@@ -1,5 +1,6 @@
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
    <modelVersion>4.0.0</modelVersion>
+
    <parent>
       <groupId>org.smallmind</groupId>
       <artifactId>smallmind</artifactId>
@@ -7,12 +8,29 @@
    </parent>
    <groupId>org.smallmind.nutsnbolts</groupId>
    <artifactId>nutsnbolts</artifactId>
-   <packaging>jar</packaging>
    <version>1.0</version>
+   <packaging>jar</packaging>
    <name>NutsNBolts</name>
-   <description>SmallMind Nuts'n'Bolts Utilities</description>
-   <properties></properties>
+   <description>Nuts'n'Bolts Utilities</description>
    <dependencies>
+      <dependency>
+         <groupId>asm</groupId>
+         <artifactId>asm-commons</artifactId>
+         <scope>compile</scope>
+         <optional>true</optional>
+      </dependency>
+      <dependency>
+         <groupId>asm</groupId>
+         <artifactId>asm-analysis</artifactId>
+         <scope>compile</scope>
+         <optional>true</optional>
+      </dependency>
+      <dependency>
+         <groupId>asm</groupId>
+         <artifactId>asm-util</artifactId>
+         <scope>compile</scope>
+         <optional>true</optional>
+      </dependency>
       <dependency>
          <groupId>org.springframework</groupId>
          <artifactId>spring-context</artifactId>
@@ -20,11 +38,4 @@
          <optional>true</optional>
       </dependency>
    </dependencies>
-   <build>
-      <extensions></extensions>
-      <plugins></plugins>
-   </build>
-   <repositories></repositories>
-   <pluginRepositories></pluginRepositories>
-   <distributionManagement></distributionManagement>
 </project>

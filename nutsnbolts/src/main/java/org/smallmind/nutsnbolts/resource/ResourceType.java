@@ -1,10 +1,8 @@
 package org.smallmind.nutsnbolts.resource;
 
-import org.smallmind.nutsnbolts.property.SystemPropertyResource;
-
 public enum ResourceType {
 
-   FILE("file", FileResource.class), CLASSPATH("classpath", ClasspathResource.class), PROPERTY("module", SystemPropertyResource.class);
+   FILE("file", FileResource.class), CLASSPATH("classpath", ClasspathResource.class);
 
    private String resourceScheme;
    private Class<? extends Resource> resourceClass;

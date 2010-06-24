@@ -1,23 +1,21 @@
 package org.smallmind.nutsnbolts.util;
 
-import com.bizzy.util.Option;
-
 public class Some<T> implements Option<T> {
 
-  private T value;
+   private T value;
 
-  public Some (T value) {
+   public Some (T value) {
 
-    this.value = value;
-  }
+      this.value = value;
+   }
 
-  public boolean isNone () {
+   public boolean isNone () {
 
-    return false;
-  }
+      return false;
+   }
 
-  public T get () {
+   public T get () {
 
-    return value;
-  }
+      return value;
+   }
 }

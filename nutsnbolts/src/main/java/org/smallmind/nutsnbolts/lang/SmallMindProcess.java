@@ -9,10 +9,8 @@ public class SmallMindProcess {
       INPUT_STREAM, ERROR_STREAM
    }
 
-   ;
-
    public static String execute (String command, StreamType expectedStream, boolean waitForProcess)
-      throws org.smallmind.nutsnbolts.lang.ExternalProcessException {
+      throws ExternalProcessException {
 
       Runtime runtime;
       Process process;
@@ -36,14 +34,14 @@ public class SmallMindProcess {
          switch (expectedStream) {
             case INPUT_STREAM:
                if (exitStatus == 0) {
-                  processStream = new BuilderedInputStream(process.getInputStream());
+                  processStream = new BufferedInputStream(process.getInputStream());
                   break;
                }
             case ERROR_STREAM:
-               processStream = new BuilderedInputStream(process.getErrorStream());
+               processStream = new BufferedInputStream(process.getErrorStream());
                break;
             default:
-               throw new org.smallmind.nutsnbolts.lang.UnknownSwitchCaseException(expectedStream.name());
+               throw new UnknownSwitchCaseException(expectedStream.name());
          }
 
          processBuilder = new StringBuilder();
@@ -53,14 +51,13 @@ public class SmallMindProcess {
          processStream.close();
       }
       catch (Exception e) {
-         throw new org.smallmind.nutsnbolts.lang.ExternalProcessException(e);
+         throw new ExternalProcessException(e);
       }
 
       if ((exitStatus != 0) || ((expectedStream.equals(StreamType.ERROR_STREAM)) && (processBuilder.length() > 0))) {
-         throw new org.smallmind.nutsnbolts.lang.ExternalProcessException("Exception during process execution...\n\t%s", processBuilder.toString());
+         throw new ExternalProcessException("Exception during process execution...\n\t%s", processBuilder.toString());
       }
 
       return processBuilder.toString();
    }
-
 }
