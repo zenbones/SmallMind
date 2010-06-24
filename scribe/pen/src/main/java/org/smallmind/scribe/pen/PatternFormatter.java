@@ -1,0 +1,161 @@
+package org.smallmind.scribe.pen;
+
+import java.util.Collection;
+import java.util.LinkedList;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
+public class PatternFormatter implements Formatter {
+
+   /*
+   Operation of this parser is similar to that of String formatting Flags. Each Flag has the general form
+   of ({[^%]+)?%((+|-)?(\d+))?(.\d*)?(!(+|-)[^!]*!)?([dtnlmTCMNLFspruabexy])([^}]+})? or
+   [{header]%[<+|->width][.precision][!(+|-)prefix!]conversion[footer}].
+
+   [{<header text>] is used to insert starting text (only if the field value exists and will be output).
+   [<footer text>}] is used to insert ending text (only if the field value exists and will be output).
+
+   [<+|->width] is used to set the maximum field length, where the optional '+' or '-' is used to denote right or left
+   padded formatting where the field length is less than the width specifier. If absent, then no padding will be used.
+
+   [.precision] is used in dot notated fields (logger name, context class, etc.) to specify a maximum number
+   of segments to display, starting from the right. For example, given a logger name of 'com.mydomain.myproject.MyClass'
+   and a format flag of %.2n, the conversion would print 'myproject.MyClass'. The precision specifier is
+   used with the multi-line fields Parameters, Statements and Metrics, to specify the maximum number of lines
+   displayed (as a multi-line list). The precision specifier will be ignored on all other field types.
+
+   [!(+|-)<prefix text>!] is used to specify a line separator and any line prefix text to insert before each line of a
+   multi-line field e.g. Stack Trace, Parameters, Correlator, Statements, and Metrics. The '+' or '-' must be present,
+   and sets whether the first line should be prefixed with the text, '+' for true and '-' for false. For instance, the
+   flag '!-,\n! would tell the formatter to insert a comma followed by a line-break before each line of a multi-line
+   field, excluding the first, which will present a comma separated list. If you desire text after the last line, use a
+   footer flag. The default is equivalent to !+\n\t!, or a new-line followed by a tab starting each output line,
+   including the first.
+
+   Available conversions are...
+
+   d - The date stamp of the log entry (yyyy-MM-dd'T'HH:mm:ss.SSSZ)
+   t - The time stamp of the entry in milliseconds
+   n - The logger name
+   l - The logger level
+   m - The log message
+   T - The name of the thread in which the logging occurred (if available)
+   C - The class from which the log event was issued (if available)
+   M - The method in which the log event was issued (if available)
+   N - Whether the method which issued the log event was native code or not [true or false] (if available)
+   L - The line number in the class file from which the log event was issued (if available)
+   F - The file name of the class file from which the log event was issued (if available)
+   w - The stack trace associated with the log event (if present)
+   z - The parameters associated with the log event (if present)
+   p - The probe point title (if a probe point)
+   r - The probe correlator (if a probe point);
+   s - The probe status (if a probe point)
+   u - The update count of the probe (if a probe point and available)
+   i - The update time of the probe (if a probe point and available)
+   a - The start time of the probe (if a probe point and available)
+   b - The stop time of the probe (if a probe point and available)
+   e - The elapsed time of the probe (if a probe point and available)
+   x - The series of statements associated with the probe (if a probe point and available)
+   y - The metrics associated with the probe (if a probe point and available)
+
+   w, r, x, y, and z (stack trace, correlator, statements, metrics, and parameters) are multi-line fields, and are
+   unaffected by the width or padding specifiers.
+
+   The sequence %% outputs a single '%'.
+   The character '\n' will be replaced by the machine specific line separator.
+   */
+
+   private static final Pattern CONVERSION_PATTERN = Pattern.compile("%%|(\\{([^{}]+))?%((\\+|-)?(\\d+))?(\\.(\\d+))?(!(\\+|-)([^!]*)!)?([dtnlmTCMNLFwzprsuiabexy])(([^{%]+)\\})?");
+   private static final StaticPatternRule DOUBLE_PERCENT_RULE = new StaticPatternRule("%");
+
+   private PatternRule[] patternRules;
+   private Timestamp timestamp;
+
+   public PatternFormatter ()
+      throws LoggerException {
+
+      this("%d %n %+5l [%T] - %m", DateFormatTimestamp.getDefaultInstance());
+   }
+
+   public PatternFormatter (String format)
+      throws LoggerException {
+
+      this(format, DateFormatTimestamp.getDefaultInstance());
+   }
+
+   public PatternFormatter (String format, Timestamp timestamp)
+      throws LoggerException {
+
+      this.timestamp = timestamp;
+
+      if (format != null) {
+         setFormat(format);
+      }
+   }
+
+   public Timestamp getTimestamp () {
+
+      return timestamp;
+   }
+
+   public void setTimestamp (Timestamp timestamp) {
+
+      this.timestamp = timestamp;
+   }
+
+   public void setFormat (String format) {
+
+      Matcher conversionMatcher = CONVERSION_PATTERN.matcher(format);
+      LinkedList<PatternRule> ruleList;
+      int index = 0;
+
+      ruleList = new LinkedList<PatternRule>();
+      while (conversionMatcher.find(index)) {
+         if (index < conversionMatcher.start()) {
+            ruleList.add(new StaticPatternRule(format.substring(index, conversionMatcher.start())));
+         }
+
+         if (conversionMatcher.group().equals("%%")) {
+            ruleList.add(DOUBLE_PERCENT_RULE);
+         }
+         else {
+            ruleList.add(new ConversionPatternRule(conversionMatcher.group(2), conversionMatcher.group(4), conversionMatcher.group(5), conversionMatcher.group(7), conversionMatcher.group(9), conversionMatcher.group(10), conversionMatcher.group(11), conversionMatcher.group(13)));
+         }
+
+         index = conversionMatcher.end();
+      }
+
+      if (index < format.length()) {
+         ruleList.add(new StaticPatternRule(format.substring(index, format.length())));
+      }
+
+      patternRules = new PatternRule[ruleList.size()];
+      ruleList.toArray(patternRules);
+   }
+
+   public String format (Record record, Collection<Filter> filterCollection) {
+
+      StringBuilder formatBuilder = new StringBuilder();
+      String conversion;
+      String header;
+      String footer;
+
+      for (PatternRule patternRule : patternRules) {
+         if ((conversion = patternRule.convert(record, filterCollection, timestamp)) != null) {
+            if ((header = patternRule.getHeader()) != null) {
+               formatBuilder.append(header);
+            }
+
+            formatBuilder.append(conversion);
+
+            if ((footer = patternRule.getFooter()) != null) {
+               formatBuilder.append(footer);
+            }
+         }
+      }
+
+      formatBuilder.append(System.getProperty("line.separator"));
+
+      return formatBuilder.toString();
+   }
+}

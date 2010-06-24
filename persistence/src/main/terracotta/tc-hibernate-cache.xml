@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<terracotta-hibernate-cache-configuration>
+
+   <default-configuration>
+      <time-to-idle-seconds>1800</time-to-idle-seconds>
+      <time-to-live-seconds>0</time-to-live-seconds>
+   </default-configuration>
+
+   <!-- The default configuration applies to any properties not defined in the <cache> blocks below. -->
+
+   <cache>
+      <region-name>org.mycompany.myapplication.domain.Widget</region-name>
+      <region-name>org.mycompany.myapplication.domain.Item</region-name>
+      <!-- Define as many regions as needed. -->
+
+      <configuration>
+         <time-to-idle-seconds>120</time-to-idle-seconds>
+         <time-to-live-seconds>600</time-to-live-seconds>
+      </configuration>
+   </cache>
+
+   <!-- More cache blocks here as needed. -->
+
+</terracotta-hibernate-cache-configuration>

@@ -1,0 +1,26 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+   <modelVersion>4.0.0</modelVersion>
+   <parent>
+      <groupId>org.smallmind</groupId>
+      <artifactId>overpom</artifactId>
+      <version>1.0</version>
+   </parent>
+   <groupId>org.smallmind.scribe</groupId>
+   <artifactId>scribe</artifactId>
+   <version>1.0</version>
+   <name>Scribe</name>
+   <description>Scribe Logging Framework</description>
+   <packaging>pom</packaging>
+   <modules>
+      <module>ink</module>
+      <module>pen</module>
+      <module>spring</module>
+      <module>slf4j</module>
+      <module>apache</module>
+      <module>trial</module>
+   </modules>
+   <dependencyManagement>
+   </dependencyManagement>
+</project>

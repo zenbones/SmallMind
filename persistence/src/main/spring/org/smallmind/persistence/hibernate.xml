@@ -1,0 +1,109 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:aop="http://www.springframework.org/schema/aop" xmlns:tx="http://www.springframework.org/schema/tx" xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-2.5.xsd
+     http://www.springframework.org/schema/tx http://www.springframework.org/schema/tx/spring-tx-2.5.xsd
+     http://www.springframework.org/schema/aop http://www.springframework.org/schema/aop/spring-aop-2.5.xsd">
+
+   <!-- Property Configuration-->
+   <bean class="org.smallmind.nutsnbolts.spring.maven.ProfilePlaceholderConfigurer">
+      <property name="profile" value="dev"/>
+   </bean>
+
+   <!-- Collect Spring Initialized Hibernate Resources -->
+   <bean class="org.smallmind.persistence.orm.spring.hibernate.HibernateAnnotationSeekingBeanFactoryPostProcessor">
+      <property name="markedAnnotations">
+         <list>
+            <value>javax.persistence.Entity</value>
+         </list>
+      </property>
+   </bean>
+
+   <bean class="org.smallmind.persistence.orm.spring.hibernate.HibernateFileSeekingBeanFactoryPostProcessor"/>
+
+   <!-- Second Level Cache -->
+   <!--
+   <bean id="hibernateCacheProvider" class="org.smallmind.quorum.cache.hibernate.spring.HibernateCacheProviderFactoryBean">
+      <property name="limit" value="${hibernate.cache.default.limit}"/>
+      <property name="timeToLiveSeconds" value="1800"/>
+      <property name="distributed" value="true"/>
+      <property name="cacheList">
+         <list>
+            <bean id="hibernateStandardQueryCache" class="org.smallmind.quorum.cache.hibernate.spring.HibernateCacheFactoryBean">
+               <property name="regionName" value="org.hibernate.cache.StandardQueryCache"/>
+               <property name="limit" value="200"/>
+               <property name="timeToLiveSeconds" value="600"/>
+               <property name="distributed" value="true"/>
+            </bean>
+            <bean id="hibernateUpdateTimestampsCache" class="org.smallmind.quorum.cache.hibernate.spring.HibernateCacheFactoryBean">
+               <property name="regionName" value="org.hibernate.cache.UpdateTimestampsCache"/>
+               <property name="limit" value="5000"/>
+               <property name="timeToLiveSeconds" value="0"/>
+               <property name="distributed" value="true"/>
+            </bean>
+         </list>
+      </property>
+   </bean>
+   -->
+
+   <!-- Connection Pooling -->
+   <bean id="connectionInstanceFactory" class="org.smallmind.persistence.pool.DriverManagerConnectionInstanceFactory">
+      <constructor-arg index="0" value="${jdbc.driver.classname}"/>
+      <constructor-arg index="1" value="${jdbc.url}"/>
+      <constructor-arg index="2" value="${db.username}"/>
+      <constructor-arg index="3" value="${db.password}"/>
+   </bean>
+
+   <bean id="dbPool" class="org.smallmind.quorum.pool.ConnectionPool">
+      <constructor-arg index="0" value="dbPool"/>
+      <constructor-arg index="1" ref="connectionInstanceFactory"/>
+      <property name="poolMode" value="BLOCKING_POOL"/>
+      <property name="acquireRetryDelayMillis" value="300"/>
+      <property name="acquireRetryAttempts" value="3"/>
+      <property name="minPoolSize" value="${db.pool.size.min}"/>
+      <property name="maxPoolSize" value="${db.pool.size.max}"/>
+      <property name="leaseTimeSeconds" value="1800"/>
+      <property name="connectionTimeoutMillis" value="500"/>
+      <property name="testOnAcquire" value="true"/>
+   </bean>
+
+   <bean id="pooledDataSource" class="org.smallmind.persistence.pool.PooledDataSource">
+      <constructor-arg index="0" ref="dbPool"/>
+   </bean>
+
+   <!-- Session and Transaction -->
+   <bean id="sessionFactory" class="org.smallmind.persistence.orm.spring.hibernate.AnnotationAwareLocalSessionFactoryBean">
+      <property name="dataSource" ref="pooledDataSource"/>
+      <property name="mappingLocations">
+         <bean class="org.smallmind.persistence.orm.spring.hibernate.HibernateFileSeekingFactoryBean"/>
+      </property>
+      <!--
+      <property name="cacheProvider" ref="hibernateCacheProvider"/>
+      -->
+      <property name="hibernateProperties">
+         <value>
+            hibernate.dialect=${hibernate.dialect}
+            hibernate.hbm2ddl.auto=${hibernate.hbm2ddl.auto}
+            hibernate.bytecode.use_reflection_optimizer=true
+            hibernate.jdbc.use_scrollable_resultset=true
+            hibernate.connection.autocommit=false
+            hibernate.show_sql=${hibernate.show_sql}
+            hibernate.format_sql=${hibernate.format_sql}
+            hibernate.use_sql_comments=false
+            hibernate.generate_statistics=false
+            hibernate.cache.use_second_level_cache=${hibernate.cache.secondlevel.use}
+            hibernate.cache.use_query_cache=false
+            hibernate.cache.use_minimal_puts=true
+            hibernate.cache.provider_class=org.terracotta.hibernate.TerracottaHibernateCacheProvider
+            <!--
+            hibernate.cache.provider_class=org.terracotta.modules.hibernatecache.TerracottaHibernateCacheProvider
+            -->
+         </value>
+      </property>
+   </bean>
+
+   <bean id="proxySession" class="org.smallmind.persistence.orm.dao.hibernate.HibernateProxySession">
+      <constructor-arg index="0" ref="sessionFactory"/>
+   </bean>
+
+   <bean id="transactionManagerApsect" class="org.smallmind.persistence.orm.aop.TransactionalManagementAspect" factory-method="aspectOf"/>
+
+</beans>

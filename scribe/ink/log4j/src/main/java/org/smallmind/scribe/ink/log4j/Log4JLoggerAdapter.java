@@ -1,0 +1,180 @@
+package org.smallmind.scribe.ink.log4j;
+
+import java.util.concurrent.ConcurrentLinkedQueue;
+import org.apache.log4j.Logger;
+import org.smallmind.scribe.pen.Appender;
+import org.smallmind.scribe.pen.DefaultLogicalContext;
+import org.smallmind.scribe.pen.Discriminator;
+import org.smallmind.scribe.pen.Enhancer;
+import org.smallmind.scribe.pen.Filter;
+import org.smallmind.scribe.pen.Level;
+import org.smallmind.scribe.pen.LogicalContext;
+import org.smallmind.scribe.pen.Record;
+import org.smallmind.scribe.pen.adapter.LoggerAdapter;
+import org.smallmind.scribe.pen.probe.ProbeReport;
+
+public class Log4JLoggerAdapter implements LoggerAdapter {
+
+   private Logger logger;
+   private ConcurrentLinkedQueue<Filter> filterList;
+   private ConcurrentLinkedQueue<Enhancer> enhancerList;
+   private boolean autoFillLogicalContext = false;
+
+   public Log4JLoggerAdapter (Logger logger) {
+
+      this.logger = logger;
+
+      logger.setAdditivity(false);
+
+      filterList = new ConcurrentLinkedQueue<Filter>();
+      enhancerList = new ConcurrentLinkedQueue<Enhancer>();
+   }
+
+   public String getName () {
+
+      return logger.getName();
+   }
+
+   public boolean getAutoFillLogicalContext () {
+
+      return autoFillLogicalContext;
+   }
+
+   public void setAutoFillLogigicalContext (boolean autoFillLogicalContext) {
+
+      this.autoFillLogicalContext = autoFillLogicalContext;
+   }
+
+   public void addFilter (Filter filter) {
+
+      filterList.add(filter);
+   }
+
+   public void clearFilters () {
+
+      filterList.clear();
+   }
+
+   public void addAppender (Appender appender) {
+
+      logger.addAppender(new Log4JAppenderWrapper(appender));
+   }
+
+   public Appender removeAppender (Appender appender) {
+
+      return removeAppender(appender.getName());
+   }
+
+   public Appender removeAppender (String name) {
+
+      org.apache.log4j.Appender appender;
+
+      if ((appender = logger.getAppender(name)) != null) {
+         logger.removeAppender(name);
+         if (appender instanceof Log4JAppenderWrapper) {
+            return ((Log4JAppenderWrapper)appender).getInnerAppender();
+         }
+         else {
+            throw new UnsupportedOperationException("Appender can't be returned via this interface because it's Log4J native");
+         }
+      }
+
+      return null;
+   }
+
+   public void clearAppenders () {
+
+      logger.removeAllAppenders();
+   }
+
+   public void addEnhancer (Enhancer enhancer) {
+
+      enhancerList.add(enhancer);
+   }
+
+   public void clearEnhancers () {
+
+      enhancerList.clear();
+   }
+
+   public Level getLevel () {
+
+      return (logger.getLevel() == null) ? Level.INFO : Log4JLevelTranslator.getLevel(logger.getLevel());
+   }
+
+   public void setLevel (Level level) {
+
+      logger.setLevel(Log4JLevelTranslator.getLog4JLevel(level));
+   }
+
+   public void logMessage (Discriminator discriminator, Level level, Throwable throwable, String message, Object... args) {
+
+      Log4JRecordSubverter recordSubverter;
+      LogicalContext logicalContext;
+
+      if ((!level.equals(Level.OFF)) && getLevel().noGreater(level)) {
+         if ((logicalContext = willLog(discriminator, level)) != null) {
+            recordSubverter = new Log4JRecordSubverter(logger, discriminator, level, null, logicalContext, throwable, message, args);
+            enhanceRecord(recordSubverter.getRecord());
+            logger.callAppenders(recordSubverter);
+         }
+      }
+   }
+
+   public void logProbe (Discriminator discriminator, Level level, Throwable throwable, ProbeReport probeReport) {
+
+      Log4JRecordSubverter recordSubverter;
+      LogicalContext logicalContext;
+
+      if ((!level.equals(Level.OFF)) && getLevel().noGreater(level)) {
+         if ((logicalContext = willLog(discriminator, level)) != null) {
+            recordSubverter = new Log4JRecordSubverter(logger, discriminator, level, probeReport, logicalContext, throwable, (probeReport.getTitle() == null) ? "Probe Report" : probeReport.getTitle());
+            enhanceRecord(recordSubverter.getRecord());
+            logger.callAppenders(recordSubverter);
+         }
+      }
+   }
+
+   public void logMessage (Discriminator discriminator, Level level, Throwable throwable, Object object) {
+
+      Log4JRecordSubverter recordSubverter;
+      LogicalContext logicalContext;
+
+      if ((!level.equals(Level.OFF)) && getLevel().noGreater(level)) {
+         if ((logicalContext = willLog(discriminator, level)) != null) {
+            recordSubverter = new Log4JRecordSubverter(logger, discriminator, level, null, logicalContext, throwable, (object == null) ? null : object.toString());
+            enhanceRecord(recordSubverter.getRecord());
+            logger.callAppenders(recordSubverter);
+         }
+      }
+   }
+
+   private LogicalContext willLog (Discriminator discriminator, Level level) {
+
+      LogicalContext logicalContext;
+      Record filterRecord;
+
+      logicalContext = new DefaultLogicalContext();
+      if (getAutoFillLogicalContext()) {
+         logicalContext.fillIn();
+      }
+
+      if (!filterList.isEmpty()) {
+         filterRecord = new Log4JRecordSubverter(logger, discriminator, level, null, logicalContext, null, null).getRecord();
+         for (Filter filter : filterList) {
+            if (!filter.willLog(filterRecord)) {
+               return null;
+            }
+         }
+      }
+
+      return logicalContext;
+   }
+
+   private void enhanceRecord (Record record) {
+
+      for (Enhancer enhancer : enhancerList) {
+         enhancer.enhance(record);
+      }
+   }
+}

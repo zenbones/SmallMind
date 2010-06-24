@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-2.5.xsd">
+
+
+   <bean id="schedulerFactory" class="org.quartz.impl.StdSchedulerFactory">
+      <constructor-arg index="0">
+         <props>
+            <prop key="org.quartz.scheduler.instanceName">Scheduler</prop>
+            <prop key="org.quartz.scheduler.instanceId">AUTO</prop>
+            <prop key="org.quartz.scheduler.threadsInheritContextClassLoaderOfInitializer">true</prop>
+            <prop key="org.quartz.threadPool.class">org.quartz.simpl.SimpleThreadPool</prop>
+            <prop key="org.quartz.threadPool.threadCount">3</prop>
+            <prop key="org.quartz.scheduler.rmi.export">true</prop>
+            <prop key="org.quartz.scheduler.rmi.createRegistry">as_needed</prop>
+            <prop key="org.quartz.jobStore.class">org.quartz.impl.jdbcjobstore.JobStoreTX</prop>
+            <prop key="org.quartz.jobStore.driverDelegateClass">org.quartz.impl.jdbcjobstore.MSSQLDelegate</prop>
+            <prop key="org.quartz.jobStore.dataSource">dsOne</prop>
+            <prop key="org.quartz.jobStore.tablePrefix">QRTZ_</prop>
+            <prop key="org.quartz.jobStore.useProperties">true</prop>
+            <prop key="org.quartz.jobStore.isClustered">false</prop>
+            <prop key="org.quartz.dataSource.dsOne.driver">${jdbc.driver.classname}</prop>
+            <prop key="org.quartz.dataSource.dsOne.URL">${jdbc.url.quartz}</prop>
+            <prop key="org.quartz.dataSource.dsOne.user">${db.username}</prop>
+            <prop key="org.quartz.dataSource.dsOne.password">${db.password}</prop>
+            <prop key="org.quartz.dataSource.dsOne.validationQuery">select 1</prop>
+         </props>
+      </constructor-arg>
+   </bean>
+
+   <bean id="scheduler" factory-bean="schedulerFactory" factory-method="getScheduler" init-method="start" destroy-method="shutdown"/>
+
+   <bean class="org.smallmind.scheduling.quartz.spring.CronJobInitializingBean">
+      <property name="scheduler" ref="scheduler"/>
+      <property name="jobMap">
+         <map>
+            <entry key-ref="some detail">
+               <list>
+                  <ref bean="some trigger"/>
+               </list>
+            </entry>
+         </map>
+      </property>
+   </bean>
+
+</beans>

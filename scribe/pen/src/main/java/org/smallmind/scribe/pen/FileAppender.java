@@ -1,0 +1,242 @@
+package org.smallmind.scribe.pen;
+
+import java.io.BufferedOutputStream;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.util.Date;
+
+public class FileAppender extends AbstractAppender {
+
+   private BufferedOutputStream fileOutputStream;
+   private File logFile;
+   private Rollover rollover;
+   private boolean closed = false;
+
+   public FileAppender () {
+
+      super();
+   }
+
+   public FileAppender (String logFilePath)
+      throws IOException {
+
+      this(logFilePath, null, null, null);
+   }
+
+   public FileAppender (File logFile)
+      throws IOException {
+
+      this(logFile, null, null, null);
+   }
+
+   public FileAppender (String logFilePath, Rollover rollover)
+      throws IOException {
+
+      this(logFilePath, rollover, null, null);
+   }
+
+   public FileAppender (File logFile, Rollover rollover)
+      throws IOException {
+
+      this(logFile, rollover, null, null);
+   }
+
+   public FileAppender (String logFilePath, Formatter formatter)
+      throws IOException {
+
+      this(logFilePath, null, formatter, null);
+   }
+
+   public FileAppender (File logFile, Formatter formatter)
+      throws IOException {
+
+      this(logFile, null, formatter, null);
+   }
+
+   public FileAppender (String logFilePath, Rollover rollover, Formatter formatter)
+      throws IOException {
+
+      this(logFilePath, rollover, formatter, null);
+   }
+
+   public FileAppender (File logFile, Rollover rollover, Formatter formatter)
+      throws IOException {
+
+      this(logFile, rollover, formatter, null);
+   }
+
+   public FileAppender (String logFilePath, Formatter formatter, ErrorHandler errorHandler)
+      throws IOException {
+
+      this(logFilePath, null, formatter, errorHandler);
+   }
+
+   public FileAppender (File logFile, Formatter formatter, ErrorHandler errorHandler)
+      throws IOException {
+
+      this(logFile, null, formatter, errorHandler);
+   }
+
+   public FileAppender (String logFilePath, Rollover rollover, Formatter formatter, ErrorHandler errorHandler)
+      throws IOException {
+
+      this(new File(logFilePath), rollover, formatter, errorHandler);
+   }
+
+   public FileAppender (File logFile, Rollover rollover, Formatter formatter, ErrorHandler errorHandler)
+      throws IOException {
+
+      super(formatter, errorHandler);
+
+      this.rollover = rollover;
+
+      setLogFile(logFile);
+   }
+
+   public boolean requiresFormatter () {
+
+      return true;
+   }
+
+   public Rollover getRollover () {
+
+      return rollover;
+   }
+
+   public void setRollover (Rollover rollover) {
+
+      this.rollover = rollover;
+   }
+
+   public File getLogFile () {
+
+      return logFile;
+   }
+
+   public void setLogFilePath (String logFilePath)
+      throws IOException {
+
+      setLogFile(new File(logFilePath));
+   }
+
+   public void setLogFile (File logFile)
+      throws IOException {
+
+      this.logFile = logFile;
+
+      try {
+
+         File parentDirectory;
+
+         if ((parentDirectory = logFile.getParentFile()) != null) {
+            parentDirectory.mkdirs();
+         }
+
+         logFile.createNewFile();
+      }
+      catch (IOException ioException) {
+         throw new IOException("Error trying to instantiate the requested file(" + logFile.getCanonicalPath() + ")");
+      }
+
+      if (!logFile.isFile()) {
+         throw new IOException("File must specify a non-directory path(" + logFile.getCanonicalPath() + ")");
+      }
+
+      fileOutputStream = new BufferedOutputStream(new FileOutputStream(logFile, true));
+   }
+
+   public synchronized void handleOutput (String formattedOutput)
+      throws LoggerException {
+
+      byte[] formattedBytes = formattedOutput.getBytes();
+
+      if (closed) {
+         throw new LoggerException("Appender to file(%s) has been previously closed", logFile.getAbsolutePath());
+      }
+
+      if (logFile != null) {
+         try {
+            if ((rollover != null) && rollover.willRollover(logFile, formattedBytes.length)) {
+
+               File rolloverFile;
+               StringBuilder rolloverPathBuilder;
+               StringBuilder uniquePathBuilder;
+               String parentPath;
+               String logFileName;
+               int dotPos;
+               int uniqueCount = 0;
+
+               rolloverPathBuilder = new StringBuilder();
+
+               if ((parentPath = logFile.getParent()) != null) {
+                  rolloverPathBuilder.append(parentPath);
+                  rolloverPathBuilder.append(System.getProperty("file.separator"));
+               }
+
+               logFileName = logFile.getName();
+
+               if ((dotPos = logFileName.lastIndexOf('.')) >= 0) {
+                  rolloverPathBuilder.append(logFileName.substring(0, dotPos));
+               }
+               else {
+                  rolloverPathBuilder.append(logFileName);
+               }
+
+               rolloverPathBuilder.append(rollover.getSeparator());
+               rolloverPathBuilder.append(rollover.getTimestampSuffix(new Date()));
+
+               do {
+                  uniquePathBuilder = new StringBuilder(rolloverPathBuilder.toString());
+                  uniquePathBuilder.append(rollover.getSeparator());
+                  uniquePathBuilder.append(uniqueCount++);
+
+                  if (dotPos >= 0) {
+                     uniquePathBuilder.append(logFileName.substring(dotPos));
+                  }
+
+                  rolloverFile = new File(uniquePathBuilder.toString());
+               } while (rolloverFile.exists());
+
+               fileOutputStream.close();
+
+               if (!logFile.renameTo(rolloverFile)) {
+                  throw new LoggerException("Could not rollover the log file to the archive name(%s)", rolloverFile.getAbsolutePath());
+               }
+
+          if (!logFile.createNewFile()) {
+            throw new LoggerException("Could not recreate the log file(%s) after rollover", logFile.getAbsolutePath());
+          }
+               fileOutputStream = new BufferedOutputStream(new FileOutputStream(logFile, true));
+            }
+
+            fileOutputStream.write(formattedBytes);
+            fileOutputStream.flush();
+         }
+         catch (IOException ioException) {
+            throw new LoggerException(ioException, "Error attempting to output to file(%s)", logFile.getAbsolutePath());
+         }
+      }
+   }
+
+   public synchronized void close ()
+      throws LoggerException {
+
+      if (!closed) {
+         closed = true;
+
+         try {
+            fileOutputStream.close();
+         }
+         catch (IOException ioException) {
+            throw new LoggerException(ioException);
+         }
+      }
+   }
+
+   public void finalize ()
+      throws LoggerException {
+
+      close();
+   }
+}

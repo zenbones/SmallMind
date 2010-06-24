@@ -1,0 +1,32 @@
+<?xml version='1.0' encoding='us-ascii'?>
+
+<!ELEMENT menu-layout (menu-bar)*>
+
+<!ELEMENT menu-bar (menu)*>
+
+<!ELEMENT menu (menu|menu-item|separator)*>
+<!ATTLIST menu
+   text         CDATA                              #REQUIRED
+   mnemonic     CDATA                              #IMPLIED
+   icon         CDATA                              #IMPLIED
+>
+
+<!ELEMENT menu-item (definition|action)>
+<!ATTLIST menu-item
+   type         (checkbox|radiobutton|default)     "default"
+>
+
+<!ELEMENT definition EMPTY>
+<!ATTLIST definition
+   text         CDATA                              #REQUIRED
+   mnemonic     CDATA                              #IMPLIED
+   icon         CDATA                              #IMPLIED
+   enabled      (true|false)                       "true"
+>
+
+<!ELEMENT action EMPTY>
+<!ATTLIST action
+   class        CDATA                              #REQUIRED
+>
+
+<!ELEMENT separator EMPTY>
