@@ -1,5 +1,5 @@
 *.iws
 *.iml
 *.ipr
-target
-test-output
+target/
+test-output/
