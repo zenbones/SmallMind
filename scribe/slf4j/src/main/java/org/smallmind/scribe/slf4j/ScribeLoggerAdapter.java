@@ -80,10 +80,6 @@ public class ScribeLoggerAdapter extends MarkerIgnoringBase implements LocationA
       logger.debug(throwable, msg);
    }
 
-   public boolean isInfoEnabled () {
-      return logger.getLevel().noGreater(Level.INFO);
-   }
-
    public void info (String msg) {
 
       logger.info(msg);
@@ -167,7 +163,12 @@ public class ScribeLoggerAdapter extends MarkerIgnoringBase implements LocationA
       logger.error(throwable, msg);
    }
 
-   public void log (Marker marker, String fqcn, int level, String msg, Throwable throwable) {
+   public boolean isInfoEnabled () {
+
+      return logger.getLevel().noGreater(Level.INFO);
+   }
+
+   public void log (Marker marker, String fqcn, int level, String msg, Object[] objects, Throwable throwable) {
 
       Level scribeLevel;
 
@@ -191,6 +192,6 @@ public class ScribeLoggerAdapter extends MarkerIgnoringBase implements LocationA
             throw new UnknownSwitchCaseException(String.valueOf(level));
       }
 
-      logger.log(scribeLevel, throwable, msg);
+      logger.log(scribeLevel, throwable, msg, objects);
    }
 }

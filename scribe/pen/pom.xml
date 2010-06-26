@@ -1,5 +1,6 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
    <modelVersion>4.0.0</modelVersion>
+
    <parent>
       <groupId>org.smallmind.scribe</groupId>
       <artifactId>scribe</artifactId>
@@ -18,20 +19,18 @@
       </dependency>
       <dependency>
          <groupId>org.aspectj</groupId>
-         <artifactId>aspectjlib</artifactId>
+         <artifactId>aspectjrt</artifactId>
          <scope>compile</scope>
          <optional>true</optional>
       </dependency>
       <dependency>
-         <groupId>org.aspectj</groupId>
-         <artifactId>aspectjrt</artifactId>
+         <groupId>org.syslog4j</groupId>
+         <artifactId>syslog4j</artifactId>
          <scope>compile</scope>
          <optional>true</optional>
       </dependency>
    </dependencies>
    <build>
-      <resources/>
-      <extensions/>
       <plugins>
          <plugin>
             <groupId>org.codehaus.mojo</groupId>
@@ -40,6 +39,7 @@
                <execution>
                   <goals>
                      <goal>compile</goal>
+                     <goal>test-compile</goal>
                   </goals>
                </execution>
             </executions>
@@ -50,7 +50,4 @@
          </plugin>
       </plugins>
    </build>
-   <repositories/>
-   <pluginRepositories/>
-   <distributionManagement/>
 </project>

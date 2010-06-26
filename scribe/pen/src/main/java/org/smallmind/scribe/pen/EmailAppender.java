@@ -1,5 +1,8 @@
 package org.smallmind.scribe.pen;
 
+import org.smallmind.nutsnbolts.email.Mail;
+import org.smallmind.nutsnbolts.email.SendMail;
+
 public class EmailAppender extends AbstractAppender {
 
    private SendMail sendMail;
