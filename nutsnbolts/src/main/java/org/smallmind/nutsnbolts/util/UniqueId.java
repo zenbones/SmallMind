@@ -61,13 +61,16 @@ public class UniqueId implements Comparable<UniqueId> {
 
       if (COUNT++ == Short.MAX_VALUE) {
 
-         long currentTime;
+         long currentTime = System.currentTimeMillis();
 
-         do {
-            currentTime = System.currentTimeMillis();
-         } while (currentTime == TIME);
+         if (currentTime <= TIME) {
+           TIME += 1;
+         }
+         else {
+            TIME = currentTime;
+         }
 
-         TIME_BYTES = Bytes.getBytes(TIME = currentTime);
+         TIME_BYTES = Bytes.getBytes(TIME);
       }
 
       System.arraycopy(MAC_BYTES, 0, bytes, 0, 6);
