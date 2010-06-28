@@ -4,23 +4,23 @@ import org.smallmind.nutsnbolts.lang.FormattedRuntimeException;
 
 public class CacheException extends FormattedRuntimeException {
 
-  public CacheException () {
+   public CacheException () {
 
-    super();
-  }
+      super();
+   }
 
-  public CacheException (String message, Object... args) {
+   public CacheException (String message, Object... args) {
 
-    super(message, args);
-  }
+      super(message, args);
+   }
 
-  public CacheException (Throwable throwable, String message, Object... args) {
+   public CacheException (Throwable throwable, String message, Object... args) {
 
-    super(throwable, message, args);
-  }
+      super(throwable, message, args);
+   }
 
-  public CacheException (Throwable throwable) {
+   public CacheException (Throwable throwable) {
 
-    super(throwable);
-  }
+      super(throwable);
+   }
 }

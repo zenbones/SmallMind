@@ -1,5 +1,6 @@
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
    <modelVersion>4.0.0</modelVersion>
+
    <parent>
       <groupId>org.smallmind</groupId>
       <artifactId>smallmind</artifactId>
@@ -25,21 +26,6 @@
          <scope>compile</scope>
       </dependency>
       <dependency>
-         <groupId>org.terracotta.modules</groupId>
-         <artifactId>tim-annotations</artifactId>
-         <scope>compile</scope>
-      </dependency>
-      <dependency>
-         <groupId>org.terracotta.modules</groupId>
-         <artifactId>tim-hibernate-entity-3.3</artifactId>
-         <scope>compile</scope>
-      </dependency>
-      <dependency>
-         <groupId>org.terracotta.modules</groupId>
-         <artifactId>tim-hibernate-cache-3.3</artifactId>
-         <scope>compile</scope>
-      </dependency>
-      <dependency>
          <groupId>org.springframework</groupId>
          <artifactId>spring-context</artifactId>
          <scope>compile</scope>
@@ -47,17 +33,15 @@
       </dependency>
       <dependency>
          <groupId>org.hibernate</groupId>
-         <artifactId>hibernate</artifactId>
+         <artifactId>hibernate-core</artifactId>
+         <scope>compile</scope>
+         <optional>true</optional>
+      </dependency>
+      <dependency>
+         <groupId>org.terracotta.modules</groupId>
+         <artifactId>tim-annotations</artifactId>
          <scope>compile</scope>
          <optional>true</optional>
       </dependency>
    </dependencies>
-   <build>
-      <resources></resources>
-      <extensions></extensions>
-      <plugins></plugins>
-   </build>
-   <repositories></repositories>
-   <pluginRepositories></pluginRepositories>
-   <distributionManagement></distributionManagement>
 </project>

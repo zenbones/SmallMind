@@ -1,8 +1,8 @@
 package org.smallmind.scribe.pen.adapter;
 
 import java.util.Iterator;
+import java.util.ServiceLoader;
 import org.smallmind.nutsnbolts.lang.StaticInitializationError;
-import sun.misc.Service;
 
 public class LoggingBlueprintsFactory {
 
@@ -10,14 +10,14 @@ public class LoggingBlueprintsFactory {
 
    static {
 
-      Iterator providerIter;
+      Iterator<LoggingBlueprints> blueprintsIter;
 
-      providerIter = Service.providers(LoggingBlueprints.class, Thread.currentThread().getContextClassLoader());
-      if (!providerIter.hasNext()) {
+      blueprintsIter = ServiceLoader.load(LoggingBlueprints.class, Thread.currentThread().getContextClassLoader()).iterator();
+      if (!blueprintsIter.hasNext()) {
          throw new StaticInitializationError("No provider found for LoggingBlueprints");
       }
 
-      LOGGING_BLUEPRINTS = (LoggingBlueprints)providerIter.next();
+      LOGGING_BLUEPRINTS = (LoggingBlueprints)blueprintsIter.next();
    }
 
    public static LoggingBlueprints getLoggingBlueprints () {
