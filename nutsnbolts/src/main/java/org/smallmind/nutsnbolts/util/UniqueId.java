@@ -1,11 +1,14 @@
 package org.smallmind.nutsnbolts.util;
 
+import org.smallmind.nutsnbolts.lang.StaticInitializationError;
+
 import java.math.BigInteger;
 import java.net.InetAddress;
 import java.net.NetworkInterface;
 import java.security.SecureRandom;
 import java.util.Arrays;
-import org.smallmind.nutsnbolts.lang.StaticInitializationError;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicLong;
 
 public class UniqueId implements Comparable<UniqueId> {
 
@@ -27,9 +30,8 @@ public class UniqueId implements Comparable<UniqueId> {
    private static final byte[] MAC_BYTES = new byte[6];
    private static final byte[] JVM_BYTES = new byte[2];
 
-   private static long TIME;
-   private static byte[] TIME_BYTES;
-   private static short COUNT = Short.MIN_VALUE;
+   private static final AtomicLong ATOMIC_TIME;
+   private static final AtomicInteger ATOMIC_COUNT;
 
    private final byte[] uniqueArray;
 
@@ -45,73 +47,70 @@ public class UniqueId implements Comparable<UniqueId> {
          throw new StaticInitializationError(exception);
       }
 
-      TIME = System.currentTimeMillis();
-      TIME_BYTES = Bytes.getBytes(TIME);
+      ATOMIC_TIME = new AtomicLong(System.currentTimeMillis());
+      ATOMIC_COUNT = new AtomicInteger(Short.MIN_VALUE);
       RANDOM.nextBytes(JVM_BYTES);
    }
 
-   public static int byteSize () {
+   public static int byteSize() {
 
       return 18;
    }
 
-   private synchronized static byte[] generateByteArray () {
+   private byte[] generateByteArray() {
 
       byte[] bytes = new byte[18];
+      long currentTime;
+      int currentCount;
 
-      if (COUNT++ == Short.MAX_VALUE) {
-
-         long currentTime = System.currentTimeMillis();
-
-         if (currentTime <= TIME) {
-           TIME += 1;
+      do {
+         currentTime = ATOMIC_TIME.get();
+         if ((currentCount = ATOMIC_COUNT.getAndIncrement()) == Short.MAX_VALUE) {
+            currentTime = ATOMIC_TIME.getAndSet(Math.max(currentTime + 1, System.currentTimeMillis()));
+            ATOMIC_COUNT.set(Short.MIN_VALUE);
          }
-         else {
-            TIME = currentTime;
-         }
+      } while (currentCount > Short.MAX_VALUE);
 
-         TIME_BYTES = Bytes.getBytes(TIME);
-      }
 
       System.arraycopy(MAC_BYTES, 0, bytes, 0, 6);
       System.arraycopy(JVM_BYTES, 0, bytes, 6, 2);
-      System.arraycopy(TIME_BYTES, 0, bytes, 8, 8);
-      System.arraycopy(Bytes.getBytes(COUNT), 0, bytes, 16, 2);
+      System.arraycopy(Bytes.getBytes(currentTime), 0, bytes, 8, 8);
+      System.arraycopy(Bytes.getBytes((short) currentCount), 0, bytes, 16, 2);
 
       return bytes;
    }
 
-   public static UniqueId newInstance () {
+   public static UniqueId newInstance() {
 
       return new UniqueId();
    }
 
-   public UniqueId () {
+   public UniqueId() {
 
       uniqueArray = generateByteArray();
    }
 
-   public UniqueId (byte[] uniqueArray) {
+   public UniqueId(byte[] uniqueArray) {
 
       this.uniqueArray = uniqueArray;
    }
 
-   public byte[] asByteArray () {
+   public byte[] asByteArray() {
 
       return uniqueArray;
    }
 
-   public BigInteger generateBigInteger () {
+   public BigInteger generateBigInteger() {
 
       return new BigInteger(uniqueArray);
    }
 
-   public String generateCompactString () {
+   public String generateCompactString() {
 
       return generateTemplateString(COMPACT_CODE_TEMPLATE, COMPACT_CODE_TEMPLATE_BITS).toString();
    }
 
-   public String generateDottedString () {
+   public String generateDottedString() {
 
       StringBuilder dottedIdBuilder = generateTemplateString(CODE_TEMPLATE, CODE_TEMPLATE_BITS);
       int dashSize;
@@ -129,7 +128,7 @@ public class UniqueId implements Comparable<UniqueId> {
       }
    }
 
-   private String insertDots (StringBuilder dottedIdBuilder, int[] offsets, int dashSize) {
+   private String insertDots(StringBuilder dottedIdBuilder, int[] offsets, int dashSize) {
 
       for (int count = 0; count < offsets.length; count++) {
          dottedIdBuilder.insert((dashSize * (count + 1)) + count + offsets[count], '.');
@@ -138,7 +137,7 @@ public class UniqueId implements Comparable<UniqueId> {
       return dottedIdBuilder.toString();
    }
 
-   private StringBuilder generateTemplateString (String template, int templateBits) {
+   private StringBuilder generateTemplateString(String template, int templateBits) {
 
       StringBuilder uniqueIdBuilder = new StringBuilder();
 
@@ -167,18 +166,18 @@ public class UniqueId implements Comparable<UniqueId> {
    }
 
    @Override
-   public int hashCode () {
+   public int hashCode() {
 
       return Arrays.hashCode(uniqueArray);
    }
 
    @Override
-   public boolean equals (Object obj) {
+   public boolean equals(Object obj) {
 
-      return (obj instanceof UniqueId) && Arrays.equals(uniqueArray, ((UniqueId)obj).asByteArray());
+      return (obj instanceof UniqueId) && Arrays.equals(uniqueArray, ((UniqueId) obj).asByteArray());
    }
 
-   public int compareTo (UniqueId uniqueId) {
+   public int compareTo(UniqueId uniqueId) {
 
       int comparison;
 
@@ -194,7 +193,7 @@ public class UniqueId implements Comparable<UniqueId> {
       return comparison;
    }
 
-   private int compareIPBytes (UniqueId uniqueId) {
+   private int compareIPBytes(UniqueId uniqueId) {
 
       int comparison;
 
@@ -208,7 +207,7 @@ public class UniqueId implements Comparable<UniqueId> {
       return 0;
    }
 
-   private int compareJVMBytes (UniqueId uniqueId) {
+   private int compareJVMBytes(UniqueId uniqueId) {
 
       int comparison;
 
@@ -222,12 +221,12 @@ public class UniqueId implements Comparable<UniqueId> {
       return 0;
    }
 
-   private int compareTimeBytes (UniqueId uniqueId) {
+   private int compareTimeBytes(UniqueId uniqueId) {
 
-      return (int)(Bytes.getLong(Arrays.copyOfRange(this.asByteArray(), 8, 16)) - Bytes.getLong(Arrays.copyOfRange(uniqueId.asByteArray(), 8, 16)));
+      return (int) (Bytes.getLong(Arrays.copyOfRange(this.asByteArray(), 8, 16)) - Bytes.getLong(Arrays.copyOfRange(uniqueId.asByteArray(), 8, 16)));
    }
 
-   private int compareCountBytes (UniqueId uniqueId) {
+   private int compareCountBytes(UniqueId uniqueId) {
 
       return Bytes.getShort(Arrays.copyOfRange(this.asByteArray(), 16, 18)) - Bytes.getShort(Arrays.copyOfRange(uniqueId.asByteArray(), 16, 18));
    }
