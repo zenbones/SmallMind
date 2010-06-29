@@ -23,9 +23,9 @@ public class FormLabel extends Label {
          super(resourceKey, parentComponent, null);
       }
 
-      public Object getObject () {
+      public String getObject () {
 
-         return super.getObject().toString() + ":";
+         return super.getObject() + ":";
       }
    }
 

@@ -3,7 +3,6 @@ package org.smallmind.wicket.model;
 import java.io.Serializable;
 import java.util.LinkedList;
 import java.util.List;
-import org.smallmind.data.orm.dao.Dao;
 import org.apache.wicket.IClusterable;
 import org.apache.wicket.model.IDetachable;
 import org.apache.wicket.model.IModel;

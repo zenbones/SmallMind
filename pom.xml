@@ -17,13 +17,32 @@
       <module>cloud</module>
       <module>constellation</module>
       <module>scheduling</module>
+      <module>plumber</module>
+      <module>spark</module>
+      <!--      <module>wicket</module> -->
+      <module>nagios</module>
    </modules>
    <dependencyManagement>
       <dependencies>
          <dependency>
+            <groupId>org.apache.maven</groupId>
+            <artifactId>maven-plugin-api</artifactId>
+            <version>2.2.1</version>
+         </dependency>
+         <dependency>
+            <groupId>org.apache.maven</groupId>
+            <artifactId>maven-project</artifactId>
+            <version>2.2.1</version>
+         </dependency>
+         <dependency>
             <groupId>javax.jms</groupId>
             <artifactId>jms</artifactId>
             <version>1.1</version>
+         </dependency>
+         <dependency>
+            <groupId>javax.servlet</groupId>
+            <artifactId>servlet-api</artifactId>
+            <version>2.5</version>
          </dependency>
          <dependency>
             <groupId>tanukisoft</groupId>
@@ -34,6 +53,16 @@
             <groupId>org.testng</groupId>
             <artifactId>testng</artifactId>
             <version>5.12.1</version>
+         </dependency>
+         <dependency>
+            <groupId>org.freemarker</groupId>
+            <artifactId>freemarker</artifactId>
+            <version>2.3.16</version>
+         </dependency>
+         <dependency>
+            <groupId>joda-time</groupId>
+            <artifactId>joda-time</artifactId>
+            <version>1.6</version>
          </dependency>
          <dependency>
             <groupId>asm</groupId>
@@ -124,6 +153,16 @@
             <groupId>org.terracotta.modules</groupId>
             <artifactId>tim-annotations</artifactId>
             <version>1.5.1</version>
+         </dependency>
+         <dependency>
+            <groupId>org.apache.wicket</groupId>
+            <artifactId>wicket</artifactId>
+            <version>1.4.9</version>
+         </dependency>
+         <dependency>
+            <groupId>org.apache.wicket</groupId>
+            <artifactId>wicket-extensions</artifactId>
+            <version>1.4.9</version>
          </dependency>
       </dependencies>
    </dependencyManagement>
