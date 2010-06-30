@@ -3,8 +3,6 @@ package org.smallmind.wicket.component.tabs;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Properties;
-import org.smallmind.wicket.behavior.CssBehavior;
-import org.smallmind.wicket.skin.SkinManager;
 import org.apache.wicket.ajax.AjaxRequestTarget;
 import org.apache.wicket.behavior.HeaderContributor;
 import org.apache.wicket.extensions.markup.html.tabs.ITab;
@@ -13,6 +11,8 @@ import org.apache.wicket.markup.html.list.ListItem;
 import org.apache.wicket.markup.html.list.ListView;
 import org.apache.wicket.markup.html.panel.Panel;
 import org.apache.wicket.protocol.http.WebApplication;
+import org.smallmind.wicket.behavior.CssBehavior;
+import org.smallmind.wicket.skin.SkinManager;
 
 public class TabPanel extends Panel {
 

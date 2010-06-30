@@ -204,9 +204,9 @@ public class FileAppender extends AbstractAppender {
                   throw new LoggerException("Could not rollover the log file to the archive name(%s)", rolloverFile.getAbsolutePath());
                }
 
-          if (!logFile.createNewFile()) {
-            throw new LoggerException("Could not recreate the log file(%s) after rollover", logFile.getAbsolutePath());
-          }
+               if (!logFile.createNewFile()) {
+                  throw new LoggerException("Could not recreate the log file(%s) after rollover", logFile.getAbsolutePath());
+               }
                fileOutputStream = new BufferedOutputStream(new FileOutputStream(logFile, true));
             }
 

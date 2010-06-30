@@ -1,51 +1,36 @@
 package org.smallmind.persistence.orm.jdo;
 
 import javax.jdo.Transaction;
-import org.smallmind.persistence.orm.ProxySession;
 import org.smallmind.persistence.orm.ProxyTransaction;
 import org.smallmind.persistence.orm.ProxyTransactionException;
+import org.smallmind.persistence.orm.TransactionEndState;
+import org.smallmind.persistence.orm.TransactionPostProcessException;
 
-public class JDOProxyTransaction implements ProxyTransaction {
+public class JDOProxyTransaction extends ProxyTransaction {
 
-   private JDOProxySession proxySession;
    private Transaction transaction;
    private boolean rolledBack = false;
 
    public JDOProxyTransaction (JDOProxySession proxySession, Transaction transaction) {
 
-      this.proxySession = proxySession;
+      super(proxySession);
+
       this.transaction = transaction;
    }
 
-   public ProxySession getSession () {
-
-      return proxySession;
-   }
-
-   public synchronized boolean isCompleted () {
+   public boolean isCompleted () {
 
       return !transaction.isActive();
    }
 
-   public synchronized void setRollbackOnly () {
+   public void flush () {
 
-      transaction.setRollbackOnly();
+      getSession().flush();
    }
 
-   public synchronized boolean isRollbackOnly () {
+   public void commit () {
 
-      return transaction.getRollbackOnly();
-   }
-
-   public synchronized void commit () {
-
-      commit(false);
-   }
-
-   public synchronized void commit (boolean restart) {
-      boolean restarted = false;
-
-      if (transaction.getRollbackOnly()) {
+      if (isRollbackOnly()) {
 
          ProxyTransactionException proxyTransactionException = new ProxyTransactionException("Transaction has been set to allow rollback only");
 
@@ -59,23 +44,36 @@ public class JDOProxyTransaction implements ProxyTransaction {
          throw proxyTransactionException;
       }
 
-      try {
-         proxySession.flush();
-         transaction.commit();
+      Throwable unexpectedThrowable = null;
 
-         if (restart) {
-            transaction.begin();
-            restarted = true;
-         }
+      try {
+         getSession().flush();
+         transaction.commit();
+      }
+      catch (Throwable throwable) {
+         unexpectedThrowable = throwable;
       }
       finally {
-         if (!restarted) {
-            proxySession.close();
+         getSession().close();
+
+         try {
+            applyPostProcesses((unexpectedThrowable == null) ? TransactionEndState.COMMIT : TransactionEndState.ROLLBACK);
+         }
+         catch (TransactionPostProcessException transactionPostProcessException) {
+            if (unexpectedThrowable != null) {
+               transactionPostProcessException.initCause(unexpectedThrowable);
+            }
+
+            throw new ProxyTransactionException(transactionPostProcessException);
+         }
+
+         if (unexpectedThrowable != null) {
+            throw new ProxyTransactionException(unexpectedThrowable);
          }
       }
    }
 
-   public synchronized void rollback () {
+   public void rollback () {
 
       if (!rolledBack) {
          try {
@@ -83,7 +81,14 @@ public class JDOProxyTransaction implements ProxyTransaction {
             rolledBack = true;
          }
          finally {
-            proxySession.close();
+            getSession().close();
+
+            try {
+               applyPostProcesses(TransactionEndState.ROLLBACK);
+            }
+            catch (TransactionPostProcessException transactionPostProcessException) {
+               throw new ProxyTransactionException(transactionPostProcessException);
+            }
          }
       }
    }

@@ -2,9 +2,9 @@ package org.smallmind.wicket.skin;
 
 import java.util.Map;
 import java.util.Properties;
+import org.apache.wicket.protocol.http.WebApplication;
 import org.smallmind.wicket.property.PropertyException;
 import org.smallmind.wicket.property.PropertyFactory;
-import org.apache.wicket.protocol.http.WebApplication;
 
 public class SkinManager {
 

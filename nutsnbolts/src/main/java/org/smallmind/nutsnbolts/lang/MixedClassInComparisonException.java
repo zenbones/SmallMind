@@ -2,23 +2,23 @@ package org.smallmind.nutsnbolts.lang;
 
 public class MixedClassInComparisonException extends FormattedRuntimeException {
 
-  public MixedClassInComparisonException () {
+   public MixedClassInComparisonException () {
 
-    super();
-  }
+      super();
+   }
 
-  public MixedClassInComparisonException (String message, Object... args) {
+   public MixedClassInComparisonException (String message, Object... args) {
 
-    super(message, args);
-  }
+      super(message, args);
+   }
 
-  public MixedClassInComparisonException (Throwable throwable, String message, Object... args) {
+   public MixedClassInComparisonException (Throwable throwable, String message, Object... args) {
 
-    super(throwable, message, args);
-  }
+      super(throwable, message, args);
+   }
 
-  public MixedClassInComparisonException (Throwable throwable) {
+   public MixedClassInComparisonException (Throwable throwable) {
 
-    super(throwable);
-  }
+      super(throwable);
+   }
 }

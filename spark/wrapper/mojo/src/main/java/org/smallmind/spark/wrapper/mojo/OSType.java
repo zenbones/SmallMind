@@ -19,8 +19,8 @@ public enum OSType {
    SOLARIS_SPARC_64(OSStyle.UNIX, "wrapper-solaris-sparc-64", "libwrapper-solaris-sparc-64.so"),
    SOLARIS_X86_32(OSStyle.UNIX, "wrapper-solaris-x86-32", "libwrapper-solaris-x86-32.so"),
    SOLARIS_X86_64(OSStyle.UNIX, "wrapper-solaris-x86-64", "libwrapper-solaris-x86-64.so"),
-  WINDOWS_X86_32(OSStyle.WINDOWS, "wrapper-windows-x86-32.exe", "wrapper-windows-x86-32.dll"),
-  WINDOWS_X86_64(OSStyle.WINDOWS, "wrapper-windows-x86-64.exe", "wrapper-windows-x86-64.dll");
+   WINDOWS_X86_32(OSStyle.WINDOWS, "wrapper-windows-x86-32.exe", "wrapper-windows-x86-32.dll"),
+   WINDOWS_X86_64(OSStyle.WINDOWS, "wrapper-windows-x86-64.exe", "wrapper-windows-x86-64.dll");
 
    private OSStyle osStyle;
    private String executable;

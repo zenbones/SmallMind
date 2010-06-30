@@ -1,5 +1,5 @@
 div.buttonstandard span.right {
-   background: url( '${contextpath}${standard.img.right}' ) no-repeat top right;
+   background: url('${contextpath}${standard.img.right}') no-repeat top right;
    color: ${standard.text.color};
    font: ${standard.text.font};
    display: block;
@@ -12,14 +12,14 @@ div.buttonstandard span.right {
 }
 
 div.buttonstandard span.left {
-   background: url( '${contextpath}${standard.img.left}' ) no-repeat top left;
+   background: url('${contextpath}${standard.img.left}') no-repeat top left;
    display: block;
    height: ${standard.height};
    padding: ${standard.pad.upper} 0 ${standard.pad.lower} ${standard.pad.horizontal};
 }
 
 div.buttonpressed span.right {
-   background: url( '${contextpath}${pressed.img.right}' ) no-repeat top right;
+   background: url('${contextpath}${pressed.img.right}') no-repeat top right;
    color: ${pressed.text.color};
    font: ${pressed.text.font};
    display: block;
@@ -32,14 +32,14 @@ div.buttonpressed span.right {
 }
 
 div.buttonpressed span.left {
-   background: url( '${contextpath}${pressed.img.left}' ) no-repeat top left;
+   background: url('${contextpath}${pressed.img.left}') no-repeat top left;
    display: block;
    height: ${pressed.height};
    padding: ${pressed.pad.upper} 0 ${pressed.pad.lower} ${pressed.pad.horizontal};
 }
 
 div.buttonhighlighted span.right {
-   background: url( '${contextpath}${highlighted.img.right}' ) no-repeat top right;
+   background: url('${contextpath}${highlighted.img.right}') no-repeat top right;
    color: ${highlighted.text.color};
    font: ${highlighted.text.font};
    display: block;
@@ -52,14 +52,14 @@ div.buttonhighlighted span.right {
 }
 
 div.buttonhighlighted span.left {
-   background: url( '${contextpath}${highlighted.img.left}' ) no-repeat top left;
+   background: url('${contextpath}${highlighted.img.left}') no-repeat top left;
    display: block;
    height: ${highlighted.height};
    padding: ${highlighted.pad.upper} 0 ${highlighted.pad.lower} ${highlighted.pad.horizontal};
 }
 
 div.buttondisabled span.right {
-   background: url( '${contextpath}${disabled.img.right}' ) no-repeat top right;
+   background: url('${contextpath}${disabled.img.right}') no-repeat top right;
    color: #333333;
    font: italic 12px arial, sans-serif;
    display: block;
@@ -72,7 +72,7 @@ div.buttondisabled span.right {
 }
 
 div.buttondisabled span.left {
-   background: url( '${contextpath}${disabled.img.left}' ) no-repeat top left;
+   background: url('${contextpath}${disabled.img.left}') no-repeat top left;
    display: block;
    height: ${disabled.height};
    padding: ${disabled.pad.upper} 0 ${disabled.pad.lower} ${disabled.pad.horizontal};

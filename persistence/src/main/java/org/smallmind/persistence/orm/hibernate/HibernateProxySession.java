@@ -1,43 +1,35 @@
 package org.smallmind.persistence.orm.hibernate;
 
-import org.hibernate.Session;
-import org.hibernate.SessionFactory;
-import org.hibernate.metadata.ClassMetadata;
 import org.smallmind.persistence.orm.ProxySession;
 import org.smallmind.persistence.orm.ProxyTransaction;
 import org.smallmind.persistence.orm.SessionEnforcementException;
+import org.smallmind.persistence.orm.aop.BoundarySet;
 import org.smallmind.persistence.orm.aop.NonTransactionalState;
+import org.smallmind.persistence.orm.aop.RollbackAwareBoundarySet;
 import org.smallmind.persistence.orm.aop.TransactionalState;
+import org.hibernate.Session;
+import org.hibernate.SessionFactory;
+import org.hibernate.metadata.ClassMetadata;
 
 public class HibernateProxySession extends ProxySession {
 
-   private final ThreadLocal<Session> managerThreadLocal;
-   private final ThreadLocal<HibernateProxyTransaction> transactionThreadLocal;
+   private final ThreadLocal<Session> managerThreadLocal = new ThreadLocal<Session>();
+   private final ThreadLocal<HibernateProxyTransaction> transactionThreadLocal = new ThreadLocal<HibernateProxyTransaction>();
+   private final ThreadLocal<Boolean> boundaryOverrideThreadLocal = new ThreadLocal<Boolean>() {
+
+      protected Boolean initialValue () {
+
+         return false;
+      }
+   };
+
    private SessionFactory sessionFactory;
 
-   public HibernateProxySession (SessionFactory sessionFactory) {
+   public HibernateProxySession (String dataSourceKey, SessionFactory sessionFactory, boolean enforceBoundary, boolean willCascade) {
 
-      this(null, sessionFactory, false);
-   }
-
-   public HibernateProxySession (SessionFactory sessionFactory, boolean enforceBoundary) {
-
-      this(null, sessionFactory, enforceBoundary);
-   }
-
-   public HibernateProxySession (String dataSourceKey, SessionFactory sessionFactory) {
-
-      this(dataSourceKey, sessionFactory, false);
-   }
-
-   public HibernateProxySession (String dataSourceKey, SessionFactory sessionFactory, boolean enforceBoundary) {
-
-      super(dataSourceKey, enforceBoundary);
+      super(dataSourceKey, enforceBoundary, willCascade);
 
       this.sessionFactory = sessionFactory;
-
-      managerThreadLocal = new ThreadLocal<Session>();
-      transactionThreadLocal = new ThreadLocal<HibernateProxyTransaction>();
    }
 
    public ClassMetadata getClassMetadata (Class entityClass) {
@@ -45,13 +37,23 @@ public class HibernateProxySession extends ProxySession {
       return sessionFactory.getClassMetadata(entityClass);
    }
 
+   public void setIgnoreBoundaryEnforcement (boolean ignoreBoundaryEnforcement) {
+
+      boundaryOverrideThreadLocal.set(ignoreBoundaryEnforcement);
+   }
+
    public HibernateProxyTransaction beginTransaction () {
 
       HibernateProxyTransaction proxyTransaction;
 
       if ((proxyTransaction = transactionThreadLocal.get()) == null) {
-         proxyTransaction = new HibernateProxyTransaction(this, getSession(true).beginTransaction());
-         transactionThreadLocal.set(proxyTransaction);
+
+         Session session = getSession();
+
+         if ((proxyTransaction = transactionThreadLocal.get()) == null) {
+            proxyTransaction = new HibernateProxyTransaction(this, session.beginTransaction());
+            transactionThreadLocal.set(proxyTransaction);
+         }
       }
 
       return proxyTransaction;
@@ -64,7 +66,10 @@ public class HibernateProxySession extends ProxySession {
 
    public void flush () {
 
-      getSession().flush();
+      Session session;
+
+      (session = getSession()).flush();
+      session.clear();
    }
 
    public boolean isClosed () {
@@ -76,32 +81,25 @@ public class HibernateProxySession extends ProxySession {
 
    public Session getSession () {
 
-      return getSession(false);
-   }
-
-   private Session getSession (boolean internal) {
-
       Session session;
-      boolean sessionRequired = false;
-      boolean sessionObtained = false;
-      boolean transactionObtained = false;
 
       if ((session = managerThreadLocal.get()) == null) {
          session = sessionFactory.openSession();
          managerThreadLocal.set(session);
 
-         sessionRequired = true;
-         if (!internal) {
-            sessionObtained = NonTransactionalState.addSession(this);
+         RollbackAwareBoundarySet<ProxyTransaction> transactionSet;
+         BoundarySet<ProxySession> sessionSet;
+
+         if ((transactionSet = TransactionalState.obtainBoundary(this)) != null) {
+            transactionSet.add(beginTransaction());
          }
-      }
-
-      if ((!internal) && (transactionThreadLocal.get() == null)) {
-         transactionObtained = TransactionalState.addTransaction(this);
-      }
-
-      if (willEnforceBoundary() && sessionRequired && (!(sessionObtained || transactionObtained))) {
-         throw new SessionEnforcementException("Session was requested outside of any boundary enforcement (@NonTransactional or @Transactional)");
+         else if ((sessionSet = NonTransactionalState.obtainBoundary(this)) != null) {
+            sessionSet.add(this);
+         }
+         else if ((!boundaryOverrideThreadLocal.get()) && willEnforceBoundary()) {
+            close();
+            throw new SessionEnforcementException("Session was requested outside of any boundary enforcement (@NonTransactional or @Transactional)");
+         }
       }
 
       return session;

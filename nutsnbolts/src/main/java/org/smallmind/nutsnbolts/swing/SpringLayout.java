@@ -315,6 +315,7 @@ public class SpringLayout implements LayoutManager2, Serializable {
    ///////////////////////////////////////////////////////////////////////////////////
    /// LayoutManager Interface
    ///////////////////////////////////////////////////////////////////////////////////
+
    public void addLayoutComponent (String name, Component comp) {
       //	comp.addComponentListener(checker);
    }
@@ -525,6 +526,7 @@ public class SpringLayout implements LayoutManager2, Serializable {
 
    // Note the possible side effect of this call
    // We are lazily storing the original bounds of the.nutsnbolts.
+
    protected Rectangle originalBoundsFor (Component view) {
       Rectangle origBounds = null;
       if (view instanceof JComponent) {

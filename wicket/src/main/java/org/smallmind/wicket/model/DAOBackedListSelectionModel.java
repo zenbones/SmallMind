@@ -6,16 +6,18 @@ import java.util.List;
 import org.apache.wicket.IClusterable;
 import org.apache.wicket.model.IDetachable;
 import org.apache.wicket.model.IModel;
+import org.smallmind.persistence.Durable;
+import org.smallmind.persistence.orm.ORMDao;
 
-public class DAOBackedListSelectionModel<P, I extends Serializable> implements Serializable, IModel, IDetachable, IClusterable {
+public class DAOBackedListSelectionModel<I extends Serializable & Comparable<I>, D extends Durable<I>> implements Serializable, IModel, IDetachable, IClusterable {
 
-   private transient List<P> selectionList;
+   private transient List<D> selectionList;
    private transient boolean attached = false;
 
-   private Dao<P, I> backingDao;
+   private ORMDao<I, D> backingDao;
    private List<I> idList;
 
-   public DAOBackedListSelectionModel (Dao<P, I> backingDao) {
+   public DAOBackedListSelectionModel (ORMDao<I, D> backingDao) {
 
       this.backingDao = backingDao;
 
@@ -25,7 +27,7 @@ public class DAOBackedListSelectionModel<P, I extends Serializable> implements S
    public synchronized Object getObject () {
 
       if (!attached) {
-         selectionList = new LinkedList<P>();
+         selectionList = new LinkedList<D>();
          for (I id : idList) {
             selectionList.add(backingDao.get(id));
          }
@@ -38,15 +40,15 @@ public class DAOBackedListSelectionModel<P, I extends Serializable> implements S
 
    public synchronized void setObject (Object obj) {
 
-      selectionList = (List<P>)obj;
+      selectionList = (List<D>)obj;
    }
 
    public synchronized void detach () {
 
       if (attached) {
          idList.clear();
-         for (P persistedObject : selectionList) {
-            idList.add(backingDao.getId(persistedObject));
+         for (D durable : selectionList) {
+            idList.add(backingDao.getId(durable));
          }
 
          attached = false;

@@ -1,0 +1,90 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:context="http://www.springframework.org/schema/context" xsi:schemaLocation="http://www.springframework.org/schema/beans
+                           http://www.springframework.org/schema/beans/spring-beans-2.5.xsd
+                            http://www.springframework.org/schema/context
+                            http://www.springframework.org/schema/context/spring-context-2.5.xsd">
+
+   <import resource="classpath:org/smallmind/persistence/hibernate.xml"/>
+
+   <!-- Liquibase updates -->
+
+   <bean class="org.smallmind.persistence.liquibase.">
+      <property name="dataSource" ref="bizzyPooledDataSource"/>
+      <property name="changeLog" value="classpath:database/bizzy/master.xml"/>
+      <property name="preview" value="false"/>
+      <property name="structural" value="true"/>
+      <property name="execute" value="${liquibase.execute}"/>
+   </bean>
+
+   <!-- Connection Pooling -->
+
+   <bean id="bizzyConnectionInstanceFactory" class="org.smallmind.persistence.orm.sql.pool.DriverManagerConnectionInstanceFactory">
+      <constructor-arg index="0" value="${jdbc.driver}"/>
+      <constructor-arg index="1" value="${jdbc.url.bizzy}"/>
+      <constructor-arg index="2" value="${jdbc.username}"/>
+      <constructor-arg index="3" value="${jdbc.password}"/>
+      <property name="validationQuery" value="${jdbc.pool.connect.query}"/>
+   </bean>
+
+   <bean id="bizzyDBPool" class="org.smallmind.quorum.pool.ConnectionPool">
+      <constructor-arg index="0" value="dbPool"/>
+      <constructor-arg index="1" ref="bizzyConnectionInstanceFactory"/>
+      <property name="poolMode" value="BLOCKING_POOL"/>
+      <property name="acquireRetryDelayMillis" value="300"/>
+      <property name="acquireRetryAttempts" value="3"/>
+      <property name="testOnAcquire" value="${jdbc.pool.connect.test}"/>
+      <property name="minPoolSize" value="${jdbc.pool.size.min}"/>
+      <property name="maxPoolSize" value="${jdbc.pool.size.max}"/>
+      <property name="leaseTimeSeconds" value="1800"/>
+      <property name="connectionTimeoutMillis" value="500"/>
+   </bean>
+
+   <bean id="bizzyPooledDataSource" class="org.smallmind.persistence.orm.sql.pool.PooledDataSource">
+      <constructor-arg index="0" ref="bizzyDBPool"/>
+   </bean>
+
+   <!-- Session and Transaction -->
+   <bean id="bizzySessionFactory" class="org.smallmind.persistence.orm.spring.hibernate.AnnotationAwareLocalSessionFactoryBean">
+      <property name="dataSourceKey" value="bizzy"/>
+      <property name="dataSource" ref="bizzyPooledDataSource"/>
+      <property name="mappingLocations">
+         <bean class="org.smallmind.persistence.orm.spring.hibernate.HibernateFileSeekingFactoryBean">
+            <property name="dataSourceKey" value="bizzy"/>
+         </bean>
+      </property>
+      <property name="hibernateProperties">
+         <value>
+            hibernate.dialect=${hibernate.dialect}
+            hibernate.hbm2ddl.auto=${hibernate.hbm2ddl.auto}
+            hibernate.bytecode.use_reflection_optimizer=true
+            hibernate.connection.isolation=${hibernate.connection.isolation}
+            hibernate.connection.autocommit=${hibernate.connection.autocommit}
+            hibernate.jdbc.use_scrollable_resultset=true
+            hibernate.jdbc.use_streams_for_binary=false
+            hibernate.jdbc.batch_size=${hibernate.jdbc.batch_size}
+            hibernate.query.substitutions=true 1, false 0
+            hibernate.show_sql=${hibernate.show_sql}
+            hibernate.format_sql=${hibernate.format_sql}
+            hibernate.use_sql_comments=false
+            hibernate.generate_statistics=false
+            hibernate.cache.use_second_level_cache=${hibernate.cache.secondlevel.use}
+            hibernate.cache.use_query_cache=false
+            hibernate.cache.use_minimal_puts=true
+            hibernate.cache.provider_class=org.terracotta.hibernate.TerracottaHibernateCacheProvider
+            hibernate.search.default.directory_provider=org.hibernate.search.store.FSDirectoryProvider
+            hibernate.search.default.indexBase=${lucene.dir}
+            hibernate.search.default.batch.merge_factor=10
+            hibernate.search.default.batch.max_buffered_docs=100
+         </value>
+      </property>
+   </bean>
+
+   <!--Proxy Session-->
+   <bean id="bizzyProxySession" class="org.smallmind.persistence.orm.hibernate.HibernateProxySession" init-method="register">
+      <constructor-arg index="0" value="bizzy"/>
+      <constructor-arg index="1" ref="bizzySessionFactory"/>
+      <constructor-arg index="2" value="true"/>
+      <constructor-arg index="3" value="${orm.cascade}"/>
+   </bean>
+
+</beans>

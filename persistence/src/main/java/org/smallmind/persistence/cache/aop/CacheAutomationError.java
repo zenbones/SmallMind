@@ -1,6 +1,6 @@
 package org.smallmind.persistence.cache.aop;
 
-import org.smallmind.util.lang.FormattedError;
+import org.smallmind.nutsnbolts.lang.FormattedError;
 
 public class CacheAutomationError extends FormattedError {
 

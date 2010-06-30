@@ -6,10 +6,10 @@ import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
+import java.util.UUID;
 import java.util.concurrent.atomic.AtomicBoolean;
 import javax.sql.StatementEvent;
 import javax.sql.StatementEventListener;
-import org.smallmind.nutsnbolts.util.UniqueId;
 
 public class DriverManagerPooledPreparedStatement implements InvocationHandler {
 
@@ -24,7 +24,7 @@ public class DriverManagerPooledPreparedStatement implements InvocationHandler {
       this.pooledConnection = pooledConnection;
       this.actualStatement = actualStatement;
 
-      statementId = UniqueId.newInstance().generateDottedString();
+      statementId = UUID.randomUUID().toString();
       proxyStatement = (PreparedStatement)(Proxy.newProxyInstance(DriverManagerPooledPreparedStatement.class.getClassLoader(), new Class[] {PreparedStatement.class}, this));
    }
 

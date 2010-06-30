@@ -1,14 +1,19 @@
 package org.smallmind.persistence.orm;
 
-import java.util.HashMap;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class SessionManager {
 
-   private static final HashMap<String, ProxySession> SESSION_MAP = new HashMap<String, ProxySession>();
+   private static final ConcurrentHashMap<String, ProxySession> SESSION_MAP = new ConcurrentHashMap<String, ProxySession>();
 
    public static void registerSession (String dataSourceKey, ProxySession proxySession) {
 
       SESSION_MAP.put(dataSourceKey, proxySession);
+   }
+
+   public static ProxySession getSession () {
+
+      return getSession(null);
    }
 
    public static ProxySession getSession (String dataSourceKey) {

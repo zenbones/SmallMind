@@ -6,9 +6,12 @@ import java.lang.reflect.Type;
 import java.util.concurrent.ConcurrentHashMap;
 import org.aspectj.lang.annotation.AfterReturning;
 import org.aspectj.lang.annotation.Aspect;
+import org.smallmind.nutsnbolts.lang.UnknownSwitchCaseException;
 import org.smallmind.persistence.Durable;
 import org.smallmind.persistence.VectorKey;
 import org.smallmind.persistence.VectoredDao;
+import org.smallmind.persistence.orm.DaoManager;
+import org.smallmind.persistence.orm.ORMDao;
 import org.smallmind.persistence.orm.WaterfallORMDao;
 
 @Aspect
@@ -20,24 +23,58 @@ public class CachedWithAspect {
    public void afterReturningPersistMethod (WaterfallORMDao waterfallOrmDao, Durable durable) {
 
       CachedWith cachedWith;
-      Iterable<Durable> finderIterable;
       VectoredDao nextDao = waterfallOrmDao.getNextDao();
 
       if (nextDao != null) {
          if ((cachedWith = waterfallOrmDao.getClass().getAnnotation(CachedWith.class)) != null) {
             for (Update update : cachedWith.updates()) {
                if (executeFilter(update.filter(), waterfallOrmDao, durable)) {
-                  nextDao.updateInVector(new VectorKey(update.value().with(), VectorIndex.getValue(durable, update.value().on()), waterfallOrmDao.getManagedClass(), update.value().classifier()), durable);
+
+                  OnPersist onPersist = executeOnPersist(update.onPersist(), waterfallOrmDao, durable);
+                  Operand operand = executeProxy(update.proxy(), waterfallOrmDao, durable);
+
+                  switch (onPersist) {
+                     case INSERT:
+                        nextDao.updateInVector(new VectorKey(VectorIndices.getVectorIndexes(update.value(), durable, waterfallOrmDao), operand.getManagedClass(), Classifications.get(CachedWith.class, null, update.value())), operand.getDurable());
+                        break;
+                     case REMOVE:
+                        nextDao.removeFromVector(new VectorKey(VectorIndices.getVectorIndexes(update.value(), durable, waterfallOrmDao), operand.getManagedClass(), Classifications.get(CachedWith.class, null, update.value())), operand.getDurable());
+                        break;
+                     default:
+                        throw new UnknownSwitchCaseException(onPersist.name());
+                  }
                }
             }
 
             for (Finder finder : cachedWith.finders()) {
-               if ((finderIterable = executeFinder(finder, waterfallOrmDao, durable)) != null) {
-                  for (Durable indexingDurable : finderIterable) {
-                     if (executeFilter(finder.filter(), waterfallOrmDao, durable)) {
-                        nextDao.updateInVector(new VectorKey(finder.vector().with(), VectorIndex.getValue(indexingDurable, finder.vector().on()), waterfallOrmDao.getManagedClass(), finder.vector().classifier()), durable);
+               if (executeFilter(finder.filter(), waterfallOrmDao, durable)) {
+
+                  Iterable<Durable> finderIterable;
+
+                  if ((finderIterable = executeFinder(finder, waterfallOrmDao, durable)) != null) {
+
+                     OnPersist onPersist = executeOnPersist(finder.onPersist(), waterfallOrmDao, durable);
+                     Operand operand = executeProxy(finder.proxy(), waterfallOrmDao, durable);
+
+                     for (Durable indexingDurable : finderIterable) {
+                        switch (onPersist) {
+                           case INSERT:
+                              nextDao.updateInVector(new VectorKey(VectorIndices.getVectorIndexes(finder.vector(), indexingDurable, waterfallOrmDao), operand.getManagedClass(), Classifications.get(CachedWith.class, null, finder.vector())), operand.getDurable());
+                              break;
+                           case REMOVE:
+                              nextDao.removeFromVector(new VectorKey(VectorIndices.getVectorIndexes(finder.vector(), indexingDurable, waterfallOrmDao), operand.getManagedClass(), Classifications.get(CachedWith.class, null, finder.vector())), operand.getDurable());
+                              break;
+                           default:
+                              throw new UnknownSwitchCaseException(onPersist.name());
+                        }
                      }
                   }
+               }
+            }
+
+            for (Invalidate invalidate : cachedWith.invalidators()) {
+               if (executeFilter(invalidate.filter(), waterfallOrmDao, durable)) {
+                  nextDao.deleteVector(new VectorKey(VectorIndices.getVectorIndexes(invalidate.vector(), durable, waterfallOrmDao), invalidate.against(), Classifications.get(CachedWith.class, null, invalidate.vector())));
                }
             }
          }
@@ -48,25 +85,38 @@ public class CachedWithAspect {
    public void afterReturningDeleteMethod (WaterfallORMDao waterfallOrmDao, Durable durable) {
 
       CachedWith cachedWith;
-      Iterable<Durable> finderIterable;
       VectoredDao nextDao = waterfallOrmDao.getNextDao();
 
       if (nextDao != null) {
          if ((cachedWith = waterfallOrmDao.getClass().getAnnotation(CachedWith.class)) != null) {
-
             for (Update update : cachedWith.updates()) {
                if (executeFilter(update.filter(), waterfallOrmDao, durable)) {
-                  nextDao.removeFromVector(new VectorKey(update.value().with(), VectorIndex.getValue(durable, update.value().on()), waterfallOrmDao.getManagedClass(), update.value().classifier()), durable);
+
+                  Operand operand = executeProxy(update.proxy(), waterfallOrmDao, durable);
+
+                  nextDao.removeFromVector(new VectorKey(VectorIndices.getVectorIndexes(update.value(), durable, waterfallOrmDao), operand.getManagedClass(), Classifications.get(CachedWith.class, null, update.value())), operand.getDurable());
                }
             }
 
             for (Finder finder : cachedWith.finders()) {
-               if ((finderIterable = executeFinder(finder, waterfallOrmDao, durable)) != null) {
-                  for (Durable indexingDurable : finderIterable) {
-                     if (executeFilter(finder.filter(), waterfallOrmDao, durable)) {
-                        nextDao.removeFromVector(new VectorKey(finder.vector().with(), VectorIndex.getValue(indexingDurable, finder.vector().on()), waterfallOrmDao.getManagedClass(), finder.vector().classifier()), durable);
+               if (executeFilter(finder.filter(), waterfallOrmDao, durable)) {
+
+                  Iterable<Durable> finderIterable;
+
+                  if ((finderIterable = executeFinder(finder, waterfallOrmDao, durable)) != null) {
+
+                     Operand operand = executeProxy(finder.proxy(), waterfallOrmDao, durable);
+
+                     for (Durable indexingDurable : finderIterable) {
+                        nextDao.removeFromVector(new VectorKey(VectorIndices.getVectorIndexes(finder.vector(), indexingDurable, waterfallOrmDao), operand.getManagedClass(), Classifications.get(CachedWith.class, null, finder.vector())), operand.getDurable());
                      }
                   }
+               }
+            }
+
+            for (Invalidate invalidate : cachedWith.invalidators()) {
+               if (executeFilter(invalidate.filter(), waterfallOrmDao, durable)) {
+                  nextDao.deleteVector(new VectorKey(VectorIndices.getVectorIndexes(invalidate.vector(), durable, waterfallOrmDao), invalidate.against(), Classifications.get(CachedWith.class, null, invalidate.vector())));
                }
             }
          }
@@ -79,7 +129,7 @@ public class CachedWithAspect {
 
       if (filterMethodName.length() > 0) {
 
-         if ((filterMethod = locateMethod(waterfallORMDao, filterMethodName, durable)) == null) {
+         if ((filterMethod = locateMethod(waterfallORMDao, filterMethodName, waterfallORMDao.getManagedClass())) == null) {
             throw new CacheAutomationError("The filter Method(%s) referenced within @CachedWith does not exist", filterMethodName);
          }
 
@@ -99,12 +149,76 @@ public class CachedWithAspect {
       return true;
    }
 
+   private OnPersist executeOnPersist (String onPersistMethodName, WaterfallORMDao waterfallORMDao, Durable durable) {
+
+      Method onPersistMethod;
+
+      if (onPersistMethodName.length() > 0) {
+
+         if ((onPersistMethod = locateMethod(waterfallORMDao, onPersistMethodName, waterfallORMDao.getManagedClass())) == null) {
+            throw new CacheAutomationError("The onPersist Method(%s) referenced within @CachedWith does not exist", onPersistMethodName);
+         }
+
+         if (!onPersistMethod.getReturnType().equals(OnPersist.class)) {
+            throw new CacheAutomationError("An onPersist Method(%s) referenced by @CachedWith must return a value of type 'OnPersist'", onPersistMethodName);
+         }
+
+         try {
+
+            return (OnPersist)onPersistMethod.invoke(waterfallORMDao, durable);
+         }
+         catch (Exception exception) {
+            throw new CacheAutomationError(exception);
+         }
+      }
+
+      return OnPersist.INSERT;
+   }
+
+   private Operand executeProxy (Proxy proxy, WaterfallORMDao waterfallORMDao, Durable durable) {
+
+      ORMDao proxyDao;
+      Method proxyGetMethod;
+      Durable proxyDurable;
+      Object proxyId;
+
+      if (proxy.on().length() > 0) {
+
+         if ((proxyDao = DaoManager.get(proxy.with())) == null) {
+            throw new CacheAutomationError("Unable to locate an implementation of ORMDao within DaoManager for the requested proxy(%s)", proxy.with().getName());
+         }
+
+         proxyId = VectorIndices.getValue(durable, (!proxy.type().equals(Nothing.class)) ? proxy.type() : proxyDao.getIdClass(), proxy.on());
+
+         if ((proxyGetMethod = locateMethod(proxyDao, "get", proxy.with())) == null) {
+            throw new CacheAutomationError("The 'get(%s)' method does not exist on the ORMDao(%s) for the requested proxy", proxyDao.getIdClass(), proxyDao.getClass().getName());
+         }
+
+         try {
+            if ((proxyDurable = (Durable)proxyGetMethod.invoke(proxyDao, proxyId)) == null) {
+               throw new CacheAutomationError("No proxy object could be obtained via the 'get(%s)' method on the ORMDao(%s)", proxyId, proxyDao.getClass().getName());
+            }
+
+            return new Operand(proxyDao.getManagedClass(), proxyDurable);
+         }
+         catch (Exception exception) {
+            throw new CacheAutomationError(exception);
+         }
+      }
+
+      return new Operand(waterfallORMDao.getManagedClass(), durable);
+   }
+
    private Iterable<Durable> executeFinder (Finder finder, WaterfallORMDao waterfallORMDao, Durable durable) {
 
       Method finderMethod;
       Type finderReturnType;
 
-      if ((finderMethod = locateMethod(waterfallORMDao, finder.method(), durable)) == null) {
+      if (finder.vector().value().length > 1) {
+         throw new CacheAutomationError("Finder methods are currently not compatable with Vectors that have more than a single Index");
+      }
+
+      if ((finderMethod = locateMethod(waterfallORMDao, finder.method(), waterfallORMDao.getManagedClass())) == null) {
          throw new CacheAutomationError("Method(%s) referenced by @Finder does not exist", finder.method());
       }
 
@@ -112,8 +226,8 @@ public class CachedWithAspect {
          throw new CacheAutomationError("A Method(%s) referenced by @Finder must return a value of type <? extends Iterable>", finder.method());
       }
 
-      if ((!((finderReturnType = finderMethod.getGenericReturnType()) instanceof ParameterizedType)) || (!((Class)((ParameterizedType)finderReturnType).getActualTypeArguments()[0]).isAssignableFrom(finder.vector().with()))) {
-         throw new CacheAutomationError("A Method(%s) referenced by @Finder must return a value of type <? extends Iterable<%s>>", finder.method(), finder.vector().with().getSimpleName());
+      if ((!((finderReturnType = finderMethod.getGenericReturnType()) instanceof ParameterizedType)) || (!((Class)((ParameterizedType)finderReturnType).getActualTypeArguments()[0]).isAssignableFrom(finder.vector().value()[0].with()))) {
+         throw new CacheAutomationError("A Method(%s) referenced by @Finder must return a value of type <? extends Iterable<%s>>", finder.method(), finder.vector().value()[0].with().getSimpleName());
       }
 
       try {
@@ -125,16 +239,15 @@ public class CachedWithAspect {
       }
    }
 
-   private Method locateMethod (WaterfallORMDao waterfallORMDao, String methodName, Durable durable) {
+   private Method locateMethod (ORMDao ormDao, String methodName, Class parameterType) {
 
       Method aspectMethod;
       MethodKey methodKey;
       Class[] parameterTypes;
 
-      if ((aspectMethod = METHOD_MAP.get(methodKey = new MethodKey(waterfallORMDao.getClass(), methodName))) == null) {
-         for (Method method : waterfallORMDao.getClass().getMethods()) {
-
-            if (method.getName().equals(methodName) && ((parameterTypes = method.getParameterTypes()).length == 1) && (parameterTypes[0].isAssignableFrom(durable.getClass()))) {
+      if ((aspectMethod = METHOD_MAP.get(methodKey = new MethodKey(ormDao.getClass(), methodName))) == null) {
+         for (Method method : ormDao.getClass().getMethods()) {
+            if (method.getName().equals(methodName) && ((parameterTypes = method.getParameterTypes()).length == 1) && (parameterTypes[0].isAssignableFrom(parameterType))) {
                METHOD_MAP.put(methodKey, aspectMethod = method);
                break;
             }
@@ -142,6 +255,28 @@ public class CachedWithAspect {
       }
 
       return aspectMethod;
+   }
+
+   private static class Operand {
+
+      private Class<? extends Durable> managedClass;
+      private Durable durable;
+
+      private Operand (Class<? extends Durable> managedClass, Durable durable) {
+
+         this.managedClass = managedClass;
+         this.durable = durable;
+      }
+
+      public Class<? extends Durable> getManagedClass () {
+
+         return managedClass;
+      }
+
+      public Durable getDurable () {
+
+         return durable;
+      }
    }
 
    private static class MethodKey {

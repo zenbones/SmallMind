@@ -9,7 +9,7 @@ import org.smallmind.quorum.cache.KeyLock;
 import org.smallmind.quorum.cache.LockManager;
 import org.smallmind.quorum.cache.StripeLockFactory;
 
-public abstract class AbstractCache<K, V, E extends CacheEntry<V>> extends LockManager<K> implements ExternallyLockedCache<K, V> {
+public abstract class AbstractCache<K, V, E extends CacheEntry<V>> extends LockManager<K, V> implements ExternallyLockedCache<K, V> {
 
    private transient ExpirationTimer<K> expirationTimer;
 

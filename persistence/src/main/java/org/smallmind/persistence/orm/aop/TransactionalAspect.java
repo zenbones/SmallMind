@@ -21,30 +21,36 @@ public class TransactionalAspect {
    }
 
    @AfterReturning (pointcut = "@within(transactional) && (execution(* * (..)) || initialization(new(..))) && !@annotation(Transactional)", argNames = "transactional")
-   public void afterReturnFromTransactionalClass (Transactional transactional)
-      throws TransactionError {
+   public void afterReturnFromTransactionalClass (Transactional transactional) {
 
       TransactionalState.commitBoundary();
    }
 
    @AfterReturning (pointcut = "(execution(@Transactional * * (..)) || initialization(@Transactional new(..))) && @annotation(transactional)", argNames = "transactional")
-   public void afterReturnFromTransactionalMethod (Transactional transactional)
-      throws TransactionError {
+   public void afterReturnFromTransactionalMethod (Transactional transactional) {
 
       TransactionalState.commitBoundary();
    }
 
-   @AfterThrowing (pointcut = "@within(Transactional) && (execution(* * (..)) || initialization(new(..)))  && !@annotation(Transactional)", throwing = "throwable")
-   public void afterThrowFromTransactionalClass (Throwable throwable)
-      throws TransactionError {
+   @AfterThrowing (pointcut = "@within(transactional) && (execution(* * (..)) || initialization(new(..)))  && !@annotation(Transactional)", throwing = "throwable", argNames = "transactional, throwable")
+   public void afterThrowFromTransactionalClass (Transactional transactional, Throwable throwable) {
 
-      TransactionalState.rollbackBoundary(throwable);
+      if (transactional.rollbackOnException()) {
+         TransactionalState.rollbackBoundary(throwable);
+      }
+      else {
+         TransactionalState.commitBoundary(throwable);
+      }
    }
 
-   @AfterThrowing (pointcut = "(execution(@Transactional * * (..)) || initialization(@Transactional new(..))) && @annotation(Transactional)", throwing = "throwable")
-   public void afterThrowFromTransactionalMethod (Throwable throwable)
-      throws TransactionError {
+   @AfterThrowing (pointcut = "(execution(@Transactional * * (..)) || initialization(@Transactional new(..))) && @annotation(transactional)", throwing = "throwable", argNames = "transactional, throwable")
+   public void afterThrowFromTransactionalMethod (Transactional transactional, Throwable throwable) {
 
-      TransactionalState.rollbackBoundary(throwable);
+      if (transactional.rollbackOnException()) {
+         TransactionalState.rollbackBoundary(throwable);
+      }
+      else {
+         TransactionalState.commitBoundary(throwable);
+      }
    }
 }

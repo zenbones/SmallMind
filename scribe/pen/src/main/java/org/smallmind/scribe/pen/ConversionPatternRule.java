@@ -33,14 +33,14 @@ public class ConversionPatternRule implements PatternRule {
 
    public ConversionPatternRule (String header, Padding padding, int width, int precision, boolean prefixFirstLine, String multilinePrefix, char conversion, String footer) {
 
-    this.header = stripSlashes(header);
+      this.header = stripSlashes(header);
       this.padding = padding;
       this.width = width;
       this.precision = precision;
       this.prefixFirstLine = prefixFirstLine;
-    this.multilinePrefix = stripSlashes(multilinePrefix);
+      this.multilinePrefix = stripSlashes(multilinePrefix);
       this.conversion = conversion;
-    this.footer = stripSlashes(footer);
+      this.footer = stripSlashes(footer);
    }
 
    public String getHeader () {
@@ -52,53 +52,54 @@ public class ConversionPatternRule implements PatternRule {
 
       return footer;
    }
-  private String stripSlashes (String slashedString) {
 
-    if (slashedString == null) {
+   private String stripSlashes (String slashedString) {
 
-      return null;
-    }
+      if (slashedString == null) {
 
-    StringBuffer strippedBuffer;
-    boolean slashed = false;
+         return null;
+      }
 
-    strippedBuffer = new StringBuffer();
+      StringBuffer strippedBuffer;
+      boolean slashed = false;
 
-    for (int count = 0; count < slashedString.length(); count++) {
-      if (slashed) {
-        switch (slashedString.charAt(count)) {
-          case 'r':
-            strippedBuffer.append('\r');
-            break;
-          case 't':
-            strippedBuffer.append('\t');
-            break;
-          case 'f':
-            strippedBuffer.append('\f');
-            break;
-          case 'n':
-            strippedBuffer.append(System.getProperty("line.separator"));
-            break;
-          default:
+      strippedBuffer = new StringBuffer();
+
+      for (int count = 0; count < slashedString.length(); count++) {
+         if (slashed) {
+            switch (slashedString.charAt(count)) {
+               case 'r':
+                  strippedBuffer.append('\r');
+                  break;
+               case 't':
+                  strippedBuffer.append('\t');
+                  break;
+               case 'f':
+                  strippedBuffer.append('\f');
+                  break;
+               case 'n':
+                  strippedBuffer.append(System.getProperty("line.separator"));
+                  break;
+               default:
+                  strippedBuffer.append(slashedString.charAt(count));
+            }
+
+            slashed = false;
+         }
+         else if (slashedString.charAt(count) == '\\') {
+            slashed = true;
+         }
+         else {
             strippedBuffer.append(slashedString.charAt(count));
-        }
-
-        slashed = false;
+         }
       }
-      else if (slashedString.charAt(count) == '\\') {
-        slashed = true;
-      }
-      else {
-        strippedBuffer.append(slashedString.charAt(count));
-      }
-    }
 
-    if (slashed) {
-      strippedBuffer.append('\\');
-    }
+      if (slashed) {
+         strippedBuffer.append('\\');
+      }
 
-    return strippedBuffer.toString();
-  }
+      return strippedBuffer.toString();
+   }
 
    public String convert (Record record, Collection<Filter> filterCollection, Timestamp timestamp) {
 
@@ -173,9 +174,9 @@ public class ConversionPatternRule implements PatternRule {
                      stackBuilder.append("Exception in thread ");
                   }
                   else {
-              if (prefixFirstLine && (multilinePrefix != null)) {
-                stackBuilder.append(multilinePrefix);
-              }
+                     if (prefixFirstLine && (multilinePrefix != null)) {
+                        stackBuilder.append(multilinePrefix);
+                     }
                      stackBuilder.append("Caused by: ");
                   }
 

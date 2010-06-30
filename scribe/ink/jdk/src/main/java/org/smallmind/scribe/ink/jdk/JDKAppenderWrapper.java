@@ -41,7 +41,8 @@ public class JDKAppenderWrapper extends Handler {
       throw new UnsupportedOperationException("Unsupported native JDK Logging method");
    }
 
-   public void setLevel (Level newLevel) throws SecurityException {
+   public void setLevel (Level newLevel)
+      throws SecurityException {
 
       throw new UnsupportedOperationException("Unsupported native JDK Logging method");
    }

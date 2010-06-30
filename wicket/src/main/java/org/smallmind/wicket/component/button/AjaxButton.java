@@ -1,9 +1,9 @@
 package org.smallmind.wicket.component.button;
 
-import org.smallmind.wicket.skin.SkinManager;
 import org.apache.wicket.ajax.AjaxEventBehavior;
 import org.apache.wicket.ajax.AjaxRequestTarget;
 import org.apache.wicket.model.IModel;
+import org.smallmind.wicket.skin.SkinManager;
 
 public abstract class AjaxButton extends Button {
 

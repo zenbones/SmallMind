@@ -65,7 +65,8 @@ public class HibernateFileSeekingBeanFactoryPostProcessor implements BeanFactory
 
                try {
                   persistentClass = (Class)((ParameterizedType)beanClass.getMethod("getManagedClass").getGenericReturnType()).getActualTypeArguments()[0];
-                  if (!hbmResourceMap.containsKey(persistentClass)) {
+
+                  while ((persistentClass != null) && (!hbmResourceMap.containsKey(persistentClass))) {
                      packageRemnant = persistentClass.getPackage().getName().replace('.', '/');
                      hbmFileName = persistentClass.getSimpleName() + ".hbm.xml";
                      do {
@@ -76,6 +77,8 @@ public class HibernateFileSeekingBeanFactoryPostProcessor implements BeanFactory
 
                         packageRemnant = packageRemnant.length() > 0 ? packageRemnant.substring(0, (lastSlashIndex = packageRemnant.lastIndexOf('/')) >= 0 ? lastSlashIndex : 0) : null;
                      } while (packageRemnant != null);
+
+                     persistentClass = persistentClass.getSuperclass();
                   }
                }
                catch (NoSuchMethodException noSuchMethodException) {

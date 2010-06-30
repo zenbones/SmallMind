@@ -14,4 +14,6 @@ public @interface Transactional {
    public abstract boolean implicit () default true;
 
    public abstract boolean rollbackOnly () default false;
+
+   public abstract boolean rollbackOnException () default true;
 }

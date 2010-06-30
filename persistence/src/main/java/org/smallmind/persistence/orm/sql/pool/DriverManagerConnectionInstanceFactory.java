@@ -11,12 +11,23 @@ public class DriverManagerConnectionInstanceFactory implements ConnectionInstanc
 
    private DriverManagerDataSource dataSource;
    private DriverManagerConnectionPoolDataSource pooledDataSource;
+   private String validationQuery = "Select 1";
 
    public DriverManagerConnectionInstanceFactory (String driverClassName, String jdbcUrl, String user, String password)
       throws SQLException {
 
       dataSource = new DriverManagerDataSource(driverClassName, jdbcUrl, user, password);
       pooledDataSource = new DriverManagerConnectionPoolDataSource(dataSource);
+   }
+
+   public String getValidationQuery () {
+
+      return validationQuery;
+   }
+
+   public void setValidationQuery (String validationQuery) {
+
+      this.validationQuery = validationQuery;
    }
 
    public int getMaxStatements () {
@@ -38,6 +49,6 @@ public class DriverManagerConnectionInstanceFactory implements ConnectionInstanc
    public ConnectionInstance createInstance (ConnectionPool connectionPool)
       throws SQLException {
 
-      return new PooledConnectionInstance(connectionPool, pooledDataSource.getPooledConnection());
+      return new PooledConnectionInstance(connectionPool, pooledDataSource.getPooledConnection(), validationQuery);
    }
 }

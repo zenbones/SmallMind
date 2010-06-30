@@ -1,10 +1,10 @@
 package org.smallmind.wicket.component.button;
 
-import org.smallmind.wicket.skin.SkinManager;
 import org.apache.wicket.AttributeModifier;
 import org.apache.wicket.markup.html.form.Form;
 import org.apache.wicket.model.AbstractReadOnlyModel;
 import org.apache.wicket.model.IModel;
+import org.smallmind.wicket.skin.SkinManager;
 
 public class SubmitButton extends Button {
 

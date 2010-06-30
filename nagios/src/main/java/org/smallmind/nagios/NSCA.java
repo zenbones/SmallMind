@@ -51,7 +51,8 @@ public class NSCA {
       this.encryptionMethod = encryptionMethod;
    }
 
-   public void send (String serviceName, String message, ReturnCode returnCode) throws NagiosException {
+   public void send (String serviceName, String message, ReturnCode returnCode)
+      throws NagiosException {
 
       Socket socket;
       OutputStream outputStream;

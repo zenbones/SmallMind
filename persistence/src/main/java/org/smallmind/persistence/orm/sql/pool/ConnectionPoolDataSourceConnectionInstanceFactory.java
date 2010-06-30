@@ -11,6 +11,7 @@ public class ConnectionPoolDataSourceConnectionInstanceFactory implements Connec
 
    private DataSource dataSource;
    private ConnectionPoolDataSource pooledDataSource;
+   private String validationQuery = "select 1";
 
    public ConnectionPoolDataSourceConnectionInstanceFactory (ConnectionPoolDataSource pooledDataSource) {
 
@@ -21,6 +22,16 @@ public class ConnectionPoolDataSourceConnectionInstanceFactory implements Connec
 
       this.dataSource = dataSource;
       this.pooledDataSource = pooledDataSource;
+   }
+
+   public String getValidationQuery () {
+
+      return validationQuery;
+   }
+
+   public void setValidationQuery (String validationQuery) {
+
+      this.validationQuery = validationQuery;
    }
 
    public Object rawInstance ()
@@ -36,6 +47,6 @@ public class ConnectionPoolDataSourceConnectionInstanceFactory implements Connec
    public ConnectionInstance createInstance (ConnectionPool connectionPool)
       throws SQLException {
 
-      return new org.smallmind.persistence.orm.sql.pool.PooledConnectionInstance(connectionPool, pooledDataSource.getPooledConnection());
+      return new PooledConnectionInstance(connectionPool, pooledDataSource.getPooledConnection(), validationQuery);
    }
 }

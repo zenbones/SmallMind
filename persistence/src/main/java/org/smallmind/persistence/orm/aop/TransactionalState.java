@@ -15,6 +15,11 @@ public class TransactionalState {
 
    public static boolean isInTransaction (String dataSource) {
 
+      return currentTransaction(dataSource) != null;
+   }
+
+   public static ProxyTransaction currentTransaction (String dataSource) {
+
       LinkedList<RollbackAwareBoundarySet<ProxyTransaction>> transactionSetStack;
 
       if ((transactionSetStack = TRANSACTION_SET_STACK_LOCAL.get()) != null) {
@@ -23,13 +28,33 @@ public class TransactionalState {
                if (dataSource == null) {
                   if (proxyTransaction.getSession().getDataSource() == null) {
 
-                     return true;
+                     return proxyTransaction;
                   }
                }
                else if (dataSource.equals(proxyTransaction.getSession().getDataSource())) {
 
-                  return true;
+                  return proxyTransaction;
                }
+            }
+         }
+      }
+
+      return null;
+   }
+
+   public static boolean withinBoundary (ProxySession proxySession) {
+
+      return withinBoundary(proxySession.getDataSource());
+   }
+
+   public static boolean withinBoundary (String dataSource) {
+
+      LinkedList<RollbackAwareBoundarySet<ProxyTransaction>> transactionSetStack;
+
+      if ((transactionSetStack = TRANSACTION_SET_STACK_LOCAL.get()) != null) {
+         for (RollbackAwareBoundarySet<ProxyTransaction> transactionSet : transactionSetStack) {
+            if (transactionSet.allows(dataSource)) {
+               return true;
             }
          }
       }
@@ -37,21 +62,23 @@ public class TransactionalState {
       return false;
    }
 
-   public static boolean addTransaction (ProxySession proxySession) {
+   public static RollbackAwareBoundarySet<ProxyTransaction> obtainBoundary (ProxySession proxySession) {
 
       LinkedList<RollbackAwareBoundarySet<ProxyTransaction>> transactionSetStack;
-      RollbackAwareBoundarySet<ProxyTransaction> transactionSet;
 
-      if (((transactionSetStack = TRANSACTION_SET_STACK_LOCAL.get()) != null) && (!transactionSetStack.isEmpty())) {
-         if ((transactionSet = transactionSetStack.getLast()).allows(proxySession)) {
-            NonTransactionalState.removeSession(proxySession);
-            transactionSet.add(proxySession.beginTransaction());
+      if ((transactionSetStack = TRANSACTION_SET_STACK_LOCAL.get()) != null) {
+         for (RollbackAwareBoundarySet<ProxyTransaction> transactionSet : transactionSetStack) {
+            if (transactionSet.allows(proxySession)) {
+               if (NonTransactionalState.containsSession(proxySession)) {
+                  throw new StolenTransactionError("Attempt to steal the session - a non-transactional boundary is already enforced");
+               }
 
-            return true;
+               return transactionSet;
+            }
          }
       }
 
-      return false;
+      return null;
    }
 
    protected static void startBoundary (Transactional transactional) {
@@ -68,39 +95,51 @@ public class TransactionalState {
    protected static void commitBoundary ()
       throws TransactionError {
 
-      LinkedList<RollbackAwareBoundarySet<ProxyTransaction>> transactionSetStack;
-      RollbackAwareBoundarySet<ProxyTransaction> transactionSet;
-      IncompleteTransactionError incompleteTransactionError = null;
+      commitBoundary(null);
+   }
 
-      if (((transactionSetStack = TRANSACTION_SET_STACK_LOCAL.get()) == null) || transactionSetStack.isEmpty()) {
-         throw new TransactionBoundaryError(0, "No transaction boundary has been enforced");
-      }
+   protected static void commitBoundary (Throwable throwable)
+      throws TransactionError {
 
-      try {
-         for (ProxyTransaction proxyTransaction : transactionSet = transactionSetStack.removeLast()) {
-            try {
-               if (transactionSet.isRollbackOnly() || proxyTransaction.isRollbackOnly()) {
-                  proxyTransaction.rollback();
+      if ((throwable == null) || (!(throwable instanceof TransactionError)) || ((TRANSACTION_SET_STACK_LOCAL.get() != null) && (TRANSACTION_SET_STACK_LOCAL.get().size() != ((TransactionError)throwable).getClosure()))) {
+
+         LinkedList<RollbackAwareBoundarySet<ProxyTransaction>> transactionSetStack;
+         RollbackAwareBoundarySet<ProxyTransaction> transactionSet;
+         IncompleteTransactionError incompleteTransactionError = null;
+
+         if (((transactionSetStack = TRANSACTION_SET_STACK_LOCAL.get()) == null) || transactionSetStack.isEmpty()) {
+            throw new TransactionBoundaryError(0, "No transaction boundary has been enforced");
+         }
+
+         try {
+            for (ProxyTransaction proxyTransaction : transactionSet = transactionSetStack.removeLast()) {
+               try {
+                  if (transactionSet.isRollbackOnly() || proxyTransaction.isRollbackOnly()) {
+                     proxyTransaction.rollback();
+                  }
+                  else {
+                     proxyTransaction.commit();
+                  }
                }
-               else {
-                  proxyTransaction.commit();
+               catch (Throwable unexpectedThrowable) {
+                  if (incompleteTransactionError == null) {
+                     incompleteTransactionError = new IncompleteTransactionError(transactionSetStack.size(), unexpectedThrowable);
+                  }
                }
             }
-            catch (Throwable unexpectedThrowable) {
-               if (incompleteTransactionError == null) {
-                  incompleteTransactionError = new IncompleteTransactionError(transactionSetStack.size(), unexpectedThrowable);
-               }
+
+            if (incompleteTransactionError != null) {
+               throw incompleteTransactionError;
             }
          }
-
-         if (incompleteTransactionError != null) {
-            throw incompleteTransactionError;
+         finally {
+            if (transactionSetStack.isEmpty()) {
+               TRANSACTION_SET_STACK_LOCAL.remove();
+            }
          }
       }
-      finally {
-         if (transactionSetStack.isEmpty()) {
-            TRANSACTION_SET_STACK_LOCAL.remove();
-         }
+      else {
+         TRANSACTION_SET_STACK_LOCAL.remove();
       }
    }
 
@@ -137,6 +176,9 @@ public class TransactionalState {
                TRANSACTION_SET_STACK_LOCAL.remove();
             }
          }
+      }
+      else {
+         TRANSACTION_SET_STACK_LOCAL.remove();
       }
    }
 }

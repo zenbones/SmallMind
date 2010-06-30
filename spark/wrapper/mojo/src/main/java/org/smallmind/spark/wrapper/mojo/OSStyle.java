@@ -2,17 +2,17 @@ package org.smallmind.spark.wrapper.mojo;
 
 public enum OSStyle {
 
-  WINDOWS("wrapper.dll"), UNIX("libwrapper.so");
+   WINDOWS("wrapper.dll"), UNIX("libwrapper.so");
 
-  private String library;
+   private String library;
 
-  private OSStyle (String library) {
+   private OSStyle (String library) {
 
-    this.library = library;
-  }
+      this.library = library;
+   }
 
-  public String getLibrary () {
+   public String getLibrary () {
 
-    return library;
-  }
+      return library;
+   }
 }

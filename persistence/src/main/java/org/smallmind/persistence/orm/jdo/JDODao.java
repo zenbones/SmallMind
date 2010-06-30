@@ -11,7 +11,7 @@ import org.smallmind.persistence.Durable;
 import org.smallmind.persistence.VectoredDao;
 import org.smallmind.persistence.orm.WaterfallORMDao;
 
-public abstract class JDODao<I extends Serializable, D extends Durable<I>> extends WaterfallORMDao<I, D> {
+public abstract class JDODao<I extends Serializable & Comparable<I>, D extends Durable<I>> extends WaterfallORMDao<I, D> {
 
    private JDOProxySession proxySession;
 
@@ -22,7 +22,7 @@ public abstract class JDODao<I extends Serializable, D extends Durable<I>> exten
 
    public JDODao (JDOProxySession proxySession, VectoredDao<I, D> vectoredDao) {
 
-      super(vectoredDao);
+      super(vectoredDao, proxySession.willAllowCascade());
 
       this.proxySession = proxySession;
    }

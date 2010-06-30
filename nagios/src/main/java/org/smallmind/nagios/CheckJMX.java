@@ -179,7 +179,8 @@ public class CheckJMX {
       }
    }
 
-   private void execute () throws Exception {
+   private void execute ()
+      throws Exception {
 
       Object attr = connection.getAttribute(new ObjectName(object), attribute);
 

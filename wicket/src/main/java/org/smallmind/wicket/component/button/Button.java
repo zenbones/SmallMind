@@ -1,8 +1,6 @@
 package org.smallmind.wicket.component.button;
 
 import java.util.Properties;
-import org.smallmind.wicket.behavior.CssBehavior;
-import org.smallmind.wicket.skin.SkinManager;
 import org.apache.wicket.AttributeModifier;
 import org.apache.wicket.behavior.HeaderContributor;
 import org.apache.wicket.behavior.IBehavior;
@@ -12,6 +10,8 @@ import org.apache.wicket.markup.html.panel.Panel;
 import org.apache.wicket.model.AbstractReadOnlyModel;
 import org.apache.wicket.model.IModel;
 import org.apache.wicket.protocol.http.WebApplication;
+import org.smallmind.wicket.behavior.CssBehavior;
+import org.smallmind.wicket.skin.SkinManager;
 
 public class Button extends Panel {
 

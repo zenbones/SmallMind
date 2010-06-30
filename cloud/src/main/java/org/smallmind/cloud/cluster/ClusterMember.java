@@ -4,8 +4,7 @@ import org.smallmind.cloud.cluster.broadcast.GossipClusterBroadcast;
 import org.smallmind.cloud.cluster.broadcast.ServiceClusterBroadcast;
 import org.smallmind.cloud.multicast.EventMessageException;
 
-public interface
-   ClusterMember {
+public interface ClusterMember {
 
    public abstract void handleServiceBroadcast (ServiceClusterBroadcast serviceClusterBroadcast);
 

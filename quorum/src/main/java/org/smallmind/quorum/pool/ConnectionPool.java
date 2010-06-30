@@ -14,6 +14,7 @@ public class ConnectionPool<C> {
    private PoolMode poolMode = PoolMode.BLOCKING_POOL;
    private AtomicInteger poolCount = new AtomicInteger(0);
    private AtomicBoolean initializationFlag = new AtomicBoolean(false);
+   private AtomicBoolean shutdownFlag = new AtomicBoolean(false);
    private boolean testOnConnect = false;
    private boolean testOnAcquire = false;
    private long connectionTimeoutMillis = 0;
@@ -44,6 +45,18 @@ public class ConnectionPool<C> {
 
          for (int count = 0; count < initialPoolSize; count++) {
             freeConnectionPinQueue.add(createConnectionPin());
+         }
+      }
+   }
+
+   public void shutdown () {
+
+      if (shutdownFlag.compareAndSet(false, true)) {
+         for (ConnectionPin<C> connectionPin : processingConnectionPinQueue) {
+            destroyConnectionPin(connectionPin);
+         }
+         for (ConnectionPin<C> connectionPin : freeConnectionPinQueue) {
+            destroyConnectionPin(connectionPin);
          }
       }
    }
@@ -115,6 +128,10 @@ public class ConnectionPool<C> {
 
    public Object rawConnection ()
       throws ConnectionCreationException {
+
+      if (shutdownFlag.get()) {
+         throw new IllegalStateException("ConnectionPool has been shut down");
+      }
 
       try {
          return connectionFactory.rawInstance();
@@ -250,6 +267,10 @@ public class ConnectionPool<C> {
    public C getConnection ()
       throws ConnectionPoolException {
 
+      if (shutdownFlag.get()) {
+         throw new IllegalStateException("ConnectionPool has been shut down");
+      }
+
       initialize();
 
       try {
@@ -263,11 +284,19 @@ public class ConnectionPool<C> {
    public void returnInstance (ConnectionInstance connectionInstance)
       throws Exception {
 
+      if (shutdownFlag.get()) {
+         throw new IllegalStateException("ConnectionPool has been shut down");
+      }
+
       releaseInstance(connectionInstance, false);
    }
 
    public void terminateInstance (ConnectionInstance connectionInstance)
       throws Exception {
+
+      if (shutdownFlag.get()) {
+         throw new IllegalStateException("ConnectionPool has been shut down");
+      }
 
       releaseInstance(connectionInstance, true);
    }
@@ -319,7 +348,11 @@ public class ConnectionPool<C> {
       }
    }
 
-   public int poolSize () {
+   public int getPoolSize () {
+
+      if (shutdownFlag.get()) {
+         throw new IllegalStateException("ConnectionPool has been shut down");
+      }
 
       if (!initializationFlag.get()) {
          throw new IllegalStateException("ConnectionPool has not yet been initialized");
@@ -328,7 +361,11 @@ public class ConnectionPool<C> {
       return poolCount.get();
    }
 
-   public int freeSize () {
+   public int getFreeSize () {
+
+      if (shutdownFlag.get()) {
+         throw new IllegalStateException("ConnectionPool has been shut down");
+      }
 
       if (!initializationFlag.get()) {
          throw new IllegalStateException("ConnectionPool has not yet been initialized");
@@ -337,7 +374,11 @@ public class ConnectionPool<C> {
       return freeConnectionPinQueue.size();
    }
 
-   public int processingSize () {
+   public int getProcessingSize () {
+
+      if (shutdownFlag.get()) {
+         throw new IllegalStateException("ConnectionPool has been shut down");
+      }
 
       if (!initializationFlag.get()) {
          throw new IllegalStateException("ConnectionPool has not yet been initialized");

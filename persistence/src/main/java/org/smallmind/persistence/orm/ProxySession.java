@@ -4,21 +4,16 @@ public abstract class ProxySession {
 
    private String dataSource;
    private boolean enforceBoundary;
+   private boolean allowCascade;
 
-   public ProxySession () {
-
-      this(null, false);
-   }
-
-   public ProxySession (String dataSource) {
-
-      this(dataSource, false);
-   }
-
-   public ProxySession (String dataSource, boolean enforceBoundary) {
+   public ProxySession (String dataSource, boolean enforceBoundary, boolean allowCascade) {
 
       this.dataSource = dataSource;
       this.enforceBoundary = enforceBoundary;
+      this.allowCascade = allowCascade;
+   }
+
+   public void register () {
 
       SessionManager.registerSession(dataSource, this);
    }
@@ -32,6 +27,13 @@ public abstract class ProxySession {
 
       return enforceBoundary;
    }
+
+   public boolean willAllowCascade () {
+
+      return allowCascade;
+   }
+
+   public abstract void setIgnoreBoundaryEnforcement (boolean ignoreBoundaryEnforcement);
 
    public abstract ProxyTransaction beginTransaction ();
 

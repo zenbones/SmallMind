@@ -34,7 +34,8 @@ public class JavaContextConnectionInstanceFactory implements ConnectionInstanceF
       this.password = password;
    }
 
-   public Object rawInstance () throws Exception {
+   public Object rawInstance ()
+      throws Exception {
 
       JavaContext rawContext;
       InitialContext initContext;
@@ -54,7 +55,8 @@ public class JavaContextConnectionInstanceFactory implements ConnectionInstanceF
       return rawContext;
    }
 
-   public ConnectionInstance createInstance (ConnectionPool connectionPool) throws Exception {
+   public ConnectionInstance createInstance (ConnectionPool connectionPool)
+      throws Exception {
 
       PooledJavaContext pooledJavaContext;
       InitialContext initContext;

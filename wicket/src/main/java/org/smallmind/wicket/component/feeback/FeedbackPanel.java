@@ -2,9 +2,6 @@ package org.smallmind.wicket.component.feeback;
 
 import java.util.List;
 import java.util.Properties;
-import org.smallmind.wicket.behavior.CssBehavior;
-import org.smallmind.wicket.model.VisibilityModel;
-import org.smallmind.wicket.skin.SkinManager;
 import org.apache.wicket.Session;
 import org.apache.wicket.behavior.AttributeAppender;
 import org.apache.wicket.feedback.FeedbackMessage;
@@ -15,6 +12,9 @@ import org.apache.wicket.markup.html.panel.Panel;
 import org.apache.wicket.model.AbstractReadOnlyModel;
 import org.apache.wicket.model.IModel;
 import org.apache.wicket.protocol.http.WebApplication;
+import org.smallmind.wicket.behavior.CssBehavior;
+import org.smallmind.wicket.model.VisibilityModel;
+import org.smallmind.wicket.skin.SkinManager;
 
 public class FeedbackPanel extends Panel {
 

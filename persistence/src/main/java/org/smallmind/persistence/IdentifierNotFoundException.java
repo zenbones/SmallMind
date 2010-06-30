@@ -1,8 +1,8 @@
 package org.smallmind.persistence;
 
-import org.smallmind.nutsnbolts.lang.FormattedException;
+import org.smallmind.nutsnbolts.lang.FormattedRuntimeException;
 
-public class IdentifierNotFoundException extends FormattedException {
+public class IdentifierNotFoundException extends FormattedRuntimeException {
 
    public IdentifierNotFoundException () {
 

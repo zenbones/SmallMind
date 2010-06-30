@@ -1,6 +1,6 @@
 package org.smallmind.persistence;
 
-import org.smallmind.util.lang.FormattedException;
+import org.smallmind.nutsnbolts.lang.FormattedException;
 
 public class PersistenceException extends FormattedException {
 

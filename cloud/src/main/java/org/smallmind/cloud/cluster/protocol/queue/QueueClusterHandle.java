@@ -14,7 +14,8 @@ public class QueueClusterHandle implements ClusterHandle, InvocationHandler {
       this.messagingInvocationHandler = messagingInvocationHandlerr;
    }
 
-   public Object invoke (Object proxy, Method method, Object[] args) throws Throwable {
+   public Object invoke (Object proxy, Method method, Object[] args)
+      throws Throwable {
 
       return messagingInvocationHandler.invoke(proxy, method, args);
    }

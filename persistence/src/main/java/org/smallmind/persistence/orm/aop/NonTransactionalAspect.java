@@ -21,29 +21,25 @@ public class NonTransactionalAspect {
    }
 
    @AfterReturning (value = "@within(NonTransactional) && (execution(* * (..)) || initialization(new(..))) && !@annotation(NonTransactional)")
-   public void afterReturnFromNonTransactionalClass ()
-      throws SessionError {
+   public void afterReturnFromNonTransactionalClass () {
 
       NonTransactionalState.endBoundary(null);
    }
 
    @AfterReturning (value = "(execution(@NonTransactional * * (..)) || initialization(@NonTransactional new(..))) && @annotation(NonTransactional)")
-   public void afterReturnFromNonTransactionalMethod ()
-      throws SessionError {
+   public void afterReturnFromNonTransactionalMethod () {
 
       NonTransactionalState.endBoundary(null);
    }
 
    @AfterThrowing (value = "@within(NonTransactional) && (execution(* * (..)) || initialization(new(..))) && !@annotation(NonTransactional)", throwing = "throwable")
-   public void afterThrowFromNonTransactionalClass (Throwable throwable)
-      throws SessionError {
+   public void afterThrowFromNonTransactionalClass (Throwable throwable) {
 
       NonTransactionalState.endBoundary(throwable);
    }
 
    @AfterThrowing (value = "(execution(@NonTransactional * * (..)) || initialization(@NonTransactional new(..))) && @annotation(NonTransactional)", throwing = "throwable")
-   public void afterThrowFromNonTransactionalMethod (Throwable throwable)
-      throws SessionError {
+   public void afterThrowFromNonTransactionalMethod (Throwable throwable) {
 
       NonTransactionalState.endBoundary(throwable);
    }

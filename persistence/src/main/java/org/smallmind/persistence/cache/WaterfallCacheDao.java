@@ -1,15 +1,13 @@
 package org.smallmind.persistence.cache;
 
 import org.smallmind.persistence.Durable;
-import org.smallmind.persistence.DurableVector;
 import org.smallmind.persistence.VectoredDao;
 import org.smallmind.persistence.WaterfallDao;
-import org.smallmind.quorum.cache.LockingCache;
+import org.smallmind.quorum.cache.Cache;
 
-public abstract class WaterfallCacheDao<I, D extends Durable<I>> implements CacheDao<I, D>, WaterfallDao<I, D> {
+public abstract class WaterfallCacheDao<I extends Comparable<I>, D extends Durable<I>> implements CacheDao<I, D>, WaterfallDao<I, D> {
 
    private CacheDomain<I, D> cacheDomain;
-
    private VectoredDao<I, D> nextDao;
 
    public WaterfallCacheDao (CacheDomain<I, D> cacheDomain) {
@@ -23,17 +21,24 @@ public abstract class WaterfallCacheDao<I, D extends Durable<I>> implements Cach
       this.cacheDomain = cacheDomain;
    }
 
+   public abstract D acquire (Class<D> durableClass, I id);
+
+   public String getStatisticsSource () {
+
+      return cacheDomain.getStatisticsSource();
+   }
+
    public VectoredDao<I, D> getNextDao () {
 
       return nextDao;
    }
 
-   public LockingCache<I, D> getInstanceCache (Class<D> durableClass) {
+   public Cache<String, D> getInstanceCache (Class<D> durableClass) {
 
       return cacheDomain.getInstanceCache(durableClass);
    }
 
-   public LockingCache<String, DurableVector<I, D>> getVectorCache (Class<D> durableClass) {
+   public Cache<String, DurableVector<I, D>> getVectorCache (Class<D> durableClass) {
 
       return cacheDomain.getVectorCache(durableClass);
    }

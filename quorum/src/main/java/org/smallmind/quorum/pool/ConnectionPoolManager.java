@@ -15,7 +15,7 @@ public class ConnectionPoolManager {
       }
    }
 
-   public static Object rawConnection (String poolName)
+   public static Object getRawConnection (String poolName)
       throws ConnectionPoolException {
 
       return getConnectionPool(poolName).rawConnection();
@@ -27,16 +27,16 @@ public class ConnectionPoolManager {
       return getConnectionPool(poolName).getConnection();
    }
 
-   public static int poolSize (String poolName)
+   public static int getPoolSize (String poolName)
       throws ConnectionPoolException {
 
-      return getConnectionPool(poolName).poolSize();
+      return getConnectionPool(poolName).getPoolSize();
    }
 
-   public static int freeSize (String poolName)
+   public static int getFreeSize (String poolName)
       throws ConnectionPoolException {
 
-      return getConnectionPool(poolName).freeSize();
+      return getConnectionPool(poolName).getFreeSize();
    }
 
    private static ConnectionPool getConnectionPool (String poolName)

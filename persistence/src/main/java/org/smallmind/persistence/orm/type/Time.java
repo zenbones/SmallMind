@@ -6,11 +6,16 @@ import java.util.Date;
 import java.util.TimeZone;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
+import org.terracotta.modules.annotations.InstrumentedClass;
 
+@InstrumentedClass
 public class Time implements Serializable {
 
    private String timeZoneId;
    private Date epochDate;
+
+   public Time () {
+   }
 
    public static Time fromCalendar (Calendar calendar) {
 
@@ -20,9 +25,6 @@ public class Time implements Serializable {
    public static Time fromDateTime (DateTime dateTime) {
 
       return new Time(dateTime.getZone().getID(), dateTime.toDate());
-   }
-
-   private Time () {
    }
 
    public Time (String timeZoneId, Date epochDate) {

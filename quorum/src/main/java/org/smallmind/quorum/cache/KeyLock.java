@@ -1,35 +1,35 @@
 package org.smallmind.quorum.cache;
 
-import java.util.UUID;
+import org.smallmind.nutsnbolts.util.UniqueId;
 import org.terracotta.modules.annotations.InstrumentedClass;
 
 @InstrumentedClass
 public class KeyLock {
 
-  private String uuidAsString;
+   private UniqueId uniqueId;
 
-  public KeyLock () {
+   public KeyLock () {
 
-    uuidAsString = UUID.randomUUID().toString();
-  }
+      uniqueId = UniqueId.newInstance();
+   }
 
-  public String getName () {
+   public String getName () {
 
-    return "Lock-" + uuidAsString;
-  }
+      return "Lock-" + uniqueId.generateBigInteger();
+   }
 
-  public String getUUIDAsString () {
+   public UniqueId getUniqueId () {
 
-    return uuidAsString;
-  }
+      return uniqueId;
+   }
 
-  public int hashCode () {
+   public int hashCode () {
 
-    return uuidAsString.hashCode();
-  }
+      return uniqueId.hashCode();
+   }
 
-  public boolean equals (Object obj) {
+   public boolean equals (Object obj) {
 
-    return (obj instanceof KeyLock) && uuidAsString.equals(((KeyLock)obj).getUUIDAsString());
-  }
+      return (obj instanceof KeyLock) && uniqueId.equals(((KeyLock)obj).getUniqueId());
+   }
 }

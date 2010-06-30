@@ -26,6 +26,7 @@ public class DriverManagerPooledConnection implements PooledConnection, Invocati
    private LinkedList<ConnectionEventListener> connectionEventListenerList;
    private LinkedList<StatementEventListener> statementEventListenerList;
    private AtomicBoolean closed = new AtomicBoolean(false);
+   private long creationMilliseconds;
 
    public DriverManagerPooledConnection (DriverManagerDataSource dataSource, int maxStatements)
       throws SQLException {
@@ -41,6 +42,8 @@ public class DriverManagerPooledConnection implements PooledConnection, Invocati
       if (maxStatements < 0) {
          throw new SQLException("The maximum number of cached statements for this connection must be >= 0");
       }
+
+      creationMilliseconds = System.currentTimeMillis();
 
       if ((user != null) && (password != null)) {
          actualConnection = dataSource.getConnection(user, password);
@@ -108,7 +111,7 @@ public class DriverManagerPooledConnection implements PooledConnection, Invocati
                }
             }
 
-            throw closestCause;
+            throw new PooledConnectionException(closestCause, "Connection encountered an exception after operation for %d milliseconds", System.currentTimeMillis() - creationMilliseconds);
          }
       }
    }

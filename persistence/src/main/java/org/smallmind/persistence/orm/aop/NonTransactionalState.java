@@ -2,6 +2,7 @@ package org.smallmind.persistence.orm.aop;
 
 import java.util.LinkedList;
 import org.smallmind.persistence.orm.ProxySession;
+import org.smallmind.persistence.orm.ProxyTransaction;
 
 public class NonTransactionalState {
 
@@ -14,10 +15,17 @@ public class NonTransactionalState {
 
    public static boolean isInSession (String dataSource) {
 
-      LinkedList<BoundarySet<ProxySession>> sessionSetStack;
+      return currentSession(dataSource) != null;
+   }
 
-      if (TransactionalState.isInTransaction(dataSource)) {
-         return true;
+   public static ProxySession currentSession (String dataSource) {
+
+      LinkedList<BoundarySet<ProxySession>> sessionSetStack;
+      ProxyTransaction currentTransaction;
+
+      if ((currentTransaction = TransactionalState.currentTransaction(dataSource)) != null) {
+
+         return currentTransaction.getSession();
       }
 
       if ((sessionSetStack = SESSION_SET_STACK_LOCAL.get()) != null) {
@@ -26,13 +34,28 @@ public class NonTransactionalState {
                if (dataSource == null) {
                   if (proxySession.getDataSource() == null) {
 
-                     return true;
+                     return proxySession;
                   }
                }
                else if (dataSource.equals(proxySession.getDataSource())) {
 
-                  return true;
+                  return proxySession;
                }
+            }
+         }
+      }
+
+      return null;
+   }
+
+   protected static boolean containsSession (ProxySession proxySession) {
+
+      LinkedList<BoundarySet<ProxySession>> sessionSetStack;
+
+      if ((sessionSetStack = SESSION_SET_STACK_LOCAL.get()) != null) {
+         for (BoundarySet<ProxySession> sessionSet : sessionSetStack) {
+            if (sessionSet.contains(proxySession)) {
+               return true;
             }
          }
       }
@@ -40,31 +63,20 @@ public class NonTransactionalState {
       return false;
    }
 
-   public static boolean addSession (ProxySession proxySession) {
-
-      LinkedList<BoundarySet<ProxySession>> sessionSetStack;
-      BoundarySet<ProxySession> sessionSet;
-
-      if (((sessionSetStack = SESSION_SET_STACK_LOCAL.get()) != null) && (!sessionSetStack.isEmpty())) {
-         if ((sessionSet = sessionSetStack.getLast()).allows(proxySession)) {
-            sessionSet.add(proxySession);
-
-            return true;
-         }
-      }
-
-      return false;
-   }
-
-   protected static void removeSession (ProxySession proxySession) {
+   public static BoundarySet<ProxySession> obtainBoundary (ProxySession proxySession) {
 
       LinkedList<BoundarySet<ProxySession>> sessionSetStack;
 
       if ((sessionSetStack = SESSION_SET_STACK_LOCAL.get()) != null) {
          for (BoundarySet<ProxySession> sessionSet : sessionSetStack) {
-            sessionSet.remove(proxySession);
+            if (sessionSet.allows(proxySession)) {
+
+               return sessionSet;
+            }
          }
       }
+
+      return null;
    }
 
    protected static void startBoundary (NonTransactional nonTransactional) {
@@ -111,6 +123,9 @@ public class NonTransactionalState {
                SESSION_SET_STACK_LOCAL.remove();
             }
          }
+      }
+      else {
+         SESSION_SET_STACK_LOCAL.remove();
       }
    }
 }

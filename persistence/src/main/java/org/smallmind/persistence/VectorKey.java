@@ -3,66 +3,21 @@ package org.smallmind.persistence;
 import org.terracotta.modules.annotations.InstrumentedClass;
 
 @InstrumentedClass
-public class VectorKey<I, D extends Durable<I>> {
+public class VectorKey<D extends Durable> {
 
    private Class<D> elementClass;
    private String key;
-   private String abstractKey;
 
-   public VectorKey (Durable<I> owner, Class<D> elementClass) {
+   public VectorKey (VectorIndex[] vectorIndices, Class<D> elementClass) {
 
-      this(owner.getClass(), owner.getId(), elementClass, null);
+      this(vectorIndices, elementClass, null);
    }
 
-   public VectorKey (Class<? extends Durable<I>> ownerClass, I ownerId, Class<D> elementClass) {
-
-      this(ownerClass, ownerId, elementClass, null);
-   }
-
-   public VectorKey (Durable<I> owner, Class<D> elementClass, String classifier) {
-
-      this(owner.getClass(), owner.getId(), elementClass, classifier);
-   }
-
-   public VectorKey (Class<? extends Durable> ownerClass, I ownerId, Class<D> elementClass, String classifier) {
+   public VectorKey (VectorIndex[] vectorIndices, Class<D> elementClass, String classification) {
 
       this.elementClass = elementClass;
 
-      key = buildKey(ownerClass, ownerId, elementClass, classifier);
-      abstractKey = buildAbstractKey(ownerClass, elementClass, classifier);
-   }
-
-   private String buildKey (Class<? extends Durable> ownerClass, I ownerId, Class<D> elementClass, String classifier) {
-      StringBuilder keyBuilder;
-
-      keyBuilder = new StringBuilder(elementClass.getSimpleName());
-      keyBuilder.append('[');
-      keyBuilder.append(ownerClass.getSimpleName());
-      keyBuilder.append('=');
-      keyBuilder.append(ownerId);
-      keyBuilder.append(']');
-
-      if (classifier != null) {
-         keyBuilder.append(classifier);
-      }
-
-      return keyBuilder.toString();
-   }
-
-   public static String buildAbstractKey (Class<? extends Durable> ownerClass, Class<? extends Durable> elementClass, String classifier) {
-
-      StringBuilder abstractKeyBuilder;
-
-      abstractKeyBuilder = new StringBuilder(elementClass.getSimpleName());
-      abstractKeyBuilder.append('[');
-      abstractKeyBuilder.append(ownerClass.getSimpleName());
-      abstractKeyBuilder.append(']');
-
-      if (classifier != null) {
-         abstractKeyBuilder.append(classifier);
-      }
-
-      return abstractKeyBuilder.toString();
+      key = buildKey(vectorIndices, classification);
    }
 
    public String getKey () {
@@ -70,13 +25,51 @@ public class VectorKey<I, D extends Durable<I>> {
       return key;
    }
 
-   public String getAbstractKey () {
-
-      return abstractKey;
-   }
-
    public Class<D> getElementClass () {
 
       return elementClass;
+   }
+
+   private String buildKey (VectorIndex[] vectorIndices, String classification) {
+
+      StringBuilder keyBuilder;
+      boolean indexed = false;
+
+      keyBuilder = new StringBuilder(elementClass.getSimpleName());
+
+      keyBuilder.append('[');
+      for (VectorIndex index : vectorIndices) {
+         if (indexed) {
+            keyBuilder.append(',');
+         }
+
+         keyBuilder.append(index.getIndexClass().getSimpleName());
+         keyBuilder.append('=');
+         keyBuilder.append(index.getIndexId());
+
+         indexed = true;
+      }
+      keyBuilder.append(']');
+
+      if (classification != null) {
+         keyBuilder.append(classification);
+      }
+
+      return keyBuilder.toString();
+   }
+
+   public String toString () {
+
+      return key;
+   }
+
+   public int hashCode () {
+
+      return key.hashCode();
+   }
+
+   public boolean equals (Object obj) {
+
+      return (obj instanceof VectorKey) && key.equals(((VectorKey)obj).getKey());
    }
 }

@@ -78,6 +78,11 @@ public class ProxyTransactionManager implements PlatformTransactionManager {
          return proxyTransaction.isCompleted();
       }
 
+      public void flush () {
+
+         proxyTransaction.flush();
+      }
+
       public Object createSavepoint ()
          throws TransactionException {
 

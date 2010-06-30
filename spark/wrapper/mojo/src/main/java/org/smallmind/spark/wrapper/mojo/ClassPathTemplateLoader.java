@@ -15,7 +15,8 @@ public class ClassPathTemplateLoader implements TemplateLoader {
       this.anchorClass = anchorClass;
    }
 
-   public Object findTemplateSource (String name) throws IOException {
+   public Object findTemplateSource (String name)
+      throws IOException {
 
       return anchorClass.getClassLoader().getResourceAsStream(name);
    }
@@ -25,12 +26,14 @@ public class ClassPathTemplateLoader implements TemplateLoader {
       return -1;
    }
 
-   public Reader getReader (Object templateSource, String encoding) throws IOException {
+   public Reader getReader (Object templateSource, String encoding)
+      throws IOException {
 
       return new InputStreamReader((InputStream)templateSource, encoding);
    }
 
-   public void closeTemplateSource (Object templateSource) throws IOException {
+   public void closeTemplateSource (Object templateSource)
+      throws IOException {
 
       ((InputStream)templateSource).close();
    }

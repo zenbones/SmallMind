@@ -1,12 +1,13 @@
 package org.smallmind.persistence.cache;
 
 import org.smallmind.persistence.Durable;
-import org.smallmind.persistence.DurableVector;
-import org.smallmind.quorum.cache.LockingCache;
+import org.smallmind.quorum.cache.Cache;
 
-public interface CacheDomain<I, D extends Durable<I>> {
+public interface CacheDomain<I extends Comparable<I>, D extends Durable<I>> {
 
-   public abstract LockingCache<I, D> getInstanceCache (Class<D> managedClass);
+   public abstract String getStatisticsSource ();
 
-   public abstract LockingCache<String, DurableVector<I, D>> getVectorCache (Class<D> managedClass);
+   public abstract Cache<String, D> getInstanceCache (Class<D> managedClass);
+
+   public abstract Cache<String, DurableVector<I, D>> getVectorCache (Class<D> managedClass);
 }

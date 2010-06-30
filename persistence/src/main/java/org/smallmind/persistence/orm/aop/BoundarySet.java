@@ -23,15 +23,20 @@ public class BoundarySet<T> extends HashSet<T> {
 
    public boolean allows (ProxySession proxySession) {
 
+      return allows(proxySession.getDataSource());
+   }
+
+   public boolean allows (String dataSource) {
+
       if (dataSources.length == 0) {
-         return isImplicit() || (proxySession.getDataSource() == null);
+         return isImplicit() || (dataSource == null);
       }
       else if (isImplicit()) {
          throw new IllegalArgumentException("Boundary annotation (@NonTransaction or @Transactional) is marked as implicit, but explicitly lists data sources");
       }
-      else if (proxySession.getDataSource() != null) {
-         for (String dataSource : dataSources) {
-            if (dataSource.equals(proxySession.getDataSource())) {
+      else if (dataSource != null) {
+         for (String boundarySource : dataSources) {
+            if (dataSource.equals(boundarySource)) {
                return true;
             }
          }

@@ -18,7 +18,7 @@ public class PooledConnectionInstance implements ConnectionInstance, ConnectionE
    public PooledConnectionInstance (ConnectionPool connectionPool, PooledConnection pooledConnection)
       throws SQLException {
 
-      this(connectionPool, pooledConnection, "Select 1");
+      this(connectionPool, pooledConnection, null);
    }
 
    public PooledConnectionInstance (ConnectionPool connectionPool, PooledConnection pooledConnection, String validationQuery)
@@ -27,7 +27,7 @@ public class PooledConnectionInstance implements ConnectionInstance, ConnectionE
       this.connectionPool = connectionPool;
       this.pooledConnection = pooledConnection;
 
-      if (validationQuery != null) {
+      if ((validationQuery != null) && (validationQuery.length() > 0)) {
          validationStatement = pooledConnection.getConnection().prepareStatement(validationQuery);
       }
 

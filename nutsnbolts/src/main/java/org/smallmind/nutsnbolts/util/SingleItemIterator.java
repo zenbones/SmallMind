@@ -5,39 +5,39 @@ import java.util.NoSuchElementException;
 
 public class SingleItemIterator<T> implements Iterator<T>, Iterable<T> {
 
-  private T item;
-  private boolean taken;
+   private T item;
+   private boolean taken;
 
-  public SingleItemIterator (T item) {
+   public SingleItemIterator (T item) {
 
-    this.item = item;
+      this.item = item;
 
-    taken = item != null;
-  }
+      taken = item != null;
+   }
 
-  public synchronized boolean hasNext () {
+   public synchronized boolean hasNext () {
 
-    return !taken;
-  }
+      return !taken;
+   }
 
-  public synchronized T next () {
+   public synchronized T next () {
 
-    if (taken) {
-      throw new NoSuchElementException();
-    }
+      if (taken) {
+         throw new NoSuchElementException();
+      }
 
-    taken = true;
+      taken = true;
 
-    return item;
-  }
+      return item;
+   }
 
-  public void remove () {
+   public void remove () {
 
-    throw new UnsupportedOperationException();
-  }
+      throw new UnsupportedOperationException();
+   }
 
-  public Iterator<T> iterator () {
+   public Iterator<T> iterator () {
 
-    return this;
-  }
+      return this;
+   }
 }

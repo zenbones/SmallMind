@@ -23,5 +23,4 @@ public class TypeFormatException extends FormattedException {
 
       super(throwable);
    }
-
 }

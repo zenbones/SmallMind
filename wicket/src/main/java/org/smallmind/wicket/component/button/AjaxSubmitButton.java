@@ -1,10 +1,10 @@
 package org.smallmind.wicket.component.button;
 
-import org.smallmind.wicket.skin.SkinManager;
 import org.apache.wicket.ajax.AjaxRequestTarget;
 import org.apache.wicket.ajax.form.AjaxFormSubmitBehavior;
 import org.apache.wicket.markup.html.form.Form;
 import org.apache.wicket.model.IModel;
+import org.smallmind.wicket.skin.SkinManager;
 
 public abstract class AjaxSubmitButton extends Button {
 

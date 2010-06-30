@@ -1,13 +1,12 @@
 package org.smallmind.persistence.cache;
 
 import org.smallmind.persistence.Durable;
-import org.smallmind.persistence.DurableVector;
 import org.smallmind.persistence.VectoredDao;
-import org.smallmind.quorum.cache.LockingCache;
+import org.smallmind.quorum.cache.Cache;
 
-public interface CacheDao<I, D extends Durable<I>> extends VectoredDao<I, D> {
+public interface CacheDao<I extends Comparable<I>, D extends Durable<I>> extends VectoredDao<I, D> {
 
-   public LockingCache<I, D> getInstanceCache (Class<D> durableClass);
+   public Cache<String, D> getInstanceCache (Class<D> durableClass);
 
-   public LockingCache<String, DurableVector<I, D>> getVectorCache (Class<D> durableClass);
+   public Cache<String, DurableVector<I, D>> getVectorCache (Class<D> durableClass);
 }
