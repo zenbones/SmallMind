@@ -1,39 +1,35 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <beans xmlns="http://www.springframework.org/schema/beans" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-2.0.xsd">
 
-   <!-- Property Configuration-->
-   <bean class="org.smallmind.nutsnbolts.spring.maven.ProfilePlaceholderConfigurer">
-      <property name="profile" value="dev"/>
-   </bean>
-
    <!-- Connection Pooling -->
-   <bean id="connectionInstanceFactory" class="org.smallmind.persistence.pool.DriverManagerConnectionInstanceFactory">
-      <constructor-arg index="0" value="${jdbc.driver.classname}"/>
-      <constructor-arg index="1" value="${jdbc.url}"/>
-      <constructor-arg index="2" value="${db.username}"/>
-      <constructor-arg index="3" value="${db.password}"/>
+   <bean id="schemaConnectionInstanceFactory" class="org.smallmind.persistence.orm.sql.pool.DriverManagerConnectionInstanceFactory">
+      <constructor-arg index="0" value="${jdbc.driver}"/>
+      <constructor-arg index="1" value="${jdbc.url.schema}"/>
+      <constructor-arg index="2" value="${jdbc.username}"/>
+      <constructor-arg index="3" value="${jdbc.password}"/>
+      <property name="validationQuery" value="${jdbc.pool.connect.query}"/>
    </bean>
 
-   <bean id="dbPool" class="org.smallmind.quorum.pool.ConnectionPool">
+   <bean id="schemaDBPool" class="org.smallmind.quorum.pool.ConnectionPool">
       <constructor-arg index="0" value="dbPool"/>
-      <constructor-arg index="1" ref="connectionInstanceFactory"/>
+      <constructor-arg index="1" ref="schemaConnectionInstanceFactory"/>
       <property name="poolMode" value="BLOCKING_POOL"/>
       <property name="acquireRetryDelayMillis" value="300"/>
       <property name="acquireRetryAttempts" value="3"/>
-      <property name="minPoolSize" value="${db.pool.size.min}"/>
-      <property name="maxPoolSize" value="${db.pool.size.max}"/>
+      <property name="testOnAcquire" value="${jdbc.pool.connect.test}"/>
+      <property name="minPoolSize" value="${jdbc.pool.size.min}"/>
+      <property name="maxPoolSize" value="${jdbc.pool.size.max}"/>
       <property name="leaseTimeSeconds" value="1800"/>
       <property name="connectionTimeoutMillis" value="500"/>
-      <property name="testOnAcquire" value="true"/>
    </bean>
 
-   <bean id="pooledDataSource" class="org.smallmind.persistence.pool.PooledDataSource">
-      <constructor-arg index="0" ref="dbPool"/>
+   <bean id="schemaPooledDataSource" class="org.smallmind.persistence.orm.sql.pool.PooledDataSource">
+      <constructor-arg index="0" ref="schemaDBPool"/>
    </bean>
 
    <!-- JDO Persistence Manager -->
    <bean id="persistenceManagerFactory" class="org.smallmind.persistence.orm.spring.jdo.LocalPersistenceManagerFactroyBean">
-      <property name="dataSource" ref="pooledDataSource"/>
+      <property name="dataSource" ref="schemaPooledDataSource"/>
       <property name="properties">
          <props>
             <prop key="javax.jdo.PersistenceManagerFactoryClass">org.datanucleus.jdo.JDOPersistenceManagerFactory</prop>
@@ -42,10 +38,14 @@
       </property>
    </bean>
 
-   <bean id="proxySession" class="org.smallmind.persistence.orm.dao.jdo.JDOProxySession">
-      <constructor-arg index="0" ref="persistenceManagerFactory"/>
+   <bean id="proxySession" class="org.smallmind.persistence.orm.jdo.JDOProxySession">
+      <constructor-arg index="0" value="schema"/>
+      <constructor-arg index="1" ref="persistenceManagerFactory"/>
+      <constructor-arg index="2" value="true"/>
+      <constructor-arg index="3" value="${orm.cascade}"/>
    </bean>
 
-   <bean id="transactionManagerApsect" class="org.smallmind.persistence.orm.aop.TransactionalManagementAspect" factory-method="aspectOf"/>
+   <!-- AspectJ Transaction Management -->
+   <bean id="transactionManagerAspect" class="org.smallmind.persistence.orm.aop.TransactionalAspect" factory-method="aspectOf"/>
 
 </beans>

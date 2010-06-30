@@ -7,28 +7,26 @@
    <import resource="classpath:org/smallmind/persistence/hibernate.xml"/>
 
    <!-- Liquibase updates -->
-
-   <bean class="org.smallmind.persistence.liquibase.">
-      <property name="dataSource" ref="bizzyPooledDataSource"/>
-      <property name="changeLog" value="classpath:database/bizzy/master.xml"/>
+   <bean class="org.smallmind.persistence.liquibase.SpringLiquibase">
+      <property name="dataSource" ref="schemaPooledDataSource"/>
+      <property name="changeLog" value="classpath:database/schema/master.xml"/>
       <property name="preview" value="false"/>
       <property name="structural" value="true"/>
       <property name="execute" value="${liquibase.execute}"/>
    </bean>
 
    <!-- Connection Pooling -->
-
-   <bean id="bizzyConnectionInstanceFactory" class="org.smallmind.persistence.orm.sql.pool.DriverManagerConnectionInstanceFactory">
+   <bean id="schemaConnectionInstanceFactory" class="org.smallmind.persistence.orm.sql.pool.DriverManagerConnectionInstanceFactory">
       <constructor-arg index="0" value="${jdbc.driver}"/>
-      <constructor-arg index="1" value="${jdbc.url.bizzy}"/>
+      <constructor-arg index="1" value="${jdbc.url.schema}"/>
       <constructor-arg index="2" value="${jdbc.username}"/>
       <constructor-arg index="3" value="${jdbc.password}"/>
       <property name="validationQuery" value="${jdbc.pool.connect.query}"/>
    </bean>
 
-   <bean id="bizzyDBPool" class="org.smallmind.quorum.pool.ConnectionPool">
+   <bean id="schemaDBPool" class="org.smallmind.quorum.pool.ConnectionPool">
       <constructor-arg index="0" value="dbPool"/>
-      <constructor-arg index="1" ref="bizzyConnectionInstanceFactory"/>
+      <constructor-arg index="1" ref="schemaConnectionInstanceFactory"/>
       <property name="poolMode" value="BLOCKING_POOL"/>
       <property name="acquireRetryDelayMillis" value="300"/>
       <property name="acquireRetryAttempts" value="3"/>
@@ -39,17 +37,17 @@
       <property name="connectionTimeoutMillis" value="500"/>
    </bean>
 
-   <bean id="bizzyPooledDataSource" class="org.smallmind.persistence.orm.sql.pool.PooledDataSource">
-      <constructor-arg index="0" ref="bizzyDBPool"/>
+   <bean id="schemaPooledDataSource" class="org.smallmind.persistence.orm.sql.pool.PooledDataSource">
+      <constructor-arg index="0" ref="schemaDBPool"/>
    </bean>
 
    <!-- Session and Transaction -->
-   <bean id="bizzySessionFactory" class="org.smallmind.persistence.orm.spring.hibernate.AnnotationAwareLocalSessionFactoryBean">
-      <property name="dataSourceKey" value="bizzy"/>
-      <property name="dataSource" ref="bizzyPooledDataSource"/>
+   <bean id="schemaSessionFactory" class="org.smallmind.persistence.orm.spring.hibernate.AnnotationAwareLocalSessionFactoryBean">
+      <property name="dataSourceKey" value="schema"/>
+      <property name="dataSource" ref="schemaPooledDataSource"/>
       <property name="mappingLocations">
          <bean class="org.smallmind.persistence.orm.spring.hibernate.HibernateFileSeekingFactoryBean">
-            <property name="dataSourceKey" value="bizzy"/>
+            <property name="dataSourceKey" value="schema"/>
          </bean>
       </property>
       <property name="hibernateProperties">
@@ -80,9 +78,9 @@
    </bean>
 
    <!--Proxy Session-->
-   <bean id="bizzyProxySession" class="org.smallmind.persistence.orm.hibernate.HibernateProxySession" init-method="register">
-      <constructor-arg index="0" value="bizzy"/>
-      <constructor-arg index="1" ref="bizzySessionFactory"/>
+   <bean id="schemaProxySession" class="org.smallmind.persistence.orm.hibernate.HibernateProxySession" init-method="register">
+      <constructor-arg index="0" value="schema"/>
+      <constructor-arg index="1" ref="schemaSessionFactory"/>
       <constructor-arg index="2" value="true"/>
       <constructor-arg index="3" value="${orm.cascade}"/>
    </bean>
