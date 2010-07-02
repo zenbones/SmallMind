@@ -28,10 +28,6 @@ public class SpringLiquibase implements InitializingBean, ResourceLoaderAware {
 
    private boolean preview = true;
 
-   private boolean structural = true;
-
-   private boolean inMemoryDB = false;
-
    private boolean execute = false;
 
    public void setResourceLoader (ResourceLoader resourceLoader) {
@@ -54,14 +50,6 @@ public class SpringLiquibase implements InitializingBean, ResourceLoaderAware {
       this.preview = preview;
    }
 
-   public void setStructural (boolean structural) {
-      this.structural = structural;
-   }
-
-   public void setInMemoryDB (boolean inMemoryDB) {
-
-      this.inMemoryDB = inMemoryDB;
-   }
 
    public void setExecute (boolean execute) {
       this.execute = execute;
@@ -70,7 +58,7 @@ public class SpringLiquibase implements InitializingBean, ResourceLoaderAware {
    @Transactional
    public void afterPropertiesSet ()
       throws SQLException, LiquibaseException {
-      if (execute && (!(structural && inMemoryDB))) {
+      if (execute) {
          Liquibase liquibase;
          liquibase = new Liquibase(changeLog, new ChangeLogFileOpener(), dataSource.getConnection());
          if (preview) {
