@@ -1,0 +1,98 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:context="http://www.springframework.org/schema/context" xsi:schemaLocation="http://www.springframework.org/schema/beans
+                           http://www.springframework.org/schema/beans/spring-beans-2.5.xsd
+                            http://www.springframework.org/schema/context
+                            http://www.springframework.org/schema/context/spring-context-2.5.xsd">
+
+   <!-- Logging Templates -->
+   <bean id="defaultTemplate" class="org.smallmind.scribe.pen.DefaultTemplate" init-method="register">
+      <property name="appenders">
+         <list>
+            <ref bean="consoleAppender"/>
+         </list>
+      </property>
+      <property name="level" value="DEBUG"/>
+   </bean>
+
+   <!-- Logging Framework Setup -->
+   <bean id="shortTimestamp" class="org.smallmind.scribe.pen.DateFormatTimestamp">
+      <property name="dateFormat">
+         <bean class="java.text.SimpleDateFormat">
+            <constructor-arg index="0" value="yyyy-MM-dd"/>
+         </bean>
+      </property>
+   </bean>
+
+   <bean id="fullTimestamp" class="org.smallmind.scribe.pen.DateFormatTimestamp">
+      <property name="dateFormat">
+         <bean class="java.text.SimpleDateFormat">
+            <constructor-arg index="0" value="yyyy-MM-dd'T'HH:mm:ss.SSSZ"/>
+         </bean>
+      </property>
+   </bean>
+
+   <bean id="xMLFormatter" class="org.smallmind.scribe.pen.XMLFormatter">
+      <property name="timestamp" ref="fullTimestamp"/>
+   </bean>
+
+   <bean id="patternFormatter" class="org.smallmind.scribe.pen.PatternFormatter">
+      <property name="timestamp" ref="fullTimestamp"/>
+      <property name="format" value="%d %n %+5l (%F.%M:%L) [%T] - %m%!+\n\t!w"/>
+   </bean>
+
+   <bean id="consoleAppender" class="org.smallmind.scribe.pen.ConsoleAppender">
+      <property name="formatter" ref="patternFormatter"/>
+   </bean>
+
+   <bean id="timestampRollover" class="org.smallmind.scribe.pen.TimestampRollover">
+      <property name="timestampQuantifier" value="TOP_OF_DAY"/>
+      <property name="separator" value="-"/>
+      <property name="timestamp" ref="shortTimestamp"/>
+   </bean>
+
+   <bean id="warnLevelFilter" class="org.smallmind.scribe.pen.LevelFilter">
+      <property name="level" value="WARN"/>
+   </bean>
+
+   <bean id="consoleErrorHandler" class="org.smallmind.scribe.pen.DefaultErrorHandler">
+      <property name="backupAppender" ref="consoleAppender"/>
+   </bean>
+
+   <bean id="fileAppender" class="org.smallmind.scribe.pen.FileAppender">
+      <property name="logFilePath" value="${log.dir}/log.txt"/>
+      <property name="rollover" ref="timestampRollover"/>
+      <property name="formatter" ref="patternFormatter"/>
+      <property name="errorHandler" ref="consoleErrorHandler"/>
+   </bean>
+
+   <bean id="errorFileAppender" class="org.smallmind.scribe.pen.FileAppender">
+      <property name="logFilePath" value="${log.dir}/error-log.txt"/>
+      <property name="rollover" ref="timestampRollover"/>
+      <property name="filter" ref="warnLevelFilter"/>
+      <property name="formatter" ref="patternFormatter"/>
+      <property name="errorHandler" ref="consoleErrorHandler"/>
+   </bean>
+
+   <bean id="fileErrorHandler" class="org.smallmind.scribe.pen.DefaultErrorHandler">
+      <property name="backupAppender" ref="errorFileAppender"/>
+   </bean>
+
+   <bean id="syslogAppender" class="org.smallmind.scribe.pen.SyslogAppender">
+      <constructor-arg index="0" value="${syslog.host}"/>
+      <constructor-arg index="1" value="${syslog.port}"/>
+      <constructor-arg index="2" value="155"/>
+      <property name="filter" ref="warnLevelFilter"/>
+      <property name="formatter" ref="xMLFormatter"/>
+      <property name="errorHandler" ref="fileErrorHandler"/>
+   </bean>
+
+   <bean id="emailAppender" class="org.smallmind.scribe.pen.EmailAppender">
+      <constructor-arg index="0" value="${smtp.host}"/>
+      <constructor-arg index="1" value="${smtp.port}"/>
+      <property name="from" value="${email.from.noreply}"/>
+      <property name="to" value="${email.to.logreaders}"/>
+      <property name="subject" value="Log Report"/>
+      <property name="formatter" ref="xMLFormatter"/>
+      <property name="errorHandler" ref="fileErrorHandler"/>
+   </bean>
+</beans>
