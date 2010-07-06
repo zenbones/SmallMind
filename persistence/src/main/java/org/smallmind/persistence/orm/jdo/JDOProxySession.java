@@ -1,8 +1,5 @@
 package org.smallmind.persistence.orm.jdo;
 
-import javax.jdo.PersistenceManager;
-import javax.jdo.PersistenceManagerFactory;
-import javax.jdo.Transaction;
 import org.smallmind.persistence.orm.ProxySession;
 import org.smallmind.persistence.orm.ProxyTransaction;
 import org.smallmind.persistence.orm.SessionEnforcementException;
@@ -11,13 +8,17 @@ import org.smallmind.persistence.orm.aop.NonTransactionalState;
 import org.smallmind.persistence.orm.aop.RollbackAwareBoundarySet;
 import org.smallmind.persistence.orm.aop.TransactionalState;
 
+import javax.jdo.PersistenceManager;
+import javax.jdo.PersistenceManagerFactory;
+import javax.jdo.Transaction;
+
 public class JDOProxySession extends ProxySession {
 
    private final ThreadLocal<PersistenceManager> managerThreadLocal = new ThreadLocal<PersistenceManager>();
    private final ThreadLocal<JDOProxyTransaction> transactionThreadLocal = new ThreadLocal<JDOProxyTransaction>();
    private final ThreadLocal<Boolean> boundaryOverrideThreadLocal = new ThreadLocal<Boolean>() {
 
-      protected Boolean initialValue () {
+      protected Boolean initialValue() {
 
          return false;
       }
@@ -25,19 +26,19 @@ public class JDOProxySession extends ProxySession {
 
    private PersistenceManagerFactory persistenceManagerFactory;
 
-   public JDOProxySession (String dataSourceKey, PersistenceManagerFactory persistenceManagerFactor, boolean enforceBoundary, boolean willCascade) {
+   public JDOProxySession(String dataSourceKey, PersistenceManagerFactory persistenceManagerFactor, boolean enforceBoundary, boolean willCascade) {
 
       super(dataSourceKey, enforceBoundary, willCascade);
 
       this.persistenceManagerFactory = persistenceManagerFactor;
    }
 
-   public void setIgnoreBoundaryEnforcement (boolean ignoreBoundaryEnforcement) {
+   public void setIgnoreBoundaryEnforcement(boolean ignoreBoundaryEnforcement) {
 
       boundaryOverrideThreadLocal.set(ignoreBoundaryEnforcement);
    }
 
-   public JDOProxyTransaction beginTransaction () {
+   public JDOProxyTransaction beginTransaction() {
 
       JDOProxyTransaction proxyTransaction;
       Transaction transaction;
@@ -53,24 +54,30 @@ public class JDOProxySession extends ProxySession {
       return proxyTransaction;
    }
 
-   public ProxyTransaction currentTransaction () {
+   public ProxyTransaction currentTransaction() {
 
       return transactionThreadLocal.get();
    }
 
-   public void flush () {
+   public void flush() {
 
       getPersistenceManager().flush();
    }
 
-   public boolean isClosed () {
+   public boolean isClosed() {
 
       PersistenceManager persistenceManager;
 
       return ((persistenceManager = managerThreadLocal.get()) == null) || (persistenceManager.isClosed());
    }
 
-   public PersistenceManager getPersistenceManager () {
+
+   public Object getNativeSession() {
+
+      return getPersistenceManager();
+   }
+
+   public PersistenceManager getPersistenceManager() {
 
       PersistenceManager persistenceManager;
 
@@ -83,11 +90,9 @@ public class JDOProxySession extends ProxySession {
 
          if ((transactionSet = TransactionalState.obtainBoundary(this)) != null) {
             transactionSet.add(beginTransaction());
-         }
-         else if ((sessionSet = NonTransactionalState.obtainBoundary(this)) != null) {
+         } else if ((sessionSet = NonTransactionalState.obtainBoundary(this)) != null) {
             sessionSet.add(this);
-         }
-         else if ((!boundaryOverrideThreadLocal.get()) && willEnforceBoundary()) {
+         } else if ((!boundaryOverrideThreadLocal.get()) && willEnforceBoundary()) {
             close();
             throw new SessionEnforcementException("Session was requested outside of any boundary enforcement (@NonTransactional or @Transactional)");
          }
@@ -96,7 +101,7 @@ public class JDOProxySession extends ProxySession {
       return persistenceManager;
    }
 
-   public void close () {
+   public void close() {
 
       PersistenceManager persistenceManager;
 
