@@ -31,7 +31,7 @@
       </property>
    </bean>
 
-   <bean id="xMLFormatter" class="org.smallmind.scribe.pen.XMLFormatter">
+   <bean id="xmlFormatter" class="org.smallmind.scribe.pen.XMLFormatter">
       <property name="timestamp" ref="fullTimestamp"/>
    </bean>
 
@@ -82,7 +82,7 @@
       <constructor-arg index="1" value="${syslog.port}"/>
       <constructor-arg index="2" value="155"/>
       <property name="filter" ref="warnLevelFilter"/>
-      <property name="formatter" ref="xMLFormatter"/>
+      <property name="formatter" ref="xmlFormatter"/>
       <property name="errorHandler" ref="fileErrorHandler"/>
    </bean>
 
@@ -92,7 +92,7 @@
       <property name="from" value="${email.from.noreply}"/>
       <property name="to" value="${email.to.logreaders}"/>
       <property name="subject" value="Log Report"/>
-      <property name="formatter" ref="xMLFormatter"/>
+      <property name="formatter" ref="xmlFormatter"/>
       <property name="errorHandler" ref="fileErrorHandler"/>
    </bean>
 </beans>
