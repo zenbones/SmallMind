@@ -13,7 +13,7 @@ public class ConnectionPool<C> {
    private String poolName;
    private PoolMode poolMode = PoolMode.BLOCKING_POOL;
    private AtomicInteger poolCount = new AtomicInteger(0);
-   private AtomicBoolean initializationFlag = new AtomicBoolean(false);
+   private AtomicBoolean startupFlag = new AtomicBoolean(false);
    private AtomicBoolean shutdownFlag = new AtomicBoolean(false);
    private boolean testOnConnect = false;
    private boolean testOnAcquire = false;
@@ -36,10 +36,10 @@ public class ConnectionPool<C> {
       ConnectionPoolManager.addConnectionPool(this);
    }
 
-   public void initialize ()
+   public void startup()
       throws ConnectionPoolException {
 
-      if (initializationFlag.compareAndSet(false, true)) {
+      if (startupFlag.compareAndSet(false, true)) {
          freeConnectionPinQueue = new ConcurrentLinkedQueue<ConnectionPin<C>>();
          processingConnectionPinQueue = new ConcurrentLinkedQueue<ConnectionPin<C>>();
 
@@ -271,7 +271,7 @@ public class ConnectionPool<C> {
          throw new IllegalStateException("ConnectionPool has been shut down");
       }
 
-      initialize();
+      startup();
 
       try {
          return useConnectionPin();
@@ -354,7 +354,7 @@ public class ConnectionPool<C> {
          throw new IllegalStateException("ConnectionPool has been shut down");
       }
 
-      if (!initializationFlag.get()) {
+      if (!startupFlag.get()) {
          throw new IllegalStateException("ConnectionPool has not yet been initialized");
       }
 
@@ -367,7 +367,7 @@ public class ConnectionPool<C> {
          throw new IllegalStateException("ConnectionPool has been shut down");
       }
 
-      if (!initializationFlag.get()) {
+      if (!startupFlag.get()) {
          throw new IllegalStateException("ConnectionPool has not yet been initialized");
       }
 
@@ -380,7 +380,7 @@ public class ConnectionPool<C> {
          throw new IllegalStateException("ConnectionPool has been shut down");
       }
 
-      if (!initializationFlag.get()) {
+      if (!startupFlag.get()) {
          throw new IllegalStateException("ConnectionPool has not yet been initialized");
       }
 
