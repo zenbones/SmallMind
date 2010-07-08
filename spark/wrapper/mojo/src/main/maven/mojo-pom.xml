@@ -14,11 +14,11 @@
             </properties>
         </profile>
         <profile>
-            <id>windows-amd-64</id>
+            <id>windows-x86-64</id>
             <activation>
                 <os>
                     <family>windows</family>
-                    <arch>amd64</arch>
+                    <arch>x86_64</arch>
                 </os>
             </activation>
             <properties>
@@ -26,11 +26,11 @@
             </properties>
         </profile>
         <profile>
-            <id>windows-x86-64</id>
+            <id>windows-amd-64</id>
             <activation>
                 <os>
                     <family>windows</family>
-                    <arch>x86_64</arch>
+                    <arch>amd64</arch>
                 </os>
             </activation>
             <properties>
