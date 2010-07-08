@@ -6,8 +6,7 @@
       <artifactId>smallmind</artifactId>
       <version>1.0</version>
    </parent>
-   <groupId>org.smallmind.nutsnbolts</groupId>
-   <artifactId>nutsnbolts</artifactId>
+   <artifactId>smallmind-nutsnbolts</artifactId>
    <version>1.0</version>
    <packaging>jar</packaging>
    <name>NutsNBolts</name>

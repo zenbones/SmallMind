@@ -6,8 +6,7 @@
       <artifactId>smallmind</artifactId>
       <version>1.0</version>
    </parent>
-   <groupId>org.smallmind.scheduling</groupId>
-   <artifactId>scheduling</artifactId>
+   <artifactId>smallmind-scheduling</artifactId>
    <name>Scheduling</name>
    <description>Scheduling Services and Extensions</description>
    <packaging>pom</packaging>

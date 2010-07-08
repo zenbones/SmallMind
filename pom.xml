@@ -26,6 +26,36 @@
     <dependencyManagement>
         <dependencies>
             <dependency>
+                <groupId>org.smallmind</groupId>
+                <artifactId>smallmind-nutsnbolts</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.smallmind</groupId>
+                <artifactId>scribe-pen</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.smallmind</groupId>
+                <artifactId>scribe-ink-indigenous</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.smallmind</groupId>
+                <artifactId>smallmind-quorum</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.smallmind</groupId>
+                <artifactId>smallmind-persistence</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.smallmind</groupId>
+                <artifactId>smallmind-cloud</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
                 <groupId>org.apache.maven</groupId>
                 <artifactId>maven-plugin-api</artifactId>
                 <version>2.2.1</version>

@@ -6,9 +6,7 @@
       <artifactId>smallmind</artifactId>
       <version>1.0</version>
    </parent>
-   <groupId>org.smallmind.spark</groupId>
-   <artifactId>spark</artifactId>
-   <version>1.0</version>
+   <artifactId>smallmind-spark</artifactId>
    <name>Spark</name>
    <description>Entry points for OS anchored services</description>
    <packaging>pom</packaging>

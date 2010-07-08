@@ -6,29 +6,25 @@
       <artifactId>smallmind</artifactId>
       <version>1.0</version>
    </parent>
-   <groupId>org.smallmind.constellation</groupId>
-   <artifactId>constellation</artifactId>
+   <artifactId>smallmind-constellation</artifactId>
    <version>1.0</version>
    <name>Conestallation</name>
    <description>Component and Container Frameworks</description>
    <packaging>jar</packaging>
    <dependencies>
       <dependency>
-         <groupId>org.smallmind.scribe</groupId>
+         <groupId>org.smallmind</groupId>
          <artifactId>scribe-pen</artifactId>
-         <version>1.0</version>
          <scope>compile</scope>
       </dependency>
       <dependency>
-         <groupId>org.smallmind.quorum</groupId>
-         <artifactId>quorum</artifactId>
-         <version>1.0</version>
+         <groupId>org.smallmind</groupId>
+         <artifactId>smallmind-quorum</artifactId>
          <scope>compile</scope>
       </dependency>
       <dependency>
-         <groupId>org.smallmind.cloud</groupId>
-         <artifactId>cloud</artifactId>
-         <version>1.0</version>
+         <groupId>org.smallmind</groupId>
+         <artifactId>smallmind-cloud</artifactId>
          <scope>compile</scope>
       </dependency>
    </dependencies>

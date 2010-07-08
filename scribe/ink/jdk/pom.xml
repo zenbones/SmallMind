@@ -2,7 +2,7 @@
    <modelVersion>4.0.0</modelVersion>
 
    <parent>
-      <groupId>org.smallmind.scribe</groupId>
+      <groupId>org.smallmind</groupId>
       <artifactId>scribe-ink</artifactId>
       <version>1.0</version>
    </parent>
@@ -12,9 +12,8 @@
    <packaging>jar</packaging>
    <dependencies>
       <dependency>
-         <groupId>org.smallmind.scribe</groupId>
+         <groupId>org.smallmind</groupId>
          <artifactId>scribe-pen</artifactId>
-         <version>1.0</version>
          <scope>compile</scope>
       </dependency>
    </dependencies>

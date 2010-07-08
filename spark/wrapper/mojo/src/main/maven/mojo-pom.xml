@@ -89,7 +89,7 @@
     <build>
         <plugins>
             <plugin>
-                <groupId>org.smallmind.spark</groupId>
+                <groupId>org.smallmind</groupId>
                 <artifactId>spark-wrapper-mojo</artifactId>
                 <executions>
                     <execution>

@@ -2,11 +2,10 @@
    <modelVersion>4.0.0</modelVersion>
 
    <parent>
-      <groupId>org.smallmind.scheduling</groupId>
-      <artifactId>scheduling</artifactId>
+      <groupId>org.smallmind</groupId>
+      <artifactId>smallmind-scheduling</artifactId>
       <version>1.0</version>
    </parent>
-   <groupId>org.smallmind.scheduling</groupId>
    <artifactId>scheduling-quartz</artifactId>
    <name>Secheduling-Quartz</name>
    <description>Quartz Extensions</description>

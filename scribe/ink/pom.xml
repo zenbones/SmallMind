@@ -2,8 +2,8 @@
    <modelVersion>4.0.0</modelVersion>
 
    <parent>
-      <groupId>org.smallmind.scribe</groupId>
-      <artifactId>scribe</artifactId>
+      <groupId>org.smallmind</groupId>
+      <artifactId>smallmind-scribe</artifactId>
       <version>1.0</version>
    </parent>
    <artifactId>scribe-ink</artifactId>

@@ -6,22 +6,19 @@
       <artifactId>smallmind</artifactId>
       <version>1.0</version>
    </parent>
-   <groupId>org.smallmind.wicket</groupId>
-   <artifactId>wicket</artifactId>
+   <artifactId>smallmind-wicket</artifactId>
    <name>Wicket</name>
    <description>Wicket Widgets and Extensions</description>
    <packaging>jar</packaging>
    <dependencies>
       <dependency>
-         <groupId>org.smallmind.nutsnbolts</groupId>
-         <artifactId>nutsnbolts</artifactId>
-         <version>1.0</version>
+         <groupId>org.smallmind</groupId>
+         <artifactId>smallmind-nutsnbolts</artifactId>
          <scope>compile</scope>
       </dependency>
       <dependency>
-         <groupId>org.smallmind.persistence</groupId>
-         <artifactId>persistence</artifactId>
-         <version>1.0</version>
+         <groupId>org.smallmind</groupId>
+         <artifactId>smallmind-persistence</artifactId>
          <scope>compile</scope>
       </dependency>
       <dependency>

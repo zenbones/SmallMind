@@ -6,23 +6,20 @@
       <artifactId>smallmind</artifactId>
       <version>1.0</version>
    </parent>
-   <groupId>org.smallmind.quorum</groupId>
-   <artifactId>quorum</artifactId>
+   <artifactId>smallmind-quorum</artifactId>
    <version>1.0</version>
    <name>Quorum</name>
    <description>Collections, Caches and Pools</description>
    <packaging>jar</packaging>
    <dependencies>
       <dependency>
-         <groupId>org.smallmind.nutsnbolts</groupId>
-         <artifactId>nutsnbolts</artifactId>
-         <version>1.0</version>
+         <groupId>org.smallmind</groupId>
+         <artifactId>smallmind-nutsnbolts</artifactId>
          <scope>compile</scope>
       </dependency>
       <dependency>
-         <groupId>org.smallmind.scribe</groupId>
+         <groupId>org.smallmind</groupId>
          <artifactId>scribe-pen</artifactId>
-         <version>1.0</version>
          <scope>compile</scope>
       </dependency>
       <dependency>

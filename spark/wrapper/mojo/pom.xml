@@ -2,20 +2,18 @@
    <modelVersion>4.0.0</modelVersion>
 
    <parent>
-      <groupId>org.smallmind.spark</groupId>
+      <groupId>org.smallmind</groupId>
       <artifactId>spark-wrapper</artifactId>
       <version>1.0</version>
    </parent>
    <artifactId>spark-wrapper-mojo</artifactId>
-   <version>1.0</version>
    <packaging>maven-plugin</packaging>
    <name>Spark-Wrapper-Mojo</name>
    <description>Tanukisoft wrapper maven plugin</description>
    <dependencies>
       <dependency>
-         <groupId>org.smallmind.nutsnbolts</groupId>
-         <artifactId>nutsnbolts</artifactId>
-         <version>1.0</version>
+         <groupId>org.smallmind</groupId>
+         <artifactId>smallmind-nutsnbolts</artifactId>
          <scope>compile</scope>
       </dependency>
       <dependency>
