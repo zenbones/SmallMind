@@ -9,6 +9,8 @@
     <description>Parent POM</description>
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <nexus.release.repository.id>nexus</nexus.release.repository.id>
+        <nexus.release.repository.url>http://${nexus.server}/nexus/content/repositories/releases</nexus.release.repository.url>
     </properties>
     <modules>
         <module>nutsnbolts</module>
@@ -278,12 +280,12 @@
 
     <distributionManagement>
         <repository>
-            <id>nexus</id>
+            <id>${nexus.release.repository.id}</id>
             <name>Nexus Release Repository</name>
-            <url>http://${nexus.server}/nexus/content/repositories/releases</url>
+            <url>${nexus.release.repository.url}</url>
         </repository>
         <snapshotRepository>
-            <id>nexus</id>
+            <id>${nexus.release.repository.id}</id>
             <name>Nexus Snapshot Repository</name>
             <url>http://${nexus.server}/nexus/content/repositories/snapshots</url>
         </snapshotRepository>
