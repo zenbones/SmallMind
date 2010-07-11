@@ -18,7 +18,7 @@ public class DataSourceManager {
       DataSource dataSource;
 
       if ((dataSource = SOURCE_MAP.get(key)) == null) {
-         throw new ORMInitializationException("No DataSOurce was mapped to the key(%s)", key);
+         throw new ORMInitializationException("No DataSource was mapped to the key(%s)", key);
       }
 
       return dataSource;
