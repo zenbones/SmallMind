@@ -13,6 +13,12 @@
    <description>Nuts'n'Bolts Utilities</description>
    <dependencies>
       <dependency>
+         <groupId>javax.servlet</groupId>
+         <artifactId>servlet-api</artifactId>
+         <scope>compile</scope>
+         <optional>true</optional>
+      </dependency>
+      <dependency>
          <groupId>asm</groupId>
          <artifactId>asm-commons</artifactId>
          <scope>compile</scope>
@@ -33,6 +39,12 @@
       <dependency>
          <groupId>org.springframework</groupId>
          <artifactId>spring-context</artifactId>
+         <scope>compile</scope>
+         <optional>true</optional>
+      </dependency>
+      <dependency>
+         <groupId>org.springframework</groupId>
+         <artifactId>spring-web</artifactId>
          <scope>compile</scope>
          <optional>true</optional>
       </dependency>
