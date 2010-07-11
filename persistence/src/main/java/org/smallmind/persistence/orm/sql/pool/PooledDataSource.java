@@ -5,6 +5,7 @@ import java.sql.Connection;
 import java.sql.SQLException;
 import javax.sql.DataSource;
 import javax.sql.PooledConnection;
+import org.smallmind.persistence.orm.sql.DataSourceManager;
 import org.smallmind.quorum.pool.ConnectionPool;
 import org.smallmind.quorum.pool.ConnectionPoolException;
 
@@ -12,12 +13,24 @@ public class PooledDataSource implements DataSource {
 
    private ConnectionPool connectionPool;
    private PrintWriter logWriter;
+   private String key;
 
-   public PooledDataSource (ConnectionPool connectionPool) {
+   public PooledDataSource (String key, ConnectionPool connectionPool) {
 
+      this.key = key;
       this.connectionPool = connectionPool;
 
       logWriter = new PrintWriter(new PooledLogWriter());
+   }
+
+   public void register () {
+
+      DataSourceManager.registerDataSource(key, this);
+   }
+
+   public String getKey () {
+
+      return key;
    }
 
    public Connection getConnection ()
