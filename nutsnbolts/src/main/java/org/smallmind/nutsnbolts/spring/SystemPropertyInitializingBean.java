@@ -28,7 +28,7 @@ public class SystemPropertyInitializingBean implements InitializingBean {
    public void afterPropertiesSet () {
 
       for (Map.Entry<String, String> propertyEntry : propertyMap.entrySet()) {
-         if (override || (System.getProperty(propertyEntry.getKey()) == null)) {
+         if (override || ((System.getProperty(propertyEntry.getKey()) == null) && (System.getenv(propertyEntry.getKey()) == null))) {
             System.setProperty(propertyEntry.getKey(), propertyEntry.getValue());
          }
       }
