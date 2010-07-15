@@ -1,5 +1,6 @@
 package org.smallmind.nutsnbolts.util;
 
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.Map;
 
@@ -49,6 +50,12 @@ public class PropertyExpander {
             throw new PropertyExpanderException("The prefix(%s) and suffix(%s) should have no characters in common", prefix, suffix);
          }
       }
+   }
+
+   public String expand (String expansion)
+      throws PropertyExpanderException {
+
+      return expand(expansion, new StringBuilder(expansion), Collections.<String, String>emptyMap()).toString();
    }
 
    public String expand (String expansion, Map<String, String> expansionMap)

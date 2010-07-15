@@ -1,6 +1,7 @@
 package org.smallmind.nutsnbolts.resource;
 
 import java.io.BufferedInputStream;
+import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
 
@@ -17,14 +18,8 @@ public class URLResource extends AbstractResource {
    }
 
    public InputStream getInputStream ()
-      throws ResourceException {
+      throws IOException {
 
-      try {
-
-         return new BufferedInputStream(new URL(getPath()).openStream());
-      }
-      catch (Exception exception) {
-         throw new ResourceException(exception);
-      }
+      return new BufferedInputStream(new URL(getPath()).openStream());
    }
 }

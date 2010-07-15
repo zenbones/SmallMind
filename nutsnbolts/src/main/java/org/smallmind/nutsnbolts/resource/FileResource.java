@@ -18,14 +18,9 @@ public class FileResource extends AbstractResource {
    }
 
    public InputStream getInputStream ()
-      throws ResourceException {
+      throws FileNotFoundException {
 
-      try {
+      return new FileInputStream(new File(getPath()));
 
-         return new FileInputStream(new File(getPath()));
-      }
-      catch (FileNotFoundException fileNotFoundException) {
-         throw new ResourceException(fileNotFoundException);
-      }
    }
 }

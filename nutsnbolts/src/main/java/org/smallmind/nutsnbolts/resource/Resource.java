@@ -13,5 +13,5 @@ public interface Resource {
    public void setPath (String path);
 
    public abstract InputStream getInputStream ()
-      throws ResourceException;
+      throws Exception;
 }

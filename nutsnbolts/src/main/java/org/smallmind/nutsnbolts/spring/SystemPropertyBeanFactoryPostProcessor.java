@@ -25,6 +25,11 @@ public class SystemPropertyBeanFactoryPostProcessor implements BeanFactoryPostPr
       this.order = order;
    }
 
+   public int getOrder () {
+
+      return order;
+   }
+
    public void setOverride (boolean override) {
 
       this.override = override;
@@ -33,11 +38,6 @@ public class SystemPropertyBeanFactoryPostProcessor implements BeanFactoryPostPr
    public void setPropertyMap (HashMap<String, String> propertyMap) {
 
       this.propertyMap.putAll(propertyMap);
-   }
-
-   public int getOrder () {
-
-      return order;
    }
 
    public void postProcessBeanFactory (ConfigurableListableBeanFactory configurableListableBeanFactory)

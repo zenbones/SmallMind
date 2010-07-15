@@ -6,9 +6,15 @@ public class ResourceParser {
 
    private final HashMap<ResourceSchemes, ResourceFactory> factoryMap;
 
-   public ResourceParser () {
+   public ResourceParser (ResourceFactory... factories) {
 
       factoryMap = new HashMap<ResourceSchemes, ResourceFactory>();
+
+      if (factories != null) {
+         for (ResourceFactory factory : factories) {
+            addResourceFactory(factory);
+         }
+      }
    }
 
    public void addResourceFactory (ResourceFactory factory) {
