@@ -21,6 +21,7 @@ public class FileResource extends AbstractResource {
       throws ResourceException {
 
       try {
+
          return new FileInputStream(new File(getPath()));
       }
       catch (FileNotFoundException fileNotFoundException) {

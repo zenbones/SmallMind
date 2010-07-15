@@ -27,7 +27,7 @@ import org.springframework.core.io.Resource;
 import org.springframework.core.io.UrlResource;
 import org.springframework.util.StringValueResolver;
 
-public class PropertyPlaceholderConfigurer extends PropertyResourceConfigurer implements BeanFactoryAware, BeanNameAware {
+public class PropertyPlaceholderConfigurer  implements BeanFactoryAware, BeanNameAware {
 
    private BeanFactory beanFactory;
    private LinkedList<Resource> locationList = new LinkedList<Resource>();

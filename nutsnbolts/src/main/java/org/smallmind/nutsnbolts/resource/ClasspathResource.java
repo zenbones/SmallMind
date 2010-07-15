@@ -14,8 +14,7 @@ public class ClasspathResource extends AbstractResource {
       return "classpath";
    }
 
-   public InputStream getInputStream ()
-      throws ResourceException {
+   public InputStream getInputStream () {
 
       return ClassLoader.getSystemResourceAsStream(getPath());
    }
