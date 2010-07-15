@@ -3,31 +3,25 @@ package org.smallmind.nutsnbolts.resource;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
-import java.io.IOException;
 import java.io.InputStream;
 
-public class FileResource implements Resource {
+public class FileResource extends AbstractResource {
 
-   private File file;
-   private String id;
+   public FileResource (String path) {
 
-   public FileResource (String filePath)
-      throws IOException {
-
-      file = new File(filePath);
-      id = "file:" + file.getCanonicalPath();
+      super(path);
    }
 
-   public String getId () {
+   public String getScheme () {
 
-      return id;
+      return "file";
    }
 
    public InputStream getInputStream ()
       throws ResourceException {
 
       try {
-         return new FileInputStream(file);
+         return new FileInputStream(new File(getPath()));
       }
       catch (FileNotFoundException fileNotFoundException) {
          throw new ResourceException(fileNotFoundException);

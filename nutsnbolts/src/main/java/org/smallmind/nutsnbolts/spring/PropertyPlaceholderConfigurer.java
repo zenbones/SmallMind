@@ -1,5 +1,14 @@
 package org.smallmind.nutsnbolts.spring;
 
+import java.io.FileReader;
+import java.io.IOException;
+import java.net.URL;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.LinkedList;
+import java.util.Map;
+import java.util.Properties;
 import org.smallmind.nutsnbolts.util.PropertyExpander;
 import org.smallmind.nutsnbolts.util.PropertyExpanderException;
 import org.smallmind.nutsnbolts.util.SystemPropertyMode;
@@ -18,16 +27,6 @@ import org.springframework.core.io.Resource;
 import org.springframework.core.io.UrlResource;
 import org.springframework.util.StringValueResolver;
 
-import java.io.FileReader;
-import java.io.IOException;
-import java.net.URL;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.LinkedList;
-import java.util.Map;
-import java.util.Properties;
-
 public class PropertyPlaceholderConfigurer extends PropertyResourceConfigurer implements BeanFactoryAware, BeanNameAware {
 
    private BeanFactory beanFactory;
@@ -38,48 +37,48 @@ public class PropertyPlaceholderConfigurer extends PropertyResourceConfigurer im
    private boolean ignoreUnresolvableProperties = false;
    private boolean searchSystemEnvironment = true;
 
-   public void setBeanFactory(BeanFactory beanFactory) {
+   public void setBeanFactory (BeanFactory beanFactory) {
 
       this.beanFactory = beanFactory;
    }
 
-   public void setBeanName(String beanName) {
+   public void setBeanName (String beanName) {
 
       this.beanName = beanName;
    }
 
-   public void setSystemPropertyMode(SystemPropertyMode systemPropertyMode) {
+   public void setSystemPropertyMode (SystemPropertyMode systemPropertyMode) {
 
       this.systemPropertyMode = systemPropertyMode;
    }
 
-   public void setIgnoreResourceNotFound(boolean ignoreResourceNotFound) {
+   public void setIgnoreResourceNotFound (boolean ignoreResourceNotFound) {
 
       this.ignoreResourceNotFound = ignoreResourceNotFound;
    }
 
-   public void setIgnoreUnresolvableProperties(boolean ignoreUnresolvableProperties) {
+   public void setIgnoreUnresolvableProperties (boolean ignoreUnresolvableProperties) {
 
       this.ignoreUnresolvableProperties = ignoreUnresolvableProperties;
    }
 
-   public void setSearchSystemEnvironment(boolean searchSystemEnvironment) {
+   public void setSearchSystemEnvironment (boolean searchSystemEnvironment) {
 
       this.searchSystemEnvironment = searchSystemEnvironment;
    }
 
-   public void setLocation(Resource location) {
+   public void setLocation (Resource location) {
 
       locationList.add(location);
    }
 
-   public void setLocations(Resource[] locations) {
+   public void setLocations (Resource[] locations) {
 
       locationList.addAll(Arrays.asList(locations));
    }
 
-   protected void processProperties(ConfigurableListableBeanFactory beanFactoryToProcess, Properties properties)
-         throws BeansException {
+   protected void processProperties (ConfigurableListableBeanFactory beanFactoryToProcess, Properties properties)
+      throws BeansException {
 
       Map<String, String> propertyMap;
       PropertyExpander locationExpander;
@@ -103,15 +102,18 @@ public class PropertyPlaceholderConfigurer extends PropertyResourceConfigurer im
 
          try {
             if (location instanceof FileSystemResource) {
-               locationPath = locationExpander.expand(((FileSystemResource) location).getPath(), Collections.<String, String>emptyMap());
+               locationPath = locationExpander.expand(((FileSystemResource)location).getPath(), Collections.<String, String>emptyMap());
                locationProperties.load(new FileReader(new FileSystemResource(locationPath).getFile()));
-            } else if (location instanceof ClassPathResource) {
-               locationPath = locationExpander.expand(((ClassPathResource) location).getPath(), Collections.<String, String>emptyMap());
-               locationProperties.load(new ClassPathResource(locationPath, ((ClassPathResource) location).getClassLoader()).getInputStream());
-            } else if (location instanceof UrlResource) {
+            }
+            else if (location instanceof ClassPathResource) {
+               locationPath = locationExpander.expand(((ClassPathResource)location).getPath(), Collections.<String, String>emptyMap());
+               locationProperties.load(new ClassPathResource(locationPath, ((ClassPathResource)location).getClassLoader()).getInputStream());
+            }
+            else if (location instanceof UrlResource) {
                locationPath = locationExpander.expand(location.getURL().toExternalForm(), Collections.<String, String>emptyMap());
                locationProperties.load(new UrlResource((new URL(locationPath))).getInputStream());
-            } else {
+            }
+            else {
                throw new RuntimeBeansException("Can't process resource(%s) of type(%s)", location.getDescription(), location.getClass());
             }
          }

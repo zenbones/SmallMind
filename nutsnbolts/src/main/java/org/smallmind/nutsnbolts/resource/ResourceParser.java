@@ -24,11 +24,8 @@ public class ResourceParser {
       String scheme;
       int colonPos;
 
-      if ((colonPos = resourceIdentifier.indexOf(':')) < 0) {
-         throw new ResourceException("Could not locate resource scheme in identifier(%s)", resourceIdentifier);
-      }
+      scheme = ((colonPos = resourceIdentifier.indexOf(':')) < 0) ? ResourceType.FILE.getResourceScheme() : resourceIdentifier.substring(0, colonPos);
 
-      scheme = resourceIdentifier.substring(0, colonPos);
       synchronized (factoryMap) {
          for (ResourceSchemes resourceSchemes : factoryMap.keySet()) {
             if (resourceSchemes.containsScheme(scheme)) {

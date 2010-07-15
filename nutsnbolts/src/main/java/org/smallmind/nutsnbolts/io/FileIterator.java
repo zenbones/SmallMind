@@ -12,16 +12,17 @@ public class FileIterator implements Iterator<File>, Iterable<File> {
    private LinkedList<File> directoryStack;
    private File currentFile;
 
-   public FileIterator(File directory) {
+   public FileIterator (File directory) {
 
       this(directory, null);
    }
 
-   public FileIterator(File directory, FileFilter fileFilter) {
+   public FileIterator (File directory, FileFilter fileFilter) {
 
       if (!directory.exists()) {
          throw new IllegalArgumentException("Specified directory(" + directory.getAbsolutePath() + ") doesn't exist");
-      } else if (!directory.isDirectory()) {
+      }
+      else if (!directory.isDirectory()) {
          throw new IllegalArgumentException("Specified file(" + directory.getAbsolutePath() + ") isn't a directory");
       }
 
@@ -32,7 +33,7 @@ public class FileIterator implements Iterator<File>, Iterable<File> {
       currentFile = getNextFile();
    }
 
-   private File getNextFile() {
+   private File getNextFile () {
 
       File file;
 
@@ -45,7 +46,8 @@ public class FileIterator implements Iterator<File>, Iterable<File> {
             for (File child : file.listFiles(fileFilter)) {
                if (child.isFile()) {
                   appendedList.addFirst(child);
-               } else {
+               }
+               else {
                   appendedList.addLast(child);
                }
             }
@@ -53,7 +55,8 @@ public class FileIterator implements Iterator<File>, Iterable<File> {
             if (!appendedList.isEmpty()) {
                directoryStack.addAll(0, appendedList);
             }
-         } else {
+         }
+         else {
             return file;
          }
       }
@@ -61,12 +64,12 @@ public class FileIterator implements Iterator<File>, Iterable<File> {
       return null;
    }
 
-   public boolean hasNext() {
+   public boolean hasNext () {
 
       return currentFile != null;
    }
 
-   public File next() {
+   public File next () {
 
       File nextFile;
 
@@ -80,12 +83,12 @@ public class FileIterator implements Iterator<File>, Iterable<File> {
       return nextFile;
    }
 
-   public void remove() {
+   public void remove () {
 
       throw new UnsupportedOperationException();
    }
 
-   public Iterator<File> iterator() {
+   public Iterator<File> iterator () {
 
       return this;
    }

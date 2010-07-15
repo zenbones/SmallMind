@@ -2,26 +2,21 @@ package org.smallmind.nutsnbolts.resource;
 
 import java.io.InputStream;
 
-public class ClasspathResource implements Resource {
-
-   private String path;
-   private String id;
+public class ClasspathResource extends AbstractResource {
 
    public ClasspathResource (String path) {
 
-      this.path = path;
-
-      id = "classpath:" + path;
+      super(path);
    }
 
-   public String getId () {
+   public String getScheme () {
 
-      return id;
+      return "classpath";
    }
 
    public InputStream getInputStream ()
       throws ResourceException {
 
-      return ClassLoader.getSystemResourceAsStream(path);
+      return ClassLoader.getSystemResourceAsStream(getPath());
    }
 }
