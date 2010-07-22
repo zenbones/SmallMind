@@ -7,7 +7,6 @@
       <version>1.0</version>
    </parent>
    <artifactId>smallmind-cloud</artifactId>
-   <version>1.0</version>
    <name>Cloud</name>
    <description>Naming, Clustering and Protocol Frameworks and Extensions</description>
    <packaging>jar</packaging>

@@ -7,7 +7,6 @@
       <version>1.0</version>
    </parent>
    <artifactId>smallmind-nutsnbolts</artifactId>
-   <version>1.0</version>
    <packaging>jar</packaging>
    <name>NutsNBolts</name>
    <description>Nuts'n'Bolts Utilities</description>
