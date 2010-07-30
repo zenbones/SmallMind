@@ -89,12 +89,6 @@
       </dependency>
    </dependencies>
    <build>
-      <resources>
-         <resource>
-            <directory>${basedir}/src/main/spring</directory>
-            <filtering>false</filtering>
-         </resource>
-      </resources>
       <plugins>
          <plugin>
             <groupId>org.codehaus.mojo</groupId>

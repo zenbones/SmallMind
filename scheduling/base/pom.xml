@@ -3,15 +3,11 @@
 
    <parent>
       <groupId>org.smallmind</groupId>
-      <artifactId>smallmind</artifactId>
+      <artifactId>smallmind-scheduling</artifactId>
       <version>1.0</version>
    </parent>
-   <artifactId>smallmind-scheduling</artifactId>
-   <name>Scheduling</name>
-   <description>Scheduling Services and Extensions</description>
-   <packaging>pom</packaging>
-   <modules>
-      <module>base</module>
-      <module>quartz</module>
-   </modules>
+   <artifactId>scheduling-base</artifactId>
+   <name>Secheduling-Base</name>
+   <description>Common Scheduling Framework</description>
+   <packaging>jar</packaging>
 </project>
