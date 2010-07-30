@@ -1,10 +1,11 @@
 package org.smallmind.wicket.behavior;
 
-import java.util.Properties;
 import org.apache.wicket.Component;
 import org.apache.wicket.behavior.AbstractBehavior;
 import org.apache.wicket.model.AbstractReadOnlyModel;
 import org.apache.wicket.util.template.TextTemplateHeaderContributor;
+
+import java.util.Properties;
 
 public class CssBehavior extends AbstractBehavior {
 
@@ -12,34 +13,61 @@ public class CssBehavior extends AbstractBehavior {
    private CssModel cssModel;
    private String cssFileName;
 
-   public CssBehavior (String cssFileName, Properties cssProperties) {
+   public CssBehavior() {
+
+      this(null, null, null);
+   }
+
+   public CssBehavior(Properties cssProperties) {
+
+      this(null, null, cssProperties);
+   }
+
+   public CssBehavior(String cssFileName) {
+
+      this(null, cssFileName, null);
+   }
+
+   public CssBehavior(String cssFileName, Properties cssProperties) {
 
       this(null, cssFileName, cssProperties);
    }
 
-   public CssBehavior (Class scopeClass, String cssFileName, Properties cssProperties) {
+   public CssBehavior(Class scopeClass) {
+
+      this(scopeClass, null, null);
+   }
+
+   public CssBehavior(Class scopeClass, Properties cssProperties) {
+
+      this(scopeClass, null, cssProperties);
+   }
+
+   public CssBehavior(Class scopeClass, String cssFileName, Properties cssProperties) {
 
       this.scopeClass = scopeClass;
       this.cssFileName = cssFileName;
 
-      cssModel = new CssModel(cssProperties);
+      if (cssProperties != null) {
+         cssModel = new CssModel(cssProperties);
+      }
    }
 
-   public void bind (Component component) {
+   public void bind(Component component) {
 
-      component.add(TextTemplateHeaderContributor.forCss((scopeClass != null) ? scopeClass : component.getClass(), cssFileName, cssModel));
+      component.add(TextTemplateHeaderContributor.forCss((scopeClass != null) ? scopeClass : component.getClass(), (cssFileName != null) ? cssFileName : (scopeClass != null) ? scopeClass.getSimpleName() + ".css" : component.getClass().getSimpleName() + ".css", cssModel));
    }
 
    private class CssModel extends AbstractReadOnlyModel {
 
       private Properties cssProperties;
 
-      public CssModel (Properties cssProperties) {
+      public CssModel(Properties cssProperties) {
 
          this.cssProperties = cssProperties;
       }
 
-      public Object getObject () {
+      public Object getObject() {
 
          return cssProperties;
       }

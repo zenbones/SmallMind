@@ -1,4 +1,4 @@
-table.feedbackContainer {
+table.feedback-container {
    color: ${color.foreground};
    margin-bottom: ${margin.bottom};
 }
