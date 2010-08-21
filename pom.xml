@@ -20,6 +20,7 @@
       <module>cloud</module>
       <module>constellation</module>
       <module>scheduling</module>
+      <module>seda</module>
       <module>plumber</module>
       <module>spark</module>
       <module>swing</module>
