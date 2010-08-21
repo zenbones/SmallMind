@@ -1,4 +1,4 @@
-package org.smallmind.nutsnbolts.util.zip;
+package org.smallmind.nutsnbolts.zip;
 
 import java.io.File;
 import java.io.FileInputStream;

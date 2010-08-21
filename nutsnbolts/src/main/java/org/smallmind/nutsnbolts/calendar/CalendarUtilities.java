@@ -1,4 +1,4 @@
-package org.smallmind.nutsnbolts.util.calendar;
+package org.smallmind.nutsnbolts.calendar;
 
 public class CalendarUtilities {
 

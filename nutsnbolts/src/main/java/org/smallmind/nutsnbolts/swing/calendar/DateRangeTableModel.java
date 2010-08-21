@@ -5,7 +5,7 @@ import java.util.GregorianCalendar;
 import javax.swing.event.TableModelListener;
 import javax.swing.table.TableModel;
 import org.smallmind.nutsnbolts.util.WeakEventListenerList;
-import org.smallmind.nutsnbolts.util.calendar.CalendarUtilities;
+import org.smallmind.nutsnbolts.calendar.CalendarUtilities;
 
 public class DateRangeTableModel implements TableModel {
 

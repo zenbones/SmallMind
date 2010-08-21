@@ -1,4 +1,4 @@
-package org.smallmind.nutsnbolts.util.csv;
+package org.smallmind.nutsnbolts.csv;
 
 public interface CSVLineHandler {
 

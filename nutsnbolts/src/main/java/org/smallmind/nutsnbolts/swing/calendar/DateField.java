@@ -22,7 +22,7 @@ import org.smallmind.nutsnbolts.swing.spinner.DefaultSpinnerRenderer;
 import org.smallmind.nutsnbolts.swing.spinner.IntegerSpinnerModel;
 import org.smallmind.nutsnbolts.swing.spinner.Spinner;
 import org.smallmind.nutsnbolts.util.WeakEventListenerList;
-import org.smallmind.nutsnbolts.util.calendar.Month;
+import org.smallmind.nutsnbolts.calendar.Month;
 
 public class DateField extends JPanel implements ChangeListener, ItemListener {
 

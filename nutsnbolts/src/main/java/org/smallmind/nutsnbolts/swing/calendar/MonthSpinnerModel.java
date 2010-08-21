@@ -4,8 +4,8 @@ import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import org.smallmind.nutsnbolts.swing.spinner.EdgeAwareSpinnerModel;
 import org.smallmind.nutsnbolts.util.WeakEventListenerList;
-import org.smallmind.nutsnbolts.util.calendar.CalendarUtilities;
-import org.smallmind.nutsnbolts.util.calendar.Month;
+import org.smallmind.nutsnbolts.calendar.CalendarUtilities;
+import org.smallmind.nutsnbolts.calendar.Month;
 
 public class MonthSpinnerModel implements EdgeAwareSpinnerModel {
 

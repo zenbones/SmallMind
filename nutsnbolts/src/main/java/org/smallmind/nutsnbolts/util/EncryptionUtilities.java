@@ -70,9 +70,7 @@ public class EncryptionUtilities {
          }
       }
 
-      synchronized (messageDigest) {
-         return messageDigest.digest(toBeHashed.getBytes());
-      }
+      return messageDigest.digest(toBeHashed.getBytes());
    }
 
    public static Key generateKey (SecurityAlgorithm algorithm)

@@ -4,7 +4,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.Socket;
-import org.smallmind.nutsnbolts.util.concurrent.Lock;
+import org.smallmind.nutsnbolts.concurrent.Lock;
 
 public class SocketPipe {
 

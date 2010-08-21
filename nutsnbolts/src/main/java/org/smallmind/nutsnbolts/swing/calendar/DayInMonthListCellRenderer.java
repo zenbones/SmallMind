@@ -15,7 +15,7 @@ import javax.swing.ListCellRenderer;
 import org.smallmind.nutsnbolts.swing.ComponentUtilities;
 import org.smallmind.nutsnbolts.swing.LayoutManagerConstructionException;
 import org.smallmind.nutsnbolts.swing.LayoutManagerFactory;
-import org.smallmind.nutsnbolts.util.calendar.CalendarUtilities;
+import org.smallmind.nutsnbolts.calendar.CalendarUtilities;
 
 public class DayInMonthListCellRenderer implements ListCellRenderer {
 

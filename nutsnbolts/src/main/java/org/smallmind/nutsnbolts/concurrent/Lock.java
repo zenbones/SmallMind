@@ -1,4 +1,4 @@
-package org.smallmind.nutsnbolts.util.concurrent;
+package org.smallmind.nutsnbolts.concurrent;
 
 public class Lock {
 
