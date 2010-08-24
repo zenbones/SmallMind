@@ -1,24 +1,18 @@
 package org.smallmind.seda;
 
-import java.util.LinkedList;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 public class ProcessorHistory {
 
    private ReentrantReadWriteLock lock;
-   private LinkedList<TimeMark> idleList;
-   private LinkedList<TimeMark> activeList;
-   private long maxTackedMillis;
-   private long idleTotal = 0;
-   private long activeTotal = 0;
+   private TimeMark idleMark;
+   private TimeMark activeMark;
 
    public ProcessorHistory (long trackingTime, TimeUnit trackingTimeUnit) {
 
-      maxTackedMillis = trackingTimeUnit.toMillis(trackingTime);
-
-      idleList = new LinkedList<TimeMark>();
-      activeList = new LinkedList<TimeMark>();
+      idleMark = new TimeMark(trackingTimeUnit.toMillis(trackingTime));
+      activeMark = new TimeMark(trackingTimeUnit.toMillis(trackingTime));
 
       lock = new ReentrantReadWriteLock();
    }
@@ -28,14 +22,15 @@ public class ProcessorHistory {
       lock.readLock().lock();
       try {
 
-         long totalTime;
+         double idleTime;
+         double totalTime;
 
-         if ((totalTime = idleTotal + activeTotal) == 0) {
+         if ((totalTime = (idleTime = idleMark.getTotal()) + activeMark.getTotal()) == 0) {
 
             return 0;
          }
 
-         return idleTotal / (double)totalTime;
+         return idleTime / totalTime;
       }
       finally {
          lock.readLock().unlock();
@@ -47,115 +42,110 @@ public class ProcessorHistory {
       lock.readLock().lock();
       try {
 
-         long totalTime;
+         double activeTime;
+         double totalTime;
 
-         if ((totalTime = idleTotal + activeTotal) == 0) {
+         if ((totalTime = idleMark.getTotal() + (activeTime = activeMark.getTotal())) == 0) {
 
             return 0;
          }
 
-         return activeTotal / (double)totalTime;
+         return activeTime / totalTime;
       }
       finally {
          lock.readLock().unlock();
       }
    }
 
-   protected void addIdleTime (long start, long end) {
+   protected void addIdleTime (long begin, long end) {
 
       lock.writeLock().lock();
       try {
-
-         long duration;
-
-         if ((duration = end - start) > 0) {
-            idleList.addFirst(new TimeMark(start, duration));
-            idleTotal += duration;
-         }
-
-         idleTotal -= trimHistory(idleList, end);
-         activeTotal -= trimHistory(activeList, end);
+         idleMark.additional(begin, end);
+         activeMark.update(end);
       }
       finally {
          lock.writeLock().unlock();
       }
    }
 
-   protected void addActiveTime (long start, long end) {
+   protected void addActiveTime (long begin, long end) {
 
       lock.writeLock().lock();
       try {
-
-         long duration;
-
-         if ((duration = end - start) > 0) {
-            activeList.addFirst(new TimeMark(start, duration));
-            activeTotal += duration;
-         }
-
-         activeTotal -= trimHistory(activeList, end);
-         idleTotal -= trimHistory(idleList, end);
+         activeMark.additional(begin, end);
+         idleMark.update(end);
       }
       finally {
          lock.writeLock().unlock();
       }
-   }
-
-   private long trimHistory (LinkedList<TimeMark> historyList, long now) {
-
-      if (!historyList.isEmpty()) {
-
-         long oldestTime = now - maxTackedMillis;
-         long durationDelta;
-         long trimmedTime = 0;
-
-         while ((!historyList.isEmpty()) && (historyList.getLast().getStart() < oldestTime)) {
-            if ((durationDelta = oldestTime - historyList.getLast().getStart()) >= historyList.getLast().getDuration()) {
-               trimmedTime += historyList.removeLast().getDuration();
-            }
-            else {
-               historyList.getLast().setStart(oldestTime);
-               historyList.getLast().setDuration(historyList.getLast().getDuration() - durationDelta);
-               trimmedTime += durationDelta;
-               break;
-            }
-         }
-
-         return trimmedTime;
-      }
-
-      return 0;
    }
 
    private static class TimeMark {
 
+      private double average;
+      private long track;
       private long start;
-      private long duration;
+      private long stop;
 
-      private TimeMark (long start, long duration) {
+      public TimeMark (long track) {
 
-         this.start = start;
-         this.duration = duration;
+         this.track = track;
       }
 
-      public long getStart () {
+      public double getTotal () {
 
-         return start;
+         if (start == 0) {
+
+            return 0;
+         }
+
+         return (stop - start) * average;
       }
 
-      public void setStart (long start) {
+      public void update (long end) {
 
-         this.start = start;
+         if (start != 0) {
+
+            long oldest;
+
+            if ((oldest = end - track) > stop) {
+               start = 0;
+               stop = 0;
+               average = 0;
+            }
+            else {
+               oldest = Math.max(start, oldest);
+               average = ((stop - oldest) * average) / (end - oldest);
+               start = oldest;
+               stop = end;
+            }
+         }
       }
 
-      public long getDuration () {
+      public void additional (long begin, long end) {
 
-         return duration;
-      }
+         if (start == 0) {
+            start = begin;
+            stop = end;
+            average = 1;
+         }
+         else {
 
-      public void setDuration (long duration) {
+            long oldest;
 
-         this.duration = duration;
+            if ((oldest = end - track) > stop) {
+               start = begin;
+               average = 1;
+            }
+            else {
+               oldest = Math.max(start, oldest);
+               average = (((stop - oldest) * average) + (end - begin)) / (end - oldest);
+               start = oldest;
+            }
+
+            stop = end;
+         }
       }
    }
 }
