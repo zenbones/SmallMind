@@ -82,7 +82,9 @@ public class ServerSocketHerald implements ComponentFactory<SocketWorker>, Runna
             if (annointed) {
                try {
                   clientSocket = serverSocket.accept();
-                  acceptCounter.inc();
+                  synchronized (acceptCounter) {
+                     acceptCounter.inc();
+                  }
 
                   worker = workerPool.getComponent();
                   worker.setSocket(clientSocket);

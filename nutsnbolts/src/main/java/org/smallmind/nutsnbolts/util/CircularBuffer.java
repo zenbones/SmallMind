@@ -1,4 +1,4 @@
-package org.smallmind.nutsnbolts.concurrent;
+package org.smallmind.nutsnbolts.util;
 
 public class CircularBuffer {
 

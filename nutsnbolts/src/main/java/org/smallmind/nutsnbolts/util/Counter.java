@@ -14,19 +14,19 @@ public class Counter {
       this.count = count;
    }
 
-   public synchronized int inc () {
+   public int inc () {
 
       count++;
       return count;
    }
 
-   public synchronized int dec () {
+   public int dec () {
 
       count--;
       return count;
    }
 
-   public synchronized int getCount () {
+   public int getCount () {
 
       return count;
    }

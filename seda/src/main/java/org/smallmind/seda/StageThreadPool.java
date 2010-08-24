@@ -1,24 +1,26 @@
 package org.smallmind.seda;
 
-import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.LinkedList;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 public class StageThreadPool<I extends Event, O extends Event> {
 
+   private final LinkedList<EventProcessor<I, O>> processorList;
+
    private CountDownLatch exitLatch;
    private AtomicBoolean stopped = new AtomicBoolean(false);
-   private ReentrantReadWriteLock shutdownLock;
-   private ConcurrentLinkedQueue<EventProcessor<I, O>> processorQueue;
    private StageController<I, O> stageController;
+   private int minPoolSize;
+   private int maxPoolSize;
 
-   public StageThreadPool (StageController<I, O> stageController) {
+   public StageThreadPool (StageController<I, O> stageController, int minPoolSize, int maxPoolSize) {
 
       this.stageController = stageController;
+      this.minPoolSize = minPoolSize;
+      this.maxPoolSize = maxPoolSize;
 
-      shutdownLock = new ReentrantReadWriteLock();
-      processorQueue = new ConcurrentLinkedQueue<EventProcessor<I, O>>();
+      processorList = new LinkedList<EventProcessor<I, O>>();
       exitLatch = new CountDownLatch(1);
    }
 
@@ -27,11 +29,15 @@ public class StageThreadPool<I extends Event, O extends Event> {
       return !stopped.get();
    }
 
-   protected boolean increase () {
+   protected synchronized boolean increase () {
 
-      shutdownLock.readLock().lock();
-      try {
-         if (stopped.get()) {
+      if (stopped.get()) {
+
+         return false;
+      }
+
+      synchronized (processorList) {
+         if (processorList.size() >= maxPoolSize) {
 
             return false;
          }
@@ -43,35 +49,45 @@ public class StageThreadPool<I extends Event, O extends Event> {
          processorThread = new Thread(eventProcessor);
          processorThread.start();
 
-         return processorQueue.add(eventProcessor);
-      }
-      finally {
-         shutdownLock.readLock().unlock();
+         processorList.add(eventProcessor);
+
+         return true;
       }
    }
 
-   protected void remove (EventProcessor<I, O> eventProcessor) {
+   protected boolean decrease (EventProcessor<I, O> eventProcessor, boolean forced) {
 
-      processorQueue.remove(eventProcessor);
+      synchronized (processorList) {
+         if ((!forced) && (processorList.size() <= minPoolSize)) {
+
+            return false;
+         }
+
+         processorList.remove(eventProcessor);
+
+         return true;
+      }
    }
 
    protected void stop ()
       throws InterruptedException {
 
       if (stopped.compareAndSet(false, true)) {
-         shutdownLock.writeLock().lock();
-         try {
+         synchronized (this) {
 
             EventProcessor<I, O> eventProcessor;
 
-            while ((eventProcessor = processorQueue.poll()) != null) {
-               eventProcessor.stop();
-            }
+            do {
+               synchronized (processorList) {
+                  eventProcessor = processorList.peek();
+               }
+
+               if (eventProcessor != null) {
+                  eventProcessor.stop();
+               }
+            } while (eventProcessor != null);
 
             exitLatch.countDown();
-         }
-         finally {
-            shutdownLock.writeLock().unlock();
          }
       }
       else {

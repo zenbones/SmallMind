@@ -39,12 +39,12 @@ public class EventProcessor<I extends Event, O extends Event> implements Runnabl
 
       try {
          while (!stopped) {
-            if ((inputEvent = stageController.poll()) != null) {
+            if ((inputEvent = stageController.pollQueue()) != null) {
 
                lastRunTimeMillis = System.currentTimeMillis();
             }
             else if ((System.currentTimeMillis() - lastRunTimeMillis) > maxIdleTimeMillis) {
-               stopped = true;
+               stopped = stageController.decreasePool(this, false);
             }
          }
       }
@@ -53,7 +53,7 @@ public class EventProcessor<I extends Event, O extends Event> implements Runnabl
          LoggerManager.getLogger(EventProcessor.class).error(interruptedException);
       }
 
-      stageController.remove(this);
+      stageController.decreasePool(this, true);
       exitLatch.countDown();
    }
 }

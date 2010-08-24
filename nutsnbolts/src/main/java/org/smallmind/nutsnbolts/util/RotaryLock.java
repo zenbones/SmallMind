@@ -1,10 +1,10 @@
-package org.smallmind.nutsnbolts.concurrent;
+package org.smallmind.nutsnbolts.util;
 
-public class Lock {
+public class RotaryLock {
 
    private boolean[] tumblers;
 
-   public Lock (int size) {
+   public RotaryLock (int size) {
 
       tumblers = new boolean[size];
 

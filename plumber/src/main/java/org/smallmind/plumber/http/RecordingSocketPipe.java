@@ -4,7 +4,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.Socket;
-import org.smallmind.nutsnbolts.concurrent.Lock;
+import org.smallmind.nutsnbolts.util.RotaryLock;
 
 public class RecordingSocketPipe {
 
@@ -27,17 +27,17 @@ public class RecordingSocketPipe {
       throws IOException {
 
       Thread lockThread;
-      Lock lock;
+      RotaryLock rotaryLock;
 
       lockThread = Thread.currentThread();
-      lock = new Lock(2);
+      rotaryLock = new RotaryLock(2);
 
-      synchronized (lock) {
-         startTransfer(lockThread, lock, UPSTREAM, downstreamSocket, upstreamSocket, true);
-         startTransfer(lockThread, lock, DOWNSTREAM, upstreamSocket, downstreamSocket, false);
+      synchronized (rotaryLock) {
+         startTransfer(lockThread, rotaryLock, UPSTREAM, downstreamSocket, upstreamSocket, true);
+         startTransfer(lockThread, rotaryLock, DOWNSTREAM, upstreamSocket, downstreamSocket, false);
 
          try {
-            lock.wait();
+            rotaryLock.wait();
          }
          catch (InterruptedException i) {
             if (threadException != null) {
@@ -47,12 +47,12 @@ public class RecordingSocketPipe {
       }
    }
 
-   private void startTransfer (Thread lockThread, Lock lock, int condition, Socket inputSocket, Socket outputSocket, boolean record)
+   private void startTransfer (Thread lockThread, RotaryLock rotaryLock, int condition, Socket inputSocket, Socket outputSocket, boolean record)
       throws IOException {
 
       Thread transferThread;
 
-      transferThread = new Thread(new TransferHandler(lockThread, lock, condition, inputSocket, outputSocket, record));
+      transferThread = new Thread(new TransferHandler(lockThread, rotaryLock, condition, inputSocket, outputSocket, record));
       transferThread.setDaemon(true);
 
       transferThread.start();
@@ -62,7 +62,7 @@ public class RecordingSocketPipe {
 
       private final Thread lockThread;
 
-      private Lock lock;
+      private RotaryLock rotaryLock;
       private Socket inputSocket;
       private Socket outputSocket;
       private InputStream inputStream;
@@ -71,11 +71,11 @@ public class RecordingSocketPipe {
       private int condition;
       private byte[] buffer;
 
-      public TransferHandler (Thread lockThread, Lock lock, int condition, Socket inputSocket, Socket outputSocket, boolean record)
+      public TransferHandler (Thread lockThread, RotaryLock rotaryLock, int condition, Socket inputSocket, Socket outputSocket, boolean record)
          throws IOException {
 
          this.lockThread = lockThread;
-         this.lock = lock;
+         this.rotaryLock = rotaryLock;
          this.condition = condition;
          this.inputSocket = inputSocket;
          this.outputSocket = outputSocket;
@@ -100,7 +100,7 @@ public class RecordingSocketPipe {
 
             inputSocket.shutdownInput();
             outputSocket.shutdownOutput();
-            lock.unlock(condition);
+            rotaryLock.unlock(condition);
          }
          catch (IOException ioException) {
             synchronized (lockThread) {

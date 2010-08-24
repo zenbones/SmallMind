@@ -12,7 +12,7 @@ public class StageController<I extends Event, O extends Event> {
    private long maxIdleTime;
    private long pollTimeout;
 
-   public StageController (StageFactory<I, O> stageFactory, int queueCapacity, long maxIdleTime, TimeUnit maxIdleTimeUnit, long pollTimeout, TimeUnit pollTimeUnit) {
+   public StageController (StageFactory<I, O> stageFactory, int maxQueueCapacity, double expansionFactor, int minPoolSize, int maxPoolSize, long maxIdleTime, TimeUnit maxIdleTimeUnit, long pollTimeout, TimeUnit pollTimeUnit) {
 
       this.stageFactory = stageFactory;
       this.maxIdleTime = maxIdleTime;
@@ -20,8 +20,8 @@ public class StageController<I extends Event, O extends Event> {
       this.pollTimeout = pollTimeout;
       this.pollTimeUnit = pollTimeUnit;
 
-      eventQueue = new EventQueue<I, O>(this, queueCapacity);
-      stageThreadPool = new StageThreadPool<I, O>(this);
+      eventQueue = new EventQueue<I, O>(this, maxQueueCapacity, expansionFactor);
+      stageThreadPool = new StageThreadPool<I, O>(this, minPoolSize, maxPoolSize);
    }
 
    protected EventProcessor<I, O> createEventProcessor () {
@@ -29,14 +29,19 @@ public class StageController<I extends Event, O extends Event> {
       return new EventProcessor<I, O>(this, maxIdleTime, maxIdleTimeUnit);
    }
 
-   protected I poll ()
+   protected I pollQueue ()
       throws InterruptedException {
 
       return eventQueue.poll(pollTimeout, pollTimeUnit);
    }
 
-   protected void remove (EventProcessor<I, O> eventProcessor) {
+   protected synchronized boolean increasePool () {
 
-      stageThreadPool.remove(eventProcessor);
+      return stageThreadPool.increase();
+   }
+
+   protected boolean decreasePool (EventProcessor<I, O> eventProcessor, boolean forced) {
+
+      return stageThreadPool.decrease(eventProcessor, forced);
    }
 }

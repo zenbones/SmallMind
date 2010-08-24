@@ -15,7 +15,7 @@ public class KeyLock {
 
    public String getName () {
 
-      return "Lock-" + uniqueId.generateBigInteger();
+      return "RotaryLock-" + uniqueId.generateBigInteger();
    }
 
    public UniqueId getUniqueId () {
