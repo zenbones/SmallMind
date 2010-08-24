@@ -8,16 +8,14 @@ public class EventProcessor<I extends Event, O extends Event> implements Runnabl
 
    private CountDownLatch exitLatch;
    private StageController<I, O> stageController;
+   private ProcessorHistory history;
    private boolean stopped = false;
-   private long maxIdleTimeMillis;
-   private long lastRunTimeMillis;
 
-   public EventProcessor (StageController<I, O> stageController, long maxIdleTime, TimeUnit maxIdleTimeUnit) {
+   public EventProcessor (StageController<I, O> stageController, long trackingTime, TimeUnit trackingTimeUnit) {
 
       this.stageController = stageController;
 
-      maxIdleTimeMillis = maxIdleTimeUnit.toMillis(maxIdleTime);
-      lastRunTimeMillis = System.currentTimeMillis();
+      history = new ProcessorHistory(trackingTime, trackingTimeUnit);
       exitLatch = new CountDownLatch(1);
    }
 
@@ -36,15 +34,18 @@ public class EventProcessor<I extends Event, O extends Event> implements Runnabl
    public void run () {
 
       I inputEvent;
+      long startTime;
 
       try {
          while (!stopped) {
+            startTime = System.currentTimeMillis();
             if ((inputEvent = stageController.pollQueue()) != null) {
-
-               lastRunTimeMillis = System.currentTimeMillis();
+               history.addIdleTime(startTime, startTime = System.currentTimeMillis());
+               //TODO: HandleEvent
+               history.addActiveTime(startTime, System.currentTimeMillis());
             }
-            else if ((System.currentTimeMillis() - lastRunTimeMillis) > maxIdleTimeMillis) {
-               stopped = stageController.decreasePool(this, false);
+            else {
+               history.addIdleTime(startTime, System.currentTimeMillis());
             }
          }
       }
