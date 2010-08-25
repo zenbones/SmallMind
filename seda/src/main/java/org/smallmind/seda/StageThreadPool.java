@@ -55,17 +55,11 @@ public class StageThreadPool<I extends Event, O extends Event> {
       }
    }
 
-   protected boolean decrease (EventProcessor<I, O> eventProcessor, boolean forced) {
+   protected void decrease (EventProcessor<I, O> eventProcessor) {
 
       synchronized (processorList) {
-         if ((!forced) && (processorList.size() <= minPoolSize)) {
-
-            return false;
-         }
 
          processorList.remove(eventProcessor);
-
-         return true;
       }
    }
 

@@ -40,8 +40,8 @@ public class StageController<I extends Event, O extends Event> {
       return stageThreadPool.increase();
    }
 
-   protected boolean decreasePool (EventProcessor<I, O> eventProcessor, boolean forced) {
+   protected void decreasePool (EventProcessor<I, O> eventProcessor) {
 
-      return stageThreadPool.decrease(eventProcessor, forced);
+      stageThreadPool.decrease(eventProcessor);
    }
 }

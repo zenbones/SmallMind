@@ -54,7 +54,7 @@ public class EventProcessor<I extends Event, O extends Event> implements Runnabl
          LoggerManager.getLogger(EventProcessor.class).error(interruptedException);
       }
 
-      stageController.decreasePool(this, true);
+      stageController.decreasePool(this);
       exitLatch.countDown();
    }
 }
