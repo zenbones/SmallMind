@@ -1,23 +1,30 @@
 package org.smallmind.swing.memory;
 
 import java.util.Iterator;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
+import org.smallmind.nutsnbolts.util.WeakEventListenerList;
+import org.smallmind.scribe.pen.LoggerManager;
 import org.smallmind.swing.event.MemoryUsageEvent;
 import org.smallmind.swing.event.MemoryUsageListener;
-import org.smallmind.nutsnbolts.util.WeakEventListenerList;
 
 public class MemoryTimer implements java.lang.Runnable {
 
    private static final String[] scalingTitles = {" bytes", "k", "M", "G", "T", "P", "E"};
    private static final long pulseTime = 3000;
 
-   private Thread runnableThread = null;
+   private CountDownLatch exitLatch;
+   private CountDownLatch pulseLatch;
+   private AtomicBoolean finished = new AtomicBoolean(false);
    private WeakEventListenerList<MemoryUsageListener> listenerList;
-   private boolean finished = false;
-   private boolean exited = false;
 
    public MemoryTimer () {
 
       listenerList = new WeakEventListenerList<MemoryUsageListener>();
+
+      pulseLatch = new CountDownLatch(1);
+      exitLatch = new CountDownLatch(1);
    }
 
    public synchronized void addMemoryUsageListener (MemoryUsageListener memoryUsageListener) {
@@ -30,19 +37,14 @@ public class MemoryTimer implements java.lang.Runnable {
       listenerList.removeListener(memoryUsageListener);
    }
 
-   public void finish () {
+   public void finish ()
+      throws InterruptedException {
 
-      finished = true;
-
-      while (!exited) {
-         runnableThread.interrupt();
-
-         try {
-            Thread.sleep(100);
-         }
-         catch (InterruptedException i) {
-         }
+      if (finished.compareAndSet(false, true)) {
+         pulseLatch.countDown();
       }
+
+      exitLatch.await();
    }
 
    public void run () {
@@ -56,10 +58,9 @@ public class MemoryTimer implements java.lang.Runnable {
       int maximumUsage;
       int currentUsage;
 
-      runnableThread = Thread.currentThread();
       runtime = Runtime.getRuntime();
 
-      while (!finished) {
+      while (!finished.get()) {
          totalMemory = runtime.totalMemory();
          freeMemory = runtime.freeMemory();
          usedMemory = totalMemory - freeMemory;
@@ -83,12 +84,14 @@ public class MemoryTimer implements java.lang.Runnable {
          fireMemoryUsageUpdate(maximumUsage, currentUsage, Integer.toString(currentUsage) + scalingTitles[scalingUnit] + " of " + Integer.toString(maximumUsage) + scalingTitles[scalingUnit]);
 
          try {
-            Thread.sleep(pulseTime);
+            pulseLatch.await(pulseTime, TimeUnit.MILLISECONDS);
          }
-         catch (InterruptedException i) {
+         catch (InterruptedException interruptedException) {
+            LoggerManager.getLogger(MemoryTimer.class).error(interruptedException);
          }
       }
-      exited = true;
+
+      exitLatch.countDown();
    }
 
    private void fireMemoryUsageUpdate (int maximumUsage, int currentUsage, String displayUsage) {

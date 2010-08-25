@@ -1,16 +1,16 @@
 package org.smallmind.scribe.pen;
 
 import java.util.List;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 public class AsynchronousAppender implements Appender, Runnable {
 
+   private CountDownLatch exitLatch;
    private Appender internalAppender;
    private LinkedBlockingQueue<Record> publishQueue;
-   private AtomicBoolean finished = new AtomicBoolean(false);
-   private boolean terminated = false;
+   private boolean finished = false;
 
    public AsynchronousAppender (Appender internalAppender) {
 
@@ -19,6 +19,8 @@ public class AsynchronousAppender implements Appender, Runnable {
       this.internalAppender = internalAppender;
 
       publishQueue = new LinkedBlockingQueue<Record>();
+
+      exitLatch = new CountDownLatch(1);
 
       publishThread = new Thread(this);
       publishThread.setDaemon(true);
@@ -88,7 +90,7 @@ public class AsynchronousAppender implements Appender, Runnable {
    public void publish (Record record) {
 
       try {
-         if (finished.get()) {
+         if (finished) {
             throw new LoggerException("%s has been previously closed", this.getClass().getSimpleName());
          }
 
@@ -120,13 +122,8 @@ public class AsynchronousAppender implements Appender, Runnable {
    public void finish ()
       throws InterruptedException {
 
-      if (!finished.get()) {
-         finished.set(true);
-
-         while (!terminated) {
-            Thread.sleep(300);
-         }
-      }
+      finished = true;
+      exitLatch.await();
    }
 
    protected void finalize ()
@@ -140,16 +137,17 @@ public class AsynchronousAppender implements Appender, Runnable {
       Record record;
 
       try {
-         while (!(finished.get() && publishQueue.isEmpty())) {
+         while (!(finished && publishQueue.isEmpty())) {
             if ((record = publishQueue.poll(1000, TimeUnit.MILLISECONDS)) != null) {
                internalAppender.publish(record);
             }
          }
       }
       catch (InterruptedException interruptedException) {
-         finished.set(true);
+         finished = true;
+         LoggerManager.getLogger(AsynchronousAppender.class).error(interruptedException);
       }
 
-      terminated = true;
+      exitLatch.countDown();
    }
 }

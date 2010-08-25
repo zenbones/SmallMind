@@ -6,11 +6,16 @@ import java.io.ObjectOutputStream;
 import java.net.DatagramPacket;
 import java.net.InetAddress;
 import java.net.MulticastSocket;
+import java.net.SocketTimeoutException;
 import java.nio.ByteBuffer;
 import java.util.Arrays;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.atomic.AtomicBoolean;
 import org.smallmind.cloud.multicast.EventMessageException;
+import org.smallmind.nutsnbolts.lang.UnknownSwitchCaseException;
 import org.smallmind.nutsnbolts.util.UniqueId;
 import org.smallmind.quorum.cache.CacheException;
+import org.smallmind.quorum.cache.KeyLock;
 import org.smallmind.quorum.cache.indigenous.UnorderedCache;
 import org.smallmind.scribe.pen.Logger;
 
@@ -21,13 +26,12 @@ public class EventTransmitter implements Runnable {
    private static final byte[] EMPTY_ID = new byte[UniqueId.byteSize()];
 
    private Logger logger;
+   private CountDownLatch exitLatch;
+   private AtomicBoolean finished = new AtomicBoolean(false);
    private UnorderedCache<EventMessageKey, EventMessageMold, EventMessageCacheEntry> messageCache;
    private MulticastEventHandler eventHandler;
    private MulticastSocket multicastSocket;
    private InetAddress multicastInetAddr;
-   private boolean closed = false;
-   private boolean finished = false;
-   private boolean exited = false;
    private int multicastPort;
    private int messageSegmentSize;
    private int messageBufferSize;
@@ -49,13 +53,15 @@ public class EventTransmitter implements Runnable {
       this.messageSegmentSize = messageSegmentSize;
 
       messageBufferSize = messageSegmentSize + EventMessage.MESSAGE_HEADER_SIZE;
-      messageCache = new UnorderedCache<EventMessageKey, EventMessageMold, EventMessageCacheEntry>("", new EventMessageCacheSource(), new EventMessageCacheExpirationPolicy(60));
+      messageCache = new UnorderedCache<EventMessageKey, EventMessageMold, EventMessageCacheEntry>(EventTransmitter.class.getSimpleName(), new EventMessageCacheSource(), new EventMessageCacheExpirationPolicy(60));
 
       multicastSocket = new MulticastSocket(multicastPort);
       multicastSocket.setReuseAddress(true);
       multicastSocket.setSoTimeout(SO_TIMEOUT);
       multicastSocket.setTimeToLive(TTL);
       multicastSocket.joinGroup(multicastInetAddr);
+
+      exitLatch = new CountDownLatch(1);
 
       receiverThread = new Thread(this);
       receiverThread.setDaemon(true);
@@ -145,17 +151,12 @@ public class EventTransmitter implements Runnable {
 
    public synchronized void finish () {
 
-      if (!closed) {
-         closed = true;
-         finished = true;
-
-         while (!exited) {
-            try {
-               Thread.sleep(100);
-            }
-            catch (InterruptedException interruptedException) {
-               break;
-            }
+      if (finished.compareAndSet(false, true)) {
+         try {
+            exitLatch.await();
+         }
+         catch (InterruptedException interruptedException) {
+            logError(interruptedException);
          }
 
          try {
@@ -170,6 +171,7 @@ public class EventTransmitter implements Runnable {
 
    public void run () {
 
+      KeyLock keyLock = new KeyLock();
       EventMessageMold messageMold;
       MulticastEvent multicastEvent;
       DatagramPacket messagePacket;
@@ -186,9 +188,7 @@ public class EventTransmitter implements Runnable {
       translationBuffer = ByteBuffer.wrap(messageBuffer);
       messagePacket = new DatagramPacket(messageBuffer, messageBuffer.length);
 
-      //TODO:
-      /*
-      while (!finished) {
+      while (!finished.get()) {
          try {
             try {
                multicastSocket.receive(messagePacket);
@@ -206,7 +206,7 @@ public class EventTransmitter implements Runnable {
                messageType = MessageType.getMessageType(translationBuffer.getInt());
                messageLength = translationBuffer.getInt();
 
-               messageMold = messageCache.get(messageKey);
+               messageMold = messageCache.get(keyLock, messageKey);
                switch (messageType) {
                   case HEADER:
                      messageMold.setMessageLength(messageLength);
@@ -222,7 +222,7 @@ public class EventTransmitter implements Runnable {
                }
 
                if (messageMold.isComplete()) {
-                  messageCache.remove(messageKey);
+                  messageCache.remove(keyLock, messageKey);
                   multicastEvent = (MulticastEvent)messageMold.unmoldMessageBody();
                   eventHandler.deliverEvent(multicastEvent);
                }
@@ -232,9 +232,8 @@ public class EventTransmitter implements Runnable {
             logger.error(e);
          }
       }
-      */
 
-      exited = true;
+      exitLatch.countDown();
    }
 
    public void finalize () {

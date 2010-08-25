@@ -6,17 +6,18 @@ import java.net.InetAddress;
 import java.net.MulticastSocket;
 import java.net.SocketTimeoutException;
 import java.nio.ByteBuffer;
+import java.util.concurrent.CountDownLatch;
 import org.smallmind.cloud.multicast.event.EventMessage;
 import org.smallmind.cloud.multicast.event.MessageStatus;
 
 public class DatagramBroadcastAgent implements Runnable {
 
+   private CountDownLatch exitLatch;
    private PacketBroadcaster packetBroadcaster;
    private MulticastSocket multicastSocket;
    private DatagramSocket datagramSocket;
    private InetAddress multicastInetAddress;
    private boolean finished = false;
-   private boolean exited = false;
    private int multicastPort;
    private int messageBufferSize;
 
@@ -29,22 +30,15 @@ public class DatagramBroadcastAgent implements Runnable {
       this.multicastPort = multicastPort;
 
       messageBufferSize = messageSegmentSize + EventMessage.MESSAGE_HEADER_SIZE;
+
+      exitLatch = new CountDownLatch(1);
    }
 
-   public synchronized void finish () {
+   public synchronized void finish ()
+      throws InterruptedException {
 
-      if (!finished) {
-         finished = true;
-
-         while (!exited) {
-            try {
-               Thread.sleep(100);
-            }
-            catch (InterruptedException interruptedException) {
-               break;
-            }
-         }
-      }
+      finished = true;
+      exitLatch.await();
    }
 
    public void run () {
@@ -79,7 +73,6 @@ public class DatagramBroadcastAgent implements Runnable {
          }
       }
 
-      exited = true;
+      exitLatch.countDown();
    }
-
 }

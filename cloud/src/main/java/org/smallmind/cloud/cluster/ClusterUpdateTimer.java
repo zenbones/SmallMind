@@ -1,11 +1,16 @@
 package org.smallmind.cloud.cluster;
 
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
+import org.smallmind.scribe.pen.LoggerManager;
+
 public class ClusterUpdateTimer implements Runnable {
 
-   private Thread runnableThread = null;
+   private CountDownLatch exitLatch;
+   private CountDownLatch pulseLatch;
+   private AtomicBoolean finished = new AtomicBoolean(false);
    private ClusterHub clusterHub;
-   private boolean finished = false;
-   private boolean exited = false;
    private long pulseTime;
 
    public ClusterUpdateTimer (ClusterHub clusterHub, int updateInterval) {
@@ -13,39 +18,36 @@ public class ClusterUpdateTimer implements Runnable {
       this.clusterHub = clusterHub;
 
       pulseTime = updateInterval * 1000;
+
+      pulseLatch = new CountDownLatch(1);
+      exitLatch = new CountDownLatch(1);
    }
 
-   public void finish () {
+   public void finish ()
+      throws InterruptedException {
 
-      finished = true;
-
-      while (!exited) {
-         runnableThread.interrupt();
-
-         try {
-            Thread.sleep(100);
-         }
-         catch (InterruptedException i) {
-         }
+      if (finished.compareAndSet(false, true)) {
+         pulseLatch.countDown();
       }
+
+      exitLatch.await();
    }
 
    public void run () {
 
-      runnableThread = Thread.currentThread();
-
-      while (!finished) {
+      while (!finished.get()) {
 
          clusterHub.fireStatusUpdate(clusterHub.getClientClusterInstances());
 
          try {
-            Thread.sleep(pulseTime);
+            pulseLatch.await(pulseTime, TimeUnit.MILLISECONDS);
          }
-         catch (InterruptedException i) {
+         catch (InterruptedException interruptedException) {
+            LoggerManager.getLogger(ClusterUpdateTimer.class).error(interruptedException);
          }
       }
 
-      exited = true;
+      exitLatch.countDown();
    }
 
 }

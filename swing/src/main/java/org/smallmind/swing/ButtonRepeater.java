@@ -2,11 +2,15 @@ package org.smallmind.swing;
 
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 import javax.swing.JButton;
 import javax.swing.SwingUtilities;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import org.smallmind.nutsnbolts.util.WeakEventListenerList;
+import org.smallmind.scribe.pen.LoggerManager;
 
 public class ButtonRepeater implements ChangeListener {
 
@@ -65,7 +69,12 @@ public class ButtonRepeater implements ChangeListener {
 
    public void finalize () {
 
-      autoPress.finish();
+      try {
+         autoPress.finish();
+      }
+      catch (InterruptedException interruptedException) {
+         LoggerManager.getLogger(ButtonRepeater.class).error(interruptedException);
+      }
    }
 
    private class DoClick implements Runnable {
@@ -78,47 +87,46 @@ public class ButtonRepeater implements ChangeListener {
 
    private class AutoPress implements Runnable {
 
-      private Thread runnableThread;
-      private boolean finished = false;
-      private boolean exited = false;
+      private CountDownLatch exitLatch;
+      private CountDownLatch pulseLatch;
+      private AtomicBoolean finished = new AtomicBoolean(false);
 
-      public void finish () {
+      public AutoPress () {
 
-         finished = true;
+         pulseLatch = new CountDownLatch(1);
+         exitLatch = new CountDownLatch(1);
+      }
 
-         while (!exited) {
-            runnableThread.interrupt();
+      public void finish ()
+         throws InterruptedException {
 
-            try {
-               Thread.sleep(100);
-            }
-            catch (InterruptedException interrupedException) {
-            }
+         if (finished.compareAndSet(false, true)) {
+            pulseLatch.countDown();
          }
+
+         exitLatch.await();
       }
 
       public void run () {
 
-         runnableThread = Thread.currentThread();
-
-         while (!finished) {
+         while (!finished.get()) {
             try {
                if (!armed) {
-                  Thread.sleep(100);
+                  pulseLatch.await(100, TimeUnit.MILLISECONDS);
                }
                else {
-                  Thread.sleep(delayMilliseconds);
+                  pulseLatch.await(delayMilliseconds, TimeUnit.MILLISECONDS);
                   if (armed) {
                      SwingUtilities.invokeLater(new DoClick());
                   }
                }
             }
-            catch (InterruptedException interrupedException) {
+            catch (InterruptedException interruptedException) {
+               LoggerManager.getLogger(ButtonRepeater.class).error(interruptedException);
             }
          }
 
-         exited = true;
+         exitLatch.countDown();
       }
    }
-
 }

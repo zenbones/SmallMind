@@ -28,5 +28,4 @@ public class Switch {
 
       return state;
    }
-
 }

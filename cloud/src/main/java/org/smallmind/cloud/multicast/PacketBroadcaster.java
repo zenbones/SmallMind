@@ -74,8 +74,19 @@ public class PacketBroadcaster {
    public synchronized void finish () {
 
       if (!finished) {
-         multicastAgent.finish();
-         datagramAgent.finish();
+         try {
+            multicastAgent.finish();
+         }
+         catch (InterruptedException interruptedException) {
+            logger.error(interruptedException);
+         }
+
+         try {
+            datagramAgent.finish();
+         }
+         catch (InterruptedException interruptedException) {
+            logger.error(interruptedException);
+         }
 
          try {
             multicastSocket.leaveGroup(multicastInetAddress);

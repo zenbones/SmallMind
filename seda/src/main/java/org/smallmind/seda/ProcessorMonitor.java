@@ -3,13 +3,13 @@ package org.smallmind.seda;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
-public class ProcessorHistory {
+public class ProcessorMonitor {
 
    private ReentrantReadWriteLock lock;
    private TimeMark idleMark;
    private TimeMark activeMark;
 
-   public ProcessorHistory (long trackingTime, TimeUnit trackingTimeUnit) {
+   public ProcessorMonitor (long trackingTime, TimeUnit trackingTimeUnit) {
 
       idleMark = new TimeMark(trackingTimeUnit.toMillis(trackingTime));
       activeMark = new TimeMark(trackingTimeUnit.toMillis(trackingTime));
@@ -57,24 +57,24 @@ public class ProcessorHistory {
       }
    }
 
-   protected void addIdleTime (long begin, long end) {
+   protected void addIdleTime (StopWatch stopWatch) {
 
       lock.writeLock().lock();
       try {
-         idleMark.additional(begin, end);
-         activeMark.update(end);
+         idleMark.additional(stopWatch.getStart(), stopWatch.getStop());
+         activeMark.update(stopWatch.getStop());
       }
       finally {
          lock.writeLock().unlock();
       }
    }
 
-   protected void addActiveTime (long begin, long end) {
+   protected void addActiveTime (StopWatch stopWatch) {
 
       lock.writeLock().lock();
       try {
-         activeMark.additional(begin, end);
-         idleMark.update(end);
+         activeMark.additional(stopWatch.getStart(), stopWatch.getStop());
+         idleMark.update(stopWatch.getStop());
       }
       finally {
          lock.writeLock().unlock();

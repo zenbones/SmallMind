@@ -321,7 +321,13 @@ public class ClusterHub implements MulticastEventHandler {
 
    public void finalize () {
 
-      clusterUpdateTimer.finish();
+      try {
+         clusterUpdateTimer.finish();
+      }
+      catch (InterruptedException interruptedException) {
+         logError(interruptedException);
+      }
+
       eventTransmitter.finish();
    }
 

@@ -3,6 +3,7 @@ package org.smallmind.swing.progress;
 import java.awt.GridLayout;
 import javax.swing.JPanel;
 import javax.swing.JProgressBar;
+import org.smallmind.scribe.pen.LoggerManager;
 
 public class ProgressPanel extends JPanel {
 
@@ -43,6 +44,11 @@ public class ProgressPanel extends JPanel {
 
    public void finalize () {
 
-      progressTimer.finish();
+      try {
+         progressTimer.finish();
+      }
+      catch (InterruptedException interruptedException) {
+         LoggerManager.getLogger(ProgressPanel.class).error(interruptedException);
+      }
    }
 }

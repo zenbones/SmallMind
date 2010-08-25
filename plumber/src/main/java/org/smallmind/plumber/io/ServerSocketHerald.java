@@ -4,6 +4,9 @@ import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.SocketTimeoutException;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 import org.smallmind.nutsnbolts.util.Counter;
 import org.smallmind.quorum.pool.ComponentFactory;
 import org.smallmind.quorum.pool.ComponentPool;
@@ -17,12 +20,12 @@ public class ServerSocketHerald implements ComponentFactory<SocketWorker>, Runna
    private final Counter acceptCounter;
 
    private Logger logger;
-   private Thread runnableThread;
+   private CountDownLatch exitLatch;
+   private CountDownLatch pulseLatch;
+   private AtomicBoolean finished = new AtomicBoolean(false);
    private ComponentPool<SocketWorker> workerPool;
    private SocketWorkerFactory workerFactory;
    private ServerSocket serverSocket;
-   private boolean finished = false;
-   private boolean exited = false;
    private int maxAccepted;
 
    public ServerSocketHerald (Logger logger, SocketWorkerFactory workerFactory, ServerSocket serverSocket, int maxAccepted, int poolSize)
@@ -36,6 +39,8 @@ public class ServerSocketHerald implements ComponentFactory<SocketWorker>, Runna
       serverSocket.setSoTimeout(1000);
 
       acceptCounter = new Counter();
+      pulseLatch = new CountDownLatch(1);
+      exitLatch = new CountDownLatch(1);
 
       workerPool = new ComponentPool<SocketWorker>(this, poolSize, PoolMode.EXPANDING_POOL);
    }
@@ -46,19 +51,14 @@ public class ServerSocketHerald implements ComponentFactory<SocketWorker>, Runna
       return workerFactory.createWorker(logger, this);
    }
 
-   public void finish () {
+   public void finish ()
+      throws InterruptedException {
 
-      finished = true;
-
-      while (!exited) {
-         runnableThread.interrupt();
-
-         try {
-            Thread.sleep(100);
-         }
-         catch (InterruptedException i) {
-         }
+      if (finished.compareAndSet(false, true)) {
+         pulseLatch.countDown();
       }
+
+      exitLatch.await();
    }
 
    public void run () {
@@ -68,9 +68,7 @@ public class ServerSocketHerald implements ComponentFactory<SocketWorker>, Runna
       Thread workThread;
       boolean annointed;
 
-      runnableThread = Thread.currentThread();
-
-      while (!finished) {
+      while (!finished.get()) {
          try {
             annointed = false;
             synchronized (acceptCounter) {
@@ -93,13 +91,15 @@ public class ServerSocketHerald implements ComponentFactory<SocketWorker>, Runna
                   workThread.start();
                }
                catch (SocketTimeoutException t) {
+                  logger.error(t);
                }
             }
             else {
                try {
-                  Thread.sleep(100);
+                  pulseLatch.await(100, TimeUnit.MILLISECONDS);
                }
-               catch (InterruptedException i) {
+               catch (InterruptedException interruptedException) {
+                  logger.error(interruptedException);
                }
             }
          }
@@ -108,7 +108,7 @@ public class ServerSocketHerald implements ComponentFactory<SocketWorker>, Runna
          }
       }
 
-      exited = true;
+      exitLatch.countDown();
    }
 
    public void returnConnection (SocketWorker worker) {

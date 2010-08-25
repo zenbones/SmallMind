@@ -7,16 +7,25 @@ import org.smallmind.scribe.pen.LoggerManager;
 public class EventProcessor<I extends Event, O extends Event> implements Runnable {
 
    private CountDownLatch exitLatch;
-   private StageController<I, O> stageController;
-   private ProcessorHistory history;
+   private EventQueue<I> eventQueue;
+   private ProcessorMonitor monitor;
+   private TimeUnit pollTimeUnit;
    private boolean stopped = false;
+   private long pollTimeout;
 
-   public EventProcessor (StageController<I, O> stageController, long trackingTime, TimeUnit trackingTimeUnit) {
+   public EventProcessor (EventQueue<I> eventQueue, long pollTimeout, TimeUnit pollTimeUnit, long trackingTime, TimeUnit trackingTimeUnit) {
 
-      this.stageController = stageController;
+      this.eventQueue = eventQueue;
+      this.pollTimeout = pollTimeout;
+      this.pollTimeUnit = pollTimeUnit;
 
-      history = new ProcessorHistory(trackingTime, trackingTimeUnit);
+      monitor = new ProcessorMonitor(trackingTime, trackingTimeUnit);
       exitLatch = new CountDownLatch(1);
+   }
+
+   protected ProcessorMonitor getMonitor () {
+
+      return monitor;
    }
 
    public boolean isRunning () {
@@ -34,18 +43,18 @@ public class EventProcessor<I extends Event, O extends Event> implements Runnabl
    public void run () {
 
       I inputEvent;
-      long startTime;
+      StopWatch stopWatch = new StopWatch();
 
       try {
+         stopWatch.click();
          while (!stopped) {
-            startTime = System.currentTimeMillis();
-            if ((inputEvent = stageController.pollQueue()) != null) {
-               history.addIdleTime(startTime, startTime = System.currentTimeMillis());
+            if ((inputEvent = eventQueue.poll(pollTimeout, pollTimeUnit)) != null) {
+               monitor.addIdleTime(stopWatch.click());
                //TODO: HandleEvent
-               history.addActiveTime(startTime, System.currentTimeMillis());
+               monitor.addActiveTime(stopWatch.click());
             }
             else {
-               history.addIdleTime(startTime, System.currentTimeMillis());
+               monitor.addIdleTime(stopWatch.click());
             }
          }
       }
@@ -54,7 +63,6 @@ public class EventProcessor<I extends Event, O extends Event> implements Runnabl
          LoggerManager.getLogger(EventProcessor.class).error(interruptedException);
       }
 
-      stageController.decreasePool(this);
       exitLatch.countDown();
    }
 }

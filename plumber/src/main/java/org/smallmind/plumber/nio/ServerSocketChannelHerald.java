@@ -6,6 +6,9 @@ import java.nio.channels.Selector;
 import java.nio.channels.ServerSocketChannel;
 import java.util.Iterator;
 import java.util.Set;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 import org.smallmind.nutsnbolts.util.Counter;
 import org.smallmind.quorum.pool.ComponentFactory;
 import org.smallmind.quorum.pool.ComponentPool;
@@ -19,12 +22,12 @@ public class ServerSocketChannelHerald implements ComponentFactory<SocketChannel
    private final Counter acceptCounter;
 
    private Logger logger;
-   private Thread runnableThread;
+   private CountDownLatch exitLatch;
+   private CountDownLatch pulseLatch;
+   private AtomicBoolean finished = new AtomicBoolean(false);
    private ComponentPool<SocketChannelWorker> workerPool;
    private SocketChannelWorkerFactory workerFactory;
    private Selector acceptSelector;
-   private boolean finished = false;
-   private boolean exited = false;
    private int maxAccepted;
 
    public ServerSocketChannelHerald (Logger logger, SocketChannelWorkerFactory workerFactory, ServerSocketChannel serverSocketChannel, int maxAccepted, int poolSize)
@@ -40,6 +43,8 @@ public class ServerSocketChannelHerald implements ComponentFactory<SocketChannel
       serverSocketChannel.register(acceptSelector, SelectionKey.OP_ACCEPT);
 
       acceptCounter = new Counter();
+      pulseLatch = new CountDownLatch(1);
+      exitLatch = new CountDownLatch(1);
 
       workerPool = new ComponentPool<SocketChannelWorker>(this, poolSize, PoolMode.EXPANDING_POOL);
    }
@@ -50,20 +55,14 @@ public class ServerSocketChannelHerald implements ComponentFactory<SocketChannel
       return workerFactory.createWorker(logger, this);
    }
 
-   public void finish () {
+   public void finish ()
+      throws InterruptedException {
 
-      finished = true;
-
-      while (!exited) {
-         runnableThread.interrupt();
-
-         try {
-            Thread.sleep(100);
-         }
-         catch (InterruptedException i) {
-         }
+      if (finished.compareAndSet(false, true)) {
+         pulseLatch.countDown();
       }
 
+      exitLatch.await();
    }
 
    public void run () {
@@ -76,15 +75,13 @@ public class ServerSocketChannelHerald implements ComponentFactory<SocketChannel
       SelectionKey readyKey;
       boolean accepted;
 
-      runnableThread = Thread.currentThread();
-
-      while (!finished) {
+      while (!finished.get()) {
          try {
             if (acceptSelector.select(1000) > 0) {
                readyKeySet = acceptSelector.selectedKeys();
                readyKeyIter = readyKeySet.iterator();
                while (readyKeyIter.hasNext()) {
-                  if (finished) {
+                  if (finished.get()) {
                      break;
                   }
 
@@ -109,9 +106,10 @@ public class ServerSocketChannelHerald implements ComponentFactory<SocketChannel
 
                   if (!accepted) {
                      try {
-                        Thread.sleep(100);
+                        pulseLatch.await(100, TimeUnit.MILLISECONDS);
                      }
-                     catch (InterruptedException i) {
+                     catch (InterruptedException interruptedException) {
+                        logger.error(interruptedException);
                      }
                   }
                }
@@ -122,7 +120,7 @@ public class ServerSocketChannelHerald implements ComponentFactory<SocketChannel
          }
       }
 
-      exited = true;
+      exitLatch.countDown();
    }
 
    public void returnConnection (SocketChannelWorker worker) {
@@ -133,5 +131,4 @@ public class ServerSocketChannelHerald implements ComponentFactory<SocketChannel
          acceptCounter.dec();
       }
    }
-
 }

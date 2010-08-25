@@ -3,18 +3,11 @@ package org.smallmind.seda;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 
-public class EventQueue<I extends Event, O extends Event> {
+public class EventQueue<I extends Event> {
 
-   private StageController<I, O> stageController;
    private LinkedBlockingQueue<I> internalQueue;
-   double expansionFactor;
-   int maxQueueCapacity;
 
-   public EventQueue (StageController<I, O> stageController, int maxQueueCapacity, double expansionFactor) {
-
-      this.stageController = stageController;
-      this.maxQueueCapacity = maxQueueCapacity;
-      this.expansionFactor = expansionFactor;
+   public EventQueue (int maxQueueCapacity) {
 
       internalQueue = new LinkedBlockingQueue<I>(maxQueueCapacity);
    }
@@ -23,10 +16,6 @@ public class EventQueue<I extends Event, O extends Event> {
       throws InterruptedException {
 
       internalQueue.put(event);
-      //TODO: work this out for real
-      if (internalQueue.size() > (maxQueueCapacity * expansionFactor)) {
-         stageController.increasePool();
-      }
    }
 
    protected I poll (long timeout, TimeUnit unit)
