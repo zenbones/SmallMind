@@ -12,11 +12,11 @@ public class ThreadPool<I extends Event, O extends Event> {
    private CountDownLatch exitLatch;
    private AtomicBoolean stopped = new AtomicBoolean(false);
    private EventQueue<I> eventQueue;
+   private DurationMonitor durationMonitor;
    private TimeUnit pollTimeUnit;
    private TimeUnit trackingTimeUnit;
    private long pollTimeout;
    private long trackingTime;
-   private int maxTracked;
    private int minPoolSize;
    private int maxPoolSize;
 
@@ -27,10 +27,10 @@ public class ThreadPool<I extends Event, O extends Event> {
       this.pollTimeUnit = pollTimeUnit;
       this.trackingTime = trackingTime;
       this.trackingTimeUnit = trackingTimeUnit;
-      this.maxTracked = maxTracked;
       this.minPoolSize = minPoolSize;
       this.maxPoolSize = maxPoolSize;
 
+      durationMonitor = new DurationMonitor(maxTracked);
       processorList = new LinkedList<EventProcessor<I, O>>();
       exitLatch = new CountDownLatch(1);
    }
@@ -49,7 +49,7 @@ public class ThreadPool<I extends Event, O extends Event> {
                Thread processorThread;
                EventProcessor<I, O> eventProcessor;
 
-               eventProcessor = new EventProcessor<I, O>(eventQueue, pollTimeout, pollTimeUnit, trackingTime, trackingTimeUnit, maxTracked);
+               eventProcessor = new EventProcessor<I, O>(eventQueue, durationMonitor, pollTimeout, pollTimeUnit, trackingTime, trackingTimeUnit);
                processorThread = new Thread(eventProcessor);
                processorThread.start();
 

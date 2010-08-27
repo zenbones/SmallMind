@@ -13,13 +13,13 @@ public class EventProcessor<I extends Event, O extends Event> implements Runnabl
    private boolean stopped = false;
    private long pollTimeout;
 
-   public EventProcessor (EventQueue<I> eventQueue, long pollTimeout, TimeUnit pollTimeUnit, long trackingTime, TimeUnit trackingTimeUnit, int maxTracked) {
+   public EventProcessor (EventQueue<I> eventQueue, DurationMonitor durationMonitor, long pollTimeout, TimeUnit pollTimeUnit, long trackingTime, TimeUnit trackingTimeUnit) {
 
       this.eventQueue = eventQueue;
       this.pollTimeout = pollTimeout;
       this.pollTimeUnit = pollTimeUnit;
 
-      monitor = new WorkMonitor(trackingTime, trackingTimeUnit, maxTracked);
+      monitor = new WorkMonitor(durationMonitor, trackingTime, trackingTimeUnit);
       exitLatch = new CountDownLatch(1);
    }
 

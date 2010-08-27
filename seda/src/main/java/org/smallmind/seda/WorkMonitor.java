@@ -10,13 +10,14 @@ public class WorkMonitor {
    private ReentrantReadWriteLock lock;
    private TimeNormalizer idleNormalizer;
    private TimeNormalizer activeNormalizer;
-   private TimeAccumulator activeAccumulator;
+   private DurationMonitor durationMonitor;
 
-   public WorkMonitor (long trackingTime, TimeUnit trackingTimeUnit, int maxActiveTimes) {
+   public WorkMonitor (DurationMonitor durationMonitor, long trackingTime, TimeUnit trackingTimeUnit) {
+
+      this.durationMonitor = durationMonitor;
 
       idleNormalizer = new TimeNormalizer(trackingTimeUnit.toMillis(trackingTime));
       activeNormalizer = new TimeNormalizer(trackingTimeUnit.toMillis(trackingTime));
-      activeAccumulator = new TimeAccumulator(maxActiveTimes);
 
       lock = new ReentrantReadWriteLock();
    }
@@ -61,11 +62,6 @@ public class WorkMonitor {
       }
    }
 
-   public double getActiveAverageNanos () {
-
-      return activeAccumulator.getAverage();
-   }
-
    protected void addIdleTime (StopWatch stopWatch) {
 
       double end = stopWatch.getStartMillis() + (stopWatch.getDurationNanos() / BY_MILLIS);
@@ -88,40 +84,10 @@ public class WorkMonitor {
       try {
          activeNormalizer.additional(stopWatch.getStartMillis(), end);
          idleNormalizer.update(end);
-         activeAccumulator.accumulate(stopWatch.getDurationNanos());
+         durationMonitor.accumulate(stopWatch.getDurationNanos());
       }
       finally {
          lock.writeLock().unlock();
-      }
-   }
-
-   private static class TimeAccumulator {
-
-      private boolean initialized = false;
-      private long[] durations;
-      private long durationTotal = 0;
-      private int index = 0;
-
-      public TimeAccumulator (int size) {
-
-         durations = new long[size];
-      }
-
-      public double getAverage () {
-
-         return durationTotal / (double)((initialized) ? durations.length : index);
-      }
-
-      public void accumulate (long duration) {
-
-         durationTotal -= durations[index];
-         durations[index++] = duration;
-         durationTotal += duration;
-
-         if (index == durations.length) {
-            initialized = true;
-            index = 0;
-         }
       }
    }
 
