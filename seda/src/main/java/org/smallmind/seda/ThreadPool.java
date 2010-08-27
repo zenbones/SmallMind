@@ -4,6 +4,7 @@ import java.util.LinkedList;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
+import org.smallmind.scribe.pen.LoggerManager;
 
 public class ThreadPool<I extends Event, O extends Event> {
 
@@ -13,6 +14,7 @@ public class ThreadPool<I extends Event, O extends Event> {
    private AtomicBoolean stopped = new AtomicBoolean(false);
    private EventQueue<I> eventQueue;
    private DurationMonitor durationMonitor;
+   private HomeostaticRegulator<I, O> homeostaticRegulator;
    private TimeUnit pollTimeUnit;
    private TimeUnit trackingTimeUnit;
    private long pollTimeout;
@@ -21,6 +23,8 @@ public class ThreadPool<I extends Event, O extends Event> {
    private int maxPoolSize;
 
    public ThreadPool (EventQueue<I> eventQueue, int minPoolSize, int maxPoolSize, long pollTimeout, TimeUnit pollTimeUnit, long trackingTime, TimeUnit trackingTimeUnit, int maxTracked, long monitorPulseTime, TimeUnit monitorPulseTimeUnit) {
+
+      Thread regulatorThread;
 
       this.eventQueue = eventQueue;
       this.pollTimeout = pollTimeout;
@@ -32,6 +36,10 @@ public class ThreadPool<I extends Event, O extends Event> {
 
       durationMonitor = new DurationMonitor(maxTracked);
       processorList = new LinkedList<EventProcessor<I, O>>();
+
+      regulatorThread = new Thread(homeostaticRegulator = new HomeostaticRegulator<I, O>(this, durationMonitor, processorList, monitorPulseTime, monitorPulseTimeUnit));
+      regulatorThread.start();
+
       exitLatch = new CountDownLatch(1);
    }
 
@@ -42,8 +50,8 @@ public class ThreadPool<I extends Event, O extends Event> {
 
    protected synchronized void increase () {
 
-      if (!stopped.get()) {
-         synchronized (processorList) {
+      synchronized (processorList) {
+         if (!stopped.get()) {
             if (processorList.size() < maxPoolSize) {
 
                Thread processorThread;
@@ -62,7 +70,18 @@ public class ThreadPool<I extends Event, O extends Event> {
    protected void decrease (EventProcessor<I, O> eventProcessor) {
 
       synchronized (processorList) {
-         processorList.remove(eventProcessor);
+         if (!stopped.get()) {
+            if (processorList.size() > minPoolSize) {
+               processorList.remove(eventProcessor);
+
+               try {
+                  eventProcessor.stop();
+               }
+               catch (InterruptedException interruptedException) {
+                  LoggerManager.getLogger(ThreadPool.class).error(interruptedException);
+               }
+            }
+         }
       }
    }
 
@@ -70,18 +89,23 @@ public class ThreadPool<I extends Event, O extends Event> {
       throws InterruptedException {
 
       if (stopped.compareAndSet(false, true)) {
+         try {
+            homeostaticRegulator.stop();
+         }
+         catch (InterruptedException interruptedException) {
+            LoggerManager.getLogger(ThreadPool.class).error(interruptedException);
+         }
 
-         EventProcessor<I, O> eventProcessor;
-
-         do {
-            synchronized (processorList) {
-               eventProcessor = processorList.peek();
+         synchronized (processorList) {
+            while (!processorList.isEmpty()) {
+               try {
+                  processorList.removeFirst().stop();
+               }
+               catch (InterruptedException interruptedException) {
+                  LoggerManager.getLogger(ThreadPool.class).error(interruptedException);
+               }
             }
-
-            if (eventProcessor != null) {
-               eventProcessor.stop();
-            }
-         } while (eventProcessor != null);
+         }
 
          exitLatch.countDown();
       }

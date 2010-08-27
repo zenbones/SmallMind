@@ -28,6 +28,16 @@ public class EventProcessor<I extends Event, O extends Event> implements Runnabl
       return monitor;
    }
 
+   public double getIdlePercentage () {
+
+      return monitor.getIdlePercentage();
+   }
+
+   public double getActivePercentage () {
+
+      return monitor.getActivePercentage();
+   }
+
    public boolean isRunning () {
 
       return !stopped;

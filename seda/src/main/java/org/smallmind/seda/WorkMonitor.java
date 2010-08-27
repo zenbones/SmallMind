@@ -35,7 +35,7 @@ public class WorkMonitor {
             return 0;
          }
 
-         return idleTime / totalTime;
+         return (idleTime / totalTime) * 100;
       }
       finally {
          lock.readLock().unlock();
@@ -55,7 +55,7 @@ public class WorkMonitor {
             return 0;
          }
 
-         return activeTime / totalTime;
+         return (activeTime / totalTime) * 100;
       }
       finally {
          lock.readLock().unlock();

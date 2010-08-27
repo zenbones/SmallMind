@@ -1,11 +1,14 @@
 package org.smallmind.seda;
 
+import java.util.LinkedList;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import org.smallmind.scribe.pen.LoggerManager;
 
 public class HomeostaticRegulator<I extends Event, O extends Event> implements Runnable {
+
+   private final LinkedList<EventProcessor<I, O>> processorList;
 
    private CountDownLatch exitLatch;
    private CountDownLatch pulseLatch;
@@ -14,9 +17,10 @@ public class HomeostaticRegulator<I extends Event, O extends Event> implements R
    private TimeUnit monitorPulseTimeUnit;
    private long monitorPulseTime;
 
-   public HomeostaticRegulator (ThreadPool<I, O> threadPool, long monitorPulseTime, TimeUnit monitorPulseTimeUnit) {
+   public HomeostaticRegulator (ThreadPool<I, O> threadPool, DurationMonitor durationMonitor, LinkedList<EventProcessor<I, O>> processorList, long monitorPulseTime, TimeUnit monitorPulseTimeUnit) {
 
       this.threadPool = threadPool;
+      this.processorList = processorList;
       this.monitorPulseTime = monitorPulseTime;
       this.monitorPulseTimeUnit = monitorPulseTimeUnit;
 
@@ -51,6 +55,17 @@ public class HomeostaticRegulator<I extends Event, O extends Event> implements R
 
          if (!stopped.get()) {
 
+            double idlePercentage = 0;
+            double activePercentage = 0;
+
+            synchronized (processorList) {
+               for (EventProcessor<I, O> eventProcessor : processorList) {
+                  idlePercentage += eventProcessor.getIdlePercentage();
+                  activePercentage += eventProcessor.getActivePercentage();
+               }
+            }
+
+            //TODO: Make decisions...
          }
       }
 
