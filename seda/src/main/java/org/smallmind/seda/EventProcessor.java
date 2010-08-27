@@ -8,22 +8,22 @@ public class EventProcessor<I extends Event, O extends Event> implements Runnabl
 
    private CountDownLatch exitLatch;
    private EventQueue<I> eventQueue;
-   private ProcessorMonitor monitor;
+   private WorkMonitor monitor;
    private TimeUnit pollTimeUnit;
    private boolean stopped = false;
    private long pollTimeout;
 
-   public EventProcessor (EventQueue<I> eventQueue, long pollTimeout, TimeUnit pollTimeUnit, long trackingTime, TimeUnit trackingTimeUnit) {
+   public EventProcessor (EventQueue<I> eventQueue, long pollTimeout, TimeUnit pollTimeUnit, long trackingTime, TimeUnit trackingTimeUnit, int maxTracked) {
 
       this.eventQueue = eventQueue;
       this.pollTimeout = pollTimeout;
       this.pollTimeUnit = pollTimeUnit;
 
-      monitor = new ProcessorMonitor(trackingTime, trackingTimeUnit);
+      monitor = new WorkMonitor(trackingTime, trackingTimeUnit, maxTracked);
       exitLatch = new CountDownLatch(1);
    }
 
-   protected ProcessorMonitor getMonitor () {
+   protected WorkMonitor getMonitor () {
 
       return monitor;
    }

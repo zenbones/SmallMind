@@ -16,16 +16,18 @@ public class ThreadPool<I extends Event, O extends Event> {
    private TimeUnit trackingTimeUnit;
    private long pollTimeout;
    private long trackingTime;
+   private int maxTracked;
    private int minPoolSize;
    private int maxPoolSize;
 
-   public ThreadPool (EventQueue<I> eventQueue, int minPoolSize, int maxPoolSize, long pollTimeout, TimeUnit pollTimeUnit, long trackingTime, TimeUnit trackingTimeUnit, long monitorPulseTime, TimeUnit monitorPulseTimeUnit) {
+   public ThreadPool (EventQueue<I> eventQueue, int minPoolSize, int maxPoolSize, long pollTimeout, TimeUnit pollTimeUnit, long trackingTime, TimeUnit trackingTimeUnit, int maxTracked, long monitorPulseTime, TimeUnit monitorPulseTimeUnit) {
 
       this.eventQueue = eventQueue;
       this.pollTimeout = pollTimeout;
       this.pollTimeUnit = pollTimeUnit;
       this.trackingTime = trackingTime;
       this.trackingTimeUnit = trackingTimeUnit;
+      this.maxTracked = maxTracked;
       this.minPoolSize = minPoolSize;
       this.maxPoolSize = maxPoolSize;
 
@@ -47,7 +49,7 @@ public class ThreadPool<I extends Event, O extends Event> {
                Thread processorThread;
                EventProcessor<I, O> eventProcessor;
 
-               eventProcessor = new EventProcessor<I, O>(eventQueue, pollTimeout, pollTimeUnit, trackingTime, trackingTimeUnit);
+               eventProcessor = new EventProcessor<I, O>(eventQueue, pollTimeout, pollTimeUnit, trackingTime, trackingTimeUnit, maxTracked);
                processorThread = new Thread(eventProcessor);
                processorThread.start();
 

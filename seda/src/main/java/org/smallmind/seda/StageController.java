@@ -12,13 +12,13 @@ public class StageController<I extends Event, O extends Event> {
    private long maxIdleTime;
    private long pollTimeout;
 
-   public StageController (StageFactory<I, O> stageFactory, int maxQueueCapacity, int minPoolSize, int maxPoolSize, long pollTimeout, TimeUnit pollTimeUnit, long trackingTime, TimeUnit trackingTimeUnit, long monitorPulseTime, TimeUnit monitorPulseTimeUnit) {
+   public StageController (StageFactory<I, O> stageFactory, int maxQueueCapacity, int minPoolSize, int maxPoolSize, long pollTimeout, TimeUnit pollTimeUnit, long trackingTime, TimeUnit trackingTimeUnit, int maxTracked, long monitorPulseTime, TimeUnit monitorPulseTimeUnit) {
 
       this.stageFactory = stageFactory;
       this.pollTimeout = pollTimeout;
       this.pollTimeUnit = pollTimeUnit;
 
       eventQueue = new EventQueue<I>(maxQueueCapacity);
-      threadPool = new ThreadPool<I, O>(eventQueue, minPoolSize, maxPoolSize, pollTimeout, pollTimeUnit, trackingTime, trackingTimeUnit, monitorPulseTime, monitorPulseTimeUnit);
+      threadPool = new ThreadPool<I, O>(eventQueue, minPoolSize, maxPoolSize, pollTimeout, pollTimeUnit, trackingTime, trackingTimeUnit, maxTracked, monitorPulseTime, monitorPulseTimeUnit);
    }
 }
