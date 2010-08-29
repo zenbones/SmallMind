@@ -60,9 +60,16 @@ public class HomeostaticRegulator<I extends Event, O extends Event> implements R
                   idlePercentage += eventProcessor.getIdlePercentage();
                   activePercentage += eventProcessor.getActivePercentage();
                }
-            }
 
-            //TODO: Make decisions...
+               idlePercentage /= processorList.size();
+               activePercentage /= processorList.size();
+            }
+            if (sedaConfiguration.getActiveUpShiftPercentage() >= activePercentage) {
+               threadPool.increase();
+            }
+            if (sedaConfiguration.getInactiveDownShiftPercentage() >= idlePercentage) {
+               threadPool.decrease();
+            }
          }
       }
 

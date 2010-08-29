@@ -56,18 +56,18 @@ public class ThreadPool<I extends Event, O extends Event> {
       }
    }
 
-   protected void decrease (EventProcessor<I, O> eventProcessor) {
+   protected void decrease () {
 
       synchronized (processorList) {
          if (!stopped.get()) {
             if ((sedaConfiguration.getMinThreadPoolSize() == 0) || (processorList.size() > sedaConfiguration.getMinThreadPoolSize())) {
-               processorList.remove(eventProcessor);
-
-               try {
-                  eventProcessor.stop();
-               }
-               catch (InterruptedException interruptedException) {
-                  LoggerManager.getLogger(ThreadPool.class).error(interruptedException);
+               if (!processorList.isEmpty()) {
+                  try {
+                     processorList.removeFirst().stop();
+                  }
+                  catch (InterruptedException interruptedException) {
+                     LoggerManager.getLogger(ThreadPool.class).error(interruptedException);
+                  }
                }
             }
          }

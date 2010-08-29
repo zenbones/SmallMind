@@ -7,6 +7,8 @@ public class SedaConfiguration {
    private TimeUnit queuePollTimeUnit;
    private TimeUnit workTrackingTimeUnit;
    private TimeUnit regulatorPulseTimeUnit;
+   private double inactiveDownShiftPercentage;
+   private double activeUpShiftPercentage;
    private long queuePollTimeout;
    private long workTrackingTime;
    private long regulatorPulseTime;
@@ -17,21 +19,18 @@ public class SedaConfiguration {
 
    public SedaConfiguration () {
 
-      this(Integer.MAX_VALUE, 300, TimeUnit.MILLISECONDS, 1, 0, 3, TimeUnit.SECONDS, 30, 500, TimeUnit.MILLISECONDS);
-   }
-
-   public SedaConfiguration (int maxQueueCapacity, long queuePollTimeout, TimeUnit queuePollTimeUnit, int minThreadPoolSize, int maxThreadPoolSize, long workTrackingTime, TimeUnit workTrackingTimeUnit, int maxTrackedInvocations, long regulatorPulseTime, TimeUnit regulatorPulseTimeUnit) {
-
-      this.maxQueueCapacity = maxQueueCapacity;
-      this.queuePollTimeout = queuePollTimeout;
-      this.queuePollTimeUnit = queuePollTimeUnit;
-      this.minThreadPoolSize = minThreadPoolSize;
-      this.maxThreadPoolSize = maxThreadPoolSize;
-      this.workTrackingTime = workTrackingTime;
-      this.workTrackingTimeUnit = workTrackingTimeUnit;
-      this.maxTrackedInvocations = maxTrackedInvocations;
-      this.regulatorPulseTime = regulatorPulseTime;
-      this.regulatorPulseTimeUnit = regulatorPulseTimeUnit;
+      setMaxQueueCapacity(Integer.MAX_VALUE);
+      setQueuePollTimeout(300);
+      setQueuePollTimeUnit(TimeUnit.MILLISECONDS);
+      setMinThreadPoolSize(1);
+      setMaxThreadPoolSize(0);
+      setWorkTrackingTime(3);
+      setWorkTrackingTimeUnit(TimeUnit.SECONDS);
+      setMaxTrackedInvocations(30);
+      setRegulatorPulseTime(500);
+      setRegulatorPulseTimeUnit(TimeUnit.MILLISECONDS);
+      setInactiveDownShiftPercentage(30);
+      setActiveUpShiftPercentage(90);
    }
 
    public TimeUnit getQueuePollTimeUnit () {
@@ -132,5 +131,25 @@ public class SedaConfiguration {
    public void setMaxTrackedInvocations (int maxTrackedInvocations) {
 
       this.maxTrackedInvocations = maxTrackedInvocations;
+   }
+
+   public double getInactiveDownShiftPercentage () {
+
+      return inactiveDownShiftPercentage;
+   }
+
+   public void setInactiveDownShiftPercentage (double inactiveDownShiftPercentage) {
+
+      this.inactiveDownShiftPercentage = inactiveDownShiftPercentage;
+   }
+
+   public double getActiveUpShiftPercentage () {
+
+      return activeUpShiftPercentage;
+   }
+
+   public void setActiveUpShiftPercentage (double activeUpShiftPercentage) {
+
+      this.activeUpShiftPercentage = activeUpShiftPercentage;
    }
 }
