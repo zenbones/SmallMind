@@ -2,7 +2,6 @@ package org.smallmind.seda;
 
 import java.util.LinkedList;
 import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import org.smallmind.scribe.pen.LoggerManager;
 
@@ -12,32 +11,22 @@ public class ThreadPool<I extends Event, O extends Event> {
 
    private CountDownLatch exitLatch;
    private AtomicBoolean stopped = new AtomicBoolean(false);
+   private SedaConfiguration sedaConfiguration;
    private EventQueue<I> eventQueue;
    private DurationMonitor durationMonitor;
    private HomeostaticRegulator<I, O> homeostaticRegulator;
-   private TimeUnit pollTimeUnit;
-   private TimeUnit trackingTimeUnit;
-   private long pollTimeout;
-   private long trackingTime;
-   private int minPoolSize;
-   private int maxPoolSize;
 
-   public ThreadPool (EventQueue<I> eventQueue, int minPoolSize, int maxPoolSize, long pollTimeout, TimeUnit pollTimeUnit, long trackingTime, TimeUnit trackingTimeUnit, int maxTracked, long monitorPulseTime, TimeUnit monitorPulseTimeUnit) {
+   public ThreadPool (EventQueue<I> eventQueue, SedaConfiguration sedaConfiguration) {
 
       Thread regulatorThread;
 
+      this.sedaConfiguration = sedaConfiguration;
       this.eventQueue = eventQueue;
-      this.pollTimeout = pollTimeout;
-      this.pollTimeUnit = pollTimeUnit;
-      this.trackingTime = trackingTime;
-      this.trackingTimeUnit = trackingTimeUnit;
-      this.minPoolSize = minPoolSize;
-      this.maxPoolSize = maxPoolSize;
 
-      durationMonitor = new DurationMonitor(maxTracked);
+      durationMonitor = new DurationMonitor(sedaConfiguration.getMaxTrackedInvocations());
       processorList = new LinkedList<EventProcessor<I, O>>();
 
-      regulatorThread = new Thread(homeostaticRegulator = new HomeostaticRegulator<I, O>(this, durationMonitor, processorList, monitorPulseTime, monitorPulseTimeUnit));
+      regulatorThread = new Thread(homeostaticRegulator = new HomeostaticRegulator<I, O>(this, durationMonitor, processorList, sedaConfiguration));
       regulatorThread.start();
 
       exitLatch = new CountDownLatch(1);
@@ -52,12 +41,12 @@ public class ThreadPool<I extends Event, O extends Event> {
 
       synchronized (processorList) {
          if (!stopped.get()) {
-            if (processorList.size() < maxPoolSize) {
+            if ((sedaConfiguration.getMaxThreadPoolSize() == 0) || (processorList.size() < sedaConfiguration.getMaxThreadPoolSize())) {
 
                Thread processorThread;
                EventProcessor<I, O> eventProcessor;
 
-               eventProcessor = new EventProcessor<I, O>(eventQueue, durationMonitor, pollTimeout, pollTimeUnit, trackingTime, trackingTimeUnit);
+               eventProcessor = new EventProcessor<I, O>(eventQueue, durationMonitor, sedaConfiguration);
                processorThread = new Thread(eventProcessor);
                processorThread.start();
 
@@ -71,7 +60,7 @@ public class ThreadPool<I extends Event, O extends Event> {
 
       synchronized (processorList) {
          if (!stopped.get()) {
-            if (processorList.size() > minPoolSize) {
+            if ((sedaConfiguration.getMinThreadPoolSize() == 0) || (processorList.size() > sedaConfiguration.getMinThreadPoolSize())) {
                processorList.remove(eventProcessor);
 
                try {

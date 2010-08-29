@@ -2,7 +2,6 @@ package org.smallmind.seda;
 
 import java.util.LinkedList;
 import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import org.smallmind.scribe.pen.LoggerManager;
 
@@ -13,16 +12,14 @@ public class HomeostaticRegulator<I extends Event, O extends Event> implements R
    private CountDownLatch exitLatch;
    private CountDownLatch pulseLatch;
    private AtomicBoolean stopped = new AtomicBoolean(false);
+   private SedaConfiguration sedaConfiguration;
    private ThreadPool<I, O> threadPool;
-   private TimeUnit monitorPulseTimeUnit;
-   private long monitorPulseTime;
 
-   public HomeostaticRegulator (ThreadPool<I, O> threadPool, DurationMonitor durationMonitor, LinkedList<EventProcessor<I, O>> processorList, long monitorPulseTime, TimeUnit monitorPulseTimeUnit) {
+   public HomeostaticRegulator (ThreadPool<I, O> threadPool, DurationMonitor durationMonitor, LinkedList<EventProcessor<I, O>> processorList, SedaConfiguration sedaConfiguration) {
 
       this.threadPool = threadPool;
       this.processorList = processorList;
-      this.monitorPulseTime = monitorPulseTime;
-      this.monitorPulseTimeUnit = monitorPulseTimeUnit;
+      this.sedaConfiguration = sedaConfiguration;
 
       exitLatch = new CountDownLatch(1);
       pulseLatch = new CountDownLatch(1);
@@ -47,7 +44,7 @@ public class HomeostaticRegulator<I extends Event, O extends Event> implements R
 
       while (!stopped.get()) {
          try {
-            pulseLatch.await(monitorPulseTime, monitorPulseTimeUnit);
+            pulseLatch.await(sedaConfiguration.getRegulatorPulseTime(), sedaConfiguration.getRegulatorPulseTimeUnit());
          }
          catch (InterruptedException interruptedException) {
             LoggerManager.getLogger(HomeostaticRegulator.class).error(interruptedException);
