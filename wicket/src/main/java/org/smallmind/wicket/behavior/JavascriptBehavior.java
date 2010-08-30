@@ -12,12 +12,12 @@ public class JavascriptBehavior extends AbstractBehavior {
    private JavascriptModel javascriptModel;
    private String javascriptFileName;
 
-   public JavascriptBehavior (String javascriptFileName, Map<String, String> substitutionMap) {
+   public JavascriptBehavior (String javascriptFileName, Map<String, Object> substitutionMap) {
 
       this(null, javascriptFileName, substitutionMap);
    }
 
-   public JavascriptBehavior (Class scopeClass, String javascriptFileName, Map<String, String> substitutionMap) {
+   public JavascriptBehavior (Class scopeClass, String javascriptFileName, Map<String, Object> substitutionMap) {
 
       this.scopeClass = scopeClass;
       this.javascriptFileName = javascriptFileName;
@@ -30,16 +30,16 @@ public class JavascriptBehavior extends AbstractBehavior {
       component.add(TextTemplateHeaderContributor.forJavaScript((scopeClass != null) ? scopeClass : component.getClass(), javascriptFileName, javascriptModel));
    }
 
-   private class JavascriptModel extends AbstractReadOnlyModel {
+   private class JavascriptModel extends AbstractReadOnlyModel<Map<String, Object>> {
 
-      private Map<String, String> substitutionMap;
+      private Map<String, Object> substitutionMap;
 
-      public JavascriptModel (Map<String, String> substitutionMap) {
+      public JavascriptModel (Map<String, Object> substitutionMap) {
 
          this.substitutionMap = substitutionMap;
       }
 
-      public Object getObject () {
+      public Map<String, Object> getObject () {
 
          return substitutionMap;
       }
