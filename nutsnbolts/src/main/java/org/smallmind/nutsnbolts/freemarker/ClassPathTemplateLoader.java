@@ -9,15 +9,23 @@ public class ClassPathTemplateLoader implements TemplateLoader {
 
    ClassLoader classLoader;
    private Class<?> anchorClass;
+   private boolean relative;
 
    public ClassPathTemplateLoader () {
 
+      relative = false;
       classLoader = Thread.currentThread().getContextClassLoader();
    }
 
    public ClassPathTemplateLoader (Class<?> anchorClass) {
 
+      this(anchorClass, true);
+   }
+
+   public ClassPathTemplateLoader (Class<?> anchorClass, boolean relative) {
+
       this.anchorClass = anchorClass;
+      this.relative = relative;
 
       classLoader = anchorClass.getClassLoader();
    }
@@ -35,22 +43,23 @@ public class ClassPathTemplateLoader implements TemplateLoader {
    public Object findTemplateSource (String name)
       throws IOException {
 
-      if (name.startsWith("/")) {
+      ClassPathTemplateSource source;
 
-         return new ClassPathTemplateSource(classLoader, name.substring(1));
+      if (!relative) {
+         source = new ClassPathTemplateSource(classLoader, name);
       }
       else if (anchorClass != null) {
 
          StringBuilder pathBuilder = new StringBuilder(anchorClass.getPackage().getName().replace('.', '/'));
 
          pathBuilder.append('/').append(name);
-
-         return new ClassPathTemplateSource(classLoader, pathBuilder.toString());
+         source = new ClassPathTemplateSource(classLoader, pathBuilder.toString());
       }
       else {
-
-         return new ClassPathTemplateSource(classLoader, name);
+         source = new ClassPathTemplateSource(classLoader, name);
       }
+
+      return (source.exists()) ? source : null;
    }
 
    public long getLastModified (Object templateSource) {

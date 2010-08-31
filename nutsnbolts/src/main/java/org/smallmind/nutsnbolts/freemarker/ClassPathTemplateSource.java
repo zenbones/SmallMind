@@ -13,6 +13,13 @@ public class ClassPathTemplateSource {
 
       this.classLoader = classLoader;
       this.name = name;
+
+      inputStream = classLoader.getResourceAsStream(name);
+   }
+
+   public boolean exists () {
+
+      return inputStream != null;
    }
 
    public ClassLoader getClassLoader () {
@@ -27,22 +34,15 @@ public class ClassPathTemplateSource {
 
    public synchronized InputStream getInputStream () {
 
-      if (inputStream != null) {
-         throw new IllegalStateException("Stream has been previously requested, but not closed");
-      }
-
-      return (inputStream = classLoader.getResourceAsStream(name));
+      return inputStream;
    }
 
    public synchronized void close ()
       throws IOException {
 
-      if (inputStream == null) {
-         throw new IllegalStateException("Stream has not been requested");
+      if (inputStream != null) {
+         inputStream.close();
       }
-
-      inputStream.close();
-      inputStream = null;
    }
 
    @Override

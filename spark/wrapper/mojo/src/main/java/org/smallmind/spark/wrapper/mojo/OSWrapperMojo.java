@@ -431,7 +431,7 @@ public class OSWrapperMojo extends AbstractMojo {
 
       freemarkerConf = new Configuration();
       freemarkerConf.setTagSyntax(freemarker.template.Configuration.SQUARE_BRACKET_TAG_SYNTAX);
-      freemarkerConf.setTemplateLoader(new ClassPathTemplateLoader(OSWrapperMojo.class));
+      freemarkerConf.setTemplateLoader(new ClassPathTemplateLoader(OSWrapperMojo.class, false));
 
       try {
          freemarkerTemplate = freemarkerConf.getTemplate("/" + templatePath);
