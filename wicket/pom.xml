@@ -36,6 +36,11 @@
          <artifactId>wicket-extensions</artifactId>
          <scope>compile</scope>
       </dependency>
+      <dependency>
+         <groupId>org.freemarker</groupId>
+         <artifactId>freemarker</artifactId>
+         <scope>compile</scope>
+      </dependency>
    </dependencies>
    <build>
       <resources>

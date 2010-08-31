@@ -15,12 +15,14 @@ import java.util.List;
 import java.util.jar.JarEntry;
 import java.util.jar.JarOutputStream;
 import java.util.jar.Manifest;
+import freemarker.template.Configuration;
 import freemarker.template.Template;
 import org.apache.maven.artifact.Artifact;
 import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.MojoFailureException;
 import org.apache.maven.project.MavenProject;
+import org.smallmind.nutsnbolts.freemarker.ClassPathTemplateLoader;
 import org.smallmind.nutsnbolts.io.FileIterator;
 
 /**
@@ -423,16 +425,16 @@ public class OSWrapperMojo extends AbstractMojo {
    private void processFreemarkerTemplate (String templatePath, File outputDir, String destinationName, HashMap<String, Object> interpolationMap)
       throws MojoExecutionException {
 
-      freemarker.template.Configuration freemarkerConf;
+      Configuration freemarkerConf;
       Template freemarkerTemplate;
       FileWriter fileWriter;
 
-      freemarkerConf = new freemarker.template.Configuration();
+      freemarkerConf = new Configuration();
       freemarkerConf.setTagSyntax(freemarker.template.Configuration.SQUARE_BRACKET_TAG_SYNTAX);
       freemarkerConf.setTemplateLoader(new ClassPathTemplateLoader(OSWrapperMojo.class));
 
       try {
-         freemarkerTemplate = freemarkerConf.getTemplate(templatePath);
+         freemarkerTemplate = freemarkerConf.getTemplate("/" + templatePath);
       }
       catch (IOException ioException) {
          throw new MojoExecutionException(String.format("Unable to load template(%s) for translation", destinationName), ioException);
