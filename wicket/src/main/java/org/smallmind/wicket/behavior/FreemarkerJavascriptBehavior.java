@@ -13,6 +13,16 @@ public class FreemarkerJavascriptBehavior extends AbstractBehavior {
    private Class<?> scopeClass;
    private String fileName;
 
+   public FreemarkerJavascriptBehavior (Map<String, Object> rootModel) {
+
+      this(null, null, rootModel);
+   }
+
+   public FreemarkerJavascriptBehavior (String fileName, Map<String, Object> rootModel) {
+
+      this(null, fileName, rootModel);
+   }
+
    public FreemarkerJavascriptBehavior (Class<?> scopeClass, String fileName, Map<String, Object> rootModel) {
 
       this.scopeClass = scopeClass;
@@ -22,7 +32,7 @@ public class FreemarkerJavascriptBehavior extends AbstractBehavior {
 
    public void bind (Component component) {
 
-      component.add(TextTemplateHeaderContributor.forJavaScript(new FreemarkerPackagedTextTemplate(scopeClass, fileName), new JavascriptModel(rootModel)));
+      component.add(TextTemplateHeaderContributor.forJavaScript(new FreemarkerPackagedTextTemplate((scopeClass != null) ? scopeClass : component.getClass(), (fileName == null) ? component.getClass().getSimpleName() + ".js" : fileName), new JavascriptModel(rootModel)));
    }
 
    private class JavascriptModel extends AbstractReadOnlyModel<Map<String, Object>> {
