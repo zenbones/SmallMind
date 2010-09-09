@@ -12,7 +12,7 @@ public class ExternalLink extends AbstractLink {
 
    public static enum Target {
 
-      BLANK("_blank", null), PARENT("_parent", "window.parent"), SELF("_self", "window.location"), TOP("_top", "window.top");
+      BLANK("_blank", null), PARENT("_parent", "window.parent.location"), SELF("_self", "window.location"), TOP("_top", "window.top.location");
 
       private String attribute;
       private String window;
@@ -54,8 +54,6 @@ public class ExternalLink extends AbstractLink {
    protected void onComponentTag (ComponentTag tag) {
 
       super.onComponentTag(tag);
-
-      tag.put("src", ((WebApplication)getApplication()).getServletContext().getContextPath() + tag.getString("src"));
 
       if (tag.getName().equalsIgnoreCase("a") || tag.getName().equalsIgnoreCase("link") || tag.getName().equalsIgnoreCase("area")) {
          tag.put("href", Strings.replaceAll(getDefaultModelObjectAsString(), "&", "&amp;"));
