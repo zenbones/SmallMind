@@ -43,10 +43,13 @@ public class SystemPropertyBeanFactoryPostProcessor implements BeanFactoryPostPr
    public void postProcessBeanFactory (ConfigurableListableBeanFactory configurableListableBeanFactory)
       throws BeansException {
 
+      System.out.println("---------------- System Properties ---------------");
       for (Map.Entry<String, String> propertyEntry : propertyMap.entrySet()) {
          if (override || ((System.getProperty(propertyEntry.getKey()) == null) && (System.getenv(propertyEntry.getKey()) == null))) {
             System.setProperty(propertyEntry.getKey(), propertyEntry.getValue());
+            System.out.println("[" + propertyEntry.getKey() + "=" + propertyEntry.getValue() + "]");
          }
       }
+      System.out.println("--------------------------------------------------");
    }
 }

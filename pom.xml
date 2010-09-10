@@ -234,6 +234,11 @@
             <artifactId>wicket-extensions</artifactId>
             <version>1.4.9</version>
          </dependency>
+         <dependency>
+            <groupId>com.google.visualization</groupId>
+            <artifactId>visualization-datasource</artifactId>
+            <version>1.0.2</version>
+         </dependency>
       </dependencies>
    </dependencyManagement>
    <dependencies>

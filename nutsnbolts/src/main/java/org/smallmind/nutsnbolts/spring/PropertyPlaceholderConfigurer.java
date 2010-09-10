@@ -133,6 +133,12 @@ public class PropertyPlaceholderConfigurer implements BeanFactoryPostProcessor, 
          }
       }
 
+      System.out.println("---------------- Config Properties ---------------");
+      for (Map.Entry<String, String> propertyEntry : propertyMap.entrySet()) {
+         System.out.println("[" + propertyEntry.getKey() + "=" + propertyEntry.getValue() + "]");
+      }
+      System.out.println("--------------------------------------------------");
+
       valueResolver = new PropertyPlaceholderStringValueResolver(propertyMap, ignoreUnresolvableProperties, systemPropertyMode, searchSystemEnvironment);
       beanDefinitionVisitor = new BeanDefinitionVisitor(valueResolver);
 

@@ -27,6 +27,11 @@
          <scope>provided</scope>
       </dependency>
       <dependency>
+         <groupId>joda-time</groupId>
+         <artifactId>joda-time</artifactId>
+         <scope>compile</scope>
+      </dependency>
+      <dependency>
          <groupId>org.apache.wicket</groupId>
          <artifactId>wicket</artifactId>
          <scope>compile</scope>
@@ -40,6 +45,13 @@
          <groupId>org.freemarker</groupId>
          <artifactId>freemarker</artifactId>
          <scope>compile</scope>
+         <optional>true</optional>
+      </dependency>
+      <dependency>
+         <groupId>com.google.visualization</groupId>
+         <artifactId>visualization-datasource</artifactId>
+         <scope>compile</scope>
+         <optional>true</optional>
       </dependency>
    </dependencies>
    <build>
