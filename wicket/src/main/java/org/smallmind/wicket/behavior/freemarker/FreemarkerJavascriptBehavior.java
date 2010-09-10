@@ -1,4 +1,4 @@
-package org.smallmind.wicket.behavior;
+package org.smallmind.wicket.behavior.freemarker;
 
 import java.util.Map;
 import org.apache.wicket.Component;

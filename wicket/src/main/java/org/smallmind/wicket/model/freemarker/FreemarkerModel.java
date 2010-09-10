@@ -1,4 +1,4 @@
-package org.smallmind.wicket.model;
+package org.smallmind.wicket.model.freemarker;
 
 import java.io.IOException;
 import java.io.StringReader;

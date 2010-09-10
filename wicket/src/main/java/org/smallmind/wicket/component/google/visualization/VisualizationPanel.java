@@ -1,5 +1,6 @@
 package org.smallmind.wicket.component.google.visualization;
 
+import java.util.UUID;
 import org.apache.wicket.markup.html.basic.Label;
 import org.apache.wicket.markup.html.panel.Panel;
 import org.apache.wicket.model.AbstractReadOnlyModel;
@@ -10,27 +11,30 @@ import org.smallmind.wicket.behavior.JavascriptNamespaceBehavior;
 
 public class VisualizationPanel extends Panel {
 
-   public VisualizationPanel (String id, String divId, String jsonClass) {
+   public VisualizationPanel (String id, String jsonClass) {
 
-      this(id, null, divId, jsonClass, null);
+      this(id, null, jsonClass, null);
    }
 
-   public VisualizationPanel (String id, String divId, String jsonClass, String options) {
+   public VisualizationPanel (String id, String jsonClass, String options) {
 
-      this(id, null, divId, jsonClass, options);
+      this(id, null, jsonClass, options);
    }
 
-   public VisualizationPanel (String id, IModel<String> javascriptModel, String divId, String jsonClass) {
+   public VisualizationPanel (String id, IModel<String> javascriptModel, String jsonClass) {
 
-      this(id, javascriptModel, divId, jsonClass, null);
+      this(id, javascriptModel, jsonClass, null);
    }
 
-   public VisualizationPanel (String id, IModel<String> javascriptModel, String divId, String jsonClass, String options) {
+   public VisualizationPanel (String id, IModel<String> javascriptModel, String jsonClass, String options) {
 
       super(id);
 
       Label divLabel;
       Label scriptLabel;
+      String divId;
+
+      divId = UUID.randomUUID().toString();
 
       add(new JavascriptNamespaceBehavior());
 
