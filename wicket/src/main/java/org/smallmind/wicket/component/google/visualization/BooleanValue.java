@@ -13,6 +13,11 @@ public class BooleanValue extends Value {
       return NULL_VALUE;
    }
 
+   public static BooleanValue create (boolean logic) {
+
+      return new BooleanValue(logic);
+   }
+
    public static BooleanValue create (Boolean logic) {
 
       return (logic == null) ? NULL_VALUE : new BooleanValue(logic);

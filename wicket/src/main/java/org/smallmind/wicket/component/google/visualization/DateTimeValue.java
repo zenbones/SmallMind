@@ -12,6 +12,11 @@ public class DateTimeValue extends TimeBasedValue {
       return NULL_VALUE;
    }
 
+   public static DateTimeValue create (long milliseconds) {
+
+      return new DateTimeValue(new DateTime(milliseconds));
+   }
+
    public static DateTimeValue create (Long milliseconds) {
 
       return (milliseconds == null) ? NULL_VALUE : new DateTimeValue(new DateTime(milliseconds));

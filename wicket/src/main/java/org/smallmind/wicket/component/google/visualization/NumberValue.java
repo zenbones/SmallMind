@@ -13,6 +13,11 @@ public class NumberValue extends Value {
       return NULL_VALUE;
    }
 
+   public static NumberValue create (double number) {
+
+      return new NumberValue(number);
+   }
+
    public static NumberValue create (Double number) {
 
       return (number == null) ? NULL_VALUE : new NumberValue(number);
@@ -23,9 +28,18 @@ public class NumberValue extends Value {
       this.number = number;
    }
 
-   public Double getNumber () {
+   public synchronized Double getNumber () {
 
       return number;
+   }
+
+   public synchronized void add (double number) {
+
+      if (this.number == null) {
+         throw new UnsupportedOperationException("Can't manipulate a null value");
+      }
+
+      this.number += number;
    }
 
    @Override

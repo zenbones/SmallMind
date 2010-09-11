@@ -2,6 +2,7 @@ package org.smallmind.wicket.component.google.visualization;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.List;
 import org.smallmind.nutsnbolts.util.ArrayIterator;
 import org.smallmind.nutsnbolts.util.IterableIterator;
 
@@ -9,6 +10,11 @@ public class DataTable extends TableElement {
 
    private ColumnDescription[] columnDescriptions;
    private ArrayList<TableRow> rows;
+
+   public DataTable (List<ColumnDescription> columnDescriptionList) {
+
+      this(columnDescriptionList.toArray(new ColumnDescription[columnDescriptionList.size()]));
+   }
 
    public DataTable (ColumnDescription[] columnDescriptions) {
 

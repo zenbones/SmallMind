@@ -12,6 +12,11 @@ public class TimeOfDayValue extends TimeBasedValue {
       return NULL_VALUE;
    }
 
+   public static TimeOfDayValue create (long milliseconds) {
+
+      return new TimeOfDayValue(new DateTime(milliseconds));
+   }
+
    public static TimeOfDayValue create (Long milliseconds) {
 
       return (milliseconds == null) ? NULL_VALUE : new TimeOfDayValue(new DateTime(milliseconds));
