@@ -6,26 +6,17 @@ import org.apache.wicket.markup.html.form.RadioGroup;
 import org.apache.wicket.markup.html.list.Loop;
 import org.apache.wicket.markup.html.panel.Panel;
 import org.apache.wicket.model.Model;
-import org.smallmind.wicket.event.OnChangeListener;
 
 public abstract class EnumRadioPanel<E extends Enum> extends Panel {
 
+   private E selection;
+
    public EnumRadioPanel (String id, Class<E> enumClass) {
 
-      this(id, enumClass, null, null);
+      this(id, enumClass, null);
    }
 
-   public EnumRadioPanel (String id, Class<E> enumClass, E selectedEnum) {
-
-      this(id, enumClass, selectedEnum, null);
-   }
-
-   public EnumRadioPanel (String id, Class<E> enumClass, OnChangeListener onChangeListener) {
-
-      this(id, enumClass, null, onChangeListener);
-   }
-
-   public EnumRadioPanel (String id, Class<E> enumClass, E selectedEnum, OnChangeListener onChangeListener) {
+   public EnumRadioPanel (String id, Class<E> enumClass, E selection) {
 
       super(id);
 
@@ -33,7 +24,9 @@ public abstract class EnumRadioPanel<E extends Enum> extends Panel {
 
       RadioGroup<E> radioGroup;
 
-      add(radioGroup = new RadioGroup<E>("enumRadioGroup", new Model<E>(selectedEnum)));
+      this.selection = selection;
+
+      add(radioGroup = new RadioGroup<E>("enumRadioGroup", new Model<E>(selection)));
       radioGroup.add(new Loop("enumRadioLoop", new Model<Integer>(enumerations.length)) {
 
          @Override
@@ -44,11 +37,17 @@ public abstract class EnumRadioPanel<E extends Enum> extends Panel {
                @Override
                public void onClick (E selection, AjaxRequestTarget target) {
 
+                  EnumRadioPanel.this.selection = selection;
                   EnumRadioPanel.this.onClick(selection, target);
                }
             });
          }
       });
+   }
+
+   public E getSelection () {
+
+      return selection;
    }
 
    public abstract void onClick (E selection, AjaxRequestTarget target);
