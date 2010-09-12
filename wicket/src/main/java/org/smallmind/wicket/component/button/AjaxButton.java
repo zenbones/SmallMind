@@ -14,7 +14,7 @@ public abstract class AjaxButton extends Button {
       addButtonBehavior(new OnClickAjaxEventBehavior());
    }
 
-   public abstract void onClick (final AjaxRequestTarget target);
+   public abstract void onClick (AjaxRequestTarget target);
 
    private class OnClickAjaxEventBehavior extends AjaxEventBehavior {
 
@@ -23,7 +23,7 @@ public abstract class AjaxButton extends Button {
          super("onClick");
       }
 
-      protected void onEvent (final AjaxRequestTarget target) {
+      protected void onEvent (AjaxRequestTarget target) {
 
          if (AjaxButton.this.isEnabled()) {
             onClick(target);
