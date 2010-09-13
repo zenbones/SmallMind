@@ -58,7 +58,7 @@ public class TimeOfDayValue extends TimeBasedValue {
       return getInstant().getMillisOfSecond();
    }
 
-   public String toString () {
+   public String forScript () {
 
       if (getInstant() == null) {
 

@@ -73,7 +73,7 @@ public class DateTimeValue extends TimeBasedValue {
       return getInstant().getMillisOfSecond();
    }
 
-   public String toString () {
+   public String forScript () {
 
       if (getInstant() == null) {
 

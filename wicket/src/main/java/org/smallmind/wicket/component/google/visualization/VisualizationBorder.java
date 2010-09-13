@@ -106,10 +106,10 @@ public abstract class VisualizationBorder extends Border {
             }
 
             if ((tableCell.getFormattedValue() == null) && (!tableCell.hasProperties())) {
-               rowBuilder.append(tableCell.getValue());
+               rowBuilder.append(tableCell.getValue().forScript());
             }
             else {
-               rowBuilder.append("{v: ").append(tableCell.getValue());
+               rowBuilder.append("{v: ").append(tableCell.getValue().forScript());
 
                if (tableCell.getFormattedValue() != null) {
                   rowBuilder.append(",f: '").append(tableCell.getFormattedValue()).append('\'');

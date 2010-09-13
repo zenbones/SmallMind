@@ -75,6 +75,12 @@ public class NumberValue extends Value {
       }
    }
 
+   @Override
+   public String forScript () {
+
+      return toString();
+   }
+
    public String toString () {
 
       return (number == null) ? "null" : number.toString();

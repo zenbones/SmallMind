@@ -53,7 +53,7 @@ public class DateValue extends TimeBasedValue {
       return getInstant().getDayOfMonth();
    }
 
-   public String toString () {
+   public String forScript () {
 
       if (getInstant() == null) {
 

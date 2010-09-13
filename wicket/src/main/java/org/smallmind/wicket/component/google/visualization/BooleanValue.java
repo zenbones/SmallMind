@@ -66,6 +66,12 @@ public class BooleanValue extends Value {
       }
    }
 
+   @Override
+   public String forScript () {
+
+      return toString();
+   }
+
    public String toString () {
 
       return (logic == null) ? "null" : logic.toString();

@@ -61,9 +61,14 @@ public class TextValue extends Value {
       }
    }
 
-   public String toString () {
+   public String forScript () {
 
       return (text == null) ? "null" : '\'' + text + '\'';
+   }
+
+   public String toString () {
+
+      return (text == null) ? "null" : text;
    }
 }
 

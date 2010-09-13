@@ -43,6 +43,12 @@ public abstract class TimeBasedValue extends Value {
          return instant.compareTo((((TimeBasedValue)value).getInstant()));
       }
    }
+
+   @Override
+   public synchronized String toString () {
+
+      return (instant == null) ? "null" : instant.toString();
+   }
 }
 
 

@@ -4,6 +4,8 @@ public abstract class Value implements Comparable<Value> {
 
    public abstract ValueType getType ();
 
+   public abstract String forScript ();
+
    public abstract boolean isNull ();
 
    public boolean equals (Object obj) {
