@@ -5,31 +5,21 @@ import org.smallmind.wicket.FormattedWicketRuntimeException;
 
 public class RowTransformer {
 
-   private ValueType[] types;
+   private DataTable dataTable;
 
    public RowTransformer (DataTable dataTable) {
 
-      int index = 0;
-
-      types = new ValueType[dataTable.getColumnCount()];
-      for (ColumnDescription columnDescription : dataTable.getColumnDescriptions()) {
-         types[index++] = columnDescription.getType();
-      }
-   }
-
-   public RowTransformer (ValueType[] types) {
-
-      this.types = types;
+      this.dataTable = dataTable;
    }
 
    public void transform (TableRow tableRow, Object[] data) {
 
-      if (types.length != data.length) {
-         throw new FormattedWicketRuntimeException("The data length(%d) does not match the expected length(%d)", data.length, types.length);
+      if (dataTable.getColumnCount() != data.length) {
+         throw new FormattedWicketRuntimeException("The data length(%d) does not match the expected length(%d)", data.length, dataTable.getColumnCount());
       }
 
       for (int count = 0; count < data.length; count++) {
-         tableRow.addCell(new TableCell(convertValue(types[count], data[count])));
+         tableRow.addCell(dataTable.getColumnDescription(count).createTableCell(convertValue(dataTable.getColumnDescription(count).getType(), data[count])));
       }
    }
 

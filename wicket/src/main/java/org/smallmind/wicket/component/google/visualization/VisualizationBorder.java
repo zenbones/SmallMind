@@ -104,7 +104,13 @@ public abstract class VisualizationBorder extends Border {
             if (rowBuilder.length() > 1) {
                rowBuilder.append(',');
             }
-            rowBuilder.append(tableCell.getValue());
+
+            if (tableCell.getFormattedValue() == null) {
+               rowBuilder.append(tableCell.getValue());
+            }
+            else {
+               rowBuilder.append("{v: ").append(tableCell.getValue()).append(",f: '").append(tableCell.getFormattedValue()).append("'}");
+            }
          }
          rowBuilder.append("]");
 

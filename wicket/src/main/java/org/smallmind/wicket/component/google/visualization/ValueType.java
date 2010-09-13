@@ -2,7 +2,7 @@ package org.smallmind.wicket.component.google.visualization;
 
 public enum ValueType {
 
-   TEXT("text") {
+   TEXT("string") {
 
       @Override
       public Value asNull () {
