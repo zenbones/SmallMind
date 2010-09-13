@@ -1,33 +1,21 @@
 package org.smallmind.wicket.component.google.visualization;
 
-import java.io.IOException;
-import org.codehaus.jackson.JsonFactory;
-import org.codehaus.jackson.JsonNode;
-import org.smallmind.wicket.FormattedWicketRuntimeException;
-
 public class TableElement {
 
-   private static final JsonFactory JSON_FACTORY = new JsonFactory();
+   private String properties;
 
-   private JsonNode jsonNode;
+   public synchronized void setProperties (String properties) {
 
-   public synchronized void setProperties (String jsonValue) {
-
-      try {
-         jsonNode = JSON_FACTORY.createJsonParser(jsonValue).readValueAsTree();
-      }
-      catch (IOException ioException) {
-         throw new FormattedWicketRuntimeException(ioException);
-      }
+      this.properties = properties;
    }
 
    public boolean hasProperties () {
 
-      return jsonNode != null;
+      return properties != null;
    }
 
    public synchronized String getPropertiesAsJson () {
 
-      return (jsonNode == null) ? "{}" : jsonNode.toString();
+      return (properties == null) ? "{}" : properties.toString();
    }
 }
