@@ -5,6 +5,8 @@ import org.apache.wicket.markup.html.IHeaderResponse;
 import org.apache.wicket.markup.html.resources.JavascriptResourceReference;
 import org.apache.wicket.model.IModel;
 import org.apache.wicket.model.Model;
+import org.apache.wicket.util.template.TextTemplateHeaderContributor;
+import org.smallmind.wicket.behavior.JavascriptBehavior;
 import org.smallmind.wicket.behavior.JavascriptNamespaceBehavior;
 import org.smallmind.wicket.component.google.visualization.VisualizationPanel;
 

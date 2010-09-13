@@ -1,3 +1,59 @@
+org.smallmind.wicket.google.visualization.compareArray = function (array1, array2) {
+
+   var arrayIndex;
+
+   if ((array1 == null) && (array2 == null)) {
+      return true;
+   }
+
+   if ((array1 == null) || (array2 == null)) {
+      return false;
+   }
+
+   if (array1.length == array2.length) {
+      for (arrayIndex in array1) {
+         if (array1[arrayIndex] != array2[arrayIndex]) {
+            return false;
+         }
+      }
+
+      return true;
+   }
+
+   return false;
+}
+
+org.smallmind.wicket.google.visualization.findPos = function (obj) {
+
+   var curleft = 0;
+   var curtop = 0;
+
+   if (obj.offsetParent) {
+      do {
+         curleft += obj.offsetLeft;
+         curtop += obj.offsetTop;
+
+      } while (obj = obj.offsetParent);
+
+      return [curleft,curtop];
+   }
+}
+
+org.smallmind.wicket.google.visualization.showTooltip = function (id, x, y, contents) {
+
+   jQuery("<div id='" + id + "'>" + contents + "</div>").css({
+      position: 'absolute',
+      display: 'none',
+      'font-size': '2em',
+      top: y - 10,
+      left: x,
+      border: '1px solid #fdd',
+      padding: '2px',
+      'background-color': '#fee',
+      opacity: 0.9
+   }).appendTo("body").fadeIn(200);
+}
+
 // Flot class constructor.
 org.smallmind.wicket.google.visualization.Flot = function(container) {
 
