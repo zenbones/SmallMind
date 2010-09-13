@@ -234,6 +234,16 @@
             <artifactId>wicket-extensions</artifactId>
             <version>1.4.9</version>
          </dependency>
+         <dependency>
+            <groupId>org.codehaus.jackson</groupId>
+            <artifactId>jackson-core-lgpl</artifactId>
+            <version>1.5.6</version>
+         </dependency>
+         <dependency>
+            <groupId>org.codehaus.jackson</groupId>
+            <artifactId>jackson-mapper-lgpl</artifactId>
+            <version>1.5.6</version>
+         </dependency>
       </dependencies>
    </dependencyManagement>
    <dependencies>

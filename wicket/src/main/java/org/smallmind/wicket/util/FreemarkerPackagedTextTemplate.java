@@ -15,6 +15,11 @@ public class FreemarkerPackagedTextTemplate extends TextTemplate {
 
    private Template freemarkerTemplate;
 
+   public FreemarkerPackagedTextTemplate (Class<?> clazz) {
+
+      this(clazz, null);
+   }
+
    public FreemarkerPackagedTextTemplate (Class<?> clazz, String fileName) {
 
       Configuration freemarkerConf;
@@ -28,7 +33,7 @@ public class FreemarkerPackagedTextTemplate extends TextTemplate {
       }
 
       try {
-         freemarkerTemplate = freemarkerConf.getTemplate(fileName);
+         freemarkerTemplate = freemarkerConf.getTemplate((fileName == null) ? clazz.getSimpleName() + ".js" : fileName);
       }
       catch (IOException ioException) {
          throw new RuntimeException(ioException);

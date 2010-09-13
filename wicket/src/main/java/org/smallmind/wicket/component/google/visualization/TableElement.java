@@ -1,27 +1,33 @@
 package org.smallmind.wicket.component.google.visualization;
 
-import java.util.HashMap;
+import java.io.IOException;
+import org.codehaus.jackson.JsonFactory;
+import org.codehaus.jackson.JsonNode;
+import org.smallmind.wicket.FormattedWicketRuntimeException;
 
 public class TableElement {
 
-   private HashMap<String, String> propertyMap;
+   private static final JsonFactory JSON_FACTORY = new JsonFactory();
 
-   public synchronized void addProperty (String key, String value) {
+   private JsonNode jsonNode;
 
-      if (propertyMap == null) {
-         propertyMap = new HashMap<String, String>();
+   public synchronized void setProperties (String jsonValue) {
+
+      try {
+         jsonNode = JSON_FACTORY.createJsonParser(jsonValue).readValueAsTree();
       }
-
-      propertyMap.put(key, value);
+      catch (IOException ioException) {
+         throw new FormattedWicketRuntimeException(ioException);
+      }
    }
 
-   public synchronized String getProperty (String key) {
+   public boolean hasProperties () {
 
-      if (propertyMap != null) {
+      return jsonNode != null;
+   }
 
-         return propertyMap.get(key);
-      }
+   public synchronized String getPropertiesAsJson () {
 
-      return null;
+      return (jsonNode == null) ? "{}" : jsonNode.toString();
    }
 }

@@ -47,6 +47,18 @@
          <scope>compile</scope>
          <optional>true</optional>
       </dependency>
+      <dependency>
+         <groupId>org.codehaus.jackson</groupId>
+         <artifactId>jackson-core-lgpl</artifactId>
+         <scope>compile</scope>
+         <optional>true</optional>
+      </dependency>
+      <dependency>
+         <groupId>org.codehaus.jackson</groupId>
+         <artifactId>jackson-mapper-lgpl</artifactId>
+         <scope>compile</scope>
+         <optional>true</optional>
+      </dependency>
    </dependencies>
    <build>
       <resources>

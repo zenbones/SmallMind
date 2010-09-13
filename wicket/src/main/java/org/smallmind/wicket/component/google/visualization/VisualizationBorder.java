@@ -1,6 +1,7 @@
 package org.smallmind.wicket.component.google.visualization;
 
 import java.util.HashSet;
+import org.apache.wicket.ajax.AjaxRequestTarget;
 import org.apache.wicket.behavior.AbstractBehavior;
 import org.apache.wicket.markup.html.IHeaderResponse;
 import org.apache.wicket.markup.html.basic.Label;
@@ -18,8 +19,14 @@ public abstract class VisualizationBorder extends Border {
 
       Label scriptLabel;
 
-      add(new JavascriptNamespaceBehavior());
+      add(new JavascriptNamespaceBehavior(new AbstractReadOnlyModel<String>() {
 
+         @Override
+         public String getObject () {
+
+            return getMarkupId();
+         }
+      }));
       add(new AbstractBehavior() {
 
          @Override
@@ -48,35 +55,13 @@ public abstract class VisualizationBorder extends Border {
       @Override
       public String getObject () {
 
-         DataTable dataTable;
          StringBuilder scriptBuilder = new StringBuilder();
-         StringBuilder rowBuilder;
 
-         dataTable = getDataTable();
-
-         scriptBuilder.append("Namespace.Manager.Register('").append(getMarkupId()).append("');");
+         scriptBuilder.append(buildTableScript());
          scriptBuilder.append(getMarkupId()).append(".loadData  = function () {");
-         scriptBuilder.append("data = new google.visualization.DataTable();");
-
-         for (ColumnDescription columnDescription : dataTable.getColumnDescriptions()) {
-            scriptBuilder.append("data.addColumn('").append(columnDescription.getType().getScriptVersion()).append("','").append(columnDescription.getLabel()).append("','").append(columnDescription.getId()).append("');");
-         }
-
-         for (TableRow tableRow : dataTable.getRows()) {
-            rowBuilder = new StringBuilder("[");
-            for (TableCell tableCell : tableRow.getCells()) {
-               if (rowBuilder.length() > 1) {
-                  rowBuilder.append(',');
-               }
-               rowBuilder.append(tableCell.getValue());
-            }
-            rowBuilder.append("]");
-
-            scriptBuilder.append("data.addRow(").append(rowBuilder).append(");");
-         }
 
          for (String panelId : panelIdSet) {
-            scriptBuilder.append(panelId).append(".drawChart(data);");
+            scriptBuilder.append(panelId).append(".drawChart(").append(getMarkupId()).append('.').append("data);");
          }
 
          scriptBuilder.append("};");
@@ -86,5 +71,46 @@ public abstract class VisualizationBorder extends Border {
 
          return scriptBuilder.toString();
       }
+   }
+
+   public void loadData (AjaxRequestTarget target) {
+
+      target.appendJavascript(buildTableScript());
+      target.appendJavascript(getMarkupId() + ".loadData();");
+   }
+
+   private String buildTableScript () {
+
+      DataTable dataTable;
+      StringBuilder scriptBuilder = new StringBuilder();
+      StringBuilder rowBuilder;
+      int columnIndex = 0;
+
+      dataTable = getDataTable();
+
+      scriptBuilder.append(getMarkupId()).append('.').append("data = new google.visualization.DataTable();");
+
+      for (ColumnDescription columnDescription : dataTable.getColumnDescriptions()) {
+         scriptBuilder.append(getMarkupId()).append(".data.addColumn('").append(columnDescription.getType().getScriptVersion()).append("','").append(columnDescription.getLabel()).append("','").append(columnDescription.getId()).append("');");
+         if (columnDescription.hasProperties()) {
+            scriptBuilder.append(getMarkupId()).append(".data.setColumnProperties(").append(columnIndex).append(',').append(columnDescription.getPropertiesAsJson()).append(");");
+         }
+         columnIndex++;
+      }
+
+      for (TableRow tableRow : dataTable.getRows()) {
+         rowBuilder = new StringBuilder("[");
+         for (TableCell tableCell : tableRow.getCells()) {
+            if (rowBuilder.length() > 1) {
+               rowBuilder.append(',');
+            }
+            rowBuilder.append(tableCell.getValue());
+         }
+         rowBuilder.append("]");
+
+         scriptBuilder.append(getMarkupId()).append(".data.addRow(").append(rowBuilder).append(");");
+      }
+
+      return scriptBuilder.toString();
    }
 }
