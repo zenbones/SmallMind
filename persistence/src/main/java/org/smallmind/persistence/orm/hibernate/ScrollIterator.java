@@ -37,7 +37,10 @@ public class ScrollIterator<T> implements Iterator<T>, Iterable<T> {
       }
 
       try {
-         return managedClass.cast(managedClass.isArray() ? scrollableResults.get() : scrollableResults.get(0));
+
+         Object[] result;
+
+         return managedClass.cast((managedClass.isArray() && ((result = scrollableResults.get()).length > 1)) ? result : scrollableResults.get(0));
       }
       finally {
          more = scrollableResults.next();
