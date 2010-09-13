@@ -105,11 +105,21 @@ public abstract class VisualizationBorder extends Border {
                rowBuilder.append(',');
             }
 
-            if (tableCell.getFormattedValue() == null) {
+            if ((tableCell.getFormattedValue() == null) && (!tableCell.hasProperties())) {
                rowBuilder.append(tableCell.getValue());
             }
             else {
-               rowBuilder.append("{v: ").append(tableCell.getValue()).append(",f: '").append(tableCell.getFormattedValue()).append("'}");
+               rowBuilder.append("{v: ").append(tableCell.getValue());
+
+               if (tableCell.getFormattedValue() != null) {
+                  rowBuilder.append(",f: '").append(tableCell.getFormattedValue()).append('\'');
+               }
+
+               if (tableCell.hasProperties()) {
+                  rowBuilder.append(",p: ").append(tableCell.getPropertiesAsJson());
+               }
+
+               rowBuilder.append('}');
             }
          }
          rowBuilder.append("]");
