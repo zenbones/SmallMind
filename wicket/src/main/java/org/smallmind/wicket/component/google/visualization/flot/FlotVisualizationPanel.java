@@ -5,7 +5,6 @@ import org.apache.wicket.markup.html.IHeaderResponse;
 import org.apache.wicket.markup.html.resources.JavascriptResourceReference;
 import org.apache.wicket.model.IModel;
 import org.apache.wicket.model.Model;
-import org.smallmind.wicket.behavior.IEConditionalBehavior;
 import org.smallmind.wicket.behavior.JavascriptNamespaceBehavior;
 import org.smallmind.wicket.component.google.visualization.VisualizationPanel;
 
@@ -31,14 +30,16 @@ public class FlotVisualizationPanel extends VisualizationPanel {
       super(id, javascriptModel, "org.smallmind.wicket.google.visualization.Flot", options);
 
       add(new JavascriptNamespaceBehavior(new Model<String>("org.smallmind.wicket.google.visualization")));
-      add(new IEConditionalBehavior() {
+      add(new AbstractBehavior() {
 
          @Override
          public void renderHead (IHeaderResponse response) {
 
             super.renderHead(response);
 
+            response.renderString("<!--[if IE]>");
             response.renderJavascriptReference(new JavascriptResourceReference(FlotVisualizationPanel.class, "api/excanvas.js"));
+            response.renderString("<![endif]-->");
          }
       });
       add(new AbstractBehavior() {
