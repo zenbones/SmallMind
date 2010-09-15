@@ -21,7 +21,7 @@ org.smallmind.wicket.google.visualization.compareArray = function (array1, array
    }
 
    return false;
-}
+};
 
 org.smallmind.wicket.google.visualization.findPos = function (obj) {
 
@@ -37,7 +37,7 @@ org.smallmind.wicket.google.visualization.findPos = function (obj) {
 
       return [curleft,curtop];
    }
-}
+};
 
 org.smallmind.wicket.google.visualization.showTooltip = function (id, x, y, contents) {
 
@@ -52,7 +52,7 @@ org.smallmind.wicket.google.visualization.showTooltip = function (id, x, y, cont
       'background-color': '#fee',
       opacity: 0.9
    }).appendTo("body").fadeIn(200);
-}
+};
 
 // Flot class constructor.
 org.smallmind.wicket.google.visualization.Flot = function(container) {
@@ -88,7 +88,7 @@ org.smallmind.wicket.google.visualization.Flot.prototype.draw = function(data, o
    if (options.title != null) {
 
       titleDiv = document.createElement("div");
-      titleDiv.setAttribute("style", "width: 100%; font-weight: bold; text-align: center; padding-bottom: 5px")
+      titleDiv.setAttribute("style", "width: 100%; font-weight: bold; text-align: center; padding-bottom: 5px");
 
       if (options.titleFontSize != null) {
          titleDiv.style.fontSize = options.titleFontSize;
@@ -106,7 +106,7 @@ org.smallmind.wicket.google.visualization.Flot.prototype.draw = function(data, o
       var emptyDiv;
 
       emptyDiv = document.createElement("div");
-      emptyDiv.setAttribute("style", "width: 100%; height: 100%; vertical-align: middle; text-align: center")
+      emptyDiv.setAttribute("style", "width: 100%; height: 100%; vertical-align: middle; text-align: center");
       emptyDiv.appendChild(document.createTextNode("No data"));
 
       flotDiv.appendChild(emptyDiv);
@@ -172,8 +172,8 @@ org.smallmind.wicket.google.visualization.Flot.prototype.draw = function(data, o
       graphTable.setAttribute("cellpadding", 0);
       graphTable.setAttribute("cellspacing", 0);
       graphTable.setAttribute("border", 0);
-      graphTable.setAttribute("width", flotDiv.offsetWidth);
-      graphTable.setAttribute("height", (titleDiv == null) ? flotDiv.offsetHeight : flotDiv.offsetHeight - titleDiv.offsetHeight);
+      graphTable.setAttribute("width", this.container.offsetWidth);
+      graphTable.setAttribute("height", (titleDiv == null) ? this.container.offsetHeight : this.container.offsetHeight - titleDiv.offsetHeight);
       flotDiv.appendChild(graphTable);
 
       topTr = document.createElement("tr");
