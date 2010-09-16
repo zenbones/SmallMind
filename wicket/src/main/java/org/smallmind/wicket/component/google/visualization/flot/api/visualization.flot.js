@@ -156,6 +156,7 @@ org.smallmind.wicket.google.visualization.Flot.prototype.draw = function(data, o
 
       var graphDiv;
       var graphTable;
+      var graphTBody;
       var middleTable;
       var topTr;
       var middleTr;
@@ -176,12 +177,15 @@ org.smallmind.wicket.google.visualization.Flot.prototype.draw = function(data, o
       graphTable.setAttribute("height", (titleDiv == null) ? this.container.offsetHeight : this.container.offsetHeight - titleDiv.offsetHeight);
       flotDiv.appendChild(graphTable);
 
+      graphTBody = document.createElement("tbody");
+      graphTable.appendChild(graphTBody);
+
       topTr = document.createElement("tr");
-      graphTable.appendChild(topTr);
+      graphTBody.appendChild(topTr);
       middleTr = document.createElement("tr");
-      graphTable.appendChild(middleTr);
+      graphTBody.appendChild(middleTr);
       bottomTr = document.createElement("tr");
-      graphTable.appendChild(bottomTr);
+      graphTBody.appendChild(bottomTr);
 
       topTd = document.createElement("td");
       topTr.appendChild(topTd);
