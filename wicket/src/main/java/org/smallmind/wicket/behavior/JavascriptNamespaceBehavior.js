@@ -1,10 +1,10 @@
 /// Create the Namespace Manager that we'll use
 ///to make creating namespaces a little easier.
-if (typeof Namespace == 'undefined') var Namespace = {};
-if (!Namespace.Manager) Namespace.Manager = {};
+if (typeof SMALLMIND == 'undefined') var SMALLMIND {};
+if (!SMALLMIND.namespace) SMALLMIND.namespace = {};
 
-Namespace.Manager = {
-   Register: function(ns) {
+SMALLMIND.namespace.manager = {
+   register: function(ns) {
       if (ns.length > 0) {
          myBaseNs = ns.substring(0, ns.lastIndexOf('.'));
          this.Register(myBaseNs);

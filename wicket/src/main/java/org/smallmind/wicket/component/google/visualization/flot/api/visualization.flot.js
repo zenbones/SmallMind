@@ -1,4 +1,4 @@
-org.smallmind.wicket.google.visualization.compareArray = function (array1, array2) {
+SMALLMIND.visualization.flot.compareArray = function (array1, array2) {
 
    var arrayIndex;
 
@@ -23,7 +23,7 @@ org.smallmind.wicket.google.visualization.compareArray = function (array1, array
    return false;
 };
 
-org.smallmind.wicket.google.visualization.findPos = function (obj) {
+SMALLMIND.visualization.flot.findPos = function (obj) {
 
    var curleft = 0;
    var curtop = 0;
@@ -39,7 +39,7 @@ org.smallmind.wicket.google.visualization.findPos = function (obj) {
    }
 };
 
-org.smallmind.wicket.google.visualization.showTooltip = function (id, x, y, contents) {
+SMALLMIND.visualization.flot.showTooltip = function (id, x, y, contents) {
 
    jQuery("<div id='" + id + "'>" + contents + "</div>").css({
       position: 'absolute',
@@ -55,13 +55,13 @@ org.smallmind.wicket.google.visualization.showTooltip = function (id, x, y, cont
 };
 
 // Flot class constructor.
-org.smallmind.wicket.google.visualization.Flot = function(container) {
+SMALLMIND.visualization.flot = function(container) {
 
    this.container = container;
 };
 
 // Flot.draw() method.
-org.smallmind.wicket.google.visualization.Flot.prototype.draw = function(data, options) {
+SMALLMIND.visualization.flot.Flot.prototype.draw = function(data, options) {
 
    var flotDiv;
    var titleDiv = null;

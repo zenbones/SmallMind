@@ -19,14 +19,7 @@ public abstract class VisualizationBorder extends Border {
 
       Label scriptLabel;
 
-      add(new JavascriptNamespaceBehavior(new AbstractReadOnlyModel<String>() {
-
-         @Override
-         public String getObject () {
-
-            return getMarkupId();
-         }
-      }));
+      add(new JavascriptNamespaceBehavior("SMALLMIND.visualization.flot." + getMarkupId()));
       add(new AbstractBehavior() {
 
          @Override
@@ -58,10 +51,10 @@ public abstract class VisualizationBorder extends Border {
          StringBuilder scriptBuilder = new StringBuilder();
 
          scriptBuilder.append(buildTableScript());
-         scriptBuilder.append(getMarkupId()).append(".loadData  = function () {");
+         scriptBuilder.append("SMALLMIND.visualization.flot.").append(getMarkupId()).append(".loadData  = function () {");
 
          for (String panelId : panelIdSet) {
-            scriptBuilder.append(panelId).append(".drawChart(").append(getMarkupId()).append('.').append("data);");
+            scriptBuilder.append("SMALLMIND.visualization.flot.").append(panelId).append(".drawChart(").append(getMarkupId()).append('.').append("data);");
          }
 
          scriptBuilder.append("};");
@@ -76,7 +69,7 @@ public abstract class VisualizationBorder extends Border {
    public void loadData (AjaxRequestTarget target) {
 
       target.appendJavascript(buildTableScript());
-      target.appendJavascript(getMarkupId() + ".loadData();");
+      target.appendJavascript("SMALLMIND.visualization.flot." + getMarkupId() + ".loadData();");
    }
 
    private String buildTableScript () {
@@ -88,12 +81,12 @@ public abstract class VisualizationBorder extends Border {
 
       dataTable = getDataTable();
 
-      scriptBuilder.append(getMarkupId()).append('.').append("data = new google.visualization.DataTable();");
+      scriptBuilder.append("SMALLMIND.visualization.flot.").append(getMarkupId()).append('.').append("data = new google.visualization.DataTable();");
 
       for (ColumnDescription columnDescription : dataTable.getColumnDescriptions()) {
-         scriptBuilder.append(getMarkupId()).append(".data.addColumn('").append(columnDescription.getType().getScriptVersion()).append("','").append(columnDescription.getLabel()).append("','").append(columnDescription.getId()).append("');");
+         scriptBuilder.append("SMALLMIND.visualization.flot.").append(getMarkupId()).append(".data.addColumn('").append(columnDescription.getType().getScriptVersion()).append("','").append(columnDescription.getLabel()).append("','").append(columnDescription.getId()).append("');");
          if (columnDescription.hasProperties()) {
-            scriptBuilder.append(getMarkupId()).append(".data.setColumnProperties(").append(columnIndex).append(',').append(columnDescription.getPropertiesAsJson()).append(");");
+            scriptBuilder.append("SMALLMIND.visualization.flot.").append(getMarkupId()).append(".data.setColumnProperties(").append(columnIndex).append(',').append(columnDescription.getPropertiesAsJson()).append(");");
          }
          columnIndex++;
       }
@@ -124,7 +117,7 @@ public abstract class VisualizationBorder extends Border {
          }
          rowBuilder.append("]");
 
-         scriptBuilder.append(getMarkupId()).append(".data.addRow(").append(rowBuilder).append(");");
+         scriptBuilder.append("SMALLMIND.visualization.flot.").append(getMarkupId()).append(".data.addRow(").append(rowBuilder).append(");");
       }
 
       return scriptBuilder.toString();

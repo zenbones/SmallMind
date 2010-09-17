@@ -36,14 +36,7 @@ public class VisualizationPanel extends Panel {
 
       divId = UUID.randomUUID().toString();
 
-      add(new JavascriptNamespaceBehavior(new AbstractReadOnlyModel<String>() {
-
-         @Override
-         public String getObject () {
-
-            return getMarkupId();
-         }
-      }));
+      add(new JavascriptNamespaceBehavior("SMALLMIND.visualization.flot." + getMarkupId()));
 
       divLabel = new Label("visualizationDiv", new Model<String>("<div id=\"" + divId + "\"></div>"));
       divLabel.setEscapeModelStrings(false);
@@ -85,7 +78,7 @@ public class VisualizationPanel extends Panel {
             throw new FormattedWicketRuntimeException("%s(%s) is not with the context of a %s", VisualizationPanel.class.getSimpleName(), getMarkupId(), VisualizationBorder.class.getSimpleName());
          }
 
-         scriptBuilder.append(getMarkupId()).append(".drawChart  = function (data) {");
+         scriptBuilder.append("SMALLMIND.visualization.flot.").append(getMarkupId()).append(".drawChart  = function (data) {");
 
          if (javascriptModel != null) {
             scriptBuilder.append(javascriptModel.getObject());

@@ -3,20 +3,19 @@ package org.smallmind.wicket.behavior;
 import org.apache.wicket.behavior.AbstractBehavior;
 import org.apache.wicket.markup.html.IHeaderResponse;
 import org.apache.wicket.markup.html.resources.JavascriptResourceReference;
-import org.apache.wicket.model.IModel;
 
 public class JavascriptNamespaceBehavior extends AbstractBehavior {
 
-   private IModel<String> namespaceModel;
+   private String namespace;
 
    public JavascriptNamespaceBehavior () {
 
       this(null);
    }
 
-   public JavascriptNamespaceBehavior (IModel<String> namespaceModel) {
+   public JavascriptNamespaceBehavior (String namespace) {
 
-      this.namespaceModel = namespaceModel;
+      this.namespace = namespace;
    }
 
    @Override
@@ -25,8 +24,8 @@ public class JavascriptNamespaceBehavior extends AbstractBehavior {
       super.renderHead(response);
       response.renderJavascriptReference(new JavascriptResourceReference(JavascriptNamespaceBehavior.class, "JavascriptNamespaceBehavior.js"), JavascriptNamespaceBehavior.class.getName());
 
-      if (namespaceModel != null) {
-         response.renderJavascript("Namespace.Manager.Register('" + namespaceModel.getObject() + "');", JavascriptNamespaceBehavior.class.getName() + '.' + namespaceModel.getObject());
+      if (namespace != null) {
+         response.renderJavascript("SMALLMIND.namespace.manager.register('" + namespace + "');", JavascriptNamespaceBehavior.class.getName() + '.' + namespace);
       }
    }
 }
