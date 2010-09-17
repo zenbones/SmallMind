@@ -2,7 +2,6 @@ package org.smallmind.wicket.component.button;
 
 import java.util.Properties;
 import org.apache.wicket.AttributeModifier;
-import org.apache.wicket.behavior.HeaderContributor;
 import org.apache.wicket.behavior.IBehavior;
 import org.apache.wicket.markup.html.WebMarkupContainer;
 import org.apache.wicket.markup.html.basic.Label;
@@ -10,6 +9,7 @@ import org.apache.wicket.markup.html.panel.Panel;
 import org.apache.wicket.model.AbstractReadOnlyModel;
 import org.apache.wicket.model.IModel;
 import org.apache.wicket.protocol.http.WebApplication;
+import org.apache.wicket.util.template.TextTemplateHeaderContributor;
 import org.smallmind.wicket.behavior.CssBehavior;
 import org.smallmind.wicket.skin.SkinManager;
 
@@ -31,7 +31,7 @@ public class Button extends Panel {
       buttonSkin.add(new AttributeModifier("class", true, new ButtonClassModel()));
       buttonSkin.add(new AttributeModifier("incapacitated", true, new ButtonDisabledModel()));
 
-      add(HeaderContributor.forJavaScript(Button.class, "Button.js"));
+      add(TextTemplateHeaderContributor.forJavaScript(Button.class, "Button.js", null));
 
       cssProperties = skinManager.getProperties((WebApplication)getApplication(), Button.class);
       cssProperties.put("contextpath", ((WebApplication)getApplication()).getServletContext().getContextPath());
