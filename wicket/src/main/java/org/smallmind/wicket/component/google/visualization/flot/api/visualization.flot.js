@@ -55,7 +55,7 @@ SMALLMIND.visualization.flot.showTooltip = function (id, x, y, contents) {
 };
 
 // Flot class constructor.
-SMALLMIND.visualization.flot = function(container) {
+SMALLMIND.visualization.flot.Flot = function(container) {
 
    this.container = container;
 };

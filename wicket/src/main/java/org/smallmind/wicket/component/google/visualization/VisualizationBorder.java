@@ -54,11 +54,11 @@ public abstract class VisualizationBorder extends Border {
          scriptBuilder.append("SMALLMIND.visualization.flot.").append(getMarkupId()).append(".loadData  = function () {");
 
          for (String panelId : panelIdSet) {
-            scriptBuilder.append("SMALLMIND.visualization.flot.").append(panelId).append(".drawChart(").append(getMarkupId()).append('.').append("data);");
+            scriptBuilder.append("SMALLMIND.visualization.flot.").append(panelId).append(".drawChart(").append("SMALLMIND.visualization.flot.").append(getMarkupId()).append('.').append("data);");
          }
 
          scriptBuilder.append("};");
-         scriptBuilder.append("google.setOnLoadCallback(").append(getMarkupId()).append(".loadData);");
+         scriptBuilder.append("google.setOnLoadCallback(").append("SMALLMIND.visualization.flot.").append(getMarkupId()).append(".loadData);");
 
          panelIdSet.clear();
 

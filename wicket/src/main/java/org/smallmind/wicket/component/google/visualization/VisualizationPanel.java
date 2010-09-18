@@ -75,7 +75,7 @@ public class VisualizationPanel extends Panel {
          StringBuilder scriptBuilder = new StringBuilder();
 
          if ((visualizationBorder = findParent(VisualizationBorder.class)) == null) {
-            throw new FormattedWicketRuntimeException("%s(%s) is not with the context of a %s", VisualizationPanel.class.getSimpleName(), getMarkupId(), VisualizationBorder.class.getSimpleName());
+            throw new FormattedWicketRuntimeException("%s(%s) is not within the context of a %s", VisualizationPanel.class.getSimpleName(), getMarkupId(), VisualizationBorder.class.getSimpleName());
          }
 
          scriptBuilder.append("SMALLMIND.visualization.flot.").append(getMarkupId()).append(".drawChart  = function (data) {");
