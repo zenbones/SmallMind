@@ -154,10 +154,43 @@ SMALLMIND.visualization.flot.Flot.prototype.draw = function(data, options) {
          flotData.push(series);
       }
 
+      /*
+       flotDiv.innerHTML = "<table cellpadding='0' cellspacing='0' border='0' width='" + this.container.offsetWidth + "' height='" + ((titleDiv == null) ? this.container.offsetHeight : this.container.offsetHeight - titleDiv.offsetHeight) + "'>" +
+       "  <tbody>" +
+       "    <tr>" +
+       "      <td>" +
+       "      </td>" +
+       "    </tr>" +
+       "    <tr>" +
+       "      <td width='100%' height='100%'>" +
+       "        <table cellpadding='0' cellspacing='0' border='0' width='100%' height='100%'>" +
+       "          <tbody>" +
+       "            <tr>" +
+       "              <td>" +
+       "              </td>" +
+       "              <td width='100%' height='100%'>" +
+       "                <div></div>" +
+       "              </td>" +
+       "              <td>" +
+       "              </td>" +
+       "            </tr>" +
+       "          </tbody>" +
+       "        </table>" +
+       "      </td>" +
+       "    </tr>" +
+       "    <tr>" +
+       "      <td>" +
+       "      </td>" +
+       "    </tr>" +
+       "  </tbody>" +
+       "</table>";
+       */
+
       var graphDiv;
       var graphTable;
-      var graphTBody;
       var middleTable;
+      var graphTBody;
+      var middleTBody;
       var topTr;
       var middleTr;
       var bottomTr;
@@ -201,12 +234,15 @@ SMALLMIND.visualization.flot.Flot.prototype.draw = function(data, options) {
       middleTable.setAttribute("width", "100%");
       middleTable.setAttribute("height", "100%");
 
+      middleTBody = document.createElement("tbody");
+      middleTable.appendChild(middleTBody);
+
       middleTd.appendChild(middleTable);
       middleTd.setAttribute("width", "100%");
       middleTd.setAttribute("height", "100%");
 
       singleTr = document.createElement("tr");
-      middleTable.appendChild(singleTr);
+      middleTBody.appendChild(singleTr);
 
       leftTd = document.createElement("td");
       singleTr.appendChild(leftTd);
