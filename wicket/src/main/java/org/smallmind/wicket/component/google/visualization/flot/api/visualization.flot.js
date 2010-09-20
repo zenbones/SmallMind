@@ -69,13 +69,14 @@ SMALLMIND.visualization.flot.Flot.prototype.draw = function(data, options) {
    this.container.style.width = options.width;
    this.container.style.height = options.height;
 
-   if ((flotDiv = document.getElementById("com.identitymind.visualization.flot_div." + this.container.id)) != null) {
+   if ((flotDiv = document.getElementById("SMALLMIND.visualization.flot_div." + this.container.id)) != null) {
       this.container.removeChild(flotDiv);
    }
 
    flotDiv = document.createElement("div");
-   flotDiv.setAttribute("id", "com.identitymind.visualization.flot_div." + this.container.id);
-   flotDiv.setAttribute("style", "width: 100%; height: 100%");
+   flotDiv.setAttribute("id", "SMALLMIND.visualization.flot_div." + this.container.id);
+   flotDiv.style.width = "100%";
+   flotDiv.style.height = "100%";
    if (options.fontSize != null) {
       flotDiv.style.fontSize = options.fontSize;
    }
@@ -88,7 +89,10 @@ SMALLMIND.visualization.flot.Flot.prototype.draw = function(data, options) {
    if (options.title != null) {
 
       titleDiv = document.createElement("div");
-      titleDiv.setAttribute("style", "width: 100%; font-weight: bold; text-align: center; padding-bottom: 5px");
+      titleDiv.style.width = "100%";
+      titleDiv.style.fontWeight = "bold";
+      titleDiv.style.textAlign = "center";
+      titleDiv.style.paddingBottom = "5px";
 
       if (options.titleFontSize != null) {
          titleDiv.style.fontSize = options.titleFontSize;
@@ -106,7 +110,10 @@ SMALLMIND.visualization.flot.Flot.prototype.draw = function(data, options) {
       var emptyDiv;
 
       emptyDiv = document.createElement("div");
-      emptyDiv.setAttribute("style", "width: 100%; height: 100%; vertical-align: middle; text-align: center");
+      emptyDiv.style.width = "100%";
+      emptyDiv.style.height = "100%";
+      emptyDiv.style.verticalAlign = "middle";
+      emptyDiv.style.textAlign = "center";
       emptyDiv.appendChild(document.createTextNode("No data"));
 
       flotDiv.appendChild(emptyDiv);
@@ -154,38 +161,6 @@ SMALLMIND.visualization.flot.Flot.prototype.draw = function(data, options) {
          flotData.push(series);
       }
 
-      /*
-       flotDiv.innerHTML = "<table cellpadding='0' cellspacing='0' border='0' width='" + this.container.offsetWidth + "' height='" + ((titleDiv == null) ? this.container.offsetHeight : this.container.offsetHeight - titleDiv.offsetHeight) + "'>" +
-       "  <tbody>" +
-       "    <tr>" +
-       "      <td>" +
-       "      </td>" +
-       "    </tr>" +
-       "    <tr>" +
-       "      <td width='100%' height='100%'>" +
-       "        <table cellpadding='0' cellspacing='0' border='0' width='100%' height='100%'>" +
-       "          <tbody>" +
-       "            <tr>" +
-       "              <td>" +
-       "              </td>" +
-       "              <td width='100%' height='100%'>" +
-       "                <div></div>" +
-       "              </td>" +
-       "              <td>" +
-       "              </td>" +
-       "            </tr>" +
-       "          </tbody>" +
-       "        </table>" +
-       "      </td>" +
-       "    </tr>" +
-       "    <tr>" +
-       "      <td>" +
-       "      </td>" +
-       "    </tr>" +
-       "  </tbody>" +
-       "</table>";
-       */
-
       var graphDiv;
       var graphTable;
       var middleTable;
@@ -222,7 +197,11 @@ SMALLMIND.visualization.flot.Flot.prototype.draw = function(data, options) {
 
       topTd = document.createElement("td");
       topTr.appendChild(topTd);
+
       middleTd = document.createElement("td");
+      middleTd.setAttribute("width", "100%");
+      middleTd.setAttribute("height", "100%");
+
       middleTr.appendChild(middleTd);
       bottomTd = document.createElement("td");
       bottomTr.appendChild(bottomTd);
@@ -233,13 +212,10 @@ SMALLMIND.visualization.flot.Flot.prototype.draw = function(data, options) {
       middleTable.setAttribute("border", 0);
       middleTable.setAttribute("width", "100%");
       middleTable.setAttribute("height", "100%");
+      middleTd.appendChild(middleTable);
 
       middleTBody = document.createElement("tbody");
       middleTable.appendChild(middleTBody);
-
-      middleTd.appendChild(middleTable);
-      middleTd.setAttribute("width", "100%");
-      middleTd.setAttribute("height", "100%");
 
       singleTr = document.createElement("tr");
       middleTBody.appendChild(singleTr);
@@ -254,7 +230,9 @@ SMALLMIND.visualization.flot.Flot.prototype.draw = function(data, options) {
       singleTr.appendChild(rightTd);
 
       if ((options.xaxis != null) && (options.xaxis.title != null)) {
-         bottomTd.setAttribute("style", "text-align: center; padding-top: 3px; padding-bottom: 3px");
+         bottomTd.style.textAlign = "center";
+         bottomTd.style.paddingTop = "3px";
+         bottomTd.style.paddingBottom = "3px";
 
          if (options.fontSize != null) {
             bottomTd.style.fontSize = options.fontSize;
@@ -266,7 +244,9 @@ SMALLMIND.visualization.flot.Flot.prototype.draw = function(data, options) {
       }
 
       if ((options.x2axis != null) && (options.x2axis.title != null)) {
-         topTd.setAttribute("style", "text-align: center; padding-top: 3px; padding-bottom: 3px");
+         topTd.style.textAlign = "center";
+         topTd.style.paddingTop = "3px";
+         topTd.style.paddingBottom = "3px";
 
          if (options.fontSize != null) {
             topTd.style.fontSize = options.fontSize;
@@ -279,24 +259,35 @@ SMALLMIND.visualization.flot.Flot.prototype.draw = function(data, options) {
 
       if ((options.yaxis != null) && (options.yaxis.title != null)) {
 
-         var lefTextDiv;
+         var leftTextDiv;
          var leftFontSize;
 
          leftFontSize = (options.fontSize != null) ? options.fontSize : '11px';
 
-         leftTd.setAttribute("style", "padding-left: 3px; padding-right: 8px");
+         leftTd.style.paddingLeft = "3px";
+         leftTd.style.paddingRight = "8px";
 
-         lefTextDiv = document.createElement("div");
-         lefTextDiv.style.height = leftTd.offsetHeight;
-         lefTextDiv.style.width = 15;
+         leftTextDiv = document.createElement("div");
+         leftTextDiv.style.height = leftTd.offsetHeight;
+         leftTextDiv.style.width = 15;
 
-         leftTd.appendChild(lefTextDiv);
+         if (navigator.userAgent.indexOf("MSIE") >= 0) {
+            leftTextDiv.style.writingMode = "tb-rl";
+            leftTextDiv.style.fontSize = leftFontSize;
+            leftTextDiv.style.fontFamily = "arial, helvetica";
+            leftTextDiv.style.textAlign = "center";
+            leftTd.appendChild(leftTextDiv);
+            leftTextDiv.appendChild(document.createTextNode(options.yaxis.title));
+         }
+         else {
+            leftTd.appendChild(leftTextDiv);
 
-         var leftSvgObject = document.createElement("object");
+            var leftSvgObject = document.createElement("object");
 
-         leftSvgObject.setAttribute("type", "image/svg+xml");
-         leftSvgObject.setAttribute("data", "data:image/svg+xml," + "<svg xmlns='http://www.w3.org/2000/svg'><g transform='translate(" + ((leftTd.offsetWidth / 2) - 3) + "," + (leftTd.offsetHeight / 2) + ")'><text x='0' y='0' text-anchor='middle' transform='rotate(-90)' font-size='" + leftFontSize + "' font-family='arial, helvetica'>" + options.yaxis.title + "</text></g></svg>");
-         lefTextDiv.appendChild(leftSvgObject);
+            leftSvgObject.setAttribute("type", "image/svg+xml");
+            leftSvgObject.setAttribute("data", "data:image/svg+xml," + "<svg xmlns='http://www.w3.org/2000/svg'><g transform='translate(" + ((leftTd.offsetWidth / 2) - 3) + "," + (leftTd.offsetHeight / 2) + ")'><text x='0' y='0' text-anchor='middle' transform='rotate(-90)' font-size='" + leftFontSize + "' font-family='arial, helvetica'>" + options.yaxis.title + "</text></g></svg>");
+            lefTextDiv.appendChild(leftSvgObject);
+         }
       }
 
       if ((options.y2axis != null) && (options.y2axis.title != null)) {
@@ -306,19 +297,30 @@ SMALLMIND.visualization.flot.Flot.prototype.draw = function(data, options) {
 
          rightFontSize = (options.fontSize != null) ? options.fontSize : '11px';
 
-         rightTd.setAttribute("style", "padding-left: 8px; padding-right: 3px");
+         rightTd.style.paddingLeft = "8px";
+         rightTd.style.paddingRight = "3px";
 
          rightTextDiv = document.createElement("div");
          rightTextDiv.style.height = rightTd.offsetHeight;
          rightTextDiv.style.width = 15;
 
-         rightTd.appendChild(rightTextDiv);
+         if (navigator.userAgent.indexOf("MSIE") >= 0) {
+            rightTextDiv.style.writingMode = "tb-rl";
+            rightTextDiv.style.fontSize = leftFontSize;
+            rightTextDiv.style.fontFamily = "arial, helvetica";
+            rightTextDiv.style.textAlign = "center";
+            rightTd.appendChild(rightTextDiv);
+            rightTextDiv.appendChild(document.createTextNode(options.y2axis.title));
+         }
+         else {
+            rightTd.appendChild(rightTextDiv);
 
-         var rightSvgObject = document.createElement("object");
+            var rightSvgObject = document.createElement("object");
 
-         rightSvgObject.setAttribute("type", "image/svg+xml");
-         rightSvgObject.setAttribute("data", "data:image/svg+xml," + "<svg xmlns='http://www.w3.org/2000/svg'><g transform='translate(" + ((rightTd.style.width / 2) + 4) + "," + (rightTd.offsetHeight / 2) + ")'><text x='0' y='0' text-anchor='middle' transform='rotate(90)' font-size='" + rightFontSize + "' font-family='arial, helvetica'>" + options.y2axis.title + "</text></g></svg>");
-         rightTextDiv.appendChild(rightSvgObject);
+            rightSvgObject.setAttribute("type", "image/svg+xml");
+            rightSvgObject.setAttribute("data", "data:image/svg+xml," + "<svg xmlns='http://www.w3.org/2000/svg'><g transform='translate(" + ((rightTd.style.width / 2) + 4) + "," + (rightTd.offsetHeight / 2) + ")'><text x='0' y='0' text-anchor='middle' transform='rotate(90)' font-size='" + rightFontSize + "' font-family='arial, helvetica'>" + options.y2axis.title + "</text></g></svg>");
+            rightTextDiv.appendChild(rightSvgObject);
+         }
       }
 
       graphDiv = document.createElement("div");
