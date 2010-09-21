@@ -34,7 +34,7 @@
    <build>
       <resources>
          <resource>
-            <directory>${basedir}/src/main/installation</directory>
+            <directory>src/main/installation</directory>
             <filtering>false</filtering>
          </resource>
       </resources>
