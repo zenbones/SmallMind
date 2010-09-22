@@ -11,7 +11,7 @@ public class JavaDocStencil extends StaticStencil {
    @Override
    public String getFirstLine () {
 
-      return "/* License Header";
+      return "/*";
    }
 
    @Override
