@@ -39,7 +39,19 @@ public class StaticStencil extends Stencil {
    }
 
    @Override
-   public final void setAllowBlankLines (boolean allowBlankLines) {
+   public final void setPrefixBlankLines (boolean prefixBlankLines) {
+
+      throw new UnsupportedOperationException();
+   }
+
+   @Override
+   public final void setBlankLinesBefore (int blankLinesBefore) {
+
+      throw new UnsupportedOperationException();
+   }
+
+   @Override
+   public final void setBlankLinesAfter (int blankLinesAfter) {
 
       throw new UnsupportedOperationException();
    }

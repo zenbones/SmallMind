@@ -7,7 +7,9 @@ public class Stencil {
    private String firstLine;
    private String lastLine;
    private String beforeEachLine;
-   private boolean allowBlankLines = false;
+   private boolean prefixBlankLines = false;
+   private int blankLinesBefore;
+   private int blankLinesAfter;
 
    public String getId () {
 
@@ -59,13 +61,33 @@ public class Stencil {
       this.beforeEachLine = beforeEachLine;
    }
 
-   public boolean isAllowBlankLines () {
+   public boolean isPrefixBlankLines () {
 
-      return allowBlankLines;
+      return prefixBlankLines;
    }
 
-   public void setAllowBlankLines (boolean allowBlankLines) {
+   public void setPrefixBlankLines (boolean prefixBlankLines) {
 
-      this.allowBlankLines = allowBlankLines;
+      this.prefixBlankLines = prefixBlankLines;
+   }
+
+   public int getBlankLinesBefore () {
+
+      return blankLinesBefore;
+   }
+
+   public void setBlankLinesBefore (int blankLinesBefore) {
+
+      this.blankLinesBefore = blankLinesBefore;
+   }
+
+   public int getBlankLinesAfter () {
+
+      return blankLinesAfter;
+   }
+
+   public void setBlankLinesAfter (int blankLinesAfter) {
+
+      this.blankLinesAfter = blankLinesAfter;
    }
 }
