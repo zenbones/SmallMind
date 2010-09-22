@@ -23,6 +23,7 @@
       <module>seda</module>
       <module>plumber</module>
       <module>spark</module>
+      <module>license</module>
       <module>swing</module>
       <module>wicket</module>
       <module>nagios</module>

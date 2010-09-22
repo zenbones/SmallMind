@@ -4,29 +4,40 @@ public class RegExpTranslator {
 
    public static String translate (String pattern) {
 
-      StringBuilder patternBuilder;
-      char curChar;
-      int index;
+      StringBuilder patternBuilder = new StringBuilder();
+      boolean isStar = false;
 
-      patternBuilder = new StringBuilder();
-      for (index = 0; index < pattern.length(); index++) {
-         curChar = pattern.charAt(index);
-         switch (curChar) {
+      for (int index = 0; index < pattern.length(); index++) {
+         if (isStar && (pattern.charAt(index) != '*')) {
+            patternBuilder.append("[^/]*");
+            isStar = false;
+         }
+
+         switch (pattern.charAt(index)) {
             case '$':
                patternBuilder.append("\\$");
-               break;
             case '.':
                patternBuilder.append("\\.");
                break;
             case '*':
-               patternBuilder.append(".*");
+               if (isStar) {
+                  patternBuilder.append(".*");
+                  isStar = false;
+               }
+               else {
+                  isStar = true;
+               }
                break;
             case '?':
-               patternBuilder.append(".?");
+               patternBuilder.append("[^/]?");
                break;
             default:
-               patternBuilder.append(curChar);
+               patternBuilder.append(pattern.charAt(index));
          }
+      }
+
+      if (isStar) {
+         patternBuilder.append("[^/]*");
       }
 
       return patternBuilder.toString();
