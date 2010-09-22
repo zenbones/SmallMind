@@ -23,7 +23,6 @@
       <module>seda</module>
       <module>plumber</module>
       <module>spark</module>
-      <module>license</module>
       <module>swing</module>
       <module>wicket</module>
       <module>nagios</module>
@@ -296,6 +295,19 @@
             <version>2.5</version>
             <configuration>
                <useSystemClassLoader>false</useSystemClassLoader>
+            </configuration>
+         </plugin>
+         <plugin>
+            <groupId>org.smallmind</groupId>
+            <artifactId>smallmind-license-plugin</artifactId>
+            <executions>
+               <execution>
+                  <goals>
+                     <goal>generate-license-headers</goal>
+                  </goals>
+               </execution>
+            </executions>
+            <configuration>
             </configuration>
          </plugin>
       </plugins>
