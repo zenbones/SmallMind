@@ -13,6 +13,7 @@
       <nexus.release.repository.url>http://${nexus.server}/nexus/content/repositories/releases</nexus.release.repository.url>
    </properties>
    <modules>
+      <module>license</module>
       <module>nutsnbolts</module>
       <module>scribe</module>
       <module>quorum</module>
