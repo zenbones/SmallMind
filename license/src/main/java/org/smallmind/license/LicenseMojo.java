@@ -39,19 +39,12 @@ public class LicenseMojo extends AbstractMojo {
    public void execute ()
       throws MojoExecutionException, MojoFailureException {
 
-      MavenProject rootProject;
+      MavenProject rootProject = project;
 
-      System.out.println("Artifact Id:" + project.getArtifactId());
-      System.out.println("Base Dir:" + project.getBasedir());
-      System.out.println("Source Dir:" + project.getBuild().getSourceDirectory());
-
-      rootProject = project;
       while (!rootProject.isExecutionRoot()) {
          rootProject = rootProject.getParent();
       }
 
-      System.out.println("Root Artifact Id:" + rootProject.getArtifactId());
-      System.out.println("Root Base Dir:" + rootProject.getBasedir());
-      System.out.println("Root Source Dir:" + rootProject.getBuild().getSourceDirectory());
+      
    }
 }

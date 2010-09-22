@@ -2,8 +2,8 @@ package org.smallmind.license.stencil;
 
 public class Stencil {
 
-   private String id = this.getClass().getName();
-   private String recognitionPattern;
+   private String id;
+   private String skipLines;
    private String firstLine;
    private String lastLine;
    private String beforeEachLine;
@@ -19,14 +19,14 @@ public class Stencil {
       this.id = id;
    }
 
-   public String getRecognitionPattern () {
+   public String getSkipLines () {
 
-      return recognitionPattern;
+      return skipLines;
    }
 
-   public void setRecognitionPattern (String recognitionPattern) {
+   public void setSkipLines (String skipLines) {
 
-      this.recognitionPattern = recognitionPattern;
+      this.skipLines = skipLines;
    }
 
    public String getFirstLine () {
