@@ -14,7 +14,6 @@ import org.smallmind.license.stencil.Stencil;
 /**
  * @goal generate-license-headers
  * @phase verify
- * @aggregator
  * @description Generates and/or replaces license headers
  */
 public class LicenseMojo extends AbstractMojo {

@@ -1,4 +1,4 @@
-package org.smallmind.spark.wrapper.mojo;
+package org.smallmind.spark.tanukisoft.mojo;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -26,15 +26,15 @@ import org.smallmind.nutsnbolts.freemarker.ClassPathTemplateLoader;
 import org.smallmind.nutsnbolts.io.FileIterator;
 
 /**
- * @goal generate-os-wrapper
+ * @goal generate-wrapper
  * @phase package
  * @requiresDependencyResolution runtime
  * @description Generates Tanukisoft based os service wrappers
  */
-public class OSWrapperMojo extends AbstractMojo {
+public class GenerateWrapperMojo extends AbstractMojo {
 
    private static final String[] NOTHING = new String[0];
-   private static final String RESOURCE_BASE_PATH = OSWrapperMojo.class.getPackage().getName().replace('.', '/');
+   private static final String RESOURCE_BASE_PATH = GenerateWrapperMojo.class.getPackage().getName().replace('.', '/');
 
    /**
     * @parameter expression="${project}"
@@ -186,7 +186,7 @@ public class OSWrapperMojo extends AbstractMojo {
       freemarkerMap = new HashMap<String, Object>();
       freemarkerMap.put("applicationName", applicationName);
       freemarkerMap.put("applicationLongName", applicationLongName);
-      freemarkerMap.put("applicationDescription", (applicationDescription != null) ? applicationDescription : String.format("%s generated project", OSWrapperMojo.class.getSimpleName()));
+      freemarkerMap.put("applicationDescription", (applicationDescription != null) ? applicationDescription : String.format("%s generated project", GenerateWrapperMojo.class.getSimpleName()));
       freemarkerMap.put("javaCommand", javaCommand);
       freemarkerMap.put("wrapperListener", wrapperListener);
       freemarkerMap.put("jvmArgs", (jvmArgs != null) ? jvmArgs : NOTHING);
@@ -298,8 +298,8 @@ public class OSWrapperMojo extends AbstractMojo {
             getLog().info(String.format("Copying wrapper library(%s)...", osType.getLibrary()));
          }
 
-         copyToDestination(OSWrapperMojo.class.getClassLoader().getResourceAsStream(getWrapperFilePath("lib", osType.getLibrary())), libDirectory.getAbsolutePath(), osType.getLibrary());
-         copyToDestination(OSWrapperMojo.class.getClassLoader().getResourceAsStream(getWrapperFilePath("lib", osType.getLibrary())), libDirectory.getAbsolutePath(), osType.getOsStyle().getLibrary());
+         copyToDestination(GenerateWrapperMojo.class.getClassLoader().getResourceAsStream(getWrapperFilePath("lib", osType.getLibrary())), libDirectory.getAbsolutePath(), osType.getLibrary());
+         copyToDestination(GenerateWrapperMojo.class.getClassLoader().getResourceAsStream(getWrapperFilePath("lib", osType.getLibrary())), libDirectory.getAbsolutePath(), osType.getOsStyle().getLibrary());
       }
       catch (IOException ioException) {
          throw new MojoExecutionException(String.format("Problem in copying the wrapper library(%s) into the application library", osType.getLibrary()), ioException);
@@ -310,7 +310,7 @@ public class OSWrapperMojo extends AbstractMojo {
             getLog().info(String.format("Copying wrapper executable(%s)...", osType.getExecutable()));
          }
 
-         copyToDestination(OSWrapperMojo.class.getClassLoader().getResourceAsStream(getWrapperFilePath("bin", osType.getExecutable())), binDirectory.getAbsolutePath(), osType.getExecutable());
+         copyToDestination(GenerateWrapperMojo.class.getClassLoader().getResourceAsStream(getWrapperFilePath("bin", osType.getExecutable())), binDirectory.getAbsolutePath(), osType.getExecutable());
       }
       catch (IOException ioException) {
          throw new MojoExecutionException(String.format("Problem in copying the wrapper executable(%s) into the application binaries", osType.getExecutable()), ioException);
@@ -326,9 +326,9 @@ public class OSWrapperMojo extends AbstractMojo {
                processFreemarkerTemplate(getWrapperFilePath("bin", "freemarker.sh.script.in"), binDirectory, applicationName, freemarkerMap);
                break;
             case WINDOWS:
-               copyToDestination(OSWrapperMojo.class.getClassLoader().getResourceAsStream(getWrapperFilePath("bin", "App.bat.in")), binDirectory.getAbsolutePath(), applicationName + ".bat");
-               copyToDestination(OSWrapperMojo.class.getClassLoader().getResourceAsStream(getWrapperFilePath("bin", "InstallApp-NT.bat.in")), binDirectory.getAbsolutePath(), "Install" + applicationName + "-NT.bat");
-               copyToDestination(OSWrapperMojo.class.getClassLoader().getResourceAsStream(getWrapperFilePath("bin", "UninstallApp-NT.bat.in")), binDirectory.getAbsolutePath(), "Uninstall" + applicationName + "-NT.bat");
+               copyToDestination(GenerateWrapperMojo.class.getClassLoader().getResourceAsStream(getWrapperFilePath("bin", "App.bat.in")), binDirectory.getAbsolutePath(), applicationName + ".bat");
+               copyToDestination(GenerateWrapperMojo.class.getClassLoader().getResourceAsStream(getWrapperFilePath("bin", "InstallApp-NT.bat.in")), binDirectory.getAbsolutePath(), "Install" + applicationName + "-NT.bat");
+               copyToDestination(GenerateWrapperMojo.class.getClassLoader().getResourceAsStream(getWrapperFilePath("bin", "UninstallApp-NT.bat.in")), binDirectory.getAbsolutePath(), "Uninstall" + applicationName + "-NT.bat");
                break;
             default:
                throw new MojoExecutionException(String.format("Unknown os style(%s)", osType.getOsStyle().name()));
@@ -431,7 +431,7 @@ public class OSWrapperMojo extends AbstractMojo {
 
       freemarkerConf = new Configuration();
       freemarkerConf.setTagSyntax(freemarker.template.Configuration.SQUARE_BRACKET_TAG_SYNTAX);
-      freemarkerConf.setTemplateLoader(new ClassPathTemplateLoader(OSWrapperMojo.class, false));
+      freemarkerConf.setTemplateLoader(new ClassPathTemplateLoader(GenerateWrapperMojo.class, false));
 
       try {
          freemarkerTemplate = freemarkerConf.getTemplate("/" + templatePath);

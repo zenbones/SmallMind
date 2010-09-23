@@ -1,4 +1,4 @@
-package org.smallmind.spark.wrapper.mojo;
+package org.smallmind.spark.tanukisoft.mojo;
 
 public enum OSStyle {
 

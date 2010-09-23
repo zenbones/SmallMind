@@ -1,4 +1,4 @@
-package org.smallmind.spark.wrapper.mojo;
+package org.smallmind.spark.tanukisoft.mojo;
 
 import org.apache.maven.artifact.Artifact;
 
