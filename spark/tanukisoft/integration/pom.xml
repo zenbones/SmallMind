@@ -3,12 +3,12 @@
 
    <parent>
       <groupId>org.smallmind</groupId>
-      <artifactId>spark-wrapper</artifactId>
+      <artifactId>spark-tanukisoft</artifactId>
       <version>1.0</version>
    </parent>
-   <artifactId>spark-wrapper-integration</artifactId>
+   <artifactId>spark-tanukisoft-integration</artifactId>
    <packaging>jar</packaging>
-   <name>Spark-Wrapper-Integration</name>
+   <name>Spark-Tanukisoft-Integration</name>
    <description>Tanukisoft wrapper integrations</description>
    <dependencies>
       <dependency>
