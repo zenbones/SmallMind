@@ -286,7 +286,7 @@ SMALLMIND.visualization.flot.Flot.prototype.draw = function(data, options) {
 
             leftSvgObject.setAttribute("type", "image/svg+xml");
             leftSvgObject.setAttribute("data", "data:image/svg+xml," + "<svg xmlns='http://www.w3.org/2000/svg'><g transform='translate(" + ((leftTd.offsetWidth / 2) - 3) + "," + (leftTd.offsetHeight / 2) + ")'><text x='0' y='0' text-anchor='middle' transform='rotate(-90)' font-size='" + leftFontSize + "' font-family='arial, helvetica'>" + options.yaxis.title + "</text></g></svg>");
-            lefTextDiv.appendChild(leftSvgObject);
+            leftTextDiv.appendChild(leftSvgObject);
          }
       }
 
