@@ -1,33 +1,31 @@
 package org.smallmind.license;
 
-import java.io.File;
-
 public class Rule {
 
-   private File template;
-   private String fileType;
-   private String stencil;
+   private String[] fileTypes;
    private String[] includes;
    private String[] excludes;
+   private String license;
+   private String stencil;
 
-   public File getTemplate () {
+   public String getLicense () {
 
-      return template;
+      return license;
    }
 
-   public void setTemplate (File template) {
+   public void setLicense (String license) {
 
-      this.template = template;
+      this.license = license;
    }
 
-   public String getFileType () {
+   public String[] getFileTypes () {
 
-      return fileType;
+      return fileTypes;
    }
 
-   public void setFileType (String fileType) {
+   public void setFileTypes (String[] fileTypes) {
 
-      this.fileType = fileType;
+      this.fileTypes = fileTypes;
    }
 
    public String getStencil () {

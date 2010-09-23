@@ -267,6 +267,25 @@
                <artifactId>aspectj-maven-plugin</artifactId>
                <version>1.3</version>
             </plugin>
+            <plugin>
+               <groupId>org.smallmind</groupId>
+               <artifactId>smallmind-license-plugin</artifactId>
+               <version>${project.version}</version>
+               <executions>
+                  <execution>
+                     <goals>
+                        <goal>generate-license-headers</goal>
+                     </goals>
+                  </execution>
+               </executions>
+               <configuration>
+                  <rules>
+                     <rule>
+                        <license>COPYRIGHT</license>
+                     </rule>
+                  </rules>
+               </configuration>
+            </plugin>
          </plugins>
       </pluginManagement>
       <plugins>
@@ -298,21 +317,6 @@
                <useSystemClassLoader>false</useSystemClassLoader>
             </configuration>
          </plugin>
-         <!--
-         <plugin>
-            <groupId>org.smallmind</groupId>
-            <artifactId>smallmind-license-plugin</artifactId>
-            <executions>
-               <execution>
-                  <goals>
-                     <goal>generate-license-headers</goal>
-                  </goals>
-               </execution>
-            </executions>
-            <configuration>
-            </configuration>
-         </plugin>
-         -->
       </plugins>
       <resources>
          <resource>
