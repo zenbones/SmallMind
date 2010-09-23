@@ -298,6 +298,7 @@
                <useSystemClassLoader>false</useSystemClassLoader>
             </configuration>
          </plugin>
+         <!--
          <plugin>
             <groupId>org.smallmind</groupId>
             <artifactId>smallmind-license-plugin</artifactId>
@@ -311,6 +312,7 @@
             <configuration>
             </configuration>
          </plugin>
+         -->
       </plugins>
       <resources>
          <resource>
