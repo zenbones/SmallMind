@@ -11,6 +11,6 @@
    <description>Entry points for OS anchored services</description>
    <packaging>pom</packaging>
    <modules>
-      <module>wrapper</module>
+      <module>tanukisoft</module>
    </modules>
 </project>
