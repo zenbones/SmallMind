@@ -1,6 +1,6 @@
-package org.smallmind.spark.wrapper.integration.spring;
+package org.smallmind.spark.tanukisoft.integration.spring;
 
-import org.smallmind.spark.wrapper.integration.AbstractWrapperListener;
+import org.smallmind.spark.tanukisoft.integration.AbstractWrapperListener;
 import org.springframework.context.ConfigurableApplicationContext;
 
 public abstract class SpringContextWrapperListener extends AbstractWrapperListener {

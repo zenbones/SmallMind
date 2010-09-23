@@ -1,4 +1,4 @@
-package org.smallmind.spark.wrapper.integration.spring;
+package org.smallmind.spark.tanukisoft.integration.spring;
 
 import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.context.support.ClassPathXmlApplicationContext;

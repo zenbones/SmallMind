@@ -1,4 +1,4 @@
-package org.smallmind.spark.wrapper.integration;
+package org.smallmind.spark.tanukisoft.integration;
 
 import org.tanukisoftware.wrapper.WrapperListener;
 import org.tanukisoftware.wrapper.WrapperManager;
