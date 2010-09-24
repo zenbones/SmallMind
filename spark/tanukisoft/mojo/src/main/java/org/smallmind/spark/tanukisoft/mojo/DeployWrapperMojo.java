@@ -2,9 +2,9 @@ package org.smallmind.spark.tanukisoft.mojo;
 
 import java.io.File;
 import org.apache.maven.artifact.Artifact;
+import org.apache.maven.artifact.deployer.ArtifactDeployer;
+import org.apache.maven.artifact.deployer.ArtifactDeploymentException;
 import org.apache.maven.artifact.factory.ArtifactFactory;
-import org.apache.maven.artifact.installer.ArtifactInstallationException;
-import org.apache.maven.artifact.installer.ArtifactInstaller;
 import org.apache.maven.artifact.repository.ArtifactRepository;
 import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugin.MojoExecutionException;
@@ -12,11 +12,11 @@ import org.apache.maven.plugin.MojoFailureException;
 import org.apache.maven.project.MavenProject;
 
 /**
- * @goal install-wrapper
- * @phase install
- * @description Installs Tanukisoft based os service wrappers
+ * @goal deploy-wrapper
+ * @phase deploy
+ * @description Deploys Tanukisoft based os service wrappers
  */
-public class InstallWrapperMojo extends AbstractMojo {
+public class DeployWrapperMojo extends AbstractMojo {
 
    /**
     * @parameter expression="${project}"
@@ -34,13 +34,18 @@ public class InstallWrapperMojo extends AbstractMojo {
     * @component
     * @readonly
     */
-   ArtifactInstaller artifactInstaller;
+   ArtifactDeployer artifactDeployer;
 
    /**
     * @parameter expression="${localRepository}"
     * @readonly
     */
    private ArtifactRepository localRepository;
+
+   /**
+    * @parameter default-value="${project.distributionManagementArtifactRepository}"
+    */
+   private ArtifactRepository deploymentRepository;
 
    /**
     * @parameter default-value="application"
@@ -75,10 +80,10 @@ public class InstallWrapperMojo extends AbstractMojo {
       nameBuilder.append("-app").append(".jar");
 
       try {
-         artifactInstaller.install(new File(nameBuilder.toString()), applicationArtifact, localRepository);
+         artifactDeployer.deploy(new File(nameBuilder.toString()), applicationArtifact, deploymentRepository, localRepository);
       }
-      catch (ArtifactInstallationException artifactInstallationException) {
-         throw new MojoExecutionException("Unable to install the application(" + applicationName + ")", artifactInstallationException);
+      catch (ArtifactDeploymentException artifactDeploymentException) {
+         throw new MojoExecutionException("Unable to deploy the application(" + applicationName + ")", artifactDeploymentException);
       }
    }
 }

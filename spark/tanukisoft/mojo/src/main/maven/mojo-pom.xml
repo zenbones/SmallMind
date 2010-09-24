@@ -111,6 +111,12 @@
                      <goal>install-wrapper</goal>
                   </goals>
                </execution>
+               <execution>
+                  <id>deploy</id>
+                  <goals>
+                     <goal>deploy-wrapper</goal>
+                  </goals>
+               </execution>
             </executions>
             <configuration>
                <licenseFile>${user.home}/.m2/wrapper-license.conf</licenseFile>
@@ -131,50 +137,6 @@
                   <configuration>${project.build.directory}/classes/tc-config.xml</configuration>
                </configurations>
             </configuration>
-         </plugin>
-
-         <plugin>
-            <groupId>org.apache.maven.plugins</groupId>
-            <artifactId>maven-install-plugin</artifactId>
-            <executions>
-               <execution>
-                  <phase>install</phase>
-                  <goals>
-                     <goal>install-file</goal>
-                  </goals>
-                  <configuration>
-                     <packaging>jar</packaging>
-                     <artifactId>${project.artifactId}</artifactId>
-                     <groupId>${project.groupId}</groupId>
-                     <version>${project.version}</version>
-                     <classifier>app</classifier>
-                     <file>${project.build.directory}/application/${project.artifactId}-${project.version}-app.jar</file>
-                  </configuration>
-               </execution>
-            </executions>
-         </plugin>
-
-         <plugin>
-            <groupId>org.apache.maven.plugins</groupId>
-            <artifactId>maven-deploy-plugin</artifactId>
-            <executions>
-               <execution>
-                  <phase>deploy</phase>
-                  <goals>
-                     <goal>deploy-file</goal>
-                  </goals>
-                  <configuration>
-                     <packaging>jar</packaging>
-                     <artifactId>${project.artifactId}</artifactId>
-                     <groupId>${project.groupId}</groupId>
-                     <version>${project.version}</version>
-                     <classifier>app</classifier>
-                     <file>${project.build.directory}/application/${project.artifactId}-${project.version}-app.jar</file>
-                     <repositoryId>${nexus.release.repository.id}</repositoryId>
-                     <url>${nexus.release.repository.url}</url>
-                  </configuration>
-               </execution>
-            </executions>
          </plugin>
       </plugins>
    </build>
