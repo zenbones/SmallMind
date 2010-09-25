@@ -5,8 +5,30 @@ public class Rule {
    private String[] fileTypes;
    private String[] includes;
    private String[] excludes;
+   private String id;
+   private String name;
+   private String stencilId;
    private String license;
-   private String stencil;
+
+   public String getId () {
+
+      return id;
+   }
+
+   public void setId (String id) {
+
+      this.id = id;
+   }
+
+   public String getName () {
+
+      return name;
+   }
+
+   public void setName (String name) {
+
+      this.name = name;
+   }
 
    public String getLicense () {
 
@@ -28,14 +50,14 @@ public class Rule {
       this.fileTypes = fileTypes;
    }
 
-   public String getStencil () {
+   public String getStencilId () {
 
-      return stencil;
+      return stencilId;
    }
 
-   public void setStencil (String stencil) {
+   public void setStencilId (String stencilId) {
 
-      this.stencil = stencil;
+      this.stencilId = stencilId;
    }
 
    public String[] getIncludes () {

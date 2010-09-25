@@ -2,9 +2,11 @@ package org.smallmind.license;
 
 import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileFilter;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.LinkedList;
+import org.apache.maven.model.Resource;
 import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.MojoFailureException;
@@ -13,10 +15,10 @@ import org.smallmind.license.stencil.Stencil;
 
 /**
  * @goal generate-license-headers
- * @phase verify
- * @description Generates and/or replaces license headers
+ * @phase prepare-package
+ * @description Generates and/or replaces license headers in source files
  */
-public class LicenseMojo extends AbstractMojo {
+public class SourceLicenseMojo extends AbstractMojo {
 
    /**
     * @parameter expression="${project}"
@@ -33,6 +35,16 @@ public class LicenseMojo extends AbstractMojo {
     * @parameter
     */
    private Rule[] rules;
+
+   /**
+    * @parameter default-value=true
+    */
+   private boolean includeResources;
+
+   /**
+    * @parameter default-value=false
+    */
+   private boolean includeTests;
 
    /**
     * @parameter default-value=false
@@ -53,12 +65,44 @@ public class LicenseMojo extends AbstractMojo {
 
          String[] licenseArray;
          File licenseFile;
+         FileFilter[] fileFilters;
 
          if (rule.getLicense() != null) {
             licenseFile = new File(rule.getLicense());
             licenseArray = getFileAsLineArray(licenseFile.isAbsolute() ? licenseFile.getAbsolutePath() : rootProject.getBasedir() + System.getProperty("file.separator") + licenseFile.getPath());
 
+            fileFilters = new FileFilter[rule.getFileTypes().length];
+            for (int count = 0; count < fileFilters.length; count++) {
+               fileFilters[count] = new FileTypeFilenameFilter(FileTypeRegExpTranslator.translate(rule.getFileTypes()[count]));
+            }
+
+            processFiles(project.getBuild().getSourceDirectory(), fileFilters);
+            processFiles(project.getBuild().getScriptSourceDirectory(), fileFilters);
+
+            if (includeResources) {
+               for (Resource resource : project.getBuild().getResources()) {
+                  processFiles(resource.getDirectory(), fileFilters);
+               }
+            }
+
+            if (includeTests) {
+               processFiles(project.getBuild().getTestSourceDirectory(), fileFilters);
+
+               if (includeResources) {
+                  for (Resource testResource : project.getBuild().getTestResources()) {
+                     processFiles(testResource.getDirectory(), fileFilters);
+                  }
+               }
+            }
          }
+      }
+   }
+
+   private void processFiles (String directoryPath, FileFilter... fileFilters)
+      throws MojoExecutionException {
+
+      for (File licensedFile : new LicensedFileIterator(new File(directoryPath), fileFilters)) {
+         System.out.println("**************:" + licensedFile.getName());
       }
    }
 
