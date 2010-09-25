@@ -71,9 +71,13 @@ public class SourceLicenseMojo extends AbstractMojo {
             licenseFile = new File(rule.getLicense());
             licenseArray = getFileAsLineArray(licenseFile.isAbsolute() ? licenseFile.getAbsolutePath() : rootProject.getBasedir() + System.getProperty("file.separator") + licenseFile.getPath());
 
+            if ((rule.getFileTypes() == null) || (rule.getFileTypes().length == 0)) {
+               throw new MojoExecutionException("No file types were specified for rule(" + rule.getId() + ")");
+            }
+
             fileFilters = new FileFilter[rule.getFileTypes().length];
             for (int count = 0; count < fileFilters.length; count++) {
-               fileFilters[count] = new FileTypeFilenameFilter(FileTypeRegExpTranslator.translate(rule.getFileTypes()[count]));
+               fileFilters[count] = new FileTypeFilenameFilter(rule.getFileTypes()[count]);
             }
 
             processFiles(project.getBuild().getSourceDirectory(), fileFilters);

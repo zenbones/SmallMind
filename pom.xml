@@ -282,6 +282,10 @@
                   <includeTests>true</includeTests>
                   <rules>
                      <rule>
+                        <fileTypes>
+                           <fileType>*.java</fileType>
+                        </fileTypes>
+                        <stencilId>org.smallmind.license.stencil.JavaDocStencil</stencilId>
                         <license>COPYRIGHT</license>
                      </rule>
                   </rules>

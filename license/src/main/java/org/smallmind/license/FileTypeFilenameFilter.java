@@ -15,7 +15,7 @@ public class FileTypeFilenameFilter implements FileFilter {
 
    public boolean accept (File file) {
 
-      return namePattern.matcher(file.getName()).matches();
+      return file.isDirectory() || namePattern.matcher(file.getName()).matches();
    }
 
 }
