@@ -23,13 +23,13 @@ public class JavaDocStencil extends StaticStencil {
    @Override
    public String getBeforeEachLine () {
 
-      return "*";
+      return " * ";
    }
 
    @Override
    public boolean willPrefixBlankLines () {
 
-      return false;
+      return true;
    }
 
    @Override
