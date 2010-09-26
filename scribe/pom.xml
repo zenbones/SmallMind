@@ -18,4 +18,12 @@
       <module>apache</module>
       <module>trial</module>
    </modules>
+   <build>
+      <plugins>
+         <plugin>
+            <groupId>org.smallmind</groupId>
+            <artifactId>smallmind-license-plugin</artifactId>
+         </plugin>
+      </plugins>
+   </build>
 </project>
