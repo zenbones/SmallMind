@@ -17,7 +17,7 @@ public class JavaDocStencil extends StaticStencil {
    @Override
    public String getLastLine () {
 
-      return "*/";
+      return " */";
    }
 
    @Override
