@@ -183,7 +183,7 @@ public class SourceLicenseMojo extends AbstractMojo {
                   }
                   else {
                      fileWriter.write(singleLine);
-                     fileWriter.write(System.getProperty("file.separator"));
+                     fileWriter.write(System.getProperty("line.separator"));
                   }
                }
 
@@ -194,34 +194,34 @@ public class SourceLicenseMojo extends AbstractMojo {
                }
 
                for (int count = 0; count < stencil.getBlankLinesBefore(); count++) {
-                  fileWriter.write(System.getProperty("file.separator"));
+                  fileWriter.write(System.getProperty("line.separator"));
                }
 
                if (stencil.getFirstLine() != null) {
                   fileWriter.write(stencil.getFirstLine());
-                  fileWriter.write(System.getProperty("file.separator"));
+                  fileWriter.write(System.getProperty("line.separator"));
                }
 
                for (String licenseLine : licenseArray) {
                   if ((stencil.getBeforeEachLine() != null) && ((licenseLine.length() > 0) || stencil.willPrefixBlankLines())) {
                      fileWriter.write(stencil.getBeforeEachLine());
                   }
-                  fileWriter.write(stencil.getFirstLine());
-                  fileWriter.write(System.getProperty("file.separator"));
+                  fileWriter.write(licenseLine);
+                  fileWriter.write(System.getProperty("line.separator"));
                }
 
                if (stencil.getLastLine() != null) {
                   fileWriter.write(stencil.getLastLine());
-                  fileWriter.write(System.getProperty("file.separator"));
+                  fileWriter.write(System.getProperty("line.separator"));
                }
 
                for (int count = 0; count < stencil.getBlankLinesAfter(); count++) {
-                  fileWriter.write(System.getProperty("file.separator"));
+                  fileWriter.write(System.getProperty("line.separator"));
                }
 
                if (singleLine != null) {
                   fileWriter.write(singleLine);
-                  fileWriter.write(System.getProperty("file.separator"));
+                  fileWriter.write(System.getProperty("line.separator"));
                }
 
                while ((charsRead = fileReader.read(buffer)) >= 0) {
