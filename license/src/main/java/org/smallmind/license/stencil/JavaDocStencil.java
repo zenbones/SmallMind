@@ -27,7 +27,7 @@ public class JavaDocStencil extends StaticStencil {
    }
 
    @Override
-   public boolean isPrefixBlankLines () {
+   public boolean willPrefixBlankLines () {
 
       return false;
    }

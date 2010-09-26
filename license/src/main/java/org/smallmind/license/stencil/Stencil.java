@@ -61,7 +61,7 @@ public class Stencil {
       this.beforeEachLine = beforeEachLine;
    }
 
-   public boolean isPrefixBlankLines () {
+   public boolean willPrefixBlankLines () {
 
       return prefixBlankLines;
    }
