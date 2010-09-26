@@ -6,7 +6,6 @@ public class Rule {
    private String[] includes;
    private String[] excludes;
    private String id;
-   private String name;
    private String stencilId;
    private String license;
 
@@ -18,16 +17,6 @@ public class Rule {
    public void setId (String id) {
 
       this.id = id;
-   }
-
-   public String getName () {
-
-      return name;
-   }
-
-   public void setName (String name) {
-
-      this.name = name;
    }
 
    public String getLicense () {

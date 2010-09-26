@@ -63,13 +63,16 @@ public class SourceLicenseMojo extends AbstractMojo {
 
       for (Rule rule : rules) {
 
-         String[] licenseArray;
          File licenseFile;
          FileFilter[] fileFilters;
+         String[] licenseArray;
+         boolean stenciled;
+         long licenseModTime;
 
          if (rule.getLicense() != null) {
             licenseFile = new File(rule.getLicense());
             licenseArray = getFileAsLineArray(licenseFile.isAbsolute() ? licenseFile.getAbsolutePath() : rootProject.getBasedir() + System.getProperty("file.separator") + licenseFile.getPath());
+            licenseModTime = licenseFile.lastModified();
 
             if ((rule.getFileTypes() == null) || (rule.getFileTypes().length == 0)) {
                throw new MojoExecutionException("No file types were specified for rule(" + rule.getId() + ")");
@@ -80,33 +83,44 @@ public class SourceLicenseMojo extends AbstractMojo {
                fileFilters[count] = new FileTypeFilenameFilter(rule.getFileTypes()[count]);
             }
 
-            processFiles(project.getBuild().getSourceDirectory(), fileFilters);
-            processFiles(project.getBuild().getScriptSourceDirectory(), fileFilters);
+            stenciled = false;
+            for (Stencil stencil : stencils) {
+               if (stencil.getId().equals(rule.getStencilId())) {
+                  stenciled = true;
 
-            if (includeResources) {
-               for (Resource resource : project.getBuild().getResources()) {
-                  processFiles(resource.getDirectory(), fileFilters);
+                  processFiles(stencil, licenseArray, licenseModTime, project.getBuild().getSourceDirectory(), fileFilters);
+                  processFiles(stencil, licenseArray, licenseModTime, project.getBuild().getScriptSourceDirectory(), fileFilters);
+
+                  if (includeResources) {
+                     for (Resource resource : project.getBuild().getResources()) {
+                        processFiles(stencil, licenseArray, licenseModTime, resource.getDirectory(), fileFilters);
+                     }
+                  }
+
+                  if (includeTests) {
+                     processFiles(stencil, licenseArray, licenseModTime, project.getBuild().getTestSourceDirectory(), fileFilters);
+
+                     if (includeResources) {
+                        for (Resource testResource : project.getBuild().getTestResources()) {
+                           processFiles(stencil, licenseArray, licenseModTime, testResource.getDirectory(), fileFilters);
+                        }
+                     }
+                  }
                }
             }
 
-            if (includeTests) {
-               processFiles(project.getBuild().getTestSourceDirectory(), fileFilters);
-
-               if (includeResources) {
-                  for (Resource testResource : project.getBuild().getTestResources()) {
-                     processFiles(testResource.getDirectory(), fileFilters);
-                  }
-               }
+            if (!stenciled) {
+               throw new MojoExecutionException("No stencil found with id(" + rule.getStencilId() + ") for rule(" + rule.getId() + ")");
             }
          }
       }
    }
 
-   private void processFiles (String directoryPath, FileFilter... fileFilters)
+   private void processFiles (Stencil stencil, String[] licenseArray, long licenseModTime, String directoryPath, FileFilter... fileFilters)
       throws MojoExecutionException {
 
       for (File licensedFile : new LicensedFileIterator(new File(directoryPath), fileFilters)) {
-         System.out.println("**************:" + licensedFile.getName());
+
       }
    }
 
