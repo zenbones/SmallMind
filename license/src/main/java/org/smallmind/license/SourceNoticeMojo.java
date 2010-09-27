@@ -61,7 +61,7 @@ public class SourceNoticeMojo extends AbstractMojo {
     */
    private boolean verbose;
 
-   //TODO: Excludes, Removes, Verbose, Seek/Process Optimization
+   //TODO: Excludes, Seek/Process Optimization
 
    @Override
    public void execute ()
@@ -84,68 +84,79 @@ public class SourceNoticeMojo extends AbstractMojo {
 
       for (Rule rule : rules) {
 
-         File noticeFile;
          FileFilter[] fileFilters;
          String[] noticeArray;
          boolean stenciled;
          long noticeModTime;
 
-         if (rule.getNotice() != null) {
+         if (verbose) {
+            getLog().info(String.format("Processing rule(%s)...", rule.getId()));
+         }
+
+         if (rule.getNotice() == null) {
+            noticeArray = null;
+            noticeModTime = -1;
+         }
+         else {
+
+            File noticeFile;
+
             noticeFile = new File(rule.getNotice());
             noticeArray = getFileAsLineArray(noticeFile.isAbsolute() ? noticeFile.getAbsolutePath() : rootProject.getBasedir() + System.getProperty("file.separator") + noticeFile.getPath());
             noticeModTime = noticeFile.lastModified();
+         }
 
-            if ((rule.getFileTypes() == null) || (rule.getFileTypes().length == 0)) {
-               throw new MojoExecutionException("No file types were specified for rule(" + rule.getId() + ")");
-            }
+         if ((rule.getFileTypes() == null) || (rule.getFileTypes().length == 0)) {
+            throw new MojoExecutionException("No file types were specified for rule(" + rule.getId() + ")");
+         }
 
-            fileFilters = new FileFilter[rule.getFileTypes().length];
-            for (int count = 0; count < fileFilters.length; count++) {
-               fileFilters[count] = new FileTypeFilenameFilter(rule.getFileTypes()[count]);
-            }
+         fileFilters = new FileFilter[rule.getFileTypes().length];
+         for (int count = 0; count < fileFilters.length; count++) {
+            fileFilters[count] = new FileTypeFilenameFilter(rule.getFileTypes()[count]);
+         }
 
-            stenciled = false;
-            for (Stencil stencil : mergedStencils) {
-               if (stencil.getId().equals(rule.getStencilId())) {
-                  stenciled = true;
+         stenciled = false;
+         for (Stencil stencil : mergedStencils) {
+            if (stencil.getId().equals(rule.getStencilId())) {
+               stenciled = true;
 
-                  processFiles(stencil, noticeArray, noticeModTime, buffer, project.getBuild().getSourceDirectory(), fileFilters);
-                  processFiles(stencil, noticeArray, noticeModTime, buffer, project.getBuild().getScriptSourceDirectory(), fileFilters);
+               updateNotice(stencil, noticeArray, noticeModTime, buffer, project.getBuild().getSourceDirectory(), fileFilters);
+               updateNotice(stencil, noticeArray, noticeModTime, buffer, project.getBuild().getScriptSourceDirectory(), fileFilters);
+
+               if (includeResources) {
+                  for (Resource resource : project.getBuild().getResources()) {
+                     updateNotice(stencil, noticeArray, noticeModTime, buffer, resource.getDirectory(), fileFilters);
+                  }
+               }
+
+               if (includeTests) {
+                  updateNotice(stencil, noticeArray, noticeModTime, buffer, project.getBuild().getTestSourceDirectory(), fileFilters);
 
                   if (includeResources) {
-                     for (Resource resource : project.getBuild().getResources()) {
-                        processFiles(stencil, noticeArray, noticeModTime, buffer, resource.getDirectory(), fileFilters);
-                     }
-                  }
-
-                  if (includeTests) {
-                     processFiles(stencil, noticeArray, noticeModTime, buffer, project.getBuild().getTestSourceDirectory(), fileFilters);
-
-                     if (includeResources) {
-                        for (Resource testResource : project.getBuild().getTestResources()) {
-                           processFiles(stencil, noticeArray, noticeModTime, buffer, testResource.getDirectory(), fileFilters);
-                        }
+                     for (Resource testResource : project.getBuild().getTestResources()) {
+                        updateNotice(stencil, noticeArray, noticeModTime, buffer, testResource.getDirectory(), fileFilters);
                      }
                   }
                }
-            }
 
-            if (!stenciled) {
-               throw new MojoExecutionException("No stencil found with id(" + rule.getStencilId() + ") for rule(" + rule.getId() + ")");
+               break;
             }
+         }
+
+         if (!stenciled) {
+            throw new MojoExecutionException("No stencil found with id(" + rule.getStencilId() + ") for rule(" + rule.getId() + ")");
          }
       }
    }
 
-   private void processFiles (Stencil stencil, String[] noticeArray, long noticeModTime, char[] buffer, String directoryPath, FileFilter... fileFilters)
+   private void updateNotice (Stencil stencil, String[] noticeArray, long noticeModTime, char[] buffer, String directoryPath, FileFilter... fileFilters)
       throws MojoExecutionException {
 
       File tempFile;
       BufferedReader fileReader;
       FileWriter fileWriter;
-      NoticeState noticeState;
       Pattern skipPattern = null;
-      String singleLine = null;
+      String unprocessedLine;
       int charsRead;
 
       if (stencil.getSkipLines() != null) {
@@ -153,76 +164,24 @@ public class SourceNoticeMojo extends AbstractMojo {
       }
 
       for (File licensedFile : new LicensedFileIterator(new File(directoryPath), fileFilters)) {
+         if (verbose) {
+            getLog().info(String.format(((noticeArray == null) ? "Removing" : "Updating") + " license notice for file(%s)...", licensedFile.getAbsolutePath()));
+         }
+
          try {
             fileWriter = new FileWriter(tempFile = new File(licensedFile.getParent() + System.getProperty("file.separator") + "license.temp"));
 
             try {
                fileReader = new BufferedReader(new FileReader(licensedFile));
 
-               noticeState = (stencil.getFirstLine() != null) ? NoticeState.FIRST : NoticeState.LAST;
-               while ((!(noticeState.equals(NoticeState.COMPLETED) || noticeState.equals(NoticeState.TERMINATED))) && ((singleLine = fileReader.readLine()) != null)) {
-                  if ((skipPattern == null) || (!skipPattern.matcher(singleLine).matches())) {
-                     switch (noticeState) {
-                        case FIRST:
-                           if (singleLine.length() > 0) {
-                              noticeState = singleLine.equals(stencil.getFirstLine()) ? NoticeState.LAST : NoticeState.TERMINATED;
-                           }
-                           break;
-                        case LAST:
-                           if ((stencil.getLastLine() != null) && singleLine.equals(stencil.getLastLine())) {
-                              noticeState = NoticeState.COMPLETED;
-                           }
-                           else if ((singleLine.length() > 0) && (!singleLine.startsWith(stencil.getBeforeEachLine()))) {
-                              noticeState = NoticeState.TERMINATED;
-                           }
-                           else if ((singleLine.length() == 0) && stencil.willPrefixBlankLines()) {
-                              noticeState = NoticeState.TERMINATED;
-                           }
-                           break;
-                        default:
-                           throw new MojoFailureException("Unknown or inappropriate notice seeking state(" + noticeState.name() + ")");
-                     }
-                  }
-                  else {
-                     fileWriter.write(singleLine);
-                     fileWriter.write(System.getProperty("line.separator"));
-                  }
+               unprocessedLine = seekNotice(stencil, skipPattern, fileReader, fileWriter);
+
+               if (noticeArray != null) {
+                  applyNotice(stencil, noticeArray, fileWriter);
                }
 
-               if (noticeState.equals(NoticeState.COMPLETED) || ((singleLine != null) && (singleLine.length() == 0))) {
-                  do {
-                     singleLine = fileReader.readLine();
-                  } while ((singleLine != null) && (singleLine.length() == 0));
-               }
-
-               for (int count = 0; count < stencil.getBlankLinesBefore(); count++) {
-                  fileWriter.write(System.getProperty("line.separator"));
-               }
-
-               if (stencil.getFirstLine() != null) {
-                  fileWriter.write(stencil.getFirstLine());
-                  fileWriter.write(System.getProperty("line.separator"));
-               }
-
-               for (String noticeLine : noticeArray) {
-                  if ((stencil.getBeforeEachLine() != null) && ((noticeLine.length() > 0) || stencil.willPrefixBlankLines())) {
-                     fileWriter.write(stencil.getBeforeEachLine());
-                  }
-                  fileWriter.write(noticeLine);
-                  fileWriter.write(System.getProperty("line.separator"));
-               }
-
-               if (stencil.getLastLine() != null) {
-                  fileWriter.write(stencil.getLastLine());
-                  fileWriter.write(System.getProperty("line.separator"));
-               }
-
-               for (int count = 0; count < stencil.getBlankLinesAfter(); count++) {
-                  fileWriter.write(System.getProperty("line.separator"));
-               }
-
-               if (singleLine != null) {
-                  fileWriter.write(singleLine);
+               if (unprocessedLine != null) {
+                  fileWriter.write(unprocessedLine);
                   fileWriter.write(System.getProperty("line.separator"));
                }
 
@@ -278,5 +237,80 @@ public class SourceNoticeMojo extends AbstractMojo {
       lineList.toArray(lineArray);
 
       return lineArray;
+   }
+
+   private String seekNotice (Stencil stencil, Pattern skipPattern, BufferedReader fileReader, FileWriter fileWriter)
+      throws IOException, MojoFailureException {
+
+      NoticeState noticeState;
+      String singleLine = null;
+
+      noticeState = (stencil.getFirstLine() != null) ? NoticeState.FIRST : NoticeState.LAST;
+      while ((!(noticeState.equals(NoticeState.COMPLETED) || noticeState.equals(NoticeState.TERMINATED))) && ((singleLine = fileReader.readLine()) != null)) {
+         if ((skipPattern == null) || (!skipPattern.matcher(singleLine).matches())) {
+            switch (noticeState) {
+               case FIRST:
+                  if (singleLine.length() > 0) {
+                     noticeState = singleLine.equals(stencil.getFirstLine()) ? NoticeState.LAST : NoticeState.TERMINATED;
+                  }
+                  break;
+               case LAST:
+                  if ((stencil.getLastLine() != null) && singleLine.equals(stencil.getLastLine())) {
+                     noticeState = NoticeState.COMPLETED;
+                  }
+                  else if ((singleLine.length() > 0) && (!singleLine.startsWith(stencil.getBeforeEachLine()))) {
+                     noticeState = NoticeState.TERMINATED;
+                  }
+                  else if ((singleLine.length() == 0) && stencil.willPrefixBlankLines()) {
+                     noticeState = NoticeState.TERMINATED;
+                  }
+                  break;
+               default:
+                  throw new MojoFailureException("Unknown or inappropriate notice seeking state(" + noticeState.name() + ")");
+            }
+         }
+         else {
+            fileWriter.write(singleLine);
+            fileWriter.write(System.getProperty("line.separator"));
+         }
+      }
+
+      if (noticeState.equals(NoticeState.COMPLETED) || ((singleLine != null) && (singleLine.length() == 0))) {
+         do {
+            singleLine = fileReader.readLine();
+         } while ((singleLine != null) && (singleLine.length() == 0));
+      }
+
+      return singleLine;
+   }
+
+   private void applyNotice (Stencil stencil, String[] noticeArray, FileWriter fileWriter)
+      throws IOException {
+
+      for (int count = 0; count < stencil.getBlankLinesBefore(); count++) {
+         fileWriter.write(System.getProperty("line.separator"));
+      }
+
+      if (stencil.getFirstLine() != null) {
+         fileWriter.write(stencil.getFirstLine());
+         fileWriter.write(System.getProperty("line.separator"));
+      }
+
+      for (String noticeLine : noticeArray) {
+         if ((stencil.getBeforeEachLine() != null) && ((noticeLine.length() > 0) || stencil.willPrefixBlankLines())) {
+            fileWriter.write(stencil.getBeforeEachLine());
+         }
+         fileWriter.write(noticeLine);
+         fileWriter.write(System.getProperty("line.separator"));
+      }
+
+      if (stencil.getLastLine() != null) {
+         fileWriter.write(stencil.getLastLine());
+         fileWriter.write(System.getProperty("line.separator"));
+      }
+
+      for (int count = 0; count < stencil.getBlankLinesAfter(); count++) {
+         fileWriter.write(System.getProperty("line.separator"));
+      }
    }
 }
