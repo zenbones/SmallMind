@@ -293,11 +293,11 @@
                   <includeTests>true</includeTests>
                   <rules>
                      <rule>
+                        <notice>COPYRIGHT</notice>
                         <fileTypes>
                            <fileType>*.java</fileType>
                         </fileTypes>
                         <stencilId>org.smallmind.license.stencil.JavaDocStencil</stencilId>
-                        <notice>COPYRIGHT</notice>
                      </rule>
                   </rules>
                </configuration>

@@ -100,7 +100,7 @@ public class SourceNoticeMojo extends AbstractMojo {
 
          if (rule.getNotice() == null) {
             if (!allowNoticeRemoval) {
-               throw new MojoExecutionException("No notice was provided for rule(" + rule.getId() + "), but notice removal has not been enabled");
+               throw new MojoExecutionException("No notice was provided for rule(" + rule.getId() + "), but notice removal has not been enabled(allowNoticeRemoval = false)");
             }
 
             noticeArray = null;
