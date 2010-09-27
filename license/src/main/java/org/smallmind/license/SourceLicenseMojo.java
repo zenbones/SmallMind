@@ -88,8 +88,8 @@ public class SourceLicenseMojo extends AbstractMojo {
          boolean stenciled;
          long licenseModTime;
 
-         if (rule.getLicense() != null) {
-            licenseFile = new File(rule.getLicense());
+         if (rule.getNotice() != null) {
+            licenseFile = new File(rule.getNotice());
             licenseArray = getFileAsLineArray(licenseFile.isAbsolute() ? licenseFile.getAbsolutePath() : rootProject.getBasedir() + System.getProperty("file.separator") + licenseFile.getPath());
             licenseModTime = licenseFile.lastModified();
 

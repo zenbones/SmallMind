@@ -3,11 +3,10 @@ package org.smallmind.license;
 public class Rule {
 
    private String[] fileTypes;
-   private String[] includes;
    private String[] excludes;
    private String id;
    private String stencilId;
-   private String license;
+   private String notice;
 
    public String getId () {
 
@@ -19,14 +18,14 @@ public class Rule {
       this.id = id;
    }
 
-   public String getLicense () {
+   public String getNotice () {
 
-      return license;
+      return notice;
    }
 
-   public void setLicense (String license) {
+   public void setNotice (String notice) {
 
-      this.license = license;
+      this.notice = notice;
    }
 
    public String[] getFileTypes () {
@@ -47,16 +46,6 @@ public class Rule {
    public void setStencilId (String stencilId) {
 
       this.stencilId = stencilId;
-   }
-
-   public String[] getIncludes () {
-
-      return includes;
-   }
-
-   public void setIncludes (String[] includes) {
-
-      this.includes = includes;
    }
 
    public String[] getExcludes () {
