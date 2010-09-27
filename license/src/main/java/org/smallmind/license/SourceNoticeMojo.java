@@ -47,6 +47,11 @@ public class SourceNoticeMojo extends AbstractMojo {
    private Rule[] rules;
 
    /**
+    * @parameter default-value=false
+    */
+   private boolean allowNoticeRemoval;
+
+   /**
     * @parameter default-value=true
     */
    private boolean includeResources;
@@ -94,6 +99,10 @@ public class SourceNoticeMojo extends AbstractMojo {
          }
 
          if (rule.getNotice() == null) {
+            if (!allowNoticeRemoval) {
+               throw new MojoExecutionException("No notice was provided for rule(" + rule.getId() + "), but notice removal has not been enabled");
+            }
+
             noticeArray = null;
             noticeModTime = -1;
          }
