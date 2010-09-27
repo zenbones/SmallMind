@@ -61,6 +61,8 @@ public class SourceNoticeMojo extends AbstractMojo {
     */
    private boolean verbose;
 
+   //TODO: Excludes, Removes, Verbose, Seek/Process Optimization
+
    @Override
    public void execute ()
       throws MojoExecutionException, MojoFailureException {
