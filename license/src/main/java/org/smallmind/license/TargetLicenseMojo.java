@@ -1,14 +1,17 @@
 package org.smallmind.license;
 
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
 import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.MojoFailureException;
 import org.apache.maven.project.MavenProject;
-import org.smallmind.license.stencil.Stencil;
 
 /**
  * @goal install-license-files
- * @phase process-resources
+ * @phase prepare-package
  * @description Installs license files for inclusion in distribution artifacts
  */
 public class TargetLicenseMojo extends AbstractMojo {
@@ -22,12 +25,12 @@ public class TargetLicenseMojo extends AbstractMojo {
    /**
     * @parameter
     */
-   private Stencil[] stencils;
+   private Rule[] rules;
 
    /**
     * @parameter
     */
-   private Rule[] rules;
+   private String[] licenses;
 
    /**
     * @parameter default-value=false
@@ -38,14 +41,56 @@ public class TargetLicenseMojo extends AbstractMojo {
    public void execute ()
       throws MojoExecutionException, MojoFailureException {
 
-      MavenProject rootProject = project;
+      if ((new File(project.getBuild().getOutputDirectory())).exists()) {
 
-      while (!rootProject.isExecutionRoot()) {
-         rootProject = rootProject.getParent();
-      }
+         MavenProject rootProject = project;
+         byte[] buffer = new byte[8192];
 
-      for (Rule rule : rules) {
+         while (!rootProject.isExecutionRoot()) {
+            rootProject = rootProject.getParent();
+         }
+
+         for (String license : licenses) {
+
+            File licenseFile;
+            File copyFile;
+            FileInputStream inputStream;
+            FileOutputStream outputStream;
+            int bytesRead;
+
+            if (!(licenseFile = new File(license)).isAbsolute()) {
+               licenseFile = new File(rootProject.getBasedir() + System.getProperty("file.separator") + licenseFile.getPath());
+               copyFile = new File(project.getBuild().getOutputDirectory() + System.getProperty("file.separator") + licenseFile.getName());
+
+               try {
+                  outputStream = new FileOutputStream(copyFile);
+               }
+               catch (IOException ioException) {
+                  throw new MojoExecutionException("Unable to create output license file (" + copyFile.getAbsolutePath() + ")", ioException);
+               }
+
+               try {
+                  inputStream = new FileInputStream(licenseFile);
+
+                  while ((bytesRead = inputStream.read(buffer)) >= 0) {
+                     outputStream.write(buffer, 0, bytesRead);
+                  }
+
+                  inputStream.close();
+               }
+               catch (IOException ioException) {
+                  copyFile.delete();
+                  throw new MojoExecutionException("Problem in copying output license file (" + copyFile.getAbsolutePath() + ")", ioException);
+               }
+
+               try {
+                  outputStream.close();
+               }
+               catch (IOException ioException) {
+                  throw new MojoExecutionException("Problem in closing license file (" + licenseFile.getAbsolutePath() + ")", ioException);
+               }
+            }
+         }
       }
    }
-
 }

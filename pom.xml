@@ -273,12 +273,23 @@
                <version>${project.version}</version>
                <executions>
                   <execution>
+                     <id>generate</id>
                      <goals>
-                        <goal>generate-license-headers</goal>
+                        <goal>generate-notice-headers</goal>
+                     </goals>
+                  </execution>
+                  <execution>
+                     <id>install</id>
+                     <goals>
+                        <goal>install-license-files</goal>
                      </goals>
                   </execution>
                </executions>
                <configuration>
+                  <licenses>
+                     <license>COPYING</license>
+                     <license>COPYING.LESSER</license>
+                  </licenses>
                   <includeTests>true</includeTests>
                   <rules>
                      <rule>

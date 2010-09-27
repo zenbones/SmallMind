@@ -17,15 +17,15 @@ import org.smallmind.license.stencil.JavaDocStencil;
 import org.smallmind.license.stencil.Stencil;
 
 /**
- * @goal generate-license-headers
- * @phase prepare-package
- * @description Generates and/or replaces license headers in source files
+ * @goal generate-notice-headers
+ * @phase process-sources
+ * @description Generates and/or replaces notice headers in source files
  */
-public class SourceLicenseMojo extends AbstractMojo {
+public class SourceNoticeMojo extends AbstractMojo {
 
    private static final Stencil[] DEFAULT_STENCILS = new Stencil[] {new JavaDocStencil()};
 
-   private static enum LicenseState {
+   private static enum NoticeState {
 
       FIRST, LAST, COMPLETED, TERMINATED
    }
@@ -82,16 +82,16 @@ public class SourceLicenseMojo extends AbstractMojo {
 
       for (Rule rule : rules) {
 
-         File licenseFile;
+         File noticeFile;
          FileFilter[] fileFilters;
-         String[] licenseArray;
+         String[] noticeArray;
          boolean stenciled;
-         long licenseModTime;
+         long noticeModTime;
 
          if (rule.getNotice() != null) {
-            licenseFile = new File(rule.getNotice());
-            licenseArray = getFileAsLineArray(licenseFile.isAbsolute() ? licenseFile.getAbsolutePath() : rootProject.getBasedir() + System.getProperty("file.separator") + licenseFile.getPath());
-            licenseModTime = licenseFile.lastModified();
+            noticeFile = new File(rule.getNotice());
+            noticeArray = getFileAsLineArray(noticeFile.isAbsolute() ? noticeFile.getAbsolutePath() : rootProject.getBasedir() + System.getProperty("file.separator") + noticeFile.getPath());
+            noticeModTime = noticeFile.lastModified();
 
             if ((rule.getFileTypes() == null) || (rule.getFileTypes().length == 0)) {
                throw new MojoExecutionException("No file types were specified for rule(" + rule.getId() + ")");
@@ -107,21 +107,21 @@ public class SourceLicenseMojo extends AbstractMojo {
                if (stencil.getId().equals(rule.getStencilId())) {
                   stenciled = true;
 
-                  processFiles(stencil, licenseArray, licenseModTime, buffer, project.getBuild().getSourceDirectory(), fileFilters);
-                  processFiles(stencil, licenseArray, licenseModTime, buffer, project.getBuild().getScriptSourceDirectory(), fileFilters);
+                  processFiles(stencil, noticeArray, noticeModTime, buffer, project.getBuild().getSourceDirectory(), fileFilters);
+                  processFiles(stencil, noticeArray, noticeModTime, buffer, project.getBuild().getScriptSourceDirectory(), fileFilters);
 
                   if (includeResources) {
                      for (Resource resource : project.getBuild().getResources()) {
-                        processFiles(stencil, licenseArray, licenseModTime, buffer, resource.getDirectory(), fileFilters);
+                        processFiles(stencil, noticeArray, noticeModTime, buffer, resource.getDirectory(), fileFilters);
                      }
                   }
 
                   if (includeTests) {
-                     processFiles(stencil, licenseArray, licenseModTime, buffer, project.getBuild().getTestSourceDirectory(), fileFilters);
+                     processFiles(stencil, noticeArray, noticeModTime, buffer, project.getBuild().getTestSourceDirectory(), fileFilters);
 
                      if (includeResources) {
                         for (Resource testResource : project.getBuild().getTestResources()) {
-                           processFiles(stencil, licenseArray, licenseModTime, buffer, testResource.getDirectory(), fileFilters);
+                           processFiles(stencil, noticeArray, noticeModTime, buffer, testResource.getDirectory(), fileFilters);
                         }
                      }
                   }
@@ -135,13 +135,13 @@ public class SourceLicenseMojo extends AbstractMojo {
       }
    }
 
-   private void processFiles (Stencil stencil, String[] licenseArray, long licenseModTime, char[] buffer, String directoryPath, FileFilter... fileFilters)
+   private void processFiles (Stencil stencil, String[] noticeArray, long noticeModTime, char[] buffer, String directoryPath, FileFilter... fileFilters)
       throws MojoExecutionException {
 
       File tempFile;
       BufferedReader fileReader;
       FileWriter fileWriter;
-      LicenseState licenseState;
+      NoticeState noticeState;
       Pattern skipPattern = null;
       String singleLine = null;
       int charsRead;
@@ -157,28 +157,28 @@ public class SourceLicenseMojo extends AbstractMojo {
             try {
                fileReader = new BufferedReader(new FileReader(licensedFile));
 
-               licenseState = (stencil.getFirstLine() != null) ? LicenseState.FIRST : LicenseState.LAST;
-               while ((!(licenseState.equals(LicenseState.COMPLETED) || licenseState.equals(LicenseState.TERMINATED))) && ((singleLine = fileReader.readLine()) != null)) {
+               noticeState = (stencil.getFirstLine() != null) ? NoticeState.FIRST : NoticeState.LAST;
+               while ((!(noticeState.equals(NoticeState.COMPLETED) || noticeState.equals(NoticeState.TERMINATED))) && ((singleLine = fileReader.readLine()) != null)) {
                   if ((skipPattern == null) || (!skipPattern.matcher(singleLine).matches())) {
-                     switch (licenseState) {
+                     switch (noticeState) {
                         case FIRST:
                            if (singleLine.length() > 0) {
-                              licenseState = singleLine.equals(stencil.getFirstLine()) ? LicenseState.LAST : LicenseState.TERMINATED;
+                              noticeState = singleLine.equals(stencil.getFirstLine()) ? NoticeState.LAST : NoticeState.TERMINATED;
                            }
                            break;
                         case LAST:
                            if ((stencil.getLastLine() != null) && singleLine.equals(stencil.getLastLine())) {
-                              licenseState = LicenseState.COMPLETED;
+                              noticeState = NoticeState.COMPLETED;
                            }
                            else if ((singleLine.length() > 0) && (!singleLine.startsWith(stencil.getBeforeEachLine()))) {
-                              licenseState = LicenseState.TERMINATED;
+                              noticeState = NoticeState.TERMINATED;
                            }
                            else if ((singleLine.length() == 0) && stencil.willPrefixBlankLines()) {
-                              licenseState = LicenseState.TERMINATED;
+                              noticeState = NoticeState.TERMINATED;
                            }
                            break;
                         default:
-                           throw new MojoFailureException("Unknown or inappropriate license seek state(" + licenseState.name() + ")");
+                           throw new MojoFailureException("Unknown or inappropriate notice seeking state(" + noticeState.name() + ")");
                      }
                   }
                   else {
@@ -187,7 +187,7 @@ public class SourceLicenseMojo extends AbstractMojo {
                   }
                }
 
-               if (licenseState.equals(LicenseState.COMPLETED) || ((singleLine != null) && (singleLine.length() == 0))) {
+               if (noticeState.equals(NoticeState.COMPLETED) || ((singleLine != null) && (singleLine.length() == 0))) {
                   do {
                      singleLine = fileReader.readLine();
                   } while ((singleLine != null) && (singleLine.length() == 0));
@@ -202,11 +202,11 @@ public class SourceLicenseMojo extends AbstractMojo {
                   fileWriter.write(System.getProperty("line.separator"));
                }
 
-               for (String licenseLine : licenseArray) {
-                  if ((stencil.getBeforeEachLine() != null) && ((licenseLine.length() > 0) || stencil.willPrefixBlankLines())) {
+               for (String noticeLine : noticeArray) {
+                  if ((stencil.getBeforeEachLine() != null) && ((noticeLine.length() > 0) || stencil.willPrefixBlankLines())) {
                      fileWriter.write(stencil.getBeforeEachLine());
                   }
-                  fileWriter.write(licenseLine);
+                  fileWriter.write(noticeLine);
                   fileWriter.write(System.getProperty("line.separator"));
                }
 
@@ -237,7 +237,7 @@ public class SourceLicenseMojo extends AbstractMojo {
             }
             catch (Exception exception) {
                tempFile.delete();
-               throw new MojoExecutionException("Exception during license processing", exception);
+               throw new MojoExecutionException("Exception during notice processing", exception);
             }
 
             if (!tempFile.renameTo(licensedFile)) {
@@ -248,28 +248,28 @@ public class SourceLicenseMojo extends AbstractMojo {
             throw mojoExecutionException;
          }
          catch (Exception exception) {
-            throw new MojoExecutionException("Exception during license processing", exception);
+            throw new MojoExecutionException("Exception during notice processing", exception);
          }
       }
    }
 
-   private String[] getFileAsLineArray (String licensePath)
+   private String[] getFileAsLineArray (String noticePath)
       throws MojoExecutionException {
 
-      BufferedReader licenseReader;
+      BufferedReader noticeReader;
       LinkedList<String> lineList;
       String[] lineArray;
       String singleLine;
 
       try {
-         licenseReader = new BufferedReader(new FileReader(licensePath));
+         noticeReader = new BufferedReader(new FileReader(noticePath));
          lineList = new LinkedList<String>();
-         while ((singleLine = licenseReader.readLine()) != null) {
+         while ((singleLine = noticeReader.readLine()) != null) {
             lineList.add(singleLine);
          }
       }
       catch (IOException ioException) {
-         throw new MojoExecutionException("Unable to acquire the license file(" + licensePath + ")", ioException);
+         throw new MojoExecutionException("Unable to acquire the notice file(" + noticePath + ")", ioException);
       }
 
       lineArray = new String[lineList.size()];
