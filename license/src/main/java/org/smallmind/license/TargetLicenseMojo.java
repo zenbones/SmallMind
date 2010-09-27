@@ -60,35 +60,40 @@ public class TargetLicenseMojo extends AbstractMojo {
 
             if (!(licenseFile = new File(license)).isAbsolute()) {
                licenseFile = new File(rootProject.getBasedir() + System.getProperty("file.separator") + licenseFile.getPath());
-               copyFile = new File(project.getBuild().getOutputDirectory() + System.getProperty("file.separator") + licenseFile.getName());
+            }
 
-               try {
-                  outputStream = new FileOutputStream(copyFile);
-               }
-               catch (IOException ioException) {
-                  throw new MojoExecutionException("Unable to create output license file (" + copyFile.getAbsolutePath() + ")", ioException);
+            if (verbose) {
+               getLog().info(String.format("Copying license(%s)...", licenseFile.getName()));
+            }
+
+            copyFile = new File(project.getBuild().getOutputDirectory() + System.getProperty("file.separator") + licenseFile.getName());
+
+            try {
+               outputStream = new FileOutputStream(copyFile);
+            }
+            catch (IOException ioException) {
+               throw new MojoExecutionException("Unable to create output license file (" + copyFile.getAbsolutePath() + ")", ioException);
+            }
+
+            try {
+               inputStream = new FileInputStream(licenseFile);
+
+               while ((bytesRead = inputStream.read(buffer)) >= 0) {
+                  outputStream.write(buffer, 0, bytesRead);
                }
 
-               try {
-                  inputStream = new FileInputStream(licenseFile);
+               inputStream.close();
+            }
+            catch (IOException ioException) {
+               copyFile.delete();
+               throw new MojoExecutionException("Problem in copying output license file (" + copyFile.getAbsolutePath() + ")", ioException);
+            }
 
-                  while ((bytesRead = inputStream.read(buffer)) >= 0) {
-                     outputStream.write(buffer, 0, bytesRead);
-                  }
-
-                  inputStream.close();
-               }
-               catch (IOException ioException) {
-                  copyFile.delete();
-                  throw new MojoExecutionException("Problem in copying output license file (" + copyFile.getAbsolutePath() + ")", ioException);
-               }
-
-               try {
-                  outputStream.close();
-               }
-               catch (IOException ioException) {
-                  throw new MojoExecutionException("Problem in closing license file (" + licenseFile.getAbsolutePath() + ")", ioException);
-               }
+            try {
+               outputStream.close();
+            }
+            catch (IOException ioException) {
+               throw new MojoExecutionException("Problem in closing license file (" + licenseFile.getAbsolutePath() + ")", ioException);
             }
          }
       }
