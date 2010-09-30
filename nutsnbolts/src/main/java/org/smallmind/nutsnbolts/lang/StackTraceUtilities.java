@@ -28,14 +28,22 @@ package org.smallmind.nutsnbolts.lang;
 
 public class StackTraceUtilities {
 
-   public static String obtainStackTrace (Throwable throwable) {
+   public static String[] obtainStackTraceAsArray (Throwable throwable) {
+
+      return obtainStackTrace(new ArrayStackTraceAccumulator(), throwable).asArray();
+   }
+
+   public static String obtainStackTraceAsString (Throwable throwable) {
+
+      return obtainStackTrace(new StringStackTraceAccumulator(), throwable).toString();
+   }
+
+   private static <S extends StackTraceAccumulator> S obtainStackTrace (S accumulator, Throwable throwable) {
 
       StackTraceElement[] prevStackTrace = null;
-      StringBuilder traceBuilder;
       StringBuilder lineBuilder;
       int repeatedElements;
 
-      traceBuilder = new StringBuilder();
       lineBuilder = new StringBuilder();
       do {
          lineBuilder.append(prevStackTrace == null ? "Exception in thread " : "Caused by: ");
@@ -43,7 +51,7 @@ public class StackTraceUtilities {
          lineBuilder.append(throwable.getClass().getCanonicalName());
          lineBuilder.append(": ");
          lineBuilder.append(throwable.getMessage());
-         traceBuilder.append(lineBuilder);
+         accumulator.append(lineBuilder);
          lineBuilder.delete(0, lineBuilder.length());
 
          for (StackTraceElement singleElement : throwable.getStackTrace()) {
@@ -52,7 +60,7 @@ public class StackTraceUtilities {
                   lineBuilder.append("   ... ");
                   lineBuilder.append(repeatedElements);
                   lineBuilder.append(" more");
-                  traceBuilder.append(lineBuilder);
+                  accumulator.append(lineBuilder);
                   lineBuilder.delete(0, lineBuilder.length());
                   break;
                }
@@ -60,14 +68,14 @@ public class StackTraceUtilities {
 
             lineBuilder.append("   at ");
             lineBuilder.append(singleElement);
-            traceBuilder.append(lineBuilder);
+            accumulator.append(lineBuilder);
             lineBuilder.delete(0, lineBuilder.length());
          }
 
          prevStackTrace = throwable.getStackTrace();
       } while ((throwable = throwable.getCause()) != null);
 
-      return traceBuilder.toString();
+      return accumulator;
    }
 
    private static int findRepeatedStackElements (StackTraceElement singleElement, StackTraceElement[] prevStackTrace) {

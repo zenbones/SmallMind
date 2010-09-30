@@ -24,30 +24,26 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.nutsnbolts.http;
+package org.smallmind.nutsnbolts.lang;
 
-import org.smallmind.nutsnbolts.lang.StackTraceUtilities;
+public class StringStackTraceAccumulator implements StackTraceAccumulator {
 
-public final class HTMLUtilities {
+   private StringBuilder traceBuilder;
 
-   public static String convertLineBreaks(String javaString) {
+   public StringStackTraceAccumulator () {
 
-      StringBuilder htmlBuilder;
-
-      htmlBuilder = new StringBuilder();
-      for (int count = 0; count < javaString.length(); count++) {
-         if (javaString.charAt(count) == '\n') {
-            htmlBuilder.append("<br>");
-         } else if (javaString.charAt(count) != '\r') {
-            htmlBuilder.append(javaString.charAt(count));
-         }
-      }
-
-      return htmlBuilder.toString();
+      traceBuilder = new StringBuilder();
    }
 
-   public static String convertThrowable(Throwable throwable) {
+   @Override
+   public void append (CharSequence charSequence) {
 
-      return convertLineBreaks(StackTraceUtilities.obtainStackTraceAsString(throwable));
+      traceBuilder.append(charSequence).append(System.getProperty("line.separator"));
+   }
+
+   @Override
+   public String toString () {
+
+      return traceBuilder.toString();
    }
 }
