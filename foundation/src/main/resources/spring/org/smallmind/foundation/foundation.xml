@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.springframework.org/schema/beans
+           http://www.springframework.org/schema/beans/spring-beans-3.0.xsd">
+
+   <import resource="classpath:org/smallmind/foundation/logging.xml"/>
+
+   <bean class="org.smallmind.nutsnbolts.spring.SystemPropertyBeanFactoryPostProcessor">
+      <property name="order" value="1"/>
+      <property name="propertyMap">
+         <map>
+            <entry key="SMALLMIND_ENVIRONMENT" value="de"/>
+            <entry key="SMALLMIND_DATABASE" value="mysql"/>
+            <entry key="SMALLMIND_APPLICATION" value="foundation"/>
+         </map>
+      </property>
+   </bean>
+
+   <bean id="allProperties" class="org.smallmind.nutsnbolts.spring.PropertyPlaceholderConfigurer">
+      <property name="order" value="2"/>
+      <property name="ignoreResourceNotFound" value="true"/>
+      <property name="ignoreUnresolvableProperties" value="false"/>
+      <property name="systemPropertyMode" value="OVERRIDE"/>
+      <property name="searchSystemEnvironment" value="true"/>
+      <property name="locations">
+         <list>
+            <value>classpath:com/SMALLMIND/foundation/global.properties</value>
+            <value>classpath:com/SMALLMIND/foundation/database-${SMALLMIND_DATABASE}.properties</value>
+            <value>classpath:com/SMALLMIND/foundation/${SMALLMIND_ENVIRONMENT}/environment.properties</value>
+            <value>classpath:com/SMALLMIND/foundation/${SMALLMIND_ENVIRONMENT}/database-${SMALLMIND_DATABASE}.properties</value>
+            <value>classpath:com/SMALLMIND/${SMALLMIND_APPLICATION}/application.properties</value>
+            <value>classpath:com/SMALLMIND/${SMALLMIND_APPLICATION}/database-${SMALLMIND_DATABASE}.properties</value>
+            <value>classpath:com/SMALLMIND/${SMALLMIND_APPLICATION}/${SMALLMIND_ENVIRONMENT}/application.properties</value>
+            <value>classpath:com/SMALLMIND/${SMALLMIND_APPLICATION}/${SMALLMIND_ENVIRONMENT}/database-${SMALLMIND_DATABASE}.properties</value>
+            <value>file:${user.home}/.m2/local.properties</value>
+            <value>file:${user.home}/.m2/database-${SMALLMIND_DATABASE}.properties</value>
+         </list>
+      </property>
+   </bean>
+
+</beans>

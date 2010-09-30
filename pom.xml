@@ -16,6 +16,7 @@
       <module>license</module>
       <module>nutsnbolts</module>
       <module>scribe</module>
+      <module>foundation</module>
       <module>quorum</module>
       <module>persistence</module>
       <module>cloud</module>
@@ -43,6 +44,16 @@
          <dependency>
             <groupId>org.smallmind</groupId>
             <artifactId>scribe-ink-indigenous</artifactId>
+            <version>${project.version}</version>
+         </dependency>
+         <dependency>
+            <groupId>org.smallmind</groupId>
+            <artifactId>scribe-apache</artifactId>
+            <version>${project.version}</version>
+         </dependency>
+         <dependency>
+            <groupId>org.smallmind</groupId>
+            <artifactId>scribe-slf4j</artifactId>
             <version>${project.version}</version>
          </dependency>
          <dependency>
