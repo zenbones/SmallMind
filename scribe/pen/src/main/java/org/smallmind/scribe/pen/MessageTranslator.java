@@ -34,7 +34,7 @@ public class MessageTranslator {
    public static String translateMessage (String message, Object... args) {
 
       if (message == null) {
-         if (args.length > 0) {
+         if ((args != null) && (args.length > 0)) {
 
             StringBuilder errorBuilder = new StringBuilder();
 
@@ -46,7 +46,7 @@ public class MessageTranslator {
 
          return null;
       }
-      else if (args.length == 0) {
+      else if ((args == null) || (args.length == 0)) {
          return message;
       }
       else {
