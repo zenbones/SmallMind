@@ -26,15 +26,10 @@
  */
 package org.smallmind.persistence.orm.hibernate;
 
+import java.io.Serializable;
 import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
-import org.smallmind.persistence.Durable;
-import org.smallmind.persistence.VectoredDao;
-import org.smallmind.persistence.model.reflect.ReflectionUtility;
-import org.smallmind.persistence.orm.DaoManager;
-import org.smallmind.persistence.orm.ProxySession;
-import org.smallmind.persistence.orm.WaterfallORMDao;
 import org.hibernate.Criteria;
 import org.hibernate.Query;
 import org.hibernate.SQLQuery;
@@ -44,8 +39,14 @@ import org.hibernate.criterion.Order;
 import org.hibernate.criterion.Projections;
 import org.hibernate.criterion.Restrictions;
 import org.hibernate.transform.Transformers;
+import org.smallmind.persistence.Durable;
+import org.smallmind.persistence.VectoredDao;
+import org.smallmind.persistence.model.reflect.ReflectionUtility;
+import org.smallmind.persistence.orm.DaoManager;
+import org.smallmind.persistence.orm.ProxySession;
+import org.smallmind.persistence.orm.WaterfallORMDao;
 
-public abstract class HibernateDao<D extends Durable<Long>> extends WaterfallORMDao<Long, D> {
+public abstract class HibernateDao<I extends Serializable & Comparable<I>, D extends Durable<I>> extends WaterfallORMDao<I, D> {
 
    private HibernateProxySession proxySession;
 
@@ -54,7 +55,7 @@ public abstract class HibernateDao<D extends Durable<Long>> extends WaterfallORM
       this(proxySession, null);
    }
 
-   public HibernateDao (HibernateProxySession proxySession, VectoredDao<Long, D> vectoredDao) {
+   public HibernateDao (HibernateProxySession proxySession, VectoredDao<I, D> vectoredDao) {
 
       super(vectoredDao, proxySession.willAllowCascade());
 
@@ -76,31 +77,21 @@ public abstract class HibernateDao<D extends Durable<Long>> extends WaterfallORM
       return proxySession;
    }
 
-   public Class<Long> getIdClass () {
-
-      return Long.class;
-   }
-
-   public Long getIdFromString (String value) {
-
-      return Long.parseLong(value);
-   }
-
-   public Long getId (D durable) {
+   public I getId (D durable) {
 
       return durable.getId();
    }
 
-   public D get (Long id) {
+   public D get (I id) {
 
       return get(getManagedClass(), id);
    }
 
-   public D get (Class<D> durableClass, Long id) {
+   public D get (Class<D> durableClass, I id) {
 
       D durable;
       Object persistedObject;
-      VectoredDao<Long, D> nextDao = getNextDao();
+      VectoredDao<I, D> nextDao = getNextDao();
 
       if (nextDao != null) {
          if ((durable = nextDao.get(durableClass, id)) != null) {
@@ -170,7 +161,7 @@ public abstract class HibernateDao<D extends Durable<Long>> extends WaterfallORM
    public D persist (Class<D> durableClass, D durable) {
 
       D persistentDurable;
-      VectoredDao<Long, D> nextDao = getNextDao();
+      VectoredDao<I, D> nextDao = getNextDao();
 
       if (proxySession.getSession().contains(durable)) {
          persistentDurable = durable;
@@ -194,7 +185,7 @@ public abstract class HibernateDao<D extends Durable<Long>> extends WaterfallORM
 
    public void delete (Class<D> durableClass, D durable) {
 
-      VectoredDao<Long, D> nextDao = getNextDao();
+      VectoredDao<I, D> nextDao = getNextDao();
 
       if (!proxySession.getSession().contains(durable)) {
          proxySession.getSession().delete(proxySession.getSession().load(durable.getClass(), durable.getId()));
