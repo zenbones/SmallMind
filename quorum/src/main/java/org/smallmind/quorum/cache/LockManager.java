@@ -320,22 +320,25 @@ public abstract class LockManager<K, V> implements ExternallyLockedCache<K, V> {
 
          KeyCondition keyCondition;
 
-         while (!finished.get()) {
-            try {
-               if ((keyCondition = forcedUnlockQueue.poll(500, TimeUnit.MILLISECONDS)) != null) {
-                  keyCondition.terminate();
+         try {
+            while (!finished.get()) {
+               try {
+                  if ((keyCondition = forcedUnlockQueue.poll(500, TimeUnit.MILLISECONDS)) != null) {
+                     keyCondition.terminate();
+                  }
+               }
+               catch (InterruptedException interruptedException) {
+                  finished.set(true);
                }
             }
-            catch (InterruptedException interruptedException) {
-               finished.set(true);
+
+            for (KeyCondition exitKeyCondition : forcedUnlockQueue) {
+               exitKeyCondition.terminate();
             }
          }
-
-         for (KeyCondition exitKeyCondition : forcedUnlockQueue) {
-            exitKeyCondition.terminate();
+         finally {
+            exitLatch.countDown();
          }
-
-         exitLatch.countDown();
       }
    }
 }

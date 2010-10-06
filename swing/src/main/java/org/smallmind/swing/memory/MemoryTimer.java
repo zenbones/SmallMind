@@ -86,38 +86,41 @@ public class MemoryTimer implements java.lang.Runnable {
 
       runtime = Runtime.getRuntime();
 
-      while (!finished.get()) {
-         totalMemory = runtime.totalMemory();
-         freeMemory = runtime.freeMemory();
-         usedMemory = totalMemory - freeMemory;
+      try {
+         while (!finished.get()) {
+            totalMemory = runtime.totalMemory();
+            freeMemory = runtime.freeMemory();
+            usedMemory = totalMemory - freeMemory;
 
-         scalingFactor = 1;
-         scalingUnit = 0;
+            scalingFactor = 1;
+            scalingUnit = 0;
 
-         while ((usedMemory / scalingFactor) >= 1024) {
-            scalingFactor *= 1024;
-            scalingUnit++;
-         }
+            while ((usedMemory / scalingFactor) >= 1024) {
+               scalingFactor *= 1024;
+               scalingUnit++;
+            }
 
-         if ((scalingUnit > 0) && ((usedMemory / scalingFactor) == (totalMemory / scalingFactor))) {
-            scalingFactor /= 1024;
-            scalingUnit--;
-         }
+            if ((scalingUnit > 0) && ((usedMemory / scalingFactor) == (totalMemory / scalingFactor))) {
+               scalingFactor /= 1024;
+               scalingUnit--;
+            }
 
-         maximumUsage = (int)(totalMemory / scalingFactor);
-         currentUsage = (int)(usedMemory / scalingFactor);
+            maximumUsage = (int)(totalMemory / scalingFactor);
+            currentUsage = (int)(usedMemory / scalingFactor);
 
-         fireMemoryUsageUpdate(maximumUsage, currentUsage, Integer.toString(currentUsage) + scalingTitles[scalingUnit] + " of " + Integer.toString(maximumUsage) + scalingTitles[scalingUnit]);
+            fireMemoryUsageUpdate(maximumUsage, currentUsage, Integer.toString(currentUsage) + scalingTitles[scalingUnit] + " of " + Integer.toString(maximumUsage) + scalingTitles[scalingUnit]);
 
-         try {
-            pulseLatch.await(pulseTime, TimeUnit.MILLISECONDS);
-         }
-         catch (InterruptedException interruptedException) {
-            LoggerManager.getLogger(MemoryTimer.class).error(interruptedException);
+            try {
+               pulseLatch.await(pulseTime, TimeUnit.MILLISECONDS);
+            }
+            catch (InterruptedException interruptedException) {
+               LoggerManager.getLogger(MemoryTimer.class).error(interruptedException);
+            }
          }
       }
-
-      exitLatch.countDown();
+      finally {
+         exitLatch.countDown();
+      }
    }
 
    private void fireMemoryUsageUpdate (int maximumUsage, int currentUsage, String displayUsage) {

@@ -94,47 +94,50 @@ public class ServerSocketHerald implements ComponentFactory<SocketWorker>, Runna
       Thread workThread;
       boolean annointed;
 
-      while (!finished.get()) {
-         try {
-            annointed = false;
-            synchronized (acceptCounter) {
-               if ((maxAccepted < 0) || (acceptCounter.getCount() < maxAccepted)) {
-                  annointed = true;
-               }
-            }
-
-            if (annointed) {
-               try {
-                  clientSocket = serverSocket.accept();
-                  synchronized (acceptCounter) {
-                     acceptCounter.inc();
+      try {
+         while (!finished.get()) {
+            try {
+               annointed = false;
+               synchronized (acceptCounter) {
+                  if ((maxAccepted < 0) || (acceptCounter.getCount() < maxAccepted)) {
+                     annointed = true;
                   }
+               }
 
-                  worker = workerPool.getComponent();
-                  worker.setSocket(clientSocket);
-                  workThread = new Thread(worker);
-                  workThread.setDaemon(true);
-                  workThread.start();
+               if (annointed) {
+                  try {
+                     clientSocket = serverSocket.accept();
+                     synchronized (acceptCounter) {
+                        acceptCounter.inc();
+                     }
+
+                     worker = workerPool.getComponent();
+                     worker.setSocket(clientSocket);
+                     workThread = new Thread(worker);
+                     workThread.setDaemon(true);
+                     workThread.start();
+                  }
+                  catch (SocketTimeoutException t) {
+                     logger.error(t);
+                  }
                }
-               catch (SocketTimeoutException t) {
-                  logger.error(t);
+               else {
+                  try {
+                     pulseLatch.await(100, TimeUnit.MILLISECONDS);
+                  }
+                  catch (InterruptedException interruptedException) {
+                     logger.error(interruptedException);
+                  }
                }
             }
-            else {
-               try {
-                  pulseLatch.await(100, TimeUnit.MILLISECONDS);
-               }
-               catch (InterruptedException interruptedException) {
-                  logger.error(interruptedException);
-               }
+            catch (Exception e) {
+               logger.error(e);
             }
-         }
-         catch (Exception e) {
-            logger.error(e);
          }
       }
-
-      exitLatch.countDown();
+      finally {
+         exitLatch.countDown();
+      }
    }
 
    public void returnConnection (SocketWorker worker) {

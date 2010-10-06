@@ -173,7 +173,8 @@ public class AsynchronousAppender implements Appender, Runnable {
          finished = true;
          LoggerManager.getLogger(AsynchronousAppender.class).error(interruptedException);
       }
-
-      exitLatch.countDown();
+      finally {
+         exitLatch.countDown();
+      }
    }
 }

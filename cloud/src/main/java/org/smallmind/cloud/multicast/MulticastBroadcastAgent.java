@@ -78,32 +78,35 @@ public class MulticastBroadcastAgent implements Runnable {
       translationBuffer = ByteBuffer.wrap(messageBuffer);
       messagePacket = new DatagramPacket(messageBuffer, messageBuffer.length);
 
-      while (!finished) {
-         try {
+      try {
+         while (!finished) {
             try {
-               multicastSocket.receive(messagePacket);
-               packetReceived = true;
-            }
-            catch (SocketTimeoutException s) {
-               packetReceived = false;
-            }
+               try {
+                  multicastSocket.receive(messagePacket);
+                  packetReceived = true;
+               }
+               catch (SocketTimeoutException s) {
+                  packetReceived = false;
+               }
 
-            if (packetReceived) {
-               messageStatus = MessageStatus.getMessageStatus(translationBuffer.getInt(0));
-               if (!messageStatus.equals(MessageStatus.BROADCAST)) {
-                  messagePacket.setPort(broadcastPort);
-                  for (InetAddress broadcastAddress : broadcastInetAddresses) {
-                     messagePacket.setAddress(broadcastAddress);
-                     datagramSocket.send(messagePacket);
+               if (packetReceived) {
+                  messageStatus = MessageStatus.getMessageStatus(translationBuffer.getInt(0));
+                  if (!messageStatus.equals(MessageStatus.BROADCAST)) {
+                     messagePacket.setPort(broadcastPort);
+                     for (InetAddress broadcastAddress : broadcastInetAddresses) {
+                        messagePacket.setAddress(broadcastAddress);
+                        datagramSocket.send(messagePacket);
+                     }
                   }
                }
             }
-         }
-         catch (Exception e) {
-            packetBroadcaster.logError(e);
+            catch (Exception e) {
+               packetBroadcaster.logError(e);
+            }
          }
       }
-
-      exitLatch.countDown();
+      finally {
+         exitLatch.countDown();
+      }
    }
 }

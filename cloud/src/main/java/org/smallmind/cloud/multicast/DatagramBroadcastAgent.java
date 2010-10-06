@@ -77,28 +77,31 @@ public class DatagramBroadcastAgent implements Runnable {
       translationBuffer = ByteBuffer.wrap(messageBuffer);
       messagePacket = new DatagramPacket(messageBuffer, messageBuffer.length);
 
-      while (!finished) {
-         try {
+      try {
+         while (!finished) {
             try {
-               datagramSocket.receive(messagePacket);
-               packetReceived = true;
-            }
-            catch (SocketTimeoutException s) {
-               packetReceived = false;
-            }
+               try {
+                  datagramSocket.receive(messagePacket);
+                  packetReceived = true;
+               }
+               catch (SocketTimeoutException s) {
+                  packetReceived = false;
+               }
 
-            if (packetReceived) {
-               translationBuffer.putInt(0, MessageStatus.BROADCAST.ordinal());
-               messagePacket.setPort(multicastPort);
-               messagePacket.setAddress(multicastInetAddress);
-               multicastSocket.send(messagePacket);
+               if (packetReceived) {
+                  translationBuffer.putInt(0, MessageStatus.BROADCAST.ordinal());
+                  messagePacket.setPort(multicastPort);
+                  messagePacket.setAddress(multicastInetAddress);
+                  multicastSocket.send(messagePacket);
+               }
             }
-         }
-         catch (Exception e) {
-            packetBroadcaster.logError(e);
+            catch (Exception e) {
+               packetBroadcaster.logError(e);
+            }
          }
       }
-
-      exitLatch.countDown();
+      finally {
+         exitLatch.countDown();
+      }
    }
 }
