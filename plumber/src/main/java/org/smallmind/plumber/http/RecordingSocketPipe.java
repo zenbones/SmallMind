@@ -137,7 +137,5 @@ public class RecordingSocketPipe {
             }
          }
       }
-
    }
-
 }

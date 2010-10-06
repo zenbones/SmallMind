@@ -214,52 +214,55 @@ public class EventTransmitter implements Runnable {
       translationBuffer = ByteBuffer.wrap(messageBuffer);
       messagePacket = new DatagramPacket(messageBuffer, messageBuffer.length);
 
-      while (!finished.get()) {
-         try {
+      try {
+         while (!finished.get()) {
             try {
-               multicastSocket.receive(messagePacket);
-               packetReceived = true;
-            }
-            catch (SocketTimeoutException s) {
-               packetReceived = false;
-            }
-
-            if (packetReceived) {
-               translationBuffer.rewind();
-               translationBuffer.getInt();
-               translationBuffer.get(messageKeyBuffer);
-               messageKey = new EventMessageKey(messageKeyBuffer);
-               messageType = MessageType.getMessageType(translationBuffer.getInt());
-               messageLength = translationBuffer.getInt();
-
-               messageMold = messageCache.get(keyLock, messageKey);
-               switch (messageType) {
-                  case HEADER:
-                     messageMold.setMessageLength(messageLength);
-                     break;
-                  case DATA:
-                     messageIndex = translationBuffer.getInt();
-                     messageSegment = new byte[messageLength];
-                     translationBuffer.get(messageSegment);
-                     messageMold.addData(messageIndex, messageSegment);
-                     break;
-                  default:
-                     throw new UnknownSwitchCaseException(messageType.name());
+               try {
+                  multicastSocket.receive(messagePacket);
+                  packetReceived = true;
+               }
+               catch (SocketTimeoutException s) {
+                  packetReceived = false;
                }
 
-               if (messageMold.isComplete()) {
-                  messageCache.remove(keyLock, messageKey);
-                  multicastEvent = (MulticastEvent)messageMold.unmoldMessageBody();
-                  eventHandler.deliverEvent(multicastEvent);
+               if (packetReceived) {
+                  translationBuffer.rewind();
+                  translationBuffer.getInt();
+                  translationBuffer.get(messageKeyBuffer);
+                  messageKey = new EventMessageKey(messageKeyBuffer);
+                  messageType = MessageType.getMessageType(translationBuffer.getInt());
+                  messageLength = translationBuffer.getInt();
+
+                  messageMold = messageCache.get(keyLock, messageKey);
+                  switch (messageType) {
+                     case HEADER:
+                        messageMold.setMessageLength(messageLength);
+                        break;
+                     case DATA:
+                        messageIndex = translationBuffer.getInt();
+                        messageSegment = new byte[messageLength];
+                        translationBuffer.get(messageSegment);
+                        messageMold.addData(messageIndex, messageSegment);
+                        break;
+                     default:
+                        throw new UnknownSwitchCaseException(messageType.name());
+                  }
+
+                  if (messageMold.isComplete()) {
+                     messageCache.remove(keyLock, messageKey);
+                     multicastEvent = (MulticastEvent)messageMold.unmoldMessageBody();
+                     eventHandler.deliverEvent(multicastEvent);
+                  }
                }
             }
-         }
-         catch (Exception e) {
-            logger.error(e);
+            catch (Exception e) {
+               logger.error(e);
+            }
          }
       }
-
-      exitLatch.countDown();
+      finally {
+         exitLatch.countDown();
+      }
    }
 
    public void finalize () {

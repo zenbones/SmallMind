@@ -36,7 +36,7 @@ public class ExpirationTimer<K> implements Runnable {
    /*
    * Marked as transient so that Terracotta will not attempt to share these fields, which, as
    * they're not marked as roots, shouldn't be a problem, but Terracotta traverses the graph of
-   * this object due to the shared processing field, which is a root, and comnplains
+   * this object due to the shared processing field, which is a root, and complains
    */
    private transient CountDownLatch terminationLatch;
    private transient CountDownLatch exitLatch;
@@ -81,7 +81,7 @@ public class ExpirationTimer<K> implements Runnable {
 
             if (!finished.get()) {
                /**
-                * This wierdness is driven by Terracotta - The cache internals are shared across a cluster,
+                * This weirdness is driven by Terracotta - The cache internals are shared across a cluster,
                 * so there may be many threads running this code, but we only need one of them to actually
                 * execute, so the code gets guarded by a shared atomic boolean
                 */

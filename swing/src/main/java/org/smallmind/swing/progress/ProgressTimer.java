@@ -60,17 +60,20 @@ public class ProgressTimer implements Runnable {
 
    public void run () {
 
-      while (!finished.get()) {
-         progressPanel.setProgress();
+      try {
+         while (!finished.get()) {
+            progressPanel.setProgress();
 
-         try {
-            pulseLatch.await(pulseTime, TimeUnit.MILLISECONDS);
-         }
-         catch (InterruptedException interruptedException) {
-            LoggerManager.getLogger(ProgressTimer.class).error(interruptedException);
+            try {
+               pulseLatch.await(pulseTime, TimeUnit.MILLISECONDS);
+            }
+            catch (InterruptedException interruptedException) {
+               LoggerManager.getLogger(ProgressTimer.class).error(interruptedException);
+            }
          }
       }
-
-      exitLatch.countDown();
+      finally {
+         exitLatch.countDown();
+      }
    }
 }

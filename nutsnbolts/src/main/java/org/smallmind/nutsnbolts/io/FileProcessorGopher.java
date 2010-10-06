@@ -30,13 +30,11 @@ import java.io.File;
 import java.io.FileFilter;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 public class FileProcessorGopher implements Runnable {
 
    private CountDownLatch terminationLatch;
    private CountDownLatch exitLatch;
-   private AtomicBoolean finished = new AtomicBoolean(false);
    private FileProcessorQueue fileProcessorQueue;
    private File directory;
    private FileFilter fileFilter;
@@ -58,28 +56,25 @@ public class FileProcessorGopher implements Runnable {
    public void finish ()
       throws InterruptedException {
 
-      if (finished.compareAndSet(false, true)) {
-         terminationLatch.countDown();
-      }
-
+      terminationLatch.countDown();
       exitLatch.await();
    }
 
    public void run () {
 
-      while (!finished.get()) {
-         try {
+      try {
+         do {
             for (File file : new FileIterator(directory, fileFilter)) {
                fileProcessorQueue.push(file);
             }
 
-            terminationLatch.await(pulse, timeUnit);
-         }
-         catch (InterruptedException interruptedException) {
-            finished.set(true);
-         }
+         } while (!terminationLatch.await(pulse, timeUnit));
       }
-
-      exitLatch.countDown();
+      catch (InterruptedException interruptedException) {
+         terminationLatch.countDown();
+      }
+      finally {
+         exitLatch.countDown();
+      }
    }
 }

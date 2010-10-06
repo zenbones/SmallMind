@@ -68,37 +68,40 @@ public class HomeostaticRegulator<I extends Event, O extends Event> implements R
 
    public void run () {
 
-      while (!stopped.get()) {
-         try {
-            pulseLatch.await(sedaConfiguration.getRegulatorPulseTime(), sedaConfiguration.getRegulatorPulseTimeUnit());
-         }
-         catch (InterruptedException interruptedException) {
-            LoggerManager.getLogger(HomeostaticRegulator.class).error(interruptedException);
-         }
+      try {
+         while (!stopped.get()) {
+            try {
+               pulseLatch.await(sedaConfiguration.getRegulatorPulseTime(), sedaConfiguration.getRegulatorPulseTimeUnit());
+            }
+            catch (InterruptedException interruptedException) {
+               LoggerManager.getLogger(HomeostaticRegulator.class).error(interruptedException);
+            }
 
-         if (!stopped.get()) {
+            if (!stopped.get()) {
 
-            double idlePercentage = 0;
-            double activePercentage = 0;
+               double idlePercentage = 0;
+               double activePercentage = 0;
 
-            synchronized (processorList) {
-               for (EventProcessor<I, O> eventProcessor : processorList) {
-                  idlePercentage += eventProcessor.getIdlePercentage();
-                  activePercentage += eventProcessor.getActivePercentage();
+               synchronized (processorList) {
+                  for (EventProcessor<I, O> eventProcessor : processorList) {
+                     idlePercentage += eventProcessor.getIdlePercentage();
+                     activePercentage += eventProcessor.getActivePercentage();
+                  }
+
+                  idlePercentage /= processorList.size();
+                  activePercentage /= processorList.size();
                }
-
-               idlePercentage /= processorList.size();
-               activePercentage /= processorList.size();
-            }
-            if (sedaConfiguration.getActiveUpShiftPercentage() >= activePercentage) {
-               threadPool.increase();
-            }
-            if (sedaConfiguration.getInactiveDownShiftPercentage() >= idlePercentage) {
-               threadPool.decrease();
+               if (sedaConfiguration.getActiveUpShiftPercentage() >= activePercentage) {
+                  threadPool.increase();
+               }
+               if (sedaConfiguration.getInactiveDownShiftPercentage() >= idlePercentage) {
+                  threadPool.decrease();
+               }
             }
          }
       }
-
-      exitLatch.countDown();
+      finally {
+         exitLatch.countDown();
+      }
    }
 }

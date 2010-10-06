@@ -94,7 +94,8 @@ public class EventProcessor<I extends Event, O extends Event> implements Runnabl
          stopped = true;
          LoggerManager.getLogger(EventProcessor.class).error(interruptedException);
       }
-
-      exitLatch.countDown();
+      finally {
+         exitLatch.countDown();
+      }
    }
 }

@@ -135,24 +135,27 @@ public class ButtonRepeater implements ChangeListener {
 
       public void run () {
 
-         while (!finished.get()) {
-            try {
-               if (!armed) {
-                  pulseLatch.await(100, TimeUnit.MILLISECONDS);
-               }
-               else {
-                  pulseLatch.await(delayMilliseconds, TimeUnit.MILLISECONDS);
-                  if (armed) {
-                     SwingUtilities.invokeLater(new DoClick());
+         try {
+            while (!finished.get()) {
+               try {
+                  if (!armed) {
+                     pulseLatch.await(100, TimeUnit.MILLISECONDS);
+                  }
+                  else {
+                     pulseLatch.await(delayMilliseconds, TimeUnit.MILLISECONDS);
+                     if (armed) {
+                        SwingUtilities.invokeLater(new DoClick());
+                     }
                   }
                }
-            }
-            catch (InterruptedException interruptedException) {
-               LoggerManager.getLogger(ButtonRepeater.class).error(interruptedException);
+               catch (InterruptedException interruptedException) {
+                  LoggerManager.getLogger(ButtonRepeater.class).error(interruptedException);
+               }
             }
          }
-
-         exitLatch.countDown();
+         finally {
+            exitLatch.countDown();
+         }
       }
    }
 }

@@ -128,41 +128,44 @@ public class DeconstructionWorker implements java.lang.Runnable {
          deconstructionFuse.abort();
       }
 
-      if (!aborted) {
-         synchronized (connectionPin) {
-            connectionPin.decommission();
-         }
-
-         while (!deconstructed) {
+      try {
+         if (!aborted) {
             synchronized (connectionPin) {
-               if (forced || connectionPin.isFree()) {
+               connectionPin.decommission();
+            }
+
+            while (!deconstructed) {
+               synchronized (connectionPin) {
+                  if (forced || connectionPin.isFree()) {
+                     try {
+                        connectionPin.close();
+                     }
+                     catch (Exception exception) {
+                        ConnectionPoolManager.logError(exception);
+                     }
+                  }
+
+                  if (connectionPin.isClosed()) {
+                     deconstructed = true;
+                  }
+               }
+
+               if (deconstructed) {
+                  connectionPool.removePin(connectionPin);
+               }
+               else {
                   try {
-                     connectionPin.close();
+                     Thread.sleep(100);
                   }
-                  catch (Exception exception) {
-                     ConnectionPoolManager.logError(exception);
+                  catch (InterruptedException interruptedException) {
+                     ConnectionPoolManager.logError(interruptedException);
                   }
-               }
-
-               if (connectionPin.isClosed()) {
-                  deconstructed = true;
-               }
-            }
-
-            if (deconstructed) {
-               connectionPool.removePin(connectionPin);
-            }
-            else {
-               try {
-                  Thread.sleep(100);
-               }
-               catch (InterruptedException interruptedException) {
-                  ConnectionPoolManager.logError(interruptedException);
                }
             }
          }
       }
-
-      exitLatch.countDown();
+      finally {
+         exitLatch.countDown();
+      }
    }
 }

@@ -101,52 +101,55 @@ public class ServerSocketChannelHerald implements ComponentFactory<SocketChannel
       SelectionKey readyKey;
       boolean accepted;
 
-      while (!finished.get()) {
-         try {
-            if (acceptSelector.select(1000) > 0) {
-               readyKeySet = acceptSelector.selectedKeys();
-               readyKeyIter = readyKeySet.iterator();
-               while (readyKeyIter.hasNext()) {
-                  if (finished.get()) {
-                     break;
-                  }
-
-                  accepted = false;
-                  synchronized (acceptCounter) {
-                     if ((maxAccepted < 0) || (acceptCounter.getCount() < maxAccepted)) {
-                        acceptCounter.inc();
-                        accepted = true;
-
-                        readyKey = readyKeyIter.next();
-                        readyKeyIter.remove();
-
-                        readyChannel = (ServerSocketChannel)readyKey.channel();
-
-                        worker = workerPool.getComponent();
-                        worker.setChannel(readyChannel);
-                        workThread = new Thread(worker);
-                        workThread.setDaemon(true);
-                        workThread.start();
+      try {
+         while (!finished.get()) {
+            try {
+               if (acceptSelector.select(1000) > 0) {
+                  readyKeySet = acceptSelector.selectedKeys();
+                  readyKeyIter = readyKeySet.iterator();
+                  while (readyKeyIter.hasNext()) {
+                     if (finished.get()) {
+                        break;
                      }
-                  }
 
-                  if (!accepted) {
-                     try {
-                        pulseLatch.await(100, TimeUnit.MILLISECONDS);
+                     accepted = false;
+                     synchronized (acceptCounter) {
+                        if ((maxAccepted < 0) || (acceptCounter.getCount() < maxAccepted)) {
+                           acceptCounter.inc();
+                           accepted = true;
+
+                           readyKey = readyKeyIter.next();
+                           readyKeyIter.remove();
+
+                           readyChannel = (ServerSocketChannel)readyKey.channel();
+
+                           worker = workerPool.getComponent();
+                           worker.setChannel(readyChannel);
+                           workThread = new Thread(worker);
+                           workThread.setDaemon(true);
+                           workThread.start();
+                        }
                      }
-                     catch (InterruptedException interruptedException) {
-                        logger.error(interruptedException);
+
+                     if (!accepted) {
+                        try {
+                           pulseLatch.await(100, TimeUnit.MILLISECONDS);
+                        }
+                        catch (InterruptedException interruptedException) {
+                           logger.error(interruptedException);
+                        }
                      }
                   }
                }
             }
-         }
-         catch (Exception e) {
-            logger.error(e);
+            catch (Exception e) {
+               logger.error(e);
+            }
          }
       }
-
-      exitLatch.countDown();
+      finally {
+         exitLatch.countDown();
+      }
    }
 
    public void returnConnection (SocketChannelWorker worker) {
