@@ -32,20 +32,31 @@ import org.smallmind.scribe.pen.Logger;
 
 public class ProbeFactory {
 
-   private static final ThreadLocal<Throwable> THROWABLE_LOCAL = new ThreadLocal<Throwable>();
    private static final ProbeStackThreadLocal PROBE_STACK_LOCAL = new ProbeStackThreadLocal();
+   private static final ThreadLocal<Throwable> THROWABLE_LOCAL = new ThreadLocal<Throwable>();
+   private static final ThreadLocal<byte[]> IDENTIFIER_LOCAL = new ThreadLocal<byte[]>();
 
-   public static void storeThrowable (Throwable throwable) {
+   public static void setIdentifier (byte[] identifier) {
+
+      IDENTIFIER_LOCAL.set(identifier);
+   }
+
+   public static byte[] getIdentifier () {
+
+      return IDENTIFIER_LOCAL.get();
+   }
+
+   public static void setThrowable (Throwable throwable) {
 
       THROWABLE_LOCAL.set(throwable);
    }
 
-   public static Throwable retrieveThrowable () {
+   public static Throwable getThrowable () {
 
       return THROWABLE_LOCAL.get();
    }
 
-   public static Probe retrieveProbe () {
+   public static Probe getProbe () {
 
       return PROBE_STACK_LOCAL.get().peek();
    }
@@ -119,7 +130,7 @@ public class ProbeFactory {
 
       protected ProbeStack initialValue () {
 
-         return new ProbeStack();
+         return new ProbeStack(getIdentifier());
       }
 
       protected ProbeStack childValue (ProbeStack parentValue) {

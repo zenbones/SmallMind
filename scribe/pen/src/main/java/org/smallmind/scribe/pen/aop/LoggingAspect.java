@@ -72,7 +72,7 @@ public class LoggingAspect {
 
       Probe probe;
 
-      probe = ProbeFactory.retrieveProbe();
+      probe = ProbeFactory.getProbe();
       if (probe == null) {
          throw new AutoLogRuntimeException("The current thread has no stored Probe");
       }
@@ -86,16 +86,16 @@ public class LoggingAspect {
 
       Probe probe;
 
-      probe = ProbeFactory.retrieveProbe();
+      probe = ProbeFactory.getProbe();
       if (probe == null) {
          throw new AutoLogRuntimeException("The current thread has no stored Probe");
       }
 
-      if (throwable.equals(ProbeFactory.retrieveThrowable())) {
+      if (throwable.equals(ProbeFactory.getThrowable())) {
          probe.abort();
       }
       else {
-         ProbeFactory.storeThrowable(throwable);
+         ProbeFactory.setThrowable(throwable);
          probe.abort(throwable);
       }
    }

@@ -39,11 +39,6 @@ public class ProbeStack {
    private byte[] parentIdentifier;
    private int instance = 0;
 
-   public ProbeStack () {
-
-      this(null);
-   }
-
    public ProbeStack (byte[] parentIdentifier) {
 
       this.parentIdentifier = parentIdentifier;
