@@ -26,15 +26,16 @@
  */
 package org.smallmind.quorum.cache;
 
-import java.util.HashMap;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class LockingCacheEnforcer<K, V> implements LockingCache<K, V> {
 
-   private static final InheritableThreadLocal<HashMap<Object, KeyLock>> KEY_LOCK_MAP_LOCAL = new InheritableThreadLocal<HashMap<Object, KeyLock>>() {
+   private static final InheritableThreadLocal<Map<Object, KeyLock>> KEY_LOCK_MAP_LOCAL = new InheritableThreadLocal<Map<Object, KeyLock>>() {
       @Override
-      protected HashMap<Object, KeyLock> initialValue () {
+      protected Map<Object, KeyLock> initialValue () {
 
-         return new HashMap<Object, KeyLock>();
+         return new ConcurrentHashMap<Object, KeyLock>();
       }
    };
 

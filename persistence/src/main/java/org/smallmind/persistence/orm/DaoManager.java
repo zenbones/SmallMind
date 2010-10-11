@@ -27,21 +27,30 @@
 package org.smallmind.persistence.orm;
 
 import java.io.Serializable;
+import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import org.smallmind.nutsnbolts.lang.MappedStaticManager;
 import org.smallmind.persistence.Durable;
 
-public class DaoManager {
+public class DaoManager implements MappedStaticManager<Class<? extends Durable>, ORMDao> {
 
-   private static final ConcurrentHashMap<Class<? extends Durable>, ORMDao> DAO_MAP = new ConcurrentHashMap<Class<? extends Durable>, ORMDao>();
+   private static final InheritableThreadLocal<Map<Class<? extends Durable>, ORMDao>> DAO_MAP_LOCAL = new InheritableThreadLocal<Map<Class<? extends Durable>, ORMDao>>() {
+
+      @Override
+      protected Map<Class<? extends Durable>, ORMDao> initialValue () {
+
+         return new ConcurrentHashMap<Class<? extends Durable>, ORMDao>();
+      }
+   };
 
    public static void register (Class<? extends Durable> durableClass, ORMDao ormDao) {
 
-      DAO_MAP.put(durableClass, ormDao);
+      DAO_MAP_LOCAL.get().put(durableClass, ormDao);
    }
 
    public static Class<? extends Durable> findDurableClass (String simpleName) {
 
-      for (Class<? extends Durable> durableClass : DAO_MAP.keySet()) {
+      for (Class<? extends Durable> durableClass : DAO_MAP_LOCAL.get().keySet()) {
          if (durableClass.getSimpleName().equals(simpleName)) {
 
             return durableClass;
@@ -57,7 +66,7 @@ public class DaoManager {
 
       if ((durableClass = findDurableClass(simpleName)) != null) {
 
-         return DAO_MAP.get(durableClass);
+         return DAO_MAP_LOCAL.get().get(durableClass);
       }
 
       return null;
@@ -65,6 +74,6 @@ public class DaoManager {
 
    public static <I extends Serializable & Comparable<I>, D extends Durable<I>> ORMDao<I, D> get (Class<D> durableClass) {
 
-      return DAO_MAP.get(durableClass);
+      return DAO_MAP_LOCAL.get().get(durableClass);
    }
 }

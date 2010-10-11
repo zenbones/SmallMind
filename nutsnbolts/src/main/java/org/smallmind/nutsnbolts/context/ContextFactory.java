@@ -33,14 +33,13 @@ import java.util.Map;
 
 public class ContextFactory {
 
-   private static final Map<Class<? extends Context>, InheritableThreadLocal<ContextStack>> CONTEXT_MAP = new HashMap<Class<? extends Context>, InheritableThreadLocal<ContextStack>>();
+   private static final Map<Class<? extends Context>, ContextStackThreadLocal> CONTEXT_MAP = new HashMap<Class<? extends Context>, ContextStackThreadLocal>();
    private static final Class[] EMPTY_SIGNATURE = new Class[0];
    private static final Object[] NO_PARAMETERS = new Object[0];
 
    public static boolean exists (Class<? extends Context> contextClass) {
 
-      InheritableThreadLocal<ContextStack> threadLocal;
-      ContextStack contextStack;
+      ContextStackThreadLocal threadLocal;
 
       synchronized (CONTEXT_MAP) {
          if ((threadLocal = CONTEXT_MAP.get(contextClass)) == null) {
@@ -48,27 +47,20 @@ public class ContextFactory {
          }
       }
 
-      return !(((contextStack = threadLocal.get()) == null) || contextStack.isEmpty());
+      return !threadLocal.get().isEmpty();
    }
 
    public static void setContext (Context context) {
 
-      InheritableThreadLocal<ContextStack> threadLocal;
-      ContextStack contextStack;
+      ContextStackThreadLocal threadLocal;
 
       synchronized (CONTEXT_MAP) {
          if ((threadLocal = CONTEXT_MAP.get(context.getClass())) == null) {
-            threadLocal = new InheritableThreadLocal<ContextStack>();
-            CONTEXT_MAP.put(context.getClass(), threadLocal);
+            CONTEXT_MAP.put(context.getClass(), threadLocal = new ContextStackThreadLocal());
          }
       }
 
-      if ((contextStack = threadLocal.get()) == null) {
-         contextStack = new ContextStack();
-         threadLocal.set(contextStack);
-      }
-
-      contextStack.push(context);
+      threadLocal.get().push(context);
    }
 
    public static Context[] getExpectedContexts (Class<?> expectingClass)
@@ -108,8 +100,7 @@ public class ContextFactory {
    public static Context getContext (Class<? extends Context> contextClass)
       throws ContextException {
 
-      InheritableThreadLocal<ContextStack> threadLocal;
-      ContextStack contextStack;
+      ContextStackThreadLocal threadLocal;
       Context context;
 
       synchronized (CONTEXT_MAP) {
@@ -118,7 +109,7 @@ public class ContextFactory {
          }
       }
 
-      if (((contextStack = threadLocal.get()) == null) || ((context = contextStack.peek()) == null)) {
+      if ((context = threadLocal.get().peek()) == null) {
          throw new ContextException("Context(%s) has not been instantiated", contextClass);
       }
 
@@ -132,17 +123,25 @@ public class ContextFactory {
 
    public static Context removeContext (Class<? extends Context> contextClass) {
 
-      InheritableThreadLocal<ContextStack> threadLocal;
-      ContextStack contextStack;
+      ContextStackThreadLocal threadLocal;
 
       synchronized (CONTEXT_MAP) {
          threadLocal = CONTEXT_MAP.get(contextClass);
       }
 
-      if ((threadLocal != null) && ((contextStack = threadLocal.get()) != null)) {
-         return contextStack.pop();
+      if (threadLocal != null) {
+         return threadLocal.get().pop();
       }
 
       return null;
+   }
+
+   private static class ContextStackThreadLocal extends InheritableThreadLocal<ContextStack> {
+
+      @Override
+      protected ContextStack initialValue () {
+
+         return new ContextStack();
+      }
    }
 }

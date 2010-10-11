@@ -26,15 +26,24 @@
  */
 package org.smallmind.persistence.orm;
 
+import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import org.smallmind.nutsnbolts.lang.MappedStaticManager;
 
-public class SessionManager {
+public class SessionManager implements MappedStaticManager<String, ProxySession> {
 
-   private static final ConcurrentHashMap<String, ProxySession> SESSION_MAP = new ConcurrentHashMap<String, ProxySession>();
+   private static final InheritableThreadLocal<Map<String, ProxySession>> SESSION_MAP_LOCAL = new InheritableThreadLocal<Map<String, ProxySession>>() {
 
-   public static void registerSession (String dataSourceKey, ProxySession proxySession) {
+      @Override
+      protected Map<String, ProxySession> initialValue () {
 
-      SESSION_MAP.put(dataSourceKey, proxySession);
+         return new ConcurrentHashMap<String, ProxySession>();
+      }
+   };
+
+   public static void register (String dataSourceKey, ProxySession proxySession) {
+
+      SESSION_MAP_LOCAL.get().put(dataSourceKey, proxySession);
    }
 
    public static ProxySession getSession () {
@@ -46,7 +55,7 @@ public class SessionManager {
 
       ProxySession proxySession;
 
-      if ((proxySession = SESSION_MAP.get(dataSourceKey)) == null) {
+      if ((proxySession = SESSION_MAP_LOCAL.get().get(dataSourceKey)) == null) {
          throw new ORMInitializationException("No ProxySession was mapped to the data source value(%s)", dataSourceKey);
       }
 

@@ -51,7 +51,7 @@ public class PooledDataSource implements DataSource {
 
    public void register () {
 
-      DataSourceManager.registerDataSource(key, this);
+      DataSourceManager.register(key, this);
    }
 
    public String getKey () {

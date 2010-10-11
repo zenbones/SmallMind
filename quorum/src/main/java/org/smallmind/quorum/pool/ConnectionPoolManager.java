@@ -26,19 +26,26 @@
  */
 package org.smallmind.quorum.pool;
 
-import java.util.HashMap;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+import org.smallmind.nutsnbolts.lang.InstanceStaticManager;
 import org.smallmind.scribe.pen.Level;
 import org.smallmind.scribe.pen.LoggerManager;
 
-public class ConnectionPoolManager {
+public class ConnectionPoolManager implements InstanceStaticManager<ConnectionPool> {
 
-   private static final HashMap<String, ConnectionPool> POOL_MAP = new HashMap<String, ConnectionPool>();
+   private static final InheritableThreadLocal<Map<String, ConnectionPool>> POOL_MAP_LOCAL = new InheritableThreadLocal<Map<String, ConnectionPool>>() {
 
-   public static void addConnectionPool (ConnectionPool connectionPool) {
+      @Override
+      protected Map<String, ConnectionPool> initialValue () {
 
-      synchronized (POOL_MAP) {
-         POOL_MAP.put(connectionPool.getPoolName(), connectionPool);
+         return new ConcurrentHashMap<String, ConnectionPool>();
       }
+   };
+
+   public static void register (ConnectionPool connectionPool) {
+
+      POOL_MAP_LOCAL.get().put(connectionPool.getPoolName(), connectionPool);
    }
 
    public static Object getRawConnection (String poolName)
@@ -68,13 +75,13 @@ public class ConnectionPoolManager {
    private static ConnectionPool getConnectionPool (String poolName)
       throws ConnectionPoolException {
 
-      synchronized (POOL_MAP) {
-         if (POOL_MAP.containsKey(poolName)) {
-            return POOL_MAP.get(poolName);
-         }
+      ConnectionPool pool;
+
+      if ((pool = POOL_MAP_LOCAL.get().get(poolName)) == null) {
+         throw new ConnectionPoolException("No ConnectionPool defined for name (%s)", poolName);
       }
 
-      throw new ConnectionPoolException("No ConnectionPool defined for name (%s)", poolName);
+      return pool;
    }
 
    public static void logInfo (String message) {

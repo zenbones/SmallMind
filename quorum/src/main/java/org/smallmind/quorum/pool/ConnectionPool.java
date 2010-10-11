@@ -59,7 +59,7 @@ public class ConnectionPool<C> {
       this.poolName = poolName;
       this.connectionFactory = connectionFactory;
 
-      ConnectionPoolManager.addConnectionPool(this);
+      ConnectionPoolManager.register(this);
    }
 
    public void startup()

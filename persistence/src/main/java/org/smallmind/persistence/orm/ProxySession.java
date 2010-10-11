@@ -41,7 +41,7 @@ public abstract class ProxySession {
 
    public void register() {
 
-      SessionManager.registerSession(dataSource, this);
+      SessionManager.register(dataSource, this);
    }
 
    public String getDataSource() {
