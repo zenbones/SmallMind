@@ -26,9 +26,9 @@
  */
 package org.smallmind.persistence;
 
-import org.smallmind.nutsnbolts.lang.InstanceStaticManager;
+import org.smallmind.nutsnbolts.lang.StaticManager;
 
-public class PersistenceManager implements InstanceStaticManager<Persistence> {
+public class PersistenceManager implements StaticManager {
 
    private static InheritableThreadLocal<Persistence> PERSISTENCE_LOCAL = new InheritableThreadLocal<Persistence>();
 

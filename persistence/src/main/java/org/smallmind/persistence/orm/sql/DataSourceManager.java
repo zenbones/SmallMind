@@ -29,10 +29,10 @@ package org.smallmind.persistence.orm.sql;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import javax.sql.DataSource;
-import org.smallmind.nutsnbolts.lang.MappedStaticManager;
+import org.smallmind.nutsnbolts.lang.StaticManager;
 import org.smallmind.persistence.orm.ORMInitializationException;
 
-public class DataSourceManager implements MappedStaticManager<String, DataSource> {
+public class DataSourceManager implements StaticManager {
 
    private static final InheritableThreadLocal<Map<String, DataSource>> SOURCE_MAP_LOCAL = new InheritableThreadLocal<Map<String, DataSource>>() {
 

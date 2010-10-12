@@ -28,11 +28,11 @@ package org.smallmind.quorum.pool;
 
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
-import org.smallmind.nutsnbolts.lang.InstanceStaticManager;
+import org.smallmind.nutsnbolts.lang.StaticManager;
 import org.smallmind.scribe.pen.Level;
 import org.smallmind.scribe.pen.LoggerManager;
 
-public class ConnectionPoolManager implements InstanceStaticManager<ConnectionPool> {
+public class ConnectionPoolManager implements StaticManager {
 
    private static final InheritableThreadLocal<Map<String, ConnectionPool>> POOL_MAP_LOCAL = new InheritableThreadLocal<Map<String, ConnectionPool>>() {
 

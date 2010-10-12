@@ -29,10 +29,10 @@ package org.smallmind.persistence.orm;
 import java.io.Serializable;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
-import org.smallmind.nutsnbolts.lang.MappedStaticManager;
+import org.smallmind.nutsnbolts.lang.StaticManager;
 import org.smallmind.persistence.Durable;
 
-public class DaoManager implements MappedStaticManager<Class<? extends Durable>, ORMDao> {
+public class DaoManager implements StaticManager {
 
    private static final InheritableThreadLocal<Map<Class<? extends Durable>, ORMDao>> DAO_MAP_LOCAL = new InheritableThreadLocal<Map<Class<? extends Durable>, ORMDao>>() {
 

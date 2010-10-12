@@ -28,9 +28,9 @@ package org.smallmind.persistence.orm;
 
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
-import org.smallmind.nutsnbolts.lang.MappedStaticManager;
+import org.smallmind.nutsnbolts.lang.StaticManager;
 
-public class SessionManager implements MappedStaticManager<String, ProxySession> {
+public class SessionManager implements StaticManager {
 
    private static final InheritableThreadLocal<Map<String, ProxySession>> SESSION_MAP_LOCAL = new InheritableThreadLocal<Map<String, ProxySession>>() {
 
