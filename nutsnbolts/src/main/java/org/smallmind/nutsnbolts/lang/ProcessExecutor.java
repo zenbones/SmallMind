@@ -36,8 +36,8 @@ public class ProcessExecutor {
       INPUT_STREAM, ERROR_STREAM
    }
 
-   public static ProcessResult execute(String command, StreamType expectedStream, boolean redirectErrorStream, File directory, boolean waitForProcess)
-         throws ExternalProcessException {
+   public static ProcessResult execute (String command, StreamType expectedStream, boolean redirectErrorStream, File directory, boolean waitForProcess)
+      throws ExternalProcessException {
 
       ProcessBuilder processBuilder;
       Process process;
@@ -58,7 +58,8 @@ public class ProcessExecutor {
 
          if (waitForProcess) {
             exitStatus = process.waitFor();
-         } else {
+         }
+         else {
             exitStatus = 0;
          }
 
@@ -66,8 +67,11 @@ public class ProcessExecutor {
             case INPUT_STREAM:
                if (redirectErrorStream || (exitStatus == 0)) {
                   processStream = new BufferedInputStream(process.getInputStream());
-                  break;
                }
+               else {
+                  processStream = new BufferedInputStream(process.getErrorStream());
+               }
+               break;
             case ERROR_STREAM:
                processStream = new BufferedInputStream(process.getErrorStream());
                break;
@@ -77,7 +81,7 @@ public class ProcessExecutor {
 
          resultBuilder = new StringBuilder();
          while ((singleChar = processStream.read()) != -1) {
-            resultBuilder.append((char) singleChar);
+            resultBuilder.append((char)singleChar);
          }
          processStream.close();
       }
