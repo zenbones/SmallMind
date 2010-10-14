@@ -10,7 +10,8 @@
          <map>
             <entry key="SMALLMIND_ENVIRONMENT" value="de"/>
             <entry key="SMALLMIND_DATABASE" value="mysql"/>
-            <entry key="SMALLMIND_APPLICATION" value="foundation"/>
+            <entry key="SMALLMIND_MODULE" value="foundation"/>
+            <entry key="SMALLMIND_PRODUCT" value="any"/>
          </map>
       </property>
    </bean>
@@ -27,10 +28,14 @@
             <value>classpath:com/SMALLMIND/foundation/database-${SMALLMIND_DATABASE}.properties</value>
             <value>classpath:com/SMALLMIND/foundation/${SMALLMIND_ENVIRONMENT}/environment.properties</value>
             <value>classpath:com/SMALLMIND/foundation/${SMALLMIND_ENVIRONMENT}/database-${SMALLMIND_DATABASE}.properties</value>
-            <value>classpath:com/SMALLMIND/${SMALLMIND_APPLICATION}/application.properties</value>
-            <value>classpath:com/SMALLMIND/${SMALLMIND_APPLICATION}/database-${SMALLMIND_DATABASE}.properties</value>
-            <value>classpath:com/SMALLMIND/${SMALLMIND_APPLICATION}/${SMALLMIND_ENVIRONMENT}/application.properties</value>
-            <value>classpath:com/SMALLMIND/${SMALLMIND_APPLICATION}/${SMALLMIND_ENVIRONMENT}/database-${SMALLMIND_DATABASE}.properties</value>
+            <value>classpath:com/SMALLMIND/${SMALLMIND_MODULE}/application.properties</value>
+            <value>classpath:com/SMALLMIND/${SMALLMIND_MODULE}/database-${SMALLMIND_DATABASE}.properties</value>
+            <value>classpath:com/SMALLMIND/${SMALLMIND_MODULE}/${SMALLMIND_ENVIRONMENT}/application.properties</value>
+            <value>classpath:com/SMALLMIND/${SMALLMIND_MODULE}/${SMALLMIND_ENVIRONMENT}/database-${SMALLMIND_DATABASE}.properties</value>
+            <value>classpath:com/SMALLMIND/${SMALLMIND_MODULE}/${SMALLMIND_PRODUCT}/application.properties</value>
+            <value>classpath:com/SMALLMIND/${SMALLMIND_MODULE}/${SMALLMIND_PRODUCT}/database-${SMALLMIND_DATABASE}.properties</value>
+            <value>classpath:com/SMALLMIND/${SMALLMIND_MODULE}/${SMALLMIND_PRODUCT}/${SMALLMIND_ENVIRONMENT}/application.properties</value>
+            <value>classpath:com/SMALLMIND/${SMALLMIND_MODULE}/${SMALLMIND_PRODUCT}/${SMALLMIND_ENVIRONMENT}/database-${SMALLMIND_DATABASE}.properties</value>
             <value>file:${user.home}/.m2/local.properties</value>
             <value>file:${user.home}/.m2/database-${SMALLMIND_DATABASE}.properties</value>
          </list>
