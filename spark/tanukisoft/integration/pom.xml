@@ -12,6 +12,11 @@
    <description>Tanukisoft wrapper integrations</description>
    <dependencies>
       <dependency>
+         <groupId>org.smallmind</groupId>
+         <artifactId>smallmind-nutsnbolts</artifactId>
+         <scope>compile</scope>
+      </dependency>
+      <dependency>
          <groupId>tanukisoft</groupId>
          <artifactId>wrapper</artifactId>
          <scope>compile</scope>

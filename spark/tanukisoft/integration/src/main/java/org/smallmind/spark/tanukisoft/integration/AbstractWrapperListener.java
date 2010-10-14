@@ -26,6 +26,8 @@
  */
 package org.smallmind.spark.tanukisoft.integration;
 
+import org.smallmind.nutsnbolts.util.PropertyExpander;
+import org.smallmind.nutsnbolts.util.SystemPropertyMode;
 import org.tanukisoftware.wrapper.WrapperListener;
 import org.tanukisoftware.wrapper.WrapperManager;
 
@@ -84,9 +86,15 @@ public abstract class AbstractWrapperListener implements WrapperListener {
       else {
 
          String[] trimmedArgs;
+         PropertyExpander propertyExpander;
 
          trimmedArgs = new String[args.length - 1];
          System.arraycopy(args, 1, trimmedArgs, 0, args.length - 1);
+
+         propertyExpander = new PropertyExpander(false, SystemPropertyMode.FALLBACK, true);
+         for (int count = 0; count < trimmedArgs.length; count++) {
+            trimmedArgs[count] = propertyExpander.expand(trimmedArgs[count]);
+         }
 
          WrapperManager.start((WrapperListener)Class.forName(args[0]).newInstance(), trimmedArgs);
       }

@@ -127,7 +127,7 @@
                <jvmMaxMemoryMB>256</jvmMaxMemoryMB>
                <appParameters>
                   <appParameter>com/mydomain/spring1.xml</appParameter>
-                  <appParameter>com/mydoain/spring2.xml</appParameter>
+                  <appParameter>com/mydomain/spring2.xml</appParameter>
                </appParameters>
                <jvmArgs>
                   <jvmArg>-server</jvmArg>
