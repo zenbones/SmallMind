@@ -352,6 +352,9 @@
                   </goals>
                </execution>
             </executions>
+            <configuration>
+               <sourceDir>${basedir}/src/main/scala</sourceDir>
+            </configuration>
          </plugin>
          <plugin>
             <groupId>org.apache.maven.plugins</groupId>
