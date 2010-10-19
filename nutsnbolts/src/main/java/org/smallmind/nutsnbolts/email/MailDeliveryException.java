@@ -28,25 +28,26 @@ package org.smallmind.nutsnbolts.email;
 
 import org.smallmind.nutsnbolts.lang.FormattedException;
 
-public class SMTPMailException extends FormattedException {
+public class MailDeliveryException extends FormattedException {
 
-   public SMTPMailException () {
+   public MailDeliveryException () {
 
       super();
    }
 
-   public SMTPMailException (String message, Object... args) {
+   public MailDeliveryException (String message, Object... args) {
 
       super(message, args);
    }
 
-   public SMTPMailException (Throwable throwable, String message, Object... args) {
+   public MailDeliveryException (Throwable throwable, String message, Object... args) {
 
       super(throwable, message, args);
    }
 
-   public SMTPMailException (Throwable throwable) {
+   public MailDeliveryException (Throwable throwable) {
 
       super(throwable);
    }
 }
+

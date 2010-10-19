@@ -26,22 +26,42 @@
  */
 package org.smallmind.nutsnbolts.email;
 
+import java.util.Properties;
 import javax.mail.Authenticator;
-import org.smallmind.nutsnbolts.email.AuthType;
+import javax.mail.Session;
 
-public class Authentication {
+public enum Protocol {
 
-   private AuthType type;
-   private Object[] data;
+   SMTP("smtp", "smtp", false), SMTPS("smtps", "smtp", true);
 
-   public Authentication (AuthType type, Object... data) {
+   private String name;
+   private String selector;
+   private boolean secure;
 
-      this.type = type;
-      this.data = data;
+   private Protocol (String name, String selector, boolean secure) {
+
+      this.name = name;
+      this.selector = selector;
+      this.secure = secure;
    }
 
-   public Authenticator getAuthenticator () {
+   public Session getSession (String host, int port, Authentication authentication) {
 
-      return type.getAuthenticator(data);
+      Properties properties = new Properties();
+      Authenticator authenticator;
+
+      properties.setProperty("mail.transport.protocol", name);
+      properties.setProperty("mail." + selector + ".host", host);
+      properties.put("mail." + selector + ".port", port);
+
+      if (secure) {
+         properties.setProperty("mail." + selector + ".starttls.enable", "true");
+      }
+
+      if ((authenticator = authentication.getAuthenticator()) != null) {
+         properties.setProperty("mail." + selector + ".auth", "true");
+      }
+
+      return Session.getInstance(properties, authenticator);
    }
 }

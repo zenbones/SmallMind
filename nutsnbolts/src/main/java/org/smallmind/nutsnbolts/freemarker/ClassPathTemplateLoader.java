@@ -35,23 +35,15 @@ public class ClassPathTemplateLoader implements TemplateLoader {
 
    ClassLoader classLoader;
    private Class<?> anchorClass;
-   private boolean relative;
 
    public ClassPathTemplateLoader () {
 
-      relative = false;
       classLoader = Thread.currentThread().getContextClassLoader();
    }
 
    public ClassPathTemplateLoader (Class<?> anchorClass) {
 
-      this(anchorClass, true);
-   }
-
-   public ClassPathTemplateLoader (Class<?> anchorClass, boolean relative) {
-
       this.anchorClass = anchorClass;
-      this.relative = relative;
 
       classLoader = anchorClass.getClassLoader();
    }
@@ -71,7 +63,7 @@ public class ClassPathTemplateLoader implements TemplateLoader {
 
       ClassPathTemplateSource source;
 
-      if (!relative) {
+      if (name.startsWith("/")) {
          source = new ClassPathTemplateSource(classLoader, name);
       }
       else if (anchorClass != null) {

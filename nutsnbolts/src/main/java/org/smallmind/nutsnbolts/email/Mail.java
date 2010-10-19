@@ -26,12 +26,11 @@
  */
 package org.smallmind.nutsnbolts.email;
 
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
-import java.util.Date;
+import java.io.File;
 
 public class Mail {
 
+   private File[] attachments;
    private String from = null;
    private String to = null;
    private String replyTo = null;
@@ -39,30 +38,28 @@ public class Mail {
    private String bcc = null;
    private String subject = null;
    private String text = null;
-   private String date = null;
-   private DateFormat dateFormat = null;
 
-   public Mail (String from, String to) {
+   public Mail (String from, String to, File... attachments) {
 
-      this(from, to, null, null, null, null, null);
+      this(from, to, null, null, null, null, null, attachments);
    }
 
-   public Mail (String from, String to, String text) {
+   public Mail (String from, String to, String text, File... attachments) {
 
-      this(from, to, null, null, null, null, text);
+      this(from, to, null, null, null, null, text, attachments);
    }
 
-   public Mail (String from, String to, String subject, String text) {
+   public Mail (String from, String to, String subject, String text, File... attachments) {
 
-      this(from, to, null, null, null, subject, text);
+      this(from, to, null, null, null, subject, text, attachments);
    }
 
-   public Mail (String from, String to, String replyTo, String cc, String subject, String text) {
+   public Mail (String from, String to, String replyTo, String cc, String subject, String text, File... attachments) {
 
-      this(from, to, replyTo, cc, null, subject, text);
+      this(from, to, replyTo, cc, null, subject, text, attachments);
    }
 
-   public Mail (String from, String to, String replyTo, String cc, String bcc, String subject, String text) {
+   public Mail (String from, String to, String replyTo, String cc, String bcc, String subject, String text, File... attachments) {
 
       this.from = from;
       this.to = to;
@@ -71,8 +68,7 @@ public class Mail {
       this.bcc = bcc;
       this.subject = subject;
       this.text = text;
-      this.dateFormat = new SimpleDateFormat("EEE, dd MMM yyy HH:mm:ss ZZZZ");
-      this.date = dateFormat.format(new Date());
+      this.attachments = attachments;
    }
 
    public void setFrom (String from) {
@@ -110,14 +106,19 @@ public class Mail {
       this.text = text;
    }
 
-   public void setDate (Date date) {
+   public void addAttachment (File attachment) {
 
-      this.date = dateFormat.format(date);
-   }
+      if (attachments == null) {
+         attachments = new File[] {attachment};
+      }
+      else {
 
-   public void setDate (String date) {
+         File[] moreAttachments = new File[attachments.length + 1];
 
-      this.date = date;
+         System.arraycopy(attachments, 0, moreAttachments, 0, attachments.length);
+         moreAttachments[attachments.length] = attachment;
+         attachments = moreAttachments;
+      }
    }
 
    public String getFrom () {
@@ -155,9 +156,9 @@ public class Mail {
       return text;
    }
 
-   public String getDate () {
+   public File[] getAttachments () {
 
-      return date;
+      return attachments;
    }
 
 }

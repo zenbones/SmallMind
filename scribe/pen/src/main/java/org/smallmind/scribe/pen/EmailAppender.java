@@ -26,21 +26,38 @@
  */
 package org.smallmind.scribe.pen;
 
+import org.smallmind.nutsnbolts.email.AuthType;
+import org.smallmind.nutsnbolts.email.Authentication;
 import org.smallmind.nutsnbolts.email.Mail;
-import org.smallmind.nutsnbolts.email.SendMail;
+import org.smallmind.nutsnbolts.email.Postman;
 
 public class EmailAppender extends AbstractAppender {
 
-   private SendMail sendMail;
+   private Postman postman;
    private String from;
    private String to;
    private String subject;
 
    public EmailAppender (String smtpServer, int smtpPort) {
 
+      this(smtpServer, smtpPort, new Authentication(AuthType.NONE), false);
+   }
+
+   public EmailAppender (String smtpServer, int smtpPort, Authentication authentication) {
+
+      this(smtpServer, smtpPort, authentication, false);
+   }
+
+   public EmailAppender (String smtpServer, int smtpPort, boolean secure) {
+
+      this(smtpServer, smtpPort, new Authentication(AuthType.NONE), secure);
+   }
+
+   public EmailAppender (String smtpServer, int smtpPort, Authentication authentication, boolean secure) {
+
       super();
 
-      sendMail = new SendMail(smtpServer, smtpPort);
+      postman = new Postman(smtpServer, smtpPort, authentication, secure);
    }
 
    public EmailAppender (String smtpServer, int smtpPort, String from, String to, String subject) {
@@ -71,7 +88,7 @@ public class EmailAppender extends AbstractAppender {
    public void handleOutput (String output)
       throws Exception {
 
-      sendMail.smtp(new Mail(from, to, subject, output));
+      postman.send(new Mail(from, to, subject, output));
    }
 
    public boolean requiresFormatter () {

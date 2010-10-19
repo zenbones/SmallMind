@@ -12,6 +12,12 @@
    <description>Nuts'n'Bolts Utilities</description>
    <dependencies>
       <dependency>
+         <groupId>javax.mail</groupId>
+         <artifactId>mail</artifactId>
+         <scope>compile</scope>
+         <optional>true</optional>
+      </dependency>
+      <dependency>
          <groupId>javax.servlet</groupId>
          <artifactId>servlet-api</artifactId>
          <scope>compile</scope>

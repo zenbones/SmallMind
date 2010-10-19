@@ -26,48 +26,31 @@
  */
 package org.smallmind.nutsnbolts.email;
 
-public class SwapName {
+import javax.mail.Authenticator;
+import javax.mail.PasswordAuthentication;
 
-   private static final char[] VALID_ADJECTIVES = {'*'};
+public enum AuthType {
 
-   private String name;
-   private String adjectives;
+   NONE {
 
-   public SwapName (String unparsedName) {
+      @Override
+      public Authenticator getAuthenticator (Object... data) {
 
-      int adjectivePos;
-
-      adjectivePos = getAdjectivePos(unparsedName);
-      name = unparsedName.substring(0, adjectivePos);
-      adjectives = unparsedName.substring(adjectivePos);
-   }
-
-   public String getName () {
-
-      return name;
-   }
-
-   public boolean isAdjective (char adjective) {
-
-      return (adjectives.indexOf(adjective) >= 0);
-   }
-
-   private int getAdjectivePos (String unparsedName) {
-
-      int latestPos;
-      int adjectivePos = 0;
-
-      for (char valiAdjective : VALID_ADJECTIVES) {
-         if ((latestPos = unparsedName.indexOf(valiAdjective)) > adjectivePos) {
-            adjectivePos = latestPos;
-         }
+         return null;
       }
+   },
+   LOGIN {
 
-      if (adjectivePos == 0) {
-         return unparsedName.length();
+      @Override
+      public Authenticator getAuthenticator (final Object... data) {
+
+         return new Authenticator() {
+            protected PasswordAuthentication getPasswordAuthentication () {
+               return new PasswordAuthentication((String)data[0], (String)data[1]);
+            }
+         };
       }
+   };
 
-      return adjectivePos;
-   }
-
+   public abstract Authenticator getAuthenticator (Object... data);
 }

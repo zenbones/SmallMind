@@ -97,9 +97,8 @@ public class WeakEventListenerList<E extends EventListener> implements Iterable<
       synchronized (referenceList) {
          referenceIter = referenceList.iterator();
          while (referenceIter.hasNext()) {
-            if ((referenceIter.next()).get() == eventListener) {
+            if ((referenceIter.next()).get().equals(eventListener)) {
                referenceIter.remove();
-               break;
             }
          }
       }
