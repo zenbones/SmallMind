@@ -27,9 +27,12 @@
 package org.smallmind.nutsnbolts.email;
 
 import java.io.File;
+import java.io.Reader;
+import java.io.StringReader;
 
 public class Mail {
 
+   private Reader bodyReader;
    private File[] attachments;
    private String from = null;
    private String to = null;
@@ -37,29 +40,43 @@ public class Mail {
    private String cc = null;
    private String bcc = null;
    private String subject = null;
-   private String text = null;
 
    public Mail (String from, String to, File... attachments) {
 
       this(from, to, null, null, null, null, null, attachments);
    }
 
-   public Mail (String from, String to, String text, File... attachments) {
+   public Mail (String from, String to, String body, File... attachments) {
 
-      this(from, to, null, null, null, null, text, attachments);
+      this(from, to, null, null, null, null, new StringReader(body), attachments);
    }
 
-   public Mail (String from, String to, String subject, String text, File... attachments) {
+   public Mail (String from, String to, Reader bodyReader, File... attachments) {
 
-      this(from, to, null, null, null, subject, text, attachments);
+      this(from, to, null, null, null, null, bodyReader, attachments);
    }
 
-   public Mail (String from, String to, String replyTo, String cc, String subject, String text, File... attachments) {
+   public Mail (String from, String to, String subject, String body, File... attachments) {
 
-      this(from, to, replyTo, cc, null, subject, text, attachments);
+      this(from, to, null, null, null, subject, new StringReader(body), attachments);
    }
 
-   public Mail (String from, String to, String replyTo, String cc, String bcc, String subject, String text, File... attachments) {
+   public Mail (String from, String to, String subject, Reader bodyReader, File... attachments) {
+
+      this(from, to, null, null, null, subject, bodyReader, attachments);
+   }
+
+   public Mail (String from, String to, String replyTo, String cc, String subject, String body, File... attachments) {
+
+      this(from, to, replyTo, cc, null, subject, new StringReader(body), attachments);
+   }
+
+   public Mail (String from, String to, String replyTo, String cc, String subject, Reader bodyReader, File... attachments) {
+
+      this(from, to, replyTo, cc, null, subject, bodyReader, attachments);
+   }
+
+   public Mail (String from, String to, String replyTo, String cc, String bcc, String subject, Reader bodyReader, File... attachments) {
 
       this.from = from;
       this.to = to;
@@ -67,7 +84,7 @@ public class Mail {
       this.cc = cc;
       this.bcc = bcc;
       this.subject = subject;
-      this.text = text;
+      this.bodyReader = bodyReader;
       this.attachments = attachments;
    }
 
@@ -101,9 +118,19 @@ public class Mail {
       this.subject = subject;
    }
 
-   public void setText (String text) {
+   public void setBody (String body) {
 
-      this.text = text;
+      setBodyReader(new StringReader(body));
+   }
+
+   public void setBodyReader (Reader bodyReader) {
+
+      this.bodyReader = bodyReader;
+   }
+
+   public void setAttachments (File[] attachments) {
+
+      this.attachments = attachments;
    }
 
    public void addAttachment (File attachment) {
@@ -151,9 +178,9 @@ public class Mail {
       return subject;
    }
 
-   public String getText () {
+   public Reader getBodyReader () {
 
-      return text;
+      return bodyReader;
    }
 
    public File[] getAttachments () {

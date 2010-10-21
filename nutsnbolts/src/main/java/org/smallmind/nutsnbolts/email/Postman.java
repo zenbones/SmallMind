@@ -111,22 +111,33 @@ public class Postman {
             message.setSubject(mail.getSubject());
          }
 
-         if (mail.getText() != null) {
+         if (mail.getBodyReader() != null) {
+
+            StringBuilder bodyBuilder;
+            char[] buffer;
+            int charsRead;
+
+            buffer = new char[256];
+            bodyBuilder = new StringBuilder();
+            while ((charsRead = mail.getBodyReader().read(buffer)) >= 0) {
+               bodyBuilder.append(buffer, 0, charsRead);
+            }
+            mail.getBodyReader().close();
 
             MimeBodyPart textPart = new MimeBodyPart();
 
             if (interpolationMap == null) {
-               textPart.setText(mail.getText());
+               textPart.setText(bodyBuilder.toString());
             }
             else {
 
                Template template;
                StringWriter templateWriter;
-               MD5Key md5Key = new MD5Key(EncryptionUtilities.hash(EncryptionUtilities.HashAlgorithm.MD5, mail.getText()));
+               MD5Key md5Key = new MD5Key(EncryptionUtilities.hash(EncryptionUtilities.HashAlgorithm.MD5, bodyBuilder.toString()));
 
                synchronized (templateMap) {
                   if ((template = templateMap.get(md5Key)) == null) {
-                     templateMap.put(md5Key, template = new Template(new String(md5Key.getMd5Hash()), new StringReader(mail.getText()), freemarkerConf));
+                     templateMap.put(md5Key, template = new Template(new String(md5Key.getMd5Hash()), new StringReader(bodyBuilder.toString()), freemarkerConf));
                   }
                }
 
