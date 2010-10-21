@@ -7,7 +7,7 @@
       <version>1.0.1</version>
    </parent>
    <artifactId>smallmind-constellation</artifactId>
-   <name>Conestallation</name>
+   <name>Constellation</name>
    <description>Component and Container Frameworks</description>
    <packaging>jar</packaging>
    <dependencies>
