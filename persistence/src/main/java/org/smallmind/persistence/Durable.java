@@ -26,45 +26,56 @@
  */
 package org.smallmind.persistence;
 
+import java.io.Serializable;
+import java.lang.reflect.Field;
+import java.util.HashSet;
+import java.util.Set;
 import org.terracotta.modules.annotations.AutolockRead;
 import org.terracotta.modules.annotations.AutolockWrite;
 import org.terracotta.modules.annotations.InstrumentedClass;
 
-import java.io.Serializable;
-import java.lang.reflect.Field;
-
 @InstrumentedClass
 public abstract class Durable<I extends Comparable<I>> implements Serializable, Comparable<Durable<I>> {
 
+   private static final ThreadLocal<Set<Durable>> IN_USE_SET_LOCAL = new ThreadLocal<Set<Durable>>() {
+
+      @Override
+      protected Set<Durable> initialValue () {
+
+         return new HashSet<Durable>();
+      }
+   };
+
    private I id;
 
-   public Durable() {
+   public Durable () {
    }
 
-   public Durable(Durable<I> durable) {
+   public Durable (Durable<I> durable) {
 
       id = durable.getId();
    }
 
    @AutolockRead
-   public synchronized I getId() {
+   public synchronized I getId () {
 
       return id;
    }
 
    @AutolockWrite
-   public synchronized void setId(I id) {
+   public synchronized void setId (I id) {
 
       this.id = id;
    }
 
-   public int compareTo(Durable<I> durable) {
+   public int compareTo (Durable<I> durable) {
 
       if (getId() == null) {
          if (durable.getId() == null) {
 
             return 0;
-         } else {
+         }
+         else {
 
             return -1;
          }
@@ -80,7 +91,7 @@ public abstract class Durable<I extends Comparable<I>> implements Serializable, 
 
    @Override
    @AutolockRead
-   public synchronized int hashCode() {
+   public synchronized int hashCode () {
 
       if (id == null) {
 
@@ -95,25 +106,26 @@ public abstract class Durable<I extends Comparable<I>> implements Serializable, 
    }
 
    @Override
-   public synchronized boolean equals(Object obj) {
+   public synchronized boolean equals (Object obj) {
 
       if (obj instanceof Durable) {
-         if ((((Durable) obj).getId() == null) || (id == null)) {
+         if ((((Durable)obj).getId() == null) || (id == null)) {
             return super.equals(obj);
-         } else {
-            return ((Durable) obj).getId().equals(id);
+         }
+         else {
+            return ((Durable)obj).getId().equals(id);
          }
       }
 
       return false;
    }
 
-   public boolean mirrors(Durable durable) {
+   public boolean mirrors (Durable durable) {
 
       return mirrors(durable, "id");
    }
 
-   private boolean mirrors(Durable durable, String... exclusions) {
+   private boolean mirrors (Durable durable, String... exclusions) {
 
       if (this.getClass().isAssignableFrom(durable.getClass())) {
 
@@ -143,7 +155,8 @@ public abstract class Durable<I extends Comparable<I>> implements Serializable, 
 
                         return false;
                      }
-                  } else if (!myValue.equals(theirValue)) {
+                  }
+                  else if (!myValue.equals(theirValue)) {
 
                      return false;
                   }
@@ -154,37 +167,47 @@ public abstract class Durable<I extends Comparable<I>> implements Serializable, 
             throw new RuntimeException(illegalAccessException);
          }
 
-
          return true;
       }
 
       return false;
    }
 
-   @Override
-   public String toString() {
+   public String toString () {
 
       StringBuilder displayBuilder = new StringBuilder();
-      boolean first = false;
 
-      displayBuilder.append(this.getClass().getSimpleName()).append('[');
+      if (IN_USE_SET_LOCAL.get().contains(this)) {
+         displayBuilder.append(this.getClass().getSimpleName()).append("[id=").append(id).append(']');
+      }
+      else {
+         try {
+            IN_USE_SET_LOCAL.get().add(this);
 
-      try {
-         for (Field field : DurableFields.getFields(this.getClass())) {
-            if (first) {
-               displayBuilder.append(',');
+            boolean first = false;
+
+            displayBuilder.append(this.getClass().getSimpleName()).append('[');
+
+            try {
+               for (Field field : DurableFields.getFields(this.getClass())) {
+                  if (first) {
+                     displayBuilder.append(',');
+                  }
+
+                  displayBuilder.append(field.getName()).append('=').append(field.get(this));
+                  first = true;
+               }
+            }
+            catch (IllegalAccessException illegalAccessException) {
+               throw new RuntimeException(illegalAccessException);
             }
 
-            displayBuilder.append(field.getName()).append('=').append(field.get(this));
-            first = true;
+            displayBuilder.append(']');
+         }
+         finally {
+            IN_USE_SET_LOCAL.get().remove(this);
          }
       }
-      catch (IllegalAccessException illegalAccessException) {
-         throw new RuntimeException(illegalAccessException);
-      }
-
-      displayBuilder.append(']');
-
 
       return displayBuilder.toString();
    }
