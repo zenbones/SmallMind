@@ -178,7 +178,7 @@ public abstract class Durable<I extends Comparable<I>> implements Serializable, 
       StringBuilder displayBuilder = new StringBuilder();
 
       if (IN_USE_SET_LOCAL.get().contains(this)) {
-         displayBuilder.append(this.getClass().getSimpleName()).append("[id=").append(id).append(']');
+         displayBuilder.append(this.getClass().getSimpleName()).append("[id=").append(id).append(",...]");
       }
       else {
          try {
