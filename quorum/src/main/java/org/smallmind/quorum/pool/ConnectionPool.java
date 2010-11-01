@@ -39,6 +39,7 @@ public class ConnectionPool<C> {
    private String poolName;
    private PoolMode poolMode = PoolMode.BLOCKING_POOL;
    private AtomicInteger poolCount = new AtomicInteger(0);
+   private AtomicInteger processingCount = new AtomicInteger(0);
    private AtomicBoolean startupFlag = new AtomicBoolean(false);
    private AtomicBoolean shutdownFlag = new AtomicBoolean(false);
    private boolean testOnConnect = false;
@@ -62,7 +63,7 @@ public class ConnectionPool<C> {
       ConnectionPoolManager.register(this);
    }
 
-   public void startup()
+   public void startup ()
       throws ConnectionPoolException {
 
       if (startupFlag.compareAndSet(false, true)) {
@@ -257,6 +258,7 @@ public class ConnectionPool<C> {
                      }
                      finally {
                         processingConnectionPinQueue.add(connectionPin);
+                        processingCount.incrementAndGet();
                      }
                   }
                }
@@ -273,6 +275,7 @@ public class ConnectionPool<C> {
                }
                finally {
                   processingConnectionPinQueue.add(connectionPin);
+                  processingCount.incrementAndGet();
                }
             }
          }
@@ -333,6 +336,8 @@ public class ConnectionPool<C> {
       for (ConnectionPin<C> connectionPin : processingConnectionPinQueue) {
          if (connectionPin.contains(connectionInstance)) {
             if (processingConnectionPinQueue.remove(connectionPin)) {
+               processingCount.decrementAndGet();
+
                synchronized (connectionPin) {
                   if (terminate || (poolCount.get() > minPoolSize)) {
                      destroyConnectionPin(connectionPin);
@@ -360,7 +365,11 @@ public class ConnectionPool<C> {
 
    protected void removePin (ConnectionPin connectionPin) {
 
-      if (processingConnectionPinQueue.remove(connectionPin) || freeConnectionPinQueue.remove(connectionPin)) {
+      if (processingConnectionPinQueue.remove(connectionPin)) {
+         processingCount.decrementAndGet();
+         poolCount.decrementAndGet();
+      }
+      else if (freeConnectionPinQueue.remove(connectionPin)) {
          poolCount.decrementAndGet();
       }
 
@@ -397,7 +406,7 @@ public class ConnectionPool<C> {
          throw new IllegalStateException("ConnectionPool has not yet been initialized");
       }
 
-      return freeConnectionPinQueue.size();
+      return poolCount.get() - processingCount.get();
    }
 
    public int getProcessingSize () {
@@ -410,6 +419,6 @@ public class ConnectionPool<C> {
          throw new IllegalStateException("ConnectionPool has not yet been initialized");
       }
 
-      return processingConnectionPinQueue.size();
+      return processingCount.get();
    }
 }

@@ -35,16 +35,19 @@ public class ConnectionPin<C> {
       FREE, SERVED, CLOSED
    }
 
+   private ConnectionPool connectionPool;
    private DeconstructionWorker deconstructionWorker;
    private ConnectionInstance<C> connectionInstance;
    private State state;
    private boolean commissioned = true;
+   private long serviceTimeNanos;
 
    public ConnectionPin (ConnectionPool connectionPool, ConnectionInstance<C> connectionInstance, int maxIdleTimeSeconds, int leaseTimeSeconds, int unreturnedConnectionTimeoutSeconds) {
 
       Thread workerThread;
       LinkedList<DeconstructionFuse> fuseList;
 
+      this.connectionPool = connectionPool;
       this.connectionInstance = connectionInstance;
 
       state = State.FREE;
@@ -131,6 +134,8 @@ public class ConnectionPin<C> {
          deconstructionWorker.serve();
       }
 
+      serviceTimeNanos = System.nanoTime();
+
       return connection;
    }
 
@@ -141,6 +146,8 @@ public class ConnectionPin<C> {
       if (deconstructionWorker != null) {
          deconstructionWorker.free();
       }
+
+
    }
 
    public void close ()
@@ -150,6 +157,8 @@ public class ConnectionPin<C> {
          state = State.CLOSED;
          connectionInstance.close();
       }
+
+      
    }
 
    public void finalize () {

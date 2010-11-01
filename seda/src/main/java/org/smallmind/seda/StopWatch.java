@@ -45,7 +45,6 @@ public class StopWatch {
    public StopWatch click () {
 
       if (!initialized) {
-         System.out.println(CURRENT_THREAD_CPU_TIME_SUPPORTED);
          initialized = true;
 
          clickClockMillis = System.currentTimeMillis();
