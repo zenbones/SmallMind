@@ -138,6 +138,9 @@ public class PooledConnectionInstance extends AbstractConnectionInstance impleme
 
          throw sqlException;
       }
+      finally {
+         pooledConnection.removeConnectionEventListener(this);
+      }
 
       if (validationCloseException != null) {
          throw validationCloseException;

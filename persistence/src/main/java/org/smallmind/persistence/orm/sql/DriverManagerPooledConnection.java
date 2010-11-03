@@ -159,7 +159,12 @@ public class DriverManagerPooledConnection implements PooledConnection, Invocati
 
       if (closed.compareAndSet(false, true)) {
          if (statementCache != null) {
-            statementCache.close();
+            try {
+               statementCache.close();
+            }
+            finally {
+               removeStatementEventListener(statementCache);
+            }
          }
 
          actualConnection.close();
