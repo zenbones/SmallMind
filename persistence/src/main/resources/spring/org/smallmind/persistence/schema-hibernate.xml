@@ -30,7 +30,7 @@
       <property name="testOnAcquire" value="${jdbc.pool.connect.test}"/>
       <property name="minPoolSize" value="${jdbc.pool.size.min}"/>
       <property name="maxPoolSize" value="${jdbc.pool.size.max}"/>
-      <property name="leaseTimeSeconds" value="1800"/>
+      <property name="maxLeaseTimeSeconds" value="1800"/>
       <property name="connectionTimeoutMillis" value="500"/>
    </bean>
 

@@ -30,12 +30,18 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
+import org.smallmind.quorum.pool.event.ConnectionInstanceEvent;
+import org.smallmind.quorum.pool.event.ConnectionInstanceEventListener;
+import org.smallmind.quorum.pool.event.ConnectionPoolEventListener;
+import org.smallmind.quorum.pool.event.ErrorReportingConnectionPoolEvent;
+import org.smallmind.quorum.pool.event.LeaseTimeReportingConnectionPoolEvent;
 
-public class ConnectionPool<C> {
+public class ConnectionPool<C> implements ConnectionInstanceEventListener {
 
    private ConnectionInstanceFactory<C> connectionFactory;
    private ConcurrentLinkedQueue<ConnectionPin<C>> freeConnectionPinQueue;
    private ConcurrentLinkedQueue<ConnectionPin<C>> processingConnectionPinQueue;
+   private ConcurrentLinkedQueue<ConnectionPoolEventListener> connectionPoolEventListenerQueue;
    private String poolName;
    private PoolMode poolMode = PoolMode.BLOCKING_POOL;
    private AtomicInteger poolCount = new AtomicInteger(0);
@@ -44,13 +50,14 @@ public class ConnectionPool<C> {
    private AtomicBoolean shutdownFlag = new AtomicBoolean(false);
    private boolean testOnConnect = false;
    private boolean testOnAcquire = false;
+   private boolean reportLeaseTimeNanos = true;
    private long connectionTimeoutMillis = 0;
    private int initialPoolSize = 0;
    private int minPoolSize = 1;
    private int maxPoolSize = 10;
    private int acquireRetryAttempts = 0;
    private int acquireRetryDelayMillis = 0;
-   private int leaseTimeSeconds = 0;
+   private int maxLeaseTimeSeconds = 0;
    private int maxIdleTimeSeconds = 0;
    private int unreturnedConnectionTimeoutSeconds = 0;
 
@@ -60,10 +67,12 @@ public class ConnectionPool<C> {
       this.poolName = poolName;
       this.connectionFactory = connectionFactory;
 
+      connectionPoolEventListenerQueue = new ConcurrentLinkedQueue<ConnectionPoolEventListener>();
+
       ConnectionPoolManager.register(this);
    }
 
-   public void startup ()
+   public synchronized void startup ()
       throws ConnectionPoolException {
 
       if (startupFlag.compareAndSet(false, true)) {
@@ -76,7 +85,7 @@ public class ConnectionPool<C> {
       }
    }
 
-   public void shutdown () {
+   public synchronized void shutdown () {
 
       if (shutdownFlag.compareAndSet(false, true)) {
          for (ConnectionPin<C> connectionPin : processingConnectionPinQueue) {
@@ -88,69 +97,143 @@ public class ConnectionPool<C> {
       }
    }
 
-   public void setPoolMode (PoolMode poolMode) {
+   public String getPoolName () {
+
+      return poolName;
+   }
+
+   public synchronized PoolMode getPoolMode () {
+
+      return poolMode;
+   }
+
+   public synchronized void setPoolMode (PoolMode poolMode) {
 
       this.poolMode = poolMode;
    }
 
-   public void setTestOnConnect (boolean testOnConnect) {
+   public synchronized boolean isTestOnConnect () {
+
+      return testOnConnect;
+   }
+
+   public synchronized void setTestOnConnect (boolean testOnConnect) {
 
       this.testOnConnect = testOnConnect;
    }
 
-   public void setTestOnAcquire (boolean testOnAcquire) {
+   public synchronized boolean isTestOnAcquire () {
+
+      return testOnAcquire;
+   }
+
+   public synchronized void setTestOnAcquire (boolean testOnAcquire) {
 
       this.testOnAcquire = testOnAcquire;
    }
 
-   public void setConnectionTimeoutMillis (long connectionTimeoutMillis) {
+   public synchronized boolean isReportLeaseTimeNanos () {
+
+      return reportLeaseTimeNanos;
+   }
+
+   public synchronized void setReportLeaseTimeNanos (boolean reportLeaseTimeNanos) {
+
+      this.reportLeaseTimeNanos = reportLeaseTimeNanos;
+   }
+
+   public synchronized long getConnectionTimeoutMillis () {
+
+      return connectionTimeoutMillis;
+   }
+
+   public synchronized void setConnectionTimeoutMillis (long connectionTimeoutMillis) {
 
       this.connectionTimeoutMillis = connectionTimeoutMillis;
    }
 
-   public void setInitialPoolSize (int initialPoolSize) {
+   public synchronized int getInitialPoolSize () {
+
+      return initialPoolSize;
+   }
+
+   public synchronized void setInitialPoolSize (int initialPoolSize) {
+
+      if (startupFlag.get()) {
+         throw new IllegalStateException("ConnectionPool has already been initialized");
+      }
 
       this.initialPoolSize = initialPoolSize;
    }
 
-   public void setMinPoolSize (int minPoolSize) {
+   public synchronized int getMinPoolSize () {
+
+      return minPoolSize;
+   }
+
+   public synchronized void setMinPoolSize (int minPoolSize) {
 
       this.minPoolSize = minPoolSize;
    }
 
-   public void setMaxPoolSize (int maxPoolSize) {
+   public synchronized int getMaxPoolSize () {
+
+      return maxPoolSize;
+   }
+
+   public synchronized void setMaxPoolSize (int maxPoolSize) {
 
       this.maxPoolSize = maxPoolSize;
    }
 
-   public void setAcquireRetryAttempts (int acquireRetryAttempts) {
+   public synchronized int getAcquireRetryAttempts () {
+
+      return acquireRetryAttempts;
+   }
+
+   public synchronized void setAcquireRetryAttempts (int acquireRetryAttempts) {
 
       this.acquireRetryAttempts = acquireRetryAttempts;
    }
 
-   public void setAcquireRetryDelayMillis (int acquireRetryDelayMillis) {
+   public synchronized int getAcquireRetryDelayMillis () {
+
+      return acquireRetryDelayMillis;
+   }
+
+   public synchronized void setAcquireRetryDelayMillis (int acquireRetryDelayMillis) {
 
       this.acquireRetryDelayMillis = acquireRetryDelayMillis;
    }
 
-   public void setLeaseTimeSeconds (int leaseTimeSeconds) {
+   public synchronized int getMaxLeaseTimeSeconds () {
 
-      this.leaseTimeSeconds = leaseTimeSeconds;
+      return maxLeaseTimeSeconds;
    }
 
-   public void setMaxIdleTimeSeconds (int maxIdleTimeSeconds) {
+   public synchronized void setMaxLeaseTimeSeconds (int maxLeaseTimeSeconds) {
+
+      this.maxLeaseTimeSeconds = maxLeaseTimeSeconds;
+   }
+
+   public synchronized int getMaxIdleTimeSeconds () {
+
+      return maxIdleTimeSeconds;
+   }
+
+   public synchronized void setMaxIdleTimeSeconds (int maxIdleTimeSeconds) {
 
       this.maxIdleTimeSeconds = maxIdleTimeSeconds;
    }
 
-   public void setUnreturnedConnectionTimeoutSeconds (int unreturnedConnectionTimeoutSeconds) {
+   public synchronized int getUnreturnedConnectionTimeoutSeconds () {
 
-      this.unreturnedConnectionTimeoutSeconds = unreturnedConnectionTimeoutSeconds;
+      return unreturnedConnectionTimeoutSeconds;
    }
 
-   public String getPoolName () {
+   public synchronized void setUnreturnedConnectionTimeoutSeconds (int unreturnedConnectionTimeoutSeconds) {
 
-      return poolName;
+      this.unreturnedConnectionTimeoutSeconds = unreturnedConnectionTimeoutSeconds;
    }
 
    public Object rawConnection ()
@@ -165,6 +248,34 @@ public class ConnectionPool<C> {
       }
       catch (Exception exception) {
          throw new ConnectionCreationException(exception);
+      }
+   }
+
+   public void addConnectionPoolEventListener (ConnectionPoolEventListener listener) {
+
+      connectionPoolEventListenerQueue.add(listener);
+   }
+
+   public void removeConnectionPoolEventListener (ConnectionPoolEventListener listener) {
+
+      connectionPoolEventListenerQueue.remove(listener);
+   }
+
+   public void connectionErrorOccurred (ConnectionInstanceEvent instanceEvent) {
+
+      ErrorReportingConnectionPoolEvent poolEvent = new ErrorReportingConnectionPoolEvent(this, instanceEvent.getException());
+
+      for (ConnectionPoolEventListener listener : connectionPoolEventListenerQueue) {
+         listener.connectionErrorOccurred(poolEvent);
+      }
+   }
+
+   public void reportConnectionLeaseTimeNanos (long leaseTimeNanos) {
+
+      LeaseTimeReportingConnectionPoolEvent poolEvent = new LeaseTimeReportingConnectionPoolEvent(this, leaseTimeNanos);
+
+      for (ConnectionPoolEventListener listener : connectionPoolEventListenerQueue) {
+         listener.connectionLeaseTime(poolEvent);
       }
    }
 
@@ -220,7 +331,7 @@ public class ConnectionPool<C> {
       else {
          poolCount.incrementAndGet();
 
-         return new ConnectionPin<C>(this, connectionInstance, maxIdleTimeSeconds, leaseTimeSeconds, unreturnedConnectionTimeoutSeconds);
+         return new ConnectionPin<C>(this, connectionInstance, reportLeaseTimeNanos, maxIdleTimeSeconds, maxLeaseTimeSeconds, unreturnedConnectionTimeoutSeconds);
       }
    }
 

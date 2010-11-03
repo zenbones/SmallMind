@@ -19,7 +19,7 @@
       <property name="testOnAcquire" value="${jdbc.pool.connect.test}"/>
       <property name="minThreadPoolSize" value="${jdbc.pool.size.min}"/>
       <property name="maxThreadPoolSize" value="${jdbc.pool.size.max}"/>
-      <property name="leaseTimeSeconds" value="1800"/>
+      <property name="maxLeaseTimeSeconds" value="1800"/>
       <property name="connectionTimeoutMillis" value="500"/>
    </bean>
 

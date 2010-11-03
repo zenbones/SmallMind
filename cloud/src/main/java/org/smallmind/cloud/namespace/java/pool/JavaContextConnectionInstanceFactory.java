@@ -27,7 +27,6 @@
 package org.smallmind.cloud.namespace.java.pool;
 
 import java.util.Hashtable;
-import java.util.concurrent.atomic.AtomicBoolean;
 import javax.naming.Context;
 import javax.naming.InitialContext;
 import org.smallmind.cloud.namespace.java.JavaContext;
@@ -40,7 +39,6 @@ import org.smallmind.quorum.pool.ConnectionPool;
 
 public class JavaContextConnectionInstanceFactory implements ConnectionInstanceFactory {
 
-   private AtomicBoolean insurance = new AtomicBoolean(false);
    private StorageType storageType;
    private String contextPath;
    private String host;

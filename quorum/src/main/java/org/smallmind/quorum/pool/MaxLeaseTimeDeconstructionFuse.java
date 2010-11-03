@@ -26,13 +26,13 @@
  */
 package org.smallmind.quorum.pool;
 
-public class LeaseTimeDeconstructionFuse extends DeconstructionFuse {
+public class MaxLeaseTimeDeconstructionFuse extends DeconstructionFuse {
 
-   private int leaseTimeSeconds;
+   private int maxLeaseTimeSeconds;
 
-   public LeaseTimeDeconstructionFuse (int leaseTimeSeconds) {
+   public MaxLeaseTimeDeconstructionFuse (int maxLeaseTimeSeconds) {
 
-      this.leaseTimeSeconds = leaseTimeSeconds;
+      this.maxLeaseTimeSeconds = maxLeaseTimeSeconds;
    }
 
    public void free () {
@@ -44,7 +44,7 @@ public class LeaseTimeDeconstructionFuse extends DeconstructionFuse {
    public void run () {
 
       try {
-         sleep(leaseTimeSeconds);
+         sleep(maxLeaseTimeSeconds);
          if (!hasBeenAborted()) {
             ignite(false);
          }

@@ -20,7 +20,7 @@
       <property name="acquireRetryAttempts" value="3"/>
       <property name="minPoolSize" value="${java.context.env.pool.size.min}"/>
       <property name="maxPoolSize" value="${java.context.env.pool.size.max}"/>
-      <property name="leaseTimeSeconds" value="1800"/>
+      <property name="maxLeaseTimeSeconds" value="1800"/>
       <property name="connectionTimeoutMillis" value="500"/>
       <property name="testOnAcquire" value="true"/>
    </bean>

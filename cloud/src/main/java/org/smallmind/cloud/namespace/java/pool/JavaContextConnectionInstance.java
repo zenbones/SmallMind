@@ -30,17 +30,19 @@ import javax.naming.NamingException;
 import org.smallmind.cloud.namespace.java.PooledJavaContext;
 import org.smallmind.cloud.namespace.java.event.JavaContextEvent;
 import org.smallmind.cloud.namespace.java.event.JavaContextListener;
-import org.smallmind.quorum.pool.ConnectionInstance;
+import org.smallmind.quorum.pool.AbstractConnectionInstance;
 import org.smallmind.quorum.pool.ConnectionPool;
 import org.smallmind.quorum.pool.ConnectionPoolManager;
 
-public class JavaContextConnectionInstance implements ConnectionInstance, JavaContextListener {
+public class JavaContextConnectionInstance extends AbstractConnectionInstance implements JavaContextListener {
 
    private ConnectionPool connectionPool;
    private PooledJavaContext pooledJavaContext;
 
    public JavaContextConnectionInstance (ConnectionPool connectionPool, PooledJavaContext pooledJavaContext)
       throws NamingException {
+
+      super();
 
       this.connectionPool = connectionPool;
       this.pooledJavaContext = pooledJavaContext;
@@ -73,11 +75,23 @@ public class JavaContextConnectionInstance implements ConnectionInstance, JavaCo
 
    public void contextAborted (JavaContextEvent javaContextEvent) {
 
+      Exception reportedException = javaContextEvent.getCommunicationException();
+
       try {
          connectionPool.terminateInstance(this);
       }
       catch (Exception exception) {
-         ConnectionPoolManager.logError(exception);
+         if (reportedException != null) {
+            exception.initCause(reportedException);
+         }
+
+         reportedException = exception;
+      }
+      finally {
+         if (reportedException != null) {
+            fireConnectionErrorOccurred(reportedException);
+            ConnectionPoolManager.logError(reportedException);
+         }
       }
    }
 

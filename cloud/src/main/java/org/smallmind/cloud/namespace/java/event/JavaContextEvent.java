@@ -27,12 +27,31 @@
 package org.smallmind.cloud.namespace.java.event;
 
 import java.util.EventObject;
+import javax.naming.CommunicationException;
 
 public class JavaContextEvent extends EventObject {
 
+   private CommunicationException communicationException;
+
    public JavaContextEvent (Object source) {
 
-      super(source);
+      this(source, null);
    }
 
+   public JavaContextEvent (Object source, CommunicationException communicationException) {
+
+      super(source);
+
+      this.communicationException = communicationException;
+   }
+
+   public boolean containsCommunicationException () {
+
+      return communicationException != null;
+   }
+
+   public CommunicationException getCommunicationException () {
+
+      return communicationException;
+   }
 }

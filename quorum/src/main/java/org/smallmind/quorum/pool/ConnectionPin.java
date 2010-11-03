@@ -40,22 +40,26 @@ public class ConnectionPin<C> {
    private ConnectionInstance<C> connectionInstance;
    private State state;
    private boolean commissioned = true;
-   private long serviceTimeNanos;
+   private boolean reportLeaseTimeNanos;
+   private long leaseStartNanos;
 
-   public ConnectionPin (ConnectionPool connectionPool, ConnectionInstance<C> connectionInstance, int maxIdleTimeSeconds, int leaseTimeSeconds, int unreturnedConnectionTimeoutSeconds) {
+   public ConnectionPin (ConnectionPool connectionPool, ConnectionInstance<C> connectionInstance, boolean reportLeaseTimeNanos, int maxIdleTimeSeconds, int maxLeaseTimeSeconds, int unreturnedConnectionTimeoutSeconds) {
 
       Thread workerThread;
       LinkedList<DeconstructionFuse> fuseList;
 
       this.connectionPool = connectionPool;
       this.connectionInstance = connectionInstance;
+      this.reportLeaseTimeNanos = reportLeaseTimeNanos;
 
       state = State.FREE;
 
+      connectionInstance.addConnectionInstanceEventListener(connectionPool);
+
       fuseList = new LinkedList<DeconstructionFuse>();
 
-      if (leaseTimeSeconds > 0) {
-         fuseList.add(new LeaseTimeDeconstructionFuse(leaseTimeSeconds));
+      if (maxLeaseTimeSeconds > 0) {
+         fuseList.add(new MaxLeaseTimeDeconstructionFuse(maxLeaseTimeSeconds));
       }
 
       if (maxIdleTimeSeconds > 0) {
@@ -134,7 +138,9 @@ public class ConnectionPin<C> {
          deconstructionWorker.serve();
       }
 
-      serviceTimeNanos = System.nanoTime();
+      if (reportLeaseTimeNanos) {
+         leaseStartNanos = System.nanoTime();
+      }
 
       return connection;
    }
@@ -143,22 +149,31 @@ public class ConnectionPin<C> {
 
       state = State.FREE;
 
+      if (reportLeaseTimeNanos) {
+         connectionPool.reportConnectionLeaseTimeNanos(System.nanoTime() - leaseStartNanos);
+      }
+
       if (deconstructionWorker != null) {
          deconstructionWorker.free();
       }
-
-
    }
 
    public void close ()
       throws Exception {
 
-      if (!state.equals(State.CLOSED)) {
-         state = State.CLOSED;
-         connectionInstance.close();
-      }
+      try {
+         if (!state.equals(State.CLOSED)) {
+            state = State.CLOSED;
+            connectionInstance.close();
 
-      
+            if (reportLeaseTimeNanos) {
+               connectionPool.reportConnectionLeaseTimeNanos(System.nanoTime() - leaseStartNanos);
+            }
+         }
+      }
+      finally {
+         connectionInstance.removeConnectionInstanceEventListener(connectionPool);
+      }
    }
 
    public void finalize () {

@@ -26,16 +26,12 @@
  */
 package org.smallmind.nutsnbolts.context;
 
-import java.lang.annotation.Annotation;
-import java.lang.reflect.Method;
 import java.util.HashMap;
 import java.util.Map;
 
 public class ContextFactory {
 
    private static final Map<Class<? extends Context>, ContextStackThreadLocal> CONTEXT_MAP = new HashMap<Class<? extends Context>, ContextStackThreadLocal>();
-   private static final Class[] EMPTY_SIGNATURE = new Class[0];
-   private static final Object[] NO_PARAMETERS = new Object[0];
 
    public static boolean exists (Class<? extends Context> contextClass) {
 
@@ -66,21 +62,13 @@ public class ContextFactory {
    public static Context[] getExpectedContexts (Class<?> expectingClass)
       throws ContextException {
 
+      ExpectedContexts contextAnnotation;
       Context[] expectedContexts;
-      Annotation expectedAnnotation;
-      Method valueMethod;
       Class<? extends Context>[] contextClasses;
 
-      if ((expectedAnnotation = expectingClass.getAnnotation(ExpectedContexts.class)) != null) {
+      if ((contextAnnotation = expectingClass.getAnnotation(ExpectedContexts.class)) != null) {
          try {
-            valueMethod = expectedAnnotation.annotationType().getMethod("value", EMPTY_SIGNATURE);
-         }
-         catch (NoSuchMethodException noSuchMethodException) {
-            throw new ContextException(noSuchMethodException, "The annotation @ExpectedContexts has been altered and has no value() method");
-         }
-
-         try {
-            contextClasses = (Class<? extends Context>[])valueMethod.invoke(expectedAnnotation, NO_PARAMETERS);
+            contextClasses = contextAnnotation.value();
 
             expectedContexts = new Context[contextClasses.length];
             for (int count = 0; count < contextClasses.length; count++) {

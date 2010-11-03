@@ -26,7 +26,13 @@
  */
 package org.smallmind.quorum.pool;
 
+import org.smallmind.quorum.pool.event.ConnectionInstanceEventListener;
+
 public interface ConnectionInstance<C> {
+
+   public abstract void addConnectionInstanceEventListener (ConnectionInstanceEventListener connectionInstanceEventListener);
+
+   public abstract void removeConnectionInstanceEventListener (ConnectionInstanceEventListener connectionInstanceEventListener);
 
    public abstract boolean validate ();
 

@@ -78,7 +78,7 @@ public class PooledJavaContext extends JavaContext {
          return super.lookup(name);
       }
       catch (CommunicationException communicationException) {
-         fireContextAborted(new JavaContextEvent(this));
+         fireContextAborted(new JavaContextEvent(this, communicationException));
          throw communicationException;
       }
    }
@@ -90,7 +90,7 @@ public class PooledJavaContext extends JavaContext {
          return super.lookup(name);
       }
       catch (CommunicationException communicationException) {
-         fireContextAborted(new JavaContextEvent(this));
+         fireContextAborted(new JavaContextEvent(this, communicationException));
          throw communicationException;
       }
    }
@@ -102,7 +102,7 @@ public class PooledJavaContext extends JavaContext {
          super.bind(name, obj);
       }
       catch (CommunicationException communicationException) {
-         fireContextAborted(new JavaContextEvent(this));
+         fireContextAborted(new JavaContextEvent(this, communicationException));
          throw communicationException;
       }
    }
@@ -114,7 +114,7 @@ public class PooledJavaContext extends JavaContext {
          super.bind(name, obj);
       }
       catch (CommunicationException communicationException) {
-         fireContextAborted(new JavaContextEvent(this));
+         fireContextAborted(new JavaContextEvent(this, communicationException));
          throw communicationException;
       }
    }
@@ -126,7 +126,7 @@ public class PooledJavaContext extends JavaContext {
          super.rebind(name, obj);
       }
       catch (CommunicationException communicationException) {
-         fireContextAborted(new JavaContextEvent(this));
+         fireContextAborted(new JavaContextEvent(this, communicationException));
          throw communicationException;
       }
    }
@@ -138,7 +138,7 @@ public class PooledJavaContext extends JavaContext {
          super.rebind(name, obj);
       }
       catch (CommunicationException communicationException) {
-         fireContextAborted(new JavaContextEvent(this));
+         fireContextAborted(new JavaContextEvent(this, communicationException));
          throw communicationException;
       }
    }
@@ -150,7 +150,7 @@ public class PooledJavaContext extends JavaContext {
          super.unbind(name);
       }
       catch (CommunicationException communicationException) {
-         fireContextAborted(new JavaContextEvent(this));
+         fireContextAborted(new JavaContextEvent(this, communicationException));
          throw communicationException;
       }
    }
@@ -162,7 +162,7 @@ public class PooledJavaContext extends JavaContext {
          super.unbind(name);
       }
       catch (CommunicationException communicationException) {
-         fireContextAborted(new JavaContextEvent(this));
+         fireContextAborted(new JavaContextEvent(this, communicationException));
          throw communicationException;
       }
    }
@@ -174,7 +174,7 @@ public class PooledJavaContext extends JavaContext {
          super.rename(oldName, newName);
       }
       catch (CommunicationException communicationException) {
-         fireContextAborted(new JavaContextEvent(this));
+         fireContextAborted(new JavaContextEvent(this, communicationException));
          throw communicationException;
       }
    }
@@ -186,7 +186,7 @@ public class PooledJavaContext extends JavaContext {
          super.rename(oldName, newName);
       }
       catch (CommunicationException communicationException) {
-         fireContextAborted(new JavaContextEvent(this));
+         fireContextAborted(new JavaContextEvent(this, communicationException));
          throw communicationException;
       }
    }
@@ -198,7 +198,7 @@ public class PooledJavaContext extends JavaContext {
          return super.list(name);
       }
       catch (CommunicationException communicationException) {
-         fireContextAborted(new JavaContextEvent(this));
+         fireContextAborted(new JavaContextEvent(this, communicationException));
          throw communicationException;
       }
    }
@@ -210,7 +210,7 @@ public class PooledJavaContext extends JavaContext {
          return super.list(name);
       }
       catch (CommunicationException communicationException) {
-         fireContextAborted(new JavaContextEvent(this));
+         fireContextAborted(new JavaContextEvent(this, communicationException));
          throw communicationException;
       }
    }
@@ -222,7 +222,7 @@ public class PooledJavaContext extends JavaContext {
          return super.listBindings(name);
       }
       catch (CommunicationException communicationException) {
-         fireContextAborted(new JavaContextEvent(this));
+         fireContextAborted(new JavaContextEvent(this, communicationException));
          throw communicationException;
       }
    }
@@ -234,7 +234,7 @@ public class PooledJavaContext extends JavaContext {
          return super.listBindings(name);
       }
       catch (CommunicationException communicationException) {
-         fireContextAborted(new JavaContextEvent(this));
+         fireContextAborted(new JavaContextEvent(this, communicationException));
          throw communicationException;
       }
    }
@@ -246,7 +246,7 @@ public class PooledJavaContext extends JavaContext {
          super.destroySubcontext(name);
       }
       catch (CommunicationException communicationException) {
-         fireContextAborted(new JavaContextEvent(this));
+         fireContextAborted(new JavaContextEvent(this, communicationException));
          throw communicationException;
       }
    }
@@ -258,7 +258,7 @@ public class PooledJavaContext extends JavaContext {
          super.destroySubcontext(name);
       }
       catch (CommunicationException communicationException) {
-         fireContextAborted(new JavaContextEvent(this));
+         fireContextAborted(new JavaContextEvent(this, communicationException));
          throw communicationException;
       }
    }
@@ -270,7 +270,7 @@ public class PooledJavaContext extends JavaContext {
          return super.createSubcontext(name);
       }
       catch (CommunicationException communicationException) {
-         fireContextAborted(new JavaContextEvent(this));
+         fireContextAborted(new JavaContextEvent(this, communicationException));
          throw communicationException;
       }
    }
@@ -282,7 +282,7 @@ public class PooledJavaContext extends JavaContext {
          return super.createSubcontext(name);
       }
       catch (CommunicationException communicationException) {
-         fireContextAborted(new JavaContextEvent(this));
+         fireContextAborted(new JavaContextEvent(this, communicationException));
          throw communicationException;
       }
    }
@@ -294,7 +294,7 @@ public class PooledJavaContext extends JavaContext {
          return super.lookupLink(name);
       }
       catch (CommunicationException communicationException) {
-         fireContextAborted(new JavaContextEvent(this));
+         fireContextAborted(new JavaContextEvent(this, communicationException));
          throw communicationException;
       }
    }
@@ -306,7 +306,7 @@ public class PooledJavaContext extends JavaContext {
          return super.lookupLink(name);
       }
       catch (CommunicationException communicationException) {
-         fireContextAborted(new JavaContextEvent(this));
+         fireContextAborted(new JavaContextEvent(this, communicationException));
          throw communicationException;
       }
    }
@@ -318,7 +318,7 @@ public class PooledJavaContext extends JavaContext {
          return super.getNameParser(name);
       }
       catch (CommunicationException communicationException) {
-         fireContextAborted(new JavaContextEvent(this));
+         fireContextAborted(new JavaContextEvent(this, communicationException));
          throw communicationException;
       }
    }
@@ -330,7 +330,7 @@ public class PooledJavaContext extends JavaContext {
          return super.getNameParser(name);
       }
       catch (CommunicationException communicationException) {
-         fireContextAborted(new JavaContextEvent(this));
+         fireContextAborted(new JavaContextEvent(this, communicationException));
          throw communicationException;
       }
    }
@@ -342,7 +342,7 @@ public class PooledJavaContext extends JavaContext {
          return super.composeName(name, prefix);
       }
       catch (CommunicationException communicationException) {
-         fireContextAborted(new JavaContextEvent(this));
+         fireContextAborted(new JavaContextEvent(this, communicationException));
          throw communicationException;
       }
    }
@@ -354,7 +354,7 @@ public class PooledJavaContext extends JavaContext {
          return super.composeName(name, prefix);
       }
       catch (CommunicationException communicationException) {
-         fireContextAborted(new JavaContextEvent(this));
+         fireContextAborted(new JavaContextEvent(this, communicationException));
          throw communicationException;
       }
    }
@@ -383,7 +383,7 @@ public class PooledJavaContext extends JavaContext {
          return super.getNameInNamespace();
       }
       catch (CommunicationException communicationException) {
-         fireContextAborted(new JavaContextEvent(this));
+         fireContextAborted(new JavaContextEvent(this, communicationException));
          throw communicationException;
       }
    }
@@ -395,7 +395,7 @@ public class PooledJavaContext extends JavaContext {
          return super.getAttributes(name);
       }
       catch (CommunicationException communicationException) {
-         fireContextAborted(new JavaContextEvent(this));
+         fireContextAborted(new JavaContextEvent(this, communicationException));
          throw communicationException;
       }
    }
@@ -407,7 +407,7 @@ public class PooledJavaContext extends JavaContext {
          return super.getAttributes(name);
       }
       catch (CommunicationException communicationException) {
-         fireContextAborted(new JavaContextEvent(this));
+         fireContextAborted(new JavaContextEvent(this, communicationException));
          throw communicationException;
       }
    }
@@ -419,7 +419,7 @@ public class PooledJavaContext extends JavaContext {
          return super.getAttributes(name, attrIds);
       }
       catch (CommunicationException communicationException) {
-         fireContextAborted(new JavaContextEvent(this));
+         fireContextAborted(new JavaContextEvent(this, communicationException));
          throw communicationException;
       }
    }
@@ -431,7 +431,7 @@ public class PooledJavaContext extends JavaContext {
          return super.getAttributes(name, attrIds);
       }
       catch (CommunicationException communicationException) {
-         fireContextAborted(new JavaContextEvent(this));
+         fireContextAborted(new JavaContextEvent(this, communicationException));
          throw communicationException;
       }
    }
@@ -443,7 +443,7 @@ public class PooledJavaContext extends JavaContext {
          super.modifyAttributes(name, mod_op, attrs);
       }
       catch (CommunicationException communicationException) {
-         fireContextAborted(new JavaContextEvent(this));
+         fireContextAborted(new JavaContextEvent(this, communicationException));
          throw communicationException;
       }
    }
@@ -455,7 +455,7 @@ public class PooledJavaContext extends JavaContext {
          super.modifyAttributes(name, mod_op, attrs);
       }
       catch (CommunicationException communicationException) {
-         fireContextAborted(new JavaContextEvent(this));
+         fireContextAborted(new JavaContextEvent(this, communicationException));
          throw communicationException;
       }
    }
@@ -467,7 +467,7 @@ public class PooledJavaContext extends JavaContext {
          super.modifyAttributes(name, mods);
       }
       catch (CommunicationException communicationException) {
-         fireContextAborted(new JavaContextEvent(this));
+         fireContextAborted(new JavaContextEvent(this, communicationException));
          throw communicationException;
       }
    }
@@ -479,7 +479,7 @@ public class PooledJavaContext extends JavaContext {
          super.modifyAttributes(name, mods);
       }
       catch (CommunicationException communicationException) {
-         fireContextAborted(new JavaContextEvent(this));
+         fireContextAborted(new JavaContextEvent(this, communicationException));
          throw communicationException;
       }
    }
@@ -491,7 +491,7 @@ public class PooledJavaContext extends JavaContext {
          super.bind(name, obj, attrs);
       }
       catch (CommunicationException communicationException) {
-         fireContextAborted(new JavaContextEvent(this));
+         fireContextAborted(new JavaContextEvent(this, communicationException));
          throw communicationException;
       }
    }
@@ -503,7 +503,7 @@ public class PooledJavaContext extends JavaContext {
          super.bind(name, obj, attrs);
       }
       catch (CommunicationException communicationException) {
-         fireContextAborted(new JavaContextEvent(this));
+         fireContextAborted(new JavaContextEvent(this, communicationException));
          throw communicationException;
       }
    }
@@ -515,7 +515,7 @@ public class PooledJavaContext extends JavaContext {
          super.rebind(name, obj, attrs);
       }
       catch (CommunicationException communicationException) {
-         fireContextAborted(new JavaContextEvent(this));
+         fireContextAborted(new JavaContextEvent(this, communicationException));
          throw communicationException;
       }
    }
@@ -527,7 +527,7 @@ public class PooledJavaContext extends JavaContext {
          super.rebind(name, obj, attrs);
       }
       catch (CommunicationException communicationException) {
-         fireContextAborted(new JavaContextEvent(this));
+         fireContextAborted(new JavaContextEvent(this, communicationException));
          throw communicationException;
       }
    }
@@ -539,7 +539,7 @@ public class PooledJavaContext extends JavaContext {
          return super.createSubcontext(name, attrs);
       }
       catch (CommunicationException communicationException) {
-         fireContextAborted(new JavaContextEvent(this));
+         fireContextAborted(new JavaContextEvent(this, communicationException));
          throw communicationException;
       }
    }
@@ -551,7 +551,7 @@ public class PooledJavaContext extends JavaContext {
          return super.createSubcontext(name, attrs);
       }
       catch (CommunicationException communicationException) {
-         fireContextAborted(new JavaContextEvent(this));
+         fireContextAborted(new JavaContextEvent(this, communicationException));
          throw communicationException;
       }
    }
@@ -563,7 +563,7 @@ public class PooledJavaContext extends JavaContext {
          return super.getSchema(name);
       }
       catch (CommunicationException communicationException) {
-         fireContextAborted(new JavaContextEvent(this));
+         fireContextAborted(new JavaContextEvent(this, communicationException));
          throw communicationException;
       }
    }
@@ -575,7 +575,7 @@ public class PooledJavaContext extends JavaContext {
          return super.getSchema(name);
       }
       catch (CommunicationException communicationException) {
-         fireContextAborted(new JavaContextEvent(this));
+         fireContextAborted(new JavaContextEvent(this, communicationException));
          throw communicationException;
       }
    }
@@ -587,7 +587,7 @@ public class PooledJavaContext extends JavaContext {
          return super.getSchemaClassDefinition(name);
       }
       catch (CommunicationException communicationException) {
-         fireContextAborted(new JavaContextEvent(this));
+         fireContextAborted(new JavaContextEvent(this, communicationException));
          throw communicationException;
       }
    }
@@ -599,7 +599,7 @@ public class PooledJavaContext extends JavaContext {
          return super.getSchemaClassDefinition(name);
       }
       catch (CommunicationException communicationException) {
-         fireContextAborted(new JavaContextEvent(this));
+         fireContextAborted(new JavaContextEvent(this, communicationException));
          throw communicationException;
       }
    }
@@ -611,7 +611,7 @@ public class PooledJavaContext extends JavaContext {
          return super.search(name, matchingAttributes, attributesToReturn);
       }
       catch (CommunicationException communicationException) {
-         fireContextAborted(new JavaContextEvent(this));
+         fireContextAborted(new JavaContextEvent(this, communicationException));
          throw communicationException;
       }
    }
@@ -623,7 +623,7 @@ public class PooledJavaContext extends JavaContext {
          return super.search(name, matchingAttributes, attributesToReturn);
       }
       catch (CommunicationException communicationException) {
-         fireContextAborted(new JavaContextEvent(this));
+         fireContextAborted(new JavaContextEvent(this, communicationException));
          throw communicationException;
       }
    }
@@ -635,7 +635,7 @@ public class PooledJavaContext extends JavaContext {
          return super.search(name, matchingAttributes);
       }
       catch (CommunicationException communicationException) {
-         fireContextAborted(new JavaContextEvent(this));
+         fireContextAborted(new JavaContextEvent(this, communicationException));
          throw communicationException;
       }
    }
@@ -647,7 +647,7 @@ public class PooledJavaContext extends JavaContext {
          return super.search(name, matchingAttributes);
       }
       catch (CommunicationException communicationException) {
-         fireContextAborted(new JavaContextEvent(this));
+         fireContextAborted(new JavaContextEvent(this, communicationException));
          throw communicationException;
       }
    }
@@ -659,7 +659,7 @@ public class PooledJavaContext extends JavaContext {
          return super.search(name, filter, cons);
       }
       catch (CommunicationException communicationException) {
-         fireContextAborted(new JavaContextEvent(this));
+         fireContextAborted(new JavaContextEvent(this, communicationException));
          throw communicationException;
       }
    }
@@ -671,7 +671,7 @@ public class PooledJavaContext extends JavaContext {
          return super.search(name, filter, cons);
       }
       catch (CommunicationException communicationException) {
-         fireContextAborted(new JavaContextEvent(this));
+         fireContextAborted(new JavaContextEvent(this, communicationException));
          throw communicationException;
       }
    }
@@ -683,7 +683,7 @@ public class PooledJavaContext extends JavaContext {
          return super.search(name, filterExpr, filterArgs, cons);
       }
       catch (CommunicationException communicationException) {
-         fireContextAborted(new JavaContextEvent(this));
+         fireContextAborted(new JavaContextEvent(this, communicationException));
          throw communicationException;
       }
    }
@@ -695,7 +695,7 @@ public class PooledJavaContext extends JavaContext {
          return super.search(name, filterExpr, filterArgs, cons);
       }
       catch (CommunicationException communicationException) {
-         fireContextAborted(new JavaContextEvent(this));
+         fireContextAborted(new JavaContextEvent(this, communicationException));
          throw communicationException;
       }
    }

@@ -34,7 +34,7 @@ import java.lang.reflect.UndeclaredThrowableException;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
-import java.util.LinkedList;
+import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.atomic.AtomicBoolean;
 import javax.sql.ConnectionEvent;
 import javax.sql.ConnectionEventListener;
@@ -49,8 +49,8 @@ public class DriverManagerPooledConnection implements PooledConnection, Invocati
    private DataSource dataSource;
    private Connection actualConnection;
    private Connection proxyConnection;
-   private LinkedList<ConnectionEventListener> connectionEventListenerList;
-   private LinkedList<StatementEventListener> statementEventListenerList;
+   private ConcurrentLinkedQueue<ConnectionEventListener> connectionEventListenerQueue;
+   private ConcurrentLinkedQueue<StatementEventListener> statementEventListenerQueue;
    private AtomicBoolean closed = new AtomicBoolean(false);
    private long creationMilliseconds;
 
@@ -80,8 +80,8 @@ public class DriverManagerPooledConnection implements PooledConnection, Invocati
 
       proxyConnection = (Connection)Proxy.newProxyInstance(DriverManagerDataSource.class.getClassLoader(), new Class[] {Connection.class}, this);
 
-      connectionEventListenerList = new LinkedList<ConnectionEventListener>();
-      statementEventListenerList = new LinkedList<StatementEventListener>();
+      connectionEventListenerQueue = new ConcurrentLinkedQueue<ConnectionEventListener>();
+      statementEventListenerQueue = new ConcurrentLinkedQueue<StatementEventListener>();
 
       if (maxStatements == 0) {
          statementCache = null;
@@ -98,7 +98,7 @@ public class DriverManagerPooledConnection implements PooledConnection, Invocati
 
          ConnectionEvent event = new ConnectionEvent(this);
 
-         for (ConnectionEventListener listener : connectionEventListenerList) {
+         for (ConnectionEventListener listener : connectionEventListenerQueue) {
             listener.connectionClosed(event);
          }
 
@@ -132,7 +132,7 @@ public class DriverManagerPooledConnection implements PooledConnection, Invocati
 
                ConnectionEvent event = new ConnectionEvent(this, (SQLException)closestCause);
 
-               for (ConnectionEventListener listener : connectionEventListenerList) {
+               for (ConnectionEventListener listener : connectionEventListenerQueue) {
                   listener.connectionErrorOccurred(event);
                }
             }
@@ -184,26 +184,26 @@ public class DriverManagerPooledConnection implements PooledConnection, Invocati
 
    public void addConnectionEventListener (ConnectionEventListener listener) {
 
-      connectionEventListenerList.add(listener);
+      connectionEventListenerQueue.add(listener);
    }
 
    public void removeConnectionEventListener (ConnectionEventListener listener) {
 
-      connectionEventListenerList.remove(listener);
+      connectionEventListenerQueue.remove(listener);
    }
 
    protected Iterable<StatementEventListener> getStatementEventListeners () {
 
-      return statementEventListenerList;
+      return statementEventListenerQueue;
    }
 
    public void addStatementEventListener (StatementEventListener listener) {
 
-      statementEventListenerList.add(listener);
+      statementEventListenerQueue.add(listener);
    }
 
    public void removeStatementEventListener (StatementEventListener listener) {
 
-      statementEventListenerList.remove(listener);
+      statementEventListenerQueue.remove(listener);
    }
 }

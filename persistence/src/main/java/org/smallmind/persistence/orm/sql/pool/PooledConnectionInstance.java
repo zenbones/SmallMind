@@ -31,11 +31,11 @@ import java.sql.SQLException;
 import javax.sql.ConnectionEvent;
 import javax.sql.ConnectionEventListener;
 import javax.sql.PooledConnection;
-import org.smallmind.quorum.pool.ConnectionInstance;
+import org.smallmind.quorum.pool.AbstractConnectionInstance;
 import org.smallmind.quorum.pool.ConnectionPool;
 import org.smallmind.quorum.pool.ConnectionPoolManager;
 
-public class PooledConnectionInstance implements ConnectionInstance, ConnectionEventListener {
+public class PooledConnectionInstance extends AbstractConnectionInstance implements ConnectionEventListener {
 
    private ConnectionPool connectionPool;
    private PooledConnection pooledConnection;
@@ -49,6 +49,8 @@ public class PooledConnectionInstance implements ConnectionInstance, ConnectionE
 
    public PooledConnectionInstance (ConnectionPool connectionPool, PooledConnection pooledConnection, String validationQuery)
       throws SQLException {
+
+      super();
 
       this.connectionPool = connectionPool;
       this.pooledConnection = pooledConnection;
@@ -100,6 +102,7 @@ public class PooledConnectionInstance implements ConnectionInstance, ConnectionE
       }
       finally {
          if (reportedException != null) {
+            fireConnectionErrorOccurred(reportedException);
             ConnectionPoolManager.logError(reportedException);
          }
       }
