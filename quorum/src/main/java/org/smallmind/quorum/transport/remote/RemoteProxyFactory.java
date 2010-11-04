@@ -35,7 +35,7 @@ import javax.rmi.PortableRemoteObject;
 
 public class RemoteProxyFactory {
 
-   public static Proxy generateRemoteProxy (Class endpointInterface, String hostName, String registryName)
+   public static <C> C generateRemoteProxy (Class<C> endpointInterface, String hostName, String registryName)
       throws NoSuchMethodException, NamingException, RemoteException {
 
       RemoteTarget remoteTarget;
@@ -48,6 +48,6 @@ public class RemoteProxyFactory {
       rmiContext.close();
       initContext.close();
 
-      return (Proxy)Proxy.newProxyInstance(RemoteInvocationHandler.class.getClassLoader(), new Class[] {endpointInterface}, new RemoteInvocationHandler(endpointInterface, remoteTarget));
+      return endpointInterface.cast(Proxy.newProxyInstance(RemoteInvocationHandler.class.getClassLoader(), new Class[] {endpointInterface}, new RemoteInvocationHandler(endpointInterface, remoteTarget)));
    }
 }

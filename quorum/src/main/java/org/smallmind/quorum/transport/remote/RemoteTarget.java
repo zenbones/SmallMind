@@ -33,5 +33,4 @@ public interface RemoteTarget extends Remote {
 
    public abstract Object remoteInvocation (InvocationSignal invocationSignal)
       throws Exception;
-
 }

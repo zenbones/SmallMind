@@ -26,7 +26,14 @@
  */
 package org.smallmind.quorum.transport.remote;
 
-public interface RemoteEndpoint {
+import java.net.MalformedURLException;
+import java.rmi.RemoteException;
 
-   public abstract Class[] getProxyInterfaces ();
+public class RemoteEndpointBinder {
+
+   public static void bind (RemoteEndpoint remoteEndpoint, String registryName)
+      throws NoSuchMethodException, MalformedURLException, RemoteException {
+
+      new RemoteTargetImpl(remoteEndpoint, registryName);
+   }
 }

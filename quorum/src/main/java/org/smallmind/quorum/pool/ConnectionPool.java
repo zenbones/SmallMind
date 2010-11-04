@@ -35,8 +35,11 @@ import org.smallmind.quorum.pool.event.ConnectionInstanceEventListener;
 import org.smallmind.quorum.pool.event.ConnectionPoolEventListener;
 import org.smallmind.quorum.pool.event.ErrorReportingConnectionPoolEvent;
 import org.smallmind.quorum.pool.event.LeaseTimeReportingConnectionPoolEvent;
+import org.smallmind.quorum.transport.remote.RemoteEndpoint;
 
-public class ConnectionPool<C> implements ConnectionInstanceEventListener {
+public class ConnectionPool<C> implements ConnectionPoolSurface, ConnectionInstanceEventListener, RemoteEndpoint {
+
+   private static final Class[] REMOTE_INTERFACES = new Class[] {ConnectionPoolSurface.class};
 
    private ConnectionInstanceFactory<C> connectionFactory;
    private ConcurrentLinkedQueue<ConnectionPin<C>> freeConnectionPinQueue;
@@ -70,6 +73,11 @@ public class ConnectionPool<C> implements ConnectionInstanceEventListener {
       connectionPoolEventListenerQueue = new ConcurrentLinkedQueue<ConnectionPoolEventListener>();
 
       ConnectionPoolManager.register(this);
+   }
+
+   public Class[] getProxyInterfaces () {
+
+      return REMOTE_INTERFACES;
    }
 
    public synchronized void startup ()

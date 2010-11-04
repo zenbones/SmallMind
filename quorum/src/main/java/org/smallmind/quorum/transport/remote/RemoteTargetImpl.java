@@ -40,8 +40,8 @@ public class RemoteTargetImpl extends UnicastRemoteObject implements RemoteTarge
    public RemoteTargetImpl (RemoteEndpoint remoteEndpoint, String registryName)
       throws NoSuchMethodException, MalformedURLException, RemoteException {
 
-      Naming.rebind(registryName, this);
       methodInvoker = new MethodInvoker(remoteEndpoint, remoteEndpoint.getProxyInterfaces());
+      Naming.rebind(registryName, this);
    }
 
    public Object remoteInvocation (InvocationSignal invocationSignal)
