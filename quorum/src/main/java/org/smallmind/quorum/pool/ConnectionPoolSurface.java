@@ -92,8 +92,4 @@ public interface ConnectionPoolSurface {
    public abstract int getFreeSize ();
 
    public abstract int getProcessingSize ();
-
-   public abstract void addConnectionPoolEventListener (ConnectionPoolEventListener listener);
-
-   public abstract void removeConnectionPoolEventListener (ConnectionPoolEventListener listener);
 }

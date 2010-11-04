@@ -35,11 +35,12 @@ import org.smallmind.quorum.pool.event.ConnectionInstanceEventListener;
 import org.smallmind.quorum.pool.event.ConnectionPoolEventListener;
 import org.smallmind.quorum.pool.event.ErrorReportingConnectionPoolEvent;
 import org.smallmind.quorum.pool.event.LeaseTimeReportingConnectionPoolEvent;
+import org.smallmind.quorum.pool.remote.RemoteConnectionPoolSurface;
 import org.smallmind.quorum.transport.remote.RemoteEndpoint;
 
-public class ConnectionPool<C> implements ConnectionPoolSurface, ConnectionInstanceEventListener, RemoteEndpoint {
+public class ConnectionPool<C> implements ConnectionInstanceEventListener, RemoteConnectionPoolSurface, RemoteEndpoint {
 
-   private static final Class[] REMOTE_INTERFACES = new Class[] {ConnectionPoolSurface.class};
+   private static final Class[] REMOTE_INTERFACES = new Class[] {RemoteConnectionPoolSurface.class};
 
    private ConnectionInstanceFactory<C> connectionFactory;
    private ConcurrentLinkedQueue<ConnectionPin<C>> freeConnectionPinQueue;

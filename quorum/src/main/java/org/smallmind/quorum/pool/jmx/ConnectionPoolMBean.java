@@ -34,6 +34,7 @@ import org.smallmind.quorum.pool.ConnectionPoolException;
 import org.smallmind.quorum.pool.ConnectionPoolSurface;
 import org.smallmind.quorum.pool.PoolMode;
 import org.smallmind.quorum.pool.event.ConnectionPoolEventListener;
+import org.smallmind.quorum.pool.remote.RemoteConnectionPoolSurface;
 import org.smallmind.quorum.transport.remote.RemoteEndpointBinder;
 import org.smallmind.quorum.transport.remote.RemoteProxyFactory;
 
@@ -45,7 +46,7 @@ public class ConnectionPoolMBean implements ConnectionPoolMXBean {
       throws NoSuchMethodException, MalformedURLException, RemoteException, NamingException {
 
       RemoteEndpointBinder.bind(connectionPool, registryName);
-      connectionPoolSurface = RemoteProxyFactory.generateRemoteProxy(ConnectionPoolSurface.class, hostName, registryName);
+      connectionPoolSurface = RemoteProxyFactory.generateRemoteProxy(RemoteConnectionPoolSurface.class, hostName, registryName);
    }
 
    public String getPoolName () {
@@ -188,13 +189,5 @@ public class ConnectionPoolMBean implements ConnectionPoolMXBean {
    public int getProcessingSize () {
 
       return connectionPoolSurface.getProcessingSize();
-   }
-
-   public void addConnectionPoolEventListener (ConnectionPoolEventListener listener) {
-      //To change body of implemented methods use File | Settings | File Templates.
-   }
-
-   public void removeConnectionPoolEventListener (ConnectionPoolEventListener listener) {
-      //To change body of implemented methods use File | Settings | File Templates.
    }
 }
