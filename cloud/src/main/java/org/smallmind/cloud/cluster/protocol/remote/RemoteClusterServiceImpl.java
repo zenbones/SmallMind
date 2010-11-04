@@ -36,8 +36,8 @@ import org.smallmind.cloud.cluster.ClusterMember;
 import org.smallmind.cloud.cluster.ClusterService;
 import org.smallmind.cloud.cluster.broadcast.ServiceClusterBroadcast;
 import org.smallmind.cloud.multicast.EventMessageException;
-import org.smallmind.cloud.transport.InvocationSignal;
-import org.smallmind.cloud.transport.MethodInvoker;
+import org.smallmind.quorum.transport.InvocationSignal;
+import org.smallmind.quorum.transport.MethodInvoker;
 
 public class RemoteClusterServiceImpl extends UnicastRemoteObject implements RemoteClusterService, ClusterService<RemoteClusterProtocolDetails> {
 

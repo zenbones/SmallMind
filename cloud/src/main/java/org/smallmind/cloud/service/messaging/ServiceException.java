@@ -24,33 +24,29 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.cloud.transport.messaging.service;
+package org.smallmind.cloud.service.messaging;
 
-public class ServiceEndpoint {
+import org.smallmind.nutsnbolts.lang.FormattedException;
 
-   private Object service;
-   private Class serviceInterface;
-   private String serviceSelector;
+public class ServiceException extends FormattedException {
 
-   public ServiceEndpoint (Object service, Class serviceInterface, String serviceSelector) {
+   public ServiceException () {
 
-      this.service = service;
-      this.serviceInterface = serviceInterface;
-      this.serviceSelector = serviceSelector;
+      super();
    }
 
-   public Object getService () {
+   public ServiceException (String message, Object... args) {
 
-      return service;
+      super(message, args);
    }
 
-   public Class getServiceInterface () {
+   public ServiceException (Throwable throwable, String message, Object... args) {
 
-      return serviceInterface;
+      super(throwable, message, args);
    }
 
-   public String getServiceSelector () {
+   public ServiceException (Throwable throwable) {
 
-      return serviceSelector;
+      super(throwable);
    }
 }

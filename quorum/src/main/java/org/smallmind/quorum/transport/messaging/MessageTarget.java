@@ -24,41 +24,15 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.cloud.transport;
+package org.smallmind.quorum.transport.messaging;
 
-import java.io.Serializable;
-import org.smallmind.nutsnbolts.context.Context;
+import javax.jms.Message;
+import javax.jms.Session;
 
-public class InvocationSignal implements Serializable {
+public interface MessageTarget {
 
-   private Context[] contexts;
-   private FauxMethod fauxMethod;
-   private Object[] args;
+   public abstract Message handleMessage (Session session, Message message)
+      throws Exception;
 
-   public InvocationSignal (Context[] contexts, FauxMethod fauxMethod, Object[] args) {
-
-      this.contexts = contexts;
-      this.fauxMethod = fauxMethod;
-      this.args = args;
-   }
-
-   public boolean containsContexts () {
-
-      return (contexts != null) && (contexts.length > 0);
-   }
-
-   public Context[] getContexts () {
-
-      return contexts;
-   }
-
-   public FauxMethod getFauxMethod () {
-
-      return fauxMethod;
-   }
-
-   public Object[] getArgs () {
-
-      return args;
-   }
+   public abstract void logError (Throwable throwable);
 }

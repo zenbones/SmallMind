@@ -24,7 +24,7 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.cloud.transport.messaging;
+package org.smallmind.quorum.transport.messaging;
 
 import org.smallmind.quorum.pool.ConnectionPool;
 

@@ -12,6 +12,12 @@
    <packaging>jar</packaging>
    <dependencies>
       <dependency>
+         <groupId>javax.jms</groupId>
+         <artifactId>jms</artifactId>
+         <scope>compile</scope>
+         <optional>true</optional>
+      </dependency>
+      <dependency>
          <groupId>org.smallmind</groupId>
          <artifactId>smallmind-nutsnbolts</artifactId>
          <scope>compile</scope>

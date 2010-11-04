@@ -27,7 +27,7 @@
 package org.smallmind.cloud.cluster.protocol.remote;
 
 import java.rmi.Remote;
-import org.smallmind.cloud.transport.InvocationSignal;
+import org.smallmind.quorum.transport.InvocationSignal;
 
 public interface RemoteClusterService extends Remote {
 

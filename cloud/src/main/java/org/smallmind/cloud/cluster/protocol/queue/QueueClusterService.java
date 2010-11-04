@@ -33,8 +33,8 @@ import org.smallmind.cloud.cluster.ClusterMember;
 import org.smallmind.cloud.cluster.ClusterService;
 import org.smallmind.cloud.cluster.broadcast.ServiceClusterBroadcast;
 import org.smallmind.cloud.multicast.EventMessageException;
-import org.smallmind.cloud.transport.messaging.MessageTarget;
-import org.smallmind.cloud.transport.messaging.MessagingReceiver;
+import org.smallmind.quorum.transport.messaging.MessageTarget;
+import org.smallmind.quorum.transport.messaging.MessagingReceiver;
 
 public class QueueClusterService implements ClusterService<QueueClusterProtocolDetails> {
 

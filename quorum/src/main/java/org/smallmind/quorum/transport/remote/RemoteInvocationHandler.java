@@ -24,25 +24,31 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.cloud.transport.messaging.service;
+package org.smallmind.quorum.transport.remote;
 
-import org.smallmind.cloud.transport.messaging.InvocationMessageTarget;
-import org.smallmind.scribe.pen.LoggerManager;
+import java.io.Serializable;
+import java.lang.reflect.InvocationHandler;
+import java.lang.reflect.Method;
+import javax.naming.NamingException;
+import org.smallmind.quorum.transport.FauxMethod;
+import org.smallmind.quorum.transport.InvocationSignal;
+import org.smallmind.nutsnbolts.context.ContextFactory;
 
-public class ServiceTarget extends InvocationMessageTarget {
+public class RemoteInvocationHandler implements Serializable, InvocationHandler {
 
-   Class serviceInterface;
+   private Class endpointInterface;
+   private RemoteTarget remoteTarget;
 
-   public ServiceTarget (ServiceEndpoint serviceEndpoint)
-      throws NoSuchMethodException {
+   public RemoteInvocationHandler (Class endpointInterface, RemoteTarget remoteTarget)
+      throws NamingException {
 
-      super(serviceEndpoint.getService(), serviceEndpoint.getServiceInterface());
-
-      serviceInterface = serviceEndpoint.getServiceInterface();
+      this.endpointInterface = endpointInterface;
+      this.remoteTarget = remoteTarget;
    }
 
-   public void logError (Throwable throwable) {
+   public Object invoke (Object proxy, Method method, Object[] args)
+      throws Throwable {
 
-      LoggerManager.getLogger(serviceInterface).error(throwable);
+      return remoteTarget.remoteInvocation(new InvocationSignal(ContextFactory.getExpectedContexts(endpointInterface), new FauxMethod(method), args));
    }
 }

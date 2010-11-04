@@ -24,38 +24,25 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.cloud.transport.messaging;
+package org.smallmind.cloud.service.messaging;
 
-import java.lang.reflect.InvocationHandler;
-import java.lang.reflect.Method;
-import org.smallmind.cloud.transport.FauxMethod;
-import org.smallmind.cloud.transport.InvocationSignal;
-import org.smallmind.nutsnbolts.context.ContextFactory;
+import org.smallmind.quorum.transport.messaging.InvocationMessageTarget;
+import org.smallmind.scribe.pen.LoggerManager;
 
-public class MessagingInvocationHandler implements InvocationHandler {
+public class ServiceTarget extends InvocationMessageTarget {
 
-   private MessagingTransmitter messagingTransmitter;
-   private Class invocableInterface;
+   Class serviceInterface;
 
-   public MessagingInvocationHandler (MessagingTransmitter messagingTransmitter, Class invocableInterface) {
+   public ServiceTarget (ServiceEndpoint serviceEndpoint)
+      throws NoSuchMethodException {
 
-      this.messagingTransmitter = messagingTransmitter;
-      this.invocableInterface = invocableInterface;
+      super(serviceEndpoint.getService(), serviceEndpoint.getServiceInterface());
+
+      serviceInterface = serviceEndpoint.getServiceInterface();
    }
 
-   public Object invoke (Object proxy, Method method, Object[] args)
-      throws Throwable {
+   public void logError (Throwable throwable) {
 
-      MessageSender messageSender;
-
-      messageSender = messagingTransmitter.borrowMessageSender();
-
-      try {
-         messageSender.sendMessage(messageSender.createObjectMessage(new InvocationSignal(ContextFactory.getExpectedContexts(invocableInterface), new FauxMethod(method), args)));
-         return messageSender.getResult();
-      }
-      finally {
-         messagingTransmitter.returnMessageSender(messageSender);
-      }
+      LoggerManager.getLogger(serviceInterface).error(throwable);
    }
 }

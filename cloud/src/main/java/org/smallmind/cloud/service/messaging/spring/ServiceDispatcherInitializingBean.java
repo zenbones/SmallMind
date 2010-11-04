@@ -24,32 +24,37 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.cloud.transport.messaging.service.spring;
+package org.smallmind.cloud.service.messaging.spring;
 
-import java.util.LinkedList;
+import java.util.HashMap;
 import java.util.List;
 import javax.jms.JMSException;
 import javax.naming.NamingException;
-import org.smallmind.cloud.transport.messaging.MessagingConnectionDetails;
-import org.smallmind.cloud.transport.messaging.MessagingReceiver;
-import org.smallmind.cloud.transport.messaging.service.ServiceEndpoint;
-import org.smallmind.cloud.transport.messaging.service.ServiceTarget;
+import org.smallmind.quorum.transport.messaging.MessagingConnectionDetails;
+import org.smallmind.quorum.transport.messaging.MessagingTransmitter;
 import org.smallmind.quorum.pool.ConnectionPool;
 import org.smallmind.quorum.pool.ConnectionPoolException;
+import org.smallmind.scribe.pen.LoggerManager;
 import org.springframework.beans.factory.DisposableBean;
 import org.springframework.beans.factory.InitializingBean;
 
-public class ServiceNegotiatorInitializingBean implements InitializingBean, DisposableBean {
+public class ServiceDispatcherInitializingBean implements InitializingBean, DisposableBean {
 
-   private final LinkedList<MessagingReceiver> messagingReceiverList = new LinkedList<MessagingReceiver>();
+   private static final HashMap<String, MessagingTransmitter> MESSAGING_TRANSMITTER_MAP = new HashMap<String, MessagingTransmitter>();
 
    private ConnectionPool javaEnvironmentPool;
-   private List<ServiceEndpoint> serviceEndpointList;
+   private List<String> serviceSelectorList;
    private String jmsUser;
    private String jmsCredentials;
    private String destinationEnvPath;
    private String factoryEnvPath;
    private boolean closed = false;
+   private int transmissionPoolSize;
+
+   public static MessagingTransmitter getMessagingTransmitter (String serviceSelector) {
+
+      return MESSAGING_TRANSMITTER_MAP.get(serviceSelector);
+   }
 
    public void setJmsUser (String jmsUser) {
 
@@ -76,9 +81,14 @@ public class ServiceNegotiatorInitializingBean implements InitializingBean, Disp
       this.factoryEnvPath = factoryEnvPath;
    }
 
-   public void setServiceEndpointList (List<ServiceEndpoint> serviceEndpointList) {
+   public void setTransmissionPoolSize (int transmissionPoolSize) {
 
-      this.serviceEndpointList = serviceEndpointList;
+      this.transmissionPoolSize = transmissionPoolSize;
+   }
+
+   public void setServiceSelectorList (List<String> serviceSelectorList) {
+
+      this.serviceSelectorList = serviceSelectorList;
    }
 
    public void afterPropertiesSet ()
@@ -86,9 +96,9 @@ public class ServiceNegotiatorInitializingBean implements InitializingBean, Disp
 
       MessagingConnectionDetails connectionDetails;
 
-      for (ServiceEndpoint serviceEndpoint : serviceEndpointList) {
-         connectionDetails = new MessagingConnectionDetails(javaEnvironmentPool, destinationEnvPath, factoryEnvPath, jmsUser, jmsCredentials, 0, serviceEndpoint.getServiceSelector());
-         messagingReceiverList.add(new MessagingReceiver(new ServiceTarget(serviceEndpoint), connectionDetails));
+      for (String serviceSelector : serviceSelectorList) {
+         connectionDetails = new MessagingConnectionDetails(javaEnvironmentPool, destinationEnvPath, factoryEnvPath, jmsUser, jmsCredentials, transmissionPoolSize, serviceSelector);
+         MESSAGING_TRANSMITTER_MAP.put(serviceSelector, new MessagingTransmitter(connectionDetails));
       }
    }
 
@@ -97,8 +107,13 @@ public class ServiceNegotiatorInitializingBean implements InitializingBean, Disp
       if (!closed) {
          closed = true;
 
-         for (MessagingReceiver messagingReceiver : messagingReceiverList) {
-            messagingReceiver.close();
+         for (MessagingTransmitter messagingTransmitter : MESSAGING_TRANSMITTER_MAP.values()) {
+            try {
+               messagingTransmitter.close();
+            }
+            catch (JMSException jmsException) {
+               LoggerManager.getLogger(ServiceDispatcherInitializingBean.class).error(jmsException);
+            }
          }
       }
    }

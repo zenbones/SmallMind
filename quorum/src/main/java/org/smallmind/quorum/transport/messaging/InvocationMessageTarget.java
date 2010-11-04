@@ -24,14 +24,14 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.cloud.transport.messaging;
+package org.smallmind.quorum.transport.messaging;
 
 import java.io.Serializable;
 import javax.jms.Message;
 import javax.jms.ObjectMessage;
 import javax.jms.Session;
-import org.smallmind.cloud.transport.InvocationSignal;
-import org.smallmind.cloud.transport.MethodInvoker;
+import org.smallmind.quorum.transport.InvocationSignal;
+import org.smallmind.quorum.transport.MethodInvoker;
 
 public abstract class InvocationMessageTarget implements MessageTarget {
 

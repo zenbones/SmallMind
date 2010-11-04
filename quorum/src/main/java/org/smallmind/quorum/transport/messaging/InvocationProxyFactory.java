@@ -24,40 +24,14 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.cloud.transport.messaging.service.spring;
+package org.smallmind.quorum.transport.messaging;
 
-import org.smallmind.cloud.transport.messaging.MessagingTransmitter;
-import org.smallmind.cloud.transport.messaging.service.ServiceException;
-import org.springframework.beans.factory.FactoryBean;
+import java.lang.reflect.Proxy;
 
-public class ServiceDispatcherFactoryBean implements FactoryBean {
+public class InvocationProxyFactory {
 
-   private String serviceSelector;
+   public static Proxy generateProxy (MessagingTransmitter messagingTransmitter, Class invocableInterface) {
 
-   public void setServiceSelector (String serviceSelector) {
-
-      this.serviceSelector = serviceSelector;
-   }
-
-   public Object getObject ()
-      throws ServiceException {
-
-      MessagingTransmitter messagingTransmitter;
-
-      if ((messagingTransmitter = ServiceDispatcherInitializingBean.getMessagingTransmitter(serviceSelector)) == null) {
-         throw new ServiceException("No %s configured for selector(%s)", MessagingTransmitter.class.getSimpleName(), serviceSelector);
-      }
-
-      return messagingTransmitter;
-   }
-
-   public Class getObjectType () {
-
-      return MessagingTransmitter.class;
-   }
-
-   public boolean isSingleton () {
-
-      return true;
+      return (Proxy)Proxy.newProxyInstance(invocableInterface.getClassLoader(), new Class[] {invocableInterface}, new MessagingInvocationHandler(messagingTransmitter, invocableInterface));
    }
 }

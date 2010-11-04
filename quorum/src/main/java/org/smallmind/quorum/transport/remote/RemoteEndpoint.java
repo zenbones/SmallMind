@@ -24,29 +24,10 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.cloud.transport;
+package org.smallmind.quorum.transport.remote;
 
-import org.smallmind.nutsnbolts.lang.FormattedException;
+public interface RemoteEndpoint {
 
-public class MissingInvocationException extends FormattedException {
+   public abstract Class[] getProxyInterfaces ();
 
-   public MissingInvocationException () {
-
-      super();
-   }
-
-   public MissingInvocationException (String message, Object... args) {
-
-      super(message, args);
-   }
-
-   public MissingInvocationException (Throwable throwable, String message, Object... args) {
-
-      super(throwable, message, args);
-   }
-
-   public MissingInvocationException (Throwable throwable) {
-
-      super(throwable);
-   }
 }

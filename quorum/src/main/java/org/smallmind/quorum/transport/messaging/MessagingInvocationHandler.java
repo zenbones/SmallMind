@@ -24,53 +24,38 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.cloud.transport;
+package org.smallmind.quorum.transport.messaging;
 
-import java.io.Serializable;
+import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
-import java.util.Arrays;
+import org.smallmind.quorum.transport.FauxMethod;
+import org.smallmind.quorum.transport.InvocationSignal;
+import org.smallmind.nutsnbolts.context.ContextFactory;
 
-public class FauxMethod implements Serializable {
+public class MessagingInvocationHandler implements InvocationHandler {
 
-   private Class[] signature;
-   private Class returnType;
-   private String name;
+   private MessagingTransmitter messagingTransmitter;
+   private Class invocableInterface;
 
-   public FauxMethod (Method method) {
+   public MessagingInvocationHandler (MessagingTransmitter messagingTransmitter, Class invocableInterface) {
 
-      name = method.getName();
-      returnType = method.getReturnType();
-      signature = method.getParameterTypes();
+      this.messagingTransmitter = messagingTransmitter;
+      this.invocableInterface = invocableInterface;
    }
 
-   public String getName () {
-      return name;
-   }
+   public Object invoke (Object proxy, Method method, Object[] args)
+      throws Throwable {
 
-   public Class getReturnType () {
-      return returnType;
-   }
+      MessageSender messageSender;
 
-   public Class[] getSignature () {
-      return signature;
-   }
+      messageSender = messagingTransmitter.borrowMessageSender();
 
-   public int hashCode () {
-
-      int hashCode;
-
-      hashCode = name.hashCode();
-      hashCode = hashCode ^ returnType.getName().hashCode();
-
-      for (Class parameterType : signature) {
-         hashCode = hashCode ^ parameterType.getName().hashCode();
+      try {
+         messageSender.sendMessage(messageSender.createObjectMessage(new InvocationSignal(ContextFactory.getExpectedContexts(invocableInterface), new FauxMethod(method), args)));
+         return messageSender.getResult();
       }
-
-      return hashCode;
-   }
-
-   public boolean equals (Object obj) {
-
-      return (obj instanceof FauxMethod) && name.equals(((FauxMethod)obj).getName()) && returnType.equals(((FauxMethod)obj).getReturnType()) && Arrays.equals(signature, ((FauxMethod)obj).getSignature());
+      finally {
+         messagingTransmitter.returnMessageSender(messageSender);
+      }
    }
 }

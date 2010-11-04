@@ -24,17 +24,27 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.cloud.transport.messaging.service;
+package org.smallmind.cloud.service.messaging;
 
-import javax.jms.JMSException;
-import org.smallmind.cloud.transport.messaging.InvocationProxyFactory;
-import org.smallmind.cloud.transport.messaging.MessagingTransmitter;
+public class SecurityException extends ServiceException {
 
-public class ServiceHandleFactory {
+   public SecurityException () {
 
-   public static <S> S createServiceHandle (MessagingTransmitter messagingTransmitter, Class<S> serviceInterface)
-      throws JMSException {
+      super();
+   }
 
-      return serviceInterface.cast(InvocationProxyFactory.generateProxy(messagingTransmitter, serviceInterface));
+   public SecurityException (String message, Object... args) {
+
+      super(message, args);
+   }
+
+   public SecurityException (Throwable throwable, String message, Object... args) {
+
+      super(throwable, message, args);
+   }
+
+   public SecurityException (Throwable throwable) {
+
+      super(throwable);
    }
 }

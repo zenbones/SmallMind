@@ -24,29 +24,17 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.cloud.transport.remote;
+package org.smallmind.cloud.service.messaging;
 
-import java.net.MalformedURLException;
-import java.rmi.Naming;
-import java.rmi.RemoteException;
-import java.rmi.server.UnicastRemoteObject;
-import org.smallmind.cloud.transport.InvocationSignal;
-import org.smallmind.cloud.transport.MethodInvoker;
+import javax.jms.JMSException;
+import org.smallmind.quorum.transport.messaging.InvocationProxyFactory;
+import org.smallmind.quorum.transport.messaging.MessagingTransmitter;
 
-public class RemoteTargetImpl extends UnicastRemoteObject implements RemoteTarget {
+public class ServiceHandleFactory {
 
-   private MethodInvoker methodInvoker;
+   public static <S> S createServiceHandle (MessagingTransmitter messagingTransmitter, Class<S> serviceInterface)
+      throws JMSException {
 
-   public RemoteTargetImpl (RemoteEndpoint remoteEndpoint, String registryName)
-      throws NoSuchMethodException, MalformedURLException, RemoteException {
-
-      Naming.rebind(registryName, this);
-      methodInvoker = new MethodInvoker(remoteEndpoint, remoteEndpoint.getProxyInterfaces());
-   }
-
-   public Object remoteInvocation (InvocationSignal invocationSignal)
-      throws Exception {
-
-      return methodInvoker.remoteInvocation(invocationSignal);
+      return serviceInterface.cast(InvocationProxyFactory.generateProxy(messagingTransmitter, serviceInterface));
    }
 }

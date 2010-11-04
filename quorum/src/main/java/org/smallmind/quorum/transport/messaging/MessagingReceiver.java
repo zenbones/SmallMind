@@ -24,7 +24,7 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.cloud.transport.messaging;
+package org.smallmind.quorum.transport.messaging;
 
 import javax.jms.DeliveryMode;
 import javax.jms.JMSException;

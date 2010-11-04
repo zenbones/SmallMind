@@ -45,7 +45,7 @@ public class RemoteClusterManagerBuilder implements ClusterManagerBuilder<Remote
       RemoteClusterManager clusterManager;
 
       if ((clusterManager = managerMap.get(clusterInterface.getClusterName())) == null) {
-         clusterManager = new RemoteClusterManager(clusterHub, clusterInterface);
+         clusterManager = new RemoteClusterManager(clusterInterface);
          managerMap.put(clusterInterface.getClusterName(), clusterManager);
       }
 

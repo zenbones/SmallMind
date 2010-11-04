@@ -28,7 +28,7 @@ package org.smallmind.cloud.cluster.protocol.queue;
 
 import org.smallmind.cloud.cluster.protocol.ClusterProtocol;
 import org.smallmind.cloud.cluster.protocol.ClusterProtocolDetails;
-import org.smallmind.cloud.transport.messaging.MessagingConnectionDetails;
+import org.smallmind.quorum.transport.messaging.MessagingConnectionDetails;
 
 public class QueueClusterProtocolDetails extends ClusterProtocolDetails {
 

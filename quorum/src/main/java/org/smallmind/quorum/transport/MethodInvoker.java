@@ -24,7 +24,7 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.cloud.transport;
+package org.smallmind.quorum.transport;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;

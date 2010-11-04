@@ -30,6 +30,7 @@
          <groupId>javax.jms</groupId>
          <artifactId>jms</artifactId>
          <scope>compile</scope>
+         <optional>true</optional>
       </dependency>
       <dependency>
          <groupId>org.springframework</groupId>

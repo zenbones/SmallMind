@@ -24,14 +24,29 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.cloud.transport.messaging;
+package org.smallmind.quorum.transport;
 
-import java.lang.reflect.Proxy;
+import org.smallmind.nutsnbolts.lang.FormattedException;
 
-public class InvocationProxyFactory {
+public class MissingInvocationException extends FormattedException {
 
-   public static Proxy generateProxy (MessagingTransmitter messagingTransmitter, Class invocableInterface) {
+   public MissingInvocationException () {
 
-      return (Proxy)Proxy.newProxyInstance(invocableInterface.getClassLoader(), new Class[] {invocableInterface}, new MessagingInvocationHandler(messagingTransmitter, invocableInterface));
+      super();
+   }
+
+   public MissingInvocationException (String message, Object... args) {
+
+      super(message, args);
+   }
+
+   public MissingInvocationException (Throwable throwable, String message, Object... args) {
+
+      super(throwable, message, args);
+   }
+
+   public MissingInvocationException (Throwable throwable) {
+
+      super(throwable);
    }
 }

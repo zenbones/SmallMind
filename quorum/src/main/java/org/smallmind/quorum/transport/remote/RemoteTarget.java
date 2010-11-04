@@ -24,31 +24,14 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.cloud.transport.remote;
+package org.smallmind.quorum.transport.remote;
 
-import java.io.Serializable;
-import java.lang.reflect.InvocationHandler;
-import java.lang.reflect.Method;
-import javax.naming.NamingException;
-import org.smallmind.cloud.transport.FauxMethod;
-import org.smallmind.cloud.transport.InvocationSignal;
-import org.smallmind.nutsnbolts.context.ContextFactory;
+import java.rmi.Remote;
+import org.smallmind.quorum.transport.InvocationSignal;
 
-public class RemoteInvocationHandler implements Serializable, InvocationHandler {
+public interface RemoteTarget extends Remote {
 
-   private Class endpointInterface;
-   private RemoteTarget remoteTarget;
+   public abstract Object remoteInvocation (InvocationSignal invocationSignal)
+      throws Exception;
 
-   public RemoteInvocationHandler (Class endpointInterface, RemoteTarget remoteTarget)
-      throws NamingException {
-
-      this.endpointInterface = endpointInterface;
-      this.remoteTarget = remoteTarget;
-   }
-
-   public Object invoke (Object proxy, Method method, Object[] args)
-      throws Throwable {
-
-      return remoteTarget.remoteInvocation(new InvocationSignal(ContextFactory.getExpectedContexts(endpointInterface), new FauxMethod(method), args));
-   }
 }

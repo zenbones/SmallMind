@@ -24,14 +24,30 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.cloud.transport.remote;
+package org.smallmind.quorum.transport.remote;
 
-import java.rmi.Remote;
-import org.smallmind.cloud.transport.InvocationSignal;
+import java.lang.reflect.Proxy;
+import java.rmi.RemoteException;
+import javax.naming.Context;
+import javax.naming.InitialContext;
+import javax.naming.NamingException;
+import javax.rmi.PortableRemoteObject;
 
-public interface RemoteTarget extends Remote {
+public class RemoteProxyFactory {
 
-   public abstract Object remoteInvocation (InvocationSignal invocationSignal)
-      throws Exception;
+   public static Proxy generateRemoteProxy (Class endpointInterface, String hostName, String registryName)
+      throws NoSuchMethodException, NamingException, RemoteException {
 
+      RemoteTarget remoteTarget;
+      InitialContext initContext;
+      Context rmiContext;
+
+      initContext = new InitialContext();
+      rmiContext = (Context)initContext.lookup("rmi://" + hostName);
+      remoteTarget = (RemoteTarget)PortableRemoteObject.narrow(rmiContext.lookup(registryName), RemoteTarget.class);
+      rmiContext.close();
+      initContext.close();
+
+      return (Proxy)Proxy.newProxyInstance(RemoteInvocationHandler.class.getClassLoader(), new Class[] {endpointInterface}, new RemoteInvocationHandler(endpointInterface, remoteTarget));
+   }
 }

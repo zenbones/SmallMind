@@ -29,7 +29,7 @@ package org.smallmind.cloud.cluster.protocol.queue;
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
 import org.smallmind.cloud.cluster.ClusterHandle;
-import org.smallmind.cloud.transport.messaging.MessagingInvocationHandler;
+import org.smallmind.quorum.transport.messaging.MessagingInvocationHandler;
 
 public class QueueClusterHandle implements ClusterHandle, InvocationHandler {
 

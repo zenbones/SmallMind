@@ -40,10 +40,10 @@ import org.smallmind.cloud.cluster.ClusterHub;
 import org.smallmind.cloud.cluster.ClusterInterface;
 import org.smallmind.cloud.cluster.ClusterManagementException;
 import org.smallmind.cloud.cluster.ClusterManager;
-import org.smallmind.cloud.transport.FauxMethod;
-import org.smallmind.cloud.transport.InvocationSignal;
-import org.smallmind.cloud.transport.MissingInvocationException;
 import org.smallmind.nutsnbolts.context.ContextFactory;
+import org.smallmind.quorum.transport.FauxMethod;
+import org.smallmind.quorum.transport.InvocationSignal;
+import org.smallmind.quorum.transport.MissingInvocationException;
 
 public class RemoteClusterManager implements ClusterManager<RemoteClusterProtocolDetails> {
 
@@ -55,11 +55,10 @@ public class RemoteClusterManager implements ClusterManager<RemoteClusterProtoco
    private Proxy clusterProxy;
    private ClusterInterface<RemoteClusterProtocolDetails> clusterInterface;
 
-   protected RemoteClusterManager (ClusterHub clusterHub, ClusterInterface<RemoteClusterProtocolDetails> clusterInterface) {
+   protected RemoteClusterManager (ClusterInterface<RemoteClusterProtocolDetails> clusterInterface) {
 
       RemoteClusterHandle clusterHandle;
 
-      this.clusterHub = clusterHub;
       this.clusterInterface = clusterInterface;
 
       rmiServerMap = new HashMap<ClusterEndpoint, RemoteClusterService>();

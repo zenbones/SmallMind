@@ -34,8 +34,8 @@ import org.smallmind.cloud.cluster.ClusterHub;
 import org.smallmind.cloud.cluster.ClusterInterface;
 import org.smallmind.cloud.cluster.ClusterManagementException;
 import org.smallmind.cloud.cluster.ClusterManager;
-import org.smallmind.cloud.transport.messaging.MessagingInvocationHandler;
-import org.smallmind.cloud.transport.messaging.MessagingTransmitter;
+import org.smallmind.quorum.transport.messaging.MessagingInvocationHandler;
+import org.smallmind.quorum.transport.messaging.MessagingTransmitter;
 
 public class QueueClusterManager implements ClusterManager<QueueClusterProtocolDetails> {
 

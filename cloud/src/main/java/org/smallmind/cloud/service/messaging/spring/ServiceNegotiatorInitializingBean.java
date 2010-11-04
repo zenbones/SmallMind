@@ -24,37 +24,32 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.cloud.transport.messaging.service.spring;
+package org.smallmind.cloud.service.messaging.spring;
 
-import java.util.HashMap;
+import java.util.LinkedList;
 import java.util.List;
 import javax.jms.JMSException;
 import javax.naming.NamingException;
-import org.smallmind.cloud.transport.messaging.MessagingConnectionDetails;
-import org.smallmind.cloud.transport.messaging.MessagingTransmitter;
+import org.smallmind.cloud.service.messaging.ServiceEndpoint;
+import org.smallmind.cloud.service.messaging.ServiceTarget;
 import org.smallmind.quorum.pool.ConnectionPool;
 import org.smallmind.quorum.pool.ConnectionPoolException;
-import org.smallmind.scribe.pen.LoggerManager;
+import org.smallmind.quorum.transport.messaging.MessagingConnectionDetails;
+import org.smallmind.quorum.transport.messaging.MessagingReceiver;
 import org.springframework.beans.factory.DisposableBean;
 import org.springframework.beans.factory.InitializingBean;
 
-public class ServiceDispatcherInitializingBean implements InitializingBean, DisposableBean {
+public class ServiceNegotiatorInitializingBean implements InitializingBean, DisposableBean {
 
-   private static final HashMap<String, MessagingTransmitter> MESSAGING_TRANSMITTER_MAP = new HashMap<String, MessagingTransmitter>();
+   private final LinkedList<MessagingReceiver> messagingReceiverList = new LinkedList<MessagingReceiver>();
 
    private ConnectionPool javaEnvironmentPool;
-   private List<String> serviceSelectorList;
+   private List<ServiceEndpoint> serviceEndpointList;
    private String jmsUser;
    private String jmsCredentials;
    private String destinationEnvPath;
    private String factoryEnvPath;
    private boolean closed = false;
-   private int transmissionPoolSize;
-
-   public static MessagingTransmitter getMessagingTransmitter (String serviceSelector) {
-
-      return MESSAGING_TRANSMITTER_MAP.get(serviceSelector);
-   }
 
    public void setJmsUser (String jmsUser) {
 
@@ -81,14 +76,9 @@ public class ServiceDispatcherInitializingBean implements InitializingBean, Disp
       this.factoryEnvPath = factoryEnvPath;
    }
 
-   public void setTransmissionPoolSize (int transmissionPoolSize) {
+   public void setServiceEndpointList (List<ServiceEndpoint> serviceEndpointList) {
 
-      this.transmissionPoolSize = transmissionPoolSize;
-   }
-
-   public void setServiceSelectorList (List<String> serviceSelectorList) {
-
-      this.serviceSelectorList = serviceSelectorList;
+      this.serviceEndpointList = serviceEndpointList;
    }
 
    public void afterPropertiesSet ()
@@ -96,9 +86,9 @@ public class ServiceDispatcherInitializingBean implements InitializingBean, Disp
 
       MessagingConnectionDetails connectionDetails;
 
-      for (String serviceSelector : serviceSelectorList) {
-         connectionDetails = new MessagingConnectionDetails(javaEnvironmentPool, destinationEnvPath, factoryEnvPath, jmsUser, jmsCredentials, transmissionPoolSize, serviceSelector);
-         MESSAGING_TRANSMITTER_MAP.put(serviceSelector, new MessagingTransmitter(connectionDetails));
+      for (ServiceEndpoint serviceEndpoint : serviceEndpointList) {
+         connectionDetails = new MessagingConnectionDetails(javaEnvironmentPool, destinationEnvPath, factoryEnvPath, jmsUser, jmsCredentials, 0, serviceEndpoint.getServiceSelector());
+         messagingReceiverList.add(new MessagingReceiver(new ServiceTarget(serviceEndpoint), connectionDetails));
       }
    }
 
@@ -107,13 +97,8 @@ public class ServiceDispatcherInitializingBean implements InitializingBean, Disp
       if (!closed) {
          closed = true;
 
-         for (MessagingTransmitter messagingTransmitter : MESSAGING_TRANSMITTER_MAP.values()) {
-            try {
-               messagingTransmitter.close();
-            }
-            catch (JMSException jmsException) {
-               LoggerManager.getLogger(ServiceDispatcherInitializingBean.class).error(jmsException);
-            }
+         for (MessagingReceiver messagingReceiver : messagingReceiverList) {
+            messagingReceiver.close();
          }
       }
    }

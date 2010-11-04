@@ -24,27 +24,40 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.cloud.transport.messaging.service;
+package org.smallmind.cloud.service.messaging.spring;
 
-public class SecurityException extends ServiceException {
+import org.smallmind.cloud.service.messaging.ServiceException;
+import org.smallmind.quorum.transport.messaging.MessagingTransmitter;
+import org.springframework.beans.factory.FactoryBean;
 
-   public SecurityException () {
+public class ServiceDispatcherFactoryBean implements FactoryBean {
 
-      super();
+   private String serviceSelector;
+
+   public void setServiceSelector (String serviceSelector) {
+
+      this.serviceSelector = serviceSelector;
    }
 
-   public SecurityException (String message, Object... args) {
+   public Object getObject ()
+      throws ServiceException {
 
-      super(message, args);
+      MessagingTransmitter messagingTransmitter;
+
+      if ((messagingTransmitter = ServiceDispatcherInitializingBean.getMessagingTransmitter(serviceSelector)) == null) {
+         throw new ServiceException("No %s configured for selector(%s)", MessagingTransmitter.class.getSimpleName(), serviceSelector);
+      }
+
+      return messagingTransmitter;
    }
 
-   public SecurityException (Throwable throwable, String message, Object... args) {
+   public Class getObjectType () {
 
-      super(throwable, message, args);
+      return MessagingTransmitter.class;
    }
 
-   public SecurityException (Throwable throwable) {
+   public boolean isSingleton () {
 
-      super(throwable);
+      return true;
    }
 }
