@@ -26,7 +26,26 @@
  */
 package org.smallmind.quorum.pool.jmx;
 
-import org.smallmind.quorum.pool.ConnectionPoolSurface;
+import java.util.concurrent.atomic.AtomicLong;
+import javax.management.Notification;
 
-public interface ConnectionPoolMXBean extends ConnectionPoolSurface {
+public class ConnectionLeaseTimeNotification extends Notification {
+
+   public static final String TYPE = "LEASE_TIME";
+
+   private static final AtomicLong SEQUNCE_NUMBER = new AtomicLong(0);
+
+   private long leaseTimeNanos;
+
+   public ConnectionLeaseTimeNotification (Object source, long leaseTimeNanos) {
+
+      super(TYPE, source, SEQUNCE_NUMBER.incrementAndGet(), System.currentTimeMillis());
+
+      this.leaseTimeNanos = leaseTimeNanos;
+   }
+
+   public long getLeaseTimeNanos () {
+
+      return leaseTimeNanos;
+   }
 }

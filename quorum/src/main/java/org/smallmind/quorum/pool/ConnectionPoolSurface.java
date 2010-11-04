@@ -26,8 +26,6 @@
  */
 package org.smallmind.quorum.pool;
 
-import org.smallmind.quorum.pool.event.ConnectionPoolEventListener;
-
 public interface ConnectionPoolSurface {
 
    public abstract String getPoolName ();
@@ -72,7 +70,7 @@ public interface ConnectionPoolSurface {
 
    public abstract int getMaxLeaseTimeSeconds ();
 
-   public abstract void setMaxLeaseTimeSeconds (int leaseTimeSeconds);
+   public abstract void setMaxLeaseTimeSeconds (int maxLeaseTimeSeconds);
 
    public abstract int getMaxIdleTimeSeconds ();
 

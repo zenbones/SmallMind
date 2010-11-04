@@ -27,6 +27,8 @@
 package org.smallmind.quorum.transport.remote;
 
 import java.lang.reflect.Proxy;
+import java.net.InetAddress;
+import java.net.UnknownHostException;
 import java.rmi.RemoteException;
 import javax.naming.Context;
 import javax.naming.InitialContext;
@@ -34,6 +36,12 @@ import javax.naming.NamingException;
 import javax.rmi.PortableRemoteObject;
 
 public class RemoteProxyFactory {
+
+   public static <C> C generateRemoteProxy (Class<C> endpointInterface, String registryName)
+      throws UnknownHostException, NoSuchMethodException, NamingException, RemoteException {
+
+      return generateRemoteProxy(endpointInterface, InetAddress.getLocalHost().getHostAddress(), registryName);
+   }
 
    public static <C> C generateRemoteProxy (Class<C> endpointInterface, String hostName, String registryName)
       throws NoSuchMethodException, NamingException, RemoteException {
