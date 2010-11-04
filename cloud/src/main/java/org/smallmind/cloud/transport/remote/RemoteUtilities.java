@@ -37,14 +37,20 @@ public class RemoteUtilities {
 
    private static ActivationSystem activationSystem;
 
-   public static synchronized void startRMIRegistry ()
+   public static void startRMIRegistry ()
+      throws RemoteException {
+
+      startRMIRegistry(1099);
+   }
+
+   public static synchronized void startRMIRegistry (int rmiPort)
       throws RemoteException {
 
       try {
-         LocateRegistry.createRegistry(1099);
+         LocateRegistry.createRegistry(rmiPort);
       }
       catch (RemoteException r) {
-         LocateRegistry.getRegistry(1099);
+         LocateRegistry.getRegistry(rmiPort);
       }
    }
 
