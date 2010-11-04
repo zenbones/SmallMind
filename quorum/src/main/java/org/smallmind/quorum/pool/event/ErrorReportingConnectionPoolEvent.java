@@ -27,19 +27,20 @@
 package org.smallmind.quorum.pool.event;
 
 import org.smallmind.quorum.pool.ConnectionPool;
+import org.smallmind.quorum.pool.ConnectionPoolException;
 
 public class ErrorReportingConnectionPoolEvent extends ConnectionPoolEvent {
 
-   private Exception exception;
+   private ConnectionPoolException exception;
 
-   public ErrorReportingConnectionPoolEvent (ConnectionPool connectionPool, Exception exception) {
+   public ErrorReportingConnectionPoolEvent (ConnectionPool connectionPool, ConnectionPoolException exception) {
 
       super(connectionPool);
 
       this.exception = exception;
    }
 
-   public Exception getException () {
+   public ConnectionPoolException getException () {
 
       return exception;
    }
