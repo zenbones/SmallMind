@@ -35,7 +35,7 @@ import org.smallmind.quorum.pool.ConnectionPoolException;
 import org.smallmind.quorum.pool.PoolMode;
 import org.smallmind.quorum.pool.remote.RemoteConnectionPoolSurface;
 
-public interface ConnectionPoolMonitorsMXBean {
+public interface ConnectionPoolMonitorsMBean {
 
    public abstract void registerConnectionPool (String poolId, RemoteConnectionPoolSurface remoteSurface)
       throws UnknownHostException, NoSuchMethodException, MalformedURLException, RemoteException, NamingException;

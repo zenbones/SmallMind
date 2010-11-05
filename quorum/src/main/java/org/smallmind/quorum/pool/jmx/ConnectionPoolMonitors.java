@@ -32,10 +32,10 @@ import java.rmi.NotBoundException;
 import java.rmi.RemoteException;
 import java.util.concurrent.ConcurrentHashMap;
 import javax.management.MBeanNotificationInfo;
-import javax.management.MBeanRegistration;
 import javax.management.MBeanServer;
 import javax.management.NotificationBroadcasterSupport;
 import javax.management.ObjectName;
+import javax.management.StandardEmitterMBean;
 import javax.naming.NamingException;
 import org.smallmind.quorum.pool.ConnectionPoolException;
 import org.smallmind.quorum.pool.PoolMode;
@@ -47,7 +47,7 @@ import org.smallmind.quorum.pool.remote.RemoteConnectionPoolSurface;
 import org.smallmind.quorum.transport.remote.RemoteEndpointBinder;
 import org.smallmind.quorum.transport.remote.RemoteProxyFactory;
 
-public class ConnectionPoolMonitors extends NotificationBroadcasterSupport implements ConnectionPoolMonitorsMXBean, MBeanRegistration, ConnectionPoolEventListener {
+public class ConnectionPoolMonitors extends StandardEmitterMBean implements ConnectionPoolMonitorsMBean, ConnectionPoolEventListener {
 
    private static final String REGISTRY_NAME = ConnectionPoolMonitors.class.getPackage().getName() + ".listener";
 
@@ -58,7 +58,7 @@ public class ConnectionPoolMonitors extends NotificationBroadcasterSupport imple
 
    public ConnectionPoolMonitors () {
 
-      super(new MBeanNotificationInfo(new String[] {ConnectionErrorOccurredNotification.TYPE}, ConnectionErrorOccurredNotification.class.getName(), "Connection Error Occurred"), new MBeanNotificationInfo(new String[] {ConnectionLeaseTimeNotification.TYPE}, ConnectionLeaseTimeNotification.class.getName(), "Connection Lease Time"));
+      super(ConnectionPoolMonitorsMBean.class, false, new NotificationBroadcasterSupport(new MBeanNotificationInfo(new String[] {ConnectionErrorOccurredNotification.TYPE}, ConnectionErrorOccurredNotification.class.getName(), "Connection Error Occurred"), new MBeanNotificationInfo(new String[] {ConnectionLeaseTimeNotification.TYPE}, ConnectionLeaseTimeNotification.class.getName(), "Connection Lease Time")));
    }
 
    public ObjectName preRegister (MBeanServer mBeanServer, ObjectName objectName)
