@@ -24,24 +24,29 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.quorum.transport.remote;
+package org.smallmind.quorum.pool.jmx;
 
-import java.net.MalformedURLException;
-import java.rmi.Naming;
-import java.rmi.NotBoundException;
-import java.rmi.RemoteException;
+import org.smallmind.nutsnbolts.lang.FormattedException;
 
-public class RemoteEndpointBinder {
+public class ConnectionPoolRegistrationException extends FormattedException {
 
-   public static void bind (RemoteEndpoint remoteEndpoint, String registryName)
-      throws NoSuchMethodException, MalformedURLException, RemoteException {
+   public ConnectionPoolRegistrationException () {
 
-      new RemoteTargetImpl(remoteEndpoint, registryName);
+      super();
    }
 
-   public static void unbind (String registryName)
-      throws MalformedURLException, NotBoundException, RemoteException {
+   public ConnectionPoolRegistrationException (String message, Object... args) {
 
-      Naming.unbind(registryName);
+      super(String.format(message, args));
+   }
+
+   public ConnectionPoolRegistrationException (Throwable throwable, String message, Object... args) {
+
+      super(String.format(message, args), throwable);
+   }
+
+   public ConnectionPoolRegistrationException (Throwable throwable) {
+
+      super(throwable);
    }
 }

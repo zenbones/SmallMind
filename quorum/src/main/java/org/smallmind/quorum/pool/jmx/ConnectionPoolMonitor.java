@@ -29,6 +29,7 @@ package org.smallmind.quorum.pool.jmx;
 import java.net.InetAddress;
 import java.net.MalformedURLException;
 import java.net.UnknownHostException;
+import java.rmi.NotBoundException;
 import java.rmi.RemoteException;
 import javax.management.MBeanNotificationInfo;
 import javax.management.MBeanRegistration;
@@ -51,7 +52,7 @@ public class ConnectionPoolMonitor extends NotificationBroadcasterSupport implem
 
    private ObjectName objectName;
    private RemoteConnectionPoolSurface remoteSurface;
-   private RemoteConnectionPoolEventListener remoteListener;
+   private ConnectionPoolEventListener remoteListener;
    private String registryName;
 
    public ConnectionPoolMonitor (ConnectionPool connectionPool, String registryName)
@@ -74,10 +75,8 @@ public class ConnectionPoolMonitor extends NotificationBroadcasterSupport implem
    public ObjectName preRegister (MBeanServer mBeanServer, ObjectName objectName)
       throws UnknownHostException, NoSuchMethodException, MalformedURLException, RemoteException, NamingException {
 
-      remoteListener = new RemoteConnectionPoolEventListener(this);
-      RemoteEndpointBinder.bind(remoteListener, registryName + ".listener");
-
-      remoteSurface.addConnectionPoolEventListener(RemoteProxyFactory.generateRemoteProxy(ConnectionPoolEventListener.class, registryName + ".listener"));
+      RemoteEndpointBinder.bind(new RemoteConnectionPoolEventListener(this), registryName + ".listener");
+      remoteSurface.addConnectionPoolEventListener(remoteListener = RemoteProxyFactory.generateRemoteProxy(ConnectionPoolEventListener.class, registryName + ".listener"));
 
       return this.objectName = objectName;
    }
@@ -85,9 +84,11 @@ public class ConnectionPoolMonitor extends NotificationBroadcasterSupport implem
    public void postRegister (Boolean success) {
    }
 
-   public void preDeregister () {
+   public void preDeregister ()
+      throws MalformedURLException, NotBoundException, RemoteException {
 
       remoteSurface.removeConnectionPoolEventListener(remoteListener);
+      RemoteEndpointBinder.unbind(registryName + ".listener");
    }
 
    public void postDeregister () {

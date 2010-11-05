@@ -24,24 +24,44 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.quorum.transport.remote;
+package org.smallmind.quorum.pool.remote.spring;
 
-import java.net.MalformedURLException;
-import java.rmi.Naming;
-import java.rmi.NotBoundException;
-import java.rmi.RemoteException;
+import org.smallmind.quorum.pool.ConnectionPool;
+import org.smallmind.quorum.pool.remote.RemoteConnectionPoolSurface;
+import org.smallmind.quorum.transport.remote.RemoteEndpointBinder;
+import org.smallmind.quorum.transport.remote.RemoteProxyFactory;
+import org.springframework.beans.factory.FactoryBean;
 
-public class RemoteEndpointBinder {
+public class RemoteConnectionPoolFactoryBean implements FactoryBean {
 
-   public static void bind (RemoteEndpoint remoteEndpoint, String registryName)
-      throws NoSuchMethodException, MalformedURLException, RemoteException {
+   private ConnectionPool connectionPool;
+   private String registryName;
 
-      new RemoteTargetImpl(remoteEndpoint, registryName);
+   public void setConnectionPool (ConnectionPool connectionPool) {
+
+      this.connectionPool = connectionPool;
    }
 
-   public static void unbind (String registryName)
-      throws MalformedURLException, NotBoundException, RemoteException {
+   public void setRegistryName (String registryName) {
 
-      Naming.unbind(registryName);
+      this.registryName = registryName;
+   }
+
+   public Object getObject ()
+      throws Exception {
+
+      RemoteEndpointBinder.bind(connectionPool, registryName);
+
+      return RemoteProxyFactory.generateRemoteProxy(RemoteConnectionPoolSurface.class, registryName);
+   }
+
+   public Class getObjectType () {
+
+      return RemoteConnectionPoolSurface.class;
+   }
+
+   public boolean isSingleton () {
+
+      return true;
    }
 }
