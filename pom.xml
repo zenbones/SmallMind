@@ -27,7 +27,6 @@
       <module>spark</module>
       <module>swing</module>
       <module>wicket</module>
-      <module>nagios</module>
    </modules>
    <dependencyManagement>
       <dependencies>
