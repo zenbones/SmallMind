@@ -109,15 +109,19 @@ public class ConnectionPoolMonitors extends StandardEmitterMBean implements Conn
       return remoteSurface;
    }
 
-   public void registerConnectionPool (String poolId, RemoteConnectionPoolSurface remoteSurface)
+   public synchronized void registerConnectionPool (String poolId, RemoteConnectionPoolSurface remoteSurface)
       throws UnknownHostException, NoSuchMethodException, MalformedURLException, RemoteException, NamingException {
 
-      if (handleMap.putIfAbsent(poolId, remoteSurface) == null) {
-         remoteSurface.addConnectionPoolEventListener(remoteListener);
+      RemoteConnectionPoolSurface priorRemoteSurface;
+
+      if ((priorRemoteSurface = handleMap.put(poolId, remoteSurface)) != null) {
+         priorRemoteSurface.removeConnectionPoolEventListener(remoteListener);
       }
+
+      remoteSurface.addConnectionPoolEventListener(remoteListener);
    }
 
-   public void removeConnectionPool (String poolId)
+   public synchronized void removeConnectionPool (String poolId)
       throws ConnectionPoolRegistrationException, MalformedURLException, NotBoundException, RemoteException {
 
       RemoteConnectionPoolSurface remoteSurface;
