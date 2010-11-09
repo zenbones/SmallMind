@@ -119,6 +119,7 @@ public class DriverManagerPooledConnection implements PooledConnection, Invocati
                return preparedStatement;
             }
             else {
+
                return method.invoke(actualConnection, args);
             }
          }

@@ -91,19 +91,28 @@ public class PooledConnectionInstance extends AbstractConnectionInstance impleme
       Exception reportedException = connectionEvent.getSQLException();
 
       try {
-         connectionPool.terminateInstance(this);
-      }
-      catch (Exception exception) {
-         if (reportedException != null) {
-            exception.initCause(reportedException);
-         }
-
-         reportedException = exception;
-      }
-      finally {
          if (reportedException != null) {
             fireConnectionErrorOccurred(reportedException);
-            ConnectionPoolManager.logError(reportedException);
+         }
+      }
+      catch (Exception exception) {
+         ConnectionPoolManager.logError(exception);
+      }
+      finally {
+         try {
+            connectionPool.terminateInstance(this);
+         }
+         catch (Exception exception) {
+            if (reportedException != null) {
+               exception.initCause(reportedException);
+            }
+
+            reportedException = exception;
+         }
+         finally {
+            if (reportedException != null) {
+               ConnectionPoolManager.logError(reportedException);
+            }
          }
       }
    }
