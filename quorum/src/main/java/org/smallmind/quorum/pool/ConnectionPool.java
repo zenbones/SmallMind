@@ -320,7 +320,6 @@ public class ConnectionPool<C> implements ConnectionInstanceEventListener, Remot
          }
 
          if (connectionWorker.hasBeenAborted()) {
-
             throw fireErrorReportingConnectionPoolEvent(new ConnectionCreationException("Exceeded connection timeout(%d) waiting on connection creation", connectionTimeoutMillis));
          }
          else if (connectionWorker.hasException()) {
