@@ -342,7 +342,7 @@ public class ConnectionPool<C> implements ConnectionInstanceEventListener, Remot
       }
 
       if (testOnConnect && (!connectionInstance.validate())) {
-         throw fireErrorReportingConnectionPoolEvent(new InvalidConnectionException("A new connection was required by failed to validate"));
+         throw fireErrorReportingConnectionPoolEvent(new InvalidConnectionException("A new connection was required, but failed to validate"));
       }
       else {
          poolCount.incrementAndGet();
