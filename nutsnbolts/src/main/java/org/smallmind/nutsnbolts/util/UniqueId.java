@@ -33,7 +33,6 @@ import java.security.SecureRandom;
 import java.util.Arrays;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
-import org.smallmind.nutsnbolts.lang.StaticInitializationError;
 
 public class UniqueId implements Comparable<UniqueId> {
 
@@ -66,11 +65,12 @@ public class UniqueId implements Comparable<UniqueId> {
 
       try {
          macAddress = NetworkInterface.getByInetAddress(InetAddress.getLocalHost()).getHardwareAddress();
-         System.arraycopy(macAddress, 0, MAC_BYTES, 0, 6);
       }
       catch (Exception exception) {
-         throw new StaticInitializationError(exception);
+         RANDOM.nextBytes(macAddress = new byte[6]);
       }
+
+      System.arraycopy(macAddress, 0, MAC_BYTES, 0, 6);
 
       ATOMIC_TIME = new AtomicLong(System.currentTimeMillis());
       ATOMIC_COUNT = new AtomicInteger(Short.MIN_VALUE);
