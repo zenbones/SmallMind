@@ -63,13 +63,19 @@ public class UniqueId implements Comparable<UniqueId> {
 
       byte[] macAddress;
 
+      System.out.println("========================================>1234!:0");
       try {
+         System.out.println("========================================>1234!:1");
          macAddress = NetworkInterface.getByInetAddress(InetAddress.getLocalHost()).getHardwareAddress();
+         System.out.println("========================================>1234!:2");
       }
       catch (Exception exception) {
+         System.out.println("========================================>1234!:3");
          RANDOM.nextBytes(macAddress = new byte[6]);
+         System.out.println("========================================>1234!:4:" + macAddress);
       }
 
+      System.out.println("========================================>1234!:5:" + macAddress + ":" + MAC_BYTES);
       System.arraycopy(macAddress, 0, MAC_BYTES, 0, 6);
 
       ATOMIC_TIME = new AtomicLong(System.currentTimeMillis());
