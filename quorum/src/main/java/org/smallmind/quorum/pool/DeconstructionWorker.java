@@ -151,7 +151,12 @@ public class DeconstructionWorker implements java.lang.Runnable {
                }
 
                if (deconstructed) {
-                  connectionPool.removePin(connectionPin);
+                  try {
+                     connectionPool.removePin(connectionPin);
+                  }
+                  catch (Exception exception) {
+                     ConnectionPoolManager.logError(exception);
+                  }
                }
                else {
                   try {

@@ -65,8 +65,7 @@ public class ConnectionPool<C> implements ConnectionInstanceEventListener, Remot
    private int maxIdleTimeSeconds = 0;
    private int unreturnedConnectionTimeoutSeconds = 0;
 
-   public ConnectionPool (String poolName, ConnectionInstanceFactory<C> connectionFactory)
-      throws ConnectionPoolException {
+   public ConnectionPool (String poolName, ConnectionInstanceFactory<C> connectionFactory) {
 
       this.poolName = poolName;
       this.connectionFactory = connectionFactory;
@@ -83,26 +82,42 @@ public class ConnectionPool<C> implements ConnectionInstanceEventListener, Remot
 
    public synchronized void startup ()
       throws ConnectionPoolException {
+      try {
+         if (startupFlag.compareAndSet(false, true)) {
+            freeConnectionPinQueue = new ConcurrentLinkedQueue<ConnectionPin<C>>();
+            processingConnectionPinQueue = new ConcurrentLinkedQueue<ConnectionPin<C>>();
 
-      if (startupFlag.compareAndSet(false, true)) {
-         freeConnectionPinQueue = new ConcurrentLinkedQueue<ConnectionPin<C>>();
-         processingConnectionPinQueue = new ConcurrentLinkedQueue<ConnectionPin<C>>();
-
-         for (int count = 0; count < initialPoolSize; count++) {
-            freeConnectionPinQueue.add(createConnectionPin());
+            for (int count = 0; count < initialPoolSize; count++) {
+               freeConnectionPinQueue.add(createConnectionPin());
+            }
          }
+      }
+      catch (ConnectionPoolException connectionPoolException) {
+         throw connectionPoolException;
+      }
+      catch (Exception exception) {
+         throw new ConnectionPoolException(exception);
       }
    }
 
-   public synchronized void shutdown () {
+   public synchronized void shutdown ()
+      throws ConnectionPoolException {
 
-      if (shutdownFlag.compareAndSet(false, true)) {
-         for (ConnectionPin<C> connectionPin : processingConnectionPinQueue) {
-            destroyConnectionPin(connectionPin);
+      try {
+         if (shutdownFlag.compareAndSet(false, true)) {
+            for (ConnectionPin<C> connectionPin : processingConnectionPinQueue) {
+               destroyConnectionPin(connectionPin);
+            }
+            for (ConnectionPin<C> connectionPin : freeConnectionPinQueue) {
+               destroyConnectionPin(connectionPin);
+            }
          }
-         for (ConnectionPin<C> connectionPin : freeConnectionPinQueue) {
-            destroyConnectionPin(connectionPin);
-         }
+      }
+      catch (ConnectionPoolException connectionPoolException) {
+         throw connectionPoolException;
+      }
+      catch (Exception exception) {
+         throw new ConnectionPoolException(exception);
       }
    }
 
@@ -272,10 +287,10 @@ public class ConnectionPool<C> implements ConnectionInstanceEventListener, Remot
 
    public void connectionErrorOccurred (ConnectionInstanceEvent instanceEvent) {
 
-      fireErrorReportingConnectionPoolEvent((instanceEvent.getException() instanceof ConnectionPoolException) ? (ConnectionCreationException)instanceEvent.getException() : new ConnectionCreationException(instanceEvent.getException()));
+      fireErrorReportingConnectionPoolEvent(instanceEvent.getException());
    }
 
-   private ConnectionPoolException fireErrorReportingConnectionPoolEvent (ConnectionPoolException exception) {
+   private ConnectionPoolException fireErrorReportingConnectionPoolEvent (Exception exception) {
 
       ErrorReportingConnectionPoolEvent poolEvent = new ErrorReportingConnectionPoolEvent(this, exception);
 
@@ -283,7 +298,7 @@ public class ConnectionPool<C> implements ConnectionInstanceEventListener, Remot
          listener.connectionErrorOccurred(poolEvent);
       }
 
-      return exception;
+      return (exception instanceof ConnectionPoolException) ? (ConnectionPoolException)exception : new ConnectionPoolException(exception);
    }
 
    public void reportConnectionLeaseTimeNanos (long leaseTimeNanos) {
@@ -296,7 +311,7 @@ public class ConnectionPool<C> implements ConnectionInstanceEventListener, Remot
    }
 
    private ConnectionPin<C> createConnectionPin ()
-      throws ConnectionPoolException {
+      throws Exception {
 
       ConnectionInstance<C> connectionInstance;
 
@@ -310,39 +325,26 @@ public class ConnectionPool<C> implements ConnectionInstanceEventListener, Remot
          workerThread = new Thread(connectionWorker);
          workerThread.start();
 
-         try {
-            workerInitLatch.await();
-            workerThread.join(connectionTimeoutMillis);
-            connectionWorker.abort();
-         }
-         catch (InterruptedException interruptedException) {
-            throw fireErrorReportingConnectionPoolEvent(new ConnectionPoolException(interruptedException));
-         }
+         workerInitLatch.await();
+         workerThread.join(connectionTimeoutMillis);
+         connectionWorker.abort();
 
          if (connectionWorker.hasBeenAborted()) {
-            throw fireErrorReportingConnectionPoolEvent(new ConnectionCreationException("Exceeded connection timeout(%d) waiting on connection creation", connectionTimeoutMillis));
+            throw new ConnectionCreationException("Exceeded connection timeout(%d) waiting on connection creation", connectionTimeoutMillis);
          }
          else if (connectionWorker.hasException()) {
-            throw fireErrorReportingConnectionPoolEvent(connectionWorker.getException());
+            throw connectionWorker.getException();
          }
          else {
             connectionInstance = connectionWorker.getConnectionInstance();
          }
       }
       else {
-         try {
-            connectionInstance = connectionFactory.createInstance(this);
-         }
-         catch (ConnectionPoolException connectionPoolException) {
-            throw fireErrorReportingConnectionPoolEvent(connectionPoolException);
-         }
-         catch (Exception otherException) {
-            throw fireErrorReportingConnectionPoolEvent(new ConnectionPoolException(otherException));
-         }
+         connectionInstance = connectionFactory.createInstance(this);
       }
 
       if (testOnConnect && (!connectionInstance.validate())) {
-         throw fireErrorReportingConnectionPoolEvent(new InvalidConnectionException("A new connection was required, but failed to validate"));
+         throw new InvalidConnectionException("A new connection was required, but failed to validate");
       }
       else {
          poolCount.incrementAndGet();
@@ -351,15 +353,13 @@ public class ConnectionPool<C> implements ConnectionInstanceEventListener, Remot
       }
    }
 
-   private void destroyConnectionPin (ConnectionPin<C> connectionPin) {
+   private void destroyConnectionPin (ConnectionPin<C> connectionPin)
+      throws Exception {
 
       poolCount.decrementAndGet();
 
       try {
          connectionPin.close();
-      }
-      catch (Exception exception) {
-         ConnectionPoolManager.logError(exception);
       }
       finally {
          connectionPin.abort();
@@ -367,7 +367,7 @@ public class ConnectionPool<C> implements ConnectionInstanceEventListener, Remot
    }
 
    private C useConnectionPin ()
-      throws ConnectionPoolException {
+      throws Exception {
 
       ConnectionPin<C> connectionPin;
       int blockedAttempts = 0;
@@ -380,19 +380,13 @@ public class ConnectionPool<C> implements ConnectionInstanceEventListener, Remot
                      destroyConnectionPin(connectionPin);
                   }
                   else {
-                     try {
-                        return connectionPin.serve();
-                     }
-                     catch (ConnectionPoolException connectionPoolException) {
-                        throw fireErrorReportingConnectionPoolEvent(connectionPoolException);
-                     }
-                     catch (Exception otherException) {
-                        throw fireErrorReportingConnectionPoolEvent(new ConnectionPoolException(otherException));
-                     }
-                     finally {
-                        processingConnectionPinQueue.add(connectionPin);
-                        processingCount.incrementAndGet();
-                     }
+
+                     C connection = connectionPin.serve();
+
+                     processingCount.incrementAndGet();
+                     processingConnectionPinQueue.add(connectionPin);
+
+                     return connection;
                   }
                }
                else {
@@ -403,38 +397,27 @@ public class ConnectionPool<C> implements ConnectionInstanceEventListener, Remot
 
          if (poolMode.equals(PoolMode.EXPANDING_POOL) || (poolCount.get() < maxPoolSize)) {
             synchronized (connectionPin = createConnectionPin()) {
-               try {
-                  return connectionPin.serve();
-               }
-               catch (ConnectionPoolException connectionPoolException) {
-                  throw fireErrorReportingConnectionPoolEvent(connectionPoolException);
-               }
-               catch (Exception otherException) {
-                  throw fireErrorReportingConnectionPoolEvent(new ConnectionPoolException(otherException));
-               }
-               finally {
-                  processingConnectionPinQueue.add(connectionPin);
-                  processingCount.incrementAndGet();
-               }
+
+               C connection = connectionPin.serve();
+
+               processingCount.incrementAndGet();
+               processingConnectionPinQueue.add(connectionPin);
+
+               return connection;
             }
          }
 
          if (poolMode.equals(PoolMode.BLOCKING_POOL)) {
             if ((acquireRetryAttempts == 0) || (++blockedAttempts < acquireRetryAttempts)) {
-               try {
-                  Thread.sleep(acquireRetryDelayMillis);
-               }
-               catch (InterruptedException interruptedException) {
-                  throw fireErrorReportingConnectionPoolEvent(new ConnectionPoolException(interruptedException));
-               }
+               Thread.sleep(acquireRetryDelayMillis);
             }
             else {
-               throw fireErrorReportingConnectionPoolEvent(new ConnectionPoolException("Blocking ConnectionPool (%s) has exceeded its maximum attempts (%d)", poolName, acquireRetryAttempts));
+               throw new ConnectionPoolException("Blocking ConnectionPool (%s) has exceeded its maximum attempts (%d)", poolName, acquireRetryAttempts);
             }
          }
       } while (poolMode.equals(PoolMode.BLOCKING_POOL));
 
-      throw fireErrorReportingConnectionPoolEvent(new ConnectionPoolException("Fixed ConnectionPool (%s) is completely booked", poolName));
+      throw new ConnectionPoolException("Fixed ConnectionPool (%s) is completely booked", poolName);
    }
 
    public C getConnection ()
@@ -444,38 +427,51 @@ public class ConnectionPool<C> implements ConnectionInstanceEventListener, Remot
          throw new IllegalStateException("ConnectionPool has been shut down");
       }
 
-      startup();
-
       try {
+         startup();
+
          return useConnectionPin();
       }
       catch (Exception exception) {
-         throw fireErrorReportingConnectionPoolEvent(new ConnectionPoolException(exception));
+         throw fireErrorReportingConnectionPoolEvent(exception);
       }
    }
 
    public void returnInstance (ConnectionInstance connectionInstance)
-      throws Exception {
+      throws ConnectionPoolException {
 
       if (shutdownFlag.get()) {
          throw new IllegalStateException("ConnectionPool has been shut down");
       }
 
-      releaseInstance(connectionInstance, false);
+      try {
+         releaseInstance(connectionInstance, false);
+      }
+      catch (Exception exception) {
+         throw fireErrorReportingConnectionPoolEvent(exception);
+      }
    }
 
    public void terminateInstance (ConnectionInstance connectionInstance)
-      throws Exception {
+      throws ConnectionPoolException {
 
       if (shutdownFlag.get()) {
          throw new IllegalStateException("ConnectionPool has been shut down");
       }
 
-      releaseInstance(connectionInstance, true);
+      try {
+         releaseInstance(connectionInstance, true);
+      }
+      catch (ConnectionPoolException connectionPoolException) {
+         throw connectionPoolException;
+      }
+      catch (Exception exception) {
+         throw new ConnectionPoolException(exception);
+      }
    }
 
    private void releaseInstance (ConnectionInstance connectionInstance, boolean terminate)
-      throws ConnectionPoolException {
+      throws Exception {
 
       for (ConnectionPin<C> connectionPin : processingConnectionPinQueue) {
          if (connectionPin.contains(connectionInstance)) {
@@ -504,10 +500,11 @@ public class ConnectionPool<C> implements ConnectionInstanceEventListener, Remot
          }
       }
 
-      throw fireErrorReportingConnectionPoolEvent(new ConnectionPoolException("Could not find connection (%s) within ConnectionPool (%s)", connectionInstance, poolName));
+      throw new ConnectionPoolException("Could not find connection (%s) within ConnectionPool (%s)", connectionInstance, poolName);
    }
 
-   protected void removePin (ConnectionPin connectionPin) {
+   protected void removePin (ConnectionPin connectionPin)
+      throws Exception {
 
       if (processingConnectionPinQueue.remove(connectionPin)) {
          processingCount.decrementAndGet();
@@ -518,12 +515,7 @@ public class ConnectionPool<C> implements ConnectionInstanceEventListener, Remot
       }
 
       if (poolCount.get() < minPoolSize) {
-         try {
-            freeConnectionPinQueue.add(createConnectionPin());
-         }
-         catch (ConnectionPoolException connectionPoolException) {
-            ConnectionPoolManager.logError(connectionPoolException);
-         }
+         freeConnectionPinQueue.add(createConnectionPin());
       }
    }
 

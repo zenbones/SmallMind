@@ -83,7 +83,8 @@ public interface ConnectionPoolSurface {
    public abstract void startup ()
       throws ConnectionPoolException;
 
-   public abstract void shutdown ();
+   public abstract void shutdown ()
+      throws ConnectionPoolException;
 
    public abstract int getPoolSize ();
 

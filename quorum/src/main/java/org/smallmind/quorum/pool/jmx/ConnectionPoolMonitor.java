@@ -240,7 +240,8 @@ public class ConnectionPoolMonitor extends NotificationBroadcasterSupport implem
       remoteSurface.startup();
    }
 
-   public void shutdown () {
+   public void shutdown ()
+      throws ConnectionPoolException {
 
       remoteSurface.shutdown();
    }

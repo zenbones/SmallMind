@@ -34,7 +34,7 @@ public class ConnectionWorker<C> implements Runnable {
    private ConnectionPool<C> connectionPool;
    private ConnectionInstanceFactory<C> connectionFactory;
    private ConnectionInstance<C> connectionInstance;
-   private ConnectionPoolException exception;
+   private Exception exception;
    private Thread runnableThread;
    private CountDownLatch exitLatch;
    private CountDownLatch workerInitLatch;
@@ -60,7 +60,7 @@ public class ConnectionWorker<C> implements Runnable {
       return exception != null;
    }
 
-   public ConnectionPoolException getException () {
+   public Exception getException () {
 
       return exception;
    }
@@ -91,11 +91,8 @@ public class ConnectionWorker<C> implements Runnable {
       catch (InterruptedException interruptedException) {
          aborted = true;
       }
-      catch (ConnectionPoolException connectionPoolException) {
-         exception = connectionPoolException;
-      }
       catch (Exception otherException) {
-         exception = new ConnectionPoolException(otherException);
+         exception = otherException;
       }
 
       exitLatch.countDown();

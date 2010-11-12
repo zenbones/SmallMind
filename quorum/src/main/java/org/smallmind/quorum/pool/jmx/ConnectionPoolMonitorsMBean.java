@@ -125,7 +125,7 @@ public interface ConnectionPoolMonitorsMBean {
       throws ConnectionPoolException, ConnectionPoolRegistrationException;
 
    public abstract void shutdown (String poolId)
-      throws ConnectionPoolRegistrationException;
+      throws ConnectionPoolException, ConnectionPoolRegistrationException;
 
    public abstract int getPoolSize (String poolId)
       throws ConnectionPoolRegistrationException;

@@ -296,7 +296,7 @@ public class ConnectionPoolMonitors extends StandardEmitterMBean implements Conn
    }
 
    public void shutdown (String poolId)
-      throws ConnectionPoolRegistrationException {
+      throws ConnectionPoolRegistrationException, ConnectionPoolException {
 
       getRemoteSurface(poolId).shutdown();
    }

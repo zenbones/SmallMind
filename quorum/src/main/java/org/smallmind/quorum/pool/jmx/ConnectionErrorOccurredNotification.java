@@ -28,7 +28,6 @@ package org.smallmind.quorum.pool.jmx;
 
 import java.util.concurrent.atomic.AtomicLong;
 import javax.management.Notification;
-import org.smallmind.quorum.pool.ConnectionPoolException;
 
 public class ConnectionErrorOccurredNotification extends Notification {
 
@@ -36,16 +35,16 @@ public class ConnectionErrorOccurredNotification extends Notification {
 
    private static final AtomicLong SEQUNCE_NUMBER = new AtomicLong(0);
 
-   private ConnectionPoolException exception;
+   private Exception exception;
 
-   public ConnectionErrorOccurredNotification (Object source, ConnectionPoolException exception) {
+   public ConnectionErrorOccurredNotification (Object source, Exception exception) {
 
       super(TYPE, source, SEQUNCE_NUMBER.incrementAndGet(), System.currentTimeMillis());
 
       this.exception = exception;
    }
 
-   public ConnectionPoolException getException () {
+   public Exception getException () {
 
       return exception;
    }
