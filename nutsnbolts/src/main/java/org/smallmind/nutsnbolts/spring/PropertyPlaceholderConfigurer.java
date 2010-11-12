@@ -36,6 +36,7 @@ import java.util.Properties;
 import org.smallmind.nutsnbolts.resource.Resource;
 import org.smallmind.nutsnbolts.resource.ResourceParser;
 import org.smallmind.nutsnbolts.resource.ResourceTypeFactory;
+import org.smallmind.nutsnbolts.util.DotNotationException;
 import org.smallmind.nutsnbolts.util.PropertyExpander;
 import org.smallmind.nutsnbolts.util.PropertyExpanderException;
 import org.smallmind.nutsnbolts.util.SystemPropertyMode;
@@ -55,6 +56,7 @@ import org.springframework.util.StringValueResolver;
 public class PropertyPlaceholderConfigurer implements BeanFactoryPostProcessor, BeanFactoryAware, BeanNameAware, Ordered, PriorityOrdered {
 
    private BeanFactory beanFactory;
+   private KeyDebugger keyDebugger;
    private LinkedList<String> locationList = new LinkedList<String>();
    private String beanName;
    private SystemPropertyMode systemPropertyMode = SystemPropertyMode.FALLBACK;
@@ -113,6 +115,12 @@ public class PropertyPlaceholderConfigurer implements BeanFactoryPostProcessor, 
       locationList.addAll(Arrays.asList(locations));
    }
 
+   public void setDebugKeys (String[] debugPatterns)
+      throws DotNotationException {
+
+      keyDebugger = new KeyDebugger(debugPatterns);
+   }
+
    public void postProcessBeanFactory (ConfigurableListableBeanFactory beanFactoryToProcess)
       throws BeansException {
 
@@ -159,11 +167,15 @@ public class PropertyPlaceholderConfigurer implements BeanFactoryPostProcessor, 
          }
       }
 
-      System.out.println("---------------- Config Properties ---------------");
-      for (Map.Entry<String, String> propertyEntry : propertyMap.entrySet()) {
-         System.out.println("[" + propertyEntry.getKey() + "=" + propertyEntry.getValue() + "]");
+      if (keyDebugger.willDebug()) {
+         System.out.println("---------------- Config Properties ---------------");
+         for (Map.Entry<String, String> propertyEntry : propertyMap.entrySet()) {
+            if (keyDebugger.willDebug() && keyDebugger.matches(propertyEntry.getKey())) {
+               System.out.println("[" + propertyEntry.getKey() + "=" + propertyEntry.getValue() + "]");
+            }
+         }
+         System.out.println("--------------------------------------------------");
       }
-      System.out.println("--------------------------------------------------");
 
       valueResolver = new PropertyPlaceholderStringValueResolver(propertyMap, ignoreUnresolvableProperties, systemPropertyMode, searchSystemEnvironment);
       beanDefinitionVisitor = new BeanDefinitionVisitor(valueResolver);

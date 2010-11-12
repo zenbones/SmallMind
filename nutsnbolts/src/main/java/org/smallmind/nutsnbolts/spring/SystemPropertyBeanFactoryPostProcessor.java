@@ -28,6 +28,7 @@ package org.smallmind.nutsnbolts.spring;
 
 import java.util.HashMap;
 import java.util.Map;
+import org.smallmind.nutsnbolts.util.DotNotationException;
 import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.config.BeanFactoryPostProcessor;
 import org.springframework.beans.factory.config.ConfigurableListableBeanFactory;
@@ -37,6 +38,7 @@ import org.springframework.core.PriorityOrdered;
 public class SystemPropertyBeanFactoryPostProcessor implements BeanFactoryPostProcessor, Ordered, PriorityOrdered {
 
    private HashMap<String, String> propertyMap;
+   private KeyDebugger keyDebugger;
    private boolean override;
    private int order;
 
@@ -66,16 +68,30 @@ public class SystemPropertyBeanFactoryPostProcessor implements BeanFactoryPostPr
       this.propertyMap.putAll(propertyMap);
    }
 
+   public void setDebugKeys (String[] debugPatterns)
+      throws DotNotationException {
+
+      keyDebugger = new KeyDebugger(debugPatterns);
+   }
+
    public void postProcessBeanFactory (ConfigurableListableBeanFactory configurableListableBeanFactory)
       throws BeansException {
 
-      System.out.println("---------------- System Properties ---------------");
+      if (keyDebugger.willDebug()) {
+         System.out.println("---------------- System Properties ---------------");
+      }
+
       for (Map.Entry<String, String> propertyEntry : propertyMap.entrySet()) {
          if (override || ((System.getProperty(propertyEntry.getKey()) == null) && (System.getenv(propertyEntry.getKey()) == null))) {
             System.setProperty(propertyEntry.getKey(), propertyEntry.getValue());
-            System.out.println("[" + propertyEntry.getKey() + "=" + propertyEntry.getValue() + "]");
+            if (keyDebugger.willDebug() && keyDebugger.matches(propertyEntry.getKey())) {
+               System.out.println("[" + propertyEntry.getKey() + "=" + propertyEntry.getValue() + "]");
+            }
          }
       }
-      System.out.println("--------------------------------------------------");
+
+      if (keyDebugger.willDebug()) {
+         System.out.println("--------------------------------------------------");
+      }
    }
 }
