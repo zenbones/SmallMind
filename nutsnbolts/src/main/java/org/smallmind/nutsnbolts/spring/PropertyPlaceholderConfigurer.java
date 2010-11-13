@@ -167,10 +167,10 @@ public class PropertyPlaceholderConfigurer implements BeanFactoryPostProcessor, 
          }
       }
 
-      if (keyDebugger.willDebug()) {
+      if ((keyDebugger != null) && keyDebugger.willDebug()) {
          System.out.println("---------------- Config Properties ---------------");
          for (Map.Entry<String, String> propertyEntry : propertyMap.entrySet()) {
-            if (keyDebugger.willDebug() && keyDebugger.matches(propertyEntry.getKey())) {
+            if (keyDebugger.matches(propertyEntry.getKey())) {
                System.out.println("[" + propertyEntry.getKey() + "=" + propertyEntry.getValue() + "]");
             }
          }

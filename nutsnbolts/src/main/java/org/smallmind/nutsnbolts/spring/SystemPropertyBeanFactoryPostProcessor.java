@@ -77,20 +77,20 @@ public class SystemPropertyBeanFactoryPostProcessor implements BeanFactoryPostPr
    public void postProcessBeanFactory (ConfigurableListableBeanFactory configurableListableBeanFactory)
       throws BeansException {
 
-      if (keyDebugger.willDebug()) {
+      if ((keyDebugger != null) && keyDebugger.willDebug()) {
          System.out.println("---------------- System Properties ---------------");
       }
 
       for (Map.Entry<String, String> propertyEntry : propertyMap.entrySet()) {
          if (override || ((System.getProperty(propertyEntry.getKey()) == null) && (System.getenv(propertyEntry.getKey()) == null))) {
             System.setProperty(propertyEntry.getKey(), propertyEntry.getValue());
-            if (keyDebugger.willDebug() && keyDebugger.matches(propertyEntry.getKey())) {
+            if ((keyDebugger != null) && keyDebugger.willDebug() && keyDebugger.matches(propertyEntry.getKey())) {
                System.out.println("[" + propertyEntry.getKey() + "=" + propertyEntry.getValue() + "]");
             }
          }
       }
 
-      if (keyDebugger.willDebug()) {
+      if ((keyDebugger != null) && keyDebugger.willDebug()) {
          System.out.println("--------------------------------------------------");
       }
    }
