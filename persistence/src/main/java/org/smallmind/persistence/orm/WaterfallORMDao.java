@@ -43,8 +43,6 @@ public abstract class WaterfallORMDao<I extends Serializable & Comparable<I>, D 
       this.allowCascade = allowCascade;
    }
 
-   public abstract void imprint (D durable);
-
    public String getStatisticsSource () {
 
       return StatSource.ORM.getDisplay();

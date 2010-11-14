@@ -148,11 +148,6 @@ public abstract class HibernateDao<I extends Serializable & Comparable<I>, D ext
       });
    }
 
-   public void imprint (D durable) {
-
-      proxySession.getSession().merge(durable);
-   }
-
    public D persist (D durable) {
 
       return persist(getManagedClass(), durable);
