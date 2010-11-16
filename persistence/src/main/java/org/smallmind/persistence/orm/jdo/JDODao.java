@@ -35,6 +35,7 @@ import javax.jdo.Query;
 import org.smallmind.nutsnbolts.util.IterableIterator;
 import org.smallmind.persistence.Durable;
 import org.smallmind.persistence.VectoredDao;
+import org.smallmind.persistence.orm.ProxySession;
 import org.smallmind.persistence.orm.WaterfallORMDao;
 
 public abstract class JDODao<I extends Serializable & Comparable<I>, D extends Durable<I>> extends WaterfallORMDao<I, D> {
@@ -51,6 +52,16 @@ public abstract class JDODao<I extends Serializable & Comparable<I>, D extends D
       super(vectoredDao, proxySession.willAllowCascade());
 
       this.proxySession = proxySession;
+   }
+
+   public String getDataSource () {
+
+      return proxySession.getDataSource();
+   }
+
+   public ProxySession getSession () {
+
+      return proxySession;
    }
 
    public I getId (D object) {
