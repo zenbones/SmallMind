@@ -124,7 +124,7 @@ public abstract class HibernateDao<I extends Serializable & Comparable<I>, D ext
       return new ScrollIterator<D>(proxySession.getSession().createCriteria(getManagedClass()).setFetchSize(fetchSize).scroll(ScrollMode.SCROLL_INSENSITIVE), getManagedClass());
    }
 
-   public Iterable<D> scrollById (final Long greaterThan, final int fetchSize) {
+   public Iterable<D> scrollById (final I greaterThan, final int fetchSize) {
 
       return scrollByCriteria(new CriteriaDetails() {
 
@@ -146,11 +146,6 @@ public abstract class HibernateDao<I extends Serializable & Comparable<I>, D ext
             return criteria.setProjection(Projections.rowCount());
          }
       });
-   }
-
-   public void imprint (D durable) {
-
-      proxySession.getSession().merge(durable);
    }
 
    public D persist (D durable) {

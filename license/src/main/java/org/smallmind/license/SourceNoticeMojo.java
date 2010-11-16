@@ -91,74 +91,80 @@ public class SourceNoticeMojo extends AbstractMojo {
 
          FileFilter[] fileFilters;
          String[] noticeArray;
+         boolean noticed;
          boolean stenciled;
-         long noticeModTime;
 
          if (verbose) {
             getLog().info(String.format("Processing rule(%s)...", rule.getId()));
          }
 
+         noticed = true;
          if (rule.getNotice() == null) {
             if (!allowNoticeRemoval) {
                throw new MojoExecutionException("No notice was provided for rule(" + rule.getId() + "), but notice removal has not been enabled(allowNoticeRemoval = false)");
             }
 
             noticeArray = null;
-            noticeModTime = -1;
          }
          else {
 
             File noticeFile;
 
             noticeFile = new File(rule.getNotice());
-            noticeArray = getFileAsLineArray(noticeFile.isAbsolute() ? noticeFile.getAbsolutePath() : rootProject.getBasedir() + System.getProperty("file.separator") + noticeFile.getPath());
-            noticeModTime = noticeFile.lastModified();
-         }
-
-         if ((rule.getFileTypes() == null) || (rule.getFileTypes().length == 0)) {
-            throw new MojoExecutionException("No file types were specified for rule(" + rule.getId() + ")");
-         }
-
-         fileFilters = new FileFilter[rule.getFileTypes().length];
-         for (int count = 0; count < fileFilters.length; count++) {
-            fileFilters[count] = new FileTypeFilenameFilter(rule.getFileTypes()[count]);
-         }
-
-         stenciled = false;
-         for (Stencil stencil : mergedStencils) {
-            if (stencil.getId().equals(rule.getStencilId())) {
-               stenciled = true;
-
-               updateNotice(stencil, noticeArray, noticeModTime, buffer, project.getBuild().getSourceDirectory(), fileFilters);
-               updateNotice(stencil, noticeArray, noticeModTime, buffer, project.getBuild().getScriptSourceDirectory(), fileFilters);
-
-               if (includeResources) {
-                  for (Resource resource : project.getBuild().getResources()) {
-                     updateNotice(stencil, noticeArray, noticeModTime, buffer, resource.getDirectory(), fileFilters);
-                  }
-               }
-
-               if (includeTests) {
-                  updateNotice(stencil, noticeArray, noticeModTime, buffer, project.getBuild().getTestSourceDirectory(), fileFilters);
-
-                  if (includeResources) {
-                     for (Resource testResource : project.getBuild().getTestResources()) {
-                        updateNotice(stencil, noticeArray, noticeModTime, buffer, testResource.getDirectory(), fileFilters);
-                     }
-                  }
-               }
-
-               break;
+            if ((noticeArray = getFileAsLineArray(noticeFile.isAbsolute() ? noticeFile.getAbsolutePath() : rootProject.getBasedir() + System.getProperty("file.separator") + noticeFile.getPath())) == null) {
+               noticed = false;
             }
          }
 
-         if (!stenciled) {
-            throw new MojoExecutionException("No stencil found with id(" + rule.getStencilId() + ") for rule(" + rule.getId() + ")");
+         if (!noticed) {
+            getLog().warn(String.format("Unable to acquire the notice file(%s), skipping notice updating...", rule.getNotice()));
+         }
+         else {
+            if ((rule.getFileTypes() == null) || (rule.getFileTypes().length == 0)) {
+               throw new MojoExecutionException("No file types were specified for rule(" + rule.getId() + ")");
+            }
+
+            fileFilters = new FileFilter[rule.getFileTypes().length];
+            for (int count = 0; count < fileFilters.length; count++) {
+               fileFilters[count] = new FileTypeFilenameFilter(rule.getFileTypes()[count]);
+            }
+
+            stenciled = false;
+            for (Stencil stencil : mergedStencils) {
+               if (stencil.getId().equals(rule.getStencilId())) {
+                  stenciled = true;
+
+                  updateNotice(stencil, noticeArray, buffer, project.getBuild().getSourceDirectory(), fileFilters);
+                  updateNotice(stencil, noticeArray, buffer, project.getBuild().getScriptSourceDirectory(), fileFilters);
+
+                  if (includeResources) {
+                     for (Resource resource : project.getBuild().getResources()) {
+                        updateNotice(stencil, noticeArray, buffer, resource.getDirectory(), fileFilters);
+                     }
+                  }
+
+                  if (includeTests) {
+                     updateNotice(stencil, noticeArray, buffer, project.getBuild().getTestSourceDirectory(), fileFilters);
+
+                     if (includeResources) {
+                        for (Resource testResource : project.getBuild().getTestResources()) {
+                           updateNotice(stencil, noticeArray, buffer, testResource.getDirectory(), fileFilters);
+                        }
+                     }
+                  }
+
+                  break;
+               }
+            }
+
+            if (!stenciled) {
+               throw new MojoExecutionException("No stencil found with id(" + rule.getStencilId() + ") for rule(" + rule.getId() + ")");
+            }
          }
       }
    }
 
-   private void updateNotice (Stencil stencil, String[] noticeArray, long noticeModTime, char[] buffer, String directoryPath, FileFilter... fileFilters)
+   private void updateNotice (Stencil stencil, String[] noticeArray, char[] buffer, String directoryPath, FileFilter... fileFilters)
       throws MojoExecutionException {
 
       File tempFile;
@@ -239,7 +245,8 @@ public class SourceNoticeMojo extends AbstractMojo {
          }
       }
       catch (IOException ioException) {
-         throw new MojoExecutionException("Unable to acquire the notice file(" + noticePath + ")", ioException);
+
+         return null;
       }
 
       lineArray = new String[lineList.size()];
