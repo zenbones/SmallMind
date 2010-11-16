@@ -190,7 +190,6 @@ public abstract class HibernateDao<I extends Serializable & Comparable<I>, D ext
       }
 
       if (nextDao != null) {
-
          nextDao.delete(durableClass, durable);
       }
    }
