@@ -32,26 +32,23 @@ import java.lang.reflect.Modifier;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.util.Arrays;
+import java.util.concurrent.atomic.AtomicReference;
 import org.smallmind.persistence.Durable;
 import org.smallmind.persistence.Identifier;
 import org.smallmind.persistence.statistics.StatSource;
 
 public abstract class AbstractORMDao<I extends Serializable & Comparable<I>, D extends Durable<I>> implements ORMDao<I, D> {
 
-   private TypeInference idTypeInference;
-   private TypeInference durableTypeInference;
+   private TypeInference idTypeInference = new TypeInference();
+   private TypeInference durableTypeInference = new TypeInference();
+   private AtomicReference<Method> fromStringMethodRef = new AtomicReference<Method>();
 
    public AbstractORMDao () {
 
       Class currentClass = this.getClass();
-
-      idTypeInference = new TypeInference();
-      durableTypeInference = new TypeInference();
+      Type superType;
 
       do {
-
-         Type superType;
-
          if (((superType = currentClass.getGenericSuperclass()) != null) && (superType instanceof ParameterizedType)) {
 
             Type[] parameterTypes;
@@ -130,9 +127,13 @@ public abstract class AbstractORMDao<I extends Serializable & Comparable<I>, D e
 
             Method fromStringMethod;
 
-            fromStringMethod = idClass.getMethod("fromString", String.class);
-            if (!Modifier.isStatic(fromStringMethod.getModifiers())) {
-               throw new ORMInitializationException("The fromString() method in the identifier class(%s) needs to be declared static", idClass.getName());
+            if ((fromStringMethod = fromStringMethodRef.get()) == null) {
+               fromStringMethod = idClass.getMethod("fromString", String.class);
+               if (!Modifier.isStatic(fromStringMethod.getModifiers())) {
+                  throw new ORMInitializationException("The fromString() method in the identifier class(%s) needs to be declared static", idClass.getName());
+               }
+
+               fromStringMethodRef.compareAndSet(null, fromStringMethod);
             }
 
             return idClass.cast(fromStringMethod.invoke(null, value));
