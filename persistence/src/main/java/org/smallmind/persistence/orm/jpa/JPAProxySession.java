@@ -24,11 +24,10 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.persistence.orm.jdo;
+package org.smallmind.persistence.orm.jpa;
 
-import javax.jdo.PersistenceManager;
-import javax.jdo.PersistenceManagerFactory;
-import javax.jdo.Transaction;
+import javax.persistence.EntityManager;
+import javax.persistence.EntityManagerFactory;
 import org.smallmind.persistence.orm.ProxySession;
 import org.smallmind.persistence.orm.ProxyTransaction;
 import org.smallmind.persistence.orm.SessionEnforcementException;
@@ -37,10 +36,10 @@ import org.smallmind.persistence.orm.aop.NonTransactionalState;
 import org.smallmind.persistence.orm.aop.RollbackAwareBoundarySet;
 import org.smallmind.persistence.orm.aop.TransactionalState;
 
-public class JDOProxySession extends ProxySession {
+public class JPAProxySession extends ProxySession {
 
-   private final ThreadLocal<PersistenceManager> managerThreadLocal = new ThreadLocal<PersistenceManager>();
-   private final ThreadLocal<JDOProxyTransaction> transactionThreadLocal = new ThreadLocal<JDOProxyTransaction>();
+   private final ThreadLocal<EntityManager> managerThreadLocal = new ThreadLocal<EntityManager>();
+   private final ThreadLocal<JPAProxyTransaction> transactionThreadLocal = new ThreadLocal<JPAProxyTransaction>();
    private final ThreadLocal<Boolean> boundaryOverrideThreadLocal = new ThreadLocal<Boolean>() {
 
       protected Boolean initialValue () {
@@ -49,13 +48,13 @@ public class JDOProxySession extends ProxySession {
       }
    };
 
-   private PersistenceManagerFactory persistenceManagerFactory;
+   private EntityManagerFactory entityManagerFactory;
 
-   public JDOProxySession (String dataSourceKey, PersistenceManagerFactory persistenceManagerFactor, boolean enforceBoundary, boolean willCascade) {
+   public JPAProxySession (String dataSourceKey, EntityManagerFactory entityManagerFactory, boolean enforceBoundary, boolean willCascade) {
 
       super(dataSourceKey, enforceBoundary, willCascade);
 
-      this.persistenceManagerFactory = persistenceManagerFactor;
+      this.entityManagerFactory = entityManagerFactory;
    }
 
    public void setIgnoreBoundaryEnforcement (boolean ignoreBoundaryEnforcement) {
@@ -63,20 +62,16 @@ public class JDOProxySession extends ProxySession {
       boundaryOverrideThreadLocal.set(ignoreBoundaryEnforcement);
    }
 
-   public JDOProxyTransaction beginTransaction () {
+   public JPAProxyTransaction beginTransaction () {
 
-      JDOProxyTransaction proxyTransaction;
-      Transaction transaction;
+      JPAProxyTransaction proxyTransaction;
 
       if ((proxyTransaction = transactionThreadLocal.get()) == null) {
 
-         PersistenceManager persistenceManager = getPersistenceManager();
+         EntityManager entityManager = getEntityManager();
 
          if ((proxyTransaction = transactionThreadLocal.get()) == null) {
-            if (!(transaction = persistenceManager.currentTransaction()).isActive()) {
-               transaction.begin();
-            }
-            proxyTransaction = new JDOProxyTransaction(this, transaction);
+            proxyTransaction = new JPAProxyTransaction(this, entityManager.getTransaction());
             transactionThreadLocal.set(proxyTransaction);
          }
       }
@@ -91,28 +86,31 @@ public class JDOProxySession extends ProxySession {
 
    public void flush () {
 
-      getPersistenceManager().flush();
+      EntityManager entityManager;
+
+      (entityManager = getEntityManager()).flush();
+      entityManager.clear();
    }
 
    public boolean isClosed () {
 
-      PersistenceManager persistenceManager;
+      EntityManager entityManager;
 
-      return ((persistenceManager = managerThreadLocal.get()) == null) || (persistenceManager.isClosed());
+      return ((entityManager = managerThreadLocal.get()) == null) || (!entityManager.isOpen());
    }
 
    public Object getNativeSession () {
 
-      return getPersistenceManager();
+      return getEntityManager();
    }
 
-   public PersistenceManager getPersistenceManager () {
+   public EntityManager getEntityManager () {
 
-      PersistenceManager persistenceManager;
+      EntityManager entityManager;
 
-      if ((persistenceManager = managerThreadLocal.get()) == null) {
-         persistenceManager = persistenceManagerFactory.getPersistenceManager();
-         managerThreadLocal.set(persistenceManager);
+      if ((entityManager = managerThreadLocal.get()) == null) {
+         entityManager = entityManagerFactory.createEntityManager();
+         managerThreadLocal.set(entityManager);
 
          RollbackAwareBoundarySet<ProxyTransaction> transactionSet;
          BoundarySet<ProxySession> sessionSet;
@@ -129,16 +127,16 @@ public class JDOProxySession extends ProxySession {
          }
       }
 
-      return persistenceManager;
+      return entityManager;
    }
 
    public void close () {
 
-      PersistenceManager persistenceManager;
+      EntityManager entityManager;
 
       try {
-         if ((persistenceManager = managerThreadLocal.get()) != null) {
-            persistenceManager.close();
+         if ((entityManager = managerThreadLocal.get()) != null) {
+            entityManager.close();
          }
       }
       finally {

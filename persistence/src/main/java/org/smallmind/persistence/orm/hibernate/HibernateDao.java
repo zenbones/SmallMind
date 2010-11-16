@@ -124,7 +124,7 @@ public abstract class HibernateDao<I extends Serializable & Comparable<I>, D ext
       return new ScrollIterator<D>(proxySession.getSession().createCriteria(getManagedClass()).setFetchSize(fetchSize).scroll(ScrollMode.SCROLL_INSENSITIVE), getManagedClass());
    }
 
-   public Iterable<D> scrollById (final Long greaterThan, final int fetchSize) {
+   public Iterable<D> scrollById (final I greaterThan, final int fetchSize) {
 
       return scrollByCriteria(new CriteriaDetails() {
 
@@ -190,7 +190,6 @@ public abstract class HibernateDao<I extends Serializable & Comparable<I>, D ext
       }
 
       if (nextDao != null) {
-
          nextDao.delete(durableClass, durable);
       }
    }

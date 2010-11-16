@@ -35,6 +35,7 @@ import javax.jdo.Query;
 import org.smallmind.nutsnbolts.util.IterableIterator;
 import org.smallmind.persistence.Durable;
 import org.smallmind.persistence.VectoredDao;
+import org.smallmind.persistence.orm.ProxySession;
 import org.smallmind.persistence.orm.WaterfallORMDao;
 
 public abstract class JDODao<I extends Serializable & Comparable<I>, D extends Durable<I>> extends WaterfallORMDao<I, D> {
@@ -53,6 +54,16 @@ public abstract class JDODao<I extends Serializable & Comparable<I>, D extends D
       this.proxySession = proxySession;
    }
 
+   public String getDataSource () {
+
+      return proxySession.getDataSource();
+   }
+
+   public ProxySession getSession () {
+
+      return proxySession;
+   }
+
    public I getId (D object) {
 
       return getIdClass().cast(proxySession.getPersistenceManager().getObjectId(object));
@@ -66,6 +77,7 @@ public abstract class JDODao<I extends Serializable & Comparable<I>, D extends D
    public D get (Class<D> durableClass, I id) {
 
       D durable;
+      Object persistedObject;
       VectoredDao<I, D> nextDao = getNextDao();
 
       if (nextDao != null) {
@@ -75,7 +87,9 @@ public abstract class JDODao<I extends Serializable & Comparable<I>, D extends D
          }
       }
 
-      if ((durable = durableClass.cast(proxySession.getPersistenceManager().getObjectId(id))) != null) {
+      if ((persistedObject = proxySession.getPersistenceManager().getObjectId(id)) != null) {
+         durable = durableClass.cast(persistedObject);
+
          if (nextDao != null) {
 
             return nextDao.persist(durableClass, durable);
@@ -124,6 +138,7 @@ public abstract class JDODao<I extends Serializable & Comparable<I>, D extends D
       persistentDurable = durableClass.cast(proxySession.getPersistenceManager().makePersistent(durable));
 
       if (nextDao != null) {
+
          return nextDao.persist(durableClass, persistentDurable);
       }
 
