@@ -53,6 +53,7 @@
             hibernate.dialect=${hibernate.dialect}
             hibernate.hbm2ddl.auto=${hibernate.hbm2ddl.auto}
             hibernate.bytecode.use_reflection_optimizer=true
+            hibernate.id.new_generator_mappings=true
             hibernate.connection.isolation=${hibernate.connection.isolation}
             hibernate.connection.autocommit=${hibernate.connection.autocommit}
             hibernate.jdbc.use_scrollable_resultset=true
