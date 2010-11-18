@@ -45,7 +45,7 @@ import javax.crypto.NoSuchPaddingException;
 
 public class EncryptionUtilities {
 
-   public static final HashMap<HashAlgorithm, MessageDigest> DIGEST_MAP = new HashMap<HashAlgorithm, MessageDigest>();
+   private static final HashMap<HashAlgorithm, MessageDigest> DIGEST_MAP = new HashMap<HashAlgorithm, MessageDigest>();
 
    public static enum SecurityAlgorithm {
 
