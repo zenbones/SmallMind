@@ -54,7 +54,19 @@ public class EncryptionUtilities {
 
    public static enum HashAlgorithm {
 
-      MD5
+      MD5("MD5"), SHA_1("SHA-1");
+
+      private String algorithmName;
+
+      private HashAlgorithm (String algorithmName) {
+
+         this.algorithmName = algorithmName;
+      }
+
+      public String getAlgorithmName () {
+
+         return algorithmName;
+      }
    }
 
    public static String hexEncode (byte[] bytes) {
@@ -91,7 +103,7 @@ public class EncryptionUtilities {
 
       synchronized (DIGEST_MAP) {
          if ((messageDigest = DIGEST_MAP.get(algorithm)) == null) {
-            messageDigest = MessageDigest.getInstance(algorithm.name());
+            messageDigest = MessageDigest.getInstance(algorithm.getAlgorithmName());
             DIGEST_MAP.put(algorithm, messageDigest);
          }
       }
