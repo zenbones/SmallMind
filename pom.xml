@@ -14,6 +14,7 @@
    </properties>
    <modules>
       <module>license</module>
+      <module>validation</module>
       <module>nutsnbolts</module>
       <module>scribe</module>
       <module>foundation</module>
