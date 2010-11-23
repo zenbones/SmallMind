@@ -85,11 +85,11 @@ public class ContextFactory {
       return null;
    }
 
-   public static Context getContext (Class<? extends Context> contextClass)
+   public static <C extends Context> C getContext (Class<C> contextClass)
       throws ContextException {
 
       ContextStackThreadLocal threadLocal;
-      Context context;
+      C context;
 
       synchronized (CONTEXT_MAP) {
          if ((threadLocal = CONTEXT_MAP.get(contextClass)) == null) {
@@ -97,7 +97,7 @@ public class ContextFactory {
          }
       }
 
-      if ((context = threadLocal.get().peek()) == null) {
+      if ((context = (C)threadLocal.get().peek()) == null) {
          throw new ContextException("Context(%s) has not been instantiated", contextClass);
       }
 
@@ -109,7 +109,7 @@ public class ContextFactory {
       return removeContext(context.getClass());
    }
 
-   public static Context removeContext (Class<? extends Context> contextClass) {
+   public static <C extends Context> C removeContext (Class<C> contextClass) {
 
       ContextStackThreadLocal threadLocal;
 
@@ -118,7 +118,7 @@ public class ContextFactory {
       }
 
       if (threadLocal != null) {
-         return threadLocal.get().pop();
+         return (C)threadLocal.get().pop();
       }
 
       return null;
