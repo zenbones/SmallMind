@@ -26,9 +26,9 @@
  */
 package org.smallmind.nutsnbolts.context;
 
-import org.smallmind.nutsnbolts.lang.FormattedException;
+import org.smallmind.nutsnbolts.lang.FormattedRuntimeException;
 
-public class ContextException extends FormattedException {
+public class ContextException extends FormattedRuntimeException {
 
    public ContextException () {
 
