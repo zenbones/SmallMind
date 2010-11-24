@@ -85,6 +85,20 @@ public class ContextFactory {
       return null;
    }
 
+   public boolean containsContext (Class<? extends Context> contextClass) {
+
+      ContextStackThreadLocal threadLocal;
+
+      synchronized (CONTEXT_MAP) {
+         if ((threadLocal = CONTEXT_MAP.get(contextClass)) == null) {
+
+            return false;
+         }
+
+         return (!threadLocal.get().isEmpty());
+      }
+   }
+
    public static <C extends Context> C getContext (Class<C> contextClass)
       throws ContextException {
 
