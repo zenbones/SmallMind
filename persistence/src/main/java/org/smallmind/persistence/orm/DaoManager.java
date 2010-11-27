@@ -48,10 +48,12 @@ public class DaoManager implements StaticManager {
       DAO_MAP_LOCAL.get().put(durableClass, ormDao);
    }
 
-   public static Class<? extends Durable> findDurableClass (String simpleName) {
+   public static Class<? extends Durable> findDurableClass (String name) {
+
+      boolean isSimple = name.indexOf('.') < 0;
 
       for (Class<? extends Durable> durableClass : DAO_MAP_LOCAL.get().keySet()) {
-         if (durableClass.getSimpleName().equals(simpleName)) {
+         if ((isSimple) ? durableClass.getSimpleName().equals(name) : durableClass.getName().equals(name)) {
 
             return durableClass;
          }
@@ -60,11 +62,11 @@ public class DaoManager implements StaticManager {
       return null;
    }
 
-   public static ORMDao get (String simpleName) {
+   public static ORMDao get (String name) {
 
       Class<? extends Durable> durableClass;
 
-      if ((durableClass = findDurableClass(simpleName)) != null) {
+      if ((durableClass = findDurableClass(name)) != null) {
 
          return DAO_MAP_LOCAL.get().get(durableClass);
       }
