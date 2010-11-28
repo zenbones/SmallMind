@@ -47,6 +47,16 @@ public class ContextStack {
       contextList.addFirst(context);
    }
 
+   public synchronized void set (Context context) {
+
+      if (contextList.isEmpty()) {
+         contextList.addFirst(context);
+      }
+      else {
+         contextList.set(0, context);
+      }
+   }
+
    public synchronized Context peek () {
 
       if (contextList.isEmpty()) {

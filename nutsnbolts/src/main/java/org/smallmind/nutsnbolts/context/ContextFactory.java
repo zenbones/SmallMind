@@ -46,7 +46,7 @@ public class ContextFactory {
       return !threadLocal.get().isEmpty();
    }
 
-   public static void setContext (Context context) {
+   public static void pushContext (Context context) {
 
       ContextStackThreadLocal threadLocal;
 
@@ -57,6 +57,19 @@ public class ContextFactory {
       }
 
       threadLocal.get().push(context);
+   }
+
+   public static void setContext (Context context) {
+
+      ContextStackThreadLocal threadLocal;
+
+      synchronized (CONTEXT_MAP) {
+         if ((threadLocal = CONTEXT_MAP.get(context.getClass())) == null) {
+            CONTEXT_MAP.put(context.getClass(), threadLocal = new ContextStackThreadLocal());
+         }
+      }
+
+      threadLocal.get().set(context);
    }
 
    public static Context[] getExpectedContexts (Class<?> expectingClass)
@@ -118,12 +131,12 @@ public class ContextFactory {
       return context;
    }
 
-   public static Context removeContext (Context context) {
+   public static Context popContext (Context context) {
 
-      return removeContext(context.getClass());
+      return popContext(context.getClass());
    }
 
-   public static <C extends Context> C removeContext (Class<C> contextClass) {
+   public static <C extends Context> C popContext (Class<C> contextClass) {
 
       ContextStackThreadLocal threadLocal;
 
