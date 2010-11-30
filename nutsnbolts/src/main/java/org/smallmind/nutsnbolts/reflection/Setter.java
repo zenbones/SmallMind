@@ -46,7 +46,7 @@ public class Setter {
 
       attributeName = Character.toLowerCase(method.getName().charAt(3)) + method.getName().substring(4);
 
-      if (method.getReturnType() != Void.class) {
+      if (!(method.getReturnType().equals(Void.class) || method.getReturnType().equals(void.class))) {
          throw new ReflectionContractException("Setter for attribute (%s) must return void", attributeName);
       }
 
