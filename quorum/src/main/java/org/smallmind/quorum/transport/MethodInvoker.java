@@ -79,7 +79,7 @@ public class MethodInvoker {
 
       if (invocationSignal.containsContexts()) {
          for (Context context : invocationSignal.getContexts()) {
-            ContextFactory.setContext(context);
+            ContextFactory.pushContext(context);
          }
       }
 
@@ -97,7 +97,7 @@ public class MethodInvoker {
       finally {
          if (invocationSignal.containsContexts()) {
             for (Context context : invocationSignal.getContexts()) {
-               ContextFactory.removeContext(context);
+               ContextFactory.popContext(context);
             }
          }
       }
