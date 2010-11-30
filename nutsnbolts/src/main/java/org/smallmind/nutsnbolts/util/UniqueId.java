@@ -64,7 +64,7 @@ public class UniqueId implements Comparable<UniqueId> {
       byte[] macAddress;
 
       try {
-         if ((macAddress = NetworkInterface.getByInetAddress(InetAddress.getLocalHost()).getHardwareAddress()) == null) {
+         if (((macAddress = NetworkInterface.getByInetAddress(InetAddress.getLocalHost()).getHardwareAddress()) == null) || (macAddress.length == 0)) {
             RANDOM.nextBytes(macAddress = new byte[6]);
          }
       }
