@@ -26,10 +26,11 @@
  */
 package org.smallmind.nutsnbolts.reflection;
 
+import java.io.Serializable;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 
-public class Getter {
+public class Getter implements Serializable {
 
    private static final Object[] NO_PARAMETERS = new Object[0];
 

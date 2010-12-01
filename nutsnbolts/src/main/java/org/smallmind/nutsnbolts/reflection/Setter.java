@@ -26,10 +26,11 @@
  */
 package org.smallmind.nutsnbolts.reflection;
 
+import java.io.Serializable;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 
-public class Setter {
+public class Setter implements Serializable {
 
    private Class attributeClass;
    private Method method;
