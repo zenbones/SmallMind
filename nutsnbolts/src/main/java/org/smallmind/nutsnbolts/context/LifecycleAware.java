@@ -26,59 +26,9 @@
  */
 package org.smallmind.nutsnbolts.context;
 
-import java.util.LinkedList;
+public interface LifecycleAware {
 
-public class ContextStack {
+   public abstract void beforePush ();
 
-   private final LinkedList<Context> contextList;
-
-   public ContextStack () {
-
-      contextList = new LinkedList<Context>();
-   }
-
-   public synchronized boolean isEmpty () {
-
-      return contextList.isEmpty();
-   }
-
-   public synchronized void push (Context context) {
-
-      if (context instanceof LifecycleAware) {
-         ((LifecycleAware)context).beforePush();
-      }
-
-      contextList.addFirst(context);
-   }
-
-   public synchronized void set (Context context) {
-
-      pop();
-      push(context);
-   }
-
-   public synchronized Context peek () {
-
-      if (contextList.isEmpty()) {
-         return null;
-      }
-
-      return contextList.getFirst();
-   }
-
-   public synchronized Context pop () {
-
-      if (!contextList.isEmpty()) {
-
-         Context context = contextList.removeFirst();
-
-         if (context instanceof LifecycleAware) {
-            ((LifecycleAware)context).afterPop();
-         }
-
-         return context;
-      }
-
-      return null;
-   }
+   public abstract void afterPop ();
 }
