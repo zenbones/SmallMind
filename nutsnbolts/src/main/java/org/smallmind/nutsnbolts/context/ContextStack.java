@@ -42,13 +42,13 @@ public class ContextStack {
       return contextList.isEmpty();
    }
 
-   public synchronized void push (Context context) {
+   public synchronized Context peek () {
 
-      if (context instanceof LifecycleAware) {
-         ((LifecycleAware)context).beforePush();
+      if (contextList.isEmpty()) {
+         return null;
       }
 
-      contextList.addFirst(context);
+      return contextList.getFirst();
    }
 
    public synchronized void set (Context context) {
@@ -57,13 +57,13 @@ public class ContextStack {
       push(context);
    }
 
-   public synchronized Context peek () {
+   public synchronized void push (Context context) {
 
-      if (contextList.isEmpty()) {
-         return null;
+      if (context instanceof LifecycleAware) {
+         ((LifecycleAware)context).beforePush();
       }
 
-      return contextList.getFirst();
+      contextList.addFirst(context);
    }
 
    public synchronized Context pop () {

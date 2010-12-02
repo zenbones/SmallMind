@@ -46,58 +46,6 @@ public class ContextFactory {
       return !threadLocal.get().isEmpty();
    }
 
-   public static void pushContext (Context context) {
-
-      ContextStackThreadLocal threadLocal;
-
-      synchronized (CONTEXT_MAP) {
-         if ((threadLocal = CONTEXT_MAP.get(context.getClass())) == null) {
-            CONTEXT_MAP.put(context.getClass(), threadLocal = new ContextStackThreadLocal());
-         }
-      }
-
-      threadLocal.get().push(context);
-   }
-
-   public static void setContext (Context context) {
-
-      ContextStackThreadLocal threadLocal;
-
-      synchronized (CONTEXT_MAP) {
-         if ((threadLocal = CONTEXT_MAP.get(context.getClass())) == null) {
-            CONTEXT_MAP.put(context.getClass(), threadLocal = new ContextStackThreadLocal());
-         }
-      }
-
-      threadLocal.get().set(context);
-   }
-
-   public static Context[] getExpectedContexts (Class<?> expectingClass)
-      throws ContextException {
-
-      ExpectedContexts contextAnnotation;
-      Context[] expectedContexts;
-      Class<? extends Context>[] contextClasses;
-
-      if ((contextAnnotation = expectingClass.getAnnotation(ExpectedContexts.class)) != null) {
-         try {
-            contextClasses = contextAnnotation.value();
-
-            expectedContexts = new Context[contextClasses.length];
-            for (int count = 0; count < contextClasses.length; count++) {
-               expectedContexts[count] = getContext(contextClasses[count]);
-            }
-
-            return expectedContexts;
-         }
-         catch (Exception exception) {
-            throw new ContextException(exception);
-         }
-      }
-
-      return null;
-   }
-
    public boolean containsContext (Class<? extends Context> contextClass) {
 
       ContextStackThreadLocal threadLocal;
@@ -129,6 +77,58 @@ public class ContextFactory {
       }
 
       return context;
+   }
+
+   public static Context[] getExpectedContexts (Class<?> expectingClass)
+      throws ContextException {
+
+      ExpectedContexts contextAnnotation;
+      Context[] expectedContexts;
+      Class<? extends Context>[] contextClasses;
+
+      if ((contextAnnotation = expectingClass.getAnnotation(ExpectedContexts.class)) != null) {
+         try {
+            contextClasses = contextAnnotation.value();
+
+            expectedContexts = new Context[contextClasses.length];
+            for (int count = 0; count < contextClasses.length; count++) {
+               expectedContexts[count] = getContext(contextClasses[count]);
+            }
+
+            return expectedContexts;
+         }
+         catch (Exception exception) {
+            throw new ContextException(exception);
+         }
+      }
+
+      return null;
+   }
+
+   public static void pushContext (Context context) {
+
+      ContextStackThreadLocal threadLocal;
+
+      synchronized (CONTEXT_MAP) {
+         if ((threadLocal = CONTEXT_MAP.get(context.getClass())) == null) {
+            CONTEXT_MAP.put(context.getClass(), threadLocal = new ContextStackThreadLocal());
+         }
+      }
+
+      threadLocal.get().push(context);
+   }
+
+   public static void setContext (Context context) {
+
+      ContextStackThreadLocal threadLocal;
+
+      synchronized (CONTEXT_MAP) {
+         if ((threadLocal = CONTEXT_MAP.get(context.getClass())) == null) {
+            CONTEXT_MAP.put(context.getClass(), threadLocal = new ContextStackThreadLocal());
+         }
+      }
+
+      threadLocal.get().set(context);
    }
 
    public static Context popContext (Context context) {
