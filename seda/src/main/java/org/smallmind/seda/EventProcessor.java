@@ -27,6 +27,7 @@
 package org.smallmind.seda;
 
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.atomic.AtomicBoolean;
 import org.smallmind.scribe.pen.LoggerManager;
 
 public class EventProcessor<I extends Event, O extends Event> implements Runnable {
@@ -35,7 +36,7 @@ public class EventProcessor<I extends Event, O extends Event> implements Runnabl
    private SedaConfiguration sedaConfiguration;
    private EventQueue<I> eventQueue;
    private WorkMonitor monitor;
-   private boolean stopped = false;
+   private AtomicBoolean stopped = new AtomicBoolean(false);
 
    public EventProcessor (EventQueue<I> eventQueue, DurationMonitor durationMonitor, SedaConfiguration sedaConfiguration) {
 
@@ -62,13 +63,13 @@ public class EventProcessor<I extends Event, O extends Event> implements Runnabl
 
    public boolean isRunning () {
 
-      return !stopped;
+      return !stopped.get();
    }
 
    protected void stop ()
       throws InterruptedException {
 
-      stopped = true;
+      stopped.compareAndSet(false, true);
       exitLatch.await();
    }
 
@@ -79,7 +80,7 @@ public class EventProcessor<I extends Event, O extends Event> implements Runnabl
 
       try {
          stopWatch.click();
-         while (!stopped) {
+         while (!stopped.get()) {
             if ((inputEvent = eventQueue.poll(sedaConfiguration.getQueuePollTimeout(), sedaConfiguration.getQueuePollTimeUnit())) != null) {
                monitor.addIdleTime(stopWatch.click());
                //TODO: HandleEvent
@@ -91,7 +92,7 @@ public class EventProcessor<I extends Event, O extends Event> implements Runnabl
          }
       }
       catch (InterruptedException interruptedException) {
-         stopped = true;
+         stopped.compareAndSet(false, true);
          LoggerManager.getLogger(EventProcessor.class).error(interruptedException);
       }
       finally {
