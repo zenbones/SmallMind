@@ -9,7 +9,7 @@
    <artifactId>spark-tanukisoft-integration</artifactId>
    <packaging>jar</packaging>
    <name>Spark-Tanukisoft-Integration</name>
-   <description>Tanukisoft wrapper integrations</description>
+   <description>Tanukisoft Wrapper Integration</description>
    <dependencies>
       <dependency>
          <groupId>org.smallmind</groupId>

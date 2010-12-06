@@ -8,7 +8,7 @@
    </parent>
    <artifactId>spark-tanukisoft-mojo</artifactId>
    <name>Spark-Tanukisoft-Mojo</name>
-   <description>Tanukisoft wrapper maven plugin</description>
+   <description>Tanukisoft Wrapper Maven Plugin</description>
    <packaging>maven-plugin</packaging>
    <dependencies>
       <dependency>
