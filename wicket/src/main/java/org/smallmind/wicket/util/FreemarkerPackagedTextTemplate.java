@@ -53,7 +53,7 @@ public class FreemarkerPackagedTextTemplate extends TextTemplate {
       if ((freemarkerConf = CONFIG_MAP.get(clazz)) == null) {
          freemarkerConf = new Configuration();
          freemarkerConf.setTagSyntax(freemarker.template.Configuration.SQUARE_BRACKET_TAG_SYNTAX);
-         freemarkerConf.setTemplateLoader(new ClassPathTemplateLoader(clazz));
+         freemarkerConf.setTemplateLoader(new ClassPathTemplateLoader(clazz, true));
 
          CONFIG_MAP.put(clazz, freemarkerConf);
       }

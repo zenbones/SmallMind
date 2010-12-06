@@ -460,7 +460,7 @@ public class GenerateWrapperMojo extends AbstractMojo {
       freemarkerConf.setTemplateLoader(new ClassPathTemplateLoader(GenerateWrapperMojo.class));
 
       try {
-         freemarkerTemplate = freemarkerConf.getTemplate(templatePath.startsWith("/") ? templatePath : "/" + templatePath);
+         freemarkerTemplate = freemarkerConf.getTemplate(templatePath);
       }
       catch (IOException ioException) {
          throw new MojoExecutionException(String.format("Unable to load template(%s) for translation", destinationName), ioException);
