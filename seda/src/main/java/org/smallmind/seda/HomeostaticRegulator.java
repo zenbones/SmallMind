@@ -94,7 +94,7 @@ public class HomeostaticRegulator<I extends Event, O extends Event> implements R
                if (sedaConfiguration.getActiveUpShiftPercentage() >= activePercentage) {
                   threadPool.increase();
                }
-               if (sedaConfiguration.getInactiveDownShiftPercentage() >= idlePercentage) {
+               else if (sedaConfiguration.getInactiveDownShiftPercentage() >= idlePercentage) {
                   threadPool.decrease();
                }
             }
