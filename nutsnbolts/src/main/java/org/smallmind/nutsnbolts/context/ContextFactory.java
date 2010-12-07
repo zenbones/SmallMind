@@ -68,7 +68,7 @@ public class ContextFactory {
          }
       }
 
-      if ((context = (C)threadLocal.get().peek()) == null) {
+      if ((context = contextClass.cast(threadLocal.get().peek())) == null) {
          throw new ContextException("Context(%s) has not been instantiated", contextClass);
       }
 
@@ -141,7 +141,7 @@ public class ContextFactory {
       }
 
       if (threadLocal != null) {
-         return (C)threadLocal.get().pop();
+         return contextClass.cast(threadLocal.get().pop());
       }
 
       return null;
