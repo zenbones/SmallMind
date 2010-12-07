@@ -126,6 +126,16 @@ public class GenerateWrapperMojo extends AbstractMojo {
    private int jvmMaxMemoryMB;
 
    /**
+    * @parameter default-value=""
+    */
+   private String runAs;
+
+   /**
+    * @parameter default-value=""
+    */
+   private String withPassword;
+
+   /**
     * @parameter default-value="java"
     */
    private String javaCommand;
@@ -223,6 +233,14 @@ public class GenerateWrapperMojo extends AbstractMojo {
 
       if (jvmMaxMemoryMB > 0) {
          freemarkerMap.put("jvmMaxMemoryMB", jvmMaxMemoryMB);
+      }
+
+      if (runAs.length() > 0) {
+         freemarkerMap.put("runAs", runAs);
+      }
+
+      if (withPassword.length() > 0) {
+         freemarkerMap.put("withPassword", withPassword);
       }
 
       if (appParameters == null) {

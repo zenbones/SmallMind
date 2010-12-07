@@ -123,3 +123,14 @@ wrapper.ntservice.starttype=AUTO_START
 
 # Allow the service to interact with the desktop.
 wrapper.ntservice.interactive=false
+
+# If a 'runAs' user exists
+[#if runAs?exists]
+wrapper.ntservice.account=${runAs}
+[/#if]
+
+# If 'withPassword' exists
+[#if withPassword?exists]
+wrapper.ntservice.password=${withPassword}
+[/#if]
+
