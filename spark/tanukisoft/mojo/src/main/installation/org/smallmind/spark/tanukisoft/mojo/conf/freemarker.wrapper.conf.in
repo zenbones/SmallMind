@@ -33,6 +33,11 @@ wrapper.java.library.path.1=../lib
 # Java Bits.  On applicable platforms, tells the JVM to run in 32 or 64-bit mode.
 wrapper.java.additional.auto_bits=TRUE
 
+# If a 'umask' has been specified
+[#if umask?exists]
+wrapper.java.umask=${umask}
+[/#if]
+
 # Java Additional Parameters
 [#list jvmArgs as jvmArg]
 wrapper.java.additional.${jvmArg_index + 1}=${jvmArg}

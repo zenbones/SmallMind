@@ -136,6 +136,11 @@ public class GenerateWrapperMojo extends AbstractMojo {
    private String withPassword;
 
    /**
+    * @parameter default-value=""
+    */
+   private String umask;
+
+   /**
     * @parameter default-value="java"
     */
    private String javaCommand;
@@ -241,6 +246,10 @@ public class GenerateWrapperMojo extends AbstractMojo {
 
       if (withPassword.length() > 0) {
          freemarkerMap.put("withPassword", withPassword);
+      }
+
+      if (umask.length() > 0) {
+         freemarkerMap.put("umask", umask);
       }
 
       if (appParameters == null) {
