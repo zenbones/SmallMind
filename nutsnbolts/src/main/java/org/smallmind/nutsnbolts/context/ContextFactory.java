@@ -51,12 +51,8 @@ public class ContextFactory {
       ContextStackThreadLocal threadLocal;
 
       synchronized (CONTEXT_MAP) {
-         if ((threadLocal = CONTEXT_MAP.get(contextClass)) == null) {
 
-            return false;
-         }
-
-         return (!threadLocal.get().isEmpty());
+         return ((threadLocal = CONTEXT_MAP.get(contextClass)) != null) && (!threadLocal.get().isEmpty());
       }
    }
 
