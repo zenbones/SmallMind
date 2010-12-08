@@ -48,7 +48,7 @@ public class ContextFactory {
       return !threadLocal.get().isEmpty();
    }
 
-   public static <C extends Context> void importContexts (Class<C> contextClass, C... contexts) {
+   public static <C extends Context> void importContextHistory (Class<C> contextClass, C... contexts) {
 
       ContextStackThreadLocal threadLocal;
 
@@ -65,7 +65,7 @@ public class ContextFactory {
       }
    }
 
-   public static <C extends Context> C[] exportContexts (Class<C> contextClass) {
+   public static <C extends Context> C[] exportContextHistory (Class<C> contextClass) {
 
       C[] contexts;
       Context context;
@@ -91,6 +91,25 @@ public class ContextFactory {
       contextList.toArray(contexts);
 
       return contexts;
+   }
+
+   public static void clearContextHistory (Class<? extends Context> contextClass) {
+
+      Context context;
+      ContextStackThreadLocal threadLocal;
+      ContextStack contextStack;
+
+      synchronized (CONTEXT_MAP) {
+         threadLocal = CONTEXT_MAP.get(contextClass);
+      }
+
+      if (threadLocal != null) {
+         if ((contextStack = threadLocal.get()) != null) {
+            do {
+               context = contextStack.pop();
+            } while (context != null);
+         }
+      }
    }
 
    public static boolean containsContext (Class<? extends Context> contextClass) {
