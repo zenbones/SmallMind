@@ -33,9 +33,9 @@ public class ContextFactory {
 
    private static final Map<Class<? extends Context>, ContextStackThreadLocal> CONTEXT_MAP = new HashMap<Class<? extends Context>, ContextStackThreadLocal>();
 
-   public static boolean exists (Class<? extends Context> contextClass) {
+   public static <C extends Context> boolean exists (Class<C> contextClass) {
 
-      ContextStackThreadLocal threadLocal;
+      ContextStackThreadLocal<C> threadLocal;
 
       synchronized (CONTEXT_MAP) {
          if ((threadLocal = CONTEXT_MAP.get(contextClass)) == null) {
@@ -46,9 +46,35 @@ public class ContextFactory {
       return !threadLocal.get().isEmpty();
    }
 
-   public boolean containsContext (Class<? extends Context> contextClass) {
+   public static <C extends Context> void setContextStack (ContextStack<C> contextStack) {
 
-      ContextStackThreadLocal threadLocal;
+      ContextStackThreadLocal<C> threadLocal;
+
+      synchronized (CONTEXT_MAP) {
+         if ((threadLocal = CONTEXT_MAP.get(contextStack.getContextClass())) == null) {
+            CONTEXT_MAP.put(contextStack.getContextClass(), threadLocal = new ContextStackThreadLocal<C>(contextStack.getContextClass()));
+         }
+      }
+
+      threadLocal.set(contextStack);
+   }
+
+   public static <C extends Context> ContextStack<C> getContextStack (Class<C> contextClass) {
+
+      ContextStackThreadLocal<C> threadLocal;
+
+      synchronized (CONTEXT_MAP) {
+         if ((threadLocal = CONTEXT_MAP.get(contextClass)) == null) {
+            throw new ContextException("Context(%s) has not been instantiated", contextClass);
+         }
+      }
+
+      return threadLocal.get();
+   }
+
+   public static boolean containsContext (Class<? extends Context> contextClass) {
+
+      ContextStackThreadLocal<? extends Context> threadLocal;
 
       synchronized (CONTEXT_MAP) {
 
@@ -59,7 +85,7 @@ public class ContextFactory {
    public static <C extends Context> C getContext (Class<C> contextClass)
       throws ContextException {
 
-      ContextStackThreadLocal threadLocal;
+      ContextStackThreadLocal<C> threadLocal;
       C context;
 
       synchronized (CONTEXT_MAP) {
@@ -101,30 +127,30 @@ public class ContextFactory {
       return null;
    }
 
-   public static void pushContext (Context context) {
+   public static <C extends Context> void setContext (C context) {
 
-      ContextStackThreadLocal threadLocal;
-
-      synchronized (CONTEXT_MAP) {
-         if ((threadLocal = CONTEXT_MAP.get(context.getClass())) == null) {
-            CONTEXT_MAP.put(context.getClass(), threadLocal = new ContextStackThreadLocal());
-         }
-      }
-
-      threadLocal.get().push(context);
-   }
-
-   public static void setContext (Context context) {
-
-      ContextStackThreadLocal threadLocal;
+      ContextStackThreadLocal<C> threadLocal;
 
       synchronized (CONTEXT_MAP) {
          if ((threadLocal = CONTEXT_MAP.get(context.getClass())) == null) {
-            CONTEXT_MAP.put(context.getClass(), threadLocal = new ContextStackThreadLocal());
+            CONTEXT_MAP.put(context.getClass(), threadLocal = new ContextStackThreadLocal(context.getClass()));
          }
       }
 
       threadLocal.get().set(context);
+   }
+
+   public static <C extends Context> void pushContext (C context) {
+
+      ContextStackThreadLocal<C> threadLocal;
+
+      synchronized (CONTEXT_MAP) {
+         if ((threadLocal = CONTEXT_MAP.get(context.getClass())) == null) {
+            CONTEXT_MAP.put(context.getClass(), threadLocal = new ContextStackThreadLocal(context.getClass()));
+         }
+      }
+
+      threadLocal.get().push(context);
    }
 
    public static Context popContext (Context context) {
@@ -134,7 +160,7 @@ public class ContextFactory {
 
    public static <C extends Context> C popContext (Class<C> contextClass) {
 
-      ContextStackThreadLocal threadLocal;
+      ContextStackThreadLocal<C> threadLocal;
 
       synchronized (CONTEXT_MAP) {
          threadLocal = CONTEXT_MAP.get(contextClass);
@@ -147,12 +173,19 @@ public class ContextFactory {
       return null;
    }
 
-   private static class ContextStackThreadLocal extends InheritableThreadLocal<ContextStack> {
+   private static class ContextStackThreadLocal<C extends Context> extends InheritableThreadLocal<ContextStack<C>> {
+
+      private Class<C> contextClass;
+
+      public ContextStackThreadLocal (Class<C> contextClass) {
+
+         this.contextClass = contextClass;
+      }
 
       @Override
-      protected ContextStack initialValue () {
+      protected ContextStack<C> initialValue () {
 
-         return new ContextStack();
+         return new ContextStack<C>(contextClass);
       }
    }
 }
