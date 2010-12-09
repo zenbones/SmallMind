@@ -7,6 +7,31 @@
    <packaging>pom</packaging>
    <name>Parent</name>
    <description>Parent POM</description>
+   <url>http://www.smallmind.org</url>
+   <licenses>
+      <license>
+         <name>GNU Affero General Public License, Version 3</name>
+         <url>http://www.gnu.org/licenses/</url>
+         <distribution>repo</distribution>
+      </license>
+      <license>
+         <name>GNU Lesser General Public License, Version 3</name>
+         <url>http://www.gnu.org/licenses/</url>
+         <distribution>repo</distribution>
+      </license>
+   </licenses>
+   <scm>
+      <url>https://github.com/zenbones/SmallMind</url>
+      <connection>git@github.com:zenbones/SmallMind.git</connection>
+   </scm>
+   <developers>
+      <developer>
+         <id>david.berkman</id>
+         <name>David Berkman</name>
+         <email>david.berkman@grenadefish.net</email>
+      </developer>
+   </developers>
+
    <properties>
       <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
       <nexus.release.repository.id>nexus</nexus.release.repository.id>
