@@ -46,7 +46,7 @@ public class TargetLicenseMojo extends AbstractMojo {
          MavenProject rootProject = project;
          byte[] buffer = new byte[8192];
 
-         while (!rootProject.isExecutionRoot()) {
+         while (!(rootProject.getParent() == null)) {
             rootProject = rootProject.getParent();
          }
 
