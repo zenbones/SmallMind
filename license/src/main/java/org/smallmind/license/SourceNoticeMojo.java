@@ -20,6 +20,7 @@ import org.smallmind.license.stencil.Stencil;
  * @goal generate-notice-headers
  * @phase process-sources
  * @description Generates and/or replaces notice headers in source files
+ * @threadSafe
  */
 public class SourceNoticeMojo extends AbstractMojo {
 

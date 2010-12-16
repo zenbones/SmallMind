@@ -13,6 +13,7 @@ import org.apache.maven.project.MavenProject;
  * @goal install-license-files
  * @phase prepare-package
  * @description Installs license files for inclusion in distribution artifacts
+ * @threadSafe
  */
 public class TargetLicenseMojo extends AbstractMojo {
 

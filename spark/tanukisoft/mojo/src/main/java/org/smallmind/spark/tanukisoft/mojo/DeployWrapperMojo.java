@@ -41,6 +41,7 @@ import org.apache.maven.project.MavenProject;
  * @goal deploy-wrapper
  * @phase deploy
  * @description Deploys Tanukisoft based os service wrappers
+ * @threadSafe
  */
 public class DeployWrapperMojo extends AbstractMojo {
 

@@ -41,6 +41,7 @@ import org.apache.maven.project.MavenProject;
  * @goal install-wrapper
  * @phase install
  * @description Installs Tanukisoft based os service wrappers
+ * @threadSafe
  */
 public class InstallWrapperMojo extends AbstractMojo {
 

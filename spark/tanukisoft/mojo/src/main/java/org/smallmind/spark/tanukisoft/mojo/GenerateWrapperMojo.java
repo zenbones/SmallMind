@@ -56,6 +56,7 @@ import org.smallmind.nutsnbolts.io.FileIterator;
  * @phase package
  * @requiresDependencyResolution runtime
  * @description Generates Tanukisoft based os service wrappers
+ * @threadSafe
  */
 public class GenerateWrapperMojo extends AbstractMojo {
 

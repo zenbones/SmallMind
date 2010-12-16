@@ -44,6 +44,7 @@ import org.xml.sax.helpers.DefaultHandler;
  * @phase validate
  * @requiresDependencyResolution runtime
  * @description Validates XML against W3C XSD
+ * @threadSafe
  */
 public class XMLValidationMojo extends AbstractMojo {
 
