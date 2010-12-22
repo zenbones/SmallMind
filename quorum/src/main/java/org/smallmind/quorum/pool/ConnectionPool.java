@@ -55,7 +55,7 @@ public class ConnectionPool<C> implements ConnectionInstanceEventListener, Remot
    private boolean testOnConnect = false;
    private boolean testOnAcquire = false;
    private boolean reportLeaseTimeNanos = true;
-   private boolean allowSoftMinSize = true;
+   private boolean allowSoftMinSize = false;
    private long connectionTimeoutMillis = 0;
    private int initialPoolSize = 0;
    private int minPoolSize = 1;
