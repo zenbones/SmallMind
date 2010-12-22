@@ -55,6 +55,7 @@ public class ConnectionPool<C> implements ConnectionInstanceEventListener, Remot
    private boolean testOnConnect = false;
    private boolean testOnAcquire = false;
    private boolean reportLeaseTimeNanos = true;
+   private boolean allowSoftMinSize = true;
    private long connectionTimeoutMillis = 0;
    private int initialPoolSize = 0;
    private int minPoolSize = 1;
@@ -82,6 +83,7 @@ public class ConnectionPool<C> implements ConnectionInstanceEventListener, Remot
 
    public synchronized void startup ()
       throws ConnectionPoolException {
+
       try {
          if (startupFlag.compareAndSet(false, true)) {
             freeConnectionPinQueue = new ConcurrentLinkedQueue<ConnectionPin<C>>();
@@ -198,6 +200,16 @@ public class ConnectionPool<C> implements ConnectionInstanceEventListener, Remot
    public synchronized void setMinPoolSize (int minPoolSize) {
 
       this.minPoolSize = minPoolSize;
+   }
+
+   public boolean isAllowSoftMinSize () {
+
+      return allowSoftMinSize;
+   }
+
+   public void setAllowSoftMinSize (boolean allowSoftMinSize) {
+
+      this.allowSoftMinSize = allowSoftMinSize;
    }
 
    public synchronized int getMaxPoolSize () {
@@ -514,7 +526,7 @@ public class ConnectionPool<C> implements ConnectionInstanceEventListener, Remot
          poolCount.decrementAndGet();
       }
 
-      if (poolCount.get() < minPoolSize) {
+      if ((!allowSoftMinSize) && (poolCount.get() < minPoolSize)) {
          freeConnectionPinQueue.add(createConnectionPin());
       }
    }
