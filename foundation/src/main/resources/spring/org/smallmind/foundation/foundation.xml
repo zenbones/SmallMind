@@ -24,18 +24,18 @@
       <property name="searchSystemEnvironment" value="true"/>
       <property name="locations">
          <list>
-            <value>classpath:com/SMALLMIND/foundation/global.properties</value>
-            <value>classpath:com/SMALLMIND/foundation/database-${SMALLMIND_DATABASE}.properties</value>
-            <value>classpath:com/SMALLMIND/foundation/${SMALLMIND_ENVIRONMENT}/environment.properties</value>
-            <value>classpath:com/SMALLMIND/foundation/${SMALLMIND_ENVIRONMENT}/database-${SMALLMIND_DATABASE}.properties</value>
-            <value>classpath:com/SMALLMIND/${SMALLMIND_MODULE}/application.properties</value>
-            <value>classpath:com/SMALLMIND/${SMALLMIND_MODULE}/database-${SMALLMIND_DATABASE}.properties</value>
-            <value>classpath:com/SMALLMIND/${SMALLMIND_MODULE}/${SMALLMIND_ENVIRONMENT}/application.properties</value>
-            <value>classpath:com/SMALLMIND/${SMALLMIND_MODULE}/${SMALLMIND_ENVIRONMENT}/database-${SMALLMIND_DATABASE}.properties</value>
-            <value>classpath:com/SMALLMIND/${SMALLMIND_MODULE}/${SMALLMIND_PRODUCT}/application.properties</value>
-            <value>classpath:com/SMALLMIND/${SMALLMIND_MODULE}/${SMALLMIND_PRODUCT}/database-${SMALLMIND_DATABASE}.properties</value>
-            <value>classpath:com/SMALLMIND/${SMALLMIND_MODULE}/${SMALLMIND_PRODUCT}/${SMALLMIND_ENVIRONMENT}/application.properties</value>
-            <value>classpath:com/SMALLMIND/${SMALLMIND_MODULE}/${SMALLMIND_PRODUCT}/${SMALLMIND_ENVIRONMENT}/database-${SMALLMIND_DATABASE}.properties</value>
+            <value>classpath:com/smallmind/foundation/global.properties</value>
+            <value>classpath:com/smallmind/foundation/database-${SMALLMIND_DATABASE}.properties</value>
+            <value>classpath:com/smallmind/foundation/${SMALLMIND_ENVIRONMENT}/environment.properties</value>
+            <value>classpath:com/smallmind/foundation/${SMALLMIND_ENVIRONMENT}/database-${SMALLMIND_DATABASE}.properties</value>
+            <value>classpath:com/smallmind/${SMALLMIND_MODULE}/application.properties</value>
+            <value>classpath:com/smallmind/${SMALLMIND_MODULE}/database-${SMALLMIND_DATABASE}.properties</value>
+            <value>classpath:com/smallmind/${SMALLMIND_MODULE}/${SMALLMIND_ENVIRONMENT}/application.properties</value>
+            <value>classpath:com/smallmind/${SMALLMIND_MODULE}/${SMALLMIND_ENVIRONMENT}/database-${SMALLMIND_DATABASE}.properties</value>
+            <value>classpath:com/smallmind/${SMALLMIND_MODULE}/${SMALLMIND_PRODUCT}/application.properties</value>
+            <value>classpath:com/smallmind/${SMALLMIND_MODULE}/${SMALLMIND_PRODUCT}/database-${SMALLMIND_DATABASE}.properties</value>
+            <value>classpath:com/smallmind/${SMALLMIND_MODULE}/${SMALLMIND_PRODUCT}/${SMALLMIND_ENVIRONMENT}/application.properties</value>
+            <value>classpath:com/smallmind/${SMALLMIND_MODULE}/${SMALLMIND_PRODUCT}/${SMALLMIND_ENVIRONMENT}/database-${SMALLMIND_DATABASE}.properties</value>
             <value>file:${user.home}/.m2/local.properties</value>
             <value>file:${user.home}/.m2/database-${SMALLMIND_DATABASE}.properties</value>
          </list>
