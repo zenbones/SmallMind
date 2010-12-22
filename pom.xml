@@ -32,6 +32,28 @@
       </developer>
    </developers>
 
+   <profiles>
+      <profile>
+         <id>javadoc</id>
+         <build>
+            <plugins>
+               <plugin>
+                  <groupId>org.apache.maven.plugins</groupId>
+                  <artifactId>maven-javadoc-plugin</artifactId>
+                  <executions>
+                     <execution>
+                        <id>attach-javadoc</id>
+                        <goals>
+                           <goal>aggregate-jar</goal>
+                        </goals>
+                     </execution>
+                  </executions>
+               </plugin>
+            </plugins>
+         </build>
+      </profile>
+   </profiles>
+
    <properties>
       <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
       <nexus.release.repository.id>nexus</nexus.release.repository.id>
@@ -322,6 +344,11 @@
                <groupId>org.apache.maven.plugins</groupId>
                <artifactId>maven-compiler-plugin</artifactId>
                <version>2.3.2</version>
+            </plugin>
+            <plugin>
+               <groupId>org.apache.maven.plugins</groupId>
+               <artifactId>maven-javadoc-plugin</artifactId>
+               <version>2.7</version>
             </plugin>
             <plugin>
                <groupId>org.codehaus.mojo</groupId>
