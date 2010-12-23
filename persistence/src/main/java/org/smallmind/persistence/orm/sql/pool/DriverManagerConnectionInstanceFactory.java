@@ -33,7 +33,7 @@ import org.smallmind.quorum.pool.ConnectionInstance;
 import org.smallmind.quorum.pool.ConnectionInstanceFactory;
 import org.smallmind.quorum.pool.ConnectionPool;
 
-public class DriverManagerConnectionInstanceFactory implements ConnectionInstanceFactory {
+public class DriverManagerConnectionInstanceFactory implements ConnectionInstanceFactory<PooledConnectionInstance> {
 
    private DriverManagerDataSource dataSource;
    private DriverManagerConnectionPoolDataSource pooledDataSource;

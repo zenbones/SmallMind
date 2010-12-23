@@ -65,7 +65,13 @@ public class ConnectionPinManager<C> {
       }
    }
 
-   public ConnectionPin<C> add (long connectionTimeoutMillis, boolean testOnConnect, boolean reportLeaseTimeNanos, int maxIdleTimeSeconds, int maxLeaseTimeSeconds, int unreturnedConnectionTimeoutSeconds)
+   public void initialize (ConnectionPin<C> connectionPin) {
+
+      freeQueue.add(connectionPin.getOriginatingIndex());
+      freeCount.incrementAndGet();
+   }
+
+   public ConnectionPin<C> create (long connectionTimeoutMillis, boolean testOnConnect, boolean reportLeaseTimeNanos, int maxIdleTimeSeconds, int maxLeaseTimeSeconds, int unreturnedConnectionTimeoutSeconds)
       throws Exception {
 
       ConnectionPin<C> connectionPin;
@@ -110,8 +116,8 @@ public class ConnectionPinManager<C> {
       }
 
       try {
-         emptyCount.decrementAndGet();
          connectionPins[index] = connectionPin = new ConnectionPin<C>(connectionPool, index, connectionInstance, reportLeaseTimeNanos, maxIdleTimeSeconds, maxLeaseTimeSeconds, unreturnedConnectionTimeoutSeconds);
+         emptyCount.decrementAndGet();
       }
       finally {
          if (readWriteLock != null) {
@@ -231,7 +237,7 @@ public class ConnectionPinManager<C> {
 
       try {
          for (ConnectionPin<C> connectionPin : connectionPins) {
-            if (connectionPin.contains(connectionInstance)) {
+            if ((connectionPin != null) && connectionPin.contains(connectionInstance)) {
                matchedConnectionPin = connectionPin;
                break;
             }

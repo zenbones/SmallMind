@@ -84,7 +84,7 @@ public class ConnectionPool<C> implements ConnectionInstanceEventListener, Remot
             connectionPinManager = new ConnectionPinManager<C>(this, connectionFactory, maxPoolSize, poolMode.equals(PoolMode.EXPANDING_POOL));
 
             for (int count = 0; count < initialPoolSize; count++) {
-               createConnectionPin();
+               connectionPinManager.initialize(createConnectionPin());
             }
          }
       }
@@ -318,7 +318,7 @@ public class ConnectionPool<C> implements ConnectionInstanceEventListener, Remot
          throw new IllegalStateException("ConnectionPool has been shut down");
       }
 
-      return connectionPinManager.add(connectionTimeoutMillis, testOnConnect, reportLeaseTimeNanos, maxIdleTimeSeconds, maxLeaseTimeSeconds, unreturnedConnectionTimeoutSeconds);
+      return connectionPinManager.create(connectionTimeoutMillis, testOnConnect, reportLeaseTimeNanos, maxIdleTimeSeconds, maxLeaseTimeSeconds, unreturnedConnectionTimeoutSeconds);
    }
 
    private C useConnectionPin ()
