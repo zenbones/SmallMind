@@ -42,13 +42,15 @@ public class ConnectionPin<C> {
    private boolean commissioned = true;
    private boolean reportLeaseTimeNanos;
    private long leaseStartNanos;
+   private Integer originatingIndex;
 
-   public ConnectionPin (ConnectionPool connectionPool, ConnectionInstance<C> connectionInstance, boolean reportLeaseTimeNanos, int maxIdleTimeSeconds, int maxLeaseTimeSeconds, int unreturnedConnectionTimeoutSeconds) {
+   public ConnectionPin (ConnectionPool connectionPool, Integer originatingIndex, ConnectionInstance<C> connectionInstance, boolean reportLeaseTimeNanos, int maxIdleTimeSeconds, int maxLeaseTimeSeconds, int unreturnedConnectionTimeoutSeconds) {
 
       Thread workerThread;
       LinkedList<DeconstructionFuse> fuseList;
 
       this.connectionPool = connectionPool;
+      this.originatingIndex = originatingIndex;
       this.connectionInstance = connectionInstance;
       this.reportLeaseTimeNanos = reportLeaseTimeNanos;
 
@@ -80,6 +82,11 @@ public class ConnectionPin<C> {
       }
    }
 
+   public Integer getOriginatingIndex () {
+
+      return originatingIndex;
+   }
+
    protected void abort () {
 
       if (deconstructionWorker != null) {
@@ -92,7 +99,7 @@ public class ConnectionPin<C> {
       commissioned = false;
    }
 
-   public boolean isComissioned () {
+   public boolean isCommissioned () {
 
       return commissioned;
    }

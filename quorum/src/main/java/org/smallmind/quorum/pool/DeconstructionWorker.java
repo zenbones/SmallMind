@@ -31,11 +31,11 @@ import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-public class DeconstructionWorker implements java.lang.Runnable {
+public class DeconstructionWorker<C> implements java.lang.Runnable {
 
-   private final ConnectionPin connectionPin;
+   private final ConnectionPin<C> connectionPin;
 
-   private ConnectionPool connectionPool;
+   private ConnectionPool<C> connectionPool;
    private CountDownLatch deconstructionLatch;
    private CountDownLatch exitLatch;
    private List<DeconstructionFuse> fuseList;
@@ -44,7 +44,7 @@ public class DeconstructionWorker implements java.lang.Runnable {
    private boolean forced = false;
    private boolean aborted = false;
 
-   public DeconstructionWorker (ConnectionPool connectionPool, ConnectionPin connectionPin, List<DeconstructionFuse> fuseList) {
+   public DeconstructionWorker (ConnectionPool<C> connectionPool, ConnectionPin<C> connectionPin, List<DeconstructionFuse> fuseList) {
 
       Thread fuseThread;
 
