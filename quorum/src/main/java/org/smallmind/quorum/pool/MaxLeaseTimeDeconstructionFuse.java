@@ -36,9 +36,11 @@ public class MaxLeaseTimeDeconstructionFuse extends DeconstructionFuse {
    }
 
    public void free () {
+
    }
 
    public void serve () {
+
    }
 
    public void run () {

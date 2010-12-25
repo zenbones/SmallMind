@@ -82,6 +82,7 @@ public class ConnectionPoolMonitor extends NotificationBroadcasterSupport implem
    }
 
    public void postRegister (Boolean success) {
+
    }
 
    public void preDeregister ()
@@ -92,6 +93,7 @@ public class ConnectionPoolMonitor extends NotificationBroadcasterSupport implem
    }
 
    public void postDeregister () {
+
    }
 
    public void connectionErrorOccurred (ErrorReportingConnectionPoolEvent event) {

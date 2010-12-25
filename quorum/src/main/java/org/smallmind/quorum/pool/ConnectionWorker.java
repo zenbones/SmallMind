@@ -39,12 +39,14 @@ public class ConnectionWorker<C> implements Runnable {
    private CountDownLatch exitLatch;
    private CountDownLatch workerInitLatch;
    private AtomicBoolean finished = new AtomicBoolean(false);
+   private Integer originatingIndex;
    private boolean aborted = false;
 
-   public ConnectionWorker (ConnectionPool<C> connectionPool, ConnectionInstanceFactory<C> connectionFactory, CountDownLatch workerInitLatch) {
+   public ConnectionWorker (ConnectionPool<C> connectionPool, ConnectionInstanceFactory<C> connectionFactory, Integer originatingIndex, CountDownLatch workerInitLatch) {
 
       this.connectionPool = connectionPool;
       this.connectionFactory = connectionFactory;
+      this.originatingIndex = originatingIndex;
       this.workerInitLatch = workerInitLatch;
 
       exitLatch = new CountDownLatch(1);
@@ -86,7 +88,7 @@ public class ConnectionWorker<C> implements Runnable {
       workerInitLatch.countDown();
 
       try {
-         connectionInstance = connectionFactory.createInstance(connectionPool);
+         connectionInstance = connectionFactory.createInstance(connectionPool, originatingIndex);
       }
       catch (InterruptedException interruptedException) {
          aborted = true;

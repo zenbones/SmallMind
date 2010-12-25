@@ -37,7 +37,7 @@ import org.smallmind.quorum.pool.ConnectionInstance;
 import org.smallmind.quorum.pool.ConnectionInstanceFactory;
 import org.smallmind.quorum.pool.ConnectionPool;
 
-public class JavaContextConnectionInstanceFactory implements ConnectionInstanceFactory {
+public class JavaContextConnectionInstanceFactory implements ConnectionInstanceFactory<PooledJavaContext> {
 
    private StorageType storageType;
    private String contextPath;
@@ -79,7 +79,7 @@ public class JavaContextConnectionInstanceFactory implements ConnectionInstanceF
       return rawContext;
    }
 
-   public ConnectionInstance createInstance (ConnectionPool connectionPool)
+   public ConnectionInstance<PooledJavaContext> createInstance (ConnectionPool connectionPool, Integer originatingIndex)
       throws Exception {
 
       PooledJavaContext pooledJavaContext;
@@ -98,6 +98,6 @@ public class JavaContextConnectionInstanceFactory implements ConnectionInstanceF
       pooledJavaContext = (PooledJavaContext)initContext.lookup(contextPath);
       initContext.close();
 
-      return new JavaContextConnectionInstance(connectionPool, pooledJavaContext);
+      return new JavaContextConnectionInstance(connectionPool, originatingIndex, pooledJavaContext);
    }
 }

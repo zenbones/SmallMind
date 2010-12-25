@@ -44,14 +44,17 @@ public class FauxMethod implements Serializable {
    }
 
    public String getName () {
+
       return name;
    }
 
    public Class getReturnType () {
+
       return returnType;
    }
 
    public Class[] getSignature () {
+
       return signature;
    }
 

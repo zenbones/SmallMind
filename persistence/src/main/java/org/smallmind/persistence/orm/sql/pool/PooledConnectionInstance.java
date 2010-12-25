@@ -35,22 +35,22 @@ import org.smallmind.quorum.pool.AbstractConnectionInstance;
 import org.smallmind.quorum.pool.ConnectionPool;
 import org.smallmind.quorum.pool.ConnectionPoolManager;
 
-public class PooledConnectionInstance extends AbstractConnectionInstance implements ConnectionEventListener {
+public class PooledConnectionInstance extends AbstractConnectionInstance<PooledConnection> implements ConnectionEventListener {
 
    private ConnectionPool connectionPool;
    private PooledConnection pooledConnection;
    private PreparedStatement validationStatement;
 
-   public PooledConnectionInstance (ConnectionPool connectionPool, PooledConnection pooledConnection)
+   public PooledConnectionInstance(ConnectionPool connectionPool, Integer originatingIndex, PooledConnection pooledConnection)
       throws SQLException {
 
-      this(connectionPool, pooledConnection, null);
+      this(connectionPool, originatingIndex, pooledConnection, null);
    }
 
-   public PooledConnectionInstance (ConnectionPool connectionPool, PooledConnection pooledConnection, String validationQuery)
+   public PooledConnectionInstance(ConnectionPool connectionPool, Integer originatingIndex, PooledConnection pooledConnection, String validationQuery)
       throws SQLException {
 
-      super();
+      super(originatingIndex);
 
       this.connectionPool = connectionPool;
       this.pooledConnection = pooledConnection;
@@ -62,13 +62,12 @@ public class PooledConnectionInstance extends AbstractConnectionInstance impleme
       pooledConnection.addConnectionEventListener(this);
    }
 
-   public boolean validate () {
+   public boolean validate() {
 
       if (validationStatement != null) {
          try {
             validationStatement.execute();
-         }
-         catch (SQLException sqlException) {
+         } catch (SQLException sqlException) {
             return false;
          }
       }
@@ -76,17 +75,16 @@ public class PooledConnectionInstance extends AbstractConnectionInstance impleme
       return true;
    }
 
-   public void connectionClosed (ConnectionEvent connectionEvent) {
+   public void connectionClosed(ConnectionEvent connectionEvent) {
 
       try {
          connectionPool.returnInstance(this);
-      }
-      catch (Exception exception) {
+      } catch (Exception exception) {
          ConnectionPoolManager.logError(exception);
       }
    }
 
-   public void connectionErrorOccurred (ConnectionEvent connectionEvent) {
+   public void connectionErrorOccurred(ConnectionEvent connectionEvent) {
 
       Exception reportedException = connectionEvent.getSQLException();
 
@@ -94,22 +92,18 @@ public class PooledConnectionInstance extends AbstractConnectionInstance impleme
          if (reportedException != null) {
             fireConnectionErrorOccurred(reportedException);
          }
-      }
-      catch (Exception exception) {
+      } catch (Exception exception) {
          ConnectionPoolManager.logError(exception);
-      }
-      finally {
+      } finally {
          try {
             connectionPool.terminateInstance(this);
-         }
-         catch (Exception exception) {
+         } catch (Exception exception) {
             if (reportedException != null) {
                exception.initCause(reportedException);
             }
 
             reportedException = exception;
-         }
-         finally {
+         } finally {
             if (reportedException != null) {
                ConnectionPoolManager.logError(reportedException);
             }
@@ -117,12 +111,12 @@ public class PooledConnectionInstance extends AbstractConnectionInstance impleme
       }
    }
 
-   public Object serve () {
+   public PooledConnection serve() {
 
       return pooledConnection;
    }
 
-   public void close ()
+   public void close()
       throws SQLException {
 
       SQLException validationCloseException = null;
@@ -130,24 +124,21 @@ public class PooledConnectionInstance extends AbstractConnectionInstance impleme
       if (validationStatement != null) {
          try {
             validationStatement.close();
-         }
-         catch (SQLException sqlException) {
+         } catch (SQLException sqlException) {
             validationCloseException = sqlException;
          }
       }
 
       try {
          pooledConnection.close();
-      }
-      catch (SQLException sqlException) {
+      } catch (SQLException sqlException) {
 
          if (validationCloseException != null) {
             sqlException.initCause(validationCloseException);
          }
 
          throw sqlException;
-      }
-      finally {
+      } finally {
          pooledConnection.removeConnectionEventListener(this);
       }
 

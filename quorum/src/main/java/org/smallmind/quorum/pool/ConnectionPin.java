@@ -44,7 +44,7 @@ public class ConnectionPin<C> {
    private long leaseStartNanos;
    private Integer originatingIndex;
 
-   public ConnectionPin (ConnectionPool connectionPool, Integer originatingIndex, ConnectionInstance<C> connectionInstance, boolean reportLeaseTimeNanos, int maxIdleTimeSeconds, int maxLeaseTimeSeconds, int unreturnedConnectionTimeoutSeconds) {
+   public ConnectionPin (ConnectionPool<C> connectionPool, Integer originatingIndex, ConnectionInstance<C> connectionInstance, boolean reportLeaseTimeNanos, int maxIdleTimeSeconds, int maxLeaseTimeSeconds, int unreturnedConnectionTimeoutSeconds) {
 
       Thread workerThread;
       LinkedList<DeconstructionFuse> fuseList;
@@ -73,7 +73,7 @@ public class ConnectionPin<C> {
       }
 
       if (!fuseList.isEmpty()) {
-         deconstructionWorker = new DeconstructionWorker(connectionPool, this, fuseList);
+         deconstructionWorker = new DeconstructionWorker<C>(connectionPool, this, fuseList);
          workerThread = new Thread(deconstructionWorker);
          workerThread.setDaemon(true);
          workerThread.start();

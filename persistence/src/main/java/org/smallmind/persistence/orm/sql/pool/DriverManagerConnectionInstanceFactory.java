@@ -27,13 +27,14 @@
 package org.smallmind.persistence.orm.sql.pool;
 
 import java.sql.SQLException;
+import javax.sql.PooledConnection;
 import org.smallmind.persistence.orm.sql.DriverManagerConnectionPoolDataSource;
 import org.smallmind.persistence.orm.sql.DriverManagerDataSource;
 import org.smallmind.quorum.pool.ConnectionInstance;
 import org.smallmind.quorum.pool.ConnectionInstanceFactory;
 import org.smallmind.quorum.pool.ConnectionPool;
 
-public class DriverManagerConnectionInstanceFactory implements ConnectionInstanceFactory<PooledConnectionInstance> {
+public class DriverManagerConnectionInstanceFactory implements ConnectionInstanceFactory<PooledConnection> {
 
    private DriverManagerDataSource dataSource;
    private DriverManagerConnectionPoolDataSource pooledDataSource;
@@ -72,9 +73,9 @@ public class DriverManagerConnectionInstanceFactory implements ConnectionInstanc
       return dataSource.getConnection();
    }
 
-   public ConnectionInstance createInstance (ConnectionPool connectionPool)
+   public ConnectionInstance<PooledConnection> createInstance (ConnectionPool connectionPool, Integer originatingIndex)
       throws SQLException {
 
-      return new PooledConnectionInstance(connectionPool, pooledDataSource.getPooledConnection(), validationQuery);
+      return new PooledConnectionInstance(connectionPool, originatingIndex, pooledDataSource.getPooledConnection(), validationQuery);
    }
 }

@@ -31,6 +31,6 @@ public interface ConnectionInstanceFactory<C> {
    public abstract Object rawInstance ()
       throws Exception;
 
-   public abstract ConnectionInstance<C> createInstance (ConnectionPool<C> connectionPool)
+   public abstract ConnectionInstance<C> createInstance (ConnectionPool<C> connectionPool, Integer originatingIndex)
       throws Exception;
 }

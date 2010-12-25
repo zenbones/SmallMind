@@ -357,6 +357,7 @@ public class InternalHashMap<K, V> {
       }
 
       public boolean equals (Object obj) {
+
          if (obj instanceof Entry) {
 
             Entry entry = (Entry)obj;

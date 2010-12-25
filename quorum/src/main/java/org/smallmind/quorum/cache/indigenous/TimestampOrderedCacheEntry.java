@@ -34,11 +34,14 @@ public class TimestampOrderedCacheEntry<V> extends AbstractTimestampOrderedCache
    }
 
    public void cacheHit () {
+
    }
 
    public void expire () {
+
    }
 
    public void close () {
+
    }
 }

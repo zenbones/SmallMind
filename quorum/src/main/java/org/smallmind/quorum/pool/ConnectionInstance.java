@@ -30,6 +30,8 @@ import org.smallmind.quorum.pool.event.ConnectionInstanceEventListener;
 
 public interface ConnectionInstance<C> {
 
+   public abstract Integer getOriginatingIndex ();
+
    public abstract void addConnectionInstanceEventListener (ConnectionInstanceEventListener connectionInstanceEventListener);
 
    public abstract void removeConnectionInstanceEventListener (ConnectionInstanceEventListener connectionInstanceEventListener);

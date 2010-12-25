@@ -34,15 +34,15 @@ import org.smallmind.quorum.pool.AbstractConnectionInstance;
 import org.smallmind.quorum.pool.ConnectionPool;
 import org.smallmind.quorum.pool.ConnectionPoolManager;
 
-public class JavaContextConnectionInstance extends AbstractConnectionInstance implements JavaContextListener {
+public class JavaContextConnectionInstance extends AbstractConnectionInstance<PooledJavaContext> implements JavaContextListener {
 
    private ConnectionPool connectionPool;
    private PooledJavaContext pooledJavaContext;
 
-   public JavaContextConnectionInstance (ConnectionPool connectionPool, PooledJavaContext pooledJavaContext)
+   public JavaContextConnectionInstance(ConnectionPool connectionPool, Integer originatingIndex, PooledJavaContext pooledJavaContext)
       throws NamingException {
 
-      super();
+      super(originatingIndex);
 
       this.connectionPool = connectionPool;
       this.pooledJavaContext = pooledJavaContext;
@@ -50,12 +50,11 @@ public class JavaContextConnectionInstance extends AbstractConnectionInstance im
       pooledJavaContext.addJavaContextListener(this);
    }
 
-   public boolean validate () {
+   public boolean validate() {
 
       try {
          pooledJavaContext.lookup("");
-      }
-      catch (NamingException namingException) {
+      } catch (NamingException namingException) {
 
          return false;
       }
@@ -63,31 +62,28 @@ public class JavaContextConnectionInstance extends AbstractConnectionInstance im
       return true;
    }
 
-   public void contextClosed (JavaContextEvent javaContextEvent) {
+   public void contextClosed(JavaContextEvent javaContextEvent) {
 
       try {
          connectionPool.returnInstance(this);
-      }
-      catch (Exception exception) {
+      } catch (Exception exception) {
          ConnectionPoolManager.logError(exception);
       }
    }
 
-   public void contextAborted (JavaContextEvent javaContextEvent) {
+   public void contextAborted(JavaContextEvent javaContextEvent) {
 
       Exception reportedException = javaContextEvent.getCommunicationException();
 
       try {
          connectionPool.terminateInstance(this);
-      }
-      catch (Exception exception) {
+      } catch (Exception exception) {
          if (reportedException != null) {
             exception.initCause(reportedException);
          }
 
          reportedException = exception;
-      }
-      finally {
+      } finally {
          if (reportedException != null) {
             fireConnectionErrorOccurred(reportedException);
             ConnectionPoolManager.logError(reportedException);
@@ -95,13 +91,13 @@ public class JavaContextConnectionInstance extends AbstractConnectionInstance im
       }
    }
 
-   public Object serve ()
+   public PooledJavaContext serve()
       throws Exception {
 
       return pooledJavaContext;
    }
 
-   public void close ()
+   public void close()
       throws Exception {
 
       pooledJavaContext.close(true);

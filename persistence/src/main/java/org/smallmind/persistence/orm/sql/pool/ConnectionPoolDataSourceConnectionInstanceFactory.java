@@ -29,11 +29,12 @@ package org.smallmind.persistence.orm.sql.pool;
 import java.sql.SQLException;
 import javax.sql.ConnectionPoolDataSource;
 import javax.sql.DataSource;
+import javax.sql.PooledConnection;
 import org.smallmind.quorum.pool.ConnectionInstance;
 import org.smallmind.quorum.pool.ConnectionInstanceFactory;
 import org.smallmind.quorum.pool.ConnectionPool;
 
-public class ConnectionPoolDataSourceConnectionInstanceFactory implements ConnectionInstanceFactory {
+public class ConnectionPoolDataSourceConnectionInstanceFactory implements ConnectionInstanceFactory<PooledConnection> {
 
    private DataSource dataSource;
    private ConnectionPoolDataSource pooledDataSource;
@@ -70,9 +71,9 @@ public class ConnectionPoolDataSourceConnectionInstanceFactory implements Connec
       return dataSource.getConnection();
    }
 
-   public ConnectionInstance createInstance (ConnectionPool connectionPool)
+   public ConnectionInstance<PooledConnection> createInstance (ConnectionPool connectionPool, Integer originatingIndex)
       throws SQLException {
 
-      return new PooledConnectionInstance(connectionPool, pooledDataSource.getPooledConnection(), validationQuery);
+      return new PooledConnectionInstance(connectionPool, originatingIndex, pooledDataSource.getPooledConnection(), validationQuery);
    }
 }

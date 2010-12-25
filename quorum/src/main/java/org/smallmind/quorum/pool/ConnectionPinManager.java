@@ -103,7 +103,7 @@ public class ConnectionPinManager<C> {
       }
 
       try {
-         connectionInstance = createConnection(connectionTimeoutMillis, testOnConnect);
+         connectionInstance = createConnection(index, connectionTimeoutMillis, testOnConnect);
       }
       catch (Exception exception) {
          emptyQueue.add(index);
@@ -117,7 +117,6 @@ public class ConnectionPinManager<C> {
 
       try {
          connectionPins[index] = connectionPin = new ConnectionPin<C>(connectionPool, index, connectionInstance, reportLeaseTimeNanos, maxIdleTimeSeconds, maxLeaseTimeSeconds, unreturnedConnectionTimeoutSeconds);
-         emptyCount.decrementAndGet();
       }
       finally {
          if (readWriteLock != null) {
@@ -125,10 +124,12 @@ public class ConnectionPinManager<C> {
          }
       }
 
+      emptyCount.decrementAndGet();
+
       return connectionPin;
    }
 
-   private ConnectionInstance<C> createConnection (long connectionTimeoutMillis, boolean testOnConnect)
+   private ConnectionInstance<C> createConnection (Integer originatingIndex, long connectionTimeoutMillis, boolean testOnConnect)
       throws Exception {
 
       ConnectionInstance<C> connectionInstance;
@@ -139,7 +140,7 @@ public class ConnectionPinManager<C> {
          Thread workerThread;
          CountDownLatch workerInitLatch = new CountDownLatch(1);
 
-         connectionWorker = new ConnectionWorker<C>(connectionPool, connectionFactory, workerInitLatch);
+         connectionWorker = new ConnectionWorker<C>(connectionPool, connectionFactory, originatingIndex, workerInitLatch);
          workerThread = new Thread(connectionWorker);
          workerThread.start();
 
@@ -158,7 +159,7 @@ public class ConnectionPinManager<C> {
          }
       }
       else {
-         connectionInstance = connectionFactory.createInstance(connectionPool);
+         connectionInstance = connectionFactory.createInstance(connectionPool, originatingIndex);
       }
 
       if (testOnConnect && (!connectionInstance.validate())) {
@@ -194,10 +195,10 @@ public class ConnectionPinManager<C> {
 
          emptyQueue.add(connectionPin.getOriginatingIndex());
          currentlyEmpty = emptyCount.incrementAndGet();
-      }
 
-      if (regenerate && ((connectionPins.length - currentlyEmpty) < connectionPool.getMinPoolSize())) {
-         connectionPool.createConnectionPin();
+         if (regenerate && ((connectionPins.length - currentlyEmpty) < connectionPool.getMinPoolSize())) {
+            connectionPool.createConnectionPin();
+         }
       }
    }
 
@@ -210,12 +211,13 @@ public class ConnectionPinManager<C> {
          return null;
       }
 
+      freeCount.decrementAndGet();
+
       if (readWriteLock != null) {
          readWriteLock.readLock().lock();
       }
 
       try {
-         freeCount.decrementAndGet();
 
          return connectionPins[index];
       }
@@ -229,18 +231,15 @@ public class ConnectionPinManager<C> {
    public void release (ConnectionInstance<C> connectionInstance, boolean terminate)
       throws Exception {
 
-      ConnectionPin<C> matchedConnectionPin = null;
+      ConnectionPin<C> connectionPin;
 
       if (readWriteLock != null) {
          readWriteLock.readLock().lock();
       }
 
       try {
-         for (ConnectionPin<C> connectionPin : connectionPins) {
-            if ((connectionPin != null) && connectionPin.contains(connectionInstance)) {
-               matchedConnectionPin = connectionPin;
-               break;
-            }
+         if (!(connectionPin = connectionPins[connectionInstance.getOriginatingIndex()]).contains(connectionInstance)) {
+            throw new ConnectionPoolException("Could not find connection (%s) within ConnectionPool (%s)", connectionInstance, connectionPool.getPoolName());
          }
       }
       finally {
@@ -249,19 +248,15 @@ public class ConnectionPinManager<C> {
          }
       }
 
-      if (matchedConnectionPin == null) {
-         throw new ConnectionPoolException("Could not find connection (%s) within ConnectionPool (%s)", connectionInstance, connectionPool.getPoolName());
-      }
-
       if (terminate || ((connectionPins.length - emptyCount.get()) > connectionPool.getMinPoolSize())) {
-         remove(matchedConnectionPin, false);
+         remove(connectionPin, false);
       }
       else {
-         synchronized (matchedConnectionPin) {
-            if (matchedConnectionPin.isServed()) {
-               matchedConnectionPin.free();
+         synchronized (connectionPin) {
+            if (connectionPin.isServed()) {
+               connectionPin.free();
 
-               freeQueue.add(matchedConnectionPin.getOriginatingIndex());
+               freeQueue.add(connectionPin.getOriginatingIndex());
                freeCount.incrementAndGet();
             }
          }

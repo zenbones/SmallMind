@@ -71,6 +71,7 @@ public class ConnectionPoolMonitors extends StandardEmitterMBean implements Conn
    }
 
    public void postRegister (Boolean success) {
+
    }
 
    public void preDeregister ()
@@ -85,6 +86,7 @@ public class ConnectionPoolMonitors extends StandardEmitterMBean implements Conn
    }
 
    public void postDeregister () {
+
    }
 
    public void connectionErrorOccurred (ErrorReportingConnectionPoolEvent event) {

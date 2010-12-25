@@ -30,9 +30,9 @@ import java.io.Serializable;
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
 import javax.naming.NamingException;
+import org.smallmind.nutsnbolts.context.ContextFactory;
 import org.smallmind.quorum.transport.FauxMethod;
 import org.smallmind.quorum.transport.InvocationSignal;
-import org.smallmind.nutsnbolts.context.ContextFactory;
 
 public class RemoteInvocationHandler implements Serializable, InvocationHandler {
 

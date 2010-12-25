@@ -32,6 +32,7 @@ import java.util.concurrent.ConcurrentHashMap;
 public class LockingCacheEnforcer<K, V> implements LockingCache<K, V> {
 
    private static final InheritableThreadLocal<Map<Object, KeyLock>> KEY_LOCK_MAP_LOCAL = new InheritableThreadLocal<Map<Object, KeyLock>>() {
+
       @Override
       protected Map<Object, KeyLock> initialValue () {
 

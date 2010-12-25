@@ -30,13 +30,21 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 import org.smallmind.quorum.pool.event.ConnectionInstanceEvent;
 import org.smallmind.quorum.pool.event.ConnectionInstanceEventListener;
 
-public abstract class AbstractConnectionInstance implements ConnectionInstance {
+public abstract class AbstractConnectionInstance<C> implements ConnectionInstance<C> {
 
    private ConcurrentLinkedQueue<ConnectionInstanceEventListener> connectionInstanceEventListenerQueue;
+   private Integer originatingIndex;
 
-   public AbstractConnectionInstance () {
+   public AbstractConnectionInstance (Integer originatingIndex) {
+
+      this.originatingIndex = originatingIndex;
 
       connectionInstanceEventListenerQueue = new ConcurrentLinkedQueue<ConnectionInstanceEventListener>();
+   }
+
+   public Integer getOriginatingIndex () {
+
+      return originatingIndex;
    }
 
    public void addConnectionInstanceEventListener (ConnectionInstanceEventListener listener) {
