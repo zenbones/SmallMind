@@ -21,8 +21,9 @@
       </license>
    </licenses>
    <scm>
-      <url>https://github.com/zenbones/SmallMind</url>
-      <connection>git@github.com:zenbones/SmallMind.git</connection>
+      <connection>scm:git:git@github.com:zenbones/SmallMind.git</connection>
+      <developerConnection>scm:git:git@github.com:zenbones/SmallMind.git</developerConnection>
+      <url>git@github.com:zenbones/SmallMind.git</url>
    </scm>
    <developers>
       <developer>
