@@ -28,11 +28,14 @@ package org.smallmind.quorum.pool;
 
 public class TestConnectionInstance extends AbstractConnectionInstance<MootConnection> {
 
-   private MootConnection mootConnection = new MootConnection();
+   private ConnectionPool<MootConnection> connectionPool;
+   private MootConnection mootConnection = new MootConnection(this);
 
-   public TestConnectionInstance (Integer originatingIndex) {
+   public TestConnectionInstance (ConnectionPool<MootConnection> connectionPool, Integer originatingIndex) {
 
       super(originatingIndex);
+
+      this.connectionPool = connectionPool;
    }
 
    @Override
@@ -47,8 +50,15 @@ public class TestConnectionInstance extends AbstractConnectionInstance<MootConne
       return mootConnection;
    }
 
+   public void pooledClose ()
+      throws Exception {
+
+      connectionPool.returnInstance(this);
+   }
+
    @Override
    public void close () throws Exception {
 
+      mootConnection.close();
    }
 }

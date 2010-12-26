@@ -53,7 +53,7 @@ public class ConnectionPool<C> implements ConnectionInstanceEventListener, Remot
    private long connectionTimeoutMillis = 0;
    private long acquireWaitTimeMillis = 0;
    private int initialPoolSize = 0;
-   private int minPoolSize = 1;
+   private int minPoolSize = 0;
    private int maxPoolSize = 10;
    private int maxLeaseTimeSeconds = 0;
    private int maxIdleTimeSeconds = 0;
@@ -400,7 +400,7 @@ public class ConnectionPool<C> implements ConnectionInstanceEventListener, Remot
       }
    }
 
-   public void returnInstance (ConnectionInstance connectionInstance)
+   public void returnInstance (ConnectionInstance<C> connectionInstance)
       throws ConnectionPoolException {
 
       if (shutdownFlag.get()) {
@@ -415,7 +415,7 @@ public class ConnectionPool<C> implements ConnectionInstanceEventListener, Remot
       }
    }
 
-   public void terminateInstance (ConnectionInstance connectionInstance)
+   public void terminateInstance (ConnectionInstance<C> connectionInstance)
       throws ConnectionPoolException {
 
       if (shutdownFlag.get()) {

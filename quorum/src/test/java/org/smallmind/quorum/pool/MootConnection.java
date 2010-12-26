@@ -28,4 +28,21 @@ package org.smallmind.quorum.pool;
 
 public class MootConnection {
 
+   private TestConnectionInstance connectionInstance;
+
+   public MootConnection (TestConnectionInstance connectionInstance) {
+
+      this.connectionInstance = connectionInstance;
+   }
+
+   public void pooledClose ()
+      throws Exception {
+
+      connectionInstance.pooledClose();
+   }
+
+   public void close ()
+      throws Exception {
+
+   }
 }

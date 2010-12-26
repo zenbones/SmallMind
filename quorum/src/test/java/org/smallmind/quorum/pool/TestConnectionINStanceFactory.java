@@ -31,12 +31,12 @@ public class TestConnectionInstanceFactory implements ConnectionInstanceFactory<
    @Override
    public Object rawInstance () throws Exception {
 
-      return new MootConnection();
+      return new MootConnection(null);
    }
 
    @Override
-   public ConnectionInstance<MootConnection> createInstance (ConnectionPool<MootConnection> mootConnectionConnectionPool, Integer originatingIndex) throws Exception {
+   public ConnectionInstance<MootConnection> createInstance (ConnectionPool<MootConnection> connectionPool, Integer originatingIndex) throws Exception {
 
-      return new TestConnectionInstance(originatingIndex);
+      return new TestConnectionInstance(connectionPool, originatingIndex);
    }
 }

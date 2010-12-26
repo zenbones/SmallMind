@@ -38,6 +38,7 @@ public class DeconstructionWorker<C> implements java.lang.Runnable {
    private ConnectionPool<C> connectionPool;
    private CountDownLatch deconstructionLatch;
    private CountDownLatch exitLatch;
+   private Thread runnableThread;
    private List<DeconstructionFuse> fuseList;
    private HashMap<DeconstructionFuse, Thread> fuseThreadMap;
    private AtomicBoolean terminated = new AtomicBoolean(false);
@@ -105,17 +106,21 @@ public class DeconstructionWorker<C> implements java.lang.Runnable {
          deconstructionLatch.countDown();
       }
 
-      try {
-         exitLatch.await();
-      }
-      catch (InterruptedException interruptedException) {
-         ConnectionPoolManager.logError(interruptedException);
+      if (!Thread.currentThread().equals(runnableThread)) {
+         try {
+            exitLatch.await();
+         }
+         catch (InterruptedException interruptedException) {
+            ConnectionPoolManager.logError(interruptedException);
+         }
       }
    }
 
    public void run () {
 
       boolean deconstructed = false;
+
+      runnableThread = Thread.currentThread();
 
       try {
          deconstructionLatch.await();

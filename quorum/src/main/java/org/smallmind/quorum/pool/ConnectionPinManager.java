@@ -89,12 +89,14 @@ public class ConnectionPinManager<C> {
             try {
 
                ConnectionPin[] expandedArray = new ConnectionPin[(connectionPins.length == 0) ? 10 : connectionPins.length * 2];
+               int expandedStart = connectionPins.length;
 
                System.arraycopy(connectionPins, 0, expandedArray, 0, connectionPins.length);
                connectionPins = expandedArray;
-               for (int expandedIndex = connectionPins.length; expandedIndex < expandedArray.length; expandedIndex++) {
+               for (int expandedIndex = expandedStart; expandedIndex < expandedArray.length; expandedIndex++) {
                   emptyQueue.add(expandedIndex);
                }
+
             }
             finally {
                readWriteLock.writeLock().unlock();
@@ -205,7 +207,7 @@ public class ConnectionPinManager<C> {
          currentlyEmpty = emptyCount.incrementAndGet();
 
          if (regenerate && ((connectionPins.length - currentlyEmpty) < connectionPool.getMinPoolSize())) {
-            connectionPool.createConnectionPin();
+            initialize(connectionPool.createConnectionPin());
          }
       }
    }

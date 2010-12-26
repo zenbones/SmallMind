@@ -26,23 +26,34 @@
  */
 package org.smallmind.quorum.pool;
 
+import java.util.LinkedList;
 import org.testng.annotations.Test;
 
 public class ConnectionPoolTest {
 
-//   @Test
+   @Test
    public void testBlockingBehavior ()
-      throws ConnectionPoolException {
+      throws Exception {
 
       ConnectionPool<MootConnection> connectionPool;
+      LinkedList<MootConnection> mootConnectionList;
 
       connectionPool = new ConnectionPool<MootConnection>("test", new TestConnectionInstanceFactory());
       connectionPool.setMaxPoolSize(50);
       connectionPool.setAcquireWaitTimeMillis(3000);
+      connectionPool.setMaxIdleTimeSeconds(3);
+      connectionPool.setMinPoolSize(10);
 
-      for (int count = 0; count < 51; count++) {
+      mootConnectionList = new LinkedList<MootConnection>();
+      for (int count = 0; count < 50; count++) {
          System.out.println(count);
-         connectionPool.getConnection();
+         mootConnectionList.add(connectionPool.getConnection());
       }
+
+      for (MootConnection mootConnection : mootConnectionList) {
+         mootConnection.pooledClose();
+      }
+
+      Thread.sleep(10000);
    }
 }
