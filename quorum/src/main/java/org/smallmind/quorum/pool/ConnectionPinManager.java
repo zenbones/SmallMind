@@ -69,7 +69,12 @@ public class ConnectionPinManager<C> {
       }
    }
 
-   public void initialize (ConnectionPin<C> connectionPin) {
+   public void initialize (ConnectionPin<C> connectionPin)
+      throws ConnectionPoolException {
+
+      if (connectionPin == null) {
+         throw new ConnectionPoolException("Unable to initialize a new connection due to connection pool(%s) limitations", connectionPool.getPoolName());
+      }
 
       freeQueue.add(connectionPin.getOriginatingIndex());
       freeCount.incrementAndGet();
@@ -109,7 +114,7 @@ public class ConnectionPinManager<C> {
       }
 
       try {
-         connectionInstance = createConnection(index, connectionTimeoutMillis, testOnConnect);
+         connectionInstance = obtainConnection(index, connectionTimeoutMillis, testOnConnect);
       }
       catch (Exception exception) {
          emptyQueue.add(index);
@@ -135,7 +140,7 @@ public class ConnectionPinManager<C> {
       return connectionPin;
    }
 
-   private ConnectionInstance<C> createConnection (Integer originatingIndex, long connectionTimeoutMillis, boolean testOnConnect)
+   private ConnectionInstance<C> obtainConnection (Integer originatingIndex, long connectionTimeoutMillis, boolean testOnConnect)
       throws Exception {
 
       ConnectionInstance<C> connectionInstance;
