@@ -39,7 +39,6 @@ import javax.management.ObjectName;
 import javax.naming.NamingException;
 import org.smallmind.quorum.pool.ConnectionPool;
 import org.smallmind.quorum.pool.ConnectionPoolException;
-import org.smallmind.quorum.pool.PoolMode;
 import org.smallmind.quorum.pool.event.ConnectionPoolEventListener;
 import org.smallmind.quorum.pool.event.ErrorReportingConnectionPoolEvent;
 import org.smallmind.quorum.pool.event.LeaseTimeReportingConnectionPoolEvent;
@@ -111,16 +110,6 @@ public class ConnectionPoolMonitor extends NotificationBroadcasterSupport implem
       return remoteSurface.getPoolName();
    }
 
-   public PoolMode getPoolMode () {
-
-      return remoteSurface.getPoolMode();
-   }
-
-   public void setPoolMode (PoolMode poolMode) {
-
-      remoteSurface.setPoolMode(poolMode);
-   }
-
    public boolean isTestOnConnect () {
 
       return remoteSurface.isTestOnConnect();
@@ -176,6 +165,16 @@ public class ConnectionPoolMonitor extends NotificationBroadcasterSupport implem
       remoteSurface.setMinPoolSize(minPoolSize);
    }
 
+   public synchronized boolean isAllowSoftMinSize () {
+
+      return remoteSurface.isAllowSoftMinSize();
+   }
+
+   public synchronized void setAllowSoftMinSize (boolean allowSoftMinSize) {
+
+      remoteSurface.setAllowSoftMinSize(allowSoftMinSize);
+   }
+
    public int getMaxPoolSize () {
 
       return remoteSurface.getMaxPoolSize();
@@ -186,24 +185,14 @@ public class ConnectionPoolMonitor extends NotificationBroadcasterSupport implem
       remoteSurface.setMaxPoolSize(maxPoolSize);
    }
 
-   public int getAcquireRetryAttempts () {
+   public synchronized long getAcquireWaitTimeMillis () {
 
-      return remoteSurface.getAcquireRetryAttempts();
+      return remoteSurface.getAcquireWaitTimeMillis();
    }
 
-   public void setAcquireRetryAttempts (int acquireRetryAttempts) {
+   public synchronized void setAcquireWaitTimeMillis (long acquireWaitTimeMillis) {
 
-      remoteSurface.setAcquireRetryAttempts(acquireRetryAttempts);
-   }
-
-   public int getAcquireRetryDelayMillis () {
-
-      return remoteSurface.getAcquireRetryDelayMillis();
-   }
-
-   public void setAcquireRetryDelayMillis (int acquireRetryDelayMillis) {
-
-      remoteSurface.setAcquireRetryDelayMillis(acquireRetryDelayMillis);
+      remoteSurface.setAcquireWaitTimeMillis(acquireWaitTimeMillis);
    }
 
    public int getMaxLeaseTimeSeconds () {

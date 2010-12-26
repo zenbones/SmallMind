@@ -30,17 +30,17 @@ import java.util.LinkedList;
 
 public class ComponentPool<T> {
 
-   private PoolMode poolMode;
    private ComponentFactory<T> componentFactory;
    private LinkedList<T> usedList;
    private LinkedList<T> freeList;
+   private long acquireWaitTimeMillis;
    private int size;
 
-   public ComponentPool (ComponentFactory<T> componentFactory, int size, PoolMode poolMode) {
+   public ComponentPool (ComponentFactory<T> componentFactory, int size, long acquireWaitTimeMillis) {
 
       this.componentFactory = componentFactory;
       this.size = size;
-      this.poolMode = poolMode;
+      this.acquireWaitTimeMillis = acquireWaitTimeMillis;
 
       usedList = new LinkedList<T>();
       freeList = new LinkedList<T>();
@@ -52,7 +52,7 @@ public class ComponentPool<T> {
       T component = null;
 
       if (freeList.isEmpty()) {
-         if ((usedList.size() < size) || poolMode.equals(PoolMode.EXPANDING_POOL)) {
+         if ((size == 0) || (usedList.size() < size)) {
             try {
                component = componentFactory.createComponent();
             }
@@ -60,22 +60,22 @@ public class ComponentPool<T> {
                throw new ComponentPoolException(e);
             }
          }
-         else if (poolMode.equals(PoolMode.BLOCKING_POOL)) {
+         else {
             try {
                do {
-                  wait();
+                  wait(acquireWaitTimeMillis);
 
                   if (!freeList.isEmpty()) {
                      component = freeList.remove(0);
+                  }
+                  else if (acquireWaitTimeMillis > 0) {
+                     throw new ComponentPoolException("ComponentPool(%s) is completely booked", componentFactory.getClass().getSimpleName());
                   }
                } while (component == null);
             }
             catch (InterruptedException i) {
                throw new ComponentPoolException(i);
             }
-         }
-         else {
-            throw new ComponentPoolException("Fixed ComponentPool(%s) is completely booked", componentFactory.getClass().getSimpleName());
          }
       }
       else {
@@ -94,7 +94,7 @@ public class ComponentPool<T> {
       if ((usedList.size() + freeList.size()) < size) {
          freeList.add(component);
 
-         if (poolMode.equals(PoolMode.BLOCKING_POOL)) {
+         if (size > 0) {
             notify();
          }
       }

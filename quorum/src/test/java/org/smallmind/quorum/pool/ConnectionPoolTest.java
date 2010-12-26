@@ -26,7 +26,23 @@
  */
 package org.smallmind.quorum.pool;
 
-public enum PoolMode {
+import org.testng.annotations.Test;
 
-   FIXED_POOL, EXPANDING_POOL, BLOCKING_POOL
+public class ConnectionPoolTest {
+
+   @Test
+   public void testBlockingBehavior ()
+      throws ConnectionPoolException {
+
+      ConnectionPool<MootConnection> connectionPool;
+
+      connectionPool = new ConnectionPool<MootConnection>("test", new TestConnectionInstanceFactory());
+      connectionPool.setMaxPoolSize(50);
+      connectionPool.setAcquireWaitTimeMillis(500);
+
+      for (int count = 0; count < 51; count++) {
+         System.out.println(count);
+         connectionPool.getConnection();
+      }
+   }
 }

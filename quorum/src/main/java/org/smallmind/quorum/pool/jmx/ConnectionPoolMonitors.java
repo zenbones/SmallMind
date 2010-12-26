@@ -38,7 +38,6 @@ import javax.management.ObjectName;
 import javax.management.StandardEmitterMBean;
 import javax.naming.NamingException;
 import org.smallmind.quorum.pool.ConnectionPoolException;
-import org.smallmind.quorum.pool.PoolMode;
 import org.smallmind.quorum.pool.event.ConnectionPoolEventListener;
 import org.smallmind.quorum.pool.event.ErrorReportingConnectionPoolEvent;
 import org.smallmind.quorum.pool.event.LeaseTimeReportingConnectionPoolEvent;
@@ -141,18 +140,6 @@ public class ConnectionPoolMonitors extends StandardEmitterMBean implements Conn
       return getRemoteSurface(poolId).getPoolName();
    }
 
-   public PoolMode getPoolMode (String poolId)
-      throws ConnectionPoolRegistrationException {
-
-      return getRemoteSurface(poolId).getPoolMode();
-   }
-
-   public void setPoolMode (String poolId, PoolMode poolMode)
-      throws ConnectionPoolRegistrationException {
-
-      getRemoteSurface(poolId).setPoolMode(poolMode);
-   }
-
    public boolean isTestOnConnect (String poolId)
       throws ConnectionPoolRegistrationException {
 
@@ -219,6 +206,19 @@ public class ConnectionPoolMonitors extends StandardEmitterMBean implements Conn
       getRemoteSurface(poolId).setMinPoolSize(minPoolSize);
    }
 
+   public boolean isAllowSoftMinSize (String poolId)
+      throws ConnectionPoolRegistrationException {
+
+      return getRemoteSurface(poolId).isAllowSoftMinSize();
+   }
+
+   public void setAllowSoftMinSize (String poolId, boolean allowSoftMinSize)
+
+      throws ConnectionPoolRegistrationException {
+
+      getRemoteSurface(poolId).setAllowSoftMinSize(allowSoftMinSize);
+   }
+
    public int getMaxPoolSize (String poolId)
       throws ConnectionPoolRegistrationException {
 
@@ -231,28 +231,16 @@ public class ConnectionPoolMonitors extends StandardEmitterMBean implements Conn
       getRemoteSurface(poolId).setMaxPoolSize(maxPoolSize);
    }
 
-   public int getAcquireRetryAttempts (String poolId)
+   public long getAcquireWaitTimeMillis (String poolId)
       throws ConnectionPoolRegistrationException {
 
-      return getRemoteSurface(poolId).getAcquireRetryAttempts();
+      return getRemoteSurface(poolId).getAcquireWaitTimeMillis();
    }
 
-   public void setAcquireRetryAttempts (String poolId, int acquireRetryAttempts)
+   public void setAcquireWaitTimeMillis (String poolId, long acquireWaitTimeMillis)
       throws ConnectionPoolRegistrationException {
 
-      getRemoteSurface(poolId).setAcquireRetryAttempts(acquireRetryAttempts);
-   }
-
-   public int getAcquireRetryDelayMillis (String poolId)
-      throws ConnectionPoolRegistrationException {
-
-      return getRemoteSurface(poolId).getAcquireRetryDelayMillis();
-   }
-
-   public void setAcquireRetryDelayMillis (String poolId, int acquireRetryDelayMillis)
-      throws ConnectionPoolRegistrationException {
-
-      getRemoteSurface(poolId).setAcquireRetryDelayMillis(acquireRetryDelayMillis);
+      getRemoteSurface(poolId).setAcquireWaitTimeMillis(acquireWaitTimeMillis);
    }
 
    public int getMaxLeaseTimeSeconds (String poolId)

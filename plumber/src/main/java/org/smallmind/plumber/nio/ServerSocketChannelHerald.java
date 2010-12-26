@@ -38,7 +38,6 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import org.smallmind.nutsnbolts.util.Counter;
 import org.smallmind.quorum.pool.ComponentFactory;
 import org.smallmind.quorum.pool.ComponentPool;
-import org.smallmind.quorum.pool.PoolMode;
 import org.smallmind.scribe.pen.Logger;
 
 public class ServerSocketChannelHerald implements ComponentFactory<SocketChannelWorker>, Runnable {
@@ -72,7 +71,7 @@ public class ServerSocketChannelHerald implements ComponentFactory<SocketChannel
       pulseLatch = new CountDownLatch(1);
       exitLatch = new CountDownLatch(1);
 
-      workerPool = new ComponentPool<SocketChannelWorker>(this, poolSize, PoolMode.EXPANDING_POOL);
+      workerPool = new ComponentPool<SocketChannelWorker>(this, poolSize, 0);
    }
 
    public SocketChannelWorker createComponent ()

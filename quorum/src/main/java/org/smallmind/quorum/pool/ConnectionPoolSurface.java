@@ -30,10 +30,6 @@ public interface ConnectionPoolSurface {
 
    public abstract String getPoolName ();
 
-   public abstract PoolMode getPoolMode ();
-
-   public abstract void setPoolMode (PoolMode poolMode);
-
    public abstract boolean isTestOnConnect ();
 
    public abstract void setTestOnConnect (boolean testOnConnect);
@@ -46,9 +42,17 @@ public interface ConnectionPoolSurface {
 
    public abstract void setReportLeaseTimeNanos (boolean reportLeaseTimeNanos);
 
+   public abstract boolean isAllowSoftMinSize ();
+
+   public abstract void setAllowSoftMinSize (boolean allowSoftMinSize);
+
    public abstract long getConnectionTimeoutMillis ();
 
    public abstract void setConnectionTimeoutMillis (long connectionTimeoutMillis);
+
+   public abstract long getAcquireWaitTimeMillis ();
+
+   public abstract void setAcquireWaitTimeMillis (long acquireWaitTimeMillis);
 
    public abstract int getInitialPoolSize ();
 
@@ -59,14 +63,6 @@ public interface ConnectionPoolSurface {
    public abstract int getMaxPoolSize ();
 
    public abstract void setMaxPoolSize (int maxPoolSize);
-
-   public abstract int getAcquireRetryAttempts ();
-
-   public abstract void setAcquireRetryAttempts (int acquireRetryAttempts);
-
-   public abstract int getAcquireRetryDelayMillis ();
-
-   public abstract void setAcquireRetryDelayMillis (int acquireRetryDelayMillis);
 
    public abstract int getMaxLeaseTimeSeconds ();
 

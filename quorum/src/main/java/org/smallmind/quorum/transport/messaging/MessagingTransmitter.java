@@ -45,7 +45,6 @@ import org.smallmind.quorum.pool.ComponentFactory;
 import org.smallmind.quorum.pool.ComponentPool;
 import org.smallmind.quorum.pool.ComponentPoolException;
 import org.smallmind.quorum.pool.ConnectionPoolException;
-import org.smallmind.quorum.pool.PoolMode;
 
 public class MessagingTransmitter {
 
@@ -77,7 +76,7 @@ public class MessagingTransmitter {
       queueSession = queueConnection.createQueueSession(false, Session.AUTO_ACKNOWLEDGE);
       queueSender = queueSession.createSender(queue);
 
-      messageSenderPool = new ComponentPool<MessageSender>(new MessageSenderComponentFactory(this), messagingConnectionDetails.getTransmissionPoolSize(), PoolMode.BLOCKING_POOL);
+      messageSenderPool = new ComponentPool<MessageSender>(new MessageSenderComponentFactory(this), messagingConnectionDetails.getTransmissionPoolSize(), 0);
 
       queueConnection.start();
    }

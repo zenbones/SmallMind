@@ -28,6 +28,8 @@ package org.smallmind.quorum.pool;
 
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import org.dom4j.IllegalAddException;
@@ -39,12 +41,13 @@ public class ConnectionPinManager<C> {
    private ConnectionPool<C> connectionPool;
    private ConnectionInstanceFactory<C> connectionFactory;
    private ConnectionPin[] connectionPins;
-   private ConcurrentLinkedQueue<Integer> freeQueue;
+   private LinkedBlockingQueue<Integer> freeQueue;
    private ConcurrentLinkedQueue<Integer> emptyQueue;
    private AtomicInteger freeCount = new AtomicInteger(0);
    private AtomicInteger emptyCount;
+   private int maxSize;
 
-   public ConnectionPinManager (ConnectionPool<C> connectionPool, ConnectionInstanceFactory<C> connectionFactory, int maxSize, boolean unconstrained) {
+   public ConnectionPinManager (ConnectionPool<C> connectionPool, ConnectionInstanceFactory<C> connectionFactory, int maxSize) {
 
       if (maxSize < 0) {
          throw new IllegalAddException("size must be >= 0");
@@ -52,11 +55,12 @@ public class ConnectionPinManager<C> {
 
       this.connectionPool = connectionPool;
       this.connectionFactory = connectionFactory;
+      this.maxSize = maxSize;
 
-      readWriteLock = (unconstrained) ? new ReentrantReadWriteLock() : null;
+      readWriteLock = (maxSize == 0) ? new ReentrantReadWriteLock() : null;
 
       connectionPins = new ConnectionPin[maxSize];
-      freeQueue = new ConcurrentLinkedQueue<Integer>();
+      freeQueue = new LinkedBlockingQueue<Integer>();
 
       emptyQueue = new ConcurrentLinkedQueue<Integer>();
       emptyCount = new AtomicInteger(connectionPins.length);
@@ -184,14 +188,18 @@ public class ConnectionPinManager<C> {
 
       try {
          connectionPins[connectionPin.getOriginatingIndex()] = null;
-         connectionPin.close();
+         synchronized (connectionPin) {
+            connectionPin.close();
+         }
       }
       finally {
          if (readWriteLock != null) {
             readWriteLock.readLock().unlock();
          }
 
-         connectionPin.abort();
+         synchronized (connectionPin) {
+            connectionPin.abort();
+         }
 
          emptyQueue.add(connectionPin.getOriginatingIndex());
          currentlyEmpty = emptyCount.incrementAndGet();
@@ -202,11 +210,12 @@ public class ConnectionPinManager<C> {
       }
    }
 
-   public ConnectionPin<C> serve () {
+   public ConnectionPin<C> serve (long acquireWaitTimeMillis, boolean immediate)
+      throws InterruptedException {
 
       Integer index;
 
-      if ((index = freeQueue.poll()) == null) {
+      if ((index = (immediate || (maxSize == 0)) ? freeQueue.poll() : (acquireWaitTimeMillis == 0) ? freeQueue.take() : freeQueue.poll(acquireWaitTimeMillis, TimeUnit.MILLISECONDS)) == null) {
 
          return null;
       }

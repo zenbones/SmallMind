@@ -32,7 +32,6 @@ import java.rmi.NotBoundException;
 import java.rmi.RemoteException;
 import javax.naming.NamingException;
 import org.smallmind.quorum.pool.ConnectionPoolException;
-import org.smallmind.quorum.pool.PoolMode;
 import org.smallmind.quorum.pool.remote.RemoteConnectionPoolSurface;
 
 public interface ConnectionPoolMonitorsMBean {
@@ -44,12 +43,6 @@ public interface ConnectionPoolMonitorsMBean {
       throws ConnectionPoolRegistrationException, MalformedURLException, NotBoundException, RemoteException;
 
    public abstract String getPoolName (String poolId)
-      throws ConnectionPoolRegistrationException;
-
-   public abstract PoolMode getPoolMode (String poolId)
-      throws ConnectionPoolRegistrationException;
-
-   public abstract void setPoolMode (String poolId, PoolMode poolMode)
       throws ConnectionPoolRegistrationException;
 
    public abstract boolean isTestOnConnect (String poolId)
@@ -85,22 +78,22 @@ public interface ConnectionPoolMonitorsMBean {
    public abstract void setMinPoolSize (String poolId, int minPoolSize)
       throws ConnectionPoolRegistrationException;
 
+   public abstract boolean isAllowSoftMinSize (String poolId)
+      throws ConnectionPoolRegistrationException;
+
+   public abstract void setAllowSoftMinSize (String poolId, boolean allowSoftMinSize)
+      throws ConnectionPoolRegistrationException;
+
    public abstract int getMaxPoolSize (String poolId)
       throws ConnectionPoolRegistrationException;
 
    public abstract void setMaxPoolSize (String poolId, int maxPoolSize)
       throws ConnectionPoolRegistrationException;
 
-   public abstract int getAcquireRetryAttempts (String poolId)
+   public abstract long getAcquireWaitTimeMillis (String poolId)
       throws ConnectionPoolRegistrationException;
 
-   public abstract void setAcquireRetryAttempts (String poolId, int acquireRetryAttempts)
-      throws ConnectionPoolRegistrationException;
-
-   public abstract int getAcquireRetryDelayMillis (String poolId)
-      throws ConnectionPoolRegistrationException;
-
-   public abstract void setAcquireRetryDelayMillis (String poolId, int acquireRetryDelayMillis)
+   public abstract void setAcquireWaitTimeMillis (String poolId, long acquireWaitTimeMillis)
       throws ConnectionPoolRegistrationException;
 
    public abstract int getMaxLeaseTimeSeconds (String poolId)

@@ -44,7 +44,6 @@ public class ConnectionPool<C> implements ConnectionInstanceEventListener, Remot
    private ConnectionPinManager<C> connectionPinManager;
    private ConcurrentLinkedQueue<ConnectionPoolEventListener> connectionPoolEventListenerQueue;
    private String poolName;
-   private PoolMode poolMode = PoolMode.BLOCKING_POOL;
    private AtomicBoolean startupFlag = new AtomicBoolean(false);
    private AtomicBoolean shutdownFlag = new AtomicBoolean(false);
    private boolean testOnConnect = false;
@@ -52,11 +51,10 @@ public class ConnectionPool<C> implements ConnectionInstanceEventListener, Remot
    private boolean reportLeaseTimeNanos = true;
    private boolean allowSoftMinSize = false;
    private long connectionTimeoutMillis = 0;
+   private long acquireWaitTimeMillis = 0;
    private int initialPoolSize = 0;
    private int minPoolSize = 1;
    private int maxPoolSize = 10;
-   private int acquireRetryAttempts = 0;
-   private int acquireRetryDelayMillis = 0;
    private int maxLeaseTimeSeconds = 0;
    private int maxIdleTimeSeconds = 0;
    private int unreturnedConnectionTimeoutSeconds = 0;
@@ -81,7 +79,7 @@ public class ConnectionPool<C> implements ConnectionInstanceEventListener, Remot
 
       try {
          if (startupFlag.compareAndSet(false, true)) {
-            connectionPinManager = new ConnectionPinManager<C>(this, connectionFactory, maxPoolSize, poolMode.equals(PoolMode.EXPANDING_POOL));
+            connectionPinManager = new ConnectionPinManager<C>(this, connectionFactory, maxPoolSize);
 
             for (int count = 0; count < initialPoolSize; count++) {
                connectionPinManager.initialize(createConnectionPin());
@@ -115,16 +113,6 @@ public class ConnectionPool<C> implements ConnectionInstanceEventListener, Remot
    public String getPoolName () {
 
       return poolName;
-   }
-
-   public synchronized PoolMode getPoolMode () {
-
-      return poolMode;
-   }
-
-   public synchronized void setPoolMode (PoolMode poolMode) {
-
-      this.poolMode = poolMode;
    }
 
    public synchronized boolean isTestOnConnect () {
@@ -164,6 +152,10 @@ public class ConnectionPool<C> implements ConnectionInstanceEventListener, Remot
 
    public synchronized void setConnectionTimeoutMillis (long connectionTimeoutMillis) {
 
+      if (connectionTimeoutMillis < 0) {
+         throw new IllegalArgumentException("Connection timeout must be >= 0");
+      }
+
       this.connectionTimeoutMillis = connectionTimeoutMillis;
    }
 
@@ -178,6 +170,10 @@ public class ConnectionPool<C> implements ConnectionInstanceEventListener, Remot
          throw new IllegalStateException("ConnectionPool has already been initialized");
       }
 
+      if (initialPoolSize < 0) {
+         throw new IllegalArgumentException("Initial pool size must be >= 0");
+      }
+
       this.initialPoolSize = initialPoolSize;
    }
 
@@ -188,15 +184,19 @@ public class ConnectionPool<C> implements ConnectionInstanceEventListener, Remot
 
    public synchronized void setMinPoolSize (int minPoolSize) {
 
+      if (minPoolSize < 0) {
+         throw new IllegalArgumentException("Minimum pool size must be >= 0");
+      }
+
       this.minPoolSize = minPoolSize;
    }
 
-   public boolean isAllowSoftMinSize () {
+   public synchronized boolean isAllowSoftMinSize () {
 
       return allowSoftMinSize;
    }
 
-   public void setAllowSoftMinSize (boolean allowSoftMinSize) {
+   public synchronized void setAllowSoftMinSize (boolean allowSoftMinSize) {
 
       this.allowSoftMinSize = allowSoftMinSize;
    }
@@ -208,27 +208,25 @@ public class ConnectionPool<C> implements ConnectionInstanceEventListener, Remot
 
    public synchronized void setMaxPoolSize (int maxPoolSize) {
 
+      if (maxPoolSize < 0) {
+         throw new IllegalArgumentException("Maximum pool size must be >= 0");
+      }
+
       this.maxPoolSize = maxPoolSize;
    }
 
-   public synchronized int getAcquireRetryAttempts () {
+   public synchronized long getAcquireWaitTimeMillis () {
 
-      return acquireRetryAttempts;
+      return acquireWaitTimeMillis;
    }
 
-   public synchronized void setAcquireRetryAttempts (int acquireRetryAttempts) {
+   public synchronized void setAcquireWaitTimeMillis (long acquireWaitTimeMillis) {
 
-      this.acquireRetryAttempts = acquireRetryAttempts;
-   }
+      if (acquireWaitTimeMillis < 0) {
+         throw new IllegalArgumentException("Acquire wait time must be >= 0");
+      }
 
-   public synchronized int getAcquireRetryDelayMillis () {
-
-      return acquireRetryDelayMillis;
-   }
-
-   public synchronized void setAcquireRetryDelayMillis (int acquireRetryDelayMillis) {
-
-      this.acquireRetryDelayMillis = acquireRetryDelayMillis;
+      this.acquireWaitTimeMillis = acquireWaitTimeMillis;
    }
 
    public synchronized int getMaxLeaseTimeSeconds () {
@@ -237,6 +235,10 @@ public class ConnectionPool<C> implements ConnectionInstanceEventListener, Remot
    }
 
    public synchronized void setMaxLeaseTimeSeconds (int maxLeaseTimeSeconds) {
+
+      if (maxLeaseTimeSeconds < 0) {
+         throw new IllegalArgumentException("Maximum lease time must be >= 0");
+      }
 
       this.maxLeaseTimeSeconds = maxLeaseTimeSeconds;
    }
@@ -248,6 +250,10 @@ public class ConnectionPool<C> implements ConnectionInstanceEventListener, Remot
 
    public synchronized void setMaxIdleTimeSeconds (int maxIdleTimeSeconds) {
 
+      if (maxIdleTimeSeconds < 0) {
+         throw new IllegalArgumentException("Maximum idle time must be >= 0");
+      }
+
       this.maxIdleTimeSeconds = maxIdleTimeSeconds;
    }
 
@@ -257,6 +263,10 @@ public class ConnectionPool<C> implements ConnectionInstanceEventListener, Remot
    }
 
    public synchronized void setUnreturnedConnectionTimeoutSeconds (int unreturnedConnectionTimeoutSeconds) {
+
+      if (unreturnedConnectionTimeoutSeconds < 0) {
+         throw new IllegalArgumentException("Unreturned connection timeout must be >= 0");
+      }
 
       this.unreturnedConnectionTimeoutSeconds = unreturnedConnectionTimeoutSeconds;
    }
@@ -325,10 +335,34 @@ public class ConnectionPool<C> implements ConnectionInstanceEventListener, Remot
       throws Exception {
 
       ConnectionPin<C> connectionPin;
-      int blockedAttempts = 0;
+      C connection;
+
+      if ((connection = serve(true)) != null) {
+
+         return connection;
+      }
+      else if ((connectionPin = createConnectionPin()) != null) {
+         synchronized (connectionPin) {
+
+            return connectionPin.serve();
+         }
+      }
+      else if ((connection = serve(false)) != null) {
+
+         return connection;
+      }
+      else {
+         throw new ConnectionPoolException("ConnectionPool (%s) exceeded its maximum acquire wait time (%d)", poolName, acquireWaitTimeMillis);
+      }
+   }
+
+   private C serve (boolean immediate)
+      throws Exception {
+
+      ConnectionPin<C> connectionPin;
 
       do {
-         while ((connectionPin = connectionPinManager.serve()) != null) {
+         if ((connectionPin = connectionPinManager.serve(acquireWaitTimeMillis, immediate)) != null) {
             synchronized (connectionPin) {
                if (connectionPin.isCommissioned() && connectionPin.isFree()) {
                   if (testOnAcquire && (!connectionPin.validate())) {
@@ -343,25 +377,10 @@ public class ConnectionPool<C> implements ConnectionInstanceEventListener, Remot
                }
             }
          }
+      }
+      while (connectionPin != null);
 
-         if ((connectionPin = createConnectionPin()) != null) {
-            synchronized (connectionPin) {
-
-               return connectionPin.serve();
-            }
-         }
-
-         if (poolMode.equals(PoolMode.BLOCKING_POOL)) {
-            if ((acquireRetryAttempts == 0) || (++blockedAttempts < acquireRetryAttempts)) {
-               Thread.sleep(acquireRetryDelayMillis);
-            }
-            else {
-               throw new ConnectionPoolException("Blocking ConnectionPool (%s) has exceeded its maximum attempts (%d)", poolName, acquireRetryAttempts);
-            }
-         }
-      } while (poolMode.equals(PoolMode.BLOCKING_POOL));
-
-      throw new ConnectionPoolException("Fixed ConnectionPool (%s) is completely booked", poolName);
+      return null;
    }
 
    public C getConnection ()
