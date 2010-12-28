@@ -25,12 +25,13 @@
       <constructor-arg index="0" value="dbPool"/>
       <constructor-arg index="1" ref="schemaConnectionInstanceFactory"/>
       <property name="testOnAcquire" value="${jdbc.pool.connect.test}"/>
+      <property name="initialPoolSize" value="${jdbc.pool.size.min}"/>
       <property name="minPoolSize" value="${jdbc.pool.size.min}"/>
-      <property name="allowSoftMinSize" value="true"/>
       <property name="maxPoolSize" value="${jdbc.pool.size.max}"/>
-      <property name="acquireWaitTimeMillis" value="1000"/>
+      <property name="allowSoftMinSize" value="true"/>
+      <property name="acquireWaitTimeMillis" value="750"/>
+      <property name="connectionTimeoutMillis" value="300"/>
       <property name="maxLeaseTimeSeconds" value="1800"/>
-      <property name="connectionTimeoutMillis" value="500"/>
    </bean>
 
    <bean id="schemaPooledDataSource" class="org.smallmind.persistence.orm.sql.pool.PooledDataSource">
