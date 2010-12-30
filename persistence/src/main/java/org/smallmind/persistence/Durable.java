@@ -30,9 +30,9 @@ import java.io.Serializable;
 import java.lang.reflect.Field;
 import java.util.HashSet;
 import java.util.Set;
-import org.terracotta.modules.annotations.AutolockRead;
-import org.terracotta.modules.annotations.AutolockWrite;
-import org.terracotta.modules.annotations.InstrumentedClass;
+import org.terracotta.annotations.AutolockRead;
+import org.terracotta.annotations.AutolockWrite;
+import org.terracotta.annotations.InstrumentedClass;
 
 @InstrumentedClass
 public abstract class Durable<I extends Comparable<I>> implements Serializable, Comparable<Durable<I>> {

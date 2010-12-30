@@ -34,7 +34,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.ReentrantLock;
-import org.terracotta.modules.annotations.InstrumentedClass;
+import org.terracotta.annotations.InstrumentedClass;
 
 @InstrumentedClass
 public abstract class LockManager<K, V> implements ExternallyLockedCache<K, V> {

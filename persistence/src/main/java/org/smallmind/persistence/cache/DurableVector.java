@@ -30,7 +30,7 @@ import java.util.Comparator;
 import java.util.List;
 import org.smallmind.persistence.Durable;
 import org.smallmind.persistence.VectorPredicate;
-import org.terracotta.modules.annotations.InstrumentedClass;
+import org.terracotta.annotations.InstrumentedClass;
 
 @InstrumentedClass
 public abstract class DurableVector<I extends Comparable<I>, D extends Durable<I>> implements Iterable<D> {

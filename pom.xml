@@ -285,14 +285,19 @@
             <version>3.2.0.Final</version>
          </dependency>
          <dependency>
+            <groupId>hsqldb</groupId>
+            <artifactId>hsqldb</artifactId>
+            <version>1.8.0.10</version>
+         </dependency>
+         <dependency>
             <groupId>org.quartz-scheduler</groupId>
             <artifactId>quartz</artifactId>
             <version>1.8.3</version>
          </dependency>
          <dependency>
-            <groupId>org.terracotta.modules</groupId>
-            <artifactId>tim-annotations</artifactId>
-            <version>1.5.1</version>
+            <groupId>org.terracotta.toolkit</groupId>
+            <artifactId>terracotta-toolkit-1.0</artifactId>
+            <version>1.0.0</version>
          </dependency>
          <dependency>
             <groupId>org.apache.wicket</groupId>

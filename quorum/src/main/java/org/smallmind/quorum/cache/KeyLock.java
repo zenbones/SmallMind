@@ -27,7 +27,7 @@
 package org.smallmind.quorum.cache;
 
 import org.smallmind.nutsnbolts.util.UniqueId;
-import org.terracotta.modules.annotations.InstrumentedClass;
+import org.terracotta.annotations.InstrumentedClass;
 
 @InstrumentedClass
 public class KeyLock {

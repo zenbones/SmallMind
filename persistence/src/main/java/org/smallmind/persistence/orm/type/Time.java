@@ -32,7 +32,7 @@ import java.util.Date;
 import java.util.TimeZone;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
-import org.terracotta.modules.annotations.InstrumentedClass;
+import org.terracotta.annotations.InstrumentedClass;
 
 @InstrumentedClass
 public class Time implements Serializable {

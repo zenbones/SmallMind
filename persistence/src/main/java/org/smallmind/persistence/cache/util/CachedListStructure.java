@@ -26,7 +26,7 @@
  */
 package org.smallmind.persistence.cache.util;
 
-import org.terracotta.modules.annotations.InstrumentedClass;
+import org.terracotta.annotations.InstrumentedClass;
 
 @InstrumentedClass
 public class CachedListStructure<T> {

@@ -33,9 +33,9 @@ import java.util.List;
 import org.smallmind.persistence.Durable;
 import org.smallmind.persistence.VectorPredicate;
 import org.smallmind.persistence.cache.util.CachedList;
-import org.terracotta.modules.annotations.AutolockRead;
-import org.terracotta.modules.annotations.AutolockWrite;
-import org.terracotta.modules.annotations.InstrumentedClass;
+import org.terracotta.annotations.AutolockRead;
+import org.terracotta.annotations.AutolockWrite;
+import org.terracotta.annotations.InstrumentedClass;
 
 @InstrumentedClass
 public class ByReferenceDurableVector<I extends Comparable<I>, D extends Durable<I>> extends DurableVector<I, D> {
