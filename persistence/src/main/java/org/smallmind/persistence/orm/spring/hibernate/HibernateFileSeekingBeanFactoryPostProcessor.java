@@ -27,13 +27,11 @@
 package org.smallmind.persistence.orm.spring.hibernate;
 
 import java.lang.annotation.Annotation;
-import java.lang.reflect.ParameterizedType;
 import java.net.URL;
 import java.util.HashMap;
 import org.smallmind.persistence.orm.DataSource;
 import org.smallmind.persistence.orm.hibernate.HibernateDao;
 import org.springframework.beans.BeansException;
-import org.springframework.beans.FatalBeanException;
 import org.springframework.beans.factory.config.BeanFactoryPostProcessor;
 import org.springframework.beans.factory.config.ConfigurableListableBeanFactory;
 import org.springframework.core.io.Resource;
@@ -75,6 +73,7 @@ public class HibernateFileSeekingBeanFactoryPostProcessor implements BeanFactory
       String dataSourceKey = null;
       String packageRemnant;
       String hbmFileName;
+      int lastSlashIndex;
 
       for (String beanName : configurableListableBeanFactory.getBeanDefinitionNames()) {
          if ((beanClass = configurableListableBeanFactory.getType(beanName)) != null) {
@@ -87,28 +86,21 @@ public class HibernateFileSeekingBeanFactoryPostProcessor implements BeanFactory
                   HBM_DATA_SOURCE_MAP.put(dataSourceKey, hbmResourceMap = new HashMap<Class, UrlResource>());
                }
 
-               int lastSlashIndex;
+               persistentClass = ((HibernateDao)configurableListableBeanFactory.getBean(beanName)).getManagedClass();
 
-               try {
-                  persistentClass = (Class)((ParameterizedType)beanClass.getMethod("getManagedClass").getGenericReturnType()).getActualTypeArguments()[0];
+               while ((persistentClass != null) && (!hbmResourceMap.containsKey(persistentClass))) {
+                  packageRemnant = persistentClass.getPackage().getName().replace('.', '/');
+                  hbmFileName = persistentClass.getSimpleName() + ".hbm.xml";
+                  do {
+                     if ((hbmURL = configurableListableBeanFactory.getBeanClassLoader().getResource((packageRemnant.length() > 0) ? packageRemnant + '/' + hbmFileName : hbmFileName)) != null) {
+                        hbmResourceMap.put(persistentClass, new UrlResource(hbmURL));
+                        break;
+                     }
 
-                  while ((persistentClass != null) && (!hbmResourceMap.containsKey(persistentClass))) {
-                     packageRemnant = persistentClass.getPackage().getName().replace('.', '/');
-                     hbmFileName = persistentClass.getSimpleName() + ".hbm.xml";
-                     do {
-                        if ((hbmURL = configurableListableBeanFactory.getBeanClassLoader().getResource((packageRemnant.length() > 0) ? packageRemnant + '/' + hbmFileName : hbmFileName)) != null) {
-                           hbmResourceMap.put(persistentClass, new UrlResource(hbmURL));
-                           break;
-                        }
+                     packageRemnant = packageRemnant.length() > 0 ? packageRemnant.substring(0, (lastSlashIndex = packageRemnant.lastIndexOf('/')) >= 0 ? lastSlashIndex : 0) : null;
+                  } while (packageRemnant != null);
 
-                        packageRemnant = packageRemnant.length() > 0 ? packageRemnant.substring(0, (lastSlashIndex = packageRemnant.lastIndexOf('/')) >= 0 ? lastSlashIndex : 0) : null;
-                     } while (packageRemnant != null);
-
-                     persistentClass = persistentClass.getSuperclass();
-                  }
-               }
-               catch (NoSuchMethodException noSuchMethodException) {
-                  throw new FatalBeanException("HibernateDao classes are expected to contain the method getManagedClass()", noSuchMethodException);
+                  persistentClass = persistentClass.getSuperclass();
                }
             }
          }

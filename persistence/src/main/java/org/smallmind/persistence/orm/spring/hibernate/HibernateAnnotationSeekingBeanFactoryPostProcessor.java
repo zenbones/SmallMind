@@ -27,13 +27,11 @@
 package org.smallmind.persistence.orm.spring.hibernate;
 
 import java.lang.annotation.Annotation;
-import java.lang.reflect.ParameterizedType;
 import java.util.HashMap;
 import java.util.HashSet;
 import org.smallmind.persistence.orm.DataSource;
 import org.smallmind.persistence.orm.hibernate.HibernateDao;
 import org.springframework.beans.BeansException;
-import org.springframework.beans.FatalBeanException;
 import org.springframework.beans.factory.config.BeanFactoryPostProcessor;
 import org.springframework.beans.factory.config.ConfigurableListableBeanFactory;
 
@@ -102,14 +100,9 @@ public class HibernateAnnotationSeekingBeanFactoryPostProcessor implements BeanF
                   ANNOTATED_CLASS_DATA_SOURCE_MAP.put(dataSourceKey, annotatedClassSet = new HashSet<Class>());
                }
 
-               try {
-                  persistentClass = (Class)((ParameterizedType)beanClass.getMethod("getManagedClass").getGenericReturnType()).getActualTypeArguments()[0];
-                  if (hasMarkedAnnotation(persistentClass)) {
-                     annotatedClassSet.add(persistentClass);
-                  }
-               }
-               catch (NoSuchMethodException noSuchMethodException) {
-                  throw new FatalBeanException("HibernateDao classes are expected to contain the method getManagedClass()", noSuchMethodException);
+               persistentClass = ((HibernateDao)configurableListableBeanFactory.getBean(beanName)).getManagedClass();
+               if (hasMarkedAnnotation(persistentClass)) {
+                  annotatedClassSet.add(persistentClass);
                }
             }
          }
