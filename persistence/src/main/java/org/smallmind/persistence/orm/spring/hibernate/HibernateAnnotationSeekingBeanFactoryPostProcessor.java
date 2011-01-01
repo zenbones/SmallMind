@@ -27,11 +27,15 @@
 package org.smallmind.persistence.orm.spring.hibernate;
 
 import java.lang.annotation.Annotation;
+import java.lang.reflect.ParameterizedType;
+import java.lang.reflect.Type;
 import java.util.HashMap;
 import java.util.HashSet;
+import org.smallmind.persistence.Durable;
 import org.smallmind.persistence.orm.DataSource;
 import org.smallmind.persistence.orm.hibernate.HibernateDao;
 import org.springframework.beans.BeansException;
+import org.springframework.beans.FatalBeanException;
 import org.springframework.beans.factory.config.BeanFactoryPostProcessor;
 import org.springframework.beans.factory.config.ConfigurableListableBeanFactory;
 
@@ -100,12 +104,33 @@ public class HibernateAnnotationSeekingBeanFactoryPostProcessor implements BeanF
                   ANNOTATED_CLASS_DATA_SOURCE_MAP.put(dataSourceKey, annotatedClassSet = new HashSet<Class>());
                }
 
-               persistentClass = ((HibernateDao)configurableListableBeanFactory.getBean(beanName)).getManagedClass();
-               if (hasMarkedAnnotation(persistentClass)) {
+               if ((persistentClass = findDurableClass(beanClass)) == null) {
+                  throw new FatalBeanException("No inference of the Durable class for type(" + beanClass.getName() + ") was possible");
+               }
+               else if (hasMarkedAnnotation(persistentClass)) {
                   annotatedClassSet.add(persistentClass);
                }
             }
          }
       }
+   }
+
+   private Class findDurableClass (Class beanClass) {
+
+      Class currentClass = beanClass;
+      Type superType;
+
+      do {
+         if (((superType = currentClass.getGenericSuperclass()) != null) && (superType instanceof ParameterizedType)) {
+            for (Type genericType : ((ParameterizedType)superType).getActualTypeArguments()) {
+               if ((genericType instanceof Class) && Durable.class.isAssignableFrom((Class)genericType)) {
+
+                  return (Class)genericType;
+               }
+            }
+         }
+      } while ((currentClass = currentClass.getSuperclass()) != null);
+
+      return null;
    }
 }
