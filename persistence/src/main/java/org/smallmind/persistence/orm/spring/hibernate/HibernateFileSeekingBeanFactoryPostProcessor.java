@@ -117,6 +117,17 @@ public class HibernateFileSeekingBeanFactoryPostProcessor implements BeanFactory
 
       Class currentClass = beanClass;
       Type superType;
+      Type returnType;
+
+      try {
+         if ((returnType = ((ParameterizedType)beanClass.getMethod("getManagedClass").getGenericReturnType()).getActualTypeArguments()[0]) instanceof Class) {
+
+            return (Class)returnType;
+         }
+      }
+      catch (NoSuchMethodException noSuchMethodException) {
+         throw new FatalBeanException("HibernateDao classes are expected to contain the method getManagedClass()", noSuchMethodException);
+      }
 
       do {
          if (((superType = currentClass.getGenericSuperclass()) != null) && (superType instanceof ParameterizedType)) {

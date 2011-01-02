@@ -70,8 +70,8 @@ public class SourceNoticeMojo extends AbstractMojo {
    //TODO: Excludes, Seek/Process Optimization
 
    @Override
-   public void execute()
-         throws MojoExecutionException, MojoFailureException {
+   public void execute ()
+      throws MojoExecutionException, MojoFailureException {
 
       MavenProject rootProject = project;
       Stencil[] mergedStencils;
@@ -105,7 +105,8 @@ public class SourceNoticeMojo extends AbstractMojo {
             }
 
             noticeArray = null;
-         } else {
+         }
+         else {
 
             File noticeFile;
 
@@ -117,7 +118,8 @@ public class SourceNoticeMojo extends AbstractMojo {
 
          if (!noticed) {
             getLog().warn(String.format("Unable to acquire the notice file(%s), skipping notice updating...", rule.getNotice()));
-         } else {
+         }
+         else {
             if ((rule.getFileTypes() == null) || (rule.getFileTypes().length == 0)) {
                throw new MojoExecutionException("No file types were specified for rule(" + rule.getId() + ")");
             }
@@ -162,8 +164,8 @@ public class SourceNoticeMojo extends AbstractMojo {
       }
    }
 
-   private void updateNotice(Stencil stencil, String[] noticeArray, char[] buffer, String directoryPath, FileFilter... fileFilters)
-         throws MojoExecutionException {
+   private void updateNotice (Stencil stencil, String[] noticeArray, char[] buffer, String directoryPath, FileFilter... fileFilters)
+      throws MojoExecutionException {
 
       File tempFile;
       BufferedReader fileReader;
@@ -208,7 +210,8 @@ public class SourceNoticeMojo extends AbstractMojo {
                if (!licensedFile.delete()) {
                   throw new MojoFailureException("Unable to delete file(" + licensedFile.getAbsolutePath() + ")");
                }
-            } catch (Exception exception) {
+            }
+            catch (Exception exception) {
                tempFile.delete();
                throw new MojoExecutionException("Exception during notice processing", exception);
             }
@@ -216,16 +219,18 @@ public class SourceNoticeMojo extends AbstractMojo {
             if (!tempFile.renameTo(licensedFile)) {
                throw new MojoFailureException("Unable to rename temp file(" + tempFile.getAbsolutePath() + ") to processed file(" + licensedFile.getAbsolutePath() + ")");
             }
-         } catch (MojoExecutionException mojoExecutionException) {
+         }
+         catch (MojoExecutionException mojoExecutionException) {
             throw mojoExecutionException;
-         } catch (Exception exception) {
+         }
+         catch (Exception exception) {
             throw new MojoExecutionException("Exception during notice processing", exception);
          }
       }
    }
 
-   private String[] getFileAsLineArray(String noticePath)
-         throws MojoExecutionException {
+   private String[] getFileAsLineArray (String noticePath)
+      throws MojoExecutionException {
 
       BufferedReader noticeReader;
       LinkedList<String> lineList;
@@ -238,7 +243,8 @@ public class SourceNoticeMojo extends AbstractMojo {
          while ((singleLine = noticeReader.readLine()) != null) {
             lineList.add(singleLine);
          }
-      } catch (IOException ioException) {
+      }
+      catch (IOException ioException) {
 
          return null;
       }
@@ -249,11 +255,18 @@ public class SourceNoticeMojo extends AbstractMojo {
       return lineArray;
    }
 
-   private String seekNotice(Stencil stencil, Pattern skipPattern, BufferedReader fileReader, FileWriter fileWriter)
-         throws IOException, MojoFailureException {
+   private String seekNotice (Stencil stencil, Pattern skipPattern, BufferedReader fileReader, FileWriter fileWriter)
+      throws IOException, MojoFailureException {
 
       NoticeState noticeState;
       String singleLine = null;
+      String generalPrefix = (stencil.getBeforeEachLine() != null) ? stencil.getBeforeEachLine() : "";
+      int whitespaceIndex = generalPrefix.length();
+
+      while ((whitespaceIndex > 0) && Character.isWhitespace(generalPrefix.charAt(whitespaceIndex - 1))) {
+         whitespaceIndex--;
+      }
+      generalPrefix = generalPrefix.substring(0, whitespaceIndex);
 
       noticeState = (stencil.getFirstLine() != null) ? NoticeState.FIRST : NoticeState.LAST;
       while ((!(noticeState.equals(NoticeState.COMPLETED) || noticeState.equals(NoticeState.TERMINATED))) && ((singleLine = fileReader.readLine()) != null)) {
@@ -267,16 +280,19 @@ public class SourceNoticeMojo extends AbstractMojo {
                case LAST:
                   if ((stencil.getLastLine() != null) && singleLine.equals(stencil.getLastLine())) {
                      noticeState = NoticeState.COMPLETED;
-                  } else if ((singleLine.length() > 0) && (!singleLine.startsWith(stencil.getBeforeEachLine()))) {
+                  }
+                  else if ((singleLine.length() > 0) && (!singleLine.startsWith(generalPrefix))) {
                      noticeState = NoticeState.TERMINATED;
-                  } else if ((singleLine.length() == 0) && stencil.willPrefixBlankLines()) {
+                  }
+                  else if ((singleLine.length() == 0) && stencil.willPrefixBlankLines()) {
                      noticeState = NoticeState.TERMINATED;
                   }
                   break;
                default:
                   throw new MojoFailureException("Unknown or inappropriate notice seeking state(" + noticeState.name() + ")");
             }
-         } else {
+         }
+         else {
             fileWriter.write(singleLine);
             fileWriter.write(System.getProperty("line.separator"));
          }
@@ -291,8 +307,8 @@ public class SourceNoticeMojo extends AbstractMojo {
       return singleLine;
    }
 
-   private void applyNotice(Stencil stencil, String[] noticeArray, FileWriter fileWriter)
-         throws IOException {
+   private void applyNotice (Stencil stencil, String[] noticeArray, FileWriter fileWriter)
+      throws IOException {
 
       for (int count = 0; count < stencil.getBlankLinesBefore(); count++) {
          fileWriter.write(System.getProperty("line.separator"));
