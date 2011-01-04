@@ -21,11 +21,6 @@
          <artifactId>scribe-ink-indigenous</artifactId>
          <scope>runtime</scope>
       </dependency>
-      <dependency>
-         <groupId>org.aspectj</groupId>
-         <artifactId>aspectjrt</artifactId>
-         <scope>test</scope>
-      </dependency>
    </dependencies>
    <build>
       <plugins>
