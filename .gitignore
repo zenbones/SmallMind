@@ -1,6 +1,15 @@
-*.*~
-*.iws
+*.*
+~
+*
+.iws
+
 *.iml
+
 *.ipr
+
 target/
+
 test-output/
+
+CVS
+.cvsignore
