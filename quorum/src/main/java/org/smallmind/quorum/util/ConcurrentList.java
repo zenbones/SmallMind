@@ -1,22 +1,22 @@
 /*
  * Copyright (c) 2007, 2008, 2009, 2010 David Berkman
- * 
+ *
  * This file is part of the SmallMind Code Project.
- * 
+ *
  * The SmallMind Code Project is free software, you can redistribute
  * it and/or modify it under the terms of GNU Affero General Public
  * License as published by the Free Software Foundation, either version 3
  * of the License, or (at your option) any later version.
- * 
+ *
  * The SmallMind Code Project is distributed in the hope that it will
  * be useful, but WITHOUT ANY WARRANTY; without even the implied warranty
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * General Public License for more details.
- * 
+ *
  * You should have received a copy of the the GNU Affero General Public
  * License, along with The SmallMind Code Project. If not, see
  * <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under the GNU Affero GPL version 3 section 7
  * ------------------------------------------------------------------
  * If you modify this Program, or any covered work, by linking or
@@ -24,7 +24,7 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.persistence.cache.util;
+package org.smallmind.quorum.util;
 
 import java.lang.reflect.Array;
 import java.util.Collection;
@@ -37,31 +37,31 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 import org.terracotta.annotations.InstrumentedClass;
 
 @InstrumentedClass
-public class CachedList<T> implements List<T> {
+public class ConcurrentList<T> implements List<T> {
 
    private final ReentrantReadWriteLock lock;
 
-   private CachedListStructure<T> structure;
+   private ConcurrentListStructure<T> structure;
 
-   public CachedList () {
+   public ConcurrentList () {
 
-      this(new ReentrantReadWriteLock(), new CachedListStructure<T>());
+      this(new ReentrantReadWriteLock(), new ConcurrentListStructure<T>());
    }
 
-   public CachedList (Collection<? extends T> c) {
+   public ConcurrentList (Collection<? extends T> c) {
 
-      this(new ReentrantReadWriteLock(), new CachedListStructure<T>());
+      this(new ReentrantReadWriteLock(), new ConcurrentListStructure<T>());
 
       if (!c.isEmpty()) {
 
-         CachedNode<T> added = null;
+         ConcurrentListNode<T> added = null;
 
          for (T element : c) {
             if (added == null) {
-               structure.setHead(added = new CachedNode<T>(element, null, null));
+               structure.setHead(added = new ConcurrentListNode<T>(element, null, null));
             }
             else {
-               added = new CachedNode<T>(element, added, null);
+               added = new ConcurrentListNode<T>(element, added, null);
                added.getPrev().setNext(added);
             }
          }
@@ -71,7 +71,7 @@ public class CachedList<T> implements List<T> {
       }
    }
 
-   public CachedList (ReentrantReadWriteLock lock, CachedListStructure<T> structure) {
+   public ConcurrentList (ReentrantReadWriteLock lock, ConcurrentListStructure<T> structure) {
 
       this.lock = lock;
       this.structure = structure;
@@ -82,7 +82,7 @@ public class CachedList<T> implements List<T> {
       return lock;
    }
 
-   protected CachedNode<T> getNextInView (CachedNode<T> current) {
+   protected ConcurrentListNode<T> getNextInView (ConcurrentListNode<T> current) {
 
       lock.readLock().lock();
       try {
@@ -94,7 +94,7 @@ public class CachedList<T> implements List<T> {
       }
    }
 
-   protected CachedNode<T> getPrevInView (CachedNode<T> current) {
+   protected ConcurrentListNode<T> getPrevInView (ConcurrentListNode<T> current) {
 
       lock.readLock().lock();
       try {
@@ -135,7 +135,7 @@ public class CachedList<T> implements List<T> {
       lock.readLock().lock();
       try {
          if (structure.getSize() > 0) {
-            for (CachedNode<T> current = structure.getHead(); current != null; current = getNextInView(current)) {
+            for (ConcurrentListNode<T> current = structure.getHead(); current != null; current = getNextInView(current)) {
                if (current.objEquals(obj)) {
 
                   return true;
@@ -166,7 +166,7 @@ public class CachedList<T> implements List<T> {
 
             int index = 0;
 
-            for (CachedNode<T> current = structure.getHead(); current != null; current = getNextInView(current)) {
+            for (ConcurrentListNode<T> current = structure.getHead(); current != null; current = getNextInView(current)) {
                elements[index++] = current.getObj();
             }
          }
@@ -182,13 +182,13 @@ public class CachedList<T> implements List<T> {
       }
    }
 
-   private CachedNode<T> getNode (int index) {
+   private ConcurrentListNode<T> getNode (int index) {
 
       if ((index < 0) || (index >= structure.getSize())) {
          throw new IndexOutOfBoundsException(String.valueOf(index));
       }
 
-      CachedNode<T> current;
+      ConcurrentListNode<T> current;
 
       if (index <= (structure.getSize() / 2)) {
          current = structure.getHead();
@@ -255,7 +255,7 @@ public class CachedList<T> implements List<T> {
       lock.readLock().lock();
       try {
 
-         CachedNode<T> current;
+         ConcurrentListNode<T> current;
          T value;
 
          value = (current = getNode(index)).getObj();
@@ -268,12 +268,12 @@ public class CachedList<T> implements List<T> {
       }
    }
 
-   protected void add (CachedNode<T> next, T element) {
+   protected void add (ConcurrentListNode<T> next, T element) {
 
-      CachedNode<T> prev = next.getPrev();
-      CachedNode<T> added;
+      ConcurrentListNode<T> prev = next.getPrev();
+      ConcurrentListNode<T> added;
 
-      next.setPrev(added = new CachedNode<T>(element, prev, next));
+      next.setPrev(added = new ConcurrentListNode<T>(element, prev, next));
       if (prev != null) {
          prev.setNext(added);
       }
@@ -309,8 +309,8 @@ public class CachedList<T> implements List<T> {
          }
          else {
 
-            CachedNode<T> end;
-            CachedNode<T> added = new CachedNode<T>(element, structure.getTail(), end = structure.getTail().getNext());
+            ConcurrentListNode<T> end;
+            ConcurrentListNode<T> added = new ConcurrentListNode<T>(element, structure.getTail(), end = structure.getTail().getNext());
 
             if (end != null) {
                end.setPrev(added);
@@ -349,10 +349,10 @@ public class CachedList<T> implements List<T> {
       }
    }
 
-   protected void removeNode (CachedNode<T> current) {
+   protected void removeNode (ConcurrentListNode<T> current) {
 
-      CachedNode<T> prev = current.getPrev();
-      CachedNode<T> next = current.getNext();
+      ConcurrentListNode<T> prev = current.getPrev();
+      ConcurrentListNode<T> next = current.getNext();
 
       if (prev != null) {
          prev.setNext(next);
@@ -420,7 +420,7 @@ public class CachedList<T> implements List<T> {
 
       lock.writeLock().lock();
       try {
-         for (CachedNode<T> current = structure.getHead(); current != null; current = getNextInView(current)) {
+         for (ConcurrentListNode<T> current = structure.getHead(); current != null; current = getNextInView(current)) {
             if (current.objEquals(o)) {
                removeNode(current);
 
@@ -440,7 +440,7 @@ public class CachedList<T> implements List<T> {
       lock.writeLock().lock();
       try {
 
-         CachedNode<T> current;
+         ConcurrentListNode<T> current;
 
          removeNode(current = getNode(index));
 
@@ -462,7 +462,7 @@ public class CachedList<T> implements List<T> {
 
       lock.readLock().lock();
       try {
-         for (CachedNode<T> current = structure.getHead(); current != null; current = getNextInView(current)) {
+         for (ConcurrentListNode<T> current = structure.getHead(); current != null; current = getNextInView(current)) {
             checkSet.remove(current.getObj());
             if (checkSet.isEmpty()) {
                return true;
@@ -501,7 +501,7 @@ public class CachedList<T> implements List<T> {
          lock.writeLock().lock();
          try {
 
-            CachedNode<T> next = getNode(index);
+            ConcurrentListNode<T> next = getNode(index);
 
             for (T element : c) {
                add(next, element);
@@ -529,7 +529,7 @@ public class CachedList<T> implements List<T> {
 
       lock.writeLock().lock();
       try {
-         for (CachedNode<T> current = structure.getHead(); current != null; current = getNextInView(current)) {
+         for (ConcurrentListNode<T> current = structure.getHead(); current != null; current = getNextInView(current)) {
             if (checkSet.contains(current.getObj())) {
                removeNode(current);
                changed = true;
@@ -555,7 +555,7 @@ public class CachedList<T> implements List<T> {
 
       lock.writeLock().lock();
       try {
-         for (CachedNode<T> current = structure.getHead(); current != null; current = getNextInView(current)) {
+         for (ConcurrentListNode<T> current = structure.getHead(); current != null; current = getNextInView(current)) {
             if (!checkSet.contains(current.getObj())) {
                removeNode(current);
                changed = true;
@@ -587,7 +587,7 @@ public class CachedList<T> implements List<T> {
 
          int index = 0;
 
-         for (CachedNode<T> current = structure.getHead(); current != null; current = getNextInView(current)) {
+         for (ConcurrentListNode<T> current = structure.getHead(); current != null; current = getNextInView(current)) {
             if (current.objEquals(o)) {
 
                return index;
@@ -610,7 +610,7 @@ public class CachedList<T> implements List<T> {
 
          int index = structure.getSize() - 1;
 
-         for (CachedNode<T> current = structure.getTail(); current != null; current = getPrevInView(current)) {
+         for (ConcurrentListNode<T> current = structure.getTail(); current != null; current = getPrevInView(current)) {
             if (current.objEquals(o)) {
 
                return index;
@@ -636,7 +636,7 @@ public class CachedList<T> implements List<T> {
       lock.readLock().lock();
       try {
 
-         return new CachedListIterator<T>(this, null, structure.getHead(), 0);
+         return new ConcurrentListIterator<T>(this, null, structure.getHead(), 0);
       }
       finally {
          lock.readLock().unlock();
@@ -651,13 +651,13 @@ public class CachedList<T> implements List<T> {
             throw new IndexOutOfBoundsException(String.valueOf(index));
          }
          else if (index == structure.getSize()) {
-            return new CachedListIterator<T>(this, structure.getTail(), null, index);
+            return new ConcurrentListIterator<T>(this, structure.getTail(), null, index);
          }
          else {
 
-            CachedNode<T> current = getNode(index);
+            ConcurrentListNode<T> current = getNode(index);
 
-            return new CachedListIterator<T>(this, getPrevInView(current), current, index);
+            return new ConcurrentListIterator<T>(this, getPrevInView(current), current, index);
          }
       }
       finally {
@@ -673,7 +673,7 @@ public class CachedList<T> implements List<T> {
       lock.readLock().lock();
       try {
 
-         return new CachedList<T>(lock, new CachedListStructure<T>(structure, getNode(fromIndex), getNode(toIndex - 1), toIndex - fromIndex));
+         return new ConcurrentList<T>(lock, new ConcurrentListStructure<T>(structure, getNode(fromIndex), getNode(toIndex - 1), toIndex - fromIndex));
       }
       finally {
          lock.readLock().unlock();

@@ -1,7 +1,5 @@
-*.*
-~
-*
-.iws
+*.*~
+*.iws
 *.iml
 *.ipr
 target/
