@@ -36,6 +36,7 @@ public class None implements Option {
    }
 
    private None () {
+
    }
 
    public boolean isNone () {

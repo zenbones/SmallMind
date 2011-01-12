@@ -1,22 +1,22 @@
 /*
  * Copyright (c) 2007, 2008, 2009, 2010 David Berkman
- *
+ * 
  * This file is part of the SmallMind Code Project.
- *
+ * 
  * The SmallMind Code Project is free software, you can redistribute
  * it and/or modify it under the terms of GNU Affero General Public
  * License as published by the Free Software Foundation, either version 3
  * of the License, or (at your option) any later version.
- *
+ * 
  * The SmallMind Code Project is distributed in the hope that it will
  * be useful, but WITHOUT ANY WARRANTY; without even the implied warranty
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * General Public License for more details.
- *
+ * 
  * You should have received a copy of the the GNU Affero General Public
  * License, along with The SmallMind Code Project. If not, see
  * <http://www.gnu.org/licenses/>.
- *
+ * 
  * Additional permission under the GNU Affero GPL version 3 section 7
  * ------------------------------------------------------------------
  * If you modify this Program, or any covered work, by linking or
@@ -31,7 +31,7 @@ import org.terracotta.annotations.InstrumentedClass;
 @InstrumentedClass
 public class ConcurrentListStructure<T> {
 
-   private ConcurrentListStructure<T> subStructure;
+   private ConcurrentListStructure<T> parent;
    private ConcurrentListNode<T> head;
    private ConcurrentListNode<T> tail;
    int size;
@@ -41,9 +41,9 @@ public class ConcurrentListStructure<T> {
       size = 0;
    }
 
-   public ConcurrentListStructure (ConcurrentListStructure<T> subStructure, ConcurrentListNode<T> head, ConcurrentListNode<T> tail, int size) {
+   public ConcurrentListStructure (ConcurrentListStructure<T> parent, ConcurrentListNode<T> head, ConcurrentListNode<T> tail, int size) {
 
-      this.subStructure = subStructure;
+      this.parent = parent;
       this.head = head;
       this.tail = tail;
       this.size = size;
@@ -56,8 +56,8 @@ public class ConcurrentListStructure<T> {
 
    public void setHead (ConcurrentListNode<T> head) {
 
-      if ((subStructure != null) && subStructure.isHead(this.head)) {
-         subStructure.setHead(head);
+      if ((parent != null) && parent.isHead(this.head)) {
+         parent.setHead(head);
       }
 
       this.head = head;
@@ -75,8 +75,8 @@ public class ConcurrentListStructure<T> {
 
    public void setTail (ConcurrentListNode<T> tail) {
 
-      if ((subStructure != null) && subStructure.isTail(this.tail)) {
-         subStructure.setTail(tail);
+      if ((parent != null) && parent.isTail(this.tail)) {
+         parent.setTail(tail);
       }
 
       this.tail = tail;
@@ -89,7 +89,7 @@ public class ConcurrentListStructure<T> {
 
    public void evaporate (ConcurrentListNode<T> prev, ConcurrentListNode<T> current, ConcurrentListNode<T> next) {
 
-      if (subStructure != null) {
+      if (parent != null) {
          evaporate(prev, current, next);
       }
 
@@ -116,8 +116,8 @@ public class ConcurrentListStructure<T> {
          tail.setPrev(added);
       }
 
-      if (subStructure != null) {
-         subStructure.reconstitute(added, head, tail);
+      if (parent != null) {
+         parent.reconstitute(added, head, tail);
       }
 
       head = tail = added;
@@ -126,8 +126,8 @@ public class ConcurrentListStructure<T> {
 
    public void reconstitute (ConcurrentListNode<T> added, ConcurrentListNode<T> head, ConcurrentListNode<T> tail) {
 
-      if (subStructure != null) {
-         subStructure.reconstitute(added, head, tail);
+      if (parent != null) {
+         parent.reconstitute(added, head, tail);
       }
 
       if (head == null) {
@@ -153,7 +153,7 @@ public class ConcurrentListStructure<T> {
             tail.setPrev(head);
          }
 
-         size = 0;
+         subtractSize(getSize());
       }
    }
 
@@ -162,15 +162,28 @@ public class ConcurrentListStructure<T> {
       return size;
    }
 
-   public void setSize (int size) {
+   public void addSize (int delta) {
 
-      this.size = size;
+      if (parent != null) {
+         parent.addSize(delta);
+      }
+
+      size += delta;
+   }
+
+   public void subtractSize (int delta) {
+
+      if (parent != null) {
+         parent.subtractSize(delta);
+      }
+
+      size -= delta;
    }
 
    public void incSize () {
 
-      if (subStructure != null) {
-         subStructure.incSize();
+      if (parent != null) {
+         parent.incSize();
       }
 
       size++;
@@ -178,8 +191,8 @@ public class ConcurrentListStructure<T> {
 
    public void decSize () {
 
-      if (subStructure != null) {
-         subStructure.decSize();
+      if (parent != null) {
+         parent.decSize();
       }
 
       size--;

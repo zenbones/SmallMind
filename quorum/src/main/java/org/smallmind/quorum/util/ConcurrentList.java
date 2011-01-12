@@ -1,22 +1,22 @@
 /*
  * Copyright (c) 2007, 2008, 2009, 2010 David Berkman
- *
+ * 
  * This file is part of the SmallMind Code Project.
- *
+ * 
  * The SmallMind Code Project is free software, you can redistribute
  * it and/or modify it under the terms of GNU Affero General Public
  * License as published by the Free Software Foundation, either version 3
  * of the License, or (at your option) any later version.
- *
+ * 
  * The SmallMind Code Project is distributed in the hope that it will
  * be useful, but WITHOUT ANY WARRANTY; without even the implied warranty
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * General Public License for more details.
- *
+ * 
  * You should have received a copy of the the GNU Affero General Public
  * License, along with The SmallMind Code Project. If not, see
  * <http://www.gnu.org/licenses/>.
- *
+ * 
  * Additional permission under the GNU Affero GPL version 3 section 7
  * ------------------------------------------------------------------
  * If you modify this Program, or any covered work, by linking or
@@ -67,11 +67,11 @@ public class ConcurrentList<T> implements List<T> {
          }
 
          structure.setTail(added);
-         structure.setSize(c.size());
+         structure.addSize(c.size());
       }
    }
 
-   public ConcurrentList (ReentrantReadWriteLock lock, ConcurrentListStructure<T> structure) {
+   private ConcurrentList (ReentrantReadWriteLock lock, ConcurrentListStructure<T> structure) {
 
       this.lock = lock;
       this.structure = structure;
@@ -362,16 +362,7 @@ public class ConcurrentList<T> implements List<T> {
       }
 
       structure.decSize();
-
-      if (structure.getSize() == 0) {
-         structure.evaporate(prev, current, next);
-      }
-      else if (structure.isHead(current)) {
-         structure.setHead(next);
-      }
-      else if (structure.isTail(current)) {
-         structure.setTail(prev);
-      }
+      structure.evaporate(prev, current, next);
    }
 
    public T removeFirst () {
@@ -458,7 +449,7 @@ public class ConcurrentList<T> implements List<T> {
          return true;
       }
 
-      HashSet<?> checkSet = new HashSet(c);
+      HashSet<?> checkSet = new HashSet<Object>(c);
 
       lock.readLock().lock();
       try {
@@ -524,7 +515,7 @@ public class ConcurrentList<T> implements List<T> {
          return false;
       }
 
-      HashSet<?> checkSet = new HashSet(c);
+      HashSet<?> checkSet = new HashSet<Object>(c);
       boolean changed = false;
 
       lock.writeLock().lock();
@@ -550,7 +541,7 @@ public class ConcurrentList<T> implements List<T> {
          return false;
       }
 
-      HashSet<?> checkSet = new HashSet(c);
+      HashSet<?> checkSet = new HashSet<Object>(c);
       boolean changed = false;
 
       lock.writeLock().lock();
@@ -636,7 +627,7 @@ public class ConcurrentList<T> implements List<T> {
       lock.readLock().lock();
       try {
 
-         return new ConcurrentListIterator<T>(this, null, structure.getHead(), 0);
+         return new ConcurrentListIterator<T>(this, null, (structure.getSize() == 0) ? null : structure.getHead(), 0);
       }
       finally {
          lock.readLock().unlock();
@@ -651,7 +642,7 @@ public class ConcurrentList<T> implements List<T> {
             throw new IndexOutOfBoundsException(String.valueOf(index));
          }
          else if (index == structure.getSize()) {
-            return new ConcurrentListIterator<T>(this, structure.getTail(), null, index);
+            return new ConcurrentListIterator<T>(this, (structure.getSize() == 0) ? null : structure.getTail(), null, index);
          }
          else {
 
@@ -670,10 +661,11 @@ public class ConcurrentList<T> implements List<T> {
       if (fromIndex > toIndex) {
          throw new IndexOutOfBoundsException(fromIndex + " > " + toIndex);
       }
+
       lock.readLock().lock();
       try {
 
-         return new ConcurrentList<T>(lock, new ConcurrentListStructure<T>(structure, getNode(fromIndex), getNode(toIndex - 1), toIndex - fromIndex));
+         return new ConcurrentList<T>(lock, new ConcurrentListStructure<T>(structure, getNode(fromIndex), (fromIndex == toIndex) ? getNode(fromIndex).getNext(): getNode(toIndex - 1), toIndex - fromIndex));
       }
       finally {
          lock.readLock().unlock();
