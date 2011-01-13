@@ -38,6 +38,7 @@ import liquibase.Liquibase;
 import liquibase.database.jvm.JdbcConnection;
 import liquibase.exception.LiquibaseException;
 import liquibase.resource.ResourceAccessor;
+import org.smallmind.nutsnbolts.lang.UnknownSwitchCaseException;
 import org.smallmind.persistence.orm.aop.Transactional;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.context.ResourceLoaderAware;
@@ -47,10 +48,10 @@ public class SpringLiquibase implements InitializingBean, ResourceLoaderAware {
 
    private ResourceLoader resourceLoader;
    private DataSource dataSource;
+   private Goal goal;
    private String changeLog;
    private String contexts;
-   private boolean preview = true;
-   private boolean execute = false;
+   private String outputDir;
 
    public void setResourceLoader (ResourceLoader resourceLoader) {
 
@@ -60,6 +61,11 @@ public class SpringLiquibase implements InitializingBean, ResourceLoaderAware {
    public void setDataSource (DataSource dataSource) {
 
       this.dataSource = dataSource;
+   }
+
+   public void setGoal (Goal goal) {
+
+      this.goal = goal;
    }
 
    public void setChangeLog (String changeLog) {
@@ -72,30 +78,33 @@ public class SpringLiquibase implements InitializingBean, ResourceLoaderAware {
       this.contexts = contexts;
    }
 
-   public void setPreview (boolean preview) {
+   public void setOutputDir (String outputDir) {
 
-      this.preview = preview;
-   }
-
-   public void setExecute (boolean execute) {
-
-      this.execute = execute;
+      this.outputDir = outputDir;
    }
 
    @Transactional
    public void afterPropertiesSet ()
       throws SQLException, LiquibaseException {
 
-      if (execute) {
+      if (!goal.equals(Goal.NONE)) {
 
          Liquibase liquibase;
 
          liquibase = new Liquibase(changeLog, new ChangeLogResourceAccessor(), new JdbcConnection(dataSource.getConnection()));
-         if (preview) {
-            liquibase.update(contexts, new PrintWriter(System.out));
-         }
-         else {
-            liquibase.update(contexts);
+
+         switch (goal) {
+            case PREVIEW:
+               liquibase.update(contexts, new PrintWriter(System.out));
+               break;
+            case UPDATE:
+               liquibase.update(contexts);
+               break;
+            case DOCUMENT:
+               liquibase.generateDocumentation(((outputDir == null) || (outputDir.length() == 0)) ? System.getProperty("java.io.tmpdir") : outputDir, contexts);
+               break;
+            default:
+               throw new UnknownSwitchCaseException(goal.name());
          }
       }
    }
