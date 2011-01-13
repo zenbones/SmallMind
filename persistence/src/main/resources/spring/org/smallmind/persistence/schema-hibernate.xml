@@ -8,8 +8,7 @@
    <bean class="org.smallmind.persistence.liquibase.SpringLiquibase">
       <property name="dataSource" ref="schemaPooledDataSource"/>
       <property name="changeLog" value="classpath:database/schema/schema.xml"/>
-      <property name="preview" value="false"/>
-      <property name="execute" value="${liquibase.execute}"/>
+      <property name="goal" value="${liquibase.goal}"/>
    </bean>
 
    <!-- Connection Pooling -->
