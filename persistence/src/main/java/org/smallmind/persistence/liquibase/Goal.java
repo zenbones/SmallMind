@@ -28,5 +28,5 @@ package org.smallmind.persistence.liquibase;
 
 public enum Goal {
 
-   NONE, PREVIEW, UPDATE, DOCUMENT
+   NONE, PREVIEW, UPDATE, DOCUMENT, GENERATE
 }

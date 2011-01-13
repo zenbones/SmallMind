@@ -26,16 +26,23 @@
  */
 package org.smallmind.persistence.liquibase;
 
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.PrintStream;
 import java.io.PrintWriter;
 import java.net.URL;
 import java.sql.SQLException;
 import java.util.Enumeration;
 import java.util.NoSuchElementException;
 import javax.sql.DataSource;
+import javax.xml.parsers.ParserConfigurationException;
 import liquibase.Liquibase;
+import liquibase.database.Database;
+import liquibase.database.DatabaseFactory;
 import liquibase.database.jvm.JdbcConnection;
+import liquibase.diff.Diff;
+import liquibase.diff.DiffResult;
 import liquibase.exception.LiquibaseException;
 import liquibase.resource.ResourceAccessor;
 import org.smallmind.nutsnbolts.lang.UnknownSwitchCaseException;
@@ -51,6 +58,7 @@ public class SpringLiquibase implements InitializingBean, ResourceLoaderAware {
    private Goal goal;
    private String changeLog;
    private String contexts;
+   private String outputLog;
    private String outputDir;
 
    public void setResourceLoader (ResourceLoader resourceLoader) {
@@ -78,6 +86,11 @@ public class SpringLiquibase implements InitializingBean, ResourceLoaderAware {
       this.contexts = contexts;
    }
 
+   public void setOutputLog (String outputLog) {
+
+      this.outputLog = outputLog;
+   }
+
    public void setOutputDir (String outputDir) {
 
       this.outputDir = outputDir;
@@ -85,7 +98,7 @@ public class SpringLiquibase implements InitializingBean, ResourceLoaderAware {
 
    @Transactional
    public void afterPropertiesSet ()
-      throws SQLException, LiquibaseException {
+      throws IOException, ParserConfigurationException, SQLException, LiquibaseException {
 
       if (!goal.equals(Goal.NONE)) {
 
@@ -102,6 +115,20 @@ public class SpringLiquibase implements InitializingBean, ResourceLoaderAware {
                break;
             case DOCUMENT:
                liquibase.generateDocumentation(((outputDir == null) || (outputDir.length() == 0)) ? System.getProperty("java.io.tmpdir") : outputDir, contexts);
+               break;
+            case GENERATE:
+
+               Diff diff;
+               DiffResult diffResult;
+               Database database;
+
+               diff = new Diff(database = DatabaseFactory.getInstance().findCorrectDatabaseImplementation(new JdbcConnection(dataSource.getConnection())), database.getDefaultSchemaName());
+               diffResult = diff.compare();
+               diffResult.setChangeSetAuthor("maven.generated");
+               diffResult.setChangeSetContext(contexts);
+               diffResult.setDataDir(outputDir);
+
+               diffResult.printChangeLog(new PrintStream(new File((((outputDir == null) || (outputDir.length() == 0)) ? System.getProperty("java.io.tmpdir") : outputDir) + System.getProperty("file.separator") + outputLog)), database);
                break;
             default:
                throw new UnknownSwitchCaseException(goal.name());
