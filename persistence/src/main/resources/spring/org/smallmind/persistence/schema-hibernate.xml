@@ -5,7 +5,7 @@
    <import resource="classpath:org/smallmind/persistence/hibernate.xml"/>
 
    <!-- Liquibase updates -->
-   <bean class="org.smallmind.persistence.liquibase.SpringLiquibase">
+   <bean class="org.smallmind.liquibase.spring.SpringLiquibase">
       <property name="dataSource" ref="schemaPooledDataSource"/>
       <property name="changeLog" value="classpath:database/schema/schema.xml"/>
       <property name="goal" value="${liquibase.goal}"/>

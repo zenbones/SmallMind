@@ -52,12 +52,6 @@
          <optional>true</optional>
       </dependency>
       <dependency>
-         <groupId>org.liquibase</groupId>
-         <artifactId>liquibase-core</artifactId>
-         <scope>compile</scope>
-         <optional>true</optional>
-      </dependency>
-      <dependency>
          <groupId>javax.jdo</groupId>
          <artifactId>jdo2-api</artifactId>
          <scope>compile</scope>

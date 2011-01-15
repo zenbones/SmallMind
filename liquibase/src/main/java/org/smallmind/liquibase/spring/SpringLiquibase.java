@@ -24,7 +24,7 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.persistence.liquibase;
+package org.smallmind.liquibase.spring;
 
 import java.io.File;
 import java.io.IOException;

@@ -97,6 +97,7 @@
       <module>spark</module>
       <module>swing</module>
       <module>wicket</module>
+      <module>liquibase</module>
    </modules>
    <dependencyManagement>
       <dependencies>
