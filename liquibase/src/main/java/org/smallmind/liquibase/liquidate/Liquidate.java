@@ -27,6 +27,8 @@
 package org.smallmind.liquibase.liquidate;
 
 import java.awt.Dimension;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import javax.swing.ButtonGroup;
 import javax.swing.GroupLayout;
 import javax.swing.JButton;
@@ -38,9 +40,19 @@ import javax.swing.JRadioButton;
 import javax.swing.JSeparator;
 import javax.swing.JTextField;
 import org.smallmind.liquibase.spring.Goal;
+import org.smallmind.liquibase.spring.SpringLiquibase;
 import org.smallmind.nutsnbolts.util.StringUtilities;
+import org.smallmind.persistence.orm.sql.DriverManagerDataSource;
 
-public class Liquidate extends JFrame {
+public class Liquidate extends JFrame implements ActionListener {
+
+   private JComboBox databaseCombo;
+   private ButtonGroup goalButtonGroup;
+   private JTextField hostTextField;
+   private JTextField portTextField;
+   private JTextField schemaTextField;
+   private JTextField userTextField;
+   private JPasswordField passwordField;
 
    public Liquidate () {
 
@@ -50,17 +62,12 @@ public class Liquidate extends JFrame {
       GroupLayout.ParallelGroup buttonHorizontalGroup;
       GroupLayout.SequentialGroup buttonVerticalGroup;
       JSeparator buttonSeparator;
-      JComboBox databaseCombo;
       JButton startButton;
-      ButtonGroup goalButtonGroup;
       JRadioButton[] goalButtons;
-      JTextField hostTextField;
-      JTextField portTextField;
-      JTextField userTextField;
-      JPasswordField passwordField;
       JLabel databaseLabel;
       JLabel hostLabel;
       JLabel colonLabel;
+      JLabel schemaLabel;
       JLabel userLabel;
       JLabel passwordLabel;
       JLabel goalLabel;
@@ -80,6 +87,9 @@ public class Liquidate extends JFrame {
       portTextField.setMaximumSize(portTextField.getPreferredSize());
       colonLabel = new JLabel(":");
 
+      schemaLabel = new JLabel("Choose Schema:");
+      schemaTextField = new JTextField();
+
       userLabel = new JLabel("Choose User:");
       userTextField = new JTextField();
 
@@ -91,7 +101,8 @@ public class Liquidate extends JFrame {
       goalButtons = new JRadioButton[Goal.values().length - 1];
       for (Goal goal : Goal.values()) {
          if (!goal.equals(Goal.NONE)) {
-            goalButtonGroup.add(goalButtons[goalIndex++] = new JRadioButton(StringUtilities.toDisplayCase(goal.name(), '_')));
+            goalButtonGroup.add(goalButtons[goalIndex] = new JRadioButton(StringUtilities.toDisplayCase(goal.name(), '_')));
+            goalButtons[goalIndex++].setActionCommand(goal.name());
          }
       }
       goalButtons[0].setSelected(true);
@@ -99,6 +110,7 @@ public class Liquidate extends JFrame {
       buttonSeparator = new JSeparator(JSeparator.HORIZONTAL);
       buttonSeparator.setMaximumSize(new Dimension(Integer.MAX_VALUE, (int)buttonSeparator.getPreferredSize().getHeight()));
       startButton = new JButton("Start");
+      startButton.addActionListener(this);
 
       layout.setAutoCreateContainerGaps(true);
 
@@ -106,11 +118,13 @@ public class Liquidate extends JFrame {
          .addGroup(layout.createSequentialGroup().addGroup(layout.createParallelGroup(GroupLayout.Alignment.TRAILING)
             .addGroup(layout.createSequentialGroup().addComponent(databaseLabel).addGap(10))
             .addGroup(layout.createSequentialGroup().addComponent(hostLabel).addGap(10))
+            .addGroup(layout.createSequentialGroup().addComponent(schemaLabel).addGap(10))
             .addGroup(layout.createSequentialGroup().addComponent(userLabel).addGap(10))
             .addGroup(layout.createSequentialGroup().addComponent(passwordLabel).addGap(10))
             .addGroup(layout.createSequentialGroup().addComponent(goalLabel).addGap(10)))
-            .addGroup(buttonHorizontalGroup = layout.createParallelGroup(GroupLayout.Alignment.LEADING).addComponent(databaseCombo).addComponent(userTextField).addComponent(passwordField)
-               .addGroup(layout.createSequentialGroup().addComponent(hostTextField).addGap(2).addComponent(colonLabel).addGap(2).addComponent(portTextField))))
+            .addGroup(buttonHorizontalGroup = layout.createParallelGroup(GroupLayout.Alignment.LEADING).addComponent(databaseCombo)
+               .addGroup(layout.createSequentialGroup().addComponent(hostTextField).addGap(2).addComponent(colonLabel).addGap(2).addComponent(portTextField))
+               .addComponent(schemaTextField).addComponent(userTextField).addComponent(passwordField)))
          .addComponent(buttonSeparator).addComponent(startButton));
 
       for (JRadioButton goalButton : goalButtons) {
@@ -120,6 +134,7 @@ public class Liquidate extends JFrame {
       layout.setVerticalGroup(buttonVerticalGroup = layout.createSequentialGroup()
          .addGroup(layout.createParallelGroup(GroupLayout.Alignment.BASELINE).addComponent(databaseLabel).addComponent(databaseCombo)).addGap(8)
          .addGroup(layout.createParallelGroup(GroupLayout.Alignment.BASELINE).addComponent(hostLabel).addComponent(hostTextField).addComponent(colonLabel).addComponent(portTextField)).addGap(8)
+         .addGroup(layout.createParallelGroup(GroupLayout.Alignment.BASELINE).addComponent(schemaLabel).addComponent(schemaTextField)).addGap(8)
          .addGroup(layout.createParallelGroup(GroupLayout.Alignment.BASELINE).addComponent(userLabel).addComponent(userTextField)).addGap(8)
          .addGroup(layout.createParallelGroup(GroupLayout.Alignment.BASELINE).addComponent(passwordLabel).addComponent(passwordField)).addGap(8)
          .addGroup(layout.createParallelGroup(GroupLayout.Alignment.BASELINE).addComponent(goalLabel).addComponent(goalButtons[0])));
@@ -132,6 +147,28 @@ public class Liquidate extends JFrame {
 
       setSize(new Dimension(((int)getLayout().preferredLayoutSize(this).getWidth()) + 120, ((int)getLayout().preferredLayoutSize(this).getHeight()) + 35));
       setLocationByPlatform(true);
+   }
+
+   public void actionPerformed (ActionEvent actionEvent) {
+
+      SpringLiquibase springLiquibase;
+      Database database;
+
+      springLiquibase = new SpringLiquibase();
+      springLiquibase.setGoal(Goal.valueOf(goalButtonGroup.getSelection().getActionCommand()));
+
+      database = (Database)databaseCombo.getSelectedItem();
+
+      try {
+         springLiquibase.setDataSource(new DriverManagerDataSource(database.getDriver().getName(), database.getUrl(hostTextField.getText(), portTextField.getText(), schemaTextField.getText()), userTextField.getText(), new String(passwordField.getPassword())));
+         springLiquibase.afterPropertiesSet();
+      }
+      catch (Exception exception) {
+         throw new RuntimeException(exception);
+      }
+
+      this.setVisible(false);
+      this.dispose();
    }
 
    public static void main (String... args) {
