@@ -29,10 +29,13 @@ package org.smallmind.liquibase.liquidate;
 import java.awt.Dimension;
 import javax.swing.ButtonGroup;
 import javax.swing.GroupLayout;
+import javax.swing.JButton;
 import javax.swing.JComboBox;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
+import javax.swing.JPasswordField;
 import javax.swing.JRadioButton;
+import javax.swing.JSeparator;
 import javax.swing.JTextField;
 import org.smallmind.liquibase.spring.Goal;
 import org.smallmind.nutsnbolts.util.StringUtilities;
@@ -46,13 +49,15 @@ public class Liquidate extends JFrame {
       GroupLayout layout;
       GroupLayout.ParallelGroup buttonHorizontalGroup;
       GroupLayout.SequentialGroup buttonVerticalGroup;
+      JSeparator buttonSeparator;
       JComboBox databaseCombo;
+      JButton startButton;
       ButtonGroup goalButtonGroup;
       JRadioButton[] goalButtons;
       JTextField hostTextField;
       JTextField portTextField;
       JTextField userTextField;
-      JTextField passwordTextField;
+      JPasswordField passwordField;
       JLabel databaseLabel;
       JLabel hostLabel;
       JLabel colonLabel;
@@ -79,7 +84,7 @@ public class Liquidate extends JFrame {
       userTextField = new JTextField();
 
       passwordLabel = new JLabel("Choose Password:");
-      passwordTextField = new JTextField();
+      passwordField = new JPasswordField();
 
       goalLabel = new JLabel("Choose Goal:");
       goalButtonGroup = new ButtonGroup();
@@ -91,17 +96,22 @@ public class Liquidate extends JFrame {
       }
       goalButtons[0].setSelected(true);
 
+      buttonSeparator = new JSeparator(JSeparator.HORIZONTAL);
+      buttonSeparator.setMaximumSize(new Dimension(Integer.MAX_VALUE, (int)buttonSeparator.getPreferredSize().getHeight()));
+      startButton = new JButton("Start");
+
       layout.setAutoCreateContainerGaps(true);
 
-      layout.setHorizontalGroup(layout.createSequentialGroup()
-         .addGroup(layout.createParallelGroup(GroupLayout.Alignment.TRAILING)
+      layout.setHorizontalGroup(layout.createParallelGroup(GroupLayout.Alignment.TRAILING)
+         .addGroup(layout.createSequentialGroup().addGroup(layout.createParallelGroup(GroupLayout.Alignment.TRAILING)
             .addGroup(layout.createSequentialGroup().addComponent(databaseLabel).addGap(10))
             .addGroup(layout.createSequentialGroup().addComponent(hostLabel).addGap(10))
             .addGroup(layout.createSequentialGroup().addComponent(userLabel).addGap(10))
             .addGroup(layout.createSequentialGroup().addComponent(passwordLabel).addGap(10))
             .addGroup(layout.createSequentialGroup().addComponent(goalLabel).addGap(10)))
-         .addGroup(buttonHorizontalGroup = layout.createParallelGroup(GroupLayout.Alignment.LEADING).addComponent(databaseCombo).addComponent(userTextField).addComponent(passwordTextField)
-            .addGroup(layout.createSequentialGroup().addComponent(hostTextField).addGap(2).addComponent(colonLabel).addGap(2).addComponent(portTextField))));
+            .addGroup(buttonHorizontalGroup = layout.createParallelGroup(GroupLayout.Alignment.LEADING).addComponent(databaseCombo).addComponent(userTextField).addComponent(passwordField)
+               .addGroup(layout.createSequentialGroup().addComponent(hostTextField).addGap(2).addComponent(colonLabel).addGap(2).addComponent(portTextField))))
+         .addComponent(buttonSeparator).addComponent(startButton));
 
       for (JRadioButton goalButton : goalButtons) {
          buttonHorizontalGroup.addComponent(goalButton);
@@ -111,14 +121,17 @@ public class Liquidate extends JFrame {
          .addGroup(layout.createParallelGroup(GroupLayout.Alignment.BASELINE).addComponent(databaseLabel).addComponent(databaseCombo)).addGap(8)
          .addGroup(layout.createParallelGroup(GroupLayout.Alignment.BASELINE).addComponent(hostLabel).addComponent(hostTextField).addComponent(colonLabel).addComponent(portTextField)).addGap(8)
          .addGroup(layout.createParallelGroup(GroupLayout.Alignment.BASELINE).addComponent(userLabel).addComponent(userTextField)).addGap(8)
-         .addGroup(layout.createParallelGroup(GroupLayout.Alignment.BASELINE).addComponent(passwordLabel).addComponent(passwordTextField)).addGap(8)
+         .addGroup(layout.createParallelGroup(GroupLayout.Alignment.BASELINE).addComponent(passwordLabel).addComponent(passwordField)).addGap(8)
          .addGroup(layout.createParallelGroup(GroupLayout.Alignment.BASELINE).addComponent(goalLabel).addComponent(goalButtons[0])));
 
       for (int count = 1; count < goalButtons.length; count++) {
          buttonVerticalGroup.addComponent(goalButtons[count]);
       }
 
-      setSize(getLayout().preferredLayoutSize(this));
+      buttonVerticalGroup.addGap(15).addComponent(buttonSeparator).addGap(5).addComponent(startButton);
+
+      setSize(new Dimension(((int)getLayout().preferredLayoutSize(this).getWidth()) + 120, ((int)getLayout().preferredLayoutSize(this).getHeight()) + 35));
+      setLocationByPlatform(true);
    }
 
    public static void main (String... args) {
