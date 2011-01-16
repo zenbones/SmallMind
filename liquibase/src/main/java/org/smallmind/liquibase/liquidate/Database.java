@@ -48,4 +48,9 @@ public enum Database {
 
       return driver;
    }
+
+   public String toString () {
+
+      return display;
+   }
 }
