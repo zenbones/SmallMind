@@ -170,11 +170,4 @@ public class Liquidate extends JFrame implements ActionListener {
       this.setVisible(false);
       this.dispose();
    }
-
-   public static void main (String... args) {
-
-      Liquidate liquidate = new Liquidate();
-
-      liquidate.setVisible(true);
-   }
 }
