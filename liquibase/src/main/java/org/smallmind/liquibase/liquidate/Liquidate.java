@@ -1,22 +1,22 @@
 /*
  * Copyright (c) 2007, 2008, 2009, 2010 David Berkman
- * 
+ *
  * This file is part of the SmallMind Code Project.
- * 
+ *
  * The SmallMind Code Project is free software, you can redistribute
  * it and/or modify it under the terms of GNU Affero General Public
  * License as published by the Free Software Foundation, either version 3
  * of the License, or (at your option) any later version.
- * 
+ *
  * The SmallMind Code Project is distributed in the hope that it will
  * be useful, but WITHOUT ANY WARRANTY; without even the implied warranty
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * General Public License for more details.
- * 
+ *
  * You should have received a copy of the the GNU Affero General Public
  * License, along with The SmallMind Code Project. If not, see
  * <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under the GNU Affero GPL version 3 section 7
  * ------------------------------------------------------------------
  * If you modify this Program, or any covered work, by linking or
@@ -43,26 +43,32 @@ import org.smallmind.liquibase.spring.Goal;
 import org.smallmind.liquibase.spring.SpringLiquibase;
 import org.smallmind.nutsnbolts.util.StringUtilities;
 import org.smallmind.persistence.orm.sql.DriverManagerDataSource;
+import org.springframework.core.io.DefaultResourceLoader;
 
 public class Liquidate extends JFrame implements ActionListener {
 
    private JComboBox databaseCombo;
+   private ButtonGroup sourceButtonGroup;
    private ButtonGroup goalButtonGroup;
+   private JPasswordField passwordField;
    private JTextField hostTextField;
    private JTextField portTextField;
    private JTextField schemaTextField;
    private JTextField userTextField;
-   private JPasswordField passwordField;
+   private JTextField logTextField;
 
    public Liquidate () {
 
       super("Liquidate");
 
       GroupLayout layout;
-      GroupLayout.ParallelGroup buttonHorizontalGroup;
-      GroupLayout.SequentialGroup buttonVerticalGroup;
+      GroupLayout.ParallelGroup sourceVerticalGroup;
+      GroupLayout.ParallelGroup goalHorizontalGroup;
+      GroupLayout.SequentialGroup sourceHorizontalGroup;
+      GroupLayout.SequentialGroup goalVerticalGroup;
       JSeparator buttonSeparator;
       JButton startButton;
+      JRadioButton[] sourceButtons;
       JRadioButton[] goalButtons;
       JLabel databaseLabel;
       JLabel hostLabel;
@@ -70,16 +76,18 @@ public class Liquidate extends JFrame implements ActionListener {
       JLabel schemaLabel;
       JLabel userLabel;
       JLabel passwordLabel;
+      JLabel sourceLabel;
       JLabel goalLabel;
+      int sourceIndex = 0;
       int goalIndex = 0;
 
       setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
       setLayout(layout = new GroupLayout(getContentPane()));
 
-      databaseLabel = new JLabel("Choose Database:");
+      databaseLabel = new JLabel("Database:");
       databaseCombo = new JComboBox(Database.values());
 
-      hostLabel = new JLabel("Choose Host and Port:");
+      hostLabel = new JLabel("Host and Port:");
       hostTextField = new JTextField();
       portTextField = new JTextField();
       portTextField.setHorizontalAlignment(JTextField.RIGHT);
@@ -87,16 +95,26 @@ public class Liquidate extends JFrame implements ActionListener {
       portTextField.setMaximumSize(portTextField.getPreferredSize());
       colonLabel = new JLabel(":");
 
-      schemaLabel = new JLabel("Choose Schema:");
+      schemaLabel = new JLabel("Schema:");
       schemaTextField = new JTextField();
 
-      userLabel = new JLabel("Choose User:");
+      userLabel = new JLabel("User:");
       userTextField = new JTextField();
 
-      passwordLabel = new JLabel("Choose Password:");
+      passwordLabel = new JLabel("Password:");
       passwordField = new JPasswordField();
 
-      goalLabel = new JLabel("Choose Goal:");
+      sourceLabel = new JLabel("Change Log:");
+      sourceButtonGroup = new ButtonGroup();
+      sourceButtons = new JRadioButton[Source.values().length];
+      for (Source source : Source.values()) {
+         sourceButtonGroup.add(sourceButtons[sourceIndex] = new JRadioButton(StringUtilities.toDisplayCase(source.name(), '_')));
+         sourceButtons[sourceIndex++].setActionCommand(source.name());
+      }
+      sourceButtons[0].setSelected(true);
+      logTextField = new JTextField();
+
+      goalLabel = new JLabel("Goal:");
       goalButtonGroup = new ButtonGroup();
       goalButtons = new JRadioButton[Goal.values().length - 1];
       for (Goal goal : Goal.values()) {
@@ -121,29 +139,41 @@ public class Liquidate extends JFrame implements ActionListener {
             .addGroup(layout.createSequentialGroup().addComponent(schemaLabel).addGap(10))
             .addGroup(layout.createSequentialGroup().addComponent(userLabel).addGap(10))
             .addGroup(layout.createSequentialGroup().addComponent(passwordLabel).addGap(10))
+            .addGroup(layout.createSequentialGroup().addComponent(sourceLabel).addGap(10))
             .addGroup(layout.createSequentialGroup().addComponent(goalLabel).addGap(10)))
-            .addGroup(buttonHorizontalGroup = layout.createParallelGroup(GroupLayout.Alignment.LEADING).addComponent(databaseCombo)
+            .addGroup(goalHorizontalGroup = layout.createParallelGroup(GroupLayout.Alignment.LEADING).addComponent(databaseCombo)
                .addGroup(layout.createSequentialGroup().addComponent(hostTextField).addGap(2).addComponent(colonLabel).addGap(2).addComponent(portTextField))
-               .addComponent(schemaTextField).addComponent(userTextField).addComponent(passwordField)))
+               .addComponent(schemaTextField).addComponent(userTextField).addComponent(passwordField)
+               .addGroup(sourceHorizontalGroup = layout.createSequentialGroup()).addComponent(logTextField)))
          .addComponent(buttonSeparator).addComponent(startButton));
 
-      for (JRadioButton goalButton : goalButtons) {
-         buttonHorizontalGroup.addComponent(goalButton);
+      for (JRadioButton sourceButton : sourceButtons) {
+         sourceHorizontalGroup.addComponent(sourceButton);
       }
 
-      layout.setVerticalGroup(buttonVerticalGroup = layout.createSequentialGroup()
+      for (JRadioButton goalButton : goalButtons) {
+         goalHorizontalGroup.addComponent(goalButton);
+      }
+
+      layout.setVerticalGroup(goalVerticalGroup = layout.createSequentialGroup()
          .addGroup(layout.createParallelGroup(GroupLayout.Alignment.BASELINE).addComponent(databaseLabel).addComponent(databaseCombo)).addGap(8)
          .addGroup(layout.createParallelGroup(GroupLayout.Alignment.BASELINE).addComponent(hostLabel).addComponent(hostTextField).addComponent(colonLabel).addComponent(portTextField)).addGap(8)
          .addGroup(layout.createParallelGroup(GroupLayout.Alignment.BASELINE).addComponent(schemaLabel).addComponent(schemaTextField)).addGap(8)
          .addGroup(layout.createParallelGroup(GroupLayout.Alignment.BASELINE).addComponent(userLabel).addComponent(userTextField)).addGap(8)
          .addGroup(layout.createParallelGroup(GroupLayout.Alignment.BASELINE).addComponent(passwordLabel).addComponent(passwordField)).addGap(8)
+         .addGroup(layout.createParallelGroup(GroupLayout.Alignment.BASELINE).addComponent(sourceLabel).addGroup(sourceVerticalGroup = layout.createParallelGroup())).addGap(8)
+         .addComponent(logTextField).addGap(8)
          .addGroup(layout.createParallelGroup(GroupLayout.Alignment.BASELINE).addComponent(goalLabel).addComponent(goalButtons[0])));
 
-      for (int count = 1; count < goalButtons.length; count++) {
-         buttonVerticalGroup.addComponent(goalButtons[count]);
+      for (JRadioButton sourceButton : sourceButtons) {
+         sourceVerticalGroup.addComponent(sourceButton);
       }
 
-      buttonVerticalGroup.addGap(15).addComponent(buttonSeparator).addGap(5).addComponent(startButton);
+      for (int count = 1; count < goalButtons.length; count++) {
+         goalVerticalGroup.addComponent(goalButtons[count]);
+      }
+
+      goalVerticalGroup.addGap(15).addComponent(buttonSeparator).addGap(8).addComponent(startButton);
 
       setSize(new Dimension(((int)getLayout().preferredLayoutSize(this).getWidth()) + 120, ((int)getLayout().preferredLayoutSize(this).getHeight()) + 35));
       setLocationByPlatform(true);
@@ -155,6 +185,8 @@ public class Liquidate extends JFrame implements ActionListener {
       Database database;
 
       springLiquibase = new SpringLiquibase();
+      springLiquibase.setResourceLoader(new DefaultResourceLoader());
+      springLiquibase.setChangeLog(Source.valueOf(sourceButtonGroup.getSelection().getActionCommand()).getProlog() + logTextField.getText());
       springLiquibase.setGoal(Goal.valueOf(goalButtonGroup.getSelection().getActionCommand()));
 
       database = (Database)databaseCombo.getSelectedItem();
@@ -169,5 +201,12 @@ public class Liquidate extends JFrame implements ActionListener {
 
       this.setVisible(false);
       this.dispose();
+   }
+
+   public static void main (String... args) {
+
+      Liquidate liquidate = new Liquidate();
+
+      liquidate.setVisible(true);
    }
 }

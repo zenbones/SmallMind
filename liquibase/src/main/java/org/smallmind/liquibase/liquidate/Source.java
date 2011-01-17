@@ -24,9 +24,33 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.liquibase.spring;
+package org.smallmind.liquibase.liquidate;
 
-public enum Goal {
+public enum Source {
 
-   NONE, PREVIEW, UPDATE, GENERATE, DOCUMENT
+   CLASSPATH("Classpath", "classpath:"), FILE("File", "file:");
+
+   private String display;
+   private String prolog;
+
+   Source (String display, String prolog) {
+
+      this.display = display;
+      this.prolog = prolog;
+   }
+
+   public String getDisplay () {
+
+      return display;
+   }
+
+   public String getProlog () {
+
+      return prolog;
+   }
+
+   public String toString () {
+
+      return display;
+   }
 }
