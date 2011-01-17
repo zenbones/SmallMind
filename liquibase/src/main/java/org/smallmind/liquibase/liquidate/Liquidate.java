@@ -29,6 +29,8 @@ package org.smallmind.liquibase.liquidate;
 import java.awt.Dimension;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.util.Enumeration;
+import javax.swing.AbstractButton;
 import javax.swing.ButtonGroup;
 import javax.swing.GroupLayout;
 import javax.swing.JButton;
@@ -203,10 +205,64 @@ public class Liquidate extends JFrame implements ActionListener {
       this.dispose();
    }
 
-   public static void main (String... args) {
+   public void setDatabase (Database database) {
 
-      Liquidate liquidate = new Liquidate();
+      databaseCombo.setSelectedItem(database);
+   }
 
-      liquidate.setVisible(true);
+   public void setHost (String host) {
+
+      hostTextField.setText(host);
+   }
+
+   public void setPort (int port) {
+
+      portTextField.setText(String.valueOf(port));
+   }
+
+   public void setSchema (String schema) {
+
+      schemaTextField.setText(schema);
+   }
+
+   public void setUser (String user) {
+
+      userTextField.setText(user);
+   }
+
+   public void setPassword (String password) {
+
+      passwordField.setText(password);
+   }
+
+   public void setSource (Source source) {
+
+      Enumeration<AbstractButton> buttonEnum = sourceButtonGroup.getElements();
+      AbstractButton button;
+
+      while (buttonEnum.hasMoreElements()) {
+         if ((button = buttonEnum.nextElement()).getActionCommand().equals(source.name())) {
+            sourceButtonGroup.setSelected(button.getModel(), true);
+            break;
+         }
+      }
+   }
+
+   public void setChangeLog (String changeLog) {
+
+      logTextField.setText(changeLog);
+   }
+
+   public void setGoal (Goal goal) {
+
+      Enumeration<AbstractButton> buttonEnum = goalButtonGroup.getElements();
+      AbstractButton button;
+
+      while (buttonEnum.hasMoreElements()) {
+         if ((button = buttonEnum.nextElement()).getActionCommand().equals(goal.name())) {
+            goalButtonGroup.setSelected(button.getModel(), true);
+            break;
+         }
+      }
    }
 }
