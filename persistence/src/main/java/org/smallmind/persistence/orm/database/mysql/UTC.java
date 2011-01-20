@@ -24,7 +24,7 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.persistence.orm.type;
+package org.smallmind.persistence.orm.database.mysql;
 
 import java.util.Date;
 import org.joda.time.DateTime;
