@@ -36,7 +36,7 @@
             </executions>
             <configuration>
                <verbose>true</verbose>
-               <complianceLevel>1.5</complianceLevel>
+               <complianceLevel>1.6</complianceLevel>
                <aspectLibraries>
                   <aspectLibrary>
                      <groupId>org.smallmind</groupId>

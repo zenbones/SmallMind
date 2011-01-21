@@ -38,7 +38,7 @@
             </executions>
             <configuration>
                <verbose>true</verbose>
-               <complianceLevel>1.5</complianceLevel>
+               <complianceLevel>1.6</complianceLevel>
             </configuration>
          </plugin>
       </plugins>
