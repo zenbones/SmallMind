@@ -23,7 +23,7 @@
         </dependency>
         <dependency>
             <groupId>org.springframework</groupId>
-            <artifactId>spring-beans</artifactId>
+            <artifactId>spring-context</artifactId>
             <scope>compile</scope>
         </dependency>
         <dependency>

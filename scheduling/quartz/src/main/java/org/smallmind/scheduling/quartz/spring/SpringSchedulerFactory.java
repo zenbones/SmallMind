@@ -24,31 +24,41 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.scheduling.base;
+package org.smallmind.scheduling.quartz.spring;
 
-import java.util.Date;
+import java.util.Properties;
+import org.quartz.Scheduler;
+import org.quartz.SchedulerException;
+import org.quartz.impl.StdSchedulerFactory;
+import org.springframework.beans.BeansException;
+import org.springframework.context.ApplicationContext;
+import org.springframework.context.ApplicationContextAware;
 
-public interface ProxyJob {
+public class SpringSchedulerFactory extends StdSchedulerFactory implements ApplicationContextAware {
 
-   public abstract boolean logOnZeroCount ();
+   private SpringJobFactory jobFactory;
 
-   public abstract JobStatus getJobStatus ();
+   public SpringSchedulerFactory (Properties properties)
+      throws SchedulerException {
 
-   public abstract int getCount ();
+      super(properties);
+   }
 
-   public abstract void incCount ();
+   @Override
+   public void setApplicationContext (ApplicationContext applicationContext)
+      throws BeansException {
 
-   public abstract Date getStartTime ();
+      jobFactory = new SpringJobFactory(applicationContext);
+   }
 
-   public abstract Date getStopTime ();
+   @Override
+   public Scheduler getScheduler () throws SchedulerException {
 
-   public abstract Exception[] getExceptions ();
+      Scheduler scheduler;
 
-   public abstract void setException (Exception exception);
+      scheduler = super.getScheduler();
+      scheduler.setJobFactory(jobFactory);
 
-   public abstract void proceed ()
-      throws Exception;
-
-   public abstract void shutdown ()
-      throws Exception;
+      return scheduler;
+   }
 }

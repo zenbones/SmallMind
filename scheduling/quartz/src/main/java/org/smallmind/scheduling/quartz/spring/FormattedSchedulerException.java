@@ -24,31 +24,29 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.scheduling.base;
+package org.smallmind.scheduling.quartz.spring;
 
-import java.util.Date;
+import org.quartz.SchedulerException;
 
-public interface ProxyJob {
+public class FormattedSchedulerException extends SchedulerException {
 
-   public abstract boolean logOnZeroCount ();
+   public FormattedSchedulerException () {
 
-   public abstract JobStatus getJobStatus ();
+      super();
+   }
 
-   public abstract int getCount ();
+   public FormattedSchedulerException (String message, Object... args) {
 
-   public abstract void incCount ();
+      super(String.format(message, args));
+   }
 
-   public abstract Date getStartTime ();
+   public FormattedSchedulerException (Throwable throwable, String message, Object... args) {
 
-   public abstract Date getStopTime ();
+      super(String.format(message, args), throwable);
+   }
 
-   public abstract Exception[] getExceptions ();
+   public FormattedSchedulerException (Throwable throwable) {
 
-   public abstract void setException (Exception exception);
-
-   public abstract void proceed ()
-      throws Exception;
-
-   public abstract void shutdown ()
-      throws Exception;
+      super(throwable);
+   }
 }
