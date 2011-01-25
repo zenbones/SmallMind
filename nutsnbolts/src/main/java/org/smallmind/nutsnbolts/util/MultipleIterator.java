@@ -34,6 +34,16 @@ public class MultipleIterator<T> implements Iterator<T>, Iterable<T> {
    private Iterator<T>[] iterators;
    private int index = 0;
 
+   public MultipleIterator (Iterable<T>... iterables) {
+
+      iterators = new Iterator[iterables.length];
+      for (int count = 0; count < iterables.length; count++) {
+         iterators[count] = iterables[count].iterator();
+      }
+
+      moveIndex();
+   }
+
    public MultipleIterator (Iterator<T>... iterators) {
 
       this.iterators = iterators;
