@@ -40,7 +40,15 @@
    <build>
       <resources>
          <resource>
-            <directory>src/main/resources</directory>
+            <directory>src/main/resources/spring</directory>
+            <filtering>false</filtering>
+         </resource>
+         <resource>
+            <directory>src/main/resources/liquibase</directory>
+            <filtering>false</filtering>
+         </resource>
+         <resource>
+            <directory>src/main/resources/sql</directory>
             <filtering>false</filtering>
          </resource>
       </resources>
