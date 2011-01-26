@@ -148,6 +148,11 @@
          </dependency>
          <dependency>
             <groupId>org.smallmind</groupId>
+            <artifactId>smallmind-liquibase</artifactId>
+            <version>${project.version}</version>
+         </dependency>
+         <dependency>
+            <groupId>org.smallmind</groupId>
             <artifactId>smallmind-swing</artifactId>
             <version>${project.version}</version>
          </dependency>

@@ -32,39 +32,4 @@
 
    <bean id="scheduler" factory-bean="schedulerFactory" factory-method="getScheduler" init-method="start" destroy-method="shutdown"/>
 
-   <bean id="group.nameDetail" class="org.quartz.JobDetail">
-      <property name="description" value="Description of detail"/>
-      <property name="group" value="group"/>
-      <property name="name" value="nameJob"/>
-      <property name="jobClass" value="jobClass"/>
-      <property name="durability" value="true"/>
-      <property name="volatility" value="true"/>
-      <property name="requestsRecovery" value="false"/>
-   </bean>
-
-   <bean id="group.nameTrigger" class="org.quartz.CronTrigger">
-      <property name="description" value="Run every 10 minutes"/>
-      <property name="group" value="group"/>
-      <property name="name" value="nameTrigger"/>
-      <property name="jobGroup" value="group"/>
-      <property name="jobName" value="nameJob"/>
-      <property name="cronExpression" value="0 0/10 * * * ?"/>
-      <property name="volatility" value="false"/>
-   </bean>
-
-   <bean id="group.nameJob" class="jobClass" scope="prototype"/>
-
-   <bean class="org.smallmind.scheduling.quartz.spring.CronJobInitializingBean">
-      <property name="scheduler" ref="scheduler"/>
-      <property name="jobMap">
-         <map>
-            <entry key-ref="group.nameDetail">
-               <list>
-                  <ref bean="group.nameTrigger"/>
-               </list>
-            </entry>
-         </map>
-      </property>
-   </bean>
-
 </beans>
