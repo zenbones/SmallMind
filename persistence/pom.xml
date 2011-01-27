@@ -28,12 +28,6 @@
          <optional>true</optional>
       </dependency>
       <dependency>
-         <groupId>org.smallmind</groupId>
-         <artifactId>smallmind-liquibase</artifactId>
-         <scope>compile</scope>
-         <optional>true</optional>
-      </dependency>
-      <dependency>
          <groupId>org.terracotta.toolkit</groupId>
          <artifactId>terracotta-toolkit-1.0</artifactId>
          <scope>compile</scope>
