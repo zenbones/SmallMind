@@ -24,8 +24,8 @@
             <prop key="org.quartz.jobStore.clusterCheckinInterval">20000</prop>
             <prop key="org.quartz.dataSource.dsOne.driver">${jdbc.driver.classname}</prop>
             <prop key="org.quartz.dataSource.dsOne.URL">${jdbc.url.quartz}</prop>
-            <prop key="org.quartz.dataSource.dsOne.user">${db.username}</prop>
-            <prop key="org.quartz.dataSource.dsOne.password">${db.password}</prop>
+            <prop key="org.quartz.dataSource.dsOne.user">${jdbc.username.quartz}</prop>
+            <prop key="org.quartz.dataSource.dsOne.password">${jdbc.password.quartz}</prop>
             <prop key="org.quartz.dataSource.dsOne.validationQuery">select 1</prop>
             <prop key="org.quartz.dataSource.myDS.maxConnections">10</prop>
          </props>

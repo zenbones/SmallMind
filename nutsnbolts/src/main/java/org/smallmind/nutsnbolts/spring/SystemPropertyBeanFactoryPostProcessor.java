@@ -79,6 +79,7 @@ public class SystemPropertyBeanFactoryPostProcessor implements BeanFactoryPostPr
 
       if ((keyDebugger != null) && keyDebugger.willDebug()) {
          System.out.println("---------------- System Properties ---------------");
+         System.out.println("[user.home=" + System.getProperty("user.home") + "]");
       }
 
       for (Map.Entry<String, String> propertyEntry : propertyMap.entrySet()) {
