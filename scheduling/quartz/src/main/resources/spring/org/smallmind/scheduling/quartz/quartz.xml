@@ -27,7 +27,7 @@
             <prop key="org.quartz.dataSource.dsOne.user">${jdbc.username.quartz}</prop>
             <prop key="org.quartz.dataSource.dsOne.password">${jdbc.password.quartz}</prop>
             <prop key="org.quartz.dataSource.dsOne.validationQuery">select 1</prop>
-            <prop key="org.quartz.dataSource.myDS.maxConnections">10</prop>
+            <prop key="org.quartz.dataSource.dsOne.maxConnections">10</prop>
          </props>
       </constructor-arg>
    </bean>
