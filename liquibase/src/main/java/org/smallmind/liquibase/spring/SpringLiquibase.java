@@ -28,13 +28,9 @@ package org.smallmind.liquibase.spring;
 
 import java.io.File;
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.PrintStream;
 import java.io.PrintWriter;
-import java.net.URL;
 import java.sql.SQLException;
-import java.util.Enumeration;
-import java.util.NoSuchElementException;
 import javax.sql.DataSource;
 import javax.xml.parsers.ParserConfigurationException;
 import liquibase.Liquibase;
@@ -44,31 +40,40 @@ import liquibase.database.jvm.JdbcConnection;
 import liquibase.diff.Diff;
 import liquibase.diff.DiffResult;
 import liquibase.exception.LiquibaseException;
+import liquibase.resource.ClassLoaderResourceAccessor;
+import liquibase.resource.FileSystemResourceAccessor;
 import liquibase.resource.ResourceAccessor;
 import org.smallmind.nutsnbolts.lang.UnknownSwitchCaseException;
 import org.smallmind.persistence.orm.aop.Transactional;
 import org.springframework.beans.factory.InitializingBean;
-import org.springframework.context.ResourceLoaderAware;
-import org.springframework.core.io.ResourceLoader;
 
-public class SpringLiquibase implements InitializingBean, ResourceLoaderAware {
+public class SpringLiquibase implements InitializingBean {
 
-   private ResourceLoader resourceLoader;
    private DataSource dataSource;
+   private ResourceAccessor resourceAccessor;
    private Goal goal;
    private String changeLog;
    private String contexts;
    private String outputLog;
    private String outputDir;
 
-   public void setResourceLoader (ResourceLoader resourceLoader) {
-
-      this.resourceLoader = resourceLoader;
-   }
-
    public void setDataSource (DataSource dataSource) {
 
       this.dataSource = dataSource;
+   }
+
+   public void setSource (Source source) {
+
+      switch (source) {
+         case FILE:
+            resourceAccessor = new FileSystemResourceAccessor();
+            break;
+         case CLASSPATH:
+            resourceAccessor = new ClassLoaderResourceAccessor();
+            break;
+         default:
+            throw new UnknownSwitchCaseException(source.name());
+      }
    }
 
    public void setGoal (Goal goal) {
@@ -104,7 +109,7 @@ public class SpringLiquibase implements InitializingBean, ResourceLoaderAware {
 
          Liquibase liquibase;
 
-         liquibase = new Liquibase(changeLog, new ChangeLogResourceAccessor(), new JdbcConnection(dataSource.getConnection()));
+         liquibase = new Liquibase(changeLog, resourceAccessor, new JdbcConnection(dataSource.getConnection()));
 
          switch (goal) {
             case PREVIEW:
@@ -133,53 +138,6 @@ public class SpringLiquibase implements InitializingBean, ResourceLoaderAware {
             default:
                throw new UnknownSwitchCaseException(goal.name());
          }
-      }
-   }
-
-   private class ChangeLogResourceAccessor implements ResourceAccessor {
-
-      public InputStream getResourceAsStream (String resource)
-         throws IOException {
-
-         return resourceLoader.getResource(resource).getInputStream();
-      }
-
-      public Enumeration<URL> getResources (String resource)
-         throws IOException {
-
-         return new ChangeLogEnumeration(resourceLoader.getResource(resource).getURL());
-      }
-
-      public ClassLoader toClassLoader () {
-
-         return resourceLoader.getClassLoader();
-      }
-   }
-
-   private class ChangeLogEnumeration implements Enumeration<URL> {
-
-      private URL url;
-      private boolean taken = false;
-
-      public ChangeLogEnumeration (URL url) {
-
-         this.url = url;
-      }
-
-      public synchronized boolean hasMoreElements () {
-
-         return taken;
-      }
-
-      public synchronized URL nextElement () {
-
-         if (taken) {
-            throw new NoSuchElementException();
-         }
-
-         taken = true;
-
-         return url;
       }
    }
 }

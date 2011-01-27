@@ -42,10 +42,10 @@ import javax.swing.JRadioButton;
 import javax.swing.JSeparator;
 import javax.swing.JTextField;
 import org.smallmind.liquibase.spring.Goal;
+import org.smallmind.liquibase.spring.Source;
 import org.smallmind.liquibase.spring.SpringLiquibase;
 import org.smallmind.nutsnbolts.util.StringUtilities;
 import org.smallmind.persistence.orm.sql.DriverManagerDataSource;
-import org.springframework.core.io.DefaultResourceLoader;
 
 public class Liquidate extends JFrame implements ActionListener {
 
@@ -187,8 +187,8 @@ public class Liquidate extends JFrame implements ActionListener {
       Database database;
 
       springLiquibase = new SpringLiquibase();
-      springLiquibase.setResourceLoader(new DefaultResourceLoader());
-      springLiquibase.setChangeLog(Source.valueOf(sourceButtonGroup.getSelection().getActionCommand()).getProlog() + logTextField.getText());
+      springLiquibase.setSource(Source.valueOf(sourceButtonGroup.getSelection().getActionCommand()));
+      springLiquibase.setChangeLog(logTextField.getText());
       springLiquibase.setGoal(Goal.valueOf(goalButtonGroup.getSelection().getActionCommand()));
 
       database = (Database)databaseCombo.getSelectedItem();
