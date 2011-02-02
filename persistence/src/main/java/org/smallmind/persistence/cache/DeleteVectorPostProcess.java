@@ -24,26 +24,29 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.persistence;
+package org.smallmind.persistence.cache;
 
-import java.util.Comparator;
-import org.smallmind.persistence.cache.DurableVector;
+import org.smallmind.persistence.Durable;
+import org.smallmind.persistence.orm.ProcessPriority;
+import org.smallmind.persistence.orm.TransactionEndState;
+import org.smallmind.persistence.orm.TransactionPostProcess;
 
-public interface VectoredDao<I extends Comparable<I>, D extends Durable<I>> extends Dao<I, D> {
+public class DeleteVectorPostProcess<I extends Comparable<I>, D extends Durable<I>> extends TransactionPostProcess {
 
-   public abstract void updateInVector (VectorKey<D> vectorKey, D durable);
+   private VectoredDao<I, D> vectoredDao;
+   private VectorKey<D> vectorKey;
 
-   public abstract void removeFromVector (VectorKey<D> vectorKey, D durable);
+   public DeleteVectorPostProcess (VectoredDao<I, D> vectoredDao, VectorKey<D> vectorKey) {
 
-   public abstract DurableVector<I, D> getVector (VectorKey<D> vectorKey);
+      super(TransactionEndState.COMMIT, ProcessPriority.MIDDLE);
 
-   public abstract DurableVector<I, D> persistVector (VectorKey<D> vectorKey, DurableVector<I, D> vector);
+      this.vectoredDao = vectoredDao;
+      this.vectorKey = vectorKey;
+   }
 
-   public abstract DurableVector<I, D> migrateVector (DurableVector<I, D> vector);
+   public void process ()
+      throws Exception {
 
-   public abstract DurableVector<I, D> createSingularVector (VectorKey<D> vectorKey, D durable, long timeToLive);
-
-   public abstract DurableVector<I, D> createVector (VectorKey<D> vectorKey, Iterable<D> elementIter, Comparator<D> comparator, int maxSize, long timeToLive, boolean ordered);
-
-   public abstract void deleteVector (VectorKey<D> vectorKey);
+      vectoredDao.deleteVector(vectorKey);
+   }
 }

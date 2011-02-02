@@ -33,18 +33,18 @@ import java.lang.reflect.Type;
 import java.security.SecureRandom;
 import java.util.Comparator;
 import java.util.Random;
-import org.smallmind.persistence.Durable;
-import org.smallmind.persistence.PersistenceManager;
-import org.smallmind.persistence.VectorKey;
-import org.smallmind.persistence.VectoredDao;
-import org.smallmind.persistence.cache.DurableVector;
-import org.smallmind.persistence.orm.WaterfallORMDao;
-import org.smallmind.persistence.statistics.StatisticsFactory;
-import org.smallmind.persistence.statistics.aop.StatisticsStopwatch;
 import org.aspectj.lang.ProceedingJoinPoint;
 import org.aspectj.lang.annotation.Around;
 import org.aspectj.lang.annotation.Aspect;
 import org.aspectj.lang.reflect.MethodSignature;
+import org.smallmind.persistence.Durable;
+import org.smallmind.persistence.PersistenceManager;
+import org.smallmind.persistence.cache.DurableVector;
+import org.smallmind.persistence.cache.VectorKey;
+import org.smallmind.persistence.cache.VectoredDao;
+import org.smallmind.persistence.orm.CacheAwareORMDao;
+import org.smallmind.persistence.statistics.StatisticsFactory;
+import org.smallmind.persistence.statistics.aop.StatisticsStopwatch;
 
 @Aspect
 public class CacheAsAspect {
@@ -52,8 +52,8 @@ public class CacheAsAspect {
    private static final Random RANDOM = new SecureRandom();
    private static final StatisticsFactory STATISTICS_FACTORY = PersistenceManager.getPersistence().getStatisticsFactory();
 
-   @Around (value = "execution(@CacheAs * * (..)) && @annotation(cacheAs) && this(waterfallOrmDao)", argNames = "thisJoinPoint, cacheAs, waterfallOrmDao")
-   public Object aroundCacheAsMethod (ProceedingJoinPoint thisJoinPoint, CacheAs cacheAs, WaterfallORMDao waterfallOrmDao)
+   @Around(value = "execution(@CacheAs * * (..)) && @annotation(cacheAs) && this(ormDao)", argNames = "thisJoinPoint, cacheAs, ormDao")
+   public Object aroundCacheAsMethod (ProceedingJoinPoint thisJoinPoint, CacheAs cacheAs, CacheAwareORMDao ormDao)
       throws Throwable {
 
       Annotation statisticsStopwatchAnnotation;
@@ -63,7 +63,7 @@ public class CacheAsAspect {
       long start = 0;
       long stop;
 
-      statisticsStopwatchAnnotation = waterfallOrmDao.getClass().getAnnotation(StatisticsStopwatch.class);
+      statisticsStopwatchAnnotation = ormDao.getClass().getAnnotation(StatisticsStopwatch.class);
       if (timingEnabled = STATISTICS_FACTORY.isEnabled() && (statisticsStopwatchAnnotation != null) && ((StatisticsStopwatch)statisticsStopwatchAnnotation).value()) {
          start = System.currentTimeMillis();
       }
@@ -91,25 +91,25 @@ public class CacheAsAspect {
                throw new CacheAutomationError("A method annotated with @CacheAs (singular = true) can not register a comparator(%s)", cacheAs.comparator().getClass().getName());
             }
 
-            if (!waterfallOrmDao.getManagedClass().equals(((MethodSignature)thisJoinPoint.getSignature()).getReturnType())) {
-               throw new CacheAutomationError("A method annotated with @CacheAs (singular = true) must return its managed type(%s)", waterfallOrmDao.getManagedClass().getSimpleName());
+            if (!ormDao.getManagedClass().equals(((MethodSignature)thisJoinPoint.getSignature()).getReturnType())) {
+               throw new CacheAutomationError("A method annotated with @CacheAs (singular = true) must return its managed type(%s)", ormDao.getManagedClass().getSimpleName());
             }
 
             VectorKey vectorKey;
-            VectoredDao nextDao = waterfallOrmDao.getNextDao();
+            VectoredDao vectoredDao = ormDao.getVectoredDao();
 
-            vectorKey = new VectorKey(VectorIndices.getVectorIndexes(cacheAs.value(), thisJoinPoint, waterfallOrmDao), waterfallOrmDao.getManagedClass(), Classifications.get(CacheAs.class, thisJoinPoint, cacheAs.value()));
+            vectorKey = new VectorKey(VectorIndices.getVectorIndexes(cacheAs.value(), thisJoinPoint, ormDao), ormDao.getManagedClass(), Classifications.get(CacheAs.class, thisJoinPoint, cacheAs.value()));
 
-            if (nextDao != null) {
+            if (vectoredDao != null) {
 
                DurableVector vector;
 
-               if ((vector = nextDao.getVector(vectorKey)) != null) {
+               if ((vector = vectoredDao.getVector(vectorKey)) != null) {
                   if (!vector.isAlive()) {
-                     nextDao.deleteVector(vectorKey);
+                     vectoredDao.deleteVector(vectorKey);
                   }
                   else {
-                     statisticsSource = nextDao.getStatisticsSource();
+                     statisticsSource = vectoredDao.getStatisticsSource();
 
                      return vector.head();
                   }
@@ -118,13 +118,13 @@ public class CacheAsAspect {
 
             Durable durable;
 
-            statisticsSource = waterfallOrmDao.getStatisticsSource();
+            statisticsSource = ormDao.getStatisticsSource();
             if ((durable = (Durable)thisJoinPoint.proceed()) != null) {
-               if (nextDao != null) {
+               if (vectoredDao != null) {
 
-                  DurableVector vector = nextDao.createSingularVector(vectorKey, durable, getTimeToLive(cacheAs));
+                  DurableVector vector = vectoredDao.createSingularVector(vectorKey, durable, getTimeToLive(cacheAs));
 
-                  return nextDao.persistVector(vectorKey, vector).head();
+                  return vectoredDao.persistVector(vectorKey, vector).head();
                }
             }
 
@@ -139,25 +139,25 @@ public class CacheAsAspect {
                throw new CacheAutomationError("Methods annotated with @CacheAs (singular = false) must return a value of type <? extends Iterable>");
             }
 
-            if ((!((returnType = (executedMethod = ((MethodSignature)thisJoinPoint.getSignature()).getMethod()).getGenericReturnType()) instanceof ParameterizedType)) || (!waterfallOrmDao.getManagedClass().equals(((ParameterizedType)returnType).getActualTypeArguments()[0]))) {
-               throw new CacheAutomationError("Methods annotated with @CacheAs (singular = false) must return a value of type <? extends Iterable<%s>>", waterfallOrmDao.getManagedClass().getSimpleName());
+            if ((!((returnType = (executedMethod = ((MethodSignature)thisJoinPoint.getSignature()).getMethod()).getGenericReturnType()) instanceof ParameterizedType)) || (!ormDao.getManagedClass().equals(((ParameterizedType)returnType).getActualTypeArguments()[0]))) {
+               throw new CacheAutomationError("Methods annotated with @CacheAs (singular = false) must return a value of type <? extends Iterable<%s>>", ormDao.getManagedClass().getSimpleName());
             }
 
             VectorKey vectorKey;
-            VectoredDao nextDao = waterfallOrmDao.getNextDao();
+            VectoredDao vectoredDao = ormDao.getVectoredDao();
 
-            vectorKey = new VectorKey(VectorIndices.getVectorIndexes(cacheAs.value(), thisJoinPoint, waterfallOrmDao), waterfallOrmDao.getManagedClass(), Classifications.get(CacheAs.class, thisJoinPoint, cacheAs.value()));
+            vectorKey = new VectorKey(VectorIndices.getVectorIndexes(cacheAs.value(), thisJoinPoint, ormDao), ormDao.getManagedClass(), Classifications.get(CacheAs.class, thisJoinPoint, cacheAs.value()));
 
-            if (nextDao != null) {
+            if (vectoredDao != null) {
 
                DurableVector vector;
 
-               if ((vector = nextDao.getVector(vectorKey)) != null) {
+               if ((vector = vectoredDao.getVector(vectorKey)) != null) {
                   if (!vector.isAlive()) {
-                     nextDao.deleteVector(vectorKey);
+                     vectoredDao.deleteVector(vectorKey);
                   }
                   else {
-                     statisticsSource = nextDao.getStatisticsSource();
+                     statisticsSource = vectoredDao.getStatisticsSource();
 
                      return vector.asList();
                   }
@@ -166,13 +166,13 @@ public class CacheAsAspect {
 
             Iterable iterable;
 
-            statisticsSource = waterfallOrmDao.getStatisticsSource();
+            statisticsSource = ormDao.getStatisticsSource();
             if ((iterable = (Iterable)thisJoinPoint.proceed()) != null) {
-               if (nextDao != null) {
+               if (vectoredDao != null) {
 
-                  DurableVector vector = nextDao.createVector(vectorKey, iterable, cacheAs.comparator().equals(Comparator.class) ? null : cacheAs.comparator().newInstance(), cacheAs.max(), getTimeToLive(cacheAs), cacheAs.ordered());
+                  DurableVector vector = vectoredDao.createVector(vectorKey, iterable, cacheAs.comparator().equals(Comparator.class) ? null : cacheAs.comparator().newInstance(), cacheAs.max(), getTimeToLive(cacheAs), cacheAs.ordered());
 
-                  return nextDao.persistVector(vectorKey, vector).asList();
+                  return vectoredDao.persistVector(vectorKey, vector).asList();
                }
             }
 
@@ -187,7 +187,7 @@ public class CacheAsAspect {
                executedMethod = ((MethodSignature)thisJoinPoint.getSignature()).getMethod();
             }
 
-            STATISTICS_FACTORY.getStatistics().addStatLine(waterfallOrmDao.getManagedClass(), executedMethod, statisticsSource, stop - start);
+            STATISTICS_FACTORY.getStatistics().addStatLine(ormDao.getManagedClass(), executedMethod, statisticsSource, stop - start);
          }
       }
    }

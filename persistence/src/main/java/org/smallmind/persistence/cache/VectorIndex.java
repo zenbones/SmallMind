@@ -24,28 +24,33 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.persistence.orm;
+package org.smallmind.persistence.cache;
 
 import org.smallmind.persistence.Durable;
-import org.smallmind.persistence.VectoredDao;
 
-public class WaterfallPersistPostProcess<I extends Comparable<I>, D extends Durable<I>> extends TransactionPostProcess {
+public class VectorIndex<I extends Comparable<I>> {
 
-   private VectoredDao<I, D> nextDao;
-   Class<D> durableClass;
-   D durable;
+   private Class<? extends Durable> indexClass;
+   private I indexId;
 
-   public WaterfallPersistPostProcess (VectoredDao<I, D> nextDao, Class<D> durableClass, D durable) {
+   public VectorIndex (Durable<I> owner) {
 
-      super(TransactionEndState.COMMIT, ProcessPriority.FIRST);
-
-      this.nextDao = nextDao;
-      this.durableClass = durableClass;
-      this.durable = durable;
+      this(owner.getClass(), owner.getId());
    }
 
-   public void process () {
+   public VectorIndex (Class<? extends Durable> indexClass, I indexId) {
 
-      nextDao.persist(durableClass, durable);
+      this.indexClass = indexClass;
+      this.indexId = indexId;
+   }
+
+   public Class<? extends Durable> getIndexClass () {
+
+      return indexClass;
+   }
+
+   public I getIndexId () {
+
+      return indexId;
    }
 }

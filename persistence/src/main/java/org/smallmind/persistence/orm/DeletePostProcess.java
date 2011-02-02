@@ -24,32 +24,28 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.persistence.cache;
+package org.smallmind.persistence.orm;
 
 import org.smallmind.persistence.Durable;
-import org.smallmind.persistence.VectorKey;
-import org.smallmind.persistence.VectoredDao;
-import org.smallmind.persistence.orm.ProcessPriority;
-import org.smallmind.persistence.orm.TransactionEndState;
-import org.smallmind.persistence.orm.TransactionPostProcess;
+import org.smallmind.persistence.cache.VectoredDao;
 
-public class WaterfallRemoveFromVectorPostProcess<I extends Comparable<I>, D extends Durable<I>> extends TransactionPostProcess {
+public class DeletePostProcess<I extends Comparable<I>, D extends Durable<I>> extends TransactionPostProcess {
 
-   private VectoredDao<I, D> nextDao;
-   private VectorKey<D> vectorKey;
-   private D durable;
+   private VectoredDao<I, D> vectoredDao;
+   Class<D> durableClass;
+   D durable;
 
-   public WaterfallRemoveFromVectorPostProcess (VectoredDao<I, D> nextDao, VectorKey<D> vectorKey, D durable) {
+   public DeletePostProcess (VectoredDao<I, D> vectoredDao, Class<D> durableClass, D durable) {
 
-      super(TransactionEndState.COMMIT, ProcessPriority.MIDDLE);
+      super(TransactionEndState.COMMIT, ProcessPriority.LAST);
 
-      this.nextDao = nextDao;
-      this.vectorKey = vectorKey;
+      this.vectoredDao = vectoredDao;
+      this.durableClass = durableClass;
       this.durable = durable;
    }
 
    public void process () {
 
-      nextDao.removeFromVector(vectorKey, durable);
+      vectoredDao.delete(durableClass, durable);
    }
 }

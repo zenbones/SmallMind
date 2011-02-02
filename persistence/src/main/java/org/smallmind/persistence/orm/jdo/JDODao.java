@@ -34,11 +34,11 @@ import java.util.List;
 import javax.jdo.Query;
 import org.smallmind.nutsnbolts.util.IterableIterator;
 import org.smallmind.persistence.Durable;
-import org.smallmind.persistence.VectoredDao;
+import org.smallmind.persistence.cache.VectoredDao;
+import org.smallmind.persistence.orm.CacheAwareORMDao;
 import org.smallmind.persistence.orm.ProxySession;
-import org.smallmind.persistence.orm.WaterfallORMDao;
 
-public abstract class JDODao<I extends Serializable & Comparable<I>, D extends Durable<I>> extends WaterfallORMDao<I, D> {
+public abstract class JDODao<I extends Serializable & Comparable<I>, D extends Durable<I>> extends CacheAwareORMDao<I, D> {
 
    private JDOProxySession proxySession;
 
@@ -49,7 +49,7 @@ public abstract class JDODao<I extends Serializable & Comparable<I>, D extends D
 
    public JDODao (JDOProxySession proxySession, VectoredDao<I, D> vectoredDao) {
 
-      super(vectoredDao, proxySession.willAllowCascade());
+      super(vectoredDao);
 
       this.proxySession = proxySession;
    }
@@ -78,10 +78,10 @@ public abstract class JDODao<I extends Serializable & Comparable<I>, D extends D
 
       D durable;
       Object persistedObject;
-      VectoredDao<I, D> nextDao = getNextDao();
+      VectoredDao<I, D> vectoredDao = getVectoredDao();
 
-      if (nextDao != null) {
-         if ((durable = nextDao.get(durableClass, id)) != null) {
+      if (vectoredDao != null) {
+         if ((durable = vectoredDao.get(durableClass, id)) != null) {
 
             return durable;
          }
@@ -90,9 +90,9 @@ public abstract class JDODao<I extends Serializable & Comparable<I>, D extends D
       if ((persistedObject = proxySession.getPersistenceManager().getObjectId(id)) != null) {
          durable = durableClass.cast(persistedObject);
 
-         if (nextDao != null) {
+         if (vectoredDao != null) {
 
-            return nextDao.persist(durableClass, durable);
+            return vectoredDao.persist(durableClass, durable);
          }
 
          return durable;
@@ -133,13 +133,13 @@ public abstract class JDODao<I extends Serializable & Comparable<I>, D extends D
    public D persist (Class<D> durableClass, D durable) {
 
       D persistentDurable;
-      VectoredDao<I, D> nextDao = getNextDao();
+      VectoredDao<I, D> vectoredDao = getVectoredDao();
 
       persistentDurable = durableClass.cast(proxySession.getPersistenceManager().makePersistent(durable));
 
-      if (nextDao != null) {
+      if (vectoredDao != null) {
 
-         return nextDao.persist(durableClass, persistentDurable);
+         return vectoredDao.persist(durableClass, persistentDurable);
       }
 
       return persistentDurable;
@@ -152,12 +152,12 @@ public abstract class JDODao<I extends Serializable & Comparable<I>, D extends D
 
    public void delete (Class<D> durableClass, D durable) {
 
-      VectoredDao<I, D> nextDao = getNextDao();
+      VectoredDao<I, D> vectoredDao = getVectoredDao();
 
       proxySession.getPersistenceManager().deletePersistent(durable);
 
-      if (nextDao != null) {
-         nextDao.delete(durableClass, durable);
+      if (vectoredDao != null) {
+         vectoredDao.delete(durableClass, durable);
       }
    }
 

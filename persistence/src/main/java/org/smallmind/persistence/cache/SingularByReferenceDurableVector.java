@@ -31,7 +31,6 @@ import java.util.Iterator;
 import java.util.List;
 import org.smallmind.nutsnbolts.util.SingleItemIterator;
 import org.smallmind.persistence.Durable;
-import org.smallmind.persistence.VectorPredicate;
 import org.terracotta.annotations.AutolockRead;
 import org.terracotta.annotations.AutolockWrite;
 import org.terracotta.annotations.InstrumentedClass;

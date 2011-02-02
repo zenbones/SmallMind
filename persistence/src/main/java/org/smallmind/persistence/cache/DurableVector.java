@@ -29,7 +29,6 @@ package org.smallmind.persistence.cache;
 import java.util.Comparator;
 import java.util.List;
 import org.smallmind.persistence.Durable;
-import org.smallmind.persistence.VectorPredicate;
 import org.terracotta.annotations.InstrumentedClass;
 
 @InstrumentedClass

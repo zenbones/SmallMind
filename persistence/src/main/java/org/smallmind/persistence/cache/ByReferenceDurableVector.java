@@ -31,7 +31,6 @@ import java.util.Comparator;
 import java.util.Iterator;
 import java.util.List;
 import org.smallmind.persistence.Durable;
-import org.smallmind.persistence.VectorPredicate;
 import org.smallmind.quorum.util.ConcurrentList;
 import org.terracotta.annotations.AutolockRead;
 import org.terracotta.annotations.AutolockWrite;

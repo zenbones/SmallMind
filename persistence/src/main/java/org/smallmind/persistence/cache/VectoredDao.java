@@ -24,9 +24,27 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.persistence;
+package org.smallmind.persistence.cache;
 
-public interface WaterfallDao<I extends Comparable<I>, D extends Durable<I>> extends Dao<I, D> {
+import java.util.Comparator;
+import org.smallmind.persistence.Dao;
+import org.smallmind.persistence.Durable;
 
-   public VectoredDao<I, D> getNextDao ();
+public interface VectoredDao<I extends Comparable<I>, D extends Durable<I>> extends Dao<I, D> {
+
+   public abstract void updateInVector (VectorKey<D> vectorKey, D durable);
+
+   public abstract void removeFromVector (VectorKey<D> vectorKey, D durable);
+
+   public abstract DurableVector<I, D> getVector (VectorKey<D> vectorKey);
+
+   public abstract DurableVector<I, D> persistVector (VectorKey<D> vectorKey, DurableVector<I, D> vector);
+
+   public abstract DurableVector<I, D> migrateVector (DurableVector<I, D> vector);
+
+   public abstract DurableVector<I, D> createSingularVector (VectorKey<D> vectorKey, D durable, long timeToLive);
+
+   public abstract DurableVector<I, D> createVector (VectorKey<D> vectorKey, Iterable<D> elementIter, Comparator<D> comparator, int maxSize, long timeToLive, boolean ordered);
+
+   public abstract void deleteVector (VectorKey<D> vectorKey);
 }

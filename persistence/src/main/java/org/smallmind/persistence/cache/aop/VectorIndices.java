@@ -28,7 +28,7 @@ package org.smallmind.persistence.cache.aop;
 
 import org.smallmind.persistence.Durable;
 import org.smallmind.persistence.PersistenceManager;
-import org.smallmind.persistence.VectorIndex;
+import org.smallmind.persistence.cache.VectorIndex;
 import org.smallmind.persistence.model.aop.AOPUtility;
 import org.smallmind.persistence.model.bean.BeanUtility;
 import org.smallmind.persistence.model.reflect.ReflectionUtility;

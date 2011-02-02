@@ -24,9 +24,36 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.persistence;
+package org.smallmind.persistence.cache;
 
-public interface VectorPredicate<D> {
+import org.smallmind.persistence.Durable;
+import org.smallmind.persistence.orm.ProcessPriority;
+import org.smallmind.persistence.orm.TransactionEndState;
+import org.smallmind.persistence.orm.TransactionPostProcess;
 
-   public boolean isValid (D durable);
+public class PersistVectorPostProcess<I extends Comparable<I>, D extends Durable<I>> extends TransactionPostProcess {
+
+   private VectoredDao<I, D> vectoredDao;
+   private VectorKey<D> vectorKey;
+   private DurableVector<I, D> vector;
+
+   public PersistVectorPostProcess (VectoredDao<I, D> vectoredDao, VectorKey<D> vectorKey, DurableVector<I, D> vector) {
+
+      super(TransactionEndState.COMMIT, ProcessPriority.MIDDLE);
+
+      this.vectoredDao = vectoredDao;
+      this.vectorKey = vectorKey;
+      this.vector = vector;
+   }
+
+   public DurableVector<I, D> getVector () {
+
+      return vector;
+   }
+
+   public void process ()
+      throws Exception {
+
+      vectoredDao.persistVector(vectorKey, vector);
+   }
 }

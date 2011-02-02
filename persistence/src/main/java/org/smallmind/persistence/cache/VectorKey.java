@@ -24,8 +24,9 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.persistence;
+package org.smallmind.persistence.cache;
 
+import org.smallmind.persistence.Durable;
 import org.terracotta.annotations.InstrumentedClass;
 
 @InstrumentedClass

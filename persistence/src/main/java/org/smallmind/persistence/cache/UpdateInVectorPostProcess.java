@@ -27,45 +27,27 @@
 package org.smallmind.persistence.cache;
 
 import org.smallmind.persistence.Durable;
-import org.smallmind.persistence.VectoredDao;
-import org.smallmind.persistence.WaterfallDao;
-import org.smallmind.quorum.cache.Cache;
+import org.smallmind.persistence.orm.ProcessPriority;
+import org.smallmind.persistence.orm.TransactionEndState;
+import org.smallmind.persistence.orm.TransactionPostProcess;
 
-public abstract class WaterfallCacheDao<I extends Comparable<I>, D extends Durable<I>> implements CacheDao<I, D>, WaterfallDao<I, D> {
+public class UpdateInVectorPostProcess<I extends Comparable<I>, D extends Durable<I>> extends TransactionPostProcess {
 
-   private CacheDomain<I, D> cacheDomain;
-   private VectoredDao<I, D> nextDao;
+   private VectoredDao<I, D> vectoredDao;
+   private VectorKey<D> vectorKey;
+   private D durable;
 
-   public WaterfallCacheDao (CacheDomain<I, D> cacheDomain) {
+   public UpdateInVectorPostProcess (VectoredDao<I, D> vectoredDao, VectorKey<D> vectorKey, D durable) {
 
-      this(null, cacheDomain);
+      super(TransactionEndState.COMMIT, ProcessPriority.MIDDLE);
+
+      this.vectoredDao = vectoredDao;
+      this.vectorKey = vectorKey;
+      this.durable = durable;
    }
 
-   public WaterfallCacheDao (VectoredDao<I, D> nextDao, CacheDomain<I, D> cacheDomain) {
+   public void process () {
 
-      this.nextDao = nextDao;
-      this.cacheDomain = cacheDomain;
-   }
-
-   public abstract D acquire (Class<D> durableClass, I id);
-
-   public String getStatisticsSource () {
-
-      return cacheDomain.getStatisticsSource();
-   }
-
-   public VectoredDao<I, D> getNextDao () {
-
-      return nextDao;
-   }
-
-   public Cache<String, D> getInstanceCache (Class<D> durableClass) {
-
-      return cacheDomain.getInstanceCache(durableClass);
-   }
-
-   public Cache<String, DurableVector<I, D>> getVectorCache (Class<D> durableClass) {
-
-      return cacheDomain.getVectorCache(durableClass);
+      vectoredDao.updateInVector(vectorKey, durable);
    }
 }

@@ -24,31 +24,11 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.persistence.orm;
+package org.smallmind.persistence.cache;
 
-import java.io.Serializable;
 import org.smallmind.persistence.Durable;
-import org.smallmind.persistence.VectoredDao;
-import org.smallmind.persistence.WaterfallDao;
 
-public abstract class WaterfallORMDao<I extends Serializable & Comparable<I>, D extends Durable<I>> extends AbstractORMDao<I, D> implements WaterfallDao<I, D> {
+public interface CacheAware<I extends Comparable<I>, D extends Durable<I>> {
 
-   private VectoredDao<I, D> nextDao;
-   private boolean allowCascade;
-
-   public WaterfallORMDao (VectoredDao<I, D> nextDao, boolean allowCascade) {
-
-      this.nextDao = nextDao;
-      this.allowCascade = allowCascade;
-   }
-
-   public VectoredDao<I, D> getNextDao () {
-
-      if (!allowCascade) {
-
-         return null;
-      }
-
-      return nextDao;
-   }
+   public abstract VectoredDao<I, D> getVectoredDao ();
 }

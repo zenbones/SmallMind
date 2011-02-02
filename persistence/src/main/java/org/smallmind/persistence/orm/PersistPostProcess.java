@@ -24,31 +24,28 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.persistence;
+package org.smallmind.persistence.orm;
 
-public class VectorIndex<I extends Comparable<I>> {
+import org.smallmind.persistence.Durable;
+import org.smallmind.persistence.cache.VectoredDao;
 
-   private Class<? extends Durable> indexClass;
-   private I indexId;
+public class PersistPostProcess<I extends Comparable<I>, D extends Durable<I>> extends TransactionPostProcess {
 
-   public VectorIndex (Durable<I> owner) {
+   private VectoredDao<I, D> vectoredDao;
+   Class<D> durableClass;
+   D durable;
 
-      this(owner.getClass(), owner.getId());
+   public PersistPostProcess (VectoredDao<I, D> vectoredDao, Class<D> durableClass, D durable) {
+
+      super(TransactionEndState.COMMIT, ProcessPriority.FIRST);
+
+      this.vectoredDao = vectoredDao;
+      this.durableClass = durableClass;
+      this.durable = durable;
    }
 
-   public VectorIndex (Class<? extends Durable> indexClass, I indexId) {
+   public void process () {
 
-      this.indexClass = indexClass;
-      this.indexId = indexId;
-   }
-
-   public Class<? extends Durable> getIndexClass () {
-
-      return indexClass;
-   }
-
-   public I getIndexId () {
-
-      return indexId;
+      vectoredDao.persist(durableClass, durable);
    }
 }

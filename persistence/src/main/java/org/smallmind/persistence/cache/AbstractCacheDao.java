@@ -27,28 +27,31 @@
 package org.smallmind.persistence.cache;
 
 import org.smallmind.persistence.Durable;
-import org.smallmind.persistence.VectorKey;
-import org.smallmind.persistence.VectoredDao;
-import org.smallmind.persistence.orm.ProcessPriority;
-import org.smallmind.persistence.orm.TransactionEndState;
-import org.smallmind.persistence.orm.TransactionPostProcess;
+import org.smallmind.quorum.cache.Cache;
 
-public class WaterfallDeleteVectorPostProcess<I extends Comparable<I>, D extends Durable<I>> extends TransactionPostProcess {
+public abstract class AbstractCacheDao<I extends Comparable<I>, D extends Durable<I>> implements CacheDao<I, D> {
 
-   private VectoredDao<I, D> nextDao;
-   private VectorKey<D> vectorKey;
+   private CacheDomain<I, D> cacheDomain;
 
-   public WaterfallDeleteVectorPostProcess (VectoredDao<I, D> nextDao, VectorKey<D> vectorKey) {
+   public AbstractCacheDao (CacheDomain<I, D> cacheDomain) {
 
-      super(TransactionEndState.COMMIT, ProcessPriority.MIDDLE);
-
-      this.nextDao = nextDao;
-      this.vectorKey = vectorKey;
+      this.cacheDomain = cacheDomain;
    }
 
-   public void process ()
-      throws Exception {
+   public abstract D acquire (Class<D> durableClass, I id);
 
-      nextDao.deleteVector(vectorKey);
+   public String getStatisticsSource () {
+
+      return cacheDomain.getStatisticsSource();
+   }
+
+   public Cache<String, D> getInstanceCache (Class<D> durableClass) {
+
+      return cacheDomain.getInstanceCache(durableClass);
+   }
+
+   public Cache<String, DurableVector<I, D>> getVectorCache (Class<D> durableClass) {
+
+      return cacheDomain.getVectorCache(durableClass);
    }
 }

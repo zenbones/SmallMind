@@ -40,13 +40,13 @@ import org.hibernate.criterion.Projections;
 import org.hibernate.criterion.Restrictions;
 import org.hibernate.transform.Transformers;
 import org.smallmind.persistence.Durable;
-import org.smallmind.persistence.VectoredDao;
+import org.smallmind.persistence.cache.VectoredDao;
 import org.smallmind.persistence.model.reflect.ReflectionUtility;
+import org.smallmind.persistence.orm.CacheAwareORMDao;
 import org.smallmind.persistence.orm.DaoManager;
 import org.smallmind.persistence.orm.ProxySession;
-import org.smallmind.persistence.orm.WaterfallORMDao;
 
-public abstract class HibernateDao<I extends Serializable & Comparable<I>, D extends Durable<I>> extends WaterfallORMDao<I, D> {
+public abstract class HibernateDao<I extends Serializable & Comparable<I>, D extends Durable<I>> extends CacheAwareORMDao<I, D> {
 
    private HibernateProxySession proxySession;
 
@@ -57,7 +57,7 @@ public abstract class HibernateDao<I extends Serializable & Comparable<I>, D ext
 
    public HibernateDao (HibernateProxySession proxySession, VectoredDao<I, D> vectoredDao) {
 
-      super(vectoredDao, proxySession.willAllowCascade());
+      super(vectoredDao);
 
       this.proxySession = proxySession;
    }
@@ -91,10 +91,10 @@ public abstract class HibernateDao<I extends Serializable & Comparable<I>, D ext
 
       D durable;
       Object persistedObject;
-      VectoredDao<I, D> nextDao = getNextDao();
+      VectoredDao<I, D> vectoredDao = getVectoredDao();
 
-      if (nextDao != null) {
-         if ((durable = nextDao.get(durableClass, id)) != null) {
+      if (vectoredDao != null) {
+         if ((durable = vectoredDao.get(durableClass, id)) != null) {
 
             return durable;
          }
@@ -103,9 +103,9 @@ public abstract class HibernateDao<I extends Serializable & Comparable<I>, D ext
       if ((persistedObject = proxySession.getSession().get(durableClass, id)) != null) {
          durable = durableClass.cast(persistedObject);
 
-         if (nextDao != null) {
+         if (vectoredDao != null) {
 
-            return nextDao.persist(durableClass, durable);
+            return vectoredDao.persist(durableClass, durable);
          }
 
          return durable;
@@ -156,7 +156,7 @@ public abstract class HibernateDao<I extends Serializable & Comparable<I>, D ext
    public D persist (Class<D> durableClass, D durable) {
 
       D persistentDurable;
-      VectoredDao<I, D> nextDao = getNextDao();
+      VectoredDao<I, D> vectoredDao = getVectoredDao();
 
       if (proxySession.getSession().contains(durable)) {
          persistentDurable = durable;
@@ -165,9 +165,9 @@ public abstract class HibernateDao<I extends Serializable & Comparable<I>, D ext
          persistentDurable = getManagedClass().cast(proxySession.getSession().merge(durable));
       }
 
-      if (nextDao != null) {
+      if (vectoredDao != null) {
 
-         return nextDao.persist(durableClass, persistentDurable);
+         return vectoredDao.persist(durableClass, persistentDurable);
       }
 
       return persistentDurable;
@@ -180,7 +180,7 @@ public abstract class HibernateDao<I extends Serializable & Comparable<I>, D ext
 
    public void delete (Class<D> durableClass, D durable) {
 
-      VectoredDao<I, D> nextDao = getNextDao();
+      VectoredDao<I, D> vectoredDao = getVectoredDao();
 
       if (!proxySession.getSession().contains(durable)) {
          proxySession.getSession().delete(proxySession.getSession().load(durable.getClass(), durable.getId()));
@@ -189,8 +189,8 @@ public abstract class HibernateDao<I extends Serializable & Comparable<I>, D ext
          proxySession.getSession().delete(durable);
       }
 
-      if (nextDao != null) {
-         nextDao.delete(durableClass, durable);
+      if (vectoredDao != null) {
+         vectoredDao.delete(durableClass, durable);
       }
    }
 

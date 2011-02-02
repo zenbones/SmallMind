@@ -28,21 +28,13 @@ package org.smallmind.persistence.cache;
 
 import java.util.Comparator;
 import org.smallmind.persistence.Durable;
-import org.smallmind.persistence.DurableKey;
-import org.smallmind.persistence.VectorKey;
-import org.smallmind.persistence.VectoredDao;
 import org.smallmind.quorum.util.ConcurrentList;
 
-public class ByReferenceDistributedCacheDao<I extends Comparable<I>, D extends Durable<I>> extends WaterfallCacheDao<I, D> {
+public class ByReferenceDistributedCacheDao<I extends Comparable<I>, D extends Durable<I>> extends AbstractCacheDao<I, D> {
 
    public ByReferenceDistributedCacheDao (CacheDomain<I, D> cacheDomain) {
 
-      super(null, cacheDomain);
-   }
-
-   public ByReferenceDistributedCacheDao (VectoredDao<I, D> nextDao, CacheDomain<I, D> cacheDomain) {
-
-      super(nextDao, cacheDomain);
+      super(cacheDomain);
    }
 
    public D acquire (Class<D> durableClass, I id) {
@@ -54,26 +46,9 @@ public class ByReferenceDistributedCacheDao<I extends Comparable<I>, D extends D
 
    public D get (Class<D> durableClass, I id) {
 
-      D cachedDurable;
-      VectoredDao<I, D> nextDao = getNextDao();
       DurableKey<I, D> durableKey = new DurableKey<I, D>(durableClass, id);
 
-      if (nextDao != null) {
-         if ((cachedDurable = nextDao.get(durableClass, id)) != null) {
-
-            return cachedDurable;
-         }
-      }
-
-      if ((cachedDurable = getInstanceCache(durableClass).get(durableKey.getKey())) != null) {
-         if (nextDao != null) {
-            nextDao.persist(durableClass, cachedDurable);
-         }
-
-         return cachedDurable;
-      }
-
-      return null;
+      return getInstanceCache(durableClass).get(durableKey.getKey());
    }
 
    public D persist (Class<D> durableClass, D durable) {
@@ -81,34 +56,21 @@ public class ByReferenceDistributedCacheDao<I extends Comparable<I>, D extends D
       if (durable != null) {
 
          D cachedDurable;
-         VectoredDao<I, D> nextDao = getNextDao();
          DurableKey<I, D> durableKey = new DurableKey<I, D>(durableClass, durable.getId());
 
-         if ((cachedDurable = getInstanceCache(durableClass).putIfAbsent(durableKey.getKey(), durable)) != null) {
-
-            return cachedDurable;
-         }
-
-         if (nextDao != null) {
-            nextDao.persist(durableClass, durable);
-         }
+         return ((cachedDurable = getInstanceCache(durableClass).putIfAbsent(durableKey.getKey(), durable)) != null) ? cachedDurable : durable;
       }
 
-      return durable;
+      return null;
    }
 
    public void delete (Class<D> durableClass, D durable) {
 
       if (durable != null) {
 
-         VectoredDao<I, D> nextDao = getNextDao();
          DurableKey<I, D> durableKey = new DurableKey<I, D>(durableClass, durable.getId());
 
          getInstanceCache(durableClass).remove(durableKey.getKey());
-
-         if (nextDao != null) {
-            nextDao.delete(durableClass, durable);
-         }
       }
    }
 
@@ -117,14 +79,9 @@ public class ByReferenceDistributedCacheDao<I extends Comparable<I>, D extends D
       if (durable != null) {
 
          DurableVector<I, D> vector;
-         VectoredDao<I, D> nextDao = getNextDao();
 
          if ((vector = getVectorCache(vectorKey.getElementClass()).get(vectorKey.getKey())) != null) {
             vector.add(durable);
-         }
-
-         if (nextDao != null) {
-            nextDao.updateInVector(vectorKey, durable);
          }
       }
    }
@@ -134,57 +91,26 @@ public class ByReferenceDistributedCacheDao<I extends Comparable<I>, D extends D
       if (durable != null) {
 
          DurableVector<I, D> vector;
-         VectoredDao<I, D> nextDao = getNextDao();
 
          if ((vector = getVectorCache(vectorKey.getElementClass()).get(vectorKey.getKey())) != null) {
             vector.remove(durable);
-         }
-
-         if (nextDao != null) {
-            nextDao.removeFromVector(vectorKey, durable);
          }
       }
    }
 
    public DurableVector<I, D> getVector (VectorKey<D> vectorKey) {
 
-      DurableVector<I, D> cachedVector;
-      VectoredDao<I, D> nextDao = getNextDao();
-
-      if (nextDao != null) {
-         if ((cachedVector = nextDao.getVector(vectorKey)) != null) {
-
-            return cachedVector;
-         }
-      }
-
-      if ((cachedVector = getVectorCache(vectorKey.getElementClass()).get(vectorKey.getKey())) != null) {
-         if (nextDao != null) {
-            nextDao.persistVector(vectorKey, cachedVector);
-         }
-
-         return cachedVector;
-      }
-
-      return null;
+      return getVectorCache(vectorKey.getElementClass()).get(vectorKey.getKey());
    }
 
    public DurableVector<I, D> persistVector (VectorKey<D> vectorKey, DurableVector<I, D> vector) {
 
       DurableVector<I, D> migratedVector;
       DurableVector<I, D> cachedVector;
-      VectoredDao<I, D> nextDao = getNextDao();
 
       migratedVector = migrateVector(vector);
-      if ((cachedVector = getVectorCache(vectorKey.getElementClass()).putIfAbsent(vectorKey.getKey(), migratedVector)) != null) {
 
-         return cachedVector;
-      }
-      else if (nextDao != null) {
-         nextDao.persistVector(vectorKey, migratedVector);
-      }
-
-      return vector;
+      return ((cachedVector = getVectorCache(vectorKey.getElementClass()).putIfAbsent(vectorKey.getKey(), migratedVector)) != null) ? cachedVector : vector;
    }
 
    public DurableVector<I, D> migrateVector (DurableVector<I, D> vector) {
@@ -246,12 +172,6 @@ public class ByReferenceDistributedCacheDao<I extends Comparable<I>, D extends D
 
    public void deleteVector (VectorKey<D> vectorKey) {
 
-      VectoredDao<I, D> nextDao = getNextDao();
-
       getVectorCache(vectorKey.getElementClass()).remove(vectorKey.getKey());
-
-      if (nextDao != null) {
-         nextDao.deleteVector(vectorKey);
-      }
    }
 }

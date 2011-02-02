@@ -24,28 +24,30 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.persistence.orm;
+package org.smallmind.persistence.cache;
 
 import org.smallmind.persistence.Durable;
-import org.smallmind.persistence.VectoredDao;
+import org.smallmind.persistence.orm.ProcessPriority;
+import org.smallmind.persistence.orm.TransactionEndState;
+import org.smallmind.persistence.orm.TransactionPostProcess;
 
-public class WaterfallDeletePostProcess<I extends Comparable<I>, D extends Durable<I>> extends TransactionPostProcess {
+public class RemoveFromVectorPostProcess<I extends Comparable<I>, D extends Durable<I>> extends TransactionPostProcess {
 
-   private VectoredDao<I, D> nextDao;
-   Class<D> durableClass;
-   D durable;
+   private VectoredDao<I, D> vectoredDao;
+   private VectorKey<D> vectorKey;
+   private D durable;
 
-   public WaterfallDeletePostProcess (VectoredDao<I, D> nextDao, Class<D> durableClass, D durable) {
+   public RemoveFromVectorPostProcess (VectoredDao<I, D> vectoredDao, VectorKey<D> vectorKey, D durable) {
 
-      super(TransactionEndState.COMMIT, ProcessPriority.LAST);
+      super(TransactionEndState.COMMIT, ProcessPriority.MIDDLE);
 
-      this.nextDao = nextDao;
-      this.durableClass = durableClass;
+      this.vectoredDao = vectoredDao;
+      this.vectorKey = vectorKey;
       this.durable = durable;
    }
 
    public void process () {
 
-      nextDao.delete(durableClass, durable);
+      vectoredDao.removeFromVector(vectorKey, durable);
    }
 }
