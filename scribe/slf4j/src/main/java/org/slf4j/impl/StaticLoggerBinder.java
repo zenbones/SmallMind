@@ -34,12 +34,18 @@ import org.smallmind.scribe.slf4j.ScribeLoggerFactory;
 public class StaticLoggerBinder implements LoggerFactoryBinder {
 
    public static final StaticLoggerBinder SINGLETON = new StaticLoggerBinder();
+   public static final String REQUESTED_API_VERSION = "1.6.1";
 
    private final ILoggerFactory loggerFactory;
 
    static {
 
       LoggerManager.addLoggingPackagePrefix("org.slf4j.");
+   }
+
+   public static StaticLoggerBinder getSingleton () {
+
+      return SINGLETON;
    }
 
    public StaticLoggerBinder () {
