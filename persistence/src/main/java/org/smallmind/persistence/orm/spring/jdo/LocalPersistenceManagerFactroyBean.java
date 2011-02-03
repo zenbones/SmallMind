@@ -34,7 +34,7 @@ import org.springframework.beans.factory.DisposableBean;
 import org.springframework.beans.factory.FactoryBean;
 import org.springframework.beans.factory.InitializingBean;
 
-public class LocalPersistenceManagerFactroyBean implements DisposableBean, FactoryBean, InitializingBean {
+public class LocalPersistenceManagerFactroyBean implements DisposableBean, FactoryBean<PersistenceManagerFactory>, InitializingBean {
 
    private PersistenceManagerFactory persistenceManagerFactory;
    private DataSource dataSource;
@@ -50,7 +50,7 @@ public class LocalPersistenceManagerFactroyBean implements DisposableBean, Facto
       this.properties = properties;
    }
 
-   public Object getObject () {
+   public PersistenceManagerFactory getObject () {
 
       return persistenceManagerFactory;
    }

@@ -32,7 +32,7 @@ import org.smallmind.quorum.transport.remote.RemoteEndpointBinder;
 import org.smallmind.quorum.transport.remote.RemoteProxyFactory;
 import org.springframework.beans.factory.FactoryBean;
 
-public class RemoteConnectionPoolFactoryBean implements FactoryBean {
+public class RemoteConnectionPoolFactoryBean implements FactoryBean<RemoteConnectionPoolSurface> {
 
    private ConnectionPool connectionPool;
    private String registryName;
@@ -47,7 +47,7 @@ public class RemoteConnectionPoolFactoryBean implements FactoryBean {
       this.registryName = registryName;
    }
 
-   public Object getObject ()
+   public RemoteConnectionPoolSurface getObject ()
       throws Exception {
 
       RemoteEndpointBinder.bind(connectionPool, registryName);

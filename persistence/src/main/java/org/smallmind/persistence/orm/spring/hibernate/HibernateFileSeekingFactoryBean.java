@@ -29,7 +29,7 @@ package org.smallmind.persistence.orm.spring.hibernate;
 import org.springframework.beans.factory.FactoryBean;
 import org.springframework.core.io.Resource;
 
-public class HibernateFileSeekingFactoryBean implements FactoryBean {
+public class HibernateFileSeekingFactoryBean implements FactoryBean<Resource[]> {
 
    private String dataSourceKey;
 
@@ -38,7 +38,7 @@ public class HibernateFileSeekingFactoryBean implements FactoryBean {
       this.dataSourceKey = dataSourceKey;
    }
 
-   public Object getObject () {
+   public Resource[] getObject () {
 
       return HibernateFileSeekingBeanFactoryPostProcessor.getHibernateResources(dataSourceKey);
    }

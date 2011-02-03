@@ -30,7 +30,7 @@ import org.smallmind.cloud.service.messaging.ServiceException;
 import org.smallmind.quorum.transport.messaging.MessagingTransmitter;
 import org.springframework.beans.factory.FactoryBean;
 
-public class ServiceDispatcherFactoryBean implements FactoryBean {
+public class ServiceDispatcherFactoryBean implements FactoryBean<MessagingTransmitter> {
 
    private String serviceSelector;
 
@@ -39,7 +39,7 @@ public class ServiceDispatcherFactoryBean implements FactoryBean {
       this.serviceSelector = serviceSelector;
    }
 
-   public Object getObject ()
+   public MessagingTransmitter getObject ()
       throws ServiceException {
 
       MessagingTransmitter messagingTransmitter;
