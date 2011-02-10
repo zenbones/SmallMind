@@ -81,7 +81,6 @@
       <constructor-arg index="0" value="schema"/>
       <constructor-arg index="1" ref="schemaSessionFactory"/>
       <constructor-arg index="2" value="true"/>
-      <constructor-arg index="3" value="${orm.cascade}"/>
    </bean>
 
 </beans>

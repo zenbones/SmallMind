@@ -50,9 +50,9 @@ public class JPAProxySession extends ProxySession {
 
    private EntityManagerFactory entityManagerFactory;
 
-   public JPAProxySession (String dataSourceKey, EntityManagerFactory entityManagerFactory, boolean enforceBoundary, boolean willCascade) {
+   public JPAProxySession (String dataSourceKey, EntityManagerFactory entityManagerFactory, boolean enforceBoundary) {
 
-      super(dataSourceKey, enforceBoundary, willCascade);
+      super(dataSourceKey, enforceBoundary);
 
       this.entityManagerFactory = entityManagerFactory;
    }

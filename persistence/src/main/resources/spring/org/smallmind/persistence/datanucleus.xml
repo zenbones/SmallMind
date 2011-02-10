@@ -10,21 +10,22 @@
       <property name="validationQuery" value="${jdbc.pool.connect.query}"/>
    </bean>
 
-   <bean id="schemaDBPool" class="org.smallmind.quorum.pool.ConnectionPool">
+   <bean id="schemaDBPool" class="org.smallmind.quorum.pool.ConnectionPool" init-method="startup" destroy-method="shutdown">
       <constructor-arg index="0" value="dbPool"/>
       <constructor-arg index="1" ref="schemaConnectionInstanceFactory"/>
-      <property name="poolMode" value="BLOCKING_POOL"/>
-      <property name="acquireRetryDelayMillis" value="300"/>
-      <property name="acquireRetryAttempts" value="3"/>
       <property name="testOnAcquire" value="${jdbc.pool.connect.test}"/>
-      <property name="minThreadPoolSize" value="${jdbc.pool.size.min}"/>
-      <property name="maxThreadPoolSize" value="${jdbc.pool.size.max}"/>
+      <property name="initialPoolSize" value="${jdbc.pool.size.min}"/>
+      <property name="minPoolSize" value="${jdbc.pool.size.min}"/>
+      <property name="maxPoolSize" value="${jdbc.pool.size.max}"/>
+      <property name="allowSoftMinSize" value="true"/>
+      <property name="acquireWaitTimeMillis" value="750"/>
+      <property name="connectionTimeoutMillis" value="300"/>
       <property name="maxLeaseTimeSeconds" value="1800"/>
-      <property name="connectionTimeoutMillis" value="500"/>
    </bean>
 
    <bean id="schemaPooledDataSource" class="org.smallmind.persistence.orm.sql.pool.PooledDataSource">
-      <constructor-arg index="0" ref="schemaDBPool"/>
+      <constructor-arg index="0" value="schema"/>
+      <constructor-arg index="1" ref="schemaDBPool"/>
    </bean>
 
    <!-- JDO Persistence Manager -->
@@ -42,7 +43,6 @@
       <constructor-arg index="0" value="schema"/>
       <constructor-arg index="1" ref="persistenceManagerFactory"/>
       <constructor-arg index="2" value="true"/>
-      <constructor-arg index="3" value="${orm.cascade}"/>
    </bean>
 
    <!-- AspectJ Transaction Management -->

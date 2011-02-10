@@ -43,7 +43,7 @@ public class HibernateProxySession extends ProxySession {
    private final ThreadLocal<HibernateProxyTransaction> transactionThreadLocal = new ThreadLocal<HibernateProxyTransaction>();
    private final ThreadLocal<Boolean> boundaryOverrideThreadLocal = new ThreadLocal<Boolean>() {
 
-      protected Boolean initialValue() {
+      protected Boolean initialValue () {
 
          return false;
       }
@@ -51,24 +51,24 @@ public class HibernateProxySession extends ProxySession {
 
    private SessionFactory sessionFactory;
 
-   public HibernateProxySession(String dataSourceKey, SessionFactory sessionFactory, boolean enforceBoundary, boolean willCascade) {
+   public HibernateProxySession (String dataSourceKey, SessionFactory sessionFactory, boolean enforceBoundary) {
 
-      super(dataSourceKey, enforceBoundary, willCascade);
+      super(dataSourceKey, enforceBoundary);
 
       this.sessionFactory = sessionFactory;
    }
 
-   public ClassMetadata getClassMetadata(Class entityClass) {
+   public ClassMetadata getClassMetadata (Class entityClass) {
 
       return sessionFactory.getClassMetadata(entityClass);
    }
 
-   public void setIgnoreBoundaryEnforcement(boolean ignoreBoundaryEnforcement) {
+   public void setIgnoreBoundaryEnforcement (boolean ignoreBoundaryEnforcement) {
 
       boundaryOverrideThreadLocal.set(ignoreBoundaryEnforcement);
    }
 
-   public HibernateProxyTransaction beginTransaction() {
+   public HibernateProxyTransaction beginTransaction () {
 
       HibernateProxyTransaction proxyTransaction;
 
@@ -85,12 +85,12 @@ public class HibernateProxySession extends ProxySession {
       return proxyTransaction;
    }
 
-   public ProxyTransaction currentTransaction() {
+   public ProxyTransaction currentTransaction () {
 
       return transactionThreadLocal.get();
    }
 
-   public void flush() {
+   public void flush () {
 
       Session session;
 
@@ -98,20 +98,19 @@ public class HibernateProxySession extends ProxySession {
       session.clear();
    }
 
-   public boolean isClosed() {
+   public boolean isClosed () {
 
       Session session;
 
       return ((session = managerThreadLocal.get()) == null) || (!session.isOpen());
    }
 
-
-   public Object getNativeSession() {
+   public Object getNativeSession () {
 
       return getSession();
    }
 
-   public Session getSession() {
+   public Session getSession () {
 
       Session session;
 
@@ -124,9 +123,11 @@ public class HibernateProxySession extends ProxySession {
 
          if ((transactionSet = TransactionalState.obtainBoundary(this)) != null) {
             transactionSet.add(beginTransaction());
-         } else if ((sessionSet = NonTransactionalState.obtainBoundary(this)) != null) {
+         }
+         else if ((sessionSet = NonTransactionalState.obtainBoundary(this)) != null) {
             sessionSet.add(this);
-         } else if ((!boundaryOverrideThreadLocal.get()) && willEnforceBoundary()) {
+         }
+         else if ((!boundaryOverrideThreadLocal.get()) && willEnforceBoundary()) {
             close();
             throw new SessionEnforcementException("Session was requested outside of any boundary enforcement (@NonTransactional or @Transactional)");
          }
@@ -135,7 +136,7 @@ public class HibernateProxySession extends ProxySession {
       return session;
    }
 
-   public void close() {
+   public void close () {
 
       Session session;
 
