@@ -28,9 +28,10 @@
       <property name="initialPoolSize" value="${jdbc.pool.size.min}"/>
       <property name="minPoolSize" value="${jdbc.pool.size.min}"/>
       <property name="maxPoolSize" value="${jdbc.pool.size.max}"/>
-      <property name="allowSoftMinSize" value="true"/>
+      <property name="allowSoftMinSize" value="false"/>
       <property name="acquireWaitTimeMillis" value="750"/>
       <property name="connectionTimeoutMillis" value="300"/>
+      <property name="maxIdleTimeSeconds" value="300"/>
       <property name="maxLeaseTimeSeconds" value="1800"/>
    </bean>
 

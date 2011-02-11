@@ -264,8 +264,8 @@ public class ConnectionPinManager<C> {
          }
       }
 
-      if (terminate || ((connectionPins.length - emptyCount.get()) > connectionPool.getMinPoolSize())) {
-         remove(connectionPin, false);
+      if (terminate) {
+         remove(connectionPin, true);
       }
       else {
          synchronized (connectionPin) {
