@@ -32,15 +32,35 @@ import org.springframework.core.io.Resource;
 public class HibernateFileSeekingFactoryBean implements FactoryBean<Resource[]> {
 
    private String dataSourceKey;
+   private Resource[] additionalResources;
 
    public void setDataSourceKey (String dataSourceKey) {
 
       this.dataSourceKey = dataSourceKey;
    }
 
+   public void setAdditionalResources (Resource[] additionalResources) {
+
+      this.additionalResources = additionalResources;
+   }
+
    public Resource[] getObject () {
 
-      return HibernateFileSeekingBeanFactoryPostProcessor.getHibernateResources(dataSourceKey);
+      Resource[] dataSourceResources;
+
+      dataSourceResources = HibernateFileSeekingBeanFactoryPostProcessor.getHibernateResources(dataSourceKey);
+
+      if ((additionalResources == null) || additionalResources.length == 0) {
+
+         return dataSourceResources;
+      }
+
+      Resource[] combinedResources = new Resource[dataSourceResources.length + additionalResources.length];
+
+      System.arraycopy(dataSourceResources, 0, combinedResources, 0, dataSourceResources.length);
+      System.arraycopy(additionalResources, 0, combinedResources, dataSourceResources.length, additionalResources.length);
+
+      return combinedResources;
    }
 
    public Class getObjectType () {
