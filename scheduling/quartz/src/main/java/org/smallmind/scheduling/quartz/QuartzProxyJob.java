@@ -26,15 +26,14 @@
  */
 package org.smallmind.scheduling.quartz;
 
+import java.util.Date;
+import java.util.LinkedList;
 import org.quartz.Job;
 import org.quartz.JobExecutionContext;
 import org.quartz.JobExecutionException;
 import org.smallmind.scheduling.base.JobStatus;
 import org.smallmind.scheduling.base.ProxyJob;
 import org.smallmind.scribe.pen.LoggerManager;
-
-import java.util.Date;
-import java.util.LinkedList;
 
 public abstract class QuartzProxyJob implements ProxyJob, Job {
 
@@ -44,37 +43,42 @@ public abstract class QuartzProxyJob implements ProxyJob, Job {
    private Date stopTime;
    private int count = 0;
 
-   public QuartzProxyJob() {
+   public QuartzProxyJob () {
 
       exceptionList = new LinkedList<Exception>();
    }
 
-   public JobStatus getJobStatus() {
+   public JobStatus getJobStatus () {
 
       return status;
    }
 
-   public Date getStartTime() {
+   public Date getStartTime () {
 
       return startTime;
    }
 
-   public Date getStopTime() {
+   public Date getStopTime () {
 
       return stopTime;
    }
 
-   public synchronized void incCount() {
+   public synchronized void incCount () {
 
       count++;
    }
 
-   public synchronized int getCount() {
+   public synchronized void addToCount (int additional) {
+
+      count += additional;
+   }
+
+   public synchronized int getCount () {
 
       return count;
    }
 
-   public synchronized Exception[] getExceptions() {
+   public synchronized Exception[] getExceptions () {
 
       if (!exceptionList.isEmpty()) {
 
@@ -89,12 +93,12 @@ public abstract class QuartzProxyJob implements ProxyJob, Job {
       return null;
    }
 
-   public synchronized void setException(Exception exception) {
+   public synchronized void setException (Exception exception) {
 
       setException(exception, true);
    }
 
-   public synchronized void setException(Exception exception, boolean isFailure) {
+   public synchronized void setException (Exception exception, boolean isFailure) {
 
       exceptionList.add(exception);
       LoggerManager.getLogger(this.getClass()).error(exception);
@@ -104,8 +108,8 @@ public abstract class QuartzProxyJob implements ProxyJob, Job {
       }
    }
 
-   public void execute(JobExecutionContext jobExecutionContext)
-         throws JobExecutionException {
+   public void execute (JobExecutionContext jobExecutionContext)
+      throws JobExecutionException {
 
       startTime = new Date();
       try {
