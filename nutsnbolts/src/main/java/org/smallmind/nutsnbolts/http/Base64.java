@@ -58,13 +58,13 @@ public final class Base64 {
       for (int index = 0; index < bytesRead; index++) {
         switch (index) {
           case 0:
-            encodeBuilder.append(BASE64_BIBLE.charAt(triplet[0] >>> 2));
+            encodeBuilder.append(BASE64_BIBLE.charAt((triplet[0] & 0xFF) >>> 2));
             break;
           case 1:
-            encodeBuilder.append(BASE64_BIBLE.charAt(((triplet[0] & 3) << 4) | (triplet[1] >>> 4)));
+            encodeBuilder.append(BASE64_BIBLE.charAt(((triplet[0] & 3) << 4) | ((triplet[1] & 0xFF) >>> 4)));
             break;
           case 2:
-            encodeBuilder.append(BASE64_BIBLE.charAt(((triplet[1] & 15) << 2) | (triplet[2] >>> 6)));
+            encodeBuilder.append(BASE64_BIBLE.charAt(((triplet[1] & 15) << 2) | ((triplet[2] & 0xFF) >>> 6)));
             encodeBuilder.append(BASE64_BIBLE.charAt(triplet[2] & 63));
             break;
         }
