@@ -26,111 +26,120 @@
  */
 package org.smallmind.nutsnbolts.http;
 
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.io.StringReader;
-import java.io.StringWriter;
 import java.io.UnsupportedEncodingException;
 
 public final class Base64 {
 
-   private static final String base64Bible = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/=";
+  private static final String BASE64_BIBLE = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/=";
 
-   public static String decode (String encodedString)
-      throws UnsupportedEncodingException {
+  public static String encode (String original)
+    throws IOException {
 
-      StringWriter transStringWriter = new StringWriter();
-      int transChar;
-      int maxOctets;
-      int baseConv1;
-      int baseConv2;
-      int octet;
-      int index;
+    return encode(original.getBytes());
+  }
 
-      maxOctets = encodedString.length() / 4;
-      for (octet = 0; octet < maxOctets; octet++) {
-         for (index = 0; index < 3; index++) {
-            baseConv1 = base64Bible.indexOf(encodedString.charAt(index + (octet * 4)));
-            baseConv2 = base64Bible.indexOf(encodedString.charAt(index + 1 + (octet * 4)));
-            if ((baseConv1 < 0) || (baseConv2 < 0)) {
-               throw new UnsupportedEncodingException();
-            }
-            if (baseConv1 == 64) {
-               baseConv1 = 0;
-            }
-            if (baseConv2 == 64) {
-               return transStringWriter.toString();
-            }
-            switch (index) {
-               case 0:
-                  transChar = ((baseConv1 & 63) << 2) | ((baseConv2 & 48) >> 4);
-                  break;
-               case 1:
-                  transChar = ((baseConv1 & 15) << 4) | ((baseConv2 & 60) >> 2);
-                  break;
-               case 2:
-                  transChar = ((baseConv1 & 3) << 6) | (baseConv2 & 63);
-                  break;
-               default:
-                  transChar = 0;
-            }
-            transStringWriter.write(transChar);
-         }
+  public static String encode (byte[] bytes)
+    throws IOException {
+
+    return encode(new ByteArrayInputStream(bytes));
+  }
+
+  public static String encode (ByteArrayInputStream byteInputStream)
+    throws IOException {
+
+    StringBuilder encodeBuilder = new StringBuilder();
+    byte[] triplet = new byte[3];
+    int bytesRead;
+
+    while ((bytesRead = byteInputStream.read(triplet)) >= 0) {
+      for (int index = 0; index < bytesRead; index++) {
+        switch (index) {
+          case 0:
+            encodeBuilder.append(BASE64_BIBLE.charAt(triplet[0] >>> 2));
+            break;
+          case 1:
+            encodeBuilder.append(BASE64_BIBLE.charAt(((triplet[0] & 3) << 4) | (triplet[1] >>> 4)));
+            break;
+          case 2:
+            encodeBuilder.append(BASE64_BIBLE.charAt(((triplet[1] & 15) << 2) | (triplet[2] >>> 6)));
+            encodeBuilder.append(BASE64_BIBLE.charAt(triplet[2] & 63));
+            break;
+        }
       }
-      return transStringWriter.toString();
-   }
 
-   public static String encode (String normalString)
-      throws UnsupportedEncodingException {
-
-      StringReader transStringReader = new StringReader(normalString);
-      StringBuilder encodedString;
-      int base64Conv;
-      int transChar;
-      int normalChar;
-      int maxOctets;
-      int padding;
-      int octet;
-      int index;
-
-      maxOctets = normalString.length() / 3;
-      if ((normalString.length() % 3) > 0) {
-         maxOctets++;
+      if (bytesRead == 1) {
+        encodeBuilder.append(BASE64_BIBLE.charAt((triplet[0] & 3) << 4));
+        encodeBuilder.append('=').append('=');
       }
-      encodedString = new StringBuilder(maxOctets * 4);
-      padding = 0;
-      for (octet = 0; octet < maxOctets; octet++) {
-         transChar = 0;
-         for (index = 0; index < 3; index++) {
-            try {
-               normalChar = transStringReader.read();
-            }
-            catch (IOException i) {
-               throw new UnsupportedEncodingException();
-            }
-            transChar <<= 8;
-            if (normalChar > 0) {
-               transChar += (normalChar & 255);
-            }
-            else if (normalChar < 0) {
-               padding++;
-            }
-         }
-         for (index = 0; index < 4; index++) {
-            base64Conv = (transChar & 16515072) >> 18;
-            if ((base64Conv == 0) && (index == 2) && (padding == 2)) {
-               encodedString.append(base64Bible.charAt(64));
-               padding--;
-            }
-            else if ((base64Conv == 0) && (index == 3) && (padding == 1)) {
-               encodedString.append(base64Bible.charAt(64));
-               padding--;
-            }
-            else {
-               encodedString.append(base64Bible.charAt(base64Conv));
-            }
-            transChar <<= 6;
-         }
+      else if (bytesRead == 2) {
+        encodeBuilder.append(BASE64_BIBLE.charAt((triplet[1] & 15) << 2));
+        encodeBuilder.append('=');
       }
-      return encodedString.toString();
-   }
+    }
+
+    return encodeBuilder.toString();
+  }
+
+  public static byte[] decode (String encoded)
+    throws IOException {
+
+    return decode(encoded.getBytes());
+  }
+
+  public static byte[] decode (byte[] bytes)
+    throws IOException {
+
+    return decode(new ByteArrayInputStream(bytes));
+  }
+
+  public static byte[] decode (ByteArrayInputStream byteInputStream)
+    throws IOException {
+
+    ByteArrayOutputStream byteOutputStream;
+    boolean endOfStream = false;
+    byte[] buffer = new byte[4];
+    byte[] quartet = new byte[4];
+    int bytesRead;
+
+    byteOutputStream = new ByteArrayOutputStream();
+    while ((bytesRead = byteInputStream.read(buffer)) >= 0) {
+      if (endOfStream) {
+        throw new UnsupportedEncodingException("Not a base64 encoded stream");
+      }
+      if ((bytesRead > 0) && (bytesRead < 4)) {
+        throw new UnsupportedEncodingException("The length of the stream must be a multiple of 4");
+      }
+
+      for (int index = 0; index < buffer.length; index++) {
+        if ((quartet[index] = (byte)BASE64_BIBLE.indexOf(buffer[index])) < 0) {
+          throw new UnsupportedEncodingException("Not a base64 encoded stream");
+        }
+        if (buffer[index] == '=') {
+          endOfStream = true;
+        }
+      }
+
+      if ((buffer[0] == '=') || (buffer[1] == '=') || ((buffer[2] == '=') && (buffer[3] != '='))) {
+        throw new UnsupportedEncodingException("Not a base64 encoded stream");
+      }
+
+      byteOutputStream.write(((quartet[0] & 63) << 2) | ((quartet[1] & 48) >>> 4));
+
+      if (buffer[2] == '=') {
+        byteOutputStream.write((quartet[1] & 15) << 4);
+      }
+      else {
+        byteOutputStream.write(((quartet[1] & 15) << 4) | ((quartet[2] & 60) >>> 2));
+      }
+
+      if (buffer[3] != '=') {
+        byteOutputStream.write(((quartet[2] & 3) << 6) | (quartet[3] & 63));
+      }
+    }
+
+    return byteOutputStream.toByteArray();
+  }
 }
