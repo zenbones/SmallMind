@@ -26,11 +26,11 @@
  */
 package org.smallmind.persistence.orm.hibernate;
 
+import org.hibernate.Transaction;
 import org.smallmind.persistence.orm.ProxyTransaction;
 import org.smallmind.persistence.orm.ProxyTransactionException;
 import org.smallmind.persistence.orm.TransactionEndState;
 import org.smallmind.persistence.orm.TransactionPostProcessException;
-import org.hibernate.Transaction;
 
 public class HibernateProxyTransaction extends ProxyTransaction {
 
@@ -57,54 +57,48 @@ public class HibernateProxyTransaction extends ProxyTransaction {
    public void commit () {
 
       if (isRollbackOnly()) {
-
-         ProxyTransactionException proxyTransactionException = new ProxyTransactionException("Transaction has been set to allow rollback only");
-
+         rollback(new ProxyTransactionException("Transaction has been set to allow rollback only"));
+      }
+      else {
          try {
-            rollback();
+            getSession().flush();
+            transaction.commit();
          }
-         catch (Exception exception) {
-            proxyTransactionException.initCause(exception);
+         catch (Throwable throwable) {
+            rollback(throwable);
+         }
+         finally {
+            getSession().close();
          }
 
-         throw proxyTransactionException;
-      }
-
-      Throwable unexpectedThrowable = null;
-
-      try {
-         getSession().flush();
-         transaction.commit();
-      }
-      catch (Throwable throwable) {
-         unexpectedThrowable = throwable;
-      }
-      finally {
-         getSession().close();
-
-         try {
-            applyPostProcesses((unexpectedThrowable == null) ? TransactionEndState.COMMIT : TransactionEndState.ROLLBACK);
-         }
-         catch (TransactionPostProcessException transactionPostProcessException) {
-            if (unexpectedThrowable != null) {
-               transactionPostProcessException.initCause(unexpectedThrowable);
+         if (!rolledBack) {
+            try {
+               applyPostProcesses(TransactionEndState.COMMIT);
             }
-
-            throw new ProxyTransactionException(transactionPostProcessException);
-         }
-
-         if (unexpectedThrowable != null) {
-            throw new ProxyTransactionException(unexpectedThrowable);
+            catch (TransactionPostProcessException transactionPostProcessException) {
+               throw new ProxyTransactionException(transactionPostProcessException);
+            }
          }
       }
    }
 
    public void rollback () {
 
+      rollback(null);
+   }
+
+   private void rollback (Throwable thrownDuringCommit) {
+
+      Throwable thrownDuringRollback = thrownDuringCommit;
+
       if (!rolledBack) {
+         rolledBack = true;
+
          try {
             transaction.rollback();
-            rolledBack = true;
+         }
+         catch (Throwable throwable) {
+            thrownDuringRollback = (thrownDuringRollback == null) ? throwable : throwable.initCause(thrownDuringRollback);
          }
          finally {
             getSession().close();
@@ -113,7 +107,16 @@ public class HibernateProxyTransaction extends ProxyTransaction {
                applyPostProcesses(TransactionEndState.ROLLBACK);
             }
             catch (TransactionPostProcessException transactionPostProcessException) {
-               throw new ProxyTransactionException(transactionPostProcessException);
+               thrownDuringRollback = (thrownDuringRollback == null) ? new ProxyTransactionException(transactionPostProcessException) : new ProxyTransactionException(transactionPostProcessException).initCause(thrownDuringRollback);
+            }
+         }
+
+         if (thrownDuringRollback != null) {
+            if (thrownDuringRollback instanceof ProxyTransactionException) {
+               throw (ProxyTransactionException)thrownDuringRollback;
+            }
+            else {
+               throw new ProxyTransactionException(thrownDuringRollback);
             }
          }
       }
