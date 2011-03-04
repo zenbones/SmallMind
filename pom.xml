@@ -3,7 +3,7 @@
 
   <groupId>org.smallmind</groupId>
   <artifactId>smallmind</artifactId>
-  <version>1.0.12</version>
+  <version>1.0.13</version>
   <packaging>pom</packaging>
   <name>Parent</name>
   <description>Parent POM</description>
@@ -338,8 +338,8 @@
       </dependency>
       <dependency>
         <groupId>org.terracotta.toolkit</groupId>
-        <artifactId>terracotta-toolkit-1.0</artifactId>
-        <version>1.0.0</version>
+        <artifactId>terracotta-toolkit-1.1</artifactId>
+        <version>2.1.0</version>
       </dependency>
       <dependency>
         <groupId>org.apache.wicket</groupId>
