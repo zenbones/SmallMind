@@ -1,3 +1,29 @@
+/*
+ * Copyright (c) 2007, 2008, 2009, 2010 David Berkman
+ * 
+ * This file is part of the SmallMind Code Project.
+ * 
+ * The SmallMind Code Project is free software, you can redistribute
+ * it and/or modify it under the terms of GNU Affero General Public
+ * License as published by the Free Software Foundation, either version 3
+ * of the License, or (at your option) any later version.
+ * 
+ * The SmallMind Code Project is distributed in the hope that it will
+ * be useful, but WITHOUT ANY WARRANTY; without even the implied warranty
+ * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * General Public License for more details.
+ * 
+ * You should have received a copy of the the GNU Affero General Public
+ * License, along with The SmallMind Code Project. If not, see
+ * <http://www.gnu.org/licenses/>.
+ * 
+ * Additional permission under the GNU Affero GPL version 3 section 7
+ * ------------------------------------------------------------------
+ * If you modify this Program, or any covered work, by linking or
+ * combining it with other code, such other code is not for that reason
+ * alone subject to any of the requirements of the GNU Affero GPL
+ * version 3.
+ */
 package org.smallmind.persistence.cache;
 
 import java.io.Serializable;
@@ -17,21 +43,26 @@ import org.terracotta.annotations.InstrumentedClass;
 
 @InstrumentedClass
 @HonorTransient
-public class DurableKeyConcurrentList<I extends Serializable & Comparable<I>, D extends Durable<I>, K extends DurableKey<I, D>> implements List<D> {
+public class DurableKeyConcurrentList<I extends Serializable & Comparable<I>, D extends Durable<I>> implements List<D> {
 
   private transient AtomicReference<ORMDao<I, D>> ormDaoRef;
   private transient boolean ormReferenced;
 
-  private ConcurrentList<K> keyList;
+  private ConcurrentList<DurableKey<I, D>> keyList;
   private Class<D> durableClass;
 
-  public DurableKeyConcurrentList () {
+  private DurableKeyConcurrentList () {
 
     ormReferenced = false;
     ormDaoRef = new AtomicReference<ORMDao<I, D>>();
   }
 
-  public DurableKeyConcurrentList (Class<D> durableClass, ConcurrentList<K> keyList) {
+  protected DurableKeyConcurrentList (DurableKeyConcurrentList<I, D> durableKeyConcurrentList) {
+
+    this(durableKeyConcurrentList.getDurableClass(), new ConcurrentList<DurableKey<I, D>>(durableKeyConcurrentList.getKeyList()));
+  }
+
+  public DurableKeyConcurrentList (Class<D> durableClass, ConcurrentList<DurableKey<I, D>> keyList) {
 
     this();
 
@@ -50,7 +81,7 @@ public class DurableKeyConcurrentList<I extends Serializable & Comparable<I>, D 
     return ormDaoRef.get();
   }
 
-  private D getDurable (K durableKey) {
+  private D getDurable (DurableKey<I, D> durableKey) {
 
     if (durableKey == null) {
 
@@ -64,6 +95,16 @@ public class DurableKeyConcurrentList<I extends Serializable & Comparable<I>, D 
     }
 
     return getORMDao().get(getORMDao().getIdFromString(durableKey.getKey().substring(equalsPos + 1)));
+  }
+
+  private Class<D> getDurableClass () {
+
+    return durableClass;
+  }
+
+  private ConcurrentList<DurableKey<I, D>> getKeyList () {
+
+    return keyList;
   }
 
   public int size () {
@@ -95,7 +136,7 @@ public class DurableKeyConcurrentList<I extends Serializable & Comparable<I>, D 
 
     elements = ((a != null) && (a.length >= keyArray.length)) ? a : (Object[])Array.newInstance((a == null) ? durableClass : a.getClass().getComponentType(), keyArray.length);
     for (Object key : keyArray) {
-      if ((durable = getDurable((K)key)) != null) {
+      if ((durable = getDurable((DurableKey<I, D>)key)) != null) {
         elements[index++] = durable;
       }
     }
@@ -110,22 +151,32 @@ public class DurableKeyConcurrentList<I extends Serializable & Comparable<I>, D 
 
   public D set (int index, D durable) {
 
-    return getDurable(keyList.set(index, (K)new DurableKey<I, D>(durableClass, durable.getId())));
+    return getDurable(keyList.set(index, new DurableKey<I, D>(durableClass, durable.getId())));
+  }
+
+  public void addFirst (D durable) {
+
+    keyList.addFirst(new DurableKey<I, D>(durableClass, durable.getId()));
   }
 
   public boolean add (D durable) {
 
-    return keyList.add((K)new DurableKey<I, D>(durableClass, durable.getId()));
+    return keyList.add(new DurableKey<I, D>(durableClass, durable.getId()));
   }
 
   public void add (int index, D durable) {
 
-    keyList.add(index, (K)new DurableKey<I, D>(durableClass, durable.getId()));
+    keyList.add(index, new DurableKey<I, D>(durableClass, durable.getId()));
   }
 
   public boolean remove (Object obj) {
 
     return durableClass.isAssignableFrom(obj.getClass()) && keyList.remove(new DurableKey<I, D>(durableClass, durableClass.cast(obj).getId()));
+  }
+
+  public D removeLast () {
+
+    return getDurable(keyList.removeLast());
   }
 
   public D remove (int index) {
@@ -135,7 +186,7 @@ public class DurableKeyConcurrentList<I extends Serializable & Comparable<I>, D 
 
   public boolean containsAll (Collection<?> c) {
 
-    HashSet<K> keySet = new HashSet<K>();
+    HashSet<DurableKey<I, D>> keySet = new HashSet<DurableKey<I, D>>();
 
     for (Object obj : c) {
       if (!durableClass.isAssignableFrom(obj.getClass())) {
@@ -143,7 +194,7 @@ public class DurableKeyConcurrentList<I extends Serializable & Comparable<I>, D 
         return false;
       }
 
-      keySet.add((K)new DurableKey<I, D>(durableClass, durableClass.cast(obj).getId()));
+      keySet.add(new DurableKey<I, D>(durableClass, durableClass.cast(obj).getId()));
     }
 
     return keySet.containsAll(keySet);
@@ -151,11 +202,11 @@ public class DurableKeyConcurrentList<I extends Serializable & Comparable<I>, D 
 
   public boolean addAll (Collection<? extends D> c) {
 
-    HashSet<K> keySet = new HashSet<K>();
+    HashSet<DurableKey<I, D>> keySet = new HashSet<DurableKey<I, D>>();
 
     for (Object obj : c) {
       if (durableClass.isAssignableFrom(obj.getClass())) {
-        keySet.add((K)new DurableKey<I, D>(durableClass, durableClass.cast(obj).getId()));
+        keySet.add(new DurableKey<I, D>(durableClass, durableClass.cast(obj).getId()));
       }
     }
 
@@ -164,11 +215,11 @@ public class DurableKeyConcurrentList<I extends Serializable & Comparable<I>, D 
 
   public boolean addAll (int index, Collection<? extends D> c) {
 
-    HashSet<K> keySet = new HashSet<K>();
+    HashSet<DurableKey<I, D>> keySet = new HashSet<DurableKey<I, D>>();
 
     for (Object obj : c) {
       if (durableClass.isAssignableFrom(obj.getClass())) {
-        keySet.add((K)new DurableKey<I, D>(durableClass, durableClass.cast(obj).getId()));
+        keySet.add(new DurableKey<I, D>(durableClass, durableClass.cast(obj).getId()));
       }
     }
 
@@ -177,11 +228,11 @@ public class DurableKeyConcurrentList<I extends Serializable & Comparable<I>, D 
 
   public boolean removeAll (Collection<?> c) {
 
-    HashSet<K> keySet = new HashSet<K>();
+    HashSet<DurableKey<I, D>> keySet = new HashSet<DurableKey<I, D>>();
 
     for (Object obj : c) {
       if (durableClass.isAssignableFrom(obj.getClass())) {
-        keySet.add((K)new DurableKey<I, D>(durableClass, durableClass.cast(obj).getId()));
+        keySet.add(new DurableKey<I, D>(durableClass, durableClass.cast(obj).getId()));
       }
     }
 
@@ -190,11 +241,11 @@ public class DurableKeyConcurrentList<I extends Serializable & Comparable<I>, D 
 
   public boolean retainAll (Collection<?> c) {
 
-    HashSet<K> keySet = new HashSet<K>();
+    HashSet<DurableKey<I, D>> keySet = new HashSet<DurableKey<I, D>>();
 
     for (Object obj : c) {
       if (durableClass.isAssignableFrom(obj.getClass())) {
-        keySet.add((K)new DurableKey<I, D>(durableClass, durableClass.cast(obj).getId()));
+        keySet.add(new DurableKey<I, D>(durableClass, durableClass.cast(obj).getId()));
       }
     }
 
@@ -218,21 +269,21 @@ public class DurableKeyConcurrentList<I extends Serializable & Comparable<I>, D 
 
   public Iterator<D> iterator () {
 
-    return new DurableKeyConcurrentListIterator<I, D, K>(getORMDao(), keyList.listIterator());
+    return new DurableKeyConcurrentListIterator<I, D>(getORMDao(), keyList.listIterator());
   }
 
   public ListIterator<D> listIterator () {
 
-    return new DurableKeyConcurrentListIterator<I, D, K>(getORMDao(), keyList.listIterator());
+    return new DurableKeyConcurrentListIterator<I, D>(getORMDao(), keyList.listIterator());
   }
 
   public ListIterator<D> listIterator (int index) {
 
-    return new DurableKeyConcurrentListIterator<I, D, K>(getORMDao(), keyList.listIterator(index));
+    return new DurableKeyConcurrentListIterator<I, D>(getORMDao(), keyList.listIterator(index));
   }
 
   public List<D> subList (int fromIndex, int toIndex) {
 
-    return new DurableKeyConcurrentList<I, D, K>(durableClass, (ConcurrentList<K>)keyList.subList(fromIndex, toIndex));
+    return new DurableKeyConcurrentList<I, D>(durableClass, (ConcurrentList<DurableKey<I, D>>)keyList.subList(fromIndex, toIndex));
   }
 }
