@@ -38,39 +38,16 @@ import org.terracotta.annotations.AutolockWrite;
 import org.terracotta.annotations.InstrumentedClass;
 
 @InstrumentedClass
-public class ByKeyDurableVector<I extends Serializable & Comparable<I>, D extends Durable<I>> extends DurableVector<I, D> {
+public abstract class RosterBasedDurableVector<I extends Serializable & Comparable<I>, D extends Durable<I>> extends DurableVector<I, D> {
 
-  private ByKeyConcurrentRoster<I, D> elements;
-
-  public ByKeyDurableVector (Class<D> durableClass, ConcurrentRoster<D> durables, Comparator<D> comparator, int maxSize, long timeToLive, boolean ordered) {
+  public RosterBasedDurableVector (Comparator<D> comparator, int maxSize, long timeToLive, boolean ordered) {
 
     super(comparator, maxSize, timeToLive, ordered);
-
-    ConcurrentRoster<DurableKey<I, D>> keyList = new ConcurrentRoster<DurableKey<I, D>>();
-    int index = 0;
-
-    for (Durable durable : durables) {
-      keyList.add(new DurableKey<I, D>(durableClass, (I)durable.getId()));
-      if ((maxSize > 0) && (++index == maxSize)) {
-        break;
-      }
-    }
-
-    elements = new ByKeyConcurrentRoster<I, D>(durableClass, keyList);
   }
 
-  private ByKeyDurableVector (ByKeyConcurrentRoster<I, D> elements, Comparator<D> comparator, int maxSize, long timeToLive, boolean ordered) {
+  public abstract ConcurrentRoster<D> getRoster ();
 
-    super(comparator, maxSize, timeToLive, ordered);
-
-    this.elements = elements;
-  }
-
-  @AutolockRead
-  public DurableVector<I, D> copy () {
-
-    return new ByKeyDurableVector<I, D>(new ByKeyConcurrentRoster<I, D>(elements), getComparator(), getMaxSize(), getTimeToLive(), isOrdered());
-  }
+  public abstract DurableVector<I, D> copy ();
 
   public boolean isSingular () {
 
@@ -84,15 +61,15 @@ public class ByKeyDurableVector<I extends Serializable & Comparable<I>, D extend
 
       if (isOrdered()) {
 
-        Iterator<D> elementIter = elements.iterator();
+        Iterator<D> rosterIter = getRoster().iterator();
         D element;
         boolean removed = false;
         boolean zoned = false;
         boolean inserted = false;
         int index = 0;
 
-        while ((!(removed && zoned)) && elementIter.hasNext()) {
-          element = elementIter.next();
+        while ((!(removed && zoned)) && rosterIter.hasNext()) {
+          element = rosterIter.next();
 
           if (element.equals(durable)) {
             if (((getComparator() == null) ? element.compareTo(durable) : getComparator().compare(element, durable)) == 0) {
@@ -100,7 +77,7 @@ public class ByKeyDurableVector<I extends Serializable & Comparable<I>, D extend
               inserted = true;
             }
             else {
-              elementIter.remove();
+              rosterIter.remove();
             }
 
             removed = true;
@@ -114,14 +91,14 @@ public class ByKeyDurableVector<I extends Serializable & Comparable<I>, D extend
         }
 
         if (!inserted) {
-          elements.add(index, durable);
+          getRoster().add(index, durable);
         }
       }
       else {
 
         boolean matched = false;
 
-        for (D element : elements) {
+        for (D element : getRoster()) {
           if (element.equals(durable)) {
             matched = true;
             break;
@@ -129,12 +106,12 @@ public class ByKeyDurableVector<I extends Serializable & Comparable<I>, D extend
         }
 
         if (!matched) {
-          elements.addFirst(durable);
+          getRoster().addFirst(durable);
         }
       }
 
-      if ((getMaxSize() > 0) && (elements.size() > getMaxSize())) {
-        elements.removeLast();
+      if ((getMaxSize() > 0) && (getRoster().size() > getMaxSize())) {
+        getRoster().removeLast();
       }
     }
   }
@@ -145,18 +122,18 @@ public class ByKeyDurableVector<I extends Serializable & Comparable<I>, D extend
     boolean removed;
 
     do {
-      removed = elements.remove(durable);
+      removed = getRoster().remove(durable);
     } while (removed);
   }
 
   @AutolockWrite
   public void removeId (I id) {
 
-    Iterator<D> elementIter = elements.iterator();
+    Iterator<D> rosterIter = getRoster().iterator();
 
-    while (elementIter.hasNext()) {
-      if (elementIter.next().getId().equals(id)) {
-        elementIter.remove();
+    while (rosterIter.hasNext()) {
+      if (rosterIter.next().getId().equals(id)) {
+        rosterIter.remove();
       }
     }
   }
@@ -164,11 +141,11 @@ public class ByKeyDurableVector<I extends Serializable & Comparable<I>, D extend
   @AutolockWrite
   public void filter (VectorPredicate<D> predicate) {
 
-    Iterator<D> elementIter = elements.iterator();
+    Iterator<D> rosterIter = getRoster().iterator();
 
-    while (elementIter.hasNext()) {
-      if (!predicate.isValid(elementIter.next())) {
-        elementIter.remove();
+    while (rosterIter.hasNext()) {
+      if (!predicate.isValid(rosterIter.next())) {
+        rosterIter.remove();
       }
     }
   }
@@ -176,22 +153,22 @@ public class ByKeyDurableVector<I extends Serializable & Comparable<I>, D extend
   @AutolockRead
   public synchronized D head () {
 
-    if (elements.isEmpty()) {
+    if (getRoster().isEmpty()) {
       return null;
     }
 
-    return elements.get(0);
+    return getRoster().get(0);
   }
 
   @AutolockRead
   public synchronized List<D> asList () {
 
-    return Collections.unmodifiableList(elements);
+    return Collections.unmodifiableList(getRoster());
   }
 
   @AutolockRead
   public synchronized Iterator<D> iterator () {
 
-    return Collections.unmodifiableList(elements).iterator();
+    return Collections.unmodifiableList(getRoster()).iterator();
   }
 }

@@ -41,7 +41,7 @@ import org.smallmind.persistence.cache.VectoredDao;
 import org.smallmind.persistence.orm.CacheAwareORMDao;
 import org.smallmind.persistence.statistics.StatisticsFactory;
 import org.smallmind.persistence.statistics.aop.StatisticsStopwatch;
-import org.smallmind.quorum.util.ConcurrentList;
+import org.smallmind.persistence.cache.util.ConcurrentRoster;
 
 @Aspect
 public class CacheCoherentAspect {
@@ -96,9 +96,9 @@ public class CacheCoherentAspect {
                   return list;
                }
 
-               ConcurrentList<Durable> cacheConsistentElements;
+               ConcurrentRoster<Durable> cacheConsistentElements;
 
-               cacheConsistentElements = new ConcurrentList<Durable>();
+               cacheConsistentElements = new ConcurrentRoster<Durable>();
                for (Object element : list) {
                   if (element != null) {
                      cacheConsistentElements.add((Durable)vectoredDao.persist(ormDao.getManagedClass(), element));

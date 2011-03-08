@@ -28,7 +28,7 @@ package org.smallmind.persistence.cache;
 
 import java.util.Comparator;
 import org.smallmind.persistence.Durable;
-import org.smallmind.quorum.util.ConcurrentList;
+import org.smallmind.persistence.cache.util.ConcurrentRoster;
 
 public class ByReferenceDistributedCacheDao<I extends Comparable<I>, D extends Durable<I>> extends AbstractCacheDao<I, D> {
 
@@ -126,7 +126,7 @@ public class ByReferenceDistributedCacheDao<I extends Comparable<I>, D extends D
       else {
          if (!(vector instanceof ByReferenceDurableVector)) {
 
-            return new ByReferenceDurableVector<I, D>(new ConcurrentList<D>(vector.asList()), vector.getComparator(), vector.getMaxSize(), vector.getTimeToLive(), vector.isOrdered());
+            return new ByReferenceDurableVector<I, D>(new ConcurrentRoster<D>(vector.asList()), vector.getComparator(), vector.getMaxSize(), vector.getTimeToLive(), vector.isOrdered());
          }
 
          return vector;
@@ -149,11 +149,11 @@ public class ByReferenceDistributedCacheDao<I extends Comparable<I>, D extends D
 
    public DurableVector<I, D> createVector (VectorKey<D> vectorKey, Iterable<D> elementIter, Comparator<D> comparator, int maxSize, long timeToLive, boolean ordered) {
 
-      ConcurrentList<D> cacheConsistentElements;
+      ConcurrentRoster<D> cacheConsistentElements;
       DurableKey<I, D> durableKey;
       D inCacheDurable;
 
-      cacheConsistentElements = new ConcurrentList<D>();
+      cacheConsistentElements = new ConcurrentRoster<D>();
       for (D element : elementIter) {
          if (element != null) {
 

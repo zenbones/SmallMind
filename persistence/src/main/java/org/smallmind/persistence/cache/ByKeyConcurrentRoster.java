@@ -1,22 +1,22 @@
 /*
  * Copyright (c) 2007, 2008, 2009, 2010 David Berkman
- *
+ * 
  * This file is part of the SmallMind Code Project.
- *
+ * 
  * The SmallMind Code Project is free software, you can redistribute
  * it and/or modify it under the terms of GNU Affero General Public
  * License as published by the Free Software Foundation, either version 3
  * of the License, or (at your option) any later version.
- *
+ * 
  * The SmallMind Code Project is distributed in the hope that it will
  * be useful, but WITHOUT ANY WARRANTY; without even the implied warranty
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * General Public License for more details.
- *
+ * 
  * You should have received a copy of the the GNU Affero General Public
  * License, along with The SmallMind Code Project. If not, see
  * <http://www.gnu.org/licenses/>.
- *
+ * 
  * Additional permission under the GNU Affero GPL version 3 section 7
  * ------------------------------------------------------------------
  * If you modify this Program, or any covered work, by linking or
@@ -37,32 +37,33 @@ import java.util.concurrent.atomic.AtomicReference;
 import org.smallmind.persistence.Durable;
 import org.smallmind.persistence.orm.DaoManager;
 import org.smallmind.persistence.orm.ORMDao;
-import org.smallmind.quorum.util.ConcurrentList;
+import org.smallmind.persistence.cache.util.ConcurrentRoster;
+import org.smallmind.persistence.cache.util.Roster;
 import org.terracotta.annotations.HonorTransient;
 import org.terracotta.annotations.InstrumentedClass;
 
 @InstrumentedClass
 @HonorTransient
-public class DurableKeyConcurrentList<I extends Serializable & Comparable<I>, D extends Durable<I>> implements List<D> {
+public class ByKeyConcurrentRoster<I extends Serializable & Comparable<I>, D extends Durable<I>> implements Roster<D> {
 
   private transient AtomicReference<ORMDao<I, D>> ormDaoRef;
   private transient boolean ormReferenced;
 
-  private ConcurrentList<DurableKey<I, D>> keyList;
+  private ConcurrentRoster<DurableKey<I, D>> keyList;
   private Class<D> durableClass;
 
-  private DurableKeyConcurrentList () {
+  private ByKeyConcurrentRoster () {
 
     ormReferenced = false;
     ormDaoRef = new AtomicReference<ORMDao<I, D>>();
   }
 
-  protected DurableKeyConcurrentList (DurableKeyConcurrentList<I, D> durableKeyConcurrentList) {
+  protected ByKeyConcurrentRoster (ByKeyConcurrentRoster<I, D> durableKeyConcurrentList) {
 
-    this(durableKeyConcurrentList.getDurableClass(), new ConcurrentList<DurableKey<I, D>>(durableKeyConcurrentList.getKeyList()));
+    this(durableKeyConcurrentList.getDurableClass(), new ConcurrentRoster<DurableKey<I, D>>(durableKeyConcurrentList.getKeyList()));
   }
 
-  public DurableKeyConcurrentList (Class<D> durableClass, ConcurrentList<DurableKey<I, D>> keyList) {
+  public ByKeyConcurrentRoster (Class<D> durableClass, ConcurrentRoster<DurableKey<I, D>> keyList) {
 
     this();
 
@@ -109,7 +110,7 @@ public class DurableKeyConcurrentList<I extends Serializable & Comparable<I>, D 
     return durableClass;
   }
 
-  private ConcurrentList<DurableKey<I, D>> getKeyList () {
+  private ConcurrentRoster<DurableKey<I, D>> getKeyList () {
 
     return keyList;
   }
@@ -276,21 +277,21 @@ public class DurableKeyConcurrentList<I extends Serializable & Comparable<I>, D 
 
   public Iterator<D> iterator () {
 
-    return new DurableKeyConcurrentListIterator<I, D>(getORMDao(), keyList.listIterator());
+    return new ByKeyConcurrentRosterIterator<I, D>(getORMDao(), keyList.listIterator());
   }
 
   public ListIterator<D> listIterator () {
 
-    return new DurableKeyConcurrentListIterator<I, D>(getORMDao(), keyList.listIterator());
+    return new ByKeyConcurrentRosterIterator<I, D>(getORMDao(), keyList.listIterator());
   }
 
   public ListIterator<D> listIterator (int index) {
 
-    return new DurableKeyConcurrentListIterator<I, D>(getORMDao(), keyList.listIterator(index));
+    return new ByKeyConcurrentRosterIterator<I, D>(getORMDao(), keyList.listIterator(index));
   }
 
   public List<D> subList (int fromIndex, int toIndex) {
 
-    return new DurableKeyConcurrentList<I, D>(durableClass, (ConcurrentList<DurableKey<I, D>>)keyList.subList(fromIndex, toIndex));
+    return new ByKeyConcurrentRoster<I, D>(durableClass, (ConcurrentRoster<DurableKey<I, D>>)keyList.subList(fromIndex, toIndex));
   }
 }

@@ -24,29 +24,56 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.persistence.cache;
+package org.smallmind.persistence.cache.util;
 
-import org.smallmind.persistence.Durable;
-import org.smallmind.persistence.orm.ProcessPriority;
-import org.smallmind.persistence.orm.TransactionEndState;
-import org.smallmind.persistence.orm.TransactionPostProcess;
+import org.terracotta.annotations.InstrumentedClass;
 
-public class DeleteVectorPostProcess<I extends Comparable<I>, D extends Durable<I>> extends TransactionPostProcess {
+@InstrumentedClass
+public class ConcurrentRosterNode<T> {
 
-   private VectoredDao<I, D> vectoredDao;
-   private VectorKey<D> vectorKey;
+   private ConcurrentRosterNode<T> prev;
+   private ConcurrentRosterNode<T> next;
+   private T obj;
 
-   public DeleteVectorPostProcess (VectoredDao<I, D> vectoredDao, VectorKey<D> vectorKey) {
+   public ConcurrentRosterNode (T obj, ConcurrentRosterNode<T> prev, ConcurrentRosterNode<T> next) {
 
-      super(TransactionEndState.COMMIT, ProcessPriority.MIDDLE);
-
-      this.vectoredDao = vectoredDao;
-      this.vectorKey = vectorKey;
+      this.obj = obj;
+      this.prev = prev;
+      this.next = next;
    }
 
-   public void process ()
-      throws Exception {
+   public synchronized T getObj () {
 
-      vectoredDao.deleteVector(vectorKey);
+      return obj;
+   }
+
+   public synchronized void setObj (T obj) {
+
+      this.obj = obj;
+   }
+
+   public synchronized boolean objEquals (Object something) {
+
+      return (obj == something) || ((obj != null) && obj.equals(something));
+   }
+
+   public ConcurrentRosterNode<T> getPrev () {
+
+      return prev;
+   }
+
+   public void setPrev (ConcurrentRosterNode<T> prev) {
+
+      this.prev = prev;
+   }
+
+   public ConcurrentRosterNode<T> getNext () {
+
+      return next;
+   }
+
+   public void setNext (ConcurrentRosterNode<T> next) {
+
+      this.next = next;
    }
 }

@@ -31,7 +31,7 @@ import java.util.Comparator;
 import java.util.Iterator;
 import java.util.List;
 import org.smallmind.persistence.Durable;
-import org.smallmind.quorum.util.ConcurrentList;
+import org.smallmind.persistence.cache.util.ConcurrentRoster;
 import org.terracotta.annotations.AutolockRead;
 import org.terracotta.annotations.AutolockWrite;
 import org.terracotta.annotations.InstrumentedClass;
@@ -39,9 +39,9 @@ import org.terracotta.annotations.InstrumentedClass;
 @InstrumentedClass
 public class ByReferenceDurableVector<I extends Comparable<I>, D extends Durable<I>> extends DurableVector<I, D> {
 
-   private ConcurrentList<D> elements;
+   private ConcurrentRoster<D> elements;
 
-   public ByReferenceDurableVector (ConcurrentList<D> elements, Comparator<D> comparator, int maxSize, long timeToLive, boolean ordered) {
+   public ByReferenceDurableVector (ConcurrentRoster<D> elements, Comparator<D> comparator, int maxSize, long timeToLive, boolean ordered) {
 
       super(comparator, maxSize, timeToLive, ordered);
 
@@ -56,7 +56,7 @@ public class ByReferenceDurableVector<I extends Comparable<I>, D extends Durable
    @AutolockRead
    public DurableVector<I, D> copy () {
 
-      return new ByReferenceDurableVector<I, D>(new ConcurrentList<D>(elements), getComparator(), getMaxSize(), getTimeToLive(), isOrdered());
+      return new ByReferenceDurableVector<I, D>(new ConcurrentRoster<D>(elements), getComparator(), getMaxSize(), getTimeToLive(), isOrdered());
    }
 
    public boolean isSingular () {

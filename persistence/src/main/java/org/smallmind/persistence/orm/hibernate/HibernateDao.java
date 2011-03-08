@@ -89,26 +89,35 @@ public abstract class HibernateDao<I extends Serializable & Comparable<I>, D ext
 
   public D get (Class<D> durableClass, I id) {
 
-    D durable;
+    VectoredDao<I, D> vectoredDao;
     Object persistedObject;
-    VectoredDao<I, D> vectoredDao = getVectoredDao();
 
-    if (vectoredDao != null) {
-      if ((durable = vectoredDao.get(durableClass, id)) != null) {
+    if ((vectoredDao = getVectoredDao()) == null) {
+      if ((persistedObject = proxySession.getSession().get(durableClass, id)) != null) {
 
-        return durable;
+        return durableClass.cast(persistedObject);
       }
     }
+    else {
 
-    if ((persistedObject = proxySession.getSession().get(durableClass, id)) != null) {
-      durable = durableClass.cast(persistedObject);
+      D durable;
 
-      if (vectoredDao != null) {
+      vectoredDao.readLock(getManagedClass(), id);
+      try {
+        if ((durable = vectoredDao.get(durableClass, id)) != null) {
 
-        return vectoredDao.persist(durableClass, durable);
+          return durable;
+        }
+
+        if ((persistedObject = proxySession.getSession().get(durableClass, id)) != null) {
+          durable = durableClass.cast(persistedObject);
+
+          return vectoredDao.persist(durableClass, durable);
+        }
       }
-
-      return durable;
+      finally {
+        vectoredDao.readUnlock(getManagedClass(), id);
+      }
     }
 
     return null;

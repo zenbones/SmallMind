@@ -24,56 +24,13 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.quorum.util;
+package org.smallmind.persistence.cache.util;
 
-import org.terracotta.annotations.InstrumentedClass;
+import java.util.List;
 
-@InstrumentedClass
-public class ConcurrentListNode<T> {
+public interface Roster<T> extends List<T> {
 
-   private ConcurrentListNode<T> prev;
-   private ConcurrentListNode<T> next;
-   private T obj;
+  public abstract void addFirst (T element);
 
-   public ConcurrentListNode (T obj, ConcurrentListNode<T> prev, ConcurrentListNode<T> next) {
-
-      this.obj = obj;
-      this.prev = prev;
-      this.next = next;
-   }
-
-   public synchronized T getObj () {
-
-      return obj;
-   }
-
-   public synchronized void setObj (T obj) {
-
-      this.obj = obj;
-   }
-
-   public synchronized boolean objEquals (Object something) {
-
-      return (obj == something) || ((obj != null) && obj.equals(something));
-   }
-
-   public ConcurrentListNode<T> getPrev () {
-
-      return prev;
-   }
-
-   public void setPrev (ConcurrentListNode<T> prev) {
-
-      this.prev = prev;
-   }
-
-   public ConcurrentListNode<T> getNext () {
-
-      return next;
-   }
-
-   public void setNext (ConcurrentListNode<T> next) {
-
-      this.next = next;
-   }
+  public abstract T removeLast ();
 }

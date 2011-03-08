@@ -32,19 +32,27 @@ import org.smallmind.persistence.Durable;
 
 public interface VectoredDao<I extends Comparable<I>, D extends Durable<I>> extends Dao<I, D> {
 
-   public abstract void updateInVector (VectorKey<D> vectorKey, D durable);
+  public abstract void readLock (Class<D> managedClass, I... ids);
 
-   public abstract void removeFromVector (VectorKey<D> vectorKey, D durable);
+  public abstract void readUnlock (Class<D> managedClass, I... ids);
 
-   public abstract DurableVector<I, D> getVector (VectorKey<D> vectorKey);
+  public abstract void writeLock (Class<D> managedClass, I... ids);
 
-   public abstract DurableVector<I, D> persistVector (VectorKey<D> vectorKey, DurableVector<I, D> vector);
+  public abstract void writeUnlock (Class<D> managedClass, I... ids);
 
-   public abstract DurableVector<I, D> migrateVector (DurableVector<I, D> vector);
+  public abstract void updateInVector (VectorKey<D> vectorKey, D durable);
 
-   public abstract DurableVector<I, D> createSingularVector (VectorKey<D> vectorKey, D durable, long timeToLive);
+  public abstract void removeFromVector (VectorKey<D> vectorKey, D durable);
 
-   public abstract DurableVector<I, D> createVector (VectorKey<D> vectorKey, Iterable<D> elementIter, Comparator<D> comparator, int maxSize, long timeToLive, boolean ordered);
+  public abstract DurableVector<I, D> getVector (VectorKey<D> vectorKey);
 
-   public abstract void deleteVector (VectorKey<D> vectorKey);
+  public abstract DurableVector<I, D> persistVector (VectorKey<D> vectorKey, DurableVector<I, D> vector);
+
+  public abstract DurableVector<I, D> migrateVector (DurableVector<I, D> vector);
+
+  public abstract DurableVector<I, D> createSingularVector (VectorKey<D> vectorKey, D durable, long timeToLive);
+
+  public abstract DurableVector<I, D> createVector (VectorKey<D> vectorKey, Iterable<D> elementIter, Comparator<D> comparator, int maxSize, long timeToLive, boolean ordered);
+
+  public abstract void deleteVector (VectorKey<D> vectorKey);
 }

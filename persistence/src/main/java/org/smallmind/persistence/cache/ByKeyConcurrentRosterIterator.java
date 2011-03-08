@@ -32,7 +32,7 @@ import java.util.NoSuchElementException;
 import org.smallmind.persistence.Durable;
 import org.smallmind.persistence.orm.ORMDao;
 
-public class DurableKeyConcurrentListIterator<I extends Serializable & Comparable<I>, D extends Durable<I>> implements ListIterator<D> {
+public class ByKeyConcurrentRosterIterator<I extends Serializable & Comparable<I>, D extends Durable<I>> implements ListIterator<D> {
 
   private ORMDao<I, D> ormDao;
   private ListIterator<DurableKey<I, D>> keyListIterator;
@@ -41,7 +41,7 @@ public class DurableKeyConcurrentListIterator<I extends Serializable & Comparabl
   private int nextIndex;
   private int prevIndex;
 
-  public DurableKeyConcurrentListIterator (ORMDao<I, D> ormDao, ListIterator<DurableKey<I, D>> keyListIterator) {
+  public ByKeyConcurrentRosterIterator (ORMDao<I, D> ormDao, ListIterator<DurableKey<I, D>> keyListIterator) {
 
     this.ormDao = ormDao;
     this.keyListIterator = keyListIterator;
