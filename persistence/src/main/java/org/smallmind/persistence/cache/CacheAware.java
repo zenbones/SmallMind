@@ -30,5 +30,5 @@ import org.smallmind.persistence.Durable;
 
 public interface CacheAware<I extends Comparable<I>, D extends Durable<I>> {
 
-   public abstract VectoredDao<I, D> getVectoredDao ();
+  public abstract VectoredDao<I, D> getVectoredDao ();
 }

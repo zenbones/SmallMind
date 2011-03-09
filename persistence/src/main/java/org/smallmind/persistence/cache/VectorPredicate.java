@@ -28,5 +28,5 @@ package org.smallmind.persistence.cache;
 
 public interface VectorPredicate<D> {
 
-   public boolean isValid (D durable);
+  public boolean isValid (D durable);
 }

@@ -32,19 +32,19 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 import java.util.Comparator;
 
-@Target (ElementType.METHOD)
-@Retention (RetentionPolicy.RUNTIME)
+@Target(ElementType.METHOD)
+@Retention(RetentionPolicy.RUNTIME)
 public @interface CacheAs {
 
-   public abstract Vector value ();
+  public abstract Vector value ();
 
-   public abstract Class<? extends Comparator> comparator () default Comparator.class;
+  public abstract Class<? extends Comparator> comparator () default Comparator.class;
 
-   public abstract int max () default 0;
+  public abstract int max () default 0;
 
-   public abstract Time time () default @Time (0);
+  public abstract Time time () default @Time(0);
 
-   public abstract boolean ordered () default false;
+  public abstract boolean ordered () default false;
 
-   public abstract boolean singular () default false;
+  public abstract boolean singular () default false;
 }

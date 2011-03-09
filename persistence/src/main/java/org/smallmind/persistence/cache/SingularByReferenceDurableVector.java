@@ -38,73 +38,73 @@ import org.terracotta.annotations.InstrumentedClass;
 @InstrumentedClass
 public class SingularByReferenceDurableVector<I extends Comparable<I>, D extends Durable<I>> extends DurableVector<I, D> {
 
-   private D durable;
+  private D durable;
 
-   public SingularByReferenceDurableVector (D durable, long timeToLive) {
+  public SingularByReferenceDurableVector (D durable, long timeToLive) {
 
-      super(null, 1, timeToLive, false);
+    super(null, 1, timeToLive, false);
 
+    this.durable = durable;
+  }
+
+  @AutolockRead
+  public DurableVector<I, D> copy () {
+
+    return new SingularByReferenceDurableVector<I, D>(durable, getTimeToLive());
+  }
+
+  public boolean isSingular () {
+
+    return true;
+  }
+
+  @AutolockWrite
+  public synchronized void add (D durable) {
+
+    if ((durable != null) && (!durable.equals(this.durable))) {
       this.durable = durable;
-   }
+    }
+  }
 
-   @AutolockRead
-   public DurableVector<I, D> copy () {
+  public void remove (D durable) {
 
-      return new SingularByReferenceDurableVector<I, D>(durable, getTimeToLive());
-   }
+    throw new UnsupportedOperationException("Attempted removal from a 'singular' vector");
+  }
 
-   public boolean isSingular () {
+  public void removeId (I id) {
 
-      return true;
-   }
+    throw new UnsupportedOperationException("Attempted removal from a 'singular' vector");
+  }
 
-   @AutolockWrite
-   public synchronized void add (D durable) {
+  public void filter (VectorPredicate<D> predicate) {
 
-      if ((durable != null) && (!durable.equals(this.durable))) {
-         this.durable = durable;
-      }
-   }
+    throw new UnsupportedOperationException("Attempted filter of a 'singular' vector");
+  }
 
-   public void remove (D durable) {
+  @AutolockRead
+  public synchronized D head () {
 
-      throw new UnsupportedOperationException("Attempted removal from a 'singular' vector");
-   }
+    if (durable == null) {
+      throw new UnsupportedOperationException("Empty singular reference");
+    }
 
-   public void removeId (I id) {
+    return durable;
+  }
 
-      throw new UnsupportedOperationException("Attempted removal from a 'singular' vector");
-   }
+  @AutolockRead
+  public synchronized List<D> asList () {
 
-   public void filter (VectorPredicate<D> predicate) {
+    if (durable == null) {
 
-      throw new UnsupportedOperationException("Attempted filter of a 'singular' vector");
-   }
+      return Collections.emptyList();
+    }
 
-   @AutolockRead
-   public synchronized D head () {
+    return Collections.singletonList(durable);
+  }
 
-      if (durable == null) {
-         throw new UnsupportedOperationException("Empty singular reference");
-      }
+  @AutolockRead
+  public synchronized Iterator<D> iterator () {
 
-      return durable;
-   }
-
-   @AutolockRead
-   public synchronized List<D> asList () {
-
-      if (durable == null) {
-
-         return Collections.emptyList();
-      }
-
-      return Collections.singletonList(durable);
-   }
-
-   @AutolockRead
-   public synchronized Iterator<D> iterator () {
-
-      return new SingleItemIterator<D>(durable);
-   }
+    return new SingleItemIterator<D>(durable);
+  }
 }

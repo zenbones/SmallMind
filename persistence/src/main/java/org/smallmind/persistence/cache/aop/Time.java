@@ -30,9 +30,9 @@ import java.util.concurrent.TimeUnit;
 
 public @interface Time {
 
-   public abstract long value ();
+  public abstract long value ();
 
-   public abstract int stochastic () default 0;
+  public abstract int stochastic () default 0;
 
-   public abstract TimeUnit unit () default TimeUnit.MILLISECONDS;
+  public abstract TimeUnit unit () default TimeUnit.MILLISECONDS;
 }

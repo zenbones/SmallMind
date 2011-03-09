@@ -35,11 +35,11 @@ import java.lang.annotation.Target;
 @Retention(RetentionPolicy.RUNTIME)
 public @interface CachedWith {
 
-   public abstract String source ();
+  public abstract String source ();
 
-   public abstract Update[] updates () default {};
+  public abstract Update[] updates () default {};
 
-   public abstract Finder[] finders () default {};
+  public abstract Finder[] finders () default {};
 
-   public abstract Invalidate[] invalidators () default {};
+  public abstract Invalidate[] invalidators () default {};
 }

@@ -34,60 +34,60 @@ import org.terracotta.annotations.InstrumentedClass;
 @InstrumentedClass
 public abstract class DurableVector<I extends Comparable<I>, D extends Durable<I>> implements Iterable<D> {
 
-   private Comparator<D> comparator;
-   private boolean ordered;
-   private long creationTime;
-   private long timeToLive;
-   private int maxSize;
+  private Comparator<D> comparator;
+  private boolean ordered;
+  private long creationTime;
+  private long timeToLive;
+  private int maxSize;
 
-   public DurableVector (Comparator<D> comparator, int maxSize, long timeToLive, boolean ordered) {
+  public DurableVector (Comparator<D> comparator, int maxSize, long timeToLive, boolean ordered) {
 
-      this.comparator = comparator;
-      this.maxSize = maxSize;
-      this.timeToLive = timeToLive;
-      this.ordered = ordered;
+    this.comparator = comparator;
+    this.maxSize = maxSize;
+    this.timeToLive = timeToLive;
+    this.ordered = ordered;
 
-      creationTime = System.currentTimeMillis();
-   }
+    creationTime = System.currentTimeMillis();
+  }
 
-   public abstract DurableVector<I, D> copy ();
+  public abstract DurableVector<I, D> copy ();
 
-   public abstract boolean isSingular ();
+  public abstract boolean isSingular ();
 
-   public Comparator<D> getComparator () {
+  public Comparator<D> getComparator () {
 
-      return comparator;
-   }
+    return comparator;
+  }
 
-   public int getMaxSize () {
+  public int getMaxSize () {
 
-      return maxSize;
-   }
+    return maxSize;
+  }
 
-   public long getTimeToLive () {
+  public long getTimeToLive () {
 
-      return timeToLive;
-   }
+    return timeToLive;
+  }
 
-   public boolean isOrdered () {
+  public boolean isOrdered () {
 
-      return ordered;
-   }
+    return ordered;
+  }
 
-   public boolean isAlive () {
+  public boolean isAlive () {
 
-      return (timeToLive <= 0) || (System.currentTimeMillis() - creationTime <= timeToLive);
-   }
+    return (timeToLive <= 0) || (System.currentTimeMillis() - creationTime <= timeToLive);
+  }
 
-   public abstract void add (D durable);
+  public abstract void add (D durable);
 
-   public abstract void remove (D durable);
+  public abstract void remove (D durable);
 
-   public abstract void removeId (I id);
+  public abstract void removeId (I id);
 
-   public abstract void filter (VectorPredicate<D> predicate);
+  public abstract void filter (VectorPredicate<D> predicate);
 
-   public abstract D head ();
+  public abstract D head ();
 
-   public abstract List<D> asList ();
+  public abstract List<D> asList ();
 }

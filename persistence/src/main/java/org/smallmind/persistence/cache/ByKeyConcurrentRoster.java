@@ -35,10 +35,10 @@ import java.util.List;
 import java.util.ListIterator;
 import java.util.concurrent.atomic.AtomicReference;
 import org.smallmind.persistence.Durable;
-import org.smallmind.persistence.orm.DaoManager;
-import org.smallmind.persistence.orm.ORMDao;
 import org.smallmind.persistence.cache.util.ConcurrentRoster;
 import org.smallmind.persistence.cache.util.Roster;
+import org.smallmind.persistence.orm.DaoManager;
+import org.smallmind.persistence.orm.ORMDao;
 import org.terracotta.annotations.HonorTransient;
 import org.terracotta.annotations.InstrumentedClass;
 

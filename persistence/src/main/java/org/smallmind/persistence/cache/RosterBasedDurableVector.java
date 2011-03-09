@@ -32,7 +32,7 @@ import java.util.Comparator;
 import java.util.Iterator;
 import java.util.List;
 import org.smallmind.persistence.Durable;
-import org.smallmind.persistence.cache.util.ConcurrentRoster;
+import org.smallmind.persistence.cache.util.Roster;
 import org.terracotta.annotations.AutolockRead;
 import org.terracotta.annotations.AutolockWrite;
 import org.terracotta.annotations.InstrumentedClass;
@@ -45,7 +45,7 @@ public abstract class RosterBasedDurableVector<I extends Serializable & Comparab
     super(comparator, maxSize, timeToLive, ordered);
   }
 
-  public abstract ConcurrentRoster<D> getRoster ();
+  public abstract Roster<D> getRoster ();
 
   public abstract DurableVector<I, D> copy ();
 

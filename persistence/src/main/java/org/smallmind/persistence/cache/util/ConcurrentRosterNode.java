@@ -31,49 +31,49 @@ import org.terracotta.annotations.InstrumentedClass;
 @InstrumentedClass
 public class ConcurrentRosterNode<T> {
 
-   private ConcurrentRosterNode<T> prev;
-   private ConcurrentRosterNode<T> next;
-   private T obj;
+  private ConcurrentRosterNode<T> prev;
+  private ConcurrentRosterNode<T> next;
+  private T obj;
 
-   public ConcurrentRosterNode (T obj, ConcurrentRosterNode<T> prev, ConcurrentRosterNode<T> next) {
+  public ConcurrentRosterNode (T obj, ConcurrentRosterNode<T> prev, ConcurrentRosterNode<T> next) {
 
-      this.obj = obj;
-      this.prev = prev;
-      this.next = next;
-   }
+    this.obj = obj;
+    this.prev = prev;
+    this.next = next;
+  }
 
-   public synchronized T getObj () {
+  public synchronized T getObj () {
 
-      return obj;
-   }
+    return obj;
+  }
 
-   public synchronized void setObj (T obj) {
+  public synchronized void setObj (T obj) {
 
-      this.obj = obj;
-   }
+    this.obj = obj;
+  }
 
-   public synchronized boolean objEquals (Object something) {
+  public synchronized boolean objEquals (Object something) {
 
-      return (obj == something) || ((obj != null) && obj.equals(something));
-   }
+    return (obj == something) || ((obj != null) && obj.equals(something));
+  }
 
-   public ConcurrentRosterNode<T> getPrev () {
+  public ConcurrentRosterNode<T> getPrev () {
 
-      return prev;
-   }
+    return prev;
+  }
 
-   public void setPrev (ConcurrentRosterNode<T> prev) {
+  public void setPrev (ConcurrentRosterNode<T> prev) {
 
-      this.prev = prev;
-   }
+    this.prev = prev;
+  }
 
-   public ConcurrentRosterNode<T> getNext () {
+  public ConcurrentRosterNode<T> getNext () {
 
-      return next;
-   }
+    return next;
+  }
 
-   public void setNext (ConcurrentRosterNode<T> next) {
+  public void setNext (ConcurrentRosterNode<T> next) {
 
-      this.next = next;
-   }
+    this.next = next;
+  }
 }

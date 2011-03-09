@@ -38,113 +38,113 @@ import org.aspectj.lang.reflect.MethodSignature;
 import org.smallmind.persistence.Durable;
 import org.smallmind.persistence.PersistenceManager;
 import org.smallmind.persistence.cache.VectoredDao;
+import org.smallmind.persistence.cache.util.ConcurrentRoster;
 import org.smallmind.persistence.orm.CacheAwareORMDao;
 import org.smallmind.persistence.statistics.StatisticsFactory;
 import org.smallmind.persistence.statistics.aop.StatisticsStopwatch;
-import org.smallmind.persistence.cache.util.ConcurrentRoster;
 
 @Aspect
 public class CacheCoherentAspect {
 
-   private static final StatisticsFactory STATISTICS_FACTORY = PersistenceManager.getPersistence().getStatisticsFactory();
+  private static final StatisticsFactory STATISTICS_FACTORY = PersistenceManager.getPersistence().getStatisticsFactory();
 
-   @Around(value = "execution(@CacheCoherent * * (..)) && this(ormDao)", argNames = "thisJoinPoint, ormDao")
-   public Object aroundCacheCoherentMethod (ProceedingJoinPoint thisJoinPoint, CacheAwareORMDao ormDao)
-      throws Throwable {
+  @Around(value = "execution(@CacheCoherent * * (..)) && this(ormDao)", argNames = "thisJoinPoint, ormDao")
+  public Object aroundCacheCoherentMethod (ProceedingJoinPoint thisJoinPoint, CacheAwareORMDao ormDao)
+    throws Throwable {
 
-      Annotation statisticsStopwatchAnnotation;
-      Method executedMethod = null;
-      boolean timingEnabled;
-      long start = 0;
-      long stop;
+    Annotation statisticsStopwatchAnnotation;
+    Method executedMethod = null;
+    boolean timingEnabled;
+    long start = 0;
+    long stop;
 
-      statisticsStopwatchAnnotation = ormDao.getClass().getAnnotation(StatisticsStopwatch.class);
-      if (timingEnabled = STATISTICS_FACTORY.isEnabled() && (statisticsStopwatchAnnotation != null) && ((StatisticsStopwatch)statisticsStopwatchAnnotation).value()) {
-         start = System.currentTimeMillis();
+    statisticsStopwatchAnnotation = ormDao.getClass().getAnnotation(StatisticsStopwatch.class);
+    if (timingEnabled = STATISTICS_FACTORY.isEnabled() && (statisticsStopwatchAnnotation != null) && ((StatisticsStopwatch)statisticsStopwatchAnnotation).value()) {
+      start = System.currentTimeMillis();
+    }
+
+    try {
+
+      VectoredDao vectoredDao = ormDao.getVectoredDao();
+      Type returnType;
+
+      if (ormDao.getManagedClass().equals(((MethodSignature)thisJoinPoint.getSignature()).getReturnType())) {
+
+        Durable durable;
+
+        if ((durable = (Durable)thisJoinPoint.proceed()) != null) {
+          if (vectoredDao == null) {
+
+            return durable;
+          }
+
+          return vectoredDao.persist(ormDao.getManagedClass(), durable);
+        }
+
+        return null;
       }
+      else if (List.class.isAssignableFrom(((MethodSignature)thisJoinPoint.getSignature()).getReturnType())) {
+        if ((!((returnType = (executedMethod = ((MethodSignature)thisJoinPoint.getSignature()).getMethod()).getGenericReturnType()) instanceof ParameterizedType)) || (!ormDao.getManagedClass().equals(((ParameterizedType)returnType).getActualTypeArguments()[0]))) {
+          throw new CacheAutomationError("Methods annotated with @CacheCoherent which return a List type must be parameterized as <? extends List<%s>>", ormDao.getManagedClass().getSimpleName());
+        }
 
-      try {
+        List list;
 
-         VectoredDao vectoredDao = ormDao.getVectoredDao();
-         Type returnType;
+        if ((list = (List)thisJoinPoint.proceed()) != null) {
+          if (vectoredDao == null) {
 
-         if (ormDao.getManagedClass().equals(((MethodSignature)thisJoinPoint.getSignature()).getReturnType())) {
+            return list;
+          }
 
-            Durable durable;
+          ConcurrentRoster<Durable> cacheConsistentElements;
 
-            if ((durable = (Durable)thisJoinPoint.proceed()) != null) {
-               if (vectoredDao == null) {
-
-                  return durable;
-               }
-
-               return vectoredDao.persist(ormDao.getManagedClass(), durable);
+          cacheConsistentElements = new ConcurrentRoster<Durable>();
+          for (Object element : list) {
+            if (element != null) {
+              cacheConsistentElements.add((Durable)vectoredDao.persist(ormDao.getManagedClass(), element));
             }
-
-            return null;
-         }
-         else if (List.class.isAssignableFrom(((MethodSignature)thisJoinPoint.getSignature()).getReturnType())) {
-            if ((!((returnType = (executedMethod = ((MethodSignature)thisJoinPoint.getSignature()).getMethod()).getGenericReturnType()) instanceof ParameterizedType)) || (!ormDao.getManagedClass().equals(((ParameterizedType)returnType).getActualTypeArguments()[0]))) {
-               throw new CacheAutomationError("Methods annotated with @CacheCoherent which return a List type must be parameterized as <? extends List<%s>>", ormDao.getManagedClass().getSimpleName());
+            else {
+              cacheConsistentElements.add(null);
             }
+          }
 
-            List list;
+          return cacheConsistentElements;
+        }
 
-            if ((list = (List)thisJoinPoint.proceed()) != null) {
-               if (vectoredDao == null) {
-
-                  return list;
-               }
-
-               ConcurrentRoster<Durable> cacheConsistentElements;
-
-               cacheConsistentElements = new ConcurrentRoster<Durable>();
-               for (Object element : list) {
-                  if (element != null) {
-                     cacheConsistentElements.add((Durable)vectoredDao.persist(ormDao.getManagedClass(), element));
-                  }
-                  else {
-                     cacheConsistentElements.add(null);
-                  }
-               }
-
-               return cacheConsistentElements;
-            }
-
-            return null;
-         }
-         else if (Iterable.class.isAssignableFrom(((MethodSignature)thisJoinPoint.getSignature()).getReturnType())) {
-            if ((!((returnType = (executedMethod = ((MethodSignature)thisJoinPoint.getSignature()).getMethod()).getGenericReturnType()) instanceof ParameterizedType)) || (!ormDao.getManagedClass().equals(((ParameterizedType)returnType).getActualTypeArguments()[0]))) {
-               throw new CacheAutomationError("Methods annotated with @CacheCoherent which return an Iterable type must be parameterized as <? extends Iterable<%s>>", ormDao.getManagedClass().getSimpleName());
-            }
-
-            Iterable iterable;
-
-            if ((iterable = (Iterable)thisJoinPoint.proceed()) != null) {
-               if (vectoredDao == null) {
-
-                  return iterable;
-               }
-
-               return new CacheCoherentIterator(iterable.iterator(), ormDao.getManagedClass(), vectoredDao);
-            }
-
-            return null;
-         }
-         else {
-            throw new CacheAutomationError("Methods annotated with @CacheCoherent must return either the managed Class(%s), a parameterized List <? extends List<%s>>, or a parameterized Iterable <? extends Iterable<%s>>", ormDao.getManagedClass().getSimpleName(), ormDao.getManagedClass().getSimpleName(), ormDao.getManagedClass().getSimpleName());
-         }
+        return null;
       }
-      finally {
-         if (timingEnabled) {
-            stop = System.currentTimeMillis();
+      else if (Iterable.class.isAssignableFrom(((MethodSignature)thisJoinPoint.getSignature()).getReturnType())) {
+        if ((!((returnType = (executedMethod = ((MethodSignature)thisJoinPoint.getSignature()).getMethod()).getGenericReturnType()) instanceof ParameterizedType)) || (!ormDao.getManagedClass().equals(((ParameterizedType)returnType).getActualTypeArguments()[0]))) {
+          throw new CacheAutomationError("Methods annotated with @CacheCoherent which return an Iterable type must be parameterized as <? extends Iterable<%s>>", ormDao.getManagedClass().getSimpleName());
+        }
 
-            if (executedMethod == null) {
-               executedMethod = ((MethodSignature)thisJoinPoint.getSignature()).getMethod();
-            }
+        Iterable iterable;
 
-            STATISTICS_FACTORY.getStatistics().addStatLine(ormDao.getManagedClass(), executedMethod, ormDao.getStatisticsSource(), stop - start);
-         }
+        if ((iterable = (Iterable)thisJoinPoint.proceed()) != null) {
+          if (vectoredDao == null) {
+
+            return iterable;
+          }
+
+          return new CacheCoherentIterator(iterable.iterator(), ormDao.getManagedClass(), vectoredDao);
+        }
+
+        return null;
       }
-   }
+      else {
+        throw new CacheAutomationError("Methods annotated with @CacheCoherent must return either the managed Class(%s), a parameterized List <? extends List<%s>>, or a parameterized Iterable <? extends Iterable<%s>>", ormDao.getManagedClass().getSimpleName(), ormDao.getManagedClass().getSimpleName(), ormDao.getManagedClass().getSimpleName());
+      }
+    }
+    finally {
+      if (timingEnabled) {
+        stop = System.currentTimeMillis();
+
+        if (executedMethod == null) {
+          executedMethod = ((MethodSignature)thisJoinPoint.getSignature()).getMethod();
+        }
+
+        STATISTICS_FACTORY.getStatistics().addStatLine(ormDao.getManagedClass(), executedMethod, ormDao.getStatisticsSource(), stop - start);
+      }
+    }
+  }
 }

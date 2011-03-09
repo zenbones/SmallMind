@@ -30,23 +30,23 @@ import org.smallmind.nutsnbolts.lang.FormattedError;
 
 public class CacheAutomationError extends FormattedError {
 
-   public CacheAutomationError () {
+  public CacheAutomationError () {
 
-      super();
-   }
+    super();
+  }
 
-   public CacheAutomationError (String message, Object... args) {
+  public CacheAutomationError (String message, Object... args) {
 
-      super(message, args);
-   }
+    super(message, args);
+  }
 
-   public CacheAutomationError (Throwable throwable, String message, Object... args) {
+  public CacheAutomationError (Throwable throwable, String message, Object... args) {
 
-      super(throwable, message, args);
-   }
+    super(throwable, message, args);
+  }
 
-   public CacheAutomationError (Throwable throwable) {
+  public CacheAutomationError (Throwable throwable) {
 
-      super(throwable);
-   }
+    super(throwable);
+  }
 }

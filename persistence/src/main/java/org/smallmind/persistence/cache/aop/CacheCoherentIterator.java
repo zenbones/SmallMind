@@ -32,34 +32,34 @@ import org.smallmind.persistence.cache.VectoredDao;
 
 public class CacheCoherentIterator<I extends Comparable<I>, D extends Durable<I>> implements Iterator<D>, Iterable<D> {
 
-   private Iterator<D> durableIter;
-   private VectoredDao<I, D> vectoredDao;
-   private Class<D> durableClass;
+  private Iterator<D> durableIter;
+  private VectoredDao<I, D> vectoredDao;
+  private Class<D> durableClass;
 
-   public CacheCoherentIterator (Iterator<D> durableIter, Class<D> durableClass, VectoredDao<I, D> vectoredDao) {
+  public CacheCoherentIterator (Iterator<D> durableIter, Class<D> durableClass, VectoredDao<I, D> vectoredDao) {
 
-      this.durableIter = durableIter;
-      this.durableClass = durableClass;
-      this.vectoredDao = vectoredDao;
-   }
+    this.durableIter = durableIter;
+    this.durableClass = durableClass;
+    this.vectoredDao = vectoredDao;
+  }
 
-   public boolean hasNext () {
+  public boolean hasNext () {
 
-      return durableIter.hasNext();
-   }
+    return durableIter.hasNext();
+  }
 
-   public Iterator<D> iterator () {
+  public Iterator<D> iterator () {
 
-      return this;
-   }
+    return this;
+  }
 
-   public D next () {
+  public D next () {
 
-      return vectoredDao.persist(durableClass, durableIter.next());
-   }
+    return vectoredDao.persist(durableClass, durableIter.next());
+  }
 
-   public void remove () {
+  public void remove () {
 
-      durableIter.remove();
-   }
+    durableIter.remove();
+  }
 }

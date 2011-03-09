@@ -32,71 +32,71 @@ import org.terracotta.annotations.InstrumentedClass;
 @InstrumentedClass
 public class VectorKey<D extends Durable> {
 
-   private Class<D> elementClass;
-   private String key;
+  private Class<D> elementClass;
+  private String key;
 
-   public VectorKey (VectorIndex[] vectorIndices, Class<D> elementClass) {
+  public VectorKey (VectorIndex[] vectorIndices, Class<D> elementClass) {
 
-      this(vectorIndices, elementClass, null);
-   }
+    this(vectorIndices, elementClass, null);
+  }
 
-   public VectorKey (VectorIndex[] vectorIndices, Class<D> elementClass, String classification) {
+  public VectorKey (VectorIndex[] vectorIndices, Class<D> elementClass, String classification) {
 
-      this.elementClass = elementClass;
+    this.elementClass = elementClass;
 
-      key = buildKey(vectorIndices, classification);
-   }
+    key = buildKey(vectorIndices, classification);
+  }
 
-   public String getKey () {
+  public String getKey () {
 
-      return key;
-   }
+    return key;
+  }
 
-   public Class<D> getElementClass () {
+  public Class<D> getElementClass () {
 
-      return elementClass;
-   }
+    return elementClass;
+  }
 
-   private String buildKey (VectorIndex[] vectorIndices, String classification) {
+  private String buildKey (VectorIndex[] vectorIndices, String classification) {
 
-      StringBuilder keyBuilder;
-      boolean indexed = false;
+    StringBuilder keyBuilder;
+    boolean indexed = false;
 
-      keyBuilder = new StringBuilder(elementClass.getSimpleName());
+    keyBuilder = new StringBuilder(elementClass.getSimpleName());
 
-      keyBuilder.append('[');
-      for (VectorIndex index : vectorIndices) {
-         if (indexed) {
-            keyBuilder.append(',');
-         }
-
-         keyBuilder.append(index.getIndexClass().getSimpleName());
-         keyBuilder.append('=');
-         keyBuilder.append(index.getIndexId());
-
-         indexed = true;
-      }
-      keyBuilder.append(']');
-
-      if (classification != null) {
-         keyBuilder.append(classification);
+    keyBuilder.append('[');
+    for (VectorIndex index : vectorIndices) {
+      if (indexed) {
+        keyBuilder.append(',');
       }
 
-      return keyBuilder.toString();
-   }
+      keyBuilder.append(index.getIndexClass().getSimpleName());
+      keyBuilder.append('=');
+      keyBuilder.append(index.getIndexId());
 
-   public String toString () {
+      indexed = true;
+    }
+    keyBuilder.append(']');
 
-      return key;
-   }
+    if (classification != null) {
+      keyBuilder.append(classification);
+    }
 
-   public int hashCode () {
+    return keyBuilder.toString();
+  }
 
-      return key.hashCode();
-   }
+  public String toString () {
 
-   public boolean equals (Object obj) {
+    return key;
+  }
 
-      return (obj instanceof VectorKey) && key.equals(((VectorKey)obj).getKey());
-   }
+  public int hashCode () {
+
+    return key.hashCode();
+  }
+
+  public boolean equals (Object obj) {
+
+    return (obj instanceof VectorKey) && key.equals(((VectorKey)obj).getKey());
+  }
 }

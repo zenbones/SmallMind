@@ -34,9 +34,9 @@ import java.lang.annotation.Target;
 @Retention(RetentionPolicy.RUNTIME)
 public @interface Vector {
 
-   public abstract Index[] value ();
+  public abstract Index[] value ();
 
-   public abstract String classifier () default "";
+  public abstract String classifier () default "";
 
-   public abstract boolean asParameter () default false;
+  public abstract boolean asParameter () default false;
 }
