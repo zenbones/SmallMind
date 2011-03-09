@@ -24,11 +24,13 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.persistence.cache;
+package org.smallmind.persistence.cache.concurrent;
 
 import java.io.Serializable;
 import java.util.ListIterator;
 import org.smallmind.persistence.Durable;
+import org.smallmind.persistence.cache.CacheOperationException;
+import org.smallmind.persistence.cache.DurableKey;
 import org.smallmind.persistence.orm.ORMDao;
 
 public class ByKeyConcurrentRosterIterator<I extends Serializable & Comparable<I>, D extends Durable<I>> implements ListIterator<D> {

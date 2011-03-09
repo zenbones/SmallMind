@@ -24,15 +24,20 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.persistence.cache;
+package org.smallmind.persistence.cache.concurrent;
 
 import java.io.Serializable;
 import java.util.Comparator;
 import org.smallmind.persistence.Durable;
+import org.smallmind.persistence.cache.AbstractCacheDao;
+import org.smallmind.persistence.cache.CacheDomain;
+import org.smallmind.persistence.cache.DurableKey;
+import org.smallmind.persistence.cache.DurableVector;
+import org.smallmind.persistence.cache.VectorKey;
 
-public class ByKeyCacheDao<I extends Serializable & Comparable<I>, D extends Durable<I>> extends AbstractCacheDao<I, D> {
+public class ByKeyConcurrentCacheDao<I extends Serializable & Comparable<I>, D extends Durable<I>> extends AbstractCacheDao<I, D> {
 
-  public ByKeyCacheDao (CacheDomain<I, D> cacheDomain) {
+  public ByKeyConcurrentCacheDao (CacheDomain<I, D> cacheDomain) {
 
     super(cacheDomain);
   }
@@ -116,17 +121,17 @@ public class ByKeyCacheDao<I extends Serializable & Comparable<I>, D extends Dur
   public DurableVector<I, D> migrateVector (Class<D> managedClass, DurableVector<I, D> vector) {
 
     if (vector.isSingular()) {
-      if (!(vector instanceof ByKeySingularDurableVector)) {
+      if (!(vector instanceof ByKeySingularConcurrentVector)) {
 
-        return new ByKeySingularDurableVector<I, D>(new DurableKey<I, D>(managedClass, vector.head().getId()), vector.getTimeToLive());
+        return new ByKeySingularConcurrentVector<I, D>(new DurableKey<I, D>(managedClass, vector.head().getId()), vector.getTimeToLive());
       }
 
       return vector;
     }
     else {
-      if (!(vector instanceof ByKeyDurableVector)) {
+      if (!(vector instanceof ByKeyConcurrentVector)) {
 
-        return new ByKeyDurableVector<I, D>(managedClass, vector.asList(), vector.getComparator(), vector.getMaxSize(), vector.getTimeToLive(), vector.isOrdered());
+        return new ByKeyConcurrentVector<I, D>(managedClass, vector.asList(), vector.getComparator(), vector.getMaxSize(), vector.getTimeToLive(), vector.isOrdered());
       }
 
       return vector;
@@ -135,12 +140,12 @@ public class ByKeyCacheDao<I extends Serializable & Comparable<I>, D extends Dur
 
   public DurableVector<I, D> createSingularVector (VectorKey<D> vectorKey, D durable, long timeToLive) {
 
-    return new ByKeySingularDurableVector<I, D>(new DurableKey<I, D>(vectorKey.getElementClass(), durable.getId()), timeToLive);
+    return new ByKeySingularConcurrentVector<I, D>(new DurableKey<I, D>(vectorKey.getElementClass(), durable.getId()), timeToLive);
   }
 
   public DurableVector<I, D> createVector (VectorKey<D> vectorKey, Iterable<D> elementIter, Comparator<D> comparator, int maxSize, long timeToLive, boolean ordered) {
 
-    return new ByKeyDurableVector<I, D>(vectorKey.getElementClass(), elementIter, comparator, maxSize, timeToLive, ordered);
+    return new ByKeyConcurrentVector<I, D>(vectorKey.getElementClass(), elementIter, comparator, maxSize, timeToLive, ordered);
   }
 
   public void deleteVector (VectorKey<D> vectorKey) {

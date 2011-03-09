@@ -38,7 +38,7 @@ import org.aspectj.lang.reflect.MethodSignature;
 import org.smallmind.persistence.Durable;
 import org.smallmind.persistence.PersistenceManager;
 import org.smallmind.persistence.cache.VectoredDao;
-import org.smallmind.persistence.cache.util.ConcurrentRoster;
+import org.smallmind.persistence.cache.concurrent.util.ConcurrentRoster;
 import org.smallmind.persistence.orm.CacheAwareORMDao;
 import org.smallmind.persistence.statistics.StatisticsFactory;
 import org.smallmind.persistence.statistics.aop.StatisticsStopwatch;

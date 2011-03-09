@@ -24,7 +24,7 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.persistence.cache;
+package org.smallmind.persistence.cache.concurrent;
 
 import java.io.Serializable;
 import java.lang.reflect.Array;
@@ -34,8 +34,10 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.ListIterator;
 import org.smallmind.persistence.Durable;
-import org.smallmind.persistence.cache.util.ConcurrentRoster;
-import org.smallmind.persistence.cache.util.Roster;
+import org.smallmind.persistence.cache.CacheOperationException;
+import org.smallmind.persistence.cache.DurableKey;
+import org.smallmind.persistence.cache.concurrent.util.ConcurrentRoster;
+import org.smallmind.persistence.cache.concurrent.util.Roster;
 import org.smallmind.persistence.orm.DaoManager;
 import org.smallmind.persistence.orm.ORMDao;
 import org.terracotta.annotations.InstrumentedClass;

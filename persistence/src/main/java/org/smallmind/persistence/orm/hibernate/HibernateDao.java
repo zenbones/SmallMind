@@ -172,6 +172,7 @@ public abstract class HibernateDao<I extends Serializable & Comparable<I>, D ext
       }
       else {
          persistentDurable = getManagedClass().cast(proxySession.getSession().merge(durable));
+         proxySession.flush();
       }
 
       if (vectoredDao != null) {

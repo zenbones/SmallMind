@@ -24,33 +24,62 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.persistence.cache;
+package org.smallmind.persistence.cache.concurrent;
 
+import java.io.Serializable;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 import org.smallmind.nutsnbolts.util.SingleItemIterator;
 import org.smallmind.persistence.Durable;
+import org.smallmind.persistence.cache.CacheOperationException;
+import org.smallmind.persistence.cache.DurableKey;
+import org.smallmind.persistence.cache.DurableVector;
+import org.smallmind.persistence.cache.VectorPredicate;
+import org.smallmind.persistence.orm.DaoManager;
+import org.smallmind.persistence.orm.ORMDao;
 import org.terracotta.annotations.AutolockRead;
 import org.terracotta.annotations.AutolockWrite;
 import org.terracotta.annotations.InstrumentedClass;
 
 @InstrumentedClass
-public class ByReferenceSingularDurableVector<I extends Comparable<I>, D extends Durable<I>> extends DurableVector<I, D> {
+public class ByKeySingularConcurrentVector<I extends Serializable & Comparable<I>, D extends Durable<I>> extends DurableVector<I, D> {
 
-  private D durable;
+  private DurableKey<I, D> durableKey;
 
-  public ByReferenceSingularDurableVector (D durable, long timeToLive) {
+  public ByKeySingularConcurrentVector (DurableKey<I, D> durableKey, long timeToLive) {
 
     super(null, 1, timeToLive, false);
 
-    this.durable = durable;
+    this.durableKey = durableKey;
+  }
+
+  private ORMDao<I, D> getORMDao () {
+
+    ORMDao<I, D> ormDao;
+
+    if ((ormDao = DaoManager.get(durableKey.getDurableClass())) == null) {
+      throw new CacheOperationException("Unable to locate an implementation of ORMDao within DaoManager for the requested durable(%s)", durableKey.getDurableClass().getSimpleName());
+    }
+
+    return ormDao;
+  }
+
+  private D getDurable () {
+
+    int equalsPos;
+
+    if ((equalsPos = durableKey.getKey().indexOf('=')) < 0) {
+      throw new CacheOperationException("Invalid durable key(%s)", durableKey);
+    }
+
+    return getORMDao().get(getORMDao().getIdFromString(durableKey.getKey().substring(equalsPos + 1)));
   }
 
   @AutolockRead
   public DurableVector<I, D> copy () {
 
-    return new ByReferenceSingularDurableVector<I, D>(durable, getTimeToLive());
+    return new ByKeySingularConcurrentVector<I, D>(durableKey, getTimeToLive());
   }
 
   public boolean isSingular () {
@@ -61,8 +90,8 @@ public class ByReferenceSingularDurableVector<I extends Comparable<I>, D extends
   @AutolockWrite
   public synchronized void add (D durable) {
 
-    if (!this.durable.equals(durable)) {
-      this.durable = durable;
+    if (!getDurable().equals(durable)) {
+      durableKey = new DurableKey<I, D>(durableKey.getDurableClass(), durable.getId());
     }
   }
 
@@ -84,18 +113,18 @@ public class ByReferenceSingularDurableVector<I extends Comparable<I>, D extends
   @AutolockRead
   public synchronized D head () {
 
-    return durable;
+    return getDurable();
   }
 
   @AutolockRead
   public synchronized List<D> asList () {
 
-    return Collections.singletonList(durable);
+    return Collections.singletonList(getDurable());
   }
 
   @AutolockRead
   public synchronized Iterator<D> iterator () {
 
-    return new SingleItemIterator<D>(durable);
+    return new SingleItemIterator<D>(getDurable());
   }
 }

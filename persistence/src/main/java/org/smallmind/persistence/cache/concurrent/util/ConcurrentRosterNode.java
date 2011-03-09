@@ -24,41 +24,56 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.persistence.cache;
+package org.smallmind.persistence.cache.concurrent.util;
 
-import java.io.Serializable;
-import java.util.Comparator;
-import org.smallmind.persistence.Durable;
-import org.smallmind.persistence.cache.util.ConcurrentRoster;
-import org.terracotta.annotations.AutolockRead;
 import org.terracotta.annotations.InstrumentedClass;
 
 @InstrumentedClass
-public class ByReferenceDurableVector<I extends Serializable & Comparable<I>, D extends Durable<I>> extends RosterBasedDurableVector<I, D> {
+public class ConcurrentRosterNode<T> {
 
-  private ConcurrentRoster<D> roster;
+  private ConcurrentRosterNode<T> prev;
+  private ConcurrentRosterNode<T> next;
+  private T obj;
 
-  public ByReferenceDurableVector (ConcurrentRoster<D> roster, Comparator<D> comparator, int maxSize, long timeToLive, boolean ordered) {
+  public ConcurrentRosterNode (T obj, ConcurrentRosterNode<T> prev, ConcurrentRosterNode<T> next) {
 
-    super(comparator, maxSize, timeToLive, ordered);
-
-    this.roster = roster;
-    if (maxSize > 0) {
-      while (roster.size() > maxSize) {
-        roster.removeLast();
-      }
-    }
+    this.obj = obj;
+    this.prev = prev;
+    this.next = next;
   }
 
-  @Override
-  public ConcurrentRoster<D> getRoster () {
+  public synchronized T getObj () {
 
-    return roster;
+    return obj;
   }
 
-  @AutolockRead
-  public DurableVector<I, D> copy () {
+  public synchronized void setObj (T obj) {
 
-    return new ByReferenceDurableVector<I, D>(new ConcurrentRoster<D>(roster), getComparator(), getMaxSize(), getTimeToLive(), isOrdered());
+    this.obj = obj;
+  }
+
+  public synchronized boolean objEquals (Object something) {
+
+    return (obj == something) || ((obj != null) && obj.equals(something));
+  }
+
+  public ConcurrentRosterNode<T> getPrev () {
+
+    return prev;
+  }
+
+  public void setPrev (ConcurrentRosterNode<T> prev) {
+
+    this.prev = prev;
+  }
+
+  public ConcurrentRosterNode<T> getNext () {
+
+    return next;
+  }
+
+  public void setNext (ConcurrentRosterNode<T> next) {
+
+    this.next = next;
   }
 }

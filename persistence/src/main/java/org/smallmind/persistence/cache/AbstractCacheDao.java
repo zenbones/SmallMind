@@ -31,47 +31,67 @@ import org.smallmind.quorum.cache.Cache;
 
 public abstract class AbstractCacheDao<I extends Comparable<I>, D extends Durable<I>> implements CacheDao<I, D> {
 
-  private CacheDomain<I, D> cacheDomain;
+   private CacheDomain<I, D> cacheDomain;
 
-  public AbstractCacheDao (CacheDomain<I, D> cacheDomain) {
+   public AbstractCacheDao (CacheDomain<I, D> cacheDomain) {
 
-    this.cacheDomain = cacheDomain;
-  }
+      this.cacheDomain = cacheDomain;
+   }
 
-  public void readLock (Class<D> managedClass, I... ids) {
+   public void lookupLock () {
 
-    cacheDomain.readLock(managedClass, ids);
-  }
+      cacheDomain.lookupLock();
+   }
 
-  public void readUnlock (Class<D> managedClass, I... ids) {
+   public void lookupUnlock () {
 
-    cacheDomain.readUnlock(managedClass, ids);
-  }
+      cacheDomain.lookupUnlock();
+   }
 
-  public void writeLock (Class<D> managedClass, I... ids) {
+   public void updateLock () {
 
-    cacheDomain.writeLock(managedClass, ids);
-  }
+      cacheDomain.updateLock();
+   }
 
-  public void writeUnlock (Class<D> managedClass, I... ids) {
+   public void updateUnlock () {
 
-    cacheDomain.writeUnlock(managedClass, ids);
-  }
+      cacheDomain.updateUnlock();
+   }
 
-  public abstract D acquire (Class<D> durableClass, I ids);
+   public void readLock (Class<D> managedClass, I id) {
 
-  public String getStatisticsSource () {
+      cacheDomain.readLock(managedClass, id);
+   }
 
-    return cacheDomain.getStatisticsSource();
-  }
+   public void readUnlock (Class<D> managedClass, I id) {
 
-  public Cache<String, D> getInstanceCache (Class<D> durableClass) {
+      cacheDomain.readUnlock(managedClass, id);
+   }
 
-    return cacheDomain.getInstanceCache(durableClass);
-  }
+   public void writeLock (Class<D> managedClass, I id) {
 
-  public Cache<String, DurableVector<I, D>> getVectorCache (Class<D> durableClass) {
+      cacheDomain.writeLock(managedClass, id);
+   }
 
-    return cacheDomain.getVectorCache(durableClass);
-  }
+   public void writeUnlock (Class<D> managedClass, I id) {
+
+      cacheDomain.writeUnlock(managedClass, id);
+   }
+
+   public abstract D acquire (Class<D> durableClass, I ids);
+
+   public String getStatisticsSource () {
+
+      return cacheDomain.getStatisticsSource();
+   }
+
+   public Cache<String, D> getInstanceCache (Class<D> durableClass) {
+
+      return cacheDomain.getInstanceCache(durableClass);
+   }
+
+   public Cache<String, DurableVector<I, D>> getVectorCache (Class<D> durableClass) {
+
+      return cacheDomain.getVectorCache(durableClass);
+   }
 }

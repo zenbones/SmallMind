@@ -24,7 +24,7 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.persistence.cache;
+package org.smallmind.persistence.cache.concurrent;
 
 import java.io.Serializable;
 import java.util.Collections;
@@ -32,15 +32,17 @@ import java.util.Comparator;
 import java.util.Iterator;
 import java.util.List;
 import org.smallmind.persistence.Durable;
-import org.smallmind.persistence.cache.util.Roster;
+import org.smallmind.persistence.cache.DurableVector;
+import org.smallmind.persistence.cache.VectorPredicate;
+import org.smallmind.persistence.cache.concurrent.util.Roster;
 import org.terracotta.annotations.AutolockRead;
 import org.terracotta.annotations.AutolockWrite;
 import org.terracotta.annotations.InstrumentedClass;
 
 @InstrumentedClass
-public abstract class RosterBasedDurableVector<I extends Serializable & Comparable<I>, D extends Durable<I>> extends DurableVector<I, D> {
+public abstract class ConcurrentDurableVector<I extends Serializable & Comparable<I>, D extends Durable<I>> extends DurableVector<I, D> {
 
-  public RosterBasedDurableVector (Comparator<D> comparator, int maxSize, long timeToLive, boolean ordered) {
+  public ConcurrentDurableVector (Comparator<D> comparator, int maxSize, long timeToLive, boolean ordered) {
 
     super(comparator, maxSize, timeToLive, ordered);
   }

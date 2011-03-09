@@ -31,17 +31,25 @@ import org.smallmind.quorum.cache.Cache;
 
 public interface CacheDomain<I extends Comparable<I>, D extends Durable<I>> {
 
-  public abstract String getStatisticsSource ();
+   public abstract String getStatisticsSource ();
 
-  public abstract void readLock (Class<D> managedClass, I... ids);
+   public abstract void lookupLock ();
 
-  public abstract void readUnlock (Class<D> managedClass, I... ids);
+   public abstract void lookupUnlock ();
 
-  public abstract void writeLock (Class<D> managedClass, I... ids);
+   public abstract void updateLock ();
 
-  public abstract void writeUnlock (Class<D> managedClass, I... ids);
+   public abstract void updateUnlock ();
 
-  public abstract Cache<String, D> getInstanceCache (Class<D> managedClass);
+   public abstract void readLock (Class<D> managedClass, I id);
 
-  public abstract Cache<String, DurableVector<I, D>> getVectorCache (Class<D> managedClass);
+   public abstract void readUnlock (Class<D> managedClass, I id);
+
+   public abstract void writeLock (Class<D> managedClass, I id);
+
+   public abstract void writeUnlock (Class<D> managedClass, I id);
+
+   public abstract Cache<String, D> getInstanceCache (Class<D> managedClass);
+
+   public abstract Cache<String, DurableVector<I, D>> getVectorCache (Class<D> managedClass);
 }

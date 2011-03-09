@@ -24,7 +24,7 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.persistence.cache.util;
+package org.smallmind.persistence.cache.concurrent.util;
 
 import java.lang.reflect.Array;
 import java.util.Collection;
