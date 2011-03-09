@@ -70,9 +70,7 @@ public class VectorKey<D extends Durable> {
         keyBuilder.append(',');
       }
 
-      keyBuilder.append(index.getIndexClass().getSimpleName());
-      keyBuilder.append('=');
-      keyBuilder.append(index.getIndexId());
+      keyBuilder.append(index.getIndexClass().getSimpleName()).append('.').append(index.getIndexField()).append('=').append(index.getIndexId());
 
       indexed = true;
     }

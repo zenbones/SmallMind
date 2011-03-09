@@ -31,22 +31,29 @@ import org.smallmind.persistence.Durable;
 public class VectorIndex<I extends Comparable<I>> {
 
   private Class<? extends Durable> indexClass;
+  private String indexField;
   private I indexId;
 
   public VectorIndex (Durable<I> owner) {
 
-    this(owner.getClass(), owner.getId());
+    this(owner.getClass(), "id", owner.getId());
   }
 
-  public VectorIndex (Class<? extends Durable> indexClass, I indexId) {
+  public VectorIndex (Class<? extends Durable> indexClass, String indexField, I indexId) {
 
     this.indexClass = indexClass;
+    this.indexField = indexField;
     this.indexId = indexId;
   }
 
   public Class<? extends Durable> getIndexClass () {
 
     return indexClass;
+  }
+
+  public String getIndexField () {
+
+    return indexField;
   }
 
   public I getIndexId () {

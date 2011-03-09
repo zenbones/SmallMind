@@ -59,7 +59,7 @@ public class VectorIndices {
         indexValue = getValue(durable, (!vector.value()[count].type().equals(Nothing.class)) ? vector.value()[count].type() : getIdClass(vector.value()[count], ormDao), vector.value()[count].on());
       }
 
-      indices[count] = new VectorIndex(vector.value()[count].with(), indexValue);
+      indices[count] = new VectorIndex(vector.value()[count].with(), vector.value()[count].on(), indexValue);
     }
 
     return indices;
@@ -86,7 +86,7 @@ public class VectorIndices {
         indexValue = getValue(joinPoint, (!vector.value()[count].type().equals(Nothing.class)) ? vector.value()[count].type() : getIdClass(vector.value()[count], ormDao), vector.value()[count].on());
       }
 
-      indices[count] = new VectorIndex(vector.value()[count].with(), indexValue);
+      indices[count] = new VectorIndex(vector.value()[count].with(), vector.value()[count].on(), indexValue);
     }
 
     return indices;
