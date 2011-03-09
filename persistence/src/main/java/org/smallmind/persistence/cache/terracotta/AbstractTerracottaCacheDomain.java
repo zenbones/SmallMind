@@ -27,6 +27,7 @@
 package org.smallmind.persistence.cache.terracotta;
 
 import java.util.concurrent.locks.ReentrantReadWriteLock;
+import org.smallmind.nutsnbolts.util.MagicHash;
 import org.smallmind.persistence.Durable;
 import org.smallmind.persistence.cache.CacheDomain;
 import org.smallmind.persistence.cache.CacheOperationException;
@@ -35,51 +36,51 @@ import org.terracotta.annotations.InstrumentedClass;
 @InstrumentedClass
 public abstract class AbstractTerracottaCacheDomain<I extends Comparable<I>, D extends Durable<I>> implements CacheDomain<I, D> {
 
-  private final ReentrantReadWriteLock[] stripeLocks;
+   private final ReentrantReadWriteLock[] stripeLocks;
 
-  public AbstractTerracottaCacheDomain () {
+   public AbstractTerracottaCacheDomain () {
 
-    this(16);
-  }
+      this(16);
+   }
 
-  public AbstractTerracottaCacheDomain (int concurrencyLevel) {
+   public AbstractTerracottaCacheDomain (int concurrencyLevel) {
 
-    if ((concurrencyLevel <= 0) || (concurrencyLevel % 2 != 0)) {
-      throw new CacheOperationException("Concurrency level(%d) must be > 0 and an even power of 2", concurrencyLevel);
-    }
+      if ((concurrencyLevel <= 0) || (concurrencyLevel % 2 != 0)) {
+         throw new CacheOperationException("Concurrency level(%d) must be > 0 and an even power of 2", concurrencyLevel);
+      }
 
-    stripeLocks = new ReentrantReadWriteLock[concurrencyLevel];
+      stripeLocks = new ReentrantReadWriteLock[concurrencyLevel];
 
-    for (int count = 0; count < stripeLocks.length; count++) {
-      stripeLocks[count] = new ReentrantReadWriteLock();
-    }
-  }
+      for (int count = 0; count < stripeLocks.length; count++) {
+         stripeLocks[count] = new ReentrantReadWriteLock();
+      }
+   }
 
-  public void readLock (Class<D> managedClass, I... ids) {
+   public void readLock (Class<D> managedClass, I... ids) {
 
-    for (I id : ids) {
-      stripeLocks[Math.abs(id.hashCode() % stripeLocks.length)].readLock().lock();
-    }
-  }
+      for (I id : ids) {
+         stripeLocks[Math.abs(MagicHash.rehash(id.hashCode()) % stripeLocks.length)].readLock().lock();
+      }
+   }
 
-  public void readUnlock (Class<D> managedClass, I... ids) {
+   public void readUnlock (Class<D> managedClass, I... ids) {
 
-    for (I id : ids) {
-      stripeLocks[Math.abs(id.hashCode() % stripeLocks.length)].readLock().unlock();
-    }
-  }
+      for (I id : ids) {
+         stripeLocks[Math.abs(MagicHash.rehash(id.hashCode()) % stripeLocks.length)].readLock().unlock();
+      }
+   }
 
-  public void writeLock (Class<D> managedClass, I... ids) {
+   public void writeLock (Class<D> managedClass, I... ids) {
 
-    for (I id : ids) {
-      stripeLocks[Math.abs(id.hashCode() % stripeLocks.length)].writeLock().lock();
-    }
-  }
+      for (I id : ids) {
+         stripeLocks[Math.abs(MagicHash.rehash(id.hashCode()) % stripeLocks.length)].writeLock().lock();
+      }
+   }
 
-  public void writeUnlock (Class<D> managedClass, I... ids) {
+   public void writeUnlock (Class<D> managedClass, I... ids) {
 
-    for (I id : ids) {
-      stripeLocks[Math.abs(id.hashCode() % stripeLocks.length)].writeLock().unlock();
-    }
-  }
+      for (I id : ids) {
+         stripeLocks[Math.abs(MagicHash.rehash(id.hashCode()) % stripeLocks.length)].writeLock().unlock();
+      }
+   }
 }
