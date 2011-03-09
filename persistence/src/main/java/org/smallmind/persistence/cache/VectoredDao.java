@@ -48,7 +48,7 @@ public interface VectoredDao<I extends Comparable<I>, D extends Durable<I>> exte
 
   public abstract DurableVector<I, D> persistVector (VectorKey<D> vectorKey, DurableVector<I, D> vector);
 
-  public abstract DurableVector<I, D> migrateVector (DurableVector<I, D> vector);
+  public abstract DurableVector<I, D> migrateVector (Class<D> managedClass, DurableVector<I, D> vector);
 
   public abstract DurableVector<I, D> createSingularVector (VectorKey<D> vectorKey, D durable, long timeToLive);
 

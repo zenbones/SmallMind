@@ -33,30 +33,18 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.ListIterator;
-import java.util.concurrent.atomic.AtomicReference;
 import org.smallmind.persistence.Durable;
 import org.smallmind.persistence.cache.util.ConcurrentRoster;
 import org.smallmind.persistence.cache.util.Roster;
 import org.smallmind.persistence.orm.DaoManager;
 import org.smallmind.persistence.orm.ORMDao;
-import org.terracotta.annotations.HonorTransient;
 import org.terracotta.annotations.InstrumentedClass;
 
 @InstrumentedClass
-@HonorTransient
 public class ByKeyConcurrentRoster<I extends Serializable & Comparable<I>, D extends Durable<I>> implements Roster<D> {
-
-  private transient AtomicReference<ORMDao<I, D>> ormDaoRef;
-  private transient boolean ormReferenced;
 
   private ConcurrentRoster<DurableKey<I, D>> keyList;
   private Class<D> durableClass;
-
-  private ByKeyConcurrentRoster () {
-
-    ormReferenced = false;
-    ormDaoRef = new AtomicReference<ORMDao<I, D>>();
-  }
 
   protected ByKeyConcurrentRoster (ByKeyConcurrentRoster<I, D> durableKeyConcurrentList) {
 
@@ -65,28 +53,19 @@ public class ByKeyConcurrentRoster<I extends Serializable & Comparable<I>, D ext
 
   public ByKeyConcurrentRoster (Class<D> durableClass, ConcurrentRoster<DurableKey<I, D>> keyList) {
 
-    this();
-
     this.durableClass = durableClass;
     this.keyList = keyList;
   }
 
   private ORMDao<I, D> getORMDao () {
 
-    if (!ormReferenced) {
+    ORMDao<I, D> ormDao;
 
-      ORMDao<I, D> ormDao;
-
-      if ((ormDao = DaoManager.get(durableClass)) == null) {
-        throw new CacheOperationException("Unable to locate an implementation of ORMDao within DaoManager for the requested durable(%s)", durableClass.getSimpleName());
-      }
-
-      if (ormDaoRef.compareAndSet(null, ormDao)) {
-        ormReferenced = true;
-      }
+    if ((ormDao = DaoManager.get(durableClass)) == null) {
+      throw new CacheOperationException("Unable to locate an implementation of ORMDao within DaoManager for the requested durable(%s)", durableClass.getSimpleName());
     }
 
-    return ormDaoRef.get();
+    return ormDao;
   }
 
   private D getDurable (DurableKey<I, D> durableKey) {

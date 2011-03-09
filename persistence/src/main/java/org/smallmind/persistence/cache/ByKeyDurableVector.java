@@ -39,7 +39,7 @@ public class ByKeyDurableVector<I extends Serializable & Comparable<I>, D extend
 
   private ByKeyConcurrentRoster<I, D> roster;
 
-  public ByKeyDurableVector (Class<D> durableClass, ConcurrentRoster<D> durables, Comparator<D> comparator, int maxSize, long timeToLive, boolean ordered) {
+  public ByKeyDurableVector (Class<D> durableClass, Iterable<D> durables, Comparator<D> comparator, int maxSize, long timeToLive, boolean ordered) {
 
     super(comparator, maxSize, timeToLive, ordered);
 

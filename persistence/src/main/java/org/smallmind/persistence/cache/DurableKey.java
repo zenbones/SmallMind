@@ -27,7 +27,9 @@
 package org.smallmind.persistence.cache;
 
 import org.smallmind.persistence.Durable;
+import org.terracotta.annotations.InstrumentedClass;
 
+@InstrumentedClass
 public class DurableKey<I extends Comparable<I>, D extends Durable<I>> {
 
   private Class<D> durableClass;

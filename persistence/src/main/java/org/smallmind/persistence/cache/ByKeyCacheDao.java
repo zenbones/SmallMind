@@ -29,11 +29,10 @@ package org.smallmind.persistence.cache;
 import java.io.Serializable;
 import java.util.Comparator;
 import org.smallmind.persistence.Durable;
-import org.smallmind.persistence.cache.util.ConcurrentRoster;
 
-public class ByReferenceDistributedCacheDao<I extends Serializable & Comparable<I>, D extends Durable<I>> extends AbstractCacheDao<I, D> {
+public class ByKeyCacheDao<I extends Serializable & Comparable<I>, D extends Durable<I>> extends AbstractCacheDao<I, D> {
 
-  public ByReferenceDistributedCacheDao (CacheDomain<I, D> cacheDomain) {
+  public ByKeyCacheDao (CacheDomain<I, D> cacheDomain) {
 
     super(cacheDomain);
   }
@@ -109,25 +108,25 @@ public class ByReferenceDistributedCacheDao<I extends Serializable & Comparable<
     DurableVector<I, D> migratedVector;
     DurableVector<I, D> cachedVector;
 
-    migratedVector = migrateVector(vector);
+    migratedVector = migrateVector(vectorKey.getElementClass(), vector);
 
     return ((cachedVector = getVectorCache(vectorKey.getElementClass()).putIfAbsent(vectorKey.getKey(), migratedVector)) != null) ? cachedVector : vector;
   }
 
-  public DurableVector<I, D> migrateVector (DurableVector<I, D> vector) {
+  public DurableVector<I, D> migrateVector (Class<D> managedClass, DurableVector<I, D> vector) {
 
     if (vector.isSingular()) {
-      if (!(vector instanceof SingularByReferenceDurableVector)) {
+      if (!(vector instanceof ByKeySingularDurableVector)) {
 
-        return new SingularByReferenceDurableVector<I, D>(vector.head(), vector.getTimeToLive());
+        return new ByKeySingularDurableVector<I, D>(new DurableKey<I, D>(managedClass, vector.head().getId()), vector.getTimeToLive());
       }
 
       return vector;
     }
     else {
-      if (!(vector instanceof ByReferenceDurableVector)) {
+      if (!(vector instanceof ByKeyDurableVector)) {
 
-        return new ByReferenceDurableVector<I, D>(new ConcurrentRoster<D>(vector.asList()), vector.getComparator(), vector.getMaxSize(), vector.getTimeToLive(), vector.isOrdered());
+        return new ByKeyDurableVector<I, D>(managedClass, vector.asList(), vector.getComparator(), vector.getMaxSize(), vector.getTimeToLive(), vector.isOrdered());
       }
 
       return vector;
@@ -136,39 +135,12 @@ public class ByReferenceDistributedCacheDao<I extends Serializable & Comparable<
 
   public DurableVector<I, D> createSingularVector (VectorKey<D> vectorKey, D durable, long timeToLive) {
 
-    DurableKey<I, D> durableKey;
-    D inCacheDurable;
-
-    durableKey = new DurableKey<I, D>(vectorKey.getElementClass(), durable.getId());
-    if ((inCacheDurable = getInstanceCache(vectorKey.getElementClass()).putIfAbsent(durableKey.getKey(), durable)) != null) {
-
-      return new SingularByReferenceDurableVector<I, D>(inCacheDurable, timeToLive);
-    }
-
-    return new SingularByReferenceDurableVector<I, D>(durable, timeToLive);
+    return new ByKeySingularDurableVector<I, D>(new DurableKey<I, D>(vectorKey.getElementClass(), durable.getId()), timeToLive);
   }
 
   public DurableVector<I, D> createVector (VectorKey<D> vectorKey, Iterable<D> elementIter, Comparator<D> comparator, int maxSize, long timeToLive, boolean ordered) {
 
-    ConcurrentRoster<D> cacheConsistentElements;
-    DurableKey<I, D> durableKey;
-    D inCacheDurable;
-
-    cacheConsistentElements = new ConcurrentRoster<D>();
-    for (D element : elementIter) {
-      if (element != null) {
-
-        durableKey = new DurableKey<I, D>(vectorKey.getElementClass(), element.getId());
-        if ((inCacheDurable = getInstanceCache(vectorKey.getElementClass()).putIfAbsent(durableKey.getKey(), element)) != null) {
-          cacheConsistentElements.add(inCacheDurable);
-        }
-        else {
-          cacheConsistentElements.add(element);
-        }
-      }
-    }
-
-    return new ByReferenceDurableVector<I, D>(cacheConsistentElements, comparator, maxSize, timeToLive, ordered);
+    return new ByKeyDurableVector<I, D>(vectorKey.getElementClass(), elementIter, comparator, maxSize, timeToLive, ordered);
   }
 
   public void deleteVector (VectorKey<D> vectorKey) {
