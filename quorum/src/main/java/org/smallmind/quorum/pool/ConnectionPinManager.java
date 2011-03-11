@@ -26,6 +26,7 @@
  */
 package org.smallmind.quorum.pool;
 
+import java.util.LinkedList;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -33,288 +34,321 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import org.dom4j.IllegalAddException;
+import org.smallmind.nutsnbolts.lang.StackTrace;
 
 public class ConnectionPinManager<C> {
 
-   private final ReentrantReadWriteLock readWriteLock;
+  private final ReentrantReadWriteLock readWriteLock;
 
-   private ConnectionPool<C> connectionPool;
-   private ConnectionInstanceFactory<C> connectionFactory;
-   private ConnectionPin[] connectionPins;
-   private LinkedBlockingQueue<Integer> freeQueue;
-   private ConcurrentLinkedQueue<Integer> emptyQueue;
-   private AtomicInteger freeCount = new AtomicInteger(0);
-   private AtomicInteger emptyCount;
-   private int maxSize;
+  private ConnectionPool<C> connectionPool;
+  private ConnectionInstanceFactory<C> connectionFactory;
+  private ConnectionPin[] connectionPins;
+  private LinkedBlockingQueue<Integer> freeQueue;
+  private ConcurrentLinkedQueue<Integer> emptyQueue;
+  private AtomicInteger freeCount = new AtomicInteger(0);
+  private AtomicInteger emptyCount;
+  private int maxSize;
 
-   public ConnectionPinManager (ConnectionPool<C> connectionPool, ConnectionInstanceFactory<C> connectionFactory, int maxSize) {
+  public ConnectionPinManager (ConnectionPool<C> connectionPool, ConnectionInstanceFactory<C> connectionFactory, int maxSize) {
 
-      if (maxSize < 0) {
-         throw new IllegalAddException("size must be >= 0");
-      }
+    if (maxSize < 0) {
+      throw new IllegalAddException("size must be >= 0");
+    }
 
-      this.connectionPool = connectionPool;
-      this.connectionFactory = connectionFactory;
-      this.maxSize = maxSize;
+    this.connectionPool = connectionPool;
+    this.connectionFactory = connectionFactory;
+    this.maxSize = maxSize;
 
-      readWriteLock = (maxSize == 0) ? new ReentrantReadWriteLock() : null;
+    readWriteLock = (maxSize == 0) ? new ReentrantReadWriteLock() : null;
 
-      connectionPins = new ConnectionPin[maxSize];
-      freeQueue = new LinkedBlockingQueue<Integer>();
+    connectionPins = new ConnectionPin[maxSize];
+    freeQueue = new LinkedBlockingQueue<Integer>();
 
-      emptyQueue = new ConcurrentLinkedQueue<Integer>();
-      emptyCount = new AtomicInteger(connectionPins.length);
-      for (int index = 0; index < connectionPins.length; index++) {
-         emptyQueue.add(index);
-      }
-   }
+    emptyQueue = new ConcurrentLinkedQueue<Integer>();
+    emptyCount = new AtomicInteger(connectionPins.length);
+    for (int index = 0; index < connectionPins.length; index++) {
+      emptyQueue.add(index);
+    }
+  }
 
-   public void initialize (ConnectionPin<C> connectionPin)
-      throws ConnectionPoolException {
+  public void initialize (ConnectionPin<C> connectionPin)
+    throws ConnectionPoolException {
 
-      if (connectionPin == null) {
-         throw new ConnectionPoolException("Unable to initialize a new connection due to connection pool(%s) limitations", connectionPool.getPoolName());
-      }
+    if (connectionPin == null) {
+      throw new ConnectionPoolException("Unable to initialize a new connection due to connection pool(%s) limitations", connectionPool.getPoolName());
+    }
 
-      freeQueue.add(connectionPin.getOriginatingIndex());
-      freeCount.incrementAndGet();
-   }
+    freeQueue.add(connectionPin.getOriginatingIndex());
+    freeCount.incrementAndGet();
+  }
 
-   public ConnectionPin<C> create (long connectionTimeoutMillis, boolean testOnConnect, boolean reportLeaseTimeNanos, int maxIdleTimeSeconds, int maxLeaseTimeSeconds, int unreturnedConnectionTimeoutSeconds)
-      throws Exception {
+  public ConnectionPin<C> create (long connectionTimeoutMillis, boolean testOnConnect, boolean reportLeaseTimeNanos, int maxIdleTimeSeconds, int maxLeaseTimeSeconds, int unreturnedConnectionTimeoutSeconds)
+    throws Exception {
 
-      ConnectionPin<C> connectionPin;
-      ConnectionInstance<C> connectionInstance;
-      Integer index;
+    ConnectionPin<C> connectionPin;
+    ConnectionInstance<C> connectionInstance;
+    Integer index;
 
-      while ((index = emptyQueue.poll()) == null) {
-
-         if (readWriteLock != null) {
-            readWriteLock.writeLock().lock();
-            try {
-
-               ConnectionPin[] expandedArray = new ConnectionPin[(connectionPins.length == 0) ? 10 : connectionPins.length * 2];
-               int expandedStart = connectionPins.length;
-
-               System.arraycopy(connectionPins, 0, expandedArray, 0, connectionPins.length);
-               connectionPins = expandedArray;
-               for (int expandedIndex = expandedStart; expandedIndex < expandedArray.length; expandedIndex++) {
-                  emptyQueue.add(expandedIndex);
-               }
-
-            }
-            finally {
-               readWriteLock.writeLock().unlock();
-            }
-         }
-         else {
-
-            return null;
-         }
-      }
-
-      try {
-         connectionInstance = obtainConnection(index, connectionTimeoutMillis, testOnConnect);
-      }
-      catch (Exception exception) {
-         emptyQueue.add(index);
-
-         throw exception;
-      }
+    while ((index = emptyQueue.poll()) == null) {
 
       if (readWriteLock != null) {
-         readWriteLock.readLock().lock();
-      }
+        readWriteLock.writeLock().lock();
+        try {
 
-      try {
-         connectionPins[index] = connectionPin = new ConnectionPin<C>(connectionPool, index, connectionInstance, reportLeaseTimeNanos, maxIdleTimeSeconds, maxLeaseTimeSeconds, unreturnedConnectionTimeoutSeconds);
-      }
-      finally {
-         if (readWriteLock != null) {
-            readWriteLock.readLock().unlock();
-         }
-      }
+          ConnectionPin[] expandedArray = new ConnectionPin[(connectionPins.length == 0) ? 10 : connectionPins.length * 2];
+          int expandedStart = connectionPins.length;
 
-      emptyCount.decrementAndGet();
+          System.arraycopy(connectionPins, 0, expandedArray, 0, connectionPins.length);
+          connectionPins = expandedArray;
+          for (int expandedIndex = expandedStart; expandedIndex < expandedArray.length; expandedIndex++) {
+            emptyQueue.add(expandedIndex);
+          }
 
-      return connectionPin;
-   }
-
-   private ConnectionInstance<C> obtainConnection (Integer originatingIndex, long connectionTimeoutMillis, boolean testOnConnect)
-      throws Exception {
-
-      ConnectionInstance<C> connectionInstance;
-
-      if (connectionTimeoutMillis > 0) {
-
-         ConnectionWorker<C> connectionWorker;
-         Thread workerThread;
-         CountDownLatch workerInitLatch = new CountDownLatch(1);
-
-         connectionWorker = new ConnectionWorker<C>(connectionPool, connectionFactory, originatingIndex, workerInitLatch);
-         workerThread = new Thread(connectionWorker);
-         workerThread.start();
-
-         workerInitLatch.await();
-         workerThread.join(connectionTimeoutMillis);
-         connectionWorker.abort();
-
-         if (connectionWorker.hasBeenAborted()) {
-            throw new ConnectionCreationException("Exceeded connection timeout(%d) waiting on connection creation", connectionTimeoutMillis);
-         }
-         else if (connectionWorker.hasException()) {
-            throw connectionWorker.getException();
-         }
-         else {
-            connectionInstance = connectionWorker.getConnectionInstance();
-         }
+        }
+        finally {
+          readWriteLock.writeLock().unlock();
+        }
       }
       else {
-         connectionInstance = connectionFactory.createInstance(connectionPool, originatingIndex);
+
+        return null;
       }
+    }
 
-      if (testOnConnect && (!connectionInstance.validate())) {
-         throw new InvalidConnectionException("A new connection was required, but failed to validate");
-      }
+    try {
+      connectionInstance = obtainConnection(index, connectionTimeoutMillis, testOnConnect);
+    }
+    catch (Exception exception) {
+      emptyQueue.add(index);
 
-      return connectionInstance;
-   }
+      throw exception;
+    }
 
-   public void remove (ConnectionPin<C> connectionPin, boolean regenerate)
-      throws Exception {
+    if (readWriteLock != null) {
+      readWriteLock.readLock().lock();
+    }
 
-      int currentlyEmpty;
-
-      if (freeQueue.remove(connectionPin.getOriginatingIndex())) {
-         freeCount.decrementAndGet();
-      }
-
+    try {
+      connectionPins[index] = connectionPin = new ConnectionPin<C>(connectionPool, index, connectionInstance, reportLeaseTimeNanos, maxIdleTimeSeconds, maxLeaseTimeSeconds, unreturnedConnectionTimeoutSeconds);
+    }
+    finally {
       if (readWriteLock != null) {
-         readWriteLock.readLock().lock();
+        readWriteLock.readLock().unlock();
       }
+    }
 
-      try {
-         connectionPins[connectionPin.getOriginatingIndex()] = null;
-         synchronized (connectionPin) {
-            connectionPin.close();
-         }
+    emptyCount.decrementAndGet();
+
+    return connectionPin;
+  }
+
+  private ConnectionInstance<C> obtainConnection (Integer originatingIndex, long connectionTimeoutMillis, boolean testOnConnect)
+    throws Exception {
+
+    ConnectionInstance<C> connectionInstance;
+
+    if (connectionTimeoutMillis > 0) {
+
+      ConnectionWorker<C> connectionWorker;
+      Thread workerThread;
+      CountDownLatch workerInitLatch = new CountDownLatch(1);
+
+      connectionWorker = new ConnectionWorker<C>(connectionPool, connectionFactory, originatingIndex, workerInitLatch);
+      workerThread = new Thread(connectionWorker);
+      workerThread.start();
+
+      workerInitLatch.await();
+      workerThread.join(connectionTimeoutMillis);
+      connectionWorker.abort();
+
+      if (connectionWorker.hasBeenAborted()) {
+        throw new ConnectionCreationException("Exceeded connection timeout(%d) waiting on connection creation", connectionTimeoutMillis);
       }
-      finally {
-         if (readWriteLock != null) {
-            readWriteLock.readLock().unlock();
-         }
-
-         synchronized (connectionPin) {
-            connectionPin.abort();
-         }
-
-         emptyQueue.add(connectionPin.getOriginatingIndex());
-         currentlyEmpty = emptyCount.incrementAndGet();
-
-         if (regenerate && ((connectionPins.length - currentlyEmpty) < connectionPool.getMinPoolSize())) {
-            initialize(connectionPool.createConnectionPin());
-         }
+      else if (connectionWorker.hasException()) {
+        throw connectionWorker.getException();
       }
-   }
-
-   public ConnectionPin<C> serve (long acquireWaitTimeMillis, boolean immediate)
-      throws InterruptedException {
-
-      Integer index;
-
-      if ((index = (immediate || (maxSize == 0)) ? freeQueue.poll() : (acquireWaitTimeMillis == 0) ? freeQueue.take() : freeQueue.poll(acquireWaitTimeMillis, TimeUnit.MILLISECONDS)) == null) {
-
-         return null;
+      else {
+        connectionInstance = connectionWorker.getConnectionInstance();
       }
+    }
+    else {
+      connectionInstance = connectionFactory.createInstance(connectionPool, originatingIndex);
+    }
 
+    if (testOnConnect && (!connectionInstance.validate())) {
+      throw new InvalidConnectionException("A new connection was required, but failed to validate");
+    }
+
+    return connectionInstance;
+  }
+
+  public void remove (ConnectionPin<C> connectionPin, boolean regenerate)
+    throws Exception {
+
+    int currentlyEmpty;
+
+    if (freeQueue.remove(connectionPin.getOriginatingIndex())) {
       freeCount.decrementAndGet();
+    }
 
+    if (readWriteLock != null) {
+      readWriteLock.readLock().lock();
+    }
+
+    try {
+      connectionPins[connectionPin.getOriginatingIndex()] = null;
+      synchronized (connectionPin) {
+        connectionPin.close();
+      }
+    }
+    finally {
       if (readWriteLock != null) {
-         readWriteLock.readLock().lock();
+        readWriteLock.readLock().unlock();
       }
 
-      try {
-
-         return connectionPins[index];
+      synchronized (connectionPin) {
+        connectionPin.abort();
       }
-      finally {
-         if (readWriteLock != null) {
-            readWriteLock.readLock().unlock();
-         }
+
+      emptyQueue.add(connectionPin.getOriginatingIndex());
+      currentlyEmpty = emptyCount.incrementAndGet();
+
+      if (regenerate && ((connectionPins.length - currentlyEmpty) < connectionPool.getMinPoolSize())) {
+        initialize(connectionPool.createConnectionPin());
       }
-   }
+    }
+  }
 
-   public void release (ConnectionInstance<C> connectionInstance, boolean terminate)
-      throws Exception {
+  public ConnectionPin<C> serve (long acquireWaitTimeMillis, boolean immediate)
+    throws InterruptedException {
 
-      ConnectionPin<C> connectionPin;
+    Integer index;
 
+    if ((index = (immediate || (maxSize == 0)) ? freeQueue.poll() : (acquireWaitTimeMillis == 0) ? freeQueue.take() : freeQueue.poll(acquireWaitTimeMillis, TimeUnit.MILLISECONDS)) == null) {
+
+      return null;
+    }
+
+    freeCount.decrementAndGet();
+
+    if (readWriteLock != null) {
+      readWriteLock.readLock().lock();
+    }
+
+    try {
+
+      return connectionPins[index];
+    }
+    finally {
       if (readWriteLock != null) {
-         readWriteLock.readLock().lock();
+        readWriteLock.readLock().unlock();
       }
+    }
+  }
 
-      try {
-         if (!(connectionPin = connectionPins[connectionInstance.getOriginatingIndex()]).contains(connectionInstance)) {
-            throw new ConnectionPoolException("Could not find connection (%s) within ConnectionPool (%s)", connectionInstance, connectionPool.getPoolName());
-         }
-      }
-      finally {
-         if (readWriteLock != null) {
-            readWriteLock.readLock().unlock();
-         }
-      }
+  public void release (ConnectionInstance<C> connectionInstance, boolean terminate)
+    throws Exception {
 
-      if (terminate) {
-         remove(connectionPin, true);
-      }
-      else {
-         synchronized (connectionPin) {
-            if (connectionPin.isServed()) {
-               connectionPin.free();
+    ConnectionPin<C> connectionPin;
 
-               freeQueue.add(connectionPin.getOriginatingIndex());
-               freeCount.incrementAndGet();
+    if (readWriteLock != null) {
+      readWriteLock.readLock().lock();
+    }
+
+    try {
+      if (!(connectionPin = connectionPins[connectionInstance.getOriginatingIndex()]).contains(connectionInstance)) {
+        throw new ConnectionPoolException("Could not find connection (%s) within ConnectionPool (%s)", connectionInstance, connectionPool.getPoolName());
+      }
+    }
+    finally {
+      if (readWriteLock != null) {
+        readWriteLock.readLock().unlock();
+      }
+    }
+
+    if (terminate) {
+      remove(connectionPin, true);
+    }
+    else {
+      synchronized (connectionPin) {
+        if (connectionPin.isServed()) {
+          connectionPin.free();
+
+          freeQueue.add(connectionPin.getOriginatingIndex());
+          freeCount.incrementAndGet();
+        }
+      }
+    }
+  }
+
+  public StackTrace[] getExistentialStackTraces () {
+
+    LinkedList<StackTrace> stackTraceList = new LinkedList<StackTrace>();
+    StackTrace[] stackTraces;
+
+    if (readWriteLock != null) {
+      readWriteLock.readLock().lock();
+    }
+
+    try {
+      for (ConnectionPin connectionPin : connectionPins) {
+        if (connectionPin != null) {
+          synchronized (connectionPin) {
+            if (connectionPin.isCommissioned() && connectionPin.isServed()) {
+              stackTraceList.add(new StackTrace(connectionPin.getExistentialStackTrace()));
             }
-         }
+          }
+        }
       }
-   }
-
-   public void shutdown ()
-      throws Exception {
-
-      freeQueue.clear();
-      freeCount.set(0);
-
+    }
+    finally {
       if (readWriteLock != null) {
-         readWriteLock.readLock().lock();
+        readWriteLock.readLock().unlock();
       }
+    }
 
-      try {
-         for (ConnectionPin<C> connectionPin : connectionPins) {
-            if (connectionPin != null) {
-               remove(connectionPin, false);
-            }
-         }
+    stackTraces = new StackTrace[stackTraceList.size()];
+    stackTraceList.toArray(stackTraces);
+
+    return stackTraces;
+  }
+
+  public void shutdown ()
+    throws Exception {
+
+    freeQueue.clear();
+    freeCount.set(0);
+
+    if (readWriteLock != null) {
+      readWriteLock.readLock().lock();
+    }
+
+    try {
+      for (ConnectionPin<C> connectionPin : connectionPins) {
+        if (connectionPin != null) {
+          remove(connectionPin, false);
+        }
       }
-      finally {
-         if (readWriteLock != null) {
-            readWriteLock.readLock().unlock();
-         }
+    }
+    finally {
+      if (readWriteLock != null) {
+        readWriteLock.readLock().unlock();
       }
-   }
+    }
+  }
 
-   public int getPoolSize () {
+  public int getPoolSize () {
 
-      return connectionPins.length - emptyCount.get();
-   }
+    return connectionPins.length - emptyCount.get();
+  }
 
-   public int getFreeSize () {
+  public int getFreeSize () {
 
-      return freeQueue.size();
-   }
+    return freeQueue.size();
+  }
 
-   public int getProcessingSize () {
+  public int getProcessingSize () {
 
-      return getPoolSize() - getFreeSize();
-   }
+    return getPoolSize() - getFreeSize();
+  }
 }

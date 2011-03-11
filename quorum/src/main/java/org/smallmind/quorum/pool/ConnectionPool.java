@@ -28,6 +28,7 @@ package org.smallmind.quorum.pool;
 
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.atomic.AtomicBoolean;
+import org.smallmind.nutsnbolts.lang.StackTrace;
 import org.smallmind.quorum.pool.event.ConnectionInstanceEvent;
 import org.smallmind.quorum.pool.event.ConnectionInstanceEventListener;
 import org.smallmind.quorum.pool.event.ConnectionPoolEventListener;
@@ -38,449 +39,454 @@ import org.smallmind.quorum.transport.remote.RemoteEndpoint;
 
 public class ConnectionPool<C> implements ConnectionInstanceEventListener, RemoteConnectionPoolSurface, RemoteEndpoint {
 
-   private static final Class[] REMOTE_INTERFACES = new Class[] {RemoteConnectionPoolSurface.class};
+  private static final Class[] REMOTE_INTERFACES = new Class[] {RemoteConnectionPoolSurface.class};
 
-   private ConnectionInstanceFactory<C> connectionFactory;
-   private ConnectionPinManager<C> connectionPinManager;
-   private ConcurrentLinkedQueue<ConnectionPoolEventListener> connectionPoolEventListenerQueue;
-   private String poolName;
-   private AtomicBoolean startupFlag = new AtomicBoolean(false);
-   private AtomicBoolean shutdownFlag = new AtomicBoolean(false);
-   private boolean testOnConnect = false;
-   private boolean testOnAcquire = false;
-   private boolean reportLeaseTimeNanos = true;
-   private boolean allowSoftMinSize = false;
-   private long connectionTimeoutMillis = 0;
-   private long acquireWaitTimeMillis = 0;
-   private int initialPoolSize = 0;
-   private int minPoolSize = 0;
-   private int maxPoolSize = 10;
-   private int maxLeaseTimeSeconds = 0;
-   private int maxIdleTimeSeconds = 0;
-   private int unreturnedConnectionTimeoutSeconds = 0;
+  private ConnectionInstanceFactory<C> connectionFactory;
+  private ConnectionPinManager<C> connectionPinManager;
+  private ConcurrentLinkedQueue<ConnectionPoolEventListener> connectionPoolEventListenerQueue;
+  private String poolName;
+  private AtomicBoolean startupFlag = new AtomicBoolean(false);
+  private AtomicBoolean shutdownFlag = new AtomicBoolean(false);
+  private boolean testOnConnect = false;
+  private boolean testOnAcquire = false;
+  private boolean reportLeaseTimeNanos = true;
+  private boolean allowSoftMinSize = false;
+  private long connectionTimeoutMillis = 0;
+  private long acquireWaitTimeMillis = 0;
+  private int initialPoolSize = 0;
+  private int minPoolSize = 0;
+  private int maxPoolSize = 10;
+  private int maxLeaseTimeSeconds = 0;
+  private int maxIdleTimeSeconds = 0;
+  private int unreturnedConnectionTimeoutSeconds = 0;
 
-   public ConnectionPool (String poolName, ConnectionInstanceFactory<C> connectionFactory) {
+  public ConnectionPool (String poolName, ConnectionInstanceFactory<C> connectionFactory) {
 
-      this.poolName = poolName;
-      this.connectionFactory = connectionFactory;
+    this.poolName = poolName;
+    this.connectionFactory = connectionFactory;
 
-      connectionPoolEventListenerQueue = new ConcurrentLinkedQueue<ConnectionPoolEventListener>();
+    connectionPoolEventListenerQueue = new ConcurrentLinkedQueue<ConnectionPoolEventListener>();
 
-      ConnectionPoolManager.register(this);
-   }
+    ConnectionPoolManager.register(this);
+  }
 
-   public Class[] getProxyInterfaces () {
+  public Class[] getProxyInterfaces () {
 
-      return REMOTE_INTERFACES;
-   }
+    return REMOTE_INTERFACES;
+  }
 
-   public synchronized void startup ()
-      throws ConnectionPoolException {
+  public synchronized void startup ()
+    throws ConnectionPoolException {
 
-      try {
-         if (startupFlag.compareAndSet(false, true)) {
-            connectionPinManager = new ConnectionPinManager<C>(this, connectionFactory, maxPoolSize);
+    try {
+      if (startupFlag.compareAndSet(false, true)) {
+        connectionPinManager = new ConnectionPinManager<C>(this, connectionFactory, maxPoolSize);
 
-            for (int count = 0; count < initialPoolSize; count++) {
-               connectionPinManager.initialize(createConnectionPin());
+        for (int count = 0; count < initialPoolSize; count++) {
+          connectionPinManager.initialize(createConnectionPin());
+        }
+      }
+    }
+    catch (ConnectionPoolException connectionPoolException) {
+      throw connectionPoolException;
+    }
+    catch (Exception exception) {
+      throw new ConnectionPoolException(exception);
+    }
+  }
+
+  public synchronized void shutdown ()
+    throws ConnectionPoolException {
+
+    try {
+      if (shutdownFlag.compareAndSet(false, true)) {
+        connectionPinManager.shutdown();
+      }
+    }
+    catch (ConnectionPoolException connectionPoolException) {
+      throw connectionPoolException;
+    }
+    catch (Exception exception) {
+      throw new ConnectionPoolException(exception);
+    }
+  }
+
+  public String getPoolName () {
+
+    return poolName;
+  }
+
+  public synchronized boolean isTestOnConnect () {
+
+    return testOnConnect;
+  }
+
+  public synchronized void setTestOnConnect (boolean testOnConnect) {
+
+    this.testOnConnect = testOnConnect;
+  }
+
+  public synchronized boolean isTestOnAcquire () {
+
+    return testOnAcquire;
+  }
+
+  public synchronized void setTestOnAcquire (boolean testOnAcquire) {
+
+    this.testOnAcquire = testOnAcquire;
+  }
+
+  public synchronized boolean isReportLeaseTimeNanos () {
+
+    return reportLeaseTimeNanos;
+  }
+
+  public synchronized void setReportLeaseTimeNanos (boolean reportLeaseTimeNanos) {
+
+    this.reportLeaseTimeNanos = reportLeaseTimeNanos;
+  }
+
+  public synchronized long getConnectionTimeoutMillis () {
+
+    return connectionTimeoutMillis;
+  }
+
+  public synchronized void setConnectionTimeoutMillis (long connectionTimeoutMillis) {
+
+    if (connectionTimeoutMillis < 0) {
+      throw new IllegalArgumentException("Connection timeout must be >= 0");
+    }
+
+    this.connectionTimeoutMillis = connectionTimeoutMillis;
+  }
+
+  public synchronized int getInitialPoolSize () {
+
+    return initialPoolSize;
+  }
+
+  public synchronized void setInitialPoolSize (int initialPoolSize) {
+
+    if (startupFlag.get()) {
+      throw new IllegalStateException("ConnectionPool has already been initialized");
+    }
+
+    if (initialPoolSize < 0) {
+      throw new IllegalArgumentException("Initial pool size must be >= 0");
+    }
+
+    this.initialPoolSize = initialPoolSize;
+  }
+
+  public synchronized int getMinPoolSize () {
+
+    return minPoolSize;
+  }
+
+  public synchronized void setMinPoolSize (int minPoolSize) {
+
+    if (minPoolSize < 0) {
+      throw new IllegalArgumentException("Minimum pool size must be >= 0");
+    }
+
+    this.minPoolSize = minPoolSize;
+  }
+
+  public synchronized boolean isAllowSoftMinSize () {
+
+    return allowSoftMinSize;
+  }
+
+  public synchronized void setAllowSoftMinSize (boolean allowSoftMinSize) {
+
+    this.allowSoftMinSize = allowSoftMinSize;
+  }
+
+  public synchronized int getMaxPoolSize () {
+
+    return maxPoolSize;
+  }
+
+  public synchronized void setMaxPoolSize (int maxPoolSize) {
+
+    if (maxPoolSize < 0) {
+      throw new IllegalArgumentException("Maximum pool size must be >= 0");
+    }
+
+    this.maxPoolSize = maxPoolSize;
+  }
+
+  public synchronized long getAcquireWaitTimeMillis () {
+
+    return acquireWaitTimeMillis;
+  }
+
+  public synchronized void setAcquireWaitTimeMillis (long acquireWaitTimeMillis) {
+
+    if (acquireWaitTimeMillis < 0) {
+      throw new IllegalArgumentException("Acquire wait time must be >= 0");
+    }
+
+    this.acquireWaitTimeMillis = acquireWaitTimeMillis;
+  }
+
+  public synchronized int getMaxLeaseTimeSeconds () {
+
+    return maxLeaseTimeSeconds;
+  }
+
+  public synchronized void setMaxLeaseTimeSeconds (int maxLeaseTimeSeconds) {
+
+    if (maxLeaseTimeSeconds < 0) {
+      throw new IllegalArgumentException("Maximum lease time must be >= 0");
+    }
+
+    this.maxLeaseTimeSeconds = maxLeaseTimeSeconds;
+  }
+
+  public synchronized int getMaxIdleTimeSeconds () {
+
+    return maxIdleTimeSeconds;
+  }
+
+  public synchronized void setMaxIdleTimeSeconds (int maxIdleTimeSeconds) {
+
+    if (maxIdleTimeSeconds < 0) {
+      throw new IllegalArgumentException("Maximum idle time must be >= 0");
+    }
+
+    this.maxIdleTimeSeconds = maxIdleTimeSeconds;
+  }
+
+  public synchronized int getUnreturnedConnectionTimeoutSeconds () {
+
+    return unreturnedConnectionTimeoutSeconds;
+  }
+
+  public synchronized void setUnreturnedConnectionTimeoutSeconds (int unreturnedConnectionTimeoutSeconds) {
+
+    if (unreturnedConnectionTimeoutSeconds < 0) {
+      throw new IllegalArgumentException("Unreturned connection timeout must be >= 0");
+    }
+
+    this.unreturnedConnectionTimeoutSeconds = unreturnedConnectionTimeoutSeconds;
+  }
+
+  public Object rawConnection ()
+    throws ConnectionCreationException {
+
+    if (shutdownFlag.get()) {
+      throw new IllegalStateException("ConnectionPool has been shut down");
+    }
+
+    try {
+      return connectionFactory.rawInstance();
+    }
+    catch (Exception exception) {
+      throw new ConnectionCreationException(exception);
+    }
+  }
+
+  public void addConnectionPoolEventListener (ConnectionPoolEventListener listener) {
+
+    connectionPoolEventListenerQueue.add(listener);
+  }
+
+  public void removeConnectionPoolEventListener (ConnectionPoolEventListener listener) {
+
+    connectionPoolEventListenerQueue.remove(listener);
+  }
+
+  public void connectionErrorOccurred (ConnectionInstanceEvent instanceEvent) {
+
+    fireErrorReportingConnectionPoolEvent(instanceEvent.getException());
+  }
+
+  private ConnectionPoolException fireErrorReportingConnectionPoolEvent (Exception exception) {
+
+    ErrorReportingConnectionPoolEvent poolEvent = new ErrorReportingConnectionPoolEvent(this, exception);
+
+    for (ConnectionPoolEventListener listener : connectionPoolEventListenerQueue) {
+      listener.connectionErrorOccurred(poolEvent);
+    }
+
+    return (exception instanceof ConnectionPoolException) ? (ConnectionPoolException)exception : new ConnectionPoolException(exception);
+  }
+
+  public void reportConnectionLeaseTimeNanos (long leaseTimeNanos) {
+
+    LeaseTimeReportingConnectionPoolEvent poolEvent = new LeaseTimeReportingConnectionPoolEvent(this, leaseTimeNanos);
+
+    for (ConnectionPoolEventListener listener : connectionPoolEventListenerQueue) {
+      listener.connectionLeaseTime(poolEvent);
+    }
+  }
+
+  public StackTrace[] getExistentialStackTraces () {
+
+    return connectionPinManager.getExistentialStackTraces();
+  }
+
+  protected ConnectionPin<C> createConnectionPin ()
+    throws Exception {
+
+    if (shutdownFlag.get()) {
+      throw new IllegalStateException("ConnectionPool has been shut down");
+    }
+
+    return connectionPinManager.create(connectionTimeoutMillis, testOnConnect, reportLeaseTimeNanos, maxIdleTimeSeconds, maxLeaseTimeSeconds, unreturnedConnectionTimeoutSeconds);
+  }
+
+  private C useConnectionPin ()
+    throws Exception {
+
+    ConnectionPin<C> connectionPin;
+    C connection;
+
+    if ((connection = serve(true)) != null) {
+
+      return connection;
+    }
+    else if ((connectionPin = createConnectionPin()) != null) {
+      synchronized (connectionPin) {
+
+        return connectionPin.serve();
+      }
+    }
+    else if ((connection = serve(false)) != null) {
+
+      return connection;
+    }
+    else {
+      throw new ConnectionPoolException("ConnectionPool (%s) exceeded its maximum acquire wait time (%d)", poolName, acquireWaitTimeMillis);
+    }
+  }
+
+  private C serve (boolean immediate)
+    throws Exception {
+
+    ConnectionPin<C> connectionPin;
+
+    do {
+      if ((connectionPin = connectionPinManager.serve(acquireWaitTimeMillis, immediate)) != null) {
+        synchronized (connectionPin) {
+          if (connectionPin.isCommissioned() && connectionPin.isFree()) {
+            if (testOnAcquire && (!connectionPin.validate())) {
+              connectionPinManager.remove(connectionPin, true);
             }
-         }
-      }
-      catch (ConnectionPoolException connectionPoolException) {
-         throw connectionPoolException;
-      }
-      catch (Exception exception) {
-         throw new ConnectionPoolException(exception);
-      }
-   }
-
-   public synchronized void shutdown ()
-      throws ConnectionPoolException {
-
-      try {
-         if (shutdownFlag.compareAndSet(false, true)) {
-            connectionPinManager.shutdown();
-         }
-      }
-      catch (ConnectionPoolException connectionPoolException) {
-         throw connectionPoolException;
-      }
-      catch (Exception exception) {
-         throw new ConnectionPoolException(exception);
-      }
-   }
-
-   public String getPoolName () {
-
-      return poolName;
-   }
-
-   public synchronized boolean isTestOnConnect () {
-
-      return testOnConnect;
-   }
-
-   public synchronized void setTestOnConnect (boolean testOnConnect) {
-
-      this.testOnConnect = testOnConnect;
-   }
-
-   public synchronized boolean isTestOnAcquire () {
-
-      return testOnAcquire;
-   }
-
-   public synchronized void setTestOnAcquire (boolean testOnAcquire) {
-
-      this.testOnAcquire = testOnAcquire;
-   }
-
-   public synchronized boolean isReportLeaseTimeNanos () {
-
-      return reportLeaseTimeNanos;
-   }
-
-   public synchronized void setReportLeaseTimeNanos (boolean reportLeaseTimeNanos) {
-
-      this.reportLeaseTimeNanos = reportLeaseTimeNanos;
-   }
-
-   public synchronized long getConnectionTimeoutMillis () {
-
-      return connectionTimeoutMillis;
-   }
-
-   public synchronized void setConnectionTimeoutMillis (long connectionTimeoutMillis) {
-
-      if (connectionTimeoutMillis < 0) {
-         throw new IllegalArgumentException("Connection timeout must be >= 0");
-      }
-
-      this.connectionTimeoutMillis = connectionTimeoutMillis;
-   }
-
-   public synchronized int getInitialPoolSize () {
-
-      return initialPoolSize;
-   }
-
-   public synchronized void setInitialPoolSize (int initialPoolSize) {
-
-      if (startupFlag.get()) {
-         throw new IllegalStateException("ConnectionPool has already been initialized");
-      }
-
-      if (initialPoolSize < 0) {
-         throw new IllegalArgumentException("Initial pool size must be >= 0");
-      }
-
-      this.initialPoolSize = initialPoolSize;
-   }
-
-   public synchronized int getMinPoolSize () {
-
-      return minPoolSize;
-   }
-
-   public synchronized void setMinPoolSize (int minPoolSize) {
-
-      if (minPoolSize < 0) {
-         throw new IllegalArgumentException("Minimum pool size must be >= 0");
-      }
-
-      this.minPoolSize = minPoolSize;
-   }
-
-   public synchronized boolean isAllowSoftMinSize () {
-
-      return allowSoftMinSize;
-   }
-
-   public synchronized void setAllowSoftMinSize (boolean allowSoftMinSize) {
-
-      this.allowSoftMinSize = allowSoftMinSize;
-   }
-
-   public synchronized int getMaxPoolSize () {
-
-      return maxPoolSize;
-   }
-
-   public synchronized void setMaxPoolSize (int maxPoolSize) {
-
-      if (maxPoolSize < 0) {
-         throw new IllegalArgumentException("Maximum pool size must be >= 0");
-      }
-
-      this.maxPoolSize = maxPoolSize;
-   }
-
-   public synchronized long getAcquireWaitTimeMillis () {
-
-      return acquireWaitTimeMillis;
-   }
-
-   public synchronized void setAcquireWaitTimeMillis (long acquireWaitTimeMillis) {
-
-      if (acquireWaitTimeMillis < 0) {
-         throw new IllegalArgumentException("Acquire wait time must be >= 0");
-      }
-
-      this.acquireWaitTimeMillis = acquireWaitTimeMillis;
-   }
-
-   public synchronized int getMaxLeaseTimeSeconds () {
-
-      return maxLeaseTimeSeconds;
-   }
-
-   public synchronized void setMaxLeaseTimeSeconds (int maxLeaseTimeSeconds) {
-
-      if (maxLeaseTimeSeconds < 0) {
-         throw new IllegalArgumentException("Maximum lease time must be >= 0");
-      }
-
-      this.maxLeaseTimeSeconds = maxLeaseTimeSeconds;
-   }
-
-   public synchronized int getMaxIdleTimeSeconds () {
-
-      return maxIdleTimeSeconds;
-   }
-
-   public synchronized void setMaxIdleTimeSeconds (int maxIdleTimeSeconds) {
-
-      if (maxIdleTimeSeconds < 0) {
-         throw new IllegalArgumentException("Maximum idle time must be >= 0");
-      }
-
-      this.maxIdleTimeSeconds = maxIdleTimeSeconds;
-   }
-
-   public synchronized int getUnreturnedConnectionTimeoutSeconds () {
-
-      return unreturnedConnectionTimeoutSeconds;
-   }
-
-   public synchronized void setUnreturnedConnectionTimeoutSeconds (int unreturnedConnectionTimeoutSeconds) {
-
-      if (unreturnedConnectionTimeoutSeconds < 0) {
-         throw new IllegalArgumentException("Unreturned connection timeout must be >= 0");
-      }
-
-      this.unreturnedConnectionTimeoutSeconds = unreturnedConnectionTimeoutSeconds;
-   }
-
-   public Object rawConnection ()
-      throws ConnectionCreationException {
-
-      if (shutdownFlag.get()) {
-         throw new IllegalStateException("ConnectionPool has been shut down");
-      }
-
-      try {
-         return connectionFactory.rawInstance();
-      }
-      catch (Exception exception) {
-         throw new ConnectionCreationException(exception);
-      }
-   }
-
-   public void addConnectionPoolEventListener (ConnectionPoolEventListener listener) {
-
-      connectionPoolEventListenerQueue.add(listener);
-   }
-
-   public void removeConnectionPoolEventListener (ConnectionPoolEventListener listener) {
-
-      connectionPoolEventListenerQueue.remove(listener);
-   }
-
-   public void connectionErrorOccurred (ConnectionInstanceEvent instanceEvent) {
-
-      fireErrorReportingConnectionPoolEvent(instanceEvent.getException());
-   }
-
-   private ConnectionPoolException fireErrorReportingConnectionPoolEvent (Exception exception) {
-
-      ErrorReportingConnectionPoolEvent poolEvent = new ErrorReportingConnectionPoolEvent(this, exception);
-
-      for (ConnectionPoolEventListener listener : connectionPoolEventListenerQueue) {
-         listener.connectionErrorOccurred(poolEvent);
-      }
-
-      return (exception instanceof ConnectionPoolException) ? (ConnectionPoolException)exception : new ConnectionPoolException(exception);
-   }
-
-   public void reportConnectionLeaseTimeNanos (long leaseTimeNanos) {
-
-      LeaseTimeReportingConnectionPoolEvent poolEvent = new LeaseTimeReportingConnectionPoolEvent(this, leaseTimeNanos);
-
-      for (ConnectionPoolEventListener listener : connectionPoolEventListenerQueue) {
-         listener.connectionLeaseTime(poolEvent);
-      }
-   }
-
-   protected ConnectionPin<C> createConnectionPin ()
-      throws Exception {
-
-      if (shutdownFlag.get()) {
-         throw new IllegalStateException("ConnectionPool has been shut down");
-      }
-
-      return connectionPinManager.create(connectionTimeoutMillis, testOnConnect, reportLeaseTimeNanos, maxIdleTimeSeconds, maxLeaseTimeSeconds, unreturnedConnectionTimeoutSeconds);
-   }
-
-   private C useConnectionPin ()
-      throws Exception {
-
-      ConnectionPin<C> connectionPin;
-      C connection;
-
-      if ((connection = serve(true)) != null) {
-
-         return connection;
-      }
-      else if ((connectionPin = createConnectionPin()) != null) {
-         synchronized (connectionPin) {
-
-            return connectionPin.serve();
-         }
-      }
-      else if ((connection = serve(false)) != null) {
-
-         return connection;
-      }
-      else {
-         throw new ConnectionPoolException("ConnectionPool (%s) exceeded its maximum acquire wait time (%d)", poolName, acquireWaitTimeMillis);
-      }
-   }
-
-   private C serve (boolean immediate)
-      throws Exception {
-
-      ConnectionPin<C> connectionPin;
-
-      do {
-         if ((connectionPin = connectionPinManager.serve(acquireWaitTimeMillis, immediate)) != null) {
-            synchronized (connectionPin) {
-               if (connectionPin.isCommissioned() && connectionPin.isFree()) {
-                  if (testOnAcquire && (!connectionPin.validate())) {
-                     connectionPinManager.remove(connectionPin, true);
-                  }
-                  else {
-                     return connectionPin.serve();
-                  }
-               }
-               else {
-                  connectionPinManager.remove(connectionPin, true);
-               }
+            else {
+              return connectionPin.serve();
             }
-         }
+          }
+          else {
+            connectionPinManager.remove(connectionPin, true);
+          }
+        }
       }
-      while (connectionPin != null);
+    }
+    while (connectionPin != null);
 
-      return null;
-   }
+    return null;
+  }
 
-   public C getConnection ()
-      throws ConnectionPoolException {
+  public C getConnection ()
+    throws ConnectionPoolException {
 
-      if (shutdownFlag.get()) {
-         throw new IllegalStateException("ConnectionPool has been shut down");
-      }
+    if (shutdownFlag.get()) {
+      throw new IllegalStateException("ConnectionPool has been shut down");
+    }
 
-      try {
-         startup();
+    try {
+      startup();
 
-         return useConnectionPin();
-      }
-      catch (Exception exception) {
-         throw fireErrorReportingConnectionPoolEvent(exception);
-      }
-   }
+      return useConnectionPin();
+    }
+    catch (Exception exception) {
+      throw fireErrorReportingConnectionPoolEvent(exception);
+    }
+  }
 
-   public void returnInstance (ConnectionInstance<C> connectionInstance)
-      throws ConnectionPoolException {
+  public void returnInstance (ConnectionInstance<C> connectionInstance)
+    throws ConnectionPoolException {
 
-      if (shutdownFlag.get()) {
-         throw new IllegalStateException("ConnectionPool has been shut down");
-      }
+    if (shutdownFlag.get()) {
+      throw new IllegalStateException("ConnectionPool has been shut down");
+    }
 
-      try {
-         releaseInstance(connectionInstance, false);
-      }
-      catch (Exception exception) {
-         throw fireErrorReportingConnectionPoolEvent(exception);
-      }
-   }
+    try {
+      releaseInstance(connectionInstance, false);
+    }
+    catch (Exception exception) {
+      throw fireErrorReportingConnectionPoolEvent(exception);
+    }
+  }
 
-   public void terminateInstance (ConnectionInstance<C> connectionInstance)
-      throws ConnectionPoolException {
+  public void terminateInstance (ConnectionInstance<C> connectionInstance)
+    throws ConnectionPoolException {
 
-      if (shutdownFlag.get()) {
-         throw new IllegalStateException("ConnectionPool has been shut down");
-      }
+    if (shutdownFlag.get()) {
+      throw new IllegalStateException("ConnectionPool has been shut down");
+    }
 
-      try {
-         releaseInstance(connectionInstance, true);
-      }
-      catch (ConnectionPoolException connectionPoolException) {
-         throw connectionPoolException;
-      }
-      catch (Exception exception) {
-         throw new ConnectionPoolException(exception);
-      }
-   }
+    try {
+      releaseInstance(connectionInstance, true);
+    }
+    catch (ConnectionPoolException connectionPoolException) {
+      throw connectionPoolException;
+    }
+    catch (Exception exception) {
+      throw new ConnectionPoolException(exception);
+    }
+  }
 
-   private void releaseInstance (ConnectionInstance<C> connectionInstance, boolean terminate)
-      throws Exception {
+  private void releaseInstance (ConnectionInstance<C> connectionInstance, boolean terminate)
+    throws Exception {
 
-      connectionPinManager.release(connectionInstance, terminate);
-   }
+    connectionPinManager.release(connectionInstance, terminate);
+  }
 
-   protected void removePin (ConnectionPin<C> connectionPin)
-      throws Exception {
+  protected void removePin (ConnectionPin<C> connectionPin)
+    throws Exception {
 
-      connectionPinManager.remove(connectionPin, !allowSoftMinSize);
-   }
+    connectionPinManager.remove(connectionPin, !allowSoftMinSize);
+  }
 
-   public int getPoolSize () {
+  public int getPoolSize () {
 
-      if (shutdownFlag.get()) {
-         throw new IllegalStateException("ConnectionPool has been shut down");
-      }
+    if (shutdownFlag.get()) {
+      throw new IllegalStateException("ConnectionPool has been shut down");
+    }
 
-      if (!startupFlag.get()) {
-         throw new IllegalStateException("ConnectionPool has not yet been initialized");
-      }
+    if (!startupFlag.get()) {
+      throw new IllegalStateException("ConnectionPool has not yet been initialized");
+    }
 
-      return connectionPinManager.getPoolSize();
-   }
+    return connectionPinManager.getPoolSize();
+  }
 
-   public int getFreeSize () {
+  public int getFreeSize () {
 
-      if (shutdownFlag.get()) {
-         throw new IllegalStateException("ConnectionPool has been shut down");
-      }
+    if (shutdownFlag.get()) {
+      throw new IllegalStateException("ConnectionPool has been shut down");
+    }
 
-      if (!startupFlag.get()) {
-         throw new IllegalStateException("ConnectionPool has not yet been initialized");
-      }
+    if (!startupFlag.get()) {
+      throw new IllegalStateException("ConnectionPool has not yet been initialized");
+    }
 
-      return connectionPinManager.getFreeSize();
-   }
+    return connectionPinManager.getFreeSize();
+  }
 
-   public int getProcessingSize () {
+  public int getProcessingSize () {
 
-      if (shutdownFlag.get()) {
-         throw new IllegalStateException("ConnectionPool has been shut down");
-      }
+    if (shutdownFlag.get()) {
+      throw new IllegalStateException("ConnectionPool has been shut down");
+    }
 
-      if (!startupFlag.get()) {
-         throw new IllegalStateException("ConnectionPool has not yet been initialized");
-      }
+    if (!startupFlag.get()) {
+      throw new IllegalStateException("ConnectionPool has not yet been initialized");
+    }
 
-      return connectionPinManager.getProcessingSize();
-   }
+    return connectionPinManager.getProcessingSize();
+  }
 }

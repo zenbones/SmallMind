@@ -27,172 +27,178 @@
 package org.smallmind.quorum.pool;
 
 import java.util.LinkedList;
+import org.smallmind.nutsnbolts.lang.Existential;
 
-public class ConnectionPin<C> {
+public class ConnectionPin<C> implements Existential {
 
-   private enum State {
+  private enum State {
 
-      FREE, SERVED, CLOSED
-   }
+    FREE, SERVED, CLOSED
+  }
 
-   private ConnectionPool connectionPool;
-   private DeconstructionWorker deconstructionWorker;
-   private ConnectionInstance<C> connectionInstance;
-   private State state;
-   private boolean commissioned = true;
-   private boolean reportLeaseTimeNanos;
-   private long leaseStartNanos;
-   private Integer originatingIndex;
+  private ConnectionPool connectionPool;
+  private DeconstructionWorker deconstructionWorker;
+  private ConnectionInstance<C> connectionInstance;
+  private State state;
+  private boolean commissioned = true;
+  private boolean reportLeaseTimeNanos;
+  private long leaseStartNanos;
+  private Integer originatingIndex;
 
-   public ConnectionPin (ConnectionPool<C> connectionPool, Integer originatingIndex, ConnectionInstance<C> connectionInstance, boolean reportLeaseTimeNanos, int maxIdleTimeSeconds, int maxLeaseTimeSeconds, int unreturnedConnectionTimeoutSeconds) {
+  public ConnectionPin (ConnectionPool<C> connectionPool, Integer originatingIndex, ConnectionInstance<C> connectionInstance, boolean reportLeaseTimeNanos, int maxIdleTimeSeconds, int maxLeaseTimeSeconds, int unreturnedConnectionTimeoutSeconds) {
 
-      Thread workerThread;
-      LinkedList<DeconstructionFuse> fuseList;
+    Thread workerThread;
+    LinkedList<DeconstructionFuse> fuseList;
 
-      this.connectionPool = connectionPool;
-      this.originatingIndex = originatingIndex;
-      this.connectionInstance = connectionInstance;
-      this.reportLeaseTimeNanos = reportLeaseTimeNanos;
+    this.connectionPool = connectionPool;
+    this.originatingIndex = originatingIndex;
+    this.connectionInstance = connectionInstance;
+    this.reportLeaseTimeNanos = reportLeaseTimeNanos;
 
-      state = State.FREE;
+    state = State.FREE;
 
-      connectionInstance.addConnectionInstanceEventListener(connectionPool);
+    connectionInstance.addConnectionInstanceEventListener(connectionPool);
 
-      fuseList = new LinkedList<DeconstructionFuse>();
+    fuseList = new LinkedList<DeconstructionFuse>();
 
-      if (maxLeaseTimeSeconds > 0) {
-         fuseList.add(new MaxLeaseTimeDeconstructionFuse(maxLeaseTimeSeconds));
+    if (maxLeaseTimeSeconds > 0) {
+      fuseList.add(new MaxLeaseTimeDeconstructionFuse(maxLeaseTimeSeconds));
+    }
+
+    if (maxIdleTimeSeconds > 0) {
+      fuseList.add(new MaxIdleTimeDeconstructionFuse(maxIdleTimeSeconds));
+    }
+
+    if (unreturnedConnectionTimeoutSeconds > 0) {
+      fuseList.add(new UnreturnedConnectionTimeoutDeconstructionFuse(unreturnedConnectionTimeoutSeconds));
+    }
+
+    if (!fuseList.isEmpty()) {
+      deconstructionWorker = new DeconstructionWorker<C>(connectionPool, this, fuseList);
+      workerThread = new Thread(deconstructionWorker);
+      workerThread.setDaemon(true);
+      workerThread.start();
+
+      deconstructionWorker.free();
+    }
+  }
+
+  public StackTraceElement[] getExistentialStackTrace () {
+
+    return ((Existential)connectionInstance).getExistentialStackTrace();
+  }
+
+  public Integer getOriginatingIndex () {
+
+    return originatingIndex;
+  }
+
+  protected void abort () {
+
+    if (deconstructionWorker != null) {
+      deconstructionWorker.abort();
+    }
+  }
+
+  public void decommission () {
+
+    commissioned = false;
+  }
+
+  public boolean isCommissioned () {
+
+    return commissioned;
+  }
+
+  public boolean isFree () {
+
+    return state.equals(State.FREE);
+  }
+
+  public boolean isServed () {
+
+    return state.equals(State.SERVED);
+  }
+
+  public boolean isClosed () {
+
+    return state.equals(State.CLOSED);
+  }
+
+  public boolean contains (ConnectionInstance connectionInstance) {
+
+    return this.connectionInstance == connectionInstance;
+  }
+
+  public boolean validate () {
+
+    return connectionInstance.validate();
+  }
+
+  public C serve ()
+    throws Exception {
+
+    C connection;
+
+    if (!state.equals(State.FREE)) {
+      throw new ConnectionPoolException("An attempt to serve this connection while in state(%s)", state);
+    }
+
+    connection = connectionInstance.serve();
+    state = State.SERVED;
+
+    if (deconstructionWorker != null) {
+      deconstructionWorker.serve();
+    }
+
+    if (reportLeaseTimeNanos) {
+      leaseStartNanos = System.nanoTime();
+    }
+
+    return connection;
+  }
+
+  public void free () {
+
+    state = State.FREE;
+
+    if (reportLeaseTimeNanos) {
+      connectionPool.reportConnectionLeaseTimeNanos(System.nanoTime() - leaseStartNanos);
+    }
+
+    if (deconstructionWorker != null) {
+      deconstructionWorker.free();
+    }
+  }
+
+  public void close ()
+    throws Exception {
+
+    try {
+      if (!state.equals(State.CLOSED)) {
+        state = State.CLOSED;
+        connectionInstance.close();
+
+        if (reportLeaseTimeNanos) {
+          connectionPool.reportConnectionLeaseTimeNanos(System.nanoTime() - leaseStartNanos);
+        }
       }
+    }
+    finally {
+      connectionInstance.removeConnectionInstanceEventListener(connectionPool);
+    }
+  }
 
-      if (maxIdleTimeSeconds > 0) {
-         fuseList.add(new MaxIdleTimeDeconstructionFuse(maxIdleTimeSeconds));
-      }
+  public void finalize () {
 
-      if (unreturnedConnectionTimeoutSeconds > 0) {
-         fuseList.add(new UnreturnedConnectionTimeoutDeconstructionFuse(unreturnedConnectionTimeoutSeconds));
-      }
-
-      if (!fuseList.isEmpty()) {
-         deconstructionWorker = new DeconstructionWorker<C>(connectionPool, this, fuseList);
-         workerThread = new Thread(deconstructionWorker);
-         workerThread.setDaemon(true);
-         workerThread.start();
-
-         deconstructionWorker.free();
-      }
-   }
-
-   public Integer getOriginatingIndex () {
-
-      return originatingIndex;
-   }
-
-   protected void abort () {
-
-      if (deconstructionWorker != null) {
-         deconstructionWorker.abort();
-      }
-   }
-
-   public void decommission () {
-
-      commissioned = false;
-   }
-
-   public boolean isCommissioned () {
-
-      return commissioned;
-   }
-
-   public boolean isFree () {
-
-      return state.equals(State.FREE);
-   }
-
-   public boolean isServed () {
-
-      return state.equals(State.SERVED);
-   }
-
-   public boolean isClosed () {
-
-      return state.equals(State.CLOSED);
-   }
-
-   public boolean contains (ConnectionInstance connectionInstance) {
-
-      return this.connectionInstance == connectionInstance;
-   }
-
-   public boolean validate () {
-
-      return connectionInstance.validate();
-   }
-
-   public C serve ()
-      throws Exception {
-
-      C connection;
-
-      if (!state.equals(State.FREE)) {
-         throw new ConnectionPoolException("An attempt to serve this connection while in state(%s)", state);
-      }
-
-      connection = connectionInstance.serve();
-      state = State.SERVED;
-
-      if (deconstructionWorker != null) {
-         deconstructionWorker.serve();
-      }
-
-      if (reportLeaseTimeNanos) {
-         leaseStartNanos = System.nanoTime();
-      }
-
-      return connection;
-   }
-
-   public void free () {
-
-      state = State.FREE;
-
-      if (reportLeaseTimeNanos) {
-         connectionPool.reportConnectionLeaseTimeNanos(System.nanoTime() - leaseStartNanos);
-      }
-
-      if (deconstructionWorker != null) {
-         deconstructionWorker.free();
-      }
-   }
-
-   public void close ()
-      throws Exception {
-
-      try {
-         if (!state.equals(State.CLOSED)) {
-            state = State.CLOSED;
-            connectionInstance.close();
-
-            if (reportLeaseTimeNanos) {
-               connectionPool.reportConnectionLeaseTimeNanos(System.nanoTime() - leaseStartNanos);
-            }
-         }
-      }
-      finally {
-         connectionInstance.removeConnectionInstanceEventListener(connectionPool);
-      }
-   }
-
-   public void finalize () {
-
-      try {
-         close();
-      }
-      catch (Exception exception) {
-         ConnectionPoolManager.logError(exception);
-      }
-      finally {
-         abort();
-      }
-   }
+    try {
+      close();
+    }
+    catch (Exception exception) {
+      ConnectionPoolManager.logError(exception);
+    }
+    finally {
+      abort();
+    }
+  }
 }

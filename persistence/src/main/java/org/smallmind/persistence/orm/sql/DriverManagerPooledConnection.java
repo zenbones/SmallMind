@@ -41,175 +41,203 @@ import javax.sql.ConnectionEventListener;
 import javax.sql.DataSource;
 import javax.sql.PooledConnection;
 import javax.sql.StatementEventListener;
+import org.smallmind.nutsnbolts.lang.Existential;
+import org.smallmind.nutsnbolts.lang.StaticInitializationError;
 
-public class DriverManagerPooledConnection implements PooledConnection, InvocationHandler {
+public class DriverManagerPooledConnection implements PooledConnection, Existential, InvocationHandler {
 
-   private final DriverManagerPreparedStatementCache statementCache;
+  private static final Method CLOSE_METHOD;
+  private static final Method GET_EXISTENTIAL_STACK_TRACE_METHOD;
 
-   private DataSource dataSource;
-   private Connection actualConnection;
-   private Connection proxyConnection;
-   private ConcurrentLinkedQueue<ConnectionEventListener> connectionEventListenerQueue;
-   private ConcurrentLinkedQueue<StatementEventListener> statementEventListenerQueue;
-   private AtomicBoolean closed = new AtomicBoolean(false);
-   private long creationMilliseconds;
+  private final DriverManagerPreparedStatementCache statementCache;
 
-   public DriverManagerPooledConnection (DriverManagerDataSource dataSource, int maxStatements)
-      throws SQLException {
+  private Thread owningThread;
+  private DataSource dataSource;
+  private Connection actualConnection;
+  private Connection proxyConnection;
+  private ConcurrentLinkedQueue<ConnectionEventListener> connectionEventListenerQueue;
+  private ConcurrentLinkedQueue<StatementEventListener> statementEventListenerQueue;
+  private AtomicBoolean closed = new AtomicBoolean(false);
+  private long creationMilliseconds;
 
-      this(dataSource, null, null, maxStatements);
-   }
+  static {
 
-   public DriverManagerPooledConnection (DriverManagerDataSource dataSource, String user, String password, int maxStatements)
-      throws SQLException {
+    try {
+      CLOSE_METHOD = Connection.class.getMethod("close");
+      GET_EXISTENTIAL_STACK_TRACE_METHOD = Existential.class.getMethod("getExistentialStackTrace");
+    }
+    catch (NoSuchMethodException noSuchMethodException) {
+      throw new StaticInitializationError(noSuchMethodException);
+    }
+  }
 
-      this.dataSource = dataSource;
+  public DriverManagerPooledConnection (DriverManagerDataSource dataSource, int maxStatements)
+    throws SQLException {
 
-      if (maxStatements < 0) {
-         throw new SQLException("The maximum number of cached statements for this connection must be >= 0");
+    this(dataSource, null, null, maxStatements);
+  }
+
+  public DriverManagerPooledConnection (DriverManagerDataSource dataSource, String user, String password, int maxStatements)
+    throws SQLException {
+
+    this.dataSource = dataSource;
+
+    if (maxStatements < 0) {
+      throw new SQLException("The maximum number of cached statements for this connection must be >= 0");
+    }
+
+    creationMilliseconds = System.currentTimeMillis();
+
+    if ((user != null) && (password != null)) {
+      actualConnection = dataSource.getConnection(user, password);
+    }
+    else {
+      actualConnection = dataSource.getConnection();
+    }
+
+    proxyConnection = (Connection)Proxy.newProxyInstance(DriverManagerDataSource.class.getClassLoader(), new Class[] {Connection.class, Existential.class}, this);
+
+    connectionEventListenerQueue = new ConcurrentLinkedQueue<ConnectionEventListener>();
+    statementEventListenerQueue = new ConcurrentLinkedQueue<StatementEventListener>();
+
+    if (maxStatements == 0) {
+      statementCache = null;
+    }
+    else {
+      addStatementEventListener(statementCache = new DriverManagerPreparedStatementCache(maxStatements));
+    }
+  }
+
+  public StackTraceElement[] getExistentialStackTrace () {
+
+    return (owningThread == null) ? null : owningThread.getStackTrace();
+  }
+
+  public Object invoke (Object proxy, Method method, Object[] args)
+    throws Throwable {
+
+    if (GET_EXISTENTIAL_STACK_TRACE_METHOD.equals(method)) {
+
+    }
+    if (CLOSE_METHOD.equals(method)) {
+
+      ConnectionEvent event = new ConnectionEvent(this);
+
+      owningThread = null;
+      for (ConnectionEventListener listener : connectionEventListenerQueue) {
+        listener.connectionClosed(event);
       }
 
-      creationMilliseconds = System.currentTimeMillis();
-
-      if ((user != null) && (password != null)) {
-         actualConnection = dataSource.getConnection(user, password);
-      }
-      else {
-         actualConnection = dataSource.getConnection();
-      }
-
-      proxyConnection = (Connection)Proxy.newProxyInstance(DriverManagerDataSource.class.getClassLoader(), new Class[] {Connection.class}, this);
-
-      connectionEventListenerQueue = new ConcurrentLinkedQueue<ConnectionEventListener>();
-      statementEventListenerQueue = new ConcurrentLinkedQueue<StatementEventListener>();
-
-      if (maxStatements == 0) {
-         statementCache = null;
-      }
-      else {
-         addStatementEventListener(statementCache = new DriverManagerPreparedStatementCache(maxStatements));
-      }
-   }
-
-   public Object invoke (Object proxy, Method method, Object[] args)
-      throws Throwable {
-
-      if (method.getName().equals("close")) {
-
-         ConnectionEvent event = new ConnectionEvent(this);
-
-         for (ConnectionEventListener listener : connectionEventListenerQueue) {
-            listener.connectionClosed(event);
-         }
-
-         return null;
-      }
-      else {
-         try {
-            if ((statementCache != null) && PreparedStatement.class.isAssignableFrom(method.getReturnType())) {
-
-               PreparedStatement preparedStatement;
-
-               synchronized (statementCache) {
-                  if ((preparedStatement = statementCache.getPreparedStatement(args)) == null) {
-                     preparedStatement = statementCache.cachePreparedStatement(args, new DriverManagerPooledPreparedStatement(this, (PreparedStatement)method.invoke(actualConnection, args)));
-                  }
-               }
-
-               return preparedStatement;
-            }
-            else {
-
-               return method.invoke(actualConnection, args);
-            }
-         }
-         catch (Throwable throwable) {
-
-            Throwable closestCause;
-
-            closestCause = ((throwable instanceof UndeclaredThrowableException) && (throwable.getCause() != null)) ? throwable.getCause() : throwable;
-
-            if (closestCause instanceof SQLException) {
-
-               ConnectionEvent event = new ConnectionEvent(this, (SQLException)closestCause);
-
-               for (ConnectionEventListener listener : connectionEventListenerQueue) {
-                  listener.connectionErrorOccurred(event);
-               }
-            }
-
-            throw new PooledConnectionException(closestCause, "Connection encountered an exception after operation for %d milliseconds", System.currentTimeMillis() - creationMilliseconds);
-         }
-      }
-   }
-
-   public PrintWriter getLogWriter ()
-      throws SQLException {
-
-      return dataSource.getLogWriter();
-   }
-
-   public Connection getConnection ()
-      throws SQLException {
-
-      return proxyConnection;
-   }
-
-   public void close ()
-      throws SQLException {
-
-      if (closed.compareAndSet(false, true)) {
-         if (statementCache != null) {
-            try {
-               statementCache.close();
-            }
-            finally {
-               removeStatementEventListener(statementCache);
-            }
-         }
-
-         actualConnection.close();
-      }
-   }
-
-   public void finalize ()
-      throws SQLException {
-
+      return null;
+    }
+    else {
       try {
-         close();
+        if ((statementCache != null) && PreparedStatement.class.isAssignableFrom(method.getReturnType())) {
+
+          PreparedStatement preparedStatement;
+
+          synchronized (statementCache) {
+            if ((preparedStatement = statementCache.getPreparedStatement(args)) == null) {
+              preparedStatement = statementCache.cachePreparedStatement(args, new DriverManagerPooledPreparedStatement(this, (PreparedStatement)method.invoke(actualConnection, args)));
+            }
+          }
+
+          return preparedStatement;
+        }
+        else {
+
+          return method.invoke(actualConnection, args);
+        }
       }
-      catch (SQLException sqlExecption) {
+      catch (Throwable throwable) {
 
-         PrintWriter logWriter;
+        Throwable closestCause;
 
-         if ((logWriter = getLogWriter()) != null) {
-            sqlExecption.printStackTrace(logWriter);
-         }
+        closestCause = ((throwable instanceof UndeclaredThrowableException) && (throwable.getCause() != null)) ? throwable.getCause() : throwable;
+
+        if (closestCause instanceof SQLException) {
+
+          ConnectionEvent event = new ConnectionEvent(this, (SQLException)closestCause);
+
+          for (ConnectionEventListener listener : connectionEventListenerQueue) {
+            listener.connectionErrorOccurred(event);
+          }
+        }
+
+        throw new PooledConnectionException(closestCause, "Connection encountered an exception after operation for %d milliseconds", System.currentTimeMillis() - creationMilliseconds);
       }
-   }
+    }
+  }
 
-   public void addConnectionEventListener (ConnectionEventListener listener) {
+  public PrintWriter getLogWriter ()
+    throws SQLException {
 
-      connectionEventListenerQueue.add(listener);
-   }
+    return dataSource.getLogWriter();
+  }
 
-   public void removeConnectionEventListener (ConnectionEventListener listener) {
+  public Connection getConnection ()
+    throws SQLException {
 
-      connectionEventListenerQueue.remove(listener);
-   }
+    owningThread = Thread.currentThread();
 
-   protected Iterable<StatementEventListener> getStatementEventListeners () {
+    return proxyConnection;
+  }
 
-      return statementEventListenerQueue;
-   }
+  public void close ()
+    throws SQLException {
 
-   public void addStatementEventListener (StatementEventListener listener) {
+    if (closed.compareAndSet(false, true)) {
+      if (statementCache != null) {
+        try {
+          statementCache.close();
+        }
+        finally {
+          removeStatementEventListener(statementCache);
+        }
+      }
 
-      statementEventListenerQueue.add(listener);
-   }
+      actualConnection.close();
+    }
+  }
 
-   public void removeStatementEventListener (StatementEventListener listener) {
+  public void finalize ()
+    throws SQLException {
 
-      statementEventListenerQueue.remove(listener);
-   }
+    try {
+      close();
+    }
+    catch (SQLException sqlExecption) {
+
+      PrintWriter logWriter;
+
+      if ((logWriter = getLogWriter()) != null) {
+        sqlExecption.printStackTrace(logWriter);
+      }
+    }
+  }
+
+  public void addConnectionEventListener (ConnectionEventListener listener) {
+
+    connectionEventListenerQueue.add(listener);
+  }
+
+  public void removeConnectionEventListener (ConnectionEventListener listener) {
+
+    connectionEventListenerQueue.remove(listener);
+  }
+
+  protected Iterable<StatementEventListener> getStatementEventListeners () {
+
+    return statementEventListenerQueue;
+  }
+
+  public void addStatementEventListener (StatementEventListener listener) {
+
+    statementEventListenerQueue.add(listener);
+  }
+
+  public void removeStatementEventListener (StatementEventListener listener) {
+
+    statementEventListenerQueue.remove(listener);
+  }
 }

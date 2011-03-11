@@ -31,119 +31,134 @@ import java.sql.SQLException;
 import javax.sql.ConnectionEvent;
 import javax.sql.ConnectionEventListener;
 import javax.sql.PooledConnection;
+import org.smallmind.nutsnbolts.lang.Existential;
 import org.smallmind.quorum.pool.AbstractConnectionInstance;
 import org.smallmind.quorum.pool.ConnectionPool;
 import org.smallmind.quorum.pool.ConnectionPoolManager;
 
-public class PooledConnectionInstance extends AbstractConnectionInstance<PooledConnection> implements ConnectionEventListener {
+public class PooledConnectionInstance extends AbstractConnectionInstance<PooledConnection> implements ConnectionEventListener, Existential {
 
-   private ConnectionPool connectionPool;
-   private PooledConnection pooledConnection;
-   private PreparedStatement validationStatement;
+  private ConnectionPool connectionPool;
+  private PooledConnection pooledConnection;
+  private PreparedStatement validationStatement;
 
-   public PooledConnectionInstance(ConnectionPool connectionPool, Integer originatingIndex, PooledConnection pooledConnection)
-      throws SQLException {
+  public PooledConnectionInstance (ConnectionPool connectionPool, Integer originatingIndex, PooledConnection pooledConnection)
+    throws SQLException {
 
-      this(connectionPool, originatingIndex, pooledConnection, null);
-   }
+    this(connectionPool, originatingIndex, pooledConnection, null);
+  }
 
-   public PooledConnectionInstance(ConnectionPool connectionPool, Integer originatingIndex, PooledConnection pooledConnection, String validationQuery)
-      throws SQLException {
+  public PooledConnectionInstance (ConnectionPool connectionPool, Integer originatingIndex, PooledConnection pooledConnection, String validationQuery)
+    throws SQLException {
 
-      super(originatingIndex);
+    super(originatingIndex);
 
-      this.connectionPool = connectionPool;
-      this.pooledConnection = pooledConnection;
+    this.connectionPool = connectionPool;
+    this.pooledConnection = pooledConnection;
 
-      if ((validationQuery != null) && (validationQuery.length() > 0)) {
-         validationStatement = pooledConnection.getConnection().prepareStatement(validationQuery);
-      }
+    if ((validationQuery != null) && (validationQuery.length() > 0)) {
+      validationStatement = pooledConnection.getConnection().prepareStatement(validationQuery);
+    }
 
-      pooledConnection.addConnectionEventListener(this);
-   }
+    pooledConnection.addConnectionEventListener(this);
+  }
 
-   public boolean validate() {
+  public StackTraceElement[] getExistentialStackTrace () {
 
-      if (validationStatement != null) {
-         try {
-            validationStatement.execute();
-         } catch (SQLException sqlException) {
-            return false;
-         }
-      }
+    return ((Existential)pooledConnection).getExistentialStackTrace();
+  }
 
-      return true;
-   }
+  public boolean validate () {
 
-   public void connectionClosed(ConnectionEvent connectionEvent) {
-
+    if (validationStatement != null) {
       try {
-         connectionPool.returnInstance(this);
-      } catch (Exception exception) {
-         ConnectionPoolManager.logError(exception);
+        validationStatement.execute();
       }
-   }
+      catch (SQLException sqlException) {
+        return false;
+      }
+    }
 
-   public void connectionErrorOccurred(ConnectionEvent connectionEvent) {
+    return true;
+  }
 
-      Exception reportedException = connectionEvent.getSQLException();
+  public void connectionClosed (ConnectionEvent connectionEvent) {
 
+    try {
+      connectionPool.returnInstance(this);
+    }
+    catch (Exception exception) {
+      ConnectionPoolManager.logError(exception);
+    }
+  }
+
+  public void connectionErrorOccurred (ConnectionEvent connectionEvent) {
+
+    Exception reportedException = connectionEvent.getSQLException();
+
+    try {
+      if (reportedException != null) {
+        fireConnectionErrorOccurred(reportedException);
+      }
+    }
+    catch (Exception exception) {
+      ConnectionPoolManager.logError(exception);
+    }
+    finally {
       try {
-         if (reportedException != null) {
-            fireConnectionErrorOccurred(reportedException);
-         }
-      } catch (Exception exception) {
-         ConnectionPoolManager.logError(exception);
-      } finally {
-         try {
-            connectionPool.terminateInstance(this);
-         } catch (Exception exception) {
-            if (reportedException != null) {
-               exception.initCause(reportedException);
-            }
-
-            reportedException = exception;
-         } finally {
-            if (reportedException != null) {
-               ConnectionPoolManager.logError(reportedException);
-            }
-         }
+        connectionPool.terminateInstance(this);
       }
-   }
+      catch (Exception exception) {
+        if (reportedException != null) {
+          exception.initCause(reportedException);
+        }
 
-   public PooledConnection serve() {
-
-      return pooledConnection;
-   }
-
-   public void close()
-      throws SQLException {
-
-      SQLException validationCloseException = null;
-
-      if (validationStatement != null) {
-         try {
-            validationStatement.close();
-         } catch (SQLException sqlException) {
-            validationCloseException = sqlException;
-         }
+        reportedException = exception;
       }
+      finally {
+        if (reportedException != null) {
+          ConnectionPoolManager.logError(reportedException);
+        }
+      }
+    }
+  }
 
+  public PooledConnection serve () {
+
+    return pooledConnection;
+  }
+
+  public void close ()
+    throws SQLException {
+
+    SQLException validationCloseException = null;
+
+    if (validationStatement != null) {
       try {
-         pooledConnection.close();
-      } catch (SQLException sqlException) {
-
-         if (validationCloseException != null) {
-            sqlException.initCause(validationCloseException);
-         }
-
-         throw sqlException;
-      } finally {
-         pooledConnection.removeConnectionEventListener(this);
+        validationStatement.close();
       }
+      catch (SQLException sqlException) {
+        validationCloseException = sqlException;
+      }
+    }
+
+    try {
+      pooledConnection.close();
+    }
+    catch (SQLException sqlException) {
 
       if (validationCloseException != null) {
-         throw validationCloseException;
+        sqlException.initCause(validationCloseException);
       }
-   }
+
+      throw sqlException;
+    }
+    finally {
+      pooledConnection.removeConnectionEventListener(this);
+    }
+
+    if (validationCloseException != null) {
+      throw validationCloseException;
+    }
+  }
 }
