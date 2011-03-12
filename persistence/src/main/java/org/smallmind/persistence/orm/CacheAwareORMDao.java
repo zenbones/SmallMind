@@ -33,16 +33,18 @@ import org.smallmind.persistence.cache.VectoredDao;
 
 public abstract class CacheAwareORMDao<I extends Serializable & Comparable<I>, D extends Durable<I>> extends AbstractORMDao<I, D> implements CacheAware<I, D> {
 
-   private VectoredDao<I, D> vectoredDao;
+  private ProxySession proxySession;
+  private VectoredDao<I, D> vectoredDao;
 
-   public CacheAwareORMDao (VectoredDao<I, D> vectoredDao) {
+  public CacheAwareORMDao (ProxySession proxySession, VectoredDao<I, D> vectoredDao) {
 
-      this.vectoredDao = vectoredDao;
-   }
+    this.proxySession = proxySession;
+    this.vectoredDao = vectoredDao;
+  }
 
-   @Override
-   public VectoredDao<I, D> getVectoredDao () {
+  @Override
+  public VectoredDao<I, D> getVectoredDao () {
 
-      return vectoredDao;
-   }
+    return proxySession.isCacheEnabled() ? vectoredDao : null;
+  }
 }

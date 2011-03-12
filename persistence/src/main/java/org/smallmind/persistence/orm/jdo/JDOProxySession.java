@@ -39,111 +39,99 @@ import org.smallmind.persistence.orm.aop.TransactionalState;
 
 public class JDOProxySession extends ProxySession {
 
-   private final ThreadLocal<PersistenceManager> managerThreadLocal = new ThreadLocal<PersistenceManager>();
-   private final ThreadLocal<JDOProxyTransaction> transactionThreadLocal = new ThreadLocal<JDOProxyTransaction>();
-   private final ThreadLocal<Boolean> boundaryOverrideThreadLocal = new ThreadLocal<Boolean>() {
+  private final ThreadLocal<PersistenceManager> managerThreadLocal = new ThreadLocal<PersistenceManager>();
+  private final ThreadLocal<JDOProxyTransaction> transactionThreadLocal = new ThreadLocal<JDOProxyTransaction>();
 
-      protected Boolean initialValue () {
+  private PersistenceManagerFactory persistenceManagerFactory;
 
-         return false;
-      }
-   };
+  public JDOProxySession (String dataSourceKey, PersistenceManagerFactory persistenceManagerFactor, boolean boundaryEnforced, boolean cacheEnabled) {
 
-   private PersistenceManagerFactory persistenceManagerFactory;
+    super(dataSourceKey, boundaryEnforced, cacheEnabled);
 
-   public JDOProxySession (String dataSourceKey, PersistenceManagerFactory persistenceManagerFactor, boolean enforceBoundary) {
+    this.persistenceManagerFactory = persistenceManagerFactor;
+  }
 
-      super(dataSourceKey, enforceBoundary);
+  public JDOProxyTransaction beginTransaction () {
 
-      this.persistenceManagerFactory = persistenceManagerFactor;
-   }
+    JDOProxyTransaction proxyTransaction;
+    Transaction transaction;
 
-   public void setIgnoreBoundaryEnforcement (boolean ignoreBoundaryEnforcement) {
+    if ((proxyTransaction = transactionThreadLocal.get()) == null) {
 
-      boundaryOverrideThreadLocal.set(ignoreBoundaryEnforcement);
-   }
-
-   public JDOProxyTransaction beginTransaction () {
-
-      JDOProxyTransaction proxyTransaction;
-      Transaction transaction;
+      PersistenceManager persistenceManager = getPersistenceManager();
 
       if ((proxyTransaction = transactionThreadLocal.get()) == null) {
-
-         PersistenceManager persistenceManager = getPersistenceManager();
-
-         if ((proxyTransaction = transactionThreadLocal.get()) == null) {
-            if (!(transaction = persistenceManager.currentTransaction()).isActive()) {
-               transaction.begin();
-            }
-            proxyTransaction = new JDOProxyTransaction(this, transaction);
-            transactionThreadLocal.set(proxyTransaction);
-         }
+        if (!(transaction = persistenceManager.currentTransaction()).isActive()) {
+          transaction.begin();
+        }
+        proxyTransaction = new JDOProxyTransaction(this, transaction);
+        transactionThreadLocal.set(proxyTransaction);
       }
+    }
 
-      return proxyTransaction;
-   }
+    return proxyTransaction;
+  }
 
-   public ProxyTransaction currentTransaction () {
+  public ProxyTransaction currentTransaction () {
 
-      return transactionThreadLocal.get();
-   }
+    return transactionThreadLocal.get();
+  }
 
-   public void flush () {
+  public void flush () {
 
-      getPersistenceManager().flush();
-   }
+    getPersistenceManager().flush();
+  }
 
-   public boolean isClosed () {
+  public boolean isClosed () {
 
-      PersistenceManager persistenceManager;
+    PersistenceManager persistenceManager;
 
-      return ((persistenceManager = managerThreadLocal.get()) == null) || (persistenceManager.isClosed());
-   }
+    return ((persistenceManager = managerThreadLocal.get()) == null) || (persistenceManager.isClosed());
+  }
 
-   public Object getNativeSession () {
+  public Object getNativeSession () {
 
-      return getPersistenceManager();
-   }
+    return getPersistenceManager();
+  }
 
-   public PersistenceManager getPersistenceManager () {
+  public PersistenceManager getPersistenceManager () {
 
-      PersistenceManager persistenceManager;
+    PersistenceManager persistenceManager;
 
-      if ((persistenceManager = managerThreadLocal.get()) == null) {
-         persistenceManager = persistenceManagerFactory.getPersistenceManager();
-         managerThreadLocal.set(persistenceManager);
+    if ((persistenceManager = managerThreadLocal.get()) == null) {
+      persistenceManager = persistenceManagerFactory.getPersistenceManager();
+      managerThreadLocal.set(persistenceManager);
 
-         RollbackAwareBoundarySet<ProxyTransaction> transactionSet;
-         BoundarySet<ProxySession> sessionSet;
+      RollbackAwareBoundarySet<ProxyTransaction> transactionSet;
+      BoundarySet<ProxySession> sessionSet;
 
-         if ((transactionSet = TransactionalState.obtainBoundary(this)) != null) {
-            transactionSet.add(beginTransaction());
-         }
-         else if ((sessionSet = NonTransactionalState.obtainBoundary(this)) != null) {
-            sessionSet.add(this);
-         }
-         else if ((!boundaryOverrideThreadLocal.get()) && willEnforceBoundary()) {
-            close();
-            throw new SessionEnforcementException("Session was requested outside of any boundary enforcement (@NonTransactional or @Transactional)");
-         }
+      if ((transactionSet = TransactionalState.obtainBoundary(this)) != null) {
+        transactionSet.add(beginTransaction());
       }
-
-      return persistenceManager;
-   }
-
-   public void close () {
-
-      PersistenceManager persistenceManager;
-
-      try {
-         if ((persistenceManager = managerThreadLocal.get()) != null) {
-            persistenceManager.close();
-         }
+      else if ((sessionSet = NonTransactionalState.obtainBoundary(this)) != null) {
+        sessionSet.add(this);
       }
-      finally {
-         managerThreadLocal.set(null);
-         transactionThreadLocal.set(null);
+      else if (isBoundaryEnforced()) {
+        close();
+        throw new SessionEnforcementException("Session was requested outside of any boundary enforcement (@NonTransactional or @Transactional)");
       }
-   }
+    }
+
+    return persistenceManager;
+  }
+
+  public void close () {
+
+    PersistenceManager persistenceManager;
+
+    try {
+      if ((persistenceManager = managerThreadLocal.get()) != null) {
+        persistenceManager.close();
+      }
+    }
+    finally {
+      managerThreadLocal.set(null);
+      transactionThreadLocal.set(null);
+    }
+  }
 }

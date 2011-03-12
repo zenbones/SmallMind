@@ -40,168 +40,168 @@ import org.smallmind.persistence.orm.ProxySession;
 
 public abstract class JDODao<I extends Serializable & Comparable<I>, D extends Durable<I>> extends CacheAwareORMDao<I, D> {
 
-   private JDOProxySession proxySession;
+  private JDOProxySession proxySession;
 
-   public JDODao (JDOProxySession proxySession) {
+  public JDODao (JDOProxySession proxySession) {
 
-      this(proxySession, null);
-   }
+    this(proxySession, null);
+  }
 
-   public JDODao (JDOProxySession proxySession, VectoredDao<I, D> vectoredDao) {
+  public JDODao (JDOProxySession proxySession, VectoredDao<I, D> vectoredDao) {
 
-      super(vectoredDao);
+    super(proxySession, vectoredDao);
 
-      this.proxySession = proxySession;
-   }
+    this.proxySession = proxySession;
+  }
 
-   public String getDataSource () {
+  public String getDataSource () {
 
-      return proxySession.getDataSource();
-   }
+    return proxySession.getDataSource();
+  }
 
-   public ProxySession getSession () {
+  public ProxySession getSession () {
 
-      return proxySession;
-   }
+    return proxySession;
+  }
 
-   public I getId (D object) {
+  public I getId (D object) {
 
-      return getIdClass().cast(proxySession.getPersistenceManager().getObjectId(object));
-   }
+    return getIdClass().cast(proxySession.getPersistenceManager().getObjectId(object));
+  }
 
-   public D get (I id) {
+  public D get (I id) {
 
-      return get(getManagedClass(), id);
-   }
+    return get(getManagedClass(), id);
+  }
 
-   public D get (Class<D> durableClass, I id) {
+  public D get (Class<D> durableClass, I id) {
 
-      D durable;
-      Object persistedObject;
-      VectoredDao<I, D> vectoredDao = getVectoredDao();
+    D durable;
+    Object persistedObject;
+    VectoredDao<I, D> vectoredDao = getVectoredDao();
 
-      if (vectoredDao != null) {
-         if ((durable = vectoredDao.get(durableClass, id)) != null) {
+    if (vectoredDao != null) {
+      if ((durable = vectoredDao.get(durableClass, id)) != null) {
 
-            return durable;
-         }
+        return durable;
       }
+    }
 
-      if ((persistedObject = proxySession.getPersistenceManager().getObjectId(id)) != null) {
-         durable = durableClass.cast(persistedObject);
-
-         if (vectoredDao != null) {
-
-            return vectoredDao.persist(durableClass, durable);
-         }
-
-         return durable;
-      }
-
-      return null;
-   }
-
-   public List<D> list () {
-
-      LinkedList<D> instanceList;
-      Iterator instanceIter;
-
-      instanceIter = proxySession.getPersistenceManager().getExtent(getManagedClass()).iterator();
-      instanceList = new LinkedList<D>();
-      while (instanceIter.hasNext()) {
-         instanceList.add(getManagedClass().cast(instanceIter.next()));
-      }
-
-      return instanceList;
-   }
-
-   public Iterable<D> scroll () {
-
-      return new IterableIterator<D>(proxySession.getPersistenceManager().getExtent(getManagedClass()).iterator());
-   }
-
-   public D detach (D object) {
-
-      return getManagedClass().cast(proxySession.getPersistenceManager().detachCopy(object));
-   }
-
-   public D persist (D durable) {
-
-      return persist(getManagedClass(), durable);
-   }
-
-   public D persist (Class<D> durableClass, D durable) {
-
-      D persistentDurable;
-      VectoredDao<I, D> vectoredDao = getVectoredDao();
-
-      persistentDurable = durableClass.cast(proxySession.getPersistenceManager().makePersistent(durable));
+    if ((persistedObject = proxySession.getPersistenceManager().getObjectId(id)) != null) {
+      durable = durableClass.cast(persistedObject);
 
       if (vectoredDao != null) {
 
-         return vectoredDao.persist(durableClass, persistentDurable);
+        return vectoredDao.persist(durableClass, durable);
       }
 
-      return persistentDurable;
-   }
+      return durable;
+    }
 
-   public void delete (D durable) {
+    return null;
+  }
 
-      delete(getManagedClass(), durable);
-   }
+  public List<D> list () {
 
-   public void delete (Class<D> durableClass, D durable) {
+    LinkedList<D> instanceList;
+    Iterator instanceIter;
 
-      VectoredDao<I, D> vectoredDao = getVectoredDao();
+    instanceIter = proxySession.getPersistenceManager().getExtent(getManagedClass()).iterator();
+    instanceList = new LinkedList<D>();
+    while (instanceIter.hasNext()) {
+      instanceList.add(getManagedClass().cast(instanceIter.next()));
+    }
 
-      proxySession.getPersistenceManager().deletePersistent(durable);
+    return instanceList;
+  }
 
-      if (vectoredDao != null) {
-         vectoredDao.delete(durableClass, durable);
+  public Iterable<D> scroll () {
+
+    return new IterableIterator<D>(proxySession.getPersistenceManager().getExtent(getManagedClass()).iterator());
+  }
+
+  public D detach (D object) {
+
+    return getManagedClass().cast(proxySession.getPersistenceManager().detachCopy(object));
+  }
+
+  public D persist (D durable) {
+
+    return persist(getManagedClass(), durable);
+  }
+
+  public D persist (Class<D> durableClass, D durable) {
+
+    D persistentDurable;
+    VectoredDao<I, D> vectoredDao = getVectoredDao();
+
+    persistentDurable = durableClass.cast(proxySession.getPersistenceManager().makePersistent(durable));
+
+    if (vectoredDao != null) {
+
+      return vectoredDao.persist(durableClass, persistentDurable);
+    }
+
+    return persistentDurable;
+  }
+
+  public void delete (D durable) {
+
+    delete(getManagedClass(), durable);
+  }
+
+  public void delete (Class<D> durableClass, D durable) {
+
+    VectoredDao<I, D> vectoredDao = getVectoredDao();
+
+    proxySession.getPersistenceManager().deletePersistent(durable);
+
+    if (vectoredDao != null) {
+      vectoredDao.delete(durableClass, durable);
+    }
+  }
+
+  public D find (QueryDetails queryDetails) {
+
+    Query query;
+
+    query = constructQuery(queryDetails);
+    query.setUnique(true);
+
+    return getManagedClass().cast(query.executeWithMap(queryDetails.getParameterMap()));
+  }
+
+  public List<D> list (QueryDetails queryDetails) {
+
+    return Collections.checkedList((List<D>)constructQuery(queryDetails).executeWithMap(queryDetails.getParameterMap()), getManagedClass());
+  }
+
+  private Query constructQuery (QueryDetails queryDetails) {
+
+    Query query;
+    Class[] importClasses;
+
+    query = proxySession.getPersistenceManager().newQuery(queryDetails.getQuery());
+    query.setIgnoreCache(queryDetails.getIgnoreCache());
+
+    if ((importClasses = queryDetails.getImports()) != null) {
+      if (importClasses.length > 0) {
+
+        StringBuilder importBuilder;
+
+        importBuilder = new StringBuilder("import ");
+        for (int count = 0; count < importClasses.length; count++) {
+          if (count > 0) {
+            importBuilder.append("; ");
+          }
+
+          importBuilder.append(importClasses[count].getCanonicalName());
+        }
+
+        query.declareImports(importBuilder.toString());
       }
-   }
+    }
 
-   public D find (QueryDetails queryDetails) {
-
-      Query query;
-
-      query = constructQuery(queryDetails);
-      query.setUnique(true);
-
-      return getManagedClass().cast(query.executeWithMap(queryDetails.getParameterMap()));
-   }
-
-   public List<D> list (QueryDetails queryDetails) {
-
-      return Collections.checkedList((List<D>)constructQuery(queryDetails).executeWithMap(queryDetails.getParameterMap()), getManagedClass());
-   }
-
-   private Query constructQuery (QueryDetails queryDetails) {
-
-      Query query;
-      Class[] importClasses;
-
-      query = proxySession.getPersistenceManager().newQuery(queryDetails.getQuery());
-      query.setIgnoreCache(queryDetails.getIgnoreCache());
-
-      if ((importClasses = queryDetails.getImports()) != null) {
-         if (importClasses.length > 0) {
-
-            StringBuilder importBuilder;
-
-            importBuilder = new StringBuilder("import ");
-            for (int count = 0; count < importClasses.length; count++) {
-               if (count > 0) {
-                  importBuilder.append("; ");
-               }
-
-               importBuilder.append(importClasses[count].getCanonicalName());
-            }
-
-            query.declareImports(importBuilder.toString());
-         }
-      }
-
-      return query;
-   }
+    return query;
+  }
 }

@@ -38,110 +38,98 @@ import org.smallmind.persistence.orm.aop.TransactionalState;
 
 public class JPAProxySession extends ProxySession {
 
-   private final ThreadLocal<EntityManager> managerThreadLocal = new ThreadLocal<EntityManager>();
-   private final ThreadLocal<JPAProxyTransaction> transactionThreadLocal = new ThreadLocal<JPAProxyTransaction>();
-   private final ThreadLocal<Boolean> boundaryOverrideThreadLocal = new ThreadLocal<Boolean>() {
+  private final ThreadLocal<EntityManager> managerThreadLocal = new ThreadLocal<EntityManager>();
+  private final ThreadLocal<JPAProxyTransaction> transactionThreadLocal = new ThreadLocal<JPAProxyTransaction>();
 
-      protected Boolean initialValue () {
+  private EntityManagerFactory entityManagerFactory;
 
-         return false;
-      }
-   };
+  public JPAProxySession (String dataSourceKey, EntityManagerFactory entityManagerFactory, boolean boundaryEnforced, boolean cacheEnabled) {
 
-   private EntityManagerFactory entityManagerFactory;
+    super(dataSourceKey, boundaryEnforced, cacheEnabled);
 
-   public JPAProxySession (String dataSourceKey, EntityManagerFactory entityManagerFactory, boolean enforceBoundary) {
+    this.entityManagerFactory = entityManagerFactory;
+  }
 
-      super(dataSourceKey, enforceBoundary);
+  public JPAProxyTransaction beginTransaction () {
 
-      this.entityManagerFactory = entityManagerFactory;
-   }
+    JPAProxyTransaction proxyTransaction;
 
-   public void setIgnoreBoundaryEnforcement (boolean ignoreBoundaryEnforcement) {
+    if ((proxyTransaction = transactionThreadLocal.get()) == null) {
 
-      boundaryOverrideThreadLocal.set(ignoreBoundaryEnforcement);
-   }
-
-   public JPAProxyTransaction beginTransaction () {
-
-      JPAProxyTransaction proxyTransaction;
+      EntityManager entityManager = getEntityManager();
 
       if ((proxyTransaction = transactionThreadLocal.get()) == null) {
-
-         EntityManager entityManager = getEntityManager();
-
-         if ((proxyTransaction = transactionThreadLocal.get()) == null) {
-            proxyTransaction = new JPAProxyTransaction(this, entityManager.getTransaction());
-            transactionThreadLocal.set(proxyTransaction);
-         }
+        proxyTransaction = new JPAProxyTransaction(this, entityManager.getTransaction());
+        transactionThreadLocal.set(proxyTransaction);
       }
+    }
 
-      return proxyTransaction;
-   }
+    return proxyTransaction;
+  }
 
-   public ProxyTransaction currentTransaction () {
+  public ProxyTransaction currentTransaction () {
 
-      return transactionThreadLocal.get();
-   }
+    return transactionThreadLocal.get();
+  }
 
-   public void flush () {
+  public void flush () {
 
-      EntityManager entityManager;
+    EntityManager entityManager;
 
-      (entityManager = getEntityManager()).flush();
-      entityManager.clear();
-   }
+    (entityManager = getEntityManager()).flush();
+    entityManager.clear();
+  }
 
-   public boolean isClosed () {
+  public boolean isClosed () {
 
-      EntityManager entityManager;
+    EntityManager entityManager;
 
-      return ((entityManager = managerThreadLocal.get()) == null) || (!entityManager.isOpen());
-   }
+    return ((entityManager = managerThreadLocal.get()) == null) || (!entityManager.isOpen());
+  }
 
-   public Object getNativeSession () {
+  public Object getNativeSession () {
 
-      return getEntityManager();
-   }
+    return getEntityManager();
+  }
 
-   public EntityManager getEntityManager () {
+  public EntityManager getEntityManager () {
 
-      EntityManager entityManager;
+    EntityManager entityManager;
 
-      if ((entityManager = managerThreadLocal.get()) == null) {
-         entityManager = entityManagerFactory.createEntityManager();
-         managerThreadLocal.set(entityManager);
+    if ((entityManager = managerThreadLocal.get()) == null) {
+      entityManager = entityManagerFactory.createEntityManager();
+      managerThreadLocal.set(entityManager);
 
-         RollbackAwareBoundarySet<ProxyTransaction> transactionSet;
-         BoundarySet<ProxySession> sessionSet;
+      RollbackAwareBoundarySet<ProxyTransaction> transactionSet;
+      BoundarySet<ProxySession> sessionSet;
 
-         if ((transactionSet = TransactionalState.obtainBoundary(this)) != null) {
-            transactionSet.add(beginTransaction());
-         }
-         else if ((sessionSet = NonTransactionalState.obtainBoundary(this)) != null) {
-            sessionSet.add(this);
-         }
-         else if ((!boundaryOverrideThreadLocal.get()) && willEnforceBoundary()) {
-            close();
-            throw new SessionEnforcementException("Session was requested outside of any boundary enforcement (@NonTransactional or @Transactional)");
-         }
+      if ((transactionSet = TransactionalState.obtainBoundary(this)) != null) {
+        transactionSet.add(beginTransaction());
       }
-
-      return entityManager;
-   }
-
-   public void close () {
-
-      EntityManager entityManager;
-
-      try {
-         if ((entityManager = managerThreadLocal.get()) != null) {
-            entityManager.close();
-         }
+      else if ((sessionSet = NonTransactionalState.obtainBoundary(this)) != null) {
+        sessionSet.add(this);
       }
-      finally {
-         managerThreadLocal.set(null);
-         transactionThreadLocal.set(null);
+      else if (isBoundaryEnforced()) {
+        close();
+        throw new SessionEnforcementException("Session was requested outside of any boundary enforcement (@NonTransactional or @Transactional)");
       }
-   }
+    }
+
+    return entityManager;
+  }
+
+  public void close () {
+
+    EntityManager entityManager;
+
+    try {
+      if ((entityManager = managerThreadLocal.get()) != null) {
+        entityManager.close();
+      }
+    }
+    finally {
+      managerThreadLocal.set(null);
+      transactionThreadLocal.set(null);
+    }
+  }
 }

@@ -28,41 +28,71 @@ package org.smallmind.persistence.orm;
 
 public abstract class ProxySession {
 
-   private String dataSource;
-   private boolean enforceBoundary;
+  private final ThreadLocal<Boolean> boundaryEnforcedThreadLocal = new ThreadLocal<Boolean>() {
 
-   public ProxySession (String dataSource, boolean enforceBoundary) {
+    protected Boolean initialValue () {
 
-      this.dataSource = dataSource;
-      this.enforceBoundary = enforceBoundary;
-   }
+      return boundaryEnforced;
+    }
+  };
+  private final ThreadLocal<Boolean> cacheEnabledThreadLocal = new ThreadLocal<Boolean>() {
 
-   public void register () {
+    protected Boolean initialValue () {
 
-      SessionManager.register(dataSource, this);
-   }
+      return cacheEnabled;
+    }
+  };
 
-   public String getDataSource () {
+  private String dataSource;
+  private boolean boundaryEnforced;
+  private boolean cacheEnabled;
 
-      return dataSource;
-   }
+  public ProxySession (String dataSource, boolean boundaryEnforced, boolean cacheEnabled) {
 
-   public boolean willEnforceBoundary () {
+    this.dataSource = dataSource;
+    this.boundaryEnforced = boundaryEnforced;
+    this.cacheEnabled = cacheEnabled;
+  }
 
-      return enforceBoundary;
-   }
+  public void register () {
 
-   public abstract Object getNativeSession ();
+    SessionManager.register(dataSource, this);
+  }
 
-   public abstract void setIgnoreBoundaryEnforcement (boolean ignoreBoundaryEnforcement);
+  public String getDataSource () {
 
-   public abstract ProxyTransaction beginTransaction ();
+    return dataSource;
+  }
 
-   public abstract ProxyTransaction currentTransaction ();
+  public boolean isBoundaryEnforced () {
 
-   public abstract void flush ();
+    return boundaryEnforcedThreadLocal.get();
+  }
 
-   public abstract boolean isClosed ();
+  public void setBoundaryEnforcedOverride (boolean boundaryEnforced) {
 
-   public abstract void close ();
+    boundaryEnforcedThreadLocal.set(boundaryEnforced);
+  }
+
+  public boolean isCacheEnabled () {
+
+    return cacheEnabledThreadLocal.get();
+  }
+
+  public void setCacheEnabled (boolean cacheEnabled) {
+
+    cacheEnabledThreadLocal.set(cacheEnabled);
+  }
+
+  public abstract Object getNativeSession ();
+
+  public abstract ProxyTransaction beginTransaction ();
+
+  public abstract ProxyTransaction currentTransaction ();
+
+  public abstract void flush ();
+
+  public abstract boolean isClosed ();
+
+  public abstract void close ();
 }
