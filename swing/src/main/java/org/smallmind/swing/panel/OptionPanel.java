@@ -66,7 +66,7 @@ public abstract class OptionPanel extends JPanel {
    public void closeParent () {
 
       if (!initialized) {
-         throw new IllegalStateException("Parent dialog was never initalized");
+         throw new IllegalStateException("Parent dialog was never initialized");
       }
 
       optionDialog.windowClosing(null);
