@@ -130,7 +130,7 @@ public class OptionDialog extends JDialog implements WindowListener {
     listenerList = new WeakEventListenerList<DialogListener>();
 
     try {
-      optionImage = new ImageIcon(Thread.currentThread().getContextClassLoader().getResource("org/smallmind/swing//dialog_" + optionType.getImageType() + ".png"));
+      optionImage = new ImageIcon(Thread.currentThread().getContextClassLoader().getResource("org/smallmind/swing/dialog_" + optionType.getImageType() + ".png"));
     }
     catch (Exception i) {
       optionImage = null;
