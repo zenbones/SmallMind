@@ -28,7 +28,7 @@ package org.smallmind.swing.dialog;
 
 public enum OptionType {
 
-   INFO("Info Message", "Info"), WARNING("Warning Message", "Warning"), QUESTION("Question", "Question"), STOP("Error Message", "Stop"), BUG("Bug", "Bug"), PROGRESS("Progress", "Progress");
+   INFO("Info Message", "info"), WARNING("Warning Message", "warning"), QUESTION("Question", "question"), STOP("Error Message", "stop"), BUG("Bug", "bug"), PROGRESS("Progress", "progress");
 
    private final String title;
    private final String imageType;

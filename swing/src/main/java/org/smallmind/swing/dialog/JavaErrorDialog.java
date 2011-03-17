@@ -49,172 +49,178 @@ import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTextArea;
 import javax.swing.KeyStroke;
+import org.smallmind.nutsnbolts.util.WeakEventListenerList;
 import org.smallmind.swing.event.ErrorEvent;
 import org.smallmind.swing.event.ErrorListener;
-import org.smallmind.nutsnbolts.util.WeakEventListenerList;
 
 public class JavaErrorDialog extends javax.swing.JDialog implements ActionListener, WindowListener {
 
-   private static final GridBagLayout GRID_BAG_LAYOUT = new GridBagLayout();
+  private static final GridBagLayout GRID_BAG_LAYOUT = new GridBagLayout();
 
-   private static ImageIcon BUG_ICON;
-   private static final int DIALOG_WIDTH = 600;
-   private static final int DIALOG_HEIGHT = 300;
+  private static ImageIcon BUG_ICON;
+  private static final int DIALOG_WIDTH = 600;
+  private static final int DIALOG_HEIGHT = 300;
 
-   private WeakEventListenerList<ErrorListener> listenerList;
-   private Object source;
-   private Exception exception;
+  private WeakEventListenerList<ErrorListener> listenerList;
+  private Object source;
+  private Exception exception;
 
-   static {
+  static {
 
-      BUG_ICON = new ImageIcon(ClassLoader.getSystemResource("public/images/dialogBug.png"));
-   }
+    BUG_ICON = new ImageIcon(Thread.currentThread().getContextClassLoader().getResource("org/smallmind/swing//dialogBug.png"));
+  }
 
-   public static void showJavaErrorDialog (Frame parentFrame, Object source, Exception exception) {
+  public static void showJavaErrorDialog (Frame parentFrame, Object source, Exception exception) {
 
-      JavaErrorDialog errorDialog = new JavaErrorDialog(parentFrame, source, exception);
+    JavaErrorDialog errorDialog = new JavaErrorDialog(parentFrame, source, exception);
 
-      errorDialog.setModal(true);
-      errorDialog.setVisible(true);
-   }
+    errorDialog.setModal(true);
+    errorDialog.setVisible(true);
+  }
 
-   public JavaErrorDialog (Frame parentFrame, Object source, Exception exception) {
+  public JavaErrorDialog (Frame parentFrame, Object source, Exception exception) {
 
-      super(parentFrame, "Java Error Message...");
+    super(parentFrame, "Java Error Message...");
 
-      StringWriter errorBuffer;
-      PrintWriter errorWriter;
-      GridBagConstraints constraint;
-      Container contentPane;
-      JPanel dialogPanel;
-      JPanel workPanel;
-      JLabel exceptionIconLabel;
-      JScrollPane warningScroll;
-      JTextArea exceptionTextArea;
-      JButton continueButton;
-      String exceptionText;
+    StringWriter errorBuffer;
+    PrintWriter errorWriter;
+    GridBagConstraints constraint;
+    Container contentPane;
+    JPanel dialogPanel;
+    JPanel workPanel;
+    JLabel exceptionIconLabel;
+    JScrollPane warningScroll;
+    JTextArea exceptionTextArea;
+    JButton continueButton;
+    String exceptionText;
 
-      this.source = source;
-      this.exception = exception;
+    this.source = source;
+    this.exception = exception;
 
-      listenerList = new WeakEventListenerList<ErrorListener>();
-      addWindowListener(this);
+    listenerList = new WeakEventListenerList<ErrorListener>();
+    addWindowListener(this);
 
-      continueButton = new JButton("Continue");
-      continueButton.registerKeyboardAction(this, "Continue", KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0, true), JComponent.WHEN_IN_FOCUSED_WINDOW);
-      continueButton.addActionListener(this);
+    continueButton = new JButton("Continue");
+    continueButton.registerKeyboardAction(this, "Continue", KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0, true), JComponent.WHEN_IN_FOCUSED_WINDOW);
+    continueButton.addActionListener(this);
 
-      setSize(DIALOG_WIDTH, DIALOG_HEIGHT);
+    setSize(DIALOG_WIDTH, DIALOG_HEIGHT);
 
-      exceptionIconLabel = new JLabel(BUG_ICON);
+    exceptionIconLabel = new JLabel(BUG_ICON);
 
-      errorBuffer = new StringWriter();
-      errorWriter = new PrintWriter(errorBuffer);
-      exception.printStackTrace(errorWriter);
-      exceptionText = errorBuffer.getBuffer().toString();
-      errorWriter.close();
+    errorBuffer = new StringWriter();
+    errorWriter = new PrintWriter(errorBuffer);
+    exception.printStackTrace(errorWriter);
+    exceptionText = errorBuffer.getBuffer().toString();
+    errorWriter.close();
 
-      exceptionTextArea = new JTextArea(exceptionText, 30, 75);
-      exceptionTextArea.setEditable(false);
-      exceptionTextArea.setBorder(BorderFactory.createEmptyBorder(3, 3, 0, 0));
+    exceptionTextArea = new JTextArea(exceptionText, 30, 75);
+    exceptionTextArea.setEditable(false);
+    exceptionTextArea.setBorder(BorderFactory.createEmptyBorder(3, 3, 0, 0));
 
-      warningScroll = new JScrollPane(exceptionTextArea);
-      warningScroll.setBorder(BorderFactory.createLoweredBevelBorder());
+    warningScroll = new JScrollPane(exceptionTextArea);
+    warningScroll.setBorder(BorderFactory.createLoweredBevelBorder());
 
-      dialogPanel = new JPanel(GRID_BAG_LAYOUT);
-      workPanel = new JPanel(GRID_BAG_LAYOUT);
+    dialogPanel = new JPanel(GRID_BAG_LAYOUT);
+    workPanel = new JPanel(GRID_BAG_LAYOUT);
 
-      constraint = new GridBagConstraints();
+    constraint = new GridBagConstraints();
 
-      constraint.anchor = GridBagConstraints.NORTH;
-      constraint.fill = GridBagConstraints.BOTH;
-      constraint.insets = new Insets(0, 0, 0, 0);
-      constraint.gridx = 0;
-      constraint.gridy = 0;
-      constraint.weightx = 1;
-      constraint.weighty = 1;
-      workPanel.add(warningScroll, constraint);
+    constraint.anchor = GridBagConstraints.NORTH;
+    constraint.fill = GridBagConstraints.BOTH;
+    constraint.insets = new Insets(0, 0, 0, 0);
+    constraint.gridx = 0;
+    constraint.gridy = 0;
+    constraint.weightx = 1;
+    constraint.weighty = 1;
+    workPanel.add(warningScroll, constraint);
 
-      constraint.anchor = GridBagConstraints.EAST;
-      constraint.fill = GridBagConstraints.NONE;
-      constraint.insets = new Insets(15, 0, 0, 0);
-      constraint.gridx = 0;
-      constraint.gridy = 1;
-      constraint.weightx = 0;
-      constraint.weighty = 0;
-      workPanel.add(continueButton, constraint);
+    constraint.anchor = GridBagConstraints.EAST;
+    constraint.fill = GridBagConstraints.NONE;
+    constraint.insets = new Insets(15, 0, 0, 0);
+    constraint.gridx = 0;
+    constraint.gridy = 1;
+    constraint.weightx = 0;
+    constraint.weighty = 0;
+    workPanel.add(continueButton, constraint);
 
-      constraint.anchor = GridBagConstraints.NORTHWEST;
-      constraint.fill = GridBagConstraints.NONE;
-      constraint.insets = new Insets(5, 5, 5, 0);
-      constraint.gridx = 0;
-      constraint.gridy = 0;
-      constraint.weightx = 0;
-      constraint.weighty = 0;
-      dialogPanel.add(exceptionIconLabel, constraint);
+    constraint.anchor = GridBagConstraints.NORTHWEST;
+    constraint.fill = GridBagConstraints.NONE;
+    constraint.insets = new Insets(5, 5, 5, 0);
+    constraint.gridx = 0;
+    constraint.gridy = 0;
+    constraint.weightx = 0;
+    constraint.weighty = 0;
+    dialogPanel.add(exceptionIconLabel, constraint);
 
-      constraint.anchor = GridBagConstraints.NORTHEAST;
-      constraint.fill = GridBagConstraints.BOTH;
-      constraint.insets = new Insets(5, 15, 5, 5);
-      constraint.gridx = 1;
-      constraint.gridy = 0;
-      constraint.weightx = 1;
-      constraint.weighty = 1;
-      dialogPanel.add(workPanel, constraint);
+    constraint.anchor = GridBagConstraints.NORTHEAST;
+    constraint.fill = GridBagConstraints.BOTH;
+    constraint.insets = new Insets(5, 15, 5, 5);
+    constraint.gridx = 1;
+    constraint.gridy = 0;
+    constraint.weightx = 1;
+    constraint.weighty = 1;
+    dialogPanel.add(workPanel, constraint);
 
-      contentPane = getContentPane();
-      contentPane.setLayout(new GridLayout(1, 0));
-      contentPane.add(dialogPanel);
-   }
+    contentPane = getContentPane();
+    contentPane.setLayout(new GridLayout(1, 0));
+    contentPane.add(dialogPanel);
+  }
 
-   public synchronized void addErrorListener (ErrorListener errorListener) {
+  public synchronized void addErrorListener (ErrorListener errorListener) {
 
-      listenerList.addListener(errorListener);
-   }
+    listenerList.addListener(errorListener);
+  }
 
-   public synchronized void removErrorListener (ErrorListener errorListener) {
+  public synchronized void removErrorListener (ErrorListener errorListener) {
 
-      listenerList.removeListener(errorListener);
-   }
+    listenerList.removeListener(errorListener);
+  }
 
-   public void actionPerformed (ActionEvent a) {
+  public void actionPerformed (ActionEvent a) {
 
-      windowClosing(null);
-   }
+    windowClosing(null);
+  }
 
-   public void windowOpened (WindowEvent w) {
-   }
+  public void windowOpened (WindowEvent w) {
 
-   public void windowClosing (WindowEvent w) {
+  }
 
-      Iterator<ErrorListener> listenerIter = listenerList.getListeners();
-      ErrorEvent errorEvent;
+  public void windowClosing (WindowEvent w) {
 
-      setVisible(false);
+    Iterator<ErrorListener> listenerIter = listenerList.getListeners();
+    ErrorEvent errorEvent;
 
-      if (source != null) {
-         errorEvent = new ErrorEvent(source, exception);
-         while (listenerIter.hasNext()) {
-            listenerIter.next().errorHandler(errorEvent);
-         }
+    setVisible(false);
+
+    if (source != null) {
+      errorEvent = new ErrorEvent(source, exception);
+      while (listenerIter.hasNext()) {
+        listenerIter.next().errorHandler(errorEvent);
       }
+    }
 
-      dispose();
-   }
+    dispose();
+  }
 
-   public void windowClosed (WindowEvent w) {
-   }
+  public void windowClosed (WindowEvent w) {
 
-   public void windowIconified (WindowEvent w) {
-   }
+  }
 
-   public void windowDeiconified (WindowEvent w) {
-   }
+  public void windowIconified (WindowEvent w) {
 
-   public void windowActivated (WindowEvent w) {
-   }
+  }
 
-   public void windowDeactivated (WindowEvent w) {
-   }
+  public void windowDeiconified (WindowEvent w) {
+
+  }
+
+  public void windowActivated (WindowEvent w) {
+
+  }
+
+  public void windowDeactivated (WindowEvent w) {
+
+  }
 
 }
