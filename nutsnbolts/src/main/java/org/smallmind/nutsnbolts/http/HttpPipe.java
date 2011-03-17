@@ -34,101 +34,115 @@ import org.smallmind.nutsnbolts.lang.UnknownSwitchCaseException;
 
 public class HttpPipe {
 
-   private static enum State {WRITE, READ, TERMINATED}
+  private static enum State {START, WRITE, READ, TERMINATED}
 
-   private HttpURLConnection urlConnection;
-   private OutputStream httpOutput;
-   private InputStream httpInput;
-   private State state;
+  private HttpURLConnection urlConnection;
+  private OutputStream httpOutput;
+  private InputStream httpInput;
+  private State state;
 
-   public HttpPipe (HttpURLConnection urlConnection)
-      throws IOException {
+  public HttpPipe (HttpURLConnection urlConnection)
+    throws IOException {
 
-      this.urlConnection = urlConnection;
+    this.urlConnection = urlConnection;
 
-      urlConnection.connect();
-      state = urlConnection.getDoOutput() ? State.WRITE : urlConnection.getDoInput() ? State.READ : State.TERMINATED;
+  }
 
-      switch (state) {
-         case WRITE:
-            httpOutput = urlConnection.getOutputStream();
-            break;
-         case READ:
-            httpInput = urlConnection.getInputStream();
-            break;
-         case TERMINATED:
-            urlConnection.disconnect();
-            break;
-         default:
-            throw new UnknownSwitchCaseException(state.name());
+  public synchronized HttpPipe setRequestHeader (String key, String value) {
+
+    urlConnection.setRequestProperty(key, value);
+
+    return this;
+  }
+
+  public synchronized HttpPipe connect ()
+    throws IOException {
+
+    urlConnection.connect();
+    state = urlConnection.getDoOutput() ? State.WRITE : urlConnection.getDoInput() ? State.READ : State.TERMINATED;
+
+    switch (state) {
+      case WRITE:
+        httpOutput = urlConnection.getOutputStream();
+        break;
+      case READ:
+        httpInput = urlConnection.getInputStream();
+        break;
+      case TERMINATED:
+        urlConnection.disconnect();
+        break;
+      default:
+        throw new UnknownSwitchCaseException(state.name());
+    }
+
+    return this;
+  }
+
+  public synchronized HttpPipe write (String body)
+    throws IOException {
+
+    if (!state.equals(State.WRITE)) {
+      throw new IllegalStateException("Pipe's state does not allow writing");
+    }
+
+    httpOutput.write(body.getBytes());
+    httpOutput.flush();
+
+    return this;
+  }
+
+  public synchronized void doneWriting ()
+    throws IOException {
+
+    if (!state.equals(State.WRITE)) {
+      throw new IllegalStateException("Pipe's state does not allow writing");
+    }
+
+    httpOutput.close();
+
+    state = urlConnection.getDoInput() ? State.READ : State.TERMINATED;
+
+    if (state.equals(State.READ)) {
+      httpInput = urlConnection.getInputStream();
+    }
+    else {
+      urlConnection.disconnect();
+    }
+  }
+
+  public synchronized int read (byte[] buffer)
+    throws IOException {
+
+    int bytesRead = 0;
+
+    if (!state.equals(State.READ)) {
+      throw new IllegalStateException("Pipe's state does not allow reading");
+    }
+
+    try {
+      return (bytesRead = httpInput.read(buffer));
+    }
+    finally {
+      if (bytesRead < 0) {
+        doneReading();
       }
-   }
+    }
+  }
 
-   public synchronized HttpPipe write (String body)
-      throws IOException {
+  public synchronized void doneReading ()
+    throws IOException {
 
-      if (!state.equals(State.WRITE)) {
-         throw new IllegalStateException("Pipe's state does not allow writing");
-      }
+    if (!state.equals(State.READ)) {
+      throw new IllegalStateException("Pipe's state does not allow reading");
+    }
 
-      httpOutput.write(body.getBytes());
-      httpOutput.flush();
+    state = State.TERMINATED;
 
-      return this;
-   }
-
-   public synchronized void doneWriting ()
-      throws IOException {
-
-      if (!state.equals(State.WRITE)) {
-         throw new IllegalStateException("Pipe's state does not allow writing");
-      }
-
-      httpOutput.close();
-
-      state = urlConnection.getDoInput() ? State.READ : State.TERMINATED;
-
-      if (state.equals(State.READ)) {
-         httpInput = urlConnection.getInputStream();
-      }
-      else {
-         urlConnection.disconnect();
-      }
-   }
-
-   public synchronized int read (byte[] buffer)
-      throws IOException {
-
-      int bytesRead = 0;
-
-      if (!state.equals(State.READ)) {
-         throw new IllegalStateException("Pipe's state does not allow reading");
-      }
-
-      try {
-         return (bytesRead = httpInput.read(buffer));
-      }
-      finally {
-         if (bytesRead < 0) {
-            doneReading();
-         }
-      }
-   }
-
-   public synchronized void doneReading ()
-      throws IOException {
-
-      if (!state.equals(State.READ)) {
-         throw new IllegalStateException("Pipe's state does not allow reading");
-      }
-
-      state = State.TERMINATED;
-
-      try {
-         httpInput.close();
-      }
-      finally {
-         urlConnection.disconnect();
-      }
-   }
+    try {
+      httpInput.close();
+    }
+    finally {
+      urlConnection.disconnect();
+    }
+  }
 }
