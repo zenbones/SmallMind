@@ -4,7 +4,7 @@
    <parent>
       <groupId>org.smallmind</groupId>
       <artifactId>smallmind-scribe</artifactId>
-      <version>1.0.15</version>
+      <version>1.0.16</version>
    </parent>
    <artifactId>scribe-slf4j</artifactId>
    <name>Scribe-SLF4J</name>
