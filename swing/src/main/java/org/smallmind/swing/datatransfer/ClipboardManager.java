@@ -1,22 +1,22 @@
 /*
  * Copyright (c) 2007, 2008, 2009, 2010 David Berkman
- * 
+ *
  * This file is part of the SmallMind Code Project.
- * 
+ *
  * The SmallMind Code Project is free software, you can redistribute
  * it and/or modify it under the terms of GNU Affero General Public
  * License as published by the Free Software Foundation, either version 3
  * of the License, or (at your option) any later version.
- * 
+ *
  * The SmallMind Code Project is distributed in the hope that it will
  * be useful, but WITHOUT ANY WARRANTY; without even the implied warranty
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * General Public License for more details.
- * 
+ *
  * You should have received a copy of the the GNU Affero General Public
  * License, along with The SmallMind Code Project. If not, see
  * <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under the GNU Affero GPL version 3 section 7
  * ------------------------------------------------------------------
  * If you modify this Program, or any covered work, by linking or
@@ -42,131 +42,132 @@ import org.smallmind.swing.event.ClipboardListener;
 
 public class ClipboardManager implements ClipboardOwner, FocusListener {
 
-   private Clipboard systemClipboard;
-   private Action cutAction;
-   private Action copyAction;
-   private Action pasteAction;
-   private Component selectedComponent;
-   private HashMap<Component, ClipboardListener> listenerMap;
+  private static final Clipboard SYSTEM_CLIPBOARD = Toolkit.getDefaultToolkit().getSystemClipboard();
 
-   public ClipboardManager () {
+  private Action cutAction;
+  private Action copyAction;
+  private Action pasteAction;
+  private Component selectedComponent;
+  private HashMap<Component, ClipboardListener> listenerMap;
 
-      cutAction = new CutAction(this, "Cut");
-      copyAction = new CopyAction(this, "Copy");
-      pasteAction = new PasteAction(this, "Paste");
+  public ClipboardManager () {
 
-      systemClipboard = Toolkit.getDefaultToolkit().getSystemClipboard();
-      listenerMap = new HashMap<Component, ClipboardListener>();
-   }
+    cutAction = new CutAction(this, "Cut");
+    copyAction = new CopyAction(this, "Copy");
+    pasteAction = new PasteAction(this, "Paste");
 
-   public Action getCutAction () {
+    listenerMap = new HashMap<Component, ClipboardListener>();
+  }
 
-      return cutAction;
-   }
+  public Action getCutAction () {
 
-   public Action getCopyAction () {
+    return cutAction;
+  }
 
-      return copyAction;
-   }
+  public Action getCopyAction () {
 
-   public Action getPasteAction () {
+    return copyAction;
+  }
 
-      return pasteAction;
-   }
+  public Action getPasteAction () {
 
-   public synchronized void addClipboardListener (ClipboardListener clipboardListener, Component clipboardUser) {
+    return pasteAction;
+  }
 
-      clipboardUser.addFocusListener(this);
-      listenerMap.put(clipboardUser, clipboardListener);
-   }
+  public synchronized void addClipboardListener (ClipboardListener clipboardListener, Component clipboardUser) {
 
-   public synchronized void removeClipboardListener (ClipboardListener clipboardListener, Component clipboardUser) {
+    clipboardUser.addFocusListener(this);
+    listenerMap.put(clipboardUser, clipboardListener);
+  }
 
-      clipboardUser.removeFocusListener(this);
-      listenerMap.remove(clipboardUser);
-   }
+  public synchronized void removeClipboardListener (ClipboardListener clipboardListener, Component clipboardUser) {
 
-   public void focusGained (FocusEvent focusEvent) {
+    clipboardUser.removeFocusListener(this);
+    listenerMap.remove(clipboardUser);
+  }
 
-      selectedComponent = (Component)focusEvent.getSource();
-   }
+  public void focusGained (FocusEvent focusEvent) {
 
-   public void focusLost (FocusEvent focusEvent) {
+    selectedComponent = (Component)focusEvent.getSource();
+  }
 
-      selectedComponent = null;
-   }
+  public void focusLost (FocusEvent focusEvent) {
 
-   public void setContents (Transferable transferable) {
+    selectedComponent = null;
+  }
 
-      systemClipboard.setContents(transferable, this);
-   }
+  public void setContents (Transferable transferable) {
 
-   public void lostOwnership (Clipboard clipboard, Transferable contents) {
-   }
+    SYSTEM_CLIPBOARD.setContents(transferable, this);
+  }
 
-   public class CutAction extends AbstractAction {
+  public void lostOwnership (Clipboard clipboard, Transferable contents) {
 
-      private ClipboardManager clipboardManager;
+  }
 
-      public CutAction (ClipboardManager clipboardManager, String name) {
+  public class CutAction extends AbstractAction {
 
-         super(name);
+    private ClipboardManager clipboardManager;
 
-         this.clipboardManager = clipboardManager;
+    public CutAction (ClipboardManager clipboardManager, String name) {
+
+      super(name);
+
+      this.clipboardManager = clipboardManager;
+    }
+
+    public void actionPerformed (ActionEvent actionEvent) {
+
+      ClipboardEvent clipboardEvent;
+
+      if (selectedComponent != null) {
+        (listenerMap.get(selectedComponent)).cutAction(new ClipboardEvent(clipboardManager, selectedComponent));
       }
+    }
 
-      public void actionPerformed (ActionEvent actionEvent) {
+  }
 
-         ClipboardEvent clipboardEvent;
+  public class CopyAction extends AbstractAction {
 
-         if (selectedComponent != null) {
-            (listenerMap.get(selectedComponent)).cutAction(new ClipboardEvent(clipboardManager, selectedComponent));
-         }
+    private ClipboardManager clipboardManager;
+
+    public CopyAction (ClipboardManager clipboardManager, String name) {
+
+      super(name);
+
+      this.clipboardManager = clipboardManager;
+    }
+
+    public void actionPerformed (ActionEvent actionEvent) {
+
+      if (selectedComponent != null) {
+        (listenerMap.get(selectedComponent)).copyAction(new ClipboardEvent(clipboardManager, selectedComponent));
       }
+    }
 
-   }
+  }
 
-   public class CopyAction extends AbstractAction {
+  public class PasteAction extends AbstractAction {
 
-      private ClipboardManager clipboardManager;
+    private ClipboardManager clipboardManager;
 
-      public CopyAction (ClipboardManager clipboardManager, String name) {
+    public PasteAction (ClipboardManager clipboardManager, String name) {
 
-         super(name);
+      super(name);
 
-         this.clipboardManager = clipboardManager;
+      this.clipboardManager = clipboardManager;
+    }
+
+    public void actionPerformed (ActionEvent actionEvent) {
+
+      Transferable transferable;
+
+      transferable = SYSTEM_CLIPBOARD.getContents(clipboardManager);
+      if (selectedComponent != null) {
+        (listenerMap.get(selectedComponent)).pasteAction(new ClipboardEvent(clipboardManager, selectedComponent, transferable));
       }
+    }
 
-      public void actionPerformed (ActionEvent actionEvent) {
-
-         if (selectedComponent != null) {
-            (listenerMap.get(selectedComponent)).copyAction(new ClipboardEvent(clipboardManager, selectedComponent));
-         }
-      }
-
-   }
-
-   public class PasteAction extends AbstractAction {
-
-      private ClipboardManager clipboardManager;
-
-      public PasteAction (ClipboardManager clipboardManager, String name) {
-
-         super(name);
-
-         this.clipboardManager = clipboardManager;
-      }
-
-      public void actionPerformed (ActionEvent actionEvent) {
-
-         Transferable transferable;
-
-         transferable = systemClipboard.getContents(clipboardManager);
-         if (selectedComponent != null) {
-            (listenerMap.get(selectedComponent)).pasteAction(new ClipboardEvent(clipboardManager, selectedComponent, transferable));
-         }
-      }
-
-   }
+  }
 
 }
