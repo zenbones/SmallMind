@@ -156,7 +156,7 @@ public class MenuXmlParser implements ContentHandler {
         menu.setMnemonic(VK_CODES[ALPHABET.indexOf(mnemonic.charAt(0))]);
       }
       if ((icon = atts.getValue("icon")) != null) {
-        menu.setIcon(new ImageIcon(ClassLoader.getSystemResource(icon)));
+        menu.setIcon(new ImageIcon(Thread.currentThread().getContextClassLoader().getResource(icon)));
       }
 
       pushMenuItem(menu);
@@ -177,7 +177,7 @@ public class MenuXmlParser implements ContentHandler {
         menuItem.setMnemonic(VK_CODES[ALPHABET.indexOf(mnemonic.charAt(0))]);
       }
       if ((icon = atts.getValue("icon")) != null) {
-        menuItem.setIcon(new ImageIcon(ClassLoader.getSystemResource(icon)));
+        menuItem.setIcon(new ImageIcon(Thread.currentThread().getContextClassLoader().getResource(icon)));
       }
 
       menuItem.addActionListener(actionProvider.getDefaultActionListener());

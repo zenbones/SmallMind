@@ -32,7 +32,7 @@ import org.smallmind.nutsnbolts.resource.Resource;
 public class SmallMindProtocolResolver implements ProtocolResolver {
 
    private static SmallMindProtocolResolver PROTOCOL_RESOLVER;
-   private static final String INTERNAL_PROTOCOL = "smallmind://";
+   private static final String INTERNAL_PROTOCOL = "http://www.smallmind.org/schema/";
 
    public synchronized static SmallMindProtocolResolver getInstance () {
 
@@ -46,7 +46,7 @@ public class SmallMindProtocolResolver implements ProtocolResolver {
       throws ProtocolResolutionException {
 
       if (systemId.startsWith(INTERNAL_PROTOCOL)) {
-         return new ClasspathResource(systemId.substring(INTERNAL_PROTOCOL.length()));
+         return new ClasspathResource("org/smallmind/" + systemId.substring(INTERNAL_PROTOCOL.length()));
       }
 
       return null;
