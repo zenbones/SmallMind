@@ -50,182 +50,191 @@ import org.xml.sax.SAXException;
 
 public class MenuXmlParser implements ContentHandler {
 
-   private static final String ALPHABET = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
-   private static final int[] VK_CODES = {KeyEvent.VK_A, KeyEvent.VK_B, KeyEvent.VK_C, KeyEvent.VK_D, KeyEvent.VK_E, KeyEvent.VK_F, KeyEvent.VK_G, KeyEvent.VK_H, KeyEvent.VK_I, KeyEvent.VK_J, KeyEvent.VK_K, KeyEvent.VK_L, KeyEvent.VK_M, KeyEvent.VK_N, KeyEvent.VK_O, KeyEvent.VK_P, KeyEvent.VK_Q, KeyEvent.VK_R, KeyEvent.VK_S, KeyEvent.VK_T, KeyEvent.VK_U, KeyEvent.VK_V, KeyEvent.VK_W, KeyEvent.VK_X, KeyEvent.VK_Y, KeyEvent.VK_Z};
+  private static final String ALPHABET = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+  private static final int[] VK_CODES = {KeyEvent.VK_A, KeyEvent.VK_B, KeyEvent.VK_C, KeyEvent.VK_D, KeyEvent.VK_E, KeyEvent.VK_F, KeyEvent.VK_G, KeyEvent.VK_H, KeyEvent.VK_I, KeyEvent.VK_J, KeyEvent.VK_K, KeyEvent.VK_L, KeyEvent.VK_M, KeyEvent.VK_N, KeyEvent.VK_O, KeyEvent.VK_P, KeyEvent.VK_Q, KeyEvent.VK_R, KeyEvent.VK_S, KeyEvent.VK_T, KeyEvent.VK_U, KeyEvent.VK_V, KeyEvent.VK_W, KeyEvent.VK_X, KeyEvent.VK_Y, KeyEvent.VK_Z};
 
-   private MenuModel menuModel;
-   private MenuActionProvider actionProvider;
-   private LinkedList<JComponent> menuStack;
+  private MenuModel menuModel;
+  private MenuActionProvider actionProvider;
+  private LinkedList<JComponent> menuStack;
 
-   public static MenuModel parse (InputSource inputSource, MenuActionProvider actionProvider)
-      throws IOException, SAXException, ParserConfigurationException {
+  public static MenuModel parse (InputSource inputSource, MenuActionProvider actionProvider)
+    throws IOException, SAXException, ParserConfigurationException {
 
-      SAXParserFactory parserFactory;
-      SAXParser parser;
-      MenuXmlParser contentHandler;
-      MenuModel menuModel;
+    SAXParserFactory parserFactory;
+    SAXParser parser;
+    MenuXmlParser contentHandler;
+    MenuModel menuModel;
 
-      parserFactory = SAXParserFactory.newInstance();
-      parserFactory.setValidating(true);
-      parserFactory.setNamespaceAware(true);
-      parser = parserFactory.newSAXParser();
+    parserFactory = SAXParserFactory.newInstance();
+    parserFactory.setValidating(true);
+    parserFactory.setNamespaceAware(true);
+    parser = parserFactory.newSAXParser();
 
-      menuModel = new MenuModel();
-      contentHandler = new MenuXmlParser(menuModel, actionProvider);
+    menuModel = new MenuModel();
+    contentHandler = new MenuXmlParser(menuModel, actionProvider);
 
-      parser.getXMLReader().setContentHandler(contentHandler);
-      parser.getXMLReader().setEntityResolver(XMLEntityResolver.getInstance());
-      parser.getXMLReader().setErrorHandler(XMLErrorHandler.getInstance());
-      parser.getXMLReader().parse(inputSource);
+    parser.getXMLReader().setProperty("http://java.sun.com/xml/jaxp/properties/schemaLanguage", "http://www.w3.org/2001/XMLSchema");
+    parser.getXMLReader().setContentHandler(contentHandler);
+    parser.getXMLReader().setEntityResolver(XMLEntityResolver.getInstance());
+    parser.getXMLReader().setErrorHandler(XMLErrorHandler.getInstance());
+    parser.getXMLReader().parse(inputSource);
 
-      return menuModel;
-   }
+    return menuModel;
+  }
 
-   private MenuXmlParser (MenuModel menuModel, MenuActionProvider actionProvider) {
+  private MenuXmlParser (MenuModel menuModel, MenuActionProvider actionProvider) {
 
-      this.menuModel = menuModel;
-      this.actionProvider = actionProvider;
+    this.menuModel = menuModel;
+    this.actionProvider = actionProvider;
 
-      menuStack = new LinkedList<JComponent>();
-   }
+    menuStack = new LinkedList<JComponent>();
+  }
 
-   public void setDocumentLocator (Locator locator) {
-   }
+  public void setDocumentLocator (Locator locator) {
 
-   public void startDocument ()
-      throws SAXException {
-   }
+  }
 
-   public void endDocument ()
-      throws SAXException {
-   }
+  public void startDocument ()
+    throws SAXException {
 
-   private void pushMenuItem (JMenuItem menuItem) {
+  }
 
-      if (menuStack.getLast() instanceof JMenuBar) {
-         ((JMenuBar)menuStack.getLast()).add((JMenu)menuItem);
+  public void endDocument ()
+    throws SAXException {
+
+  }
+
+  private void pushMenuItem (JMenuItem menuItem) {
+
+    if (menuStack.getLast() instanceof JMenuBar) {
+      ((JMenuBar)menuStack.getLast()).add((JMenu)menuItem);
+    }
+    else {
+      ((JMenu)menuStack.getLast()).add(menuItem);
+    }
+
+    menuStack.add(menuItem);
+  }
+
+  private String getActionPath () {
+
+    StringBuilder pathBuilder;
+    Iterator menuStackIter;
+    Object menuObject;
+
+    pathBuilder = new StringBuilder();
+    menuStackIter = menuStack.iterator();
+    while (menuStackIter.hasNext()) {
+      menuObject = menuStackIter.next();
+      if (!(menuObject instanceof JMenuBar)) {
+        if (pathBuilder.length() != 0) {
+          pathBuilder.append("/");
+        }
+        pathBuilder.append(((AbstractButton)menuObject).getText());
       }
-      else {
-         ((JMenu)menuStack.getLast()).add(menuItem);
+    }
+
+    return pathBuilder.toString();
+  }
+
+  public void startElement (String namespaceURI, String localName, String qName, Attributes atts)
+    throws SAXException {
+
+    JMenu menu;
+    JMenuItem menuItem;
+    Action menuAction;
+    String actionPath;
+    String mnemonic;
+    String icon;
+
+    if (qName.equals("menu-bar")) {
+      menuStack.add(menuModel.addMenuBar());
+    }
+    else if (qName.equals("menu")) {
+      menu = new JMenu(atts.getValue("text"));
+      if ((mnemonic = atts.getValue("mnemonic")) != null) {
+        menu.setMnemonic(VK_CODES[ALPHABET.indexOf(mnemonic.charAt(0))]);
+      }
+      if ((icon = atts.getValue("icon")) != null) {
+        menu.setIcon(new ImageIcon(ClassLoader.getSystemResource(icon)));
       }
 
-      menuStack.add(menuItem);
-   }
+      pushMenuItem(menu);
+    }
+    else if (qName.equals("menu-item")) {
+      pushMenuItem(new JMenuItem());
+    }
+    else if (qName.equals("separator")) {
+      ((JMenu)menuStack.getLast()).addSeparator();
+    }
+    else if (qName.equals("definition")) {
+      actionPath = getActionPath() + atts.getValue("text");
 
-   private String getActionPath () {
-
-      StringBuilder pathBuilder;
-      Iterator menuStackIter;
-      Object menuObject;
-
-      pathBuilder = new StringBuilder();
-      menuStackIter = menuStack.iterator();
-      while (menuStackIter.hasNext()) {
-         menuObject = menuStackIter.next();
-         if (!(menuObject instanceof JMenuBar)) {
-            if (pathBuilder.length() != 0) {
-               pathBuilder.append("/");
-            }
-            pathBuilder.append(((AbstractButton)menuObject).getText());
-         }
+      menuItem = (JMenuItem)menuStack.getLast();
+      menuItem.setText(atts.getValue("text"));
+      menuItem.setActionCommand(actionPath);
+      if ((mnemonic = atts.getValue("mnemonic")) != null) {
+        menuItem.setMnemonic(VK_CODES[ALPHABET.indexOf(mnemonic.charAt(0))]);
+      }
+      if ((icon = atts.getValue("icon")) != null) {
+        menuItem.setIcon(new ImageIcon(ClassLoader.getSystemResource(icon)));
       }
 
-      return pathBuilder.toString();
-   }
+      menuItem.addActionListener(actionProvider.getDefaultActionListener());
 
-   public void startElement (String namespaceURI, String localName, String qName, Attributes atts)
-      throws SAXException {
-
-      JMenu menu;
-      JMenuItem menuItem;
-      Action menuAction;
-      String actionPath;
-      String mnemonic;
-      String icon;
-
-      if (qName.equals("menu-bar")) {
-         menuStack.add(menuModel.addMenuBar());
+      menuModel.addMenuReference(actionPath, menuItem);
+    }
+    else if (qName.equals("action")) {
+      if ((menuAction = actionProvider.getAction(atts.getValue("class"))) == null) {
+        throw new SAXException("No such Action (" + atts.getValue("class") + ")");
       }
-      else if (qName.equals("menu")) {
-         menu = new JMenu(atts.getValue("text"));
-         if ((mnemonic = atts.getValue("mnemonic")) != null) {
-            menu.setMnemonic(VK_CODES[ALPHABET.indexOf(mnemonic.charAt(0))]);
-         }
-         if ((icon = atts.getValue("icon")) != null) {
-            menu.setIcon(new ImageIcon(ClassLoader.getSystemResource(icon)));
-         }
 
-         pushMenuItem(menu);
-      }
-      else if (qName.equals("menu-item")) {
-         pushMenuItem(new JMenuItem());
-      }
-      else if (qName.equals("separator")) {
-         ((JMenu)menuStack.getLast()).addSeparator();
-      }
-      else if (qName.equals("definition")) {
-         actionPath = getActionPath() + atts.getValue("text");
+      actionPath = getActionPath() + menuAction.getValue(Action.NAME);
 
-         menuItem = (JMenuItem)menuStack.getLast();
-         menuItem.setText(atts.getValue("text"));
-         menuItem.setActionCommand(actionPath);
-         if ((mnemonic = atts.getValue("mnemonic")) != null) {
-            menuItem.setMnemonic(VK_CODES[ALPHABET.indexOf(mnemonic.charAt(0))]);
-         }
-         if ((icon = atts.getValue("icon")) != null) {
-            menuItem.setIcon(new ImageIcon(ClassLoader.getSystemResource(icon)));
-         }
+      menuItem = (JMenuItem)menuStack.getLast();
+      menuItem.setAction(menuAction);
 
-         menuItem.addActionListener(actionProvider.getDefaultActionListener());
+      menuItem.setActionCommand(getActionPath());
 
-         menuModel.addMenuReference(actionPath, menuItem);
-      }
-      else if (qName.equals("action")) {
-         if ((menuAction = actionProvider.getAction(atts.getValue("class"))) == null) {
-            throw new SAXException("No such Action (" + atts.getValue("class") + ")");
-         }
+      menuModel.addMenuReference(actionPath, menuItem);
+    }
+  }
 
-         actionPath = getActionPath() + menuAction.getValue(Action.NAME);
+  public void endElement (String namespaceURI, String localName, String qName)
+    throws SAXException {
 
-         menuItem = (JMenuItem)menuStack.getLast();
-         menuItem.setAction(menuAction);
+    if (qName.equals("menu-bar") || qName.equals("menu") || qName.equals("menu-item")) {
+      menuStack.removeLast();
+    }
+  }
 
-         menuItem.setActionCommand(getActionPath());
+  public void characters (char[] ch, int start, int length)
+    throws SAXException {
 
-         menuModel.addMenuReference(actionPath, menuItem);
-      }
-   }
+  }
 
-   public void endElement (String namespaceURI, String localName, String qName)
-      throws SAXException {
+  public void ignorableWhitespace (char[] ch, int start, int length)
+    throws SAXException {
 
-      if (qName.equals("menu-bar") || qName.equals("menu") || qName.equals("menu-item")) {
-         menuStack.removeLast();
-      }
-   }
+  }
 
-   public void characters (char[] ch, int start, int length)
-      throws SAXException {
-   }
+  public void processingInstruction (String target, String data)
+    throws SAXException {
 
-   public void ignorableWhitespace (char[] ch, int start, int length)
-      throws SAXException {
-   }
+  }
 
-   public void processingInstruction (String target, String data)
-      throws SAXException {
-   }
+  public void skippedEntity (String name)
+    throws SAXException {
 
-   public void skippedEntity (String name)
-      throws SAXException {
-   }
+  }
 
-   public void startPrefixMapping (String prefix, String uri)
-      throws SAXException {
-   }
+  public void startPrefixMapping (String prefix, String uri)
+    throws SAXException {
 
-   public void endPrefixMapping (String prefix)
-      throws SAXException {
-   }
+  }
 
+  public void endPrefixMapping (String prefix)
+    throws SAXException {
+
+  }
 }
