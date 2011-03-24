@@ -56,5 +56,4 @@ public class CommandArguments {
 
       argumentList.add(argument);
    }
-
 }

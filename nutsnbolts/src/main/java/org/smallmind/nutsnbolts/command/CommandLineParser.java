@@ -109,5 +109,4 @@ public class CommandLineParser {
 
       return commandSet;
    }
-
 }
