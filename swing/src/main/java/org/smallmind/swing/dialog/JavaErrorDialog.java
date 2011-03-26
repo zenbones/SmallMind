@@ -67,7 +67,7 @@ public class JavaErrorDialog extends javax.swing.JDialog implements ActionListen
 
   static {
 
-    BUG_ICON = new ImageIcon(Thread.currentThread().getContextClassLoader().getResource("org/smallmind/swing/dialog_bug.png"));
+    BUG_ICON = new ImageIcon(Thread.currentThread().getContextClassLoader().getResource("org/smallmind/swing/dialog/dialog_bug.png"));
   }
 
   public static void showJavaErrorDialog (Frame parentFrame, Object source, Exception exception) {

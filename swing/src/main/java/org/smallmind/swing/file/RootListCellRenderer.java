@@ -39,39 +39,39 @@ import javax.swing.UIManager;
 
 public class RootListCellRenderer implements ListCellRenderer {
 
-   private static ImageIcon DRIVE;
+  private static ImageIcon DRIVE;
 
-   private HashMap<File, JLabel> rootLabelMap;
+  private HashMap<File, JLabel> rootLabelMap;
 
-   static {
+  static {
 
-      DRIVE = new ImageIcon(ClassLoader.getSystemResource("public/iconexperience/application basics/16x16/plain/harddisk.png"));
-   }
+    DRIVE = new ImageIcon(ClassLoader.getSystemResource("org/smallmind/swing/system/harddisk_16.png"));
+  }
 
-   public RootListCellRenderer () {
+  public RootListCellRenderer () {
 
-      rootLabelMap = new HashMap<File, JLabel>();
-   }
+    rootLabelMap = new HashMap<File, JLabel>();
+  }
 
-   public Component getListCellRendererComponent (JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
+  public Component getListCellRendererComponent (JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
 
-      JLabel rootLabel;
+    JLabel rootLabel;
 
-      if ((rootLabel = rootLabelMap.get(value)) == null) {
-         rootLabel = new JLabel(((File)value).getAbsolutePath(), DRIVE, SwingConstants.LEFT);
-         rootLabel.setBorder(BorderFactory.createEmptyBorder(0, 5, 0, 0));
-         rootLabel.setOpaque(true);
-         rootLabelMap.put((File)value, rootLabel);
-      }
+    if ((rootLabel = rootLabelMap.get(value)) == null) {
+      rootLabel = new JLabel(((File)value).getAbsolutePath(), DRIVE, SwingConstants.LEFT);
+      rootLabel.setBorder(BorderFactory.createEmptyBorder(0, 5, 0, 0));
+      rootLabel.setOpaque(true);
+      rootLabelMap.put((File)value, rootLabel);
+    }
 
-      if (isSelected) {
-         rootLabel.setBackground(UIManager.getDefaults().getColor("textHighlight"));
-      }
-      else {
-         rootLabel.setBackground(UIManager.getDefaults().getColor("control"));
-      }
+    if (isSelected) {
+      rootLabel.setBackground(UIManager.getDefaults().getColor("textHighlight"));
+    }
+    else {
+      rootLabel.setBackground(UIManager.getDefaults().getColor("control"));
+    }
 
-      return rootLabel;
-   }
+    return rootLabel;
+  }
 
 }
