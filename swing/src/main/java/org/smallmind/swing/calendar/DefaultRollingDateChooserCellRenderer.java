@@ -102,5 +102,4 @@ public class DefaultRollingDateChooserCellRenderer implements RollingDateChooser
 
       return dayLabel;
    }
-
 }

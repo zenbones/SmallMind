@@ -33,89 +33,86 @@ import javax.swing.filechooser.FileFilter;
 
 public final class ExtensionFileFilter extends FileFilter implements java.io.FileFilter {
 
-   private LinkedList<Pattern> regExpList;
-   private LinkedList<String> extensionList;
-   private String description;
+  private LinkedList<Pattern> regExpList;
+  private LinkedList<String> extensionList;
+  private String description;
 
-   public ExtensionFileFilter () {
+  public ExtensionFileFilter () {
 
-      this(null, "");
-   }
+    this("", new String[0]);
+  }
 
-   public ExtensionFileFilter (String extension) {
+  public ExtensionFileFilter (String description, String... extensions) {
 
-      this(extension, "");
-   }
+    this.description = description;
 
-   public ExtensionFileFilter (String extension, String description) {
+    regExpList = new LinkedList<Pattern>();
+    extensionList = new LinkedList<String>();
 
-      this.description = description;
-
-      regExpList = new LinkedList<Pattern>();
-      extensionList = new LinkedList<String>();
-
-      if (extension != null) {
-         addExtension(extension);
+    if (extensions != null) {
+      for (String extension : extensions) {
+        addExtension(extension);
       }
-   }
+    }
+  }
 
-   public void addExtension (String extension) {
+  public void addExtension (String extension) {
 
-      Pattern parsedPattern;
+    Pattern parsedPattern;
 
-      parsedPattern = Pattern.compile(RegExpTranslator.translate("*." + extension));
-      regExpList.add(parsedPattern);
-      extensionList.add(extension);
-   }
+    parsedPattern = Pattern.compile(RegExpTranslator.translate("*." + extension));
+    regExpList.add(parsedPattern);
+    extensionList.add(extension);
+  }
 
-   public String getExtension () {
+  public String getExtension () {
 
-      return extensionList.getFirst();
-   }
+    return extensionList.getFirst();
+  }
 
-   public boolean accept (File f) {
+  public boolean accept (File f) {
 
-      return accept(f.getName());
-   }
+    return accept(f.getName());
+  }
 
-   public boolean accept (String filename) {
+  public boolean accept (String filename) {
 
-      for (Pattern pattern : regExpList) {
-         if (pattern.matcher(filename).matches()) {
+    for (Pattern pattern : regExpList) {
+      if (pattern.matcher(filename).matches()) {
 
-            return true;
-         }
+        return true;
       }
+    }
 
-      return false;
-   }
+    return false;
+  }
 
-   public void setDescription (String description) {
+  public void setDescription (String description) {
 
-      this.description = description;
-   }
+    this.description = description;
+  }
 
-   public String getDescription () {
+  public String getDescription () {
 
-      StringBuilder fullDescription = new StringBuilder();
-      boolean first = true;
+    StringBuilder fullDescription = new StringBuilder();
+    boolean first = true;
 
-      fullDescription.append(description);
-      fullDescription.append(" (");
+    fullDescription.append(description);
+    fullDescription.append(" (");
 
-      for (String extension : extensionList) {
-         if (!first) {
-            fullDescription.append(" ");
-         }
-
-         fullDescription.append("*.");
-         fullDescription.append(extension);
-
-         first = false;
+    for (String extension : extensionList) {
+      if (!first) {
+        fullDescription.append(" ");
       }
 
-      fullDescription.append(")");
+      fullDescription.append("*.");
+      fullDescription.append(extension);
 
-      return fullDescription.toString();
-   }
+      first = false;
+    }
+
+    fullDescription.append(")");
+
+    return fullDescription.toString();
+  }
 }

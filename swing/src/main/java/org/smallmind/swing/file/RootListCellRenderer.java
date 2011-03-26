@@ -28,7 +28,6 @@ package org.smallmind.swing.file;
 
 import java.awt.Component;
 import java.io.File;
-import java.util.HashMap;
 import javax.swing.BorderFactory;
 import javax.swing.ImageIcon;
 import javax.swing.JLabel;
@@ -41,28 +40,18 @@ public class RootListCellRenderer implements ListCellRenderer {
 
   private static ImageIcon DRIVE;
 
-  private HashMap<File, JLabel> rootLabelMap;
-
   static {
 
     DRIVE = new ImageIcon(ClassLoader.getSystemResource("org/smallmind/swing/system/harddisk_16.png"));
-  }
-
-  public RootListCellRenderer () {
-
-    rootLabelMap = new HashMap<File, JLabel>();
   }
 
   public Component getListCellRendererComponent (JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
 
     JLabel rootLabel;
 
-    if ((rootLabel = rootLabelMap.get(value)) == null) {
-      rootLabel = new JLabel(((File)value).getAbsolutePath(), DRIVE, SwingConstants.LEFT);
-      rootLabel.setBorder(BorderFactory.createEmptyBorder(0, 5, 0, 0));
-      rootLabel.setOpaque(true);
-      rootLabelMap.put((File)value, rootLabel);
-    }
+    rootLabel = new JLabel(((File)value).getAbsolutePath(), DRIVE, SwingConstants.LEFT);
+    rootLabel.setBorder(BorderFactory.createEmptyBorder(1, 5, 1, 1));
+    rootLabel.setOpaque(true);
 
     if (isSelected) {
       rootLabel.setBackground(UIManager.getDefaults().getColor("textHighlight"));
@@ -73,5 +62,4 @@ public class RootListCellRenderer implements ListCellRenderer {
 
     return rootLabel;
   }
-
 }

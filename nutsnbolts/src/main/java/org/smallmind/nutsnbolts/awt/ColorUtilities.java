@@ -30,42 +30,74 @@ import java.awt.Color;
 
 public class ColorUtilities {
 
-   public static Color invert (Color color) {
+  /*
+   desktop: Color of the desktop background
+   activeCaption: Color for captions (title bars) when they are active.
+   activeCaptionText: Text color for text in captions (title bars).
+   activeCaptionBorder: Border color for caption (title bar) window borders.
+   inactiveCaption: Color for captions (title bars) when not active.
+   inactiveCaptionText: Text color for text in inactive captions (title bars).
+   inactiveCaptionBorder: Border color for inactive caption (title bar) window borders.
+   window: Default color for the interior of windows
+   windowBorder: Color of the window's border
+   windowText: Color of the window's title text
+   menu: Background color for menus
+   menuText: Text color for menus
+   text: Text background color
+   textText: Text foreground color
+   textHighlight: Text background color when selected
+   textHighlightText: Text color when selected
+   textInactiveText: Text color when disabled
+   control: Default color for controls (buttons, sliders, etc)
+   controlText: Default color for text in controls
+   controlHighlight: Specular highlight (opposite of the shadow)
+   controlLtHighlight: Highlight color for controls
+   controlShadow: Shadow color for controls
+   controlDkShadow: Dark shadow color for controls
+   scrollbar: Scrollbar background (usually the "track")
+   info: information color (sometimes used for tooltips)
+   infoText: information text color (sometimes used for tooltips)
+  */
 
-      return invert(color, color.getAlpha());
-   }
+  public static final Color HIGHLIGHT_COLOR = new Color(178, 178, 255);
+  public static final Color INVERSE_HIGHLIGHT_COLOR = new Color(255, 222, 100);
 
-   public static Color invert (Color color, int alpha) {
+  public static Color invert (Color color) {
 
-      return new Color(255 - color.getRed(), 255 - color.getGreen(), 255 - color.getBlue(), alpha);
-   }
+    return invert(color, color.getAlpha());
+  }
 
-   public static Color shade (Color color, Color tint, int step) {
+  public static Color invert (Color color, int alpha) {
 
-      return new Color(tinge(color.getRed(), tint.getRed(), step), tinge(color.getGreen(), tint.getGreen(), step), tinge(color.getBlue(), tint.getBlue(), step), color.getAlpha());
-   }
+    return new Color(255 - color.getRed(), 255 - color.getGreen(), 255 - color.getBlue(), alpha);
+  }
 
-   private static int tinge (int channel, int tintChannel, int step) {
+  public static Color shade (Color color, Color tint, int step) {
 
-      int tingedChannel;
+    return new Color(tinge(color.getRed(), tint.getRed(), step), tinge(color.getGreen(), tint.getGreen(), step), tinge(color.getBlue(), tint.getBlue(), step), color.getAlpha());
+  }
 
-      if (channel >= tintChannel) {
-         tingedChannel = channel - (int)Math.floor(step * ((255 - tintChannel) / 255F));
-      }
-      else {
-         tingedChannel = channel + (int)Math.floor(step * (tintChannel / 255F));
-      }
+  private static int tinge (int channel, int tintChannel, int step) {
 
-      if (tingedChannel < 0) {
-         return 0;
-      }
-      else if (tingedChannel > 255) {
-         return 255;
-      }
-      else {
-         return tingedChannel;
-      }
+    int tingedChannel;
 
-   }
+    if (channel >= tintChannel) {
+      tingedChannel = channel - (int)Math.floor(step * ((255 - tintChannel) / 255F));
+    }
+    else {
+      tingedChannel = channel + (int)Math.floor(step * (tintChannel / 255F));
+    }
+
+    if (tingedChannel < 0) {
+      return 0;
+    }
+    else if (tingedChannel > 255) {
+      return 255;
+    }
+    else {
+      return tingedChannel;
+    }
+
+  }
 
 }
