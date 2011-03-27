@@ -31,25 +31,28 @@ import javax.swing.event.ListDataListener;
 
 public class BannerListModel implements ListModel {
 
-   private Object[] elements;
+  private Object[] elements;
 
-   public void addListDataListener (ListDataListener listDataListener) {
-   }
+  public BannerListModel (Object[] elements) {
 
-   public void removeListDataListener (ListDataListener listDataListener) {
-   }
+    this.elements = elements;
+  }
 
-   public BannerListModel (Object[] elements) {
+  public int getSize () {
 
-      this.elements = elements;
-   }
+    return elements.length;
+  }
 
-   public int getSize () {
-      return elements.length;
-   }
+  public Object getElementAt (int index) {
 
-   public Object getElementAt (int index) {
-      return elements[index];
-   }
+    return elements[index];
+  }
 
+  public void addListDataListener (ListDataListener listDataListener) {
+
+  }
+
+  public void removeListDataListener (ListDataListener listDataListener) {
+
+  }
 }

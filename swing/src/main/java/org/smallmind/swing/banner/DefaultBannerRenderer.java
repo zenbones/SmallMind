@@ -31,7 +31,7 @@ import java.awt.SystemColor;
 import javax.swing.BorderFactory;
 import javax.swing.JLabel;
 
-public class DefaultBannerRenderer implements BannerRenderer {
+public class DefaultBannerRenderer implements BannerCellRenderer {
 
    private JLabel renderLabel;
 

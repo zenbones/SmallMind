@@ -39,7 +39,7 @@ public final class ExtensionFileFilter extends FileFilter implements java.io.Fil
 
   public ExtensionFileFilter () {
 
-    this("", new String[0]);
+    this("");
   }
 
   public ExtensionFileFilter (String description, String... extensions) {

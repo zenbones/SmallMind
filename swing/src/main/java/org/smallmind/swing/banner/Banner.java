@@ -1,22 +1,22 @@
 /*
  * Copyright (c) 2007, 2008, 2009, 2010 David Berkman
- * 
+ *
  * This file is part of the SmallMind Code Project.
- * 
+ *
  * The SmallMind Code Project is free software, you can redistribute
  * it and/or modify it under the terms of GNU Affero General Public
  * License as published by the Free Software Foundation, either version 3
  * of the License, or (at your option) any later version.
- * 
+ *
  * The SmallMind Code Project is distributed in the hope that it will
  * be useful, but WITHOUT ANY WARRANTY; without even the implied warranty
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * General Public License for more details.
- * 
+ *
  * You should have received a copy of the the GNU Affero General Public
  * License, along with The SmallMind Code Project. If not, see
  * <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under the GNU Affero GPL version 3 section 7
  * ------------------------------------------------------------------
  * If you modify this Program, or any covered work, by linking or
@@ -45,315 +45,400 @@ import javax.swing.KeyStroke;
 import javax.swing.ListModel;
 import javax.swing.ListSelectionModel;
 import javax.swing.Scrollable;
+import javax.swing.UIManager;
+import javax.swing.event.ListDataEvent;
+import javax.swing.event.ListDataListener;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
+import org.smallmind.nutsnbolts.util.WeakEventListenerList;
 
-public class Banner extends JComponent implements Scrollable, MouseListener, ListSelectionListener {
+public class Banner extends JComponent implements Scrollable, MouseListener, ListSelectionListener, ListDataListener {
 
-   private ListModel listModel;
-   private ListSelectionModel listSelectionModel;
-   private BannerRenderer bannerRenderer;
+  private final WeakEventListenerList<ListSelectionListener> listSelectionListenerList = new WeakEventListenerList<ListSelectionListener>();
 
-   public Banner (ListModel model) {
+  private ListModel listModel;
+  private ListSelectionModel listSelectionModel;
+  private BannerCellRenderer bannerRenderer;
 
-      ActionMap actionMap;
-      InputMap inputMap;
+  public Banner (ListModel listModel) {
 
-      this.listModel = model;
+    ActionMap actionMap;
+    InputMap inputMap;
 
-      listSelectionModel = new DefaultListSelectionModel();
-      bannerRenderer = new DefaultBannerRenderer();
+    bannerRenderer = new DefaultBannerRenderer();
 
-      inputMap = getInputMap(JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT);
-      actionMap = getActionMap();
+    inputMap = getInputMap(JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT);
+    actionMap = getActionMap();
 
-      inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_LEFT, 0), "selectLeft");
-      inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_RIGHT, 0), "selectRight");
-      actionMap.put("selectLeft", new SelectLeftAction());
-      actionMap.put("selectRight", new SelectRightAction());
+    inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_LEFT, 0), "selectLeft");
+    inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_RIGHT, 0), "selectRight");
+    actionMap.put("selectLeft", new SelectLeftAction());
+    actionMap.put("selectRight", new SelectRightAction());
 
-      listSelectionModel.addListSelectionListener(this);
-      addMouseListener(this);
-   }
+    setOpaque(true);
+    setBackground(UIManager.getDefaults().getColor("text"));
 
-   public synchronized ListModel getListModel () {
+    setListModel(listModel);
+    setListSelectionModel(new DefaultListSelectionModel());
+    addMouseListener(this);
+  }
 
-      return listModel;
-   }
+  public synchronized ListModel getListModel () {
 
-   public synchronized ListSelectionModel getListSelectionModel () {
+    return listModel;
+  }
 
-      return listSelectionModel;
-   }
+  public synchronized void setListModel (ListModel listModel) {
 
-   public synchronized BannerRenderer getBannerRenderer () {
+    if (this.listModel != null) {
+      this.listModel.removeListDataListener(this);
+    }
 
-      return bannerRenderer;
-   }
+    this.listModel = listModel;
+    this.listModel.addListDataListener(this);
+  }
 
-   public synchronized void setBannerRenderer (BannerRenderer bannerRenderer) {
+  public synchronized ListSelectionModel getListSelectionModel () {
 
-      this.bannerRenderer = bannerRenderer;
-      repaint();
-   }
+    return listSelectionModel;
+  }
 
-   public synchronized int getIndexAtPoint (Point point) {
+  public synchronized void setListSelectionModel (ListSelectionModel listSelectionModel) {
 
-      BannerRenderer bannerRenderer;
-      Component renderComponent;
-      int width = 0;
+    if (this.listSelectionModel != null) {
+      this.listSelectionModel.removeListSelectionListener(this);
+    }
 
-      bannerRenderer = getBannerRenderer();
-      for (int count = 0; count < getListModel().getSize(); count++) {
-         renderComponent = bannerRenderer.getBannerRendererComponent(this, getListModel().getElementAt(count), count, false);
-         width += (int)renderComponent.getPreferredSize().getWidth();
-         if (point.getX() <= width) {
-            return count;
-         }
+    this.listSelectionModel = listSelectionModel;
+    this.listSelectionModel.addListSelectionListener(this);
+  }
+
+  public synchronized BannerCellRenderer getBannerCellRenderer () {
+
+    return bannerRenderer;
+  }
+
+  public synchronized void setBannerCellRenderer (BannerCellRenderer bannerRenderer) {
+
+    this.bannerRenderer = bannerRenderer;
+    repaint();
+  }
+
+  public void clearSelection () {
+
+    listSelectionModel.clearSelection();
+  }
+
+  public synchronized int getIndexAtPoint (Point point) {
+
+    BannerCellRenderer bannerRenderer;
+    Component renderComponent;
+    int width = 0;
+
+    bannerRenderer = getBannerCellRenderer();
+    for (int count = 0; count < getListModel().getSize(); count++) {
+      renderComponent = bannerRenderer.getBannerRendererComponent(this, getListModel().getElementAt(count), count, false);
+      width += (int)renderComponent.getPreferredSize().getWidth();
+      if (point.getX() <= width) {
+        return count;
       }
+    }
 
-      return -1;
-   }
+    return -1;
+  }
 
-   private Rectangle getSquashedRectangleAtIndex (int index) {
+  private Rectangle getSquashedRectangleAtIndex (int index) {
 
-      BannerRenderer bannerRenderer;
-      Component renderComponent;
-      int xPos = 0;
+    BannerCellRenderer bannerRenderer;
+    Component renderComponent;
+    int xPos = 0;
 
-      bannerRenderer = getBannerRenderer();
-      for (int count = 0; count < index; count++) {
-         renderComponent = bannerRenderer.getBannerRendererComponent(this, getListModel().getElementAt(count), count, false);
-         xPos += (int)renderComponent.getPreferredSize().getWidth();
+    bannerRenderer = getBannerCellRenderer();
+    for (int count = 0; count < index; count++) {
+      renderComponent = bannerRenderer.getBannerRendererComponent(this, getListModel().getElementAt(count), count, false);
+      xPos += (int)renderComponent.getPreferredSize().getWidth();
+    }
+
+    renderComponent = bannerRenderer.getBannerRendererComponent(this, getListModel().getElementAt(index), index, false);
+
+    return new Rectangle(xPos, 0, (int)renderComponent.getPreferredSize().getWidth(), 0);
+  }
+
+  public synchronized void scrollLeft () {
+
+    int leadIndex;
+
+    if ((leadIndex = listSelectionModel.getLeadSelectionIndex()) >= 0) {
+      if (leadIndex > 0) {
+        scrollToIndex(leadIndex - 1, true);
       }
+    }
+  }
 
-      renderComponent = bannerRenderer.getBannerRendererComponent(this, getListModel().getElementAt(index), index, false);
+  public synchronized void scrollRight () {
 
-      return new Rectangle(xPos, 0, (int)renderComponent.getPreferredSize().getWidth(), 0);
-   }
+    int leadIndex;
 
-   public synchronized void scrollLeft () {
-
-      int leadIndex;
-
-      if ((leadIndex = listSelectionModel.getLeadSelectionIndex()) >= 0) {
-         if (leadIndex > 0) {
-            scrollToIndex(leadIndex - 1, true);
-         }
+    if ((leadIndex = listSelectionModel.getLeadSelectionIndex()) >= 0) {
+      if (leadIndex < listModel.getSize() - 1) {
+        scrollToIndex(leadIndex + 1, true);
       }
-   }
+    }
+  }
 
-   public synchronized void scrollRight () {
+  public synchronized void scrollToIndex (int index, boolean select) {
 
-      int leadIndex;
+    Rectangle trackingRectangle;
+    Rectangle viewRectangle;
+    int selectedIndex;
 
-      if ((leadIndex = listSelectionModel.getLeadSelectionIndex()) >= 0) {
-         if (leadIndex < listModel.getSize() - 1) {
-            scrollToIndex(leadIndex + 1, true);
-         }
-      }
-   }
-
-   public synchronized void scrollToIndex (int index, boolean select) {
-
-      Rectangle trackingRectangle;
-      Rectangle viewRectangle;
-      int selectedIndex;
-
-      if (getParent() instanceof JViewport) {
-         trackingRectangle = getSquashedRectangleAtIndex(index);
-         viewRectangle = ((JViewport)getParent()).getViewRect();
-         if ((trackingRectangle.getX() < viewRectangle.getX()) || ((trackingRectangle.getX() + trackingRectangle.getWidth()) > (viewRectangle.getX() + viewRectangle.getWidth()))) {
-            selectedIndex = listSelectionModel.getLeadSelectionIndex();
-            if ((selectedIndex < 0) || (index <= selectedIndex)) {
-               ((JViewport)getParent()).setViewPosition(new Point((int)trackingRectangle.getX(), 0));
-            }
-            else {
-               ((JViewport)getParent()).setViewPosition(new Point((int)(trackingRectangle.getX() + trackingRectangle.getWidth() - viewRectangle.getWidth()), 0));
-            }
-         }
-      }
-
-      if (select) {
-         listSelectionModel.setSelectionInterval(index, index);
-      }
-   }
-
-   public synchronized void valueChanged (ListSelectionEvent listSelectionEvent) {
-
-      repaint();
-   }
-
-   public synchronized void mouseClicked (MouseEvent mouseEvent) {
-
-      int anchorIndex;
-      int index;
-
-      if ((index = getIndexAtPoint(mouseEvent.getPoint())) >= 0) {
-         if (mouseEvent.isShiftDown()) {
-            if ((anchorIndex = listSelectionModel.getAnchorSelectionIndex()) < 0) {
-               listSelectionModel.setSelectionInterval(index, index);
-            }
-            else {
-               listSelectionModel.setSelectionInterval(anchorIndex, index);
-            }
-         }
-         else if (mouseEvent.isControlDown()) {
-            if (listSelectionModel.isSelectedIndex(index)) {
-               listSelectionModel.removeSelectionInterval(index, index);
-            }
-            else {
-               listSelectionModel.addSelectionInterval(index, index);
-            }
-         }
-         else {
-            listSelectionModel.setSelectionInterval(index, index);
-         }
-
-         requestFocusInWindow();
-      }
-
-   }
-
-   public void mousePressed (MouseEvent mouseEvent) {
-   }
-
-   public void mouseReleased (MouseEvent mouseEvent) {
-   }
-
-   public void mouseEntered (MouseEvent mouseEvent) {
-   }
-
-   public void mouseExited (MouseEvent mouseEvent) {
-   }
-
-   public synchronized Dimension getPreferredScrollableViewportSize () {
-
-      return getPreferredSize();
-   }
-
-   public synchronized int getScrollableUnitIncrement (Rectangle visibleRect, int orientation, int direction) {
-
-      Rectangle viewRectangle;
-      int index;
-      int jiggleJump = 0;
-
+    if (getParent() instanceof JViewport) {
+      trackingRectangle = getSquashedRectangleAtIndex(index);
       viewRectangle = ((JViewport)getParent()).getViewRect();
-
-      if (direction < 0) {
-         if (viewRectangle.getX() > 0) {
-            index = getIndexAtPoint(new Point((int)viewRectangle.getX(), 0));
-            jiggleJump = (int)(viewRectangle.getX() - getSquashedRectangleAtIndex(index).getX());
-            if (jiggleJump == 0) {
-               jiggleJump += getSquashedRectangleAtIndex(index - 1).getWidth();
-            }
-         }
+      if ((trackingRectangle.getX() < viewRectangle.getX()) || ((trackingRectangle.getX() + trackingRectangle.getWidth()) > (viewRectangle.getX() + viewRectangle.getWidth()))) {
+        selectedIndex = listSelectionModel.getLeadSelectionIndex();
+        if ((selectedIndex < 0) || (index <= selectedIndex)) {
+          ((JViewport)getParent()).setViewPosition(new Point((int)trackingRectangle.getX(), 0));
+        }
+        else {
+          ((JViewport)getParent()).setViewPosition(new Point((int)(trackingRectangle.getX() + trackingRectangle.getWidth() - viewRectangle.getWidth()), 0));
+        }
       }
-      else if (direction > 0) {
-         if ((viewRectangle.getX() + viewRectangle.getWidth()) < getPreferredSize().getWidth()) {
-            index = getIndexAtPoint(new Point((int)(viewRectangle.getX() + viewRectangle.getWidth()), 0));
-            jiggleJump = (int)((getSquashedRectangleAtIndex(index).getX() + getSquashedRectangleAtIndex(index).getWidth()) - (viewRectangle.getX() + viewRectangle.getWidth()));
-            if (jiggleJump == 0) {
-               jiggleJump += getSquashedRectangleAtIndex(index + 1).getWidth();
-            }
-         }
+    }
+
+    if (select) {
+      listSelectionModel.setSelectionInterval(index, index);
+    }
+  }
+
+  public void valueChanged (ListSelectionEvent listSelectionEvent) {
+
+    synchronized (listSelectionListenerList) {
+
+      ListSelectionEvent translatedEvent = new ListSelectionEvent(this, listSelectionEvent.getFirstIndex(), listSelectionEvent.getLastIndex(), listSelectionEvent.getValueIsAdjusting());
+
+      for (ListSelectionListener listSelectionListener : listSelectionListenerList) {
+        listSelectionListener.valueChanged(translatedEvent);
       }
+    }
 
-      return jiggleJump;
-   }
+    repaint();
+  }
 
-   public synchronized int getScrollableBlockIncrement (Rectangle visibleRect, int orientation, int direction) {
+  public void intervalAdded (ListDataEvent listDataEvent) {
 
-      Dimension preferredSize;
-      Rectangle viewRectangle;
+    repaint();
+  }
 
-      viewRectangle = ((JViewport)getParent()).getViewRect();
+  public void intervalRemoved (ListDataEvent listDataEvent) {
 
-      if (direction < 0) {
-         return (int)viewRectangle.getX();
+    repaint();
+  }
+
+  public void contentsChanged (ListDataEvent listDataEvent) {
+
+    getListSelectionModel().clearSelection();
+    repaint();
+  }
+
+  public synchronized void mouseClicked (MouseEvent mouseEvent) {
+
+    int anchorIndex;
+    int index;
+
+    if ((index = getIndexAtPoint(mouseEvent.getPoint())) >= 0) {
+      if (mouseEvent.isShiftDown()) {
+        if ((anchorIndex = listSelectionModel.getAnchorSelectionIndex()) < 0) {
+          listSelectionModel.setSelectionInterval(index, index);
+        }
+        else {
+          listSelectionModel.setSelectionInterval(anchorIndex, index);
+        }
       }
-      else if (direction > 0) {
-         preferredSize = getPreferredSize();
-
-         return (int)(preferredSize.getWidth() - viewRectangle.getX() + viewRectangle.getWidth());
+      else if (mouseEvent.isControlDown()) {
+        if (listSelectionModel.isSelectedIndex(index)) {
+          listSelectionModel.removeSelectionInterval(index, index);
+        }
+        else {
+          listSelectionModel.addSelectionInterval(index, index);
+        }
       }
-
-      return 0;
-   }
-
-   public synchronized boolean getScrollableTracksViewportWidth () {
-
-      if (getParent() instanceof JViewport) {
-         return (getParent().getWidth() > getPreferredSize().width);
-      }
-
-      return false;
-   }
-
-   public synchronized boolean getScrollableTracksViewportHeight () {
-
-      if (getParent() instanceof JViewport) {
-         return (getParent().getHeight() > getPreferredSize().height);
-      }
-
-      return false;
-   }
-
-   public synchronized Dimension getPreferredSize () {
-
-      BannerRenderer bannerRenderer;
-      Component renderComponent;
-      int width = 0;
-      int height = 0;
-
-      bannerRenderer = getBannerRenderer();
-      for (int count = 0; count < getListModel().getSize(); count++) {
-         renderComponent = bannerRenderer.getBannerRendererComponent(this, getListModel().getElementAt(count), count, false);
-         width += (int)renderComponent.getPreferredSize().getWidth();
-         if (renderComponent.getPreferredSize().getHeight() > height) {
-            height = (int)renderComponent.getPreferredSize().getHeight();
-         }
+      else {
+        listSelectionModel.setSelectionInterval(index, index);
       }
 
-      return new Dimension(width, height);
-   }
+      requestFocusInWindow();
+    }
+  }
 
-   public synchronized void paint (Graphics graphics) {
+  public void mousePressed (MouseEvent mouseEvent) {
 
-      BannerRenderer bannerRenderer;
-      Component renderComponent;
-      Dimension renderPreferredSize;
-      int preferredHeight;
-      int prevWidth = 0;
+  }
 
-      preferredHeight = (int)getPreferredSize().getHeight();
-      bannerRenderer = getBannerRenderer();
-      for (int count = 0; count < getListModel().getSize(); count++) {
-         renderComponent = bannerRenderer.getBannerRendererComponent(this, getListModel().getElementAt(count), count, listSelectionModel.isSelectedIndex(count));
-         renderPreferredSize = renderComponent.getPreferredSize();
-         renderComponent.setBounds(0, 0, (int)renderPreferredSize.getWidth(), preferredHeight);
-         graphics.translate(prevWidth, 0);
-         renderComponent.paint(graphics);
-         prevWidth = (int)renderPreferredSize.getWidth();
+  public void mouseReleased (MouseEvent mouseEvent) {
+
+  }
+
+  public void mouseEntered (MouseEvent mouseEvent) {
+
+  }
+
+  public void mouseExited (MouseEvent mouseEvent) {
+
+  }
+
+  public synchronized Dimension getPreferredScrollableViewportSize () {
+
+    return getPreferredSize();
+  }
+
+  public synchronized int getScrollableUnitIncrement (Rectangle visibleRect, int orientation, int direction) {
+
+    Rectangle viewRectangle;
+    int index;
+    int jiggleJump = 0;
+
+    viewRectangle = ((JViewport)getParent()).getViewRect();
+
+    if (direction < 0) {
+      if (viewRectangle.getX() > 0) {
+        index = getIndexAtPoint(new Point((int)viewRectangle.getX(), 0));
+        jiggleJump = (int)(viewRectangle.getX() - getSquashedRectangleAtIndex(index).getX());
+        if (jiggleJump == 0) {
+          jiggleJump += getSquashedRectangleAtIndex(index - 1).getWidth();
+        }
       }
-   }
-
-   public class SelectLeftAction extends AbstractAction {
-
-      public synchronized void actionPerformed (ActionEvent actionEvent) {
-
-         scrollLeft();
+    }
+    else if (direction > 0) {
+      if ((viewRectangle.getX() + viewRectangle.getWidth()) < getPreferredSize().getWidth()) {
+        index = getIndexAtPoint(new Point((int)(viewRectangle.getX() + viewRectangle.getWidth()), 0));
+        jiggleJump = (int)((getSquashedRectangleAtIndex(index).getX() + getSquashedRectangleAtIndex(index).getWidth()) - (viewRectangle.getX() + viewRectangle.getWidth()));
+        if (jiggleJump == 0) {
+          jiggleJump += getSquashedRectangleAtIndex(index + 1).getWidth();
+        }
       }
+    }
 
-   }
+    return jiggleJump;
+  }
 
-   public class SelectRightAction extends AbstractAction {
+  public synchronized int getScrollableBlockIncrement (Rectangle visibleRect, int orientation, int direction) {
 
-      public synchronized void actionPerformed (ActionEvent actionEvent) {
+    Dimension preferredSize;
+    Rectangle viewRectangle;
 
-         scrollRight();
+    viewRectangle = ((JViewport)getParent()).getViewRect();
+
+    if (direction < 0) {
+      return (int)viewRectangle.getX();
+    }
+    else if (direction > 0) {
+      preferredSize = getPreferredSize();
+
+      return (int)(preferredSize.getWidth() - viewRectangle.getX() + viewRectangle.getWidth());
+    }
+
+    return 0;
+  }
+
+  public synchronized boolean getScrollableTracksViewportWidth () {
+
+    return (getParent() instanceof JViewport) && (getParent().getWidth() > getPreferredSize().width);
+  }
+
+  public synchronized boolean getScrollableTracksViewportHeight () {
+
+    return (getParent() instanceof JViewport) && (getParent().getHeight() > getPreferredSize().height);
+  }
+
+  public Dimension getMinimumSize () {
+
+    return getPreferredSize();
+  }
+
+  public Dimension getMaximumSize () {
+
+    return getPreferredSize();
+  }
+
+  public synchronized Dimension getPreferredSize () {
+
+    BannerCellRenderer bannerRenderer;
+    Component renderComponent;
+    int width = 0;
+    int height = 0;
+
+    bannerRenderer = getBannerCellRenderer();
+    for (int count = 0; count < getListModel().getSize(); count++) {
+      renderComponent = bannerRenderer.getBannerRendererComponent(this, getListModel().getElementAt(count), count, false);
+      width += (int)renderComponent.getPreferredSize().getWidth();
+      if (renderComponent.getPreferredSize().getHeight() > height) {
+        height = (int)renderComponent.getPreferredSize().getHeight();
       }
+    }
 
-   }
+    return new Dimension(width, height);
+  }
 
+  public synchronized void paint (Graphics graphics) {
+
+    BannerCellRenderer bannerRenderer;
+    Component renderComponent;
+    Dimension renderPreferredSize;
+    int preferredHeight;
+    int prevWidth = 0;
+
+    preferredHeight = (int)getPreferredSize().getHeight();
+    bannerRenderer = getBannerCellRenderer();
+    for (int count = 0; count < getListModel().getSize(); count++) {
+      renderComponent = bannerRenderer.getBannerRendererComponent(this, getListModel().getElementAt(count), count, listSelectionModel.isSelectedIndex(count));
+      renderPreferredSize = renderComponent.getPreferredSize();
+      renderComponent.setBounds(0, 0, (int)renderPreferredSize.getWidth(), preferredHeight);
+      graphics.translate(prevWidth, 0);
+      renderComponent.paint(graphics);
+      prevWidth = (int)renderPreferredSize.getWidth();
+    }
+
+    if (prevWidth < getVisibleRect().getWidth()) {
+      graphics.setColor(getBackground());
+      graphics.translate(prevWidth, 0);
+      graphics.fillRect(0, 0, (int)(getVisibleRect().getWidth() - prevWidth), preferredHeight);
+    }
+  }
+
+  public class SelectLeftAction extends AbstractAction {
+
+    public synchronized void actionPerformed (ActionEvent actionEvent) {
+
+      scrollLeft();
+    }
+  }
+
+  public class SelectRightAction extends AbstractAction {
+
+    public synchronized void actionPerformed (ActionEvent actionEvent) {
+
+      scrollRight();
+    }
+  }
+
+  public synchronized void addListSelectionListener (ListSelectionListener listSelectionListener) {
+
+    listSelectionListenerList.addListener(listSelectionListener);
+  }
+
+  public synchronized void removeListSelectionListener (ListSelectionListener listSelectionListener) {
+
+    listSelectionListenerList.removeListener(listSelectionListener);
+  }
+
+  public void addListDataListener (ListDataListener listDataListener) {
+
+    listModel.addListDataListener(listDataListener);
+  }
+
+  public void removeListDataListener (ListDataListener listDataListener) {
+
+    listModel.removeListDataListener(listDataListener);
+  }
 }
