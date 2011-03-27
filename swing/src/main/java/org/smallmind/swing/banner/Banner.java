@@ -35,6 +35,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
+import javax.accessibility.Accessible;
 import javax.swing.AbstractAction;
 import javax.swing.ActionMap;
 import javax.swing.DefaultListSelectionModel;
@@ -52,7 +53,7 @@ import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import org.smallmind.nutsnbolts.util.WeakEventListenerList;
 
-public class Banner extends JComponent implements Scrollable, MouseListener, ListSelectionListener, ListDataListener {
+public class Banner extends JComponent implements Scrollable, Accessible, MouseListener, ListSelectionListener, ListDataListener {
 
   private final WeakEventListenerList<ListSelectionListener> listSelectionListenerList = new WeakEventListenerList<ListSelectionListener>();
 
@@ -204,6 +205,7 @@ public class Banner extends JComponent implements Scrollable, MouseListener, Lis
           ((JViewport)getParent()).setViewPosition(new Point((int)(trackingRectangle.getX() + trackingRectangle.getWidth() - viewRectangle.getWidth()), 0));
         }
       }
+
     }
 
     if (select) {
