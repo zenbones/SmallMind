@@ -77,7 +77,7 @@ public class FilePickListModel implements ListModel {
 
     this.directory = (directory == null) ? new File(System.getProperty("user.home")) : directory;
 
-    files = directory.listFiles((java.io.FileFilter)filter);
+    files = this.directory.listFiles((java.io.FileFilter)filter);
     Arrays.sort(files, FILE_COMPARATOR);
 
     fireContentsChanges(new ListDataEvent(this, ListDataEvent.CONTENTS_CHANGED, 0, Math.max(files.length, prevSize)));

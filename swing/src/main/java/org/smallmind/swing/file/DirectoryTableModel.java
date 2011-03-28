@@ -55,7 +55,7 @@ public class DirectoryTableModel implements TableModel {
     this.directory = (directory == null) ? new File(System.getProperty("user.home")) : directory;
 
     pathList = new ArrayList<File>();
-    pathElement = directory;
+    pathElement = this.directory;
     do {
       pathList.add(0, pathElement);
     } while ((pathElement = pathElement.getParentFile()) != null);
