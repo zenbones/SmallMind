@@ -33,57 +33,62 @@ import org.smallmind.nutsnbolts.util.SmallMindTreeNode;
 
 public class DirectoryNode extends SmallMindTreeNode {
 
-   private boolean instantiated = false;
+  private boolean instantiated = false;
 
-   public DirectoryNode (Directory directory) {
+  public DirectoryNode (Directory directory) {
 
-      super(directory, directory.hasChildren());
-   }
+    super(directory, directory.hasChildren());
+  }
 
-   private synchronized void instantiateChildren () {
+  private synchronized void instantiateChildren () {
 
-      Directory[] childDirectories;
+    Directory[] childDirectories;
 
-      if (!instantiated) {
-         instantiated = true;
+    if (!instantiated) {
+      instantiated = true;
 
-         if (getAllowsChildren()) {
-            childDirectories = ((Directory)getUserObject()).getChildren();
-            for (Directory childDirectory : childDirectories) {
-               add(new DirectoryNode(childDirectory));
-            }
-         }
+      if (getAllowsChildren()) {
+        childDirectories = ((Directory)getUserObject()).getChildren();
+        for (Directory childDirectory : childDirectories) {
+          add(new DirectoryNode(childDirectory));
+        }
       }
-   }
+    }
+  }
 
-   public Enumeration children () {
-      instantiateChildren();
+  public Enumeration children () {
 
-      return super.children();
-   }
+    instantiateChildren();
 
-   public TreeNode getChildAt (int childIndex) {
-      instantiateChildren();
+    return super.children();
+  }
 
-      return super.getChildAt(childIndex);
-   }
+  public TreeNode getChildAt (int childIndex) {
 
-   public int getChildCount () {
-      instantiateChildren();
+    instantiateChildren();
 
-      return super.getChildCount();
-   }
+    return super.getChildAt(childIndex);
+  }
 
-   public int getIndex (TreeNode node) {
-      instantiateChildren();
+  public int getChildCount () {
 
-      return super.getIndex(node);
-   }
+    instantiateChildren();
 
-   public void sortChildren (Comparator<TreeNode> sort) {
-      instantiateChildren();
+    return super.getChildCount();
+  }
 
-      super.sortChildren(sort);
-   }
+  public int getIndex (TreeNode node) {
+
+    instantiateChildren();
+
+    return super.getIndex(node);
+  }
+
+  public void sortChildren (Comparator<TreeNode> sort) {
+
+    instantiateChildren();
+
+    super.sortChildren(sort);
+  }
 
 }

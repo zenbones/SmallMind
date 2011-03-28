@@ -31,56 +31,56 @@ import java.util.LinkedList;
 
 public class Directory extends File {
 
-   private static final Directory[] NO_CHILDREN = new Directory[0];
+  private static final Directory[] NO_CHILDREN = new Directory[0];
 
-   public Directory (String pathName) {
+  public Directory (String pathName) {
 
-      super(pathName);
+    super(pathName);
 
-      if (!isDirectory()) {
-         throw new IllegalStateException("The path name(" + pathName + ") does not represent a directory structure");
-      }
-   }
+    if (!isDirectory()) {
+      throw new IllegalStateException("The path name(" + pathName + ") does not represent a directory structure");
+    }
+  }
 
-   public boolean hasChildren () {
+  public boolean hasChildren () {
 
-      File[] files;
+    File[] files;
 
-      if ((files = listFiles()) == null) {
-         return false;
-      }
-
-      for (File file : files) {
-         if (file.isDirectory()) {
-            return true;
-         }
-      }
-
+    if ((files = listFiles()) == null) {
       return false;
-   }
+    }
 
-   public Directory[] getChildren () {
-
-      Directory[] directories;
-      LinkedList<Directory> directoryList;
-      File[] files;
-
-      if ((files = listFiles()) == null) {
-         return NO_CHILDREN;
+    for (File file : files) {
+      if (file.isDirectory()) {
+        return true;
       }
+    }
 
-      directoryList = new LinkedList<Directory>();
+    return false;
+  }
 
-      for (File file : files) {
-         if (file.isDirectory()) {
-            directoryList.add(new Directory(file.getAbsolutePath()));
-         }
+  public Directory[] getChildren () {
+
+    Directory[] directories;
+    LinkedList<Directory> directoryList;
+    File[] files;
+
+    if ((files = listFiles()) == null) {
+      return NO_CHILDREN;
+    }
+
+    directoryList = new LinkedList<Directory>();
+
+    for (File file : files) {
+      if (file.isDirectory()) {
+        directoryList.add(new Directory(file.getAbsolutePath()));
       }
+    }
 
-      directories = new Directory[directoryList.size()];
-      directoryList.toArray(directories);
+    directories = new Directory[directoryList.size()];
+    directoryList.toArray(directories);
 
-      return directories;
-   }
+    return directories;
+  }
 
 }
