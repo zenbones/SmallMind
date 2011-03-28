@@ -52,7 +52,7 @@ public class DirectoryTableModel implements TableModel {
 
     File pathElement;
 
-    this.directory = directory;
+    this.directory = (directory == null) ? new File(System.getProperty("user.home")) : directory;
 
     pathList = new ArrayList<File>();
     pathElement = directory;

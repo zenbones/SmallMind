@@ -91,7 +91,7 @@ public class FileChooserPanel extends JPanel implements ComponentListener, Mouse
 
   public FileChooserPanel (Window parentWindow, FileChooserState state) {
 
-    this(parentWindow, state, new File(System.getProperty("user.home")));
+    this(parentWindow, state, null, null);
   }
 
   public FileChooserPanel (Window parentWindow, FileChooserState state, File directory) {

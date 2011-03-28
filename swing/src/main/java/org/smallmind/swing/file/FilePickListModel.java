@@ -50,7 +50,6 @@ public class FilePickListModel implements ListModel {
 
   public FilePickListModel (File directory, FileFilter filter) {
 
-    this.directory = directory;
     this.filter = filter;
 
     setDirectory(directory);
@@ -76,7 +75,7 @@ public class FilePickListModel implements ListModel {
 
     int prevSize = (files == null) ? 0 : files.length;
 
-    this.directory = directory;
+    this.directory = (directory == null) ? new File(System.getProperty("user.home")) : directory;
 
     files = directory.listFiles((java.io.FileFilter)filter);
     Arrays.sort(files, FILE_COMPARATOR);
