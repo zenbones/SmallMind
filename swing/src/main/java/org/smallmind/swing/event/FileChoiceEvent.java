@@ -26,14 +26,22 @@
  */
 package org.smallmind.swing.event;
 
-import java.util.EventListener;
+import java.io.File;
+import java.util.EventObject;
 
-public interface DirectoryChoiceListener extends EventListener {
+public class FileChoiceEvent extends EventObject {
 
-   public abstract void rootChosen (DirectoryChoiceEvent directoryChoiceEvent);
+   private File file;
 
-   public abstract void directoryChosen (DirectoryChoiceEvent directoryChoiceEvent);
+   public FileChoiceEvent (Object source, File file) {
+
+      super(source);
+
+      this.file = file;
+   }
+
+   public File getChosenFile () {
+
+      return file;
+   }
 }
-
-
-

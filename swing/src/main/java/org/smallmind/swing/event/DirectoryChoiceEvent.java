@@ -44,5 +44,4 @@ public class DirectoryChoiceEvent extends EventObject {
 
       return file;
    }
-
 }

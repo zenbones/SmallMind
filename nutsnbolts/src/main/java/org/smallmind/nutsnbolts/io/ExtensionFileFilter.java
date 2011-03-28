@@ -70,15 +70,15 @@ public final class ExtensionFileFilter extends FileFilter implements java.io.Fil
     return extensionList.getFirst();
   }
 
-  public boolean accept (File f) {
+  public boolean accept (File file) {
 
-    return accept(f.getName());
-  }
+    if (file.isDirectory()) {
 
-  public boolean accept (String filename) {
+      return true;
+    }
 
     for (Pattern pattern : regExpList) {
-      if (pattern.matcher(filename).matches()) {
+      if (pattern.matcher(file.getName()).matches()) {
 
         return true;
       }
