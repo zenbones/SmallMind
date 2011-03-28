@@ -27,10 +27,8 @@
 package org.smallmind.swing.dialog;
 
 import java.awt.Container;
-import java.awt.Dialog;
 import java.awt.Dimension;
 import java.awt.Font;
-import java.awt.Frame;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.GridLayout;
@@ -65,52 +63,28 @@ public class OptionDialog extends JDialog implements WindowListener {
   private OptionPanel optionPanel;
   private JPanel buttonPanel;
 
-  public OptionDialog (Frame parentFrame, String optionText, OptionType optionType) {
+  public OptionDialog (Window parentWindow, String optionText, OptionType optionType) {
 
-    this(parentFrame, optionText, optionType, null, null);
+    this(parentWindow, optionText, optionType, null, null);
   }
 
-  public OptionDialog (Frame parentFrame, String optionText, OptionType optionType, OptionPanel optionPanel) {
+  public OptionDialog (Window parentWindow, String optionText, OptionType optionType, OptionPanel optionPanel) {
 
-    this(parentFrame, optionText, optionType, null, optionPanel);
+    this(parentWindow, optionText, optionType, null, optionPanel);
   }
 
-  public OptionDialog (Dialog parentDialog, String optionText, OptionType optionType) {
+  public OptionDialog (Window parentWindow, String optionText, OptionType optionType, OptionButton[] buttonList) {
 
-    this(parentDialog, optionText, optionType, null, null);
+    super(parentWindow, optionType.getTitle() + "...");
+
+    buildDialog(parentWindow, optionText, optionType, buttonList, null);
   }
 
-  public OptionDialog (Dialog parentDialog, String optionText, OptionType optionType, OptionPanel optionPanel) {
+  public OptionDialog (Window parentWindow, String optionText, OptionType optionType, OptionButton[] buttonList, OptionPanel optionPanel) {
 
-    this(parentDialog, optionText, optionType, null, optionPanel);
-  }
+    super(parentWindow, optionType.getTitle() + "...");
 
-  public OptionDialog (Frame parentFrame, String optionText, OptionType optionType, OptionButton[] buttonList) {
-
-    super(parentFrame, optionType.getTitle() + "...");
-
-    buildDialog(parentFrame, optionText, optionType, buttonList, null);
-  }
-
-  public OptionDialog (Frame parentFrame, String optionText, OptionType optionType, OptionButton[] buttonList, OptionPanel optionPanel) {
-
-    super(parentFrame, optionType.getTitle() + "...");
-
-    buildDialog(parentFrame, optionText, optionType, buttonList, optionPanel);
-  }
-
-  public OptionDialog (Dialog parentDialog, String optionText, OptionType optionType, OptionButton[] buttonList) {
-
-    super(parentDialog, optionType.getTitle() + "...");
-
-    buildDialog(parentDialog, optionText, optionType, buttonList, null);
-  }
-
-  public OptionDialog (Dialog parentDialog, String optionText, OptionType optionType, OptionButton[] buttonList, OptionPanel optionPanel) {
-
-    super(parentDialog, optionType.getTitle() + "...");
-
-    buildDialog(parentDialog, optionText, optionType, buttonList, optionPanel);
+    buildDialog(parentWindow, optionText, optionType, buttonList, optionPanel);
   }
 
   private void buildDialog (Window parentWindow, String optionText, OptionType optionType, OptionButton[] buttonList, OptionPanel optionPanel) {
@@ -217,7 +191,7 @@ public class OptionDialog extends JDialog implements WindowListener {
     dialogState = DialogState.INCOMPLETE;
 
     if (optionPanel != null) {
-      optionPanel.initalize(this);
+      optionPanel.initialize(this);
     }
 
     addWindowListener(this);

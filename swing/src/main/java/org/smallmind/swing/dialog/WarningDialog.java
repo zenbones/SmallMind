@@ -26,35 +26,20 @@
  */
 package org.smallmind.swing.dialog;
 
-import java.awt.Dialog;
-import java.awt.Frame;
+import java.awt.Window;
 
 public class WarningDialog extends OptionDialog {
 
-   public static void showWarningDialog (Frame parentFrame, String warningText) {
+  public static void showWarningDialog (Window parentWindow, String warningText) {
 
-      WarningDialog warningDialog = new WarningDialog(parentFrame, warningText);
+    WarningDialog warningDialog = new WarningDialog(parentWindow, warningText);
 
-      warningDialog.setModal(true);
-      warningDialog.setVisible(true);
-   }
+    warningDialog.setModal(true);
+    warningDialog.setVisible(true);
+  }
 
-   public static void showWarningDialog (Dialog parentDialog, String warningText) {
+  public WarningDialog (Window parentWindow, String warningText) {
 
-      WarningDialog warningDialog = new WarningDialog(parentDialog, warningText);
-
-      warningDialog.setModal(true);
-      warningDialog.setVisible(true);
-   }
-
-   public WarningDialog (Frame parentFrame, String warningText) {
-
-      super(parentFrame, warningText, OptionType.WARNING);
-   }
-
-   public WarningDialog (Dialog parentDialog, String warningText) {
-
-      super(parentDialog, warningText, OptionType.WARNING);
-   }
-
+    super(parentWindow, warningText, OptionType.WARNING);
+  }
 }

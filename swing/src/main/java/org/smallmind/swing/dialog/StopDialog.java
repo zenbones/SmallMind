@@ -26,35 +26,20 @@
  */
 package org.smallmind.swing.dialog;
 
-import java.awt.Dialog;
-import java.awt.Frame;
+import java.awt.Window;
 
 public class StopDialog extends OptionDialog {
 
-   public static void showStopDialog (Frame parentFrame, String stoptext) {
+  public static void showStopDialog (Window parentWindow, String stoptext) {
 
-      StopDialog stopDialog = new StopDialog(parentFrame, stoptext);
+    StopDialog stopDialog = new StopDialog(parentWindow, stoptext);
 
-      stopDialog.setModal(true);
-      stopDialog.setVisible(true);
-   }
+    stopDialog.setModal(true);
+    stopDialog.setVisible(true);
+  }
 
-   public static void showStopDialog (Dialog parentDialog, String stoptext) {
+  public StopDialog (Window parentWindow, String stoptext) {
 
-      StopDialog stopDialog = new StopDialog(parentDialog, stoptext);
-
-      stopDialog.setModal(true);
-      stopDialog.setVisible(true);
-   }
-
-   public StopDialog (Frame parentFrame, String stoptext) {
-
-      super(parentFrame, stoptext, OptionType.STOP);
-   }
-
-   public StopDialog (Dialog parentDialog, String stoptext) {
-
-      super(parentDialog, stoptext, OptionType.STOP);
-   }
-
+    super(parentWindow, stoptext, OptionType.STOP);
+  }
 }

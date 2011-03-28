@@ -56,7 +56,7 @@ public abstract class OptionPanel extends JPanel {
       optionDialog.setDialogState(dialogState);
    }
 
-   public void initalize (OptionDialog optionDialog) {
+   public void initialize (OptionDialog optionDialog) {
 
       this.optionDialog = optionDialog;
 

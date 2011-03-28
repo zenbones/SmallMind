@@ -40,112 +40,112 @@ import org.smallmind.swing.panel.OptionPanel;
 
 public class ProgressOptionPanel extends OptionPanel implements ProgressOperator, DialogListener {
 
-   private JProgressBar progressBar;
-   private JLabel processLabel;
-   private ProgressRunnable progressRunnable;
-   private boolean withLabel;
-   private boolean closeOnComplete;
+  private JProgressBar progressBar;
+  private JLabel processLabel;
+  private ProgressRunnable progressRunnable;
+  private boolean withLabel;
+  private boolean closeOnComplete;
 
-   public ProgressOptionPanel (ProgressRunnable progressRunnable, int orientation, int min, int max, boolean withLabel, boolean closeOnComplete)
-      throws LayoutManagerConstructionException {
+  public ProgressOptionPanel (ProgressRunnable progressRunnable, int orientation, int min, int max, boolean withLabel, boolean closeOnComplete)
+    throws LayoutManagerConstructionException {
 
-      super(LayoutManagerFactory.getLayoutManager(GridBagLayout.class));
+    super(LayoutManagerFactory.getLayoutManager(GridBagLayout.class));
 
-      GridBagConstraints constraint;
+    GridBagConstraints constraint;
 
-      this.progressRunnable = progressRunnable;
-      this.withLabel = withLabel;
-      this.closeOnComplete = closeOnComplete;
+    this.progressRunnable = progressRunnable;
+    this.withLabel = withLabel;
+    this.closeOnComplete = closeOnComplete;
 
-      if (withLabel) {
-         processLabel = new JLabel("X");
-         ComponentUtilities.setPreferredHeight(processLabel, processLabel.getPreferredSize().height);
-         processLabel.setText("");
-      }
+    if (withLabel) {
+      processLabel = new JLabel("X");
+      ComponentUtilities.setPreferredHeight(processLabel, processLabel.getPreferredSize().height);
+      processLabel.setText("");
+    }
 
-      progressBar = new JProgressBar(orientation, min, max);
-      progressBar.setStringPainted(true);
-      progressBar.setBorderPainted(true);
+    progressBar = new JProgressBar(orientation, min, max);
+    progressBar.setStringPainted(true);
+    progressBar.setBorderPainted(true);
 
-      constraint = new GridBagConstraints();
+    constraint = new GridBagConstraints();
 
-      if (withLabel) {
-         constraint.anchor = GridBagConstraints.WEST;
-         constraint.fill = GridBagConstraints.HORIZONTAL;
-         constraint.insets = new Insets(0, 0, 0, 0);
-         constraint.gridx = 0;
-         constraint.gridy = 0;
-         constraint.weightx = 1;
-         constraint.weighty = 0;
-         add(processLabel, constraint);
-      }
-
+    if (withLabel) {
       constraint.anchor = GridBagConstraints.WEST;
       constraint.fill = GridBagConstraints.HORIZONTAL;
-      constraint.insets = new Insets((!withLabel) ? 0 : 3, 0, 0, 0);
+      constraint.insets = new Insets(0, 0, 0, 0);
       constraint.gridx = 0;
-      constraint.gridy = (!withLabel) ? 0 : 1;
+      constraint.gridy = 0;
       constraint.weightx = 1;
       constraint.weighty = 0;
-      add(progressBar, constraint);
-   }
+      add(processLabel, constraint);
+    }
 
-   public void initalize (OptionDialog optionDialog) {
+    constraint.anchor = GridBagConstraints.WEST;
+    constraint.fill = GridBagConstraints.HORIZONTAL;
+    constraint.insets = new Insets((!withLabel) ? 0 : 3, 0, 0, 0);
+    constraint.gridx = 0;
+    constraint.gridy = (!withLabel) ? 0 : 1;
+    constraint.weightx = 1;
+    constraint.weighty = 0;
+    add(progressBar, constraint);
+  }
 
-      Thread progressThread;
+  public void initialize (OptionDialog optionDialog) {
 
-      super.initalize(optionDialog);
+    Thread progressThread;
 
-      progressRunnable.initalize(this);
-      progressThread = new Thread(progressRunnable);
-      progressThread.start();
+    super.initialize(optionDialog);
 
-      optionDialog.addDialogListener(this);
-   }
+    progressRunnable.initalize(this);
+    progressThread = new Thread(progressRunnable);
+    progressThread.start();
 
-   public String validateOption (DialogState dialogState) {
+    optionDialog.addDialogListener(this);
+  }
 
-      return null;
-   }
+  public String validateOption (DialogState dialogState) {
 
-   public synchronized void setProcessLabel (String name) {
+    return null;
+  }
 
-      if (!withLabel) {
-         throw new IllegalStateException("Progress bar has been requested without a label");
+  public synchronized void setProcessLabel (String name) {
+
+    if (!withLabel) {
+      throw new IllegalStateException("Progress bar has been requested without a label");
+    }
+
+    processLabel.setText(name);
+  }
+
+  public synchronized void setMinimum (int min) {
+
+    progressBar.setMinimum(min);
+  }
+
+  public synchronized void setMaximum (int max) {
+
+    progressBar.setMaximum(max);
+  }
+
+  public synchronized void setValue (int value) {
+
+    progressBar.setValue(value);
+    if (value == progressBar.getMaximum()) {
+      if (closeOnComplete) {
+        setDialogSate(DialogState.COMPLETE);
+        closeParent();
       }
-
-      processLabel.setText(name);
-   }
-
-   public synchronized void setMinimum (int min) {
-
-      progressBar.setMinimum(min);
-   }
-
-   public synchronized void setMaximum (int max) {
-
-      progressBar.setMaximum(max);
-   }
-
-   public synchronized void setValue (int value) {
-
-      progressBar.setValue(value);
-      if (value == progressBar.getMaximum()) {
-         if (closeOnComplete) {
-            setDialogSate(DialogState.COMPLETE);
-            closeParent();
-         }
-         else {
-            getOptionDialog().replaceButtons(new OptionButton[] {new OptionButton("Continue", DialogState.CONTINUE)});
-         }
+      else {
+        getOptionDialog().replaceButtons(new OptionButton[] {new OptionButton("Continue", DialogState.CONTINUE)});
       }
-   }
+    }
+  }
 
-   public synchronized void dialogHandler (DialogEvent dialogEvent) {
+  public synchronized void dialogHandler (DialogEvent dialogEvent) {
 
-      if (!getDialogState().equals(DialogState.COMPLETE)) {
-         progressRunnable.terminate();
-      }
-   }
+    if (!getDialogState().equals(DialogState.COMPLETE)) {
+      progressRunnable.terminate();
+    }
+  }
 
 }

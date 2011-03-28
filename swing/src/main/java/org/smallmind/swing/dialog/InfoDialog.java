@@ -26,35 +26,20 @@
  */
 package org.smallmind.swing.dialog;
 
-import java.awt.Dialog;
-import java.awt.Frame;
+import java.awt.Window;
 
 public class InfoDialog extends OptionDialog {
 
-   public static void showInfoDialog (Frame parentFrame, String infoText) {
+  public static void showInfoDialog (Window parentWindow, String infoText) {
 
-      InfoDialog infoDialog = new InfoDialog(parentFrame, infoText);
+    InfoDialog infoDialog = new InfoDialog(parentWindow, infoText);
 
-      infoDialog.setModal(true);
-      infoDialog.setVisible(true);
-   }
+    infoDialog.setModal(true);
+    infoDialog.setVisible(true);
+  }
 
-   public static void showInfoDialog (Dialog parentDialog, String infoText) {
+  public InfoDialog (Window parentWindow, String infoText) {
 
-      InfoDialog infoDialog = new InfoDialog(parentDialog, infoText);
-
-      infoDialog.setModal(true);
-      infoDialog.setVisible(true);
-   }
-
-   public InfoDialog (Frame parentFrame, String infoText) {
-
-      super(parentFrame, infoText, OptionType.INFO);
-   }
-
-   public InfoDialog (Dialog parentDialog, String infoText) {
-
-      super(parentDialog, infoText, OptionType.INFO);
-   }
-
+    super(parentWindow, infoText, OptionType.INFO);
+  }
 }

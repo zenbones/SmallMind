@@ -50,266 +50,264 @@ import javax.swing.JDialog;
 import javax.swing.JPanel;
 import javax.swing.JTabbedPane;
 import javax.swing.KeyStroke;
+import org.smallmind.nutsnbolts.util.WeakEventListenerList;
 import org.smallmind.swing.event.DialogEvent;
 import org.smallmind.swing.event.DialogListener;
 import org.smallmind.swing.panel.WizardPanel;
-import org.smallmind.nutsnbolts.util.WeakEventListenerList;
 
 public class WizardDialog extends JDialog implements WindowListener {
 
-   private static final GridBagLayout GRID_BAG_LAYOUT = new GridBagLayout();
-   private static final GridLayout GRID_LAYOUT = new GridLayout(1, 0);
-   private static final FlowLayout FLOW_LAYOUT = new FlowLayout(FlowLayout.RIGHT);
+  private static final GridBagLayout GRID_BAG_LAYOUT = new GridBagLayout();
+  private static final GridLayout GRID_LAYOUT = new GridLayout(1, 0);
+  private static final FlowLayout FLOW_LAYOUT = new FlowLayout(FlowLayout.RIGHT);
 
-   private Window parentWindow;
-   private Object result;
-   private WeakEventListenerList<DialogListener> listenerList;
-   private JTabbedPane wizardTabbedPane;
-   private JPanel headerPanel;
-   private CancelAction cancelAction;
-   private WizardResultValidator validator;
-   private boolean parentIsFrame;
+  private Window parentWindow;
+  private Object result;
+  private WeakEventListenerList<DialogListener> listenerList;
+  private JTabbedPane wizardTabbedPane;
+  private JPanel headerPanel;
+  private CancelAction cancelAction;
+  private WizardResultValidator validator;
+  private boolean parentIsFrame;
 
-   public WizardDialog (Dialog parentDialog, String title, Object result) {
+  public WizardDialog (Window parentWindow, String title, Object result) {
 
-      super(parentDialog, title);
+    super(parentWindow, title);
 
-      parentIsFrame = false;
-      construct(parentDialog, result);
-   }
+    parentIsFrame = true;
+    construct(parentWindow, result);
+  }
 
-   public WizardDialog (Frame parentFrame, String title, Object result) {
+  private void construct (Window parentWindow, Object result) {
 
-      super(parentFrame, title);
+    GridBagConstraints constraint = new GridBagConstraints();
+    Container contentPane;
+    JPanel buttonPanel;
+    JButton okButton;
+    JButton cancelButton;
+    OKAction okAction;
 
-      parentIsFrame = true;
-      construct(parentFrame, result);
-   }
+    this.parentWindow = parentWindow;
+    this.result = result;
 
-   private void construct (Window parentWindow, Object result) {
+    setDefaultCloseOperation(JDialog.DO_NOTHING_ON_CLOSE);
 
-      GridBagConstraints constraint = new GridBagConstraints();
-      Container contentPane;
-      JPanel buttonPanel;
-      JButton okButton;
-      JButton cancelButton;
-      OKAction okAction;
+    contentPane = getContentPane();
+    contentPane.setLayout(GRID_BAG_LAYOUT);
 
-      this.parentWindow = parentWindow;
-      this.result = result;
+    headerPanel = new JPanel(GRID_LAYOUT);
 
-      setDefaultCloseOperation(JDialog.DO_NOTHING_ON_CLOSE);
+    wizardTabbedPane = new JTabbedPane();
+    wizardTabbedPane.setFocusable(false);
 
-      contentPane = getContentPane();
-      contentPane.setLayout(GRID_BAG_LAYOUT);
+    okAction = new OKAction();
+    cancelAction = new CancelAction();
 
-      headerPanel = new JPanel(GRID_LAYOUT);
+    okButton = new JButton(okAction);
+    okButton.registerKeyboardAction(okAction, KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0), JComponent.WHEN_IN_FOCUSED_WINDOW);
 
-      wizardTabbedPane = new JTabbedPane();
-      wizardTabbedPane.setFocusable(false);
+    cancelButton = new JButton(cancelAction);
+    cancelButton.registerKeyboardAction(cancelAction, KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0), JComponent.WHEN_IN_FOCUSED_WINDOW);
 
-      okAction = new OKAction();
-      cancelAction = new CancelAction();
+    buttonPanel = new JPanel(FLOW_LAYOUT);
+    buttonPanel.add(okButton);
+    buttonPanel.add(cancelButton);
+    buttonPanel.add(new JButton(new ApplyAction()));
 
-      okButton = new JButton(okAction);
-      okButton.registerKeyboardAction(okAction, KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0), JComponent.WHEN_IN_FOCUSED_WINDOW);
+    constraint.anchor = GridBagConstraints.NORTHWEST;
+    constraint.fill = GridBagConstraints.HORIZONTAL;
+    constraint.insets = new Insets(0, 0, 0, 0);
+    constraint.gridx = 0;
+    constraint.gridy = 0;
+    constraint.weightx = 1;
+    constraint.weighty = 0;
+    contentPane.add(headerPanel, constraint);
 
-      cancelButton = new JButton(cancelAction);
-      cancelButton.registerKeyboardAction(cancelAction, KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0), JComponent.WHEN_IN_FOCUSED_WINDOW);
+    constraint.anchor = GridBagConstraints.NORTHWEST;
+    constraint.fill = GridBagConstraints.BOTH;
+    constraint.insets = new Insets(0, 0, 0, 0);
+    constraint.gridx = 0;
+    constraint.gridy = 1;
+    constraint.weightx = 1;
+    constraint.weighty = 1;
+    contentPane.add(wizardTabbedPane, constraint);
 
-      buttonPanel = new JPanel(FLOW_LAYOUT);
-      buttonPanel.add(okButton);
-      buttonPanel.add(cancelButton);
-      buttonPanel.add(new JButton(new ApplyAction()));
+    constraint.anchor = GridBagConstraints.NORTHWEST;
+    constraint.fill = GridBagConstraints.HORIZONTAL;
+    constraint.insets = new Insets(0, 0, 0, 0);
+    constraint.gridx = 0;
+    constraint.gridy = 2;
+    constraint.weightx = 1;
+    constraint.weighty = 0;
+    contentPane.add(buttonPanel, constraint);
 
-      constraint.anchor = GridBagConstraints.NORTHWEST;
-      constraint.fill = GridBagConstraints.HORIZONTAL;
-      constraint.insets = new Insets(0, 0, 0, 0);
-      constraint.gridx = 0;
-      constraint.gridy = 0;
-      constraint.weightx = 1;
-      constraint.weighty = 0;
-      contentPane.add(headerPanel, constraint);
+    pack();
+    setResizable(false);
+    setLocationRelativeTo(parentWindow);
+    setDefaultCloseOperation(JDialog.DO_NOTHING_ON_CLOSE);
 
-      constraint.anchor = GridBagConstraints.NORTHWEST;
-      constraint.fill = GridBagConstraints.BOTH;
-      constraint.insets = new Insets(0, 0, 0, 0);
-      constraint.gridx = 0;
-      constraint.gridy = 1;
-      constraint.weightx = 1;
-      constraint.weighty = 1;
-      contentPane.add(wizardTabbedPane, constraint);
+    addWindowListener(this);
 
-      constraint.anchor = GridBagConstraints.NORTHWEST;
-      constraint.fill = GridBagConstraints.HORIZONTAL;
-      constraint.insets = new Insets(0, 0, 0, 0);
-      constraint.gridx = 0;
-      constraint.gridy = 2;
-      constraint.weightx = 1;
-      constraint.weighty = 0;
-      contentPane.add(buttonPanel, constraint);
+    listenerList = new WeakEventListenerList<DialogListener>();
+  }
 
-      pack();
-      setResizable(false);
-      setLocationRelativeTo(parentWindow);
-      setDefaultCloseOperation(JDialog.DO_NOTHING_ON_CLOSE);
+  public Object getResult () {
 
-      addWindowListener(this);
+    return result;
+  }
 
-      listenerList = new WeakEventListenerList<DialogListener>();
-   }
+  public synchronized void addDialogListener (DialogListener listener) {
 
-   public Object getResult () {
+    listenerList.addListener(listener);
+  }
 
-      return result;
-   }
+  public synchronized void removeDialogListener (DialogListener listener) {
 
-   public synchronized void addDialogListener (DialogListener listener) {
+    listenerList.removeListener(listener);
+  }
 
-      listenerList.addListener(listener);
-   }
+  public void setValidator (WizardResultValidator validator) {
 
-   public synchronized void removeDialogListener (DialogListener listener) {
+    this.validator = validator;
+  }
 
-      listenerList.removeListener(listener);
-   }
+  public void setHeader (Component component, int gap) {
 
-   public void setValidator (WizardResultValidator validator) {
+    JPanel gapPanel;
 
-      this.validator = validator;
-   }
+    headerPanel.removeAll();
 
-   public void setHeader (Component component, int gap) {
+    gapPanel = new JPanel(new GridLayout(1, 0));
+    gapPanel.setBorder(BorderFactory.createEmptyBorder(0, 0, gap, 0));
+    gapPanel.add(component);
 
-      JPanel gapPanel;
+    headerPanel.add(gapPanel);
+  }
 
-      headerPanel.removeAll();
+  public void addWizardPanel (WizardPanel wizardPanel) {
 
-      gapPanel = new JPanel(new GridLayout(1, 0));
-      gapPanel.setBorder(BorderFactory.createEmptyBorder(0, 0, gap, 0));
-      gapPanel.add(component);
+    wizardTabbedPane.addTab(wizardPanel.getTitle(), wizardPanel);
+    wizardPanel.setWizardDialog(this);
+  }
 
-      headerPanel.add(gapPanel);
-   }
+  public void displayWarning (String warningMessage) {
 
-   public void addWizardPanel (WizardPanel wizardPanel) {
+    WarningDialog warningDialog;
 
-      wizardTabbedPane.addTab(wizardPanel.getTitle(), wizardPanel);
-      wizardPanel.setWizardDialog(this);
-   }
+    if (parentIsFrame) {
+      warningDialog = new WarningDialog((Frame)parentWindow, warningMessage);
+    }
+    else {
+      warningDialog = new WarningDialog((Dialog)parentWindow, warningMessage);
+    }
 
-   public void displayWarning (String warningMessage) {
+    warningDialog.setModal(true);
+    warningDialog.setVisible(true);
+  }
 
-      WarningDialog warningDialog;
+  public synchronized void fireDialogHandler (DialogState dialogState) {
 
-      if (parentIsFrame) {
-         warningDialog = new WarningDialog((Frame)parentWindow, warningMessage);
+    Iterator<DialogListener> listenerIter = listenerList.getListeners();
+    DialogEvent dialogEvent;
+
+    dialogEvent = new DialogEvent(this, dialogState);
+    while (listenerIter.hasNext()) {
+      listenerIter.next().dialogHandler(dialogEvent);
+    }
+  }
+
+  public void windowOpened (WindowEvent windowEvent) {
+
+  }
+
+  public synchronized void windowClosing (WindowEvent windowEvent) {
+
+    cancelAction.actionPerformed(null);
+  }
+
+  public void windowClosed (WindowEvent windowEvent) {
+
+  }
+
+  public void windowIconified (WindowEvent windowEvent) {
+
+  }
+
+  public void windowDeiconified (WindowEvent windowEvent) {
+
+  }
+
+  public void windowActivated (WindowEvent windowEvent) {
+
+  }
+
+  public void windowDeactivated (WindowEvent windowEvent) {
+
+  }
+
+  public class OKAction extends AbstractAction {
+
+    public OKAction () {
+
+      super();
+
+      putValue(Action.NAME, "OK");
+    }
+
+    public synchronized void actionPerformed (ActionEvent actionEvent) {
+
+      String invalidationMessage;
+
+      if ((validator != null) && ((invalidationMessage = validator.isValid(getResult())) != null)) {
+        displayWarning(invalidationMessage);
       }
       else {
-         warningDialog = new WarningDialog((Dialog)parentWindow, warningMessage);
+        setVisible(false);
+        dispose();
+        fireDialogHandler(DialogState.OK);
       }
+    }
 
-      warningDialog.setModal(true);
-      warningDialog.setVisible(true);
-   }
+  }
 
-   public synchronized void fireDialogHandler (DialogState dialogState) {
+  public class CancelAction extends AbstractAction {
 
-      Iterator<DialogListener> listenerIter = listenerList.getListeners();
-      DialogEvent dialogEvent;
+    public CancelAction () {
 
-      dialogEvent = new DialogEvent(this, dialogState);
-      while (listenerIter.hasNext()) {
-         listenerIter.next().dialogHandler(dialogEvent);
+      super();
+
+      putValue(Action.NAME, "Cancel");
+    }
+
+    public synchronized void actionPerformed (ActionEvent actionEvent) {
+
+      setVisible(false);
+      dispose();
+      fireDialogHandler(DialogState.CANCEL);
+    }
+
+  }
+
+  public class ApplyAction extends AbstractAction {
+
+    public ApplyAction () {
+
+      super();
+
+      putValue(Action.NAME, "Apply");
+    }
+
+    public synchronized void actionPerformed (ActionEvent actionEvent) {
+
+      String invalidationMessage;
+
+      if ((validator != null) && ((invalidationMessage = validator.isValid(getResult())) != null)) {
+        displayWarning(invalidationMessage);
       }
-   }
-
-   public void windowOpened (WindowEvent windowEvent) {
-   }
-
-   public synchronized void windowClosing (WindowEvent windowEvent) {
-
-      cancelAction.actionPerformed(null);
-   }
-
-   public void windowClosed (WindowEvent windowEvent) {
-   }
-
-   public void windowIconified (WindowEvent windowEvent) {
-   }
-
-   public void windowDeiconified (WindowEvent windowEvent) {
-   }
-
-   public void windowActivated (WindowEvent windowEvent) {
-   }
-
-   public void windowDeactivated (WindowEvent windowEvent) {
-   }
-
-   public class OKAction extends AbstractAction {
-
-      public OKAction () {
-
-         super();
-
-         putValue(Action.NAME, "OK");
+      else {
+        fireDialogHandler(DialogState.APPLY);
       }
-
-      public synchronized void actionPerformed (ActionEvent actionEvent) {
-
-         String invalidationMessage;
-
-         if ((validator != null) && ((invalidationMessage = validator.isValid(getResult())) != null)) {
-            displayWarning(invalidationMessage);
-         }
-         else {
-            setVisible(false);
-            dispose();
-            fireDialogHandler(DialogState.OK);
-         }
-      }
-
-   }
-
-   public class CancelAction extends AbstractAction {
-
-      public CancelAction () {
-
-         super();
-
-         putValue(Action.NAME, "Cancel");
-      }
-
-      public synchronized void actionPerformed (ActionEvent actionEvent) {
-
-         setVisible(false);
-         dispose();
-         fireDialogHandler(DialogState.CANCEL);
-      }
-
-   }
-
-   public class ApplyAction extends AbstractAction {
-
-      public ApplyAction () {
-
-         super();
-
-         putValue(Action.NAME, "Apply");
-      }
-
-      public synchronized void actionPerformed (ActionEvent actionEvent) {
-
-         String invalidationMessage;
-
-         if ((validator != null) && ((invalidationMessage = validator.isValid(getResult())) != null)) {
-            displayWarning(invalidationMessage);
-         }
-         else {
-            fireDialogHandler(DialogState.APPLY);
-         }
-      }
-   }
+    }
+  }
 
 }

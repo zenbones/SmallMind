@@ -27,9 +27,7 @@
 package org.smallmind.swing.dialog;
 
 import java.awt.Container;
-import java.awt.Dialog;
 import java.awt.FlowLayout;
-import java.awt.Frame;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Insets;
@@ -47,222 +45,211 @@ import javax.swing.JComponent;
 import javax.swing.JDialog;
 import javax.swing.JPanel;
 import javax.swing.KeyStroke;
+import org.smallmind.nutsnbolts.util.WeakEventListenerList;
 import org.smallmind.swing.event.DialogEvent;
 import org.smallmind.swing.event.DialogListener;
 import org.smallmind.swing.event.DirectoryChoiceEvent;
 import org.smallmind.swing.event.DirectoryChoiceListener;
 import org.smallmind.swing.file.DirectoryChooser;
-import org.smallmind.nutsnbolts.util.WeakEventListenerList;
 
 public class DirectoryChooserDialog extends JDialog implements WindowListener, DirectoryChoiceListener {
 
-   private static final GridBagLayout GRID_BAG_LAYOUT = new GridBagLayout();
-   private static final FlowLayout FLOW_LAYOUT = new FlowLayout(FlowLayout.RIGHT);
+  private static final GridBagLayout GRID_BAG_LAYOUT = new GridBagLayout();
+  private static final FlowLayout FLOW_LAYOUT = new FlowLayout(FlowLayout.RIGHT);
 
-   private WeakEventListenerList<DialogListener> listenerList;
-   private CancelAction cancelAction;
-   private JButton okButton;
-   private File directory;
-   boolean initialized = false;
+  private WeakEventListenerList<DialogListener> listenerList;
+  private CancelAction cancelAction;
+  private JButton okButton;
+  private File directory;
+  boolean initialized = false;
 
-   public static File createShowDialog (Dialog parentDialog) {
+  public static File createShowDialog (Window parentWindow) {
 
-      DirectoryChooserDialog directoryChooserDialog;
+    DirectoryChooserDialog directoryChooserDialog;
 
-      directoryChooserDialog = new DirectoryChooserDialog(parentDialog);
-      directoryChooserDialog.showDialog();
+    directoryChooserDialog = new DirectoryChooserDialog(parentWindow);
+    directoryChooserDialog.showDialog();
 
-      return directoryChooserDialog.getChosenDirectory();
-   }
+    return directoryChooserDialog.getChosenDirectory();
+  }
 
-   public static File createShowDialog (Frame parentFrame) {
+  public DirectoryChooserDialog (Window parentWindow) {
 
-      DirectoryChooserDialog directoryChooserDialog;
+    super(parentWindow, "Choose Directory...");
 
-      directoryChooserDialog = new DirectoryChooserDialog(parentFrame);
-      directoryChooserDialog.showDialog();
+    buildDialog(parentWindow);
+  }
 
-      return directoryChooserDialog.getChosenDirectory();
-   }
+  private void buildDialog (Window parentWindow) {
 
-   public DirectoryChooserDialog (Dialog parentDialog) {
+    GridBagConstraints constraints = new GridBagConstraints();
+    Container contentPane;
+    JPanel buttonPanel;
+    JButton cancelButton;
+    OKAction okAction;
+    DirectoryChooser directoryChooser;
 
-      super(parentDialog, "Choose Directory...");
+    setDefaultCloseOperation(JDialog.DO_NOTHING_ON_CLOSE);
 
-      buildDialog(parentDialog);
-   }
+    contentPane = getContentPane();
+    contentPane.setLayout(GRID_BAG_LAYOUT);
 
-   public DirectoryChooserDialog (Frame parentFrame) {
+    okAction = new OKAction();
+    cancelAction = new CancelAction();
 
-      super(parentFrame, "Choose Directory...");
+    okButton = new JButton(okAction);
+    okButton.setEnabled(false);
+    okButton.registerKeyboardAction(okAction, KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0), JComponent.WHEN_IN_FOCUSED_WINDOW);
 
-      buildDialog(parentFrame);
-   }
+    cancelButton = new JButton(cancelAction);
+    cancelButton.registerKeyboardAction(cancelAction, KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0), JComponent.WHEN_IN_FOCUSED_WINDOW);
 
-   private void buildDialog (Window parentWindow) {
+    buttonPanel = new JPanel(FLOW_LAYOUT);
+    buttonPanel.add(okButton);
+    buttonPanel.add(cancelButton);
 
-      GridBagConstraints constraints = new GridBagConstraints();
-      Container contentPane;
-      JPanel buttonPanel;
-      JButton cancelButton;
-      OKAction okAction;
-      DirectoryChooser directoryChooser;
+    directoryChooser = new DirectoryChooser();
 
-      setDefaultCloseOperation(JDialog.DO_NOTHING_ON_CLOSE);
+    constraints.gridx = 0;
+    constraints.gridy = 0;
+    constraints.fill = GridBagConstraints.BOTH;
+    constraints.insets = new Insets(5, 5, 0, 5);
+    constraints.weightx = 1;
+    constraints.weighty = 1;
+    contentPane.add(directoryChooser, constraints);
 
-      contentPane = getContentPane();
-      contentPane.setLayout(GRID_BAG_LAYOUT);
+    constraints.gridx = 0;
+    constraints.gridy = 1;
+    constraints.fill = GridBagConstraints.HORIZONTAL;
+    constraints.insets = new Insets(5, 5, 5, 5);
+    constraints.weightx = 1;
+    constraints.weighty = 0;
+    contentPane.add(buttonPanel, constraints);
 
-      okAction = new OKAction();
-      cancelAction = new CancelAction();
+    pack();
+    setLocationRelativeTo(parentWindow);
+    setDefaultCloseOperation(JDialog.DO_NOTHING_ON_CLOSE);
 
-      okButton = new JButton(okAction);
-      okButton.setEnabled(false);
-      okButton.registerKeyboardAction(okAction, KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0), JComponent.WHEN_IN_FOCUSED_WINDOW);
+    directoryChooser.addDirectoryChoiceListener(this);
+    addWindowListener(this);
 
-      cancelButton = new JButton(cancelAction);
-      cancelButton.registerKeyboardAction(cancelAction, KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0), JComponent.WHEN_IN_FOCUSED_WINDOW);
+    listenerList = new WeakEventListenerList<DialogListener>();
+  }
 
-      buttonPanel = new JPanel(FLOW_LAYOUT);
-      buttonPanel.add(okButton);
-      buttonPanel.add(cancelButton);
+  public void showDialog () {
 
-      directoryChooser = new DirectoryChooser();
+    setModal(true);
+    setVisible(true);
+  }
 
-      constraints.gridx = 0;
-      constraints.gridy = 0;
-      constraints.fill = GridBagConstraints.BOTH;
-      constraints.insets = new Insets(5, 5, 0, 5);
-      constraints.weightx = 1;
-      constraints.weighty = 1;
-      contentPane.add(directoryChooser, constraints);
+  public synchronized void addDialogListener (DialogListener dialogListener) {
 
-      constraints.gridx = 0;
-      constraints.gridy = 1;
-      constraints.fill = GridBagConstraints.HORIZONTAL;
-      constraints.insets = new Insets(5, 5, 5, 5);
-      constraints.weightx = 1;
-      constraints.weighty = 0;
-      contentPane.add(buttonPanel, constraints);
+    listenerList.addListener(dialogListener);
+  }
 
-      pack();
-      setLocationRelativeTo(parentWindow);
-      setDefaultCloseOperation(JDialog.DO_NOTHING_ON_CLOSE);
+  public synchronized void removeDialogListener (DialogListener dialogListener) {
 
-      directoryChooser.addDirectoryChoiceListener(this);
-      addWindowListener(this);
+    listenerList.removeListener(dialogListener);
+  }
 
-      listenerList = new WeakEventListenerList<DialogListener>();
-   }
+  public synchronized File getChosenDirectory () {
 
-   public void showDialog () {
+    return directory;
+  }
 
-      setModal(true);
-      setVisible(true);
-   }
+  public synchronized void rootChosen (DirectoryChoiceEvent directoryChoiceEvent) {
 
-   public synchronized void addDialogListener (DialogListener dialogListener) {
+    directory = null;
+    okButton.setEnabled(false);
+    initialized = false;
+  }
 
-      listenerList.addListener(dialogListener);
-   }
+  public synchronized void directoryChosen (DirectoryChoiceEvent directoryChoiceEvent) {
 
-   public synchronized void removeDialogListener (DialogListener dialogListener) {
+    directory = directoryChoiceEvent.getChosenDirectory();
 
-      listenerList.removeListener(dialogListener);
-   }
+    if (!initialized) {
+      okButton.setEnabled(true);
+      initialized = true;
+    }
+  }
 
-   public synchronized File getChosenDirectory () {
+  public synchronized void fireDialogHandler (DialogState dialogState) {
 
-      return directory;
-   }
+    Iterator<DialogListener> listenerIter = listenerList.getListeners();
+    DialogEvent dialogEvent;
 
-   public synchronized void rootChosen (DirectoryChoiceEvent directoryChoiceEvent) {
+    dialogEvent = new DialogEvent(this, dialogState);
+    while (listenerIter.hasNext()) {
+      listenerIter.next().dialogHandler(dialogEvent);
+    }
+  }
+
+  public void windowOpened (WindowEvent windowEvent) {
+
+  }
+
+  public synchronized void windowClosing (WindowEvent windowEvent) {
+
+    cancelAction.actionPerformed(null);
+  }
+
+  public void windowClosed (WindowEvent windowEvent) {
+
+  }
+
+  public void windowIconified (WindowEvent windowEvent) {
+
+  }
+
+  public void windowDeiconified (WindowEvent windowEvent) {
+
+  }
+
+  public void windowActivated (WindowEvent windowEvent) {
+
+  }
+
+  public void windowDeactivated (WindowEvent windowEvent) {
+
+  }
+
+  public class OKAction extends AbstractAction {
+
+    public OKAction () {
+
+      super();
+
+      putValue(Action.NAME, "OK");
+    }
+
+    public synchronized void actionPerformed (ActionEvent actionEvent) {
+
+      setVisible(false);
+      dispose();
+      fireDialogHandler(DialogState.OK);
+    }
+
+  }
+
+  public class CancelAction extends AbstractAction {
+
+    public CancelAction () {
+
+      super();
+
+      putValue(Action.NAME, "Cancel");
+    }
+
+    public synchronized void actionPerformed (ActionEvent actionEvent) {
 
       directory = null;
-      okButton.setEnabled(false);
-      initialized = false;
-   }
 
-   public synchronized void directoryChosen (DirectoryChoiceEvent directoryChoiceEvent) {
+      setVisible(false);
+      dispose();
+      fireDialogHandler(DialogState.CANCEL);
+    }
 
-      directory = directoryChoiceEvent.getChosenDirectory();
-
-      if (!initialized) {
-         okButton.setEnabled(true);
-         initialized = true;
-      }
-   }
-
-   public synchronized void fireDialogHandler (DialogState dialogState) {
-
-      Iterator<DialogListener> listenerIter = listenerList.getListeners();
-      DialogEvent dialogEvent;
-
-      dialogEvent = new DialogEvent(this, dialogState);
-      while (listenerIter.hasNext()) {
-         listenerIter.next().dialogHandler(dialogEvent);
-      }
-   }
-
-   public void windowOpened (WindowEvent windowEvent) {
-   }
-
-   public synchronized void windowClosing (WindowEvent windowEvent) {
-
-      cancelAction.actionPerformed(null);
-   }
-
-   public void windowClosed (WindowEvent windowEvent) {
-   }
-
-   public void windowIconified (WindowEvent windowEvent) {
-   }
-
-   public void windowDeiconified (WindowEvent windowEvent) {
-   }
-
-   public void windowActivated (WindowEvent windowEvent) {
-   }
-
-   public void windowDeactivated (WindowEvent windowEvent) {
-   }
-
-   public class OKAction extends AbstractAction {
-
-      public OKAction () {
-
-         super();
-
-         putValue(Action.NAME, "OK");
-      }
-
-      public synchronized void actionPerformed (ActionEvent actionEvent) {
-
-         setVisible(false);
-         dispose();
-         fireDialogHandler(DialogState.OK);
-      }
-
-   }
-
-   public class CancelAction extends AbstractAction {
-
-      public CancelAction () {
-
-         super();
-
-         putValue(Action.NAME, "Cancel");
-      }
-
-      public synchronized void actionPerformed (ActionEvent actionEvent) {
-
-         directory = null;
-
-         setVisible(false);
-         dispose();
-         fireDialogHandler(DialogState.CANCEL);
-      }
-
-   }
+  }
 
 }

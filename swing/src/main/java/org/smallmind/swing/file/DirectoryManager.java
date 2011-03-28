@@ -26,9 +26,7 @@
  */
 package org.smallmind.swing.file;
 
-import java.awt.Dialog;
 import java.awt.Dimension;
-import java.awt.Frame;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Insets;
@@ -49,181 +47,156 @@ import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.KeyStroke;
 import javax.swing.ListSelectionModel;
-import org.smallmind.nutsnbolts.lang.UnknownSwitchCaseException;
 import org.smallmind.swing.SmallMindScrollPane;
 import org.smallmind.swing.dialog.DirectoryChooserDialog;
 
 public class DirectoryManager extends JPanel {
 
-   private static enum ParentType {
+  private static final GridBagLayout GRID_BAG_LAYOUT = new GridBagLayout();
+  private static final Dimension PREFERRED_DIMENSION = new Dimension(300, 500);
 
-      FRAME, DIALOG
-   }
+  private static ImageIcon DIRECTORY_ADD;
+  private static ImageIcon DIRECTORY_REMOVE;
 
-   private static final GridBagLayout GRID_BAG_LAYOUT = new GridBagLayout();
-   private static final Dimension PREFERRED_DIMENSION = new Dimension(300, 500);
+  private Window parentWindow;
+  private JList directoryDisplayList;
+  private DirectoryManagerListModel listModel;
 
-   private static ImageIcon DIRECTORY_ADD;
-   private static ImageIcon DIRECTORY_REMOVE;
+  static {
 
-   private ParentType parentType;
-   private Window parentWindow;
-   private JList directoryDisplayList;
-   private DirectoryManagerListModel listModel;
+    DIRECTORY_ADD = new ImageIcon(ClassLoader.getSystemResource("public/iconexperience/application basics/24x24/plain/folder_add.png"));
+    DIRECTORY_REMOVE = new ImageIcon(ClassLoader.getSystemResource("public/iconexperience/application basics/24x24/plain/folder_delete.png"));
+  }
 
-   static {
+  public DirectoryManager (Window parentWindow, List<File> directoryList) {
 
-      DIRECTORY_ADD = new ImageIcon(ClassLoader.getSystemResource("public/iconexperience/application basics/24x24/plain/folder_add.png"));
-      DIRECTORY_REMOVE = new ImageIcon(ClassLoader.getSystemResource("public/iconexperience/application basics/24x24/plain/folder_delete.png"));
-   }
+    this(directoryList);
 
-   public DirectoryManager (Dialog parentDialog, List<File> directoryList) {
+    this.parentWindow = parentWindow;
+  }
 
-      this(directoryList);
+  private DirectoryManager (List<File> directoryList) {
 
-      parentType = ParentType.DIALOG;
-      parentWindow = parentDialog;
-   }
+    super(GRID_BAG_LAYOUT);
 
-   public DirectoryManager (Frame parentFrame, List<File> directoryList) {
+    Box buttonBox;
+    JScrollPane directoryDisplayListScrollPane;
+    JButton addDirectoryButton;
+    JButton removeDirectoryButton;
+    RemoveDirectoryAction removeDirectoryAction;
 
-      this(directoryList);
+    GridBagConstraints constraints = new GridBagConstraints();
 
-      parentType = ParentType.FRAME;
-      parentWindow = parentFrame;
-   }
+    listModel = new DirectoryManagerListModel(directoryList);
 
-   private DirectoryManager (List<File> directoryList) {
+    directoryDisplayList = new JList(listModel);
+    directoryDisplayList.setDragEnabled(false);
+    directoryDisplayList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
 
-      super(GRID_BAG_LAYOUT);
+    directoryDisplayListScrollPane = new SmallMindScrollPane(directoryDisplayList);
 
-      Box buttonBox;
-      JScrollPane directoryDisplayListScrollPane;
-      JButton addDirectoryButton;
-      JButton removeDirectoryButton;
-      RemoveDirectoryAction removeDirectoryAction;
+    removeDirectoryAction = new RemoveDirectoryAction();
+    removeDirectoryButton = new JButton(removeDirectoryAction);
+    removeDirectoryButton.setFocusable(false);
+    removeDirectoryButton.registerKeyboardAction(removeDirectoryAction, KeyStroke.getKeyStroke(KeyEvent.VK_DELETE, 0), JComponent.WHEN_IN_FOCUSED_WINDOW);
 
-      GridBagConstraints constraints = new GridBagConstraints();
+    if (listModel.getSize() == 0) {
+      removeDirectoryAction.setEnabled(false);
+    }
+    else {
+      directoryDisplayList.setSelectedIndex(0);
+    }
 
-      listModel = new DirectoryManagerListModel(directoryList);
+    addDirectoryButton = new JButton(new AddDirectoryAction(removeDirectoryAction));
+    addDirectoryButton.setFocusable(false);
 
-      directoryDisplayList = new JList(listModel);
-      directoryDisplayList.setDragEnabled(false);
-      directoryDisplayList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+    buttonBox = new Box(BoxLayout.Y_AXIS);
+    buttonBox.add(addDirectoryButton);
+    buttonBox.add(Box.createVerticalStrut(5));
+    buttonBox.add(removeDirectoryButton);
+    buttonBox.add(Box.createVerticalGlue());
 
-      directoryDisplayListScrollPane = new SmallMindScrollPane(directoryDisplayList);
+    constraints.fill = GridBagConstraints.BOTH;
+    constraints.insets = new Insets(0, 0, 0, 0);
+    constraints.gridx = 0;
+    constraints.gridy = 0;
+    constraints.weightx = 1;
+    constraints.weighty = 1;
+    add(directoryDisplayListScrollPane, constraints);
 
-      removeDirectoryAction = new RemoveDirectoryAction();
-      removeDirectoryButton = new JButton(removeDirectoryAction);
-      removeDirectoryButton.setFocusable(false);
-      removeDirectoryButton.registerKeyboardAction(removeDirectoryAction, KeyStroke.getKeyStroke(KeyEvent.VK_DELETE, 0), JComponent.WHEN_IN_FOCUSED_WINDOW);
+    constraints.fill = GridBagConstraints.BOTH;
+    constraints.insets = new Insets(0, 5, 0, 0);
+    constraints.gridx = 1;
+    constraints.gridy = 0;
+    constraints.weightx = 0;
+    constraints.weighty = 1;
+    add(buttonBox, constraints);
+  }
+
+  public Dimension getPreferredSize () {
+
+    return PREFERRED_DIMENSION;
+  }
+
+  public class AddDirectoryAction extends AbstractAction {
+
+    private RemoveDirectoryAction removeDirectoryAction;
+
+    public AddDirectoryAction (RemoveDirectoryAction removeDirectoryAction) {
+
+      super();
+
+      this.removeDirectoryAction = removeDirectoryAction;
+
+      putValue(Action.SMALL_ICON, DIRECTORY_ADD);
+      putValue(Action.SHORT_DESCRIPTION, "Add a media directory");
+    }
+
+    public synchronized void actionPerformed (ActionEvent actionEvent) {
+
+      File addedDirectory;
+
+      addedDirectory = DirectoryChooserDialog.createShowDialog(parentWindow);
+
+      if (addedDirectory != null) {
+        listModel.addDirectory(addedDirectory);
+        removeDirectoryAction.setEnabled(true);
+
+        if (directoryDisplayList.getSelectedIndex() < 0) {
+          directoryDisplayList.setSelectedIndex(0);
+        }
+      }
+    }
+
+  }
+
+  public class RemoveDirectoryAction extends AbstractAction {
+
+    public RemoveDirectoryAction () {
+
+      super();
+
+      putValue(Action.SMALL_ICON, DIRECTORY_REMOVE);
+      putValue(Action.SHORT_DESCRIPTION, "Remove a media directory");
+    }
+
+    public synchronized void actionPerformed (ActionEvent actionEvent) {
+
+      int selectedIndex;
+
+      listModel.removeDirectory(selectedIndex = directoryDisplayList.getSelectedIndex());
 
       if (listModel.getSize() == 0) {
-         removeDirectoryAction.setEnabled(false);
+        setEnabled(false);
+      }
+      if (selectedIndex < listModel.getSize()) {
+        directoryDisplayList.setSelectedIndex(selectedIndex);
       }
       else {
-         directoryDisplayList.setSelectedIndex(0);
+        directoryDisplayList.setSelectedIndex(listModel.getSize() - 1);
       }
+    }
 
-      addDirectoryButton = new JButton(new AddDirectoryAction(removeDirectoryAction));
-      addDirectoryButton.setFocusable(false);
-
-      buttonBox = new Box(BoxLayout.Y_AXIS);
-      buttonBox.add(addDirectoryButton);
-      buttonBox.add(Box.createVerticalStrut(5));
-      buttonBox.add(removeDirectoryButton);
-      buttonBox.add(Box.createVerticalGlue());
-
-      constraints.fill = GridBagConstraints.BOTH;
-      constraints.insets = new Insets(0, 0, 0, 0);
-      constraints.gridx = 0;
-      constraints.gridy = 0;
-      constraints.weightx = 1;
-      constraints.weighty = 1;
-      add(directoryDisplayListScrollPane, constraints);
-
-      constraints.fill = GridBagConstraints.BOTH;
-      constraints.insets = new Insets(0, 5, 0, 0);
-      constraints.gridx = 1;
-      constraints.gridy = 0;
-      constraints.weightx = 0;
-      constraints.weighty = 1;
-      add(buttonBox, constraints);
-   }
-
-   public Dimension getPreferredSize () {
-
-      return PREFERRED_DIMENSION;
-   }
-
-   public class AddDirectoryAction extends AbstractAction {
-
-      private RemoveDirectoryAction removeDirectoryAction;
-
-      public AddDirectoryAction (RemoveDirectoryAction removeDirectoryAction) {
-
-         super();
-
-         this.removeDirectoryAction = removeDirectoryAction;
-
-         putValue(Action.SMALL_ICON, DIRECTORY_ADD);
-         putValue(Action.SHORT_DESCRIPTION, "Add a media directory");
-      }
-
-      public synchronized void actionPerformed (ActionEvent actionEvent) {
-
-         File addedDirectory;
-
-         switch (parentType) {
-            case DIALOG:
-               addedDirectory = DirectoryChooserDialog.createShowDialog((Dialog)parentWindow);
-               break;
-            case FRAME:
-               addedDirectory = DirectoryChooserDialog.createShowDialog((Frame)parentWindow);
-               break;
-            default:
-               throw new UnknownSwitchCaseException(parentType.name());
-         }
-
-         if (addedDirectory != null) {
-            listModel.addDirectory(addedDirectory);
-            removeDirectoryAction.setEnabled(true);
-
-            if (directoryDisplayList.getSelectedIndex() < 0) {
-               directoryDisplayList.setSelectedIndex(0);
-            }
-         }
-      }
-
-   }
-
-   public class RemoveDirectoryAction extends AbstractAction {
-
-      public RemoveDirectoryAction () {
-
-         super();
-
-         putValue(Action.SMALL_ICON, DIRECTORY_REMOVE);
-         putValue(Action.SHORT_DESCRIPTION, "Remove a media directory");
-      }
-
-      public synchronized void actionPerformed (ActionEvent actionEvent) {
-
-         int selectedIndex;
-
-         listModel.removeDirectory(selectedIndex = directoryDisplayList.getSelectedIndex());
-
-         if (listModel.getSize() == 0) {
-            setEnabled(false);
-         }
-         if (selectedIndex < listModel.getSize()) {
-            directoryDisplayList.setSelectedIndex(selectedIndex);
-         }
-         else {
-            directoryDisplayList.setSelectedIndex(listModel.getSize() - 1);
-         }
-      }
-
-   }
+  }
 
 }

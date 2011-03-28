@@ -27,11 +27,11 @@
 package org.smallmind.swing.dialog;
 
 import java.awt.Container;
-import java.awt.Frame;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.GridLayout;
 import java.awt.Insets;
+import java.awt.Window;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
@@ -70,17 +70,17 @@ public class JavaErrorDialog extends javax.swing.JDialog implements ActionListen
     BUG_ICON = new ImageIcon(Thread.currentThread().getContextClassLoader().getResource("org/smallmind/swing/dialog/dialog_bug.png"));
   }
 
-  public static void showJavaErrorDialog (Frame parentFrame, Object source, Exception exception) {
+  public static void showJavaErrorDialog (Window parentWindow, Object source, Exception exception) {
 
-    JavaErrorDialog errorDialog = new JavaErrorDialog(parentFrame, source, exception);
+    JavaErrorDialog errorDialog = new JavaErrorDialog(parentWindow, source, exception);
 
     errorDialog.setModal(true);
     errorDialog.setVisible(true);
   }
 
-  public JavaErrorDialog (Frame parentFrame, Object source, Exception exception) {
+  public JavaErrorDialog (Window parentWindow, Object source, Exception exception) {
 
-    super(parentFrame, "Java Error Message...");
+    super(parentWindow, "Java Error Message...");
 
     StringWriter errorBuffer;
     PrintWriter errorWriter;

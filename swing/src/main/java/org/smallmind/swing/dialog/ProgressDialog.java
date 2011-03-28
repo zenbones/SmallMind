@@ -26,35 +26,20 @@
  */
 package org.smallmind.swing.dialog;
 
-import java.awt.Dialog;
-import java.awt.Frame;
+import java.awt.Window;
 
 public class ProgressDialog extends OptionDialog {
 
-   public static void showProgressDialog (Frame parentFrame, String title, ProgressOptionPanel progressOptionPanel) {
+  public static void showProgressDialog (Window parentWindow, String title, ProgressOptionPanel progressOptionPanel) {
 
-      ProgressDialog progressDialog = new ProgressDialog(parentFrame, title, progressOptionPanel);
+    ProgressDialog progressDialog = new ProgressDialog(parentWindow, title, progressOptionPanel);
 
-      progressDialog.setModal(true);
-      progressDialog.setVisible(true);
-   }
+    progressDialog.setModal(true);
+    progressDialog.setVisible(true);
+  }
 
-   public static void showProgressDialog (Dialog parentDialog, String title, ProgressOptionPanel progressOptionPanel) {
+  public ProgressDialog (Window parentWindow, String title, ProgressOptionPanel progressOptionPanel) {
 
-      ProgressDialog progressDialog = new ProgressDialog(parentDialog, title, progressOptionPanel);
-
-      progressDialog.setModal(true);
-      progressDialog.setVisible(true);
-   }
-
-   public ProgressDialog (Frame parentFrame, String title, ProgressOptionPanel progressOptionPanel) {
-
-      super(parentFrame, title, OptionType.PROGRESS, new OptionButton[] {new OptionButton("Cancel", DialogState.CANCEL)}, progressOptionPanel);
-   }
-
-   public ProgressDialog (Dialog parentDilaog, String title, ProgressOptionPanel progressOptionPanel) {
-
-      super(parentDilaog, title, OptionType.PROGRESS, new OptionButton[] {new OptionButton("Cancel", DialogState.CANCEL)}, progressOptionPanel);
-   }
-
+    super(parentWindow, title, OptionType.PROGRESS, new OptionButton[] {new OptionButton("Cancel", DialogState.CANCEL)}, progressOptionPanel);
+  }
 }
