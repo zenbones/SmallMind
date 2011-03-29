@@ -388,7 +388,7 @@ public class FileChooserPanel extends JPanel implements ComponentListener, Mouse
       if ((mouseEvent.getButton() == MouseEvent.BUTTON1) && (mouseEvent.getClickCount() == 2) && ((selectedValue = filePickList.getSelectedValue()) != null) && ((File)selectedValue).isDirectory()) {
         selectionSensitive.set(false);
         filePickList.clearSelection();
-        editFolderButton.setEnabled(false);
+        selectionSensitive.set(true);
 
         directoryTableModel.setDirectory((File)selectedValue);
         directoryTable.createDefaultColumnsFromModel();
