@@ -62,6 +62,7 @@ import org.smallmind.swing.dialog.OptionButton;
 import org.smallmind.swing.dialog.OptionDialog;
 import org.smallmind.swing.dialog.OptionType;
 import org.smallmind.swing.dialog.WarningDialog;
+import org.smallmind.swing.dialog.YesNoDialog;
 import org.smallmind.swing.event.FileChoiceEvent;
 import org.smallmind.swing.event.FileChoiceListener;
 import org.smallmind.swing.panel.OptionPanel;
@@ -74,6 +75,7 @@ public class FileChooserPanel extends JPanel implements ComponentListener, Mouse
   private final WeakEventListenerList<FileChoiceListener> listenerList = new WeakEventListenerList<FileChoiceListener>();
 
   private Window parentWindow;
+  private FileChooserState state;
   private JTable directoryTable;
   private JList filePickList;
   private DirectoryTableModel directoryTableModel;
@@ -104,6 +106,7 @@ public class FileChooserPanel extends JPanel implements ComponentListener, Mouse
     super();
 
     this.parentWindow = parentWindow;
+    this.state = state;
 
     GroupLayout layout;
     GroupLayout.SequentialGroup topBarSequentialGroup;
@@ -219,6 +222,8 @@ public class FileChooserPanel extends JPanel implements ComponentListener, Mouse
 
   private void finishingTouches () {
 
+    File originallyChosenFile = chosenFile;
+
     if ((chosenFile == null) && (fileNameTextField.getText() != null) && (fileNameTextField.getText().length() > 0)) {
       chosenFile = new File(directoryTableModel.getDirectory(), fileNameTextField.getText());
     }
@@ -234,7 +239,17 @@ public class FileChooserPanel extends JPanel implements ComponentListener, Mouse
       }
     }
 
-    fireFileChosen(new FileChoiceEvent(this, chosenFile));
+    if (state.equals(FileChooserState.SAVE) && (chosenFile != null) && chosenFile.exists()) {
+      if (YesNoDialog.showYesNoDialog(parentWindow, OptionType.WARNING, chosenFile.getName() + " already exists. Overwite the file?").equals(DialogState.YES)) {
+        fireFileChosen(new FileChoiceEvent(this, chosenFile));
+      }
+      else {
+        chosenFile = originallyChosenFile;
+      }
+    }
+    else {
+      fireFileChosen(new FileChoiceEvent(this, chosenFile));
+    }
   }
 
   @Override

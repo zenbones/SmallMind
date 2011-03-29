@@ -32,17 +32,17 @@ public class YesNoCancelDialog extends OptionDialog {
 
   private static final OptionButton[] yesNoCancelButtons = {new OptionButton("Yes", DialogState.YES), new OptionButton("No", DialogState.NO), new OptionButton("Cancel", DialogState.CANCEL)};
 
-  public static DialogState showYesNoCancelDialog (Window parentWindow, String yesNoText) {
+  public static DialogState showYesNoCancelDialog (Window parentWindow, OptionType optionType, String yesNoText) {
 
-    YesNoCancelDialog yesNoCancelDialog = new YesNoCancelDialog(parentWindow, yesNoText);
+    YesNoCancelDialog yesNoCancelDialog = new YesNoCancelDialog(parentWindow, optionType, yesNoText);
 
     yesNoCancelDialog.setModal(true);
     yesNoCancelDialog.setVisible(true);
     return yesNoCancelDialog.getDialogState();
   }
 
-  public YesNoCancelDialog (Window parentWindow, String yesNoText) {
+  public YesNoCancelDialog (Window parentWindow, OptionType optionType, String yesNoText) {
 
-    super(parentWindow, yesNoText, OptionType.QUESTION, yesNoCancelButtons);
+    super(parentWindow, yesNoText, optionType, yesNoCancelButtons);
   }
 }
