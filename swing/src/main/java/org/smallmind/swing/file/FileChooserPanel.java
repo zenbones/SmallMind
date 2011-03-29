@@ -217,6 +217,26 @@ public class FileChooserPanel extends JPanel implements ComponentListener, Mouse
     filterComboBoxModel.setFilter(filter);
   }
 
+  private void finishingTouches () {
+
+    if ((chosenFile == null) && (fileNameTextField.getText() != null) && (fileNameTextField.getText().length() > 0)) {
+      chosenFile = new File(directoryTableModel.getDirectory(), fileNameTextField.getText());
+    }
+    if ((chosenFile != null) && (!chosenFile.getName().equals(fileNameTextField.getText().trim()))) {
+      if ((fileNameTextField.getText() == null) || (fileNameTextField.getText().length() == 0)) {
+        chosenFile = null;
+      }
+      else if (fileNameTextField.getText().indexOf(System.getProperty("file.separator")) >= 0) {
+        chosenFile = new File(fileNameTextField.getText());
+      }
+      else {
+        chosenFile = new File(chosenFile.getParentFile(), fileNameTextField.getText());
+      }
+    }
+
+    fireFileChosen(new FileChoiceEvent(this, chosenFile));
+  }
+
   @Override
   public synchronized void valueChanged (ListSelectionEvent listSelectionEvent) {
 
@@ -308,22 +328,7 @@ public class FileChooserPanel extends JPanel implements ComponentListener, Mouse
       renameDialog.setVisible(true);
     }
     else if (actionEvent.getSource() == chooseButton) {
-      if ((chosenFile == null) && (fileNameTextField.getText() != null) && (fileNameTextField.getText().length() > 0)) {
-        chosenFile = new File(directoryTableModel.getDirectory(), fileNameTextField.getText());
-      }
-      if ((chosenFile != null) && (!chosenFile.getName().equals(fileNameTextField.getText().trim()))) {
-        if ((fileNameTextField.getText() == null) || (fileNameTextField.getText().length() == 0)) {
-          chosenFile = null;
-        }
-        else if (fileNameTextField.getText().indexOf(System.getProperty("file.separator")) >= 0) {
-          chosenFile = new File(fileNameTextField.getText());
-        }
-        else {
-          chosenFile = new File(chosenFile.getParentFile(), fileNameTextField.getText());
-        }
-      }
-
-      fireFileChosen(new FileChoiceEvent(this, chosenFile));
+      finishingTouches();
     }
     else if (actionEvent.getSource() == cancelButton) {
       fireFileChosen(new FileChoiceEvent(this, null));
@@ -385,17 +390,22 @@ public class FileChooserPanel extends JPanel implements ComponentListener, Mouse
       }
     }
     else if (mouseEvent.getSource() == filePickList) {
-      if ((mouseEvent.getButton() == MouseEvent.BUTTON1) && (mouseEvent.getClickCount() == 2) && ((selectedValue = filePickList.getSelectedValue()) != null) && ((File)selectedValue).isDirectory()) {
+      if ((mouseEvent.getButton() == MouseEvent.BUTTON1) && (mouseEvent.getClickCount() == 2) && ((selectedValue = filePickList.getSelectedValue()) != null)) {
         selectionSensitive.set(false);
         filePickList.clearSelection();
         selectionSensitive.set(true);
 
-        directoryTableModel.setDirectory((File)selectedValue);
-        directoryTable.createDefaultColumnsFromModel();
-        filePickListModel.setDirectory((File)selectedValue);
-        editFolderButton.setEnabled(false);
-        chosenFile = null;
-        fileNameTextField.setText("");
+        if (((File)selectedValue).isDirectory()) {
+          directoryTableModel.setDirectory((File)selectedValue);
+          directoryTable.createDefaultColumnsFromModel();
+          filePickListModel.setDirectory((File)selectedValue);
+          editFolderButton.setEnabled(false);
+          chosenFile = null;
+          fileNameTextField.setText("");
+        }
+        else {
+          finishingTouches();
+        }
       }
     }
   }
