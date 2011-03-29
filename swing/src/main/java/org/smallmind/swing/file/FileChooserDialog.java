@@ -57,7 +57,7 @@ public class FileChooserDialog extends JDialog implements FileChoiceListener {
     setDefaultCloseOperation(JDialog.DISPOSE_ON_CLOSE);
 
     setLayout(new BorderLayout());
-    add(fileChooserPanel = new FileChooserPanel(this, state, directory));
+    add(fileChooserPanel = new FileChooserPanel(this, state, directory, filter));
     fileChooserPanel.addFileChoiceListener(this);
 
     setMinimumSize(new Dimension(550, 350));
