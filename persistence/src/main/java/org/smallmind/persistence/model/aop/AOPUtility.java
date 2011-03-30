@@ -26,10 +26,10 @@
  */
 package org.smallmind.persistence.model.aop;
 
+import org.smallmind.nutsnbolts.reflection.ReflectionUtility;
 import org.smallmind.persistence.model.bean.BeanAccessException;
 import org.smallmind.persistence.model.bean.BeanInvocationException;
 import org.smallmind.persistence.model.bean.BeanUtility;
-import org.smallmind.persistence.model.reflect.ReflectionUtility;
 import org.aspectj.lang.JoinPoint;
 import org.aspectj.lang.reflect.MethodSignature;
 

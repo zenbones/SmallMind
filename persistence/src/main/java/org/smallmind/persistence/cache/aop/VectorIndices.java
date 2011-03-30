@@ -32,7 +32,7 @@ import org.smallmind.persistence.PersistenceManager;
 import org.smallmind.persistence.cache.VectorIndex;
 import org.smallmind.persistence.model.aop.AOPUtility;
 import org.smallmind.persistence.model.bean.BeanUtility;
-import org.smallmind.persistence.model.reflect.ReflectionUtility;
+import org.smallmind.nutsnbolts.reflection.ReflectionUtility;
 import org.smallmind.persistence.orm.DaoManager;
 import org.smallmind.persistence.orm.ORMDao;
 
