@@ -50,10 +50,10 @@ import javax.swing.JTable;
 import javax.swing.JTextField;
 import javax.swing.LayoutStyle;
 import javax.swing.ListSelectionModel;
-import javax.swing.UIManager;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import javax.swing.filechooser.FileFilter;
+import org.smallmind.nutsnbolts.awt.ColorUtilities;
 import org.smallmind.nutsnbolts.util.StringUtilities;
 import org.smallmind.nutsnbolts.util.WeakEventListenerList;
 import org.smallmind.swing.SmallMindGrayFilter;
@@ -149,7 +149,7 @@ public class FileChooserPanel extends JPanel implements ComponentListener, Mouse
     filterComboBox = new JComboBox(filterComboBoxModel = new FilterComboBoxModel(filter));
     filterComboBox.setEditable(false);
     filterComboBox.setRenderer(new FilterListCellRenderer());
-    filterComboBox.setBackground(UIManager.getDefaults().getColor("text"));
+    filterComboBox.setBackground(ColorUtilities.TEXT_COLOR);
     filterComboBox.setFocusable(false);
     filterComboBox.addActionListener(this);
 

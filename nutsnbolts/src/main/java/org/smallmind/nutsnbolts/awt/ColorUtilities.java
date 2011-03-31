@@ -27,6 +27,7 @@
 package org.smallmind.nutsnbolts.awt;
 
 import java.awt.Color;
+import javax.swing.UIManager;
 
 public class ColorUtilities {
 
@@ -59,6 +60,8 @@ public class ColorUtilities {
    infoText: information text color (sometimes used for tooltips)
   */
 
+  public static final Color TEXT_COLOR = UIManager.getDefaults().getColor("text");
+  public static final Color INVERSE_TEXT_COLOR = invert(TEXT_COLOR);
   public static final Color HIGHLIGHT_COLOR = new Color(178, 178, 255);
   public static final Color INVERSE_HIGHLIGHT_COLOR = new Color(255, 222, 100);
 

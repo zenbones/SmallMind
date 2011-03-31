@@ -35,6 +35,7 @@ import javax.swing.SwingConstants;
 import javax.swing.UIManager;
 import javax.swing.border.Border;
 import javax.swing.tree.TreeCellRenderer;
+import org.smallmind.nutsnbolts.awt.ColorUtilities;
 
 public class DirectoryTreeCellRenderer implements TreeCellRenderer {
 
@@ -43,7 +44,7 @@ public class DirectoryTreeCellRenderer implements TreeCellRenderer {
   private static ImageIcon FOLDERS;
 
   private static Border SELECTED_BORDER = BorderFactory.createCompoundBorder(BorderFactory.createLineBorder(UIManager.getDefaults().getColor("textHighlight").darker()), BorderFactory.createEmptyBorder(1, 1, 1, 1));
-  private static Border INVISIBLE_BORDER = BorderFactory.createCompoundBorder(BorderFactory.createLineBorder(UIManager.getDefaults().getColor("text")), BorderFactory.createEmptyBorder(1, 1, 1, 1));
+  private static Border INVISIBLE_BORDER = BorderFactory.createCompoundBorder(BorderFactory.createLineBorder(ColorUtilities.TEXT_COLOR), BorderFactory.createEmptyBorder(1, 1, 1, 1));
 
   static {
 
