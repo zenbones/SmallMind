@@ -41,289 +41,293 @@ import javax.swing.SpinnerModel;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import org.smallmind.nutsnbolts.lang.UnknownSwitchCaseException;
+import org.smallmind.nutsnbolts.util.WeakEventListenerList;
 import org.smallmind.swing.ButtonRepeater;
 import org.smallmind.swing.ComponentUtilities;
 import org.smallmind.swing.LayoutManagerConstructionException;
 import org.smallmind.swing.LayoutManagerFactory;
 import org.smallmind.swing.event.EditorEvent;
 import org.smallmind.swing.event.EditorListener;
-import org.smallmind.nutsnbolts.util.WeakEventListenerList;
 
 public class Spinner extends JPanel implements EditorListener, ActionListener, ChangeListener, MouseListener {
 
-   private static ImageIcon SPINNER_UP;
-   private static ImageIcon SPINNER_DOWN;
+  private static ImageIcon SPINNER_UP;
+  private static ImageIcon SPINNER_DOWN;
 
-   private WeakEventListenerList<ChangeListener> listenerList;
-   private SpinnerModel spinnerModel;
-   private SpinnerRenderer renderer;
-   private SpinnerEditor editor;
-   private SpinnerRubberStamp rubberStamp;
-   private JPanel valuePanel;
-   private JButton spinnerUpButton;
-   private JButton spinnerDownButton;
-   private ButtonRepeater spinnerUpButtonRepeater;
-   private ButtonRepeater spinnerDownButtonRepeater;
-   private boolean editing = false;
+  private WeakEventListenerList<ChangeListener> listenerList;
+  private SpinnerModel spinnerModel;
+  private SpinnerRenderer renderer;
+  private SpinnerEditor editor;
+  private SpinnerRubberStamp rubberStamp;
+  private JPanel valuePanel;
+  private JButton spinnerUpButton;
+  private JButton spinnerDownButton;
+  private ButtonRepeater spinnerUpButtonRepeater;
+  private ButtonRepeater spinnerDownButtonRepeater;
+  private boolean editing = false;
 
-   static {
+  static {
 
-      SPINNER_UP = new ImageIcon(ClassLoader.getSystemResource("public/iconexperience/application basics/16x16/plain/arrow_right_blue.png"));
-      SPINNER_DOWN = new ImageIcon(ClassLoader.getSystemResource("public/iconexperience/application basics/16x16/plain/arrow_left_blue.png"));
-   }
+    SPINNER_UP = new ImageIcon(Thread.currentThread().getContextClassLoader().getResource("org/smallmind/swing/system/arrow_right_blue_16.png"));
+    SPINNER_DOWN = new ImageIcon(Thread.currentThread().getContextClassLoader().getResource("org/smallmind/swing/system/arrow_left_blue_16.png"));
+  }
 
-   public Spinner (SpinnerModel spinnerModel, long delayMilliseconds)
-      throws LayoutManagerConstructionException {
+  public Spinner (SpinnerModel spinnerModel, long delayMilliseconds)
+    throws LayoutManagerConstructionException {
 
-      super(LayoutManagerFactory.getLayoutManager(GridBagLayout.class));
+    super(LayoutManagerFactory.getLayoutManager(GridBagLayout.class));
 
-      GridBagConstraints constraint;
+    GridBagConstraints constraint;
 
-      this.spinnerModel = spinnerModel;
+    this.spinnerModel = spinnerModel;
 
-      rubberStamp = new SpinnerRubberStamp(this);
+    rubberStamp = new SpinnerRubberStamp(this);
 
-      setSpinnerRenderer(new DefaultSpinnerRenderer());
+    setSpinnerRenderer(new DefaultSpinnerRenderer());
 
-      spinnerUpButton = new JButton(SPINNER_UP);
-      spinnerUpButton.setFocusable(false);
-      ComponentUtilities.setPreferredWidth(spinnerUpButton, 18);
-      ComponentUtilities.setMinimumWidth(spinnerUpButton, 18);
-      ComponentUtilities.setMaximumWidth(spinnerUpButton, 18);
+    spinnerUpButton = new JButton(SPINNER_UP);
+    spinnerUpButton.setFocusable(false);
+    ComponentUtilities.setPreferredWidth(spinnerUpButton, 18);
+    ComponentUtilities.setMinimumWidth(spinnerUpButton, 18);
+    ComponentUtilities.setMaximumWidth(spinnerUpButton, 18);
 
-      spinnerUpButtonRepeater = new ButtonRepeater(spinnerUpButton, delayMilliseconds);
+    spinnerUpButtonRepeater = new ButtonRepeater(spinnerUpButton, delayMilliseconds);
 
-      spinnerDownButton = new JButton(SPINNER_DOWN);
-      spinnerDownButton.setFocusable(false);
-      ComponentUtilities.setPreferredWidth(spinnerDownButton, 18);
-      ComponentUtilities.setMinimumWidth(spinnerDownButton, 18);
-      ComponentUtilities.setMaximumWidth(spinnerDownButton, 18);
+    spinnerDownButton = new JButton(SPINNER_DOWN);
+    spinnerDownButton.setFocusable(false);
+    ComponentUtilities.setPreferredWidth(spinnerDownButton, 18);
+    ComponentUtilities.setMinimumWidth(spinnerDownButton, 18);
+    ComponentUtilities.setMaximumWidth(spinnerDownButton, 18);
 
-      spinnerDownButtonRepeater = new ButtonRepeater(spinnerDownButton, delayMilliseconds);
+    spinnerDownButtonRepeater = new ButtonRepeater(spinnerDownButton, delayMilliseconds);
 
-      valuePanel = new JPanel(LayoutManagerFactory.getLayoutManager(GridLayout.class, new Class[] {int.class, int.class}, new Object[] {1, 1}));
+    valuePanel = new JPanel(LayoutManagerFactory.getLayoutManager(GridLayout.class, new Class[] {int.class, int.class}, new Object[] {1, 1}));
+    valuePanel.add(rubberStamp);
+
+    constraint = new GridBagConstraints();
+
+    constraint.anchor = GridBagConstraints.WEST;
+    constraint.fill = GridBagConstraints.VERTICAL;
+    constraint.gridx = 0;
+    constraint.gridy = 0;
+    constraint.weightx = 0;
+    constraint.weighty = 1;
+    add(spinnerDownButton, constraint);
+
+    constraint.anchor = GridBagConstraints.NORTH;
+    constraint.fill = GridBagConstraints.BOTH;
+    constraint.gridx = 1;
+    constraint.gridy = 0;
+    constraint.weightx = 1;
+    constraint.weighty = 1;
+    add(valuePanel, constraint);
+
+    constraint.anchor = GridBagConstraints.EAST;
+    constraint.fill = GridBagConstraints.VERTICAL;
+    constraint.gridx = 2;
+    constraint.gridy = 0;
+    constraint.weightx = 0;
+    constraint.weighty = 1;
+    add(spinnerUpButton, constraint);
+
+    listenerList = new WeakEventListenerList<ChangeListener>();
+
+    spinnerUpButtonRepeater.addActionListener(this);
+    spinnerDownButtonRepeater.addActionListener(this);
+    rubberStamp.addMouseListener(this);
+    spinnerModel.addChangeListener(this);
+  }
+
+  public synchronized void addChangeListener (ChangeListener changeListener) {
+
+    listenerList.addListener(changeListener);
+  }
+
+  public synchronized void removeChangeListener (ChangeListener changeListener) {
+
+    listenerList.removeListener(changeListener);
+  }
+
+  public synchronized SpinnerRenderer getSpinnerRednerer () {
+
+    return renderer;
+  }
+
+  public synchronized void setSpinnerRenderer (SpinnerRenderer renderer) {
+
+    this.renderer = renderer;
+    rubberStamp.repaint();
+  }
+
+  public synchronized SpinnerEditor getSpinnerEditor () {
+
+    return editor;
+  }
+
+  public synchronized void setSpinnerEditor (SpinnerEditor editor) {
+
+    if (this.editor != null) {
+      this.editor.removeEditorListener(this);
+    }
+
+    this.editor = editor;
+    editor.addEditorListener(this);
+  }
+
+  public synchronized Object getValue () {
+
+    if (editing) {
+      return (editor.isValid()) ? editor.getValue() : null;
+    }
+
+    return spinnerModel.getValue();
+  }
+
+  public synchronized void setValue (Object value) {
+
+    spinnerModel.setValue(value);
+  }
+
+  public synchronized Component getRenderComponent () {
+
+    return renderer.getSpinnerRendererComponent(this, getValue());
+  }
+
+  public synchronized void enableSpinning () {
+
+    if (spinnerModel instanceof EdgeAwareSpinnerModel) {
+      spinnerUpButton.setEnabled(!getValue().equals(((EdgeAwareSpinnerModel)spinnerModel).getMaximumValue()));
+      spinnerDownButton.setEnabled(!getValue().equals(((EdgeAwareSpinnerModel)spinnerModel).getMinimumValue()));
+    }
+    else {
+      spinnerUpButton.setEnabled(true);
+      spinnerDownButton.setEnabled(true);
+    }
+  }
+
+  public synchronized void disableSpinning () {
+
+    spinnerUpButton.setEnabled(false);
+    spinnerDownButton.setEnabled(false);
+  }
+
+  public synchronized void cancelEditing () {
+
+    if (editing) {
+      editing = false;
+
+      valuePanel.removeAll();
       valuePanel.add(rubberStamp);
+      valuePanel.revalidate();
 
-      constraint = new GridBagConstraints();
+      enableSpinning();
+    }
+  }
 
-      constraint.anchor = GridBagConstraints.WEST;
-      constraint.fill = GridBagConstraints.VERTICAL;
-      constraint.gridx = 0;
-      constraint.gridy = 0;
-      constraint.weightx = 0;
-      constraint.weighty = 1;
-      add(spinnerDownButton, constraint);
+  public synchronized void stopEditing () {
 
-      constraint.anchor = GridBagConstraints.NORTH;
-      constraint.fill = GridBagConstraints.BOTH;
-      constraint.gridx = 1;
-      constraint.gridy = 0;
-      constraint.weightx = 1;
-      constraint.weighty = 1;
-      add(valuePanel, constraint);
+    if (editing) {
+      spinnerModel.setValue(editor.getValue());
 
-      constraint.anchor = GridBagConstraints.EAST;
-      constraint.fill = GridBagConstraints.VERTICAL;
-      constraint.gridx = 2;
-      constraint.gridy = 0;
-      constraint.weightx = 0;
-      constraint.weighty = 1;
-      add(spinnerUpButton, constraint);
+      cancelEditing();
+    }
+  }
 
-      listenerList = new WeakEventListenerList<ChangeListener>();
+  public synchronized void editorStatus (EditorEvent editorEvent) {
 
-      spinnerUpButtonRepeater.addActionListener(this);
-      spinnerDownButtonRepeater.addActionListener(this);
-      rubberStamp.addMouseListener(this);
-      spinnerModel.addChangeListener(this);
-   }
+    switch (editorEvent.getState()) {
+      case STOPPED:
+        if (editor.isValid()) {
+          stopEditing();
+          rubberStamp.repaint();
+        }
+        break;
+      case CANCELLED:
+        cancelEditing();
+        rubberStamp.repaint();
+        break;
+      case VALID:
+        enableSpinning();
+        break;
+      case INVALID:
+        disableSpinning();
+        break;
+      default:
+        throw new UnknownSwitchCaseException(editorEvent.getState().name());
+    }
+  }
 
-   public synchronized void addChangeListener (ChangeListener changeListener) {
+  public synchronized void actionPerformed (ActionEvent actionEvent) {
 
-      listenerList.addListener(changeListener);
-   }
+    if (editing) {
+      stopEditing();
+    }
 
-   public synchronized void removeChangeListener (ChangeListener changeListener) {
+    if (actionEvent.getSource() == spinnerUpButton) {
+      spinnerModel.setValue(spinnerModel.getNextValue());
+    }
+    else if (actionEvent.getSource() == spinnerDownButton) {
+      spinnerModel.setValue(spinnerModel.getPreviousValue());
+    }
+  }
 
-      listenerList.removeListener(changeListener);
-   }
+  public synchronized void stateChanged (ChangeEvent changeEvent) {
 
-   public synchronized SpinnerRenderer getSpinnerRednerer () {
+    ChangeEvent spinnerChangeEvent;
 
-      return renderer;
-   }
+    rubberStamp.repaint();
 
-   public synchronized void setSpinnerRenderer (SpinnerRenderer renderer) {
+    if (spinnerModel instanceof EdgeAwareSpinnerModel) {
+      spinnerUpButton.setEnabled(!spinnerModel.getValue().equals(((EdgeAwareSpinnerModel)spinnerModel).getMaximumValue()));
+      spinnerDownButton.setEnabled(!spinnerModel.getValue().equals(((EdgeAwareSpinnerModel)spinnerModel).getMinimumValue()));
+    }
 
-      this.renderer = renderer;
-      rubberStamp.repaint();
-   }
+    spinnerChangeEvent = new ChangeEvent(this);
+    for (ChangeListener changeListener : listenerList) {
+      changeListener.stateChanged(spinnerChangeEvent);
+    }
+  }
 
-   public synchronized SpinnerEditor getSpinnerEditor () {
+  public void mouseEntered (MouseEvent mouseEvent) {
 
-      return editor;
-   }
+  }
 
-   public synchronized void setSpinnerEditor (SpinnerEditor editor) {
+  public void mouseExited (MouseEvent mouseEvent) {
 
-      if (this.editor != null) {
-         this.editor.removeEditorListener(this);
-      }
+  }
 
-      this.editor = editor;
-      editor.addEditorListener(this);
-   }
+  public void mouseClicked (MouseEvent mouseEvent) {
 
-   public synchronized Object getValue () {
+  }
 
-      if (editing) {
-         return (editor.isValid()) ? editor.getValue() : null;
-      }
+  public void mouseReleased (MouseEvent mouseEvent) {
 
-      return spinnerModel.getValue();
-   }
+  }
 
-   public synchronized void setValue (Object value) {
+  public synchronized void mousePressed (MouseEvent mouseEvent) {
 
-      spinnerModel.setValue(value);
-   }
+    Component editorComponent;
 
-   public synchronized Component getRenderComponent () {
+    if ((editor != null) && (!editing)) {
+      editorComponent = editor.getSpinnerEditorComponent(this, getValue());
+      editorComponent.setPreferredSize(rubberStamp.getPreferredSize());
 
-      return renderer.getSpinnerRendererComponent(this, getValue());
-   }
+      valuePanel.removeAll();
+      valuePanel.add(editorComponent);
+      valuePanel.revalidate();
 
-   public synchronized void enableSpinning () {
+      editorComponent.requestFocusInWindow();
+      editor.startEditing();
+      editing = true;
+    }
+  }
 
-      if (spinnerModel instanceof EdgeAwareSpinnerModel) {
-         spinnerUpButton.setEnabled(!getValue().equals(((EdgeAwareSpinnerModel)spinnerModel).getMaximumValue()));
-         spinnerDownButton.setEnabled(!getValue().equals(((EdgeAwareSpinnerModel)spinnerModel).getMinimumValue()));
-      }
-      else {
-         spinnerUpButton.setEnabled(true);
-         spinnerDownButton.setEnabled(true);
-      }
-   }
+  public void finalize ()
+    throws Throwable {
 
-   public synchronized void disableSpinning () {
+    spinnerUpButtonRepeater.finalize();
+    spinnerDownButtonRepeater.finalize();
 
-      spinnerUpButton.setEnabled(false);
-      spinnerDownButton.setEnabled(false);
-   }
-
-   public synchronized void cancelEditing () {
-
-      if (editing) {
-         editing = false;
-
-         valuePanel.removeAll();
-         valuePanel.add(rubberStamp);
-         valuePanel.revalidate();
-
-         enableSpinning();
-      }
-   }
-
-   public synchronized void stopEditing () {
-
-      if (editing) {
-         spinnerModel.setValue(editor.getValue());
-
-         cancelEditing();
-      }
-   }
-
-   public synchronized void editorStatus (EditorEvent editorEvent) {
-
-      switch (editorEvent.getState()) {
-         case STOPPED:
-            if (editor.isValid()) {
-               stopEditing();
-               rubberStamp.repaint();
-            }
-            break;
-         case CANCELLED:
-            cancelEditing();
-            rubberStamp.repaint();
-            break;
-         case VALID:
-            enableSpinning();
-            break;
-         case INVALID:
-            disableSpinning();
-            break;
-         default:
-            throw new UnknownSwitchCaseException(editorEvent.getState().name());
-      }
-   }
-
-   public synchronized void actionPerformed (ActionEvent actionEvent) {
-
-      if (editing) {
-         stopEditing();
-      }
-
-      if (actionEvent.getSource() == spinnerUpButton) {
-         spinnerModel.setValue(spinnerModel.getNextValue());
-      }
-      else if (actionEvent.getSource() == spinnerDownButton) {
-         spinnerModel.setValue(spinnerModel.getPreviousValue());
-      }
-   }
-
-   public synchronized void stateChanged (ChangeEvent changeEvent) {
-
-      ChangeEvent spinnerChangeEvent;
-
-      rubberStamp.repaint();
-
-      if (spinnerModel instanceof EdgeAwareSpinnerModel) {
-         spinnerUpButton.setEnabled(!spinnerModel.getValue().equals(((EdgeAwareSpinnerModel)spinnerModel).getMaximumValue()));
-         spinnerDownButton.setEnabled(!spinnerModel.getValue().equals(((EdgeAwareSpinnerModel)spinnerModel).getMinimumValue()));
-      }
-
-      spinnerChangeEvent = new ChangeEvent(this);
-      for (ChangeListener changeListener : listenerList) {
-         changeListener.stateChanged(spinnerChangeEvent);
-      }
-   }
-
-   public void mouseEntered (MouseEvent mouseEvent) {
-   }
-
-   public void mouseExited (MouseEvent mouseEvent) {
-   }
-
-   public void mouseClicked (MouseEvent mouseEvent) {
-   }
-
-   public void mouseReleased (MouseEvent mouseEvent) {
-   }
-
-   public synchronized void mousePressed (MouseEvent mouseEvent) {
-
-      Component editorComponent;
-
-      if ((editor != null) && (!editing)) {
-         editorComponent = editor.getSpinnerEditorComponent(this, getValue());
-         editorComponent.setPreferredSize(rubberStamp.getPreferredSize());
-
-         valuePanel.removeAll();
-         valuePanel.add(editorComponent);
-         valuePanel.revalidate();
-
-         editorComponent.requestFocusInWindow();
-         editor.startEditing();
-         editing = true;
-      }
-   }
-
-   public void finalize ()
-      throws Throwable {
-
-      spinnerUpButtonRepeater.finalize();
-      spinnerDownButtonRepeater.finalize();
-
-      super.finalize();
-   }
+    super.finalize();
+  }
 }
