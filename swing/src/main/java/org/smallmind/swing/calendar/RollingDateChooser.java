@@ -47,273 +47,273 @@ import javax.swing.event.ListSelectionListener;
 import javax.swing.event.TableColumnModelEvent;
 import javax.swing.event.TableColumnModelListener;
 import javax.swing.table.TableCellRenderer;
+import org.smallmind.nutsnbolts.util.WeakEventListenerList;
 import org.smallmind.swing.ComponentUtilities;
-import org.smallmind.swing.LayoutManagerConstructionException;
-import org.smallmind.swing.LayoutManagerFactory;
 import org.smallmind.swing.VerticalTextIcon;
 import org.smallmind.swing.event.DateSelectionEvent;
 import org.smallmind.swing.event.DateSelectionListener;
-import org.smallmind.nutsnbolts.util.WeakEventListenerList;
 
 public class RollingDateChooser extends JPanel implements ListSelectionListener, TableColumnModelListener {
 
-   private static final Dimension PREFERRED_DIMENSION = new Dimension(200, 300);
-   private static final String[] MONTHS = {"January", "February", "March", "April", "May", "June", "July", "Auhust", "September", "October", "November", "December"};
+  private static final Dimension PREFERRED_DIMENSION = new Dimension(200, 300);
+  private static final String[] MONTHS = {"January", "February", "March", "April", "May", "June", "July", "Auhust", "September", "October", "November", "December"};
 
-   private WeakEventListenerList<DateSelectionListener> listenerList;
-   private HashSet<CalendarDate> markedSet;
-   private JTable rollingMonthTable;
-   private DateRangeTableModel model;
-   private int selectedRow = -1;
-   private int selectedColumn = -1;
+  private WeakEventListenerList<DateSelectionListener> listenerList;
+  private HashSet<CalendarDate> markedSet;
+  private JTable rollingMonthTable;
+  private DateRangeTableModel model;
+  private int selectedRow = -1;
+  private int selectedColumn = -1;
 
-   public RollingDateChooser (int year, int month, int day, int extentDays)
-      throws LayoutManagerConstructionException {
+  public RollingDateChooser (int year, int month, int day, int extentDays) {
 
-      super(LayoutManagerFactory.getLayoutManager(GridLayout.class, new Class[] {int.class, int.class}, new Object[] {1, 0}));
+    super(new GridLayout(1, 1));
 
-      JScrollPane rollingMonthScrollPane;
+    JScrollPane rollingMonthScrollPane;
 
-      listenerList = new WeakEventListenerList<DateSelectionListener>();
-      markedSet = new HashSet<CalendarDate>();
-      model = new DateRangeTableModel(year, month, day, extentDays);
+    listenerList = new WeakEventListenerList<DateSelectionListener>();
+    markedSet = new HashSet<CalendarDate>();
+    model = new DateRangeTableModel(year, month, day, extentDays);
 
-      rollingMonthTable = new JTable(model);
-      rollingMonthTable.setAutoResizeMode(JTable.AUTO_RESIZE_ALL_COLUMNS);
-      rollingMonthTable.setCellSelectionEnabled(true);
-      rollingMonthTable.setDefaultRenderer(CalendarDate.class, new DefaultRollingDateChooserCellRenderer(this));
-      rollingMonthTable.setDragEnabled(false);
-      rollingMonthTable.setIntercellSpacing(new Dimension(0, 0));
-      rollingMonthTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-      rollingMonthTable.setShowGrid(false);
-      rollingMonthTable.setRowHeight(20);
+    rollingMonthTable = new JTable(model);
+    rollingMonthTable.setAutoResizeMode(JTable.AUTO_RESIZE_ALL_COLUMNS);
+    rollingMonthTable.setCellSelectionEnabled(true);
+    rollingMonthTable.setDefaultRenderer(CalendarDate.class, new DefaultRollingDateChooserCellRenderer(this));
+    rollingMonthTable.setDragEnabled(false);
+    rollingMonthTable.setIntercellSpacing(new Dimension(0, 0));
+    rollingMonthTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+    rollingMonthTable.setShowGrid(false);
+    rollingMonthTable.setRowHeight(20);
 
-      rollingMonthTable.getTableHeader().setResizingAllowed(false);
-      rollingMonthTable.getTableHeader().setReorderingAllowed(false);
-      rollingMonthTable.getTableHeader().setDefaultRenderer(new DayHeaderTableCellRenderer());
+    rollingMonthTable.getTableHeader().setResizingAllowed(false);
+    rollingMonthTable.getTableHeader().setReorderingAllowed(false);
+    rollingMonthTable.getTableHeader().setDefaultRenderer(new DayHeaderTableCellRenderer());
 
-      rollingMonthScrollPane = new JScrollPane(rollingMonthTable);
-      rollingMonthScrollPane.setRowHeaderView(new MonthHeaderBar(model, rollingMonthTable.getRowHeight()));
-      rollingMonthScrollPane.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
-      rollingMonthScrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED);
-      rollingMonthScrollPane.setCorner(JScrollPane.UPPER_LEFT_CORNER, new CornerPanel());
-      rollingMonthScrollPane.setCorner(JScrollPane.UPPER_RIGHT_CORNER, new CornerPanel());
-      rollingMonthScrollPane.getViewport().setBackground(SystemColor.desktop);
+    rollingMonthScrollPane = new JScrollPane(rollingMonthTable);
+    rollingMonthScrollPane.setRowHeaderView(new MonthHeaderBar(model, rollingMonthTable.getRowHeight()));
+    rollingMonthScrollPane.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
+    rollingMonthScrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED);
+    rollingMonthScrollPane.setCorner(JScrollPane.UPPER_LEFT_CORNER, new CornerPanel());
+    rollingMonthScrollPane.setCorner(JScrollPane.UPPER_RIGHT_CORNER, new CornerPanel());
+    rollingMonthScrollPane.getViewport().setBackground(SystemColor.desktop);
 
-      add(rollingMonthScrollPane);
+    add(rollingMonthScrollPane);
 
-      rollingMonthTable.getSelectionModel().addListSelectionListener(this);
-      rollingMonthTable.getColumnModel().addColumnModelListener(this);
-   }
+    rollingMonthTable.getSelectionModel().addListSelectionListener(this);
+    rollingMonthTable.getColumnModel().addColumnModelListener(this);
+  }
 
-   public synchronized void addDateSelectionListener (DateSelectionListener dateSelectionListener) {
+  public synchronized void addDateSelectionListener (DateSelectionListener dateSelectionListener) {
 
-      listenerList.addListener(dateSelectionListener);
-   }
+    listenerList.addListener(dateSelectionListener);
+  }
 
-   public synchronized void removeDateSelectionListener (DateSelectionListener dateSelectionListener) {
+  public synchronized void removeDateSelectionListener (DateSelectionListener dateSelectionListener) {
 
-      listenerList.removeListener(dateSelectionListener);
-   }
+    listenerList.removeListener(dateSelectionListener);
+  }
 
-   public synchronized void setCellRenderer (RollingDateChooserCellRenderer cellRenderer) {
+  public synchronized void setCellRenderer (RollingDateChooserCellRenderer cellRenderer) {
 
-      rollingMonthTable.setDefaultRenderer(CalendarDate.class, cellRenderer);
-   }
+    rollingMonthTable.setDefaultRenderer(CalendarDate.class, cellRenderer);
+  }
 
-   public synchronized int getTodayRow () {
+  public synchronized int getTodayRow () {
 
-      return model.getTodayRow();
-   }
+    return model.getTodayRow();
+  }
 
-   public synchronized int getTodayColumn () {
+  public synchronized int getTodayColumn () {
 
-      return model.getTodayColumn();
-   }
+    return model.getTodayColumn();
+  }
 
-   public void requestFocus () {
+  public void requestFocus () {
 
-      rollingMonthTable.requestFocusInWindow();
-   }
+    rollingMonthTable.requestFocusInWindow();
+  }
 
-   public synchronized boolean isMarked (CalendarDate calendarDate) {
+  public synchronized boolean isMarked (CalendarDate calendarDate) {
 
-      return markedSet.contains(calendarDate);
-   }
+    return markedSet.contains(calendarDate);
+  }
 
-   public synchronized void markDate (CalendarDate calendarDate, boolean set) {
+  public synchronized void markDate (CalendarDate calendarDate, boolean set) {
 
-      if (set) {
-         markedSet.add(calendarDate);
-      }
-      else {
-         markedSet.remove(calendarDate);
-      }
+    if (set) {
+      markedSet.add(calendarDate);
+    }
+    else {
+      markedSet.remove(calendarDate);
+    }
 
-      repaint();
-   }
+    repaint();
+  }
 
-   public synchronized void clearSelection () {
+  public synchronized void clearSelection () {
 
-      rollingMonthTable.clearSelection();
-   }
+    rollingMonthTable.clearSelection();
+  }
 
-   public synchronized void setSelectedDate (CalendarDate calendarDate) {
+  public synchronized void setSelectedDate (CalendarDate calendarDate) {
 
-      int row = model.getRow(calendarDate);
-      int column = model.getColumn(calendarDate);
+    int row = model.getRow(calendarDate);
+    int column = model.getColumn(calendarDate);
 
-      rollingMonthTable.setRowSelectionInterval(row, row);
-      rollingMonthTable.setColumnSelectionInterval(column, column);
-   }
+    rollingMonthTable.setRowSelectionInterval(row, row);
+    rollingMonthTable.setColumnSelectionInterval(column, column);
+  }
 
-   public synchronized void fireDateSelected () {
+  public synchronized void fireDateSelected () {
 
-      DateSelectionEvent dateSelectionEvent;
+    DateSelectionEvent dateSelectionEvent;
 
-      dateSelectionEvent = new DateSelectionEvent(this, (CalendarDate)model.getValueAt(selectedRow, selectedColumn));
-      for (DateSelectionListener dateSelectionListener : listenerList) {
-         dateSelectionListener.dateChosen(dateSelectionEvent);
-      }
-   }
+    dateSelectionEvent = new DateSelectionEvent(this, (CalendarDate)model.getValueAt(selectedRow, selectedColumn));
+    for (DateSelectionListener dateSelectionListener : listenerList) {
+      dateSelectionListener.dateChosen(dateSelectionEvent);
+    }
+  }
 
-   public Dimension getPreferredSize () {
+  public Dimension getPreferredSize () {
 
-      return PREFERRED_DIMENSION;
-   }
+    return PREFERRED_DIMENSION;
+  }
 
-   public Dimension getMinimumSize () {
+  public Dimension getMinimumSize () {
 
-      return PREFERRED_DIMENSION;
-   }
+    return PREFERRED_DIMENSION;
+  }
 
-   public synchronized void valueChanged (ListSelectionEvent listSelectionEvent) {
+  public synchronized void valueChanged (ListSelectionEvent listSelectionEvent) {
 
-      if (!listSelectionEvent.getValueIsAdjusting()) {
-         selectedRow = rollingMonthTable.getSelectedRow();
-         selectedColumn = rollingMonthTable.getSelectedColumn();
-         fireDateSelected();
-      }
-   }
+    if (!listSelectionEvent.getValueIsAdjusting()) {
+      selectedRow = rollingMonthTable.getSelectedRow();
+      selectedColumn = rollingMonthTable.getSelectedColumn();
+      fireDateSelected();
+    }
+  }
 
-   public void columnAdded (TableColumnModelEvent tableColumnModelEvent) {
-   }
+  public void columnAdded (TableColumnModelEvent tableColumnModelEvent) {
 
-   public void columnMarginChanged (ChangeEvent tableColumnModelEvent) {
-   }
+  }
 
-   public void columnMoved (TableColumnModelEvent tableColumnModelEvent) {
-   }
+  public void columnMarginChanged (ChangeEvent tableColumnModelEvent) {
 
-   public void columnRemoved (TableColumnModelEvent tableColumnModelEvent) {
-   }
+  }
 
-   public synchronized void columnSelectionChanged (ListSelectionEvent listSelectionEvent) {
+  public void columnMoved (TableColumnModelEvent tableColumnModelEvent) {
 
-      if ((!listSelectionEvent.getValueIsAdjusting()) && (selectedColumn != rollingMonthTable.getSelectedColumn())) {
-         selectedColumn = rollingMonthTable.getSelectedColumn();
-         selectedRow = rollingMonthTable.getSelectedRow();
-         fireDateSelected();
-      }
-   }
+  }
 
-   private class CornerPanel extends JPanel {
+  public void columnRemoved (TableColumnModelEvent tableColumnModelEvent) {
 
-      public CornerPanel () {
+  }
 
-         setBackground(SystemColor.textHighlight);
-         setBorder(BorderFactory.createMatteBorder(0, 0, 2, 0, SystemColor.textHighlight.brighter()));
-      }
+  public synchronized void columnSelectionChanged (ListSelectionEvent listSelectionEvent) {
 
-   }
+    if ((!listSelectionEvent.getValueIsAdjusting()) && (selectedColumn != rollingMonthTable.getSelectedColumn())) {
+      selectedColumn = rollingMonthTable.getSelectedColumn();
+      selectedRow = rollingMonthTable.getSelectedRow();
+      fireDateSelected();
+    }
+  }
 
-   private class MonthHeaderBar extends JPanel {
+  private class CornerPanel extends JPanel {
 
-      private GridBagConstraints constraint;
+    public CornerPanel () {
 
-      public MonthHeaderBar (DateRangeTableModel model, int rowHeight)
-         throws LayoutManagerConstructionException {
+      setBackground(SystemColor.textHighlight);
+      setBorder(BorderFactory.createMatteBorder(0, 0, 2, 0, SystemColor.textHighlight.brighter()));
+    }
 
-         super(LayoutManagerFactory.getLayoutManager(GridBagLayout.class));
+  }
 
-         int month;
-         int currentDay = 0;
-         int breakRow = 0;
-         int index = 0;
+  private class MonthHeaderBar extends JPanel {
 
-         constraint = new GridBagConstraints();
+    private GridBagConstraints constraint;
 
-         month = model.getStartingMonth();
-         for (int count = 0; count < model.getRowCount(); count++) {
-            if (((CalendarDate)model.getValueAt(count, 0)).getDay() < currentDay) {
-               if ((count == 1) && model.hasUnderun()) {
-                  setMonthLabel(0, index++, rowHeight);
-               }
-               else {
-                  setMonthLabel(month, index++, (count - breakRow) * rowHeight);
-               }
+    public MonthHeaderBar (DateRangeTableModel model, int rowHeight) {
 
-               breakRow = count;
-               month++;
-               if (month > 12) {
-                  month = 1;
-               }
-            }
+      super(new GridBagLayout());
 
-            currentDay = ((CalendarDate)model.getValueAt(count, 0)).getDay();
-         }
+      int month;
+      int currentDay = 0;
+      int breakRow = 0;
+      int index = 0;
 
-         setMonthLabel(month, index, (model.getRowCount() - breakRow) * rowHeight);
-      }
+      constraint = new GridBagConstraints();
 
-      private void setMonthLabel (int month, int index, int height) {
+      month = model.getStartingMonth();
+      for (int count = 0; count < model.getRowCount(); count++) {
+        if (((CalendarDate)model.getValueAt(count, 0)).getDay() < currentDay) {
+          if ((count == 1) && model.hasUnderun()) {
+            setMonthLabel(0, index++, rowHeight);
+          }
+          else {
+            setMonthLabel(month, index++, (count - breakRow) * rowHeight);
+          }
 
-         JLabel monthLabel;
-         Icon monthIcon;
+          breakRow = count;
+          month++;
+          if (month > 12) {
+            month = 1;
+          }
+        }
 
-         monthLabel = new JLabel();
-         monthLabel.setOpaque(true);
-         monthLabel.setBackground(SystemColor.textHighlight);
-         monthLabel.setForeground(SystemColor.textHighlightText);
-         monthLabel.setBorder(BorderFactory.createCompoundBorder(BorderFactory.createMatteBorder(0, 0, 1, 0, SystemColor.textHighlight.darker()), BorderFactory.createCompoundBorder(BorderFactory.createMatteBorder((month == 0) ? 0 : 1, 0, 0, 2, SystemColor.textHighlight.brighter()), BorderFactory.createMatteBorder(3, 1, 3, 3, SystemColor.textHighlight))));
-
-         monthIcon = new VerticalTextIcon(monthLabel.getFontMetrics(monthLabel.getFont().deriveFont(Font.BOLD)), (month == 0) ? " " : MONTHS[month - 1], VerticalTextIcon.ROTATE_LEFT);
-         monthLabel.setIcon(monthIcon);
-
-         ComponentUtilities.setPreferredHeight(monthLabel, height);
-
-         constraint.anchor = GridBagConstraints.NORTHWEST;
-         constraint.fill = GridBagConstraints.NONE;
-         constraint.gridx = 0;
-         constraint.gridy = index;
-         constraint.weightx = 0;
-         constraint.weighty = 1;
-         add(monthLabel, constraint);
+        currentDay = ((CalendarDate)model.getValueAt(count, 0)).getDay();
       }
 
-   }
+      setMonthLabel(month, index, (model.getRowCount() - breakRow) * rowHeight);
+    }
 
-   private class DayHeaderTableCellRenderer implements TableCellRenderer {
+    private void setMonthLabel (int month, int index, int height) {
 
-      private JLabel dayLabel;
+      JLabel monthLabel;
+      Icon monthIcon;
 
-      public DayHeaderTableCellRenderer () {
+      monthLabel = new JLabel();
+      monthLabel.setOpaque(true);
+      monthLabel.setBackground(SystemColor.textHighlight);
+      monthLabel.setForeground(SystemColor.textHighlightText);
+      monthLabel.setBorder(BorderFactory.createCompoundBorder(BorderFactory.createMatteBorder(0, 0, 1, 0, SystemColor.textHighlight.darker()), BorderFactory.createCompoundBorder(BorderFactory.createMatteBorder((month == 0) ? 0 : 1, 0, 0, 2, SystemColor.textHighlight.brighter()), BorderFactory.createMatteBorder(3, 1, 3, 3, SystemColor.textHighlight))));
 
-         dayLabel = new JLabel("", JLabel.CENTER);
-         dayLabel.setOpaque(true);
-         dayLabel.setBorder(BorderFactory.createCompoundBorder(BorderFactory.createMatteBorder(0, 0, 2, 0, SystemColor.textHighlight.brighter()), BorderFactory.createEmptyBorder(2, 2, 2, 2)));
-         dayLabel.setFont(dayLabel.getFont().deriveFont(Font.BOLD));
-         dayLabel.setBackground(SystemColor.textHighlight);
-         dayLabel.setForeground(SystemColor.textHighlightText);
-      }
+      monthIcon = new VerticalTextIcon(monthLabel.getFontMetrics(monthLabel.getFont().deriveFont(Font.BOLD)), (month == 0) ? " " : MONTHS[month - 1], VerticalTextIcon.ROTATE_LEFT);
+      monthLabel.setIcon(monthIcon);
 
-      public Component getTableCellRendererComponent (JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
+      ComponentUtilities.setPreferredHeight(monthLabel, height);
 
-         dayLabel.setText((String)value);
+      constraint.anchor = GridBagConstraints.NORTHWEST;
+      constraint.fill = GridBagConstraints.NONE;
+      constraint.gridx = 0;
+      constraint.gridy = index;
+      constraint.weightx = 0;
+      constraint.weighty = 1;
+      add(monthLabel, constraint);
+    }
 
-         return dayLabel;
-      }
+  }
 
-   }
+  private class DayHeaderTableCellRenderer implements TableCellRenderer {
+
+    private JLabel dayLabel;
+
+    public DayHeaderTableCellRenderer () {
+
+      dayLabel = new JLabel("", JLabel.CENTER);
+      dayLabel.setOpaque(true);
+      dayLabel.setBorder(BorderFactory.createCompoundBorder(BorderFactory.createMatteBorder(0, 0, 2, 0, SystemColor.textHighlight.brighter()), BorderFactory.createEmptyBorder(2, 2, 2, 2)));
+      dayLabel.setFont(dayLabel.getFont().deriveFont(Font.BOLD));
+      dayLabel.setBackground(SystemColor.textHighlight);
+      dayLabel.setForeground(SystemColor.textHighlightText);
+    }
+
+    public Component getTableCellRendererComponent (JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
+
+      dayLabel.setText((String)value);
+
+      return dayLabel;
+    }
+
+  }
 
 }

@@ -32,8 +32,6 @@ import java.awt.Insets;
 import javax.swing.JLabel;
 import javax.swing.JProgressBar;
 import org.smallmind.swing.ComponentUtilities;
-import org.smallmind.swing.LayoutManagerConstructionException;
-import org.smallmind.swing.LayoutManagerFactory;
 import org.smallmind.swing.event.DialogEvent;
 import org.smallmind.swing.event.DialogListener;
 import org.smallmind.swing.panel.OptionPanel;
@@ -46,10 +44,9 @@ public class ProgressOptionPanel extends OptionPanel implements ProgressOperator
   private boolean withLabel;
   private boolean closeOnComplete;
 
-  public ProgressOptionPanel (ProgressRunnable progressRunnable, int orientation, int min, int max, boolean withLabel, boolean closeOnComplete)
-    throws LayoutManagerConstructionException {
+  public ProgressOptionPanel (ProgressRunnable progressRunnable, int orientation, int min, int max, boolean withLabel, boolean closeOnComplete) {
 
-    super(LayoutManagerFactory.getLayoutManager(GridBagLayout.class));
+    super(new GridBagLayout());
 
     GridBagConstraints constraint;
 

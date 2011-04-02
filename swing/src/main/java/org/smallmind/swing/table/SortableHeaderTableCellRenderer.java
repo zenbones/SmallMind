@@ -31,39 +31,32 @@ import java.util.HashMap;
 import javax.swing.JLabel;
 import javax.swing.JTable;
 import javax.swing.table.TableCellRenderer;
-import org.smallmind.swing.LayoutManagerConstructionException;
 import org.smallmind.swing.label.PlainLabel;
 
 public class SortableHeaderTableCellRenderer<E extends Enum> implements TableCellRenderer {
 
-   private HashMap<Object, SortableHeaderPanel> renderMap;
-   private boolean returnToNeutral;
-   private boolean showOrder;
+  private HashMap<Object, SortableHeaderPanel> renderMap;
+  private boolean returnToNeutral;
+  private boolean showOrder;
 
-   public SortableHeaderTableCellRenderer (boolean returnToNeutral, boolean showOrder) {
+  public SortableHeaderTableCellRenderer (boolean returnToNeutral, boolean showOrder) {
 
-      this.returnToNeutral = returnToNeutral;
-      this.showOrder = showOrder;
+    this.returnToNeutral = returnToNeutral;
+    this.showOrder = showOrder;
 
-      renderMap = new HashMap<Object, SortableHeaderPanel>();
-   }
+    renderMap = new HashMap<Object, SortableHeaderPanel>();
+  }
 
-   public Component getTableCellRendererComponent (JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
+  public Component getTableCellRendererComponent (JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
 
-      SortableHeaderPanel headerPanel;
+    SortableHeaderPanel headerPanel;
 
-      if ((headerPanel = renderMap.get(value)) == null) {
-         try {
-            headerPanel = new SortableHeaderPanel<E>((SortableTable<E>)table, (E)value, new PlainLabel((String)table.getColumnModel().getColumn(column).getIdentifier(), JLabel.CENTER), returnToNeutral, showOrder);
-         }
-         catch (LayoutManagerConstructionException l) {
-            throw new IllegalStateException(l);
-         }
+    if ((headerPanel = renderMap.get(value)) == null) {
+      headerPanel = new SortableHeaderPanel<E>((SortableTable<E>)table, (E)value, new PlainLabel((String)table.getColumnModel().getColumn(column).getIdentifier(), JLabel.CENTER), returnToNeutral, showOrder);
+      renderMap.put(value, headerPanel);
+    }
 
-         renderMap.put(value, headerPanel);
-      }
-
-      return headerPanel;
-   }
+    return headerPanel;
+  }
 
 }

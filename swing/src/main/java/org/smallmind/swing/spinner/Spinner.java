@@ -44,8 +44,6 @@ import org.smallmind.nutsnbolts.lang.UnknownSwitchCaseException;
 import org.smallmind.nutsnbolts.util.WeakEventListenerList;
 import org.smallmind.swing.ButtonRepeater;
 import org.smallmind.swing.ComponentUtilities;
-import org.smallmind.swing.LayoutManagerConstructionException;
-import org.smallmind.swing.LayoutManagerFactory;
 import org.smallmind.swing.event.EditorEvent;
 import org.smallmind.swing.event.EditorListener;
 
@@ -72,10 +70,9 @@ public class Spinner extends JPanel implements EditorListener, ActionListener, C
     SPINNER_DOWN = new ImageIcon(Thread.currentThread().getContextClassLoader().getResource("org/smallmind/swing/system/arrow_left_blue_16.png"));
   }
 
-  public Spinner (SpinnerModel spinnerModel, long delayMilliseconds)
-    throws LayoutManagerConstructionException {
+  public Spinner (SpinnerModel spinnerModel, long delayMilliseconds) {
 
-    super(LayoutManagerFactory.getLayoutManager(GridBagLayout.class));
+    super(new GridBagLayout());
 
     GridBagConstraints constraint;
 
@@ -101,7 +98,7 @@ public class Spinner extends JPanel implements EditorListener, ActionListener, C
 
     spinnerDownButtonRepeater = new ButtonRepeater(spinnerDownButton, delayMilliseconds);
 
-    valuePanel = new JPanel(LayoutManagerFactory.getLayoutManager(GridLayout.class, new Class[] {int.class, int.class}, new Object[] {1, 1}));
+    valuePanel = new JPanel(new GridLayout(1, 1));
     valuePanel.add(rubberStamp);
 
     constraint = new GridBagConstraints();

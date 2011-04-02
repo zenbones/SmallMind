@@ -45,8 +45,6 @@ import org.smallmind.swing.ComponentUtilities;
 
 public class Cycle extends JPanel {
 
-  private static final GridBagLayout GRID_BAG_LAYOUT = new GridBagLayout();
-
   private static ImageIcon CYCLE_UP;
   private static ImageIcon CYCLE_DOWN;
 
@@ -70,7 +68,7 @@ public class Cycle extends JPanel {
 
   public Cycle (ListModel listModel) {
 
-    super(GRID_BAG_LAYOUT);
+    super(new GridBagLayout());
 
     GridBagConstraints constraint;
     JButton cycleUpButton;
