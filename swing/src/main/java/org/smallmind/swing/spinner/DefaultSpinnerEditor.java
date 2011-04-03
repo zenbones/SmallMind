@@ -41,70 +41,76 @@ import org.smallmind.swing.event.EditorEvent;
 
 public class DefaultSpinnerEditor extends AbstractSpinnerEditor implements DocumentListener {
 
-   private JTextField editorField;
+  private JTextField editorField;
 
-   public DefaultSpinnerEditor () {
+  public DefaultSpinnerEditor () {
 
-      super();
+    this(JTextField.LEFT);
+  }
 
-      editorField = new JTextField();
-      editorField.setFont(editorField.getFont().deriveFont(Font.BOLD));
-      editorField.setBorder(BorderFactory.createCompoundBorder(BorderFactory.createLoweredBevelBorder(), BorderFactory.createMatteBorder(2, 2, 2, 2, SystemColor.text)));
+  public DefaultSpinnerEditor (int alignment) {
 
-      editorField.getInputMap(JComponent.WHEN_FOCUSED).put(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0), "stopEditing");
-      editorField.getInputMap(JComponent.WHEN_FOCUSED).put(KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0), "cancelEditing");
-      editorField.getActionMap().put("stopEditing", getStopEditingAction());
-      editorField.getActionMap().put("cancelEditing", getCancelEditingAction());
+    super();
 
-      editorField.getDocument().addDocumentListener(this);
-   }
+    editorField = new JTextField();
+    editorField.setHorizontalAlignment(JTextField.RIGHT);
+    editorField.setFont(editorField.getFont().deriveFont(Font.BOLD));
+    editorField.setBorder(BorderFactory.createCompoundBorder(BorderFactory.createLoweredBevelBorder(), BorderFactory.createMatteBorder(2, 2, 2, 2, SystemColor.text)));
 
-   public boolean isValid () {
+    editorField.getInputMap(JComponent.WHEN_FOCUSED).put(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0), "stopEditing");
+    editorField.getInputMap(JComponent.WHEN_FOCUSED).put(KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0), "cancelEditing");
+    editorField.getActionMap().put("stopEditing", getStopEditingAction());
+    editorField.getActionMap().put("cancelEditing", getCancelEditingAction());
 
-      return true;
-   }
+    editorField.getDocument().addDocumentListener(this);
+  }
 
-   public synchronized Object getValue () {
+  public boolean isValid () {
 
-      return editorField.getText();
-   }
+    return true;
+  }
 
-   public void startEditing () {
+  public synchronized Object getValue () {
 
-      editorField.setCaretPosition(editorField.getText().length());
-   }
+    return editorField.getText();
+  }
 
-   public synchronized Component getSpinnerEditorComponent (Spinner spinner, Object value) {
+  public void startEditing () {
 
-      editorField.setText(value.toString());
+    editorField.setCaretPosition(editorField.getText().length());
+  }
 
-      return editorField;
-   }
+  public synchronized Component getSpinnerEditorComponent (Spinner spinner, Object value) {
 
-   private synchronized void checkValidty () {
+    editorField.setText(value.toString());
 
-      if (!isValid()) {
-         editorField.setForeground(Color.RED);
-         fireEditorStatus(new EditorEvent(this, EditorEvent.State.INVALID));
-      }
-      else {
-         editorField.setForeground(SystemColor.textText);
-         fireEditorStatus(new EditorEvent(this, EditorEvent.State.VALID));
-      }
-   }
+    return editorField;
+  }
 
-   public synchronized void insertUpdate (DocumentEvent documentEvent) {
+  private synchronized void checkValidty () {
 
-      checkValidty();
-   }
+    if (!isValid()) {
+      editorField.setForeground(Color.RED);
+      fireEditorStatus(new EditorEvent(this, EditorEvent.State.INVALID));
+    }
+    else {
+      editorField.setForeground(SystemColor.textText);
+      fireEditorStatus(new EditorEvent(this, EditorEvent.State.VALID));
+    }
+  }
 
-   public synchronized void removeUpdate (DocumentEvent documentEvent) {
+  public synchronized void insertUpdate (DocumentEvent documentEvent) {
 
-      checkValidty();
-   }
+    checkValidty();
+  }
 
-   public synchronized void changedUpdate (DocumentEvent documentEvent) {
+  public synchronized void removeUpdate (DocumentEvent documentEvent) {
 
-      checkValidty();
-   }
+    checkValidty();
+  }
+
+  public synchronized void changedUpdate (DocumentEvent documentEvent) {
+
+    checkValidty();
+  }
 }

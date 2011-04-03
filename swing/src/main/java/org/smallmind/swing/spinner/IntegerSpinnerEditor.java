@@ -26,38 +26,40 @@
  */
 package org.smallmind.swing.spinner;
 
+import javax.swing.JTextField;
+
 public class IntegerSpinnerEditor extends DefaultSpinnerEditor {
 
-   private IntegerSpinnerModel model;
+  private IntegerSpinnerModel model;
 
-   public IntegerSpinnerEditor (IntegerSpinnerModel model) {
+  public IntegerSpinnerEditor (IntegerSpinnerModel model) {
 
-      super();
+    super(JTextField.RIGHT);
 
-      this.model = model;
-   }
+    this.model = model;
+  }
 
-   public boolean isValid () {
+  public boolean isValid () {
 
-      int value;
+    int value;
 
-      try {
-         value = Integer.parseInt((String)super.getValue());
-      }
-      catch (NumberFormatException numberFormatException) {
-         return false;
-      }
+    try {
+      value = Integer.parseInt((String)super.getValue());
+    }
+    catch (NumberFormatException numberFormatException) {
+      return false;
+    }
 
-      if ((model.getMinimumValue() != null) && (value < (Integer)model.getMinimumValue())) {
-         return false;
-      }
-      else {
-         return !((model.getMaximumValue() != null) && (value > (Integer)model.getMaximumValue()));
-      }
-   }
+    if ((model.getMinimumValue() != null) && (value < (Integer)model.getMinimumValue())) {
+      return false;
+    }
+    else {
+      return !((model.getMaximumValue() != null) && (value > (Integer)model.getMaximumValue()));
+    }
+  }
 
-   public Object getValue () {
+  public Object getValue () {
 
-      return Integer.parseInt((String)super.getValue());
-   }
+    return Integer.parseInt((String)super.getValue());
+  }
 }
