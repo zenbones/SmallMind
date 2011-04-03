@@ -61,6 +61,7 @@ public class FileChooserDialog extends JDialog implements FileChoiceListener {
     fileChooserPanel.addFileChoiceListener(this);
 
     setMinimumSize(new Dimension(550, 350));
+    setLocationRelativeTo(parentWindow);
   }
 
   public File getChosenFile () {
