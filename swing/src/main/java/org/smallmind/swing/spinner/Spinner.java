@@ -134,7 +134,7 @@ public class Spinner extends JPanel implements EditorListener, ActionListener, C
     rubberStamp.addMouseListener(this);
     spinnerModel.addChangeListener(this);
 
-    enableSpinning();
+    setEnabled(true);
   }
 
   public synchronized void addChangeListener (ChangeListener changeListener) {
@@ -192,22 +192,30 @@ public class Spinner extends JPanel implements EditorListener, ActionListener, C
     return renderer.getSpinnerRendererComponent(this, getValue());
   }
 
-  public synchronized void enableSpinning () {
+  @Override
+  public synchronized void setEnabled (boolean enabled) {
 
-    if (spinnerModel instanceof EdgeAwareSpinnerModel) {
-      spinnerUpButton.setEnabled(!getValue().equals(((EdgeAwareSpinnerModel)spinnerModel).getMaximumValue()));
-      spinnerDownButton.setEnabled(!getValue().equals(((EdgeAwareSpinnerModel)spinnerModel).getMinimumValue()));
+    if (enabled) {
+      if (spinnerModel instanceof EdgeAwareSpinnerModel) {
+        spinnerUpButton.setEnabled(!getValue().equals(((EdgeAwareSpinnerModel)spinnerModel).getMaximumValue()));
+        spinnerDownButton.setEnabled(!getValue().equals(((EdgeAwareSpinnerModel)spinnerModel).getMinimumValue()));
+      }
+      else {
+        spinnerUpButton.setEnabled(true);
+        spinnerDownButton.setEnabled(true);
+      }
+
+      rubberStamp.repaint();
     }
     else {
-      spinnerUpButton.setEnabled(true);
-      spinnerDownButton.setEnabled(true);
+      cancelEditing();
+      rubberStamp.repaint();
+
+      spinnerUpButton.setEnabled(false);
+      spinnerDownButton.setEnabled(false);
     }
-  }
 
-  public synchronized void disableSpinning () {
-
-    spinnerUpButton.setEnabled(false);
-    spinnerDownButton.setEnabled(false);
+    super.setEnabled(enabled);
   }
 
   public synchronized void cancelEditing () {
@@ -219,7 +227,7 @@ public class Spinner extends JPanel implements EditorListener, ActionListener, C
       valuePanel.add(rubberStamp);
       valuePanel.revalidate();
 
-      enableSpinning();
+      setEnabled(true);
     }
   }
 
@@ -246,10 +254,10 @@ public class Spinner extends JPanel implements EditorListener, ActionListener, C
         rubberStamp.repaint();
         break;
       case VALID:
-        enableSpinning();
+        setEnabled(true);
         break;
       case INVALID:
-        disableSpinning();
+        setEnabled(false);
         break;
       default:
         throw new UnknownSwitchCaseException(editorEvent.getState().name());
@@ -307,7 +315,7 @@ public class Spinner extends JPanel implements EditorListener, ActionListener, C
 
     Component editorComponent;
 
-    if ((editor != null) && (!editing)) {
+    if (isEnabled() && (editor != null) && (!editing)) {
       editorComponent = editor.getSpinnerEditorComponent(this, getValue());
       editorComponent.setPreferredSize(rubberStamp.getPreferredSize());
 

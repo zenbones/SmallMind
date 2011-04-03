@@ -33,35 +33,36 @@ import javax.swing.JComponent;
 
 public class SpinnerRubberStamp extends JComponent {
 
-   private Spinner spinner;
+  private Spinner spinner;
 
-   public SpinnerRubberStamp (Spinner spinner) {
+  public SpinnerRubberStamp (Spinner spinner) {
 
-      this.spinner = spinner;
-   }
+    this.spinner = spinner;
+  }
 
-   public Dimension getPreferredSize () {
+  public Dimension getPreferredSize () {
 
-      return spinner.getRenderComponent().getPreferredSize();
-   }
+    return spinner.getRenderComponent().getPreferredSize();
+  }
 
-   public Dimension getMaximumSize () {
+  public Dimension getMaximumSize () {
 
-      return spinner.getRenderComponent().getMaximumSize();
-   }
+    return spinner.getRenderComponent().getMaximumSize();
+  }
 
-   public Dimension getMinimumSize () {
+  public Dimension getMinimumSize () {
 
-      return spinner.getRenderComponent().getMinimumSize();
-   }
+    return spinner.getRenderComponent().getMinimumSize();
+  }
 
-   public void paint (Graphics graphics) {
+  public void paint (Graphics graphics) {
 
-      Component renderComponent;
+    Component renderComponent;
 
-      renderComponent = spinner.getRenderComponent();
-      renderComponent.setBounds(getBounds());
+    renderComponent = spinner.getRenderComponent();
+    renderComponent.setEnabled(spinner.isEnabled());
+    renderComponent.setBounds(getBounds());
 
-      renderComponent.paint(graphics);
-   }
+    renderComponent.paint(graphics);
+  }
 }
