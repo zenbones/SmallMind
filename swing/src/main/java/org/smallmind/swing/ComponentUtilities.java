@@ -31,54 +31,74 @@ import javax.swing.JComponent;
 
 public class ComponentUtilities {
 
-   public static void setWidth (JComponent component, int width) {
+  public static void setWidth (JComponent component, int width) {
 
-      component.setSize(new Dimension(width, component.getHeight()));
-   }
+    component.setSize(new Dimension(width, component.getHeight()));
+  }
 
-   public static void setHeight (JComponent component, int height) {
+  public static void setHeight (JComponent component, int height) {
 
-      component.setSize(new Dimension(component.getWidth(), height));
-   }
+    component.setSize(new Dimension(component.getWidth(), height));
+  }
 
-   public static int getPreferredWidth (JComponent component) {
+  public static int getPreferredWidth (JComponent component) {
 
-      return (int)component.getPreferredSize().getWidth();
-   }
+    return (int)component.getPreferredSize().getWidth();
+  }
 
-   public static void setPreferredWidth (JComponent component, int width) {
+  public static void setPreferredWidth (JComponent component, int width) {
 
-      component.setPreferredSize(new Dimension(width, (int)component.getPreferredSize().getHeight()));
-   }
+    component.setPreferredSize(new Dimension(width, (int)component.getPreferredSize().getHeight()));
+  }
 
-   public static void setMinimumWidth (JComponent component, int width) {
+  public static int getMinimumWidth (JComponent component) {
 
-      component.setMinimumSize(new Dimension(width, (int)component.getMinimumSize().getHeight()));
-   }
+    return (int)component.getMinimumSize().getWidth();
+  }
 
-   public static void setMaximumWidth (JComponent component, int width) {
+  public static void setMinimumWidth (JComponent component, int width) {
 
-      component.setMaximumSize(new Dimension(width, (int)component.getMaximumSize().getHeight()));
-   }
+    component.setMinimumSize(new Dimension(width, (int)component.getMinimumSize().getHeight()));
+  }
 
-   public static int getPreferredHeight (JComponent component) {
+  public static int getMaximumWidth (JComponent component) {
 
-      return (int)component.getPreferredSize().getHeight();
-   }
+    return (int)component.getMaximumSize().getWidth();
+  }
 
-   public static void setPreferredHeight (JComponent component, int height) {
+  public static void setMaximumWidth (JComponent component, int width) {
 
-      component.setPreferredSize(new Dimension((int)component.getPreferredSize().getWidth(), height));
-   }
+    component.setMaximumSize(new Dimension(width, (int)component.getMaximumSize().getHeight()));
+  }
 
-   public static void setMinimumHeight (JComponent component, int height) {
+  public static int getPreferredHeight (JComponent component) {
 
-      component.setMinimumSize(new Dimension((int)component.getMinimumSize().getWidth(), height));
-   }
+    return (int)component.getPreferredSize().getHeight();
+  }
 
-   public static void setMaximumHeight (JComponent component, int height) {
+  public static void setPreferredHeight (JComponent component, int height) {
 
-      component.setMaximumSize(new Dimension((int)component.getMaximumSize().getWidth(), height));
-   }
+    component.setPreferredSize(new Dimension((int)component.getPreferredSize().getWidth(), height));
+  }
+
+  public static int getMinimumHeight (JComponent component) {
+
+    return (int)component.getMinimumSize().getHeight();
+  }
+
+  public static void setMinimumHeight (JComponent component, int height) {
+
+    component.setMinimumSize(new Dimension((int)component.getMinimumSize().getWidth(), height));
+  }
+
+  public static int getMaximumHeight (JComponent component) {
+
+    return (int)component.getMaximumSize().getHeight();
+  }
+
+  public static void setMaximumHeight (JComponent component, int height) {
+
+    component.setMaximumSize(new Dimension((int)component.getMaximumSize().getWidth(), height));
+  }
 
 }

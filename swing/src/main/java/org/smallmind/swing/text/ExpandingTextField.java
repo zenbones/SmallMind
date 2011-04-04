@@ -27,6 +27,7 @@
 package org.smallmind.swing.text;
 
 import java.awt.CardLayout;
+import java.awt.Dimension;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -43,6 +44,7 @@ import javax.swing.text.BadLocationException;
 import javax.swing.text.Document;
 import org.smallmind.nutsnbolts.lang.UnknownSwitchCaseException;
 import org.smallmind.nutsnbolts.util.WeakEventListenerList;
+import org.smallmind.swing.ComponentUtilities;
 
 public class ExpandingTextField extends JPanel implements ActionListener, DocumentListener {
 
@@ -118,9 +120,9 @@ public class ExpandingTextField extends JPanel implements ActionListener, Docume
     add(contractedPanel, "field");
     add(expandedPanel, "area");
 
-    setMinimumSize(contractedTextField.getMinimumSize());
-    setPreferredSize(contractedTextField.getPreferredSize());
-    setMaximumSize(contractedTextField.getMaximumSize());
+    setMinimumSize(new Dimension(ComponentUtilities.getMinimumWidth(expandedScrollPane), ComponentUtilities.getMinimumHeight(contractedTextField)));
+    setPreferredSize(new Dimension(ComponentUtilities.getPreferredWidth(expandedScrollPane), ComponentUtilities.getPreferredHeight(contractedTextField)));
+    setMaximumSize(new Dimension(ComponentUtilities.getMaximumWidth(expandedScrollPane), ComponentUtilities.getMaximumHeight(contractedTextField)));
 
     cardState = CardState.COLLAPSED;
   }
@@ -168,12 +170,14 @@ public class ExpandingTextField extends JPanel implements ActionListener, Docume
         setMinimumSize(expandedScrollPane.getMinimumSize());
         setPreferredSize(expandedScrollPane.getPreferredSize());
         setMaximumSize(expandedScrollPane.getMaximumSize());
+
         cardState = CardState.EXPANDED;
         break;
       case EXPANDED:
-        setMinimumSize(contractedTextField.getMinimumSize());
-        setPreferredSize(contractedTextField.getPreferredSize());
-        setMaximumSize(contractedTextField.getMaximumSize());
+        setMinimumSize(new Dimension(ComponentUtilities.getMinimumWidth(expandedScrollPane), ComponentUtilities.getMinimumHeight(contractedTextField)));
+        setPreferredSize(new Dimension(ComponentUtilities.getPreferredWidth(expandedScrollPane), ComponentUtilities.getPreferredHeight(contractedTextField)));
+        setMaximumSize(new Dimension(ComponentUtilities.getMaximumWidth(expandedScrollPane), ComponentUtilities.getMaximumHeight(contractedTextField)));
+
         cardState = CardState.COLLAPSED;
         break;
       default:
