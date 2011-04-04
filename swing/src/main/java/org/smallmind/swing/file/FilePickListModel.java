@@ -77,22 +77,23 @@ public class FilePickListModel implements ListModel {
 
     this.directory = (directory == null) ? new File(System.getProperty("user.home")) : directory;
 
-    files = this.directory.listFiles((java.io.FileFilter)filter);
-    Arrays.sort(files, FILE_COMPARATOR);
+    if ((files = this.directory.listFiles((java.io.FileFilter)filter)) != null) {
+      Arrays.sort(files, FILE_COMPARATOR);
+    }
 
-    fireContentsChanges(new ListDataEvent(this, ListDataEvent.CONTENTS_CHANGED, 0, Math.max(files.length, prevSize)));
+    fireContentsChanges(new ListDataEvent(this, ListDataEvent.CONTENTS_CHANGED, 0, Math.max((files == null) ? 0 : files.length, prevSize)));
   }
 
   @Override
   public int getSize () {
 
-    return files.length;
+    return (files == null) ? 0 : files.length;
   }
 
   @Override
   public Object getElementAt (int index) {
 
-    return files[index];
+    return (files == null) ? -1 : files[index];
   }
 
   private synchronized void fireContentsChanges (ListDataEvent listDataEvent) {
