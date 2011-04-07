@@ -109,7 +109,7 @@ public class ExpandingTextField extends JPanel implements ActionListener, Docume
     expandedScrollPane = new JScrollPane(expandedTextArea = new JTextArea(text, rows, 0), JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED, JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
     expandedTextArea.getDocument().addDocumentListener(this);
 
-    textFieldHeight = (int)contractedTextField.getPreferredSize().getHeight();
+    textFieldHeight = (int)contractedTextField.getPreferredSize().getHeight() - 1;
 
     contractedGroupLayout.setHorizontalGroup(contractedGroupLayout.createSequentialGroup().addComponent(contractedTextField).addComponent(expandButton, 22, 22, 22));
     contractedGroupLayout.setVerticalGroup(contractedGroupLayout.createParallelGroup(GroupLayout.Alignment.LEADING).addComponent(contractedTextField, GroupLayout.PREFERRED_SIZE, GroupLayout.PREFERRED_SIZE, GroupLayout.PREFERRED_SIZE).addComponent(expandButton, textFieldHeight, textFieldHeight, textFieldHeight));
