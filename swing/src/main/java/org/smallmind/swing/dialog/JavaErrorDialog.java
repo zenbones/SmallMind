@@ -75,6 +75,7 @@ public class JavaErrorDialog extends javax.swing.JDialog implements ActionListen
     JavaErrorDialog errorDialog = new JavaErrorDialog(parentWindow, source, exception);
 
     errorDialog.setModal(true);
+    errorDialog.setLocationRelativeTo(parentWindow);
     errorDialog.setVisible(true);
   }
 

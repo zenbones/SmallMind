@@ -34,7 +34,7 @@ import org.smallmind.nutsnbolts.lang.UnknownSwitchCaseException;
 
 public class HttpPipe {
 
-  private static enum State {START, WRITE, READ, TERMINATED}
+  private static enum State {WRITE, READ, TERMINATED}
 
   private HttpURLConnection urlConnection;
   private OutputStream httpOutput;

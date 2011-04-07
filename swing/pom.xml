@@ -31,10 +31,6 @@
     </plugins>
     <resources>
       <resource>
-        <directory>src/main/resources/dtd</directory>
-        <filtering>false</filtering>
-      </resource>
-      <resource>
         <directory>src/main/resources/xsd</directory>
         <filtering>false</filtering>
       </resource>
