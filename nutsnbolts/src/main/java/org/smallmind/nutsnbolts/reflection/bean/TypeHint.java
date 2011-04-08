@@ -24,29 +24,16 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.persistence.model.bean;
+package org.smallmind.nutsnbolts.reflection.bean;
 
-import org.smallmind.nutsnbolts.lang.FormattedException;
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
 
-public class BeanAccessException extends FormattedException {
+@Target(ElementType.PARAMETER)
+@Retention(RetentionPolicy.RUNTIME)
+public @interface TypeHint {
 
-   public BeanAccessException () {
-
-      super();
-   }
-
-   public BeanAccessException (String message, Object... args) {
-
-      super(message, args);
-   }
-
-   public BeanAccessException (Throwable throwable, String message, Object... args) {
-
-      super(throwable, message, args);
-   }
-
-   public BeanAccessException (Throwable throwable) {
-
-      super(throwable);
-   }
+  public abstract Class value ();
 }

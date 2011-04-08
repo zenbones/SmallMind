@@ -24,19 +24,29 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.persistence.model.type.converter;
+package org.smallmind.nutsnbolts.reflection.bean;
 
-import org.smallmind.persistence.model.type.PrimitiveType;
+import org.smallmind.nutsnbolts.lang.FormattedException;
 
-public class ByteStringConverter implements StringConverter<Byte> {
+public class BeanAccessException extends FormattedException {
 
-   public PrimitiveType getPrimitiveType () {
+  public BeanAccessException () {
 
-      return PrimitiveType.BYTE;
-   }
+    super();
+  }
 
-   public Byte convert (String value) {
+  public BeanAccessException (String message, Object... args) {
 
-      return Byte.parseByte(value);
-   }
+    super(message, args);
+  }
+
+  public BeanAccessException (Throwable throwable, String message, Object... args) {
+
+    super(throwable, message, args);
+  }
+
+  public BeanAccessException (Throwable throwable) {
+
+    super(throwable);
+  }
 }

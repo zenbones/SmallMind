@@ -24,29 +24,15 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.persistence.model.bean;
+package org.smallmind.nutsnbolts.reflection.type.converter;
 
-import org.smallmind.nutsnbolts.lang.FormattedException;
+import org.smallmind.nutsnbolts.reflection.bean.BeanInvocationException;
+import org.smallmind.nutsnbolts.reflection.type.PrimitiveType;
 
-public class BeanInvocationException extends FormattedException {
+public interface StringConverter<T> {
 
-   public BeanInvocationException () {
+  public abstract PrimitiveType getPrimitiveType ();
 
-      super();
-   }
-
-   public BeanInvocationException (String message, Object... args) {
-
-      super(message, args);
-   }
-
-   public BeanInvocationException (Throwable throwable, String message, Object... args) {
-
-      super(throwable, message, args);
-   }
-
-   public BeanInvocationException (Throwable throwable) {
-
-      super(throwable);
-   }
+  public abstract T convert (String value)
+    throws BeanInvocationException;
 }

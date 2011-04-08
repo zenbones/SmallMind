@@ -24,9 +24,19 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.persistence.model.type;
+package org.smallmind.nutsnbolts.reflection.type.converter;
 
-public enum PrimitiveType {
+import org.smallmind.nutsnbolts.reflection.type.PrimitiveType;
 
-   BOOLEAN, BYTE, CHARACTER, DATE, DOUBLE, ENUM, FLOAT, INTEGER, LONG, SHORT, STRING
+public class CharacterStringConverter implements StringConverter<Character> {
+
+  public PrimitiveType getPrimitiveType () {
+
+    return PrimitiveType.CHARACTER;
+  }
+
+  public Character convert (String value) {
+
+    return value.charAt(0);
+  }
 }

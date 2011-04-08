@@ -39,7 +39,7 @@ import org.hibernate.criterion.Order;
 import org.hibernate.criterion.Projections;
 import org.hibernate.criterion.Restrictions;
 import org.hibernate.transform.Transformers;
-import org.smallmind.nutsnbolts.reflection.ReflectionUtility;
+import org.smallmind.nutsnbolts.reflection.type.TypeUtility;
 import org.smallmind.persistence.Durable;
 import org.smallmind.persistence.cache.VectoredDao;
 import org.smallmind.persistence.orm.CacheAwareORMDao;
@@ -226,7 +226,7 @@ public abstract class HibernateDao<I extends Serializable & Comparable<I>, D ext
 
       return returnType.cast(sqlQuery.addEntity(returnType).uniqueResult());
     }
-    else if (!ReflectionUtility.isEssentiallyPrimitive(returnType)) {
+    else if (!TypeUtility.isEssentiallyPrimitive(returnType)) {
 
       return returnType.cast(sqlQuery.setResultTransformer(Transformers.aliasToBean(returnType)).uniqueResult());
     }
@@ -258,7 +258,7 @@ public abstract class HibernateDao<I extends Serializable & Comparable<I>, D ext
 
       return Collections.checkedList(sqlQuery.addEntity(returnType).list(), returnType);
     }
-    else if (!ReflectionUtility.isEssentiallyPrimitive(returnType)) {
+    else if (!TypeUtility.isEssentiallyPrimitive(returnType)) {
 
       return Collections.checkedList(sqlQuery.setResultTransformer(Transformers.aliasToBean(returnType)).list(), returnType);
     }

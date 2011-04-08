@@ -28,7 +28,7 @@ package org.smallmind.persistence.cache.aop;
 
 import java.lang.annotation.Annotation;
 import org.aspectj.lang.JoinPoint;
-import org.smallmind.persistence.model.aop.AOPUtility;
+import org.smallmind.persistence.aop.AOPUtility;
 
 public class Classifications {
 

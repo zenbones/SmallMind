@@ -24,15 +24,26 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.persistence.model.type.converter;
+package org.smallmind.nutsnbolts.reflection.type.converter;
 
-import org.smallmind.persistence.model.bean.BeanInvocationException;
-import org.smallmind.persistence.model.type.PrimitiveType;
+import org.smallmind.nutsnbolts.reflection.type.PrimitiveType;
 
-public interface StringConverter<T> {
+public class EnumStringConverter<E extends Enum<E>> implements StringConverter<E> {
 
-   public abstract PrimitiveType getPrimitiveType ();
+  private Class<E> enumClass;
 
-   public abstract T convert (String value)
-      throws BeanInvocationException;
+  public EnumStringConverter (Class<E> enumClass) {
+
+    this.enumClass = enumClass;
+  }
+
+  public PrimitiveType getPrimitiveType () {
+
+    return PrimitiveType.ENUM;
+  }
+
+  public E convert (String value) {
+
+    return Enum.valueOf(enumClass, value);
+  }
 }

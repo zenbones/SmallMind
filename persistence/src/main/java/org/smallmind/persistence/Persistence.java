@@ -26,7 +26,7 @@
  */
 package org.smallmind.persistence;
 
-import org.smallmind.persistence.model.type.converter.StringConverterFactory;
+import org.smallmind.nutsnbolts.reflection.type.converter.StringConverterFactory;
 import org.smallmind.persistence.statistics.StatisticsFactory;
 
 public class Persistence {

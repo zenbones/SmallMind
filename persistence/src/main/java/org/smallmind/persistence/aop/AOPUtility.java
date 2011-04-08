@@ -24,12 +24,12 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.persistence.model.aop;
+package org.smallmind.persistence.aop;
 
-import org.smallmind.nutsnbolts.reflection.ReflectionUtility;
-import org.smallmind.persistence.model.bean.BeanAccessException;
-import org.smallmind.persistence.model.bean.BeanInvocationException;
-import org.smallmind.persistence.model.bean.BeanUtility;
+import org.smallmind.nutsnbolts.reflection.bean.BeanInvocationException;
+import org.smallmind.nutsnbolts.reflection.bean.BeanUtility;
+import org.smallmind.nutsnbolts.reflection.type.TypeUtility;
+import org.smallmind.nutsnbolts.reflection.bean.BeanAccessException;
 import org.aspectj.lang.JoinPoint;
 import org.aspectj.lang.reflect.MethodSignature;
 
@@ -71,7 +71,7 @@ public class AOPUtility {
 
                return null;
             }
-            else if ((expectedType != null) && (!ReflectionUtility.isEssentiallyTheSameAs(expectedType, argumentValue.getClass()))) {
+            else if ((expectedType != null) && (!TypeUtility.isEssentiallyTheSameAs(expectedType, argumentValue.getClass()))) {
                throw new BeanAccessException("The parameter(%s) must be of the expected type '%s'", baseParameter, expectedType);
             }
 

@@ -24,16 +24,19 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.persistence.model.bean;
+package org.smallmind.nutsnbolts.reflection.type.converter;
 
-import java.lang.annotation.ElementType;
-import java.lang.annotation.Retention;
-import java.lang.annotation.RetentionPolicy;
-import java.lang.annotation.Target;
+import org.smallmind.nutsnbolts.reflection.type.PrimitiveType;
 
-@Target (ElementType.PARAMETER)
-@Retention (RetentionPolicy.RUNTIME)
-public @interface TypeHint {
+public class FloatStringConverter implements StringConverter<Float> {
 
-   public abstract Class value ();
+  public PrimitiveType getPrimitiveType () {
+
+    return PrimitiveType.FLOAT;
+  }
+
+  public Float convert (String value) {
+
+    return Float.parseFloat(value);
+  }
 }

@@ -24,31 +24,19 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.persistence.model.type.converter;
+package org.smallmind.nutsnbolts.reflection.type.converter;
 
-import java.util.Date;
-import org.smallmind.persistence.model.bean.BeanInvocationException;
-import org.smallmind.persistence.model.type.PrimitiveType;
-import org.joda.time.format.DateTimeFormatter;
-import org.joda.time.format.ISODateTimeFormat;
+import org.smallmind.nutsnbolts.reflection.type.PrimitiveType;
 
-public class DateStringConverter implements StringConverter<Date> {
+public class DoubleStringConverter implements StringConverter<Double> {
 
-   private static final DateTimeFormatter ISO_DATE_TIME_FORMATTER = ISODateTimeFormat.dateTime();
+  public PrimitiveType getPrimitiveType () {
 
-   public PrimitiveType getPrimitiveType () {
+    return PrimitiveType.DOUBLE;
+  }
 
-      return PrimitiveType.DATE;
-   }
+  public Double convert (String value) {
 
-   public Date convert (String value)
-      throws BeanInvocationException {
-
-      if ((value == null) || (value.length() == 0)) {
-
-         return null;
-      }
-
-      return ISO_DATE_TIME_FORMATTER.parseDateTime(value).toDate();
-   }
+    return Double.parseDouble(value);
+  }
 }

@@ -24,19 +24,9 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.persistence.model.type.converter;
+package org.smallmind.nutsnbolts.reflection.type;
 
-import org.smallmind.persistence.model.type.PrimitiveType;
+public enum PrimitiveType {
 
-public class IntegerStringConverter implements StringConverter<Integer> {
-
-   public PrimitiveType getPrimitiveType () {
-
-      return PrimitiveType.INTEGER;
-   }
-
-   public Integer convert (String value) {
-
-      return Integer.parseInt(value);
-   }
+  BOOLEAN, BYTE, CHARACTER, DATE, DOUBLE, ENUM, FLOAT, INTEGER, LONG, SHORT, STRING
 }

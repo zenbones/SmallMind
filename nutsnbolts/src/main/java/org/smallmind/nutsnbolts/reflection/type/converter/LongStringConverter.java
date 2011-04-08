@@ -24,19 +24,19 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.persistence.model.type.converter;
+package org.smallmind.nutsnbolts.reflection.type.converter;
 
-import org.smallmind.persistence.model.type.PrimitiveType;
+import org.smallmind.nutsnbolts.reflection.type.PrimitiveType;
 
-public class DoubleStringConverter implements StringConverter<Double> {
+public class LongStringConverter implements StringConverter<Long> {
 
-   public PrimitiveType getPrimitiveType () {
+  public PrimitiveType getPrimitiveType () {
 
-      return PrimitiveType.DOUBLE;
-   }
+    return PrimitiveType.LONG;
+  }
 
-   public Double convert (String value) {
+  public Long convert (String value) {
 
-      return Double.parseDouble(value);
-   }
+    return Long.parseLong(value);
+  }
 }

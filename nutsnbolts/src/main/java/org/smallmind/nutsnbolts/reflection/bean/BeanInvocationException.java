@@ -24,19 +24,29 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.persistence.model.type.converter;
+package org.smallmind.nutsnbolts.reflection.bean;
 
-import org.smallmind.persistence.model.type.PrimitiveType;
+import org.smallmind.nutsnbolts.lang.FormattedException;
 
-public class LongStringConverter implements StringConverter<Long> {
+public class BeanInvocationException extends FormattedException {
 
-   public PrimitiveType getPrimitiveType () {
+  public BeanInvocationException () {
 
-      return PrimitiveType.LONG;
-   }
+    super();
+  }
 
-   public Long convert (String value) {
+  public BeanInvocationException (String message, Object... args) {
 
-      return Long.parseLong(value);
-   }
+    super(message, args);
+  }
+
+  public BeanInvocationException (Throwable throwable, String message, Object... args) {
+
+    super(throwable, message, args);
+  }
+
+  public BeanInvocationException (Throwable throwable) {
+
+    super(throwable);
+  }
 }

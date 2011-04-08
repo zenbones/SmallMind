@@ -24,26 +24,19 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.persistence.model.type.converter;
+package org.smallmind.nutsnbolts.reflection.type.converter;
 
-import org.smallmind.persistence.model.type.PrimitiveType;
+import org.smallmind.nutsnbolts.reflection.type.PrimitiveType;
 
-public class EnumStringConverter<E extends Enum<E>> implements StringConverter<E> {
+public class BooleanStringConverter implements StringConverter<Boolean> {
 
-   private Class<E> enumClass;
+  public PrimitiveType getPrimitiveType () {
 
-   public EnumStringConverter (Class<E> enumClass) {
+    return PrimitiveType.BOOLEAN;
+  }
 
-      this.enumClass = enumClass;
-   }
+  public Boolean convert (String value) {
 
-   public PrimitiveType getPrimitiveType () {
-
-      return PrimitiveType.ENUM;
-   }
-
-   public E convert (String value) {
-
-      return Enum.valueOf(enumClass, value);
-   }
+    return Boolean.parseBoolean(value);
+  }
 }

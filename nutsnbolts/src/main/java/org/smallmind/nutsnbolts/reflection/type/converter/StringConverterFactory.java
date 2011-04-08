@@ -24,19 +24,12 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.persistence.model.type.converter;
+package org.smallmind.nutsnbolts.reflection.type.converter;
 
-import org.smallmind.persistence.model.type.PrimitiveType;
+import org.smallmind.nutsnbolts.reflection.bean.BeanAccessException;
 
-public class StringStringConverter implements StringConverter<String> {
+public interface StringConverterFactory {
 
-   public PrimitiveType getPrimitiveType () {
-
-      return PrimitiveType.STRING;
-   }
-
-   public String convert (String value) {
-
-      return value;
-   }
+  public StringConverter getStringConverter (Class parameterClass)
+    throws BeanAccessException;
 }

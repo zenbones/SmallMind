@@ -27,12 +27,12 @@
 package org.smallmind.persistence.cache.aop;
 
 import org.aspectj.lang.JoinPoint;
+import org.smallmind.nutsnbolts.reflection.bean.BeanUtility;
+import org.smallmind.nutsnbolts.reflection.type.TypeUtility;
 import org.smallmind.persistence.Durable;
 import org.smallmind.persistence.PersistenceManager;
+import org.smallmind.persistence.aop.AOPUtility;
 import org.smallmind.persistence.cache.VectorIndex;
-import org.smallmind.persistence.model.aop.AOPUtility;
-import org.smallmind.persistence.model.bean.BeanUtility;
-import org.smallmind.nutsnbolts.reflection.ReflectionUtility;
 import org.smallmind.persistence.orm.DaoManager;
 import org.smallmind.persistence.orm.ORMDao;
 
@@ -129,7 +129,7 @@ public class VectorIndices {
       throw new CacheAutomationError(exception);
     }
 
-    if (!ReflectionUtility.isEssentiallyTheSameAs(fieldType, returnValue.getClass())) {
+    if (!TypeUtility.isEssentiallyTheSameAs(fieldType, returnValue.getClass())) {
       throw new CacheAutomationError("The getter for field(%s) on cache helper (%s) must return a type assignable to '%s'", fieldName, durable.getClass().getName(), fieldType.getName());
     }
 

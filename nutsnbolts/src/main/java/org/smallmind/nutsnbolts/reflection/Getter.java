@@ -89,5 +89,4 @@ public class Getter implements Serializable {
 
       return method.invoke(target, NO_PARAMETERS);
    }
-
 }

@@ -24,19 +24,19 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.persistence.model.type.converter;
+package org.smallmind.nutsnbolts.reflection.type.converter;
 
-import org.smallmind.persistence.model.type.PrimitiveType;
+import org.smallmind.nutsnbolts.reflection.type.PrimitiveType;
 
-public class BooleanStringConverter implements StringConverter<Boolean> {
+public class IntegerStringConverter implements StringConverter<Integer> {
 
-   public PrimitiveType getPrimitiveType () {
+  public PrimitiveType getPrimitiveType () {
 
-      return PrimitiveType.BOOLEAN;
-   }
+    return PrimitiveType.INTEGER;
+  }
 
-   public Boolean convert (String value) {
+  public Integer convert (String value) {
 
-      return Boolean.parseBoolean(value);
-   }
+    return Integer.parseInt(value);
+  }
 }

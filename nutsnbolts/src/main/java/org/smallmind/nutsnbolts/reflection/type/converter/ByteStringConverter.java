@@ -24,19 +24,19 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.persistence.model.type.converter;
+package org.smallmind.nutsnbolts.reflection.type.converter;
 
-import org.smallmind.persistence.model.type.PrimitiveType;
+import org.smallmind.nutsnbolts.reflection.type.PrimitiveType;
 
-public class FloatStringConverter implements StringConverter<Float> {
+public class ByteStringConverter implements StringConverter<Byte> {
 
-   public PrimitiveType getPrimitiveType () {
+  public PrimitiveType getPrimitiveType () {
 
-      return PrimitiveType.FLOAT;
-   }
+    return PrimitiveType.BYTE;
+  }
 
-   public Float convert (String value) {
+  public Byte convert (String value) {
 
-      return Float.parseFloat(value);
-   }
+    return Byte.parseByte(value);
+  }
 }

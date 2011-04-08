@@ -24,9 +24,9 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.nutsnbolts.reflection;
+package org.smallmind.nutsnbolts.reflection.type;
 
-public class ReflectionUtility {
+public class TypeUtility {
 
   private static Class[] PRIMITIVES = new Class[] {Long.class, Boolean.class, Integer.class, Double.class, Float.class, Character.class, Short.class, Byte.class};
 
