@@ -1,22 +1,22 @@
 /*
  * Copyright (c) 2007, 2008, 2009, 2010 David Berkman
- *
+ * 
  * This file is part of the SmallMind Code Project.
- *
+ * 
  * The SmallMind Code Project is free software, you can redistribute
  * it and/or modify it under the terms of GNU Affero General Public
  * License as published by the Free Software Foundation, either version 3
  * of the License, or (at your option) any later version.
- *
+ * 
  * The SmallMind Code Project is distributed in the hope that it will
  * be useful, but WITHOUT ANY WARRANTY; without even the implied warranty
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * General Public License for more details.
- *
+ * 
  * You should have received a copy of the the GNU Affero General Public
  * License, along with The SmallMind Code Project. If not, see
  * <http://www.gnu.org/licenses/>.
- *
+ * 
  * Additional permission under the GNU Affero GPL version 3 section 7
  * ------------------------------------------------------------------
  * If you modify this Program, or any covered work, by linking or
@@ -30,6 +30,8 @@ import java.awt.CardLayout;
 import java.awt.Dimension;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.ItemEvent;
+import java.awt.event.ItemListener;
 import java.util.concurrent.atomic.AtomicBoolean;
 import javax.swing.GroupLayout;
 import javax.swing.ImageIcon;
@@ -38,6 +40,7 @@ import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTextArea;
 import javax.swing.JTextField;
+import javax.swing.JToggleButton;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 import javax.swing.text.BadLocationException;
@@ -46,42 +49,66 @@ import org.smallmind.nutsnbolts.lang.UnknownSwitchCaseException;
 import org.smallmind.nutsnbolts.util.WeakEventListenerList;
 import org.smallmind.swing.ComponentUtilities;
 
-public class FormulaTextField extends JPanel implements ActionListener, DocumentListener {
+public class FormulaTextField extends JPanel implements ActionListener, ItemListener, DocumentListener {
 
   private static final ImageIcon COLLAPSE_ICON = new ImageIcon(Thread.currentThread().getContextClassLoader().getResource("org/smallmind/swing/system/navigate_open_16.png"));
   private static final ImageIcon EXPAND_ICON = new ImageIcon(Thread.currentThread().getContextClassLoader().getResource("org/smallmind/swing/system/navigate_close_16.png"));
+  private static final ImageIcon FORMULA_ICON = new ImageIcon(Thread.currentThread().getContextClassLoader().getResource("org/smallmind/swing/system/text_formula_16.png"));
 
   private static enum CardState {COLLAPSED, EXPANDED}
 
-  private final WeakEventListenerList<DocumentListener> listenerList = new WeakEventListenerList<DocumentListener>();
+  private final WeakEventListenerList<ItemListener> itemListenerList = new WeakEventListenerList<ItemListener>();
+  private final WeakEventListenerList<DocumentListener> documentListenerList = new WeakEventListenerList<DocumentListener>();
 
   private CardLayout cardLayout;
   private CardState cardState;
   private JScrollPane expandedScrollPane;
   private JTextArea expandedTextArea;
-  private JTextField contractedTextField;
+  private JTextField collapsedTextField;
+  private JToggleButton expandedFormulaButton;
+  private JToggleButton collapsedFormulaButton;
   private AtomicBoolean documentSensitive = new AtomicBoolean(true);
 
   public FormulaTextField () {
 
-    this(null);
+    this(null, false);
+  }
+
+  public FormulaTextField (boolean formula) {
+
+    this(null, formula);
   }
 
   public FormulaTextField (String text) {
 
-    this(text, 5);
+    this(text, 5, false);
+  }
+
+  public FormulaTextField (String text, boolean formula) {
+
+    this(text, 5, formula);
   }
 
   public FormulaTextField (int rows) {
 
-    this(null, rows);
+    this(null, rows, false);
+  }
+
+  public FormulaTextField (int rows, boolean formula) {
+
+    this(null, rows, formula);
   }
 
   public FormulaTextField (String text, int rows) {
 
-    JPanel contractedPanel;
+    this(text, rows, false);
+  }
+
+  public FormulaTextField (String text, int rows, boolean formula) {
+
+    JPanel collapsedPanel;
     JPanel expandedPanel;
-    GroupLayout contractedGroupLayout;
+    GroupLayout collapsedGroupLayout;
     GroupLayout expandedGroupLayout;
     JButton collapseButton;
     JButton expandButton;
@@ -89,8 +116,8 @@ public class FormulaTextField extends JPanel implements ActionListener, Document
 
     setLayout(cardLayout = new CardLayout());
 
-    contractedPanel = new JPanel();
-    contractedPanel.setLayout(contractedGroupLayout = new GroupLayout(contractedPanel));
+    collapsedPanel = new JPanel();
+    collapsedPanel.setLayout(collapsedGroupLayout = new GroupLayout(collapsedPanel));
 
     expandedPanel = new JPanel();
     expandedPanel.setLayout(expandedGroupLayout = new GroupLayout(expandedPanel));
@@ -103,26 +130,34 @@ public class FormulaTextField extends JPanel implements ActionListener, Document
     expandButton.setFocusable(false);
     expandButton.addActionListener(this);
 
-    contractedTextField = new JTextField(text);
-    contractedTextField.getDocument().addDocumentListener(this);
+    collapsedFormulaButton = new JToggleButton(FORMULA_ICON, formula);
+    collapsedFormulaButton.setFocusable(false);
+    collapsedFormulaButton.addItemListener(this);
+
+    expandedFormulaButton = new JToggleButton(FORMULA_ICON, formula);
+    expandedFormulaButton.setFocusable(false);
+    expandedFormulaButton.addItemListener(this);
+
+    collapsedTextField = new JTextField(text);
+    collapsedTextField.getDocument().addDocumentListener(this);
 
     expandedScrollPane = new JScrollPane(expandedTextArea = new JTextArea(text, rows, 0), JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED, JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
     expandedTextArea.getDocument().addDocumentListener(this);
 
-    textFieldHeight = (int)contractedTextField.getPreferredSize().getHeight() - 1;
+    textFieldHeight = (int)collapsedTextField.getPreferredSize().getHeight() - 1;
 
-    contractedGroupLayout.setHorizontalGroup(contractedGroupLayout.createSequentialGroup().addComponent(contractedTextField).addComponent(expandButton, 22, 22, 22));
-    contractedGroupLayout.setVerticalGroup(contractedGroupLayout.createParallelGroup(GroupLayout.Alignment.LEADING).addComponent(contractedTextField, GroupLayout.PREFERRED_SIZE, GroupLayout.PREFERRED_SIZE, GroupLayout.PREFERRED_SIZE).addComponent(expandButton, textFieldHeight, textFieldHeight, textFieldHeight));
+    collapsedGroupLayout.setHorizontalGroup(collapsedGroupLayout.createSequentialGroup().addComponent(collapsedTextField).addComponent(expandButton, 22, 22, 22).addComponent(collapsedFormulaButton, 22, 22, 22));
+    collapsedGroupLayout.setVerticalGroup(collapsedGroupLayout.createParallelGroup(GroupLayout.Alignment.LEADING).addComponent(collapsedTextField, GroupLayout.PREFERRED_SIZE, GroupLayout.PREFERRED_SIZE, GroupLayout.PREFERRED_SIZE).addComponent(expandButton, textFieldHeight, textFieldHeight, textFieldHeight).addComponent(collapsedFormulaButton, textFieldHeight, textFieldHeight, textFieldHeight));
 
-    expandedGroupLayout.setHorizontalGroup(expandedGroupLayout.createSequentialGroup().addComponent(expandedScrollPane).addComponent(collapseButton, 22, 22, 22));
-    expandedGroupLayout.setVerticalGroup(expandedGroupLayout.createParallelGroup(GroupLayout.Alignment.LEADING).addComponent(expandedScrollPane, GroupLayout.PREFERRED_SIZE, GroupLayout.PREFERRED_SIZE, GroupLayout.PREFERRED_SIZE).addComponent(collapseButton, textFieldHeight, textFieldHeight, textFieldHeight));
+    expandedGroupLayout.setHorizontalGroup(expandedGroupLayout.createSequentialGroup().addComponent(expandedScrollPane).addComponent(collapseButton, 22, 22, 22).addComponent(expandedFormulaButton, 22, 22, 22));
+    expandedGroupLayout.setVerticalGroup(expandedGroupLayout.createParallelGroup(GroupLayout.Alignment.LEADING).addComponent(expandedScrollPane, GroupLayout.PREFERRED_SIZE, GroupLayout.PREFERRED_SIZE, GroupLayout.PREFERRED_SIZE).addComponent(collapseButton, textFieldHeight, textFieldHeight, textFieldHeight).addComponent(expandedFormulaButton, textFieldHeight, textFieldHeight, textFieldHeight));
 
-    add(contractedPanel, "field");
+    add(collapsedPanel, "field");
     add(expandedPanel, "area");
 
-    setMinimumSize(new Dimension(ComponentUtilities.getMinimumWidth(expandedScrollPane), ComponentUtilities.getMinimumHeight(contractedTextField)));
-    setPreferredSize(new Dimension(ComponentUtilities.getPreferredWidth(expandedScrollPane), ComponentUtilities.getPreferredHeight(contractedTextField)));
-    setMaximumSize(new Dimension(ComponentUtilities.getMaximumWidth(expandedScrollPane), ComponentUtilities.getMaximumHeight(contractedTextField)));
+    setMinimumSize(new Dimension(ComponentUtilities.getMinimumWidth(expandedScrollPane), ComponentUtilities.getMinimumHeight(collapsedTextField)));
+    setPreferredSize(new Dimension(ComponentUtilities.getPreferredWidth(expandedScrollPane), ComponentUtilities.getPreferredHeight(collapsedTextField)));
+    setMaximumSize(new Dimension(ComponentUtilities.getMaximumWidth(expandedScrollPane), ComponentUtilities.getMaximumHeight(collapsedTextField)));
 
     cardState = CardState.COLLAPSED;
   }
@@ -130,8 +165,10 @@ public class FormulaTextField extends JPanel implements ActionListener, Document
   @Override
   public void setEnabled (boolean enabled) {
 
-    contractedTextField.setEnabled(enabled);
+    collapsedTextField.setEnabled(enabled);
     expandedTextArea.setEnabled(enabled);
+    collapsedFormulaButton.setEnabled(enabled);
+    expandedFormulaButton.setEnabled(enabled);
 
     super.setEnabled(enabled);
   }
@@ -143,14 +180,14 @@ public class FormulaTextField extends JPanel implements ActionListener, Document
 
   public boolean containsDocument (Document document) {
 
-    return (contractedTextField.getDocument() == document) || (expandedTextArea.getDocument() == document);
+    return (collapsedTextField.getDocument() == document) || (expandedTextArea.getDocument() == document);
   }
 
   public void setText (String text) {
 
     switch (cardState) {
       case COLLAPSED:
-        contractedTextField.setText(text);
+        collapsedTextField.setText(text);
         break;
       case EXPANDED:
         expandedTextArea.setText(text);
@@ -158,6 +195,11 @@ public class FormulaTextField extends JPanel implements ActionListener, Document
       default:
         throw new UnknownSwitchCaseException(cardState.name());
     }
+  }
+
+  public boolean isFormula () {
+
+    return expandedFormulaButton.isSelected();
   }
 
   @Override
@@ -174,9 +216,9 @@ public class FormulaTextField extends JPanel implements ActionListener, Document
         cardState = CardState.EXPANDED;
         break;
       case EXPANDED:
-        setMinimumSize(new Dimension(ComponentUtilities.getMinimumWidth(expandedScrollPane), ComponentUtilities.getMinimumHeight(contractedTextField)));
-        setPreferredSize(new Dimension(ComponentUtilities.getPreferredWidth(expandedScrollPane), ComponentUtilities.getPreferredHeight(contractedTextField)));
-        setMaximumSize(new Dimension(ComponentUtilities.getMaximumWidth(expandedScrollPane), ComponentUtilities.getMaximumHeight(contractedTextField)));
+        setMinimumSize(new Dimension(ComponentUtilities.getMinimumWidth(expandedScrollPane), ComponentUtilities.getMinimumHeight(collapsedTextField)));
+        setPreferredSize(new Dimension(ComponentUtilities.getPreferredWidth(expandedScrollPane), ComponentUtilities.getPreferredHeight(collapsedTextField)));
+        setMaximumSize(new Dimension(ComponentUtilities.getMaximumWidth(expandedScrollPane), ComponentUtilities.getMaximumHeight(collapsedTextField)));
 
         cardState = CardState.COLLAPSED;
         break;
@@ -188,6 +230,21 @@ public class FormulaTextField extends JPanel implements ActionListener, Document
   }
 
   @Override
+  public synchronized void itemStateChanged (ItemEvent itemEvent) {
+
+    if (itemEvent.getSource() == collapsedFormulaButton) {
+      expandedFormulaButton.setSelected(collapsedFormulaButton.isSelected());
+    }
+    else {
+      collapsedFormulaButton.setSelected(expandedFormulaButton.isSelected());
+    }
+
+    for (ItemListener itemListener : itemListenerList) {
+      itemListener.itemStateChanged(itemEvent);
+    }
+  }
+
+  @Override
   public synchronized void insertUpdate (DocumentEvent documentEvent) {
 
     if (documentSensitive.get()) {
@@ -196,10 +253,10 @@ public class FormulaTextField extends JPanel implements ActionListener, Document
       try {
         switch (cardState) {
           case COLLAPSED:
-            expandedTextArea.getDocument().insertString(documentEvent.getOffset(), contractedTextField.getDocument().getText(documentEvent.getOffset(), documentEvent.getLength()), null);
+            expandedTextArea.getDocument().insertString(documentEvent.getOffset(), collapsedTextField.getDocument().getText(documentEvent.getOffset(), documentEvent.getLength()), null);
             break;
           case EXPANDED:
-            contractedTextField.getDocument().insertString(documentEvent.getOffset(), expandedTextArea.getDocument().getText(documentEvent.getOffset(), documentEvent.getLength()), null);
+            collapsedTextField.getDocument().insertString(documentEvent.getOffset(), expandedTextArea.getDocument().getText(documentEvent.getOffset(), documentEvent.getLength()), null);
             break;
           default:
             throw new UnknownSwitchCaseException(cardState.name());
@@ -209,7 +266,7 @@ public class FormulaTextField extends JPanel implements ActionListener, Document
         throw new RuntimeException(badLocationException);
       }
 
-      for (DocumentListener documentListener : listenerList) {
+      for (DocumentListener documentListener : documentListenerList) {
         documentListener.insertUpdate(documentEvent);
       }
 
@@ -229,7 +286,7 @@ public class FormulaTextField extends JPanel implements ActionListener, Document
             expandedTextArea.getDocument().remove(documentEvent.getOffset(), documentEvent.getLength());
             break;
           case EXPANDED:
-            contractedTextField.getDocument().remove(documentEvent.getOffset(), documentEvent.getLength());
+            collapsedTextField.getDocument().remove(documentEvent.getOffset(), documentEvent.getLength());
             break;
           default:
             throw new UnknownSwitchCaseException(cardState.name());
@@ -239,7 +296,7 @@ public class FormulaTextField extends JPanel implements ActionListener, Document
         throw new RuntimeException(badLocationException);
       }
 
-      for (DocumentListener documentListener : listenerList) {
+      for (DocumentListener documentListener : documentListenerList) {
         documentListener.removeUpdate(documentEvent);
       }
 
@@ -253,7 +310,7 @@ public class FormulaTextField extends JPanel implements ActionListener, Document
     if (documentSensitive.get()) {
       documentSensitive.set(false);
 
-      for (DocumentListener documentListener : listenerList) {
+      for (DocumentListener documentListener : documentListenerList) {
         documentListener.changedUpdate(documentEvent);
       }
 
@@ -261,13 +318,23 @@ public class FormulaTextField extends JPanel implements ActionListener, Document
     }
   }
 
+  public synchronized void addItemListener (ItemListener itemListener) {
+
+    itemListenerList.addListener(itemListener);
+  }
+
+  public synchronized void removeItemListener (ItemListener itemListener) {
+
+    itemListenerList.removeListener(itemListener);
+  }
+
   public synchronized void addDocumentListener (DocumentListener documentListener) {
 
-    listenerList.addListener(documentListener);
+    documentListenerList.addListener(documentListener);
   }
 
   public synchronized void removeDocumentListener (DocumentListener documentListener) {
 
-    listenerList.removeListener(documentListener);
+    documentListenerList.removeListener(documentListener);
   }
 }
