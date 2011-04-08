@@ -26,7 +26,6 @@
  */
 package org.smallmind.nutsnbolts.reflection.type.converter;
 
-import org.smallmind.nutsnbolts.reflection.bean.BeanInvocationException;
 import org.smallmind.nutsnbolts.reflection.type.PrimitiveType;
 
 public interface StringConverter<T> {
@@ -34,5 +33,5 @@ public interface StringConverter<T> {
   public abstract PrimitiveType getPrimitiveType ();
 
   public abstract T convert (String value)
-    throws BeanInvocationException;
+    throws StringConversionException;
 }

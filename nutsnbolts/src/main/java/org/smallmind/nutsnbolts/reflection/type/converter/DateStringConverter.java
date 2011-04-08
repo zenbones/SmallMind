@@ -29,7 +29,6 @@ package org.smallmind.nutsnbolts.reflection.type.converter;
 import java.util.Date;
 import org.joda.time.format.DateTimeFormatter;
 import org.joda.time.format.ISODateTimeFormat;
-import org.smallmind.nutsnbolts.reflection.bean.BeanInvocationException;
 import org.smallmind.nutsnbolts.reflection.type.PrimitiveType;
 
 public class DateStringConverter implements StringConverter<Date> {
@@ -41,8 +40,7 @@ public class DateStringConverter implements StringConverter<Date> {
     return PrimitiveType.DATE;
   }
 
-  public Date convert (String value)
-    throws BeanInvocationException {
+  public Date convert (String value) {
 
     if ((value == null) || (value.length() == 0)) {
 
