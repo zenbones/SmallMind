@@ -26,8 +26,27 @@
  */
 package org.smallmind.nutsnbolts.reflection.type.converter;
 
-public interface StringConverterFactory {
+import org.smallmind.nutsnbolts.lang.FormattedException;
 
-  public StringConverter getStringConverter (Class parameterClass)
-    throws StringConversionException;
+public class StringConversionException extends FormattedException {
+
+  public StringConversionException () {
+
+    super();
+  }
+
+  public StringConversionException (String message, Object... args) {
+
+    super(message, args);
+  }
+
+  public StringConversionException (Throwable throwable, String message, Object... args) {
+
+    super(throwable, message, args);
+  }
+
+  public StringConversionException (Throwable throwable) {
+
+    super(throwable);
+  }
 }

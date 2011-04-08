@@ -28,7 +28,6 @@ package org.smallmind.nutsnbolts.reflection.type.converter;
 
 import java.util.Date;
 import java.util.concurrent.ConcurrentHashMap;
-import org.smallmind.nutsnbolts.reflection.bean.BeanAccessException;
 import org.smallmind.nutsnbolts.reflection.type.PrimitiveType;
 
 public class DefaultStringConverterFactory implements StringConverterFactory {
@@ -68,7 +67,7 @@ public class DefaultStringConverterFactory implements StringConverterFactory {
   }
 
   public StringConverter getStringConverter (Class parameterClass)
-    throws BeanAccessException {
+    throws StringConversionException {
 
     Class convergedClass;
 
@@ -87,7 +86,7 @@ public class DefaultStringConverterFactory implements StringConverterFactory {
   }
 
   private static Class getConvergedClass (Class parameterClass)
-    throws BeanAccessException {
+    throws StringConversionException {
 
     if (parameterClass.isPrimitive()) {
       if (parameterClass.equals(long.class)) {
@@ -117,7 +116,7 @@ public class DefaultStringConverterFactory implements StringConverterFactory {
     }
 
     if (!(parameterClass.isEnum() || isKnownConversion(parameterClass))) {
-      throw new BeanAccessException("Can't convert to a 'setter' value of type(%s)", parameterClass.getName());
+      throw new StringConversionException("Can't convert to a 'setter' value of type(%s)", parameterClass.getName());
     }
 
     return parameterClass;

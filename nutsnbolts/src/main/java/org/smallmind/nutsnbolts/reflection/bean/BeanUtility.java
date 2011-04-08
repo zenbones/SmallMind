@@ -31,6 +31,7 @@ import java.lang.reflect.Method;
 import java.util.concurrent.ConcurrentHashMap;
 import org.smallmind.nutsnbolts.reflection.type.PrimitiveType;
 import org.smallmind.nutsnbolts.reflection.type.converter.DefaultStringConverterFactory;
+import org.smallmind.nutsnbolts.reflection.type.converter.StringConversionException;
 import org.smallmind.nutsnbolts.reflection.type.converter.StringConverter;
 import org.smallmind.nutsnbolts.reflection.type.converter.StringConverterFactory;
 
@@ -40,7 +41,7 @@ public class BeanUtility {
   private static final ConcurrentHashMap<MethodKey, MethodTool> SETTER_MAP = new ConcurrentHashMap<MethodKey, MethodTool>();
 
   public static Object convertFromString (StringConverterFactory stringConverterFactory, Class conversionClass, String value)
-    throws BeanAccessException, BeanInvocationException {
+    throws StringConversionException, BeanInvocationException {
 
     return stringConverterFactory.getStringConverter(conversionClass).convert(value);
   }
@@ -148,7 +149,7 @@ public class BeanUtility {
   }
 
   private static MethodTool acquireSetterTool (StringConverterFactory stringConverterFactory, Object target, String name)
-    throws BeanAccessException {
+    throws StringConversionException, BeanAccessException {
 
     MethodTool setterTool;
     MethodKey methodKey;
