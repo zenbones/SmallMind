@@ -1,22 +1,22 @@
 /*
  * Copyright (c) 2007, 2008, 2009, 2010 David Berkman
- * 
+ *
  * This file is part of the SmallMind Code Project.
- * 
+ *
  * The SmallMind Code Project is free software, you can redistribute
  * it and/or modify it under the terms of GNU Affero General Public
  * License as published by the Free Software Foundation, either version 3
  * of the License, or (at your option) any later version.
- * 
+ *
  * The SmallMind Code Project is distributed in the hope that it will
  * be useful, but WITHOUT ANY WARRANTY; without even the implied warranty
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * General Public License for more details.
- * 
+ *
  * You should have received a copy of the the GNU Affero General Public
  * License, along with The SmallMind Code Project. If not, see
  * <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under the GNU Affero GPL version 3 section 7
  * ------------------------------------------------------------------
  * If you modify this Program, or any covered work, by linking or
@@ -36,46 +36,52 @@ import org.smallmind.quorum.pool.ConnectionPool;
 
 public class DriverManagerConnectionInstanceFactory implements ConnectionInstanceFactory<PooledConnection> {
 
-   private DriverManagerDataSource dataSource;
-   private DriverManagerConnectionPoolDataSource pooledDataSource;
-   private String validationQuery = "Select 1";
+  private DriverManagerDataSource dataSource;
+  private DriverManagerConnectionPoolDataSource pooledDataSource;
+  private String validationQuery = "Select 1";
 
-   public DriverManagerConnectionInstanceFactory (String driverClassName, String jdbcUrl, String user, String password)
-      throws SQLException {
+  public DriverManagerConnectionInstanceFactory (String driverClassName, String jdbcUrl, String user, String password)
+    throws SQLException {
 
-      dataSource = new DriverManagerDataSource(driverClassName, jdbcUrl, user, password);
-      pooledDataSource = new DriverManagerConnectionPoolDataSource(dataSource);
-   }
+    this(driverClassName, jdbcUrl, user, password, false);
+  }
 
-   public String getValidationQuery () {
+  public DriverManagerConnectionInstanceFactory (String driverClassName, String jdbcUrl, String user, String password, boolean existential)
+    throws SQLException {
 
-      return validationQuery;
-   }
+    dataSource = new DriverManagerDataSource(driverClassName, jdbcUrl, user, password);
+    pooledDataSource = new DriverManagerConnectionPoolDataSource(dataSource, existential);
+  }
 
-   public void setValidationQuery (String validationQuery) {
+  public String getValidationQuery () {
 
-      this.validationQuery = validationQuery;
-   }
+    return validationQuery;
+  }
 
-   public int getMaxStatements () {
+  public void setValidationQuery (String validationQuery) {
 
-      return pooledDataSource.getMaxStatements();
-   }
+    this.validationQuery = validationQuery;
+  }
 
-   public void setMaxStatements (int maxStatements) {
+  public int getMaxStatements () {
 
-      pooledDataSource.setMaxStatements(maxStatements);
-   }
+    return pooledDataSource.getMaxStatements();
+  }
 
-   public Object rawInstance ()
-      throws SQLException {
+  public void setMaxStatements (int maxStatements) {
 
-      return dataSource.getConnection();
-   }
+    pooledDataSource.setMaxStatements(maxStatements);
+  }
 
-   public ConnectionInstance<PooledConnection> createInstance (ConnectionPool connectionPool, Integer originatingIndex)
-      throws SQLException {
+  public Object rawInstance ()
+    throws SQLException {
 
-      return new PooledConnectionInstance(connectionPool, originatingIndex, pooledDataSource.getPooledConnection(), validationQuery);
-   }
+    return dataSource.getConnection();
+  }
+
+  public ConnectionInstance<PooledConnection> createInstance (ConnectionPool connectionPool, Integer originatingIndex)
+    throws SQLException {
+
+    return new PooledConnectionInstance(connectionPool, originatingIndex, pooledDataSource.getPooledConnection(), validationQuery);
+  }
 }

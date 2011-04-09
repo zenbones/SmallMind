@@ -1,22 +1,22 @@
 /*
  * Copyright (c) 2007, 2008, 2009, 2010 David Berkman
- * 
+ *
  * This file is part of the SmallMind Code Project.
- * 
+ *
  * The SmallMind Code Project is free software, you can redistribute
  * it and/or modify it under the terms of GNU Affero General Public
  * License as published by the Free Software Foundation, either version 3
  * of the License, or (at your option) any later version.
- * 
+ *
  * The SmallMind Code Project is distributed in the hope that it will
  * be useful, but WITHOUT ANY WARRANTY; without even the implied warranty
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * General Public License for more details.
- * 
+ *
  * You should have received a copy of the the GNU Affero General Public
  * License, along with The SmallMind Code Project. If not, see
  * <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under the GNU Affero GPL version 3 section 7
  * ------------------------------------------------------------------
  * If you modify this Program, or any covered work, by linking or
@@ -36,6 +36,7 @@ import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicReference;
 import javax.sql.ConnectionEvent;
 import javax.sql.ConnectionEventListener;
 import javax.sql.DataSource;
@@ -50,14 +51,15 @@ public class DriverManagerPooledConnection implements PooledConnection, Existent
   private static final Method GET_EXISTENTIAL_STACK_TRACE_METHOD;
 
   private final DriverManagerPreparedStatementCache statementCache;
+  private final AtomicReference<StackTraceElement[]> stackTraceReference = new AtomicReference<StackTraceElement[]>();
 
-  private Thread owningThread;
   private DataSource dataSource;
   private Connection actualConnection;
   private Connection proxyConnection;
   private ConcurrentLinkedQueue<ConnectionEventListener> connectionEventListenerQueue;
   private ConcurrentLinkedQueue<StatementEventListener> statementEventListenerQueue;
   private AtomicBoolean closed = new AtomicBoolean(false);
+  private boolean existential;
   private long creationMilliseconds;
 
   static {
@@ -74,13 +76,26 @@ public class DriverManagerPooledConnection implements PooledConnection, Existent
   public DriverManagerPooledConnection (DriverManagerDataSource dataSource, int maxStatements)
     throws SQLException {
 
-    this(dataSource, null, null, maxStatements);
+    this(dataSource, null, null, maxStatements, false);
+  }
+
+  public DriverManagerPooledConnection (DriverManagerDataSource dataSource, int maxStatements, boolean existential)
+    throws SQLException {
+
+    this(dataSource, null, null, maxStatements, existential);
   }
 
   public DriverManagerPooledConnection (DriverManagerDataSource dataSource, String user, String password, int maxStatements)
     throws SQLException {
 
+    this(dataSource, user, password, maxStatements, false);
+  }
+
+  public DriverManagerPooledConnection (DriverManagerDataSource dataSource, String user, String password, int maxStatements, boolean existential)
+    throws SQLException {
+
     this.dataSource = dataSource;
+    this.existential = existential;
 
     if (maxStatements < 0) {
       throw new SQLException("The maximum number of cached statements for this connection must be >= 0");
@@ -110,7 +125,7 @@ public class DriverManagerPooledConnection implements PooledConnection, Existent
 
   public StackTraceElement[] getExistentialStackTrace () {
 
-    return (owningThread == null) ? null : owningThread.getStackTrace();
+    return stackTraceReference.get();
   }
 
   public Object invoke (Object proxy, Method method, Object[] args)
@@ -118,12 +133,15 @@ public class DriverManagerPooledConnection implements PooledConnection, Existent
 
     if (GET_EXISTENTIAL_STACK_TRACE_METHOD.equals(method)) {
 
+      return getExistentialStackTrace();
     }
     if (CLOSE_METHOD.equals(method)) {
+      if (existential) {
+        stackTraceReference.set(null);
+      }
 
       ConnectionEvent event = new ConnectionEvent(this);
 
-      owningThread = null;
       for (ConnectionEventListener listener : connectionEventListenerQueue) {
         listener.connectionClosed(event);
       }
@@ -178,7 +196,9 @@ public class DriverManagerPooledConnection implements PooledConnection, Existent
   public Connection getConnection ()
     throws SQLException {
 
-    owningThread = Thread.currentThread();
+    if (existential) {
+      stackTraceReference.set(Thread.currentThread().getStackTrace());
+    }
 
     return proxyConnection;
   }
