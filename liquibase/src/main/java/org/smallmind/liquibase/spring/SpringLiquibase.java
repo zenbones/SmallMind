@@ -30,6 +30,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.PrintStream;
 import java.io.PrintWriter;
+import java.sql.Connection;
 import java.sql.SQLException;
 import javax.sql.DataSource;
 import javax.xml.parsers.ParserConfigurationException;
@@ -49,95 +50,102 @@ import org.springframework.beans.factory.InitializingBean;
 
 public class SpringLiquibase implements InitializingBean {
 
-   private DataSource dataSource;
-   private ResourceAccessor resourceAccessor;
-   private Goal goal;
-   private String changeLog;
-   private String contexts;
-   private String outputLog;
-   private String outputDir;
+  private DataSource dataSource;
+  private ResourceAccessor resourceAccessor;
+  private Goal goal;
+  private String changeLog;
+  private String contexts;
+  private String outputLog;
+  private String outputDir;
 
-   public void setDataSource (DataSource dataSource) {
+  public void setDataSource (DataSource dataSource) {
 
-      this.dataSource = dataSource;
-   }
+    this.dataSource = dataSource;
+  }
 
-   public void setSource (Source source) {
+  public void setSource (Source source) {
 
-      switch (source) {
-         case FILE:
-            resourceAccessor = new FileSystemResourceAccessor();
+    switch (source) {
+      case FILE:
+        resourceAccessor = new FileSystemResourceAccessor();
+        break;
+      case CLASSPATH:
+        resourceAccessor = new ClassLoaderResourceAccessor();
+        break;
+      default:
+        throw new UnknownSwitchCaseException(source.name());
+    }
+  }
+
+  public void setGoal (Goal goal) {
+
+    this.goal = goal;
+  }
+
+  public void setChangeLog (String changeLog) {
+
+    this.changeLog = changeLog;
+  }
+
+  public void setContexts (String contexts) {
+
+    this.contexts = contexts;
+  }
+
+  public void setOutputLog (String outputLog) {
+
+    this.outputLog = outputLog;
+  }
+
+  public void setOutputDir (String outputDir) {
+
+    this.outputDir = outputDir;
+  }
+
+  @Transactional
+  public void afterPropertiesSet ()
+    throws IOException, ParserConfigurationException, SQLException, LiquibaseException {
+
+    if (!goal.equals(Goal.NONE)) {
+
+      Liquibase liquibase;
+      Connection connection;
+
+      connection = dataSource.getConnection();
+      try {
+        liquibase = new Liquibase(changeLog, resourceAccessor, new JdbcConnection(connection));
+
+        switch (goal) {
+          case PREVIEW:
+            liquibase.update(contexts, new PrintWriter(System.out));
             break;
-         case CLASSPATH:
-            resourceAccessor = new ClassLoaderResourceAccessor();
+          case UPDATE:
+            liquibase.update(contexts);
             break;
-         default:
-            throw new UnknownSwitchCaseException(source.name());
+          case DOCUMENT:
+            liquibase.generateDocumentation(((outputDir == null) || (outputDir.length() == 0)) ? System.getProperty("java.io.tmpdir") : outputDir, contexts);
+            break;
+          case GENERATE:
+
+            Diff diff;
+            DiffResult diffResult;
+            Database database;
+
+            diff = new Diff(database = DatabaseFactory.getInstance().findCorrectDatabaseImplementation(new JdbcConnection(dataSource.getConnection())), database.getDefaultSchemaName());
+            diffResult = diff.compare();
+            diffResult.setChangeSetAuthor("maven.generated");
+            diffResult.setChangeSetContext(contexts);
+            diffResult.setDataDir(outputDir);
+
+            diffResult.printChangeLog(new PrintStream(new File((((outputDir == null) || (outputDir.length() == 0)) ? System.getProperty("java.io.tmpdir") : outputDir) + System.getProperty("file.separator") + outputLog)), database);
+            break;
+          default:
+            throw new UnknownSwitchCaseException(goal.name());
+        }
       }
-   }
-
-   public void setGoal (Goal goal) {
-
-      this.goal = goal;
-   }
-
-   public void setChangeLog (String changeLog) {
-
-      this.changeLog = changeLog;
-   }
-
-   public void setContexts (String contexts) {
-
-      this.contexts = contexts;
-   }
-
-   public void setOutputLog (String outputLog) {
-
-      this.outputLog = outputLog;
-   }
-
-   public void setOutputDir (String outputDir) {
-
-      this.outputDir = outputDir;
-   }
-
-   @Transactional
-   public void afterPropertiesSet ()
-      throws IOException, ParserConfigurationException, SQLException, LiquibaseException {
-
-      if (!goal.equals(Goal.NONE)) {
-
-         Liquibase liquibase;
-
-         liquibase = new Liquibase(changeLog, resourceAccessor, new JdbcConnection(dataSource.getConnection()));
-
-         switch (goal) {
-            case PREVIEW:
-               liquibase.update(contexts, new PrintWriter(System.out));
-               break;
-            case UPDATE:
-               liquibase.update(contexts);
-               break;
-            case DOCUMENT:
-               liquibase.generateDocumentation(((outputDir == null) || (outputDir.length() == 0)) ? System.getProperty("java.io.tmpdir") : outputDir, contexts);
-               break;
-            case GENERATE:
-
-               Diff diff;
-               DiffResult diffResult;
-               Database database;
-
-               diff = new Diff(database = DatabaseFactory.getInstance().findCorrectDatabaseImplementation(new JdbcConnection(dataSource.getConnection())), database.getDefaultSchemaName());
-               diffResult = diff.compare();
-               diffResult.setChangeSetAuthor("maven.generated");
-               diffResult.setChangeSetContext(contexts);
-               diffResult.setDataDir(outputDir);
-
-               diffResult.printChangeLog(new PrintStream(new File((((outputDir == null) || (outputDir.length() == 0)) ? System.getProperty("java.io.tmpdir") : outputDir) + System.getProperty("file.separator") + outputLog)), database);
-               break;
-            default:
-               throw new UnknownSwitchCaseException(goal.name());
-         }
+      finally {
+        connection.close();
       }
-   }
+    }
+  }
 }
