@@ -106,7 +106,13 @@ public class JDOProxySession extends ProxySession {
       BoundarySet<ProxySession> sessionSet;
 
       if ((transactionSet = TransactionalState.obtainBoundary(this)) != null) {
-        transactionSet.add(beginTransaction());
+        try {
+          transactionSet.add(beginTransaction());
+        }
+        catch (Throwable throwable) {
+          close();
+          throw new SessionEnforcementException(throwable);
+        }
       }
       else if ((sessionSet = NonTransactionalState.obtainBoundary(this)) != null) {
         sessionSet.add(this);

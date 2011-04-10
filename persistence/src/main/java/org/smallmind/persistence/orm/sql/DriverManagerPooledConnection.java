@@ -207,16 +207,19 @@ public class DriverManagerPooledConnection implements PooledConnection, Existent
     throws SQLException {
 
     if (closed.compareAndSet(false, true)) {
-      if (statementCache != null) {
-        try {
-          statementCache.close();
-        }
-        finally {
-          removeStatementEventListener(statementCache);
+      try {
+        if (statementCache != null) {
+          try {
+            statementCache.close();
+          }
+          finally {
+            removeStatementEventListener(statementCache);
+          }
         }
       }
-
-      actualConnection.close();
+      finally {
+        actualConnection.close();
+      }
     }
   }
 

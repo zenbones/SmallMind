@@ -103,7 +103,6 @@ public class ConnectionPinManager<C> {
           for (int expandedIndex = expandedStart; expandedIndex < expandedArray.length; expandedIndex++) {
             emptyQueue.add(expandedIndex);
           }
-
         }
         finally {
           readWriteLock.writeLock().unlock();
