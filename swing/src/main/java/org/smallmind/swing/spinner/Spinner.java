@@ -27,13 +27,12 @@
 package org.smallmind.swing.spinner;
 
 import java.awt.Component;
-import java.awt.GridBagConstraints;
-import java.awt.GridBagLayout;
 import java.awt.GridLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
+import javax.swing.GroupLayout;
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JPanel;
@@ -43,7 +42,6 @@ import javax.swing.event.ChangeListener;
 import org.smallmind.nutsnbolts.lang.UnknownSwitchCaseException;
 import org.smallmind.nutsnbolts.util.WeakEventListenerList;
 import org.smallmind.swing.ButtonRepeater;
-import org.smallmind.swing.ComponentUtilities;
 import org.smallmind.swing.event.EditorEvent;
 import org.smallmind.swing.event.EditorListener;
 
@@ -72,60 +70,28 @@ public class Spinner extends JPanel implements EditorListener, ActionListener, C
 
   public Spinner (SpinnerModel spinnerModel, long delayMilliseconds) {
 
-    super(new GridBagLayout());
+    super();
 
-    GridBagConstraints constraint;
+    GroupLayout groupLayout;
+    int valuePanelHeight;
+
+    setLayout(groupLayout = new GroupLayout(this));
 
     this.spinnerModel = spinnerModel;
 
     rubberStamp = new SpinnerRubberStamp(this);
-
     setSpinnerRenderer(new DefaultSpinnerRenderer());
 
     spinnerUpButton = new JButton(SPINNER_UP);
     spinnerUpButton.setFocusable(false);
-    ComponentUtilities.setPreferredWidth(spinnerUpButton, 18);
-    ComponentUtilities.setMinimumWidth(spinnerUpButton, 18);
-    ComponentUtilities.setMaximumWidth(spinnerUpButton, 18);
-
     spinnerUpButtonRepeater = new ButtonRepeater(spinnerUpButton, delayMilliseconds);
 
     spinnerDownButton = new JButton(SPINNER_DOWN);
     spinnerDownButton.setFocusable(false);
-    ComponentUtilities.setPreferredWidth(spinnerDownButton, 18);
-    ComponentUtilities.setMinimumWidth(spinnerDownButton, 18);
-    ComponentUtilities.setMaximumWidth(spinnerDownButton, 18);
-
     spinnerDownButtonRepeater = new ButtonRepeater(spinnerDownButton, delayMilliseconds);
 
     valuePanel = new JPanel(new GridLayout(1, 1));
     valuePanel.add(rubberStamp);
-
-    constraint = new GridBagConstraints();
-
-    constraint.anchor = GridBagConstraints.WEST;
-    constraint.fill = GridBagConstraints.VERTICAL;
-    constraint.gridx = 0;
-    constraint.gridy = 0;
-    constraint.weightx = 0;
-    constraint.weighty = 1;
-    add(spinnerDownButton, constraint);
-
-    constraint.anchor = GridBagConstraints.NORTH;
-    constraint.fill = GridBagConstraints.BOTH;
-    constraint.gridx = 1;
-    constraint.gridy = 0;
-    constraint.weightx = 1;
-    constraint.weighty = 1;
-    add(valuePanel, constraint);
-
-    constraint.anchor = GridBagConstraints.EAST;
-    constraint.fill = GridBagConstraints.VERTICAL;
-    constraint.gridx = 2;
-    constraint.gridy = 0;
-    constraint.weightx = 0;
-    constraint.weighty = 1;
-    add(spinnerUpButton, constraint);
 
     listenerList = new WeakEventListenerList<ChangeListener>();
 
@@ -135,6 +101,11 @@ public class Spinner extends JPanel implements EditorListener, ActionListener, C
     spinnerModel.addChangeListener(this);
 
     setEnabled(true);
+
+    valuePanelHeight = (int)valuePanel.getPreferredSize().getHeight();
+
+    groupLayout.setHorizontalGroup(groupLayout.createSequentialGroup().addComponent(spinnerDownButton, 20, 20, 20).addComponent(valuePanel).addComponent(spinnerUpButton, 20, 20, 20));
+    groupLayout.setVerticalGroup(groupLayout.createParallelGroup().addComponent(spinnerDownButton, valuePanelHeight, valuePanelHeight, valuePanelHeight).addComponent(valuePanel, GroupLayout.PREFERRED_SIZE, GroupLayout.PREFERRED_SIZE, GroupLayout.PREFERRED_SIZE).addComponent(spinnerUpButton, valuePanelHeight, valuePanelHeight, valuePanelHeight));
   }
 
   public synchronized void addChangeListener (ChangeListener changeListener) {
