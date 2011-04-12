@@ -217,18 +217,20 @@ public class Spinner extends JPanel implements EditorListener, ActionListener, C
       case STOPPED:
         if (editor.isValid()) {
           stopEditing();
-          rubberStamp.repaint();
         }
+        else {
+          cancelEditing();
+        }
+
+        rubberStamp.repaint();
         break;
       case CANCELLED:
         cancelEditing();
         rubberStamp.repaint();
         break;
       case VALID:
-        setEnabled(true);
         break;
       case INVALID:
-        setEnabled(false);
         break;
       default:
         throw new UnknownSwitchCaseException(editorEvent.getState().name());
