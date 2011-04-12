@@ -30,6 +30,8 @@ import java.awt.Component;
 import java.awt.GridLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.FocusEvent;
+import java.awt.event.FocusListener;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import javax.swing.GroupLayout;
@@ -45,7 +47,7 @@ import org.smallmind.swing.ButtonRepeater;
 import org.smallmind.swing.event.EditorEvent;
 import org.smallmind.swing.event.EditorListener;
 
-public class Spinner extends JPanel implements EditorListener, ActionListener, ChangeListener, MouseListener {
+public class Spinner extends JPanel implements EditorListener, ActionListener, ChangeListener, MouseListener, FocusListener {
 
   private static ImageIcon SPINNER_UP;
   private static ImageIcon SPINNER_DOWN;
@@ -194,6 +196,7 @@ public class Spinner extends JPanel implements EditorListener, ActionListener, C
     if (editing) {
       editing = false;
 
+      valuePanel.getComponent(0).removeFocusListener(this);
       valuePanel.removeAll();
       valuePanel.add(rubberStamp);
       valuePanel.revalidate();
@@ -291,6 +294,7 @@ public class Spinner extends JPanel implements EditorListener, ActionListener, C
     if (isEnabled() && (editor != null) && (!editing)) {
       editorComponent = editor.getSpinnerEditorComponent(this, getValue());
       editorComponent.setPreferredSize(rubberStamp.getPreferredSize());
+      editorComponent.addFocusListener(this);
 
       valuePanel.removeAll();
       valuePanel.add(editorComponent);
@@ -300,6 +304,15 @@ public class Spinner extends JPanel implements EditorListener, ActionListener, C
       editor.startEditing();
       editing = true;
     }
+  }
+
+  public synchronized void focusGained (FocusEvent focusEvent) {
+
+  }
+
+  public synchronized void focusLost (FocusEvent focusEvent) {
+
+    cancelEditing();
   }
 
   public void finalize ()
