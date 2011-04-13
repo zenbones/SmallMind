@@ -24,7 +24,7 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.quorum.transport.remote;
+package org.smallmind.nutsnbolts.remote;
 
 import java.io.IOException;
 import java.rmi.RemoteException;
