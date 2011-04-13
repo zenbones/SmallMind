@@ -172,6 +172,7 @@ public class MenuXmlParser implements ContentHandler {
 
       menuItem = (JMenuItem)menuStack.getLast();
       menuItem.setText(atts.getValue("text"));
+      menuItem.setEnabled(Boolean.parseBoolean(atts.getValue("enabled")));
       menuItem.setActionCommand(actionPath);
       if ((mnemonic = atts.getValue("mnemonic")) != null) {
         menuItem.setMnemonic(VK_CODES[ALPHABET.indexOf(mnemonic.charAt(0))]);
