@@ -1,22 +1,22 @@
 /*
  * Copyright (c) 2007, 2008, 2009, 2010 David Berkman
- * 
+ *
  * This file is part of the SmallMind Code Project.
- * 
+ *
  * The SmallMind Code Project is free software, you can redistribute
  * it and/or modify it under the terms of GNU Affero General Public
  * License as published by the Free Software Foundation, either version 3
  * of the License, or (at your option) any later version.
- * 
+ *
  * The SmallMind Code Project is distributed in the hope that it will
  * be useful, but WITHOUT ANY WARRANTY; without even the implied warranty
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * General Public License for more details.
- * 
+ *
  * You should have received a copy of the the GNU Affero General Public
  * License, along with The SmallMind Code Project. If not, see
  * <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under the GNU Affero GPL version 3 section 7
  * ------------------------------------------------------------------
  * If you modify this Program, or any covered work, by linking or
@@ -54,19 +54,12 @@ public class DirectoryManager extends JPanel {
 
   private static final GridBagLayout GRID_BAG_LAYOUT = new GridBagLayout();
   private static final Dimension PREFERRED_DIMENSION = new Dimension(300, 500);
-
-  private static ImageIcon DIRECTORY_ADD;
-  private static ImageIcon DIRECTORY_REMOVE;
+  private static final ImageIcon DIRECTORY_ADD = new ImageIcon(ClassLoader.getSystemResource("public/iconexperience/application basics/24x24/plain/folder_add.png"));
+  private static final ImageIcon DIRECTORY_REMOVE = new ImageIcon(ClassLoader.getSystemResource("public/iconexperience/application basics/24x24/plain/folder_delete.png"));
 
   private Window parentWindow;
   private JList directoryDisplayList;
   private DirectoryManagerListModel listModel;
-
-  static {
-
-    DIRECTORY_ADD = new ImageIcon(ClassLoader.getSystemResource("public/iconexperience/application basics/24x24/plain/folder_add.png"));
-    DIRECTORY_REMOVE = new ImageIcon(ClassLoader.getSystemResource("public/iconexperience/application basics/24x24/plain/folder_delete.png"));
-  }
 
   public DirectoryManager (Window parentWindow, List<File> directoryList) {
 

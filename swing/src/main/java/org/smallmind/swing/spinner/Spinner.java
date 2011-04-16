@@ -1,22 +1,22 @@
 /*
  * Copyright (c) 2007, 2008, 2009, 2010 David Berkman
- * 
+ *
  * This file is part of the SmallMind Code Project.
- * 
+ *
  * The SmallMind Code Project is free software, you can redistribute
  * it and/or modify it under the terms of GNU Affero General Public
  * License as published by the Free Software Foundation, either version 3
  * of the License, or (at your option) any later version.
- * 
+ *
  * The SmallMind Code Project is distributed in the hope that it will
  * be useful, but WITHOUT ANY WARRANTY; without even the implied warranty
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * General Public License for more details.
- * 
+ *
  * You should have received a copy of the the GNU Affero General Public
  * License, along with The SmallMind Code Project. If not, see
  * <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under the GNU Affero GPL version 3 section 7
  * ------------------------------------------------------------------
  * If you modify this Program, or any covered work, by linking or
@@ -49,8 +49,8 @@ import org.smallmind.swing.event.EditorListener;
 
 public class Spinner extends JPanel implements EditorListener, ActionListener, ChangeListener, MouseListener, FocusListener {
 
-  private static ImageIcon SPINNER_UP;
-  private static ImageIcon SPINNER_DOWN;
+  private static final ImageIcon SPINNER_UP = new ImageIcon(ClassLoader.getSystemResource("org/smallmind/swing/system/arrow_right_blue_16.png"));
+  private static final ImageIcon SPINNER_DOWN = new ImageIcon(ClassLoader.getSystemResource("org/smallmind/swing/system/arrow_left_blue_16.png"));
 
   private WeakEventListenerList<ChangeListener> listenerList;
   private SpinnerModel spinnerModel;
@@ -63,12 +63,6 @@ public class Spinner extends JPanel implements EditorListener, ActionListener, C
   private ButtonRepeater spinnerUpButtonRepeater;
   private ButtonRepeater spinnerDownButtonRepeater;
   private boolean editing = false;
-
-  static {
-
-    SPINNER_UP = new ImageIcon(ClassLoader.getSystemResource("org/smallmind/swing/system/arrow_right_blue_16.png"));
-    SPINNER_DOWN = new ImageIcon(ClassLoader.getSystemResource("org/smallmind/swing/system/arrow_left_blue_16.png"));
-  }
 
   public Spinner (SpinnerModel spinnerModel, long delayMilliseconds) {
 

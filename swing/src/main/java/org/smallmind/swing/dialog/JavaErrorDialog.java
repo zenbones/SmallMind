@@ -1,22 +1,22 @@
 /*
  * Copyright (c) 2007, 2008, 2009, 2010 David Berkman
- * 
+ *
  * This file is part of the SmallMind Code Project.
- * 
+ *
  * The SmallMind Code Project is free software, you can redistribute
  * it and/or modify it under the terms of GNU Affero General Public
  * License as published by the Free Software Foundation, either version 3
  * of the License, or (at your option) any later version.
- * 
+ *
  * The SmallMind Code Project is distributed in the hope that it will
  * be useful, but WITHOUT ANY WARRANTY; without even the implied warranty
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * General Public License for more details.
- * 
+ *
  * You should have received a copy of the the GNU Affero General Public
  * License, along with The SmallMind Code Project. If not, see
  * <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under the GNU Affero GPL version 3 section 7
  * ------------------------------------------------------------------
  * If you modify this Program, or any covered work, by linking or
@@ -56,19 +56,14 @@ import org.smallmind.swing.event.ErrorListener;
 public class JavaErrorDialog extends javax.swing.JDialog implements ActionListener, WindowListener {
 
   private static final GridBagLayout GRID_BAG_LAYOUT = new GridBagLayout();
+  private static final ImageIcon BUG_ICON = new ImageIcon(ClassLoader.getSystemResource("org/smallmind/swing/dialog/dialog_bug.png"));
 
-  private static ImageIcon BUG_ICON;
   private static final int DIALOG_WIDTH = 600;
   private static final int DIALOG_HEIGHT = 300;
 
   private WeakEventListenerList<ErrorListener> listenerList;
   private Object source;
   private Exception exception;
-
-  static {
-
-    BUG_ICON = new ImageIcon(Thread.currentThread().getContextClassLoader().getResource("org/smallmind/swing/dialog/dialog_bug.png"));
-  }
 
   public static void showJavaErrorDialog (Window parentWindow, Object source, Exception exception) {
 

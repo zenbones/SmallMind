@@ -1,22 +1,22 @@
 /*
  * Copyright (c) 2007, 2008, 2009, 2010 David Berkman
- * 
+ *
  * This file is part of the SmallMind Code Project.
- * 
+ *
  * The SmallMind Code Project is free software, you can redistribute
  * it and/or modify it under the terms of GNU Affero General Public
  * License as published by the Free Software Foundation, either version 3
  * of the License, or (at your option) any later version.
- * 
+ *
  * The SmallMind Code Project is distributed in the hope that it will
  * be useful, but WITHOUT ANY WARRANTY; without even the implied warranty
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * General Public License for more details.
- * 
+ *
  * You should have received a copy of the the GNU Affero General Public
  * License, along with The SmallMind Code Project. If not, see
  * <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under the GNU Affero GPL version 3 section 7
  * ------------------------------------------------------------------
  * If you modify this Program, or any covered work, by linking or
@@ -39,19 +39,12 @@ import org.smallmind.nutsnbolts.awt.ColorUtilities;
 
 public class DirectoryTreeCellRenderer implements TreeCellRenderer {
 
-  private static ImageIcon DRIVE;
-  private static ImageIcon FOLDER;
-  private static ImageIcon FOLDERS;
+  private static final ImageIcon DRIVE = new ImageIcon(ClassLoader.getSystemResource("org/smallmind/swing/system/harddisk_16.png"));
+  private static final ImageIcon FOLDER = new ImageIcon(ClassLoader.getSystemResource("org/smallmind/swing/system/folder_16.png"));
+  private static final ImageIcon FOLDERS = new ImageIcon(ClassLoader.getSystemResource("org/smallmind/swing/system/folders_16.png"));
 
   private static Border SELECTED_BORDER = BorderFactory.createCompoundBorder(BorderFactory.createLineBorder(UIManager.getDefaults().getColor("textHighlight").darker()), BorderFactory.createEmptyBorder(1, 1, 1, 1));
   private static Border INVISIBLE_BORDER = BorderFactory.createCompoundBorder(BorderFactory.createLineBorder(ColorUtilities.TEXT_COLOR), BorderFactory.createEmptyBorder(1, 1, 1, 1));
-
-  static {
-
-    DRIVE = new ImageIcon(ClassLoader.getSystemResource("org/smallmind/swing/system/harddisk_16.png"));
-    FOLDER = new ImageIcon(ClassLoader.getSystemResource("org/smallmind/swing/system/folder_16.png"));
-    FOLDERS = new ImageIcon(ClassLoader.getSystemResource("org/smallmind/swing/system/folders_16.png"));
-  }
 
   public Component getTreeCellRendererComponent (JTree tree, Object value, boolean selected, boolean expanded, boolean leaf, int row, boolean hasFocus) {
 

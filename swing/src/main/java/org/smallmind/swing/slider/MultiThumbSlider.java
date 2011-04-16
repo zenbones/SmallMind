@@ -24,89 +24,79 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.swing;
+package org.smallmind.swing.slider;
 
+import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Graphics;
+import java.awt.Graphics2D;
 import java.awt.SystemColor;
+import javax.swing.ImageIcon;
 import javax.swing.JComponent;
 import javax.swing.SwingConstants;
 
-public class Separator extends JComponent {
+public class MultiThumbSlider extends JComponent {
+
+  private static final ImageIcon THUMB_ICON = new ImageIcon(ClassLoader.getSystemResource("org/smallmind/swing/system/thumb_16.png"));
 
   public static final int HORIZONTAL = SwingConstants.HORIZONTAL;
   public static final int VERTICAL = SwingConstants.VERTICAL;
 
-  private int orientation;
-  private int length;
-
-  public Separator () {
-
-    this(0, HORIZONTAL);
-  }
-
-  public Separator (int length, int orientation) {
-
-    this.length = length;
-    this.orientation = orientation;
-
-    setFocusable(false);
-
-    setForeground(SystemColor.controlShadow);
-    setBackground(SystemColor.controlLtHighlight);
-  }
-
-  public int getOrientation () {
-
-    return orientation;
-  }
-
-  public void setOrientation (int orientation) {
-
-    if (this.orientation != orientation) {
-      this.orientation = orientation;
-      revalidate();
-      repaint();
-    }
-  }
+  private int orientation = HORIZONTAL;
+  private int minValue;
+  private int maxValue;
 
   public Dimension getPreferredSize () {
 
-    if (orientation == VERTICAL) {
-      return new Dimension(2, length);
+    if (orientation == HORIZONTAL) {
+      return new Dimension(0, 20);
     }
     else {
-      return new Dimension(length, 2);
+      return new Dimension(20, 0);
     }
   }
 
   public Dimension getMaximumSize () {
 
-    if (orientation == VERTICAL) {
-      return new Dimension(2, Short.MAX_VALUE);
+    if (orientation == HORIZONTAL) {
+      return new Dimension(Short.MAX_VALUE, 20);
     }
     else {
-      return new Dimension(length, Short.MAX_VALUE);
+      return new Dimension(20, Short.MAX_VALUE);
     }
   }
 
-  public void paint (Graphics graphics) {
+  public void paint (Graphics g) {
+
+    Graphics2D g2 = (Graphics2D)g;
+    Dimension currentSize = getSize();
+
+    paintTrack(g);
+    paintThumb(g);
+    paintBorder(g);
+  }
+
+  private void paintThumb (Graphics g) {
+
+    g.setColor(Color.RED);
+    g.drawRect(300, 0, 16, 16);
+  }
+
+  private void paintTrack (Graphics g) {
 
     Dimension currentSize = getSize();
 
-    if (orientation == VERTICAL) {
-      graphics.setColor(getForeground());
-      graphics.drawLine(0, 0, 0, currentSize.height);
-
-      graphics.setColor(getBackground());
-      graphics.drawLine(1, 0, 1, currentSize.height);
+    if (orientation == HORIZONTAL) {
+      g.setColor(SystemColor.controlText);
+      g.drawRect(0, 5, (int)currentSize.getWidth(), 5);
+      g.setColor(SystemColor.controlShadow);
+      g.drawLine(1, 6, (int)currentSize.getWidth() - 1, 6);
     }
     else {
-      graphics.setColor(getForeground());
-      graphics.drawLine(0, 0, currentSize.width, 0);
-
-      graphics.setColor(getBackground());
-      graphics.drawLine(0, 1, currentSize.width, 1);
+      g.setColor(SystemColor.controlText);
+      g.drawRect(5, 0, 5, (int)currentSize.getHeight());
+      g.setColor(SystemColor.controlShadow);
+      g.drawLine(6, 1, 6, (int)currentSize.getHeight() - 1);
     }
   }
 }
