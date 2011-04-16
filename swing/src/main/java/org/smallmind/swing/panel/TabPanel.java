@@ -54,5 +54,4 @@ public class TabPanel extends JPanel {
       constraint.weighty = 1;
       add(insetPanel, constraint);
    }
-
 }

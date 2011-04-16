@@ -99,5 +99,4 @@ public class Separator extends JComponent {
          graphics.drawLine(0, 1, currentSize.width, 1);
       }
    }
-
 }

@@ -51,9 +51,9 @@ import org.smallmind.swing.ComponentUtilities;
 
 public class FormulaTextField extends JPanel implements ActionListener, ItemListener, DocumentListener {
 
-  private static final ImageIcon COLLAPSE_ICON = new ImageIcon(Thread.currentThread().getContextClassLoader().getResource("org/smallmind/swing/system/navigate_open_16.png"));
-  private static final ImageIcon EXPAND_ICON = new ImageIcon(Thread.currentThread().getContextClassLoader().getResource("org/smallmind/swing/system/navigate_close_16.png"));
-  private static final ImageIcon FORMULA_ICON = new ImageIcon(Thread.currentThread().getContextClassLoader().getResource("org/smallmind/swing/system/text_formula_16.png"));
+  private static final ImageIcon COLLAPSE_ICON = new ImageIcon(ClassLoader.getSystemResource("org/smallmind/swing/system/navigate_open_16.png"));
+  private static final ImageIcon EXPAND_ICON = new ImageIcon(ClassLoader.getSystemResource("org/smallmind/swing/system/navigate_close_16.png"));
+  private static final ImageIcon FORMULA_ICON = new ImageIcon(ClassLoader.getSystemResource("org/smallmind/swing/system/text_formula_16.png"));
 
   private static enum CardState {COLLAPSED, EXPANDED}
 

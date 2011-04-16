@@ -39,8 +39,8 @@ import org.smallmind.nutsnbolts.awt.ColorUtilities;
 
 public class FilePickListCellRenderer implements ListCellRenderer {
 
-  private static final ImageIcon DOCUMENT_ICON = new ImageIcon(Thread.currentThread().getContextClassLoader().getResource("org/smallmind/swing/system/document_16.png"));
-  private static final ImageIcon FOLDER_ICON = new ImageIcon(Thread.currentThread().getContextClassLoader().getResource("org/smallmind/swing/system/folder_closed_16.png"));
+  private static final ImageIcon DOCUMENT_ICON = new ImageIcon(ClassLoader.getSystemResource("org/smallmind/swing/system/document_16.png"));
+  private static final ImageIcon FOLDER_ICON = new ImageIcon(ClassLoader.getSystemResource("org/smallmind/swing/system/folder_closed_16.png"));
 
   private AtomicInteger rowHeight = new AtomicInteger(0);
 

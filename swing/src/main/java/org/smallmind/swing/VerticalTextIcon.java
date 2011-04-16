@@ -176,6 +176,5 @@ public class VerticalTextIcon implements Icon {
          g.translate(-x, -y);
       }
    }
-
 }
 

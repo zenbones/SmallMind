@@ -66,8 +66,8 @@ public class Spinner extends JPanel implements EditorListener, ActionListener, C
 
   static {
 
-    SPINNER_UP = new ImageIcon(Thread.currentThread().getContextClassLoader().getResource("org/smallmind/swing/system/arrow_right_blue_16.png"));
-    SPINNER_DOWN = new ImageIcon(Thread.currentThread().getContextClassLoader().getResource("org/smallmind/swing/system/arrow_left_blue_16.png"));
+    SPINNER_UP = new ImageIcon(ClassLoader.getSystemResource("org/smallmind/swing/system/arrow_right_blue_16.png"));
+    SPINNER_DOWN = new ImageIcon(ClassLoader.getSystemResource("org/smallmind/swing/system/arrow_left_blue_16.png"));
   }
 
   public Spinner (SpinnerModel spinnerModel, long delayMilliseconds) {

@@ -32,48 +32,47 @@ import org.smallmind.nutsnbolts.lang.UnknownSwitchCaseException;
 
 public class IndicatorBall extends JLabel {
 
-   private static ImageIcon RED_BALL;
-   private static ImageIcon YELLOW_BALL;
-   private static ImageIcon GREEN_BALL;
+  private static ImageIcon RED_BALL;
+  private static ImageIcon YELLOW_BALL;
+  private static ImageIcon GREEN_BALL;
 
-   private ReadySetGo color;
+  private ReadySetGo color;
 
-   static {
+  static {
 
-      RED_BALL = new ImageIcon(IndicatorBall.class.getClassLoader().getResource("public/iconexperience/bullets/16x16/plain/bullet_ball_glass_red.png"));
-      YELLOW_BALL = new ImageIcon(IndicatorBall.class.getClassLoader().getResource("public/iconexperience/bullets/16x16/plain/bullet_ball_glass_yellow.png"));
-      GREEN_BALL = new ImageIcon(IndicatorBall.class.getClassLoader().getResource("public/iconexperience/bullets/16x16/plain/bullet_ball_glass_green.png"));
-   }
+    RED_BALL = new ImageIcon(ClassLoader.getSystemResource("org/smallmind/swing/system/ball_red_16.png"));
+    YELLOW_BALL = new ImageIcon(ClassLoader.getSystemResource("org/smallmind/swing/system/ball_yellow_16.png"));
+    GREEN_BALL = new ImageIcon(ClassLoader.getSystemResource("org/smallmind/swing/system/ball_green_16.png"));
+  }
 
-   public IndicatorBall (ReadySetGo color) {
+  public IndicatorBall (ReadySetGo color) {
 
-      super();
+    super();
 
-      setColor(color);
-   }
+    setColor(color);
+  }
 
-   public synchronized ReadySetGo getColor () {
+  public synchronized ReadySetGo getColor () {
 
-      return color;
-   }
+    return color;
+  }
 
-   public synchronized void setColor (ReadySetGo color) {
+  public synchronized void setColor (ReadySetGo color) {
 
-      this.color = color;
+    this.color = color;
 
-      switch (color) {
-         case RED:
-            setIcon(RED_BALL);
-            break;
-         case YELLOW:
-            setIcon(YELLOW_BALL);
-            break;
-         case GREEN:
-            setIcon(GREEN_BALL);
-            break;
-         default:
-            throw new UnknownSwitchCaseException(color.name());
-      }
-   }
-
+    switch (color) {
+      case RED:
+        setIcon(RED_BALL);
+        break;
+      case YELLOW:
+        setIcon(YELLOW_BALL);
+        break;
+      case GREEN:
+        setIcon(GREEN_BALL);
+        break;
+      default:
+        throw new UnknownSwitchCaseException(color.name());
+    }
+  }
 }

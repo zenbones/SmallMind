@@ -38,8 +38,8 @@ import org.smallmind.nutsnbolts.awt.ColorUtilities;
 
 public class DirectoryTableCellRenderer implements TableCellRenderer {
 
-  private static final ImageIcon TRIANGLE_ICON = new ImageIcon(Thread.currentThread().getContextClassLoader().getResource("org/smallmind/swing/system/grey_triangle_16.png"));
-  private static final ImageIcon ROOT_ICON = new ImageIcon(Thread.currentThread().getContextClassLoader().getResource("org/smallmind/swing/system/harddisk_16.png"));
+  private static final ImageIcon TRIANGLE_ICON = new ImageIcon(ClassLoader.getSystemResource("org/smallmind/swing/system/grey_triangle_16.png"));
+  private static final ImageIcon ROOT_ICON = new ImageIcon(ClassLoader.getSystemResource("org/smallmind/swing/system/harddisk_16.png"));
 
   @Override
   public Component getTableCellRendererComponent (JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {

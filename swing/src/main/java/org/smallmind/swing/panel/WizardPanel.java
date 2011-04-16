@@ -64,5 +64,4 @@ public class WizardPanel extends TabPanel {
 
       return wizardDialog.getResult();
    }
-
 }
