@@ -24,48 +24,25 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.swing.signal;
+package org.smallmind.swing.slider;
 
-import javax.swing.ImageIcon;
-import javax.swing.JLabel;
-import org.smallmind.nutsnbolts.lang.UnknownSwitchCaseException;
+public interface MultiThumbModel {
 
-public class IndicatorBall extends JLabel {
+  public abstract void setMinimumValue (int minimumValue);
 
-  private static final ImageIcon RED_BALL = new ImageIcon(ClassLoader.getSystemResource("org/smallmind/swing/system/ball_red_16.png"));
-  private static final ImageIcon YELLOW_BALL = new ImageIcon(ClassLoader.getSystemResource("org/smallmind/swing/system/ball_yellow_16.png"));
-  private static final ImageIcon GREEN_BALL = new ImageIcon(ClassLoader.getSystemResource("org/smallmind/swing/system/ball_green_16.png"));
+  public abstract int getMinimumValue ();
 
-  private ReadySetGo color;
+  public abstract void setMaximumValue (int maximumValue);
 
-  public IndicatorBall (ReadySetGo color) {
+  public abstract int getMaximumValue ();
 
-    super();
+  public void addThumb (int thumbValue);
 
-    setColor(color);
-  }
+  public void removeThumb (int thumbIndex);
 
-  public synchronized ReadySetGo getColor () {
+  public abstract int getThumbCount ();
 
-    return color;
-  }
+  public abstract int getThumbValue (int thumbIndex);
 
-  public synchronized void setColor (ReadySetGo color) {
-
-    this.color = color;
-
-    switch (color) {
-      case RED:
-        setIcon(RED_BALL);
-        break;
-      case YELLOW:
-        setIcon(YELLOW_BALL);
-        break;
-      case GREEN:
-        setIcon(GREEN_BALL);
-        break;
-      default:
-        throw new UnknownSwitchCaseException(color.name());
-    }
-  }
+  public abstract boolean moveThumb (int thumbIndex, int thumbValue);
 }
