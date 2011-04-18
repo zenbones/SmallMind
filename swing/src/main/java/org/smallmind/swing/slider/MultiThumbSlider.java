@@ -38,7 +38,8 @@ import javax.swing.SwingConstants;
 
 public class MultiThumbSlider extends JComponent implements MouseMotionListener, MouseListener {
 
-  private static final ImageIcon HORIZONTAL_THUMB_ICON = new ImageIcon(ClassLoader.getSystemResource("org/smallmind/swing/system/thumb_16.png"));
+  private static final ImageIcon HORIZONTAL_THUMB_ICON = new ImageIcon(ClassLoader.getSystemResource("org/smallmind/swing/system/horizontal_thumb_16.png"));
+  private static final ImageIcon VERTICAL_THUMB_ICON = new ImageIcon(ClassLoader.getSystemResource("org/smallmind/swing/system/vertical_thumb_16.png"));
 
   public static final int HORIZONTAL = SwingConstants.HORIZONTAL;
   public static final int VERTICAL = SwingConstants.VERTICAL;
@@ -153,7 +154,7 @@ public class MultiThumbSlider extends JComponent implements MouseMotionListener,
     else if (mouseEvent.getX() < 16) {
       if ((pressedThumbIndex = getThumbIndexForPosition(mouseEvent.getY())) >= 0) {
         selectedThumbIndex = pressedThumbIndex;
-        selectedThumbOffset = mouseEvent.getY() - (getTrackLeftEdge() + positionForValue(model.getThumbValue(selectedThumbIndex)));
+        selectedThumbOffset = (getTrackRightEdge() - positionForValue(model.getThumbValue(selectedThumbIndex))) - mouseEvent.getY();
       }
       else {
         selectedThumbIndex = null;
@@ -182,7 +183,15 @@ public class MultiThumbSlider extends JComponent implements MouseMotionListener,
 
     if (selectedThumbIndex != null) {
 
-      int proposedPosition = ((orientation == HORIZONTAL) ? mouseEvent.getX() : mouseEvent.getY()) - selectedThumbOffset - getTrackLeftEdge();
+      int proposedPosition;
+
+      if (orientation == HORIZONTAL) {
+        proposedPosition = mouseEvent.getX() - selectedThumbOffset - getTrackLeftEdge();
+      }
+      else {
+        proposedPosition = getTrackRightEdge() - mouseEvent.getY() - selectedThumbOffset;
+      }
+
       int proposedValue = valueForPosition(proposedPosition);
       int currentValue = model.getThumbValue(selectedThumbIndex);
 
@@ -241,9 +250,17 @@ public class MultiThumbSlider extends JComponent implements MouseMotionListener,
 
     for (int index = 0; index < model.getThumbCount(); index++) {
       thumbPosition = positionForValue(model.getThumbValue(index));
-      if ((position >= getTrackLeftEdge() + thumbPosition - 7) && (position <= getTrackLeftEdge() + thumbPosition + 7)) {
+      if (orientation == HORIZONTAL) {
+        if ((position >= getTrackLeftEdge() + thumbPosition - 7) && (position <= getTrackLeftEdge() + thumbPosition + 7)) {
 
-        return index;
+          return index;
+        }
+      }
+      else {
+        if ((position >= getTrackRightEdge() - thumbPosition - 7) && (position <= getTrackRightEdge() - thumbPosition + 7)) {
+
+          return index;
+        }
       }
     }
 
@@ -265,12 +282,7 @@ public class MultiThumbSlider extends JComponent implements MouseMotionListener,
 
   public int positionForValue (int value) {
 
-    if (orientation == HORIZONTAL) {
-      return (int)((getTrackRightEdge() - getTrackLeftEdge()) * (value - getMinimumValue()) / ((double)(getMaximumValue() - getMinimumValue())));
-    }
-    else {
-      return (int)((getTrackRightEdge() - getTrackLeftEdge()) * (value - getMinimumValue()) / ((double)(getMaximumValue() - getMinimumValue())));
-    }
+    return (int)((getTrackRightEdge() - getTrackLeftEdge()) * (value - getMinimumValue()) / ((double)(getMaximumValue() - getMinimumValue())));
   }
 
   public synchronized void paint (Graphics g) {
@@ -287,7 +299,7 @@ public class MultiThumbSlider extends JComponent implements MouseMotionListener,
         g.drawImage(HORIZONTAL_THUMB_ICON.getImage(), getTrackLeftEdge() + positionForValue(model.getThumbValue(index)) - 7, 0, null);
       }
       else {
-        g.drawImage(HORIZONTAL_THUMB_ICON.getImage(), 0, getTrackLeftEdge() + positionForValue(model.getThumbValue(index)) - 7, null);
+        g.drawImage(VERTICAL_THUMB_ICON.getImage(), 0, getTrackRightEdge() - positionForValue(model.getThumbValue(index)) - 7, null);
       }
     }
   }
