@@ -27,11 +27,14 @@
 package org.smallmind.swing.slider;
 
 import java.awt.Dimension;
+import java.awt.Font;
+import java.awt.FontMetrics;
 import java.awt.Graphics;
 import java.awt.SystemColor;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.awt.event.MouseMotionListener;
+import java.util.Dictionary;
 import javax.swing.ImageIcon;
 import javax.swing.JComponent;
 import javax.swing.SwingConstants;
@@ -45,9 +48,17 @@ public class MultiThumbSlider extends JComponent implements MouseMotionListener,
   public static final int VERTICAL = SwingConstants.VERTICAL;
 
   private MultiThumbModel model = new DefaultMultiThumbModel();
+  private Dictionary<Integer, String> labelDictionary;
   private Integer selectedThumbIndex;
+  private boolean paintTrack = true;
+  private boolean paintTickMarks = true;
+  private boolean paintLabels = true;
   private int selectedThumbOffset;
   private int orientation = HORIZONTAL;
+  private int leftSideAdjustment;
+  private int rightSideAdjustment;
+  private int majorTickSpacing = 0;
+  private int minorTickSpacing = 0;
 
   public MultiThumbSlider () {
 
@@ -72,6 +83,16 @@ public class MultiThumbSlider extends JComponent implements MouseMotionListener,
     this.model = model;
   }
 
+  public synchronized int getOrientation () {
+
+    return orientation;
+  }
+
+  public synchronized void setOrientation (int orientation) {
+
+    this.orientation = orientation;
+  }
+
   public void setMinimumValue (int minimumValue) {
 
     model.setMaximumValue(minimumValue);
@@ -92,6 +113,66 @@ public class MultiThumbSlider extends JComponent implements MouseMotionListener,
     return model.getMaximumValue();
   }
 
+  public synchronized boolean isPaintTrack () {
+
+    return paintTrack;
+  }
+
+  public synchronized void setPaintTrack (boolean paintTrack) {
+
+    this.paintTrack = paintTrack;
+  }
+
+  public synchronized boolean isPaintTickMarks () {
+
+    return paintTickMarks;
+  }
+
+  public synchronized void setPaintTickMarks (boolean paintTickMarks) {
+
+    this.paintTickMarks = paintTickMarks;
+  }
+
+  public synchronized boolean isPaintLabels () {
+
+    return paintLabels;
+  }
+
+  public synchronized void setPaintLabels (boolean paintLabels) {
+
+    this.paintLabels = paintLabels;
+  }
+
+  public synchronized int getMinorTickSpacing () {
+
+    return minorTickSpacing;
+  }
+
+  public synchronized void setMinorTickSpacing (int minorTickSpacing) {
+
+    this.minorTickSpacing = minorTickSpacing;
+  }
+
+  public synchronized int getMajorTickSpacing () {
+
+    return majorTickSpacing;
+  }
+
+  public synchronized void setMajorTickSpacing (int majorTickSpacing) {
+
+    this.majorTickSpacing = majorTickSpacing;
+  }
+
+  public synchronized Dictionary<Integer, String> getLabelDictionary () {
+
+    return labelDictionary;
+  }
+
+  public synchronized void setLabelDictionary (Dictionary<Integer, String> labelDictionary) {
+
+    this.labelDictionary = labelDictionary;
+  }
+
   public void addThumb (int thumbValue) {
 
     model.addThumb(thumbValue);
@@ -104,32 +185,51 @@ public class MultiThumbSlider extends JComponent implements MouseMotionListener,
 
   public int getTrackLeftEdge () {
 
-    return 7;
+    return 7 - leftSideAdjustment;
   }
 
   public int getTrackRightEdge () {
 
-    return ((orientation == HORIZONTAL) ? getWidth() : getHeight()) - 7;
+    return ((orientation == HORIZONTAL) ? getWidth() : getHeight()) - (7 + rightSideAdjustment);
   }
 
   public Dimension getPreferredSize () {
 
     if (orientation == HORIZONTAL) {
-      return new Dimension(0, 20);
+      return new Dimension(0, 16 + ((paintTickMarks) ? 11 : 0) + ((paintLabels) ? getFontMetrics(getFont()).getAscent() + 1 : 0));
     }
     else {
-      return new Dimension(20, 0);
+      return new Dimension(16 + ((paintTickMarks) ? 11 : 0) + ((paintLabels) ? getMaxLabelWidth() + 4 : 0), 0);
     }
   }
 
   public Dimension getMaximumSize () {
 
     if (orientation == HORIZONTAL) {
-      return new Dimension(Short.MAX_VALUE, 20);
+      return new Dimension(Short.MAX_VALUE, 16 + ((paintTickMarks) ? 11 : 0) + ((paintLabels) ? getFontMetrics(getFont()).getAscent() + 1 : 0));
     }
     else {
-      return new Dimension(20, Short.MAX_VALUE);
+      return new Dimension(16 + ((paintTickMarks) ? 11 : 0) + ((paintLabels) ? getMaxLabelWidth() + 4 : 0), Short.MAX_VALUE);
     }
+  }
+
+  private int getMaxLabelWidth () {
+
+    FontMetrics fontMetrics = getFontMetrics(getFont());
+    String label;
+    int maxWidth = 0;
+    int width;
+
+    if (majorTickSpacing > 0) {
+      for (int mark = getMinimumValue(); mark <= getMaximumValue(); mark += majorTickSpacing) {
+        label = (getLabelDictionary() != null) ? getLabelDictionary().get(mark) : String.valueOf(mark);
+        if ((width = fontMetrics.stringWidth(label)) > maxWidth) {
+          maxWidth = width;
+        }
+      }
+    }
+
+    return maxWidth;
   }
 
   @Override
@@ -287,7 +387,41 @@ public class MultiThumbSlider extends JComponent implements MouseMotionListener,
 
   public synchronized void paint (Graphics g) {
 
-    paintTrack(g);
+    leftSideAdjustment = 0;
+    rightSideAdjustment = 0;
+
+    if (paintLabels && (majorTickSpacing > 0) && (orientation == HORIZONTAL)) {
+
+      String label;
+      int width = getWidth();
+      int textPosition;
+      int labelWidth;
+      int leftOverrun;
+      int rightOverrun;
+
+      for (int mark = getMinimumValue(); mark <= getMaximumValue(); mark += majorTickSpacing) {
+        label = (getLabelDictionary() != null) ? getLabelDictionary().get(mark) : String.valueOf(mark);
+        textPosition = getTrackLeftEdge() + positionForValue(mark);
+        labelWidth = g.getFontMetrics().stringWidth(label);
+
+        if (((leftOverrun = textPosition - (labelWidth / 2)) < 0) && (leftOverrun < leftSideAdjustment)) {
+          leftSideAdjustment = leftOverrun;
+        }
+        if (((rightOverrun = textPosition + (labelWidth / 2) - width) > 0) && (rightOverrun > rightSideAdjustment)) {
+          rightSideAdjustment = rightOverrun;
+        }
+      }
+    }
+
+    if (paintTrack) {
+      paintTrack(g);
+    }
+    if (paintTickMarks) {
+      paintTickMarks(g);
+    }
+    if (paintLabels) {
+      paintLabels(g);
+    }
     paintThumb(g);
     paintBorder(g);
   }
@@ -317,6 +451,52 @@ public class MultiThumbSlider extends JComponent implements MouseMotionListener,
       g.drawRect(5, getTrackLeftEdge(), 5, getTrackRightEdge() - getTrackLeftEdge() - 1);
       g.setColor(SystemColor.controlShadow);
       g.drawLine(6, getTrackLeftEdge() + 1, 6, getTrackRightEdge() - 2);
+    }
+  }
+
+  private void paintTickMarks (Graphics g) {
+
+    if (minorTickSpacing > 0) {
+      g.setColor(SystemColor.controlShadow);
+      for (int mark = getMinimumValue(); mark <= getMaximumValue(); mark += minorTickSpacing) {
+        if (orientation == HORIZONTAL) {
+          g.drawLine(getTrackLeftEdge() + positionForValue(mark), 20, getTrackLeftEdge() + positionForValue(mark), 23);
+        }
+        else {
+          g.drawLine(20, getTrackRightEdge() - positionForValue(mark), 23, getTrackRightEdge() - positionForValue(mark));
+        }
+      }
+    }
+    if (majorTickSpacing > 0) {
+      g.setColor(SystemColor.controlShadow);
+      for (int mark = getMinimumValue(); mark <= getMaximumValue(); mark += majorTickSpacing) {
+        if (orientation == HORIZONTAL) {
+          g.drawLine(getTrackLeftEdge() + positionForValue(mark), 20, getTrackLeftEdge() + positionForValue(mark), 26);
+        }
+        else {
+          g.drawLine(20, getTrackRightEdge() - positionForValue(mark), 26, getTrackRightEdge() - positionForValue(mark));
+        }
+      }
+    }
+  }
+
+  private void paintLabels (Graphics g) {
+
+    FontMetrics fontMetrics = getFontMetrics(getFont());
+    String label;
+
+    if (majorTickSpacing > 0) {
+      g.setColor(SystemColor.controlText);
+      g.setFont(getFont().deriveFont(Font.BOLD));
+      for (int mark = getMinimumValue(); mark <= getMaximumValue(); mark += majorTickSpacing) {
+        label = (getLabelDictionary() != null) ? getLabelDictionary().get(mark) : String.valueOf(mark);
+        if (orientation == HORIZONTAL) {
+          g.drawString(label, getTrackLeftEdge() + positionForValue(mark) - (fontMetrics.stringWidth(label) / 2), (paintTickMarks) ? 28 + fontMetrics.getAscent() : 17 + fontMetrics.getAscent());
+        }
+        else {
+
+        }
+      }
     }
   }
 }
