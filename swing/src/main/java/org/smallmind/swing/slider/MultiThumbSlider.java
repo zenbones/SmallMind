@@ -30,6 +30,8 @@ import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.FontMetrics;
 import java.awt.Graphics;
+import java.awt.Graphics2D;
+import java.awt.RenderingHints;
 import java.awt.SystemColor;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
@@ -390,6 +392,9 @@ public class MultiThumbSlider extends JComponent implements MouseMotionListener,
     leftSideAdjustment = 0;
     rightSideAdjustment = 0;
 
+    g.setFont(getFont().deriveFont(Font.BOLD));
+    ((Graphics2D)g).setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+
     if (paintLabels && (majorTickSpacing > 0) && (orientation == HORIZONTAL)) {
 
       String label;
@@ -401,13 +406,13 @@ public class MultiThumbSlider extends JComponent implements MouseMotionListener,
 
       for (int mark = getMinimumValue(); mark <= getMaximumValue(); mark += majorTickSpacing) {
         label = (getLabelDictionary() != null) ? getLabelDictionary().get(mark) : String.valueOf(mark);
-        textPosition = getTrackLeftEdge() + positionForValue(mark);
+        textPosition = (int)((width - 14) * (mark - getMinimumValue()) / ((double)(getMaximumValue() - getMinimumValue())));
         labelWidth = g.getFontMetrics().stringWidth(label);
 
-        if (((leftOverrun = textPosition - (labelWidth / 2)) < 0) && (leftOverrun < leftSideAdjustment)) {
+        if (((leftOverrun = (textPosition + 7) - (labelWidth / 2)) < 0) && (leftOverrun < leftSideAdjustment)) {
           leftSideAdjustment = leftOverrun;
         }
-        if (((rightOverrun = textPosition + (labelWidth / 2) - width) > 0) && (rightOverrun > rightSideAdjustment)) {
+        if (((rightOverrun = (textPosition + 7) + (labelWidth / 2) - width) > 0) && (rightOverrun > rightSideAdjustment)) {
           rightSideAdjustment = rightOverrun;
         }
       }
@@ -487,7 +492,6 @@ public class MultiThumbSlider extends JComponent implements MouseMotionListener,
 
     if (majorTickSpacing > 0) {
       g.setColor(SystemColor.controlText);
-      g.setFont(getFont().deriveFont(Font.BOLD));
       for (int mark = getMinimumValue(); mark <= getMaximumValue(); mark += majorTickSpacing) {
         label = (getLabelDictionary() != null) ? getLabelDictionary().get(mark) : String.valueOf(mark);
         if (orientation == HORIZONTAL) {
