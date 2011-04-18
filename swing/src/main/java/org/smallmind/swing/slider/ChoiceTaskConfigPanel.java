@@ -40,7 +40,7 @@ public class ChoiceTaskConfigPanel extends JPanel {
 
     setLayout(groupLayout = new GroupLayout(this));
 
-    choiceSlider = new MultiThumbSlider(MultiThumbSlider.VERTICAL);
+    choiceSlider = new MultiThumbSlider(MultiThumbSlider.HORIZONTAL);
     choiceSlider.setMinorTickSpacing(2);
     choiceSlider.setMajorTickSpacing(10);
     choiceSlider.addThumb(50);
