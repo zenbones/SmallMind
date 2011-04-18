@@ -24,7 +24,7 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.swing.event;
+package org.smallmind.swing.dialog;
 
 public interface DialogListener extends java.util.EventListener {
 

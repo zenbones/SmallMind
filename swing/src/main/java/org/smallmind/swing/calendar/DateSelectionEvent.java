@@ -24,52 +24,25 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.swing.event;
+package org.smallmind.swing.calendar;
 
 import java.util.EventObject;
+import org.smallmind.swing.calendar.CalendarDate;
 
-public class MultiListSelectionEvent extends EventObject {
+public class DateSelectionEvent extends EventObject {
 
-   public static enum EventType {
+   private CalendarDate calendarDate;
 
-      INSERT, REMOVE, CHANGE
-   }
-
-   ;
-
-   private EventType eventType;
-   private boolean valueIsAdjusting;
-   private int firstIndex;
-   private int lastIndex;
-
-   public MultiListSelectionEvent (Object source, EventType eventType, int firstIndex, int lastIndex, boolean valueIsAdjusting) {
+   public DateSelectionEvent (Object source, CalendarDate calendarDate) {
 
       super(source);
 
-      this.eventType = eventType;
-      this.firstIndex = firstIndex;
-      this.lastIndex = lastIndex;
-      this.valueIsAdjusting = valueIsAdjusting;
+      this.calendarDate = calendarDate;
    }
 
-   public boolean getValueIsAdjusting () {
+   public CalendarDate getCalendarDate () {
 
-      return valueIsAdjusting;
-   }
-
-   public EventType getEventType () {
-
-      return eventType;
-   }
-
-   public int getFirstIndex () {
-
-      return firstIndex;
-   }
-
-   public int getLastIndex () {
-
-      return lastIndex;
+      return calendarDate;
    }
 
 }

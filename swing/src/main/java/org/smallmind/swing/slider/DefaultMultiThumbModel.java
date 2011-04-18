@@ -26,9 +26,17 @@
  */
 package org.smallmind.swing.slider;
 
+import java.util.Arrays;
 import java.util.LinkedList;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicReference;
+import org.smallmind.nutsnbolts.util.WeakEventListenerList;
 
 public class DefaultMultiThumbModel implements MultiThumbModel {
+
+  private final WeakEventListenerList<ThumbListener> listenerList = new WeakEventListenerList<ThumbListener>();
+  private final AdjustingDelayHandler adjustingDelayHandler;
 
   private LinkedList<Integer> thumbList;
   private int minimumValue = 0;
@@ -37,6 +45,8 @@ public class DefaultMultiThumbModel implements MultiThumbModel {
   public DefaultMultiThumbModel () {
 
     thumbList = new LinkedList<Integer>();
+
+    new Thread(adjustingDelayHandler = new AdjustingDelayHandler(this)).start();
   }
 
   @Override
@@ -66,13 +76,19 @@ public class DefaultMultiThumbModel implements MultiThumbModel {
   @Override
   public synchronized void addThumb (int thumbValue) {
 
+    adjustingDelayHandler.purge();
     thumbList.add(thumbValue);
+    fireThumbAdded(new ThumbEvent(this, ThumbEvent.EventType.ADD, thumbList.size() - 1, thumbValue, thumbValue, false));
   }
 
   @Override
   public synchronized void removeThumb (int thumbIndex) {
 
-    thumbList.remove(thumbIndex);
+    int thumbValue;
+
+    adjustingDelayHandler.purge();
+    thumbValue = thumbList.remove(thumbIndex);
+    fireThumbRemoved(new ThumbEvent(this, ThumbEvent.EventType.REMOVE, thumbIndex, thumbValue, thumbValue, false));
   }
 
   @Override
@@ -82,16 +98,193 @@ public class DefaultMultiThumbModel implements MultiThumbModel {
   }
 
   @Override
+  public synchronized int[] getThumbValues () {
+
+    int[] thumbValues = new int[thumbList.size()];
+    int index = 0;
+
+    for (Integer thumbValue : thumbList) {
+      thumbValues[index++] = thumbValue;
+    }
+
+    Arrays.sort(thumbValues);
+
+    return thumbValues;
+  }
+
+  @Override
   public synchronized int getThumbValue (int thumbIndex) {
 
     return thumbList.get(thumbIndex);
   }
 
   @Override
-  public boolean moveThumb (int thumbIndex, int thumbValue) {
+  public synchronized boolean moveThumb (int thumbIndex, int thumbValue) {
 
-    thumbList.set(thumbIndex, thumbValue);
+    int currentValue;
+
+    currentValue = thumbList.set(thumbIndex, thumbValue);
+    fireThumbMoved(new ThumbEvent(this, ThumbEvent.EventType.MOVE, thumbIndex, currentValue, thumbValue, true));
+    adjustingDelayHandler.hold(thumbIndex, currentValue, thumbValue);
 
     return true;
+  }
+
+  private synchronized void fireThumbAdded (ThumbEvent thumbEvent) {
+
+    for (ThumbListener thumbListener : listenerList) {
+      thumbListener.thumbAdded(thumbEvent);
+    }
+  }
+
+  private synchronized void fireThumbRemoved (ThumbEvent thumbEvent) {
+
+    for (ThumbListener thumbListener : listenerList) {
+      thumbListener.thumbRemoved(thumbEvent);
+    }
+  }
+
+  private synchronized void fireThumbMoved (ThumbEvent thumbEvent) {
+
+    for (ThumbListener thumbListener : listenerList) {
+      thumbListener.thumbMoved(thumbEvent);
+    }
+  }
+
+  @Override
+  public synchronized void addThumbListener (ThumbListener thumbListener) {
+
+    listenerList.addListener(thumbListener);
+  }
+
+  @Override
+  public synchronized void removeThumbListener (ThumbListener thumbListener) {
+
+    listenerList.removeListener(thumbListener);
+  }
+
+  private class AdjustingDelayHandler implements Runnable {
+
+    private DefaultMultiThumbModel model;
+    private CountDownLatch terminationLatch = new CountDownLatch(1);
+    private CountDownLatch exitLatch = new CountDownLatch(1);
+    private AtomicReference<DelayedMove> delayedMoveRef = new AtomicReference<DelayedMove>();
+
+    public AdjustingDelayHandler (DefaultMultiThumbModel model) {
+
+      this.model = model;
+    }
+
+    public synchronized void hold (int thumbIndex, int startingValue, int adjustingValue) {
+
+      DelayedMove delayedMove;
+
+      if ((delayedMove = delayedMoveRef.getAndSet(null)) != null) {
+        if (delayedMove.getThumbIndex() == thumbIndex) {
+          delayedMove.setAdjustingValue(adjustingValue);
+          delayedMove.setTimestamp(System.currentTimeMillis());
+          delayedMoveRef.set(delayedMove);
+        }
+        else {
+          fireThumbMoved(new ThumbEvent(model, ThumbEvent.EventType.MOVE, delayedMove.getThumbIndex(), delayedMove.getStartingValue(), delayedMove.getAdjustingValue(), false));
+          delayedMoveRef.set(new DelayedMove(System.currentTimeMillis(), thumbIndex, startingValue, adjustingValue));
+        }
+      }
+      else {
+        delayedMoveRef.set(new DelayedMove(System.currentTimeMillis(), thumbIndex, startingValue, adjustingValue));
+      }
+    }
+
+    public synchronized void purge () {
+
+      DelayedMove delayedMove;
+
+      if ((delayedMove = delayedMoveRef.getAndSet(null)) != null) {
+        fireThumbMoved(new ThumbEvent(model, ThumbEvent.EventType.MOVE, delayedMove.getThumbIndex(), delayedMove.getStartingValue(), delayedMove.getAdjustingValue(), false));
+      }
+    }
+
+    public void finish ()
+      throws InterruptedException {
+
+      terminationLatch.countDown();
+      exitLatch.await();
+    }
+
+    @Override
+    public void run () {
+
+      try {
+        while (!terminationLatch.await(500, TimeUnit.MILLISECONDS)) {
+
+          DelayedMove delayedMove;
+
+          if ((delayedMove = delayedMoveRef.get()) != null) {
+            if (System.currentTimeMillis() - delayedMove.getTimestamp() > 500) {
+              purge();
+            }
+          }
+        }
+      }
+      catch (InterruptedException interruptedException) {
+        terminationLatch.countDown();
+      }
+      finally {
+        exitLatch.countDown();
+      }
+    }
+
+    @Override
+    protected void finalize ()
+      throws InterruptedException {
+
+      finish();
+    }
+  }
+
+  private class DelayedMove {
+
+    private long timestamp;
+    private int thumbIndex;
+    private int startingValue;
+    private int adjustingValue;
+
+    private DelayedMove (long timestamp, int thumbIndex, int startingValue, int adjustingValue) {
+
+      this.timestamp = timestamp;
+      this.thumbIndex = thumbIndex;
+      this.startingValue = startingValue;
+      this.adjustingValue = adjustingValue;
+    }
+
+    public long getTimestamp () {
+
+      return timestamp;
+    }
+
+    public void setTimestamp (long timestamp) {
+
+      this.timestamp = timestamp;
+    }
+
+    public int getThumbIndex () {
+
+      return thumbIndex;
+    }
+
+    public int getStartingValue () {
+
+      return startingValue;
+    }
+
+    public int getAdjustingValue () {
+
+      return adjustingValue;
+    }
+
+    public void setAdjustingValue (int adjustingValue) {
+
+      this.adjustingValue = adjustingValue;
+    }
   }
 }

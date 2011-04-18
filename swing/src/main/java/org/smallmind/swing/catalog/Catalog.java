@@ -44,10 +44,8 @@ import javax.swing.JPanel;
 import javax.swing.JViewport;
 import javax.swing.Scrollable;
 import javax.swing.SwingUtilities;
-import org.smallmind.swing.event.CatalogDataEvent;
-import org.smallmind.swing.event.CatalogDataListener;
-import org.smallmind.swing.event.MultiListSelectionEvent;
-import org.smallmind.swing.event.MultiListSelectionListener;
+import org.smallmind.swing.MultiListSelectionEvent;
+import org.smallmind.swing.MultiListSelectionListener;
 import org.smallmind.swing.layout.ListLayout;
 
 public class Catalog<T extends Comparable<T>, D> extends JLayeredPane implements Scrollable, CatalogDataListener, HierarchyBoundsListener, ComponentListener, MouseListener, MouseMotionListener {

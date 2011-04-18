@@ -42,7 +42,7 @@ import javax.swing.JComponent;
 import javax.swing.JLabel;
 import javax.swing.SwingConstants;
 
-public class MultiThumbSlider extends JComponent implements MouseMotionListener, MouseListener {
+public class MultiThumbSlider extends JComponent implements MouseMotionListener, MouseListener, ThumbListener {
 
   private static final ImageIcon HORIZONTAL_THUMB_ICON = new ImageIcon(ClassLoader.getSystemResource("org/smallmind/swing/system/horizontal_thumb_16.png"));
   private static final ImageIcon VERTICAL_THUMB_ICON = new ImageIcon(ClassLoader.getSystemResource("org/smallmind/swing/system/vertical_thumb_16.png"));
@@ -50,7 +50,7 @@ public class MultiThumbSlider extends JComponent implements MouseMotionListener,
   public static final int HORIZONTAL = SwingConstants.HORIZONTAL;
   public static final int VERTICAL = SwingConstants.VERTICAL;
 
-  private MultiThumbModel model = new DefaultMultiThumbModel();
+  private MultiThumbModel model;
   private Dictionary<Integer, String> labelDictionary;
   private Integer selectedThumbIndex;
   private boolean paintTrack = true;
@@ -65,27 +65,42 @@ public class MultiThumbSlider extends JComponent implements MouseMotionListener,
 
   public MultiThumbSlider () {
 
-    this(HORIZONTAL);
+    this(HORIZONTAL, new DefaultMultiThumbModel());
   }
 
   public MultiThumbSlider (int orientation) {
 
+    this(orientation, new DefaultMultiThumbModel());
+  }
+
+  public MultiThumbSlider (MultiThumbModel model) {
+
+    this(HORIZONTAL, model);
+  }
+
+  public MultiThumbSlider (int orientation, MultiThumbModel model) {
+
     this.orientation = orientation;
+    this.model = model;
 
     setFont(new JLabel().getFont().deriveFont(Font.BOLD));
+    setDoubleBuffered(true);
 
+    model.addThumbListener(this);
     addMouseListener(this);
     addMouseMotionListener(this);
   }
 
-  public MultiThumbModel getModel () {
+  public synchronized MultiThumbModel getModel () {
 
     return model;
   }
 
-  public void setModel (MultiThumbModel model) {
+  public synchronized void setModel (MultiThumbModel model) {
 
+    this.model.removeThumbListener(this);
     this.model = model;
+    this.model.addThumbListener(this);
   }
 
   public synchronized int getOrientation () {
@@ -176,6 +191,21 @@ public class MultiThumbSlider extends JComponent implements MouseMotionListener,
   public synchronized void setLabelDictionary (Dictionary<Integer, String> labelDictionary) {
 
     this.labelDictionary = labelDictionary;
+  }
+
+  public int getThumbCount () {
+
+    return model.getThumbCount();
+  }
+
+  public int[] getThumbValues () {
+
+    return model.getThumbValues();
+  }
+
+  public int getThumbValue (int thumbIndex) {
+
+    return model.getThumbValue(thumbIndex);
   }
 
   public void addThumb (int thumbValue) {
@@ -339,7 +369,6 @@ public class MultiThumbSlider extends JComponent implements MouseMotionListener,
         }
 
         model.moveThumb(selectedThumbIndex, proposedValue);
-        repaint();
       }
     }
   }
@@ -347,6 +376,24 @@ public class MultiThumbSlider extends JComponent implements MouseMotionListener,
   @Override
   public void mouseMoved (MouseEvent mouseEvent) {
 
+  }
+
+  @Override
+  public void thumbAdded (ThumbEvent thumbEvent) {
+
+    repaint();
+  }
+
+  @Override
+  public void thumbRemoved (ThumbEvent thumbEvent) {
+
+    repaint();
+  }
+
+  @Override
+  public void thumbMoved (ThumbEvent thumbEvent) {
+
+    repaint();
   }
 
   private int getThumbIndexForPosition (int position) {

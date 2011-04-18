@@ -27,7 +27,7 @@
 package org.smallmind.swing.spinner;
 
 import java.awt.Component;
-import org.smallmind.swing.event.EditorListener;
+import org.smallmind.swing.EditorListener;
 
 public interface SpinnerEditor {
 

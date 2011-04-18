@@ -32,8 +32,6 @@ import java.awt.Window;
 import java.io.File;
 import javax.swing.JDialog;
 import javax.swing.filechooser.FileFilter;
-import org.smallmind.swing.event.FileChoiceEvent;
-import org.smallmind.swing.event.FileChoiceListener;
 
 public class FileChooserDialog extends JDialog implements FileChoiceListener {
 

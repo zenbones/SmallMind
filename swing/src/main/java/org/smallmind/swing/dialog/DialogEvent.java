@@ -24,12 +24,24 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.swing.event;
+package org.smallmind.swing.dialog;
 
-import java.util.EventListener;
+import org.smallmind.swing.dialog.DialogState;
 
-public interface EditorListener extends EventListener {
+public class DialogEvent extends java.util.EventObject {
 
-   public abstract void editorStatus (EditorEvent editorEvent);
+   private DialogState eventState;
+
+   public DialogEvent (Object source, DialogState eventState) {
+
+      super(source);
+
+      this.eventState = eventState;
+   }
+
+   public DialogState getEventState () {
+
+      return eventState;
+   }
 
 }

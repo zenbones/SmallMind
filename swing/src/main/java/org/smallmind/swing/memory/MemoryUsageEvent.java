@@ -24,12 +24,38 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.swing.event;
+package org.smallmind.swing.memory;
 
-import java.util.EventListener;
+import java.util.EventObject;
 
-public interface MemoryUsageListener extends EventListener {
+public class MemoryUsageEvent extends EventObject {
 
-   public abstract void usageUpdate (MemoryUsageEvent memeoryUsageEvent);
+   private int maximumUsage;
+   private int currentUsage;
+   private String displayUsage;
+
+   public MemoryUsageEvent (Object source, int maximumUsage, int currentUsage, String displayUsage) {
+
+      super(source);
+
+      this.maximumUsage = maximumUsage;
+      this.currentUsage = currentUsage;
+      this.displayUsage = displayUsage;
+   }
+
+   public int getCurrentUsage () {
+
+      return currentUsage;
+   }
+
+   public String getDisplayUsage () {
+
+      return displayUsage;
+   }
+
+   public int getMaximumUsage () {
+
+      return maximumUsage;
+   }
 
 }

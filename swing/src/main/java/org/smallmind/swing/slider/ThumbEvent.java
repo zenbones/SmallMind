@@ -24,15 +24,53 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.swing.event;
+package org.smallmind.swing.slider;
 
-import java.util.EventListener;
+import java.util.EventObject;
 
-public interface ClipboardListener extends EventListener {
+public class ThumbEvent extends EventObject {
 
-   public abstract void cutAction (ClipboardEvent clipboardEvent);
+  public static enum EventType {ADD, REMOVE, MOVE}
 
-   public abstract void copyAction (ClipboardEvent clipboardEvent);
+  private EventType eventType;
+  private boolean adjusting;
+  private int thumbIndex;
+  private int currentValue;
+  private int adjustedValue;
 
-   public abstract void pasteAction (ClipboardEvent clipboardEvent);
+  public ThumbEvent (Object source, EventType eventType, int thumbIndex, int currentValue, int adjustedValue, boolean adjusting) {
+
+    super(source);
+
+    this.eventType = eventType;
+    this.thumbIndex = thumbIndex;
+    this.currentValue = currentValue;
+    this.adjustedValue = adjustedValue;
+    this.adjusting = adjusting;
+  }
+
+  public EventType getEventType () {
+
+    return eventType;
+  }
+
+  public int getThumbIndex () {
+
+    return thumbIndex;
+  }
+
+  public int getCurrentValue () {
+
+    return currentValue;
+  }
+
+  public int getAdjustedValue () {
+
+    return adjustedValue;
+  }
+
+  public boolean isAdjusting () {
+
+    return adjusting;
+  }
 }

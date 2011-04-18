@@ -50,8 +50,6 @@ import javax.swing.JScrollPane;
 import javax.swing.JTextArea;
 import javax.swing.KeyStroke;
 import org.smallmind.nutsnbolts.util.WeakEventListenerList;
-import org.smallmind.swing.event.ErrorEvent;
-import org.smallmind.swing.event.ErrorListener;
 
 public class JavaErrorDialog extends javax.swing.JDialog implements ActionListener, WindowListener {
 

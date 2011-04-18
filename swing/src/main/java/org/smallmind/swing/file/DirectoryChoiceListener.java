@@ -24,29 +24,16 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.swing.event;
+package org.smallmind.swing.file;
 
-import java.util.EventObject;
+import java.util.EventListener;
 
-public class EditorEvent extends EventObject {
+public interface DirectoryChoiceListener extends EventListener {
 
-   public static enum State {
+   public abstract void rootChosen (DirectoryChoiceEvent directoryChoiceEvent);
 
-      STOPPED, CANCELLED, VALID, INVALID
-   }
-
-   private State state;
-
-   public EditorEvent (Object source, State state) {
-
-      super(source);
-
-      this.state = state;
-   }
-
-   public State getState () {
-
-      return state;
-   }
-
+   public abstract void directoryChosen (DirectoryChoiceEvent directoryChoiceEvent);
 }
+
+
+

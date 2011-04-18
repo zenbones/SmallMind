@@ -24,24 +24,13 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.swing.event;
+package org.smallmind.swing.dialog;
 
-import java.io.File;
-import java.util.EventObject;
+public interface ErrorListener extends java.util.EventListener {
 
-public class DirectoryChoiceEvent extends EventObject {
+   public abstract void errorHandler (ErrorEvent errorEvent);
 
-   private File file;
-
-   public DirectoryChoiceEvent (Object source, File file) {
-
-      super(source);
-
-      this.file = file;
-   }
-
-   public File getChosenDirectory () {
-
-      return file;
-   }
 }
+
+
+

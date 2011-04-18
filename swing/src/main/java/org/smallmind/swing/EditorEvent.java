@@ -24,16 +24,29 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.swing.event;
+package org.smallmind.swing;
 
-import java.util.EventListener;
+import java.util.EventObject;
 
-public interface CatalogDataListener extends EventListener {
+public class EditorEvent extends EventObject {
 
-   public abstract void itemAdded (CatalogDataEvent catalogDataEvent);
+   public static enum State {
 
-   public abstract void intervalRemoved (CatalogDataEvent catalogDataEvent);
+      STOPPED, CANCELLED, VALID, INVALID
+   }
 
-   public abstract void intervalChanged (CatalogDataEvent catalogDataEvent);
+   private State state;
+
+   public EditorEvent (Object source, State state) {
+
+      super(source);
+
+      this.state = state;
+   }
+
+   public State getState () {
+
+      return state;
+   }
 
 }

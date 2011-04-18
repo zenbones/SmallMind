@@ -24,25 +24,12 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.swing.event;
+package org.smallmind.swing.memory;
 
-import java.util.EventObject;
-import org.smallmind.swing.calendar.CalendarDate;
+import java.util.EventListener;
 
-public class DateSelectionEvent extends EventObject {
+public interface MemoryUsageListener extends EventListener {
 
-   private CalendarDate calendarDate;
-
-   public DateSelectionEvent (Object source, CalendarDate calendarDate) {
-
-      super(source);
-
-      this.calendarDate = calendarDate;
-   }
-
-   public CalendarDate getCalendarDate () {
-
-      return calendarDate;
-   }
+   public abstract void usageUpdate (MemoryUsageEvent memeoryUsageEvent);
 
 }

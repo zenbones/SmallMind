@@ -42,8 +42,6 @@ import javax.swing.event.ChangeListener;
 import org.smallmind.nutsnbolts.calendar.Month;
 import org.smallmind.nutsnbolts.util.WeakEventListenerList;
 import org.smallmind.swing.ComponentUtilities;
-import org.smallmind.swing.event.DateSelectionEvent;
-import org.smallmind.swing.event.DateSelectionListener;
 import org.smallmind.swing.spinner.DefaultSpinnerRenderer;
 import org.smallmind.swing.spinner.IntegerSpinnerModel;
 import org.smallmind.swing.spinner.Spinner;

@@ -46,10 +46,8 @@ import javax.swing.JDialog;
 import javax.swing.JPanel;
 import javax.swing.KeyStroke;
 import org.smallmind.nutsnbolts.util.WeakEventListenerList;
-import org.smallmind.swing.event.DialogEvent;
-import org.smallmind.swing.event.DialogListener;
-import org.smallmind.swing.event.DirectoryChoiceEvent;
-import org.smallmind.swing.event.DirectoryChoiceListener;
+import org.smallmind.swing.file.DirectoryChoiceEvent;
+import org.smallmind.swing.file.DirectoryChoiceListener;
 import org.smallmind.swing.file.DirectoryChooser;
 
 public class DirectoryChooserDialog extends JDialog implements WindowListener, DirectoryChoiceListener {

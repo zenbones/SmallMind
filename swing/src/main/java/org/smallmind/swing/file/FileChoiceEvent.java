@@ -24,31 +24,24 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.swing.event;
+package org.smallmind.swing.file;
 
+import java.io.File;
 import java.util.EventObject;
 
-public class CatalogDataEvent extends EventObject {
+public class FileChoiceEvent extends EventObject {
 
-   private int startIndex;
-   private int endIndex;
+   private File file;
 
-   public CatalogDataEvent (Object source, int startIndex, int endIndex) {
+   public FileChoiceEvent (Object source, File file) {
 
       super(source);
 
-      this.startIndex = startIndex;
-      this.endIndex = endIndex;
+      this.file = file;
    }
 
-   public int getStartIndex () {
+   public File getChosenFile () {
 
-      return startIndex;
+      return file;
    }
-
-   public int getEndIndex () {
-
-      return endIndex;
-   }
-
 }

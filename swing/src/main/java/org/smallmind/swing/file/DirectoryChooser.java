@@ -48,8 +48,6 @@ import javax.swing.event.TreeSelectionListener;
 import javax.swing.tree.TreeSelectionModel;
 import org.smallmind.nutsnbolts.util.WeakEventListenerList;
 import org.smallmind.swing.SmallMindScrollPane;
-import org.smallmind.swing.event.DirectoryChoiceEvent;
-import org.smallmind.swing.event.DirectoryChoiceListener;
 import org.smallmind.swing.tree.SmallMindTreeModel;
 
 public class DirectoryChooser extends JPanel implements ItemListener, TreeSelectionListener, DocumentListener {

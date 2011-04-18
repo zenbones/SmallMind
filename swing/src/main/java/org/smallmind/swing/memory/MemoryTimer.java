@@ -32,8 +32,6 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import org.smallmind.nutsnbolts.util.WeakEventListenerList;
 import org.smallmind.scribe.pen.LoggerManager;
-import org.smallmind.swing.event.MemoryUsageEvent;
-import org.smallmind.swing.event.MemoryUsageListener;
 
 public class MemoryTimer implements java.lang.Runnable {
 

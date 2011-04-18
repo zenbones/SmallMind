@@ -26,7 +26,7 @@
  */
 package org.smallmind.swing.catalog;
 
-import org.smallmind.swing.event.MultiListSelectionListener;
+import org.smallmind.swing.MultiListSelectionListener;
 
 public interface MultiListSelectionModel<T extends Comparable<T>> {
 

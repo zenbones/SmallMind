@@ -44,8 +44,8 @@ import javax.swing.event.ChangeListener;
 import org.smallmind.nutsnbolts.lang.UnknownSwitchCaseException;
 import org.smallmind.nutsnbolts.util.WeakEventListenerList;
 import org.smallmind.swing.ButtonRepeater;
-import org.smallmind.swing.event.EditorEvent;
-import org.smallmind.swing.event.EditorListener;
+import org.smallmind.swing.EditorEvent;
+import org.smallmind.swing.EditorListener;
 
 public class Spinner extends JPanel implements EditorListener, ActionListener, ChangeListener, MouseListener, FocusListener {
 

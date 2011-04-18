@@ -24,38 +24,31 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.swing.event;
+package org.smallmind.swing.catalog;
 
 import java.util.EventObject;
 
-public class MemoryUsageEvent extends EventObject {
+public class CatalogDataEvent extends EventObject {
 
-   private int maximumUsage;
-   private int currentUsage;
-   private String displayUsage;
+   private int startIndex;
+   private int endIndex;
 
-   public MemoryUsageEvent (Object source, int maximumUsage, int currentUsage, String displayUsage) {
+   public CatalogDataEvent (Object source, int startIndex, int endIndex) {
 
       super(source);
 
-      this.maximumUsage = maximumUsage;
-      this.currentUsage = currentUsage;
-      this.displayUsage = displayUsage;
+      this.startIndex = startIndex;
+      this.endIndex = endIndex;
    }
 
-   public int getCurrentUsage () {
+   public int getStartIndex () {
 
-      return currentUsage;
+      return startIndex;
    }
 
-   public String getDisplayUsage () {
+   public int getEndIndex () {
 
-      return displayUsage;
-   }
-
-   public int getMaximumUsage () {
-
-      return maximumUsage;
+      return endIndex;
    }
 
 }

@@ -26,8 +26,6 @@
  */
 package org.smallmind.swing.catalog;
 
-import org.smallmind.swing.event.CatalogDataListener;
-
 public interface CatalogModel<D> {
 
    public abstract void addCatalogDataListener (CatalogDataListener catalogDataListener);

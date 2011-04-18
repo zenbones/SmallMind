@@ -24,14 +24,15 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.swing.event;
+package org.smallmind.swing.slider;
 
 import java.util.EventListener;
 
-public interface FileChoiceListener extends EventListener {
+public interface ThumbListener extends EventListener {
 
-  public abstract void fileChosen (FileChoiceEvent fileChoiceEvent);
+  public abstract void thumbAdded (ThumbEvent thumbEvent);
+
+  public abstract void thumbRemoved (ThumbEvent thumbEvent);
+
+  public abstract void thumbMoved (ThumbEvent thumbEvent);
 }
-
-
-

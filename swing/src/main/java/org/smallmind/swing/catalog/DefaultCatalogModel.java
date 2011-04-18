@@ -34,8 +34,6 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.Iterator;
 import java.util.List;
-import org.smallmind.swing.event.CatalogDataEvent;
-import org.smallmind.swing.event.CatalogDataListener;
 import org.smallmind.nutsnbolts.util.WeakEventListenerList;
 
 public class DefaultCatalogModel<D> implements CatalogModel<D>, Serializable {

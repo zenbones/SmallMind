@@ -32,8 +32,6 @@ import java.awt.Insets;
 import javax.swing.JLabel;
 import javax.swing.JProgressBar;
 import org.smallmind.swing.ComponentUtilities;
-import org.smallmind.swing.event.DialogEvent;
-import org.smallmind.swing.event.DialogListener;
 import org.smallmind.swing.panel.OptionPanel;
 
 public class ProgressOptionPanel extends OptionPanel implements ProgressOperator, DialogListener {

@@ -24,37 +24,14 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.swing.event;
+package org.smallmind.swing.file;
 
-import java.awt.Component;
-import java.awt.datatransfer.Transferable;
-import java.util.EventObject;
+import java.util.EventListener;
 
-public final class ClipboardEvent extends EventObject {
+public interface FileChoiceListener extends EventListener {
 
-   private Component target;
-   private Transferable transferable;
-
-   public ClipboardEvent (Object source, Component target) {
-
-      this(source, target, null);
-   }
-
-   public ClipboardEvent (Object source, Component target, Transferable transferable) {
-
-      super(source);
-      this.target = target;
-      this.transferable = transferable;
-   }
-
-   public Component getTargetComponent () {
-
-      return target;
-   }
-
-   public Transferable getTransferable () {
-
-      return transferable;
-   }
-
+  public abstract void fileChosen (FileChoiceEvent fileChoiceEvent);
 }
+
+
+

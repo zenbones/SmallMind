@@ -24,12 +24,50 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.swing.event;
+package org.smallmind.swing;
 
-import java.util.EventListener;
+import java.util.EventObject;
 
-public interface DateSelectionListener extends EventListener {
+public class MultiListSelectionEvent extends EventObject {
 
-   public void dateChosen (DateSelectionEvent dateSelectionEvent);
+   public static enum EventType {
+
+      INSERT, REMOVE, CHANGE
+   }
+
+   private EventType eventType;
+   private boolean valueIsAdjusting;
+   private int firstIndex;
+   private int lastIndex;
+
+   public MultiListSelectionEvent (Object source, EventType eventType, int firstIndex, int lastIndex, boolean valueIsAdjusting) {
+
+      super(source);
+
+      this.eventType = eventType;
+      this.firstIndex = firstIndex;
+      this.lastIndex = lastIndex;
+      this.valueIsAdjusting = valueIsAdjusting;
+   }
+
+   public boolean getValueIsAdjusting () {
+
+      return valueIsAdjusting;
+   }
+
+   public EventType getEventType () {
+
+      return eventType;
+   }
+
+   public int getFirstIndex () {
+
+      return firstIndex;
+   }
+
+   public int getLastIndex () {
+
+      return lastIndex;
+   }
 
 }

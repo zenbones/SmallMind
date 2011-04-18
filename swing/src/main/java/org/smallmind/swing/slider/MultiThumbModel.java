@@ -42,7 +42,13 @@ public interface MultiThumbModel {
 
   public abstract int getThumbCount ();
 
+  public abstract int[] getThumbValues ();
+
   public abstract int getThumbValue (int thumbIndex);
 
   public abstract boolean moveThumb (int thumbIndex, int thumbValue);
+
+  public abstract void addThumbListener (ThumbListener thumbListener);
+
+  public abstract void removeThumbListener (ThumbListener thumbListener);
 }

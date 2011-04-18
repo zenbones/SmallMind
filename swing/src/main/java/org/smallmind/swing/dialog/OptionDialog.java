@@ -49,8 +49,6 @@ import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.KeyStroke;
 import org.smallmind.nutsnbolts.util.WeakEventListenerList;
-import org.smallmind.swing.event.DialogEvent;
-import org.smallmind.swing.event.DialogListener;
 import org.smallmind.swing.panel.OptionPanel;
 
 public class OptionDialog extends JDialog implements WindowListener {

@@ -37,8 +37,6 @@ import java.awt.event.FocusListener;
 import java.util.HashMap;
 import javax.swing.AbstractAction;
 import javax.swing.Action;
-import org.smallmind.swing.event.ClipboardEvent;
-import org.smallmind.swing.event.ClipboardListener;
 
 public class ClipboardManager implements ClipboardOwner, FocusListener {
 

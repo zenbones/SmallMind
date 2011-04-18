@@ -24,33 +24,12 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.swing.memory;
+package org.smallmind.swing;
 
-import java.awt.GridLayout;
-import javax.swing.JPanel;
-import javax.swing.JProgressBar;
+import java.util.EventListener;
 
-public class MemoryPanel extends JPanel implements MemoryUsageListener {
+public interface EditorListener extends EventListener {
 
-   private JProgressBar progressBar;
-
-   public MemoryPanel () {
-
-      super(new GridLayout(1, 0));
-
-      progressBar = new JProgressBar(JProgressBar.HORIZONTAL);
-      progressBar.setMinimum(0);
-      progressBar.setStringPainted(true);
-      progressBar.setString("");
-
-      add(progressBar);
-   }
-
-   public void usageUpdate (MemoryUsageEvent memeoryUsageEvent) {
-
-      progressBar.setMaximum(memeoryUsageEvent.getMaximumUsage());
-      progressBar.setValue(memeoryUsageEvent.getCurrentUsage());
-      progressBar.setString(memeoryUsageEvent.getDisplayUsage());
-   }
+   public abstract void editorStatus (EditorEvent editorEvent);
 
 }

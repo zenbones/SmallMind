@@ -37,7 +37,7 @@ import javax.swing.JTextField;
 import javax.swing.KeyStroke;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
-import org.smallmind.swing.event.EditorEvent;
+import org.smallmind.swing.EditorEvent;
 
 public class DefaultSpinnerEditor extends AbstractSpinnerEditor implements DocumentListener {
 

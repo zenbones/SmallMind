@@ -24,24 +24,14 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.swing.event;
+package org.smallmind.swing;
 
-import org.smallmind.swing.dialog.DialogState;
+import java.util.EventListener;
 
-public class DialogEvent extends java.util.EventObject {
+public interface MultiListSelectionListener<T extends Comparable<T>> extends EventListener {
 
-   private DialogState eventState;
+   public abstract T getKey ();
 
-   public DialogEvent (Object source, DialogState eventState) {
-
-      super(source);
-
-      this.eventState = eventState;
-   }
-
-   public DialogState getEventState () {
-
-      return eventState;
-   }
+   public abstract void valueChanged (MultiListSelectionEvent selectionEvent);
 
 }

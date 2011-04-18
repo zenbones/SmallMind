@@ -24,14 +24,37 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.swing.event;
+package org.smallmind.swing.datatransfer;
 
-import java.util.EventListener;
+import java.awt.Component;
+import java.awt.datatransfer.Transferable;
+import java.util.EventObject;
 
-public interface MultiListSelectionListener<T extends Comparable<T>> extends EventListener {
+public final class ClipboardEvent extends EventObject {
 
-   public abstract T getKey ();
+   private Component target;
+   private Transferable transferable;
 
-   public abstract void valueChanged (MultiListSelectionEvent selectionEvent);
+   public ClipboardEvent (Object source, Component target) {
+
+      this(source, target, null);
+   }
+
+   public ClipboardEvent (Object source, Component target, Transferable transferable) {
+
+      super(source);
+      this.target = target;
+      this.transferable = transferable;
+   }
+
+   public Component getTargetComponent () {
+
+      return target;
+   }
+
+   public Transferable getTransferable () {
+
+      return transferable;
+   }
 
 }

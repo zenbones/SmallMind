@@ -24,24 +24,25 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.swing.event;
+package org.smallmind.swing.dialog;
 
-import java.io.File;
-import java.util.EventObject;
+public class ErrorEvent extends java.util.EventObject {
 
-public class FileChoiceEvent extends EventObject {
+  private Exception exception;
 
-   private File file;
+  public ErrorEvent (Object source, Exception exception) {
 
-   public FileChoiceEvent (Object source, File file) {
+    super(source);
+    this.exception = exception;
+  }
 
-      super(source);
+  public Exception getException () {
 
-      this.file = file;
-   }
-
-   public File getChosenFile () {
-
-      return file;
-   }
+    return exception;
+  }
 }
+
+
+
+
+

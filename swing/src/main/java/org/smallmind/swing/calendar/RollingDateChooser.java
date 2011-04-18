@@ -50,8 +50,6 @@ import javax.swing.table.TableCellRenderer;
 import org.smallmind.nutsnbolts.util.WeakEventListenerList;
 import org.smallmind.swing.ComponentUtilities;
 import org.smallmind.swing.VerticalTextIcon;
-import org.smallmind.swing.event.DateSelectionEvent;
-import org.smallmind.swing.event.DateSelectionListener;
 
 public class RollingDateChooser extends JPanel implements ListSelectionListener, TableColumnModelListener {
 

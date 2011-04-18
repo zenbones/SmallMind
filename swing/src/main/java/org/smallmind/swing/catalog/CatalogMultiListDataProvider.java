@@ -26,8 +26,8 @@
  */
 package org.smallmind.swing.catalog;
 
-import org.smallmind.swing.event.MultiListSelectionEvent;
-import org.smallmind.swing.event.MultiListSelectionListener;
+import org.smallmind.swing.MultiListSelectionEvent;
+import org.smallmind.swing.MultiListSelectionListener;
 
 public class CatalogMultiListDataProvider<T extends Comparable<T>> implements MultiListDataProvider<T>, MultiListSelectionListener<T> {
 

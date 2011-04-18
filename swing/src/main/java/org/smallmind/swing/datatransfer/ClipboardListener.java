@@ -24,26 +24,15 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.swing.event;
+package org.smallmind.swing.datatransfer;
 
-public class ErrorEvent extends java.util.EventObject {
+import java.util.EventListener;
 
-   private Exception e;
+public interface ClipboardListener extends EventListener {
 
-   public ErrorEvent (Object source, Exception e) {
+   public abstract void cutAction (ClipboardEvent clipboardEvent);
 
-      super(source);
-      this.e = e;
-   }
+   public abstract void copyAction (ClipboardEvent clipboardEvent);
 
-   public Exception getException () {
-
-      return e;
-   }
-
+   public abstract void pasteAction (ClipboardEvent clipboardEvent);
 }
-
-
-
-
-

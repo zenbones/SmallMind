@@ -24,13 +24,12 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.swing.event;
+package org.smallmind.swing.calendar;
 
-public interface ErrorListener extends java.util.EventListener {
+import java.util.EventListener;
 
-   public abstract void errorHandler (ErrorEvent errorEvent);
+public interface DateSelectionListener extends EventListener {
+
+   public void dateChosen (DateSelectionEvent dateSelectionEvent);
 
 }
-
-
-
