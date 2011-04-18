@@ -39,6 +39,7 @@ import java.awt.event.MouseMotionListener;
 import java.util.Dictionary;
 import javax.swing.ImageIcon;
 import javax.swing.JComponent;
+import javax.swing.JLabel;
 import javax.swing.SwingConstants;
 
 public class MultiThumbSlider extends JComponent implements MouseMotionListener, MouseListener {
@@ -70,6 +71,8 @@ public class MultiThumbSlider extends JComponent implements MouseMotionListener,
   public MultiThumbSlider (int orientation) {
 
     this.orientation = orientation;
+
+    setFont(new JLabel().getFont().deriveFont(Font.BOLD));
 
     addMouseListener(this);
     addMouseMotionListener(this);
@@ -392,7 +395,7 @@ public class MultiThumbSlider extends JComponent implements MouseMotionListener,
     leftSideAdjustment = 0;
     rightSideAdjustment = 0;
 
-    g.setFont(getFont().deriveFont(Font.BOLD));
+    g.setFont(getFont());
     ((Graphics2D)g).setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
 
     if (paintLabels && (majorTickSpacing > 0) && (orientation == HORIZONTAL)) {
@@ -498,7 +501,7 @@ public class MultiThumbSlider extends JComponent implements MouseMotionListener,
           g.drawString(label, getTrackLeftEdge() + positionForValue(mark) - (fontMetrics.stringWidth(label) / 2), (paintTickMarks) ? 28 + fontMetrics.getAscent() : 17 + fontMetrics.getAscent());
         }
         else {
-
+          g.drawString(label, (paintTickMarks) ? 31 : 20, getTrackRightEdge() - positionForValue(mark) + (fontMetrics.getAscent() / 2));
         }
       }
     }

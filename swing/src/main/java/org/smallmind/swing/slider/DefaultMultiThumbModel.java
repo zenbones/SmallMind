@@ -37,9 +37,6 @@ public class DefaultMultiThumbModel implements MultiThumbModel {
   public DefaultMultiThumbModel () {
 
     thumbList = new LinkedList<Integer>();
-    thumbList.add(0);
-    thumbList.add(50);
-    thumbList.add(70);
   }
 
   @Override
