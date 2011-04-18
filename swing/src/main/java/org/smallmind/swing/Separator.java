@@ -70,6 +70,16 @@ public class Separator extends JComponent {
     }
   }
 
+  public Dimension getMinimumSize () {
+
+    if (orientation == VERTICAL) {
+      return new Dimension(2, length);
+    }
+    else {
+      return new Dimension(length, 2);
+    }
+  }
+
   public Dimension getPreferredSize () {
 
     if (orientation == VERTICAL) {
