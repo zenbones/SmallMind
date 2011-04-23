@@ -31,6 +31,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.URL;
 import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.jar.JarEntry;
@@ -38,130 +39,197 @@ import java.util.jar.JarFile;
 
 public class ClasspathClassGate implements ClassGate {
 
-   private final HashMap<String, String> filePathMap;
+  private final HashMap<String, String> filePathMap;
 
-   private String[] pathComponents;
+  private String[] pathComponents;
 
-   public ClasspathClassGate () {
+  public ClasspathClassGate () {
 
-      this(System.getProperty("java.class.path"));
-   }
+    this(System.getProperty("java.class.path"));
+  }
 
-   public ClasspathClassGate (String classPath) {
+  public ClasspathClassGate (String classPath) {
 
-      this(classPath.split(System.getProperty("path.separator"), -1));
-   }
+    this(classPath.split(System.getProperty("path.separator"), -1));
+  }
 
-   public ClasspathClassGate (String[] pathComponents) {
+  public ClasspathClassGate (String... pathComponents) {
 
-      this.pathComponents = pathComponents;
+    this.pathComponents = pathComponents;
 
-      filePathMap = new HashMap<String, String>();
-   }
+    filePathMap = new HashMap<String, String>();
+  }
 
-   public long getLastModDate (String name) {
+  public long getLastModDate (String name) {
 
-      File classFile;
-      String filePath;
+    File classFile;
+    String filePath;
 
-      synchronized (filePathMap) {
-         if ((filePath = filePathMap.get(name)) != null) {
-            classFile = new File(filePath);
+    synchronized (filePathMap) {
+      if ((filePath = filePathMap.get(name)) != null) {
+        classFile = new File(filePath);
 
-            return classFile.lastModified();
-         }
+        return classFile.lastModified();
       }
+    }
 
-      return ClassGate.STATIC_CLASS;
-   }
+    return ClassGate.STATIC_CLASS;
+  }
 
-   public ClassStreamTicket getClassAsTicket (String name)
-      throws Exception {
+  public ClassStreamTicket getClassAsTicket (String name)
+    throws Exception {
 
-      String classFileName;
+    String classFileName;
 
-      classFileName = name.replace('.', '/') + ".class";
+    classFileName = name.replace('.', '/') + ".class";
 
-      for (String pathComponent : pathComponents) {
+    for (String pathComponent : pathComponents) {
 
-         InputStream classStream;
+      InputStream classStream;
 
-         if (pathComponent.endsWith(".jar")) {
-            if ((classStream = findJarStream(pathComponent, classFileName)) != null) {
-               return new ClassStreamTicket(classStream, ClassGate.STATIC_CLASS);
-            }
-         }
-         else {
-
-            File classFile;
-            long timeStamp;
-
-            if ((classFile = findFile(pathComponent, classFileName)) != null) {
-               synchronized (filePathMap) {
-                  filePathMap.put(name, classFile.getAbsolutePath());
-                  timeStamp = classFile.lastModified();
-                  return new ClassStreamTicket(new BufferedInputStream(new FileInputStream(classFile)), timeStamp);
-               }
-            }
-         }
+      if (pathComponent.endsWith(".jar")) {
+        if ((classStream = findJarStream(pathComponent, classFileName)) != null) {
+          return new ClassStreamTicket(classStream, ClassGate.STATIC_CLASS);
+        }
       }
+      else {
 
-      return null;
-   }
+        File classFile;
+        long timeStamp;
 
-   public InputStream getResourceAsStream (String path)
-      throws Exception {
-
-      for (String pathComponent : pathComponents) {
-
-         InputStream resourceStream;
-
-         if (pathComponent.endsWith(".jar")) {
-            if ((resourceStream = findJarStream(pathComponent, path)) != null) {
-               return resourceStream;
-            }
-         }
-         else {
-
-            File resourceFile;
-
-            if ((resourceFile = findFile(pathComponent, path)) != null) {
-               return new BufferedInputStream(new FileInputStream(resourceFile));
-            }
-         }
+        if ((classFile = findFile(pathComponent, classFileName)) != null) {
+          synchronized (filePathMap) {
+            filePathMap.put(name, classFile.getAbsolutePath());
+            timeStamp = classFile.lastModified();
+            return new ClassStreamTicket(new BufferedInputStream(new FileInputStream(classFile)), timeStamp);
+          }
+        }
       }
+    }
 
-      return null;
-   }
+    return null;
+  }
 
-   private InputStream findJarStream (String jarComponentPath, String path)
+  public URL getResource (String path) throws Exception {
+
+    for (String pathComponent : pathComponents) {
+
+      JarLocator jarLocator;
+
+      if (pathComponent.endsWith(".jar")) {
+        if ((jarLocator = findJarLocator(pathComponent, path)) != null) {
+
+          return new URL("jar:file://" + rectifyPath(pathComponent) + "!/" + jarLocator.getJarEntry().getName());
+        }
+      }
+      else {
+
+        File resourceFile;
+
+        if ((resourceFile = findFile(pathComponent, path)) != null) {
+          return new URL("file://" + rectifyPath(resourceFile.getAbsolutePath()));
+        }
+      }
+    }
+
+    return null;
+  }
+
+  private String rectifyPath (String path) {
+
+    String rectifiedPath = path.replace('\\', '/');
+
+    return (rectifiedPath.charAt(0) == '/') ? rectifiedPath : '/' + rectifiedPath;
+  }
+
+  public InputStream getResourceAsStream (String path)
+    throws Exception {
+
+    for (String pathComponent : pathComponents) {
+
+      InputStream resourceStream;
+
+      if (pathComponent.endsWith(".jar")) {
+        if ((resourceStream = findJarStream(pathComponent, path)) != null) {
+          return resourceStream;
+        }
+      }
+      else {
+
+        File resourceFile;
+
+        if ((resourceFile = findFile(pathComponent, path)) != null) {
+          return new BufferedInputStream(new FileInputStream(resourceFile));
+        }
+      }
+    }
+
+    return null;
+  }
+
+  private InputStream findJarStream (String jarComponentPath, String path)
+    throws IOException {
+
+    JarLocator jarLocator;
+
+    if ((jarLocator = findJarLocator(jarComponentPath, path)) != null) {
+      return new BufferedInputStream(jarLocator.getInputStream());
+    }
+
+    return null;
+  }
+
+  private JarLocator findJarLocator (String jarComponentPath, String path)
+    throws IOException {
+
+    JarFile jarFile;
+    JarEntry jarEntry;
+    Enumeration<JarEntry> entryEnumeration;
+
+    jarFile = new JarFile(jarComponentPath);
+    entryEnumeration = jarFile.entries();
+    while (entryEnumeration.hasMoreElements()) {
+      if ((jarEntry = entryEnumeration.nextElement()).getName().equals((path.charAt(0) == '/') ? path.substring(1) : path)) {
+        return new JarLocator(jarFile, jarEntry);
+      }
+    }
+
+    return null;
+  }
+
+  private File findFile (String fileComponentPath, String path) {
+
+    File pathFile;
+
+    pathFile = new File((path.charAt(0) == '/') ? fileComponentPath + path : fileComponentPath + '/' + path);
+    if (pathFile.isFile()) {
+
+      return pathFile;
+    }
+
+    return null;
+  }
+
+  private class JarLocator {
+
+    private JarFile jarFile;
+    private JarEntry jarEntry;
+
+    private JarLocator (JarFile jarFile, JarEntry jarEntry) {
+
+      this.jarFile = jarFile;
+      this.jarEntry = jarEntry;
+    }
+
+    public JarEntry getJarEntry () {
+
+      return jarEntry;
+    }
+
+    public InputStream getInputStream ()
       throws IOException {
 
-      JarFile jarFile;
-      JarEntry jarEntry;
-      Enumeration<JarEntry> entryEnumeration;
-
-      jarFile = new JarFile(jarComponentPath);
-      entryEnumeration = jarFile.entries();
-      while (entryEnumeration.hasMoreElements()) {
-         if ((jarEntry = entryEnumeration.nextElement()).getName().equals(path)) {
-            return new BufferedInputStream(jarFile.getInputStream(jarFile.getEntry(jarEntry.getName())));
-         }
-      }
-
-      return null;
-   }
-
-   private File findFile (String fileComponentPath, String path) {
-
-      File pathFile;
-
-      pathFile = new File(fileComponentPath + "/" + path);
-      if (pathFile.isFile()) {
-
-         return pathFile;
-      }
-
-      return null;
-   }
+      return jarFile.getInputStream(jarFile.getEntry(jarEntry.getName()));
+    }
+  }
 }
