@@ -132,7 +132,7 @@ public class FormulaTextField extends JPanel implements ActionListener, ItemList
     expandButton.addActionListener(this);
 
     collapsedFormulaButton = new JToggleButton(TEXT_ICON, formula);
-    expandedFormulaButton.setSelectedIcon(FORMULA_ICON);
+    collapsedFormulaButton.setSelectedIcon(FORMULA_ICON);
     collapsedFormulaButton.setFocusable(false);
     collapsedFormulaButton.setToolTipText("evaluate as text/formula");
     collapsedFormulaButton.addItemListener(this);
