@@ -26,11 +26,10 @@
  */
 package org.smallmind.nutsnbolts.util;
 
-public class DefaultAlphaNumConverter<T> implements AlphaNumericConverter<T> {
+public class DefaultAlphaNumericConverter<T> implements AlphaNumericConverter<T> {
 
-   public String toString (T object) {
+  public String toString (T object) {
 
-      return object.toString();
-   }
-
+    return object.toString();
+  }
 }

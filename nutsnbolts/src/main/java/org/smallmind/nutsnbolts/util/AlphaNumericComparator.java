@@ -34,7 +34,7 @@ public class AlphaNumericComparator<T> implements Comparator<T> {
 
    public AlphaNumericComparator () {
 
-      this(new DefaultAlphaNumConverter<T>());
+      this(new DefaultAlphaNumericConverter<T>());
    }
 
    public AlphaNumericComparator (AlphaNumericConverter<T> alphaNumConverter) {
