@@ -26,29 +26,45 @@
  */
 package org.smallmind.swing;
 
+import java.awt.Color;
 import java.awt.Component;
-import javax.swing.JPanel;
-import javax.swing.JScrollPane;
+import java.awt.Graphics;
+import javax.swing.Icon;
 
-public class SmallMindScrollPane extends ExpandedScrollPane {
+public class SwatchIcon implements Icon {
 
-   private static JPanel UPPER_CORNER_PANEL;
-   private static JPanel LOWER_CORNER_PANEL;
+  private Color color;
+  private int size;
 
-   static {
+  public SwatchIcon (int size, Color color) {
 
-      UPPER_CORNER_PANEL = new JPanel();
-      LOWER_CORNER_PANEL = new JPanel();
-   }
+    this.size = size;
+    this.color = color;
+  }
 
-   public SmallMindScrollPane (Component component) {
+  @Override
+  public int getIconWidth () {
 
-      super(component);
+    return size;
+  }
 
-      setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
-      setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED);
-      setCorner(JScrollPane.UPPER_RIGHT_CORNER, UPPER_CORNER_PANEL);
-      setCorner(JScrollPane.LOWER_RIGHT_CORNER, LOWER_CORNER_PANEL);
-   }
+  @Override
+  public int getIconHeight () {
 
+    return size;
+  }
+
+  @Override
+  public void paintIcon (Component component, Graphics g, int x, int y) {
+
+    Color oldColor = g.getColor();
+
+    g.setColor(color);
+    g.fillRect(x, y, size, size);
+
+    g.setColor(Color.BLACK);
+    g.drawRect(x, y, size, size);
+
+    g.setColor(oldColor);
+  }
 }

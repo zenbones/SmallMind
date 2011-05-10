@@ -35,7 +35,7 @@ import javax.swing.ImageIcon;
 import javax.swing.JLabel;
 import javax.swing.JList;
 import javax.swing.ListCellRenderer;
-import org.smallmind.nutsnbolts.awt.ColorUtilities;
+import org.smallmind.swing.ColorUtilities;
 
 public class FilePickListCellRenderer implements ListCellRenderer {
 

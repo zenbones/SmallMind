@@ -26,46 +26,32 @@
  */
 package org.smallmind.swing;
 
-import java.awt.Component;
-import javax.swing.JScrollPane;
-import javax.swing.JViewport;
+import java.awt.Color;
+import java.security.SecureRandom;
+import java.util.HashMap;
+import java.util.Random;
 
-public class ExpandedScrollPane extends JScrollPane {
+public class Colorizer {
 
-   protected JViewport columnFooter;
+  private static final Random RANDOM = new SecureRandom();
+  private static final double GOLDEN_RATIO_CONJUGATE = 1 / ((1 + Math.sqrt(5)) / 2);
 
-   public ExpandedScrollPane (Component view) {
+  private final HashMap<String, Color> colorMap = new HashMap<String, Color>();
 
-      super(view);
+  private double hue = RANDOM.nextDouble();
 
-      setLayout(new ExpandedScrollPaneLayout());
-   }
+  public synchronized Color getColor (String name) {
 
-   public JViewport getColumnFooter () {
-      return columnFooter;
-   }
+    Color color;
 
-   public void setColumnFooter (JViewport columnFooter) {
-      JViewport old = getColumnFooter();
-      this.columnFooter = columnFooter;
-      if (columnFooter != null) {
-         add(columnFooter, "COLUMN_FOOTER");
-      }
-      else if (old != null) {
-         remove(old);
-      }
-      firePropertyChange("columnFooter", old, columnFooter);
+    if ((color = colorMap.get(name)) == null) {
 
-      revalidate();
-      repaint();
-   }
+      hue += GOLDEN_RATIO_CONJUGATE;
+      hue %= 1;
 
-   public void setColumnFooterView (Component view) {
-      if (getColumnFooter() == null) {
-         setColumnFooter(createViewport());
-      }
-      getColumnFooter().setView(view);
-   }
+      colorMap.put(name, color = Color.getHSBColor((float)hue, (RANDOM.nextInt(50) + 50) / 100F, (RANDOM.nextInt(25) + 75) / 100F));
+    }
 
+    return color;
+  }
 }
-

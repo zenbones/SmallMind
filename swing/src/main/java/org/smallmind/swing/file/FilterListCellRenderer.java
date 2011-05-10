@@ -33,7 +33,7 @@ import javax.swing.JLabel;
 import javax.swing.JList;
 import javax.swing.ListCellRenderer;
 import javax.swing.filechooser.FileFilter;
-import org.smallmind.nutsnbolts.awt.ColorUtilities;
+import org.smallmind.swing.ColorUtilities;
 
 public class FilterListCellRenderer implements ListCellRenderer {
 

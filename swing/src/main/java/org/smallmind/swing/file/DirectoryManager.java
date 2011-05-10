@@ -47,7 +47,6 @@ import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.KeyStroke;
 import javax.swing.ListSelectionModel;
-import org.smallmind.swing.SmallMindScrollPane;
 import org.smallmind.swing.dialog.DirectoryChooserDialog;
 
 public class DirectoryManager extends JPanel {
@@ -86,7 +85,7 @@ public class DirectoryManager extends JPanel {
     directoryDisplayList.setDragEnabled(false);
     directoryDisplayList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
 
-    directoryDisplayListScrollPane = new SmallMindScrollPane(directoryDisplayList);
+    directoryDisplayListScrollPane = new JScrollPane(directoryDisplayList);
 
     removeDirectoryAction = new RemoveDirectoryAction();
     removeDirectoryButton = new JButton(removeDirectoryAction);

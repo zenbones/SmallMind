@@ -53,7 +53,7 @@ import javax.swing.ListSelectionModel;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import javax.swing.filechooser.FileFilter;
-import org.smallmind.nutsnbolts.awt.ColorUtilities;
+import org.smallmind.swing.ColorUtilities;
 import org.smallmind.nutsnbolts.util.StringUtilities;
 import org.smallmind.nutsnbolts.util.WeakEventListenerList;
 import org.smallmind.swing.SmallMindGrayFilter;

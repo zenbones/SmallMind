@@ -24,7 +24,7 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.nutsnbolts.awt;
+package org.smallmind.swing;
 
 import java.awt.Color;
 import javax.swing.UIManager;

@@ -34,7 +34,7 @@ import javax.swing.ImageIcon;
 import javax.swing.JLabel;
 import javax.swing.JTable;
 import javax.swing.table.TableCellRenderer;
-import org.smallmind.nutsnbolts.awt.ColorUtilities;
+import org.smallmind.swing.ColorUtilities;
 
 public class DirectoryTableCellRenderer implements TableCellRenderer {
 

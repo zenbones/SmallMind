@@ -35,7 +35,7 @@ import javax.swing.SwingConstants;
 import javax.swing.UIManager;
 import javax.swing.border.Border;
 import javax.swing.tree.TreeCellRenderer;
-import org.smallmind.nutsnbolts.awt.ColorUtilities;
+import org.smallmind.swing.ColorUtilities;
 
 public class DirectoryTreeCellRenderer implements TreeCellRenderer {
 

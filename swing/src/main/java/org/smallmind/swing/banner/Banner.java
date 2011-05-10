@@ -50,7 +50,7 @@ import javax.swing.event.ListDataEvent;
 import javax.swing.event.ListDataListener;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
-import org.smallmind.nutsnbolts.awt.ColorUtilities;
+import org.smallmind.swing.ColorUtilities;
 import org.smallmind.nutsnbolts.util.WeakEventListenerList;
 
 public class Banner extends JComponent implements Scrollable, Accessible, MouseListener, ListSelectionListener, ListDataListener {
