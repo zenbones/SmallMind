@@ -1,22 +1,22 @@
 /*
  * Copyright (c) 2007, 2008, 2009, 2010 David Berkman
- * 
+ *
  * This file is part of the SmallMind Code Project.
- * 
+ *
  * The SmallMind Code Project is free software, you can redistribute
  * it and/or modify it under the terms of GNU Affero General Public
  * License as published by the Free Software Foundation, either version 3
  * of the License, or (at your option) any later version.
- * 
+ *
  * The SmallMind Code Project is distributed in the hope that it will
  * be useful, but WITHOUT ANY WARRANTY; without even the implied warranty
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * General Public License for more details.
- * 
+ *
  * You should have received a copy of the the GNU Affero General Public
  * License, along with The SmallMind Code Project. If not, see
  * <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under the GNU Affero GPL version 3 section 7
  * ------------------------------------------------------------------
  * If you modify this Program, or any covered work, by linking or
@@ -33,9 +33,11 @@ import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.Map;
 import java.util.Properties;
+import java.util.TreeMap;
 import org.smallmind.nutsnbolts.resource.Resource;
 import org.smallmind.nutsnbolts.resource.ResourceParser;
 import org.smallmind.nutsnbolts.resource.ResourceTypeFactory;
+import org.smallmind.nutsnbolts.util.DotNotationComparator;
 import org.smallmind.nutsnbolts.util.DotNotationException;
 import org.smallmind.nutsnbolts.util.PropertyExpander;
 import org.smallmind.nutsnbolts.util.PropertyExpanderException;
@@ -55,143 +57,147 @@ import org.springframework.util.StringValueResolver;
 
 public class PropertyPlaceholderConfigurer implements BeanFactoryPostProcessor, BeanFactoryAware, BeanNameAware, Ordered, PriorityOrdered {
 
-   private BeanFactory beanFactory;
-   private KeyDebugger keyDebugger;
-   private LinkedList<String> locationList = new LinkedList<String>();
-   private String beanName;
-   private SystemPropertyMode systemPropertyMode = SystemPropertyMode.FALLBACK;
-   private boolean ignoreResourceNotFound = false;
-   private boolean ignoreUnresolvableProperties = false;
-   private boolean searchSystemEnvironment = true;
-   private int order;
+  private BeanFactory beanFactory;
+  private KeyDebugger keyDebugger;
+  private LinkedList<String> locationList = new LinkedList<String>();
+  private String beanName;
+  private SystemPropertyMode systemPropertyMode = SystemPropertyMode.FALLBACK;
+  private boolean ignoreResourceNotFound = false;
+  private boolean ignoreUnresolvableProperties = false;
+  private boolean searchSystemEnvironment = true;
+  private int order;
 
-   public void setBeanFactory (BeanFactory beanFactory) {
+  public void setBeanFactory (BeanFactory beanFactory) {
 
-      this.beanFactory = beanFactory;
-   }
+    this.beanFactory = beanFactory;
+  }
 
-   public void setBeanName (String beanName) {
+  public void setBeanName (String beanName) {
 
-      this.beanName = beanName;
-   }
+    this.beanName = beanName;
+  }
 
-   public void setOrder (int order) {
+  public void setOrder (int order) {
 
-      this.order = order;
-   }
+    this.order = order;
+  }
 
-   public int getOrder () {
+  public int getOrder () {
 
-      return order;
-   }
+    return order;
+  }
 
-   public void setSystemPropertyMode (SystemPropertyMode systemPropertyMode) {
+  public void setSystemPropertyMode (SystemPropertyMode systemPropertyMode) {
 
-      this.systemPropertyMode = systemPropertyMode;
-   }
+    this.systemPropertyMode = systemPropertyMode;
+  }
 
-   public void setIgnoreResourceNotFound (boolean ignoreResourceNotFound) {
+  public void setIgnoreResourceNotFound (boolean ignoreResourceNotFound) {
 
-      this.ignoreResourceNotFound = ignoreResourceNotFound;
-   }
+    this.ignoreResourceNotFound = ignoreResourceNotFound;
+  }
 
-   public void setIgnoreUnresolvableProperties (boolean ignoreUnresolvableProperties) {
+  public void setIgnoreUnresolvableProperties (boolean ignoreUnresolvableProperties) {
 
-      this.ignoreUnresolvableProperties = ignoreUnresolvableProperties;
-   }
+    this.ignoreUnresolvableProperties = ignoreUnresolvableProperties;
+  }
 
-   public void setSearchSystemEnvironment (boolean searchSystemEnvironment) {
+  public void setSearchSystemEnvironment (boolean searchSystemEnvironment) {
 
-      this.searchSystemEnvironment = searchSystemEnvironment;
-   }
+    this.searchSystemEnvironment = searchSystemEnvironment;
+  }
 
-   public void setLocation (String location) {
+  public void setLocation (String location) {
 
-      locationList.add(location);
-   }
+    locationList.add(location);
+  }
 
-   public void setLocations (String[] locations) {
+  public void setLocations (String[] locations) {
 
-      locationList.addAll(Arrays.asList(locations));
-   }
+    locationList.addAll(Arrays.asList(locations));
+  }
 
-   public void setDebugKeys (String[] debugPatterns)
-      throws DotNotationException {
+  public void setDebugKeys (String[] debugPatterns)
+    throws DotNotationException {
 
-      keyDebugger = new KeyDebugger(debugPatterns);
-   }
+    keyDebugger = new KeyDebugger(debugPatterns);
+  }
 
-   public void postProcessBeanFactory (ConfigurableListableBeanFactory beanFactoryToProcess)
-      throws BeansException {
+  public void postProcessBeanFactory (ConfigurableListableBeanFactory beanFactoryToProcess)
+    throws BeansException {
 
-      Map<String, String> propertyMap;
-      ResourceParser resourceParser;
-      PropertyExpander locationExpander;
-      StringValueResolver valueResolver;
-      BeanDefinitionVisitor beanDefinitionVisitor;
-      BeanDefinition beanDefinition;
+    Map<String, String> propertyMap;
+    ResourceParser resourceParser;
+    PropertyExpander locationExpander;
+    StringValueResolver valueResolver;
+    BeanDefinitionVisitor beanDefinitionVisitor;
+    BeanDefinition beanDefinition;
 
-      resourceParser = new ResourceParser(new ResourceTypeFactory());
-      propertyMap = new HashMap<String, String>();
+    resourceParser = new ResourceParser(new ResourceTypeFactory());
+    propertyMap = new HashMap<String, String>();
+
+    try {
+      locationExpander = new PropertyExpander(true, SystemPropertyMode.OVERRIDE, true);
+    }
+    catch (PropertyExpanderException propertyExpanderException) {
+      throw new RuntimeBeansException(propertyExpanderException);
+    }
+
+    for (String location : locationList) {
+
+      Properties locationProperties = new Properties();
+      Resource locationResource;
+      InputStream inputStream;
 
       try {
-         locationExpander = new PropertyExpander(true, SystemPropertyMode.OVERRIDE, true);
+        locationResource = resourceParser.parseResource(locationExpander.expand(location));
+        if ((inputStream = locationResource.getInputStream()) == null) {
+          throw new IOException("No stream available for resource(" + locationResource + ")");
+        }
+        else {
+          locationProperties.load(inputStream);
+        }
       }
-      catch (PropertyExpanderException propertyExpanderException) {
-         throw new RuntimeBeansException(propertyExpanderException);
-      }
-
-      for (String location : locationList) {
-
-         Properties locationProperties = new Properties();
-         Resource locationResource;
-         InputStream inputStream;
-
-         try {
-            locationResource = resourceParser.parseResource(locationExpander.expand(location));
-            if ((inputStream = locationResource.getInputStream()) == null) {
-               throw new IOException("No stream available for resource(" + locationResource + ")");
-            }
-            else {
-               locationProperties.load(inputStream);
-            }
-         }
-         catch (Exception exception) {
-            if ((!ignoreResourceNotFound) || (!(exception instanceof IOException))) {
-               throw new RuntimeBeansException(exception);
-            }
-         }
-
-         for (Map.Entry propertyEntry : locationProperties.entrySet()) {
-            propertyMap.put(propertyEntry.getKey().toString(), propertyEntry.getValue().toString());
-         }
+      catch (Exception exception) {
+        if ((!ignoreResourceNotFound) || (!(exception instanceof IOException))) {
+          throw new RuntimeBeansException(exception);
+        }
       }
 
-      if ((keyDebugger != null) && keyDebugger.willDebug()) {
-         System.out.println("---------------- Config Properties ---------------");
-         for (Map.Entry<String, String> propertyEntry : propertyMap.entrySet()) {
-            if (keyDebugger.matches(propertyEntry.getKey())) {
-               System.out.println("[" + propertyEntry.getKey() + "=" + propertyEntry.getValue() + "]");
-            }
-         }
-         System.out.println("--------------------------------------------------");
+      for (Map.Entry propertyEntry : locationProperties.entrySet()) {
+        propertyMap.put(propertyEntry.getKey().toString(), propertyEntry.getValue().toString());
       }
+    }
 
-      valueResolver = new PropertyPlaceholderStringValueResolver(propertyMap, ignoreUnresolvableProperties, systemPropertyMode, searchSystemEnvironment);
-      beanDefinitionVisitor = new BeanDefinitionVisitor(valueResolver);
+    if ((keyDebugger != null) && keyDebugger.willDebug()) {
 
-      for (String beanName : beanFactoryToProcess.getBeanDefinitionNames()) {
-         if ((!(beanName.equals(this.beanName)) && beanFactoryToProcess.equals(this.beanFactory))) {
-            beanDefinition = beanFactoryToProcess.getBeanDefinition(beanName);
-            try {
-               beanDefinitionVisitor.visitBeanDefinition(beanDefinition);
-            }
-            catch (BeanDefinitionStoreException beanDefinitionStoreException) {
-               throw new BeanDefinitionStoreException(beanDefinition.getResourceDescription(), beanName, beanDefinitionStoreException.getMessage());
-            }
-         }
+      TreeMap<String, String> orderedMap = new TreeMap<String, String>(new DotNotationComparator());
+
+      orderedMap.putAll(propertyMap);
+      System.out.println("---------------- Config Properties ---------------");
+      for (Map.Entry<String, String> orderedEntry : orderedMap.entrySet()) {
+        if (keyDebugger.matches(orderedEntry.getKey())) {
+          System.out.println("[" + orderedEntry.getKey() + "=" + orderedEntry.getValue() + "]");
+        }
       }
+      System.out.println("--------------------------------------------------");
+    }
 
-      beanFactoryToProcess.resolveAliases(valueResolver);
-   }
+    valueResolver = new PropertyPlaceholderStringValueResolver(propertyMap, ignoreUnresolvableProperties, systemPropertyMode, searchSystemEnvironment);
+    beanDefinitionVisitor = new BeanDefinitionVisitor(valueResolver);
+
+    for (String beanName : beanFactoryToProcess.getBeanDefinitionNames()) {
+      if ((!(beanName.equals(this.beanName)) && beanFactoryToProcess.equals(this.beanFactory))) {
+        beanDefinition = beanFactoryToProcess.getBeanDefinition(beanName);
+        try {
+          beanDefinitionVisitor.visitBeanDefinition(beanDefinition);
+        }
+        catch (BeanDefinitionStoreException beanDefinitionStoreException) {
+          throw new BeanDefinitionStoreException(beanDefinition.getResourceDescription(), beanName, beanDefinitionStoreException.getMessage());
+        }
+      }
+    }
+
+    beanFactoryToProcess.resolveAliases(valueResolver);
+  }
 }

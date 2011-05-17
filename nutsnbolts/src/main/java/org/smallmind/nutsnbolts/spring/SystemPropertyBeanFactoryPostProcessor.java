@@ -1,22 +1,22 @@
 /*
  * Copyright (c) 2007, 2008, 2009, 2010 David Berkman
- * 
+ *
  * This file is part of the SmallMind Code Project.
- * 
+ *
  * The SmallMind Code Project is free software, you can redistribute
  * it and/or modify it under the terms of GNU Affero General Public
  * License as published by the Free Software Foundation, either version 3
  * of the License, or (at your option) any later version.
- * 
+ *
  * The SmallMind Code Project is distributed in the hope that it will
  * be useful, but WITHOUT ANY WARRANTY; without even the implied warranty
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * General Public License for more details.
- * 
+ *
  * You should have received a copy of the the GNU Affero General Public
  * License, along with The SmallMind Code Project. If not, see
  * <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under the GNU Affero GPL version 3 section 7
  * ------------------------------------------------------------------
  * If you modify this Program, or any covered work, by linking or
@@ -28,6 +28,8 @@ package org.smallmind.nutsnbolts.spring;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.TreeMap;
+import org.smallmind.nutsnbolts.util.AlphaNumericComparator;
 import org.smallmind.nutsnbolts.util.DotNotationException;
 import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.config.BeanFactoryPostProcessor;
@@ -37,62 +39,64 @@ import org.springframework.core.PriorityOrdered;
 
 public class SystemPropertyBeanFactoryPostProcessor implements BeanFactoryPostProcessor, Ordered, PriorityOrdered {
 
-   private HashMap<String, String> propertyMap;
-   private KeyDebugger keyDebugger;
-   private boolean override;
-   private int order;
+  private HashMap<String, String> propertyMap;
+  private KeyDebugger keyDebugger;
+  private boolean override;
+  private int order;
 
-   public SystemPropertyBeanFactoryPostProcessor () {
+  public SystemPropertyBeanFactoryPostProcessor () {
 
-      propertyMap = new HashMap<String, String>();
-      override = false;
-   }
+    propertyMap = new HashMap<String, String>();
+    override = false;
+  }
 
-   public void setOrder (int order) {
+  public void setOrder (int order) {
 
-      this.order = order;
-   }
+    this.order = order;
+  }
 
-   public int getOrder () {
+  public int getOrder () {
 
-      return order;
-   }
+    return order;
+  }
 
-   public void setOverride (boolean override) {
+  public void setOverride (boolean override) {
 
-      this.override = override;
-   }
+    this.override = override;
+  }
 
-   public void setPropertyMap (HashMap<String, String> propertyMap) {
+  public void setPropertyMap (HashMap<String, String> propertyMap) {
 
-      this.propertyMap.putAll(propertyMap);
-   }
+    this.propertyMap.putAll(propertyMap);
+  }
 
-   public void setDebugKeys (String[] debugPatterns)
-      throws DotNotationException {
+  public void setDebugKeys (String[] debugPatterns)
+    throws DotNotationException {
 
-      keyDebugger = new KeyDebugger(debugPatterns);
-   }
+    keyDebugger = new KeyDebugger(debugPatterns);
+  }
 
-   public void postProcessBeanFactory (ConfigurableListableBeanFactory configurableListableBeanFactory)
-      throws BeansException {
+  public void postProcessBeanFactory (ConfigurableListableBeanFactory configurableListableBeanFactory)
+    throws BeansException {
 
-      if ((keyDebugger != null) && keyDebugger.willDebug()) {
-         System.out.println("---------------- System Properties ---------------");
-         System.out.println("[user.home=" + System.getProperty("user.home") + "]");
+    TreeMap<String, String> orderedMap = new TreeMap<String, String>(new AlphaNumericComparator<String>());
+
+    for (Map.Entry<String, String> propertyEntry : propertyMap.entrySet()) {
+      if (override || ((System.getProperty(propertyEntry.getKey()) == null) && (System.getenv(propertyEntry.getKey()) == null))) {
+        System.setProperty(propertyEntry.getKey(), propertyEntry.getValue());
+        orderedMap.put(propertyEntry.getKey(), propertyEntry.getValue());
       }
+    }
 
-      for (Map.Entry<String, String> propertyEntry : propertyMap.entrySet()) {
-         if (override || ((System.getProperty(propertyEntry.getKey()) == null) && (System.getenv(propertyEntry.getKey()) == null))) {
-            System.setProperty(propertyEntry.getKey(), propertyEntry.getValue());
-            if ((keyDebugger != null) && keyDebugger.willDebug() && keyDebugger.matches(propertyEntry.getKey())) {
-               System.out.println("[" + propertyEntry.getKey() + "=" + propertyEntry.getValue() + "]");
-            }
-         }
+    if ((keyDebugger != null) && keyDebugger.willDebug()) {
+      orderedMap.put("user.home", System.getProperty("user.home"));
+      System.out.println("---------------- System Properties ---------------");
+      for (Map.Entry<String, String> orderedEntry : orderedMap.entrySet()) {
+        if (keyDebugger.matches(orderedEntry.getKey())) {
+          System.out.println("[" + orderedEntry.getKey() + "=" + orderedEntry.getValue() + "]");
+        }
       }
-
-      if ((keyDebugger != null) && keyDebugger.willDebug()) {
-         System.out.println("--------------------------------------------------");
-      }
-   }
+      System.out.println("--------------------------------------------------");
+    }
+  }
 }
