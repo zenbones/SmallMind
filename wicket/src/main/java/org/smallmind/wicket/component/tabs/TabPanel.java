@@ -1,22 +1,22 @@
 /*
  * Copyright (c) 2007, 2008, 2009, 2010 David Berkman
- * 
+ *
  * This file is part of the SmallMind Code Project.
- * 
+ *
  * The SmallMind Code Project is free software, you can redistribute
  * it and/or modify it under the terms of GNU Affero General Public
  * License as published by the Free Software Foundation, either version 3
  * of the License, or (at your option) any later version.
- * 
+ *
  * The SmallMind Code Project is distributed in the hope that it will
  * be useful, but WITHOUT ANY WARRANTY; without even the implied warranty
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * General Public License for more details.
- * 
+ *
  * You should have received a copy of the the GNU Affero General Public
  * License, along with The SmallMind Code Project. If not, see
  * <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under the GNU Affero GPL version 3 section 7
  * ------------------------------------------------------------------
  * If you modify this Program, or any covered work, by linking or
@@ -30,7 +30,6 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Properties;
 import org.apache.wicket.ajax.AjaxRequestTarget;
-import org.apache.wicket.behavior.HeaderContributor;
 import org.apache.wicket.extensions.markup.html.tabs.ITab;
 import org.apache.wicket.markup.html.WebMarkupContainer;
 import org.apache.wicket.markup.html.list.ListItem;
@@ -42,85 +41,83 @@ import org.smallmind.wicket.skin.SkinManager;
 
 public class TabPanel extends Panel {
 
-   private SelectionChangedCallback selectionChangedCallback;
-   private LinkedList<Tab> tabList;
-   private WebMarkupContainer tabContents;
-   private int selectedIndex = 0;
+  private SelectionChangedCallback selectionChangedCallback;
+  private LinkedList<Tab> tabList;
+  private WebMarkupContainer tabContents;
+  private int selectedIndex = 0;
 
-   public TabPanel (String id, SkinManager skinManager) {
+  public TabPanel (String id, SkinManager skinManager) {
 
-      this(id, 0, skinManager);
-   }
+    this(id, 0, skinManager);
+  }
 
-   public TabPanel (String id, int selectedIndex, SkinManager skinManager) {
+  public TabPanel (String id, int selectedIndex, SkinManager skinManager) {
 
-      super(id);
+    super(id);
 
-      Properties cssProperties;
+    Properties cssProperties;
 
-      this.selectedIndex = selectedIndex;
+    this.selectedIndex = selectedIndex;
 
-      tabList = new LinkedList<Tab>();
+    tabList = new LinkedList<Tab>();
 
-      setOutputMarkupId(true);
+    setOutputMarkupId(true);
 
-      add(new TabListView("tabCell", tabList));
+    add(new TabListView("tabCell", tabList));
 
-      tabContents = new WebMarkupContainer("tabContents");
-      tabContents.setOutputMarkupId(true);
-      add(tabContents);
+    tabContents = new WebMarkupContainer("tabContents");
+    tabContents.setOutputMarkupId(true);
+    add(tabContents);
 
-      add(HeaderContributor.forJavaScript(Tab.class, "Tab.js"));
+    cssProperties = skinManager.getProperties((WebApplication)getApplication(), TabPanel.class);
+    cssProperties.put("contextpath", ((WebApplication)getApplication()).getServletContext().getContextPath());
+    add(new CssBehavior(Tab.class, "Tab.css", cssProperties));
+  }
 
-      cssProperties = skinManager.getProperties((WebApplication)getApplication(), TabPanel.class);
-      cssProperties.put("contextpath", ((WebApplication)getApplication()).getServletContext().getContextPath());
-      add(new CssBehavior(Tab.class, "Tab.css", cssProperties));
-   }
+  public synchronized void setSelectionChangedCallback (SelectionChangedCallback selectionChangedCallback) {
 
-   public synchronized void setSelectionChangedCallback (SelectionChangedCallback selectionChangedCallback) {
+    this.selectionChangedCallback = selectionChangedCallback;
+  }
 
-      this.selectionChangedCallback = selectionChangedCallback;
-   }
+  public synchronized void addTab (ITab tab) {
 
-   public synchronized void addTab (ITab tab) {
+    if (tabList.size() == selectedIndex) {
+      tabContents.add(tab.getPanel("tabPanel"));
+    }
 
-      if (tabList.size() == selectedIndex) {
-         tabContents.add(tab.getPanel("tabPanel"));
-      }
+    tabList.add(new Tab("tab", this, tab, tabList.size(), tabList.size() == selectedIndex));
+  }
 
-      tabList.add(new Tab("tab", this, tab, tabList.size(), tabList.size() == selectedIndex));
-   }
+  public synchronized void setSelectedIndex (final AjaxRequestTarget target, int index) {
 
-   public synchronized void setSelectedIndex (final AjaxRequestTarget target, int index) {
+    Tab selectedTab;
 
-      Tab selectedTab;
+    target.addComponent(tabList.get(selectedIndex).setSelected(false));
+    selectedTab = tabList.get(index).setSelected(true);
+    tabContents.replace(selectedTab.getPanel("tabPanel"));
 
-      target.addComponent(tabList.get(selectedIndex).setSelected(false));
-      selectedTab = tabList.get(index).setSelected(true);
-      tabContents.replace(selectedTab.getPanel("tabPanel"));
+    target.addComponent(tabContents);
+    target.addComponent(selectedTab);
 
-      target.addComponent(tabContents);
-      target.addComponent(selectedTab);
+    selectedIndex = index;
 
-      selectedIndex = index;
+    if (selectionChangedCallback != null) {
+      selectionChangedCallback.onSelectionChanged(target, index);
+    }
+  }
 
-      if (selectionChangedCallback != null) {
-         selectionChangedCallback.onSelectionChanged(target, index);
-      }
-   }
+  private class TabListView extends ListView {
 
-   private class TabListView extends ListView {
+    public TabListView (String id, List<Tab> tabList) {
 
-      public TabListView (String id, List<Tab> tabList) {
+      super(id, tabList);
 
-         super(id, tabList);
+      setReuseItems(true);
+    }
 
-         setReuseItems(true);
-      }
+    protected void populateItem (ListItem listItem) {
 
-      protected void populateItem (ListItem listItem) {
-
-         listItem.add((Tab)listItem.getModelObject());
-      }
-   }
+      listItem.add((Tab)listItem.getModelObject());
+    }
+  }
 }
