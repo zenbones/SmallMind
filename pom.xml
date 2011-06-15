@@ -7,7 +7,7 @@
   <packaging>pom</packaging>
   <name>Parent</name>
   <description>Parent POM</description>
-  <url>http://www.smallmind.org</url>
+  <url>http://github.com/zenbones/SmallMind</url>
   <licenses>
     <license>
       <name>GNU Affero General Public License, Version 3</name>
