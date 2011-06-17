@@ -94,7 +94,7 @@ public class DirectoryTableModel implements TableModel {
   @Override
   public Object getValueAt (int rowIndex, int columnIndex) {
 
-    return (columnIndex < pathList.size()) ? pathList.get(columnIndex) : null;
+    return ((!pathList.isEmpty()) && (columnIndex < pathList.size())) ? pathList.get(columnIndex) : null;
   }
 
   @Override
