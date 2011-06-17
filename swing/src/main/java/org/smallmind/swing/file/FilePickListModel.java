@@ -81,7 +81,7 @@ public class FilePickListModel implements ListModel {
       Arrays.sort(files, FILE_COMPARATOR);
     }
 
-    fireContentsChanges(new ListDataEvent(this, ListDataEvent.CONTENTS_CHANGED, 0, Math.max((files == null) ? 0 : files.length, prevSize)));
+    fireContentsChanged(new ListDataEvent(this, ListDataEvent.CONTENTS_CHANGED, 0, Math.max((files == null) ? 0 : files.length, prevSize)));
   }
 
   @Override
@@ -96,7 +96,7 @@ public class FilePickListModel implements ListModel {
     return (files == null) ? -1 : files[index];
   }
 
-  private synchronized void fireContentsChanges (ListDataEvent listDataEvent) {
+  private synchronized void fireContentsChanged (ListDataEvent listDataEvent) {
 
     for (ListDataListener listDataListener : listenerList) {
       listDataListener.contentsChanged(listDataEvent);

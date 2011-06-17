@@ -50,12 +50,14 @@ import javax.swing.JTable;
 import javax.swing.JTextField;
 import javax.swing.LayoutStyle;
 import javax.swing.ListSelectionModel;
+import javax.swing.event.ListDataEvent;
+import javax.swing.event.ListDataListener;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import javax.swing.filechooser.FileFilter;
-import org.smallmind.swing.ColorUtilities;
 import org.smallmind.nutsnbolts.util.StringUtilities;
 import org.smallmind.nutsnbolts.util.WeakEventListenerList;
+import org.smallmind.swing.ColorUtilities;
 import org.smallmind.swing.SmallMindGrayFilter;
 import org.smallmind.swing.dialog.DialogState;
 import org.smallmind.swing.dialog.OptionButton;
@@ -65,7 +67,7 @@ import org.smallmind.swing.dialog.WarningDialog;
 import org.smallmind.swing.dialog.YesNoDialog;
 import org.smallmind.swing.panel.OptionPanel;
 
-public class FileChooserPanel extends JPanel implements ComponentListener, MouseListener, KeyListener, ActionListener, ListSelectionListener {
+public class FileChooserPanel extends JPanel implements ComponentListener, MouseListener, KeyListener, ActionListener, ListSelectionListener, ListDataListener {
 
   private static final ImageIcon NEW_FOLDER_ICON = new ImageIcon(ClassLoader.getSystemResource("org/smallmind/swing/system/folder_new_16.png"));
   private static final ImageIcon EDIT_FOLDER_ICON = new ImageIcon(ClassLoader.getSystemResource("org/smallmind/swing/system/folder_edit_16.png"));
@@ -173,6 +175,8 @@ public class FileChooserPanel extends JPanel implements ComponentListener, Mouse
     filePickList.addKeyListener(this);
     filePickList.addListSelectionListener(this);
 
+    filePickListModel.addListDataListener(this);
+
     fileNameTextField = new JTextField();
 
     fileLabel = new JLabel("File:");
@@ -247,6 +251,24 @@ public class FileChooserPanel extends JPanel implements ComponentListener, Mouse
     }
     else {
       fireFileChosen(new FileChoiceEvent(this, chosenFile));
+    }
+  }
+
+  @Override
+  public void intervalAdded (ListDataEvent listDataEvent) {
+
+  }
+
+  @Override
+  public void intervalRemoved (ListDataEvent listDataEvent) {
+
+  }
+
+  @Override
+  public void contentsChanged (ListDataEvent listDataEvent) {
+
+    if (filePickListModel.getSize() > 0) {
+      filePickList.scrollRectToVisible(filePickList.getCellBounds(0, 0));
     }
   }
 
