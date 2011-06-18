@@ -33,6 +33,8 @@ import org.springframework.context.support.FileSystemXmlApplicationContext;
 
 public class ExtensionLoader<E extends ExtensionInstance> {
 
+  private E extensionInstance;
+
   public ExtensionLoader (Class<E> extensionInstanceClass, String springFileName)
     throws ExtensionLoaderException {
 
@@ -41,7 +43,6 @@ public class ExtensionLoader<E extends ExtensionInstance> {
     if (extensionFile.exists()) {
 
       FileSystemXmlApplicationContext applicationContext = new FileSystemXmlApplicationContext(extensionFile.getAbsolutePath());
-      E extensionInstance;
 
       try {
         extensionInstance = applicationContext.getBean(extensionInstanceClass);
@@ -64,5 +65,10 @@ public class ExtensionLoader<E extends ExtensionInstance> {
         Thread.currentThread().setContextClassLoader(new GatingClassLoader(Thread.currentThread().getContextClassLoader(), -1, new ClasspathClassGate(normalizedPathComponents)));
       }
     }
+  }
+
+  private E getExtensionInstance () {
+
+    return extensionInstance;
   }
 }
