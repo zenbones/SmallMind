@@ -41,13 +41,13 @@ public class MenuHandler implements ActionListener, MenuActionProvider {
   private MenuModel menuModel;
   private MenuDelegateFactory menuDelegateFactory;
 
-  public MenuHandler (JFrame parentFrame, MenuDelegateFactory menuDelegateFactory)
+  public MenuHandler (JFrame parentFrame, MenuDelegateFactory menuDelegateFactory, InputSource configSource)
     throws IOException, SAXException, ParserConfigurationException {
 
     this.parentFrame = parentFrame;
     this.menuDelegateFactory = menuDelegateFactory;
 
-    menuModel = MenuXmlParser.parse(new InputSource(Thread.currentThread().getContextClassLoader().getResourceAsStream("com/codeasylum/stress/ui/menu.xml")), this);
+    menuModel = MenuXmlParser.parse(configSource, this);
     parentFrame.setJMenuBar(menuModel.getMenuBar(0));
   }
 
