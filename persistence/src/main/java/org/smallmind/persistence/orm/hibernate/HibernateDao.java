@@ -128,6 +128,28 @@ public abstract class HibernateDao<I extends Serializable & Comparable<I>, D ext
     return Collections.checkedList(proxySession.getSession().createCriteria(getManagedClass()).list(), getManagedClass());
   }
 
+  public List<D> list (int fetchSize) {
+
+    return Collections.checkedList(proxySession.getSession().createCriteria(getManagedClass()).setFetchSize(fetchSize).list(), getManagedClass());
+  }
+
+  public List<D> list (final I greaterThan, final int fetchSize) {
+
+    return listByCriteria(new CriteriaDetails() {
+
+      @Override
+      public Criteria completeCriteria (Criteria criteria) {
+
+        return criteria.add(Restrictions.gt("id", greaterThan)).addOrder(Order.asc("id")).setFetchSize(fetchSize);
+      }
+    });
+  }
+
+  public Iterable<D> scroll () {
+
+    return new ScrollIterator<D>(proxySession.getSession().createCriteria(getManagedClass()).scroll(ScrollMode.SCROLL_INSENSITIVE), getManagedClass());
+  }
+
   public Iterable<D> scroll (int fetchSize) {
 
     return new ScrollIterator<D>(proxySession.getSession().createCriteria(getManagedClass()).setFetchSize(fetchSize).scroll(ScrollMode.SCROLL_INSENSITIVE), getManagedClass());

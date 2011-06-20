@@ -55,6 +55,12 @@ public interface ORMDao<I extends Serializable & Comparable<I>, D extends Durabl
 
   public abstract List<D> list ();
 
+  public abstract List<D> list (int fetchSize);
+
+  public abstract List<D> list (I greaterThan, int fetchSize);
+
+  public abstract Iterable<D> scroll ();
+
   public abstract Iterable<D> scroll (int fetchSize);
 
   public abstract Iterable<D> scrollById (I greaterThan, int fetchSize);
