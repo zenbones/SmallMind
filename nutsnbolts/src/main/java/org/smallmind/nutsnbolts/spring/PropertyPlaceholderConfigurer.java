@@ -1,22 +1,22 @@
 /*
  * Copyright (c) 2007, 2008, 2009, 2010, 2011 David Berkman
- * 
+ *
  * This file is part of the SmallMind Code Project.
- * 
+ *
  * The SmallMind Code Project is free software, you can redistribute
  * it and/or modify it under the terms of GNU Affero General Public
  * License as published by the Free Software Foundation, either version 3
  * of the License, or (at your option) any later version.
- * 
+ *
  * The SmallMind Code Project is distributed in the hope that it will
  * be useful, but WITHOUT ANY WARRANTY; without even the implied warranty
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * General Public License for more details.
- * 
+ *
  * You should have received a copy of the the GNU Affero General Public
  * License, along with The SmallMind Code Project. If not, see
  * <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under the GNU Affero GPL version 3 section 7
  * ------------------------------------------------------------------
  * If you modify this Program, or any covered work, by linking or
@@ -29,10 +29,12 @@ package org.smallmind.nutsnbolts.spring;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.Map;
 import java.util.Properties;
+import java.util.SortedMap;
 import java.util.TreeMap;
 import org.smallmind.nutsnbolts.resource.Resource;
 import org.smallmind.nutsnbolts.resource.ResourceParser;
@@ -57,6 +59,8 @@ import org.springframework.util.StringValueResolver;
 
 public class PropertyPlaceholderConfigurer implements BeanFactoryPostProcessor, BeanFactoryAware, BeanNameAware, Ordered, PriorityOrdered {
 
+  private final TreeMap<String, String> debugMap = new TreeMap<String, String>(new DotNotationComparator());
+
   private BeanFactory beanFactory;
   private KeyDebugger keyDebugger;
   private LinkedList<String> locationList = new LinkedList<String>();
@@ -66,6 +70,11 @@ public class PropertyPlaceholderConfigurer implements BeanFactoryPostProcessor, 
   private boolean ignoreUnresolvableProperties = false;
   private boolean searchSystemEnvironment = true;
   private int order;
+
+  public SortedMap<String, String> getDebugMap () {
+
+    return Collections.unmodifiableSortedMap(debugMap);
+  }
 
   public void setBeanFactory (BeanFactory beanFactory) {
 
@@ -169,23 +178,22 @@ public class PropertyPlaceholderConfigurer implements BeanFactoryPostProcessor, 
       }
     }
 
+    valueResolver = new PropertyPlaceholderStringValueResolver(propertyMap, ignoreUnresolvableProperties, systemPropertyMode, searchSystemEnvironment);
+
     if ((keyDebugger != null) && keyDebugger.willDebug()) {
 
-      TreeMap<String, String> orderedMap = new TreeMap<String, String>(new DotNotationComparator());
-      StringValueResolver orderedResolver;
+      String interpolatedValue;
 
-      orderedMap.putAll(propertyMap);
-      orderedResolver = new PropertyPlaceholderStringValueResolver(orderedMap, ignoreUnresolvableProperties, systemPropertyMode, searchSystemEnvironment);
       System.out.println("---------------- Config Properties ---------------");
-      for (Map.Entry<String, String> orderedEntry : orderedMap.entrySet()) {
-        if (keyDebugger.matches(orderedEntry.getKey())) {
-          System.out.println("[" + orderedEntry.getKey() + "=" + orderedResolver.resolveStringValue(orderedEntry.getValue()) + "]");
+      for (Map.Entry<String, String> propertyEntry : propertyMap.entrySet()) {
+        if (keyDebugger.matches(propertyEntry.getKey())) {
+          debugMap.put(propertyEntry.getKey(), interpolatedValue = valueResolver.resolveStringValue(propertyEntry.getValue()));
+          System.out.println("[" + propertyEntry.getKey() + "=" + interpolatedValue + "]");
         }
       }
       System.out.println("--------------------------------------------------");
     }
 
-    valueResolver = new PropertyPlaceholderStringValueResolver(propertyMap, ignoreUnresolvableProperties, systemPropertyMode, searchSystemEnvironment);
     beanDefinitionVisitor = new BeanDefinitionVisitor(valueResolver);
 
     for (String beanName : beanFactoryToProcess.getBeanDefinitionNames()) {
