@@ -161,7 +161,7 @@ public class FormulaTextField extends JPanel implements ActionListener, ItemList
     add(expandedPanel, "area");
 
     setMinimumSize(new Dimension(144, ComponentUtilities.getMinimumHeight(collapsedTextField)));
-    setPreferredSize(new Dimension(ComponentUtilities.getPreferredWidth(collapsedTextField) + 44, ComponentUtilities.getPreferredHeight(collapsedTextField)));
+    setPreferredSize(new Dimension(Math.min(ComponentUtilities.getPreferredWidth(collapsedTextField) + 44, Short.MAX_VALUE), ComponentUtilities.getPreferredHeight(collapsedTextField)));
     setMaximumSize(new Dimension(Short.MAX_VALUE, ComponentUtilities.getMaximumHeight(collapsedTextField)));
 
     cardState = CardState.COLLAPSED;
