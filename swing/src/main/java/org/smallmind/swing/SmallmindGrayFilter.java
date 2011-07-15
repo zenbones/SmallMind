@@ -37,10 +37,10 @@ public class SmallMindGrayFilter extends RGBImageFilter {
   private boolean brighter;
   private int percent;
 
-  public static Image createDisabledImage (Image i) {
+  public static Image createDisabledImage (Image image) {
 
     SmallMindGrayFilter filter = new SmallMindGrayFilter(true, 50);
-    ImageProducer prod = new FilteredImageSource(i.getSource(), filter);
+    ImageProducer prod = new FilteredImageSource(image.getSource(), filter);
 
     return Toolkit.getDefaultToolkit().createImage(prod);
   }
@@ -50,14 +50,14 @@ public class SmallMindGrayFilter extends RGBImageFilter {
    * grayscale image. Used by buttons to create disabled ("grayed out")
    * button images.
    *
-   * @param b a boolean -- true if the pixels should be brightened
-   * @param p an int in the range 0..100 that determines the percentage
+   * @param brighter a boolean -- true if the pixels should be brightened
+   * @param percent an int in the range 0..100 that determines the percentage
    *          of gray, where 100 is the darkest gray, and 0 is the lightest
    */
-  public SmallMindGrayFilter (boolean b, int p) {
+  public SmallMindGrayFilter (boolean brighter, int percent) {
 
-    brighter = b;
-    percent = p;
+    this.brighter = brighter;
+    this.percent = percent;
 
     // canFilterIndexColorModel indicates whether or not it is acceptable
     // to apply the color filtering of the filterRGB method to the color

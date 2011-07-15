@@ -181,15 +181,15 @@ public class PropertyPlaceholderConfigurer implements BeanFactoryPostProcessor, 
     valueResolver = new PropertyPlaceholderStringValueResolver(propertyMap, ignoreUnresolvableProperties, systemPropertyMode, searchSystemEnvironment);
 
     if ((keyDebugger != null) && keyDebugger.willDebug()) {
-
-      String interpolatedValue;
-
-      System.out.println("---------------- Config Properties ---------------");
       for (Map.Entry<String, String> propertyEntry : propertyMap.entrySet()) {
         if (keyDebugger.matches(propertyEntry.getKey())) {
-          debugMap.put(propertyEntry.getKey(), interpolatedValue = valueResolver.resolveStringValue(propertyEntry.getValue()));
-          System.out.println("[" + propertyEntry.getKey() + "=" + interpolatedValue + "]");
+          debugMap.put(propertyEntry.getKey(), valueResolver.resolveStringValue(propertyEntry.getValue()));
         }
+      }
+
+      System.out.println("---------------- Config Properties ---------------");
+      for (Map.Entry<String, String> debugEntry : debugMap.entrySet()) {
+        System.out.println("[" + debugEntry.getKey() + "=" + debugEntry.getValue() + "]");
       }
       System.out.println("--------------------------------------------------");
     }
