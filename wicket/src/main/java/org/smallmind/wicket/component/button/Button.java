@@ -28,65 +28,65 @@ package org.smallmind.wicket.component.button;
 
 import java.util.Properties;
 import org.apache.wicket.AttributeModifier;
-import org.apache.wicket.behavior.IBehavior;
+import org.apache.wicket.behavior.Behavior;
 import org.apache.wicket.markup.html.WebMarkupContainer;
 import org.apache.wicket.markup.html.basic.Label;
 import org.apache.wicket.markup.html.panel.Panel;
 import org.apache.wicket.model.AbstractReadOnlyModel;
 import org.apache.wicket.model.IModel;
 import org.apache.wicket.protocol.http.WebApplication;
-import org.apache.wicket.util.template.TextTemplateHeaderContributor;
 import org.smallmind.wicket.behavior.CssBehavior;
+import org.smallmind.wicket.behavior.JavaScriptBehavior;
 import org.smallmind.wicket.skin.SkinManager;
 
 public class Button extends Panel {
 
-   private WebMarkupContainer buttonSkin;
+  private WebMarkupContainer buttonSkin;
 
-   public Button (String id, IModel labelModel, SkinManager skinManager) {
+  public Button (String id, IModel labelModel, SkinManager skinManager) {
 
-      super(id);
+    super(id);
 
-      Properties cssProperties;
+    Properties cssProperties;
 
-      setOutputMarkupId(true);
+    setOutputMarkupId(true);
 
-      add(buttonSkin = new WebMarkupContainer("buttonSkin"));
-      buttonSkin.setOutputMarkupId(true);
-      buttonSkin.add(new Label("buttonText", labelModel));
-      buttonSkin.add(new AttributeModifier("class", true, new ButtonClassModel()));
-      buttonSkin.add(new AttributeModifier("incapacitated", true, new ButtonDisabledModel()));
+    add(buttonSkin = new WebMarkupContainer("buttonSkin"));
+    buttonSkin.setOutputMarkupId(true);
+    buttonSkin.add(new Label("buttonText", labelModel));
+    buttonSkin.add(new AttributeModifier("class", new ButtonClassModel()));
+    buttonSkin.add(new AttributeModifier("incapacitated", new ButtonDisabledModel()));
 
-      add(TextTemplateHeaderContributor.forJavaScript(Button.class, "Button.js", null));
+    add(new JavaScriptBehavior(Button.class, "Button.js", null));
 
-      cssProperties = skinManager.getProperties((WebApplication)getApplication(), Button.class);
-      cssProperties.put("contextpath", ((WebApplication)getApplication()).getServletContext().getContextPath());
-      add(new CssBehavior(Button.class, "Button.css", cssProperties));
-   }
+    cssProperties = skinManager.getProperties((WebApplication)getApplication(), Button.class);
+    cssProperties.put("contextpath", ((WebApplication)getApplication()).getServletContext().getContextPath());
+    add(new CssBehavior(Button.class, "Button.css", cssProperties));
+  }
 
-   public String getInnerMarkupId () {
+  public String getInnerMarkupId () {
 
-      return buttonSkin.getMarkupId();
-   }
+    return buttonSkin.getMarkupId();
+  }
 
-   protected void addButtonBehavior (IBehavior behavior) {
+  protected void addButtonBehavior (Behavior behavior) {
 
-      buttonSkin.add(behavior);
-   }
+    buttonSkin.add(behavior);
+  }
 
-   private class ButtonClassModel extends AbstractReadOnlyModel {
+  private class ButtonClassModel extends AbstractReadOnlyModel {
 
-      public Object getObject () {
+    public Object getObject () {
 
-         return (!isEnabled()) ? "buttondisabled" : "buttonstandard";
-      }
-   }
+      return (!isEnabled()) ? "buttondisabled" : "buttonstandard";
+    }
+  }
 
-   private class ButtonDisabledModel extends AbstractReadOnlyModel {
+  private class ButtonDisabledModel extends AbstractReadOnlyModel {
 
-      public Object getObject () {
+    public Object getObject () {
 
-         return (!isEnabled()) ? "true" : "false";
-      }
-   }
+      return (!isEnabled()) ? "true" : "false";
+    }
+  }
 }

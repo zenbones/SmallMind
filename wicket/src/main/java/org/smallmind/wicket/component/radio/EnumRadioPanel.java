@@ -30,51 +30,53 @@ import org.apache.wicket.ajax.AjaxRequestTarget;
 import org.apache.wicket.markup.html.basic.Label;
 import org.apache.wicket.markup.html.form.RadioGroup;
 import org.apache.wicket.markup.html.list.Loop;
+import org.apache.wicket.markup.html.list.LoopItem;
 import org.apache.wicket.markup.html.panel.Panel;
 import org.apache.wicket.model.Model;
 
 public abstract class EnumRadioPanel<E extends Enum> extends Panel {
 
-   private E selection;
+  private E selection;
 
-   public EnumRadioPanel (String id, Class<E> enumClass) {
+  public EnumRadioPanel (String id, Class<E> enumClass) {
 
-      this(id, enumClass, null);
-   }
+    this(id, enumClass, null);
+  }
 
-   public EnumRadioPanel (String id, Class<E> enumClass, E selection) {
+  public EnumRadioPanel (String id, Class<E> enumClass, E selection) {
 
-      super(id);
+    super(id);
 
-      final E[] enumerations = enumClass.getEnumConstants();
+    final E[] enumerations = enumClass.getEnumConstants();
 
-      RadioGroup<E> radioGroup;
+    RadioGroup<E> radioGroup;
 
-      this.selection = selection;
+    this.selection = selection;
 
-      add(radioGroup = new RadioGroup<E>("enumRadioGroup", new Model<E>(selection)));
-      radioGroup.add(new Loop("enumRadioLoop", new Model<Integer>(enumerations.length)) {
+    add(radioGroup = new RadioGroup<E>("enumRadioGroup", new Model<E>(selection)));
+    radioGroup.add(new Loop("enumRadioLoop", new Model<Integer>(enumerations.length)) {
 
-         @Override
-         protected void populateItem (LoopItem item) {
-            item.add(new Label("enumRadioLabel", new Model<String>(enumerations[item.getIteration()].toString())));
-            item.add(new AjaxRadio<E>("enumRadioButton", new Model<E>(enumerations[item.getIteration()])) {
+      @Override
+      protected void populateItem (LoopItem item) {
 
-               @Override
-               public void onClick (E selection, AjaxRequestTarget target) {
+        item.add(new Label("enumRadioLabel", new Model<String>(enumerations[item.getIndex()].toString())));
+        item.add(new AjaxRadio<E>("enumRadioButton", new Model<E>(enumerations[item.getIndex()])) {
 
-                  EnumRadioPanel.this.selection = selection;
-                  EnumRadioPanel.this.onClick(selection, target);
-               }
-            });
-         }
-      });
-   }
+          @Override
+          public void onClick (E selection, AjaxRequestTarget target) {
 
-   public E getSelection () {
+            EnumRadioPanel.this.selection = selection;
+            EnumRadioPanel.this.onClick(selection, target);
+          }
+        });
+      }
+    });
+  }
 
-      return selection;
-   }
+  public E getSelection () {
 
-   public abstract void onClick (E selection, AjaxRequestTarget target);
+    return selection;
+  }
+
+  public abstract void onClick (E selection, AjaxRequestTarget target);
 }

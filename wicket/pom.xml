@@ -4,7 +4,7 @@
   <parent>
     <groupId>org.smallmind</groupId>
     <artifactId>smallmind</artifactId>
-    <version>1.1.15</version>
+    <version>1.2.0</version>
   </parent>
   <artifactId>smallmind-wicket</artifactId>
   <name>Wicket</name>
@@ -38,7 +38,17 @@
     </dependency>
     <dependency>
       <groupId>org.apache.wicket</groupId>
-      <artifactId>wicket</artifactId>
+      <artifactId>wicket-core</artifactId>
+      <scope>compile</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.wicket</groupId>
+      <artifactId>wicket-util</artifactId>
+      <scope>compile</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.wicket</groupId>
+      <artifactId>wicket-request</artifactId>
       <scope>compile</scope>
     </dependency>
     <dependency>

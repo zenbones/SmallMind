@@ -35,55 +35,55 @@ import freemarker.template.Template;
 import org.apache.wicket.util.template.TextTemplate;
 import org.smallmind.nutsnbolts.freemarker.ClassPathTemplateLoader;
 
-public class FreemarkerPackagedTextTemplate extends TextTemplate {
+public class FreeMarkerPackageTextTemplate extends TextTemplate {
 
-   private static ConcurrentHashMap<Class<?>, Configuration> CONFIG_MAP = new ConcurrentHashMap<Class<?>, Configuration>();
+  private static ConcurrentHashMap<Class<?>, Configuration> CONFIG_MAP = new ConcurrentHashMap<Class<?>, Configuration>();
 
-   private Template freemarkerTemplate;
+  private Template freeMarkerTemplate;
 
-   public FreemarkerPackagedTextTemplate (Class<?> clazz) {
+  public FreeMarkerPackageTextTemplate (Class<?> clazz) {
 
-      this(clazz, null);
-   }
+    this(clazz, null);
+  }
 
-   public FreemarkerPackagedTextTemplate (Class<?> clazz, String fileName) {
+  public FreeMarkerPackageTextTemplate (Class<?> clazz, String fileName) {
 
-      Configuration freemarkerConf;
+    Configuration freemarkerConf;
 
-      if ((freemarkerConf = CONFIG_MAP.get(clazz)) == null) {
-         freemarkerConf = new Configuration();
-         freemarkerConf.setTagSyntax(freemarker.template.Configuration.SQUARE_BRACKET_TAG_SYNTAX);
-         freemarkerConf.setTemplateLoader(new ClassPathTemplateLoader(clazz, true));
+    if ((freemarkerConf = CONFIG_MAP.get(clazz)) == null) {
+      freemarkerConf = new Configuration();
+      freemarkerConf.setTagSyntax(freemarker.template.Configuration.SQUARE_BRACKET_TAG_SYNTAX);
+      freemarkerConf.setTemplateLoader(new ClassPathTemplateLoader(clazz, true));
 
-         CONFIG_MAP.put(clazz, freemarkerConf);
-      }
+      CONFIG_MAP.put(clazz, freemarkerConf);
+    }
 
-      try {
-         freemarkerTemplate = freemarkerConf.getTemplate((fileName == null) ? clazz.getSimpleName() + ".js" : fileName);
-      }
-      catch (IOException ioException) {
-         throw new RuntimeException(ioException);
-      }
-   }
+    try {
+      freeMarkerTemplate = freemarkerConf.getTemplate((fileName == null) ? clazz.getSimpleName() + ".js" : fileName);
+    }
+    catch (IOException ioException) {
+      throw new RuntimeException(ioException);
+    }
+  }
 
-   @Override
-   public String getString () {
+  @Override
+  public String getString () {
 
-      return freemarkerTemplate.toString();
-   }
+    return freeMarkerTemplate.toString();
+  }
 
-   @Override
-   public TextTemplate interpolate (Map<String, Object> variables) {
+  @Override
+  public TextTemplate interpolate (Map<String, ?> variables) {
 
-      StringWriter templateWriter = new StringWriter();
+    StringWriter templateWriter = new StringWriter();
 
-      try {
-         freemarkerTemplate.process(variables, templateWriter);
-      }
-      catch (Exception exception) {
-         throw new RuntimeException(exception);
-      }
+    try {
+      freeMarkerTemplate.process(variables, templateWriter);
+    }
+    catch (Exception exception) {
+      throw new RuntimeException(exception);
+    }
 
-      return new StaticTextTemplate(templateWriter.toString());
-   }
+    return new StaticTextTemplate(templateWriter.toString());
+  }
 }

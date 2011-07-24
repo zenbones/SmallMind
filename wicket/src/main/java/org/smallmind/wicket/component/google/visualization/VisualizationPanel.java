@@ -33,7 +33,7 @@ import org.apache.wicket.model.AbstractReadOnlyModel;
 import org.apache.wicket.model.IModel;
 import org.apache.wicket.model.Model;
 import org.smallmind.wicket.FormattedWicketRuntimeException;
-import org.smallmind.wicket.behavior.JavascriptNamespaceBehavior;
+import org.smallmind.wicket.behavior.JavaScriptNamespaceBehavior;
 
 public class VisualizationPanel extends Panel {
 
@@ -62,7 +62,7 @@ public class VisualizationPanel extends Panel {
 
       divId = UUID.randomUUID().toString();
 
-      add(new JavascriptNamespaceBehavior("SMALLMIND.visualization.flot." + getMarkupId()));
+      add(new JavaScriptNamespaceBehavior("SMALLMIND.visualization.flot." + getMarkupId()));
 
       divLabel = new Label("visualizationDiv", new Model<String>("<div id=\"" + divId + "\"></div>"));
       divLabel.setEscapeModelStrings(false);

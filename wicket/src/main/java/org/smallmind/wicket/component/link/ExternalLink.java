@@ -31,80 +31,79 @@ import org.apache.wicket.markup.ComponentTag;
 import org.apache.wicket.markup.MarkupStream;
 import org.apache.wicket.markup.html.link.AbstractLink;
 import org.apache.wicket.model.IModel;
-import org.apache.wicket.protocol.http.WebApplication;
 import org.apache.wicket.util.string.Strings;
 
 public class ExternalLink extends AbstractLink {
 
-   public static enum Target {
+  public static enum Target {
 
-      BLANK("_blank", null), PARENT("_parent", "window.parent.location"), SELF("_self", "window.location"), TOP("_top", "window.top.location");
+    BLANK("_blank", null), PARENT("_parent", "window.parent.location"), SELF("_self", "window.location"), TOP("_top", "window.top.location");
 
-      private String attribute;
-      private String window;
+    private String attribute;
+    private String window;
 
-      private Target (String attribute, String window) {
+    private Target (String attribute, String window) {
 
-         this.attribute = attribute;
-         this.window = window;
+      this.attribute = attribute;
+      this.window = window;
+    }
+
+    public String asAttribute () {
+
+      return attribute;
+    }
+
+    public String asWindow () {
+
+      if (window == null) {
+        throw new WicketRuntimeException("Can not set the current 'window.blank' location via script");
       }
 
-      public String asAttribute () {
+      return window;
+    }
+  }
 
-         return attribute;
-      }
+  private final IModel<String> label;
+  private Target target;
 
-      public String asWindow () {
+  public ExternalLink (String id, IModel<String> hrefModel, Target target, IModel<String> labelModel) {
 
-         if (window == null) {
-            throw new WicketRuntimeException("Can not set the current 'window.blank' location via script");
-         }
+    super(id);
 
-         return window;
-      }
-   }
+    this.target = target;
 
-   private final IModel<String> label;
-   private Target target;
+    setDefaultModel(wrap(hrefModel));
+    label = wrap(labelModel);
+  }
 
-   public ExternalLink (String id, IModel<String> hrefModel, Target target, IModel<String> labelModel) {
+  protected void onComponentTag (ComponentTag tag) {
 
-      super(id);
+    super.onComponentTag(tag);
 
-      this.target = target;
+    if (tag.getName().equalsIgnoreCase("a") || tag.getName().equalsIgnoreCase("link") || tag.getName().equalsIgnoreCase("area")) {
+      tag.put("href", Strings.replaceAll(getDefaultModelObjectAsString(), "&", "&amp;"));
+      tag.put("target", target.asAttribute());
+    }
+    else {
+      tag.put("onclick", target.asWindow() + "='" + getDefaultModelObjectAsString() + "';return false;");
+    }
+  }
 
-      setDefaultModel(wrap(hrefModel));
-      label = wrap(labelModel);
-   }
+  public void onComponentTagBody (MarkupStream markupStream, ComponentTag openTag) {
 
-   protected void onComponentTag (ComponentTag tag) {
+    if (!isLinkEnabled() && getBeforeDisabledLink() != null) {
+      getResponse().write(getBeforeDisabledLink());
+    }
 
-      super.onComponentTag(tag);
+    if ((label != null) && (label.getObject() != null)) {
+      replaceComponentTagBody(markupStream, openTag, getDefaultModelObjectAsString(label.getObject()));
+    }
+    else {
+      super.onComponentTagBody(markupStream, openTag);
+    }
 
-      if (tag.getName().equalsIgnoreCase("a") || tag.getName().equalsIgnoreCase("link") || tag.getName().equalsIgnoreCase("area")) {
-         tag.put("href", Strings.replaceAll(getDefaultModelObjectAsString(), "&", "&amp;"));
-         tag.put("target", target.asAttribute());
-      }
-      else {
-         tag.put("onclick", target.asWindow() + "='" + getDefaultModelObjectAsString() + "';return false;");
-      }
-   }
-
-   protected void onComponentTagBody (MarkupStream markupStream, ComponentTag openTag) {
-
-      if (!isLinkEnabled() && getBeforeDisabledLink() != null) {
-         getResponse().write(getBeforeDisabledLink());
-      }
-
-      if ((label != null) && (label.getObject() != null)) {
-         replaceComponentTagBody(markupStream, openTag, getDefaultModelObjectAsString(label.getObject()));
-      }
-      else {
-         renderComponentTagBody(markupStream, openTag);
-      }
-
-      if (!isLinkEnabled() && getAfterDisabledLink() != null) {
-         getResponse().write(getAfterDisabledLink());
-      }
-   }
+    if (!isLinkEnabled() && getAfterDisabledLink() != null) {
+      getResponse().write(getAfterDisabledLink());
+    }
+  }
 }

@@ -30,77 +30,66 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
 import org.apache.wicket.Component;
-import org.apache.wicket.behavior.AbstractBehavior;
-import org.apache.wicket.model.AbstractReadOnlyModel;
-import org.apache.wicket.util.template.TextTemplateHeaderContributor;
+import org.apache.wicket.behavior.Behavior;
+import org.apache.wicket.markup.html.IHeaderResponse;
+import org.apache.wicket.util.template.PackageTextTemplate;
 
-public class CssBehavior extends AbstractBehavior {
+public class CssBehavior extends Behavior {
 
-   private Class scopeClass;
-   private CssModel cssModel;
-   private String cssFileName;
+  private Map<String, Object> substitutionMap;
+  private Class scopeClass;
+  private String fileName;
 
-   public CssBehavior () {
+  public CssBehavior () {
 
-      this(null, null, null);
-   }
+    this(null, null, null);
+  }
 
-   public CssBehavior (Properties cssProperties) {
+  public CssBehavior (Properties cssProperties) {
 
-      this(null, null, cssProperties);
-   }
+    this(null, null, cssProperties);
+  }
 
-   public CssBehavior (String cssFileName) {
+  public CssBehavior (String fileName) {
 
-      this(null, cssFileName, null);
-   }
+    this(null, fileName, null);
+  }
 
-   public CssBehavior (String cssFileName, Properties cssProperties) {
+  public CssBehavior (String fileName, Properties cssProperties) {
 
-      this(null, cssFileName, cssProperties);
-   }
+    this(null, fileName, cssProperties);
+  }
 
-   public CssBehavior (Class scopeClass) {
+  public CssBehavior (Class scopeClass) {
 
-      this(scopeClass, null, null);
-   }
+    this(scopeClass, null, null);
+  }
 
-   public CssBehavior (Class scopeClass, Properties cssProperties) {
+  public CssBehavior (Class scopeClass, Properties cssProperties) {
 
-      this(scopeClass, null, cssProperties);
-   }
+    this(scopeClass, null, cssProperties);
+  }
 
-   public CssBehavior (Class scopeClass, String cssFileName, Properties cssProperties) {
+  public CssBehavior (Class scopeClass, String fileName, Properties cssProperties) {
 
-      this.scopeClass = scopeClass;
-      this.cssFileName = cssFileName;
+    this.scopeClass = scopeClass;
+    this.fileName = fileName;
 
-      if (cssProperties != null) {
-         cssModel = new CssModel(cssProperties);
+    if (cssProperties != null) {
+      substitutionMap = new HashMap<String, Object>();
+
+      for (Map.Entry<Object, Object> propertyEntry : cssProperties.entrySet()) {
+        substitutionMap.put(propertyEntry.getKey().toString(), propertyEntry.getValue());
       }
-   }
+    }
+  }
 
-   public void bind (Component component) {
+  @Override
+  public void renderHead (Component component, IHeaderResponse response) {
 
-      component.add(TextTemplateHeaderContributor.forCss((scopeClass != null) ? scopeClass : component.getClass(), (cssFileName != null) ? cssFileName : (scopeClass != null) ? scopeClass.getSimpleName() + ".css" : component.getClass().getSimpleName() + ".css", cssModel));
-   }
+    Class<?> interpolatedClass = (scopeClass != null) ? scopeClass : component.getClass();
+    String interpolatedFileName = (fileName != null) ? fileName : (scopeClass != null) ? scopeClass.getSimpleName() + ".css" : component.getClass().getSimpleName() + ".css";
 
-   private class CssModel extends AbstractReadOnlyModel<Map<String, Object>> {
-
-      private Map<String, Object> substitutionMap;
-
-      public CssModel (Properties cssProperties) {
-
-         substitutionMap = new HashMap<String, Object>();
-
-         for (Map.Entry<Object, Object> propertyEntry : cssProperties.entrySet()) {
-            substitutionMap.put(propertyEntry.getKey().toString(), propertyEntry.getValue());
-         }
-      }
-
-      public Map<String, Object> getObject () {
-
-         return substitutionMap;
-      }
-   }
+    response.renderCSS(new PackageTextTemplate(interpolatedClass, interpolatedFileName).asString(substitutionMap), interpolatedClass.getName() + ":" + interpolatedFileName);
+  }
 }

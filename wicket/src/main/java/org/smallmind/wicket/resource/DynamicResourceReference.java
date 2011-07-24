@@ -26,14 +26,14 @@
  */
 package org.smallmind.wicket.resource;
 
-import org.apache.wicket.Resource;
-import org.apache.wicket.ResourceReference;
+import org.apache.wicket.request.resource.IResource;
+import org.apache.wicket.request.resource.ResourceReference;
 
 public class DynamicResourceReference extends ResourceReference {
 
-  private final Resource resource;
+  private final IResource resource;
 
-  public DynamicResourceReference (Class<?> scope, String name, Resource resource) {
+  public DynamicResourceReference (Class<?> scope, String name, IResource resource) {
 
     super(scope, name);
 
@@ -41,7 +41,7 @@ public class DynamicResourceReference extends ResourceReference {
   }
 
   @Override
-  protected Resource newResource () {
+  public IResource getResource () {
 
     return resource;
   }

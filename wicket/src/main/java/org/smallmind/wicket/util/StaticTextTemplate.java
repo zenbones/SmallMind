@@ -31,22 +31,22 @@ import org.apache.wicket.util.template.TextTemplate;
 
 public class StaticTextTemplate extends TextTemplate {
 
-   private String text;
+  private String text;
 
-   public StaticTextTemplate (String text) {
+  public StaticTextTemplate (String text) {
 
-      this.text = text;
-   }
+    this.text = text;
+  }
 
-   @Override
-   public String getString () {
+  @Override
+  public String getString () {
 
-      return text;
-   }
+    return text;
+  }
 
-   @Override
-   public TextTemplate interpolate (Map<String, Object> variables) {
+  @Override
+  public TextTemplate interpolate (Map<String, ?> variables) {
 
-      return this;
-   }
+    return this;
+  }
 }

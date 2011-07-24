@@ -28,46 +28,34 @@ package org.smallmind.wicket.behavior;
 
 import java.util.Map;
 import org.apache.wicket.Component;
-import org.apache.wicket.behavior.AbstractBehavior;
-import org.apache.wicket.model.AbstractReadOnlyModel;
-import org.apache.wicket.util.template.TextTemplateHeaderContributor;
+import org.apache.wicket.behavior.Behavior;
+import org.apache.wicket.markup.html.IHeaderResponse;
+import org.apache.wicket.util.template.PackageTextTemplate;
 
-public class JavascriptBehavior extends AbstractBehavior {
+public class JavaScriptBehavior extends Behavior {
 
-   private Class scopeClass;
-   private JavascriptModel javascriptModel;
-   private String fileName;
+  private Map<String, Object> substitutionMap;
+  private Class scopeClass;
+  private String fileName;
 
-   public JavascriptBehavior (String fileName, Map<String, Object> substitutionMap) {
+  public JavaScriptBehavior (String fileName, Map<String, Object> substitutionMap) {
 
-      this(null, fileName, substitutionMap);
-   }
+    this(null, fileName, substitutionMap);
+  }
 
-   public JavascriptBehavior (Class scopeClass, String fileName, Map<String, Object> substitutionMap) {
+  public JavaScriptBehavior (Class scopeClass, String fileName, Map<String, Object> substitutionMap) {
 
-      this.scopeClass = scopeClass;
-      this.fileName = fileName;
+    this.scopeClass = scopeClass;
+    this.fileName = fileName;
+    this.substitutionMap = substitutionMap;
+  }
 
-      javascriptModel = new JavascriptModel(substitutionMap);
-   }
+  @Override
+  public void renderHead (Component component, IHeaderResponse response) {
 
-   public void bind (Component component) {
+    Class<?> interpolatedClass = (scopeClass != null) ? scopeClass : component.getClass();
+    String interpolatedFileName = (fileName == null) ? component.getClass().getSimpleName() + ".js" : fileName;
 
-      component.add(TextTemplateHeaderContributor.forJavaScript((scopeClass != null) ? scopeClass : component.getClass(), (fileName == null) ? component.getClass().getSimpleName() + ".js" : fileName, javascriptModel));
-   }
-
-   private class JavascriptModel extends AbstractReadOnlyModel<Map<String, Object>> {
-
-      private Map<String, Object> substitutionMap;
-
-      public JavascriptModel (Map<String, Object> substitutionMap) {
-
-         this.substitutionMap = substitutionMap;
-      }
-
-      public Map<String, Object> getObject () {
-
-         return substitutionMap;
-      }
-   }
+    response.renderJavaScript(new PackageTextTemplate(interpolatedClass, interpolatedFileName).asString(substitutionMap), interpolatedClass.getName() + ":" + interpolatedFileName);
+  }
 }

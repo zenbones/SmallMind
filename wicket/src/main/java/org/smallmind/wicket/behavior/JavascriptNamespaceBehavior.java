@@ -26,32 +26,33 @@
  */
 package org.smallmind.wicket.behavior;
 
-import org.apache.wicket.behavior.AbstractBehavior;
+import org.apache.wicket.Component;
+import org.apache.wicket.behavior.Behavior;
 import org.apache.wicket.markup.html.IHeaderResponse;
-import org.apache.wicket.markup.html.resources.JavascriptResourceReference;
+import org.apache.wicket.request.resource.JavaScriptResourceReference;
 
-public class JavascriptNamespaceBehavior extends AbstractBehavior {
+public class JavaScriptNamespaceBehavior extends Behavior {
 
-   private String namespace;
+  private String namespace;
 
-   public JavascriptNamespaceBehavior () {
+  public JavaScriptNamespaceBehavior () {
 
-      this(null);
-   }
+    this(null);
+  }
 
-   public JavascriptNamespaceBehavior (String namespace) {
+  public JavaScriptNamespaceBehavior (String namespace) {
 
-      this.namespace = namespace;
-   }
+    this.namespace = namespace;
+  }
 
-   @Override
-   public void renderHead (IHeaderResponse response) {
+  @Override
+  public void renderHead (Component component, IHeaderResponse response) {
 
-      super.renderHead(response);
-      response.renderJavascriptReference(new JavascriptResourceReference(JavascriptNamespaceBehavior.class, "JavascriptNamespaceBehavior.js"), JavascriptNamespaceBehavior.class.getName());
+    super.renderHead(component, response);
+    response.renderJavaScriptReference(new JavaScriptResourceReference(JavaScriptNamespaceBehavior.class, "JavascriptNamespaceBehavior.js"), JavaScriptNamespaceBehavior.class.getName());
 
-      if (namespace != null) {
-         response.renderJavascript("SMALLMIND.namespace.manager.register('" + namespace + "');", JavascriptNamespaceBehavior.class.getName() + '.' + namespace);
-      }
-   }
+    if (namespace != null) {
+      response.renderJavaScript("SMALLMIND.namespace.manager.register('" + namespace + "');", JavaScriptNamespaceBehavior.class.getName() + '.' + namespace);
+    }
+  }
 }

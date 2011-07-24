@@ -34,29 +34,29 @@ import org.smallmind.wicket.skin.SkinManager;
 
 public class SubmitButton extends Button {
 
-   public SubmitButton (String id, IModel labelModel, Form form, SkinManager skinManager) {
+  public SubmitButton (String id, IModel labelModel, Form form, SkinManager skinManager) {
 
-      super(id, labelModel, skinManager);
+    super(id, labelModel, skinManager);
 
-      addButtonBehavior(new AttributeModifier("onclick", true, new FormSubmitActionModel(form)));
-   }
+    addButtonBehavior(new AttributeModifier("onclick", new FormSubmitActionModel(form)));
+  }
 
-   private class FormSubmitActionModel extends AbstractReadOnlyModel {
+  private class FormSubmitActionModel extends AbstractReadOnlyModel {
 
-      private Form form;
+    private Form form;
 
-      public FormSubmitActionModel (Form form) {
+    public FormSubmitActionModel (Form form) {
 
-         this.form = form;
+      this.form = form;
+    }
+
+    public Object getObject () {
+
+      if (!SubmitButton.this.isEnabled()) {
+        return "";
       }
 
-      public Object getObject () {
-
-         if (!SubmitButton.this.isEnabled()) {
-            return "";
-         }
-
-         return "SMALLMIND.component.button.submit('" + form.getMarkupId() + "')";
-      }
-   }
+      return "SMALLMIND.component.button.submit('" + form.getMarkupId() + "')";
+    }
+  }
 }

@@ -37,88 +37,88 @@ import org.apache.wicket.model.AbstractReadOnlyModel;
 
 public class Tab extends Panel {
 
-   private TabPanel tabPanel;
-   private ITab tab;
-   private WebMarkupContainer tabSkin;
-   private boolean selected;
-   private int index;
+  private TabPanel tabPanel;
+  private ITab tab;
+  private WebMarkupContainer tabSkin;
+  private boolean selected;
+  private int index;
 
-   public Tab (String id, TabPanel tabPanel, ITab tab, int index, boolean selected) {
+  public Tab (String id, TabPanel tabPanel, ITab tab, int index, boolean selected) {
 
-      super(id);
+    super(id);
 
-      WebMarkupContainer outerSpan;
-      Label innerSpan;
+    WebMarkupContainer outerSpan;
+    Label innerSpan;
 
-      this.tabPanel = tabPanel;
-      this.tab = tab;
-      this.index = index;
-      this.selected = selected;
+    this.tabPanel = tabPanel;
+    this.tab = tab;
+    this.index = index;
+    this.selected = selected;
 
-      setOutputMarkupId(true);
+    setOutputMarkupId(true);
 
-      innerSpan = new Label("innerSpan", tab.getTitle());
+    innerSpan = new Label("innerSpan", tab.getTitle());
 
-      outerSpan = new WebMarkupContainer("outerSpan");
-      outerSpan.add(innerSpan);
+    outerSpan = new WebMarkupContainer("outerSpan");
+    outerSpan.add(innerSpan);
 
-      add(tabSkin = new WebMarkupContainer("tabSkin"));
-      tabSkin.setOutputMarkupId(true);
-      tabSkin.add(outerSpan);
-      tabSkin.add(new AttributeModifier("class", true, new TabClassModel()));
-      tabSkin.add(new AttributeModifier("selected", true, new TabSelectedModel()));
+    add(tabSkin = new WebMarkupContainer("tabSkin"));
+    tabSkin.setOutputMarkupId(true);
+    tabSkin.add(outerSpan);
+    tabSkin.add(new AttributeModifier("class", new TabClassModel()));
+    tabSkin.add(new AttributeModifier("selected", new TabSelectedModel()));
 
-      tabSkin.add(new OnClickAjaxEventBehavior());
-   }
+    tabSkin.add(new OnClickAjaxEventBehavior());
+  }
 
-   public String getInnerMarkupId () {
+  public String getInnerMarkupId () {
 
-      return tabSkin.getMarkupId();
-   }
+    return tabSkin.getMarkupId();
+  }
 
-   public Panel getPanel (String id) {
+  public WebMarkupContainer getPanel (String id) {
 
-      return tab.getPanel(id);
-   }
+    return tab.getPanel(id);
+  }
 
-   public synchronized Tab setSelected (boolean selected) {
+  public synchronized Tab setSelected (boolean selected) {
 
-      this.selected = selected;
+    this.selected = selected;
 
-      return this;
-   }
+    return this;
+  }
 
-   public synchronized boolean isSelected () {
+  public synchronized boolean isSelected () {
 
-      return selected;
-   }
+    return selected;
+  }
 
-   private class TabClassModel extends AbstractReadOnlyModel {
+  private class TabClassModel extends AbstractReadOnlyModel {
 
-      public Object getObject () {
+    public Object getObject () {
 
-         return (isSelected()) ? "tabselected" : "tabstandard";
-      }
-   }
+      return (isSelected()) ? "tabselected" : "tabstandard";
+    }
+  }
 
-   private class TabSelectedModel extends AbstractReadOnlyModel {
+  private class TabSelectedModel extends AbstractReadOnlyModel {
 
-      public Object getObject () {
+    public Object getObject () {
 
-         return (isSelected()) ? "selected" : null;
-      }
-   }
+      return (isSelected()) ? "selected" : null;
+    }
+  }
 
-   private class OnClickAjaxEventBehavior extends AjaxEventBehavior {
+  private class OnClickAjaxEventBehavior extends AjaxEventBehavior {
 
-      public OnClickAjaxEventBehavior () {
+    public OnClickAjaxEventBehavior () {
 
-         super("onClick");
-      }
+      super("onClick");
+    }
 
-      protected void onEvent (final AjaxRequestTarget target) {
+    protected void onEvent (final AjaxRequestTarget target) {
 
-         tabPanel.setSelectedIndex(target, index);
-      }
-   }
+      tabPanel.setSelectedIndex(target, index);
+    }
+  }
 }
