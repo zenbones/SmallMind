@@ -32,23 +32,23 @@ import org.apache.wicket.behavior.Behavior;
 import org.apache.wicket.markup.html.IHeaderResponse;
 import org.smallmind.wicket.util.FreeMarkerPackageTextTemplate;
 
-public class FreemarkerJavaScriptBehavior extends Behavior {
+public class FreeMarkerJavaScriptBehavior extends Behavior {
 
   private Map<String, Object> rootModel;
   private Class<?> scopeClass;
   private String fileName;
 
-  public FreemarkerJavaScriptBehavior (Map<String, Object> rootModel) {
+  public FreeMarkerJavaScriptBehavior (Map<String, Object> rootModel) {
 
     this(null, null, rootModel);
   }
 
-  public FreemarkerJavaScriptBehavior (String fileName, Map<String, Object> rootModel) {
+  public FreeMarkerJavaScriptBehavior (String fileName, Map<String, Object> rootModel) {
 
     this(null, fileName, rootModel);
   }
 
-  public FreemarkerJavaScriptBehavior (Class<?> scopeClass, String fileName, Map<String, Object> rootModel) {
+  public FreeMarkerJavaScriptBehavior (Class<?> scopeClass, String fileName, Map<String, Object> rootModel) {
 
     this.scopeClass = scopeClass;
     this.fileName = fileName;

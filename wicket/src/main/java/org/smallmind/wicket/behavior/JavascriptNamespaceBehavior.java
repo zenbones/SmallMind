@@ -49,7 +49,7 @@ public class JavaScriptNamespaceBehavior extends Behavior {
   public void renderHead (Component component, IHeaderResponse response) {
 
     super.renderHead(component, response);
-    response.renderJavaScriptReference(new JavaScriptResourceReference(JavaScriptNamespaceBehavior.class, "JavascriptNamespaceBehavior.js"), JavaScriptNamespaceBehavior.class.getName());
+    response.renderJavaScriptReference(new JavaScriptResourceReference(JavaScriptNamespaceBehavior.class, "JavaScriptNamespaceBehavior.js"), JavaScriptNamespaceBehavior.class.getName());
 
     if (namespace != null) {
       response.renderJavaScript("SMALLMIND.namespace.manager.register('" + namespace + "');", JavaScriptNamespaceBehavior.class.getName() + '.' + namespace);
