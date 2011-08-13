@@ -26,114 +26,74 @@
  */
 package org.smallmind.persistence.cache.concurrent.terracotta;
 
-import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import org.smallmind.nutsnbolts.util.MagicHash;
 import org.smallmind.persistence.Durable;
 import org.smallmind.persistence.cache.CacheDomain;
 import org.smallmind.persistence.cache.CacheOperationException;
-import org.terracotta.annotations.AutolockWrite;
+import org.smallmind.persistence.cache.VectorKey;
 import org.terracotta.annotations.InstrumentedClass;
 
 @InstrumentedClass
 public abstract class AbstractTerracottaCacheDomain<I extends Comparable<I>, D extends Durable<I>> implements CacheDomain<I, D> {
 
-   private static enum Gate {NEUTRAL, LOOKUP, UPDATE}
+  private final ReentrantReadWriteLock[] stripeLocks;
 
-   private final ReentrantReadWriteLock[] stripeLocks;
-   private final AtomicReference<Gate> atomicGate = new AtomicReference<Gate>(Gate.NEUTRAL);
+  public AbstractTerracottaCacheDomain () {
 
-   private int gateCount = 0;
+    this(16);
+  }
 
-   public AbstractTerracottaCacheDomain () {
+  public AbstractTerracottaCacheDomain (int concurrencyLevel) {
 
-      this(16);
-   }
+    if ((concurrencyLevel <= 0) || (concurrencyLevel % 2 != 0)) {
+      throw new CacheOperationException("Concurrency level(%d) must be > 0 and an even power of 2", concurrencyLevel);
+    }
 
-   public AbstractTerracottaCacheDomain (int concurrencyLevel) {
+    stripeLocks = new ReentrantReadWriteLock[concurrencyLevel];
 
-      if ((concurrencyLevel <= 0) || (concurrencyLevel % 2 != 0)) {
-         throw new CacheOperationException("Concurrency level(%d) must be > 0 and an even power of 2", concurrencyLevel);
-      }
+    for (int count = 0; count < stripeLocks.length; count++) {
+      stripeLocks[count] = new ReentrantReadWriteLock();
+    }
+  }
 
-      stripeLocks = new ReentrantReadWriteLock[concurrencyLevel];
+  public void instanceReadLock (Class<D> managedClass, I id) {
 
-      for (int count = 0; count < stripeLocks.length; count++) {
-         stripeLocks[count] = new ReentrantReadWriteLock();
-      }
-   }
+    stripeLocks[Math.abs(MagicHash.rehash(id.hashCode()) % stripeLocks.length)].readLock().lock();
+  }
 
-   @AutolockWrite
-   public synchronized void lookupLock () {
+  public void instanceReadUnlock (Class<D> managedClass, I id) {
 
-      while (atomicGate.get().equals(Gate.UPDATE)) {
-         try {
-            wait();
-         }
-         catch (InterruptedException i) {
-         }
-      }
+    stripeLocks[Math.abs(MagicHash.rehash(id.hashCode()) % stripeLocks.length)].readLock().unlock();
+  }
 
-      if (atomicGate.compareAndSet(Gate.NEUTRAL, Gate.LOOKUP)) {
-         gateCount = 0;
-      }
+  public void instanceWriteLock (Class<D> managedClass, I id) {
 
-      gateCount++;
-   }
+    stripeLocks[Math.abs(MagicHash.rehash(id.hashCode()) % stripeLocks.length)].writeLock().lock();
+  }
 
-   @AutolockWrite
-   public synchronized void lookupUnlock () {
+  public void instanceWriteUnlock (Class<D> managedClass, I id) {
 
-      if (--gateCount == 0) {
-         atomicGate.set(Gate.NEUTRAL);
-         notifyAll();
-      }
-   }
+    stripeLocks[Math.abs(MagicHash.rehash(id.hashCode()) % stripeLocks.length)].writeLock().unlock();
+  }
 
-   @AutolockWrite
-   public synchronized void updateLock () {
+  public void vectorReadLock (Class<D> managedClass, VectorKey<D> key) {
 
-      while (atomicGate.get().equals(Gate.LOOKUP)) {
-         try {
-            wait();
-         }
-         catch (InterruptedException i) {
-         }
-      }
+    stripeLocks[Math.abs(MagicHash.rehash(key.hashCode()) % stripeLocks.length)].readLock().lock();
+  }
 
-      if (atomicGate.compareAndSet(Gate.NEUTRAL, Gate.UPDATE)) {
-         gateCount = 0;
-      }
+  public void vectorReadUnlock (Class<D> managedClass, VectorKey<D> key) {
 
-      gateCount++;
-   }
+    stripeLocks[Math.abs(MagicHash.rehash(key.hashCode()) % stripeLocks.length)].readLock().unlock();
+  }
 
-   @AutolockWrite
-   public synchronized void updateUnlock () {
+  public void vectorWriteLock (Class<D> managedClass, VectorKey<D> key) {
 
-      if (--gateCount == 0) {
-         atomicGate.set(Gate.NEUTRAL);
-         notifyAll();
-      }
-   }
+    stripeLocks[Math.abs(MagicHash.rehash(key.hashCode()) % stripeLocks.length)].writeLock().lock();
+  }
 
-   public void readLock (Class<D> managedClass, I id) {
+  public void vectorWriteUnlock (Class<D> managedClass, VectorKey<D> key) {
 
-      stripeLocks[Math.abs(MagicHash.rehash(id.hashCode()) % stripeLocks.length)].readLock().lock();
-   }
-
-   public void readUnlock (Class<D> managedClass, I id) {
-
-      stripeLocks[Math.abs(MagicHash.rehash(id.hashCode()) % stripeLocks.length)].readLock().unlock();
-   }
-
-   public void writeLock (Class<D> managedClass, I id) {
-
-      stripeLocks[Math.abs(MagicHash.rehash(id.hashCode()) % stripeLocks.length)].writeLock().lock();
-   }
-
-   public void writeUnlock (Class<D> managedClass, I id) {
-
-      stripeLocks[Math.abs(MagicHash.rehash(id.hashCode()) % stripeLocks.length)].writeLock().unlock();
-   }
+    stripeLocks[Math.abs(MagicHash.rehash(key.hashCode()) % stripeLocks.length)].writeLock().unlock();
+  }
 }

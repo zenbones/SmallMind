@@ -123,18 +123,13 @@ public class CacheAsAspect {
           Durable durable;
 
           statisticsSource = ormDao.getStatisticsSource();
-          vectoredDao.lookupLock();
-          try {
-            if ((durable = (Durable)thisJoinPoint.proceed()) != null) {
 
-              return vectoredDao.persistVector(vectorKey, vectoredDao.createSingularVector(vectorKey, durable, getTimeToLive(cacheAs))).head();
-            }
+          if ((durable = (Durable)thisJoinPoint.proceed()) != null) {
 
-            return null;
+            return vectoredDao.persistVector(vectorKey, vectoredDao.createSingularVector(vectorKey, durable, getTimeToLive(cacheAs))).head();
           }
-          finally {
-            vectoredDao.lookupUnlock();
-          }
+
+          return null;
         }
       }
       else {
@@ -178,18 +173,13 @@ public class CacheAsAspect {
           Iterable iterable;
 
           statisticsSource = ormDao.getStatisticsSource();
-          vectoredDao.lookupLock();
-          try {
-            if ((iterable = (Iterable)thisJoinPoint.proceed()) != null) {
 
-              return vectoredDao.persistVector(vectorKey, vectoredDao.createVector(vectorKey, iterable, cacheAs.comparator().equals(Comparator.class) ? null : cacheAs.comparator().newInstance(), cacheAs.max(), getTimeToLive(cacheAs), cacheAs.ordered())).asList();
-            }
+          if ((iterable = (Iterable)thisJoinPoint.proceed()) != null) {
 
-            return null;
+            return vectoredDao.persistVector(vectorKey, vectoredDao.createVector(vectorKey, iterable, cacheAs.comparator().equals(Comparator.class) ? null : cacheAs.comparator().newInstance(), cacheAs.max(), getTimeToLive(cacheAs), cacheAs.ordered())).asList();
           }
-          finally {
-            vectoredDao.lookupUnlock();
-          }
+
+          return null;
         }
       }
     }

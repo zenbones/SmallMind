@@ -32,35 +32,35 @@ import org.smallmind.persistence.Durable;
 
 public interface VectoredDao<I extends Comparable<I>, D extends Durable<I>> extends Dao<I, D> {
 
-   public abstract void lookupLock ();
+  public abstract void instanceReadLock (Class<D> managedClass, I id);
 
-   public abstract void lookupUnlock ();
+  public abstract void instanceReadUnlock (Class<D> managedClass, I id);
 
-   public abstract void updateLock ();
+  public abstract void instanceWriteLock (Class<D> managedClass, I id);
 
-   public abstract void updateUnlock ();
+  public abstract void instanceWriteUnlock (Class<D> managedClass, I id);
 
-   public abstract void readLock (Class<D> managedClass, I id);
+  public abstract void vectorReadLock (Class<D> managedClass, VectorKey<D> key);
 
-   public abstract void readUnlock (Class<D> managedClass, I id);
+  public abstract void vectorReadUnlock (Class<D> managedClass, VectorKey<D> key);
 
-   public abstract void writeLock (Class<D> managedClass, I id);
+  public abstract void vectorWriteLock (Class<D> managedClass, VectorKey<D> key);
 
-   public abstract void writeUnlock (Class<D> managedClass, I id);
+  public abstract void vectorWriteUnlock (Class<D> managedClass, VectorKey<D> key);
 
-   public abstract void updateInVector (VectorKey<D> vectorKey, D durable);
+  public abstract void updateInVector (VectorKey<D> vectorKey, D durable);
 
-   public abstract void removeFromVector (VectorKey<D> vectorKey, D durable);
+  public abstract void removeFromVector (VectorKey<D> vectorKey, D durable);
 
-   public abstract DurableVector<I, D> getVector (VectorKey<D> vectorKey);
+  public abstract DurableVector<I, D> getVector (VectorKey<D> vectorKey);
 
-   public abstract DurableVector<I, D> persistVector (VectorKey<D> vectorKey, DurableVector<I, D> vector);
+  public abstract DurableVector<I, D> persistVector (VectorKey<D> vectorKey, DurableVector<I, D> vector);
 
-   public abstract DurableVector<I, D> migrateVector (Class<D> managedClass, DurableVector<I, D> vector);
+  public abstract DurableVector<I, D> migrateVector (Class<D> managedClass, DurableVector<I, D> vector);
 
-   public abstract DurableVector<I, D> createSingularVector (VectorKey<D> vectorKey, D durable, long timeToLive);
+  public abstract DurableVector<I, D> createSingularVector (VectorKey<D> vectorKey, D durable, long timeToLive);
 
-   public abstract DurableVector<I, D> createVector (VectorKey<D> vectorKey, Iterable<D> elementIter, Comparator<D> comparator, int maxSize, long timeToLive, boolean ordered);
+  public abstract DurableVector<I, D> createVector (VectorKey<D> vectorKey, Iterable<D> elementIter, Comparator<D> comparator, int maxSize, long timeToLive, boolean ordered);
 
-   public abstract void deleteVector (VectorKey<D> vectorKey);
+  public abstract void deleteVector (VectorKey<D> vectorKey);
 }

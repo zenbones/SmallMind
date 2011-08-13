@@ -31,67 +31,75 @@ import org.smallmind.quorum.cache.Cache;
 
 public abstract class AbstractCacheDao<I extends Comparable<I>, D extends Durable<I>> implements CacheDao<I, D> {
 
-   private CacheDomain<I, D> cacheDomain;
+  private CacheDomain<I, D> cacheDomain;
 
-   public AbstractCacheDao (CacheDomain<I, D> cacheDomain) {
+  public AbstractCacheDao (CacheDomain<I, D> cacheDomain) {
 
-      this.cacheDomain = cacheDomain;
-   }
+    this.cacheDomain = cacheDomain;
+  }
 
-   public void lookupLock () {
+  @Override
+  public void instanceReadLock (Class<D> managedClass, I id) {
 
-      cacheDomain.lookupLock();
-   }
+    cacheDomain.instanceReadLock(managedClass, id);
+  }
 
-   public void lookupUnlock () {
+  @Override
+  public void instanceReadUnlock (Class<D> managedClass, I id) {
 
-      cacheDomain.lookupUnlock();
-   }
+    cacheDomain.instanceReadUnlock(managedClass, id);
+  }
 
-   public void updateLock () {
+  @Override
+  public void instanceWriteLock (Class<D> managedClass, I id) {
 
-      cacheDomain.updateLock();
-   }
+    cacheDomain.instanceWriteLock(managedClass, id);
+  }
 
-   public void updateUnlock () {
+  @Override
+  public void instanceWriteUnlock (Class<D> managedClass, I id) {
 
-      cacheDomain.updateUnlock();
-   }
+    cacheDomain.instanceWriteUnlock(managedClass, id);
+  }
 
-   public void readLock (Class<D> managedClass, I id) {
+  @Override
+  public void vectorReadLock (Class<D> managedClass, VectorKey<D> key) {
 
-      cacheDomain.readLock(managedClass, id);
-   }
+    cacheDomain.vectorReadLock(managedClass, key);
+  }
 
-   public void readUnlock (Class<D> managedClass, I id) {
+  @Override
+  public void vectorReadUnlock (Class<D> managedClass, VectorKey<D> key) {
 
-      cacheDomain.readUnlock(managedClass, id);
-   }
+    cacheDomain.vectorReadUnlock(managedClass, key);
+  }
 
-   public void writeLock (Class<D> managedClass, I id) {
+  @Override
+  public void vectorWriteLock (Class<D> managedClass, VectorKey<D> key) {
 
-      cacheDomain.writeLock(managedClass, id);
-   }
+    cacheDomain.vectorWriteLock(managedClass, key);
+  }
 
-   public void writeUnlock (Class<D> managedClass, I id) {
+  @Override
+  public void vectorWriteUnlock (Class<D> managedClass, VectorKey<D> key) {
 
-      cacheDomain.writeUnlock(managedClass, id);
-   }
+    cacheDomain.vectorWriteUnlock(managedClass, key);
+  }
 
-   public abstract D acquire (Class<D> durableClass, I ids);
+  public abstract D acquire (Class<D> durableClass, I ids);
 
-   public String getStatisticsSource () {
+  public String getStatisticsSource () {
 
-      return cacheDomain.getStatisticsSource();
-   }
+    return cacheDomain.getStatisticsSource();
+  }
 
-   public Cache<String, D> getInstanceCache (Class<D> durableClass) {
+  public Cache<String, D> getInstanceCache (Class<D> durableClass) {
 
-      return cacheDomain.getInstanceCache(durableClass);
-   }
+    return cacheDomain.getInstanceCache(durableClass);
+  }
 
-   public Cache<String, DurableVector<I, D>> getVectorCache (Class<D> durableClass) {
+  public Cache<String, DurableVector<I, D>> getVectorCache (Class<D> durableClass) {
 
-      return cacheDomain.getVectorCache(durableClass);
-   }
+    return cacheDomain.getVectorCache(durableClass);
+  }
 }
