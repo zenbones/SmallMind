@@ -95,14 +95,17 @@ public class RMIRegistryFactorytBean implements FactoryBean<Registry>, Initializ
     synchronized (LocateRegistry.class) {
       try {
         registry = LocateRegistry.getRegistry(host, port, clientSocketFactory);
+        registry.list();
       }
       catch (RemoteException remoteException) {
         if ((hostInetAddress == null) || InetAddress.getLocalHost().equals(hostInetAddress)) {
           if ((clientSocketFactory != null) && (serverSocketFactory != null)) {
             registry = LocateRegistry.createRegistry(port, clientSocketFactory, serverSocketFactory);
+            registry.list();
           }
           else if ((clientSocketFactory == null) && (serverSocketFactory == null)) {
             registry = LocateRegistry.createRegistry(port);
+            registry.list();
           }
           else {
             throw new IllegalStateException("Either both client and server socket factories must be left null, or both must be set, in order to create a registry");
@@ -113,7 +116,5 @@ public class RMIRegistryFactorytBean implements FactoryBean<Registry>, Initializ
         }
       }
     }
-
-    registry.list();
   }
 }
