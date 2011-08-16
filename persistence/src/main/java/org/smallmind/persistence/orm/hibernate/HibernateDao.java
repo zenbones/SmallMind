@@ -122,19 +122,29 @@ public abstract class HibernateDao<I extends Serializable & Comparable<I>, D ext
     return Collections.checkedList(proxySession.getSession().createCriteria(getManagedClass()).list(), getManagedClass());
   }
 
-  public List<D> list (int fetchSize) {
+  public List<D> list (int maxResults) {
 
-    return Collections.checkedList(proxySession.getSession().createCriteria(getManagedClass()).setFetchSize(fetchSize).list(), getManagedClass());
+    return list(maxResults, maxResults);
   }
 
-  public List<D> list (final I greaterThan, final int fetchSize) {
+  public List<D> list (int maxResults, int fetchSize) {
+
+    return Collections.checkedList(proxySession.getSession().createCriteria(getManagedClass()).setMaxResults(maxResults).setFetchSize(fetchSize).list(), getManagedClass());
+  }
+
+  public List<D> list (I greaterThan, int maxResults) {
+
+    return list(greaterThan, maxResults, maxResults);
+  }
+
+  public List<D> list (final I greaterThan, final int maxResults, final int fetchSize) {
 
     return listByCriteria(new CriteriaDetails() {
 
       @Override
       public Criteria completeCriteria (Criteria criteria) {
 
-        return criteria.add(Restrictions.gt("id", greaterThan)).addOrder(Order.asc("id")).setFetchSize(fetchSize);
+        return criteria.add(Restrictions.gt("id", greaterThan)).addOrder(Order.asc("id")).setMaxResults(maxResults).setFetchSize(fetchSize);
       }
     });
   }
