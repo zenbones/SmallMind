@@ -3,7 +3,7 @@
 
   <groupId>org.smallmind</groupId>
   <artifactId>smallmind</artifactId>
-  <version>1.2.2</version>
+  <version>1.2.3</version>
   <packaging>pom</packaging>
   <name>Parent</name>
   <description>Parent POM</description>
