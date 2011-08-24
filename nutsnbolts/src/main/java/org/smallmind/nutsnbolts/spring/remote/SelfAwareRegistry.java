@@ -26,43 +26,67 @@
  */
 package org.smallmind.nutsnbolts.spring.remote;
 
+import java.rmi.AlreadyBoundException;
 import java.rmi.NotBoundException;
 import java.rmi.Remote;
 import java.rmi.RemoteException;
 import java.rmi.registry.Registry;
-import org.springframework.beans.factory.InitializingBean;
 
-public class RemoteServiceExporter implements InitializingBean {
+public class SelfAwareRegistry implements Registry {
 
-  private Registry registry;
-  private Remote service;
-  private String name;
+  private Registry internalRegistry;
+  private String host;
+  private int port;
 
-  public void setRegistry (Registry registry) {
+  public SelfAwareRegistry (String host, int port, Registry internalRegistry) {
 
-    this.registry = registry;
+    this.host = host;
+    this.port = port;
+    this.internalRegistry = internalRegistry;
   }
 
-  public void setService (Remote service) {
+  public String getHost () {
 
-    this.service = service;
+    return host;
   }
 
-  public void setName (String name) {
+  public int getPort () {
 
-    this.name = name;
+    return port;
   }
 
   @Override
-  public void afterPropertiesSet ()
-    throws RemoteException {
-
-    registry.rebind(name, service);
-  }
-
-  public void unbind ()
+  public Remote lookup (String name)
     throws RemoteException, NotBoundException {
 
-    registry.unbind(name);
+    return internalRegistry.lookup(name);
+  }
+
+  @Override
+  public void bind (String name, Remote obj)
+    throws RemoteException, AlreadyBoundException {
+
+    internalRegistry.bind(name, obj);
+  }
+
+  @Override
+  public void unbind (String name)
+    throws RemoteException, NotBoundException {
+
+    internalRegistry.unbind(name);
+  }
+
+  @Override
+  public void rebind (String name, Remote obj)
+    throws RemoteException {
+
+    internalRegistry.rebind(name, obj);
+  }
+
+  @Override
+  public String[] list ()
+    throws RemoteException {
+
+    return internalRegistry.list();
   }
 }

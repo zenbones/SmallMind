@@ -38,7 +38,7 @@ import org.springframework.beans.factory.InitializingBean;
 
 public class RMIRegistryFactorytBean implements FactoryBean<Registry>, InitializingBean {
 
-  private Registry registry;
+  private SelfAwareRegistry registry;
   private RMIClientSocketFactory clientSocketFactory;
   private RMIServerSocketFactory serverSocketFactory;
   private String host;
@@ -65,7 +65,7 @@ public class RMIRegistryFactorytBean implements FactoryBean<Registry>, Initializ
   }
 
   @Override
-  public Registry getObject () throws Exception {
+  public SelfAwareRegistry getObject () throws Exception {
 
     return registry;
   }
@@ -73,7 +73,7 @@ public class RMIRegistryFactorytBean implements FactoryBean<Registry>, Initializ
   @Override
   public Class<?> getObjectType () {
 
-    return Registry.class;
+    return SelfAwareRegistry.class;
   }
 
   @Override
@@ -94,17 +94,17 @@ public class RMIRegistryFactorytBean implements FactoryBean<Registry>, Initializ
 
     synchronized (LocateRegistry.class) {
       try {
-        registry = LocateRegistry.getRegistry(host, port, clientSocketFactory);
+        registry = new SelfAwareRegistry(host, port, LocateRegistry.getRegistry(host, port, clientSocketFactory));
         registry.list();
       }
       catch (RemoteException remoteException) {
         if ((hostInetAddress == null) || InetAddress.getLocalHost().equals(hostInetAddress)) {
           if ((clientSocketFactory != null) && (serverSocketFactory != null)) {
-            registry = LocateRegistry.createRegistry(port, clientSocketFactory, serverSocketFactory);
+            registry = new SelfAwareRegistry(InetAddress.getLocalHost().getHostAddress(), port, LocateRegistry.createRegistry(port, clientSocketFactory, serverSocketFactory));
             registry.list();
           }
           else if ((clientSocketFactory == null) && (serverSocketFactory == null)) {
-            registry = LocateRegistry.createRegistry(port);
+            registry = new SelfAwareRegistry(InetAddress.getLocalHost().getHostAddress(), port, LocateRegistry.createRegistry(port));
             registry.list();
           }
           else {
