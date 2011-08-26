@@ -38,10 +38,29 @@ public class SelfAwareRegistry implements Registry {
   private String host;
   private int port;
 
+  public SelfAwareRegistry () {
+
+  }
+
   public SelfAwareRegistry (String host, int port, Registry internalRegistry) {
 
     this.host = host;
     this.port = port;
+    this.internalRegistry = internalRegistry;
+  }
+
+  public void setHost (String host) {
+
+    this.host = host;
+  }
+
+  public void setPort (int port) {
+
+    this.port = port;
+  }
+
+  public void setInternalRegistry (Registry internalRegistry) {
+
     this.internalRegistry = internalRegistry;
   }
 

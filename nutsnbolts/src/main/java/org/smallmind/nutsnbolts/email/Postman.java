@@ -50,156 +50,160 @@ import org.smallmind.nutsnbolts.util.EncryptionUtilities;
 
 public class Postman {
 
-   private final HashMap<MD5Key, Template> templateMap = new HashMap<MD5Key, Template>();
+  private final HashMap<MD5Key, Template> templateMap = new HashMap<MD5Key, Template>();
 
-   private Session session;
-   private Configuration freemarkerConf;
+  private Session session;
+  private Configuration freemarkerConf;
 
-   public Postman (String host, int port) {
+  public Postman () {
 
-      this(host, port, new Authentication(AuthType.NONE), false);
-   }
+  }
 
-   public Postman (String host, int port, Authentication authentication) {
+  public Postman (String host, int port) {
 
-      this(host, port, authentication, false);
-   }
+    this(host, port, new Authentication(AuthType.NONE), false);
+  }
 
-   public Postman (String host, int port, boolean secure) {
+  public Postman (String host, int port, Authentication authentication) {
 
-      this(host, port, new Authentication(AuthType.NONE), secure);
-   }
+    this(host, port, authentication, false);
+  }
 
-   public Postman (String host, int port, Authentication authentication, boolean secure) {
+  public Postman (String host, int port, boolean secure) {
 
-      session = (!secure) ? Protocol.SMTP.getSession(host, port, authentication) : Protocol.SMTPS.getSession(host, port, authentication);
-      freemarkerConf = new Configuration();
-      freemarkerConf.setTagSyntax(freemarker.template.Configuration.SQUARE_BRACKET_TAG_SYNTAX);
-   }
+    this(host, port, new Authentication(AuthType.NONE), secure);
+  }
 
-   public void send (Mail mail)
-      throws MailDeliveryException {
+  public Postman (String host, int port, Authentication authentication, boolean secure) {
 
-      send(mail, null);
-   }
+    session = (!secure) ? Protocol.SMTP.getSession(host, port, authentication) : Protocol.SMTPS.getSession(host, port, authentication);
+    freemarkerConf = new Configuration();
+    freemarkerConf.setTagSyntax(freemarker.template.Configuration.SQUARE_BRACKET_TAG_SYNTAX);
+  }
 
-   public void send (Mail mail, HashMap<String, Object> interpolationMap)
-      throws MailDeliveryException {
+  public void send (Mail mail)
+    throws MailDeliveryException {
 
-      MimeMessage message = new MimeMessage(session);
-      Multipart multipart = new MimeMultipart();
+    send(mail, null);
+  }
 
-      try {
-         message.setFrom(new InternetAddress(mail.getFrom().trim()));
+  public void send (Mail mail, HashMap<String, Object> interpolationMap)
+    throws MailDeliveryException {
 
-         if (mail.getReplyTo() != null) {
-            message.setReplyTo(new Address[] {new InternetAddress(mail.getReplyTo())});
-         }
-         if (mail.getTo() != null) {
-            addRecipients(message, Message.RecipientType.TO, mail.getTo());
-         }
-         if (mail.getCc() != null) {
-            addRecipients(message, Message.RecipientType.CC, mail.getCc());
-         }
-         if (mail.getBcc() != null) {
-            addRecipients(message, Message.RecipientType.BCC, mail.getBcc());
-         }
+    MimeMessage message = new MimeMessage(session);
+    Multipart multipart = new MimeMultipart();
 
-         message.setSentDate(new Date());
+    try {
+      message.setFrom(new InternetAddress(mail.getFrom().trim()));
 
-         if (mail.getSubject() != null) {
-            message.setSubject(mail.getSubject());
-         }
+      if (mail.getReplyTo() != null) {
+        message.setReplyTo(new Address[] {new InternetAddress(mail.getReplyTo())});
+      }
+      if (mail.getTo() != null) {
+        addRecipients(message, Message.RecipientType.TO, mail.getTo());
+      }
+      if (mail.getCc() != null) {
+        addRecipients(message, Message.RecipientType.CC, mail.getCc());
+      }
+      if (mail.getBcc() != null) {
+        addRecipients(message, Message.RecipientType.BCC, mail.getBcc());
+      }
 
-         if (mail.getBodyReader() != null) {
+      message.setSentDate(new Date());
 
-            StringBuilder bodyBuilder;
-            char[] buffer;
-            int charsRead;
+      if (mail.getSubject() != null) {
+        message.setSubject(mail.getSubject());
+      }
 
-            buffer = new char[256];
-            bodyBuilder = new StringBuilder();
-            while ((charsRead = mail.getBodyReader().read(buffer)) >= 0) {
-               bodyBuilder.append(buffer, 0, charsRead);
+      if (mail.getBodyReader() != null) {
+
+        StringBuilder bodyBuilder;
+        char[] buffer;
+        int charsRead;
+
+        buffer = new char[256];
+        bodyBuilder = new StringBuilder();
+        while ((charsRead = mail.getBodyReader().read(buffer)) >= 0) {
+          bodyBuilder.append(buffer, 0, charsRead);
+        }
+        mail.getBodyReader().close();
+
+        MimeBodyPart textPart = new MimeBodyPart();
+
+        if (interpolationMap == null) {
+          textPart.setText(bodyBuilder.toString());
+        }
+        else {
+
+          Template template;
+          StringWriter templateWriter;
+          MD5Key md5Key = new MD5Key(EncryptionUtilities.hash(EncryptionUtilities.HashAlgorithm.MD5, bodyBuilder.toString()));
+
+          synchronized (templateMap) {
+            if ((template = templateMap.get(md5Key)) == null) {
+              templateMap.put(md5Key, template = new Template(new String(md5Key.getMd5Hash()), new StringReader(bodyBuilder.toString()), freemarkerConf));
             }
-            mail.getBodyReader().close();
+          }
 
-            MimeBodyPart textPart = new MimeBodyPart();
+          template.process(interpolationMap, templateWriter = new StringWriter());
+          textPart.setText(templateWriter.toString());
+        }
 
-            if (interpolationMap == null) {
-               textPart.setText(bodyBuilder.toString());
-            }
-            else {
-
-               Template template;
-               StringWriter templateWriter;
-               MD5Key md5Key = new MD5Key(EncryptionUtilities.hash(EncryptionUtilities.HashAlgorithm.MD5, bodyBuilder.toString()));
-
-               synchronized (templateMap) {
-                  if ((template = templateMap.get(md5Key)) == null) {
-                     templateMap.put(md5Key, template = new Template(new String(md5Key.getMd5Hash()), new StringReader(bodyBuilder.toString()), freemarkerConf));
-                  }
-               }
-
-               template.process(interpolationMap, templateWriter = new StringWriter());
-               textPart.setText(templateWriter.toString());
-            }
-
-            multipart.addBodyPart(textPart);
-         }
-
-         if ((mail.getAttachments() != null) && (mail.getAttachments().length > 0)) {
-            for (File attachment : mail.getAttachments()) {
-
-               MimeBodyPart filePart = new MimeBodyPart();
-               FileDataSource dataSource = new FileDataSource(attachment);
-
-               filePart.setDataHandler(new DataHandler(dataSource));
-               filePart.setFileName(dataSource.getName());
-               multipart.addBodyPart(filePart);
-            }
-         }
-
-         message.setContent(multipart);
-         Transport.send(message);
-      }
-      catch (Exception exception) {
-         throw new MailDeliveryException(exception);
-      }
-   }
-
-   private void addRecipients (Message message, Message.RecipientType type, String addresses)
-      throws MessagingException {
-
-      for (String address : addresses.split(",")) {
-         message.addRecipient(type, new InternetAddress(address.trim()));
-      }
-   }
-
-   private class MD5Key {
-
-      private byte[] md5Hash;
-
-      public MD5Key (byte[] md5Hash) {
-
-         this.md5Hash = md5Hash;
+        multipart.addBodyPart(textPart);
       }
 
-      public byte[] getMd5Hash () {
+      if ((mail.getAttachments() != null) && (mail.getAttachments().length > 0)) {
+        for (File attachment : mail.getAttachments()) {
 
-         return md5Hash;
+          MimeBodyPart filePart = new MimeBodyPart();
+          FileDataSource dataSource = new FileDataSource(attachment);
+
+          filePart.setDataHandler(new DataHandler(dataSource));
+          filePart.setFileName(dataSource.getName());
+          multipart.addBodyPart(filePart);
+        }
       }
 
-      @Override
-      public int hashCode () {
+      message.setContent(multipart);
+      Transport.send(message);
+    }
+    catch (Exception exception) {
+      throw new MailDeliveryException(exception);
+    }
+  }
 
-         return Arrays.hashCode(md5Hash);
-      }
+  private void addRecipients (Message message, Message.RecipientType type, String addresses)
+    throws MessagingException {
 
-      @Override
-      public boolean equals (Object obj) {
+    for (String address : addresses.split(",")) {
+      message.addRecipient(type, new InternetAddress(address.trim()));
+    }
+  }
 
-         return (obj instanceof MD5Key) && Arrays.equals(md5Hash, ((MD5Key)obj).getMd5Hash());
-      }
-   }
+  private class MD5Key {
+
+    private byte[] md5Hash;
+
+    public MD5Key (byte[] md5Hash) {
+
+      this.md5Hash = md5Hash;
+    }
+
+    public byte[] getMd5Hash () {
+
+      return md5Hash;
+    }
+
+    @Override
+    public int hashCode () {
+
+      return Arrays.hashCode(md5Hash);
+    }
+
+    @Override
+    public boolean equals (Object obj) {
+
+      return (obj instanceof MD5Key) && Arrays.equals(md5Hash, ((MD5Key)obj).getMd5Hash());
+    }
+  }
 }
