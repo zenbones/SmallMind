@@ -26,12 +26,42 @@
  */
 package org.smallmind.swing.file;
 
-import java.util.EventListener;
+import java.awt.BorderLayout;
+import java.awt.Dimension;
+import java.awt.Window;
+import java.io.File;
+import javax.swing.JDialog;
 
-public interface DirectoryChoiceListener extends EventListener {
+public class DirectoryChooserDialog extends JDialog implements DirectoryChoiceListener {
 
-  public abstract void directoryChosen (DirectoryChoiceEvent directoryChoiceEvent);
+  private File chosenDirectory;
+
+  public DirectoryChooserDialog (Window parentWindow) {
+
+    super(parentWindow, "Choose Folder...", ModalityType.APPLICATION_MODAL);
+
+    DirectoryChooserPanel directoryChooserPanel;
+
+    setDefaultCloseOperation(JDialog.DISPOSE_ON_CLOSE);
+
+    setLayout(new BorderLayout());
+    add(directoryChooserPanel = new DirectoryChooserPanel());
+    directoryChooserPanel.addDirectoryChoiceListener(this);
+
+    setMinimumSize(new Dimension(550, 350));
+    setLocationRelativeTo(parentWindow);
+  }
+
+  public File getChosenDirectory () {
+
+    return chosenDirectory;
+  }
+
+  @Override
+  public void directoryChosen (DirectoryChoiceEvent directoryChoiceEvent) {
+
+    chosenDirectory = directoryChoiceEvent.getChosenDirectory();
+    setVisible(false);
+    dispose();
+  }
 }
-
-
-

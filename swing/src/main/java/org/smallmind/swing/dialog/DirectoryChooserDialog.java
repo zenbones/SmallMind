@@ -48,7 +48,7 @@ import javax.swing.KeyStroke;
 import org.smallmind.nutsnbolts.util.WeakEventListenerList;
 import org.smallmind.swing.file.DirectoryChoiceEvent;
 import org.smallmind.swing.file.DirectoryChoiceListener;
-import org.smallmind.swing.file.DirectoryChooser;
+import org.smallmind.swing.file.DirectoryChooserPanel;
 
 public class DirectoryChooserDialog extends JDialog implements WindowListener, DirectoryChoiceListener {
 
@@ -85,7 +85,7 @@ public class DirectoryChooserDialog extends JDialog implements WindowListener, D
     JPanel buttonPanel;
     JButton cancelButton;
     OKAction okAction;
-    DirectoryChooser directoryChooser;
+    DirectoryChooserPanel directoryChooser;
 
     setDefaultCloseOperation(JDialog.DO_NOTHING_ON_CLOSE);
 
@@ -106,7 +106,7 @@ public class DirectoryChooserDialog extends JDialog implements WindowListener, D
     buttonPanel.add(okButton);
     buttonPanel.add(cancelButton);
 
-    directoryChooser = new DirectoryChooser();
+    directoryChooser = new DirectoryChooserPanel();
 
     constraints.gridx = 0;
     constraints.gridy = 0;

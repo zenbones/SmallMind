@@ -27,20 +27,23 @@
 package org.smallmind.swing.file;
 
 import java.awt.Dimension;
-import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
-import java.awt.Insets;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 import java.io.File;
 import java.util.Iterator;
 import java.util.LinkedList;
+import javax.swing.GroupLayout;
+import javax.swing.JButton;
 import javax.swing.JComboBox;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTextField;
 import javax.swing.JTree;
+import javax.swing.LayoutStyle;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 import javax.swing.event.TreeSelectionEvent;
@@ -49,27 +52,29 @@ import javax.swing.tree.TreeSelectionModel;
 import org.smallmind.nutsnbolts.util.WeakEventListenerList;
 import org.smallmind.swing.tree.SmallMindTreeModel;
 
-public class DirectoryChooser extends JPanel implements ItemListener, TreeSelectionListener, DocumentListener {
+public class DirectoryChooserPanel extends JPanel implements ActionListener, ItemListener, TreeSelectionListener, DocumentListener {
 
   private static final GridBagLayout GRID_BAG_LAYOUT = new GridBagLayout();
   private static final Dimension PREFERRED_DIMENSION = new Dimension(300, 500);
 
-  private WeakEventListenerList<DirectoryChoiceListener> listenerList;
+  private WeakEventListenerList<DirectoryChoiceListener> listenerList = new WeakEventListenerList<DirectoryChoiceListener>();
   private JTree directoryTree;
   private JTextField directoryTextField;
+  private JButton cancelButton;
+  private JButton selectButton;
 
-  public DirectoryChooser () {
+  public DirectoryChooserPanel () {
 
     super(GRID_BAG_LAYOUT);
 
-    GridBagConstraints constraints = new GridBagConstraints();
-    JPanel rootPanel;
-    JPanel inputPanel;
+    GroupLayout layout;
     JScrollPane directoryTreeScrollPane;
     JComboBox rootComboBox;
+    JLabel rootLabel;
+    JLabel directoryLabel;
     LinkedList<File> rootList;
 
-    listenerList = new WeakEventListenerList<DirectoryChoiceListener>();
+    setLayout(layout = new GroupLayout(this));
 
     rootList = new LinkedList<File>();
     for (File root : File.listRoots()) {
@@ -78,9 +83,20 @@ public class DirectoryChooser extends JPanel implements ItemListener, TreeSelect
       }
     }
 
+    rootLabel = new JLabel("Root:");
+    directoryLabel = new JLabel("Directory:");
+
     rootComboBox = new JComboBox(rootList.toArray());
     rootComboBox.setEditable(false);
     rootComboBox.setRenderer(new RootListCellRenderer());
+
+    selectButton = new JButton("Select");
+    selectButton.setFocusable(false);
+    selectButton.addActionListener(this);
+
+    cancelButton = new JButton("Cancel");
+    cancelButton.setFocusable(false);
+    cancelButton.addActionListener(this);
 
     directoryTree = new JTree();
     setRoot((File)rootComboBox.getSelectedItem());
@@ -96,66 +112,19 @@ public class DirectoryChooser extends JPanel implements ItemListener, TreeSelect
 
     directoryTextField = new JTextField();
 
-    rootPanel = new JPanel(GRID_BAG_LAYOUT);
-    inputPanel = new JPanel(GRID_BAG_LAYOUT);
+    layout.setAutoCreateContainerGaps(true);
 
-    constraints.anchor = GridBagConstraints.WEST;
-    constraints.fill = GridBagConstraints.NONE;
-    constraints.insets = new Insets(0, 0, 0, 0);
-    constraints.gridx = 0;
-    constraints.gridy = 0;
-    constraints.weightx = 0;
-    constraints.weighty = 0;
-    rootPanel.add(new JLabel("Root:"), constraints);
+    layout.setHorizontalGroup(layout.createParallelGroup(GroupLayout.Alignment.TRAILING)
+      .addGroup(layout.createSequentialGroup().addComponent(rootLabel).addPreferredGap(LayoutStyle.ComponentPlacement.RELATED).addComponent(rootComboBox))
+      .addComponent(directoryTreeScrollPane)
+      .addGroup(layout.createSequentialGroup().addComponent(directoryLabel).addPreferredGap(LayoutStyle.ComponentPlacement.RELATED).addComponent(directoryTextField))
+      .addGroup(layout.createSequentialGroup().addComponent(selectButton).addPreferredGap(LayoutStyle.ComponentPlacement.RELATED).addComponent(cancelButton)));
 
-    constraints.anchor = GridBagConstraints.WEST;
-    constraints.fill = GridBagConstraints.NONE;
-    constraints.insets = new Insets(0, 5, 0, 0);
-    constraints.gridx = 1;
-    constraints.gridy = 0;
-    constraints.weightx = 1;
-    constraints.weighty = 0;
-    rootPanel.add(rootComboBox, constraints);
-
-    constraints.fill = GridBagConstraints.NONE;
-    constraints.insets = new Insets(0, 0, 0, 0);
-    constraints.gridx = 0;
-    constraints.gridy = 0;
-    constraints.weightx = 0;
-    constraints.weighty = 0;
-    inputPanel.add(new JLabel("Directory:"), constraints);
-
-    constraints.fill = GridBagConstraints.HORIZONTAL;
-    constraints.insets = new Insets(0, 5, 0, 0);
-    constraints.gridx = 1;
-    constraints.gridy = 0;
-    constraints.weightx = 1;
-    constraints.weighty = 0;
-    inputPanel.add(directoryTextField, constraints);
-
-    constraints.fill = GridBagConstraints.HORIZONTAL;
-    constraints.insets = new Insets(0, 0, 0, 0);
-    constraints.gridx = 0;
-    constraints.gridy = 0;
-    constraints.weightx = 1;
-    constraints.weighty = 0;
-    add(rootPanel, constraints);
-
-    constraints.fill = GridBagConstraints.BOTH;
-    constraints.insets = new Insets(8, 0, 0, 0);
-    constraints.gridx = 0;
-    constraints.gridy = 1;
-    constraints.weightx = 1;
-    constraints.weighty = 1;
-    add(directoryTreeScrollPane, constraints);
-
-    constraints.fill = GridBagConstraints.HORIZONTAL;
-    constraints.insets = new Insets(8, 0, 0, 0);
-    constraints.gridx = 0;
-    constraints.gridy = 2;
-    constraints.weightx = 1;
-    constraints.weighty = 0;
-    add(inputPanel, constraints);
+    layout.setVerticalGroup(layout.createSequentialGroup()
+      .addGroup(layout.createParallelGroup(GroupLayout.Alignment.BASELINE).addComponent(rootLabel).addComponent(rootComboBox, GroupLayout.PREFERRED_SIZE, GroupLayout.PREFERRED_SIZE, GroupLayout.PREFERRED_SIZE))
+      .addPreferredGap(LayoutStyle.ComponentPlacement.UNRELATED).addComponent(directoryTreeScrollPane).addPreferredGap(LayoutStyle.ComponentPlacement.UNRELATED)
+      .addGroup(layout.createParallelGroup(GroupLayout.Alignment.BASELINE).addComponent(directoryLabel).addComponent(directoryTextField, GroupLayout.PREFERRED_SIZE, GroupLayout.PREFERRED_SIZE, GroupLayout.PREFERRED_SIZE))
+      .addPreferredGap(LayoutStyle.ComponentPlacement.UNRELATED).addGroup(layout.createParallelGroup().addComponent(selectButton).addComponent(cancelButton)));
 
     rootComboBox.addItemListener(this);
     directoryTextField.getDocument().addDocumentListener(this);
@@ -182,21 +151,27 @@ public class DirectoryChooser extends JPanel implements ItemListener, TreeSelect
     directoryTree.setModel(new SmallMindTreeModel(new DirectoryNode(new Directory(file.getAbsolutePath()))));
   }
 
-  private synchronized void fireRootChosen (DirectoryChoiceEvent directoryChoiceEvent) {
-
-    Iterator<DirectoryChoiceListener> listenerIter = listenerList.getListeners();
-
-    while (listenerIter.hasNext()) {
-      listenerIter.next().rootChosen(directoryChoiceEvent);
-    }
-  }
-
   private synchronized void fireDirectoryChosen (DirectoryChoiceEvent directoryChoiceEvent) {
 
     Iterator<DirectoryChoiceListener> listenerIter = listenerList.getListeners();
 
     while (listenerIter.hasNext()) {
       listenerIter.next().directoryChosen(directoryChoiceEvent);
+    }
+  }
+
+  public void actionPerformed (ActionEvent actionEvent) {
+
+    if (actionEvent.getSource() == selectButton) {
+      if ((directoryTextField.getText() != null) && (directoryTextField.getText().trim().length() > 0)) {
+        fireDirectoryChosen(new DirectoryChoiceEvent(this, new File(directoryTextField.getText().trim())));
+      }
+      else {
+        fireDirectoryChosen(new DirectoryChoiceEvent(this, null));
+      }
+    }
+    else if (actionEvent.getSource() == cancelButton) {
+      fireDirectoryChosen(new DirectoryChoiceEvent(this, null));
     }
   }
 
@@ -209,7 +184,6 @@ public class DirectoryChooser extends JPanel implements ItemListener, TreeSelect
     if (itemEvent.getStateChange() == ItemEvent.SELECTED) {
       rootFile = (File)itemEvent.getItem();
       setRoot(rootFile);
-      fireRootChosen(new DirectoryChoiceEvent(this, rootFile));
     }
   }
 
@@ -222,8 +196,6 @@ public class DirectoryChooser extends JPanel implements ItemListener, TreeSelect
     directoryTextField.getDocument().removeDocumentListener(this);
     directoryTextField.setText(directory.getAbsolutePath());
     directoryTextField.getDocument().addDocumentListener(this);
-
-    fireDirectoryChosen(new DirectoryChoiceEvent(this, directory));
   }
 
   private void shiftDirectory () {
@@ -233,8 +205,6 @@ public class DirectoryChooser extends JPanel implements ItemListener, TreeSelect
       directoryTree.getSelectionModel().clearSelection();
       directoryTree.getSelectionModel().addTreeSelectionListener(this);
     }
-
-    fireDirectoryChosen(new DirectoryChoiceEvent(this, new File(directoryTextField.getText())));
   }
 
   public synchronized void insertUpdate (DocumentEvent documentEvent) {
@@ -251,5 +221,4 @@ public class DirectoryChooser extends JPanel implements ItemListener, TreeSelect
 
     shiftDirectory();
   }
-
 }

@@ -233,7 +233,7 @@ public class FileChooserPanel extends JPanel implements ComponentListener, Mouse
       if ((fileNameTextField.getText() == null) || (fileNameTextField.getText().length() == 0)) {
         chosenFile = null;
       }
-      else if (fileNameTextField.getText().indexOf(System.getProperty("file.separator")) >= 0) {
+      else if (fileNameTextField.getText().contains(System.getProperty("file.separator"))) {
         chosenFile = new File(fileNameTextField.getText());
       }
       else {
