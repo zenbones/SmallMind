@@ -133,7 +133,7 @@ public class SpringLiquibase implements InitializingBean {
 
             diff = new Diff(database = DatabaseFactory.getInstance().findCorrectDatabaseImplementation(new JdbcConnection(dataSource.getConnection())), database.getDefaultSchemaName());
             diffResult = diff.compare();
-            diffResult.setChangeSetAuthor("maven.generated");
+            diffResult.setChangeSetAuthor("auto.generated");
             diffResult.setChangeSetContext(contexts);
             diffResult.setDataDir(outputDir);
 
