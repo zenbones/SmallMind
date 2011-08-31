@@ -36,7 +36,7 @@ public class DirectoryChooserDialog extends JDialog implements DirectoryChoiceLi
 
   private File chosenDirectory;
 
-  public static File createShowDialog (Window parentWindow) {
+  public static File showDirectoryChooserDialog (Window parentWindow) {
 
     DirectoryChooserDialog directoryChooserDialog;
 

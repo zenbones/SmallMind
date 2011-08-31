@@ -147,7 +147,7 @@ public class DirectoryManager extends JPanel {
 
       File addedDirectory;
 
-      if ((addedDirectory = DirectoryChooserDialog.createShowDialog(parentWindow)) != null) {
+      if ((addedDirectory = DirectoryChooserDialog.showDirectoryChooserDialog(parentWindow)) != null) {
         listModel.addDirectory(addedDirectory);
         removeDirectoryAction.setEnabled(true);
 
