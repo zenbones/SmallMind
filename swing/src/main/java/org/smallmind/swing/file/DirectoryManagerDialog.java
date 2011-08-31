@@ -24,7 +24,7 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.swing.dialog;
+package org.smallmind.swing.file;
 
 import java.awt.Container;
 import java.awt.FlowLayout;
@@ -37,7 +37,8 @@ import java.awt.event.KeyEvent;
 import java.awt.event.WindowEvent;
 import java.awt.event.WindowListener;
 import java.io.File;
-import java.util.Iterator;
+import java.util.ArrayList;
+import java.util.List;
 import javax.swing.AbstractAction;
 import javax.swing.Action;
 import javax.swing.JButton;
@@ -45,47 +46,43 @@ import javax.swing.JComponent;
 import javax.swing.JDialog;
 import javax.swing.JPanel;
 import javax.swing.KeyStroke;
-import org.smallmind.nutsnbolts.util.WeakEventListenerList;
-import org.smallmind.swing.file.DirectoryChoiceEvent;
-import org.smallmind.swing.file.DirectoryChoiceListener;
-import org.smallmind.swing.file.DirectoryChooserPanel;
 
-public class DirectoryChooserDialog extends JDialog implements WindowListener, DirectoryChoiceListener {
+public class DirectoryManagerDialog extends JDialog implements WindowListener {
 
   private static final GridBagLayout GRID_BAG_LAYOUT = new GridBagLayout();
   private static final FlowLayout FLOW_LAYOUT = new FlowLayout(FlowLayout.RIGHT);
 
-  private WeakEventListenerList<DialogListener> listenerList;
+  private List<File> internalDirectoryList;
+  private List<File> externalDirectoryList;
   private CancelAction cancelAction;
-  private JButton okButton;
-  private File directory;
   boolean initialized = false;
 
-  public static File createShowDialog (Window parentWindow) {
+  public static void createShowDialog (Window parentWindow, List<File> externalDirectoryList) {
 
-    DirectoryChooserDialog directoryChooserDialog;
+    DirectoryManagerDialog directoryChooserDialog;
 
-    directoryChooserDialog = new DirectoryChooserDialog(parentWindow);
+    directoryChooserDialog = new DirectoryManagerDialog(parentWindow, externalDirectoryList);
     directoryChooserDialog.showDialog();
-
-    return directoryChooserDialog.getChosenDirectory();
   }
 
-  public DirectoryChooserDialog (Window parentWindow) {
+  public DirectoryManagerDialog (Window parentWindow, List<File> externalDirectoryList) {
 
-    super(parentWindow, "Choose Directory...");
+    super(parentWindow, "Manage Directories...");
 
-    buildDialog(parentWindow);
+    this.externalDirectoryList = externalDirectoryList;
+    internalDirectoryList = new ArrayList<File>(externalDirectoryList);
+
+    buildDialog(parentWindow, new DirectoryManager(parentWindow, internalDirectoryList));
   }
 
-  private void buildDialog (Window parentWindow) {
+  private void buildDialog (Window parentWindow, DirectoryManager directoryManager) {
 
     GridBagConstraints constraints = new GridBagConstraints();
     Container contentPane;
     JPanel buttonPanel;
+    JButton okButton;
     JButton cancelButton;
     OKAction okAction;
-    DirectoryChooserPanel directoryChooser;
 
     setDefaultCloseOperation(JDialog.DO_NOTHING_ON_CLOSE);
 
@@ -96,7 +93,6 @@ public class DirectoryChooserDialog extends JDialog implements WindowListener, D
     cancelAction = new CancelAction();
 
     okButton = new JButton(okAction);
-    okButton.setEnabled(false);
     okButton.registerKeyboardAction(okAction, KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0), JComponent.WHEN_IN_FOCUSED_WINDOW);
 
     cancelButton = new JButton(cancelAction);
@@ -106,15 +102,13 @@ public class DirectoryChooserDialog extends JDialog implements WindowListener, D
     buttonPanel.add(okButton);
     buttonPanel.add(cancelButton);
 
-    directoryChooser = new DirectoryChooserPanel();
-
     constraints.gridx = 0;
     constraints.gridy = 0;
     constraints.fill = GridBagConstraints.BOTH;
     constraints.insets = new Insets(5, 5, 0, 5);
     constraints.weightx = 1;
     constraints.weighty = 1;
-    contentPane.add(directoryChooser, constraints);
+    contentPane.add(directoryManager, constraints);
 
     constraints.gridx = 0;
     constraints.gridy = 1;
@@ -128,59 +122,13 @@ public class DirectoryChooserDialog extends JDialog implements WindowListener, D
     setLocationRelativeTo(parentWindow);
     setDefaultCloseOperation(JDialog.DO_NOTHING_ON_CLOSE);
 
-    directoryChooser.addDirectoryChoiceListener(this);
     addWindowListener(this);
-
-    listenerList = new WeakEventListenerList<DialogListener>();
   }
 
   public void showDialog () {
 
     setModal(true);
     setVisible(true);
-  }
-
-  public synchronized void addDialogListener (DialogListener dialogListener) {
-
-    listenerList.addListener(dialogListener);
-  }
-
-  public synchronized void removeDialogListener (DialogListener dialogListener) {
-
-    listenerList.removeListener(dialogListener);
-  }
-
-  public synchronized File getChosenDirectory () {
-
-    return directory;
-  }
-
-  public synchronized void rootChosen (DirectoryChoiceEvent directoryChoiceEvent) {
-
-    directory = null;
-    okButton.setEnabled(false);
-    initialized = false;
-  }
-
-  public synchronized void directoryChosen (DirectoryChoiceEvent directoryChoiceEvent) {
-
-    directory = directoryChoiceEvent.getChosenDirectory();
-
-    if (!initialized) {
-      okButton.setEnabled(true);
-      initialized = true;
-    }
-  }
-
-  public synchronized void fireDialogHandler (DialogState dialogState) {
-
-    Iterator<DialogListener> listenerIter = listenerList.getListeners();
-    DialogEvent dialogEvent;
-
-    dialogEvent = new DialogEvent(this, dialogState);
-    while (listenerIter.hasNext()) {
-      listenerIter.next().dialogHandler(dialogEvent);
-    }
   }
 
   public void windowOpened (WindowEvent windowEvent) {
@@ -223,9 +171,11 @@ public class DirectoryChooserDialog extends JDialog implements WindowListener, D
 
     public synchronized void actionPerformed (ActionEvent actionEvent) {
 
+      externalDirectoryList.clear();
+      externalDirectoryList.addAll(internalDirectoryList);
+
       setVisible(false);
       dispose();
-      fireDialogHandler(DialogState.OK);
     }
 
   }
@@ -241,13 +191,8 @@ public class DirectoryChooserDialog extends JDialog implements WindowListener, D
 
     public synchronized void actionPerformed (ActionEvent actionEvent) {
 
-      directory = null;
-
       setVisible(false);
       dispose();
-      fireDialogHandler(DialogState.CANCEL);
     }
-
   }
-
 }

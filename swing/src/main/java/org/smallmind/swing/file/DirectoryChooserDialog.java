@@ -36,6 +36,16 @@ public class DirectoryChooserDialog extends JDialog implements DirectoryChoiceLi
 
   private File chosenDirectory;
 
+  public static File createShowDialog (Window parentWindow) {
+
+    DirectoryChooserDialog directoryChooserDialog;
+
+    directoryChooserDialog = new DirectoryChooserDialog(parentWindow);
+    directoryChooserDialog.setVisible(true);
+
+    return directoryChooserDialog.getChosenDirectory();
+  }
+
   public DirectoryChooserDialog (Window parentWindow) {
 
     super(parentWindow, "Choose Folder...", ModalityType.APPLICATION_MODAL);

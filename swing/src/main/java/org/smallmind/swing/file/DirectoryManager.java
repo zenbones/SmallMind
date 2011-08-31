@@ -47,7 +47,6 @@ import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.KeyStroke;
 import javax.swing.ListSelectionModel;
-import org.smallmind.swing.dialog.DirectoryChooserDialog;
 
 public class DirectoryManager extends JPanel {
 
@@ -148,9 +147,7 @@ public class DirectoryManager extends JPanel {
 
       File addedDirectory;
 
-      addedDirectory = DirectoryChooserDialog.createShowDialog(parentWindow);
-
-      if (addedDirectory != null) {
+      if ((addedDirectory = DirectoryChooserDialog.createShowDialog(parentWindow)) != null) {
         listModel.addDirectory(addedDirectory);
         removeDirectoryAction.setEnabled(true);
 
