@@ -34,6 +34,7 @@ import org.springframework.context.support.FileSystemXmlApplicationContext;
 public class ExtensionLoader<E extends ExtensionInstance> {
 
   private E extensionInstance;
+  private GatingClassLoader classLoader;
 
   public ExtensionLoader (Class<E> extensionInstanceClass, String springFileName)
     throws ExtensionLoaderException {
@@ -62,7 +63,7 @@ public class ExtensionLoader<E extends ExtensionInstance> {
           normalizedPathComponents[componentIndex++] = classpathComponentFile.isAbsolute() ? classpathComponent : System.getProperty("user.dir") + '/' + classpathComponent;
         }
 
-        Thread.currentThread().setContextClassLoader(new GatingClassLoader(Thread.currentThread().getContextClassLoader(), -1, new ClasspathClassGate(normalizedPathComponents)));
+        Thread.currentThread().setContextClassLoader(classLoader = new GatingClassLoader(Thread.currentThread().getContextClassLoader(), -1, new ClasspathClassGate(normalizedPathComponents)));
       }
     }
   }
@@ -70,5 +71,10 @@ public class ExtensionLoader<E extends ExtensionInstance> {
   protected E getExtensionInstance () {
 
     return extensionInstance;
+  }
+
+  public GatingClassLoader getClassLoader () {
+
+    return classLoader;
   }
 }
