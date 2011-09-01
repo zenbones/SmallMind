@@ -50,6 +50,8 @@ import org.springframework.beans.factory.InitializingBean;
 
 public class SpringLiquibase implements InitializingBean {
 
+  private final ClassLoader classloader;
+
   private DataSource dataSource;
   private ResourceAccessor resourceAccessor;
   private Goal goal;
@@ -57,6 +59,16 @@ public class SpringLiquibase implements InitializingBean {
   private String contexts;
   private String outputLog;
   private String outputDir;
+
+  public SpringLiquibase () {
+
+    this(Thread.currentThread().getContextClassLoader());
+  }
+
+  public SpringLiquibase (ClassLoader classLoader) {
+
+    this.classloader = classLoader;
+  }
 
   public void setDataSource (DataSource dataSource) {
 
@@ -70,7 +82,7 @@ public class SpringLiquibase implements InitializingBean {
         resourceAccessor = new FileSystemResourceAccessor();
         break;
       case CLASSPATH:
-        resourceAccessor = new ClassLoaderResourceAccessor(Thread.currentThread().getContextClassLoader());
+        resourceAccessor = new ClassLoaderResourceAccessor(classloader);
         break;
       default:
         throw new UnknownSwitchCaseException(source.name());
