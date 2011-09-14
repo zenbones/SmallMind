@@ -46,7 +46,8 @@ import javax.mail.internet.MimeMessage;
 import javax.mail.internet.MimeMultipart;
 import freemarker.template.Configuration;
 import freemarker.template.Template;
-import org.smallmind.nutsnbolts.util.EncryptionUtilities;
+import org.smallmind.nutsnbolts.security.EncryptionUtilities;
+import org.smallmind.nutsnbolts.security.HashAlgorithm;
 
 public class Postman {
 
@@ -137,7 +138,7 @@ public class Postman {
 
           Template template;
           StringWriter templateWriter;
-          MD5Key md5Key = new MD5Key(EncryptionUtilities.hash(EncryptionUtilities.HashAlgorithm.MD5, bodyBuilder.toString()));
+          MD5Key md5Key = new MD5Key(EncryptionUtilities.hash(HashAlgorithm.MD5, bodyBuilder.toString()));
 
           synchronized (templateMap) {
             if ((template = templateMap.get(md5Key)) == null) {
