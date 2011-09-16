@@ -90,7 +90,7 @@ public class DotNotation {
                   patternBuilder.append(')');
                }
 
-               patternBuilder.append("\\.");
+               patternBuilder.append("(\\.|$)");
                translationState = TranslationState.POST_DOT;
 
                break;
@@ -105,7 +105,7 @@ public class DotNotation {
                   throw new DotNotationException("Any wildcard followed by '*' is redundant");
                }
 
-               patternBuilder.append(".+");
+               patternBuilder.append("(.+|$)");
                translationState = TranslationState.WILD;
                wildState = WildState.STAR;
 
@@ -121,7 +121,7 @@ public class DotNotation {
                   throw new DotNotationException("Following '*' with '?' is redundant");
                }
 
-               patternBuilder.append("[^.]+");
+               patternBuilder.append("([^.]+|$)");
                translationState = TranslationState.WILD;
                wildState = WildState.QUESTION;
 
