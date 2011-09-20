@@ -128,10 +128,7 @@ public final class Base64Codec {
 
       byteOutputStream.write(((quartet[0] & 63) << 2) | ((quartet[1] & 48) >>> 4));
 
-      if (buffer[2] == '=') {
-        byteOutputStream.write((quartet[1] & 15) << 4);
-      }
-      else {
+      if (buffer[2] != '=') {
         byteOutputStream.write(((quartet[1] & 15) << 4) | ((quartet[2] & 60) >>> 2));
       }
 
