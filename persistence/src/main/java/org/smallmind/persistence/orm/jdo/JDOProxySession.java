@@ -82,6 +82,11 @@ public class JDOProxySession extends ProxySession {
     getPersistenceManager().flush();
   }
 
+  public void clear () {
+
+    getPersistenceManager().evictAll();
+  }
+
   public boolean isClosed () {
 
     PersistenceManager persistenceManager;

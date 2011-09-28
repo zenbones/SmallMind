@@ -74,10 +74,12 @@ public class JPAProxySession extends ProxySession {
 
   public void flush () {
 
-    EntityManager entityManager;
+    getEntityManager().flush();
+  }
 
-    (entityManager = getEntityManager()).flush();
-    entityManager.clear();
+  public void clear () {
+
+    getEntityManager().clear();
   }
 
   public boolean isClosed () {

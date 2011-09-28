@@ -80,10 +80,12 @@ public class HibernateProxySession extends ProxySession {
 
   public void flush () {
 
-    Session session;
+    getSession().flush();
+  }
 
-    (session = getSession()).flush();
-    session.clear();
+  public void clear () {
+
+    getSession().clear();
   }
 
   public boolean isClosed () {

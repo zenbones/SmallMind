@@ -92,6 +92,8 @@ public abstract class ProxySession {
 
   public abstract void flush ();
 
+  public abstract void clear ();
+
   public abstract boolean isClosed ();
 
   public abstract void close ();
