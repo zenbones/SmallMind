@@ -30,7 +30,7 @@
   </bean>
 
   <!-- JDO Persistence Manager -->
-  <bean id="persistenceManagerFactory" class="org.smallmind.persistence.orm.spring.jdo.LocalPersistenceManagerFactroyBean">
+  <bean id="persistenceManagerFactory" class="org.smallmind.persistence.orm.spring.jdo.LocalPersistenceManagerFactoryBean">
     <property name="dataSource" ref="schemaPooledDataSource"/>
     <property name="properties">
       <props>
