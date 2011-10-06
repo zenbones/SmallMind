@@ -30,6 +30,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.PrintStream;
 import java.io.PrintWriter;
+import java.io.Writer;
 import java.sql.Connection;
 import java.sql.SQLException;
 import javax.sql.DataSource;
@@ -55,6 +56,7 @@ public class SpringLiquibase implements InitializingBean {
   private DataSource dataSource;
   private ResourceAccessor resourceAccessor;
   private Goal goal;
+  private Writer previewWriter;
   private String changeLog;
   private String contexts;
   private String outputLog;
@@ -94,6 +96,11 @@ public class SpringLiquibase implements InitializingBean {
     this.goal = goal;
   }
 
+  public void setPreviewWriter (Writer previewWriter) {
+
+    this.previewWriter = previewWriter;
+  }
+
   public void setChangeLog (String changeLog) {
 
     this.changeLog = changeLog;
@@ -129,7 +136,7 @@ public class SpringLiquibase implements InitializingBean {
 
         switch (goal) {
           case PREVIEW:
-            liquibase.update(contexts, new PrintWriter(System.out));
+            liquibase.update(contexts, (previewWriter == null) ? new PrintWriter(System.out) : previewWriter);
             break;
           case UPDATE:
             liquibase.update(contexts);
