@@ -38,9 +38,29 @@ public class JavaScriptBehavior extends Behavior {
   private Class scopeClass;
   private String fileName;
 
+  public JavaScriptBehavior () {
+
+    this(null, null, null);
+  }
+
+  public JavaScriptBehavior (String fileName) {
+
+    this(null, fileName, null);
+  }
+
   public JavaScriptBehavior (String fileName, Map<String, Object> substitutionMap) {
 
     this(null, fileName, substitutionMap);
+  }
+
+  public JavaScriptBehavior (Class scopeClass) {
+
+    this(scopeClass, null, null);
+  }
+
+  public JavaScriptBehavior (Class scopeClass, Map<String, Object> substitutionMap) {
+
+    this(scopeClass, null, substitutionMap);
   }
 
   public JavaScriptBehavior (Class scopeClass, String fileName, Map<String, Object> substitutionMap) {
