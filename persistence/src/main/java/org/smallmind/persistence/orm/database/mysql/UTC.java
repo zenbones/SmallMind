@@ -34,34 +34,39 @@ import org.joda.time.format.ISODateTimeFormat;
 
 public class UTC {
 
-   private static final DateTimeFormatter ISO_DATE_TIME_FORMATTER = ISODateTimeFormat.dateTime();
+  private static final DateTimeFormatter ISO_DATE_TIME_FORMATTER = ISODateTimeFormat.dateTime();
 
-   public static DateTime isoParse (String date) {
+  public static DateTime isoParse (String date) {
 
-      return ISO_DATE_TIME_FORMATTER.parseDateTime(date);
-   }
+    return ISO_DATE_TIME_FORMATTER.parseDateTime(date);
+  }
 
-   public static String isoFormat (Date date) {
+  public static String isoFormat (Date date) {
 
-      return ISO_DATE_TIME_FORMATTER.print(date.getTime());
-   }
+    return ISO_DATE_TIME_FORMATTER.print(date.getTime());
+  }
 
-   public static Date now () {
+  public static Date now () {
 
-      DateTime now;
+    DateTime now;
 
-      return (now = new DateTime()).minusMillis(now.getZone().getOffset(now)).toDate();
-   }
+    return (now = new DateTime()).minusMillis(now.getZone().getOffset(now)).toDate();
+  }
 
-   public static Date then (Date date) {
+  public static Date then (Date date) {
 
-      DateTime then;
+    DateTime then;
 
-      return (then = new DateTime(date.getTime())).minusMillis(then.getZone().getOffset(then)).toDate();
-   }
+    return (then = new DateTime(date.getTime())).minusMillis(then.getZone().getOffset(then)).toDate();
+  }
 
-   public static Date local (Date date, int offset) {
+  public static Date local (Date date) {
 
-      return new DateTime(date.getTime()).withZoneRetainFields(DateTimeZone.forOffsetHours(offset)).plusHours(offset).toDate();
-   }
+    return local(date, DateTimeZone.getDefault().getOffset(System.currentTimeMillis()) / 1000 / 60);
+  }
+
+  public static Date local (Date date, int offset) {
+
+    return new DateTime(date.getTime()).withZoneRetainFields(DateTimeZone.forOffsetHours(offset)).plusHours(offset).toDate();
+  }
 }
