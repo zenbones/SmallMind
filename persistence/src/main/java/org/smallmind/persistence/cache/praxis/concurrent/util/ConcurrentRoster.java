@@ -24,7 +24,7 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.persistence.cache.concurrent.util;
+package org.smallmind.persistence.cache.praxis.concurrent.util;
 
 import java.lang.reflect.Array;
 import java.util.Collection;
@@ -34,6 +34,7 @@ import java.util.List;
 import java.util.ListIterator;
 import java.util.NoSuchElementException;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
+import org.smallmind.persistence.cache.praxis.Roster;
 import org.terracotta.annotations.InstrumentedClass;
 
 @InstrumentedClass

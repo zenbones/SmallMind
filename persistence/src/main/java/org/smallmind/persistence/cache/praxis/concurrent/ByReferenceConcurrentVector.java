@@ -24,27 +24,43 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.persistence.orm;
+package org.smallmind.persistence.cache.praxis.concurrent;
 
 import java.io.Serializable;
+import java.util.Comparator;
 import org.smallmind.persistence.Durable;
-import org.smallmind.persistence.cache.CacheAware;
-import org.smallmind.persistence.cache.VectoredDao;
+import org.smallmind.persistence.cache.DurableVector;
+import org.smallmind.persistence.cache.praxis.AbstractDurableVector;
+import org.smallmind.persistence.cache.praxis.concurrent.util.ConcurrentRoster;
+import org.terracotta.annotations.AutolockRead;
+import org.terracotta.annotations.InstrumentedClass;
 
-public abstract class CacheAwareORMDao<I extends Serializable & Comparable<I>, D extends Durable<I>> extends AbstractORMDao<I, D> implements CacheAware<I, D> {
+@InstrumentedClass
+public class ByReferenceConcurrentVector<I extends Serializable & Comparable<I>, D extends Durable<I>> extends AbstractDurableVector<I, D> {
 
-  private ProxySession proxySession;
-  private VectoredDao<I, D> vectoredDao;
+  private ConcurrentRoster<D> roster;
 
-  public CacheAwareORMDao (ProxySession proxySession, VectoredDao<I, D> vectoredDao) {
+  public ByReferenceConcurrentVector (ConcurrentRoster<D> roster, Comparator<D> comparator, int maxSize, long timeToLive, boolean ordered) {
 
-    this.proxySession = proxySession;
-    this.vectoredDao = vectoredDao;
+    super(comparator, maxSize, timeToLive, ordered);
+
+    this.roster = roster;
+    if (maxSize > 0) {
+      while (roster.size() > maxSize) {
+        roster.removeLast();
+      }
+    }
   }
 
   @Override
-  public VectoredDao<I, D> getVectoredDao () {
+  public ConcurrentRoster<D> getRoster () {
 
-    return proxySession.isCacheEnabled() ? vectoredDao : null;
+    return roster;
+  }
+
+  @AutolockRead
+  public DurableVector<I, D> copy () {
+
+    return new ByReferenceConcurrentVector<I, D>(new ConcurrentRoster<D>(roster), getComparator(), getMaxSize(), getTimeToLiveMilliseconds(), isOrdered());
   }
 }

@@ -32,7 +32,7 @@ import org.aspectj.lang.annotation.Around;
 import org.aspectj.lang.annotation.Aspect;
 import org.aspectj.lang.reflect.MethodSignature;
 import org.smallmind.persistence.PersistenceManager;
-import org.smallmind.persistence.orm.CacheAwareORMDao;
+import org.smallmind.persistence.orm.VectorAwareORMDao;
 import org.smallmind.persistence.statistics.StatisticsFactory;
 
 @Aspect
@@ -41,7 +41,7 @@ public class ApplyStatisticsAspect {
    private static final StatisticsFactory STATISTICS_FACTORY = PersistenceManager.getPersistence().getStatisticsFactory();
 
    @Around(value = "@within(statisticsStopwatch) && execution(@org.smallmind.persistence.statistics.aop.ApplyStatistics * * (..)) && this(ormDao)", argNames = "thisJoinPoint, statisticsStopwatch, ormDao")
-   public Object aroundApplyStatisticsMethod (ProceedingJoinPoint thisJoinPoint, StatisticsStopwatch statisticsStopwatch, CacheAwareORMDao ormDao)
+   public Object aroundApplyStatisticsMethod (ProceedingJoinPoint thisJoinPoint, StatisticsStopwatch statisticsStopwatch, VectorAwareORMDao ormDao)
       throws Throwable {
 
       Method executedMethod;

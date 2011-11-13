@@ -37,7 +37,7 @@ import org.smallmind.nutsnbolts.lang.UnknownSwitchCaseException;
 import org.smallmind.persistence.Durable;
 import org.smallmind.persistence.cache.VectorKey;
 import org.smallmind.persistence.cache.VectoredDao;
-import org.smallmind.persistence.orm.CacheAwareORMDao;
+import org.smallmind.persistence.orm.VectorAwareORMDao;
 import org.smallmind.persistence.orm.DaoManager;
 import org.smallmind.persistence.orm.ORMDao;
 
@@ -47,7 +47,7 @@ public class CachedWithAspect {
   private static final ConcurrentHashMap<MethodKey, Method> METHOD_MAP = new ConcurrentHashMap<MethodKey, Method>();
 
   @Around(value = "execution(* persist (..)) && args(durable) && this(ormDao)", argNames = "thisJoinPoint, ormDao, durable")
-  public Object aroundPersistMethod (ProceedingJoinPoint thisJoinPoint, CacheAwareORMDao ormDao, Durable durable)
+  public Object aroundPersistMethod (ProceedingJoinPoint thisJoinPoint, VectorAwareORMDao ormDao, Durable durable)
     throws Throwable {
 
     CachedWith cachedWith;
@@ -119,7 +119,7 @@ public class CachedWithAspect {
   }
 
   @Around(value = "execution(void delete (..)) && args(durable) && this(ormDao)", argNames = "thisJoinPoint, ormDao, durable")
-  public void aroundDeleteMethod (ProceedingJoinPoint thisJoinPoint, CacheAwareORMDao ormDao, Durable durable)
+  public void aroundDeleteMethod (ProceedingJoinPoint thisJoinPoint, VectorAwareORMDao ormDao, Durable durable)
     throws Throwable {
 
     CachedWith cachedWith;
@@ -165,7 +165,7 @@ public class CachedWithAspect {
     }
   }
 
-  private boolean executeFilter (String filterMethodName, CacheAwareORMDao ormDao, Durable durable) {
+  private boolean executeFilter (String filterMethodName, VectorAwareORMDao ormDao, Durable durable) {
 
     Method filterMethod;
 
@@ -191,7 +191,7 @@ public class CachedWithAspect {
     return true;
   }
 
-  private OnPersist executeOnPersist (String onPersistMethodName, CacheAwareORMDao ormDao, Durable durable) {
+  private OnPersist executeOnPersist (String onPersistMethodName, VectorAwareORMDao ormDao, Durable durable) {
 
     Method onPersistMethod;
 
@@ -217,7 +217,7 @@ public class CachedWithAspect {
     return OnPersist.INSERT;
   }
 
-  private Operand executeProxy (Proxy proxy, CacheAwareORMDao ormDao, Durable durable) {
+  private Operand executeProxy (Proxy proxy, VectorAwareORMDao ormDao, Durable durable) {
 
     ORMDao proxyDao;
     Method proxyGetMethod;
@@ -251,7 +251,7 @@ public class CachedWithAspect {
     return new Operand(ormDao.getManagedClass(), durable);
   }
 
-  private Iterable<Durable> executeFinder (Finder finder, CacheAwareORMDao ormDao, Durable durable) {
+  private Iterable<Durable> executeFinder (Finder finder, VectorAwareORMDao ormDao, Durable durable) {
 
     Method finderMethod;
     Type finderReturnType;

@@ -24,7 +24,7 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.persistence.cache.concurrent;
+package org.smallmind.persistence.cache.praxis;
 
 import java.util.Collections;
 import java.util.Iterator;
@@ -38,11 +38,11 @@ import org.terracotta.annotations.AutolockWrite;
 import org.terracotta.annotations.InstrumentedClass;
 
 @InstrumentedClass
-public class ByReferenceSingularConcurrentVector<I extends Comparable<I>, D extends Durable<I>> extends DurableVector<I, D> {
+public class ByReferenceSingularVector<I extends Comparable<I>, D extends Durable<I>> extends DurableVector<I, D> {
 
   private D durable;
 
-  public ByReferenceSingularConcurrentVector (D durable, long timeToLive) {
+  public ByReferenceSingularVector (D durable, long timeToLive) {
 
     super(null, 1, timeToLive, false);
 
@@ -52,7 +52,7 @@ public class ByReferenceSingularConcurrentVector<I extends Comparable<I>, D exte
   @AutolockRead
   public DurableVector<I, D> copy () {
 
-    return new ByReferenceSingularConcurrentVector<I, D>(durable, getTimeToLive());
+    return new ByReferenceSingularVector<I, D>(durable, getTimeToLiveMilliseconds());
   }
 
   public boolean isSingular () {

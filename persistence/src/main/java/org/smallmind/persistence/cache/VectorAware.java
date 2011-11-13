@@ -24,13 +24,11 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.persistence.cache.concurrent.util;
+package org.smallmind.persistence.cache;
 
-import java.util.List;
+import org.smallmind.persistence.Durable;
 
-public interface Roster<T> extends List<T> {
+public interface VectorAware<I extends Comparable<I>, D extends Durable<I>> {
 
-  public abstract void addFirst (T element);
-
-  public abstract T removeLast ();
+  public abstract VectoredDao<I, D> getVectoredDao ();
 }

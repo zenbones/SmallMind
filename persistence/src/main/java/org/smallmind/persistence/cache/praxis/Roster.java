@@ -24,33 +24,13 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.persistence.cache;
+package org.smallmind.persistence.cache.praxis;
 
-import org.smallmind.persistence.Durable;
+import java.util.List;
 
-public abstract class AbstractCacheDao<I extends Comparable<I>, D extends Durable<I>> implements CacheDao<I, D> {
+public interface Roster<T> extends List<T> {
 
-  private CacheDomain<I, D> cacheDomain;
+  public abstract void addFirst (T element);
 
-  public AbstractCacheDao (CacheDomain<I, D> cacheDomain) {
-
-    this.cacheDomain = cacheDomain;
-  }
-
-  public abstract D acquire (Class<D> durableClass, I ids);
-
-  public String getStatisticsSource () {
-
-    return cacheDomain.getStatisticsSource();
-  }
-
-  public Cache<String, D> getInstanceCache (Class<D> durableClass) {
-
-    return cacheDomain.getInstanceCache(durableClass);
-  }
-
-  public Cache<String, DurableVector<I, D>> getVectorCache (Class<D> durableClass) {
-
-    return cacheDomain.getVectorCache(durableClass);
-  }
+  public abstract T removeLast ();
 }

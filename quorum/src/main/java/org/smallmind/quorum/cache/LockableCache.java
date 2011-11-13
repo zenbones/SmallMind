@@ -26,7 +26,13 @@
  */
 package org.smallmind.quorum.cache;
 
-public interface LockingCacheProvider extends CacheProvider {
+public interface LockableCache<K, V> extends Cache<K, V> {
 
-   public abstract <K, V> LockingCache<K, V> getLockingCache (String instance, String region);
+   public abstract long getLockTimeout ();
+
+   public abstract void lock (K key);
+
+   public abstract void unlock (K key);
+
+   public abstract <R> R executeLockedCallback (LockedCallback<K, R> callback);
 }

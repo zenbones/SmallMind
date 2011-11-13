@@ -24,7 +24,7 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.persistence.cache.concurrent.util;
+package org.smallmind.persistence.cache.praxis.concurrent.util;
 
 import java.util.ListIterator;
 import java.util.NoSuchElementException;

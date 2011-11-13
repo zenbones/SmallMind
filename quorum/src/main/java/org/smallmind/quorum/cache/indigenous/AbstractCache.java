@@ -30,12 +30,12 @@ import java.util.Iterator;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.locks.ReentrantLock;
 import org.smallmind.quorum.cache.CacheException;
-import org.smallmind.quorum.cache.ExternallyLockedCache;
+import org.smallmind.quorum.cache.LockingCacheEnforcer;
+import org.smallmind.quorum.cache.LockingCache;
 import org.smallmind.quorum.cache.KeyLock;
-import org.smallmind.quorum.cache.LockManager;
 import org.smallmind.quorum.cache.StripeLockFactory;
 
-public abstract class AbstractCache<K, V, E extends CacheEntry<V>> extends LockManager<K, V> implements ExternallyLockedCache<K, V> {
+public abstract class AbstractCache<K, V, E extends CacheEntry<V>> extends LockingCacheEnforcer<K, V> implements LockingCache<K, V> {
 
    private transient ExpirationTimer<K> expirationTimer;
 

@@ -42,7 +42,7 @@ import org.smallmind.persistence.PersistenceManager;
 import org.smallmind.persistence.cache.DurableVector;
 import org.smallmind.persistence.cache.VectorKey;
 import org.smallmind.persistence.cache.VectoredDao;
-import org.smallmind.persistence.orm.CacheAwareORMDao;
+import org.smallmind.persistence.orm.VectorAwareORMDao;
 import org.smallmind.persistence.statistics.StatisticsFactory;
 import org.smallmind.persistence.statistics.aop.StatisticsStopwatch;
 
@@ -53,7 +53,7 @@ public class CacheAsAspect {
   private static final StatisticsFactory STATISTICS_FACTORY = PersistenceManager.getPersistence().getStatisticsFactory();
 
   @Around(value = "execution(@CacheAs * * (..)) && @annotation(cacheAs) && this(ormDao)", argNames = "thisJoinPoint, cacheAs, ormDao")
-  public Object aroundCacheAsMethod (ProceedingJoinPoint thisJoinPoint, CacheAs cacheAs, CacheAwareORMDao ormDao)
+  public Object aroundCacheAsMethod (ProceedingJoinPoint thisJoinPoint, CacheAs cacheAs, VectorAwareORMDao ormDao)
     throws Throwable {
 
     Annotation statisticsStopwatchAnnotation;
@@ -126,7 +126,7 @@ public class CacheAsAspect {
 
           if ((durable = (Durable)thisJoinPoint.proceed()) != null) {
 
-            return vectoredDao.persistVector(vectorKey, vectoredDao.createSingularVector(vectorKey, durable, getTimeToLive(cacheAs))).head();
+            return vectoredDao.persistVector(vectorKey, vectoredDao.createSingularVector(vectorKey, durable, getTimeToLiveMilliseconds(cacheAs))).head();
           }
 
           return null;
@@ -176,7 +176,7 @@ public class CacheAsAspect {
 
           if ((iterable = (Iterable)thisJoinPoint.proceed()) != null) {
 
-            return vectoredDao.persistVector(vectorKey, vectoredDao.createVector(vectorKey, iterable, cacheAs.comparator().equals(Comparator.class) ? null : cacheAs.comparator().newInstance(), cacheAs.max(), getTimeToLive(cacheAs), cacheAs.ordered())).asList();
+            return vectoredDao.persistVector(vectorKey, vectoredDao.createVector(vectorKey, iterable, cacheAs.comparator().equals(Comparator.class) ? null : cacheAs.comparator().newInstance(), cacheAs.max(), getTimeToLiveMilliseconds(cacheAs), cacheAs.ordered())).asList();
           }
 
           return null;
@@ -196,7 +196,7 @@ public class CacheAsAspect {
     }
   }
 
-  private long getTimeToLive (CacheAs cacheAs) {
+  private long getTimeToLiveMilliseconds (CacheAs cacheAs) {
 
     if ((cacheAs.time().value() == 0) && (cacheAs.time().stochastic() == 0)) {
 

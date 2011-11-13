@@ -29,24 +29,11 @@ package org.smallmind.persistence.cache;
 import java.util.Comparator;
 import org.smallmind.persistence.Dao;
 import org.smallmind.persistence.Durable;
+import org.smallmind.persistence.PersistenceMode;
 
 public interface VectoredDao<I extends Comparable<I>, D extends Durable<I>> extends Dao<I, D> {
 
-  public abstract void instanceReadLock (Class<D> managedClass, I id);
-
-  public abstract void instanceReadUnlock (Class<D> managedClass, I id);
-
-  public abstract void instanceWriteLock (Class<D> managedClass, I id);
-
-  public abstract void instanceWriteUnlock (Class<D> managedClass, I id);
-
-  public abstract void vectorReadLock (Class<D> managedClass, VectorKey<D> key);
-
-  public abstract void vectorReadUnlock (Class<D> managedClass, VectorKey<D> key);
-
-  public abstract void vectorWriteLock (Class<D> managedClass, VectorKey<D> key);
-
-  public abstract void vectorWriteUnlock (Class<D> managedClass, VectorKey<D> key);
+  public abstract D persist (Class<D> durableClass, D durable, PersistenceMode mode);
 
   public abstract void updateInVector (VectorKey<D> vectorKey, D durable);
 
@@ -58,9 +45,9 @@ public interface VectoredDao<I extends Comparable<I>, D extends Durable<I>> exte
 
   public abstract DurableVector<I, D> migrateVector (Class<D> managedClass, DurableVector<I, D> vector);
 
-  public abstract DurableVector<I, D> createSingularVector (VectorKey<D> vectorKey, D durable, long timeToLive);
+  public abstract DurableVector<I, D> createSingularVector (VectorKey<D> vectorKey, D durable, long timeToLiveMilliseconds);
 
-  public abstract DurableVector<I, D> createVector (VectorKey<D> vectorKey, Iterable<D> elementIter, Comparator<D> comparator, int maxSize, long timeToLive, boolean ordered);
+  public abstract DurableVector<I, D> createVector (VectorKey<D> vectorKey, Iterable<D> elementIter, Comparator<D> comparator, int maxSize, long timeToLiveMilliseconds, boolean ordered);
 
   public abstract void deleteVector (VectorKey<D> vectorKey);
 }

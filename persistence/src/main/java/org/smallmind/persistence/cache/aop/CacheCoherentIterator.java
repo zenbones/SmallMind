@@ -28,6 +28,7 @@ package org.smallmind.persistence.cache.aop;
 
 import java.util.Iterator;
 import org.smallmind.persistence.Durable;
+import org.smallmind.persistence.PersistenceMode;
 import org.smallmind.persistence.cache.VectoredDao;
 
 public class CacheCoherentIterator<I extends Comparable<I>, D extends Durable<I>> implements Iterator<D>, Iterable<D> {
@@ -55,7 +56,7 @@ public class CacheCoherentIterator<I extends Comparable<I>, D extends Durable<I>
 
   public D next () {
 
-    return vectoredDao.persist(durableClass, durableIter.next());
+    return vectoredDao.persist(durableClass, durableIter.next(), PersistenceMode.SOFT);
   }
 
   public void remove () {

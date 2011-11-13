@@ -26,9 +26,24 @@
  */
 package org.smallmind.persistence.cache;
 
-import org.smallmind.persistence.Durable;
+public interface Cache<K, V> {
 
-public interface CacheAware<I extends Comparable<I>, D extends Durable<I>> {
+  public abstract long getDefaultTimeToLiveMilliseconds ();
 
-  public abstract VectoredDao<I, D> getVectoredDao ();
+  public abstract V get (K key)
+    throws CacheOperationException;
+
+  public abstract void set (K key, V value, long timeToLiveMilliseconds)
+    throws CacheOperationException;
+
+  public abstract V putIfAbsent (K key, V value, long timeToLiveMilliseconds)
+    throws CacheOperationException;
+
+  public abstract CASValue<V> getViaCas (K key);
+
+  public abstract boolean putViaCas (K key, V value, long version, long timeToLiveMilliseconds)
+    throws CacheOperationException;
+
+  public abstract void remove (K key)
+    throws CacheOperationException;
 }

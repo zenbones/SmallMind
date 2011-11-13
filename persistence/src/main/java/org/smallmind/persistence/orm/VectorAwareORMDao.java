@@ -24,33 +24,27 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.persistence.cache;
+package org.smallmind.persistence.orm;
 
+import java.io.Serializable;
 import org.smallmind.persistence.Durable;
+import org.smallmind.persistence.cache.VectorAware;
+import org.smallmind.persistence.cache.VectoredDao;
 
-public abstract class AbstractCacheDao<I extends Comparable<I>, D extends Durable<I>> implements CacheDao<I, D> {
+public abstract class VectorAwareORMDao<I extends Serializable & Comparable<I>, D extends Durable<I>> extends AbstractORMDao<I, D> implements VectorAware<I, D> {
 
-  private CacheDomain<I, D> cacheDomain;
+  private ProxySession proxySession;
+  private VectoredDao<I, D> vectoredDao;
 
-  public AbstractCacheDao (CacheDomain<I, D> cacheDomain) {
+  public VectorAwareORMDao (ProxySession proxySession, VectoredDao<I, D> vectoredDao) {
 
-    this.cacheDomain = cacheDomain;
+    this.proxySession = proxySession;
+    this.vectoredDao = vectoredDao;
   }
 
-  public abstract D acquire (Class<D> durableClass, I ids);
+  @Override
+  public VectoredDao<I, D> getVectoredDao () {
 
-  public String getStatisticsSource () {
-
-    return cacheDomain.getStatisticsSource();
-  }
-
-  public Cache<String, D> getInstanceCache (Class<D> durableClass) {
-
-    return cacheDomain.getInstanceCache(durableClass);
-  }
-
-  public Cache<String, DurableVector<I, D>> getVectorCache (Class<D> durableClass) {
-
-    return cacheDomain.getVectorCache(durableClass);
+    return proxySession.isCacheEnabled() ? vectoredDao : null;
   }
 }

@@ -24,41 +24,43 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.persistence.cache.concurrent;
+package org.smallmind.persistence.cache.praxis.concurrent;
 
 import java.io.Serializable;
 import java.util.Comparator;
 import org.smallmind.persistence.Durable;
 import org.smallmind.persistence.cache.DurableKey;
 import org.smallmind.persistence.cache.DurableVector;
-import org.smallmind.persistence.cache.concurrent.util.ConcurrentRoster;
-import org.smallmind.persistence.cache.concurrent.util.Roster;
+import org.smallmind.persistence.cache.praxis.AbstractDurableVector;
+import org.smallmind.persistence.cache.praxis.ByKeyRoster;
+import org.smallmind.persistence.cache.praxis.Roster;
+import org.smallmind.persistence.cache.praxis.concurrent.util.ConcurrentRoster;
 import org.terracotta.annotations.AutolockRead;
 import org.terracotta.annotations.InstrumentedClass;
 
 @InstrumentedClass
-public class ByKeyConcurrentVector<I extends Serializable & Comparable<I>, D extends Durable<I>> extends ConcurrentDurableVector<I, D> {
+public class ByKeyConcurrentVector<I extends Serializable & Comparable<I>, D extends Durable<I>> extends AbstractDurableVector<I, D> {
 
-  private ByKeyConcurrentRoster<I, D> roster;
+  private ByKeyRoster<I, D> roster;
 
   public ByKeyConcurrentVector (Class<D> durableClass, Iterable<D> durables, Comparator<D> comparator, int maxSize, long timeToLive, boolean ordered) {
 
     super(comparator, maxSize, timeToLive, ordered);
 
-    ConcurrentRoster<DurableKey<I, D>> keyList = new ConcurrentRoster<DurableKey<I, D>>();
+    ConcurrentRoster<DurableKey<I, D>> keyRoster = new ConcurrentRoster<DurableKey<I, D>>();
     int index = 0;
 
     for (Durable durable : durables) {
-      keyList.add(new DurableKey<I, D>(durableClass, (I)durable.getId()));
+      keyRoster.add(new DurableKey<I, D>(durableClass, (I)durable.getId()));
       if ((maxSize > 0) && (++index == maxSize)) {
         break;
       }
     }
 
-    roster = new ByKeyConcurrentRoster<I, D>(durableClass, keyList);
+    roster = new ByKeyRoster<I, D>(durableClass, keyRoster);
   }
 
-  private ByKeyConcurrentVector (ByKeyConcurrentRoster<I, D> roster, Comparator<D> comparator, int maxSize, long timeToLive, boolean ordered) {
+  private ByKeyConcurrentVector (ByKeyRoster<I, D> roster, Comparator<D> comparator, int maxSize, long timeToLive, boolean ordered) {
 
     super(comparator, maxSize, timeToLive, ordered);
 
@@ -73,6 +75,6 @@ public class ByKeyConcurrentVector<I extends Serializable & Comparable<I>, D ext
   @AutolockRead
   public DurableVector<I, D> copy () {
 
-    return new ByKeyConcurrentVector<I, D>(new ByKeyConcurrentRoster<I, D>(roster), getComparator(), getMaxSize(), getTimeToLive(), isOrdered());
+    return new ByKeyConcurrentVector<I, D>(new ByKeyRoster<I, D>(roster.getDurableClass(), new ConcurrentRoster<DurableKey<I, D>>(roster.getInternalRoster())), getComparator(), getMaxSize(), getTimeToLiveMilliseconds(), isOrdered());
   }
 }

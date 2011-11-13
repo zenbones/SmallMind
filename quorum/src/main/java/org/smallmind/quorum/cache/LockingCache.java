@@ -26,13 +26,33 @@
  */
 package org.smallmind.quorum.cache;
 
-public interface LockingCache<K, V> extends Cache<K, V> {
+public interface LockingCache<K, V> {
 
-   public abstract long getExternalLockTimeout ();
+   public abstract int size ();
 
-   public abstract void lock (K key);
+   public abstract String getCacheName ();
 
-   public abstract void unlock (K key);
+   public abstract V get (KeyLock keyLock, K key, Object... parameters);
 
-   public abstract <R> R executeLockedCallback (LockedCallback<K, R> callback);
+   public abstract V remove (KeyLock keyLock, K key);
+
+   public abstract V put (KeyLock keyLock, K key, V value);
+
+   public abstract V putIfAbsent (KeyLock keyLock, K key, V value);
+
+   public abstract boolean exists (KeyLock keyLock, K key);
+
+   public abstract void clear ();
+
+   public abstract boolean isClosed ();
+
+   public abstract void close ();
+
+   public abstract long getLockTimeout ();
+
+   public abstract KeyLock lock (KeyLock keyLock, K key);
+
+   public abstract void unlock (KeyLock keyLock, K key);
+
+   public abstract <R> R executeLockedCallback (KeyLock keyLock, LockedCallback<K, R> callback);
 }

@@ -41,12 +41,13 @@ import org.hibernate.criterion.Restrictions;
 import org.hibernate.transform.Transformers;
 import org.smallmind.nutsnbolts.reflection.type.TypeUtility;
 import org.smallmind.persistence.Durable;
+import org.smallmind.persistence.PersistenceMode;
 import org.smallmind.persistence.cache.VectoredDao;
-import org.smallmind.persistence.orm.CacheAwareORMDao;
 import org.smallmind.persistence.orm.DaoManager;
 import org.smallmind.persistence.orm.ProxySession;
+import org.smallmind.persistence.orm.VectorAwareORMDao;
 
-public abstract class HibernateDao<I extends Serializable & Comparable<I>, D extends Durable<I>> extends CacheAwareORMDao<I, D> {
+public abstract class HibernateDao<I extends Serializable & Comparable<I>, D extends Durable<I>> extends VectorAwareORMDao<I, D> {
 
   private HibernateProxySession proxySession;
 
@@ -110,7 +111,7 @@ public abstract class HibernateDao<I extends Serializable & Comparable<I>, D ext
       if ((persistedObject = proxySession.getSession().get(durableClass, id)) != null) {
         durable = durableClass.cast(persistedObject);
 
-        return vectoredDao.persist(durableClass, durable);
+        return vectoredDao.persist(durableClass, durable, PersistenceMode.SOFT);
       }
     }
 
@@ -203,7 +204,7 @@ public abstract class HibernateDao<I extends Serializable & Comparable<I>, D ext
 
     if (vectoredDao != null) {
 
-      return vectoredDao.persist(durableClass, persistentDurable);
+      return vectoredDao.persist(durableClass, persistentDurable, PersistenceMode.HARD);
     }
 
     return persistentDurable;

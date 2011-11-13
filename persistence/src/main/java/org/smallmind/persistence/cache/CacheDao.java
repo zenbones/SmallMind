@@ -27,7 +27,6 @@
 package org.smallmind.persistence.cache;
 
 import org.smallmind.persistence.Durable;
-import org.smallmind.quorum.cache.Cache;
 
 public interface CacheDao<I extends Comparable<I>, D extends Durable<I>> extends VectoredDao<I, D> {
 

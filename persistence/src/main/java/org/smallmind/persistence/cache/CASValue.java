@@ -24,35 +24,26 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.quorum.cache;
+package org.smallmind.persistence.cache;
 
-public interface ExternallyLockedCache<K, V> {
+public class CASValue<V> {
 
-   public abstract int size ();
+  private V value;
+  private long version;
 
-   public abstract String getCacheName ();
+  public CASValue (V value, long version) {
 
-   public abstract V get (KeyLock keyLock, K key, Object... parameters);
+    this.value = value;
+    this.version = version;
+  }
 
-   public abstract V remove (KeyLock keyLock, K key);
+  public long getVersion () {
 
-   public abstract V put (KeyLock keyLock, K key, V value);
+    return version;
+  }
 
-   public abstract V putIfAbsent (KeyLock keyLock, K key, V value);
+  public V getValue () {
 
-   public abstract boolean exists (KeyLock keyLock, K key);
-
-   public abstract void clear ();
-
-   public abstract boolean isClosed ();
-
-   public abstract void close ();
-
-   public abstract long getExternalLockTimeout ();
-
-   public abstract KeyLock lock (KeyLock keyLock, K key);
-
-   public abstract void unlock (KeyLock keyLock, K key);
-
-   public abstract <R> R executeLockedCallback (KeyLock keyLock, LockedCallback<K, R> callback);
+    return value;
+  }
 }

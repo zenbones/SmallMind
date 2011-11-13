@@ -24,7 +24,7 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.persistence.cache.concurrent;
+package org.smallmind.persistence.cache.praxis;
 
 import java.io.Serializable;
 import java.lang.reflect.Array;
@@ -36,27 +36,21 @@ import java.util.ListIterator;
 import org.smallmind.persistence.Durable;
 import org.smallmind.persistence.cache.CacheOperationException;
 import org.smallmind.persistence.cache.DurableKey;
-import org.smallmind.persistence.cache.concurrent.util.ConcurrentRoster;
-import org.smallmind.persistence.cache.concurrent.util.Roster;
+import org.smallmind.persistence.cache.praxis.concurrent.util.ConcurrentRoster;
 import org.smallmind.persistence.orm.DaoManager;
 import org.smallmind.persistence.orm.ORMDao;
 import org.terracotta.annotations.InstrumentedClass;
 
 @InstrumentedClass
-public class ByKeyConcurrentRoster<I extends Serializable & Comparable<I>, D extends Durable<I>> implements Roster<D> {
+public class ByKeyRoster<I extends Serializable & Comparable<I>, D extends Durable<I>> implements Roster<D> {
 
-  private ConcurrentRoster<DurableKey<I, D>> keyList;
+  private Roster<DurableKey<I, D>> keyRoster;
   private Class<D> durableClass;
 
-  protected ByKeyConcurrentRoster (ByKeyConcurrentRoster<I, D> durableKeyConcurrentList) {
-
-    this(durableKeyConcurrentList.getDurableClass(), new ConcurrentRoster<DurableKey<I, D>>(durableKeyConcurrentList.getKeyList()));
-  }
-
-  public ByKeyConcurrentRoster (Class<D> durableClass, ConcurrentRoster<DurableKey<I, D>> keyList) {
+  public ByKeyRoster (Class<D> durableClass, Roster<DurableKey<I, D>> keyRoster) {
 
     this.durableClass = durableClass;
-    this.keyList = keyList;
+    this.keyRoster = keyRoster;
   }
 
   private ORMDao<I, D> getORMDao () {
@@ -86,29 +80,29 @@ public class ByKeyConcurrentRoster<I extends Serializable & Comparable<I>, D ext
     return getORMDao().get(getORMDao().getIdFromString(durableKey.getKey().substring(equalsPos + 1)));
   }
 
-  private Class<D> getDurableClass () {
+  public Class<D> getDurableClass () {
 
     return durableClass;
   }
 
-  private ConcurrentRoster<DurableKey<I, D>> getKeyList () {
+  public Roster<DurableKey<I, D>> getInternalRoster () {
 
-    return keyList;
+    return keyRoster;
   }
 
   public int size () {
 
-    return keyList.size();
+    return keyRoster.size();
   }
 
   public boolean isEmpty () {
 
-    return keyList.isEmpty();
+    return keyRoster.isEmpty();
   }
 
   public boolean contains (Object obj) {
 
-    return durableClass.isAssignableFrom(obj.getClass()) && keyList.contains(new DurableKey<I, D>(durableClass, durableClass.cast(obj).getId()));
+    return durableClass.isAssignableFrom(obj.getClass()) && keyRoster.contains(new DurableKey<I, D>(durableClass, durableClass.cast(obj).getId()));
   }
 
   public Object[] toArray () {
@@ -119,7 +113,7 @@ public class ByKeyConcurrentRoster<I extends Serializable & Comparable<I>, D ext
   public <T> T[] toArray (T[] a) {
 
     Object[] elements;
-    Object[] keyArray = keyList.toArray();
+    Object[] keyArray = keyRoster.toArray();
     D durable;
     int index = 0;
 
@@ -135,42 +129,42 @@ public class ByKeyConcurrentRoster<I extends Serializable & Comparable<I>, D ext
 
   public D get (int index) {
 
-    return getDurable(keyList.get(index));
+    return getDurable(keyRoster.get(index));
   }
 
   public D set (int index, D durable) {
 
-    return getDurable(keyList.set(index, new DurableKey<I, D>(durableClass, durable.getId())));
+    return getDurable(keyRoster.set(index, new DurableKey<I, D>(durableClass, durable.getId())));
   }
 
   public void addFirst (D durable) {
 
-    keyList.addFirst(new DurableKey<I, D>(durableClass, durable.getId()));
+    keyRoster.addFirst(new DurableKey<I, D>(durableClass, durable.getId()));
   }
 
   public boolean add (D durable) {
 
-    return keyList.add(new DurableKey<I, D>(durableClass, durable.getId()));
+    return keyRoster.add(new DurableKey<I, D>(durableClass, durable.getId()));
   }
 
   public void add (int index, D durable) {
 
-    keyList.add(index, new DurableKey<I, D>(durableClass, durable.getId()));
+    keyRoster.add(index, new DurableKey<I, D>(durableClass, durable.getId()));
   }
 
   public boolean remove (Object obj) {
 
-    return durableClass.isAssignableFrom(obj.getClass()) && keyList.remove(new DurableKey<I, D>(durableClass, durableClass.cast(obj).getId()));
+    return durableClass.isAssignableFrom(obj.getClass()) && keyRoster.remove(new DurableKey<I, D>(durableClass, durableClass.cast(obj).getId()));
   }
 
   public D removeLast () {
 
-    return getDurable(keyList.removeLast());
+    return getDurable(keyRoster.removeLast());
   }
 
   public D remove (int index) {
 
-    return getDurable(keyList.remove(index));
+    return getDurable(keyRoster.remove(index));
   }
 
   public boolean containsAll (Collection<?> c) {
@@ -199,7 +193,7 @@ public class ByKeyConcurrentRoster<I extends Serializable & Comparable<I>, D ext
       }
     }
 
-    return keyList.addAll(keySet);
+    return keyRoster.addAll(keySet);
   }
 
   public boolean addAll (int index, Collection<? extends D> c) {
@@ -212,7 +206,7 @@ public class ByKeyConcurrentRoster<I extends Serializable & Comparable<I>, D ext
       }
     }
 
-    return keyList.addAll(index, keySet);
+    return keyRoster.addAll(index, keySet);
   }
 
   public boolean removeAll (Collection<?> c) {
@@ -225,7 +219,7 @@ public class ByKeyConcurrentRoster<I extends Serializable & Comparable<I>, D ext
       }
     }
 
-    return keyList.removeAll(keySet);
+    return keyRoster.removeAll(keySet);
   }
 
   public boolean retainAll (Collection<?> c) {
@@ -238,41 +232,41 @@ public class ByKeyConcurrentRoster<I extends Serializable & Comparable<I>, D ext
       }
     }
 
-    return keyList.retainAll(keySet);
+    return keyRoster.retainAll(keySet);
   }
 
   public void clear () {
 
-    keyList.clear();
+    keyRoster.clear();
   }
 
   public int indexOf (Object obj) {
 
-    return durableClass.isAssignableFrom(obj.getClass()) ? keyList.indexOf(new DurableKey<I, D>(durableClass, durableClass.cast(obj).getId())) : -1;
+    return durableClass.isAssignableFrom(obj.getClass()) ? keyRoster.indexOf(new DurableKey<I, D>(durableClass, durableClass.cast(obj).getId())) : -1;
   }
 
   public int lastIndexOf (Object obj) {
 
-    return durableClass.isAssignableFrom(obj.getClass()) ? keyList.lastIndexOf(new DurableKey<I, D>(durableClass, durableClass.cast(obj).getId())) : -1;
+    return durableClass.isAssignableFrom(obj.getClass()) ? keyRoster.lastIndexOf(new DurableKey<I, D>(durableClass, durableClass.cast(obj).getId())) : -1;
   }
 
   public Iterator<D> iterator () {
 
-    return new ByKeyConcurrentRosterIterator<I, D>(getORMDao(), keyList.listIterator());
+    return new ByKeyRosterIterator<I, D>(getORMDao(), keyRoster.listIterator());
   }
 
   public ListIterator<D> listIterator () {
 
-    return new ByKeyConcurrentRosterIterator<I, D>(getORMDao(), keyList.listIterator());
+    return new ByKeyRosterIterator<I, D>(getORMDao(), keyRoster.listIterator());
   }
 
   public ListIterator<D> listIterator (int index) {
 
-    return new ByKeyConcurrentRosterIterator<I, D>(getORMDao(), keyList.listIterator(index));
+    return new ByKeyRosterIterator<I, D>(getORMDao(), keyRoster.listIterator(index));
   }
 
   public List<D> subList (int fromIndex, int toIndex) {
 
-    return new ByKeyConcurrentRoster<I, D>(durableClass, (ConcurrentRoster<DurableKey<I, D>>)keyList.subList(fromIndex, toIndex));
+    return new ByKeyRoster<I, D>(durableClass, (ConcurrentRoster<DurableKey<I, D>>)keyRoster.subList(fromIndex, toIndex));
   }
 }

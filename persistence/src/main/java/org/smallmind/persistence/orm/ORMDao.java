@@ -51,6 +51,8 @@ public interface ORMDao<I extends Serializable & Comparable<I>, D extends Durabl
 
   public abstract D persist (D durable);
 
+  public abstract D persist (Class<D> durableClass, D durable);
+
   public abstract void delete (D durable);
 
   public abstract List<D> list ();

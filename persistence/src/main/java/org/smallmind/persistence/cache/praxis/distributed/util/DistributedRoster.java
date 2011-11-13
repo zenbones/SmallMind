@@ -24,56 +24,21 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.persistence.cache.concurrent.util;
+package org.smallmind.persistence.cache.praxis.distributed.util;
 
-import org.terracotta.annotations.InstrumentedClass;
+import java.util.Collection;
+import java.util.LinkedList;
+import org.smallmind.persistence.cache.praxis.Roster;
 
-@InstrumentedClass
-public class ConcurrentRosterNode<T> {
+public class DistributedRoster<T> extends LinkedList<T> implements Roster<T> {
 
-  private ConcurrentRosterNode<T> prev;
-  private ConcurrentRosterNode<T> next;
-  private T obj;
+  public DistributedRoster () {
 
-  public ConcurrentRosterNode (T obj, ConcurrentRosterNode<T> prev, ConcurrentRosterNode<T> next) {
-
-    this.obj = obj;
-    this.prev = prev;
-    this.next = next;
+    super();
   }
 
-  public synchronized T getObj () {
+  public DistributedRoster (Collection<? extends T> c) {
 
-    return obj;
-  }
-
-  public synchronized void setObj (T obj) {
-
-    this.obj = obj;
-  }
-
-  public synchronized boolean objEquals (Object something) {
-
-    return (obj == something) || ((obj != null) && obj.equals(something));
-  }
-
-  public ConcurrentRosterNode<T> getPrev () {
-
-    return prev;
-  }
-
-  public void setPrev (ConcurrentRosterNode<T> prev) {
-
-    this.prev = prev;
-  }
-
-  public ConcurrentRosterNode<T> getNext () {
-
-    return next;
-  }
-
-  public void setNext (ConcurrentRosterNode<T> next) {
-
-    this.next = next;
+    super(c);
   }
 }

@@ -37,9 +37,10 @@ import org.aspectj.lang.annotation.Aspect;
 import org.aspectj.lang.reflect.MethodSignature;
 import org.smallmind.persistence.Durable;
 import org.smallmind.persistence.PersistenceManager;
+import org.smallmind.persistence.PersistenceMode;
 import org.smallmind.persistence.cache.VectoredDao;
-import org.smallmind.persistence.cache.concurrent.util.ConcurrentRoster;
-import org.smallmind.persistence.orm.CacheAwareORMDao;
+import org.smallmind.persistence.cache.praxis.concurrent.util.ConcurrentRoster;
+import org.smallmind.persistence.orm.VectorAwareORMDao;
 import org.smallmind.persistence.statistics.StatisticsFactory;
 import org.smallmind.persistence.statistics.aop.StatisticsStopwatch;
 
@@ -49,7 +50,7 @@ public class CacheCoherentAspect {
   private static final StatisticsFactory STATISTICS_FACTORY = PersistenceManager.getPersistence().getStatisticsFactory();
 
   @Around(value = "execution(@CacheCoherent * * (..)) && this(ormDao)", argNames = "thisJoinPoint, ormDao")
-  public Object aroundCacheCoherentMethod (ProceedingJoinPoint thisJoinPoint, CacheAwareORMDao ormDao)
+  public Object aroundCacheCoherentMethod (ProceedingJoinPoint thisJoinPoint, VectorAwareORMDao ormDao)
     throws Throwable {
 
     Annotation statisticsStopwatchAnnotation;
@@ -78,7 +79,7 @@ public class CacheCoherentAspect {
             return durable;
           }
 
-          return vectoredDao.persist(ormDao.getManagedClass(), durable);
+          return vectoredDao.persist(ormDao.getManagedClass(), durable, PersistenceMode.SOFT);
         }
 
         return null;
@@ -101,7 +102,7 @@ public class CacheCoherentAspect {
           cacheConsistentElements = new ConcurrentRoster<Durable>();
           for (Object element : list) {
             if (element != null) {
-              cacheConsistentElements.add((Durable)vectoredDao.persist(ormDao.getManagedClass(), element));
+              cacheConsistentElements.add(vectoredDao.persist(ormDao.getManagedClass(), (Durable)element, PersistenceMode.SOFT));
             }
             else {
               cacheConsistentElements.add(null);

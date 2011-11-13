@@ -24,33 +24,9 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.persistence.cache;
+package org.smallmind.quorum.cache;
 
-import org.smallmind.persistence.Durable;
+public interface LockableCacheProvider extends CacheProvider {
 
-public abstract class AbstractCacheDao<I extends Comparable<I>, D extends Durable<I>> implements CacheDao<I, D> {
-
-  private CacheDomain<I, D> cacheDomain;
-
-  public AbstractCacheDao (CacheDomain<I, D> cacheDomain) {
-
-    this.cacheDomain = cacheDomain;
-  }
-
-  public abstract D acquire (Class<D> durableClass, I ids);
-
-  public String getStatisticsSource () {
-
-    return cacheDomain.getStatisticsSource();
-  }
-
-  public Cache<String, D> getInstanceCache (Class<D> durableClass) {
-
-    return cacheDomain.getInstanceCache(durableClass);
-  }
-
-  public Cache<String, DurableVector<I, D>> getVectorCache (Class<D> durableClass) {
-
-    return cacheDomain.getVectorCache(durableClass);
-  }
+   public abstract <K, V> LockableCache<K, V> getLockingCache (String instance, String region);
 }
