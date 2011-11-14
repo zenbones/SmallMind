@@ -99,14 +99,16 @@ public class ByKeyDistributedCacheDao<I extends Serializable & Comparable<I>, D 
     if (durable != null) {
 
       CASValue<DurableVector<I, D>> casValue;
+      DurableVector<I, D> vectorCopy;
 
       do {
         if ((casValue = getVectorCache(vectorKey.getElementClass()).getViaCas(vectorKey.getKey())).getValue() == null) {
           break;
         }
 
+        vectorCopy = (!getVectorCache(vectorKey.getElementClass()).requiresCopyOnDistributedCASOperation()) ? null : (casValue.getValue() == null) ? null : casValue.getValue().copy();
         casValue.getValue().add(durable);
-      } while (!getVectorCache(vectorKey.getElementClass()).putViaCas(vectorKey.getKey(), casValue.getValue(), casValue.getVersion(), casValue.getValue().getTimeToLiveMilliseconds()));
+      } while (!getVectorCache(vectorKey.getElementClass()).putViaCas(vectorKey.getKey(), vectorCopy, casValue.getValue(), casValue.getVersion(), casValue.getValue().getTimeToLiveMilliseconds()));
     }
   }
 
@@ -115,14 +117,16 @@ public class ByKeyDistributedCacheDao<I extends Serializable & Comparable<I>, D 
     if (durable != null) {
 
       CASValue<DurableVector<I, D>> casValue;
+      DurableVector<I, D> vectorCopy;
 
       do {
         if ((casValue = getVectorCache(vectorKey.getElementClass()).getViaCas(vectorKey.getKey())).getValue() == null) {
           break;
         }
 
+        vectorCopy = (!getVectorCache(vectorKey.getElementClass()).requiresCopyOnDistributedCASOperation()) ? null : (casValue.getValue() == null) ? null : casValue.getValue().copy();
         casValue.getValue().remove(durable);
-      } while (!getVectorCache(vectorKey.getElementClass()).putViaCas(vectorKey.getKey(), casValue.getValue(), casValue.getVersion(), casValue.getValue().getTimeToLiveMilliseconds()));
+      } while (!getVectorCache(vectorKey.getElementClass()).putViaCas(vectorKey.getKey(), vectorCopy, casValue.getValue(), casValue.getVersion(), casValue.getValue().getTimeToLiveMilliseconds()));
     }
   }
 

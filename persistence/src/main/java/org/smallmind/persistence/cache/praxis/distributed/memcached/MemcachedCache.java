@@ -29,26 +29,32 @@ package org.smallmind.persistence.cache.praxis.distributed.memcached;
 import net.rubyeye.xmemcached.GetsResponse;
 import net.rubyeye.xmemcached.MemcachedClient;
 import org.smallmind.persistence.cache.CASValue;
-import org.smallmind.persistence.cache.Cache;
 import org.smallmind.persistence.cache.CacheOperationException;
+import org.smallmind.persistence.cache.PersistenceCache;
 
-public class MemcachedCache<V> implements Cache<String, V> {
+public class MemcachedCache<V> implements PersistenceCache<String, V> {
 
-  private Class<V> valueClass;
   private MemcachedClient memcachedClient;
-  private long timeout;
+  private Class<V> valueClass;
+  private long timeToLiveMilliseconds;
 
-  public MemcachedCache (Class<V> valueClass, MemcachedClient memcachedClient, long timeout) {
+  public MemcachedCache (MemcachedClient memcachedClient, Class<V> valueClass, long timeToLiveMilliseconds) {
 
     this.valueClass = valueClass;
     this.memcachedClient = memcachedClient;
-    this.timeout = timeout;
+    this.timeToLiveMilliseconds = timeToLiveMilliseconds;
+  }
+
+  @Override
+  public boolean requiresCopyOnDistributedCASOperation () {
+
+    return false;
   }
 
   @Override
   public long getDefaultTimeToLiveMilliseconds () {
 
-    return timeout;
+    return timeToLiveMilliseconds;
   }
 
   @Override
@@ -116,7 +122,7 @@ public class MemcachedCache<V> implements Cache<String, V> {
   }
 
   @Override
-  public boolean putViaCas (String key, V value, long version, long timeToLiveMilliseconds) {
+  public boolean putViaCas (String key, V oldValue, V value, long version, long timeToLiveMilliseconds) {
 
     try {
 

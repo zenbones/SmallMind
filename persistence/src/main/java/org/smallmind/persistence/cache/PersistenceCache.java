@@ -26,7 +26,9 @@
  */
 package org.smallmind.persistence.cache;
 
-public interface Cache<K, V> {
+public interface PersistenceCache<K, V> {
+
+  public abstract boolean requiresCopyOnDistributedCASOperation ();
 
   public abstract long getDefaultTimeToLiveMilliseconds ();
 
@@ -41,7 +43,7 @@ public interface Cache<K, V> {
 
   public abstract CASValue<V> getViaCas (K key);
 
-  public abstract boolean putViaCas (K key, V value, long version, long timeToLiveMilliseconds)
+  public abstract boolean putViaCas (K key, V oldValue, V value, long version, long timeToLiveMilliseconds)
     throws CacheOperationException;
 
   public abstract void remove (K key)
