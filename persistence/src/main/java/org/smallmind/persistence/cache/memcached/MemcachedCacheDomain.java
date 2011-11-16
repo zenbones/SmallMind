@@ -37,7 +37,7 @@ import org.smallmind.persistence.cache.PersistenceCache;
 public class MemcachedCacheDomain<I extends Comparable<I>, D extends Durable<I>> implements CacheDomain<I, D> {
 
   private final MemcachedClient memcachedClient;
-  private final Map<Class<D>, Integer> timeTiLiveMap;
+  private final Map<Class<D>, Integer> timeTiLiveOverrideMap;
   private final ConcurrentHashMap<Class<D>, MemcachedCache<D>> instanceCacheMap = new ConcurrentHashMap<Class<D>, MemcachedCache<D>>();
   private final ConcurrentHashMap<Class<D>, MemcachedCache<DurableVector>> vectorCacheMap = new ConcurrentHashMap<Class<D>, MemcachedCache<DurableVector>>();
   private final int timeToLiveSeconds;
@@ -47,11 +47,11 @@ public class MemcachedCacheDomain<I extends Comparable<I>, D extends Durable<I>>
     this(memcachedClient, timeToLiveSeconds, null);
   }
 
-  public MemcachedCacheDomain (MemcachedClient memcachedClient, int timeToLiveSeconds, Map<Class<D>, Integer> timeTiLiveMap) {
+  public MemcachedCacheDomain (MemcachedClient memcachedClient, int timeToLiveSeconds, Map<Class<D>, Integer> timeTiLiveOverrideMap) {
 
     this.memcachedClient = memcachedClient;
     this.timeToLiveSeconds = timeToLiveSeconds;
-    this.timeTiLiveMap = timeTiLiveMap;
+    this.timeTiLiveOverrideMap = timeTiLiveOverrideMap;
   }
 
   @Override
@@ -94,13 +94,13 @@ public class MemcachedCacheDomain<I extends Comparable<I>, D extends Durable<I>>
 
   private int getTimeToLiveSeconds (Class<D> managedClass) {
 
-    Integer timeToLiveSeconds;
+    Integer timeToLiveOverrideSeconds;
 
-    if ((timeToLiveSeconds = timeTiLiveMap.get(managedClass)) != null) {
+    if ((timeToLiveOverrideSeconds = timeTiLiveOverrideMap.get(managedClass)) != null) {
 
-      return timeToLiveSeconds;
+      return timeToLiveOverrideSeconds;
     }
 
-    return this.timeToLiveSeconds;
+    return timeToLiveSeconds;
   }
 }
