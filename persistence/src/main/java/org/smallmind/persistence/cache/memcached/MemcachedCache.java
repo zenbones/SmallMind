@@ -36,13 +36,13 @@ public class MemcachedCache<V> implements PersistenceCache<String, V> {
 
   private MemcachedClient memcachedClient;
   private Class<V> valueClass;
-  private long timeToLiveMilliseconds;
+  private int timeToLiveSeconds;
 
-  public MemcachedCache (MemcachedClient memcachedClient, Class<V> valueClass, long timeToLiveMilliseconds) {
+  public MemcachedCache (MemcachedClient memcachedClient, Class<V> valueClass, int timeToLiveSeconds) {
 
     this.valueClass = valueClass;
     this.memcachedClient = memcachedClient;
-    this.timeToLiveMilliseconds = timeToLiveMilliseconds;
+    this.timeToLiveSeconds = timeToLiveSeconds;
   }
 
   @Override
@@ -52,9 +52,9 @@ public class MemcachedCache<V> implements PersistenceCache<String, V> {
   }
 
   @Override
-  public long getDefaultTimeToLiveMilliseconds () {
+  public int getDefaultTimeToLiveSeconds () {
 
-    return timeToLiveMilliseconds;
+    return timeToLiveSeconds;
   }
 
   @Override
@@ -71,10 +71,10 @@ public class MemcachedCache<V> implements PersistenceCache<String, V> {
   }
 
   @Override
-  public void set (String key, V value, long timeToLiveMilliseconds) {
+  public void set (String key, V value, int timeToLiveSeconds) {
 
     try {
-      memcachedClient.set(key, (int)(((timeToLiveMilliseconds <= 0) ? getDefaultTimeToLiveMilliseconds() : timeToLiveMilliseconds) / 1000), value);
+      memcachedClient.set(key, (timeToLiveSeconds <= 0) ? getDefaultTimeToLiveSeconds() : timeToLiveSeconds, value);
     }
     catch (Exception exception) {
       throw new CacheOperationException(exception);
@@ -82,7 +82,7 @@ public class MemcachedCache<V> implements PersistenceCache<String, V> {
   }
 
   @Override
-  public V putIfAbsent (String key, V value, long timeToLiveMilliseconds) {
+  public V putIfAbsent (String key, V value, int timeToLiveSeconds) {
 
     try {
 
@@ -93,7 +93,7 @@ public class MemcachedCache<V> implements PersistenceCache<String, V> {
         return getsResponse.getValue();
       }
 
-      while (!memcachedClient.cas(key, (int)(((timeToLiveMilliseconds <= 0) ? getDefaultTimeToLiveMilliseconds() : timeToLiveMilliseconds) / 1000), value, getsResponse.getCas())) {
+      while (!memcachedClient.cas(key, (timeToLiveSeconds <= 0) ? getDefaultTimeToLiveSeconds() : timeToLiveSeconds, value, getsResponse.getCas())) {
         if ((getsResponse = memcachedClient.gets(key)).getValue() != null) {
 
           return getsResponse.getValue();
@@ -122,11 +122,11 @@ public class MemcachedCache<V> implements PersistenceCache<String, V> {
   }
 
   @Override
-  public boolean putViaCas (String key, V oldValue, V value, long version, long timeToLiveMilliseconds) {
+  public boolean putViaCas (String key, V oldValue, V value, long version, int timeToLiveSeconds) {
 
     try {
 
-      return memcachedClient.cas(key, (int)(((timeToLiveMilliseconds <= 0) ? getDefaultTimeToLiveMilliseconds() : timeToLiveMilliseconds) / 1000), value, version);
+      return memcachedClient.cas(key, (timeToLiveSeconds <= 0) ? getDefaultTimeToLiveSeconds() : timeToLiveSeconds, value, version);
     }
     catch (Exception exception) {
       throw new CacheOperationException(exception);

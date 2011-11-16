@@ -45,9 +45,9 @@ public class EhcacheCache<V> implements PersistenceCache<String, V> {
     this.valueClass = valueClass;
   }
 
-  private Element createElement (String key, V value, long timeToLiveMilliseconds) {
+  private Element createElement (String key, V value, int timeToLiveSeconds) {
 
-    return new Element(key, value, false, (int)ehCache.getCacheConfiguration().getTimeToIdleSeconds(), (int)((timeToLiveMilliseconds <= 0) ? ehCache.getCacheConfiguration().getTimeToLiveSeconds() : timeToLiveMilliseconds / 1000));
+    return new Element(key, value, false, (int)ehCache.getCacheConfiguration().getTimeToIdleSeconds(), (timeToLiveSeconds <= 0) ? (int)ehCache.getCacheConfiguration().getTimeToLiveSeconds() : timeToLiveSeconds);
   }
 
   @Override
@@ -57,9 +57,9 @@ public class EhcacheCache<V> implements PersistenceCache<String, V> {
   }
 
   @Override
-  public long getDefaultTimeToLiveMilliseconds () {
+  public int getDefaultTimeToLiveSeconds () {
 
-    return ehCache.getCacheConfiguration().getTimeToLiveSeconds() * 1000;
+    return (int)ehCache.getCacheConfiguration().getTimeToLiveSeconds();
   }
 
   @Override
@@ -69,15 +69,15 @@ public class EhcacheCache<V> implements PersistenceCache<String, V> {
   }
 
   @Override
-  public void set (String key, V value, long timeToLiveMilliseconds) {
+  public void set (String key, V value, int timeToLiveSeconds) {
 
-    ehCache.put(createElement(key, value, timeToLiveMilliseconds));
+    ehCache.put(createElement(key, value, timeToLiveSeconds));
   }
 
   @Override
-  public V putIfAbsent (String key, V value, long timeToLiveMilliseconds) {
+  public V putIfAbsent (String key, V value, int timeToLiveSeconds) {
 
-    return valueClass.cast(ehCache.putIfAbsent(createElement(key, value, timeToLiveMilliseconds)).getValue());
+    return valueClass.cast(ehCache.putIfAbsent(createElement(key, value, timeToLiveSeconds)).getValue());
   }
 
   @Override
@@ -93,15 +93,15 @@ public class EhcacheCache<V> implements PersistenceCache<String, V> {
   }
 
   @Override
-  public boolean putViaCas (String key, V oldValue, V value, long version, long timeToLiveMilliseconds) throws CacheOperationException {
+  public boolean putViaCas (String key, V oldValue, V value, long version, int timeToLiveSeconds) throws CacheOperationException {
 
     if (oldValue == null) {
 
-      return ehCache.putIfAbsent(createElement(key, value, timeToLiveMilliseconds)) == null;
+      return ehCache.putIfAbsent(createElement(key, value, timeToLiveSeconds)) == null;
     }
     else {
 
-      return ehCache.replace(createElement(key, oldValue, timeToLiveMilliseconds), createElement(key, value, timeToLiveMilliseconds));
+      return ehCache.replace(createElement(key, oldValue, timeToLiveSeconds), createElement(key, value, timeToLiveSeconds));
     }
   }
 

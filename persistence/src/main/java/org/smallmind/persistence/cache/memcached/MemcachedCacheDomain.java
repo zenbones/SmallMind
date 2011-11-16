@@ -38,12 +38,12 @@ public class MemcachedCacheDomain<I extends Comparable<I>, D extends Durable<I>>
   private final MemcachedClient memcachedClient;
   private final ConcurrentHashMap<Class<D>, MemcachedCache<D>> instanceCacheMap = new ConcurrentHashMap<Class<D>, MemcachedCache<D>>();
   private final ConcurrentHashMap<Class<D>, MemcachedCache<DurableVector>> vectorCacheMap = new ConcurrentHashMap<Class<D>, MemcachedCache<DurableVector>>();
-  private final long timeToLiveMilliseconds;
+  private final int timeToLiveSeconds;
 
-  public MemcachedCacheDomain (MemcachedClient memcachedClient, long timeToLiveMilliseconds) {
+  public MemcachedCacheDomain (MemcachedClient memcachedClient, int timeToLiveSeconds) {
 
     this.memcachedClient = memcachedClient;
-    this.timeToLiveMilliseconds = timeToLiveMilliseconds;
+    this.timeToLiveSeconds = timeToLiveSeconds;
   }
 
   @Override
@@ -60,7 +60,7 @@ public class MemcachedCacheDomain<I extends Comparable<I>, D extends Durable<I>>
     if ((instanceCache = instanceCacheMap.get(managedClass)) == null) {
       synchronized (instanceCacheMap) {
         if ((instanceCache = instanceCacheMap.get(managedClass)) == null) {
-          instanceCacheMap.put(managedClass, instanceCache = new MemcachedCache<D>(memcachedClient, managedClass, timeToLiveMilliseconds));
+          instanceCacheMap.put(managedClass, instanceCache = new MemcachedCache<D>(memcachedClient, managedClass, timeToLiveSeconds));
         }
       }
     }
@@ -76,7 +76,7 @@ public class MemcachedCacheDomain<I extends Comparable<I>, D extends Durable<I>>
     if ((vectorCache = vectorCacheMap.get(managedClass)) == null) {
       synchronized (vectorCacheMap) {
         if ((vectorCache = vectorCacheMap.get(managedClass)) == null) {
-          vectorCacheMap.put(managedClass, vectorCache = new MemcachedCache<DurableVector>(memcachedClient, DurableVector.class, timeToLiveMilliseconds));
+          vectorCacheMap.put(managedClass, vectorCache = new MemcachedCache<DurableVector>(memcachedClient, DurableVector.class, timeToLiveSeconds));
         }
       }
     }

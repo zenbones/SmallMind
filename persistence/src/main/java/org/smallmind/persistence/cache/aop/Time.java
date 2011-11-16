@@ -34,5 +34,5 @@ public @interface Time {
 
   public abstract int stochastic () default 0;
 
-  public abstract TimeUnit unit () default TimeUnit.MILLISECONDS;
+  public abstract TimeUnit unit () default TimeUnit.SECONDS;
 }

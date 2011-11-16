@@ -30,20 +30,20 @@ public interface PersistenceCache<K, V> {
 
   public abstract boolean requiresCopyOnDistributedCASOperation ();
 
-  public abstract long getDefaultTimeToLiveMilliseconds ();
+  public abstract int getDefaultTimeToLiveSeconds ();
 
   public abstract V get (K key)
     throws CacheOperationException;
 
-  public abstract void set (K key, V value, long timeToLiveMilliseconds)
+  public abstract void set (K key, V value, int timeToLiveSeconds)
     throws CacheOperationException;
 
-  public abstract V putIfAbsent (K key, V value, long timeToLiveMilliseconds)
+  public abstract V putIfAbsent (K key, V value, int timeToLiveSeconds)
     throws CacheOperationException;
 
   public abstract CASValue<V> getViaCas (K key);
 
-  public abstract boolean putViaCas (K key, V oldValue, V value, long version, long timeToLiveMilliseconds)
+  public abstract boolean putViaCas (K key, V oldValue, V value, long version, int timeToLiveSeconds)
     throws CacheOperationException;
 
   public abstract void remove (K key)

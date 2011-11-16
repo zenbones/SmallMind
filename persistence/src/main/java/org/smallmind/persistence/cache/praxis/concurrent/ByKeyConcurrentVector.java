@@ -43,9 +43,9 @@ public class ByKeyConcurrentVector<I extends Serializable & Comparable<I>, D ext
 
   private ByKeyRoster<I, D> roster;
 
-  public ByKeyConcurrentVector (Class<D> durableClass, Iterable<D> durables, Comparator<D> comparator, int maxSize, long timeToLive, boolean ordered) {
+  public ByKeyConcurrentVector (Class<D> durableClass, Iterable<D> durables, Comparator<D> comparator, int maxSize, int timeToLiveSeconds, boolean ordered) {
 
-    super(comparator, maxSize, timeToLive, ordered);
+    super(comparator, maxSize, timeToLiveSeconds, ordered);
 
     ConcurrentRoster<DurableKey<I, D>> keyRoster = new ConcurrentRoster<DurableKey<I, D>>();
     int index = 0;
@@ -60,9 +60,9 @@ public class ByKeyConcurrentVector<I extends Serializable & Comparable<I>, D ext
     roster = new ByKeyRoster<I, D>(durableClass, keyRoster);
   }
 
-  private ByKeyConcurrentVector (ByKeyRoster<I, D> roster, Comparator<D> comparator, int maxSize, long timeToLive, boolean ordered) {
+  private ByKeyConcurrentVector (ByKeyRoster<I, D> roster, Comparator<D> comparator, int maxSize, int timeToLiveSeconds, boolean ordered) {
 
-    super(comparator, maxSize, timeToLive, ordered);
+    super(comparator, maxSize, timeToLiveSeconds, ordered);
 
     this.roster = roster;
   }
@@ -75,6 +75,6 @@ public class ByKeyConcurrentVector<I extends Serializable & Comparable<I>, D ext
   @AutolockRead
   public DurableVector<I, D> copy () {
 
-    return new ByKeyConcurrentVector<I, D>(new ByKeyRoster<I, D>(roster.getDurableClass(), new ConcurrentRoster<DurableKey<I, D>>(roster.getInternalRoster())), getComparator(), getMaxSize(), getTimeToLiveMilliseconds(), isOrdered());
+    return new ByKeyConcurrentVector<I, D>(new ByKeyRoster<I, D>(roster.getDurableClass(), new ConcurrentRoster<DurableKey<I, D>>(roster.getInternalRoster())), getComparator(), getMaxSize(), getTimeToLiveSeconds(), isOrdered());
   }
 }

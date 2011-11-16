@@ -108,7 +108,7 @@ public class ByKeyDistributedCacheDao<I extends Serializable & Comparable<I>, D 
 
         vectorCopy = (!getVectorCache(vectorKey.getElementClass()).requiresCopyOnDistributedCASOperation()) ? null : (casValue.getValue() == null) ? null : casValue.getValue().copy();
         casValue.getValue().add(durable);
-      } while (!getVectorCache(vectorKey.getElementClass()).putViaCas(vectorKey.getKey(), vectorCopy, casValue.getValue(), casValue.getVersion(), casValue.getValue().getTimeToLiveMilliseconds()));
+      } while (!getVectorCache(vectorKey.getElementClass()).putViaCas(vectorKey.getKey(), vectorCopy, casValue.getValue(), casValue.getVersion(), casValue.getValue().getTimeToLiveSeconds()));
     }
   }
 
@@ -126,7 +126,7 @@ public class ByKeyDistributedCacheDao<I extends Serializable & Comparable<I>, D 
 
         vectorCopy = (!getVectorCache(vectorKey.getElementClass()).requiresCopyOnDistributedCASOperation()) ? null : (casValue.getValue() == null) ? null : casValue.getValue().copy();
         casValue.getValue().remove(durable);
-      } while (!getVectorCache(vectorKey.getElementClass()).putViaCas(vectorKey.getKey(), vectorCopy, casValue.getValue(), casValue.getVersion(), casValue.getValue().getTimeToLiveMilliseconds()));
+      } while (!getVectorCache(vectorKey.getElementClass()).putViaCas(vectorKey.getKey(), vectorCopy, casValue.getValue(), casValue.getVersion(), casValue.getValue().getTimeToLiveSeconds()));
     }
   }
 
@@ -142,7 +142,7 @@ public class ByKeyDistributedCacheDao<I extends Serializable & Comparable<I>, D 
 
     migratedVector = migrateVector(vectorKey.getElementClass(), vector);
 
-    return ((cachedVector = getVectorCache(vectorKey.getElementClass()).putIfAbsent(vectorKey.getKey(), migratedVector, migratedVector.getTimeToLiveMilliseconds())) != null) ? cachedVector : vector;
+    return ((cachedVector = getVectorCache(vectorKey.getElementClass()).putIfAbsent(vectorKey.getKey(), migratedVector, migratedVector.getTimeToLiveSeconds())) != null) ? cachedVector : vector;
   }
 
   public void deleteVector (VectorKey<D> vectorKey) {
@@ -155,7 +155,7 @@ public class ByKeyDistributedCacheDao<I extends Serializable & Comparable<I>, D 
     if (vector.isSingular()) {
       if (!(vector instanceof ByKeySingularVector)) {
 
-        return new ByKeySingularVector<I, D>(new DurableKey<I, D>(managedClass, vector.head().getId()), vector.getTimeToLiveMilliseconds());
+        return new ByKeySingularVector<I, D>(new DurableKey<I, D>(managedClass, vector.head().getId()), vector.getTimeToLiveSeconds());
       }
 
       return vector;
@@ -163,20 +163,20 @@ public class ByKeyDistributedCacheDao<I extends Serializable & Comparable<I>, D 
     else {
       if (!(vector instanceof ByKeyDistributedVector)) {
 
-        return new ByKeyDistributedVector<I, D>(managedClass, vector.asList(), vector.getComparator(), vector.getMaxSize(), vector.getTimeToLiveMilliseconds(), vector.isOrdered());
+        return new ByKeyDistributedVector<I, D>(managedClass, vector.asList(), vector.getComparator(), vector.getMaxSize(), vector.getTimeToLiveSeconds(), vector.isOrdered());
       }
 
       return vector;
     }
   }
 
-  public DurableVector<I, D> createSingularVector (VectorKey<D> vectorKey, D durable, long timeToLiveMilliseconds) {
+  public DurableVector<I, D> createSingularVector (VectorKey<D> vectorKey, D durable, int timeToLiveSeconds) {
 
-    return new ByKeySingularVector<I, D>(new DurableKey<I, D>(vectorKey.getElementClass(), durable.getId()), timeToLiveMilliseconds);
+    return new ByKeySingularVector<I, D>(new DurableKey<I, D>(vectorKey.getElementClass(), durable.getId()), timeToLiveSeconds);
   }
 
-  public DurableVector<I, D> createVector (VectorKey<D> vectorKey, Iterable<D> elementIter, Comparator<D> comparator, int maxSize, long timeToLiveMilliseconds, boolean ordered) {
+  public DurableVector<I, D> createVector (VectorKey<D> vectorKey, Iterable<D> elementIter, Comparator<D> comparator, int maxSize, int timeToLiveSeconds, boolean ordered) {
 
-    return new ByKeyDistributedVector<I, D>(vectorKey.getElementClass(), elementIter, comparator, maxSize, timeToLiveMilliseconds, ordered);
+    return new ByKeyDistributedVector<I, D>(vectorKey.getElementClass(), elementIter, comparator, maxSize, timeToLiveSeconds, ordered);
   }
 }

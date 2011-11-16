@@ -40,9 +40,9 @@ public class ByReferenceConcurrentVector<I extends Serializable & Comparable<I>,
 
   private ConcurrentRoster<D> roster;
 
-  public ByReferenceConcurrentVector (ConcurrentRoster<D> roster, Comparator<D> comparator, int maxSize, long timeToLive, boolean ordered) {
+  public ByReferenceConcurrentVector (ConcurrentRoster<D> roster, Comparator<D> comparator, int maxSize, int timeToLiveSeconds, boolean ordered) {
 
-    super(comparator, maxSize, timeToLive, ordered);
+    super(comparator, maxSize, timeToLiveSeconds, ordered);
 
     this.roster = roster;
     if (maxSize > 0) {
@@ -61,6 +61,6 @@ public class ByReferenceConcurrentVector<I extends Serializable & Comparable<I>,
   @AutolockRead
   public DurableVector<I, D> copy () {
 
-    return new ByReferenceConcurrentVector<I, D>(new ConcurrentRoster<D>(roster), getComparator(), getMaxSize(), getTimeToLiveMilliseconds(), isOrdered());
+    return new ByReferenceConcurrentVector<I, D>(new ConcurrentRoster<D>(roster), getComparator(), getMaxSize(), getTimeToLiveSeconds(), isOrdered());
   }
 }

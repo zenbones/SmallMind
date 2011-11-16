@@ -42,9 +42,9 @@ public class ByReferenceSingularVector<I extends Comparable<I>, D extends Durabl
 
   private D durable;
 
-  public ByReferenceSingularVector (D durable, long timeToLive) {
+  public ByReferenceSingularVector (D durable, int timeToLiveSeconds) {
 
-    super(null, 1, timeToLive, false);
+    super(null, 1, timeToLiveSeconds, false);
 
     this.durable = durable;
   }
@@ -52,7 +52,7 @@ public class ByReferenceSingularVector<I extends Comparable<I>, D extends Durabl
   @AutolockRead
   public DurableVector<I, D> copy () {
 
-    return new ByReferenceSingularVector<I, D>(durable, getTimeToLiveMilliseconds());
+    return new ByReferenceSingularVector<I, D>(durable, getTimeToLiveSeconds());
   }
 
   public boolean isSingular () {

@@ -126,7 +126,7 @@ public class CacheAsAspect {
 
           if ((durable = (Durable)thisJoinPoint.proceed()) != null) {
 
-            return vectoredDao.persistVector(vectorKey, vectoredDao.createSingularVector(vectorKey, durable, getTimeToLiveMilliseconds(cacheAs))).head();
+            return vectoredDao.persistVector(vectorKey, vectoredDao.createSingularVector(vectorKey, durable, getTimeToLiveSeconds(cacheAs))).head();
           }
 
           return null;
@@ -176,7 +176,7 @@ public class CacheAsAspect {
 
           if ((iterable = (Iterable)thisJoinPoint.proceed()) != null) {
 
-            return vectoredDao.persistVector(vectorKey, vectoredDao.createVector(vectorKey, iterable, cacheAs.comparator().equals(Comparator.class) ? null : cacheAs.comparator().newInstance(), cacheAs.max(), getTimeToLiveMilliseconds(cacheAs), cacheAs.ordered())).asList();
+            return vectoredDao.persistVector(vectorKey, vectoredDao.createVector(vectorKey, iterable, cacheAs.comparator().equals(Comparator.class) ? null : cacheAs.comparator().newInstance(), cacheAs.max(), getTimeToLiveSeconds(cacheAs), cacheAs.ordered())).asList();
           }
 
           return null;
@@ -196,17 +196,17 @@ public class CacheAsAspect {
     }
   }
 
-  private long getTimeToLiveMilliseconds (CacheAs cacheAs) {
+  private int getTimeToLiveSeconds (CacheAs cacheAs) {
 
     if ((cacheAs.time().value() == 0) && (cacheAs.time().stochastic() == 0)) {
 
       return 0;
     }
 
-    long baseTime = cacheAs.time().unit().toMillis(cacheAs.time().value());
+    int baseTime = (int)cacheAs.time().unit().toSeconds(cacheAs.time().value());
 
     if (cacheAs.time().stochastic() > 0) {
-      baseTime += (cacheAs.time().unit().toMillis(cacheAs.time().stochastic()) * RANDOM.nextDouble()) + 1;
+      baseTime += (cacheAs.time().unit().toSeconds(cacheAs.time().stochastic()) * RANDOM.nextDouble()) + 1;
     }
 
     return baseTime;

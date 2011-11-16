@@ -47,9 +47,9 @@ public class ByKeySingularVector<I extends Serializable & Comparable<I>, D exten
 
   private DurableKey<I, D> durableKey;
 
-  public ByKeySingularVector (DurableKey<I, D> durableKey, long timeToLive) {
+  public ByKeySingularVector (DurableKey<I, D> durableKey, int timeToLiveSeconds) {
 
-    super(null, 1, timeToLive, false);
+    super(null, 1, timeToLiveSeconds, false);
 
     this.durableKey = durableKey;
   }
@@ -79,7 +79,7 @@ public class ByKeySingularVector<I extends Serializable & Comparable<I>, D exten
   @AutolockRead
   public DurableVector<I, D> copy () {
 
-    return new ByKeySingularVector<I, D>(durableKey, getTimeToLiveMilliseconds());
+    return new ByKeySingularVector<I, D>(durableKey, getTimeToLiveSeconds());
   }
 
   public boolean isSingular () {

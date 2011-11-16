@@ -118,7 +118,7 @@ public class ByReferenceConcurrentCacheDao<I extends Serializable & Comparable<I
 
     migratedVector = migrateVector(vectorKey.getElementClass(), vector);
 
-    return ((cachedVector = getVectorCache(vectorKey.getElementClass()).putIfAbsent(vectorKey.getKey(), migratedVector, migratedVector.getTimeToLiveMilliseconds())) != null) ? cachedVector : vector;
+    return ((cachedVector = getVectorCache(vectorKey.getElementClass()).putIfAbsent(vectorKey.getKey(), migratedVector, migratedVector.getTimeToLiveSeconds())) != null) ? cachedVector : vector;
   }
 
   public void deleteVector (VectorKey<D> vectorKey) {
@@ -131,7 +131,7 @@ public class ByReferenceConcurrentCacheDao<I extends Serializable & Comparable<I
     if (vector.isSingular()) {
       if (!(vector instanceof ByReferenceSingularVector)) {
 
-        return new ByReferenceSingularVector<I, D>(vector.head(), vector.getTimeToLiveMilliseconds());
+        return new ByReferenceSingularVector<I, D>(vector.head(), vector.getTimeToLiveSeconds());
       }
 
       return vector;
@@ -139,14 +139,14 @@ public class ByReferenceConcurrentCacheDao<I extends Serializable & Comparable<I
     else {
       if (!(vector instanceof ByReferenceConcurrentVector)) {
 
-        return new ByReferenceConcurrentVector<I, D>(new ConcurrentRoster<D>(vector.asList()), vector.getComparator(), vector.getMaxSize(), vector.getTimeToLiveMilliseconds(), vector.isOrdered());
+        return new ByReferenceConcurrentVector<I, D>(new ConcurrentRoster<D>(vector.asList()), vector.getComparator(), vector.getMaxSize(), vector.getTimeToLiveSeconds(), vector.isOrdered());
       }
 
       return vector;
     }
   }
 
-  public DurableVector<I, D> createSingularVector (VectorKey<D> vectorKey, D durable, long timeToLiveMilliseconds) {
+  public DurableVector<I, D> createSingularVector (VectorKey<D> vectorKey, D durable, int timeToLiveSeconds) {
 
     DurableKey<I, D> durableKey;
     D inCacheDurable;
@@ -154,13 +154,13 @@ public class ByReferenceConcurrentCacheDao<I extends Serializable & Comparable<I
     durableKey = new DurableKey<I, D>(vectorKey.getElementClass(), durable.getId());
     if ((inCacheDurable = getInstanceCache(vectorKey.getElementClass()).putIfAbsent(durableKey.getKey(), durable, 0)) != null) {
 
-      return new ByReferenceSingularVector<I, D>(inCacheDurable, timeToLiveMilliseconds);
+      return new ByReferenceSingularVector<I, D>(inCacheDurable, timeToLiveSeconds);
     }
 
-    return new ByReferenceSingularVector<I, D>(durable, timeToLiveMilliseconds);
+    return new ByReferenceSingularVector<I, D>(durable, timeToLiveSeconds);
   }
 
-  public DurableVector<I, D> createVector (VectorKey<D> vectorKey, Iterable<D> elementIter, Comparator<D> comparator, int maxSize, long timeToLiveMilliseconds, boolean ordered) {
+  public DurableVector<I, D> createVector (VectorKey<D> vectorKey, Iterable<D> elementIter, Comparator<D> comparator, int maxSize, int timeToLiveSeconds, boolean ordered) {
 
     ConcurrentRoster<D> cacheConsistentElements;
     DurableKey<I, D> durableKey;
@@ -171,7 +171,7 @@ public class ByReferenceConcurrentCacheDao<I extends Serializable & Comparable<I
       if (element != null) {
 
         durableKey = new DurableKey<I, D>(vectorKey.getElementClass(), element.getId());
-        if ((inCacheDurable = getInstanceCache(vectorKey.getElementClass()).putIfAbsent(durableKey.getKey(), element, timeToLiveMilliseconds)) != null) {
+        if ((inCacheDurable = getInstanceCache(vectorKey.getElementClass()).putIfAbsent(durableKey.getKey(), element, timeToLiveSeconds)) != null) {
           cacheConsistentElements.add(inCacheDurable);
         }
         else {
@@ -180,6 +180,6 @@ public class ByReferenceConcurrentCacheDao<I extends Serializable & Comparable<I
       }
     }
 
-    return new ByReferenceConcurrentVector<I, D>(cacheConsistentElements, comparator, maxSize, timeToLiveMilliseconds, ordered);
+    return new ByReferenceConcurrentVector<I, D>(cacheConsistentElements, comparator, maxSize, timeToLiveSeconds, ordered);
   }
 }

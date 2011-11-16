@@ -41,9 +41,9 @@ import org.terracotta.annotations.InstrumentedClass;
 @InstrumentedClass
 public abstract class AbstractDurableVector<I extends Serializable & Comparable<I>, D extends Durable<I>> extends DurableVector<I, D> {
 
-  public AbstractDurableVector (Comparator<D> comparator, int maxSize, long timeToLive, boolean ordered) {
+  public AbstractDurableVector (Comparator<D> comparator, int maxSize, int timeToLiveSeconds, boolean ordered) {
 
-    super(comparator, maxSize, timeToLive, ordered);
+    super(comparator, maxSize, timeToLiveSeconds, ordered);
   }
 
   public abstract Roster<D> getRoster ();

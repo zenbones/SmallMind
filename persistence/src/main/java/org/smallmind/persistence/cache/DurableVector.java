@@ -37,14 +37,14 @@ public abstract class DurableVector<I extends Comparable<I>, D extends Durable<I
   private Comparator<D> comparator;
   private boolean ordered;
   private long creationTimeMilliseconds;
-  private long timeToLiveMilliseconds;
+  private int timeToLiveSeconds;
   private int maxSize;
 
-  public DurableVector (Comparator<D> comparator, int maxSize, long timeToLiveMilliseconds, boolean ordered) {
+  public DurableVector (Comparator<D> comparator, int maxSize, int timeToLiveSeconds, boolean ordered) {
 
     this.comparator = comparator;
     this.maxSize = maxSize;
-    this.timeToLiveMilliseconds = timeToLiveMilliseconds;
+    this.timeToLiveSeconds = timeToLiveSeconds;
     this.ordered = ordered;
 
     creationTimeMilliseconds = System.currentTimeMillis();
@@ -64,9 +64,9 @@ public abstract class DurableVector<I extends Comparable<I>, D extends Durable<I
     return maxSize;
   }
 
-  public long getTimeToLiveMilliseconds () {
+  public int getTimeToLiveSeconds () {
 
-    return timeToLiveMilliseconds;
+    return timeToLiveSeconds;
   }
 
   public boolean isOrdered () {
@@ -76,7 +76,7 @@ public abstract class DurableVector<I extends Comparable<I>, D extends Durable<I
 
   public boolean isAlive () {
 
-    return (timeToLiveMilliseconds <= 0) || (System.currentTimeMillis() - creationTimeMilliseconds <= timeToLiveMilliseconds);
+    return (timeToLiveSeconds <= 0) || ((System.currentTimeMillis() - creationTimeMilliseconds) / 1000 <= timeToLiveSeconds);
   }
 
   public abstract void add (D durable);
