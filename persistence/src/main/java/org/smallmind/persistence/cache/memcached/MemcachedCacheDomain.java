@@ -26,6 +26,7 @@
  */
 package org.smallmind.persistence.cache.memcached;
 
+import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import net.rubyeye.xmemcached.MemcachedClient;
 import org.smallmind.persistence.Durable;
@@ -36,14 +37,21 @@ import org.smallmind.persistence.cache.PersistenceCache;
 public class MemcachedCacheDomain<I extends Comparable<I>, D extends Durable<I>> implements CacheDomain<I, D> {
 
   private final MemcachedClient memcachedClient;
+  private final Map<Class<D>, Integer> timeTiLiveMap;
   private final ConcurrentHashMap<Class<D>, MemcachedCache<D>> instanceCacheMap = new ConcurrentHashMap<Class<D>, MemcachedCache<D>>();
   private final ConcurrentHashMap<Class<D>, MemcachedCache<DurableVector>> vectorCacheMap = new ConcurrentHashMap<Class<D>, MemcachedCache<DurableVector>>();
   private final int timeToLiveSeconds;
 
   public MemcachedCacheDomain (MemcachedClient memcachedClient, int timeToLiveSeconds) {
 
+    this(memcachedClient, timeToLiveSeconds, null);
+  }
+
+  public MemcachedCacheDomain (MemcachedClient memcachedClient, int timeToLiveSeconds, Map<Class<D>, Integer> timeTiLiveMap) {
+
     this.memcachedClient = memcachedClient;
     this.timeToLiveSeconds = timeToLiveSeconds;
+    this.timeTiLiveMap = timeTiLiveMap;
   }
 
   @Override
@@ -60,7 +68,7 @@ public class MemcachedCacheDomain<I extends Comparable<I>, D extends Durable<I>>
     if ((instanceCache = instanceCacheMap.get(managedClass)) == null) {
       synchronized (instanceCacheMap) {
         if ((instanceCache = instanceCacheMap.get(managedClass)) == null) {
-          instanceCacheMap.put(managedClass, instanceCache = new MemcachedCache<D>(memcachedClient, managedClass, timeToLiveSeconds));
+          instanceCacheMap.put(managedClass, instanceCache = new MemcachedCache<D>(memcachedClient, managedClass, getTimeToLiveSeconds(managedClass)));
         }
       }
     }
@@ -76,11 +84,23 @@ public class MemcachedCacheDomain<I extends Comparable<I>, D extends Durable<I>>
     if ((vectorCache = vectorCacheMap.get(managedClass)) == null) {
       synchronized (vectorCacheMap) {
         if ((vectorCache = vectorCacheMap.get(managedClass)) == null) {
-          vectorCacheMap.put(managedClass, vectorCache = new MemcachedCache<DurableVector>(memcachedClient, DurableVector.class, timeToLiveSeconds));
+          vectorCacheMap.put(managedClass, vectorCache = new MemcachedCache<DurableVector>(memcachedClient, DurableVector.class, getTimeToLiveSeconds(managedClass)));
         }
       }
     }
 
     return vectorCache;
+  }
+
+  private int getTimeToLiveSeconds (Class<D> managedClass) {
+
+    Integer timeToLiveSeconds;
+
+    if ((timeToLiveSeconds = timeTiLiveMap.get(managedClass)) != null) {
+
+      return timeToLiveSeconds;
+    }
+
+    return this.timeToLiveSeconds;
   }
 }
