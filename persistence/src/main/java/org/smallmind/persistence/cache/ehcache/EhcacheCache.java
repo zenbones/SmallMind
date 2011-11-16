@@ -24,7 +24,7 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.persistence.cache.praxis.concurrent.ehcache;
+package org.smallmind.persistence.cache.ehcache;
 
 import net.sf.ehcache.Cache;
 import net.sf.ehcache.Element;

@@ -34,5 +34,5 @@ public interface CacheDomain<I extends Comparable<I>, D extends Durable<I>> {
 
   public abstract PersistenceCache<String, D> getInstanceCache (Class<D> managedClass);
 
-  public abstract PersistenceCache<String, DurableVector<I, D>> getVectorCache (Class<D> managedClass);
+  public abstract PersistenceCache<String, DurableVector> getVectorCache (Class<D> managedClass);
 }

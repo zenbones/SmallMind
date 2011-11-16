@@ -49,7 +49,7 @@ public abstract class AbstractCacheDao<I extends Comparable<I>, D extends Durabl
     return cacheDomain.getInstanceCache(durableClass);
   }
 
-  public PersistenceCache<String, DurableVector<I, D>> getVectorCache (Class<D> durableClass) {
+  public PersistenceCache<String, DurableVector> getVectorCache (Class<D> durableClass) {
 
     return cacheDomain.getVectorCache(durableClass);
   }

@@ -98,7 +98,7 @@ public class ByKeyDistributedCacheDao<I extends Serializable & Comparable<I>, D 
 
     if (durable != null) {
 
-      CASValue<DurableVector<I, D>> casValue;
+      CASValue<DurableVector> casValue;
       DurableVector<I, D> vectorCopy;
 
       do {
@@ -116,7 +116,7 @@ public class ByKeyDistributedCacheDao<I extends Serializable & Comparable<I>, D 
 
     if (durable != null) {
 
-      CASValue<DurableVector<I, D>> casValue;
+      CASValue<DurableVector> casValue;
       DurableVector<I, D> vectorCopy;
 
       do {
