@@ -1,22 +1,22 @@
 /*
  * Copyright (c) 2007, 2008, 2009, 2010, 2011 David Berkman
- * 
+ *
  * This file is part of the SmallMind Code Project.
- * 
+ *
  * The SmallMind Code Project is free software, you can redistribute
  * it and/or modify it under the terms of GNU Affero General Public
  * License as published by the Free Software Foundation, either version 3
  * of the License, or (at your option) any later version.
- * 
+ *
  * The SmallMind Code Project is distributed in the hope that it will
  * be useful, but WITHOUT ANY WARRANTY; without even the implied warranty
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * General Public License for more details.
- * 
+ *
  * You should have received a copy of the the GNU Affero General Public
  * License, along with The SmallMind Code Project. If not, see
  * <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under the GNU Affero GPL version 3 section 7
  * ------------------------------------------------------------------
  * If you modify this Program, or any covered work, by linking or
@@ -32,76 +32,76 @@ import java.sql.SQLException;
 import javax.sql.DataSource;
 import javax.sql.PooledConnection;
 import org.smallmind.persistence.orm.sql.DataSourceManager;
-import org.smallmind.quorum.pool.ConnectionPool;
-import org.smallmind.quorum.pool.ConnectionPoolException;
+import org.smallmind.quorum.pool2.ConnectionPool;
+import org.smallmind.quorum.pool2.ConnectionPoolException;
 
 public class PooledDataSource implements DataSource {
 
-   private ConnectionPool connectionPool;
-   private PrintWriter logWriter;
-   private String key;
+  private ConnectionPool connectionPool;
+  private PrintWriter logWriter;
+  private String key;
 
-   public PooledDataSource (String key, ConnectionPool connectionPool) {
+  public PooledDataSource (String key, ConnectionPool connectionPool) {
 
-      this.key = key;
-      this.connectionPool = connectionPool;
+    this.key = key;
+    this.connectionPool = connectionPool;
 
-      logWriter = new PrintWriter(new PooledLogWriter());
-   }
+    logWriter = new PrintWriter(new PooledLogWriter());
+  }
 
-   public void register () {
+  public void register () {
 
-      DataSourceManager.register(key, this);
-   }
+    DataSourceManager.register(key, this);
+  }
 
-   public String getKey () {
+  public String getKey () {
 
-      return key;
-   }
+    return key;
+  }
 
-   public Connection getConnection ()
-      throws SQLException {
+  public Connection getConnection ()
+    throws SQLException {
 
-      try {
-         return ((PooledConnection)connectionPool.getConnection()).getConnection();
-      }
-      catch (ConnectionPoolException connectionPoolException) {
-         throw new SQLException(connectionPoolException);
-      }
-   }
+    try {
+      return ((PooledConnection)connectionPool.getConnection()).getConnection();
+    }
+    catch (ConnectionPoolException connectionPoolException) {
+      throw new SQLException(connectionPoolException);
+    }
+  }
 
-   public Connection getConnection (String username, String password) {
+  public Connection getConnection (String username, String password) {
 
-      throw new UnsupportedOperationException("Please properly configure the underlying resource managed by the pool which is represented by this DataSource");
-   }
+    throw new UnsupportedOperationException("Please properly configure the underlying resource managed by the pool which is represented by this DataSource");
+  }
 
-   public PrintWriter getLogWriter () {
+  public PrintWriter getLogWriter () {
 
-      return logWriter;
-   }
+    return logWriter;
+  }
 
-   public void setLogWriter (PrintWriter out) {
+  public void setLogWriter (PrintWriter out) {
 
-      throw new UnsupportedOperationException("Please properly configure the underlying pool which is represented by this DataSource");
-   }
+    throw new UnsupportedOperationException("Please properly configure the underlying pool which is represented by this DataSource");
+  }
 
-   public void setLoginTimeout (int seconds) {
+  public void setLoginTimeout (int seconds) {
 
-      throw new UnsupportedOperationException("Please properly configure the underlying resource managed by the pool which is represented by this DataSource");
-   }
+    throw new UnsupportedOperationException("Please properly configure the underlying resource managed by the pool which is represented by this DataSource");
+  }
 
-   public int getLoginTimeout () {
+  public int getLoginTimeout () {
 
-      throw new UnsupportedOperationException("Please properly configure the underlying resource managed by the pool which is represented by this DataSource");
-   }
+    throw new UnsupportedOperationException("Please properly configure the underlying resource managed by the pool which is represented by this DataSource");
+  }
 
-   public boolean isWrapperFor (Class<?> iface) {
+  public boolean isWrapperFor (Class<?> iface) {
 
-      return false;
-   }
+    return false;
+  }
 
-   public <T> T unwrap (Class<T> iface) {
+  public <T> T unwrap (Class<T> iface) {
 
-      throw new UnsupportedOperationException("This DataSource represents a connection pool");
-   }
+    throw new UnsupportedOperationException("This DataSource represents a connection pool");
+  }
 }

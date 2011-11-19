@@ -1,22 +1,22 @@
 /*
  * Copyright (c) 2007, 2008, 2009, 2010, 2011 David Berkman
- * 
+ *
  * This file is part of the SmallMind Code Project.
- * 
+ *
  * The SmallMind Code Project is free software, you can redistribute
  * it and/or modify it under the terms of GNU Affero General Public
  * License as published by the Free Software Foundation, either version 3
  * of the License, or (at your option) any later version.
- * 
+ *
  * The SmallMind Code Project is distributed in the hope that it will
  * be useful, but WITHOUT ANY WARRANTY; without even the implied warranty
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * General Public License for more details.
- * 
+ *
  * You should have received a copy of the the GNU Affero General Public
  * License, along with The SmallMind Code Project. If not, see
  * <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under the GNU Affero GPL version 3 section 7
  * ------------------------------------------------------------------
  * If you modify this Program, or any covered work, by linking or
@@ -32,51 +32,51 @@ import org.smallmind.cloud.cluster.ClusterHub;
 import org.smallmind.cloud.cluster.ClusterMember;
 import org.smallmind.cloud.cluster.broadcast.GossipClusterBroadcast;
 import org.smallmind.cloud.multicast.EventMessageException;
-import org.smallmind.quorum.pool.ConnectionPool;
+import org.smallmind.quorum.pool2.ConnectionPool;
 
 public abstract class SmallMindContainer extends SmallMindComponent implements ClusterMember {
 
-   private ClusterHub clusterHub;
-   private ClusterEntity clusterEntity;
-   private String globalPath;
-   private String localPath;
+  private ClusterHub clusterHub;
+  private ClusterEntity clusterEntity;
+  private String globalPath;
+  private String localPath;
 
-   public SmallMindContainer (ClusterHub clusterHub, ClusterEntity clusterEntity, ConnectionPool contextPool)
-      throws UnknownHostException {
+  public SmallMindContainer (ClusterHub clusterHub, ClusterEntity clusterEntity, ConnectionPool contextPool)
+    throws UnknownHostException {
 
-      super(contextPool);
+    super(contextPool);
 
-      this.clusterHub = clusterHub;
-      this.clusterEntity = clusterEntity;
+    this.clusterHub = clusterHub;
+    this.clusterEntity = clusterEntity;
 
-      globalPath = "container/" + clusterEntity.getClusterName() + "/global";
-      localPath = "container/" + clusterEntity.getClusterName() + "/local/" + getHostName() + "/" + clusterEntity.getInstanceId();
-   }
+    globalPath = "container/" + clusterEntity.getClusterName() + "/global";
+    localPath = "container/" + clusterEntity.getClusterName() + "/local/" + getHostName() + "/" + clusterEntity.getInstanceId();
+  }
 
-   public abstract void startUp ()
-      throws Exception;
+  public abstract void startUp ()
+    throws Exception;
 
-   public abstract void shutDown ()
-      throws Exception;
+  public abstract void shutDown ()
+    throws Exception;
 
-   public ClusterEntity getClusterEntity () {
+  public ClusterEntity getClusterEntity () {
 
-      return clusterEntity;
-   }
+    return clusterEntity;
+  }
 
-   public String getGlobalNamespacePath () {
+  public String getGlobalNamespacePath () {
 
-      return globalPath;
-   }
+    return globalPath;
+  }
 
-   public String getLocalNamespacePath () {
+  public String getLocalNamespacePath () {
 
-      return localPath;
-   }
+    return localPath;
+  }
 
-   public void fireGossipBroadcast (GossipClusterBroadcast gossipClusterBroadcast)
-      throws EventMessageException {
+  public void fireGossipBroadcast (GossipClusterBroadcast gossipClusterBroadcast)
+    throws EventMessageException {
 
-      clusterHub.fireEvent(gossipClusterBroadcast);
-   }
+    clusterHub.fireEvent(gossipClusterBroadcast);
+  }
 }

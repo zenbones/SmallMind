@@ -1,22 +1,22 @@
 /*
  * Copyright (c) 2007, 2008, 2009, 2010, 2011 David Berkman
- * 
+ *
  * This file is part of the SmallMind Code Project.
- * 
+ *
  * The SmallMind Code Project is free software, you can redistribute
  * it and/or modify it under the terms of GNU Affero General Public
  * License as published by the Free Software Foundation, either version 3
  * of the License, or (at your option) any later version.
- * 
+ *
  * The SmallMind Code Project is distributed in the hope that it will
  * be useful, but WITHOUT ANY WARRANTY; without even the implied warranty
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * General Public License for more details.
- * 
+ *
  * You should have received a copy of the the GNU Affero General Public
  * License, along with The SmallMind Code Project. If not, see
  * <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under the GNU Affero GPL version 3 section 7
  * ------------------------------------------------------------------
  * If you modify this Program, or any covered work, by linking or
@@ -32,8 +32,8 @@ import javax.jms.JMSException;
 import javax.naming.NamingException;
 import org.smallmind.cloud.service.messaging.ServiceEndpoint;
 import org.smallmind.cloud.service.messaging.ServiceTarget;
-import org.smallmind.quorum.pool.ConnectionPool;
-import org.smallmind.quorum.pool.ConnectionPoolException;
+import org.smallmind.quorum.pool2.ConnectionPool;
+import org.smallmind.quorum.pool2.ConnectionPoolException;
 import org.smallmind.quorum.transport.messaging.MessagingConnectionDetails;
 import org.smallmind.quorum.transport.messaging.MessagingReceiver;
 import org.springframework.beans.factory.DisposableBean;
@@ -41,75 +41,75 @@ import org.springframework.beans.factory.InitializingBean;
 
 public class ServiceNegotiatorInitializingBean implements InitializingBean, DisposableBean {
 
-   private final LinkedList<MessagingReceiver> messagingReceiverList = new LinkedList<MessagingReceiver>();
+  private final LinkedList<MessagingReceiver> messagingReceiverList = new LinkedList<MessagingReceiver>();
 
-   private ConnectionPool javaEnvironmentPool;
-   private List<ServiceEndpoint> serviceEndpointList;
-   private String jmsUser;
-   private String jmsCredentials;
-   private String destinationEnvPath;
-   private String factoryEnvPath;
-   private boolean closed = false;
+  private ConnectionPool javaEnvironmentPool;
+  private List<ServiceEndpoint> serviceEndpointList;
+  private String jmsUser;
+  private String jmsCredentials;
+  private String destinationEnvPath;
+  private String factoryEnvPath;
+  private boolean closed = false;
 
-   public void setJmsUser (String jmsUser) {
+  public void setJmsUser (String jmsUser) {
 
-      this.jmsUser = jmsUser;
-   }
+    this.jmsUser = jmsUser;
+  }
 
-   public void setJmsCredentials (String jmsCredentials) {
+  public void setJmsCredentials (String jmsCredentials) {
 
-      this.jmsCredentials = jmsCredentials;
-   }
+    this.jmsCredentials = jmsCredentials;
+  }
 
-   public void setJavaEnvironmentPool (ConnectionPool javaEnvironmentPool) {
+  public void setJavaEnvironmentPool (ConnectionPool javaEnvironmentPool) {
 
-      this.javaEnvironmentPool = javaEnvironmentPool;
-   }
+    this.javaEnvironmentPool = javaEnvironmentPool;
+  }
 
-   public void setDestinationEnvPath (String destinationEnvPath) {
+  public void setDestinationEnvPath (String destinationEnvPath) {
 
-      this.destinationEnvPath = destinationEnvPath;
-   }
+    this.destinationEnvPath = destinationEnvPath;
+  }
 
-   public void setFactoryEnvPath (String factoryEnvPath) {
+  public void setFactoryEnvPath (String factoryEnvPath) {
 
-      this.factoryEnvPath = factoryEnvPath;
-   }
+    this.factoryEnvPath = factoryEnvPath;
+  }
 
-   public void setServiceEndpointList (List<ServiceEndpoint> serviceEndpointList) {
+  public void setServiceEndpointList (List<ServiceEndpoint> serviceEndpointList) {
 
-      this.serviceEndpointList = serviceEndpointList;
-   }
+    this.serviceEndpointList = serviceEndpointList;
+  }
 
-   public void afterPropertiesSet ()
-      throws NoSuchMethodException, NamingException, JMSException, ConnectionPoolException {
+  public void afterPropertiesSet ()
+    throws NoSuchMethodException, NamingException, JMSException, ConnectionPoolException {
 
-      MessagingConnectionDetails connectionDetails;
+    MessagingConnectionDetails connectionDetails;
 
-      for (ServiceEndpoint serviceEndpoint : serviceEndpointList) {
-         connectionDetails = new MessagingConnectionDetails(javaEnvironmentPool, destinationEnvPath, factoryEnvPath, jmsUser, jmsCredentials, 0, serviceEndpoint.getServiceSelector());
-         messagingReceiverList.add(new MessagingReceiver(new ServiceTarget(serviceEndpoint), connectionDetails));
+    for (ServiceEndpoint serviceEndpoint : serviceEndpointList) {
+      connectionDetails = new MessagingConnectionDetails(javaEnvironmentPool, destinationEnvPath, factoryEnvPath, jmsUser, jmsCredentials, 0, serviceEndpoint.getServiceSelector());
+      messagingReceiverList.add(new MessagingReceiver(new ServiceTarget(serviceEndpoint), connectionDetails));
+    }
+  }
+
+  public synchronized void close () {
+
+    if (!closed) {
+      closed = true;
+
+      for (MessagingReceiver messagingReceiver : messagingReceiverList) {
+        messagingReceiver.close();
       }
-   }
+    }
+  }
 
-   public synchronized void close () {
+  public void destroy () {
 
-      if (!closed) {
-         closed = true;
+    close();
+  }
 
-         for (MessagingReceiver messagingReceiver : messagingReceiverList) {
-            messagingReceiver.close();
-         }
-      }
-   }
+  public void finalize () {
 
-   public void destroy () {
-
-      close();
-   }
-
-   public void finalize () {
-
-      close();
-   }
+    close();
+  }
 }

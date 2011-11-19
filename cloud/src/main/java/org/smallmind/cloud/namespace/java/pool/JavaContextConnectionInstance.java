@@ -1,22 +1,22 @@
 /*
  * Copyright (c) 2007, 2008, 2009, 2010, 2011 David Berkman
- * 
+ *
  * This file is part of the SmallMind Code Project.
- * 
+ *
  * The SmallMind Code Project is free software, you can redistribute
  * it and/or modify it under the terms of GNU Affero General Public
  * License as published by the Free Software Foundation, either version 3
  * of the License, or (at your option) any later version.
- * 
+ *
  * The SmallMind Code Project is distributed in the hope that it will
  * be useful, but WITHOUT ANY WARRANTY; without even the implied warranty
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * General Public License for more details.
- * 
+ *
  * You should have received a copy of the the GNU Affero General Public
  * License, along with The SmallMind Code Project. If not, see
  * <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under the GNU Affero GPL version 3 section 7
  * ------------------------------------------------------------------
  * If you modify this Program, or any covered work, by linking or
@@ -26,80 +26,99 @@
  */
 package org.smallmind.cloud.namespace.java.pool;
 
+import java.util.concurrent.atomic.AtomicReference;
 import javax.naming.NamingException;
 import org.smallmind.cloud.namespace.java.PooledJavaContext;
 import org.smallmind.cloud.namespace.java.event.JavaContextEvent;
 import org.smallmind.cloud.namespace.java.event.JavaContextListener;
-import org.smallmind.quorum.pool.AbstractConnectionInstance;
-import org.smallmind.quorum.pool.ConnectionPool;
-import org.smallmind.quorum.pool.ConnectionPoolManager;
+import org.smallmind.quorum.pool2.ConnectionInstance;
+import org.smallmind.quorum.pool2.ConnectionPool;
+import org.smallmind.scribe.pen.LoggerManager;
 
-public class JavaContextConnectionInstance extends AbstractConnectionInstance<PooledJavaContext> implements JavaContextListener {
+public class JavaContextConnectionInstance implements ConnectionInstance<PooledJavaContext>, JavaContextListener {
 
-   private ConnectionPool connectionPool;
-   private PooledJavaContext pooledJavaContext;
+  private final ConnectionPool<PooledJavaContext> connectionPool;
+  private final PooledJavaContext pooledJavaContext;
+  private final AtomicReference<StackTraceElement[]> stackTraceReference = new AtomicReference<StackTraceElement[]>();
 
-   public JavaContextConnectionInstance(ConnectionPool connectionPool, Integer originatingIndex, PooledJavaContext pooledJavaContext)
-      throws NamingException {
+  public JavaContextConnectionInstance (ConnectionPool<PooledJavaContext> connectionPool, PooledJavaContext pooledJavaContext)
+    throws NamingException {
 
-      super(originatingIndex);
+    this.connectionPool = connectionPool;
+    this.pooledJavaContext = pooledJavaContext;
 
-      this.connectionPool = connectionPool;
-      this.pooledJavaContext = pooledJavaContext;
+    pooledJavaContext.addJavaContextListener(this);
+  }
 
-      pooledJavaContext.addJavaContextListener(this);
-   }
+  public StackTraceElement[] getExistentialStackTrace () {
 
-   public boolean validate() {
+    return stackTraceReference.get();
+  }
 
-      try {
-         pooledJavaContext.lookup("");
-      } catch (NamingException namingException) {
+  public boolean validate () {
 
-         return false;
+    try {
+      pooledJavaContext.lookup("");
+    }
+    catch (NamingException namingException) {
+
+      return false;
+    }
+
+    return true;
+  }
+
+  public void contextClosed (JavaContextEvent javaContextEvent) {
+
+    try {
+      connectionPool.returnInstance(this);
+    }
+    catch (Exception exception) {
+      LoggerManager.getLogger(JavaContextConnectionInstance.class).error(exception);
+    }
+  }
+
+  public void contextAborted (JavaContextEvent javaContextEvent) {
+
+    Exception reportedException = javaContextEvent.getCommunicationException();
+
+    try {
+      connectionPool.terminateInstance(this);
+    }
+    catch (Exception exception) {
+      if (reportedException != null) {
+        exception.initCause(reportedException);
       }
 
-      return true;
-   }
-
-   public void contextClosed(JavaContextEvent javaContextEvent) {
-
-      try {
-         connectionPool.returnInstance(this);
-      } catch (Exception exception) {
-         ConnectionPoolManager.logError(exception);
+      reportedException = exception;
+    }
+    finally {
+      if (reportedException != null) {
+        connectionPool.reportConnectionErrorOccurred(reportedException);
+        LoggerManager.getLogger(JavaContextConnectionInstance.class).error(reportedException);
       }
-   }
+    }
+  }
 
-   public void contextAborted(JavaContextEvent javaContextEvent) {
+  public PooledJavaContext serve ()
+    throws Exception {
 
-      Exception reportedException = javaContextEvent.getCommunicationException();
+    if (connectionPool.isExistentiallyAware()) {
+      stackTraceReference.set(Thread.currentThread().getStackTrace());
+    }
 
-      try {
-         connectionPool.terminateInstance(this);
-      } catch (Exception exception) {
-         if (reportedException != null) {
-            exception.initCause(reportedException);
-         }
+    return pooledJavaContext;
+  }
 
-         reportedException = exception;
-      } finally {
-         if (reportedException != null) {
-            fireConnectionErrorOccurred(reportedException);
-            ConnectionPoolManager.logError(reportedException);
-         }
-      }
-   }
+  public void close ()
+    throws Exception {
 
-   public PooledJavaContext serve()
-      throws Exception {
+    if (connectionPool.isExistentiallyAware()) {
+      stackTraceReference.set(null);
+    }
 
-      return pooledJavaContext;
-   }
-
-   public void close()
-      throws Exception {
-
+    if (pooledJavaContext != null) {
       pooledJavaContext.close(true);
-   }
+    }
+  }
 }

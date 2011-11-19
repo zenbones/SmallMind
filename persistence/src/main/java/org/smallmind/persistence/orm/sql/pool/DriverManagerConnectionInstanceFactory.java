@@ -1,22 +1,22 @@
 /*
  * Copyright (c) 2007, 2008, 2009, 2010, 2011 David Berkman
- * 
+ *
  * This file is part of the SmallMind Code Project.
- * 
+ *
  * The SmallMind Code Project is free software, you can redistribute
  * it and/or modify it under the terms of GNU Affero General Public
  * License as published by the Free Software Foundation, either version 3
  * of the License, or (at your option) any later version.
- * 
+ *
  * The SmallMind Code Project is distributed in the hope that it will
  * be useful, but WITHOUT ANY WARRANTY; without even the implied warranty
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * General Public License for more details.
- * 
+ *
  * You should have received a copy of the the GNU Affero General Public
  * License, along with The SmallMind Code Project. If not, see
  * <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under the GNU Affero GPL version 3 section 7
  * ------------------------------------------------------------------
  * If you modify this Program, or any covered work, by linking or
@@ -30,9 +30,9 @@ import java.sql.SQLException;
 import javax.sql.PooledConnection;
 import org.smallmind.persistence.orm.sql.DriverManagerConnectionPoolDataSource;
 import org.smallmind.persistence.orm.sql.DriverManagerDataSource;
-import org.smallmind.quorum.pool.ConnectionInstance;
-import org.smallmind.quorum.pool.ConnectionInstanceFactory;
-import org.smallmind.quorum.pool.ConnectionPool;
+import org.smallmind.quorum.pool2.ConnectionInstance;
+import org.smallmind.quorum.pool2.ConnectionInstanceFactory;
+import org.smallmind.quorum.pool2.ConnectionPool;
 
 public class DriverManagerConnectionInstanceFactory implements ConnectionInstanceFactory<PooledConnection> {
 
@@ -43,14 +43,8 @@ public class DriverManagerConnectionInstanceFactory implements ConnectionInstanc
   public DriverManagerConnectionInstanceFactory (String driverClassName, String jdbcUrl, String user, String password)
     throws SQLException {
 
-    this(driverClassName, jdbcUrl, user, password, false);
-  }
-
-  public DriverManagerConnectionInstanceFactory (String driverClassName, String jdbcUrl, String user, String password, boolean existential)
-    throws SQLException {
-
     dataSource = new DriverManagerDataSource(driverClassName, jdbcUrl, user, password);
-    pooledDataSource = new DriverManagerConnectionPoolDataSource(dataSource, existential);
+    pooledDataSource = new DriverManagerConnectionPoolDataSource(dataSource);
   }
 
   public String getValidationQuery () {
@@ -79,9 +73,9 @@ public class DriverManagerConnectionInstanceFactory implements ConnectionInstanc
     return dataSource.getConnection();
   }
 
-  public ConnectionInstance<PooledConnection> createInstance (ConnectionPool connectionPool, Integer originatingIndex)
+  public ConnectionInstance<PooledConnection> createInstance (ConnectionPool<PooledConnection> connectionPool)
     throws SQLException {
 
-    return new PooledConnectionInstance(connectionPool, originatingIndex, pooledDataSource.getPooledConnection(), validationQuery);
+    return new PooledConnectionInstance(connectionPool, pooledDataSource.getPooledConnection(), validationQuery);
   }
 }

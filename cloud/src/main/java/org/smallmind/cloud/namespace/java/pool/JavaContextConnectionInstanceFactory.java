@@ -1,22 +1,22 @@
 /*
  * Copyright (c) 2007, 2008, 2009, 2010, 2011 David Berkman
- * 
+ *
  * This file is part of the SmallMind Code Project.
- * 
+ *
  * The SmallMind Code Project is free software, you can redistribute
  * it and/or modify it under the terms of GNU Affero General Public
  * License as published by the Free Software Foundation, either version 3
  * of the License, or (at your option) any later version.
- * 
+ *
  * The SmallMind Code Project is distributed in the hope that it will
  * be useful, but WITHOUT ANY WARRANTY; without even the implied warranty
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * General Public License for more details.
- * 
+ *
  * You should have received a copy of the the GNU Affero General Public
  * License, along with The SmallMind Code Project. If not, see
  * <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under the GNU Affero GPL version 3 section 7
  * ------------------------------------------------------------------
  * If you modify this Program, or any covered work, by linking or
@@ -33,71 +33,71 @@ import org.smallmind.cloud.namespace.java.JavaContext;
 import org.smallmind.cloud.namespace.java.PooledJavaContext;
 import org.smallmind.cloud.namespace.java.backingStore.NamingConnectionDetails;
 import org.smallmind.cloud.namespace.java.backingStore.StorageType;
-import org.smallmind.quorum.pool.ConnectionInstance;
-import org.smallmind.quorum.pool.ConnectionInstanceFactory;
-import org.smallmind.quorum.pool.ConnectionPool;
+import org.smallmind.quorum.pool2.ConnectionInstance;
+import org.smallmind.quorum.pool2.ConnectionInstanceFactory;
+import org.smallmind.quorum.pool2.ConnectionPool;
 
 public class JavaContextConnectionInstanceFactory implements ConnectionInstanceFactory<PooledJavaContext> {
 
-   private StorageType storageType;
-   private String contextPath;
-   private String host;
-   private String rootNamespace;
-   private String userContext;
-   private String password;
-   private int port;
+  private StorageType storageType;
+  private String contextPath;
+  private String host;
+  private String rootNamespace;
+  private String userContext;
+  private String password;
+  private int port;
 
-   public JavaContextConnectionInstanceFactory (StorageType storageType, String contextPath, String host, int port, String rootNamespace, String userContext, String password) {
+  public JavaContextConnectionInstanceFactory (StorageType storageType, String contextPath, String host, int port, String rootNamespace, String userContext, String password) {
 
-      this.storageType = storageType;
-      this.contextPath = contextPath;
-      this.host = host;
-      this.port = port;
-      this.rootNamespace = rootNamespace;
-      this.userContext = userContext;
-      this.password = password;
-   }
+    this.storageType = storageType;
+    this.contextPath = contextPath;
+    this.host = host;
+    this.port = port;
+    this.rootNamespace = rootNamespace;
+    this.userContext = userContext;
+    this.password = password;
+  }
 
-   public Object rawInstance ()
-      throws Exception {
+  public Object rawInstance ()
+    throws Exception {
 
-      JavaContext rawContext;
-      InitialContext initContext;
-      Hashtable<String, Object> env;
+    JavaContext rawContext;
+    InitialContext initContext;
+    Hashtable<String, Object> env;
 
-      env = new Hashtable<String, Object>();
-      env.put(Context.URL_PKG_PREFIXES, "org.smallmind.cloud.namespace");
-      env.put(JavaContext.CONNECTION_DETAILS, new NamingConnectionDetails(host, port, rootNamespace, userContext, password));
-      env.put(JavaContext.CONTEXT_STORE, storageType.getBackingStore());
-      env.put(JavaContext.CONTEXT_MODIFIABLE, "true");
+    env = new Hashtable<String, Object>();
+    env.put(Context.URL_PKG_PREFIXES, "org.smallmind.cloud.namespace");
+    env.put(JavaContext.CONNECTION_DETAILS, new NamingConnectionDetails(host, port, rootNamespace, userContext, password));
+    env.put(JavaContext.CONTEXT_STORE, storageType.getBackingStore());
+    env.put(JavaContext.CONTEXT_MODIFIABLE, "true");
 
-      initContext = new InitialContext(env);
+    initContext = new InitialContext(env);
 
-      rawContext = (JavaContext)initContext.lookup(contextPath);
-      initContext.close();
+    rawContext = (JavaContext)initContext.lookup(contextPath);
+    initContext.close();
 
-      return rawContext;
-   }
+    return rawContext;
+  }
 
-   public ConnectionInstance<PooledJavaContext> createInstance (ConnectionPool connectionPool, Integer originatingIndex)
-      throws Exception {
+  public ConnectionInstance<PooledJavaContext> createInstance (ConnectionPool<PooledJavaContext> connectionPool)
+    throws Exception {
 
-      PooledJavaContext pooledJavaContext;
-      InitialContext initContext;
-      Hashtable<String, Object> env;
+    PooledJavaContext pooledJavaContext;
+    InitialContext initContext;
+    Hashtable<String, Object> env;
 
-      env = new Hashtable<String, Object>();
-      env.put(Context.URL_PKG_PREFIXES, "org.smallmind.cloud.namespace");
-      env.put(JavaContext.CONNECTION_DETAILS, new NamingConnectionDetails(host, port, rootNamespace, userContext, password));
-      env.put(JavaContext.CONTEXT_STORE, storageType.getBackingStore());
-      env.put(JavaContext.CONTEXT_MODIFIABLE, "true");
-      env.put(JavaContext.POOLED_CONNECTION, "true");
+    env = new Hashtable<String, Object>();
+    env.put(Context.URL_PKG_PREFIXES, "org.smallmind.cloud.namespace");
+    env.put(JavaContext.CONNECTION_DETAILS, new NamingConnectionDetails(host, port, rootNamespace, userContext, password));
+    env.put(JavaContext.CONTEXT_STORE, storageType.getBackingStore());
+    env.put(JavaContext.CONTEXT_MODIFIABLE, "true");
+    env.put(JavaContext.POOLED_CONNECTION, "true");
 
-      initContext = new InitialContext(env);
+    initContext = new InitialContext(env);
 
-      pooledJavaContext = (PooledJavaContext)initContext.lookup(contextPath);
-      initContext.close();
+    pooledJavaContext = (PooledJavaContext)initContext.lookup(contextPath);
+    initContext.close();
 
-      return new JavaContextConnectionInstance(connectionPool, originatingIndex, pooledJavaContext);
-   }
+    return new JavaContextConnectionInstance(connectionPool, pooledJavaContext);
+  }
 }
