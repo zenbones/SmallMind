@@ -24,13 +24,39 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.quorum.transaction.xa;
+package org.smallmind.quorum.pool.remote;
 
-import javax.transaction.xa.XAResource;
-import org.smallmind.quorum.pool.ConnectionPoolException;
+import org.smallmind.quorum.pool.event.ConnectionPoolEventListener;
+import org.smallmind.quorum.pool.event.ErrorReportingConnectionPoolEvent;
+import org.smallmind.quorum.pool.event.LeaseTimeReportingConnectionPoolEvent;
+import org.smallmind.quorum.transport.remote.RemoteEndpoint;
 
-public interface SmallMindXAResource extends XAResource {
+public class RemoteConnectionPoolEventListener implements ConnectionPoolEventListener, RemoteEndpoint {
 
-  public abstract Object getResource ()
-    throws ConnectionPoolException;
+  private static final Class[] REMOTE_INTERFACES = new Class[] {ConnectionPoolEventListener.class};
+
+  private ConnectionPoolEventListener targetListener;
+
+  public RemoteConnectionPoolEventListener (ConnectionPoolEventListener targetListener) {
+
+    this.targetListener = targetListener;
+  }
+
+  @Override
+  public Class[] getProxyInterfaces () {
+
+    return REMOTE_INTERFACES;
+  }
+
+  @Override
+  public void reportConnectionErrorOccurred (ErrorReportingConnectionPoolEvent event) {
+
+    targetListener.reportConnectionErrorOccurred(event);
+  }
+
+  @Override
+  public void reportConnectionLeaseTime (LeaseTimeReportingConnectionPoolEvent event) {
+
+    targetListener.reportConnectionLeaseTime(event);
+  }
 }

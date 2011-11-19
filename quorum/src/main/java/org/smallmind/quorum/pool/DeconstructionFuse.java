@@ -24,13 +24,25 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.quorum.transaction.xa;
+package org.smallmind.quorum.pool;
 
-import javax.transaction.xa.XAResource;
-import org.smallmind.quorum.pool.ConnectionPoolException;
+public abstract class DeconstructionFuse<C> implements Runnable {
 
-public interface SmallMindXAResource extends XAResource {
+  private DeconstructionCoordinator deconstructionCoordinator;
 
-  public abstract Object getResource ()
-    throws ConnectionPoolException;
+  protected void setDeconstructionCoordinator (DeconstructionCoordinator deconstructionCoordinator) {
+
+    this.deconstructionCoordinator = deconstructionCoordinator;
+  }
+
+  public abstract void free ();
+
+  public abstract void serve ();
+
+  public abstract void abort ();
+
+  public void ignite () {
+
+    deconstructionCoordinator.ignite();
+  }
 }

@@ -24,13 +24,17 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.quorum.transaction.xa;
+package org.smallmind.quorum.pool;
 
-import javax.transaction.xa.XAResource;
-import org.smallmind.quorum.pool.ConnectionPoolException;
+import org.smallmind.nutsnbolts.lang.Existential;
 
-public interface SmallMindXAResource extends XAResource {
+public interface ConnectionInstance<C> extends Existential {
 
-  public abstract Object getResource ()
-    throws ConnectionPoolException;
+  public abstract boolean validate ();
+
+  public abstract C serve ()
+    throws Exception;
+
+  public abstract void close ()
+    throws Exception;
 }

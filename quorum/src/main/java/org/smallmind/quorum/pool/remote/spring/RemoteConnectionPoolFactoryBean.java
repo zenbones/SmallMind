@@ -24,38 +24,45 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.persistence.orm.sql.pool;
+package org.smallmind.quorum.pool.remote.spring;
 
-import java.io.IOException;
-import java.io.Writer;
-import org.smallmind.scribe.pen.Level;
-import org.smallmind.scribe.pen.LoggerManager;
+import org.smallmind.quorum.pool.ConnectionPool;
+import org.smallmind.quorum.pool.remote.RemoteConnectionPoolSurface;
+import org.smallmind.quorum.pool.remote.RemoteConnectionPoolSurfaceImpl;
+import org.smallmind.quorum.transport.remote.RemoteEndpointBinder;
+import org.smallmind.quorum.transport.remote.RemoteProxyFactory;
+import org.springframework.beans.factory.FactoryBean;
 
-public class PooledLogWriter extends Writer {
+public class RemoteConnectionPoolFactoryBean implements FactoryBean<RemoteConnectionPoolSurface> {
 
-  private Level level;
+  private ConnectionPool connectionPool;
+  private String registryName;
 
-  public PooledLogWriter () {
+  public void setConnectionPool (ConnectionPool connectionPool) {
 
-    this(Level.INFO);
+    this.connectionPool = connectionPool;
   }
 
-  public PooledLogWriter (Level level) {
+  public void setRegistryName (String registryName) {
 
-    this.level = level;
+    this.registryName = registryName;
   }
 
-  public void write (char[] cbuf, int off, int len)
-    throws IOException {
+  public RemoteConnectionPoolSurface getObject ()
+    throws Exception {
 
-    LoggerManager.getLogger(PooledLogWriter.class).log(level, new String(cbuf, off, len));
+    RemoteEndpointBinder.bind(new RemoteConnectionPoolSurfaceImpl(connectionPool), registryName);
+
+    return RemoteProxyFactory.generateRemoteProxy(RemoteConnectionPoolSurface.class, registryName);
   }
 
-  public void flush () {
+  public Class getObjectType () {
 
+    return RemoteConnectionPoolSurface.class;
   }
 
-  public void close () {
+  public boolean isSingleton () {
 
+    return true;
   }
 }

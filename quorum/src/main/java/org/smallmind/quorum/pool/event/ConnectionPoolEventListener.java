@@ -24,13 +24,13 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.quorum.transaction.xa;
+package org.smallmind.quorum.pool.event;
 
-import javax.transaction.xa.XAResource;
-import org.smallmind.quorum.pool.ConnectionPoolException;
+import java.util.EventListener;
 
-public interface SmallMindXAResource extends XAResource {
+public interface ConnectionPoolEventListener extends EventListener {
 
-  public abstract Object getResource ()
-    throws ConnectionPoolException;
+  public abstract void reportConnectionErrorOccurred (ErrorReportingConnectionPoolEvent event);
+
+  public abstract void reportConnectionLeaseTime (LeaseTimeReportingConnectionPoolEvent event);
 }

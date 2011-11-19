@@ -24,13 +24,29 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.quorum.transaction.xa;
+package org.smallmind.quorum.pool.jmx;
 
-import javax.transaction.xa.XAResource;
-import org.smallmind.quorum.pool.ConnectionPoolException;
+import org.smallmind.nutsnbolts.lang.FormattedException;
 
-public interface SmallMindXAResource extends XAResource {
+public class ConnectionPoolRegistrationException extends FormattedException {
 
-  public abstract Object getResource ()
-    throws ConnectionPoolException;
+  public ConnectionPoolRegistrationException () {
+
+    super();
+  }
+
+  public ConnectionPoolRegistrationException (String message, Object... args) {
+
+    super(String.format(message, args));
+  }
+
+  public ConnectionPoolRegistrationException (Throwable throwable, String message, Object... args) {
+
+    super(String.format(message, args), throwable);
+  }
+
+  public ConnectionPoolRegistrationException (Throwable throwable) {
+
+    super(throwable);
+  }
 }

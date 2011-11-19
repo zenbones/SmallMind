@@ -18,22 +18,24 @@
     <constructor-arg index="1" value="${jdbc.url.schema}"/>
     <constructor-arg index="2" value="${jdbc.username}"/>
     <constructor-arg index="3" value="${jdbc.password}"/>
-    <constructor-arg index="4" value="false"/>
     <property name="validationQuery" value="${jdbc.pool.connect.query}"/>
   </bean>
 
   <bean id="schemaDBPool" class="org.smallmind.quorum.pool.ConnectionPool" init-method="startup" destroy-method="shutdown">
     <constructor-arg index="0" value="dbPool"/>
     <constructor-arg index="1" ref="schemaConnectionInstanceFactory"/>
-    <property name="testOnAcquire" value="${jdbc.pool.connect.test}"/>
-    <property name="initialPoolSize" value="${jdbc.pool.size.min}"/>
-    <property name="minPoolSize" value="${jdbc.pool.size.min}"/>
-    <property name="maxPoolSize" value="${jdbc.pool.size.max}"/>
-    <property name="allowSoftMinSize" value="false"/>
-    <property name="acquireWaitTimeMillis" value="750"/>
-    <property name="connectionTimeoutMillis" value="300"/>
-    <property name="maxIdleTimeSeconds" value="300"/>
-    <property name="maxLeaseTimeSeconds" value="1800"/>
+    <property name="connectionPoolConfig">
+      <bean class="org.smallmind.quorum.pool.ConnectionPoolConfig">
+        <property name="testOnAcquire" value="${jdbc.pool.connect.test}"/>
+        <property name="initialPoolSize" value="${jdbc.pool.size.min}"/>
+        <property name="minPoolSize" value="${jdbc.pool.size.min}"/>
+        <property name="maxPoolSize" value="${jdbc.pool.size.max}"/>
+        <property name="acquireWaitTimeMillis" value="750"/>
+        <property name="connectionTimeoutMillis" value="300"/>
+        <property name="maxIdleTimeSeconds" value="300"/>
+        <property name="maxLeaseTimeSeconds" value="1800"/>
+      </bean>
+    </property>
   </bean>
 
   <bean id="schemaPooledDataSource" class="org.smallmind.persistence.orm.sql.pool.PooledDataSource">
@@ -83,7 +85,7 @@
     <constructor-arg index="0" value="schema"/>
     <constructor-arg index="1" ref="schemaSessionFactory"/>
     <constructor-arg index="2" value="true"/>
-    <constructor-arg index="3" value="false"/>
+    <constructor-arg index="3" value="true"/>
   </bean>
 
 </beans>

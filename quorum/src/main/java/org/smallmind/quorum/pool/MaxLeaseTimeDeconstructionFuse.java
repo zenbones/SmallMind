@@ -24,38 +24,55 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.persistence.orm.sql.pool;
+package org.smallmind.quorum.pool;
 
-import java.io.IOException;
-import java.io.Writer;
-import org.smallmind.scribe.pen.Level;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 import org.smallmind.scribe.pen.LoggerManager;
 
-public class PooledLogWriter extends Writer {
+public class MaxLeaseTimeDeconstructionFuse<C> extends DeconstructionFuse<C> {
 
-  private Level level;
+  private final ConnectionPool<C> connectionPool;
+  private final CountDownLatch abortLatch = new CountDownLatch(1);
+  private final CountDownLatch exitLatch = new CountDownLatch(1);
 
-  public PooledLogWriter () {
+  public MaxLeaseTimeDeconstructionFuse (ConnectionPool<C> connectionPool) {
 
-    this(Level.INFO);
+    this.connectionPool = connectionPool;
   }
 
-  public PooledLogWriter (Level level) {
-
-    this.level = level;
-  }
-
-  public void write (char[] cbuf, int off, int len)
-    throws IOException {
-
-    LoggerManager.getLogger(PooledLogWriter.class).log(level, new String(cbuf, off, len));
-  }
-
-  public void flush () {
+  public void free () {
 
   }
 
-  public void close () {
+  public void serve () {
 
+  }
+
+  @Override
+  public void abort () {
+
+    abortLatch.countDown();
+
+    try {
+      exitLatch.await();
+    }
+    catch (InterruptedException interruptedException) {
+      LoggerManager.getLogger(MaxLeaseTimeDeconstructionFuse.class).error(interruptedException);
+    }
+  }
+
+  public void run () {
+
+    try {
+      if (!abortLatch.await(connectionPool.getConnectionPoolConfig().getMaxLeaseTimeSeconds(), TimeUnit.SECONDS)) {
+        ignite();
+      }
+    }
+    catch (InterruptedException interruptedException) {
+      LoggerManager.getLogger(MaxLeaseTimeDeconstructionFuse.class).error(interruptedException);
+    }
+
+    exitLatch.countDown();
   }
 }

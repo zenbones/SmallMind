@@ -24,13 +24,28 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.quorum.transaction.xa;
+package org.smallmind.quorum.pool.jmx;
 
-import javax.transaction.xa.XAResource;
-import org.smallmind.quorum.pool.ConnectionPoolException;
+import java.util.concurrent.atomic.AtomicLong;
+import javax.management.Notification;
 
-public interface SmallMindXAResource extends XAResource {
+public class ConnectionErrorOccurredNotification extends Notification {
 
-  public abstract Object getResource ()
-    throws ConnectionPoolException;
+  public static final String TYPE = "ERROR_OCCURRED";
+
+  private static final AtomicLong SEQUNCE_NUMBER = new AtomicLong(0);
+
+  private Exception exception;
+
+  public ConnectionErrorOccurredNotification (Object source, Exception exception) {
+
+    super(TYPE, source, SEQUNCE_NUMBER.incrementAndGet(), System.currentTimeMillis());
+
+    this.exception = exception;
+  }
+
+  public Exception getException () {
+
+    return exception;
+  }
 }
