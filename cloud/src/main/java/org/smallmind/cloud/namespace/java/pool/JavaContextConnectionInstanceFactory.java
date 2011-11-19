@@ -37,7 +37,7 @@ import org.smallmind.quorum.pool.ConnectionInstance;
 import org.smallmind.quorum.pool.ConnectionInstanceFactory;
 import org.smallmind.quorum.pool.ConnectionPool;
 
-public class JavaContextConnectionInstanceFactory implements ConnectionInstanceFactory<PooledJavaContext> {
+public class JavaContextConnectionInstanceFactory implements ConnectionInstanceFactory<JavaContext, PooledJavaContext> {
 
   private StorageType storageType;
   private String contextPath;
@@ -58,7 +58,7 @@ public class JavaContextConnectionInstanceFactory implements ConnectionInstanceF
     this.password = password;
   }
 
-  public Object rawInstance ()
+  public JavaContext rawInstance ()
     throws Exception {
 
     JavaContext rawContext;

@@ -26,6 +26,7 @@
  */
 package org.smallmind.persistence.orm.sql.pool;
 
+import java.sql.Connection;
 import java.sql.SQLException;
 import javax.sql.PooledConnection;
 import org.smallmind.persistence.orm.sql.DriverManagerConnectionPoolDataSource;
@@ -34,7 +35,7 @@ import org.smallmind.quorum.pool.ConnectionInstance;
 import org.smallmind.quorum.pool.ConnectionInstanceFactory;
 import org.smallmind.quorum.pool.ConnectionPool;
 
-public class DriverManagerConnectionInstanceFactory implements ConnectionInstanceFactory<PooledConnection> {
+public class DriverManagerConnectionInstanceFactory implements ConnectionInstanceFactory<Connection, PooledConnection> {
 
   private DriverManagerDataSource dataSource;
   private DriverManagerConnectionPoolDataSource pooledDataSource;
@@ -67,7 +68,7 @@ public class DriverManagerConnectionInstanceFactory implements ConnectionInstanc
     pooledDataSource.setMaxStatements(maxStatements);
   }
 
-  public Object rawInstance ()
+  public Connection rawInstance ()
     throws SQLException {
 
     return dataSource.getConnection();

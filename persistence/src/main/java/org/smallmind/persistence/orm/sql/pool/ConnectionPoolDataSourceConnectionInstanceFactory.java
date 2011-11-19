@@ -26,6 +26,7 @@
  */
 package org.smallmind.persistence.orm.sql.pool;
 
+import java.sql.Connection;
 import java.sql.SQLException;
 import javax.sql.ConnectionPoolDataSource;
 import javax.sql.DataSource;
@@ -34,7 +35,7 @@ import org.smallmind.quorum.pool.ConnectionInstance;
 import org.smallmind.quorum.pool.ConnectionInstanceFactory;
 import org.smallmind.quorum.pool.ConnectionPool;
 
-public class ConnectionPoolDataSourceConnectionInstanceFactory implements ConnectionInstanceFactory<PooledConnection> {
+public class ConnectionPoolDataSourceConnectionInstanceFactory implements ConnectionInstanceFactory<Connection, PooledConnection> {
 
   private DataSource dataSource;
   private ConnectionPoolDataSource pooledDataSource;
@@ -61,7 +62,7 @@ public class ConnectionPoolDataSourceConnectionInstanceFactory implements Connec
     this.validationQuery = validationQuery;
   }
 
-  public Object rawInstance ()
+  public Connection rawInstance ()
     throws SQLException {
 
     if (dataSource == null) {

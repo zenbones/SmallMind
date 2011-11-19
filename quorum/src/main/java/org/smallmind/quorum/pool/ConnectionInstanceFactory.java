@@ -26,9 +26,9 @@
  */
 package org.smallmind.quorum.pool;
 
-public interface ConnectionInstanceFactory<C> {
+public interface ConnectionInstanceFactory<R, C> {
 
-  public abstract Object rawInstance ()
+  public abstract R rawInstance ()
     throws Exception;
 
   public abstract ConnectionInstance<C> createInstance (ConnectionPool<C> connectionPool)
