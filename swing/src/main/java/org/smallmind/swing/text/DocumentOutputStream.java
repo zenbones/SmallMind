@@ -33,41 +33,35 @@ import javax.swing.text.Document;
 
 public class DocumentOutputStream extends OutputStream {
 
-   private Document document;
-   private int cursor = 0;
+  private Document document;
+  private int cursor = 0;
 
-   public DocumentOutputStream (Document document) {
+  public DocumentOutputStream (Document document) {
 
-      this.document = document;
-   }
+    this.document = document;
+  }
 
-   public void write (int b)
-      throws IOException {
+  public void write (int b)
+    throws IOException {
 
-      write(new byte[] {(byte)b});
-   }
+    write(new byte[] {(byte)b});
+  }
 
-   public void write (byte buffer[])
-      throws IOException {
+  public void write (byte buffer[])
+    throws IOException {
 
-      write(buffer, 0, buffer.length);
-   }
+    write(buffer, 0, buffer.length);
+  }
 
-   public void write (byte buffer[], int off, int len)
-      throws IOException {
+  public void write (byte buffer[], int off, int len)
+    throws IOException {
 
-      try {
-         document.insertString(cursor, new String(buffer, off, len), null);
-         cursor += len - off;
-      }
-      catch (BadLocationException badLocationException) {
-         IOException ioException;
-
-         ioException = new IOException(badLocationException.getMessage());
-         ioException.initCause(badLocationException);
-
-         throw ioException;
-      }
-   }
-
+    try {
+      document.insertString(cursor, new String(buffer, off, len), null);
+      cursor += len - off;
+    }
+    catch (BadLocationException badLocationException) {
+      throw (IOException)new IOException(badLocationException.getMessage()).initCause(badLocationException);
+    }
+  }
 }

@@ -30,13 +30,15 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import org.smallmind.scribe.pen.LoggerManager;
 
-public class MaxLeaseTimeDeconstructionFuse<C> extends DeconstructionFuse<C> {
+public class MaxLeaseTimeDeconstructionFuse extends DeconstructionFuse {
 
-  private final ConnectionPool<C> connectionPool;
+  private final ConnectionPool<?> connectionPool;
   private final CountDownLatch abortLatch = new CountDownLatch(1);
   private final CountDownLatch exitLatch = new CountDownLatch(1);
 
-  public MaxLeaseTimeDeconstructionFuse (ConnectionPool<C> connectionPool) {
+  public MaxLeaseTimeDeconstructionFuse (ConnectionPool<?> connectionPool, DeconstructionCoordinator deconstructionCoordinator) {
+
+    super(deconstructionCoordinator);
 
     this.connectionPool = connectionPool;
   }

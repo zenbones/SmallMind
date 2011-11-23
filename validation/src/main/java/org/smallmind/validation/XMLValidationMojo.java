@@ -48,117 +48,111 @@ import org.xml.sax.helpers.DefaultHandler;
  */
 public class XMLValidationMojo extends AbstractMojo {
 
-   private static final SchemaFactory SCHEMA_FACTORY = SchemaFactory.newInstance(XMLConstants.W3C_XML_SCHEMA_NS_URI);
-   private static final ValidationErrorHandler ERROR_HANDLER = new ValidationErrorHandler();
+  private static final SchemaFactory SCHEMA_FACTORY = SchemaFactory.newInstance(XMLConstants.W3C_XML_SCHEMA_NS_URI);
+  private static final ValidationErrorHandler ERROR_HANDLER = new ValidationErrorHandler();
 
-   /**
-    * @parameter expression="${project.resources}"
-    * @readonly
-    */
-   private List<Resource> projectResources;
+  /**
+   * @parameter expression="${project.resources}"
+   * @readonly
+   */
+  private List<Resource> projectResources;
 
-   /**
-    * @parameter
-    * @required
-    */
-   private String w3c;
+  /**
+   * @parameter
+   * @required
+   */
+  private String w3c;
 
-   /**
-    * @parameter
-    */
-   private List<XSD> schemas;
+  /**
+   * @parameter
+   */
+  private List<XSD> schemas;
 
-   public void execute ()
-      throws MojoExecutionException {
+  public void execute ()
+    throws MojoExecutionException {
 
-      Validator w3cSchemaValidator;
-      Validator schemaValidator;
-      File w3cSchemaFile;
-      File schemaFile;
-      File xmlFile;
+    Validator w3cSchemaValidator;
+    Validator schemaValidator;
+    File w3cSchemaFile;
+    File schemaFile;
+    File xmlFile;
 
-      try {
-         if ((w3cSchemaFile = getResourceFile(w3c)) == null) {
-            throw new MojoExecutionException("Could not find the w3c schema for schemas at path(" + w3c + ") in this projects resources");
-         }
+    try {
+      if ((w3cSchemaFile = getResourceFile(w3c)) == null) {
+        throw new MojoExecutionException("Could not find the w3c schema for schemas at path(" + w3c + ") in this projects resources");
+      }
 
-         w3cSchemaValidator = SCHEMA_FACTORY.newSchema(new StreamSource(w3cSchemaFile)).newValidator();
-         w3cSchemaValidator.setErrorHandler(ERROR_HANDLER);
+      w3cSchemaValidator = SCHEMA_FACTORY.newSchema(new StreamSource(w3cSchemaFile)).newValidator();
+      w3cSchemaValidator.setErrorHandler(ERROR_HANDLER);
 
-         if (schemas != null) {
-            for (XSD xsd : schemas) {
-               System.out.println("validating [xsd] (" + xsd.getPath() + ")...");
+      if (schemas != null) {
+        for (XSD xsd : schemas) {
+          System.out.println("validating [xsd] (" + xsd.getPath() + ")...");
 
-               if ((schemaFile = getResourceFile(xsd.getPath())) == null) {
-                  throw new MojoExecutionException("Could not find xsd at path(" + xsd.getPath() + ") in this projects resources");
-               }
-               w3cSchemaValidator.validate(new StreamSource(schemaFile));
+          if ((schemaFile = getResourceFile(xsd.getPath())) == null) {
+            throw new MojoExecutionException("Could not find xsd at path(" + xsd.getPath() + ") in this projects resources");
+          }
+          w3cSchemaValidator.validate(new StreamSource(schemaFile));
 
-               if ((xsd.getImpls() != null) && (!xsd.getImpls().isEmpty())) {
-                  schemaValidator = SCHEMA_FACTORY.newSchema(new StreamSource(schemaFile)).newValidator();
+          if ((xsd.getImpls() != null) && (!xsd.getImpls().isEmpty())) {
+            schemaValidator = SCHEMA_FACTORY.newSchema(new StreamSource(schemaFile)).newValidator();
 
-                  for (String xmlPath : xsd.getImpls()) {
-                     System.out.println("validating [xml] (" + xmlPath + ")...");
+            for (String xmlPath : xsd.getImpls()) {
+              System.out.println("validating [xml] (" + xmlPath + ")...");
 
-                     if ((xmlFile = getResourceFile(xmlPath)) == null) {
-                        throw new MojoExecutionException("Could not find xml at path(" + xmlPath + ") in this projects resources");
-                     }
-                     schemaValidator.validate(new StreamSource(xmlFile));
-                  }
-               }
+              if ((xmlFile = getResourceFile(xmlPath)) == null) {
+                throw new MojoExecutionException("Could not find xml at path(" + xmlPath + ") in this projects resources");
+              }
+              schemaValidator.validate(new StreamSource(xmlFile));
             }
-         }
+          }
+        }
       }
-      catch (MojoExecutionException mojoExecutionException) {
-         throw mojoExecutionException;
+    }
+    catch (MojoExecutionException mojoExecutionException) {
+      throw mojoExecutionException;
+    }
+    catch (Exception exception) {
+      throw (MojoExecutionException)new MojoExecutionException(exception.getMessage()).initCause(exception);
+    }
+  }
+
+  private File getResourceFile (String resourcePath) {
+
+    File schemaFile;
+
+    for (Resource projectResource : projectResources) {
+      schemaFile = new File(projectResource.getDirectory() + "/" + resourcePath);
+      if (schemaFile.isFile()) {
+        return schemaFile;
       }
-      catch (Exception exception) {
+    }
 
-         MojoExecutionException mojoExecutionException;
+    return null;
+  }
 
-         mojoExecutionException = new MojoExecutionException(exception.getMessage());
-         mojoExecutionException.initCause(exception);
+  private static class ValidationErrorHandler extends DefaultHandler {
 
-         throw mojoExecutionException;
-      }
-   }
+    public void fatalError (SAXParseException saxException)
+      throws SAXException {
 
-   private File getResourceFile (String resourcePath) {
+      System.out.println("[fatal error] " + saxException.getMessage());
+      throw saxException;
+    }
 
-      File schemaFile;
+    public void error (SAXParseException saxException)
+      throws SAXException {
 
-      for (Resource projectResource : projectResources) {
-         schemaFile = new File(projectResource.getDirectory() + "/" + resourcePath);
-         if (schemaFile.isFile()) {
-            return schemaFile;
-         }
-      }
+      System.out.println("[error] " + saxException.getMessage());
+      throw saxException;
+    }
 
-      return null;
-   }
+    public void warning (SAXParseException saxException)
+      throws SAXException {
 
-   private static class ValidationErrorHandler extends DefaultHandler {
-
-      public void fatalError (SAXParseException saxException)
-         throws SAXException {
-
-         System.out.println("[fatal error] " + saxException.getMessage());
-         throw saxException;
-      }
-
-      public void error (SAXParseException saxException)
-         throws SAXException {
-
-         System.out.println("[error] " + saxException.getMessage());
-         throw saxException;
-      }
-
-      public void warning (SAXParseException saxException)
-         throws SAXException {
-
-         System.out.println("[warning] " + saxException.getMessage());
-         throw saxException;
-      }
-   }
+      System.out.println("[warning] " + saxException.getMessage());
+      throw saxException;
+    }
+  }
 }
 

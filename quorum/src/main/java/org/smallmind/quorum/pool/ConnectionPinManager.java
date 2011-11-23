@@ -288,22 +288,27 @@ public class ConnectionPinManager<C> {
 
       while (size.get() > 0) {
 
-        Set<ConnectionInstance<C>> keySet;
+        ConnectionInstance<C>[] activeConnections;
 
         backingLock.readLock().lock();
         try {
-          keySet = backingMap.keySet();
+
+          Set<ConnectionInstance<C>> keys;
+
+          keys = backingMap.keySet();
+          activeConnections = new ConnectionInstance[keys.size()];
+          keys.toArray(activeConnections);
         }
         finally {
           backingLock.readLock().unlock();
         }
 
-        for (ConnectionInstance<C> connectionInstance : keySet) {
-          terminate(connectionInstance);
+        for (ConnectionInstance<C> activeConnection : activeConnections) {
+          terminate(activeConnection);
         }
-
-        freeQueue.clear();
       }
+
+      freeQueue.clear();
     }
     else {
       try {

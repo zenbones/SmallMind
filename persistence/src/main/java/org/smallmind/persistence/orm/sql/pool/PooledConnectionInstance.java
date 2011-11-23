@@ -114,16 +114,11 @@ public class PooledConnectionInstance implements ConnectionInstance<PooledConnec
         connectionPool.terminateInstance(this);
       }
       catch (Exception exception) {
-        if (reportedException != null) {
+        if ((reportedException != null) && (exception.getCause() == exception)) {
           exception.initCause(reportedException);
         }
 
-        reportedException = exception;
-      }
-      finally {
-        if (reportedException != null) {
-          LoggerManager.getLogger(PooledConnectionInstance.class).error(reportedException);
-        }
+        LoggerManager.getLogger(PooledConnectionInstance.class).error(exception);
       }
     }
   }
@@ -162,8 +157,7 @@ public class PooledConnectionInstance implements ConnectionInstance<PooledConnec
           pooledConnection.close();
         }
         catch (SQLException sqlException) {
-
-          if (validationCloseException != null) {
+          if ((validationCloseException != null) && (sqlException.getCause() != sqlException)) {
             sqlException.initCause(validationCloseException);
           }
 

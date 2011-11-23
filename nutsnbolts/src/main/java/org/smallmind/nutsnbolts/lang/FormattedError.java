@@ -28,23 +28,23 @@ package org.smallmind.nutsnbolts.lang;
 
 public class FormattedError extends Error {
 
-   public FormattedError () {
+  public FormattedError () {
 
-      super();
-   }
+    super();
+  }
 
-   public FormattedError (String message, Object... args) {
+  public FormattedError (String message, Object... args) {
 
-      super(String.format(message, args));
-   }
+    super(String.format(message, args));
+  }
 
-   public FormattedError (Throwable throwable, String message, Object... args) {
+  public FormattedError (Throwable throwable, String message, Object... args) {
 
-      super(String.format(message, args), throwable);
-   }
+    super(String.format(message, args), throwable);
+  }
 
-   public FormattedError (Throwable throwable) {
+  public FormattedError (Throwable throwable) {
 
-      super(throwable);
-   }
+    super(throwable);
+  }
 }

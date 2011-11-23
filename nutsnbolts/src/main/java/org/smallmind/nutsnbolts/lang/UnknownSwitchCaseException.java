@@ -26,26 +26,26 @@
  */
 package org.smallmind.nutsnbolts.lang;
 
-public class UnknownSwitchCaseException extends IllegalStateException {
+public class UnknownSwitchCaseException extends FormattedRuntimeException {
 
-   public UnknownSwitchCaseException () {
+  public UnknownSwitchCaseException () {
 
-      super();
-   }
+    super();
+  }
 
-   public UnknownSwitchCaseException (String message, Object... args) {
+  public UnknownSwitchCaseException (String message, Object... args) {
 
-      super(String.format(message, args));
-   }
+    super(String.format(message, args));
+  }
 
-   public UnknownSwitchCaseException (Throwable throwable, String message, Object... args) {
+  public UnknownSwitchCaseException (Throwable throwable, String message, Object... args) {
 
-      super(String.format(message, args), throwable);
-   }
+    super(String.format(message, args), throwable);
+  }
 
-   public UnknownSwitchCaseException (Throwable throwable) {
+  public UnknownSwitchCaseException (Throwable throwable) {
 
-      super(throwable);
-   }
+    super(throwable);
+  }
 }
 

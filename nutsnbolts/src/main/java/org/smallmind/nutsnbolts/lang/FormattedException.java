@@ -28,23 +28,23 @@ package org.smallmind.nutsnbolts.lang;
 
 public class FormattedException extends Exception {
 
-   public FormattedException () {
+  public FormattedException () {
 
-      super();
-   }
+    super();
+  }
 
-   public FormattedException (String message, Object... args) {
+  public FormattedException (String message, Object... args) {
 
-      super(String.format(message, args));
-   }
+    super(String.format(message, args));
+  }
 
-   public FormattedException (Throwable throwable, String message, Object... args) {
+  public FormattedException (Throwable throwable, String message, Object... args) {
 
-      super(String.format(message, args), throwable);
-   }
+    super(String.format(message, args), throwable);
+  }
 
-   public FormattedException (Throwable throwable) {
+  public FormattedException (Throwable throwable) {
 
-      super(throwable);
-   }
+    super(throwable);
+  }
 }

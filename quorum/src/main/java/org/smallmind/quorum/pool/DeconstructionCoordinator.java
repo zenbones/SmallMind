@@ -26,24 +26,35 @@
  */
 package org.smallmind.quorum.pool;
 
+import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-public class DeconstructionCoordinator<C> {
+public class DeconstructionCoordinator {
 
-  private final ConnectionPin<C> connectionPin;
-  private final List<DeconstructionFuse<C>> fuseList;
+  private final ConnectionPin<?> connectionPin;
+  private final List<DeconstructionFuse> fuseList;
   private final AtomicBoolean terminated = new AtomicBoolean(false);
 
-  public DeconstructionCoordinator (ConnectionPin<C> connectionPin, List<DeconstructionFuse<C>> fuseList) {
+  public DeconstructionCoordinator (ConnectionPool<?> connectionPool, ConnectionPin<?> connectionPin) {
 
     Thread fuseThread;
 
     this.connectionPin = connectionPin;
-    this.fuseList = fuseList;
+
+    fuseList = new LinkedList<DeconstructionFuse>();
+
+    if (connectionPool.getConnectionPoolConfig().getMaxLeaseTimeSeconds() > 0) {
+      fuseList.add(new MaxLeaseTimeDeconstructionFuse(connectionPool, this));
+    }
+    if (connectionPool.getConnectionPoolConfig().getMaxIdleTimeSeconds() > 0) {
+      fuseList.add(new MaxIdleTimeDeconstructionFuse(connectionPool, this));
+    }
+    if (connectionPool.getConnectionPoolConfig().getUnreturnedConnectionTimeoutSeconds() > 0) {
+      fuseList.add(new UnreturnedConnectionTimeoutDeconstructionFuse(connectionPool, this));
+    }
 
     for (DeconstructionFuse deconstructionFuse : fuseList) {
-      deconstructionFuse.setDeconstructionCoordinator(this);
       fuseThread = new Thread(deconstructionFuse);
       fuseThread.setDaemon(true);
       fuseThread.start();
@@ -67,22 +78,24 @@ public class DeconstructionCoordinator<C> {
   public void abort () {
 
     if (terminated.compareAndSet(false, true)) {
-      shutdown();
+      shutdown(null);
     }
   }
 
-  public void ignite (boolean withPrejudice) {
+  public void ignite (DeconstructionFuse ignitionFuse, boolean withPrejudice) {
 
     if (terminated.compareAndSet(false, true)) {
-      shutdown();
+      shutdown(ignitionFuse);
       connectionPin.kaboom(withPrejudice);
     }
   }
 
-  private void shutdown () {
+  private void shutdown (DeconstructionFuse ignitionFuse) {
 
     for (DeconstructionFuse fuse : fuseList) {
-      fuse.abort();
+      if (!fuse.equals(ignitionFuse)) {
+        fuse.abort();
+      }
     }
   }
 }

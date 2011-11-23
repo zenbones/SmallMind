@@ -31,9 +31,11 @@ import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
 import java.lang.reflect.UndeclaredThrowableException;
+import java.security.SecureRandom;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
+import java.util.Random;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.atomic.AtomicBoolean;
 import javax.sql.ConnectionEvent;
@@ -46,6 +48,7 @@ import org.smallmind.nutsnbolts.lang.StaticInitializationError;
 
 public class DriverManagerPooledConnection implements PooledConnection, InvocationHandler {
 
+  private static final Random RANDOM = new SecureRandom();
   private static final Method CLOSE_METHOD;
 
   private final DriverManagerPreparedStatementCache statementCache;
@@ -120,6 +123,10 @@ public class DriverManagerPooledConnection implements PooledConnection, Invocati
     }
     else {
       try {
+        if (RANDOM.nextInt(500) == 0) {
+          throw new SQLException("foobar");
+        }
+
         if ((statementCache != null) && PreparedStatement.class.isAssignableFrom(method.getReturnType())) {
 
           PreparedStatement preparedStatement;

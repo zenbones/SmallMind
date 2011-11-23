@@ -28,23 +28,23 @@ package org.smallmind.nutsnbolts.lang;
 
 public class FormattedRuntimeException extends RuntimeException {
 
-   public FormattedRuntimeException () {
+  public FormattedRuntimeException () {
 
-      super();
-   }
+    super();
+  }
 
-   public FormattedRuntimeException (String message, Object... args) {
+  public FormattedRuntimeException (String message, Object... args) {
 
-      super(String.format(message, args));
-   }
+    super(String.format(message, args));
+  }
 
-   public FormattedRuntimeException (Throwable throwable, String message, Object... args) {
+  public FormattedRuntimeException (Throwable throwable, String message, Object... args) {
 
-      super(String.format(message, args), throwable);
-   }
+    super(String.format(message, args), throwable);
+  }
 
-   public FormattedRuntimeException (Throwable throwable) {
+  public FormattedRuntimeException (Throwable throwable) {
 
-      super(throwable);
-   }
+    super(throwable);
+  }
 }

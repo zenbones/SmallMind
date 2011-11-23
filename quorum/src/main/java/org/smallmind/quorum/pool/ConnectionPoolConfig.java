@@ -26,170 +26,179 @@
  */
 package org.smallmind.quorum.pool;
 
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicLong;
+
 public class ConnectionPoolConfig {
 
-  private boolean testOnConnect = false;
-  private boolean testOnAcquire = false;
-  private boolean reportLeaseTimeNanos = true;
-  private boolean existentiallyAware = false;
-  private long connectionTimeoutMillis = 0;
-  private long acquireWaitTimeMillis = 0;
-  private int initialPoolSize = 0;
-  private int minPoolSize = 0;
-  private int maxPoolSize = 10;
-  private int maxLeaseTimeSeconds = 0;
-  private int maxIdleTimeSeconds = 0;
-  private int unreturnedConnectionTimeoutSeconds = 0;
+  private final AtomicBoolean testOnConnect = new AtomicBoolean(false);
+  private final AtomicBoolean testOnAcquire = new AtomicBoolean(false);
+  private final AtomicBoolean reportLeaseTimeNanos = new AtomicBoolean(true);
+  private final AtomicBoolean existentiallyAware = new AtomicBoolean(false);
+  private final AtomicLong connectionTimeoutMillis = new AtomicLong(0);
+  private final AtomicLong acquireWaitTimeMillis = new AtomicLong(0);
+  private final AtomicInteger initialPoolSize = new AtomicInteger(0);
+  private final AtomicInteger minPoolSize = new AtomicInteger(0);
+  private final AtomicInteger maxPoolSize = new AtomicInteger(10);
+  private final AtomicInteger maxLeaseTimeSeconds = new AtomicInteger(0);
+  private final AtomicInteger maxIdleTimeSeconds = new AtomicInteger(0);
+  private final AtomicInteger unreturnedConnectionTimeoutSeconds = new AtomicInteger(0);
 
-  public synchronized boolean isTestOnConnect () {
+  public boolean requiresDeconstruction () {
 
-    return testOnConnect;
+    return (getMaxLeaseTimeSeconds() > 0) || (getMaxIdleTimeSeconds() > 0) || (getUnreturnedConnectionTimeoutSeconds() > 0);
   }
 
-  public synchronized void setTestOnConnect (boolean testOnConnect) {
+  public boolean isTestOnConnect () {
 
-    this.testOnConnect = testOnConnect;
+    return testOnConnect.get();
   }
 
-  public synchronized boolean isTestOnAcquire () {
+  public void setTestOnConnect (boolean testOnConnect) {
 
-    return testOnAcquire;
+    this.testOnConnect.set(testOnConnect);
   }
 
-  public synchronized void setTestOnAcquire (boolean testOnAcquire) {
+  public boolean isTestOnAcquire () {
 
-    this.testOnAcquire = testOnAcquire;
+    return testOnAcquire.get();
   }
 
-  public synchronized boolean isReportLeaseTimeNanos () {
+  public void setTestOnAcquire (boolean testOnAcquire) {
 
-    return reportLeaseTimeNanos;
+    this.testOnAcquire.set(testOnAcquire);
   }
 
-  public synchronized void setReportLeaseTimeNanos (boolean reportLeaseTimeNanos) {
+  public boolean isReportLeaseTimeNanos () {
 
-    this.reportLeaseTimeNanos = reportLeaseTimeNanos;
+    return reportLeaseTimeNanos.get();
   }
 
-  public synchronized boolean isExistentiallyAware () {
+  public void setReportLeaseTimeNanos (boolean reportLeaseTimeNanos) {
 
-    return existentiallyAware;
+    this.reportLeaseTimeNanos.set(reportLeaseTimeNanos);
   }
 
-  public synchronized void setExistentiallyAware (boolean existentiallyAware) {
+  public boolean isExistentiallyAware () {
 
-    this.existentiallyAware = existentiallyAware;
+    return existentiallyAware.get();
   }
 
-  public synchronized long getConnectionTimeoutMillis () {
+  public void setExistentiallyAware (boolean existentiallyAware) {
 
-    return connectionTimeoutMillis;
+    this.existentiallyAware.set(existentiallyAware);
   }
 
-  public synchronized void setConnectionTimeoutMillis (long connectionTimeoutMillis) {
+  public long getConnectionTimeoutMillis () {
+
+    return connectionTimeoutMillis.get();
+  }
+
+  public void setConnectionTimeoutMillis (long connectionTimeoutMillis) {
 
     if (connectionTimeoutMillis < 0) {
       throw new IllegalArgumentException("Connection timeout must be >= 0");
     }
 
-    this.connectionTimeoutMillis = connectionTimeoutMillis;
+    this.connectionTimeoutMillis.set(connectionTimeoutMillis);
   }
 
-  public synchronized int getInitialPoolSize () {
+  public int getInitialPoolSize () {
 
-    return initialPoolSize;
+    return initialPoolSize.get();
   }
 
-  public synchronized void setInitialPoolSize (int initialPoolSize) {
+  public void setInitialPoolSize (int initialPoolSize) {
 
     if (initialPoolSize < 0) {
       throw new IllegalArgumentException("Initial pool size must be >= 0");
     }
 
-    this.initialPoolSize = initialPoolSize;
+    this.initialPoolSize.set(initialPoolSize);
   }
 
-  public synchronized int getMinPoolSize () {
+  public int getMinPoolSize () {
 
-    return minPoolSize;
+    return minPoolSize.get();
   }
 
-  public synchronized void setMinPoolSize (int minPoolSize) {
+  public void setMinPoolSize (int minPoolSize) {
 
     if (minPoolSize < 0) {
       throw new IllegalArgumentException("Minimum pool size must be >= 0");
     }
 
-    this.minPoolSize = minPoolSize;
+    this.minPoolSize.set(minPoolSize);
   }
 
-  public synchronized int getMaxPoolSize () {
+  public int getMaxPoolSize () {
 
-    return maxPoolSize;
+    return maxPoolSize.get();
   }
 
-  public synchronized void setMaxPoolSize (int maxPoolSize) {
+  public void setMaxPoolSize (int maxPoolSize) {
 
     if (maxPoolSize < 0) {
       throw new IllegalArgumentException("Maximum pool size must be >= 0");
     }
 
-    this.maxPoolSize = maxPoolSize;
+    this.maxPoolSize.set(maxPoolSize);
   }
 
-  public synchronized long getAcquireWaitTimeMillis () {
+  public long getAcquireWaitTimeMillis () {
 
-    return acquireWaitTimeMillis;
+    return acquireWaitTimeMillis.get();
   }
 
-  public synchronized void setAcquireWaitTimeMillis (long acquireWaitTimeMillis) {
+  public void setAcquireWaitTimeMillis (long acquireWaitTimeMillis) {
 
     if (acquireWaitTimeMillis < 0) {
       throw new IllegalArgumentException("Acquire wait time must be >= 0");
     }
 
-    this.acquireWaitTimeMillis = acquireWaitTimeMillis;
+    this.acquireWaitTimeMillis.set(acquireWaitTimeMillis);
   }
 
-  public synchronized int getMaxLeaseTimeSeconds () {
+  public int getMaxLeaseTimeSeconds () {
 
-    return maxLeaseTimeSeconds;
+    return maxLeaseTimeSeconds.get();
   }
 
-  public synchronized void setMaxLeaseTimeSeconds (int maxLeaseTimeSeconds) {
+  public void setMaxLeaseTimeSeconds (int maxLeaseTimeSeconds) {
 
     if (maxLeaseTimeSeconds < 0) {
       throw new IllegalArgumentException("Maximum lease time must be >= 0");
     }
 
-    this.maxLeaseTimeSeconds = maxLeaseTimeSeconds;
+    this.maxLeaseTimeSeconds.set(maxLeaseTimeSeconds);
   }
 
-  public synchronized int getMaxIdleTimeSeconds () {
+  public int getMaxIdleTimeSeconds () {
 
-    return maxIdleTimeSeconds;
+    return maxIdleTimeSeconds.get();
   }
 
-  public synchronized void setMaxIdleTimeSeconds (int maxIdleTimeSeconds) {
+  public void setMaxIdleTimeSeconds (int maxIdleTimeSeconds) {
 
     if (maxIdleTimeSeconds < 0) {
       throw new IllegalArgumentException("Maximum idle time must be >= 0");
     }
 
-    this.maxIdleTimeSeconds = maxIdleTimeSeconds;
+    this.maxIdleTimeSeconds.set(maxIdleTimeSeconds);
   }
 
-  public synchronized int getUnreturnedConnectionTimeoutSeconds () {
+  public int getUnreturnedConnectionTimeoutSeconds () {
 
-    return unreturnedConnectionTimeoutSeconds;
+    return unreturnedConnectionTimeoutSeconds.get();
   }
 
-  public synchronized void setUnreturnedConnectionTimeoutSeconds (int unreturnedConnectionTimeoutSeconds) {
+  public void setUnreturnedConnectionTimeoutSeconds (int unreturnedConnectionTimeoutSeconds) {
 
     if (unreturnedConnectionTimeoutSeconds < 0) {
       throw new IllegalArgumentException("Unreturned connection timeout must be >= 0");
     }
 
-    this.unreturnedConnectionTimeoutSeconds = unreturnedConnectionTimeoutSeconds;
+    this.unreturnedConnectionTimeoutSeconds.set(unreturnedConnectionTimeoutSeconds);
   }
 }

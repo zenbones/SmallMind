@@ -26,11 +26,11 @@
  */
 package org.smallmind.quorum.pool;
 
-public abstract class DeconstructionFuse<C> implements Runnable {
+public abstract class DeconstructionFuse implements Runnable {
 
   private DeconstructionCoordinator deconstructionCoordinator;
 
-  protected void setDeconstructionCoordinator (DeconstructionCoordinator deconstructionCoordinator) {
+  public DeconstructionFuse (DeconstructionCoordinator deconstructionCoordinator) {
 
     this.deconstructionCoordinator = deconstructionCoordinator;
   }
@@ -43,6 +43,6 @@ public abstract class DeconstructionFuse<C> implements Runnable {
 
   public void ignite (boolean withPrejudice) {
 
-    deconstructionCoordinator.ignite(withPrejudice);
+    deconstructionCoordinator.ignite(this, withPrejudice);
   }
 }

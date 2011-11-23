@@ -88,7 +88,7 @@ public class JavaContextConnectionInstance implements ConnectionInstance<PooledJ
       connectionPool.terminateInstance(this);
     }
     catch (Exception exception) {
-      if (reportedException != null) {
+      if ((reportedException != null) && (exception.getCause() == exception)) {
         exception.initCause(reportedException);
       }
 

@@ -4,7 +4,7 @@
    <parent>
       <groupId>org.smallmind</groupId>
       <artifactId>smallmind</artifactId>
-      <version>1.3.4</version>
+      <version>1.3.6-SNAPSHOT</version>
    </parent>
    <artifactId>smallmind-constellation</artifactId>
    <name>Constellation</name>

@@ -34,91 +34,91 @@ import org.smallmind.persistence.orm.TransactionPostProcessException;
 
 public class JDOProxyTransaction extends ProxyTransaction {
 
-   private Transaction transaction;
-   private boolean rolledBack = false;
+  private Transaction transaction;
+  private boolean rolledBack = false;
 
-   public JDOProxyTransaction (JDOProxySession proxySession, Transaction transaction) {
+  public JDOProxyTransaction (JDOProxySession proxySession, Transaction transaction) {
 
-      super(proxySession);
+    super(proxySession);
 
-      this.transaction = transaction;
-   }
+    this.transaction = transaction;
+  }
 
-   public boolean isCompleted () {
+  public boolean isCompleted () {
 
-      return !transaction.isActive();
-   }
+    return !transaction.isActive();
+  }
 
-   public void flush () {
+  public void flush () {
 
-      getSession().flush();
-   }
+    getSession().flush();
+  }
 
-   public void commit () {
+  public void commit () {
 
-      if (isRollbackOnly()) {
-         rollback(new ProxyTransactionException("Transaction has been set to allow rollback only"));
+    if (isRollbackOnly()) {
+      rollback(new ProxyTransactionException("Transaction has been set to allow rollback only"));
+    }
+    else {
+      try {
+        getSession().flush();
+        transaction.commit();
       }
-      else {
-         try {
-            getSession().flush();
-            transaction.commit();
-         }
-         catch (Throwable throwable) {
-            rollback(throwable);
-         }
-         finally {
-            getSession().close();
-         }
-
-         if (!rolledBack) {
-            try {
-               applyPostProcesses(TransactionEndState.COMMIT);
-            }
-            catch (TransactionPostProcessException transactionPostProcessException) {
-               throw new ProxyTransactionException(transactionPostProcessException);
-            }
-         }
+      catch (Throwable throwable) {
+        rollback(throwable);
       }
-   }
-
-   public void rollback () {
-
-      rollback(null);
-   }
-
-   private void rollback (Throwable thrownDuringCommit) {
-
-      Throwable thrownDuringRollback = thrownDuringCommit;
+      finally {
+        getSession().close();
+      }
 
       if (!rolledBack) {
-         rolledBack = true;
-
-         try {
-            transaction.rollback();
-         }
-         catch (Throwable throwable) {
-            thrownDuringRollback = (thrownDuringRollback == null) ? throwable : throwable.initCause(thrownDuringRollback);
-         }
-         finally {
-            getSession().close();
-
-            try {
-               applyPostProcesses(TransactionEndState.ROLLBACK);
-            }
-            catch (TransactionPostProcessException transactionPostProcessException) {
-               thrownDuringRollback = (thrownDuringRollback == null) ? new ProxyTransactionException(transactionPostProcessException) : new ProxyTransactionException(transactionPostProcessException).initCause(thrownDuringRollback);
-            }
-         }
-
-         if (thrownDuringRollback != null) {
-            if (thrownDuringRollback instanceof ProxyTransactionException) {
-               throw (ProxyTransactionException)thrownDuringRollback;
-            }
-            else {
-               throw new ProxyTransactionException(thrownDuringRollback);
-            }
-         }
+        try {
+          applyPostProcesses(TransactionEndState.COMMIT);
+        }
+        catch (TransactionPostProcessException transactionPostProcessException) {
+          throw new ProxyTransactionException(transactionPostProcessException);
+        }
       }
-   }
+    }
+  }
+
+  public void rollback () {
+
+    rollback(null);
+  }
+
+  private void rollback (Throwable thrownDuringCommit) {
+
+    Throwable thrownDuringRollback = thrownDuringCommit;
+
+    if (!rolledBack) {
+      rolledBack = true;
+
+      try {
+        transaction.rollback();
+      }
+      catch (Throwable throwable) {
+        thrownDuringRollback = (thrownDuringRollback == null) ? throwable : (throwable.getCause() != throwable) ? throwable : throwable.initCause(thrownDuringRollback);
+      }
+      finally {
+        getSession().close();
+
+        try {
+          applyPostProcesses(TransactionEndState.ROLLBACK);
+        }
+        catch (TransactionPostProcessException transactionPostProcessException) {
+          thrownDuringRollback = (thrownDuringRollback == null) ? new ProxyTransactionException(transactionPostProcessException) : new ProxyTransactionException(transactionPostProcessException).initCause(thrownDuringRollback);
+        }
+      }
+
+      if (thrownDuringRollback != null) {
+        if (thrownDuringRollback instanceof ProxyTransactionException) {
+          throw (ProxyTransactionException)thrownDuringRollback;
+        }
+        else {
+          throw new ProxyTransactionException(thrownDuringRollback);
+        }
+      }
+    }
+  }
 }

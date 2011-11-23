@@ -26,26 +26,26 @@
  */
 package org.smallmind.nutsnbolts.lang;
 
-public class TypeMismatchException extends IllegalStateException {
+public class TypeMismatchException extends FormattedRuntimeException {
 
-   public TypeMismatchException () {
+  public TypeMismatchException () {
 
-      super();
-   }
+    super();
+  }
 
-   public TypeMismatchException (String message, Object... args) {
+  public TypeMismatchException (String message, Object... args) {
 
-      super(String.format(message, args));
-   }
+    super(String.format(message, args));
+  }
 
-   public TypeMismatchException (Throwable throwable, String message, Object... args) {
+  public TypeMismatchException (Throwable throwable, String message, Object... args) {
 
-      super(String.format(message, args), throwable);
-   }
+    super(String.format(message, args), throwable);
+  }
 
-   public TypeMismatchException (Throwable throwable) {
+  public TypeMismatchException (Throwable throwable) {
 
-      super(throwable);
-   }
+    super(throwable);
+  }
 }
 

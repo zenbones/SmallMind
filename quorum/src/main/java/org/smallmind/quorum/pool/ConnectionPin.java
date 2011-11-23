@@ -35,32 +35,18 @@ public class ConnectionPin<C> {
   private final ConnectionInstance<C> connectionInstance;
   private final AtomicBoolean terminated = new AtomicBoolean(false);
 
-  private DeconstructionCoordinator<C> deconstructionCoordinator;
+  private DeconstructionCoordinator deconstructionCoordinator;
   private long leaseStartNanos;
 
   protected ConnectionPin (ConnectionPool<C> connectionPool, ConnectionInstance<C> connectionInstance) {
 
-    LinkedList<DeconstructionFuse<C>> fuseList;
+    LinkedList<DeconstructionFuse> fuseList;
 
     this.connectionPool = connectionPool;
     this.connectionInstance = connectionInstance;
 
-    fuseList = new LinkedList<DeconstructionFuse<C>>();
-
-    if (connectionPool.getConnectionPoolConfig().getMaxLeaseTimeSeconds() > 0) {
-      fuseList.add(new MaxLeaseTimeDeconstructionFuse<C>(connectionPool));
-    }
-
-    if (connectionPool.getConnectionPoolConfig().getMaxIdleTimeSeconds() > 0) {
-      fuseList.add(new MaxIdleTimeDeconstructionFuse<C>(connectionPool));
-    }
-
-    if (connectionPool.getConnectionPoolConfig().getUnreturnedConnectionTimeoutSeconds() > 0) {
-      fuseList.add(new UnreturnedConnectionTimeoutDeconstructionFuse<C>(connectionPool));
-    }
-
-    if (!fuseList.isEmpty()) {
-      deconstructionCoordinator = new DeconstructionCoordinator<C>(this, fuseList);
+    if (connectionPool.getConnectionPoolConfig().requiresDeconstruction()) {
+      deconstructionCoordinator = new DeconstructionCoordinator(connectionPool, this);
       deconstructionCoordinator.free();
     }
   }

@@ -98,7 +98,7 @@ public class JPAProxyTransaction extends ProxyTransaction {
         transaction.rollback();
       }
       catch (Throwable throwable) {
-        thrownDuringRollback = (thrownDuringRollback == null) ? throwable : throwable.initCause(thrownDuringRollback);
+        thrownDuringRollback = (thrownDuringRollback == null) ? throwable : (throwable.getCause() != throwable) ? throwable : throwable.initCause(thrownDuringRollback);
       }
       finally {
         getSession().close();

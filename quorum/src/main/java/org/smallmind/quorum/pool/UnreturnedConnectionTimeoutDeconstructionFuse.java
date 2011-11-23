@@ -27,35 +27,34 @@
 package org.smallmind.quorum.pool;
 
 import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.CyclicBarrier;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
+import org.smallmind.nutsnbolts.util.CyclicRoadblock;
 import org.smallmind.scribe.pen.LoggerManager;
 
-public class UnreturnedConnectionTimeoutDeconstructionFuse<C> extends DeconstructionFuse<C> {
+public class UnreturnedConnectionTimeoutDeconstructionFuse extends DeconstructionFuse {
 
-  private final ConnectionPool<C> connectionPool;
-  private final CyclicBarrier freeBarrier;
-  private final CyclicBarrier serveBarrier;
-  private final CountDownLatch initLatch = new CountDownLatch(1);
+  private final ConnectionPool<?> connectionPool;
+  private final CyclicRoadblock freeRoadblock;
+  private final CyclicRoadblock serveRoadblock;
   private final CountDownLatch exitLatch = new CountDownLatch(1);
   private final AtomicBoolean aborted = new AtomicBoolean(false);
 
-  private Thread runnableThread;
+  protected UnreturnedConnectionTimeoutDeconstructionFuse (ConnectionPool<?> connectionPool, DeconstructionCoordinator deconstructionCoordinator) {
 
-  protected UnreturnedConnectionTimeoutDeconstructionFuse (ConnectionPool<C> connectionPool) {
+    super(deconstructionCoordinator);
 
     this.connectionPool = connectionPool;
 
-    freeBarrier = new CyclicBarrier(2);
-    serveBarrier = new CyclicBarrier(2);
+    freeRoadblock = new CyclicRoadblock(2);
+    serveRoadblock = new CyclicRoadblock(2);
   }
 
   public void free () {
 
     try {
-      freeBarrier.await();
+      freeRoadblock.await();
     }
     catch (Exception exception) {
       if (!aborted.get()) {
@@ -67,7 +66,7 @@ public class UnreturnedConnectionTimeoutDeconstructionFuse<C> extends Deconstruc
   public void serve () {
 
     try {
-      serveBarrier.await();
+      serveRoadblock.await();
     }
     catch (Exception exception) {
       if (!aborted.get()) {
@@ -80,33 +79,24 @@ public class UnreturnedConnectionTimeoutDeconstructionFuse<C> extends Deconstruc
   public void abort () {
 
     if (aborted.compareAndSet(false, true)) {
-      try {
-        initLatch.await();
-      }
-      catch (InterruptedException interruptedException) {
-        LoggerManager.getLogger(UnreturnedConnectionTimeoutDeconstructionFuse.class).error(interruptedException);
-      }
+      freeRoadblock.breakBarrier();
+      serveRoadblock.breakBarrier();
+    }
 
-      runnableThread.interrupt();
-
-      try {
-        exitLatch.await();
-      }
-      catch (InterruptedException interruptedException) {
-        LoggerManager.getLogger(UnreturnedConnectionTimeoutDeconstructionFuse.class).error(interruptedException);
-      }
+    try {
+      exitLatch.await();
+    }
+    catch (InterruptedException interruptedException) {
+      LoggerManager.getLogger(UnreturnedConnectionTimeoutDeconstructionFuse.class).error(interruptedException);
     }
   }
 
   public void run () {
 
-    runnableThread = Thread.currentThread();
-    initLatch.countDown();
-
     try {
       while (!aborted.get()) {
-        serveBarrier.await();
-        freeBarrier.await(connectionPool.getConnectionPoolConfig().getUnreturnedConnectionTimeoutSeconds(), TimeUnit.SECONDS);
+        serveRoadblock.await();
+        freeRoadblock.await(connectionPool.getConnectionPoolConfig().getUnreturnedConnectionTimeoutSeconds(), TimeUnit.SECONDS);
       }
     }
     catch (TimeoutException timeoutException) {
