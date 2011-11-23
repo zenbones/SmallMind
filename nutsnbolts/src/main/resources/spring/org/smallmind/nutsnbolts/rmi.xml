@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-3.0.xsd">
+
+  <bean id="rmiRegistry" class="org.smallmind.nutsnbolts.spring.remote.RMIRegistryFactoryBean">
+    <property name="port" value="${registryPort}"/>
+  </bean>
+
+  <bean class="org.smallmind.nutsnbolts.spring.remote.RemoteServiceExporter" destroy-method="unbind">
+    <property name="name" value="com.codeasylum.stress.api.Ouroboros"/>
+    <property name="service" ref="${serviceReference}"/>
+    <property name="registry" ref="rmiRegistry"/>
+  </bean>
+
+</beans>

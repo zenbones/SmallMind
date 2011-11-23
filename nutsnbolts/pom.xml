@@ -69,12 +69,12 @@
   <build>
     <resources>
       <resource>
-        <directory>src/main/resources/dtd</directory>
-        <filtering>true</filtering>
+        <directory>src/main/resources/spring</directory>
+        <filtering>false</filtering>
       </resource>
       <resource>
         <directory>src/main/resources/xsd</directory>
-        <filtering>true</filtering>
+        <filtering>false</filtering>
       </resource>
     </resources>
     <plugins>
