@@ -1,22 +1,22 @@
 /*
  * Copyright (c) 2007, 2008, 2009, 2010, 2011 David Berkman
- * 
+ *
  * This file is part of the SmallMind Code Project.
- * 
+ *
  * The SmallMind Code Project is free software, you can redistribute
  * it and/or modify it under the terms of GNU Affero General Public
  * License as published by the Free Software Foundation, either version 3
  * of the License, or (at your option) any later version.
- * 
+ *
  * The SmallMind Code Project is distributed in the hope that it will
  * be useful, but WITHOUT ANY WARRANTY; without even the implied warranty
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * General Public License for more details.
- * 
+ *
  * You should have received a copy of the the GNU Affero General Public
  * License, along with The SmallMind Code Project. If not, see
  * <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under the GNU Affero GPL version 3 section 7
  * ------------------------------------------------------------------
  * If you modify this Program, or any covered work, by linking or
@@ -37,7 +37,7 @@ import org.smallmind.persistence.orm.aop.NonTransactionalState;
 import org.smallmind.persistence.orm.aop.RollbackAwareBoundarySet;
 import org.smallmind.persistence.orm.aop.TransactionalState;
 
-public class JDOProxySession extends ProxySession {
+public class JDOProxySession extends ProxySession<PersistenceManager> {
 
   private final ThreadLocal<PersistenceManager> managerThreadLocal = new ThreadLocal<PersistenceManager>();
   private final ThreadLocal<JDOProxyTransaction> transactionThreadLocal = new ThreadLocal<JDOProxyTransaction>();
@@ -94,7 +94,7 @@ public class JDOProxySession extends ProxySession {
     return ((persistenceManager = managerThreadLocal.get()) == null) || (persistenceManager.isClosed());
   }
 
-  public Object getNativeSession () {
+  public PersistenceManager getNativeSession () {
 
     return getPersistenceManager();
   }

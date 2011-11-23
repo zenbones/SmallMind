@@ -1,22 +1,22 @@
 /*
  * Copyright (c) 2007, 2008, 2009, 2010, 2011 David Berkman
- * 
+ *
  * This file is part of the SmallMind Code Project.
- * 
+ *
  * The SmallMind Code Project is free software, you can redistribute
  * it and/or modify it under the terms of GNU Affero General Public
  * License as published by the Free Software Foundation, either version 3
  * of the License, or (at your option) any later version.
- * 
+ *
  * The SmallMind Code Project is distributed in the hope that it will
  * be useful, but WITHOUT ANY WARRANTY; without even the implied warranty
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * General Public License for more details.
- * 
+ *
  * You should have received a copy of the the GNU Affero General Public
  * License, along with The SmallMind Code Project. If not, see
  * <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under the GNU Affero GPL version 3 section 7
  * ------------------------------------------------------------------
  * If you modify this Program, or any covered work, by linking or
@@ -35,41 +35,41 @@ import java.util.concurrent.ConcurrentHashMap;
 
 public class DurableFields {
 
-   private static final ConcurrentHashMap<Class<? extends Durable>, Field[]> FIELD_MAP = new ConcurrentHashMap<Class<? extends Durable>, Field[]>();
+  private static final ConcurrentHashMap<Class<? extends Durable>, Field[]> FIELD_MAP = new ConcurrentHashMap<Class<? extends Durable>, Field[]>();
 
-   public static Field[] getFields(Class<? extends Durable> durableClass) {
+  public static Field[] getFields (Class<? extends Durable> durableClass) {
 
-      Field[] fields;
+    Field[] fields;
 
-      if ((fields = FIELD_MAP.get(durableClass)) == null) {
+    if ((fields = FIELD_MAP.get(durableClass)) == null) {
 
-         Class<?> currentClass = durableClass;
-         LinkedList<Field> fieldList = new LinkedList<Field>();
+      Class<?> currentClass = durableClass;
+      LinkedList<Field> fieldList = new LinkedList<Field>();
 
-         do {
-            for (Field field : currentClass.getDeclaredFields()) {
-               if (!Modifier.isStatic(field.getModifiers())) {
-                  field.setAccessible(true);
-                  fieldList.add(field);
-               }
-            }
+      do {
+        for (Field field : currentClass.getDeclaredFields()) {
+          if (!Modifier.isStatic(field.getModifiers())) {
+            field.setAccessible(true);
+            fieldList.add(field);
+          }
+        }
 
-         } while ((currentClass = currentClass.getSuperclass()) != null);
+      } while ((currentClass = currentClass.getSuperclass()) != null);
 
-         Collections.sort(fieldList, new Comparator<Field>() {
+      Collections.sort(fieldList, new Comparator<Field>() {
 
-            public int compare(Field field1, Field field2) {
+        public int compare (Field field1, Field field2) {
 
-               return field1.getName().compareToIgnoreCase(field2.getName());
-            }
-         });
+          return field1.getName().compareToIgnoreCase(field2.getName());
+        }
+      });
 
-         fields = new Field[fieldList.size()];
-         fieldList.toArray(fields);
+      fields = new Field[fieldList.size()];
+      fieldList.toArray(fields);
 
-         FIELD_MAP.put(durableClass, fields);
-      }
+      FIELD_MAP.put(durableClass, fields);
+    }
 
-      return fields;
-   }
+    return fields;
+  }
 }

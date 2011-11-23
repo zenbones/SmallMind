@@ -1,22 +1,22 @@
 /*
  * Copyright (c) 2007, 2008, 2009, 2010, 2011 David Berkman
- * 
+ *
  * This file is part of the SmallMind Code Project.
- * 
+ *
  * The SmallMind Code Project is free software, you can redistribute
  * it and/or modify it under the terms of GNU Affero General Public
  * License as published by the Free Software Foundation, either version 3
  * of the License, or (at your option) any later version.
- * 
+ *
  * The SmallMind Code Project is distributed in the hope that it will
  * be useful, but WITHOUT ANY WARRANTY; without even the implied warranty
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * General Public License for more details.
- * 
+ *
  * You should have received a copy of the the GNU Affero General Public
  * License, along with The SmallMind Code Project. If not, see
  * <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under the GNU Affero GPL version 3 section 7
  * ------------------------------------------------------------------
  * If you modify this Program, or any covered work, by linking or
@@ -43,106 +43,106 @@ import org.hibernate.usertype.UserType;
 
 public class ObjectUserType implements UserType, ParameterizedType {
 
-   private Class embeddedClass;
+  private Class embeddedClass;
 
-   public void setParameterValues (Properties parameters) {
+  public void setParameterValues (Properties parameters) {
 
-      String objectClassName = parameters.getProperty("embeddedClassName");
+    String objectClassName = parameters.getProperty("embeddedClassName");
+
+    try {
+      embeddedClass = Class.forName(objectClassName);
+
+      if (!Serializable.class.isAssignableFrom(embeddedClass)) {
+        throw new HibernateException("Embedded class(" + embeddedClass + ") must be Serializable");
+      }
+    }
+    catch (ClassNotFoundException cnfe) {
+      throw new HibernateException(cnfe);
+    }
+  }
+
+  public Object assemble (Serializable cached, Object owner)
+    throws HibernateException {
+
+    return cached;
+  }
+
+  public Object deepCopy (Object value)
+    throws HibernateException {
+
+    return value;
+  }
+
+  public Serializable disassemble (Object value)
+    throws HibernateException {
+
+    return (Serializable)value;
+  }
+
+  public boolean equals (Object x, Object y)
+    throws HibernateException {
+
+    return x == y;
+  }
+
+  public int hashCode (Object x)
+    throws HibernateException {
+
+    return x.hashCode();
+  }
+
+  public boolean isMutable () {
+
+    return false;
+  }
+
+  public Object nullSafeGet (ResultSet rs, String[] names, Object owner)
+    throws HibernateException, SQLException {
+
+    byte[] bytes = rs.getBytes(names[0]);
+
+    try {
+      return rs.wasNull() ? null : new ObjectInputStream(new ByteArrayInputStream(bytes)).readObject();
+    }
+    catch (Exception exception) {
+      throw new HibernateException(exception);
+    }
+  }
+
+  public void nullSafeSet (PreparedStatement st, Object value, int index)
+    throws HibernateException, SQLException {
+
+    if (value == null) {
+      st.setNull(index, Types.VARBINARY);
+    }
+    else {
+
+      ByteArrayOutputStream byteStream;
 
       try {
-         embeddedClass = Class.forName(objectClassName);
-
-         if (!Serializable.class.isAssignableFrom(embeddedClass)) {
-            throw new HibernateException("Embedded class(" + embeddedClass + ") must be Serializable");
-         }
+        new ObjectOutputStream(byteStream = new ByteArrayOutputStream()).writeObject(value);
       }
-      catch (ClassNotFoundException cnfe) {
-         throw new HibernateException(cnfe);
+      catch (IOException ioException) {
+        throw new HibernateException(ioException);
       }
-   }
 
-   public Object assemble (Serializable cached, Object owner)
-      throws HibernateException {
+      st.setBytes(index, byteStream.toByteArray());
+    }
+  }
 
-      return cached;
-   }
+  public Object replace (Object original, Object target, Object owner)
+    throws HibernateException {
 
-   public Object deepCopy (Object value)
-      throws HibernateException {
+    return original;
+  }
 
-      return value;
-   }
+  public Class returnedClass () {
 
-   public Serializable disassemble (Object value)
-      throws HibernateException {
+    return embeddedClass;
+  }
 
-      return (Serializable)value;
-   }
+  public int[] sqlTypes () {
 
-   public boolean equals (Object x, Object y)
-      throws HibernateException {
-
-      return x == y;
-   }
-
-   public int hashCode (Object x)
-      throws HibernateException {
-
-      return x.hashCode();
-   }
-
-   public boolean isMutable () {
-
-      return false;
-   }
-
-   public Object nullSafeGet (ResultSet rs, String[] names, Object owner)
-      throws HibernateException, SQLException {
-
-      byte[] bytes = rs.getBytes(names[0]);
-
-      try {
-         return rs.wasNull() ? null : new ObjectInputStream(new ByteArrayInputStream(bytes)).readObject();
-      }
-      catch (Exception exception) {
-         throw new HibernateException(exception);
-      }
-   }
-
-   public void nullSafeSet (PreparedStatement st, Object value, int index)
-      throws HibernateException, SQLException {
-
-      if (value == null) {
-         st.setNull(index, Types.VARBINARY);
-      }
-      else {
-
-         ByteArrayOutputStream byteStream;
-
-         try {
-            new ObjectOutputStream(byteStream = new ByteArrayOutputStream()).writeObject(value);
-         }
-         catch (IOException ioException) {
-            throw new HibernateException(ioException);
-         }
-
-         st.setBytes(index, byteStream.toByteArray());
-      }
-   }
-
-   public Object replace (Object original, Object target, Object owner)
-      throws HibernateException {
-
-      return original;
-   }
-
-   public Class returnedClass () {
-
-      return embeddedClass;
-   }
-
-   public int[] sqlTypes () {
-
-      return new int[] {Types.VARBINARY};
-   }
+    return new int[] {Types.VARBINARY};
+  }
 }

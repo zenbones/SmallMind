@@ -1,22 +1,22 @@
 /*
  * Copyright (c) 2007, 2008, 2009, 2010, 2011 David Berkman
- * 
+ *
  * This file is part of the SmallMind Code Project.
- * 
+ *
  * The SmallMind Code Project is free software, you can redistribute
  * it and/or modify it under the terms of GNU Affero General Public
  * License as published by the Free Software Foundation, either version 3
  * of the License, or (at your option) any later version.
- * 
+ *
  * The SmallMind Code Project is distributed in the hope that it will
  * be useful, but WITHOUT ANY WARRANTY; without even the implied warranty
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * General Public License for more details.
- * 
+ *
  * You should have received a copy of the the GNU Affero General Public
  * License, along with The SmallMind Code Project. If not, see
  * <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under the GNU Affero GPL version 3 section 7
  * ------------------------------------------------------------------
  * If you modify this Program, or any covered work, by linking or
@@ -38,73 +38,73 @@ import org.hibernate.usertype.UserType;
 
 public class BlobUserType implements UserType {
 
-   public int[] sqlTypes () {
+  public int[] sqlTypes () {
 
-      return new int[] {Types.BLOB};
-   }
+    return new int[] {Types.BLOB};
+  }
 
-   public Class returnedClass () {
+  public Class returnedClass () {
 
-      return byte[].class;
-   }
+    return byte[].class;
+  }
 
-   public Object assemble (Serializable cached, Object owner)
-      throws HibernateException {
+  public Object assemble (Serializable cached, Object owner)
+    throws HibernateException {
 
-      return cached;
-   }
+    return cached;
+  }
 
-   public Serializable disassemble (Object value)
-      throws HibernateException {
+  public Serializable disassemble (Object value)
+    throws HibernateException {
 
-      return (Serializable)value;
-   }
+    return (Serializable)value;
+  }
 
-   public int hashCode (Object x)
-      throws HibernateException {
+  public int hashCode (Object x)
+    throws HibernateException {
 
-      return x.hashCode();
-   }
+    return x.hashCode();
+  }
 
-   public Object replace (Object original, Object target, Object owner)
-      throws HibernateException {
+  public Object replace (Object original, Object target, Object owner)
+    throws HibernateException {
 
-      return original;
-   }
+    return original;
+  }
 
-   public boolean equals (Object x, Object y) {
+  public boolean equals (Object x, Object y) {
 
-      return (x == y) || (x != null && y != null && java.util.Arrays.equals((byte[])x, (byte[])y));
-   }
+    return (x == y) || (x != null && y != null && java.util.Arrays.equals((byte[])x, (byte[])y));
+  }
 
-   public Object nullSafeGet (ResultSet rs, String[] names, Object owner)
-      throws HibernateException, SQLException {
+  public Object nullSafeGet (ResultSet rs, String[] names, Object owner)
+    throws HibernateException, SQLException {
 
-      Blob blob = rs.getBlob(names[0]);
+    Blob blob = rs.getBlob(names[0]);
 
-      return blob.getBytes(1, (int)blob.length());
-   }
+    return blob.getBytes(1, (int)blob.length());
+  }
 
-   public void nullSafeSet (PreparedStatement st, Object value, int index)
-      throws HibernateException, SQLException {
+  public void nullSafeSet (PreparedStatement st, Object value, int index)
+    throws HibernateException, SQLException {
 
-      st.setBlob(index, Hibernate.createBlob((byte[])value));
-   }
+    st.setBlob(index, Hibernate.createBlob((byte[])value));
+  }
 
-   public Object deepCopy (Object value) {
+  public Object deepCopy (Object value) {
 
-      if (value == null) return null;
+    if (value == null) return null;
 
-      byte[] bytes = (byte[])value;
-      byte[] result = new byte[bytes.length];
+    byte[] bytes = (byte[])value;
+    byte[] result = new byte[bytes.length];
 
-      System.arraycopy(bytes, 0, result, 0, bytes.length);
+    System.arraycopy(bytes, 0, result, 0, bytes.length);
 
-      return result;
-   }
+    return result;
+  }
 
-   public boolean isMutable () {
+  public boolean isMutable () {
 
-      return true;
-   }
+    return true;
+  }
 }

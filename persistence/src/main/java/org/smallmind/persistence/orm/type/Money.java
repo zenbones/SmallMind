@@ -1,22 +1,22 @@
 /*
  * Copyright (c) 2007, 2008, 2009, 2010, 2011 David Berkman
- * 
+ *
  * This file is part of the SmallMind Code Project.
- * 
+ *
  * The SmallMind Code Project is free software, you can redistribute
  * it and/or modify it under the terms of GNU Affero General Public
  * License as published by the Free Software Foundation, either version 3
  * of the License, or (at your option) any later version.
- * 
+ *
  * The SmallMind Code Project is distributed in the hope that it will
  * be useful, but WITHOUT ANY WARRANTY; without even the implied warranty
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * General Public License for more details.
- * 
+ *
  * You should have received a copy of the the GNU Affero General Public
  * License, along with The SmallMind Code Project. If not, see
  * <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under the GNU Affero GPL version 3 section 7
  * ------------------------------------------------------------------
  * If you modify this Program, or any covered work, by linking or
@@ -35,53 +35,54 @@ import javax.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
 
 public class Money implements Serializable {
 
-   private static final Map<Character, Locale> CURRENCY_MAP = new HashMap<Character, Locale>();
+  private static final Map<Character, Locale> CURRENCY_MAP = new HashMap<Character, Locale>();
 
-   private Currency currency;
-   private double amount;
+  private Currency currency;
+  private double amount;
 
-   static {
+  static {
 
-      CURRENCY_MAP.put('$', Locale.US);
-   }
+    CURRENCY_MAP.put('$', Locale.US);
+  }
 
-   public static Locale getLocaleForCurrencySymbol (char symbol) {
+  public static Locale getLocaleForCurrencySymbol (char symbol) {
 
-      return CURRENCY_MAP.get(symbol);
-   }
+    return CURRENCY_MAP.get(symbol);
+  }
 
-   public static Money createEmptyInstance (Locale locale) {
+  public static Money createEmptyInstance (Locale locale) {
 
-      return new Money(Currency.getInstance(locale), 0);
-   }
+    return new Money(Currency.getInstance(locale), 0);
+  }
 
-   public Money () {
-   }
+  public Money () {
 
-   public Money (Currency currency, double amount) {
+  }
 
-      this.currency = currency;
-      this.amount = amount;
-   }
+  public Money (Currency currency, double amount) {
 
-   @XmlJavaTypeAdapter (CurrencyAdapter.class)
-   public Currency getCurrency () {
+    this.currency = currency;
+    this.amount = amount;
+  }
 
-      return currency;
-   }
+  @XmlJavaTypeAdapter(CurrencyAdapter.class)
+  public Currency getCurrency () {
 
-   public void setCurrency (Currency currency) {
+    return currency;
+  }
 
-      this.currency = currency;
-   }
+  public void setCurrency (Currency currency) {
 
-   public double getAmount () {
+    this.currency = currency;
+  }
 
-      return amount;
-   }
+  public double getAmount () {
 
-   public void setAmount (double amount) {
+    return amount;
+  }
 
-      this.amount = amount;
-   }
+  public void setAmount (double amount) {
+
+    this.amount = amount;
+  }
 }

@@ -2,29 +2,29 @@
 <beans xmlns="http://www.springframework.org/schema/beans" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.springframework.org/schema/beans
            http://www.springframework.org/schema/beans/spring-beans-3.0.xsd">
 
-   <!-- Collect Spring Initialized Hibernate Resources -->
-   <bean class="org.smallmind.persistence.orm.spring.hibernate.HibernateAnnotationSeekingBeanFactoryPostProcessor">
-      <property name="markedAnnotations">
-         <list>
-            <value>javax.persistence.Entity</value>
-         </list>
-      </property>
-   </bean>
+  <!-- Collect Spring Initialized Hibernate Resources -->
+  <bean class="org.smallmind.persistence.orm.spring.hibernate.HibernateAnnotationSeekingBeanFactoryPostProcessor">
+    <property name="markedAnnotations">
+      <list>
+        <value>javax.persistence.Entity</value>
+      </list>
+    </property>
+  </bean>
 
-   <bean class="org.smallmind.persistence.orm.spring.hibernate.HibernateFileSeekingBeanFactoryPostProcessor"/>
+  <bean class="org.smallmind.persistence.orm.spring.hibernate.HibernateFileSeekingBeanFactoryPostProcessor"/>
 
-   <bean id="statisticsFactory" class="org.smallmind.persistence.statistics.ThreadLocalStatisticsFactory">
-      <constructor-arg index="0" value="${orm.statistics}"/>
-   </bean>
+  <bean id="statisticsFactory" class="org.smallmind.persistence.statistics.ThreadLocalStatisticsFactory">
+    <constructor-arg index="0" value="${orm.statistics}"/>
+  </bean>
 
-   <bean id="stringConverterFactory" class="org.smallmind.nutsnbolts.reflection.type.converter.DefaultStringConverterFactory"/>
+  <bean id="stringConverterFactory" class="org.smallmind.nutsnbolts.reflection.type.converter.DefaultStringConverterFactory"/>
 
-   <bean id="persistence" class="org.smallmind.persistence.Persistence" init-method="register">
-      <constructor-arg index="0" ref="statisticsFactory"/>
-      <constructor-arg index="1" ref="stringConverterFactory"/>
-   </bean>
+  <bean id="persistence" class="org.smallmind.persistence.Persistence" init-method="register">
+    <constructor-arg index="0" ref="statisticsFactory"/>
+    <constructor-arg index="1" ref="stringConverterFactory"/>
+  </bean>
 
-   <!-- AspectJ Transaction Management -->
-   <bean id="transactionManagerAspect" class="org.smallmind.persistence.orm.aop.TransactionalAspect" factory-method="aspectOf"/>
+  <!-- AspectJ Transaction Management -->
+  <bean id="transactionManagerAspect" class="org.smallmind.persistence.orm.aop.TransactionalAspect" factory-method="aspectOf"/>
 
 </beans>

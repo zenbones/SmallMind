@@ -1,22 +1,22 @@
 /*
  * Copyright (c) 2007, 2008, 2009, 2010, 2011 David Berkman
- * 
+ *
  * This file is part of the SmallMind Code Project.
- * 
+ *
  * The SmallMind Code Project is free software, you can redistribute
  * it and/or modify it under the terms of GNU Affero General Public
  * License as published by the Free Software Foundation, either version 3
  * of the License, or (at your option) any later version.
- * 
+ *
  * The SmallMind Code Project is distributed in the hope that it will
  * be useful, but WITHOUT ANY WARRANTY; without even the implied warranty
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * General Public License for more details.
- * 
+ *
  * You should have received a copy of the the GNU Affero General Public
  * License, along with The SmallMind Code Project. If not, see
  * <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under the GNU Affero GPL version 3 section 7
  * ------------------------------------------------------------------
  * If you modify this Program, or any covered work, by linking or
@@ -37,59 +37,60 @@ import org.terracotta.annotations.InstrumentedClass;
 @InstrumentedClass
 public class Time implements Serializable {
 
-   private String timeZoneId;
-   private Date epochDate;
+  private String timeZoneId;
+  private Date epochDate;
 
-   public Time () {
-   }
+  public Time () {
 
-   public static Time fromCalendar (Calendar calendar) {
+  }
 
-      return new Time(calendar.getTimeZone().getID(), calendar.getTime());
-   }
+  public static Time fromCalendar (Calendar calendar) {
 
-   public static Time fromDateTime (DateTime dateTime) {
+    return new Time(calendar.getTimeZone().getID(), calendar.getTime());
+  }
 
-      return new Time(dateTime.getZone().getID(), dateTime.toDate());
-   }
+  public static Time fromDateTime (DateTime dateTime) {
 
-   public Time (String timeZoneId, Date epochDate) {
+    return new Time(dateTime.getZone().getID(), dateTime.toDate());
+  }
 
-      this.timeZoneId = timeZoneId;
-      this.epochDate = epochDate;
-   }
+  public Time (String timeZoneId, Date epochDate) {
 
-   public String getTimeZoneId () {
+    this.timeZoneId = timeZoneId;
+    this.epochDate = epochDate;
+  }
 
-      return timeZoneId;
-   }
+  public String getTimeZoneId () {
 
-   public void setTimeZoneId (String timeZoneId) {
+    return timeZoneId;
+  }
 
-      this.timeZoneId = timeZoneId;
-   }
+  public void setTimeZoneId (String timeZoneId) {
 
-   public Date getEpochDate () {
+    this.timeZoneId = timeZoneId;
+  }
 
-      return epochDate;
-   }
+  public Date getEpochDate () {
 
-   public void setEpochDate (Date epochDate) {
+    return epochDate;
+  }
 
-      this.epochDate = epochDate;
-   }
+  public void setEpochDate (Date epochDate) {
 
-   public Calendar toCalendar () {
+    this.epochDate = epochDate;
+  }
 
-      Calendar calendar = Calendar.getInstance(TimeZone.getTimeZone(timeZoneId));
+  public Calendar toCalendar () {
 
-      calendar.setTime(epochDate);
+    Calendar calendar = Calendar.getInstance(TimeZone.getTimeZone(timeZoneId));
 
-      return calendar;
-   }
+    calendar.setTime(epochDate);
 
-   public DateTime toDateTime () {
+    return calendar;
+  }
 
-      return new DateTime(epochDate, DateTimeZone.forID(timeZoneId));
-   }
+  public DateTime toDateTime () {
+
+    return new DateTime(epochDate, DateTimeZone.forID(timeZoneId));
+  }
 }
