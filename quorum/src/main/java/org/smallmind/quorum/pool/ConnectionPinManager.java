@@ -113,7 +113,7 @@ public class ConnectionPinManager<C> {
       return connectionPin;
     }
 
-    if ((connectionPin = addConnectionPin()) != null) {
+    if ((connectionPin = addConnectionPin(true)) != null) {
 
       return connectionPin;
     }
@@ -135,17 +135,21 @@ public class ConnectionPinManager<C> {
     throw new ConnectionPoolException("Exceeded the maximum acquire wait time(%d)", connectionPool.getConnectionPoolConfig().getAcquireWaitTimeMillis());
   }
 
-  private ConnectionPin<C> addConnectionPin ()
+  private ConnectionPin<C> addConnectionPin (boolean forced)
     throws ConnectionCreationException, ConnectionValidationException {
 
     if (State.STARTED.equals(stateRef.get())) {
 
-      int maxPoolSize;
+      int minPoolSize = connectionPool.getConnectionPoolConfig().getMinPoolSize();
+      int maxPoolSize = connectionPool.getConnectionPoolConfig().getMaxPoolSize();
+      int currentSize = size.get();
 
-      if (((maxPoolSize = connectionPool.getConnectionPoolConfig().getMaxPoolSize()) == 0) || (size.get() < maxPoolSize)) {
+      if ((forced || (currentSize > minPoolSize)) && ((maxPoolSize == 0) || (currentSize < maxPoolSize))) {
         backingLock.writeLock().lock();
         try {
-          if ((maxPoolSize == 0) || (size.get() < maxPoolSize)) {
+          currentSize = size.get();
+
+          if ((forced || (currentSize > minPoolSize)) && ((maxPoolSize == 0) || (currentSize < maxPoolSize))) {
 
             ConnectionPin<C> connectionPin;
             ConnectionInstance<C> connectionInstance;
@@ -271,7 +275,7 @@ public class ConnectionPinManager<C> {
 
         ConnectionPin<C> replacementConnectionPin;
 
-        if ((replacementConnectionPin = addConnectionPin()) != null) {
+        if ((replacementConnectionPin = addConnectionPin(false)) != null) {
           freeQueue.put(replacementConnectionPin);
         }
       }
