@@ -32,7 +32,6 @@ import java.rmi.NotBoundException;
 import java.rmi.RemoteException;
 import javax.naming.NamingException;
 import org.smallmind.quorum.pool.connection.ConnectionPoolException;
-import org.smallmind.quorum.pool.connection.ConnectionPoolException;
 import org.smallmind.quorum.pool.connection.remote.RemoteConnectionPoolSurface;
 
 public interface ConnectionPoolMonitorsMBean {

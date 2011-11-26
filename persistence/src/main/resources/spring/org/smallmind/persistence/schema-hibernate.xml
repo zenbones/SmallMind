@@ -21,11 +21,11 @@
     <property name="validationQuery" value="${jdbc.pool.connect.query}"/>
   </bean>
 
-  <bean id="schemaDBPool" class="org.smallmind.quorum.pool.ConnectionPool" init-method="startup" destroy-method="shutdown">
+  <bean id="schemaDBPool" class="org.smallmind.quorum.pool.connection.ConnectionPool" init-method="startup" destroy-method="shutdown">
     <constructor-arg index="0" value="dbPool"/>
     <constructor-arg index="1" ref="schemaConnectionInstanceFactory"/>
     <property name="connectionPoolConfig">
-      <bean class="org.smallmind.quorum.pool.ConnectionPoolConfig">
+      <bean class="org.smallmind.quorum.pool.connection.ConnectionPoolConfig">
         <property name="testOnAcquire" value="${jdbc.pool.connect.test}"/>
         <property name="initialPoolSize" value="${jdbc.pool.size.min}"/>
         <property name="minPoolSize" value="${jdbc.pool.size.min}"/>

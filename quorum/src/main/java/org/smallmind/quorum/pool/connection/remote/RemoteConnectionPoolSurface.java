@@ -27,7 +27,6 @@
 package org.smallmind.quorum.pool.connection.remote;
 
 import org.smallmind.quorum.pool.connection.ConnectionPoolSurface;
-import org.smallmind.quorum.pool.connection.ConnectionPoolSurface;
 import org.smallmind.quorum.pool.connection.event.ConnectionPoolEventListener;
 
 public interface RemoteConnectionPoolSurface extends ConnectionPoolSurface {

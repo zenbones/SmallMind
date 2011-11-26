@@ -27,7 +27,6 @@
 package org.smallmind.quorum.pool.connection.jmx;
 
 import org.smallmind.quorum.pool.connection.ConnectionPoolSurface;
-import org.smallmind.quorum.pool.connection.ConnectionPoolSurface;
 
 public interface ConnectionPoolMonitorMXBean extends ConnectionPoolSurface {
 

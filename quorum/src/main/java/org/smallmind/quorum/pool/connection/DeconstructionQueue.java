@@ -4,21 +4,18 @@ import java.util.concurrent.ConcurrentSkipListMap;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.concurrent.atomic.AtomicReference;
 import org.smallmind.scribe.pen.LoggerManager;
 
 public class DeconstructionQueue {
 
   private final ConcurrentSkipListMap<IgnitionKey, DeconstructionFuse> fuseMap = new ConcurrentSkipListMap<IgnitionKey, DeconstructionFuse>();
-  private final AtomicReference<CountDownLatch> terminationLatch = new AtomicReference<CountDownLatch>();
-  private final AtomicReference<CountDownLatch> exitLatch = new AtomicReference<CountDownLatch>();
   private final AtomicInteger ordinal = new AtomicInteger(0);
+
+  private IgnitionWorker ignitionWorker;
 
   public void startup () {
 
-    terminationLatch.set(new CountDownLatch(1));
-    exitLatch.set(new CountDownLatch(1));
-    new Thread(new IgnitionWorker()).start();
+    new Thread(ignitionWorker = new IgnitionWorker()).start();
   }
 
   public int nextOrdinal () {
@@ -39,17 +36,26 @@ public class DeconstructionQueue {
   public void shutdown ()
     throws InterruptedException {
 
-    terminationLatch.get().countDown();
-    exitLatch.get().await();
+    ignitionWorker.shutdown();
   }
 
   private class IgnitionWorker implements Runnable {
+
+    private final CountDownLatch terminationLatch = new CountDownLatch(1);
+    private final CountDownLatch exitLatch = new CountDownLatch(1);
+
+    public void shutdown ()
+      throws InterruptedException {
+
+      terminationLatch.countDown();
+      exitLatch.await();
+    }
 
     @Override
     public void run () {
 
       try {
-        while (!terminationLatch.get().await(1, TimeUnit.SECONDS)) {
+        while (!terminationLatch.await(1, TimeUnit.SECONDS)) {
 
           IgnitionKey nowKey = new IgnitionKey(Integer.MAX_VALUE, System.currentTimeMillis());
           IgnitionKey fuseKey;
@@ -63,7 +69,7 @@ public class DeconstructionQueue {
         LoggerManager.getLogger(DeconstructionQueue.class).error(interruptedException);
       }
 
-      exitLatch.get().countDown();
+      exitLatch.countDown();
     }
   }
 

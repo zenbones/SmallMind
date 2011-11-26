@@ -28,7 +28,6 @@ package org.smallmind.quorum.pool.connection.remote;
 
 import org.smallmind.quorum.pool.connection.ConnectionPool;
 import org.smallmind.quorum.pool.connection.ConnectionPoolException;
-import org.smallmind.quorum.pool.connection.ConnectionPoolException;
 import org.smallmind.quorum.pool.connection.event.ConnectionPoolEventListener;
 import org.smallmind.quorum.transport.remote.RemoteEndpoint;
 

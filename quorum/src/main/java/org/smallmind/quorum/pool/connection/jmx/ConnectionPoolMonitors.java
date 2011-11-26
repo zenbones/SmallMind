@@ -38,7 +38,6 @@ import javax.management.ObjectName;
 import javax.management.StandardEmitterMBean;
 import javax.naming.NamingException;
 import org.smallmind.quorum.pool.connection.ConnectionPoolException;
-import org.smallmind.quorum.pool.connection.ConnectionPoolException;
 import org.smallmind.quorum.pool.connection.event.ConnectionPoolEventListener;
 import org.smallmind.quorum.pool.connection.event.ErrorReportingConnectionPoolEvent;
 import org.smallmind.quorum.pool.connection.event.LeaseTimeReportingConnectionPoolEvent;

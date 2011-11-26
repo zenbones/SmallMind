@@ -27,7 +27,6 @@
 package org.smallmind.quorum.pool.connection.event;
 
 import org.smallmind.quorum.pool.connection.ConnectionPool;
-import org.smallmind.quorum.pool.connection.ConnectionPool;
 
 public class LeaseTimeReportingConnectionPoolEvent<C> extends ConnectionPoolEvent<C> {
 

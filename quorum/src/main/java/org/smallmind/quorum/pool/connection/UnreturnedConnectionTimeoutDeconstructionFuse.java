@@ -27,10 +27,13 @@
 package org.smallmind.quorum.pool.connection;
 
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public class UnreturnedConnectionTimeoutDeconstructionFuse extends DeconstructionFuse {
 
   private final ConnectionPool<?> connectionPool;
+  private final AtomicInteger generation = new AtomicInteger(0);
+  private final AtomicInteger generationServed = new AtomicInteger(0);
 
   protected UnreturnedConnectionTimeoutDeconstructionFuse (ConnectionPool<?> connectionPool, DeconstructionQueue deconstructionQueue, DeconstructionCoordinator deconstructionCoordinator) {
 
@@ -46,14 +49,24 @@ public class UnreturnedConnectionTimeoutDeconstructionFuse extends Deconstructio
   }
 
   @Override
-  public void free () {
+  public synchronized void free () {
 
+    generation.incrementAndGet();
     abort();
   }
 
   @Override
   public void serve () {
 
+    generationServed.set(generation.incrementAndGet());
     setIgnitionTime(System.currentTimeMillis() + TimeUnit.SECONDS.toMillis(connectionPool.getConnectionPoolConfig().getUnreturnedConnectionTimeoutSeconds()));
+  }
+
+  @Override
+  public synchronized void ignite () {
+
+    if (generationServed.get() == generation.get()) {
+      super.ignite();
+    }
   }
 }

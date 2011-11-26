@@ -27,7 +27,6 @@
 package org.smallmind.quorum.pool.connection.remote.spring;
 
 import org.smallmind.quorum.pool.connection.ConnectionPool;
-import org.smallmind.quorum.pool.connection.ConnectionPool;
 import org.smallmind.quorum.pool.connection.remote.RemoteConnectionPoolSurface;
 import org.smallmind.quorum.pool.connection.remote.RemoteConnectionPoolSurfaceImpl;
 import org.smallmind.quorum.transport.remote.RemoteEndpointBinder;

@@ -12,7 +12,7 @@
       <constructor-arg index="6" value="${ldap.auth.password}"/>
    </bean>
 
-   <bean id="javaEnvironmentPool" class="org.smallmind.quorum.pool.ConnectionPool">
+   <bean id="javaEnvironmentPool" class="org.smallmind.quorum.pool.connection.ConnectionPool">
       <constructor-arg index="0" value="javaEnvironmentPool"/>
       <constructor-arg index="1" ref="javaEnvironmentInstanceFactory"/>
       <property name="poolMode" value="BLOCKING_POOL"/>
