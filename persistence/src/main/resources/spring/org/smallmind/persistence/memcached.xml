@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-3.0.xsd">
+
+  <bean id="memcachedClient" class="org.smallmind.persistence.cache.memcached.spring.MemcachedClientFactoryBean" destroy-method="shutdown">
+    <property name="poolSize" value="${memcached.pool.size.max}"/>
+    <property name="servers">
+      <bean class="org.smallmind.persistence.cache.memcached.spring.MemcachedServerFactoryBean">
+        <property name="servers" value="${memcached.servers}"/>
+      </bean>
+    </property>
+  </bean>
+
+  <bean id="memcachedCacheDomain" class="org.smallmind.persistence.cache.memcached.spring.MemcachedCacheDomainFactoryBean">
+    <property name="memcachedClient" ref="memcachedClient"/>
+    <property name="timeToLiveSeconds" value="${memcached.ttl.default}"/>
+    <property name="timeToLiveOverrideMap">
+      <map>
+        <entry key="com.mydomain.MyDurable" value="${memcached.ttl.override}"/>
+      </map>
+    </property>
+  </bean>
+
+  <bean id="memcachedCacheDao" class="org.smallmind.persistence.cache.memcached.spring.MemcachedCacheDaoFactoryBean">
+    <property name="memcachedCacheDomain" ref="memcachedCacheDomain"/>
+  </bean>
+
+</beans>

@@ -46,8 +46,8 @@ public class CachedWithAspect {
 
   private static final ConcurrentHashMap<MethodKey, Method> METHOD_MAP = new ConcurrentHashMap<MethodKey, Method>();
 
-  @Around(value = "execution(* persist (..)) && args(durable) && this(ormDao)", argNames = "thisJoinPoint, ormDao, durable")
-  public Object aroundPersistMethod (ProceedingJoinPoint thisJoinPoint, VectorAwareORMDao ormDao, Durable durable)
+  @Around(value = "execution(* persist (org.smallmind.persistence.Durable)) && @within(CachedWith) && this(ormDao)", argNames = "thisJoinPoint, ormDao")
+  public Object aroundPersistMethod (ProceedingJoinPoint thisJoinPoint, VectorAwareORMDao ormDao)
     throws Throwable {
 
     CachedWith cachedWith;
@@ -59,9 +59,9 @@ public class CachedWithAspect {
     }
     else {
 
-      Durable persistentDurable;
+      Durable durable;
 
-      persistentDurable = (Durable)thisJoinPoint.proceed();
+      durable = (Durable)thisJoinPoint.proceed();
 
       for (Update update : cachedWith.updates()) {
         if (executeFilter(update.filter(), ormDao, durable)) {
@@ -114,11 +114,11 @@ public class CachedWithAspect {
         }
       }
 
-      return persistentDurable;
+      return durable;
     }
   }
 
-  @Around(value = "execution(void delete (..)) && args(durable) && this(ormDao)", argNames = "thisJoinPoint, ormDao, durable")
+  @Around(value = "execution(void delete (..)) && @within(CachedWith) && args(durable) && this(ormDao)", argNames = "thisJoinPoint, ormDao, durable")
   public void aroundDeleteMethod (ProceedingJoinPoint thisJoinPoint, VectorAwareORMDao ormDao, Durable durable)
     throws Throwable {
 
@@ -299,7 +299,7 @@ public class CachedWithAspect {
     return aspectMethod;
   }
 
-  private static class Operand {
+  public class Operand {
 
     private Class<? extends Durable> managedClass;
     private Durable durable;
@@ -321,7 +321,7 @@ public class CachedWithAspect {
     }
   }
 
-  private static class MethodKey {
+  public class MethodKey {
 
     private Class methodClass;
     private String methodName;
