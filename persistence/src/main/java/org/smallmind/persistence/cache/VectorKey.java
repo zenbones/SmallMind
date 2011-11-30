@@ -71,7 +71,7 @@ public class VectorKey<D extends Durable> implements Serializable {
         keyBuilder.append(',');
       }
 
-      keyBuilder.append(index.getIndexClass().getSimpleName()).append('.').append(index.getIndexField()).append('=').append(index.getIndexId());
+      keyBuilder.append(index.getIndexClass().getSimpleName()).append('.').append((index.getIndexAlias().length() > 0) ? index.getIndexAlias() : index.getIndexField()).append('=').append(index.getIndexValue());
 
       indexed = true;
     }
