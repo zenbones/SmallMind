@@ -33,9 +33,9 @@ public class VectorIndex {
   private Class<? extends Durable> indexClass;
   private String indexField;
   private String indexAlias;
-  private Comparable indexValue;
+  private Object indexValue;
 
-  public VectorIndex (Class<? extends Durable> indexClass, String indexField, Comparable indexValue, String indexAlias) {
+  public VectorIndex (Class<? extends Durable> indexClass, String indexField, Object indexValue, String indexAlias) {
 
     this.indexClass = indexClass;
     this.indexField = indexField;
@@ -53,7 +53,7 @@ public class VectorIndex {
     return indexField;
   }
 
-  public Comparable getIndexValue () {
+  public Object getIndexValue () {
 
     return indexValue;
   }

@@ -36,7 +36,7 @@ public @interface Index {
 
   public abstract String alias () default "";
 
-  public abstract Class<? extends Comparable> type () default Nothing.class;
+  public abstract Class<?> type () default Nothing.class;
 
   public abstract boolean nullable () default false;
 

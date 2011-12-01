@@ -46,7 +46,7 @@ public class VectorIndices {
     indices = new VectorIndex[vector.value().length];
     for (int count = 0; count < vector.value().length; count++) {
 
-      Comparable indexValue;
+      Object indexValue;
 
       if (vector.value()[count].constant()) {
         try {
@@ -74,7 +74,7 @@ public class VectorIndices {
     indices = new VectorIndex[vector.value().length];
     for (int count = 0; count < vector.value().length; count++) {
 
-      Comparable indexValue;
+      Object indexValue;
 
       if (vector.value()[count].constant()) {
         try {
