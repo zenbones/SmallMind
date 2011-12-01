@@ -4,7 +4,7 @@
    <parent>
       <groupId>org.smallmind</groupId>
       <artifactId>smallmind</artifactId>
-      <version>1.3.11</version>
+      <version>1.3.12</version>
    </parent>
    <artifactId>smallmind-cloud</artifactId>
    <name>Cloud</name>
