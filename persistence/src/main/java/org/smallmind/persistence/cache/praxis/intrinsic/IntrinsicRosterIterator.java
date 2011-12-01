@@ -1,22 +1,22 @@
 /*
  * Copyright (c) 2007, 2008, 2009, 2010, 2011 David Berkman
- * 
+ *
  * This file is part of the SmallMind Code Project.
- * 
+ *
  * The SmallMind Code Project is free software, you can redistribute
  * it and/or modify it under the terms of GNU Affero General Public
  * License as published by the Free Software Foundation, either version 3
  * of the License, or (at your option) any later version.
- * 
+ *
  * The SmallMind Code Project is distributed in the hope that it will
  * be useful, but WITHOUT ANY WARRANTY; without even the implied warranty
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * General Public License for more details.
- * 
+ *
  * You should have received a copy of the the GNU Affero General Public
  * License, along with The SmallMind Code Project. If not, see
  * <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under the GNU Affero GPL version 3 section 7
  * ------------------------------------------------------------------
  * If you modify this Program, or any covered work, by linking or
@@ -24,20 +24,20 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.persistence.cache.praxis.concurrent.util;
+package org.smallmind.persistence.cache.praxis.intrinsic;
 
 import java.util.ListIterator;
 import java.util.NoSuchElementException;
 
-public class ConcurrentRosterIterator<T> implements ListIterator<T> {
+public class IntrinsicRosterIterator<T> implements ListIterator<T> {
 
-  private ConcurrentRoster<T> concurrentList;
-  private ConcurrentRosterNode<T> next;
-  private ConcurrentRosterNode<T> prev;
-  private ConcurrentRosterNode<T> current;
+  private IntrinsicRoster<T> concurrentList;
+  private IntrinsicRosterNode<T> next;
+  private IntrinsicRosterNode<T> prev;
+  private IntrinsicRosterNode<T> current;
   private int index;
 
-  public ConcurrentRosterIterator (ConcurrentRoster<T> concurrentList, ConcurrentRosterNode<T> prev, ConcurrentRosterNode<T> next, int index) {
+  public IntrinsicRosterIterator (IntrinsicRoster<T> concurrentList, IntrinsicRosterNode<T> prev, IntrinsicRosterNode<T> next, int index) {
 
     this.concurrentList = concurrentList;
     this.next = next;

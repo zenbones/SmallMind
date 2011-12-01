@@ -2,13 +2,13 @@ package org.smallmind.persistence.cache.memcached.spring;
 
 import java.io.IOException;
 import org.smallmind.persistence.cache.memcached.MemcachedCacheDomain;
-import org.smallmind.persistence.cache.praxis.distributed.ByKeyDistributedCacheDao;
+import org.smallmind.persistence.cache.praxis.extrinsic.ByKeyExtrinsicCacheDao;
 import org.springframework.beans.factory.FactoryBean;
 import org.springframework.beans.factory.InitializingBean;
 
-public class MemcachedCacheDaoFactoryBean implements FactoryBean<ByKeyDistributedCacheDao>, InitializingBean {
+public class MemcachedCacheDaoFactoryBean implements FactoryBean<ByKeyExtrinsicCacheDao>, InitializingBean {
 
-  private ByKeyDistributedCacheDao memcachedCacheDao;
+  private ByKeyExtrinsicCacheDao memcachedCacheDao;
   private MemcachedCacheDomain memcachedCacheDomain;
 
   public void setMemcachedCacheDomain (MemcachedCacheDomain memcachedCacheDomain) {
@@ -21,12 +21,12 @@ public class MemcachedCacheDaoFactoryBean implements FactoryBean<ByKeyDistribute
     throws IOException {
 
     if (memcachedCacheDomain != null) {
-      memcachedCacheDao = new ByKeyDistributedCacheDao(memcachedCacheDomain);
+      memcachedCacheDao = new ByKeyExtrinsicCacheDao(memcachedCacheDomain);
     }
   }
 
   @Override
-  public ByKeyDistributedCacheDao getObject () {
+  public ByKeyExtrinsicCacheDao getObject () {
 
     return memcachedCacheDao;
   }
@@ -34,7 +34,7 @@ public class MemcachedCacheDaoFactoryBean implements FactoryBean<ByKeyDistribute
   @Override
   public Class<?> getObjectType () {
 
-    return ByKeyDistributedCacheDao.class;
+    return ByKeyExtrinsicCacheDao.class;
   }
 
   @Override

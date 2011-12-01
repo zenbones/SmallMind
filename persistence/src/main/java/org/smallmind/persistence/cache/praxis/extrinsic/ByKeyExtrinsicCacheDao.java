@@ -1,22 +1,22 @@
 /*
  * Copyright (c) 2007, 2008, 2009, 2010, 2011 David Berkman
- * 
+ *
  * This file is part of the SmallMind Code Project.
- * 
+ *
  * The SmallMind Code Project is free software, you can redistribute
  * it and/or modify it under the terms of GNU Affero General Public
  * License as published by the Free Software Foundation, either version 3
  * of the License, or (at your option) any later version.
- * 
+ *
  * The SmallMind Code Project is distributed in the hope that it will
  * be useful, but WITHOUT ANY WARRANTY; without even the implied warranty
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * General Public License for more details.
- * 
+ *
  * You should have received a copy of the the GNU Affero General Public
  * License, along with The SmallMind Code Project. If not, see
  * <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under the GNU Affero GPL version 3 section 7
  * ------------------------------------------------------------------
  * If you modify this Program, or any covered work, by linking or
@@ -24,22 +24,24 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.persistence.cache.praxis.concurrent;
+package org.smallmind.persistence.cache.praxis.extrinsic;
 
 import java.io.Serializable;
 import java.util.Comparator;
+import org.smallmind.nutsnbolts.lang.UnknownSwitchCaseException;
 import org.smallmind.persistence.Durable;
 import org.smallmind.persistence.PersistenceMode;
 import org.smallmind.persistence.cache.AbstractCacheDao;
+import org.smallmind.persistence.cache.CASValue;
 import org.smallmind.persistence.cache.CacheDomain;
 import org.smallmind.persistence.cache.DurableKey;
 import org.smallmind.persistence.cache.DurableVector;
 import org.smallmind.persistence.cache.VectorKey;
 import org.smallmind.persistence.cache.praxis.ByKeySingularVector;
 
-public class ByKeyConcurrentCacheDao<I extends Serializable & Comparable<I>, D extends Durable<I>> extends AbstractCacheDao<I, D> {
+public class ByKeyExtrinsicCacheDao<I extends Serializable & Comparable<I>, D extends Durable<I>> extends AbstractCacheDao<I, D> {
 
-  public ByKeyConcurrentCacheDao (CacheDomain<I, D> cacheDomain) {
+  public ByKeyExtrinsicCacheDao (CacheDomain<I, D> cacheDomain) {
 
     super(cacheDomain);
   }
@@ -58,6 +60,7 @@ public class ByKeyConcurrentCacheDao<I extends Serializable & Comparable<I>, D e
     return getInstanceCache(durableClass).get(durableKey.getKey());
   }
 
+  @Override
   public D persist (Class<D> durableClass, D durable, PersistenceMode mode) {
 
     if (durable != null) {
@@ -65,7 +68,17 @@ public class ByKeyConcurrentCacheDao<I extends Serializable & Comparable<I>, D e
       D cachedDurable;
       DurableKey<I, D> durableKey = new DurableKey<I, D>(durableClass, durable.getId());
 
-      return ((cachedDurable = getInstanceCache(durableClass).putIfAbsent(durableKey.getKey(), durable, 0)) != null) ? cachedDurable : durable;
+      switch (mode) {
+        case SOFT:
+
+          return ((cachedDurable = getInstanceCache(durableClass).putIfAbsent(durableKey.getKey(), durable, 0)) != null) ? cachedDurable : durable;
+        case HARD:
+          getInstanceCache(durableClass).set(durableKey.getKey(), durable, 0);
+
+          return durable;
+        default:
+          throw new UnknownSwitchCaseException(mode.name());
+      }
     }
 
     return null;
@@ -85,11 +98,17 @@ public class ByKeyConcurrentCacheDao<I extends Serializable & Comparable<I>, D e
 
     if (durable != null) {
 
-      DurableVector<I, D> vector;
+      CASValue<DurableVector> casValue;
+      DurableVector<I, D> vectorCopy;
 
-      if ((vector = getVectorCache(vectorKey.getElementClass()).get(vectorKey.getKey())) != null) {
-        vector.add(durable);
-      }
+      do {
+        if ((casValue = getVectorCache(vectorKey.getElementClass()).getViaCas(vectorKey.getKey())).getValue() == null) {
+          break;
+        }
+
+        vectorCopy = (!getVectorCache(vectorKey.getElementClass()).requiresCopyOnDistributedCASOperation()) ? null : (casValue.getValue() == null) ? null : casValue.getValue().copy();
+        casValue.getValue().add(durable);
+      } while (!getVectorCache(vectorKey.getElementClass()).putViaCas(vectorKey.getKey(), vectorCopy, casValue.getValue(), casValue.getVersion(), casValue.getValue().getTimeToLiveSeconds()));
     }
   }
 
@@ -97,11 +116,17 @@ public class ByKeyConcurrentCacheDao<I extends Serializable & Comparable<I>, D e
 
     if (durable != null) {
 
-      DurableVector<I, D> vector;
+      CASValue<DurableVector> casValue;
+      DurableVector<I, D> vectorCopy;
 
-      if ((vector = getVectorCache(vectorKey.getElementClass()).get(vectorKey.getKey())) != null) {
-        vector.remove(durable);
-      }
+      do {
+        if ((casValue = getVectorCache(vectorKey.getElementClass()).getViaCas(vectorKey.getKey())).getValue() == null) {
+          break;
+        }
+
+        vectorCopy = (!getVectorCache(vectorKey.getElementClass()).requiresCopyOnDistributedCASOperation()) ? null : (casValue.getValue() == null) ? null : casValue.getValue().copy();
+        casValue.getValue().remove(durable);
+      } while (!getVectorCache(vectorKey.getElementClass()).putViaCas(vectorKey.getKey(), vectorCopy, casValue.getValue(), casValue.getVersion(), casValue.getValue().getTimeToLiveSeconds()));
     }
   }
 
@@ -136,9 +161,9 @@ public class ByKeyConcurrentCacheDao<I extends Serializable & Comparable<I>, D e
       return vector;
     }
     else {
-      if (!(vector instanceof ByKeyConcurrentVector)) {
+      if (!(vector instanceof ByKeyExtrinsicVector)) {
 
-        return new ByKeyConcurrentVector<I, D>(managedClass, vector.asList(), vector.getComparator(), vector.getMaxSize(), vector.getTimeToLiveSeconds(), vector.isOrdered());
+        return new ByKeyExtrinsicVector<I, D>(managedClass, vector.asList(), vector.getComparator(), vector.getMaxSize(), vector.getTimeToLiveSeconds(), vector.isOrdered());
       }
 
       return vector;
@@ -152,6 +177,6 @@ public class ByKeyConcurrentCacheDao<I extends Serializable & Comparable<I>, D e
 
   public DurableVector<I, D> createVector (VectorKey<D> vectorKey, Iterable<D> elementIter, Comparator<D> comparator, int maxSize, int timeToLiveSeconds, boolean ordered) {
 
-    return new ByKeyConcurrentVector<I, D>(vectorKey.getElementClass(), elementIter, comparator, maxSize, timeToLiveSeconds, ordered);
+    return new ByKeyExtrinsicVector<I, D>(vectorKey.getElementClass(), elementIter, comparator, maxSize, timeToLiveSeconds, ordered);
   }
 }

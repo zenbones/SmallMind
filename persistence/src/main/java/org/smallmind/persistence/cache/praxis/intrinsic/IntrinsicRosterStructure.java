@@ -1,22 +1,22 @@
 /*
  * Copyright (c) 2007, 2008, 2009, 2010, 2011 David Berkman
- * 
+ *
  * This file is part of the SmallMind Code Project.
- * 
+ *
  * The SmallMind Code Project is free software, you can redistribute
  * it and/or modify it under the terms of GNU Affero General Public
  * License as published by the Free Software Foundation, either version 3
  * of the License, or (at your option) any later version.
- * 
+ *
  * The SmallMind Code Project is distributed in the hope that it will
  * be useful, but WITHOUT ANY WARRANTY; without even the implied warranty
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * General Public License for more details.
- * 
+ *
  * You should have received a copy of the the GNU Affero General Public
  * License, along with The SmallMind Code Project. If not, see
  * <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under the GNU Affero GPL version 3 section 7
  * ------------------------------------------------------------------
  * If you modify this Program, or any covered work, by linking or
@@ -24,24 +24,24 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.persistence.cache.praxis.concurrent.util;
+package org.smallmind.persistence.cache.praxis.intrinsic;
 
 import org.terracotta.annotations.InstrumentedClass;
 
 @InstrumentedClass
-public class ConcurrentRosterStructure<T> {
+public class IntrinsicRosterStructure<T> {
 
-  private ConcurrentRosterStructure<T> parent;
-  private ConcurrentRosterNode<T> head;
-  private ConcurrentRosterNode<T> tail;
+  private IntrinsicRosterStructure<T> parent;
+  private IntrinsicRosterNode<T> head;
+  private IntrinsicRosterNode<T> tail;
   int size;
 
-  public ConcurrentRosterStructure () {
+  public IntrinsicRosterStructure () {
 
     size = 0;
   }
 
-  public ConcurrentRosterStructure (ConcurrentRosterStructure<T> parent, ConcurrentRosterNode<T> head, ConcurrentRosterNode<T> tail, int size) {
+  public IntrinsicRosterStructure (IntrinsicRosterStructure<T> parent, IntrinsicRosterNode<T> head, IntrinsicRosterNode<T> tail, int size) {
 
     this.parent = parent;
     this.head = head;
@@ -49,12 +49,12 @@ public class ConcurrentRosterStructure<T> {
     this.size = size;
   }
 
-  public ConcurrentRosterNode<T> getHead () {
+  public IntrinsicRosterNode<T> getHead () {
 
     return head;
   }
 
-  public void setHead (ConcurrentRosterNode<T> head) {
+  public void setHead (IntrinsicRosterNode<T> head) {
 
     if ((parent != null) && parent.isHead(this.head)) {
       parent.setHead(head);
@@ -63,17 +63,17 @@ public class ConcurrentRosterStructure<T> {
     this.head = head;
   }
 
-  public boolean isHead (ConcurrentRosterNode<T> node) {
+  public boolean isHead (IntrinsicRosterNode<T> node) {
 
     return (head != null) && (node == head);
   }
 
-  public ConcurrentRosterNode<T> getTail () {
+  public IntrinsicRosterNode<T> getTail () {
 
     return tail;
   }
 
-  public void setTail (ConcurrentRosterNode<T> tail) {
+  public void setTail (IntrinsicRosterNode<T> tail) {
 
     if ((parent != null) && parent.isTail(this.tail)) {
       parent.setTail(tail);
@@ -82,12 +82,12 @@ public class ConcurrentRosterStructure<T> {
     this.tail = tail;
   }
 
-  public boolean isTail (ConcurrentRosterNode<T> node) {
+  public boolean isTail (IntrinsicRosterNode<T> node) {
 
     return (tail != null) && (node == tail);
   }
 
-  public void evaporate (ConcurrentRosterNode<T> prev, ConcurrentRosterNode<T> current, ConcurrentRosterNode<T> next) {
+  public void evaporate (IntrinsicRosterNode<T> prev, IntrinsicRosterNode<T> current, IntrinsicRosterNode<T> next) {
 
     if (parent != null) {
       evaporate(prev, current, next);
@@ -107,7 +107,7 @@ public class ConcurrentRosterStructure<T> {
 
   public void ouroboros (T element) {
 
-    ConcurrentRosterNode<T> added = new ConcurrentRosterNode<T>(element, head, tail);
+    IntrinsicRosterNode<T> added = new IntrinsicRosterNode<T>(element, head, tail);
 
     if (head != null) {
       head.setNext(added);
@@ -124,7 +124,7 @@ public class ConcurrentRosterStructure<T> {
     size = 1;
   }
 
-  public void reconstitute (ConcurrentRosterNode<T> added, ConcurrentRosterNode<T> head, ConcurrentRosterNode<T> tail) {
+  public void reconstitute (IntrinsicRosterNode<T> added, IntrinsicRosterNode<T> head, IntrinsicRosterNode<T> tail) {
 
     if (parent != null) {
       parent.reconstitute(added, head, tail);

@@ -1,22 +1,22 @@
 /*
  * Copyright (c) 2007, 2008, 2009, 2010, 2011 David Berkman
- * 
+ *
  * This file is part of the SmallMind Code Project.
- * 
+ *
  * The SmallMind Code Project is free software, you can redistribute
  * it and/or modify it under the terms of GNU Affero General Public
  * License as published by the Free Software Foundation, either version 3
  * of the License, or (at your option) any later version.
- * 
+ *
  * The SmallMind Code Project is distributed in the hope that it will
  * be useful, but WITHOUT ANY WARRANTY; without even the implied warranty
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * General Public License for more details.
- * 
+ *
  * You should have received a copy of the the GNU Affero General Public
  * License, along with The SmallMind Code Project. If not, see
  * <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under the GNU Affero GPL version 3 section 7
  * ------------------------------------------------------------------
  * If you modify this Program, or any covered work, by linking or
@@ -24,7 +24,7 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.persistence.cache.praxis.concurrent;
+package org.smallmind.persistence.cache.praxis.extrinsic;
 
 import java.io.Serializable;
 import java.util.Comparator;
@@ -34,20 +34,19 @@ import org.smallmind.persistence.cache.DurableVector;
 import org.smallmind.persistence.cache.praxis.AbstractDurableVector;
 import org.smallmind.persistence.cache.praxis.ByKeyRoster;
 import org.smallmind.persistence.cache.praxis.Roster;
-import org.smallmind.persistence.cache.praxis.concurrent.util.ConcurrentRoster;
 import org.terracotta.annotations.AutolockRead;
 import org.terracotta.annotations.InstrumentedClass;
 
 @InstrumentedClass
-public class ByKeyConcurrentVector<I extends Serializable & Comparable<I>, D extends Durable<I>> extends AbstractDurableVector<I, D> {
+public class ByKeyExtrinsicVector<I extends Serializable & Comparable<I>, D extends Durable<I>> extends AbstractDurableVector<I, D> {
 
   private ByKeyRoster<I, D> roster;
 
-  public ByKeyConcurrentVector (Class<D> durableClass, Iterable<D> durables, Comparator<D> comparator, int maxSize, int timeToLiveSeconds, boolean ordered) {
+  public ByKeyExtrinsicVector (Class<D> durableClass, Iterable<D> durables, Comparator<D> comparator, int maxSize, int timeToLiveSeconds, boolean ordered) {
 
     super(comparator, maxSize, timeToLiveSeconds, ordered);
 
-    ConcurrentRoster<DurableKey<I, D>> keyRoster = new ConcurrentRoster<DurableKey<I, D>>();
+    ExtrinsicRoster<DurableKey<I, D>> keyRoster = new ExtrinsicRoster<DurableKey<I, D>>();
     int index = 0;
 
     for (Durable durable : durables) {
@@ -60,7 +59,7 @@ public class ByKeyConcurrentVector<I extends Serializable & Comparable<I>, D ext
     roster = new ByKeyRoster<I, D>(durableClass, keyRoster);
   }
 
-  private ByKeyConcurrentVector (ByKeyRoster<I, D> roster, Comparator<D> comparator, int maxSize, int timeToLiveSeconds, boolean ordered) {
+  private ByKeyExtrinsicVector (ByKeyRoster<I, D> roster, Comparator<D> comparator, int maxSize, int timeToLiveSeconds, boolean ordered) {
 
     super(comparator, maxSize, timeToLiveSeconds, ordered);
 
@@ -75,6 +74,6 @@ public class ByKeyConcurrentVector<I extends Serializable & Comparable<I>, D ext
   @AutolockRead
   public DurableVector<I, D> copy () {
 
-    return new ByKeyConcurrentVector<I, D>(new ByKeyRoster<I, D>(roster.getDurableClass(), new ConcurrentRoster<DurableKey<I, D>>(roster.getInternalRoster())), getComparator(), getMaxSize(), getTimeToLiveSeconds(), isOrdered());
+    return new ByKeyExtrinsicVector<I, D>(new ByKeyRoster<I, D>(roster.getDurableClass(), new ExtrinsicRoster<DurableKey<I, D>>(roster.getInternalRoster())), getComparator(), getMaxSize(), getTimeToLiveSeconds(), isOrdered());
   }
 }

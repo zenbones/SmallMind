@@ -1,22 +1,22 @@
 /*
  * Copyright (c) 2007, 2008, 2009, 2010, 2011 David Berkman
- * 
+ *
  * This file is part of the SmallMind Code Project.
- * 
+ *
  * The SmallMind Code Project is free software, you can redistribute
  * it and/or modify it under the terms of GNU Affero General Public
  * License as published by the Free Software Foundation, either version 3
  * of the License, or (at your option) any later version.
- * 
+ *
  * The SmallMind Code Project is distributed in the hope that it will
  * be useful, but WITHOUT ANY WARRANTY; without even the implied warranty
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * General Public License for more details.
- * 
+ *
  * You should have received a copy of the the GNU Affero General Public
  * License, along with The SmallMind Code Project. If not, see
  * <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under the GNU Affero GPL version 3 section 7
  * ------------------------------------------------------------------
  * If you modify this Program, or any covered work, by linking or
@@ -24,7 +24,7 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.persistence.cache.praxis.concurrent;
+package org.smallmind.persistence.cache.praxis.intrinsic;
 
 import java.io.Serializable;
 import java.util.Comparator;
@@ -36,11 +36,10 @@ import org.smallmind.persistence.cache.DurableKey;
 import org.smallmind.persistence.cache.DurableVector;
 import org.smallmind.persistence.cache.VectorKey;
 import org.smallmind.persistence.cache.praxis.ByReferenceSingularVector;
-import org.smallmind.persistence.cache.praxis.concurrent.util.ConcurrentRoster;
 
-public class ByReferenceConcurrentCacheDao<I extends Serializable & Comparable<I>, D extends Durable<I>> extends AbstractCacheDao<I, D> {
+public class ByReferenceIntrinsicCacheDao<I extends Serializable & Comparable<I>, D extends Durable<I>> extends AbstractCacheDao<I, D> {
 
-  public ByReferenceConcurrentCacheDao (CacheDomain<I, D> cacheDomain) {
+  public ByReferenceIntrinsicCacheDao (CacheDomain<I, D> cacheDomain) {
 
     super(cacheDomain);
   }
@@ -137,9 +136,9 @@ public class ByReferenceConcurrentCacheDao<I extends Serializable & Comparable<I
       return vector;
     }
     else {
-      if (!(vector instanceof ByReferenceConcurrentVector)) {
+      if (!(vector instanceof ByReferenceIntrinsicVector)) {
 
-        return new ByReferenceConcurrentVector<I, D>(new ConcurrentRoster<D>(vector.asList()), vector.getComparator(), vector.getMaxSize(), vector.getTimeToLiveSeconds(), vector.isOrdered());
+        return new ByReferenceIntrinsicVector<I, D>(new IntrinsicRoster<D>(vector.asList()), vector.getComparator(), vector.getMaxSize(), vector.getTimeToLiveSeconds(), vector.isOrdered());
       }
 
       return vector;
@@ -162,11 +161,11 @@ public class ByReferenceConcurrentCacheDao<I extends Serializable & Comparable<I
 
   public DurableVector<I, D> createVector (VectorKey<D> vectorKey, Iterable<D> elementIter, Comparator<D> comparator, int maxSize, int timeToLiveSeconds, boolean ordered) {
 
-    ConcurrentRoster<D> cacheConsistentElements;
+    IntrinsicRoster<D> cacheConsistentElements;
     DurableKey<I, D> durableKey;
     D inCacheDurable;
 
-    cacheConsistentElements = new ConcurrentRoster<D>();
+    cacheConsistentElements = new IntrinsicRoster<D>();
     for (D element : elementIter) {
       if (element != null) {
 
@@ -180,6 +179,6 @@ public class ByReferenceConcurrentCacheDao<I extends Serializable & Comparable<I
       }
     }
 
-    return new ByReferenceConcurrentVector<I, D>(cacheConsistentElements, comparator, maxSize, timeToLiveSeconds, ordered);
+    return new ByReferenceIntrinsicVector<I, D>(cacheConsistentElements, comparator, maxSize, timeToLiveSeconds, ordered);
   }
 }

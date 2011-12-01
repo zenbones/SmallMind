@@ -1,22 +1,22 @@
 /*
  * Copyright (c) 2007, 2008, 2009, 2010, 2011 David Berkman
- * 
+ *
  * This file is part of the SmallMind Code Project.
- * 
+ *
  * The SmallMind Code Project is free software, you can redistribute
  * it and/or modify it under the terms of GNU Affero General Public
  * License as published by the Free Software Foundation, either version 3
  * of the License, or (at your option) any later version.
- * 
+ *
  * The SmallMind Code Project is distributed in the hope that it will
  * be useful, but WITHOUT ANY WARRANTY; without even the implied warranty
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * General Public License for more details.
- * 
+ *
  * You should have received a copy of the the GNU Affero General Public
  * License, along with The SmallMind Code Project. If not, see
  * <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under the GNU Affero GPL version 3 section 7
  * ------------------------------------------------------------------
  * If you modify this Program, or any covered work, by linking or
@@ -24,7 +24,7 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.persistence.cache.praxis.concurrent.util;
+package org.smallmind.persistence.cache.praxis.intrinsic;
 
 import java.lang.reflect.Array;
 import java.util.Collection;
@@ -38,31 +38,31 @@ import org.smallmind.persistence.cache.praxis.Roster;
 import org.terracotta.annotations.InstrumentedClass;
 
 @InstrumentedClass
-public class ConcurrentRoster<T> implements Roster<T> {
+public class IntrinsicRoster<T> implements Roster<T> {
 
   private final ReentrantReadWriteLock lock;
 
-  private ConcurrentRosterStructure<T> structure;
+  private IntrinsicRosterStructure<T> structure;
 
-  public ConcurrentRoster () {
+  public IntrinsicRoster () {
 
-    this(new ReentrantReadWriteLock(), new ConcurrentRosterStructure<T>());
+    this(new ReentrantReadWriteLock(), new IntrinsicRosterStructure<T>());
   }
 
-  public ConcurrentRoster (Collection<? extends T> c) {
+  public IntrinsicRoster (Collection<? extends T> c) {
 
-    this(new ReentrantReadWriteLock(), new ConcurrentRosterStructure<T>());
+    this(new ReentrantReadWriteLock(), new IntrinsicRosterStructure<T>());
 
     if (!c.isEmpty()) {
 
-      ConcurrentRosterNode<T> added = null;
+      IntrinsicRosterNode<T> added = null;
 
       for (T element : c) {
         if (added == null) {
-          structure.setHead(added = new ConcurrentRosterNode<T>(element, null, null));
+          structure.setHead(added = new IntrinsicRosterNode<T>(element, null, null));
         }
         else {
-          added = new ConcurrentRosterNode<T>(element, added, null);
+          added = new IntrinsicRosterNode<T>(element, added, null);
           added.getPrev().setNext(added);
         }
       }
@@ -72,7 +72,7 @@ public class ConcurrentRoster<T> implements Roster<T> {
     }
   }
 
-  private ConcurrentRoster (ReentrantReadWriteLock lock, ConcurrentRosterStructure<T> structure) {
+  private IntrinsicRoster (ReentrantReadWriteLock lock, IntrinsicRosterStructure<T> structure) {
 
     this.lock = lock;
     this.structure = structure;
@@ -83,7 +83,7 @@ public class ConcurrentRoster<T> implements Roster<T> {
     return lock;
   }
 
-  protected ConcurrentRosterNode<T> getNextInView (ConcurrentRosterNode<T> current) {
+  protected IntrinsicRosterNode<T> getNextInView (IntrinsicRosterNode<T> current) {
 
     lock.readLock().lock();
     try {
@@ -95,7 +95,7 @@ public class ConcurrentRoster<T> implements Roster<T> {
     }
   }
 
-  protected ConcurrentRosterNode<T> getPrevInView (ConcurrentRosterNode<T> current) {
+  protected IntrinsicRosterNode<T> getPrevInView (IntrinsicRosterNode<T> current) {
 
     lock.readLock().lock();
     try {
@@ -136,7 +136,7 @@ public class ConcurrentRoster<T> implements Roster<T> {
     lock.readLock().lock();
     try {
       if (structure.getSize() > 0) {
-        for (ConcurrentRosterNode<T> current = structure.getHead(); current != null; current = getNextInView(current)) {
+        for (IntrinsicRosterNode<T> current = structure.getHead(); current != null; current = getNextInView(current)) {
           if (current.objEquals(obj)) {
 
             return true;
@@ -167,7 +167,7 @@ public class ConcurrentRoster<T> implements Roster<T> {
 
         int index = 0;
 
-        for (ConcurrentRosterNode<T> current = structure.getHead(); current != null; current = getNextInView(current)) {
+        for (IntrinsicRosterNode<T> current = structure.getHead(); current != null; current = getNextInView(current)) {
           elements[index++] = current.getObj();
         }
       }
@@ -183,13 +183,13 @@ public class ConcurrentRoster<T> implements Roster<T> {
     }
   }
 
-  private ConcurrentRosterNode<T> getNode (int index) {
+  private IntrinsicRosterNode<T> getNode (int index) {
 
     if ((index < 0) || (index >= structure.getSize())) {
       throw new IndexOutOfBoundsException(String.valueOf(index));
     }
 
-    ConcurrentRosterNode<T> current;
+    IntrinsicRosterNode<T> current;
 
     if (index <= (structure.getSize() / 2)) {
       current = structure.getHead();
@@ -256,7 +256,7 @@ public class ConcurrentRoster<T> implements Roster<T> {
     lock.readLock().lock();
     try {
 
-      ConcurrentRosterNode<T> current;
+      IntrinsicRosterNode<T> current;
       T value;
 
       value = (current = getNode(index)).getObj();
@@ -269,12 +269,12 @@ public class ConcurrentRoster<T> implements Roster<T> {
     }
   }
 
-  protected void add (ConcurrentRosterNode<T> next, T element) {
+  protected void add (IntrinsicRosterNode<T> next, T element) {
 
-    ConcurrentRosterNode<T> prev = next.getPrev();
-    ConcurrentRosterNode<T> added;
+    IntrinsicRosterNode<T> prev = next.getPrev();
+    IntrinsicRosterNode<T> added;
 
-    next.setPrev(added = new ConcurrentRosterNode<T>(element, prev, next));
+    next.setPrev(added = new IntrinsicRosterNode<T>(element, prev, next));
     if (prev != null) {
       prev.setNext(added);
     }
@@ -310,8 +310,8 @@ public class ConcurrentRoster<T> implements Roster<T> {
       }
       else {
 
-        ConcurrentRosterNode<T> end;
-        ConcurrentRosterNode<T> added = new ConcurrentRosterNode<T>(element, structure.getTail(), end = structure.getTail().getNext());
+        IntrinsicRosterNode<T> end;
+        IntrinsicRosterNode<T> added = new IntrinsicRosterNode<T>(element, structure.getTail(), end = structure.getTail().getNext());
 
         if (end != null) {
           end.setPrev(added);
@@ -350,10 +350,10 @@ public class ConcurrentRoster<T> implements Roster<T> {
     }
   }
 
-  protected void removeNode (ConcurrentRosterNode<T> current) {
+  protected void removeNode (IntrinsicRosterNode<T> current) {
 
-    ConcurrentRosterNode<T> prev = current.getPrev();
-    ConcurrentRosterNode<T> next = current.getNext();
+    IntrinsicRosterNode<T> prev = current.getPrev();
+    IntrinsicRosterNode<T> next = current.getNext();
 
     if (prev != null) {
       prev.setNext(next);
@@ -412,7 +412,7 @@ public class ConcurrentRoster<T> implements Roster<T> {
 
     lock.writeLock().lock();
     try {
-      for (ConcurrentRosterNode<T> current = structure.getHead(); current != null; current = getNextInView(current)) {
+      for (IntrinsicRosterNode<T> current = structure.getHead(); current != null; current = getNextInView(current)) {
         if (current.objEquals(o)) {
           removeNode(current);
 
@@ -432,7 +432,7 @@ public class ConcurrentRoster<T> implements Roster<T> {
     lock.writeLock().lock();
     try {
 
-      ConcurrentRosterNode<T> current;
+      IntrinsicRosterNode<T> current;
 
       removeNode(current = getNode(index));
 
@@ -454,7 +454,7 @@ public class ConcurrentRoster<T> implements Roster<T> {
 
     lock.readLock().lock();
     try {
-      for (ConcurrentRosterNode<T> current = structure.getHead(); current != null; current = getNextInView(current)) {
+      for (IntrinsicRosterNode<T> current = structure.getHead(); current != null; current = getNextInView(current)) {
         checkSet.remove(current.getObj());
         if (checkSet.isEmpty()) {
           return true;
@@ -493,7 +493,7 @@ public class ConcurrentRoster<T> implements Roster<T> {
       lock.writeLock().lock();
       try {
 
-        ConcurrentRosterNode<T> next = getNode(index);
+        IntrinsicRosterNode<T> next = getNode(index);
 
         for (T element : c) {
           add(next, element);
@@ -521,7 +521,7 @@ public class ConcurrentRoster<T> implements Roster<T> {
 
     lock.writeLock().lock();
     try {
-      for (ConcurrentRosterNode<T> current = structure.getHead(); current != null; current = getNextInView(current)) {
+      for (IntrinsicRosterNode<T> current = structure.getHead(); current != null; current = getNextInView(current)) {
         if (checkSet.contains(current.getObj())) {
           removeNode(current);
           changed = true;
@@ -547,7 +547,7 @@ public class ConcurrentRoster<T> implements Roster<T> {
 
     lock.writeLock().lock();
     try {
-      for (ConcurrentRosterNode<T> current = structure.getHead(); current != null; current = getNextInView(current)) {
+      for (IntrinsicRosterNode<T> current = structure.getHead(); current != null; current = getNextInView(current)) {
         if (!checkSet.contains(current.getObj())) {
           removeNode(current);
           changed = true;
@@ -579,7 +579,7 @@ public class ConcurrentRoster<T> implements Roster<T> {
 
       int index = 0;
 
-      for (ConcurrentRosterNode<T> current = structure.getHead(); current != null; current = getNextInView(current)) {
+      for (IntrinsicRosterNode<T> current = structure.getHead(); current != null; current = getNextInView(current)) {
         if (current.objEquals(o)) {
 
           return index;
@@ -602,7 +602,7 @@ public class ConcurrentRoster<T> implements Roster<T> {
 
       int index = structure.getSize() - 1;
 
-      for (ConcurrentRosterNode<T> current = structure.getTail(); current != null; current = getPrevInView(current)) {
+      for (IntrinsicRosterNode<T> current = structure.getTail(); current != null; current = getPrevInView(current)) {
         if (current.objEquals(o)) {
 
           return index;
@@ -628,7 +628,7 @@ public class ConcurrentRoster<T> implements Roster<T> {
     lock.readLock().lock();
     try {
 
-      return new ConcurrentRosterIterator<T>(this, null, (structure.getSize() == 0) ? null : structure.getHead(), 0);
+      return new IntrinsicRosterIterator<T>(this, null, (structure.getSize() == 0) ? null : structure.getHead(), 0);
     }
     finally {
       lock.readLock().unlock();
@@ -643,13 +643,13 @@ public class ConcurrentRoster<T> implements Roster<T> {
         throw new IndexOutOfBoundsException(String.valueOf(index));
       }
       else if (index == structure.getSize()) {
-        return new ConcurrentRosterIterator<T>(this, (structure.getSize() == 0) ? null : structure.getTail(), null, index);
+        return new IntrinsicRosterIterator<T>(this, (structure.getSize() == 0) ? null : structure.getTail(), null, index);
       }
       else {
 
-        ConcurrentRosterNode<T> current = getNode(index);
+        IntrinsicRosterNode<T> current = getNode(index);
 
-        return new ConcurrentRosterIterator<T>(this, getPrevInView(current), current, index);
+        return new IntrinsicRosterIterator<T>(this, getPrevInView(current), current, index);
       }
     }
     finally {
@@ -666,7 +666,7 @@ public class ConcurrentRoster<T> implements Roster<T> {
     lock.readLock().lock();
     try {
 
-      return new ConcurrentRoster<T>(lock, new ConcurrentRosterStructure<T>(structure, getNode(fromIndex), (fromIndex == toIndex) ? getNode(fromIndex).getNext() : getNode(toIndex - 1), toIndex - fromIndex));
+      return new IntrinsicRoster<T>(lock, new IntrinsicRosterStructure<T>(structure, getNode(fromIndex), (fromIndex == toIndex) ? getNode(fromIndex).getNext() : getNode(toIndex - 1), toIndex - fromIndex));
     }
     finally {
       lock.readLock().unlock();
