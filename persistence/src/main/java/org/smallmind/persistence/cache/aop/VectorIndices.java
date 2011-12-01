@@ -50,14 +50,14 @@ public class VectorIndices {
 
       if (vector.value()[count].constant()) {
         try {
-          indexValue = (Comparable)BeanUtility.convertFromString(PersistenceManager.getPersistence().getStringConverterFactory(), (!vector.value()[count].type().equals(Nothing.class)) ? vector.value()[count].type() : getIdClass(vector.value()[count], ormDao), vector.value()[count].on());
+          indexValue = (Comparable)BeanUtility.convertFromString(PersistenceManager.getPersistence().getStringConverterFactory(), (!vector.value()[count].type().equals(Nothing.class)) ? vector.value()[count].type() : getIdClass(vector.value()[count], ormDao), vector.value()[count].on(), vector.value()[count].nullable());
         }
         catch (Exception exception) {
           throw new CacheAutomationError(exception);
         }
       }
       else {
-        indexValue = getValue(durable, (!vector.value()[count].type().equals(Nothing.class)) ? vector.value()[count].type() : getIdClass(vector.value()[count], ormDao), vector.value()[count].on());
+        indexValue = getValue(durable, (!vector.value()[count].type().equals(Nothing.class)) ? vector.value()[count].type() : getIdClass(vector.value()[count], ormDao), vector.value()[count].on(), vector.value()[count].nullable());
       }
 
       indices[count] = new VectorIndex(vector.value()[count].with(), vector.value()[count].on(), indexValue, vector.value()[count].alias());
@@ -78,14 +78,14 @@ public class VectorIndices {
 
       if (vector.value()[count].constant()) {
         try {
-          indexValue = (Comparable)BeanUtility.convertFromString(PersistenceManager.getPersistence().getStringConverterFactory(), (!vector.value()[count].type().equals(Nothing.class)) ? vector.value()[count].type() : getIdClass(vector.value()[count], ormDao), vector.value()[count].on());
+          indexValue = (Comparable)BeanUtility.convertFromString(PersistenceManager.getPersistence().getStringConverterFactory(), (!vector.value()[count].type().equals(Nothing.class)) ? vector.value()[count].type() : getIdClass(vector.value()[count], ormDao), vector.value()[count].on(), vector.value()[count].nullable());
         }
         catch (Exception exception) {
           throw new CacheAutomationError(exception);
         }
       }
       else {
-        indexValue = getValue(joinPoint, (!vector.value()[count].type().equals(Nothing.class)) ? vector.value()[count].type() : getIdClass(vector.value()[count], ormDao), vector.value()[count].on());
+        indexValue = getValue(joinPoint, (!vector.value()[count].type().equals(Nothing.class)) ? vector.value()[count].type() : getIdClass(vector.value()[count], ormDao), vector.value()[count].on(), vector.value()[count].nullable());
       }
 
       indices[count] = new VectorIndex(vector.value()[count].with(), vector.value()[count].on(), indexValue, vector.value()[count].alias());
@@ -110,22 +110,22 @@ public class VectorIndices {
     return indexingDao.getIdClass();
   }
 
-  public static Comparable getValue (JoinPoint joinPoint, Class parameterType, String parameterName) {
+  public static Comparable getValue (JoinPoint joinPoint, Class parameterType, String parameterName, boolean nullable) {
 
     try {
-      return (Comparable)AOPUtility.getParameterValue(joinPoint, parameterType, parameterName);
+      return (Comparable)AOPUtility.getParameterValue(joinPoint, parameterType, parameterName, nullable);
     }
     catch (Exception exception) {
       throw new CacheAutomationError(exception);
     }
   }
 
-  public static Comparable getValue (Durable durable, Class fieldType, String fieldName) {
+  public static Comparable getValue (Durable durable, Class fieldType, String fieldName, boolean nullable) {
 
     Object returnValue;
 
     try {
-      returnValue = BeanUtility.executeGet(durable, fieldName);
+      returnValue = BeanUtility.executeGet(durable, fieldName, nullable);
     }
     catch (Exception exception) {
       throw new CacheAutomationError(exception);

@@ -1,22 +1,22 @@
 /*
  * Copyright (c) 2007, 2008, 2009, 2010, 2011 David Berkman
- * 
+ *
  * This file is part of the SmallMind Code Project.
- * 
+ *
  * The SmallMind Code Project is free software, you can redistribute
  * it and/or modify it under the terms of GNU Affero General Public
  * License as published by the Free Software Foundation, either version 3
  * of the License, or (at your option) any later version.
- * 
+ *
  * The SmallMind Code Project is distributed in the hope that it will
  * be useful, but WITHOUT ANY WARRANTY; without even the implied warranty
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * General Public License for more details.
- * 
+ *
  * You should have received a copy of the the GNU Affero General Public
  * License, along with The SmallMind Code Project. If not, see
  * <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under the GNU Affero GPL version 3 section 7
  * ------------------------------------------------------------------
  * If you modify this Program, or any covered work, by linking or
@@ -40,13 +40,21 @@ public class BeanUtility {
   private static final ConcurrentHashMap<MethodKey, Method> GETTER_MAP = new ConcurrentHashMap<MethodKey, Method>();
   private static final ConcurrentHashMap<MethodKey, MethodTool> SETTER_MAP = new ConcurrentHashMap<MethodKey, MethodTool>();
 
-  public static Object convertFromString (StringConverterFactory stringConverterFactory, Class conversionClass, String value)
+  public static Object convertFromString (StringConverterFactory stringConverterFactory, Class conversionClass, String value, boolean nullable)
     throws StringConversionException, BeanInvocationException {
+
+    if (value == null) {
+      if (!nullable) {
+        throw new NullPointerException("Null value in a non-nullable conversion");
+      }
+
+      return null;
+    }
 
     return stringConverterFactory.getStringConverter(conversionClass).convert(value);
   }
 
-  public static Object executeGet (Object target, String methodName)
+  public static Object executeGet (Object target, String methodName, boolean nullable)
     throws BeanAccessException, BeanInvocationException {
 
     Method getterMethod;
@@ -61,7 +69,11 @@ public class BeanUtility {
       // Every segment but the last is taken as a getter method
       for (int count = 0; count < methodComponents.length - 1; count++) {
         if ((currentTarget = (getterMethod = acquireGetterMethod(currentTarget, methodComponents[count])).invoke(currentTarget)) == null) {
-          throw new BeanAccessException("The 'getter' method(%s) in chain(%s) returned a 'null' component", getterMethod.getName(), methodName);
+          if (!nullable) {
+            throw new BeanAccessException("The 'getter' method(%s) in chain(%s) returned a 'null' component", getterMethod.getName(), methodName);
+          }
+
+          return null;
         }
       }
 

@@ -38,5 +38,7 @@ public @interface Index {
 
   public abstract Class<? extends Comparable> type () default Nothing.class;
 
+  public abstract boolean nullable () default false;
+
   public abstract boolean constant () default false;
 }

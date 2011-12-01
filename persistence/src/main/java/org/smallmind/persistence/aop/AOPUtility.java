@@ -35,13 +35,13 @@ import org.smallmind.nutsnbolts.reflection.type.TypeUtility;
 
 public class AOPUtility {
 
-  public static Object getParameterValue (JoinPoint joinPoint, String parameterName)
+  public static Object getParameterValue (JoinPoint joinPoint, String parameterName, boolean nullable)
     throws BeanAccessException, BeanInvocationException {
 
-    return getParameterValue(joinPoint, null, parameterName);
+    return getParameterValue(joinPoint, null, parameterName, nullable);
   }
 
-  public static Object getParameterValue (JoinPoint joinPoint, Class expectedType, String parameterName)
+  public static Object getParameterValue (JoinPoint joinPoint, Class expectedType, String parameterName, boolean nullable)
     throws BeanAccessException, BeanInvocationException {
 
     Object argumentValue;
@@ -62,11 +62,14 @@ public class AOPUtility {
     parameterNames = methodSignature.getParameterNames();
     for (int index = 0; index < parameterNames.length; index++) {
       if (parameterNames[index].equals(baseParameter)) {
-        argumentValue = (parameterGetter == null) ? joinPoint.getArgs()[index] : BeanUtility.executeGet(joinPoint.getArgs()[index], parameterGetter);
+        argumentValue = (parameterGetter == null) ? joinPoint.getArgs()[index] : BeanUtility.executeGet(joinPoint.getArgs()[index], parameterGetter, nullable);
 
         if (argumentValue == null) {
           if ((expectedType != null) && expectedType.isPrimitive()) {
             throw new BeanAccessException("A 'null' parameter can't be assigned to the primitive expected type '%s'", expectedType);
+          }
+          else if (!nullable) {
+            throw new NullPointerException("Null value in a non-nullable parameter access");
           }
 
           return null;

@@ -230,7 +230,7 @@ public class CachedWithAspect {
         throw new CacheAutomationError("Unable to locate an implementation of ORMDao within DaoManager for the requested proxy(%s)", proxy.with().getName());
       }
 
-      proxyId = VectorIndices.getValue(durable, (!proxy.type().equals(Nothing.class)) ? proxy.type() : proxyDao.getIdClass(), proxy.on());
+      proxyId = VectorIndices.getValue(durable, (!proxy.type().equals(Nothing.class)) ? proxy.type() : proxyDao.getIdClass(), proxy.on(), false);
 
       if ((proxyGetMethod = locateMethod(proxyDao, "get", proxy.with())) == null) {
         throw new CacheAutomationError("The 'get(%s)' method does not exist on the ORMDao(%s) for the requested proxy", proxyDao.getIdClass(), proxyDao.getClass().getName());
