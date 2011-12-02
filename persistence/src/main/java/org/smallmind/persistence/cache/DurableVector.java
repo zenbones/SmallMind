@@ -84,10 +84,6 @@ public abstract class DurableVector<I extends Comparable<I>, D extends Durable<I
 
   public abstract void remove (D durable);
 
-  public abstract void removeId (I id);
-
-  public abstract void filter (VectorPredicate<D> predicate);
-
   public abstract D head ();
 
   public abstract List<D> asList ();
