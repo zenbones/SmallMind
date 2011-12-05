@@ -257,7 +257,7 @@ public class CachedWithAspect {
     Type finderReturnType;
 
     if (finder.vector().value().length > 1) {
-      throw new CacheAutomationError("Finder methods are currently not compatable with Vectors that have more than a single Index");
+      throw new CacheAutomationError("Finder methods are currently not compatible with Vectors that have more than a single Index");
     }
 
     if ((finderMethod = locateMethod(ormDao, finder.method(), ormDao.getManagedClass())) == null) {

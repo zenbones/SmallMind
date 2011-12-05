@@ -50,7 +50,7 @@ public class VectorIndices {
 
       if (vector.value()[count].constant()) {
         try {
-          indexValue = (Comparable)BeanUtility.convertFromString(PersistenceManager.getPersistence().getStringConverterFactory(), (!vector.value()[count].type().equals(Nothing.class)) ? vector.value()[count].type() : getIdClass(vector.value()[count], ormDao), vector.value()[count].on(), vector.value()[count].nullable());
+          indexValue = BeanUtility.convertFromString(PersistenceManager.getPersistence().getStringConverterFactory(), (!vector.value()[count].type().equals(Nothing.class)) ? vector.value()[count].type() : getIdClass(vector.value()[count], ormDao), vector.value()[count].on(), vector.value()[count].nullable());
         }
         catch (Exception exception) {
           throw new CacheAutomationError(exception);
@@ -78,7 +78,7 @@ public class VectorIndices {
 
       if (vector.value()[count].constant()) {
         try {
-          indexValue = (Comparable)BeanUtility.convertFromString(PersistenceManager.getPersistence().getStringConverterFactory(), (!vector.value()[count].type().equals(Nothing.class)) ? vector.value()[count].type() : getIdClass(vector.value()[count], ormDao), vector.value()[count].on(), vector.value()[count].nullable());
+          indexValue = BeanUtility.convertFromString(PersistenceManager.getPersistence().getStringConverterFactory(), (!vector.value()[count].type().equals(Nothing.class)) ? vector.value()[count].type() : getIdClass(vector.value()[count], ormDao), vector.value()[count].on(), vector.value()[count].nullable());
         }
         catch (Exception exception) {
           throw new CacheAutomationError(exception);
@@ -94,7 +94,7 @@ public class VectorIndices {
     return indices;
   }
 
-  private static Class getIdClass (Index index, ORMDao ormDao) {
+  private static Class getIdClass (Key index, ORMDao ormDao) {
 
     ORMDao indexingDao;
 

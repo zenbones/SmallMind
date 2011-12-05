@@ -1,22 +1,22 @@
 /*
  * Copyright (c) 2007, 2008, 2009, 2010, 2011 David Berkman
- * 
+ *
  * This file is part of the SmallMind Code Project.
- * 
+ *
  * The SmallMind Code Project is free software, you can redistribute
  * it and/or modify it under the terms of GNU Affero General Public
  * License as published by the Free Software Foundation, either version 3
  * of the License, or (at your option) any later version.
- * 
+ *
  * The SmallMind Code Project is distributed in the hope that it will
  * be useful, but WITHOUT ANY WARRANTY; without even the implied warranty
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * General Public License for more details.
- * 
+ *
  * You should have received a copy of the the GNU Affero General Public
  * License, along with The SmallMind Code Project. If not, see
  * <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under the GNU Affero GPL version 3 section 7
  * ------------------------------------------------------------------
  * If you modify this Program, or any covered work, by linking or
@@ -57,6 +57,7 @@ public class CacheAsAspect {
     throws Throwable {
 
     Annotation statisticsStopwatchAnnotation;
+    MethodSignature methodSignature;
     Method executedMethod = null;
     String statisticsSource = null;
     boolean timingEnabled;
@@ -67,6 +68,8 @@ public class CacheAsAspect {
     if (timingEnabled = STATISTICS_FACTORY.isEnabled() && (statisticsStopwatchAnnotation != null) && ((StatisticsStopwatch)statisticsStopwatchAnnotation).value()) {
       start = System.currentTimeMillis();
     }
+
+    methodSignature = (MethodSignature)thisJoinPoint.getSignature();
 
     try {
 
@@ -80,19 +83,15 @@ public class CacheAsAspect {
         throw new CacheAutomationError("The stochastic(%d) attribute of a @CacheAs annotation can not be negative", cacheAs.time().stochastic());
       }
 
-      if (cacheAs.singular()) {
+      if (ormDao.getManagedClass().equals(methodSignature.getReturnType())) {
         if (cacheAs.ordered()) {
-          throw new CacheAutomationError("A method annotated with @CacheAs (singular = true) can't be ordered", cacheAs.comparator().getClass().getName());
+          throw new CacheAutomationError("A method annotated with @CacheAs which does not return an Iterable type can't be ordered", cacheAs.comparator().getClass().getName());
         }
         else if (cacheAs.max() > 0) {
-          throw new CacheAutomationError("A method annotated with @CacheAs (singular = true) may not define a maximum size", cacheAs.comparator().getClass().getName());
+          throw new CacheAutomationError("A method annotated with @CacheAs which does not return an Iterable type may not define a maximum size", cacheAs.comparator().getClass().getName());
         }
         else if (!cacheAs.comparator().equals(Comparator.class)) {
-          throw new CacheAutomationError("A method annotated with @CacheAs (singular = true) can not register a comparator(%s)", cacheAs.comparator().getClass().getName());
-        }
-
-        if (!ormDao.getManagedClass().equals(((MethodSignature)thisJoinPoint.getSignature()).getReturnType())) {
-          throw new CacheAutomationError("A method annotated with @CacheAs (singular = true) must return its managed type(%s)", ormDao.getManagedClass().getSimpleName());
+          throw new CacheAutomationError("A method annotated with @CacheAs which does not return an Iterable type can not register a comparator(%s)", cacheAs.comparator().getClass().getName());
         }
 
         VectoredDao vectoredDao;
@@ -132,17 +131,13 @@ public class CacheAsAspect {
           return null;
         }
       }
-      else {
+      else if (Iterable.class.isAssignableFrom(methodSignature.getReturnType())) {
         if ((!cacheAs.comparator().equals(Comparator.class)) && (!cacheAs.ordered())) {
           throw new CacheAutomationError("A method annotated with @CacheAs has registered a comparator(%s) but is not ordered", cacheAs.comparator().getClass().getName());
         }
 
-        if (!Iterable.class.isAssignableFrom(((MethodSignature)thisJoinPoint.getSignature()).getReturnType())) {
-          throw new CacheAutomationError("Methods annotated with @CacheAs (singular = false) must return a value of type <? extends Iterable>");
-        }
-
-        if ((!((returnType = (executedMethod = ((MethodSignature)thisJoinPoint.getSignature()).getMethod()).getGenericReturnType()) instanceof ParameterizedType)) || (!ormDao.getManagedClass().equals(((ParameterizedType)returnType).getActualTypeArguments()[0]))) {
-          throw new CacheAutomationError("Methods annotated with @CacheAs (singular = false) must return a value of type <? extends Iterable<%s>>", ormDao.getManagedClass().getSimpleName());
+        if ((!((returnType = (executedMethod = methodSignature.getMethod()).getGenericReturnType()) instanceof ParameterizedType)) || (!ormDao.getManagedClass().equals(((ParameterizedType)returnType).getActualTypeArguments()[0]))) {
+          throw new CacheAutomationError("Methods annotated with @CacheAs which return an Iterable type must be parameterized to <? extends Iterable<%s>>", ormDao.getManagedClass().getSimpleName());
         }
 
         VectoredDao vectoredDao;
@@ -182,13 +177,21 @@ public class CacheAsAspect {
           return null;
         }
       }
+      else {
+        throw new CacheAutomationError("Methods annotated with @CacheAs must either return their managed type(%s), or an Iterable parameterized to their managed type <? extends Iterable<%s>>", ormDao.getManagedClass().getSimpleName(), ormDao.getManagedClass().getSimpleName());
+      }
+    }
+    catch (Throwable throwable) {
+      timingEnabled = false;
+
+      throw throwable;
     }
     finally {
       if (timingEnabled) {
         stop = System.currentTimeMillis();
 
         if (executedMethod == null) {
-          executedMethod = ((MethodSignature)thisJoinPoint.getSignature()).getMethod();
+          executedMethod = methodSignature.getMethod();
         }
 
         STATISTICS_FACTORY.getStatistics().addStatLine(ormDao.getManagedClass(), executedMethod, statisticsSource, stop - start);

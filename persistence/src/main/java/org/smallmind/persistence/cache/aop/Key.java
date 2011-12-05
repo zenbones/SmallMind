@@ -28,7 +28,7 @@ package org.smallmind.persistence.cache.aop;
 
 import org.smallmind.persistence.Durable;
 
-public @interface Index {
+public @interface Key {
 
   public abstract Class<? extends Durable> with ();
 
