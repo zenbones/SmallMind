@@ -28,18 +28,14 @@ package org.smallmind.persistence.cache.aop;
 
 import org.aspectj.lang.JoinPoint;
 import org.smallmind.nutsnbolts.reflection.bean.BeanUtility;
-import org.smallmind.nutsnbolts.reflection.type.TypeUtility;
 import org.smallmind.persistence.Durable;
-import org.smallmind.persistence.PersistenceManager;
 import org.smallmind.persistence.aop.AOPUtility;
 import org.smallmind.persistence.cache.VectorIndex;
-import org.smallmind.persistence.orm.DaoManager;
-import org.smallmind.persistence.orm.ORMDao;
 
 public class VectorIndices {
 
   // Called from CachedWithAspect
-  public static VectorIndex[] getVectorIndexes (Vector vector, Durable durable, ORMDao ormDao) {
+  public static VectorIndex[] getVectorIndexes (Vector vector, Durable durable) {
 
     VectorIndex[] indices;
 
@@ -48,18 +44,7 @@ public class VectorIndices {
 
       Object indexValue;
 
-      if (vector.value()[count].constant()) {
-        try {
-          indexValue = BeanUtility.convertFromString(PersistenceManager.getPersistence().getStringConverterFactory(), (!vector.value()[count].type().equals(Nothing.class)) ? vector.value()[count].type() : getIdClass(vector.value()[count], ormDao), vector.value()[count].on(), vector.value()[count].nullable());
-        }
-        catch (Exception exception) {
-          throw new CacheAutomationError(exception);
-        }
-      }
-      else {
-        indexValue = getValue(durable, (!vector.value()[count].type().equals(Nothing.class)) ? vector.value()[count].type() : getIdClass(vector.value()[count], ormDao), vector.value()[count].on(), vector.value()[count].nullable());
-      }
-
+      indexValue = vector.value()[count].constant() ? vector.value()[count].on() : getValue(durable, vector.value()[count].on(), vector.value()[count].nullable());
       indices[count] = new VectorIndex(vector.value()[count].with(), vector.value()[count].on(), indexValue, vector.value()[count].alias());
     }
 
@@ -67,7 +52,7 @@ public class VectorIndices {
   }
 
   // Called from CacheAsAspect
-  public static VectorIndex[] getVectorIndexes (Vector vector, JoinPoint joinPoint, ORMDao ormDao) {
+  public static VectorIndex[] getVectorIndexes (Vector vector, JoinPoint joinPoint) {
 
     VectorIndex[] indices;
 
@@ -76,65 +61,31 @@ public class VectorIndices {
 
       Object indexValue;
 
-      if (vector.value()[count].constant()) {
-        try {
-          indexValue = BeanUtility.convertFromString(PersistenceManager.getPersistence().getStringConverterFactory(), (!vector.value()[count].type().equals(Nothing.class)) ? vector.value()[count].type() : getIdClass(vector.value()[count], ormDao), vector.value()[count].on(), vector.value()[count].nullable());
-        }
-        catch (Exception exception) {
-          throw new CacheAutomationError(exception);
-        }
-      }
-      else {
-        indexValue = getValue(joinPoint, (!vector.value()[count].type().equals(Nothing.class)) ? vector.value()[count].type() : getIdClass(vector.value()[count], ormDao), vector.value()[count].on(), vector.value()[count].nullable());
-      }
-
+      indexValue = vector.value()[count].constant() ? vector.value()[count].on() : getValue(joinPoint, vector.value()[count].on(), vector.value()[count].nullable());
       indices[count] = new VectorIndex(vector.value()[count].with(), vector.value()[count].on(), indexValue, vector.value()[count].alias());
     }
 
     return indices;
   }
 
-  private static Class getIdClass (Key index, ORMDao ormDao) {
-
-    ORMDao indexingDao;
-
-    if (Durable.class.equals(index.with())) {
-
-      return ormDao.getIdClass();
-    }
-
-    if ((indexingDao = DaoManager.get(index.with())) == null) {
-      throw new CacheAutomationError("Unable to locate an implementation of ORMDao within DaoManager for the requested index(%s)", index.with().getName());
-    }
-
-    return indexingDao.getIdClass();
-  }
-
-  public static Comparable getValue (JoinPoint joinPoint, Class parameterType, String parameterName, boolean nullable) {
+  public static Object getValue (JoinPoint joinPoint, String parameterName, boolean nullable) {
 
     try {
-      return (Comparable)AOPUtility.getParameterValue(joinPoint, parameterType, parameterName, nullable);
+      return AOPUtility.getParameterValue(joinPoint, parameterName, nullable);
     }
     catch (Exception exception) {
       throw new CacheAutomationError(exception);
     }
   }
 
-  public static Comparable getValue (Durable durable, Class fieldType, String fieldName, boolean nullable) {
-
-    Object returnValue;
+  public static Object getValue (Durable durable, String fieldName, boolean nullable) {
 
     try {
-      returnValue = BeanUtility.executeGet(durable, fieldName, nullable);
+
+      return BeanUtility.executeGet(durable, fieldName, nullable);
     }
     catch (Exception exception) {
       throw new CacheAutomationError(exception);
     }
-
-    if (!TypeUtility.isEssentiallyTheSameAs(fieldType, returnValue.getClass())) {
-      throw new CacheAutomationError("The getter for field(%s) on cache helper (%s) must return a type assignable to '%s'", fieldName, durable.getClass().getName(), fieldType.getName());
-    }
-
-    return (Comparable)returnValue;
   }
 }

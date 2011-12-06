@@ -36,8 +36,6 @@ public @interface Key {
 
   public abstract String alias () default "";
 
-  public abstract Class<?> type () default Nothing.class;
-
   public abstract boolean nullable () default false;
 
   public abstract boolean constant () default false;

@@ -31,17 +31,10 @@ import org.aspectj.lang.reflect.MethodSignature;
 import org.smallmind.nutsnbolts.reflection.bean.BeanAccessException;
 import org.smallmind.nutsnbolts.reflection.bean.BeanInvocationException;
 import org.smallmind.nutsnbolts.reflection.bean.BeanUtility;
-import org.smallmind.nutsnbolts.reflection.type.TypeUtility;
 
 public class AOPUtility {
 
   public static Object getParameterValue (JoinPoint joinPoint, String parameterName, boolean nullable)
-    throws BeanAccessException, BeanInvocationException {
-
-    return getParameterValue(joinPoint, null, parameterName, nullable);
-  }
-
-  public static Object getParameterValue (JoinPoint joinPoint, Class expectedType, String parameterName, boolean nullable)
     throws BeanAccessException, BeanInvocationException {
 
     Object argumentValue;
@@ -65,17 +58,12 @@ public class AOPUtility {
         argumentValue = (parameterGetter == null) ? joinPoint.getArgs()[index] : BeanUtility.executeGet(joinPoint.getArgs()[index], parameterGetter, nullable);
 
         if (argumentValue == null) {
-          if ((expectedType != null) && expectedType.isPrimitive()) {
-            throw new BeanAccessException("A 'null' parameter can't be assigned to the primitive expected type '%s'", expectedType);
+          if (methodSignature.getParameterTypes()[index].isPrimitive()) {
+            throw new BeanAccessException("A 'null' parameter can't be assigned to the primitive type '%s'", methodSignature.getParameterTypes()[index]);
           }
           else if (!nullable) {
             throw new NullPointerException("Null value in a non-nullable parameter access");
           }
-
-          return null;
-        }
-        else if ((expectedType != null) && (!TypeUtility.isEssentiallyTheSameAs(expectedType, argumentValue.getClass()))) {
-          throw new BeanAccessException("The parameter(%s) must be of the expected type '%s'", baseParameter, expectedType);
         }
 
         return argumentValue;

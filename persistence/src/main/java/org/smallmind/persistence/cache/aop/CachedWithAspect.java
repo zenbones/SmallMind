@@ -71,10 +71,10 @@ public class CachedWithAspect {
 
           switch (onPersist) {
             case INSERT:
-              vectoredDao.updateInVector(new VectorKey(VectorIndices.getVectorIndexes(update.value(), durable, ormDao), operand.getManagedClass(), Classifications.get(CachedWith.class, null, update.value())), operand.getDurable());
+              vectoredDao.updateInVector(new VectorKey(VectorIndices.getVectorIndexes(update.value(), durable), operand.getManagedClass(), Classifications.get(CachedWith.class, null, update.value())), operand.getDurable());
               break;
             case REMOVE:
-              vectoredDao.removeFromVector(new VectorKey(VectorIndices.getVectorIndexes(update.value(), durable, ormDao), operand.getManagedClass(), Classifications.get(CachedWith.class, null, update.value())), operand.getDurable());
+              vectoredDao.removeFromVector(new VectorKey(VectorIndices.getVectorIndexes(update.value(), durable), operand.getManagedClass(), Classifications.get(CachedWith.class, null, update.value())), operand.getDurable());
               break;
             default:
               throw new UnknownSwitchCaseException(onPersist.name());
@@ -95,10 +95,10 @@ public class CachedWithAspect {
             for (Durable indexingDurable : finderIterable) {
               switch (onPersist) {
                 case INSERT:
-                  vectoredDao.updateInVector(new VectorKey(VectorIndices.getVectorIndexes(finder.vector(), indexingDurable, ormDao), operand.getManagedClass(), Classifications.get(CachedWith.class, null, finder.vector())), operand.getDurable());
+                  vectoredDao.updateInVector(new VectorKey(VectorIndices.getVectorIndexes(finder.vector(), indexingDurable), operand.getManagedClass(), Classifications.get(CachedWith.class, null, finder.vector())), operand.getDurable());
                   break;
                 case REMOVE:
-                  vectoredDao.removeFromVector(new VectorKey(VectorIndices.getVectorIndexes(finder.vector(), indexingDurable, ormDao), operand.getManagedClass(), Classifications.get(CachedWith.class, null, finder.vector())), operand.getDurable());
+                  vectoredDao.removeFromVector(new VectorKey(VectorIndices.getVectorIndexes(finder.vector(), indexingDurable), operand.getManagedClass(), Classifications.get(CachedWith.class, null, finder.vector())), operand.getDurable());
                   break;
                 default:
                   throw new UnknownSwitchCaseException(onPersist.name());
@@ -110,7 +110,7 @@ public class CachedWithAspect {
 
       for (Invalidate invalidate : cachedWith.invalidators()) {
         if (executeFilter(invalidate.filter(), ormDao, durable)) {
-          vectoredDao.deleteVector(new VectorKey(VectorIndices.getVectorIndexes(invalidate.vector(), durable, ormDao), invalidate.against(), Classifications.get(CachedWith.class, null, invalidate.vector())));
+          vectoredDao.deleteVector(new VectorKey(VectorIndices.getVectorIndexes(invalidate.vector(), durable), invalidate.against(), Classifications.get(CachedWith.class, null, invalidate.vector())));
         }
       }
 
@@ -137,7 +137,7 @@ public class CachedWithAspect {
 
           Operand operand = executeProxy(update.proxy(), ormDao, durable);
 
-          vectoredDao.removeFromVector(new VectorKey(VectorIndices.getVectorIndexes(update.value(), durable, ormDao), operand.getManagedClass(), Classifications.get(CachedWith.class, null, update.value())), operand.getDurable());
+          vectoredDao.removeFromVector(new VectorKey(VectorIndices.getVectorIndexes(update.value(), durable), operand.getManagedClass(), Classifications.get(CachedWith.class, null, update.value())), operand.getDurable());
         }
       }
 
@@ -151,7 +151,7 @@ public class CachedWithAspect {
             Operand operand = executeProxy(finder.proxy(), ormDao, durable);
 
             for (Durable indexingDurable : finderIterable) {
-              vectoredDao.removeFromVector(new VectorKey(VectorIndices.getVectorIndexes(finder.vector(), indexingDurable, ormDao), operand.getManagedClass(), Classifications.get(CachedWith.class, null, finder.vector())), operand.getDurable());
+              vectoredDao.removeFromVector(new VectorKey(VectorIndices.getVectorIndexes(finder.vector(), indexingDurable), operand.getManagedClass(), Classifications.get(CachedWith.class, null, finder.vector())), operand.getDurable());
             }
           }
         }
@@ -159,7 +159,7 @@ public class CachedWithAspect {
 
       for (Invalidate invalidate : cachedWith.invalidators()) {
         if (executeFilter(invalidate.filter(), ormDao, durable)) {
-          vectoredDao.deleteVector(new VectorKey(VectorIndices.getVectorIndexes(invalidate.vector(), durable, ormDao), invalidate.against(), Classifications.get(CachedWith.class, null, invalidate.vector())));
+          vectoredDao.deleteVector(new VectorKey(VectorIndices.getVectorIndexes(invalidate.vector(), durable), invalidate.against(), Classifications.get(CachedWith.class, null, invalidate.vector())));
         }
       }
     }
@@ -230,7 +230,7 @@ public class CachedWithAspect {
         throw new CacheAutomationError("Unable to locate an implementation of ORMDao within DaoManager for the requested proxy(%s)", proxy.with().getName());
       }
 
-      proxyId = VectorIndices.getValue(durable, (!proxy.type().equals(Nothing.class)) ? proxy.type() : proxyDao.getIdClass(), proxy.on(), false);
+      proxyId = VectorIndices.getValue(durable, proxy.on(), false);
 
       if ((proxyGetMethod = locateMethod(proxyDao, "get", proxy.with())) == null) {
         throw new CacheAutomationError("The 'get(%s)' method does not exist on the ORMDao(%s) for the requested proxy", proxyDao.getIdClass(), proxyDao.getClass().getName());
