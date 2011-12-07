@@ -41,12 +41,6 @@
   <profiles>
     <profile>
       <id>javadoc</id>
-      <activation>
-        <property>
-          <name>performRelease</name>
-          <value>true</value>
-        </property>
-      </activation>
       <build>
         <plugins>
           <plugin>
@@ -67,12 +61,6 @@
     <profile>
       <!-- You'll need -Dgpg.passphrase=thephrase or -Darguments=-Dgpg.passphrase=thephrase -->
       <id>gpg</id>
-      <activation>
-        <property>
-          <name>performRelease</name>
-          <value>true</value>
-        </property>
-      </activation>
       <build>
         <plugins>
           <plugin>
