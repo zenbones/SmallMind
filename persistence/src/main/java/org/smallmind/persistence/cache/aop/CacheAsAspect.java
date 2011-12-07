@@ -50,7 +50,16 @@ import org.smallmind.persistence.statistics.aop.StatisticsStopwatch;
 public class CacheAsAspect {
 
   private static final Random RANDOM = new SecureRandom();
-  private static final StatisticsFactory STATISTICS_FACTORY = PersistenceManager.getPersistence().getStatisticsFactory();
+  private static final StatisticsFactory STATISTICS_FACTORY;
+
+  static {
+
+    if (PersistenceManager.getPersistence() == null) {
+      throw new ExceptionInInitializerError("No Persistence instance has been registered with the PersistenceManager");
+    }
+
+    STATISTICS_FACTORY = PersistenceManager.getPersistence().getStatisticsFactory();
+  }
 
   @Around(value = "execution(@CacheAs * * (..)) && @annotation(cacheAs) && this(ormDao)", argNames = "thisJoinPoint, cacheAs, ormDao")
   public Object aroundCacheAsMethod (ProceedingJoinPoint thisJoinPoint, CacheAs cacheAs, VectorAwareORMDao ormDao)
