@@ -489,6 +489,10 @@
             </execution>
           </executions>
           <configuration>
+            <root>
+              <groupId>org.smallmind</groupId>
+              <artifactId>smallmind</artifactId>
+            </root>
             <licenses>
               <license>COPYING</license>
               <license>COPYING.LESSER</license>
