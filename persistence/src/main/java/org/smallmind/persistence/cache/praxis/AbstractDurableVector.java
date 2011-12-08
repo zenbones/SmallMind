@@ -27,10 +27,8 @@
 package org.smallmind.persistence.cache.praxis;
 
 import java.io.Serializable;
-import java.util.Collections;
 import java.util.Comparator;
 import java.util.Iterator;
-import java.util.List;
 import org.smallmind.persistence.Durable;
 import org.smallmind.persistence.cache.DurableVector;
 import org.terracotta.annotations.AutolockRead;
@@ -134,17 +132,5 @@ public abstract class AbstractDurableVector<I extends Serializable & Comparable<
     }
 
     return getRoster().get(0);
-  }
-
-  @AutolockRead
-  public synchronized List<D> asList () {
-
-    return Collections.unmodifiableList(getRoster());
-  }
-
-  @AutolockRead
-  public synchronized Iterator<D> iterator () {
-
-    return Collections.unmodifiableList(getRoster()).iterator();
   }
 }

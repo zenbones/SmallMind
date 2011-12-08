@@ -27,7 +27,10 @@
 package org.smallmind.persistence.cache.praxis.intrinsic;
 
 import java.io.Serializable;
+import java.util.Collections;
 import java.util.Comparator;
+import java.util.Iterator;
+import java.util.List;
 import org.smallmind.persistence.Durable;
 import org.smallmind.persistence.cache.DurableVector;
 import org.smallmind.persistence.cache.praxis.AbstractDurableVector;
@@ -61,5 +64,17 @@ public class ByReferenceIntrinsicVector<I extends Serializable & Comparable<I>, 
   public DurableVector<I, D> copy () {
 
     return new ByReferenceIntrinsicVector<I, D>(new IntrinsicRoster<D>(roster), getComparator(), getMaxSize(), getTimeToLiveSeconds(), isOrdered());
+  }
+
+  @AutolockRead
+  public synchronized List<D> asList () {
+
+    return Collections.unmodifiableList(getRoster());
+  }
+
+  @AutolockRead
+  public synchronized Iterator<D> iterator () {
+
+    return Collections.unmodifiableList(getRoster()).iterator();
   }
 }

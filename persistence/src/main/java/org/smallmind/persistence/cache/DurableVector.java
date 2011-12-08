@@ -55,6 +55,14 @@ public abstract class DurableVector<I extends Comparable<I>, D extends Durable<I
 
   public abstract boolean isSingular ();
 
+  public abstract void add (D durable);
+
+  public abstract void remove (D durable);
+
+  public abstract D head ();
+
+  public abstract List<D> asList ();
+
   public Comparator<D> getComparator () {
 
     return comparator;
@@ -79,12 +87,4 @@ public abstract class DurableVector<I extends Comparable<I>, D extends Durable<I
 
     return (timeToLiveSeconds <= 0) || ((System.currentTimeMillis() - creationTimeMilliseconds) / 1000 <= timeToLiveSeconds);
   }
-
-  public abstract void add (D durable);
-
-  public abstract void remove (D durable);
-
-  public abstract D head ();
-
-  public abstract List<D> asList ();
 }
