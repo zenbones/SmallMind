@@ -466,6 +466,7 @@
           <version>2.2.1</version>
           <configuration>
             <password>${git.passphrase}</password>
+            <autoVersionSubmodules>true</autoVersionSubmodules>
           </configuration>
         </plugin>
         <plugin>
