@@ -1,2 +1,133 @@
 ﻿All SmallMind projects are available through the Maven Central Repository.
 
+{{{
+<dependency>
+	<groupId>org.smallmind</groupId>
+	<artifactId>smallmind-cloud</artifactId>
+</dependency>
+
+<dependency>
+	<groupId>org.smallmind</groupId>
+	<artifactId>smallmind-constellation</artifactId>
+</dependency>
+
+<dependency>
+	<groupId>org.smallmind</groupId>
+	<artifactId>smallmind-foundation</artifactId>
+</dependency>
+
+<dependency>
+	<groupId>org.smallmind</groupId>
+	<artifactId>smallmind-license-plugin</artifactId>
+</dependency>
+
+<dependency>
+	<groupId>org.smallmind</groupId>
+	<artifactId>smallmind-liquibase</artifactId>
+</dependency>
+
+<dependency>
+	<groupId>org.smallmind</groupId>
+	<artifactId>smallmind-nutsnbolts</artifactId>
+</dependency>
+
+<dependency>
+	<groupId>org.smallmind</groupId>
+	<artifactId>smallmind-persistence</artifactId>
+</dependency>
+
+<dependency>
+	<groupId>org.smallmind</groupId>
+	<artifactId>smallmind-plumber</artifactId>
+</dependency>
+
+<dependency>
+	<groupId>org.smallmind</groupId>
+	<artifactId>smallmind-quorum</artifactId>
+</dependency>
+
+<dependency>
+	<groupId>org.smallmind</groupId>
+	<artifactId>smallmind-scheduling</artifactId>
+</dependency>
+
+<dependency>
+	<groupId>org.smallmind</groupId>
+	<artifactId>scheduling-quartz</artifactId>
+</dependency>
+
+<dependency>
+	<groupId>org.smallmind</groupId>
+	<artifactId>smallmind-scribe</artifactId>
+</dependency>
+
+<dependency>
+	<groupId>org.smallmind</groupId>
+	<artifactId>scribe-apache</artifactId>
+</dependency>
+
+<dependency>
+	<groupId>org.smallmind</groupId>
+	<artifactId>scribe-pen</artifactId>
+</dependency>
+
+<dependency>
+	<groupId>org.smallmind</groupId>
+	<artifactId>scribe-ink-indigenous</artifactId>
+</dependency>
+
+<dependency>
+	<groupId>org.smallmind</groupId>
+	<artifactId>scribe-ink-jdk</artifactId>
+</dependency>
+
+<dependency>
+	<groupId>org.smallmind</groupId>
+	<artifactId>scribe-ink-log4j</artifactId>
+</dependency>
+
+<dependency>
+	<groupId>org.smallmind</groupId>
+	<artifactId>scribe-slf4j</artifactId>
+</dependency>
+
+<dependency>
+	<groupId>org.smallmind</groupId>
+	<artifactId>scribe-spring</artifactId>
+</dependency>
+
+<dependency>
+	<groupId>org.smallmind</groupId>
+	<artifactId>smallmind-seda</artifactId>
+</dependency>
+
+<dependency>
+	<groupId>org.smallmind</groupId>
+	<artifactId>smallmind-spark</artifactId>
+</dependency>
+
+<dependency>
+	<groupId>org.smallmind</groupId>
+	<artifactId>spark-tanukisoft-mojo</artifactId>
+</dependency>
+
+<dependency>
+	<groupId>org.smallmind</groupId>
+	<artifactId>spark-tanukisoft-integration</artifactId>
+</dependency>
+
+<dependency>
+	<groupId>org.smallmind</groupId>
+	<artifactId>smallmind-swing</artifactId>
+</dependency>
+
+<dependency>
+	<groupId>org.smallmind</groupId>
+	<artifactId>smallmind-validation-plugin</artifactId>
+</dependency>
+
+<dependency>
+	<groupId>org.smallmind</groupId>
+	<artifactId>smallmind-wicket</artifactId>
+</dependency>
+}}}
