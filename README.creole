@@ -1,0 +1,2 @@
+﻿All SmallMind projects are available through the Maven Central Repository.
+
