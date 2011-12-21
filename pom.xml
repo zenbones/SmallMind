@@ -8,7 +8,7 @@
   </parent>
   <groupId>org.smallmind</groupId>
   <artifactId>smallmind</artifactId>
-  <version>1.3.22</version>
+  <version>1.3.23-SNAPSHOT</version>
   <packaging>pom</packaging>
   <name>Parent</name>
   <description>Parent POM</description>
@@ -129,57 +129,57 @@
       <dependency>
         <groupId>org.smallmind</groupId>
         <artifactId>smallmind-nutsnbolts</artifactId>
-        <version>${project.version}</version>
+        <version>1.3.21</version>
       </dependency>
       <dependency>
         <groupId>org.smallmind</groupId>
         <artifactId>scribe-pen</artifactId>
-        <version>${project.version}</version>
+        <version>1.3.21</version>
       </dependency>
       <dependency>
         <groupId>org.smallmind</groupId>
         <artifactId>scribe-ink-indigenous</artifactId>
-        <version>${project.version}</version>
+        <version>1.3.21</version>
       </dependency>
       <dependency>
         <groupId>org.smallmind</groupId>
         <artifactId>scribe-apache</artifactId>
-        <version>${project.version}</version>
+        <version>1.3.21</version>
       </dependency>
       <dependency>
         <groupId>org.smallmind</groupId>
         <artifactId>scribe-slf4j</artifactId>
-        <version>${project.version}</version>
+        <version>1.3.21</version>
       </dependency>
       <dependency>
         <groupId>org.smallmind</groupId>
         <artifactId>smallmind-quorum</artifactId>
-        <version>${project.version}</version>
+        <version>1.3.21</version>
       </dependency>
       <dependency>
         <groupId>org.smallmind</groupId>
         <artifactId>smallmind-persistence</artifactId>
-        <version>${project.version}</version>
+        <version>1.3.21</version>
       </dependency>
       <dependency>
         <groupId>org.smallmind</groupId>
         <artifactId>smallmind-cloud</artifactId>
-        <version>${project.version}</version>
+        <version>1.3.21</version>
       </dependency>
       <dependency>
         <groupId>org.smallmind</groupId>
         <artifactId>scheduling-base</artifactId>
-        <version>${project.version}</version>
+        <version>1.3.21</version>
       </dependency>
       <dependency>
         <groupId>org.smallmind</groupId>
         <artifactId>smallmind-liquibase</artifactId>
-        <version>${project.version}</version>
+        <version>1.3.21</version>
       </dependency>
       <dependency>
         <groupId>org.smallmind</groupId>
         <artifactId>smallmind-swing</artifactId>
-        <version>${project.version}</version>
+        <version>1.3.21</version>
       </dependency>
       <dependency>
         <groupId>org.apache.maven</groupId>
@@ -481,7 +481,7 @@
         <plugin>
           <groupId>org.smallmind</groupId>
           <artifactId>smallmind-license-plugin</artifactId>
-          <version>${project.version}</version>
+          <version>1.3.21</version>
           <executions>
             <execution>
               <id>generate</id>

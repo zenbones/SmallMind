@@ -4,10 +4,10 @@
   <parent>
     <groupId>org.smallmind</groupId>
     <artifactId>smallmind</artifactId>
-    <version>1.3.22</version>
+    <version>1.3.23-SNAPSHOT</version>
   </parent>
   <artifactId>smallmind-wicket</artifactId>
-  <version>1.3.22</version>
+  <version>1.3.21</version>
   <name>Wicket</name>
   <description>Wicket Widgets and Extensions</description>
   <packaging>jar</packaging>
