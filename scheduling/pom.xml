@@ -4,10 +4,10 @@
    <parent>
       <groupId>org.smallmind</groupId>
       <artifactId>smallmind</artifactId>
-      <version>1.3.22-SNAPSHOT</version>
+      <version>1.3.22</version>
    </parent>
    <artifactId>smallmind-scheduling</artifactId>
-  <version>1.3.21</version>
+  <version>1.3.22</version>
    <name>Scheduling</name>
    <description>Scheduling Services and Extensions</description>
    <packaging>pom</packaging>
