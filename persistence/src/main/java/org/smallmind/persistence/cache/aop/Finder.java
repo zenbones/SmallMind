@@ -35,13 +35,7 @@ import org.smallmind.persistence.Durable;
 @Retention(RetentionPolicy.RUNTIME)
 public @interface Finder {
 
-  public abstract Vector vector ();
+  public abstract Class<? extends Durable> with () default Durable.class;
 
-  public abstract String method ();
-
-  public abstract String filter () default "";
-
-  public abstract String onPersist () default "";
-
-  public abstract Proxy proxy () default @Proxy(with = Durable.class, on = "");
+  public String method () default "";
 }

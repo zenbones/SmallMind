@@ -35,9 +35,7 @@ import org.smallmind.persistence.Durable;
 @Retention(RetentionPolicy.RUNTIME)
 public @interface Proxy {
 
-  public abstract Class<? extends Durable> with ();
+  public abstract Class<? extends Durable> with () default Durable.class;
 
-  public abstract String on ();
-
-  public abstract Class<? extends Comparable> type () default Nothing.class;
+  public String method () default "";
 }

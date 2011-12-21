@@ -37,7 +37,5 @@ public @interface CachedWith {
 
   public abstract Update[] updates () default {};
 
-  public abstract Finder[] finders () default {};
-
-  public abstract Invalidate[] invalidators () default {};
+  public abstract Invalidate[] invalidates () default {};
 }

@@ -35,9 +35,11 @@ import org.smallmind.persistence.Durable;
 @Retention(RetentionPolicy.RUNTIME)
 public @interface Invalidate {
 
-  public abstract Vector vector ();
-
-  public abstract Class<? extends Durable> against ();
+  public abstract Vector value ();
 
   public abstract String filter () default "";
+
+  public abstract Class<? extends Durable> against () default Durable.class;
+
+  public abstract Finder finder () default @Finder();
 }
