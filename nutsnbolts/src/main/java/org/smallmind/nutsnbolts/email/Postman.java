@@ -26,8 +26,9 @@
  */
 package org.smallmind.nutsnbolts.email;
 
+import java.io.CharArrayReader;
+import java.io.CharArrayWriter;
 import java.io.File;
-import java.io.StringReader;
 import java.io.StringWriter;
 import java.util.Arrays;
 import java.util.Date;
@@ -118,31 +119,31 @@ public class Postman {
 
       if (mail.getBodyReader() != null) {
 
-        StringBuilder bodyBuilder;
+        CharArrayWriter bodyWriter;
         char[] buffer;
         int charsRead;
 
         buffer = new char[256];
-        bodyBuilder = new StringBuilder();
+        bodyWriter = new CharArrayWriter();
         while ((charsRead = mail.getBodyReader().read(buffer)) >= 0) {
-          bodyBuilder.append(buffer, 0, charsRead);
+          bodyWriter.write(buffer, 0, charsRead);
         }
         mail.getBodyReader().close();
 
         MimeBodyPart textPart = new MimeBodyPart();
 
         if (interpolationMap == null) {
-          textPart.setText(bodyBuilder.toString());
+          textPart.setText(bodyWriter.toString());
         }
         else {
 
           Template template;
           StringWriter templateWriter;
-          MD5Key md5Key = new MD5Key(EncryptionUtilities.hash(HashAlgorithm.MD5, bodyBuilder.toString()));
+          MD5Key md5Key = new MD5Key(EncryptionUtilities.hash(HashAlgorithm.MD5, bodyWriter.toString().getBytes()));
 
           synchronized (templateMap) {
             if ((template = templateMap.get(md5Key)) == null) {
-              templateMap.put(md5Key, template = new Template(new String(md5Key.getMd5Hash()), new StringReader(bodyBuilder.toString()), freemarkerConf));
+              templateMap.put(md5Key, template = new Template(new String(md5Key.getMd5Hash()), new CharArrayReader(bodyWriter.toCharArray()), freemarkerConf));
             }
           }
 

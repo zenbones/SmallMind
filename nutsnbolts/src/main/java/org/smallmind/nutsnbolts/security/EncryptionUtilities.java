@@ -76,7 +76,7 @@ public class EncryptionUtilities {
     return bytes;
   }
 
-  public static byte[] hash (HashAlgorithm algorithm, String toBeHashed)
+  public static byte[] hash (HashAlgorithm algorithm, byte[] toBeHashed)
     throws NoSuchAlgorithmException {
 
     MessageDigest messageDigest;
@@ -88,7 +88,7 @@ public class EncryptionUtilities {
       }
     }
 
-    return messageDigest.digest(toBeHashed.getBytes());
+    return messageDigest.digest(toBeHashed);
   }
 
   public static Key generateKey (SymmetricAlgorithm algorithm)
@@ -146,7 +146,7 @@ public class EncryptionUtilities {
     }
   }
 
-  public static byte[] encrypt (Key key, String toBeEncrypted)
+  public static byte[] encrypt (Key key, byte[] toBeEncrypted)
     throws NoSuchAlgorithmException, NoSuchPaddingException, InvalidKeyException, IllegalBlockSizeException, BadPaddingException {
 
     Cipher cipher;
@@ -155,12 +155,12 @@ public class EncryptionUtilities {
     cipher = Cipher.getInstance(key.getAlgorithm());
     cipher.init(Cipher.ENCRYPT_MODE, key);
 
-    data = toBeEncrypted.getBytes();
+    data = toBeEncrypted;
 
     return cipher.doFinal(data);
   }
 
-  public static String decrypt (Key key, byte[] toBeDecrypted)
+  public static byte[] decrypt (Key key, byte[] toBeDecrypted)
     throws NoSuchAlgorithmException, NoSuchPaddingException, InvalidKeyException, IllegalBlockSizeException, BadPaddingException {
 
     Cipher cipher;
@@ -168,7 +168,7 @@ public class EncryptionUtilities {
     cipher = Cipher.getInstance(key.getAlgorithm());
     cipher.init(Cipher.DECRYPT_MODE, key);
 
-    return new String(cipher.doFinal(toBeDecrypted));
+    return cipher.doFinal(toBeDecrypted);
   }
 }
 
