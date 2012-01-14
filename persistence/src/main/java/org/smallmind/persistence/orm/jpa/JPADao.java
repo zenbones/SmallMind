@@ -28,40 +28,25 @@ package org.smallmind.persistence.orm.jpa;
 
 import java.io.Serializable;
 import java.util.Collections;
-import java.util.LinkedList;
 import java.util.List;
-import org.hibernate.Criteria;
-import org.hibernate.Query;
-import org.hibernate.SQLQuery;
-import org.hibernate.ScrollMode;
-import org.hibernate.criterion.DetachedCriteria;
-import org.hibernate.criterion.Order;
-import org.hibernate.criterion.Projections;
-import org.hibernate.criterion.Restrictions;
-import org.hibernate.transform.Transformers;
-import org.smallmind.nutsnbolts.reflection.type.TypeUtility;
+import javax.persistence.Query;
 import org.smallmind.persistence.Durable;
 import org.smallmind.persistence.PersistenceMode;
 import org.smallmind.persistence.cache.VectoredDao;
 import org.smallmind.persistence.orm.DaoManager;
 import org.smallmind.persistence.orm.ProxySession;
 import org.smallmind.persistence.orm.VectorAwareORMDao;
-import org.smallmind.persistence.orm.hibernate.CriteriaDetails;
-import org.smallmind.persistence.orm.hibernate.HibernateProxySession;
-import org.smallmind.persistence.orm.hibernate.QueryDetails;
-import org.smallmind.persistence.orm.hibernate.SQLQueryDetails;
-import org.smallmind.persistence.orm.hibernate.ScrollIterator;
 
 public abstract class JPADao<I extends Serializable & Comparable<I>, D extends Durable<I>> extends VectorAwareORMDao<I, D> {
 
-  private HibernateProxySession proxySession;
+  private JPAProxySession proxySession;
 
-  public JPADao (HibernateProxySession proxySession) {
+  public JPADao (JPAProxySession proxySession) {
 
     this(proxySession, null);
   }
 
-  public JPADao (HibernateProxySession proxySession, VectoredDao<I, D> vectoredDao) {
+  public JPADao (JPAProxySession proxySession, VectoredDao<I, D> vectoredDao) {
 
     super(proxySession, vectoredDao);
 
@@ -99,7 +84,7 @@ public abstract class JPADao<I extends Serializable & Comparable<I>, D extends D
     Object persistedObject;
 
     if ((vectoredDao = getVectoredDao()) == null) {
-      if ((persistedObject = proxySession.getSession().get(durableClass, id)) != null) {
+      if ((persistedObject = proxySession.getEntityManager().find(durableClass, id)) != null) {
 
         return durableClass.cast(persistedObject);
       }
@@ -113,7 +98,7 @@ public abstract class JPADao<I extends Serializable & Comparable<I>, D extends D
         return durable;
       }
 
-      if ((persistedObject = proxySession.getSession().get(durableClass, id)) != null) {
+      if ((persistedObject = proxySession.getEntityManager().find(durableClass, id)) != null) {
         durable = durableClass.cast(persistedObject);
 
         return vectoredDao.persist(durableClass, durable, PersistenceMode.SOFT);
@@ -121,72 +106,6 @@ public abstract class JPADao<I extends Serializable & Comparable<I>, D extends D
     }
 
     return null;
-  }
-
-  public List<D> list () {
-
-    return Collections.checkedList(proxySession.getSession().createCriteria(getManagedClass()).list(), getManagedClass());
-  }
-
-  public List<D> list (int maxResults) {
-
-    return list(maxResults, maxResults);
-  }
-
-  public List<D> list (int maxResults, int fetchSize) {
-
-    return Collections.checkedList(proxySession.getSession().createCriteria(getManagedClass()).setMaxResults(maxResults).setFetchSize(fetchSize).list(), getManagedClass());
-  }
-
-  public List<D> list (I greaterThan, int maxResults) {
-
-    return list(greaterThan, maxResults, maxResults);
-  }
-
-  public List<D> list (final I greaterThan, final int maxResults, final int fetchSize) {
-
-    return listByCriteria(new CriteriaDetails() {
-
-      @Override
-      public Criteria completeCriteria (Criteria criteria) {
-
-        return criteria.add(Restrictions.gt("id", greaterThan)).addOrder(Order.asc("id")).setMaxResults(maxResults).setFetchSize(fetchSize);
-      }
-    });
-  }
-
-  public Iterable<D> scroll () {
-
-    return new ScrollIterator<D>(proxySession.getSession().createCriteria(getManagedClass()).scroll(ScrollMode.SCROLL_INSENSITIVE), getManagedClass());
-  }
-
-  public Iterable<D> scroll (int fetchSize) {
-
-    return new ScrollIterator<D>(proxySession.getSession().createCriteria(getManagedClass()).setFetchSize(fetchSize).scroll(ScrollMode.SCROLL_INSENSITIVE), getManagedClass());
-  }
-
-  public Iterable<D> scrollById (final I greaterThan, final int fetchSize) {
-
-    return scrollByCriteria(new CriteriaDetails() {
-
-      @Override
-      public Criteria completeCriteria (Criteria criteria) {
-
-        return criteria.add(Restrictions.gt("id", greaterThan)).addOrder(Order.asc("id")).setFetchSize(fetchSize);
-      }
-    });
-  }
-
-  public long size () {
-
-    return findByCriteria(Long.class, new CriteriaDetails() {
-
-      @Override
-      public Criteria completeCriteria (Criteria criteria) {
-
-        return criteria.setProjection(Projections.rowCount());
-      }
-    });
   }
 
   public D persist (D durable) {
@@ -199,11 +118,11 @@ public abstract class JPADao<I extends Serializable & Comparable<I>, D extends D
     D persistentDurable;
     VectoredDao<I, D> vectoredDao = getVectoredDao();
 
-    if (proxySession.getSession().contains(durable)) {
+    if (proxySession.getEntityManager().contains(durable)) {
       persistentDurable = durable;
     }
     else {
-      persistentDurable = getManagedClass().cast(proxySession.getSession().merge(durable));
+      persistentDurable = getManagedClass().cast(proxySession.getEntityManager().merge(durable));
       proxySession.flush();
     }
 
@@ -224,11 +143,11 @@ public abstract class JPADao<I extends Serializable & Comparable<I>, D extends D
 
     VectoredDao<I, D> vectoredDao = getVectoredDao();
 
-    if (!proxySession.getSession().contains(durable)) {
-      proxySession.getSession().delete(proxySession.getSession().load(durable.getClass(), durable.getId()));
+    if (!proxySession.getEntityManager().contains(durable)) {
+      proxySession.getEntityManager().remove(proxySession.getEntityManager().find(durable.getClass(), durable.getId()));
     }
     else {
-      proxySession.getSession().delete(durable);
+      proxySession.getEntityManager().remove(durable);
     }
 
     proxySession.flush();
@@ -240,75 +159,7 @@ public abstract class JPADao<I extends Serializable & Comparable<I>, D extends D
 
   public D detach (D object) {
 
-    throw new UnsupportedOperationException("Hibernate has no explicit detached state");
-  }
-
-  public D findBySQLQuery (SQLQueryDetails sqlQueryDetails) {
-
-    return getManagedClass().cast(constructSQLQuery(sqlQueryDetails).addEntity(getManagedClass()).uniqueResult());
-  }
-
-  public <T> T findBySQLQuery (Class<T> returnType, SQLQueryDetails sqlQueryDetails) {
-
-    SQLQuery sqlQuery;
-
-    sqlQuery = constructSQLQuery(sqlQueryDetails);
-
-    if (Durable.class.isAssignableFrom(returnType)) {
-
-      return returnType.cast(sqlQuery.addEntity(returnType).uniqueResult());
-    }
-    else if (!TypeUtility.isEssentiallyPrimitive(returnType)) {
-
-      return returnType.cast(sqlQuery.setResultTransformer(Transformers.aliasToBean(returnType)).uniqueResult());
-    }
-    else {
-
-      Object obj;
-
-      if ((obj = sqlQuery.uniqueResult()) != null) {
-
-        return returnType.cast(obj);
-      }
-
-      return null;
-    }
-  }
-
-  public List<D> listBySQLQuery (SQLQueryDetails sqlQueryDetails) {
-
-    return Collections.checkedList(constructSQLQuery(sqlQueryDetails).addEntity(getManagedClass()).list(), getManagedClass());
-  }
-
-  public <T> List<T> listBySQLQuery (Class<T> returnType, SQLQueryDetails sqlQueryDetails) {
-
-    SQLQuery sqlQuery;
-
-    sqlQuery = constructSQLQuery(sqlQueryDetails);
-
-    if (Durable.class.isAssignableFrom(returnType)) {
-
-      return Collections.checkedList(sqlQuery.addEntity(returnType).list(), returnType);
-    }
-    else if (!TypeUtility.isEssentiallyPrimitive(returnType)) {
-
-      return Collections.checkedList(sqlQuery.setResultTransformer(Transformers.aliasToBean(returnType)).list(), returnType);
-    }
-    else {
-
-      LinkedList<T> returnList = new LinkedList<T>();
-
-      for (Object obj : sqlQuery.list()) {
-        returnList.add(returnType.cast(obj));
-      }
-
-      return returnList;
-    }
-  }
-
-  public Iterable<D> scrollBySQLQuery (SQLQueryDetails sqlQueryDetails) {
-
-    return new ScrollIterator<D>(constructSQLQuery(sqlQueryDetails).addEntity(getManagedClass()).scroll(ScrollMode.SCROLL_INSENSITIVE), getManagedClass());
+    throw new UnsupportedOperationException("JPA has no explicit detached state");
   }
 
   public int executeWithQuery (QueryDetails queryDetails) {
@@ -318,85 +169,26 @@ public abstract class JPADao<I extends Serializable & Comparable<I>, D extends D
 
   public <T> T findByQuery (Class<T> returnType, QueryDetails queryDetails) {
 
-    return returnType.cast(constructQuery(queryDetails).uniqueResult());
+    return returnType.cast(constructQuery(queryDetails).getSingleResult());
   }
 
   public D findByQuery (QueryDetails queryDetails) {
 
-    return getManagedClass().cast(constructQuery(queryDetails).uniqueResult());
+    return getManagedClass().cast(constructQuery(queryDetails).getSingleResult());
   }
 
   public <T> List<T> listByQuery (Class<T> returnType, QueryDetails queryDetails) {
 
-    return Collections.checkedList(constructQuery(queryDetails).list(), returnType);
+    return Collections.checkedList(constructQuery(queryDetails).getResultList(), returnType);
   }
 
   public List<D> listByQuery (QueryDetails queryDetails) {
 
-    return Collections.checkedList(constructQuery(queryDetails).list(), getManagedClass());
-  }
-
-  public <T> Iterable<T> scrollByQuery (Class<T> returnType, QueryDetails queryDetails) {
-
-    return new ScrollIterator<T>(constructQuery(queryDetails).scroll(ScrollMode.SCROLL_INSENSITIVE), returnType);
-  }
-
-  public Iterable<D> scrollByQuery (QueryDetails queryDetails) {
-
-    return new ScrollIterator<D>(constructQuery(queryDetails).scroll(ScrollMode.SCROLL_INSENSITIVE), getManagedClass());
-  }
-
-  public <T> T findByCriteria (Class<T> returnType, CriteriaDetails criteriaDetails) {
-
-    return returnType.cast(constructCriteria(criteriaDetails).uniqueResult());
-  }
-
-  public D findByCriteria (CriteriaDetails criteriaDetails) {
-
-    return getManagedClass().cast(constructCriteria(criteriaDetails).uniqueResult());
-  }
-
-  public <T> List<T> listByCriteria (Class<T> returnType, CriteriaDetails criteriaDetails) {
-
-    return Collections.checkedList(constructCriteria(criteriaDetails).list(), returnType);
-  }
-
-  public List<D> listByCriteria (CriteriaDetails criteriaDetails) {
-
-    return Collections.checkedList(constructCriteria(criteriaDetails).list(), getManagedClass());
-  }
-
-  public <T> Iterable<T> scrollByCriteria (Class<T> returnType, CriteriaDetails criteriaDetails) {
-
-    return new ScrollIterator<T>(constructCriteria(criteriaDetails).scroll(ScrollMode.SCROLL_INSENSITIVE), returnType);
-  }
-
-  public Iterable<D> scrollByCriteria (CriteriaDetails criteriaDetails) {
-
-    return new ScrollIterator<D>(constructCriteria(criteriaDetails).scroll(ScrollMode.SCROLL_INSENSITIVE), getManagedClass());
-  }
-
-  public SQLQuery constructSQLQuery (SQLQueryDetails sqlQueryDetails) {
-
-    return sqlQueryDetails.completeSQLQuery((SQLQuery)proxySession.getSession().createSQLQuery(sqlQueryDetails.getSQLQueryString()).setCacheable(true));
+    return Collections.checkedList(constructQuery(queryDetails).getResultList(), getManagedClass());
   }
 
   public Query constructQuery (QueryDetails queryDetails) {
 
-    return queryDetails.completeQuery(proxySession.getSession().createQuery(queryDetails.getQueryString()).setCacheable(true));
-  }
-
-  public Criteria constructCriteria (CriteriaDetails criteriaDetails) {
-
-    Criteria criteria;
-
-    criteria = (criteriaDetails.getAlias() == null) ? proxySession.getSession().createCriteria(getManagedClass()) : proxySession.getSession().createCriteria(getManagedClass(), criteriaDetails.getAlias());
-
-    return criteriaDetails.completeCriteria(criteria).setCacheable(true);
-  }
-
-  public DetachedCriteria detachCriteria () {
-
-    return DetachedCriteria.forClass(getManagedClass());
+    return queryDetails.completeQuery(proxySession.getEntityManager().createQuery(queryDetails.getQueryString()));
   }
 }

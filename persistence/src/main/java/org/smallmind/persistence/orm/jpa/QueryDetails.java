@@ -26,7 +26,7 @@
  */
 package org.smallmind.persistence.orm.jpa;
 
-import org.hibernate.Query;
+import javax.persistence.Query;
 
 public abstract class QueryDetails {
 
