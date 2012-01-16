@@ -122,7 +122,6 @@
                <licenseFile>${user.home}/.m2/wrapper-license.conf</licenseFile>
                <operatingSystem>${tanukisoft.wrapper.os}</operatingSystem>
                <wrapperListener>org.smallmind.spark.tanukisoft.integration.spring.ClassPathXmlSpringContextWrapperListener</wrapperListener>
-               <javaCommand>java.exe</javaCommand>
                <jvmInitMemoryMB>64</jvmInitMemoryMB>
                <jvmMaxMemoryMB>256</jvmMaxMemoryMB>
                <appParameters>
