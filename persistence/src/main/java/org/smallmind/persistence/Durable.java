@@ -30,11 +30,7 @@ import java.io.Serializable;
 import java.lang.reflect.Field;
 import java.util.HashSet;
 import java.util.Set;
-import org.terracotta.annotations.AutolockRead;
-import org.terracotta.annotations.AutolockWrite;
-import org.terracotta.annotations.InstrumentedClass;
 
-@InstrumentedClass
 public abstract class Durable<I extends Comparable<I>> implements Serializable, Comparable<Durable<I>> {
 
   private static final long serialVersionUID = 1L;
@@ -48,28 +44,9 @@ public abstract class Durable<I extends Comparable<I>> implements Serializable, 
     }
   };
 
-  private I id;
+  public abstract I getId ();
 
-  public Durable () {
-
-  }
-
-  public Durable (Durable<I> durable) {
-
-    id = durable.getId();
-  }
-
-  @AutolockRead
-  public synchronized I getId () {
-
-    return id;
-  }
-
-  @AutolockWrite
-  public synchronized void setId (I id) {
-
-    this.id = id;
-  }
+  public abstract void setId (I id);
 
   public int compareTo (Durable<I> durable) {
 
@@ -92,16 +69,14 @@ public abstract class Durable<I extends Comparable<I>> implements Serializable, 
     return durable.getId().compareTo(getId());
   }
 
-  @Override
-  @AutolockRead
   public synchronized int hashCode () {
 
-    if (id == null) {
+    if (getId() == null) {
 
       return super.hashCode();
     }
 
-    int h = id.hashCode();
+    int h = getId().hashCode();
 
     h ^= (h >>> 20) ^ (h >>> 12);
 
@@ -112,11 +87,11 @@ public abstract class Durable<I extends Comparable<I>> implements Serializable, 
   public synchronized boolean equals (Object obj) {
 
     if (obj instanceof Durable) {
-      if ((((Durable)obj).getId() == null) || (id == null)) {
+      if ((((Durable)obj).getId() == null) || (getId() == null)) {
         return super.equals(obj);
       }
       else {
-        return ((Durable)obj).getId().equals(id);
+        return ((Durable)obj).getId().equals(getId());
       }
     }
 
@@ -181,7 +156,7 @@ public abstract class Durable<I extends Comparable<I>> implements Serializable, 
     StringBuilder displayBuilder = new StringBuilder();
 
     if (IN_USE_SET_LOCAL.get().contains(this)) {
-      displayBuilder.append(this.getClass().getSimpleName()).append("[id=").append(id).append(",...]");
+      displayBuilder.append(this.getClass().getSimpleName()).append("[id=").append(getId()).append(",...]");
     }
     else {
       try {

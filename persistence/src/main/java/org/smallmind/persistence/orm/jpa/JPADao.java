@@ -157,6 +157,54 @@ public abstract class JPADao<I extends Serializable & Comparable<I>, D extends D
     }
   }
 
+  public List<D> list () {
+
+    return listByQuery(new QueryDetails() {
+
+      @Override
+      public String getQueryString () {
+
+        return "select entity from " + getManagedClass().getSimpleName() + " entity";
+      }
+
+      @Override
+      public Query completeQuery (Query query) {
+
+        return query;
+      }
+    });
+  }
+
+  public List<D> list (int fetchSize) {
+
+    throw new UnsupportedOperationException();
+  }
+
+  public List<D> list (I greaterThan, int fetchSize) {
+
+    throw new UnsupportedOperationException();
+  }
+
+  public Iterable<D> scroll () {
+
+    throw new UnsupportedOperationException();
+  }
+
+  public Iterable<D> scroll (int fetchSize) {
+
+    throw new UnsupportedOperationException();
+  }
+
+  public Iterable<D> scrollById (I greaterThan, int fetchSize) {
+
+    throw new UnsupportedOperationException();
+  }
+
+  public long size () {
+
+    throw new UnsupportedOperationException();
+  }
+
   public D detach (D object) {
 
     throw new UnsupportedOperationException("JPA has no explicit detached state");

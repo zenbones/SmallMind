@@ -24,21 +24,23 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.spark.tanukisoft.mojo;
+package org.smallmind.persistence.orm.hibernate;
 
-public enum OSStyle {
+import org.smallmind.persistence.Durable;
 
-   WINDOWS("wrapper.dll"), UNIX("libwrapper.so");
+public abstract class HibernateDurable<I extends Comparable<I>> extends Durable<I> {
 
-   private String library;
+  private I id;
 
-   private OSStyle (String library) {
+  @Override
+  public synchronized I getId () {
 
-      this.library = library;
-   }
+    return id;
+  }
 
-   public String getLibrary () {
+  @Override
+  public synchronized void setId (I id) {
 
-      return library;
-   }
+    this.id = id;
+  }
 }
