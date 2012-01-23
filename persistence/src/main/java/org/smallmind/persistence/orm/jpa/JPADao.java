@@ -217,12 +217,42 @@ public abstract class JPADao<I extends Serializable & Comparable<I>, D extends D
 
   public <T> T findByQuery (Class<T> returnType, QueryDetails queryDetails) {
 
-    return returnType.cast(constructQuery(queryDetails).getSingleResult());
+    // TODO: Kundera doesn't handle getSuingleResult until 2.0.5
+    // return returnType.cast(constructQuery(queryDetails).getSingleResult());
+
+    List resultList;
+
+    if ((resultList = constructQuery(queryDetails).getResultList()) != null) {
+      if (resultList.size() > 1) {
+        throw new IllegalStateException("Expected a single result");
+      }
+      else if (resultList.size() > 0) {
+
+        return returnType.cast(resultList.get(0));
+      }
+    }
+
+    return null;
   }
 
   public D findByQuery (QueryDetails queryDetails) {
 
-    return getManagedClass().cast(constructQuery(queryDetails).getSingleResult());
+    // TODO: Kundera doesn't handle getSuingleResult until 2.0.5
+    // return getManagedClass().cast(constructQuery(queryDetails).getSingleResult());
+
+    List resultList;
+
+    if ((resultList = constructQuery(queryDetails).getResultList()) != null) {
+      if (resultList.size() > 1) {
+        throw new IllegalStateException("Expected a single result");
+      }
+      else if (resultList.size() > 0) {
+
+        return getManagedClass().cast(resultList.get(0));
+      }
+    }
+
+    return null;
   }
 
   public <T> List<T> listByQuery (Class<T> returnType, QueryDetails queryDetails) {
