@@ -41,14 +41,12 @@ public class SimulatedSequence extends Sequence {
   private final ConcurrentHashMap<String, SequenceData> DATA_MAP = new ConcurrentHashMap<String, SequenceData>();
   private final DataSource dataSource;
   private final String tableName;
-  private final String columnName;
   private final int incrementBy;
 
-  public SimulatedSequence (DataSource dataSource, String tableName, String columnName, int incrementBy) {
+  public SimulatedSequence (DataSource dataSource, String tableName, int incrementBy) {
 
     this.dataSource = dataSource;
     this.tableName = tableName;
-    this.columnName = columnName;
     this.incrementBy = incrementBy;
   }
 
@@ -84,7 +82,7 @@ public class SimulatedSequence extends Sequence {
 
       this.name = name;
 
-      sequenceSql = "UPDATE " + tableName + " SET " + columnName + "=LAST_INSERT_ID(" + columnName + " + " + incrementBy + ") where name = '" + name + "'";
+      sequenceSql = "UPDATE " + tableName + " SET next_val=LAST_INSERT_ID(next_val + " + incrementBy + ") where name = '" + name + "'";
       atomicBoundary = new AtomicLong(getLastInsertId());
     }
 
