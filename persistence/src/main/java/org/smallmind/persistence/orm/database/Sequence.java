@@ -24,20 +24,16 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.persistence.orm.hibernate.hsqldb;
+package org.smallmind.persistence.orm.database;
 
-public class HSQLDialect extends org.hibernate.dialect.HSQLDialect {
+import org.smallmind.persistence.orm.database.mysql.SequenceManager;
 
-  @Override
-  public String getSelectClauseNullString (int sqlType) {
+public abstract class Sequence {
 
-    String typeName = getTypeName(sqlType, 1, 1, 0);
-    //trim off the length/precision/scale
-    int loc = typeName.indexOf('(');
-    if (loc != -1) {
-      typeName = typeName.substring(0, loc);
-    }
+  public void register () {
 
-    return "cast(null as " + typeName + ")";
+    SequenceManager.register(this);
   }
+
+  public abstract long nextLong (String name);
 }

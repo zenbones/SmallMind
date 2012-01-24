@@ -31,93 +31,127 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.atomic.AtomicLong;
 import javax.sql.DataSource;
 import org.smallmind.persistence.DataIntegrityException;
+import org.smallmind.persistence.orm.database.Sequence;
 
-public class SimulatedSequence {
+public class SimulatedSequence extends Sequence {
 
-  private static final ConcurrentHashMap<String, String> SQL_MAP = new ConcurrentHashMap<String, String>();
-  private static final ConcurrentLinkedQueue<Long> SEQUENCE_QUEUE = new ConcurrentLinkedQueue<Long>();
+  private final ConcurrentHashMap<String, SequenceData> DATA_MAP = new ConcurrentHashMap<String, SequenceData>();
+  private final DataSource dataSource;
+  private final String tableName;
+  private final String columnName;
+  private final int incrementBy;
 
-  private DataSource dataSource;
-  private String tableName;
-  private int incrementBy;
-
-  public SimulatedSequence (DataSource dataSource, String tableName, int incrementBy) {
+  public SimulatedSequence (DataSource dataSource, String tableName, String columnName, int incrementBy) {
 
     this.dataSource = dataSource;
     this.tableName = tableName;
+    this.columnName = columnName;
     this.incrementBy = incrementBy;
   }
 
+  @Override
   public long nextLong (String name) {
 
-    if (incrementBy == 1) {
-      return getLastInsertId(name);
+    return getSequenceData(name).nextLong();
+  }
+
+  private SequenceData getSequenceData (String name) {
+
+    SequenceData sequenceData;
+
+    if ((sequenceData = DATA_MAP.get(name)) == null) {
+      synchronized (DATA_MAP) {
+        if ((sequenceData = DATA_MAP.get(name)) == null) {
+          DATA_MAP.put(name, sequenceData = new SequenceData(name));
+        }
+      }
     }
 
-    Long nextValue;
+    return sequenceData;
+  }
 
-    if ((nextValue = SEQUENCE_QUEUE.poll()) == null) {
-      synchronized (SEQUENCE_QUEUE) {
-        if ((nextValue = SEQUENCE_QUEUE.poll()) == null) {
-          nextValue = getLastInsertId(name);
-          for (int count = 1; count < incrementBy; count++) {
-            SEQUENCE_QUEUE.add(nextValue + count);
+  private class SequenceData {
+
+    private final AtomicLong atomicBoundary;
+    private final AtomicLong atomicOffset = new AtomicLong(0);
+    private final String name;
+    private final String sequenceSql;
+
+    public SequenceData (String name) {
+
+      this.name = name;
+
+      sequenceSql = "UPDATE " + tableName + " SET " + columnName + "=LAST_INSERT_ID(" + columnName + " + " + incrementBy + ") where name = '" + name + "'";
+      atomicBoundary = new AtomicLong(getLastInsertId());
+    }
+
+    public long nextLong () {
+
+      long nextValue = 0;
+
+      do {
+        if (incrementBy == 1) {
+
+          nextValue = getLastInsertId();
+        }
+        else {
+
+          long currentOffset;
+
+          do {
+            if ((currentOffset = atomicOffset.incrementAndGet()) < incrementBy) {
+
+              nextValue = atomicBoundary.get() + currentOffset;
+            }
+            else if (currentOffset == incrementBy) {
+              atomicBoundary.set(nextValue = getLastInsertId());
+              atomicOffset.set(0);
+            }
+          } while (currentOffset > incrementBy);
+        }
+      } while (nextValue == 0);
+
+      return nextValue;
+    }
+
+    private long getLastInsertId () {
+
+      Connection connection = null;
+      Statement statement = null;
+      ResultSet resultSet = null;
+
+      try {
+        try {
+          connection = dataSource.getConnection();
+          statement = connection.createStatement(ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_READ_ONLY);
+          statement.executeUpdate(sequenceSql, Statement.RETURN_GENERATED_KEYS);
+
+          resultSet = statement.getGeneratedKeys();
+          if (resultSet.next()) {
+            return resultSet.getLong(1);
+          }
+          else {
+            throw new DataIntegrityException("No sequence(%s) has been generated", name);
+          }
+        }
+        finally {
+          if (resultSet != null) {
+            resultSet.close();
+          }
+          if (statement != null) {
+            statement.close();
+          }
+          if (connection != null) {
+            connection.close();
           }
         }
       }
-    }
-
-    return nextValue;
-  }
-
-  private long getLastInsertId (String name) {
-
-    Connection connection = null;
-    Statement statement = null;
-    ResultSet resultSet = null;
-
-    try {
-      try {
-        connection = dataSource.getConnection();
-        statement = connection.createStatement(ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_READ_ONLY);
-        statement.executeUpdate(getSql(name), Statement.RETURN_GENERATED_KEYS);
-
-        resultSet = statement.getGeneratedKeys();
-        if (resultSet.next()) {
-          return resultSet.getLong(1);
-        }
-        else {
-          throw new DataIntegrityException("No sequence(%s) has been generated", name);
-        }
-      }
-      finally {
-        if (resultSet != null) {
-          resultSet.close();
-        }
-        if (statement != null) {
-          statement.close();
-        }
-        if (connection != null) {
-          connection.close();
-        }
+      catch (SQLException sqlException) {
+        throw new DataIntegrityException(sqlException);
       }
     }
-    catch (SQLException sqlException) {
-      throw new DataIntegrityException(sqlException);
-    }
-  }
-
-  private String getSql (String name) {
-
-    String sql;
-
-    if ((sql = SQL_MAP.get(name)) == null) {
-      SQL_MAP.put(name, sql = "UPDATE " + tableName + " SET next_val=LAST_INSERT_ID(next_val + " + incrementBy + ") where name = '" + name + "'");
-    }
-
-    return sql;
   }
 }
