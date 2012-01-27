@@ -95,7 +95,7 @@
         <snapshotRepository>
           <id>${nexus.release.repository.id}</id>
           <name>Nexus Snapshot Repository</name>
-          <url>http://${nexus.server}/nexus/content/repositories/snapshots</url>
+          <url>${nexus.server}/nexus/content/repositories/snapshots</url>
         </snapshotRepository>
       </distributionManagement>
     </profile>
