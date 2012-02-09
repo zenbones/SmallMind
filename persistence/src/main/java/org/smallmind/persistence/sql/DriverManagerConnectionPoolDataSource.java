@@ -1,22 +1,22 @@
 /*
  * Copyright (c) 2007, 2008, 2009, 2010, 2011 David Berkman
- *
+ * 
  * This file is part of the SmallMind Code Project.
- *
+ * 
  * The SmallMind Code Project is free software, you can redistribute
  * it and/or modify it under the terms of GNU Affero General Public
  * License as published by the Free Software Foundation, either version 3
  * of the License, or (at your option) any later version.
- *
+ * 
  * The SmallMind Code Project is distributed in the hope that it will
  * be useful, but WITHOUT ANY WARRANTY; without even the implied warranty
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * General Public License for more details.
- *
+ * 
  * You should have received a copy of the the GNU Affero General Public
  * License, along with The SmallMind Code Project. If not, see
  * <http://www.gnu.org/licenses/>.
- *
+ * 
  * Additional permission under the GNU Affero GPL version 3 section 7
  * ------------------------------------------------------------------
  * If you modify this Program, or any covered work, by linking or
@@ -42,9 +42,22 @@ public class DriverManagerConnectionPoolDataSource implements ConnectionPoolData
     this(new DriverManagerDataSource(driverClassName, jdbcUrl, user, password));
   }
 
+  public DriverManagerConnectionPoolDataSource (String driverClassName, String jdbcUrl, String user, String password, int maxStatements)
+    throws SQLException {
+
+    this(maxStatements, new DriverManagerDataSource(driverClassName, jdbcUrl, user, password));
+  }
+
   public DriverManagerConnectionPoolDataSource (DriverManagerDataSource dataSource) {
 
     this.dataSource = dataSource;
+  }
+
+  public DriverManagerConnectionPoolDataSource (int maxStatements, DriverManagerDataSource dataSource) {
+
+    this(dataSource);
+
+    this.maxStatements = maxStatements;
   }
 
   public PooledConnection getPooledConnection ()
@@ -57,16 +70,6 @@ public class DriverManagerConnectionPoolDataSource implements ConnectionPoolData
     throws SQLException {
 
     return new DriverManagerPooledConnection(dataSource, user, password, maxStatements);
-  }
-
-  public int getMaxStatements () {
-
-    return maxStatements;
-  }
-
-  public void setMaxStatements (int maxStatements) {
-
-    this.maxStatements = maxStatements;
   }
 
   public PrintWriter getLogWriter ()

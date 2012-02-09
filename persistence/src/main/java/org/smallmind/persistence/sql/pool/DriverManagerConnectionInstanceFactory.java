@@ -1,22 +1,22 @@
 /*
  * Copyright (c) 2007, 2008, 2009, 2010, 2011 David Berkman
- *
+ * 
  * This file is part of the SmallMind Code Project.
- *
+ * 
  * The SmallMind Code Project is free software, you can redistribute
  * it and/or modify it under the terms of GNU Affero General Public
  * License as published by the Free Software Foundation, either version 3
  * of the License, or (at your option) any later version.
- *
+ * 
  * The SmallMind Code Project is distributed in the hope that it will
  * be useful, but WITHOUT ANY WARRANTY; without even the implied warranty
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * General Public License for more details.
- *
+ * 
  * You should have received a copy of the the GNU Affero General Public
  * License, along with The SmallMind Code Project. If not, see
  * <http://www.gnu.org/licenses/>.
- *
+ * 
  * Additional permission under the GNU Affero GPL version 3 section 7
  * ------------------------------------------------------------------
  * If you modify this Program, or any covered work, by linking or
@@ -26,57 +26,31 @@
  */
 package org.smallmind.persistence.sql.pool;
 
-import java.sql.Connection;
 import java.sql.SQLException;
-import javax.sql.PooledConnection;
 import org.smallmind.persistence.sql.DriverManagerConnectionPoolDataSource;
 import org.smallmind.persistence.sql.DriverManagerDataSource;
-import org.smallmind.quorum.pool.connection.ConnectionInstance;
-import org.smallmind.quorum.pool.connection.ConnectionInstanceFactory;
-import org.smallmind.quorum.pool.connection.ConnectionPool;
 
-public class DriverManagerConnectionInstanceFactory implements ConnectionInstanceFactory<Connection, PooledConnection> {
-
-  private DriverManagerDataSource dataSource;
-  private DriverManagerConnectionPoolDataSource pooledDataSource;
-  private String validationQuery = "Select 1";
+public class DriverManagerConnectionInstanceFactory extends ConnectionPoolDataSourceConnectionInstanceFactory {
 
   public DriverManagerConnectionInstanceFactory (String driverClassName, String jdbcUrl, String user, String password)
     throws SQLException {
 
-    dataSource = new DriverManagerDataSource(driverClassName, jdbcUrl, user, password);
-    pooledDataSource = new DriverManagerConnectionPoolDataSource(dataSource);
+    this(new DriverManagerDataSource(driverClassName, jdbcUrl, user, password));
   }
 
-  public String getValidationQuery () {
-
-    return validationQuery;
-  }
-
-  public void setValidationQuery (String validationQuery) {
-
-    this.validationQuery = validationQuery;
-  }
-
-  public int getMaxStatements () {
-
-    return pooledDataSource.getMaxStatements();
-  }
-
-  public void setMaxStatements (int maxStatements) {
-
-    pooledDataSource.setMaxStatements(maxStatements);
-  }
-
-  public Connection rawInstance ()
+  public DriverManagerConnectionInstanceFactory (String driverClassName, String jdbcUrl, String user, String password, int maxStatements)
     throws SQLException {
 
-    return dataSource.getConnection();
+    this(maxStatements, new DriverManagerDataSource(driverClassName, jdbcUrl, user, password));
   }
 
-  public ConnectionInstance<PooledConnection> createInstance (ConnectionPool<PooledConnection> connectionPool)
-    throws SQLException {
+  private DriverManagerConnectionInstanceFactory (DriverManagerDataSource dataSource) {
 
-    return new PooledConnectionInstance(connectionPool, pooledDataSource.getPooledConnection(), validationQuery);
+    super(dataSource, new DriverManagerConnectionPoolDataSource(dataSource));
+  }
+
+  private DriverManagerConnectionInstanceFactory (int maxStatements, DriverManagerDataSource dataSource) {
+
+    super(dataSource, new DriverManagerConnectionPoolDataSource(maxStatements, dataSource));
   }
 }

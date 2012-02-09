@@ -37,19 +37,20 @@ import org.smallmind.quorum.pool.connection.ConnectionPool;
 
 public class ConnectionPoolDataSourceConnectionInstanceFactory implements ConnectionInstanceFactory<Connection, PooledConnection> {
 
-  private DataSource dataSource;
   private ConnectionPoolDataSource pooledDataSource;
+  private DataSource dataSource;
   private String validationQuery = "select 1";
 
   public ConnectionPoolDataSourceConnectionInstanceFactory (ConnectionPoolDataSource pooledDataSource) {
 
-    this(null, pooledDataSource);
+    this.pooledDataSource = pooledDataSource;
   }
 
   public ConnectionPoolDataSourceConnectionInstanceFactory (DataSource dataSource, ConnectionPoolDataSource pooledDataSource) {
 
+    this(pooledDataSource);
+
     this.dataSource = dataSource;
-    this.pooledDataSource = pooledDataSource;
   }
 
   public String getValidationQuery () {
@@ -66,7 +67,7 @@ public class ConnectionPoolDataSourceConnectionInstanceFactory implements Connec
     throws SQLException {
 
     if (dataSource == null) {
-      throw new UnsupportedOperationException("No standard (unpooled) data source is available");
+      throw new UnsupportedOperationException("No standard (non-pooled) data source is available");
     }
 
     return dataSource.getConnection();
