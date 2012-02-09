@@ -24,14 +24,14 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.persistence.orm.sql.pool;
+package org.smallmind.persistence.sql.pool;
 
 import java.io.PrintWriter;
 import java.sql.Connection;
 import java.sql.SQLException;
 import javax.sql.DataSource;
 import javax.sql.PooledConnection;
-import org.smallmind.persistence.orm.sql.DataSourceManager;
+import org.smallmind.persistence.sql.DataSourceManager;
 import org.smallmind.quorum.pool.connection.ConnectionPool;
 import org.smallmind.quorum.pool.connection.ConnectionPoolException;
 

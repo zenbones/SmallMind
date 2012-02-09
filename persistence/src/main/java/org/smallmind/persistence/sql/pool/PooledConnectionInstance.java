@@ -24,7 +24,7 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.persistence.orm.sql.pool;
+package org.smallmind.persistence.sql.pool;
 
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
@@ -33,8 +33,6 @@ import java.util.concurrent.atomic.AtomicReference;
 import javax.sql.ConnectionEvent;
 import javax.sql.ConnectionEventListener;
 import javax.sql.PooledConnection;
-import org.smallmind.quorum.pool.connection.ConnectionInstance;
-import org.smallmind.quorum.pool.connection.ConnectionPool;
 import org.smallmind.quorum.pool.connection.ConnectionInstance;
 import org.smallmind.quorum.pool.connection.ConnectionPool;
 import org.smallmind.scribe.pen.LoggerManager;

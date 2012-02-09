@@ -24,24 +24,14 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.persistence.orm.database;
+package org.smallmind.quorum.juggler;
 
-import java.util.HashMap;
-import java.util.concurrent.atomic.AtomicLong;
+import org.smallmind.nutsnbolts.lang.FormattedException;
 
-public class InMemorySequence extends Sequence {
+public class NoAvailableResourceException extends FormattedException {
 
-  private final HashMap<String, AtomicLong> counterMap = new HashMap<String, AtomicLong>();
+  public NoAvailableResourceException (String message, Object... args) {
 
-  @Override
-  public synchronized long nextLong (String name) {
-
-    AtomicLong counter;
-
-    if ((counter = counterMap.get(name)) == null) {
-      counterMap.put(name, counter = new AtomicLong(0));
-    }
-
-    return counter.incrementAndGet();
+    super(message, args);
   }
 }

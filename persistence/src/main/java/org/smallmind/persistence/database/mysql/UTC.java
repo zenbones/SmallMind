@@ -24,38 +24,49 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.persistence.orm.sql.pool;
+package org.smallmind.persistence.database.mysql;
 
-import java.io.IOException;
-import java.io.Writer;
-import org.smallmind.scribe.pen.Level;
-import org.smallmind.scribe.pen.LoggerManager;
+import java.util.Date;
+import org.joda.time.DateTime;
+import org.joda.time.DateTimeZone;
+import org.joda.time.format.DateTimeFormatter;
+import org.joda.time.format.ISODateTimeFormat;
 
-public class PooledLogWriter extends Writer {
+public class UTC {
 
-  private Level level;
+  private static final DateTimeFormatter ISO_DATE_TIME_FORMATTER = ISODateTimeFormat.dateTime();
 
-  public PooledLogWriter () {
+  public static DateTime isoParse (String date) {
 
-    this(Level.INFO);
+    return ISO_DATE_TIME_FORMATTER.parseDateTime(date);
   }
 
-  public PooledLogWriter (Level level) {
+  public static String isoFormat (Date date) {
 
-    this.level = level;
+    return ISO_DATE_TIME_FORMATTER.print(date.getTime());
   }
 
-  public void write (char[] cbuf, int off, int len)
-    throws IOException {
+  public static Date now () {
 
-    LoggerManager.getLogger(PooledLogWriter.class).log(level, new String(cbuf, off, len));
+    DateTime now;
+
+    return (now = new DateTime()).minusMillis(now.getZone().getOffset(now)).toDate();
   }
 
-  public void flush () {
+  public static Date then (Date date) {
 
+    DateTime then;
+
+    return (then = new DateTime(date.getTime())).minusMillis(then.getZone().getOffset(then)).toDate();
   }
 
-  public void close () {
+  public static Date local (Date date) {
 
+    return local(date, DateTimeZone.getDefault().getOffset(System.currentTimeMillis()) / 1000 / 60);
+  }
+
+  public static Date local (Date date, int offset) {
+
+    return new DateTime(date.getTime()).withZoneRetainFields(DateTimeZone.forOffsetHours(offset)).plusHours(offset).toDate();
   }
 }

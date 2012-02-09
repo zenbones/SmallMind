@@ -1,22 +1,22 @@
 /*
  * Copyright (c) 2007, 2008, 2009, 2010, 2011 David Berkman
- * 
+ *
  * This file is part of the SmallMind Code Project.
- * 
+ *
  * The SmallMind Code Project is free software, you can redistribute
  * it and/or modify it under the terms of GNU Affero General Public
  * License as published by the Free Software Foundation, either version 3
  * of the License, or (at your option) any later version.
- * 
+ *
  * The SmallMind Code Project is distributed in the hope that it will
  * be useful, but WITHOUT ANY WARRANTY; without even the implied warranty
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * General Public License for more details.
- * 
+ *
  * You should have received a copy of the the GNU Affero General Public
  * License, along with The SmallMind Code Project. If not, see
  * <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under the GNU Affero GPL version 3 section 7
  * ------------------------------------------------------------------
  * If you modify this Program, or any covered work, by linking or
@@ -24,28 +24,32 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.persistence.orm.sql.pool;
+package org.smallmind.persistence.sql.pool;
 
 import java.sql.Connection;
 import java.sql.SQLException;
+import javax.sql.ConnectionPoolDataSource;
+import javax.sql.DataSource;
 import javax.sql.PooledConnection;
-import org.smallmind.persistence.orm.sql.DriverManagerConnectionPoolDataSource;
-import org.smallmind.persistence.orm.sql.DriverManagerDataSource;
 import org.smallmind.quorum.pool.connection.ConnectionInstance;
 import org.smallmind.quorum.pool.connection.ConnectionInstanceFactory;
 import org.smallmind.quorum.pool.connection.ConnectionPool;
 
-public class DriverManagerConnectionInstanceFactory implements ConnectionInstanceFactory<Connection, PooledConnection> {
+public class ConnectionPoolDataSourceConnectionInstanceFactory implements ConnectionInstanceFactory<Connection, PooledConnection> {
 
-  private DriverManagerDataSource dataSource;
-  private DriverManagerConnectionPoolDataSource pooledDataSource;
-  private String validationQuery = "Select 1";
+  private DataSource dataSource;
+  private ConnectionPoolDataSource pooledDataSource;
+  private String validationQuery = "select 1";
 
-  public DriverManagerConnectionInstanceFactory (String driverClassName, String jdbcUrl, String user, String password)
-    throws SQLException {
+  public ConnectionPoolDataSourceConnectionInstanceFactory (ConnectionPoolDataSource pooledDataSource) {
 
-    dataSource = new DriverManagerDataSource(driverClassName, jdbcUrl, user, password);
-    pooledDataSource = new DriverManagerConnectionPoolDataSource(dataSource);
+    this(null, pooledDataSource);
+  }
+
+  public ConnectionPoolDataSourceConnectionInstanceFactory (DataSource dataSource, ConnectionPoolDataSource pooledDataSource) {
+
+    this.dataSource = dataSource;
+    this.pooledDataSource = pooledDataSource;
   }
 
   public String getValidationQuery () {
@@ -58,18 +62,12 @@ public class DriverManagerConnectionInstanceFactory implements ConnectionInstanc
     this.validationQuery = validationQuery;
   }
 
-  public int getMaxStatements () {
-
-    return pooledDataSource.getMaxStatements();
-  }
-
-  public void setMaxStatements (int maxStatements) {
-
-    pooledDataSource.setMaxStatements(maxStatements);
-  }
-
   public Connection rawInstance ()
     throws SQLException {
+
+    if (dataSource == null) {
+      throw new UnsupportedOperationException("No standard (unpooled) data source is available");
+    }
 
     return dataSource.getConnection();
   }

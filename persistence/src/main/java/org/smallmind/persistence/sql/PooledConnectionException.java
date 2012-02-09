@@ -24,49 +24,29 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.persistence.orm.database.mysql;
+package org.smallmind.persistence.sql;
 
-import java.util.Date;
-import org.joda.time.DateTime;
-import org.joda.time.DateTimeZone;
-import org.joda.time.format.DateTimeFormatter;
-import org.joda.time.format.ISODateTimeFormat;
+import org.smallmind.nutsnbolts.lang.FormattedException;
 
-public class UTC {
+public class PooledConnectionException extends FormattedException {
 
-  private static final DateTimeFormatter ISO_DATE_TIME_FORMATTER = ISODateTimeFormat.dateTime();
+  public PooledConnectionException () {
 
-  public static DateTime isoParse (String date) {
-
-    return ISO_DATE_TIME_FORMATTER.parseDateTime(date);
+    super();
   }
 
-  public static String isoFormat (Date date) {
+  public PooledConnectionException (String message, Object... args) {
 
-    return ISO_DATE_TIME_FORMATTER.print(date.getTime());
+    super(message, args);
   }
 
-  public static Date now () {
+  public PooledConnectionException (Throwable throwable, String message, Object... args) {
 
-    DateTime now;
-
-    return (now = new DateTime()).minusMillis(now.getZone().getOffset(now)).toDate();
+    super(throwable, message, args);
   }
 
-  public static Date then (Date date) {
+  public PooledConnectionException (Throwable throwable) {
 
-    DateTime then;
-
-    return (then = new DateTime(date.getTime())).minusMillis(then.getZone().getOffset(then)).toDate();
-  }
-
-  public static Date local (Date date) {
-
-    return local(date, DateTimeZone.getDefault().getOffset(System.currentTimeMillis()) / 1000 / 60);
-  }
-
-  public static Date local (Date date, int offset) {
-
-    return new DateTime(date.getTime()).withZoneRetainFields(DateTimeZone.forOffsetHours(offset)).plusHours(offset).toDate();
+    super(throwable);
   }
 }

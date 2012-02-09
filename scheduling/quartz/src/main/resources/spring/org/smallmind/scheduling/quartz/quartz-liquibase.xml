@@ -12,7 +12,7 @@
    </bean>
 
    <!-- Data Source -->
-   <bean id="quartzDataSource" class="org.smallmind.persistence.orm.sql.DriverManagerDataSource">
+   <bean id="quartzDataSource" class="org.smallmind.persistence.sql.DriverManagerDataSource">
       <constructor-arg index="0" value="${jdbc.driver.classname}"/>
       <constructor-arg index="1" value="${jdbc.url.quartz}"/>
       <constructor-arg index="2" value="${jdbc.username.quartz}"/>

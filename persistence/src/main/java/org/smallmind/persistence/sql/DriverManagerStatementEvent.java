@@ -24,29 +24,33 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.persistence.orm.sql;
+package org.smallmind.persistence.sql;
 
-import org.smallmind.nutsnbolts.lang.FormattedException;
+import java.sql.PreparedStatement;
+import java.sql.SQLException;
+import javax.sql.PooledConnection;
+import javax.sql.StatementEvent;
 
-public class PooledConnectionException extends FormattedException {
+public class DriverManagerStatementEvent extends StatementEvent {
 
-  public PooledConnectionException () {
+  private String statementId;
 
-    super();
+  public DriverManagerStatementEvent (PooledConnection connection, PreparedStatement statement, String statementId) {
+
+    super(connection, statement);
+
+    this.statementId = statementId;
   }
 
-  public PooledConnectionException (String message, Object... args) {
+  public DriverManagerStatementEvent (PooledConnection connection, PreparedStatement statement, SQLException exception, String statementId) {
 
-    super(message, args);
+    super(connection, statement, exception);
+
+    this.statementId = statementId;
   }
 
-  public PooledConnectionException (Throwable throwable, String message, Object... args) {
+  public String getStatementId () {
 
-    super(throwable, message, args);
-  }
-
-  public PooledConnectionException (Throwable throwable) {
-
-    super(throwable);
+    return statementId;
   }
 }

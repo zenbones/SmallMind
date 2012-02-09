@@ -24,33 +24,28 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.persistence.orm.sql;
+package org.smallmind.persistence.database.mysql;
 
-import java.sql.PreparedStatement;
-import java.sql.SQLException;
-import javax.sql.PooledConnection;
-import javax.sql.StatementEvent;
+import java.util.concurrent.atomic.AtomicReference;
+import org.smallmind.persistence.database.Sequence;
 
-public class DriverManagerStatementEvent extends StatementEvent {
+public class SequenceManager {
 
-  private String statementId;
+  private static final AtomicReference<Sequence> SEQUENCE_REFERENCE = new AtomicReference<Sequence>();
 
-  public DriverManagerStatementEvent (PooledConnection connection, PreparedStatement statement, String statementId) {
+  public static void register (Sequence sequence) {
 
-    super(connection, statement);
-
-    this.statementId = statementId;
+    SEQUENCE_REFERENCE.set(sequence);
   }
 
-  public DriverManagerStatementEvent (PooledConnection connection, PreparedStatement statement, SQLException exception, String statementId) {
+  public static long nextLong (String name) {
 
-    super(connection, statement, exception);
+    Sequence sequence;
 
-    this.statementId = statementId;
-  }
+    if ((sequence = SEQUENCE_REFERENCE.get()) == null) {
+      throw new IllegalStateException("The SequenceManager has not been properly initialized");
+    }
 
-  public String getStatementId () {
-
-    return statementId;
+    return sequence.nextLong(name);
   }
 }

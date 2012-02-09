@@ -24,38 +24,24 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.persistence.orm.sql;
+package org.smallmind.persistence.database;
 
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
-import javax.sql.DataSource;
-import org.smallmind.nutsnbolts.lang.StaticManager;
-import org.smallmind.persistence.orm.ORMInitializationException;
+import java.util.HashMap;
+import java.util.concurrent.atomic.AtomicLong;
 
-public class DataSourceManager implements StaticManager {
+public class InMemorySequence extends Sequence {
 
-  private static final InheritableThreadLocal<Map<String, DataSource>> SOURCE_MAP_LOCAL = new InheritableThreadLocal<Map<String, DataSource>>() {
+  private final HashMap<String, AtomicLong> counterMap = new HashMap<String, AtomicLong>();
 
-    @Override
-    protected Map<String, DataSource> initialValue () {
+  @Override
+  public synchronized long nextLong (String name) {
 
-      return new ConcurrentHashMap<String, DataSource>();
-    }
-  };
+    AtomicLong counter;
 
-  public static void register (String key, DataSource dataSource) {
-
-    SOURCE_MAP_LOCAL.get().put(key, dataSource);
-  }
-
-  public static DataSource getDataSource (String key) {
-
-    DataSource dataSource;
-
-    if ((dataSource = SOURCE_MAP_LOCAL.get().get(key)) == null) {
-      throw new ORMInitializationException("No DataSource was mapped to the key(%s)", key);
+    if ((counter = counterMap.get(name)) == null) {
+      counterMap.put(name, counter = new AtomicLong(0));
     }
 
-    return dataSource;
+    return counter.incrementAndGet();
   }
 }

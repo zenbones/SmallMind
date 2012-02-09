@@ -24,9 +24,9 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.persistence.orm.database;
+package org.smallmind.persistence.database;
 
-import org.smallmind.persistence.orm.database.mysql.SequenceManager;
+import org.smallmind.persistence.database.mysql.SequenceManager;
 
 public abstract class Sequence {
 

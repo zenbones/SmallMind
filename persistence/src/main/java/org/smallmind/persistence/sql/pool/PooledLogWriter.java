@@ -24,28 +24,38 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.persistence.orm.database.mysql;
+package org.smallmind.persistence.sql.pool;
 
-import java.util.concurrent.atomic.AtomicReference;
-import org.smallmind.persistence.orm.database.Sequence;
+import java.io.IOException;
+import java.io.Writer;
+import org.smallmind.scribe.pen.Level;
+import org.smallmind.scribe.pen.LoggerManager;
 
-public class SequenceManager {
+public class PooledLogWriter extends Writer {
 
-  private static final AtomicReference<Sequence> SEQUENCE_REFERENCE = new AtomicReference<Sequence>();
+  private Level level;
 
-  public static void register (Sequence sequence) {
+  public PooledLogWriter () {
 
-    SEQUENCE_REFERENCE.set(sequence);
+    this(Level.INFO);
   }
 
-  public static long nextLong (String name) {
+  public PooledLogWriter (Level level) {
 
-    Sequence sequence;
+    this.level = level;
+  }
 
-    if ((sequence = SEQUENCE_REFERENCE.get()) == null) {
-      throw new IllegalStateException("The SequenceManager has not been properly initialized");
-    }
+  public void write (char[] cbuf, int off, int len)
+    throws IOException {
 
-    return sequence.nextLong(name);
+    LoggerManager.getLogger(PooledLogWriter.class).log(level, new String(cbuf, off, len));
+  }
+
+  public void flush () {
+
+  }
+
+  public void close () {
+
   }
 }

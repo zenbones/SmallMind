@@ -2,7 +2,7 @@
 <beans xmlns="http://www.springframework.org/schema/beans" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-2.0.xsd">
 
   <!-- Connection Pooling -->
-  <bean id="schemaConnectionInstanceFactory" class="org.smallmind.persistence.orm.sql.pool.DriverManagerConnectionInstanceFactory">
+  <bean id="schemaConnectionInstanceFactory" class="org.smallmind.persistence.sql.pool.DriverManagerConnectionInstanceFactory">
     <constructor-arg index="0" value="${jdbc.driver}"/>
     <constructor-arg index="1" value="${jdbc.url.schema}"/>
     <constructor-arg index="2" value="${jdbc.username}"/>
@@ -27,7 +27,7 @@
     </property>
   </bean>
 
-  <bean id="schemaPooledDataSource" class="org.smallmind.persistence.orm.sql.pool.PooledDataSource">
+  <bean id="schemaPooledDataSource" class="org.smallmind.persistence.sql.pool.PooledDataSource">
     <constructor-arg index="0" value="schema"/>
     <constructor-arg index="1" ref="schemaDBPool"/>
   </bean>

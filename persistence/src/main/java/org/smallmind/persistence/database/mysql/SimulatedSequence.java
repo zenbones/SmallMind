@@ -24,7 +24,7 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.persistence.orm.database.mysql;
+package org.smallmind.persistence.database.mysql;
 
 import java.sql.Connection;
 import java.sql.ResultSet;
@@ -34,7 +34,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicLong;
 import javax.sql.DataSource;
 import org.smallmind.persistence.DataIntegrityException;
-import org.smallmind.persistence.orm.database.Sequence;
+import org.smallmind.persistence.database.Sequence;
 
 public class SimulatedSequence extends Sequence {
 
@@ -101,7 +101,6 @@ public class SimulatedSequence extends Sequence {
 
           do {
             if ((currentOffset = atomicOffset.incrementAndGet()) < incrementBy) {
-
               nextValue = atomicBoundary.get() + currentOffset;
             }
             else if (currentOffset == incrementBy) {
