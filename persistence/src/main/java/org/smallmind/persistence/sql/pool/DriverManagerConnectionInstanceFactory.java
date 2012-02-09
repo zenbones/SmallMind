@@ -30,27 +30,59 @@ import java.sql.SQLException;
 import org.smallmind.persistence.sql.DriverManagerConnectionPoolDataSource;
 import org.smallmind.persistence.sql.DriverManagerDataSource;
 
-public class DriverManagerConnectionInstanceFactory extends ConnectionPoolDataSourceConnectionInstanceFactory {
+public class DriverManagerConnectionInstanceFactory extends DataSourceConnectionInstanceFactory {
 
   public DriverManagerConnectionInstanceFactory (String driverClassName, String jdbcUrl, String user, String password)
     throws SQLException {
 
-    this(new DriverManagerDataSource(driverClassName, jdbcUrl, user, password));
+    this(driverClassName, jdbcUrl, user, password, 0);
   }
 
   public DriverManagerConnectionInstanceFactory (String driverClassName, String jdbcUrl, String user, String password, int maxStatements)
     throws SQLException {
 
-    this(maxStatements, new DriverManagerDataSource(driverClassName, jdbcUrl, user, password));
+    this(driverClassName, maxStatements, new ConnectionEndpoint(jdbcUrl, user, password));
   }
 
-  private DriverManagerConnectionInstanceFactory (DriverManagerDataSource dataSource) {
+  public DriverManagerConnectionInstanceFactory (String driverClassName, ConnectionEndpoint... endpoints)
+    throws SQLException {
 
-    super(dataSource, new DriverManagerConnectionPoolDataSource(dataSource));
+    this(driverClassName, 0, endpoints);
   }
 
-  private DriverManagerConnectionInstanceFactory (int maxStatements, DriverManagerDataSource dataSource) {
+  public DriverManagerConnectionInstanceFactory (String driverClassName, int maxStatements, ConnectionEndpoint... endpoints)
+    throws SQLException {
 
-    super(dataSource, new DriverManagerConnectionPoolDataSource(maxStatements, dataSource));
+    this(maxStatements, constructDataSources(driverClassName, endpoints));
+  }
+
+  public DriverManagerConnectionInstanceFactory (int maxStatements, DriverManagerDataSource... dataSources)
+    throws SQLException {
+
+    super(60, constructCartridges(maxStatements, dataSources));
+  }
+
+  private static DriverManagerDataSource[] constructDataSources (String driverClassName, ConnectionEndpoint... endpoints)
+    throws SQLException {
+
+    DriverManagerDataSource[] dataSources = new DriverManagerDataSource[endpoints.length];
+
+    for (int index = 0; index < endpoints.length; index++) {
+      dataSources[index] = new DriverManagerDataSource(driverClassName, endpoints[index].getJdbcUrl(), endpoints[index].getUser(), endpoints[index].getPassword());
+    }
+
+    return dataSources;
+  }
+
+  private static DataSourceCartridge[] constructCartridges (int maxStatements, DriverManagerDataSource... dataSources)
+    throws SQLException {
+
+    DataSourceCartridge[] cartridges = new DataSourceCartridge[dataSources.length];
+
+    for (int index = 0; index < dataSources.length; index++) {
+      cartridges[index] = new DataSourceCartridge(dataSources[index], new DriverManagerConnectionPoolDataSource(maxStatements, dataSources[index]));
+    }
+
+    return cartridges;
   }
 }

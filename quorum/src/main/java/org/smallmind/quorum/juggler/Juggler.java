@@ -36,11 +36,11 @@ import org.smallmind.scribe.pen.LoggerManager;
 
 public class Juggler<P, R> {
 
-  private final ProviderRecoveryWorker recoveryWorker;
   private final SecureRandom random = new SecureRandom();
   private final ConcurrentSkipListMap<Long, JugglingPin<R>> blackMap;
   private final Class<P> managedClass;
 
+  private ProviderRecoveryWorker recoveryWorker = null;
   private ArrayList<JugglingPin<R>> sourcePins;
   private ArrayList<JugglingPin<R>> targetPins;
 
@@ -62,9 +62,11 @@ public class Juggler<P, R> {
       sourcePins.add(targetPins.remove(random.nextInt(targetPins.size())));
     }
 
-    recoveryThread = new Thread(recoveryWorker = new ProviderRecoveryWorker(recoveryCheckSeconds));
-    recoveryThread.setDaemon(true);
-    recoveryThread.start();
+    if (recoveryCheckSeconds > 0) {
+      recoveryThread = new Thread(recoveryWorker = new ProviderRecoveryWorker(recoveryCheckSeconds));
+      recoveryThread.setDaemon(true);
+      recoveryThread.start();
+    }
   }
 
   public R pickResource ()
@@ -108,7 +110,9 @@ public class Juggler<P, R> {
   public void shutdown ()
     throws InterruptedException {
 
-    recoveryWorker.abort();
+    if (recoveryWorker != null) {
+      recoveryWorker.abort();
+    }
   }
 
   private class ProviderRecoveryWorker implements Runnable {
@@ -135,7 +139,7 @@ public class Juggler<P, R> {
     public void run () {
 
       try {
-        while (!terminationLatch.await(1, TimeUnit.SECONDS)) {
+        while (!terminationLatch.await(3, TimeUnit.SECONDS)) {
 
           Map.Entry<Long, JugglingPin<R>> firstEntry;
 
