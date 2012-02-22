@@ -38,11 +38,17 @@ public class MemcachedCacheDomainFactoryBean implements FactoryBean<MemcachedCac
   private MemcachedCacheDomain memcachedCacheDomain;
   private MemcachedClient memcachedClient;
   private Map<Class, Integer> timeToLiveOverrideMap;
+  private String discriminator;
   private int timeToLiveSeconds;
 
   public void setMemcachedClient (MemcachedClient memcachedClient) {
 
     this.memcachedClient = memcachedClient;
+  }
+
+  public void setDiscriminator (String discriminator) {
+
+    this.discriminator = discriminator;
   }
 
   public void setTimeToLiveSeconds (int timeToLiveSeconds) {
@@ -60,7 +66,7 @@ public class MemcachedCacheDomainFactoryBean implements FactoryBean<MemcachedCac
     throws IOException {
 
     if (memcachedClient != null) {
-      memcachedCacheDomain = new MemcachedCacheDomain(memcachedClient, timeToLiveSeconds, timeToLiveOverrideMap);
+      memcachedCacheDomain = new MemcachedCacheDomain(memcachedClient, discriminator, timeToLiveSeconds, timeToLiveOverrideMap);
     }
   }
 

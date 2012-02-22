@@ -12,6 +12,7 @@
 
   <bean id="memcachedCacheDomain" class="org.smallmind.persistence.cache.memcached.spring.MemcachedCacheDomainFactoryBean">
     <property name="memcachedClient" ref="memcachedClient"/>
+    <property name="discriminator" value="PC"/>
     <property name="timeToLiveSeconds" value="${memcached.ttl.default}"/>
     <property name="timeToLiveOverrideMap">
       <map>

@@ -40,16 +40,18 @@ public class MemcachedCacheDomain<I extends Comparable<I>, D extends Durable<I>>
   private final Map<Class<D>, Integer> timeTiLiveOverrideMap;
   private final ConcurrentHashMap<Class<D>, MemcachedCache<D>> instanceCacheMap = new ConcurrentHashMap<Class<D>, MemcachedCache<D>>();
   private final ConcurrentHashMap<Class<D>, MemcachedCache<DurableVector>> vectorCacheMap = new ConcurrentHashMap<Class<D>, MemcachedCache<DurableVector>>();
+  private final String discriminator;
   private final int timeToLiveSeconds;
 
-  public MemcachedCacheDomain (MemcachedClient memcachedClient, int timeToLiveSeconds) {
+  public MemcachedCacheDomain (MemcachedClient memcachedClient, String discriminator, int timeToLiveSeconds) {
 
-    this(memcachedClient, timeToLiveSeconds, null);
+    this(memcachedClient, discriminator, timeToLiveSeconds, null);
   }
 
-  public MemcachedCacheDomain (MemcachedClient memcachedClient, int timeToLiveSeconds, Map<Class<D>, Integer> timeTiLiveOverrideMap) {
+  public MemcachedCacheDomain (MemcachedClient memcachedClient, String discriminator, int timeToLiveSeconds, Map<Class<D>, Integer> timeTiLiveOverrideMap) {
 
     this.memcachedClient = memcachedClient;
+    this.discriminator = discriminator;
     this.timeToLiveSeconds = timeToLiveSeconds;
     this.timeTiLiveOverrideMap = timeTiLiveOverrideMap;
   }
@@ -68,7 +70,7 @@ public class MemcachedCacheDomain<I extends Comparable<I>, D extends Durable<I>>
     if ((instanceCache = instanceCacheMap.get(managedClass)) == null) {
       synchronized (instanceCacheMap) {
         if ((instanceCache = instanceCacheMap.get(managedClass)) == null) {
-          instanceCacheMap.put(managedClass, instanceCache = new MemcachedCache<D>(memcachedClient, managedClass, getTimeToLiveSeconds(managedClass)));
+          instanceCacheMap.put(managedClass, instanceCache = new MemcachedCache<D>(memcachedClient, discriminator, managedClass, getTimeToLiveSeconds(managedClass)));
         }
       }
     }
@@ -84,7 +86,7 @@ public class MemcachedCacheDomain<I extends Comparable<I>, D extends Durable<I>>
     if ((vectorCache = vectorCacheMap.get(managedClass)) == null) {
       synchronized (vectorCacheMap) {
         if ((vectorCache = vectorCacheMap.get(managedClass)) == null) {
-          vectorCacheMap.put(managedClass, vectorCache = new MemcachedCache<DurableVector>(memcachedClient, DurableVector.class, getTimeToLiveSeconds(managedClass)));
+          vectorCacheMap.put(managedClass, vectorCache = new MemcachedCache<DurableVector>(memcachedClient, discriminator, DurableVector.class, getTimeToLiveSeconds(managedClass)));
         }
       }
     }
