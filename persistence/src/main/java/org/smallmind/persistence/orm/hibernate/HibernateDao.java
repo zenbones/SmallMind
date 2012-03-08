@@ -1,22 +1,22 @@
 /*
  * Copyright (c) 2007, 2008, 2009, 2010, 2011 David Berkman
- * 
+ *
  * This file is part of the SmallMind Code Project.
- * 
+ *
  * The SmallMind Code Project is free software, you can redistribute
  * it and/or modify it under the terms of GNU Affero General Public
  * License as published by the Free Software Foundation, either version 3
  * of the License, or (at your option) any later version.
- * 
+ *
  * The SmallMind Code Project is distributed in the hope that it will
  * be useful, but WITHOUT ANY WARRANTY; without even the implied warranty
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * General Public License for more details.
- * 
+ *
  * You should have received a copy of the the GNU Affero General Public
  * License, along with The SmallMind Code Project. If not, see
  * <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under the GNU Affero GPL version 3 section 7
  * ------------------------------------------------------------------
  * If you modify this Program, or any covered work, by linking or
@@ -152,12 +152,12 @@ public abstract class HibernateDao<I extends Serializable & Comparable<I>, D ext
 
   public Iterable<D> scroll () {
 
-    return new ScrollIterator<D>(proxySession.getSession().createCriteria(getManagedClass()).scroll(ScrollMode.SCROLL_INSENSITIVE), getManagedClass());
+    return new ScrollIterator<D>(proxySession.getSession().createCriteria(getManagedClass()).scroll(ScrollMode.FORWARD_ONLY), getManagedClass());
   }
 
   public Iterable<D> scroll (int fetchSize) {
 
-    return new ScrollIterator<D>(proxySession.getSession().createCriteria(getManagedClass()).setFetchSize(fetchSize).scroll(ScrollMode.SCROLL_INSENSITIVE), getManagedClass());
+    return new ScrollIterator<D>(proxySession.getSession().createCriteria(getManagedClass()).setFetchSize(fetchSize).scroll(ScrollMode.FORWARD_ONLY), getManagedClass());
   }
 
   public Iterable<D> scrollById (final I greaterThan, final int fetchSize) {
@@ -303,7 +303,7 @@ public abstract class HibernateDao<I extends Serializable & Comparable<I>, D ext
 
   public Iterable<D> scrollBySQLQuery (SQLQueryDetails sqlQueryDetails) {
 
-    return new ScrollIterator<D>(constructSQLQuery(sqlQueryDetails).addEntity(getManagedClass()).scroll(ScrollMode.SCROLL_INSENSITIVE), getManagedClass());
+    return new ScrollIterator<D>(constructSQLQuery(sqlQueryDetails).addEntity(getManagedClass()).scroll(ScrollMode.FORWARD_ONLY), getManagedClass());
   }
 
   public int executeWithQuery (QueryDetails queryDetails) {
@@ -333,12 +333,12 @@ public abstract class HibernateDao<I extends Serializable & Comparable<I>, D ext
 
   public <T> Iterable<T> scrollByQuery (Class<T> returnType, QueryDetails queryDetails) {
 
-    return new ScrollIterator<T>(constructQuery(queryDetails).scroll(ScrollMode.SCROLL_INSENSITIVE), returnType);
+    return new ScrollIterator<T>(constructQuery(queryDetails).scroll(ScrollMode.FORWARD_ONLY), returnType);
   }
 
   public Iterable<D> scrollByQuery (QueryDetails queryDetails) {
 
-    return new ScrollIterator<D>(constructQuery(queryDetails).scroll(ScrollMode.SCROLL_INSENSITIVE), getManagedClass());
+    return new ScrollIterator<D>(constructQuery(queryDetails).scroll(ScrollMode.FORWARD_ONLY), getManagedClass());
   }
 
   public <T> T findByCriteria (Class<T> returnType, CriteriaDetails criteriaDetails) {
@@ -363,12 +363,12 @@ public abstract class HibernateDao<I extends Serializable & Comparable<I>, D ext
 
   public <T> Iterable<T> scrollByCriteria (Class<T> returnType, CriteriaDetails criteriaDetails) {
 
-    return new ScrollIterator<T>(constructCriteria(criteriaDetails).scroll(ScrollMode.SCROLL_INSENSITIVE), returnType);
+    return new ScrollIterator<T>(constructCriteria(criteriaDetails).scroll(ScrollMode.FORWARD_ONLY), returnType);
   }
 
   public Iterable<D> scrollByCriteria (CriteriaDetails criteriaDetails) {
 
-    return new ScrollIterator<D>(constructCriteria(criteriaDetails).scroll(ScrollMode.SCROLL_INSENSITIVE), getManagedClass());
+    return new ScrollIterator<D>(constructCriteria(criteriaDetails).scroll(ScrollMode.FORWARD_ONLY), getManagedClass());
   }
 
   public SQLQuery constructSQLQuery (SQLQueryDetails sqlQueryDetails) {
