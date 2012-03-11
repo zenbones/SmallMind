@@ -36,7 +36,7 @@ import org.hibernate.HibernateException;
 import org.hibernate.usertype.EnhancedUserType;
 import org.hibernate.usertype.ParameterizedType;
 
-public class EnumUserType implements EnhancedUserType, ParameterizedType {
+public class EnumUserType implements ParameterizedType, EnhancedUserType {
 
   private Class<Enum> enumClass;
 
@@ -52,16 +52,20 @@ public class EnumUserType implements EnhancedUserType, ParameterizedType {
     }
   }
 
+  public int[] sqlTypes () {
+
+    return new int[] {Types.VARCHAR};
+  }
+
+  public Class returnedClass () {
+
+    return enumClass;
+  }
+
   public Object assemble (Serializable cached, Object owner)
     throws HibernateException {
 
     return cached;
-  }
-
-  public Object deepCopy (Object value)
-    throws HibernateException {
-
-    return value;
   }
 
   public Serializable disassemble (Object value)
@@ -70,21 +74,22 @@ public class EnumUserType implements EnhancedUserType, ParameterizedType {
     return (Enum)value;
   }
 
-  public boolean equals (Object x, Object y)
-    throws HibernateException {
-
-    return x == y;
-  }
-
   public int hashCode (Object x)
     throws HibernateException {
 
     return x.hashCode();
   }
 
-  public boolean isMutable () {
+  public Object replace (Object original, Object target, Object owner)
+    throws HibernateException {
 
-    return false;
+    return original;
+  }
+
+  public boolean equals (Object x, Object y)
+    throws HibernateException {
+
+    return x == y;
   }
 
   public Object nullSafeGet (ResultSet rs, String[] names, Object owner)
@@ -106,20 +111,15 @@ public class EnumUserType implements EnhancedUserType, ParameterizedType {
     }
   }
 
-  public Object replace (Object original, Object target, Object owner)
+  public Object deepCopy (Object value)
     throws HibernateException {
 
-    return original;
+    return value;
   }
 
-  public Class returnedClass () {
+  public boolean isMutable () {
 
-    return enumClass;
-  }
-
-  public int[] sqlTypes () {
-
-    return new int[] {Types.VARCHAR};
+    return false;
   }
 
   public Object fromXMLString (String xmlValue) {

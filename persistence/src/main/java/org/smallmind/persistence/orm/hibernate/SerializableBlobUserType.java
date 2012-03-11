@@ -26,14 +26,21 @@
  */
 package org.smallmind.persistence.orm.hibernate;
 
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.io.Serializable;
+import java.lang.reflect.Constructor;
 import java.sql.Blob;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Types;
-import java.util.Arrays;
 import java.util.Properties;
+import java.util.zip.GZIPInputStream;
+import java.util.zip.GZIPOutputStream;
 import org.hibernate.Hibernate;
 import org.hibernate.HibernateException;
 import org.hibernate.Session;
@@ -41,13 +48,17 @@ import org.hibernate.usertype.ParameterizedType;
 import org.hibernate.usertype.UserType;
 import org.smallmind.persistence.orm.SessionManager;
 
-public class BlobUserType implements UserType, ParameterizedType {
+public class SerializableBlobUserType implements UserType, ParameterizedType {
 
   private String dataSource;
+  private boolean compressed;
+  private boolean immutable;
 
   public void setParameterValues (Properties parameters) {
 
     dataSource = parameters.getProperty("dataSource");
+    compressed = Boolean.parseBoolean(parameters.getProperty("compressed", "false"));
+    immutable = Boolean.parseBoolean(parameters.getProperty("immutable", "false"));
   }
 
   public int[] sqlTypes () {
@@ -57,7 +68,7 @@ public class BlobUserType implements UserType, ParameterizedType {
 
   public Class returnedClass () {
 
-    return byte[].class;
+    return Serializable.class;
   }
 
   public Object assemble (Serializable cached, Object owner)
@@ -75,7 +86,7 @@ public class BlobUserType implements UserType, ParameterizedType {
   public int hashCode (Object x)
     throws HibernateException {
 
-    return Arrays.hashCode((byte[])x);
+    return x.hashCode();
   }
 
   public Object replace (Object original, Object target, Object owner)
@@ -84,9 +95,10 @@ public class BlobUserType implements UserType, ParameterizedType {
     return original;
   }
 
-  public boolean equals (Object x, Object y) {
+  public boolean equals (Object x, Object y)
+    throws HibernateException {
 
-    return (x == y) || ((x instanceof byte[]) && (y instanceof byte[]) && Arrays.equals((byte[])x, (byte[])y));
+    return x == y || (x != null && y != null && x.equals(y));
   }
 
   public Object nullSafeGet (ResultSet rs, String[] names, Object owner)
@@ -94,29 +106,83 @@ public class BlobUserType implements UserType, ParameterizedType {
 
     Blob blob = rs.getBlob(names[0]);
 
-    return blob.getBytes(1, (int)blob.length());
+    return fromByteArray(blob.getBytes(1, (int)blob.length()));
   }
 
   public void nullSafeSet (PreparedStatement st, Object value, int index)
     throws HibernateException, SQLException {
 
-    st.setBlob(index, Hibernate.createBlob((byte[])value, (Session)SessionManager.getSession(dataSource).getNativeSession()));
+    st.setBlob(index, Hibernate.createBlob(toByteArray(value), (Session)SessionManager.getSession(dataSource).getNativeSession()));
   }
 
-  public Object deepCopy (Object value) {
+  public Object deepCopy (Object value)
+    throws HibernateException {
 
-    if (value == null) return null;
+    if (immutable) {
 
-    byte[] bytes = (byte[])value;
-    byte[] result = new byte[bytes.length];
+      return value;
+    }
+    if (value instanceof Cloneable) {
+      try {
 
-    System.arraycopy(bytes, 0, result, 0, bytes.length);
+        return value.getClass().getMethod("clone").invoke(value);
+      }
+      catch (Exception exception) {
+        throw new HibernateException(exception);
+      }
+    }
+    else {
+      try {
 
-    return result;
+        Constructor<?> copyConstructor = value.getClass().getConstructor(value.getClass());
+
+        return copyConstructor.newInstance(value);
+      }
+      catch (Exception exception) {
+
+        return fromByteArray(toByteArray(value));
+      }
+    }
   }
 
   public boolean isMutable () {
 
-    return true;
+    return !immutable;
+  }
+
+  private byte[] toByteArray (Object value) {
+
+    if (value == null) return null;
+
+    ByteArrayOutputStream baos = new ByteArrayOutputStream((value instanceof SizeAwareSerializable) ? ((SizeAwareSerializable)value).approximateSize() / (compressed ? 4 : 1) : 1024);
+    ObjectOutputStream oos;
+
+    try {
+      (oos = compressed ? new ObjectOutputStream(new GZIPOutputStream(baos)) : new ObjectOutputStream(baos)).writeObject(value);
+      oos.close();
+
+      return baos.toByteArray();
+    }
+    catch (IOException ioException) {
+      throw new HibernateException(ioException);
+    }
+  }
+
+  private Object fromByteArray (byte[] array) {
+
+    try {
+
+      ByteArrayInputStream bais = new ByteArrayInputStream(array);
+      ObjectInputStream ois = compressed ? new ObjectInputStream(new GZIPInputStream(bais)) : new ObjectInputStream(bais);
+      Object value;
+
+      value = ois.readObject();
+      ois.close();
+
+      return value;
+    }
+    catch (Exception exception) {
+      throw new HibernateException(exception);
+    }
   }
 }
