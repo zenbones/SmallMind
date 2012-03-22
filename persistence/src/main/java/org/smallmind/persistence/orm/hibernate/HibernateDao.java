@@ -1,22 +1,22 @@
 /*
  * Copyright (c) 2007, 2008, 2009, 2010, 2011 David Berkman
- *
+ * 
  * This file is part of the SmallMind Code Project.
- *
+ * 
  * The SmallMind Code Project is free software, you can redistribute
  * it and/or modify it under the terms of GNU Affero General Public
  * License as published by the Free Software Foundation, either version 3
  * of the License, or (at your option) any later version.
- *
+ * 
  * The SmallMind Code Project is distributed in the hope that it will
  * be useful, but WITHOUT ANY WARRANTY; without even the implied warranty
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * General Public License for more details.
- *
+ * 
  * You should have received a copy of the the GNU Affero General Public
  * License, along with The SmallMind Code Project. If not, see
  * <http://www.gnu.org/licenses/>.
- *
+ * 
  * Additional permission under the GNU Affero GPL version 3 section 7
  * ------------------------------------------------------------------
  * If you modify this Program, or any covered work, by linking or
@@ -39,13 +39,13 @@ import org.hibernate.criterion.Order;
 import org.hibernate.criterion.Projections;
 import org.hibernate.criterion.Restrictions;
 import org.hibernate.transform.Transformers;
-import org.smallmind.nutsnbolts.reflection.type.TypeUtility;
 import org.smallmind.persistence.Durable;
 import org.smallmind.persistence.PersistenceMode;
 import org.smallmind.persistence.cache.VectoredDao;
 import org.smallmind.persistence.orm.DaoManager;
 import org.smallmind.persistence.orm.ProxySession;
 import org.smallmind.persistence.orm.VectorAwareORMDao;
+import org.smallmind.persistence.sql.SqlType;
 
 public abstract class HibernateDao<I extends Serializable & Comparable<I>, D extends Durable<I>> extends VectorAwareORMDao<I, D> {
 
@@ -258,7 +258,7 @@ public abstract class HibernateDao<I extends Serializable & Comparable<I>, D ext
 
       return returnType.cast(sqlQuery.addEntity(returnType).uniqueResult());
     }
-    else if (!TypeUtility.isEssentiallyPrimitive(returnType)) {
+    else if (!SqlType.isKnownType(returnType)) {
 
       return returnType.cast(sqlQuery.setResultTransformer(Transformers.aliasToBean(returnType)).uniqueResult());
     }
@@ -290,7 +290,7 @@ public abstract class HibernateDao<I extends Serializable & Comparable<I>, D ext
 
       return Collections.checkedList(sqlQuery.addEntity(returnType).list(), returnType);
     }
-    else if (!TypeUtility.isEssentiallyPrimitive(returnType)) {
+    else if (!SqlType.isKnownType(returnType)) {
 
       return Collections.checkedList(sqlQuery.setResultTransformer(Transformers.aliasToBean(returnType)).list(), returnType);
     }

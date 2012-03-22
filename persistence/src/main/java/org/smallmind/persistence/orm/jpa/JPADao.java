@@ -217,7 +217,7 @@ public abstract class JPADao<I extends Serializable & Comparable<I>, D extends D
 
   public <T> T findByQuery (Class<T> returnType, QueryDetails queryDetails) {
 
-    // TODO: Kundera doesn't handle getSuingleResult until 2.0.5
+    // TODO: Kundera doesn't handle getSingleResult until 2.0.5
     // return returnType.cast(constructQuery(queryDetails).getSingleResult());
 
     List resultList;
@@ -237,7 +237,7 @@ public abstract class JPADao<I extends Serializable & Comparable<I>, D extends D
 
   public D findByQuery (QueryDetails queryDetails) {
 
-    // TODO: Kundera doesn't handle getSuingleResult until 2.0.5
+    // TODO: Kundera doesn't handle getSingleResult until 2.0.5
     // return getManagedClass().cast(constructQuery(queryDetails).getSingleResult());
 
     List resultList;
