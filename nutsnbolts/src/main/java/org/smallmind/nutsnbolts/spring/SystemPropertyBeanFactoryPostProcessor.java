@@ -1,22 +1,22 @@
 /*
  * Copyright (c) 2007, 2008, 2009, 2010, 2011 David Berkman
- * 
+ *
  * This file is part of the SmallMind Code Project.
- * 
+ *
  * The SmallMind Code Project is free software, you can redistribute
  * it and/or modify it under the terms of GNU Affero General Public
  * License as published by the Free Software Foundation, either version 3
  * of the License, or (at your option) any later version.
- * 
+ *
  * The SmallMind Code Project is distributed in the hope that it will
  * be useful, but WITHOUT ANY WARRANTY; without even the implied warranty
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * General Public License for more details.
- * 
+ *
  * You should have received a copy of the the GNU Affero General Public
  * License, along with The SmallMind Code Project. If not, see
  * <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under the GNU Affero GPL version 3 section 7
  * ------------------------------------------------------------------
  * If you modify this Program, or any covered work, by linking or
@@ -26,8 +26,10 @@
  */
 package org.smallmind.nutsnbolts.spring;
 
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.SortedMap;
 import java.util.TreeMap;
 import org.smallmind.nutsnbolts.util.AlphaNumericComparator;
 import org.smallmind.nutsnbolts.util.DotNotationException;
@@ -39,6 +41,8 @@ import org.springframework.core.PriorityOrdered;
 
 public class SystemPropertyBeanFactoryPostProcessor implements BeanFactoryPostProcessor, Ordered, PriorityOrdered {
 
+  private final TreeMap<String, String> debugMap = new TreeMap<String, String>(new AlphaNumericComparator<String>());
+
   private HashMap<String, String> propertyMap;
   private KeyDebugger keyDebugger;
   private boolean override;
@@ -48,6 +52,11 @@ public class SystemPropertyBeanFactoryPostProcessor implements BeanFactoryPostPr
 
     propertyMap = new HashMap<String, String>();
     override = false;
+  }
+
+  public SortedMap<String, String> getDebugMap () {
+
+    return Collections.unmodifiableSortedMap(debugMap);
   }
 
   public void setOrder (int order) {
@@ -79,22 +88,22 @@ public class SystemPropertyBeanFactoryPostProcessor implements BeanFactoryPostPr
   public void postProcessBeanFactory (ConfigurableListableBeanFactory configurableListableBeanFactory)
     throws BeansException {
 
-    TreeMap<String, String> orderedMap = new TreeMap<String, String>(new AlphaNumericComparator<String>());
-
     for (Map.Entry<String, String> propertyEntry : propertyMap.entrySet()) {
       if (override || ((System.getProperty(propertyEntry.getKey()) == null) && (System.getenv(propertyEntry.getKey()) == null))) {
         System.setProperty(propertyEntry.getKey(), propertyEntry.getValue());
-        orderedMap.put(propertyEntry.getKey(), propertyEntry.getValue());
+        if ((keyDebugger != null) && keyDebugger.willDebug()) {
+          if (keyDebugger.matches(propertyEntry.getKey())) {
+            debugMap.put(propertyEntry.getKey(), propertyEntry.getValue());
+          }
+        }
       }
     }
 
     if ((keyDebugger != null) && keyDebugger.willDebug()) {
-      orderedMap.put("user.home", System.getProperty("user.home"));
+      debugMap.put("user.home", System.getProperty("user.home"));
       System.out.println("---------------- System Properties ---------------");
-      for (Map.Entry<String, String> orderedEntry : orderedMap.entrySet()) {
-        if (keyDebugger.matches(orderedEntry.getKey())) {
-          System.out.println("[" + orderedEntry.getKey() + "=" + orderedEntry.getValue() + "]");
-        }
+      for (Map.Entry<String, String> debugEntry : debugMap.entrySet()) {
+        System.out.println("[" + debugEntry.getKey() + "=" + debugEntry.getValue() + "]");
       }
       System.out.println("--------------------------------------------------");
     }
