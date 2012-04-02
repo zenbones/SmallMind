@@ -28,14 +28,14 @@ package org.smallmind.scheduling.quartz;
 
 import java.util.Date;
 import java.util.LinkedList;
+import org.quartz.Job;
 import org.quartz.JobExecutionContext;
 import org.quartz.JobExecutionException;
-import org.quartz.StatefulJob;
 import org.smallmind.scheduling.base.JobStatus;
 import org.smallmind.scheduling.base.ProxyJob;
 import org.smallmind.scribe.pen.LoggerManager;
 
-public abstract class QuartzProxyJob implements ProxyJob, StatefulJob {
+public abstract class QuartzProxyJob implements ProxyJob, Job {
 
   private LinkedList<Exception> exceptionList;
   private JobStatus status = JobStatus.SUCCESS;

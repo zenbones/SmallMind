@@ -37,112 +37,112 @@ import org.springframework.beans.factory.InitializingBean;
 
 public class CronJobInitializingBean implements InitializingBean {
 
-   private Scheduler scheduler;
-   private HashMap<JobDetail, List<CronTrigger>> jobMap;
+  private Scheduler scheduler;
+  private HashMap<JobDetail, List<CronTrigger>> jobMap;
 
-   public CronJobInitializingBean () {
+  public CronJobInitializingBean () {
 
-      jobMap = new HashMap<JobDetail, List<CronTrigger>>();
-   }
+    jobMap = new HashMap<JobDetail, List<CronTrigger>>();
+  }
 
-   public void setScheduler (Scheduler scheduler) {
+  public void setScheduler (Scheduler scheduler) {
 
-      this.scheduler = scheduler;
-   }
+    this.scheduler = scheduler;
+  }
 
-   public void setJobMap (Map<JobDetail, List<CronTrigger>> jobMap) {
+  public void setJobMap (Map<JobDetail, List<CronTrigger>> jobMap) {
 
-      this.jobMap.putAll(jobMap);
-   }
+    this.jobMap.putAll(jobMap);
+  }
 
-   public void afterPropertiesSet ()
-      throws SchedulerException {
+  public void afterPropertiesSet ()
+    throws SchedulerException {
 
-      CronTrigger installedCronTrigger;
-      JobDetail installedJobDetail;
+    CronTrigger installedCronTrigger;
+    JobDetail installedJobDetail;
 
-      for (JobDetail jobDetail : jobMap.keySet()) {
-         for (CronTrigger cronTrigger : jobMap.get(jobDetail)) {
-            if ((installedJobDetail = scheduler.getJobDetail(jobDetail.getName(), jobDetail.getGroup())) == null) {
-               scheduler.addJob(jobDetail, false);
-            }
-            else if (!isSame(jobDetail, installedJobDetail)) {
-               scheduler.addJob(jobDetail, true);
-            }
+    for (JobDetail jobDetail : jobMap.keySet()) {
+      for (CronTrigger cronTrigger : jobMap.get(jobDetail)) {
+        if ((installedJobDetail = scheduler.getJobDetail(jobDetail.getKey())) == null) {
+          scheduler.addJob(jobDetail, false);
+        }
+        else if (!isSame(jobDetail, installedJobDetail)) {
+          scheduler.addJob(jobDetail, true);
+        }
 
-            if ((installedCronTrigger = (CronTrigger)scheduler.getTrigger(cronTrigger.getName(), cronTrigger.getGroup())) == null) {
-               scheduler.scheduleJob(cronTrigger);
-            }
-            else if (!cronTrigger.getCronExpression().equals(installedCronTrigger.getCronExpression())) {
-               scheduler.rescheduleJob(installedCronTrigger.getName(), installedCronTrigger.getGroup(), cronTrigger);
-            }
-         }
+        if ((installedCronTrigger = (CronTrigger)scheduler.getTrigger(cronTrigger.getKey())) == null) {
+          scheduler.scheduleJob(cronTrigger);
+        }
+        else if (!cronTrigger.getCronExpression().equals(installedCronTrigger.getCronExpression())) {
+          scheduler.rescheduleJob(installedCronTrigger.getKey(), cronTrigger);
+        }
       }
+    }
 
-      scheduler.start();
-   }
+    scheduler.start();
+  }
 
-   private boolean isSame (JobDetail jobDetail, JobDetail installedJobDetail) {
+  private boolean isSame (JobDetail jobDetail, JobDetail installedJobDetail) {
 
-      if (jobDetail.isVolatile() != installedJobDetail.isVolatile()) {
+    if (jobDetail.isDurable() != installedJobDetail.isDurable()) {
 
-         return false;
+      return false;
+    }
+    if (jobDetail.requestsRecovery() != installedJobDetail.requestsRecovery()) {
+
+      return false;
+    }
+    if (jobDetail.isConcurrentExectionDisallowed() != installedJobDetail.isConcurrentExectionDisallowed()) {
+
+      return false;
+    }
+    if (jobDetail.isPersistJobDataAfterExecution() != installedJobDetail.isPersistJobDataAfterExecution()) {
+
+      return false;
+    }
+
+    Object detailValue;
+    Object installedDetailValue;
+    String[] detailKeys = jobDetail.getJobDataMap().getKeys();
+    String[] installedKeys = installedJobDetail.getJobDataMap().getKeys();
+    boolean match;
+
+    if (detailKeys.length != installedKeys.length) {
+
+      return false;
+    }
+    else {
+      for (String detailKey : detailKeys) {
+        match = false;
+        for (String installedKey : installedKeys) {
+          if (detailKey.equals(installedKey)) {
+            match = true;
+            break;
+          }
+        }
+
+        if (!match) {
+          return false;
+        }
+        else {
+          detailValue = jobDetail.getJobDataMap().get(detailKey);
+          installedDetailValue = installedJobDetail.getJobDataMap().get(detailKey);
+          if ((detailValue == null) && (installedDetailValue != null)) {
+
+            return false;
+          }
+          else if ((detailValue != null) && (installedDetailValue == null)) {
+
+            return false;
+          }
+          else if ((detailValue != null) && (!detailValue.equals(installedDetailValue))) {
+
+            return false;
+          }
+        }
       }
-      if (jobDetail.isDurable() != installedJobDetail.isDurable()) {
+    }
 
-         return false;
-      }
-      if (jobDetail.isStateful() != installedJobDetail.isStateful()) {
-
-         return false;
-      }
-      if (jobDetail.requestsRecovery() != installedJobDetail.requestsRecovery()) {
-
-         return false;
-      }
-
-      Object detailValue;
-      Object installedDetailValue;
-      String[] detailKeys = jobDetail.getJobDataMap().getKeys();
-      String[] installedKeys = installedJobDetail.getJobDataMap().getKeys();
-      boolean match;
-
-      if (detailKeys.length != installedKeys.length) {
-
-         return false;
-      }
-      else {
-         for (String detailKey : detailKeys) {
-            match = false;
-            for (String installedKey : installedKeys) {
-               if (detailKey.equals(installedKey)) {
-                  match = true;
-                  break;
-               }
-            }
-
-            if (!match) {
-               return false;
-            }
-            else {
-               detailValue = jobDetail.getJobDataMap().get(detailKey);
-               installedDetailValue = installedJobDetail.getJobDataMap().get(detailKey);
-               if ((detailValue == null) && (installedDetailValue != null)) {
-
-                  return false;
-               }
-               else if ((detailValue != null) && (installedDetailValue == null)) {
-
-                  return false;
-               }
-               else if ((detailValue != null) && (!detailValue.equals(installedDetailValue))) {
-
-                  return false;
-               }
-            }
-         }
-      }
-
-      return true;
-   }
+    return true;
+  }
 }

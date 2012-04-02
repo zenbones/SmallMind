@@ -33,6 +33,7 @@ import java.sql.SQLException;
 import java.sql.Types;
 import java.util.Properties;
 import org.hibernate.HibernateException;
+import org.hibernate.engine.spi.SessionImplementor;
 import org.hibernate.usertype.EnhancedUserType;
 import org.hibernate.usertype.ParameterizedType;
 
@@ -92,7 +93,8 @@ public class EnumUserType implements ParameterizedType, EnhancedUserType {
     return x == y;
   }
 
-  public Object nullSafeGet (ResultSet rs, String[] names, Object owner)
+  @Override
+  public Object nullSafeGet (ResultSet rs, String[] names, SessionImplementor session, Object owner)
     throws HibernateException, SQLException {
 
     String name = rs.getString(names[0]);
@@ -100,7 +102,8 @@ public class EnumUserType implements ParameterizedType, EnhancedUserType {
     return rs.wasNull() ? null : Enum.valueOf(enumClass, name);
   }
 
-  public void nullSafeSet (PreparedStatement st, Object value, int index)
+  @Override
+  public void nullSafeSet (PreparedStatement st, Object value, int index, SessionImplementor session)
     throws HibernateException, SQLException {
 
     if (value == null) {

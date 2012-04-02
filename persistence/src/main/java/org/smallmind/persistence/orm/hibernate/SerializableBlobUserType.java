@@ -43,10 +43,9 @@ import java.util.zip.GZIPInputStream;
 import java.util.zip.GZIPOutputStream;
 import org.hibernate.Hibernate;
 import org.hibernate.HibernateException;
-import org.hibernate.Session;
+import org.hibernate.engine.spi.SessionImplementor;
 import org.hibernate.usertype.ParameterizedType;
 import org.hibernate.usertype.UserType;
-import org.smallmind.persistence.orm.SessionManager;
 
 public class SerializableBlobUserType implements UserType, ParameterizedType {
 
@@ -101,7 +100,8 @@ public class SerializableBlobUserType implements UserType, ParameterizedType {
     return x == y || (x != null && y != null && x.equals(y));
   }
 
-  public Object nullSafeGet (ResultSet rs, String[] names, Object owner)
+  @Override
+  public Object nullSafeGet (ResultSet rs, String[] names, SessionImplementor session, Object owner)
     throws HibernateException, SQLException {
 
     Blob blob = rs.getBlob(names[0]);
@@ -109,10 +109,11 @@ public class SerializableBlobUserType implements UserType, ParameterizedType {
     return fromByteArray(blob.getBytes(1, (int)blob.length()));
   }
 
-  public void nullSafeSet (PreparedStatement st, Object value, int index)
+  @Override
+  public void nullSafeSet (PreparedStatement st, Object value, int index, SessionImplementor session)
     throws HibernateException, SQLException {
 
-    st.setBlob(index, Hibernate.createBlob(toByteArray(value), (Session)SessionManager.getSession(dataSource).getNativeSession()));
+    st.setBlob(index, Hibernate.getLobCreator(session).createBlob(toByteArray(value)));
   }
 
   public Object deepCopy (Object value)

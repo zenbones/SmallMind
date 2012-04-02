@@ -28,6 +28,7 @@ package org.smallmind.scheduling.quartz.spring;
 
 import java.util.Map;
 import org.quartz.Job;
+import org.quartz.Scheduler;
 import org.quartz.SchedulerException;
 import org.quartz.spi.JobFactory;
 import org.quartz.spi.TriggerFiredBundle;
@@ -35,46 +36,46 @@ import org.springframework.context.ApplicationContext;
 
 public class SpringJobFactory implements JobFactory {
 
-   private ApplicationContext applicationContext;
+  private ApplicationContext applicationContext;
 
-   public SpringJobFactory (ApplicationContext applicationContext) {
+  public SpringJobFactory (ApplicationContext applicationContext) {
 
-      this.applicationContext = applicationContext;
-   }
+    this.applicationContext = applicationContext;
+  }
 
-   @Override
-   public Job newJob (TriggerFiredBundle bundle)
-      throws SchedulerException {
+  @Override
+  public Job newJob (TriggerFiredBundle bundle, Scheduler scheduler)
+    throws SchedulerException {
 
-      Map<String, ? extends Job> jobMap;
+    Map<String, ? extends Job> jobMap;
 
-      jobMap = applicationContext.getBeansOfType(bundle.getJobDetail().getJobClass());
+    jobMap = applicationContext.getBeansOfType(bundle.getJobDetail().getJobClass());
 
-      if (jobMap.size() == 0) {
-         throw new FormattedSchedulerException("No job(%s) of type(%s) is present in the application context", bundle.getJobDetail().getFullName(), bundle.getJobDetail().getJobClass().getName());
+    if (jobMap.size() == 0) {
+      throw new FormattedSchedulerException("No job(%s) of type(%s) is present in the application context", bundle.getJobDetail().getKey(), bundle.getJobDetail().getJobClass().getName());
+    }
+    else if (jobMap.size() == 1) {
+
+      Map.Entry<String, ? extends Job> jobEntry = jobMap.entrySet().iterator().next();
+
+      if (!applicationContext.isPrototype(jobEntry.getKey())) {
+        throw new FormattedSchedulerException("The matching job(%s) with id(%s) in the application context is not a prototype bean", bundle.getJobDetail().getKey(), jobEntry.getKey());
       }
-      else if (jobMap.size() == 1) {
 
-         Map.Entry<String, ? extends Job> jobEntry = jobMap.entrySet().iterator().next();
+      return jobEntry.getValue();
+    }
+    else {
+      for (Map.Entry<String, ? extends Job> jobEntry : jobMap.entrySet()) {
+        if (jobEntry.getKey().equals(bundle.getJobDetail().getKey().toString())) {
+          if (!applicationContext.isPrototype(jobEntry.getKey())) {
+            throw new FormattedSchedulerException("The matching job(%s) with id(%s) in the application context is not a prototype bean", bundle.getJobDetail().getKey(), jobEntry.getKey());
+          }
 
-         if (!applicationContext.isPrototype(jobEntry.getKey())) {
-            throw new FormattedSchedulerException("The matching job(%s) with id(%s) in the application context is not a prototype bean", bundle.getJobDetail().getFullName(), jobEntry.getKey());
-         }
-
-         return jobEntry.getValue();
+          return jobEntry.getValue();
+        }
       }
-      else {
-         for (Map.Entry<String, ? extends Job> jobEntry : jobMap.entrySet()) {
-            if (jobEntry.getKey().equals(bundle.getJobDetail().getFullName())) {
-               if (!applicationContext.isPrototype(jobEntry.getKey())) {
-                  throw new FormattedSchedulerException("The matching job(%s) with id(%s) in the application context is not a prototype bean", bundle.getJobDetail().getFullName(), jobEntry.getKey());
-               }
 
-               return jobEntry.getValue();
-            }
-         }
-
-         throw new FormattedSchedulerException("Multiple jobs of type(%s) are present in the application context, but none with an exact id(%s)", bundle.getJobDetail().getJobClass().getName(), bundle.getJobDetail().getFullName());
-      }
-   }
+      throw new FormattedSchedulerException("Multiple jobs of type(%s) are present in the application context, but none with an exact id(%s)", bundle.getJobDetail().getJobClass().getName(), bundle.getJobDetail().getKey());
+    }
+  }
 }
