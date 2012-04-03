@@ -26,10 +26,7 @@
  */
 package org.smallmind.persistence.orm.spring.hibernate;
 
-import org.hibernate.HibernateException;
-import org.hibernate.cfg.AnnotationConfiguration;
-import org.hibernate.cfg.Configuration;
-import org.springframework.orm.hibernate3.LocalSessionFactoryBean;
+import org.springframework.orm.hibernate4.LocalSessionFactoryBean;
 
 public class AnnotationAwareLocalSessionFactoryBean extends LocalSessionFactoryBean {
 
@@ -41,15 +38,8 @@ public class AnnotationAwareLocalSessionFactoryBean extends LocalSessionFactoryB
   }
 
   @Override
-  protected Configuration newConfiguration ()
-    throws HibernateException {
+  public void setAnnotatedClasses (Class<?>[] annotatedClasses) {
 
-    AnnotationConfiguration configuration = new AnnotationConfiguration();
-
-    for (Class annotatedClass : HibernateAnnotationSeekingBeanFactoryPostProcessor.getAnnotatedClasses(dataSourceKey)) {
-      configuration.addAnnotatedClass(annotatedClass);
-    }
-
-    return configuration;
+    super.setAnnotatedClasses(HibernateAnnotationSeekingBeanFactoryPostProcessor.getAnnotatedClasses(dataSourceKey));
   }
 }
