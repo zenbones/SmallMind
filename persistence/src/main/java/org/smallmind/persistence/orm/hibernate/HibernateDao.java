@@ -184,6 +184,18 @@ public abstract class HibernateDao<I extends Serializable & Comparable<I>, D ext
     });
   }
 
+  public I lastId () {
+
+    return findByCriteria(getIdClass(), new CriteriaDetails() {
+
+      @Override
+      public Criteria completeCriteria (Criteria criteria) {
+
+        return criteria.addOrder(Order.desc("id")).setProjection(Projections.id()).setMaxResults(1);
+      }
+    });
+  }
+
   public D persist (D durable) {
 
     return persist(getManagedClass(), durable);
