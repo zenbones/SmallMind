@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2008, 2009, 2010, 2011 David Berkman
+ * Copyright (c) 2007, 2008, 2009, 2010, 2011, 2012 David Berkman
  * 
  * This file is part of the SmallMind Code Project.
  * 
@@ -31,27 +31,27 @@ import javax.naming.CommunicationException;
 
 public class JavaContextEvent extends EventObject {
 
-   private CommunicationException communicationException;
+  private CommunicationException communicationException;
 
-   public JavaContextEvent (Object source) {
+  public JavaContextEvent (Object source) {
 
-      this(source, null);
-   }
+    this(source, null);
+  }
 
-   public JavaContextEvent (Object source, CommunicationException communicationException) {
+  public JavaContextEvent (Object source, CommunicationException communicationException) {
 
-      super(source);
+    super(source);
 
-      this.communicationException = communicationException;
-   }
+    this.communicationException = communicationException;
+  }
 
-   public boolean containsCommunicationException () {
+  public boolean containsCommunicationException () {
 
-      return communicationException != null;
-   }
+    return communicationException != null;
+  }
 
-   public CommunicationException getCommunicationException () {
+  public CommunicationException getCommunicationException () {
 
-      return communicationException;
-   }
+    return communicationException;
+  }
 }

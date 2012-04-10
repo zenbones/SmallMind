@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2008, 2009, 2010, 2011 David Berkman
+ * Copyright (c) 2007, 2008, 2009, 2010, 2011, 2012 David Berkman
  * 
  * This file is part of the SmallMind Code Project.
  * 
@@ -38,69 +38,69 @@ import org.smallmind.quorum.transport.messaging.MessagingReceiver;
 
 public class QueueClusterService implements ClusterService<QueueClusterProtocolDetails> {
 
-   private ClusterHub clusterHub;
-   private MessagingReceiver messagingReceiver;
-   private ClusterMember clusterMember;
-   private ClusterInstance<QueueClusterProtocolDetails> clusterInstance;
-   private boolean open = true;
+  private ClusterHub clusterHub;
+  private MessagingReceiver messagingReceiver;
+  private ClusterMember clusterMember;
+  private ClusterInstance<QueueClusterProtocolDetails> clusterInstance;
+  private boolean open = true;
 
-   public QueueClusterService (ClusterHub clusterHub, ClusterInstance<QueueClusterProtocolDetails> clusterInstance) {
+  public QueueClusterService (ClusterHub clusterHub, ClusterInstance<QueueClusterProtocolDetails> clusterInstance) {
 
-      this.clusterHub = clusterHub;
-      this.clusterInstance = clusterInstance;
-   }
+    this.clusterHub = clusterHub;
+    this.clusterInstance = clusterInstance;
+  }
 
-   public ClusterInstance<QueueClusterProtocolDetails> getClusterInstance () {
+  public ClusterInstance<QueueClusterProtocolDetails> getClusterInstance () {
 
-      return clusterInstance;
-   }
+    return clusterInstance;
+  }
 
-   public void bindClusterMember (ClusterMember clusterMember) {
+  public void bindClusterMember (ClusterMember clusterMember) {
 
-      this.clusterMember = clusterMember;
-   }
+    this.clusterMember = clusterMember;
+  }
 
-   public synchronized void fireServiceBroadcast (ServiceClusterBroadcast serviceClusterBroadcast)
-      throws EventMessageException {
+  public synchronized void fireServiceBroadcast (ServiceClusterBroadcast serviceClusterBroadcast)
+    throws EventMessageException {
 
-      if (!open) {
-         throw new IllegalStateException("The service has already been closed");
+    if (!open) {
+      throw new IllegalStateException("The service has already been closed");
+    }
+
+    clusterHub.fireEvent(serviceClusterBroadcast);
+  }
+
+  public synchronized void handleServiceBroadcast (ServiceClusterBroadcast serviceClusterBroadcast) {
+
+    if (!open) {
+      throw new IllegalStateException("The service has already been closed");
+    }
+
+    clusterMember.handleServiceBroadcast(serviceClusterBroadcast);
+  }
+
+  public synchronized void start ()
+    throws ClusterManagementException {
+
+    if (!open) {
+      try {
+        messagingReceiver = new MessagingReceiver((MessageTarget)clusterMember, clusterInstance.getClusterInterface().getClusterProtocolDetails().getConnectionDetails(), clusterInstance.getClusterInterface().getClusterProtocolDetails().getServiceSelector(), clusterInstance.getClusterInterface().getClusterProtocolDetails().getServiceConcurrencyLimit());
+      }
+      catch (Exception exception) {
+        throw new ClusterManagementException(exception);
       }
 
-      clusterHub.fireEvent(serviceClusterBroadcast);
-   }
+      clusterHub.addClusterService(this);
+      open = true;
+    }
+  }
 
-   public synchronized void handleServiceBroadcast (ServiceClusterBroadcast serviceClusterBroadcast) {
+  public synchronized void stop () {
 
-      if (!open) {
-         throw new IllegalStateException("The service has already been closed");
-      }
-
-      clusterMember.handleServiceBroadcast(serviceClusterBroadcast);
-   }
-
-   public synchronized void start ()
-      throws ClusterManagementException {
-
-      if (!open) {
-         try {
-            messagingReceiver = new MessagingReceiver((MessageTarget)clusterMember, clusterInstance.getClusterInterface().getClusterProtocolDetails().getConnectionDetails());
-         }
-         catch (Exception exception) {
-            throw new ClusterManagementException(exception);
-         }
-
-         clusterHub.addClusterService(this);
-         open = true;
-      }
-   }
-
-   public synchronized void stop () {
-
-      if (open) {
-         open = false;
-         clusterHub.removeClusterService(getClusterInstance());
-         messagingReceiver.close();
-      }
-   }
+    if (open) {
+      open = false;
+      clusterHub.removeClusterService(getClusterInstance());
+      messagingReceiver.close();
+    }
+  }
 }

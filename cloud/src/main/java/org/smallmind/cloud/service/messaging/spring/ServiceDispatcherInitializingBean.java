@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2008, 2009, 2010, 2011 David Berkman
+ * Copyright (c) 2007, 2008, 2009, 2010, 2011, 2012 David Berkman
  * 
  * This file is part of the SmallMind Code Project.
  * 
@@ -26,9 +26,8 @@
  */
 package org.smallmind.cloud.service.messaging.spring;
 
-import java.util.HashMap;
-import java.util.List;
 import javax.jms.JMSException;
+import javax.naming.Context;
 import javax.naming.NamingException;
 import org.smallmind.quorum.pool.connection.ConnectionPool;
 import org.smallmind.quorum.pool.connection.ConnectionPoolException;
@@ -36,25 +35,19 @@ import org.smallmind.quorum.transport.messaging.MessagingConnectionDetails;
 import org.smallmind.quorum.transport.messaging.MessagingTransmitter;
 import org.smallmind.scribe.pen.LoggerManager;
 import org.springframework.beans.factory.DisposableBean;
+import org.springframework.beans.factory.FactoryBean;
 import org.springframework.beans.factory.InitializingBean;
 
-public class ServiceDispatcherInitializingBean implements InitializingBean, DisposableBean {
+public class ServiceDispatcherInitializingBean implements InitializingBean, DisposableBean, FactoryBean<MessagingTransmitter> {
 
-  private static final HashMap<String, MessagingTransmitter> MESSAGING_TRANSMITTER_MAP = new HashMap<String, MessagingTransmitter>();
-
-  private ConnectionPool javaEnvironmentPool;
-  private List<String> serviceSelectorList;
+  private MessagingTransmitter messagingTransmitter;
+  private ConnectionPool<Context> javaEnvironmentPool;
   private String jmsUser;
   private String jmsCredentials;
   private String destinationEnvPath;
   private String factoryEnvPath;
   private boolean closed = false;
   private int transmissionPoolSize;
-
-  public static MessagingTransmitter getMessagingTransmitter (String serviceSelector) {
-
-    return MESSAGING_TRANSMITTER_MAP.get(serviceSelector);
-  }
 
   public void setJmsUser (String jmsUser) {
 
@@ -66,7 +59,7 @@ public class ServiceDispatcherInitializingBean implements InitializingBean, Disp
     this.jmsCredentials = jmsCredentials;
   }
 
-  public void setJavaEnvironmentPool (ConnectionPool javaEnvironmentPool) {
+  public void setJavaEnvironmentPool (ConnectionPool<Context> javaEnvironmentPool) {
 
     this.javaEnvironmentPool = javaEnvironmentPool;
   }
@@ -86,20 +79,31 @@ public class ServiceDispatcherInitializingBean implements InitializingBean, Disp
     this.transmissionPoolSize = transmissionPoolSize;
   }
 
-  public void setServiceSelectorList (List<String> serviceSelectorList) {
-
-    this.serviceSelectorList = serviceSelectorList;
-  }
-
   public void afterPropertiesSet ()
-    throws NoSuchMethodException, NamingException, JMSException, ConnectionPoolException {
+    throws ConnectionPoolException, NamingException, JMSException {
 
     MessagingConnectionDetails connectionDetails;
 
-    for (String serviceSelector : serviceSelectorList) {
-      connectionDetails = new MessagingConnectionDetails(javaEnvironmentPool, destinationEnvPath, factoryEnvPath, jmsUser, jmsCredentials, transmissionPoolSize, serviceSelector);
-      MESSAGING_TRANSMITTER_MAP.put(serviceSelector, new MessagingTransmitter(connectionDetails));
-    }
+    connectionDetails = new MessagingConnectionDetails(javaEnvironmentPool, destinationEnvPath, factoryEnvPath, jmsUser, jmsCredentials);
+    messagingTransmitter = new MessagingTransmitter(connectionDetails, transmissionPoolSize);
+  }
+
+  @Override
+  public MessagingTransmitter getObject () {
+
+    return messagingTransmitter;
+  }
+
+  @Override
+  public Class<?> getObjectType () {
+
+    return MessagingTransmitter.class;
+  }
+
+  @Override
+  public boolean isSingleton () {
+
+    return true;
   }
 
   public synchronized void close () {
@@ -107,23 +111,16 @@ public class ServiceDispatcherInitializingBean implements InitializingBean, Disp
     if (!closed) {
       closed = true;
 
-      for (MessagingTransmitter messagingTransmitter : MESSAGING_TRANSMITTER_MAP.values()) {
-        try {
-          messagingTransmitter.close();
-        }
-        catch (JMSException jmsException) {
-          LoggerManager.getLogger(ServiceDispatcherInitializingBean.class).error(jmsException);
-        }
+      try {
+        messagingTransmitter.close();
+      }
+      catch (Exception exception) {
+        LoggerManager.getLogger(ServiceDispatcherInitializingBean.class).error(exception);
       }
     }
   }
 
   public void destroy () {
-
-    close();
-  }
-
-  public void finalize () {
 
     close();
   }

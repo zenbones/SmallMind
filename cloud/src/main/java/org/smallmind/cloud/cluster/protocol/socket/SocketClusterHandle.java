@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2008, 2009, 2010, 2011 David Berkman
+ * Copyright (c) 2007, 2008, 2009, 2010, 2011, 2012 David Berkman
  * 
  * This file is part of the SmallMind Code Project.
  * 
@@ -32,17 +32,16 @@ import org.smallmind.cloud.cluster.ClusterManagementException;
 
 public class SocketClusterHandle implements ClusterHandle {
 
-   private SocketClusterManager socketClusterManager;
+  private SocketClusterManager socketClusterManager;
 
-   public SocketClusterHandle (SocketClusterManager socketClusterManager) {
+  public SocketClusterHandle (SocketClusterManager socketClusterManager) {
 
-      this.socketClusterManager = socketClusterManager;
-   }
+    this.socketClusterManager = socketClusterManager;
+  }
 
-   public SocketChannel connect (Object[] parameters)
-      throws ClusterManagementException {
+  public SocketChannel connect (Object[] parameters)
+    throws ClusterManagementException {
 
-      return socketClusterManager.connect(parameters);
-   }
-
+    return socketClusterManager.connect(parameters);
+  }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2008, 2009, 2010, 2011 David Berkman
+ * Copyright (c) 2007, 2008, 2009, 2010, 2011, 2012 David Berkman
  * 
  * This file is part of the SmallMind Code Project.
  * 
@@ -28,12 +28,12 @@ package org.smallmind.cloud.multicast.event;
 
 public class EventMessageBody extends EventMessage {
 
-   public EventMessageBody (byte[] messageId, int messageIndex, byte[] messageData) {
+  public EventMessageBody (byte[] messageId, int messageIndex, byte[] messageData) {
 
-      super(messageId, MessageType.DATA, messageData.length, messageData.length + 4);
+    super(messageId, MessageType.DATA, messageData.length, messageData.length + 4);
 
-      putInt(messageIndex);
-      put(messageData);
-   }
+    putInt(messageIndex);
+    put(messageData);
+  }
 
 }

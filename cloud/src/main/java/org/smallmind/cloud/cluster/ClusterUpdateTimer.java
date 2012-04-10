@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2008, 2009, 2010, 2011 David Berkman
+ * Copyright (c) 2007, 2008, 2009, 2010, 2011, 2012 David Berkman
  * 
  * This file is part of the SmallMind Code Project.
  * 
@@ -32,41 +32,41 @@ import org.smallmind.scribe.pen.LoggerManager;
 
 public class ClusterUpdateTimer implements Runnable {
 
-   private CountDownLatch exitLatch;
-   private CountDownLatch finishLatch;
-   private ClusterHub clusterHub;
-   private long pulseTime;
+  private CountDownLatch exitLatch;
+  private CountDownLatch finishLatch;
+  private ClusterHub clusterHub;
+  private long pulseTime;
 
-   public ClusterUpdateTimer (ClusterHub clusterHub, int updateInterval) {
+  public ClusterUpdateTimer (ClusterHub clusterHub, int updateInterval) {
 
-      this.clusterHub = clusterHub;
+    this.clusterHub = clusterHub;
 
-      pulseTime = updateInterval * 1000;
+    pulseTime = updateInterval * 1000;
 
-      finishLatch = new CountDownLatch(1);
-      exitLatch = new CountDownLatch(1);
-   }
+    finishLatch = new CountDownLatch(1);
+    exitLatch = new CountDownLatch(1);
+  }
 
-   public void finish ()
-      throws InterruptedException {
+  public void finish ()
+    throws InterruptedException {
 
+    finishLatch.countDown();
+    exitLatch.await();
+  }
+
+  public void run () {
+
+    try {
+      do {
+        clusterHub.fireStatusUpdate(clusterHub.getClientClusterInstances());
+      } while (!finishLatch.await(pulseTime, TimeUnit.MILLISECONDS));
+    }
+    catch (InterruptedException interruptedException) {
       finishLatch.countDown();
-      exitLatch.await();
-   }
-
-   public void run () {
-
-      try {
-         do {
-            clusterHub.fireStatusUpdate(clusterHub.getClientClusterInstances());
-         } while (!finishLatch.await(pulseTime, TimeUnit.MILLISECONDS));
-      }
-      catch (InterruptedException interruptedException) {
-         finishLatch.countDown();
-         LoggerManager.getLogger(ClusterUpdateTimer.class).error(interruptedException);
-      }
-      finally {
-         exitLatch.countDown();
-      }
-   }
+      LoggerManager.getLogger(ClusterUpdateTimer.class).error(interruptedException);
+    }
+    finally {
+      exitLatch.countDown();
+    }
+  }
 }

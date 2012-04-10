@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2008, 2009, 2010, 2011 David Berkman
+ * Copyright (c) 2007, 2008, 2009, 2010, 2011, 2012 David Berkman
  * 
  * This file is part of the SmallMind Code Project.
  * 
@@ -28,29 +28,36 @@ package org.smallmind.cloud.service.messaging;
 
 public class ServiceEndpoint {
 
-   private Object service;
-   private Class serviceInterface;
-   private String serviceSelector;
+  private Object service;
+  private Class serviceInterface;
+  private String serviceSelector;
+  private int concurrencyLimit;
 
-   public ServiceEndpoint (Object service, Class serviceInterface, String serviceSelector) {
+  public ServiceEndpoint (Object service, Class serviceInterface, String serviceSelector, int concurrencyLimit) {
 
-      this.service = service;
-      this.serviceInterface = serviceInterface;
-      this.serviceSelector = serviceSelector;
-   }
+    this.service = service;
+    this.serviceInterface = serviceInterface;
+    this.serviceSelector = serviceSelector;
+    this.concurrencyLimit = concurrencyLimit;
+  }
 
-   public Object getService () {
+  public Object getService () {
 
-      return service;
-   }
+    return service;
+  }
 
-   public Class getServiceInterface () {
+  public Class getServiceInterface () {
 
-      return serviceInterface;
-   }
+    return serviceInterface;
+  }
 
-   public String getServiceSelector () {
+  public String getServiceSelector () {
 
-      return serviceSelector;
-   }
+    return serviceSelector;
+  }
+
+  public int getConcurrencyLimit () {
+
+    return concurrencyLimit;
+  }
 }

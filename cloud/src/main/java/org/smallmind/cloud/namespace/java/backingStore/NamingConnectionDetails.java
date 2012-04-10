@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2008, 2009, 2010, 2011 David Berkman
+ * Copyright (c) 2007, 2008, 2009, 2010, 2011, 2012 David Berkman
  * 
  * This file is part of the SmallMind Code Project.
  * 
@@ -28,43 +28,43 @@ package org.smallmind.cloud.namespace.java.backingStore;
 
 public class NamingConnectionDetails {
 
-   private String host;
-   private String rootNamespace;
-   private String userName;
-   private String password;
-   private int port;
+  private String host;
+  private String rootNamespace;
+  private String userName;
+  private String password;
+  private int port;
 
-   public NamingConnectionDetails (String host, int port, String rootNamespace, String userName, String password) {
+  public NamingConnectionDetails (String host, int port, String rootNamespace, String userName, String password) {
 
-      this.host = host;
-      this.port = port;
-      this.rootNamespace = rootNamespace;
-      this.userName = userName;
-      this.password = password;
-   }
+    this.host = host;
+    this.port = port;
+    this.rootNamespace = rootNamespace;
+    this.userName = userName;
+    this.password = password;
+  }
 
-   public String getHost () {
+  public String getHost () {
 
-      return host;
-   }
+    return host;
+  }
 
-   public int getPort () {
+  public int getPort () {
 
-      return port;
-   }
+    return port;
+  }
 
-   public String getRootNamespace () {
+  public String getRootNamespace () {
 
-      return rootNamespace;
-   }
+    return rootNamespace;
+  }
 
-   public String getUserName () {
+  public String getUserName () {
 
-      return userName;
-   }
+    return userName;
+  }
 
-   public String getPassword () {
+  public String getPassword () {
 
-      return password;
-   }
+    return password;
+  }
 }

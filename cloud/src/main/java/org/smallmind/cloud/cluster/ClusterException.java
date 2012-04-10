@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2008, 2009, 2010, 2011 David Berkman
+ * Copyright (c) 2007, 2008, 2009, 2010, 2011, 2012 David Berkman
  * 
  * This file is part of the SmallMind Code Project.
  * 
@@ -30,23 +30,23 @@ import org.smallmind.nutsnbolts.lang.FormattedException;
 
 public class ClusterException extends FormattedException {
 
-   public ClusterException () {
+  public ClusterException () {
 
-      super();
-   }
+    super();
+  }
 
-   public ClusterException (String message, Object... args) {
+  public ClusterException (String message, Object... args) {
 
-      super(message, args);
-   }
+    super(message, args);
+  }
 
-   public ClusterException (Throwable throwable, String message, Object... args) {
+  public ClusterException (Throwable throwable, String message, Object... args) {
 
-      super(throwable, message, args);
-   }
+    super(throwable, message, args);
+  }
 
-   public ClusterException (Throwable throwable) {
+  public ClusterException (Throwable throwable) {
 
-      super(throwable);
-   }
+    super(throwable);
+  }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2008, 2009, 2010, 2011 David Berkman
+ * Copyright (c) 2007, 2008, 2009, 2010, 2011, 2012 David Berkman
  * 
  * This file is part of the SmallMind Code Project.
  * 
@@ -28,17 +28,17 @@ package org.smallmind.cloud.namespace.java.backingStore;
 
 public enum StorageType {
 
-   LDAP("ldap");
+  LDAP("ldap");
 
-   private String backingStore;
+  private String backingStore;
 
-   private StorageType (String backingStore) {
+  private StorageType (String backingStore) {
 
-      this.backingStore = backingStore;
-   }
+    this.backingStore = backingStore;
+  }
 
-   public String getBackingStore () {
+  public String getBackingStore () {
 
-      return backingStore;
-   }
+    return backingStore;
+  }
 }

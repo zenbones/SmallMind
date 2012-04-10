@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2008, 2009, 2010, 2011 David Berkman
+ * Copyright (c) 2007, 2008, 2009, 2010, 2011, 2012 David Berkman
  * 
  * This file is part of the SmallMind Code Project.
  * 
@@ -35,56 +35,56 @@ import org.smallmind.cloud.namespace.java.JavaName;
 
 public abstract class NameTranslator {
 
-   private ContextCreator contextCreator;
+  private ContextCreator contextCreator;
 
-   public NameTranslator (ContextCreator contextCreator) {
+  public NameTranslator (ContextCreator contextCreator) {
 
-      this.contextCreator = contextCreator;
-   }
+    this.contextCreator = contextCreator;
+  }
 
-   public ContextCreator getContextCreator () {
+  public ContextCreator getContextCreator () {
 
-      return contextCreator;
-   }
+    return contextCreator;
+  }
 
-   public ContextNamePair fromInternalNameToExternalContext (DirContext internalContext, Name internalName)
-      throws NamingException {
+  public ContextNamePair fromInternalNameToExternalContext (DirContext internalContext, Name internalName)
+    throws NamingException {
 
-      if (internalContext == null) {
-         if ((internalName.size() == 0) || (!internalName.get(0).equals("java:"))) {
-            throw new NamingException("No starting context from which to resolve (" + internalName + ")");
-         }
-
-         try {
-            return new ContextNamePair(contextCreator.getInitialContext(), fromInternalNameToExternalName(internalName.getSuffix(1)));
-         }
-         catch (NamingException namingException) {
-            throw namingException;
-         }
-         catch (Exception e) {
-
-            NamingException namingException;
-
-            namingException = new NamingException(e.getMessage());
-            namingException.setRootCause(e);
-
-            throw namingException;
-         }
+    if (internalContext == null) {
+      if ((internalName.size() == 0) || (!internalName.get(0).equals("java:"))) {
+        throw new NamingException("No starting context from which to resolve (" + internalName + ")");
       }
-      else {
-         return new ContextNamePair(internalContext, fromInternalNameToExternalName(internalName));
+
+      try {
+        return new ContextNamePair(contextCreator.getInitialContext(), fromInternalNameToExternalName(internalName.getSuffix(1)));
       }
-   }
+      catch (NamingException namingException) {
+        throw namingException;
+      }
+      catch (Exception e) {
 
-   public abstract JavaName fromInternalNameToExternalName (Name internalName)
-      throws InvalidNameException;
+        NamingException namingException;
 
-   public abstract String fromExternalNameToExternalString (JavaName internalName);
+        namingException = new NamingException(e.getMessage());
+        namingException.setRootCause(e);
 
-   public abstract String fromAbsoluteExternalStringToInternalString (String externalName)
-      throws InvalidNameException;
+        throw namingException;
+      }
+    }
+    else {
+      return new ContextNamePair(internalContext, fromInternalNameToExternalName(internalName));
+    }
+  }
 
-   public abstract String fromExternalStringToInternalString (String externalName)
-      throws InvalidNameException;
+  public abstract JavaName fromInternalNameToExternalName (Name internalName)
+    throws InvalidNameException;
+
+  public abstract String fromExternalNameToExternalString (JavaName internalName);
+
+  public abstract String fromAbsoluteExternalStringToInternalString (String externalName)
+    throws InvalidNameException;
+
+  public abstract String fromExternalStringToInternalString (String externalName)
+    throws InvalidNameException;
 
 }

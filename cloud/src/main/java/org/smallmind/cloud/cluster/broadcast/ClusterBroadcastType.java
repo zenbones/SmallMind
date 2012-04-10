@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2008, 2009, 2010, 2011 David Berkman
+ * Copyright (c) 2007, 2008, 2009, 2010, 2011, 2012 David Berkman
  * 
  * This file is part of the SmallMind Code Project.
  * 
@@ -28,5 +28,5 @@ package org.smallmind.cloud.cluster.broadcast;
 
 public enum ClusterBroadcastType {
 
-   SYSTEM, SERVICE, GOSSIP
+  SYSTEM, SERVICE, GOSSIP
 }

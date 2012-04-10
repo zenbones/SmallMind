@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2008, 2009, 2010, 2011 David Berkman
+ * Copyright (c) 2007, 2008, 2009, 2010, 2011, 2012 David Berkman
  * 
  * This file is part of the SmallMind Code Project.
  * 
@@ -32,24 +32,49 @@ import org.smallmind.quorum.transport.messaging.MessagingConnectionDetails;
 
 public class QueueClusterProtocolDetails extends ClusterProtocolDetails {
 
-   private Class serviceInterface;
-   private MessagingConnectionDetails messagingConnectionDetails;
+  private Class serviceInterface;
+  private MessagingConnectionDetails messagingConnectionDetails;
+  private String serviceSelector;
+  private int transmissionPoolSize;
+  private int serviceConcurrencyLimit;
 
-   public QueueClusterProtocolDetails (Class serviceInterface, MessagingConnectionDetails messagingConnectionDetails) {
+  public QueueClusterProtocolDetails (Class serviceInterface, MessagingConnectionDetails messagingConnectionDetails, int transmissionPoolSize, String serviceSelector, int serviceConcurrencyLimit) {
 
-      super(ClusterProtocol.QUEUE);
+    this.serviceInterface = serviceInterface;
+    this.messagingConnectionDetails = messagingConnectionDetails;
+    this.transmissionPoolSize = transmissionPoolSize;
+    this.serviceSelector = serviceSelector;
+    this.serviceConcurrencyLimit = serviceConcurrencyLimit;
+  }
 
-      this.serviceInterface = serviceInterface;
-      this.messagingConnectionDetails = messagingConnectionDetails;
-   }
+  @Override
+  public ClusterProtocol getClusterProtocol () {
 
-   public Class getServiceInterface () {
+    return ClusterProtocol.QUEUE;
+  }
 
-      return serviceInterface;
-   }
+  public Class getServiceInterface () {
 
-   public MessagingConnectionDetails getConnectionDetails () {
+    return serviceInterface;
+  }
 
-      return messagingConnectionDetails;
-   }
+  public MessagingConnectionDetails getConnectionDetails () {
+
+    return messagingConnectionDetails;
+  }
+
+  public int getTransmissionPoolSize () {
+
+    return transmissionPoolSize;
+  }
+
+  public String getServiceSelector () {
+
+    return serviceSelector;
+  }
+
+  public int getServiceConcurrencyLimit () {
+
+    return serviceConcurrencyLimit;
+  }
 }

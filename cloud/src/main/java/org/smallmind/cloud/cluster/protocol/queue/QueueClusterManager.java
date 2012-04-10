@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2008, 2009, 2010, 2011 David Berkman
+ * Copyright (c) 2007, 2008, 2009, 2010, 2011, 2012 David Berkman
  * 
  * This file is part of the SmallMind Code Project.
  * 
@@ -27,7 +27,6 @@
 package org.smallmind.cloud.cluster.protocol.queue;
 
 import java.lang.reflect.Proxy;
-import javax.jms.JMSException;
 import org.smallmind.cloud.cluster.ClusterEndpoint;
 import org.smallmind.cloud.cluster.ClusterHandle;
 import org.smallmind.cloud.cluster.ClusterHub;
@@ -39,54 +38,50 @@ import org.smallmind.quorum.transport.messaging.MessagingTransmitter;
 
 public class QueueClusterManager implements ClusterManager<QueueClusterProtocolDetails> {
 
-   private ClusterHub clusterHub;
-   private Proxy clusterProxy;
-   private ClusterInterface<QueueClusterProtocolDetails> clusterInterface;
-   private MessagingTransmitter messagingTransmitter;
+  private ClusterHub clusterHub;
+  private Proxy clusterProxy;
+  private ClusterInterface<QueueClusterProtocolDetails> clusterInterface;
+  private MessagingTransmitter messagingTransmitter;
 
-   public QueueClusterManager (ClusterHub clusterHub, ClusterInterface<QueueClusterProtocolDetails> clusterInterface)
-      throws ClusterManagementException {
+  public QueueClusterManager (ClusterHub clusterHub, MessagingTransmitter messagingTransmitter, ClusterInterface<QueueClusterProtocolDetails> clusterInterface)
+    throws ClusterManagementException {
 
-      QueueClusterHandle clusterHandle;
+    QueueClusterHandle clusterHandle;
 
-      this.clusterHub = clusterHub;
-      this.clusterInterface = clusterInterface;
+    this.clusterHub = clusterHub;
+    this.messagingTransmitter = messagingTransmitter;
+    this.clusterInterface = clusterInterface;
 
-      try {
-         messagingTransmitter = new MessagingTransmitter(clusterInterface.getClusterProtocolDetails().getConnectionDetails());
-      }
-      catch (Exception exception) {
-         throw new ClusterManagementException(exception);
-      }
+    clusterHandle = new QueueClusterHandle(new MessagingInvocationHandler(messagingTransmitter, clusterInterface.getClusterProtocolDetails().getServiceInterface(), clusterInterface.getClusterProtocolDetails().getServiceSelector()));
+    clusterProxy = (Proxy)Proxy.newProxyInstance(clusterInterface.getClusterProtocolDetails().getServiceInterface().getClassLoader(), new Class[] {ClusterHandle.class, clusterInterface.getClusterProtocolDetails().getServiceInterface()}, clusterHandle);
+  }
 
-      clusterHandle = new QueueClusterHandle(new MessagingInvocationHandler(messagingTransmitter, clusterInterface.getClusterProtocolDetails().getServiceInterface()));
-      clusterProxy = (Proxy)Proxy.newProxyInstance(clusterInterface.getClusterProtocolDetails().getServiceInterface().getClassLoader(), new Class[] {ClusterHandle.class, clusterInterface.getClusterProtocolDetails().getServiceInterface()}, clusterHandle);
-   }
+  public ClusterInterface<QueueClusterProtocolDetails> getClusterInterface () {
 
-   public ClusterInterface<QueueClusterProtocolDetails> getClusterInterface () {
+    return clusterInterface;
+  }
 
-      return clusterInterface;
-   }
+  public ClusterHandle getClusterHandle ()
+    throws ClusterManagementException {
 
-   public ClusterHandle getClusterHandle ()
-      throws ClusterManagementException {
+    return (ClusterHandle)clusterProxy;
+  }
 
-      return (ClusterHandle)clusterProxy;
-   }
+  public void updateClusterStatus (ClusterEndpoint clusterEndpoint, int calibratedFreeCapacity) {
 
-   public void updateClusterStatus (ClusterEndpoint clusterEndpoint, int calibratedFreeCapacity) {
-   }
+  }
 
-   public void removeClusterMember (ClusterEndpoint clusterEndpoint) {
-   }
+  public void removeClusterMember (ClusterEndpoint clusterEndpoint) {
 
-   public void finalize () {
+  }
 
-      try {
-         messagingTransmitter.close();
-      }
-      catch (JMSException j) {
-         clusterHub.logError(j);
-      }
-   }
+  public void finalize () {
+
+    try {
+      messagingTransmitter.close();
+    }
+    catch (Exception exception) {
+      clusterHub.logError(exception);
+    }
+  }
 }

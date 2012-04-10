@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2008, 2009, 2010, 2011 David Berkman
+ * Copyright (c) 2007, 2008, 2009, 2010, 2011, 2012 David Berkman
  * 
  * This file is part of the SmallMind Code Project.
  * 
@@ -33,23 +33,23 @@ import org.smallmind.cloud.cluster.ClusterManagerBuilder;
 
 public class RemoteClusterManagerBuilder implements ClusterManagerBuilder<RemoteClusterProtocolDetails> {
 
-   private HashMap<String, RemoteClusterManager> managerMap;
+  private HashMap<String, RemoteClusterManager> managerMap;
 
-   public RemoteClusterManagerBuilder () {
+  public RemoteClusterManagerBuilder () {
 
-      managerMap = new HashMap<String, RemoteClusterManager>();
-   }
+    managerMap = new HashMap<String, RemoteClusterManager>();
+  }
 
-   public synchronized RemoteClusterManager getClusterManager (ClusterHub clusterHub, ClusterInterface<RemoteClusterProtocolDetails> clusterInterface) {
+  public synchronized RemoteClusterManager getClusterManager (ClusterHub clusterHub, ClusterInterface<RemoteClusterProtocolDetails> clusterInterface) {
 
-      RemoteClusterManager clusterManager;
+    RemoteClusterManager clusterManager;
 
-      if ((clusterManager = managerMap.get(clusterInterface.getClusterName())) == null) {
-         clusterManager = new RemoteClusterManager(clusterInterface);
-         managerMap.put(clusterInterface.getClusterName(), clusterManager);
-      }
+    if ((clusterManager = managerMap.get(clusterInterface.getClusterName())) == null) {
+      clusterManager = new RemoteClusterManager(clusterInterface);
+      managerMap.put(clusterInterface.getClusterName(), clusterManager);
+    }
 
-      return clusterManager;
-   }
+    return clusterManager;
+  }
 
 }

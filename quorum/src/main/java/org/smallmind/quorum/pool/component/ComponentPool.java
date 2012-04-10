@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2008, 2009, 2010, 2011 David Berkman
+ * Copyright (c) 2007, 2008, 2009, 2010, 2011, 2012 David Berkman
  * 
  * This file is part of the SmallMind Code Project.
  * 
@@ -27,9 +27,14 @@
 package org.smallmind.quorum.pool.component;
 
 import java.util.LinkedList;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.atomic.AtomicBoolean;
 
-public class ComponentPool<T> {
+public class ComponentPool<T extends PooledComponent> {
 
+  private CountDownLatch exitLatch = new CountDownLatch(1);
+  private CountDownLatch terminationLatch = new CountDownLatch(1);
+  private AtomicBoolean closed = new AtomicBoolean(false);
   private ComponentFactory<T> componentFactory;
   private LinkedList<T> usedList;
   private LinkedList<T> freeList;
@@ -49,6 +54,10 @@ public class ComponentPool<T> {
   public synchronized T getComponent ()
     throws ComponentPoolException {
 
+    if (closed.get()) {
+      throw new ComponentPoolException("Pool has been closed");
+    }
+
     T component = null;
 
     if (freeList.isEmpty()) {
@@ -65,8 +74,11 @@ public class ComponentPool<T> {
           do {
             wait(acquireWaitTimeMillis);
 
-            if (!freeList.isEmpty()) {
-              component = freeList.remove(0);
+            if (closed.get()) {
+              throw new ComponentPoolException("Pool has been closed");
+            }
+            else if (!freeList.isEmpty()) {
+              component = freeList.removeFirst();
             }
             else if (acquireWaitTimeMillis > 0) {
               throw new ComponentPoolException("ComponentPool(%s) is completely booked", componentFactory.getClass().getSimpleName());
@@ -79,7 +91,7 @@ public class ComponentPool<T> {
       }
     }
     else {
-      component = freeList.remove(0);
+      component = freeList.removeFirst();
     }
 
     usedList.add(component);
@@ -98,6 +110,13 @@ public class ComponentPool<T> {
         notify();
       }
     }
+    else {
+      component.terminate();
+    }
+
+    if (closed.get() && usedList.isEmpty()) {
+      terminationLatch.countDown();
+    }
   }
 
   public synchronized int poolSize () {
@@ -108,5 +127,32 @@ public class ComponentPool<T> {
   public synchronized int freeSize () {
 
     return freeList.size();
+  }
+
+  public void close ()
+    throws InterruptedException {
+
+    if (closed.compareAndSet(false, true)) {
+      try {
+        synchronized (this) {
+          notifyAll();
+
+          if (usedList.isEmpty()) {
+            terminationLatch.countDown();
+          }
+        }
+
+        terminationLatch.await();
+
+        for (T component : freeList) {
+          component.terminate();
+        }
+      }
+      finally {
+        exitLatch.countDown();
+      }
+    }
+
+    exitLatch.await();
   }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2008, 2009, 2010, 2011 David Berkman
+ * Copyright (c) 2007, 2008, 2009, 2010, 2011, 2012 David Berkman
  * 
  * This file is part of the SmallMind Code Project.
  * 
@@ -31,10 +31,10 @@ import org.smallmind.cloud.cluster.ClusterInterface;
 
 public class UpdateRequestClusterBroadcast extends SemiAutomaticClusterBroadcast {
 
-   public UpdateRequestClusterBroadcast (ClusterInterface clusterInterface)
-      throws UnknownHostException {
+  public UpdateRequestClusterBroadcast (ClusterInterface clusterInterface)
+    throws UnknownHostException {
 
-      super(clusterInterface);
-   }
+    super(clusterInterface);
+  }
 
 }

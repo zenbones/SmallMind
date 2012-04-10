@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2008, 2009, 2010, 2011 David Berkman
+ * Copyright (c) 2007, 2008, 2009, 2010, 2011, 2012 David Berkman
  * 
  * This file is part of the SmallMind Code Project.
  * 
@@ -28,22 +28,22 @@ package org.smallmind.cloud.cluster;
 
 public class ClusterEntity {
 
-   private String clusterName;
-   private String instanceId;
+  private String clusterName;
+  private String instanceId;
 
-   public ClusterEntity (String clusterName, String instanceId) {
+  public ClusterEntity (String clusterName, String instanceId) {
 
-      this.clusterName = clusterName;
-      this.instanceId = instanceId;
-   }
+    this.clusterName = clusterName;
+    this.instanceId = instanceId;
+  }
 
-   public String getClusterName () {
+  public String getClusterName () {
 
-      return clusterName;
-   }
+    return clusterName;
+  }
 
-   public String getInstanceId () {
+  public String getInstanceId () {
 
-      return instanceId;
-   }
+    return instanceId;
+  }
 }

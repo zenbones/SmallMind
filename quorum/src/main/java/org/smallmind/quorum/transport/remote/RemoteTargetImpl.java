@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2008, 2009, 2010, 2011 David Berkman
+ * Copyright (c) 2007, 2008, 2009, 2010, 2011, 2012 David Berkman
  * 
  * This file is part of the SmallMind Code Project.
  * 
@@ -35,18 +35,18 @@ import org.smallmind.quorum.transport.MethodInvoker;
 
 public class RemoteTargetImpl extends UnicastRemoteObject implements RemoteTarget {
 
-   private MethodInvoker methodInvoker;
+  private MethodInvoker methodInvoker;
 
-   public RemoteTargetImpl (RemoteEndpoint remoteEndpoint, String registryName)
-      throws NoSuchMethodException, MalformedURLException, RemoteException {
+  public RemoteTargetImpl (RemoteEndpoint remoteEndpoint, String registryName)
+    throws NoSuchMethodException, MalformedURLException, RemoteException {
 
-      methodInvoker = new MethodInvoker(remoteEndpoint, remoteEndpoint.getProxyInterfaces());
-      Naming.rebind(registryName, this);
-   }
+    methodInvoker = new MethodInvoker(remoteEndpoint, remoteEndpoint.getProxyInterfaces());
+    Naming.rebind(registryName, this);
+  }
 
-   public Object remoteInvocation (InvocationSignal invocationSignal)
-      throws Exception {
+  public Object remoteInvocation (InvocationSignal invocationSignal)
+    throws Exception {
 
-      return methodInvoker.remoteInvocation(invocationSignal);
-   }
+    return methodInvoker.remoteInvocation(invocationSignal);
+  }
 }

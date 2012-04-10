@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2008, 2009, 2010, 2011 David Berkman
+ * Copyright (c) 2007, 2008, 2009, 2010, 2011, 2012 David Berkman
  * 
  * This file is part of the SmallMind Code Project.
  * 
@@ -32,19 +32,19 @@ import org.smallmind.cloud.multicast.EventMessageException;
 
 public interface ClusterService<D extends ClusterProtocolDetails> {
 
-   public ClusterInstance<D> getClusterInstance ();
+  public ClusterInstance<D> getClusterInstance ();
 
-   public abstract void bindClusterMember (ClusterMember clusterMember)
-      throws ClusterManagementException;
+  public abstract void bindClusterMember (ClusterMember clusterMember)
+    throws ClusterManagementException;
 
-   public abstract void handleServiceBroadcast (ServiceClusterBroadcast serviceClusterBroadcast);
+  public abstract void handleServiceBroadcast (ServiceClusterBroadcast serviceClusterBroadcast);
 
-   public abstract void fireServiceBroadcast (ServiceClusterBroadcast serviceClusterBroadcast)
-      throws EventMessageException;
+  public abstract void fireServiceBroadcast (ServiceClusterBroadcast serviceClusterBroadcast)
+    throws EventMessageException;
 
-   public abstract void start ()
-      throws ClusterManagementException;
+  public abstract void start ()
+    throws ClusterManagementException;
 
-   public abstract void stop ();
+  public abstract void stop ();
 
 }

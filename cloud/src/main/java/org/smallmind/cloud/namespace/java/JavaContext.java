@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2008, 2009, 2010, 2011 David Berkman
+ * Copyright (c) 2007, 2008, 2009, 2010, 2011, 2012 David Berkman
  * 
  * This file is part of the SmallMind Code Project.
  * 
@@ -45,589 +45,589 @@ import org.smallmind.cloud.namespace.java.backingStore.NameTranslator;
 
 public class JavaContext implements DirContext {
 
-   public static final String CONNECTION_DETAILS = "org.smallmind.cloud.namespace.java.connection details";
-   public static final String CONTEXT_STORE = "org.smallmind.cloud.namespace.java.store";
-   public static final String CONTEXT_MODIFIABLE = "org.smallmind.cloud.namespace.java.modifiable";
-   public static final String POOLED_CONNECTION = "org.smallmind.cloud.namespace.java.pooled";
+  public static final String CONNECTION_DETAILS = "org.smallmind.cloud.namespace.java.connection details";
+  public static final String CONTEXT_STORE = "org.smallmind.cloud.namespace.java.store";
+  public static final String CONTEXT_MODIFIABLE = "org.smallmind.cloud.namespace.java.modifiable";
+  public static final String POOLED_CONNECTION = "org.smallmind.cloud.namespace.java.pooled";
 
-   private Hashtable<String, Object> environment;
-   private DirContext internalContext;
-   private NameTranslator nameTranslator;
-   private JavaNameParser nameParser;
-   private boolean modifiable;
-   private boolean pooled;
+  private Hashtable<String, Object> environment;
+  private DirContext internalContext;
+  private NameTranslator nameTranslator;
+  private JavaNameParser nameParser;
+  private boolean modifiable;
+  private boolean pooled;
 
-   public static JavaContext insureContext (JavaContext javaContext, String namingPath)
-      throws NamingException {
+  public static JavaContext insureContext (JavaContext javaContext, String namingPath)
+    throws NamingException {
 
-      JavaContext lastContext = javaContext;
-      StringBuilder pathSoFar;
-      String[] pathArray;
+    JavaContext lastContext = javaContext;
+    StringBuilder pathSoFar;
+    String[] pathArray;
 
-      pathArray = namingPath.split("/", -1);
-      pathSoFar = new StringBuilder();
-      for (int count = pathArray.length - 1; count >= 0; count--) {
-         if (pathSoFar.length() > 0) {
-            pathSoFar.insert(0, '/');
-         }
-         pathSoFar.insert(0, pathArray[count]);
-         try {
-            lastContext = (JavaContext)javaContext.lookup(pathSoFar.toString());
-         }
-         catch (NameNotFoundException n) {
-            lastContext = (JavaContext)javaContext.createSubcontext(pathSoFar.toString());
-         }
+    pathArray = namingPath.split("/", -1);
+    pathSoFar = new StringBuilder();
+    for (int count = pathArray.length - 1; count >= 0; count--) {
+      if (pathSoFar.length() > 0) {
+        pathSoFar.insert(0, '/');
       }
-
-      return lastContext;
-   }
-
-   protected JavaContext (NameTranslator nameTranslator, Hashtable<String, Object> environment, boolean modifiable, boolean pooled) {
-
-      this.nameTranslator = nameTranslator;
-      this.environment = environment;
-      this.modifiable = modifiable;
-      this.pooled = pooled;
-
-      internalContext = null;
-      nameParser = new JavaNameParser(nameTranslator);
-   }
-
-   protected JavaContext (Hashtable<String, Object> environment, DirContext internalContext, NameTranslator nameTranslator, JavaNameParser nameParser, boolean modifiable) {
-
-      this.environment = environment;
-      this.internalContext = internalContext;
-      this.nameTranslator = nameTranslator;
-      this.nameParser = nameParser;
-      this.modifiable = modifiable;
-
-      pooled = false;
-   }
-
-   public Object lookup (Name name)
-      throws NamingException {
-
-      ContextNamePair contextNamePair;
-      Object lookupObject;
-
-      contextNamePair = nameTranslator.fromInternalNameToExternalContext(internalContext, name);
-      lookupObject = contextNamePair.getContext().lookup(contextNamePair.getName());
-      if (lookupObject.getClass().equals(contextNamePair.getContext().getClass())) {
-         if (pooled) {
-            return new PooledJavaContext(environment, (DirContext)lookupObject, nameTranslator, nameParser, modifiable);
-         }
-         else {
-            return new JavaContext(environment, (DirContext)lookupObject, nameTranslator, nameParser, modifiable);
-         }
+      pathSoFar.insert(0, pathArray[count]);
+      try {
+        lastContext = (JavaContext)javaContext.lookup(pathSoFar.toString());
       }
-
-      return lookupObject;
-   }
-
-   public Object lookup (String name)
-      throws NamingException {
-
-      return lookup(nameParser.parse(name));
-   }
-
-   public void bind (Name name, Object obj)
-      throws NamingException {
-
-      ContextNamePair contextNamePair;
-
-      if (!modifiable) {
-         throw new OperationNotSupportedException("This backing store is not modifiable");
+      catch (NameNotFoundException n) {
+        lastContext = (JavaContext)javaContext.createSubcontext(pathSoFar.toString());
       }
+    }
 
-      contextNamePair = nameTranslator.fromInternalNameToExternalContext(internalContext, name);
-      contextNamePair.getContext().bind(contextNamePair.getName(), obj);
-   }
+    return lastContext;
+  }
 
-   public void bind (String name, Object obj)
-      throws NamingException {
+  protected JavaContext (NameTranslator nameTranslator, Hashtable<String, Object> environment, boolean modifiable, boolean pooled) {
 
-      bind(nameParser.parse(name), obj);
-   }
+    this.nameTranslator = nameTranslator;
+    this.environment = environment;
+    this.modifiable = modifiable;
+    this.pooled = pooled;
 
-   public void rebind (Name name, Object obj)
-      throws NamingException {
+    internalContext = null;
+    nameParser = new JavaNameParser(nameTranslator);
+  }
 
-      ContextNamePair contextNamePair;
+  protected JavaContext (Hashtable<String, Object> environment, DirContext internalContext, NameTranslator nameTranslator, JavaNameParser nameParser, boolean modifiable) {
 
-      if (!modifiable) {
-         throw new OperationNotSupportedException("This backing store is not modifiable");
+    this.environment = environment;
+    this.internalContext = internalContext;
+    this.nameTranslator = nameTranslator;
+    this.nameParser = nameParser;
+    this.modifiable = modifiable;
+
+    pooled = false;
+  }
+
+  public Object lookup (Name name)
+    throws NamingException {
+
+    ContextNamePair contextNamePair;
+    Object lookupObject;
+
+    contextNamePair = nameTranslator.fromInternalNameToExternalContext(internalContext, name);
+    lookupObject = contextNamePair.getContext().lookup(contextNamePair.getName());
+    if (lookupObject.getClass().equals(contextNamePair.getContext().getClass())) {
+      if (pooled) {
+        return new PooledJavaContext(environment, (DirContext)lookupObject, nameTranslator, nameParser, modifiable);
       }
-
-      contextNamePair = nameTranslator.fromInternalNameToExternalContext(internalContext, name);
-      contextNamePair.getContext().rebind(contextNamePair.getName(), obj);
-   }
-
-   public void rebind (String name, Object obj)
-      throws NamingException {
-
-      rebind(nameParser.parse(name), obj);
-   }
-
-   public void unbind (Name name)
-      throws NamingException {
-
-      ContextNamePair contextNamePair;
-
-      if (!modifiable) {
-         throw new OperationNotSupportedException("This backing store is not modifiable");
+      else {
+        return new JavaContext(environment, (DirContext)lookupObject, nameTranslator, nameParser, modifiable);
       }
+    }
 
-      contextNamePair = nameTranslator.fromInternalNameToExternalContext(internalContext, name);
-      contextNamePair.getContext().unbind(contextNamePair.getName());
-   }
+    return lookupObject;
+  }
 
-   public void unbind (String name)
-      throws NamingException {
+  public Object lookup (String name)
+    throws NamingException {
 
-      unbind(nameParser.parse(name));
-   }
+    return lookup(nameParser.parse(name));
+  }
 
-   public void rename (Name oldName, Name newName)
-      throws NamingException {
+  public void bind (Name name, Object obj)
+    throws NamingException {
 
-      ContextNamePair contextNamePair;
+    ContextNamePair contextNamePair;
 
-      if (!modifiable) {
-         throw new OperationNotSupportedException("This backing store is not modifiable");
-      }
+    if (!modifiable) {
+      throw new OperationNotSupportedException("This backing store is not modifiable");
+    }
 
-      contextNamePair = nameTranslator.fromInternalNameToExternalContext(internalContext, oldName);
-      contextNamePair.getContext().rename(contextNamePair.getName(), nameTranslator.fromInternalNameToExternalName(newName));
-   }
+    contextNamePair = nameTranslator.fromInternalNameToExternalContext(internalContext, name);
+    contextNamePair.getContext().bind(contextNamePair.getName(), obj);
+  }
 
-   public void rename (String oldName, String newName)
-      throws NamingException {
+  public void bind (String name, Object obj)
+    throws NamingException {
 
-      rename(nameParser.parse(oldName), nameParser.parse(newName));
-   }
+    bind(nameParser.parse(name), obj);
+  }
 
-   public NamingEnumeration<NameClassPair> list (Name name)
-      throws NamingException {
+  public void rebind (Name name, Object obj)
+    throws NamingException {
 
-      ContextNamePair contextNamePair;
-      NamingEnumeration<NameClassPair> internalEnumeration;
+    ContextNamePair contextNamePair;
 
-      contextNamePair = nameTranslator.fromInternalNameToExternalContext(internalContext, name);
-      if ((internalEnumeration = contextNamePair.getContext().list(contextNamePair.getName())) != null) {
+    if (!modifiable) {
+      throw new OperationNotSupportedException("This backing store is not modifiable");
+    }
 
-         return new JavaNamingEnumeration<NameClassPair>(NameClassPair.class, internalEnumeration, contextNamePair.getContext().getClass(), environment, nameTranslator, nameParser, modifiable);
-      }
+    contextNamePair = nameTranslator.fromInternalNameToExternalContext(internalContext, name);
+    contextNamePair.getContext().rebind(contextNamePair.getName(), obj);
+  }
 
-      return null;
-   }
+  public void rebind (String name, Object obj)
+    throws NamingException {
 
-   public NamingEnumeration<NameClassPair> list (String name)
-      throws NamingException {
+    rebind(nameParser.parse(name), obj);
+  }
 
-      return list(nameParser.parse(name));
-   }
+  public void unbind (Name name)
+    throws NamingException {
 
-   public NamingEnumeration<Binding> listBindings (Name name)
-      throws NamingException {
+    ContextNamePair contextNamePair;
 
-      ContextNamePair contextNamePair;
-      NamingEnumeration<Binding> internalEnumeration;
+    if (!modifiable) {
+      throw new OperationNotSupportedException("This backing store is not modifiable");
+    }
 
-      contextNamePair = nameTranslator.fromInternalNameToExternalContext(internalContext, name);
-      if ((internalEnumeration = contextNamePair.getContext().listBindings(contextNamePair.getName())) != null) {
+    contextNamePair = nameTranslator.fromInternalNameToExternalContext(internalContext, name);
+    contextNamePair.getContext().unbind(contextNamePair.getName());
+  }
 
-         return new JavaNamingEnumeration<Binding>(Binding.class, internalEnumeration, contextNamePair.getContext().getClass(), environment, nameTranslator, nameParser, modifiable);
-      }
+  public void unbind (String name)
+    throws NamingException {
 
-      return null;
-   }
+    unbind(nameParser.parse(name));
+  }
 
-   public NamingEnumeration<Binding> listBindings (String name)
-      throws NamingException {
+  public void rename (Name oldName, Name newName)
+    throws NamingException {
 
-      return listBindings(nameParser.parse(name));
-   }
+    ContextNamePair contextNamePair;
 
-   public void destroySubcontext (Name name)
-      throws NamingException {
+    if (!modifiable) {
+      throw new OperationNotSupportedException("This backing store is not modifiable");
+    }
 
-      ContextNamePair contextNamePair;
+    contextNamePair = nameTranslator.fromInternalNameToExternalContext(internalContext, oldName);
+    contextNamePair.getContext().rename(contextNamePair.getName(), nameTranslator.fromInternalNameToExternalName(newName));
+  }
 
-      if (!modifiable) {
-         throw new OperationNotSupportedException("This backing store is not modifiable");
-      }
+  public void rename (String oldName, String newName)
+    throws NamingException {
 
-      contextNamePair = nameTranslator.fromInternalNameToExternalContext(internalContext, name);
-      contextNamePair.getContext().destroySubcontext(contextNamePair.getName());
-   }
+    rename(nameParser.parse(oldName), nameParser.parse(newName));
+  }
 
-   public void destroySubcontext (String name)
-      throws NamingException {
+  public NamingEnumeration<NameClassPair> list (Name name)
+    throws NamingException {
 
-      destroySubcontext(nameParser.parse(name));
-   }
+    ContextNamePair contextNamePair;
+    NamingEnumeration<NameClassPair> internalEnumeration;
 
-   public Context createSubcontext (Name name)
-      throws NamingException {
+    contextNamePair = nameTranslator.fromInternalNameToExternalContext(internalContext, name);
+    if ((internalEnumeration = contextNamePair.getContext().list(contextNamePair.getName())) != null) {
 
-      ContextNamePair contextNamePair;
-      Context createdContext;
+      return new JavaNamingEnumeration<NameClassPair>(NameClassPair.class, internalEnumeration, contextNamePair.getContext().getClass(), environment, nameTranslator, nameParser, modifiable);
+    }
 
-      if (!modifiable) {
-         throw new OperationNotSupportedException("This backing store is not modifiable");
-      }
+    return null;
+  }
 
-      contextNamePair = nameTranslator.fromInternalNameToExternalContext(internalContext, name);
-      createdContext = contextNamePair.getContext().createSubcontext(contextNamePair.getName());
+  public NamingEnumeration<NameClassPair> list (String name)
+    throws NamingException {
 
-      return new JavaContext(environment, (DirContext)createdContext, nameTranslator, nameParser, modifiable);
-   }
+    return list(nameParser.parse(name));
+  }
 
-   public Context createSubcontext (String name)
-      throws NamingException {
+  public NamingEnumeration<Binding> listBindings (Name name)
+    throws NamingException {
 
-      return createSubcontext(nameParser.parse(name));
-   }
+    ContextNamePair contextNamePair;
+    NamingEnumeration<Binding> internalEnumeration;
 
-   public Object lookupLink (Name name)
-      throws NamingException {
+    contextNamePair = nameTranslator.fromInternalNameToExternalContext(internalContext, name);
+    if ((internalEnumeration = contextNamePair.getContext().listBindings(contextNamePair.getName())) != null) {
 
-      ContextNamePair contextNamePair;
-      Object lookupObject;
+      return new JavaNamingEnumeration<Binding>(Binding.class, internalEnumeration, contextNamePair.getContext().getClass(), environment, nameTranslator, nameParser, modifiable);
+    }
 
-      contextNamePair = nameTranslator.fromInternalNameToExternalContext(internalContext, name);
-      lookupObject = contextNamePair.getContext().lookupLink(contextNamePair.getName());
+    return null;
+  }
 
-      if (lookupObject.getClass().equals(contextNamePair.getContext().getClass())) {
+  public NamingEnumeration<Binding> listBindings (String name)
+    throws NamingException {
 
-         return new JavaContext(environment, (DirContext)lookupObject, nameTranslator, nameParser, modifiable);
-      }
+    return listBindings(nameParser.parse(name));
+  }
 
-      return lookupObject;
-   }
+  public void destroySubcontext (Name name)
+    throws NamingException {
 
-   public Object lookupLink (String name)
-      throws NamingException {
+    ContextNamePair contextNamePair;
 
-      return lookupLink(nameParser.parse(name));
-   }
+    if (!modifiable) {
+      throw new OperationNotSupportedException("This backing store is not modifiable");
+    }
 
-   public NameParser getNameParser (Name name)
-      throws NamingException {
+    contextNamePair = nameTranslator.fromInternalNameToExternalContext(internalContext, name);
+    contextNamePair.getContext().destroySubcontext(contextNamePair.getName());
+  }
 
-      return nameParser;
-   }
+  public void destroySubcontext (String name)
+    throws NamingException {
 
-   public NameParser getNameParser (String name)
-      throws NamingException {
+    destroySubcontext(nameParser.parse(name));
+  }
 
-      return getNameParser(nameParser.parse(name));
-   }
+  public Context createSubcontext (Name name)
+    throws NamingException {
 
-   public Name composeName (Name name, Name prefix)
-      throws NamingException {
+    ContextNamePair contextNamePair;
+    Context createdContext;
 
-      return ((Name)prefix.clone()).addAll(name);
-   }
+    if (!modifiable) {
+      throw new OperationNotSupportedException("This backing store is not modifiable");
+    }
 
-   public String composeName (String name, String prefix)
-      throws NamingException {
+    contextNamePair = nameTranslator.fromInternalNameToExternalContext(internalContext, name);
+    createdContext = contextNamePair.getContext().createSubcontext(contextNamePair.getName());
 
-      return nameParser.unparse(composeName(nameParser.parse(name), nameParser.parse(prefix)));
-   }
+    return new JavaContext(environment, (DirContext)createdContext, nameTranslator, nameParser, modifiable);
+  }
 
-   public Object addToEnvironment (String propName, Object propVal)
-      throws NamingException {
+  public Context createSubcontext (String name)
+    throws NamingException {
 
-      Object prevObject;
+    return createSubcontext(nameParser.parse(name));
+  }
 
-      if (!modifiable) {
-         throw new OperationNotSupportedException("This backing store is not modifiable");
-      }
-      prevObject = environment.get(propName);
-      environment.put(propName, propVal);
-      return prevObject;
-   }
+  public Object lookupLink (Name name)
+    throws NamingException {
 
-   public Object removeFromEnvironment (String propName)
-      throws NamingException {
+    ContextNamePair contextNamePair;
+    Object lookupObject;
 
-      if (!modifiable) {
-         throw new OperationNotSupportedException("This backing store is not modifiable");
-      }
-      return environment.remove(propName);
-   }
+    contextNamePair = nameTranslator.fromInternalNameToExternalContext(internalContext, name);
+    lookupObject = contextNamePair.getContext().lookupLink(contextNamePair.getName());
 
-   public Hashtable getEnvironment ()
-      throws NamingException {
+    if (lookupObject.getClass().equals(contextNamePair.getContext().getClass())) {
 
-      return environment;
-   }
+      return new JavaContext(environment, (DirContext)lookupObject, nameTranslator, nameParser, modifiable);
+    }
 
-   public void close ()
-      throws NamingException {
+    return lookupObject;
+  }
 
-      if (internalContext != null) {
-         internalContext.close();
-      }
-   }
+  public Object lookupLink (String name)
+    throws NamingException {
 
-   public void finalize ()
-      throws NamingException {
+    return lookupLink(nameParser.parse(name));
+  }
 
-      close();
-   }
+  public NameParser getNameParser (Name name)
+    throws NamingException {
 
-   public String getNameInNamespace ()
-      throws NamingException {
+    return nameParser;
+  }
 
-      return nameTranslator.fromAbsoluteExternalStringToInternalString(internalContext.getNameInNamespace());
-   }
+  public NameParser getNameParser (String name)
+    throws NamingException {
 
-   public Attributes getAttributes (Name name)
-      throws NamingException {
+    return getNameParser(nameParser.parse(name));
+  }
 
-      ContextNamePair contextNamePair;
+  public Name composeName (Name name, Name prefix)
+    throws NamingException {
 
-      contextNamePair = nameTranslator.fromInternalNameToExternalContext(internalContext, name);
+    return ((Name)prefix.clone()).addAll(name);
+  }
 
-      return contextNamePair.getContext().getAttributes(contextNamePair.getName());
-   }
+  public String composeName (String name, String prefix)
+    throws NamingException {
 
-   public Attributes getAttributes (String name)
-      throws NamingException {
+    return nameParser.unparse(composeName(nameParser.parse(name), nameParser.parse(prefix)));
+  }
 
-      return getAttributes(nameParser.parse(name));
-   }
+  public Object addToEnvironment (String propName, Object propVal)
+    throws NamingException {
 
-   public Attributes getAttributes (Name name, String[] attrIds)
-      throws NamingException {
+    Object prevObject;
 
-      ContextNamePair contextNamePair;
+    if (!modifiable) {
+      throw new OperationNotSupportedException("This backing store is not modifiable");
+    }
+    prevObject = environment.get(propName);
+    environment.put(propName, propVal);
+    return prevObject;
+  }
 
-      contextNamePair = nameTranslator.fromInternalNameToExternalContext(internalContext, name);
+  public Object removeFromEnvironment (String propName)
+    throws NamingException {
 
-      return contextNamePair.getContext().getAttributes(contextNamePair.getName(), attrIds);
-   }
+    if (!modifiable) {
+      throw new OperationNotSupportedException("This backing store is not modifiable");
+    }
+    return environment.remove(propName);
+  }
 
-   public Attributes getAttributes (String name, String[] attrIds)
-      throws NamingException {
+  public Hashtable getEnvironment ()
+    throws NamingException {
 
-      return getAttributes(nameParser.parse(name), attrIds);
-   }
+    return environment;
+  }
 
-   public void modifyAttributes (Name name, int mod_op, Attributes attrs)
-      throws NamingException {
+  public void close ()
+    throws NamingException {
 
-      ContextNamePair contextNamePair;
+    if (internalContext != null) {
+      internalContext.close();
+    }
+  }
 
-      if (!modifiable) {
-         throw new OperationNotSupportedException("This backing store is not modifiable");
-      }
+  public void finalize ()
+    throws NamingException {
 
-      contextNamePair = nameTranslator.fromInternalNameToExternalContext(internalContext, name);
-      contextNamePair.getContext().modifyAttributes(contextNamePair.getName(), mod_op, attrs);
-   }
+    close();
+  }
 
-   public void modifyAttributes (String name, int mod_op, Attributes attrs)
-      throws NamingException {
+  public String getNameInNamespace ()
+    throws NamingException {
 
-      modifyAttributes(nameParser.parse(name), mod_op, attrs);
-   }
+    return nameTranslator.fromAbsoluteExternalStringToInternalString(internalContext.getNameInNamespace());
+  }
 
-   public void modifyAttributes (Name name, ModificationItem[] mods)
-      throws NamingException {
+  public Attributes getAttributes (Name name)
+    throws NamingException {
 
-      ContextNamePair contextNamePair;
+    ContextNamePair contextNamePair;
 
-      if (!modifiable) {
-         throw new OperationNotSupportedException("This backing store is not modifiable");
-      }
+    contextNamePair = nameTranslator.fromInternalNameToExternalContext(internalContext, name);
 
-      contextNamePair = nameTranslator.fromInternalNameToExternalContext(internalContext, name);
-      contextNamePair.getContext().modifyAttributes(contextNamePair.getName(), mods);
-   }
+    return contextNamePair.getContext().getAttributes(contextNamePair.getName());
+  }
 
-   public void modifyAttributes (String name, ModificationItem[] mods)
-      throws NamingException {
+  public Attributes getAttributes (String name)
+    throws NamingException {
 
-      modifyAttributes(nameParser.parse(name), mods);
-   }
+    return getAttributes(nameParser.parse(name));
+  }
 
-   public void bind (Name name, Object obj, Attributes attrs)
-      throws NamingException {
+  public Attributes getAttributes (Name name, String[] attrIds)
+    throws NamingException {
 
-      ContextNamePair contextNamePair;
+    ContextNamePair contextNamePair;
 
-      if (!modifiable) {
-         throw new OperationNotSupportedException("This backing store is not modifiable");
-      }
+    contextNamePair = nameTranslator.fromInternalNameToExternalContext(internalContext, name);
 
-      contextNamePair = nameTranslator.fromInternalNameToExternalContext(internalContext, name);
-      contextNamePair.getContext().bind(contextNamePair.getName(), obj, attrs);
-   }
+    return contextNamePair.getContext().getAttributes(contextNamePair.getName(), attrIds);
+  }
 
-   public void bind (String name, Object obj, Attributes attrs)
-      throws NamingException {
+  public Attributes getAttributes (String name, String[] attrIds)
+    throws NamingException {
 
-      bind(nameParser.parse(name), obj, attrs);
-   }
+    return getAttributes(nameParser.parse(name), attrIds);
+  }
 
-   public void rebind (Name name, Object obj, Attributes attrs)
-      throws NamingException {
+  public void modifyAttributes (Name name, int mod_op, Attributes attrs)
+    throws NamingException {
 
-      ContextNamePair contextNamePair;
+    ContextNamePair contextNamePair;
 
-      if (!modifiable) {
-         throw new OperationNotSupportedException("This backing store is not modifiable");
-      }
+    if (!modifiable) {
+      throw new OperationNotSupportedException("This backing store is not modifiable");
+    }
 
-      contextNamePair = nameTranslator.fromInternalNameToExternalContext(internalContext, name);
-      contextNamePair.getContext().rebind(contextNamePair.getName(), obj, attrs);
-   }
+    contextNamePair = nameTranslator.fromInternalNameToExternalContext(internalContext, name);
+    contextNamePair.getContext().modifyAttributes(contextNamePair.getName(), mod_op, attrs);
+  }
 
-   public void rebind (String name, Object obj, Attributes attrs)
-      throws NamingException {
+  public void modifyAttributes (String name, int mod_op, Attributes attrs)
+    throws NamingException {
 
-      rebind(nameParser.parse(name), obj, attrs);
-   }
+    modifyAttributes(nameParser.parse(name), mod_op, attrs);
+  }
 
-   public DirContext createSubcontext (Name name, Attributes attrs)
-      throws NamingException {
+  public void modifyAttributes (Name name, ModificationItem[] mods)
+    throws NamingException {
 
-      ContextNamePair contextNamePair;
-      Context createdContext;
+    ContextNamePair contextNamePair;
 
-      if (!modifiable) {
-         throw new OperationNotSupportedException("This backing store is not modifiable");
-      }
+    if (!modifiable) {
+      throw new OperationNotSupportedException("This backing store is not modifiable");
+    }
 
-      contextNamePair = nameTranslator.fromInternalNameToExternalContext(internalContext, name);
-      createdContext = contextNamePair.getContext().createSubcontext(contextNamePair.getName(), attrs);
+    contextNamePair = nameTranslator.fromInternalNameToExternalContext(internalContext, name);
+    contextNamePair.getContext().modifyAttributes(contextNamePair.getName(), mods);
+  }
 
-      return new JavaContext(environment, (DirContext)createdContext, nameTranslator, nameParser, modifiable);
-   }
+  public void modifyAttributes (String name, ModificationItem[] mods)
+    throws NamingException {
 
-   public DirContext createSubcontext (String name, Attributes attrs)
-      throws NamingException {
+    modifyAttributes(nameParser.parse(name), mods);
+  }
 
-      return createSubcontext(nameParser.parse(name), attrs);
-   }
+  public void bind (Name name, Object obj, Attributes attrs)
+    throws NamingException {
 
-   public DirContext getSchema (Name name)
-      throws NamingException {
+    ContextNamePair contextNamePair;
 
-      ContextNamePair contextNamePair;
+    if (!modifiable) {
+      throw new OperationNotSupportedException("This backing store is not modifiable");
+    }
 
-      contextNamePair = nameTranslator.fromInternalNameToExternalContext(internalContext, name);
+    contextNamePair = nameTranslator.fromInternalNameToExternalContext(internalContext, name);
+    contextNamePair.getContext().bind(contextNamePair.getName(), obj, attrs);
+  }
 
-      return contextNamePair.getContext().getSchema(contextNamePair.getName());
-   }
+  public void bind (String name, Object obj, Attributes attrs)
+    throws NamingException {
 
-   public DirContext getSchema (String name)
-      throws NamingException {
+    bind(nameParser.parse(name), obj, attrs);
+  }
 
-      return getSchema(nameParser.parse(name));
-   }
+  public void rebind (Name name, Object obj, Attributes attrs)
+    throws NamingException {
 
-   public DirContext getSchemaClassDefinition (Name name)
-      throws NamingException {
+    ContextNamePair contextNamePair;
 
-      ContextNamePair contextNamePair;
+    if (!modifiable) {
+      throw new OperationNotSupportedException("This backing store is not modifiable");
+    }
 
-      contextNamePair = nameTranslator.fromInternalNameToExternalContext(internalContext, name);
+    contextNamePair = nameTranslator.fromInternalNameToExternalContext(internalContext, name);
+    contextNamePair.getContext().rebind(contextNamePair.getName(), obj, attrs);
+  }
 
-      return contextNamePair.getContext().getSchemaClassDefinition(contextNamePair.getName());
-   }
+  public void rebind (String name, Object obj, Attributes attrs)
+    throws NamingException {
 
-   public DirContext getSchemaClassDefinition (String name)
-      throws NamingException {
+    rebind(nameParser.parse(name), obj, attrs);
+  }
 
-      return getSchemaClassDefinition(nameParser.parse(name));
-   }
+  public DirContext createSubcontext (Name name, Attributes attrs)
+    throws NamingException {
 
-   public NamingEnumeration<SearchResult> search (Name name, Attributes matchingAttributes, String[] attributesToReturn)
-      throws NamingException {
+    ContextNamePair contextNamePair;
+    Context createdContext;
 
-      ContextNamePair contextNamePair;
-      NamingEnumeration<SearchResult> internalEnumeration;
+    if (!modifiable) {
+      throw new OperationNotSupportedException("This backing store is not modifiable");
+    }
 
-      contextNamePair = nameTranslator.fromInternalNameToExternalContext(internalContext, name);
-      if ((internalEnumeration = contextNamePair.getContext().search(contextNamePair.getName(), matchingAttributes, attributesToReturn)) != null) {
+    contextNamePair = nameTranslator.fromInternalNameToExternalContext(internalContext, name);
+    createdContext = contextNamePair.getContext().createSubcontext(contextNamePair.getName(), attrs);
 
-         return new JavaNamingEnumeration<SearchResult>(SearchResult.class, internalEnumeration, contextNamePair.getContext().getClass(), environment, nameTranslator, nameParser, modifiable);
-      }
+    return new JavaContext(environment, (DirContext)createdContext, nameTranslator, nameParser, modifiable);
+  }
 
-      return null;
-   }
+  public DirContext createSubcontext (String name, Attributes attrs)
+    throws NamingException {
 
-   public NamingEnumeration<SearchResult> search (String name, Attributes matchingAttributes, String[] attributesToReturn)
-      throws NamingException {
+    return createSubcontext(nameParser.parse(name), attrs);
+  }
 
-      return search(nameParser.parse(name), matchingAttributes, attributesToReturn);
-   }
+  public DirContext getSchema (Name name)
+    throws NamingException {
 
-   public NamingEnumeration<SearchResult> search (Name name, Attributes matchingAttributes)
-      throws NamingException {
+    ContextNamePair contextNamePair;
 
-      ContextNamePair contextNamePair;
-      NamingEnumeration<SearchResult> internalEnumeration;
+    contextNamePair = nameTranslator.fromInternalNameToExternalContext(internalContext, name);
 
-      contextNamePair = nameTranslator.fromInternalNameToExternalContext(internalContext, name);
-      if ((internalEnumeration = contextNamePair.getContext().search(contextNamePair.getName(), matchingAttributes)) != null) {
+    return contextNamePair.getContext().getSchema(contextNamePair.getName());
+  }
 
-         return new JavaNamingEnumeration<SearchResult>(SearchResult.class, internalEnumeration, contextNamePair.getContext().getClass(), environment, nameTranslator, nameParser, modifiable);
-      }
+  public DirContext getSchema (String name)
+    throws NamingException {
 
-      return null;
-   }
+    return getSchema(nameParser.parse(name));
+  }
 
-   public NamingEnumeration<SearchResult> search (String name, Attributes matchingAttributes)
-      throws NamingException {
+  public DirContext getSchemaClassDefinition (Name name)
+    throws NamingException {
 
-      return search(nameParser.parse(name), matchingAttributes);
-   }
+    ContextNamePair contextNamePair;
 
-   public NamingEnumeration<SearchResult> search (Name name, String filter, SearchControls cons)
-      throws NamingException {
+    contextNamePair = nameTranslator.fromInternalNameToExternalContext(internalContext, name);
 
-      ContextNamePair contextNamePair;
-      NamingEnumeration<SearchResult> internalEnumeration;
+    return contextNamePair.getContext().getSchemaClassDefinition(contextNamePair.getName());
+  }
 
-      contextNamePair = nameTranslator.fromInternalNameToExternalContext(internalContext, name);
-      if ((internalEnumeration = contextNamePair.getContext().search(contextNamePair.getName(), filter, cons)) != null) {
+  public DirContext getSchemaClassDefinition (String name)
+    throws NamingException {
 
-         return new JavaNamingEnumeration<SearchResult>(SearchResult.class, internalEnumeration, contextNamePair.getContext().getClass(), environment, nameTranslator, nameParser, modifiable);
-      }
+    return getSchemaClassDefinition(nameParser.parse(name));
+  }
 
-      return null;
-   }
+  public NamingEnumeration<SearchResult> search (Name name, Attributes matchingAttributes, String[] attributesToReturn)
+    throws NamingException {
 
-   public NamingEnumeration<SearchResult> search (String name, String filter, SearchControls cons)
-      throws NamingException {
+    ContextNamePair contextNamePair;
+    NamingEnumeration<SearchResult> internalEnumeration;
 
-      return search(nameParser.parse(name), filter, cons);
-   }
+    contextNamePair = nameTranslator.fromInternalNameToExternalContext(internalContext, name);
+    if ((internalEnumeration = contextNamePair.getContext().search(contextNamePair.getName(), matchingAttributes, attributesToReturn)) != null) {
 
-   public NamingEnumeration<SearchResult> search (Name name, String filterExpr, Object[] filterArgs, SearchControls cons)
-      throws NamingException {
+      return new JavaNamingEnumeration<SearchResult>(SearchResult.class, internalEnumeration, contextNamePair.getContext().getClass(), environment, nameTranslator, nameParser, modifiable);
+    }
 
-      ContextNamePair contextNamePair;
-      NamingEnumeration<SearchResult> internalEnumeration;
+    return null;
+  }
 
-      contextNamePair = nameTranslator.fromInternalNameToExternalContext(internalContext, name);
+  public NamingEnumeration<SearchResult> search (String name, Attributes matchingAttributes, String[] attributesToReturn)
+    throws NamingException {
 
-      if ((internalEnumeration = contextNamePair.getContext().search(contextNamePair.getName(), filterExpr, filterArgs, cons)) != null) {
+    return search(nameParser.parse(name), matchingAttributes, attributesToReturn);
+  }
 
-         return new JavaNamingEnumeration<SearchResult>(SearchResult.class, internalEnumeration, contextNamePair.getContext().getClass(), environment, nameTranslator, nameParser, modifiable);
-      }
+  public NamingEnumeration<SearchResult> search (Name name, Attributes matchingAttributes)
+    throws NamingException {
 
-      return null;
-   }
+    ContextNamePair contextNamePair;
+    NamingEnumeration<SearchResult> internalEnumeration;
 
-   public NamingEnumeration<SearchResult> search (String name, String filterExpr, Object[] filterArgs, SearchControls cons)
-      throws NamingException {
+    contextNamePair = nameTranslator.fromInternalNameToExternalContext(internalContext, name);
+    if ((internalEnumeration = contextNamePair.getContext().search(contextNamePair.getName(), matchingAttributes)) != null) {
 
-      return search(nameParser.parse(name), filterExpr, filterArgs, cons);
-   }
+      return new JavaNamingEnumeration<SearchResult>(SearchResult.class, internalEnumeration, contextNamePair.getContext().getClass(), environment, nameTranslator, nameParser, modifiable);
+    }
+
+    return null;
+  }
+
+  public NamingEnumeration<SearchResult> search (String name, Attributes matchingAttributes)
+    throws NamingException {
+
+    return search(nameParser.parse(name), matchingAttributes);
+  }
+
+  public NamingEnumeration<SearchResult> search (Name name, String filter, SearchControls cons)
+    throws NamingException {
+
+    ContextNamePair contextNamePair;
+    NamingEnumeration<SearchResult> internalEnumeration;
+
+    contextNamePair = nameTranslator.fromInternalNameToExternalContext(internalContext, name);
+    if ((internalEnumeration = contextNamePair.getContext().search(contextNamePair.getName(), filter, cons)) != null) {
+
+      return new JavaNamingEnumeration<SearchResult>(SearchResult.class, internalEnumeration, contextNamePair.getContext().getClass(), environment, nameTranslator, nameParser, modifiable);
+    }
+
+    return null;
+  }
+
+  public NamingEnumeration<SearchResult> search (String name, String filter, SearchControls cons)
+    throws NamingException {
+
+    return search(nameParser.parse(name), filter, cons);
+  }
+
+  public NamingEnumeration<SearchResult> search (Name name, String filterExpr, Object[] filterArgs, SearchControls cons)
+    throws NamingException {
+
+    ContextNamePair contextNamePair;
+    NamingEnumeration<SearchResult> internalEnumeration;
+
+    contextNamePair = nameTranslator.fromInternalNameToExternalContext(internalContext, name);
+
+    if ((internalEnumeration = contextNamePair.getContext().search(contextNamePair.getName(), filterExpr, filterArgs, cons)) != null) {
+
+      return new JavaNamingEnumeration<SearchResult>(SearchResult.class, internalEnumeration, contextNamePair.getContext().getClass(), environment, nameTranslator, nameParser, modifiable);
+    }
+
+    return null;
+  }
+
+  public NamingEnumeration<SearchResult> search (String name, String filterExpr, Object[] filterArgs, SearchControls cons)
+    throws NamingException {
+
+    return search(nameParser.parse(name), filterExpr, filterArgs, cons);
+  }
 }

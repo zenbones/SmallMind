@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2008, 2009, 2010, 2011 David Berkman
+ * Copyright (c) 2007, 2008, 2009, 2010, 2011, 2012 David Berkman
  * 
  * This file is part of the SmallMind Code Project.
  * 
@@ -32,9 +32,9 @@ import org.smallmind.quorum.transport.messaging.MessagingTransmitter;
 
 public class ServiceHandleFactory {
 
-   public static <S> S createServiceHandle (MessagingTransmitter messagingTransmitter, Class<S> serviceInterface)
-      throws JMSException {
+  public static <S> S createServiceHandle (MessagingTransmitter messagingTransmitter, Class<S> serviceInterface, String serviceSelector)
+    throws JMSException {
 
-      return serviceInterface.cast(InvocationProxyFactory.generateProxy(messagingTransmitter, serviceInterface));
-   }
+    return serviceInterface.cast(InvocationProxyFactory.generateProxy(messagingTransmitter, serviceInterface, serviceSelector));
+  }
 }

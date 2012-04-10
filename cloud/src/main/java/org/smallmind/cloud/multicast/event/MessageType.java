@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2008, 2009, 2010, 2011 David Berkman
+ * Copyright (c) 2007, 2008, 2009, 2010, 2011, 2012 David Berkman
  * 
  * This file is part of the SmallMind Code Project.
  * 
@@ -28,11 +28,11 @@ package org.smallmind.cloud.multicast.event;
 
 public enum MessageType {
 
-   HEADER, DATA;
+  HEADER, DATA;
 
-   public static MessageType getMessageType (int ordinal) {
+  public static MessageType getMessageType (int ordinal) {
 
-      return MessageType.values()[ordinal];
-   }
+    return MessageType.values()[ordinal];
+  }
 
 }

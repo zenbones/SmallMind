@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2008, 2009, 2010, 2011 David Berkman
+ * Copyright (c) 2007, 2008, 2009, 2010, 2011, 2012 David Berkman
  * 
  * This file is part of the SmallMind Code Project.
  * 
@@ -28,56 +28,69 @@ package org.smallmind.plumber.io;
 
 import java.io.IOException;
 import java.net.Socket;
+import org.smallmind.quorum.pool.component.PooledComponent;
 import org.smallmind.scribe.pen.Logger;
+import org.smallmind.scribe.pen.LoggerManager;
 
-public abstract class SocketWorker implements Runnable {
+public abstract class SocketWorker implements PooledComponent, Runnable {
 
-   private Logger logger;
-   private ServerSocketHerald herald;
-   private Socket socket;
+  private Logger logger;
+  private ServerSocketHerald herald;
+  private Socket socket;
 
-   public SocketWorker (Logger logger, ServerSocketHerald herald) {
+  public SocketWorker (Logger logger, ServerSocketHerald herald) {
 
-      this.logger = logger;
-      this.herald = herald;
-   }
+    this.logger = logger;
+    this.herald = herald;
+  }
 
-   public void setSocket (Socket socket) {
+  public void setSocket (Socket socket) {
 
-      this.socket = socket;
-   }
+    this.socket = socket;
+  }
 
-   public abstract void socketWork (Socket socket)
-      throws Exception;
+  public abstract void socketWork (Socket socket)
+    throws Exception;
 
-   public void run () {
+  public void run () {
+
+    try {
+      if (socket == null) {
+        throw new IllegalArgumentException("No socket has been set on this SocketWorker");
+      }
+      if (socket.isClosed()) {
+        throw new IllegalArgumentException("The socket has already been closed");
+      }
 
       try {
-         if (socket == null) {
-            throw new IllegalArgumentException("No socket has been set on this SocketWorker");
-         }
-         if (socket.isClosed()) {
-            throw new IllegalArgumentException("The socket has already been closed");
-         }
-
-         try {
-            socketWork(socket);
-         }
-         finally {
-            socket.close();
-         }
-      }
-      catch (Exception e) {
-         logger.error(e);
+        socketWork(socket);
       }
       finally {
-         herald.returnConnection(this);
+        socket.close();
       }
-   }
+    }
+    catch (Exception e) {
+      logger.error(e);
+    }
+    finally {
+      herald.returnConnection(this);
+    }
+  }
 
-   public void close ()
-      throws IOException {
+  public void close ()
+    throws IOException {
 
-      socket.close();
-   }
+    socket.close();
+  }
+
+  @Override
+  public void terminate () {
+
+    try {
+      close();
+    }
+    catch (IOException ioException) {
+      LoggerManager.getLogger(SocketWorker.class).error(ioException);
+    }
+  }
 }

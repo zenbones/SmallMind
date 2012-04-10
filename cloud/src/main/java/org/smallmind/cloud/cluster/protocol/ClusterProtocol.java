@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2008, 2009, 2010, 2011 David Berkman
+ * Copyright (c) 2007, 2008, 2009, 2010, 2011, 2012 David Berkman
  * 
  * This file is part of the SmallMind Code Project.
  * 
@@ -37,24 +37,24 @@ import org.smallmind.cloud.cluster.protocol.socket.SocketClusterServiceBuilder;
 
 public enum ClusterProtocol {
 
-   REMOTE(RemoteClusterServiceBuilder.class, RemoteClusterManagerBuilder.class), QUEUE(QueueClusterServiceBuilder.class, QueueClusterManagerBuilder.class), SOCKET(SocketClusterServiceBuilder.class, SocketClusterManagerBuilder.class);
+  REMOTE(RemoteClusterServiceBuilder.class, RemoteClusterManagerBuilder.class), QUEUE(QueueClusterServiceBuilder.class, QueueClusterManagerBuilder.class), SOCKET(SocketClusterServiceBuilder.class, SocketClusterManagerBuilder.class);
 
-   private Class<? extends ClusterServiceBuilder<? extends ClusterProtocolDetails>> serviceBuilderClass;
-   private Class<? extends ClusterManagerBuilder<? extends ClusterProtocolDetails>> managerBuilderClass;
+  private Class<? extends ClusterServiceBuilder> serviceBuilderClass;
+  private Class<? extends ClusterManagerBuilder> managerBuilderClass;
 
-   private ClusterProtocol (Class<? extends ClusterServiceBuilder<? extends ClusterProtocolDetails>> serviceBuilderClass, Class<? extends ClusterManagerBuilder<? extends ClusterProtocolDetails>> managerBuilderClass) {
+  private ClusterProtocol (Class<? extends ClusterServiceBuilder<? extends ClusterProtocolDetails>> serviceBuilderClass, Class<? extends ClusterManagerBuilder> managerBuilderClass) {
 
-      this.serviceBuilderClass = serviceBuilderClass;
-      this.managerBuilderClass = managerBuilderClass;
-   }
+    this.serviceBuilderClass = serviceBuilderClass;
+    this.managerBuilderClass = managerBuilderClass;
+  }
 
-   public Class<? extends ClusterServiceBuilder<? extends ClusterProtocolDetails>> getServiceBuilderClass () {
+  public Class<? extends ClusterServiceBuilder> getServiceBuilderClass () {
 
-      return serviceBuilderClass;
-   }
+    return serviceBuilderClass;
+  }
 
-   public Class<? extends ClusterManagerBuilder<? extends ClusterProtocolDetails>> getManagerBuilderClass () {
+  public Class<? extends ClusterManagerBuilder> getManagerBuilderClass () {
 
-      return managerBuilderClass;
-   }
+    return managerBuilderClass;
+  }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2008, 2009, 2010, 2011 David Berkman
+ * Copyright (c) 2007, 2008, 2009, 2010, 2011, 2012 David Berkman
  * 
  * This file is part of the SmallMind Code Project.
  * 
@@ -26,62 +26,59 @@
  */
 package org.smallmind.cloud.cluster;
 
+import java.io.Serializable;
 import java.net.InetAddress;
+import org.smallmind.cloud.cluster.protocol.ClusterProtocolDetails;
 
-public class ClusterEndpoint implements java.io.Serializable {
+public class ClusterEndpoint<D extends ClusterProtocolDetails> implements Serializable {
 
-   private InetAddress inetAddress;
-   private ClusterInstance clusterInstance;
+  private InetAddress inetAddress;
+  private ClusterInstance<D> clusterInstance;
 
-   public ClusterEndpoint (InetAddress inetAddress, ClusterInstance clusterInstance) {
+  public ClusterEndpoint (InetAddress inetAddress, ClusterInstance<D> clusterInstance) {
 
-      this.inetAddress = inetAddress;
-      this.clusterInstance = clusterInstance;
-   }
+    this.inetAddress = inetAddress;
+    this.clusterInstance = clusterInstance;
+  }
 
-   public InetAddress getHostAddress () {
+  public InetAddress getHostAddress () {
 
-      return inetAddress;
-   }
+    return inetAddress;
+  }
 
-   public String getHostName () {
+  public ClusterInstance<D> getClusterInstance () {
 
-      return inetAddress.getHostName();
-   }
+    return clusterInstance;
+  }
 
-   public ClusterInstance getClusterInstance () {
+  public String toString () {
 
-      return clusterInstance;
-   }
+    StringBuilder endpointBuilder;
 
-   public String toString () {
+    endpointBuilder = new StringBuilder("ClusterEndpoint [");
+    endpointBuilder.append(inetAddress.toString());
+    endpointBuilder.append(":");
+    endpointBuilder.append(clusterInstance.toString());
+    endpointBuilder.append("]");
 
-      StringBuilder endpointBuilder;
+    return endpointBuilder.toString();
+  }
 
-      endpointBuilder = new StringBuilder("ClusterEndpoint [");
-      endpointBuilder.append(inetAddress.toString());
-      endpointBuilder.append(":");
-      endpointBuilder.append(clusterInstance.toString());
-      endpointBuilder.append("]");
+  public int hashCode () {
 
-      return endpointBuilder.toString();
-   }
+    return (inetAddress.hashCode() ^ clusterInstance.hashCode());
+  }
 
-   public int hashCode () {
+  public boolean equals (Object obj) {
 
-      return (inetAddress.hashCode() ^ clusterInstance.hashCode());
-   }
-
-   public boolean equals (Object obj) {
-
-      if (obj instanceof ClusterEndpoint) {
-         if (inetAddress.equals(((ClusterEndpoint)obj).getHostAddress())) {
-            if (clusterInstance.equals(((ClusterEndpoint)obj).getClusterInstance())) {
-               return true;
-            }
-         }
+    if (obj instanceof ClusterEndpoint) {
+      if (inetAddress.equals(((ClusterEndpoint)obj).getHostAddress())) {
+        if (clusterInstance.equals(((ClusterEndpoint)obj).getClusterInstance())) {
+          return true;
+        }
       }
+    }
 
-      return false;
-   }
+    return false;
+  }
 }

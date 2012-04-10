@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2008, 2009, 2010, 2011 David Berkman
+ * Copyright (c) 2007, 2008, 2009, 2010, 2011, 2012 David Berkman
  * 
  * This file is part of the SmallMind Code Project.
  * 
@@ -34,28 +34,30 @@ import org.smallmind.quorum.transport.InvocationSignal;
 
 public class MessagingInvocationHandler implements InvocationHandler {
 
-   private MessagingTransmitter messagingTransmitter;
-   private Class invocableInterface;
+  private MessagingTransmitter messagingTransmitter;
+  private Class invocableInterface;
+  private String serviceSelector;
 
-   public MessagingInvocationHandler (MessagingTransmitter messagingTransmitter, Class invocableInterface) {
+  public MessagingInvocationHandler (MessagingTransmitter messagingTransmitter, Class invocableInterface, String serviceSelector) {
 
-      this.messagingTransmitter = messagingTransmitter;
-      this.invocableInterface = invocableInterface;
-   }
+    this.messagingTransmitter = messagingTransmitter;
+    this.invocableInterface = invocableInterface;
+    this.serviceSelector = serviceSelector;
+  }
 
-   public Object invoke (Object proxy, Method method, Object[] args)
-      throws Throwable {
+  public Object invoke (Object proxy, Method method, Object[] args)
+    throws Throwable {
 
-      MessageSender messageSender;
+    MessageSender messageSender;
 
-      messageSender = messagingTransmitter.borrowMessageSender();
+    messageSender = messagingTransmitter.borrowMessageSender(serviceSelector);
 
-      try {
-         messageSender.sendMessage(messageSender.createObjectMessage(new InvocationSignal(ContextFactory.getExpectedContexts(invocableInterface), new FauxMethod(method), args)));
-         return messageSender.getResult();
-      }
-      finally {
-         messagingTransmitter.returnMessageSender(messageSender);
-      }
-   }
+    try {
+      messageSender.sendMessage(messageSender.createObjectMessage(new InvocationSignal(ContextFactory.getExpectedContexts(invocableInterface), new FauxMethod(method), args)));
+      return messageSender.getResult();
+    }
+    finally {
+      messagingTransmitter.returnMessageSender(messageSender);
+    }
+  }
 }

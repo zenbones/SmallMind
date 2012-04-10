@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2008, 2009, 2010, 2011 David Berkman
+ * Copyright (c) 2007, 2008, 2009, 2010, 2011, 2012 David Berkman
  * 
  * This file is part of the SmallMind Code Project.
  * 
@@ -31,16 +31,16 @@ import org.smallmind.cloud.cluster.ClusterInstance;
 
 public class GossipClusterEvent implements Serializable {
 
-   private ClusterInstance clusterInstance;
+  private ClusterInstance clusterInstance;
 
-   public GossipClusterEvent (ClusterInstance clusterInstance) {
+  public GossipClusterEvent (ClusterInstance clusterInstance) {
 
-      this.clusterInstance = clusterInstance;
-   }
+    this.clusterInstance = clusterInstance;
+  }
 
-   public ClusterInstance getClusterInstance () {
+  public ClusterInstance getClusterInstance () {
 
-      return clusterInstance;
-   }
+    return clusterInstance;
+  }
 
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2008, 2009, 2010, 2011 David Berkman
+ * Copyright (c) 2007, 2008, 2009, 2010, 2011, 2012 David Berkman
  * 
  * This file is part of the SmallMind Code Project.
  * 
@@ -30,20 +30,20 @@ import org.smallmind.quorum.cache.indigenous.CacheExpirationPolicy;
 
 public class EventMessageCacheExpirationPolicy implements CacheExpirationPolicy<EventMessageCacheEntry> {
 
-   private int timerTickSeconds;
+  private int timerTickSeconds;
 
-   public EventMessageCacheExpirationPolicy (int timerTickSeconds) {
+  public EventMessageCacheExpirationPolicy (int timerTickSeconds) {
 
-      this.timerTickSeconds = timerTickSeconds;
-   }
+    this.timerTickSeconds = timerTickSeconds;
+  }
 
-   public int getTimerTickSeconds () {
+  public int getTimerTickSeconds () {
 
-      return timerTickSeconds;
-   }
+    return timerTickSeconds;
+  }
 
-   public boolean isStale (EventMessageCacheEntry cacheEntry) {
+  public boolean isStale (EventMessageCacheEntry cacheEntry) {
 
-      return ((System.currentTimeMillis() - cacheEntry.getLastAccessTime()) > 10000);
-   }
+    return ((System.currentTimeMillis() - cacheEntry.getLastAccessTime()) > 10000);
+  }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2008, 2009, 2010, 2011 David Berkman
+ * Copyright (c) 2007, 2008, 2009, 2010, 2011, 2012 David Berkman
  * 
  * This file is part of the SmallMind Code Project.
  * 
@@ -30,33 +30,33 @@ import java.util.Arrays;
 
 public class EventMessageKey {
 
-   private byte[] keyArray;
+  private byte[] keyArray;
 
-   public EventMessageKey (byte[] keyArray) {
+  public EventMessageKey (byte[] keyArray) {
 
-      this.keyArray = new byte[keyArray.length];
-      System.arraycopy(keyArray, 0, this.keyArray, 0, keyArray.length);
-   }
+    this.keyArray = new byte[keyArray.length];
+    System.arraycopy(keyArray, 0, this.keyArray, 0, keyArray.length);
+  }
 
-   public byte[] getKey () {
+  public byte[] getKey () {
 
-      return keyArray;
-   }
+    return keyArray;
+  }
 
-   public int hashCode () {
+  public int hashCode () {
 
-      int hashCode = 0;
+    int hashCode = 0;
 
-      for (byte keyByte : keyArray) {
-         hashCode += keyByte;
-      }
+    for (byte keyByte : keyArray) {
+      hashCode += keyByte;
+    }
 
-      return hashCode;
-   }
+    return hashCode;
+  }
 
-   public boolean equals (Object object) {
+  public boolean equals (Object object) {
 
-      return (object instanceof EventMessageKey) && Arrays.equals(keyArray, ((EventMessageKey)object).getKey());
-   }
+    return (object instanceof EventMessageKey) && Arrays.equals(keyArray, ((EventMessageKey)object).getKey());
+  }
 
 }

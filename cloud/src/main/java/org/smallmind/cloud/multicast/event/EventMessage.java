@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2008, 2009, 2010, 2011 David Berkman
+ * Copyright (c) 2007, 2008, 2009, 2010, 2011, 2012 David Berkman
  * 
  * This file is part of the SmallMind Code Project.
  * 
@@ -31,41 +31,41 @@ import org.smallmind.nutsnbolts.util.UniqueId;
 
 public abstract class EventMessage {
 
-   public static final int MESSAGE_HEADER_SIZE = UniqueId.byteSize() + 16;
+  public static final int MESSAGE_HEADER_SIZE = UniqueId.byteSize() + 16;
 
-   private ByteBuffer translationBuffer;
+  private ByteBuffer translationBuffer;
 
-   public EventMessage (byte[] messageId, MessageType messageType, int messageLength, int extraSize) {
+  public EventMessage (byte[] messageId, MessageType messageType, int messageLength, int extraSize) {
 
-      byte[] messageArray;
+    byte[] messageArray;
 
-      messageArray = new byte[messageId.length + 12 + extraSize];
-      translationBuffer = ByteBuffer.wrap(messageArray);
+    messageArray = new byte[messageId.length + 12 + extraSize];
+    translationBuffer = ByteBuffer.wrap(messageArray);
 
-      translationBuffer.putInt(MessageStatus.MULTICAST.ordinal());
-      translationBuffer.put(messageId);
-      translationBuffer.putInt(messageType.ordinal());
-      translationBuffer.putInt(messageLength);
-   }
+    translationBuffer.putInt(MessageStatus.MULTICAST.ordinal());
+    translationBuffer.put(messageId);
+    translationBuffer.putInt(messageType.ordinal());
+    translationBuffer.putInt(messageLength);
+  }
 
-   public void put (byte[] b) {
+  public void put (byte[] b) {
 
-      translationBuffer.put(b);
-   }
+    translationBuffer.put(b);
+  }
 
-   public void putInt (int i) {
+  public void putInt (int i) {
 
-      translationBuffer.putInt(i);
-   }
+    translationBuffer.putInt(i);
+  }
 
-   public void putLong (long l) {
+  public void putLong (long l) {
 
-      translationBuffer.putLong(l);
-   }
+    translationBuffer.putLong(l);
+  }
 
-   public ByteBuffer getByteBuffer () {
+  public ByteBuffer getByteBuffer () {
 
-      return translationBuffer;
-   }
+    return translationBuffer;
+  }
 
 }

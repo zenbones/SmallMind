@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2008, 2009, 2010, 2011 David Berkman
+ * Copyright (c) 2007, 2008, 2009, 2010, 2011, 2012 David Berkman
  * 
  * This file is part of the SmallMind Code Project.
  * 
@@ -32,60 +32,50 @@ import org.smallmind.cloud.cluster.protocol.ClusterProtocolDetails;
 
 public class ClusterInterface<D extends ClusterProtocolDetails> implements Serializable {
 
-   private String clusterName;
-   private ClusterPivot clusterPivot;
-   private D clusterProtocolDetails;
+  private String clusterName;
+  private ClusterPivot<D> clusterPivot;
+  private D clusterProtocolDetails;
 
-   public ClusterInterface (String clusterName, ClusterPivot clusterPivot, D clusterProtocolDetails) {
+  public ClusterInterface (String clusterName, ClusterPivot<D> clusterPivot, D clusterProtocolDetails) {
 
-      this.clusterName = clusterName;
-      this.clusterPivot = clusterPivot;
-      this.clusterProtocolDetails = clusterProtocolDetails;
-   }
+    this.clusterName = clusterName;
+    this.clusterPivot = clusterPivot;
+    this.clusterProtocolDetails = clusterProtocolDetails;
+  }
 
-   public String getClusterName () {
+  public String getClusterName () {
 
-      return clusterName;
-   }
+    return clusterName;
+  }
 
-   public ClusterPivot getClusterPivot () {
+  public ClusterPivot<D> getClusterPivot () {
 
-      return clusterPivot;
-   }
+    return clusterPivot;
+  }
 
-   public D getClusterProtocolDetails () {
+  public D getClusterProtocolDetails () {
 
-      return clusterProtocolDetails;
-   }
+    return clusterProtocolDetails;
+  }
 
-   public String toString () {
+  public String toString () {
 
-      StringBuilder interfaceBuilder;
+    StringBuilder interfaceBuilder;
 
-      interfaceBuilder = new StringBuilder("ClusterInterface [");
-      interfaceBuilder.append(clusterName);
-      interfaceBuilder.append(':');
-      interfaceBuilder.append(clusterProtocolDetails.getClusterProtocol());
-      interfaceBuilder.append("]");
+    interfaceBuilder = new StringBuilder("ClusterInterface [");
+    interfaceBuilder.append(clusterName);
+    interfaceBuilder.append("]");
 
-      return interfaceBuilder.toString();
-   }
+    return interfaceBuilder.toString();
+  }
 
-   public int hashCode () {
+  public int hashCode () {
 
-      return (clusterName.hashCode() ^ clusterProtocolDetails.getClass().hashCode());
-   }
+    return clusterName.hashCode();
+  }
 
-   public boolean equals (Object obj) {
+  public boolean equals (Object obj) {
 
-      if (obj instanceof ClusterInterface) {
-         if (clusterName.equals(((ClusterInterface)obj).getClusterName())) {
-            if (clusterProtocolDetails.getClusterProtocol().equals(((ClusterInterface)obj).getClusterProtocolDetails().getClusterProtocol())) {
-               return true;
-            }
-         }
-      }
-
-      return false;
-   }
+    return (obj instanceof ClusterInterface) && clusterName.equals(((ClusterInterface)obj).getClusterName());
+  }
 }

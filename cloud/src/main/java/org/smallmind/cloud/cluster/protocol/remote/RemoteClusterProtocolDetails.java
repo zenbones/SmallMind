@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2008, 2009, 2010, 2011 David Berkman
+ * Copyright (c) 2007, 2008, 2009, 2010, 2011, 2012 David Berkman
  * 
  * This file is part of the SmallMind Code Project.
  * 
@@ -31,17 +31,21 @@ import org.smallmind.cloud.cluster.protocol.ClusterProtocolDetails;
 
 public class RemoteClusterProtocolDetails extends ClusterProtocolDetails {
 
-   private Class serviceInterface;
+  private Class serviceInterface;
 
-   public RemoteClusterProtocolDetails (Class serviceInterface) {
+  public RemoteClusterProtocolDetails (Class serviceInterface) {
 
-      super(ClusterProtocol.REMOTE);
+    this.serviceInterface = serviceInterface;
+  }
 
-      this.serviceInterface = serviceInterface;
-   }
+  @Override
+  public ClusterProtocol getClusterProtocol () {
 
-   public Class getServiceInterface () {
+    return ClusterProtocol.REMOTE;
+  }
 
-      return serviceInterface;
-   }
+  public Class getServiceInterface () {
+
+    return serviceInterface;
+  }
 }

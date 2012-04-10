@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2008, 2009, 2010, 2011 David Berkman
+ * Copyright (c) 2007, 2008, 2009, 2010, 2011, 2012 David Berkman
  * 
  * This file is part of the SmallMind Code Project.
  * 
@@ -38,75 +38,75 @@ import org.smallmind.cloud.multicast.event.MessageStatus;
 
 public class MulticastBroadcastAgent implements Runnable {
 
-   private CountDownLatch exitLatch;
-   private PacketBroadcaster packetBroadcaster;
-   private MulticastSocket multicastSocket;
-   private DatagramSocket datagramSocket;
-   private InetAddress[] broadcastInetAddresses;
-   private boolean finished = false;
-   private int broadcastPort;
-   private int messageBufferSize;
+  private CountDownLatch exitLatch;
+  private PacketBroadcaster packetBroadcaster;
+  private MulticastSocket multicastSocket;
+  private DatagramSocket datagramSocket;
+  private InetAddress[] broadcastInetAddresses;
+  private boolean finished = false;
+  private int broadcastPort;
+  private int messageBufferSize;
 
-   public MulticastBroadcastAgent (PacketBroadcaster packetBroadcaster, DatagramSocket datagramSocket, MulticastSocket multicastSocket, InetAddress[] broadcastInetAddresses, int broadcastPort, int messageSegmentSize) {
+  public MulticastBroadcastAgent (PacketBroadcaster packetBroadcaster, DatagramSocket datagramSocket, MulticastSocket multicastSocket, InetAddress[] broadcastInetAddresses, int broadcastPort, int messageSegmentSize) {
 
-      this.packetBroadcaster = packetBroadcaster;
-      this.datagramSocket = datagramSocket;
-      this.multicastSocket = multicastSocket;
-      this.broadcastInetAddresses = broadcastInetAddresses;
-      this.broadcastPort = broadcastPort;
+    this.packetBroadcaster = packetBroadcaster;
+    this.datagramSocket = datagramSocket;
+    this.multicastSocket = multicastSocket;
+    this.broadcastInetAddresses = broadcastInetAddresses;
+    this.broadcastPort = broadcastPort;
 
-      messageBufferSize = messageSegmentSize + EventMessage.MESSAGE_HEADER_SIZE;
+    messageBufferSize = messageSegmentSize + EventMessage.MESSAGE_HEADER_SIZE;
 
-      exitLatch = new CountDownLatch(1);
-   }
+    exitLatch = new CountDownLatch(1);
+  }
 
-   public synchronized void finish ()
-      throws InterruptedException {
+  public synchronized void finish ()
+    throws InterruptedException {
 
-      finished = true;
-      exitLatch.await();
-   }
+    finished = true;
+    exitLatch.await();
+  }
 
-   public void run () {
+  public void run () {
 
-      DatagramPacket messagePacket;
-      ByteBuffer translationBuffer;
-      MessageStatus messageStatus;
-      boolean packetReceived;
-      byte[] messageBuffer = new byte[messageBufferSize];
+    DatagramPacket messagePacket;
+    ByteBuffer translationBuffer;
+    MessageStatus messageStatus;
+    boolean packetReceived;
+    byte[] messageBuffer = new byte[messageBufferSize];
 
-      translationBuffer = ByteBuffer.wrap(messageBuffer);
-      messagePacket = new DatagramPacket(messageBuffer, messageBuffer.length);
+    translationBuffer = ByteBuffer.wrap(messageBuffer);
+    messagePacket = new DatagramPacket(messageBuffer, messageBuffer.length);
 
-      try {
-         while (!finished) {
-            try {
-               try {
-                  multicastSocket.receive(messagePacket);
-                  packetReceived = true;
-               }
-               catch (SocketTimeoutException s) {
-                  packetReceived = false;
-               }
+    try {
+      while (!finished) {
+        try {
+          try {
+            multicastSocket.receive(messagePacket);
+            packetReceived = true;
+          }
+          catch (SocketTimeoutException s) {
+            packetReceived = false;
+          }
 
-               if (packetReceived) {
-                  messageStatus = MessageStatus.getMessageStatus(translationBuffer.getInt(0));
-                  if (!messageStatus.equals(MessageStatus.BROADCAST)) {
-                     messagePacket.setPort(broadcastPort);
-                     for (InetAddress broadcastAddress : broadcastInetAddresses) {
-                        messagePacket.setAddress(broadcastAddress);
-                        datagramSocket.send(messagePacket);
-                     }
-                  }
-               }
+          if (packetReceived) {
+            messageStatus = MessageStatus.getMessageStatus(translationBuffer.getInt(0));
+            if (!messageStatus.equals(MessageStatus.BROADCAST)) {
+              messagePacket.setPort(broadcastPort);
+              for (InetAddress broadcastAddress : broadcastInetAddresses) {
+                messagePacket.setAddress(broadcastAddress);
+                datagramSocket.send(messagePacket);
+              }
             }
-            catch (Exception e) {
-               packetBroadcaster.logError(e);
-            }
-         }
+          }
+        }
+        catch (Exception e) {
+          packetBroadcaster.logError(e);
+        }
       }
-      finally {
-         exitLatch.countDown();
-      }
-   }
+    }
+    finally {
+      exitLatch.countDown();
+    }
+  }
 }

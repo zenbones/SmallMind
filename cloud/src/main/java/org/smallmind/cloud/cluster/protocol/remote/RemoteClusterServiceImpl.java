@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2008, 2009, 2010, 2011 David Berkman
+ * Copyright (c) 2007, 2008, 2009, 2010, 2011, 2012 David Berkman
  * 
  * This file is part of the SmallMind Code Project.
  * 
@@ -41,97 +41,97 @@ import org.smallmind.quorum.transport.MethodInvoker;
 
 public class RemoteClusterServiceImpl extends UnicastRemoteObject implements RemoteClusterService, ClusterService<RemoteClusterProtocolDetails> {
 
-   private static final String RMI_NAME_PREFIX = "org.smallmind.cloud.cluster.protocol.remote.";
+  private static final String RMI_NAME_PREFIX = "org.smallmind.cloud.cluster.protocol.remote.";
 
-   private ClusterHub clusterHub;
-   private ClusterMember clusterMember = null;
-   private ClusterInstance<RemoteClusterProtocolDetails> clusterInstance;
-   private MethodInvoker methodInvoker;
-   private boolean open = true;
+  private ClusterHub clusterHub;
+  private ClusterMember clusterMember = null;
+  private ClusterInstance<RemoteClusterProtocolDetails> clusterInstance;
+  private MethodInvoker methodInvoker;
+  private boolean open = true;
 
-   public RemoteClusterServiceImpl (ClusterHub clusterHub, ClusterInstance<RemoteClusterProtocolDetails> clusterInstance)
-      throws RemoteException {
+  public RemoteClusterServiceImpl (ClusterHub clusterHub, ClusterInstance<RemoteClusterProtocolDetails> clusterInstance)
+    throws RemoteException {
 
-      this.clusterHub = clusterHub;
-      this.clusterInstance = clusterInstance;
-   }
+    this.clusterHub = clusterHub;
+    this.clusterInstance = clusterInstance;
+  }
 
-   public ClusterInstance<RemoteClusterProtocolDetails> getClusterInstance () {
+  public ClusterInstance<RemoteClusterProtocolDetails> getClusterInstance () {
 
-      return clusterInstance;
-   }
+    return clusterInstance;
+  }
 
-   public void bindClusterMember (ClusterMember clusterMember)
-      throws ClusterManagementException {
+  public void bindClusterMember (ClusterMember clusterMember)
+    throws ClusterManagementException {
 
-      this.clusterMember = clusterMember;
+    this.clusterMember = clusterMember;
+
+    try {
+      methodInvoker = new MethodInvoker(clusterMember, new Class[] {clusterInstance.getClusterInterface().getClusterProtocolDetails().getServiceInterface()});
+    }
+    catch (NoSuchMethodException noSuchMethodException) {
+      throw new ClusterManagementException(noSuchMethodException);
+    }
+  }
+
+  public Object remoteInvocation (InvocationSignal invocationSignal)
+    throws Exception {
+
+    if (methodInvoker == null) {
+      throw new IllegalStateException("No ClusterMember(" + clusterInstance.getClusterInterface().getClusterProtocolDetails().getServiceInterface().getCanonicalName() + ") has been bound to this service representation");
+    }
+
+    return methodInvoker.remoteInvocation(invocationSignal);
+  }
+
+  public synchronized void fireServiceBroadcast (ServiceClusterBroadcast serviceClusterBroadcast)
+    throws EventMessageException {
+
+    if (!open) {
+      throw new IllegalStateException("The service has already been closed");
+    }
+
+    clusterHub.fireEvent(serviceClusterBroadcast);
+  }
+
+  public synchronized void handleServiceBroadcast (ServiceClusterBroadcast serviceClusterBroadcast) {
+
+    if (!open) {
+      throw new IllegalStateException("The service has already been closed");
+    }
+
+    clusterMember.handleServiceBroadcast(serviceClusterBroadcast);
+  }
+
+  public synchronized void start ()
+    throws ClusterManagementException {
+
+    if (!open) {
+      try {
+        Naming.rebind(RMI_NAME_PREFIX + clusterInstance.getClusterInterface().getClusterName() + ".instance." + clusterInstance.getInstanceId(), this);
+      }
+      catch (Exception exception) {
+        throw new ClusterManagementException(exception);
+      }
+
+      clusterHub.addClusterService(this);
+      open = true;
+    }
+  }
+
+  public synchronized void stop () {
+
+    if (open) {
+      open = false;
+      clusterHub.removeClusterService(getClusterInstance());
 
       try {
-         methodInvoker = new MethodInvoker(clusterMember, new Class[] {clusterInstance.getClusterInterface().getClusterProtocolDetails().getServiceInterface()});
+        Naming.unbind(RMI_NAME_PREFIX + clusterInstance.getClusterInterface().getClusterName() + ".instance." + clusterInstance.getInstanceId());
       }
-      catch (NoSuchMethodException noSuchMethodException) {
-         throw new ClusterManagementException(noSuchMethodException);
+      catch (Exception exception) {
+        clusterHub.logError(exception);
       }
-   }
-
-   public Object remoteInvocation (InvocationSignal invocationSignal)
-      throws Exception {
-
-      if (methodInvoker == null) {
-         throw new IllegalStateException("No ClusterMember(" + clusterInstance.getClusterInterface().getClusterProtocolDetails().getServiceInterface().getCanonicalName() + ") has been bound to this service representation");
-      }
-
-      return methodInvoker.remoteInvocation(invocationSignal);
-   }
-
-   public synchronized void fireServiceBroadcast (ServiceClusterBroadcast serviceClusterBroadcast)
-      throws EventMessageException {
-
-      if (!open) {
-         throw new IllegalStateException("The service has already been closed");
-      }
-
-      clusterHub.fireEvent(serviceClusterBroadcast);
-   }
-
-   public synchronized void handleServiceBroadcast (ServiceClusterBroadcast serviceClusterBroadcast) {
-
-      if (!open) {
-         throw new IllegalStateException("The service has already been closed");
-      }
-
-      clusterMember.handleServiceBroadcast(serviceClusterBroadcast);
-   }
-
-   public synchronized void start ()
-      throws ClusterManagementException {
-
-      if (!open) {
-         try {
-            Naming.rebind(RMI_NAME_PREFIX + clusterInstance.getClusterInterface().getClusterName() + ".instance." + clusterInstance.getInstanceId(), this);
-         }
-         catch (Exception exception) {
-            throw new ClusterManagementException(exception);
-         }
-
-         clusterHub.addClusterService(this);
-         open = true;
-      }
-   }
-
-   public synchronized void stop () {
-
-      if (open) {
-         open = false;
-         clusterHub.removeClusterService(getClusterInstance());
-
-         try {
-            Naming.unbind(RMI_NAME_PREFIX + clusterInstance.getClusterInterface().getClusterName() + ".instance." + clusterInstance.getInstanceId());
-         }
-         catch (Exception exception) {
-            clusterHub.logError(exception);
-         }
-      }
-   }
+    }
+  }
 
 }

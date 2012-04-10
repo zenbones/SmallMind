@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2008, 2009, 2010, 2011 David Berkman
+ * Copyright (c) 2007, 2008, 2009, 2010, 2011, 2012 David Berkman
  * 
  * This file is part of the SmallMind Code Project.
  * 
@@ -37,170 +37,170 @@ import org.smallmind.nutsnbolts.util.AlphaNumericComparator;
 
 public class JavaName implements Name {
 
-   private static final AlphaNumericComparator<String> alphaSort = new AlphaNumericComparator<String>();
+  private static final AlphaNumericComparator<String> alphaSort = new AlphaNumericComparator<String>();
 
-   private NameTranslator nameTranslator;
-   private ArrayList<String> nameList;
+  private NameTranslator nameTranslator;
+  private ArrayList<String> nameList;
 
-   public JavaName (JavaName name) {
+  public JavaName (JavaName name) {
 
-      this(name.getNameTranslator(), name.getNameList());
-   }
+    this(name.getNameTranslator(), name.getNameList());
+  }
 
-   public JavaName (NameTranslator nameTranslator) {
+  public JavaName (NameTranslator nameTranslator) {
 
-      this(nameTranslator, new ArrayList<String>());
-   }
+    this(nameTranslator, new ArrayList<String>());
+  }
 
-   private JavaName (NameTranslator nameTranslator, List<String> externalList) {
+  private JavaName (NameTranslator nameTranslator, List<String> externalList) {
 
-      this.nameTranslator = nameTranslator;
-      this.nameList = new ArrayList<String>(externalList);
-   }
+    this.nameTranslator = nameTranslator;
+    this.nameList = new ArrayList<String>(externalList);
+  }
 
-   protected NameTranslator getNameTranslator () {
+  protected NameTranslator getNameTranslator () {
 
-      return nameTranslator;
-   }
+    return nameTranslator;
+  }
 
-   protected ArrayList<String> getNameList () {
+  protected ArrayList<String> getNameList () {
 
-      return nameList;
-   }
+    return nameList;
+  }
 
-   public int compareTo (Object obj) {
+  public int compareTo (Object obj) {
 
-      int comparison;
-      int count;
+    int comparison;
+    int count;
 
-      if (!(obj instanceof JavaName)) {
-         throw new ClassCastException("Must be an instance of (" + this.getClass().getName() + ")");
+    if (!(obj instanceof JavaName)) {
+      throw new ClassCastException("Must be an instance of (" + this.getClass().getName() + ")");
+    }
+    if (nameList.size() < ((JavaName)obj).size()) {
+      return -1;
+    }
+    else if (nameList.size() > ((JavaName)obj).size()) {
+      return 1;
+    }
+    for (count = 0; count < size(); count++) {
+      comparison = alphaSort.compare(nameList.get(count), ((JavaName)obj).get(count));
+      if (comparison != 0) {
+        return comparison;
       }
-      if (nameList.size() < ((JavaName)obj).size()) {
-         return -1;
+    }
+    return 0;
+  }
+
+  public int size () {
+
+    return nameList.size();
+  }
+
+  public boolean isEmpty () {
+
+    return nameList.isEmpty();
+  }
+
+  public Enumeration<String> getAll () {
+
+    return Collections.enumeration(nameList);
+  }
+
+  public String get (int posn) {
+
+    return nameList.get(posn);
+  }
+
+  public Name getPrefix (int posn) {
+
+    return new JavaName(nameTranslator, nameList.subList(0, posn));
+  }
+
+  public Name getSuffix (int posn) {
+
+    return new JavaName(nameTranslator, nameList.subList(posn, nameList.size()));
+  }
+
+  public boolean startsWith (Name n) {
+
+    int count;
+
+    if (nameList.size() < n.size()) {
+      return false;
+    }
+    for (count = 0; count < n.size(); count++) {
+      if (!n.get(count).equals(nameList.get(count))) {
+        return false;
       }
-      else if (nameList.size() > ((JavaName)obj).size()) {
-         return 1;
+    }
+    return true;
+  }
+
+  public boolean endsWith (Name n) {
+
+    int count;
+
+    if (nameList.size() < n.size()) {
+      return false;
+    }
+    for (count = 0; count < n.size(); count++) {
+      if (!n.get(n.size() - (count + 1)).equals(nameList.get(nameList.size() - (count + 1)))) {
+        return false;
       }
-      for (count = 0; count < size(); count++) {
-         comparison = alphaSort.compare(nameList.get(count), ((JavaName)obj).get(count));
-         if (comparison != 0) {
-            return comparison;
-         }
-      }
-      return 0;
-   }
+    }
+    return true;
+  }
 
-   public int size () {
+  public Name addAll (Name suffix)
+    throws InvalidNameException {
 
-      return nameList.size();
-   }
+    int count;
 
-   public boolean isEmpty () {
+    for (count = 0; count < suffix.size(); count++) {
+      nameList.add(suffix.get(count));
+    }
+    return this;
+  }
 
-      return nameList.isEmpty();
-   }
+  public Name addAll (int posn, Name n)
+    throws InvalidNameException {
 
-   public Enumeration<String> getAll () {
+    int count;
 
-      return Collections.enumeration(nameList);
-   }
+    for (count = 0; count < n.size(); count++) {
+      nameList.add(posn, n.get(count));
+    }
+    return this;
+  }
 
-   public String get (int posn) {
+  public Name add (String comp)
+    throws InvalidNameException {
 
-      return nameList.get(posn);
-   }
+    nameList.add(comp);
+    return this;
+  }
 
-   public Name getPrefix (int posn) {
+  public Name add (int posn, String comp)
+    throws InvalidNameException {
 
-      return new JavaName(nameTranslator, nameList.subList(0, posn));
-   }
+    nameList.add(posn, comp);
+    return this;
+  }
 
-   public Name getSuffix (int posn) {
+  public Object remove (int posn)
+    throws InvalidNameException {
 
-      return new JavaName(nameTranslator, nameList.subList(posn, nameList.size()));
-   }
+    return nameList.remove(posn);
+  }
 
-   public boolean startsWith (Name n) {
+  public Object clone () {
 
-      int count;
+    return new JavaName(this);
+  }
 
-      if (nameList.size() < n.size()) {
-         return false;
-      }
-      for (count = 0; count < n.size(); count++) {
-         if (!n.get(count).equals(nameList.get(count))) {
-            return false;
-         }
-      }
-      return true;
-   }
+  public String toString () {
 
-   public boolean endsWith (Name n) {
-
-      int count;
-
-      if (nameList.size() < n.size()) {
-         return false;
-      }
-      for (count = 0; count < n.size(); count++) {
-         if (!n.get(n.size() - (count + 1)).equals(nameList.get(nameList.size() - (count + 1)))) {
-            return false;
-         }
-      }
-      return true;
-   }
-
-   public Name addAll (Name suffix)
-      throws InvalidNameException {
-
-      int count;
-
-      for (count = 0; count < suffix.size(); count++) {
-         nameList.add(suffix.get(count));
-      }
-      return this;
-   }
-
-   public Name addAll (int posn, Name n)
-      throws InvalidNameException {
-
-      int count;
-
-      for (count = 0; count < n.size(); count++) {
-         nameList.add(posn, n.get(count));
-      }
-      return this;
-   }
-
-   public Name add (String comp)
-      throws InvalidNameException {
-
-      nameList.add(comp);
-      return this;
-   }
-
-   public Name add (int posn, String comp)
-      throws InvalidNameException {
-
-      nameList.add(posn, comp);
-      return this;
-   }
-
-   public Object remove (int posn)
-      throws InvalidNameException {
-
-      return nameList.remove(posn);
-   }
-
-   public Object clone () {
-
-      return new JavaName(this);
-   }
-
-   public String toString () {
-
-      return nameTranslator.fromExternalNameToExternalString(this);
-   }
+    return nameTranslator.fromExternalNameToExternalString(this);
+  }
 
 }

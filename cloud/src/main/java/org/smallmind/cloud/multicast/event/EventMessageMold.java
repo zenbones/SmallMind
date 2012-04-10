@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2008, 2009, 2010, 2011 David Berkman
+ * Copyright (c) 2007, 2008, 2009, 2010, 2011, 2012 David Berkman
  * 
  * This file is part of the SmallMind Code Project.
  * 
@@ -35,55 +35,55 @@ import java.util.TreeMap;
 
 public class EventMessageMold {
 
-   private TreeMap<Integer, byte[]> messageSegmentMap;
-   private int messageLength = 0;
-   private int totalBytes = 0;
+  private TreeMap<Integer, byte[]> messageSegmentMap;
+  private int messageLength = 0;
+  private int totalBytes = 0;
 
-   public EventMessageMold () {
+  public EventMessageMold () {
 
-      messageSegmentMap = new TreeMap<Integer, byte[]>();
-   }
+    messageSegmentMap = new TreeMap<Integer, byte[]>();
+  }
 
-   public void setMessageLength (int messageLength) {
+  public void setMessageLength (int messageLength) {
 
-      this.messageLength = messageLength;
-   }
+    this.messageLength = messageLength;
+  }
 
-   public void addData (int messageIndex, byte[] messageSegment) {
+  public void addData (int messageIndex, byte[] messageSegment) {
 
-      messageSegmentMap.put(messageIndex, messageSegment);
-      totalBytes += messageSegment.length;
-   }
+    messageSegmentMap.put(messageIndex, messageSegment);
+    totalBytes += messageSegment.length;
+  }
 
-   public boolean isComplete () {
+  public boolean isComplete () {
 
-      return (messageLength != 0) && (totalBytes >= messageLength);
-   }
+    return (messageLength != 0) && (totalBytes >= messageLength);
+  }
 
-   public Object unmoldMessageBody ()
-      throws IOException, ClassNotFoundException {
+  public Object unmoldMessageBody ()
+    throws IOException, ClassNotFoundException {
 
-      Object unmoldedObject;
-      ObjectInputStream objectInputStream;
-      ByteArrayOutputStream byteOutputStream;
-      Iterator<Integer> segmentKeyIter;
+    Object unmoldedObject;
+    ObjectInputStream objectInputStream;
+    ByteArrayOutputStream byteOutputStream;
+    Iterator<Integer> segmentKeyIter;
 
-      if (totalBytes == 0) {
-         return null;
-      }
+    if (totalBytes == 0) {
+      return null;
+    }
 
-      byteOutputStream = new ByteArrayOutputStream(totalBytes);
-      segmentKeyIter = messageSegmentMap.keySet().iterator();
-      while (segmentKeyIter.hasNext()) {
-         byteOutputStream.write(messageSegmentMap.get(segmentKeyIter.next()));
-      }
-      byteOutputStream.close();
+    byteOutputStream = new ByteArrayOutputStream(totalBytes);
+    segmentKeyIter = messageSegmentMap.keySet().iterator();
+    while (segmentKeyIter.hasNext()) {
+      byteOutputStream.write(messageSegmentMap.get(segmentKeyIter.next()));
+    }
+    byteOutputStream.close();
 
-      objectInputStream = new ObjectInputStream(new ByteArrayInputStream(byteOutputStream.toByteArray()));
-      unmoldedObject = objectInputStream.readObject();
-      objectInputStream.close();
+    objectInputStream = new ObjectInputStream(new ByteArrayInputStream(byteOutputStream.toByteArray()));
+    unmoldedObject = objectInputStream.readObject();
+    objectInputStream.close();
 
-      return unmoldedObject;
-   }
+    return unmoldedObject;
+  }
 
 }

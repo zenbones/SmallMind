@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2008, 2009, 2010, 2011 David Berkman
+ * Copyright (c) 2007, 2008, 2009, 2010, 2011, 2012 David Berkman
  * 
  * This file is part of the SmallMind Code Project.
  * 
@@ -33,33 +33,33 @@ import org.smallmind.cloud.namespace.java.backingStore.NameTranslator;
 
 public class NamingEnumerationUtilities {
 
-   protected static String convertName (String name, NameTranslator nameTranslator)
-      throws InvalidNameException {
+  protected static String convertName (String name, NameTranslator nameTranslator)
+    throws InvalidNameException {
 
-      return nameTranslator.fromExternalStringToInternalString(name);
-   }
+    return nameTranslator.fromExternalStringToInternalString(name);
+  }
 
-   protected static String convertClassName (String className, Class internalDirContextClass) {
+  protected static String convertClassName (String className, Class internalDirContextClass) {
 
-      if (className != null) {
-         if (className.equals(internalDirContextClass.getName())) {
+    if (className != null) {
+      if (className.equals(internalDirContextClass.getName())) {
 
-            return JavaContext.class.getName();
-         }
+        return JavaContext.class.getName();
       }
+    }
 
-      return className;
-   }
+    return className;
+  }
 
-   protected static Object convertObject (Object boundObject, Class internalDirContextClass, Hashtable<String, Object> environment, NameTranslator nameTranslator, JavaNameParser nameParser, boolean modifiable) {
+  protected static Object convertObject (Object boundObject, Class internalDirContextClass, Hashtable<String, Object> environment, NameTranslator nameTranslator, JavaNameParser nameParser, boolean modifiable) {
 
-      if (boundObject != null) {
-         if (boundObject.getClass().equals(internalDirContextClass)) {
+    if (boundObject != null) {
+      if (boundObject.getClass().equals(internalDirContextClass)) {
 
-            return new JavaContext(environment, (DirContext)boundObject, nameTranslator, nameParser, modifiable);
-         }
+        return new JavaContext(environment, (DirContext)boundObject, nameTranslator, nameParser, modifiable);
       }
-      return boundObject;
-   }
+    }
+    return boundObject;
+  }
 
 }

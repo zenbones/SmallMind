@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2008, 2009, 2010, 2011 David Berkman
+ * Copyright (c) 2007, 2008, 2009, 2010, 2011, 2012 David Berkman
  * 
  * This file is part of the SmallMind Code Project.
  * 
@@ -31,18 +31,18 @@ import org.smallmind.scribe.pen.LoggerManager;
 
 public class ServiceTarget extends InvocationMessageTarget {
 
-   Class serviceInterface;
+  Class serviceInterface;
 
-   public ServiceTarget (ServiceEndpoint serviceEndpoint)
-      throws NoSuchMethodException {
+  public ServiceTarget (ServiceEndpoint serviceEndpoint)
+    throws NoSuchMethodException {
 
-      super(serviceEndpoint.getService(), serviceEndpoint.getServiceInterface());
+    super(serviceEndpoint.getService(), serviceEndpoint.getServiceInterface());
 
-      serviceInterface = serviceEndpoint.getServiceInterface();
-   }
+    serviceInterface = serviceEndpoint.getServiceInterface();
+  }
 
-   public void logError (Throwable throwable) {
+  public void logError (Throwable throwable) {
 
-      LoggerManager.getLogger(serviceInterface).error(throwable);
-   }
+    LoggerManager.getLogger(serviceInterface).error(throwable);
+  }
 }

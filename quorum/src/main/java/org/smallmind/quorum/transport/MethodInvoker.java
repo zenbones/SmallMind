@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2008, 2009, 2010, 2011 David Berkman
+ * Copyright (c) 2007, 2008, 2009, 2010, 2011, 2012 David Berkman
  * 
  * This file is part of the SmallMind Code Project.
  * 
@@ -34,72 +34,72 @@ import org.smallmind.nutsnbolts.context.ContextFactory;
 
 public class MethodInvoker {
 
-   private static final Class[] EMPTY_SIGNATURE = new Class[0];
-   private static final Class[] OBJECT_SIGNATURE = {Object.class};
+  private static final Class[] EMPTY_SIGNATURE = new Class[0];
+  private static final Class[] OBJECT_SIGNATURE = {Object.class};
 
-   private Object targetObject;
-   private HashMap<FauxMethod, Method> methodMap;
+  private Object targetObject;
+  private HashMap<FauxMethod, Method> methodMap;
 
-   public MethodInvoker (Object targetObject, Class[] proxyInterfaces)
-      throws NoSuchMethodException {
+  public MethodInvoker (Object targetObject, Class[] proxyInterfaces)
+    throws NoSuchMethodException {
 
-      Class endpointClass;
-      Method toStringMethod;
-      Method hashCodeMethod;
-      Method equalsMethod;
+    Class endpointClass;
+    Method toStringMethod;
+    Method hashCodeMethod;
+    Method equalsMethod;
 
-      this.targetObject = targetObject;
+    this.targetObject = targetObject;
 
-      methodMap = new HashMap<FauxMethod, Method>();
-      for (Class proxyInterface : proxyInterfaces) {
-         for (Method method : proxyInterface.getMethods()) {
-            methodMap.put(new FauxMethod(method), method);
-         }
+    methodMap = new HashMap<FauxMethod, Method>();
+    for (Class proxyInterface : proxyInterfaces) {
+      for (Method method : proxyInterface.getMethods()) {
+        methodMap.put(new FauxMethod(method), method);
       }
+    }
 
-      endpointClass = targetObject.getClass();
+    endpointClass = targetObject.getClass();
 
-      toStringMethod = endpointClass.getMethod("toString", EMPTY_SIGNATURE);
-      hashCodeMethod = endpointClass.getMethod("hashCode", EMPTY_SIGNATURE);
-      equalsMethod = endpointClass.getMethod("equals", OBJECT_SIGNATURE);
+    toStringMethod = endpointClass.getMethod("toString", EMPTY_SIGNATURE);
+    hashCodeMethod = endpointClass.getMethod("hashCode", EMPTY_SIGNATURE);
+    equalsMethod = endpointClass.getMethod("equals", OBJECT_SIGNATURE);
 
-      methodMap.put(new FauxMethod(toStringMethod), toStringMethod);
-      methodMap.put(new FauxMethod(hashCodeMethod), hashCodeMethod);
-      methodMap.put(new FauxMethod(equalsMethod), equalsMethod);
-   }
+    methodMap.put(new FauxMethod(toStringMethod), toStringMethod);
+    methodMap.put(new FauxMethod(hashCodeMethod), hashCodeMethod);
+    methodMap.put(new FauxMethod(equalsMethod), equalsMethod);
+  }
 
-   public Object remoteInvocation (InvocationSignal invocationSignal)
-      throws Exception {
+  public Object remoteInvocation (InvocationSignal invocationSignal)
+    throws Exception {
 
-      Method serviceMethod;
+    Method serviceMethod;
 
-      if ((serviceMethod = methodMap.get(invocationSignal.getFauxMethod())) == null) {
-         throw new MissingInvocationException();
+    if ((serviceMethod = methodMap.get(invocationSignal.getFauxMethod())) == null) {
+      throw new MissingInvocationException();
+    }
+
+    if (invocationSignal.containsContexts()) {
+      for (Context context : invocationSignal.getContexts()) {
+        ContextFactory.pushContext(context);
       }
+    }
 
+    try {
+      return serviceMethod.invoke(targetObject, invocationSignal.getArgs());
+    }
+    catch (InvocationTargetException invocationTargetException) {
+      if ((invocationTargetException.getCause() != null) && (invocationTargetException.getCause() instanceof Exception)) {
+        throw (Exception)invocationTargetException.getCause();
+      }
+      else {
+        throw invocationTargetException;
+      }
+    }
+    finally {
       if (invocationSignal.containsContexts()) {
-         for (Context context : invocationSignal.getContexts()) {
-            ContextFactory.pushContext(context);
-         }
+        for (Context context : invocationSignal.getContexts()) {
+          ContextFactory.popContext(context);
+        }
       }
-
-      try {
-         return serviceMethod.invoke(targetObject, invocationSignal.getArgs());
-      }
-      catch (InvocationTargetException invocationTargetException) {
-         if ((invocationTargetException.getCause() != null) && (invocationTargetException.getCause() instanceof Exception)) {
-            throw (Exception)invocationTargetException.getCause();
-         }
-         else {
-            throw invocationTargetException;
-         }
-      }
-      finally {
-         if (invocationSignal.containsContexts()) {
-            for (Context context : invocationSignal.getContexts()) {
-               ContextFactory.popContext(context);
-            }
-         }
-      }
-   }
+    }
+  }
 }

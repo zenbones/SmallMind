@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2008, 2009, 2010, 2011 David Berkman
+ * Copyright (c) 2007, 2008, 2009, 2010, 2011, 2012 David Berkman
  * 
  * This file is part of the SmallMind Code Project.
  * 
@@ -26,7 +26,7 @@
  */
 package org.smallmind.quorum.transport.messaging;
 
-import org.smallmind.quorum.pool.connection.ConnectionPool;
+import javax.naming.Context;
 import org.smallmind.quorum.pool.connection.ConnectionPool;
 
 public class MessagingConnectionDetails {
@@ -34,31 +34,22 @@ public class MessagingConnectionDetails {
   public static final String SELECTION_PROPERTY = "Selection";
   public static final String EXCEPTION_PROPERTY = "Exception";
 
-  private ConnectionPool contextPool;
+  private ConnectionPool<Context> contextPool;
   private String destinationName;
   private String connectionFactoryName;
   private String userName;
   private String password;
-  private String serviceSelector;
-  private int transmissionPoolSize;
 
-  public MessagingConnectionDetails (ConnectionPool contextPool, String destinationName, String connectionFactoryName, String userName, String password, int transmissionPoolSize) {
-
-    this(contextPool, destinationName, connectionFactoryName, userName, password, transmissionPoolSize, null);
-  }
-
-  public MessagingConnectionDetails (ConnectionPool contextPool, String destinationName, String connectionFactoryName, String userName, String password, int transmissionPoolSize, String serviceSelector) {
+  public MessagingConnectionDetails (ConnectionPool<Context> contextPool, String destinationName, String connectionFactoryName, String userName, String password) {
 
     this.contextPool = contextPool;
     this.destinationName = destinationName;
     this.connectionFactoryName = connectionFactoryName;
     this.userName = userName;
     this.password = password;
-    this.transmissionPoolSize = transmissionPoolSize;
-    this.serviceSelector = serviceSelector;
   }
 
-  public ConnectionPool getContextPool () {
+  public ConnectionPool<Context> getContextPool () {
 
     return contextPool;
   }
@@ -81,15 +72,5 @@ public class MessagingConnectionDetails {
   public String getPassword () {
 
     return password;
-  }
-
-  public String getServiceSelector () {
-
-    return serviceSelector;
-  }
-
-  public int getTransmissionPoolSize () {
-
-    return transmissionPoolSize;
   }
 }

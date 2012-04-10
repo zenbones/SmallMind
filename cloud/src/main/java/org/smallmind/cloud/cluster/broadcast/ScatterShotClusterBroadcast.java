@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2008, 2009, 2010, 2011 David Berkman
+ * Copyright (c) 2007, 2008, 2009, 2010, 2011, 2012 David Berkman
  * 
  * This file is part of the SmallMind Code Project.
  * 
@@ -31,19 +31,19 @@ import org.smallmind.cloud.cluster.ClusterInstance;
 
 public class ScatterShotClusterBroadcast extends SystemClusterBroadcast {
 
-   ClusterInstance[] clusterInstances;
+  ClusterInstance[] clusterInstances;
 
-   public ScatterShotClusterBroadcast (ClusterInstance[] clusterInstances)
-      throws UnknownHostException {
+  public ScatterShotClusterBroadcast (ClusterInstance[] clusterInstances)
+    throws UnknownHostException {
 
-      super();
+    super();
 
-      this.clusterInstances = clusterInstances;
-   }
+    this.clusterInstances = clusterInstances;
+  }
 
-   public ClusterInstance[] getClusterInstances () {
+  public ClusterInstance[] getClusterInstances () {
 
-      return clusterInstances;
-   }
+    return clusterInstances;
+  }
 
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2008, 2009, 2010, 2011 David Berkman
+ * Copyright (c) 2007, 2008, 2009, 2010, 2011, 2012 David Berkman
  * 
  * This file is part of the SmallMind Code Project.
  * 
@@ -26,31 +26,23 @@
  */
 package org.smallmind.quorum.transport.messaging;
 
-import javax.jms.DeliveryMode;
+import java.util.concurrent.atomic.AtomicBoolean;
 import javax.jms.JMSException;
-import javax.jms.Message;
-import javax.jms.MessageListener;
 import javax.jms.Queue;
 import javax.jms.QueueConnection;
 import javax.jms.QueueConnectionFactory;
-import javax.jms.QueueReceiver;
-import javax.jms.QueueSender;
-import javax.jms.QueueSession;
-import javax.jms.Session;
 import javax.naming.Context;
 import javax.naming.NamingException;
 import org.smallmind.quorum.pool.connection.ConnectionPoolException;
-import org.smallmind.quorum.pool.connection.ConnectionPoolException;
 
-public class MessagingReceiver implements MessageListener {
+public class MessagingReceiver {
 
+  private AtomicBoolean stopped = new AtomicBoolean(false);
   private MessageTarget messageTarget;
   private QueueConnection queueConnection;
-  private QueueSession queueSession;
-  private QueueReceiver queueReceiver;
-  private boolean stopped = false;
+  private MessagingWorker[] messagingWorkers;
 
-  public MessagingReceiver (MessageTarget messageTarget, MessagingConnectionDetails messagingConnectionDetails)
+  public MessagingReceiver (MessageTarget messageTarget, MessagingConnectionDetails messagingConnectionDetails, String serviceSelector, int serviceConcurrencyLimit)
     throws ConnectionPoolException, NamingException, JMSException {
 
     Context javaEnvironment;
@@ -59,7 +51,7 @@ public class MessagingReceiver implements MessageListener {
 
     this.messageTarget = messageTarget;
 
-    javaEnvironment = (Context)messagingConnectionDetails.getContextPool().getConnection();
+    javaEnvironment = messagingConnectionDetails.getContextPool().getConnection();
     try {
       queue = (Queue)javaEnvironment.lookup(messagingConnectionDetails.getDestinationName());
       queueConnectionFactory = (QueueConnectionFactory)javaEnvironment.lookup(messagingConnectionDetails.getConnectionFactoryName());
@@ -69,53 +61,26 @@ public class MessagingReceiver implements MessageListener {
     }
 
     queueConnection = queueConnectionFactory.createQueueConnection(messagingConnectionDetails.getUserName(), messagingConnectionDetails.getPassword());
-    queueSession = queueConnection.createQueueSession(false, Session.AUTO_ACKNOWLEDGE);
 
-    queueReceiver = (messagingConnectionDetails.getServiceSelector() == null) ? queueSession.createReceiver(queue) : queueSession.createReceiver(queue, MessagingConnectionDetails.SELECTION_PROPERTY + "='" + messagingConnectionDetails.getServiceSelector() + "'");
-    queueReceiver.setMessageListener(this);
+    messagingWorkers = new MessagingWorker[serviceConcurrencyLimit];
+    for (int count = 0; count < messagingWorkers.length; count++) {
+      messagingWorkers[count] = new MessagingWorker(queueConnection, queue, messageTarget, serviceSelector);
+    }
 
     queueConnection.start();
   }
 
   public synchronized void close () {
 
-    stopped = true;
-
-    try {
-      queueConnection.stop();
-
-      queueReceiver.close();
-      queueSession.close();
-      queueConnection.close();
-    }
-    catch (JMSException jmsException) {
-      messageTarget.logError(jmsException);
-    }
-  }
-
-  public synchronized void onMessage (Message message) {
-
-    Message responseMessage;
-    QueueSender queueSender;
-
-    if (!stopped) {
+    if (stopped.compareAndSet(false, true)) {
       try {
-        try {
-          responseMessage = messageTarget.handleMessage(queueSession, message);
-        }
-        catch (JMSException jmsException) {
-          throw jmsException;
-        }
-        catch (Exception exception) {
-          responseMessage = queueSession.createObjectMessage(exception);
-          responseMessage.setBooleanProperty(MessagingConnectionDetails.EXCEPTION_PROPERTY, true);
+        queueConnection.stop();
+
+        for (MessagingWorker messageWorker : messagingWorkers) {
+          messageWorker.close();
         }
 
-        responseMessage.setJMSDeliveryMode(DeliveryMode.NON_PERSISTENT);
-
-        queueSender = queueSession.createSender((Queue)message.getJMSReplyTo());
-        queueSender.send(responseMessage);
-        queueSender.close();
+        queueConnection.close();
       }
       catch (JMSException jmsException) {
         messageTarget.logError(jmsException);

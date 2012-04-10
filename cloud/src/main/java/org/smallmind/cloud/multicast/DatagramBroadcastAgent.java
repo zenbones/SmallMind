@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2008, 2009, 2010, 2011 David Berkman
+ * Copyright (c) 2007, 2008, 2009, 2010, 2011, 2012 David Berkman
  * 
  * This file is part of the SmallMind Code Project.
  * 
@@ -38,70 +38,70 @@ import org.smallmind.cloud.multicast.event.MessageStatus;
 
 public class DatagramBroadcastAgent implements Runnable {
 
-   private CountDownLatch exitLatch;
-   private PacketBroadcaster packetBroadcaster;
-   private MulticastSocket multicastSocket;
-   private DatagramSocket datagramSocket;
-   private InetAddress multicastInetAddress;
-   private boolean finished = false;
-   private int multicastPort;
-   private int messageBufferSize;
+  private CountDownLatch exitLatch;
+  private PacketBroadcaster packetBroadcaster;
+  private MulticastSocket multicastSocket;
+  private DatagramSocket datagramSocket;
+  private InetAddress multicastInetAddress;
+  private boolean finished = false;
+  private int multicastPort;
+  private int messageBufferSize;
 
-   public DatagramBroadcastAgent (PacketBroadcaster packetBroadcaster, DatagramSocket datagramSocket, MulticastSocket multicastSocket, InetAddress multicastInetAddress, int multicastPort, int messageSegmentSize) {
+  public DatagramBroadcastAgent (PacketBroadcaster packetBroadcaster, DatagramSocket datagramSocket, MulticastSocket multicastSocket, InetAddress multicastInetAddress, int multicastPort, int messageSegmentSize) {
 
-      this.packetBroadcaster = packetBroadcaster;
-      this.datagramSocket = datagramSocket;
-      this.multicastSocket = multicastSocket;
-      this.multicastInetAddress = multicastInetAddress;
-      this.multicastPort = multicastPort;
+    this.packetBroadcaster = packetBroadcaster;
+    this.datagramSocket = datagramSocket;
+    this.multicastSocket = multicastSocket;
+    this.multicastInetAddress = multicastInetAddress;
+    this.multicastPort = multicastPort;
 
-      messageBufferSize = messageSegmentSize + EventMessage.MESSAGE_HEADER_SIZE;
+    messageBufferSize = messageSegmentSize + EventMessage.MESSAGE_HEADER_SIZE;
 
-      exitLatch = new CountDownLatch(1);
-   }
+    exitLatch = new CountDownLatch(1);
+  }
 
-   public synchronized void finish ()
-      throws InterruptedException {
+  public synchronized void finish ()
+    throws InterruptedException {
 
-      finished = true;
-      exitLatch.await();
-   }
+    finished = true;
+    exitLatch.await();
+  }
 
-   public void run () {
+  public void run () {
 
-      DatagramPacket messagePacket;
-      ByteBuffer translationBuffer;
-      byte[] messageBuffer = new byte[messageBufferSize];
-      boolean packetReceived;
+    DatagramPacket messagePacket;
+    ByteBuffer translationBuffer;
+    byte[] messageBuffer = new byte[messageBufferSize];
+    boolean packetReceived;
 
-      translationBuffer = ByteBuffer.wrap(messageBuffer);
-      messagePacket = new DatagramPacket(messageBuffer, messageBuffer.length);
+    translationBuffer = ByteBuffer.wrap(messageBuffer);
+    messagePacket = new DatagramPacket(messageBuffer, messageBuffer.length);
 
-      try {
-         while (!finished) {
-            try {
-               try {
-                  datagramSocket.receive(messagePacket);
-                  packetReceived = true;
-               }
-               catch (SocketTimeoutException s) {
-                  packetReceived = false;
-               }
+    try {
+      while (!finished) {
+        try {
+          try {
+            datagramSocket.receive(messagePacket);
+            packetReceived = true;
+          }
+          catch (SocketTimeoutException s) {
+            packetReceived = false;
+          }
 
-               if (packetReceived) {
-                  translationBuffer.putInt(0, MessageStatus.BROADCAST.ordinal());
-                  messagePacket.setPort(multicastPort);
-                  messagePacket.setAddress(multicastInetAddress);
-                  multicastSocket.send(messagePacket);
-               }
-            }
-            catch (Exception e) {
-               packetBroadcaster.logError(e);
-            }
-         }
+          if (packetReceived) {
+            translationBuffer.putInt(0, MessageStatus.BROADCAST.ordinal());
+            messagePacket.setPort(multicastPort);
+            messagePacket.setAddress(multicastInetAddress);
+            multicastSocket.send(messagePacket);
+          }
+        }
+        catch (Exception e) {
+          packetBroadcaster.logError(e);
+        }
       }
-      finally {
-         exitLatch.countDown();
-      }
-   }
+    }
+    finally {
+      exitLatch.countDown();
+    }
+  }
 }

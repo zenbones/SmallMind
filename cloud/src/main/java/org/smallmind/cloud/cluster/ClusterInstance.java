@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2008, 2009, 2010, 2011 David Berkman
+ * Copyright (c) 2007, 2008, 2009, 2010, 2011, 2012 David Berkman
  * 
  * This file is part of the SmallMind Code Project.
  * 
@@ -31,54 +31,45 @@ import org.smallmind.cloud.cluster.protocol.ClusterProtocolDetails;
 
 public class ClusterInstance<D extends ClusterProtocolDetails> implements Serializable {
 
-   private ClusterInterface<D> clusterInterface;
-   private String instanceId;
+  private ClusterInterface<D> clusterInterface;
+  private String instanceId;
 
-   public ClusterInstance (ClusterInterface<D> clusterInterface, String instanceId) {
+  public ClusterInstance (ClusterInterface<D> clusterInterface, String instanceId) {
 
-      this.clusterInterface = clusterInterface;
-      this.instanceId = instanceId;
-   }
+    this.clusterInterface = clusterInterface;
+    this.instanceId = instanceId;
+  }
 
-   public ClusterInterface<D> getClusterInterface () {
+  public ClusterInterface<D> getClusterInterface () {
 
-      return clusterInterface;
-   }
+    return clusterInterface;
+  }
 
-   public String getInstanceId () {
+  public String getInstanceId () {
 
-      return instanceId;
-   }
+    return instanceId;
+  }
 
-   public String toString () {
+  public String toString () {
 
-      StringBuilder idBuilder;
+    StringBuilder idBuilder;
 
-      idBuilder = new StringBuilder("ClusterInstance [");
-      idBuilder.append(clusterInterface.toString());
-      idBuilder.append(':');
-      idBuilder.append(instanceId);
-      idBuilder.append("]");
+    idBuilder = new StringBuilder("ClusterInstance [");
+    idBuilder.append(clusterInterface.toString());
+    idBuilder.append(':');
+    idBuilder.append(instanceId);
+    idBuilder.append("]");
 
-      return idBuilder.toString();
-   }
+    return idBuilder.toString();
+  }
 
-   public int hashCode () {
+  public int hashCode () {
 
-      return (clusterInterface.hashCode() ^ instanceId.hashCode());
-   }
+    return (clusterInterface.hashCode() ^ instanceId.hashCode());
+  }
 
-   public boolean equals (Object obj) {
+  public boolean equals (Object obj) {
 
-      if (obj instanceof ClusterInstance) {
-         if (clusterInterface.equals(((ClusterInstance)obj).getClusterInterface())) {
-            if (instanceId.equals(((ClusterInstance)obj).getInstanceId())) {
-               return true;
-            }
-         }
-      }
-
-      return false;
-   }
-
+    return (obj instanceof ClusterInstance) && clusterInterface.equals(((ClusterInstance)obj).getClusterInterface()) && instanceId.equals(((ClusterInstance)obj).getInstanceId());
+  }
 }

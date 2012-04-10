@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2008, 2009, 2010, 2011 David Berkman
+ * Copyright (c) 2007, 2008, 2009, 2010, 2011, 2012 David Berkman
  * 
  * This file is part of the SmallMind Code Project.
  * 
@@ -32,16 +32,16 @@ import org.smallmind.cloud.cluster.ClusterHandle;
 
 public class RemoteClusterHandle implements ClusterHandle, InvocationHandler {
 
-   private RemoteClusterManager remoteClusterManager;
+  private RemoteClusterManager remoteClusterManager;
 
-   public RemoteClusterHandle (RemoteClusterManager remoteClusterManager) {
+  public RemoteClusterHandle (RemoteClusterManager remoteClusterManager) {
 
-      this.remoteClusterManager = remoteClusterManager;
-   }
+    this.remoteClusterManager = remoteClusterManager;
+  }
 
-   public Object invoke (Object proxy, Method method, Object[] args)
-      throws Exception {
+  public Object invoke (Object proxy, Method method, Object[] args)
+    throws Exception {
 
-      return remoteClusterManager.invoke(method, args);
-   }
+    return remoteClusterManager.invoke(method, args);
+  }
 }

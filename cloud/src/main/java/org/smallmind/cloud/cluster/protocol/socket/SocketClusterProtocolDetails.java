@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2008, 2009, 2010, 2011 David Berkman
+ * Copyright (c) 2007, 2008, 2009, 2010, 2011, 2012 David Berkman
  * 
  * This file is part of the SmallMind Code Project.
  * 
@@ -31,17 +31,21 @@ import org.smallmind.cloud.cluster.protocol.ClusterProtocolDetails;
 
 public class SocketClusterProtocolDetails extends ClusterProtocolDetails {
 
-   private PortMapper portMapper;
+  private PortMapper portMapper;
 
-   public SocketClusterProtocolDetails (PortMapper portMapper) {
+  public SocketClusterProtocolDetails (PortMapper portMapper) {
 
-      super(ClusterProtocol.SOCKET);
+    this.portMapper = portMapper;
+  }
 
-      this.portMapper = portMapper;
-   }
+  @Override
+  public ClusterProtocol getClusterProtocol () {
 
-   public PortMapper getPortMapper () {
+    return ClusterProtocol.SOCKET;
+  }
 
-      return portMapper;
-   }
+  public PortMapper getPortMapper () {
+
+    return portMapper;
+  }
 }

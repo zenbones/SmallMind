@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2008, 2009, 2010, 2011 David Berkman
+ * Copyright (c) 2007, 2008, 2009, 2010, 2011, 2012 David Berkman
  * 
  * This file is part of the SmallMind Code Project.
  * 
@@ -31,17 +31,17 @@ import java.net.UnknownHostException;
 
 public class MulticastEvent implements java.io.Serializable {
 
-   private InetAddress hostAddress;
+  private InetAddress hostAddress;
 
-   public MulticastEvent ()
-      throws UnknownHostException {
+  public MulticastEvent ()
+    throws UnknownHostException {
 
-      hostAddress = InetAddress.getLocalHost();
-   }
+    hostAddress = InetAddress.getLocalHost();
+  }
 
-   public InetAddress getHostAddress () {
+  public InetAddress getHostAddress () {
 
-      return hostAddress;
-   }
+    return hostAddress;
+  }
 
 }

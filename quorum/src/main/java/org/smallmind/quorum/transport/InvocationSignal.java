@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2008, 2009, 2010, 2011 David Berkman
+ * Copyright (c) 2007, 2008, 2009, 2010, 2011, 2012 David Berkman
  * 
  * This file is part of the SmallMind Code Project.
  * 
@@ -31,34 +31,34 @@ import org.smallmind.nutsnbolts.context.Context;
 
 public class InvocationSignal implements Serializable {
 
-   private Context[] contexts;
-   private FauxMethod fauxMethod;
-   private Object[] args;
+  private Context[] contexts;
+  private FauxMethod fauxMethod;
+  private Object[] args;
 
-   public InvocationSignal (Context[] contexts, FauxMethod fauxMethod, Object[] args) {
+  public InvocationSignal (Context[] contexts, FauxMethod fauxMethod, Object[] args) {
 
-      this.contexts = contexts;
-      this.fauxMethod = fauxMethod;
-      this.args = args;
-   }
+    this.contexts = contexts;
+    this.fauxMethod = fauxMethod;
+    this.args = args;
+  }
 
-   public boolean containsContexts () {
+  public boolean containsContexts () {
 
-      return (contexts != null) && (contexts.length > 0);
-   }
+    return (contexts != null) && (contexts.length > 0);
+  }
 
-   public Context[] getContexts () {
+  public Context[] getContexts () {
 
-      return contexts;
-   }
+    return contexts;
+  }
 
-   public FauxMethod getFauxMethod () {
+  public FauxMethod getFauxMethod () {
 
-      return fauxMethod;
-   }
+    return fauxMethod;
+  }
 
-   public Object[] getArgs () {
+  public Object[] getArgs () {
 
-      return args;
-   }
+    return args;
+  }
 }

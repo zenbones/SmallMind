@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2008, 2009, 2010, 2011 David Berkman
+ * Copyright (c) 2007, 2008, 2009, 2010, 2011, 2012 David Berkman
  * 
  * This file is part of the SmallMind Code Project.
  * 
@@ -32,26 +32,26 @@ import org.smallmind.cloud.cluster.event.GossipClusterEvent;
 
 public class GossipClusterBroadcast extends ClusterBroadcast {
 
-   private ClusterInterface clusterInterface;
-   private GossipClusterEvent gossipClusterEvent;
+  private ClusterInterface clusterInterface;
+  private GossipClusterEvent gossipClusterEvent;
 
-   public GossipClusterBroadcast (ClusterInterface clusterInterface, GossipClusterEvent gossipClusterEvnt)
-      throws UnknownHostException {
+  public GossipClusterBroadcast (ClusterInterface clusterInterface, GossipClusterEvent gossipClusterEvnt)
+    throws UnknownHostException {
 
-      super(ClusterBroadcastType.GOSSIP);
+    super(ClusterBroadcastType.GOSSIP);
 
-      this.clusterInterface = clusterInterface;
-      this.gossipClusterEvent = gossipClusterEvnt;
-   }
+    this.clusterInterface = clusterInterface;
+    this.gossipClusterEvent = gossipClusterEvnt;
+  }
 
-   public ClusterInterface getClusterInsterface () {
+  public ClusterInterface getClusterInsterface () {
 
-      return clusterInterface;
-   }
+    return clusterInterface;
+  }
 
-   public GossipClusterEvent getGossipClusterEvent () {
+  public GossipClusterEvent getGossipClusterEvent () {
 
-      return gossipClusterEvent;
-   }
+    return gossipClusterEvent;
+  }
 
 }

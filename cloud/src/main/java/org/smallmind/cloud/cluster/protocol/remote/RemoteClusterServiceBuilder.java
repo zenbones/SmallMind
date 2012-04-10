@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2008, 2009, 2010, 2011 David Berkman
+ * Copyright (c) 2007, 2008, 2009, 2010, 2011, 2012 David Berkman
  * 
  * This file is part of the SmallMind Code Project.
  * 
@@ -34,14 +34,14 @@ import org.smallmind.cloud.cluster.ClusterServiceBuilder;
 
 public class RemoteClusterServiceBuilder implements ClusterServiceBuilder<RemoteClusterProtocolDetails> {
 
-   public RemoteClusterServiceImpl getClusterService (ClusterHub clusterHub, ClusterInstance<RemoteClusterProtocolDetails> clusterInstance)
-      throws ClusterManagementException {
+  public RemoteClusterServiceImpl getClusterService (ClusterHub clusterHub, ClusterInstance<RemoteClusterProtocolDetails> clusterInstance)
+    throws ClusterManagementException {
 
-      try {
-         return new RemoteClusterServiceImpl(clusterHub, clusterInstance);
-      }
-      catch (RemoteException remoteException) {
-         throw new ClusterManagementException(remoteException);
-      }
-   }
+    try {
+      return new RemoteClusterServiceImpl(clusterHub, clusterInstance);
+    }
+    catch (RemoteException remoteException) {
+      throw new ClusterManagementException(remoteException);
+    }
+  }
 }

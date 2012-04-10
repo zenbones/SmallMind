@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2008, 2009, 2010, 2011 David Berkman
+ * Copyright (c) 2007, 2008, 2009, 2010, 2011, 2012 David Berkman
  * 
  * This file is part of the SmallMind Code Project.
  * 
@@ -35,59 +35,60 @@ import org.smallmind.cloud.multicast.EventMessageException;
 
 public class SocketClusterService implements ClusterService<SocketClusterProtocolDetails> {
 
-   private ClusterHub clusterHub;
-   private ClusterMember clusterMember;
-   private ClusterInstance<SocketClusterProtocolDetails> clusterInstance;
-   private boolean open = true;
+  private ClusterHub clusterHub;
+  private ClusterMember clusterMember;
+  private ClusterInstance<SocketClusterProtocolDetails> clusterInstance;
+  private boolean open = true;
 
-   public SocketClusterService (ClusterHub clusterHub, ClusterInstance<SocketClusterProtocolDetails> clusterInstance) {
+  public SocketClusterService (ClusterHub clusterHub, ClusterInstance<SocketClusterProtocolDetails> clusterInstance) {
 
-      this.clusterHub = clusterHub;
-      this.clusterInstance = clusterInstance;
-   }
+    this.clusterHub = clusterHub;
+    this.clusterInstance = clusterInstance;
+  }
 
-   public ClusterInstance<SocketClusterProtocolDetails> getClusterInstance () {
+  @Override
+  public ClusterInstance<SocketClusterProtocolDetails> getClusterInstance () {
 
-      return clusterInstance;
-   }
+    return clusterInstance;
+  }
 
-   public void bindClusterMember (ClusterMember clusterMember) {
+  public void bindClusterMember (ClusterMember clusterMember) {
 
-      this.clusterMember = clusterMember;
-   }
+    this.clusterMember = clusterMember;
+  }
 
-   public synchronized void fireServiceBroadcast (ServiceClusterBroadcast serviceClusterBroadcast)
-      throws EventMessageException {
+  public synchronized void fireServiceBroadcast (ServiceClusterBroadcast serviceClusterBroadcast)
+    throws EventMessageException {
 
-      if (!open) {
-         throw new IllegalStateException("The service has already been closed");
-      }
+    if (!open) {
+      throw new IllegalStateException("The service has already been closed");
+    }
 
-      clusterHub.fireEvent(serviceClusterBroadcast);
-   }
+    clusterHub.fireEvent(serviceClusterBroadcast);
+  }
 
-   public synchronized void handleServiceBroadcast (ServiceClusterBroadcast serviceClusterBroadcast) {
+  public synchronized void handleServiceBroadcast (ServiceClusterBroadcast serviceClusterBroadcast) {
 
-      if (!open) {
-         throw new IllegalStateException("The service has already been closed");
-      }
+    if (!open) {
+      throw new IllegalStateException("The service has already been closed");
+    }
 
-      clusterMember.handleServiceBroadcast(serviceClusterBroadcast);
-   }
+    clusterMember.handleServiceBroadcast(serviceClusterBroadcast);
+  }
 
-   public synchronized void start () {
+  public synchronized void start () {
 
-      if (!open) {
-         clusterHub.addClusterService(this);
-         open = true;
-      }
-   }
+    if (!open) {
+      clusterHub.addClusterService(this);
+      open = true;
+    }
+  }
 
-   public synchronized void stop () {
+  public synchronized void stop () {
 
-      if (open) {
-         open = false;
-         clusterHub.removeClusterService(getClusterInstance());
-      }
-   }
+    if (open) {
+      open = false;
+      clusterHub.removeClusterService(clusterInstance);
+    }
+  }
 }

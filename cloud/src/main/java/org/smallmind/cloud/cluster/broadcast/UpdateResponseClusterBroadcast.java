@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2008, 2009, 2010, 2011 David Berkman
+ * Copyright (c) 2007, 2008, 2009, 2010, 2011, 2012 David Berkman
  * 
  * This file is part of the SmallMind Code Project.
  * 
@@ -31,19 +31,19 @@ import org.smallmind.cloud.cluster.ClusterInstance;
 
 public class UpdateResponseClusterBroadcast extends ScatterShotClusterBroadcast {
 
-   private int calibratedFreeCapacity;
+  private int calibratedFreeCapacity;
 
-   public UpdateResponseClusterBroadcast (ClusterInstance[] clusterInstances, int calibratedFreeCapacity)
-      throws UnknownHostException {
+  public UpdateResponseClusterBroadcast (ClusterInstance[] clusterInstances, int calibratedFreeCapacity)
+    throws UnknownHostException {
 
-      super(clusterInstances);
+    super(clusterInstances);
 
-      this.calibratedFreeCapacity = calibratedFreeCapacity;
-   }
+    this.calibratedFreeCapacity = calibratedFreeCapacity;
+  }
 
-   public int getCalibratedFreeCapacity () {
+  public int getCalibratedFreeCapacity () {
 
-      return calibratedFreeCapacity;
-   }
+    return calibratedFreeCapacity;
+  }
 
 }

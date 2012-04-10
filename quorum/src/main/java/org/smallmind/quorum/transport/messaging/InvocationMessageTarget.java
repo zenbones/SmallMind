@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2008, 2009, 2010, 2011 David Berkman
+ * Copyright (c) 2007, 2008, 2009, 2010, 2011, 2012 David Berkman
  * 
  * This file is part of the SmallMind Code Project.
  * 
@@ -35,22 +35,22 @@ import org.smallmind.quorum.transport.MethodInvoker;
 
 public abstract class InvocationMessageTarget implements MessageTarget {
 
-   private MethodInvoker methodInvoker;
+  private MethodInvoker methodInvoker;
 
-   public InvocationMessageTarget (Object targetObject, Class serviceInterface)
-      throws NoSuchMethodException {
+  public InvocationMessageTarget (Object targetObject, Class serviceInterface)
+    throws NoSuchMethodException {
 
-      methodInvoker = new MethodInvoker(targetObject, new Class[] {serviceInterface});
-   }
+    methodInvoker = new MethodInvoker(targetObject, new Class[] {serviceInterface});
+  }
 
-   public Message handleMessage (Session session, Message message)
-      throws Exception {
+  public Message handleMessage (Session session, Message message)
+    throws Exception {
 
-      InvocationSignal invocationSignal;
-      Serializable result;
+    InvocationSignal invocationSignal;
+    Serializable result;
 
-      invocationSignal = (InvocationSignal)((ObjectMessage)message).getObject();
-      result = (Serializable)methodInvoker.remoteInvocation(invocationSignal);
-      return session.createObjectMessage(result);
-   }
+    invocationSignal = (InvocationSignal)((ObjectMessage)message).getObject();
+    result = (Serializable)methodInvoker.remoteInvocation(invocationSignal);
+    return session.createObjectMessage(result);
+  }
 }

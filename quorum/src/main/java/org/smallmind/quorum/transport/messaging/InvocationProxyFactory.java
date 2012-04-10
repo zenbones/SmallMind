@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2008, 2009, 2010, 2011 David Berkman
+ * Copyright (c) 2007, 2008, 2009, 2010, 2011, 2012 David Berkman
  * 
  * This file is part of the SmallMind Code Project.
  * 
@@ -30,8 +30,8 @@ import java.lang.reflect.Proxy;
 
 public class InvocationProxyFactory {
 
-   public static Proxy generateProxy (MessagingTransmitter messagingTransmitter, Class invocableInterface) {
+  public static Proxy generateProxy (MessagingTransmitter messagingTransmitter, Class invocableInterface, String serviceSelector) {
 
-      return (Proxy)Proxy.newProxyInstance(invocableInterface.getClassLoader(), new Class[] {invocableInterface}, new MessagingInvocationHandler(messagingTransmitter, invocableInterface));
-   }
+    return (Proxy)Proxy.newProxyInstance(invocableInterface.getClassLoader(), new Class[] {invocableInterface}, new MessagingInvocationHandler(messagingTransmitter, invocableInterface, serviceSelector));
+  }
 }

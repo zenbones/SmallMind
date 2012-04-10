@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2008, 2009, 2010, 2011 David Berkman
+ * Copyright (c) 2007, 2008, 2009, 2010, 2011, 2012 David Berkman
  * 
  * This file is part of the SmallMind Code Project.
  * 
@@ -33,23 +33,23 @@ import org.smallmind.cloud.cluster.ClusterManagerBuilder;
 
 public class SocketClusterManagerBuilder implements ClusterManagerBuilder<SocketClusterProtocolDetails> {
 
-   private HashMap<String, SocketClusterManager> managerMap;
+  private HashMap<String, SocketClusterManager> managerMap;
 
-   public SocketClusterManagerBuilder () {
+  public SocketClusterManagerBuilder () {
 
-      managerMap = new HashMap<String, SocketClusterManager>();
-   }
+    managerMap = new HashMap<String, SocketClusterManager>();
+  }
 
-   public synchronized SocketClusterManager getClusterManager (ClusterHub clusterHub, ClusterInterface<SocketClusterProtocolDetails> clusterInterface) {
+  public synchronized SocketClusterManager getClusterManager (ClusterHub clusterHub, ClusterInterface clusterInterface) {
 
-      SocketClusterManager clusterManager;
+    SocketClusterManager clusterManager;
 
-      if ((clusterManager = managerMap.get(clusterInterface.getClusterName())) == null) {
-         clusterManager = new SocketClusterManager(clusterHub, clusterInterface);
-         managerMap.put(clusterInterface.getClusterName(), clusterManager);
-      }
+    if ((clusterManager = managerMap.get(clusterInterface.getClusterName())) == null) {
+      clusterManager = new SocketClusterManager(clusterHub, clusterInterface);
+      managerMap.put(clusterInterface.getClusterName(), clusterManager);
+    }
 
-      return clusterManager;
-   }
+    return clusterManager;
+  }
 
 }

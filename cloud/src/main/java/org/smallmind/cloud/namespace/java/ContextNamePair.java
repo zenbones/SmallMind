@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2008, 2009, 2010, 2011 David Berkman
+ * Copyright (c) 2007, 2008, 2009, 2010, 2011, 2012 David Berkman
  * 
  * This file is part of the SmallMind Code Project.
  * 
@@ -31,23 +31,23 @@ import javax.naming.directory.DirContext;
 
 public class ContextNamePair {
 
-   private DirContext dirContext;
-   private Name name;
+  private DirContext dirContext;
+  private Name name;
 
-   public ContextNamePair (DirContext dirContext, Name name) {
+  public ContextNamePair (DirContext dirContext, Name name) {
 
-      this.dirContext = dirContext;
-      this.name = name;
-   }
+    this.dirContext = dirContext;
+    this.name = name;
+  }
 
-   public DirContext getContext () {
+  public DirContext getContext () {
 
-      return dirContext;
-   }
+    return dirContext;
+  }
 
-   public Name getName () {
+  public Name getName () {
 
-      return name;
-   }
+    return name;
+  }
 
 }

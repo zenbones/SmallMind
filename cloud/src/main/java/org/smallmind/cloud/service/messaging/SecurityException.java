@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2008, 2009, 2010, 2011 David Berkman
+ * Copyright (c) 2007, 2008, 2009, 2010, 2011, 2012 David Berkman
  * 
  * This file is part of the SmallMind Code Project.
  * 
@@ -28,23 +28,23 @@ package org.smallmind.cloud.service.messaging;
 
 public class SecurityException extends ServiceException {
 
-   public SecurityException () {
+  public SecurityException () {
 
-      super();
-   }
+    super();
+  }
 
-   public SecurityException (String message, Object... args) {
+  public SecurityException (String message, Object... args) {
 
-      super(message, args);
-   }
+    super(message, args);
+  }
 
-   public SecurityException (Throwable throwable, String message, Object... args) {
+  public SecurityException (Throwable throwable, String message, Object... args) {
 
-      super(throwable, message, args);
-   }
+    super(throwable, message, args);
+  }
 
-   public SecurityException (Throwable throwable) {
+  public SecurityException (Throwable throwable) {
 
-      super(throwable);
-   }
+    super(throwable);
+  }
 }

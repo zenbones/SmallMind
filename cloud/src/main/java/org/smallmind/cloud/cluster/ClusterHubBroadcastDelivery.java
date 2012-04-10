@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2008, 2009, 2010, 2011 David Berkman
+ * Copyright (c) 2007, 2008, 2009, 2010, 2011, 2012 David Berkman
  * 
  * This file is part of the SmallMind Code Project.
  * 
@@ -30,18 +30,18 @@ import org.smallmind.cloud.cluster.broadcast.ServiceClusterBroadcast;
 
 public class ClusterHubBroadcastDelivery implements Runnable {
 
-   private ClusterService clusterService;
-   private ServiceClusterBroadcast serviceClusterBroadcast;
+  private ClusterService clusterService;
+  private ServiceClusterBroadcast serviceClusterBroadcast;
 
-   public ClusterHubBroadcastDelivery (ClusterService clusterService, ServiceClusterBroadcast serviceClusterBroadcast) {
+  public ClusterHubBroadcastDelivery (ClusterService clusterService, ServiceClusterBroadcast serviceClusterBroadcast) {
 
-      this.clusterService = clusterService;
-      this.serviceClusterBroadcast = serviceClusterBroadcast;
-   }
+    this.clusterService = clusterService;
+    this.serviceClusterBroadcast = serviceClusterBroadcast;
+  }
 
-   public void run () {
+  public void run () {
 
-      clusterService.handleServiceBroadcast(serviceClusterBroadcast);
-   }
+    clusterService.handleServiceBroadcast(serviceClusterBroadcast);
+  }
 
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2008, 2009, 2010, 2011 David Berkman
+ * Copyright (c) 2007, 2008, 2009, 2010, 2011, 2012 David Berkman
  * 
  * This file is part of the SmallMind Code Project.
  * 
@@ -31,34 +31,34 @@ import org.smallmind.cloud.cluster.protocol.ClusterProtocol;
 
 public class ClusterManagerFactory {
 
-   private static final HashMap<ClusterProtocol, ClusterManagerBuilder> PROTOCOL_MAP = new HashMap<ClusterProtocol, ClusterManagerBuilder>();
+  private static final HashMap<ClusterProtocol, ClusterManagerBuilder> PROTOCOL_MAP = new HashMap<ClusterProtocol, ClusterManagerBuilder>();
 
-   public static ClusterHandle getClusterHandle (ClusterHub clusterHub, ClusterInterface clusterInterface)
-      throws ClusterManagementException {
+  public static ClusterHandle getClusterHandle (ClusterHub clusterHub, ClusterInterface clusterInterface)
+    throws ClusterManagementException {
 
-      ClusterManager clusterManager;
+    ClusterManager clusterManager;
 
-      if ((clusterManager = clusterHub.getClusterManager(clusterInterface)) == null) {
+    if ((clusterManager = clusterHub.getClusterManager(clusterInterface)) == null) {
 
-         ClusterManagerBuilder clusterManagerBuilder;
+      ClusterManagerBuilder clusterManagerBuilder;
 
-         synchronized (PROTOCOL_MAP) {
-            if ((clusterManagerBuilder = PROTOCOL_MAP.get(clusterInterface.getClusterProtocolDetails().getClusterProtocol())) == null) {
-               try {
-                  clusterManagerBuilder = clusterInterface.getClusterProtocolDetails().getClusterProtocol().getManagerBuilderClass().newInstance();
-               }
-               catch (Exception exception) {
-                  throw new ClusterManagementException(exception);
-               }
+      synchronized (PROTOCOL_MAP) {
+        if ((clusterManagerBuilder = PROTOCOL_MAP.get(clusterInterface.getClusterProtocolDetails().getClusterProtocol())) == null) {
+          try {
+            clusterManagerBuilder = clusterInterface.getClusterProtocolDetails().getClusterProtocol().getManagerBuilderClass().newInstance();
+          }
+          catch (Exception exception) {
+            throw new ClusterManagementException(exception);
+          }
 
-               PROTOCOL_MAP.put(clusterInterface.getClusterProtocolDetails().getClusterProtocol(), clusterManagerBuilder);
-            }
-         }
-
-         clusterManager = clusterManagerBuilder.getClusterManager(clusterHub, clusterInterface);
-         clusterHub.addClusterManager(clusterManager);
+          PROTOCOL_MAP.put(clusterInterface.getClusterProtocolDetails().getClusterProtocol(), clusterManagerBuilder);
+        }
       }
 
-      return clusterManager.getClusterHandle();
-   }
+      clusterManager = clusterManagerBuilder.getClusterManager(clusterHub, clusterInterface);
+      clusterHub.addClusterManager(clusterManager);
+    }
+
+    return clusterManager.getClusterHandle();
+  }
 }

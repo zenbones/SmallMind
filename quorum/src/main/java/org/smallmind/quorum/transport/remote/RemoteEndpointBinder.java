@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2008, 2009, 2010, 2011 David Berkman
+ * Copyright (c) 2007, 2008, 2009, 2010, 2011, 2012 David Berkman
  * 
  * This file is part of the SmallMind Code Project.
  * 
@@ -33,15 +33,15 @@ import java.rmi.RemoteException;
 
 public class RemoteEndpointBinder {
 
-   public static void bind (RemoteEndpoint remoteEndpoint, String registryName)
-      throws NoSuchMethodException, MalformedURLException, RemoteException {
+  public static void bind (RemoteEndpoint remoteEndpoint, String registryName)
+    throws NoSuchMethodException, MalformedURLException, RemoteException {
 
-      new RemoteTargetImpl(remoteEndpoint, registryName);
-   }
+    new RemoteTargetImpl(remoteEndpoint, registryName);
+  }
 
-   public static void unbind (String registryName)
-      throws MalformedURLException, NotBoundException, RemoteException {
+  public static void unbind (String registryName)
+    throws MalformedURLException, NotBoundException, RemoteException {
 
-      Naming.unbind(registryName);
-   }
+    Naming.unbind(registryName);
+  }
 }

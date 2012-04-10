@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2008, 2009, 2010, 2011 David Berkman
+ * Copyright (c) 2007, 2008, 2009, 2010, 2011, 2012 David Berkman
  * 
  * This file is part of the SmallMind Code Project.
  * 
@@ -31,27 +31,35 @@ import org.smallmind.cloud.cluster.ClusterHub;
 import org.smallmind.cloud.cluster.ClusterInterface;
 import org.smallmind.cloud.cluster.ClusterManagementException;
 import org.smallmind.cloud.cluster.ClusterManagerBuilder;
+import org.smallmind.quorum.transport.messaging.MessagingTransmitter;
 
 public class QueueClusterManagerBuilder implements ClusterManagerBuilder<QueueClusterProtocolDetails> {
 
-   private HashMap<String, QueueClusterManager> managerMap;
+  private HashMap<String, QueueClusterManager> managerMap;
 
-   public QueueClusterManagerBuilder () {
+  public QueueClusterManagerBuilder () {
 
-      managerMap = new HashMap<String, QueueClusterManager>();
-   }
+    managerMap = new HashMap<String, QueueClusterManager>();
+  }
 
-   public QueueClusterManager getClusterManager (ClusterHub clusterHub, ClusterInterface<QueueClusterProtocolDetails> clusterInterface)
-      throws ClusterManagementException {
+  public QueueClusterManager getClusterManager (ClusterHub clusterHub, ClusterInterface<QueueClusterProtocolDetails> clusterInterface)
+    throws ClusterManagementException {
 
-      QueueClusterManager clusterManager;
+    QueueClusterManager clusterManager;
+    MessagingTransmitter messagingTransmitter;
 
-      if ((clusterManager = managerMap.get(clusterInterface.getClusterName())) == null) {
-         clusterManager = new QueueClusterManager(clusterHub, clusterInterface);
-         managerMap.put(clusterInterface.getClusterName(), clusterManager);
-      }
+    try {
+      messagingTransmitter = new MessagingTransmitter(clusterInterface.getClusterProtocolDetails().getConnectionDetails(), clusterInterface.getClusterProtocolDetails().getTransmissionPoolSize());
+    }
+    catch (Exception exception) {
+      throw new ClusterManagementException(exception);
+    }
 
-      return clusterManager;
-   }
+    if ((clusterManager = managerMap.get(clusterInterface.getClusterName())) == null) {
+      clusterManager = new QueueClusterManager(clusterHub, messagingTransmitter, clusterInterface);
+      managerMap.put(clusterInterface.getClusterName(), clusterManager);
+    }
 
+    return clusterManager;
+  }
 }

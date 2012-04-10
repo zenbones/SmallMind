@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2008, 2009, 2010, 2011 David Berkman
+ * Copyright (c) 2007, 2008, 2009, 2010, 2011, 2012 David Berkman
  * 
  * This file is part of the SmallMind Code Project.
  * 
@@ -34,92 +34,92 @@ import org.smallmind.cloud.namespace.java.backingStore.NameTranslator;
 
 public class LdapNameTranslator extends NameTranslator {
 
-   private static final String LDAP_NODE_PREFIX = "cn=";
+  private static final String LDAP_NODE_PREFIX = "cn=";
 
-   public LdapNameTranslator (ContextCreator contextCreator) {
+  public LdapNameTranslator (ContextCreator contextCreator) {
 
-      super(contextCreator);
-   }
+    super(contextCreator);
+  }
 
-   public JavaName fromInternalNameToExternalName (Name internalName)
-      throws InvalidNameException {
+  public JavaName fromInternalNameToExternalName (Name internalName)
+    throws InvalidNameException {
 
-      JavaName translatedName;
-      int count;
+    JavaName translatedName;
+    int count;
 
-      translatedName = new JavaName(this);
-      for (count = 0; count < internalName.size(); count++) {
-         translatedName.add(LDAP_NODE_PREFIX + internalName.get(count));
+    translatedName = new JavaName(this);
+    for (count = 0; count < internalName.size(); count++) {
+      translatedName.add(LDAP_NODE_PREFIX + internalName.get(count));
+    }
+    return translatedName;
+  }
+
+  public String fromExternalNameToExternalString (JavaName externalName) {
+
+    StringBuilder externalBuilder;
+    int count;
+
+    externalBuilder = new StringBuilder();
+    for (count = 0; count < externalName.size(); count++) {
+      if (count > 0) {
+        externalBuilder.insert(0, ',');
       }
-      return translatedName;
-   }
+      externalBuilder.insert(0, externalName.get(count));
+    }
+    return externalBuilder.toString();
+  }
 
-   public String fromExternalNameToExternalString (JavaName externalName) {
+  public String fromAbsoluteExternalStringToInternalString (String externalName)
+    throws InvalidNameException {
 
-      StringBuilder externalBuilder;
-      int count;
+    return getInternalString(externalName, true);
+  }
 
-      externalBuilder = new StringBuilder();
-      for (count = 0; count < externalName.size(); count++) {
-         if (count > 0) {
-            externalBuilder.insert(0, ',');
-         }
-         externalBuilder.insert(0, externalName.get(count));
-      }
-      return externalBuilder.toString();
-   }
+  public String fromExternalStringToInternalString (String externalName)
+    throws InvalidNameException {
 
-   public String fromAbsoluteExternalStringToInternalString (String externalName)
-      throws InvalidNameException {
+    return getInternalString(externalName, false);
+  }
 
-      return getInternalString(externalName, true);
-   }
+  private String getInternalString (String externalName, boolean absolute)
+    throws InvalidNameException {
 
-   public String fromExternalStringToInternalString (String externalName)
-      throws InvalidNameException {
+    StringBuilder internalBuilder;
+    String[] parsedArray;
+    String parsedName;
+    String rootName;
+    int insertPos = 0;
+    int equalsPos;
 
-      return getInternalString(externalName, false);
-   }
+    rootName = ((LdapContextCreator)getContextCreator()).getRoot();
 
-   private String getInternalString (String externalName, boolean absolute)
-      throws InvalidNameException {
+    internalBuilder = new StringBuilder();
+    if (absolute && externalName.equals(rootName)) {
+      throw new InvalidNameException("Parameter (" + externalName + ") must designate a context below the Ldap root context (" + rootName + ")");
+    }
+    else if (absolute && externalName.endsWith(rootName)) {
+      internalBuilder.append("java:");
+      insertPos = 5;
+      parsedArray = externalName.substring(0, externalName.length() - (rootName.length() + 1)).split(",", -1);
+    }
+    else {
+      parsedArray = externalName.split(",", -1);
+    }
 
-      StringBuilder internalBuilder;
-      String[] parsedArray;
-      String parsedName;
-      String rootName;
-      int insertPos = 0;
-      int equalsPos;
-
-      rootName = ((LdapContextCreator)getContextCreator()).getRoot();
-
-      internalBuilder = new StringBuilder();
-      if (absolute && externalName.equals(rootName)) {
-         throw new InvalidNameException("Parameter (" + externalName + ") must designate a context below the Ldap root context (" + rootName + ")");
-      }
-      else if (absolute && externalName.endsWith(rootName)) {
-         internalBuilder.append("java:");
-         insertPos = 5;
-         parsedArray = externalName.substring(0, externalName.length() - (rootName.length() + 1)).split(",", -1);
+    for (int count = 0; count < parsedArray.length; count++) {
+      parsedName = parsedArray[count];
+      if ((equalsPos = parsedName.indexOf('=')) >= 0) {
+        if (count > 0) {
+          internalBuilder.insert(insertPos, '/');
+        }
+        internalBuilder.insert(insertPos, parsedName.substring(equalsPos + 1).trim());
       }
       else {
-         parsedArray = externalName.split(",", -1);
+        throw new InvalidNameException("Parameter (" + externalName + ") is not a proper distinguished Ldap name");
       }
+    }
 
-      for (int count = 0; count < parsedArray.length; count++) {
-         parsedName = parsedArray[count];
-         if ((equalsPos = parsedName.indexOf('=')) >= 0) {
-            if (count > 0) {
-               internalBuilder.insert(insertPos, '/');
-            }
-            internalBuilder.insert(insertPos, parsedName.substring(equalsPos + 1).trim());
-         }
-         else {
-            throw new InvalidNameException("Parameter (" + externalName + ") is not a proper distinguished Ldap name");
-         }
-      }
-
-      return internalBuilder.toString();
-   }
+    return internalBuilder.toString();
+  }
 
 }

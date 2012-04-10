@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2008, 2009, 2010, 2011 David Berkman
+ * Copyright (c) 2007, 2008, 2009, 2010, 2011, 2012 David Berkman
  * 
  * This file is part of the SmallMind Code Project.
  * 
@@ -31,19 +31,19 @@ import javax.naming.directory.DirContext;
 
 public abstract class ContextCreator {
 
-   private NamingConnectionDetails connectionDetails;
+  private NamingConnectionDetails connectionDetails;
 
-   public ContextCreator (NamingConnectionDetails connectionDetails) {
+  public ContextCreator (NamingConnectionDetails connectionDetails) {
 
-      this.connectionDetails = connectionDetails;
-   }
+    this.connectionDetails = connectionDetails;
+  }
 
-   public NamingConnectionDetails getConnectionDetails () {
+  public NamingConnectionDetails getConnectionDetails () {
 
-      return connectionDetails;
-   }
+    return connectionDetails;
+  }
 
-   public abstract DirContext getInitialContext ()
-      throws NamingException;
+  public abstract DirContext getInitialContext ()
+    throws NamingException;
 
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2008, 2009, 2010, 2011 David Berkman
+ * Copyright (c) 2007, 2008, 2009, 2010, 2011, 2012 David Berkman
  * 
  * This file is part of the SmallMind Code Project.
  * 
@@ -31,8 +31,8 @@ import javax.jms.Session;
 
 public interface MessageTarget {
 
-   public abstract Message handleMessage (Session session, Message message)
-      throws Exception;
+  public abstract Message handleMessage (Session session, Message message)
+    throws Exception;
 
-   public abstract void logError (Throwable throwable);
+  public abstract void logError (Throwable throwable);
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2008, 2009, 2010, 2011 David Berkman
+ * Copyright (c) 2007, 2008, 2009, 2010, 2011, 2012 David Berkman
  * 
  * This file is part of the SmallMind Code Project.
  * 
@@ -30,35 +30,37 @@ import org.smallmind.quorum.cache.indigenous.CacheEntry;
 
 public class EventMessageCacheEntry implements CacheEntry<EventMessageMold> {
 
-   private EventMessageMold messageMold;
-   private long lastAccessTime;
+  private EventMessageMold messageMold;
+  private long lastAccessTime;
 
-   public EventMessageCacheEntry (EventMessageMold messageMold) {
+  public EventMessageCacheEntry (EventMessageMold messageMold) {
 
-      this.messageMold = messageMold;
+    this.messageMold = messageMold;
 
-      lastAccessTime = System.currentTimeMillis();
-   }
+    lastAccessTime = System.currentTimeMillis();
+  }
 
-   public synchronized long getLastAccessTime () {
+  public synchronized long getLastAccessTime () {
 
-      return lastAccessTime;
-   }
+    return lastAccessTime;
+  }
 
-   public EventMessageMold getEntry () {
+  public EventMessageMold getEntry () {
 
-      return messageMold;
-   }
+    return messageMold;
+  }
 
-   public synchronized void cacheHit () {
+  public synchronized void cacheHit () {
 
-      lastAccessTime = System.currentTimeMillis();
-   }
+    lastAccessTime = System.currentTimeMillis();
+  }
 
-   public void expire () {
-   }
+  public void expire () {
 
-   public void close () {
-   }
+  }
+
+  public void close () {
+
+  }
 
 }

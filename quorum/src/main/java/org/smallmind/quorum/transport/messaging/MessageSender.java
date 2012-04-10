@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2008, 2009, 2010, 2011 David Berkman
+ * Copyright (c) 2007, 2008, 2009, 2010, 2011, 2012 David Berkman
  * 
  * This file is part of the SmallMind Code Project.
  * 
@@ -31,56 +31,90 @@ import java.lang.reflect.InvocationTargetException;
 import javax.jms.JMSException;
 import javax.jms.Message;
 import javax.jms.ObjectMessage;
+import javax.jms.Queue;
+import javax.jms.QueueConnection;
 import javax.jms.QueueReceiver;
+import javax.jms.QueueSender;
+import javax.jms.QueueSession;
+import javax.jms.Session;
 import javax.jms.TemporaryQueue;
+import org.smallmind.quorum.pool.component.PooledComponent;
+import org.smallmind.scribe.pen.LoggerManager;
 
-public class MessageSender {
+public class MessageSender implements PooledComponent {
 
-   private MessagingTransmitter messagingTransmitter;
-   private TemporaryQueue temporaryQueue;
-   private QueueReceiver queueReceiver;
+  private ThreadLocal<String> serviceSelectorLocal = new ThreadLocal<String>();
 
-   public MessageSender (MessagingTransmitter messagingTransmitter, TemporaryQueue temporaryQueue, QueueReceiver queueReceiver) {
+  private QueueSession queueSession;
+  private QueueSender queueSender;
+  private TemporaryQueue temporaryQueue;
+  private QueueReceiver queueReceiver;
 
-      this.messagingTransmitter = messagingTransmitter;
-      this.temporaryQueue = temporaryQueue;
-      this.queueReceiver = queueReceiver;
-   }
+  public MessageSender (QueueConnection queueConnection, Queue queue)
+    throws JMSException {
 
-   public ObjectMessage createObjectMessage (Serializable serializable)
-      throws JMSException {
+    queueSession = queueConnection.createQueueSession(false, Session.AUTO_ACKNOWLEDGE);
+    queueSender = queueSession.createSender(queue);
+    temporaryQueue = queueSession.createTemporaryQueue();
+    queueReceiver = queueSession.createReceiver(temporaryQueue);
+  }
 
-      return messagingTransmitter.createObjectMessage(serializable);
-   }
+  public MessageSender setServiceSelector (String serviceSelector) {
 
-   public void sendMessage (Message message)
-      throws JMSException {
+    serviceSelectorLocal.set(serviceSelector);
 
-      messagingTransmitter.sendMessage(temporaryQueue, message);
-   }
+    return this;
+  }
 
-   public Object getResult ()
-      throws JMSException, InvocationTargetException {
+  public ObjectMessage createObjectMessage (Serializable serializable)
+    throws JMSException {
 
-      return messagingTransmitter.getResult(queueReceiver);
-   }
+    return queueSession.createObjectMessage(serializable);
+  }
 
-   public Message recieveMessage ()
-      throws JMSException {
+  public void sendMessage (Message message)
+    throws JMSException {
 
-      return queueReceiver.receive();
-   }
+    String serviceSelector;
 
-   public void close ()
-      throws JMSException {
+    if ((serviceSelector = serviceSelectorLocal.get()) != null) {
+      message.setStringProperty(MessagingConnectionDetails.SELECTION_PROPERTY, serviceSelector);
+    }
 
-      queueReceiver.close();
-      temporaryQueue.delete();
-   }
+    message.setJMSReplyTo(temporaryQueue);
+    queueSender.send(message);
+  }
 
-   public void finalize ()
-      throws JMSException {
+  public Object getResult ()
+    throws JMSException, InvocationTargetException {
 
+    ObjectMessage objectMessage;
+
+    objectMessage = (ObjectMessage)queueReceiver.receive();
+    if (objectMessage.getBooleanProperty(MessagingConnectionDetails.EXCEPTION_PROPERTY)) {
+      throw new InvocationTargetException((Exception)objectMessage.getObject());
+    }
+
+    return objectMessage.getObject();
+  }
+
+  public void close ()
+    throws JMSException {
+
+    queueSender.close();
+    queueReceiver.close();
+    temporaryQueue.delete();
+    queueSession.close();
+  }
+
+  @Override
+  public void terminate () {
+
+    try {
       close();
-   }
+    }
+    catch (JMSException jmsException) {
+      LoggerManager.getLogger(MessageSender.class).error(jmsException);
+    }
+  }
 }

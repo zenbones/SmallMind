@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2008, 2009, 2010, 2011 David Berkman
+ * Copyright (c) 2007, 2008, 2009, 2010, 2011, 2012 David Berkman
  * 
  * This file is part of the SmallMind Code Project.
  * 
@@ -30,15 +30,15 @@ import org.smallmind.cloud.cluster.protocol.ClusterProtocolDetails;
 
 public interface ClusterManager<D extends ClusterProtocolDetails> {
 
-   public abstract ClusterInterface<D> getClusterInterface ();
+  public abstract ClusterInterface<D> getClusterInterface ();
 
-   public abstract ClusterHandle getClusterHandle ()
-      throws ClusterManagementException;
+  public abstract ClusterHandle getClusterHandle ()
+    throws ClusterManagementException;
 
-   public abstract void updateClusterStatus (ClusterEndpoint clusterEndpoint, int calibratedFreeCapacity)
-      throws ClusterManagementException;
+  public abstract void updateClusterStatus (ClusterEndpoint<D> clusterEndpoint, int calibratedFreeCapacity)
+    throws ClusterManagementException;
 
-   public abstract void removeClusterMember (ClusterEndpoint clusterEndpoint)
-      throws ClusterManagementException;
+  public abstract void removeClusterMember (ClusterEndpoint<D> clusterEndpoint)
+    throws ClusterManagementException;
 
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2008, 2009, 2010, 2011 David Berkman
+ * Copyright (c) 2007, 2008, 2009, 2010, 2011, 2012 David Berkman
  * 
  * This file is part of the SmallMind Code Project.
  * 
@@ -32,15 +32,15 @@ import org.smallmind.quorum.cache.indigenous.CacheSource;
 
 public class EventMessageCacheSource implements CacheSource<EventMessageKey, EventMessageMold, EventMessageCacheEntry> {
 
-   public EventMessageCacheEntry createEntry (EventMessageKey key, Object... parameters)
-      throws CacheException {
+  public EventMessageCacheEntry createEntry (EventMessageKey key, Object... parameters)
+    throws CacheException {
 
-      return new EventMessageCacheEntry(new EventMessageMold());
-   }
+    return new EventMessageCacheEntry(new EventMessageMold());
+  }
 
-   public CacheReference<EventMessageKey, EventMessageCacheEntry> wrapReference (EventMessageKey key, EventMessageMold value)
-      throws CacheException {
+  public CacheReference<EventMessageKey, EventMessageCacheEntry> wrapReference (EventMessageKey key, EventMessageMold value)
+    throws CacheException {
 
-      return new CacheReference<EventMessageKey, EventMessageCacheEntry>(key, new EventMessageCacheEntry(new EventMessageMold()));
-   }
+    return new CacheReference<EventMessageKey, EventMessageCacheEntry>(key, new EventMessageCacheEntry(new EventMessageMold()));
+  }
 }

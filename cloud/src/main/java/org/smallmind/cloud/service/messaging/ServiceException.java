@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2008, 2009, 2010, 2011 David Berkman
+ * Copyright (c) 2007, 2008, 2009, 2010, 2011, 2012 David Berkman
  * 
  * This file is part of the SmallMind Code Project.
  * 
@@ -30,23 +30,23 @@ import org.smallmind.nutsnbolts.lang.FormattedException;
 
 public class ServiceException extends FormattedException {
 
-   public ServiceException () {
+  public ServiceException () {
 
-      super();
-   }
+    super();
+  }
 
-   public ServiceException (String message, Object... args) {
+  public ServiceException (String message, Object... args) {
 
-      super(message, args);
-   }
+    super(message, args);
+  }
 
-   public ServiceException (Throwable throwable, String message, Object... args) {
+  public ServiceException (Throwable throwable, String message, Object... args) {
 
-      super(throwable, message, args);
-   }
+    super(throwable, message, args);
+  }
 
-   public ServiceException (Throwable throwable) {
+  public ServiceException (Throwable throwable) {
 
-      super(throwable);
-   }
+    super(throwable);
+  }
 }

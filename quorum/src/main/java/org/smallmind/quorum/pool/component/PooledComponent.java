@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2008, 2009, 2010, 2011 David Berkman
+ * Copyright (c) 2007, 2008, 2009, 2010, 2011, 2012 David Berkman
  * 
  * This file is part of the SmallMind Code Project.
  * 
@@ -24,40 +24,9 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.cloud.service.messaging.spring;
+package org.smallmind.quorum.pool.component;
 
-import org.smallmind.cloud.service.messaging.ServiceException;
-import org.smallmind.quorum.transport.messaging.MessagingTransmitter;
-import org.springframework.beans.factory.FactoryBean;
+public interface PooledComponent {
 
-public class ServiceDispatcherFactoryBean implements FactoryBean<MessagingTransmitter> {
-
-   private String serviceSelector;
-
-   public void setServiceSelector (String serviceSelector) {
-
-      this.serviceSelector = serviceSelector;
-   }
-
-   public MessagingTransmitter getObject ()
-      throws ServiceException {
-
-      MessagingTransmitter messagingTransmitter;
-
-      if ((messagingTransmitter = ServiceDispatcherInitializingBean.getMessagingTransmitter(serviceSelector)) == null) {
-         throw new ServiceException("No %s configured for selector(%s)", MessagingTransmitter.class.getSimpleName(), serviceSelector);
-      }
-
-      return messagingTransmitter;
-   }
-
-   public Class getObjectType () {
-
-      return MessagingTransmitter.class;
-   }
-
-   public boolean isSingleton () {
-
-      return true;
-   }
+  public abstract void terminate ();
 }

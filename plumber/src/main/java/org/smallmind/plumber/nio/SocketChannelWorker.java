@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2008, 2009, 2010, 2011 David Berkman
+ * Copyright (c) 2007, 2008, 2009, 2010, 2011, 2012 David Berkman
  * 
  * This file is part of the SmallMind Code Project.
  * 
@@ -28,51 +28,55 @@ package org.smallmind.plumber.nio;
 
 import java.nio.channels.ServerSocketChannel;
 import java.nio.channels.SocketChannel;
+import org.smallmind.quorum.pool.component.PooledComponent;
 import org.smallmind.scribe.pen.Logger;
 
-public abstract class SocketChannelWorker implements Runnable {
+public abstract class SocketChannelWorker implements PooledComponent, Runnable {
 
-   private Logger logger;
-   private ServerSocketChannelHerald herald;
-   private ServerSocketChannel readyChannel;
+  private Logger logger;
+  private ServerSocketChannelHerald herald;
+  private ServerSocketChannel readyChannel;
 
-   public SocketChannelWorker (Logger logger, ServerSocketChannelHerald herald) {
+  public SocketChannelWorker (Logger logger, ServerSocketChannelHerald herald) {
 
-      this.logger = logger;
-      this.herald = herald;
-   }
+    this.logger = logger;
+    this.herald = herald;
+  }
 
-   public void setChannel (ServerSocketChannel readyChannel) {
+  public void setChannel (ServerSocketChannel readyChannel) {
 
-      this.readyChannel = readyChannel;
-   }
+    this.readyChannel = readyChannel;
+  }
 
-   public abstract void socketChannelWork (SocketChannel socketChannel)
-      throws Exception;
+  public abstract void socketChannelWork (SocketChannel socketChannel)
+    throws Exception;
 
-   public void run () {
+  public void run () {
 
-      SocketChannel socketChannel;
+    SocketChannel socketChannel;
 
-      try {
-         if (readyChannel == null) {
-            throw new IllegalArgumentException("No channel has been set on this SocketChannelWorker");
-         }
-
-         socketChannel = readyChannel.accept();
-         try {
-            socketChannelWork(socketChannel);
-         }
-         finally {
-            socketChannel.close();
-         }
+    try {
+      if (readyChannel == null) {
+        throw new IllegalArgumentException("No channel has been set on this SocketChannelWorker");
       }
-      catch (Exception e) {
-         logger.error(e);
+
+      socketChannel = readyChannel.accept();
+      try {
+        socketChannelWork(socketChannel);
       }
       finally {
-         herald.returnConnection(this);
+        socketChannel.close();
       }
-   }
+    }
+    catch (Exception e) {
+      logger.error(e);
+    }
+    finally {
+      herald.returnConnection(this);
+    }
+  }
 
+  @Override
+  public void terminate () {
+  }
 }

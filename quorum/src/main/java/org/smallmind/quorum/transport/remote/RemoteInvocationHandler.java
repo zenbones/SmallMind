@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2008, 2009, 2010, 2011 David Berkman
+ * Copyright (c) 2007, 2008, 2009, 2010, 2011, 2012 David Berkman
  * 
  * This file is part of the SmallMind Code Project.
  * 
@@ -36,19 +36,19 @@ import org.smallmind.quorum.transport.InvocationSignal;
 
 public class RemoteInvocationHandler implements Serializable, InvocationHandler {
 
-   private Class endpointInterface;
-   private RemoteTarget remoteTarget;
+  private Class endpointInterface;
+  private RemoteTarget remoteTarget;
 
-   public RemoteInvocationHandler (Class endpointInterface, RemoteTarget remoteTarget)
-      throws NamingException {
+  public RemoteInvocationHandler (Class endpointInterface, RemoteTarget remoteTarget)
+    throws NamingException {
 
-      this.endpointInterface = endpointInterface;
-      this.remoteTarget = remoteTarget;
-   }
+    this.endpointInterface = endpointInterface;
+    this.remoteTarget = remoteTarget;
+  }
 
-   public Object invoke (Object proxy, Method method, Object[] args)
-      throws Throwable {
+  public Object invoke (Object proxy, Method method, Object[] args)
+    throws Throwable {
 
-      return remoteTarget.remoteInvocation(new InvocationSignal(ContextFactory.getExpectedContexts(endpointInterface), new FauxMethod(method), args));
-   }
+    return remoteTarget.remoteInvocation(new InvocationSignal(ContextFactory.getExpectedContexts(endpointInterface), new FauxMethod(method), args));
+  }
 }

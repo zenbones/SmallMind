@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2008, 2009, 2010, 2011 David Berkman
+ * Copyright (c) 2007, 2008, 2009, 2010, 2011, 2012 David Berkman
  * 
  * This file is part of the SmallMind Code Project.
  * 
@@ -28,9 +28,9 @@ package org.smallmind.cloud.multicast.event;
 
 public class EventMessageHeader extends EventMessage {
 
-   public EventMessageHeader (byte[] messageId, int messageLength) {
+  public EventMessageHeader (byte[] messageId, int messageLength) {
 
-      super(messageId, MessageType.HEADER, messageLength, 0);
-   }
+    super(messageId, MessageType.HEADER, messageLength, 0);
+  }
 
 }

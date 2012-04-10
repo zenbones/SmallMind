@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2008, 2009, 2010, 2011 David Berkman
+ * Copyright (c) 2007, 2008, 2009, 2010, 2011, 2012 David Berkman
  * 
  * This file is part of the SmallMind Code Project.
  * 
@@ -31,6 +31,6 @@ import org.smallmind.quorum.transport.InvocationSignal;
 
 public interface RemoteTarget extends Remote {
 
-   public abstract Object remoteInvocation (InvocationSignal invocationSignal)
-      throws Exception;
+  public abstract Object remoteInvocation (InvocationSignal invocationSignal)
+    throws Exception;
 }

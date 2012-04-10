@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2008, 2009, 2010, 2011 David Berkman
+ * Copyright (c) 2007, 2008, 2009, 2010, 2011, 2012 David Berkman
  * 
  * This file is part of the SmallMind Code Project.
  * 
@@ -37,25 +37,25 @@ import javax.rmi.PortableRemoteObject;
 
 public class RemoteProxyFactory {
 
-   public static <C> C generateRemoteProxy (Class<C> endpointInterface, String registryName)
-      throws UnknownHostException, NoSuchMethodException, NamingException, RemoteException {
+  public static <C> C generateRemoteProxy (Class<C> endpointInterface, String registryName)
+    throws UnknownHostException, NoSuchMethodException, NamingException, RemoteException {
 
-      return generateRemoteProxy(endpointInterface, InetAddress.getLocalHost().getHostAddress(), registryName);
-   }
+    return generateRemoteProxy(endpointInterface, InetAddress.getLocalHost().getHostAddress(), registryName);
+  }
 
-   public static <C> C generateRemoteProxy (Class<C> endpointInterface, String hostName, String registryName)
-      throws NoSuchMethodException, NamingException, RemoteException {
+  public static <C> C generateRemoteProxy (Class<C> endpointInterface, String hostName, String registryName)
+    throws NoSuchMethodException, NamingException, RemoteException {
 
-      RemoteTarget remoteTarget;
-      InitialContext initContext;
-      Context rmiContext;
+    RemoteTarget remoteTarget;
+    InitialContext initContext;
+    Context rmiContext;
 
-      initContext = new InitialContext();
-      rmiContext = (Context)initContext.lookup("rmi://" + hostName);
-      remoteTarget = (RemoteTarget)PortableRemoteObject.narrow(rmiContext.lookup(registryName), RemoteTarget.class);
-      rmiContext.close();
-      initContext.close();
+    initContext = new InitialContext();
+    rmiContext = (Context)initContext.lookup("rmi://" + hostName);
+    remoteTarget = (RemoteTarget)PortableRemoteObject.narrow(rmiContext.lookup(registryName), RemoteTarget.class);
+    rmiContext.close();
+    initContext.close();
 
-      return endpointInterface.cast(Proxy.newProxyInstance(RemoteInvocationHandler.class.getClassLoader(), new Class[] {endpointInterface}, new RemoteInvocationHandler(endpointInterface, remoteTarget)));
-   }
+    return endpointInterface.cast(Proxy.newProxyInstance(RemoteInvocationHandler.class.getClassLoader(), new Class[] {endpointInterface}, new RemoteInvocationHandler(endpointInterface, remoteTarget)));
+  }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2008, 2009, 2010, 2011 David Berkman
+ * Copyright (c) 2007, 2008, 2009, 2010, 2011, 2012 David Berkman
  * 
  * This file is part of the SmallMind Code Project.
  * 
@@ -29,12 +29,11 @@ package org.smallmind.cloud.service.messaging.spring;
 import java.util.LinkedList;
 import java.util.List;
 import javax.jms.JMSException;
+import javax.naming.Context;
 import javax.naming.NamingException;
 import org.smallmind.cloud.service.messaging.ServiceEndpoint;
 import org.smallmind.cloud.service.messaging.ServiceTarget;
 import org.smallmind.quorum.pool.connection.ConnectionPool;
-import org.smallmind.quorum.pool.connection.ConnectionPool;
-import org.smallmind.quorum.pool.connection.ConnectionPoolException;
 import org.smallmind.quorum.pool.connection.ConnectionPoolException;
 import org.smallmind.quorum.transport.messaging.MessagingConnectionDetails;
 import org.smallmind.quorum.transport.messaging.MessagingReceiver;
@@ -45,7 +44,7 @@ public class ServiceNegotiatorInitializingBean implements InitializingBean, Disp
 
   private final LinkedList<MessagingReceiver> messagingReceiverList = new LinkedList<MessagingReceiver>();
 
-  private ConnectionPool javaEnvironmentPool;
+  private ConnectionPool<Context> javaEnvironmentPool;
   private List<ServiceEndpoint> serviceEndpointList;
   private String jmsUser;
   private String jmsCredentials;
@@ -63,7 +62,7 @@ public class ServiceNegotiatorInitializingBean implements InitializingBean, Disp
     this.jmsCredentials = jmsCredentials;
   }
 
-  public void setJavaEnvironmentPool (ConnectionPool javaEnvironmentPool) {
+  public void setJavaEnvironmentPool (ConnectionPool<Context> javaEnvironmentPool) {
 
     this.javaEnvironmentPool = javaEnvironmentPool;
   }
@@ -89,8 +88,8 @@ public class ServiceNegotiatorInitializingBean implements InitializingBean, Disp
     MessagingConnectionDetails connectionDetails;
 
     for (ServiceEndpoint serviceEndpoint : serviceEndpointList) {
-      connectionDetails = new MessagingConnectionDetails(javaEnvironmentPool, destinationEnvPath, factoryEnvPath, jmsUser, jmsCredentials, 0, serviceEndpoint.getServiceSelector());
-      messagingReceiverList.add(new MessagingReceiver(new ServiceTarget(serviceEndpoint), connectionDetails));
+      connectionDetails = new MessagingConnectionDetails(javaEnvironmentPool, destinationEnvPath, factoryEnvPath, jmsUser, jmsCredentials);
+      messagingReceiverList.add(new MessagingReceiver(new ServiceTarget(serviceEndpoint), connectionDetails, serviceEndpoint.getServiceSelector(), serviceEndpoint.getConcurrencyLimit()));
     }
   }
 

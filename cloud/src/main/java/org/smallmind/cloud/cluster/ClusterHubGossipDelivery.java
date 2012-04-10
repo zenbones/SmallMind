@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2008, 2009, 2010, 2011 David Berkman
+ * Copyright (c) 2007, 2008, 2009, 2010, 2011, 2012 David Berkman
  * 
  * This file is part of the SmallMind Code Project.
  * 
@@ -31,18 +31,18 @@ import org.smallmind.cloud.cluster.event.GossipClusterListener;
 
 public class ClusterHubGossipDelivery implements Runnable {
 
-   private GossipClusterListener gossipClusterListener;
-   private GossipClusterEvent gossipClusterEvent;
+  private GossipClusterListener gossipClusterListener;
+  private GossipClusterEvent gossipClusterEvent;
 
-   public ClusterHubGossipDelivery (GossipClusterListener gossipClusterListener, GossipClusterEvent gossipClusterEvent) {
+  public ClusterHubGossipDelivery (GossipClusterListener gossipClusterListener, GossipClusterEvent gossipClusterEvent) {
 
-      this.gossipClusterListener = gossipClusterListener;
-      this.gossipClusterEvent = gossipClusterEvent;
-   }
+    this.gossipClusterListener = gossipClusterListener;
+    this.gossipClusterEvent = gossipClusterEvent;
+  }
 
-   public void run () {
+  public void run () {
 
-      gossipClusterListener.handleGossip(gossipClusterEvent);
-   }
+    gossipClusterListener.handleGossip(gossipClusterEvent);
+  }
 
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2008, 2009, 2010, 2011 David Berkman
+ * Copyright (c) 2007, 2008, 2009, 2010, 2011, 2012 David Berkman
  * 
  * This file is part of the SmallMind Code Project.
  * 
@@ -31,19 +31,19 @@ import org.smallmind.cloud.cluster.ClusterInterface;
 
 public class ServiceClusterBroadcast extends ClusterBroadcast {
 
-   private ClusterInterface clusterInterface;
+  private ClusterInterface clusterInterface;
 
-   public ServiceClusterBroadcast (ClusterInterface clusterInterface)
-      throws UnknownHostException {
+  public ServiceClusterBroadcast (ClusterInterface clusterInterface)
+    throws UnknownHostException {
 
-      super(ClusterBroadcastType.SERVICE);
+    super(ClusterBroadcastType.SERVICE);
 
-      this.clusterInterface = clusterInterface;
-   }
+    this.clusterInterface = clusterInterface;
+  }
 
-   public ClusterInterface getClusterInterface () {
+  public ClusterInterface getClusterInterface () {
 
-      return clusterInterface;
-   }
+    return clusterInterface;
+  }
 
 }
