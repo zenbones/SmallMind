@@ -30,38 +30,38 @@ import org.smallmind.nutsnbolts.util.UniqueId;
 
 public class TimestampedCacheMetaData implements CacheMetaData {
 
-   private long creationTimepstamp;
-   private long lastAccessTimestamp = 0;
-   private UniqueId uniqueId;
+  private long creationTimepstamp;
+  private long lastAccessTimestamp = 0;
+  private UniqueId uniqueId;
 
-   public TimestampedCacheMetaData () {
+  public TimestampedCacheMetaData () {
 
-      creationTimepstamp = System.currentTimeMillis();
-      uniqueId = UniqueId.newInstance();
-   }
+    creationTimepstamp = System.currentTimeMillis();
+    uniqueId = UniqueId.newInstance();
+  }
 
-   public UniqueId getUniqueId () {
+  public UniqueId getUniqueId () {
 
-      return uniqueId;
-   }
+    return uniqueId;
+  }
 
-   public long getCreationTimestamp () {
+  public long getCreationTimestamp () {
 
-      return creationTimepstamp;
-   }
+    return creationTimepstamp;
+  }
 
-   public long getLastAccessTimestamp () {
+  public long getLastAccessTimestamp () {
 
-      return (lastAccessTimestamp == 0) ? creationTimepstamp : lastAccessTimestamp;
-   }
+    return (lastAccessTimestamp == 0) ? creationTimepstamp : lastAccessTimestamp;
+  }
 
-   public boolean willUpdate () {
+  public boolean willUpdate () {
 
-      return true;
-   }
+    return true;
+  }
 
-   public void update () {
+  public void update () {
 
-      lastAccessTimestamp = System.currentTimeMillis();
-   }
+    lastAccessTimestamp = System.currentTimeMillis();
+  }
 }

@@ -24,26 +24,28 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.cloud.service.messaging;
+package org.smallmind.quorum.transport;
 
-public class SecurityException extends ServiceException {
+import org.smallmind.nutsnbolts.lang.FormattedException;
 
-  public SecurityException () {
+public class TransportException extends FormattedException {
+
+  public TransportException () {
 
     super();
   }
 
-  public SecurityException (String message, Object... args) {
+  public TransportException (String message, Object... args) {
 
     super(message, args);
   }
 
-  public SecurityException (Throwable throwable, String message, Object... args) {
+  public TransportException (Throwable throwable, String message, Object... args) {
 
     super(throwable, message, args);
   }
 
-  public SecurityException (Throwable throwable) {
+  public TransportException (Throwable throwable) {
 
     super(throwable);
   }

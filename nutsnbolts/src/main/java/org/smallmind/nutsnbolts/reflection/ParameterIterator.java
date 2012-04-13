@@ -44,94 +44,94 @@ import java.util.NoSuchElementException;
 */
 public class ParameterIterator implements Iterator<String>, Iterable<String> {
 
-   private String encrypted;
-   private int index = 0;
+  private String encrypted;
+  private int index = 0;
 
-   public ParameterIterator (String encrypted) {
+  public ParameterIterator (String encrypted) {
 
-      this.encrypted = encrypted;
-   }
+    this.encrypted = encrypted;
+  }
 
-   public Iterator<String> iterator () {
+  public Iterator<String> iterator () {
 
-      return this;
-   }
+    return this;
+  }
 
-   public boolean hasNext () {
+  public boolean hasNext () {
 
-      return index < encrypted.length();
-   }
+    return index < encrypted.length();
+  }
 
-   public String next () {
+  public String next () {
 
-      if (!hasNext()) {
-         throw new NoSuchElementException();
+    if (!hasNext()) {
+      throw new NoSuchElementException();
+    }
+
+    int arrayDepth = 0;
+
+    do {
+      switch (encrypted.charAt(index++)) {
+        case 'Z':
+          return assembleType("Z", arrayDepth);
+        case 'B':
+          return assembleType("B", arrayDepth);
+        case 'C':
+          return assembleType("C", arrayDepth);
+        case 'S':
+          return assembleType("S", arrayDepth);
+        case 'I':
+          return assembleType("I", arrayDepth);
+        case 'J':
+          return assembleType("J", arrayDepth);
+        case 'F':
+          return assembleType("F", arrayDepth);
+        case 'D':
+          return assembleType("D", arrayDepth);
+        case 'L':
+
+          StringBuilder objectBuilder = new StringBuilder("L");
+          char objectChar;
+
+          do {
+            switch (objectChar = encrypted.charAt(index++)) {
+              case ';':
+                return assembleType(objectBuilder.append(';').toString(), arrayDepth);
+              default:
+                objectBuilder.append(objectChar);
+            }
+          } while (index < encrypted.length());
+          break;
+        case '[':
+          arrayDepth++;
+          break;
+        default:
+          throw new ByteCodeManipulationException("Unknown format for parameter encrypted(%s)", encrypted);
       }
+    } while (index < encrypted.length());
 
-      int arrayDepth = 0;
+    throw new ByteCodeManipulationException("Unknown format for parameter encrypted(%s)", encrypted);
+  }
 
-      do {
-         switch (encrypted.charAt(index++)) {
-            case 'Z':
-               return assembleType("Z", arrayDepth);
-            case 'B':
-               return assembleType("B", arrayDepth);
-            case 'C':
-               return assembleType("C", arrayDepth);
-            case 'S':
-               return assembleType("S", arrayDepth);
-            case 'I':
-               return assembleType("I", arrayDepth);
-            case 'J':
-               return assembleType("J", arrayDepth);
-            case 'F':
-               return assembleType("F", arrayDepth);
-            case 'D':
-               return assembleType("D", arrayDepth);
-            case 'L':
+  private String assembleType (String baseType, int arrayDepth) {
 
-               StringBuilder objectBuilder = new StringBuilder("L");
-               char objectChar;
+    if (arrayDepth == 0) {
 
-               do {
-                  switch (objectChar = encrypted.charAt(index++)) {
-                     case ';':
-                        return assembleType(objectBuilder.append(';').toString(), arrayDepth);
-                     default:
-                        objectBuilder.append(objectChar);
-                  }
-               } while (index < encrypted.length());
-               break;
-            case '[':
-               arrayDepth++;
-               break;
-            default:
-               throw new ByteCodeManipulationException("Unknown format for parameter encrypted(%s)", encrypted);
-         }
-      } while (index < encrypted.length());
+      return baseType;
+    }
 
-      throw new ByteCodeManipulationException("Unknown format for parameter encrypted(%s)", encrypted);
-   }
+    StringBuilder arrayBuilder = new StringBuilder();
 
-   private String assembleType (String baseType, int arrayDepth) {
+    for (int count = 0; count < arrayDepth; count++) {
+      arrayBuilder.append('[');
+    }
+    arrayBuilder.append(baseType);
 
-      if (arrayDepth == 0) {
+    return arrayBuilder.toString();
+  }
 
-         return baseType;
-      }
+  public void remove () {
 
-      StringBuilder arrayBuilder = new StringBuilder();
-
-      for (int count = 0; count < arrayDepth; count++) {
-         arrayBuilder.append('[');
-      }
-      arrayBuilder.append(baseType);
-
-      return arrayBuilder.toString();
-   }
-
-   public void remove () {
-
-      throw new UnsupportedOperationException();
-   }
+    throw new UnsupportedOperationException();
+  }
 }

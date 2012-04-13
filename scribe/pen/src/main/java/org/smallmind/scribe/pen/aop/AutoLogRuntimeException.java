@@ -30,23 +30,23 @@ import org.smallmind.scribe.pen.LoggerRuntimeException;
 
 public class AutoLogRuntimeException extends LoggerRuntimeException {
 
-   public AutoLogRuntimeException () {
+  public AutoLogRuntimeException () {
 
-      super();
-   }
+    super();
+  }
 
-   public AutoLogRuntimeException (String message, Object... args) {
+  public AutoLogRuntimeException (String message, Object... args) {
 
-      super(message, args);
-   }
+    super(message, args);
+  }
 
-   public AutoLogRuntimeException (Throwable throwable, String message, Object... args) {
+  public AutoLogRuntimeException (Throwable throwable, String message, Object... args) {
 
-      super(throwable, message, args);
-   }
+    super(throwable, message, args);
+  }
 
-   public AutoLogRuntimeException (Throwable exception) {
+  public AutoLogRuntimeException (Throwable exception) {
 
-      super(exception);
-   }
+    super(exception);
+  }
 }

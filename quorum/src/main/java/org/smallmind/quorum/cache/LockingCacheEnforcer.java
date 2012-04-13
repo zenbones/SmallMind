@@ -39,306 +39,306 @@ import org.terracotta.annotations.InstrumentedClass;
 @InstrumentedClass
 public abstract class LockingCacheEnforcer<K, V> implements LockingCache<K, V> {
 
-   private static final ForcedUnlockTimer FORCED_UNLOCK_TIMER;
+  private static final ForcedUnlockTimer FORCED_UNLOCK_TIMER;
 
-   private final ConcurrentHashMap<K, KeyCondition<K>> keyConditionMap;
-   private final ReentrantLock[] stripeLocks;
+  private final ConcurrentHashMap<K, KeyCondition<K>> keyConditionMap;
+  private final ReentrantLock[] stripeLocks;
 
-   private long lockTimeout;
+  private long lockTimeout;
 
-   static {
+  static {
 
-      Thread forcedUnlockTimerThread;
+    Thread forcedUnlockTimerThread;
 
-      FORCED_UNLOCK_TIMER = new ForcedUnlockTimer();
-      forcedUnlockTimerThread = new Thread(FORCED_UNLOCK_TIMER);
-      forcedUnlockTimerThread.setDaemon(true);
-      forcedUnlockTimerThread.start();
-   }
+    FORCED_UNLOCK_TIMER = new ForcedUnlockTimer();
+    forcedUnlockTimerThread = new Thread(FORCED_UNLOCK_TIMER);
+    forcedUnlockTimerThread.setDaemon(true);
+    forcedUnlockTimerThread.start();
+  }
 
-   public LockingCacheEnforcer (ReentrantLock[] stripeLocks, long lockTimeout)
-      throws CacheException {
+  public LockingCacheEnforcer (ReentrantLock[] stripeLocks, long lockTimeout)
+    throws CacheException {
 
-      if (stripeLocks.length % 2 != 0) {
-         throw new CacheException("Concurrency level(%d) must be an even power of 2", stripeLocks.length);
+    if (stripeLocks.length % 2 != 0) {
+      throw new CacheException("Concurrency level(%d) must be an even power of 2", stripeLocks.length);
+    }
+
+    this.stripeLocks = stripeLocks;
+    this.lockTimeout = lockTimeout;
+
+    keyConditionMap = new ConcurrentHashMap<K, KeyCondition<K>>(stripeLocks.length, .75F, stripeLocks.length);
+  }
+
+  public long getLockTimeout () {
+
+    return lockTimeout;
+  }
+
+  public <R> R executeLockedCallback (KeyLock keyLock, LockedCallback<K, R> callback) {
+
+    ReentrantLock stripeLock;
+
+    stripeLock = lockStripe(callback.getKey());
+    try {
+      gateKey(keyLock, callback.getKey());
+
+      return callback.execute();
+    }
+    finally {
+      stripeLock.unlock();
+    }
+  }
+
+  public KeyLock lock (KeyLock keyLock, K key) {
+
+    ReentrantLock stripeLock;
+    KeyCondition<K> keyCondition;
+
+    stripeLock = lockStripe(key);
+    try {
+      if ((keyCondition = keyConditionMap.get(key)) == null) {
+        keyConditionMap.put(key, keyCondition = new KeyCondition<K>(this, key, lockTimeout));
+
+        return keyCondition.getOwningKeyLock();
       }
-
-      this.stripeLocks = stripeLocks;
-      this.lockTimeout = lockTimeout;
-
-      keyConditionMap = new ConcurrentHashMap<K, KeyCondition<K>>(stripeLocks.length, .75F, stripeLocks.length);
-   }
-
-   public long getLockTimeout () {
-
-      return lockTimeout;
-   }
-
-   public <R> R executeLockedCallback (KeyLock keyLock, LockedCallback<K, R> callback) {
-
-      ReentrantLock stripeLock;
-
-      stripeLock = lockStripe(callback.getKey());
-      try {
-         gateKey(keyLock, callback.getKey());
-
-         return callback.execute();
+      else if ((keyLock != null) && keyCondition.isOwnedByKeyLock(keyLock)) {
+        return keyCondition.inc();
       }
-      finally {
-         stripeLock.unlock();
-      }
-   }
-
-   public KeyLock lock (KeyLock keyLock, K key) {
-
-      ReentrantLock stripeLock;
-      KeyCondition<K> keyCondition;
-
-      stripeLock = lockStripe(key);
-      try {
-         if ((keyCondition = keyConditionMap.get(key)) == null) {
-            keyConditionMap.put(key, keyCondition = new KeyCondition<K>(this, key, lockTimeout));
-
-            return keyCondition.getOwningKeyLock();
-         }
-         else if ((keyLock != null) && keyCondition.isOwnedByKeyLock(keyLock)) {
-            return keyCondition.inc();
-         }
-         else {
-            while ((keyCondition = keyConditionMap.get(key)) != null) {
-               try {
-                  keyCondition.getCondition().await();
-               }
-               catch (InterruptedException interruptedException) {
-                  throw new CacheLockException(interruptedException, "Interrupted while awaiting a lock opportunity on key(%s)", key.toString());
-               }
-            }
-
-            keyConditionMap.put(key, keyCondition = new KeyCondition<K>(this, key, lockTimeout));
-
-            return keyCondition.getOwningKeyLock();
-         }
-      }
-      finally {
-         stripeLock.unlock();
-      }
-   }
-
-   public void unlock (KeyLock keyLock, K key) {
-
-      ReentrantLock stripeLock;
-      KeyCondition keyCondition;
-
-      stripeLock = lockStripe(key);
-      try {
-         if ((keyCondition = keyConditionMap.get(key)) == null) {
-            throw new CacheLockException("Attempt to unlock key(%s), but the lock has already expired - try increasing the lock time out", key.toString());
-         }
-         else if (!keyCondition.isOwnedByKeyLock(keyLock)) {
-            throw new CacheLockException("Attempt to unlock key(%s) owned by lock(%s) by a non-owning lock(%s)", key.toString(), keyCondition.getOwningKeyLock().getName(), (keyLock == null) ? "null" : keyLock.getName());
-         }
-         else {
-            keyCondition.dec();
-         }
-      }
-      finally {
-         stripeLock.unlock();
-      }
-   }
-
-   protected ReentrantLock[] getStripeLockArray () {
-
-      return stripeLocks;
-   }
-
-   protected ReentrantLock lockStripe (K key) {
-
-      ReentrantLock stripeLock = stripeLocks[Math.abs(key.hashCode() % stripeLocks.length)];
-
-      stripeLock.lock();
-
-      return stripeLock;
-   }
-
-   protected void gateKey (KeyLock keyLock, K key) {
-
-      KeyCondition keyCondition;
-
-      while (((keyCondition = keyConditionMap.get(key)) != null) && (!keyCondition.isOwnedByKeyLock(keyLock))) {
-         try {
+      else {
+        while ((keyCondition = keyConditionMap.get(key)) != null) {
+          try {
             keyCondition.getCondition().await();
-         }
-         catch (InterruptedException interruptedException) {
-            throw new CacheLockException(interruptedException, "Interrupted while awaiting the stripeLock on key(%s)", key.toString());
-         }
+          }
+          catch (InterruptedException interruptedException) {
+            throw new CacheLockException(interruptedException, "Interrupted while awaiting a lock opportunity on key(%s)", key.toString());
+          }
+        }
+
+        keyConditionMap.put(key, keyCondition = new KeyCondition<K>(this, key, lockTimeout));
+
+        return keyCondition.getOwningKeyLock();
       }
-   }
+    }
+    finally {
+      stripeLock.unlock();
+    }
+  }
 
-   private Condition createCondition (K key) {
+  public void unlock (KeyLock keyLock, K key) {
 
-      return stripeLocks[Math.abs(key.hashCode() % stripeLocks.length)].newCondition();
-   }
+    ReentrantLock stripeLock;
+    KeyCondition keyCondition;
 
-   private KeyCondition<K> retrieveGatedKeyCondition (K key) {
+    stripeLock = lockStripe(key);
+    try {
+      if ((keyCondition = keyConditionMap.get(key)) == null) {
+        throw new CacheLockException("Attempt to unlock key(%s), but the lock has already expired - try increasing the lock time out", key.toString());
+      }
+      else if (!keyCondition.isOwnedByKeyLock(keyLock)) {
+        throw new CacheLockException("Attempt to unlock key(%s) owned by lock(%s) by a non-owning lock(%s)", key.toString(), keyCondition.getOwningKeyLock().getName(), (keyLock == null) ? "null" : keyLock.getName());
+      }
+      else {
+        keyCondition.dec();
+      }
+    }
+    finally {
+      stripeLock.unlock();
+    }
+  }
 
-      return keyConditionMap.remove(key);
-   }
+  protected ReentrantLock[] getStripeLockArray () {
 
-   @InstrumentedClass
-   private static class KeyCondition<K> implements Delayed {
+    return stripeLocks;
+  }
 
-      private KeyLock keyLock;
-      private LockingCacheEnforcer<K, ?> lockingCache;
-      private K key;
-      private Condition condition;
-      private AtomicBoolean terminated = new AtomicBoolean(false);
-      private boolean timed;
-      private long unlockTarget;
-      private int lockCount = 1;
+  protected ReentrantLock lockStripe (K key) {
 
-      public KeyCondition (LockingCacheEnforcer<K, ?> lockingCache, K key, long externalLockTimeout) {
+    ReentrantLock stripeLock = stripeLocks[Math.abs(key.hashCode() % stripeLocks.length)];
 
-         this.lockingCache = lockingCache;
-         this.key = key;
+    stripeLock.lock();
 
-         keyLock = new KeyLock();
-         condition = lockingCache.createCondition(key);
+    return stripeLock;
+  }
 
-         if (timed = (externalLockTimeout > 0)) {
-            unlockTarget = System.currentTimeMillis() + externalLockTimeout;
-            FORCED_UNLOCK_TIMER.add(this);
-         }
+  protected void gateKey (KeyLock keyLock, K key) {
+
+    KeyCondition keyCondition;
+
+    while (((keyCondition = keyConditionMap.get(key)) != null) && (!keyCondition.isOwnedByKeyLock(keyLock))) {
+      try {
+        keyCondition.getCondition().await();
+      }
+      catch (InterruptedException interruptedException) {
+        throw new CacheLockException(interruptedException, "Interrupted while awaiting the stripeLock on key(%s)", key.toString());
+      }
+    }
+  }
+
+  private Condition createCondition (K key) {
+
+    return stripeLocks[Math.abs(key.hashCode() % stripeLocks.length)].newCondition();
+  }
+
+  private KeyCondition<K> retrieveGatedKeyCondition (K key) {
+
+    return keyConditionMap.remove(key);
+  }
+
+  @InstrumentedClass
+  private static class KeyCondition<K> implements Delayed {
+
+    private KeyLock keyLock;
+    private LockingCacheEnforcer<K, ?> lockingCache;
+    private K key;
+    private Condition condition;
+    private AtomicBoolean terminated = new AtomicBoolean(false);
+    private boolean timed;
+    private long unlockTarget;
+    private int lockCount = 1;
+
+    public KeyCondition (LockingCacheEnforcer<K, ?> lockingCache, K key, long externalLockTimeout) {
+
+      this.lockingCache = lockingCache;
+      this.key = key;
+
+      keyLock = new KeyLock();
+      condition = lockingCache.createCondition(key);
+
+      if (timed = (externalLockTimeout > 0)) {
+        unlockTarget = System.currentTimeMillis() + externalLockTimeout;
+        FORCED_UNLOCK_TIMER.add(this);
+      }
+    }
+
+    public KeyLock getOwningKeyLock () {
+
+      return keyLock;
+    }
+
+    public boolean isOwnedByKeyLock (KeyLock keyLock) {
+
+      return this.keyLock.equals(keyLock);
+    }
+
+    public Condition getCondition () {
+
+      return condition;
+    }
+
+    public long getUnlockTarget () {
+
+      if (!timed) {
+        throw new UnsupportedOperationException("No external lock timeout was specified");
       }
 
-      public KeyLock getOwningKeyLock () {
+      return unlockTarget;
+    }
 
-         return keyLock;
+    public long getDelay (TimeUnit unit) {
+
+      if (!timed) {
+        throw new UnsupportedOperationException("No external lock timeout was specified");
       }
 
-      public boolean isOwnedByKeyLock (KeyLock keyLock) {
+      return unit.convert(unlockTarget - System.currentTimeMillis(), TimeUnit.MILLISECONDS);
+    }
 
-         return this.keyLock.equals(keyLock);
+    public int compareTo (Delayed delayed) {
+
+      if (!timed) {
+        throw new UnsupportedOperationException("No external lock timeout was specified");
       }
 
-      public Condition getCondition () {
+      return (int)(unlockTarget - ((KeyCondition)delayed).getUnlockTarget());
+    }
 
-         return condition;
+    public KeyLock inc () {
+
+      lockCount++;
+
+      return keyLock;
+    }
+
+    public void dec () {
+
+      if (--lockCount == 0) {
+        if (timed) {
+          FORCED_UNLOCK_TIMER.remove(this);
+        }
+
+        terminate();
       }
+    }
 
-      public long getUnlockTarget () {
+    public void terminate () {
 
-         if (!timed) {
-            throw new UnsupportedOperationException("No external lock timeout was specified");
-         }
+      if (terminated.compareAndSet(false, true)) {
 
-         return unlockTarget;
+        ReentrantLock stripeLock;
+
+        stripeLock = lockingCache.lockStripe(key);
+        try {
+          lockingCache.retrieveGatedKeyCondition(key).getCondition().signalAll();
+        }
+        finally {
+          stripeLock.unlock();
+        }
       }
+    }
+  }
 
-      public long getDelay (TimeUnit unit) {
+  private static class ForcedUnlockTimer implements Runnable {
 
-         if (!timed) {
-            throw new UnsupportedOperationException("No external lock timeout was specified");
-         }
+    private CountDownLatch exitLatch;
+    private DelayQueue<KeyCondition> forcedUnlockQueue;
+    private AtomicBoolean finished = new AtomicBoolean(false);
 
-         return unit.convert(unlockTarget - System.currentTimeMillis(), TimeUnit.MILLISECONDS);
-      }
+    public ForcedUnlockTimer () {
 
-      public int compareTo (Delayed delayed) {
+      forcedUnlockQueue = new DelayQueue<KeyCondition>();
+      exitLatch = new CountDownLatch(1);
+    }
 
-         if (!timed) {
-            throw new UnsupportedOperationException("No external lock timeout was specified");
-         }
+    public void add (KeyCondition keyCondition) {
 
-         return (int)(unlockTarget - ((KeyCondition)delayed).getUnlockTarget());
-      }
+      forcedUnlockQueue.add(keyCondition);
+    }
 
-      public KeyLock inc () {
+    public void remove (KeyCondition keyCondition) {
 
-         lockCount++;
+      forcedUnlockQueue.remove(keyCondition);
+    }
 
-         return keyLock;
-      }
+    public void finish ()
+      throws InterruptedException {
 
-      public void dec () {
+      finished.set(true);
+      exitLatch.await();
+    }
 
-         if (--lockCount == 0) {
-            if (timed) {
-               FORCED_UNLOCK_TIMER.remove(this);
+    public void run () {
+
+      KeyCondition keyCondition;
+
+      try {
+        while (!finished.get()) {
+          try {
+            if ((keyCondition = forcedUnlockQueue.poll(500, TimeUnit.MILLISECONDS)) != null) {
+              keyCondition.terminate();
             }
+          }
+          catch (InterruptedException interruptedException) {
+            finished.set(true);
+          }
+        }
 
-            terminate();
-         }
+        for (KeyCondition exitKeyCondition : forcedUnlockQueue) {
+          exitKeyCondition.terminate();
+        }
       }
-
-      public void terminate () {
-
-         if (terminated.compareAndSet(false, true)) {
-
-            ReentrantLock stripeLock;
-
-            stripeLock = lockingCache.lockStripe(key);
-            try {
-               lockingCache.retrieveGatedKeyCondition(key).getCondition().signalAll();
-            }
-            finally {
-               stripeLock.unlock();
-            }
-         }
+      finally {
+        exitLatch.countDown();
       }
-   }
-
-   private static class ForcedUnlockTimer implements Runnable {
-
-      private CountDownLatch exitLatch;
-      private DelayQueue<KeyCondition> forcedUnlockQueue;
-      private AtomicBoolean finished = new AtomicBoolean(false);
-
-      public ForcedUnlockTimer () {
-
-         forcedUnlockQueue = new DelayQueue<KeyCondition>();
-         exitLatch = new CountDownLatch(1);
-      }
-
-      public void add (KeyCondition keyCondition) {
-
-         forcedUnlockQueue.add(keyCondition);
-      }
-
-      public void remove (KeyCondition keyCondition) {
-
-         forcedUnlockQueue.remove(keyCondition);
-      }
-
-      public void finish ()
-         throws InterruptedException {
-
-         finished.set(true);
-         exitLatch.await();
-      }
-
-      public void run () {
-
-         KeyCondition keyCondition;
-
-         try {
-            while (!finished.get()) {
-               try {
-                  if ((keyCondition = forcedUnlockQueue.poll(500, TimeUnit.MILLISECONDS)) != null) {
-                     keyCondition.terminate();
-                  }
-               }
-               catch (InterruptedException interruptedException) {
-                  finished.set(true);
-               }
-            }
-
-            for (KeyCondition exitKeyCondition : forcedUnlockQueue) {
-               exitKeyCondition.terminate();
-            }
-         }
-         finally {
-            exitLatch.countDown();
-         }
-      }
-   }
+    }
+  }
 }

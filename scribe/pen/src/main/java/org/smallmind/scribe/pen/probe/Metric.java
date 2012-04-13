@@ -33,72 +33,72 @@ import java.util.concurrent.ConcurrentHashMap;
 
 public class Metric implements Serializable {
 
-   private ConcurrentHashMap<String, Serializable> dataMap;
-   private String title;
+  private ConcurrentHashMap<String, Serializable> dataMap;
+  private String title;
 
-   public Metric () {
+  public Metric () {
 
-      dataMap = new ConcurrentHashMap<String, Serializable>();
-   }
+    dataMap = new ConcurrentHashMap<String, Serializable>();
+  }
 
-   public Metric (String title) {
+  public Metric (String title) {
 
-      this();
+    this();
 
-      this.title = title;
-   }
+    this.title = title;
+  }
 
-   public Metric (Metric metric) {
+  public Metric (Metric metric) {
 
-      this(metric.getTitle());
+    this(metric.getTitle());
 
-      synchronized (metric) {
-         dataMap.putAll(metric.getDataMap());
-      }
-   }
+    synchronized (metric) {
+      dataMap.putAll(metric.getDataMap());
+    }
+  }
 
-   private Map<String, Serializable> getDataMap () {
+  private Map<String, Serializable> getDataMap () {
 
-      return dataMap;
-   }
+    return dataMap;
+  }
 
-   public String getTitle () {
+  public String getTitle () {
 
-      return (title == null) ? getClass().getSimpleName() : title;
-   }
+    return (title == null) ? getClass().getSimpleName() : title;
+  }
 
-   public Set<String> getKeys () {
+  public Set<String> getKeys () {
 
-      return dataMap.keySet();
-   }
+    return dataMap.keySet();
+  }
 
-   public boolean containsKey (String key) {
+  public boolean containsKey (String key) {
 
-      return dataMap.containsKey(key);
-   }
+    return dataMap.containsKey(key);
+  }
 
-   public Object getData (String key) {
+  public Object getData (String key) {
 
-      return dataMap.get(key);
-   }
+    return dataMap.get(key);
+  }
 
-   protected void setData (String key, Number numberValue) {
+  protected void setData (String key, Number numberValue) {
 
-      dataMap.put(key, numberValue);
-   }
+    dataMap.put(key, numberValue);
+  }
 
-   protected void setData (String key, Boolean booleanValue) {
+  protected void setData (String key, Boolean booleanValue) {
 
-      dataMap.put(key, booleanValue);
-   }
+    dataMap.put(key, booleanValue);
+  }
 
-   protected void setData (String key, Character characterValue) {
+  protected void setData (String key, Character characterValue) {
 
-      dataMap.put(key, characterValue);
-   }
+    dataMap.put(key, characterValue);
+  }
 
-   protected void setData (String key, String stringValue) {
+  protected void setData (String key, String stringValue) {
 
-      dataMap.put(key, stringValue);
-   }
+    dataMap.put(key, stringValue);
+  }
 }

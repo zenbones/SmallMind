@@ -28,5 +28,5 @@ package org.smallmind.nutsnbolts.lang;
 
 public interface StackTraceAccumulator {
 
-   public abstract void append (CharSequence charSequence);
+  public abstract void append (CharSequence charSequence);
 }

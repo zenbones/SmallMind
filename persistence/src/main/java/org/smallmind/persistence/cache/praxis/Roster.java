@@ -35,5 +35,4 @@ public interface Roster<T> extends Serializable, List<T> {
 
   public abstract T removeLast ();
 
-
 }

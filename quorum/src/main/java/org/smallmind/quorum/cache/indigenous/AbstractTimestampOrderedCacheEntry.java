@@ -28,29 +28,29 @@ package org.smallmind.quorum.cache.indigenous;
 
 public abstract class AbstractTimestampOrderedCacheEntry<V> implements OrderedCacheEntry<TimestampedCacheMetaData, V> {
 
-   private V value;
-   private TimestampedCacheMetaData metaData;
+  private V value;
+  private TimestampedCacheMetaData metaData;
 
-   public AbstractTimestampOrderedCacheEntry (V value) {
+  public AbstractTimestampOrderedCacheEntry (V value) {
 
-      this.value = value;
+    this.value = value;
 
-      metaData = new TimestampedCacheMetaData();
-   }
+    metaData = new TimestampedCacheMetaData();
+  }
 
-   public abstract void cacheHit ();
+  public abstract void cacheHit ();
 
-   public abstract void expire ();
+  public abstract void expire ();
 
-   public abstract void close ();
+  public abstract void close ();
 
-   public TimestampedCacheMetaData getCacheMetaData () {
+  public TimestampedCacheMetaData getCacheMetaData () {
 
-      return metaData;
-   }
+    return metaData;
+  }
 
-   public V getEntry () {
+  public V getEntry () {
 
-      return value;
-   }
+    return value;
+  }
 }

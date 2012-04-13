@@ -28,25 +28,25 @@ package org.smallmind.scribe.pen;
 
 public class DefaultTemplate extends Template {
 
-   public DefaultTemplate () {
+  public DefaultTemplate () {
 
-      super();
-   }
+    super();
+  }
 
-   public DefaultTemplate (Level level, boolean autoFillLogicalContext)
-      throws LoggerException {
+  public DefaultTemplate (Level level, boolean autoFillLogicalContext)
+    throws LoggerException {
 
-      super(level, autoFillLogicalContext);
-   }
+    super(level, autoFillLogicalContext);
+  }
 
-   public DefaultTemplate (Filter[] filters, Appender[] appenders, Enhancer[] enhancers, Level level, boolean autoFillLogicalContext)
-      throws LoggerException {
+  public DefaultTemplate (Filter[] filters, Appender[] appenders, Enhancer[] enhancers, Level level, boolean autoFillLogicalContext)
+    throws LoggerException {
 
-      super(filters, appenders, enhancers, level, autoFillLogicalContext);
-   }
+    super(filters, appenders, enhancers, level, autoFillLogicalContext);
+  }
 
-   public int matchLogger (String loggerName) {
+  public int matchLogger (String loggerName) {
 
-      return NO_MATCH + 1;
-   }
+    return NO_MATCH + 1;
+  }
 }

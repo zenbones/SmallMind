@@ -28,17 +28,18 @@ package org.smallmind.nutsnbolts.reflection;
 
 public class ObjectImpersonator {
 
-   public int hashCode () {
-      return super.hashCode();
-   }
+  public int hashCode () {
 
-   public boolean equals (Object obj) {
+    return super.hashCode();
+  }
 
-      return super.equals(obj);
-   }
+  public boolean equals (Object obj) {
 
-   public String toString () {
+    return super.equals(obj);
+  }
 
-      return super.toString();
-   }
+  public String toString () {
+
+    return super.toString();
+  }
 }

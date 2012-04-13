@@ -28,23 +28,22 @@ package org.smallmind.nutsnbolts.lang;
 
 public class ProcessResult {
 
-   private String output;
-   private int exitStatus;
+  private String output;
+  private int exitStatus;
 
-   public ProcessResult(int exitStatus, String output) {
+  public ProcessResult (int exitStatus, String output) {
 
-      this.exitStatus = exitStatus;
-      this.output = output;
-   }
+    this.exitStatus = exitStatus;
+    this.output = output;
+  }
 
-   public int getExitStatus() {
+  public int getExitStatus () {
 
+    return exitStatus;
+  }
 
-      return exitStatus;
-   }
+  public String getOutput () {
 
-   public String getOutput() {
-
-      return output;
-   }
+    return output;
+  }
 }

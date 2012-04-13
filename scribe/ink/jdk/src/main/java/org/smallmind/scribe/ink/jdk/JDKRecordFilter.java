@@ -38,122 +38,122 @@ import org.smallmind.scribe.pen.probe.ProbeReport;
 
 public class JDKRecordFilter extends LogRecord implements RecordWrapper {
 
-   private FilterRecord filterRecord;
-   private Discriminator discriminator;
-   private Level level;
+  private FilterRecord filterRecord;
+  private Discriminator discriminator;
+  private Level level;
 
-   public JDKRecordFilter (Record record, Discriminator discriminator, Level level) {
+  public JDKRecordFilter (Record record, Discriminator discriminator, Level level) {
 
-      super(JDKLevelTranslator.getLog4JLevel(level), record.getMessage());
+    super(JDKLevelTranslator.getLog4JLevel(level), record.getMessage());
 
-      this.discriminator = discriminator;
-      this.level = level;
+    this.discriminator = discriminator;
+    this.level = level;
 
-      filterRecord = new FilterRecord(record, this);
-   }
+    filterRecord = new FilterRecord(record, this);
+  }
 
-   public String getSourceClassName () {
+  public String getSourceClassName () {
 
-      if (filterRecord.getLogicalContext() != null) {
-         return filterRecord.getLogicalContext().getClassName();
-      }
+    if (filterRecord.getLogicalContext() != null) {
+      return filterRecord.getLogicalContext().getClassName();
+    }
 
-      return null;
-   }
+    return null;
+  }
 
-   public String getSourceMethodName () {
+  public String getSourceMethodName () {
 
-      if (filterRecord.getLogicalContext() != null) {
-         return filterRecord.getLogicalContext().getMethodName();
-      }
+    if (filterRecord.getLogicalContext() != null) {
+      return filterRecord.getLogicalContext().getMethodName();
+    }
 
-      return null;
-   }
+    return null;
+  }
 
-   public Record getRecord () {
+  public Record getRecord () {
 
-      return filterRecord;
-   }
+    return filterRecord;
+  }
 
-   private class FilterRecord implements Record {
+  private class FilterRecord implements Record {
 
-      private Record record;
-      private LogRecord logRecord;
+    private Record record;
+    private LogRecord logRecord;
 
-      public FilterRecord (Record record, LogRecord logRecord) {
+    public FilterRecord (Record record, LogRecord logRecord) {
 
-         this.record = record;
-         this.logRecord = logRecord;
-      }
+      this.record = record;
+      this.logRecord = logRecord;
+    }
 
-      public Object getNativeLogEntry () {
+    public Object getNativeLogEntry () {
 
-         return logRecord;
-      }
+      return logRecord;
+    }
 
-      public ProbeReport getProbeReport () {
+    public ProbeReport getProbeReport () {
 
-         return record.getProbeReport();
-      }
+      return record.getProbeReport();
+    }
 
-      public String getLoggerName () {
+    public String getLoggerName () {
 
-         return record.getLoggerName();
-      }
+      return record.getLoggerName();
+    }
 
-      public Discriminator getDiscriminator () {
+    public Discriminator getDiscriminator () {
 
-         return discriminator;
-      }
+      return discriminator;
+    }
 
-      public Level getLevel () {
+    public Level getLevel () {
 
-         return level;
-      }
+      return level;
+    }
 
-      public Throwable getThrown () {
+    public Throwable getThrown () {
 
-         return record.getThrown();
-      }
+      return record.getThrown();
+    }
 
-      public String getMessage () {
+    public String getMessage () {
 
-         return record.getMessage();
-      }
+      return record.getMessage();
+    }
 
-      public void addParameter (String key, Serializable value) {
+    public void addParameter (String key, Serializable value) {
 
-         throw new UnsupportedOperationException();
-      }
+      throw new UnsupportedOperationException();
+    }
 
-      public Parameter[] getParameters () {
+    public Parameter[] getParameters () {
 
-         return record.getParameters();
-      }
+      return record.getParameters();
+    }
 
-      public LogicalContext getLogicalContext () {
+    public LogicalContext getLogicalContext () {
 
-         return record.getLogicalContext();
-      }
+      return record.getLogicalContext();
+    }
 
-      public long getThreadID () {
+    public long getThreadID () {
 
-         return record.getThreadID();
-      }
+      return record.getThreadID();
+    }
 
-      public String getThreadName () {
+    public String getThreadName () {
 
-         return record.getThreadName();
-      }
+      return record.getThreadName();
+    }
 
-      public long getSequenceNumber () {
+    public long getSequenceNumber () {
 
-         return record.getSequenceNumber();
-      }
+      return record.getSequenceNumber();
+    }
 
-      public long getMillis () {
+    public long getMillis () {
 
-         return record.getMillis();
-      }
-   }
+      return record.getMillis();
+    }
+  }
 }

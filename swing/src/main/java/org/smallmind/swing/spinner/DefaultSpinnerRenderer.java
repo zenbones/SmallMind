@@ -33,26 +33,26 @@ import javax.swing.JLabel;
 
 public class DefaultSpinnerRenderer implements SpinnerRenderer {
 
-   private JLabel renderLabel;
+  private JLabel renderLabel;
 
-   public DefaultSpinnerRenderer () {
+  public DefaultSpinnerRenderer () {
 
-      this(JLabel.LEFT);
-   }
+    this(JLabel.LEFT);
+  }
 
-   public DefaultSpinnerRenderer (int alignment) {
+  public DefaultSpinnerRenderer (int alignment) {
 
-      renderLabel = new JLabel();
-      renderLabel.setHorizontalAlignment(alignment);
-      renderLabel.setOpaque(true);
-      renderLabel.setBackground(SystemColor.text);
-      renderLabel.setBorder(BorderFactory.createCompoundBorder(BorderFactory.createLineBorder(SystemColor.controlShadow), BorderFactory.createMatteBorder(2, 2, 2, 2, SystemColor.text)));
-   }
+    renderLabel = new JLabel();
+    renderLabel.setHorizontalAlignment(alignment);
+    renderLabel.setOpaque(true);
+    renderLabel.setBackground(SystemColor.text);
+    renderLabel.setBorder(BorderFactory.createCompoundBorder(BorderFactory.createLineBorder(SystemColor.controlShadow), BorderFactory.createMatteBorder(2, 2, 2, 2, SystemColor.text)));
+  }
 
-   public Component getSpinnerRendererComponent (Spinner spinner, Object value) {
+  public Component getSpinnerRendererComponent (Spinner spinner, Object value) {
 
-      renderLabel.setText(value.toString());
+    renderLabel.setText(value.toString());
 
-      return renderLabel;
-   }
+    return renderLabel;
+  }
 }

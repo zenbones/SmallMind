@@ -30,24 +30,24 @@ import org.smallmind.nutsnbolts.lang.FormattedException;
 
 public class DotNotationException extends FormattedException {
 
-   public DotNotationException () {
+  public DotNotationException () {
 
-      super();
-   }
+    super();
+  }
 
-   public DotNotationException (String message, Object... args) {
+  public DotNotationException (String message, Object... args) {
 
-      super(message, args);
-   }
+    super(message, args);
+  }
 
-   public DotNotationException (Throwable throwable, String message, Object... args) {
+  public DotNotationException (Throwable throwable, String message, Object... args) {
 
-      super(throwable, message, args);
-   }
+    super(throwable, message, args);
+  }
 
-   public DotNotationException (Throwable throwable) {
+  public DotNotationException (Throwable throwable) {
 
-      super(throwable);
-   }
+    super(throwable);
+  }
 }
 

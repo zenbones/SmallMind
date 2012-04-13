@@ -34,42 +34,42 @@ import org.apache.wicket.model.IModel;
 
 public abstract class AjaxRadio<E> extends Radio<E> {
 
-   public AjaxRadio (String id) {
+  public AjaxRadio (String id) {
 
-      this(id, null, null);
-   }
+    this(id, null, null);
+  }
 
-   public AjaxRadio (String id, IModel<E> model) {
+  public AjaxRadio (String id, IModel<E> model) {
 
-      this(id, model, null);
-   }
+    this(id, model, null);
+  }
 
-   public AjaxRadio (String id, RadioGroup<E> group) {
+  public AjaxRadio (String id, RadioGroup<E> group) {
 
-      this(id, null, group);
-   }
+    this(id, null, group);
+  }
 
-   public AjaxRadio (String id, IModel<E> model, RadioGroup<E> group) {
+  public AjaxRadio (String id, IModel<E> model, RadioGroup<E> group) {
 
-      super(id, model, group);
+    super(id, model, group);
 
-      add(new OnClickAjaxEventBehavior());
-   }
+    add(new OnClickAjaxEventBehavior());
+  }
 
-   public abstract void onClick (E selection, AjaxRequestTarget target);
+  public abstract void onClick (E selection, AjaxRequestTarget target);
 
-   private class OnClickAjaxEventBehavior extends AjaxEventBehavior {
+  private class OnClickAjaxEventBehavior extends AjaxEventBehavior {
 
-      public OnClickAjaxEventBehavior () {
+    public OnClickAjaxEventBehavior () {
 
-         super("onClick");
+      super("onClick");
+    }
+
+    protected void onEvent (AjaxRequestTarget target) {
+
+      if (AjaxRadio.this.isEnabled()) {
+        onClick(AjaxRadio.this.getModel().getObject(), target);
       }
-
-      protected void onEvent (AjaxRequestTarget target) {
-
-         if (AjaxRadio.this.isEnabled()) {
-            onClick(AjaxRadio.this.getModel().getObject(), target);
-         }
-      }
-   }
+    }
+  }
 }

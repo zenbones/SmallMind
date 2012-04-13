@@ -28,22 +28,22 @@ package org.smallmind.quorum.cache.indigenous;
 
 public class CacheReference<K, E extends CacheEntry> {
 
-   private K key;
-   private E cacheEntry;
+  private K key;
+  private E cacheEntry;
 
-   public CacheReference (K key, E cacheEntry) {
+  public CacheReference (K key, E cacheEntry) {
 
-      this.key = key;
-      this.cacheEntry = cacheEntry;
-   }
+    this.key = key;
+    this.cacheEntry = cacheEntry;
+  }
 
-   public K getKey () {
+  public K getKey () {
 
-      return key;
-   }
+    return key;
+  }
 
-   public E getCacheEntry () {
+  public E getCacheEntry () {
 
-      return cacheEntry;
-   }
+    return cacheEntry;
+  }
 }

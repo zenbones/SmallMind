@@ -28,8 +28,8 @@ package org.smallmind.swing;
 
 public abstract interface Vetoable {
 
-   public abstract void veto ();
+  public abstract void veto ();
 
-   public abstract boolean wasVetoed ();
+  public abstract boolean wasVetoed ();
 
 }

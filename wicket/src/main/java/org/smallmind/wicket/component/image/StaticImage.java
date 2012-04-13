@@ -32,16 +32,16 @@ import org.apache.wicket.protocol.http.WebApplication;
 
 public class StaticImage extends WebComponent {
 
-   public StaticImage (String id) {
+  public StaticImage (String id) {
 
-      super(id);
-   }
+    super(id);
+  }
 
-   protected void onComponentTag (ComponentTag tag) {
+  protected void onComponentTag (ComponentTag tag) {
 
-      super.onComponentTag(tag);
-      checkComponentTag(tag, "img");
+    super.onComponentTag(tag);
+    checkComponentTag(tag, "img");
 
-      tag.put("src", ((WebApplication)getApplication()).getServletContext().getContextPath() + tag.getString("src"));
-   }
+    tag.put("src", ((WebApplication)getApplication()).getServletContext().getContextPath() + tag.getString("src"));
+  }
 }

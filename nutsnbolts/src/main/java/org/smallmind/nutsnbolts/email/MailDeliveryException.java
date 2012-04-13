@@ -30,24 +30,24 @@ import org.smallmind.nutsnbolts.lang.FormattedException;
 
 public class MailDeliveryException extends FormattedException {
 
-   public MailDeliveryException () {
+  public MailDeliveryException () {
 
-      super();
-   }
+    super();
+  }
 
-   public MailDeliveryException (String message, Object... args) {
+  public MailDeliveryException (String message, Object... args) {
 
-      super(message, args);
-   }
+    super(message, args);
+  }
 
-   public MailDeliveryException (Throwable throwable, String message, Object... args) {
+  public MailDeliveryException (Throwable throwable, String message, Object... args) {
 
-      super(throwable, message, args);
-   }
+    super(throwable, message, args);
+  }
 
-   public MailDeliveryException (Throwable throwable) {
+  public MailDeliveryException (Throwable throwable) {
 
-      super(throwable);
-   }
+    super(throwable);
+  }
 }
 

@@ -32,30 +32,30 @@ import org.terracotta.annotations.InstrumentedClass;
 @InstrumentedClass
 public class KeyLock {
 
-   private UniqueId uniqueId;
+  private UniqueId uniqueId;
 
-   public KeyLock () {
+  public KeyLock () {
 
-      uniqueId = UniqueId.newInstance();
-   }
+    uniqueId = UniqueId.newInstance();
+  }
 
-   public String getName () {
+  public String getName () {
 
-      return "Lock-" + uniqueId.generateBigInteger();
-   }
+    return "Lock-" + uniqueId.generateBigInteger();
+  }
 
-   public UniqueId getUniqueId () {
+  public UniqueId getUniqueId () {
 
-      return uniqueId;
-   }
+    return uniqueId;
+  }
 
-   public int hashCode () {
+  public int hashCode () {
 
-      return uniqueId.hashCode();
-   }
+    return uniqueId.hashCode();
+  }
 
-   public boolean equals (Object obj) {
+  public boolean equals (Object obj) {
 
-      return (obj instanceof KeyLock) && uniqueId.equals(((KeyLock)obj).getUniqueId());
-   }
+    return (obj instanceof KeyLock) && uniqueId.equals(((KeyLock)obj).getUniqueId());
+  }
 }

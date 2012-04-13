@@ -39,28 +39,28 @@ import org.smallmind.scribe.pen.adapter.LoggingBlueprints;
 
 public class Log4JLoggingBlueprints extends LoggingBlueprints {
 
-   static {
+  static {
 
-      LoggerManager.addLoggingPackagePrefix("org.apache.log4j.");
-   }
+    LoggerManager.addLoggingPackagePrefix("org.apache.log4j.");
+  }
 
-   public LoggerAdapter getLoggingAdapter (String name) {
+  public LoggerAdapter getLoggingAdapter (String name) {
 
-      return new Log4JLoggerAdapter(Logger.getLogger(name));
-   }
+    return new Log4JLoggerAdapter(Logger.getLogger(name));
+  }
 
-   public Record filterRecord (Record record, Discriminator discriminator, Level level) {
+  public Record filterRecord (Record record, Discriminator discriminator, Level level) {
 
-      return new Log4JRecordFilter(record, discriminator, level).getRecord();
-   }
+    return new Log4JRecordFilter(record, discriminator, level).getRecord();
+  }
 
-   public Record errorRecord (Record record, Throwable throwable, String message, Object... args) {
+  public Record errorRecord (Record record, Throwable throwable, String message, Object... args) {
 
-      LogicalContext logicalContext;
+    LogicalContext logicalContext;
 
-      logicalContext = new DefaultLogicalContext();
-      logicalContext.fillIn();
+    logicalContext = new DefaultLogicalContext();
+    logicalContext.fillIn();
 
-      return new Log4JRecordSubverter((Logger)((LoggingEvent)record.getNativeLogEntry()).getLogger(), null, Level.FATAL, null, logicalContext, throwable, message, args).getRecord();
-   }
+    return new Log4JRecordSubverter((Logger)((LoggingEvent)record.getNativeLogEntry()).getLogger(), null, Level.FATAL, null, logicalContext, throwable, message, args).getRecord();
+  }
 }

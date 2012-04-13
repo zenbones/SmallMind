@@ -30,21 +30,21 @@ import java.util.Comparator;
 
 public abstract class DirectionalComparator<T> implements Comparator<T> {
 
-   public static enum Direction {
+  public static enum Direction {
 
-      DESCENDING, ASCENDING
-   }
+    DESCENDING, ASCENDING
+  }
 
-   private Direction direction;
+  private Direction direction;
 
-   public DirectionalComparator (Direction direction) {
+  public DirectionalComparator (Direction direction) {
 
-      this.direction = direction;
-   }
+    this.direction = direction;
+  }
 
-   public Direction getDirection () {
+  public Direction getDirection () {
 
-      return direction;
-   }
+    return direction;
+  }
 
 }

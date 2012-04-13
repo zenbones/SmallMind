@@ -35,31 +35,31 @@ import org.smallmind.scribe.pen.probe.ProbeReport;
 
 public interface LoggerAdapter {
 
-   public abstract String getName ();
+  public abstract String getName ();
 
-   public abstract boolean getAutoFillLogicalContext ();
+  public abstract boolean getAutoFillLogicalContext ();
 
-   public abstract void setAutoFillLogicalContext (boolean autoFillLogicalContext);
+  public abstract void setAutoFillLogicalContext (boolean autoFillLogicalContext);
 
-   public abstract void addFilter (Filter filter);
+  public abstract void addFilter (Filter filter);
 
-   public abstract void clearFilters ();
+  public abstract void clearFilters ();
 
-   public abstract void addAppender (Appender appender);
+  public abstract void addAppender (Appender appender);
 
-   public abstract void clearAppenders ();
+  public abstract void clearAppenders ();
 
-   public abstract void addEnhancer (Enhancer enhancer);
+  public abstract void addEnhancer (Enhancer enhancer);
 
-   public abstract void clearEnhancers ();
+  public abstract void clearEnhancers ();
 
-   public abstract Level getLevel ();
+  public abstract Level getLevel ();
 
-   public abstract void setLevel (Level level);
+  public abstract void setLevel (Level level);
 
-   public abstract void logMessage (Discriminator discriminator, Level level, Throwable throwable, String message, Object... args);
+  public abstract void logMessage (Discriminator discriminator, Level level, Throwable throwable, String message, Object... args);
 
-   public abstract void logProbe (Discriminator discriminator, Level level, Throwable throwable, ProbeReport probeReport);
+  public abstract void logProbe (Discriminator discriminator, Level level, Throwable throwable, ProbeReport probeReport);
 
-   public abstract void logMessage (Discriminator discriminator, Level level, Throwable throwable, Object object);
+  public abstract void logMessage (Discriminator discriminator, Level level, Throwable throwable, Object object);
 }

@@ -31,54 +31,54 @@ import org.smallmind.nutsnbolts.util.Bytes;
 
 public final class SmallMindXid implements Xid {
 
-   public static final int MAXGTRIDSIZE = 1024;
-   public static final int MAXBQUALSIZE = 8;
+  public static final int MAXGTRIDSIZE = 1024;
+  public static final int MAXBQUALSIZE = 8;
 
-   public static final int SmallMind_FORMAT_ID = 1174;
+  public static final int SmallMind_FORMAT_ID = 1174;
 
-   private String gtrid;
-   private long bqual;
+  private String gtrid;
+  private long bqual;
 
-   public SmallMindXid (String gtrid, long bqual) {
+  public SmallMindXid (String gtrid, long bqual) {
 
-      this.gtrid = gtrid;
-      this.bqual = bqual;
-   }
+    this.gtrid = gtrid;
+    this.bqual = bqual;
+  }
 
-   protected String getInternalGlobalTransactionId () {
+  protected String getInternalGlobalTransactionId () {
 
-      return gtrid;
-   }
+    return gtrid;
+  }
 
-   protected long getInternalBranchQualifier () {
+  protected long getInternalBranchQualifier () {
 
-      return bqual;
-   }
+    return bqual;
+  }
 
-   public int getFormatId () {
+  public int getFormatId () {
 
-      return SmallMind_FORMAT_ID;
-   }
+    return SmallMind_FORMAT_ID;
+  }
 
-   public byte[] getGlobalTransactionId () {
+  public byte[] getGlobalTransactionId () {
 
-      return gtrid.getBytes();
-   }
+    return gtrid.getBytes();
+  }
 
-   public byte[] getBranchQualifier () {
+  public byte[] getBranchQualifier () {
 
-      return Bytes.getBytes(bqual);
-   }
+    return Bytes.getBytes(bqual);
+  }
 
-   public boolean equals (Object o) {
+  public boolean equals (Object o) {
 
-      if (o instanceof SmallMindXid) {
-         if ((((SmallMindXid)o).getInternalGlobalTransactionId().equals(gtrid)) && (((SmallMindXid)o).getInternalBranchQualifier() == bqual)) {
-            return true;
-         }
+    if (o instanceof SmallMindXid) {
+      if ((((SmallMindXid)o).getInternalGlobalTransactionId().equals(gtrid)) && (((SmallMindXid)o).getInternalBranchQualifier() == bqual)) {
+        return true;
       }
+    }
 
-      return false;
-   }
+    return false;
+  }
 
 }

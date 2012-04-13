@@ -33,75 +33,75 @@ import org.smallmind.scribe.pen.LoggerManager;
 
 public class HomeostaticRegulator<I extends Event, O extends Event> implements Runnable {
 
-   private final LinkedList<EventProcessor<I, O>> processorList;
+  private final LinkedList<EventProcessor<I, O>> processorList;
 
-   private CountDownLatch exitLatch;
-   private CountDownLatch pulseLatch;
-   private AtomicBoolean stopped = new AtomicBoolean(false);
-   private SedaConfiguration sedaConfiguration;
-   private ThreadPool<I, O> threadPool;
+  private CountDownLatch exitLatch;
+  private CountDownLatch pulseLatch;
+  private AtomicBoolean stopped = new AtomicBoolean(false);
+  private SedaConfiguration sedaConfiguration;
+  private ThreadPool<I, O> threadPool;
 
-   public HomeostaticRegulator (ThreadPool<I, O> threadPool, DurationMonitor durationMonitor, LinkedList<EventProcessor<I, O>> processorList, SedaConfiguration sedaConfiguration) {
+  public HomeostaticRegulator (ThreadPool<I, O> threadPool, DurationMonitor durationMonitor, LinkedList<EventProcessor<I, O>> processorList, SedaConfiguration sedaConfiguration) {
 
-      this.threadPool = threadPool;
-      this.processorList = processorList;
-      this.sedaConfiguration = sedaConfiguration;
+    this.threadPool = threadPool;
+    this.processorList = processorList;
+    this.sedaConfiguration = sedaConfiguration;
 
-      exitLatch = new CountDownLatch(1);
-      pulseLatch = new CountDownLatch(1);
-   }
+    exitLatch = new CountDownLatch(1);
+    pulseLatch = new CountDownLatch(1);
+  }
 
-   public boolean isRunning () {
+  public boolean isRunning () {
 
-      return !stopped.get();
-   }
+    return !stopped.get();
+  }
 
-   protected void stop ()
-      throws InterruptedException {
+  protected void stop ()
+    throws InterruptedException {
 
-      if (stopped.compareAndSet(false, true)) {
-         pulseLatch.countDown();
-      }
+    if (stopped.compareAndSet(false, true)) {
+      pulseLatch.countDown();
+    }
 
-      exitLatch.await();
-   }
+    exitLatch.await();
+  }
 
-   public void run () {
+  public void run () {
 
-      try {
-         while (!stopped.get()) {
-            try {
-               pulseLatch.await(sedaConfiguration.getRegulatorPulseTime(), sedaConfiguration.getRegulatorPulseTimeUnit());
+    try {
+      while (!stopped.get()) {
+        try {
+          pulseLatch.await(sedaConfiguration.getRegulatorPulseTime(), sedaConfiguration.getRegulatorPulseTimeUnit());
+        }
+        catch (InterruptedException interruptedException) {
+          LoggerManager.getLogger(HomeostaticRegulator.class).error(interruptedException);
+        }
+
+        if (!stopped.get()) {
+
+          double idlePercentage = 0;
+          double activePercentage = 0;
+
+          synchronized (processorList) {
+            for (EventProcessor<I, O> eventProcessor : processorList) {
+              idlePercentage += eventProcessor.getIdlePercentage();
+              activePercentage += eventProcessor.getActivePercentage();
             }
-            catch (InterruptedException interruptedException) {
-               LoggerManager.getLogger(HomeostaticRegulator.class).error(interruptedException);
-            }
 
-            if (!stopped.get()) {
-
-               double idlePercentage = 0;
-               double activePercentage = 0;
-
-               synchronized (processorList) {
-                  for (EventProcessor<I, O> eventProcessor : processorList) {
-                     idlePercentage += eventProcessor.getIdlePercentage();
-                     activePercentage += eventProcessor.getActivePercentage();
-                  }
-
-                  idlePercentage /= processorList.size();
-                  activePercentage /= processorList.size();
-               }
-               if (sedaConfiguration.getActiveUpShiftPercentage() >= activePercentage) {
-                  threadPool.increase();
-               }
-               else if (sedaConfiguration.getInactiveDownShiftPercentage() >= idlePercentage) {
-                  threadPool.decrease();
-               }
-            }
-         }
+            idlePercentage /= processorList.size();
+            activePercentage /= processorList.size();
+          }
+          if (sedaConfiguration.getActiveUpShiftPercentage() >= activePercentage) {
+            threadPool.increase();
+          }
+          else if (sedaConfiguration.getInactiveDownShiftPercentage() >= idlePercentage) {
+            threadPool.decrease();
+          }
+        }
       }
-      finally {
-         exitLatch.countDown();
-      }
-   }
+    }
+    finally {
+      exitLatch.countDown();
+    }
+  }
 }

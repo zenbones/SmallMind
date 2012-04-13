@@ -28,5 +28,5 @@ package org.smallmind.liquibase.spring;
 
 public enum Goal {
 
-   NONE, PREVIEW, UPDATE, GENERATE, DOCUMENT
+  NONE, PREVIEW, UPDATE, GENERATE, DOCUMENT
 }

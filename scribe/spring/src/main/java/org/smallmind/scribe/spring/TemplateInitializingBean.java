@@ -33,23 +33,23 @@ import org.springframework.beans.factory.InitializingBean;
 
 public class TemplateInitializingBean implements InitializingBean {
 
-   private LinkedList<Template> initialTemplates;
+  private LinkedList<Template> initialTemplates;
 
-   public TemplateInitializingBean () {
+  public TemplateInitializingBean () {
 
-      initialTemplates = new LinkedList<Template>();
-   }
+    initialTemplates = new LinkedList<Template>();
+  }
 
-   public void setInitialTemplates (List<Template> initialTemplates) {
+  public void setInitialTemplates (List<Template> initialTemplates) {
 
-      this.initialTemplates.addAll(initialTemplates);
-   }
+    this.initialTemplates.addAll(initialTemplates);
+  }
 
-   public void afterPropertiesSet ()
-      throws Exception {
+  public void afterPropertiesSet ()
+    throws Exception {
 
-      for (Template template : initialTemplates) {
-         template.register();
-      }
-   }
+    for (Template template : initialTemplates) {
+      template.register();
+    }
+  }
 }

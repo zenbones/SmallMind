@@ -30,23 +30,23 @@ import org.smallmind.nutsnbolts.lang.FormattedRuntimeException;
 
 public class LoggerRuntimeException extends FormattedRuntimeException {
 
-   public LoggerRuntimeException () {
+  public LoggerRuntimeException () {
 
-      super();
-   }
+    super();
+  }
 
-   public LoggerRuntimeException (String message, Object... args) {
+  public LoggerRuntimeException (String message, Object... args) {
 
-      super(message, args);
-   }
+    super(message, args);
+  }
 
-   public LoggerRuntimeException (Throwable throwable, String message, Object... args) {
+  public LoggerRuntimeException (Throwable throwable, String message, Object... args) {
 
-      super(throwable, message, args);
-   }
+    super(throwable, message, args);
+  }
 
-   public LoggerRuntimeException (Throwable exception) {
+  public LoggerRuntimeException (Throwable exception) {
 
-      super(exception);
-   }
+    super(exception);
+  }
 }

@@ -45,67 +45,67 @@ import org.apache.maven.project.MavenProject;
  */
 public class InstallWrapperMojo extends AbstractMojo {
 
-   /**
-    * @parameter expression="${project}"
-    * @readonly
-    */
-   private MavenProject project;
+  /**
+   * @parameter expression="${project}"
+   * @readonly
+   */
+  private MavenProject project;
 
-   /**
-    * @component
-    * @readonly
-    */
-   ArtifactFactory artifactFactory;
+  /**
+   * @component
+   * @readonly
+   */
+  ArtifactFactory artifactFactory;
 
-   /**
-    * @component
-    * @readonly
-    */
-   ArtifactInstaller artifactInstaller;
+  /**
+   * @component
+   * @readonly
+   */
+  ArtifactInstaller artifactInstaller;
 
-   /**
-    * @parameter expression="${localRepository}"
-    * @readonly
-    */
-   private ArtifactRepository localRepository;
+  /**
+   * @parameter expression="${localRepository}"
+   * @readonly
+   */
+  private ArtifactRepository localRepository;
 
-   /**
-    * @parameter default-value="application"
-    */
-   private String applicationDir;
+  /**
+   * @parameter default-value="application"
+   */
+  private String applicationDir;
 
-   /**
-    * @parameter expression="${project.artifactId}"
-    */
-   private String applicationName;
+  /**
+   * @parameter expression="${project.artifactId}"
+   */
+  private String applicationName;
 
-   public void execute ()
-      throws MojoExecutionException, MojoFailureException {
+  public void execute ()
+    throws MojoExecutionException, MojoFailureException {
 
-      Artifact applicationArtifact;
-      StringBuilder nameBuilder;
+    Artifact applicationArtifact;
+    StringBuilder nameBuilder;
 
-      applicationArtifact = artifactFactory.createArtifactWithClassifier(project.getGroupId(), project.getArtifactId(), project.getVersion(), "jar", (project.getArtifact().getClassifier() == null) ? "app" : project.getArtifact().getClassifier() + "-app");
+    applicationArtifact = artifactFactory.createArtifactWithClassifier(project.getGroupId(), project.getArtifactId(), project.getVersion(), "jar", (project.getArtifact().getClassifier() == null) ? "app" : project.getArtifact().getClassifier() + "-app");
 
-      nameBuilder = new StringBuilder(project.getBuild().getDirectory() + System.getProperty("file.separator") + applicationDir);
+    nameBuilder = new StringBuilder(project.getBuild().getDirectory() + System.getProperty("file.separator") + applicationDir);
 
-      nameBuilder.append(System.getProperty("file.separator"));
-      nameBuilder.append(applicationName);
+    nameBuilder.append(System.getProperty("file.separator"));
+    nameBuilder.append(applicationName);
+    nameBuilder.append('-');
+    nameBuilder.append(project.getVersion());
+
+    if (project.getArtifact().getClassifier() != null) {
       nameBuilder.append('-');
-      nameBuilder.append(project.getVersion());
+      nameBuilder.append(project.getArtifact().getClassifier());
+    }
 
-      if (project.getArtifact().getClassifier() != null) {
-         nameBuilder.append('-');
-         nameBuilder.append(project.getArtifact().getClassifier());
-      }
+    nameBuilder.append("-app").append(".jar");
 
-      nameBuilder.append("-app").append(".jar");
-
-      try {
-         artifactInstaller.install(new File(nameBuilder.toString()), applicationArtifact, localRepository);
-      }
-      catch (ArtifactInstallationException artifactInstallationException) {
-         throw new MojoExecutionException("Unable to install the application(" + applicationName + ")", artifactInstallationException);
-      }
-   }
+    try {
+      artifactInstaller.install(new File(nameBuilder.toString()), applicationArtifact, localRepository);
+    }
+    catch (ArtifactInstallationException artifactInstallationException) {
+      throw new MojoExecutionException("Unable to install the application(" + applicationName + ")", artifactInstallationException);
+    }
+  }
 }

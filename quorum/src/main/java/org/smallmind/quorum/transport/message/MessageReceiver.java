@@ -1,22 +1,22 @@
 /*
  * Copyright (c) 2007, 2008, 2009, 2010, 2011, 2012 David Berkman
- *
+ * 
  * This file is part of the SmallMind Code Project.
- *
+ * 
  * The SmallMind Code Project is free software, you can redistribute
  * it and/or modify it under the terms of GNU Affero General Public
  * License as published by the Free Software Foundation, either version 3
  * of the License, or (at your option) any later version.
- *
+ * 
  * The SmallMind Code Project is distributed in the hope that it will
  * be useful, but WITHOUT ANY WARRANTY; without even the implied warranty
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * General Public License for more details.
- *
+ * 
  * You should have received a copy of the the GNU Affero General Public
  * License, along with The SmallMind Code Project. If not, see
  * <http://www.gnu.org/licenses/>.
- *
+ * 
  * Additional permission under the GNU Affero GPL version 3 section 7
  * ------------------------------------------------------------------
  * If you modify this Program, or any covered work, by linking or
@@ -26,6 +26,7 @@
  */
 package org.smallmind.quorum.transport.message;
 
+import java.util.HashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
 import javax.jms.JMSException;
 import javax.jms.Queue;
@@ -34,37 +35,41 @@ import javax.jms.QueueConnectionFactory;
 import javax.naming.Context;
 import javax.naming.NamingException;
 import org.smallmind.quorum.pool.connection.ConnectionPoolException;
+import org.smallmind.scribe.pen.LoggerManager;
 
 public class MessageReceiver {
 
   private AtomicBoolean stopped = new AtomicBoolean(false);
-  private MessageTarget messageTarget;
   private QueueConnection queueConnection;
-  private MessageWorker[] messagingWorkers;
+  private MessageDistributor[] messageDistributors;
 
-  public MessageReceiver (MessageTarget messageTarget, MessageConnectionDetails messagingConnectionDetails, String serviceSelector, int serviceConcurrencyLimit)
+  public MessageReceiver (MessageConnectionDetails messageConnectionDetails, int concurrencyLimit, MessageTarget... messageTargets)
     throws ConnectionPoolException, NamingException, JMSException {
 
     Context javaEnvironment;
     Queue queue;
     QueueConnectionFactory queueConnectionFactory;
 
-    this.messageTarget = messageTarget;
-
-    javaEnvironment = messagingConnectionDetails.getContextPool().getConnection();
+    javaEnvironment = messageConnectionDetails.getContextPool().getConnection();
     try {
-      queue = (Queue)javaEnvironment.lookup(messagingConnectionDetails.getDestinationName());
-      queueConnectionFactory = (QueueConnectionFactory)javaEnvironment.lookup(messagingConnectionDetails.getConnectionFactoryName());
+      queue = (Queue)javaEnvironment.lookup(messageConnectionDetails.getDestinationName());
+      queueConnectionFactory = (QueueConnectionFactory)javaEnvironment.lookup(messageConnectionDetails.getConnectionFactoryName());
     }
     finally {
       javaEnvironment.close();
     }
 
-    queueConnection = queueConnectionFactory.createQueueConnection(messagingConnectionDetails.getUserName(), messagingConnectionDetails.getPassword());
+    queueConnection = queueConnectionFactory.createQueueConnection(messageConnectionDetails.getUserName(), messageConnectionDetails.getPassword());
 
-    messagingWorkers = new MessageWorker[serviceConcurrencyLimit];
-    for (int count = 0; count < messagingWorkers.length; count++) {
-      messagingWorkers[count] = new MessageWorker(queueConnection, queue, messageTarget, serviceSelector);
+    HashMap<String, MessageTarget> targetMap = new HashMap<String, MessageTarget>();
+
+    for (MessageTarget messageTarget : messageTargets) {
+      targetMap.put(messageTarget.getServiceInterface().getName(), messageTarget);
+    }
+
+    messageDistributors = new MessageDistributor[concurrencyLimit];
+    for (int count = 0; count < messageDistributors.length; count++) {
+      messageDistributors[count] = new MessageDistributor(queueConnection, queue, targetMap);
     }
 
     queueConnection.start();
@@ -76,14 +81,14 @@ public class MessageReceiver {
       try {
         queueConnection.stop();
 
-        for (MessageWorker messageWorker : messagingWorkers) {
-          messageWorker.close();
+        for (MessageDistributor messageDistributor : messageDistributors) {
+          messageDistributor.close();
         }
 
         queueConnection.close();
       }
       catch (JMSException jmsException) {
-        messageTarget.logError(jmsException);
+        LoggerManager.getLogger(MessageReceiver.class).error(jmsException);
       }
     }
   }

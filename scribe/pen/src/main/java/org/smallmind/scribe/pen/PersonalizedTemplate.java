@@ -30,50 +30,50 @@ import java.util.concurrent.atomic.AtomicReference;
 
 public class PersonalizedTemplate extends Template {
 
-   private AtomicReference<String> loggerNameRef = new AtomicReference<String>();
+  private AtomicReference<String> loggerNameRef = new AtomicReference<String>();
 
-   public PersonalizedTemplate () {
+  public PersonalizedTemplate () {
 
-      super();
-   }
+    super();
+  }
 
-   public PersonalizedTemplate (String loggerName) {
+  public PersonalizedTemplate (String loggerName) {
 
-      super();
+    super();
 
-      loggerNameRef.set(loggerName);
-   }
+    loggerNameRef.set(loggerName);
+  }
 
-   public PersonalizedTemplate (Level level, boolean autoFillLogicalContext, String loggerName)
-      throws LoggerException {
+  public PersonalizedTemplate (Level level, boolean autoFillLogicalContext, String loggerName)
+    throws LoggerException {
 
-      super(level, autoFillLogicalContext);
+    super(level, autoFillLogicalContext);
 
-      loggerNameRef.set(loggerName);
-   }
+    loggerNameRef.set(loggerName);
+  }
 
-   public PersonalizedTemplate (Filter[] filters, Appender[] appenders, Enhancer[] enhancers, Level level, boolean autoFillLogicalContext, String loggerName)
-      throws LoggerException {
+  public PersonalizedTemplate (Filter[] filters, Appender[] appenders, Enhancer[] enhancers, Level level, boolean autoFillLogicalContext, String loggerName)
+    throws LoggerException {
 
-      super(filters, appenders, enhancers, level, autoFillLogicalContext);
+    super(filters, appenders, enhancers, level, autoFillLogicalContext);
 
-      loggerNameRef.set(loggerName);
-   }
+    loggerNameRef.set(loggerName);
+  }
 
-   public void setLoggerName (String loggerName) {
+  public void setLoggerName (String loggerName) {
 
-      if (!loggerNameRef.compareAndSet(null, loggerName)) {
-         throw new LoggerRuntimeException("PersonalizedTemplate has been previously initialized with a logger name");
-      }
-   }
+    if (!loggerNameRef.compareAndSet(null, loggerName)) {
+      throw new LoggerRuntimeException("PersonalizedTemplate has been previously initialized with a logger name");
+    }
+  }
 
-   public int matchLogger (String loggerName) {
+  public int matchLogger (String loggerName) {
 
-      if (loggerNameRef.get() == null) {
-         throw new LoggerRuntimeException("PersonalizedTemplate was never initialized with a logger name");
-      }
+    if (loggerNameRef.get() == null) {
+      throw new LoggerRuntimeException("PersonalizedTemplate was never initialized with a logger name");
+    }
 
-      return loggerNameRef.get().equals(loggerName) ? Integer.MAX_VALUE : NO_MATCH;
-   }
+    return loggerNameRef.get().equals(loggerName) ? Integer.MAX_VALUE : NO_MATCH;
+  }
 }
 

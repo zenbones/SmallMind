@@ -28,7 +28,7 @@ package org.smallmind.swing.dialog;
 
 public interface ErrorListener extends java.util.EventListener {
 
-   public abstract void errorHandler (ErrorEvent errorEvent);
+  public abstract void errorHandler (ErrorEvent errorEvent);
 
 }
 

@@ -30,18 +30,18 @@ import java.io.InputStream;
 
 public class ClasspathResource extends AbstractResource {
 
-   public ClasspathResource (String path) {
+  public ClasspathResource (String path) {
 
-      super(path);
-   }
+    super(path);
+  }
 
-   public String getScheme () {
+  public String getScheme () {
 
-      return "classpath";
-   }
+    return "classpath";
+  }
 
-   public InputStream getInputStream () {
+  public InputStream getInputStream () {
 
-      return Thread.currentThread().getContextClassLoader().getResourceAsStream(getPath());
-   }
+    return Thread.currentThread().getContextClassLoader().getResourceAsStream(getPath());
+  }
 }

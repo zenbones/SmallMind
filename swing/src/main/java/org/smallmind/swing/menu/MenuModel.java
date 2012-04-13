@@ -33,38 +33,38 @@ import javax.swing.JMenuItem;
 
 public class MenuModel {
 
-   LinkedList<JMenuBar> menuBarList;
-   HashMap<String, JMenuItem> menuMap;
+  LinkedList<JMenuBar> menuBarList;
+  HashMap<String, JMenuItem> menuMap;
 
-   public MenuModel () {
+  public MenuModel () {
 
-      menuBarList = new LinkedList<JMenuBar>();
-      menuMap = new HashMap<String, JMenuItem>();
-   }
+    menuBarList = new LinkedList<JMenuBar>();
+    menuMap = new HashMap<String, JMenuItem>();
+  }
 
-   public synchronized JMenuBar getMenuBar (int index) {
+  public synchronized JMenuBar getMenuBar (int index) {
 
-      return menuBarList.get(index);
-   }
+    return menuBarList.get(index);
+  }
 
-   public synchronized JMenuBar addMenuBar () {
+  public synchronized JMenuBar addMenuBar () {
 
-      JMenuBar menuBar;
+    JMenuBar menuBar;
 
-      menuBar = new JMenuBar();
-      menuBarList.add(menuBar);
+    menuBar = new JMenuBar();
+    menuBarList.add(menuBar);
 
-      return menuBar;
-   }
+    return menuBar;
+  }
 
-   public synchronized void addMenuReference (String menuPath, JMenuItem menuItem) {
+  public synchronized void addMenuReference (String menuPath, JMenuItem menuItem) {
 
-      menuMap.put(menuPath, menuItem);
-   }
+    menuMap.put(menuPath, menuItem);
+  }
 
-   public synchronized JMenuItem getMenuItem (String menuPath) {
+  public synchronized JMenuItem getMenuItem (String menuPath) {
 
-      return menuMap.get(menuPath);
-   }
+    return menuMap.get(menuPath);
+  }
 
 }

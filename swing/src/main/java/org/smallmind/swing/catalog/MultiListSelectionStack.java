@@ -32,52 +32,52 @@ import org.smallmind.nutsnbolts.util.DirectionalComparator;
 
 public class MultiListSelectionStack<T extends Comparable<T>> {
 
-   private LinkedList<MultiListSelection<T>> selectionList;
-   private DirectionalComparator.Direction direction;
+  private LinkedList<MultiListSelection<T>> selectionList;
+  private DirectionalComparator.Direction direction;
 
-   public MultiListSelectionStack (DirectionalComparator.Direction direction) {
+  public MultiListSelectionStack (DirectionalComparator.Direction direction) {
 
-      this.direction = direction;
+    this.direction = direction;
 
-      selectionList = new LinkedList<MultiListSelection<T>>();
-   }
+    selectionList = new LinkedList<MultiListSelection<T>>();
+  }
 
-   public synchronized void addMultiListSelection (MultiListSelection<T> selection) {
+  public synchronized void addMultiListSelection (MultiListSelection<T> selection) {
 
-      Iterator<MultiListSelection<T>> selectionIter;
-      int index = 0;
+    Iterator<MultiListSelection<T>> selectionIter;
+    int index = 0;
 
-      if (selection != null) {
-         selectionIter = selectionList.iterator();
-         while (selectionIter.hasNext()) {
-            if (selection.compareTo(selectionIter.next(), direction) < 0) {
-               break;
-            }
-            else {
-               index++;
-            }
-         }
-
-         selectionList.add(index, selection);
-      }
-   }
-
-   public synchronized MultiListSelection<T> getFirst () {
-
-      if (selectionList.isEmpty()) {
-         return null;
+    if (selection != null) {
+      selectionIter = selectionList.iterator();
+      while (selectionIter.hasNext()) {
+        if (selection.compareTo(selectionIter.next(), direction) < 0) {
+          break;
+        }
+        else {
+          index++;
+        }
       }
 
-      return selectionList.getFirst();
-   }
+      selectionList.add(index, selection);
+    }
+  }
 
-   public synchronized MultiListSelection<T> getLast () {
+  public synchronized MultiListSelection<T> getFirst () {
 
-      if (selectionList.isEmpty()) {
-         return null;
-      }
+    if (selectionList.isEmpty()) {
+      return null;
+    }
 
-      return selectionList.getLast();
-   }
+    return selectionList.getFirst();
+  }
+
+  public synchronized MultiListSelection<T> getLast () {
+
+    if (selectionList.isEmpty()) {
+      return null;
+    }
+
+    return selectionList.getLast();
+  }
 
 }

@@ -37,86 +37,86 @@ import org.smallmind.wicket.behavior.JavaScriptNamespaceBehavior;
 
 public class VisualizationPanel extends Panel {
 
-   public VisualizationPanel (String id, String jsonClass) {
+  public VisualizationPanel (String id, String jsonClass) {
 
-      this(id, null, jsonClass, null);
-   }
+    this(id, null, jsonClass, null);
+  }
 
-   public VisualizationPanel (String id, String jsonClass, String options) {
+  public VisualizationPanel (String id, String jsonClass, String options) {
 
-      this(id, null, jsonClass, options);
-   }
+    this(id, null, jsonClass, options);
+  }
 
-   public VisualizationPanel (String id, IModel<String> javascriptModel, String jsonClass) {
+  public VisualizationPanel (String id, IModel<String> javascriptModel, String jsonClass) {
 
-      this(id, javascriptModel, jsonClass, null);
-   }
+    this(id, javascriptModel, jsonClass, null);
+  }
 
-   public VisualizationPanel (String id, IModel<String> javascriptModel, String jsonClass, String options) {
+  public VisualizationPanel (String id, IModel<String> javascriptModel, String jsonClass, String options) {
 
-      super(id);
+    super(id);
 
-      Label divLabel;
-      Label scriptLabel;
-      String divId;
+    Label divLabel;
+    Label scriptLabel;
+    String divId;
 
-      divId = UUID.randomUUID().toString();
+    divId = UUID.randomUUID().toString();
 
-      add(new JavaScriptNamespaceBehavior("SMALLMIND.visualization.flot." + getMarkupId()));
+    add(new JavaScriptNamespaceBehavior("SMALLMIND.visualization.flot." + getMarkupId()));
 
-      divLabel = new Label("visualizationDiv", new Model<String>("<div id=\"" + divId + "\"></div>"));
-      divLabel.setEscapeModelStrings(false);
+    divLabel = new Label("visualizationDiv", new Model<String>("<div id=\"" + divId + "\"></div>"));
+    divLabel.setEscapeModelStrings(false);
 
-      scriptLabel = new Label("visualizationPanelScript", new VisualizationPanelScriptModel(javascriptModel, divId, jsonClass, options));
-      scriptLabel.setEscapeModelStrings(false);
+    scriptLabel = new Label("visualizationPanelScript", new VisualizationPanelScriptModel(javascriptModel, divId, jsonClass, options));
+    scriptLabel.setEscapeModelStrings(false);
 
-      add(divLabel);
-      add(scriptLabel);
-   }
+    add(divLabel);
+    add(scriptLabel);
+  }
 
-   public String getJavascriptDataVariable () {
+  public String getJavascriptDataVariable () {
 
-      return "data";
-   }
+    return "data";
+  }
 
-   private class VisualizationPanelScriptModel extends AbstractReadOnlyModel<String> {
+  private class VisualizationPanelScriptModel extends AbstractReadOnlyModel<String> {
 
-      private IModel<String> javascriptModel;
-      private String divId;
-      private String jsonClass;
-      private String options;
+    private IModel<String> javascriptModel;
+    private String divId;
+    private String jsonClass;
+    private String options;
 
-      public VisualizationPanelScriptModel (IModel<String> javascriptModel, String divId, String jsonClass, String options) {
+    public VisualizationPanelScriptModel (IModel<String> javascriptModel, String divId, String jsonClass, String options) {
 
-         this.javascriptModel = javascriptModel;
-         this.divId = divId;
-         this.jsonClass = jsonClass;
-         this.options = options;
+      this.javascriptModel = javascriptModel;
+      this.divId = divId;
+      this.jsonClass = jsonClass;
+      this.options = options;
+    }
+
+    @Override
+    public String getObject () {
+
+      VisualizationBorder visualizationBorder;
+      StringBuilder scriptBuilder = new StringBuilder();
+
+      if ((visualizationBorder = findParent(VisualizationBorder.class)) == null) {
+        throw new FormattedWicketRuntimeException("%s(%s) is not within the context of a %s", VisualizationPanel.class.getSimpleName(), getMarkupId(), VisualizationBorder.class.getSimpleName());
       }
 
-      @Override
-      public String getObject () {
+      scriptBuilder.append("SMALLMIND.visualization.flot.").append(getMarkupId()).append(".drawChart  = function (data) {");
 
-         VisualizationBorder visualizationBorder;
-         StringBuilder scriptBuilder = new StringBuilder();
-
-         if ((visualizationBorder = findParent(VisualizationBorder.class)) == null) {
-            throw new FormattedWicketRuntimeException("%s(%s) is not within the context of a %s", VisualizationPanel.class.getSimpleName(), getMarkupId(), VisualizationBorder.class.getSimpleName());
-         }
-
-         scriptBuilder.append("SMALLMIND.visualization.flot.").append(getMarkupId()).append(".drawChart  = function (data) {");
-
-         if (javascriptModel != null) {
-            scriptBuilder.append(javascriptModel.getObject());
-         }
-
-         scriptBuilder.append("var chart = new ").append(jsonClass).append("(document.getElementById('").append(divId).append("'));");
-         scriptBuilder.append("chart.draw(").append(getJavascriptDataVariable()).append(", ").append((options == null) ? "{}" : options).append(");");
-         scriptBuilder.append('}');
-
-         visualizationBorder.addRenderingPanel(getMarkupId());
-
-         return scriptBuilder.toString();
+      if (javascriptModel != null) {
+        scriptBuilder.append(javascriptModel.getObject());
       }
-   }
+
+      scriptBuilder.append("var chart = new ").append(jsonClass).append("(document.getElementById('").append(divId).append("'));");
+      scriptBuilder.append("chart.draw(").append(getJavascriptDataVariable()).append(", ").append((options == null) ? "{}" : options).append(");");
+      scriptBuilder.append('}');
+
+      visualizationBorder.addRenderingPanel(getMarkupId());
+
+      return scriptBuilder.toString();
+    }
+  }
 }

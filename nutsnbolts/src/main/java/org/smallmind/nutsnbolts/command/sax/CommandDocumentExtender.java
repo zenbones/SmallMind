@@ -35,21 +35,21 @@ import org.xml.sax.Attributes;
 
 public class CommandDocumentExtender extends AbstractDocumentExtender {
 
-   private CommandTemplate commandTemplate;
+  private CommandTemplate commandTemplate;
 
-   public CommandDocumentExtender (CommandTemplate commandTemplate) {
+  public CommandDocumentExtender (CommandTemplate commandTemplate) {
 
-      this.commandTemplate = commandTemplate;
-   }
+    this.commandTemplate = commandTemplate;
+  }
 
-   public CommandTemplate getCommandTemplate () {
+  public CommandTemplate getCommandTemplate () {
 
-      return commandTemplate;
-   }
+    return commandTemplate;
+  }
 
-   public ElementExtender getElementExtender (SAXExtender parent, String namespaceURI, String localName, String qName, Attributes atts)
-      throws Exception {
+  public ElementExtender getElementExtender (SAXExtender parent, String namespaceURI, String localName, String qName, Attributes atts)
+    throws Exception {
 
-      return (ElementExtender)Class.forName(CommandDocumentExtender.class.getPackage().getName() + "." + StringUtilities.toCamelCase(qName, '-') + "ElementExtender").newInstance();
-   }
+    return (ElementExtender)Class.forName(CommandDocumentExtender.class.getPackage().getName() + "." + StringUtilities.toCamelCase(qName, '-') + "ElementExtender").newInstance();
+  }
 }

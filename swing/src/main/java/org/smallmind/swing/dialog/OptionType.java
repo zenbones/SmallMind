@@ -28,25 +28,25 @@ package org.smallmind.swing.dialog;
 
 public enum OptionType {
 
-   INFO("Info Message", "info"), WARNING("Warning Message", "warning"), QUESTION("Question", "question"), STOP("Error Message", "stop"), BUG("Bug", "bug"), PROGRESS("Progress", "progress");
+  INFO("Info Message", "info"), WARNING("Warning Message", "warning"), QUESTION("Question", "question"), STOP("Error Message", "stop"), BUG("Bug", "bug"), PROGRESS("Progress", "progress");
 
-   private final String title;
-   private final String imageType;
+  private final String title;
+  private final String imageType;
 
-   OptionType (String title, String imageType) {
+  OptionType (String title, String imageType) {
 
-      this.title = title;
-      this.imageType = imageType;
-   }
+    this.title = title;
+    this.imageType = imageType;
+  }
 
-   public String getTitle () {
+  public String getTitle () {
 
-      return title;
-   }
+    return title;
+  }
 
-   public String getImageType () {
+  public String getImageType () {
 
-      return imageType;
-   }
+    return imageType;
+  }
 
 }

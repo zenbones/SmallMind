@@ -30,23 +30,23 @@ import org.smallmind.nutsnbolts.lang.FormattedRuntimeException;
 
 public class ByteCodeManipulationException extends FormattedRuntimeException {
 
-   public ByteCodeManipulationException () {
+  public ByteCodeManipulationException () {
 
-      super();
-   }
+    super();
+  }
 
-   public ByteCodeManipulationException (String message, Object... args) {
+  public ByteCodeManipulationException (String message, Object... args) {
 
-      super(message, args);
-   }
+    super(message, args);
+  }
 
-   public ByteCodeManipulationException (Throwable throwable, String message, Object... args) {
+  public ByteCodeManipulationException (Throwable throwable, String message, Object... args) {
 
-      super(throwable, message, args);
-   }
+    super(throwable, message, args);
+  }
 
-   public ByteCodeManipulationException (Throwable throwable) {
+  public ByteCodeManipulationException (Throwable throwable) {
 
-      super(throwable);
-   }
+    super(throwable);
+  }
 }

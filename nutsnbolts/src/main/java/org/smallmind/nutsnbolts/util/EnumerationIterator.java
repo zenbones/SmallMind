@@ -31,30 +31,30 @@ import java.util.Iterator;
 
 public class EnumerationIterator<T> implements Iterator<T>, Iterable<T> {
 
-   private Enumeration<T> internalEnumeration;
+  private Enumeration<T> internalEnumeration;
 
-   public EnumerationIterator(Enumeration<T> internalEnumeration) {
+  public EnumerationIterator (Enumeration<T> internalEnumeration) {
 
-      this.internalEnumeration = internalEnumeration;
-   }
+    this.internalEnumeration = internalEnumeration;
+  }
 
-   public boolean hasNext() {
+  public boolean hasNext () {
 
-      return internalEnumeration.hasMoreElements();
-   }
+    return internalEnumeration.hasMoreElements();
+  }
 
-   public T next() {
+  public T next () {
 
-      return internalEnumeration.nextElement();
-   }
+    return internalEnumeration.nextElement();
+  }
 
-   public void remove() {
+  public void remove () {
 
-      throw new UnsupportedOperationException();
-   }
+    throw new UnsupportedOperationException();
+  }
 
-   public Iterator<T> iterator() {
+  public Iterator<T> iterator () {
 
-      return this;
-   }
+    return this;
+  }
 }

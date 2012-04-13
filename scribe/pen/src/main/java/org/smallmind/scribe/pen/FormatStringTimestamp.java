@@ -30,30 +30,30 @@ import java.util.Date;
 
 public class FormatStringTimestamp implements Timestamp {
 
-   private String format;
+  private String format;
 
-   public FormatStringTimestamp () {
+  public FormatStringTimestamp () {
 
-      this("%tY-%tm-%td");
-   }
+    this("%tY-%tm-%td");
+  }
 
-   public FormatStringTimestamp (String format) {
+  public FormatStringTimestamp (String format) {
 
-      this.format = format;
-   }
+    this.format = format;
+  }
 
-   public String getFormat () {
+  public String getFormat () {
 
-      return format;
-   }
+    return format;
+  }
 
-   public void setFormat (String format) {
+  public void setFormat (String format) {
 
-      this.format = format;
-   }
+    this.format = format;
+  }
 
-   public String getTimestamp (Date date) {
+  public String getTimestamp (Date date) {
 
-      return String.format(format, date);
-   }
+    return String.format(format, date);
+  }
 }

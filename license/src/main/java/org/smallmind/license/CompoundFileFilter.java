@@ -5,23 +5,23 @@ import java.io.FileFilter;
 
 public class CompoundFileFilter implements FileFilter {
 
-   private FileFilter[] fileFilters;
+  private FileFilter[] fileFilters;
 
-   public CompoundFileFilter (FileFilter... fileFilters) {
+  public CompoundFileFilter (FileFilter... fileFilters) {
 
-      this.fileFilters = fileFilters;
-   }
+    this.fileFilters = fileFilters;
+  }
 
-   @Override
-   public boolean accept (File file) {
+  @Override
+  public boolean accept (File file) {
 
-      for (FileFilter fileFilter : fileFilters) {
-         if (fileFilter.accept(file)) {
+    for (FileFilter fileFilter : fileFilters) {
+      if (fileFilter.accept(file)) {
 
-            return true;
-         }
+        return true;
       }
+    }
 
-      return false;
-   }
+    return false;
+  }
 }

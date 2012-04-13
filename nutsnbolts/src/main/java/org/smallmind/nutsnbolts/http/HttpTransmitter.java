@@ -33,58 +33,58 @@ import org.smallmind.nutsnbolts.lang.UnknownSwitchCaseException;
 
 public class HttpTransmitter {
 
-   public static HttpPipe emitGetRequest (URL url, boolean openReader)
-      throws IOException {
+  public static HttpPipe emitGetRequest (URL url, boolean openReader)
+    throws IOException {
 
-      return emitHttpRequest(HttpMethod.GET, url, openReader);
-   }
+    return emitHttpRequest(HttpMethod.GET, url, openReader);
+  }
 
-   public static HttpPipe emitPutRequest (URL url, boolean openReader)
-      throws IOException {
+  public static HttpPipe emitPutRequest (URL url, boolean openReader)
+    throws IOException {
 
-      return emitHttpRequest(HttpMethod.PUT, url, openReader);
-   }
+    return emitHttpRequest(HttpMethod.PUT, url, openReader);
+  }
 
-   public static HttpPipe emitPostRequest (URL url, boolean openReader)
-      throws IOException {
+  public static HttpPipe emitPostRequest (URL url, boolean openReader)
+    throws IOException {
 
-      return emitHttpRequest(HttpMethod.POST, url, openReader);
-   }
+    return emitHttpRequest(HttpMethod.POST, url, openReader);
+  }
 
-   public static HttpPipe emitDeleteRequest (URL url, boolean openReader)
-      throws IOException {
+  public static HttpPipe emitDeleteRequest (URL url, boolean openReader)
+    throws IOException {
 
-      return emitHttpRequest(HttpMethod.DELETE, url, openReader);
-   }
+    return emitHttpRequest(HttpMethod.DELETE, url, openReader);
+  }
 
-   public static HttpPipe emitHttpRequest (HttpMethod method, URL url, boolean openReader)
-      throws IOException {
+  public static HttpPipe emitHttpRequest (HttpMethod method, URL url, boolean openReader)
+    throws IOException {
 
-      HttpURLConnection urlConnection;
+    HttpURLConnection urlConnection;
 
-      urlConnection = (HttpURLConnection)url.openConnection();
-      urlConnection.setDoInput(openReader);
-      switch (method) {
-         case GET:
-            urlConnection.setDoOutput(false);
-            urlConnection.setRequestMethod("GET");
-            break;
-         case PUT:
-            urlConnection.setDoOutput(true);
-            urlConnection.setRequestMethod("PUT");
-            break;
-         case POST:
-            urlConnection.setDoOutput(true);
-            urlConnection.setRequestMethod("POST");
-            break;
-         case DELETE:
-            urlConnection.setDoOutput(false);
-            urlConnection.setRequestMethod("DELETE");
-            break;
-         default:
-            throw new UnknownSwitchCaseException(method.name());
-      }
+    urlConnection = (HttpURLConnection)url.openConnection();
+    urlConnection.setDoInput(openReader);
+    switch (method) {
+      case GET:
+        urlConnection.setDoOutput(false);
+        urlConnection.setRequestMethod("GET");
+        break;
+      case PUT:
+        urlConnection.setDoOutput(true);
+        urlConnection.setRequestMethod("PUT");
+        break;
+      case POST:
+        urlConnection.setDoOutput(true);
+        urlConnection.setRequestMethod("POST");
+        break;
+      case DELETE:
+        urlConnection.setDoOutput(false);
+        urlConnection.setRequestMethod("DELETE");
+        break;
+      default:
+        throw new UnknownSwitchCaseException(method.name());
+    }
 
-      return new HttpPipe(urlConnection);
-   }
+    return new HttpPipe(urlConnection);
+  }
 }

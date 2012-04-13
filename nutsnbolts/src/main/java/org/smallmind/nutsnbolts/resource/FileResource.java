@@ -33,19 +33,19 @@ import java.io.InputStream;
 
 public class FileResource extends AbstractResource {
 
-   public FileResource (String path) {
+  public FileResource (String path) {
 
-      super(path);
-   }
+    super(path);
+  }
 
-   public String getScheme () {
+  public String getScheme () {
 
-      return "file";
-   }
+    return "file";
+  }
 
-   public InputStream getInputStream ()
-      throws FileNotFoundException {
+  public InputStream getInputStream ()
+    throws FileNotFoundException {
 
-      return new FileInputStream(new File(getPath()));
-   }
+    return new FileInputStream(new File(getPath()));
+  }
 }

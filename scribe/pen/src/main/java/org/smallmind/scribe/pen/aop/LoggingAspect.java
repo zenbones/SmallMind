@@ -42,97 +42,97 @@ import org.smallmind.scribe.pen.probe.ProbeFactory;
 @Aspect
 public class LoggingAspect {
 
-   private static final Class[] PARSE_SIGNATURE = new Class[] {String.class};
+  private static final Class[] PARSE_SIGNATURE = new Class[] {String.class};
 
-   private void startProbe (AutoLog autoLog, Class toBeLoggedClass) {
+  private void startProbe (AutoLog autoLog, Class toBeLoggedClass) {
 
-      Logger backingLogger;
-      Probe autoProbe;
-      Discriminator discriminator = null;
+    Logger backingLogger;
+    Probe autoProbe;
+    Discriminator discriminator = null;
 
-      if (!autoLog.discriminator().ofClass().equals(Unused.class)) {
+    if (!autoLog.discriminator().ofClass().equals(Unused.class)) {
 
-         Method parseMethod;
+      Method parseMethod;
 
-         try {
-            parseMethod = autoLog.discriminator().ofClass().getMethod("parse", PARSE_SIGNATURE);
-            discriminator = (Discriminator)parseMethod.invoke(null, autoLog.discriminator().value());
-         }
-         catch (Exception exception) {
-            throw new AutoLogRuntimeException(exception);
-         }
+      try {
+        parseMethod = autoLog.discriminator().ofClass().getMethod("parse", PARSE_SIGNATURE);
+        discriminator = (Discriminator)parseMethod.invoke(null, autoLog.discriminator().value());
       }
-
-      backingLogger = LoggerManager.getLogger(autoLog.name().equals("") ? toBeLoggedClass.getCanonicalName() : autoLog.name());
-      autoProbe = ProbeFactory.createProbe(backingLogger, discriminator, autoLog.off() ? Level.OFF : (!autoLog.level().equals(Level.OFF)) ? autoLog.level() : backingLogger.getLevel(), (autoLog.title().length() == 0) ? null : autoLog.title());
-      autoProbe.start();
-   }
-
-   private void stopProbe () {
-
-      Probe probe;
-
-      probe = ProbeFactory.getProbe();
-      if (probe == null) {
-         throw new AutoLogRuntimeException("The current thread has no stored Probe");
+      catch (Exception exception) {
+        throw new AutoLogRuntimeException(exception);
       }
+    }
 
-      if (!probe.isAborted()) {
-         probe.stop();
-      }
-   }
+    backingLogger = LoggerManager.getLogger(autoLog.name().equals("") ? toBeLoggedClass.getCanonicalName() : autoLog.name());
+    autoProbe = ProbeFactory.createProbe(backingLogger, discriminator, autoLog.off() ? Level.OFF : (!autoLog.level().equals(Level.OFF)) ? autoLog.level() : backingLogger.getLevel(), (autoLog.title().length() == 0) ? null : autoLog.title());
+    autoProbe.start();
+  }
 
-   private void abortProbe (Throwable throwable) {
+  private void stopProbe () {
 
-      Probe probe;
+    Probe probe;
 
-      probe = ProbeFactory.getProbe();
-      if (probe == null) {
-         throw new AutoLogRuntimeException("The current thread has no stored Probe");
-      }
+    probe = ProbeFactory.getProbe();
+    if (probe == null) {
+      throw new AutoLogRuntimeException("The current thread has no stored Probe");
+    }
 
-      if (throwable.equals(ProbeFactory.getThrowable())) {
-         probe.abort();
-      }
-      else {
-         ProbeFactory.setThrowable(throwable);
-         probe.abort(throwable);
-      }
-   }
+    if (!probe.isAborted()) {
+      probe.stop();
+    }
+  }
 
-   @Before (value = "@within(autoLog) && (execution(* * (..)) || initialization(new(..)) || staticinitialization(*)) && !@annotation(AutoLog)", argNames = "staticPart, autoLog")
-   public void beforeClassToBeLogged (JoinPoint.StaticPart staticPart, AutoLog autoLog) {
+  private void abortProbe (Throwable throwable) {
 
-      startProbe(autoLog, staticPart.getSourceLocation().getWithinType());
-   }
+    Probe probe;
 
-   @Before (value = "(execution(@AutoLog * * (..)) || initialization(@AutoLog new(..))) && @annotation(autoLog)", argNames = "staticPart, autoLog")
-   public void beforeMethodToBeLogged (JoinPoint.StaticPart staticPart, AutoLog autoLog) {
+    probe = ProbeFactory.getProbe();
+    if (probe == null) {
+      throw new AutoLogRuntimeException("The current thread has no stored Probe");
+    }
 
-      startProbe(autoLog, staticPart.getSourceLocation().getWithinType());
-   }
+    if (throwable.equals(ProbeFactory.getThrowable())) {
+      probe.abort();
+    }
+    else {
+      ProbeFactory.setThrowable(throwable);
+      probe.abort(throwable);
+    }
+  }
 
-   @AfterReturning ("@within(AutoLog) && (execution(* * (..)) || initialization(new(..)) || staticinitialization(*)) && !@annotation(AutoLog)")
-   public void afterReturnFromClassToBeLogged () {
+  @Before(value = "@within(autoLog) && (execution(* * (..)) || initialization(new(..)) || staticinitialization(*)) && !@annotation(AutoLog)", argNames = "staticPart, autoLog")
+  public void beforeClassToBeLogged (JoinPoint.StaticPart staticPart, AutoLog autoLog) {
 
-      stopProbe();
-   }
+    startProbe(autoLog, staticPart.getSourceLocation().getWithinType());
+  }
 
-   @AfterReturning ("(execution(@AutoLog * * (..)) || initialization(@AutoLog new(..))) && @annotation(AutoLog)")
-   public void afterReturnFromMethodToBeLogged () {
+  @Before(value = "(execution(@AutoLog * * (..)) || initialization(@AutoLog new(..))) && @annotation(autoLog)", argNames = "staticPart, autoLog")
+  public void beforeMethodToBeLogged (JoinPoint.StaticPart staticPart, AutoLog autoLog) {
 
-      stopProbe();
-   }
+    startProbe(autoLog, staticPart.getSourceLocation().getWithinType());
+  }
 
-   @AfterThrowing (pointcut = "@within(AutoLog) && (execution(* * (..)) || initialization(new(..)) || staticinitialization(*))  && !@annotation(AutoLog)", throwing = "throwable", argNames = "throwable")
-   public void afterThrowFromClassToBeLogged (Throwable throwable) {
+  @AfterReturning("@within(AutoLog) && (execution(* * (..)) || initialization(new(..)) || staticinitialization(*)) && !@annotation(AutoLog)")
+  public void afterReturnFromClassToBeLogged () {
 
-      abortProbe(throwable);
-   }
+    stopProbe();
+  }
 
-   @AfterThrowing (pointcut = "(execution(@AutoLog * * (..)) || initialization(@AutoLog new(..))) && @annotation(AutoLog)", throwing = "throwable", argNames = "throwable")
-   public void afterThrowFromMethodToBeLogged (Throwable throwable) {
+  @AfterReturning("(execution(@AutoLog * * (..)) || initialization(@AutoLog new(..))) && @annotation(AutoLog)")
+  public void afterReturnFromMethodToBeLogged () {
 
-      abortProbe(throwable);
-   }
+    stopProbe();
+  }
+
+  @AfterThrowing(pointcut = "@within(AutoLog) && (execution(* * (..)) || initialization(new(..)) || staticinitialization(*))  && !@annotation(AutoLog)", throwing = "throwable", argNames = "throwable")
+  public void afterThrowFromClassToBeLogged (Throwable throwable) {
+
+    abortProbe(throwable);
+  }
+
+  @AfterThrowing(pointcut = "(execution(@AutoLog * * (..)) || initialization(@AutoLog new(..))) && @annotation(AutoLog)", throwing = "throwable", argNames = "throwable")
+  public void afterThrowFromMethodToBeLogged (Throwable throwable) {
+
+    abortProbe(throwable);
+  }
 }

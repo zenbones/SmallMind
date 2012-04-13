@@ -30,13 +30,13 @@ import java.util.IllegalFormatException;
 
 public class MessageFormattingException extends RuntimeException {
 
-   public MessageFormattingException (String message) {
+  public MessageFormattingException (String message) {
 
-      super(message);
-   }
+    super(message);
+  }
 
-   public MessageFormattingException (IllegalFormatException illegalFormatException, String message) {
+  public MessageFormattingException (IllegalFormatException illegalFormatException, String message) {
 
-      super(message, illegalFormatException);
-   }
+    super(message, illegalFormatException);
+  }
 }

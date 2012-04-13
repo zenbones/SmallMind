@@ -28,61 +28,61 @@ package org.smallmind.nutsnbolts.lang;
 
 public class StackTraceUtilities {
 
-   public static String[] obtainStackTraceAsArray (Throwable throwable) {
+  public static String[] obtainStackTraceAsArray (Throwable throwable) {
 
-      return obtainStackTrace(new ArrayStackTraceAccumulator(), throwable).asArray();
-   }
+    return obtainStackTrace(new ArrayStackTraceAccumulator(), throwable).asArray();
+  }
 
-   public static String obtainStackTraceAsString (Throwable throwable) {
+  public static String obtainStackTraceAsString (Throwable throwable) {
 
-      return obtainStackTrace(new StringStackTraceAccumulator(), throwable).toString();
-   }
+    return obtainStackTrace(new StringStackTraceAccumulator(), throwable).toString();
+  }
 
-   private static <S extends StackTraceAccumulator> S obtainStackTrace (S accumulator, Throwable throwable) {
+  private static <S extends StackTraceAccumulator> S obtainStackTrace (S accumulator, Throwable throwable) {
 
-      StackTraceElement[] prevStackTrace = null;
-      StringBuilder lineBuilder;
-      int repeatedElements;
+    StackTraceElement[] prevStackTrace = null;
+    StringBuilder lineBuilder;
+    int repeatedElements;
 
-      lineBuilder = new StringBuilder();
-      do {
-         lineBuilder.append(prevStackTrace == null ? "Exception in thread " : "Caused by: ");
+    lineBuilder = new StringBuilder();
+    do {
+      lineBuilder.append(prevStackTrace == null ? "Exception in thread " : "Caused by: ");
 
-         lineBuilder.append(throwable.getClass().getCanonicalName());
-         lineBuilder.append(": ");
-         lineBuilder.append(throwable.getMessage());
-         accumulator.append(lineBuilder);
-         lineBuilder.delete(0, lineBuilder.length());
+      lineBuilder.append(throwable.getClass().getCanonicalName());
+      lineBuilder.append(": ");
+      lineBuilder.append(throwable.getMessage());
+      accumulator.append(lineBuilder);
+      lineBuilder.delete(0, lineBuilder.length());
 
-         for (StackTraceElement singleElement : throwable.getStackTrace()) {
-            if (prevStackTrace != null) {
-               if ((repeatedElements = findRepeatedStackElements(singleElement, prevStackTrace)) >= 0) {
-                  lineBuilder.append("   ... ");
-                  lineBuilder.append(repeatedElements);
-                  lineBuilder.append(" more");
-                  accumulator.append(lineBuilder);
-                  lineBuilder.delete(0, lineBuilder.length());
-                  break;
-               }
-            }
-
-            lineBuilder.append("   at ");
-            lineBuilder.append(singleElement);
+      for (StackTraceElement singleElement : throwable.getStackTrace()) {
+        if (prevStackTrace != null) {
+          if ((repeatedElements = findRepeatedStackElements(singleElement, prevStackTrace)) >= 0) {
+            lineBuilder.append("   ... ");
+            lineBuilder.append(repeatedElements);
+            lineBuilder.append(" more");
             accumulator.append(lineBuilder);
             lineBuilder.delete(0, lineBuilder.length());
-         }
+            break;
+          }
+        }
 
-         prevStackTrace = throwable.getStackTrace();
-      } while ((throwable = throwable.getCause()) != null);
+        lineBuilder.append("   at ");
+        lineBuilder.append(singleElement);
+        accumulator.append(lineBuilder);
+        lineBuilder.delete(0, lineBuilder.length());
+      }
 
-      return accumulator;
-   }
+      prevStackTrace = throwable.getStackTrace();
+    } while ((throwable = throwable.getCause()) != null);
 
-   private static int findRepeatedStackElements (StackTraceElement singleElement, StackTraceElement[] prevStackTrace) {
+    return accumulator;
+  }
 
-      for (int count = 0; count < prevStackTrace.length; count++)
-         if (singleElement.equals(prevStackTrace[count])) return prevStackTrace.length - count;
+  private static int findRepeatedStackElements (StackTraceElement singleElement, StackTraceElement[] prevStackTrace) {
 
-      return -1;
-   }
+    for (int count = 0; count < prevStackTrace.length; count++)
+      if (singleElement.equals(prevStackTrace[count])) return prevStackTrace.length - count;
+
+    return -1;
+  }
 }

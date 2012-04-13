@@ -26,22 +26,20 @@
  */
 package org.smallmind.swing.dialog;
 
-import org.smallmind.swing.dialog.DialogState;
-
 public class DialogEvent extends java.util.EventObject {
 
-   private DialogState eventState;
+  private DialogState eventState;
 
-   public DialogEvent (Object source, DialogState eventState) {
+  public DialogEvent (Object source, DialogState eventState) {
 
-      super(source);
+    super(source);
 
-      this.eventState = eventState;
-   }
+    this.eventState = eventState;
+  }
 
-   public DialogState getEventState () {
+  public DialogState getEventState () {
 
-      return eventState;
-   }
+    return eventState;
+  }
 
 }

@@ -36,84 +36,85 @@ import org.smallmind.nutsnbolts.lang.UnknownSwitchCaseException;
 
 public class MonitorHandler implements SOAPHandler<SOAPMessageContext> {
 
-   private PrintStream printStream;
-   private MessageDirection messageDirection;
+  private PrintStream printStream;
+  private MessageDirection messageDirection;
 
-   public MonitorHandler () {
+  public MonitorHandler () {
 
-      this(System.out, MessageDirection.BOTH);
-   }
+    this(System.out, MessageDirection.BOTH);
+  }
 
-   public MonitorHandler (PrintStream printStream) {
+  public MonitorHandler (PrintStream printStream) {
 
-      this(printStream, MessageDirection.BOTH);
-   }
+    this(printStream, MessageDirection.BOTH);
+  }
 
-   public MonitorHandler (MessageDirection messageDirection) {
+  public MonitorHandler (MessageDirection messageDirection) {
 
-      this(System.out, messageDirection);
-   }
+    this(System.out, messageDirection);
+  }
 
-   public MonitorHandler (PrintStream printStream, MessageDirection messageDirection) {
+  public MonitorHandler (PrintStream printStream, MessageDirection messageDirection) {
 
-      this.printStream = printStream;
-      this.messageDirection = messageDirection;
-   }
+    this.printStream = printStream;
+    this.messageDirection = messageDirection;
+  }
 
-   public Set<QName> getHeaders () {
+  public Set<QName> getHeaders () {
 
-      return null;
-   }
+    return null;
+  }
 
-   public boolean handleMessage (SOAPMessageContext context) {
+  public boolean handleMessage (SOAPMessageContext context) {
 
-      try {
-         switch (messageDirection) {
-            case IN:
-               if (!(Boolean)context.get(SOAPMessageContext.MESSAGE_OUTBOUND_PROPERTY)) {
-                  context.getMessage().writeTo(printStream);
-                  printStream.println();
-               }
-               break;
-            case OUT:
-               if ((Boolean)context.get(SOAPMessageContext.MESSAGE_OUTBOUND_PROPERTY)) {
-                  context.getMessage().writeTo(printStream);
-                  printStream.println();
-               }
-               break;
-            case BOTH:
-               context.getMessage().writeTo(printStream);
-               printStream.println();
-               break;
-            default:
-               throw new UnknownSwitchCaseException(messageDirection.name());
-         }
+    try {
+      switch (messageDirection) {
+        case IN:
+          if (!(Boolean)context.get(SOAPMessageContext.MESSAGE_OUTBOUND_PROPERTY)) {
+            context.getMessage().writeTo(printStream);
+            printStream.println();
+          }
+          break;
+        case OUT:
+          if ((Boolean)context.get(SOAPMessageContext.MESSAGE_OUTBOUND_PROPERTY)) {
+            context.getMessage().writeTo(printStream);
+            printStream.println();
+          }
+          break;
+        case BOTH:
+          context.getMessage().writeTo(printStream);
+          printStream.println();
+          break;
+        default:
+          throw new UnknownSwitchCaseException(messageDirection.name());
       }
-      catch (Exception exception) {
-         throw new RuntimeException(exception);
-      }
+    }
+    catch (Exception exception) {
+      throw new RuntimeException(exception);
+    }
 
-      return true;
-   }
+    return true;
+  }
 
-   public boolean handleFault (SOAPMessageContext context) {
+  public boolean handleFault (SOAPMessageContext context) {
 
-      try {
-         context.getMessage().writeTo(printStream);
-         printStream.println();
-      }
-      catch (Exception exception) {
-         throw new RuntimeException(exception);
-      }
+    try {
+      context.getMessage().writeTo(printStream);
+      printStream.println();
+    }
+    catch (Exception exception) {
+      throw new RuntimeException(exception);
+    }
 
-      return true;
-   }
+    return true;
+  }
 
-   public void close (MessageContext context) {
-   }
+  public void close (MessageContext context) {
 
-   protected void finalize () {
+  }
 
-      printStream.close();
-   }
+  protected void finalize () {
+
+    printStream.close();
+  }
 }

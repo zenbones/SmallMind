@@ -32,37 +32,37 @@ import java.util.Date;
 
 public class DateFormatTimestamp implements Timestamp {
 
-   private static final DateFormatTimestamp STANDARD_TIMESTAMP = new DateFormatTimestamp();
+  private static final DateFormatTimestamp STANDARD_TIMESTAMP = new DateFormatTimestamp();
 
-   private DateFormat dateFormat;
+  private DateFormat dateFormat;
 
-   public static DateFormatTimestamp getDefaultInstance () {
+  public static DateFormatTimestamp getDefaultInstance () {
 
-      return STANDARD_TIMESTAMP;
-   }
+    return STANDARD_TIMESTAMP;
+  }
 
-   public DateFormatTimestamp () {
+  public DateFormatTimestamp () {
 
-      this(new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSZ"));
-   }
+    this(new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSZ"));
+  }
 
-   public DateFormatTimestamp (DateFormat dateFormat) {
+  public DateFormatTimestamp (DateFormat dateFormat) {
 
-      this.dateFormat = dateFormat;
-   }
+    this.dateFormat = dateFormat;
+  }
 
-   public DateFormat getDateFormat () {
+  public DateFormat getDateFormat () {
 
-      return dateFormat;
-   }
+    return dateFormat;
+  }
 
-   public void setDateFormat (DateFormat dateFormat) {
+  public void setDateFormat (DateFormat dateFormat) {
 
-      this.dateFormat = dateFormat;
-   }
+    this.dateFormat = dateFormat;
+  }
 
-   public synchronized String getTimestamp (Date date) {
+  public synchronized String getTimestamp (Date date) {
 
-      return dateFormat.format(date);
-   }
+    return dateFormat.format(date);
+  }
 }

@@ -33,22 +33,22 @@ import org.smallmind.nutsnbolts.xml.sax.ElementExtender;
 
 public class PropertiesElementExtender extends AbstractElementExtender {
 
-   private HashMap<String, String> propertyMap;
+  private HashMap<String, String> propertyMap;
 
-   public PropertiesElementExtender () {
+  public PropertiesElementExtender () {
 
-      propertyMap = new HashMap<String, String>();
-   }
+    propertyMap = new HashMap<String, String>();
+  }
 
-   @Override
-   public void endElement (String namespaceURI, String localName, String qName, StringBuilder contentBuilder) {
+  @Override
+  public void endElement (String namespaceURI, String localName, String qName, StringBuilder contentBuilder) {
 
-      ((ProfileElementExtender)getParent()).setPropertyMap(propertyMap);
-   }
+    ((ProfileElementExtender)getParent()).setPropertyMap(propertyMap);
+  }
 
-   @Override
-   public void completedChildElement (ElementExtender elementExtender) {
+  @Override
+  public void completedChildElement (ElementExtender elementExtender) {
 
-      propertyMap.put(((BasicElementExtender)elementExtender).getLocalName(), ((BasicElementExtender)elementExtender).getContent());
-   }
+    propertyMap.put(((BasicElementExtender)elementExtender).getLocalName(), ((BasicElementExtender)elementExtender).getContent());
+  }
 }

@@ -30,152 +30,152 @@ import java.util.concurrent.TimeUnit;
 
 public class SedaConfiguration {
 
-   private TimeUnit queuePollTimeUnit;
-   private TimeUnit workTrackingTimeUnit;
-   private TimeUnit regulatorPulseTimeUnit;
-   private double inactiveDownShiftPercentage;
-   private double activeUpShiftPercentage;
-   private long queuePollTimeout;
-   private long workTrackingTime;
-   private long regulatorPulseTime;
-   private int maxQueueCapacity;
-   private int minThreadPoolSize;
-   private int maxThreadPoolSize;
-   private int maxTrackedInvocations;
+  private TimeUnit queuePollTimeUnit;
+  private TimeUnit workTrackingTimeUnit;
+  private TimeUnit regulatorPulseTimeUnit;
+  private double inactiveDownShiftPercentage;
+  private double activeUpShiftPercentage;
+  private long queuePollTimeout;
+  private long workTrackingTime;
+  private long regulatorPulseTime;
+  private int maxQueueCapacity;
+  private int minThreadPoolSize;
+  private int maxThreadPoolSize;
+  private int maxTrackedInvocations;
 
-   public SedaConfiguration () {
+  public SedaConfiguration () {
 
-      setMaxQueueCapacity(Integer.MAX_VALUE);
-      setQueuePollTimeout(300);
-      setQueuePollTimeUnit(TimeUnit.MILLISECONDS);
-      setMinThreadPoolSize(1);
-      setMaxThreadPoolSize(0);
-      setWorkTrackingTime(3);
-      setWorkTrackingTimeUnit(TimeUnit.SECONDS);
-      setMaxTrackedInvocations(30);
-      setRegulatorPulseTime(500);
-      setRegulatorPulseTimeUnit(TimeUnit.MILLISECONDS);
-      setInactiveDownShiftPercentage(30);
-      setActiveUpShiftPercentage(90);
-   }
+    setMaxQueueCapacity(Integer.MAX_VALUE);
+    setQueuePollTimeout(300);
+    setQueuePollTimeUnit(TimeUnit.MILLISECONDS);
+    setMinThreadPoolSize(1);
+    setMaxThreadPoolSize(0);
+    setWorkTrackingTime(3);
+    setWorkTrackingTimeUnit(TimeUnit.SECONDS);
+    setMaxTrackedInvocations(30);
+    setRegulatorPulseTime(500);
+    setRegulatorPulseTimeUnit(TimeUnit.MILLISECONDS);
+    setInactiveDownShiftPercentage(30);
+    setActiveUpShiftPercentage(90);
+  }
 
-   public TimeUnit getQueuePollTimeUnit () {
+  public TimeUnit getQueuePollTimeUnit () {
 
-      return queuePollTimeUnit;
-   }
+    return queuePollTimeUnit;
+  }
 
-   public void setQueuePollTimeUnit (TimeUnit queuePollTimeUnit) {
+  public void setQueuePollTimeUnit (TimeUnit queuePollTimeUnit) {
 
-      this.queuePollTimeUnit = queuePollTimeUnit;
-   }
+    this.queuePollTimeUnit = queuePollTimeUnit;
+  }
 
-   public TimeUnit getWorkTrackingTimeUnit () {
+  public TimeUnit getWorkTrackingTimeUnit () {
 
-      return workTrackingTimeUnit;
-   }
+    return workTrackingTimeUnit;
+  }
 
-   public void setWorkTrackingTimeUnit (TimeUnit workTrackingTimeUnit) {
+  public void setWorkTrackingTimeUnit (TimeUnit workTrackingTimeUnit) {
 
-      this.workTrackingTimeUnit = workTrackingTimeUnit;
-   }
+    this.workTrackingTimeUnit = workTrackingTimeUnit;
+  }
 
-   public TimeUnit getRegulatorPulseTimeUnit () {
+  public TimeUnit getRegulatorPulseTimeUnit () {
 
-      return regulatorPulseTimeUnit;
-   }
+    return regulatorPulseTimeUnit;
+  }
 
-   public void setRegulatorPulseTimeUnit (TimeUnit regulatorPulseTimeUnit) {
+  public void setRegulatorPulseTimeUnit (TimeUnit regulatorPulseTimeUnit) {
 
-      this.regulatorPulseTimeUnit = regulatorPulseTimeUnit;
-   }
+    this.regulatorPulseTimeUnit = regulatorPulseTimeUnit;
+  }
 
-   public long getQueuePollTimeout () {
+  public long getQueuePollTimeout () {
 
-      return queuePollTimeout;
-   }
+    return queuePollTimeout;
+  }
 
-   public void setQueuePollTimeout (long queuePollTimeout) {
+  public void setQueuePollTimeout (long queuePollTimeout) {
 
-      this.queuePollTimeout = queuePollTimeout;
-   }
+    this.queuePollTimeout = queuePollTimeout;
+  }
 
-   public long getWorkTrackingTime () {
+  public long getWorkTrackingTime () {
 
-      return workTrackingTime;
-   }
+    return workTrackingTime;
+  }
 
-   public void setWorkTrackingTime (long workTrackingTime) {
+  public void setWorkTrackingTime (long workTrackingTime) {
 
-      this.workTrackingTime = workTrackingTime;
-   }
+    this.workTrackingTime = workTrackingTime;
+  }
 
-   public long getRegulatorPulseTime () {
+  public long getRegulatorPulseTime () {
 
-      return regulatorPulseTime;
-   }
+    return regulatorPulseTime;
+  }
 
-   public void setRegulatorPulseTime (long regulatorPulseTime) {
+  public void setRegulatorPulseTime (long regulatorPulseTime) {
 
-      this.regulatorPulseTime = regulatorPulseTime;
-   }
+    this.regulatorPulseTime = regulatorPulseTime;
+  }
 
-   public int getMaxQueueCapacity () {
+  public int getMaxQueueCapacity () {
 
-      return maxQueueCapacity;
-   }
+    return maxQueueCapacity;
+  }
 
-   public void setMaxQueueCapacity (int maxQueueCapacity) {
+  public void setMaxQueueCapacity (int maxQueueCapacity) {
 
-      this.maxQueueCapacity = maxQueueCapacity;
-   }
+    this.maxQueueCapacity = maxQueueCapacity;
+  }
 
-   public int getMinThreadPoolSize () {
+  public int getMinThreadPoolSize () {
 
-      return minThreadPoolSize;
-   }
+    return minThreadPoolSize;
+  }
 
-   public void setMinThreadPoolSize (int minThreadPoolSize) {
+  public void setMinThreadPoolSize (int minThreadPoolSize) {
 
-      this.minThreadPoolSize = minThreadPoolSize;
-   }
+    this.minThreadPoolSize = minThreadPoolSize;
+  }
 
-   public int getMaxThreadPoolSize () {
+  public int getMaxThreadPoolSize () {
 
-      return maxThreadPoolSize;
-   }
+    return maxThreadPoolSize;
+  }
 
-   public void setMaxThreadPoolSize (int maxThreadPoolSize) {
+  public void setMaxThreadPoolSize (int maxThreadPoolSize) {
 
-      this.maxThreadPoolSize = maxThreadPoolSize;
-   }
+    this.maxThreadPoolSize = maxThreadPoolSize;
+  }
 
-   public int getMaxTrackedInvocations () {
+  public int getMaxTrackedInvocations () {
 
-      return maxTrackedInvocations;
-   }
+    return maxTrackedInvocations;
+  }
 
-   public void setMaxTrackedInvocations (int maxTrackedInvocations) {
+  public void setMaxTrackedInvocations (int maxTrackedInvocations) {
 
-      this.maxTrackedInvocations = maxTrackedInvocations;
-   }
+    this.maxTrackedInvocations = maxTrackedInvocations;
+  }
 
-   public double getInactiveDownShiftPercentage () {
+  public double getInactiveDownShiftPercentage () {
 
-      return inactiveDownShiftPercentage;
-   }
+    return inactiveDownShiftPercentage;
+  }
 
-   public void setInactiveDownShiftPercentage (double inactiveDownShiftPercentage) {
+  public void setInactiveDownShiftPercentage (double inactiveDownShiftPercentage) {
 
-      this.inactiveDownShiftPercentage = inactiveDownShiftPercentage;
-   }
+    this.inactiveDownShiftPercentage = inactiveDownShiftPercentage;
+  }
 
-   public double getActiveUpShiftPercentage () {
+  public double getActiveUpShiftPercentage () {
 
-      return activeUpShiftPercentage;
-   }
+    return activeUpShiftPercentage;
+  }
 
-   public void setActiveUpShiftPercentage (double activeUpShiftPercentage) {
+  public void setActiveUpShiftPercentage (double activeUpShiftPercentage) {
 
-      this.activeUpShiftPercentage = activeUpShiftPercentage;
-   }
+    this.activeUpShiftPercentage = activeUpShiftPercentage;
+  }
 }

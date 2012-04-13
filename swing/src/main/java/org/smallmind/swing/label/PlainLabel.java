@@ -32,50 +32,50 @@ import javax.swing.JLabel;
 
 public class PlainLabel extends JLabel {
 
-   public PlainLabel () {
+  public PlainLabel () {
 
-      super();
-      setFont(getFont().deriveFont(Font.PLAIN));
-   }
+    super();
+    setFont(getFont().deriveFont(Font.PLAIN));
+  }
 
-   public PlainLabel (Icon icon) {
+  public PlainLabel (Icon icon) {
 
-      super(icon);
-      setFont(getFont().deriveFont(Font.PLAIN));
-   }
+    super(icon);
+    setFont(getFont().deriveFont(Font.PLAIN));
+  }
 
-   public PlainLabel (Icon icon, int horizontalAlignment) {
+  public PlainLabel (Icon icon, int horizontalAlignment) {
 
-      super(icon, horizontalAlignment);
-      setFont(getFont().deriveFont(Font.PLAIN));
-   }
+    super(icon, horizontalAlignment);
+    setFont(getFont().deriveFont(Font.PLAIN));
+  }
 
-   public PlainLabel (String text) {
+  public PlainLabel (String text) {
 
-      super(text);
-      setFont(getFont().deriveFont(Font.PLAIN));
-   }
+    super(text);
+    setFont(getFont().deriveFont(Font.PLAIN));
+  }
 
-   public PlainLabel (String text, int horizontalAlignment) {
+  public PlainLabel (String text, int horizontalAlignment) {
 
-      super(text, horizontalAlignment);
-      setFont(getFont().deriveFont(Font.PLAIN));
-   }
+    super(text, horizontalAlignment);
+    setFont(getFont().deriveFont(Font.PLAIN));
+  }
 
-   public PlainLabel (String text, Icon icon, int horizontalAlignment) {
+  public PlainLabel (String text, Icon icon, int horizontalAlignment) {
 
-      super(text, icon, horizontalAlignment);
-      setFont(getFont().deriveFont(Font.PLAIN));
-   }
+    super(text, icon, horizontalAlignment);
+    setFont(getFont().deriveFont(Font.PLAIN));
+  }
 
-   public synchronized void setFontStyle (int style) {
+  public synchronized void setFontStyle (int style) {
 
-      setFont(getFont().deriveFont(style));
-   }
+    setFont(getFont().deriveFont(style));
+  }
 
-   public synchronized void setFontSize (float size) {
+  public synchronized void setFontSize (float size) {
 
-      setFont(getFont().deriveFont(size));
-   }
+    setFont(getFont().deriveFont(size));
+  }
 
 }

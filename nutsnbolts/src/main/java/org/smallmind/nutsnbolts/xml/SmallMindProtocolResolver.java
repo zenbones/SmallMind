@@ -31,25 +31,25 @@ import org.smallmind.nutsnbolts.resource.Resource;
 
 public class SmallMindProtocolResolver implements ProtocolResolver {
 
-   private static SmallMindProtocolResolver PROTOCOL_RESOLVER;
-   private static final String INTERNAL_PROTOCOL = "http://www.smallmind.org/schema/";
+  private static SmallMindProtocolResolver PROTOCOL_RESOLVER;
+  private static final String INTERNAL_PROTOCOL = "http://www.smallmind.org/schema/";
 
-   public synchronized static SmallMindProtocolResolver getInstance () {
+  public synchronized static SmallMindProtocolResolver getInstance () {
 
-      if (PROTOCOL_RESOLVER == null) {
-         PROTOCOL_RESOLVER = new SmallMindProtocolResolver();
-      }
-      return PROTOCOL_RESOLVER;
-   }
+    if (PROTOCOL_RESOLVER == null) {
+      PROTOCOL_RESOLVER = new SmallMindProtocolResolver();
+    }
+    return PROTOCOL_RESOLVER;
+  }
 
-   public Resource resolve (String systemId)
-      throws ProtocolResolutionException {
+  public Resource resolve (String systemId)
+    throws ProtocolResolutionException {
 
-      if (systemId.startsWith(INTERNAL_PROTOCOL)) {
-         return new ClasspathResource("org/smallmind/" + systemId.substring(INTERNAL_PROTOCOL.length()));
-      }
+    if (systemId.startsWith(INTERNAL_PROTOCOL)) {
+      return new ClasspathResource("org/smallmind/" + systemId.substring(INTERNAL_PROTOCOL.length()));
+    }
 
-      return null;
-   }
+    return null;
+  }
 }
 

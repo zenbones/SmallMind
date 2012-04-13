@@ -2,36 +2,36 @@
 <beans xmlns="http://www.springframework.org/schema/beans" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.springframework.org/schema/beans
            http://www.springframework.org/schema/beans/spring-beans-3.0.xsd">
 
-   <import resource="classpath:org/smallmind/scheduling/quartz/quartz-liquibase.xml"/>
+  <import resource="classpath:org/smallmind/scheduling/quartz/quartz-liquibase.xml"/>
 
-   <bean id="schedulerFactory" class="org.smallmind.scheduling.quartz.spring.SpringSchedulerFactory" depends-on="quartzLiquibase">
-      <constructor-arg index="0">
-         <props>
-            <prop key="org.quartz.scheduler.instanceName">Scheduler</prop>
-            <prop key="org.quartz.scheduler.instanceId">AUTO</prop>
-            <prop key="org.quartz.scheduler.threadsInheritContextClassLoaderOfInitializer">true</prop>
-            <prop key="org.quartz.threadPool.class">org.quartz.simpl.SimpleThreadPool</prop>
-            <prop key="org.quartz.threadPool.threadCount">10</prop>
-            <prop key="org.quartz.scheduler.rmi.export">true</prop>
-            <prop key="org.quartz.scheduler.rmi.createRegistry">as_needed</prop>
-            <prop key="org.quartz.jobStore.misfireThreshold">60000</prop>
-            <prop key="org.quartz.jobStore.class">org.quartz.impl.jdbcjobstore.JobStoreTX</prop>
-            <prop key="org.quartz.jobStore.driverDelegateClass">org.quartz.impl.jdbcjobstore.StdJDBCDelegate</prop>
-            <prop key="org.quartz.jobStore.dataSource">dsOne</prop>
-            <prop key="org.quartz.jobStore.tablePrefix">QRTZ_</prop>
-            <prop key="org.quartz.jobStore.useProperties">true</prop>
-            <prop key="org.quartz.jobStore.isClustered">true</prop>
-            <prop key="org.quartz.jobStore.clusterCheckinInterval">20000</prop>
-            <prop key="org.quartz.dataSource.dsOne.driver">${jdbc.driver.classname}</prop>
-            <prop key="org.quartz.dataSource.dsOne.URL">${jdbc.url.quartz}</prop>
-            <prop key="org.quartz.dataSource.dsOne.user">${jdbc.username.quartz}</prop>
-            <prop key="org.quartz.dataSource.dsOne.password">${jdbc.password.quartz}</prop>
-            <prop key="org.quartz.dataSource.dsOne.validationQuery">select 1</prop>
-            <prop key="org.quartz.dataSource.dsOne.maxConnections">10</prop>
-         </props>
-      </constructor-arg>
-   </bean>
+  <bean id="schedulerFactory" class="org.smallmind.scheduling.quartz.spring.SpringSchedulerFactory" depends-on="quartzLiquibase">
+    <constructor-arg index="0">
+      <props>
+        <prop key="org.quartz.scheduler.instanceName">Scheduler</prop>
+        <prop key="org.quartz.scheduler.instanceId">AUTO</prop>
+        <prop key="org.quartz.scheduler.threadsInheritContextClassLoaderOfInitializer">true</prop>
+        <prop key="org.quartz.threadPool.class">org.quartz.simpl.SimpleThreadPool</prop>
+        <prop key="org.quartz.threadPool.threadCount">10</prop>
+        <prop key="org.quartz.scheduler.rmi.export">true</prop>
+        <prop key="org.quartz.scheduler.rmi.createRegistry">as_needed</prop>
+        <prop key="org.quartz.jobStore.misfireThreshold">60000</prop>
+        <prop key="org.quartz.jobStore.class">org.quartz.impl.jdbcjobstore.JobStoreTX</prop>
+        <prop key="org.quartz.jobStore.driverDelegateClass">org.quartz.impl.jdbcjobstore.StdJDBCDelegate</prop>
+        <prop key="org.quartz.jobStore.dataSource">dsOne</prop>
+        <prop key="org.quartz.jobStore.tablePrefix">QRTZ_</prop>
+        <prop key="org.quartz.jobStore.useProperties">true</prop>
+        <prop key="org.quartz.jobStore.isClustered">true</prop>
+        <prop key="org.quartz.jobStore.clusterCheckinInterval">20000</prop>
+        <prop key="org.quartz.dataSource.dsOne.driver">${jdbc.driver.classname}</prop>
+        <prop key="org.quartz.dataSource.dsOne.URL">${jdbc.url.quartz}</prop>
+        <prop key="org.quartz.dataSource.dsOne.user">${jdbc.username.quartz}</prop>
+        <prop key="org.quartz.dataSource.dsOne.password">${jdbc.password.quartz}</prop>
+        <prop key="org.quartz.dataSource.dsOne.validationQuery">select 1</prop>
+        <prop key="org.quartz.dataSource.dsOne.maxConnections">10</prop>
+      </props>
+    </constructor-arg>
+  </bean>
 
-   <bean id="scheduler" factory-bean="schedulerFactory" factory-method="getScheduler" init-method="start" destroy-method="shutdown"/>
+  <bean id="scheduler" factory-bean="schedulerFactory" factory-method="getScheduler" init-method="start" destroy-method="shutdown"/>
 
 </beans>

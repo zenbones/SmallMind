@@ -36,46 +36,46 @@ import org.xml.sax.Attributes;
 
 public class SettingsDocumentExtender extends AbstractDocumentExtender {
 
-   private String profile;
-   private HashMap<String, String> propertyMap;
+  private String profile;
+  private HashMap<String, String> propertyMap;
 
-   public SettingsDocumentExtender (String profile) {
+  public SettingsDocumentExtender (String profile) {
 
-      this.profile = profile;
-   }
+    this.profile = profile;
+  }
 
-   public HashMap<String, String> getPropertyMap () {
+  public HashMap<String, String> getPropertyMap () {
 
-      return propertyMap;
-   }
+    return propertyMap;
+  }
 
-   public void setPropertyMap (HashMap<String, String> propertyMap) {
+  public void setPropertyMap (HashMap<String, String> propertyMap) {
 
-      this.propertyMap = propertyMap;
-   }
+    this.propertyMap = propertyMap;
+  }
 
-   public ElementExtender getElementExtender (SAXExtender parent, String namespaceURI, String localName, String qName, Attributes atts) {
+  public ElementExtender getElementExtender (SAXExtender parent, String namespaceURI, String localName, String qName, Attributes atts) {
 
-      if (localName.equals("settings")) {
-         return new SettingsElementExtender(profile);
-      }
-      else if (localName.equals("profiles")) {
-         return new ProfilesElementExtender();
-      }
-      else if (localName.equals("profile")) {
-         return new ProfileElementExtender();
-      }
-      else if ((parent instanceof ProfileElementExtender) && localName.equals("id")) {
-         return new IdElementExtender();
-      }
-      else if ((parent instanceof ProfileElementExtender) && localName.equals("properties")) {
-         return new PropertiesElementExtender();
-      }
-      else if (parent instanceof PropertiesElementExtender) {
-         return new BasicElementExtender();
-      }
-      else {
-         return new DoNothingElementExtender();
-      }
-   }
+    if (localName.equals("settings")) {
+      return new SettingsElementExtender(profile);
+    }
+    else if (localName.equals("profiles")) {
+      return new ProfilesElementExtender();
+    }
+    else if (localName.equals("profile")) {
+      return new ProfileElementExtender();
+    }
+    else if ((parent instanceof ProfileElementExtender) && localName.equals("id")) {
+      return new IdElementExtender();
+    }
+    else if ((parent instanceof ProfileElementExtender) && localName.equals("properties")) {
+      return new PropertiesElementExtender();
+    }
+    else if (parent instanceof PropertiesElementExtender) {
+      return new BasicElementExtender();
+    }
+    else {
+      return new DoNothingElementExtender();
+    }
+  }
 }

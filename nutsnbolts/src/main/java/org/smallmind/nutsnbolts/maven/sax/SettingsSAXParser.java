@@ -37,20 +37,20 @@ import org.xml.sax.SAXException;
 
 public class SettingsSAXParser {
 
-   public static HashMap<String, String> parse (String profile)
-      throws IOException, SAXException, ParserConfigurationException {
+  public static HashMap<String, String> parse (String profile)
+    throws IOException, SAXException, ParserConfigurationException {
 
-      SettingsDocumentExtender settingsDocumentExtender;
-      StringBuilder settingsPathBuilder = new StringBuilder();
+    SettingsDocumentExtender settingsDocumentExtender;
+    StringBuilder settingsPathBuilder = new StringBuilder();
 
-      settingsPathBuilder.append(System.getProperty("user.home"));
-      settingsPathBuilder.append(System.getProperty("file.separator"));
-      settingsPathBuilder.append(".m2");
-      settingsPathBuilder.append(System.getProperty("file.separator"));
-      settingsPathBuilder.append("settings.xml");
+    settingsPathBuilder.append(System.getProperty("user.home"));
+    settingsPathBuilder.append(System.getProperty("file.separator"));
+    settingsPathBuilder.append(".m2");
+    settingsPathBuilder.append(System.getProperty("file.separator"));
+    settingsPathBuilder.append("settings.xml");
 
-      ExtensibleSAXParser.parse(settingsDocumentExtender = new SettingsDocumentExtender(profile), new InputSource(new FileInputStream(settingsPathBuilder.toString())), XMLEntityResolver.getInstance(), false);
+    ExtensibleSAXParser.parse(settingsDocumentExtender = new SettingsDocumentExtender(profile), new InputSource(new FileInputStream(settingsPathBuilder.toString())), XMLEntityResolver.getInstance(), false);
 
-      return settingsDocumentExtender.getPropertyMap();
-   }
+    return settingsDocumentExtender.getPropertyMap();
+  }
 }

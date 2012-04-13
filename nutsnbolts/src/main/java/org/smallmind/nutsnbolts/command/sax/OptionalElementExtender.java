@@ -33,20 +33,20 @@ import org.xml.sax.SAXException;
 
 public class OptionalElementExtender extends AbstractElementExtender {
 
-   public void completedChildElement (ElementExtender elementExtender)
-      throws SAXException {
+  public void completedChildElement (ElementExtender elementExtender)
+    throws SAXException {
 
-      CommandGroup commandGroup;
+    CommandGroup commandGroup;
 
-      if (elementExtender instanceof CommandElementExtender) {
-         commandGroup = new CommandGroup(true);
-         commandGroup.addCommandStructure(((CommandElementExtender)elementExtender).getCommandtStructure());
-      }
-      else {
-         commandGroup = ((GroupElementExtender)elementExtender).getCommandGroup();
-         commandGroup.setOptional(true);
-      }
+    if (elementExtender instanceof CommandElementExtender) {
+      commandGroup = new CommandGroup(true);
+      commandGroup.addCommandStructure(((CommandElementExtender)elementExtender).getCommandtStructure());
+    }
+    else {
+      commandGroup = ((GroupElementExtender)elementExtender).getCommandGroup();
+      commandGroup.setOptional(true);
+    }
 
-      ((CommandsElementExtender)getParent()).addCommandGroup(commandGroup);
-   }
+    ((CommandsElementExtender)getParent()).addCommandGroup(commandGroup);
+  }
 }

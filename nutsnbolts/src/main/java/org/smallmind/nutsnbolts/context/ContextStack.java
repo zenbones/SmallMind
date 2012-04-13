@@ -30,55 +30,55 @@ import java.util.LinkedList;
 
 public class ContextStack {
 
-   private final LinkedList<Context> contextList;
+  private final LinkedList<Context> contextList;
 
-   public ContextStack () {
+  public ContextStack () {
 
-      contextList = new LinkedList<Context>();
-   }
+    contextList = new LinkedList<Context>();
+  }
 
-   public synchronized boolean isEmpty () {
+  public synchronized boolean isEmpty () {
 
-      return contextList.isEmpty();
-   }
+    return contextList.isEmpty();
+  }
 
-   public synchronized Context peek () {
+  public synchronized Context peek () {
 
-      if (contextList.isEmpty()) {
-         return null;
-      }
+    if (contextList.isEmpty()) {
+      return null;
+    }
 
-      return contextList.getFirst();
-   }
+    return contextList.getFirst();
+  }
 
-   public synchronized void set (Context context) {
+  public synchronized void set (Context context) {
 
-      pop();
-      push(context);
-   }
+    pop();
+    push(context);
+  }
 
-   public synchronized void push (Context context) {
+  public synchronized void push (Context context) {
+
+    if (context instanceof LifecycleAware) {
+      ((LifecycleAware)context).beforePush();
+    }
+
+    contextList.addFirst(context);
+  }
+
+  public synchronized Context pop () {
+
+    if (!contextList.isEmpty()) {
+
+      Context context = contextList.removeFirst();
 
       if (context instanceof LifecycleAware) {
-         ((LifecycleAware)context).beforePush();
+        ((LifecycleAware)context).afterPop();
       }
 
-      contextList.addFirst(context);
-   }
+      return context;
+    }
 
-   public synchronized Context pop () {
-
-      if (!contextList.isEmpty()) {
-
-         Context context = contextList.removeFirst();
-
-         if (context instanceof LifecycleAware) {
-            ((LifecycleAware)context).afterPop();
-         }
-
-         return context;
-      }
-
-      return null;
-   }
+    return null;
+  }
 }

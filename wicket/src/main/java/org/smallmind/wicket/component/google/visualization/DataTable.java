@@ -34,62 +34,62 @@ import org.smallmind.nutsnbolts.util.IterableIterator;
 
 public class DataTable extends TableElement {
 
-   private ColumnDescription[] columnDescriptions;
-   private ArrayList<TableRow> rows;
+  private ColumnDescription[] columnDescriptions;
+  private ArrayList<TableRow> rows;
 
-   public DataTable (List<ColumnDescription> columnDescriptionList) {
+  public DataTable (List<ColumnDescription> columnDescriptionList) {
 
-      this(columnDescriptionList.toArray(new ColumnDescription[columnDescriptionList.size()]));
-   }
+    this(columnDescriptionList.toArray(new ColumnDescription[columnDescriptionList.size()]));
+  }
 
-   public DataTable (ColumnDescription[] columnDescriptions) {
+  public DataTable (ColumnDescription[] columnDescriptions) {
 
-      this.columnDescriptions = columnDescriptions;
+    this.columnDescriptions = columnDescriptions;
 
-      rows = new ArrayList<TableRow>();
-   }
+    rows = new ArrayList<TableRow>();
+  }
 
-   public int getColumnCount () {
+  public int getColumnCount () {
 
-      return columnDescriptions.length;
-   }
+    return columnDescriptions.length;
+  }
 
-   public ColumnDescription getColumnDescription (int index) {
+  public ColumnDescription getColumnDescription (int index) {
 
-      return columnDescriptions[index];
-   }
+    return columnDescriptions[index];
+  }
 
-   public Iterable<ColumnDescription> getColumnDescriptions () {
+  public Iterable<ColumnDescription> getColumnDescriptions () {
 
-      return new ArrayIterator<ColumnDescription>(columnDescriptions);
-   }
+    return new ArrayIterator<ColumnDescription>(columnDescriptions);
+  }
 
-   public synchronized TableRow createTableRow () {
+  public synchronized TableRow createTableRow () {
 
-      TableRow tableRow = new TableRow(this, new TableCell[columnDescriptions.length]);
+    TableRow tableRow = new TableRow(this, new TableCell[columnDescriptions.length]);
 
-      rows.add(tableRow);
+    rows.add(tableRow);
 
-      return tableRow;
-   }
+    return tableRow;
+  }
 
-   public synchronized Iterable<TableRow> getRows () {
+  public synchronized Iterable<TableRow> getRows () {
 
-      return new IterableIterator<TableRow>(Collections.unmodifiableList(rows).iterator());
-   }
+    return new IterableIterator<TableRow>(Collections.unmodifiableList(rows).iterator());
+  }
 
-   public synchronized TableRow getRow (int index) {
+  public synchronized TableRow getRow (int index) {
 
-      return rows.get(index);
-   }
+    return rows.get(index);
+  }
 
-   public synchronized TableCell getCell (int rowIndex, int cellIndex) {
+  public synchronized TableCell getCell (int rowIndex, int cellIndex) {
 
-      return rows.get(rowIndex).getCell(cellIndex);
-   }
+    return rows.get(rowIndex).getCell(cellIndex);
+  }
 
-   public synchronized Value getValue (int rowIndex, int cellIndex) {
+  public synchronized Value getValue (int rowIndex, int cellIndex) {
 
-      return rows.get(rowIndex).getCell(cellIndex).getValue();
-   }
+    return rows.get(rowIndex).getCell(cellIndex).getValue();
+  }
 }

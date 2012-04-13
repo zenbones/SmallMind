@@ -34,211 +34,211 @@ import java.util.Set;
 
 public class Tuple<K, V> implements Serializable, Cloneable {
 
-   private ArrayList<K> keys;
-   private ArrayList<V> values;
+  private ArrayList<K> keys;
+  private ArrayList<V> values;
 
-   public Tuple () {
+  public Tuple () {
 
-      keys = new ArrayList<K>();
-      values = new ArrayList<V>();
-   }
+    keys = new ArrayList<K>();
+    values = new ArrayList<V>();
+  }
 
-   public synchronized void clear () {
+  public synchronized void clear () {
 
-      keys.clear();
-      values.clear();
-   }
+    keys.clear();
+    values.clear();
+  }
 
-   public synchronized void add (Tuple<K, V> tuple) {
+  public synchronized void add (Tuple<K, V> tuple) {
 
-      for (int count = 0; count < tuple.size(); count++) {
-         addPair(tuple.getKey(count), tuple.getValue(count));
-      }
-   }
+    for (int count = 0; count < tuple.size(); count++) {
+      addPair(tuple.getKey(count), tuple.getValue(count));
+    }
+  }
 
-   public synchronized void addPair (K key, V value) {
+  public synchronized void addPair (K key, V value) {
 
-      keys.add(key);
-      values.add(value);
-   }
+    keys.add(key);
+    values.add(value);
+  }
 
-   public synchronized void addPair (int index, K key, V value) {
+  public synchronized void addPair (int index, K key, V value) {
 
-      keys.add(index, key);
-      values.add(index, value);
-   }
+    keys.add(index, key);
+    values.add(index, value);
+  }
 
-   public synchronized void setPair (K key, V value) {
+  public synchronized void setPair (K key, V value) {
 
-      int keyIndex;
+    int keyIndex;
 
-      if ((keyIndex = keys.indexOf(key)) < 0) {
-         addPair(key, value);
-      }
-      else {
-         setValue(keyIndex, value);
-      }
-   }
+    if ((keyIndex = keys.indexOf(key)) < 0) {
+      addPair(key, value);
+    }
+    else {
+      setValue(keyIndex, value);
+    }
+  }
 
-   public synchronized void setPair (int index, K key, V value) {
+  public synchronized void setPair (int index, K key, V value) {
 
-      int keyIndex;
+    int keyIndex;
 
-      if ((keyIndex = keys.indexOf(key)) < 0) {
-         addPair(index, key, value);
-      }
-      else {
-         setValue(keyIndex, value);
-      }
-   }
+    if ((keyIndex = keys.indexOf(key)) < 0) {
+      addPair(index, key, value);
+    }
+    else {
+      setValue(keyIndex, value);
+    }
+  }
 
-   public synchronized void removeKey (K key) {
+  public synchronized void removeKey (K key) {
 
-      int index;
+    int index;
 
-      while ((index = keys.indexOf(key)) >= 0) {
-         removePair(index);
-      }
-   }
+    while ((index = keys.indexOf(key)) >= 0) {
+      removePair(index);
+    }
+  }
 
-   public synchronized V removePair (K key) {
+  public synchronized V removePair (K key) {
 
-      int index;
+    int index;
 
-      if ((index = keys.indexOf(key)) >= 0) {
-         return removePair(index);
-      }
+    if ((index = keys.indexOf(key)) >= 0) {
+      return removePair(index);
+    }
 
-      return null;
-   }
+    return null;
+  }
 
-   public synchronized V removePair (int index) {
+  public synchronized V removePair (int index) {
 
-      keys.remove(index);
-      return values.remove(index);
-   }
+    keys.remove(index);
+    return values.remove(index);
+  }
 
-   public synchronized void setValue (int index, V value) {
+  public synchronized void setValue (int index, V value) {
 
-      values.set(index, value);
-   }
+    values.set(index, value);
+  }
 
-   public synchronized void setValue (K key, V value) {
+  public synchronized void setValue (K key, V value) {
 
-      values.set(keys.indexOf(key), value);
-   }
+    values.set(keys.indexOf(key), value);
+  }
 
-   public synchronized int size () {
+  public synchronized int size () {
 
-      return keys.size();
-   }
+    return keys.size();
+  }
 
-   public synchronized K getKey (int index) {
+  public synchronized K getKey (int index) {
 
-      return keys.get(index);
-   }
+    return keys.get(index);
+  }
 
-   public synchronized List<K> getKeys () {
+  public synchronized List<K> getKeys () {
 
-      return keys;
-   }
+    return keys;
+  }
 
-   public synchronized Set<K> getUniqueKeys () {
+  public synchronized Set<K> getUniqueKeys () {
 
-      HashSet<K> uniqueSet;
+    HashSet<K> uniqueSet;
 
-      uniqueSet = new HashSet<K>();
-      for (int count = 0; count < size(); count++) {
-         uniqueSet.add(keys.get(count));
-      }
+    uniqueSet = new HashSet<K>();
+    for (int count = 0; count < size(); count++) {
+      uniqueSet.add(keys.get(count));
+    }
 
-      return uniqueSet;
-   }
+    return uniqueSet;
+  }
 
-   public synchronized int indexOfKey (K key) {
+  public synchronized int indexOfKey (K key) {
 
-      return keys.indexOf(key);
-   }
+    return keys.indexOf(key);
+  }
 
-   public synchronized V getValue (int index) {
+  public synchronized V getValue (int index) {
 
+    return values.get(index);
+  }
+
+  public synchronized V getValue (K key) {
+
+    int index;
+
+    if ((index = keys.indexOf(key)) >= 0) {
       return values.get(index);
-   }
+    }
 
-   public synchronized V getValue (K key) {
+    return null;
+  }
 
-      int index;
+  public synchronized List<V> getValues (K key) {
 
-      if ((index = keys.indexOf(key)) >= 0) {
-         return values.get(index);
-      }
+    ArrayList<V> allValues;
 
+    if (keys.indexOf(key) < 0) {
       return null;
-   }
+    }
 
-   public synchronized List<V> getValues (K key) {
+    allValues = new ArrayList<V>();
+    for (int count = 0; count < size(); count++) {
+      if ((keys.get(count)).equals(key)) {
+        allValues.add(values.get(count));
+      }
+    }
 
-      ArrayList<V> allValues;
+    return allValues;
+  }
 
-      if (keys.indexOf(key) < 0) {
-         return null;
+  public synchronized boolean isKey (K key) {
+
+    return keys.contains(key);
+  }
+
+  public synchronized boolean isKeyValuePair (K key, V value) {
+
+    for (int count = 0; count < size(); count++) {
+      if ((keys.get(count)).equals(key)) {
+        if ((values.get(count)).equals(value)) {
+          return true;
+        }
+      }
+    }
+
+    return false;
+  }
+
+  public synchronized Object clone () {
+
+    Tuple<K, V> tuple = new Tuple<K, V>();
+
+    for (int count = 0; count < size(); count++) {
+      tuple.addPair(getKey(count), getValue(count));
+    }
+
+    return tuple;
+  }
+
+  public synchronized String toString () {
+
+    StringBuilder dataBuilder;
+
+    dataBuilder = new StringBuilder("[" + String.valueOf(size()) + "](");
+    for (int count = 0; count < size(); count++) {
+      if (count > 0) {
+        dataBuilder.append(";");
       }
 
-      allValues = new ArrayList<V>();
-      for (int count = 0; count < size(); count++) {
-         if ((keys.get(count)).equals(key)) {
-            allValues.add(values.get(count));
-         }
-      }
-
-      return allValues;
-   }
-
-   public synchronized boolean isKey (K key) {
-
-      return keys.contains(key);
-   }
-
-   public synchronized boolean isKeyValuePair (K key, V value) {
-
-      for (int count = 0; count < size(); count++) {
-         if ((keys.get(count)).equals(key)) {
-            if ((values.get(count)).equals(value)) {
-               return true;
-            }
-         }
-      }
-
-      return false;
-   }
-
-   public synchronized Object clone () {
-
-      Tuple<K, V> tuple = new Tuple<K, V>();
-
-      for (int count = 0; count < size(); count++) {
-         tuple.addPair(getKey(count), getValue(count));
-      }
-
-      return tuple;
-   }
-
-   public synchronized String toString () {
-
-      StringBuilder dataBuilder;
-
-      dataBuilder = new StringBuilder("[" + String.valueOf(size()) + "](");
-      for (int count = 0; count < size(); count++) {
-         if (count > 0) {
-            dataBuilder.append(";");
-         }
-
-         dataBuilder.append(getKey(count));
-         dataBuilder.append("=");
-         dataBuilder.append(getValue(count));
-      }
-      dataBuilder.append(")");
-      return dataBuilder.toString();
-   }
+      dataBuilder.append(getKey(count));
+      dataBuilder.append("=");
+      dataBuilder.append(getValue(count));
+    }
+    dataBuilder.append(")");
+    return dataBuilder.toString();
+  }
 
 }

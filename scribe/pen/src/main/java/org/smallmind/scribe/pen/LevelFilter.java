@@ -28,23 +28,24 @@ package org.smallmind.scribe.pen;
 
 public class LevelFilter implements Filter {
 
-   private Level level = Level.TRACE;
+  private Level level = Level.TRACE;
 
-   public LevelFilter () {
-   }
+  public LevelFilter () {
 
-   public LevelFilter (Level level) {
+  }
 
-      this.level = level;
-   }
+  public LevelFilter (Level level) {
 
-   public void setLevel (Level level) {
+    this.level = level;
+  }
 
-      this.level = level;
-   }
+  public void setLevel (Level level) {
 
-   public boolean willLog (Record record) {
+    this.level = level;
+  }
 
-      return record.getLevel().atLeast(level);
-   }
+  public boolean willLog (Record record) {
+
+    return record.getLevel().atLeast(level);
+  }
 }

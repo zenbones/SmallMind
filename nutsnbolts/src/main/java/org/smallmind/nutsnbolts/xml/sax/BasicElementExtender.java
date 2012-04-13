@@ -30,28 +30,28 @@ import org.xml.sax.Attributes;
 
 public class BasicElementExtender extends AbstractElementExtender {
 
-   private String localName;
-   private StringBuilder contentBuilder;
+  private String localName;
+  private StringBuilder contentBuilder;
 
-   public String getLocalName () {
+  public String getLocalName () {
 
-      return localName;
-   }
+    return localName;
+  }
 
-   public String getContent () {
+  public String getContent () {
 
-      return contentBuilder.toString();
-   }
+    return contentBuilder.toString();
+  }
 
-   @Override
-   public void startElement (String namespaceURI, String localName, String qName, Attributes atts) {
+  @Override
+  public void startElement (String namespaceURI, String localName, String qName, Attributes atts) {
 
-      this.localName = localName;
-   }
+    this.localName = localName;
+  }
 
-   @Override
-   public void endElement (String namespaceURI, String localName, String qName, StringBuilder contentBuilder) {
+  @Override
+  public void endElement (String namespaceURI, String localName, String qName, StringBuilder contentBuilder) {
 
-      this.contentBuilder = contentBuilder;
-   }
+    this.contentBuilder = contentBuilder;
+  }
 }

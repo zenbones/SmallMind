@@ -33,45 +33,45 @@ import org.smallmind.swing.dialog.OptionDialog;
 
 public abstract class OptionPanel extends JPanel {
 
-   private OptionDialog optionDialog;
-   private boolean initialized = false;
+  private OptionDialog optionDialog;
+  private boolean initialized = false;
 
-   public OptionPanel (LayoutManager layoutManager) {
+  public OptionPanel (LayoutManager layoutManager) {
 
-      super(layoutManager);
-   }
+    super(layoutManager);
+  }
 
-   public OptionDialog getOptionDialog () {
+  public OptionDialog getOptionDialog () {
 
-      return optionDialog;
-   }
+    return optionDialog;
+  }
 
-   public DialogState getDialogState () {
+  public DialogState getDialogState () {
 
-      return optionDialog.getDialogState();
-   }
+    return optionDialog.getDialogState();
+  }
 
-   public void setDialogSate (DialogState dialogState) {
+  public void setDialogSate (DialogState dialogState) {
 
-      optionDialog.setDialogState(dialogState);
-   }
+    optionDialog.setDialogState(dialogState);
+  }
 
-   public void initialize (OptionDialog optionDialog) {
+  public void initialize (OptionDialog optionDialog) {
 
-      this.optionDialog = optionDialog;
+    this.optionDialog = optionDialog;
 
-      initialized = true;
-   }
+    initialized = true;
+  }
 
-   public void closeParent () {
+  public void closeParent () {
 
-      if (!initialized) {
-         throw new IllegalStateException("Parent dialog was never initialized");
-      }
+    if (!initialized) {
+      throw new IllegalStateException("Parent dialog was never initialized");
+    }
 
-      optionDialog.windowClosing(null);
-   }
+    optionDialog.windowClosing(null);
+  }
 
-   public abstract String validateOption (DialogState dialogState);
+  public abstract String validateOption (DialogState dialogState);
 
 }

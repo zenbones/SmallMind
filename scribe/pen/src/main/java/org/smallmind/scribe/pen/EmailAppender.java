@@ -33,66 +33,66 @@ import org.smallmind.nutsnbolts.email.Postman;
 
 public class EmailAppender extends AbstractAppender {
 
-   private Postman postman;
-   private String from;
-   private String to;
-   private String subject;
+  private Postman postman;
+  private String from;
+  private String to;
+  private String subject;
 
-   public EmailAppender (String smtpServer, int smtpPort) {
+  public EmailAppender (String smtpServer, int smtpPort) {
 
-      this(smtpServer, smtpPort, new Authentication(AuthType.NONE), false);
-   }
+    this(smtpServer, smtpPort, new Authentication(AuthType.NONE), false);
+  }
 
-   public EmailAppender (String smtpServer, int smtpPort, Authentication authentication) {
+  public EmailAppender (String smtpServer, int smtpPort, Authentication authentication) {
 
-      this(smtpServer, smtpPort, authentication, false);
-   }
+    this(smtpServer, smtpPort, authentication, false);
+  }
 
-   public EmailAppender (String smtpServer, int smtpPort, boolean secure) {
+  public EmailAppender (String smtpServer, int smtpPort, boolean secure) {
 
-      this(smtpServer, smtpPort, new Authentication(AuthType.NONE), secure);
-   }
+    this(smtpServer, smtpPort, new Authentication(AuthType.NONE), secure);
+  }
 
-   public EmailAppender (String smtpServer, int smtpPort, Authentication authentication, boolean secure) {
+  public EmailAppender (String smtpServer, int smtpPort, Authentication authentication, boolean secure) {
 
-      super();
+    super();
 
-      postman = new Postman(smtpServer, smtpPort, authentication, secure);
-   }
+    postman = new Postman(smtpServer, smtpPort, authentication, secure);
+  }
 
-   public EmailAppender (String smtpServer, int smtpPort, String from, String to, String subject) {
+  public EmailAppender (String smtpServer, int smtpPort, String from, String to, String subject) {
 
-      this(smtpServer, smtpPort);
+    this(smtpServer, smtpPort);
 
-      this.from = from;
-      this.to = to;
+    this.from = from;
+    this.to = to;
 
-      setSubject(subject);
-   }
+    setSubject(subject);
+  }
 
-   public void setFrom (String from) {
+  public void setFrom (String from) {
 
-      this.from = from;
-   }
+    this.from = from;
+  }
 
-   public void setTo (String to) {
+  public void setTo (String to) {
 
-      this.to = to;
-   }
+    this.to = to;
+  }
 
-   public void setSubject (String subject) {
+  public void setSubject (String subject) {
 
-      this.subject = subject;
-   }
+    this.subject = subject;
+  }
 
-   public void handleOutput (String output)
-      throws Exception {
+  public void handleOutput (String output)
+    throws Exception {
 
-      postman.send(new Mail(from, to, subject, output));
-   }
+    postman.send(new Mail(from, to, subject, output));
+  }
 
-   public boolean requiresFormatter () {
+  public boolean requiresFormatter () {
 
-      return true;
-   }
+    return true;
+  }
 }

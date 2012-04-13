@@ -32,15 +32,15 @@ import java.util.regex.Pattern;
 
 public class WildcardFileNameFileFilter implements FileFilter {
 
-   private Pattern namePattern;
+  private Pattern namePattern;
 
-   public WildcardFileNameFileFilter (String name) {
+  public WildcardFileNameFileFilter (String name) {
 
-      namePattern = Pattern.compile(RegExpTranslator.translate(name));
-   }
+    namePattern = Pattern.compile(RegExpTranslator.translate(name));
+  }
 
-   public boolean accept (File file) {
+  public boolean accept (File file) {
 
-      return namePattern.matcher(file.getName()).matches();
-   }
+    return namePattern.matcher(file.getName()).matches();
+  }
 }

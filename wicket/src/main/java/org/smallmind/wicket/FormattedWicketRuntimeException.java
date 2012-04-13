@@ -30,23 +30,23 @@ import org.apache.wicket.WicketRuntimeException;
 
 public class FormattedWicketRuntimeException extends WicketRuntimeException {
 
-   public FormattedWicketRuntimeException () {
+  public FormattedWicketRuntimeException () {
 
-      super();
-   }
+    super();
+  }
 
-   public FormattedWicketRuntimeException (String message, Object... args) {
+  public FormattedWicketRuntimeException (String message, Object... args) {
 
-      super(String.format(message, args));
-   }
+    super(String.format(message, args));
+  }
 
-   public FormattedWicketRuntimeException (Throwable throwable, String message, Object... args) {
+  public FormattedWicketRuntimeException (Throwable throwable, String message, Object... args) {
 
-      super(String.format(message, args), throwable);
-   }
+    super(String.format(message, args), throwable);
+  }
 
-   public FormattedWicketRuntimeException (Throwable throwable) {
+  public FormattedWicketRuntimeException (Throwable throwable) {
 
-      super(throwable);
-   }
+    super(throwable);
+  }
 }

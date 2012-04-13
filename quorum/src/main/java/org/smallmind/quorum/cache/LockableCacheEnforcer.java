@@ -31,89 +31,89 @@ import java.util.concurrent.ConcurrentHashMap;
 
 public class LockableCacheEnforcer<K, V> implements LockableCache<K, V> {
 
-   private static final InheritableThreadLocal<Map<Object, KeyLock>> KEY_LOCK_MAP_LOCAL = new InheritableThreadLocal<Map<Object, KeyLock>>() {
+  private static final InheritableThreadLocal<Map<Object, KeyLock>> KEY_LOCK_MAP_LOCAL = new InheritableThreadLocal<Map<Object, KeyLock>>() {
 
-      @Override
-      protected Map<Object, KeyLock> initialValue () {
+    @Override
+    protected Map<Object, KeyLock> initialValue () {
 
-         return new ConcurrentHashMap<Object, KeyLock>();
-      }
-   };
+      return new ConcurrentHashMap<Object, KeyLock>();
+    }
+  };
 
-   private LockingCache<K, V> cache;
+  private LockingCache<K, V> cache;
 
-   public LockableCacheEnforcer (LockingCache<K, V> cache) {
+  public LockableCacheEnforcer (LockingCache<K, V> cache) {
 
-      this.cache = cache;
-   }
+    this.cache = cache;
+  }
 
-   public long getLockTimeout () {
+  public long getLockTimeout () {
 
-      return cache.getLockTimeout();
-   }
+    return cache.getLockTimeout();
+  }
 
-   public void lock (K key) {
+  public void lock (K key) {
 
-      KEY_LOCK_MAP_LOCAL.get().put(key, cache.lock(KEY_LOCK_MAP_LOCAL.get().get(key), key));
-   }
+    KEY_LOCK_MAP_LOCAL.get().put(key, cache.lock(KEY_LOCK_MAP_LOCAL.get().get(key), key));
+  }
 
-   public void unlock (K key) {
+  public void unlock (K key) {
 
-      cache.unlock(KEY_LOCK_MAP_LOCAL.get().remove(key), key);
-   }
+    cache.unlock(KEY_LOCK_MAP_LOCAL.get().remove(key), key);
+  }
 
-   public <R> R executeLockedCallback (LockedCallback<K, R> callback) {
+  public <R> R executeLockedCallback (LockedCallback<K, R> callback) {
 
-      return cache.executeLockedCallback(KEY_LOCK_MAP_LOCAL.get().get(callback.getKey()), callback);
-   }
+    return cache.executeLockedCallback(KEY_LOCK_MAP_LOCAL.get().get(callback.getKey()), callback);
+  }
 
-   public int size () {
+  public int size () {
 
-      return cache.size();
-   }
+    return cache.size();
+  }
 
-   public String getCacheName () {
+  public String getCacheName () {
 
-      return cache.getCacheName();
-   }
+    return cache.getCacheName();
+  }
 
-   public V get (K key, Object... parameters) {
+  public V get (K key, Object... parameters) {
 
-      return cache.get(KEY_LOCK_MAP_LOCAL.get().get(key), key, parameters);
-   }
+    return cache.get(KEY_LOCK_MAP_LOCAL.get().get(key), key, parameters);
+  }
 
-   public V remove (K key) {
+  public V remove (K key) {
 
-      return cache.remove(KEY_LOCK_MAP_LOCAL.get().get(key), key);
-   }
+    return cache.remove(KEY_LOCK_MAP_LOCAL.get().get(key), key);
+  }
 
-   public V put (K key, V value) {
+  public V put (K key, V value) {
 
-      return cache.put(KEY_LOCK_MAP_LOCAL.get().get(key), key, value);
-   }
+    return cache.put(KEY_LOCK_MAP_LOCAL.get().get(key), key, value);
+  }
 
-   public V putIfAbsent (K key, V value) {
+  public V putIfAbsent (K key, V value) {
 
-      return cache.putIfAbsent(KEY_LOCK_MAP_LOCAL.get().get(key), key, value);
-   }
+    return cache.putIfAbsent(KEY_LOCK_MAP_LOCAL.get().get(key), key, value);
+  }
 
-   public boolean exists (K key) {
+  public boolean exists (K key) {
 
-      return cache.exists(KEY_LOCK_MAP_LOCAL.get().get(key), key);
-   }
+    return cache.exists(KEY_LOCK_MAP_LOCAL.get().get(key), key);
+  }
 
-   public void clear () {
+  public void clear () {
 
-      cache.clear();
-   }
+    cache.clear();
+  }
 
-   public boolean isClosed () {
+  public boolean isClosed () {
 
-      return cache.isClosed();
-   }
+    return cache.isClosed();
+  }
 
-   public void close () {
+  public void close () {
 
-      cache.close();
-   }
+    cache.close();
+  }
 }

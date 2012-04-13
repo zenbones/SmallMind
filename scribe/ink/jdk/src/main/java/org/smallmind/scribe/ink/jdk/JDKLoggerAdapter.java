@@ -43,158 +43,158 @@ import org.smallmind.scribe.pen.probe.ProbeReport;
 
 public class JDKLoggerAdapter implements LoggerAdapter {
 
-   private final Logger logger;
+  private final Logger logger;
 
-   private ConcurrentLinkedQueue<Filter> filterList;
-   private ConcurrentLinkedQueue<Enhancer> enhancerList;
-   private boolean autoFillLogicalContext = false;
+  private ConcurrentLinkedQueue<Filter> filterList;
+  private ConcurrentLinkedQueue<Enhancer> enhancerList;
+  private boolean autoFillLogicalContext = false;
 
-   public JDKLoggerAdapter (Logger logger) {
+  public JDKLoggerAdapter (Logger logger) {
 
-      this.logger = logger;
+    this.logger = logger;
 
-      filterList = new ConcurrentLinkedQueue<Filter>();
-      enhancerList = new ConcurrentLinkedQueue<Enhancer>();
-   }
+    filterList = new ConcurrentLinkedQueue<Filter>();
+    enhancerList = new ConcurrentLinkedQueue<Enhancer>();
+  }
 
-   public String getName () {
+  public String getName () {
 
-      return logger.getName();
-   }
+    return logger.getName();
+  }
 
-   public boolean getAutoFillLogicalContext () {
+  public boolean getAutoFillLogicalContext () {
 
-      return autoFillLogicalContext;
-   }
+    return autoFillLogicalContext;
+  }
 
-   public void setAutoFillLogicalContext (boolean autoFillLogicalContext) {
+  public void setAutoFillLogicalContext (boolean autoFillLogicalContext) {
 
-      this.autoFillLogicalContext = autoFillLogicalContext;
-   }
+    this.autoFillLogicalContext = autoFillLogicalContext;
+  }
 
-   public synchronized void addFilter (Filter filter) {
+  public synchronized void addFilter (Filter filter) {
 
-      synchronized (logger) {
-         filterList.add(filter);
-         logger.setFilter(new JDKFilterWrapper(filter));
+    synchronized (logger) {
+      filterList.add(filter);
+      logger.setFilter(new JDKFilterWrapper(filter));
+    }
+  }
+
+  public synchronized void clearFilters () {
+
+    filterList.clear();
+    logger.setFilter(null);
+  }
+
+  public synchronized void addAppender (Appender appender) {
+
+    logger.addHandler(new JDKAppenderWrapper(appender));
+  }
+
+  public synchronized void clearAppenders () {
+
+    for (Handler handler : logger.getHandlers()) {
+      logger.removeHandler(handler);
+    }
+  }
+
+  public void addEnhancer (Enhancer enhancer) {
+
+    enhancerList.add(enhancer);
+  }
+
+  public void clearEnhancers () {
+
+    enhancerList.clear();
+  }
+
+  public Level getLevel () {
+
+    return (logger.getLevel() == null) ? Level.INFO : JDKLevelTranslator.getLevel(logger.getLevel());
+  }
+
+  public void setLevel (Level level) {
+
+    logger.setLevel(JDKLevelTranslator.getLog4JLevel(level));
+  }
+
+  public void logMessage (Discriminator discriminator, Level level, Throwable throwable, String message, Object... args) {
+
+    JDKRecordSubverter recordSubverter;
+    LogicalContext logicalContext;
+
+    if ((!level.equals(Level.OFF)) && getLevel().noGreater(level)) {
+      if ((logicalContext = willLog(discriminator, level)) != null) {
+        recordSubverter = new JDKRecordSubverter(logger.getName(), discriminator, level, null, logicalContext, throwable, message, args);
+        enhanceRecord(recordSubverter.getRecord());
+        logger.log(recordSubverter);
       }
-   }
+    }
+  }
 
-   public synchronized void clearFilters () {
+  public void logProbe (Discriminator discriminator, Level level, Throwable throwable, ProbeReport probeReport) {
 
-      filterList.clear();
-      logger.setFilter(null);
-   }
+    JDKRecordSubverter recordSubverter;
+    LogicalContext logicalContext;
 
-   public synchronized void addAppender (Appender appender) {
-
-      logger.addHandler(new JDKAppenderWrapper(appender));
-   }
-
-   public synchronized void clearAppenders () {
-
-      for (Handler handler : logger.getHandlers()) {
-         logger.removeHandler(handler);
+    if ((!level.equals(Level.OFF)) && getLevel().noGreater(level)) {
+      if ((logicalContext = willLog(discriminator, level)) != null) {
+        recordSubverter = new JDKRecordSubverter(logger.getName(), discriminator, level, probeReport, logicalContext, throwable, (probeReport.getTitle() == null) ? "Probe Report" : probeReport.getTitle());
+        enhanceRecord(recordSubverter.getRecord());
+        logger.log(recordSubverter);
       }
-   }
+    }
+  }
 
-   public void addEnhancer (Enhancer enhancer) {
+  public void logMessage (Discriminator discriminator, Level level, Throwable throwable, Object object) {
 
-      enhancerList.add(enhancer);
-   }
+    JDKRecordSubverter recordSubverter;
+    LogicalContext logicalContext;
 
-   public void clearEnhancers () {
-
-      enhancerList.clear();
-   }
-
-   public Level getLevel () {
-
-      return (logger.getLevel() == null) ? Level.INFO : JDKLevelTranslator.getLevel(logger.getLevel());
-   }
-
-   public void setLevel (Level level) {
-
-      logger.setLevel(JDKLevelTranslator.getLog4JLevel(level));
-   }
-
-   public void logMessage (Discriminator discriminator, Level level, Throwable throwable, String message, Object... args) {
-
-      JDKRecordSubverter recordSubverter;
-      LogicalContext logicalContext;
-
-      if ((!level.equals(Level.OFF)) && getLevel().noGreater(level)) {
-         if ((logicalContext = willLog(discriminator, level)) != null) {
-            recordSubverter = new JDKRecordSubverter(logger.getName(), discriminator, level, null, logicalContext, throwable, message, args);
-            enhanceRecord(recordSubverter.getRecord());
-            logger.log(recordSubverter);
-         }
+    if ((!level.equals(Level.OFF)) && getLevel().noGreater(level)) {
+      if ((logicalContext = willLog(discriminator, level)) != null) {
+        recordSubverter = new JDKRecordSubverter(logger.getName(), discriminator, level, null, logicalContext, throwable, (object == null) ? null : object.toString());
+        enhanceRecord(recordSubverter.getRecord());
+        logger.log(recordSubverter);
       }
-   }
+    }
+  }
 
-   public void logProbe (Discriminator discriminator, Level level, Throwable throwable, ProbeReport probeReport) {
+  private LogicalContext willLog (Discriminator discriminator, Level level) {
 
-      JDKRecordSubverter recordSubverter;
-      LogicalContext logicalContext;
+    LogicalContext logicalContext;
+    Record filterRecord;
 
-      if ((!level.equals(Level.OFF)) && getLevel().noGreater(level)) {
-         if ((logicalContext = willLog(discriminator, level)) != null) {
-            recordSubverter = new JDKRecordSubverter(logger.getName(), discriminator, level, probeReport, logicalContext, throwable, (probeReport.getTitle() == null) ? "Probe Report" : probeReport.getTitle());
-            enhanceRecord(recordSubverter.getRecord());
-            logger.log(recordSubverter);
-         }
-      }
-   }
+    logicalContext = new DefaultLogicalContext();
+    if (getAutoFillLogicalContext()) {
+      logicalContext.fillIn();
+    }
 
-   public void logMessage (Discriminator discriminator, Level level, Throwable throwable, Object object) {
+    if (!((logger.getFilter() == null) && filterList.isEmpty())) {
+      filterRecord = new JDKRecordSubverter(logger.getName(), discriminator, level, null, logicalContext, null, null).getRecord();
 
-      JDKRecordSubverter recordSubverter;
-      LogicalContext logicalContext;
-
-      if ((!level.equals(Level.OFF)) && getLevel().noGreater(level)) {
-         if ((logicalContext = willLog(discriminator, level)) != null) {
-            recordSubverter = new JDKRecordSubverter(logger.getName(), discriminator, level, null, logicalContext, throwable, (object == null) ? null : object.toString());
-            enhanceRecord(recordSubverter.getRecord());
-            logger.log(recordSubverter);
-         }
-      }
-   }
-
-   private LogicalContext willLog (Discriminator discriminator, Level level) {
-
-      LogicalContext logicalContext;
-      Record filterRecord;
-
-      logicalContext = new DefaultLogicalContext();
-      if (getAutoFillLogicalContext()) {
-         logicalContext.fillIn();
-      }
-
-      if (!((logger.getFilter() == null) && filterList.isEmpty())) {
-         filterRecord = new JDKRecordSubverter(logger.getName(), discriminator, level, null, logicalContext, null, null).getRecord();
-
-         if (logger.getFilter() != null) {
-            if (!logger.getFilter().isLoggable((LogRecord)filterRecord.getNativeLogEntry())) {
-               return null;
-            }
-         }
-
-         if (!filterList.isEmpty()) {
-            for (Filter filter : filterList) {
-               if (!filter.willLog(filterRecord)) {
-                  return null;
-               }
-            }
-         }
+      if (logger.getFilter() != null) {
+        if (!logger.getFilter().isLoggable((LogRecord)filterRecord.getNativeLogEntry())) {
+          return null;
+        }
       }
 
-      return logicalContext;
-   }
-
-   private void enhanceRecord (Record record) {
-
-      for (Enhancer enhancer : enhancerList) {
-         enhancer.enhance(record);
+      if (!filterList.isEmpty()) {
+        for (Filter filter : filterList) {
+          if (!filter.willLog(filterRecord)) {
+            return null;
+          }
+        }
       }
-   }
+    }
+
+    return logicalContext;
+  }
+
+  private void enhanceRecord (Record record) {
+
+    for (Enhancer enhancer : enhancerList) {
+      enhancer.enhance(record);
+    }
+  }
 }

@@ -28,5 +28,5 @@ package org.smallmind.liquibase.spring;
 
 public enum Source {
 
-   FILE, CLASSPATH
+  FILE, CLASSPATH
 }

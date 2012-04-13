@@ -32,48 +32,48 @@ import java.lang.reflect.Method;
 
 public class Setter implements Serializable {
 
-   private Class attributeClass;
-   private Method method;
-   private String attributeName;
+  private Class attributeClass;
+  private Method method;
+  private String attributeName;
 
-   public Setter (Method method)
-      throws ReflectionContractException {
+  public Setter (Method method)
+    throws ReflectionContractException {
 
-      this.method = method;
+    this.method = method;
 
-      if (!(method.getName().startsWith("set") && (method.getName().length() > 3) && Character.isUpperCase(method.getName().charAt(3)))) {
-         throw new ReflectionContractException("The declared name of a setter method must start with 'set' followed by a camel case attribute name");
-      }
+    if (!(method.getName().startsWith("set") && (method.getName().length() > 3) && Character.isUpperCase(method.getName().charAt(3)))) {
+      throw new ReflectionContractException("The declared name of a setter method must start with 'set' followed by a camel case attribute name");
+    }
 
-      attributeName = Character.toLowerCase(method.getName().charAt(3)) + method.getName().substring(4);
+    attributeName = Character.toLowerCase(method.getName().charAt(3)) + method.getName().substring(4);
 
-      if (!(method.getReturnType().equals(Void.class) || method.getReturnType().equals(void.class))) {
-         throw new ReflectionContractException("Setter for attribute (%s) must return void", attributeName);
-      }
+    if (!(method.getReturnType().equals(Void.class) || method.getReturnType().equals(void.class))) {
+      throw new ReflectionContractException("Setter for attribute (%s) must return void", attributeName);
+    }
 
-      if (method.getParameterTypes().length != 1) {
-         throw new ReflectionContractException("Setter for attribute (%s) must declare a single parameter", attributeName);
-      }
+    if (method.getParameterTypes().length != 1) {
+      throw new ReflectionContractException("Setter for attribute (%s) must declare a single parameter", attributeName);
+    }
 
-      attributeClass = method.getParameterTypes()[0];
-   }
+    attributeClass = method.getParameterTypes()[0];
+  }
 
-   public String getAttributeName () {
+  public String getAttributeName () {
 
-      return attributeName;
-   }
+    return attributeName;
+  }
 
-   public Class getAttributeClass () {
+  public Class getAttributeClass () {
 
-      return attributeClass;
-   }
+    return attributeClass;
+  }
 
-   public Object invoke (Object target, Object value)
-      throws IllegalAccessException, IllegalArgumentException, InvocationTargetException {
+  public Object invoke (Object target, Object value)
+    throws IllegalAccessException, IllegalArgumentException, InvocationTargetException {
 
-      Object[] parameter = {value};
+    Object[] parameter = {value};
 
-      return method.invoke(target, parameter);
-   }
+    return method.invoke(target, parameter);
+  }
 
 }

@@ -28,5 +28,5 @@ package org.smallmind.nutsnbolts.http;
 
 public enum HttpMethod {
 
-   GET, PUT, POST, DELETE
+  GET, PUT, POST, DELETE
 }

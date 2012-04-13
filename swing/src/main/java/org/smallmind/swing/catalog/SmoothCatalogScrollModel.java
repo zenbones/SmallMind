@@ -30,23 +30,23 @@ import java.awt.Rectangle;
 
 public class SmoothCatalogScrollModel implements CatalogScrollModel {
 
-   private int unit;
-   private int block;
+  private int unit;
+  private int block;
 
-   public SmoothCatalogScrollModel (int unit, int block) {
+  public SmoothCatalogScrollModel (int unit, int block) {
 
-      this.unit = unit;
-      this.block = block;
-   }
+    this.unit = unit;
+    this.block = block;
+  }
 
-   public int getScrollableUnitIncrement (Rectangle visibleRect, int orientation, int direction) {
+  public int getScrollableUnitIncrement (Rectangle visibleRect, int orientation, int direction) {
 
-      return unit;
-   }
+    return unit;
+  }
 
-   public int getScrollableBlockIncrement (Rectangle visibleRect, int orientation, int direction) {
+  public int getScrollableBlockIncrement (Rectangle visibleRect, int orientation, int direction) {
 
-      return block;
-   }
+    return block;
+  }
 
 }

@@ -33,19 +33,19 @@ import java.net.URL;
 
 public class URLResource extends AbstractResource {
 
-   public URLResource (String path) {
+  public URLResource (String path) {
 
-      super(path);
-   }
+    super(path);
+  }
 
-   public String getScheme () {
+  public String getScheme () {
 
-      return "url";
-   }
+    return "url";
+  }
 
-   public InputStream getInputStream ()
-      throws IOException {
+  public InputStream getInputStream ()
+    throws IOException {
 
-      return new BufferedInputStream(new URL(getPath()).openStream());
-   }
+    return new BufferedInputStream(new URL(getPath()).openStream());
+  }
 }

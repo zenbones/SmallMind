@@ -33,98 +33,98 @@ import org.smallmind.scribe.pen.LoggerManager;
 
 public class ThreadPool<I extends Event, O extends Event> {
 
-   private final LinkedList<EventProcessor<I, O>> processorList;
+  private final LinkedList<EventProcessor<I, O>> processorList;
 
-   private CountDownLatch exitLatch;
-   private AtomicBoolean stopped = new AtomicBoolean(false);
-   private SedaConfiguration sedaConfiguration;
-   private EventQueue<I> eventQueue;
-   private DurationMonitor durationMonitor;
-   private HomeostaticRegulator<I, O> homeostaticRegulator;
+  private CountDownLatch exitLatch;
+  private AtomicBoolean stopped = new AtomicBoolean(false);
+  private SedaConfiguration sedaConfiguration;
+  private EventQueue<I> eventQueue;
+  private DurationMonitor durationMonitor;
+  private HomeostaticRegulator<I, O> homeostaticRegulator;
 
-   public ThreadPool (EventQueue<I> eventQueue, SedaConfiguration sedaConfiguration) {
+  public ThreadPool (EventQueue<I> eventQueue, SedaConfiguration sedaConfiguration) {
 
-      Thread regulatorThread;
+    Thread regulatorThread;
 
-      this.sedaConfiguration = sedaConfiguration;
-      this.eventQueue = eventQueue;
+    this.sedaConfiguration = sedaConfiguration;
+    this.eventQueue = eventQueue;
 
-      durationMonitor = new DurationMonitor(sedaConfiguration.getMaxTrackedInvocations());
-      processorList = new LinkedList<EventProcessor<I, O>>();
+    durationMonitor = new DurationMonitor(sedaConfiguration.getMaxTrackedInvocations());
+    processorList = new LinkedList<EventProcessor<I, O>>();
 
-      regulatorThread = new Thread(homeostaticRegulator = new HomeostaticRegulator<I, O>(this, durationMonitor, processorList, sedaConfiguration));
-      regulatorThread.start();
+    regulatorThread = new Thread(homeostaticRegulator = new HomeostaticRegulator<I, O>(this, durationMonitor, processorList, sedaConfiguration));
+    regulatorThread.start();
 
-      exitLatch = new CountDownLatch(1);
-   }
+    exitLatch = new CountDownLatch(1);
+  }
 
-   public boolean isRunning () {
+  public boolean isRunning () {
 
-      return !stopped.get();
-   }
+    return !stopped.get();
+  }
 
-   protected synchronized void increase () {
+  protected synchronized void increase () {
 
-      synchronized (processorList) {
-         if (!stopped.get()) {
-            if ((sedaConfiguration.getMaxThreadPoolSize() == 0) || (processorList.size() < sedaConfiguration.getMaxThreadPoolSize())) {
+    synchronized (processorList) {
+      if (!stopped.get()) {
+        if ((sedaConfiguration.getMaxThreadPoolSize() == 0) || (processorList.size() < sedaConfiguration.getMaxThreadPoolSize())) {
 
-               Thread processorThread;
-               EventProcessor<I, O> eventProcessor;
+          Thread processorThread;
+          EventProcessor<I, O> eventProcessor;
 
-               eventProcessor = new EventProcessor<I, O>(eventQueue, durationMonitor, sedaConfiguration);
-               processorThread = new Thread(eventProcessor);
-               processorThread.start();
+          eventProcessor = new EventProcessor<I, O>(eventQueue, durationMonitor, sedaConfiguration);
+          processorThread = new Thread(eventProcessor);
+          processorThread.start();
 
-               processorList.add(eventProcessor);
-            }
-         }
+          processorList.add(eventProcessor);
+        }
       }
-   }
+    }
+  }
 
-   protected void decrease () {
+  protected void decrease () {
 
-      synchronized (processorList) {
-         if (!stopped.get()) {
-            if ((!processorList.isEmpty()) && (processorList.size() > sedaConfiguration.getMinThreadPoolSize())) {
-               try {
-                  processorList.removeFirst().stop();
-                  // TODO: When the processor list is Empty (or 1), the processor should short circuit and decide how to upshift out of this state
-               }
-               catch (InterruptedException interruptedException) {
-                  LoggerManager.getLogger(ThreadPool.class).error(interruptedException);
-               }
-            }
-         }
-      }
-   }
-
-   protected void stop ()
-      throws InterruptedException {
-
-      if (stopped.compareAndSet(false, true)) {
-         try {
-            homeostaticRegulator.stop();
-         }
-         catch (InterruptedException interruptedException) {
+    synchronized (processorList) {
+      if (!stopped.get()) {
+        if ((!processorList.isEmpty()) && (processorList.size() > sedaConfiguration.getMinThreadPoolSize())) {
+          try {
+            processorList.removeFirst().stop();
+            // TODO: When the processor list is Empty (or 1), the processor should short circuit and decide how to upshift out of this state
+          }
+          catch (InterruptedException interruptedException) {
             LoggerManager.getLogger(ThreadPool.class).error(interruptedException);
-         }
-
-         synchronized (processorList) {
-            while (!processorList.isEmpty()) {
-               try {
-                  processorList.removeFirst().stop();
-               }
-               catch (InterruptedException interruptedException) {
-                  LoggerManager.getLogger(ThreadPool.class).error(interruptedException);
-               }
-            }
-         }
-
-         exitLatch.countDown();
+          }
+        }
       }
-      else {
-         exitLatch.await();
+    }
+  }
+
+  protected void stop ()
+    throws InterruptedException {
+
+    if (stopped.compareAndSet(false, true)) {
+      try {
+        homeostaticRegulator.stop();
       }
-   }
+      catch (InterruptedException interruptedException) {
+        LoggerManager.getLogger(ThreadPool.class).error(interruptedException);
+      }
+
+      synchronized (processorList) {
+        while (!processorList.isEmpty()) {
+          try {
+            processorList.removeFirst().stop();
+          }
+          catch (InterruptedException interruptedException) {
+            LoggerManager.getLogger(ThreadPool.class).error(interruptedException);
+          }
+        }
+      }
+
+      exitLatch.countDown();
+    }
+    else {
+      exitLatch.await();
+    }
+  }
 }

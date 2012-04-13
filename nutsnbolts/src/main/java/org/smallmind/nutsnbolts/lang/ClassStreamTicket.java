@@ -30,24 +30,24 @@ import java.io.InputStream;
 
 public class ClassStreamTicket {
 
-   private InputStream inputStream;
-   private long timeStamp;
+  private InputStream inputStream;
+  private long timeStamp;
 
-   public ClassStreamTicket (InputStream inputStream, long timeStamp) {
+  public ClassStreamTicket (InputStream inputStream, long timeStamp) {
 
-      this.inputStream = inputStream;
-      this.timeStamp = timeStamp;
-   }
+    this.inputStream = inputStream;
+    this.timeStamp = timeStamp;
+  }
 
-   public InputStream getInputStream () {
+  public InputStream getInputStream () {
 
-      return inputStream;
-   }
+    return inputStream;
+  }
 
-   public long getTimeStamp () {
+  public long getTimeStamp () {
 
-      return timeStamp;
-   }
+    return timeStamp;
+  }
 
 }
 

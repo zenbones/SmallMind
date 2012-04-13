@@ -32,113 +32,113 @@ import java.util.LinkedList;
 
 public class CommandSet {
 
-   private HashMap<String, LinkedList<String>> commandMap;
+  private HashMap<String, LinkedList<String>> commandMap;
 
-   public CommandSet () {
+  public CommandSet () {
 
-      commandMap = new HashMap<String, LinkedList<String>>();
-   }
+    commandMap = new HashMap<String, LinkedList<String>>();
+  }
 
-   public synchronized void addCommand (String command) {
+  public synchronized void addCommand (String command) {
 
-      if (!commandMap.containsKey(command)) {
-         commandMap.put(command, new LinkedList<String>());
+    if (!commandMap.containsKey(command)) {
+      commandMap.put(command, new LinkedList<String>());
+    }
+  }
+
+  public synchronized void addArgument (String command, String argument) {
+
+    addCommand(command);
+    (commandMap.get(command)).add(argument);
+  }
+
+  public synchronized boolean containsCommand (String command) {
+
+    return commandMap.containsKey(command);
+  }
+
+  public synchronized boolean containsAllCommands (String[] commands) {
+
+    for (String command : commands) {
+      if (!containsCommand(command)) {
+        return false;
       }
-   }
+    }
 
-   public synchronized void addArgument (String command, String argument) {
+    return true;
+  }
 
-      addCommand(command);
-      (commandMap.get(command)).add(argument);
-   }
+  public synchronized String[] getCommands () {
 
-   public synchronized boolean containsCommand (String command) {
+    String[] commands;
 
-      return commandMap.containsKey(command);
-   }
+    commands = new String[commandMap.size()];
+    commandMap.keySet().toArray(commands);
 
-   public synchronized boolean containsAllCommands (String[] commands) {
+    return commands;
+  }
 
-      for (String command : commands) {
-         if (!containsCommand(command)) {
-            return false;
-         }
+  public synchronized String getArgument (String command) {
+
+    LinkedList<String> argumentList;
+
+    if ((argumentList = commandMap.get(command)) != null) {
+      if (!argumentList.isEmpty()) {
+        return argumentList.getFirst();
       }
+    }
 
-      return true;
-   }
+    return null;
+  }
 
-   public synchronized String[] getCommands () {
+  public synchronized String[] getArguments (String command) {
 
-      String[] commands;
+    LinkedList<String> argumentList;
+    String[] arguments = null;
 
-      commands = new String[commandMap.size()];
-      commandMap.keySet().toArray(commands);
+    if ((argumentList = commandMap.get(command)) != null) {
+      arguments = new String[argumentList.size()];
+      argumentList.toArray(arguments);
+    }
 
-      return commands;
-   }
+    return arguments;
+  }
 
-   public synchronized String getArgument (String command) {
+  public String toString () {
 
-      LinkedList<String> argumentList;
+    StringBuilder lineBuilder;
+    Iterator<String> commandIter;
+    Iterator argumentIter;
+    String command;
+    String argument;
+    boolean first = true;
 
-      if ((argumentList = commandMap.get(command)) != null) {
-         if (!argumentList.isEmpty()) {
-            return argumentList.getFirst();
-         }
+    lineBuilder = new StringBuilder();
+    commandIter = commandMap.keySet().iterator();
+    while (commandIter.hasNext()) {
+      command = commandIter.next();
+      if (!first) {
+        lineBuilder.append(' ');
       }
+      lineBuilder.append("--");
+      lineBuilder.append(command);
+      first = false;
 
-      return null;
-   }
-
-   public synchronized String[] getArguments (String command) {
-
-      LinkedList<String> argumentList;
-      String[] arguments = null;
-
-      if ((argumentList = commandMap.get(command)) != null) {
-         arguments = new String[argumentList.size()];
-         argumentList.toArray(arguments);
+      argumentIter = (commandMap.get(command)).iterator();
+      while (argumentIter.hasNext()) {
+        argument = (String)argumentIter.next();
+        lineBuilder.append(' ');
+        if (argument.indexOf(' ') >= 0) {
+          lineBuilder.append('"');
+        }
+        lineBuilder.append(argument);
+        if (argument.indexOf(' ') >= 0) {
+          lineBuilder.append('"');
+        }
       }
+    }
 
-      return arguments;
-   }
-
-   public String toString () {
-
-      StringBuilder lineBuilder;
-      Iterator<String> commandIter;
-      Iterator argumentIter;
-      String command;
-      String argument;
-      boolean first = true;
-
-      lineBuilder = new StringBuilder();
-      commandIter = commandMap.keySet().iterator();
-      while (commandIter.hasNext()) {
-         command = commandIter.next();
-         if (!first) {
-            lineBuilder.append(' ');
-         }
-         lineBuilder.append("--");
-         lineBuilder.append(command);
-         first = false;
-
-         argumentIter = (commandMap.get(command)).iterator();
-         while (argumentIter.hasNext()) {
-            argument = (String)argumentIter.next();
-            lineBuilder.append(' ');
-            if (argument.indexOf(' ') >= 0) {
-               lineBuilder.append('"');
-            }
-            lineBuilder.append(argument);
-            if (argument.indexOf(' ') >= 0) {
-               lineBuilder.append('"');
-            }
-         }
-      }
-
-      return lineBuilder.toString();
-   }
+    return lineBuilder.toString();
+  }
 
 }

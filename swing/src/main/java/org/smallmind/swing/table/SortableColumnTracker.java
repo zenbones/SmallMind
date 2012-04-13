@@ -28,55 +28,55 @@ package org.smallmind.swing.table;
 
 public class SortableColumnTracker<E extends Enum> {
 
-   private E enumDataType;
-   private SortableDirection direction;
+  private E enumDataType;
+  private SortableDirection direction;
 
-   public SortableColumnTracker (E enumDataType, SortableDirection direction) {
+  public SortableColumnTracker (E enumDataType, SortableDirection direction) {
 
-      this.enumDataType = enumDataType;
-      this.direction = direction;
-   }
+    this.enumDataType = enumDataType;
+    this.direction = direction;
+  }
 
-   public E getEnumDataType () {
+  public E getEnumDataType () {
 
-      return enumDataType;
-   }
+    return enumDataType;
+  }
 
-   public synchronized SortableDirection getDirection () {
+  public synchronized SortableDirection getDirection () {
 
-      return direction;
-   }
+    return direction;
+  }
 
-   public synchronized void setDirection (SortableDirection direction) {
+  public synchronized void setDirection (SortableDirection direction) {
 
-      this.direction = direction;
-   }
+    this.direction = direction;
+  }
 
-   public int hashCode () {
+  public int hashCode () {
 
-      return enumDataType.hashCode();
-   }
+    return enumDataType.hashCode();
+  }
 
-   public boolean equals (Object obj) {
+  public boolean equals (Object obj) {
 
-      if (obj instanceof SortableColumnTracker) {
-         return enumDataType.equals(((SortableColumnTracker)obj).getEnumDataType());
-      }
+    if (obj instanceof SortableColumnTracker) {
+      return enumDataType.equals(((SortableColumnTracker)obj).getEnumDataType());
+    }
 
-      return false;
-   }
+    return false;
+  }
 
-   public String toString () {
+  public String toString () {
 
-      StringBuilder displayBuilder;
+    StringBuilder displayBuilder;
 
-      displayBuilder = new StringBuilder("Tracker[name=");
-      displayBuilder.append(enumDataType.name());
-      displayBuilder.append(";direction=");
-      displayBuilder.append(direction.name());
-      displayBuilder.append(']');
+    displayBuilder = new StringBuilder("Tracker[name=");
+    displayBuilder.append(enumDataType.name());
+    displayBuilder.append(";direction=");
+    displayBuilder.append(direction.name());
+    displayBuilder.append(']');
 
-      return displayBuilder.toString();
-   }
+    return displayBuilder.toString();
+  }
 
 }

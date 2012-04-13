@@ -30,24 +30,24 @@ import org.smallmind.nutsnbolts.lang.FormattedException;
 
 public class CommandException extends FormattedException {
 
-   public CommandException () {
+  public CommandException () {
 
-      super();
-   }
+    super();
+  }
 
-   public CommandException (String message, Object... args) {
+  public CommandException (String message, Object... args) {
 
-      super(message, args);
-   }
+    super(message, args);
+  }
 
-   public CommandException (Throwable throwable, String message, Object... args) {
+  public CommandException (Throwable throwable, String message, Object... args) {
 
-      super(throwable, message, args);
-   }
+    super(throwable, message, args);
+  }
 
-   public CommandException (Throwable throwable) {
+  public CommandException (Throwable throwable) {
 
-      super(throwable);
-   }
+    super(throwable);
+  }
 }
 

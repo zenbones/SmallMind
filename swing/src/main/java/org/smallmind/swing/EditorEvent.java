@@ -30,23 +30,23 @@ import java.util.EventObject;
 
 public class EditorEvent extends EventObject {
 
-   public static enum State {
+  public static enum State {
 
-      STOPPED, CANCELLED, VALID, INVALID
-   }
+    STOPPED, CANCELLED, VALID, INVALID
+  }
 
-   private State state;
+  private State state;
 
-   public EditorEvent (Object source, State state) {
+  public EditorEvent (Object source, State state) {
 
-      super(source);
+    super(source);
 
-      this.state = state;
-   }
+    this.state = state;
+  }
 
-   public State getState () {
+  public State getState () {
 
-      return state;
-   }
+    return state;
+  }
 
 }

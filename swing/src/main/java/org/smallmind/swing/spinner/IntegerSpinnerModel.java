@@ -32,66 +32,66 @@ import org.smallmind.nutsnbolts.util.WeakEventListenerList;
 
 public class IntegerSpinnerModel implements EdgeAwareSpinnerModel {
 
-   private WeakEventListenerList<ChangeListener> listenerList;
-   private Integer minimumValue;
-   private Integer maximumValue;
-   private int value;
-   private int increment;
+  private WeakEventListenerList<ChangeListener> listenerList;
+  private Integer minimumValue;
+  private Integer maximumValue;
+  private int value;
+  private int increment;
 
-   public IntegerSpinnerModel (int value, int increment, Integer minimumValue, Integer maximumValue) {
+  public IntegerSpinnerModel (int value, int increment, Integer minimumValue, Integer maximumValue) {
 
-      listenerList = new WeakEventListenerList<ChangeListener>();
+    listenerList = new WeakEventListenerList<ChangeListener>();
 
-      this.value = value;
-      this.increment = increment;
-      this.minimumValue = minimumValue;
-      this.maximumValue = maximumValue;
-   }
+    this.value = value;
+    this.increment = increment;
+    this.minimumValue = minimumValue;
+    this.maximumValue = maximumValue;
+  }
 
-   public void addChangeListener (ChangeListener changeListener) {
+  public void addChangeListener (ChangeListener changeListener) {
 
-      listenerList.addListener(changeListener);
-   }
+    listenerList.addListener(changeListener);
+  }
 
-   public void removeChangeListener (ChangeListener changeListener) {
+  public void removeChangeListener (ChangeListener changeListener) {
 
-      listenerList.removeListener(changeListener);
-   }
+    listenerList.removeListener(changeListener);
+  }
 
-   public Object getMinimumValue () {
+  public Object getMinimumValue () {
 
-      return minimumValue;
-   }
+    return minimumValue;
+  }
 
-   public Object getMaximumValue () {
+  public Object getMaximumValue () {
 
-      return maximumValue;
-   }
+    return maximumValue;
+  }
 
-   public Object getValue () {
+  public Object getValue () {
 
-      return value;
-   }
+    return value;
+  }
 
-   public void setValue (Object value) {
+  public void setValue (Object value) {
 
-      ChangeEvent changeEvent;
+    ChangeEvent changeEvent;
 
-      this.value = (Integer)value;
+    this.value = (Integer)value;
 
-      changeEvent = new ChangeEvent(this);
-      for (ChangeListener changeListener : listenerList) {
-         changeListener.stateChanged(changeEvent);
-      }
-   }
+    changeEvent = new ChangeEvent(this);
+    for (ChangeListener changeListener : listenerList) {
+      changeListener.stateChanged(changeEvent);
+    }
+  }
 
-   public Object getNextValue () {
+  public Object getNextValue () {
 
-      return value + increment;
-   }
+    return value + increment;
+  }
 
-   public Object getPreviousValue () {
+  public Object getPreviousValue () {
 
-      return value - increment;
-   }
+    return value - increment;
+  }
 }

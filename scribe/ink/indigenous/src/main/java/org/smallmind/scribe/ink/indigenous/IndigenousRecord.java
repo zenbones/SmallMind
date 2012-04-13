@@ -41,124 +41,124 @@ import org.smallmind.scribe.pen.probe.ProbeReport;
 
 public class IndigenousRecord implements Record, RecordWrapper {
 
-   private ProbeReport probeReport;
-   private LogicalContext logicalContext;
-   private Discriminator discriminator;
-   private Level level;
-   private Throwable throwable;
-   private HashMap<String, Serializable> parameterMap;
-   private String loggerName;
-   private String message;
-   private String threadName;
-   private Object[] args;
-   private long millis;
-   private long threadId;
-   private long sequenceNumber;
+  private ProbeReport probeReport;
+  private LogicalContext logicalContext;
+  private Discriminator discriminator;
+  private Level level;
+  private Throwable throwable;
+  private HashMap<String, Serializable> parameterMap;
+  private String loggerName;
+  private String message;
+  private String threadName;
+  private Object[] args;
+  private long millis;
+  private long threadId;
+  private long sequenceNumber;
 
-   public IndigenousRecord (String loggerName, Discriminator discriminator, Level level, ProbeReport probeReport, Throwable throwable, String message, Object... args) {
+  public IndigenousRecord (String loggerName, Discriminator discriminator, Level level, ProbeReport probeReport, Throwable throwable, String message, Object... args) {
 
-      this.loggerName = loggerName;
-      this.discriminator = discriminator;
-      this.level = level;
-      this.probeReport = probeReport;
-      this.throwable = throwable;
-      this.message = message;
-      this.args = args;
+    this.loggerName = loggerName;
+    this.discriminator = discriminator;
+    this.level = level;
+    this.probeReport = probeReport;
+    this.throwable = throwable;
+    this.message = message;
+    this.args = args;
 
-      millis = System.currentTimeMillis();
+    millis = System.currentTimeMillis();
 
-      parameterMap = new HashMap<String, Serializable>();
+    parameterMap = new HashMap<String, Serializable>();
 
-      threadId = Thread.currentThread().getId();
-      threadName = Thread.currentThread().getName();
-      sequenceNumber = SequenceGenerator.next();
-   }
+    threadId = Thread.currentThread().getId();
+    threadName = Thread.currentThread().getName();
+    sequenceNumber = SequenceGenerator.next();
+  }
 
-   public void setLogicalContext (LogicalContext logicalContext) {
+  public void setLogicalContext (LogicalContext logicalContext) {
 
-      this.logicalContext = logicalContext;
-   }
+    this.logicalContext = logicalContext;
+  }
 
-   public Record getRecord () {
+  public Record getRecord () {
 
-      return this;
-   }
+    return this;
+  }
 
-   public Object getNativeLogEntry () {
+  public Object getNativeLogEntry () {
 
-      return this;
-   }
+    return this;
+  }
 
-   public ProbeReport getProbeReport () {
+  public ProbeReport getProbeReport () {
 
-      return probeReport;
-   }
+    return probeReport;
+  }
 
-   public String getLoggerName () {
+  public String getLoggerName () {
 
-      return loggerName;
-   }
+    return loggerName;
+  }
 
-   public Discriminator getDiscriminator () {
+  public Discriminator getDiscriminator () {
 
-      return discriminator;
-   }
+    return discriminator;
+  }
 
-   public Level getLevel () {
+  public Level getLevel () {
 
-      return level;
-   }
+    return level;
+  }
 
-   public Throwable getThrown () {
+  public Throwable getThrown () {
 
-      return throwable;
-   }
+    return throwable;
+  }
 
-   public String getMessage () {
+  public String getMessage () {
 
-      return MessageTranslator.translateMessage(message, args);
-   }
+    return MessageTranslator.translateMessage(message, args);
+  }
 
-   public void addParameter (String key, Serializable value) {
+  public void addParameter (String key, Serializable value) {
 
-      parameterMap.put(key, value);
-   }
+    parameterMap.put(key, value);
+  }
 
-   public Parameter[] getParameters () {
+  public Parameter[] getParameters () {
 
-      Parameter[] parameters;
-      int index = 0;
+    Parameter[] parameters;
+    int index = 0;
 
-      parameters = new Parameter[parameterMap.size()];
-      for (Map.Entry<String, Serializable> entry : parameterMap.entrySet()) {
-         parameters[index++] = new Parameter(entry.getKey(), entry.getValue());
-      }
+    parameters = new Parameter[parameterMap.size()];
+    for (Map.Entry<String, Serializable> entry : parameterMap.entrySet()) {
+      parameters[index++] = new Parameter(entry.getKey(), entry.getValue());
+    }
 
-      return parameters;
-   }
+    return parameters;
+  }
 
-   public LogicalContext getLogicalContext () {
+  public LogicalContext getLogicalContext () {
 
-      return logicalContext;
-   }
+    return logicalContext;
+  }
 
-   public long getThreadID () {
+  public long getThreadID () {
 
-      return threadId;
-   }
+    return threadId;
+  }
 
-   public String getThreadName () {
+  public String getThreadName () {
 
-      return threadName;
-   }
+    return threadName;
+  }
 
-   public long getSequenceNumber () {
+  public long getSequenceNumber () {
 
-      return sequenceNumber;
-   }
+    return sequenceNumber;
+  }
 
-   public long getMillis () {
+  public long getMillis () {
 
-      return millis;
-   }
+    return millis;
+  }
 }

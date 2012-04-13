@@ -28,15 +28,15 @@ package org.smallmind.scribe.pen;
 
 public enum Level {
 
-   TRACE, DEBUG, INFO, WARN, ERROR, FATAL, OFF;
+  TRACE, DEBUG, INFO, WARN, ERROR, FATAL, OFF;
 
-   public boolean atLeast (Level level) {
+  public boolean atLeast (Level level) {
 
-      return this.ordinal() >= level.ordinal();
-   }
+    return this.ordinal() >= level.ordinal();
+  }
 
-   public boolean noGreater (Level level) {
+  public boolean noGreater (Level level) {
 
-      return this.ordinal() <= level.ordinal();
-   }
+    return this.ordinal() <= level.ordinal();
+  }
 }

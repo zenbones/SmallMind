@@ -28,5 +28,5 @@ package org.smallmind.quorum.cache;
 
 public interface LockableCacheProvider extends CacheProvider {
 
-   public abstract <K, V> LockableCache<K, V> getLockingCache (String instance, String region);
+  public abstract <K, V> LockableCache<K, V> getLockingCache (String instance, String region);
 }

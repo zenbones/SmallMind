@@ -31,50 +31,50 @@ import org.smallmind.nutsnbolts.lang.TypeMismatchException;
 
 public abstract class TimeBasedValue extends Value {
 
-   private DateTime instant;
+  private DateTime instant;
 
-   public TimeBasedValue (DateTime instant) {
+  public TimeBasedValue (DateTime instant) {
 
-      this.instant = instant;
-   }
+    this.instant = instant;
+  }
 
-   public DateTime getInstant () {
+  public DateTime getInstant () {
 
-      return instant;
-   }
+    return instant;
+  }
 
-   @Override
-   public boolean isNull () {
+  @Override
+  public boolean isNull () {
 
-      return (instant == null);
-   }
+    return (instant == null);
+  }
 
-   @Override
-   public int compareTo (Value value) {
+  @Override
+  public int compareTo (Value value) {
 
-      if (!getType().equals(value.getType())) {
-         throw new TypeMismatchException();
-      }
+    if (!getType().equals(value.getType())) {
+      throw new TypeMismatchException();
+    }
 
-      if (isNull()) {
+    if (isNull()) {
 
-         return (value.isNull()) ? 0 : -1;
-      }
-      else if (value.isNull()) {
+      return (value.isNull()) ? 0 : -1;
+    }
+    else if (value.isNull()) {
 
-         return 1;
-      }
-      else {
+      return 1;
+    }
+    else {
 
-         return instant.compareTo((((TimeBasedValue)value).getInstant()));
-      }
-   }
+      return instant.compareTo((((TimeBasedValue)value).getInstant()));
+    }
+  }
 
-   @Override
-   public synchronized String toString () {
+  @Override
+  public synchronized String toString () {
 
-      return (instant == null) ? "null" : instant.toString();
-   }
+    return (instant == null) ? "null" : instant.toString();
+  }
 }
 
 

@@ -32,9 +32,9 @@ import org.smallmind.scribe.pen.Record;
 
 public abstract class LoggingBlueprints {
 
-   public abstract LoggerAdapter getLoggingAdapter (String name);
+  public abstract LoggerAdapter getLoggingAdapter (String name);
 
-   public abstract Record filterRecord (Record record, Discriminator discriminator, Level level);
+  public abstract Record filterRecord (Record record, Discriminator discriminator, Level level);
 
-   public abstract Record errorRecord (Record record, Throwable throwable, String message, Object... args);
+  public abstract Record errorRecord (Record record, Throwable throwable, String message, Object... args);
 }

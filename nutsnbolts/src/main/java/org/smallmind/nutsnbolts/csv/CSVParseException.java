@@ -30,23 +30,23 @@ import org.smallmind.nutsnbolts.lang.FormattedException;
 
 public class CSVParseException extends FormattedException {
 
-   public CSVParseException () {
+  public CSVParseException () {
 
-      super();
-   }
+    super();
+  }
 
-   public CSVParseException (String message, Object... args) {
+  public CSVParseException (String message, Object... args) {
 
-      super(message, args);
-   }
+    super(message, args);
+  }
 
-   public CSVParseException (Throwable throwable, String message, Object... args) {
+  public CSVParseException (Throwable throwable, String message, Object... args) {
 
-      super(throwable, message, args);
-   }
+    super(throwable, message, args);
+  }
 
-   public CSVParseException (Throwable throwable) {
+  public CSVParseException (Throwable throwable) {
 
-      super(throwable);
-   }
+    super(throwable);
+  }
 }

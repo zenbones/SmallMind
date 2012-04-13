@@ -34,40 +34,41 @@ import org.smallmind.wicket.skin.SkinManager;
 
 public abstract class AjaxSubmitButton extends Button {
 
-   public AjaxSubmitButton (String id, IModel labelModel, Form form, SkinManager skinManager) {
+  public AjaxSubmitButton (String id, IModel labelModel, Form form, SkinManager skinManager) {
 
-      super(id, labelModel, skinManager);
+    super(id, labelModel, skinManager);
 
-      addButtonBehavior(new OnClickAjaxFormSubmitBehavior(form, "onclick"));
-   }
+    addButtonBehavior(new OnClickAjaxFormSubmitBehavior(form, "onclick"));
+  }
 
-   public abstract void onSubmit (AjaxRequestTarget target, Form form);
+  public abstract void onSubmit (AjaxRequestTarget target, Form form);
 
-   public void onError (AjaxRequestTarget target, Form form) {
-   }
+  public void onError (AjaxRequestTarget target, Form form) {
 
-   private class OnClickAjaxFormSubmitBehavior extends AjaxFormSubmitBehavior {
+  }
 
-      public OnClickAjaxFormSubmitBehavior (Form form, String event) {
+  private class OnClickAjaxFormSubmitBehavior extends AjaxFormSubmitBehavior {
 
-         super(form, event);
+    public OnClickAjaxFormSubmitBehavior (Form form, String event) {
+
+      super(form, event);
+    }
+
+    protected void onEvent (AjaxRequestTarget target) {
+
+      if (AjaxSubmitButton.this.isEnabled()) {
+        super.onEvent(target);
       }
+    }
 
-      protected void onEvent (AjaxRequestTarget target) {
+    public void onSubmit (AjaxRequestTarget target) {
 
-         if (AjaxSubmitButton.this.isEnabled()) {
-            super.onEvent(target);
-         }
-      }
+      AjaxSubmitButton.this.onSubmit(target, getForm());
+    }
 
-      public void onSubmit (AjaxRequestTarget target) {
+    public void onError (AjaxRequestTarget target) {
 
-         AjaxSubmitButton.this.onSubmit(target, getForm());
-      }
-
-      public void onError (AjaxRequestTarget target) {
-
-         AjaxSubmitButton.this.onError(target, getForm());
-      }
-   }
+      AjaxSubmitButton.this.onError(target, getForm());
+    }
+  }
 }

@@ -30,7 +30,7 @@ import org.smallmind.scribe.pen.Logger;
 
 public interface SocketWorkerFactory {
 
-   public SocketWorker createWorker (Logger logger, ServerSocketHerald herald)
-      throws Exception;
+  public SocketWorker createWorker (Logger logger, ServerSocketHerald herald)
+    throws Exception;
 
 }

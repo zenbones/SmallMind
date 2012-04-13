@@ -34,16 +34,16 @@ import org.springframework.core.convert.converter.Converter;
 
 public class ResourceConverter implements Converter<String, Resource> {
 
-   private static final ResourceParser RESOURCE_PARSER = new ResourceParser(new ResourceTypeFactory());
+  private static final ResourceParser RESOURCE_PARSER = new ResourceParser(new ResourceTypeFactory());
 
-   public Resource convert (String s) {
+  public Resource convert (String s) {
 
-      try {
+    try {
 
-         return RESOURCE_PARSER.parseResource(s);
-      }
-      catch (ResourceException resourceException) {
-         throw new RuntimeBeansException(resourceException);
-      }
-   }
+      return RESOURCE_PARSER.parseResource(s);
+    }
+    catch (ResourceException resourceException) {
+      throw new RuntimeBeansException(resourceException);
+    }
+  }
 }

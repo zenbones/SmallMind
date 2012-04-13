@@ -39,150 +39,151 @@ import org.smallmind.scribe.pen.adapter.RecordWrapper;
 
 public class JDKAppenderWrapper extends Handler {
 
-   private Appender appender;
+  private Appender appender;
 
-   public JDKAppenderWrapper (Appender appender) {
+  public JDKAppenderWrapper (Appender appender) {
 
-      this.appender = appender;
-   }
+    this.appender = appender;
+  }
 
-   protected Appender getInnerAppender () {
+  protected Appender getInnerAppender () {
 
-      return appender;
-   }
+    return appender;
+  }
 
-   public void setEncoding (String encoding)
-      throws SecurityException, UnsupportedEncodingException {
+  public void setEncoding (String encoding)
+    throws SecurityException, UnsupportedEncodingException {
 
-      throw new UnsupportedOperationException("Unsupported native JDK Logging method");
-   }
+    throw new UnsupportedOperationException("Unsupported native JDK Logging method");
+  }
 
-   public String getEncoding () {
+  public String getEncoding () {
 
-      throw new UnsupportedOperationException("Unsupported native JDK Logging method");
-   }
+    throw new UnsupportedOperationException("Unsupported native JDK Logging method");
+  }
 
-   public Level getLevel () {
+  public Level getLevel () {
 
-      throw new UnsupportedOperationException("Unsupported native JDK Logging method");
-   }
+    throw new UnsupportedOperationException("Unsupported native JDK Logging method");
+  }
 
-   public void setLevel (Level newLevel)
-      throws SecurityException {
+  public void setLevel (Level newLevel)
+    throws SecurityException {
 
-      throw new UnsupportedOperationException("Unsupported native JDK Logging method");
-   }
+    throw new UnsupportedOperationException("Unsupported native JDK Logging method");
+  }
 
-   public void setFormatter (Formatter formatter) {
+  public void setFormatter (Formatter formatter) {
 
-      appender.setFormatter(new JDKFormatterAdapter(formatter));
-   }
+    appender.setFormatter(new JDKFormatterAdapter(formatter));
+  }
 
-   public Formatter getFormatter () {
+  public Formatter getFormatter () {
 
-      org.smallmind.scribe.pen.Formatter formatter;
+    org.smallmind.scribe.pen.Formatter formatter;
 
-      if ((formatter = appender.getFormatter()) != null) {
-         if (!(formatter instanceof JDKFormatterAdapter)) {
-            throw new UnsupportedOperationException("Can not return a non-JDK Logging native Formatter(" + formatter.getClass().getCanonicalName() + ")");
-         }
-
-         return ((JDKFormatterAdapter)formatter).getNativeFormatter();
+    if ((formatter = appender.getFormatter()) != null) {
+      if (!(formatter instanceof JDKFormatterAdapter)) {
+        throw new UnsupportedOperationException("Can not return a non-JDK Logging native Formatter(" + formatter.getClass().getCanonicalName() + ")");
       }
 
-      return null;
-   }
+      return ((JDKFormatterAdapter)formatter).getNativeFormatter();
+    }
 
-   public void setFilter (Filter filter) {
+    return null;
+  }
 
-      appender.clearFilters();
-      appender.addFilter(new JDKFilterAdapter(filter));
-   }
+  public void setFilter (Filter filter) {
 
-   public Filter getFilter () {
+    appender.clearFilters();
+    appender.addFilter(new JDKFilterAdapter(filter));
+  }
 
-      org.smallmind.scribe.pen.Filter[] filters;
+  public Filter getFilter () {
 
-      if ((filters = appender.getFilters()).length > 0) {
-         if (!(filters[0] instanceof JDKFilterAdapter)) {
-            throw new UnsupportedOperationException("Can not return a non-JDK Logging native Filter(" + filters[0].getClass().getCanonicalName() + ")");
-         }
+    org.smallmind.scribe.pen.Filter[] filters;
 
-         return ((JDKFilterAdapter)filters[0]).getNativeFilter();
+    if ((filters = appender.getFilters()).length > 0) {
+      if (!(filters[0] instanceof JDKFilterAdapter)) {
+        throw new UnsupportedOperationException("Can not return a non-JDK Logging native Filter(" + filters[0].getClass().getCanonicalName() + ")");
       }
 
-      return null;
-   }
+      return ((JDKFilterAdapter)filters[0]).getNativeFilter();
+    }
 
-   public boolean isLoggable (LogRecord record) {
+    return null;
+  }
 
-      for (org.smallmind.scribe.pen.Filter filter : appender.getFilters()) {
-         if (!(filter instanceof JDKFilterAdapter)) {
-            throw new UnsupportedOperationException("Encountered a non-JDK Logging native Filter(" + filter.getClass().getCanonicalName() + ")");
-         }
-         else if (!((JDKFilterAdapter)filter).getNativeFilter().isLoggable(record)) {
-            return false;
-         }
+  public boolean isLoggable (LogRecord record) {
+
+    for (org.smallmind.scribe.pen.Filter filter : appender.getFilters()) {
+      if (!(filter instanceof JDKFilterAdapter)) {
+        throw new UnsupportedOperationException("Encountered a non-JDK Logging native Filter(" + filter.getClass().getCanonicalName() + ")");
+      }
+      else if (!((JDKFilterAdapter)filter).getNativeFilter().isLoggable(record)) {
+        return false;
+      }
+    }
+
+    return false;
+  }
+
+  public void setErrorManager (ErrorManager errorManager) {
+
+    appender.setErrorHandler(new JDKErrorHandlerAdapter(errorManager));
+  }
+
+  public ErrorManager getErrorManager () {
+
+    org.smallmind.scribe.pen.ErrorHandler errorHandler;
+
+    if ((errorHandler = appender.getErrorHandler()) != null) {
+      if (!(errorHandler instanceof JDKErrorHandlerAdapter)) {
+        throw new UnsupportedOperationException("Can not return a non-JDK Logging native ErrorManager(" + errorHandler.getClass().getCanonicalName() + ")");
       }
 
-      return false;
-   }
+      return ((JDKErrorHandlerAdapter)errorHandler).getNativeErrorManager();
+    }
 
-   public void setErrorManager (ErrorManager errorManager) {
+    return null;
+  }
 
-      appender.setErrorHandler(new JDKErrorHandlerAdapter(errorManager));
-   }
+  public void publish (LogRecord record) {
 
-   public ErrorManager getErrorManager () {
+    appender.publish(((RecordWrapper)record).getRecord());
+  }
 
-      org.smallmind.scribe.pen.ErrorHandler errorHandler;
+  public void flush () {
 
-      if ((errorHandler = appender.getErrorHandler()) != null) {
-         if (!(errorHandler instanceof JDKErrorHandlerAdapter)) {
-            throw new UnsupportedOperationException("Can not return a non-JDK Logging native ErrorManager(" + errorHandler.getClass().getCanonicalName() + ")");
-         }
+  }
 
-         return ((JDKErrorHandlerAdapter)errorHandler).getNativeErrorManager();
-      }
+  public void close ()
+    throws SecurityException {
 
-      return null;
-   }
+    try {
+      appender.close();
+    }
+    catch (LoggerException loggerException) {
+      throw new SecurityException(loggerException);
+    }
+  }
 
-   public void publish (LogRecord record) {
+  public int hashCode () {
 
-      appender.publish(((RecordWrapper)record).getRecord());
-   }
+    return appender.hashCode();
+  }
 
-   public void flush () {
-   }
+  protected void finalize () {
 
-   public void close ()
-      throws SecurityException {
+    close();
+  }
 
-      try {
-         appender.close();
-      }
-      catch (LoggerException loggerException) {
-         throw new SecurityException(loggerException);
-      }
-   }
+  public boolean equals (Object obj) {
 
-   public int hashCode () {
+    if (obj instanceof JDKAppenderWrapper) {
+      return appender.equals(((JDKAppenderWrapper)obj).getInnerAppender());
+    }
 
-      return appender.hashCode();
-   }
-
-   protected void finalize () {
-
-      close();
-   }
-
-   public boolean equals (Object obj) {
-
-      if (obj instanceof JDKAppenderWrapper) {
-         return appender.equals(((JDKAppenderWrapper)obj).getInnerAppender());
-      }
-
-      return appender.equals(obj);
-   }
+    return appender.equals(obj);
+  }
 }

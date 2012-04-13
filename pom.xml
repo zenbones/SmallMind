@@ -115,7 +115,6 @@
     <module>quorum</module>
     <module>persistence</module>
     <module>cloud</module>
-    <module>constellation</module>
     <module>scheduling</module>
     <module>seda</module>
     <module>plumber</module>

@@ -31,103 +31,103 @@ import java.util.Date;
 
 public class CalendarDate implements Comparable<CalendarDate> {
 
-   private int year;
-   private int month;
-   private int day;
+  private int year;
+  private int month;
+  private int day;
 
-   public CalendarDate (int year, int month, int day) {
+  public CalendarDate (int year, int month, int day) {
 
-      this.year = year;
-      this.month = month;
-      this.day = day;
-   }
+    this.year = year;
+    this.month = month;
+    this.day = day;
+  }
 
-   public CalendarDate (Date date) {
+  public CalendarDate (Date date) {
 
-      Calendar calendar;
+    Calendar calendar;
 
-      calendar = Calendar.getInstance();
-      calendar.setTime(date);
-      this.year = calendar.get(Calendar.YEAR);
-      this.month = calendar.get(Calendar.MONTH) + 1;
-      this.day = calendar.get(Calendar.DAY_OF_MONTH);
-   }
+    calendar = Calendar.getInstance();
+    calendar.setTime(date);
+    this.year = calendar.get(Calendar.YEAR);
+    this.month = calendar.get(Calendar.MONTH) + 1;
+    this.day = calendar.get(Calendar.DAY_OF_MONTH);
+  }
 
-   public int getYear () {
+  public int getYear () {
 
-      return year;
-   }
+    return year;
+  }
 
-   public int getMonth () {
+  public int getMonth () {
 
-      return month;
-   }
+    return month;
+  }
 
-   public int getDay () {
+  public int getDay () {
 
-      return day;
-   }
+    return day;
+  }
 
-   public int intValue () {
+  public int intValue () {
 
-      return (year * 10000) + (month * 100) + day;
-   }
+    return (year * 10000) + (month * 100) + day;
+  }
 
-   public boolean before (CalendarDate calendarDate) {
+  public boolean before (CalendarDate calendarDate) {
 
-      return intValue() < calendarDate.intValue();
-   }
+    return intValue() < calendarDate.intValue();
+  }
 
-   public boolean beforeOrOn (CalendarDate calendarDate) {
+  public boolean beforeOrOn (CalendarDate calendarDate) {
 
-      return intValue() <= calendarDate.intValue();
-   }
+    return intValue() <= calendarDate.intValue();
+  }
 
-   public boolean after (CalendarDate calendarDate) {
+  public boolean after (CalendarDate calendarDate) {
 
-      return intValue() > calendarDate.intValue();
-   }
+    return intValue() > calendarDate.intValue();
+  }
 
-   public boolean onOrAfter (CalendarDate calendarDate) {
+  public boolean onOrAfter (CalendarDate calendarDate) {
 
-      return intValue() >= calendarDate.intValue();
-   }
+    return intValue() >= calendarDate.intValue();
+  }
 
-   public boolean on (CalendarDate calendarDate) {
+  public boolean on (CalendarDate calendarDate) {
 
-      return intValue() == calendarDate.intValue();
-   }
+    return intValue() == calendarDate.intValue();
+  }
 
-   public int compareTo (CalendarDate calendarDate) {
+  public int compareTo (CalendarDate calendarDate) {
 
-      if (this.before(calendarDate)) {
-         return -1;
-      }
-      else if (this.after(calendarDate)) {
-         return 1;
-      }
-      else {
-         return 0;
-      }
-   }
+    if (this.before(calendarDate)) {
+      return -1;
+    }
+    else if (this.after(calendarDate)) {
+      return 1;
+    }
+    else {
+      return 0;
+    }
+  }
 
-   public String toString () {
+  public String toString () {
 
-      return String.valueOf(intValue());
-   }
+    return String.valueOf(intValue());
+  }
 
-   public int hashCode () {
+  public int hashCode () {
 
-      return intValue();
-   }
+    return intValue();
+  }
 
-   public boolean equals (Object obj) {
+  public boolean equals (Object obj) {
 
-      if (obj instanceof CalendarDate) {
-         return (intValue() == ((CalendarDate)obj).intValue());
-      }
+    if (obj instanceof CalendarDate) {
+      return (intValue() == ((CalendarDate)obj).intValue());
+    }
 
-      return false;
-   }
+    return false;
+  }
 
 }

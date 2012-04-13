@@ -35,31 +35,31 @@ import org.springframework.util.StringValueResolver;
 
 public class PropertyPlaceholderStringValueResolver implements StringValueResolver {
 
-   private PropertyExpander propertyExpander;
-   private Map<String, String> propertyMap;
+  private PropertyExpander propertyExpander;
+  private Map<String, String> propertyMap;
 
-   public PropertyPlaceholderStringValueResolver (Map<String, String> propertyMap, boolean ignoreUnresolvableProperties, SystemPropertyMode systemPropertyMode, boolean searchSystemEnvironment)
-      throws BeansException {
+  public PropertyPlaceholderStringValueResolver (Map<String, String> propertyMap, boolean ignoreUnresolvableProperties, SystemPropertyMode systemPropertyMode, boolean searchSystemEnvironment)
+    throws BeansException {
 
-      try {
-         propertyExpander = new PropertyExpander(ignoreUnresolvableProperties, systemPropertyMode, searchSystemEnvironment);
-      }
-      catch (PropertyExpanderException propertyExpanderException) {
-         throw new RuntimeBeansException(propertyExpanderException);
-      }
+    try {
+      propertyExpander = new PropertyExpander(ignoreUnresolvableProperties, systemPropertyMode, searchSystemEnvironment);
+    }
+    catch (PropertyExpanderException propertyExpanderException) {
+      throw new RuntimeBeansException(propertyExpanderException);
+    }
 
-      this.propertyMap = propertyMap;
-   }
+    this.propertyMap = propertyMap;
+  }
 
-   public String resolveStringValue (String property)
-      throws BeansException {
+  public String resolveStringValue (String property)
+    throws BeansException {
 
-      try {
+    try {
 
-         return propertyExpander.expand(property, propertyMap);
-      }
-      catch (PropertyExpanderException propertyExpanderException) {
-         throw new RuntimeBeansException(propertyExpanderException);
-      }
-   }
+      return propertyExpander.expand(property, propertyMap);
+    }
+    catch (PropertyExpanderException propertyExpanderException) {
+      throw new RuntimeBeansException(propertyExpanderException);
+    }
+  }
 }

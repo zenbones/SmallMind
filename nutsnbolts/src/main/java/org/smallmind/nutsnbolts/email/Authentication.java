@@ -27,21 +27,20 @@
 package org.smallmind.nutsnbolts.email;
 
 import javax.mail.Authenticator;
-import org.smallmind.nutsnbolts.email.AuthType;
 
 public class Authentication {
 
-   private AuthType type;
-   private Object[] data;
+  private AuthType type;
+  private Object[] data;
 
-   public Authentication (AuthType type, Object... data) {
+  public Authentication (AuthType type, Object... data) {
 
-      this.type = type;
-      this.data = data;
-   }
+    this.type = type;
+    this.data = data;
+  }
 
-   public Authenticator getAuthenticator () {
+  public Authenticator getAuthenticator () {
 
-      return type.getAuthenticator(data);
-   }
+    return type.getAuthenticator(data);
+  }
 }

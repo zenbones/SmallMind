@@ -31,17 +31,17 @@ import java.util.EventObject;
 
 public class FileChoiceEvent extends EventObject {
 
-   private File file;
+  private File file;
 
-   public FileChoiceEvent (Object source, File file) {
+  public FileChoiceEvent (Object source, File file) {
 
-      super(source);
+    super(source);
 
-      this.file = file;
-   }
+    this.file = file;
+  }
 
-   public File getChosenFile () {
+  public File getChosenFile () {
 
-      return file;
-   }
+    return file;
+  }
 }

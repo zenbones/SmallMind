@@ -30,18 +30,18 @@ import org.springframework.beans.BeansException;
 
 public class RuntimeBeansException extends BeansException {
 
-   public RuntimeBeansException (String message, Object... args) {
+  public RuntimeBeansException (String message, Object... args) {
 
-      super(String.format(message, args));
-   }
+    super(String.format(message, args));
+  }
 
-   public RuntimeBeansException (Throwable throwable, String message, Object... args) {
+  public RuntimeBeansException (Throwable throwable, String message, Object... args) {
 
-      super(String.format(message, args), throwable);
-   }
+    super(String.format(message, args), throwable);
+  }
 
-   public RuntimeBeansException (Throwable throwable) {
+  public RuntimeBeansException (Throwable throwable) {
 
-      super(throwable.getMessage(), throwable);
-   }
+    super(throwable.getMessage(), throwable);
+  }
 }

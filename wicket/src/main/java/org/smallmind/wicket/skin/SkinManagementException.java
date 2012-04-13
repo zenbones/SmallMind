@@ -30,23 +30,23 @@ import org.smallmind.nutsnbolts.lang.FormattedRuntimeException;
 
 public class SkinManagementException extends FormattedRuntimeException {
 
-   public SkinManagementException () {
+  public SkinManagementException () {
 
-      super();
-   }
+    super();
+  }
 
-   public SkinManagementException (String message, Object... args) {
+  public SkinManagementException (String message, Object... args) {
 
-      super(message, args);
-   }
+    super(message, args);
+  }
 
-   public SkinManagementException (Throwable throwable, String message, Object... args) {
+  public SkinManagementException (Throwable throwable, String message, Object... args) {
 
-      super(throwable, message, args);
-   }
+    super(throwable, message, args);
+  }
 
-   public SkinManagementException (Throwable throwable) {
+  public SkinManagementException (Throwable throwable) {
 
-      super(throwable);
-   }
+    super(throwable);
+  }
 }

@@ -31,72 +31,72 @@ import org.joda.time.DateTime;
 
 public class TimeOfDayValue extends TimeBasedValue {
 
-   private static TimeOfDayValue NULL_VALUE = new TimeOfDayValue(null);
+  private static TimeOfDayValue NULL_VALUE = new TimeOfDayValue(null);
 
-   public static TimeOfDayValue asNull () {
+  public static TimeOfDayValue asNull () {
 
-      return NULL_VALUE;
-   }
+    return NULL_VALUE;
+  }
 
-   public static TimeOfDayValue create (long milliseconds) {
+  public static TimeOfDayValue create (long milliseconds) {
 
-      return new TimeOfDayValue(new DateTime(milliseconds));
-   }
+    return new TimeOfDayValue(new DateTime(milliseconds));
+  }
 
-   public static TimeOfDayValue create (Long milliseconds) {
+  public static TimeOfDayValue create (Long milliseconds) {
 
-      return (milliseconds == null) ? NULL_VALUE : new TimeOfDayValue(new DateTime(milliseconds));
-   }
+    return (milliseconds == null) ? NULL_VALUE : new TimeOfDayValue(new DateTime(milliseconds));
+  }
 
-   public static TimeOfDayValue create (Date date) {
+  public static TimeOfDayValue create (Date date) {
 
-      return (date == null) ? NULL_VALUE : new TimeOfDayValue(new DateTime(date));
-   }
+    return (date == null) ? NULL_VALUE : new TimeOfDayValue(new DateTime(date));
+  }
 
-   private TimeOfDayValue (DateTime instant) {
+  private TimeOfDayValue (DateTime instant) {
 
-      super(instant);
-   }
+    super(instant);
+  }
 
-   @Override
-   public ValueType getType () {
+  @Override
+  public ValueType getType () {
 
-      return ValueType.TIMEOFDAY;
-   }
+    return ValueType.TIMEOFDAY;
+  }
 
-   public int getHour () {
+  public int getHour () {
 
-      return getInstant().getHourOfDay();
-   }
+    return getInstant().getHourOfDay();
+  }
 
-   public int getMinute () {
+  public int getMinute () {
 
-      return getInstant().getMinuteOfHour();
-   }
+    return getInstant().getMinuteOfHour();
+  }
 
-   public int getSecond () {
+  public int getSecond () {
 
-      return getInstant().getSecondOfMinute();
-   }
+    return getInstant().getSecondOfMinute();
+  }
 
-   public int getMillisecond () {
+  public int getMillisecond () {
 
-      return getInstant().getMillisOfSecond();
-   }
+    return getInstant().getMillisOfSecond();
+  }
 
-   public String forScript () {
+  public String forScript () {
 
-      if (getInstant() == null) {
+    if (getInstant() == null) {
 
-         return "null";
-      }
+      return "null";
+    }
 
-      StringBuilder timeOfDayBuilder = new StringBuilder("[");
+    StringBuilder timeOfDayBuilder = new StringBuilder("[");
 
-      timeOfDayBuilder.append(getHour()).append(',').append(getMinute()).append(',').append(getSecond()).append(',').append(getMillisecond()).append(']');
+    timeOfDayBuilder.append(getHour()).append(',').append(getMinute()).append(',').append(getSecond()).append(',').append(getMillisecond()).append(']');
 
-      return timeOfDayBuilder.toString();
-   }
+    return timeOfDayBuilder.toString();
+  }
 }
 
 

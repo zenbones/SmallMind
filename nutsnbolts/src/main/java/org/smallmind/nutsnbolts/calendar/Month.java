@@ -30,11 +30,11 @@ import org.smallmind.nutsnbolts.util.StringUtilities;
 
 public enum Month {
 
-   JANUARY, FEBRUARY, MARCH, APRIL, MAY, JUNE, JULY, AUGUST, SEPTEMBER, OCTOBER, NOVEMBER, DECEMBER;
+  JANUARY, FEBRUARY, MARCH, APRIL, MAY, JUNE, JULY, AUGUST, SEPTEMBER, OCTOBER, NOVEMBER, DECEMBER;
 
-   public String getDisplayName () {
+  public String getDisplayName () {
 
-      return StringUtilities.toDisplayCase(this.name());
-   }
+    return StringUtilities.toDisplayCase(this.name());
+  }
 
 }

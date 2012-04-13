@@ -32,72 +32,72 @@ import org.smallmind.nutsnbolts.util.DotNotationException;
 
 public class KeyDebugger {
 
-   private LinkedList<DebugMatcher> matcherList;
-   boolean debug = false;
+  private LinkedList<DebugMatcher> matcherList;
+  boolean debug = false;
 
-   public KeyDebugger (String[] patterns)
+  public KeyDebugger (String[] patterns)
+    throws DotNotationException {
+
+    DebugMatcher debugMatcher;
+
+    matcherList = new LinkedList<DebugMatcher>();
+    for (String pattern : patterns) {
+      matcherList.add(debugMatcher = new DebugMatcher(pattern));
+      if (!debugMatcher.isExclusion()) {
+        debug = true;
+      }
+    }
+  }
+
+  public boolean willDebug () {
+
+    return debug;
+  }
+
+  public boolean matches (String key) {
+
+    boolean match = false;
+
+    for (DebugMatcher debugMatcher : matcherList) {
+      if (debugMatcher.matches(key)) {
+        if (debugMatcher.isExclusion()) {
+
+          return false;
+        }
+        else {
+          match = true;
+        }
+      }
+    }
+
+    return match;
+  }
+
+  private class DebugMatcher {
+
+    private DotNotation dotNotation;
+    private boolean exclusion = false;
+
+    public DebugMatcher (String pattern)
       throws DotNotationException {
 
-      DebugMatcher debugMatcher;
-
-      matcherList = new LinkedList<DebugMatcher>();
-      for (String pattern : patterns) {
-         matcherList.add(debugMatcher = new DebugMatcher(pattern));
-         if (!debugMatcher.isExclusion()) {
-            debug = true;
-         }
+      if (pattern.charAt(0) == '-') {
+        exclusion = true;
+        dotNotation = new DotNotation(pattern.substring(1));
       }
-   }
-
-   public boolean willDebug () {
-
-      return debug;
-   }
-
-   public boolean matches (String key) {
-
-      boolean match = false;
-
-      for (DebugMatcher debugMatcher : matcherList) {
-         if (debugMatcher.matches(key)) {
-            if (debugMatcher.isExclusion()) {
-
-               return false;
-            }
-            else {
-               match = true;
-            }
-         }
+      else {
+        dotNotation = new DotNotation(pattern);
       }
+    }
 
-      return match;
-   }
+    public boolean isExclusion () {
 
-   private class DebugMatcher {
+      return exclusion;
+    }
 
-      private DotNotation dotNotation;
-      private boolean exclusion = false;
+    public boolean matches (String key) {
 
-      public DebugMatcher (String pattern)
-         throws DotNotationException {
-
-         if (pattern.charAt(0) == '-') {
-            exclusion = true;
-            dotNotation = new DotNotation(pattern.substring(1));
-         }
-         else {
-            dotNotation = new DotNotation(pattern);
-         }
-      }
-
-      public boolean isExclusion () {
-
-         return exclusion;
-      }
-
-      public boolean matches (String key) {
-
-         return dotNotation.getPattern().matcher(key).matches();
-      }
-   }
+      return dotNotation.getPattern().matcher(key).matches();
+    }
+  }
 }

@@ -28,28 +28,28 @@ package org.smallmind.scribe.pen;
 
 public class ConsoleAppender extends AbstractAppender {
 
-   public ConsoleAppender () {
+  public ConsoleAppender () {
 
-      this(null, null);
-   }
+    this(null, null);
+  }
 
-   public ConsoleAppender (Formatter formatter) {
+  public ConsoleAppender (Formatter formatter) {
 
-      this(formatter, null);
-   }
+    this(formatter, null);
+  }
 
-   public ConsoleAppender (Formatter formatter, ErrorHandler errorHandler) {
+  public ConsoleAppender (Formatter formatter, ErrorHandler errorHandler) {
 
-      super(formatter, errorHandler);
-   }
+    super(formatter, errorHandler);
+  }
 
-   public boolean requiresFormatter () {
+  public boolean requiresFormatter () {
 
-      return true;
-   }
+    return true;
+  }
 
-   public synchronized void handleOutput (String formattedOutput) {
+  public synchronized void handleOutput (String formattedOutput) {
 
-      System.out.print(formattedOutput);
-   }
+    System.out.print(formattedOutput);
+  }
 }

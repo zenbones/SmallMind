@@ -32,16 +32,16 @@ import org.xml.sax.SAXException;
 
 public class ArgumentElementExtender extends AbstractElementExtender {
 
-   public String value;
+  public String value;
 
-   public String getValue () {
+  public String getValue () {
 
-      return value;
-   }
+    return value;
+  }
 
-   public void startElement (String namespaceURI, String localName, String qName, Attributes atts)
-      throws SAXException {
+  public void startElement (String namespaceURI, String localName, String qName, Attributes atts)
+    throws SAXException {
 
-      value = atts.getValue("value");
-   }
+    value = atts.getValue("value");
+  }
 }

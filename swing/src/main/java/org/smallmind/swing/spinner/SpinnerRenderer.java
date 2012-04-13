@@ -30,6 +30,6 @@ import java.awt.Component;
 
 public interface SpinnerRenderer {
 
-   public abstract Component getSpinnerRendererComponent (Spinner spinner, Object value);
+  public abstract Component getSpinnerRendererComponent (Spinner spinner, Object value);
 
 }

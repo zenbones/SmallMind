@@ -31,17 +31,17 @@ import java.lang.reflect.Method;
 
 public class OffloadingInvocationHandler implements InvocationHandler {
 
-   private Object target;
+  private Object target;
 
-   public OffloadingInvocationHandler (Object target) {
+  public OffloadingInvocationHandler (Object target) {
 
-      this.target = target;
-   }
+    this.target = target;
+  }
 
-   @Override
-   public Object invoke (Object proxy, Method method, Object[] args)
-      throws Throwable {
+  @Override
+  public Object invoke (Object proxy, Method method, Object[] args)
+    throws Throwable {
 
-      return method.invoke(target, args);
-   }
+    return method.invoke(target, args);
+  }
 }

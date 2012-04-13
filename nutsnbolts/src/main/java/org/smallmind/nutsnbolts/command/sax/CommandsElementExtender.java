@@ -33,25 +33,25 @@ import org.xml.sax.SAXException;
 
 public class CommandsElementExtender extends AbstractElementExtender {
 
-   public void addCommandGroup (CommandGroup commandGroup) {
+  public void addCommandGroup (CommandGroup commandGroup) {
 
-      ((CommandDocumentExtender)getDocumentExtender()).getCommandTemplate().addCommandGroup(commandGroup);
-   }
+    ((CommandDocumentExtender)getDocumentExtender()).getCommandTemplate().addCommandGroup(commandGroup);
+  }
 
-   public void completedChildElement (ElementExtender elementExtender)
-      throws SAXException {
+  public void completedChildElement (ElementExtender elementExtender)
+    throws SAXException {
 
-      if (elementExtender instanceof CommandElementExtender) {
+    if (elementExtender instanceof CommandElementExtender) {
 
-         CommandGroup commandGroup;
+      CommandGroup commandGroup;
 
-         commandGroup = new CommandGroup();
-         commandGroup.addCommandStructure(((CommandElementExtender)elementExtender).getCommandtStructure());
-         addCommandGroup(commandGroup);
-      }
-      else if (elementExtender instanceof GroupElementExtender) {
-         addCommandGroup(((GroupElementExtender)elementExtender).getCommandGroup());
-      }
-   }
+      commandGroup = new CommandGroup();
+      commandGroup.addCommandStructure(((CommandElementExtender)elementExtender).getCommandtStructure());
+      addCommandGroup(commandGroup);
+    }
+    else if (elementExtender instanceof GroupElementExtender) {
+      addCommandGroup(((GroupElementExtender)elementExtender).getCommandGroup());
+    }
+  }
 
 }

@@ -32,36 +32,36 @@ import javax.mail.Session;
 
 public enum Protocol {
 
-   SMTP("smtp", "smtp", false), SMTPS("smtps", "smtp", true);
+  SMTP("smtp", "smtp", false), SMTPS("smtps", "smtp", true);
 
-   private String name;
-   private String selector;
-   private boolean secure;
+  private String name;
+  private String selector;
+  private boolean secure;
 
-   private Protocol (String name, String selector, boolean secure) {
+  private Protocol (String name, String selector, boolean secure) {
 
-      this.name = name;
-      this.selector = selector;
-      this.secure = secure;
-   }
+    this.name = name;
+    this.selector = selector;
+    this.secure = secure;
+  }
 
-   public Session getSession (String host, int port, Authentication authentication) {
+  public Session getSession (String host, int port, Authentication authentication) {
 
-      Properties properties = new Properties();
-      Authenticator authenticator;
+    Properties properties = new Properties();
+    Authenticator authenticator;
 
-      properties.setProperty("mail.transport.protocol", name);
-      properties.setProperty("mail." + selector + ".host", host);
-      properties.put("mail." + selector + ".port", port);
+    properties.setProperty("mail.transport.protocol", name);
+    properties.setProperty("mail." + selector + ".host", host);
+    properties.put("mail." + selector + ".port", port);
 
-      if (secure) {
-         properties.setProperty("mail." + selector + ".starttls.enable", "true");
-      }
+    if (secure) {
+      properties.setProperty("mail." + selector + ".starttls.enable", "true");
+    }
 
-      if ((authenticator = authentication.getAuthenticator()) != null) {
-         properties.setProperty("mail." + selector + ".auth", "true");
-      }
+    if ((authenticator = authentication.getAuthenticator()) != null) {
+      properties.setProperty("mail." + selector + ".auth", "true");
+    }
 
-      return Session.getInstance(properties, authenticator);
-   }
+    return Session.getInstance(properties, authenticator);
+  }
 }

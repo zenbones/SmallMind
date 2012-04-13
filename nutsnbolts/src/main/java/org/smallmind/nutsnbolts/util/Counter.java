@@ -28,33 +28,33 @@ package org.smallmind.nutsnbolts.util;
 
 public class Counter {
 
-   private int count;
+  private int count;
 
-   public Counter () {
+  public Counter () {
 
-      count = 0;
-   }
+    count = 0;
+  }
 
-   public Counter (int count) {
+  public Counter (int count) {
 
-      this.count = count;
-   }
+    this.count = count;
+  }
 
-   public int inc () {
+  public int inc () {
 
-      count++;
-      return count;
-   }
+    count++;
+    return count;
+  }
 
-   public int dec () {
+  public int dec () {
 
-      count--;
-      return count;
-   }
+    count--;
+    return count;
+  }
 
-   public int getCount () {
+  public int getCount () {
 
-      return count;
-   }
+    return count;
+  }
 
 }

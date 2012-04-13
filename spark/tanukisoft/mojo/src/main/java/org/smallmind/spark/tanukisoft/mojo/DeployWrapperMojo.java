@@ -45,72 +45,72 @@ import org.apache.maven.project.MavenProject;
  */
 public class DeployWrapperMojo extends AbstractMojo {
 
-   /**
-    * @parameter expression="${project}"
-    * @readonly
-    */
-   private MavenProject project;
+  /**
+   * @parameter expression="${project}"
+   * @readonly
+   */
+  private MavenProject project;
 
-   /**
-    * @component
-    * @readonly
-    */
-   ArtifactFactory artifactFactory;
+  /**
+   * @component
+   * @readonly
+   */
+  ArtifactFactory artifactFactory;
 
-   /**
-    * @component
-    * @readonly
-    */
-   ArtifactDeployer artifactDeployer;
+  /**
+   * @component
+   * @readonly
+   */
+  ArtifactDeployer artifactDeployer;
 
-   /**
-    * @parameter expression="${localRepository}"
-    * @readonly
-    */
-   private ArtifactRepository localRepository;
+  /**
+   * @parameter expression="${localRepository}"
+   * @readonly
+   */
+  private ArtifactRepository localRepository;
 
-   /**
-    * @parameter default-value="${project.distributionManagementArtifactRepository}"
-    */
-   private ArtifactRepository deploymentRepository;
+  /**
+   * @parameter default-value="${project.distributionManagementArtifactRepository}"
+   */
+  private ArtifactRepository deploymentRepository;
 
-   /**
-    * @parameter default-value="application"
-    */
-   private String applicationDir;
+  /**
+   * @parameter default-value="application"
+   */
+  private String applicationDir;
 
-   /**
-    * @parameter expression="${project.artifactId}"
-    */
-   private String applicationName;
+  /**
+   * @parameter expression="${project.artifactId}"
+   */
+  private String applicationName;
 
-   public void execute ()
-      throws MojoExecutionException, MojoFailureException {
+  public void execute ()
+    throws MojoExecutionException, MojoFailureException {
 
-      Artifact applicationArtifact;
-      StringBuilder nameBuilder;
+    Artifact applicationArtifact;
+    StringBuilder nameBuilder;
 
-      applicationArtifact = artifactFactory.createArtifactWithClassifier(project.getGroupId(), project.getArtifactId(), project.getVersion(), "jar", (project.getArtifact().getClassifier() == null) ? "app" : project.getArtifact().getClassifier() + "-app");
+    applicationArtifact = artifactFactory.createArtifactWithClassifier(project.getGroupId(), project.getArtifactId(), project.getVersion(), "jar", (project.getArtifact().getClassifier() == null) ? "app" : project.getArtifact().getClassifier() + "-app");
 
-      nameBuilder = new StringBuilder(project.getBuild().getDirectory() + System.getProperty("file.separator") + applicationDir);
+    nameBuilder = new StringBuilder(project.getBuild().getDirectory() + System.getProperty("file.separator") + applicationDir);
 
-      nameBuilder.append(System.getProperty("file.separator"));
-      nameBuilder.append(applicationName);
+    nameBuilder.append(System.getProperty("file.separator"));
+    nameBuilder.append(applicationName);
+    nameBuilder.append('-');
+    nameBuilder.append(project.getVersion());
+
+    if (project.getArtifact().getClassifier() != null) {
       nameBuilder.append('-');
-      nameBuilder.append(project.getVersion());
+      nameBuilder.append(project.getArtifact().getClassifier());
+    }
 
-      if (project.getArtifact().getClassifier() != null) {
-         nameBuilder.append('-');
-         nameBuilder.append(project.getArtifact().getClassifier());
-      }
+    nameBuilder.append("-app").append(".jar");
 
-      nameBuilder.append("-app").append(".jar");
-
-      try {
-         artifactDeployer.deploy(new File(nameBuilder.toString()), applicationArtifact, deploymentRepository, localRepository);
-      }
-      catch (ArtifactDeploymentException artifactDeploymentException) {
-         throw new MojoExecutionException("Unable to deploy the application(" + applicationName + ")", artifactDeploymentException);
-      }
-   }
+    try {
+      artifactDeployer.deploy(new File(nameBuilder.toString()), applicationArtifact, deploymentRepository, localRepository);
+    }
+    catch (ArtifactDeploymentException artifactDeploymentException) {
+      throw new MojoExecutionException("Unable to deploy the application(" + applicationName + ")", artifactDeploymentException);
+    }
+  }
 }

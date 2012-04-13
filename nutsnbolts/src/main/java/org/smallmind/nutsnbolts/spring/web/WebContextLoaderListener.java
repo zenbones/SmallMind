@@ -31,8 +31,8 @@ import org.springframework.web.context.ContextLoaderListener;
 
 public class WebContextLoaderListener extends ContextLoaderListener {
 
-   public void contextInitialized (ServletContextEvent servletContextEvent) {
+  public void contextInitialized (ServletContextEvent servletContextEvent) {
 
-      super.contextInitialized(servletContextEvent);
-   }
+    super.contextInitialized(servletContextEvent);
+  }
 }

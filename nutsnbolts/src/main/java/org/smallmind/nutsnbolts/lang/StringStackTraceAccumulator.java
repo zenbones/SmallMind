@@ -28,22 +28,22 @@ package org.smallmind.nutsnbolts.lang;
 
 public class StringStackTraceAccumulator implements StackTraceAccumulator {
 
-   private StringBuilder traceBuilder;
+  private StringBuilder traceBuilder;
 
-   public StringStackTraceAccumulator () {
+  public StringStackTraceAccumulator () {
 
-      traceBuilder = new StringBuilder();
-   }
+    traceBuilder = new StringBuilder();
+  }
 
-   @Override
-   public void append (CharSequence charSequence) {
+  @Override
+  public void append (CharSequence charSequence) {
 
-      traceBuilder.append(charSequence).append(System.getProperty("line.separator"));
-   }
+    traceBuilder.append(charSequence).append(System.getProperty("line.separator"));
+  }
 
-   @Override
-   public String toString () {
+  @Override
+  public String toString () {
 
-      return traceBuilder.toString();
-   }
+    return traceBuilder.toString();
+  }
 }

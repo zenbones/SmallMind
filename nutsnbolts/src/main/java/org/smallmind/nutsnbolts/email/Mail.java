@@ -32,160 +32,160 @@ import java.io.StringReader;
 
 public class Mail {
 
-   private Reader bodyReader;
-   private File[] attachments;
-   private String from = null;
-   private String to = null;
-   private String replyTo = null;
-   private String cc = null;
-   private String bcc = null;
-   private String subject = null;
+  private Reader bodyReader;
+  private File[] attachments;
+  private String from = null;
+  private String to = null;
+  private String replyTo = null;
+  private String cc = null;
+  private String bcc = null;
+  private String subject = null;
 
-   public Mail (String from, String to, File... attachments) {
+  public Mail (String from, String to, File... attachments) {
 
-      this(from, to, null, null, null, null, null, attachments);
-   }
+    this(from, to, null, null, null, null, null, attachments);
+  }
 
-   public Mail (String from, String to, String body, File... attachments) {
+  public Mail (String from, String to, String body, File... attachments) {
 
-      this(from, to, null, null, null, null, new StringReader(body), attachments);
-   }
+    this(from, to, null, null, null, null, new StringReader(body), attachments);
+  }
 
-   public Mail (String from, String to, Reader bodyReader, File... attachments) {
+  public Mail (String from, String to, Reader bodyReader, File... attachments) {
 
-      this(from, to, null, null, null, null, bodyReader, attachments);
-   }
+    this(from, to, null, null, null, null, bodyReader, attachments);
+  }
 
-   public Mail (String from, String to, String subject, String body, File... attachments) {
+  public Mail (String from, String to, String subject, String body, File... attachments) {
 
-      this(from, to, null, null, null, subject, new StringReader(body), attachments);
-   }
+    this(from, to, null, null, null, subject, new StringReader(body), attachments);
+  }
 
-   public Mail (String from, String to, String subject, Reader bodyReader, File... attachments) {
+  public Mail (String from, String to, String subject, Reader bodyReader, File... attachments) {
 
-      this(from, to, null, null, null, subject, bodyReader, attachments);
-   }
+    this(from, to, null, null, null, subject, bodyReader, attachments);
+  }
 
-   public Mail (String from, String to, String replyTo, String cc, String subject, String body, File... attachments) {
+  public Mail (String from, String to, String replyTo, String cc, String subject, String body, File... attachments) {
 
-      this(from, to, replyTo, cc, null, subject, new StringReader(body), attachments);
-   }
+    this(from, to, replyTo, cc, null, subject, new StringReader(body), attachments);
+  }
 
-   public Mail (String from, String to, String replyTo, String cc, String subject, Reader bodyReader, File... attachments) {
+  public Mail (String from, String to, String replyTo, String cc, String subject, Reader bodyReader, File... attachments) {
 
-      this(from, to, replyTo, cc, null, subject, bodyReader, attachments);
-   }
+    this(from, to, replyTo, cc, null, subject, bodyReader, attachments);
+  }
 
-   public Mail (String from, String to, String replyTo, String cc, String bcc, String subject, Reader bodyReader, File... attachments) {
+  public Mail (String from, String to, String replyTo, String cc, String bcc, String subject, Reader bodyReader, File... attachments) {
 
-      this.from = from;
-      this.to = to;
-      this.replyTo = replyTo;
-      this.cc = cc;
-      this.bcc = bcc;
-      this.subject = subject;
-      this.bodyReader = bodyReader;
-      this.attachments = attachments;
-   }
+    this.from = from;
+    this.to = to;
+    this.replyTo = replyTo;
+    this.cc = cc;
+    this.bcc = bcc;
+    this.subject = subject;
+    this.bodyReader = bodyReader;
+    this.attachments = attachments;
+  }
 
-   public void setFrom (String from) {
+  public void setFrom (String from) {
 
-      this.from = from;
-   }
+    this.from = from;
+  }
 
-   public void setTo (String to) {
+  public void setTo (String to) {
 
-      this.to = to;
-   }
+    this.to = to;
+  }
 
-   public void setReplyTo (String replyTo) {
+  public void setReplyTo (String replyTo) {
 
-      this.replyTo = replyTo;
-   }
+    this.replyTo = replyTo;
+  }
 
-   public void setCc (String cc) {
+  public void setCc (String cc) {
 
-      this.cc = cc;
-   }
+    this.cc = cc;
+  }
 
-   public void setBcc (String bcc) {
+  public void setBcc (String bcc) {
 
-      this.bcc = bcc;
-   }
+    this.bcc = bcc;
+  }
 
-   public void setSubject (String subject) {
+  public void setSubject (String subject) {
 
-      this.subject = subject;
-   }
+    this.subject = subject;
+  }
 
-   public void setBody (String body) {
+  public void setBody (String body) {
 
-      setBodyReader(new StringReader(body));
-   }
+    setBodyReader(new StringReader(body));
+  }
 
-   public void setBodyReader (Reader bodyReader) {
+  public void setBodyReader (Reader bodyReader) {
 
-      this.bodyReader = bodyReader;
-   }
+    this.bodyReader = bodyReader;
+  }
 
-   public void setAttachments (File[] attachments) {
+  public void setAttachments (File[] attachments) {
 
-      this.attachments = attachments;
-   }
+    this.attachments = attachments;
+  }
 
-   public void addAttachment (File attachment) {
+  public void addAttachment (File attachment) {
 
-      if (attachments == null) {
-         attachments = new File[] {attachment};
-      }
-      else {
+    if (attachments == null) {
+      attachments = new File[] {attachment};
+    }
+    else {
 
-         File[] moreAttachments = new File[attachments.length + 1];
+      File[] moreAttachments = new File[attachments.length + 1];
 
-         System.arraycopy(attachments, 0, moreAttachments, 0, attachments.length);
-         moreAttachments[attachments.length] = attachment;
-         attachments = moreAttachments;
-      }
-   }
+      System.arraycopy(attachments, 0, moreAttachments, 0, attachments.length);
+      moreAttachments[attachments.length] = attachment;
+      attachments = moreAttachments;
+    }
+  }
 
-   public String getFrom () {
+  public String getFrom () {
 
-      return from;
-   }
+    return from;
+  }
 
-   public String getTo () {
+  public String getTo () {
 
-      return to;
-   }
+    return to;
+  }
 
-   public String getReplyTo () {
+  public String getReplyTo () {
 
-      return replyTo;
-   }
+    return replyTo;
+  }
 
-   public String getCc () {
+  public String getCc () {
 
-      return cc;
-   }
+    return cc;
+  }
 
-   public String getBcc () {
+  public String getBcc () {
 
-      return bcc;
-   }
+    return bcc;
+  }
 
-   public String getSubject () {
+  public String getSubject () {
 
-      return subject;
-   }
+    return subject;
+  }
 
-   public Reader getBodyReader () {
+  public Reader getBodyReader () {
 
-      return bodyReader;
-   }
+    return bodyReader;
+  }
 
-   public File[] getAttachments () {
+  public File[] getAttachments () {
 
-      return attachments;
-   }
+    return attachments;
+  }
 
 }

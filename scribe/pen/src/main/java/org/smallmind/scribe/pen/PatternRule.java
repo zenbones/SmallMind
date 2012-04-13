@@ -30,9 +30,9 @@ import java.util.Collection;
 
 public interface PatternRule {
 
-   String getHeader ();
+  String getHeader ();
 
-   String getFooter ();
+  String getFooter ();
 
-   String convert (Record record, Collection<Filter> filterCollection, Timestamp timestamp);
+  String convert (Record record, Collection<Filter> filterCollection, Timestamp timestamp);
 }

@@ -28,30 +28,30 @@ package org.smallmind.nutsnbolts.resource;
 
 public abstract class AbstractResource implements Resource {
 
-   private String path;
+  private String path;
 
-   public AbstractResource (String path) {
+  public AbstractResource (String path) {
 
-      this.path = path;
-   }
+    this.path = path;
+  }
 
-   public String getIdentifier () {
+  public String getIdentifier () {
 
-      return getScheme() + ":" + getPath();
-   }
+    return getScheme() + ":" + getPath();
+  }
 
-   public String getPath () {
+  public String getPath () {
 
-      return path;
-   }
+    return path;
+  }
 
-   public void setPath (String path) {
+  public void setPath (String path) {
 
-      this.path = path;
-   }
+    this.path = path;
+  }
 
-   public String toString () {
+  public String toString () {
 
-      return getIdentifier();
-   }
+    return getIdentifier();
+  }
 }

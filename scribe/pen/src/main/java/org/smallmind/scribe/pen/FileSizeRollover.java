@@ -30,52 +30,52 @@ import java.io.File;
 
 public class FileSizeRollover extends Rollover {
 
-   private FileSizeQuantifier fileSizeQuantifier;
-   private long maxSize;
+  private FileSizeQuantifier fileSizeQuantifier;
+  private long maxSize;
 
-   public FileSizeRollover () {
+  public FileSizeRollover () {
 
-      this(10, FileSizeQuantifier.MEGABYTES);
-   }
+    this(10, FileSizeQuantifier.MEGABYTES);
+  }
 
-   public FileSizeRollover (long maxSize, FileSizeQuantifier fileSizeQuantifier) {
+  public FileSizeRollover (long maxSize, FileSizeQuantifier fileSizeQuantifier) {
 
-      super();
+    super();
 
-      this.maxSize = maxSize;
-      this.fileSizeQuantifier = fileSizeQuantifier;
-   }
+    this.maxSize = maxSize;
+    this.fileSizeQuantifier = fileSizeQuantifier;
+  }
 
-   public FileSizeRollover (long maxSize, FileSizeQuantifier fileSizeQuantifier, char separator, Timestamp timestamp) {
+  public FileSizeRollover (long maxSize, FileSizeQuantifier fileSizeQuantifier, char separator, Timestamp timestamp) {
 
-      super(separator, timestamp);
+    super(separator, timestamp);
 
-      this.maxSize = maxSize;
-      this.fileSizeQuantifier = fileSizeQuantifier;
-   }
+    this.maxSize = maxSize;
+    this.fileSizeQuantifier = fileSizeQuantifier;
+  }
 
-   public long getMaxSize () {
+  public long getMaxSize () {
 
-      return maxSize;
-   }
+    return maxSize;
+  }
 
-   public void setMaxSize (long maxSize) {
+  public void setMaxSize (long maxSize) {
 
-      this.maxSize = maxSize;
-   }
+    this.maxSize = maxSize;
+  }
 
-   public FileSizeQuantifier getFileSizeQuantifier () {
+  public FileSizeQuantifier getFileSizeQuantifier () {
 
-      return fileSizeQuantifier;
-   }
+    return fileSizeQuantifier;
+  }
 
-   public void setFileSizeQuantifier (FileSizeQuantifier fileSizeQuantifier) {
+  public void setFileSizeQuantifier (FileSizeQuantifier fileSizeQuantifier) {
 
-      this.fileSizeQuantifier = fileSizeQuantifier;
-   }
+    this.fileSizeQuantifier = fileSizeQuantifier;
+  }
 
-   public boolean willRollover (File logFile, long bytesToBeWritten) {
+  public boolean willRollover (File logFile, long bytesToBeWritten) {
 
-      return (logFile.length() + bytesToBeWritten) > (maxSize * fileSizeQuantifier.getMultiplier());
-   }
+    return (logFile.length() + bytesToBeWritten) > (maxSize * fileSizeQuantifier.getMultiplier());
+  }
 }

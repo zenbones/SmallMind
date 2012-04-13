@@ -30,23 +30,23 @@ import org.smallmind.nutsnbolts.lang.FormattedRuntimeException;
 
 public class ContextException extends FormattedRuntimeException {
 
-   public ContextException () {
+  public ContextException () {
 
-      super();
-   }
+    super();
+  }
 
-   public ContextException (String message, Object... args) {
+  public ContextException (String message, Object... args) {
 
-      super(message, args);
-   }
+    super(message, args);
+  }
 
-   public ContextException (Throwable throwable, String message, Object... args) {
+  public ContextException (Throwable throwable, String message, Object... args) {
 
-      super(throwable, message, args);
-   }
+    super(throwable, message, args);
+  }
 
-   public ContextException (Throwable throwable) {
+  public ContextException (Throwable throwable) {
 
-      super(throwable);
-   }
+    super(throwable);
+  }
 }

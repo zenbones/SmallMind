@@ -30,46 +30,46 @@ import org.smallmind.nutsnbolts.util.DirectionalComparator;
 
 public class MultiListSelection<T extends Comparable<T>> {
 
-   private T comparable;
-   private int index;
+  private T comparable;
+  private int index;
 
-   public MultiListSelection (T comparable, int index) {
+  public MultiListSelection (T comparable, int index) {
 
-      this.comparable = comparable;
-      this.index = index;
-   }
+    this.comparable = comparable;
+    this.index = index;
+  }
 
-   public T getComparable () {
+  public T getComparable () {
 
-      return comparable;
-   }
+    return comparable;
+  }
 
-   public int getIndex () {
+  public int getIndex () {
 
-      return index;
-   }
+    return index;
+  }
 
-   public int compareTo (MultiListSelection<T> selection, DirectionalComparator.Direction direction) {
+  public int compareTo (MultiListSelection<T> selection, DirectionalComparator.Direction direction) {
 
-      if (getComparable().compareTo(selection.getComparable()) < 0) {
-         if (direction.equals(DirectionalComparator.Direction.ASCENDING)) {
-            return 1;
-         }
-         else {
-            return -1;
-         }
-      }
-      else if (getComparable().compareTo(selection.getComparable()) > 0) {
-         if (direction.equals(DirectionalComparator.Direction.ASCENDING)) {
-            return -1;
-         }
-         else {
-            return 1;
-         }
+    if (getComparable().compareTo(selection.getComparable()) < 0) {
+      if (direction.equals(DirectionalComparator.Direction.ASCENDING)) {
+        return 1;
       }
       else {
-         return getIndex() - selection.getIndex();
+        return -1;
       }
-   }
+    }
+    else if (getComparable().compareTo(selection.getComparable()) > 0) {
+      if (direction.equals(DirectionalComparator.Direction.ASCENDING)) {
+        return -1;
+      }
+      else {
+        return 1;
+      }
+    }
+    else {
+      return getIndex() - selection.getIndex();
+    }
+  }
 
 }

@@ -30,23 +30,23 @@ import org.smallmind.scribe.pen.LoggerRuntimeException;
 
 public class ProbeException extends LoggerRuntimeException {
 
-   public ProbeException () {
+  public ProbeException () {
 
-      super();
-   }
+    super();
+  }
 
-   public ProbeException (String message, Object... args) {
+  public ProbeException (String message, Object... args) {
 
-      super(message, args);
-   }
+    super(message, args);
+  }
 
-   public ProbeException (Throwable throwable, String message, Object... args) {
+  public ProbeException (Throwable throwable, String message, Object... args) {
 
-      super(throwable, message, args);
-   }
+    super(throwable, message, args);
+  }
 
-   public ProbeException (Throwable exception) {
+  public ProbeException (Throwable exception) {
 
-      super(exception);
-   }
+    super(exception);
+  }
 }

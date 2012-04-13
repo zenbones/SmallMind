@@ -30,18 +30,18 @@ import java.io.InputStream;
 
 public class PlaceholderResource extends AbstractResource {
 
-   public PlaceholderResource (String path) {
+  public PlaceholderResource (String path) {
 
-      super(path);
-   }
+    super(path);
+  }
 
-   public String getScheme () {
+  public String getScheme () {
 
-      return "placeholder";
-   }
+    return "placeholder";
+  }
 
-   public InputStream getInputStream () {
+  public InputStream getInputStream () {
 
-      throw new UnsupportedOperationException();
-   }
+    throw new UnsupportedOperationException();
+  }
 }

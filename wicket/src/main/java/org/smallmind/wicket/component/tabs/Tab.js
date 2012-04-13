@@ -1,24 +1,24 @@
 if (typeof SMALLMIND == "undefined") {
-   var SMALLMIND = {};
+  var SMALLMIND = {};
 }
 
 if (typeof SMALLMIND.component == "undefined") {
-   SMALLMIND.component = {};
+  SMALLMIND.component = {};
 }
 
-SMALLMIND.component.tab = new function() {
+SMALLMIND.component.tab = new function () {
 
-   this.highlight = function(tab) {
+  this.highlight = function (tab) {
 
-      if (tab.getAttribute("selected") == null) {
-         tab.className = "tabhighlighted"
-      }
-   }
+    if (tab.getAttribute("selected") == null) {
+      tab.className = "tabhighlighted"
+    }
+  }
 
-   this.normal = function(tab) {
+  this.normal = function (tab) {
 
-      if (tab.getAttribute("selected") == null) {
-         tab.className = "tabstandard"
-      }
-   }
+    if (tab.getAttribute("selected") == null) {
+      tab.className = "tabstandard"
+    }
+  }
 }

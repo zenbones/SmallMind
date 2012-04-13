@@ -37,48 +37,48 @@ import org.smallmind.persistence.orm.ORMDao;
 
 public class DaoBackedListSelectionModel<I extends Serializable & Comparable<I>, D extends Durable<I>> implements Serializable, IModel, IDetachable, IClusterable {
 
-   private transient List<D> selectionList;
-   private transient boolean attached = false;
+  private transient List<D> selectionList;
+  private transient boolean attached = false;
 
-   private ORMDao<I, D> backingDao;
-   private List<I> idList;
+  private ORMDao<I, D> backingDao;
+  private List<I> idList;
 
-   public DaoBackedListSelectionModel (ORMDao<I, D> backingDao) {
+  public DaoBackedListSelectionModel (ORMDao<I, D> backingDao) {
 
-      this.backingDao = backingDao;
+    this.backingDao = backingDao;
 
-      idList = new LinkedList<I>();
-   }
+    idList = new LinkedList<I>();
+  }
 
-   public synchronized Object getObject () {
+  public synchronized Object getObject () {
 
-      if (!attached) {
-         selectionList = new LinkedList<D>();
-         for (I id : idList) {
-            selectionList.add(backingDao.get(id));
-         }
-
-         attached = true;
+    if (!attached) {
+      selectionList = new LinkedList<D>();
+      for (I id : idList) {
+        selectionList.add(backingDao.get(id));
       }
 
-      return selectionList;
-   }
+      attached = true;
+    }
 
-   public synchronized void setObject (Object obj) {
+    return selectionList;
+  }
 
-      selectionList = (List<D>)obj;
-   }
+  public synchronized void setObject (Object obj) {
 
-   public synchronized void detach () {
+    selectionList = (List<D>)obj;
+  }
 
-      if (attached) {
-         idList.clear();
-         for (D durable : selectionList) {
-            idList.add(backingDao.getId(durable));
-         }
+  public synchronized void detach () {
 
-         attached = false;
-         selectionList = null;
+    if (attached) {
+      idList.clear();
+      for (D durable : selectionList) {
+        idList.add(backingDao.getId(durable));
       }
-   }
+
+      attached = false;
+      selectionList = null;
+    }
+  }
 }

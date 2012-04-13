@@ -33,48 +33,48 @@ import java.util.concurrent.TimeUnit;
 
 public class FileProcessorGopher implements Runnable {
 
-   private CountDownLatch terminationLatch;
-   private CountDownLatch exitLatch;
-   private FileProcessorQueue fileProcessorQueue;
-   private File directory;
-   private FileFilter fileFilter;
-   private TimeUnit timeUnit;
-   private long pulse;
+  private CountDownLatch terminationLatch;
+  private CountDownLatch exitLatch;
+  private FileProcessorQueue fileProcessorQueue;
+  private File directory;
+  private FileFilter fileFilter;
+  private TimeUnit timeUnit;
+  private long pulse;
 
-   public FileProcessorGopher (FileProcessorQueue fileProcessorQueue, File directory, FileFilter fileFilter, long pulse, TimeUnit timeUnit) {
+  public FileProcessorGopher (FileProcessorQueue fileProcessorQueue, File directory, FileFilter fileFilter, long pulse, TimeUnit timeUnit) {
 
-      this.fileProcessorQueue = fileProcessorQueue;
-      this.directory = directory;
-      this.fileFilter = fileFilter;
-      this.pulse = pulse;
-      this.timeUnit = timeUnit;
+    this.fileProcessorQueue = fileProcessorQueue;
+    this.directory = directory;
+    this.fileFilter = fileFilter;
+    this.pulse = pulse;
+    this.timeUnit = timeUnit;
 
-      terminationLatch = new CountDownLatch(1);
-      exitLatch = new CountDownLatch(1);
-   }
+    terminationLatch = new CountDownLatch(1);
+    exitLatch = new CountDownLatch(1);
+  }
 
-   public void finish ()
-      throws InterruptedException {
+  public void finish ()
+    throws InterruptedException {
 
+    terminationLatch.countDown();
+    exitLatch.await();
+  }
+
+  public void run () {
+
+    try {
+      do {
+        for (File file : new FileIterator(directory, fileFilter)) {
+          fileProcessorQueue.push(file);
+        }
+
+      } while (!terminationLatch.await(pulse, timeUnit));
+    }
+    catch (InterruptedException interruptedException) {
       terminationLatch.countDown();
-      exitLatch.await();
-   }
-
-   public void run () {
-
-      try {
-         do {
-            for (File file : new FileIterator(directory, fileFilter)) {
-               fileProcessorQueue.push(file);
-            }
-
-         } while (!terminationLatch.await(pulse, timeUnit));
-      }
-      catch (InterruptedException interruptedException) {
-         terminationLatch.countDown();
-      }
-      finally {
-         exitLatch.countDown();
-      }
-   }
+    }
+    finally {
+      exitLatch.countDown();
+    }
+  }
 }

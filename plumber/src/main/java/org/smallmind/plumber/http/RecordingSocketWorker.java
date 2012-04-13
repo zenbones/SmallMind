@@ -34,30 +34,30 @@ import org.smallmind.scribe.pen.Logger;
 
 public class RecordingSocketWorker extends SocketWorker {
 
-   private String httpHost;
-   private int httpPort;
-   private int bufferSize;
+  private String httpHost;
+  private int httpPort;
+  private int bufferSize;
 
-   public RecordingSocketWorker (Logger logger, ServerSocketHerald herald, String httpHost, int httpPort, int bufferSize) {
+  public RecordingSocketWorker (Logger logger, ServerSocketHerald herald, String httpHost, int httpPort, int bufferSize) {
 
-      super(logger, herald);
+    super(logger, herald);
 
-      this.httpHost = httpHost;
-      this.httpPort = httpPort;
-      this.bufferSize = bufferSize;
-   }
+    this.httpHost = httpHost;
+    this.httpPort = httpPort;
+    this.bufferSize = bufferSize;
+  }
 
-   public void socketWork (Socket socket)
-      throws Exception {
+  public void socketWork (Socket socket)
+    throws Exception {
 
-      Socket serviceSocket;
-      RecordingSocketPipe socketPipe;
+    Socket serviceSocket;
+    RecordingSocketPipe socketPipe;
 
-      serviceSocket = new Socket(InetAddress.getByName(httpHost), httpPort);
+    serviceSocket = new Socket(InetAddress.getByName(httpHost), httpPort);
 
-      socketPipe = new RecordingSocketPipe(socket, serviceSocket, bufferSize);
-      socketPipe.startPipe();
+    socketPipe = new RecordingSocketPipe(socket, serviceSocket, bufferSize);
+    socketPipe.startPipe();
 
-      serviceSocket.close();
-   }
+    serviceSocket.close();
+  }
 }

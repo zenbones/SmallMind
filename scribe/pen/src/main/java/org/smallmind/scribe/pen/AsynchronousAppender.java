@@ -33,148 +33,148 @@ import java.util.concurrent.TimeUnit;
 
 public class AsynchronousAppender implements Appender, Runnable {
 
-   private CountDownLatch exitLatch;
-   private Appender internalAppender;
-   private LinkedBlockingQueue<Record> publishQueue;
-   private boolean finished = false;
+  private CountDownLatch exitLatch;
+  private Appender internalAppender;
+  private LinkedBlockingQueue<Record> publishQueue;
+  private boolean finished = false;
 
-   public AsynchronousAppender (Appender internalAppender) {
+  public AsynchronousAppender (Appender internalAppender) {
 
-      Thread publishThread;
+    Thread publishThread;
 
-      this.internalAppender = internalAppender;
+    this.internalAppender = internalAppender;
 
-      publishQueue = new LinkedBlockingQueue<Record>();
+    publishQueue = new LinkedBlockingQueue<Record>();
 
-      exitLatch = new CountDownLatch(1);
+    exitLatch = new CountDownLatch(1);
 
-      publishThread = new Thread(this);
-      publishThread.setDaemon(true);
-      publishThread.start();
-   }
+    publishThread = new Thread(this);
+    publishThread.setDaemon(true);
+    publishThread.start();
+  }
 
-   public void setName (String name) {
+  public void setName (String name) {
 
-      internalAppender.setName(name);
-   }
+    internalAppender.setName(name);
+  }
 
-   public String getName () {
+  public String getName () {
 
-      return internalAppender.getName();
-   }
+    return internalAppender.getName();
+  }
 
-   public void clearFilters () {
+  public void clearFilters () {
 
-      internalAppender.clearFilters();
-   }
+    internalAppender.clearFilters();
+  }
 
-   public synchronized void setFilter (Filter filter) {
+  public synchronized void setFilter (Filter filter) {
 
-      internalAppender.setFilter(filter);
-   }
+    internalAppender.setFilter(filter);
+  }
 
-   public void setFilters (List<Filter> filterList) {
+  public void setFilters (List<Filter> filterList) {
 
-      internalAppender.setFilters(filterList);
-   }
+    internalAppender.setFilters(filterList);
+  }
 
-   public void addFilter (Filter filter) {
+  public void addFilter (Filter filter) {
 
-      internalAppender.addFilter(filter);
-   }
+    internalAppender.addFilter(filter);
+  }
 
-   public Filter[] getFilters () {
+  public Filter[] getFilters () {
 
-      return internalAppender.getFilters();
-   }
+    return internalAppender.getFilters();
+  }
 
-   public ErrorHandler getErrorHandler () {
+  public ErrorHandler getErrorHandler () {
 
-      return internalAppender.getErrorHandler();
-   }
+    return internalAppender.getErrorHandler();
+  }
 
-   public void setErrorHandler (ErrorHandler errorHandler) {
+  public void setErrorHandler (ErrorHandler errorHandler) {
 
-      internalAppender.setErrorHandler(errorHandler);
-   }
+    internalAppender.setErrorHandler(errorHandler);
+  }
 
-   public void setFormatter (Formatter formatter) {
+  public void setFormatter (Formatter formatter) {
 
-      internalAppender.setFormatter(formatter);
-   }
+    internalAppender.setFormatter(formatter);
+  }
 
-   public Formatter getFormatter () {
+  public Formatter getFormatter () {
 
-      return internalAppender.getFormatter();
-   }
+    return internalAppender.getFormatter();
+  }
 
-   public boolean requiresFormatter () {
+  public boolean requiresFormatter () {
 
-      return internalAppender.requiresFormatter();
-   }
+    return internalAppender.requiresFormatter();
+  }
 
-   public void publish (Record record) {
+  public void publish (Record record) {
 
-      try {
-         if (finished) {
-            throw new LoggerException("%s has been previously closed", this.getClass().getSimpleName());
-         }
-
-         publishQueue.put(record);
-      }
-      catch (Exception exception) {
-         if (internalAppender.getErrorHandler() == null) {
-            exception.printStackTrace();
-         }
-         else {
-            internalAppender.getErrorHandler().process(record, exception, "Fatal error in appender(%s)", this.getClass().getCanonicalName());
-         }
-      }
-   }
-
-   public void close ()
-      throws LoggerException {
-
-      try {
-         finish();
-      }
-      catch (InterruptedException interuptedException) {
-         throw new LoggerException(interuptedException);
+    try {
+      if (finished) {
+        throw new LoggerException("%s has been previously closed", this.getClass().getSimpleName());
       }
 
-      internalAppender.close();
-   }
+      publishQueue.put(record);
+    }
+    catch (Exception exception) {
+      if (internalAppender.getErrorHandler() == null) {
+        exception.printStackTrace();
+      }
+      else {
+        internalAppender.getErrorHandler().process(record, exception, "Fatal error in appender(%s)", this.getClass().getCanonicalName());
+      }
+    }
+  }
 
-   public void finish ()
-      throws InterruptedException {
+  public void close ()
+    throws LoggerException {
 
-      finished = true;
-      exitLatch.await();
-   }
-
-   protected void finalize ()
-      throws InterruptedException {
-
+    try {
       finish();
-   }
+    }
+    catch (InterruptedException interuptedException) {
+      throw new LoggerException(interuptedException);
+    }
 
-   public void run () {
+    internalAppender.close();
+  }
 
-      Record record;
+  public void finish ()
+    throws InterruptedException {
 
-      try {
-         while (!(finished && publishQueue.isEmpty())) {
-            if ((record = publishQueue.poll(1000, TimeUnit.MILLISECONDS)) != null) {
-               internalAppender.publish(record);
-            }
-         }
+    finished = true;
+    exitLatch.await();
+  }
+
+  protected void finalize ()
+    throws InterruptedException {
+
+    finish();
+  }
+
+  public void run () {
+
+    Record record;
+
+    try {
+      while (!(finished && publishQueue.isEmpty())) {
+        if ((record = publishQueue.poll(1000, TimeUnit.MILLISECONDS)) != null) {
+          internalAppender.publish(record);
+        }
       }
-      catch (InterruptedException interruptedException) {
-         finished = true;
-         LoggerManager.getLogger(AsynchronousAppender.class).error(interruptedException);
-      }
-      finally {
-         exitLatch.countDown();
-      }
-   }
+    }
+    catch (InterruptedException interruptedException) {
+      finished = true;
+      LoggerManager.getLogger(AsynchronousAppender.class).error(interruptedException);
+    }
+    finally {
+      exitLatch.countDown();
+    }
+  }
 }

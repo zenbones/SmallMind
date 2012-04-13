@@ -31,38 +31,41 @@ import org.xml.sax.SAXException;
 
 public abstract class AbstractElementExtender implements ElementExtender {
 
-   private DocumentExtender documentExtender;
-   private SAXExtender parent;
+  private DocumentExtender documentExtender;
+  private SAXExtender parent;
 
-   public void setDocumentExtender (DocumentExtender documentExtender) {
+  public void setDocumentExtender (DocumentExtender documentExtender) {
 
-      this.documentExtender = documentExtender;
-   }
+    this.documentExtender = documentExtender;
+  }
 
-   public void setParent (SAXExtender parent) {
+  public void setParent (SAXExtender parent) {
 
-      this.parent = parent;
-   }
+    this.parent = parent;
+  }
 
-   public DocumentExtender getDocumentExtender () {
+  public DocumentExtender getDocumentExtender () {
 
-      return documentExtender;
-   }
+    return documentExtender;
+  }
 
-   public SAXExtender getParent () {
+  public SAXExtender getParent () {
 
-      return parent;
-   }
+    return parent;
+  }
 
-   public void startElement (String namespaceURI, String localName, String qName, Attributes atts)
-      throws SAXException {
-   }
+  public void startElement (String namespaceURI, String localName, String qName, Attributes atts)
+    throws SAXException {
 
-   public void endElement (String namespaceURI, String localName, String qName, StringBuilder contentBuilder)
-      throws SAXException {
-   }
+  }
 
-   public void completedChildElement (ElementExtender elementExtender)
-      throws SAXException {
-   }
+  public void endElement (String namespaceURI, String localName, String qName, StringBuilder contentBuilder)
+    throws SAXException {
+
+  }
+
+  public void completedChildElement (ElementExtender elementExtender)
+    throws SAXException {
+
+  }
 }

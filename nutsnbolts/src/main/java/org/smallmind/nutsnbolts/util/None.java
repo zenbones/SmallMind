@@ -28,24 +28,24 @@ package org.smallmind.nutsnbolts.util;
 
 public class None implements Option {
 
-   private static None NONE = new None();
+  private static None NONE = new None();
 
-   public static None none () {
+  public static None none () {
 
-      return NONE;
-   }
+    return NONE;
+  }
 
-   private None () {
+  private None () {
 
-   }
+  }
 
-   public boolean isNone () {
+  public boolean isNone () {
 
-      return true;
-   }
+    return true;
+  }
 
-   public Object get () {
+  public Object get () {
 
-      return null;
-   }
+    return null;
+  }
 }

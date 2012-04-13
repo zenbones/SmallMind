@@ -30,30 +30,30 @@ import java.util.LinkedList;
 
 public class CommandArguments {
 
-   private LinkedList<String> argumentList;
+  private LinkedList<String> argumentList;
 
-   public CommandArguments () {
+  public CommandArguments () {
 
-      argumentList = new LinkedList<String>();
-   }
+    argumentList = new LinkedList<String>();
+  }
 
-   public synchronized boolean areUnrestricted () {
+  public synchronized boolean areUnrestricted () {
 
-      return argumentList.isEmpty();
-   }
+    return argumentList.isEmpty();
+  }
 
-   public synchronized String[] getArguments () {
+  public synchronized String[] getArguments () {
 
-      String[] arguments;
+    String[] arguments;
 
-      arguments = new String[argumentList.size()];
-      argumentList.toArray(arguments);
+    arguments = new String[argumentList.size()];
+    argumentList.toArray(arguments);
 
-      return arguments;
-   }
+    return arguments;
+  }
 
-   public synchronized void addArgument (String argument) {
+  public synchronized void addArgument (String argument) {
 
-      argumentList.add(argument);
-   }
+    argumentList.add(argument);
+  }
 }

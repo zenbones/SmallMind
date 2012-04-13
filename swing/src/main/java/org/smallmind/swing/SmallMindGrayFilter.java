@@ -51,8 +51,8 @@ public class SmallMindGrayFilter extends RGBImageFilter {
    * button images.
    *
    * @param brighter a boolean -- true if the pixels should be brightened
-   * @param percent an int in the range 0..100 that determines the percentage
-   *          of gray, where 100 is the darkest gray, and 0 is the lightest
+   * @param percent  an int in the range 0..100 that determines the percentage
+   *                 of gray, where 100 is the darkest gray, and 0 is the lightest
    */
   public SmallMindGrayFilter (boolean brighter, int percent) {
 

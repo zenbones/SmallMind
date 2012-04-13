@@ -28,7 +28,7 @@ package org.smallmind.nutsnbolts.context;
 
 public interface LifecycleAware {
 
-   public abstract void beforePush ();
+  public abstract void beforePush ();
 
-   public abstract void afterPop ();
+  public abstract void afterPop ();
 }

@@ -28,23 +28,23 @@ package org.smallmind.nutsnbolts.lang;
 
 public class ExternalProcessException extends FormattedException {
 
-   public ExternalProcessException () {
+  public ExternalProcessException () {
 
-      super();
-   }
+    super();
+  }
 
-   public ExternalProcessException (String message, Object... args) {
+  public ExternalProcessException (String message, Object... args) {
 
-      super(message, args);
-   }
+    super(message, args);
+  }
 
-   public ExternalProcessException (Throwable throwable, String message, Object... args) {
+  public ExternalProcessException (Throwable throwable, String message, Object... args) {
 
-      super(throwable, message, args);
-   }
+    super(throwable, message, args);
+  }
 
-   public ExternalProcessException (Throwable throwable) {
+  public ExternalProcessException (Throwable throwable) {
 
-      super(throwable);
-   }
+    super(throwable);
+  }
 }

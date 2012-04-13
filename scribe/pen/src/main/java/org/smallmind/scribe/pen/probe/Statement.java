@@ -33,31 +33,31 @@ import org.smallmind.scribe.pen.MessageTranslator;
 
 public class Statement implements Serializable {
 
-   private Discriminator discriminator;
-   private Level level;
-   private String message;
-   private Object[] args;
+  private Discriminator discriminator;
+  private Level level;
+  private String message;
+  private Object[] args;
 
-   public Statement (Discriminator discriminator, Level level, String message, Object... args) {
+  public Statement (Discriminator discriminator, Level level, String message, Object... args) {
 
-      this.discriminator = discriminator;
-      this.level = level;
-      this.message = message;
-      this.args = args;
-   }
+    this.discriminator = discriminator;
+    this.level = level;
+    this.message = message;
+    this.args = args;
+  }
 
-   public Discriminator getDiscriminator () {
+  public Discriminator getDiscriminator () {
 
-      return discriminator;
-   }
+    return discriminator;
+  }
 
-   public Level getLevel () {
+  public Level getLevel () {
 
-      return level;
-   }
+    return level;
+  }
 
-   public String getMessage () {
+  public String getMessage () {
 
-      return MessageTranslator.translateMessage(message, args);
-   }
+    return MessageTranslator.translateMessage(message, args);
+  }
 }

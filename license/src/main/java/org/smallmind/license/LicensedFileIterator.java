@@ -9,85 +9,85 @@ import org.apache.maven.plugin.MojoExecutionException;
 
 public class LicensedFileIterator implements Iterator<File>, Iterable<File> {
 
-   private CompoundFileFilter compoundFileFilter;
-   private LinkedList<File> directoryStack;
-   private File currentFile;
+  private CompoundFileFilter compoundFileFilter;
+  private LinkedList<File> directoryStack;
+  private File currentFile;
 
-   public LicensedFileIterator (File directory, FileFilter... fileFilters)
-      throws MojoExecutionException {
+  public LicensedFileIterator (File directory, FileFilter... fileFilters)
+    throws MojoExecutionException {
 
-      if (directory.exists()) {
-         if (!directory.isDirectory()) {
-            throw new MojoExecutionException("Specified file(" + directory.getAbsolutePath() + ") isn't a directory");
-         }
-         else {
-            compoundFileFilter = new CompoundFileFilter(fileFilters);
-            directoryStack = new LinkedList<File>();
-            directoryStack.add(directory);
-            currentFile = getNextFile();
-         }
+    if (directory.exists()) {
+      if (!directory.isDirectory()) {
+        throw new MojoExecutionException("Specified file(" + directory.getAbsolutePath() + ") isn't a directory");
       }
-   }
-
-   private File getNextFile () {
-
-      File file;
-
-      while (!directoryStack.isEmpty()) {
-         file = directoryStack.removeFirst();
-         if (file.isDirectory()) {
-
-            LinkedList<File> appendedList = new LinkedList<File>();
-
-            for (File child : file.listFiles(compoundFileFilter)) {
-               if (child.isFile()) {
-                  appendedList.addFirst(child);
-               }
-               else {
-                  appendedList.addLast(child);
-               }
-            }
-
-            if (!appendedList.isEmpty()) {
-               directoryStack.addAll(0, appendedList);
-            }
-         }
-         else {
-            return file;
-         }
+      else {
+        compoundFileFilter = new CompoundFileFilter(fileFilters);
+        directoryStack = new LinkedList<File>();
+        directoryStack.add(directory);
+        currentFile = getNextFile();
       }
+    }
+  }
 
-      return null;
-   }
+  private File getNextFile () {
 
-   public boolean hasNext () {
+    File file;
 
-      return currentFile != null;
-   }
+    while (!directoryStack.isEmpty()) {
+      file = directoryStack.removeFirst();
+      if (file.isDirectory()) {
 
-   public File next () {
+        LinkedList<File> appendedList = new LinkedList<File>();
 
-      File nextFile;
+        for (File child : file.listFiles(compoundFileFilter)) {
+          if (child.isFile()) {
+            appendedList.addFirst(child);
+          }
+          else {
+            appendedList.addLast(child);
+          }
+        }
 
-      if (currentFile == null) {
-         throw new NoSuchElementException();
+        if (!appendedList.isEmpty()) {
+          directoryStack.addAll(0, appendedList);
+        }
       }
+      else {
+        return file;
+      }
+    }
 
-      nextFile = currentFile;
-      currentFile = getNextFile();
+    return null;
+  }
 
-      return nextFile;
-   }
+  public boolean hasNext () {
 
-   public void remove () {
+    return currentFile != null;
+  }
 
-      throw new UnsupportedOperationException();
-   }
+  public File next () {
 
-   public Iterator<File> iterator () {
+    File nextFile;
 
-      return this;
-   }
+    if (currentFile == null) {
+      throw new NoSuchElementException();
+    }
+
+    nextFile = currentFile;
+    currentFile = getNextFile();
+
+    return nextFile;
+  }
+
+  public void remove () {
+
+    throw new UnsupportedOperationException();
+  }
+
+  public Iterator<File> iterator () {
+
+    return this;
+  }
 }
 
 

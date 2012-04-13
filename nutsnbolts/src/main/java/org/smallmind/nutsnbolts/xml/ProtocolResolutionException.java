@@ -30,23 +30,23 @@ import org.smallmind.nutsnbolts.lang.FormattedException;
 
 public class ProtocolResolutionException extends FormattedException {
 
-   public ProtocolResolutionException () {
+  public ProtocolResolutionException () {
 
-      super();
-   }
+    super();
+  }
 
-   public ProtocolResolutionException (String message, Object... args) {
+  public ProtocolResolutionException (String message, Object... args) {
 
-      super(message, args);
-   }
+    super(message, args);
+  }
 
-   public ProtocolResolutionException (Throwable throwable, String message, Object... args) {
+  public ProtocolResolutionException (Throwable throwable, String message, Object... args) {
 
-      super(throwable, message, args);
-   }
+    super(throwable, message, args);
+  }
 
-   public ProtocolResolutionException (Throwable throwable) {
+  public ProtocolResolutionException (Throwable throwable) {
 
-      super(throwable);
-   }
+    super(throwable);
+  }
 }

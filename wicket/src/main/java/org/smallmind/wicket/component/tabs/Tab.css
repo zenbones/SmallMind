@@ -1,70 +1,70 @@
 div.tabstandard span.right {
-   background: url('${contextpath}${standard.img.right}') no-repeat top right;
-   color: ${standard.text.color};
-   font: ${standard.text.font};
-   display: block;
-   float: left;
-   height: ${standard.height};
-   padding-right: ${standard.pad.horizontal};
-   cursor: pointer;
-   text-decoration: none;
-   outline: none;
-   white-space: nowrap;
+  background: url('${contextpath}${standard.img.right}') no-repeat top right;
+  color: ${standard.text.color};
+  font: ${standard.text.font};
+  display: block;
+  float: left;
+  height: ${standard.height};
+  padding-right: ${standard.pad.horizontal};
+  cursor: pointer;
+  text-decoration: none;
+  outline: none;
+  white-space: nowrap;
 }
 
 div.tabstandard span.left {
-   background: url('${contextpath}${standard.img.left}') no-repeat top left;
-   display: block;
-   height: ${standard.height};
-   padding: ${standard.pad.upper} 0 ${standard.pad.lower} ${standard.pad.horizontal};
-   white-space: nowrap;
+  background: url('${contextpath}${standard.img.left}') no-repeat top left;
+  display: block;
+  height: ${standard.height};
+  padding: ${standard.pad.upper} 0 ${standard.pad.lower} ${standard.pad.horizontal};
+  white-space: nowrap;
 }
 
 div.tabhighlighted span.right {
-   background: url('${contextpath}${highlighted.img.right}') no-repeat top right;
-   color: ${highlighted.text.color};
-   font: ${highlighted.text.font};
-   display: block;
-   float: left;
-   height: ${highlighted.height};
-   padding-right: ${highlighted.pad.horizontal};
-   cursor: pointer;
-   text-decoration: none;
-   outline: none;
-   white-space: nowrap;
+  background: url('${contextpath}${highlighted.img.right}') no-repeat top right;
+  color: ${highlighted.text.color};
+  font: ${highlighted.text.font};
+  display: block;
+  float: left;
+  height: ${highlighted.height};
+  padding-right: ${highlighted.pad.horizontal};
+  cursor: pointer;
+  text-decoration: none;
+  outline: none;
+  white-space: nowrap;
 }
 
 div.tabhighlighted span.left {
-   background: url('${contextpath}${highlighted.img.left}') no-repeat top left;
-   display: block;
-   height: ${highlighted.height};
-   padding: ${highlighted.pad.upper} 0 ${highlighted.pad.lower} ${highlighted.pad.horizontal};
-   white-space: nowrap;
+  background: url('${contextpath}${highlighted.img.left}') no-repeat top left;
+  display: block;
+  height: ${highlighted.height};
+  padding: ${highlighted.pad.upper} 0 ${highlighted.pad.lower} ${highlighted.pad.horizontal};
+  white-space: nowrap;
 }
 
 div.tabselected span.right {
-   background: url('${contextpath}${selected.img.right}') no-repeat top right;
-   color: ${selected.text.color};
-   font: ${selected.text.font};
-   display: block;
-   float: left;
-   height: ${selected.height};
-   padding-right: ${selected.pad.horizontal};
-   cursor: pointer;
-   text-decoration: none;
-   outline: none;
-   white-space: nowrap;
+  background: url('${contextpath}${selected.img.right}') no-repeat top right;
+  color: ${selected.text.color};
+  font: ${selected.text.font};
+  display: block;
+  float: left;
+  height: ${selected.height};
+  padding-right: ${selected.pad.horizontal};
+  cursor: pointer;
+  text-decoration: none;
+  outline: none;
+  white-space: nowrap;
 }
 
 div.tabselected span.left {
-   background: url('${contextpath}${selected.img.left}') no-repeat top left;
-   display: block;
-   height: ${selected.height};
-   padding: ${selected.pad.upper} 0 ${selected.pad.lower} ${selected.pad.horizontal};
-   white-space: nowrap;
+  background: url('${contextpath}${selected.img.left}') no-repeat top left;
+  display: block;
+  height: ${selected.height};
+  padding: ${selected.pad.upper} 0 ${selected.pad.lower} ${selected.pad.horizontal};
+  white-space: nowrap;
 }
 
 div.tabPanelContents {
-   padding: 10px;
-   border: 1px solid #BFBFBF;
+  padding: 10px;
+  border: 1px solid #BFBFBF;
 }

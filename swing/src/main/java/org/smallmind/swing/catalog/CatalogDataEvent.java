@@ -30,25 +30,25 @@ import java.util.EventObject;
 
 public class CatalogDataEvent extends EventObject {
 
-   private int startIndex;
-   private int endIndex;
+  private int startIndex;
+  private int endIndex;
 
-   public CatalogDataEvent (Object source, int startIndex, int endIndex) {
+  public CatalogDataEvent (Object source, int startIndex, int endIndex) {
 
-      super(source);
+    super(source);
 
-      this.startIndex = startIndex;
-      this.endIndex = endIndex;
-   }
+    this.startIndex = startIndex;
+    this.endIndex = endIndex;
+  }
 
-   public int getStartIndex () {
+  public int getStartIndex () {
 
-      return startIndex;
-   }
+    return startIndex;
+  }
 
-   public int getEndIndex () {
+  public int getEndIndex () {
 
-      return endIndex;
-   }
+    return endIndex;
+  }
 
 }

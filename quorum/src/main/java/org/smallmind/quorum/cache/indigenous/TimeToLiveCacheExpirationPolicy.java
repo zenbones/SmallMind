@@ -28,27 +28,27 @@ package org.smallmind.quorum.cache.indigenous;
 
 public class TimeToLiveCacheExpirationPolicy<E extends AbstractTimestampOrderedCacheEntry<?>> implements CacheExpirationPolicy<E> {
 
-   private int timeToLiveSeconds;
-   private int timerTickSeconds;
+  private int timeToLiveSeconds;
+  private int timerTickSeconds;
 
-   public TimeToLiveCacheExpirationPolicy (int timeToLiveSeconds) {
+  public TimeToLiveCacheExpirationPolicy (int timeToLiveSeconds) {
 
-      this(timeToLiveSeconds, 0);
-   }
+    this(timeToLiveSeconds, 0);
+  }
 
-   public TimeToLiveCacheExpirationPolicy (int timeToLiveSeconds, int timerTickSeconds) {
+  public TimeToLiveCacheExpirationPolicy (int timeToLiveSeconds, int timerTickSeconds) {
 
-      this.timeToLiveSeconds = timeToLiveSeconds;
-      this.timerTickSeconds = timerTickSeconds;
-   }
+    this.timeToLiveSeconds = timeToLiveSeconds;
+    this.timerTickSeconds = timerTickSeconds;
+  }
 
-   public int getTimerTickSeconds () {
+  public int getTimerTickSeconds () {
 
-      return timerTickSeconds;
-   }
+    return timerTickSeconds;
+  }
 
-   public boolean isStale (E cacheEntry) {
+  public boolean isStale (E cacheEntry) {
 
-      return (cacheEntry.getCacheMetaData().getLastAccessTimestamp() - cacheEntry.getCacheMetaData().getCreationTimestamp()) > (timeToLiveSeconds * 1000);
-   }
+    return (cacheEntry.getCacheMetaData().getLastAccessTimestamp() - cacheEntry.getCacheMetaData().getCreationTimestamp()) > (timeToLiveSeconds * 1000);
+  }
 }

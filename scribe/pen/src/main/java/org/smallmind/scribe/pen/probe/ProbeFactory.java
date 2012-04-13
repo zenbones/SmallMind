@@ -32,110 +32,110 @@ import org.smallmind.scribe.pen.Logger;
 
 public class ProbeFactory {
 
-   private static final ProbeStackThreadLocal PROBE_STACK_LOCAL = new ProbeStackThreadLocal();
-   private static final ThreadLocal<Throwable> THROWABLE_LOCAL = new ThreadLocal<Throwable>();
-   private static final ThreadLocal<byte[]> IDENTIFIER_LOCAL = new ThreadLocal<byte[]>();
+  private static final ProbeStackThreadLocal PROBE_STACK_LOCAL = new ProbeStackThreadLocal();
+  private static final ThreadLocal<Throwable> THROWABLE_LOCAL = new ThreadLocal<Throwable>();
+  private static final ThreadLocal<byte[]> IDENTIFIER_LOCAL = new ThreadLocal<byte[]>();
 
-   public static void setIdentifier (byte[] identifier) {
+  public static void setIdentifier (byte[] identifier) {
 
-      IDENTIFIER_LOCAL.set(identifier);
-   }
+    IDENTIFIER_LOCAL.set(identifier);
+  }
 
-   public static byte[] getIdentifier () {
+  public static byte[] getIdentifier () {
 
-      return IDENTIFIER_LOCAL.get();
-   }
+    return IDENTIFIER_LOCAL.get();
+  }
 
-   public static void setThrowable (Throwable throwable) {
+  public static void setThrowable (Throwable throwable) {
 
-      THROWABLE_LOCAL.set(throwable);
-   }
+    THROWABLE_LOCAL.set(throwable);
+  }
 
-   public static Throwable getThrowable () {
+  public static Throwable getThrowable () {
 
-      return THROWABLE_LOCAL.get();
-   }
+    return THROWABLE_LOCAL.get();
+  }
 
-   public static Probe getProbe () {
+  public static Probe getProbe () {
 
-      return PROBE_STACK_LOCAL.get().peek();
-   }
+    return PROBE_STACK_LOCAL.get().peek();
+  }
 
-   public static Probe createProbe (Logger logger, Discriminator discriminator, Level level, String title) {
+  public static Probe createProbe (Logger logger, Discriminator discriminator, Level level, String title) {
 
-      return PROBE_STACK_LOCAL.get().push(logger, discriminator, level, title);
-   }
+    return PROBE_STACK_LOCAL.get().push(logger, discriminator, level, title);
+  }
 
-   protected static void closeProbe (Probe probe)
-      throws ProbeException {
+  protected static void closeProbe (Probe probe)
+    throws ProbeException {
 
-      PROBE_STACK_LOCAL.get().pop(probe);
-   }
+    PROBE_STACK_LOCAL.get().pop(probe);
+  }
 
-   public static void executeInstrumentation (Logger logger, Discriminator discriminator, Level level, String title, Instrument instrument)
-      throws ProbeException {
+  public static void executeInstrumentation (Logger logger, Discriminator discriminator, Level level, String title, Instrument instrument)
+    throws ProbeException {
 
-      Probe probe = createProbe(logger, discriminator, level, title);
+    Probe probe = createProbe(logger, discriminator, level, title);
 
-      probe.start();
-      try {
-         instrument.withProbe(probe);
+    probe.start();
+    try {
+      instrument.withProbe(probe);
+    }
+    catch (ProbeException probeException) {
+      probe.abort();
+
+      throw probeException;
+    }
+    catch (Exception exception) {
+
+      probe.abort(exception);
+
+      throw new ProbeException(exception);
+    }
+    finally {
+      if (!probe.isAborted()) {
+        probe.stop();
       }
-      catch (ProbeException probeException) {
-         probe.abort();
+    }
+  }
 
-         throw probeException;
+  public static <T> T executeInstrumentationAndReturn (Logger logger, Discriminator discriminator, Level level, String title, InstrumentAndReturn<T> instrumentAndReturn)
+    throws ProbeException {
+
+    Probe probe = createProbe(logger, discriminator, level, title);
+
+    probe.start();
+    try {
+      return instrumentAndReturn.withProbe(probe);
+    }
+    catch (ProbeException probeException) {
+      probe.abort();
+
+      throw probeException;
+    }
+    catch (Exception exception) {
+
+      probe.abort(exception);
+
+      throw new ProbeException(exception);
+    }
+    finally {
+      if (!probe.isAborted()) {
+        probe.stop();
       }
-      catch (Exception exception) {
+    }
+  }
 
-         probe.abort(exception);
+  private static class ProbeStackThreadLocal extends InheritableThreadLocal<ProbeStack> {
 
-         throw new ProbeException(exception);
-      }
-      finally {
-         if (!probe.isAborted()) {
-            probe.stop();
-         }
-      }
-   }
+    protected ProbeStack initialValue () {
 
-   public static <T> T executeInstrumentationAndReturn (Logger logger, Discriminator discriminator, Level level, String title, InstrumentAndReturn<T> instrumentAndReturn)
-      throws ProbeException {
+      return new ProbeStack(getIdentifier());
+    }
 
-      Probe probe = createProbe(logger, discriminator, level, title);
+    protected ProbeStack childValue (ProbeStack parentValue) {
 
-      probe.start();
-      try {
-         return instrumentAndReturn.withProbe(probe);
-      }
-      catch (ProbeException probeException) {
-         probe.abort();
-
-         throw probeException;
-      }
-      catch (Exception exception) {
-
-         probe.abort(exception);
-
-         throw new ProbeException(exception);
-      }
-      finally {
-         if (!probe.isAborted()) {
-            probe.stop();
-         }
-      }
-   }
-
-   private static class ProbeStackThreadLocal extends InheritableThreadLocal<ProbeStack> {
-
-      protected ProbeStack initialValue () {
-
-         return new ProbeStack(getIdentifier());
-      }
-
-      protected ProbeStack childValue (ProbeStack parentValue) {
-
-         return new ProbeStack(parentValue.getCurrentIdentifier());
-      }
-   }
+      return new ProbeStack(parentValue.getCurrentIdentifier());
+    }
+  }
 }

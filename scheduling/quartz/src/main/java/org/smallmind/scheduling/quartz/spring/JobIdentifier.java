@@ -28,26 +28,26 @@ package org.smallmind.scheduling.quartz.spring;
 
 public class JobIdentifier {
 
-   private String name;
-   private String group;
+  private String name;
+  private String group;
 
-   public String getName () {
+  public String getName () {
 
-      return name;
-   }
+    return name;
+  }
 
-   public void setName (String name) {
+  public void setName (String name) {
 
-      this.name = name;
-   }
+    this.name = name;
+  }
 
-   public String getGroup () {
+  public String getGroup () {
 
-      return group;
-   }
+    return group;
+  }
 
-   public void setGroup (String group) {
+  public void setGroup (String group) {
 
-      this.group = group;
-   }
+    this.group = group;
+  }
 }

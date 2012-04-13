@@ -33,102 +33,102 @@ import org.smallmind.swing.progress.ProgressPanel;
 
 public class ProgressInputStream extends InputStream implements ProgressDataHandler {
 
-   private ProgressPanel progressPanel;
-   private InputStream inputStream;
-   private long length;
-   private long index;
-   private long markIndex;
+  private ProgressPanel progressPanel;
+  private InputStream inputStream;
+  private long length;
+  private long index;
+  private long markIndex;
 
-   public ProgressInputStream (InputStream inputStream, long length, long pulseTime) {
+  public ProgressInputStream (InputStream inputStream, long length, long pulseTime) {
 
-      this.inputStream = inputStream;
-      this.length = length;
+    this.inputStream = inputStream;
+    this.length = length;
 
-      index = 0;
-      markIndex = 0;
+    index = 0;
+    markIndex = 0;
 
-      progressPanel = new ProgressPanel(this, pulseTime);
-   }
+    progressPanel = new ProgressPanel(this, pulseTime);
+  }
 
-   public long getLength () {
+  public long getLength () {
 
-      return length;
-   }
+    return length;
+  }
 
-   public synchronized long getIndex () {
+  public synchronized long getIndex () {
 
-      return index;
-   }
+    return index;
+  }
 
-   public ProgressPanel getIOProgressPanel () {
+  public ProgressPanel getIOProgressPanel () {
 
-      return progressPanel;
-   }
+    return progressPanel;
+  }
 
-   public synchronized int read ()
-      throws IOException {
+  public synchronized int read ()
+    throws IOException {
 
-      int readValue;
+    int readValue;
 
-      if ((readValue = inputStream.read()) >= 0) {
-         index++;
-      }
+    if ((readValue = inputStream.read()) >= 0) {
+      index++;
+    }
 
-      return readValue;
-   }
+    return readValue;
+  }
 
-   public synchronized int read (byte buf[])
-      throws IOException {
+  public synchronized int read (byte buf[])
+    throws IOException {
 
-      int readValue;
+    int readValue;
 
-      if ((readValue = inputStream.read(buf)) >= 0) {
-         index += readValue;
-      }
+    if ((readValue = inputStream.read(buf)) >= 0) {
+      index += readValue;
+    }
 
-      return readValue;
-   }
+    return readValue;
+  }
 
-   public synchronized int read (byte buf[], int off, int len)
-      throws IOException {
+  public synchronized int read (byte buf[], int off, int len)
+    throws IOException {
 
-      int readValue;
+    int readValue;
 
-      if ((readValue = inputStream.read(buf, off, len)) >= 0) {
-         index += readValue;
-      }
+    if ((readValue = inputStream.read(buf, off, len)) >= 0) {
+      index += readValue;
+    }
 
-      return readValue;
-   }
+    return readValue;
+  }
 
-   public synchronized long skip (long n)
-      throws IOException {
+  public synchronized long skip (long n)
+    throws IOException {
 
-      long skipValue;
+    long skipValue;
 
-      skipValue = inputStream.skip(n);
-      index += skipValue;
+    skipValue = inputStream.skip(n);
+    index += skipValue;
 
-      return skipValue;
-   }
+    return skipValue;
+  }
 
-   public synchronized void mark (int readAheadLimit) {
+  public synchronized void mark (int readAheadLimit) {
 
-      inputStream.mark(readAheadLimit);
-      markIndex = index;
-   }
+    inputStream.mark(readAheadLimit);
+    markIndex = index;
+  }
 
-   public synchronized void reset ()
-      throws IOException {
+  public synchronized void reset ()
+    throws IOException {
 
-      inputStream.reset();
-      index = markIndex;
-   }
+    inputStream.reset();
+    index = markIndex;
+  }
 
-   public void close ()
-      throws IOException {
+  public void close ()
+    throws IOException {
 
-      inputStream.close();
-   }
+    inputStream.close();
+  }
 
 }

@@ -30,22 +30,22 @@ import java.util.concurrent.TimeUnit;
 
 public class Time {
 
-   TimeUnit timeUnit;
-   long duration;
+  TimeUnit timeUnit;
+  long duration;
 
-   public Time (long duration, TimeUnit timeUnit) {
+  public Time (long duration, TimeUnit timeUnit) {
 
-      this.duration = duration;
-      this.timeUnit = timeUnit;
-   }
+    this.duration = duration;
+    this.timeUnit = timeUnit;
+  }
 
-   public long getDuration () {
+  public long getDuration () {
 
-      return duration;
-   }
+    return duration;
+  }
 
-   public TimeUnit getTimeUnit () {
+  public TimeUnit getTimeUnit () {
 
-      return timeUnit;
-   }
+    return timeUnit;
+  }
 }

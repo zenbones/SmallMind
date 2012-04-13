@@ -30,36 +30,36 @@ import java.io.Serializable;
 
 public class ProbeReport implements Serializable {
 
-   private Correlator correlator;
-   private ProbeEntry probeEntry;
-   private String title;
-   private boolean first;
+  private Correlator correlator;
+  private ProbeEntry probeEntry;
+  private String title;
+  private boolean first;
 
-   public ProbeReport (Correlator correlator, String title, ProbeEntry probeEntry, boolean first) {
+  public ProbeReport (Correlator correlator, String title, ProbeEntry probeEntry, boolean first) {
 
-      this.correlator = correlator;
-      this.title = title;
-      this.probeEntry = probeEntry;
-      this.first = first;
-   }
+    this.correlator = correlator;
+    this.title = title;
+    this.probeEntry = probeEntry;
+    this.first = first;
+  }
 
-   public boolean isFirst () {
+  public boolean isFirst () {
 
-      return first;
-   }
+    return first;
+  }
 
-   public Correlator getCorrelator () {
+  public Correlator getCorrelator () {
 
-      return correlator;
-   }
+    return correlator;
+  }
 
-   public String getTitle () {
+  public String getTitle () {
 
-      return title;
-   }
+    return title;
+  }
 
-   public ProbeEntry getProbeEntry () {
+  public ProbeEntry getProbeEntry () {
 
-      return probeEntry;
-   }
+    return probeEntry;
+  }
 }

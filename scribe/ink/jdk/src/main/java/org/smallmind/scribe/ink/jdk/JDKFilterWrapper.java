@@ -32,34 +32,34 @@ import org.smallmind.scribe.pen.adapter.RecordWrapper;
 
 public class JDKFilterWrapper implements java.util.logging.Filter {
 
-   private Filter filter;
+  private Filter filter;
 
-   public JDKFilterWrapper (Filter filter) {
+  public JDKFilterWrapper (Filter filter) {
 
-      this.filter = filter;
-   }
+    this.filter = filter;
+  }
 
-   public Filter getInnerFilter () {
+  public Filter getInnerFilter () {
 
-      return filter;
-   }
+    return filter;
+  }
 
-   public boolean isLoggable (LogRecord record) {
+  public boolean isLoggable (LogRecord record) {
 
-      return filter.willLog(((RecordWrapper)record).getRecord());
-   }
+    return filter.willLog(((RecordWrapper)record).getRecord());
+  }
 
-   public int hashCode () {
+  public int hashCode () {
 
-      return filter.hashCode();
-   }
+    return filter.hashCode();
+  }
 
-   public boolean equals (Object obj) {
+  public boolean equals (Object obj) {
 
-      if (obj instanceof JDKFilterWrapper) {
-         return filter.equals(((JDKFilterWrapper)obj).getInnerFilter());
-      }
+    if (obj instanceof JDKFilterWrapper) {
+      return filter.equals(((JDKFilterWrapper)obj).getInnerFilter());
+    }
 
-      return filter.equals(obj);
-   }
+    return filter.equals(obj);
+  }
 }

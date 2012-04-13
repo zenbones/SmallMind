@@ -30,14 +30,16 @@ import java.util.Arrays;
 
 public class DefaultCSVLineHandler implements CSVLineHandler {
 
-   public void startDocument () {
-   }
+  public void startDocument () {
 
-   public void endDocument () {
-   }
+  }
 
-   public void handleFields (String[] fields) {
+  public void endDocument () {
 
-      Arrays.toString(fields);
-   }
+  }
+
+  public void handleFields (String[] fields) {
+
+    Arrays.toString(fields);
+  }
 }

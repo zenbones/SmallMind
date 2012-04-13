@@ -30,23 +30,23 @@ import org.smallmind.nutsnbolts.lang.FormattedException;
 
 public class FileProcessingException extends FormattedException {
 
-   public FileProcessingException () {
+  public FileProcessingException () {
 
-      super();
-   }
+    super();
+  }
 
-   public FileProcessingException (String message, Object... args) {
+  public FileProcessingException (String message, Object... args) {
 
-      super(message, args);
-   }
+    super(message, args);
+  }
 
-   public FileProcessingException (Throwable throwable, String message, Object... args) {
+  public FileProcessingException (Throwable throwable, String message, Object... args) {
 
-      super(throwable, message, args);
-   }
+    super(throwable, message, args);
+  }
 
-   public FileProcessingException (Throwable throwable) {
+  public FileProcessingException (Throwable throwable) {
 
-      super(throwable);
-   }
+    super(throwable);
+  }
 }

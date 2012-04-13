@@ -30,26 +30,26 @@ import java.util.LinkedList;
 
 public class ArrayStackTraceAccumulator implements StackTraceAccumulator {
 
-   private LinkedList<String> traceList;
+  private LinkedList<String> traceList;
 
-   public ArrayStackTraceAccumulator () {
+  public ArrayStackTraceAccumulator () {
 
-      traceList = new LinkedList<String>();
-   }
+    traceList = new LinkedList<String>();
+  }
 
-   public String[] asArray () {
+  public String[] asArray () {
 
-      String[] trace;
+    String[] trace;
 
-      trace = new String[traceList.size()];
-      traceList.toArray(trace);
+    trace = new String[traceList.size()];
+    traceList.toArray(trace);
 
-      return trace;
-   }
+    return trace;
+  }
 
-   @Override
-   public void append (CharSequence charSequence) {
+  @Override
+  public void append (CharSequence charSequence) {
 
-      traceList.add(charSequence.toString());
-   }
+    traceList.add(charSequence.toString());
+  }
 }

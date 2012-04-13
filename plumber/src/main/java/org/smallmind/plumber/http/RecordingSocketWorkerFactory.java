@@ -33,21 +33,21 @@ import org.smallmind.scribe.pen.Logger;
 
 public class RecordingSocketWorkerFactory implements SocketWorkerFactory {
 
-   String httpHost;
-   int httpPort;
-   int bufferSize;
+  String httpHost;
+  int httpPort;
+  int bufferSize;
 
-   public RecordingSocketWorkerFactory (String httpHost, int httpPort, int bufferSize) {
+  public RecordingSocketWorkerFactory (String httpHost, int httpPort, int bufferSize) {
 
-      this.httpHost = httpHost;
-      this.httpPort = httpPort;
-      this.bufferSize = bufferSize;
-   }
+    this.httpHost = httpHost;
+    this.httpPort = httpPort;
+    this.bufferSize = bufferSize;
+  }
 
-   public SocketWorker createWorker (Logger logger, ServerSocketHerald herald)
-      throws Exception {
+  public SocketWorker createWorker (Logger logger, ServerSocketHerald herald)
+    throws Exception {
 
-      return new RecordingSocketWorker(logger, herald, httpHost, httpPort, bufferSize);
-   }
+    return new RecordingSocketWorker(logger, herald, httpHost, httpPort, bufferSize);
+  }
 
 }

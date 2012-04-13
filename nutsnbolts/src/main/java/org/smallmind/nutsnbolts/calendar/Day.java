@@ -30,11 +30,11 @@ import org.smallmind.nutsnbolts.util.StringUtilities;
 
 public enum Day {
 
-   SUNDAY, MONDAY, TUESDAY, WEDNESDAY, THURSDAY, FRIDAY, SATURDAY;
+  SUNDAY, MONDAY, TUESDAY, WEDNESDAY, THURSDAY, FRIDAY, SATURDAY;
 
-   public String getDisplayName () {
+  public String getDisplayName () {
 
-      return StringUtilities.toDisplayCase(this.name());
-   }
+    return StringUtilities.toDisplayCase(this.name());
+  }
 
 }

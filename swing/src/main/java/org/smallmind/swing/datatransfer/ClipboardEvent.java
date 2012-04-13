@@ -32,29 +32,29 @@ import java.util.EventObject;
 
 public final class ClipboardEvent extends EventObject {
 
-   private Component target;
-   private Transferable transferable;
+  private Component target;
+  private Transferable transferable;
 
-   public ClipboardEvent (Object source, Component target) {
+  public ClipboardEvent (Object source, Component target) {
 
-      this(source, target, null);
-   }
+    this(source, target, null);
+  }
 
-   public ClipboardEvent (Object source, Component target, Transferable transferable) {
+  public ClipboardEvent (Object source, Component target, Transferable transferable) {
 
-      super(source);
-      this.target = target;
-      this.transferable = transferable;
-   }
+    super(source);
+    this.target = target;
+    this.transferable = transferable;
+  }
 
-   public Component getTargetComponent () {
+  public Component getTargetComponent () {
 
-      return target;
-   }
+    return target;
+  }
 
-   public Transferable getTransferable () {
+  public Transferable getTransferable () {
 
-      return transferable;
-   }
+    return transferable;
+  }
 
 }

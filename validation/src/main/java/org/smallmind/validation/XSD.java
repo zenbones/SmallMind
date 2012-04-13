@@ -30,26 +30,26 @@ import java.util.List;
 
 public class XSD {
 
-   private String path;
-   private List<String> impls;
+  private String path;
+  private List<String> impls;
 
-   public String getPath () {
+  public String getPath () {
 
-      return path;
-   }
+    return path;
+  }
 
-   public void setPath (String path) {
+  public void setPath (String path) {
 
-      this.path = path;
-   }
+    this.path = path;
+  }
 
-   public List<String> getImpls () {
+  public List<String> getImpls () {
 
-      return impls;
-   }
+    return impls;
+  }
 
-   public void setImpls (List<String> impls) {
+  public void setImpls (List<String> impls) {
 
-      this.impls = impls;
-   }
+    this.impls = impls;
+  }
 }

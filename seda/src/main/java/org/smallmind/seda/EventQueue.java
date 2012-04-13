@@ -31,22 +31,22 @@ import java.util.concurrent.TimeUnit;
 
 public class EventQueue<I extends Event> {
 
-   private LinkedBlockingQueue<I> internalQueue;
+  private LinkedBlockingQueue<I> internalQueue;
 
-   public EventQueue (int maxQueueCapacity) {
+  public EventQueue (int maxQueueCapacity) {
 
-      internalQueue = new LinkedBlockingQueue<I>(maxQueueCapacity);
-   }
+    internalQueue = new LinkedBlockingQueue<I>(maxQueueCapacity);
+  }
 
-   protected void put (I event)
-      throws InterruptedException {
+  protected void put (I event)
+    throws InterruptedException {
 
-      internalQueue.put(event);
-   }
+    internalQueue.put(event);
+  }
 
-   protected I poll (long timeout, TimeUnit unit)
-      throws InterruptedException {
+  protected I poll (long timeout, TimeUnit unit)
+    throws InterruptedException {
 
-      return internalQueue.poll(timeout, unit);
-   }
+    return internalQueue.poll(timeout, unit);
+  }
 }

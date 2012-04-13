@@ -28,23 +28,23 @@ package org.smallmind.swing.dialog;
 
 public class OptionButton {
 
-   private String buttonName;
-   private DialogState buttonState;
+  private String buttonName;
+  private DialogState buttonState;
 
-   public OptionButton (String buttonName, DialogState buttonState) {
+  public OptionButton (String buttonName, DialogState buttonState) {
 
-      this.buttonName = buttonName;
-      this.buttonState = buttonState;
-   }
+    this.buttonName = buttonName;
+    this.buttonState = buttonState;
+  }
 
-   public String getName () {
+  public String getName () {
 
-      return buttonName;
-   }
+    return buttonName;
+  }
 
-   public DialogState getButtonState () {
+  public DialogState getButtonState () {
 
-      return buttonState;
-   }
+    return buttonState;
+  }
 
 }

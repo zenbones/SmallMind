@@ -28,20 +28,20 @@ package org.smallmind.wicket.component.google.visualization;
 
 public class TableElement {
 
-   private String properties;
+  private String properties;
 
-   public synchronized void setProperties (String properties) {
+  public synchronized void setProperties (String properties) {
 
-      this.properties = properties;
-   }
+    this.properties = properties;
+  }
 
-   public boolean hasProperties () {
+  public boolean hasProperties () {
 
-      return properties != null;
-   }
+    return properties != null;
+  }
 
-   public synchronized String getPropertiesAsJson () {
+  public synchronized String getPropertiesAsJson () {
 
-      return (properties == null) ? "{}" : properties.toString();
-   }
+    return (properties == null) ? "{}" : properties.toString();
+  }
 }

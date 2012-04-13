@@ -28,23 +28,23 @@ package org.smallmind.quorum.cache;
 
 public class CacheLockException extends CacheException {
 
-   public CacheLockException () {
+  public CacheLockException () {
 
-      super();
-   }
+    super();
+  }
 
-   public CacheLockException (String message, Object... args) {
+  public CacheLockException (String message, Object... args) {
 
-      super(message, args);
-   }
+    super(message, args);
+  }
 
-   public CacheLockException (Throwable throwable, String message, Object... args) {
+  public CacheLockException (Throwable throwable, String message, Object... args) {
 
-      super(throwable, message, args);
-   }
+    super(throwable, message, args);
+  }
 
-   public CacheLockException (Throwable throwable) {
+  public CacheLockException (Throwable throwable) {
 
-      super(throwable);
-   }
+    super(throwable);
+  }
 }

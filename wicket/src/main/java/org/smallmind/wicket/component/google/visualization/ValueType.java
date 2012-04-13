@@ -28,66 +28,60 @@ package org.smallmind.wicket.component.google.visualization;
 
 public enum ValueType {
 
-   TEXT("string") {
+  TEXT("string") {
+    @Override
+    public Value asNull () {
 
-      @Override
-      public Value asNull () {
+      return TextValue.asNull();
+    }
+  },
+  NUMBER("number") {
+    @Override
+    public Value asNull () {
 
-         return TextValue.asNull();
-      }
-   },
-   NUMBER("number") {
+      return NumberValue.asNull();
+    }
+  },
+  BOOLEAN("boolean") {
+    @Override
+    public Value asNull () {
 
-      @Override
-      public Value asNull () {
+      return BooleanValue.asNull();
+    }
+  },
+  DATE("date") {
+    @Override
+    public Value asNull () {
 
-         return NumberValue.asNull();
-      }
-   },
-   BOOLEAN("boolean") {
+      return DateValue.asNull();
+    }
+  },
+  DATETIME("datetime") {
+    @Override
+    public Value asNull () {
 
-      @Override
-      public Value asNull () {
+      return DateTimeValue.asNull();
+    }
+  },
+  TIMEOFDAY("timeofday") {
+    @Override
+    public Value asNull () {
 
-         return BooleanValue.asNull();
-      }
-   },
-   DATE("date") {
+      return TimeOfDayValue.asNull();
+    }
+  };
 
-      @Override
-      public Value asNull () {
+  private String scriptVersion;
 
-         return DateValue.asNull();
-      }
-   },
-   DATETIME("datetime") {
+  private ValueType (String scriptVersion) {
 
-      @Override
-      public Value asNull () {
+    this.scriptVersion = scriptVersion;
+  }
 
-         return DateTimeValue.asNull();
-      }
-   },
-   TIMEOFDAY("timeofday") {
+  public String getScriptVersion () {
 
-      @Override
-      public Value asNull () {
+    return scriptVersion;
+  }
 
-         return TimeOfDayValue.asNull();
-      }
-   };
-
-   private String scriptVersion;
-
-   private ValueType (String scriptVersion) {
-
-      this.scriptVersion = scriptVersion;
-   }
-
-   public String getScriptVersion () {
-
-      return scriptVersion;
-   }
-
-   public abstract Value asNull ();
+  public abstract Value asNull ();
 }

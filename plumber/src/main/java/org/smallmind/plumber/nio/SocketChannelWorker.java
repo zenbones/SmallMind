@@ -78,5 +78,6 @@ public abstract class SocketChannelWorker implements PooledComponent, Runnable {
 
   @Override
   public void terminate () {
+
   }
 }

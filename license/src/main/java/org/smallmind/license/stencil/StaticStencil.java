@@ -2,57 +2,57 @@ package org.smallmind.license.stencil;
 
 public class StaticStencil extends Stencil {
 
-   @Override
-   public final String getId () {
+  @Override
+  public final String getId () {
 
-      return this.getClass().getName();
-   }
+    return this.getClass().getName();
+  }
 
-   @Override
-   public final void setId (String id) {
+  @Override
+  public final void setId (String id) {
 
-      throw new UnsupportedOperationException();
-   }
+    throw new UnsupportedOperationException();
+  }
 
-   @Override
-   public final void setSkipLines (String skipLines) {
+  @Override
+  public final void setSkipLines (String skipLines) {
 
-      throw new UnsupportedOperationException();
-   }
+    throw new UnsupportedOperationException();
+  }
 
-   @Override
-   public final void setFirstLine (String firstLine) {
+  @Override
+  public final void setFirstLine (String firstLine) {
 
-      throw new UnsupportedOperationException();
-   }
+    throw new UnsupportedOperationException();
+  }
 
-   @Override
-   public final void setLastLine (String lastLine) {
+  @Override
+  public final void setLastLine (String lastLine) {
 
-      throw new UnsupportedOperationException();
-   }
+    throw new UnsupportedOperationException();
+  }
 
-   @Override
-   public final void setBeforeEachLine (String beforeEachLine) {
+  @Override
+  public final void setBeforeEachLine (String beforeEachLine) {
 
-      throw new UnsupportedOperationException();
-   }
+    throw new UnsupportedOperationException();
+  }
 
-   @Override
-   public final void setPrefixBlankLines (boolean prefixBlankLines) {
+  @Override
+  public final void setPrefixBlankLines (boolean prefixBlankLines) {
 
-      throw new UnsupportedOperationException();
-   }
+    throw new UnsupportedOperationException();
+  }
 
-   @Override
-   public final void setBlankLinesBefore (int blankLinesBefore) {
+  @Override
+  public final void setBlankLinesBefore (int blankLinesBefore) {
 
-      throw new UnsupportedOperationException();
-   }
+    throw new UnsupportedOperationException();
+  }
 
-   @Override
-   public final void setBlankLinesAfter (int blankLinesAfter) {
+  @Override
+  public final void setBlankLinesAfter (int blankLinesAfter) {
 
-      throw new UnsupportedOperationException();
-   }
+    throw new UnsupportedOperationException();
+  }
 }

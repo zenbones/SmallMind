@@ -28,30 +28,30 @@ package org.smallmind.nutsnbolts.util;
 
 public class Switch {
 
-   private boolean state;
+  private boolean state;
 
-   public Switch () {
+  public Switch () {
 
-      this(false);
-   }
+    this(false);
+  }
 
-   public Switch (boolean state) {
+  public Switch (boolean state) {
 
-      this.state = state;
-   }
+    this.state = state;
+  }
 
-   public void flip () {
+  public void flip () {
 
-      state = !state;
-   }
+    state = !state;
+  }
 
-   public void setState (boolean state) {
+  public void setState (boolean state) {
 
-      this.state = state;
-   }
+    this.state = state;
+  }
 
-   public boolean isOn () {
+  public boolean isOn () {
 
-      return state;
-   }
+    return state;
+  }
 }

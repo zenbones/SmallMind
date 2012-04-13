@@ -35,31 +35,31 @@ import org.smallmind.scribe.pen.Record;
 
 public class Log4JFormatterAdapter implements Formatter {
 
-   private Layout layout;
+  private Layout layout;
 
-   public Log4JFormatterAdapter (Layout layout) {
+  public Log4JFormatterAdapter (Layout layout) {
 
-      this.layout = layout;
-   }
+    this.layout = layout;
+  }
 
-   public String format (Record record, Collection<Filter> filterCollection) {
+  public String format (Record record, Collection<Filter> filterCollection) {
 
-      StringBuilder formatBuilder = new StringBuilder();
-      String header;
-      String footer;
+    StringBuilder formatBuilder = new StringBuilder();
+    String header;
+    String footer;
 
-      header = layout.getHeader();
-      if (header != null) {
-         formatBuilder.append(header);
-      }
+    header = layout.getHeader();
+    if (header != null) {
+      formatBuilder.append(header);
+    }
 
-      formatBuilder.append(layout.format((LoggingEvent)record.getNativeLogEntry()));
+    formatBuilder.append(layout.format((LoggingEvent)record.getNativeLogEntry()));
 
-      footer = layout.getFooter();
-      if (footer != null) {
-         formatBuilder.append(footer);
-      }
+    footer = layout.getFooter();
+    if (footer != null) {
+      formatBuilder.append(footer);
+    }
 
-      return formatBuilder.toString();
-   }
+    return formatBuilder.toString();
+  }
 }

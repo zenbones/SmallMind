@@ -30,6 +30,6 @@ import org.xml.sax.SAXException;
 
 public interface SAXExtender {
 
-   public abstract void completedChildElement (ElementExtender elementExtender)
-      throws SAXException;
+  public abstract void completedChildElement (ElementExtender elementExtender)
+    throws SAXException;
 }

@@ -36,29 +36,29 @@ import org.springframework.context.ApplicationContextAware;
 
 public class SpringSchedulerFactory extends StdSchedulerFactory implements ApplicationContextAware {
 
-   private SpringJobFactory jobFactory;
+  private SpringJobFactory jobFactory;
 
-   public SpringSchedulerFactory (Properties properties)
-      throws SchedulerException {
+  public SpringSchedulerFactory (Properties properties)
+    throws SchedulerException {
 
-      super(properties);
-   }
+    super(properties);
+  }
 
-   @Override
-   public void setApplicationContext (ApplicationContext applicationContext)
-      throws BeansException {
+  @Override
+  public void setApplicationContext (ApplicationContext applicationContext)
+    throws BeansException {
 
-      jobFactory = new SpringJobFactory(applicationContext);
-   }
+    jobFactory = new SpringJobFactory(applicationContext);
+  }
 
-   @Override
-   public Scheduler getScheduler () throws SchedulerException {
+  @Override
+  public Scheduler getScheduler () throws SchedulerException {
 
-      Scheduler scheduler;
+    Scheduler scheduler;
 
-      scheduler = super.getScheduler();
-      scheduler.setJobFactory(jobFactory);
+    scheduler = super.getScheduler();
+    scheduler.setJobFactory(jobFactory);
 
-      return scheduler;
-   }
+    return scheduler;
+  }
 }

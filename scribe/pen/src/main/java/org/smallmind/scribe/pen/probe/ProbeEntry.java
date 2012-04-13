@@ -31,45 +31,45 @@ import java.util.LinkedList;
 
 public abstract class ProbeEntry implements Serializable {
 
-   private ProbeStatus probeStatus;
-   private LinkedList<MetricMilieu> metricMilieuList;
-   private LinkedList<Statement> statementList;
+  private ProbeStatus probeStatus;
+  private LinkedList<MetricMilieu> metricMilieuList;
+  private LinkedList<Statement> statementList;
 
-   public ProbeEntry (ProbeStatus probeStatus, Probe probe) {
+  public ProbeEntry (ProbeStatus probeStatus, Probe probe) {
 
-      this.probeStatus = probeStatus;
+    this.probeStatus = probeStatus;
 
-      metricMilieuList = new LinkedList<MetricMilieu>();
+    metricMilieuList = new LinkedList<MetricMilieu>();
 
-      for (MetricMilieu metricMilieu : probe.getMetricMilieuList()) {
-         metricMilieuList.add(new MetricMilieu(metricMilieu));
-      }
+    for (MetricMilieu metricMilieu : probe.getMetricMilieuList()) {
+      metricMilieuList.add(new MetricMilieu(metricMilieu));
+    }
 
-      statementList = new LinkedList<Statement>(probe.getStatementList());
-   }
+    statementList = new LinkedList<Statement>(probe.getStatementList());
+  }
 
-   public ProbeStatus getProbeStatus () {
+  public ProbeStatus getProbeStatus () {
 
-      return probeStatus;
-   }
+    return probeStatus;
+  }
 
-   public MetricMilieu[] getMetricMilieus () {
+  public MetricMilieu[] getMetricMilieus () {
 
-      MetricMilieu[] metricMilieus;
+    MetricMilieu[] metricMilieus;
 
-      metricMilieus = new MetricMilieu[metricMilieuList.size()];
-      metricMilieuList.toArray(metricMilieus);
+    metricMilieus = new MetricMilieu[metricMilieuList.size()];
+    metricMilieuList.toArray(metricMilieus);
 
-      return metricMilieus;
-   }
+    return metricMilieus;
+  }
 
-   public Statement[] getStatements () {
+  public Statement[] getStatements () {
 
-      Statement[] statements;
+    Statement[] statements;
 
-      statements = new Statement[statementList.size()];
-      statementList.toArray(statements);
+    statements = new Statement[statementList.size()];
+    statementList.toArray(statements);
 
-      return statements;
-   }
+    return statements;
+  }
 }

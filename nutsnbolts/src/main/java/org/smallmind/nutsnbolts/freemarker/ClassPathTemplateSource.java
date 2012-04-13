@@ -31,55 +31,55 @@ import java.io.InputStream;
 
 public class ClassPathTemplateSource {
 
-   private InputStream inputStream;
-   private ClassLoader classLoader;
-   private String name;
+  private InputStream inputStream;
+  private ClassLoader classLoader;
+  private String name;
 
-   public ClassPathTemplateSource (ClassLoader classLoader, String name) {
+  public ClassPathTemplateSource (ClassLoader classLoader, String name) {
 
-      this.classLoader = classLoader;
-      this.name = name;
+    this.classLoader = classLoader;
+    this.name = name;
 
-      inputStream = classLoader.getResourceAsStream(name);
-   }
+    inputStream = classLoader.getResourceAsStream(name);
+  }
 
-   public boolean exists () {
+  public boolean exists () {
 
-      return inputStream != null;
-   }
+    return inputStream != null;
+  }
 
-   public ClassLoader getClassLoader () {
+  public ClassLoader getClassLoader () {
 
-      return classLoader;
-   }
+    return classLoader;
+  }
 
-   public String getName () {
+  public String getName () {
 
-      return name;
-   }
+    return name;
+  }
 
-   public synchronized InputStream getInputStream () {
+  public synchronized InputStream getInputStream () {
 
-      return inputStream;
-   }
+    return inputStream;
+  }
 
-   public synchronized void close ()
-      throws IOException {
+  public synchronized void close ()
+    throws IOException {
 
-      if (inputStream != null) {
-         inputStream.close();
-      }
-   }
+    if (inputStream != null) {
+      inputStream.close();
+    }
+  }
 
-   @Override
-   public int hashCode () {
+  @Override
+  public int hashCode () {
 
-      return classLoader.hashCode() ^ name.hashCode();
-   }
+    return classLoader.hashCode() ^ name.hashCode();
+  }
 
-   @Override
-   public boolean equals (Object obj) {
+  @Override
+  public boolean equals (Object obj) {
 
-      return (obj instanceof ClassPathTemplateSource) && ((ClassPathTemplateSource)obj).getClassLoader().equals(classLoader) && ((ClassPathTemplateSource)obj).getName().equals(name);
-   }
+    return (obj instanceof ClassPathTemplateSource) && ((ClassPathTemplateSource)obj).getClassLoader().equals(classLoader) && ((ClassPathTemplateSource)obj).getName().equals(name);
+  }
 }

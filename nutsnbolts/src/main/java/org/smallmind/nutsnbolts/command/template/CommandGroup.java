@@ -30,49 +30,49 @@ import java.util.LinkedList;
 
 public class CommandGroup {
 
-   private LinkedList<CommandStructure> structureList;
-   private boolean optional;
+  private LinkedList<CommandStructure> structureList;
+  private boolean optional;
 
-   public CommandGroup () {
+  public CommandGroup () {
 
-      this(false);
-   }
+    this(false);
+  }
 
-   public CommandGroup (boolean optional) {
+  public CommandGroup (boolean optional) {
 
-      this.optional = optional;
+    this.optional = optional;
 
-      structureList = new LinkedList<CommandStructure>();
-   }
+    structureList = new LinkedList<CommandStructure>();
+  }
 
-   public void setOptional (boolean optional) {
+  public void setOptional (boolean optional) {
 
-      this.optional = optional;
-   }
+    this.optional = optional;
+  }
 
-   public boolean isOptional () {
+  public boolean isOptional () {
 
-      return optional;
-   }
+    return optional;
+  }
 
-   public synchronized boolean isNominalGroup () {
+  public synchronized boolean isNominalGroup () {
 
-      return (structureList.size() < 2);
-   }
+    return (structureList.size() < 2);
+  }
 
-   public synchronized CommandStructure[] getCommandStructures () {
+  public synchronized CommandStructure[] getCommandStructures () {
 
-      CommandStructure[] commandStructures;
+    CommandStructure[] commandStructures;
 
-      commandStructures = new CommandStructure[structureList.size()];
-      structureList.toArray(commandStructures);
+    commandStructures = new CommandStructure[structureList.size()];
+    structureList.toArray(commandStructures);
 
-      return commandStructures;
-   }
+    return commandStructures;
+  }
 
-   public synchronized void addCommandStructure (CommandStructure commandStructure) {
+  public synchronized void addCommandStructure (CommandStructure commandStructure) {
 
-      structureList.add(commandStructure);
-   }
+    structureList.add(commandStructure);
+  }
 
 }

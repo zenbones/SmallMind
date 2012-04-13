@@ -34,34 +34,35 @@ import org.smallmind.wicket.property.PropertyFactory;
 
 public class SkinManager {
 
-   private Map<Class, String> propertyMap;
+  private Map<Class, String> propertyMap;
 
-   public SkinManager () {
-   }
+  public SkinManager () {
 
-   public SkinManager (Map<Class, String> propertyMap) {
+  }
 
-      this.propertyMap = propertyMap;
-   }
+  public SkinManager (Map<Class, String> propertyMap) {
 
-   public void setPropertyMap (Map<Class, String> propertyMap) {
+    this.propertyMap = propertyMap;
+  }
 
-      this.propertyMap = propertyMap;
-   }
+  public void setPropertyMap (Map<Class, String> propertyMap) {
 
-   public synchronized Properties getProperties (WebApplication webApplication, Class componentClass) {
+    this.propertyMap = propertyMap;
+  }
 
-      String resourcePath;
+  public synchronized Properties getProperties (WebApplication webApplication, Class componentClass) {
 
-      if ((resourcePath = propertyMap.get(componentClass)) == null) {
-         throw new SkinManagementException("Unknown component class(%s)", componentClass.getName());
-      }
+    String resourcePath;
 
-      try {
-         return PropertyFactory.getProperties(webApplication, resourcePath);
-      }
-      catch (PropertyException propertyException) {
-         throw new SkinManagementException(propertyException);
-      }
-   }
+    if ((resourcePath = propertyMap.get(componentClass)) == null) {
+      throw new SkinManagementException("Unknown component class(%s)", componentClass.getName());
+    }
+
+    try {
+      return PropertyFactory.getProperties(webApplication, resourcePath);
+    }
+    catch (PropertyException propertyException) {
+      throw new SkinManagementException(propertyException);
+    }
+  }
 }

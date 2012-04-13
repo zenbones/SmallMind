@@ -35,41 +35,41 @@ import org.xml.sax.SAXException;
 
 public class XMLEntityResolver implements EntityResolver {
 
-   private static XMLEntityResolver ENTITY_RESOLVER;
+  private static XMLEntityResolver ENTITY_RESOLVER;
 
-   private ProtocolResolver protocolResolver;
+  private ProtocolResolver protocolResolver;
 
-   public synchronized static XMLEntityResolver getInstance () {
+  public synchronized static XMLEntityResolver getInstance () {
 
-      if (ENTITY_RESOLVER == null) {
-         ENTITY_RESOLVER = new XMLEntityResolver(SmallMindProtocolResolver.getInstance());
+    if (ENTITY_RESOLVER == null) {
+      ENTITY_RESOLVER = new XMLEntityResolver(SmallMindProtocolResolver.getInstance());
+    }
+
+    return ENTITY_RESOLVER;
+  }
+
+  public XMLEntityResolver (ProtocolResolver protocolResolver) {
+
+    this.protocolResolver = protocolResolver;
+  }
+
+  public InputSource resolveEntity (String publicId, String systemId)
+    throws SAXException, IOException {
+
+    Resource entityResource;
+    InputStream entityStream;
+
+    try {
+      if ((entityResource = protocolResolver.resolve(systemId)) != null) {
+        if ((entityStream = entityResource.getInputStream()) != null) {
+          return new InputSource(entityStream);
+        }
       }
+    }
+    catch (Exception exception) {
+      throw new SAXException(exception);
+    }
 
-      return ENTITY_RESOLVER;
-   }
-
-   public XMLEntityResolver (ProtocolResolver protocolResolver) {
-
-      this.protocolResolver = protocolResolver;
-   }
-
-   public InputSource resolveEntity (String publicId, String systemId)
-      throws SAXException, IOException {
-
-      Resource entityResource;
-      InputStream entityStream;
-
-      try {
-         if ((entityResource = protocolResolver.resolve(systemId)) != null) {
-            if ((entityStream = entityResource.getInputStream()) != null) {
-               return new InputSource(entityStream);
-            }
-         }
-      }
-      catch (Exception exception) {
-         throw new SAXException(exception);
-      }
-
-      return null;
-   }
+    return null;
+  }
 }

@@ -33,72 +33,72 @@ import freemarker.cache.TemplateLoader;
 
 public class ClassPathTemplateLoader implements TemplateLoader {
 
-   ClassLoader classLoader;
-   private Class<?> anchorClass;
-   boolean relative;
+  ClassLoader classLoader;
+  private Class<?> anchorClass;
+  boolean relative;
 
-   public ClassPathTemplateLoader () {
+  public ClassPathTemplateLoader () {
 
-      relative = false;
-      classLoader = Thread.currentThread().getContextClassLoader();
-   }
+    relative = false;
+    classLoader = Thread.currentThread().getContextClassLoader();
+  }
 
-   public ClassPathTemplateLoader (Class<?> anchorClass) {
+  public ClassPathTemplateLoader (Class<?> anchorClass) {
 
-      this(anchorClass, false);
-   }
+    this(anchorClass, false);
+  }
 
-   public ClassPathTemplateLoader (Class<?> anchorClass, boolean relative) {
+  public ClassPathTemplateLoader (Class<?> anchorClass, boolean relative) {
 
-      this.anchorClass = anchorClass;
-      this.relative = relative;
+    this.anchorClass = anchorClass;
+    this.relative = relative;
 
-      classLoader = anchorClass.getClassLoader();
-   }
+    classLoader = anchorClass.getClassLoader();
+  }
 
-   public Class<?> getAnchorClass () {
+  public Class<?> getAnchorClass () {
 
-      return anchorClass;
-   }
+    return anchorClass;
+  }
 
-   public ClassLoader getClassLoader () {
+  public ClassLoader getClassLoader () {
 
-      return classLoader;
-   }
+    return classLoader;
+  }
 
-   public Object findTemplateSource (String name)
-      throws IOException {
+  public Object findTemplateSource (String name)
+    throws IOException {
 
-      ClassPathTemplateSource source;
+    ClassPathTemplateSource source;
 
-      if (relative && (anchorClass != null)) {
+    if (relative && (anchorClass != null)) {
 
-         StringBuilder pathBuilder = new StringBuilder(anchorClass.getPackage().getName().replace('.', '/'));
+      StringBuilder pathBuilder = new StringBuilder(anchorClass.getPackage().getName().replace('.', '/'));
 
-         pathBuilder.append('/').append(name);
-         source = new ClassPathTemplateSource(classLoader, pathBuilder.toString());
-      }
-      else {
-         source = new ClassPathTemplateSource(classLoader, name);
-      }
+      pathBuilder.append('/').append(name);
+      source = new ClassPathTemplateSource(classLoader, pathBuilder.toString());
+    }
+    else {
+      source = new ClassPathTemplateSource(classLoader, name);
+    }
 
-      return (source.exists()) ? source : null;
-   }
+    return (source.exists()) ? source : null;
+  }
 
-   public long getLastModified (Object templateSource) {
+  public long getLastModified (Object templateSource) {
 
-      return -1;
-   }
+    return -1;
+  }
 
-   public Reader getReader (Object templateSource, String encoding)
-      throws IOException {
+  public Reader getReader (Object templateSource, String encoding)
+    throws IOException {
 
-      return new InputStreamReader(((ClassPathTemplateSource)templateSource).getInputStream(), encoding);
-   }
+    return new InputStreamReader(((ClassPathTemplateSource)templateSource).getInputStream(), encoding);
+  }
 
-   public void closeTemplateSource (Object templateSource)
-      throws IOException {
+  public void closeTemplateSource (Object templateSource)
+    throws IOException {
 
-      ((ClassPathTemplateSource)templateSource).close();
-   }
+    ((ClassPathTemplateSource)templateSource).close();
+  }
 }

@@ -35,133 +35,137 @@ import javax.swing.table.TableColumn;
 
 public class SortableTable<E extends Enum> extends JTable implements MouseListener {
 
-   private SortableColumnTrackerStack<E> trackerStack;
+  private SortableColumnTrackerStack<E> trackerStack;
 
-   public SortableTable (SortableTableModel<E> sortableTableModel) {
+  public SortableTable (SortableTableModel<E> sortableTableModel) {
 
-      super(sortableTableModel);
+    super(sortableTableModel);
 
-      trackerStack = new SortableColumnTrackerStack<E>();
-   }
+    trackerStack = new SortableColumnTrackerStack<E>();
+  }
 
-   public synchronized SortableTableModel<E> getModel () {
+  public synchronized SortableTableModel<E> getModel () {
 
-      return (SortableTableModel<E>)super.getModel();
-   }
+    return (SortableTableModel<E>)super.getModel();
+  }
 
-   public synchronized void setModel (SortableTableModel<E> sortableTableModel) {
+  public synchronized void setModel (SortableTableModel<E> sortableTableModel) {
 
-      super.setModel(sortableTableModel);
-   }
+    super.setModel(sortableTableModel);
+  }
 
-   public synchronized void setTableHeader (JTableHeader tableHeader) {
+  public synchronized void setTableHeader (JTableHeader tableHeader) {
 
-      if (getTableHeader() != null) {
-         getTableHeader().removeMouseListener(this);
-      }
+    if (getTableHeader() != null) {
+      getTableHeader().removeMouseListener(this);
+    }
 
-      super.setTableHeader(tableHeader);
+    super.setTableHeader(tableHeader);
 
-      if (tableHeader != null) {
-         updateHeader();
-         tableHeader.addMouseListener(this);
-      }
-   }
-
-   public synchronized void removeSortableColumnTracker (E enumDataType) {
-
-      trackerStack.removeSortableColumnTracker(enumDataType);
-   }
-
-   public synchronized int getSortOrder (E enumDataType) {
-
-      int pos = 0;
-
-      for (SortableColumnTracker columnTracker : trackerStack) {
-         if (columnTracker.getEnumDataType().equals(enumDataType)) {
-            return pos;
-         }
-
-         pos++;
-      }
-
-      return -1;
-   }
-
-   public synchronized SortableDirection getSortDirection (E enumDataType) {
-
-      for (SortableColumnTracker columnTracker : trackerStack) {
-         if (columnTracker.getEnumDataType().equals(enumDataType)) {
-            return columnTracker.getDirection();
-         }
-      }
-
-      return SortableDirection.NONE;
-   }
-
-   public synchronized void setSortDirection (E enumDataType, SortableDirection direction) {
-
-      if (direction.equals(SortableDirection.NONE)) {
-         trackerStack.removeSortableColumnTracker(enumDataType);
-      }
-      else {
-         trackerStack.addSortableColumnTracker(new SortableColumnTracker<E>(enumDataType, direction));
-      }
-
+    if (tableHeader != null) {
       updateHeader();
-   }
+      tableHeader.addMouseListener(this);
+    }
+  }
 
-   public synchronized void updateHeader () {
+  public synchronized void removeSortableColumnTracker (E enumDataType) {
 
-      TableColumn browseColumn;
-      Component renderComponent;
+    trackerStack.removeSortableColumnTracker(enumDataType);
+  }
 
-      for (int count = 0; count < getColumnModel().getColumnCount(); count++) {
-         browseColumn = getColumnModel().getColumn(count);
-         if (browseColumn.getHeaderRenderer() != null) {
-            renderComponent = browseColumn.getHeaderRenderer().getTableCellRendererComponent(this, browseColumn.getHeaderValue(), false, false, 0, count);
-            ((SortableHeaderPanel)renderComponent).displaySortingState();
-         }
-      }
-   }
+  public synchronized int getSortOrder (E enumDataType) {
 
-   public synchronized void sortTableData () {
+    int pos = 0;
 
-      getModel().sortTableData(trackerStack);
-   }
-
-   public void mouseEntered (MouseEvent mouseEvent) {
-   }
-
-   public void mouseExited (MouseEvent mouseEvent) {
-   }
-
-   public void mouseClicked (MouseEvent mouseEvent) {
-   }
-
-   public void mouseReleased (MouseEvent mouseEvent) {
-   }
-
-   public synchronized void mousePressed (MouseEvent mouseEvent) {
-
-      TableColumn browseColumn;
-      Component renderComponent;
-      int columnIndex;
-      int leftClipPos = 0;
-      int hitPoint;
-
-      columnIndex = columnAtPoint(mouseEvent.getPoint());
-      for (int count = 0; count < columnIndex; count++) {
-         leftClipPos += getColumnModel().getColumn(count).getWidth();
+    for (SortableColumnTracker columnTracker : trackerStack) {
+      if (columnTracker.getEnumDataType().equals(enumDataType)) {
+        return pos;
       }
 
-      browseColumn = getColumnModel().getColumn(columnIndex);
-      renderComponent = browseColumn.getHeaderRenderer().getTableCellRendererComponent(this, browseColumn.getHeaderValue(), false, false, 0, columnIndex);
-      hitPoint = leftClipPos + browseColumn.getWidth() - mouseEvent.getX();
-      if ((hitPoint <= ((SortableHeaderPanel)renderComponent).getClickWidth()) && (hitPoint > 5)) {
-         ((SortableHeaderPanel)renderComponent).incSortingState();
-         getTableHeader().repaint();
+      pos++;
+    }
+
+    return -1;
+  }
+
+  public synchronized SortableDirection getSortDirection (E enumDataType) {
+
+    for (SortableColumnTracker columnTracker : trackerStack) {
+      if (columnTracker.getEnumDataType().equals(enumDataType)) {
+        return columnTracker.getDirection();
       }
-   }
+    }
+
+    return SortableDirection.NONE;
+  }
+
+  public synchronized void setSortDirection (E enumDataType, SortableDirection direction) {
+
+    if (direction.equals(SortableDirection.NONE)) {
+      trackerStack.removeSortableColumnTracker(enumDataType);
+    }
+    else {
+      trackerStack.addSortableColumnTracker(new SortableColumnTracker<E>(enumDataType, direction));
+    }
+
+    updateHeader();
+  }
+
+  public synchronized void updateHeader () {
+
+    TableColumn browseColumn;
+    Component renderComponent;
+
+    for (int count = 0; count < getColumnModel().getColumnCount(); count++) {
+      browseColumn = getColumnModel().getColumn(count);
+      if (browseColumn.getHeaderRenderer() != null) {
+        renderComponent = browseColumn.getHeaderRenderer().getTableCellRendererComponent(this, browseColumn.getHeaderValue(), false, false, 0, count);
+        ((SortableHeaderPanel)renderComponent).displaySortingState();
+      }
+    }
+  }
+
+  public synchronized void sortTableData () {
+
+    getModel().sortTableData(trackerStack);
+  }
+
+  public void mouseEntered (MouseEvent mouseEvent) {
+
+  }
+
+  public void mouseExited (MouseEvent mouseEvent) {
+
+  }
+
+  public void mouseClicked (MouseEvent mouseEvent) {
+
+  }
+
+  public void mouseReleased (MouseEvent mouseEvent) {
+
+  }
+
+  public synchronized void mousePressed (MouseEvent mouseEvent) {
+
+    TableColumn browseColumn;
+    Component renderComponent;
+    int columnIndex;
+    int leftClipPos = 0;
+    int hitPoint;
+
+    columnIndex = columnAtPoint(mouseEvent.getPoint());
+    for (int count = 0; count < columnIndex; count++) {
+      leftClipPos += getColumnModel().getColumn(count).getWidth();
+    }
+
+    browseColumn = getColumnModel().getColumn(columnIndex);
+    renderComponent = browseColumn.getHeaderRenderer().getTableCellRendererComponent(this, browseColumn.getHeaderValue(), false, false, 0, columnIndex);
+    hitPoint = leftClipPos + browseColumn.getWidth() - mouseEvent.getX();
+    if ((hitPoint <= ((SortableHeaderPanel)renderComponent).getClickWidth()) && (hitPoint > 5)) {
+      ((SortableHeaderPanel)renderComponent).incSortingState();
+      getTableHeader().repaint();
+    }
+  }
 
 }

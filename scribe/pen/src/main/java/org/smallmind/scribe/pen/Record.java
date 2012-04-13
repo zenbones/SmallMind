@@ -31,31 +31,31 @@ import org.smallmind.scribe.pen.probe.ProbeReport;
 
 public interface Record extends Serializable {
 
-   public abstract Object getNativeLogEntry ();
+  public abstract Object getNativeLogEntry ();
 
-   public abstract ProbeReport getProbeReport ();
+  public abstract ProbeReport getProbeReport ();
 
-   public abstract String getLoggerName ();
+  public abstract String getLoggerName ();
 
-   public abstract Discriminator getDiscriminator ();
+  public abstract Discriminator getDiscriminator ();
 
-   public abstract Level getLevel ();
+  public abstract Level getLevel ();
 
-   public abstract Throwable getThrown ();
+  public abstract Throwable getThrown ();
 
-   public abstract String getMessage ();
+  public abstract String getMessage ();
 
-   public abstract void addParameter (String key, Serializable value);
+  public abstract void addParameter (String key, Serializable value);
 
-   public abstract Parameter[] getParameters ();
+  public abstract Parameter[] getParameters ();
 
-   public abstract LogicalContext getLogicalContext ();
+  public abstract LogicalContext getLogicalContext ();
 
-   public abstract long getThreadID ();
+  public abstract long getThreadID ();
 
-   public abstract String getThreadName ();
+  public abstract String getThreadName ();
 
-   public abstract long getSequenceNumber ();
+  public abstract long getSequenceNumber ();
 
-   public abstract long getMillis ();
+  public abstract long getMillis ();
 }

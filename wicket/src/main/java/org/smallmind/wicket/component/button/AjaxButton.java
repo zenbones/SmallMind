@@ -33,27 +33,27 @@ import org.smallmind.wicket.skin.SkinManager;
 
 public abstract class AjaxButton extends Button {
 
-   public AjaxButton (String id, IModel labelModel, SkinManager skinManager) {
+  public AjaxButton (String id, IModel labelModel, SkinManager skinManager) {
 
-      super(id, labelModel, skinManager);
+    super(id, labelModel, skinManager);
 
-      addButtonBehavior(new OnClickAjaxEventBehavior());
-   }
+    addButtonBehavior(new OnClickAjaxEventBehavior());
+  }
 
-   public abstract void onClick (AjaxRequestTarget target);
+  public abstract void onClick (AjaxRequestTarget target);
 
-   private class OnClickAjaxEventBehavior extends AjaxEventBehavior {
+  private class OnClickAjaxEventBehavior extends AjaxEventBehavior {
 
-      public OnClickAjaxEventBehavior () {
+    public OnClickAjaxEventBehavior () {
 
-         super("onClick");
+      super("onClick");
+    }
+
+    protected void onEvent (AjaxRequestTarget target) {
+
+      if (AjaxButton.this.isEnabled()) {
+        onClick(target);
       }
-
-      protected void onEvent (AjaxRequestTarget target) {
-
-         if (AjaxButton.this.isEnabled()) {
-            onClick(target);
-         }
-      }
-   }
+    }
+  }
 }

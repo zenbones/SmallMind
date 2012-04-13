@@ -28,23 +28,23 @@ package org.smallmind.nutsnbolts.lang;
 
 public class ClassGateTicket {
 
-   private ClassGate classGate;
-   private long timeStamp;
+  private ClassGate classGate;
+  private long timeStamp;
 
-   public ClassGateTicket (ClassGate classGate, long timeStamp) {
+  public ClassGateTicket (ClassGate classGate, long timeStamp) {
 
-      this.classGate = classGate;
-      this.timeStamp = timeStamp;
-   }
+    this.classGate = classGate;
+    this.timeStamp = timeStamp;
+  }
 
-   public ClassGate getClassGate () {
+  public ClassGate getClassGate () {
 
-      return classGate;
-   }
+    return classGate;
+  }
 
-   public long getTimeStamp () {
+  public long getTimeStamp () {
 
-      return timeStamp;
-   }
+    return timeStamp;
+  }
 
 }

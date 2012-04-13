@@ -31,13 +31,13 @@ import org.springframework.context.support.ClassPathXmlApplicationContext;
 
 public class ClassPathXmlSpringContextWrapperListener extends SpringContextWrapperListener {
 
-   public static Class<? extends SpringContextWrapperListener> getImplementationClass () {
+  public static Class<? extends SpringContextWrapperListener> getImplementationClass () {
 
-      return ClassPathXmlSpringContextWrapperListener.class;
-   }
+    return ClassPathXmlSpringContextWrapperListener.class;
+  }
 
-   public ConfigurableApplicationContext[] loadApplicationContexts (String[] args) {
+  public ConfigurableApplicationContext[] loadApplicationContexts (String[] args) {
 
-      return new ConfigurableApplicationContext[] {new ClassPathXmlApplicationContext(args)};
-   }
+    return new ConfigurableApplicationContext[] {new ClassPathXmlApplicationContext(args)};
+  }
 }

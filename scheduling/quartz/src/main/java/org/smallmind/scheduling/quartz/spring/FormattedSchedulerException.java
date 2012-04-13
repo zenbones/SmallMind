@@ -30,23 +30,23 @@ import org.quartz.SchedulerException;
 
 public class FormattedSchedulerException extends SchedulerException {
 
-   public FormattedSchedulerException () {
+  public FormattedSchedulerException () {
 
-      super();
-   }
+    super();
+  }
 
-   public FormattedSchedulerException (String message, Object... args) {
+  public FormattedSchedulerException (String message, Object... args) {
 
-      super(String.format(message, args));
-   }
+    super(String.format(message, args));
+  }
 
-   public FormattedSchedulerException (Throwable throwable, String message, Object... args) {
+  public FormattedSchedulerException (Throwable throwable, String message, Object... args) {
 
-      super(String.format(message, args), throwable);
-   }
+    super(String.format(message, args), throwable);
+  }
 
-   public FormattedSchedulerException (Throwable throwable) {
+  public FormattedSchedulerException (Throwable throwable) {
 
-      super(throwable);
-   }
+    super(throwable);
+  }
 }

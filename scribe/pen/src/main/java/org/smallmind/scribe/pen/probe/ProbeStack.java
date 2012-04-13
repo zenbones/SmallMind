@@ -34,55 +34,55 @@ import org.smallmind.scribe.pen.Logger;
 
 public class ProbeStack {
 
-   private LinkedList<Probe> probeList;
-   private byte[] threadIdentifier;
-   private byte[] parentIdentifier;
-   private int instance = 0;
+  private LinkedList<Probe> probeList;
+  private byte[] threadIdentifier;
+  private byte[] parentIdentifier;
+  private int instance = 0;
 
-   public ProbeStack (byte[] parentIdentifier) {
+  public ProbeStack (byte[] parentIdentifier) {
 
-      this.parentIdentifier = parentIdentifier;
+    this.parentIdentifier = parentIdentifier;
 
-      threadIdentifier = UniqueId.newInstance().asByteArray();
-      probeList = new LinkedList<Probe>();
-   }
+    threadIdentifier = UniqueId.newInstance().asByteArray();
+    probeList = new LinkedList<Probe>();
+  }
 
-   public byte[] getCurrentIdentifier () {
+  public byte[] getCurrentIdentifier () {
 
-      if (probeList.isEmpty()) {
+    if (probeList.isEmpty()) {
 
-         return null;
-      }
+      return null;
+    }
 
-      return probeList.getFirst().getCorrelator().getIdentifier();
-   }
+    return probeList.getFirst().getCorrelator().getIdentifier();
+  }
 
-   public Probe peek () {
+  public Probe peek () {
 
-      if (probeList.isEmpty()) {
+    if (probeList.isEmpty()) {
 
-         return null;
-      }
+      return null;
+    }
 
-      return probeList.getFirst();
-   }
+    return probeList.getFirst();
+  }
 
-   public Probe push (Logger logger, Discriminator discriminator, Level level, String title) {
+  public Probe push (Logger logger, Discriminator discriminator, Level level, String title) {
 
-      Probe probe;
+    Probe probe;
 
-      probeList.addFirst(probe = new Probe(logger, discriminator, level, new Correlator(threadIdentifier, probeList.isEmpty() ? parentIdentifier : probeList.getFirst().getCorrelator().getIdentifier(), UniqueId.newInstance().asByteArray(), probeList.size(), instance++), title, probeList.isEmpty()));
+    probeList.addFirst(probe = new Probe(logger, discriminator, level, new Correlator(threadIdentifier, probeList.isEmpty() ? parentIdentifier : probeList.getFirst().getCorrelator().getIdentifier(), UniqueId.newInstance().asByteArray(), probeList.size(), instance++), title, probeList.isEmpty()));
 
-      return probe;
-   }
+    return probe;
+  }
 
-   public void pop (Probe probe)
-      throws ProbeException {
+  public void pop (Probe probe)
+    throws ProbeException {
 
-      if (!probe.equals(probeList.getFirst())) {
-         throw new ProbeException("Out of order Probe(%s) termination", probe.getCorrelator().getIdentifier());
-      }
+    if (!probe.equals(probeList.getFirst())) {
+      throw new ProbeException("Out of order Probe(%s) termination", probe.getCorrelator().getIdentifier());
+    }
 
-      probeList.removeFirst();
-   }
+    probeList.removeFirst();
+  }
 }

@@ -34,101 +34,103 @@ import java.io.Serializable;
 
 public class ListLayout implements LayoutManager, Serializable {
 
-   private int gap;
+  private int gap;
 
-   public ListLayout () {
+  public ListLayout () {
 
-      this(0);
-   }
+    this(0);
+  }
 
-   public ListLayout (int gap) {
+  public ListLayout (int gap) {
 
-      this.gap = gap;
-   }
+    this.gap = gap;
+  }
 
-   public void addLayoutComponent (String s, Component component) {
-   }
+  public void addLayoutComponent (String s, Component component) {
 
-   public void removeLayoutComponent (Component component) {
-   }
+  }
 
-   public Dimension preferredLayoutSize (Container container) {
+  public void removeLayoutComponent (Component component) {
 
-      Component component;
-      Dimension preferredSize;
-      int height = 0;
-      int width;
+  }
 
-      width = container.getWidth() - container.getInsets().left - container.getInsets().right;
+  public Dimension preferredLayoutSize (Container container) {
 
-      synchronized (container.getTreeLock()) {
-         for (int count = 0; count < container.getComponentCount(); count++) {
-            component = container.getComponent(count);
-            if (component.isVisible()) {
-               preferredSize = component.getPreferredSize();
-               height += preferredSize.getHeight();
-               if (count > 0) {
-                  height += gap;
-               }
-            }
-         }
+    Component component;
+    Dimension preferredSize;
+    int height = 0;
+    int width;
 
-         height += container.getInsets().top + container.getInsets().bottom;
+    width = container.getWidth() - container.getInsets().left - container.getInsets().right;
 
-         return new Dimension(width, height);
+    synchronized (container.getTreeLock()) {
+      for (int count = 0; count < container.getComponentCount(); count++) {
+        component = container.getComponent(count);
+        if (component.isVisible()) {
+          preferredSize = component.getPreferredSize();
+          height += preferredSize.getHeight();
+          if (count > 0) {
+            height += gap;
+          }
+        }
       }
-   }
 
-   public Dimension minimumLayoutSize (Container container) {
+      height += container.getInsets().top + container.getInsets().bottom;
 
-      Component component;
-      Dimension minSize;
-      int height = 0;
-      int width;
+      return new Dimension(width, height);
+    }
+  }
 
-      width = container.getWidth() - container.getInsets().left - container.getInsets().right;
+  public Dimension minimumLayoutSize (Container container) {
 
-      synchronized (container.getTreeLock()) {
-         for (int count = 0; count < container.getComponentCount(); count++) {
-            component = container.getComponent(count);
-            if (component.isVisible()) {
-               minSize = component.getMinimumSize();
-               height += minSize.getHeight();
-               if (count > 0) {
-                  height += gap;
-               }
-            }
-         }
+    Component component;
+    Dimension minSize;
+    int height = 0;
+    int width;
 
-         height += container.getInsets().top + container.getInsets().bottom;
+    width = container.getWidth() - container.getInsets().left - container.getInsets().right;
 
-         return new Dimension(width, height);
+    synchronized (container.getTreeLock()) {
+      for (int count = 0; count < container.getComponentCount(); count++) {
+        component = container.getComponent(count);
+        if (component.isVisible()) {
+          minSize = component.getMinimumSize();
+          height += minSize.getHeight();
+          if (count > 0) {
+            height += gap;
+          }
+        }
       }
-   }
 
-   public void layoutContainer (Container container) {
+      height += container.getInsets().top + container.getInsets().bottom;
 
-      Component component;
-      Dimension preferredSize;
-      int width;
-      int xPos;
-      int yPos;
+      return new Dimension(width, height);
+    }
+  }
 
-      width = container.getWidth() - container.getInsets().left - container.getInsets().right;
-      xPos = container.getInsets().left;
-      yPos = container.getInsets().top;
+  public void layoutContainer (Container container) {
 
-      synchronized (container.getTreeLock()) {
-         for (int count = 0; count < container.getComponentCount(); count++) {
-            component = container.getComponent(count);
-            if (component.isVisible()) {
-               preferredSize = component.getPreferredSize();
-               component.setLocation(xPos, yPos);
-               component.setSize(width, (int)preferredSize.getHeight());
-               yPos += (preferredSize.getHeight() + gap);
-            }
-         }
+    Component component;
+    Dimension preferredSize;
+    int width;
+    int xPos;
+    int yPos;
+
+    width = container.getWidth() - container.getInsets().left - container.getInsets().right;
+    xPos = container.getInsets().left;
+    yPos = container.getInsets().top;
+
+    synchronized (container.getTreeLock()) {
+      for (int count = 0; count < container.getComponentCount(); count++) {
+        component = container.getComponent(count);
+        if (component.isVisible()) {
+          preferredSize = component.getPreferredSize();
+          component.setLocation(xPos, yPos);
+          component.setSize(width, (int)preferredSize.getHeight());
+          yPos += (preferredSize.getHeight() + gap);
+        }
       }
-   }
+    }
+  }
 
 }

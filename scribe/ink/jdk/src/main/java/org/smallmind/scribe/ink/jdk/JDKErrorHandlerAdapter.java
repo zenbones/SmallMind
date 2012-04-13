@@ -34,25 +34,25 @@ import org.smallmind.scribe.pen.Record;
 
 public class JDKErrorHandlerAdapter implements ErrorHandler {
 
-   private ErrorManager errorManager;
+  private ErrorManager errorManager;
 
-   public JDKErrorHandlerAdapter (ErrorManager errorManager) {
+  public JDKErrorHandlerAdapter (ErrorManager errorManager) {
 
-      this.errorManager = errorManager;
-   }
+    this.errorManager = errorManager;
+  }
 
-   public ErrorManager getNativeErrorManager () {
+  public ErrorManager getNativeErrorManager () {
 
-      return errorManager;
-   }
+    return errorManager;
+  }
 
-   public void setBackupAppender (Appender appender) {
+  public void setBackupAppender (Appender appender) {
 
-      throw new UnsupportedOperationException("Method is not supported by native JDK Logging");
-   }
+    throw new UnsupportedOperationException("Method is not supported by native JDK Logging");
+  }
 
-   public void process (Record record, Exception exception, String errorMessage, Object... args) {
+  public void process (Record record, Exception exception, String errorMessage, Object... args) {
 
-      errorManager.error(MessageTranslator.translateMessage(errorMessage, args), exception, 0);
-   }
+    errorManager.error(MessageTranslator.translateMessage(errorMessage, args), exception, 0);
+  }
 }

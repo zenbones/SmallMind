@@ -30,23 +30,23 @@ import org.smallmind.nutsnbolts.lang.FormattedException;
 
 public class PropertyExpanderException extends FormattedException {
 
-   public PropertyExpanderException () {
+  public PropertyExpanderException () {
 
-      super();
-   }
+    super();
+  }
 
-   public PropertyExpanderException (String message, Object... args) {
+  public PropertyExpanderException (String message, Object... args) {
 
-      super(message, args);
-   }
+    super(message, args);
+  }
 
-   public PropertyExpanderException (Throwable throwable, String message, Object... args) {
+  public PropertyExpanderException (Throwable throwable, String message, Object... args) {
 
-      super(throwable, message, args);
-   }
+    super(throwable, message, args);
+  }
 
-   public PropertyExpanderException (Throwable throwable) {
+  public PropertyExpanderException (Throwable throwable) {
 
-      super(throwable);
-   }
+    super(throwable);
+  }
 }

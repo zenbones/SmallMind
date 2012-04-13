@@ -30,34 +30,34 @@ import org.smallmind.nutsnbolts.lang.UnknownSwitchCaseException;
 
 public enum ReadySetGo {
 
-   RED, YELLOW, GREEN;
+  RED, YELLOW, GREEN;
 
-   public ReadySetGo inc () {
+  public ReadySetGo inc () {
 
-      switch (this) {
-         case RED:
-            return YELLOW;
-         case YELLOW:
-            return GREEN;
-         case GREEN:
-            return GREEN;
-         default:
-            throw new UnknownSwitchCaseException(this.name());
-      }
-   }
+    switch (this) {
+      case RED:
+        return YELLOW;
+      case YELLOW:
+        return GREEN;
+      case GREEN:
+        return GREEN;
+      default:
+        throw new UnknownSwitchCaseException(this.name());
+    }
+  }
 
-   public ReadySetGo dec () {
+  public ReadySetGo dec () {
 
-      switch (this) {
-         case RED:
-            return RED;
-         case YELLOW:
-            return RED;
-         case GREEN:
-            return YELLOW;
-         default:
-            throw new UnknownSwitchCaseException(this.name());
-      }
-   }
+    switch (this) {
+      case RED:
+        return RED;
+      case YELLOW:
+        return RED;
+      case GREEN:
+        return YELLOW;
+      default:
+        throw new UnknownSwitchCaseException(this.name());
+    }
+  }
 
 }

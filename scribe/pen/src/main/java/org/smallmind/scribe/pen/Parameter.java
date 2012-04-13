@@ -30,22 +30,22 @@ import java.io.Serializable;
 
 public class Parameter implements Serializable {
 
-   private String key;
-   private Serializable value;
+  private String key;
+  private Serializable value;
 
-   public Parameter (String key, Serializable value) {
+  public Parameter (String key, Serializable value) {
 
-      this.key = key;
-      this.value = value;
-   }
+    this.key = key;
+    this.value = value;
+  }
 
-   public String getKey () {
+  public String getKey () {
 
-      return key;
-   }
+    return key;
+  }
 
-   public Serializable getValue () {
+  public Serializable getValue () {
 
-      return value;
-   }
+    return value;
+  }
 }

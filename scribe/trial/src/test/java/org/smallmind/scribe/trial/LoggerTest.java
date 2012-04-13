@@ -39,26 +39,26 @@ import org.testng.annotations.Test;
 
 public class LoggerTest {
 
-   private Logger logger;
+  private Logger logger;
 
-   @BeforeClass
-   public void setup ()
-      throws LoggerException {
+  @BeforeClass
+  public void setup ()
+    throws LoggerException {
 
-      Template testTemplate;
+    Template testTemplate;
 
-      testTemplate = new ClassNameTemplate("org.smallmind.scribe.trial.LoggerTest");
-      testTemplate.setAutoFillLogicalContext(true);
-      testTemplate.addAppender(new ConsoleAppender(new XMLFormatter()));
+    testTemplate = new ClassNameTemplate("org.smallmind.scribe.trial.LoggerTest");
+    testTemplate.setAutoFillLogicalContext(true);
+    testTemplate.addAppender(new ConsoleAppender(new XMLFormatter()));
 
-      LoggerManager.addTemplate(testTemplate);
-      logger = LoggerManager.getLogger(LoggerTest.class);
-   }
+    LoggerManager.addTemplate(testTemplate);
+    logger = LoggerManager.getLogger(LoggerTest.class);
+  }
 
-   @AutoLog
-   @Test
-   public void testLogger () {
+  @AutoLog
+  @Test
+  public void testLogger () {
 
-      logger.info("This is a test method");
-   }
+    logger.info("This is a test method");
+  }
 }

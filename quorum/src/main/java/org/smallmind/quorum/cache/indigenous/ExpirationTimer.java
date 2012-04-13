@@ -33,92 +33,92 @@ import org.smallmind.nutsnbolts.util.IterableIterator;
 
 public class ExpirationTimer<K> implements Runnable {
 
-   /*
-   * Marked as transient so that Terracotta will not attempt to share these fields, which, as
-   * they're not marked as roots, shouldn't be a problem, but Terracotta traverses the graph of
-   * this object due to the shared processing field, which is a root, and complains
-   */
-   private transient CountDownLatch terminationLatch;
-   private transient CountDownLatch exitLatch;
+  /*
+  * Marked as transient so that Terracotta will not attempt to share these fields, which, as
+  * they're not marked as roots, shouldn't be a problem, but Terracotta traverses the graph of
+  * this object due to the shared processing field, which is a root, and complains
+  */
+  private transient CountDownLatch terminationLatch;
+  private transient CountDownLatch exitLatch;
 
-   private AbstractCache<K, ?, ?> cache;
-   private AtomicBoolean processing = new AtomicBoolean(false);
-   private AtomicBoolean finished = new AtomicBoolean(false);
-   private int expirationTimerTickSeconds;
+  private AbstractCache<K, ?, ?> cache;
+  private AtomicBoolean processing = new AtomicBoolean(false);
+  private AtomicBoolean finished = new AtomicBoolean(false);
+  private int expirationTimerTickSeconds;
 
-   public ExpirationTimer (AbstractCache<K, ?, ?> cache, int expirationTimerTickSeconds) {
+  public ExpirationTimer (AbstractCache<K, ?, ?> cache, int expirationTimerTickSeconds) {
 
-      this.cache = cache;
-      this.expirationTimerTickSeconds = expirationTimerTickSeconds;
+    this.cache = cache;
+    this.expirationTimerTickSeconds = expirationTimerTickSeconds;
 
-      terminationLatch = new CountDownLatch(1);
-      exitLatch = new CountDownLatch(1);
-   }
+    terminationLatch = new CountDownLatch(1);
+    exitLatch = new CountDownLatch(1);
+  }
 
-   public boolean isProcessing () {
+  public boolean isProcessing () {
 
-      return processing.get();
-   }
+    return processing.get();
+  }
 
-   public void finish () {
+  public void finish () {
 
-      if (finished.compareAndSet(false, true)) {
-         terminationLatch.countDown();
-      }
+    if (finished.compareAndSet(false, true)) {
+      terminationLatch.countDown();
+    }
 
-      try {
-         exitLatch.await();
-      }
-      catch (InterruptedException i) {
-      }
-   }
+    try {
+      exitLatch.await();
+    }
+    catch (InterruptedException i) {
+    }
+  }
 
-   public void run () {
+  public void run () {
 
-      try {
-         while (!finished.get()) {
-            terminationLatch.await(expirationTimerTickSeconds, TimeUnit.SECONDS);
+    try {
+      while (!finished.get()) {
+        terminationLatch.await(expirationTimerTickSeconds, TimeUnit.SECONDS);
 
-            if (!finished.get()) {
-               /**
-                * This weirdness is driven by Terracotta - The cache internals are shared across a cluster,
-                * so there may be many threads running this code, but we only need one of them to actually
-                * execute, so the code gets guarded by a shared atomic boolean
-                */
-               if (processing.compareAndSet(false, true)) {
-                  try {
-                     for (K key : new IterableIterator<K>(cache.getKeyIterator())) {
+        if (!finished.get()) {
+          /**
+           * This weirdness is driven by Terracotta - The cache internals are shared across a cluster,
+           * so there may be many threads running this code, but we only need one of them to actually
+           * execute, so the code gets guarded by a shared atomic boolean
+           */
+          if (processing.compareAndSet(false, true)) {
+            try {
+              for (K key : new IterableIterator<K>(cache.getKeyIterator())) {
 //TODO:
-                        /*
-                        cache.executeLockedCallback(new LockedCallback<K, Void>() {
+                /*
+                cache.executeLockedCallback(new LockedCallback<K, Void>() {
 
-                           public K getKey () {
+                   public K getKey () {
 
-                              return key;
-                           }
+                      return key;
+                   }
 
-                           public Void execute () {
+                   public Void execute () {
 
-                              cache.retrieveEntry(key);
+                      cache.retrieveEntry(key);
 
-                              return null;
-                           }
-                        });
-                        */
-                     }
-                  }
-                  finally {
-                     processing.set(false);
-                  }
-               }
+                      return null;
+                   }
+                });
+                */
+              }
             }
-         }
+            finally {
+              processing.set(false);
+            }
+          }
+        }
       }
-      catch (InterruptedException i) {
-         finished.set(true);
-      }
-      finally {
-         exitLatch.countDown();
-      }
-   }
+    }
+    catch (InterruptedException i) {
+      finished.set(true);
+    }
+    finally {
+      exitLatch.countDown();
+    }
+  }
 }

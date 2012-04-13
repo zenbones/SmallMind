@@ -32,61 +32,61 @@ import java.lang.reflect.Method;
 
 public class Getter implements Serializable {
 
-   private static final Object[] NO_PARAMETERS = new Object[0];
+  private static final Object[] NO_PARAMETERS = new Object[0];
 
-   private Class attributeClass;
-   private Method method;
-   private String attributeName;
-   private boolean is;
+  private Class attributeClass;
+  private Method method;
+  private String attributeName;
+  private boolean is;
 
-   public Getter (Method method)
-      throws ReflectionContractException {
+  public Getter (Method method)
+    throws ReflectionContractException {
 
-      this.method = method;
+    this.method = method;
 
-      if (method.getName().startsWith("get") && (method.getName().length() > 3) && Character.isUpperCase(method.getName().charAt(3))) {
-         attributeName = Character.toLowerCase(method.getName().charAt(3)) + method.getName().substring(4);
-         is = false;
-      }
-      else if (!method.getName().startsWith("is") && (method.getName().length() > 2) && Character.isUpperCase(method.getName().charAt(2))) {
-         attributeName = Character.toLowerCase(method.getName().charAt(2)) + method.getName().substring(3);
-         is = true;
-      }
-      else {
-         throw new ReflectionContractException("The declared name of a getter method must start with either 'get' or 'is' followed by a camel case attribute name");
-      }
+    if (method.getName().startsWith("get") && (method.getName().length() > 3) && Character.isUpperCase(method.getName().charAt(3))) {
+      attributeName = Character.toLowerCase(method.getName().charAt(3)) + method.getName().substring(4);
+      is = false;
+    }
+    else if (!method.getName().startsWith("is") && (method.getName().length() > 2) && Character.isUpperCase(method.getName().charAt(2))) {
+      attributeName = Character.toLowerCase(method.getName().charAt(2)) + method.getName().substring(3);
+      is = true;
+    }
+    else {
+      throw new ReflectionContractException("The declared name of a getter method must start with either 'get' or 'is' followed by a camel case attribute name");
+    }
 
-      if (method.getParameterTypes().length > 0) {
-         throw new ReflectionContractException("Getter for attribute (%s) must declare no parameters", attributeName);
-      }
+    if (method.getParameterTypes().length > 0) {
+      throw new ReflectionContractException("Getter for attribute (%s) must declare no parameters", attributeName);
+    }
 
-      if ((attributeClass = method.getReturnType()) == Void.class) {
-         throw new ReflectionContractException("Getter for attribute (%s) must not return void", attributeName);
-      }
+    if ((attributeClass = method.getReturnType()) == Void.class) {
+      throw new ReflectionContractException("Getter for attribute (%s) must not return void", attributeName);
+    }
 
-      if (is && (attributeClass != Boolean.class)) {
-         throw new ReflectionContractException("Getter for attribute (%s) must return 'boolean'", attributeName);
-      }
-   }
+    if (is && (attributeClass != Boolean.class)) {
+      throw new ReflectionContractException("Getter for attribute (%s) must return 'boolean'", attributeName);
+    }
+  }
 
-   public boolean isIs () {
+  public boolean isIs () {
 
-      return is;
-   }
+    return is;
+  }
 
-   public String getAttributeName () {
+  public String getAttributeName () {
 
-      return attributeName;
-   }
+    return attributeName;
+  }
 
-   public Class getAttributeClass () {
+  public Class getAttributeClass () {
 
-      return attributeClass;
-   }
+    return attributeClass;
+  }
 
-   public Object invoke (Object target)
-      throws IllegalAccessException, IllegalArgumentException, InvocationTargetException {
+  public Object invoke (Object target)
+    throws IllegalAccessException, IllegalArgumentException, InvocationTargetException {
 
-      return method.invoke(target, NO_PARAMETERS);
-   }
+    return method.invoke(target, NO_PARAMETERS);
+  }
 }

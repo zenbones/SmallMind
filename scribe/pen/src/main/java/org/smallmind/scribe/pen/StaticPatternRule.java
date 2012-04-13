@@ -30,25 +30,25 @@ import java.util.Collection;
 
 public class StaticPatternRule implements PatternRule {
 
-   private String staticField;
+  private String staticField;
 
-   public StaticPatternRule (String staticField) {
+  public StaticPatternRule (String staticField) {
 
-      this.staticField = staticField;
-   }
+    this.staticField = staticField;
+  }
 
-   public String getHeader () {
+  public String getHeader () {
 
-      return null;
-   }
+    return null;
+  }
 
-   public String getFooter () {
+  public String getFooter () {
 
-      return null;
-   }
+    return null;
+  }
 
-   public String convert (Record record, Collection<Filter> filterCollection, Timestamp timestamp) {
+  public String convert (Record record, Collection<Filter> filterCollection, Timestamp timestamp) {
 
-      return staticField;
-   }
+    return staticField;
+  }
 }

@@ -32,71 +32,71 @@ import org.smallmind.scribe.pen.LoggerManager;
 
 public class EventProcessor<I extends Event, O extends Event> implements Runnable {
 
-   private CountDownLatch exitLatch;
-   private SedaConfiguration sedaConfiguration;
-   private EventQueue<I> eventQueue;
-   private WorkMonitor monitor;
-   private AtomicBoolean stopped = new AtomicBoolean(false);
+  private CountDownLatch exitLatch;
+  private SedaConfiguration sedaConfiguration;
+  private EventQueue<I> eventQueue;
+  private WorkMonitor monitor;
+  private AtomicBoolean stopped = new AtomicBoolean(false);
 
-   public EventProcessor (EventQueue<I> eventQueue, DurationMonitor durationMonitor, SedaConfiguration sedaConfiguration) {
+  public EventProcessor (EventQueue<I> eventQueue, DurationMonitor durationMonitor, SedaConfiguration sedaConfiguration) {
 
-      this.eventQueue = eventQueue;
+    this.eventQueue = eventQueue;
 
-      monitor = new WorkMonitor(durationMonitor, sedaConfiguration.getWorkTrackingTime(), sedaConfiguration.getWorkTrackingTimeUnit());
-      exitLatch = new CountDownLatch(1);
-   }
+    monitor = new WorkMonitor(durationMonitor, sedaConfiguration.getWorkTrackingTime(), sedaConfiguration.getWorkTrackingTimeUnit());
+    exitLatch = new CountDownLatch(1);
+  }
 
-   protected WorkMonitor getMonitor () {
+  protected WorkMonitor getMonitor () {
 
-      return monitor;
-   }
+    return monitor;
+  }
 
-   public double getIdlePercentage () {
+  public double getIdlePercentage () {
 
-      return monitor.getIdlePercentage();
-   }
+    return monitor.getIdlePercentage();
+  }
 
-   public double getActivePercentage () {
+  public double getActivePercentage () {
 
-      return monitor.getActivePercentage();
-   }
+    return monitor.getActivePercentage();
+  }
 
-   public boolean isRunning () {
+  public boolean isRunning () {
 
-      return !stopped.get();
-   }
+    return !stopped.get();
+  }
 
-   protected void stop ()
-      throws InterruptedException {
+  protected void stop ()
+    throws InterruptedException {
 
+    stopped.compareAndSet(false, true);
+    exitLatch.await();
+  }
+
+  public void run () {
+
+    I inputEvent;
+    StopWatch stopWatch = new StopWatch();
+
+    try {
+      stopWatch.click();
+      while (!stopped.get()) {
+        if ((inputEvent = eventQueue.poll(sedaConfiguration.getQueuePollTimeout(), sedaConfiguration.getQueuePollTimeUnit())) != null) {
+          monitor.addIdleTime(stopWatch.click());
+          //TODO: HandleEvent
+          monitor.addActiveTime(stopWatch.click());
+        }
+        else {
+          monitor.addIdleTime(stopWatch.click());
+        }
+      }
+    }
+    catch (InterruptedException interruptedException) {
       stopped.compareAndSet(false, true);
-      exitLatch.await();
-   }
-
-   public void run () {
-
-      I inputEvent;
-      StopWatch stopWatch = new StopWatch();
-
-      try {
-         stopWatch.click();
-         while (!stopped.get()) {
-            if ((inputEvent = eventQueue.poll(sedaConfiguration.getQueuePollTimeout(), sedaConfiguration.getQueuePollTimeUnit())) != null) {
-               monitor.addIdleTime(stopWatch.click());
-               //TODO: HandleEvent
-               monitor.addActiveTime(stopWatch.click());
-            }
-            else {
-               monitor.addIdleTime(stopWatch.click());
-            }
-         }
-      }
-      catch (InterruptedException interruptedException) {
-         stopped.compareAndSet(false, true);
-         LoggerManager.getLogger(EventProcessor.class).error(interruptedException);
-      }
-      finally {
-         exitLatch.countDown();
-      }
-   }
+      LoggerManager.getLogger(EventProcessor.class).error(interruptedException);
+    }
+    finally {
+      exitLatch.countDown();
+    }
+  }
 }

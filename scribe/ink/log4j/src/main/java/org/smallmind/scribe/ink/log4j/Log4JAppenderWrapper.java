@@ -35,95 +35,95 @@ import org.smallmind.scribe.pen.adapter.RecordWrapper;
 
 public class Log4JAppenderWrapper implements org.apache.log4j.Appender {
 
-   private Appender appender;
+  private Appender appender;
 
-   public Log4JAppenderWrapper (Appender appender) {
+  public Log4JAppenderWrapper (Appender appender) {
 
-      this.appender = appender;
-   }
+    this.appender = appender;
+  }
 
-   protected Appender getInnerAppender () {
+  protected Appender getInnerAppender () {
 
-      return appender;
-   }
+    return appender;
+  }
 
-   public String getName () {
+  public String getName () {
 
-      return appender.getName();
-   }
+    return appender.getName();
+  }
 
-   public void setName (String name) {
+  public void setName (String name) {
 
-      appender.setName(name);
-   }
+    appender.setName(name);
+  }
 
-   public void addFilter (Filter filter) {
+  public void addFilter (Filter filter) {
 
-      appender.addFilter(new Log4JFilterAdapter(filter));
-   }
+    appender.addFilter(new Log4JFilterAdapter(filter));
+  }
 
-   public Filter getFilter () {
+  public Filter getFilter () {
 
-      throw new UnsupportedOperationException("Unsupported native Log4J method");
-   }
+    throw new UnsupportedOperationException("Unsupported native Log4J method");
+  }
 
-   public void clearFilters () {
+  public void clearFilters () {
 
-      throw new UnsupportedOperationException("Unsupported native Log4J method");
-   }
+    throw new UnsupportedOperationException("Unsupported native Log4J method");
+  }
 
-   public void doAppend (LoggingEvent loggingEvent) {
+  public void doAppend (LoggingEvent loggingEvent) {
 
-      appender.publish(((RecordWrapper)loggingEvent).getRecord());
-   }
+    appender.publish(((RecordWrapper)loggingEvent).getRecord());
+  }
 
-   public void close () {
+  public void close () {
 
-      // Log4J will close all Appenders when removing them from a Logger, even though under Log4J
-      // Appenders are shared objects. So we can't let Log4J handle the close method> Bad Log4J.
-   }
+    // Log4J will close all Appenders when removing them from a Logger, even though under Log4J
+    // Appenders are shared objects. So we can't let Log4J handle the close method> Bad Log4J.
+  }
 
-   public void setErrorHandler (ErrorHandler errorHandler) {
+  public void setErrorHandler (ErrorHandler errorHandler) {
 
-      appender.setErrorHandler(new Log4JErrorHandlerAdapter(errorHandler));
-   }
+    appender.setErrorHandler(new Log4JErrorHandlerAdapter(errorHandler));
+  }
 
-   public ErrorHandler getErrorHandler () {
+  public ErrorHandler getErrorHandler () {
 
-      throw new UnsupportedOperationException("Unsupported native Log4J method");
-   }
+    throw new UnsupportedOperationException("Unsupported native Log4J method");
+  }
 
-   public void setLayout (Layout layout) {
+  public void setLayout (Layout layout) {
 
-      appender.setFormatter(new Log4JFormatterAdapter(layout));
-   }
+    appender.setFormatter(new Log4JFormatterAdapter(layout));
+  }
 
-   public Layout getLayout () {
+  public Layout getLayout () {
 
-      throw new UnsupportedOperationException("Unsupported native Log4J method");
-   }
+    throw new UnsupportedOperationException("Unsupported native Log4J method");
+  }
 
-   public boolean requiresLayout () {
+  public boolean requiresLayout () {
 
-      return appender.requiresFormatter();
-   }
+    return appender.requiresFormatter();
+  }
 
-   public int hashCode () {
+  public int hashCode () {
 
-      return appender.hashCode();
-   }
+    return appender.hashCode();
+  }
 
-   public boolean equals (Object obj) {
+  public boolean equals (Object obj) {
 
-      if (obj instanceof Log4JAppenderWrapper) {
-         return appender.equals(((Log4JAppenderWrapper)obj).getInnerAppender());
-      }
+    if (obj instanceof Log4JAppenderWrapper) {
+      return appender.equals(((Log4JAppenderWrapper)obj).getInnerAppender());
+    }
 
-      return appender.equals(obj);
-   }
+    return appender.equals(obj);
+  }
 
-   protected void finalize () {
+  protected void finalize () {
 
-      close();
-   }
+    close();
+  }
 }

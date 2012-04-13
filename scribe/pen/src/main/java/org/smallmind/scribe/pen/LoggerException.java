@@ -30,23 +30,23 @@ import org.smallmind.nutsnbolts.lang.FormattedException;
 
 public class LoggerException extends FormattedException {
 
-   public LoggerException () {
+  public LoggerException () {
 
-      super();
-   }
+    super();
+  }
 
-   public LoggerException (String message, Object... args) {
+  public LoggerException (String message, Object... args) {
 
-      super(message, args);
-   }
+    super(message, args);
+  }
 
-   public LoggerException (Throwable throwable, String message, Object... args) {
+  public LoggerException (Throwable throwable, String message, Object... args) {
 
-      super(throwable, message, args);
-   }
+    super(throwable, message, args);
+  }
 
-   public LoggerException (Throwable exception) {
+  public LoggerException (Throwable exception) {
 
-      super(exception);
-   }
+    super(exception);
+  }
 }

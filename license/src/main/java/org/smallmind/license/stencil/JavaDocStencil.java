@@ -2,45 +2,45 @@ package org.smallmind.license.stencil;
 
 public class JavaDocStencil extends StaticStencil {
 
-   @Override
-   public String getSkipLines () {
+  @Override
+  public String getSkipLines () {
 
-      return null;
-   }
+    return null;
+  }
 
-   @Override
-   public String getFirstLine () {
+  @Override
+  public String getFirstLine () {
 
-      return "/*";
-   }
+    return "/*";
+  }
 
-   @Override
-   public String getLastLine () {
+  @Override
+  public String getLastLine () {
 
-      return " */";
-   }
+    return " */";
+  }
 
-   @Override
-   public String getBeforeEachLine () {
+  @Override
+  public String getBeforeEachLine () {
 
-      return " * ";
-   }
+    return " * ";
+  }
 
-   @Override
-   public boolean willPrefixBlankLines () {
+  @Override
+  public boolean willPrefixBlankLines () {
 
-      return true;
-   }
+    return true;
+  }
 
-   @Override
-   public int getBlankLinesBefore () {
+  @Override
+  public int getBlankLinesBefore () {
 
-      return 0;
-   }
+    return 0;
+  }
 
-   @Override
-   public int getBlankLinesAfter () {
+  @Override
+  public int getBlankLinesAfter () {
 
-      return 0;
-   }
+    return 0;
+  }
 }

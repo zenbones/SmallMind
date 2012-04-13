@@ -30,32 +30,32 @@ import java.util.EventObject;
 
 public class MemoryUsageEvent extends EventObject {
 
-   private int maximumUsage;
-   private int currentUsage;
-   private String displayUsage;
+  private int maximumUsage;
+  private int currentUsage;
+  private String displayUsage;
 
-   public MemoryUsageEvent (Object source, int maximumUsage, int currentUsage, String displayUsage) {
+  public MemoryUsageEvent (Object source, int maximumUsage, int currentUsage, String displayUsage) {
 
-      super(source);
+    super(source);
 
-      this.maximumUsage = maximumUsage;
-      this.currentUsage = currentUsage;
-      this.displayUsage = displayUsage;
-   }
+    this.maximumUsage = maximumUsage;
+    this.currentUsage = currentUsage;
+    this.displayUsage = displayUsage;
+  }
 
-   public int getCurrentUsage () {
+  public int getCurrentUsage () {
 
-      return currentUsage;
-   }
+    return currentUsage;
+  }
 
-   public String getDisplayUsage () {
+  public String getDisplayUsage () {
 
-      return displayUsage;
-   }
+    return displayUsage;
+  }
 
-   public int getMaximumUsage () {
+  public int getMaximumUsage () {
 
-      return maximumUsage;
-   }
+    return maximumUsage;
+  }
 
 }

@@ -2,59 +2,59 @@ package org.smallmind.license;
 
 public class Rule {
 
-   private String[] fileTypes;
-   private String[] excludes;
-   private String id;
-   private String stencilId;
-   private String notice;
+  private String[] fileTypes;
+  private String[] excludes;
+  private String id;
+  private String stencilId;
+  private String notice;
 
-   public String getId () {
+  public String getId () {
 
-      return id;
-   }
+    return id;
+  }
 
-   public void setId (String id) {
+  public void setId (String id) {
 
-      this.id = id;
-   }
+    this.id = id;
+  }
 
-   public String getNotice () {
+  public String getNotice () {
 
-      return notice;
-   }
+    return notice;
+  }
 
-   public void setNotice (String notice) {
+  public void setNotice (String notice) {
 
-      this.notice = notice;
-   }
+    this.notice = notice;
+  }
 
-   public String[] getFileTypes () {
+  public String[] getFileTypes () {
 
-      return fileTypes;
-   }
+    return fileTypes;
+  }
 
-   public void setFileTypes (String[] fileTypes) {
+  public void setFileTypes (String[] fileTypes) {
 
-      this.fileTypes = fileTypes;
-   }
+    this.fileTypes = fileTypes;
+  }
 
-   public String getStencilId () {
+  public String getStencilId () {
 
-      return stencilId;
-   }
+    return stencilId;
+  }
 
-   public void setStencilId (String stencilId) {
+  public void setStencilId (String stencilId) {
 
-      this.stencilId = stencilId;
-   }
+    this.stencilId = stencilId;
+  }
 
-   public String[] getExcludes () {
+  public String[] getExcludes () {
 
-      return excludes;
-   }
+    return excludes;
+  }
 
-   public void setExcludes (String[] excludes) {
+  public void setExcludes (String[] excludes) {
 
-      this.excludes = excludes;
-   }
+    this.excludes = excludes;
+  }
 }

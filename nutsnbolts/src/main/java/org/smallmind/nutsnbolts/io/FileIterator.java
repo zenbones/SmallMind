@@ -34,89 +34,89 @@ import java.util.NoSuchElementException;
 
 public class FileIterator implements Iterator<File>, Iterable<File> {
 
-   private FileFilter fileFilter;
-   private LinkedList<File> directoryStack;
-   private File currentFile;
+  private FileFilter fileFilter;
+  private LinkedList<File> directoryStack;
+  private File currentFile;
 
-   public FileIterator (File directory) {
+  public FileIterator (File directory) {
 
-      this(directory, null);
-   }
+    this(directory, null);
+  }
 
-   public FileIterator (File directory, FileFilter fileFilter) {
+  public FileIterator (File directory, FileFilter fileFilter) {
 
-      if (!directory.exists()) {
-         throw new IllegalArgumentException("Specified directory(" + directory.getAbsolutePath() + ") doesn't exist");
+    if (!directory.exists()) {
+      throw new IllegalArgumentException("Specified directory(" + directory.getAbsolutePath() + ") doesn't exist");
+    }
+    else if (!directory.isDirectory()) {
+      throw new IllegalArgumentException("Specified file(" + directory.getAbsolutePath() + ") isn't a directory");
+    }
+
+    this.fileFilter = fileFilter;
+    directoryStack = new LinkedList<File>();
+    directoryStack.add(directory);
+
+    currentFile = getNextFile();
+  }
+
+  private File getNextFile () {
+
+    File file;
+
+    while (!directoryStack.isEmpty()) {
+      file = directoryStack.removeFirst();
+      if (file.isDirectory()) {
+
+        LinkedList<File> appendedList = new LinkedList<File>();
+
+        for (File child : file.listFiles(fileFilter)) {
+          if (child.isFile()) {
+            appendedList.addFirst(child);
+          }
+          else {
+            appendedList.addLast(child);
+          }
+        }
+
+        if (!appendedList.isEmpty()) {
+          directoryStack.addAll(0, appendedList);
+        }
       }
-      else if (!directory.isDirectory()) {
-         throw new IllegalArgumentException("Specified file(" + directory.getAbsolutePath() + ") isn't a directory");
+      else {
+        return file;
       }
+    }
 
-      this.fileFilter = fileFilter;
-      directoryStack = new LinkedList<File>();
-      directoryStack.add(directory);
+    return null;
+  }
 
-      currentFile = getNextFile();
-   }
+  public boolean hasNext () {
 
-   private File getNextFile () {
+    return currentFile != null;
+  }
 
-      File file;
+  public File next () {
 
-      while (!directoryStack.isEmpty()) {
-         file = directoryStack.removeFirst();
-         if (file.isDirectory()) {
+    File nextFile;
 
-            LinkedList<File> appendedList = new LinkedList<File>();
+    if (currentFile == null) {
+      throw new NoSuchElementException();
+    }
 
-            for (File child : file.listFiles(fileFilter)) {
-               if (child.isFile()) {
-                  appendedList.addFirst(child);
-               }
-               else {
-                  appendedList.addLast(child);
-               }
-            }
+    nextFile = currentFile;
+    currentFile = getNextFile();
 
-            if (!appendedList.isEmpty()) {
-               directoryStack.addAll(0, appendedList);
-            }
-         }
-         else {
-            return file;
-         }
-      }
+    return nextFile;
+  }
 
-      return null;
-   }
+  public void remove () {
 
-   public boolean hasNext () {
+    throw new UnsupportedOperationException();
+  }
 
-      return currentFile != null;
-   }
+  public Iterator<File> iterator () {
 
-   public File next () {
-
-      File nextFile;
-
-      if (currentFile == null) {
-         throw new NoSuchElementException();
-      }
-
-      nextFile = currentFile;
-      currentFile = getNextFile();
-
-      return nextFile;
-   }
-
-   public void remove () {
-
-      throw new UnsupportedOperationException();
-   }
-
-   public Iterator<File> iterator () {
-
-      return this;
-   }
+    return this;
+  }
 }
 

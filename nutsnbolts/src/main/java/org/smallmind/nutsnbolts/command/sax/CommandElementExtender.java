@@ -34,22 +34,22 @@ import org.xml.sax.SAXException;
 
 public class CommandElementExtender extends AbstractElementExtender {
 
-   CommandStructure commandStructure;
+  CommandStructure commandStructure;
 
-   public CommandStructure getCommandtStructure () {
+  public CommandStructure getCommandtStructure () {
 
-      return commandStructure;
-   }
+    return commandStructure;
+  }
 
-   public void startElement (String namespaceURI, String localName, String qName, Attributes atts)
-      throws SAXException {
+  public void startElement (String namespaceURI, String localName, String qName, Attributes atts)
+    throws SAXException {
 
-      commandStructure = new CommandStructure(atts.getValue("name"));
-   }
+    commandStructure = new CommandStructure(atts.getValue("name"));
+  }
 
-   public void completedChildElement (ElementExtender elementExtender)
-      throws SAXException {
+  public void completedChildElement (ElementExtender elementExtender)
+    throws SAXException {
 
-      commandStructure.getCommandArguments().addArgument(((ArgumentElementExtender)elementExtender).getValue());
-   }
+    commandStructure.getCommandArguments().addArgument(((ArgumentElementExtender)elementExtender).getValue());
+  }
 }

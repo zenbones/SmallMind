@@ -40,125 +40,125 @@ import org.smallmind.scribe.pen.probe.ProbeReport;
 
 public class Log4JRecordFilter extends LoggingEvent implements RecordWrapper {
 
-   private FilterRecord filterRecord;
-   private AtomicReference<LocationInfo> locationInfoReference;
-   private Discriminator discriminator;
-   private Level level;
+  private FilterRecord filterRecord;
+  private AtomicReference<LocationInfo> locationInfoReference;
+  private Discriminator discriminator;
+  private Level level;
 
-   public Log4JRecordFilter (Record record, Discriminator discriminator, Level level) {
+  public Log4JRecordFilter (Record record, Discriminator discriminator, Level level) {
 
-      this(record, (LoggingEvent)record.getNativeLogEntry(), discriminator, level);
-   }
+    this(record, (LoggingEvent)record.getNativeLogEntry(), discriminator, level);
+  }
 
-   private Log4JRecordFilter (Record record, LoggingEvent loggingEvent, Discriminator discriminator, Level level) {
+  private Log4JRecordFilter (Record record, LoggingEvent loggingEvent, Discriminator discriminator, Level level) {
 
-      super(loggingEvent.getFQNOfLoggerClass(), loggingEvent.getLogger(), loggingEvent.getTimeStamp(), Log4JLevelTranslator.getLog4JLevel(level), loggingEvent.getRenderedMessage(), loggingEvent.getThrowableInformation().getThrowable());
+    super(loggingEvent.getFQNOfLoggerClass(), loggingEvent.getLogger(), loggingEvent.getTimeStamp(), Log4JLevelTranslator.getLog4JLevel(level), loggingEvent.getRenderedMessage(), loggingEvent.getThrowableInformation().getThrowable());
 
-      this.discriminator = discriminator;
-      this.level = level;
+    this.discriminator = discriminator;
+    this.level = level;
 
-      filterRecord = new FilterRecord(record, this);
+    filterRecord = new FilterRecord(record, this);
 
-      locationInfoReference = new AtomicReference<LocationInfo>();
-   }
+    locationInfoReference = new AtomicReference<LocationInfo>();
+  }
 
-   public Record getRecord () {
+  public Record getRecord () {
 
-      return filterRecord;
-   }
+    return filterRecord;
+  }
 
-   public LocationInfo getLocationInformation () {
+  public LocationInfo getLocationInformation () {
 
-      if (locationInfoReference.get() == null) {
-         synchronized (this) {
-            if ((locationInfoReference.get() == null) && (filterRecord.getLogicalContext() != null)) {
-               locationInfoReference.set(new LocationInfo(filterRecord.getLogicalContext().getFileName(), filterRecord.getLogicalContext().getClassName(), filterRecord.getLogicalContext().getMethodName(), String.valueOf(filterRecord.getLogicalContext().getLineNumber())));
-            }
-         }
+    if (locationInfoReference.get() == null) {
+      synchronized (this) {
+        if ((locationInfoReference.get() == null) && (filterRecord.getLogicalContext() != null)) {
+          locationInfoReference.set(new LocationInfo(filterRecord.getLogicalContext().getFileName(), filterRecord.getLogicalContext().getClassName(), filterRecord.getLogicalContext().getMethodName(), String.valueOf(filterRecord.getLogicalContext().getLineNumber())));
+        }
       }
+    }
 
-      return locationInfoReference.get();
-   }
+    return locationInfoReference.get();
+  }
 
-   private class FilterRecord implements Record {
+  private class FilterRecord implements Record {
 
-      private Record record;
-      private LoggingEvent loggingEvent;
+    private Record record;
+    private LoggingEvent loggingEvent;
 
-      public FilterRecord (Record record, LoggingEvent loggingEvent) {
+    public FilterRecord (Record record, LoggingEvent loggingEvent) {
 
-         this.record = record;
-         this.loggingEvent = loggingEvent;
-      }
+      this.record = record;
+      this.loggingEvent = loggingEvent;
+    }
 
-      public Object getNativeLogEntry () {
+    public Object getNativeLogEntry () {
 
-         return loggingEvent;
-      }
+      return loggingEvent;
+    }
 
-      public ProbeReport getProbeReport () {
+    public ProbeReport getProbeReport () {
 
-         return record.getProbeReport();
-      }
+      return record.getProbeReport();
+    }
 
-      public String getLoggerName () {
+    public String getLoggerName () {
 
-         return record.getLoggerName();
-      }
+      return record.getLoggerName();
+    }
 
-      public Discriminator getDiscriminator () {
+    public Discriminator getDiscriminator () {
 
-         return discriminator;
-      }
+      return discriminator;
+    }
 
-      public Level getLevel () {
+    public Level getLevel () {
 
-         return level;
-      }
+      return level;
+    }
 
-      public Throwable getThrown () {
+    public Throwable getThrown () {
 
-         return record.getThrown();
-      }
+      return record.getThrown();
+    }
 
-      public String getMessage () {
+    public String getMessage () {
 
-         return record.getMessage();
-      }
+      return record.getMessage();
+    }
 
-      public void addParameter (String key, Serializable value) {
+    public void addParameter (String key, Serializable value) {
 
-         throw new UnsupportedOperationException();
-      }
+      throw new UnsupportedOperationException();
+    }
 
-      public Parameter[] getParameters () {
+    public Parameter[] getParameters () {
 
-         return record.getParameters();
-      }
+      return record.getParameters();
+    }
 
-      public LogicalContext getLogicalContext () {
+    public LogicalContext getLogicalContext () {
 
-         return record.getLogicalContext();
-      }
+      return record.getLogicalContext();
+    }
 
-      public long getThreadID () {
+    public long getThreadID () {
 
-         return record.getThreadID();
-      }
+      return record.getThreadID();
+    }
 
-      public String getThreadName () {
+    public String getThreadName () {
 
-         return record.getThreadName();
-      }
+      return record.getThreadName();
+    }
 
-      public long getSequenceNumber () {
+    public long getSequenceNumber () {
 
-         return record.getSequenceNumber();
-      }
+      return record.getSequenceNumber();
+    }
 
-      public long getMillis () {
+    public long getMillis () {
 
-         return record.getMillis();
-      }
-   }
+      return record.getMillis();
+    }
+  }
 }

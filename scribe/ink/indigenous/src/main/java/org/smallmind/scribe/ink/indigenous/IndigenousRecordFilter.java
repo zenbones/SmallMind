@@ -37,89 +37,89 @@ import org.smallmind.scribe.pen.probe.ProbeReport;
 
 public class IndigenousRecordFilter implements Record, RecordWrapper {
 
-   private Record record;
-   private Discriminator discriminator;
-   private Level level;
+  private Record record;
+  private Discriminator discriminator;
+  private Level level;
 
-   public IndigenousRecordFilter (Record record, Discriminator discriminator, Level level) {
+  public IndigenousRecordFilter (Record record, Discriminator discriminator, Level level) {
 
-      this.record = record;
-      this.discriminator = discriminator;
-      this.level = level;
-   }
+    this.record = record;
+    this.discriminator = discriminator;
+    this.level = level;
+  }
 
-   public Record getRecord () {
+  public Record getRecord () {
 
-      return this;
-   }
+    return this;
+  }
 
-   public Object getNativeLogEntry () {
+  public Object getNativeLogEntry () {
 
-      return this;
-   }
+    return this;
+  }
 
-   public ProbeReport getProbeReport () {
+  public ProbeReport getProbeReport () {
 
-      return record.getProbeReport();
-   }
+    return record.getProbeReport();
+  }
 
-   public String getLoggerName () {
+  public String getLoggerName () {
 
-      return record.getLoggerName();
-   }
+    return record.getLoggerName();
+  }
 
-   public Discriminator getDiscriminator () {
+  public Discriminator getDiscriminator () {
 
-      return discriminator;
-   }
+    return discriminator;
+  }
 
-   public Level getLevel () {
+  public Level getLevel () {
 
-      return level;
-   }
+    return level;
+  }
 
-   public Throwable getThrown () {
+  public Throwable getThrown () {
 
-      return record.getThrown();
-   }
+    return record.getThrown();
+  }
 
-   public void addParameter (String key, Serializable value) {
+  public void addParameter (String key, Serializable value) {
 
-      throw new UnsupportedOperationException();
-   }
+    throw new UnsupportedOperationException();
+  }
 
-   public Parameter[] getParameters () {
+  public Parameter[] getParameters () {
 
-      return record.getParameters();
-   }
+    return record.getParameters();
+  }
 
-   public String getMessage () {
+  public String getMessage () {
 
-      return record.getMessage();
-   }
+    return record.getMessage();
+  }
 
-   public LogicalContext getLogicalContext () {
+  public LogicalContext getLogicalContext () {
 
-      return record.getLogicalContext();
-   }
+    return record.getLogicalContext();
+  }
 
-   public long getThreadID () {
+  public long getThreadID () {
 
-      return record.getThreadID();
-   }
+    return record.getThreadID();
+  }
 
-   public String getThreadName () {
+  public String getThreadName () {
 
-      return record.getThreadName();
-   }
+    return record.getThreadName();
+  }
 
-   public long getSequenceNumber () {
+  public long getSequenceNumber () {
 
-      return record.getSequenceNumber();
-   }
+    return record.getSequenceNumber();
+  }
 
-   public long getMillis () {
+  public long getMillis () {
 
-      return record.getMillis();
-   }
+    return record.getMillis();
+  }
 }

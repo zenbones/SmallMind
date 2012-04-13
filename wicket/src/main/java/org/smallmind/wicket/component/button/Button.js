@@ -1,61 +1,61 @@
 if (typeof SMALLMIND == "undefined") {
-   var SMALLMIND = {};
+  var SMALLMIND = {};
 }
 
 if (typeof SMALLMIND.component == "undefined") {
-   SMALLMIND.component = {};
+  SMALLMIND.component = {};
 }
 
-SMALLMIND.component.button = new function() {
+SMALLMIND.component.button = new function () {
 
-   this.submit = function (submitFormId) {
+  this.submit = function (submitFormId) {
 
-      var submitForm = document.getElementById(submitFormId);
+    var submitForm = document.getElementById(submitFormId);
 
-      submitForm.submit();
-   }
+    submitForm.submit();
+  }
 
-   this.normal = function(button) {
+  this.normal = function (button) {
 
-      if (button.getAttribute("incapacitated") == "false") {
-         button.className = "buttonstandard"
-      }
-   }
+    if (button.getAttribute("incapacitated") == "false") {
+      button.className = "buttonstandard"
+    }
+  }
 
-   this.highlight = function(button) {
+  this.highlight = function (button) {
 
-      if (button.getAttribute("incapacitated") == "false") {
-         button.className = "buttonhighlighted"
-      }
-   }
+    if (button.getAttribute("incapacitated") == "false") {
+      button.className = "buttonhighlighted"
+    }
+  }
 
-   this.press = function(button) {
+  this.press = function (button) {
 
-      if (button.getAttribute("incapacitated") == "false") {
-         button.className = "buttonpressed"
-      }
-   }
+    if (button.getAttribute("incapacitated") == "false") {
+      button.className = "buttonpressed"
+    }
+  }
 
-   this.isEnabled = function(buttonId) {
+  this.isEnabled = function (buttonId) {
 
-      var button = document.getElementById(buttonId);
+    var button = document.getElementById(buttonId);
 
-      return button.getAttribute("incapacitated") != "true";
-   }
+    return button.getAttribute("incapacitated") != "true";
+  }
 
-   this.disable = function(buttonId) {
+  this.disable = function (buttonId) {
 
-      var button = document.getElementById(buttonId);
+    var button = document.getElementById(buttonId);
 
-      button.setAttribute("incapacitated", "true");
-      button.className = "buttonincapacitated";
-   }
+    button.setAttribute("incapacitated", "true");
+    button.className = "buttonincapacitated";
+  }
 
-   this.enable = function(buttonId) {
+  this.enable = function (buttonId) {
 
-      var button = document.getElementById(buttonId);
+    var button = document.getElementById(buttonId);
 
-      button.setAttribute("incapacitated", "false");
-      button.className = "buttonstandard";
-   }
+    button.setAttribute("incapacitated", "false");
+    button.className = "buttonstandard";
+  }
 }

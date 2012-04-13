@@ -28,192 +28,192 @@ package org.smallmind.nutsnbolts.util;
 
 public class CircularBuffer {
 
-   private static enum State {
+  private static enum State {
 
-      READ, WRITE
-   }
+    READ, WRITE
+  }
 
-   private RangeSegment[] segments;
-   private boolean closed = false;
-   private int position = 0;
-   private int filled = 0;
-   private byte[] buffer;
+  private RangeSegment[] segments;
+  private boolean closed = false;
+  private int position = 0;
+  private int filled = 0;
+  private byte[] buffer;
 
-   public CircularBuffer (int size) {
+  public CircularBuffer (int size) {
 
-      buffer = new byte[size];
-      segments = new RangeSegment[2];
-   }
+    buffer = new byte[size];
+    segments = new RangeSegment[2];
+  }
 
-   public synchronized boolean isClosed () {
+  public synchronized boolean isClosed () {
 
-      return closed;
-   }
+    return closed;
+  }
 
-   public synchronized void close () {
+  public synchronized void close () {
 
-      closed = true;
-      notifyAll();
-   }
+    closed = true;
+    notifyAll();
+  }
 
-   public synchronized int available () {
+  public synchronized int available () {
 
-      return (buffer.length - filled);
-   }
+    return (buffer.length - filled);
+  }
 
-   public int read (byte[] data) {
+  public int read (byte[] data) {
 
-      return read(data, 0);
-   }
+    return read(data, 0);
+  }
 
-   public synchronized int read (byte[] data, long millis) {
+  public synchronized int read (byte[] data, long millis) {
 
-      int bytesRead;
+    int bytesRead;
 
-      if (data.length == 0) {
-         return 0;
-      }
+    if (data.length == 0) {
+      return 0;
+    }
 
-      while ((bytesRead = get(data)) == 0) {
-         if (closed) {
-            return -1;
-         }
-
-         try {
-            wait(millis);
-         }
-         catch (InterruptedException i) {
-         }
-      }
-
-      notifyAll();
-      return bytesRead;
-   }
-
-   public void write (byte[] data) {
-
-      write(data, 0, data.length);
-   }
-
-   public synchronized void write (byte[] data, int off, int length) {
-
-      int totalBytes = 0;
-      int bytesWritten;
-
+    while ((bytesRead = get(data)) == 0) {
       if (closed) {
-         throw new IllegalStateException("The close() method has previously been called");
+        return -1;
       }
 
-      do {
-         if ((bytesWritten = put(data, totalBytes, length - totalBytes)) > 0) {
-            totalBytes += bytesWritten;
-            notifyAll();
-         }
+      try {
+        wait(millis);
+      }
+      catch (InterruptedException i) {
+      }
+    }
 
-         if (totalBytes < length) {
-            try {
-               wait();
-            }
-            catch (InterruptedException i) {
-            }
-         }
-      } while (totalBytes < length);
-   }
+    notifyAll();
+    return bytesRead;
+  }
 
-   private int put (byte[] data, int off, int length) {
+  public void write (byte[] data) {
 
-      int totalBytes = 0;
-      int writeBytes;
+    write(data, 0, data.length);
+  }
 
-      setSegments(State.WRITE);
-      for (int count = 0; count < segments.length; count++) {
-         if (segments[count] != null) {
-            writeBytes = Math.min(segments[count].getStop() - segments[count].getStart(), length - totalBytes);
-            if (writeBytes > 0) {
-               System.arraycopy(data, off + totalBytes, buffer, segments[count].getStart(), writeBytes);
-               totalBytes += writeBytes;
-            }
-         }
+  public synchronized void write (byte[] data, int off, int length) {
+
+    int totalBytes = 0;
+    int bytesWritten;
+
+    if (closed) {
+      throw new IllegalStateException("The close() method has previously been called");
+    }
+
+    do {
+      if ((bytesWritten = put(data, totalBytes, length - totalBytes)) > 0) {
+        totalBytes += bytesWritten;
+        notifyAll();
       }
 
-      filled += totalBytes;
-      return totalBytes;
-   }
-
-   private int get (byte[] data) {
-
-      int totalBytes = 0;
-      int readBytes;
-
-      setSegments(State.READ);
-      for (int count = 0; count < segments.length; count++) {
-         if (segments[count] != null) {
-            readBytes = Math.min(segments[count].getStop() - segments[count].getStart(), data.length - totalBytes);
-            if (readBytes > 0) {
-               System.arraycopy(buffer, segments[count].getStart(), data, totalBytes, readBytes);
-               totalBytes += readBytes;
-            }
-         }
+      if (totalBytes < length) {
+        try {
+          wait();
+        }
+        catch (InterruptedException i) {
+        }
       }
+    } while (totalBytes < length);
+  }
 
-      filled -= totalBytes;
-      position += totalBytes;
-      if (position > buffer.length) {
-         position -= buffer.length;
+  private int put (byte[] data, int off, int length) {
+
+    int totalBytes = 0;
+    int writeBytes;
+
+    setSegments(State.WRITE);
+    for (int count = 0; count < segments.length; count++) {
+      if (segments[count] != null) {
+        writeBytes = Math.min(segments[count].getStop() - segments[count].getStart(), length - totalBytes);
+        if (writeBytes > 0) {
+          System.arraycopy(data, off + totalBytes, buffer, segments[count].getStart(), writeBytes);
+          totalBytes += writeBytes;
+        }
       }
+    }
 
-      return totalBytes;
-   }
+    filled += totalBytes;
+    return totalBytes;
+  }
 
-   private void setSegments (State state) {
+  private int get (byte[] data) {
 
-      if (position + filled <= buffer.length) {
-         switch (state) {
-            case READ:
-               segments[0] = new RangeSegment(position, position + filled);
-               segments[1] = null;
-               break;
-            case WRITE:
-               segments = new RangeSegment[2];
-               segments[0] = new RangeSegment(position + filled, buffer.length);
-               segments[1] = new RangeSegment(0, position);
-         }
+    int totalBytes = 0;
+    int readBytes;
+
+    setSegments(State.READ);
+    for (int count = 0; count < segments.length; count++) {
+      if (segments[count] != null) {
+        readBytes = Math.min(segments[count].getStop() - segments[count].getStart(), data.length - totalBytes);
+        if (readBytes > 0) {
+          System.arraycopy(buffer, segments[count].getStart(), data, totalBytes, readBytes);
+          totalBytes += readBytes;
+        }
       }
-      else {
-         switch (state) {
-            case READ:
-               segments = new RangeSegment[2];
-               segments[0] = new RangeSegment(position, buffer.length);
-               segments[1] = new RangeSegment(0, position + filled - buffer.length);
-               break;
-            case WRITE:
-               segments[0] = new RangeSegment(position + filled - buffer.length, position);
-               segments[1] = null;
-         }
+    }
+
+    filled -= totalBytes;
+    position += totalBytes;
+    if (position > buffer.length) {
+      position -= buffer.length;
+    }
+
+    return totalBytes;
+  }
+
+  private void setSegments (State state) {
+
+    if (position + filled <= buffer.length) {
+      switch (state) {
+        case READ:
+          segments[0] = new RangeSegment(position, position + filled);
+          segments[1] = null;
+          break;
+        case WRITE:
+          segments = new RangeSegment[2];
+          segments[0] = new RangeSegment(position + filled, buffer.length);
+          segments[1] = new RangeSegment(0, position);
       }
-   }
-
-   public class RangeSegment {
-
-      private int start;
-      private int stop;
-
-      public RangeSegment (int start, int stop) {
-
-         this.start = start;
-         this.stop = stop;
+    }
+    else {
+      switch (state) {
+        case READ:
+          segments = new RangeSegment[2];
+          segments[0] = new RangeSegment(position, buffer.length);
+          segments[1] = new RangeSegment(0, position + filled - buffer.length);
+          break;
+        case WRITE:
+          segments[0] = new RangeSegment(position + filled - buffer.length, position);
+          segments[1] = null;
       }
+    }
+  }
 
-      public int getStart () {
+  public class RangeSegment {
 
-         return start;
-      }
+    private int start;
+    private int stop;
 
-      public int getStop () {
+    public RangeSegment (int start, int stop) {
 
-         return stop;
-      }
+      this.start = start;
+      this.stop = stop;
+    }
 
-   }
+    public int getStart () {
+
+      return start;
+    }
+
+    public int getStop () {
+
+      return stop;
+    }
+
+  }
 
 }

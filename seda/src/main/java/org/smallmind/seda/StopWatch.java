@@ -31,62 +31,62 @@ import java.lang.management.ThreadMXBean;
 
 public class StopWatch {
 
-   private static final ThreadMXBean THREAD_MX_BEAN = ManagementFactory.getThreadMXBean();
-   private static final boolean CURRENT_THREAD_CPU_TIME_SUPPORTED = THREAD_MX_BEAN.isCurrentThreadCpuTimeSupported();
+  private static final ThreadMXBean THREAD_MX_BEAN = ManagementFactory.getThreadMXBean();
+  private static final boolean CURRENT_THREAD_CPU_TIME_SUPPORTED = THREAD_MX_BEAN.isCurrentThreadCpuTimeSupported();
 
-   private boolean initialized = false;
-   private long startMillis;
-   private long clickClockMillis;
-   private long clickClockNanos;
-   private long durationNanos;
-   private long clickCPUNanos;
-   private long cpuTimeNanos;
+  private boolean initialized = false;
+  private long startMillis;
+  private long clickClockMillis;
+  private long clickClockNanos;
+  private long durationNanos;
+  private long clickCPUNanos;
+  private long cpuTimeNanos;
 
-   public StopWatch click () {
+  public StopWatch click () {
 
-      if (!initialized) {
-         initialized = true;
+    if (!initialized) {
+      initialized = true;
 
-         clickClockMillis = System.currentTimeMillis();
-         clickClockNanos = System.nanoTime();
+      clickClockMillis = System.currentTimeMillis();
+      clickClockNanos = System.nanoTime();
+    }
+    else {
+
+      long stopNanos;
+
+      startMillis = clickClockMillis;
+      clickClockMillis = System.currentTimeMillis();
+
+      durationNanos = (stopNanos = System.nanoTime()) - clickClockNanos;
+      clickClockNanos = stopNanos;
+
+      if (!CURRENT_THREAD_CPU_TIME_SUPPORTED) {
+        cpuTimeNanos = durationNanos;
       }
       else {
 
-         long stopNanos;
+        long stopCPUNanos;
 
-         startMillis = clickClockMillis;
-         clickClockMillis = System.currentTimeMillis();
-
-         durationNanos = (stopNanos = System.nanoTime()) - clickClockNanos;
-         clickClockNanos = stopNanos;
-
-         if (!CURRENT_THREAD_CPU_TIME_SUPPORTED) {
-            cpuTimeNanos = durationNanos;
-         }
-         else {
-
-            long stopCPUNanos;
-
-            cpuTimeNanos = (stopCPUNanos = THREAD_MX_BEAN.getCurrentThreadCpuTime()) - clickCPUNanos;
-            clickCPUNanos = stopCPUNanos;
-         }
+        cpuTimeNanos = (stopCPUNanos = THREAD_MX_BEAN.getCurrentThreadCpuTime()) - clickCPUNanos;
+        clickCPUNanos = stopCPUNanos;
       }
+    }
 
-      return this;
-   }
+    return this;
+  }
 
-   public long getStartMillis () {
+  public long getStartMillis () {
 
-      return startMillis;
-   }
+    return startMillis;
+  }
 
-   public long getDurationNanos () {
+  public long getDurationNanos () {
 
-      return durationNanos;
-   }
+    return durationNanos;
+  }
 
-   public long getCpuTimeNanos () {
+  public long getCpuTimeNanos () {
 
-      return cpuTimeNanos;
-   }
+    return cpuTimeNanos;
+  }
 }

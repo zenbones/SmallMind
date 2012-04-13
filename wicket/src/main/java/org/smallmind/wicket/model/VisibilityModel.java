@@ -30,10 +30,10 @@ import org.apache.wicket.model.AbstractReadOnlyModel;
 
 public abstract class VisibilityModel extends AbstractReadOnlyModel {
 
-   public abstract boolean isVisible ();
+  public abstract boolean isVisible ();
 
-   public Object getObject () {
+  public Object getObject () {
 
-      return isVisible() ? "visibility: visible; display: block" : "visibility: collapse; display: none";
-   }
+    return isVisible() ? "visibility: visible; display: block" : "visibility: collapse; display: none";
+  }
 }

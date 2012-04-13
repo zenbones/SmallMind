@@ -31,51 +31,53 @@ import java.util.Arrays;
 
 public class Correlator implements Serializable {
 
-   private byte[] threadIdentifier;
-   private byte[] parentIdentifier;
-   private byte[] identifier;
-   private int frame;
-   private int instance;
+  private byte[] threadIdentifier;
+  private byte[] parentIdentifier;
+  private byte[] identifier;
+  private int frame;
+  private int instance;
 
-   public Correlator (byte[] threadIdentifier, byte[] parentIdentifier, byte[] identifier, int frame, int instance) {
+  public Correlator (byte[] threadIdentifier, byte[] parentIdentifier, byte[] identifier, int frame, int instance) {
 
-      this.threadIdentifier = threadIdentifier;
-      this.parentIdentifier = parentIdentifier;
-      this.identifier = identifier;
-      this.frame = frame;
-      this.instance = instance;
-   }
+    this.threadIdentifier = threadIdentifier;
+    this.parentIdentifier = parentIdentifier;
+    this.identifier = identifier;
+    this.frame = frame;
+    this.instance = instance;
+  }
 
-   public byte[] getThreadIdentifier () {
-      return threadIdentifier;
-   }
+  public byte[] getThreadIdentifier () {
 
-   public byte[] getParentIdentifier () {
+    return threadIdentifier;
+  }
 
-      return parentIdentifier;
-   }
+  public byte[] getParentIdentifier () {
 
-   public byte[] getIdentifier () {
+    return parentIdentifier;
+  }
 
-      return identifier;
-   }
+  public byte[] getIdentifier () {
 
-   public int getFrame () {
-      return frame;
-   }
+    return identifier;
+  }
 
-   public int getInstance () {
+  public int getFrame () {
 
-      return instance;
-   }
+    return frame;
+  }
 
-   public int hashCode () {
+  public int getInstance () {
 
-      return identifier.hashCode();
-   }
+    return instance;
+  }
 
-   public boolean equals (Object obj) {
+  public int hashCode () {
 
-      return (obj instanceof Correlator) && Arrays.equals(identifier, ((Correlator)obj).getIdentifier());
-   }
+    return identifier.hashCode();
+  }
+
+  public boolean equals (Object obj) {
+
+    return (obj instanceof Correlator) && Arrays.equals(identifier, ((Correlator)obj).getIdentifier());
+  }
 }

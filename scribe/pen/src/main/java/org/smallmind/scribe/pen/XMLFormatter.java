@@ -41,339 +41,339 @@ import org.smallmind.scribe.pen.probe.UpdateProbeEntry;
 
 public class XMLFormatter implements Formatter {
 
-   private Timestamp timestamp;
-   private XMLElement[] xmlElements;
-   private int indent;
+  private Timestamp timestamp;
+  private XMLElement[] xmlElements;
+  private int indent;
 
-   public XMLFormatter () {
+  public XMLFormatter () {
 
-      this(3, XMLElement.values(), DateFormatTimestamp.getDefaultInstance());
-   }
+    this(3, XMLElement.values(), DateFormatTimestamp.getDefaultInstance());
+  }
 
-   public XMLFormatter (Timestamp timestamp) {
+  public XMLFormatter (Timestamp timestamp) {
 
-      this(3, XMLElement.values(), timestamp);
-   }
+    this(3, XMLElement.values(), timestamp);
+  }
 
-   public XMLFormatter (int indent) {
+  public XMLFormatter (int indent) {
 
-      this(indent, XMLElement.values(), DateFormatTimestamp.getDefaultInstance());
-   }
+    this(indent, XMLElement.values(), DateFormatTimestamp.getDefaultInstance());
+  }
 
-   public XMLFormatter (int indent, Timestamp timestamp) {
+  public XMLFormatter (int indent, Timestamp timestamp) {
 
-      this(indent, XMLElement.values(), timestamp);
-   }
+    this(indent, XMLElement.values(), timestamp);
+  }
 
-   public XMLFormatter (XMLElement[] xmlElements) {
+  public XMLFormatter (XMLElement[] xmlElements) {
 
-      this(3, xmlElements, DateFormatTimestamp.getDefaultInstance());
-   }
+    this(3, xmlElements, DateFormatTimestamp.getDefaultInstance());
+  }
 
-   public XMLFormatter (XMLElement[] xmlElements, Timestamp timestamp) {
+  public XMLFormatter (XMLElement[] xmlElements, Timestamp timestamp) {
 
-      this(3, xmlElements, timestamp);
-   }
+    this(3, xmlElements, timestamp);
+  }
 
-   public XMLFormatter (int indent, XMLElement[] xmlElements) {
+  public XMLFormatter (int indent, XMLElement[] xmlElements) {
 
-      this(indent, xmlElements, DateFormatTimestamp.getDefaultInstance());
-   }
+    this(indent, xmlElements, DateFormatTimestamp.getDefaultInstance());
+  }
 
-   public XMLFormatter (int indent, XMLElement[] xmlElements, Timestamp timestamp) {
+  public XMLFormatter (int indent, XMLElement[] xmlElements, Timestamp timestamp) {
 
-      this.indent = indent;
-      this.xmlElements = xmlElements;
-      this.timestamp = timestamp;
-   }
+    this.indent = indent;
+    this.xmlElements = xmlElements;
+    this.timestamp = timestamp;
+  }
 
-   public int getIndent () {
+  public int getIndent () {
 
-      return indent;
-   }
+    return indent;
+  }
 
-   public void setIndent (int indent) {
+  public void setIndent (int indent) {
 
-      this.indent = indent;
-   }
+    this.indent = indent;
+  }
 
-   public Timestamp getTimestamp () {
+  public Timestamp getTimestamp () {
 
-      return timestamp;
-   }
+    return timestamp;
+  }
 
-   public void setTimestamp (Timestamp timestamp) {
+  public void setTimestamp (Timestamp timestamp) {
 
-      this.timestamp = timestamp;
-   }
+    this.timestamp = timestamp;
+  }
 
-   public XMLElement[] getXmlElements () {
+  public XMLElement[] getXmlElements () {
 
-      return xmlElements;
-   }
+    return xmlElements;
+  }
 
-   public void setXmlElements (XMLElement[] xmlElements) {
+  public void setXmlElements (XMLElement[] xmlElements) {
 
-      this.xmlElements = xmlElements;
-   }
+    this.xmlElements = xmlElements;
+  }
 
-   public String format (Record record, Collection<Filter> filterCollection) {
+  public String format (Record record, Collection<Filter> filterCollection) {
 
-      StringBuilder formatBuilder = new StringBuilder();
+    StringBuilder formatBuilder = new StringBuilder();
 
-      appendLine(formatBuilder, "<log-record>", 0);
+    appendLine(formatBuilder, "<log-record>", 0);
 
-      for (XMLElement xmlElement : xmlElements) {
-         switch (xmlElement) {
-            case DATE:
-               appendElement(formatBuilder, "date", timestamp.getTimestamp(new Date(record.getMillis())), 1);
-               break;
-            case MILLISECONDS:
-               appendElement(formatBuilder, "milliseconds", String.valueOf(record.getMillis()), 1);
-               break;
-            case LOGGER_NAME:
-               appendElement(formatBuilder, "logger", record.getLoggerName(), 1);
-               break;
-            case LEVEL:
-               appendElement(formatBuilder, "level", record.getLevel().name(), 1);
-               break;
-            case MESSAGE:
-               appendElement(formatBuilder, "message", record.getMessage(), 1);
-               break;
-            case THREAD:
-               appendThreadInfo(formatBuilder, record.getThreadName(), record.getThreadID(), 1);
-               break;
-            case LOGICAL_CONTEXT:
-               appendLogicalContext(formatBuilder, record.getLogicalContext(), 1);
-               break;
-            case PARAMETERS:
-               appendParameters(formatBuilder, record.getParameters(), 1);
-               break;
-            case STACK_TRACE:
-               appendStackTrace(formatBuilder, record.getThrown(), 1);
-               break;
-            case PROBE_REPORT:
-               appendProbeReport(formatBuilder, record, record.getProbeReport(), filterCollection, 1);
-               break;
-            default:
-               throw new UnknownSwitchCaseException(xmlElement.name());
-         }
+    for (XMLElement xmlElement : xmlElements) {
+      switch (xmlElement) {
+        case DATE:
+          appendElement(formatBuilder, "date", timestamp.getTimestamp(new Date(record.getMillis())), 1);
+          break;
+        case MILLISECONDS:
+          appendElement(formatBuilder, "milliseconds", String.valueOf(record.getMillis()), 1);
+          break;
+        case LOGGER_NAME:
+          appendElement(formatBuilder, "logger", record.getLoggerName(), 1);
+          break;
+        case LEVEL:
+          appendElement(formatBuilder, "level", record.getLevel().name(), 1);
+          break;
+        case MESSAGE:
+          appendElement(formatBuilder, "message", record.getMessage(), 1);
+          break;
+        case THREAD:
+          appendThreadInfo(formatBuilder, record.getThreadName(), record.getThreadID(), 1);
+          break;
+        case LOGICAL_CONTEXT:
+          appendLogicalContext(formatBuilder, record.getLogicalContext(), 1);
+          break;
+        case PARAMETERS:
+          appendParameters(formatBuilder, record.getParameters(), 1);
+          break;
+        case STACK_TRACE:
+          appendStackTrace(formatBuilder, record.getThrown(), 1);
+          break;
+        case PROBE_REPORT:
+          appendProbeReport(formatBuilder, record, record.getProbeReport(), filterCollection, 1);
+          break;
+        default:
+          throw new UnknownSwitchCaseException(xmlElement.name());
       }
+    }
 
-      appendLine(formatBuilder, "</log-record>", 0);
+    appendLine(formatBuilder, "</log-record>", 0);
 
-      return formatBuilder.toString();
-   }
+    return formatBuilder.toString();
+  }
 
-   private void appendThreadInfo (StringBuilder formatBuilder, String threadName, long threadId, int level) {
+  private void appendThreadInfo (StringBuilder formatBuilder, String threadName, long threadId, int level) {
 
-      if ((threadName != null) || (threadId > 0)) {
-         appendLine(formatBuilder, "<thread>", level);
-         appendElement(formatBuilder, "name", threadName, level + 1);
-         appendElement(formatBuilder, "id", (threadId > 0) ? String.valueOf(threadId) : null, level + 1);
-         appendLine(formatBuilder, "</thread>", level);
+    if ((threadName != null) || (threadId > 0)) {
+      appendLine(formatBuilder, "<thread>", level);
+      appendElement(formatBuilder, "name", threadName, level + 1);
+      appendElement(formatBuilder, "id", (threadId > 0) ? String.valueOf(threadId) : null, level + 1);
+      appendLine(formatBuilder, "</thread>", level);
+    }
+  }
+
+  private void appendLogicalContext (StringBuilder formatBuilder, LogicalContext logicalContext, int level) {
+
+    if ((logicalContext != null) && (logicalContext.isFilled())) {
+      appendLine(formatBuilder, "<context>", level);
+      appendElement(formatBuilder, "class", logicalContext.getClassName(), level + 1);
+      appendElement(formatBuilder, "method", logicalContext.getMethodName(), level + 1);
+      appendElement(formatBuilder, "native", String.valueOf(logicalContext.isNativeMethod()), level + 1);
+      appendElement(formatBuilder, "line", ((!logicalContext.isNativeMethod()) && (logicalContext.getLineNumber() > 0)) ? String.valueOf(logicalContext.getLineNumber()) : null, level + 1);
+      appendElement(formatBuilder, "file", logicalContext.getFileName(), level + 1);
+      appendLine(formatBuilder, "</context>", level);
+    }
+  }
+
+  private void appendParameters (StringBuilder formatBuilder, Parameter[] parameters, int level) {
+
+    if (parameters.length > 0) {
+      appendLine(formatBuilder, "<parameters>", level);
+      for (Parameter parameter : parameters) {
+        appendElement(formatBuilder, parameter.getKey(), parameter.getValue().toString(), level + 1);
       }
-   }
+      appendLine(formatBuilder, "</parameters>", level);
+    }
+  }
 
-   private void appendLogicalContext (StringBuilder formatBuilder, LogicalContext logicalContext, int level) {
+  private void appendStackTrace (StringBuilder formatBuilder, Throwable throwable, int level) {
 
-      if ((logicalContext != null) && (logicalContext.isFilled())) {
-         appendLine(formatBuilder, "<context>", level);
-         appendElement(formatBuilder, "class", logicalContext.getClassName(), level + 1);
-         appendElement(formatBuilder, "method", logicalContext.getMethodName(), level + 1);
-         appendElement(formatBuilder, "native", String.valueOf(logicalContext.isNativeMethod()), level + 1);
-         appendElement(formatBuilder, "line", ((!logicalContext.isNativeMethod()) && (logicalContext.getLineNumber() > 0)) ? String.valueOf(logicalContext.getLineNumber()) : null, level + 1);
-         appendElement(formatBuilder, "file", logicalContext.getFileName(), level + 1);
-         appendLine(formatBuilder, "</context>", level);
-      }
-   }
+    StackTraceElement[] prevStackTrace = null;
+    int repeatedElements;
 
-   private void appendParameters (StringBuilder formatBuilder, Parameter[] parameters, int level) {
+    if (throwable != null) {
+      appendLine(formatBuilder, "<stack-trace>", level);
 
-      if (parameters.length > 0) {
-         appendLine(formatBuilder, "<parameters>", level);
-         for (Parameter parameter : parameters) {
-            appendElement(formatBuilder, parameter.getKey(), parameter.getValue().toString(), level + 1);
-         }
-         appendLine(formatBuilder, "</parameters>", level);
-      }
-   }
+      do {
+        appendIndent(formatBuilder, level + 1);
 
-   private void appendStackTrace (StringBuilder formatBuilder, Throwable throwable, int level) {
+        if (prevStackTrace == null) {
+          formatBuilder.append("Exception in thread ");
+        }
+        else {
+          formatBuilder.append("Caused by: ");
+        }
 
-      StackTraceElement[] prevStackTrace = null;
-      int repeatedElements;
+        formatBuilder.append(throwable.getClass().getCanonicalName());
+        formatBuilder.append(": ");
+        formatBuilder.append(throwable.getMessage());
+        formatBuilder.append(System.getProperty("line.separator"));
 
-      if (throwable != null) {
-         appendLine(formatBuilder, "<stack-trace>", level);
+        for (StackTraceElement singleElement : throwable.getStackTrace()) {
 
-         do {
-            appendIndent(formatBuilder, level + 1);
+          appendIndent(formatBuilder, level + 1);
 
-            if (prevStackTrace == null) {
-               formatBuilder.append("Exception in thread ");
+          if (prevStackTrace != null) {
+            if ((repeatedElements = findRepeatedStackElements(singleElement, prevStackTrace)) >= 0) {
+              formatBuilder.append("   ... ");
+              formatBuilder.append(repeatedElements);
+              formatBuilder.append(" more");
+              formatBuilder.append(System.getProperty("line.separator"));
+              break;
             }
-            else {
-               formatBuilder.append("Caused by: ");
-            }
+          }
 
-            formatBuilder.append(throwable.getClass().getCanonicalName());
-            formatBuilder.append(": ");
-            formatBuilder.append(throwable.getMessage());
-            formatBuilder.append(System.getProperty("line.separator"));
+          formatBuilder.append("   at ");
+          formatBuilder.append(singleElement.toString());
+          formatBuilder.append(System.getProperty("line.separator"));
+        }
 
-            for (StackTraceElement singleElement : throwable.getStackTrace()) {
+        prevStackTrace = throwable.getStackTrace();
+      } while ((throwable = throwable.getCause()) != null);
 
-               appendIndent(formatBuilder, level + 1);
+      appendLine(formatBuilder, "</stack-trace>", level);
+    }
+  }
 
-               if (prevStackTrace != null) {
-                  if ((repeatedElements = findRepeatedStackElements(singleElement, prevStackTrace)) >= 0) {
-                     formatBuilder.append("   ... ");
-                     formatBuilder.append(repeatedElements);
-                     formatBuilder.append(" more");
-                     formatBuilder.append(System.getProperty("line.separator"));
-                     break;
-                  }
-               }
+  private static int findRepeatedStackElements (StackTraceElement singleElement, StackTraceElement[] prevStackTrace) {
 
-               formatBuilder.append("   at ");
-               formatBuilder.append(singleElement.toString());
-               formatBuilder.append(System.getProperty("line.separator"));
-            }
-
-            prevStackTrace = throwable.getStackTrace();
-         } while ((throwable = throwable.getCause()) != null);
-
-         appendLine(formatBuilder, "</stack-trace>", level);
+    for (int count = 0; count < prevStackTrace.length; count++) {
+      if (singleElement.equals(prevStackTrace[count])) {
+        return prevStackTrace.length - count;
       }
-   }
+    }
 
-   private static int findRepeatedStackElements (StackTraceElement singleElement, StackTraceElement[] prevStackTrace) {
+    return -1;
+  }
 
-      for (int count = 0; count < prevStackTrace.length; count++) {
-         if (singleElement.equals(prevStackTrace[count])) {
-            return prevStackTrace.length - count;
-         }
+  private void appendProbeReport (StringBuilder formatBuilder, Record record, ProbeReport probeReport, Collection<Filter> filterCollection, int level) {
+
+    if (probeReport != null) {
+      appendLine(formatBuilder, "<probe-report>", level);
+      appendElement(formatBuilder, "first", String.valueOf(probeReport.isFirst()), level + 1);
+      appendCorrelator(formatBuilder, probeReport.getCorrelator(), level + 1);
+      appendProbeEntry(formatBuilder, record, probeReport.getProbeEntry(), filterCollection, level + 1);
+      appendLine(formatBuilder, "</probe-report>", level);
+    }
+  }
+
+  private void appendCorrelator (StringBuilder formatBuilder, Correlator correlator, int level) {
+
+    appendLine(formatBuilder, "<correlator>", level);
+    appendElement(formatBuilder, "thread-identifier", Arrays.toString(correlator.getThreadIdentifier()), level + 1);
+    appendElement(formatBuilder, "parent-identifier", Arrays.toString(correlator.getParentIdentifier()), level + 1);
+    appendElement(formatBuilder, "identifier", Arrays.toString(correlator.getIdentifier()), level + 1);
+    appendElement(formatBuilder, "frame", String.valueOf(correlator.getFrame()), level + 1);
+    appendElement(formatBuilder, "instance", String.valueOf(correlator.getInstance()), level + 1);
+    appendLine(formatBuilder, "</correlator>", level);
+  }
+
+  private void appendProbeEntry (StringBuilder formatBuilder, Record record, ProbeEntry probeEntry, Collection<Filter> filterCollection, int level) {
+
+    Record filterRecord;
+
+    if (probeEntry != null) {
+      appendLine(formatBuilder, "<probe-entry>", level);
+      appendElement(formatBuilder, "status", probeEntry.getProbeStatus().name(), level + 1);
+
+      if (probeEntry instanceof UpdateProbeEntry) {
+        appendElement(formatBuilder, "updated", String.valueOf(((UpdateProbeEntry)probeEntry).getUpdateTime()), level + 1);
+        appendElement(formatBuilder, "count", String.valueOf(((UpdateProbeEntry)probeEntry).getUpdateCount()), level + 1);
+      }
+      else if (probeEntry instanceof CompleteOrAbortProbeEntry) {
+        appendElement(formatBuilder, "started", String.valueOf(((CompleteOrAbortProbeEntry)probeEntry).getStartTime()), level + 1);
+        appendElement(formatBuilder, "stopped", String.valueOf(((CompleteOrAbortProbeEntry)probeEntry).getStopTime()), level + 1);
+        appendElement(formatBuilder, "elapsed", String.valueOf(((CompleteOrAbortProbeEntry)probeEntry).getStopTime() - ((CompleteOrAbortProbeEntry)probeEntry).getStartTime()), level + 1);
+      }
+      else {
+        throw new IllegalArgumentException("Unknown instance type of ProbeEntry(" + probeEntry.getClass().getCanonicalName() + ")");
       }
 
-      return -1;
-   }
+      for (Statement statement : probeEntry.getStatements()) {
 
-   private void appendProbeReport (StringBuilder formatBuilder, Record record, ProbeReport probeReport, Collection<Filter> filterCollection, int level) {
+        boolean skipStatement = false;
 
-      if (probeReport != null) {
-         appendLine(formatBuilder, "<probe-report>", level);
-         appendElement(formatBuilder, "first", String.valueOf(probeReport.isFirst()), level + 1);
-         appendCorrelator(formatBuilder, probeReport.getCorrelator(), level + 1);
-         appendProbeEntry(formatBuilder, record, probeReport.getProbeEntry(), filterCollection, level + 1);
-         appendLine(formatBuilder, "</probe-report>", level);
+        if (!filterCollection.isEmpty()) {
+          filterRecord = LoggingBlueprintsFactory.getLoggingBlueprints().filterRecord(record, statement.getDiscriminator(), statement.getLevel());
+          for (Filter filter : filterCollection) {
+            if (!filter.willLog(filterRecord)) {
+              skipStatement = true;
+              break;
+            }
+          }
+        }
+
+        if (!skipStatement) {
+          appendElement(formatBuilder, "statement", statement.getMessage(), level + 1);
+        }
       }
-   }
 
-   private void appendCorrelator (StringBuilder formatBuilder, Correlator correlator, int level) {
+      for (MetricMilieu metricMilieu : probeEntry.getMetricMilieus()) {
 
-      appendLine(formatBuilder, "<correlator>", level);
-      appendElement(formatBuilder, "thread-identifier", Arrays.toString(correlator.getThreadIdentifier()), level + 1);
-      appendElement(formatBuilder, "parent-identifier", Arrays.toString(correlator.getParentIdentifier()), level + 1);
-      appendElement(formatBuilder, "identifier", Arrays.toString(correlator.getIdentifier()), level + 1);
-      appendElement(formatBuilder, "frame", String.valueOf(correlator.getFrame()), level + 1);
-      appendElement(formatBuilder, "instance", String.valueOf(correlator.getInstance()), level + 1);
-      appendLine(formatBuilder, "</correlator>", level);
-   }
+        boolean skipMetric = false;
 
-   private void appendProbeEntry (StringBuilder formatBuilder, Record record, ProbeEntry probeEntry, Collection<Filter> filterCollection, int level) {
-
-      Record filterRecord;
-
-      if (probeEntry != null) {
-         appendLine(formatBuilder, "<probe-entry>", level);
-         appendElement(formatBuilder, "status", probeEntry.getProbeStatus().name(), level + 1);
-
-         if (probeEntry instanceof UpdateProbeEntry) {
-            appendElement(formatBuilder, "updated", String.valueOf(((UpdateProbeEntry)probeEntry).getUpdateTime()), level + 1);
-            appendElement(formatBuilder, "count", String.valueOf(((UpdateProbeEntry)probeEntry).getUpdateCount()), level + 1);
-         }
-         else if (probeEntry instanceof CompleteOrAbortProbeEntry) {
-            appendElement(formatBuilder, "started", String.valueOf(((CompleteOrAbortProbeEntry)probeEntry).getStartTime()), level + 1);
-            appendElement(formatBuilder, "stopped", String.valueOf(((CompleteOrAbortProbeEntry)probeEntry).getStopTime()), level + 1);
-            appendElement(formatBuilder, "elapsed", String.valueOf(((CompleteOrAbortProbeEntry)probeEntry).getStopTime() - ((CompleteOrAbortProbeEntry)probeEntry).getStartTime()), level + 1);
-         }
-         else {
-            throw new IllegalArgumentException("Unknown instance type of ProbeEntry(" + probeEntry.getClass().getCanonicalName() + ")");
-         }
-
-         for (Statement statement : probeEntry.getStatements()) {
-
-            boolean skipStatement = false;
-
-            if (!filterCollection.isEmpty()) {
-               filterRecord = LoggingBlueprintsFactory.getLoggingBlueprints().filterRecord(record, statement.getDiscriminator(), statement.getLevel());
-               for (Filter filter : filterCollection) {
-                  if (!filter.willLog(filterRecord)) {
-                     skipStatement = true;
-                     break;
-                  }
-               }
+        if (!filterCollection.isEmpty()) {
+          filterRecord = LoggingBlueprintsFactory.getLoggingBlueprints().filterRecord(record, metricMilieu.getDiscriminator(), metricMilieu.getLevel());
+          for (Filter filter : filterCollection) {
+            if (!filter.willLog(filterRecord)) {
+              skipMetric = true;
+              break;
             }
+          }
+        }
 
-            if (!skipStatement) {
-               appendElement(formatBuilder, "statement", statement.getMessage(), level + 1);
-            }
-         }
-
-         for (MetricMilieu metricMilieu : probeEntry.getMetricMilieus()) {
-
-            boolean skipMetric = false;
-
-            if (!filterCollection.isEmpty()) {
-               filterRecord = LoggingBlueprintsFactory.getLoggingBlueprints().filterRecord(record, metricMilieu.getDiscriminator(), metricMilieu.getLevel());
-               for (Filter filter : filterCollection) {
-                  if (!filter.willLog(filterRecord)) {
-                     skipMetric = true;
-                     break;
-                  }
-               }
-            }
-
-            if (!skipMetric) {
-               appendLine(formatBuilder, "<" + metricMilieu.getMetric().getTitle() + ">", level + 1);
-               for (String key : metricMilieu.getMetric().getKeys()) {
-                  appendElement(formatBuilder, key, metricMilieu.getMetric().getData(key).toString(), level + 2);
-               }
-               appendLine(formatBuilder, "</" + metricMilieu.getMetric().getTitle() + ">", level + 1);
-            }
-         }
-
-         appendLine(formatBuilder, "</probe-entry>", level);
+        if (!skipMetric) {
+          appendLine(formatBuilder, "<" + metricMilieu.getMetric().getTitle() + ">", level + 1);
+          for (String key : metricMilieu.getMetric().getKeys()) {
+            appendElement(formatBuilder, key, metricMilieu.getMetric().getData(key).toString(), level + 2);
+          }
+          appendLine(formatBuilder, "</" + metricMilieu.getMetric().getTitle() + ">", level + 1);
+        }
       }
-   }
 
-   private void appendElement (StringBuilder formatBuilder, String tagName, String value, int level) {
+      appendLine(formatBuilder, "</probe-entry>", level);
+    }
+  }
 
-      if (value != null) {
-         appendIndent(formatBuilder, level);
-         formatBuilder.append("<");
-         formatBuilder.append(tagName);
-         formatBuilder.append(">");
-         formatBuilder.append(value);
-         formatBuilder.append("</");
-         formatBuilder.append(tagName);
-         formatBuilder.append(">");
-         formatBuilder.append(System.getProperty("line.separator"));
-      }
-   }
+  private void appendElement (StringBuilder formatBuilder, String tagName, String value, int level) {
 
-   private void appendLine (StringBuilder formatBuilder, String content, int level) {
-
+    if (value != null) {
       appendIndent(formatBuilder, level);
-      formatBuilder.append(content);
+      formatBuilder.append("<");
+      formatBuilder.append(tagName);
+      formatBuilder.append(">");
+      formatBuilder.append(value);
+      formatBuilder.append("</");
+      formatBuilder.append(tagName);
+      formatBuilder.append(">");
       formatBuilder.append(System.getProperty("line.separator"));
-   }
+    }
+  }
 
-   private void appendIndent (StringBuilder formatBuilder, int level) {
+  private void appendLine (StringBuilder formatBuilder, String content, int level) {
 
-      for (int count = 0; count < (level * indent); count++) {
-         formatBuilder.append(" ");
-      }
-   }
+    appendIndent(formatBuilder, level);
+    formatBuilder.append(content);
+    formatBuilder.append(System.getProperty("line.separator"));
+  }
+
+  private void appendIndent (StringBuilder formatBuilder, int level) {
+
+    for (int count = 0; count < (level * indent); count++) {
+      formatBuilder.append(" ");
+    }
+  }
 }

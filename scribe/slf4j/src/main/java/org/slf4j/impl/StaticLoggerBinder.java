@@ -33,33 +33,33 @@ import org.smallmind.scribe.slf4j.ScribeLoggerFactory;
 
 public class StaticLoggerBinder implements LoggerFactoryBinder {
 
-   public static final StaticLoggerBinder SINGLETON = new StaticLoggerBinder();
-   public static final String REQUESTED_API_VERSION = "1.6.1";
+  public static final StaticLoggerBinder SINGLETON = new StaticLoggerBinder();
+  public static final String REQUESTED_API_VERSION = "1.6.1";
 
-   private final ILoggerFactory loggerFactory;
+  private final ILoggerFactory loggerFactory;
 
-   static {
+  static {
 
-      LoggerManager.addLoggingPackagePrefix("org.slf4j.");
-   }
+    LoggerManager.addLoggingPackagePrefix("org.slf4j.");
+  }
 
-   public static StaticLoggerBinder getSingleton () {
+  public static StaticLoggerBinder getSingleton () {
 
-      return SINGLETON;
-   }
+    return SINGLETON;
+  }
 
-   public StaticLoggerBinder () {
+  public StaticLoggerBinder () {
 
-      loggerFactory = new ScribeLoggerFactory();
-   }
+    loggerFactory = new ScribeLoggerFactory();
+  }
 
-   public ILoggerFactory getLoggerFactory () {
+  public ILoggerFactory getLoggerFactory () {
 
-      return loggerFactory;
-   }
+    return loggerFactory;
+  }
 
-   public String getLoggerFactoryClassStr () {
+  public String getLoggerFactoryClassStr () {
 
-      return ScribeLoggerFactory.class.getName();
-   }
+    return ScribeLoggerFactory.class.getName();
+  }
 }

@@ -28,7 +28,7 @@ package org.smallmind.swing.dialog;
 
 public interface DialogListener extends java.util.EventListener {
 
-   public abstract void dialogHandler (DialogEvent dialogEvent);
+  public abstract void dialogHandler (DialogEvent dialogEvent);
 
 }
 

@@ -30,57 +30,57 @@ import org.smallmind.nutsnbolts.lang.TypeMismatchException;
 
 public class ColumnDescription extends TableElement {
 
-   private CellFormatter cellFormatter;
-   private ValueType type;
-   private String id;
-   private String label;
+  private CellFormatter cellFormatter;
+  private ValueType type;
+  private String id;
+  private String label;
 
-   public ColumnDescription (String id, ValueType type, String label) {
+  public ColumnDescription (String id, ValueType type, String label) {
 
-      this(id, type, label, null);
-   }
+    this(id, type, label, null);
+  }
 
-   public ColumnDescription (String id, ValueType type, String label, CellFormatter cellFormatter) {
+  public ColumnDescription (String id, ValueType type, String label, CellFormatter cellFormatter) {
 
-      super();
+    super();
 
-      this.id = id;
-      this.type = type;
-      this.label = label;
-      this.cellFormatter = cellFormatter;
-   }
+    this.id = id;
+    this.type = type;
+    this.label = label;
+    this.cellFormatter = cellFormatter;
+  }
 
-   public String getId () {
+  public String getId () {
 
-      return id;
-   }
+    return id;
+  }
 
-   public ValueType getType () {
+  public ValueType getType () {
 
-      return type;
-   }
+    return type;
+  }
 
-   public String getLabel () {
+  public String getLabel () {
 
-      return label;
-   }
+    return label;
+  }
 
-   public CellFormatter getCellFormatter () {
+  public CellFormatter getCellFormatter () {
 
-      return cellFormatter;
-   }
+    return cellFormatter;
+  }
 
-   public TableCell createTableCell (Value value) {
+  public TableCell createTableCell (Value value) {
 
-      return createTableCell(value, null);
-   }
+    return createTableCell(value, null);
+  }
 
-   public TableCell createTableCell (Value value, String formattedValue) {
+  public TableCell createTableCell (Value value, String formattedValue) {
 
-      if (!type.equals(value.getType())) {
-         throw new TypeMismatchException("%s != %s", type, value.getType());
-      }
+    if (!type.equals(value.getType())) {
+      throw new TypeMismatchException("%s != %s", type, value.getType());
+    }
 
-      return new TableCell(value, ((formattedValue == null) && (cellFormatter != null)) ? cellFormatter.format(value) : formattedValue);
-   }
+    return new TableCell(value, ((formattedValue == null) && (cellFormatter != null)) ? cellFormatter.format(value) : formattedValue);
+  }
 }

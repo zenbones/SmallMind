@@ -33,47 +33,47 @@ import org.smallmind.scribe.pen.LoggerManager;
 
 public class ProgressTimer implements Runnable {
 
-   private CountDownLatch exitLatch;
-   private CountDownLatch pulseLatch;
-   private AtomicBoolean finished = new AtomicBoolean(false);
-   private ProgressPanel progressPanel;
-   private long pulseTime;
+  private CountDownLatch exitLatch;
+  private CountDownLatch pulseLatch;
+  private AtomicBoolean finished = new AtomicBoolean(false);
+  private ProgressPanel progressPanel;
+  private long pulseTime;
 
-   public ProgressTimer (ProgressPanel progressPanel, long pulseTime) {
+  public ProgressTimer (ProgressPanel progressPanel, long pulseTime) {
 
-      this.progressPanel = progressPanel;
-      this.pulseTime = pulseTime;
+    this.progressPanel = progressPanel;
+    this.pulseTime = pulseTime;
 
-      pulseLatch = new CountDownLatch(1);
-      exitLatch = new CountDownLatch(1);
-   }
+    pulseLatch = new CountDownLatch(1);
+    exitLatch = new CountDownLatch(1);
+  }
 
-   public void finish ()
-      throws InterruptedException {
+  public void finish ()
+    throws InterruptedException {
 
-      if (finished.compareAndSet(false, true)) {
-         pulseLatch.countDown();
+    if (finished.compareAndSet(false, true)) {
+      pulseLatch.countDown();
+    }
+
+    exitLatch.await();
+  }
+
+  public void run () {
+
+    try {
+      while (!finished.get()) {
+        progressPanel.setProgress();
+
+        try {
+          pulseLatch.await(pulseTime, TimeUnit.MILLISECONDS);
+        }
+        catch (InterruptedException interruptedException) {
+          LoggerManager.getLogger(ProgressTimer.class).error(interruptedException);
+        }
       }
-
-      exitLatch.await();
-   }
-
-   public void run () {
-
-      try {
-         while (!finished.get()) {
-            progressPanel.setProgress();
-
-            try {
-               pulseLatch.await(pulseTime, TimeUnit.MILLISECONDS);
-            }
-            catch (InterruptedException interruptedException) {
-               LoggerManager.getLogger(ProgressTimer.class).error(interruptedException);
-            }
-         }
-      }
-      finally {
-         exitLatch.countDown();
-      }
-   }
+    }
+    finally {
+      exitLatch.countDown();
+    }
+  }
 }

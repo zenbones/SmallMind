@@ -33,22 +33,22 @@ import javax.swing.JLabel;
 
 public class DefaultBannerRenderer implements BannerCellRenderer {
 
-   private JLabel renderLabel;
+  private JLabel renderLabel;
 
-   public DefaultBannerRenderer () {
+  public DefaultBannerRenderer () {
 
-      renderLabel = new JLabel();
-      renderLabel.setOpaque(true);
-   }
+    renderLabel = new JLabel();
+    renderLabel.setOpaque(true);
+  }
 
-   public Component getBannerRendererComponent (Banner banner, Object value, int index, boolean isSelected) {
+  public Component getBannerRendererComponent (Banner banner, Object value, int index, boolean isSelected) {
 
-      renderLabel.setText(value.toString());
-      renderLabel.setBackground((isSelected) ? SystemColor.textHighlight : SystemColor.text);
-      renderLabel.setForeground((isSelected) ? SystemColor.text : SystemColor.textText);
-      renderLabel.setBorder(BorderFactory.createMatteBorder(2, 2, 2, 2, (isSelected) ? SystemColor.textHighlight : SystemColor.text));
+    renderLabel.setText(value.toString());
+    renderLabel.setBackground((isSelected) ? SystemColor.textHighlight : SystemColor.text);
+    renderLabel.setForeground((isSelected) ? SystemColor.text : SystemColor.textText);
+    renderLabel.setBorder(BorderFactory.createMatteBorder(2, 2, 2, 2, (isSelected) ? SystemColor.textHighlight : SystemColor.text));
 
-      return renderLabel;
-   }
+    return renderLabel;
+  }
 
 }

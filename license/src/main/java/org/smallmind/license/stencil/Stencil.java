@@ -2,92 +2,92 @@ package org.smallmind.license.stencil;
 
 public class Stencil {
 
-   private String id;
-   private String skipLines;
-   private String firstLine;
-   private String lastLine;
-   private String beforeEachLine;
-   private boolean prefixBlankLines = false;
-   private int blankLinesBefore;
-   private int blankLinesAfter;
+  private String id;
+  private String skipLines;
+  private String firstLine;
+  private String lastLine;
+  private String beforeEachLine;
+  private boolean prefixBlankLines = false;
+  private int blankLinesBefore;
+  private int blankLinesAfter;
 
-   public String getId () {
+  public String getId () {
 
-      return id;
-   }
+    return id;
+  }
 
-   public void setId (String id) {
+  public void setId (String id) {
 
-      this.id = id;
-   }
+    this.id = id;
+  }
 
-   public String getSkipLines () {
+  public String getSkipLines () {
 
-      return skipLines;
-   }
+    return skipLines;
+  }
 
-   public void setSkipLines (String skipLines) {
+  public void setSkipLines (String skipLines) {
 
-      this.skipLines = skipLines;
-   }
+    this.skipLines = skipLines;
+  }
 
-   public String getFirstLine () {
+  public String getFirstLine () {
 
-      return firstLine;
-   }
+    return firstLine;
+  }
 
-   public void setFirstLine (String firstLine) {
+  public void setFirstLine (String firstLine) {
 
-      this.firstLine = firstLine;
-   }
+    this.firstLine = firstLine;
+  }
 
-   public String getLastLine () {
+  public String getLastLine () {
 
-      return lastLine;
-   }
+    return lastLine;
+  }
 
-   public void setLastLine (String lastLine) {
+  public void setLastLine (String lastLine) {
 
-      this.lastLine = lastLine;
-   }
+    this.lastLine = lastLine;
+  }
 
-   public String getBeforeEachLine () {
+  public String getBeforeEachLine () {
 
-      return beforeEachLine;
-   }
+    return beforeEachLine;
+  }
 
-   public void setBeforeEachLine (String beforeEachLine) {
+  public void setBeforeEachLine (String beforeEachLine) {
 
-      this.beforeEachLine = beforeEachLine;
-   }
+    this.beforeEachLine = beforeEachLine;
+  }
 
-   public boolean willPrefixBlankLines () {
+  public boolean willPrefixBlankLines () {
 
-      return prefixBlankLines;
-   }
+    return prefixBlankLines;
+  }
 
-   public void setPrefixBlankLines (boolean prefixBlankLines) {
+  public void setPrefixBlankLines (boolean prefixBlankLines) {
 
-      this.prefixBlankLines = prefixBlankLines;
-   }
+    this.prefixBlankLines = prefixBlankLines;
+  }
 
-   public int getBlankLinesBefore () {
+  public int getBlankLinesBefore () {
 
-      return blankLinesBefore;
-   }
+    return blankLinesBefore;
+  }
 
-   public void setBlankLinesBefore (int blankLinesBefore) {
+  public void setBlankLinesBefore (int blankLinesBefore) {
 
-      this.blankLinesBefore = blankLinesBefore;
-   }
+    this.blankLinesBefore = blankLinesBefore;
+  }
 
-   public int getBlankLinesAfter () {
+  public int getBlankLinesAfter () {
 
-      return blankLinesAfter;
-   }
+    return blankLinesAfter;
+  }
 
-   public void setBlankLinesAfter (int blankLinesAfter) {
+  public void setBlankLinesAfter (int blankLinesAfter) {
 
-      this.blankLinesAfter = blankLinesAfter;
-   }
+    this.blankLinesAfter = blankLinesAfter;
+  }
 }

@@ -31,28 +31,28 @@ import org.smallmind.swing.MultiListSelectionListener;
 
 public class CatalogMultiListDataProvider<T extends Comparable<T>> implements MultiListDataProvider<T>, MultiListSelectionListener<T> {
 
-   private T key;
-   private Catalog catalog;
+  private T key;
+  private Catalog catalog;
 
-   public CatalogMultiListDataProvider (T key, Catalog catalog) {
+  public CatalogMultiListDataProvider (T key, Catalog catalog) {
 
-      this.key = key;
-      this.catalog = catalog;
-   }
+    this.key = key;
+    this.catalog = catalog;
+  }
 
-   public T getKey () {
+  public T getKey () {
 
-      return key;
-   }
+    return key;
+  }
 
-   public int getElementCount () {
+  public int getElementCount () {
 
-      return catalog.getModel().getSize();
-   }
+    return catalog.getModel().getSize();
+  }
 
-   public void valueChanged (MultiListSelectionEvent selectionEvent) {
+  public void valueChanged (MultiListSelectionEvent selectionEvent) {
 
-      catalog.valueChanged(selectionEvent);
-   }
+    catalog.valueChanged(selectionEvent);
+  }
 
 }

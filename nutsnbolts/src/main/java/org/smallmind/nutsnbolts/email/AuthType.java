@@ -31,26 +31,26 @@ import javax.mail.PasswordAuthentication;
 
 public enum AuthType {
 
-   NONE {
+  NONE {
+    @Override
+    public Authenticator getAuthenticator (Object... data) {
 
-      @Override
-      public Authenticator getAuthenticator (Object... data) {
+      return null;
+    }
+  },
+  LOGIN {
+    @Override
+    public Authenticator getAuthenticator (final Object... data) {
 
-         return null;
-      }
-   },
-   LOGIN {
+      return new Authenticator() {
 
-      @Override
-      public Authenticator getAuthenticator (final Object... data) {
+        protected PasswordAuthentication getPasswordAuthentication () {
 
-         return new Authenticator() {
-            protected PasswordAuthentication getPasswordAuthentication () {
-               return new PasswordAuthentication((String)data[0], (String)data[1]);
-            }
-         };
-      }
-   };
+          return new PasswordAuthentication((String)data[0], (String)data[1]);
+        }
+      };
+    }
+  };
 
-   public abstract Authenticator getAuthenticator (Object... data);
+  public abstract Authenticator getAuthenticator (Object... data);
 }

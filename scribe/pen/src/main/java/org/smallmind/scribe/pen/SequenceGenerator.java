@@ -30,10 +30,10 @@ import java.util.concurrent.atomic.AtomicLong;
 
 public class SequenceGenerator {
 
-   private static AtomicLong count = new AtomicLong(0);
+  private static AtomicLong count = new AtomicLong(0);
 
-   public static long next () {
+  public static long next () {
 
-      return count.incrementAndGet();
-   }
+    return count.incrementAndGet();
+  }
 }

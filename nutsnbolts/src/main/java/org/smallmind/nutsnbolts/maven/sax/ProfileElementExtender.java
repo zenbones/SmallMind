@@ -31,26 +31,26 @@ import org.smallmind.nutsnbolts.xml.sax.AbstractElementExtender;
 
 public class ProfileElementExtender extends AbstractElementExtender {
 
-   private HashMap<String, String> propertyMap;
-   private String id;
+  private HashMap<String, String> propertyMap;
+  private String id;
 
-   public String getId () {
+  public String getId () {
 
-      return id;
-   }
+    return id;
+  }
 
-   public void setId (String id) {
+  public void setId (String id) {
 
-      this.id = id;
-   }
+    this.id = id;
+  }
 
-   public HashMap<String, String> getPropertyMap () {
+  public HashMap<String, String> getPropertyMap () {
 
-      return propertyMap;
-   }
+    return propertyMap;
+  }
 
-   public void setPropertyMap (HashMap<String, String> propertyMap) {
+  public void setPropertyMap (HashMap<String, String> propertyMap) {
 
-      this.propertyMap = propertyMap;
-   }
+    this.propertyMap = propertyMap;
+  }
 }

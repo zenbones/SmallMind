@@ -28,27 +28,27 @@ package org.smallmind.swing.progress;
 
 public class IncrementalProgressDataHandler implements ProgressDataHandler {
 
-   private long length;
-   private long index = 0;
+  private long length;
+  private long index = 0;
 
-   public IncrementalProgressDataHandler (int length) {
+  public IncrementalProgressDataHandler (int length) {
 
-      this.length = length;
-   }
+    this.length = length;
+  }
 
-   public long getLength () {
+  public long getLength () {
 
-      return length;
-   }
+    return length;
+  }
 
-   public synchronized long getIndex () {
+  public synchronized long getIndex () {
 
-      return index;
-   }
+    return index;
+  }
 
-   public synchronized void setIndex (long index) {
+  public synchronized void setIndex (long index) {
 
-      this.index = index;
-   }
+    this.index = index;
+  }
 
 }
