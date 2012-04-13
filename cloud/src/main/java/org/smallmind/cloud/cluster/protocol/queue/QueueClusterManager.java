@@ -1,22 +1,22 @@
 /*
  * Copyright (c) 2007, 2008, 2009, 2010, 2011, 2012 David Berkman
- * 
+ *
  * This file is part of the SmallMind Code Project.
- * 
+ *
  * The SmallMind Code Project is free software, you can redistribute
  * it and/or modify it under the terms of GNU Affero General Public
  * License as published by the Free Software Foundation, either version 3
  * of the License, or (at your option) any later version.
- * 
+ *
  * The SmallMind Code Project is distributed in the hope that it will
  * be useful, but WITHOUT ANY WARRANTY; without even the implied warranty
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * General Public License for more details.
- * 
+ *
  * You should have received a copy of the the GNU Affero General Public
  * License, along with The SmallMind Code Project. If not, see
  * <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under the GNU Affero GPL version 3 section 7
  * ------------------------------------------------------------------
  * If you modify this Program, or any covered work, by linking or
@@ -33,17 +33,17 @@ import org.smallmind.cloud.cluster.ClusterHub;
 import org.smallmind.cloud.cluster.ClusterInterface;
 import org.smallmind.cloud.cluster.ClusterManagementException;
 import org.smallmind.cloud.cluster.ClusterManager;
-import org.smallmind.quorum.transport.messaging.MessagingInvocationHandler;
-import org.smallmind.quorum.transport.messaging.MessagingTransmitter;
+import org.smallmind.quorum.transport.message.MessageInvocationHandler;
+import org.smallmind.quorum.transport.message.MessageTransmitter;
 
 public class QueueClusterManager implements ClusterManager<QueueClusterProtocolDetails> {
 
   private ClusterHub clusterHub;
   private Proxy clusterProxy;
   private ClusterInterface<QueueClusterProtocolDetails> clusterInterface;
-  private MessagingTransmitter messagingTransmitter;
+  private MessageTransmitter messagingTransmitter;
 
-  public QueueClusterManager (ClusterHub clusterHub, MessagingTransmitter messagingTransmitter, ClusterInterface<QueueClusterProtocolDetails> clusterInterface)
+  public QueueClusterManager (ClusterHub clusterHub, MessageTransmitter messagingTransmitter, ClusterInterface<QueueClusterProtocolDetails> clusterInterface)
     throws ClusterManagementException {
 
     QueueClusterHandle clusterHandle;
@@ -52,7 +52,7 @@ public class QueueClusterManager implements ClusterManager<QueueClusterProtocolD
     this.messagingTransmitter = messagingTransmitter;
     this.clusterInterface = clusterInterface;
 
-    clusterHandle = new QueueClusterHandle(new MessagingInvocationHandler(messagingTransmitter, clusterInterface.getClusterProtocolDetails().getServiceInterface(), clusterInterface.getClusterProtocolDetails().getServiceSelector()));
+    clusterHandle = new QueueClusterHandle(new MessageInvocationHandler(messagingTransmitter, clusterInterface.getClusterProtocolDetails().getServiceInterface(), clusterInterface.getClusterProtocolDetails().getServiceSelector()));
     clusterProxy = (Proxy)Proxy.newProxyInstance(clusterInterface.getClusterProtocolDetails().getServiceInterface().getClassLoader(), new Class[] {ClusterHandle.class, clusterInterface.getClusterProtocolDetails().getServiceInterface()}, clusterHandle);
   }
 

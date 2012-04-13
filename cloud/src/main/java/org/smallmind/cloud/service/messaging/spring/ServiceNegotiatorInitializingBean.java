@@ -1,22 +1,22 @@
 /*
  * Copyright (c) 2007, 2008, 2009, 2010, 2011, 2012 David Berkman
- * 
+ *
  * This file is part of the SmallMind Code Project.
- * 
+ *
  * The SmallMind Code Project is free software, you can redistribute
  * it and/or modify it under the terms of GNU Affero General Public
  * License as published by the Free Software Foundation, either version 3
  * of the License, or (at your option) any later version.
- * 
+ *
  * The SmallMind Code Project is distributed in the hope that it will
  * be useful, but WITHOUT ANY WARRANTY; without even the implied warranty
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * General Public License for more details.
- * 
+ *
  * You should have received a copy of the the GNU Affero General Public
  * License, along with The SmallMind Code Project. If not, see
  * <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under the GNU Affero GPL version 3 section 7
  * ------------------------------------------------------------------
  * If you modify this Program, or any covered work, by linking or
@@ -35,14 +35,14 @@ import org.smallmind.cloud.service.messaging.ServiceEndpoint;
 import org.smallmind.cloud.service.messaging.ServiceTarget;
 import org.smallmind.quorum.pool.connection.ConnectionPool;
 import org.smallmind.quorum.pool.connection.ConnectionPoolException;
-import org.smallmind.quorum.transport.messaging.MessagingConnectionDetails;
-import org.smallmind.quorum.transport.messaging.MessagingReceiver;
+import org.smallmind.quorum.transport.message.MessageConnectionDetails;
+import org.smallmind.quorum.transport.message.MessageReceiver;
 import org.springframework.beans.factory.DisposableBean;
 import org.springframework.beans.factory.InitializingBean;
 
 public class ServiceNegotiatorInitializingBean implements InitializingBean, DisposableBean {
 
-  private final LinkedList<MessagingReceiver> messagingReceiverList = new LinkedList<MessagingReceiver>();
+  private final LinkedList<MessageReceiver> messagingReceiverList = new LinkedList<MessageReceiver>();
 
   private ConnectionPool<Context> javaEnvironmentPool;
   private List<ServiceEndpoint> serviceEndpointList;
@@ -85,11 +85,11 @@ public class ServiceNegotiatorInitializingBean implements InitializingBean, Disp
   public void afterPropertiesSet ()
     throws NoSuchMethodException, NamingException, JMSException, ConnectionPoolException {
 
-    MessagingConnectionDetails connectionDetails;
+    MessageConnectionDetails connectionDetails;
 
     for (ServiceEndpoint serviceEndpoint : serviceEndpointList) {
-      connectionDetails = new MessagingConnectionDetails(javaEnvironmentPool, destinationEnvPath, factoryEnvPath, jmsUser, jmsCredentials);
-      messagingReceiverList.add(new MessagingReceiver(new ServiceTarget(serviceEndpoint), connectionDetails, serviceEndpoint.getServiceSelector(), serviceEndpoint.getConcurrencyLimit()));
+      connectionDetails = new MessageConnectionDetails(javaEnvironmentPool, destinationEnvPath, factoryEnvPath, jmsUser, jmsCredentials);
+      messagingReceiverList.add(new MessageReceiver(new ServiceTarget(serviceEndpoint), connectionDetails, serviceEndpoint.getServiceSelector(), serviceEndpoint.getConcurrencyLimit()));
     }
   }
 
@@ -98,7 +98,7 @@ public class ServiceNegotiatorInitializingBean implements InitializingBean, Disp
     if (!closed) {
       closed = true;
 
-      for (MessagingReceiver messagingReceiver : messagingReceiverList) {
+      for (MessageReceiver messagingReceiver : messagingReceiverList) {
         messagingReceiver.close();
       }
     }

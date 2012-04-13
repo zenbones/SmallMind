@@ -1,22 +1,22 @@
 /*
  * Copyright (c) 2007, 2008, 2009, 2010, 2011, 2012 David Berkman
- * 
+ *
  * This file is part of the SmallMind Code Project.
- * 
+ *
  * The SmallMind Code Project is free software, you can redistribute
  * it and/or modify it under the terms of GNU Affero General Public
  * License as published by the Free Software Foundation, either version 3
  * of the License, or (at your option) any later version.
- * 
+ *
  * The SmallMind Code Project is distributed in the hope that it will
  * be useful, but WITHOUT ANY WARRANTY; without even the implied warranty
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * General Public License for more details.
- * 
+ *
  * You should have received a copy of the the GNU Affero General Public
  * License, along with The SmallMind Code Project. If not, see
  * <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under the GNU Affero GPL version 3 section 7
  * ------------------------------------------------------------------
  * If you modify this Program, or any covered work, by linking or
@@ -24,7 +24,7 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.quorum.transport.messaging;
+package org.smallmind.quorum.transport.message;
 
 import java.util.concurrent.atomic.AtomicBoolean;
 import javax.jms.JMSException;
@@ -35,14 +35,14 @@ import javax.naming.Context;
 import javax.naming.NamingException;
 import org.smallmind.quorum.pool.connection.ConnectionPoolException;
 
-public class MessagingReceiver {
+public class MessageReceiver {
 
   private AtomicBoolean stopped = new AtomicBoolean(false);
   private MessageTarget messageTarget;
   private QueueConnection queueConnection;
-  private MessagingWorker[] messagingWorkers;
+  private MessageWorker[] messagingWorkers;
 
-  public MessagingReceiver (MessageTarget messageTarget, MessagingConnectionDetails messagingConnectionDetails, String serviceSelector, int serviceConcurrencyLimit)
+  public MessageReceiver (MessageTarget messageTarget, MessageConnectionDetails messagingConnectionDetails, String serviceSelector, int serviceConcurrencyLimit)
     throws ConnectionPoolException, NamingException, JMSException {
 
     Context javaEnvironment;
@@ -62,9 +62,9 @@ public class MessagingReceiver {
 
     queueConnection = queueConnectionFactory.createQueueConnection(messagingConnectionDetails.getUserName(), messagingConnectionDetails.getPassword());
 
-    messagingWorkers = new MessagingWorker[serviceConcurrencyLimit];
+    messagingWorkers = new MessageWorker[serviceConcurrencyLimit];
     for (int count = 0; count < messagingWorkers.length; count++) {
-      messagingWorkers[count] = new MessagingWorker(queueConnection, queue, messageTarget, serviceSelector);
+      messagingWorkers[count] = new MessageWorker(queueConnection, queue, messageTarget, serviceSelector);
     }
 
     queueConnection.start();
@@ -76,7 +76,7 @@ public class MessagingReceiver {
       try {
         queueConnection.stop();
 
-        for (MessagingWorker messageWorker : messagingWorkers) {
+        for (MessageWorker messageWorker : messagingWorkers) {
           messageWorker.close();
         }
 

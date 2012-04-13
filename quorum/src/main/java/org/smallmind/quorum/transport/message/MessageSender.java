@@ -1,22 +1,22 @@
 /*
  * Copyright (c) 2007, 2008, 2009, 2010, 2011, 2012 David Berkman
- * 
+ *
  * This file is part of the SmallMind Code Project.
- * 
+ *
  * The SmallMind Code Project is free software, you can redistribute
  * it and/or modify it under the terms of GNU Affero General Public
  * License as published by the Free Software Foundation, either version 3
  * of the License, or (at your option) any later version.
- * 
+ *
  * The SmallMind Code Project is distributed in the hope that it will
  * be useful, but WITHOUT ANY WARRANTY; without even the implied warranty
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * General Public License for more details.
- * 
+ *
  * You should have received a copy of the the GNU Affero General Public
  * License, along with The SmallMind Code Project. If not, see
  * <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under the GNU Affero GPL version 3 section 7
  * ------------------------------------------------------------------
  * If you modify this Program, or any covered work, by linking or
@@ -24,7 +24,7 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.quorum.transport.messaging;
+package org.smallmind.quorum.transport.message;
 
 import java.io.Serializable;
 import java.lang.reflect.InvocationTargetException;
@@ -43,8 +43,6 @@ import org.smallmind.scribe.pen.LoggerManager;
 
 public class MessageSender implements PooledComponent {
 
-  private ThreadLocal<String> serviceSelectorLocal = new ThreadLocal<String>();
-
   private QueueSession queueSession;
   private QueueSender queueSender;
   private TemporaryQueue temporaryQueue;
@@ -59,26 +57,19 @@ public class MessageSender implements PooledComponent {
     queueReceiver = queueSession.createReceiver(temporaryQueue);
   }
 
-  public MessageSender setServiceSelector (String serviceSelector) {
-
-    serviceSelectorLocal.set(serviceSelector);
-
-    return this;
-  }
-
   public ObjectMessage createObjectMessage (Serializable serializable)
     throws JMSException {
 
     return queueSession.createObjectMessage(serializable);
   }
 
-  public void sendMessage (Message message)
+  public void sendMessage (Message message, String serviceSelector)
     throws JMSException {
 
     String serviceSelector;
 
     if ((serviceSelector = serviceSelectorLocal.get()) != null) {
-      message.setStringProperty(MessagingConnectionDetails.SELECTION_PROPERTY, serviceSelector);
+      message.setStringProperty(MessageProperty.SERVICE.getKey(), serviceSelector);
     }
 
     message.setJMSReplyTo(temporaryQueue);
@@ -91,7 +82,7 @@ public class MessageSender implements PooledComponent {
     ObjectMessage objectMessage;
 
     objectMessage = (ObjectMessage)queueReceiver.receive();
-    if (objectMessage.getBooleanProperty(MessagingConnectionDetails.EXCEPTION_PROPERTY)) {
+    if (objectMessage.getBooleanProperty(MessageProperty.EXCEPTION.getKey())) {
       throw new InvocationTargetException((Exception)objectMessage.getObject());
     }
 
