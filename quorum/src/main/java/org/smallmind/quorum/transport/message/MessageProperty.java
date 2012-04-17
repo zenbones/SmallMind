@@ -34,7 +34,7 @@ public enum MessageProperty {
 
   private MessageProperty (String key) {
 
-    this.key = MessageProperty.class.getPackage().getName() + '.' + key;
+    this.key = key;
   }
 
   public String getKey () {
