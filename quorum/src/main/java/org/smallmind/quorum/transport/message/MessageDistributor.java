@@ -27,6 +27,7 @@
 package org.smallmind.quorum.transport.message;
 
 import java.util.HashMap;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicBoolean;
 import javax.jms.DeliveryMode;
 import javax.jms.JMSException;
@@ -41,8 +42,9 @@ import javax.jms.Session;
 import org.smallmind.quorum.transport.TransportException;
 import org.smallmind.scribe.pen.LoggerManager;
 
-public class MessageDistributor implements MessageListener {
+public class MessageDistributor implements MessageListener, Runnable {
 
+  private CountDownLatch exitLatch;
   private AtomicBoolean stopped = new AtomicBoolean(false);
   private QueueSession queueSession;
   private QueueReceiver queueReceiver;
@@ -59,14 +61,32 @@ public class MessageDistributor implements MessageListener {
 
     queueReceiver = queueSession.createReceiver(queue);
     queueReceiver.setMessageListener(this);
+
+    exitLatch = new CountDownLatch(1);
   }
 
   public void close ()
     throws JMSException {
 
     if (stopped.compareAndSet(false, true)) {
-      queueReceiver.close();
-      queueSession.close();
+      try {
+        queueReceiver.close();
+        queueSession.close();
+      }
+      finally {
+        exitLatch.countDown();
+      }
+    }
+  }
+
+  @Override
+  public void run () {
+
+    try {
+      exitLatch.await();
+    }
+    catch (InterruptedException interruptedException) {
+      LoggerManager.getLogger(MessageDistributor.class).error(interruptedException);
     }
   }
 
@@ -75,36 +95,34 @@ public class MessageDistributor implements MessageListener {
     Message responseMessage;
     QueueSender queueSender;
 
-    if (!stopped.get()) {
+    try {
       try {
-        try {
 
-          MessageTarget messageTarget;
-          String serviceSelector;
+        MessageTarget messageTarget;
+        String serviceSelector;
 
-          if ((serviceSelector = message.getStringProperty(MessageProperty.SERVICE.getKey())) == null) {
-            throw new TransportException("Missing message property(%s)", MessageProperty.SERVICE.getKey());
-          }
-          else if ((messageTarget = targetMap.get(serviceSelector)) == null) {
-            throw new TransportException("Unknown service selector(%s)", serviceSelector);
-          }
-
-          responseMessage = messageTarget.handleMessage(queueSession, messageStrategy, message);
+        if ((serviceSelector = message.getStringProperty(MessageProperty.SERVICE.getKey())) == null) {
+          throw new TransportException("Missing message property(%s)", MessageProperty.SERVICE.getKey());
         }
-        catch (Exception exception) {
-          responseMessage = messageStrategy.wrapInMessage(queueSession, exception);
-          responseMessage.setBooleanProperty(MessageProperty.EXCEPTION.getKey(), true);
+        else if ((messageTarget = targetMap.get(serviceSelector)) == null) {
+          throw new TransportException("Unknown service selector(%s)", serviceSelector);
         }
 
-        responseMessage.setJMSDeliveryMode(DeliveryMode.NON_PERSISTENT);
-
-        queueSender = queueSession.createSender((Queue)message.getJMSReplyTo());
-        queueSender.send(responseMessage);
-        queueSender.close();
+        responseMessage = messageTarget.handleMessage(queueSession, messageStrategy, message);
       }
       catch (Exception exception) {
-        LoggerManager.getLogger(MessageDistributor.class).error(exception);
+        responseMessage = messageStrategy.wrapInMessage(queueSession, exception);
+        responseMessage.setBooleanProperty(MessageProperty.EXCEPTION.getKey(), true);
       }
+
+      responseMessage.setJMSDeliveryMode(DeliveryMode.NON_PERSISTENT);
+
+      queueSender = queueSession.createSender((Queue)message.getJMSReplyTo());
+      queueSender.send(responseMessage);
+      queueSender.close();
+    }
+    catch (Exception exception) {
+      LoggerManager.getLogger(MessageDistributor.class).error(exception);
     }
   }
 }

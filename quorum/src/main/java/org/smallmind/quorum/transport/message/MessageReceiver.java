@@ -51,7 +51,7 @@ public class MessageReceiver {
 
     messageDistributors = new MessageDistributor[concurrencyLimit];
     for (int count = 0; count < messageDistributors.length; count++) {
-      messageDistributors[count] = new MessageDistributor(queueConnection, (Queue)managedObjects.getDestination(), messageStrategy, targetMap);
+      new Thread(messageDistributors[count] = new MessageDistributor(queueConnection, (Queue)managedObjects.getDestination(), messageStrategy, targetMap)).start();
     }
 
     queueConnection.start();
