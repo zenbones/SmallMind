@@ -29,6 +29,8 @@ package org.smallmind.persistence.sql.pool;
 import java.io.PrintWriter;
 import java.sql.Connection;
 import java.sql.SQLException;
+import java.sql.SQLFeatureNotSupportedException;
+import java.util.logging.Logger;
 import javax.sql.DataSource;
 import javax.sql.PooledConnection;
 import org.smallmind.persistence.sql.DataSourceManager;
@@ -73,6 +75,11 @@ public class PooledDataSource implements DataSource {
   public Connection getConnection (String username, String password) {
 
     throw new UnsupportedOperationException("Please properly configure the underlying resource managed by the pool which is represented by this DataSource");
+  }
+
+  public Logger getParentLogger () throws SQLFeatureNotSupportedException {
+
+    throw new SQLFeatureNotSupportedException();
   }
 
   public PrintWriter getLogWriter () {

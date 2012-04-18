@@ -30,6 +30,8 @@ import java.io.PrintWriter;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
+import java.sql.SQLFeatureNotSupportedException;
+import java.util.logging.Logger;
 import javax.sql.DataSource;
 
 public class DriverManagerDataSource implements DataSource {
@@ -64,6 +66,11 @@ public class DriverManagerDataSource implements DataSource {
     throws SQLException {
 
     return DriverManager.getConnection(jdbcUrl, user, password);
+  }
+
+  public Logger getParentLogger () throws SQLFeatureNotSupportedException {
+
+    throw new SQLFeatureNotSupportedException();
   }
 
   public PrintWriter getLogWriter () {

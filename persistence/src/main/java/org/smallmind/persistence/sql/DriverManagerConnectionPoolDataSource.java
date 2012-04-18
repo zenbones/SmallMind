@@ -28,6 +28,8 @@ package org.smallmind.persistence.sql;
 
 import java.io.PrintWriter;
 import java.sql.SQLException;
+import java.sql.SQLFeatureNotSupportedException;
+import java.util.logging.Logger;
 import javax.sql.ConnectionPoolDataSource;
 import javax.sql.PooledConnection;
 
@@ -70,6 +72,11 @@ public class DriverManagerConnectionPoolDataSource implements ConnectionPoolData
     throws SQLException {
 
     return new DriverManagerPooledConnection(dataSource, user, password, maxStatements);
+  }
+
+  public Logger getParentLogger () throws SQLFeatureNotSupportedException {
+
+    throw new SQLFeatureNotSupportedException();
   }
 
   public PrintWriter getLogWriter ()
