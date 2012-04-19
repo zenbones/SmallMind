@@ -30,4 +30,7 @@ public interface JugglingPin<R> {
 
   public abstract R obtain ()
     throws Exception;
+
+  public abstract void close ()
+    throws Exception;
 }

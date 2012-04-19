@@ -44,4 +44,10 @@ public class ConnectionJugglingPin implements JugglingPin<Connection> {
 
     return (cartridge.getDataSource() == null) ? null : cartridge.getDataSource().getConnection();
   }
+
+  @Override
+  public void close ()
+    throws Exception {
+
+  }
 }

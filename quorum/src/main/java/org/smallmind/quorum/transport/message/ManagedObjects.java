@@ -28,12 +28,13 @@ package org.smallmind.quorum.transport.message;
 
 import javax.jms.Connection;
 import javax.jms.Destination;
+import org.smallmind.quorum.transport.TransportException;
 
 public interface ManagedObjects {
 
   public abstract Connection createConnection ()
-    throws Exception;
+    throws TransportException;
 
   public abstract Destination getDestination ()
-    throws Exception;
+    throws TransportException;
 }

@@ -29,20 +29,16 @@ package org.smallmind.quorum.transport.message;
 import java.util.HashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
 import javax.jms.JMSException;
-import javax.jms.Queue;
-import javax.jms.QueueConnection;
+import org.smallmind.quorum.transport.TransportException;
 import org.smallmind.scribe.pen.LoggerManager;
 
 public class MessageReceiver {
 
   private AtomicBoolean stopped = new AtomicBoolean(false);
-  private QueueConnection queueConnection;
   private MessageDistributor[] messageDistributors;
 
   public MessageReceiver (ManagedObjects managedObjects, MessageStrategy messageStrategy, int concurrencyLimit, MessageTarget... messageTargets)
-    throws Exception {
-
-    queueConnection = (QueueConnection)managedObjects.createConnection();
+    throws JMSException, TransportException {
 
     HashMap<String, MessageTarget> targetMap = new HashMap<String, MessageTarget>();
     for (MessageTarget messageTarget : messageTargets) {
@@ -51,23 +47,17 @@ public class MessageReceiver {
 
     messageDistributors = new MessageDistributor[concurrencyLimit];
     for (int count = 0; count < messageDistributors.length; count++) {
-      new Thread(messageDistributors[count] = new MessageDistributor(queueConnection, (Queue)managedObjects.getDestination(), messageStrategy, targetMap)).start();
+      new Thread(messageDistributors[count] = new MessageDistributor(managedObjects, messageStrategy, targetMap)).start();
     }
-
-    queueConnection.start();
   }
 
   public synchronized void close () {
 
     if (stopped.compareAndSet(false, true)) {
       try {
-        queueConnection.stop();
-
         for (MessageDistributor messageDistributor : messageDistributors) {
           messageDistributor.close();
         }
-
-        queueConnection.close();
       }
       catch (JMSException jmsException) {
         LoggerManager.getLogger(MessageReceiver.class).error(jmsException);

@@ -113,6 +113,7 @@ public class ConnectionPinManager<C> {
         throw new ConnectionValidationException("A free connection was acquired, but failed to validate");
       }
 
+      System.out.println("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
       return connectionPin;
     }
 
@@ -122,7 +123,7 @@ public class ConnectionPinManager<C> {
     }
 
     try {
-      if ((connectionPin = freeQueue.poll(connectionPool.getConnectionPoolConfig().getAcquireWaitTimeMillis(), TimeUnit.MILLISECONDS)) != null) {
+      if ((connectionPool.getConnectionPoolConfig().getAcquireWaitTimeMillis() > 0) && (connectionPin = freeQueue.poll(connectionPool.getConnectionPoolConfig().getAcquireWaitTimeMillis(), TimeUnit.MILLISECONDS)) != null) {
 
         if (connectionPool.getConnectionPoolConfig().isTestOnAcquire() && (!connectionPin.getConnectionInstance().validate())) {
           throw new ConnectionValidationException("A free connection was acquired, but failed to validate");

@@ -29,35 +29,36 @@ package org.smallmind.persistence.sql.pool;
 import java.sql.SQLException;
 import org.smallmind.persistence.sql.DriverManagerConnectionPoolDataSource;
 import org.smallmind.persistence.sql.DriverManagerDataSource;
+import org.smallmind.quorum.juggler.ResourceCreationException;
 
 public class DriverManagerConnectionInstanceFactory extends DataSourceConnectionInstanceFactory {
 
   public DriverManagerConnectionInstanceFactory (String driverClassName, String jdbcUrl, String user, String password)
-    throws SQLException {
+    throws SQLException, ResourceCreationException {
 
     this(driverClassName, jdbcUrl, user, password, 0);
   }
 
   public DriverManagerConnectionInstanceFactory (String driverClassName, String jdbcUrl, String user, String password, int maxStatements)
-    throws SQLException {
+    throws SQLException, ResourceCreationException {
 
     this(driverClassName, maxStatements, new ConnectionEndpoint(jdbcUrl, user, password));
   }
 
   public DriverManagerConnectionInstanceFactory (String driverClassName, ConnectionEndpoint... endpoints)
-    throws SQLException {
+    throws SQLException, ResourceCreationException {
 
     this(driverClassName, 0, endpoints);
   }
 
   public DriverManagerConnectionInstanceFactory (String driverClassName, int maxStatements, ConnectionEndpoint... endpoints)
-    throws SQLException {
+    throws SQLException, ResourceCreationException {
 
     this(maxStatements, constructDataSources(driverClassName, endpoints));
   }
 
   public DriverManagerConnectionInstanceFactory (int maxStatements, DriverManagerDataSource... dataSources)
-    throws SQLException {
+    throws SQLException, ResourceCreationException {
 
     super(60, constructCartridges(maxStatements, dataSources));
   }

@@ -55,9 +55,11 @@ public class ConnectionPoolConfig {
     return testOnConnect.get();
   }
 
-  public void setTestOnConnect (boolean testOnConnect) {
+  public ConnectionPoolConfig setTestOnConnect (boolean testOnConnect) {
 
     this.testOnConnect.set(testOnConnect);
+
+    return this;
   }
 
   public boolean isTestOnAcquire () {
@@ -65,9 +67,11 @@ public class ConnectionPoolConfig {
     return testOnAcquire.get();
   }
 
-  public void setTestOnAcquire (boolean testOnAcquire) {
+  public ConnectionPoolConfig setTestOnAcquire (boolean testOnAcquire) {
 
     this.testOnAcquire.set(testOnAcquire);
+
+    return this;
   }
 
   public boolean isReportLeaseTimeNanos () {
@@ -75,9 +79,11 @@ public class ConnectionPoolConfig {
     return reportLeaseTimeNanos.get();
   }
 
-  public void setReportLeaseTimeNanos (boolean reportLeaseTimeNanos) {
+  public ConnectionPoolConfig setReportLeaseTimeNanos (boolean reportLeaseTimeNanos) {
 
     this.reportLeaseTimeNanos.set(reportLeaseTimeNanos);
+
+    return this;
   }
 
   public boolean isExistentiallyAware () {
@@ -85,9 +91,11 @@ public class ConnectionPoolConfig {
     return existentiallyAware.get();
   }
 
-  public void setExistentiallyAware (boolean existentiallyAware) {
+  public ConnectionPoolConfig setExistentiallyAware (boolean existentiallyAware) {
 
     this.existentiallyAware.set(existentiallyAware);
+
+    return this;
   }
 
   public long getConnectionTimeoutMillis () {
@@ -95,13 +103,15 @@ public class ConnectionPoolConfig {
     return connectionTimeoutMillis.get();
   }
 
-  public void setConnectionTimeoutMillis (long connectionTimeoutMillis) {
+  public ConnectionPoolConfig setConnectionTimeoutMillis (long connectionTimeoutMillis) {
 
     if (connectionTimeoutMillis < 0) {
       throw new IllegalArgumentException("Connection timeout must be >= 0");
     }
 
     this.connectionTimeoutMillis.set(connectionTimeoutMillis);
+
+    return this;
   }
 
   public int getInitialPoolSize () {
@@ -109,13 +119,15 @@ public class ConnectionPoolConfig {
     return initialPoolSize.get();
   }
 
-  public void setInitialPoolSize (int initialPoolSize) {
+  public ConnectionPoolConfig setInitialPoolSize (int initialPoolSize) {
 
     if (initialPoolSize < 0) {
       throw new IllegalArgumentException("Initial pool size must be >= 0");
     }
 
     this.initialPoolSize.set(initialPoolSize);
+
+    return this;
   }
 
   public int getMinPoolSize () {
@@ -123,13 +135,15 @@ public class ConnectionPoolConfig {
     return minPoolSize.get();
   }
 
-  public void setMinPoolSize (int minPoolSize) {
+  public ConnectionPoolConfig setMinPoolSize (int minPoolSize) {
 
     if (minPoolSize < 0) {
       throw new IllegalArgumentException("Minimum pool size must be >= 0");
     }
 
     this.minPoolSize.set(minPoolSize);
+
+    return this;
   }
 
   public int getMaxPoolSize () {
@@ -137,13 +151,15 @@ public class ConnectionPoolConfig {
     return maxPoolSize.get();
   }
 
-  public void setMaxPoolSize (int maxPoolSize) {
+  public ConnectionPoolConfig setMaxPoolSize (int maxPoolSize) {
 
     if (maxPoolSize < 0) {
       throw new IllegalArgumentException("Maximum pool size must be >= 0");
     }
 
     this.maxPoolSize.set(maxPoolSize);
+
+    return this;
   }
 
   public long getAcquireWaitTimeMillis () {
@@ -151,13 +167,15 @@ public class ConnectionPoolConfig {
     return acquireWaitTimeMillis.get();
   }
 
-  public void setAcquireWaitTimeMillis (long acquireWaitTimeMillis) {
+  public ConnectionPoolConfig setAcquireWaitTimeMillis (long acquireWaitTimeMillis) {
 
     if (acquireWaitTimeMillis < 0) {
       throw new IllegalArgumentException("Acquire wait time must be >= 0");
     }
 
     this.acquireWaitTimeMillis.set(acquireWaitTimeMillis);
+
+    return this;
   }
 
   public int getMaxLeaseTimeSeconds () {
@@ -165,13 +183,15 @@ public class ConnectionPoolConfig {
     return maxLeaseTimeSeconds.get();
   }
 
-  public void setMaxLeaseTimeSeconds (int maxLeaseTimeSeconds) {
+  public ConnectionPoolConfig setMaxLeaseTimeSeconds (int maxLeaseTimeSeconds) {
 
     if (maxLeaseTimeSeconds < 0) {
       throw new IllegalArgumentException("Maximum lease time must be >= 0");
     }
 
     this.maxLeaseTimeSeconds.set(maxLeaseTimeSeconds);
+
+    return this;
   }
 
   public int getMaxIdleTimeSeconds () {
@@ -179,13 +199,15 @@ public class ConnectionPoolConfig {
     return maxIdleTimeSeconds.get();
   }
 
-  public void setMaxIdleTimeSeconds (int maxIdleTimeSeconds) {
+  public ConnectionPoolConfig setMaxIdleTimeSeconds (int maxIdleTimeSeconds) {
 
     if (maxIdleTimeSeconds < 0) {
       throw new IllegalArgumentException("Maximum idle time must be >= 0");
     }
 
     this.maxIdleTimeSeconds.set(maxIdleTimeSeconds);
+
+    return this;
   }
 
   public int getUnreturnedConnectionTimeoutSeconds () {
@@ -193,12 +215,14 @@ public class ConnectionPoolConfig {
     return unreturnedConnectionTimeoutSeconds.get();
   }
 
-  public void setUnreturnedConnectionTimeoutSeconds (int unreturnedConnectionTimeoutSeconds) {
+  public ConnectionPoolConfig setUnreturnedConnectionTimeoutSeconds (int unreturnedConnectionTimeoutSeconds) {
 
     if (unreturnedConnectionTimeoutSeconds < 0) {
       throw new IllegalArgumentException("Unreturned connection timeout must be >= 0");
     }
 
     this.unreturnedConnectionTimeoutSeconds.set(unreturnedConnectionTimeoutSeconds);
+
+    return this;
   }
 }

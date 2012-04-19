@@ -26,41 +26,39 @@
  */
 package org.smallmind.quorum.transport.message;
 
+import javax.jms.JMSException;
 import javax.jms.Queue;
 import javax.jms.QueueConnection;
 import org.smallmind.quorum.juggler.Juggler;
+import org.smallmind.quorum.juggler.NoAvailableResourceException;
+import org.smallmind.quorum.pool.connection.ConnectionInstance;
+import org.smallmind.quorum.pool.connection.ConnectionInstanceFactory;
 import org.smallmind.quorum.pool.connection.ConnectionPool;
-import org.smallmind.quorum.pool.connection.ConnectionPoolException;
 
-public class MessageTransmitter {
+public class MessageSenderConnectionInstanceFactory implements ConnectionInstanceFactory<MessageSender, MessageSender> {
 
   private Juggler<ManagedObjects, QueueConnection> queueConnectionJuggler;
-  private ConnectionPool<MessageSender> messageSenderPool;
+  private Queue queue;
+  private MessageStrategy messageStrategy;
 
-  public MessageTransmitter (ManagedObjects managedObjects, MessageStrategy messageStrategy, int connectionCount, MessagePoolConfig messagePoolConfig)
-    throws Exception {
+  public MessageSenderConnectionInstanceFactory (Juggler<ManagedObjects, QueueConnection> queueConnectionJuggler, Queue queue, MessageStrategy messageStrategy) {
 
-    queueConnectionJuggler = new Juggler<ManagedObjects, QueueConnection>(ManagedObjects.class, 60, new QueueConnectionJugglingPinFactory(), managedObjects, connectionCount);
-    messageSenderPool = new ConnectionPool<MessageSender>("", new MessageSenderConnectionInstanceFactory(queueConnectionJuggler, (Queue)managedObjects.getDestination(), messageStrategy), messagePoolConfig);
-
-    messageSenderPool.startup();
+    this.queueConnectionJuggler = queueConnectionJuggler;
+    this.queue = queue;
+    this.messageStrategy = messageStrategy;
   }
 
-  public MessageSender borrowMessageSender ()
-    throws ConnectionPoolException {
+  @Override
+  public MessageSender rawInstance ()
+    throws UnsupportedOperationException {
 
-    return messageSenderPool.getConnection();
+    throw new UnsupportedOperationException();
   }
 
-  public void returnMessageSender (MessageSender messageSender) {
+  @Override
+  public ConnectionInstance<MessageSender> createInstance (ConnectionPool<MessageSender> connectionPool)
+    throws NoAvailableResourceException, JMSException {
 
-    messageSenderPool.returnInstance(messageSender.getConnectionInstance());
-  }
-
-  public void close ()
-    throws ConnectionPoolException {
-
-    messageSenderPool.shutdown();
-    queueConnectionJuggler.shutdown();
+    return new MessageSenderConnectionInstance(connectionPool, queueConnectionJuggler.pickResource(), queue, messageStrategy);
   }
 }

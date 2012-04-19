@@ -28,6 +28,7 @@ package org.smallmind.quorum.juggler;
 
 import java.security.SecureRandom;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Map;
 import java.util.concurrent.ConcurrentSkipListMap;
 import java.util.concurrent.CountDownLatch;
@@ -43,8 +44,26 @@ public class Juggler<P, R> {
   private ProviderRecoveryWorker recoveryWorker = null;
   private ArrayList<JugglingPin<R>> sourcePins;
   private ArrayList<JugglingPin<R>> targetPins;
+  private boolean closed = false;
 
-  public Juggler (Class<P> managedClass, int recoveryCheckSeconds, JugglingPinFactory<P, R> jugglingPinFactory, P... providers) {
+  public Juggler (Class<P> managedClass, int recoveryCheckSeconds, JugglingPinFactory<P, R> jugglingPinFactory, P provider, int size)
+    throws ResourceCreationException {
+
+    this(managedClass, recoveryCheckSeconds, jugglingPinFactory, generateArray(provider, size));
+
+  }
+
+  private static <P> P[] generateArray (P provider, int size) {
+
+    P[] array = (P[])new Object[size];
+
+    Arrays.fill(array, provider);
+
+    return array;
+  }
+
+  public Juggler (Class<P> managedClass, int recoveryCheckSeconds, JugglingPinFactory<P, R> jugglingPinFactory, P... providers)
+    throws ResourceCreationException {
 
     Thread recoveryThread;
 
@@ -69,49 +88,76 @@ public class Juggler<P, R> {
     }
   }
 
-  public R pickResource ()
+  public synchronized R pickResource ()
     throws NoAvailableResourceException {
 
-    synchronized (this) {
-      while (!(sourcePins.isEmpty() && targetPins.isEmpty())) {
+    if (closed) {
+      throw new IllegalStateException("Juggler has been closed");
+    }
 
-        R resource;
-        JugglingPin<R> pin;
+    while (!(sourcePins.isEmpty() && targetPins.isEmpty())) {
 
-        if (sourcePins.isEmpty()) {
+      R resource;
+      JugglingPin<R> pin;
 
-          ArrayList<JugglingPin<R>> tempPins = sourcePins;
+      if (sourcePins.isEmpty()) {
 
-          sourcePins = targetPins;
-          targetPins = tempPins;
-        }
+        ArrayList<JugglingPin<R>> tempPins = sourcePins;
 
-        pin = sourcePins.remove(random.nextInt(sourcePins.size()));
+        sourcePins = targetPins;
+        targetPins = tempPins;
+      }
+
+      pin = sourcePins.remove(random.nextInt(sourcePins.size()));
+      try {
+        resource = pin.obtain();
+        targetPins.add(pin);
+
+        return resource;
+      }
+      catch (Exception exception) {
         try {
-          resource = pin.obtain();
-          targetPins.add(pin);
-
-          return resource;
+          LoggerManager.getLogger(Juggler.class).error(exception);
         }
-        catch (Exception exception) {
-          try {
-            LoggerManager.getLogger(Juggler.class).error(exception);
-          }
-          finally {
-            blackMap.put(System.currentTimeMillis(), pin);
-          }
+        finally {
+          blackMap.put(System.currentTimeMillis(), pin);
+        }
+      }
+    }
+
+    throw new NoAvailableResourceException("All available resources(%s) have been black listed", managedClass.getSimpleName());
+  }
+
+  public synchronized void shutdown () {
+
+    if (!closed) {
+      closed = true;
+
+      if (recoveryWorker != null) {
+        try {
+          recoveryWorker.abort();
+        }
+        catch (InterruptedException interruptedException) {
+          LoggerManager.getLogger(Juggler.class).error(interruptedException);
         }
       }
 
-      throw new NoAvailableResourceException("All available resources(%s) have been black listed", managedClass.getSimpleName());
-    }
-  }
-
-  public void shutdown ()
-    throws InterruptedException {
-
-    if (recoveryWorker != null) {
-      recoveryWorker.abort();
+      for (JugglingPin<R> pin : sourcePins) {
+        try {
+          pin.close();
+        }
+        catch (Exception exception) {
+          LoggerManager.getLogger(Juggler.class).error(exception);
+        }
+      }
+      for (JugglingPin<R> pin : targetPins) {
+        try {
+          pin.close();
+        }
+        catch (Exception exception) {
+          LoggerManager.getLogger(Juggler.class).error(exception);
+        }
+      }
     }
   }
 

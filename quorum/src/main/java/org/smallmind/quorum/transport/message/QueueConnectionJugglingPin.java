@@ -24,30 +24,39 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.persistence.sql.pool;
+package org.smallmind.quorum.transport.message;
 
-import javax.sql.PooledConnection;
+import javax.jms.JMSException;
+import javax.jms.QueueConnection;
 import org.smallmind.quorum.juggler.JugglingPin;
 
-public class PooledConnectionJugglingPin implements JugglingPin<PooledConnection> {
+public class QueueConnectionJugglingPin implements JugglingPin<QueueConnection> {
 
-  private DataSourceCartridge cartridge;
+  private QueueConnection connection;
 
-  public PooledConnectionJugglingPin (DataSourceCartridge cartridge) {
+  public QueueConnectionJugglingPin (QueueConnection connection)
+    throws JMSException {
 
-    this.cartridge = cartridge;
+    this.connection = connection;
+
+    connection.start();
   }
 
   @Override
-  public PooledConnection obtain ()
-    throws Exception {
+  public QueueConnection obtain () {
 
-    return cartridge.getConnectionPoolDataSource().getPooledConnection();
+    return connection;
   }
 
   @Override
   public void close ()
-    throws Exception {
+    throws JMSException {
 
+    try {
+      connection.stop();
+    }
+    finally {
+      connection.close();
+    }
   }
 }

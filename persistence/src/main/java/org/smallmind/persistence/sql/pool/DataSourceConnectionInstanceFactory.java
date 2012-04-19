@@ -33,6 +33,7 @@ import javax.sql.DataSource;
 import javax.sql.PooledConnection;
 import org.smallmind.quorum.juggler.Juggler;
 import org.smallmind.quorum.juggler.NoAvailableResourceException;
+import org.smallmind.quorum.juggler.ResourceCreationException;
 import org.smallmind.quorum.pool.connection.ConnectionInstance;
 import org.smallmind.quorum.pool.connection.ConnectionInstanceFactory;
 import org.smallmind.quorum.pool.connection.ConnectionPool;
@@ -43,32 +44,38 @@ public class DataSourceConnectionInstanceFactory implements ConnectionInstanceFa
   private Juggler<DataSourceCartridge, Connection> rawConnectionJuggler;
   private String validationQuery = "select 1";
 
-  public DataSourceConnectionInstanceFactory (ConnectionPoolDataSource connectionPoolDataSource) {
+  public DataSourceConnectionInstanceFactory (ConnectionPoolDataSource connectionPoolDataSource)
+    throws ResourceCreationException {
 
     this(0, new DataSourceCartridge(connectionPoolDataSource));
   }
 
-  public DataSourceConnectionInstanceFactory (ConnectionPoolDataSource connectionPoolDataSource, int recoveryCheckSeconds) {
+  public DataSourceConnectionInstanceFactory (ConnectionPoolDataSource connectionPoolDataSource, int recoveryCheckSeconds)
+    throws ResourceCreationException {
 
     this(recoveryCheckSeconds, new DataSourceCartridge(connectionPoolDataSource));
   }
 
-  public DataSourceConnectionInstanceFactory (DataSource dataSource, ConnectionPoolDataSource connectionPoolDataSource) {
+  public DataSourceConnectionInstanceFactory (DataSource dataSource, ConnectionPoolDataSource connectionPoolDataSource)
+    throws ResourceCreationException {
 
     this(0, new DataSourceCartridge(dataSource, connectionPoolDataSource));
   }
 
-  public DataSourceConnectionInstanceFactory (DataSource dataSource, ConnectionPoolDataSource connectionPoolDataSource, int recoveryCheckSeconds) {
+  public DataSourceConnectionInstanceFactory (DataSource dataSource, ConnectionPoolDataSource connectionPoolDataSource, int recoveryCheckSeconds)
+    throws ResourceCreationException {
 
     this(recoveryCheckSeconds, new DataSourceCartridge(dataSource, connectionPoolDataSource));
   }
 
-  public DataSourceConnectionInstanceFactory (DataSourceCartridge... cartridges) {
+  public DataSourceConnectionInstanceFactory (DataSourceCartridge... cartridges)
+    throws ResourceCreationException {
 
     this(0, cartridges);
   }
 
-  public DataSourceConnectionInstanceFactory (int recoveryCheckSeconds, DataSourceCartridge... cartridges) {
+  public DataSourceConnectionInstanceFactory (int recoveryCheckSeconds, DataSourceCartridge... cartridges)
+    throws ResourceCreationException {
 
     rawConnectionJuggler = new Juggler<DataSourceCartridge, Connection>(DataSourceCartridge.class, recoveryCheckSeconds, new ConnectionJugglingPinFactory(), cartridges);
     pooledConnectionJuggler = new Juggler<DataSourceCartridge, PooledConnection>(DataSourceCartridge.class, recoveryCheckSeconds, new PooledConnectionJugglingPinFactory(), cartridges);

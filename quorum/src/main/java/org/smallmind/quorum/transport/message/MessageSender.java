@@ -37,26 +37,31 @@ import javax.jms.QueueSender;
 import javax.jms.QueueSession;
 import javax.jms.Session;
 import javax.jms.TemporaryQueue;
-import org.smallmind.quorum.pool.component.PooledComponent;
-import org.smallmind.scribe.pen.LoggerManager;
 
-public class MessageSender implements PooledComponent {
+public class MessageSender {
 
+  private MessageSenderConnectionInstance connectionInstance;
   private QueueSession queueSession;
   private QueueSender queueSender;
   private TemporaryQueue temporaryQueue;
   private QueueReceiver queueReceiver;
   private MessageStrategy messageStrategy;
 
-  public MessageSender (QueueConnection queueConnection, Queue queue, MessageStrategy messageStrategy)
+  public MessageSender (MessageSenderConnectionInstance connectionInstance, QueueConnection queueConnection, Queue queue, MessageStrategy messageStrategy)
     throws JMSException {
 
+    this.connectionInstance = connectionInstance;
     this.messageStrategy = messageStrategy;
 
     queueSession = queueConnection.createQueueSession(false, Session.AUTO_ACKNOWLEDGE);
     queueSender = queueSession.createSender(queue);
     temporaryQueue = queueSession.createTemporaryQueue();
     queueReceiver = queueSession.createReceiver(temporaryQueue);
+  }
+
+  public MessageSenderConnectionInstance getConnectionInstance () {
+
+    return connectionInstance;
   }
 
   public Message wrapInMessage (Serializable serializable)
@@ -93,16 +98,5 @@ public class MessageSender implements PooledComponent {
     queueReceiver.close();
     temporaryQueue.delete();
     queueSession.close();
-  }
-
-  @Override
-  public void terminate () {
-
-    try {
-      close();
-    }
-    catch (JMSException jmsException) {
-      LoggerManager.getLogger(MessageSender.class).error(jmsException);
-    }
   }
 }

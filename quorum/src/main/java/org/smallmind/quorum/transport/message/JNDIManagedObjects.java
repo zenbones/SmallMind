@@ -28,12 +28,10 @@ package org.smallmind.quorum.transport.message;
 
 import javax.jms.Connection;
 import javax.jms.Destination;
-import javax.jms.JMSException;
 import javax.jms.Queue;
 import javax.jms.QueueConnectionFactory;
 import javax.naming.Context;
-import javax.naming.NamingException;
-import org.smallmind.quorum.pool.connection.ConnectionPoolException;
+import org.smallmind.quorum.transport.TransportException;
 
 public class JNDIManagedObjects implements ManagedObjects {
 
@@ -46,37 +44,49 @@ public class JNDIManagedObjects implements ManagedObjects {
 
   @Override
   public Connection createConnection ()
-    throws ConnectionPoolException, NamingException, JMSException {
+    throws TransportException {
 
-    Context javaEnvironment;
-    QueueConnectionFactory queueConnectionFactory;
-
-    javaEnvironment = messageConnectionDetails.getContextPool().getConnection();
     try {
-      queueConnectionFactory = (QueueConnectionFactory)javaEnvironment.lookup(messageConnectionDetails.getConnectionFactoryName());
-    }
-    finally {
-      javaEnvironment.close();
-    }
 
-    return queueConnectionFactory.createQueueConnection(messageConnectionDetails.getUserName(), messageConnectionDetails.getPassword());
+      Context javaEnvironment;
+      QueueConnectionFactory queueConnectionFactory;
+
+      javaEnvironment = messageConnectionDetails.getContextPool().getConnection();
+      try {
+        queueConnectionFactory = (QueueConnectionFactory)javaEnvironment.lookup(messageConnectionDetails.getConnectionFactoryName());
+      }
+      finally {
+        javaEnvironment.close();
+      }
+
+      return queueConnectionFactory.createQueueConnection(messageConnectionDetails.getUserName(), messageConnectionDetails.getPassword());
+    }
+    catch (Exception exception) {
+      throw new TransportException(exception);
+    }
   }
 
   @Override
   public Destination getDestination ()
-    throws ConnectionPoolException, NamingException {
+    throws TransportException {
 
-    Context javaEnvironment;
-    Queue queue;
-
-    javaEnvironment = messageConnectionDetails.getContextPool().getConnection();
     try {
-      queue = (Queue)javaEnvironment.lookup(messageConnectionDetails.getDestinationName());
-    }
-    finally {
-      javaEnvironment.close();
-    }
 
-    return queue;
+      Context javaEnvironment;
+      Queue queue;
+
+      javaEnvironment = messageConnectionDetails.getContextPool().getConnection();
+      try {
+        queue = (Queue)javaEnvironment.lookup(messageConnectionDetails.getDestinationName());
+      }
+      finally {
+        javaEnvironment.close();
+      }
+
+      return queue;
+    }
+    catch (Exception exception) {
+      throw new TransportException(exception);
+    }
   }
 }
