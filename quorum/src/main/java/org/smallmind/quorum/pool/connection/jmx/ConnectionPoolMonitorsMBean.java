@@ -123,9 +123,9 @@ public interface ConnectionPoolMonitorsMBean {
   public abstract void setMaxIdleTimeSeconds (String poolId, int maxIdleTimeSeconds)
     throws ConnectionPoolRegistrationException;
 
-  public abstract int getUnreturnedConnectionTimeoutSeconds (String poolId)
+  public abstract int getUnReturnedElementTimeoutSeconds (String poolId)
     throws ConnectionPoolRegistrationException;
 
-  public abstract void setUnreturnedConnectionTimeoutSeconds (String poolId, int unreturnedConnectionTimeoutSeconds)
+  public abstract void setUnReturnedElementTimeoutSeconds (String poolId, int unReturnedElementTimeoutSeconds)
     throws ConnectionPoolRegistrationException;
 }

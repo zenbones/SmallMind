@@ -30,6 +30,7 @@ import javax.jms.Queue;
 import javax.jms.QueueConnection;
 import org.smallmind.quorum.juggler.Juggler;
 import org.smallmind.quorum.pool.connection.ConnectionPool;
+import org.smallmind.quorum.pool.connection.ConnectionPoolConfig;
 import org.smallmind.quorum.pool.connection.ConnectionPoolException;
 
 public class MessageTransmitter {
@@ -41,7 +42,7 @@ public class MessageTransmitter {
     throws Exception {
 
     queueConnectionJuggler = new Juggler<ManagedObjects, QueueConnection>(ManagedObjects.class, 60, new QueueConnectionJugglingPinFactory(), managedObjects, connectionCount);
-    messageSenderPool = new ConnectionPool<MessageSender>("", new MessageSenderConnectionInstanceFactory(queueConnectionJuggler, (Queue)managedObjects.getDestination(), messageStrategy), messagePoolConfig);
+    messageSenderPool = new ConnectionPool<MessageSender>("", new MessageSenderConnectionInstanceFactory(queueConnectionJuggler, (Queue)managedObjects.getDestination(), messageStrategy), new ConnectionPoolConfig(messagePoolConfig));
 
     messageSenderPool.startup();
   }

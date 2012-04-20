@@ -296,15 +296,15 @@ public class ConnectionPoolMonitors extends StandardEmitterMBean implements Conn
     getRemoteSurface(poolId).setMaxIdleTimeSeconds(maxIdleTimeSeconds);
   }
 
-  public int getUnreturnedConnectionTimeoutSeconds (String poolId)
+  public int getUnReturnedElementTimeoutSeconds (String poolId)
     throws ConnectionPoolRegistrationException {
 
-    return getRemoteSurface(poolId).getUnreturnedConnectionTimeoutSeconds();
+    return getRemoteSurface(poolId).getUnReturnedElementTimeoutSeconds();
   }
 
-  public void setUnreturnedConnectionTimeoutSeconds (String poolId, int unreturnedConnectionTimeoutSeconds)
+  public void setUnReturnedElementTimeoutSeconds (String poolId, int unReturnedElementTimeoutSeconds)
     throws ConnectionPoolRegistrationException {
 
-    getRemoteSurface(poolId).setUnreturnedConnectionTimeoutSeconds(unreturnedConnectionTimeoutSeconds);
+    getRemoteSurface(poolId).setUnReturnedElementTimeoutSeconds(unReturnedElementTimeoutSeconds);
   }
 }

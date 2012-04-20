@@ -27,27 +27,39 @@
 package org.smallmind.quorum.pool.connection;
 
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
+import org.smallmind.quorum.pool.PoolConfig;
 
-public class ConnectionPoolConfig {
+public class ConnectionPoolConfig extends PoolConfig<ConnectionPoolConfig> {
 
   private final AtomicBoolean testOnConnect = new AtomicBoolean(false);
   private final AtomicBoolean testOnAcquire = new AtomicBoolean(false);
-  private final AtomicBoolean reportLeaseTimeNanos = new AtomicBoolean(false);
-  private final AtomicBoolean existentiallyAware = new AtomicBoolean(false);
   private final AtomicLong connectionTimeoutMillis = new AtomicLong(0);
-  private final AtomicLong acquireWaitTimeMillis = new AtomicLong(0);
-  private final AtomicInteger initialPoolSize = new AtomicInteger(0);
-  private final AtomicInteger minPoolSize = new AtomicInteger(0);
-  private final AtomicInteger maxPoolSize = new AtomicInteger(10);
-  private final AtomicInteger maxLeaseTimeSeconds = new AtomicInteger(0);
-  private final AtomicInteger maxIdleTimeSeconds = new AtomicInteger(0);
-  private final AtomicInteger unreturnedConnectionTimeoutSeconds = new AtomicInteger(0);
+
+  public ConnectionPoolConfig () {
+
+  }
+
+  public ConnectionPoolConfig (PoolConfig<?> poolConfig) {
+
+    super(poolConfig);
+
+    if (poolConfig.getConfigurationClass().isAssignableFrom(ConnectionPoolConfig.class)) {
+      setTestOnConnect(((ConnectionPoolConfig)poolConfig).isTestOnConnect());
+      setTestOnAcquire(((ConnectionPoolConfig)poolConfig).isTestOnAcquire());
+      setConnectionTimeoutMillis(((ConnectionPoolConfig)poolConfig).getConnectionTimeoutMillis());
+    }
+  }
+
+  @Override
+  public Class<ConnectionPoolConfig> getConfigurationClass () {
+
+    return ConnectionPoolConfig.class;
+  }
 
   public boolean requiresDeconstruction () {
 
-    return (getMaxLeaseTimeSeconds() > 0) || (getMaxIdleTimeSeconds() > 0) || (getUnreturnedConnectionTimeoutSeconds() > 0);
+    return (getMaxLeaseTimeSeconds() > 0) || (getMaxIdleTimeSeconds() > 0) || (getUnReturnedElementTimeoutSeconds() > 0);
   }
 
   public boolean isTestOnConnect () {
@@ -59,7 +71,7 @@ public class ConnectionPoolConfig {
 
     this.testOnConnect.set(testOnConnect);
 
-    return this;
+    return getConfigurationClass().cast(this);
   }
 
   public boolean isTestOnAcquire () {
@@ -71,31 +83,7 @@ public class ConnectionPoolConfig {
 
     this.testOnAcquire.set(testOnAcquire);
 
-    return this;
-  }
-
-  public boolean isReportLeaseTimeNanos () {
-
-    return reportLeaseTimeNanos.get();
-  }
-
-  public ConnectionPoolConfig setReportLeaseTimeNanos (boolean reportLeaseTimeNanos) {
-
-    this.reportLeaseTimeNanos.set(reportLeaseTimeNanos);
-
-    return this;
-  }
-
-  public boolean isExistentiallyAware () {
-
-    return existentiallyAware.get();
-  }
-
-  public ConnectionPoolConfig setExistentiallyAware (boolean existentiallyAware) {
-
-    this.existentiallyAware.set(existentiallyAware);
-
-    return this;
+    return getConfigurationClass().cast(this);
   }
 
   public long getConnectionTimeoutMillis () {
@@ -111,118 +99,6 @@ public class ConnectionPoolConfig {
 
     this.connectionTimeoutMillis.set(connectionTimeoutMillis);
 
-    return this;
-  }
-
-  public int getInitialPoolSize () {
-
-    return initialPoolSize.get();
-  }
-
-  public ConnectionPoolConfig setInitialPoolSize (int initialPoolSize) {
-
-    if (initialPoolSize < 0) {
-      throw new IllegalArgumentException("Initial pool size must be >= 0");
-    }
-
-    this.initialPoolSize.set(initialPoolSize);
-
-    return this;
-  }
-
-  public int getMinPoolSize () {
-
-    return minPoolSize.get();
-  }
-
-  public ConnectionPoolConfig setMinPoolSize (int minPoolSize) {
-
-    if (minPoolSize < 0) {
-      throw new IllegalArgumentException("Minimum pool size must be >= 0");
-    }
-
-    this.minPoolSize.set(minPoolSize);
-
-    return this;
-  }
-
-  public int getMaxPoolSize () {
-
-    return maxPoolSize.get();
-  }
-
-  public ConnectionPoolConfig setMaxPoolSize (int maxPoolSize) {
-
-    if (maxPoolSize < 0) {
-      throw new IllegalArgumentException("Maximum pool size must be >= 0");
-    }
-
-    this.maxPoolSize.set(maxPoolSize);
-
-    return this;
-  }
-
-  public long getAcquireWaitTimeMillis () {
-
-    return acquireWaitTimeMillis.get();
-  }
-
-  public ConnectionPoolConfig setAcquireWaitTimeMillis (long acquireWaitTimeMillis) {
-
-    if (acquireWaitTimeMillis < 0) {
-      throw new IllegalArgumentException("Acquire wait time must be >= 0");
-    }
-
-    this.acquireWaitTimeMillis.set(acquireWaitTimeMillis);
-
-    return this;
-  }
-
-  public int getMaxLeaseTimeSeconds () {
-
-    return maxLeaseTimeSeconds.get();
-  }
-
-  public ConnectionPoolConfig setMaxLeaseTimeSeconds (int maxLeaseTimeSeconds) {
-
-    if (maxLeaseTimeSeconds < 0) {
-      throw new IllegalArgumentException("Maximum lease time must be >= 0");
-    }
-
-    this.maxLeaseTimeSeconds.set(maxLeaseTimeSeconds);
-
-    return this;
-  }
-
-  public int getMaxIdleTimeSeconds () {
-
-    return maxIdleTimeSeconds.get();
-  }
-
-  public ConnectionPoolConfig setMaxIdleTimeSeconds (int maxIdleTimeSeconds) {
-
-    if (maxIdleTimeSeconds < 0) {
-      throw new IllegalArgumentException("Maximum idle time must be >= 0");
-    }
-
-    this.maxIdleTimeSeconds.set(maxIdleTimeSeconds);
-
-    return this;
-  }
-
-  public int getUnreturnedConnectionTimeoutSeconds () {
-
-    return unreturnedConnectionTimeoutSeconds.get();
-  }
-
-  public ConnectionPoolConfig setUnreturnedConnectionTimeoutSeconds (int unreturnedConnectionTimeoutSeconds) {
-
-    if (unreturnedConnectionTimeoutSeconds < 0) {
-      throw new IllegalArgumentException("Unreturned connection timeout must be >= 0");
-    }
-
-    this.unreturnedConnectionTimeoutSeconds.set(unreturnedConnectionTimeoutSeconds);
-
-    return this;
+    return getConfigurationClass().cast(this);
   }
 }

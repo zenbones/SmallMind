@@ -26,19 +26,17 @@
  */
 package org.smallmind.quorum.transport.message;
 
-import org.smallmind.quorum.pool.connection.ConnectionPoolConfig;
+import org.smallmind.quorum.pool.PoolConfig;
 
-public class MessagePoolConfig extends ConnectionPoolConfig {
+public class MessagePoolConfig extends PoolConfig<MessagePoolConfig> {
 
-  @Override
-  public ConnectionPoolConfig setTestOnConnect (boolean testOnConnect) {
+  public MessagePoolConfig () {
 
-    throw new UnsupportedOperationException();
   }
 
   @Override
-  public ConnectionPoolConfig setTestOnAcquire (boolean testOnAcquire) {
+  public Class<MessagePoolConfig> getConfigurationClass () {
 
-    throw new UnsupportedOperationException();
+    return MessagePoolConfig.class;
   }
 }

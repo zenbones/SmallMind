@@ -29,31 +29,44 @@ package org.smallmind.quorum.transport.message;
 import java.util.HashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
 import javax.jms.JMSException;
+import javax.jms.Queue;
+import javax.jms.QueueConnection;
+import org.smallmind.quorum.juggler.Juggler;
+import org.smallmind.quorum.juggler.NoAvailableResourceException;
+import org.smallmind.quorum.juggler.ResourceCreationException;
 import org.smallmind.quorum.transport.TransportException;
 import org.smallmind.scribe.pen.LoggerManager;
 
 public class MessageReceiver {
 
   private AtomicBoolean stopped = new AtomicBoolean(false);
+  private Juggler<ManagedObjects, QueueConnection> queueConnectionJuggler;
   private MessageDistributor[] messageDistributors;
 
-  public MessageReceiver (ManagedObjects managedObjects, MessageStrategy messageStrategy, int concurrencyLimit, MessageTarget... messageTargets)
-    throws JMSException, TransportException {
+  public MessageReceiver (ManagedObjects managedObjects, MessageStrategy messageStrategy, int connectionCount, int sessionCount, MessageTarget... messageTargets)
+    throws ResourceCreationException, NoAvailableResourceException, TransportException, JMSException {
 
     HashMap<String, MessageTarget> targetMap = new HashMap<String, MessageTarget>();
+    Queue queue;
+
     for (MessageTarget messageTarget : messageTargets) {
       targetMap.put(messageTarget.getServiceInterface().getName(), messageTarget);
     }
 
-    messageDistributors = new MessageDistributor[concurrencyLimit];
+    queue = (Queue)managedObjects.getDestination();
+    queueConnectionJuggler = new Juggler<ManagedObjects, QueueConnection>(ManagedObjects.class, 60, new QueueConnectionJugglingPinFactory(), managedObjects, connectionCount);
+
+    messageDistributors = new MessageDistributor[sessionCount];
     for (int count = 0; count < messageDistributors.length; count++) {
-      new Thread(messageDistributors[count] = new MessageDistributor(managedObjects, messageStrategy, targetMap)).start();
+      new Thread(messageDistributors[count] = new MessageDistributor(queueConnectionJuggler.pickResource(), queue, messageStrategy, targetMap)).start();
     }
   }
 
   public synchronized void close () {
 
     if (stopped.compareAndSet(false, true)) {
+      queueConnectionJuggler.shutdown();
+
       try {
         for (MessageDistributor messageDistributor : messageDistributors) {
           messageDistributor.close();

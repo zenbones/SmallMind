@@ -228,14 +228,14 @@ public class ConnectionPoolMonitor extends NotificationBroadcasterSupport implem
     remoteSurface.setMaxIdleTimeSeconds(maxIdleTimeSeconds);
   }
 
-  public int getUnreturnedConnectionTimeoutSeconds () {
+  public int getUnReturnedElementTimeoutSeconds () {
 
-    return remoteSurface.getUnreturnedConnectionTimeoutSeconds();
+    return remoteSurface.getUnReturnedElementTimeoutSeconds();
   }
 
-  public void setUnreturnedConnectionTimeoutSeconds (int unreturnedConnectionTimeoutSeconds) {
+  public void setUnReturnedElementTimeoutSeconds (int unReturnedElementTimeoutSeconds) {
 
-    remoteSurface.setUnreturnedConnectionTimeoutSeconds(unreturnedConnectionTimeoutSeconds);
+    remoteSurface.setUnReturnedElementTimeoutSeconds(unReturnedElementTimeoutSeconds);
   }
 
   public int getPoolSize () {

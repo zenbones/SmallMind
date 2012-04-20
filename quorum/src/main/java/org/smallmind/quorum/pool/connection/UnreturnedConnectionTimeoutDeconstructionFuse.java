@@ -59,7 +59,7 @@ public class UnreturnedConnectionTimeoutDeconstructionFuse extends Deconstructio
   public void serve () {
 
     generationServed.set(generation.incrementAndGet());
-    setIgnitionTime(System.currentTimeMillis() + TimeUnit.SECONDS.toMillis(connectionPool.getConnectionPoolConfig().getUnreturnedConnectionTimeoutSeconds()));
+    setIgnitionTime(System.currentTimeMillis() + TimeUnit.SECONDS.toMillis(connectionPool.getConnectionPoolConfig().getUnReturnedElementTimeoutSeconds()));
   }
 
   @Override

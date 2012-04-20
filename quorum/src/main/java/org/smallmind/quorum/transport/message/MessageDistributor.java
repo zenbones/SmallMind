@@ -46,22 +46,20 @@ public class MessageDistributor implements MessageListener, Runnable {
 
   private CountDownLatch exitLatch;
   private AtomicBoolean stopped = new AtomicBoolean(false);
-  private QueueConnection queueConnection;
   private QueueSession queueSession;
   private QueueReceiver queueReceiver;
   private MessageStrategy messageStrategy;
   private HashMap<String, MessageTarget> targetMap;
 
-  public MessageDistributor (ManagedObjects managedObjects, MessageStrategy messageStrategy, HashMap<String, MessageTarget> targetMap)
+  public MessageDistributor (QueueConnection queueConnection, Queue queue, MessageStrategy messageStrategy, HashMap<String, MessageTarget> targetMap)
     throws TransportException, JMSException {
 
     this.messageStrategy = messageStrategy;
     this.targetMap = targetMap;
 
-    queueConnection = (QueueConnection)managedObjects.createConnection();
     queueSession = queueConnection.createQueueSession(false, Session.AUTO_ACKNOWLEDGE);
 
-    queueReceiver = queueSession.createReceiver((Queue)managedObjects.getDestination());
+    queueReceiver = queueSession.createReceiver(queue);
     queueReceiver.setMessageListener(this);
     queueConnection.start();
 
@@ -73,10 +71,8 @@ public class MessageDistributor implements MessageListener, Runnable {
 
     if (stopped.compareAndSet(false, true)) {
       try {
-        queueConnection.stop();
         queueReceiver.close();
         queueSession.close();
-        queueConnection.close();
       }
       finally {
         exitLatch.countDown();

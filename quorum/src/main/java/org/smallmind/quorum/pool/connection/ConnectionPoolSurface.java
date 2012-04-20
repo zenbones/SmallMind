@@ -84,7 +84,7 @@ public interface ConnectionPoolSurface {
 
   public abstract void setMaxIdleTimeSeconds (int maxIdleTimeSeconds);
 
-  public abstract int getUnreturnedConnectionTimeoutSeconds ();
+  public abstract int getUnReturnedElementTimeoutSeconds ();
 
-  public abstract void setUnreturnedConnectionTimeoutSeconds (int unreturnedConnectionTimeoutSeconds);
+  public abstract void setUnReturnedElementTimeoutSeconds (int unReturnedElementTimeoutSeconds);
 }

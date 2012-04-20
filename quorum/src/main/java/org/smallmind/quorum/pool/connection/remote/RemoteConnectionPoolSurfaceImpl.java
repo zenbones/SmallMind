@@ -224,14 +224,14 @@ public class RemoteConnectionPoolSurfaceImpl implements RemoteConnectionPoolSurf
   }
 
   @Override
-  public int getUnreturnedConnectionTimeoutSeconds () {
+  public int getUnReturnedElementTimeoutSeconds () {
 
-    return connectionPool.getConnectionPoolConfig().getUnreturnedConnectionTimeoutSeconds();
+    return connectionPool.getConnectionPoolConfig().getUnReturnedElementTimeoutSeconds();
   }
 
   @Override
-  public void setUnreturnedConnectionTimeoutSeconds (int unreturnedConnectionTimeoutSeconds) {
+  public void setUnReturnedElementTimeoutSeconds (int unReturnedElementTimeoutSeconds) {
 
-    connectionPool.getConnectionPoolConfig().setUnreturnedConnectionTimeoutSeconds(unreturnedConnectionTimeoutSeconds);
+    connectionPool.getConnectionPoolConfig().setUnReturnedElementTimeoutSeconds(unReturnedElementTimeoutSeconds);
   }
 }

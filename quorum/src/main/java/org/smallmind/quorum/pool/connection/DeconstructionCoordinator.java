@@ -48,7 +48,7 @@ public class DeconstructionCoordinator {
     if (connectionPool.getConnectionPoolConfig().getMaxIdleTimeSeconds() > 0) {
       fuseList.add(new MaxIdleTimeDeconstructionFuse(connectionPool, deconstructionQueue, this));
     }
-    if (connectionPool.getConnectionPoolConfig().getUnreturnedConnectionTimeoutSeconds() > 0) {
+    if (connectionPool.getConnectionPoolConfig().getUnReturnedElementTimeoutSeconds() > 0) {
       fuseList.add(new UnreturnedConnectionTimeoutDeconstructionFuse(connectionPool, deconstructionQueue, this));
     }
   }
