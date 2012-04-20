@@ -27,24 +27,21 @@
 package org.smallmind.quorum.transport.message;
 
 import java.util.HashMap;
-import java.util.concurrent.atomic.AtomicBoolean;
 import javax.jms.JMSException;
 import javax.jms.Queue;
 import javax.jms.QueueConnection;
 import org.smallmind.quorum.juggler.Juggler;
-import org.smallmind.quorum.juggler.NoAvailableResourceException;
-import org.smallmind.quorum.juggler.ResourceCreationException;
+import org.smallmind.quorum.juggler.ResourceException;
 import org.smallmind.quorum.transport.TransportException;
 import org.smallmind.scribe.pen.LoggerManager;
 
 public class MessageReceiver {
 
-  private AtomicBoolean stopped = new AtomicBoolean(false);
   private Juggler<ManagedObjects, QueueConnection> queueConnectionJuggler;
   private MessageDistributor[] messageDistributors;
 
   public MessageReceiver (ManagedObjects managedObjects, MessageStrategy messageStrategy, int connectionCount, int sessionCount, MessageTarget... messageTargets)
-    throws ResourceCreationException, NoAvailableResourceException, TransportException, JMSException {
+    throws ResourceException, TransportException, JMSException {
 
     HashMap<String, MessageTarget> targetMap = new HashMap<String, MessageTarget>();
     Queue queue;
@@ -56,25 +53,30 @@ public class MessageReceiver {
     queue = (Queue)managedObjects.getDestination();
     queueConnectionJuggler = new Juggler<ManagedObjects, QueueConnection>(ManagedObjects.class, 60, new QueueConnectionJugglingPinFactory(), managedObjects, connectionCount);
 
+    queueConnectionJuggler.initialize();
+
     messageDistributors = new MessageDistributor[sessionCount];
     for (int count = 0; count < messageDistributors.length; count++) {
       new Thread(messageDistributors[count] = new MessageDistributor(queueConnectionJuggler.pickResource(), queue, messageStrategy, targetMap)).start();
     }
+
+    queueConnectionJuggler.startup();
   }
 
   public synchronized void close () {
 
-    if (stopped.compareAndSet(false, true)) {
-      queueConnectionJuggler.shutdown();
+    queueConnectionJuggler.shutdown();
 
+    for (MessageDistributor messageDistributor : messageDistributors) {
       try {
-        for (MessageDistributor messageDistributor : messageDistributors) {
-          messageDistributor.close();
-        }
+        messageDistributor.close();
       }
       catch (JMSException jmsException) {
         LoggerManager.getLogger(MessageReceiver.class).error(jmsException);
       }
     }
+
+    queueConnectionJuggler.deconstruct();
   }
 }
+

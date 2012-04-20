@@ -26,9 +26,7 @@
  */
 package org.smallmind.quorum.juggler;
 
-import org.smallmind.nutsnbolts.lang.FormattedException;
-
-public class ResourceCreationException extends FormattedException {
+public class ResourceCreationException extends ResourceException {
 
   public ResourceCreationException (Throwable throwable) {
 

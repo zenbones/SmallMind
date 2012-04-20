@@ -26,9 +26,7 @@
  */
 package org.smallmind.quorum.juggler;
 
-import org.smallmind.nutsnbolts.lang.FormattedException;
-
-public class NoAvailableResourceException extends FormattedException {
+public class NoAvailableResourceException extends ResourceException {
 
   public NoAvailableResourceException (String message, Object... args) {
 

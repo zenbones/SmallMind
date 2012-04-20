@@ -37,7 +37,7 @@ import org.smallmind.scribe.pen.LoggerManager;
 
 public class Juggler<P, R> {
 
-  private static enum State {STOPPED, STARTED, INITIALIZED, DECOMMISSIONED}
+  private static enum State {DECONSTRUCTED, INITIALIZED, STARTED, STOPPED}
 
   private final SecureRandom random = new SecureRandom();
   private final JugglingPinFactory<P, R> jugglingPinFactory;
@@ -49,7 +49,7 @@ public class Juggler<P, R> {
   private ArrayList<JugglingPin<R>> sourcePins;
   private ArrayList<JugglingPin<R>> targetPins;
   private ConcurrentSkipListMap<Long, JugglingPin<R>> blackMap;
-  private State state = State.STOPPED;
+  private State state = State.DECONSTRUCTED;
 
   public Juggler (Class<P> managedClass, int recoveryCheckSeconds, JugglingPinFactory<P, R> jugglingPinFactory, P provider, int size) {
 
@@ -73,10 +73,10 @@ public class Juggler<P, R> {
     this.providers = providers;
   }
 
-  public synchronized void startup ()
+  public synchronized void initialize ()
     throws ResourceCreationException {
 
-    if (state.equals(State.STOPPED)) {
+    if (state.equals(State.DECONSTRUCTED)) {
       sourcePins = new ArrayList<JugglingPin<R>>(providers.length);
       targetPins = new ArrayList<JugglingPin<R>>(providers.length);
       blackMap = new ConcurrentSkipListMap<Long, JugglingPin<R>>();
@@ -89,14 +89,14 @@ public class Juggler<P, R> {
         sourcePins.add(targetPins.remove(random.nextInt(targetPins.size())));
       }
 
-      state = State.STARTED;
+      state = State.INITIALIZED;
     }
   }
 
-  public synchronized void init ()
+  public synchronized void startup ()
     throws ResourceException {
 
-    if (state.equals(State.STARTED)) {
+    if (state.equals(State.INITIALIZED)) {
 
       Thread recoveryThread;
 
@@ -110,15 +110,15 @@ public class Juggler<P, R> {
         recoveryThread.start();
       }
 
-      state = State.INITIALIZED;
+      state = State.STARTED;
     }
   }
 
   public synchronized R pickResource ()
     throws NoAvailableResourceException {
 
-    if (!state.equals(State.INITIALIZED)) {
-      throw new IllegalStateException("Juggler has not been properly initialized");
+    if (!state.equals(State.STARTED)) {
+      throw new IllegalStateException("Juggler has not been properly started");
     }
 
     while (!(sourcePins.isEmpty() && targetPins.isEmpty())) {
@@ -154,9 +154,9 @@ public class Juggler<P, R> {
     throw new NoAvailableResourceException("All available resources(%s) have been black listed", managedClass.getSimpleName());
   }
 
-  public synchronized void decommission () {
+  public synchronized void shutdown () {
 
-    if (state.equals(State.INITIALIZED)) {
+    if (state.equals(State.STARTED)) {
       if (recoveryWorker != null) {
         try {
           recoveryWorker.abort();
@@ -189,13 +189,13 @@ public class Juggler<P, R> {
         }
       }
 
-      state = State.DECOMMISSIONED;
+      state = State.STOPPED;
     }
   }
 
-  public synchronized void shutdown () {
+  public synchronized void deconstruct () {
 
-    if (state.equals(State.DECOMMISSIONED)) {
+    if (state.equals(State.STOPPED)) {
       for (JugglingPin<R> pin : sourcePins) {
         try {
           pin.close();
@@ -205,7 +205,7 @@ public class Juggler<P, R> {
         }
       }
 
-      state = State.STOPPED;
+      state = State.DECONSTRUCTED;
     }
   }
 

@@ -34,4 +34,9 @@ public class ResourceException extends FormattedException {
 
     super(throwable);
   }
+
+  public ResourceException (String message, Object... args) {
+
+    super(message, args);
+  }
 }
