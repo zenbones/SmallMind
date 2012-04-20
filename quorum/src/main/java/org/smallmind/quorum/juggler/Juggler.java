@@ -117,8 +117,8 @@ public class Juggler<P, R> {
   public synchronized R pickResource ()
     throws NoAvailableResourceException {
 
-    if (!state.equals(State.STARTED)) {
-      throw new IllegalStateException("Juggler has not been properly started");
+    if (!state.equals(State.INITIALIZED)) {
+      throw new IllegalStateException("Juggler has not been properly initialized");
     }
 
     while (!(sourcePins.isEmpty() && targetPins.isEmpty())) {
