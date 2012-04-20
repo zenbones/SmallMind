@@ -24,47 +24,14 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.persistence.sql.pool;
+package org.smallmind.quorum.juggler;
 
-import java.sql.Connection;
-import java.sql.SQLException;
-import org.smallmind.quorum.juggler.JugglingPin;
-import org.smallmind.quorum.juggler.ResourceException;
+import org.smallmind.nutsnbolts.lang.FormattedException;
 
-public class ConnectionJugglingPin implements JugglingPin<Connection> {
+public class ResourceException extends FormattedException {
 
-  private DataSourceCartridge cartridge;
+  public ResourceException (Throwable throwable) {
 
-  public ConnectionJugglingPin (DataSourceCartridge cartridge) {
-
-    this.cartridge = cartridge;
-  }
-
-  @Override
-  public Connection obtain ()
-    throws ResourceException {
-
-    try {
-
-      return (cartridge.getDataSource() == null) ? null : cartridge.getDataSource().getConnection();
-    }
-    catch (SQLException sqlException) {
-      throw new ResourceException(sqlException);
-    }
-  }
-
-  @Override
-  public void start () {
-
-  }
-
-  @Override
-  public void stop () {
-
-  }
-
-  @Override
-  public void close () {
-
+    super(throwable);
   }
 }

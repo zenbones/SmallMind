@@ -29,8 +29,14 @@ package org.smallmind.quorum.juggler;
 public interface JugglingPin<R> {
 
   public abstract R obtain ()
-    throws Exception;
+    throws ResourceException;
+
+  public abstract void start ()
+    throws ResourceException;
+
+  public abstract void stop ()
+    throws ResourceException;
 
   public abstract void close ()
-    throws Exception;
+    throws ResourceException;
 }

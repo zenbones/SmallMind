@@ -29,6 +29,7 @@ package org.smallmind.quorum.transport.message;
 import javax.jms.JMSException;
 import javax.jms.QueueConnection;
 import org.smallmind.quorum.juggler.JugglingPin;
+import org.smallmind.quorum.juggler.ResourceException;
 
 public class QueueConnectionJugglingPin implements JugglingPin<QueueConnection> {
 
@@ -49,14 +50,38 @@ public class QueueConnectionJugglingPin implements JugglingPin<QueueConnection> 
   }
 
   @Override
-  public void close ()
-    throws JMSException {
+  public void start ()
+    throws ResourceException {
+
+    try {
+      connection.start();
+    }
+    catch (JMSException jmsException) {
+      throw new ResourceException(jmsException);
+    }
+  }
+
+  @Override
+  public void stop ()
+    throws ResourceException {
 
     try {
       connection.stop();
     }
-    finally {
+    catch (JMSException jmsException) {
+      throw new ResourceException(jmsException);
+    }
+  }
+
+  @Override
+  public void close ()
+    throws ResourceException {
+
+    try {
       connection.close();
+    }
+    catch (JMSException jmsException) {
+      throw new ResourceException(jmsException);
     }
   }
 }

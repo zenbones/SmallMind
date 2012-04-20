@@ -37,20 +37,23 @@ import org.smallmind.scribe.pen.LoggerManager;
 
 public class Juggler<P, R> {
 
+  private static enum State {STOPPED, STARTED, INITIALIZED, DECOMMISSIONED}
+
   private final SecureRandom random = new SecureRandom();
-  private final ConcurrentSkipListMap<Long, JugglingPin<R>> blackMap;
+  private final JugglingPinFactory<P, R> jugglingPinFactory;
+  private final P[] providers;
   private final Class<P> managedClass;
+  private int recoveryCheckSeconds;
 
   private ProviderRecoveryWorker recoveryWorker = null;
   private ArrayList<JugglingPin<R>> sourcePins;
   private ArrayList<JugglingPin<R>> targetPins;
-  private boolean closed = false;
+  private ConcurrentSkipListMap<Long, JugglingPin<R>> blackMap;
+  private State state = State.STOPPED;
 
-  public Juggler (Class<P> managedClass, int recoveryCheckSeconds, JugglingPinFactory<P, R> jugglingPinFactory, P provider, int size)
-    throws ResourceCreationException {
+  public Juggler (Class<P> managedClass, int recoveryCheckSeconds, JugglingPinFactory<P, R> jugglingPinFactory, P provider, int size) {
 
     this(managedClass, recoveryCheckSeconds, jugglingPinFactory, generateArray(provider, size));
-
   }
 
   private static <P> P[] generateArray (P provider, int size) {
@@ -62,37 +65,60 @@ public class Juggler<P, R> {
     return array;
   }
 
-  public Juggler (Class<P> managedClass, int recoveryCheckSeconds, JugglingPinFactory<P, R> jugglingPinFactory, P... providers)
-    throws ResourceCreationException {
-
-    Thread recoveryThread;
+  public Juggler (Class<P> managedClass, int recoveryCheckSeconds, JugglingPinFactory<P, R> jugglingPinFactory, P... providers) {
 
     this.managedClass = managedClass;
+    this.recoveryCheckSeconds = recoveryCheckSeconds;
+    this.jugglingPinFactory = jugglingPinFactory;
+    this.providers = providers;
+  }
 
-    sourcePins = new ArrayList<JugglingPin<R>>(providers.length);
-    targetPins = new ArrayList<JugglingPin<R>>(providers.length);
-    blackMap = new ConcurrentSkipListMap<Long, JugglingPin<R>>();
+  public synchronized void startup ()
+    throws ResourceCreationException {
 
-    for (P provider : providers) {
-      targetPins.add(jugglingPinFactory.createJugglingPin(provider));
+    if (state.equals(State.STOPPED)) {
+      sourcePins = new ArrayList<JugglingPin<R>>(providers.length);
+      targetPins = new ArrayList<JugglingPin<R>>(providers.length);
+      blackMap = new ConcurrentSkipListMap<Long, JugglingPin<R>>();
+
+      for (P provider : providers) {
+        targetPins.add(jugglingPinFactory.createJugglingPin(provider));
+      }
+
+      while (!targetPins.isEmpty()) {
+        sourcePins.add(targetPins.remove(random.nextInt(targetPins.size())));
+      }
+
+      state = State.STARTED;
     }
+  }
 
-    while (!targetPins.isEmpty()) {
-      sourcePins.add(targetPins.remove(random.nextInt(targetPins.size())));
-    }
+  public synchronized void init ()
+    throws ResourceException {
 
-    if (recoveryCheckSeconds > 0) {
-      recoveryThread = new Thread(recoveryWorker = new ProviderRecoveryWorker(recoveryCheckSeconds));
-      recoveryThread.setDaemon(true);
-      recoveryThread.start();
+    if (state.equals(State.STARTED)) {
+
+      Thread recoveryThread;
+
+      for (JugglingPin<R> pin : sourcePins) {
+        pin.start();
+      }
+
+      if (recoveryCheckSeconds > 0) {
+        recoveryThread = new Thread(recoveryWorker = new ProviderRecoveryWorker(recoveryCheckSeconds));
+        recoveryThread.setDaemon(true);
+        recoveryThread.start();
+      }
+
+      state = State.INITIALIZED;
     }
   }
 
   public synchronized R pickResource ()
     throws NoAvailableResourceException {
 
-    if (closed) {
-      throw new IllegalStateException("Juggler has been closed");
+    if (!state.equals(State.INITIALIZED)) {
+      throw new IllegalStateException("Juggler has not been properly initialized");
     }
 
     while (!(sourcePins.isEmpty() && targetPins.isEmpty())) {
@@ -128,11 +154,9 @@ public class Juggler<P, R> {
     throw new NoAvailableResourceException("All available resources(%s) have been black listed", managedClass.getSimpleName());
   }
 
-  public synchronized void shutdown () {
+  public synchronized void decommission () {
 
-    if (!closed) {
-      closed = true;
-
+    if (state.equals(State.INITIALIZED)) {
       if (recoveryWorker != null) {
         try {
           recoveryWorker.abort();
@@ -144,13 +168,35 @@ public class Juggler<P, R> {
 
       for (JugglingPin<R> pin : sourcePins) {
         try {
-          pin.close();
+          pin.stop();
         }
         catch (Exception exception) {
           LoggerManager.getLogger(Juggler.class).error(exception);
         }
       }
-      for (JugglingPin<R> pin : targetPins) {
+      while (!targetPins.isEmpty()) {
+
+        JugglingPin<R> pin = targetPins.remove(0);
+
+        try {
+          pin.stop();
+        }
+        catch (Exception exception) {
+          LoggerManager.getLogger(Juggler.class).error(exception);
+        }
+        finally {
+          sourcePins.add(pin);
+        }
+      }
+
+      state = State.DECOMMISSIONED;
+    }
+  }
+
+  public synchronized void shutdown () {
+
+    if (state.equals(State.DECOMMISSIONED)) {
+      for (JugglingPin<R> pin : sourcePins) {
         try {
           pin.close();
         }
@@ -158,6 +204,8 @@ public class Juggler<P, R> {
           LoggerManager.getLogger(Juggler.class).error(exception);
         }
       }
+
+      state = State.STOPPED;
     }
   }
 

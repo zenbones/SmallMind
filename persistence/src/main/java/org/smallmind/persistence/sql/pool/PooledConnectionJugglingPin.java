@@ -26,8 +26,10 @@
  */
 package org.smallmind.persistence.sql.pool;
 
+import java.sql.SQLException;
 import javax.sql.PooledConnection;
 import org.smallmind.quorum.juggler.JugglingPin;
+import org.smallmind.quorum.juggler.ResourceException;
 
 public class PooledConnectionJugglingPin implements JugglingPin<PooledConnection> {
 
@@ -40,14 +42,29 @@ public class PooledConnectionJugglingPin implements JugglingPin<PooledConnection
 
   @Override
   public PooledConnection obtain ()
-    throws Exception {
+    throws ResourceException {
 
-    return cartridge.getConnectionPoolDataSource().getPooledConnection();
+    try {
+
+      return cartridge.getConnectionPoolDataSource().getPooledConnection();
+    }
+    catch (SQLException sqlException) {
+      throw new ResourceException(sqlException);
+    }
   }
 
   @Override
-  public void close ()
-    throws Exception {
+  public void start () {
+
+  }
+
+  @Override
+  public void stop () {
+
+  }
+
+  @Override
+  public void close () {
 
   }
 }
