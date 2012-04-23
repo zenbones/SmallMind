@@ -1,22 +1,22 @@
 /*
  * Copyright (c) 2007, 2008, 2009, 2010, 2011, 2012 David Berkman
- * 
+ *
  * This file is part of the SmallMind Code Project.
- * 
+ *
  * The SmallMind Code Project is free software, you can redistribute
  * it and/or modify it under the terms of GNU Affero General Public
  * License as published by the Free Software Foundation, either version 3
  * of the License, or (at your option) any later version.
- * 
+ *
  * The SmallMind Code Project is distributed in the hope that it will
  * be useful, but WITHOUT ANY WARRANTY; without even the implied warranty
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * General Public License for more details.
- * 
+ *
  * You should have received a copy of the the GNU Affero General Public
  * License, along with The SmallMind Code Project. If not, see
  * <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under the GNU Affero GPL version 3 section 7
  * ------------------------------------------------------------------
  * If you modify this Program, or any covered work, by linking or
@@ -45,13 +45,13 @@ public class MessageSender {
   private QueueSender queueSender;
   private TemporaryQueue temporaryQueue;
   private QueueReceiver queueReceiver;
-  private MessageStrategy messageStrategy;
+  private MessageObjectStrategy messageObjectStrategy;
 
-  public MessageSender (MessageSenderConnectionInstance connectionInstance, QueueConnection queueConnection, Queue queue, MessageStrategy messageStrategy)
+  public MessageSender (MessageSenderConnectionInstance connectionInstance, QueueConnection queueConnection, Queue queue, MessageObjectStrategy messageObjectStrategy)
     throws JMSException {
 
     this.connectionInstance = connectionInstance;
-    this.messageStrategy = messageStrategy;
+    this.messageObjectStrategy = messageObjectStrategy;
 
     queueSession = queueConnection.createQueueSession(false, Session.AUTO_ACKNOWLEDGE);
     queueSender = queueSession.createSender(queue);
@@ -67,7 +67,7 @@ public class MessageSender {
   public Message wrapInMessage (Serializable serializable)
     throws Exception {
 
-    return messageStrategy.wrapInMessage(queueSession, serializable);
+    return messageObjectStrategy.wrapInMessage(queueSession, serializable);
   }
 
   public void sendMessage (Message message, String serviceSelector)
@@ -85,10 +85,10 @@ public class MessageSender {
 
     message = queueReceiver.receive();
     if (message.getBooleanProperty(MessageProperty.EXCEPTION.getKey())) {
-      throw new InvocationTargetException((Exception)messageStrategy.unwrapFromMessage(message));
+      throw new InvocationTargetException((Exception)messageObjectStrategy.unwrapFromMessage(message));
     }
 
-    return messageStrategy.unwrapFromMessage(message);
+    return messageObjectStrategy.unwrapFromMessage(message);
   }
 
   public void close ()
