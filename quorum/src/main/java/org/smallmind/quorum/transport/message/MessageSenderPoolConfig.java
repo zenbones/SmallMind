@@ -28,15 +28,15 @@ package org.smallmind.quorum.transport.message;
 
 import org.smallmind.quorum.pool.PoolConfig;
 
-public class MessagePoolConfig extends PoolConfig<MessagePoolConfig> {
+public class MessageSenderPoolConfig extends PoolConfig<MessageSenderPoolConfig> {
 
-  public MessagePoolConfig () {
+  public MessageSenderPoolConfig () {
 
   }
 
   @Override
-  public Class<MessagePoolConfig> getConfigurationClass () {
+  public Class<MessageSenderPoolConfig> getConfigurationClass () {
 
-    return MessagePoolConfig.class;
+    return MessageSenderPoolConfig.class;
   }
 }
