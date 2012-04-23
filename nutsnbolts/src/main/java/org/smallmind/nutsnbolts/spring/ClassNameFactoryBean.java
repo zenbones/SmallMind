@@ -24,41 +24,34 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.quorum.transport.message;
+package org.smallmind.nutsnbolts.spring;
 
-import java.io.Serializable;
-import javax.jms.Message;
-import javax.jms.Session;
-import org.smallmind.quorum.transport.InvocationSignal;
-import org.smallmind.quorum.transport.MethodInvoker;
+import org.springframework.beans.factory.FactoryBean;
 
-public class InvocationMessageTarget implements MessageTarget {
+public class ClassNameFactoryBean implements FactoryBean<String> {
 
-  private MethodInvoker methodInvoker;
-  private Class serviceInterface;
+  private Class<?> clazz;
 
-  public InvocationMessageTarget (Object targetObject, Class serviceInterface)
-    throws NoSuchMethodException {
+  public void setClazz (Class<?> clazz) {
 
-    methodInvoker = new MethodInvoker(targetObject, new Class[] {this.serviceInterface = serviceInterface});
+    this.clazz = clazz;
   }
 
   @Override
-  public Class getServiceInterface () {
+  public String getObject () throws Exception {
 
-    return serviceInterface;
+    return clazz.getName();
   }
 
   @Override
-  public Message handleMessage (Session session, MessageObjectStrategy messageObjectStrategy, Message message)
-    throws Exception {
+  public Class<?> getObjectType () {
 
-    InvocationSignal invocationSignal;
-    Serializable result;
+    return String.class;
+  }
 
-    invocationSignal = (InvocationSignal)messageObjectStrategy.unwrapFromMessage(message);
-    result = (Serializable)methodInvoker.remoteInvocation(invocationSignal);
+  @Override
+  public boolean isSingleton () {
 
-    return messageObjectStrategy.wrapInMessage(session, result);
+    return true;
   }
 }
