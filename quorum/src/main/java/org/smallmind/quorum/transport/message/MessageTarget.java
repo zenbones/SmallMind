@@ -33,6 +33,6 @@ public interface MessageTarget {
 
   public abstract Class getServiceInterface ();
 
-  public abstract Message handleMessage (Session session, MessageObjectStrategy messageObjectStrategy, Message message)
+  public abstract Message handleMessage (Session session, MessageStrategy messageStrategy, Message message)
     throws Exception;
 }

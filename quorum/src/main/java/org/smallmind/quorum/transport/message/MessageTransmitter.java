@@ -40,11 +40,11 @@ public class MessageTransmitter {
   private Juggler<TransportManagedObjects, QueueConnection> queueConnectionJuggler;
   private ConnectionPool<MessageSender> messageSenderPool;
 
-  public MessageTransmitter (TransportManagedObjects managedObjects, MessageObjectStrategy messageObjectStrategy, int connectionCount, MessagePoolConfig messagePoolConfig)
+  public MessageTransmitter (TransportManagedObjects managedObjects, MessageStrategy messageStrategy, int connectionCount, MessagePoolConfig messagePoolConfig)
     throws ResourceException, ConnectionPoolException, TransportException {
 
     queueConnectionJuggler = new Juggler<TransportManagedObjects, QueueConnection>(TransportManagedObjects.class, 60, new QueueConnectionJugglingPinFactory(), managedObjects, connectionCount);
-    messageSenderPool = new ConnectionPool<MessageSender>("", new MessageSenderConnectionInstanceFactory(queueConnectionJuggler, (Queue)managedObjects.getDestination(), messageObjectStrategy), new ConnectionPoolConfig(messagePoolConfig));
+    messageSenderPool = new ConnectionPool<MessageSender>("", new MessageSenderConnectionInstanceFactory(queueConnectionJuggler, (Queue)managedObjects.getDestination(), messageStrategy), new ConnectionPoolConfig(messagePoolConfig));
 
     queueConnectionJuggler.initialize();
     messageSenderPool.startup();

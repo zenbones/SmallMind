@@ -48,13 +48,13 @@ public class MessageDistributor implements MessageListener, Runnable {
   private AtomicBoolean stopped = new AtomicBoolean(false);
   private QueueSession queueSession;
   private QueueReceiver queueReceiver;
-  private MessageObjectStrategy messageObjectStrategy;
+  private MessageStrategy messageStrategy;
   private HashMap<String, MessageTarget> targetMap;
 
-  public MessageDistributor (QueueConnection queueConnection, Queue queue, MessageObjectStrategy messageObjectStrategy, HashMap<String, MessageTarget> targetMap)
+  public MessageDistributor (QueueConnection queueConnection, Queue queue, MessageStrategy messageStrategy, HashMap<String, MessageTarget> targetMap)
     throws TransportException, JMSException {
 
-    this.messageObjectStrategy = messageObjectStrategy;
+    this.messageStrategy = messageStrategy;
     this.targetMap = targetMap;
 
     queueSession = queueConnection.createQueueSession(false, Session.AUTO_ACKNOWLEDGE);
@@ -109,10 +109,10 @@ public class MessageDistributor implements MessageListener, Runnable {
           throw new TransportException("Unknown service selector(%s)", serviceSelector);
         }
 
-        responseMessage = messageTarget.handleMessage(queueSession, messageObjectStrategy, message);
+        responseMessage = messageTarget.handleMessage(queueSession, messageStrategy, message);
       }
       catch (Exception exception) {
-        responseMessage = messageObjectStrategy.wrapInMessage(queueSession, exception);
+        responseMessage = messageStrategy.wrapInMessage(queueSession, exception);
         responseMessage.setBooleanProperty(MessageProperty.EXCEPTION.getKey(), true);
       }
 

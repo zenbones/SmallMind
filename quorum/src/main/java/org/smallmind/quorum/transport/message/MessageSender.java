@@ -45,13 +45,13 @@ public class MessageSender {
   private QueueSender queueSender;
   private TemporaryQueue temporaryQueue;
   private QueueReceiver queueReceiver;
-  private MessageObjectStrategy messageObjectStrategy;
+  private MessageStrategy messageStrategy;
 
-  public MessageSender (MessageSenderConnectionInstance connectionInstance, QueueConnection queueConnection, Queue queue, MessageObjectStrategy messageObjectStrategy)
+  public MessageSender (MessageSenderConnectionInstance connectionInstance, QueueConnection queueConnection, Queue queue, MessageStrategy messageStrategy)
     throws JMSException {
 
     this.connectionInstance = connectionInstance;
-    this.messageObjectStrategy = messageObjectStrategy;
+    this.messageStrategy = messageStrategy;
 
     queueSession = queueConnection.createQueueSession(false, Session.AUTO_ACKNOWLEDGE);
     queueSender = queueSession.createSender(queue);
@@ -67,7 +67,7 @@ public class MessageSender {
   public Message wrapInMessage (Serializable serializable)
     throws Exception {
 
-    return messageObjectStrategy.wrapInMessage(queueSession, serializable);
+    return messageStrategy.wrapInMessage(queueSession, serializable);
   }
 
   public void sendMessage (Message message, String serviceSelector)
@@ -85,10 +85,10 @@ public class MessageSender {
 
     message = queueReceiver.receive();
     if (message.getBooleanProperty(MessageProperty.EXCEPTION.getKey())) {
-      throw new InvocationTargetException((Exception)messageObjectStrategy.unwrapFromMessage(message));
+      throw new InvocationTargetException((Exception)messageStrategy.unwrapFromMessage(message));
     }
 
-    return messageObjectStrategy.unwrapFromMessage(message);
+    return messageStrategy.unwrapFromMessage(message);
   }
 
   public void close ()

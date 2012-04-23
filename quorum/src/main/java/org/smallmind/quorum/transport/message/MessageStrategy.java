@@ -30,7 +30,7 @@ import java.io.Serializable;
 import javax.jms.Message;
 import javax.jms.Session;
 
-public interface MessageObjectStrategy {
+public interface MessageStrategy {
 
   public abstract Message wrapInMessage (Session session, Serializable serializable)
     throws Exception;

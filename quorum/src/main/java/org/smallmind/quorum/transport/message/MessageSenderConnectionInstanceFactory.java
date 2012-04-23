@@ -39,13 +39,13 @@ public class MessageSenderConnectionInstanceFactory implements ConnectionInstanc
 
   private Juggler<TransportManagedObjects, QueueConnection> queueConnectionJuggler;
   private Queue queue;
-  private MessageObjectStrategy messageObjectStrategy;
+  private MessageStrategy messageStrategy;
 
-  public MessageSenderConnectionInstanceFactory (Juggler<TransportManagedObjects, QueueConnection> queueConnectionJuggler, Queue queue, MessageObjectStrategy messageObjectStrategy) {
+  public MessageSenderConnectionInstanceFactory (Juggler<TransportManagedObjects, QueueConnection> queueConnectionJuggler, Queue queue, MessageStrategy messageStrategy) {
 
     this.queueConnectionJuggler = queueConnectionJuggler;
     this.queue = queue;
-    this.messageObjectStrategy = messageObjectStrategy;
+    this.messageStrategy = messageStrategy;
   }
 
   @Override
@@ -59,6 +59,6 @@ public class MessageSenderConnectionInstanceFactory implements ConnectionInstanc
   public ConnectionInstance<MessageSender> createInstance (ConnectionPool<MessageSender> connectionPool)
     throws NoAvailableResourceException, JMSException {
 
-    return new MessageSenderConnectionInstance(connectionPool, queueConnectionJuggler.pickResource(), queue, messageObjectStrategy);
+    return new MessageSenderConnectionInstance(connectionPool, queueConnectionJuggler.pickResource(), queue, messageStrategy);
   }
 }

@@ -32,7 +32,7 @@ import javax.jms.Message;
 import javax.jms.ObjectMessage;
 import javax.jms.Session;
 
-public class NativeMessageStrategy implements MessageObjectStrategy {
+public class DefaultMessageStrategy implements MessageStrategy {
 
   @Override
   public Message wrapInMessage (Session session, Serializable serializable)

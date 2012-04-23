@@ -50,15 +50,15 @@ public class InvocationMessageTarget implements MessageTarget {
   }
 
   @Override
-  public Message handleMessage (Session session, MessageObjectStrategy messageObjectStrategy, Message message)
+  public Message handleMessage (Session session, MessageStrategy messageStrategy, Message message)
     throws Exception {
 
     InvocationSignal invocationSignal;
     Serializable result;
 
-    invocationSignal = (InvocationSignal)messageObjectStrategy.unwrapFromMessage(message);
+    invocationSignal = (InvocationSignal)messageStrategy.unwrapFromMessage(message);
     result = (Serializable)methodInvoker.remoteInvocation(invocationSignal);
 
-    return messageObjectStrategy.wrapInMessage(session, result);
+    return messageStrategy.wrapInMessage(session, result);
   }
 }
