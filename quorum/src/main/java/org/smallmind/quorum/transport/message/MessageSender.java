@@ -27,7 +27,6 @@
 package org.smallmind.quorum.transport.message;
 
 import java.io.Serializable;
-import java.lang.reflect.InvocationTargetException;
 import javax.jms.JMSException;
 import javax.jms.Message;
 import javax.jms.Queue;
@@ -85,7 +84,7 @@ public class MessageSender {
 
     message = queueReceiver.receive();
     if (message.getBooleanProperty(MessageProperty.EXCEPTION.getKey())) {
-      throw new InvocationTargetException((Exception)messageStrategy.unwrapFromMessage(message));
+      throw new EnclosedException((Exception)messageStrategy.unwrapFromMessage(message));
     }
 
     return messageStrategy.unwrapFromMessage(message);

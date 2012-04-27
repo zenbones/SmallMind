@@ -31,6 +31,7 @@ import java.lang.reflect.Method;
 import org.smallmind.nutsnbolts.context.ContextFactory;
 import org.smallmind.quorum.transport.FauxMethod;
 import org.smallmind.quorum.transport.InvocationSignal;
+import org.smallmind.quorum.transport.TransportException;
 
 public class MessageInvocationHandler implements InvocationHandler {
 
@@ -54,6 +55,12 @@ public class MessageInvocationHandler implements InvocationHandler {
       messageSender.sendMessage(messageSender.wrapInMessage(new InvocationSignal(ContextFactory.getExpectedContexts(serviceInterface), new FauxMethod(method), args)), serviceInterface.getName());
 
       return messageSender.getResult();
+    }
+    catch (EnclosedException enclosedException) {
+      throw enclosedException.getCause();
+    }
+    catch (Exception exception) {
+      throw new TransportException(exception);
     }
     finally {
       messageTransmitter.returnMessageSender(messageSender);
