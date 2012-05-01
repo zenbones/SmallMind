@@ -34,7 +34,6 @@ import javax.jms.QueueConnection;
 import javax.jms.QueueReceiver;
 import javax.jms.QueueSender;
 import javax.jms.QueueSession;
-import javax.jms.Session;
 import javax.jms.TemporaryQueue;
 
 public class MessageSender {
@@ -46,14 +45,15 @@ public class MessageSender {
   private QueueReceiver queueReceiver;
   private MessageStrategy messageStrategy;
 
-  public MessageSender (MessageSenderConnectionInstance connectionInstance, QueueConnection queueConnection, Queue queue, MessageStrategy messageStrategy)
+  public MessageSender (MessageSenderConnectionInstance connectionInstance, QueueConnection queueConnection, Queue queue, MessagePolicy messagePolicy, MessageStrategy messageStrategy)
     throws JMSException {
 
     this.connectionInstance = connectionInstance;
     this.messageStrategy = messageStrategy;
 
-    queueSession = queueConnection.createQueueSession(false, Session.AUTO_ACKNOWLEDGE);
+    queueSession = queueConnection.createQueueSession(false, messagePolicy.getAcknowledgeMode().getJmsValue());
     queueSender = queueSession.createSender(queue);
+    messagePolicy.apply(queueSender);
     temporaryQueue = queueSession.createTemporaryQueue();
     queueReceiver = queueSession.createReceiver(temporaryQueue);
   }

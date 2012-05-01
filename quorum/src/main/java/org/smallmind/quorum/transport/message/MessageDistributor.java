@@ -29,7 +29,6 @@ package org.smallmind.quorum.transport.message;
 import java.util.HashMap;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicBoolean;
-import javax.jms.DeliveryMode;
 import javax.jms.JMSException;
 import javax.jms.Message;
 import javax.jms.MessageListener;
@@ -38,7 +37,6 @@ import javax.jms.QueueConnection;
 import javax.jms.QueueReceiver;
 import javax.jms.QueueSender;
 import javax.jms.QueueSession;
-import javax.jms.Session;
 import org.smallmind.quorum.transport.TransportException;
 import org.smallmind.scribe.pen.LoggerManager;
 
@@ -48,16 +46,18 @@ public class MessageDistributor implements MessageListener, Runnable {
   private AtomicBoolean stopped = new AtomicBoolean(false);
   private QueueSession queueSession;
   private QueueReceiver queueReceiver;
+  private MessagePolicy messagePolicy;
   private MessageStrategy messageStrategy;
   private HashMap<String, MessageTarget> targetMap;
 
-  public MessageDistributor (QueueConnection queueConnection, Queue queue, MessageStrategy messageStrategy, HashMap<String, MessageTarget> targetMap)
+  public MessageDistributor (QueueConnection queueConnection, Queue queue, MessagePolicy messagePolicy, MessageStrategy messageStrategy, HashMap<String, MessageTarget> targetMap)
     throws TransportException, JMSException {
 
+    this.messagePolicy = messagePolicy;
     this.messageStrategy = messageStrategy;
     this.targetMap = targetMap;
 
-    queueSession = queueConnection.createQueueSession(false, Session.AUTO_ACKNOWLEDGE);
+    queueSession = queueConnection.createQueueSession(false, messagePolicy.getAcknowledgeMode().getJmsValue());
 
     queueReceiver = queueSession.createReceiver(queue);
     queueReceiver.setMessageListener(this);
@@ -116,9 +116,8 @@ public class MessageDistributor implements MessageListener, Runnable {
         responseMessage.setBooleanProperty(MessageProperty.EXCEPTION.getKey(), true);
       }
 
-      responseMessage.setJMSDeliveryMode(DeliveryMode.NON_PERSISTENT);
-
       queueSender = queueSession.createSender((Queue)message.getJMSReplyTo());
+      messagePolicy.apply(queueSender);
 
       try {
         queueSender.send(responseMessage);

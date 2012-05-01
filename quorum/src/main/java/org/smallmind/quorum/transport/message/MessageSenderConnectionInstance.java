@@ -41,12 +41,12 @@ public class MessageSenderConnectionInstance implements ConnectionInstance<Messa
   private final AtomicReference<StackTraceElement[]> stackTraceReference = new AtomicReference<StackTraceElement[]>();
   private final AtomicBoolean closed = new AtomicBoolean(false);
 
-  public MessageSenderConnectionInstance (ConnectionPool<MessageSender> connectionPool, QueueConnection queueConnection, Queue queue, MessageStrategy messageStrategy)
+  public MessageSenderConnectionInstance (ConnectionPool<MessageSender> connectionPool, QueueConnection queueConnection, Queue queue, MessagePolicy messagePolicy, MessageStrategy messageStrategy)
     throws JMSException {
 
     this.connectionPool = connectionPool;
 
-    messageSender = new MessageSender(this, queueConnection, queue, messageStrategy);
+    messageSender = new MessageSender(this, queueConnection, queue, messagePolicy, messageStrategy);
   }
 
   @Override

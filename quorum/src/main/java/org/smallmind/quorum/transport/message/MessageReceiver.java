@@ -40,7 +40,7 @@ public class MessageReceiver {
   private Juggler<TransportManagedObjects, QueueConnection> queueConnectionJuggler;
   private MessageDistributor[] messageDistributors;
 
-  public MessageReceiver (TransportManagedObjects managedObjects, MessageStrategy messageStrategy, int connectionCount, int sessionCount, MessageTarget... messageTargets)
+  public MessageReceiver (TransportManagedObjects managedObjects, MessagePolicy messagePolicy, MessageStrategy messageStrategy, int connectionCount, int sessionCount, MessageTarget... messageTargets)
     throws ResourceException, TransportException, JMSException {
 
     HashMap<String, MessageTarget> targetMap = new HashMap<String, MessageTarget>();
@@ -57,7 +57,7 @@ public class MessageReceiver {
 
     messageDistributors = new MessageDistributor[sessionCount];
     for (int count = 0; count < messageDistributors.length; count++) {
-      new Thread(messageDistributors[count] = new MessageDistributor(queueConnectionJuggler.pickResource(), queue, messageStrategy, targetMap)).start();
+      new Thread(messageDistributors[count] = new MessageDistributor(queueConnectionJuggler.pickResource(), queue, messagePolicy, messageStrategy, targetMap)).start();
     }
 
     queueConnectionJuggler.startup();
