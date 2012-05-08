@@ -45,12 +45,12 @@ wrapper.java.additional.${jvmArg_index + 1}=${jvmArg}
 
 # Initial Java Heap Size (in MB)
 [#if jvmInitMemoryMB?exists]
-wrapper.java.initmemory=${jvmInitMemoryMB}
+wrapper.java.initmemory=${jvmInitMemoryMB?c}
 [/#if]
 
 # Maximum Java Heap Size (in MB)
 [#if jvmMaxMemoryMB?exists]
-wrapper.java.maxmemory=${jvmMaxMemoryMB}
+wrapper.java.maxmemory=${jvmMaxMemoryMB?c}
 [/#if]
 
 # Application parameters.  Add parameters as needed starting from 1
