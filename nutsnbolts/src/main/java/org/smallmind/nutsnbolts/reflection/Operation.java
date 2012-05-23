@@ -93,5 +93,4 @@ public class Operation {
 
     return false;
   }
-
 }
