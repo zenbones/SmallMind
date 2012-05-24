@@ -75,11 +75,6 @@ public class DeployWrapperMojo extends AbstractMojo {
   private ArtifactRepository deploymentRepository;
 
   /**
-   * @parameter default-value="application"
-   */
-  private String applicationDir;
-
-  /**
    * @parameter expression="${project.artifactId}"
    */
   private String applicationName;
@@ -88,26 +83,20 @@ public class DeployWrapperMojo extends AbstractMojo {
     throws MojoExecutionException, MojoFailureException {
 
     Artifact applicationArtifact;
-    StringBuilder nameBuilder;
+    StringBuilder pathBuilder;
 
     applicationArtifact = artifactFactory.createArtifactWithClassifier(project.getGroupId(), project.getArtifactId(), project.getVersion(), "jar", (project.getArtifact().getClassifier() == null) ? "app" : project.getArtifact().getClassifier() + "-app");
-
-    nameBuilder = new StringBuilder(project.getBuild().getDirectory() + System.getProperty("file.separator") + applicationDir);
-
-    nameBuilder.append(System.getProperty("file.separator"));
-    nameBuilder.append(applicationName);
-    nameBuilder.append('-');
-    nameBuilder.append(project.getVersion());
+    pathBuilder = new StringBuilder(project.getBuild().getDirectory()).append(System.getProperty("file.separator")).append(applicationName).append('-').append(project.getVersion());
 
     if (project.getArtifact().getClassifier() != null) {
-      nameBuilder.append('-');
-      nameBuilder.append(project.getArtifact().getClassifier());
+      pathBuilder.append('-');
+      pathBuilder.append(project.getArtifact().getClassifier());
     }
 
-    nameBuilder.append("-app").append(".jar");
+    pathBuilder.append("-app").append(".jar");
 
     try {
-      artifactDeployer.deploy(new File(nameBuilder.toString()), applicationArtifact, deploymentRepository, localRepository);
+      artifactDeployer.deploy(new File(pathBuilder.toString()), applicationArtifact, deploymentRepository, localRepository);
     }
     catch (ArtifactDeploymentException artifactDeploymentException) {
       throw new MojoExecutionException("Unable to deploy the application(" + applicationName + ")", artifactDeploymentException);

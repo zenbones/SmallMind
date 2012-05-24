@@ -70,11 +70,6 @@ public class InstallWrapperMojo extends AbstractMojo {
   private ArtifactRepository localRepository;
 
   /**
-   * @parameter default-value="application"
-   */
-  private String applicationDir;
-
-  /**
    * @parameter expression="${project.artifactId}"
    */
   private String applicationName;
@@ -83,26 +78,20 @@ public class InstallWrapperMojo extends AbstractMojo {
     throws MojoExecutionException, MojoFailureException {
 
     Artifact applicationArtifact;
-    StringBuilder nameBuilder;
+    StringBuilder pathBuilder;
 
     applicationArtifact = artifactFactory.createArtifactWithClassifier(project.getGroupId(), project.getArtifactId(), project.getVersion(), "jar", (project.getArtifact().getClassifier() == null) ? "app" : project.getArtifact().getClassifier() + "-app");
-
-    nameBuilder = new StringBuilder(project.getBuild().getDirectory() + System.getProperty("file.separator") + applicationDir);
-
-    nameBuilder.append(System.getProperty("file.separator"));
-    nameBuilder.append(applicationName);
-    nameBuilder.append('-');
-    nameBuilder.append(project.getVersion());
+    pathBuilder = new StringBuilder(project.getBuild().getDirectory()).append(System.getProperty("file.separator")).append(applicationName).append('-').append(project.getVersion());
 
     if (project.getArtifact().getClassifier() != null) {
-      nameBuilder.append('-');
-      nameBuilder.append(project.getArtifact().getClassifier());
+      pathBuilder.append('-');
+      pathBuilder.append(project.getArtifact().getClassifier());
     }
 
-    nameBuilder.append("-app").append(".jar");
+    pathBuilder.append("-app").append(".jar");
 
     try {
-      artifactInstaller.install(new File(nameBuilder.toString()), applicationArtifact, localRepository);
+      artifactInstaller.install(new File(pathBuilder.toString()), applicationArtifact, localRepository);
     }
     catch (ArtifactInstallationException artifactInstallationException) {
       throw new MojoExecutionException("Unable to install the application(" + applicationName + ")", artifactInstallationException);

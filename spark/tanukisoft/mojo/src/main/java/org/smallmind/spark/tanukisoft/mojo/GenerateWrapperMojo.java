@@ -80,11 +80,6 @@ public class GenerateWrapperMojo extends AbstractMojo {
   private Dependency[] dependencies;
 
   /**
-   * @parameter default-value="application"
-   */
-  private String applicationDir;
-
-  /**
    * @parameter
    * @required
    */
@@ -95,6 +90,11 @@ public class GenerateWrapperMojo extends AbstractMojo {
    * @required
    */
   private String wrapperListener;
+
+  /**
+   * @parameter default-value="application"
+   */
+  private String applicationDir;
 
   /**
    * @parameter expression="${project.artifactId}"
@@ -190,9 +190,9 @@ public class GenerateWrapperMojo extends AbstractMojo {
       throw new MojoExecutionException(String.format("Unknown operating system type(%s) - valid choices are %s", operatingSystem, Arrays.toString(OSType.values())), throwable);
     }
 
-    createDirectory("bin", binDirectory = new File(project.getBuild().getDirectory() + System.getProperty("file.separator") + applicationDir + System.getProperty("file.separator") + "bin"));
-    createDirectory("lib", libDirectory = new File(project.getBuild().getDirectory() + System.getProperty("file.separator") + applicationDir + System.getProperty("file.separator") + "lib"));
-    createDirectory("conf", confDirectory = new File(project.getBuild().getDirectory() + System.getProperty("file.separator") + applicationDir + System.getProperty("file.separator") + "conf"));
+    createDirectory("bin", binDirectory = new File(project.getBuild().getDirectory() + System.getProperty("file.separator") + applicationDir + System.getProperty("file.separator") + createArtifactName(false) + System.getProperty("file.separator") + "bin"));
+    createDirectory("lib", libDirectory = new File(project.getBuild().getDirectory() + System.getProperty("file.separator") + applicationDir + System.getProperty("file.separator") + createArtifactName(false) + System.getProperty("file.separator") + "lib"));
+    createDirectory("conf", confDirectory = new File(project.getBuild().getDirectory() + System.getProperty("file.separator") + applicationDir + System.getProperty("file.separator") + createArtifactName(false) + System.getProperty("file.separator") + "conf"));
 
     if (licenseFile != null) {
       try {
@@ -318,7 +318,7 @@ public class GenerateWrapperMojo extends AbstractMojo {
 
       File jarFile;
 
-      jarFile = new File(createJarArtifactName(project.getBuild().getDirectory(), false));
+      jarFile = new File(createJarArtifactPath(project.getBuild().getDirectory(), false));
 
       try {
         if (verbose) {
@@ -402,7 +402,7 @@ public class GenerateWrapperMojo extends AbstractMojo {
 
       File jarFile;
 
-      jarFile = new File(createJarArtifactName(project.getBuild().getDirectory() + System.getProperty("file.separator") + applicationDir, true));
+      jarFile = new File(createJarArtifactPath(project.getBuild().getDirectory(), true));
 
       try {
         if (verbose) {
@@ -417,28 +417,26 @@ public class GenerateWrapperMojo extends AbstractMojo {
     }
   }
 
-  private String createJarArtifactName (String outputPath, boolean applicationArtifact) {
+  private String createArtifactName (boolean applicationArtifact) {
 
     StringBuilder nameBuilder;
 
-    nameBuilder = new StringBuilder(outputPath);
-    nameBuilder.append(System.getProperty("file.separator"));
-    nameBuilder.append(applicationName);
-    nameBuilder.append('-');
-    nameBuilder.append(project.getVersion());
+    nameBuilder = new StringBuilder(applicationName).append('-').append(project.getVersion());
 
     if (project.getArtifact().getClassifier() != null) {
-      nameBuilder.append('-');
-      nameBuilder.append(project.getArtifact().getClassifier());
+      nameBuilder.append('-').append(project.getArtifact().getClassifier());
     }
 
     if (applicationArtifact) {
       nameBuilder.append("-app");
     }
 
-    nameBuilder.append(".jar");
-
     return nameBuilder.toString();
+  }
+
+  private String createJarArtifactPath (String outputPath, boolean applicationArtifact) {
+
+    return new StringBuilder(outputPath).append(System.getProperty("file.separator")).append(createArtifactName(applicationArtifact)).append(".jar").toString();
   }
 
   private void createJar (File jarFile, File directoryToJar)
