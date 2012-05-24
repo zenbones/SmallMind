@@ -26,6 +26,7 @@
  */
 package org.smallmind.quorum.transport.message;
 
+import java.util.Collections;
 import java.util.HashMap;
 import javax.jms.JMSException;
 import javax.jms.Queue;
@@ -40,7 +41,7 @@ public class MessageReceiver {
   private Juggler<TransportManagedObjects, QueueConnection> queueConnectionJuggler;
   private MessageDistributor[] messageDistributors;
 
-  public MessageReceiver (TransportManagedObjects managedObjects, MessagePolicy messagePolicy, MessageStrategy messageStrategy, int connectionCount, int sessionCount, MessageTarget... messageTargets)
+  public MessageReceiver (TransportManagedObjects managedObjects, MessagePolicy messagePolicy, MessageStrategy messageStrategy, int connectionCount, int sessionCount, int replyCacheSize, MessageTarget... messageTargets)
     throws ResourceException, TransportException, JMSException {
 
     HashMap<String, MessageTarget> targetMap = new HashMap<String, MessageTarget>();
@@ -57,7 +58,7 @@ public class MessageReceiver {
 
     messageDistributors = new MessageDistributor[sessionCount];
     for (int count = 0; count < messageDistributors.length; count++) {
-      new Thread(messageDistributors[count] = new MessageDistributor(queueConnectionJuggler.pickResource(), queue, messagePolicy, messageStrategy, targetMap)).start();
+      new Thread(messageDistributors[count] = new MessageDistributor(queueConnectionJuggler.pickResource(), queue, messagePolicy, messageStrategy, Collections.unmodifiableMap(targetMap), replyCacheSize)).start();
     }
 
     queueConnectionJuggler.startup();

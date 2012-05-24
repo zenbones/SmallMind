@@ -26,7 +26,7 @@
  */
 package org.smallmind.quorum.transport.message;
 
-import java.util.HashMap;
+import java.util.Map;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicBoolean;
 import javax.jms.JMSException;
@@ -42,20 +42,24 @@ import org.smallmind.scribe.pen.LoggerManager;
 
 public class MessageDistributor implements MessageListener, Runnable {
 
+  private final QueueSenderLRUCache queueSenderLRUCache;
+
   private CountDownLatch exitLatch;
   private AtomicBoolean stopped = new AtomicBoolean(false);
   private QueueSession queueSession;
   private QueueReceiver queueReceiver;
   private MessagePolicy messagePolicy;
   private MessageStrategy messageStrategy;
-  private HashMap<String, MessageTarget> targetMap;
+  private Map<String, MessageTarget> targetMap;
 
-  public MessageDistributor (QueueConnection queueConnection, Queue queue, MessagePolicy messagePolicy, MessageStrategy messageStrategy, HashMap<String, MessageTarget> targetMap)
+  public MessageDistributor (QueueConnection queueConnection, Queue queue, MessagePolicy messagePolicy, MessageStrategy messageStrategy, Map<String, MessageTarget> targetMap, int replyCacheSize)
     throws TransportException, JMSException {
 
     this.messagePolicy = messagePolicy;
     this.messageStrategy = messageStrategy;
     this.targetMap = targetMap;
+
+    queueSenderLRUCache = new QueueSenderLRUCache(replyCacheSize);
 
     queueSession = queueConnection.createQueueSession(false, messagePolicy.getAcknowledgeMode().getJmsValue());
 
@@ -72,6 +76,11 @@ public class MessageDistributor implements MessageListener, Runnable {
     if (stopped.compareAndSet(false, true)) {
       try {
         queueReceiver.close();
+
+        for (QueueSender queueSender : queueSenderLRUCache.values()) {
+          queueSender.close();
+        }
+
         queueSession.close();
       }
       finally {
@@ -93,10 +102,13 @@ public class MessageDistributor implements MessageListener, Runnable {
 
   public synchronized void onMessage (Message message) {
 
-    Message responseMessage;
-    QueueSender queueSender;
-
     try {
+
+      Message responseMessage;
+      QueueSender queueSender;
+      Queue replyQueue;
+      String replyQueueName;
+
       try {
 
         MessageTarget messageTarget;
@@ -116,15 +128,12 @@ public class MessageDistributor implements MessageListener, Runnable {
         responseMessage.setBooleanProperty(MessageProperty.EXCEPTION.getKey(), true);
       }
 
-      queueSender = queueSession.createSender((Queue)message.getJMSReplyTo());
-      messagePolicy.apply(queueSender);
+      if ((queueSender = queueSenderLRUCache.get(replyQueueName = (replyQueue = (Queue)message.getJMSReplyTo()).getQueueName())) == null) {
+        queueSenderLRUCache.put(replyQueueName, queueSender = queueSession.createSender(replyQueue));
+      }
 
-      try {
-        queueSender.send(responseMessage);
-      }
-      finally {
-        queueSender.close();
-      }
+      messagePolicy.apply(queueSender);
+      queueSender.send(responseMessage);
     }
     catch (Throwable throwable) {
       LoggerManager.getLogger(MessageDistributor.class).error(throwable);
