@@ -71,9 +71,11 @@ public class ConnectionPool<C> {
     return connectionPoolConfig;
   }
 
-  public void setConnectionPoolConfig (ConnectionPoolConfig connectionPoolConfig) {
+  public ConnectionPool<C> setConnectionPoolConfig (ConnectionPoolConfig connectionPoolConfig) {
 
     this.connectionPoolConfig = connectionPoolConfig;
+
+    return this;
   }
 
   public StackTrace[] getExistentialStackTraces () {
@@ -112,13 +114,40 @@ public class ConnectionPool<C> {
   public void startup ()
     throws ConnectionPoolException {
 
+    try {
+      connectionInstanceFactory.initialize();
+    }
+    catch (Exception exception) {
+      throw new ConnectionPoolException(exception);
+    }
     connectionPinManager.startup();
+
+    try {
+      connectionInstanceFactory.startup();
+    }
+    catch (Exception exception) {
+      throw new ConnectionPoolException(exception);
+    }
   }
 
   public void shutdown ()
     throws ConnectionPoolException {
 
+    try {
+      connectionInstanceFactory.shutdown();
+    }
+    catch (Exception exception) {
+      throw new ConnectionPoolException(exception);
+    }
+
     connectionPinManager.shutdown();
+
+    try {
+      connectionInstanceFactory.deconstruct();
+    }
+    catch (Exception exception) {
+      throw new ConnectionPoolException(exception);
+    }
   }
 
   public C getConnection ()

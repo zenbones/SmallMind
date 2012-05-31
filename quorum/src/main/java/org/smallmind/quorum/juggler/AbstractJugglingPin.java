@@ -24,25 +24,22 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.quorum.pool.connection;
+package org.smallmind.quorum.juggler;
 
-public interface ConnectionInstanceFactory<R, C> {
+public abstract class AbstractJugglingPin<R> implements JugglingPin<R> {
 
-  public abstract R rawInstance ()
-    throws Exception;
+  @Override
+  public void start () {
 
-  public abstract ConnectionInstance<C> createInstance (ConnectionPool<C> connectionPool)
-    throws Exception;
+  }
 
-  public void initialize ()
-    throws Exception;
+  @Override
+  public void stop () {
 
-  public void startup ()
-    throws Exception;
+  }
 
-  public void shutdown ()
-    throws Exception;
+  @Override
+  public void close () {
 
-  public void deconstruct ()
-    throws Exception;
+  }
 }

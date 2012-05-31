@@ -33,11 +33,11 @@ import org.smallmind.cloud.namespace.java.JavaContext;
 import org.smallmind.cloud.namespace.java.PooledJavaContext;
 import org.smallmind.cloud.namespace.java.backingStore.NamingConnectionDetails;
 import org.smallmind.cloud.namespace.java.backingStore.StorageType;
+import org.smallmind.quorum.pool.connection.AbstractConnectionInstanceFactory;
 import org.smallmind.quorum.pool.connection.ConnectionInstance;
-import org.smallmind.quorum.pool.connection.ConnectionInstanceFactory;
 import org.smallmind.quorum.pool.connection.ConnectionPool;
 
-public class JavaContextConnectionInstanceFactory implements ConnectionInstanceFactory<JavaContext, PooledJavaContext> {
+public class JavaContextConnectionInstanceFactory extends AbstractConnectionInstanceFactory<JavaContext, PooledJavaContext> {
 
   private StorageType storageType;
   private String contextPath;

@@ -26,23 +26,25 @@
  */
 package org.smallmind.quorum.pool.connection;
 
-public interface ConnectionInstanceFactory<R, C> {
+public abstract class AbstractConnectionInstanceFactory<R, C> implements ConnectionInstanceFactory<R, C> {
 
-  public abstract R rawInstance ()
-    throws Exception;
+  @Override
+  public void initialize () {
 
-  public abstract ConnectionInstance<C> createInstance (ConnectionPool<C> connectionPool)
-    throws Exception;
+  }
 
-  public void initialize ()
-    throws Exception;
+  @Override
+  public void startup () {
 
-  public void startup ()
-    throws Exception;
+  }
 
-  public void shutdown ()
-    throws Exception;
+  @Override
+  public void shutdown () {
 
-  public void deconstruct ()
-    throws Exception;
+  }
+
+  @Override
+  public void deconstruct () {
+
+  }
 }

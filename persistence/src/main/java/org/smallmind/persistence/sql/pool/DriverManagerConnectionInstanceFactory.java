@@ -29,36 +29,34 @@ package org.smallmind.persistence.sql.pool;
 import java.sql.SQLException;
 import org.smallmind.persistence.sql.DriverManagerConnectionPoolDataSource;
 import org.smallmind.persistence.sql.DriverManagerDataSource;
-import org.smallmind.quorum.juggler.JugglerResourceException;
 
 public class DriverManagerConnectionInstanceFactory extends DataSourceConnectionInstanceFactory {
 
   public DriverManagerConnectionInstanceFactory (String driverClassName, String jdbcUrl, String user, String password)
-    throws SQLException, JugglerResourceException {
+    throws SQLException {
 
     this(driverClassName, jdbcUrl, user, password, 0);
   }
 
   public DriverManagerConnectionInstanceFactory (String driverClassName, String jdbcUrl, String user, String password, int maxStatements)
-    throws SQLException, JugglerResourceException {
+    throws SQLException {
 
     this(driverClassName, maxStatements, new ConnectionEndpoint(jdbcUrl, user, password));
   }
 
   public DriverManagerConnectionInstanceFactory (String driverClassName, ConnectionEndpoint... endpoints)
-    throws SQLException, JugglerResourceException {
+    throws SQLException {
 
     this(driverClassName, 0, endpoints);
   }
 
   public DriverManagerConnectionInstanceFactory (String driverClassName, int maxStatements, ConnectionEndpoint... endpoints)
-    throws SQLException, JugglerResourceException {
+    throws SQLException {
 
     this(maxStatements, constructDataSources(driverClassName, endpoints));
   }
 
-  public DriverManagerConnectionInstanceFactory (int maxStatements, DriverManagerDataSource... dataSources)
-    throws SQLException, JugglerResourceException {
+  public DriverManagerConnectionInstanceFactory (int maxStatements, DriverManagerDataSource... dataSources) {
 
     super(60, constructCartridges(maxStatements, dataSources));
   }
@@ -75,8 +73,7 @@ public class DriverManagerConnectionInstanceFactory extends DataSourceConnection
     return dataSources;
   }
 
-  private static DataSourceCartridge[] constructCartridges (int maxStatements, DriverManagerDataSource... dataSources)
-    throws SQLException {
+  private static DataSourceCartridge[] constructCartridges (int maxStatements, DriverManagerDataSource... dataSources) {
 
     DataSourceCartridge[] cartridges = new DataSourceCartridge[dataSources.length];
 

@@ -39,8 +39,6 @@ public class QueueConnectionJugglingPin implements JugglingPin<QueueConnection> 
     throws JMSException {
 
     this.connection = connection;
-
-    connection.start();
   }
 
   @Override

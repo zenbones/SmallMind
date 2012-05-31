@@ -28,38 +28,65 @@ package org.smallmind.persistence.sql.pool.spring;
 
 import java.sql.SQLException;
 import javax.sql.DataSource;
+import javax.sql.PooledConnection;
 import org.smallmind.persistence.sql.pool.ConnectionEndpoint;
 import org.smallmind.persistence.sql.pool.DriverManagerConnectionInstanceFactory;
-import org.smallmind.quorum.juggler.JugglerResourceException;
+import org.smallmind.persistence.sql.pool.PooledDataSource;
+import org.smallmind.quorum.pool.connection.ConnectionPool;
+import org.smallmind.quorum.pool.connection.ConnectionPoolConfig;
+import org.smallmind.quorum.pool.connection.ConnectionPoolException;
+import org.springframework.beans.factory.DisposableBean;
 import org.springframework.beans.factory.FactoryBean;
 import org.springframework.beans.factory.InitializingBean;
 
-public class DriverManagerPooledDataSourceFactoryBean implements InitializingBean, FactoryBean<DataSource> {
+public class DriverManagerPooledDataSourceFactoryBean implements FactoryBean<DataSource>, InitializingBean, DisposableBean {
 
-  /*
-  <constructor-arg index="0" value="${jdbc.driver.classname}"/>
-  <constructor-arg index="1" value="${jdbc.url.protocol}"/>
-  <constructor-arg index="2" value="${jdbc.username.protocol}"/>
-  <constructor-arg index="3" value="${jdbc.password.protocol}"/>
-  <property name="validationQuery" value="${jdbc.validation.statement}"/>
-</bean>
-
-<bean id="protocolDBPool" class="org.smallmind.quorum.pool.connection.ConnectionPool" init-method="startup" destroy-method="shutdown">
-  <constructor-arg index="0" value="protocolDBPool"/>
-  <constructor-arg index="1" ref="protocolConnectionInstanceFactory"/>
-  <property name="connectionPoolConfig">
-  */
-
+  private PooledDataSource dataSource;
+  private ConnectionPool<PooledConnection> connectionPool;
+  private ConnectionPoolConfig poolConfig;
   private DatabaseConnection[] connections;
   private String driverClassName;
+  private String poolName;
   private int maxStatements;
+
+  public void setPoolName (String poolName) {
+
+    this.poolName = poolName;
+  }
+
+  public void setDriverClassName (String driverClassName) {
+
+    this.driverClassName = driverClassName;
+  }
+
+  public void setConnections (DatabaseConnection[] connections) {
+
+    this.connections = connections;
+  }
+
+  public void setMaxStatements (int maxStatements) {
+
+    this.maxStatements = maxStatements;
+  }
+
+  public void setPoolConfig (ConnectionPoolConfig poolConfig) {
+
+    this.poolConfig = poolConfig;
+  }
 
   @Override
   public void afterPropertiesSet ()
-    throws SQLException, JugglerResourceException {
+    throws SQLException, ConnectionPoolException {
 
-    DriverManagerConnectionInstanceFactory connectionInstanceFactory = new DriverManagerConnectionInstanceFactory(driverClassName, maxStatements, createConnectionEndpoints(connections));
+    dataSource = new PooledDataSource(connectionPool = new ConnectionPool<PooledConnection>(poolName, new DriverManagerConnectionInstanceFactory(driverClassName, maxStatements, createConnectionEndpoints(connections))).setConnectionPoolConfig(poolConfig));
+    connectionPool.startup();
+  }
 
+  @Override
+  public void destroy ()
+    throws ConnectionPoolException {
+
+    connectionPool.shutdown();
   }
 
   private ConnectionEndpoint[] createConnectionEndpoints (DatabaseConnection... databaseConnections) {
@@ -95,6 +122,6 @@ public class DriverManagerPooledDataSourceFactoryBean implements InitializingBea
   @Override
   public DataSource getObject () {
 
-    return null;
+    return dataSource;
   }
 }

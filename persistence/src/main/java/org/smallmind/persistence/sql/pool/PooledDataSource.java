@@ -43,6 +43,11 @@ public class PooledDataSource implements DataSource {
   private PrintWriter logWriter;
   private String key;
 
+  public PooledDataSource (ConnectionPool connectionPool) {
+
+    this(connectionPool.getPoolName(), connectionPool);
+  }
+
   public PooledDataSource (String key, ConnectionPool connectionPool) {
 
     this.key = key;

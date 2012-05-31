@@ -28,10 +28,10 @@ package org.smallmind.persistence.sql.pool;
 
 import java.sql.SQLException;
 import javax.sql.PooledConnection;
+import org.smallmind.quorum.juggler.AbstractJugglingPin;
 import org.smallmind.quorum.juggler.JugglerResourceException;
-import org.smallmind.quorum.juggler.JugglingPin;
 
-public class PooledConnectionJugglingPin implements JugglingPin<PooledConnection> {
+public class PooledConnectionJugglingPin extends AbstractJugglingPin<PooledConnection> {
 
   private DataSourceCartridge cartridge;
 
@@ -51,20 +51,5 @@ public class PooledConnectionJugglingPin implements JugglingPin<PooledConnection
     catch (SQLException sqlException) {
       throw new JugglerResourceException(sqlException);
     }
-  }
-
-  @Override
-  public void start () {
-
-  }
-
-  @Override
-  public void stop () {
-
-  }
-
-  @Override
-  public void close () {
-
   }
 }
