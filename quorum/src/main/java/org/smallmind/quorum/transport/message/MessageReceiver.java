@@ -32,7 +32,7 @@ import javax.jms.JMSException;
 import javax.jms.Queue;
 import javax.jms.QueueConnection;
 import org.smallmind.quorum.juggler.Juggler;
-import org.smallmind.quorum.juggler.ResourceException;
+import org.smallmind.quorum.juggler.JugglerResourceException;
 import org.smallmind.quorum.transport.TransportException;
 import org.smallmind.scribe.pen.LoggerManager;
 
@@ -42,7 +42,7 @@ public class MessageReceiver {
   private MessageDistributor[] messageDistributors;
 
   public MessageReceiver (TransportManagedObjects managedObjects, MessagePolicy messagePolicy, MessageStrategy messageStrategy, int connectionCount, int sessionCount, int replyCacheSize, MessageTarget... messageTargets)
-    throws ResourceException, TransportException, JMSException {
+    throws JugglerResourceException, TransportException, JMSException {
 
     HashMap<String, MessageTarget> targetMap = new HashMap<String, MessageTarget>();
     Queue queue;

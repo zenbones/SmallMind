@@ -74,7 +74,7 @@ public class Juggler<P, R> {
   }
 
   public synchronized void initialize ()
-    throws ResourceCreationException {
+    throws JugglerResourceCreationException {
 
     if (state.equals(State.DECONSTRUCTED)) {
       sourcePins = new ArrayList<JugglingPin<R>>(providers.length);
@@ -94,7 +94,7 @@ public class Juggler<P, R> {
   }
 
   public synchronized void startup ()
-    throws ResourceException {
+    throws JugglerResourceException {
 
     if (state.equals(State.INITIALIZED)) {
 
@@ -115,7 +115,7 @@ public class Juggler<P, R> {
   }
 
   public synchronized R pickResource ()
-    throws NoAvailableResourceException {
+    throws NoAvailableJugglerResourceException {
 
     if (!(state.equals(State.INITIALIZED) || state.equals(State.STARTED))) {
       throw new IllegalStateException("Juggler must be in the initialized or started state");
@@ -151,7 +151,7 @@ public class Juggler<P, R> {
       }
     }
 
-    throw new NoAvailableResourceException("All available resources(%s) have been black listed", managedClass.getSimpleName());
+    throw new NoAvailableJugglerResourceException("All available resources(%s) have been black listed", managedClass.getSimpleName());
   }
 
   public synchronized void shutdown () {

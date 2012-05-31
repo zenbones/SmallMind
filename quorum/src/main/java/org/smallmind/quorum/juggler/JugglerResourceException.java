@@ -26,17 +26,17 @@
  */
 package org.smallmind.quorum.juggler;
 
-public interface JugglingPin<R> {
+import org.smallmind.nutsnbolts.lang.FormattedException;
 
-  public abstract R obtain ()
-    throws JugglerResourceException;
+public class JugglerResourceException extends FormattedException {
 
-  public abstract void start ()
-    throws JugglerResourceException;
+  public JugglerResourceException (Throwable throwable) {
 
-  public abstract void stop ()
-    throws JugglerResourceException;
+    super(throwable);
+  }
 
-  public abstract void close ()
-    throws JugglerResourceException;
+  public JugglerResourceException (String message, Object... args) {
+
+    super(message, args);
+  }
 }

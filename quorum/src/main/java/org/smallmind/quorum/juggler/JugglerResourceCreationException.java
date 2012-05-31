@@ -26,9 +26,9 @@
  */
 package org.smallmind.quorum.juggler;
 
-public class ResourceCreationException extends ResourceException {
+public class JugglerResourceCreationException extends JugglerResourceException {
 
-  public ResourceCreationException (Throwable throwable) {
+  public JugglerResourceCreationException (Throwable throwable) {
 
     super(throwable);
   }

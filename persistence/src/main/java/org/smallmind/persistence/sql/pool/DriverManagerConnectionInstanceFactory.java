@@ -29,36 +29,36 @@ package org.smallmind.persistence.sql.pool;
 import java.sql.SQLException;
 import org.smallmind.persistence.sql.DriverManagerConnectionPoolDataSource;
 import org.smallmind.persistence.sql.DriverManagerDataSource;
-import org.smallmind.quorum.juggler.ResourceException;
+import org.smallmind.quorum.juggler.JugglerResourceException;
 
 public class DriverManagerConnectionInstanceFactory extends DataSourceConnectionInstanceFactory {
 
   public DriverManagerConnectionInstanceFactory (String driverClassName, String jdbcUrl, String user, String password)
-    throws SQLException, ResourceException {
+    throws SQLException, JugglerResourceException {
 
     this(driverClassName, jdbcUrl, user, password, 0);
   }
 
   public DriverManagerConnectionInstanceFactory (String driverClassName, String jdbcUrl, String user, String password, int maxStatements)
-    throws SQLException, ResourceException {
+    throws SQLException, JugglerResourceException {
 
     this(driverClassName, maxStatements, new ConnectionEndpoint(jdbcUrl, user, password));
   }
 
   public DriverManagerConnectionInstanceFactory (String driverClassName, ConnectionEndpoint... endpoints)
-    throws SQLException, ResourceException {
+    throws SQLException, JugglerResourceException {
 
     this(driverClassName, 0, endpoints);
   }
 
   public DriverManagerConnectionInstanceFactory (String driverClassName, int maxStatements, ConnectionEndpoint... endpoints)
-    throws SQLException, ResourceException {
+    throws SQLException, JugglerResourceException {
 
     this(maxStatements, constructDataSources(driverClassName, endpoints));
   }
 
   public DriverManagerConnectionInstanceFactory (int maxStatements, DriverManagerDataSource... dataSources)
-    throws SQLException, ResourceException {
+    throws SQLException, JugglerResourceException {
 
     super(60, constructCartridges(maxStatements, dataSources));
   }

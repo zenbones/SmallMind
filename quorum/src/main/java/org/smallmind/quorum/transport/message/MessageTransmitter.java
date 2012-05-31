@@ -29,7 +29,7 @@ package org.smallmind.quorum.transport.message;
 import javax.jms.Queue;
 import javax.jms.QueueConnection;
 import org.smallmind.quorum.juggler.Juggler;
-import org.smallmind.quorum.juggler.ResourceException;
+import org.smallmind.quorum.juggler.JugglerResourceException;
 import org.smallmind.quorum.pool.connection.ConnectionPool;
 import org.smallmind.quorum.pool.connection.ConnectionPoolConfig;
 import org.smallmind.quorum.pool.connection.ConnectionPoolException;
@@ -41,7 +41,7 @@ public class MessageTransmitter {
   private ConnectionPool<MessageSender> messageSenderPool;
 
   public MessageTransmitter (TransportManagedObjects managedObjects, MessagePolicy messagePolicy, MessageStrategy messageStrategy, int connectionCount, MessageSenderPoolConfig messageSenderPoolConfig)
-    throws ResourceException, ConnectionPoolException, TransportException {
+    throws JugglerResourceException, ConnectionPoolException, TransportException {
 
     queueConnectionJuggler = new Juggler<TransportManagedObjects, QueueConnection>(TransportManagedObjects.class, 60, new QueueConnectionJugglingPinFactory(), managedObjects, connectionCount);
     messageSenderPool = new ConnectionPool<MessageSender>("", new MessageSenderConnectionInstanceFactory(queueConnectionJuggler, (Queue)managedObjects.getDestination(), messagePolicy, messageStrategy), new ConnectionPoolConfig(messageSenderPoolConfig));

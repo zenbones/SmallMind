@@ -24,12 +24,42 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.quorum.juggler;
+package org.smallmind.persistence.sql.pool.spring;
 
-public class NoAvailableResourceException extends ResourceException {
 
-  public NoAvailableResourceException (String message, Object... args) {
+public class DatabaseConnection {
 
-    super(message, args);
+  private String jdbcUrl;
+  private String user;
+  private String password;
+
+  public String getJdbcUrl () {
+
+    return jdbcUrl;
+  }
+
+  public void setJdbcUrl (String jdbcUrl) {
+
+    this.jdbcUrl = jdbcUrl;
+  }
+
+  public String getUser () {
+
+    return user;
+  }
+
+  public void setUser (String user) {
+
+    this.user = user;
+  }
+
+  public String getPassword () {
+
+    return password;
+  }
+
+  public void setPassword (String password) {
+
+    this.password = password;
   }
 }

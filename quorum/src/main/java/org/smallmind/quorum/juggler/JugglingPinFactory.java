@@ -29,5 +29,5 @@ package org.smallmind.quorum.juggler;
 public interface JugglingPinFactory<P, R> {
 
   public abstract JugglingPin<R> createJugglingPin (P provider)
-    throws ResourceCreationException;
+    throws JugglerResourceCreationException;
 }

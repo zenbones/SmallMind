@@ -30,7 +30,7 @@ import javax.jms.JMSException;
 import javax.jms.Queue;
 import javax.jms.QueueConnection;
 import org.smallmind.quorum.juggler.Juggler;
-import org.smallmind.quorum.juggler.NoAvailableResourceException;
+import org.smallmind.quorum.juggler.NoAvailableJugglerResourceException;
 import org.smallmind.quorum.pool.connection.ConnectionInstance;
 import org.smallmind.quorum.pool.connection.ConnectionInstanceFactory;
 import org.smallmind.quorum.pool.connection.ConnectionPool;
@@ -59,7 +59,7 @@ public class MessageSenderConnectionInstanceFactory implements ConnectionInstanc
 
   @Override
   public ConnectionInstance<MessageSender> createInstance (ConnectionPool<MessageSender> connectionPool)
-    throws NoAvailableResourceException, JMSException {
+    throws NoAvailableJugglerResourceException, JMSException {
 
     return new MessageSenderConnectionInstance(connectionPool, queueConnectionJuggler.pickResource(), queue, messagePolicy, messageStrategy);
   }
