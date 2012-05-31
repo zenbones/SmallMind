@@ -34,7 +34,7 @@ import org.springframework.beans.factory.DisposableBean;
 import org.springframework.beans.factory.FactoryBean;
 import org.springframework.beans.factory.InitializingBean;
 
-public class DriverManagerPooledDataSourceFactoryBean implements FactoryBean<DataSource>, InitializingBean, DisposableBean {
+public class DynamicDriverManagerPooledDataSourceFactoryBean implements FactoryBean<DataSource>, InitializingBean, DisposableBean {
 
   private DriverManagerPooledDataSourceProvider dataSourceProvider;
   private ConnectionPoolConfig poolConfig;
