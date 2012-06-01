@@ -49,21 +49,17 @@ import org.springframework.beans.factory.BeanDefinitionStoreException;
 import org.springframework.beans.factory.BeanFactory;
 import org.springframework.beans.factory.BeanFactoryAware;
 import org.springframework.beans.factory.BeanNameAware;
-import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.config.BeanDefinition;
 import org.springframework.beans.factory.config.BeanDefinitionVisitor;
 import org.springframework.beans.factory.config.BeanFactoryPostProcessor;
 import org.springframework.beans.factory.config.ConfigurableListableBeanFactory;
 import org.springframework.core.Ordered;
 import org.springframework.core.PriorityOrdered;
-import org.springframework.util.StringValueResolver;
 
-public class PropertyPlaceholderConfigurer implements BeanFactoryPostProcessor, BeanFactoryAware, BeanNameAware, Ordered, PriorityOrdered, InitializingBean {
+public class PropertyPlaceholderConfigurer implements BeanFactoryPostProcessor, BeanFactoryAware, BeanNameAware, Ordered, PriorityOrdered {
 
-  private final Map<String, String> propertyMap = new HashMap<String, String>();
   private final TreeMap<String, String> debugMap = new TreeMap<String, String>(new DotNotationComparator());
 
-  private StringValueResolver valueResolver;
   private BeanFactory beanFactory;
   private KeyDebugger keyDebugger;
   private LinkedList<String> locationList = new LinkedList<String>();
@@ -135,11 +131,15 @@ public class PropertyPlaceholderConfigurer implements BeanFactoryPostProcessor, 
     keyDebugger = new KeyDebugger(debugPatterns);
   }
 
-  @Override
-  public void afterPropertiesSet () {
+  public void postProcessBeanFactory (ConfigurableListableBeanFactory beanFactoryToProcess)
+    throws BeansException {
 
+    PropertyPlaceholderStringValueResolver valueResolver;
+    Map<String, String> propertyMap = new HashMap<String, String>();
     ResourceParser resourceParser;
     PropertyExpander locationExpander;
+    BeanDefinitionVisitor beanDefinitionVisitor;
+    BeanDefinition beanDefinition;
 
     resourceParser = new ResourceParser(new ResourceTypeFactory());
 
@@ -177,13 +177,6 @@ public class PropertyPlaceholderConfigurer implements BeanFactoryPostProcessor, 
     }
 
     SpringPropertyAccessor.setInstance(valueResolver = new PropertyPlaceholderStringValueResolver(propertyMap, ignoreUnresolvableProperties, systemPropertyMode, searchSystemEnvironment));
-  }
-
-  public void postProcessBeanFactory (ConfigurableListableBeanFactory beanFactoryToProcess)
-    throws BeansException {
-
-    BeanDefinitionVisitor beanDefinitionVisitor;
-    BeanDefinition beanDefinition;
 
     if ((keyDebugger != null) && keyDebugger.willDebug()) {
       for (Map.Entry<String, String> propertyEntry : propertyMap.entrySet()) {

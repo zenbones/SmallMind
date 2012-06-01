@@ -40,10 +40,16 @@ public class DriverManagerPooledDataSourceProvider {
   private final PooledDataSource dataSource;
   private final ConnectionPool<PooledConnection> connectionPool;
 
-  public DriverManagerPooledDataSourceProvider (String poolName, String driverClassName, int maxStatements, ConnectionPoolConfig poolConfig, DatabaseConnection... connections)
+  public DriverManagerPooledDataSourceProvider (String poolName, String driverClassName, String validationQuery, int maxStatements, ConnectionPoolConfig poolConfig, DatabaseConnection... connections)
     throws SQLException {
 
-    dataSource = new PooledDataSource(connectionPool = new ConnectionPool<PooledConnection>(poolName, new DriverManagerConnectionInstanceFactory(driverClassName, maxStatements, createConnectionEndpoints(connections))).setConnectionPoolConfig(poolConfig));
+    DriverManagerConnectionInstanceFactory connectionInstanceFactory = new DriverManagerConnectionInstanceFactory(driverClassName, maxStatements, createConnectionEndpoints(connections));
+
+    if (validationQuery != null) {
+      connectionInstanceFactory.setValidationQuery(validationQuery);
+    }
+
+    dataSource = new PooledDataSource(connectionPool = new ConnectionPool<PooledConnection>(poolName, connectionInstanceFactory).setConnectionPoolConfig(poolConfig));
   }
 
   public PooledDataSource getPooledDataSource () {

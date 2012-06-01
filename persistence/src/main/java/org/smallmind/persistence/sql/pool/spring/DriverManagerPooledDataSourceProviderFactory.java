@@ -26,39 +26,7 @@
  */
 package org.smallmind.persistence.sql.pool.spring;
 
-import javax.sql.DataSource;
-import org.springframework.beans.factory.FactoryBean;
+public interface DriverManagerPooledDataSourceProviderFactory {
 
-public class DynamicDriverManagerPooledDataSourceFactoryBean implements FactoryBean<DataSource> {
-
-  private DriverManagerPooledDataSourceProviderFactory dataSourceProviderFactory;
-  private String dataSourceKey;
-
-  public void setDataSourceKey (String dataSourceKey) {
-
-    this.dataSourceKey = dataSourceKey;
-  }
-
-  public void setDataSourceProviderFactory (DriverManagerPooledDataSourceProviderFactory dataSourceProviderFactory) {
-
-    this.dataSourceProviderFactory = dataSourceProviderFactory;
-  }
-
-  @Override
-  public boolean isSingleton () {
-
-    return true;
-  }
-
-  @Override
-  public Class<?> getObjectType () {
-
-    return DataSource.class;
-  }
-
-  @Override
-  public DataSource getObject () {
-
-    return dataSourceProviderFactory.getDataSourceProvider(dataSourceKey).getPooledDataSource();
-  }
+  public abstract DriverManagerPooledDataSourceProvider getDataSourceProvider (String dataSourceKey);
 }

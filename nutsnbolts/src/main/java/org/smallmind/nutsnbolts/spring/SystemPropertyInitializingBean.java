@@ -39,7 +39,7 @@ import org.springframework.beans.factory.config.ConfigurableListableBeanFactory;
 import org.springframework.core.Ordered;
 import org.springframework.core.PriorityOrdered;
 
-public class SystemPropertyBeanFactoryPostProcessor implements BeanFactoryPostProcessor, Ordered, PriorityOrdered {
+public class SystemPropertyInitializingBean implements BeanFactoryPostProcessor, Ordered, PriorityOrdered {
 
   private final TreeMap<String, String> debugMap = new TreeMap<String, String>(new AlphaNumericComparator<String>());
 
@@ -48,7 +48,7 @@ public class SystemPropertyBeanFactoryPostProcessor implements BeanFactoryPostPr
   private boolean override;
   private int order;
 
-  public SystemPropertyBeanFactoryPostProcessor () {
+  public SystemPropertyInitializingBean () {
 
     propertyMap = new HashMap<String, String>();
     override = false;
@@ -85,8 +85,9 @@ public class SystemPropertyBeanFactoryPostProcessor implements BeanFactoryPostPr
     keyDebugger = new KeyDebugger(debugPatterns);
   }
 
-  public void postProcessBeanFactory (ConfigurableListableBeanFactory configurableListableBeanFactory)
-    throws BeansException {
+  @Override
+  // We exist as a post processor merely to get into the first 'special' initialization phase
+  public void postProcessBeanFactory (ConfigurableListableBeanFactory beanFactory) throws BeansException {
 
     for (Map.Entry<String, String> propertyEntry : propertyMap.entrySet()) {
       if (override || ((System.getProperty(propertyEntry.getKey()) == null) && (System.getenv(propertyEntry.getKey()) == null))) {

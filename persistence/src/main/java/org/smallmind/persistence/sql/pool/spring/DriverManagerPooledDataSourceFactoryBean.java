@@ -41,6 +41,7 @@ public class DriverManagerPooledDataSourceFactoryBean implements FactoryBean<Dat
   private DatabaseConnection[] connections;
   private String driverClassName;
   private String poolName;
+  private String validationQuery;
   private int maxStatements;
 
   public void setPoolName (String poolName) {
@@ -58,6 +59,11 @@ public class DriverManagerPooledDataSourceFactoryBean implements FactoryBean<Dat
     this.connections = connections;
   }
 
+  public void setValidationQuery (String validationQuery) {
+
+    this.validationQuery = validationQuery;
+  }
+
   public void setMaxStatements (int maxStatements) {
 
     this.maxStatements = maxStatements;
@@ -72,7 +78,7 @@ public class DriverManagerPooledDataSourceFactoryBean implements FactoryBean<Dat
   public void afterPropertiesSet ()
     throws SQLException, ConnectionPoolException {
 
-    dataSourceProvider = new DriverManagerPooledDataSourceProvider(poolName, driverClassName, maxStatements, poolConfig, connections);
+    dataSourceProvider = new DriverManagerPooledDataSourceProvider(poolName, driverClassName, validationQuery, maxStatements, poolConfig, connections);
     dataSourceProvider.startup();
   }
 

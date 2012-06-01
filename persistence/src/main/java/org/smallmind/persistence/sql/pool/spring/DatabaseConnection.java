@@ -26,12 +26,18 @@
  */
 package org.smallmind.persistence.sql.pool.spring;
 
-
 public class DatabaseConnection {
 
   private String jdbcUrl;
   private String user;
   private String password;
+
+  public DatabaseConnection (String jdbcUrl, String user, String password) {
+
+    this.jdbcUrl = jdbcUrl;
+    this.user = user;
+    this.password = password;
+  }
 
   public String getJdbcUrl () {
 

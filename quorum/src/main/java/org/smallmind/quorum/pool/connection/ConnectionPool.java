@@ -120,6 +120,7 @@ public class ConnectionPool<C> {
     catch (Exception exception) {
       throw new ConnectionPoolException(exception);
     }
+
     connectionPinManager.startup();
 
     try {

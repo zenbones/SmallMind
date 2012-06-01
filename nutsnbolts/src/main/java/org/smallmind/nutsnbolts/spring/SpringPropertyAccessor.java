@@ -26,28 +26,33 @@
  */
 package org.smallmind.nutsnbolts.spring;
 
-import org.springframework.util.StringValueResolver;
+import java.util.Set;
 
-public class SpringPropertyAccessor implements StringValueResolver {
+public class SpringPropertyAccessor {
 
-  private static StringValueResolver instance;
+  private static PropertyPlaceholderStringValueResolver INSTANCE;
 
-  public static synchronized void setInstance (StringValueResolver instance) {
+  public static synchronized void setInstance (PropertyPlaceholderStringValueResolver instance) {
 
+    INSTANCE = instance;
   }
 
-  private static synchronized StringValueResolver getInstance () {
+  private static synchronized PropertyPlaceholderStringValueResolver getInstance () {
 
-    if (instance == null) {
-      throw new RuntimeBeansException("No instance(%s) has been set - please report this error to your operations team", SpringPropertyAccessor.class.getSimpleName());
+    if (INSTANCE == null) {
+      throw new RuntimeBeansException("No instance(%s) has been set - please report this error to your operations team", PropertyPlaceholderStringValueResolver.class.getSimpleName());
     }
 
-    return instance;
+    return INSTANCE;
   }
 
-  @Override
-  public String resolveStringValue (String strVal) {
+  public static Set<String> getKeySet () {
 
-    return getInstance().resolveStringValue(strVal);
+    return INSTANCE.getKeySet();
+  }
+
+  public static String resolveStringValue (String keyInterpolation) {
+
+    return getInstance().resolveStringValue(keyInterpolation);
   }
 }

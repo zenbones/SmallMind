@@ -26,11 +26,11 @@
  */
 package org.smallmind.nutsnbolts.util;
 
-public class None implements Option {
+public class None<T> implements Option<T> {
 
   private static None NONE = new None();
 
-  public static None none () {
+  public static <T> None<T> none () {
 
     return NONE;
   }
@@ -44,7 +44,7 @@ public class None implements Option {
     return true;
   }
 
-  public Object get () {
+  public T get () {
 
     return null;
   }

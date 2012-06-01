@@ -26,7 +26,9 @@
  */
 package org.smallmind.nutsnbolts.spring;
 
+import java.util.Collections;
 import java.util.Map;
+import java.util.Set;
 import org.smallmind.nutsnbolts.util.PropertyExpander;
 import org.smallmind.nutsnbolts.util.PropertyExpanderException;
 import org.smallmind.nutsnbolts.util.SystemPropertyMode;
@@ -49,6 +51,11 @@ public class PropertyPlaceholderStringValueResolver implements StringValueResolv
     }
 
     this.propertyMap = propertyMap;
+  }
+
+  public Set<String> getKeySet () {
+
+    return Collections.unmodifiableSet(propertyMap.keySet());
   }
 
   public String resolveStringValue (String property)

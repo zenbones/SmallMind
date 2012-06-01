@@ -4,7 +4,7 @@
 
   <import resource="classpath:org/smallmind/foundation/logging.xml"/>
 
-  <bean class="org.smallmind.nutsnbolts.spring.SystemPropertyBeanFactoryPostProcessor">
+  <bean class="org.smallmind.nutsnbolts.spring.SystemPropertyInitializingBean">
     <property name="order" value="1"/>
     <property name="propertyMap">
       <map>
