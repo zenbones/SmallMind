@@ -27,10 +27,15 @@
 package org.smallmind.nutsnbolts.spring;
 
 import java.util.Set;
+import org.smallmind.nutsnbolts.util.None;
+import org.smallmind.nutsnbolts.util.Option;
+import org.smallmind.nutsnbolts.util.Some;
 
 public class SpringPropertyAccessor {
 
   private static PropertyPlaceholderStringValueResolver INSTANCE;
+
+  private Set<String> keySet;
 
   public static synchronized void setInstance (PropertyPlaceholderStringValueResolver instance) {
 
@@ -46,13 +51,69 @@ public class SpringPropertyAccessor {
     return INSTANCE;
   }
 
-  public static Set<String> getKeySet () {
+  public SpringPropertyAccessor () {
 
-    return INSTANCE.getKeySet();
+    keySet = getInstance().getKeySet();
   }
 
-  public static String resolveStringValue (String keyInterpolation) {
+  public Set<String> getKeySet () {
 
-    return getInstance().resolveStringValue(keyInterpolation);
+    return keySet;
+  }
+
+  public String asString (String key) {
+
+    if (!keySet.contains(key)) {
+
+      return null;
+    }
+
+    return getInstance().resolveStringValue("${" + key + "}");
+  }
+
+  public Option<Boolean> asBoolean (String key) {
+
+    String stringValue;
+
+    if ((stringValue = asString(key)) == null) {
+
+      return None.none();
+    }
+
+    return new Some<Boolean>(Boolean.parseBoolean(stringValue));
+  }
+
+  public Option<Long> asLong (String key) {
+
+    String stringValue;
+
+    if ((stringValue = asString(key)) == null) {
+
+      return None.none();
+    }
+
+    try {
+      return new Some<Long>(Long.parseLong(stringValue));
+    }
+    catch (NumberFormatException numberFormatException) {
+      throw new RuntimeBeansException("The value of key(%s) must interpolate as an long(%s)", key, stringValue);
+    }
+  }
+
+  public Option<Integer> asInt (String key) {
+
+    String stringValue;
+
+    if ((stringValue = asString(key)) == null) {
+
+      return None.none();
+    }
+
+    try {
+      return new Some<Integer>(Integer.parseInt(stringValue));
+    }
+    catch (NumberFormatException numberFormatException) {
+      throw new RuntimeBeansException("The value of key(%s) must interpolate as an int(%s)", key, stringValue);
+    }
   }
 }

@@ -29,12 +29,9 @@ package org.smallmind.persistence.sql.pool.spring;
 import java.sql.SQLException;
 import java.util.HashMap;
 import java.util.LinkedList;
-import java.util.Set;
 import org.smallmind.nutsnbolts.spring.RuntimeBeansException;
 import org.smallmind.nutsnbolts.spring.SpringPropertyAccessor;
-import org.smallmind.nutsnbolts.util.None;
 import org.smallmind.nutsnbolts.util.Option;
-import org.smallmind.nutsnbolts.util.Some;
 import org.smallmind.quorum.pool.connection.ConnectionPoolConfig;
 import org.smallmind.quorum.pool.connection.ConnectionPoolException;
 import org.springframework.beans.factory.DisposableBean;
@@ -83,9 +80,9 @@ public class DynamicDriverManagerPooledDataSourceInitializingBean implements Ini
   public void afterPropertiesSet ()
     throws SQLException, ConnectionPoolException {
 
-    Set<String> keySet = SpringPropertyAccessor.getKeySet();
+    SpringPropertyAccessor springPropertyAccessor = new SpringPropertyAccessor();
 
-    for (String key : keySet) {
+    for (String key : springPropertyAccessor.getKeySet()) {
 
       String poolName;
 
@@ -108,39 +105,39 @@ public class DynamicDriverManagerPooledDataSourceInitializingBean implements Ini
         String validationQuery;
         int index = 0;
 
-        driverClassName = asString(keySet, "jdbc.driver.class_name." + poolName);
-        maxStatementsOption = asInt(keySet, "jdbc.max_statements." + poolName);
-        validationQuery = asString(keySet, "jdbc.validation_query." + poolName);
+        driverClassName = springPropertyAccessor.asString("jdbc.driver.class_name." + poolName);
+        maxStatementsOption = springPropertyAccessor.asInt("jdbc.max_statements." + poolName);
+        validationQuery = springPropertyAccessor.asString("jdbc.validation_query." + poolName);
 
-        while ((connection = containsConnection(keySet, poolName, index++)) != null) {
+        while ((connection = containsConnection(springPropertyAccessor, poolName, index++)) != null) {
           connectionList.add(connection);
         }
         if (connectionList.isEmpty()) {
           throw new RuntimeBeansException("Database connection pool(%s) must have at least one complete connection defined at index(0)", poolName);
         }
 
-        if (!(testOnAcquireOption = asBoolean(keySet, "jdbc.pool.test_on_acquire." + poolName)).isNone()) {
+        if (!(testOnAcquireOption = springPropertyAccessor.asBoolean("jdbc.pool.test_on_acquire." + poolName)).isNone()) {
           connectionPoolConfig.setTestOnAcquire(testOnAcquireOption.get());
         }
-        if (!(initialSizeOption = asInt(keySet, "jdbc.pool.initial_size." + poolName)).isNone()) {
+        if (!(initialSizeOption = springPropertyAccessor.asInt("jdbc.pool.initial_size." + poolName)).isNone()) {
           connectionPoolConfig.setInitialPoolSize(initialSizeOption.get());
         }
-        if (!(minSizeOption = asInt(keySet, "jdbc.pool.min_size." + poolName)).isNone()) {
+        if (!(minSizeOption = springPropertyAccessor.asInt("jdbc.pool.min_size." + poolName)).isNone()) {
           connectionPoolConfig.setMinPoolSize(minSizeOption.get());
         }
-        if (!(maxSizeOption = asInt(keySet, "jdbc.pool.max_size." + poolName)).isNone()) {
+        if (!(maxSizeOption = springPropertyAccessor.asInt("jdbc.pool.max_size." + poolName)).isNone()) {
           connectionPoolConfig.setMaxPoolSize(maxSizeOption.get());
         }
-        if (!(acquireWaitTimeMillisOption = asLong(keySet, "jdbc.pool.acquire_wait_time_millis." + poolName)).isNone()) {
+        if (!(acquireWaitTimeMillisOption = springPropertyAccessor.asLong("jdbc.pool.acquire_wait_time_millis." + poolName)).isNone()) {
           connectionPoolConfig.setAcquireWaitTimeMillis(acquireWaitTimeMillisOption.get());
         }
-        if (!(connectionTimeoutMillisOption = asLong(keySet, "jdbc.pool.connection_timeout_millis." + poolName)).isNone()) {
+        if (!(connectionTimeoutMillisOption = springPropertyAccessor.asLong("jdbc.pool.connection_timeout_millis." + poolName)).isNone()) {
           connectionPoolConfig.setConnectionTimeoutMillis(connectionTimeoutMillisOption.get());
         }
-        if (!(maxIdleSecondsOption = asInt(keySet, "jdbc.pool.max_idle_seconds." + poolName)).isNone()) {
+        if (!(maxIdleSecondsOption = springPropertyAccessor.asInt("jdbc.pool.max_idle_seconds." + poolName)).isNone()) {
           connectionPoolConfig.setMaxIdleTimeSeconds(maxIdleSecondsOption.get());
         }
-        if (!(maxLeaseTimeSecondsOption = asInt(keySet, "jdbc.pool.max_lease_time_seconds." + poolName)).isNone()) {
+        if (!(maxLeaseTimeSecondsOption = springPropertyAccessor.asInt("jdbc.pool.max_lease_time_seconds." + poolName)).isNone()) {
           connectionPoolConfig.setMaxLeaseTimeSeconds(maxLeaseTimeSecondsOption.get());
         }
 
@@ -151,13 +148,13 @@ public class DynamicDriverManagerPooledDataSourceInitializingBean implements Ini
       }
     }
 
-    for (String key : keySet) {
+    for (String key : springPropertyAccessor.getKeySet()) {
 
       String dataSourceKey;
       String poolName;
 
       if (key.startsWith("jdbc.mapping.") && (!(dataSourceKey = key.substring("jdbc.mapping.".length())).contains("."))) {
-        poolNameMap.put(dataSourceKey, poolName = asString(keySet, "jdbc.mapping." + dataSourceKey));
+        poolNameMap.put(dataSourceKey, poolName = springPropertyAccessor.asString("jdbc.mapping." + dataSourceKey));
         if (!dataSourceProviderMap.containsKey(poolName)) {
           throw new RuntimeBeansException("No connection pool(%s) definition exists for data source key(%s)", poolName, dataSourceKey);
         }
@@ -178,15 +175,15 @@ public class DynamicDriverManagerPooledDataSourceInitializingBean implements Ini
     }
   }
 
-  private DatabaseConnection containsConnection (Set<String> keySet, String poolName, int index) {
+  private DatabaseConnection containsConnection (SpringPropertyAccessor springPropertyAccessor, String poolName, int index) {
 
     String url;
     String user;
     String password;
 
-    if ((url = asString(keySet, "jdbc.url." + poolName + "." + String.valueOf(index))) != null) {
-      if ((user = asString(keySet, "jdbc.user." + poolName + "." + String.valueOf(index))) != null) {
-        if ((password = asString(keySet, "jdbc.password." + poolName + "." + String.valueOf(index))) != null) {
+    if ((url = springPropertyAccessor.asString("jdbc.url." + poolName + "." + String.valueOf(index))) != null) {
+      if ((user = springPropertyAccessor.asString("jdbc.user." + poolName + "." + String.valueOf(index))) != null) {
+        if ((password = springPropertyAccessor.asString("jdbc.password." + poolName + "." + String.valueOf(index))) != null) {
 
           return new DatabaseConnection(url, user, password);
         }
@@ -194,61 +191,5 @@ public class DynamicDriverManagerPooledDataSourceInitializingBean implements Ini
     }
 
     return null;
-  }
-
-  private String asString (Set<String> keySet, String key) {
-
-    if (!keySet.contains(key)) {
-
-      return null;
-    }
-
-    return SpringPropertyAccessor.resolveStringValue("${" + key + "}");
-  }
-
-  private Option<Boolean> asBoolean (Set<String> keySet, String key) {
-
-    String stringValue;
-
-    if ((stringValue = asString(keySet, key)) == null) {
-
-      return None.none();
-    }
-
-    return new Some<Boolean>(Boolean.parseBoolean(stringValue));
-  }
-
-  private Option<Long> asLong (Set<String> keySet, String key) {
-
-    String stringValue;
-
-    if ((stringValue = asString(keySet, key)) == null) {
-
-      return None.none();
-    }
-
-    try {
-      return new Some<Long>(Long.parseLong(stringValue));
-    }
-    catch (NumberFormatException numberFormatException) {
-      throw new RuntimeBeansException("The value of key(%s) must interpolate as an long(%s)", key, stringValue);
-    }
-  }
-
-  private Option<Integer> asInt (Set<String> keySet, String key) {
-
-    String stringValue;
-
-    if ((stringValue = asString(keySet, key)) == null) {
-
-      return None.none();
-    }
-
-    try {
-      return new Some<Integer>(Integer.parseInt(stringValue));
-    }
-    catch (NumberFormatException numberFormatException) {
-      throw new RuntimeBeansException("The value of key(%s) must interpolate as an int(%s)", key, stringValue);
-    }
   }
 }
