@@ -124,6 +124,8 @@ public class MessageDistributor implements MessageListener, Runnable {
         responseMessage = messageTarget.handleMessage(queueSession, messageStrategy, message);
       }
       catch (Exception exception) {
+        LoggerManager.getLogger(MessageDistributor.class).error(exception);
+
         responseMessage = messageStrategy.wrapInMessage(queueSession, exception);
         responseMessage.setBooleanProperty(MessageProperty.EXCEPTION.getKey(), true);
       }
