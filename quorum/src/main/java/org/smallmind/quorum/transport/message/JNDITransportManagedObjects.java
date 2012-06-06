@@ -33,11 +33,11 @@ import javax.jms.QueueConnectionFactory;
 import javax.naming.Context;
 import org.smallmind.quorum.transport.TransportException;
 
-public class JNDIManagedObjects implements TransportManagedObjects {
+public class JNDITransportManagedObjects implements TransportManagedObjects {
 
   private MessageConnectionDetails messageConnectionDetails;
 
-  public JNDIManagedObjects (MessageConnectionDetails messageConnectionDetails) {
+  public JNDITransportManagedObjects (MessageConnectionDetails messageConnectionDetails) {
 
     this.messageConnectionDetails = messageConnectionDetails;
   }

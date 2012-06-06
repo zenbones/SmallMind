@@ -27,6 +27,7 @@
 package org.smallmind.quorum.transport.message;
 
 import javax.jms.QueueConnection;
+import org.smallmind.quorum.juggler.BlackList;
 import org.smallmind.quorum.juggler.JugglerResourceCreationException;
 import org.smallmind.quorum.juggler.JugglingPin;
 import org.smallmind.quorum.juggler.JugglingPinFactory;
@@ -34,11 +35,11 @@ import org.smallmind.quorum.juggler.JugglingPinFactory;
 public class QueueConnectionJugglingPinFactory implements JugglingPinFactory<TransportManagedObjects, QueueConnection> {
 
   @Override
-  public JugglingPin<QueueConnection> createJugglingPin (TransportManagedObjects managedObjects)
+  public JugglingPin<QueueConnection> createJugglingPin (BlackList<QueueConnection> blackList, TransportManagedObjects managedObjects)
     throws JugglerResourceCreationException {
 
     try {
-      return new QueueConnectionJugglingPin((QueueConnection)managedObjects.createConnection());
+      return new QueueConnectionJugglingPin(blackList, managedObjects);
     }
     catch (Exception exception) {
       throw new JugglerResourceCreationException(exception);

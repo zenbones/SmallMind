@@ -26,19 +26,37 @@
  */
 package org.smallmind.quorum.transport.message;
 
+import javax.jms.ExceptionListener;
 import javax.jms.JMSException;
 import javax.jms.QueueConnection;
+import org.smallmind.quorum.juggler.BlackList;
 import org.smallmind.quorum.juggler.JugglerResourceException;
 import org.smallmind.quorum.juggler.JugglingPin;
+import org.smallmind.quorum.transport.TransportException;
+import org.smallmind.scribe.pen.LoggerManager;
 
-public class QueueConnectionJugglingPin implements JugglingPin<QueueConnection> {
+public class QueueConnectionJugglingPin implements JugglingPin<QueueConnection>, ExceptionListener {
+
+  private final BlackList<QueueConnection> blackList;
+  private final TransportManagedObjects managedObjects;
 
   private QueueConnection connection;
 
-  public QueueConnectionJugglingPin (QueueConnection connection)
-    throws JMSException {
+  public QueueConnectionJugglingPin (BlackList<QueueConnection> blackList, TransportManagedObjects managedObjects)
+    throws TransportException, JMSException {
 
-    this.connection = connection;
+    this.blackList = blackList;
+    this.managedObjects = managedObjects;
+
+    connection = (QueueConnection)managedObjects.createConnection();
+    connection.setExceptionListener(this);
+  }
+
+  @Override
+  public void onException (JMSException jmsException) {
+
+    LoggerManager.getLogger(QueueConnectionJugglingPin.class).error(jmsException);
+    blackList.addToBlackList(this);
   }
 
   @Override
@@ -80,6 +98,22 @@ public class QueueConnectionJugglingPin implements JugglingPin<QueueConnection> 
     }
     catch (JMSException jmsException) {
       throw new JugglerResourceException(jmsException);
+    }
+  }
+
+  @Override
+  public boolean recover () {
+
+    try {
+      connection = (QueueConnection)managedObjects.createConnection();
+      connection.setExceptionListener(this);
+      connection.start();
+
+      return true;
+    }
+    catch (Exception exception) {
+
+      return false;
     }
   }
 }

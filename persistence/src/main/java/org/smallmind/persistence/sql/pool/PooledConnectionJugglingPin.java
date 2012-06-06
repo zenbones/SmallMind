@@ -52,4 +52,18 @@ public class PooledConnectionJugglingPin extends AbstractJugglingPin<PooledConne
       throw new JugglerResourceException(sqlException);
     }
   }
+
+  @Override
+  public boolean recover () {
+
+    try {
+      cartridge.getConnectionPoolDataSource().getPooledConnection().close();
+
+      return true;
+    }
+    catch (SQLException sqlException) {
+
+      return false;
+    }
+  }
 }

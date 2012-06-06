@@ -27,13 +27,14 @@
 package org.smallmind.persistence.sql.pool;
 
 import java.sql.Connection;
+import org.smallmind.quorum.juggler.BlackList;
 import org.smallmind.quorum.juggler.JugglingPin;
 import org.smallmind.quorum.juggler.JugglingPinFactory;
 
 public class ConnectionJugglingPinFactory implements JugglingPinFactory<DataSourceCartridge, Connection> {
 
   @Override
-  public JugglingPin<Connection> createJugglingPin (DataSourceCartridge cartridge) {
+  public JugglingPin<Connection> createJugglingPin (BlackList<Connection> blackList, DataSourceCartridge cartridge) {
 
     return new ConnectionJugglingPin(cartridge);
   }

@@ -35,7 +35,7 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import org.smallmind.scribe.pen.LoggerManager;
 
-public class Juggler<P, R> {
+public class Juggler<P, R> implements BlackList<R> {
 
   private static enum State {DECONSTRUCTED, INITIALIZED, STARTED, STOPPED}
 
@@ -43,7 +43,7 @@ public class Juggler<P, R> {
   private final JugglingPinFactory<P, R> jugglingPinFactory;
   private final P[] providers;
   private final Class<P> managedClass;
-  private int recoveryCheckSeconds;
+  private final int recoveryCheckSeconds;
 
   private ProviderRecoveryWorker recoveryWorker = null;
   private ArrayList<JugglingPin<R>> sourcePins;
@@ -82,7 +82,7 @@ public class Juggler<P, R> {
       blackMap = new ConcurrentSkipListMap<Long, JugglingPin<R>>();
 
       for (P provider : providers) {
-        targetPins.add(jugglingPinFactory.createJugglingPin(provider));
+        targetPins.add(jugglingPinFactory.createJugglingPin(this, provider));
       }
 
       while (!targetPins.isEmpty()) {
@@ -152,6 +152,16 @@ public class Juggler<P, R> {
     }
 
     throw new NoAvailableJugglerResourceException("All available resources(%s) have been black listed", managedClass.getSimpleName());
+  }
+
+  public synchronized void addToBlackList (JugglingPin<R> blackPin) {
+
+    if (sourcePins.remove(blackPin)) {
+      blackMap.put(System.currentTimeMillis(), blackPin);
+    }
+    else if (targetPins.remove(blackPin)) {
+      blackMap.put(System.currentTimeMillis(), blackPin);
+    }
   }
 
   public synchronized void shutdown () {
@@ -238,9 +248,7 @@ public class Juggler<P, R> {
           Map.Entry<Long, JugglingPin<R>> firstEntry;
 
           while (((firstEntry = blackMap.firstEntry()) != null) && ((firstEntry.getKey() + recoveryCheckMillis) <= System.currentTimeMillis())) {
-            try {
-              firstEntry.getValue().obtain();
-
+            if (firstEntry.getValue().recover()) {
               synchronized (Juggler.this) {
 
                 JugglingPin<R> recoveredPin;
@@ -252,9 +260,6 @@ public class Juggler<P, R> {
                   LoggerManager.getLogger(ProviderRecoveryWorker.class).fatal("We've lost a resource(%s), which should never occur - please notify a system administrator", managedClass.getSimpleName());
                 }
               }
-            }
-            catch (Exception exception) {
-              // We can bury this exception because it just means that the resource provider is still broke
             }
           }
         }
