@@ -1,22 +1,22 @@
 /*
  * Copyright (c) 2007, 2008, 2009, 2010, 2011, 2012 David Berkman
- * 
+ *
  * This file is part of the SmallMind Code Project.
- * 
+ *
  * The SmallMind Code Project is free software, you can redistribute
  * it and/or modify it under the terms of GNU Affero General Public
  * License as published by the Free Software Foundation, either version 3
  * of the License, or (at your option) any later version.
- * 
+ *
  * The SmallMind Code Project is distributed in the hope that it will
  * be useful, but WITHOUT ANY WARRANTY; without even the implied warranty
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * General Public License for more details.
- * 
+ *
  * You should have received a copy of the the GNU Affero General Public
  * License, along with The SmallMind Code Project. If not, see
  * <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under the GNU Affero GPL version 3 section 7
  * ------------------------------------------------------------------
  * If you modify this Program, or any covered work, by linking or
@@ -35,6 +35,7 @@ import javax.jms.QueueReceiver;
 import javax.jms.QueueSender;
 import javax.jms.QueueSession;
 import javax.jms.TemporaryQueue;
+import org.smallmind.quorum.transport.TransportException;
 import org.smallmind.scribe.pen.LoggerManager;
 
 public class MessageSender {
@@ -45,12 +46,15 @@ public class MessageSender {
   private TemporaryQueue temporaryQueue;
   private QueueReceiver queueReceiver;
   private MessageStrategy messageStrategy;
+  private long timeoutMillis;
 
-  public MessageSender (MessageSenderConnectionInstance connectionInstance, QueueConnection queueConnection, Queue queue, MessagePolicy messagePolicy, MessageStrategy messageStrategy)
+  public MessageSender (MessageSenderConnectionInstance connectionInstance, QueueConnection queueConnection, Queue queue, MessagePolicy messagePolicy, MessageStrategy messageStrategy, int timeoutSeconds)
     throws JMSException {
 
     this.connectionInstance = connectionInstance;
     this.messageStrategy = messageStrategy;
+
+    timeoutMillis = timeoutSeconds * 1000;
 
     queueSession = queueConnection.createQueueSession(false, messagePolicy.getAcknowledgeMode().getJmsValue());
     queueSender = queueSession.createSender(queue);
@@ -84,16 +88,22 @@ public class MessageSender {
     throws Exception {
 
     Message message;
+    long startTime = System.currentTimeMillis();
 
     do {
-      message = queueReceiver.receive();
-    } while (!matchMessageId(messageId, message));
+      message = queueReceiver.receive(500);
+    } while (((message == null) || (!matchMessageId(messageId, message))) && (System.currentTimeMillis() - startTime < timeoutMillis));
 
-    if (message.getBooleanProperty(MessageProperty.EXCEPTION.getKey())) {
-      throw new EnclosedException((Exception)messageStrategy.unwrapFromMessage(message));
+    if (message == null) {
+      throw new TransportException("Message reception time exceeded the timeout(%d)", timeoutMillis);
     }
+    else {
+      if (message.getBooleanProperty(MessageProperty.EXCEPTION.getKey())) {
+        throw new EnclosedException((Exception)messageStrategy.unwrapFromMessage(message));
+      }
 
-    return messageStrategy.unwrapFromMessage(message);
+      return messageStrategy.unwrapFromMessage(message);
+    }
   }
 
   private boolean matchMessageId (String messageId, Message message)
