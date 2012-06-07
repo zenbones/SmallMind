@@ -95,7 +95,7 @@ public class MessageSender {
     } while (((message == null) || (!matchMessageId(messageId, message))) && (System.currentTimeMillis() - startTime < timeoutMillis));
 
     if (message == null) {
-      throw new TransportException("Message reception time exceeded the timeout(%d)", timeoutMillis);
+      throw new TransportException("Message reception time exceeded the timeout(%d) seconds", timeoutMillis / 1000);
     }
     else {
       if (message.getBooleanProperty(MessageProperty.EXCEPTION.getKey())) {

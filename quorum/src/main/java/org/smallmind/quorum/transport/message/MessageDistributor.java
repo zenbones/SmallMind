@@ -131,13 +131,16 @@ public class MessageDistributor implements MessageListener, Runnable {
 
       responseMessage.setJMSCorrelationID(messageId);
 
+      //TODO: Temporary Revert
+      queueSender = queueSession.createSender((Queue)message.getJMSReplyTo());
+      messagePolicy.apply(queueSender);
+      /*
       if ((queueSender = queueSenderLRUCache.get(replyQueueName = (replyQueue = (Queue)message.getJMSReplyTo()).getQueueName())) == null) {
         queueSenderLRUCache.put(replyQueueName, queueSender = queueSession.createSender(replyQueue));
-        // TODO: Temporary check for queue propagation race condition
-        Thread.sleep(2000);
+        messagePolicy.apply(queueSender);
       }
+      */
 
-      messagePolicy.apply(queueSender);
       queueSender.send(responseMessage);
     }
     catch (Throwable throwable) {
