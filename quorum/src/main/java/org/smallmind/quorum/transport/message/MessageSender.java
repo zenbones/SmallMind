@@ -56,7 +56,7 @@ public class MessageSender {
 
     timeoutMillis = timeoutSeconds * 1000;
 
-    queueSession = queueConnection.createQueueSession(false, messagePolicy.getAcknowledgeMode().getJmsValue());
+    queueSession = queueConnection.createQueueSession(false, AcknowledgeMode.AUTO_ACKNOWLEDGE.getJmsValue());
     queueSender = queueSession.createSender(queue);
     messagePolicy.apply(queueSender);
     temporaryQueue = queueSession.createTemporaryQueue();
@@ -91,8 +91,8 @@ public class MessageSender {
     long startTime = System.currentTimeMillis();
 
     do {
-      message = queueReceiver.receive(500);
-    } while (((message == null) || (!matchMessageId(messageId, message))) && (System.currentTimeMillis() - startTime < timeoutMillis));
+      message = queueReceiver.receive();
+    } while ((message == null) || (!matchMessageId(messageId, message)));
 
     if (message == null) {
       throw new TransportException("Message reception time exceeded the timeout(%d) seconds", timeoutMillis / 1000);
