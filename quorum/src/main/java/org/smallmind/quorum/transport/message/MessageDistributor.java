@@ -133,7 +133,7 @@ public class MessageDistributor implements MessageListener, Runnable {
 
       //TODO: Temporary Revert
       queueSender = queueSession.createSender((Queue)message.getJMSReplyTo());
-      messagePolicy.apply(queueSender);
+      responseMessage.setJMSDeliveryMode(DeliveryMode.NON_PERSISTENT.getJmsValue());
       /*
       if ((queueSender = queueSenderLRUCache.get(replyQueueName = (replyQueue = (Queue)message.getJMSReplyTo()).getQueueName())) == null) {
         queueSenderLRUCache.put(replyQueueName, queueSender = queueSession.createSender(replyQueue));
@@ -141,7 +141,12 @@ public class MessageDistributor implements MessageListener, Runnable {
       }
       */
 
-      queueSender.send(responseMessage);
+      try {
+        queueSender.send(responseMessage);
+      }
+      finally {
+        queueSender.close();
+      }
     }
     catch (Throwable throwable) {
       LoggerManager.getLogger(MessageDistributor.class).error(throwable);
