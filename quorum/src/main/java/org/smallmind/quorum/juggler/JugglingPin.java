@@ -28,9 +28,6 @@ package org.smallmind.quorum.juggler;
 
 public interface JugglingPin<R> {
 
-  public abstract R obtain ()
-    throws JugglerResourceException;
-
   public abstract void start ()
     throws JugglerResourceException;
 
@@ -38,6 +35,9 @@ public interface JugglingPin<R> {
     throws JugglerResourceException;
 
   public abstract void close ()
+    throws JugglerResourceException;
+
+  public abstract R obtain ()
     throws JugglerResourceException;
 
   public abstract boolean recover ();

@@ -102,7 +102,7 @@ public class ConnectionPinManager<C> {
     throws ConnectionPoolException {
 
     if (!State.STARTED.equals(stateRef.get())) {
-      throw new ConnectionPoolException("ConnectionPool has not been started");
+      throw new ConnectionPoolException("ConnectionPool is not in the 'started' state");
     }
 
     ConnectionPin<C> connectionPin;

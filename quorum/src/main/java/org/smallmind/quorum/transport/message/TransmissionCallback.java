@@ -26,17 +26,37 @@
  */
 package org.smallmind.quorum.transport.message;
 
-import org.smallmind.quorum.pool.PoolConfig;
+import javax.jms.Message;
 
-public class MessageSenderPoolConfig extends PoolConfig<MessageSenderPoolConfig> {
+public class TransmissionCallback {
 
-  public MessageSenderPoolConfig () {
+  private final MessageStrategy messageStrategy;
 
+  private Message responseMessage;
+
+  public TransmissionCallback (MessageStrategy messageStrategy) {
+
+    this.messageStrategy = messageStrategy;
   }
 
-  @Override
-  public Class<MessageSenderPoolConfig> getConfigurationClass () {
+  public synchronized Object getResult ()
+    throws Exception {
 
-    return MessageSenderPoolConfig.class;
+    while (responseMessage == null) {
+      wait();
+    }
+
+    if (responseMessage.getBooleanProperty(MessageProperty.EXCEPTION.getKey())) {
+      throw (Exception)messageStrategy.unwrapFromMessage(responseMessage);
+    }
+
+    return messageStrategy.unwrapFromMessage(responseMessage);
+  }
+
+  public synchronized void setResponseMessage (Message responseMessage) {
+
+    this.responseMessage = responseMessage;
+
+    notify();
   }
 }

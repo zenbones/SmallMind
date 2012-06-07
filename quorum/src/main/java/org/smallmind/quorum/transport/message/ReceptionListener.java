@@ -26,61 +26,58 @@
  */
 package org.smallmind.quorum.transport.message;
 
+import java.util.concurrent.SynchronousQueue;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicReference;
 import javax.jms.JMSException;
+import javax.jms.Message;
+import javax.jms.MessageListener;
 import javax.jms.Queue;
 import javax.jms.QueueConnection;
-import org.smallmind.quorum.pool.connection.ConnectionInstance;
-import org.smallmind.quorum.pool.connection.ConnectionPool;
+import javax.jms.QueueReceiver;
+import javax.jms.QueueSession;
+import org.smallmind.scribe.pen.LoggerManager;
 
-public class MessageSenderConnectionInstance implements ConnectionInstance<MessageSender> {
+public class ReceptionListener implements MessageListener {
 
-  private final ConnectionPool<MessageSender> connectionPool;
-  private final MessageSender messageSender;
-  private final AtomicReference<StackTraceElement[]> stackTraceReference = new AtomicReference<StackTraceElement[]>();
   private final AtomicBoolean closed = new AtomicBoolean(false);
+  private final QueueConnection requestConnection;
+  private final QueueSession requestSession;
+  private final QueueReceiver requestReceiver;
+  private final SynchronousQueue<Message> messageRendezvous;
 
-  public MessageSenderConnectionInstance (ConnectionPool<MessageSender> connectionPool, QueueConnection queueConnection, Queue queue, MessagePolicy messagePolicy, MessageStrategy messageStrategy, int timeoutSeconds)
+  public ReceptionListener (QueueConnection requestConnection, Queue requestQueue, AcknowledgeMode acknowledgeMode, SynchronousQueue<Message> messageRendezvous)
     throws JMSException {
 
-    this.connectionPool = connectionPool;
+    this.requestConnection = requestConnection;
+    this.messageRendezvous = messageRendezvous;
 
-    messageSender = new MessageSender(this, queueConnection, queue, messagePolicy, messageStrategy, timeoutSeconds);
+    requestSession = requestConnection.createQueueSession(false, acknowledgeMode.getJmsValue());
+    requestReceiver = requestSession.createReceiver(requestQueue);
+    requestReceiver.setMessageListener(this);
+    requestConnection.start();
   }
 
-  @Override
-  public boolean validate () {
-
-    return true;
-  }
-
-  @Override
-  public MessageSender serve () {
-
-    if (connectionPool.getConnectionPoolConfig().isExistentiallyAware()) {
-      stackTraceReference.set(Thread.currentThread().getStackTrace());
-    }
-
-    return messageSender;
-  }
-
-  @Override
   public void close ()
     throws JMSException {
 
     if (closed.compareAndSet(false, true)) {
-      if (connectionPool.getConnectionPoolConfig().isExistentiallyAware()) {
-        stackTraceReference.set(null);
-      }
+      requestConnection.stop();
 
-      messageSender.close();
+      requestReceiver.close();
+      requestSession.close();
+      requestConnection.close();
     }
   }
 
   @Override
-  public StackTraceElement[] getExistentialStackTrace () {
+  public synchronized void onMessage (Message message) {
 
-    return stackTraceReference.get();
+    try {
+
+      messageRendezvous.put(message);
+    }
+    catch (InterruptedException interruptedException) {
+      LoggerManager.getLogger(ReceptionListener.class).error(interruptedException);
+    }
   }
 }

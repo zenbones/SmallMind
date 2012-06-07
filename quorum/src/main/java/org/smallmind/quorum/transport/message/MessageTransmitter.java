@@ -26,41 +26,125 @@
  */
 package org.smallmind.quorum.transport.message;
 
+import java.security.SecureRandom;
+import java.util.Random;
+import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.atomic.AtomicBoolean;
+import javax.jms.JMSException;
+import javax.jms.Message;
 import javax.jms.Queue;
 import javax.jms.QueueConnection;
-import org.smallmind.quorum.juggler.Juggler;
-import org.smallmind.quorum.juggler.JugglerResourceException;
-import org.smallmind.quorum.pool.connection.ConnectionPool;
-import org.smallmind.quorum.pool.connection.ConnectionPoolConfig;
-import org.smallmind.quorum.pool.connection.ConnectionPoolException;
+import javax.jms.Topic;
+import javax.jms.TopicConnection;
+import org.smallmind.quorum.transport.InvocationSignal;
 import org.smallmind.quorum.transport.TransportException;
+import org.smallmind.scribe.pen.LoggerManager;
 
 public class MessageTransmitter {
 
-  private ConnectionPool<MessageSender> messageSenderPool;
+  private static final Random RANDOM = new SecureRandom();
 
-  public MessageTransmitter (TransportManagedObjects managedObjects, MessagePolicy messagePolicy, MessageStrategy messageStrategy, int connectionCount, int timeoutSeconds, MessageSenderPoolConfig messageSenderPoolConfig)
-    throws JugglerResourceException, ConnectionPoolException, TransportException {
+  private final AtomicBoolean closed = new AtomicBoolean(false);
+  private final MessageStrategy messageStrategy;
+  private final ConcurrentLinkedQueue<QueueOperator> operatorQueue;
+  private final ConcurrentHashMap<String, TransmissionCallback> callbackMap = new ConcurrentHashMap<String, TransmissionCallback>();
+  private final TransmissionListener[] transmissionListeners;
+  private final QueueConnection[] requestConnections;
+  private final String instanceId = UUID.randomUUID().toString();
 
-    messageSenderPool = new ConnectionPool<MessageSender>("", new MessageSenderConnectionInstanceFactory(new Juggler<TransportManagedObjects, QueueConnection>(TransportManagedObjects.class, 60, new QueueConnectionJugglingPinFactory(), managedObjects, connectionCount), (Queue)managedObjects.getDestination(), messagePolicy, messageStrategy, timeoutSeconds), new ConnectionPoolConfig(messageSenderPoolConfig));
+  public MessageTransmitter (TransportManagedObjects requestManagedObjects, TransportManagedObjects responseManagedObjects, MessagePolicy messagePolicy, MessageStrategy messageStrategy, int clusterSize, int concurrencyLimit, int timeoutSeconds)
+    throws JMSException, TransportException {
 
-    messageSenderPool.startup();
+    int requestIndex;
+
+    this.messageStrategy = messageStrategy;
+
+    requestConnections = new QueueConnection[clusterSize];
+    for (int index = 0; index < requestConnections.length; index++) {
+      requestConnections[index] = (QueueConnection)requestManagedObjects.createConnection();
+    }
+
+    requestIndex = RANDOM.nextInt(requestConnections.length);
+
+    operatorQueue = new ConcurrentLinkedQueue<QueueOperator>();
+    for (int index = 0; index < Math.max(clusterSize, concurrencyLimit); index++) {
+      operatorQueue.add(new QueueOperator(requestConnections[requestIndex], (Queue)requestManagedObjects.getDestination(), messagePolicy));
+      if (++requestIndex == requestConnections.length) {
+        requestIndex = 0;
+      }
+    }
+
+    transmissionListeners = new TransmissionListener[clusterSize];
+    for (int index = 0; index < transmissionListeners.length; index++) {
+      transmissionListeners[index] = new TransmissionListener(this, (TopicConnection)responseManagedObjects.createConnection(), (Topic)responseManagedObjects.getDestination(), messagePolicy.getAcknowledgeMode());
+    }
   }
 
-  public MessageSender borrowMessageSender ()
-    throws ConnectionPoolException {
+  public String getInstanceId () {
 
-    return messageSenderPool.getConnection();
+    return instanceId;
   }
 
-  public void returnMessageSender (MessageSender messageSender) {
+  public TransmissionCallback sendMessage (InvocationSignal invocationSignal, String serviceSelector)
+    throws Exception {
 
-    messageSenderPool.returnInstance(messageSender.getConnectionInstance());
+    QueueOperator queueOperator;
+
+    if ((queueOperator = operatorQueue.poll()) == null) {
+      throw new TransportException("Unable to take a TopicOperator, which should never happen - please contact your system administrator");
+    }
+
+    try {
+
+      Message requestMessage = messageStrategy.wrapInMessage(queueOperator.getRequestSession(), invocationSignal);
+      TransmissionCallback callback;
+
+      requestMessage.setStringProperty(MessageProperty.INSTANCE.getKey(), instanceId);
+      requestMessage.setStringProperty(MessageProperty.SERVICE.getKey(), serviceSelector);
+
+      queueOperator.send(requestMessage);
+      callbackMap.put(requestMessage.getJMSMessageID(), callback = new TransmissionCallback(messageStrategy));
+
+      return callback;
+    }
+    finally {
+      operatorQueue.add(queueOperator);
+    }
+  }
+
+  public void completeCallback (Message responseMessage) {
+
+    try {
+
+      TransmissionCallback callback;
+
+      if ((callback = callbackMap.remove(responseMessage.getJMSCorrelationID())) != null) {
+        callback.setResponseMessage(responseMessage);
+      }
+    }
+    catch (JMSException jmsException) {
+      LoggerManager.getLogger(MessageTransmitter.class).error(jmsException);
+    }
   }
 
   public void close ()
-    throws ConnectionPoolException {
+    throws JMSException {
 
-    messageSenderPool.shutdown();
+    if (closed.compareAndSet(false, true)) {
+      for (QueueConnection requestConnection : requestConnections) {
+        requestConnection.stop();
+      }
+      for (QueueOperator queueOperator : operatorQueue) {
+        queueOperator.close();
+      }
+      for (QueueConnection requestConnection : requestConnections) {
+        requestConnection.close();
+      }
+      for (TransmissionListener transmissionListener : transmissionListeners) {
+        transmissionListener.close();
+      }
+    }
   }
 }

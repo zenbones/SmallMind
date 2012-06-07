@@ -24,12 +24,50 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.quorum.transport.message;
+package org.smallmind.quorum.transport.message.jndi;
 
-public class EnclosedException extends Exception {
+import javax.naming.Context;
+import org.smallmind.quorum.pool.connection.ConnectionPool;
 
-  public EnclosedException (Throwable throwable) {
+public class MessageConnectionDetails {
 
-    super(throwable);
+  private ConnectionPool<Context> contextPool;
+  private String destinationName;
+  private String connectionFactoryName;
+  private String userName;
+  private String password;
+
+  public MessageConnectionDetails (ConnectionPool<Context> contextPool, String destinationName, String connectionFactoryName, String userName, String password) {
+
+    this.contextPool = contextPool;
+    this.destinationName = destinationName;
+    this.connectionFactoryName = connectionFactoryName;
+    this.userName = userName;
+    this.password = password;
+  }
+
+  public ConnectionPool<Context> getContextPool () {
+
+    return contextPool;
+  }
+
+  public String getDestinationName () {
+
+    return destinationName;
+  }
+
+  public String getConnectionFactoryName () {
+
+    return connectionFactoryName;
+  }
+
+  public String getUserName () {
+
+    return userName;
+  }
+
+  public String getPassword () {
+
+    return password;
   }
 }

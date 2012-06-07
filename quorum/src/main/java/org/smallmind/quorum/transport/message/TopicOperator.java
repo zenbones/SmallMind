@@ -26,23 +26,45 @@
  */
 package org.smallmind.quorum.transport.message;
 
-import javax.jms.QueueConnection;
-import org.smallmind.quorum.juggler.BlackList;
-import org.smallmind.quorum.juggler.JugglerResourceCreationException;
-import org.smallmind.quorum.juggler.JugglingPin;
-import org.smallmind.quorum.juggler.JugglingPinFactory;
+import java.util.concurrent.atomic.AtomicBoolean;
+import javax.jms.JMSException;
+import javax.jms.Message;
+import javax.jms.Topic;
+import javax.jms.TopicConnection;
+import javax.jms.TopicPublisher;
+import javax.jms.TopicSession;
 
-public class QueueConnectionJugglingPinFactory implements JugglingPinFactory<TransportManagedObjects, QueueConnection> {
+public class TopicOperator {
 
-  @Override
-  public JugglingPin<QueueConnection> createJugglingPin (BlackList<QueueConnection> blackList, TransportManagedObjects managedObjects)
-    throws JugglerResourceCreationException {
+  private final AtomicBoolean closed = new AtomicBoolean(false);
+  private final TopicSession responseSession;
+  private final TopicPublisher responsePublisher;
 
-    try {
-      return new QueueConnectionJugglingPin(blackList, managedObjects);
-    }
-    catch (Exception exception) {
-      throw new JugglerResourceCreationException(exception);
+  public TopicOperator (TopicConnection responseConnection, Topic responseTopic, MessagePolicy messagePolicy)
+    throws JMSException {
+
+    responseSession = responseConnection.createTopicSession(false, messagePolicy.getAcknowledgeMode().getJmsValue());
+    responsePublisher = responseSession.createPublisher(responseTopic);
+    messagePolicy.apply(responsePublisher);
+  }
+
+  public TopicSession getResponseSession () {
+
+    return responseSession;
+  }
+
+  public void publish (Message message)
+    throws JMSException {
+
+    responsePublisher.publish(message);
+  }
+
+  public void close ()
+    throws JMSException {
+
+    if (closed.compareAndSet(false, true)) {
+      responsePublisher.close();
+      responseSession.close();
     }
   }
 }
