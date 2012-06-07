@@ -61,7 +61,7 @@ public class MessageDistributor implements MessageListener, Runnable {
 
     queueSenderLRUCache = new QueueSenderLRUCache(replyCacheSize);
 
-    queueSession = queueConnection.createQueueSession(false, messagePolicy.getAcknowledgeMode().getJmsValue());
+    queueSession = queueConnection.createQueueSession(false, AcknowledgeMode.AUTO_ACKNOWLEDGE.getJmsValue());
 
     queueReceiver = queueSession.createReceiver(queue);
     queueReceiver.setMessageListener(this);

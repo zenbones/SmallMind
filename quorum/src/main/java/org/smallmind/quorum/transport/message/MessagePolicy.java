@@ -76,10 +76,10 @@ public class MessagePolicy {
   public void apply (MessageProducer producer)
     throws JMSException {
 
+    producer.setDeliveryMode(deliveryMode.getJmsValue());
     producer.setDisableMessageID(disableMessageID);
     producer.setDisableMessageTimestamp(disableMessageTimestamp);
     producer.setTimeToLive(timeToLive);
-    producer.setDeliveryMode(deliveryMode.getJmsValue());
     producer.setPriority(priority);
   }
 }
