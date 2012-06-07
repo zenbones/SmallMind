@@ -58,7 +58,8 @@ public class MessageSender {
 
     queueSession = queueConnection.createQueueSession(false, AcknowledgeMode.AUTO_ACKNOWLEDGE.getJmsValue());
     queueSender = queueSession.createSender(queue);
-    messagePolicy.apply(queueSender);
+    //TODO: Temporary Revert
+//    messagePolicy.apply(queueSender);
     temporaryQueue = queueSession.createTemporaryQueue();
     queueReceiver = queueSession.createReceiver(temporaryQueue);
   }
