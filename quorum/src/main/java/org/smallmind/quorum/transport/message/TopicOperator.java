@@ -26,48 +26,45 @@
  */
 package org.smallmind.quorum.transport.message;
 
-import javax.naming.Context;
-import org.smallmind.quorum.pool.connection.ConnectionPool;
+import java.util.concurrent.atomic.AtomicBoolean;
+import javax.jms.JMSException;
+import javax.jms.Message;
+import javax.jms.Topic;
+import javax.jms.TopicConnection;
+import javax.jms.TopicPublisher;
+import javax.jms.TopicSession;
 
-public class MessageConnectionDetails {
+public class TopicOperator {
 
-  private ConnectionPool<Context> contextPool;
-  private String destinationName;
-  private String connectionFactoryName;
-  private String userName;
-  private String password;
+  private final AtomicBoolean closed = new AtomicBoolean(false);
+  private final TopicSession responseSession;
+  private final TopicPublisher responsePublisher;
 
-  public MessageConnectionDetails (ConnectionPool<Context> contextPool, String destinationName, String connectionFactoryName, String userName, String password) {
+  public TopicOperator (TopicConnection responseConnection, Topic responseTopic, MessagePolicy messagePolicy)
+    throws JMSException {
 
-    this.contextPool = contextPool;
-    this.destinationName = destinationName;
-    this.connectionFactoryName = connectionFactoryName;
-    this.userName = userName;
-    this.password = password;
+    responseSession = responseConnection.createTopicSession(false, messagePolicy.getAcknowledgeMode().getJmsValue());
+    responsePublisher = responseSession.createPublisher(responseTopic);
+    messagePolicy.apply(responsePublisher);
   }
 
-  public ConnectionPool<Context> getContextPool () {
+  public TopicSession getResponseSession () {
 
-    return contextPool;
+    return responseSession;
   }
 
-  public String getDestinationName () {
+  public void publish (Message message)
+    throws JMSException {
 
-    return destinationName;
+    responsePublisher.publish(message);
   }
 
-  public String getConnectionFactoryName () {
+  public void close ()
+    throws JMSException {
 
-    return connectionFactoryName;
-  }
-
-  public String getUserName () {
-
-    return userName;
-  }
-
-  public String getPassword () {
-
-    return password;
+    if (closed.compareAndSet(false, true)) {
+      responsePublisher.close();
+      responseSession.close();
+    }
   }
 }

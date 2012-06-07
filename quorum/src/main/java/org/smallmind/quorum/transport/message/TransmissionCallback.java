@@ -26,23 +26,37 @@
  */
 package org.smallmind.quorum.transport.message;
 
-import javax.jms.QueueConnection;
-import org.smallmind.quorum.juggler.BlackList;
-import org.smallmind.quorum.juggler.JugglerResourceCreationException;
-import org.smallmind.quorum.juggler.JugglingPin;
-import org.smallmind.quorum.juggler.JugglingPinFactory;
+import javax.jms.Message;
 
-public class QueueConnectionJugglingPinFactory implements JugglingPinFactory<TransportManagedObjects, QueueConnection> {
+public class TransmissionCallback {
 
-  @Override
-  public JugglingPin<QueueConnection> createJugglingPin (BlackList<QueueConnection> blackList, TransportManagedObjects managedObjects)
-    throws JugglerResourceCreationException {
+  private final MessageStrategy messageStrategy;
 
-    try {
-      return new QueueConnectionJugglingPin(blackList, managedObjects);
+  private Message responseMessage;
+
+  public TransmissionCallback (MessageStrategy messageStrategy) {
+
+    this.messageStrategy = messageStrategy;
+  }
+
+  public synchronized Object getResult ()
+    throws Exception {
+
+    while (responseMessage == null) {
+      wait();
     }
-    catch (Exception exception) {
-      throw new JugglerResourceCreationException(exception);
+
+    if (responseMessage.getBooleanProperty(MessageProperty.EXCEPTION.getKey())) {
+      throw new EnclosedException((Exception)messageStrategy.unwrapFromMessage(responseMessage));
     }
+
+    return messageStrategy.unwrapFromMessage(responseMessage);
+  }
+
+  public synchronized void setResponseMessage (Message responseMessage) {
+
+    this.responseMessage = responseMessage;
+
+    notify();
   }
 }

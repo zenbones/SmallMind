@@ -26,37 +26,45 @@
  */
 package org.smallmind.quorum.transport.message;
 
-import java.util.LinkedHashMap;
-import java.util.Map;
+import java.util.concurrent.atomic.AtomicBoolean;
 import javax.jms.JMSException;
+import javax.jms.Message;
+import javax.jms.Queue;
+import javax.jms.QueueConnection;
 import javax.jms.QueueSender;
-import org.smallmind.scribe.pen.LoggerManager;
+import javax.jms.QueueSession;
 
-public class QueueSenderLRUCache extends LinkedHashMap<String, QueueSender> {
+public class QueueOperator {
 
-  private int maxSize;
+  private final AtomicBoolean closed = new AtomicBoolean(false);
+  private final QueueSession requestSession;
+  private final QueueSender requestSender;
 
-  public QueueSenderLRUCache (int maxSize) {
+  public QueueOperator (QueueConnection requestConnection, Queue requestQueue, MessagePolicy messagePolicy)
+    throws JMSException {
 
-    super(maxSize, 0.75F, true);
-
-    this.maxSize = maxSize;
+    requestSession = requestConnection.createQueueSession(false, messagePolicy.getAcknowledgeMode().getJmsValue());
+    requestSender = requestSession.createSender(requestQueue);
+    messagePolicy.apply(requestSender);
   }
 
-  @Override
-  protected boolean removeEldestEntry (Map.Entry<String, QueueSender> eldest) {
+  public QueueSession getRequestSession () {
 
-    if (size() > maxSize) {
-      try {
-        eldest.getValue().close();
-      }
-      catch (JMSException jmsException) {
-        LoggerManager.getLogger(QueueSenderLRUCache.class).error(jmsException);
-      }
+    return requestSession;
+  }
 
-      return true;
+  public void send (Message message)
+    throws JMSException {
+
+    requestSender.send(message);
+  }
+
+  public void close ()
+    throws JMSException {
+
+    if (closed.compareAndSet(false, true)) {
+      requestSender.close();
+      requestSession.close();
     }
-
-    return false;
   }
 }

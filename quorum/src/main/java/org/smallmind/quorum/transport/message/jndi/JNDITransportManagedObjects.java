@@ -24,7 +24,7 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.quorum.transport.message;
+package org.smallmind.quorum.transport.message.jndi;
 
 import javax.jms.Connection;
 import javax.jms.Destination;
@@ -32,6 +32,8 @@ import javax.jms.Queue;
 import javax.jms.QueueConnectionFactory;
 import javax.naming.Context;
 import org.smallmind.quorum.transport.TransportException;
+import org.smallmind.quorum.transport.message.jndi.MessageConnectionDetails;
+import org.smallmind.quorum.transport.message.TransportManagedObjects;
 
 public class JNDITransportManagedObjects implements TransportManagedObjects {
 

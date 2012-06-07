@@ -26,58 +26,88 @@
  */
 package org.smallmind.quorum.transport.message;
 
-import java.util.Collections;
+import java.security.SecureRandom;
 import java.util.HashMap;
+import java.util.Random;
+import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.SynchronousQueue;
+import java.util.concurrent.atomic.AtomicBoolean;
 import javax.jms.JMSException;
+import javax.jms.Message;
 import javax.jms.Queue;
 import javax.jms.QueueConnection;
-import org.smallmind.quorum.juggler.Juggler;
-import org.smallmind.quorum.juggler.JugglerResourceException;
+import javax.jms.Topic;
+import javax.jms.TopicConnection;
 import org.smallmind.quorum.transport.TransportException;
-import org.smallmind.scribe.pen.LoggerManager;
 
 public class MessageReceiver {
 
-  private Juggler<TransportManagedObjects, QueueConnection> queueConnectionJuggler;
-  private MessageDistributor[] messageDistributors;
+  private static final Random RANDOM = new SecureRandom();
 
-  public MessageReceiver (TransportManagedObjects managedObjects, MessagePolicy messagePolicy, MessageStrategy messageStrategy, int connectionCount, int sessionCount, int replyCacheSize, MessageTarget... messageTargets)
-    throws JugglerResourceException, TransportException, JMSException {
+  private final AtomicBoolean closed = new AtomicBoolean(false);
+  private final ConcurrentLinkedQueue<TopicOperator> operatorQueue;
+  private final ReceptionListener[] receptionListeners;
+  private final ReceptionWorker[] receptionWorkers;
+  private final TopicConnection[] responseConnections;
 
+  public MessageReceiver (TransportManagedObjects requestManagedObjects, TransportManagedObjects responseManagedObjects, MessagePolicy messagePolicy, MessageStrategy messageStrategy, int clusterSize, int concurrencyLimit, MessageTarget... messageTargets)
+    throws JMSException, TransportException {
+
+    SynchronousQueue<Message> messageRendezvous = new SynchronousQueue<Message>(true);
     HashMap<String, MessageTarget> targetMap = new HashMap<String, MessageTarget>();
-    Queue queue;
+
+    int topicIndex;
 
     for (MessageTarget messageTarget : messageTargets) {
       targetMap.put(messageTarget.getServiceInterface().getName(), messageTarget);
     }
 
-    queue = (Queue)managedObjects.getDestination();
-    queueConnectionJuggler = new Juggler<TransportManagedObjects, QueueConnection>(TransportManagedObjects.class, 60, new QueueConnectionJugglingPinFactory(), managedObjects, connectionCount);
-
-    queueConnectionJuggler.initialize();
-
-    messageDistributors = new MessageDistributor[sessionCount];
-    for (int count = 0; count < messageDistributors.length; count++) {
-      new Thread(messageDistributors[count] = new MessageDistributor(queueConnectionJuggler.pickResource(), queue, messagePolicy, messageStrategy, Collections.unmodifiableMap(targetMap), replyCacheSize)).start();
+    receptionListeners = new ReceptionListener[clusterSize];
+    for (int index = 0; index < receptionListeners.length; index++) {
+      receptionListeners[index] = new ReceptionListener((QueueConnection)requestManagedObjects.createConnection(), (Queue)requestManagedObjects.getDestination(), messagePolicy.getAcknowledgeMode(), messageRendezvous);
     }
 
-    queueConnectionJuggler.startup();
+    responseConnections = new TopicConnection[clusterSize];
+    for (int index = 0; index < responseConnections.length; index++) {
+      responseConnections[index] = (TopicConnection)responseManagedObjects.createConnection();
+    }
+
+    topicIndex = RANDOM.nextInt(responseConnections.length);
+
+    operatorQueue = new ConcurrentLinkedQueue<TopicOperator>();
+    for (int index = 0; index < Math.max(clusterSize, concurrencyLimit); index++) {
+      operatorQueue.add(new TopicOperator(responseConnections[topicIndex], (Topic)responseManagedObjects.getDestination(), messagePolicy));
+      if (++topicIndex == responseConnections.length) {
+        topicIndex = 0;
+      }
+    }
+
+    receptionWorkers = new ReceptionWorker[concurrencyLimit];
+    for (int index = 0; index < receptionWorkers.length; index++) {
+      new Thread(receptionWorkers[index] = new ReceptionWorker(messageStrategy, targetMap, messageRendezvous, operatorQueue)).start();
+    }
   }
 
-  public synchronized void close () {
+  public void close ()
+    throws JMSException, InterruptedException {
 
-    queueConnectionJuggler.shutdown();
-
-    for (MessageDistributor messageDistributor : messageDistributors) {
-      try {
-        messageDistributor.close();
+    if (closed.compareAndSet(false, true)) {
+      for (ReceptionListener receptionListener : receptionListeners) {
+        receptionListener.close();
       }
-      catch (JMSException jmsException) {
-        LoggerManager.getLogger(MessageReceiver.class).error(jmsException);
+      for (TopicConnection responseConnection : responseConnections) {
+        responseConnection.stop();
+      }
+      for (TopicOperator topicOperator : operatorQueue) {
+        topicOperator.close();
+      }
+      for (TopicConnection responseConnection : responseConnections) {
+        responseConnection.close();
+      }
+      for (ReceptionWorker receptionWorker : receptionWorkers) {
+        receptionWorker.stop();
       }
     }
-
-    queueConnectionJuggler.deconstruct();
   }
 }
 

@@ -24,19 +24,50 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.quorum.transport.message;
+package org.smallmind.quorum.transport.message.jndi;
 
-import org.smallmind.quorum.pool.PoolConfig;
+import javax.naming.Context;
+import org.smallmind.quorum.pool.connection.ConnectionPool;
 
-public class MessageSenderPoolConfig extends PoolConfig<MessageSenderPoolConfig> {
+public class MessageConnectionDetails {
 
-  public MessageSenderPoolConfig () {
+  private ConnectionPool<Context> contextPool;
+  private String destinationName;
+  private String connectionFactoryName;
+  private String userName;
+  private String password;
 
+  public MessageConnectionDetails (ConnectionPool<Context> contextPool, String destinationName, String connectionFactoryName, String userName, String password) {
+
+    this.contextPool = contextPool;
+    this.destinationName = destinationName;
+    this.connectionFactoryName = connectionFactoryName;
+    this.userName = userName;
+    this.password = password;
   }
 
-  @Override
-  public Class<MessageSenderPoolConfig> getConfigurationClass () {
+  public ConnectionPool<Context> getContextPool () {
 
-    return MessageSenderPoolConfig.class;
+    return contextPool;
+  }
+
+  public String getDestinationName () {
+
+    return destinationName;
+  }
+
+  public String getConnectionFactoryName () {
+
+    return connectionFactoryName;
+  }
+
+  public String getUserName () {
+
+    return userName;
+  }
+
+  public String getPassword () {
+
+    return password;
   }
 }
