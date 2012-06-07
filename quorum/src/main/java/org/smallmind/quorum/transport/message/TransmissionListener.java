@@ -50,7 +50,7 @@ public class TransmissionListener implements MessageListener {
     this.responseConnection = responseConnection;
 
     responseSession = responseConnection.createTopicSession(false, acknowledgeMode.getJmsValue());
-    responseSubscriber = responseSession.createSubscriber(responseTopic, MessageProperty.INSTANCE + " = '" + messageTransmitter.getInstanceId() + "'", false);
+    responseSubscriber = responseSession.createSubscriber(responseTopic, MessageProperty.INSTANCE.getKey() + "='" + messageTransmitter.getInstanceId() + "'", false);
     responseSubscriber.setMessageListener(this);
     responseConnection.start();
   }

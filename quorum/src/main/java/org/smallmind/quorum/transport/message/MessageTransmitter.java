@@ -120,7 +120,7 @@ public class MessageTransmitter {
 
       TransmissionCallback callback;
 
-      if ((callback = callbackMap.get(responseMessage.getJMSCorrelationID())) != null) {
+      if ((callback = callbackMap.remove(responseMessage.getJMSCorrelationID())) != null) {
         callback.setResponseMessage(responseMessage);
       }
     }
