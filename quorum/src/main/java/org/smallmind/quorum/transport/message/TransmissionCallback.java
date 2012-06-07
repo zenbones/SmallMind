@@ -47,7 +47,7 @@ public class TransmissionCallback {
     }
 
     if (responseMessage.getBooleanProperty(MessageProperty.EXCEPTION.getKey())) {
-      throw new EnclosedException((Exception)messageStrategy.unwrapFromMessage(responseMessage));
+      throw (Exception)messageStrategy.unwrapFromMessage(responseMessage);
     }
 
     return messageStrategy.unwrapFromMessage(responseMessage);
