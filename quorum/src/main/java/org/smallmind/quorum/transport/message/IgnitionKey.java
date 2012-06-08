@@ -26,8 +26,49 @@
  */
 package org.smallmind.quorum.transport.message;
 
-public interface TransmissionCallback extends SelfDestructive {
+public class IgnitionKey<K extends Comparable<K>> implements Comparable<IgnitionKey<K>> {
 
-  public abstract Object getResult ()
-    throws Exception;
+  private final K mapKey;
+  private final long ignitionTime;
+
+  public IgnitionKey (K mapKey, long ignitionTime) {
+
+    this.mapKey = mapKey;
+    this.ignitionTime = ignitionTime;
+  }
+
+  public K getMapKey () {
+
+    return mapKey;
+  }
+
+  public long getIgnitionTime () {
+
+    return ignitionTime;
+  }
+
+  @Override
+  public int compareTo (IgnitionKey<K> key) {
+
+    long comparison;
+
+    if ((comparison = ignitionTime - key.getIgnitionTime()) == 0) {
+
+      return mapKey.compareTo(key.getMapKey());
+    }
+
+    return (int)comparison;
+  }
+
+  @Override
+  public int hashCode () {
+
+    return mapKey.hashCode();
+  }
+
+  @Override
+  public boolean equals (Object obj) {
+
+    return (obj instanceof IgnitionKey) && (mapKey.equals(((IgnitionKey)obj).getMapKey()));
+  }
 }

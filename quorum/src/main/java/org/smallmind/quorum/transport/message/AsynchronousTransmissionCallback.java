@@ -26,8 +26,49 @@
  */
 package org.smallmind.quorum.transport.message;
 
-public interface TransmissionCallback extends SelfDestructive {
+import java.util.concurrent.CountDownLatch;
+import javax.jms.Message;
+import org.smallmind.quorum.transport.TransportException;
 
-  public abstract Object getResult ()
-    throws Exception;
+public class AsynchronousTransmissionCallback implements TransmissionCallback {
+
+  private final CountDownLatch resultLatch = new CountDownLatch(1);
+  private final MessageStrategy messageStrategy;
+
+  private Message responseMessage;
+
+  public AsynchronousTransmissionCallback (MessageStrategy messageStrategy) {
+
+    this.messageStrategy = messageStrategy;
+  }
+
+  @Override
+  public void destroy () {
+
+    resultLatch.countDown();
+  }
+
+  @Override
+  public synchronized Object getResult ()
+    throws Exception {
+
+    resultLatch.await();
+
+    if (responseMessage == null) {
+      throw new TransportException("Timeout exceeded while waiting for a response");
+    }
+
+    if (responseMessage.getBooleanProperty(MessageProperty.EXCEPTION.getKey())) {
+      throw (Exception)messageStrategy.unwrapFromMessage(responseMessage);
+    }
+
+    return messageStrategy.unwrapFromMessage(responseMessage);
+  }
+
+  public synchronized void setResponseMessage (Message responseMessage) {
+
+    this.responseMessage = responseMessage;
+
+    resultLatch.countDown();
+  }
 }

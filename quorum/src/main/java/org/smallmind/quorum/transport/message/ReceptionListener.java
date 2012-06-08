@@ -27,6 +27,7 @@
 package org.smallmind.quorum.transport.message;
 
 import java.util.concurrent.SynchronousQueue;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import javax.jms.JMSException;
 import javax.jms.Message;
@@ -72,9 +73,12 @@ public class ReceptionListener implements MessageListener {
   @Override
   public synchronized void onMessage (Message message) {
 
-    try {
+    boolean success;
 
-      messageRendezvous.put(message);
+    try {
+      do {
+        success = messageRendezvous.offer(message, 1, TimeUnit.SECONDS);
+      } while ((!closed.get()) && (!success));
     }
     catch (InterruptedException interruptedException) {
       LoggerManager.getLogger(ReceptionListener.class).error(interruptedException);

@@ -26,8 +26,7 @@
  */
 package org.smallmind.quorum.transport.message;
 
-public interface TransmissionCallback extends SelfDestructive {
+public interface SelfDestructive {
 
-  public abstract Object getResult ()
-    throws Exception;
+  public abstract void destroy ();
 }

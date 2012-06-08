@@ -31,13 +31,14 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.SynchronousQueue;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 import javax.jms.Message;
 import org.smallmind.quorum.transport.TransportException;
 import org.smallmind.scribe.pen.LoggerManager;
 
 public class ReceptionWorker implements Runnable {
 
-  private final CountDownLatch stopLatch = new CountDownLatch(1);
+  private final AtomicBoolean stopped = new AtomicBoolean(false);
   private final CountDownLatch exitLatch = new CountDownLatch(1);
   private final MessageStrategy messageStrategy;
   private final Map<String, MessageTarget> targetMap;
@@ -55,7 +56,7 @@ public class ReceptionWorker implements Runnable {
   public void stop ()
     throws InterruptedException {
 
-    stopLatch.countDown();
+    stopped.set(true);
     exitLatch.await();
   }
 
@@ -63,59 +64,62 @@ public class ReceptionWorker implements Runnable {
   public void run () {
 
     try {
-      while (!stopLatch.await(1, TimeUnit.SECONDS)) {
+      while (!stopped.get()) {
 
-        Message requestMessage = messageRendezvous.take();
-        TopicOperator topicOperator;
+        Message requestMessage;
 
-        if ((topicOperator = operatorQueue.poll()) == null) {
-          throw new TransportException("Unable to take a TopicOperator, which should never happen - please contact your system administrator");
-        }
+        if ((requestMessage = messageRendezvous.poll(1, TimeUnit.SECONDS)) != null) {
 
-        try {
+          TopicOperator topicOperator;
 
-          Message responseMessage;
-          String transmissionInstance;
-
-          if ((transmissionInstance = requestMessage.getStringProperty(MessageProperty.INSTANCE.getKey())) == null) {
-            throw new TransportException("Missing message property(%s)", MessageProperty.INSTANCE.getKey());
+          if ((topicOperator = operatorQueue.poll()) == null) {
+            throw new TransportException("Unable to take a TopicOperator, which should never happen - please contact your system administrator");
           }
 
           try {
 
-            MessageTarget messageTarget;
-            String serviceSelector;
+            Message responseMessage;
+            String transmissionInstance;
 
-            if ((serviceSelector = requestMessage.getStringProperty(MessageProperty.SERVICE.getKey())) == null) {
-              throw new TransportException("Missing message property(%s)", MessageProperty.SERVICE.getKey());
-            }
-            else if ((messageTarget = targetMap.get(serviceSelector)) == null) {
-              throw new TransportException("Unknown service selector(%s)", serviceSelector);
+            if ((transmissionInstance = requestMessage.getStringProperty(MessageProperty.INSTANCE.getKey())) == null) {
+              throw new TransportException("Missing message property(%s)", MessageProperty.INSTANCE.getKey());
             }
 
-            responseMessage = messageTarget.handleMessage(topicOperator.getResponseSession(), messageStrategy, requestMessage);
-          }
-          catch (Exception exception) {
-            responseMessage = messageStrategy.wrapInMessage(topicOperator.getResponseSession(), exception);
-            responseMessage.setBooleanProperty(MessageProperty.EXCEPTION.getKey(), true);
-          }
+            try {
 
-          responseMessage.setJMSCorrelationID(requestMessage.getJMSMessageID());
-          responseMessage.setStringProperty(MessageProperty.INSTANCE.getKey(), transmissionInstance);
+              MessageTarget messageTarget;
+              String serviceSelector;
 
-          topicOperator.publish(responseMessage);
-        }
-        catch (Throwable throwable) {
-          LoggerManager.getLogger(ReceptionWorker.class).error(throwable);
-        }
-        finally {
-          operatorQueue.add(topicOperator);
+              if ((serviceSelector = requestMessage.getStringProperty(MessageProperty.SERVICE.getKey())) == null) {
+                throw new TransportException("Missing message property(%s)", MessageProperty.SERVICE.getKey());
+              }
+              else if ((messageTarget = targetMap.get(serviceSelector)) == null) {
+                throw new TransportException("Unknown service selector(%s)", serviceSelector);
+              }
+
+              responseMessage = messageTarget.handleMessage(topicOperator.getResponseSession(), messageStrategy, requestMessage);
+            }
+            catch (Exception exception) {
+              responseMessage = messageStrategy.wrapInMessage(topicOperator.getResponseSession(), exception);
+              responseMessage.setBooleanProperty(MessageProperty.EXCEPTION.getKey(), true);
+            }
+
+            responseMessage.setJMSCorrelationID(requestMessage.getJMSMessageID());
+            responseMessage.setStringProperty(MessageProperty.INSTANCE.getKey(), transmissionInstance);
+
+            topicOperator.publish(responseMessage);
+          }
+          catch (Throwable throwable) {
+            LoggerManager.getLogger(ReceptionWorker.class).error(throwable);
+          }
+          finally {
+            operatorQueue.add(topicOperator);
+          }
         }
       }
     }
     catch (Exception exception) {
       LoggerManager.getLogger(ReceptionWorker.class).error(exception);
-      stopLatch.countDown();
     }
     finally {
       exitLatch.countDown();

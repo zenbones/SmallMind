@@ -29,8 +29,8 @@ package org.smallmind.quorum.transport.message;
 import java.security.SecureRandom;
 import java.util.Random;
 import java.util.UUID;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import javax.jms.JMSException;
 import javax.jms.Message;
@@ -48,8 +48,8 @@ public class MessageTransmitter {
 
   private final AtomicBoolean closed = new AtomicBoolean(false);
   private final MessageStrategy messageStrategy;
-  private final ConcurrentLinkedQueue<QueueOperator> operatorQueue;
-  private final ConcurrentHashMap<String, TransmissionCallback> callbackMap = new ConcurrentHashMap<String, TransmissionCallback>();
+  private final LinkedBlockingQueue<QueueOperator> operatorQueue;
+  private final SelfDestructiveMap<String, TransmissionCallback> callbackMap;
   private final TransmissionListener[] transmissionListeners;
   private final QueueConnection[] requestConnections;
   private final String instanceId = UUID.randomUUID().toString();
@@ -61,6 +61,8 @@ public class MessageTransmitter {
 
     this.messageStrategy = messageStrategy;
 
+    callbackMap = new SelfDestructiveMap<String, TransmissionCallback>(timeoutSeconds);
+
     requestConnections = new QueueConnection[clusterSize];
     for (int index = 0; index < requestConnections.length; index++) {
       requestConnections[index] = (QueueConnection)requestManagedObjects.createConnection();
@@ -68,7 +70,7 @@ public class MessageTransmitter {
 
     requestIndex = RANDOM.nextInt(requestConnections.length);
 
-    operatorQueue = new ConcurrentLinkedQueue<QueueOperator>();
+    operatorQueue = new LinkedBlockingQueue<QueueOperator>();
     for (int index = 0; index < Math.max(clusterSize, concurrencyLimit); index++) {
       operatorQueue.add(new QueueOperator(requestConnections[requestIndex], (Queue)requestManagedObjects.getDestination(), messagePolicy));
       if (++requestIndex == requestConnections.length) {
@@ -92,25 +94,33 @@ public class MessageTransmitter {
 
     QueueOperator queueOperator;
 
-    if ((queueOperator = operatorQueue.poll()) == null) {
-      throw new TransportException("Unable to take a TopicOperator, which should never happen - please contact your system administrator");
+    do {
+      queueOperator = operatorQueue.poll(1, TimeUnit.SECONDS);
+    } while ((!closed.get()) && (queueOperator == null));
+
+    if (queueOperator == null) {
+      throw new TransportException("Message transmission has been closed");
     }
 
     try {
 
       Message requestMessage = messageStrategy.wrapInMessage(queueOperator.getRequestSession(), invocationSignal);
-      TransmissionCallback callback;
+      AsynchronousTransmissionCallback asynchronousCallback;
+      SynchronousTransmissionCallback previousCallback;
 
       requestMessage.setStringProperty(MessageProperty.INSTANCE.getKey(), instanceId);
       requestMessage.setStringProperty(MessageProperty.SERVICE.getKey(), serviceSelector);
 
       queueOperator.send(requestMessage);
-      callbackMap.put(requestMessage.getJMSMessageID(), callback = new TransmissionCallback(messageStrategy));
+      if ((previousCallback = (SynchronousTransmissionCallback)callbackMap.putIfAbsent(requestMessage.getJMSMessageID(), asynchronousCallback = new AsynchronousTransmissionCallback(messageStrategy))) != null) {
 
-      return callback;
+        return previousCallback;
+      }
+
+      return asynchronousCallback;
     }
     finally {
-      operatorQueue.add(queueOperator);
+      operatorQueue.put(queueOperator);
     }
   }
 
@@ -118,10 +128,10 @@ public class MessageTransmitter {
 
     try {
 
-      TransmissionCallback callback;
+      AsynchronousTransmissionCallback previousCallback;
 
-      if ((callback = callbackMap.remove(responseMessage.getJMSCorrelationID())) != null) {
-        callback.setResponseMessage(responseMessage);
+      if ((previousCallback = (AsynchronousTransmissionCallback)callbackMap.putIfAbsent(responseMessage.getJMSCorrelationID(), new SynchronousTransmissionCallback(messageStrategy, responseMessage))) != null) {
+        previousCallback.setResponseMessage(responseMessage);
       }
     }
     catch (JMSException jmsException) {
@@ -130,7 +140,7 @@ public class MessageTransmitter {
   }
 
   public void close ()
-    throws JMSException {
+    throws JMSException, InterruptedException {
 
     if (closed.compareAndSet(false, true)) {
       for (QueueConnection requestConnection : requestConnections) {
@@ -145,6 +155,7 @@ public class MessageTransmitter {
       for (TransmissionListener transmissionListener : transmissionListeners) {
         transmissionListener.close();
       }
+      callbackMap.shutdown();
     }
   }
 }

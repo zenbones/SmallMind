@@ -26,8 +26,32 @@
  */
 package org.smallmind.quorum.transport.message;
 
-public interface TransmissionCallback extends SelfDestructive {
+import javax.jms.Message;
 
-  public abstract Object getResult ()
-    throws Exception;
+public class SynchronousTransmissionCallback implements TransmissionCallback {
+
+  private final MessageStrategy messageStrategy;
+  private final Message responseMessage;
+
+  public SynchronousTransmissionCallback (MessageStrategy messageStrategy, Message responseMessage) {
+
+    this.messageStrategy = messageStrategy;
+    this.responseMessage = responseMessage;
+  }
+
+  @Override
+  public void destroy () {
+
+  }
+
+  public synchronized Object getResult ()
+    throws Exception {
+
+    if (responseMessage.getBooleanProperty(MessageProperty.EXCEPTION.getKey())) {
+      throw (Exception)messageStrategy.unwrapFromMessage(responseMessage);
+    }
+
+    return messageStrategy.unwrapFromMessage(responseMessage);
+  }
+
 }
