@@ -48,8 +48,8 @@ public class EnumUserType implements ParameterizedType, EnhancedUserType {
     try {
       enumClass = (Class<Enum>)Class.forName(enumClassName);
     }
-    catch (ClassNotFoundException cnfe) {
-      throw new HibernateException("Enum class not found", cnfe);
+    catch (ClassNotFoundException classNotFoundException) {
+      throw new HibernateException("Enum class not found", classNotFoundException);
     }
   }
 
