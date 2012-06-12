@@ -26,6 +26,7 @@
  */
 package org.smallmind.quorum.transport.message;
 
+import java.util.NavigableSet;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentSkipListSet;
 import java.util.concurrent.CountDownLatch;
@@ -35,7 +36,7 @@ import org.smallmind.scribe.pen.LoggerManager;
 public class SelfDestructiveMap<K extends Comparable<K>, V extends SelfDestructive> {
 
   private final ConcurrentHashMap<K, V> internalMap = new ConcurrentHashMap<K, V>();
-  private final ConcurrentSkipListSet<IgnitionKey<K>> ignitionKeySet = new ConcurrentSkipListSet<IgnitionKey<K>>();
+  private final ConcurrentSkipListSet<SelfDestructiveKey<K>> ignitionKeySet = new ConcurrentSkipListSet<SelfDestructiveKey<K>>();
   private IgnitionWorker ignitionWorker;
   private final int timeoutSeconds;
 
@@ -60,7 +61,7 @@ public class SelfDestructiveMap<K extends Comparable<K>, V extends SelfDestructi
     V previousValue;
 
     if ((previousValue = internalMap.putIfAbsent(key, value)) == null) {
-      ignitionKeySet.add(new IgnitionKey<K>(key, System.currentTimeMillis() + (timeoutSeconds * 1000)));
+      ignitionKeySet.add(new SelfDestructiveKey<K>(key, System.currentTimeMillis() + (timeoutSeconds * 1000)));
     }
 
     return previousValue;
@@ -95,15 +96,20 @@ public class SelfDestructiveMap<K extends Comparable<K>, V extends SelfDestructi
       try {
         while (!terminationLatch.await(1, TimeUnit.SECONDS)) {
 
-          IgnitionKey<K> firstKey;
+          NavigableSet<SelfDestructiveKey<K>> ignitedKeySet;
           long now = System.currentTimeMillis();
 
-          while (((firstKey = ignitionKeySet.first()) != null) && (firstKey.getIgnitionTime() <= now)) {
+          if (!(ignitedKeySet = ignitionKeySet.headSet(new SelfDestructiveKey<K>(now))).isEmpty()) {
 
-            SelfDestructive selfDestructive;
+            SelfDestructiveKey<K> ignitedKey;
 
-            if ((selfDestructive = internalMap.remove(firstKey.getMapKey())) != null) {
-              selfDestructive.destroy();
+            while ((ignitedKey = ignitedKeySet.pollFirst()) != null) {
+
+              SelfDestructive selfDestructive;
+
+              if ((selfDestructive = internalMap.remove(ignitedKey.getMapKey())) != null) {
+                selfDestructive.destroy();
+              }
             }
           }
         }

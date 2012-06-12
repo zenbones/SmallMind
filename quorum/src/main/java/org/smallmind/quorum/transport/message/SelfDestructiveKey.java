@@ -26,12 +26,19 @@
  */
 package org.smallmind.quorum.transport.message;
 
-public class IgnitionKey<K extends Comparable<K>> implements Comparable<IgnitionKey<K>> {
+public class SelfDestructiveKey<K extends Comparable<K>> implements Comparable<SelfDestructiveKey<K>> {
 
   private final K mapKey;
   private final long ignitionTime;
 
-  public IgnitionKey (K mapKey, long ignitionTime) {
+  public SelfDestructiveKey (long ignitionTime) {
+
+    this.ignitionTime = ignitionTime;
+
+    mapKey = null;
+  }
+
+  public SelfDestructiveKey (K mapKey, long ignitionTime) {
 
     this.mapKey = mapKey;
     this.ignitionTime = ignitionTime;
@@ -48,13 +55,13 @@ public class IgnitionKey<K extends Comparable<K>> implements Comparable<Ignition
   }
 
   @Override
-  public int compareTo (IgnitionKey<K> key) {
+  public int compareTo (SelfDestructiveKey<K> key) {
 
     long comparison;
 
     if ((comparison = ignitionTime - key.getIgnitionTime()) == 0) {
 
-      return mapKey.compareTo(key.getMapKey());
+      return (key.getMapKey() == null) ? (mapKey == null) ? 0 : -1 : mapKey.compareTo(key.getMapKey());
     }
 
     return (int)comparison;
@@ -69,6 +76,6 @@ public class IgnitionKey<K extends Comparable<K>> implements Comparable<Ignition
   @Override
   public boolean equals (Object obj) {
 
-    return (obj instanceof IgnitionKey) && (mapKey.equals(((IgnitionKey)obj).getMapKey()));
+    return (obj instanceof SelfDestructiveKey) && (mapKey.equals(((SelfDestructiveKey)obj).getMapKey()));
   }
 }
