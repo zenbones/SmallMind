@@ -1,22 +1,22 @@
 /*
  * Copyright (c) 2007, 2008, 2009, 2010, 2011, 2012 David Berkman
- * 
+ *
  * This file is part of the SmallMind Code Project.
- * 
+ *
  * The SmallMind Code Project is free software, you can redistribute
  * it and/or modify it under the terms of GNU Affero General Public
  * License as published by the Free Software Foundation, either version 3
  * of the License, or (at your option) any later version.
- * 
+ *
  * The SmallMind Code Project is distributed in the hope that it will
  * be useful, but WITHOUT ANY WARRANTY; without even the implied warranty
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * General Public License for more details.
- * 
+ *
  * You should have received a copy of the the GNU Affero General Public
  * License, along with The SmallMind Code Project. If not, see
  * <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under the GNU Affero GPL version 3 section 7
  * ------------------------------------------------------------------
  * If you modify this Program, or any covered work, by linking or
@@ -30,15 +30,21 @@ import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 public class AsynchronousAppender implements Appender, Runnable {
 
   private CountDownLatch exitLatch;
+  private AtomicBoolean finished = new AtomicBoolean(false);
   private Appender internalAppender;
   private LinkedBlockingQueue<Record> publishQueue;
-  private boolean finished = false;
 
   public AsynchronousAppender (Appender internalAppender) {
+
+    this(internalAppender, Integer.MAX_VALUE);
+  }
+
+  public AsynchronousAppender (Appender internalAppender, int bufferSize) {
 
     Thread publishThread;
 
@@ -116,7 +122,7 @@ public class AsynchronousAppender implements Appender, Runnable {
   public void publish (Record record) {
 
     try {
-      if (finished) {
+      if (finished.get()) {
         throw new LoggerException("%s has been previously closed", this.getClass().getSimpleName());
       }
 
@@ -148,7 +154,7 @@ public class AsynchronousAppender implements Appender, Runnable {
   public void finish ()
     throws InterruptedException {
 
-    finished = true;
+    finished.compareAndSet(false, true);
     exitLatch.await();
   }
 
@@ -163,14 +169,14 @@ public class AsynchronousAppender implements Appender, Runnable {
     Record record;
 
     try {
-      while (!(finished && publishQueue.isEmpty())) {
-        if ((record = publishQueue.poll(1000, TimeUnit.MILLISECONDS)) != null) {
+      while (!finished.get()) {
+        if ((record = publishQueue.poll(1, TimeUnit.SECONDS)) != null) {
           internalAppender.publish(record);
         }
       }
     }
     catch (InterruptedException interruptedException) {
-      finished = true;
+      finished.set(true);
       LoggerManager.getLogger(AsynchronousAppender.class).error(interruptedException);
     }
     finally {
