@@ -48,7 +48,7 @@ public class ContextFactory {
     return !threadLocal.get().isEmpty();
   }
 
-  public static <C extends Context> void importContextHistory (Class<C> contextClass, C... contexts) {
+  public static <C extends Context> void importContextTrace (Class<C> contextClass, C... contexts) {
 
     ContextStackThreadLocal threadLocal;
 
@@ -65,7 +65,7 @@ public class ContextFactory {
     }
   }
 
-  public static <C extends Context> C[] exportContextHistory (Class<C> contextClass) {
+  public static <C extends Context> C[] exportContextTrace (Class<C> contextClass) {
 
     C[] contexts;
     Context context;
@@ -93,7 +93,7 @@ public class ContextFactory {
     return contexts;
   }
 
-  public static void clearContextHistory (Class<? extends Context> contextClass) {
+  public static void clearContextTrace (Class<? extends Context> contextClass) {
 
     Context context;
     ContextStackThreadLocal threadLocal;

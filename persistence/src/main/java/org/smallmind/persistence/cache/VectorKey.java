@@ -28,6 +28,10 @@ package org.smallmind.persistence.cache;
 
 import java.io.Serializable;
 import org.smallmind.persistence.Durable;
+import org.smallmind.persistence.cache.aop.CachedWith;
+import org.smallmind.persistence.cache.aop.Classifications;
+import org.smallmind.persistence.cache.aop.Vector;
+import org.smallmind.persistence.cache.aop.VectorIndices;
 import org.terracotta.annotations.InstrumentedClass;
 
 @InstrumentedClass
@@ -35,6 +39,11 @@ public class VectorKey<D extends Durable> implements Serializable {
 
   private Class<D> elementClass;
   private String key;
+
+  public VectorKey (Vector vector, D durable, Class<D> elementClass) {
+
+    this(VectorIndices.getVectorIndexes(vector, durable), elementClass, Classifications.get(CachedWith.class, null, vector));
+  }
 
   public VectorKey (VectorIndex[] vectorIndices, Class<D> elementClass) {
 
