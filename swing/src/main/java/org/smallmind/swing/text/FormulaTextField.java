@@ -65,7 +65,7 @@ public class FormulaTextField extends JPanel implements ActionListener, ItemList
   private CardState cardState;
   private JScrollPane expandedScrollPane;
   private JTextArea expandedTextArea;
-  private JTextField collapsedTextField;
+  private SlimTextField collapsedTextField;
   private JToggleButton expandedFormulaButton;
   private JToggleButton collapsedFormulaButton;
   private AtomicBoolean documentSensitive = new AtomicBoolean(true);
@@ -143,7 +143,7 @@ public class FormulaTextField extends JPanel implements ActionListener, ItemList
     expandedFormulaButton.setToolTipText("evaluate as text/formula");
     expandedFormulaButton.addItemListener(this);
 
-    collapsedTextField = new JTextField(text);
+    collapsedTextField = new SlimTextField(text);
     collapsedTextField.getDocument().addDocumentListener(this);
 
     expandedScrollPane = new JScrollPane(expandedTextArea = new JTextArea(text, rows, 0), JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED, JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
