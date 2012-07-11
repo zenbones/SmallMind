@@ -27,18 +27,13 @@
 package org.smallmind.persistence.orm;
 
 import java.io.Serializable;
-import java.lang.reflect.Method;
-import java.util.Arrays;
-import java.util.concurrent.ConcurrentHashMap;
 import org.smallmind.persistence.Durable;
 import org.smallmind.persistence.cache.VectorAware;
 import org.smallmind.persistence.cache.VectorKey;
 import org.smallmind.persistence.cache.VectoredDao;
-import org.smallmind.persistence.cache.aop.CacheAs;
+import org.smallmind.persistence.cache.aop.Vector;
 
 public abstract class VectorAwareORMDao<I extends Serializable & Comparable<I>, D extends Durable<I>> extends AbstractORMDao<I, D> implements VectorAware<I, D> {
-
-  private static final ConcurrentHashMap<MethodKey, CacheAs> ANNOTATION_MAP = new ConcurrentHashMap<MethodKey, CacheAs>();
 
   private ProxySession proxySession;
   private VectoredDao<I, D> vectoredDao;
@@ -55,68 +50,33 @@ public abstract class VectorAwareORMDao<I extends Serializable & Comparable<I>, 
     return proxySession.isCacheEnabled() ? vectoredDao : null;
   }
 
-  public void purge (D durable, String methodName, Class<?>... methodSignature) {
+  public void deleteVector (D durable, Vector vector) {
 
     VectoredDao<I, D> vectoredDao;
 
     if ((vectoredDao = getVectoredDao()) != null) {
 
-      CacheAs cacheAs;
-      MethodKey methodKey = new MethodKey(methodName, methodSignature);
-
-      if ((cacheAs = ANNOTATION_MAP.get(methodKey)) == null) {
-
-        Method cachingMethod;
-
-        try {
-          cachingMethod = this.getClass().getMethod(methodName, methodSignature);
-        }
-        catch (NoSuchMethodException noSuchMethodException) {
-          throw new ORMOperationException(noSuchMethodException);
-        }
-
-        if ((cacheAs = cachingMethod.getAnnotation(CacheAs.class)) == null) {
-          throw new ORMOperationException("The method(%s) has no %s annotation", methodName, CacheAs.class.getSimpleName());
-        }
-
-        ANNOTATION_MAP.put(methodKey, cacheAs);
-      }
-
-      vectoredDao.deleteVector(new VectorKey<D>(cacheAs.value(), durable, getManagedClass()));
+      vectoredDao.deleteVector(new VectorKey<D>(vector, durable, getManagedClass()));
     }
   }
 
-  public static class MethodKey {
+  public void updateInVector (D durable, Vector vector) {
 
-    private Class[] methodSignature;
-    private String methodName;
+    VectoredDao<I, D> vectoredDao;
 
-    private MethodKey (String methodName, Class<?>... methodSignature) {
+    if ((vectoredDao = getVectoredDao()) != null) {
 
-      this.methodName = methodName;
-      this.methodSignature = methodSignature;
+      vectoredDao.updateInVector(new VectorKey<D>(vector, durable, getManagedClass()), durable);
     }
+  }
 
-    public String getMethodName () {
+  public void removeFromVector (D durable, Vector vector) {
 
-      return methodName;
-    }
+    VectoredDao<I, D> vectoredDao;
 
-    public Class[] getMethodSignature () {
+    if ((vectoredDao = getVectoredDao()) != null) {
 
-      return methodSignature;
-    }
-
-    @Override
-    public int hashCode () {
-
-      return methodName.hashCode() ^ ((methodSignature == null) ? 0 : Arrays.hashCode(methodSignature));
-    }
-
-    @Override
-    public boolean equals (Object obj) {
-
-      return (obj instanceof MethodKey) && methodName.equals(((MethodKey)obj).getMethodName()) && (methodSignature == null) ? (((MethodKey)obj).getMethodSignature() == null) : Arrays.equals(methodSignature, ((MethodKey)obj).getMethodSignature());
+      vectoredDao.removeFromVector(new VectorKey<D>(vector, durable, getManagedClass()), durable);
     }
   }
 }
