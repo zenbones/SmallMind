@@ -27,11 +27,17 @@
 package org.smallmind.persistence.orm;
 
 import java.io.Serializable;
+import java.util.Arrays;
+import java.util.concurrent.ConcurrentHashMap;
 import org.smallmind.persistence.Durable;
 import org.smallmind.persistence.cache.VectorAware;
+import org.smallmind.persistence.cache.VectorKey;
 import org.smallmind.persistence.cache.VectoredDao;
+import org.smallmind.persistence.cache.aop.CacheAs;
 
 public abstract class VectorAwareORMDao<I extends Serializable & Comparable<I>, D extends Durable<I>> extends AbstractORMDao<I, D> implements VectorAware<I, D> {
+
+  private static final ConcurrentHashMap<MethodKey, CacheAs> ANNOTATION_MAP = new ConcurrentHashMap<MethodKey, CacheAs>();
 
   private ProxySession proxySession;
   private VectoredDao<I, D> vectoredDao;
@@ -46,5 +52,60 @@ public abstract class VectorAwareORMDao<I extends Serializable & Comparable<I>, 
   public VectoredDao<I, D> getVectoredDao () {
 
     return proxySession.isCacheEnabled() ? vectoredDao : null;
+  }
+
+  public void purge (D durable, String methodName, Class<?>... methodSignature)
+    throws NoSuchMethodException {
+
+    VectoredDao<I, D> vectoredDao;
+
+    if ((vectoredDao = getVectoredDao()) != null) {
+
+      CacheAs cacheAs;
+      MethodKey methodKey = new MethodKey(methodName, methodSignature);
+
+      if ((cacheAs = ANNOTATION_MAP.get(methodKey)) == null) {
+        if ((cacheAs = this.getClass().getMethod(methodName, methodSignature).getAnnotation(CacheAs.class)) == null) {
+          throw new ORMOperationException("The method(%s) has no %s annotation", methodName, CacheAs.class.getSimpleName());
+        }
+        ANNOTATION_MAP.put(methodKey, cacheAs);
+      }
+
+      vectoredDao.deleteVector(new VectorKey<D>(cacheAs.value(), durable, getManagedClass()));
+    }
+  }
+
+  public static class MethodKey {
+
+    private Class[] methodSignature;
+    private String methodName;
+
+    private MethodKey (String methodName, Class<?>... methodSignature) {
+
+      this.methodName = methodName;
+      this.methodSignature = methodSignature;
+    }
+
+    public String getMethodName () {
+
+      return methodName;
+    }
+
+    public Class[] getMethodSignature () {
+
+      return methodSignature;
+    }
+
+    @Override
+    public int hashCode () {
+
+      return methodName.hashCode() ^ ((methodSignature == null) ? 0 : Arrays.hashCode(methodSignature));
+    }
+
+    @Override
+    public boolean equals (Object obj) {
+
+      return (obj instanceof MethodKey) && methodName.equals(((MethodKey)obj).getMethodName()) && (methodSignature == null) ? (((MethodKey)obj).getMethodSignature() == null) : Arrays.equals(methodSignature, ((MethodKey)obj).getMethodSignature());
+    }
   }
 }
