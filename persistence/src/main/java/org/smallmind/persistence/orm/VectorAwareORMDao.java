@@ -27,6 +27,7 @@
 package org.smallmind.persistence.orm;
 
 import java.io.Serializable;
+import java.lang.reflect.Method;
 import java.util.Arrays;
 import java.util.concurrent.ConcurrentHashMap;
 import org.smallmind.persistence.Durable;
@@ -54,8 +55,7 @@ public abstract class VectorAwareORMDao<I extends Serializable & Comparable<I>, 
     return proxySession.isCacheEnabled() ? vectoredDao : null;
   }
 
-  public void purge (D durable, String methodName, Class<?>... methodSignature)
-    throws NoSuchMethodException {
+  public void purge (D durable, String methodName, Class<?>... methodSignature) {
 
     VectoredDao<I, D> vectoredDao;
 
@@ -65,9 +65,20 @@ public abstract class VectorAwareORMDao<I extends Serializable & Comparable<I>, 
       MethodKey methodKey = new MethodKey(methodName, methodSignature);
 
       if ((cacheAs = ANNOTATION_MAP.get(methodKey)) == null) {
-        if ((cacheAs = this.getClass().getMethod(methodName, methodSignature).getAnnotation(CacheAs.class)) == null) {
+
+        Method cachingMethod;
+
+        try {
+          cachingMethod = this.getClass().getMethod(methodName, methodSignature);
+        }
+        catch (NoSuchMethodException noSuchMethodException) {
+          throw new ORMOperationException(noSuchMethodException);
+        }
+
+        if ((cacheAs = cachingMethod.getAnnotation(CacheAs.class)) == null) {
           throw new ORMOperationException("The method(%s) has no %s annotation", methodName, CacheAs.class.getSimpleName());
         }
+
         ANNOTATION_MAP.put(methodKey, cacheAs);
       }
 
