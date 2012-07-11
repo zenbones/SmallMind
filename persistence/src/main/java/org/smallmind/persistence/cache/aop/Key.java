@@ -39,9 +39,9 @@ public @interface Key {
 
   public abstract String on () default "id";
 
+  public abstract String constant () default "";
+
   public abstract String alias () default "";
 
   public abstract boolean nullable () default false;
-
-  public abstract boolean constant () default false;
 }

@@ -44,7 +44,7 @@ public class VectorIndices {
 
       Object indexValue;
 
-      indexValue = vector.value()[count].constant() ? vector.value()[count].on() : getValue(durable, vector.value()[count].on(), vector.value()[count].nullable());
+      indexValue = (!vector.value()[count].constant().equals("")) ? vector.value()[count].constant() : getValue(durable, vector.value()[count].on(), vector.value()[count].nullable());
       indices[count] = new VectorIndex(vector.value()[count].with(), vector.value()[count].on(), indexValue, vector.value()[count].alias());
     }
 
@@ -61,7 +61,7 @@ public class VectorIndices {
 
       Object indexValue;
 
-      indexValue = vector.value()[count].constant() ? vector.value()[count].on() : getValue(joinPoint, vector.value()[count].on(), vector.value()[count].nullable());
+      indexValue = (!vector.value()[count].constant().equals("")) ? vector.value()[count].constant() : getValue(joinPoint, vector.value()[count].on(), vector.value()[count].nullable());
       indices[count] = new VectorIndex(vector.value()[count].with(), vector.value()[count].on(), indexValue, vector.value()[count].alias());
     }
 
