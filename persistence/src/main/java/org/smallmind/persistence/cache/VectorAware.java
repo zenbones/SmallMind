@@ -27,8 +27,15 @@
 package org.smallmind.persistence.cache;
 
 import org.smallmind.persistence.Durable;
+import org.smallmind.persistence.cache.aop.Vector;
 
 public interface VectorAware<I extends Comparable<I>, D extends Durable<I>> {
 
   public abstract VectoredDao<I, D> getVectoredDao ();
+
+  public void deleteVector (D durable, Vector vector);
+
+  public void updateInVector (D durable, Vector vector);
+
+  public void removeFromVector (D durable, Vector vector);
 }
