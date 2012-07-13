@@ -6,8 +6,8 @@
   </bean>
 
   <bean class="org.smallmind.nutsnbolts.spring.remote.RemoteServiceExporter" destroy-method="unbind">
-    <property name="name" value="com.codeasylum.stress.api.Ouroboros"/>
-    <property name="service" ref="${serviceReference}"/>
+    <property name="name" value="${registered name or absolute class name}"/>
+    <property name="service" ref="serviceReference"/>
     <property name="registry" ref="rmiRegistry"/>
   </bean>
 

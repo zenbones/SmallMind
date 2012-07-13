@@ -2,6 +2,8 @@
 <beans xmlns="http://www.springframework.org/schema/beans" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.springframework.org/schema/beans
            http://www.springframework.org/schema/beans/spring-beans-3.0.xsd">
 
+  <import resource="classpath:org/smallmind/nutsnbolts/jmx.xml"/>
+
   <!-- Collect Spring Initialized Hibernate Resources -->
   <bean class="org.smallmind.persistence.orm.spring.hibernate.HibernateAnnotationSeekingBeanFactoryPostProcessor">
     <property name="markedAnnotations">
@@ -22,6 +24,10 @@
   <bean id="persistence" class="org.smallmind.persistence.Persistence" init-method="register">
     <constructor-arg index="0" ref="statisticsFactory"/>
     <constructor-arg index="1" ref="stringConverterFactory"/>
+  </bean>
+
+  <bean id="statisticsMonitor" class="org.smallmind.persistence.statistics.jmx.StatisticsMonitor">
+    <constructor-arg index="0" name="persistence" ref="persistence"/>
   </bean>
 
   <!-- AspectJ Transaction Management -->
