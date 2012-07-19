@@ -24,41 +24,39 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.slf4j.impl;
+package org.smallmind.quorum.transport.message.statistics;
 
-import org.slf4j.ILoggerFactory;
-import org.slf4j.spi.LoggerFactoryBinder;
-import org.smallmind.scribe.pen.LoggerManager;
-import org.smallmind.scribe.slf4j.ScribeLoggerFactory;
+import java.io.Serializable;
 
-public class StaticLoggerBinder implements LoggerFactoryBinder {
+public class StatisticsEntry implements Serializable {
 
-  public static final StaticLoggerBinder SINGLETON = new StaticLoggerBinder();
+  private String source;
+  private long avgTime = 0;
+  private int hits = 0;
 
-  private final ILoggerFactory loggerFactory;
+  public StatisticsEntry (String source) {
 
-  static {
-
-    LoggerManager.addLoggingPackagePrefix("org.slf4j.");
+    this.source = source;
   }
 
-  public static StaticLoggerBinder getSingleton () {
+  public String getSource () {
 
-    return SINGLETON;
+    return source;
   }
 
-  public StaticLoggerBinder () {
+  public synchronized int getHits () {
 
-    loggerFactory = new ScribeLoggerFactory();
+    return hits;
   }
 
-  public ILoggerFactory getLoggerFactory () {
+  public synchronized long getAvgTime () {
 
-    return loggerFactory;
+    return avgTime;
   }
 
-  public String getLoggerFactoryClassStr () {
+  public synchronized void hit (long time) {
 
-    return ScribeLoggerFactory.class.getName();
+    avgTime = ((avgTime * hits) + time) / (hits + 1);
+    hits++;
   }
 }
