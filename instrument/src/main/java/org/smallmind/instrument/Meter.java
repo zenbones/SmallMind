@@ -1,4 +1,4 @@
-package org.smallmind.nutsnbolts.measure;
+package org.smallmind.instrument;
 
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;

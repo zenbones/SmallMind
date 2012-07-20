@@ -111,6 +111,7 @@
     <module>validation</module>
     <module>nutsnbolts</module>
     <module>scribe</module>
+    <module>instrument</module>
     <module>foundation</module>
     <module>quorum</module>
     <module>persistence</module>

@@ -1,4 +1,4 @@
-package org.smallmind.nutsnbolts.measure;
+package org.smallmind.instrument;
 
 import java.io.OutputStream;
 import java.io.PrintWriter;

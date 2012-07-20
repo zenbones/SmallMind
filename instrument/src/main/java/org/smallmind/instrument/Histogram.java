@@ -1,4 +1,4 @@
-package org.smallmind.nutsnbolts.measure;
+package org.smallmind.instrument;
 
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;

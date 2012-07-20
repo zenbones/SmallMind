@@ -1,4 +1,4 @@
-package org.smallmind.nutsnbolts.measure;
+package org.smallmind.instrument;
 
 public enum Samples {
 

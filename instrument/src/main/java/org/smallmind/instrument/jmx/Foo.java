@@ -1,4 +1,4 @@
-package org.smallmind.nutsnbolts.measure.jmx;
+package org.smallmind.instrument.jmx;
 
 
 import javax.management.*;

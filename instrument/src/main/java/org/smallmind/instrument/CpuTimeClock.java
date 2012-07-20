@@ -1,4 +1,4 @@
-package org.smallmind.nutsnbolts.measure;
+package org.smallmind.instrument;
 
 import java.lang.management.ManagementFactory;
 import java.lang.management.ThreadMXBean;
