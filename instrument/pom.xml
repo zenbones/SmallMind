@@ -11,6 +11,11 @@
   <name>Instrument</name>
   <description>Code Instrumentation Frameworks</description>
   <dependencies>
+    <dependency>
+      <groupId>org.smallmind</groupId>
+      <artifactId>smallmind-nutsnbolts</artifactId>
+      <scope>compile</scope>
+    </dependency>
   </dependencies>
   <build>
     <plugins>
