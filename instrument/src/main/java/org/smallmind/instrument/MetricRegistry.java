@@ -32,13 +32,13 @@ public class MetricRegistry {
 
   private static final HashMap<MetricKey, Metric> METRIC_MAP = new HashMap<MetricKey, Metric>();
 
-  public static Metric register (MetricKey metricKey, Metrics.MetricBuilder metricBuilder) {
+  public static <M extends Metric> M register (MetricKey metricKey, Metrics.MetricBuilder<M> metricBuilder) {
 
-    Metric metric;
+    M metric;
 
-    if ((metric = METRIC_MAP.get(metricKey)) == null) {
+    if ((metric = metricBuilder.getMetricClass().cast(METRIC_MAP.get(metricKey))) == null) {
       synchronized (METRIC_MAP) {
-        if ((metric = METRIC_MAP.get(metricKey)) == null) {
+        if ((metric = metricBuilder.getMetricClass().cast(METRIC_MAP.get(metricKey))) == null) {
           METRIC_MAP.put(metricKey, metric = metricBuilder.construct());
         }
       }

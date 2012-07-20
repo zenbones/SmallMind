@@ -62,6 +62,8 @@ public class Metrics {
 
   public static interface MetricBuilder<M extends Metric> {
 
+    public abstract Class<M> getMetricClass ();
+
     public abstract M construct ();
   }
 
@@ -72,6 +74,12 @@ public class Metrics {
     public RegisterBuilder (int initialCount) {
 
       this.initialCount = initialCount;
+    }
+
+    @Override
+    public Class<Register> getMetricClass () {
+
+      return Register.class;
     }
 
     @Override
@@ -95,6 +103,12 @@ public class Metrics {
     }
 
     @Override
+    public Class<Meter> getMetricClass () {
+
+      return Meter.class;
+    }
+
+    @Override
     public Meter construct () {
 
       return new Meter(tickInterval, tickTimeUnit, clocks.getClock());
@@ -108,6 +122,12 @@ public class Metrics {
     private HistogramBuilder (Samples samples) {
 
       this.samples = samples;
+    }
+
+    @Override
+    public Class<Histogram> getMetricClass () {
+
+      return Histogram.class;
     }
 
     @Override
@@ -130,6 +150,12 @@ public class Metrics {
       this.tickInterval = tickInterval;
       this.tickTimeUnit = tickTimeUnit;
       this.clocks = clocks;
+    }
+
+    @Override
+    public Class<Chronometer> getMetricClass () {
+
+      return Chronometer.class;
     }
 
     @Override
