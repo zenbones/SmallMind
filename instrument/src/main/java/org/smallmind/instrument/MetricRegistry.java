@@ -45,12 +45,12 @@ public class MetricRegistry {
 
   private final ConcurrentHashMap<MetricKey, Metric> metricMap = new ConcurrentHashMap<MetricKey, Metric>();
 
-  private MBeanServer mBeanServer;
+  private MBeanServer server;
   private JMXNamingPolicy jmxNamingPolicy = new DefaultJMXNamingPolicy();
 
-  public void setMBeanServer (MBeanServer mBeanServer) {
+  public void setServer (MBeanServer server) {
 
-    this.mBeanServer = mBeanServer;
+    this.server = server;
   }
 
   public void setJmxNamingPolicy (JMXNamingPolicy jmxNamingPolicy) {
@@ -74,7 +74,7 @@ public class MetricRegistry {
         if ((metric = metricBuilder.getMetricClass().cast(metricMap.get(metricKey))) == null) {
           metricMap.put(metricKey, metric = metricBuilder.construct());
 
-          if (mBeanServer != null) {
+          if (server != null) {
 
             DynamicMBean mBean = null;
 
@@ -95,7 +95,7 @@ public class MetricRegistry {
                 throw new UnknownSwitchCaseException(metricBuilder.getType().name());
             }
 
-            mBeanServer.registerMBean(mBean, jmxNamingPolicy.createObjectName(domain, name, event, metricBuilder.getType()));
+            server.registerMBean(mBean, jmxNamingPolicy.createObjectName(domain, name, event, metricBuilder.getType()));
           }
         }
       }

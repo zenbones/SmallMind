@@ -23,6 +23,11 @@
     </dependency>
     <dependency>
       <groupId>org.smallmind</groupId>
+      <artifactId>smallmind-instrument</artifactId>
+      <scope>compile</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.smallmind</groupId>
       <artifactId>smallmind-quorum</artifactId>
       <scope>compile</scope>
       <optional>true</optional>

@@ -27,17 +27,16 @@
 package org.smallmind.persistence;
 
 import org.smallmind.nutsnbolts.reflection.type.converter.StringConverterFactory;
-import org.smallmind.persistence.statistics.StatisticsFactory;
 
 public class Persistence {
 
-  private StatisticsFactory statisticsFactory;
   private StringConverterFactory stringConverterFactory;
+  private boolean staticsEnabled;
 
-  public Persistence (StatisticsFactory statisticsFactory, StringConverterFactory stringConverterFactory) {
+  public Persistence (StringConverterFactory stringConverterFactory, boolean staticsEnabled) {
 
-    this.statisticsFactory = statisticsFactory;
     this.stringConverterFactory = stringConverterFactory;
+    this.staticsEnabled = staticsEnabled;
   }
 
   public void register () {
@@ -45,13 +44,13 @@ public class Persistence {
     PersistenceManager.register(this);
   }
 
-  public StatisticsFactory getStatisticsFactory () {
-
-    return statisticsFactory;
-  }
-
   public StringConverterFactory getStringConverterFactory () {
 
     return stringConverterFactory;
+  }
+
+  public boolean isStaticsEnabled () {
+
+    return staticsEnabled;
   }
 }

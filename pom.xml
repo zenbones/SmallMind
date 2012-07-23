@@ -153,6 +153,11 @@
       </dependency>
       <dependency>
         <groupId>org.smallmind</groupId>
+        <artifactId>smallmind-instrument</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.smallmind</groupId>
         <artifactId>smallmind-quorum</artifactId>
         <version>${project.version}</version>
       </dependency>

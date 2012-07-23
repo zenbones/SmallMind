@@ -15,15 +15,11 @@
 
   <bean class="org.smallmind.persistence.orm.spring.hibernate.HibernateFileSeekingBeanFactoryPostProcessor"/>
 
-  <bean id="statisticsFactory" class="org.smallmind.persistence.statistics.ThreadLocalStatisticsFactory">
-    <constructor-arg index="0" value="${orm.statistics}"/>
-  </bean>
-
   <bean id="stringConverterFactory" class="org.smallmind.nutsnbolts.reflection.type.converter.DefaultStringConverterFactory"/>
 
   <bean id="persistence" class="org.smallmind.persistence.Persistence" init-method="register">
-    <constructor-arg index="0" ref="statisticsFactory"/>
-    <constructor-arg index="1" ref="stringConverterFactory"/>
+    <constructor-arg index="0" ref="stringConverterFactory"/>
+    <constructor-arg index="1" value="${orm.statistics}"/>
   </bean>
 
   <bean id="statisticsMonitor" class="org.smallmind.persistence.statistics.jmx.StatisticsMonitor">

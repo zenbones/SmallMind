@@ -27,18 +27,37 @@
 package org.smallmind.persistence.statistics.aop;
 
 import java.lang.reflect.Method;
+import java.util.concurrent.TimeUnit;
 import org.aspectj.lang.ProceedingJoinPoint;
 import org.aspectj.lang.annotation.Around;
 import org.aspectj.lang.annotation.Aspect;
 import org.aspectj.lang.reflect.MethodSignature;
+import org.smallmind.instrument.Clocks;
+import org.smallmind.instrument.MetricRegistry;
+import org.smallmind.instrument.MetricRegistryFactory;
+import org.smallmind.instrument.Metrics;
+import org.smallmind.persistence.Persistence;
 import org.smallmind.persistence.PersistenceManager;
 import org.smallmind.persistence.orm.VectorAwareORMDao;
-import org.smallmind.persistence.statistics.StatisticsFactory;
 
 @Aspect
 public class ApplyStatisticsAspect {
 
-  private static final StatisticsFactory STATISTICS_FACTORY = PersistenceManager.getPersistence().getStatisticsFactory();
+  private static final MetricRegistry METRIC_REGISTRY;
+
+  static {
+
+    Persistence persistence;
+
+    if (((persistence = PersistenceManager.getPersistence()) == null) || (!persistence.isStaticsEnabled())) {
+      METRIC_REGISTRY = null;
+    }
+    else {
+      if ((METRIC_REGISTRY = MetricRegistryFactory.getMetricRegistry()) == null) {
+        throw new ExceptionInInitializerError("No MetricRegistry instance has been registered with the MetricRegistryFactory");
+      }
+    }
+  }
 
   @Around(value = "@within(statisticsStopwatch) && execution(@org.smallmind.persistence.statistics.aop.ApplyStatistics * * (..)) && this(ormDao)", argNames = "thisJoinPoint, statisticsStopwatch, ormDao")
   public Object aroundApplyStatisticsMethod (ProceedingJoinPoint thisJoinPoint, StatisticsStopwatch statisticsStopwatch, VectorAwareORMDao ormDao)
@@ -49,7 +68,7 @@ public class ApplyStatisticsAspect {
     long start = 0;
     long stop;
 
-    if (timingEnabled = STATISTICS_FACTORY.isEnabled() && statisticsStopwatch.value()) {
+    if (timingEnabled = (METRIC_REGISTRY != null) && statisticsStopwatch.value()) {
       start = System.currentTimeMillis();
     }
 
@@ -61,7 +80,8 @@ public class ApplyStatisticsAspect {
       if (timingEnabled) {
         stop = System.currentTimeMillis();
         executedMethod = ((MethodSignature)thisJoinPoint.getSignature()).getMethod();
-        STATISTICS_FACTORY.getStatistics().addEntry(ormDao.getManagedClass(), executedMethod, ormDao.getStatisticsSource(), stop - start);
+
+        METRIC_REGISTRY.ensure("org.smallmind.persistence." + ormDao.getStatisticsSource(), ormDao.getManagedClass().getSimpleName(), executedMethod.getName(), Metrics.buildChronometer(TimeUnit.MILLISECONDS, 1, TimeUnit.MINUTES, Clocks.NANO)).update(stop - start, TimeUnit.MILLISECONDS);
       }
     }
   }

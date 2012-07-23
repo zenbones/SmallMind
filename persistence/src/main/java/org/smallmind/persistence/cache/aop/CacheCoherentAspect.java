@@ -31,23 +31,42 @@ import java.lang.reflect.Method;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 import org.aspectj.lang.ProceedingJoinPoint;
 import org.aspectj.lang.annotation.Around;
 import org.aspectj.lang.annotation.Aspect;
 import org.aspectj.lang.reflect.MethodSignature;
+import org.smallmind.instrument.Clocks;
+import org.smallmind.instrument.MetricRegistry;
+import org.smallmind.instrument.MetricRegistryFactory;
+import org.smallmind.instrument.Metrics;
 import org.smallmind.persistence.Durable;
+import org.smallmind.persistence.Persistence;
 import org.smallmind.persistence.PersistenceManager;
 import org.smallmind.persistence.PersistenceMode;
 import org.smallmind.persistence.cache.VectoredDao;
 import org.smallmind.persistence.cache.praxis.intrinsic.IntrinsicRoster;
 import org.smallmind.persistence.orm.VectorAwareORMDao;
-import org.smallmind.persistence.statistics.StatisticsFactory;
 import org.smallmind.persistence.statistics.aop.StatisticsStopwatch;
 
 @Aspect
 public class CacheCoherentAspect {
 
-  private static final StatisticsFactory STATISTICS_FACTORY = PersistenceManager.getPersistence().getStatisticsFactory();
+  private static final MetricRegistry METRIC_REGISTRY;
+
+  static {
+
+    Persistence persistence;
+
+    if (((persistence = PersistenceManager.getPersistence()) == null) || (!persistence.isStaticsEnabled())) {
+      METRIC_REGISTRY = null;
+    }
+    else {
+      if ((METRIC_REGISTRY = MetricRegistryFactory.getMetricRegistry()) == null) {
+        throw new ExceptionInInitializerError("No MetricRegistry instance has been registered with the MetricRegistryFactory");
+      }
+    }
+  }
 
   @Around(value = "execution(@CacheCoherent * * (..)) && this(ormDao)", argNames = "thisJoinPoint, ormDao")
   public Object aroundCacheCoherentMethod (ProceedingJoinPoint thisJoinPoint, VectorAwareORMDao ormDao)
@@ -60,7 +79,7 @@ public class CacheCoherentAspect {
     long stop;
 
     statisticsStopwatchAnnotation = ormDao.getClass().getAnnotation(StatisticsStopwatch.class);
-    if (timingEnabled = STATISTICS_FACTORY.isEnabled() && (statisticsStopwatchAnnotation != null) && ((StatisticsStopwatch)statisticsStopwatchAnnotation).value()) {
+    if (timingEnabled = (METRIC_REGISTRY != null) && (statisticsStopwatchAnnotation != null) && ((StatisticsStopwatch)statisticsStopwatchAnnotation).value()) {
       start = System.currentTimeMillis();
     }
 
@@ -144,7 +163,7 @@ public class CacheCoherentAspect {
           executedMethod = ((MethodSignature)thisJoinPoint.getSignature()).getMethod();
         }
 
-        STATISTICS_FACTORY.getStatistics().addEntry(ormDao.getManagedClass(), executedMethod, ormDao.getStatisticsSource(), stop - start);
+        METRIC_REGISTRY.ensure("org.smallmind.persistence." + ormDao.getStatisticsSource(), ormDao.getManagedClass().getSimpleName(), executedMethod.getName(), Metrics.buildChronometer(TimeUnit.MILLISECONDS, 1, TimeUnit.MINUTES, Clocks.NANO)).update(stop - start, TimeUnit.MILLISECONDS);
       }
     }
   }
