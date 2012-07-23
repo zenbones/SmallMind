@@ -26,44 +26,19 @@
  */
 package org.smallmind.instrument;
 
-import org.smallmind.nutsnbolts.util.AlphaNumericComparator;
-import org.smallmind.nutsnbolts.util.DotNotationComparator;
+import java.util.Arrays;
 
-public class MetricKey implements Comparable<MetricKey> {
-
-  private static final DotNotationComparator DOT_NOTATION_COMPARATOR = new DotNotationComparator();
-  private static final AlphaNumericComparator<String> ALPHA_NUMERIC_COMPARATOR = new AlphaNumericComparator<String>();
+public class MetricKey {
 
   private MetricType type;
+  private MetricProperty[] properties;
   private String domain;
-  private String name;
-  private String event;
 
-  public MetricKey (String domain, String name, String event, MetricType type) {
+  public MetricKey (MetricType type, String domain, MetricProperty... properties) {
 
-    if ((domain == null) || (name == null) || (event == null) || (type == null)) {
-      throw new NullPointerException("No part of a metric key may be 'null'");
-    }
-
-    this.domain = domain;
-    this.name = name;
-    this.event = event;
     this.type = type;
-  }
-
-  public String getDomain () {
-
-    return domain;
-  }
-
-  public String getName () {
-
-    return name;
-  }
-
-  public String getEvent () {
-
-    return event;
+    this.domain = domain;
+    this.properties = properties;
   }
 
   public MetricType getType () {
@@ -71,31 +46,25 @@ public class MetricKey implements Comparable<MetricKey> {
     return type;
   }
 
-  @Override
-  public int compareTo (MetricKey metricKey) {
+  public String getDomain () {
 
-    int comparison;
+    return domain;
+  }
 
-    if ((comparison = DOT_NOTATION_COMPARATOR.compare(domain, metricKey.getDomain())) == 0) {
-      if ((comparison = ALPHA_NUMERIC_COMPARATOR.compare(name, metricKey.getName())) == 0) {
-        if ((comparison = ALPHA_NUMERIC_COMPARATOR.compare(event, metricKey.getEvent())) == 0) {
-          comparison = ALPHA_NUMERIC_COMPARATOR.compare(type.name(), metricKey.getType().name());
-        }
-      }
-    }
+  public MetricProperty[] getProperties () {
 
-    return comparison;
+    return properties;
   }
 
   @Override
   public int hashCode () {
 
-    return domain.hashCode() ^ name.hashCode() ^ event.hashCode() ^ type.hashCode();
+    return type.hashCode() ^ domain.hashCode() ^ Arrays.hashCode(properties);
   }
 
   @Override
   public boolean equals (Object obj) {
 
-    return (obj instanceof MetricKey) && ((MetricKey)obj).getDomain().equals(domain) && ((MetricKey)obj).getName().equals(name) && ((MetricKey)obj).getEvent().equals(event) && ((MetricKey)obj).getType().equals(type);
+    return (obj instanceof MetricKey) && ((MetricKey)obj).getDomain().equals(domain) && Arrays.equals(((MetricKey)obj).getProperties(), properties);
   }
 }

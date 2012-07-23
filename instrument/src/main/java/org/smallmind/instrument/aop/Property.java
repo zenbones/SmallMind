@@ -32,9 +32,9 @@ import java.lang.annotation.Target;
 
 @Target({})
 @Retention(RetentionPolicy.RUNTIME)
-public @interface JMX {
+public @interface Property {
 
-  public abstract String domain ();
+  public abstract String key ();
 
-  public abstract Property[] properties ();
+  public abstract String value ();
 }

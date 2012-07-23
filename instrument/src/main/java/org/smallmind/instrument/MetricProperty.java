@@ -24,17 +24,38 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.instrument.aop;
+package org.smallmind.instrument;
 
-import java.lang.annotation.Retention;
-import java.lang.annotation.RetentionPolicy;
-import java.lang.annotation.Target;
+public class MetricProperty {
 
-@Target({})
-@Retention(RetentionPolicy.RUNTIME)
-public @interface JMX {
+  private String key;
+  private String value;
 
-  public abstract String domain ();
+  public MetricProperty (String key, String value) {
 
-  public abstract Property[] properties ();
+    this.key = key;
+    this.value = value;
+  }
+
+  public String getKey () {
+
+    return key;
+  }
+
+  public String getValue () {
+
+    return value;
+  }
+
+  @Override
+  public int hashCode () {
+
+    return key.hashCode() ^ value.hashCode();
+  }
+
+  @Override
+  public boolean equals (Object obj) {
+
+    return (obj instanceof MetricProperty) && ((MetricProperty)obj).getKey().equals(key) && ((MetricProperty)obj).getValue().equals(value);
+  }
 }

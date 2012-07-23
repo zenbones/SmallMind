@@ -63,11 +63,11 @@ public class MetricRegistry {
     MetricRegistryFactory.register(this);
   }
 
-  public <M extends Metric> M ensure (String domain, String name, String event, Metrics.MetricBuilder<M> metricBuilder)
+  public <M extends Metric> M ensure (Metrics.MetricBuilder<M> metricBuilder, String domain, MetricProperty... properties)
     throws MalformedObjectNameException, InstanceAlreadyExistsException, MBeanRegistrationException, NotCompliantMBeanException {
 
     M metric;
-    MetricKey metricKey = new MetricKey(domain, name, event, metricBuilder.getType());
+    MetricKey metricKey = new MetricKey(metricBuilder.getType(), domain, properties);
 
     if ((metric = metricBuilder.getMetricClass().cast(metricMap.get(metricKey))) == null) {
       synchronized (metricMap) {
@@ -95,7 +95,7 @@ public class MetricRegistry {
                 throw new UnknownSwitchCaseException(metricBuilder.getType().name());
             }
 
-            server.registerMBean(mBean, jmxNamingPolicy.createObjectName(domain, name, event, metricBuilder.getType()));
+            server.registerMBean(mBean, jmxNamingPolicy.createObjectName(metricBuilder.getType(), domain, properties));
           }
         }
       }

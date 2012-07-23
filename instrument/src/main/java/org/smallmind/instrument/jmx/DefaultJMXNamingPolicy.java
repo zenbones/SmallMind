@@ -28,14 +28,27 @@ package org.smallmind.instrument.jmx;
 
 import javax.management.MalformedObjectNameException;
 import javax.management.ObjectName;
+import org.smallmind.instrument.MetricProperty;
 import org.smallmind.instrument.MetricType;
 
 public class DefaultJMXNamingPolicy implements JMXNamingPolicy {
 
   @Override
-  public ObjectName createObjectName (String domain, String name, String event, MetricType type)
+  public ObjectName createObjectName (MetricType type, String domain, MetricProperty... properties)
     throws MalformedObjectNameException {
 
-    return new ObjectName(new StringBuilder(domain).append(":name=").append(name).append(",event=").append(event).append(",type=").append(type.name()).toString());
+    StringBuilder nameBuilder = new StringBuilder(domain).append(':');
+    boolean first = true;
+
+    for (MetricProperty property : properties) {
+      if (!first) {
+        nameBuilder.append(',');
+      }
+
+      nameBuilder.append(property.getKey()).append('=').append(property.getValue());
+      first = false;
+    }
+
+    return new ObjectName(nameBuilder.append(type.name()).toString());
   }
 }

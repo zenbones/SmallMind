@@ -28,6 +28,7 @@ package org.smallmind.instrument.aop;
 
 import org.aspectj.lang.ProceedingJoinPoint;
 import org.smallmind.instrument.Metric;
+import org.smallmind.instrument.MetricProperty;
 import org.smallmind.instrument.MetricRegistry;
 import org.smallmind.instrument.MetricRegistryFactory;
 import org.smallmind.instrument.Metrics;
@@ -47,9 +48,15 @@ public abstract class MetricAspect {
     throws Throwable {
 
     Metric metric;
+    MetricProperty[] properties;
     String supplierKey;
 
-    metric = METRIC_REGISTRY.ensure(jmx.domain(), jmx.name(), jmx.event(), metricBuilder);
+    properties = new MetricProperty[jmx.properties().length];
+    for (int index = 0; index < properties.length; index++) {
+      properties[index] = new MetricProperty(jmx.properties()[index].key(), jmx.properties()[index].value());
+    }
+
+    metric = METRIC_REGISTRY.ensure(metricBuilder, jmx.domain(), properties);
     MetricSupplier.put(supplierKey = (alias.length() == 0) ? null : alias, metric);
 
     try {

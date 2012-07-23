@@ -28,10 +28,11 @@ package org.smallmind.instrument.jmx;
 
 import javax.management.MalformedObjectNameException;
 import javax.management.ObjectName;
+import org.smallmind.instrument.MetricProperty;
 import org.smallmind.instrument.MetricType;
 
 public interface JMXNamingPolicy {
 
-  public ObjectName createObjectName (String domain, String name, String event, MetricType type)
+  public ObjectName createObjectName (MetricType type, String domain, MetricProperty... properties)
     throws MalformedObjectNameException;
 }

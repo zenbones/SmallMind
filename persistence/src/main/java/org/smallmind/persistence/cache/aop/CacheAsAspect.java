@@ -39,6 +39,7 @@ import org.aspectj.lang.annotation.Around;
 import org.aspectj.lang.annotation.Aspect;
 import org.aspectj.lang.reflect.MethodSignature;
 import org.smallmind.instrument.Clocks;
+import org.smallmind.instrument.MetricProperty;
 import org.smallmind.instrument.MetricRegistry;
 import org.smallmind.instrument.MetricRegistryFactory;
 import org.smallmind.instrument.Metrics;
@@ -213,7 +214,7 @@ public class CacheAsAspect {
           executedMethod = methodSignature.getMethod();
         }
 
-        METRIC_REGISTRY.ensure("org.smallmind.persistence." + statisticsSource, ormDao.getManagedClass().getSimpleName(), executedMethod.getName(), Metrics.buildChronometer(TimeUnit.MILLISECONDS, 1, TimeUnit.MINUTES, Clocks.NANO)).update(stop - start, TimeUnit.MILLISECONDS);
+        METRIC_REGISTRY.ensure(Metrics.buildChronometer(TimeUnit.MILLISECONDS, 1, TimeUnit.MINUTES, Clocks.NANO), "org.smallmind.persistence", new MetricProperty("durable", ormDao.getManagedClass().getSimpleName()), new MetricProperty("method", executedMethod.getName()), new MetricProperty("source", statisticsSource)).update(stop - start, TimeUnit.MILLISECONDS);
       }
     }
   }
