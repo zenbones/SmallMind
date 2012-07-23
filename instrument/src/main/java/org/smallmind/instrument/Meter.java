@@ -134,7 +134,7 @@ public class Meter implements Metric, Metered, Stoppable {
   }
 
   @Override
-  public double getMeanRate () {
+  public double getAverageRate () {
 
     long currentCount = count.get();
 
