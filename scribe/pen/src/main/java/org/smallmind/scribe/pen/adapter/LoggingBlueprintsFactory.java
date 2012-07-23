@@ -26,7 +26,9 @@
  */
 package org.smallmind.scribe.pen.adapter;
 
+import java.util.Arrays;
 import java.util.Iterator;
+import java.util.LinkedList;
 import java.util.ServiceLoader;
 import org.smallmind.nutsnbolts.lang.StaticInitializationError;
 
@@ -43,7 +45,21 @@ public class LoggingBlueprintsFactory {
       throw new StaticInitializationError("No provider found for LoggingBlueprints");
     }
 
-    LOGGING_BLUEPRINTS = (LoggingBlueprints)blueprintsIter.next();
+    LOGGING_BLUEPRINTS = blueprintsIter.next();
+
+    if (blueprintsIter.hasNext()) {
+
+      LinkedList<String> implementationList = new LinkedList<String>();
+
+      while (blueprintsIter.hasNext()) {
+        implementationList.add(blueprintsIter.next().getClass().getName());
+      }
+
+      String[] implementations = new String[implementationList.size()];
+      implementationList.toArray(implementations);
+
+      throw new StaticInitializationError("Found conflicting service implementations(%s) %s", LoggingBlueprints.class.getSimpleName(), Arrays.toString(implementations));
+    }
   }
 
   public static LoggingBlueprints getLoggingBlueprints () {

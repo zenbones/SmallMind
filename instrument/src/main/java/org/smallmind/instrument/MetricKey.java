@@ -26,24 +26,34 @@
  */
 package org.smallmind.instrument;
 
+import org.smallmind.nutsnbolts.util.AlphaNumericComparator;
 import org.smallmind.nutsnbolts.util.DotNotationComparator;
 
 public class MetricKey implements Comparable<MetricKey> {
 
   private static final DotNotationComparator DOT_NOTATION_COMPARATOR = new DotNotationComparator();
+  private static final AlphaNumericComparator<String> ALPHA_NUMERIC_COMPARATOR = new AlphaNumericComparator<String>();
 
-  private String group;
+  private MetricType type;
+  private String domain;
   private String name;
+  private String event;
 
-  public MetricKey (String group, String name) {
+  public MetricKey (String domain, String name, String event, MetricType type) {
 
-    this.group = group;
+    if ((domain == null) || (name == null) || (event == null) || (type == null)) {
+      throw new NullPointerException("No part of a metric key may be 'null'");
+    }
+
+    this.domain = domain;
     this.name = name;
+    this.event = event;
+    this.type = type;
   }
 
-  public String getGroup () {
+  public String getDomain () {
 
-    return group;
+    return domain;
   }
 
   public String getName () {
@@ -51,13 +61,27 @@ public class MetricKey implements Comparable<MetricKey> {
     return name;
   }
 
+  public String getEvent () {
+
+    return event;
+  }
+
+  public MetricType getType () {
+
+    return type;
+  }
+
   @Override
   public int compareTo (MetricKey metricKey) {
 
     int comparison;
 
-    if ((comparison = DOT_NOTATION_COMPARATOR.compare(group, metricKey.getGroup())) == 0) {
-      comparison = name.compareTo(metricKey.getName());
+    if ((comparison = DOT_NOTATION_COMPARATOR.compare(domain, metricKey.getDomain())) == 0) {
+      if ((comparison = ALPHA_NUMERIC_COMPARATOR.compare(name, metricKey.getName())) == 0) {
+        if ((comparison = ALPHA_NUMERIC_COMPARATOR.compare(event, metricKey.getEvent())) == 0) {
+          comparison = ALPHA_NUMERIC_COMPARATOR.compare(type.name(), metricKey.getType().name());
+        }
+      }
     }
 
     return comparison;
@@ -66,12 +90,12 @@ public class MetricKey implements Comparable<MetricKey> {
   @Override
   public int hashCode () {
 
-    return group.hashCode() ^ name.hashCode();
+    return domain.hashCode() ^ name.hashCode() ^ event.hashCode() ^ type.hashCode();
   }
 
   @Override
   public boolean equals (Object obj) {
 
-    return (obj instanceof MetricKey) && ((MetricKey)obj).getGroup().equals(group) && ((MetricKey)obj).getName().equals(name);
+    return (obj instanceof MetricKey) && ((MetricKey)obj).getDomain().equals(domain) && ((MetricKey)obj).getName().equals(name) && ((MetricKey)obj).getEvent().equals(event) && ((MetricKey)obj).getType().equals(type);
   }
 }

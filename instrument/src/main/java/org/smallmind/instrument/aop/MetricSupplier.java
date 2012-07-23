@@ -24,21 +24,34 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.instrument;
+package org.smallmind.instrument.aop;
 
-public interface Ranking {
+import java.util.HashMap;
+import org.smallmind.instrument.Metric;
 
-  public abstract double getMedian ();
+public class MetricSupplier {
 
-  public abstract double get75thPercentile ();
+  private static final ThreadLocal<HashMap<String, Metric>> METRIC_MAP_LOCAL = new ThreadLocal<HashMap<String, Metric>>() {
 
-  public abstract double get95thPercentile ();
+    @Override
+    protected HashMap<String, Metric> initialValue () {
 
-  public abstract double get98thPercentile ();
+      return new HashMap<String, Metric>();
+    }
+  };
 
-  public abstract double get99thPercentile ();
+  public static void put (String key, Metric metric) {
 
-  public abstract double get999thPercentile ();
+    METRIC_MAP_LOCAL.get().put(key, metric);
+  }
 
-  public abstract double[] getValues ();
+  public static void remove (String key) {
+
+    METRIC_MAP_LOCAL.get().remove(key);
+  }
+
+  public static <M extends Metric> M get (String key, Class<M> metricClass) {
+
+    return metricClass.cast(METRIC_MAP_LOCAL.get().get(key));
+  }
 }

@@ -26,19 +26,17 @@
  */
 package org.smallmind.instrument;
 
-public interface Ranking {
+public class MetricRegistryFactory {
 
-  public abstract double getMedian ();
+  private static InheritableThreadLocal<MetricRegistry> METRIC_REGISTRY_LOCAL = new InheritableThreadLocal<MetricRegistry>();
 
-  public abstract double get75thPercentile ();
+  public static void register (MetricRegistry metricRegistry) {
 
-  public abstract double get95thPercentile ();
+    METRIC_REGISTRY_LOCAL.set(metricRegistry);
+  }
 
-  public abstract double get98thPercentile ();
+  public static MetricRegistry getMetricRegistry () {
 
-  public abstract double get99thPercentile ();
-
-  public abstract double get999thPercentile ();
-
-  public abstract double[] getValues ();
+    return METRIC_REGISTRY_LOCAL.get();
+  }
 }

@@ -26,20 +26,77 @@
  */
 package org.smallmind.instrument;
 
-import java.util.HashMap;
+import java.util.concurrent.ConcurrentHashMap;
+import javax.management.DynamicMBean;
+import javax.management.InstanceAlreadyExistsException;
+import javax.management.MBeanRegistrationException;
+import javax.management.MBeanServer;
+import javax.management.MalformedObjectNameException;
+import javax.management.NotCompliantMBeanException;
+import org.smallmind.instrument.jmx.ChronometerMonitor;
+import org.smallmind.instrument.jmx.DefaultJMXNamingPolicy;
+import org.smallmind.instrument.jmx.HistogramMonitor;
+import org.smallmind.instrument.jmx.JMXNamingPolicy;
+import org.smallmind.instrument.jmx.MeterMonitor;
+import org.smallmind.instrument.jmx.RegisterMonitor;
+import org.smallmind.nutsnbolts.lang.UnknownSwitchCaseException;
 
 public class MetricRegistry {
 
-  private static final HashMap<MetricKey, Metric> METRIC_MAP = new HashMap<MetricKey, Metric>();
+  private final ConcurrentHashMap<MetricKey, Metric> metricMap = new ConcurrentHashMap<MetricKey, Metric>();
 
-  public static <M extends Metric> M register (MetricKey metricKey, Metrics.MetricBuilder<M> metricBuilder) {
+  private MBeanServer mBeanServer;
+  private JMXNamingPolicy jmxNamingPolicy = new DefaultJMXNamingPolicy();
+
+  public void setMBeanServer (MBeanServer mBeanServer) {
+
+    this.mBeanServer = mBeanServer;
+  }
+
+  public void setJmxNamingPolicy (JMXNamingPolicy jmxNamingPolicy) {
+
+    this.jmxNamingPolicy = jmxNamingPolicy;
+  }
+
+  public void register () {
+
+    MetricRegistryFactory.register(this);
+  }
+
+  public <M extends Metric> M ensure (String domain, String name, String event, Metrics.MetricBuilder<M> metricBuilder)
+    throws MalformedObjectNameException, InstanceAlreadyExistsException, MBeanRegistrationException, NotCompliantMBeanException {
 
     M metric;
+    MetricKey metricKey = new MetricKey(domain, name, event, metricBuilder.getType());
 
-    if ((metric = metricBuilder.getMetricClass().cast(METRIC_MAP.get(metricKey))) == null) {
-      synchronized (METRIC_MAP) {
-        if ((metric = metricBuilder.getMetricClass().cast(METRIC_MAP.get(metricKey))) == null) {
-          METRIC_MAP.put(metricKey, metric = metricBuilder.construct());
+    if ((metric = metricBuilder.getMetricClass().cast(metricMap.get(metricKey))) == null) {
+      synchronized (metricMap) {
+        if ((metric = metricBuilder.getMetricClass().cast(metricMap.get(metricKey))) == null) {
+          metricMap.put(metricKey, metric = metricBuilder.construct());
+
+          if (mBeanServer != null) {
+
+            DynamicMBean mBean = null;
+
+            switch (metricBuilder.getType()) {
+              case REGISTER:
+                mBean = new RegisterMonitor((Register)metric);
+                break;
+              case METER:
+                mBean = new MeterMonitor((Meter)metric);
+                break;
+              case HISTOGRAM:
+                new HistogramMonitor((Histogram)metric);
+                break;
+              case CHRONOMETER:
+                new ChronometerMonitor((Chronometer)metric);
+                break;
+              default:
+                throw new UnknownSwitchCaseException(metricBuilder.getType().name());
+            }
+
+            mBeanServer.registerMBean(mBean, jmxNamingPolicy.createObjectName(domain, name, event, metricBuilder.getType()));
+          }
         }
       }
     }

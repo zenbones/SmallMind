@@ -24,21 +24,14 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.instrument;
+package org.smallmind.instrument.jmx;
 
-public interface Ranking {
+import javax.management.MalformedObjectNameException;
+import javax.management.ObjectName;
+import org.smallmind.instrument.MetricType;
 
-  public abstract double getMedian ();
+public interface JMXNamingPolicy {
 
-  public abstract double get75thPercentile ();
-
-  public abstract double get95thPercentile ();
-
-  public abstract double get98thPercentile ();
-
-  public abstract double get99thPercentile ();
-
-  public abstract double get999thPercentile ();
-
-  public abstract double[] getValues ();
+  public ObjectName createObjectName (String domain, String name, String event, MetricType type)
+    throws MalformedObjectNameException;
 }

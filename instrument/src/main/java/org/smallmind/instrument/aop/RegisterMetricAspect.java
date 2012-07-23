@@ -24,21 +24,27 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.instrument;
+package org.smallmind.instrument.aop;
 
-public interface Ranking {
+import org.aspectj.lang.ProceedingJoinPoint;
+import org.aspectj.lang.annotation.Around;
+import org.aspectj.lang.annotation.Aspect;
+import org.smallmind.instrument.Metrics;
 
-  public abstract double getMedian ();
+@Aspect
+public class RegisterMetricAspect extends MetricAspect {
 
-  public abstract double get75thPercentile ();
+  @Around(value = "@within(registerMetric) && (execution(* * (..)) || initialization(new(..))) && !@annotation(RegisterMetric)", argNames = "thisJoinPoint, registerMetric")
+  public Object aroundRegisterMetricClass (ProceedingJoinPoint thisJoinPoint, RegisterMetric registerMetric)
+    throws Throwable {
 
-  public abstract double get95thPercentile ();
+    return engage(thisJoinPoint, registerMetric.value(), registerMetric.alias(), Metrics.buildRegister(registerMetric.initialCount()));
+  }
 
-  public abstract double get98thPercentile ();
+  @Around(value = "(execution(@RegisterMetric * * (..)) || initialization(@RegisterMetric new(..))) && @annotation(registerMetric)", argNames = "thisJoinPoint, registerMetric")
+  public Object aroundRegisterMetricMethod (ProceedingJoinPoint thisJoinPoint, RegisterMetric registerMetric)
+    throws Throwable {
 
-  public abstract double get99thPercentile ();
-
-  public abstract double get999thPercentile ();
-
-  public abstract double[] getValues ();
+    return engage(thisJoinPoint, registerMetric.value(), registerMetric.alias(), Metrics.buildRegister(registerMetric.initialCount()));
+  }
 }

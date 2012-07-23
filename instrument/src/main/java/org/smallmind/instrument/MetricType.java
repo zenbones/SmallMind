@@ -26,19 +26,7 @@
  */
 package org.smallmind.instrument;
 
-public interface Ranking {
+public enum MetricType {
 
-  public abstract double getMedian ();
-
-  public abstract double get75thPercentile ();
-
-  public abstract double get95thPercentile ();
-
-  public abstract double get98thPercentile ();
-
-  public abstract double get99thPercentile ();
-
-  public abstract double get999thPercentile ();
-
-  public abstract double[] getValues ();
+  REGISTER, METER, HISTOGRAM, CHRONOMETER
 }

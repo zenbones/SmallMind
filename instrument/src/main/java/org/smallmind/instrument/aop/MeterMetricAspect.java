@@ -24,21 +24,27 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.instrument;
+package org.smallmind.instrument.aop;
 
-public interface Ranking {
+import org.aspectj.lang.ProceedingJoinPoint;
+import org.aspectj.lang.annotation.Around;
+import org.aspectj.lang.annotation.Aspect;
+import org.smallmind.instrument.Metrics;
 
-  public abstract double getMedian ();
+@Aspect
+public class MeterMetricAspect extends MetricAspect {
 
-  public abstract double get75thPercentile ();
+  @Around(value = "@within(meterMetric) && (execution(* * (..)) || initialization(new(..))) && !@annotation(MeterMetric)", argNames = "thisJoinPoint, meterMetric")
+  public Object aroundMeterMetricClass (ProceedingJoinPoint thisJoinPoint, MeterMetric meterMetric)
+    throws Throwable {
 
-  public abstract double get95thPercentile ();
+    return engage(thisJoinPoint, meterMetric.value(), meterMetric.alias(), Metrics.buildMeter(meterMetric.tickInterval(), meterMetric.tickTimeUnit(), meterMetric.clocks()));
+  }
 
-  public abstract double get98thPercentile ();
+  @Around(value = "(execution(@MeterMetric * * (..)) || initialization(@MeterMetric new(..))) && @annotation(meterMetric)", argNames = "thisJoinPoint, meterMetric")
+  public Object aroundMeterMetricMethod (ProceedingJoinPoint thisJoinPoint, MeterMetric meterMetric)
+    throws Throwable {
 
-  public abstract double get99thPercentile ();
-
-  public abstract double get999thPercentile ();
-
-  public abstract double[] getValues ();
+    return engage(thisJoinPoint, meterMetric.value(), meterMetric.alias(), Metrics.buildMeter(meterMetric.tickInterval(), meterMetric.tickTimeUnit(), meterMetric.clocks()));
+  }
 }

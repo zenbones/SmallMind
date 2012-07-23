@@ -24,21 +24,27 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.instrument;
+package org.smallmind.instrument.aop;
 
-public interface Ranking {
+import org.aspectj.lang.ProceedingJoinPoint;
+import org.aspectj.lang.annotation.Around;
+import org.aspectj.lang.annotation.Aspect;
+import org.smallmind.instrument.Metrics;
 
-  public abstract double getMedian ();
+@Aspect
+public class HistogramMetricAspect extends MetricAspect {
 
-  public abstract double get75thPercentile ();
+  @Around(value = "@within(histogramMetric) && (execution(* * (..)) || initialization(new(..))) && !@annotation(HistogramMetric)", argNames = "thisJoinPoint, histogramMetric")
+  public Object aroundHistogramMetricClass (ProceedingJoinPoint thisJoinPoint, HistogramMetric histogramMetric)
+    throws Throwable {
 
-  public abstract double get95thPercentile ();
+    return engage(thisJoinPoint, histogramMetric.value(), histogramMetric.alias(), Metrics.buildHistogram(histogramMetric.samples()));
+  }
 
-  public abstract double get98thPercentile ();
+  @Around(value = "(execution(@HistogramMetric * * (..)) || initialization(@HistogramMetric new(..))) && @annotation(histogramMetric)", argNames = "thisJoinPoint, histogramMetric")
+  public Object aroundHistogramMetricMethod (ProceedingJoinPoint thisJoinPoint, HistogramMetric histogramMetric)
+    throws Throwable {
 
-  public abstract double get99thPercentile ();
-
-  public abstract double get999thPercentile ();
-
-  public abstract double[] getValues ();
+    return engage(thisJoinPoint, histogramMetric.value(), histogramMetric.alias(), Metrics.buildHistogram(histogramMetric.samples()));
+  }
 }

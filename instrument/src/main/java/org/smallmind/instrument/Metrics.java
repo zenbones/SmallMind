@@ -64,6 +64,8 @@ public class Metrics {
 
     public abstract Class<M> getMetricClass ();
 
+    public abstract MetricType getType ();
+
     public abstract M construct ();
   }
 
@@ -80,6 +82,12 @@ public class Metrics {
     public Class<Register> getMetricClass () {
 
       return Register.class;
+    }
+
+    @Override
+    public MetricType getType () {
+
+      return MetricType.REGISTER;
     }
 
     @Override
@@ -109,6 +117,12 @@ public class Metrics {
     }
 
     @Override
+    public MetricType getType () {
+
+      return MetricType.METER;
+    }
+
+    @Override
     public Meter construct () {
 
       return new Meter(tickInterval, tickTimeUnit, clocks.getClock());
@@ -128,6 +142,12 @@ public class Metrics {
     public Class<Histogram> getMetricClass () {
 
       return Histogram.class;
+    }
+
+    @Override
+    public MetricType getType () {
+
+      return MetricType.HISTOGRAM;
     }
 
     @Override
@@ -156,6 +176,12 @@ public class Metrics {
     public Class<Chronometer> getMetricClass () {
 
       return Chronometer.class;
+    }
+
+    @Override
+    public MetricType getType () {
+
+      return MetricType.CHRONOMETER;
     }
 
     @Override

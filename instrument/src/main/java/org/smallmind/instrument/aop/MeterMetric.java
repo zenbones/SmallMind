@@ -24,21 +24,26 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.instrument;
+package org.smallmind.instrument.aop;
 
-public interface Ranking {
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
+import java.util.concurrent.TimeUnit;
+import org.smallmind.instrument.Clocks;
 
-  public abstract double getMedian ();
+@Target({ElementType.TYPE, ElementType.CONSTRUCTOR, ElementType.METHOD})
+@Retention(RetentionPolicy.RUNTIME)
+public @interface MeterMetric {
 
-  public abstract double get75thPercentile ();
+  public abstract JMX value ();
 
-  public abstract double get95thPercentile ();
+  public abstract String alias () default "";
 
-  public abstract double get98thPercentile ();
+  public abstract long tickInterval () default 1;
 
-  public abstract double get99thPercentile ();
+  public abstract TimeUnit tickTimeUnit () default TimeUnit.SECONDS;
 
-  public abstract double get999thPercentile ();
-
-  public abstract double[] getValues ();
+  public abstract Clocks clocks () default Clocks.NANO;
 }

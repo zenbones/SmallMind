@@ -24,21 +24,39 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.instrument;
+package org.smallmind.instrument.aop;
 
-public interface Ranking {
+import org.aspectj.lang.ProceedingJoinPoint;
+import org.smallmind.instrument.Metric;
+import org.smallmind.instrument.MetricRegistry;
+import org.smallmind.instrument.MetricRegistryFactory;
+import org.smallmind.instrument.Metrics;
 
-  public abstract double getMedian ();
+public abstract class MetricAspect {
 
-  public abstract double get75thPercentile ();
+  private static final MetricRegistry METRIC_REGISTRY;
 
-  public abstract double get95thPercentile ();
+  static {
 
-  public abstract double get98thPercentile ();
+    if ((METRIC_REGISTRY = MetricRegistryFactory.getMetricRegistry()) == null) {
+      throw new ExceptionInInitializerError("No MetricRegistry instance has been registered with the MetricRegistryFactory");
+    }
+  }
 
-  public abstract double get99thPercentile ();
+  public Object engage (ProceedingJoinPoint thisJoinPoint, JMX jmx, String alias, Metrics.MetricBuilder<?> metricBuilder)
+    throws Throwable {
 
-  public abstract double get999thPercentile ();
+    Metric metric;
+    String supplierKey;
 
-  public abstract double[] getValues ();
+    metric = METRIC_REGISTRY.ensure(jmx.domain(), jmx.name(), jmx.event(), metricBuilder);
+    MetricSupplier.put(supplierKey = (alias.length() == 0) ? null : alias, metric);
+
+    try {
+      return thisJoinPoint.proceed();
+    }
+    finally {
+      MetricSupplier.remove(supplierKey);
+    }
+  }
 }

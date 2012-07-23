@@ -24,21 +24,19 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.instrument;
+package org.smallmind.instrument.aop;
 
-public interface Ranking {
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
 
-  public abstract double getMedian ();
+@Target({})
+@Retention(RetentionPolicy.RUNTIME)
+public @interface JMX {
 
-  public abstract double get75thPercentile ();
+  public abstract String domain ();
 
-  public abstract double get95thPercentile ();
+  public abstract String name ();
 
-  public abstract double get98thPercentile ();
-
-  public abstract double get99thPercentile ();
-
-  public abstract double get999thPercentile ();
-
-  public abstract double[] getValues ();
+  public abstract String event ();
 }
