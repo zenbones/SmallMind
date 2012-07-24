@@ -76,7 +76,7 @@ public class MetricRegistry {
 
           if (server != null) {
 
-            DynamicMBean mBean = null;
+            DynamicMBean mBean;
 
             switch (metricBuilder.getType()) {
               case REGISTER:
@@ -86,10 +86,10 @@ public class MetricRegistry {
                 mBean = new MeterMonitor((Meter)metric);
                 break;
               case HISTOGRAM:
-                new HistogramMonitor((Histogram)metric);
+                mBean = new HistogramMonitor((Histogram)metric);
                 break;
               case CHRONOMETER:
-                new ChronometerMonitor((Chronometer)metric);
+                mBean = new ChronometerMonitor((Chronometer)metric);
                 break;
               default:
                 throw new UnknownSwitchCaseException(metricBuilder.getType().name());
