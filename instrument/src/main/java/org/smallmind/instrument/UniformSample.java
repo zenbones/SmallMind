@@ -49,6 +49,12 @@ public class UniformSample implements Sample {
   }
 
   @Override
+  public Samples getType () {
+
+    return Samples.UNIFORM;
+  }
+
+  @Override
   public void clear () {
 
     for (int i = 0; i < values.length(); i++) {

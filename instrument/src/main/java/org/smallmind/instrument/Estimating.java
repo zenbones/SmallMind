@@ -28,6 +28,8 @@ package org.smallmind.instrument;
 
 public interface Estimating extends Countable {
 
+  public abstract String getSampleType ();
+
   public abstract double getSum ();
 
   public abstract double getMin ();

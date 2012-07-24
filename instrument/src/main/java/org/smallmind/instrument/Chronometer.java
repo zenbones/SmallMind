@@ -71,6 +71,12 @@ public class Chronometer implements Metric, Metered, Estimating, Timed, Shutterb
   }
 
   @Override
+  public String getSampleType () {
+
+    return histogram.getSampleType();
+  }
+
+  @Override
   public String getLatencyTimeUnit () {
 
     return durationTimeUnit.name();

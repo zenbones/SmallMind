@@ -80,6 +80,12 @@ public class Histogram implements Metric, Estimating, Shutterbug {
     updateVariance(value);
   }
 
+  @Override
+  public String getSampleType () {
+
+    return sample.getType().name();
+  }
+
   public long getCount () {
 
     return count.get();

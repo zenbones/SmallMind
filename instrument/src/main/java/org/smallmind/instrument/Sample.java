@@ -28,6 +28,8 @@ package org.smallmind.instrument;
 
 public interface Sample extends Shutterbug {
 
+  public abstract Samples getType ();
+
   public abstract void clear ();
 
   public abstract int size ();

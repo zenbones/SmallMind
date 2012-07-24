@@ -41,6 +41,12 @@ public class ChronometerMonitor extends StandardMBean implements ChronometerMoni
   }
 
   @Override
+  public String getSampleType () {
+
+    return chronometer.getSampleType();
+  }
+
+  @Override
   public String getLatencyTimeUnit () {
 
     return chronometer.getLatencyTimeUnit();

@@ -41,6 +41,12 @@ public class HistogramMonitor extends StandardMBean implements HistogramMonitorM
   }
 
   @Override
+  public String getSampleType () {
+
+    return histogram.getSampleType();
+  }
+
+  @Override
   public long getCount () {
 
     return histogram.getCount();

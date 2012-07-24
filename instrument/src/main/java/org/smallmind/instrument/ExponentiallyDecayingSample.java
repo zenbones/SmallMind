@@ -71,6 +71,12 @@ public class ExponentiallyDecayingSample implements Sample {
   }
 
   @Override
+  public Samples getType () {
+
+    return Samples.BIASED;
+  }
+
+  @Override
   public void clear () {
 
     lock.writeLock().lock();
