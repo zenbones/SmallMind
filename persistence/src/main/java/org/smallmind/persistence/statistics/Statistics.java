@@ -24,34 +24,54 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.persistence;
+package org.smallmind.persistence.statistics;
 
-import org.smallmind.nutsnbolts.reflection.type.converter.StringConverterFactory;
-import org.smallmind.persistence.statistics.Statistics;
+import java.util.concurrent.TimeUnit;
 
-public class Persistence {
+public class Statistics {
 
-  private Statistics statistics;
-  private StringConverterFactory stringConverterFactory;
+  private TimeUnit tickTimeUnit = TimeUnit.SECONDS;
+  private String metricDomain = Statistics.class.getPackage().getName();
+  private boolean staticsEnabled = true;
+  private long tickInterval = 10;
 
-  public Persistence (StringConverterFactory stringConverterFactory, Statistics statistics) {
+  public boolean isStaticsEnabled () {
 
-    this.stringConverterFactory = stringConverterFactory;
-    this.statistics = statistics;
+    return staticsEnabled;
   }
 
-  public void register () {
+  public void setStaticsEnabled (boolean staticsEnabled) {
 
-    PersistenceManager.register(this);
+    this.staticsEnabled = staticsEnabled;
   }
 
-  public StringConverterFactory getStringConverterFactory () {
+  public String getMetricDomain () {
 
-    return stringConverterFactory;
+    return metricDomain;
   }
 
-  public Statistics getStatistics () {
+  public void setMetricDomain (String metricDomain) {
 
-    return statistics;
+    this.metricDomain = metricDomain;
+  }
+
+  public long getTickInterval () {
+
+    return tickInterval;
+  }
+
+  public void setTickInterval (long tickInterval) {
+
+    this.tickInterval = tickInterval;
+  }
+
+  public TimeUnit getTickTimeUnit () {
+
+    return tickTimeUnit;
+  }
+
+  public void setTickTimeUnit (TimeUnit tickTimeUnit) {
+
+    this.tickTimeUnit = tickTimeUnit;
   }
 }

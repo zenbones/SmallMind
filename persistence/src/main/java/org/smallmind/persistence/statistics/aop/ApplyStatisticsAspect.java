@@ -44,13 +44,12 @@ import org.smallmind.persistence.orm.VectorAwareORMDao;
 @Aspect
 public class ApplyStatisticsAspect {
 
+  private static final Persistence PERSISTENCE;
   private static final MetricRegistry METRIC_REGISTRY;
 
   static {
 
-    Persistence persistence;
-
-    if (((persistence = PersistenceManager.getPersistence()) == null) || (!persistence.isStaticsEnabled())) {
+    if (((PERSISTENCE = PersistenceManager.getPersistence()) == null) || (!PERSISTENCE.getStatistics().isStaticsEnabled())) {
       METRIC_REGISTRY = null;
     }
     else {
@@ -82,7 +81,7 @@ public class ApplyStatisticsAspect {
         stop = System.currentTimeMillis();
         executedMethod = ((MethodSignature)thisJoinPoint.getSignature()).getMethod();
 
-        METRIC_REGISTRY.ensure(Metrics.buildChronometer(TimeUnit.MILLISECONDS, 1, TimeUnit.MINUTES, Clocks.NANO), "org.smallmind.persistence", new MetricProperty("durable", ormDao.getManagedClass().getSimpleName()), new MetricProperty("method", executedMethod.getName()), new MetricProperty("source", ormDao.getStatisticsSource())).update(stop - start, TimeUnit.MILLISECONDS);
+        METRIC_REGISTRY.ensure(Metrics.buildChronometer(TimeUnit.MILLISECONDS, PERSISTENCE.getStatistics().getTickInterval(), PERSISTENCE.getStatistics().getTickTimeUnit(), Clocks.NANO), PERSISTENCE.getStatistics().getMetricDomain(), new MetricProperty("durable", ormDao.getManagedClass().getSimpleName()), new MetricProperty("method", executedMethod.getName()), new MetricProperty("source", ormDao.getStatisticsSource())).update(stop - start, TimeUnit.MILLISECONDS);
       }
     }
   }

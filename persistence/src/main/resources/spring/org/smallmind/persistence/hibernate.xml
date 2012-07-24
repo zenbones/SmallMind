@@ -15,11 +15,15 @@
 
   <bean class="org.smallmind.persistence.orm.spring.hibernate.HibernateFileSeekingBeanFactoryPostProcessor"/>
 
-  <bean id="stringConverterFactory" class="org.smallmind.nutsnbolts.reflection.type.converter.DefaultStringConverterFactory"/>
-
   <bean id="persistence" class="org.smallmind.persistence.Persistence" init-method="register">
-    <constructor-arg index="0" ref="stringConverterFactory"/>
-    <constructor-arg index="1" value="${orm.statistics}"/>
+    <constructor-arg index="0">
+      <bean class="org.smallmind.nutsnbolts.reflection.type.converter.DefaultStringConverterFactory"/>
+    </constructor-arg>
+    <constructor-arg index="1">
+      <bean class="org.smallmind.persistence.statistics.Statistics">
+        <property name="staticsEnabled" value="${orm.statistics}"/>
+      </bean>
+    </constructor-arg>
   </bean>
 
   <!-- AspectJ Transaction Management -->
