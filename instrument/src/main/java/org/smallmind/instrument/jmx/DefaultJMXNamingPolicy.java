@@ -38,17 +38,11 @@ public class DefaultJMXNamingPolicy implements JMXNamingPolicy {
     throws MalformedObjectNameException {
 
     StringBuilder nameBuilder = new StringBuilder(domain).append(':');
-    boolean first = true;
 
     for (MetricProperty property : properties) {
-      if (!first) {
-        nameBuilder.append(',');
-      }
-
-      nameBuilder.append(property.getKey()).append('=').append(property.getValue());
-      first = false;
+      nameBuilder.append(property.getKey()).append('=').append(property.getValue()).append(',');
     }
 
-    return new ObjectName(nameBuilder.append(type.name()).toString());
+    return new ObjectName(nameBuilder.append(JMXNamingPolicy.class.getPackage().getName()).append(".type=").append(type.name()).toString());
   }
 }
