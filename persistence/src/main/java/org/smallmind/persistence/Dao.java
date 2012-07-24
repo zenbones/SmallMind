@@ -28,7 +28,7 @@ package org.smallmind.persistence;
 
 public interface Dao<I, P> {
 
-  public abstract String getStatisticsSource ();
+  public abstract String getMetricSource ();
 
   public abstract P get (Class<P> persistentClass, I id);
 

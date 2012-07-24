@@ -33,7 +33,7 @@ import org.smallmind.persistence.Durable;
 import org.smallmind.persistence.cache.CacheDomain;
 import org.smallmind.persistence.cache.DurableVector;
 import org.smallmind.persistence.cache.PersistenceCache;
-import org.smallmind.persistence.statistics.StatisticsSource;
+import org.smallmind.persistence.instrument.MetricSource;
 
 public class MemcachedCacheDomain<I extends Comparable<I>, D extends Durable<I>> implements CacheDomain<I, D> {
 
@@ -58,9 +58,9 @@ public class MemcachedCacheDomain<I extends Comparable<I>, D extends Durable<I>>
   }
 
   @Override
-  public String getStatisticsSource () {
+  public String getMetricSource () {
 
-    return StatisticsSource.MEMCACHED.getDisplay();
+    return MetricSource.MEMCACHED.getDisplay();
   }
 
   @Override

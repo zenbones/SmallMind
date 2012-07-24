@@ -26,18 +26,18 @@
  */
 package org.smallmind.persistence;
 
+import org.smallmind.instrument.config.MetricConfiguration;
 import org.smallmind.nutsnbolts.reflection.type.converter.StringConverterFactory;
-import org.smallmind.persistence.statistics.Statistics;
 
 public class Persistence {
 
-  private Statistics statistics;
+  private MetricConfiguration metricConfiguration;
   private StringConverterFactory stringConverterFactory;
 
-  public Persistence (StringConverterFactory stringConverterFactory, Statistics statistics) {
+  public Persistence (StringConverterFactory stringConverterFactory, MetricConfiguration metricConfiguration) {
 
     this.stringConverterFactory = stringConverterFactory;
-    this.statistics = statistics;
+    this.metricConfiguration = metricConfiguration;
   }
 
   public void register () {
@@ -50,8 +50,8 @@ public class Persistence {
     return stringConverterFactory;
   }
 
-  public Statistics getStatistics () {
+  public MetricConfiguration getMetricConfiguration () {
 
-    return statistics;
+    return metricConfiguration;
   }
 }

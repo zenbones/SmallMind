@@ -24,21 +24,15 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.persistence.statistics;
+package org.smallmind.persistence.instrument.aop;
 
-public enum StatisticsSource {
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
 
-  ORM("Orm"), TERRACOTTA("Terracotta"), MEMCACHED("Memcached"), EHCACHE("Ehcache");
+@Target(ElementType.METHOD)
+@Retention(RetentionPolicy.RUNTIME)
+public @interface ApplyInstrumentation {
 
-  private String display;
-
-  private StatisticsSource (String display) {
-
-    this.display = display;
-  }
-
-  public String getDisplay () {
-
-    return display;
-  }
 }

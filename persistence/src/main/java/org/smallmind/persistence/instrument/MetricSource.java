@@ -24,16 +24,21 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.persistence.statistics.aop;
+package org.smallmind.persistence.instrument;
 
-import java.lang.annotation.ElementType;
-import java.lang.annotation.Retention;
-import java.lang.annotation.RetentionPolicy;
-import java.lang.annotation.Target;
+public enum MetricSource {
 
-@Target({ElementType.TYPE})
-@Retention(RetentionPolicy.RUNTIME)
-public @interface StatisticsStopwatch {
+  ORM("Orm"), TERRACOTTA("Terracotta"), MEMCACHED("Memcached"), EHCACHE("Ehcache");
 
-  public abstract boolean value () default true;
+  private String display;
+
+  private MetricSource (String display) {
+
+    this.display = display;
+  }
+
+  public String getDisplay () {
+
+    return display;
+  }
 }

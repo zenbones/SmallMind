@@ -20,8 +20,8 @@
       <bean class="org.smallmind.nutsnbolts.reflection.type.converter.DefaultStringConverterFactory"/>
     </constructor-arg>
     <constructor-arg index="1">
-      <bean class="org.smallmind.persistence.statistics.Statistics">
-        <property name="staticsEnabled" value="${orm.statistics}"/>
+      <bean class="org.smallmind.instrument.config.MetricConfiguration">
+        <property name="instrumented" value="${orm.statistics}"/>
       </bean>
     </constructor-arg>
   </bean>

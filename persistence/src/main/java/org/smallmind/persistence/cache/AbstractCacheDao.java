@@ -39,9 +39,9 @@ public abstract class AbstractCacheDao<I extends Comparable<I>, D extends Durabl
 
   public abstract D acquire (Class<D> durableClass, I ids);
 
-  public String getStatisticsSource () {
+  public String getMetricSource () {
 
-    return cacheDomain.getStatisticsSource();
+    return cacheDomain.getMetricSource();
   }
 
   public PersistenceCache<String, D> getInstanceCache (Class<D> durableClass) {

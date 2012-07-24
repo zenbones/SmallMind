@@ -49,8 +49,8 @@ import org.smallmind.persistence.PersistenceManager;
 import org.smallmind.persistence.cache.DurableVector;
 import org.smallmind.persistence.cache.VectorKey;
 import org.smallmind.persistence.cache.VectoredDao;
+import org.smallmind.persistence.instrument.aop.Instrumented;
 import org.smallmind.persistence.orm.VectorAwareORMDao;
-import org.smallmind.persistence.statistics.aop.StatisticsStopwatch;
 
 @Aspect
 public class CacheAsAspect {
@@ -61,7 +61,7 @@ public class CacheAsAspect {
 
   static {
 
-    if (((PERSISTENCE = PersistenceManager.getPersistence()) == null) || (!PERSISTENCE.getStatistics().isStaticsEnabled())) {
+    if (((PERSISTENCE = PersistenceManager.getPersistence()) == null) || (!PERSISTENCE.getMetricConfiguration().isInstrumented())) {
       METRIC_REGISTRY = null;
     }
     else {
@@ -75,16 +75,16 @@ public class CacheAsAspect {
   public Object aroundCacheAsMethod (ProceedingJoinPoint thisJoinPoint, CacheAs cacheAs, VectorAwareORMDao ormDao)
     throws Throwable {
 
-    Annotation statisticsStopwatchAnnotation;
+    Annotation instrumentedAnnotation;
     MethodSignature methodSignature;
     Method executedMethod = null;
-    String statisticsSource = null;
+    String metricSource = null;
     boolean timingEnabled;
     long start = 0;
     long stop;
 
-    statisticsStopwatchAnnotation = ormDao.getClass().getAnnotation(StatisticsStopwatch.class);
-    if (timingEnabled = (METRIC_REGISTRY != null) && (statisticsStopwatchAnnotation != null) && ((StatisticsStopwatch)statisticsStopwatchAnnotation).value()) {
+    instrumentedAnnotation = ormDao.getClass().getAnnotation(Instrumented.class);
+    if (timingEnabled = (METRIC_REGISTRY != null) && (instrumentedAnnotation != null) && ((Instrumented)instrumentedAnnotation).value()) {
       start = System.currentTimeMillis();
     }
 
@@ -116,7 +116,7 @@ public class CacheAsAspect {
         VectoredDao vectoredDao;
 
         if ((vectoredDao = ormDao.getVectoredDao()) == null) {
-          statisticsSource = ormDao.getStatisticsSource();
+          metricSource = ormDao.getMetricSource();
 
           return thisJoinPoint.proceed();
         }
@@ -132,7 +132,7 @@ public class CacheAsAspect {
               vectoredDao.deleteVector(vectorKey);
             }
             else {
-              statisticsSource = vectoredDao.getStatisticsSource();
+              metricSource = vectoredDao.getMetricSource();
 
               return vector.head();
             }
@@ -140,7 +140,7 @@ public class CacheAsAspect {
 
           Durable durable;
 
-          statisticsSource = ormDao.getStatisticsSource();
+          metricSource = ormDao.getMetricSource();
 
           if ((durable = (Durable)thisJoinPoint.proceed()) != null) {
 
@@ -162,7 +162,7 @@ public class CacheAsAspect {
         VectoredDao vectoredDao;
 
         if ((vectoredDao = ormDao.getVectoredDao()) == null) {
-          statisticsSource = ormDao.getStatisticsSource();
+          metricSource = ormDao.getMetricSource();
 
           return thisJoinPoint.proceed();
         }
@@ -178,7 +178,7 @@ public class CacheAsAspect {
               vectoredDao.deleteVector(vectorKey);
             }
             else {
-              statisticsSource = vectoredDao.getStatisticsSource();
+              metricSource = vectoredDao.getMetricSource();
 
               return vector.asList();
             }
@@ -186,7 +186,7 @@ public class CacheAsAspect {
 
           Iterable iterable;
 
-          statisticsSource = ormDao.getStatisticsSource();
+          metricSource = ormDao.getMetricSource();
 
           if ((iterable = (Iterable)thisJoinPoint.proceed()) != null) {
 
@@ -213,7 +213,7 @@ public class CacheAsAspect {
           executedMethod = methodSignature.getMethod();
         }
 
-        METRIC_REGISTRY.ensure(Metrics.buildChronometer(PERSISTENCE.getStatistics().getChronometerSamples(), TimeUnit.MILLISECONDS, PERSISTENCE.getStatistics().getTickInterval(), PERSISTENCE.getStatistics().getTickTimeUnit(), Clocks.NANO), PERSISTENCE.getStatistics().getMetricDomain(), new MetricProperty("durable", ormDao.getManagedClass().getSimpleName()), new MetricProperty("method", executedMethod.getName()), new MetricProperty("source", statisticsSource)).update(stop - start, TimeUnit.MILLISECONDS);
+        METRIC_REGISTRY.ensure(Metrics.buildChronometer(PERSISTENCE.getMetricConfiguration().getChronometerSamples(), TimeUnit.MILLISECONDS, PERSISTENCE.getMetricConfiguration().getTickInterval(), PERSISTENCE.getMetricConfiguration().getTickTimeUnit(), Clocks.NANO), PERSISTENCE.getMetricConfiguration().getMetricDomain(), new MetricProperty("durable", ormDao.getManagedClass().getSimpleName()), new MetricProperty("method", executedMethod.getName()), new MetricProperty("source", metricSource)).update(stop - start, TimeUnit.MILLISECONDS);
       }
     }
   }

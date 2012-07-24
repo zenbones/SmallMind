@@ -30,7 +30,7 @@ import org.smallmind.persistence.Durable;
 
 public interface CacheDomain<I extends Comparable<I>, D extends Durable<I>> {
 
-  public abstract String getStatisticsSource ();
+  public abstract String getMetricSource ();
 
   public abstract PersistenceCache<String, D> getInstanceCache (Class<D> managedClass);
 

@@ -24,7 +24,7 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.persistence.statistics.aop;
+package org.smallmind.persistence.instrument.aop;
 
 import java.lang.reflect.Method;
 import java.util.concurrent.TimeUnit;
@@ -42,14 +42,14 @@ import org.smallmind.persistence.PersistenceManager;
 import org.smallmind.persistence.orm.VectorAwareORMDao;
 
 @Aspect
-public class ApplyStatisticsAspect {
+public class ApplyInstrumentationAspect {
 
   private static final Persistence PERSISTENCE;
   private static final MetricRegistry METRIC_REGISTRY;
 
   static {
 
-    if (((PERSISTENCE = PersistenceManager.getPersistence()) == null) || (!PERSISTENCE.getStatistics().isStaticsEnabled())) {
+    if (((PERSISTENCE = PersistenceManager.getPersistence()) == null) || (!PERSISTENCE.getMetricConfiguration().isInstrumented())) {
       METRIC_REGISTRY = null;
     }
     else {
@@ -59,8 +59,8 @@ public class ApplyStatisticsAspect {
     }
   }
 
-  @Around(value = "@within(statisticsStopwatch) && execution(@org.smallmind.persistence.statistics.aop.ApplyStatistics * * (..)) && this(ormDao)", argNames = "thisJoinPoint, statisticsStopwatch, ormDao")
-  public Object aroundApplyStatisticsMethod (ProceedingJoinPoint thisJoinPoint, StatisticsStopwatch statisticsStopwatch, VectorAwareORMDao ormDao)
+  @Around(value = "@within(instrumented) && execution(@org.smallmind.persistence.instrument.aop.ApplyInstrumentation * * (..)) && this(ormDao)", argNames = "thisJoinPoint, instrumented, ormDao")
+  public Object aroundApplyStatisticsMethod (ProceedingJoinPoint thisJoinPoint, Instrumented instrumented, VectorAwareORMDao ormDao)
     throws Throwable {
 
     Method executedMethod;
@@ -68,7 +68,7 @@ public class ApplyStatisticsAspect {
     long start = 0;
     long stop;
 
-    if (timingEnabled = (METRIC_REGISTRY != null) && statisticsStopwatch.value()) {
+    if (timingEnabled = (METRIC_REGISTRY != null) && instrumented.value()) {
       start = System.currentTimeMillis();
     }
 
@@ -81,7 +81,7 @@ public class ApplyStatisticsAspect {
         stop = System.currentTimeMillis();
         executedMethod = ((MethodSignature)thisJoinPoint.getSignature()).getMethod();
 
-        METRIC_REGISTRY.ensure(Metrics.buildChronometer(PERSISTENCE.getStatistics().getChronometerSamples(), TimeUnit.MILLISECONDS, PERSISTENCE.getStatistics().getTickInterval(), PERSISTENCE.getStatistics().getTickTimeUnit(), Clocks.NANO), PERSISTENCE.getStatistics().getMetricDomain(), new MetricProperty("durable", ormDao.getManagedClass().getSimpleName()), new MetricProperty("method", executedMethod.getName()), new MetricProperty("source", ormDao.getStatisticsSource())).update(stop - start, TimeUnit.MILLISECONDS);
+        METRIC_REGISTRY.ensure(Metrics.buildChronometer(PERSISTENCE.getMetricConfiguration().getChronometerSamples(), TimeUnit.MILLISECONDS, PERSISTENCE.getMetricConfiguration().getTickInterval(), PERSISTENCE.getMetricConfiguration().getTickTimeUnit(), Clocks.NANO), PERSISTENCE.getMetricConfiguration().getMetricDomain(), new MetricProperty("durable", ormDao.getManagedClass().getSimpleName()), new MetricProperty("method", executedMethod.getName()), new MetricProperty("source", ormDao.getMetricSource())).update(stop - start, TimeUnit.MILLISECONDS);
       }
     }
   }

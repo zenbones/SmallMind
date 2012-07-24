@@ -24,27 +24,28 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.persistence.statistics;
+package org.smallmind.instrument.config;
 
 import java.util.concurrent.TimeUnit;
 import org.smallmind.instrument.Samples;
 
-public class Statistics {
+// This class has no direct use in the instrumentation API, but is made available for use by instrumentation clients
+public class MetricConfiguration {
 
   private Samples chronometerSamples = Samples.BIASED;
   private TimeUnit tickTimeUnit = TimeUnit.SECONDS;
-  private String metricDomain = Statistics.class.getPackage().getName();
-  private boolean staticsEnabled = true;
+  private String metricDomain = MetricConfiguration.class.getPackage().getName();
+  private boolean instrumented = true;
   private long tickInterval = 10;
 
-  public boolean isStaticsEnabled () {
+  public boolean isInstrumented () {
 
-    return staticsEnabled;
+    return instrumented;
   }
 
-  public void setStaticsEnabled (boolean staticsEnabled) {
+  public void setInstrumented (boolean instrumented) {
 
-    this.staticsEnabled = staticsEnabled;
+    this.instrumented = instrumented;
   }
 
   public String getMetricDomain () {

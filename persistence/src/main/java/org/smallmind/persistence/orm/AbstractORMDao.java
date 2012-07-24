@@ -35,7 +35,7 @@ import java.util.Arrays;
 import java.util.concurrent.atomic.AtomicReference;
 import org.smallmind.persistence.Durable;
 import org.smallmind.persistence.Identifier;
-import org.smallmind.persistence.statistics.StatisticsSource;
+import org.smallmind.persistence.instrument.MetricSource;
 
 public abstract class AbstractORMDao<I extends Serializable & Comparable<I>, D extends Durable<I>> implements ORMDao<I, D> {
 
@@ -146,9 +146,9 @@ public abstract class AbstractORMDao<I extends Serializable & Comparable<I>, D e
     throw new ORMInitializationException("Id class is neither a String, an Enum, a primitive type, nor a primitive wrapper, and does not implement Identifier, so you need to override getIdFromString(String value)");
   }
 
-  public String getStatisticsSource () {
+  public String getMetricSource () {
 
-    return StatisticsSource.ORM.getDisplay();
+    return MetricSource.ORM.getDisplay();
   }
 
   private static class TypeInference {
