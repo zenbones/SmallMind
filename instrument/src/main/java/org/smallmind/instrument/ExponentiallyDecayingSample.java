@@ -100,18 +100,14 @@ public class ExponentiallyDecayingSample implements Sample {
   @Override
   public void update (long value) {
 
-    update(value, currentTimeInSeconds());
-  }
-
-  public void update (long value, long timestamp) {
-
     rescaleIfNeeded();
 
     lock.readLock().lock();
     try {
-      final double priority = weight(timestamp - startTime) / ThreadLocalRandom.current()
-        .nextDouble();
+
+      final double priority = weight(currentTimeInSeconds() - startTime) / ThreadLocalRandom.current().nextDouble();
       final long newCount = count.incrementAndGet();
+
       if (newCount <= reservoirSize) {
         values.put(priority, value);
       }

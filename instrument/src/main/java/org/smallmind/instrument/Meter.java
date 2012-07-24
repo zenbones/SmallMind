@@ -32,6 +32,7 @@ import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
+import org.smallmind.nutsnbolts.time.TimeUtilities;
 
 public class Meter implements Metric, Metered, Stoppable {
 
@@ -72,7 +73,7 @@ public class Meter implements Metric, Metered, Stoppable {
     this.tickTimeUnit = tickTimeUnit;
     this.clock = clock;
 
-    startTime = clock.getTick();
+    startTime = clock.getTime();
 
     m1Rate = ExponentiallyWeightedMovingAverage.lastOneMinute(tickInterval, tickTimeUnit);
     m5Rate = ExponentiallyWeightedMovingAverage.lastFiveMinutes(tickInterval, tickTimeUnit);
@@ -144,7 +145,7 @@ public class Meter implements Metric, Metered, Stoppable {
     }
     else {
 
-      return (currentCount / (double)(clock.getTick() - startTime)) * (double)tickTimeUnit.toNanos(1);
+      return (((double)currentCount) / (clock.getTime() - startTime)) * TimeUtilities.convert(1, tickTimeUnit, TimeUnit.MILLISECONDS);
     }
   }
 
