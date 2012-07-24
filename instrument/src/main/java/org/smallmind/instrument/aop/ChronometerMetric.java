@@ -32,6 +32,7 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 import java.util.concurrent.TimeUnit;
 import org.smallmind.instrument.Clocks;
+import org.smallmind.instrument.Samples;
 
 @Target({ElementType.TYPE, ElementType.CONSTRUCTOR, ElementType.METHOD})
 @Retention(RetentionPolicy.RUNTIME)
@@ -40,6 +41,8 @@ public @interface ChronometerMetric {
   public abstract JMX value ();
 
   public abstract String alias () default "";
+
+  public abstract Samples samples () default Samples.BIASED;
 
   public abstract TimeUnit durationUnit () default TimeUnit.MILLISECONDS;
 

@@ -52,12 +52,22 @@ public class Metrics {
 
   public static ChronometerBuilder buildChronometer (TimeUnit durationUnit, long tickInterval, TimeUnit tickTimeUnit) {
 
-    return new ChronometerBuilder(durationUnit, tickInterval, tickTimeUnit, Clocks.NANO);
+    return new ChronometerBuilder(Samples.BIASED, durationUnit, tickInterval, tickTimeUnit, Clocks.NANO);
+  }
+
+  public static ChronometerBuilder buildChronometer (Samples samples, TimeUnit durationUnit, long tickInterval, TimeUnit tickTimeUnit) {
+
+    return new ChronometerBuilder(samples, durationUnit, tickInterval, tickTimeUnit, Clocks.NANO);
   }
 
   public static ChronometerBuilder buildChronometer (TimeUnit durationUnit, long tickInterval, TimeUnit tickTimeUnit, Clocks clocks) {
 
-    return new ChronometerBuilder(durationUnit, tickInterval, tickTimeUnit, clocks);
+    return new ChronometerBuilder(Samples.BIASED, durationUnit, tickInterval, tickTimeUnit, clocks);
+  }
+
+  public static ChronometerBuilder buildChronometer (Samples samples, TimeUnit durationUnit, long tickInterval, TimeUnit tickTimeUnit, Clocks clocks) {
+
+    return new ChronometerBuilder(samples, durationUnit, tickInterval, tickTimeUnit, clocks);
   }
 
   public static interface MetricBuilder<M extends Metric> {
@@ -159,13 +169,15 @@ public class Metrics {
 
   private static class ChronometerBuilder implements MetricBuilder<Chronometer> {
 
+    private Samples samples;
     private Clocks clocks;
     private TimeUnit durationUnit;
     private TimeUnit tickTimeUnit;
     private long tickInterval;
 
-    private ChronometerBuilder (TimeUnit durationUnit, long tickInterval, TimeUnit tickTimeUnit, Clocks clocks) {
+    private ChronometerBuilder (Samples samples, TimeUnit durationUnit, long tickInterval, TimeUnit tickTimeUnit, Clocks clocks) {
 
+      this.samples = samples;
       this.durationUnit = durationUnit;
       this.tickInterval = tickInterval;
       this.tickTimeUnit = tickTimeUnit;
@@ -187,7 +199,7 @@ public class Metrics {
     @Override
     public Chronometer construct () {
 
-      return new Chronometer(durationUnit, tickInterval, tickTimeUnit, clocks.getClock());
+      return new Chronometer(samples, durationUnit, tickInterval, tickTimeUnit, clocks.getClock());
     }
   }
 }

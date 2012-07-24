@@ -27,9 +27,11 @@
 package org.smallmind.persistence.statistics;
 
 import java.util.concurrent.TimeUnit;
+import org.smallmind.instrument.Samples;
 
 public class Statistics {
 
+  private Samples samples = Samples.BIASED;
   private TimeUnit tickTimeUnit = TimeUnit.SECONDS;
   private String metricDomain = Statistics.class.getPackage().getName();
   private boolean staticsEnabled = true;
@@ -53,6 +55,16 @@ public class Statistics {
   public void setMetricDomain (String metricDomain) {
 
     this.metricDomain = metricDomain;
+  }
+
+  public Samples getSamples () {
+
+    return samples;
+  }
+
+  public void setSamples (Samples samples) {
+
+    this.samples = samples;
   }
 
   public long getTickInterval () {

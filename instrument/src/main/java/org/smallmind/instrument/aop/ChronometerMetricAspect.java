@@ -38,13 +38,13 @@ public class ChronometerMetricAspect extends MetricAspect {
   public Object aroundChronometerMetricClass (ProceedingJoinPoint thisJoinPoint, ChronometerMetric chronometerMetric)
     throws Throwable {
 
-    return engage(thisJoinPoint, chronometerMetric.value(), chronometerMetric.alias(), Metrics.buildChronometer(chronometerMetric.durationUnit(), chronometerMetric.tickInterval(), chronometerMetric.tickTimeUnit(), chronometerMetric.clocks()));
+    return engage(thisJoinPoint, chronometerMetric.value(), chronometerMetric.alias(), Metrics.buildChronometer(chronometerMetric.samples(), chronometerMetric.durationUnit(), chronometerMetric.tickInterval(), chronometerMetric.tickTimeUnit(), chronometerMetric.clocks()));
   }
 
   @Around(value = "(execution(@ChronometerMetric * * (..)) || initialization(@ChronometerMetric new(..))) && @annotation(chronometerMetric)", argNames = "thisJoinPoint, chronometerMetric")
   public Object aroundChronometerMetricMethod (ProceedingJoinPoint thisJoinPoint, ChronometerMetric chronometerMetric)
     throws Throwable {
 
-    return engage(thisJoinPoint, chronometerMetric.value(), chronometerMetric.alias(), Metrics.buildChronometer(chronometerMetric.durationUnit(), chronometerMetric.tickInterval(), chronometerMetric.tickTimeUnit(), chronometerMetric.clocks()));
+    return engage(thisJoinPoint, chronometerMetric.value(), chronometerMetric.alias(), Metrics.buildChronometer(chronometerMetric.samples(), chronometerMetric.durationUnit(), chronometerMetric.tickInterval(), chronometerMetric.tickTimeUnit(), chronometerMetric.clocks()));
   }
 }
