@@ -31,7 +31,7 @@ import org.smallmind.instrument.Samples;
 
 public class Statistics {
 
-  private Samples samples = Samples.BIASED;
+  private Samples chronometerSamples = Samples.BIASED;
   private TimeUnit tickTimeUnit = TimeUnit.SECONDS;
   private String metricDomain = Statistics.class.getPackage().getName();
   private boolean staticsEnabled = true;
@@ -57,14 +57,14 @@ public class Statistics {
     this.metricDomain = metricDomain;
   }
 
-  public Samples getSamples () {
+  public Samples getChronometerSamples () {
 
-    return samples;
+    return chronometerSamples;
   }
 
-  public void setSamples (Samples samples) {
+  public void setChronometerSamples (Samples chronometerSamples) {
 
-    this.samples = samples;
+    this.chronometerSamples = chronometerSamples;
   }
 
   public long getTickInterval () {

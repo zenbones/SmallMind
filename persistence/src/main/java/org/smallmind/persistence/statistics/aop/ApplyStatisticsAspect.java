@@ -81,7 +81,7 @@ public class ApplyStatisticsAspect {
         stop = System.currentTimeMillis();
         executedMethod = ((MethodSignature)thisJoinPoint.getSignature()).getMethod();
 
-        METRIC_REGISTRY.ensure(Metrics.buildChronometer(TimeUnit.MILLISECONDS, PERSISTENCE.getStatistics().getTickInterval(), PERSISTENCE.getStatistics().getTickTimeUnit(), Clocks.NANO), PERSISTENCE.getStatistics().getMetricDomain(), new MetricProperty("durable", ormDao.getManagedClass().getSimpleName()), new MetricProperty("method", executedMethod.getName()), new MetricProperty("source", ormDao.getStatisticsSource())).update(stop - start, TimeUnit.MILLISECONDS);
+        METRIC_REGISTRY.ensure(Metrics.buildChronometer(PERSISTENCE.getStatistics().getChronometerSamples(), TimeUnit.MILLISECONDS, PERSISTENCE.getStatistics().getTickInterval(), PERSISTENCE.getStatistics().getTickTimeUnit(), Clocks.NANO), PERSISTENCE.getStatistics().getMetricDomain(), new MetricProperty("durable", ormDao.getManagedClass().getSimpleName()), new MetricProperty("method", executedMethod.getName()), new MetricProperty("source", ormDao.getStatisticsSource())).update(stop - start, TimeUnit.MILLISECONDS);
       }
     }
   }
