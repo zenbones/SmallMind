@@ -27,15 +27,39 @@
 package org.smallmind.quorum.transport.message;
 
 import java.io.Serializable;
+import java.util.concurrent.TimeUnit;
 import javax.jms.Message;
 import javax.jms.Session;
+import org.smallmind.instrument.Chronometer;
+import org.smallmind.instrument.MetricProperty;
+import org.smallmind.instrument.MetricRegistry;
+import org.smallmind.instrument.MetricRegistryFactory;
+import org.smallmind.instrument.Metrics;
 import org.smallmind.quorum.transport.InvocationSignal;
 import org.smallmind.quorum.transport.MethodInvoker;
+import org.smallmind.quorum.transport.Transport;
+import org.smallmind.quorum.transport.TransportManager;
+import org.smallmind.quorum.transport.instrument.MetricEvent;
 
 public class InvocationMessageTarget implements MessageTarget {
 
+  private static final Transport TRANSPORT;
+  private static final MetricRegistry METRIC_REGISTRY;
+
   private MethodInvoker methodInvoker;
   private Class serviceInterface;
+
+  static {
+
+    if (((TRANSPORT = TransportManager.getTransport()) == null) || (!TRANSPORT.getMetricConfiguration().isInstrumented())) {
+      METRIC_REGISTRY = null;
+    }
+    else {
+      if ((METRIC_REGISTRY = MetricRegistryFactory.getMetricRegistry()) == null) {
+        throw new ExceptionInInitializerError("No MetricRegistry instance has been registered with the MetricRegistryFactory");
+      }
+    }
+  }
 
   public InvocationMessageTarget (Object targetObject, Class serviceInterface)
     throws NoSuchMethodException {
@@ -53,12 +77,36 @@ public class InvocationMessageTarget implements MessageTarget {
   public Message handleMessage (Session session, MessageStrategy messageStrategy, Message message)
     throws Exception {
 
+    Message responseMessage;
     InvocationSignal invocationSignal;
     Serializable result;
+    Chronometer invocationChronometer = null;
+    Chronometer serializationChronometer = null;
+    long invocationStart = 0;
+    long serializationStart = 0;
 
     invocationSignal = (InvocationSignal)messageStrategy.unwrapFromMessage(message);
+
+    if (METRIC_REGISTRY != null) {
+      invocationChronometer = METRIC_REGISTRY.ensure(Metrics.buildChronometer(TRANSPORT.getMetricConfiguration().getChronometerSamples(), TimeUnit.MILLISECONDS, TRANSPORT.getMetricConfiguration().getTickInterval(), TRANSPORT.getMetricConfiguration().getTickTimeUnit()), TRANSPORT.getMetricConfiguration().getMetricDomain().getDomain(), new MetricProperty("event", MetricEvent.INVOCATION.getDisplay()), new MetricProperty("service", serviceInterface.getSimpleName()), new MetricProperty("method", invocationSignal.getFauxMethod().getName()));
+      invocationStart = System.currentTimeMillis();
+    }
+
     result = (Serializable)methodInvoker.remoteInvocation(invocationSignal);
 
-    return messageStrategy.wrapInMessage(session, result);
+    if (METRIC_REGISTRY != null) {
+      invocationChronometer.update(System.currentTimeMillis() - invocationStart, TimeUnit.MILLISECONDS);
+
+      serializationChronometer = METRIC_REGISTRY.ensure(Metrics.buildChronometer(TRANSPORT.getMetricConfiguration().getChronometerSamples(), TimeUnit.MILLISECONDS, TRANSPORT.getMetricConfiguration().getTickInterval(), TRANSPORT.getMetricConfiguration().getTickTimeUnit()), TRANSPORT.getMetricConfiguration().getMetricDomain().getDomain(), new MetricProperty("event", MetricEvent.CONSTRUCT_MESSAGE.getDisplay()));
+      serializationStart = System.currentTimeMillis();
+    }
+
+    responseMessage = messageStrategy.wrapInMessage(session, result);
+
+    if (METRIC_REGISTRY != null) {
+      serializationChronometer.update(System.currentTimeMillis() - serializationStart, TimeUnit.MILLISECONDS);
+    }
+
+    return responseMessage;
   }
 }

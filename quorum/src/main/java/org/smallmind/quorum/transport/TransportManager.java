@@ -24,21 +24,21 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.instrument;
+package org.smallmind.quorum.transport;
 
 import org.smallmind.nutsnbolts.lang.StaticManager;
 
-public class MetricRegistryFactory implements StaticManager {
+public class TransportManager implements StaticManager {
 
-  private static InheritableThreadLocal<MetricRegistry> METRIC_REGISTRY_LOCAL = new InheritableThreadLocal<MetricRegistry>();
+  private static InheritableThreadLocal<Transport> TRANSPORT_LOCAL = new InheritableThreadLocal<Transport>();
 
-  public static void register (MetricRegistry metricRegistry) {
+  public static void register (Transport transport) {
 
-    METRIC_REGISTRY_LOCAL.set(metricRegistry);
+    TRANSPORT_LOCAL.set(transport);
   }
 
-  public static MetricRegistry getMetricRegistry () {
+  public static Transport getTransport () {
 
-    return METRIC_REGISTRY_LOCAL.get();
+    return TRANSPORT_LOCAL.get();
   }
 }

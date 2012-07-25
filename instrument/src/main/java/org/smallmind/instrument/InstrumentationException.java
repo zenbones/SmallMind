@@ -26,19 +26,12 @@
  */
 package org.smallmind.instrument;
 
-import org.smallmind.nutsnbolts.lang.StaticManager;
+import org.smallmind.nutsnbolts.lang.FormattedRuntimeException;
 
-public class MetricRegistryFactory implements StaticManager {
+public class InstrumentationException extends FormattedRuntimeException {
 
-  private static InheritableThreadLocal<MetricRegistry> METRIC_REGISTRY_LOCAL = new InheritableThreadLocal<MetricRegistry>();
+  public InstrumentationException (String message, Object... args) {
 
-  public static void register (MetricRegistry metricRegistry) {
-
-    METRIC_REGISTRY_LOCAL.set(metricRegistry);
-  }
-
-  public static MetricRegistry getMetricRegistry () {
-
-    return METRIC_REGISTRY_LOCAL.get();
+    super(message, args);
   }
 }

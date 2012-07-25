@@ -24,21 +24,15 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.instrument;
+package org.smallmind.instrument.config;
 
-import org.smallmind.nutsnbolts.lang.StaticManager;
+import org.smallmind.instrument.InstrumentationException;
 
-public class MetricRegistryFactory implements StaticManager {
+public class UnsetMetricDomain implements MetricDomain {
 
-  private static InheritableThreadLocal<MetricRegistry> METRIC_REGISTRY_LOCAL = new InheritableThreadLocal<MetricRegistry>();
+  @Override
+  public String getDomain () {
 
-  public static void register (MetricRegistry metricRegistry) {
-
-    METRIC_REGISTRY_LOCAL.set(metricRegistry);
-  }
-
-  public static MetricRegistry getMetricRegistry () {
-
-    return METRIC_REGISTRY_LOCAL.get();
+    throw new InstrumentationException("No metric domain has been set within the configuration - please see the documentation");
   }
 }

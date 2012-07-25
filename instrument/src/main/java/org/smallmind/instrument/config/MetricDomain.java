@@ -24,21 +24,9 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.instrument;
+package org.smallmind.instrument.config;
 
-import org.smallmind.nutsnbolts.lang.StaticManager;
+public interface MetricDomain {
 
-public class MetricRegistryFactory implements StaticManager {
-
-  private static InheritableThreadLocal<MetricRegistry> METRIC_REGISTRY_LOCAL = new InheritableThreadLocal<MetricRegistry>();
-
-  public static void register (MetricRegistry metricRegistry) {
-
-    METRIC_REGISTRY_LOCAL.set(metricRegistry);
-  }
-
-  public static MetricRegistry getMetricRegistry () {
-
-    return METRIC_REGISTRY_LOCAL.get();
-  }
+  public abstract String getDomain ();
 }

@@ -22,6 +22,11 @@
     <constructor-arg index="1">
       <bean class="org.smallmind.instrument.config.MetricConfiguration">
         <property name="instrumented" value="${orm.statistics}"/>
+        <property name="metricDomain">
+          <bean class="org.smallmind.instrument.config.PackageMetricDomain">
+            <constructor-arg index="0" value="org.smallmind.persistence.instrument.MetricSource"/>
+          </bean>
+        </property>
       </bean>
     </constructor-arg>
   </bean>

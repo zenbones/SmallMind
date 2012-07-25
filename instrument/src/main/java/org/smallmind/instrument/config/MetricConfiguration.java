@@ -32,9 +32,9 @@ import org.smallmind.instrument.Samples;
 // This class has no direct use in the instrumentation API, but is made available for use by instrumentation clients
 public class MetricConfiguration {
 
+  private MetricDomain metricDomain = new UnsetMetricDomain();
   private Samples chronometerSamples = Samples.BIASED;
   private TimeUnit tickTimeUnit = TimeUnit.SECONDS;
-  private String metricDomain = MetricConfiguration.class.getPackage().getName();
   private boolean instrumented = true;
   private long tickInterval = 10;
 
@@ -48,12 +48,12 @@ public class MetricConfiguration {
     this.instrumented = instrumented;
   }
 
-  public String getMetricDomain () {
+  public MetricDomain getMetricDomain () {
 
     return metricDomain;
   }
 
-  public void setMetricDomain (String metricDomain) {
+  public void setMetricDomain (MetricDomain metricDomain) {
 
     this.metricDomain = metricDomain;
   }
