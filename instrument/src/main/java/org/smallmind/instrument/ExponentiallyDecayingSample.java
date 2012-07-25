@@ -39,7 +39,7 @@ import org.smallmind.nutsnbolts.util.ThreadLocalRandom;
  */
 public class ExponentiallyDecayingSample implements Sample {
 
-  private static final long RESCALE_THRESHOLD = TimeUnit.HOURS.toNanos(1);
+  private static final long RESCALE_THRESHOLD = TimeUnit.HOURS.toMillis(1);
 
   private volatile long startTime;
 
@@ -65,7 +65,7 @@ public class ExponentiallyDecayingSample implements Sample {
 
     values = new ConcurrentSkipListMap<Double, Long>();
     startTime = currentTimeInSeconds();
-    nextScaleTime.set(clock.getTick() + RESCALE_THRESHOLD);
+    nextScaleTime.set(clock.getTime() + RESCALE_THRESHOLD);
 
     lock = new ReentrantReadWriteLock();
   }
@@ -84,7 +84,7 @@ public class ExponentiallyDecayingSample implements Sample {
       values.clear();
       count.set(0);
       startTime = currentTimeInSeconds();
-      nextScaleTime.set(clock.getTick() + RESCALE_THRESHOLD);
+      nextScaleTime.set(clock.getTime() + RESCALE_THRESHOLD);
     }
     finally {
       lock.writeLock().unlock();
@@ -130,7 +130,7 @@ public class ExponentiallyDecayingSample implements Sample {
 
   private void rescaleIfNeeded () {
 
-    long now = clock.getTick();
+    long now = clock.getTime();
     long next = nextScaleTime.get();
 
     if (now >= next) {
@@ -199,5 +199,4 @@ public class ExponentiallyDecayingSample implements Sample {
       }
     }
   }
-
 }
