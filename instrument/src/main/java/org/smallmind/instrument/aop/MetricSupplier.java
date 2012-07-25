@@ -27,27 +27,35 @@
 package org.smallmind.instrument.aop;
 
 import java.util.HashMap;
+import java.util.LinkedList;
 import org.smallmind.instrument.Metric;
 
 public class MetricSupplier {
 
-  private static final ThreadLocal<HashMap<String, Metric>> METRIC_MAP_LOCAL = new ThreadLocal<HashMap<String, Metric>>() {
+  private static final ThreadLocal<HashMap<String, LinkedList<Metric>>> METRIC_MAP_LOCAL = new ThreadLocal<HashMap<String, LinkedList<Metric>>>() {
 
     @Override
-    protected HashMap<String, Metric> initialValue () {
+    protected HashMap<String, LinkedList<Metric>> initialValue () {
 
-      return new HashMap<String, Metric>();
+      return new HashMap<String, LinkedList<Metric>>();
     }
   };
 
-  public static void put (String key, Metric metric) {
+  public static void push (String key, Metric metric) {
 
-    METRIC_MAP_LOCAL.get().put(key, metric);
+    HashMap<String, LinkedList<Metric>> metricMap = METRIC_MAP_LOCAL.get();
+    LinkedList<Metric> metricList;
+
+    if ((metricList = metricMap.get(key)) == null) {
+      metricMap.put(key, metricList = new LinkedList<Metric>());
+    }
+
+    metricList.push(metric);
   }
 
-  public static void remove (String key) {
+  public static void pop (String key) {
 
-    METRIC_MAP_LOCAL.get().remove(key);
+    METRIC_MAP_LOCAL.get().get(key).pop();
   }
 
   public static <M extends Metric> M get (String key, Class<M> metricClass) {

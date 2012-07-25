@@ -58,13 +58,13 @@ public abstract class MetricAspect {
     }
 
     metric = METRIC_REGISTRY.ensure(metricBuilder, jmx.domain(), properties);
-    MetricSupplier.put(supplierKey = (alias.length() == 0) ? null : alias, metric);
+    MetricSupplier.push(supplierKey = (alias.length() == 0) ? null : alias, metric);
 
     try {
       return thisJoinPoint.proceed();
     }
     finally {
-      MetricSupplier.remove(supplierKey);
+      MetricSupplier.pop(supplierKey);
     }
   }
 }
