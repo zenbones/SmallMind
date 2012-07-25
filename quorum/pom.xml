@@ -24,6 +24,11 @@
     </dependency>
     <dependency>
       <groupId>org.smallmind</groupId>
+      <artifactId>smallmind-instrument</artifactId>
+      <scope>compile</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.smallmind</groupId>
       <artifactId>scribe-pen</artifactId>
       <scope>compile</scope>
     </dependency>
@@ -45,14 +50,35 @@
       <scope>compile</scope>
       <optional>true</optional>
     </dependency>
-    <!-- Kryo Dependencies Start -->
-    <!-- Kryo Dependencies End -->
   </dependencies>
   <build>
     <plugins>
       <plugin>
         <groupId>org.smallmind</groupId>
         <artifactId>smallmind-license-plugin</artifactId>
+      </plugin>
+      <plugin>
+        <groupId>org.codehaus.mojo</groupId>
+        <artifactId>aspectj-maven-plugin</artifactId>
+        <executions>
+          <execution>
+            <goals>
+              <goal>compile</goal>
+              <goal>test-compile</goal>
+            </goals>
+          </execution>
+        </executions>
+        <configuration>
+          <verbose>true</verbose>
+          <complianceLevel>1.6</complianceLevel>
+          <showWeaveInfo>true</showWeaveInfo>
+          <aspectLibraries>
+            <aspectLibrary>
+              <groupId>org.smallmind</groupId>
+              <artifactId>smallmind-instrument</artifactId>
+            </aspectLibrary>
+          </aspectLibraries>
+        </configuration>
       </plugin>
     </plugins>
   </build>
