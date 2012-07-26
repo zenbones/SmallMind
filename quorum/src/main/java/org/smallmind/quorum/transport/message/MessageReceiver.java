@@ -1,22 +1,22 @@
 /*
  * Copyright (c) 2007, 2008, 2009, 2010, 2011, 2012 David Berkman
- * 
+ *
  * This file is part of the SmallMind Code Project.
- * 
+ *
  * The SmallMind Code Project is free software, you can redistribute
  * it and/or modify it under the terms of GNU Affero General Public
  * License as published by the Free Software Foundation, either version 3
  * of the License, or (at your option) any later version.
- * 
+ *
  * The SmallMind Code Project is distributed in the hope that it will
  * be useful, but WITHOUT ANY WARRANTY; without even the implied warranty
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * General Public License for more details.
- * 
+ *
  * You should have received a copy of the the GNU Affero General Public
  * License, along with The SmallMind Code Project. If not, see
  * <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under the GNU Affero GPL version 3 section 7
  * ------------------------------------------------------------------
  * If you modify this Program, or any covered work, by linking or
@@ -26,37 +26,30 @@
  */
 package org.smallmind.quorum.transport.message;
 
-import java.security.SecureRandom;
 import java.util.HashMap;
-import java.util.Random;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.SynchronousQueue;
 import java.util.concurrent.atomic.AtomicBoolean;
 import javax.jms.JMSException;
 import javax.jms.Message;
 import javax.jms.Queue;
-import javax.jms.QueueConnection;
 import javax.jms.Topic;
-import javax.jms.TopicConnection;
 import org.smallmind.quorum.transport.TransportException;
 
 public class MessageReceiver {
 
-  private static final Random RANDOM = new SecureRandom();
-
   private final AtomicBoolean closed = new AtomicBoolean(false);
-  private final ConcurrentLinkedQueue<TopicOperator> operatorQueue;
   private final ReceptionListener[] receptionListeners;
   private final ReceptionWorker[] receptionWorkers;
-  private final TopicConnection[] responseConnections;
+  private final ConnectionBroker[] responseConnectionBrokers;
 
-  public MessageReceiver (TransportManagedObjects requestManagedObjects, TransportManagedObjects responseManagedObjects, MessagePolicy messagePolicy, MessageStrategy messageStrategy, int clusterSize, int concurrencyLimit, MessageTarget... messageTargets)
+  public MessageReceiver (TransportManagedObjects requestManagedObjects, TransportManagedObjects responseManagedObjects, MessagePolicy messagePolicy, ReconnectionPolicy reconnectionPolicy, MessageStrategy messageStrategy, int clusterSize, int concurrencyLimit, MessageTarget... messageTargets)
     throws JMSException, TransportException {
 
+    ConcurrentLinkedQueue<TopicOperator> operatorQueue;
     SynchronousQueue<Message> messageRendezvous = new SynchronousQueue<Message>(true);
     HashMap<String, MessageTarget> targetMap = new HashMap<String, MessageTarget>();
-
-    int topicIndex;
+    int topicIndex = 0;
 
     for (MessageTarget messageTarget : messageTargets) {
       targetMap.put(messageTarget.getServiceInterface().getName(), messageTarget);
@@ -64,20 +57,18 @@ public class MessageReceiver {
 
     receptionListeners = new ReceptionListener[clusterSize];
     for (int index = 0; index < receptionListeners.length; index++) {
-      receptionListeners[index] = new ReceptionListener((QueueConnection)requestManagedObjects.createConnection(), (Queue)requestManagedObjects.getDestination(), messagePolicy.getAcknowledgeMode(), messageRendezvous);
+      receptionListeners[index] = new ReceptionListener(new ConnectionBroker(requestManagedObjects, messagePolicy, reconnectionPolicy), (Queue)requestManagedObjects.getDestination(), messageRendezvous);
     }
 
-    responseConnections = new TopicConnection[clusterSize];
-    for (int index = 0; index < responseConnections.length; index++) {
-      responseConnections[index] = (TopicConnection)responseManagedObjects.createConnection();
+    responseConnectionBrokers = new ConnectionBroker[clusterSize];
+    for (int index = 0; index < responseConnectionBrokers.length; index++) {
+      responseConnectionBrokers[index] = new ConnectionBroker(responseManagedObjects, messagePolicy, reconnectionPolicy);
     }
-
-    topicIndex = RANDOM.nextInt(responseConnections.length);
 
     operatorQueue = new ConcurrentLinkedQueue<TopicOperator>();
     for (int index = 0; index < Math.max(clusterSize, concurrencyLimit); index++) {
-      operatorQueue.add(new TopicOperator(responseConnections[topicIndex], (Topic)responseManagedObjects.getDestination(), messagePolicy));
-      if (++topicIndex == responseConnections.length) {
+      operatorQueue.add(new TopicOperator(responseConnectionBrokers[topicIndex], (Topic)responseManagedObjects.getDestination()));
+      if (++topicIndex == responseConnectionBrokers.length) {
         topicIndex = 0;
       }
     }
@@ -95,17 +86,14 @@ public class MessageReceiver {
       for (ReceptionListener receptionListener : receptionListeners) {
         receptionListener.close();
       }
-      for (TopicConnection responseConnection : responseConnections) {
-        responseConnection.stop();
-      }
-      for (TopicOperator topicOperator : operatorQueue) {
-        topicOperator.close();
-      }
-      for (TopicConnection responseConnection : responseConnections) {
-        responseConnection.close();
+      for (ConnectionBroker responseConnectionBroker : responseConnectionBrokers) {
+        responseConnectionBroker.stop();
       }
       for (ReceptionWorker receptionWorker : receptionWorkers) {
         receptionWorker.stop();
+      }
+      for (ConnectionBroker responseConnectionBroker : responseConnectionBrokers) {
+        responseConnectionBroker.close();
       }
     }
   }
