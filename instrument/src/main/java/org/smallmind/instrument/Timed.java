@@ -26,7 +26,9 @@
  */
 package org.smallmind.instrument;
 
+import java.util.concurrent.TimeUnit;
+
 public interface Timed {
 
-  public abstract String getLatencyTimeUnit ();
+  public abstract TimeUnit getLatencyTimeUnit ();
 }

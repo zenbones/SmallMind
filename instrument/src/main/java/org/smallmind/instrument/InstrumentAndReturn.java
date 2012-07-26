@@ -26,11 +26,20 @@
  */
 package org.smallmind.instrument;
 
-public class NanoClock extends Clock {
+public abstract class InstrumentAndReturn<M extends Metric, T> {
 
-  @Override
-  public long getTick () {
+  private InstrumentationArguments<M> arguments;
 
-    return System.nanoTime();
+  public InstrumentAndReturn (InstrumentationArguments<M> arguments) {
+
+    this.arguments = arguments;
   }
+
+  public InstrumentationArguments<M> getArguments () {
+
+    return arguments;
+  }
+
+  public abstract T with (M metric)
+    throws Exception;
 }

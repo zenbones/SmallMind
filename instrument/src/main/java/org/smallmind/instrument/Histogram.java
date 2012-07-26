@@ -65,11 +65,6 @@ public class Histogram implements Metric, Estimating, Shutterbug {
     variance.set(new double[] {-1, 0});
   }
 
-  public void update (int value) {
-
-    update((long)value);
-  }
-
   public void update (long value) {
 
     count.incrementAndGet();

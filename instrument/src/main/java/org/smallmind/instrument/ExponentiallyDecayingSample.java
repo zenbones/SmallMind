@@ -1,22 +1,22 @@
 /*
  * Copyright (c) 2007, 2008, 2009, 2010, 2011, 2012 David Berkman
- *
+ * 
  * This file is part of the SmallMind Code Project.
- *
+ * 
  * The SmallMind Code Project is free software, you can redistribute
  * it and/or modify it under the terms of GNU Affero General Public
  * License as published by the Free Software Foundation, either version 3
  * of the License, or (at your option) any later version.
- *
+ * 
  * The SmallMind Code Project is distributed in the hope that it will
  * be useful, but WITHOUT ANY WARRANTY; without even the implied warranty
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * General Public License for more details.
- *
+ * 
  * You should have received a copy of the the GNU Affero General Public
  * License, along with The SmallMind Code Project. If not, see
  * <http://www.gnu.org/licenses/>.
- *
+ * 
  * Additional permission under the GNU Affero GPL version 3 section 7
  * ------------------------------------------------------------------
  * If you modify this Program, or any covered work, by linking or
@@ -53,7 +53,7 @@ public class ExponentiallyDecayingSample implements Sample {
   // alpha - the exponential decay factor; the higher this is, the more biased the sample will be towards newer values
   public ExponentiallyDecayingSample (int reservoirSize, double alpha) {
 
-    this(reservoirSize, alpha, Clocks.NANO.getClock());
+    this(reservoirSize, alpha, Clocks.EPOCH.getClock());
   }
 
   public ExponentiallyDecayingSample (int reservoirSize, double alpha, Clock clock) {
@@ -63,7 +63,7 @@ public class ExponentiallyDecayingSample implements Sample {
     this.clock = clock;
 
     values = new ConcurrentSkipListMap<Double, Long>();
-    nextScaleTime.set(clock.getTime() + RESCALE_THRESHOLD);
+    nextScaleTime.set(clock.getTimeMilliseconds() + RESCALE_THRESHOLD);
 
     lock = new ReentrantReadWriteLock();
     startTime = new AtomicLong(currentTimeInSeconds());
@@ -83,7 +83,7 @@ public class ExponentiallyDecayingSample implements Sample {
       values.clear();
       count.set(0);
       startTime.set(currentTimeInSeconds());
-      nextScaleTime.set(clock.getTime() + RESCALE_THRESHOLD);
+      nextScaleTime.set(clock.getTimeMilliseconds() + RESCALE_THRESHOLD);
     }
     finally {
       lock.writeLock().unlock();
@@ -129,7 +129,7 @@ public class ExponentiallyDecayingSample implements Sample {
 
   private void rescaleIfNeeded () {
 
-    long now = clock.getTime();
+    long now = clock.getTimeMilliseconds();
     long next = nextScaleTime.get();
 
     if (now >= next) {
@@ -151,7 +151,7 @@ public class ExponentiallyDecayingSample implements Sample {
 
   private long currentTimeInSeconds () {
 
-    return TimeUnit.MILLISECONDS.toSeconds(clock.getTime());
+    return TimeUnit.MILLISECONDS.toSeconds(clock.getTimeMilliseconds());
   }
 
   private double weight (long t) {

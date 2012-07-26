@@ -26,6 +26,7 @@
  */
 package org.smallmind.instrument.jmx;
 
+import java.util.concurrent.TimeUnit;
 import javax.management.StandardMBean;
 import org.smallmind.instrument.Meter;
 
@@ -41,7 +42,8 @@ public class MeterMonitor extends StandardMBean implements MeterMonitorMXBean {
   }
 
   @Override
-  public String getRateTimeUnit () {
+  public TimeUnit
+  getRateTimeUnit () {
 
     return meter.getRateTimeUnit();
   }

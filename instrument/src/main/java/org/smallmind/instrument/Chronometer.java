@@ -26,48 +26,30 @@
  */
 package org.smallmind.instrument;
 
-import java.util.concurrent.Callable;
 import java.util.concurrent.TimeUnit;
 
-public class Chronometer implements Metric, Metered, Estimating, Timed, Shutterbug, Stoppable {
+public class Chronometer implements Metric, Metered, Estimating, Timed, Shutterbug, Clocked, Stoppable {
 
   private final Histogram histogram;
   private final Meter meter;
-  private final Clock clock;
   private final TimeUnit durationTimeUnit;
 
   Chronometer (Samples samples, TimeUnit durationTimeUnit, long tickInterval, TimeUnit tickTimeUnit, Clock clock) {
 
     this.durationTimeUnit = durationTimeUnit;
-    this.clock = clock;
 
     meter = new Meter(tickInterval, tickTimeUnit, clock);
     histogram = new Histogram(samples);
   }
 
-  public <T> T time (Callable<T> event)
-    throws Exception {
+  public void update (long duration) {
 
-    final long startTime = clock.getTick();
-    try {
-      return event.call();
+    if (duration < 0) {
+      throw new InstrumentationException("Chronometer durations must be >= 0");
     }
-    finally {
-      update(clock.getTick() - startTime);
-    }
-  }
 
-  public void update (long duration, TimeUnit unit) {
-
-    update(unit.toNanos(duration));
-  }
-
-  private void update (long duration) {
-
-    if (duration >= 0) {
-      histogram.update(duration);
-      meter.mark();
-    }
+    histogram.update(duration);
+    meter.mark();
   }
 
   @Override
@@ -77,13 +59,19 @@ public class Chronometer implements Metric, Metered, Estimating, Timed, Shutterb
   }
 
   @Override
-  public String getLatencyTimeUnit () {
+  public Clock getClock () {
 
-    return durationTimeUnit.name();
+    return meter.getClock();
   }
 
   @Override
-  public String getRateTimeUnit () {
+  public TimeUnit getLatencyTimeUnit () {
+
+    return durationTimeUnit;
+  }
+
+  @Override
+  public TimeUnit getRateTimeUnit () {
 
     return meter.getRateTimeUnit();
   }
@@ -121,49 +109,37 @@ public class Chronometer implements Metric, Metered, Estimating, Timed, Shutterb
   @Override
   public double getMax () {
 
-    return convertToDurationTimeUnit(histogram.getMax());
+    return histogram.getMax();
   }
 
   @Override
   public double getMin () {
 
-    return convertToDurationTimeUnit(histogram.getMin());
+    return histogram.getMin();
   }
 
   @Override
   public double getAverage () {
 
-    return convertToDurationTimeUnit(histogram.getAverage());
+    return histogram.getAverage();
   }
 
   @Override
   public double getStdDev () {
 
-    return convertToDurationTimeUnit(histogram.getStdDev());
+    return histogram.getStdDev();
   }
 
   @Override
   public double getSum () {
 
-    return convertToDurationTimeUnit(histogram.getSum());
+    return histogram.getSum();
   }
 
   @Override
   public Snapshot getSnapshot () {
 
-    double[] values = histogram.getSnapshot().getValues();
-    double[] converted = new double[values.length];
-
-    for (int i = 0; i < values.length; i++) {
-      converted[i] = convertToDurationTimeUnit(values[i]);
-    }
-
-    return new Snapshot(converted);
-  }
-
-  private double convertToDurationTimeUnit (double nanoseconds) {
-
-    return nanoseconds / TimeUnit.NANOSECONDS.convert(1, durationTimeUnit);
+    return new Snapshot(histogram.getSnapshot().getValues());
   }
 
   @Override

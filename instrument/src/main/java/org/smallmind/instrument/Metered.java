@@ -26,9 +26,11 @@
  */
 package org.smallmind.instrument;
 
+import java.util.concurrent.TimeUnit;
+
 public interface Metered extends Countable {
 
-  public abstract String getRateTimeUnit ();
+  public abstract TimeUnit getRateTimeUnit ();
 
   public abstract double getOneMinuteRate ();
 

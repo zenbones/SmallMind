@@ -37,7 +37,7 @@ public class Metrics {
 
   public static MetricBuilder buildMeter (long tickInterval, TimeUnit tickTimeUnit) {
 
-    return new MeterBuilder(tickInterval, tickTimeUnit, Clocks.NANO);
+    return new MeterBuilder(tickInterval, tickTimeUnit, Clocks.EPOCH);
   }
 
   public static MetricBuilder buildMeter (long tickInterval, TimeUnit tickTimeUnit, Clocks clocks) {
@@ -52,12 +52,12 @@ public class Metrics {
 
   public static ChronometerBuilder buildChronometer (TimeUnit durationUnit, long tickInterval, TimeUnit tickTimeUnit) {
 
-    return new ChronometerBuilder(Samples.BIASED, durationUnit, tickInterval, tickTimeUnit, Clocks.NANO);
+    return new ChronometerBuilder(Samples.BIASED, durationUnit, tickInterval, tickTimeUnit, Clocks.EPOCH);
   }
 
   public static ChronometerBuilder buildChronometer (Samples samples, TimeUnit durationUnit, long tickInterval, TimeUnit tickTimeUnit) {
 
-    return new ChronometerBuilder(samples, durationUnit, tickInterval, tickTimeUnit, Clocks.NANO);
+    return new ChronometerBuilder(samples, durationUnit, tickInterval, tickTimeUnit, Clocks.EPOCH);
   }
 
   public static ChronometerBuilder buildChronometer (TimeUnit durationUnit, long tickInterval, TimeUnit tickTimeUnit, Clocks clocks) {

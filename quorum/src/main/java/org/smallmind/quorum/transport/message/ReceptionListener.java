@@ -36,38 +36,20 @@ import javax.jms.Queue;
 import javax.jms.QueueConnection;
 import javax.jms.QueueReceiver;
 import javax.jms.QueueSession;
-import org.smallmind.instrument.Chronometer;
+import org.smallmind.instrument.ChronometerInstrument;
+import org.smallmind.instrument.InstrumentationManager;
 import org.smallmind.instrument.MetricProperty;
-import org.smallmind.instrument.MetricRegistry;
-import org.smallmind.instrument.MetricRegistryFactory;
-import org.smallmind.instrument.Metrics;
-import org.smallmind.quorum.transport.Transport;
 import org.smallmind.quorum.transport.TransportManager;
 import org.smallmind.quorum.transport.instrument.MetricEvent;
 import org.smallmind.scribe.pen.LoggerManager;
 
 public class ReceptionListener implements MessageListener {
 
-  private static final Transport TRANSPORT;
-  private static final MetricRegistry METRIC_REGISTRY;
-
   private final AtomicBoolean closed = new AtomicBoolean(false);
   private final QueueConnection requestConnection;
   private final QueueSession requestSession;
   private final QueueReceiver requestReceiver;
   private final SynchronousQueue<Message> messageRendezvous;
-
-  static {
-
-    if (((TRANSPORT = TransportManager.getTransport()) == null) || (!TRANSPORT.getMetricConfiguration().isInstrumented())) {
-      METRIC_REGISTRY = null;
-    }
-    else {
-      if ((METRIC_REGISTRY = MetricRegistryFactory.getMetricRegistry()) == null) {
-        throw new ExceptionInInitializerError("No MetricRegistry instance has been registered with the MetricRegistryFactory");
-      }
-    }
-  }
 
   public ReceptionListener (QueueConnection requestConnection, Queue requestQueue, AcknowledgeMode acknowledgeMode, SynchronousQueue<Message> messageRendezvous)
     throws JMSException {
@@ -94,27 +76,22 @@ public class ReceptionListener implements MessageListener {
   }
 
   @Override
-  public synchronized void onMessage (Message message) {
-
-    boolean success;
+  public synchronized void onMessage (final Message message) {
 
     try {
+      InstrumentationManager.execute(new ChronometerInstrument(TransportManager.getTransport(), new MetricProperty("event", MetricEvent.ACQUIRE_WORKER.getDisplay())) {
 
-      Chronometer rendezvousChronometer = null;
-      long rendezvousStart = 0;
+        @Override
+        public void withChronometer ()
+          throws InterruptedException {
 
-      if (METRIC_REGISTRY != null) {
-        rendezvousChronometer = METRIC_REGISTRY.ensure(Metrics.buildChronometer(TRANSPORT.getMetricConfiguration().getChronometerSamples(), TimeUnit.MILLISECONDS, TRANSPORT.getMetricConfiguration().getTickInterval(), TRANSPORT.getMetricConfiguration().getTickTimeUnit()), TRANSPORT.getMetricConfiguration().getMetricDomain().getDomain(), new MetricProperty("event", MetricEvent.ACQUIRE_WORKER.getDisplay()));
-        rendezvousStart = System.currentTimeMillis();
-      }
+          boolean success;
 
-      do {
-        success = messageRendezvous.offer(message, 1, TimeUnit.SECONDS);
-      } while ((!closed.get()) && (!success));
-
-      if (METRIC_REGISTRY != null) {
-        rendezvousChronometer.update(System.currentTimeMillis() - rendezvousStart, TimeUnit.MILLISECONDS);
-      }
+          do {
+            success = messageRendezvous.offer(message, 1, TimeUnit.SECONDS);
+          } while ((!closed.get()) && (!success));
+        }
+      });
     }
     catch (Exception exception) {
       LoggerManager.getLogger(ReceptionListener.class).error(exception);

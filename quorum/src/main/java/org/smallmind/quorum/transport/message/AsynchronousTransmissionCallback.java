@@ -29,17 +29,19 @@ package org.smallmind.quorum.transport.message;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicReference;
 import javax.jms.Message;
-import org.smallmind.quorum.transport.TransportException;
+import org.smallmind.quorum.transport.TransportTimeoutException;
 
 public class AsynchronousTransmissionCallback implements TransmissionCallback {
 
   private final CountDownLatch resultLatch = new CountDownLatch(1);
   private final AtomicReference<Message> responseMessageRef = new AtomicReference<Message>();
   private final MessageStrategy messageStrategy;
+  private final long timeoutSeconds;
 
-  public AsynchronousTransmissionCallback (MessageStrategy messageStrategy) {
+  public AsynchronousTransmissionCallback (MessageStrategy messageStrategy, long timeoutSeconds) {
 
     this.messageStrategy = messageStrategy;
+    this.timeoutSeconds = timeoutSeconds;
   }
 
   @Override
@@ -57,7 +59,7 @@ public class AsynchronousTransmissionCallback implements TransmissionCallback {
     resultLatch.await();
 
     if ((responseMessage = responseMessageRef.get()) == null) {
-      throw new TransportException("Timeout exceeded while waiting for a response");
+      throw new TransportTimeoutException("The timeout(%d) seconds was exceeded while waiting for a response", timeoutSeconds);
     }
 
     if (responseMessage.getBooleanProperty(MessageProperty.EXCEPTION.getKey())) {

@@ -57,7 +57,7 @@ public class ExponentiallyWeightedMovingAverage {
 
   private ExponentiallyWeightedMovingAverage (long tickInterval, TimeUnit tickTimeUnit, int minutes) {
 
-    alpha = 1 - Math.exp(-(tickInterval / TimeUtilities.convert(minutes, TimeUnit.MINUTES, tickTimeUnit)));
+    alpha = 1 - Math.exp(-(tickInterval / TimeUtilities.convertToDouble(minutes, TimeUnit.MINUTES, tickTimeUnit)));
     intervalInNanos = tickTimeUnit.toNanos(tickInterval);
   }
 

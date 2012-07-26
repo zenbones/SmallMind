@@ -26,27 +26,10 @@
  */
 package org.smallmind.quorum.transport;
 
-import org.smallmind.nutsnbolts.lang.FormattedException;
-
-public class MissingInvocationException extends FormattedException {
-
-  public MissingInvocationException () {
-
-    super();
-  }
+public class MissingInvocationException extends TransportException {
 
   public MissingInvocationException (String message, Object... args) {
 
     super(message, args);
-  }
-
-  public MissingInvocationException (Throwable throwable, String message, Object... args) {
-
-    super(throwable, message, args);
-  }
-
-  public MissingInvocationException (Throwable throwable) {
-
-    super(throwable);
   }
 }

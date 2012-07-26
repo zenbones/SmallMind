@@ -26,6 +26,7 @@
  */
 package org.smallmind.instrument.jmx;
 
+import java.util.concurrent.TimeUnit;
 import javax.management.StandardMBean;
 import org.smallmind.instrument.Chronometer;
 
@@ -47,13 +48,13 @@ public class ChronometerMonitor extends StandardMBean implements ChronometerMoni
   }
 
   @Override
-  public String getLatencyTimeUnit () {
+  public TimeUnit getLatencyTimeUnit () {
 
     return chronometer.getLatencyTimeUnit();
   }
 
   @Override
-  public String getRateTimeUnit () {
+  public TimeUnit getRateTimeUnit () {
 
     return chronometer.getRateTimeUnit();
   }

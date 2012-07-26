@@ -28,6 +28,7 @@ package org.smallmind.quorum.transport;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.util.Arrays;
 import java.util.HashMap;
 import org.smallmind.nutsnbolts.context.Context;
 import org.smallmind.nutsnbolts.context.ContextFactory;
@@ -37,8 +38,9 @@ public class MethodInvoker {
   private static final Class[] EMPTY_SIGNATURE = new Class[0];
   private static final Class[] OBJECT_SIGNATURE = {Object.class};
 
-  private Object targetObject;
-  private HashMap<FauxMethod, Method> methodMap;
+  private final HashMap<FauxMethod, Method> methodMap;
+  private final Class[] proxyInterfaces;
+  private final Object targetObject;
 
   public MethodInvoker (Object targetObject, Class[] proxyInterfaces)
     throws NoSuchMethodException {
@@ -49,6 +51,7 @@ public class MethodInvoker {
     Method equalsMethod;
 
     this.targetObject = targetObject;
+    this.proxyInterfaces = proxyInterfaces;
 
     methodMap = new HashMap<FauxMethod, Method>();
     for (Class proxyInterface : proxyInterfaces) {
@@ -74,7 +77,7 @@ public class MethodInvoker {
     Method serviceMethod;
 
     if ((serviceMethod = methodMap.get(invocationSignal.getFauxMethod())) == null) {
-      throw new MissingInvocationException();
+      throw new MissingInvocationException("No method(%s) available in proxy interfaces(%s)", invocationSignal.getFauxMethod().getName(), Arrays.toString(proxyInterfaces));
     }
 
     if (invocationSignal.containsContexts()) {

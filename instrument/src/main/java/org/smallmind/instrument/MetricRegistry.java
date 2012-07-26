@@ -60,25 +60,25 @@ public class MetricRegistry {
 
   public void register () {
 
-    MetricRegistryFactory.register(this);
+    InstrumentationManager.register(this);
   }
 
-  public <M extends Metric> M ensure (Metrics.MetricBuilder<M> metricBuilder, String domain, MetricProperty... properties)
+  public <M extends Metric> M instrument (Metrics.MetricBuilder<M> builder, String domain, MetricProperty... properties)
     throws MalformedObjectNameException, InstanceAlreadyExistsException, MBeanRegistrationException, NotCompliantMBeanException {
 
     M metric;
-    MetricKey metricKey = new MetricKey(metricBuilder.getType(), domain, properties);
+    MetricKey metricKey = new MetricKey(builder.getType(), domain, properties);
 
-    if ((metric = metricBuilder.getMetricClass().cast(metricMap.get(metricKey))) == null) {
+    if ((metric = builder.getMetricClass().cast(metricMap.get(metricKey))) == null) {
       synchronized (metricMap) {
-        if ((metric = metricBuilder.getMetricClass().cast(metricMap.get(metricKey))) == null) {
-          metricMap.put(metricKey, metric = metricBuilder.construct());
+        if ((metric = builder.getMetricClass().cast(metricMap.get(metricKey))) == null) {
+          metricMap.put(metricKey, metric = builder.construct());
 
           if (server != null) {
 
             DynamicMBean mBean;
 
-            switch (metricBuilder.getType()) {
+            switch (builder.getType()) {
               case REGISTER:
                 mBean = new RegisterMonitor((Register)metric);
                 break;
@@ -92,10 +92,10 @@ public class MetricRegistry {
                 mBean = new ChronometerMonitor((Chronometer)metric);
                 break;
               default:
-                throw new UnknownSwitchCaseException(metricBuilder.getType().name());
+                throw new UnknownSwitchCaseException(builder.getType().name());
             }
 
-            server.registerMBean(mBean, jmxNamingPolicy.createObjectName(metricBuilder.getType(), domain, properties));
+            server.registerMBean(mBean, jmxNamingPolicy.createObjectName(builder.getType(), domain, properties));
           }
         }
       }

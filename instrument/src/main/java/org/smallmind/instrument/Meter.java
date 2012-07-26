@@ -34,7 +34,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 import org.smallmind.nutsnbolts.time.TimeUtilities;
 
-public class Meter implements Metric, Metered, Stoppable {
+public class Meter implements Metric, Metered, Clocked, Stoppable {
 
   private static final ScheduledExecutorService SCHEDULED_EXECUTOR = Executors.newScheduledThreadPool(2, new ThreadFactory() {
 
@@ -60,12 +60,12 @@ public class Meter implements Metric, Metered, Stoppable {
 
   public Meter () {
 
-    this(5, TimeUnit.SECONDS, Clocks.NANO.getClock());
+    this(5, TimeUnit.SECONDS, Clocks.EPOCH.getClock());
   }
 
   public Meter (long tickInterval, TimeUnit tickTimeUnit) {
 
-    this(tickInterval, tickTimeUnit, Clocks.NANO.getClock());
+    this(tickInterval, tickTimeUnit, Clocks.EPOCH.getClock());
   }
 
   Meter (long tickInterval, TimeUnit tickTimeUnit, Clock clock) {
@@ -73,7 +73,7 @@ public class Meter implements Metric, Metered, Stoppable {
     this.tickTimeUnit = tickTimeUnit;
     this.clock = clock;
 
-    startTime = clock.getTime();
+    startTime = clock.getTimeMilliseconds();
 
     m1Rate = ExponentiallyWeightedMovingAverage.lastOneMinute(tickInterval, tickTimeUnit);
     m5Rate = ExponentiallyWeightedMovingAverage.lastFiveMinutes(tickInterval, tickTimeUnit);
@@ -105,9 +105,15 @@ public class Meter implements Metric, Metered, Stoppable {
   }
 
   @Override
-  public String getRateTimeUnit () {
+  public Clock getClock () {
 
-    return tickTimeUnit.name();
+    return clock;
+  }
+
+  @Override
+  public TimeUnit getRateTimeUnit () {
+
+    return tickTimeUnit;
   }
 
   @Override
@@ -145,7 +151,7 @@ public class Meter implements Metric, Metered, Stoppable {
     }
     else {
 
-      return (((double)currentCount) / (clock.getTime() - startTime)) * TimeUtilities.convert(1, tickTimeUnit, TimeUnit.MILLISECONDS);
+      return (((double)currentCount) / (clock.getTimeMilliseconds() - startTime)) * TimeUtilities.convertToDouble(1, tickTimeUnit, TimeUnit.MILLISECONDS);
     }
   }
 

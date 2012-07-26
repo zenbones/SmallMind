@@ -30,7 +30,12 @@ import java.util.concurrent.TimeUnit;
 
 public class TimeUtilities {
 
-  public static double convert (long fromTime, TimeUnit fromTimeUnit, TimeUnit toTimeUnit) {
+  public static long convertToLong (long fromTime, TimeUnit fromTimeUnit, TimeUnit toTimeUnit) {
+
+    return (fromTimeUnit.ordinal() >= toTimeUnit.ordinal()) ? toTimeUnit.convert(fromTime, fromTimeUnit) : 0;
+  }
+
+  public static double convertToDouble (long fromTime, TimeUnit fromTimeUnit, TimeUnit toTimeUnit) {
 
     return (fromTimeUnit.ordinal() >= toTimeUnit.ordinal()) ? (double)toTimeUnit.convert(fromTime, fromTimeUnit) : ((double)fromTime) / fromTimeUnit.convert(1, toTimeUnit);
   }

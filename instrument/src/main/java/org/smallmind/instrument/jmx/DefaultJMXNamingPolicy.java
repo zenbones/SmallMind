@@ -39,8 +39,10 @@ public class DefaultJMXNamingPolicy implements JMXNamingPolicy {
 
     StringBuilder nameBuilder = new StringBuilder(domain).append(':');
 
-    for (MetricProperty property : properties) {
-      nameBuilder.append(property.getKey()).append('=').append(property.getValue()).append(',');
+    if (properties != null) {
+      for (MetricProperty property : properties) {
+        nameBuilder.append(property.getKey()).append('=').append(property.getValue()).append(',');
+      }
     }
 
     return new ObjectName(nameBuilder.append(JMXNamingPolicy.class.getPackage().getName()).append(".type=").append(type.name()).toString());

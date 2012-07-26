@@ -45,5 +45,5 @@ public @interface MeterMetric {
 
   public abstract TimeUnit tickTimeUnit () default TimeUnit.SECONDS;
 
-  public abstract Clocks clocks () default Clocks.NANO;
+  public abstract Clocks clocks () default Clocks.EPOCH;
 }

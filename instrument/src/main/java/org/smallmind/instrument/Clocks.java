@@ -28,7 +28,7 @@ package org.smallmind.instrument;
 
 public enum Clocks {
 
-  NANO(new NanoClock()), CPU_TIME(new CpuTimeClock());
+  EPOCH(new EpochTime()), CPU(new CpuTimeClock());
 
   private Clock clock;
 

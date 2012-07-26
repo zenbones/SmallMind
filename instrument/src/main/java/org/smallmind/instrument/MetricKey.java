@@ -59,7 +59,7 @@ public class MetricKey {
   @Override
   public int hashCode () {
 
-    return type.hashCode() ^ domain.hashCode() ^ Arrays.hashCode(properties);
+    return type.hashCode() ^ domain.hashCode() ^ ((properties == null) ? 0 : Arrays.hashCode(properties));
   }
 
   @Override

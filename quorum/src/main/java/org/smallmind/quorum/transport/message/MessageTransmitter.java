@@ -38,13 +38,10 @@ import javax.jms.Queue;
 import javax.jms.QueueConnection;
 import javax.jms.Topic;
 import javax.jms.TopicConnection;
-import org.smallmind.instrument.Chronometer;
+import org.smallmind.instrument.ChronometerInstrumentAndReturn;
+import org.smallmind.instrument.InstrumentationManager;
 import org.smallmind.instrument.MetricProperty;
-import org.smallmind.instrument.MetricRegistry;
-import org.smallmind.instrument.MetricRegistryFactory;
-import org.smallmind.instrument.Metrics;
 import org.smallmind.quorum.transport.InvocationSignal;
-import org.smallmind.quorum.transport.Transport;
 import org.smallmind.quorum.transport.TransportException;
 import org.smallmind.quorum.transport.TransportManager;
 import org.smallmind.quorum.transport.instrument.MetricEvent;
@@ -53,8 +50,6 @@ import org.smallmind.scribe.pen.LoggerManager;
 public class MessageTransmitter {
 
   private static final Random RANDOM = new SecureRandom();
-  private static final Transport TRANSPORT;
-  private static final MetricRegistry METRIC_REGISTRY;
 
   private final AtomicBoolean closed = new AtomicBoolean(false);
   private final MessageStrategy messageStrategy;
@@ -63,18 +58,7 @@ public class MessageTransmitter {
   private final TransmissionListener[] transmissionListeners;
   private final QueueConnection[] requestConnections;
   private final String instanceId = UUID.randomUUID().toString();
-
-  static {
-
-    if (((TRANSPORT = TransportManager.getTransport()) == null) || (!TRANSPORT.getMetricConfiguration().isInstrumented())) {
-      METRIC_REGISTRY = null;
-    }
-    else {
-      if ((METRIC_REGISTRY = MetricRegistryFactory.getMetricRegistry()) == null) {
-        throw new ExceptionInInitializerError("No MetricRegistry instance has been registered with the MetricRegistryFactory");
-      }
-    }
-  }
+  private final long timeoutSeconds;
 
   public MessageTransmitter (TransportManagedObjects requestManagedObjects, TransportManagedObjects responseManagedObjects, MessagePolicy messagePolicy, MessageStrategy messageStrategy, int clusterSize, int concurrencyLimit, int timeoutSeconds)
     throws JMSException, TransportException {
@@ -82,6 +66,7 @@ public class MessageTransmitter {
     int requestIndex;
 
     this.messageStrategy = messageStrategy;
+    this.timeoutSeconds = timeoutSeconds;
 
     callbackMap = new SelfDestructiveMap<String, TransmissionCallback>(timeoutSeconds);
 
@@ -111,54 +96,56 @@ public class MessageTransmitter {
     return instanceId;
   }
 
-  public TransmissionCallback sendMessage (InvocationSignal invocationSignal, String serviceSelector)
+  public TransmissionCallback sendMessage (final InvocationSignal invocationSignal, final String serviceSelector)
     throws Exception {
 
-    QueueOperator queueOperator;
-    Chronometer operatorChronometer = null;
-    long operatorStart = 0;
+    final QueueOperator queueOperator;
 
-    if (METRIC_REGISTRY != null) {
-      operatorChronometer = METRIC_REGISTRY.ensure(Metrics.buildChronometer(TRANSPORT.getMetricConfiguration().getChronometerSamples(), TimeUnit.MILLISECONDS, TRANSPORT.getMetricConfiguration().getTickInterval(), TRANSPORT.getMetricConfiguration().getTickTimeUnit()), TRANSPORT.getMetricConfiguration().getMetricDomain().getDomain(), new MetricProperty("event", MetricEvent.ACQUIRE_QUEUE.getDisplay()));
-      operatorStart = System.currentTimeMillis();
-    }
+    queueOperator = InstrumentationManager.execute(new ChronometerInstrumentAndReturn<QueueOperator>(TransportManager.getTransport(), new MetricProperty("event", MetricEvent.ACQUIRE_QUEUE.getDisplay())) {
 
-    do {
-      queueOperator = operatorQueue.poll(1, TimeUnit.SECONDS);
-    } while ((!closed.get()) && (queueOperator == null));
+      @Override
+      public QueueOperator withChronometer ()
+        throws TransportException, InterruptedException {
 
-    if (queueOperator == null) {
-      throw new TransportException("Message transmission has been closed");
-    }
+        QueueOperator queueOperator;
 
-    if (METRIC_REGISTRY != null) {
-      operatorChronometer.update(System.currentTimeMillis() - operatorStart, TimeUnit.MILLISECONDS);
-    }
+        do {
+          queueOperator = operatorQueue.poll(1, TimeUnit.SECONDS);
+        } while ((!closed.get()) && (queueOperator == null));
+
+        if (queueOperator == null) {
+          throw new TransportException("Message transmission has been closed");
+        }
+
+        return queueOperator;
+      }
+    });
 
     try {
 
       Message requestMessage;
       AsynchronousTransmissionCallback asynchronousCallback;
       SynchronousTransmissionCallback previousCallback;
-      Chronometer serializationChronometer = null;
-      long serializationStart = 0;
 
-      if (METRIC_REGISTRY != null) {
-        serializationChronometer = METRIC_REGISTRY.ensure(Metrics.buildChronometer(TRANSPORT.getMetricConfiguration().getChronometerSamples(), TimeUnit.MILLISECONDS, TRANSPORT.getMetricConfiguration().getTickInterval(), TRANSPORT.getMetricConfiguration().getTickTimeUnit()), TRANSPORT.getMetricConfiguration().getMetricDomain().getDomain(), new MetricProperty("event", MetricEvent.CONSTRUCT_MESSAGE.getDisplay()));
-        serializationStart = System.currentTimeMillis();
-      }
+      requestMessage = InstrumentationManager.execute(new ChronometerInstrumentAndReturn<Message>(TransportManager.getTransport(), new MetricProperty("event", MetricEvent.CONSTRUCT_MESSAGE.getDisplay())) {
 
-      requestMessage = messageStrategy.wrapInMessage(queueOperator.getRequestSession(), invocationSignal);
+        @Override
+        public Message withChronometer ()
+          throws Exception {
 
-      requestMessage.setStringProperty(MessageProperty.INSTANCE.getKey(), instanceId);
-      requestMessage.setStringProperty(MessageProperty.SERVICE.getKey(), serviceSelector);
+          Message requestMessage;
 
-      if (METRIC_REGISTRY != null) {
-        serializationChronometer.update(System.currentTimeMillis() - serializationStart, TimeUnit.MILLISECONDS);
-      }
+          requestMessage = messageStrategy.wrapInMessage(queueOperator.getRequestSession(), invocationSignal);
+
+          requestMessage.setStringProperty(MessageProperty.INSTANCE.getKey(), instanceId);
+          requestMessage.setStringProperty(MessageProperty.SERVICE.getKey(), serviceSelector);
+
+          return requestMessage;
+        }
+      });
 
       queueOperator.send(requestMessage);
-      if ((previousCallback = (SynchronousTransmissionCallback)callbackMap.putIfAbsent(requestMessage.getJMSMessageID(), asynchronousCallback = new AsynchronousTransmissionCallback(messageStrategy))) != null) {
+      if ((previousCallback = (SynchronousTransmissionCallback)callbackMap.putIfAbsent(requestMessage.getJMSMessageID(), asynchronousCallback = new AsynchronousTransmissionCallback(messageStrategy, timeoutSeconds))) != null) {
 
         return previousCallback;
       }

@@ -26,10 +26,11 @@
  */
 package org.smallmind.persistence;
 
+import org.smallmind.instrument.config.ConfigurationProvider;
 import org.smallmind.instrument.config.MetricConfiguration;
 import org.smallmind.nutsnbolts.reflection.type.converter.StringConverterFactory;
 
-public class Persistence {
+public class Persistence implements ConfigurationProvider {
 
   private MetricConfiguration metricConfiguration;
   private StringConverterFactory stringConverterFactory;

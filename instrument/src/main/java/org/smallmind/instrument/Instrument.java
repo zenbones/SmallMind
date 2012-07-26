@@ -26,19 +26,20 @@
  */
 package org.smallmind.instrument;
 
-import org.smallmind.nutsnbolts.lang.StaticManager;
+public abstract class Instrument<M extends Metric> {
 
-public class MetricRegistryFactory implements StaticManager {
+  private InstrumentationArguments<M> arguments;
 
-  private static InheritableThreadLocal<MetricRegistry> METRIC_REGISTRY_LOCAL = new InheritableThreadLocal<MetricRegistry>();
+  public Instrument (InstrumentationArguments<M> arguments) {
 
-  public static void register (MetricRegistry metricRegistry) {
-
-    METRIC_REGISTRY_LOCAL.set(metricRegistry);
+    this.arguments = arguments;
   }
 
-  public static MetricRegistry getMetricRegistry () {
+  public InstrumentationArguments<M> getArguments () {
 
-    return METRIC_REGISTRY_LOCAL.get();
+    return arguments;
   }
+
+  public abstract void with (M metric)
+    throws Exception;
 }

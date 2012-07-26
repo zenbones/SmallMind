@@ -27,10 +27,10 @@
 package org.smallmind.instrument.aop;
 
 import org.aspectj.lang.ProceedingJoinPoint;
+import org.smallmind.instrument.InstrumentationManager;
 import org.smallmind.instrument.Metric;
 import org.smallmind.instrument.MetricProperty;
 import org.smallmind.instrument.MetricRegistry;
-import org.smallmind.instrument.MetricRegistryFactory;
 import org.smallmind.instrument.Metrics;
 import org.smallmind.nutsnbolts.reflection.aop.AOPUtility;
 
@@ -40,7 +40,7 @@ public abstract class MetricAspect {
 
   static {
 
-    if ((METRIC_REGISTRY = MetricRegistryFactory.getMetricRegistry()) == null) {
+    if ((METRIC_REGISTRY = InstrumentationManager.getMetricRegistry()) == null) {
       throw new ExceptionInInitializerError("No MetricRegistry instance has been registered with the MetricRegistryFactory");
     }
   }
@@ -57,7 +57,7 @@ public abstract class MetricAspect {
       properties[index] = new MetricProperty(jmx.properties()[index].key(), jmx.properties()[index].constant() ? jmx.properties()[index].value() : AOPUtility.getParameterValue(thisJoinPoint, jmx.properties()[index].value(), false).toString());
     }
 
-    metric = METRIC_REGISTRY.ensure(metricBuilder, jmx.domain(), properties);
+    metric = METRIC_REGISTRY.instrument(metricBuilder, jmx.domain(), properties);
     MetricSupplier.push(supplierKey = (alias.length() == 0) ? null : alias, metric);
 
     try {

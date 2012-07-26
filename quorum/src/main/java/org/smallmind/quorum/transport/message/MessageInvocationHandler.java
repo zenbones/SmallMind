@@ -28,38 +28,19 @@ package org.smallmind.quorum.transport.message;
 
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
-import java.util.concurrent.TimeUnit;
-import org.smallmind.instrument.Chronometer;
+import org.smallmind.instrument.ChronometerInstrumentAndReturn;
+import org.smallmind.instrument.InstrumentationManager;
 import org.smallmind.instrument.MetricProperty;
-import org.smallmind.instrument.MetricRegistry;
-import org.smallmind.instrument.MetricRegistryFactory;
-import org.smallmind.instrument.Metrics;
 import org.smallmind.nutsnbolts.context.ContextFactory;
 import org.smallmind.quorum.transport.FauxMethod;
 import org.smallmind.quorum.transport.InvocationSignal;
-import org.smallmind.quorum.transport.Transport;
 import org.smallmind.quorum.transport.TransportManager;
 import org.smallmind.quorum.transport.instrument.MetricEvent;
 
 public class MessageInvocationHandler implements InvocationHandler {
 
-  private static final Transport TRANSPORT;
-  private static final MetricRegistry METRIC_REGISTRY;
-
   private MessageTransmitter messageTransmitter;
   private Class serviceInterface;
-
-  static {
-
-    if (((TRANSPORT = TransportManager.getTransport()) == null) || (!TRANSPORT.getMetricConfiguration().isInstrumented())) {
-      METRIC_REGISTRY = null;
-    }
-    else {
-      if ((METRIC_REGISTRY = MetricRegistryFactory.getMetricRegistry()) == null) {
-        throw new ExceptionInInitializerError("No MetricRegistry instance has been registered with the MetricRegistryFactory");
-      }
-    }
-  }
 
   public MessageInvocationHandler (MessageTransmitter messageTransmitter, Class serviceInterface) {
 
@@ -67,24 +48,17 @@ public class MessageInvocationHandler implements InvocationHandler {
     this.serviceInterface = serviceInterface;
   }
 
-  public Object invoke (Object proxy, Method method, Object[] args)
+  public Object invoke (Object proxy, final Method method, final Object[] args)
     throws Throwable {
 
-    TransmissionCallback callback;
-    Chronometer invocationChronometer = null;
-    long invocationStart = 0;
+    return InstrumentationManager.execute(new ChronometerInstrumentAndReturn<Object>(TransportManager.getTransport(), new MetricProperty("event", MetricEvent.INVOCATION.getDisplay()), new MetricProperty("service", serviceInterface.getSimpleName()), new MetricProperty("method", method.getName())) {
 
-    if (METRIC_REGISTRY != null) {
-      invocationChronometer = METRIC_REGISTRY.ensure(Metrics.buildChronometer(TRANSPORT.getMetricConfiguration().getChronometerSamples(), TimeUnit.MILLISECONDS, TRANSPORT.getMetricConfiguration().getTickInterval(), TRANSPORT.getMetricConfiguration().getTickTimeUnit()), TRANSPORT.getMetricConfiguration().getMetricDomain().getDomain(), new MetricProperty("event", MetricEvent.INVOCATION.getDisplay()), new MetricProperty("service", serviceInterface.getSimpleName()), new MetricProperty("method", method.getName()));
-      invocationStart = System.currentTimeMillis();
-    }
+      @Override
+      public Object withChronometer ()
+        throws Exception {
 
-    callback = messageTransmitter.sendMessage(new InvocationSignal(ContextFactory.getExpectedContexts(serviceInterface), new FauxMethod(method), args), serviceInterface.getName());
-
-    if (METRIC_REGISTRY != null) {
-      invocationChronometer.update(System.currentTimeMillis() - invocationStart, TimeUnit.MILLISECONDS);
-    }
-
-    return callback.getResult();
+        return messageTransmitter.sendMessage(new InvocationSignal(ContextFactory.getExpectedContexts(serviceInterface), new FauxMethod(method), args), serviceInterface.getName()).getResult();
+      }
+    });
   }
 }

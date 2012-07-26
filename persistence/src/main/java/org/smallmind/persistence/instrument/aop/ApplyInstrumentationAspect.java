@@ -33,9 +33,9 @@ import org.aspectj.lang.annotation.Around;
 import org.aspectj.lang.annotation.Aspect;
 import org.aspectj.lang.reflect.MethodSignature;
 import org.smallmind.instrument.Clocks;
+import org.smallmind.instrument.InstrumentationManager;
 import org.smallmind.instrument.MetricProperty;
 import org.smallmind.instrument.MetricRegistry;
-import org.smallmind.instrument.MetricRegistryFactory;
 import org.smallmind.instrument.Metrics;
 import org.smallmind.persistence.Persistence;
 import org.smallmind.persistence.PersistenceManager;
@@ -53,7 +53,7 @@ public class ApplyInstrumentationAspect {
       METRIC_REGISTRY = null;
     }
     else {
-      if ((METRIC_REGISTRY = MetricRegistryFactory.getMetricRegistry()) == null) {
+      if ((METRIC_REGISTRY = InstrumentationManager.getMetricRegistry()) == null) {
         throw new ExceptionInInitializerError("No MetricRegistry instance has been registered with the MetricRegistryFactory");
       }
     }
@@ -81,7 +81,7 @@ public class ApplyInstrumentationAspect {
         stop = System.currentTimeMillis();
         executedMethod = ((MethodSignature)thisJoinPoint.getSignature()).getMethod();
 
-        METRIC_REGISTRY.ensure(Metrics.buildChronometer(PERSISTENCE.getMetricConfiguration().getChronometerSamples(), TimeUnit.MILLISECONDS, PERSISTENCE.getMetricConfiguration().getTickInterval(), PERSISTENCE.getMetricConfiguration().getTickTimeUnit(), Clocks.NANO), PERSISTENCE.getMetricConfiguration().getMetricDomain().getDomain(), new MetricProperty("durable", ormDao.getManagedClass().getSimpleName()), new MetricProperty("method", executedMethod.getName()), new MetricProperty("source", ormDao.getMetricSource())).update(stop - start, TimeUnit.MILLISECONDS);
+        METRIC_REGISTRY.instrument(Metrics.buildChronometer(PERSISTENCE.getMetricConfiguration().getChronometerSamples(), TimeUnit.MILLISECONDS, PERSISTENCE.getMetricConfiguration().getTickInterval(), PERSISTENCE.getMetricConfiguration().getTickTimeUnit(), Clocks.EPOCH), PERSISTENCE.getMetricConfiguration().getMetricDomain().getDomain(), new MetricProperty("durable", ormDao.getManagedClass().getSimpleName()), new MetricProperty("method", executedMethod.getName()), new MetricProperty("source", ormDao.getMetricSource())).update(stop - start);
       }
     }
   }

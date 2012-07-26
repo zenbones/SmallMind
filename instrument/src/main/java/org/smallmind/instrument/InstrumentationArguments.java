@@ -24,31 +24,33 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.instrument.aop;
+package org.smallmind.instrument;
 
-import java.lang.annotation.ElementType;
-import java.lang.annotation.Retention;
-import java.lang.annotation.RetentionPolicy;
-import java.lang.annotation.Target;
-import java.util.concurrent.TimeUnit;
-import org.smallmind.instrument.Clocks;
-import org.smallmind.instrument.Samples;
+public class InstrumentationArguments<M extends Metric> {
 
-@Target({ElementType.CONSTRUCTOR, ElementType.METHOD})
-@Retention(RetentionPolicy.RUNTIME)
-public @interface ChronometerMetric {
+  private Metrics.MetricBuilder<M> builder;
+  private MetricProperty[] properties;
+  private String domain;
 
-  public abstract JMX value ();
+  public InstrumentationArguments (Metrics.MetricBuilder<M> builder, String domain, MetricProperty... properties) {
 
-  public abstract String alias () default "";
+    this.builder = builder;
+    this.domain = domain;
+    this.properties = properties;
+  }
 
-  public abstract Samples samples () default Samples.BIASED;
+  public Metrics.MetricBuilder<M> getBuilder () {
 
-  public abstract TimeUnit durationUnit () default TimeUnit.MILLISECONDS;
+    return builder;
+  }
 
-  public abstract long tickInterval () default 10;
+  public String getDomain () {
 
-  public abstract TimeUnit tickTimeUnit () default TimeUnit.SECONDS;
+    return domain;
+  }
 
-  public abstract Clocks clocks () default Clocks.EPOCH;
+  public MetricProperty[] getProperties () {
+
+    return properties;
+  }
 }

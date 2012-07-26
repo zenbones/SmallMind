@@ -28,9 +28,9 @@ package org.smallmind.instrument;
 
 public abstract class Clock {
 
-  public abstract long getTick ();
+  public abstract long getTimeNanoseconds ();
 
-  public long getTime () {
+  public long getTimeMilliseconds () {
 
     return System.currentTimeMillis();
   }
