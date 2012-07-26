@@ -26,7 +26,7 @@
  */
 package org.smallmind.instrument;
 
-public class EpochTime extends Clock {
+public class EpochClock extends Clock {
 
   @Override
   public long getTimeNanoseconds () {

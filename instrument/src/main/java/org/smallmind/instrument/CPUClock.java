@@ -29,7 +29,7 @@ package org.smallmind.instrument;
 import java.lang.management.ManagementFactory;
 import java.lang.management.ThreadMXBean;
 
-public class CpuTimeClock extends Clock {
+public class CpuClock extends Clock {
 
   private static final ThreadMXBean THREAD_MX_BEAN = ManagementFactory.getThreadMXBean();
 
