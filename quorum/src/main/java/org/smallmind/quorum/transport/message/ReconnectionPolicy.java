@@ -1,6 +1,5 @@
 package org.smallmind.quorum.transport.message;
 
-
 public class ReconnectionPolicy {
 
   private long reconnectionDelayMilliseconds = 300;
