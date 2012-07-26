@@ -41,13 +41,12 @@ public class ExponentiallyDecayingSample implements Sample {
 
   private static final long RESCALE_THRESHOLD = TimeUnit.HOURS.toMillis(1);
 
-  private volatile long startTime;
-
   private final ReentrantReadWriteLock lock;
   private final ConcurrentSkipListMap<Double, Long> values;
   private final Clock clock;
   private final AtomicLong count = new AtomicLong(0);
   private final AtomicLong nextScaleTime = new AtomicLong(0);
+  private final AtomicLong startTime = new AtomicLong(currentTimeInSeconds());
   private final double alpha;
   private final int reservoirSize;
 
@@ -64,7 +63,6 @@ public class ExponentiallyDecayingSample implements Sample {
     this.clock = clock;
 
     values = new ConcurrentSkipListMap<Double, Long>();
-    startTime = currentTimeInSeconds();
     nextScaleTime.set(clock.getTime() + RESCALE_THRESHOLD);
 
     lock = new ReentrantReadWriteLock();
@@ -83,7 +81,7 @@ public class ExponentiallyDecayingSample implements Sample {
     try {
       values.clear();
       count.set(0);
-      startTime = currentTimeInSeconds();
+      startTime.set(currentTimeInSeconds());
       nextScaleTime.set(clock.getTime() + RESCALE_THRESHOLD);
     }
     finally {
@@ -105,7 +103,7 @@ public class ExponentiallyDecayingSample implements Sample {
     lock.readLock().lock();
     try {
 
-      final double priority = weight(currentTimeInSeconds() - startTime) / ThreadLocalRandom.current().nextDouble();
+      final double priority = weight(currentTimeInSeconds() - startTime.get()) / ThreadLocalRandom.current().nextDouble();
       final long newCount = count.incrementAndGet();
 
       if (newCount <= reservoirSize) {
@@ -183,12 +181,14 @@ public class ExponentiallyDecayingSample implements Sample {
     if (nextScaleTime.compareAndSet(next, now + RESCALE_THRESHOLD)) {
       lock.writeLock().lock();
       try {
-        final long oldStartTime = startTime;
-        this.startTime = currentTimeInSeconds();
-        final ArrayList<Double> keys = new ArrayList<Double>(values.keySet());
+
+        ArrayList<Double> keys = new ArrayList<Double>(values.keySet());
+        long newStartTime;
+        long oldStartTime = startTime.getAndSet(newStartTime = currentTimeInSeconds());
+
         for (Double key : keys) {
           final Long value = values.remove(key);
-          values.put(key * Math.exp(-alpha * (startTime - oldStartTime)), value);
+          values.put(key * Math.exp(-alpha * (newStartTime - oldStartTime)), value);
         }
 
         // make sure the counter is in sync with the number of stored samples.
