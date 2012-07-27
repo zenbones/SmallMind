@@ -28,7 +28,6 @@ package org.smallmind.instrument;
 
 import java.util.concurrent.TimeUnit;
 import org.smallmind.instrument.config.ConfigurationProvider;
-import org.smallmind.nutsnbolts.time.TimeUtilities;
 
 public abstract class ChronometerInstrument extends Instrument<Chronometer> {
 
@@ -58,7 +57,7 @@ public abstract class ChronometerInstrument extends Instrument<Chronometer> {
     withChronometer();
 
     if (chronometer != null) {
-      chronometer.update(TimeUtilities.convertToLong(chronometer.getClock().getTimeNanoseconds() - startTime, TimeUnit.NANOSECONDS, chronometer.getLatencyTimeUnit()));
+      chronometer.update(chronometer.getLatencyTimeUnit().convert(chronometer.getClock().getTimeNanoseconds() - startTime, TimeUnit.NANOSECONDS));
     }
   }
 }
