@@ -180,7 +180,10 @@ public class ConnectionFactor implements ExceptionListener {
         }
       }
 
-      if (!success) {
+      if (success) {
+        LoggerManager.getLogger(ConnectionFactor.class).info("Successful reconnection after JMS provider failure");
+      }
+      else {
 
         TransportException transportException = new TransportException("Unable to reconnection within max attempts(%d)", reconnectionPolicy.getReconnectionAttempts());
 
