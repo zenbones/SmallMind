@@ -1,3 +1,29 @@
+/*
+ * Copyright (c) 2007, 2008, 2009, 2010, 2011, 2012 David Berkman
+ * 
+ * This file is part of the SmallMind Code Project.
+ * 
+ * The SmallMind Code Project is free software, you can redistribute
+ * it and/or modify it under the terms of GNU Affero General Public
+ * License as published by the Free Software Foundation, either version 3
+ * of the License, or (at your option) any later version.
+ * 
+ * The SmallMind Code Project is distributed in the hope that it will
+ * be useful, but WITHOUT ANY WARRANTY; without even the implied warranty
+ * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * General Public License for more details.
+ * 
+ * You should have received a copy of the the GNU Affero General Public
+ * License, along with The SmallMind Code Project. If not, see
+ * <http://www.gnu.org/licenses/>.
+ * 
+ * Additional permission under the GNU Affero GPL version 3 section 7
+ * ------------------------------------------------------------------
+ * If you modify this Program, or any covered work, by linking or
+ * combining it with other code, such other code is not for that reason
+ * alone subject to any of the requirements of the GNU Affero GPL
+ * version 3.
+ */
 package org.smallmind.quorum.transport.message;
 
 import java.util.concurrent.ConcurrentHashMap;
@@ -12,7 +38,7 @@ import javax.jms.Session;
 import org.smallmind.quorum.transport.TransportException;
 import org.smallmind.scribe.pen.LoggerManager;
 
-public class ConnectionBroker implements ExceptionListener {
+public class ConnectionFactor implements ExceptionListener {
 
   private final ReentrantReadWriteLock lock = new ReentrantReadWriteLock();
   private final TransportManagedObjects managedObjects;
@@ -24,7 +50,7 @@ public class ConnectionBroker implements ExceptionListener {
 
   private Connection connection;
 
-  public ConnectionBroker (TransportManagedObjects managedObjects, MessagePolicy messagePolicy, ReconnectionPolicy reconnectionPolicy)
+  public ConnectionFactor (TransportManagedObjects managedObjects, MessagePolicy messagePolicy, ReconnectionPolicy reconnectionPolicy)
     throws TransportException, JMSException {
 
     this.managedObjects = managedObjects;
@@ -132,7 +158,7 @@ public class ConnectionBroker implements ExceptionListener {
       boolean success = false;
       int reconnectionCount = 0;
 
-      LoggerManager.getLogger(ConnectionBroker.class).error(jmsException);
+      LoggerManager.getLogger(ConnectionFactor.class).error(jmsException);
 
       while ((!success) && ((reconnectionPolicy.getReconnectionAttempts() < 0) || (reconnectionCount++ < reconnectionPolicy.getReconnectionAttempts()))) {
         try {
@@ -158,7 +184,7 @@ public class ConnectionBroker implements ExceptionListener {
 
         TransportException transportException = new TransportException("Unable to reconnection within max attempts(%d)", reconnectionPolicy.getReconnectionAttempts());
 
-        LoggerManager.getLogger(ConnectionBroker.class).error((lastException != null) ? transportException.initCause(lastException) : transportException);
+        LoggerManager.getLogger(ConnectionFactor.class).error((lastException != null) ? transportException.initCause(lastException) : transportException);
       }
     }
     finally {

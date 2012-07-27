@@ -1,22 +1,22 @@
 /*
  * Copyright (c) 2007, 2008, 2009, 2010, 2011, 2012 David Berkman
- *
+ * 
  * This file is part of the SmallMind Code Project.
- *
+ * 
  * The SmallMind Code Project is free software, you can redistribute
  * it and/or modify it under the terms of GNU Affero General Public
  * License as published by the Free Software Foundation, either version 3
  * of the License, or (at your option) any later version.
- *
+ * 
  * The SmallMind Code Project is distributed in the hope that it will
  * be useful, but WITHOUT ANY WARRANTY; without even the implied warranty
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * General Public License for more details.
- *
+ * 
  * You should have received a copy of the the GNU Affero General Public
  * License, along with The SmallMind Code Project. If not, see
  * <http://www.gnu.org/licenses/>.
- *
+ * 
  * Additional permission under the GNU Affero GPL version 3 section 7
  * ------------------------------------------------------------------
  * If you modify this Program, or any covered work, by linking or
@@ -41,7 +41,7 @@ public class MessageReceiver {
   private final AtomicBoolean closed = new AtomicBoolean(false);
   private final ReceptionListener[] receptionListeners;
   private final ReceptionWorker[] receptionWorkers;
-  private final ConnectionBroker[] responseConnectionBrokers;
+  private final ConnectionFactor[] responseConnectionFactors;
 
   public MessageReceiver (TransportManagedObjects requestManagedObjects, TransportManagedObjects responseManagedObjects, MessagePolicy messagePolicy, ReconnectionPolicy reconnectionPolicy, MessageStrategy messageStrategy, int clusterSize, int concurrencyLimit, MessageTarget... messageTargets)
     throws JMSException, TransportException {
@@ -57,18 +57,18 @@ public class MessageReceiver {
 
     receptionListeners = new ReceptionListener[clusterSize];
     for (int index = 0; index < receptionListeners.length; index++) {
-      receptionListeners[index] = new ReceptionListener(new ConnectionBroker(requestManagedObjects, messagePolicy, reconnectionPolicy), (Queue)requestManagedObjects.getDestination(), messageRendezvous);
+      receptionListeners[index] = new ReceptionListener(new ConnectionFactor(requestManagedObjects, messagePolicy, reconnectionPolicy), (Queue)requestManagedObjects.getDestination(), messageRendezvous);
     }
 
-    responseConnectionBrokers = new ConnectionBroker[clusterSize];
-    for (int index = 0; index < responseConnectionBrokers.length; index++) {
-      responseConnectionBrokers[index] = new ConnectionBroker(responseManagedObjects, messagePolicy, reconnectionPolicy);
+    responseConnectionFactors = new ConnectionFactor[clusterSize];
+    for (int index = 0; index < responseConnectionFactors.length; index++) {
+      responseConnectionFactors[index] = new ConnectionFactor(responseManagedObjects, messagePolicy, reconnectionPolicy);
     }
 
     operatorQueue = new ConcurrentLinkedQueue<TopicOperator>();
     for (int index = 0; index < Math.max(clusterSize, concurrencyLimit); index++) {
-      operatorQueue.add(new TopicOperator(responseConnectionBrokers[topicIndex], (Topic)responseManagedObjects.getDestination()));
-      if (++topicIndex == responseConnectionBrokers.length) {
+      operatorQueue.add(new TopicOperator(responseConnectionFactors[topicIndex], (Topic)responseManagedObjects.getDestination()));
+      if (++topicIndex == responseConnectionFactors.length) {
         topicIndex = 0;
       }
     }
@@ -86,14 +86,14 @@ public class MessageReceiver {
       for (ReceptionListener receptionListener : receptionListeners) {
         receptionListener.close();
       }
-      for (ConnectionBroker responseConnectionBroker : responseConnectionBrokers) {
-        responseConnectionBroker.stop();
+      for (ConnectionFactor responseConnectionFactor : responseConnectionFactors) {
+        responseConnectionFactor.stop();
       }
       for (ReceptionWorker receptionWorker : receptionWorkers) {
         receptionWorker.stop();
       }
-      for (ConnectionBroker responseConnectionBroker : responseConnectionBrokers) {
-        responseConnectionBroker.close();
+      for (ConnectionFactor responseConnectionFactor : responseConnectionFactors) {
+        responseConnectionFactor.close();
       }
     }
   }

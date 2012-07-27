@@ -1,22 +1,22 @@
 /*
  * Copyright (c) 2007, 2008, 2009, 2010, 2011, 2012 David Berkman
- *
+ * 
  * This file is part of the SmallMind Code Project.
- *
+ * 
  * The SmallMind Code Project is free software, you can redistribute
  * it and/or modify it under the terms of GNU Affero General Public
  * License as published by the Free Software Foundation, either version 3
  * of the License, or (at your option) any later version.
- *
+ * 
  * The SmallMind Code Project is distributed in the hope that it will
  * be useful, but WITHOUT ANY WARRANTY; without even the implied warranty
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * General Public License for more details.
- *
+ * 
  * You should have received a copy of the the GNU Affero General Public
  * License, along with The SmallMind Code Project. If not, see
  * <http://www.gnu.org/licenses/>.
- *
+ * 
  * Additional permission under the GNU Affero GPL version 3 section 7
  * ------------------------------------------------------------------
  * If you modify this Program, or any covered work, by linking or
@@ -50,7 +50,7 @@ public class MessageTransmitter {
   private final LinkedBlockingQueue<QueueOperator> operatorQueue;
   private final SelfDestructiveMap<String, TransmissionCallback> callbackMap;
   private final TransmissionListener[] transmissionListeners;
-  private final ConnectionBroker[] requestConnectionBrokers;
+  private final ConnectionFactor[] requestConnectionFactors;
   private final String instanceId = UUID.randomUUID().toString();
   private final long timeoutSeconds;
 
@@ -64,22 +64,22 @@ public class MessageTransmitter {
 
     callbackMap = new SelfDestructiveMap<String, TransmissionCallback>(timeoutSeconds);
 
-    requestConnectionBrokers = new ConnectionBroker[clusterSize];
-    for (int index = 0; index < requestConnectionBrokers.length; index++) {
-      requestConnectionBrokers[index] = new ConnectionBroker(requestManagedObjects, messagePolicy, reconnectionPolicy);
+    requestConnectionFactors = new ConnectionFactor[clusterSize];
+    for (int index = 0; index < requestConnectionFactors.length; index++) {
+      requestConnectionFactors[index] = new ConnectionFactor(requestManagedObjects, messagePolicy, reconnectionPolicy);
     }
 
     operatorQueue = new LinkedBlockingQueue<QueueOperator>();
     for (int index = 0; index < Math.max(clusterSize, concurrencyLimit); index++) {
-      operatorQueue.add(new QueueOperator(requestConnectionBrokers[requestIndex], (Queue)requestManagedObjects.getDestination()));
-      if (++requestIndex == requestConnectionBrokers.length) {
+      operatorQueue.add(new QueueOperator(requestConnectionFactors[requestIndex], (Queue)requestManagedObjects.getDestination()));
+      if (++requestIndex == requestConnectionFactors.length) {
         requestIndex = 0;
       }
     }
 
     transmissionListeners = new TransmissionListener[clusterSize];
     for (int index = 0; index < transmissionListeners.length; index++) {
-      transmissionListeners[index] = new TransmissionListener(this, new ConnectionBroker(responseManagedObjects, messagePolicy, reconnectionPolicy), (Topic)responseManagedObjects.getDestination());
+      transmissionListeners[index] = new TransmissionListener(this, new ConnectionFactor(responseManagedObjects, messagePolicy, reconnectionPolicy), (Topic)responseManagedObjects.getDestination());
     }
   }
 
@@ -174,11 +174,11 @@ public class MessageTransmitter {
     throws JMSException, InterruptedException {
 
     if (closed.compareAndSet(false, true)) {
-      for (ConnectionBroker requestConnectionBroker : requestConnectionBrokers) {
-        requestConnectionBroker.stop();
+      for (ConnectionFactor requestConnectionFactor : requestConnectionFactors) {
+        requestConnectionFactor.stop();
       }
-      for (ConnectionBroker requestConnectionBroker : requestConnectionBrokers) {
-        requestConnectionBroker.close();
+      for (ConnectionFactor requestConnectionFactor : requestConnectionFactors) {
+        requestConnectionFactor.close();
       }
       for (TransmissionListener transmissionListener : transmissionListeners) {
         transmissionListener.close();
