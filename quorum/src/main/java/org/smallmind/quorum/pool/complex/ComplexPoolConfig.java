@@ -37,7 +37,7 @@ public class ComplexPoolConfig extends PoolConfig<ComplexPoolConfig> {
   private final AtomicBoolean testOnCreate = new AtomicBoolean(false);
   private final AtomicBoolean testOnAcquire = new AtomicBoolean(false);
   private final AtomicBoolean existentiallyAware = new AtomicBoolean(false);
-  private final AtomicLong elementCreationTimeoutMillis = new AtomicLong(0);
+  private final AtomicLong creationTimeoutMillis = new AtomicLong(0);
   private final AtomicInteger initialPoolSize = new AtomicInteger(0);
   private final AtomicInteger minPoolSize = new AtomicInteger(0);
   private final AtomicInteger maxLeaseTimeSeconds = new AtomicInteger(0);
@@ -54,10 +54,10 @@ public class ComplexPoolConfig extends PoolConfig<ComplexPoolConfig> {
 
     if (poolConfig.getConfigurationClass().isAssignableFrom(ComplexPoolConfig.class)) {
       setReportLeaseTimeNanos(((ComplexPoolConfig)poolConfig).isReportLeaseTimeNanos());
-      setTestOnCreate(((ComplexPoolConfig)poolConfig).getTestOnCreate());
+      setTestOnCreate(((ComplexPoolConfig)poolConfig).isTestOnCreate());
       setTestOnAcquire(((ComplexPoolConfig)poolConfig).isTestOnAcquire());
       setExistentiallyAware(((ComplexPoolConfig)poolConfig).isExistentiallyAware());
-      setElementCreationTimeoutMillis(((ComplexPoolConfig)poolConfig).getElementCreationTimeoutMillis());
+      setCreationTimeoutMillis(((ComplexPoolConfig)poolConfig).getCreationTimeoutMillis());
       setInitialPoolSize(((ComplexPoolConfig)poolConfig).getInitialPoolSize());
       setMinPoolSize(((ComplexPoolConfig)poolConfig).getMinPoolSize());
       setMaxLeaseTimeSeconds(((ComplexPoolConfig)poolConfig).getMaxLeaseTimeSeconds());
@@ -101,7 +101,7 @@ public class ComplexPoolConfig extends PoolConfig<ComplexPoolConfig> {
     return getConfigurationClass().cast(this);
   }
 
-  public boolean getTestOnCreate () {
+  public boolean isTestOnCreate () {
 
     return testOnCreate.get();
   }
@@ -157,18 +157,18 @@ public class ComplexPoolConfig extends PoolConfig<ComplexPoolConfig> {
     return getConfigurationClass().cast(this);
   }
 
-  public long getElementCreationTimeoutMillis () {
+  public long getCreationTimeoutMillis () {
 
-    return elementCreationTimeoutMillis.get();
+    return creationTimeoutMillis.get();
   }
 
-  public ComplexPoolConfig setElementCreationTimeoutMillis (long elementCreationTimeoutMillis) {
+  public ComplexPoolConfig setCreationTimeoutMillis (long creationTimeoutMillis) {
 
-    if (elementCreationTimeoutMillis < 0) {
+    if (creationTimeoutMillis < 0) {
       throw new IllegalArgumentException("Creation timeout must be >= 0");
     }
 
-    this.elementCreationTimeoutMillis.set(elementCreationTimeoutMillis);
+    this.creationTimeoutMillis.set(creationTimeoutMillis);
 
     return getConfigurationClass().cast(this);
   }

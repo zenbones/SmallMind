@@ -178,7 +178,7 @@ public class ComponentPinManager<C> {
     ComponentInstance<C> componentInstance;
 
     try {
-      if (componentPool.getComplexPoolConfig().getElementCreationTimeoutMillis() > 0) {
+      if (componentPool.getComplexPoolConfig().getCreationTimeoutMillis() > 0) {
 
         ComponentCreationWorker<C> creationWorker;
         Thread workerThread;
@@ -188,9 +188,9 @@ public class ComponentPinManager<C> {
         workerThread.setDaemon(true);
         workerThread.start();
 
-        workerThread.join(componentPool.getComplexPoolConfig().getElementCreationTimeoutMillis());
+        workerThread.join(componentPool.getComplexPoolConfig().getCreationTimeoutMillis());
         if (creationWorker.abort()) {
-          throw new ComponentCreationException("Exceeded element timeout(%d) waiting on element creation", componentPool.getComplexPoolConfig().getElementCreationTimeoutMillis());
+          throw new ComponentCreationException("Exceeded element timeout(%d) waiting on element creation", componentPool.getComplexPoolConfig().getCreationTimeoutMillis());
         }
         else {
           componentInstance = creationWorker.getComponentInstance();
@@ -207,7 +207,7 @@ public class ComponentPinManager<C> {
       throw new ComponentCreationException(exception);
     }
 
-    if (componentPool.getComplexPoolConfig().getTestOnCreate() && (!componentInstance.validate())) {
+    if (componentPool.getComplexPoolConfig().isTestOnCreate() && (!componentInstance.validate())) {
       throw new ComponentValidationException("A new element was required, but failed to validate");
     }
 

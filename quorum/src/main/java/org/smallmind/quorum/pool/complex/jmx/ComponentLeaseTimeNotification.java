@@ -26,27 +26,26 @@
  */
 package org.smallmind.quorum.pool.complex.jmx;
 
-import org.smallmind.nutsnbolts.lang.FormattedException;
+import java.util.concurrent.atomic.AtomicLong;
+import javax.management.Notification;
 
-public class ComponentPoolRegistrationException extends FormattedException {
+public class ComponentLeaseTimeNotification extends Notification {
 
-  public ComponentPoolRegistrationException () {
+  public static final String TYPE = "LEASE_TIME";
 
-    super();
+  private static final AtomicLong SEQUNCE_NUMBER = new AtomicLong(0);
+
+  private long leaseTimeNanos;
+
+  public ComponentLeaseTimeNotification (Object source, long leaseTimeNanos) {
+
+    super(TYPE, source, SEQUNCE_NUMBER.incrementAndGet(), System.currentTimeMillis());
+
+    this.leaseTimeNanos = leaseTimeNanos;
   }
 
-  public ComponentPoolRegistrationException (String message, Object... args) {
+  public long getLeaseTimeNanos () {
 
-    super(String.format(message, args));
-  }
-
-  public ComponentPoolRegistrationException (Throwable throwable, String message, Object... args) {
-
-    super(String.format(message, args), throwable);
-  }
-
-  public ComponentPoolRegistrationException (Throwable throwable) {
-
-    super(throwable);
+    return leaseTimeNanos;
   }
 }

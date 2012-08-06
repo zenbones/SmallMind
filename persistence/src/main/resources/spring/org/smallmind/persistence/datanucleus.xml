@@ -20,7 +20,7 @@
         <property name="minPoolSize" value="${jdbc.pool.min_size.poo}"/>
         <property name="maxPoolSize" value="${jdbc.pool.max_size.poo}"/>
         <property name="acquireWaitTimeMillis" value="750"/>
-        <property name="elementCreationTimeoutMillis" value="300"/>
+        <property name="creationTimeoutMillis" value="300"/>
         <property name="maxIdleTimeSeconds" value="300"/>
         <property name="maxLeaseTimeSeconds" value="1800"/>
       </bean>

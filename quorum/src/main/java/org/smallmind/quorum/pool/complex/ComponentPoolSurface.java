@@ -42,9 +42,9 @@ public interface ComponentPoolSurface {
 
   public abstract int getProcessingSize ();
 
-  public abstract boolean isTestOnConnect ();
+  public abstract boolean isTestOnCreate ();
 
-  public abstract void setTestOnConnect (boolean testOnConnect);
+  public abstract void setTestOnCreate (boolean testOnCreate);
 
   public abstract boolean isTestOnAcquire ();
 
@@ -58,9 +58,9 @@ public interface ComponentPoolSurface {
 
   public abstract void setExistentiallyAware (boolean existentiallyAware);
 
-  public abstract long getConnectionTimeoutMillis ();
+  public abstract long getCreationTimeoutMillis ();
 
-  public abstract void setConnectionTimeoutMillis (long connectionTimeoutMillis);
+  public abstract void setCreationTimeoutMillis (long creationTimeoutMillis);
 
   public abstract long getAcquireWaitTimeMillis ();
 

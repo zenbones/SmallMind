@@ -29,23 +29,23 @@ package org.smallmind.quorum.pool.complex.jmx;
 import java.util.concurrent.atomic.AtomicLong;
 import javax.management.Notification;
 
-public class ConnectionLeaseTimeNotification extends Notification {
+public class CreationErrorOccurredNotification extends Notification {
 
-  public static final String TYPE = "LEASE_TIME";
+  public static final String TYPE = "ERROR_OCCURRED";
 
   private static final AtomicLong SEQUNCE_NUMBER = new AtomicLong(0);
 
-  private long leaseTimeNanos;
+  private Exception exception;
 
-  public ConnectionLeaseTimeNotification (Object source, long leaseTimeNanos) {
+  public CreationErrorOccurredNotification (Object source, Exception exception) {
 
     super(TYPE, source, SEQUNCE_NUMBER.incrementAndGet(), System.currentTimeMillis());
 
-    this.leaseTimeNanos = leaseTimeNanos;
+    this.exception = exception;
   }
 
-  public long getLeaseTimeNanos () {
+  public Exception getException () {
 
-    return leaseTimeNanos;
+    return exception;
   }
 }

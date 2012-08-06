@@ -132,7 +132,7 @@ public class DynamicDriverManagerPooledDataSourceInitializingBean implements Ini
           complexPoolConfig.setAcquireWaitTimeMillis(acquireWaitTimeMillisOption.get());
         }
         if (!(connectionTimeoutMillisOption = springPropertyAccessor.asLong("jdbc.pool.connection_timeout_millis." + poolName)).isNone()) {
-          complexPoolConfig.setElementCreationTimeoutMillis(connectionTimeoutMillisOption.get());
+          complexPoolConfig.setCreationTimeoutMillis(connectionTimeoutMillisOption.get());
         }
         if (!(maxIdleSecondsOption = springPropertyAccessor.asInt("jdbc.pool.max_idle_seconds." + poolName)).isNone()) {
           complexPoolConfig.setMaxIdleTimeSeconds(maxIdleSecondsOption.get());

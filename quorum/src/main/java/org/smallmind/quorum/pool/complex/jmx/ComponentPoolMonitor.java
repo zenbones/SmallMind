@@ -26,7 +26,6 @@
  */
 package org.smallmind.quorum.pool.complex.jmx;
 
-import java.net.InetAddress;
 import java.net.MalformedURLException;
 import java.net.UnknownHostException;
 import java.rmi.NotBoundException;
@@ -42,41 +41,24 @@ import org.smallmind.quorum.pool.complex.ComponentPoolException;
 import org.smallmind.quorum.pool.complex.event.ComponentPoolEventListener;
 import org.smallmind.quorum.pool.complex.event.ErrorReportingComponentPoolEvent;
 import org.smallmind.quorum.pool.complex.event.LeaseTimeReportingComponentPoolEvent;
-import org.smallmind.quorum.pool.complex.remote.RemoteComponentPoolEventListener;
-import org.smallmind.quorum.pool.complex.remote.RemoteComponentPoolSurface;
-import org.smallmind.quorum.pool.complex.remote.RemoteComponentPoolSurfaceImpl;
-import org.smallmind.quorum.transport.remote.RemoteEndpointBinder;
-import org.smallmind.quorum.transport.remote.RemoteProxyFactory;
 
 public class ComponentPoolMonitor extends NotificationBroadcasterSupport implements ComponentPoolMonitorMXBean, MBeanRegistration, ComponentPoolEventListener {
 
+  private ComponentPool componentPool;
   private ObjectName objectName;
-  private RemoteComponentPoolSurface remoteSurface;
-  private ComponentPoolEventListener remoteListener;
-  private String registryName;
 
-  public ComponentPoolMonitor (ComponentPool componentPool, String registryName)
+  public ComponentPoolMonitor (ComponentPool componentPool)
     throws UnknownHostException, NoSuchMethodException, MalformedURLException, RemoteException, NamingException {
 
-    this(componentPool, InetAddress.getLocalHost().getHostAddress(), registryName);
-  }
+    super(new MBeanNotificationInfo(new String[] {CreationErrorOccurredNotification.TYPE}, CreationErrorOccurredNotification.class.getName(), "Creation Error Occurred"), new MBeanNotificationInfo(new String[] {ComponentLeaseTimeNotification.TYPE}, ComponentLeaseTimeNotification.class.getName(), "Component Lease Time"));
 
-  public ComponentPoolMonitor (ComponentPool componentPool, String hostName, String registryName)
-    throws UnknownHostException, NoSuchMethodException, MalformedURLException, RemoteException, NamingException {
-
-    super(new MBeanNotificationInfo(new String[] {ConnectionErrorOccurredNotification.TYPE}, ConnectionErrorOccurredNotification.class.getName(), "Connection Error Occurred"), new MBeanNotificationInfo(new String[] {ConnectionLeaseTimeNotification.TYPE}, ConnectionLeaseTimeNotification.class.getName(), "Connection Lease Time"));
-
-    this.registryName = registryName;
-
-    RemoteEndpointBinder.bind(new RemoteComponentPoolSurfaceImpl(componentPool), registryName);
-    remoteSurface = RemoteProxyFactory.generateRemoteProxy(RemoteComponentPoolSurface.class, hostName, registryName);
+    this.componentPool = componentPool;
   }
 
   public ObjectName preRegister (MBeanServer mBeanServer, ObjectName objectName)
     throws UnknownHostException, NoSuchMethodException, MalformedURLException, RemoteException, NamingException {
 
-    RemoteEndpointBinder.bind(new RemoteComponentPoolEventListener(this), registryName + ".listener");
-    remoteSurface.addComponentPoolEventListener(remoteListener = RemoteProxyFactory.generateRemoteProxy(ComponentPoolEventListener.class, registryName + ".listener"));
+    componentPool.addComponentPoolEventListener(this);
 
     return this.objectName = objectName;
   }
@@ -88,8 +70,7 @@ public class ComponentPoolMonitor extends NotificationBroadcasterSupport impleme
   public void preDeregister ()
     throws MalformedURLException, NotBoundException, RemoteException {
 
-    remoteSurface.removeComponentPoolEventListener(remoteListener);
-    RemoteEndpointBinder.unbind(registryName + ".listener");
+    componentPool.removeComponentPoolEventListener(this);
   }
 
   public void postDeregister () {
@@ -98,158 +79,158 @@ public class ComponentPoolMonitor extends NotificationBroadcasterSupport impleme
 
   public void reportErrorOccurred (ErrorReportingComponentPoolEvent event) {
 
-    sendNotification(new ConnectionErrorOccurredNotification(objectName, event.getException()));
+    sendNotification(new CreationErrorOccurredNotification(objectName, event.getException()));
   }
 
   public void reportLeaseTime (LeaseTimeReportingComponentPoolEvent event) {
 
-    sendNotification(new ConnectionLeaseTimeNotification(objectName, event.getLeaseTimeNanos()));
+    sendNotification(new ComponentLeaseTimeNotification(objectName, event.getLeaseTimeNanos()));
   }
 
   public String getPoolName () {
 
-    return remoteSurface.getPoolName();
+    return componentPool.getPoolName();
   }
 
   public void startup ()
     throws ComponentPoolException {
 
-    remoteSurface.startup();
+    componentPool.startup();
   }
 
   public void shutdown ()
     throws ComponentPoolException {
 
-    remoteSurface.shutdown();
+    componentPool.shutdown();
   }
 
-  public boolean isTestOnConnect () {
+  public boolean isTestOnCreate () {
 
-    return remoteSurface.isTestOnConnect();
+    return componentPool.getComplexPoolConfig().isTestOnCreate();
   }
 
-  public void setTestOnConnect (boolean testOnConnect) {
+  public void setTestOnCreate (boolean testOnCreate) {
 
-    remoteSurface.setTestOnConnect(testOnConnect);
+    componentPool.getComplexPoolConfig().setTestOnCreate(testOnCreate);
   }
 
   public boolean isTestOnAcquire () {
 
-    return remoteSurface.isTestOnAcquire();
+    return componentPool.getComplexPoolConfig().isTestOnAcquire();
   }
 
   public void setTestOnAcquire (boolean testOnAcquire) {
 
-    remoteSurface.setTestOnAcquire(testOnAcquire);
+    componentPool.getComplexPoolConfig().setTestOnAcquire(testOnAcquire);
   }
 
   public boolean isReportLeaseTimeNanos () {
 
-    return remoteSurface.isReportLeaseTimeNanos();
+    return componentPool.getComplexPoolConfig().isReportLeaseTimeNanos();
   }
 
   public void setReportLeaseTimeNanos (boolean reportLeaseTimeNanos) {
 
-    remoteSurface.setReportLeaseTimeNanos(reportLeaseTimeNanos);
+    componentPool.getComplexPoolConfig().setReportLeaseTimeNanos(reportLeaseTimeNanos);
   }
 
   public boolean isExistentiallyAware () {
 
-    return remoteSurface.isExistentiallyAware();
+    return componentPool.getComplexPoolConfig().isExistentiallyAware();
   }
 
   public void setExistentiallyAware (boolean existentiallyAware) {
 
-    remoteSurface.setExistentiallyAware(existentiallyAware);
+    componentPool.getComplexPoolConfig().setExistentiallyAware(existentiallyAware);
   }
 
-  public long getConnectionTimeoutMillis () {
+  public long getCreationTimeoutMillis () {
 
-    return remoteSurface.getConnectionTimeoutMillis();
+    return componentPool.getComplexPoolConfig().getCreationTimeoutMillis();
   }
 
-  public void setConnectionTimeoutMillis (long connectionTimeoutMillis) {
+  public void setCreationTimeoutMillis (long creationTimeoutMillis) {
 
-    remoteSurface.setConnectionTimeoutMillis(connectionTimeoutMillis);
+    componentPool.getComplexPoolConfig().setCreationTimeoutMillis(creationTimeoutMillis);
   }
 
   public int getInitialPoolSize () {
 
-    return remoteSurface.getInitialPoolSize();
+    return componentPool.getComplexPoolConfig().getInitialPoolSize();
   }
 
   public int getMinPoolSize () {
 
-    return remoteSurface.getMinPoolSize();
+    return componentPool.getComplexPoolConfig().getMinPoolSize();
   }
 
   public void setMinPoolSize (int minPoolSize) {
 
-    remoteSurface.setMinPoolSize(minPoolSize);
+    componentPool.getComplexPoolConfig().setMinPoolSize(minPoolSize);
   }
 
   public int getMaxPoolSize () {
 
-    return remoteSurface.getMaxPoolSize();
+    return componentPool.getComplexPoolConfig().getMaxPoolSize();
   }
 
   public void setMaxPoolSize (int maxPoolSize) {
 
-    remoteSurface.setMaxPoolSize(maxPoolSize);
+    componentPool.getComplexPoolConfig().setMaxPoolSize(maxPoolSize);
   }
 
   public synchronized long getAcquireWaitTimeMillis () {
 
-    return remoteSurface.getAcquireWaitTimeMillis();
+    return componentPool.getComplexPoolConfig().getAcquireWaitTimeMillis();
   }
 
   public synchronized void setAcquireWaitTimeMillis (long acquireWaitTimeMillis) {
 
-    remoteSurface.setAcquireWaitTimeMillis(acquireWaitTimeMillis);
+    componentPool.getComplexPoolConfig().setAcquireWaitTimeMillis(acquireWaitTimeMillis);
   }
 
   public int getMaxLeaseTimeSeconds () {
 
-    return remoteSurface.getMaxLeaseTimeSeconds();
+    return componentPool.getComplexPoolConfig().getMaxLeaseTimeSeconds();
   }
 
   public void setMaxLeaseTimeSeconds (int leaseTimeSeconds) {
 
-    remoteSurface.setMaxLeaseTimeSeconds(leaseTimeSeconds);
+    componentPool.getComplexPoolConfig().setMaxLeaseTimeSeconds(leaseTimeSeconds);
   }
 
   public int getMaxIdleTimeSeconds () {
 
-    return remoteSurface.getMaxIdleTimeSeconds();
+    return componentPool.getComplexPoolConfig().getMaxIdleTimeSeconds();
   }
 
   public void setMaxIdleTimeSeconds (int maxIdleTimeSeconds) {
 
-    remoteSurface.setMaxIdleTimeSeconds(maxIdleTimeSeconds);
+    componentPool.getComplexPoolConfig().setMaxIdleTimeSeconds(maxIdleTimeSeconds);
   }
 
   public int getUnReturnedElementTimeoutSeconds () {
 
-    return remoteSurface.getUnReturnedElementTimeoutSeconds();
+    return componentPool.getComplexPoolConfig().getUnReturnedElementTimeoutSeconds();
   }
 
   public void setUnReturnedElementTimeoutSeconds (int unReturnedElementTimeoutSeconds) {
 
-    remoteSurface.setUnReturnedElementTimeoutSeconds(unReturnedElementTimeoutSeconds);
+    componentPool.getComplexPoolConfig().setUnReturnedElementTimeoutSeconds(unReturnedElementTimeoutSeconds);
   }
 
   public int getPoolSize () {
 
-    return remoteSurface.getPoolSize();
+    return componentPool.getPoolSize();
   }
 
   public int getFreeSize () {
 
-    return remoteSurface.getFreeSize();
+    return componentPool.getFreeSize();
   }
 
   public int getProcessingSize () {
 
-    return remoteSurface.getProcessingSize();
+    return componentPool.getProcessingSize();
   }
 }
