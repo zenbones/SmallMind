@@ -27,17 +27,17 @@
 package org.smallmind.quorum.transport.message.jndi;
 
 import javax.naming.Context;
-import org.smallmind.quorum.pool.connection.ConnectionPool;
+import org.smallmind.quorum.pool.complex.ComponentPool;
 
 public class MessageConnectionDetails {
 
-  private ConnectionPool<Context> contextPool;
+  private ComponentPool<Context> contextPool;
   private String destinationName;
   private String connectionFactoryName;
   private String userName;
   private String password;
 
-  public MessageConnectionDetails (ConnectionPool<Context> contextPool, String destinationName, String connectionFactoryName, String userName, String password) {
+  public MessageConnectionDetails (ComponentPool<Context> contextPool, String destinationName, String connectionFactoryName, String userName, String password) {
 
     this.contextPool = contextPool;
     this.destinationName = destinationName;
@@ -46,7 +46,7 @@ public class MessageConnectionDetails {
     this.password = password;
   }
 
-  public ConnectionPool<Context> getContextPool () {
+  public ComponentPool<Context> getContextPool () {
 
     return contextPool;
   }

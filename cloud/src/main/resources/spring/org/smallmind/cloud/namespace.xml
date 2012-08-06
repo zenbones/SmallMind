@@ -2,7 +2,7 @@
 <beans xmlns="http://www.springframework.org/schema/beans" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.springframework.org/schema/beans
            http://www.springframework.org/schema/beans/spring-beans-3.0.xsd">
 
-  <bean id="javaEnvironmentInstanceFactory" class="org.smallmind.cloud.namespace.java.pool.JavaContextConnectionInstanceFactory">
+  <bean id="javaEnvironmentInstanceFactory" class="org.smallmind.cloud.namespace.java.pool.PooledJavaContextComponentInstanceFactory">
     <constructor-arg index="0" value="LDAP"/>
     <constructor-arg index="1" value="${java.context.env}"/>
     <constructor-arg index="2" value="${ldap.host}"/>
@@ -12,7 +12,7 @@
     <constructor-arg index="6" value="${ldap.auth.password}"/>
   </bean>
 
-  <bean id="javaEnvironmentPool" class="org.smallmind.quorum.pool.connection.ConnectionPool">
+  <bean id="javaEnvironmentPool" class="org.smallmind.quorum.pool.complex.ComponentPool">
     <constructor-arg index="0" value="javaEnvironmentPool"/>
     <constructor-arg index="1" ref="javaEnvironmentInstanceFactory"/>
     <property name="poolMode" value="BLOCKING_POOL"/>

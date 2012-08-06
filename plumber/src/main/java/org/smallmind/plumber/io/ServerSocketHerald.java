@@ -34,8 +34,9 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import org.smallmind.nutsnbolts.util.Counter;
-import org.smallmind.quorum.pool.component.ComponentFactory;
-import org.smallmind.quorum.pool.component.ComponentPool;
+import org.smallmind.quorum.pool.simple.ComponentFactory;
+import org.smallmind.quorum.pool.simple.ComponentPool;
+import org.smallmind.quorum.pool.simple.SimplePoolConfig;
 import org.smallmind.scribe.pen.Logger;
 
 public class ServerSocketHerald implements ComponentFactory<SocketWorker>, Runnable {
@@ -56,6 +57,8 @@ public class ServerSocketHerald implements ComponentFactory<SocketWorker>, Runna
   public ServerSocketHerald (Logger logger, SocketWorkerFactory workerFactory, ServerSocket serverSocket, int maxAccepted, int poolSize)
     throws IOException {
 
+    SimplePoolConfig simplePoolConfig;
+
     this.logger = logger;
     this.workerFactory = workerFactory;
     this.serverSocket = serverSocket;
@@ -67,7 +70,10 @@ public class ServerSocketHerald implements ComponentFactory<SocketWorker>, Runna
     pulseLatch = new CountDownLatch(1);
     exitLatch = new CountDownLatch(1);
 
-    workerPool = new ComponentPool<SocketWorker>(this, poolSize, 0);
+    simplePoolConfig = new SimplePoolConfig();
+    simplePoolConfig.setAcquireWaitTimeMillis(poolSize);
+
+    workerPool = new ComponentPool<SocketWorker>(this, simplePoolConfig);
   }
 
   public SocketWorker createComponent ()

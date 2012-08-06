@@ -29,27 +29,27 @@ package org.smallmind.persistence.sql.pool.spring;
 import java.sql.SQLException;
 import javax.sql.PooledConnection;
 import org.smallmind.persistence.sql.pool.ConnectionEndpoint;
-import org.smallmind.persistence.sql.pool.DriverManagerConnectionInstanceFactory;
+import org.smallmind.persistence.sql.pool.DriverManagerComponentInstanceFactory;
 import org.smallmind.persistence.sql.pool.PooledDataSource;
-import org.smallmind.quorum.pool.connection.ConnectionPool;
-import org.smallmind.quorum.pool.connection.ConnectionPoolConfig;
-import org.smallmind.quorum.pool.connection.ConnectionPoolException;
+import org.smallmind.quorum.pool.complex.ComplexPoolConfig;
+import org.smallmind.quorum.pool.complex.ComponentPool;
+import org.smallmind.quorum.pool.complex.ComponentPoolException;
 
 public class DriverManagerPooledDataSourceProvider {
 
   private final PooledDataSource dataSource;
-  private final ConnectionPool<PooledConnection> connectionPool;
+  private final ComponentPool<PooledConnection> componentPool;
 
-  public DriverManagerPooledDataSourceProvider (String poolName, String driverClassName, String validationQuery, int maxStatements, ConnectionPoolConfig poolConfig, DatabaseConnection... connections)
+  public DriverManagerPooledDataSourceProvider (String poolName, String driverClassName, String validationQuery, int maxStatements, ComplexPoolConfig poolConfig, DatabaseConnection... connections)
     throws SQLException {
 
-    DriverManagerConnectionInstanceFactory connectionInstanceFactory = new DriverManagerConnectionInstanceFactory(driverClassName, maxStatements, createConnectionEndpoints(connections));
+    DriverManagerComponentInstanceFactory connectionInstanceFactory = new DriverManagerComponentInstanceFactory(driverClassName, maxStatements, createConnectionEndpoints(connections));
 
     if (validationQuery != null) {
       connectionInstanceFactory.setValidationQuery(validationQuery);
     }
 
-    dataSource = new PooledDataSource(connectionPool = new ConnectionPool<PooledConnection>(poolName, connectionInstanceFactory).setConnectionPoolConfig(poolConfig));
+    dataSource = new PooledDataSource(componentPool = new ComponentPool<PooledConnection>(poolName, connectionInstanceFactory).setComplexPoolConfig(poolConfig));
   }
 
   public PooledDataSource getPooledDataSource () {
@@ -58,15 +58,15 @@ public class DriverManagerPooledDataSourceProvider {
   }
 
   public void startup ()
-    throws ConnectionPoolException {
+    throws ComponentPoolException {
 
-    connectionPool.startup();
+    componentPool.startup();
   }
 
   public void shutdown ()
-    throws ConnectionPoolException {
+    throws ComponentPoolException {
 
-    connectionPool.shutdown();
+    componentPool.shutdown();
   }
 
   private ConnectionEndpoint[] createConnectionEndpoints (DatabaseConnection... databaseConnections) {

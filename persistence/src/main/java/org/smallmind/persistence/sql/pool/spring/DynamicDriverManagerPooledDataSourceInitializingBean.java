@@ -32,8 +32,8 @@ import java.util.LinkedList;
 import org.smallmind.nutsnbolts.spring.RuntimeBeansException;
 import org.smallmind.nutsnbolts.spring.SpringPropertyAccessor;
 import org.smallmind.nutsnbolts.util.Option;
-import org.smallmind.quorum.pool.connection.ConnectionPoolConfig;
-import org.smallmind.quorum.pool.connection.ConnectionPoolException;
+import org.smallmind.quorum.pool.complex.ComplexPoolConfig;
+import org.smallmind.quorum.pool.complex.ComponentPoolException;
 import org.springframework.beans.factory.DisposableBean;
 import org.springframework.beans.factory.InitializingBean;
 
@@ -78,7 +78,7 @@ public class DynamicDriverManagerPooledDataSourceInitializingBean implements Ini
 
   @Override
   public void afterPropertiesSet ()
-    throws SQLException, ConnectionPoolException {
+    throws SQLException, ComponentPoolException {
 
     SpringPropertyAccessor springPropertyAccessor = new SpringPropertyAccessor();
 
@@ -88,7 +88,7 @@ public class DynamicDriverManagerPooledDataSourceInitializingBean implements Ini
 
       if (key.startsWith("jdbc.driver.class_name.") && (!(poolName = key.substring("jdbc.driver.class_name.".length())).contains("."))) {
 
-        ConnectionPoolConfig connectionPoolConfig = new ConnectionPoolConfig();
+        ComplexPoolConfig complexPoolConfig = new ComplexPoolConfig();
         LinkedList<DatabaseConnection> connectionList = new LinkedList<DatabaseConnection>();
         DatabaseConnection[] connections;
         DatabaseConnection connection;
@@ -117,34 +117,34 @@ public class DynamicDriverManagerPooledDataSourceInitializingBean implements Ini
         }
 
         if (!(testOnAcquireOption = springPropertyAccessor.asBoolean("jdbc.pool.test_on_acquire." + poolName)).isNone()) {
-          connectionPoolConfig.setTestOnAcquire(testOnAcquireOption.get());
+          complexPoolConfig.setTestOnAcquire(testOnAcquireOption.get());
         }
         if (!(initialSizeOption = springPropertyAccessor.asInt("jdbc.pool.initial_size." + poolName)).isNone()) {
-          connectionPoolConfig.setInitialPoolSize(initialSizeOption.get());
+          complexPoolConfig.setInitialPoolSize(initialSizeOption.get());
         }
         if (!(minSizeOption = springPropertyAccessor.asInt("jdbc.pool.min_size." + poolName)).isNone()) {
-          connectionPoolConfig.setMinPoolSize(minSizeOption.get());
+          complexPoolConfig.setMinPoolSize(minSizeOption.get());
         }
         if (!(maxSizeOption = springPropertyAccessor.asInt("jdbc.pool.max_size." + poolName)).isNone()) {
-          connectionPoolConfig.setMaxPoolSize(maxSizeOption.get());
+          complexPoolConfig.setMaxPoolSize(maxSizeOption.get());
         }
         if (!(acquireWaitTimeMillisOption = springPropertyAccessor.asLong("jdbc.pool.acquire_wait_time_millis." + poolName)).isNone()) {
-          connectionPoolConfig.setAcquireWaitTimeMillis(acquireWaitTimeMillisOption.get());
+          complexPoolConfig.setAcquireWaitTimeMillis(acquireWaitTimeMillisOption.get());
         }
         if (!(connectionTimeoutMillisOption = springPropertyAccessor.asLong("jdbc.pool.connection_timeout_millis." + poolName)).isNone()) {
-          connectionPoolConfig.setConnectionTimeoutMillis(connectionTimeoutMillisOption.get());
+          complexPoolConfig.setElementCreationTimeoutMillis(connectionTimeoutMillisOption.get());
         }
         if (!(maxIdleSecondsOption = springPropertyAccessor.asInt("jdbc.pool.max_idle_seconds." + poolName)).isNone()) {
-          connectionPoolConfig.setMaxIdleTimeSeconds(maxIdleSecondsOption.get());
+          complexPoolConfig.setMaxIdleTimeSeconds(maxIdleSecondsOption.get());
         }
         if (!(maxLeaseTimeSecondsOption = springPropertyAccessor.asInt("jdbc.pool.max_lease_time_seconds." + poolName)).isNone()) {
-          connectionPoolConfig.setMaxLeaseTimeSeconds(maxLeaseTimeSecondsOption.get());
+          complexPoolConfig.setMaxLeaseTimeSeconds(maxLeaseTimeSecondsOption.get());
         }
 
         connections = new DatabaseConnection[connectionList.size()];
         connectionList.toArray(connections);
 
-        dataSourceProviderMap.put(poolName, new DriverManagerPooledDataSourceProvider(poolName, driverClassName, validationQuery, maxStatementsOption.isNone() ? 0 : maxStatementsOption.get(), connectionPoolConfig, connections));
+        dataSourceProviderMap.put(poolName, new DriverManagerPooledDataSourceProvider(poolName, driverClassName, validationQuery, maxStatementsOption.isNone() ? 0 : maxStatementsOption.get(), complexPoolConfig, connections));
       }
     }
 
@@ -168,7 +168,7 @@ public class DynamicDriverManagerPooledDataSourceInitializingBean implements Ini
 
   @Override
   public void destroy ()
-    throws ConnectionPoolException {
+    throws ComponentPoolException {
 
     for (DriverManagerPooledDataSourceProvider dataSourceProvider : dataSourceProviderMap.values()) {
       dataSourceProvider.shutdown();

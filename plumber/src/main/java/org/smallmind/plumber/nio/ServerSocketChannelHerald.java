@@ -36,8 +36,9 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import org.smallmind.nutsnbolts.util.Counter;
-import org.smallmind.quorum.pool.component.ComponentFactory;
-import org.smallmind.quorum.pool.component.ComponentPool;
+import org.smallmind.quorum.pool.simple.ComponentFactory;
+import org.smallmind.quorum.pool.simple.ComponentPool;
+import org.smallmind.quorum.pool.simple.SimplePoolConfig;
 import org.smallmind.scribe.pen.Logger;
 
 public class ServerSocketChannelHerald implements ComponentFactory<SocketChannelWorker>, Runnable {
@@ -58,6 +59,8 @@ public class ServerSocketChannelHerald implements ComponentFactory<SocketChannel
   public ServerSocketChannelHerald (Logger logger, SocketChannelWorkerFactory workerFactory, ServerSocketChannel serverSocketChannel, int maxAccepted, int poolSize)
     throws IOException {
 
+    SimplePoolConfig simplePoolConfig;
+
     this.logger = logger;
     this.workerFactory = workerFactory;
     this.maxAccepted = maxAccepted;
@@ -71,7 +74,10 @@ public class ServerSocketChannelHerald implements ComponentFactory<SocketChannel
     pulseLatch = new CountDownLatch(1);
     exitLatch = new CountDownLatch(1);
 
-    workerPool = new ComponentPool<SocketChannelWorker>(this, poolSize, 0);
+    simplePoolConfig = new SimplePoolConfig();
+    simplePoolConfig.setAcquireWaitTimeMillis(poolSize);
+
+    workerPool = new ComponentPool<SocketChannelWorker>(this, simplePoolConfig);
   }
 
   public SocketChannelWorker createComponent ()

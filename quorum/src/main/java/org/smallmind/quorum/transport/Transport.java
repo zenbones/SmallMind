@@ -26,10 +26,10 @@
  */
 package org.smallmind.quorum.transport;
 
-import org.smallmind.instrument.config.ConfigurationProvider;
+import org.smallmind.instrument.config.MetricConfigurationProvider;
 import org.smallmind.instrument.config.MetricConfiguration;
 
-public class Transport implements ConfigurationProvider {
+public class Transport implements MetricConfigurationProvider {
 
   private MetricConfiguration metricConfiguration;
 

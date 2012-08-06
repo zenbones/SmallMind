@@ -13,7 +13,7 @@
   </bean>
 
   <!-- Connection Pooling -->
-  <bean id="schemaConnectionInstanceFactory" class="org.smallmind.persistence.sql.pool.DriverManagerConnectionInstanceFactory">
+  <bean id="schemaConnectionInstanceFactory" class="org.smallmind.persistence.sql.pool.DriverManagerComponentInstanceFactory">
     <constructor-arg index="0" value="${jdbc.driver.class_name.pool}"/>
     <constructor-arg index="1" value="${jdbc.url.pool}"/>
     <constructor-arg index="2" value="${jdbc.user.pool}"/>
@@ -21,17 +21,17 @@
     <property name="validationQuery" value="${jdbc.validation_query.pool}"/>
   </bean>
 
-  <bean id="schemaDBPool" class="org.smallmind.quorum.pool.connection.ConnectionPool" init-method="startup" destroy-method="shutdown">
+  <bean id="schemaDBPool" class="org.smallmind.quorum.pool.complex.ComponentPool" init-method="startup" destroy-method="shutdown">
     <constructor-arg index="0" value="dbPool"/>
     <constructor-arg index="1" ref="schemaConnectionInstanceFactory"/>
-    <property name="connectionPoolConfig">
-      <bean class="org.smallmind.quorum.pool.connection.ConnectionPoolConfig">
+    <property name="complexPoolConfig">
+      <bean class="org.smallmind.quorum.pool.complex.ComplexPoolConfig">
         <property name="testOnAcquire" value="${jdbc.pool.test_on_acquire.pool}"/>
         <property name="initialPoolSize" value="${jdbc.pool.initial_size.poo}"/>
         <property name="minPoolSize" value="${jdbc.pool.min_size.poo}"/>
         <property name="maxPoolSize" value="${jdbc.pool.max_size.poo}"/>
         <property name="acquireWaitTimeMillis" value="750"/>
-        <property name="connectionTimeoutMillis" value="300"/>
+        <property name="elementCreationTimeoutMillis" value="300"/>
         <property name="maxIdleTimeSeconds" value="300"/>
         <property name="maxLeaseTimeSeconds" value="1800"/>
       </bean>

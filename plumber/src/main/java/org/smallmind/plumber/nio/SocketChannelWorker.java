@@ -28,7 +28,7 @@ package org.smallmind.plumber.nio;
 
 import java.nio.channels.ServerSocketChannel;
 import java.nio.channels.SocketChannel;
-import org.smallmind.quorum.pool.component.PooledComponent;
+import org.smallmind.quorum.pool.simple.PooledComponent;
 import org.smallmind.scribe.pen.Logger;
 
 public abstract class SocketChannelWorker implements PooledComponent, Runnable {

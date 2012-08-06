@@ -52,7 +52,7 @@ public class JNDITransportManagedObjects implements TransportManagedObjects {
       Context javaEnvironment;
       QueueConnectionFactory queueConnectionFactory;
 
-      javaEnvironment = messageConnectionDetails.getContextPool().getConnection();
+      javaEnvironment = messageConnectionDetails.getContextPool().getComponent();
       try {
         queueConnectionFactory = (QueueConnectionFactory)javaEnvironment.lookup(messageConnectionDetails.getConnectionFactoryName());
       }
@@ -76,7 +76,7 @@ public class JNDITransportManagedObjects implements TransportManagedObjects {
       Context javaEnvironment;
       Queue queue;
 
-      javaEnvironment = messageConnectionDetails.getContextPool().getConnection();
+      javaEnvironment = messageConnectionDetails.getContextPool().getComponent();
       try {
         queue = (Queue)javaEnvironment.lookup(messageConnectionDetails.getDestinationName());
       }

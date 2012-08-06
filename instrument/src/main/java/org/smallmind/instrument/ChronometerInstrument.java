@@ -27,11 +27,11 @@
 package org.smallmind.instrument;
 
 import java.util.concurrent.TimeUnit;
-import org.smallmind.instrument.config.ConfigurationProvider;
+import org.smallmind.instrument.config.MetricConfigurationProvider;
 
 public abstract class ChronometerInstrument extends Instrument<Chronometer> {
 
-  public ChronometerInstrument (ConfigurationProvider provider, MetricProperty... properties) {
+  public ChronometerInstrument (MetricConfigurationProvider provider, MetricProperty... properties) {
 
     super(((provider == null) || (provider.getMetricConfiguration() == null) || (!provider.getMetricConfiguration().isInstrumented())) ? null : new InstrumentationArguments<Chronometer>(Metrics.buildChronometer(provider.getMetricConfiguration().getChronometerSamples(), TimeUnit.MILLISECONDS, provider.getMetricConfiguration().getTickInterval(), provider.getMetricConfiguration().getTickTimeUnit()), provider.getMetricConfiguration().getMetricDomain().getDomain(), properties));
   }

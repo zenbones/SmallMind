@@ -34,24 +34,24 @@ import java.util.logging.Logger;
 import javax.sql.DataSource;
 import javax.sql.PooledConnection;
 import org.smallmind.persistence.sql.DataSourceManager;
-import org.smallmind.quorum.pool.connection.ConnectionPool;
-import org.smallmind.quorum.pool.connection.ConnectionPoolException;
+import org.smallmind.quorum.pool.complex.ComponentPool;
+import org.smallmind.quorum.pool.complex.ComponentPoolException;
 
 public class PooledDataSource implements DataSource {
 
-  private ConnectionPool connectionPool;
+  private ComponentPool componentPool;
   private PrintWriter logWriter;
   private String key;
 
-  public PooledDataSource (ConnectionPool connectionPool) {
+  public PooledDataSource (ComponentPool componentPool) {
 
-    this(connectionPool.getPoolName(), connectionPool);
+    this(componentPool.getPoolName(), componentPool);
   }
 
-  public PooledDataSource (String key, ConnectionPool connectionPool) {
+  public PooledDataSource (String key, ComponentPool componentPool) {
 
     this.key = key;
-    this.connectionPool = connectionPool;
+    this.componentPool = componentPool;
 
     logWriter = new PrintWriter(new PooledLogWriter());
   }
@@ -70,10 +70,10 @@ public class PooledDataSource implements DataSource {
     throws SQLException {
 
     try {
-      return ((PooledConnection)connectionPool.getConnection()).getConnection();
+      return ((PooledConnection)componentPool.getComponent()).getConnection();
     }
-    catch (ConnectionPoolException connectionPoolException) {
-      throw new SQLException(connectionPoolException);
+    catch (ComponentPoolException componentPoolException) {
+      throw new SQLException(componentPoolException);
     }
   }
 

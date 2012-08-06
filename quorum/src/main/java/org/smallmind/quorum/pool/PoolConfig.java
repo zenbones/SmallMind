@@ -26,21 +26,13 @@
  */
 package org.smallmind.quorum.pool;
 
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 
 public abstract class PoolConfig<P extends PoolConfig> {
 
-  private final AtomicBoolean reportLeaseTimeNanos = new AtomicBoolean(false);
-  private final AtomicBoolean existentiallyAware = new AtomicBoolean(false);
   private final AtomicLong acquireWaitTimeMillis = new AtomicLong(0);
-  private final AtomicInteger initialPoolSize = new AtomicInteger(0);
-  private final AtomicInteger minPoolSize = new AtomicInteger(0);
   private final AtomicInteger maxPoolSize = new AtomicInteger(10);
-  private final AtomicInteger maxLeaseTimeSeconds = new AtomicInteger(0);
-  private final AtomicInteger maxIdleTimeSeconds = new AtomicInteger(0);
-  private final AtomicInteger unReturnedElementTimeoutSeconds = new AtomicInteger(0);
 
   public PoolConfig () {
 
@@ -48,74 +40,11 @@ public abstract class PoolConfig<P extends PoolConfig> {
 
   public PoolConfig (PoolConfig<?> poolConfig) {
 
-    setReportLeaseTimeNanos(poolConfig.isReportLeaseTimeNanos());
-    setExistentiallyAware(poolConfig.isExistentiallyAware());
     setAcquireWaitTimeMillis(poolConfig.getAcquireWaitTimeMillis());
-    setInitialPoolSize(poolConfig.getInitialPoolSize());
-    setMinPoolSize(poolConfig.getMinPoolSize());
     setMaxPoolSize(poolConfig.getMaxPoolSize());
-    setMaxLeaseTimeSeconds(poolConfig.getMaxLeaseTimeSeconds());
-    setMaxIdleTimeSeconds(poolConfig.getMaxIdleTimeSeconds());
-    setUnReturnedElementTimeoutSeconds(poolConfig.getUnReturnedElementTimeoutSeconds());
   }
 
   public abstract Class<P> getConfigurationClass ();
-
-  public boolean isReportLeaseTimeNanos () {
-
-    return reportLeaseTimeNanos.get();
-  }
-
-  public P setReportLeaseTimeNanos (boolean reportLeaseTimeNanos) {
-
-    this.reportLeaseTimeNanos.set(reportLeaseTimeNanos);
-
-    return getConfigurationClass().cast(this);
-  }
-
-  public boolean isExistentiallyAware () {
-
-    return existentiallyAware.get();
-  }
-
-  public P setExistentiallyAware (boolean existentiallyAware) {
-
-    this.existentiallyAware.set(existentiallyAware);
-
-    return getConfigurationClass().cast(this);
-  }
-
-  public int getInitialPoolSize () {
-
-    return initialPoolSize.get();
-  }
-
-  public P setInitialPoolSize (int initialPoolSize) {
-
-    if (initialPoolSize < 0) {
-      throw new IllegalArgumentException("Initial pool size must be >= 0");
-    }
-
-    this.initialPoolSize.set(initialPoolSize);
-
-    return getConfigurationClass().cast(this);
-  }
-
-  public int getMinPoolSize () {
-
-    return minPoolSize.get();
-  }
-
-  public P setMinPoolSize (int minPoolSize) {
-
-    if (minPoolSize < 0) {
-      throw new IllegalArgumentException("Minimum pool size must be >= 0");
-    }
-
-    this.minPoolSize.set(minPoolSize);
-
-    return getConfigurationClass().cast(this);
-  }
 
   public int getMaxPoolSize () {
 
@@ -145,54 +74,6 @@ public abstract class PoolConfig<P extends PoolConfig> {
     }
 
     this.acquireWaitTimeMillis.set(acquireWaitTimeMillis);
-
-    return getConfigurationClass().cast(this);
-  }
-
-  public int getMaxLeaseTimeSeconds () {
-
-    return maxLeaseTimeSeconds.get();
-  }
-
-  public P setMaxLeaseTimeSeconds (int maxLeaseTimeSeconds) {
-
-    if (maxLeaseTimeSeconds < 0) {
-      throw new IllegalArgumentException("Maximum lease time must be >= 0");
-    }
-
-    this.maxLeaseTimeSeconds.set(maxLeaseTimeSeconds);
-
-    return getConfigurationClass().cast(this);
-  }
-
-  public int getMaxIdleTimeSeconds () {
-
-    return maxIdleTimeSeconds.get();
-  }
-
-  public P setMaxIdleTimeSeconds (int maxIdleTimeSeconds) {
-
-    if (maxIdleTimeSeconds < 0) {
-      throw new IllegalArgumentException("Maximum idle time must be >= 0");
-    }
-
-    this.maxIdleTimeSeconds.set(maxIdleTimeSeconds);
-
-    return getConfigurationClass().cast(this);
-  }
-
-  public int getUnReturnedElementTimeoutSeconds () {
-
-    return unReturnedElementTimeoutSeconds.get();
-  }
-
-  public P setUnReturnedElementTimeoutSeconds (int unReturnedElementTimeoutSeconds) {
-
-    if (unReturnedElementTimeoutSeconds < 0) {
-      throw new IllegalArgumentException("Un-returned element timeout must be >= 0");
-    }
-
-    this.unReturnedElementTimeoutSeconds.set(unReturnedElementTimeoutSeconds);
 
     return getConfigurationClass().cast(this);
   }

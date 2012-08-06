@@ -28,7 +28,7 @@ package org.smallmind.plumber.io;
 
 import java.io.IOException;
 import java.net.Socket;
-import org.smallmind.quorum.pool.component.PooledComponent;
+import org.smallmind.quorum.pool.simple.PooledComponent;
 import org.smallmind.scribe.pen.Logger;
 import org.smallmind.scribe.pen.LoggerManager;
 
