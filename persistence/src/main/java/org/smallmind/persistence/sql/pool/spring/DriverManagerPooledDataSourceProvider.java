@@ -41,7 +41,7 @@ public class DriverManagerPooledDataSourceProvider {
   private final ComponentPool<PooledConnection> componentPool;
 
   public DriverManagerPooledDataSourceProvider (String poolName, String driverClassName, String validationQuery, int maxStatements, ComplexPoolConfig poolConfig, DatabaseConnection... connections)
-    throws SQLException {
+    throws ComponentPoolException, SQLException {
 
     DriverManagerComponentInstanceFactory connectionInstanceFactory = new DriverManagerComponentInstanceFactory(driverClassName, maxStatements, createConnectionEndpoints(connections));
 

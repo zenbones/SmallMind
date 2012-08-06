@@ -53,6 +53,11 @@ public class MetricRegistry {
     this.server = server;
   }
 
+  public MBeanServer getServer () {
+
+    return server;
+  }
+
   public void setJmxNamingPolicy (JMXNamingPolicy jmxNamingPolicy) {
 
     this.jmxNamingPolicy = jmxNamingPolicy;

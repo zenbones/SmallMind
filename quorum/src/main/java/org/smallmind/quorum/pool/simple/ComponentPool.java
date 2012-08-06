@@ -29,6 +29,7 @@ package org.smallmind.quorum.pool.simple;
 import java.util.LinkedList;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicBoolean;
+import org.smallmind.quorum.pool.ComponentPoolException;
 
 public class ComponentPool<T extends PooledComponent> {
 

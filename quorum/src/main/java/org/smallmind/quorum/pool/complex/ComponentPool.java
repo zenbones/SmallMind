@@ -27,10 +27,16 @@
 package org.smallmind.quorum.pool.complex;
 
 import java.util.concurrent.ConcurrentLinkedQueue;
+import javax.management.ObjectName;
+import org.smallmind.instrument.InstrumentationManager;
+import org.smallmind.instrument.MetricRegistry;
+import org.smallmind.instrument.config.MetricConfiguration;
 import org.smallmind.nutsnbolts.lang.StackTrace;
+import org.smallmind.quorum.pool.PoolManager;
 import org.smallmind.quorum.pool.complex.event.ComponentPoolEventListener;
 import org.smallmind.quorum.pool.complex.event.ErrorReportingComponentPoolEvent;
 import org.smallmind.quorum.pool.complex.event.LeaseTimeReportingComponentPoolEvent;
+import org.smallmind.quorum.pool.complex.jmx.ComponentPoolMonitor;
 
 public class ComponentPool<C> {
 
@@ -41,15 +47,29 @@ public class ComponentPool<C> {
 
   private ComplexPoolConfig complexPoolConfig = new ComplexPoolConfig();
 
-  public ComponentPool (String name, ComponentInstanceFactory<C> componentInstanceFactory) {
+  public ComponentPool (String name, ComponentInstanceFactory<C> componentInstanceFactory)
+    throws ComponentPoolException {
+
+    MetricConfiguration metricConfiguration;
+    MetricRegistry metricRegistry;
 
     this.name = name;
     this.componentInstanceFactory = componentInstanceFactory;
 
     componentPinManager = new ComponentPinManager<C>(this);
+
+    if ((PoolManager.getPool() != null) && ((metricConfiguration = PoolManager.getPool().getMetricConfiguration()) != null) && ((metricRegistry = InstrumentationManager.getMetricRegistry()) != null) && (metricRegistry.getServer() != null)) {
+      try {
+        metricRegistry.getServer().registerMBean(new ComponentPoolMonitor(this), new ObjectName(metricConfiguration.getMetricDomain().getDomain() + ":" + "pool=" + name));
+      }
+      catch (Exception exception) {
+        throw new ComponentPoolException(exception);
+      }
+    }
   }
 
-  public ComponentPool (String name, ComponentInstanceFactory<C> componentInstanceFactory, ComplexPoolConfig complexPoolConfig) {
+  public ComponentPool (String name, ComponentInstanceFactory<C> componentInstanceFactory, ComplexPoolConfig complexPoolConfig)
+    throws ComponentPoolException {
 
     this(name, componentInstanceFactory);
 

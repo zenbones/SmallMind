@@ -24,7 +24,7 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.quorum.pool.simple;
+package org.smallmind.quorum.pool;
 
 import org.smallmind.nutsnbolts.lang.FormattedException;
 

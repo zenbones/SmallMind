@@ -9,7 +9,7 @@
 
   <bean id="serverConnector" class="org.springframework.jmx.support.ConnectorServerFactoryBean">
     <property name="objectName" value="connector:name=rmi"/>
-    <property name="serviceUrl" value="service:jmx:rmi://localhost/jndi/rmi://localhost:1099/jmxrmi"/>
+    <property name="serviceUrl" value="service:jmx:rmi://localhost:${rmi.jmx.port}/jndi/rmi://localhost:${rmi.registry.port}/jmxrmi"/>
   </bean>
 
   <bean id="exporter" class="org.springframework.jmx.export.MBeanExporter">

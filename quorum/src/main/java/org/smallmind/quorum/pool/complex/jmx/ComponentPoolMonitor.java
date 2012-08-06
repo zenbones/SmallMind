@@ -27,7 +27,6 @@
 package org.smallmind.quorum.pool.complex.jmx;
 
 import java.net.MalformedURLException;
-import java.net.UnknownHostException;
 import java.rmi.NotBoundException;
 import java.rmi.RemoteException;
 import javax.management.MBeanNotificationInfo;
@@ -35,7 +34,6 @@ import javax.management.MBeanRegistration;
 import javax.management.MBeanServer;
 import javax.management.NotificationBroadcasterSupport;
 import javax.management.ObjectName;
-import javax.naming.NamingException;
 import org.smallmind.quorum.pool.complex.ComponentPool;
 import org.smallmind.quorum.pool.complex.ComponentPoolException;
 import org.smallmind.quorum.pool.complex.event.ComponentPoolEventListener;
@@ -47,16 +45,14 @@ public class ComponentPoolMonitor extends NotificationBroadcasterSupport impleme
   private ComponentPool componentPool;
   private ObjectName objectName;
 
-  public ComponentPoolMonitor (ComponentPool componentPool)
-    throws UnknownHostException, NoSuchMethodException, MalformedURLException, RemoteException, NamingException {
+  public ComponentPoolMonitor (ComponentPool componentPool) {
 
     super(new MBeanNotificationInfo(new String[] {CreationErrorOccurredNotification.TYPE}, CreationErrorOccurredNotification.class.getName(), "Creation Error Occurred"), new MBeanNotificationInfo(new String[] {ComponentLeaseTimeNotification.TYPE}, ComponentLeaseTimeNotification.class.getName(), "Component Lease Time"));
 
     this.componentPool = componentPool;
   }
 
-  public ObjectName preRegister (MBeanServer mBeanServer, ObjectName objectName)
-    throws UnknownHostException, NoSuchMethodException, MalformedURLException, RemoteException, NamingException {
+  public ObjectName preRegister (MBeanServer mBeanServer, ObjectName objectName) {
 
     componentPool.addComponentPoolEventListener(this);
 
