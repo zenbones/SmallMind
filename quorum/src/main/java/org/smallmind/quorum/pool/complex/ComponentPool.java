@@ -28,7 +28,9 @@ package org.smallmind.quorum.pool.complex;
 
 import java.util.concurrent.ConcurrentLinkedQueue;
 import javax.management.ObjectName;
+import org.smallmind.instrument.ChronometerInstrumentAndReturn;
 import org.smallmind.instrument.InstrumentationManager;
+import org.smallmind.instrument.MetricProperty;
 import org.smallmind.instrument.MetricRegistry;
 import org.smallmind.instrument.config.MetricConfiguration;
 import org.smallmind.nutsnbolts.lang.StackTrace;
@@ -37,6 +39,7 @@ import org.smallmind.quorum.pool.complex.event.ComponentPoolEventListener;
 import org.smallmind.quorum.pool.complex.event.ErrorReportingComponentPoolEvent;
 import org.smallmind.quorum.pool.complex.event.LeaseTimeReportingComponentPoolEvent;
 import org.smallmind.quorum.pool.complex.jmx.ComponentPoolMonitor;
+import org.smallmind.quorum.pool.instrument.MetricEvent;
 
 public class ComponentPool<C> {
 
@@ -176,7 +179,14 @@ public class ComponentPool<C> {
 
     try {
 
-      return componentPinManager.serve().serve();
+      return InstrumentationManager.execute(new ChronometerInstrumentAndReturn<C>(PoolManager.getPool(), new MetricProperty("event", MetricEvent.WAITING.getDisplay())) {
+
+        @Override
+        public C withChronometer () throws Exception {
+
+          return componentPinManager.serve().serve();
+        }
+      });
     }
     catch (Exception exception) {
       throw new ComponentPoolException(exception);

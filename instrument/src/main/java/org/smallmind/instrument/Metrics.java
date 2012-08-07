@@ -30,17 +30,17 @@ import java.util.concurrent.TimeUnit;
 
 public class Metrics {
 
-  public static MetricBuilder buildRegister (int initialCount) {
+  public static RegisterBuilder buildRegister (int initialCount) {
 
     return new RegisterBuilder(initialCount);
   }
 
-  public static MetricBuilder buildMeter (long tickInterval, TimeUnit tickTimeUnit) {
+  public static MeterBuilder buildMeter (long tickInterval, TimeUnit tickTimeUnit) {
 
     return new MeterBuilder(tickInterval, tickTimeUnit, Clocks.EPOCH);
   }
 
-  public static MetricBuilder buildMeter (long tickInterval, TimeUnit tickTimeUnit, Clocks clocks) {
+  public static MeterBuilder buildMeter (long tickInterval, TimeUnit tickTimeUnit, Clocks clocks) {
 
     return new MeterBuilder(tickInterval, tickTimeUnit, clocks);
   }
@@ -48,6 +48,26 @@ public class Metrics {
   public static HistogramBuilder buildHistogram (Samples samples) {
 
     return new HistogramBuilder(samples);
+  }
+
+  public static SpeedometerBuilder buildSpeedometer (long tickInterval, TimeUnit tickTimeUnit) {
+
+    return new SpeedometerBuilder(Samples.BIASED, tickInterval, tickTimeUnit, Clocks.EPOCH);
+  }
+
+  public static SpeedometerBuilder buildSpeedometer (Samples samples, long tickInterval, TimeUnit tickTimeUnit) {
+
+    return new SpeedometerBuilder(samples, tickInterval, tickTimeUnit, Clocks.EPOCH);
+  }
+
+  public static SpeedometerBuilder buildSpeedometer (long tickInterval, TimeUnit tickTimeUnit, Clocks clocks) {
+
+    return new SpeedometerBuilder(Samples.BIASED, tickInterval, tickTimeUnit, clocks);
+  }
+
+  public static SpeedometerBuilder buildSpeedometer (Samples samples, long tickInterval, TimeUnit tickTimeUnit, Clocks clocks) {
+
+    return new SpeedometerBuilder(samples, tickInterval, tickTimeUnit, clocks);
   }
 
   public static ChronometerBuilder buildChronometer (TimeUnit durationUnit, long tickInterval, TimeUnit tickTimeUnit) {
@@ -164,6 +184,40 @@ public class Metrics {
     public Histogram construct () {
 
       return new Histogram(samples);
+    }
+  }
+
+  private static class SpeedometerBuilder implements MetricBuilder<Speedometer> {
+
+    private Samples samples;
+    private Clocks clocks;
+    private TimeUnit tickTimeUnit;
+    private long tickInterval;
+
+    private SpeedometerBuilder (Samples samples, long tickInterval, TimeUnit tickTimeUnit, Clocks clocks) {
+
+      this.samples = samples;
+      this.tickInterval = tickInterval;
+      this.tickTimeUnit = tickTimeUnit;
+      this.clocks = clocks;
+    }
+
+    @Override
+    public Class<Speedometer> getMetricClass () {
+
+      return Speedometer.class;
+    }
+
+    @Override
+    public MetricType getType () {
+
+      return MetricType.SPEEDOMETER;
+    }
+
+    @Override
+    public Speedometer construct () {
+
+      return new Speedometer(samples, tickInterval, tickTimeUnit, clocks.getClock());
     }
   }
 

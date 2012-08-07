@@ -33,7 +33,7 @@ import org.smallmind.instrument.Samples;
 public class MetricConfiguration {
 
   private MetricDomain metricDomain = new UnsetMetricDomain();
-  private Samples chronometerSamples = Samples.BIASED;
+  private Samples samples = Samples.BIASED;
   private TimeUnit tickTimeUnit = TimeUnit.SECONDS;
   private boolean instrumented = true;
   private long tickInterval = 10;
@@ -58,14 +58,14 @@ public class MetricConfiguration {
     this.metricDomain = metricDomain;
   }
 
-  public Samples getChronometerSamples () {
+  public Samples getSamples () {
 
-    return chronometerSamples;
+    return samples;
   }
 
-  public void setChronometerSamples (Samples chronometerSamples) {
+  public void setSamples (Samples samples) {
 
-    this.chronometerSamples = chronometerSamples;
+    this.samples = samples;
   }
 
   public long getTickInterval () {

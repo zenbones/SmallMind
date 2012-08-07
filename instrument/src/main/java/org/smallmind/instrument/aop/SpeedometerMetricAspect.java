@@ -24,9 +24,20 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.instrument;
+package org.smallmind.instrument.aop;
 
-public enum MetricType {
+import org.aspectj.lang.ProceedingJoinPoint;
+import org.aspectj.lang.annotation.Around;
+import org.aspectj.lang.annotation.Aspect;
+import org.smallmind.instrument.Metrics;
 
-  REGISTER, METER, HISTOGRAM, SPEEDOMETER, CHRONOMETER
+@Aspect
+public class SpeedometerMetricAspect extends MetricAspect {
+
+  @Around(value = "(execution(@SpeedometerMetric * * (..)) || initialization(@SpeedometerMetric new(..))) && @annotation(speedometerMetric)", argNames = "thisJoinPoint, speedometerMetric")
+  public Object aroundSpeedometerMetricMethod (ProceedingJoinPoint thisJoinPoint, SpeedometerMetric speedometerMetric)
+    throws Throwable {
+
+    return engage(thisJoinPoint, speedometerMetric.value(), speedometerMetric.alias(), Metrics.buildSpeedometer(speedometerMetric.samples(), speedometerMetric.tickInterval(), speedometerMetric.tickTimeUnit(), speedometerMetric.clocks()));
+  }
 }

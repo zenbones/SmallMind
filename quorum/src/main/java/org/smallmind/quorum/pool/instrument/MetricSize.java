@@ -24,9 +24,21 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.instrument;
+package org.smallmind.quorum.pool.instrument;
 
-public enum MetricType {
+public enum MetricSize {
 
-  REGISTER, METER, HISTOGRAM, SPEEDOMETER, CHRONOMETER
+  PROCESSING("Processing"), FREE("Free");
+
+  private String display;
+
+  private MetricSize (String display) {
+
+    this.display = display;
+  }
+
+  public String getDisplay () {
+
+    return display;
+  }
 }

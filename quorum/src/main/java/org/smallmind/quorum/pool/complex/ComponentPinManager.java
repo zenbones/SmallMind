@@ -34,7 +34,16 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
+import org.smallmind.instrument.Clocks;
+import org.smallmind.instrument.InstrumentationManager;
+import org.smallmind.instrument.MetricProperty;
+import org.smallmind.instrument.Metrics;
+import org.smallmind.instrument.config.MetricConfiguration;
 import org.smallmind.nutsnbolts.lang.StackTrace;
+import org.smallmind.quorum.pool.Pool;
+import org.smallmind.quorum.pool.PoolManager;
+import org.smallmind.quorum.pool.instrument.MetricEvent;
+import org.smallmind.quorum.pool.instrument.MetricSize;
 import org.smallmind.scribe.pen.LoggerManager;
 
 public class ComponentPinManager<C> {
@@ -73,6 +82,8 @@ public class ComponentPinManager<C> {
 
         size.set(backingMap.size());
         stateRef.set(State.STARTED);
+
+        trackSize();
       }
       catch (Exception exception) {
         freeQueue.clear();
@@ -113,10 +124,14 @@ public class ComponentPinManager<C> {
         throw new ComponentValidationException("A free element was acquired, but failed to validate");
       }
 
+      trackSize();
+
       return componentPin;
     }
 
     if ((componentPin = addComponentPin(true)) != null) {
+
+      trackSize();
 
       return componentPin;
     }
@@ -128,6 +143,8 @@ public class ComponentPinManager<C> {
           throw new ComponentValidationException("A free element was acquired, but failed to validate");
         }
 
+        trackSize();
+
         return componentPin;
       }
     }
@@ -135,6 +152,7 @@ public class ComponentPinManager<C> {
       throw new ComponentPoolException(interruptedException);
     }
 
+    trackTimeout();
     throw new ComponentPoolException("Exceeded the maximum acquire wait time(%d)", componentPool.getComplexPoolConfig().getAcquireWaitTimeMillis());
   }
 
@@ -218,6 +236,7 @@ public class ComponentPinManager<C> {
 
     if (freeQueue.remove(componentPin) || withPrejudice) {
       terminate(componentPin.getComponentInstance());
+      trackSize();
     }
   }
 
@@ -249,6 +268,8 @@ public class ComponentPinManager<C> {
           }
         }
       }
+
+      trackSize();
     }
   }
 
@@ -286,6 +307,8 @@ public class ComponentPinManager<C> {
       catch (Exception exception) {
         LoggerManager.getLogger(ComponentPinManager.class).error(exception);
       }
+
+      trackSize();
     }
   }
 
@@ -352,6 +375,40 @@ public class ComponentPinManager<C> {
   public int getProcessingSize () {
 
     return getPoolSize() - getFreeSize();
+  }
+
+  private void trackSize () {
+
+    Pool pool;
+    MetricConfiguration metricConfiguration;
+
+    if (((pool = PoolManager.getPool()) != null) && ((metricConfiguration = pool.getMetricConfiguration()) != null)) {
+
+      int freeSize;
+
+      try {
+        InstrumentationManager.getMetricRegistry().instrument(Metrics.buildSpeedometer(metricConfiguration.getSamples(), metricConfiguration.getTickInterval(), metricConfiguration.getTickTimeUnit(), Clocks.EPOCH), metricConfiguration.getMetricDomain().getDomain(), new MetricProperty("size", MetricSize.FREE.getDisplay())).update(freeSize = freeQueue.size());
+        InstrumentationManager.getMetricRegistry().instrument(Metrics.buildSpeedometer(metricConfiguration.getSamples(), metricConfiguration.getTickInterval(), metricConfiguration.getTickTimeUnit(), Clocks.EPOCH), metricConfiguration.getMetricDomain().getDomain(), new MetricProperty("size", MetricSize.PROCESSING.getDisplay())).update(getPoolSize() - freeSize);
+      }
+      catch (Exception exception) {
+        LoggerManager.getLogger(ComponentPinManager.class).error(exception);
+      }
+    }
+  }
+
+  private void trackTimeout () {
+
+    Pool pool;
+    MetricConfiguration metricConfiguration;
+
+    if (((pool = PoolManager.getPool()) != null) && ((metricConfiguration = pool.getMetricConfiguration()) != null)) {
+      try {
+        InstrumentationManager.getMetricRegistry().instrument(Metrics.buildMeter(metricConfiguration.getTickInterval(), metricConfiguration.getTickTimeUnit(), Clocks.EPOCH), metricConfiguration.getMetricDomain().getDomain(), new MetricProperty("event", MetricEvent.TIMEOUT.getDisplay())).mark();
+      }
+      catch (Exception exception) {
+        LoggerManager.getLogger(ComponentPinManager.class).error(exception);
+      }
+    }
   }
 
   public StackTrace[] getExistentialStackTraces () {

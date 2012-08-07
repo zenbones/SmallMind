@@ -24,9 +24,8 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.instrument;
+package org.smallmind.instrument.jmx;
 
-public enum MetricType {
+public interface SpeedometerMonitorMXBean extends MeterMonitorMXBean, HistogramMonitorMXBean {
 
-  REGISTER, METER, HISTOGRAM, SPEEDOMETER, CHRONOMETER
 }

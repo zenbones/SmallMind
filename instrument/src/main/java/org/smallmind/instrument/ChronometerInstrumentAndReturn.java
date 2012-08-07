@@ -33,7 +33,7 @@ public abstract class ChronometerInstrumentAndReturn<T> extends InstrumentAndRet
 
   public ChronometerInstrumentAndReturn (MetricConfigurationProvider provider, MetricProperty... properties) {
 
-    super(((provider == null) || (provider.getMetricConfiguration() == null) || (!provider.getMetricConfiguration().isInstrumented())) ? null : new InstrumentationArguments<Chronometer>(Metrics.buildChronometer(provider.getMetricConfiguration().getChronometerSamples(), TimeUnit.MILLISECONDS, provider.getMetricConfiguration().getTickInterval(), provider.getMetricConfiguration().getTickTimeUnit()), provider.getMetricConfiguration().getMetricDomain().getDomain(), properties));
+    super(((provider == null) || (provider.getMetricConfiguration() == null) || (!provider.getMetricConfiguration().isInstrumented())) ? null : new InstrumentationArguments<Chronometer>(Metrics.buildChronometer(provider.getMetricConfiguration().getSamples(), TimeUnit.MILLISECONDS, provider.getMetricConfiguration().getTickInterval(), provider.getMetricConfiguration().getTickTimeUnit()), provider.getMetricConfiguration().getMetricDomain().getDomain(), properties));
   }
 
   public ChronometerInstrumentAndReturn (Metrics.MetricBuilder<Chronometer> builder, String domain, MetricProperty... properties) {

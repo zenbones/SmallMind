@@ -39,6 +39,7 @@ import org.smallmind.instrument.jmx.HistogramMonitor;
 import org.smallmind.instrument.jmx.JMXNamingPolicy;
 import org.smallmind.instrument.jmx.MeterMonitor;
 import org.smallmind.instrument.jmx.RegisterMonitor;
+import org.smallmind.instrument.jmx.SpeedometerMonitor;
 import org.smallmind.nutsnbolts.lang.UnknownSwitchCaseException;
 
 public class MetricRegistry {
@@ -92,6 +93,9 @@ public class MetricRegistry {
                 break;
               case HISTOGRAM:
                 mBean = new HistogramMonitor((Histogram)metric);
+                break;
+              case SPEEDOMETER:
+                mBean = new SpeedometerMonitor((Speedometer)metric);
                 break;
               case CHRONOMETER:
                 mBean = new ChronometerMonitor((Chronometer)metric);

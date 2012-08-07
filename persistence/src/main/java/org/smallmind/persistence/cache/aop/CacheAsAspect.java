@@ -213,7 +213,7 @@ public class CacheAsAspect {
           executedMethod = methodSignature.getMethod();
         }
 
-        METRIC_REGISTRY.instrument(Metrics.buildChronometer(PERSISTENCE.getMetricConfiguration().getChronometerSamples(), TimeUnit.MILLISECONDS, PERSISTENCE.getMetricConfiguration().getTickInterval(), PERSISTENCE.getMetricConfiguration().getTickTimeUnit(), Clocks.EPOCH), PERSISTENCE.getMetricConfiguration().getMetricDomain().getDomain(), new MetricProperty("durable", ormDao.getManagedClass().getSimpleName()), new MetricProperty("method", executedMethod.getName()), new MetricProperty("source", metricSource)).update(stop - start);
+        METRIC_REGISTRY.instrument(Metrics.buildChronometer(PERSISTENCE.getMetricConfiguration().getSamples(), TimeUnit.MILLISECONDS, PERSISTENCE.getMetricConfiguration().getTickInterval(), PERSISTENCE.getMetricConfiguration().getTickTimeUnit(), Clocks.EPOCH), PERSISTENCE.getMetricConfiguration().getMetricDomain().getDomain(), new MetricProperty("durable", ormDao.getManagedClass().getSimpleName()), new MetricProperty("method", executedMethod.getName()), new MetricProperty("source", metricSource)).update(stop - start);
       }
     }
   }
