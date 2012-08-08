@@ -28,7 +28,7 @@ package org.smallmind.quorum.transport.instrument;
 
 public enum MetricEvent {
 
-  INVOCATION("Invocation"), ACQUIRE_QUEUE("Acquire Queue"), CONSTRUCT_MESSAGE("Construct Message"), ACQUIRE_WORKER("Acquire Worker");
+  INVOCATION("Invocation"), ACQUIRE_QUEUE("Acquire Queue"), CONSTRUCT_MESSAGE("Construct Message"), ACQUIRE_WORKER("Acquire Worker"), REQUEST_QUEUE("Request Queue"), RESPONSE_TOPIC("Response Topic");
 
   private String display;
 

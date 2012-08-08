@@ -102,7 +102,7 @@ public class ComponentPin<C> {
     Pool pool;
     MetricConfiguration metricConfiguration;
 
-    if (((pool = PoolManager.getPool()) != null) && ((metricConfiguration = pool.getMetricConfiguration()) != null)) {
+    if (((pool = PoolManager.getPool()) != null) && ((metricConfiguration = pool.getMetricConfiguration()) != null) && metricConfiguration.isInstrumented()) {
       try {
         InstrumentationManager.getMetricRegistry().instrument(Metrics.buildChronometer(metricConfiguration.getSamples(), TimeUnit.NANOSECONDS, metricConfiguration.getTickInterval(), metricConfiguration.getTickTimeUnit(), Clocks.EPOCH), metricConfiguration.getMetricDomain().getDomain(), new MetricProperty("event", MetricEvent.PROCESSING.getDisplay())).update(leaseTime);
       }

@@ -382,7 +382,7 @@ public class ComponentPinManager<C> {
     Pool pool;
     MetricConfiguration metricConfiguration;
 
-    if (((pool = PoolManager.getPool()) != null) && ((metricConfiguration = pool.getMetricConfiguration()) != null)) {
+    if (((pool = PoolManager.getPool()) != null) && ((metricConfiguration = pool.getMetricConfiguration()) != null) && metricConfiguration.isInstrumented()) {
 
       int freeSize;
 
@@ -401,7 +401,7 @@ public class ComponentPinManager<C> {
     Pool pool;
     MetricConfiguration metricConfiguration;
 
-    if (((pool = PoolManager.getPool()) != null) && ((metricConfiguration = pool.getMetricConfiguration()) != null)) {
+    if (((pool = PoolManager.getPool()) != null) && ((metricConfiguration = pool.getMetricConfiguration()) != null) && metricConfiguration.isInstrumented()) {
       try {
         InstrumentationManager.getMetricRegistry().instrument(Metrics.buildMeter(metricConfiguration.getTickInterval(), metricConfiguration.getTickTimeUnit(), Clocks.EPOCH), metricConfiguration.getMetricDomain().getDomain(), new MetricProperty("event", MetricEvent.TIMEOUT.getDisplay())).mark();
       }
