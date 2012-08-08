@@ -27,17 +27,12 @@
 package org.smallmind.quorum.pool.complex;
 
 import java.util.LinkedList;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import org.smallmind.instrument.Clocks;
 import org.smallmind.instrument.InstrumentationManager;
 import org.smallmind.instrument.MetricProperty;
-import org.smallmind.instrument.Metrics;
-import org.smallmind.instrument.config.MetricConfiguration;
-import org.smallmind.quorum.pool.Pool;
 import org.smallmind.quorum.pool.PoolManager;
 import org.smallmind.quorum.pool.instrument.MetricEvent;
-import org.smallmind.scribe.pen.LoggerManager;
 
 public class ComponentPin<C> {
 
@@ -90,25 +85,10 @@ public class ComponentPin<C> {
       componentPool.reportLeaseTimeNanos(leaseTime);
     }
 
-    trackLeaseTime(leaseTime);
+    InstrumentationManager.instrumentWithChronometer(PoolManager.getPool(), leaseTime, new MetricProperty("event", MetricEvent.PROCESSING.getDisplay()));
 
     if (deconstructionCoordinator != null) {
       deconstructionCoordinator.free();
-    }
-  }
-
-  private void trackLeaseTime (long leaseTime) {
-
-    Pool pool;
-    MetricConfiguration metricConfiguration;
-
-    if (((pool = PoolManager.getPool()) != null) && ((metricConfiguration = pool.getMetricConfiguration()) != null) && metricConfiguration.isInstrumented()) {
-      try {
-        InstrumentationManager.getMetricRegistry().instrument(Metrics.buildChronometer(metricConfiguration.getSamples(), TimeUnit.NANOSECONDS, metricConfiguration.getTickInterval(), metricConfiguration.getTickTimeUnit(), Clocks.EPOCH), metricConfiguration.getMetricDomain().getDomain(), new MetricProperty("event", MetricEvent.PROCESSING.getDisplay())).update(leaseTime);
-      }
-      catch (Exception exception) {
-        LoggerManager.getLogger(ComponentPinManager.class).error(exception);
-      }
     }
   }
 

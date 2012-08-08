@@ -67,16 +67,18 @@ public class CachedWithAspect {
         if (executeFilter(update.filter(), ormDao, durable)) {
 
           OnPersist onPersist = executeOnPersist(update.onPersist(), ormDao, durable);
-          Operand operand = executeProxy(update.proxy(), ormDao, durable);
           Iterable<Durable> finderIterable = executeFinder(update.finder(), ormDao, durable);
 
           for (Durable indexingDurable : finderIterable) {
+
+            Operand operand = executeProxy(update.proxy(), ormDao, indexingDurable);
+
             switch (onPersist) {
               case INSERT:
-                vectoredDao.updateInVector(new VectorKey(VectorIndices.getVectorIndexes(update.value(), indexingDurable), operand.getManagedClass(), Classifications.get(CachedWith.class, null, update.value())), operand.getDurable());
+                vectoredDao.updateInVector(new VectorKey(VectorIndices.getVectorIndexes(update.value(), operand.getDurable()), ormDao.getManagedClass(), Classifications.get(CachedWith.class, null, update.value())), indexingDurable);
                 break;
               case REMOVE:
-                vectoredDao.removeFromVector(new VectorKey(VectorIndices.getVectorIndexes(update.value(), indexingDurable), operand.getManagedClass(), Classifications.get(CachedWith.class, null, update.value())), operand.getDurable());
+                vectoredDao.removeFromVector(new VectorKey(VectorIndices.getVectorIndexes(update.value(), operand.getDurable()), ormDao.getManagedClass(), Classifications.get(CachedWith.class, null, update.value())), indexingDurable);
                 break;
               default:
                 throw new UnknownSwitchCaseException(onPersist.name());
@@ -91,7 +93,10 @@ public class CachedWithAspect {
           Iterable<Durable> finderIterable = executeFinder(invalidate.finder(), ormDao, durable);
 
           for (Durable indexingDurable : finderIterable) {
-            vectoredDao.deleteVector(new VectorKey(VectorIndices.getVectorIndexes(invalidate.value(), indexingDurable), (invalidate.against() == null) ? durable.getClass() : invalidate.against(), Classifications.get(CachedWith.class, null, invalidate.value())));
+
+            Operand operand = executeProxy(invalidate.proxy(), ormDao, indexingDurable);
+
+            vectoredDao.deleteVector(new VectorKey(VectorIndices.getVectorIndexes(invalidate.value(), operand.getDurable()), ormDao.getManagedClass(), Classifications.get(CachedWith.class, null, invalidate.value())));
           }
         }
       }
@@ -117,11 +122,13 @@ public class CachedWithAspect {
       for (Update update : cachedWith.updates()) {
         if (executeFilter(update.filter(), ormDao, durable)) {
 
-          Operand operand = executeProxy(update.proxy(), ormDao, durable);
           Iterable<Durable> finderIterable = executeFinder(update.finder(), ormDao, durable);
 
           for (Durable indexingDurable : finderIterable) {
-            vectoredDao.removeFromVector(new VectorKey(VectorIndices.getVectorIndexes(update.value(), indexingDurable), operand.getManagedClass(), Classifications.get(CachedWith.class, null, update.value())), operand.getDurable());
+
+            Operand operand = executeProxy(update.proxy(), ormDao, indexingDurable);
+
+            vectoredDao.removeFromVector(new VectorKey(VectorIndices.getVectorIndexes(update.value(), operand.getDurable()), ormDao.getManagedClass(), Classifications.get(CachedWith.class, null, update.value())), indexingDurable);
           }
         }
       }
@@ -132,7 +139,10 @@ public class CachedWithAspect {
           Iterable<Durable> finderIterable = executeFinder(invalidate.finder(), ormDao, durable);
 
           for (Durable indexingDurable : finderIterable) {
-            vectoredDao.deleteVector(new VectorKey(VectorIndices.getVectorIndexes(invalidate.value(), indexingDurable), (invalidate.against() == null) ? durable.getClass() : invalidate.against(), Classifications.get(CachedWith.class, null, invalidate.value())));
+
+            Operand operand = executeProxy(invalidate.proxy(), ormDao, indexingDurable);
+
+            vectoredDao.deleteVector(new VectorKey(VectorIndices.getVectorIndexes(invalidate.value(), operand.getDurable()), ormDao.getManagedClass(), Classifications.get(CachedWith.class, null, invalidate.value())));
           }
         }
       }

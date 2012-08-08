@@ -24,23 +24,21 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.persistence.cache.aop;
+package org.smallmind.quorum.transport.instrument;
 
-import java.lang.annotation.Retention;
-import java.lang.annotation.RetentionPolicy;
-import java.lang.annotation.Target;
+public enum MetricDestination {
 
-@Target({})
-@Retention(RetentionPolicy.RUNTIME)
-public @interface Update {
+  REQUEST_QUEUE("Request Queue"), RESPONSE_TOPIC("Response Topic");
 
-  public abstract Vector value ();
+  private String display;
 
-  public abstract String filter () default "";
+  private MetricDestination (String display) {
 
-  public abstract String onPersist () default "";
+    this.display = display;
+  }
 
-  public abstract Finder finder () default @Finder();
+  public String getDisplay () {
 
-  public abstract Proxy proxy () default @Proxy();
+    return display;
+  }
 }

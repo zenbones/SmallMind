@@ -26,21 +26,16 @@
  */
 package org.smallmind.quorum.transport.message;
 
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import javax.jms.Destination;
 import javax.jms.JMSException;
 import javax.jms.Message;
 import javax.jms.MessageListener;
 import javax.jms.Topic;
-import org.smallmind.instrument.Clocks;
 import org.smallmind.instrument.InstrumentationManager;
 import org.smallmind.instrument.MetricProperty;
-import org.smallmind.instrument.Metrics;
-import org.smallmind.instrument.config.MetricConfiguration;
-import org.smallmind.quorum.transport.Transport;
 import org.smallmind.quorum.transport.TransportManager;
-import org.smallmind.quorum.transport.instrument.MetricEvent;
+import org.smallmind.quorum.transport.instrument.MetricDestination;
 import org.smallmind.scribe.pen.LoggerManager;
 
 public class TransmissionListener implements SessionEmployer, MessageListener {
@@ -87,19 +82,14 @@ public class TransmissionListener implements SessionEmployer, MessageListener {
   @Override
   public void onMessage (Message message) {
 
-    Transport transport;
-    MetricConfiguration metricConfiguration;
+    try {
 
-    if (((transport = TransportManager.getTransport()) != null) && ((metricConfiguration = transport.getMetricConfiguration()) != null) && metricConfiguration.isInstrumented()) {
-      try {
+      long timeInTopic = System.currentTimeMillis() - message.getJMSTimestamp();
 
-        long timeInTopic = System.currentTimeMillis() - message.getJMSTimestamp();
-
-        InstrumentationManager.getMetricRegistry().instrument(Metrics.buildChronometer(metricConfiguration.getSamples(), TimeUnit.MILLISECONDS, metricConfiguration.getTickInterval(), metricConfiguration.getTickTimeUnit(), Clocks.EPOCH), metricConfiguration.getMetricDomain().getDomain(), new MetricProperty("event", MetricEvent.RESPONSE_TOPIC.getDisplay())).update(timeInTopic);
-      }
-      catch (Exception exception) {
-        LoggerManager.getLogger(ReceptionListener.class).error(exception);
-      }
+      InstrumentationManager.instrumentWithChronometer(TransportManager.getTransport(), (timeInTopic >= 0) ? timeInTopic : 0, new MetricProperty("destination", MetricDestination.RESPONSE_TOPIC.getDisplay()));
+    }
+    catch (JMSException jmsException) {
+      LoggerManager.getLogger(ReceptionListener.class).error(jmsException);
     }
 
     messageTransmitter.completeCallback(message);

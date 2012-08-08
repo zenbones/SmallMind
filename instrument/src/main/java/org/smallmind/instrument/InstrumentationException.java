@@ -34,4 +34,9 @@ public class InstrumentationException extends FormattedRuntimeException {
 
     super(message, args);
   }
+
+  public InstrumentationException (Throwable throwable) {
+
+    super(throwable);
+  }
 }

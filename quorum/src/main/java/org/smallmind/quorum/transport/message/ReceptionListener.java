@@ -35,13 +35,10 @@ import javax.jms.Message;
 import javax.jms.MessageListener;
 import javax.jms.Queue;
 import org.smallmind.instrument.ChronometerInstrument;
-import org.smallmind.instrument.Clocks;
 import org.smallmind.instrument.InstrumentationManager;
 import org.smallmind.instrument.MetricProperty;
-import org.smallmind.instrument.Metrics;
-import org.smallmind.instrument.config.MetricConfiguration;
-import org.smallmind.quorum.transport.Transport;
 import org.smallmind.quorum.transport.TransportManager;
+import org.smallmind.quorum.transport.instrument.MetricDestination;
 import org.smallmind.quorum.transport.instrument.MetricEvent;
 import org.smallmind.scribe.pen.LoggerManager;
 
@@ -86,22 +83,11 @@ public class ReceptionListener implements SessionEmployer, MessageListener {
   @Override
   public synchronized void onMessage (final Message message) {
 
-    Transport transport;
-    MetricConfiguration metricConfiguration;
-
-    if (((transport = TransportManager.getTransport()) != null) && ((metricConfiguration = transport.getMetricConfiguration()) != null) && metricConfiguration.isInstrumented()) {
-      try {
-
-        long timeInQueue = System.currentTimeMillis() - message.getJMSTimestamp();
-
-        InstrumentationManager.getMetricRegistry().instrument(Metrics.buildChronometer(metricConfiguration.getSamples(), TimeUnit.MILLISECONDS, metricConfiguration.getTickInterval(), metricConfiguration.getTickTimeUnit(), Clocks.EPOCH), metricConfiguration.getMetricDomain().getDomain(), new MetricProperty("event", MetricEvent.REQUEST_QUEUE.getDisplay())).update(timeInQueue);
-      }
-      catch (Exception exception) {
-        LoggerManager.getLogger(ReceptionListener.class).error(exception);
-      }
-    }
-
     try {
+
+      long timeInQueue = System.currentTimeMillis() - message.getJMSTimestamp();
+
+      InstrumentationManager.instrumentWithChronometer(TransportManager.getTransport(), (timeInQueue >= 0) ? timeInQueue : 0, new MetricProperty("destination", MetricDestination.REQUEST_QUEUE.getDisplay()));
       InstrumentationManager.execute(new ChronometerInstrument(TransportManager.getTransport(), new MetricProperty("event", MetricEvent.ACQUIRE_WORKER.getDisplay())) {
 
         @Override

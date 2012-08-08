@@ -34,13 +34,9 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
-import org.smallmind.instrument.Clocks;
 import org.smallmind.instrument.InstrumentationManager;
 import org.smallmind.instrument.MetricProperty;
-import org.smallmind.instrument.Metrics;
-import org.smallmind.instrument.config.MetricConfiguration;
 import org.smallmind.nutsnbolts.lang.StackTrace;
-import org.smallmind.quorum.pool.Pool;
 import org.smallmind.quorum.pool.PoolManager;
 import org.smallmind.quorum.pool.instrument.MetricEvent;
 import org.smallmind.quorum.pool.instrument.MetricSize;
@@ -379,36 +375,15 @@ public class ComponentPinManager<C> {
 
   private void trackSize () {
 
-    Pool pool;
-    MetricConfiguration metricConfiguration;
+    int freeSize;
 
-    if (((pool = PoolManager.getPool()) != null) && ((metricConfiguration = pool.getMetricConfiguration()) != null) && metricConfiguration.isInstrumented()) {
-
-      int freeSize;
-
-      try {
-        InstrumentationManager.getMetricRegistry().instrument(Metrics.buildSpeedometer(metricConfiguration.getSamples(), metricConfiguration.getTickInterval(), metricConfiguration.getTickTimeUnit(), Clocks.EPOCH), metricConfiguration.getMetricDomain().getDomain(), new MetricProperty("size", MetricSize.FREE.getDisplay())).update(freeSize = freeQueue.size());
-        InstrumentationManager.getMetricRegistry().instrument(Metrics.buildSpeedometer(metricConfiguration.getSamples(), metricConfiguration.getTickInterval(), metricConfiguration.getTickTimeUnit(), Clocks.EPOCH), metricConfiguration.getMetricDomain().getDomain(), new MetricProperty("size", MetricSize.PROCESSING.getDisplay())).update(getPoolSize() - freeSize);
-      }
-      catch (Exception exception) {
-        LoggerManager.getLogger(ComponentPinManager.class).error(exception);
-      }
-    }
+    InstrumentationManager.instrumentWithSpeedometer(PoolManager.getPool(), freeSize = freeQueue.size(), new MetricProperty("size", MetricSize.FREE.getDisplay()));
+    InstrumentationManager.instrumentWithSpeedometer(PoolManager.getPool(), getPoolSize() - freeSize, new MetricProperty("size", MetricSize.PROCESSING.getDisplay()));
   }
 
   private void trackTimeout () {
 
-    Pool pool;
-    MetricConfiguration metricConfiguration;
-
-    if (((pool = PoolManager.getPool()) != null) && ((metricConfiguration = pool.getMetricConfiguration()) != null) && metricConfiguration.isInstrumented()) {
-      try {
-        InstrumentationManager.getMetricRegistry().instrument(Metrics.buildMeter(metricConfiguration.getTickInterval(), metricConfiguration.getTickTimeUnit(), Clocks.EPOCH), metricConfiguration.getMetricDomain().getDomain(), new MetricProperty("event", MetricEvent.TIMEOUT.getDisplay())).mark();
-      }
-      catch (Exception exception) {
-        LoggerManager.getLogger(ComponentPinManager.class).error(exception);
-      }
-    }
+    InstrumentationManager.instrumentWithMeter(PoolManager.getPool(), new MetricProperty("event", MetricEvent.TIMEOUT.getDisplay()));
   }
 
   public StackTrace[] getExistentialStackTraces () {

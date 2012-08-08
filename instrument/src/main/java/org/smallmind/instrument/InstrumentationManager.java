@@ -26,6 +26,8 @@
  */
 package org.smallmind.instrument;
 
+import java.util.concurrent.TimeUnit;
+import org.smallmind.instrument.config.MetricConfigurationProvider;
 import org.smallmind.nutsnbolts.lang.StaticManager;
 
 public class InstrumentationManager implements StaticManager {
@@ -58,5 +60,31 @@ public class InstrumentationManager implements StaticManager {
     InstrumentationArguments<M> arguments;
 
     return instrumentAndReturn.with((((metricRegistry = METRIC_REGISTRY_LOCAL.get()) == null) || ((arguments = instrumentAndReturn.getArguments()) == null)) ? null : metricRegistry.instrument(arguments.getBuilder(), arguments.getDomain(), arguments.getProperties()));
+  }
+
+  public static void instrumentWithMeter (MetricConfigurationProvider provider, MetricProperty... properties) {
+
+    instrumentWithMeter(provider, 1, properties);
+  }
+
+  public static void instrumentWithMeter (MetricConfigurationProvider provider, long quantity, MetricProperty... properties) {
+
+    if ((provider != null) && (provider.getMetricConfiguration() != null) && provider.getMetricConfiguration().isInstrumented()) {
+      getMetricRegistry().instrument(Metrics.buildMeter(provider.getMetricConfiguration().getTickInterval(), provider.getMetricConfiguration().getTickTimeUnit(), Clocks.EPOCH), provider.getMetricConfiguration().getMetricDomain().getDomain(), properties).mark(quantity);
+    }
+  }
+
+  public static void instrumentWithSpeedometer (MetricConfigurationProvider provider, long quantity, MetricProperty... properties) {
+
+    if ((provider != null) && (provider.getMetricConfiguration() != null) && provider.getMetricConfiguration().isInstrumented()) {
+      getMetricRegistry().instrument(Metrics.buildSpeedometer(provider.getMetricConfiguration().getSamples(), provider.getMetricConfiguration().getTickInterval(), provider.getMetricConfiguration().getTickTimeUnit(), Clocks.EPOCH), provider.getMetricConfiguration().getMetricDomain().getDomain(), properties).update(quantity);
+    }
+  }
+
+  public static void instrumentWithChronometer (MetricConfigurationProvider provider, long duration, MetricProperty... properties) {
+
+    if ((provider != null) && (provider.getMetricConfiguration() != null) && provider.getMetricConfiguration().isInstrumented()) {
+      getMetricRegistry().instrument(Metrics.buildChronometer(provider.getMetricConfiguration().getSamples(), TimeUnit.MILLISECONDS, provider.getMetricConfiguration().getTickInterval(), provider.getMetricConfiguration().getTickTimeUnit(), Clocks.EPOCH), provider.getMetricConfiguration().getMetricDomain().getDomain(), properties).update(duration);
+    }
   }
 }

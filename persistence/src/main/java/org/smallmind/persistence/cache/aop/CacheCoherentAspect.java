@@ -31,18 +31,13 @@ import java.lang.reflect.Method;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.util.List;
-import java.util.concurrent.TimeUnit;
 import org.aspectj.lang.ProceedingJoinPoint;
 import org.aspectj.lang.annotation.Around;
 import org.aspectj.lang.annotation.Aspect;
 import org.aspectj.lang.reflect.MethodSignature;
-import org.smallmind.instrument.Clocks;
 import org.smallmind.instrument.InstrumentationManager;
 import org.smallmind.instrument.MetricProperty;
-import org.smallmind.instrument.MetricRegistry;
-import org.smallmind.instrument.Metrics;
 import org.smallmind.persistence.Durable;
-import org.smallmind.persistence.Persistence;
 import org.smallmind.persistence.PersistenceManager;
 import org.smallmind.persistence.PersistenceMode;
 import org.smallmind.persistence.cache.VectoredDao;
@@ -52,21 +47,6 @@ import org.smallmind.persistence.orm.VectorAwareORMDao;
 
 @Aspect
 public class CacheCoherentAspect {
-
-  private static final Persistence PERSISTENCE;
-  private static final MetricRegistry METRIC_REGISTRY;
-
-  static {
-
-    if (((PERSISTENCE = PersistenceManager.getPersistence()) == null) || (!PERSISTENCE.getMetricConfiguration().isInstrumented())) {
-      METRIC_REGISTRY = null;
-    }
-    else {
-      if ((METRIC_REGISTRY = InstrumentationManager.getMetricRegistry()) == null) {
-        throw new ExceptionInInitializerError("No MetricRegistry instance has been registered with the MetricRegistryFactory");
-      }
-    }
-  }
 
   @Around(value = "execution(@CacheCoherent * * (..)) && this(ormDao)", argNames = "thisJoinPoint, ormDao")
   public Object aroundCacheCoherentMethod (ProceedingJoinPoint thisJoinPoint, VectorAwareORMDao ormDao)
@@ -79,7 +59,7 @@ public class CacheCoherentAspect {
     long stop;
 
     instrumentedAnnotation = ormDao.getClass().getAnnotation(Instrumented.class);
-    if (timingEnabled = (METRIC_REGISTRY != null) && (instrumentedAnnotation != null) && ((Instrumented)instrumentedAnnotation).value()) {
+    if (timingEnabled = (instrumentedAnnotation != null) && ((Instrumented)instrumentedAnnotation).value()) {
       start = System.currentTimeMillis();
     }
 
@@ -163,7 +143,7 @@ public class CacheCoherentAspect {
           executedMethod = ((MethodSignature)thisJoinPoint.getSignature()).getMethod();
         }
 
-        METRIC_REGISTRY.instrument(Metrics.buildChronometer(PERSISTENCE.getMetricConfiguration().getSamples(), TimeUnit.MILLISECONDS, PERSISTENCE.getMetricConfiguration().getTickInterval(), PERSISTENCE.getMetricConfiguration().getTickTimeUnit(), Clocks.EPOCH), PERSISTENCE.getMetricConfiguration().getMetricDomain().getDomain(), new MetricProperty("durable", ormDao.getManagedClass().getSimpleName()), new MetricProperty("method", executedMethod.getName()), new MetricProperty("source", ormDao.getMetricSource())).update(stop - start);
+        InstrumentationManager.instrumentWithChronometer(PersistenceManager.getPersistence(), stop - start, new MetricProperty("durable", ormDao.getManagedClass().getSimpleName()), new MetricProperty("method", executedMethod.getName()), new MetricProperty("source", ormDao.getMetricSource()));
       }
     }
   }

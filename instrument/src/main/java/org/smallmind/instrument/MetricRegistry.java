@@ -28,11 +28,7 @@ package org.smallmind.instrument;
 
 import java.util.concurrent.ConcurrentHashMap;
 import javax.management.DynamicMBean;
-import javax.management.InstanceAlreadyExistsException;
-import javax.management.MBeanRegistrationException;
 import javax.management.MBeanServer;
-import javax.management.MalformedObjectNameException;
-import javax.management.NotCompliantMBeanException;
 import org.smallmind.instrument.jmx.ChronometerMonitor;
 import org.smallmind.instrument.jmx.DefaultJMXNamingPolicy;
 import org.smallmind.instrument.jmx.HistogramMonitor;
@@ -69,8 +65,7 @@ public class MetricRegistry {
     InstrumentationManager.register(this);
   }
 
-  public <M extends Metric> M instrument (Metrics.MetricBuilder<M> builder, String domain, MetricProperty... properties)
-    throws MalformedObjectNameException, InstanceAlreadyExistsException, MBeanRegistrationException, NotCompliantMBeanException {
+  public <M extends Metric> M instrument (Metrics.MetricBuilder<M> builder, String domain, MetricProperty... properties) {
 
     M metric;
     MetricKey metricKey = new MetricKey(builder.getType(), domain, properties);
@@ -104,7 +99,12 @@ public class MetricRegistry {
                 throw new UnknownSwitchCaseException(builder.getType().name());
             }
 
-            server.registerMBean(mBean, jmxNamingPolicy.createObjectName(builder.getType(), domain, properties));
+            try {
+              server.registerMBean(mBean, jmxNamingPolicy.createObjectName(builder.getType(), domain, properties));
+            }
+            catch (Exception exception) {
+              throw new InstrumentationException(exception);
+            }
           }
         }
       }

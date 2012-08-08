@@ -29,7 +29,6 @@ package org.smallmind.persistence.cache.aop;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
-import org.smallmind.persistence.Durable;
 
 @Target({})
 @Retention(RetentionPolicy.RUNTIME)
@@ -39,7 +38,7 @@ public @interface Invalidate {
 
   public abstract String filter () default "";
 
-  public abstract Class<? extends Durable> against () default Durable.class;
-
   public abstract Finder finder () default @Finder();
+
+  public abstract Proxy proxy () default @Proxy();
 }
