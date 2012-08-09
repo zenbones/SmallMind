@@ -31,11 +31,13 @@ import java.util.concurrent.TimeUnit;
 public class Speedometer implements Metric, Metered, Estimating, Shutterbug, Clocked, Stoppable {
 
   private final Histogram histogram;
-  private final Meter meter;
+  private final Meter usageMeter;
+  private final Meter incidentMeter;
 
   Speedometer (Samples samples, long tickInterval, TimeUnit tickTimeUnit, Clock clock) {
 
-    meter = new Meter(tickInterval, tickTimeUnit, clock);
+    usageMeter = new Meter(tickInterval, tickTimeUnit, clock);
+    incidentMeter = new Meter(tickInterval, tickTimeUnit, clock);
     histogram = new Histogram(samples);
   }
 
@@ -47,7 +49,8 @@ public class Speedometer implements Metric, Metered, Estimating, Shutterbug, Clo
   public void update (long quantity) {
 
     histogram.update(quantity);
-    meter.mark(quantity);
+    usageMeter.mark(quantity);
+    incidentMeter.mark();
   }
 
   @Override
@@ -59,43 +62,43 @@ public class Speedometer implements Metric, Metered, Estimating, Shutterbug, Clo
   @Override
   public Clock getClock () {
 
-    return meter.getClock();
+    return usageMeter.getClock();
   }
 
   @Override
   public TimeUnit getRateTimeUnit () {
 
-    return meter.getRateTimeUnit();
+    return usageMeter.getRateTimeUnit();
   }
 
   @Override
   public long getCount () {
 
-    return meter.getCount();
+    return incidentMeter.getCount();
   }
 
   @Override
   public double getOneMinuteRate () {
 
-    return meter.getOneMinuteRate();
+    return usageMeter.getOneMinuteRate() / incidentMeter.getOneMinuteRate();
   }
 
   @Override
   public double getFiveMinuteRate () {
 
-    return meter.getFiveMinuteRate();
+    return usageMeter.getFiveMinuteRate() / incidentMeter.getFiveMinuteRate();
   }
 
   @Override
   public double getFifteenMinuteRate () {
 
-    return meter.getFifteenMinuteRate();
+    return usageMeter.getFifteenMinuteRate() / incidentMeter.getFifteenMinuteRate();
   }
 
   @Override
   public double getAverageRate () {
 
-    return meter.getAverageRate();
+    return usageMeter.getAverageRate() / incidentMeter.getAverageRate();
   }
 
   @Override
@@ -137,6 +140,7 @@ public class Speedometer implements Metric, Metered, Estimating, Shutterbug, Clo
   @Override
   public void stop () {
 
-    meter.stop();
+    usageMeter.stop();
+    incidentMeter.stop();
   }
 }
