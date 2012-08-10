@@ -26,17 +26,17 @@
  */
 package org.smallmind.instrument;
 
-public interface Ranking {
+public interface Tracked extends Metered {
 
-  public abstract double getMedian ();
+  public abstract double getMin ();
 
-  public abstract double get75thPercentile ();
+  public abstract double getMax ();
 
-  public abstract double get95thPercentile ();
+  public abstract double getOneMinuteAvgVelocity ();
 
-  public abstract double get98thPercentile ();
+  public abstract double getFiveMinuteAvgVelocity ();
 
-  public abstract double get99thPercentile ();
+  public abstract double getFifteenMinuteAvgVelocity ();
 
-  public abstract double get999thPercentile ();
+  public abstract double getAverageVelocity ();
 }

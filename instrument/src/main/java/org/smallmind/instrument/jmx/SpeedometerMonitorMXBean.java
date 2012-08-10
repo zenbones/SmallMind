@@ -26,6 +26,8 @@
  */
 package org.smallmind.instrument.jmx;
 
-public interface SpeedometerMonitorMXBean extends MeterMonitorMXBean, HistogramMonitorMXBean {
+import org.smallmind.instrument.Tracked;
+
+public interface SpeedometerMonitorMXBean extends Tracked {
 
 }

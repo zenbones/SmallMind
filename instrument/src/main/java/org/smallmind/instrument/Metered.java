@@ -32,11 +32,11 @@ public interface Metered extends Countable {
 
   public abstract TimeUnit getRateTimeUnit ();
 
-  public abstract double getOneMinuteRate ();
+  public abstract double getOneMinuteAvgRate ();
 
-  public abstract double getFiveMinuteRate ();
+  public abstract double getFiveMinuteAvgRate ();
 
-  public abstract double getFifteenMinuteRate ();
+  public abstract double getFifteenMinuteAvgRate ();
 
   public abstract double getAverageRate ();
 }

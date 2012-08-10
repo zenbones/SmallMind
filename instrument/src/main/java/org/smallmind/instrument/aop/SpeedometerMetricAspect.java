@@ -38,6 +38,6 @@ public class SpeedometerMetricAspect extends MetricAspect {
   public Object aroundSpeedometerMetricMethod (ProceedingJoinPoint thisJoinPoint, SpeedometerMetric speedometerMetric)
     throws Throwable {
 
-    return engage(thisJoinPoint, speedometerMetric.value(), speedometerMetric.alias(), Metrics.buildSpeedometer(speedometerMetric.samples(), speedometerMetric.tickInterval(), speedometerMetric.tickTimeUnit(), speedometerMetric.clocks()));
+    return engage(thisJoinPoint, speedometerMetric.value(), speedometerMetric.alias(), Metrics.buildSpeedometer(speedometerMetric.tickInterval(), speedometerMetric.tickTimeUnit(), speedometerMetric.clocks()));
   }
 }

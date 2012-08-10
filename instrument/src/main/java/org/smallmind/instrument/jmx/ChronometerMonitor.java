@@ -66,27 +66,27 @@ public class ChronometerMonitor extends StandardMBean implements ChronometerMoni
   }
 
   @Override
-  public double getOneMinuteRate () {
+  public double getOneMinuteAvgRate () {
 
-    return chronometer.getOneMinuteRate();
+    return chronometer.getOneMinuteAvgRate();
   }
 
   @Override
-  public double getFiveMinuteRate () {
+  public double getFiveMinuteAvgRate () {
 
-    return chronometer.getFiveMinuteRate();
+    return chronometer.getFiveMinuteAvgRate();
   }
 
   @Override
-  public double getFifteenMinuteRate () {
+  public double getFifteenMinuteAvgRate () {
 
-    return chronometer.getFifteenMinuteRate();
+    return chronometer.getFifteenMinuteAvgRate();
   }
 
   @Override
   public double getAverageRate () {
 
-    return chronometer.getAverageRate();
+    return chronometer.getAverage();
   }
 
   @Override
@@ -153,11 +153,5 @@ public class ChronometerMonitor extends StandardMBean implements ChronometerMoni
   public double get999thPercentile () {
 
     return chronometer.getSnapshot().get999thPercentile();
-  }
-
-  @Override
-  public double[] getValues () {
-
-    return chronometer.getSnapshot().getValues();
   }
 }

@@ -117,10 +117,4 @@ public class HistogramMonitor extends StandardMBean implements HistogramMonitorM
 
     return histogram.getSnapshot().get999thPercentile();
   }
-
-  @Override
-  public double[] getValues () {
-
-    return histogram.getSnapshot().getValues();
-  }
 }

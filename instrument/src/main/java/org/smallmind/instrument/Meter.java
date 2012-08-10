@@ -50,9 +50,9 @@ public class Meter implements Metric, Metered, Clocked, Stoppable {
   });
 
   private final AtomicLong count = new AtomicLong(0);
-  private final ExponentiallyWeightedMovingAverage m1Rate;
-  private final ExponentiallyWeightedMovingAverage m5Rate;
-  private final ExponentiallyWeightedMovingAverage m15Rate;
+  private final ExponentiallyWeightedMovingAverage m1Average;
+  private final ExponentiallyWeightedMovingAverage m5Average;
+  private final ExponentiallyWeightedMovingAverage m15Average;
   private final ScheduledFuture<?> future;
   private final Clock clock;
   private final TimeUnit tickTimeUnit;
@@ -75,18 +75,18 @@ public class Meter implements Metric, Metered, Clocked, Stoppable {
 
     startTime = clock.getTimeMilliseconds();
 
-    m1Rate = ExponentiallyWeightedMovingAverage.lastOneMinute(tickInterval, tickTimeUnit);
-    m5Rate = ExponentiallyWeightedMovingAverage.lastFiveMinutes(tickInterval, tickTimeUnit);
-    m15Rate = ExponentiallyWeightedMovingAverage.lastFifteenMinutes(tickInterval, tickTimeUnit);
+    m1Average = ExponentiallyWeightedMovingAverage.lastOneMinute(tickInterval, tickTimeUnit);
+    m5Average = ExponentiallyWeightedMovingAverage.lastFiveMinutes(tickInterval, tickTimeUnit);
+    m15Average = ExponentiallyWeightedMovingAverage.lastFifteenMinutes(tickInterval, tickTimeUnit);
 
     this.future = SCHEDULED_EXECUTOR.scheduleAtFixedRate(new Runnable() {
 
       @Override
       public void run () {
 
-        m1Rate.tick();
-        m5Rate.tick();
-        m15Rate.tick();
+        m1Average.tick();
+        m5Average.tick();
+        m15Average.tick();
       }
     }, tickInterval, tickInterval, tickTimeUnit);
   }
@@ -99,9 +99,9 @@ public class Meter implements Metric, Metered, Clocked, Stoppable {
   public void mark (long n) {
 
     count.addAndGet(n);
-    m1Rate.update(n);
-    m5Rate.update(n);
-    m15Rate.update(n);
+    m1Average.update(n);
+    m5Average.update(n);
+    m15Average.update(n);
   }
 
   @Override
@@ -123,21 +123,21 @@ public class Meter implements Metric, Metered, Clocked, Stoppable {
   }
 
   @Override
-  public double getOneMinuteRate () {
+  public double getOneMinuteAvgRate () {
 
-    return m1Rate.getRate(tickTimeUnit);
+    return m1Average.getMovingAverage(tickTimeUnit);
   }
 
   @Override
-  public double getFiveMinuteRate () {
+  public double getFiveMinuteAvgRate () {
 
-    return m5Rate.getRate(tickTimeUnit);
+    return m5Average.getMovingAverage(tickTimeUnit);
   }
 
   @Override
-  public double getFifteenMinuteRate () {
+  public double getFifteenMinuteAvgRate () {
 
-    return m15Rate.getRate(tickTimeUnit);
+    return m15Average.getMovingAverage(tickTimeUnit);
   }
 
   @Override

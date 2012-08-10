@@ -42,12 +42,6 @@ public class SpeedometerMonitor extends StandardMBean implements SpeedometerMoni
   }
 
   @Override
-  public String getSampleType () {
-
-    return speedometer.getSampleType();
-  }
-
-  @Override
   public TimeUnit getRateTimeUnit () {
 
     return speedometer.getRateTimeUnit();
@@ -60,27 +54,9 @@ public class SpeedometerMonitor extends StandardMBean implements SpeedometerMoni
   }
 
   @Override
-  public double getOneMinuteRate () {
+  public double getMin () {
 
-    return speedometer.getOneMinuteRate();
-  }
-
-  @Override
-  public double getFiveMinuteRate () {
-
-    return speedometer.getFiveMinuteRate();
-  }
-
-  @Override
-  public double getFifteenMinuteRate () {
-
-    return speedometer.getFifteenMinuteRate();
-  }
-
-  @Override
-  public double getAverageRate () {
-
-    return speedometer.getAverageRate();
+    return speedometer.getMin();
   }
 
   @Override
@@ -90,68 +66,50 @@ public class SpeedometerMonitor extends StandardMBean implements SpeedometerMoni
   }
 
   @Override
-  public double getMin () {
+  public double getOneMinuteAvgRate () {
 
-    return speedometer.getMin();
+    return speedometer.getOneMinuteAvgRate();
   }
 
   @Override
-  public double getAverage () {
+  public double getOneMinuteAvgVelocity () {
 
-    return speedometer.getAverage();
+    return speedometer.getOneMinuteAvgVelocity();
   }
 
   @Override
-  public double getStdDev () {
+  public double getFiveMinuteAvgRate () {
 
-    return speedometer.getStdDev();
+    return speedometer.getFiveMinuteAvgRate();
   }
 
   @Override
-  public double getSum () {
+  public double getFiveMinuteAvgVelocity () {
 
-    return speedometer.getSum();
+    return speedometer.getFiveMinuteAvgVelocity();
   }
 
   @Override
-  public double getMedian () {
+  public double getFifteenMinuteAvgRate () {
 
-    return speedometer.getSnapshot().getMedian();
+    return speedometer.getFifteenMinuteAvgRate();
   }
 
   @Override
-  public double get75thPercentile () {
+  public double getFifteenMinuteAvgVelocity () {
 
-    return speedometer.getSnapshot().get75thPercentile();
+    return speedometer.getFifteenMinuteAvgVelocity();
   }
 
   @Override
-  public double get95thPercentile () {
+  public double getAverageRate () {
 
-    return speedometer.getSnapshot().get95thPercentile();
+    return speedometer.getAverageRate();
   }
 
   @Override
-  public double get98thPercentile () {
+  public double getAverageVelocity () {
 
-    return speedometer.getSnapshot().get98thPercentile();
-  }
-
-  @Override
-  public double get99thPercentile () {
-
-    return speedometer.getSnapshot().get99thPercentile();
-  }
-
-  @Override
-  public double get999thPercentile () {
-
-    return speedometer.getSnapshot().get999thPercentile();
-  }
-
-  @Override
-  public double[] getValues () {
-
-    return speedometer.getSnapshot().getValues();
+    return speedometer.getAverageVelocity();
   }
 }

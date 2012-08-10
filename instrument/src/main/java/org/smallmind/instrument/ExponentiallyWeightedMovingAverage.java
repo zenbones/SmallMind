@@ -34,7 +34,7 @@ import org.smallmind.nutsnbolts.time.TimeUtilities;
 
 public class ExponentiallyWeightedMovingAverage {
 
-  private final AtomicReference<Double> rate = new AtomicReference<Double>(0.0);
+  private final AtomicReference<Double> average = new AtomicReference<Double>(0.0);
   private final AtomicBoolean initialized = new AtomicBoolean(false);
   private final AtomicLong unprocessed = new AtomicLong();
   private final double alpha;
@@ -69,18 +69,18 @@ public class ExponentiallyWeightedMovingAverage {
   public void tick () {
 
     if (initialized.compareAndSet(false, true)) {
-      rate.set(unprocessed.getAndSet(0) / intervalInNanos);
+      average.set(unprocessed.getAndSet(0) / intervalInNanos);
     }
     else {
 
-      double currentRate = rate.get();
+      double currentRate = average.get();
 
-      rate.set(currentRate + (alpha * ((unprocessed.getAndSet(0) / intervalInNanos) - currentRate)));
+      average.set(currentRate + (alpha * ((unprocessed.getAndSet(0) / intervalInNanos) - currentRate)));
     }
   }
 
-  public double getRate (TimeUnit rateTimeUnit) {
+  public double getMovingAverage (TimeUnit rateTimeUnit) {
 
-    return rate.get() * rateTimeUnit.toNanos(1);
+    return average.get() * rateTimeUnit.toNanos(1);
   }
 }

@@ -52,22 +52,12 @@ public class Metrics {
 
   public static SpeedometerBuilder buildSpeedometer (long tickInterval, TimeUnit tickTimeUnit) {
 
-    return new SpeedometerBuilder(Samples.BIASED, tickInterval, tickTimeUnit, Clocks.EPOCH);
-  }
-
-  public static SpeedometerBuilder buildSpeedometer (Samples samples, long tickInterval, TimeUnit tickTimeUnit) {
-
-    return new SpeedometerBuilder(samples, tickInterval, tickTimeUnit, Clocks.EPOCH);
+    return new SpeedometerBuilder(tickInterval, tickTimeUnit, Clocks.EPOCH);
   }
 
   public static SpeedometerBuilder buildSpeedometer (long tickInterval, TimeUnit tickTimeUnit, Clocks clocks) {
 
-    return new SpeedometerBuilder(Samples.BIASED, tickInterval, tickTimeUnit, clocks);
-  }
-
-  public static SpeedometerBuilder buildSpeedometer (Samples samples, long tickInterval, TimeUnit tickTimeUnit, Clocks clocks) {
-
-    return new SpeedometerBuilder(samples, tickInterval, tickTimeUnit, clocks);
+    return new SpeedometerBuilder(tickInterval, tickTimeUnit, clocks);
   }
 
   public static ChronometerBuilder buildChronometer (TimeUnit durationUnit, long tickInterval, TimeUnit tickTimeUnit) {
@@ -189,14 +179,12 @@ public class Metrics {
 
   private static class SpeedometerBuilder implements MetricBuilder<Speedometer> {
 
-    private Samples samples;
     private Clocks clocks;
     private TimeUnit tickTimeUnit;
     private long tickInterval;
 
-    private SpeedometerBuilder (Samples samples, long tickInterval, TimeUnit tickTimeUnit, Clocks clocks) {
+    private SpeedometerBuilder (long tickInterval, TimeUnit tickTimeUnit, Clocks clocks) {
 
-      this.samples = samples;
       this.tickInterval = tickInterval;
       this.tickTimeUnit = tickTimeUnit;
       this.clocks = clocks;
@@ -217,7 +205,7 @@ public class Metrics {
     @Override
     public Speedometer construct () {
 
-      return new Speedometer(samples, tickInterval, tickTimeUnit, clocks.getClock());
+      return new Speedometer(tickInterval, tickTimeUnit, clocks.getClock());
     }
   }
 

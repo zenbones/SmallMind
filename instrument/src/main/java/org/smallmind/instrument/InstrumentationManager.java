@@ -77,7 +77,7 @@ public class InstrumentationManager implements StaticManager {
   public static void instrumentWithSpeedometer (MetricConfigurationProvider provider, long quantity, MetricProperty... properties) {
 
     if ((provider != null) && (provider.getMetricConfiguration() != null) && provider.getMetricConfiguration().isInstrumented()) {
-      getMetricRegistry().instrument(Metrics.buildSpeedometer(provider.getMetricConfiguration().getSamples(), provider.getMetricConfiguration().getTickInterval(), provider.getMetricConfiguration().getTickTimeUnit(), Clocks.EPOCH), provider.getMetricConfiguration().getMetricDomain().getDomain(), properties).update(quantity);
+      getMetricRegistry().instrument(Metrics.buildSpeedometer(provider.getMetricConfiguration().getTickInterval(), provider.getMetricConfiguration().getTickTimeUnit(), Clocks.EPOCH), provider.getMetricConfiguration().getMetricDomain().getDomain(), properties).update(quantity);
     }
   }
 

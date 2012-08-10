@@ -27,18 +27,19 @@
 package org.smallmind.instrument;
 
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicLong;
 
-public class Speedometer implements Metric, Metered, Estimating, Shutterbug, Clocked, Stoppable {
+public class Speedometer implements Metric, Tracked, Clocked, Stoppable {
 
-  private final Histogram histogram;
-  private final Meter usageMeter;
-  private final Meter incidentMeter;
+  private final Meter rateMeter;
+  private final Meter quantityMeter;
+  private final AtomicLong min = new AtomicLong(Long.MAX_VALUE);
+  private final AtomicLong max = new AtomicLong(Long.MIN_VALUE);
 
-  Speedometer (Samples samples, long tickInterval, TimeUnit tickTimeUnit, Clock clock) {
+  Speedometer (long tickInterval, TimeUnit tickTimeUnit, Clock clock) {
 
-    usageMeter = new Meter(tickInterval, tickTimeUnit, clock);
-    incidentMeter = new Meter(tickInterval, tickTimeUnit, clock);
-    histogram = new Histogram(samples);
+    rateMeter = new Meter(tickInterval, tickTimeUnit, clock);
+    quantityMeter = new Meter(tickInterval, tickTimeUnit, clock);
   }
 
   public void update () {
@@ -48,99 +49,92 @@ public class Speedometer implements Metric, Metered, Estimating, Shutterbug, Clo
 
   public void update (long quantity) {
 
-    histogram.update(quantity);
-    usageMeter.mark(quantity);
-    incidentMeter.mark();
-  }
-
-  @Override
-  public String getSampleType () {
-
-    return histogram.getSampleType();
+    rateMeter.mark(quantity);
+    quantityMeter.mark();
   }
 
   @Override
   public Clock getClock () {
 
-    return usageMeter.getClock();
+    return rateMeter.getClock();
   }
 
   @Override
   public TimeUnit getRateTimeUnit () {
 
-    return usageMeter.getRateTimeUnit();
+    return rateMeter.getRateTimeUnit();
   }
 
   @Override
   public long getCount () {
 
-    return incidentMeter.getCount();
+    return rateMeter.getCount();
   }
 
   @Override
-  public double getOneMinuteRate () {
+  public double getOneMinuteAvgRate () {
 
-    return usageMeter.getOneMinuteRate() / incidentMeter.getOneMinuteRate();
+    return rateMeter.getOneMinuteAvgRate();
   }
 
   @Override
-  public double getFiveMinuteRate () {
+  public double getOneMinuteAvgVelocity () {
 
-    return usageMeter.getFiveMinuteRate() / incidentMeter.getFiveMinuteRate();
+    return quantityMeter.getOneMinuteAvgRate() / rateMeter.getOneMinuteAvgRate();
   }
 
   @Override
-  public double getFifteenMinuteRate () {
+  public double getFiveMinuteAvgRate () {
 
-    return usageMeter.getFifteenMinuteRate() / incidentMeter.getFifteenMinuteRate();
+    return rateMeter.getFiveMinuteAvgRate();
+  }
+
+  @Override
+  public double getFiveMinuteAvgVelocity () {
+
+    return quantityMeter.getFiveMinuteAvgRate() / rateMeter.getFiveMinuteAvgRate();
+  }
+
+  @Override
+  public double getFifteenMinuteAvgRate () {
+
+    return rateMeter.getFifteenMinuteAvgRate();
+  }
+
+  @Override
+  public double getFifteenMinuteAvgVelocity () {
+
+    return quantityMeter.getFifteenMinuteAvgRate() / rateMeter.getFifteenMinuteAvgRate();
   }
 
   @Override
   public double getAverageRate () {
 
-    return usageMeter.getAverageRate() / incidentMeter.getAverageRate();
+    return rateMeter.getAverageRate();
+  }
+
+  @Override
+  public double getAverageVelocity () {
+
+    return quantityMeter.getAverageRate() / rateMeter.getAverageRate();
   }
 
   @Override
   public double getMax () {
 
-    return histogram.getMax();
+    return (getCount() > 0) ? max.get() : 0.0;
   }
 
   @Override
   public double getMin () {
 
-    return histogram.getMin();
-  }
-
-  @Override
-  public double getAverage () {
-
-    return histogram.getAverage();
-  }
-
-  @Override
-  public double getStdDev () {
-
-    return histogram.getStdDev();
-  }
-
-  @Override
-  public double getSum () {
-
-    return histogram.getSum();
-  }
-
-  @Override
-  public Snapshot getSnapshot () {
-
-    return new Snapshot(histogram.getSnapshot().getValues());
+    return (getCount() > 0) ? min.get() : 0.0;
   }
 
   @Override
   public void stop () {
 
-    usageMeter.stop();
-    incidentMeter.stop();
+    rateMeter.stop();
+    quantityMeter.stop();
   }
 }

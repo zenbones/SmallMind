@@ -83,21 +83,21 @@ public class Chronometer implements Metric, Metered, Estimating, Timed, Shutterb
   }
 
   @Override
-  public double getOneMinuteRate () {
+  public double getOneMinuteAvgRate () {
 
-    return meter.getOneMinuteRate();
+    return meter.getOneMinuteAvgRate();
   }
 
   @Override
-  public double getFiveMinuteRate () {
+  public double getFiveMinuteAvgRate () {
 
-    return meter.getFiveMinuteRate();
+    return meter.getFiveMinuteAvgRate();
   }
 
   @Override
-  public double getFifteenMinuteRate () {
+  public double getFifteenMinuteAvgRate () {
 
-    return meter.getFifteenMinuteRate();
+    return meter.getFifteenMinuteAvgRate();
   }
 
   @Override
