@@ -32,10 +32,12 @@ import javax.jms.JMSException;
 import javax.jms.Message;
 import javax.jms.MessageListener;
 import javax.jms.Topic;
+import org.smallmind.instrument.ChronometerInstrument;
 import org.smallmind.instrument.InstrumentationManager;
 import org.smallmind.instrument.MetricProperty;
 import org.smallmind.quorum.transport.TransportManager;
 import org.smallmind.quorum.transport.instrument.MetricDestination;
+import org.smallmind.quorum.transport.instrument.MetricEvent;
 import org.smallmind.scribe.pen.LoggerManager;
 
 public class TransmissionListener implements SessionEmployer, MessageListener {
@@ -80,7 +82,7 @@ public class TransmissionListener implements SessionEmployer, MessageListener {
   }
 
   @Override
-  public void onMessage (Message message) {
+  public void onMessage (final Message message) {
 
     try {
 
@@ -92,6 +94,18 @@ public class TransmissionListener implements SessionEmployer, MessageListener {
       LoggerManager.getLogger(ReceptionListener.class).error(jmsException);
     }
 
-    messageTransmitter.completeCallback(message);
+    try {
+      InstrumentationManager.execute(new ChronometerInstrument(TransportManager.getTransport(), new MetricProperty("event", MetricEvent.COMPLETE_CALLBACK.getDisplay())) {
+
+        @Override
+        public void withChronometer () {
+
+          messageTransmitter.completeCallback(message);
+        }
+      });
+    }
+    catch (Exception exception) {
+      LoggerManager.getLogger(ReceptionListener.class).error(exception);
+    }
   }
 }
