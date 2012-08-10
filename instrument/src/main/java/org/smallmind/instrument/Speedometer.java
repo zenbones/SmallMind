@@ -58,8 +58,8 @@ public class Speedometer implements Metric, Tracked, Clocked, Stoppable {
 
   public void update (long quantity) {
 
-    rateMeter.mark(quantity);
-    quantityMeter.mark();
+    rateMeter.mark();
+    quantityMeter.mark(quantity);
   }
 
   @Override
