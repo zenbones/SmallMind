@@ -86,7 +86,7 @@ public class ChronometerMonitor extends StandardMBean implements ChronometerMoni
   @Override
   public double getAverageRate () {
 
-    return chronometer.getAverage();
+    return chronometer.getAverageRate();
   }
 
   @Override

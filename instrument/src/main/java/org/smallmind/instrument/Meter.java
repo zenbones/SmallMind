@@ -49,12 +49,12 @@ public class Meter implements Metric, Metered, Clocked, Stoppable {
     }
   });
 
-  private final AtomicLong count = new AtomicLong(0);
   private final ExponentiallyWeightedMovingAverage m1Average;
   private final ExponentiallyWeightedMovingAverage m5Average;
   private final ExponentiallyWeightedMovingAverage m15Average;
   private final ScheduledFuture<?> future;
   private final AtomicLong startTime;
+  private final AtomicLong count = new AtomicLong(0);
   private final Clock clock;
   private final TimeUnit tickTimeUnit;
 

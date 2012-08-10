@@ -60,6 +60,8 @@ public class Speedometer implements Metric, Tracked, Clocked, Stoppable {
 
     rateMeter.mark();
     quantityMeter.mark(quantity);
+    setMax(quantity);
+    setMin(quantity);
   }
 
   @Override
@@ -134,10 +136,34 @@ public class Speedometer implements Metric, Tracked, Clocked, Stoppable {
     return (getCount() > 0) ? max.get() : 0.0;
   }
 
+  private void setMax (long potentialMax) {
+
+    boolean done = false;
+
+    while (!done) {
+
+      long currentMax = max.get();
+
+      done = currentMax >= potentialMax || max.compareAndSet(currentMax, potentialMax);
+    }
+  }
+
   @Override
   public double getMin () {
 
     return (getCount() > 0) ? min.get() : 0.0;
+  }
+
+  private void setMin (long potentialMin) {
+
+    boolean done = false;
+
+    while (!done) {
+
+      long currentMin = min.get();
+
+      done = currentMin <= potentialMin || min.compareAndSet(currentMin, potentialMin);
+    }
   }
 
   @Override
