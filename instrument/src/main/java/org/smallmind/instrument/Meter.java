@@ -54,9 +54,9 @@ public class Meter implements Metric, Metered, Clocked, Stoppable {
   private final ExponentiallyWeightedMovingAverage m5Average;
   private final ExponentiallyWeightedMovingAverage m15Average;
   private final ScheduledFuture<?> future;
+  private final AtomicLong startTime;
   private final Clock clock;
   private final TimeUnit tickTimeUnit;
-  private final long startTime;
 
   public Meter () {
 
@@ -68,12 +68,12 @@ public class Meter implements Metric, Metered, Clocked, Stoppable {
     this(tickInterval, tickTimeUnit, Clocks.EPOCH.getClock());
   }
 
-  Meter (long tickInterval, TimeUnit tickTimeUnit, Clock clock) {
+  public Meter (long tickInterval, TimeUnit tickTimeUnit, Clock clock) {
 
     this.tickTimeUnit = tickTimeUnit;
     this.clock = clock;
 
-    startTime = clock.getTimeMilliseconds();
+    startTime = new AtomicLong(clock.getTimeMilliseconds());
 
     m1Average = ExponentiallyWeightedMovingAverage.lastOneMinute(tickInterval, tickTimeUnit);
     m5Average = ExponentiallyWeightedMovingAverage.lastFiveMinutes(tickInterval, tickTimeUnit);
@@ -89,6 +89,16 @@ public class Meter implements Metric, Metered, Clocked, Stoppable {
         m15Average.tick();
       }
     }, tickInterval, tickInterval, tickTimeUnit);
+  }
+
+  @Override
+  public void clear () {
+
+    startTime.set(clock.getTimeMilliseconds());
+    count.set(0);
+    m15Average.clear();
+    m15Average.clear();
+    m15Average.clear();
   }
 
   public void mark () {
@@ -151,7 +161,7 @@ public class Meter implements Metric, Metered, Clocked, Stoppable {
     }
     else {
 
-      return (((double)currentCount) / (clock.getTimeMilliseconds() - startTime)) * TimeUtilities.convertToDouble(1, tickTimeUnit, TimeUnit.MILLISECONDS);
+      return (((double)currentCount) / (clock.getTimeMilliseconds() - startTime.get())) * TimeUtilities.convertToDouble(1, tickTimeUnit, TimeUnit.MILLISECONDS);
     }
   }
 

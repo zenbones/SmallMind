@@ -34,12 +34,19 @@ public class Chronometer implements Metric, Metered, Estimating, Timed, Shutterb
   private final Meter meter;
   private final TimeUnit durationTimeUnit;
 
-  Chronometer (Samples samples, TimeUnit durationTimeUnit, long tickInterval, TimeUnit tickTimeUnit, Clock clock) {
+  public Chronometer (Samples samples, TimeUnit durationTimeUnit, long tickInterval, TimeUnit tickTimeUnit, Clock clock) {
 
     this.durationTimeUnit = durationTimeUnit;
 
     meter = new Meter(tickInterval, tickTimeUnit, clock);
     histogram = new Histogram(samples);
+  }
+
+  @Override
+  public void clear () {
+
+    meter.clear();
+    histogram.clear();
   }
 
   public void update (long duration) {

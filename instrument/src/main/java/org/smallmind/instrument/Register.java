@@ -42,6 +42,12 @@ public class Register implements Metric, Countable {
     this.count = new AtomicLong(initialCount);
   }
 
+  @Override
+  public void clear () {
+
+    count.set(0);
+  }
+
   public void inc () {
 
     count.incrementAndGet();
@@ -62,13 +68,9 @@ public class Register implements Metric, Countable {
     count.addAndGet(0 - n);
   }
 
+  @Override
   public long getCount () {
 
     return count.get();
-  }
-
-  public void clear () {
-
-    count.set(0);
   }
 }

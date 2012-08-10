@@ -28,4 +28,5 @@ package org.smallmind.instrument;
 
 public interface Metric {
 
+  public abstract void clear ();
 }

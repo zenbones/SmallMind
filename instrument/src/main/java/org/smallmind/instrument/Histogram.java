@@ -50,7 +50,7 @@ public class Histogram implements Metric, Estimating, Shutterbug {
   private final AtomicLong max = new AtomicLong(Long.MIN_VALUE);
   private final AtomicLong sum = new AtomicLong(0);
 
-  Histogram (Samples samples) {
+  public Histogram (Samples samples) {
 
     sample = samples.createSample();
   }

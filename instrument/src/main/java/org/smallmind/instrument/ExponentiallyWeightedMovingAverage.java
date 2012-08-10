@@ -61,6 +61,11 @@ public class ExponentiallyWeightedMovingAverage {
     intervalInNanos = tickTimeUnit.toNanos(tickInterval);
   }
 
+  public void clear () {
+
+    initialized.set(false);
+  }
+
   public void update (long n) {
 
     unprocessed.addAndGet(n);

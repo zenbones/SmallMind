@@ -36,10 +36,19 @@ public class Speedometer implements Metric, Tracked, Clocked, Stoppable {
   private final AtomicLong min = new AtomicLong(Long.MAX_VALUE);
   private final AtomicLong max = new AtomicLong(Long.MIN_VALUE);
 
-  Speedometer (long tickInterval, TimeUnit tickTimeUnit, Clock clock) {
+  public Speedometer (long tickInterval, TimeUnit tickTimeUnit, Clock clock) {
 
     rateMeter = new Meter(tickInterval, tickTimeUnit, clock);
     quantityMeter = new Meter(tickInterval, tickTimeUnit, clock);
+  }
+
+  @Override
+  public void clear () {
+
+    rateMeter.clear();
+    quantityMeter.clear();
+    min.set(Long.MAX_VALUE);
+    max.set(Long.MIN_VALUE);
   }
 
   public void update () {
