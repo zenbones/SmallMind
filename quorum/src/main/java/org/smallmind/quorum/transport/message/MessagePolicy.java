@@ -31,7 +31,7 @@ import javax.jms.MessageProducer;
 
 public class MessagePolicy {
 
-  private AcknowledgeMode acknowledgeMode = AcknowledgeMode.CLIENT_ACKNOWLEDGE;
+  private AcknowledgeMode acknowledgeMode = JmsAcknowledgeMode.CLIENT_ACKNOWLEDGE;
   private DeliveryMode deliveryMode = DeliveryMode.PERSISTENT;
   private boolean disableMessageID = false;
   private boolean disableMessageTimestamp = false;
