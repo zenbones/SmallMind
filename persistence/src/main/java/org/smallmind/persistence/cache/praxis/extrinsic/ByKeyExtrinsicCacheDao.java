@@ -60,7 +60,6 @@ public class ByKeyExtrinsicCacheDao<I extends Serializable & Comparable<I>, D ex
     return getInstanceCache(durableClass).get(durableKey.getKey());
   }
 
-  @Override
   public D persist (Class<D> durableClass, D durable, PersistenceMode mode) {
 
     if (durable != null) {

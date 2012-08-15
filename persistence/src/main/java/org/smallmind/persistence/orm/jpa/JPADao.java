@@ -81,31 +81,33 @@ public abstract class JPADao<I extends Serializable & Comparable<I>, D extends D
   public D get (Class<D> durableClass, I id) {
 
     VectoredDao<I, D> vectoredDao;
-    Object persistedObject;
+    D durable;
 
     if ((vectoredDao = getVectoredDao()) == null) {
-      if ((persistedObject = proxySession.getEntityManager().find(durableClass, id)) != null) {
+      if ((durable = acquire(durableClass, id)) != null) {
 
-        return durableClass.cast(persistedObject);
+        return durable;
       }
     }
     else {
-
-      D durable;
-
       if ((durable = vectoredDao.get(durableClass, id)) != null) {
 
         return durable;
       }
 
-      if ((persistedObject = proxySession.getEntityManager().find(durableClass, id)) != null) {
-        durable = durableClass.cast(persistedObject);
+      if ((durable = acquire(durableClass, id)) != null) {
 
         return vectoredDao.persist(durableClass, durable, PersistenceMode.SOFT);
       }
     }
 
     return null;
+  }
+
+  @Override
+  public D acquire (Class<D> durableClass, I id) {
+
+    return durableClass.cast(proxySession.getEntityManager().find(durableClass, id));
   }
 
   public D persist (D durable) {
@@ -217,42 +219,12 @@ public abstract class JPADao<I extends Serializable & Comparable<I>, D extends D
 
   public <T> T findByQuery (Class<T> returnType, QueryDetails queryDetails) {
 
-    // TODO: Kundera doesn't handle getSingleResult until 2.0.5
-    // return returnType.cast(constructQuery(queryDetails).getSingleResult());
-
-    List resultList;
-
-    if ((resultList = constructQuery(queryDetails).getResultList()) != null) {
-      if (resultList.size() > 1) {
-        throw new IllegalStateException("Expected a single result");
-      }
-      else if (resultList.size() > 0) {
-
-        return returnType.cast(resultList.get(0));
-      }
-    }
-
-    return null;
+    return returnType.cast(constructQuery(queryDetails).getSingleResult());
   }
 
   public D findByQuery (QueryDetails queryDetails) {
 
-    // TODO: Kundera doesn't handle getSingleResult until 2.0.5
-    // return getManagedClass().cast(constructQuery(queryDetails).getSingleResult());
-
-    List resultList;
-
-    if ((resultList = constructQuery(queryDetails).getResultList()) != null) {
-      if (resultList.size() > 1) {
-        throw new IllegalStateException("Expected a single result");
-      }
-      else if (resultList.size() > 0) {
-
-        return getManagedClass().cast(resultList.get(0));
-      }
-    }
-
-    return null;
+    return getManagedClass().cast(constructQuery(queryDetails).getSingleResult());
   }
 
   public <T> List<T> listByQuery (Class<T> returnType, QueryDetails queryDetails) {

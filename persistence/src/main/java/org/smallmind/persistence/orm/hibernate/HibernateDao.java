@@ -91,31 +91,33 @@ public abstract class HibernateDao<I extends Serializable & Comparable<I>, D ext
   public D get (Class<D> durableClass, I id) {
 
     VectoredDao<I, D> vectoredDao;
-    Object persistedObject;
+    D durable;
 
     if ((vectoredDao = getVectoredDao()) == null) {
-      if ((persistedObject = proxySession.getSession().get(durableClass, id)) != null) {
+      if ((durable = acquire(durableClass, id)) != null) {
 
-        return durableClass.cast(persistedObject);
+        return durable;
       }
     }
     else {
-
-      D durable;
-
       if ((durable = vectoredDao.get(durableClass, id)) != null) {
 
         return durable;
       }
 
-      if ((persistedObject = proxySession.getSession().get(durableClass, id)) != null) {
-        durable = durableClass.cast(persistedObject);
+      if ((durable = acquire(durableClass, id)) != null) {
 
         return vectoredDao.persist(durableClass, durable, PersistenceMode.SOFT);
       }
     }
 
     return null;
+  }
+
+  @Override
+  public D acquire (Class<D> durableClass, I id) {
+
+    return durableClass.cast(proxySession.getSession().get(durableClass, id));
   }
 
   public List<D> list () {

@@ -77,29 +77,34 @@ public abstract class JDODao<I extends Serializable & Comparable<I>, D extends D
 
   public D get (Class<D> durableClass, I id) {
 
+    VectoredDao<I, D> vectoredDao;
     D durable;
-    Object persistedObject;
-    VectoredDao<I, D> vectoredDao = getVectoredDao();
 
-    if (vectoredDao != null) {
-      if ((durable = vectoredDao.get(durableClass, id)) != null) {
+    if ((vectoredDao = getVectoredDao()) == null) {
+      if ((durable = acquire(durableClass, id)) != null) {
 
         return durable;
       }
     }
+    else {
+      if ((durable = vectoredDao.get(durableClass, id)) != null) {
 
-    if ((persistedObject = proxySession.getPersistenceManager().getObjectId(id)) != null) {
-      durable = durableClass.cast(persistedObject);
+        return durable;
+      }
 
-      if (vectoredDao != null) {
+      if ((durable = acquire(durableClass, id)) != null) {
 
         return vectoredDao.persist(durableClass, durable, PersistenceMode.SOFT);
       }
-
-      return durable;
     }
 
     return null;
+  }
+
+  @Override
+  public D acquire (Class<D> durableClass, I id) {
+
+    return durableClass.cast(proxySession.getPersistenceManager().getObjectById(durableClass, id));
   }
 
   public List<D> list () {

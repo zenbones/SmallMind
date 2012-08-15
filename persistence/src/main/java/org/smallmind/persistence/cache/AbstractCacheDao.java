@@ -37,8 +37,6 @@ public abstract class AbstractCacheDao<I extends Comparable<I>, D extends Durabl
     this.cacheDomain = cacheDomain;
   }
 
-  public abstract D acquire (Class<D> durableClass, I ids);
-
   public String getMetricSource () {
 
     return cacheDomain.getMetricSource();
