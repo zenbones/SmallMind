@@ -60,6 +60,13 @@ public class DynamicDriverManagerPooledDataSourceInitializingBean implements Ini
   private final HashMap<String, DriverManagerPooledDataSourceProvider> dataSourceProviderMap = new HashMap<String, DriverManagerPooledDataSourceProvider>();
   private final HashMap<String, String> poolNameMap = new HashMap<String, String>();
 
+  private String[] poolNames;
+
+  public void setPoolNames (String[] poolNames) {
+
+    this.poolNames = poolNames;
+  }
+
   @Override
   public DriverManagerPooledDataSourceProvider getDataSourceProvider (String dataSourceKey) {
 
@@ -82,70 +89,68 @@ public class DynamicDriverManagerPooledDataSourceInitializingBean implements Ini
 
     SpringPropertyAccessor springPropertyAccessor = new SpringPropertyAccessor();
 
-    for (String key : springPropertyAccessor.getKeySet()) {
+    for (String poolName : poolNames) {
 
-      String poolName;
+      ComplexPoolConfig complexPoolConfig = new ComplexPoolConfig();
+      LinkedList<DatabaseConnection> connectionList = new LinkedList<DatabaseConnection>();
+      DatabaseConnection[] connections;
+      DatabaseConnection connection;
+      Option<Boolean> testOnAcquireOption;
+      Option<Long> acquireWaitTimeMillisOption;
+      Option<Long> connectionTimeoutMillisOption;
+      Option<Integer> maxStatementsOption;
+      Option<Integer> initialSizeOption;
+      Option<Integer> minSizeOption;
+      Option<Integer> maxSizeOption;
+      Option<Integer> maxIdleSecondsOption;
+      Option<Integer> maxLeaseTimeSecondsOption;
+      String driverClassName;
+      String validationQuery;
+      int index = 0;
 
-      if (key.startsWith("jdbc.driver.class_name.") && (!(poolName = key.substring("jdbc.driver.class_name.".length())).contains("."))) {
-
-        ComplexPoolConfig complexPoolConfig = new ComplexPoolConfig();
-        LinkedList<DatabaseConnection> connectionList = new LinkedList<DatabaseConnection>();
-        DatabaseConnection[] connections;
-        DatabaseConnection connection;
-        Option<Boolean> testOnAcquireOption;
-        Option<Long> acquireWaitTimeMillisOption;
-        Option<Long> connectionTimeoutMillisOption;
-        Option<Integer> maxStatementsOption;
-        Option<Integer> initialSizeOption;
-        Option<Integer> minSizeOption;
-        Option<Integer> maxSizeOption;
-        Option<Integer> maxIdleSecondsOption;
-        Option<Integer> maxLeaseTimeSecondsOption;
-        String driverClassName;
-        String validationQuery;
-        int index = 0;
-
-        driverClassName = springPropertyAccessor.asString("jdbc.driver.class_name." + poolName);
-        maxStatementsOption = springPropertyAccessor.asInt("jdbc.max_statements." + poolName);
-        validationQuery = springPropertyAccessor.asString("jdbc.validation_query." + poolName);
-
-        while ((connection = containsConnection(springPropertyAccessor, poolName, index++)) != null) {
-          connectionList.add(connection);
-        }
-        if (connectionList.isEmpty()) {
-          throw new RuntimeBeansException("Database connection pool(%s) must have at least one complete connection defined at index(0)", poolName);
-        }
-
-        if (!(testOnAcquireOption = springPropertyAccessor.asBoolean("jdbc.pool.test_on_acquire." + poolName)).isNone()) {
-          complexPoolConfig.setTestOnAcquire(testOnAcquireOption.get());
-        }
-        if (!(initialSizeOption = springPropertyAccessor.asInt("jdbc.pool.initial_size." + poolName)).isNone()) {
-          complexPoolConfig.setInitialPoolSize(initialSizeOption.get());
-        }
-        if (!(minSizeOption = springPropertyAccessor.asInt("jdbc.pool.min_size." + poolName)).isNone()) {
-          complexPoolConfig.setMinPoolSize(minSizeOption.get());
-        }
-        if (!(maxSizeOption = springPropertyAccessor.asInt("jdbc.pool.max_size." + poolName)).isNone()) {
-          complexPoolConfig.setMaxPoolSize(maxSizeOption.get());
-        }
-        if (!(acquireWaitTimeMillisOption = springPropertyAccessor.asLong("jdbc.pool.acquire_wait_time_millis." + poolName)).isNone()) {
-          complexPoolConfig.setAcquireWaitTimeMillis(acquireWaitTimeMillisOption.get());
-        }
-        if (!(connectionTimeoutMillisOption = springPropertyAccessor.asLong("jdbc.pool.connection_timeout_millis." + poolName)).isNone()) {
-          complexPoolConfig.setCreationTimeoutMillis(connectionTimeoutMillisOption.get());
-        }
-        if (!(maxIdleSecondsOption = springPropertyAccessor.asInt("jdbc.pool.max_idle_seconds." + poolName)).isNone()) {
-          complexPoolConfig.setMaxIdleTimeSeconds(maxIdleSecondsOption.get());
-        }
-        if (!(maxLeaseTimeSecondsOption = springPropertyAccessor.asInt("jdbc.pool.max_lease_time_seconds." + poolName)).isNone()) {
-          complexPoolConfig.setMaxLeaseTimeSeconds(maxLeaseTimeSecondsOption.get());
-        }
-
-        connections = new DatabaseConnection[connectionList.size()];
-        connectionList.toArray(connections);
-
-        dataSourceProviderMap.put(poolName, new DriverManagerPooledDataSourceProvider(poolName, driverClassName, validationQuery, maxStatementsOption.isNone() ? 0 : maxStatementsOption.get(), complexPoolConfig, connections));
+      if ((driverClassName = springPropertyAccessor.asString("jdbc.driver.class_name." + poolName)) == null) {
+        throw new RuntimeBeansException("Database connection pool(%s) must have a defined driver class name", poolName);
       }
+
+      maxStatementsOption = springPropertyAccessor.asInt("jdbc.max_statements." + poolName);
+      validationQuery = springPropertyAccessor.asString("jdbc.validation_query." + poolName);
+
+      while ((connection = containsConnection(springPropertyAccessor, poolName, index++)) != null) {
+        connectionList.add(connection);
+      }
+      if (connectionList.isEmpty()) {
+        throw new RuntimeBeansException("Database connection pool(%s) must have at least one complete connection defined at index(0)", poolName);
+      }
+
+      if (!(testOnAcquireOption = springPropertyAccessor.asBoolean("jdbc.pool.test_on_acquire." + poolName)).isNone()) {
+        complexPoolConfig.setTestOnAcquire(testOnAcquireOption.get());
+      }
+      if (!(initialSizeOption = springPropertyAccessor.asInt("jdbc.pool.initial_size." + poolName)).isNone()) {
+        complexPoolConfig.setInitialPoolSize(initialSizeOption.get());
+      }
+      if (!(minSizeOption = springPropertyAccessor.asInt("jdbc.pool.min_size." + poolName)).isNone()) {
+        complexPoolConfig.setMinPoolSize(minSizeOption.get());
+      }
+      if (!(maxSizeOption = springPropertyAccessor.asInt("jdbc.pool.max_size." + poolName)).isNone()) {
+        complexPoolConfig.setMaxPoolSize(maxSizeOption.get());
+      }
+      if (!(acquireWaitTimeMillisOption = springPropertyAccessor.asLong("jdbc.pool.acquire_wait_time_millis." + poolName)).isNone()) {
+        complexPoolConfig.setAcquireWaitTimeMillis(acquireWaitTimeMillisOption.get());
+      }
+      if (!(connectionTimeoutMillisOption = springPropertyAccessor.asLong("jdbc.pool.connection_timeout_millis." + poolName)).isNone()) {
+        complexPoolConfig.setCreationTimeoutMillis(connectionTimeoutMillisOption.get());
+      }
+      if (!(maxIdleSecondsOption = springPropertyAccessor.asInt("jdbc.pool.max_idle_seconds." + poolName)).isNone()) {
+        complexPoolConfig.setMaxIdleTimeSeconds(maxIdleSecondsOption.get());
+      }
+      if (!(maxLeaseTimeSecondsOption = springPropertyAccessor.asInt("jdbc.pool.max_lease_time_seconds." + poolName)).isNone()) {
+        complexPoolConfig.setMaxLeaseTimeSeconds(maxLeaseTimeSecondsOption.get());
+      }
+
+      connections = new DatabaseConnection[connectionList.size()];
+      connectionList.toArray(connections);
+
+      dataSourceProviderMap.put(poolName, new DriverManagerPooledDataSourceProvider(poolName, driverClassName, validationQuery, maxStatementsOption.isNone() ? 0 : maxStatementsOption.get(), complexPoolConfig, connections));
     }
 
     for (String key : springPropertyAccessor.getKeySet()) {

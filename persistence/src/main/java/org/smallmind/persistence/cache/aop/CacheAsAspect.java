@@ -162,7 +162,7 @@ public class CacheAsAspect {
             else {
               metricSource = vectoredDao.getMetricSource();
 
-              return List.class.isAssignableFrom(methodSignature.getReturnType()) ? vector.prefetch() : vector.asList();
+              return List.class.isAssignableFrom(methodSignature.getReturnType()) ? vector.asBestEffortPreFetchedList() : vector.asBestEffortLazyList();
             }
           }
 
@@ -173,7 +173,7 @@ public class CacheAsAspect {
           if ((iterable = (Iterable)thisJoinPoint.proceed()) != null) {
             vector = vectoredDao.persistVector(vectorKey, vectoredDao.createVector(vectorKey, iterable, cacheAs.comparator().equals(Comparator.class) ? null : cacheAs.comparator().newInstance(), cacheAs.max(), getTimeToLiveSeconds(cacheAs), cacheAs.ordered()));
 
-            return List.class.isAssignableFrom(methodSignature.getReturnType()) ? vector.prefetch() : vector.asList();
+            return List.class.isAssignableFrom(methodSignature.getReturnType()) ? vector.asBestEffortPreFetchedList() : vector.asBestEffortLazyList();
           }
 
           return null;

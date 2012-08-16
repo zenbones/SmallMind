@@ -104,7 +104,7 @@ public class ByKeySingularVector<I extends Serializable & Comparable<I>, D exten
   }
 
   @AutolockRead
-  public synchronized List<D> asList () {
+  public synchronized List<D> asBestEffortLazyList () {
 
     return Collections.singletonList(getDurable());
   }

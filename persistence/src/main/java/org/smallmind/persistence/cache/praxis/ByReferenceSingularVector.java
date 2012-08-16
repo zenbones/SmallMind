@@ -83,7 +83,7 @@ public class ByReferenceSingularVector<I extends Comparable<I>, D extends Durabl
   }
 
   @AutolockRead
-  public synchronized List<D> asList () {
+  public synchronized List<D> asBestEffortLazyList () {
 
     return Collections.singletonList(durable);
   }

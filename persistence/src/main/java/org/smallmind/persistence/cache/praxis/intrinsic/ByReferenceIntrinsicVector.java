@@ -67,7 +67,7 @@ public class ByReferenceIntrinsicVector<I extends Serializable & Comparable<I>, 
   }
 
   @AutolockRead
-  public synchronized List<D> asList () {
+  public synchronized List<D> asBestEffortLazyList () {
 
     return Collections.unmodifiableList(getRoster());
   }

@@ -82,13 +82,13 @@ public class ByKeyIntrinsicVector<I extends Serializable & Comparable<I>, D exte
   }
 
   @AutolockRead
-  public synchronized List<D> asList () {
+  public synchronized List<D> asBestEffortLazyList () {
 
     return Collections.unmodifiableList(new LinkedList<D>(getRoster()));
   }
 
   @AutolockRead
-  public synchronized List<D> prefetch () {
+  public synchronized List<D> asBestEffortPreFetchedList () {
 
     return Collections.unmodifiableList(roster.prefetch());
   }

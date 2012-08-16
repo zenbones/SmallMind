@@ -77,12 +77,12 @@ public class ByKeyExtrinsicVector<I extends Serializable & Comparable<I>, D exte
     return new ByKeyExtrinsicVector<I, D>(new ByKeyRoster<I, D>(roster.getDurableClass(), new ExtrinsicRoster<DurableKey<I, D>>(roster.getInternalRoster())), getComparator(), getMaxSize(), getTimeToLiveSeconds(), isOrdered());
   }
 
-  public synchronized List<D> asList () {
+  public synchronized List<D> asBestEffortLazyList () {
 
     return Collections.unmodifiableList(new LinkedList<D>(getRoster()));
   }
 
-  public synchronized List<D> prefetch () {
+  public synchronized List<D> asBestEffortPreFetchedList () {
 
     return Collections.unmodifiableList(roster.prefetch());
   }

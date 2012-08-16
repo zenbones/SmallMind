@@ -126,7 +126,7 @@ public class ByKeyExtrinsicCacheDao<I extends Serializable & Comparable<I>, D ex
     else {
       if (!(vector instanceof ByKeyExtrinsicVector)) {
 
-        return new ByKeyExtrinsicVector<I, D>(managedClass, vector.prefetch(), vector.getComparator(), vector.getMaxSize(), vector.getTimeToLiveSeconds(), vector.isOrdered());
+        return new ByKeyExtrinsicVector<I, D>(managedClass, vector.asBestEffortPreFetchedList(), vector.getComparator(), vector.getMaxSize(), vector.getTimeToLiveSeconds(), vector.isOrdered());
       }
 
       return vector;

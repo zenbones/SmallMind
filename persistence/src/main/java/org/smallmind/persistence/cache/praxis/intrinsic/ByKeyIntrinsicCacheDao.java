@@ -99,7 +99,7 @@ public class ByKeyIntrinsicCacheDao<I extends Serializable & Comparable<I>, D ex
     else {
       if (!(vector instanceof ByKeyIntrinsicVector)) {
 
-        return new ByKeyIntrinsicVector<I, D>(managedClass, vector.prefetch(), vector.getComparator(), vector.getMaxSize(), vector.getTimeToLiveSeconds(), vector.isOrdered());
+        return new ByKeyIntrinsicVector<I, D>(managedClass, vector.asBestEffortPreFetchedList(), vector.getComparator(), vector.getMaxSize(), vector.getTimeToLiveSeconds(), vector.isOrdered());
       }
 
       return vector;
