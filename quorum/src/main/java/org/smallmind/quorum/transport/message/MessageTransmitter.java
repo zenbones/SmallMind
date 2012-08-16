@@ -139,7 +139,6 @@ public class MessageTransmitter {
 
       queueOperator.send(requestMessage);
       if ((previousCallback = (SynchronousTransmissionCallback)callbackMap.putIfAbsent(correlationId = requestMessage.getJMSMessageID(), asynchronousCallback = new AsynchronousTransmissionCallback(messageStrategy, timeoutSeconds))) != null) {
-        callbackMap.remove(correlationId);
 
         return previousCallback;
       }
@@ -161,14 +160,12 @@ public class MessageTransmitter {
       if ((previousCallback = callbackMap.get(correlationId = responseMessage.getJMSCorrelationID())) == null) {
         if ((previousCallback = callbackMap.putIfAbsent(correlationId, new SynchronousTransmissionCallback(messageStrategy, responseMessage))) != null) {
           if (previousCallback instanceof AsynchronousTransmissionCallback) {
-            callbackMap.remove(correlationId);
             ((AsynchronousTransmissionCallback)previousCallback).setResponseMessage(responseMessage);
           }
         }
       }
       else {
         if (previousCallback instanceof AsynchronousTransmissionCallback) {
-          callbackMap.remove(correlationId);
           ((AsynchronousTransmissionCallback)previousCallback).setResponseMessage(responseMessage);
         }
       }

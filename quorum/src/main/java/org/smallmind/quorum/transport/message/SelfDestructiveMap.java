@@ -33,9 +33,9 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import org.smallmind.scribe.pen.LoggerManager;
 
-public class SelfDestructiveMap<K extends Comparable<K>, V extends SelfDestructive> {
+public class SelfDestructiveMap<K extends Comparable<K>, S extends SelfDestructive> {
 
-  private final ConcurrentHashMap<K, V> internalMap = new ConcurrentHashMap<K, V>();
+  private final ConcurrentHashMap<K, S> internalMap = new ConcurrentHashMap<K, S>();
   private final ConcurrentSkipListSet<SelfDestructiveKey<K>> ignitionKeySet = new ConcurrentSkipListSet<SelfDestructiveKey<K>>();
   private IgnitionWorker ignitionWorker;
   private final int timeoutSeconds;
@@ -51,25 +51,20 @@ public class SelfDestructiveMap<K extends Comparable<K>, V extends SelfDestructi
     ignitionThread.start();
   }
 
-  public V get (K key) {
+  public S get (K key) {
 
     return internalMap.get(key);
   }
 
-  public V putIfAbsent (K key, V value) {
+  public S putIfAbsent (K key, S value) {
 
-    V previousValue;
+    S previousValue;
 
     if ((previousValue = internalMap.putIfAbsent(key, value)) == null) {
       ignitionKeySet.add(new SelfDestructiveKey<K>(key, System.currentTimeMillis() + (timeoutSeconds * 1000)));
     }
 
     return previousValue;
-  }
-
-  public V remove (K key) {
-
-    return internalMap.remove(key);
   }
 
   public void shutdown ()
