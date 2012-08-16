@@ -31,14 +31,18 @@ import java.lang.reflect.Array;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.ListIterator;
+import java.util.Map;
 import org.smallmind.persistence.Durable;
 import org.smallmind.persistence.cache.CacheOperationException;
 import org.smallmind.persistence.cache.DurableKey;
+import org.smallmind.persistence.cache.VectoredDao;
 import org.smallmind.persistence.cache.praxis.intrinsic.IntrinsicRoster;
 import org.smallmind.persistence.orm.DaoManager;
 import org.smallmind.persistence.orm.ORMDao;
+import org.smallmind.persistence.orm.VectorAwareORMDao;
 import org.terracotta.annotations.InstrumentedClass;
 
 @InstrumentedClass
@@ -64,6 +68,34 @@ public class ByKeyRoster<I extends Serializable & Comparable<I>, D extends Durab
     return ormDao;
   }
 
+  public List<D> prefetch () {
+
+    ORMDao<I, D> ormDao;
+    VectoredDao<I, D> vectoredDao;
+
+    if (((ormDao = getORMDao()) instanceof VectorAwareORMDao) && ((vectoredDao = ((VectorAwareORMDao<I, D>)ormDao).getVectoredDao()) != null)) {
+
+      LinkedList<D> prefetchList = new LinkedList<D>();
+      Map<DurableKey<I, D>, D> prefetchMap = vectoredDao.get(durableClass, keyRoster);
+
+      for (DurableKey<I, D> durableKey : keyRoster) {
+
+        D durable;
+
+        if ((durable = prefetchMap.get(durableKey)) != null) {
+          prefetchList.add(durable);
+        }
+        else {
+          prefetchList.add(getDurable(durableKey));
+        }
+      }
+
+      return prefetchList;
+    }
+
+    return new LinkedList<D>(this);
+  }
+
   private D getDurable (DurableKey<I, D> durableKey) {
 
     if (durableKey == null) {
@@ -71,13 +103,7 @@ public class ByKeyRoster<I extends Serializable & Comparable<I>, D extends Durab
       return null;
     }
 
-    int equalsPos;
-
-    if ((equalsPos = durableKey.getKey().indexOf('=')) < 0) {
-      throw new CacheOperationException("Invalid durable key(%s)", durableKey);
-    }
-
-    return getORMDao().get(getORMDao().getIdFromString(durableKey.getKey().substring(equalsPos + 1)));
+    return getORMDao().get(getORMDao().getIdFromString(durableKey.getIdAsString()));
   }
 
   public Class<D> getDurableClass () {

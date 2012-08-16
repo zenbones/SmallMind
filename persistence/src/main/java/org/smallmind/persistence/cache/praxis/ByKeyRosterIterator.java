@@ -29,7 +29,6 @@ package org.smallmind.persistence.cache.praxis;
 import java.io.Serializable;
 import java.util.ListIterator;
 import org.smallmind.persistence.Durable;
-import org.smallmind.persistence.cache.CacheOperationException;
 import org.smallmind.persistence.cache.DurableKey;
 import org.smallmind.persistence.orm.ORMDao;
 
@@ -51,13 +50,7 @@ public class ByKeyRosterIterator<I extends Serializable & Comparable<I>, D exten
       return null;
     }
 
-    int equalsPos;
-
-    if ((equalsPos = durableKey.getKey().indexOf('=')) < 0) {
-      throw new CacheOperationException("Invalid durable key(%s)", durableKey);
-    }
-
-    return ormDao.get(ormDao.getIdFromString(durableKey.getKey().substring(equalsPos + 1)));
+    return ormDao.get(ormDao.getIdFromString(durableKey.getIdAsString()));
   }
 
   public boolean hasNext () {

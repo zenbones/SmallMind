@@ -30,6 +30,7 @@ public interface Dao<I, P> {
 
   public abstract String getMetricSource ();
 
+  // The acquire() method gets the managed object directly from the underlying data source (no vector, no cascade)
   public abstract P acquire (Class<P> durableClass, I id);
 
   public abstract P get (Class<P> persistentClass, I id);

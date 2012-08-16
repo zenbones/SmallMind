@@ -26,6 +26,9 @@
  */
 package org.smallmind.persistence.cache;
 
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import org.smallmind.persistence.Durable;
 
 public abstract class AbstractCacheDao<I extends Comparable<I>, D extends Durable<I>> implements CacheDao<I, D> {
@@ -50,5 +53,66 @@ public abstract class AbstractCacheDao<I extends Comparable<I>, D extends Durabl
   public PersistenceCache<String, DurableVector> getVectorCache (Class<D> durableClass) {
 
     return cacheDomain.getVectorCache(durableClass);
+  }
+
+  public D get (Class<D> durableClass, I id) {
+
+    return acquire(durableClass, id);
+  }
+
+  public Map<DurableKey<I, D>, D> get (Class<D> durableClass, List<DurableKey<I, D>> durableKeys) {
+
+    Map<DurableKey<I, D>, D> resultMap = new HashMap<DurableKey<I, D>, D>();
+    HashMap<String, DurableKey<I, D>> durableKeyMap = new HashMap<String, DurableKey<I, D>>();
+    String[] keys = new String[durableKeys.size()];
+    int index = 0;
+
+    for (DurableKey<I, D> durableKey : durableKeys) {
+      keys[index] = durableKey.getKey();
+      durableKeyMap.put(keys[index++], durableKey);
+    }
+
+    for (Map.Entry<String, D> resultEntry : getInstanceCache(durableClass).get(keys).entrySet()) {
+      resultMap.put(durableKeyMap.get(resultEntry.getKey()), resultEntry.getValue());
+    }
+
+    return resultMap;
+  }
+
+  public D acquire (Class<D> durableClass, I id) {
+
+    DurableKey<I, D> durableKey = new DurableKey<I, D>(durableClass, id);
+
+    return getInstanceCache(durableClass).get(durableKey.getKey());
+  }
+
+  public void delete (Class<D> durableClass, D durable) {
+
+    if (durable != null) {
+
+      DurableKey<I, D> durableKey = new DurableKey<I, D>(durableClass, durable.getId());
+
+      getInstanceCache(durableClass).remove(durableKey.getKey());
+    }
+  }
+
+  public DurableVector<I, D> getVector (VectorKey<D> vectorKey) {
+
+    return getVectorCache(vectorKey.getElementClass()).get(vectorKey.getKey());
+  }
+
+  public DurableVector<I, D> persistVector (VectorKey<D> vectorKey, DurableVector<I, D> vector) {
+
+    DurableVector<I, D> migratedVector;
+    DurableVector<I, D> cachedVector;
+
+    migratedVector = migrateVector(vectorKey.getElementClass(), vector);
+
+    return ((cachedVector = getVectorCache(vectorKey.getElementClass()).putIfAbsent(vectorKey.getKey(), migratedVector, migratedVector.getTimeToLiveSeconds())) != null) ? cachedVector : vector;
+  }
+
+  public void deleteVector (VectorKey<D> vectorKey) {
+
+    getVectorCache(vectorKey.getElementClass()).remove(vectorKey.getKey());
   }
 }

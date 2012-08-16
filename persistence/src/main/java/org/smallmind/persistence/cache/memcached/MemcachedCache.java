@@ -26,6 +26,8 @@
  */
 package org.smallmind.persistence.cache.memcached;
 
+import java.util.Arrays;
+import java.util.Map;
 import net.rubyeye.xmemcached.GetsResponse;
 import net.rubyeye.xmemcached.MemcachedClient;
 import org.smallmind.persistence.cache.CASValue;
@@ -66,6 +68,19 @@ public class MemcachedCache<V> implements PersistenceCache<String, V> {
     try {
 
       return valueClass.cast(memcachedClient.get(getDiscriminatedKey(key)));
+    }
+    catch (Exception exception) {
+      throw new CacheOperationException(exception);
+    }
+  }
+
+  @Override
+  public Map<String, V> get (String[] keys)
+    throws CacheOperationException {
+
+    try {
+
+      return memcachedClient.get(Arrays.asList(keys));
     }
     catch (Exception exception) {
       throw new CacheOperationException(exception);

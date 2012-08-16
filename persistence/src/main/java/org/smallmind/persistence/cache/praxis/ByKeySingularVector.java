@@ -66,13 +66,7 @@ public class ByKeySingularVector<I extends Serializable & Comparable<I>, D exten
 
   private D getDurable () {
 
-    int equalsPos;
-
-    if ((equalsPos = durableKey.getKey().indexOf('=')) < 0) {
-      throw new CacheOperationException("Invalid durable key(%s)", durableKey);
-    }
-
-    return getORMDao().get(getORMDao().getIdFromString(durableKey.getKey().substring(equalsPos + 1)));
+    return getORMDao().get(getORMDao().getIdFromString(durableKey.getIdAsString()));
   }
 
   @AutolockRead

@@ -26,6 +26,8 @@
  */
 package org.smallmind.persistence.cache.ehcache;
 
+import java.util.HashMap;
+import java.util.Map;
 import net.sf.ehcache.Cache;
 import net.sf.ehcache.Element;
 import org.smallmind.persistence.cache.CASValue;
@@ -63,9 +65,27 @@ public class EhcacheCache<V> implements PersistenceCache<String, V> {
   }
 
   @Override
-  public V get (String key) throws CacheOperationException {
+  public V get (String key) {
 
     return valueClass.cast(ehCache.get(key).getValue());
+  }
+
+  @Override
+  public Map<String, V> get (String[] keys)
+    throws CacheOperationException {
+
+    HashMap<String, V> resultMap = new HashMap<String, V>();
+
+    for (String key : keys) {
+
+      V value;
+
+      if ((value = valueClass.cast(ehCache.get(key).getValue())) != null) {
+        resultMap.put(key, value);
+      }
+    }
+
+    return resultMap;
   }
 
   @Override
@@ -93,7 +113,7 @@ public class EhcacheCache<V> implements PersistenceCache<String, V> {
   }
 
   @Override
-  public boolean putViaCas (String key, V oldValue, V value, long version, int timeToLiveSeconds) throws CacheOperationException {
+  public boolean putViaCas (String key, V oldValue, V value, long version, int timeToLiveSeconds) {
 
     if (oldValue == null) {
 

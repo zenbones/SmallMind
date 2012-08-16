@@ -63,6 +63,11 @@ public abstract class DurableVector<I extends Comparable<I>, D extends Durable<I
 
   public abstract List<D> asList ();
 
+  public List<D> prefetch () {
+
+    return asList();
+  }
+
   public Comparator<D> getComparator () {
 
     return comparator;

@@ -58,6 +58,11 @@ public class DurableKey<I extends Comparable<I>, D extends Durable<I>> implement
     return key;
   }
 
+  public String getIdAsString () {
+
+    return key.substring(key.indexOf(key.indexOf('=') + 1));
+  }
+
   public String toString () {
 
     return key;

@@ -26,6 +26,8 @@
  */
 package org.smallmind.persistence.cache;
 
+import java.util.Map;
+
 public interface PersistenceCache<K, V> {
 
   public abstract boolean requiresCopyOnDistributedCASOperation ();
@@ -33,6 +35,9 @@ public interface PersistenceCache<K, V> {
   public abstract int getDefaultTimeToLiveSeconds ();
 
   public abstract V get (K key)
+    throws CacheOperationException;
+
+  public abstract Map<K, V> get (K[] keys)
     throws CacheOperationException;
 
   public abstract void set (K key, V value, int timeToLiveSeconds)

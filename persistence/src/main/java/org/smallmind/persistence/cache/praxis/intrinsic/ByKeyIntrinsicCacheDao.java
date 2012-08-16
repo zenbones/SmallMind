@@ -44,20 +44,6 @@ public class ByKeyIntrinsicCacheDao<I extends Serializable & Comparable<I>, D ex
     super(cacheDomain);
   }
 
-  public D acquire (Class<D> durableClass, I id) {
-
-    DurableKey<I, D> durableKey = new DurableKey<I, D>(durableClass, id);
-
-    return getInstanceCache(durableClass).get(durableKey.getKey());
-  }
-
-  public D get (Class<D> durableClass, I id) {
-
-    DurableKey<I, D> durableKey = new DurableKey<I, D>(durableClass, id);
-
-    return getInstanceCache(durableClass).get(durableKey.getKey());
-  }
-
   public D persist (Class<D> durableClass, D durable, PersistenceMode mode) {
 
     if (durable != null) {
@@ -69,16 +55,6 @@ public class ByKeyIntrinsicCacheDao<I extends Serializable & Comparable<I>, D ex
     }
 
     return null;
-  }
-
-  public void delete (Class<D> durableClass, D durable) {
-
-    if (durable != null) {
-
-      DurableKey<I, D> durableKey = new DurableKey<I, D>(durableClass, durable.getId());
-
-      getInstanceCache(durableClass).remove(durableKey.getKey());
-    }
   }
 
   public void updateInVector (VectorKey<D> vectorKey, D durable) {
@@ -108,26 +84,6 @@ public class ByKeyIntrinsicCacheDao<I extends Serializable & Comparable<I>, D ex
         }
       }
     }
-  }
-
-  public DurableVector<I, D> getVector (VectorKey<D> vectorKey) {
-
-    return getVectorCache(vectorKey.getElementClass()).get(vectorKey.getKey());
-  }
-
-  public DurableVector<I, D> persistVector (VectorKey<D> vectorKey, DurableVector<I, D> vector) {
-
-    DurableVector<I, D> migratedVector;
-    DurableVector<I, D> cachedVector;
-
-    migratedVector = migrateVector(vectorKey.getElementClass(), vector);
-
-    return ((cachedVector = getVectorCache(vectorKey.getElementClass()).putIfAbsent(vectorKey.getKey(), migratedVector, migratedVector.getTimeToLiveSeconds())) != null) ? cachedVector : vector;
-  }
-
-  public void deleteVector (VectorKey<D> vectorKey) {
-
-    getVectorCache(vectorKey.getElementClass()).remove(vectorKey.getKey());
   }
 
   public DurableVector<I, D> migrateVector (Class<D> managedClass, DurableVector<I, D> vector) {
