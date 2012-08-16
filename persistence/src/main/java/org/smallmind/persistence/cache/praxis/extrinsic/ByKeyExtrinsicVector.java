@@ -82,6 +82,11 @@ public class ByKeyExtrinsicVector<I extends Serializable & Comparable<I>, D exte
     return Collections.unmodifiableList(new LinkedList<D>(getRoster()));
   }
 
+  public synchronized List<D> prefetch () {
+
+    return Collections.unmodifiableList(roster.prefetch());
+  }
+
   public synchronized Iterator<D> iterator () {
 
     return Collections.unmodifiableList(new LinkedList<D>(getRoster())).iterator();

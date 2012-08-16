@@ -32,6 +32,7 @@ import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.security.SecureRandom;
 import java.util.Comparator;
+import java.util.List;
 import java.util.Random;
 import org.aspectj.lang.ProceedingJoinPoint;
 import org.aspectj.lang.annotation.Around;
@@ -161,7 +162,7 @@ public class CacheAsAspect {
             else {
               metricSource = vectoredDao.getMetricSource();
 
-              return vector.asList();
+              return List.class.isAssignableFrom(methodSignature.getReturnType()) ? vector.prefetch() : vector.asList();
             }
           }
 
@@ -170,8 +171,9 @@ public class CacheAsAspect {
           metricSource = ormDao.getMetricSource();
 
           if ((iterable = (Iterable)thisJoinPoint.proceed()) != null) {
+            vector = vectoredDao.persistVector(vectorKey, vectoredDao.createVector(vectorKey, iterable, cacheAs.comparator().equals(Comparator.class) ? null : cacheAs.comparator().newInstance(), cacheAs.max(), getTimeToLiveSeconds(cacheAs), cacheAs.ordered()));
 
-            return vectoredDao.persistVector(vectorKey, vectoredDao.createVector(vectorKey, iterable, cacheAs.comparator().equals(Comparator.class) ? null : cacheAs.comparator().newInstance(), cacheAs.max(), getTimeToLiveSeconds(cacheAs), cacheAs.ordered())).asList();
+            return List.class.isAssignableFrom(methodSignature.getReturnType()) ? vector.prefetch() : vector.asList();
           }
 
           return null;

@@ -88,6 +88,12 @@ public class ByKeyIntrinsicVector<I extends Serializable & Comparable<I>, D exte
   }
 
   @AutolockRead
+  public synchronized List<D> prefetch () {
+
+    return Collections.unmodifiableList(roster.prefetch());
+  }
+
+  @AutolockRead
   public synchronized Iterator<D> iterator () {
 
     return Collections.unmodifiableList(new LinkedList<D>(getRoster())).iterator();
