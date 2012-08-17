@@ -63,17 +63,24 @@ public abstract class AbstractCacheDao<I extends Comparable<I>, D extends Durabl
   public Map<DurableKey<I, D>, D> get (Class<D> durableClass, List<DurableKey<I, D>> durableKeys) {
 
     Map<DurableKey<I, D>, D> resultMap = new HashMap<DurableKey<I, D>, D>();
-    HashMap<String, DurableKey<I, D>> durableKeyMap = new HashMap<String, DurableKey<I, D>>();
-    String[] keys = new String[durableKeys.size()];
-    int index = 0;
 
-    for (DurableKey<I, D> durableKey : durableKeys) {
-      keys[index] = durableKey.getKey();
-      durableKeyMap.put(keys[index++], durableKey);
-    }
+    if ((durableKeys != null) && (!durableKeys.isEmpty())) {
 
-    for (Map.Entry<String, D> resultEntry : getInstanceCache(durableClass).get(keys).entrySet()) {
-      resultMap.put(durableKeyMap.get(resultEntry.getKey()), resultEntry.getValue());
+      HashMap<String, DurableKey<I, D>> durableKeyMap = new HashMap<String, DurableKey<I, D>>();
+      Map<String, D> valueMap;
+      String[] keys = new String[durableKeys.size()];
+      int index = 0;
+
+      for (DurableKey<I, D> durableKey : durableKeys) {
+        keys[index] = durableKey.getKey();
+        durableKeyMap.put(keys[index++], durableKey);
+      }
+
+      if ((valueMap = getInstanceCache(durableClass).get(keys)) != null) {
+        for (Map.Entry<String, D> resultEntry : valueMap.entrySet()) {
+          resultMap.put(durableKeyMap.get(resultEntry.getKey()), resultEntry.getValue());
+        }
+      }
     }
 
     return resultMap;
