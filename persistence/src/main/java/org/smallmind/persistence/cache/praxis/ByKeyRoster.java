@@ -85,8 +85,8 @@ public class ByKeyRoster<I extends Serializable & Comparable<I>, D extends Durab
         if ((durable = prefetchMap.get(durableKey)) != null) {
           prefetchList.add(durable);
         }
-        else {
-          prefetchList.add(getDurable(durableKey));
+        else if ((durable = getORMDao().acquire(durableClass, getORMDao().getIdFromString(durableKey.getIdAsString()))) != null) {
+          prefetchList.add(durable);
         }
       }
 
