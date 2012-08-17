@@ -34,8 +34,8 @@ import java.util.logging.Logger;
 import javax.sql.DataSource;
 import javax.sql.PooledConnection;
 import org.smallmind.persistence.sql.DataSourceManager;
+import org.smallmind.quorum.pool.ComponentPoolException;
 import org.smallmind.quorum.pool.complex.ComponentPool;
-import org.smallmind.quorum.pool.complex.ComponentPoolException;
 
 public class PooledDataSource implements DataSource {
 

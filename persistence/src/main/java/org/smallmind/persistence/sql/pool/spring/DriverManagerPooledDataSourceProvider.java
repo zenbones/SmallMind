@@ -31,9 +31,9 @@ import javax.sql.PooledConnection;
 import org.smallmind.persistence.sql.pool.ConnectionEndpoint;
 import org.smallmind.persistence.sql.pool.DriverManagerComponentInstanceFactory;
 import org.smallmind.persistence.sql.pool.PooledDataSource;
+import org.smallmind.quorum.pool.ComponentPoolException;
 import org.smallmind.quorum.pool.complex.ComplexPoolConfig;
 import org.smallmind.quorum.pool.complex.ComponentPool;
-import org.smallmind.quorum.pool.complex.ComponentPoolException;
 
 public class DriverManagerPooledDataSourceProvider {
 

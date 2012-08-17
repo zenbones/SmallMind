@@ -28,8 +28,8 @@ package org.smallmind.persistence.sql.pool.spring;
 
 import java.sql.SQLException;
 import javax.sql.DataSource;
+import org.smallmind.quorum.pool.ComponentPoolException;
 import org.smallmind.quorum.pool.complex.ComplexPoolConfig;
-import org.smallmind.quorum.pool.complex.ComponentPoolException;
 import org.springframework.beans.factory.DisposableBean;
 import org.springframework.beans.factory.FactoryBean;
 import org.springframework.beans.factory.InitializingBean;

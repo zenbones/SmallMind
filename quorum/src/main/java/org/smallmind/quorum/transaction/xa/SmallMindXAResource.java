@@ -27,7 +27,7 @@
 package org.smallmind.quorum.transaction.xa;
 
 import javax.transaction.xa.XAResource;
-import org.smallmind.quorum.pool.complex.ComponentPoolException;
+import org.smallmind.quorum.pool.ComponentPoolException;
 
 public interface SmallMindXAResource extends XAResource {
 

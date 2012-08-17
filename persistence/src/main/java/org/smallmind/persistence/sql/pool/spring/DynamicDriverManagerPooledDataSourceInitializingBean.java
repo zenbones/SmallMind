@@ -32,8 +32,8 @@ import java.util.LinkedList;
 import org.smallmind.nutsnbolts.spring.RuntimeBeansException;
 import org.smallmind.nutsnbolts.spring.SpringPropertyAccessor;
 import org.smallmind.nutsnbolts.util.Option;
+import org.smallmind.quorum.pool.ComponentPoolException;
 import org.smallmind.quorum.pool.complex.ComplexPoolConfig;
-import org.smallmind.quorum.pool.complex.ComponentPoolException;
 import org.springframework.beans.factory.DisposableBean;
 import org.springframework.beans.factory.InitializingBean;
 

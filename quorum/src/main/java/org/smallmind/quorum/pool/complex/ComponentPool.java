@@ -34,6 +34,7 @@ import org.smallmind.instrument.MetricProperty;
 import org.smallmind.instrument.MetricRegistry;
 import org.smallmind.instrument.config.MetricConfiguration;
 import org.smallmind.nutsnbolts.lang.StackTrace;
+import org.smallmind.quorum.pool.ComponentPoolException;
 import org.smallmind.quorum.pool.PoolManager;
 import org.smallmind.quorum.pool.complex.event.ComponentPoolEventListener;
 import org.smallmind.quorum.pool.complex.event.ErrorReportingComponentPoolEvent;
@@ -61,7 +62,7 @@ public class ComponentPool<C> {
 
     componentPinManager = new ComponentPinManager<C>(this);
 
-    if ((PoolManager.getPool() != null) && ((metricConfiguration = PoolManager.getPool().getMetricConfiguration()) != null) && metricConfiguration.isInstrumented() &&((metricRegistry = InstrumentationManager.getMetricRegistry()) != null) && (metricRegistry.getServer() != null)) {
+    if ((PoolManager.getPool() != null) && ((metricConfiguration = PoolManager.getPool().getMetricConfiguration()) != null) && metricConfiguration.isInstrumented() && ((metricRegistry = InstrumentationManager.getMetricRegistry()) != null) && (metricRegistry.getServer() != null)) {
       try {
         metricRegistry.getServer().registerMBean(new ComponentPoolMonitor(this), new ObjectName(metricConfiguration.getMetricDomain().getDomain() + ":" + "pool=" + name));
       }

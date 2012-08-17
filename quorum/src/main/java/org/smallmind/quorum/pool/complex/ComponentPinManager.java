@@ -37,6 +37,7 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 import org.smallmind.instrument.InstrumentationManager;
 import org.smallmind.instrument.MetricProperty;
 import org.smallmind.nutsnbolts.lang.StackTrace;
+import org.smallmind.quorum.pool.ComponentPoolException;
 import org.smallmind.quorum.pool.PoolManager;
 import org.smallmind.quorum.pool.instrument.MetricEvent;
 import org.smallmind.quorum.pool.instrument.MetricSize;

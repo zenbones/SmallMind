@@ -26,6 +26,8 @@
  */
 package org.smallmind.quorum.pool.complex;
 
+import org.smallmind.quorum.pool.ComponentPoolException;
+
 public class ComponentCreationException extends ComponentPoolException {
 
   public ComponentCreationException () {
