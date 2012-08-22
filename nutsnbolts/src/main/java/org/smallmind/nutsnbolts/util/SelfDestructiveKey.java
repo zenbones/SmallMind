@@ -24,7 +24,7 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.quorum.transport.message;
+package org.smallmind.nutsnbolts.util;
 
 public class SelfDestructiveKey<K extends Comparable<K>> implements Comparable<SelfDestructiveKey<K>> {
 

@@ -37,6 +37,7 @@ import javax.jms.Topic;
 import org.smallmind.instrument.ChronometerInstrumentAndReturn;
 import org.smallmind.instrument.InstrumentationManager;
 import org.smallmind.instrument.MetricProperty;
+import org.smallmind.nutsnbolts.util.SelfDestructiveMap;
 import org.smallmind.quorum.transport.InvocationSignal;
 import org.smallmind.quorum.transport.TransportException;
 import org.smallmind.quorum.transport.TransportManager;

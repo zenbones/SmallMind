@@ -26,6 +26,8 @@
  */
 package org.smallmind.quorum.transport.message;
 
+import org.smallmind.nutsnbolts.util.SelfDestructive;
+
 public interface TransmissionCallback extends SelfDestructive {
 
   public abstract Object getResult ()

@@ -24,14 +24,13 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.quorum.transport.message;
+package org.smallmind.nutsnbolts.util;
 
 import java.util.NavigableSet;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentSkipListSet;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
-import org.smallmind.scribe.pen.LoggerManager;
 
 public class SelfDestructiveMap<K extends Comparable<K>, S extends SelfDestructive> {
 
@@ -39,12 +38,19 @@ public class SelfDestructiveMap<K extends Comparable<K>, S extends SelfDestructi
   private final ConcurrentSkipListSet<SelfDestructiveKey<K>> ignitionKeySet = new ConcurrentSkipListSet<SelfDestructiveKey<K>>();
   private IgnitionWorker ignitionWorker;
   private final int timeoutSeconds;
+  private final int pulseTimeSeconds;
 
   public SelfDestructiveMap (int timeoutSeconds) {
+
+    this(timeoutSeconds, 1);
+  }
+
+  public SelfDestructiveMap (int timeoutSeconds, int pulseTimeSeconds) {
 
     Thread ignitionThread;
 
     this.timeoutSeconds = timeoutSeconds;
+    this.pulseTimeSeconds = pulseTimeSeconds;
 
     ignitionThread = new Thread(ignitionWorker = new IgnitionWorker());
     ignitionThread.setDaemon(true);
@@ -73,6 +79,13 @@ public class SelfDestructiveMap<K extends Comparable<K>, S extends SelfDestructi
     ignitionWorker.shutdown();
   }
 
+  @Override
+  protected void finalize ()
+    throws InterruptedException {
+
+    shutdown();
+  }
+
   private class IgnitionWorker implements Runnable {
 
     private final CountDownLatch terminationLatch = new CountDownLatch(1);
@@ -89,7 +102,7 @@ public class SelfDestructiveMap<K extends Comparable<K>, S extends SelfDestructi
     public void run () {
 
       try {
-        while (!terminationLatch.await(1, TimeUnit.SECONDS)) {
+        while (!terminationLatch.await(pulseTimeSeconds, TimeUnit.SECONDS)) {
 
           NavigableSet<SelfDestructiveKey<K>> ignitedKeySet;
           long now = System.currentTimeMillis();
@@ -110,7 +123,7 @@ public class SelfDestructiveMap<K extends Comparable<K>, S extends SelfDestructi
         }
       }
       catch (InterruptedException interruptedException) {
-        LoggerManager.getLogger(SelfDestructiveMap.class).error(interruptedException);
+        terminationLatch.countDown();
       }
 
       exitLatch.countDown();
