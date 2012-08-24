@@ -1,7 +1,10 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
 <databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-2.0.xsd">
-  <changeSet author="quartz.generated" id="1">
-    <createTable tableName="qrtz_blob_triggers">
+  <changeSet author="auto.generated" id="1">
+    <createTable tableName="QRTZ_BLOB_TRIGGERS">
+      <column name="SCHED_NAME" type="VARCHAR(120)">
+        <constraints nullable="false"/>
+      </column>
       <column name="TRIGGER_NAME" type="VARCHAR(200)">
         <constraints nullable="false"/>
       </column>
@@ -11,18 +14,24 @@
       <column name="BLOB_DATA" type="BLOB"/>
     </createTable>
   </changeSet>
-  <changeSet author="quartz.generated" id="2">
-    <createTable tableName="qrtz_calendars">
+  <changeSet author="auto.generated" id="2">
+    <createTable tableName="QRTZ_CALENDARS">
+      <column name="SCHED_NAME" type="VARCHAR(120)">
+        <constraints nullable="false"/>
+      </column>
       <column name="CALENDAR_NAME" type="VARCHAR(200)">
-        <constraints nullable="false" primaryKey="true"/>
+        <constraints nullable="false"/>
       </column>
       <column name="CALENDAR" type="BLOB">
         <constraints nullable="false"/>
       </column>
     </createTable>
   </changeSet>
-  <changeSet author="quartz.generated" id="3">
-    <createTable tableName="qrtz_cron_triggers">
+  <changeSet author="auto.generated" id="3">
+    <createTable tableName="QRTZ_CRON_TRIGGERS">
+      <column name="SCHED_NAME" type="VARCHAR(120)">
+        <constraints nullable="false"/>
+      </column>
       <column name="TRIGGER_NAME" type="VARCHAR(200)">
         <constraints nullable="false"/>
       </column>
@@ -35,18 +44,18 @@
       <column name="TIME_ZONE_ID" type="VARCHAR(80)"/>
     </createTable>
   </changeSet>
-  <changeSet author="quartz.generated" id="4">
-    <createTable tableName="qrtz_fired_triggers">
+  <changeSet author="auto.generated" id="4">
+    <createTable tableName="QRTZ_FIRED_TRIGGERS">
+      <column name="SCHED_NAME" type="VARCHAR(120)">
+        <constraints nullable="false"/>
+      </column>
       <column name="ENTRY_ID" type="VARCHAR(95)">
-        <constraints nullable="false" primaryKey="true"/>
+        <constraints nullable="false"/>
       </column>
       <column name="TRIGGER_NAME" type="VARCHAR(200)">
         <constraints nullable="false"/>
       </column>
       <column name="TRIGGER_GROUP" type="VARCHAR(200)">
-        <constraints nullable="false"/>
-      </column>
-      <column name="IS_VOLATILE" type="VARCHAR(1)">
         <constraints nullable="false"/>
       </column>
       <column name="INSTANCE_NAME" type="VARCHAR(200)">
@@ -63,12 +72,15 @@
       </column>
       <column name="JOB_NAME" type="VARCHAR(200)"/>
       <column name="JOB_GROUP" type="VARCHAR(200)"/>
-      <column name="IS_STATEFUL" type="VARCHAR(1)"/>
+      <column name="IS_NONCONCURRENT" type="VARCHAR(1)"/>
       <column name="REQUESTS_RECOVERY" type="VARCHAR(1)"/>
     </createTable>
   </changeSet>
-  <changeSet author="quartz.generated" id="5">
-    <createTable tableName="qrtz_job_details">
+  <changeSet author="auto.generated" id="5">
+    <createTable tableName="QRTZ_JOB_DETAILS">
+      <column name="SCHED_NAME" type="VARCHAR(120)">
+        <constraints nullable="false"/>
+      </column>
       <column name="JOB_NAME" type="VARCHAR(200)">
         <constraints nullable="false"/>
       </column>
@@ -82,10 +94,10 @@
       <column name="IS_DURABLE" type="VARCHAR(1)">
         <constraints nullable="false"/>
       </column>
-      <column name="IS_VOLATILE" type="VARCHAR(1)">
+      <column name="IS_NONCONCURRENT" type="VARCHAR(1)">
         <constraints nullable="false"/>
       </column>
-      <column name="IS_STATEFUL" type="VARCHAR(1)">
+      <column name="IS_UPDATE_DATA" type="VARCHAR(1)">
         <constraints nullable="false"/>
       </column>
       <column name="REQUESTS_RECOVERY" type="VARCHAR(1)">
@@ -94,37 +106,33 @@
       <column name="JOB_DATA" type="BLOB"/>
     </createTable>
   </changeSet>
-  <changeSet author="quartz.generated" id="6">
-    <createTable tableName="qrtz_job_listeners">
-      <column name="JOB_NAME" type="VARCHAR(200)">
+  <changeSet author="auto.generated" id="6">
+    <createTable tableName="QRTZ_LOCKS">
+      <column name="SCHED_NAME" type="VARCHAR(120)">
         <constraints nullable="false"/>
       </column>
-      <column name="JOB_GROUP" type="VARCHAR(200)">
-        <constraints nullable="false"/>
-      </column>
-      <column name="JOB_LISTENER" type="VARCHAR(200)">
-        <constraints nullable="false"/>
-      </column>
-    </createTable>
-  </changeSet>
-  <changeSet author="quartz.generated" id="7">
-    <createTable tableName="qrtz_locks">
       <column name="LOCK_NAME" type="VARCHAR(40)">
-        <constraints nullable="false" primaryKey="true"/>
+        <constraints nullable="false"/>
       </column>
     </createTable>
   </changeSet>
-  <changeSet author="quartz.generated" id="8">
-    <createTable tableName="qrtz_paused_trigger_grps">
+  <changeSet author="auto.generated" id="7">
+    <createTable tableName="QRTZ_PAUSED_TRIGGER_GRPS">
+      <column name="SCHED_NAME" type="VARCHAR(120)">
+        <constraints nullable="false"/>
+      </column>
       <column name="TRIGGER_GROUP" type="VARCHAR(200)">
-        <constraints nullable="false" primaryKey="true"/>
+        <constraints nullable="false"/>
       </column>
     </createTable>
   </changeSet>
-  <changeSet author="quartz.generated" id="9">
-    <createTable tableName="qrtz_scheduler_state">
+  <changeSet author="auto.generated" id="8">
+    <createTable tableName="QRTZ_SCHEDULER_STATE">
+      <column name="SCHED_NAME" type="VARCHAR(120)">
+        <constraints nullable="false"/>
+      </column>
       <column name="INSTANCE_NAME" type="VARCHAR(200)">
-        <constraints nullable="false" primaryKey="true"/>
+        <constraints nullable="false"/>
       </column>
       <column name="LAST_CHECKIN_TIME" type="BIGINT">
         <constraints nullable="false"/>
@@ -134,8 +142,11 @@
       </column>
     </createTable>
   </changeSet>
-  <changeSet author="quartz.generated" id="10">
-    <createTable tableName="qrtz_simple_triggers">
+  <changeSet author="auto.generated" id="9">
+    <createTable tableName="QRTZ_SIMPLE_TRIGGERS">
+      <column name="SCHED_NAME" type="VARCHAR(120)">
+        <constraints nullable="false"/>
+      </column>
       <column name="TRIGGER_NAME" type="VARCHAR(200)">
         <constraints nullable="false"/>
       </column>
@@ -153,21 +164,35 @@
       </column>
     </createTable>
   </changeSet>
-  <changeSet author="quartz.generated" id="11">
-    <createTable tableName="qrtz_trigger_listeners">
+  <changeSet author="auto.generated" id="10">
+    <createTable tableName="QRTZ_SIMPROP_TRIGGERS">
+      <column name="SCHED_NAME" type="VARCHAR(120)">
+        <constraints nullable="false"/>
+      </column>
       <column name="TRIGGER_NAME" type="VARCHAR(200)">
         <constraints nullable="false"/>
       </column>
       <column name="TRIGGER_GROUP" type="VARCHAR(200)">
         <constraints nullable="false"/>
       </column>
-      <column name="TRIGGER_LISTENER" type="VARCHAR(200)">
-        <constraints nullable="false"/>
-      </column>
+      <column name="STR_PROP_1" type="VARCHAR(512)"/>
+      <column name="STR_PROP_2" type="VARCHAR(512)"/>
+      <column name="STR_PROP_3" type="VARCHAR(512)"/>
+      <column name="INT_PROP_1" type="INT"/>
+      <column name="INT_PROP_2" type="INT"/>
+      <column name="LONG_PROP_1" type="BIGINT"/>
+      <column name="LONG_PROP_2" type="BIGINT"/>
+      <column name="DEC_PROP_1" type="DECIMAL(13,4)"/>
+      <column name="DEC_PROP_2" type="DECIMAL(13,4)"/>
+      <column name="BOOL_PROP_1" type="VARCHAR(1)"/>
+      <column name="BOOL_PROP_2" type="VARCHAR(1)"/>
     </createTable>
   </changeSet>
-  <changeSet author="quartz.generated" id="12">
-    <createTable tableName="qrtz_triggers">
+  <changeSet author="auto.generated" id="11">
+    <createTable tableName="QRTZ_TRIGGERS">
+      <column name="SCHED_NAME" type="VARCHAR(120)">
+        <constraints nullable="false"/>
+      </column>
       <column name="TRIGGER_NAME" type="VARCHAR(200)">
         <constraints nullable="false"/>
       </column>
@@ -178,9 +203,6 @@
         <constraints nullable="false"/>
       </column>
       <column name="JOB_GROUP" type="VARCHAR(200)">
-        <constraints nullable="false"/>
-      </column>
-      <column name="IS_VOLATILE" type="VARCHAR(1)">
         <constraints nullable="false"/>
       </column>
       <column name="DESCRIPTION" type="VARCHAR(250)"/>
@@ -202,52 +224,179 @@
       <column name="JOB_DATA" type="BLOB"/>
     </createTable>
   </changeSet>
-  <changeSet author="quartz.generated" id="13">
-    <addPrimaryKey columnNames="TRIGGER_NAME, TRIGGER_GROUP" tableName="qrtz_blob_triggers"/>
+  <changeSet author="auto.generated" id="12">
+    <addPrimaryKey columnNames="SCHED_NAME, TRIGGER_NAME, TRIGGER_GROUP" tableName="QRTZ_BLOB_TRIGGERS"/>
   </changeSet>
-  <changeSet author="quartz.generated" id="14">
-    <addPrimaryKey columnNames="TRIGGER_NAME, TRIGGER_GROUP" tableName="qrtz_cron_triggers"/>
+  <changeSet author="auto.generated" id="13">
+    <addPrimaryKey columnNames="SCHED_NAME, CALENDAR_NAME" tableName="QRTZ_CALENDARS"/>
   </changeSet>
-  <changeSet author="quartz.generated" id="15">
-    <addPrimaryKey columnNames="JOB_NAME, JOB_GROUP" tableName="qrtz_job_details"/>
+  <changeSet author="auto.generated" id="14">
+    <addPrimaryKey columnNames="SCHED_NAME, TRIGGER_NAME, TRIGGER_GROUP" tableName="QRTZ_CRON_TRIGGERS"/>
   </changeSet>
-  <changeSet author="quartz.generated" id="16">
-    <addPrimaryKey columnNames="JOB_NAME, JOB_GROUP, JOB_LISTENER" tableName="qrtz_job_listeners"/>
+  <changeSet author="auto.generated" id="15">
+    <addPrimaryKey columnNames="SCHED_NAME, ENTRY_ID" tableName="QRTZ_FIRED_TRIGGERS"/>
   </changeSet>
-  <changeSet author="quartz.generated" id="17">
-    <addPrimaryKey columnNames="TRIGGER_NAME, TRIGGER_GROUP" tableName="qrtz_simple_triggers"/>
+  <changeSet author="auto.generated" id="16">
+    <addPrimaryKey columnNames="SCHED_NAME, JOB_NAME, JOB_GROUP" tableName="QRTZ_JOB_DETAILS"/>
   </changeSet>
-  <changeSet author="quartz.generated" id="18">
-    <addPrimaryKey columnNames="TRIGGER_NAME, TRIGGER_GROUP, TRIGGER_LISTENER" tableName="qrtz_trigger_listeners"/>
+  <changeSet author="auto.generated" id="17">
+    <addPrimaryKey columnNames="SCHED_NAME, LOCK_NAME" tableName="QRTZ_LOCKS"/>
   </changeSet>
-  <changeSet author="quartz.generated" id="19">
-    <addPrimaryKey columnNames="TRIGGER_NAME, TRIGGER_GROUP" tableName="qrtz_triggers"/>
+  <changeSet author="auto.generated" id="18">
+    <addPrimaryKey columnNames="SCHED_NAME, TRIGGER_GROUP" tableName="QRTZ_PAUSED_TRIGGER_GRPS"/>
   </changeSet>
-  <changeSet author="quartz.generated" id="20">
-    <addForeignKeyConstraint baseColumnNames="TRIGGER_NAME, TRIGGER_GROUP" baseTableName="qrtz_blob_triggers" baseTableSchemaName="quartz" constraintName="qrtz_blob_triggers_ibfk_1" deferrable="false" initiallyDeferred="false" onDelete="NO ACTION" onUpdate="NO ACTION" referencedColumnNames="TRIGGER_NAME, TRIGGER_GROUP" referencedTableName="qrtz_triggers" referencedTableSchemaName="quartz" referencesUniqueColumn="false"/>
+  <changeSet author="auto.generated" id="19">
+    <addPrimaryKey columnNames="SCHED_NAME, INSTANCE_NAME" tableName="QRTZ_SCHEDULER_STATE"/>
   </changeSet>
-  <changeSet author="quartz.generated" id="21">
-    <addForeignKeyConstraint baseColumnNames="TRIGGER_NAME, TRIGGER_GROUP" baseTableName="qrtz_cron_triggers" baseTableSchemaName="quartz" constraintName="qrtz_cron_triggers_ibfk_1" deferrable="false" initiallyDeferred="false" onDelete="NO ACTION" onUpdate="NO ACTION" referencedColumnNames="TRIGGER_NAME, TRIGGER_GROUP" referencedTableName="qrtz_triggers" referencedTableSchemaName="quartz" referencesUniqueColumn="false"/>
+  <changeSet author="auto.generated" id="20">
+    <addPrimaryKey columnNames="SCHED_NAME, TRIGGER_NAME, TRIGGER_GROUP" tableName="QRTZ_SIMPLE_TRIGGERS"/>
   </changeSet>
-  <changeSet author="quartz.generated" id="22">
-    <addForeignKeyConstraint baseColumnNames="JOB_NAME, JOB_GROUP" baseTableName="qrtz_job_listeners" baseTableSchemaName="quartz" constraintName="qrtz_job_listeners_ibfk_1" deferrable="false" initiallyDeferred="false" onDelete="NO ACTION" onUpdate="NO ACTION" referencedColumnNames="JOB_NAME, JOB_GROUP" referencedTableName="qrtz_job_details" referencedTableSchemaName="quartz" referencesUniqueColumn="false"/>
+  <changeSet author="auto.generated" id="21">
+    <addPrimaryKey columnNames="SCHED_NAME, TRIGGER_NAME, TRIGGER_GROUP" tableName="QRTZ_SIMPROP_TRIGGERS"/>
   </changeSet>
-  <changeSet author="quartz.generated" id="23">
-    <addForeignKeyConstraint baseColumnNames="TRIGGER_NAME, TRIGGER_GROUP" baseTableName="qrtz_simple_triggers" baseTableSchemaName="quartz" constraintName="qrtz_simple_triggers_ibfk_1" deferrable="false" initiallyDeferred="false" onDelete="NO ACTION" onUpdate="NO ACTION" referencedColumnNames="TRIGGER_NAME, TRIGGER_GROUP" referencedTableName="qrtz_triggers" referencedTableSchemaName="quartz" referencesUniqueColumn="false"/>
+  <changeSet author="auto.generated" id="22">
+    <addPrimaryKey columnNames="SCHED_NAME, TRIGGER_NAME, TRIGGER_GROUP" tableName="QRTZ_TRIGGERS"/>
   </changeSet>
-  <changeSet author="quartz.generated" id="24">
-    <addForeignKeyConstraint baseColumnNames="TRIGGER_NAME, TRIGGER_GROUP" baseTableName="qrtz_trigger_listeners" baseTableSchemaName="quartz" constraintName="qrtz_trigger_listeners_ibfk_1" deferrable="false" initiallyDeferred="false" onDelete="NO ACTION" onUpdate="NO ACTION" referencedColumnNames="TRIGGER_NAME, TRIGGER_GROUP" referencedTableName="qrtz_triggers" referencedTableSchemaName="quartz" referencesUniqueColumn="false"/>
+  <changeSet author="auto.generated" id="23">
+    <createIndex indexName="IDX_QRTZ_FT_INST_JOB_REQ_RCVRY" tableName="QRTZ_FIRED_TRIGGERS" unique="false">
+      <column name="INSTANCE_NAME"/>
+      <column name="REQUESTS_RECOVERY"/>
+      <column name="SCHED_NAME"/>
+    </createIndex>
   </changeSet>
-  <changeSet author="quartz.generated" id="25">
-    <addForeignKeyConstraint baseColumnNames="JOB_NAME, JOB_GROUP" baseTableName="qrtz_triggers" baseTableSchemaName="quartz" constraintName="qrtz_triggers_ibfk_1" deferrable="false" initiallyDeferred="false" onDelete="NO ACTION" onUpdate="NO ACTION" referencedColumnNames="JOB_NAME, JOB_GROUP" referencedTableName="qrtz_job_details" referencedTableSchemaName="quartz" referencesUniqueColumn="false"/>
+  <changeSet author="auto.generated" id="24">
+    <createIndex indexName="IDX_QRTZ_FT_JG" tableName="QRTZ_FIRED_TRIGGERS" unique="false">
+      <column name="JOB_GROUP"/>
+      <column name="SCHED_NAME"/>
+    </createIndex>
   </changeSet>
-  <changeSet author="quartz.generated" id="26">
-    <insert tableName="QRTZ_LOCKS">
-      <column name="LOCK_NAME" value="TRIGGER_ACCESS"/>
-      <column name="LOCK_NAME" value="JOB_ACCESS"/>
-      <column name="LOCK_NAME" value="CALENDAR_ACCESS"/>
-      <column name="LOCK_NAME" value="STATE_ACCESS"/>
-      <column name="LOCK_NAME" value="MISFIRE_ACCESS"/>
-    </insert>
+  <changeSet author="auto.generated" id="25">
+    <createIndex indexName="IDX_QRTZ_FT_J_G" tableName="QRTZ_FIRED_TRIGGERS" unique="false">
+      <column name="JOB_GROUP"/>
+      <column name="JOB_NAME"/>
+      <column name="SCHED_NAME"/>
+    </createIndex>
+  </changeSet>
+  <changeSet author="auto.generated" id="26">
+    <createIndex indexName="IDX_QRTZ_FT_TG" tableName="QRTZ_FIRED_TRIGGERS" unique="false">
+      <column name="SCHED_NAME"/>
+      <column name="TRIGGER_GROUP"/>
+    </createIndex>
+  </changeSet>
+  <changeSet author="auto.generated" id="27">
+    <createIndex indexName="IDX_QRTZ_FT_TRIG_INST_NAME" tableName="QRTZ_FIRED_TRIGGERS" unique="false">
+      <column name="INSTANCE_NAME"/>
+      <column name="SCHED_NAME"/>
+    </createIndex>
+  </changeSet>
+  <changeSet author="auto.generated" id="28">
+    <createIndex indexName="IDX_QRTZ_FT_T_G" tableName="QRTZ_FIRED_TRIGGERS" unique="false">
+      <column name="SCHED_NAME"/>
+      <column name="TRIGGER_GROUP"/>
+      <column name="TRIGGER_NAME"/>
+    </createIndex>
+  </changeSet>
+  <changeSet author="auto.generated" id="29">
+    <createIndex indexName="IDX_QRTZ_J_GRP" tableName="QRTZ_JOB_DETAILS" unique="false">
+      <column name="JOB_GROUP"/>
+      <column name="SCHED_NAME"/>
+    </createIndex>
+  </changeSet>
+  <changeSet author="auto.generated" id="30">
+    <createIndex indexName="IDX_QRTZ_J_REQ_RECOVERY" tableName="QRTZ_JOB_DETAILS" unique="false">
+      <column name="REQUESTS_RECOVERY"/>
+      <column name="SCHED_NAME"/>
+    </createIndex>
+  </changeSet>
+  <changeSet author="auto.generated" id="31">
+    <createIndex indexName="IDX_QRTZ_T_C" tableName="QRTZ_TRIGGERS" unique="false">
+      <column name="CALENDAR_NAME"/>
+      <column name="SCHED_NAME"/>
+    </createIndex>
+  </changeSet>
+  <changeSet author="auto.generated" id="32">
+    <createIndex indexName="IDX_QRTZ_T_G" tableName="QRTZ_TRIGGERS" unique="false">
+      <column name="SCHED_NAME"/>
+      <column name="TRIGGER_GROUP"/>
+    </createIndex>
+  </changeSet>
+  <changeSet author="auto.generated" id="33">
+    <createIndex indexName="IDX_QRTZ_T_JG" tableName="QRTZ_TRIGGERS" unique="false">
+      <column name="JOB_GROUP"/>
+      <column name="SCHED_NAME"/>
+    </createIndex>
+  </changeSet>
+  <changeSet author="auto.generated" id="34">
+    <createIndex indexName="IDX_QRTZ_T_NEXT_FIRE_TIME" tableName="QRTZ_TRIGGERS" unique="false">
+      <column name="NEXT_FIRE_TIME"/>
+      <column name="SCHED_NAME"/>
+    </createIndex>
+  </changeSet>
+  <changeSet author="auto.generated" id="35">
+    <createIndex indexName="IDX_QRTZ_T_NFT_MISFIRE" tableName="QRTZ_TRIGGERS" unique="false">
+      <column name="MISFIRE_INSTR"/>
+      <column name="NEXT_FIRE_TIME"/>
+      <column name="SCHED_NAME"/>
+    </createIndex>
+  </changeSet>
+  <changeSet author="auto.generated" id="36">
+    <createIndex indexName="IDX_QRTZ_T_NFT_ST" tableName="QRTZ_TRIGGERS" unique="false">
+      <column name="NEXT_FIRE_TIME"/>
+      <column name="SCHED_NAME"/>
+      <column name="TRIGGER_STATE"/>
+    </createIndex>
+  </changeSet>
+  <changeSet author="auto.generated" id="37">
+    <createIndex indexName="IDX_QRTZ_T_NFT_ST_MISFIRE" tableName="QRTZ_TRIGGERS" unique="false">
+      <column name="MISFIRE_INSTR"/>
+      <column name="NEXT_FIRE_TIME"/>
+      <column name="SCHED_NAME"/>
+      <column name="TRIGGER_STATE"/>
+    </createIndex>
+  </changeSet>
+  <changeSet author="auto.generated" id="38">
+    <createIndex indexName="IDX_QRTZ_T_NFT_ST_MISFIRE_GRP" tableName="QRTZ_TRIGGERS" unique="false">
+      <column name="MISFIRE_INSTR"/>
+      <column name="NEXT_FIRE_TIME"/>
+      <column name="SCHED_NAME"/>
+      <column name="TRIGGER_GROUP"/>
+      <column name="TRIGGER_STATE"/>
+    </createIndex>
+  </changeSet>
+  <changeSet author="auto.generated" id="39">
+    <createIndex indexName="IDX_QRTZ_T_N_G_STATE" tableName="QRTZ_TRIGGERS" unique="false">
+      <column name="SCHED_NAME"/>
+      <column name="TRIGGER_GROUP"/>
+      <column name="TRIGGER_STATE"/>
+    </createIndex>
+  </changeSet>
+  <changeSet author="auto.generated" id="40">
+    <createIndex indexName="IDX_QRTZ_T_N_STATE" tableName="QRTZ_TRIGGERS" unique="false">
+      <column name="SCHED_NAME"/>
+      <column name="TRIGGER_GROUP"/>
+      <column name="TRIGGER_NAME"/>
+      <column name="TRIGGER_STATE"/>
+    </createIndex>
+  </changeSet>
+  <changeSet author="auto.generated" id="41">
+    <createIndex indexName="IDX_QRTZ_T_STATE" tableName="QRTZ_TRIGGERS" unique="false">
+      <column name="SCHED_NAME"/>
+      <column name="TRIGGER_STATE"/>
+    </createIndex>
+  </changeSet>
+  <changeSet author="auto.generated" id="42">
+    <addForeignKeyConstraint baseColumnNames="SCHED_NAME, TRIGGER_NAME, TRIGGER_GROUP" baseTableName="QRTZ_BLOB_TRIGGERS" baseTableSchemaName="quartz" constraintName="QRTZ_BLOB_TRIGGERS_ibfk_1" deferrable="false" initiallyDeferred="false" onDelete="NO ACTION" onUpdate="NO ACTION" referencedColumnNames="SCHED_NAME, TRIGGER_NAME, TRIGGER_GROUP" referencedTableName="QRTZ_TRIGGERS" referencedTableSchemaName="quartz" referencesUniqueColumn="false"/>
+  </changeSet>
+  <changeSet author="auto.generated" id="43">
+    <addForeignKeyConstraint baseColumnNames="SCHED_NAME, TRIGGER_NAME, TRIGGER_GROUP" baseTableName="QRTZ_CRON_TRIGGERS" baseTableSchemaName="quartz" constraintName="QRTZ_CRON_TRIGGERS_ibfk_1" deferrable="false" initiallyDeferred="false" onDelete="NO ACTION" onUpdate="NO ACTION" referencedColumnNames="SCHED_NAME, TRIGGER_NAME, TRIGGER_GROUP" referencedTableName="QRTZ_TRIGGERS" referencedTableSchemaName="quartz" referencesUniqueColumn="false"/>
+  </changeSet>
+  <changeSet author="auto.generated" id="44">
+    <addForeignKeyConstraint baseColumnNames="SCHED_NAME, TRIGGER_NAME, TRIGGER_GROUP" baseTableName="QRTZ_SIMPLE_TRIGGERS" baseTableSchemaName="quartz" constraintName="QRTZ_SIMPLE_TRIGGERS_ibfk_1" deferrable="false" initiallyDeferred="false" onDelete="NO ACTION" onUpdate="NO ACTION" referencedColumnNames="SCHED_NAME, TRIGGER_NAME, TRIGGER_GROUP" referencedTableName="QRTZ_TRIGGERS" referencedTableSchemaName="quartz" referencesUniqueColumn="false"/>
+  </changeSet>
+  <changeSet author="auto.generated" id="45">
+    <addForeignKeyConstraint baseColumnNames="SCHED_NAME, TRIGGER_NAME, TRIGGER_GROUP" baseTableName="QRTZ_SIMPROP_TRIGGERS" baseTableSchemaName="quartz" constraintName="QRTZ_SIMPROP_TRIGGERS_ibfk_1" deferrable="false" initiallyDeferred="false" onDelete="NO ACTION" onUpdate="NO ACTION" referencedColumnNames="SCHED_NAME, TRIGGER_NAME, TRIGGER_GROUP" referencedTableName="QRTZ_TRIGGERS" referencedTableSchemaName="quartz" referencesUniqueColumn="false"/>
+  </changeSet>
+  <changeSet author="auto.generated" id="46">
+    <addForeignKeyConstraint baseColumnNames="SCHED_NAME, JOB_NAME, JOB_GROUP" baseTableName="QRTZ_TRIGGERS" baseTableSchemaName="quartz" constraintName="QRTZ_TRIGGERS_ibfk_1" deferrable="false" initiallyDeferred="false" onDelete="NO ACTION" onUpdate="NO ACTION" referencedColumnNames="SCHED_NAME, JOB_NAME, JOB_GROUP" referencedTableName="QRTZ_JOB_DETAILS" referencedTableSchemaName="quartz" referencesUniqueColumn="false"/>
   </changeSet>
 </databaseChangeLog>
