@@ -48,8 +48,10 @@ import org.terracotta.annotations.InstrumentedClass;
 @InstrumentedClass
 public class ByKeyRoster<I extends Serializable & Comparable<I>, D extends Durable<I>> implements Roster<D> {
 
-  private Roster<DurableKey<I, D>> keyRoster;
-  private Class<D> durableClass;
+  private transient volatile ORMDao<I, D> ormDao;
+
+  private final Roster<DurableKey<I, D>> keyRoster;
+  private final Class<D> durableClass;
 
   public ByKeyRoster (Class<D> durableClass, Roster<DurableKey<I, D>> keyRoster) {
 
@@ -59,10 +61,10 @@ public class ByKeyRoster<I extends Serializable & Comparable<I>, D extends Durab
 
   private ORMDao<I, D> getORMDao () {
 
-    ORMDao<I, D> ormDao;
-
-    if ((ormDao = DaoManager.get(durableClass)) == null) {
-      throw new CacheOperationException("Unable to locate an implementation of ORMDao within DaoManager for the requested durable(%s)", durableClass.getSimpleName());
+    if (ormDao == null) {
+      if ((ormDao = DaoManager.get(durableClass)) == null) {
+        throw new CacheOperationException("Unable to locate an implementation of ORMDao within DaoManager for the requested durable(%s)", durableClass.getSimpleName());
+      }
     }
 
     return ormDao;
@@ -103,7 +105,13 @@ public class ByKeyRoster<I extends Serializable & Comparable<I>, D extends Durab
       return null;
     }
 
-    return getORMDao().get(getORMDao().getIdFromString(durableKey.getIdAsString()));
+    D durable;
+
+    if ((durable = getORMDao().get(getORMDao().getIdFromString(durableKey.getIdAsString()))) == null) {
+      throw new CacheOperationException("Unable to locate the requested durable(%s) instance(%s)", durableKey.getDurableClass().getSimpleName(), durableKey.getIdAsString());
+    }
+
+    return durable;
   }
 
   public Class<D> getDurableClass () {

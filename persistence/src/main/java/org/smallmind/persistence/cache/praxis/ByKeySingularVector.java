@@ -44,6 +44,8 @@ import org.terracotta.annotations.InstrumentedClass;
 @InstrumentedClass
 public class ByKeySingularVector<I extends Serializable & Comparable<I>, D extends Durable<I>> extends DurableVector<I, D> {
 
+  private transient volatile ORMDao<I, D> ormDao;
+
   private DurableKey<I, D> durableKey;
 
   public ByKeySingularVector (DurableKey<I, D> durableKey, int timeToLiveSeconds) {
@@ -55,10 +57,10 @@ public class ByKeySingularVector<I extends Serializable & Comparable<I>, D exten
 
   private ORMDao<I, D> getORMDao () {
 
-    ORMDao<I, D> ormDao;
-
-    if ((ormDao = DaoManager.get(durableKey.getDurableClass())) == null) {
-      throw new CacheOperationException("Unable to locate an implementation of ORMDao within DaoManager for the requested durable(%s)", durableKey.getDurableClass().getSimpleName());
+    if (ormDao == null) {
+      if ((ormDao = DaoManager.get(durableKey.getDurableClass())) == null) {
+        throw new CacheOperationException("Unable to locate an implementation of ORMDao within DaoManager for the requested durable(%s)", durableKey.getDurableClass().getSimpleName());
+      }
     }
 
     return ormDao;
@@ -66,7 +68,14 @@ public class ByKeySingularVector<I extends Serializable & Comparable<I>, D exten
 
   private D getDurable () {
 
-    return getORMDao().get(getORMDao().getIdFromString(durableKey.getIdAsString()));
+    D durable;
+    ORMDao<I, D> ormDao;
+
+    if ((durable = (ormDao = getORMDao()).get(ormDao.getIdFromString(durableKey.getIdAsString()))) == null) {
+      throw new CacheOperationException("Unable to locate the requested durable(%s) instance(%s)", durableKey.getDurableClass().getSimpleName(), durableKey.getIdAsString());
+    }
+
+    return durable;
   }
 
   @AutolockRead

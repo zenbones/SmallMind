@@ -29,13 +29,14 @@ package org.smallmind.persistence.cache.praxis;
 import java.io.Serializable;
 import java.util.ListIterator;
 import org.smallmind.persistence.Durable;
+import org.smallmind.persistence.cache.CacheOperationException;
 import org.smallmind.persistence.cache.DurableKey;
 import org.smallmind.persistence.orm.ORMDao;
 
 public class ByKeyRosterIterator<I extends Serializable & Comparable<I>, D extends Durable<I>> implements ListIterator<D> {
 
-  private ORMDao<I, D> ormDao;
-  private ListIterator<DurableKey<I, D>> keyListIterator;
+  private final ORMDao<I, D> ormDao;
+  private final ListIterator<DurableKey<I, D>> keyListIterator;
 
   public ByKeyRosterIterator (ORMDao<I, D> ormDao, ListIterator<DurableKey<I, D>> keyListIterator) {
 
@@ -50,7 +51,13 @@ public class ByKeyRosterIterator<I extends Serializable & Comparable<I>, D exten
       return null;
     }
 
-    return ormDao.get(ormDao.getIdFromString(durableKey.getIdAsString()));
+    D durable;
+
+    if ((durable = ormDao.get(ormDao.getIdFromString(durableKey.getIdAsString()))) == null) {
+      throw new CacheOperationException("Unable to locate the requested durable(%s) instance(%s)", durableKey.getDurableClass().getSimpleName(), durableKey.getIdAsString());
+    }
+
+    return durable;
   }
 
   public boolean hasNext () {
