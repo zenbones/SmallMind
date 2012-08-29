@@ -167,6 +167,11 @@ public class GenerateWrapperMojo extends AbstractMojo {
   private boolean createJar;
 
   /**
+   * @parameter default-value=true
+   */
+  private boolean versionedExplosion;
+
+  /**
    * @parameter default-value=false
    */
   private boolean verbose;
@@ -190,9 +195,9 @@ public class GenerateWrapperMojo extends AbstractMojo {
       throw new MojoExecutionException(String.format("Unknown operating system type(%s) - valid choices are %s", operatingSystem, Arrays.toString(OSType.values())), throwable);
     }
 
-    createDirectory("bin", binDirectory = new File(project.getBuild().getDirectory() + System.getProperty("file.separator") + applicationDir + System.getProperty("file.separator") + createArtifactName(false) + System.getProperty("file.separator") + "bin"));
-    createDirectory("lib", libDirectory = new File(project.getBuild().getDirectory() + System.getProperty("file.separator") + applicationDir + System.getProperty("file.separator") + createArtifactName(false) + System.getProperty("file.separator") + "lib"));
-    createDirectory("conf", confDirectory = new File(project.getBuild().getDirectory() + System.getProperty("file.separator") + applicationDir + System.getProperty("file.separator") + createArtifactName(false) + System.getProperty("file.separator") + "conf"));
+    createDirectory("bin", binDirectory = new File(project.getBuild().getDirectory() + System.getProperty("file.separator") + applicationDir + System.getProperty("file.separator") + createArtifactName(versionedExplosion, false) + System.getProperty("file.separator") + "bin"));
+    createDirectory("lib", libDirectory = new File(project.getBuild().getDirectory() + System.getProperty("file.separator") + applicationDir + System.getProperty("file.separator") + createArtifactName(versionedExplosion, false) + System.getProperty("file.separator") + "lib"));
+    createDirectory("conf", confDirectory = new File(project.getBuild().getDirectory() + System.getProperty("file.separator") + applicationDir + System.getProperty("file.separator") + createArtifactName(versionedExplosion, false) + System.getProperty("file.separator") + "conf"));
 
     if (licenseFile != null) {
       try {
@@ -417,11 +422,15 @@ public class GenerateWrapperMojo extends AbstractMojo {
     }
   }
 
-  private String createArtifactName (boolean applicationArtifact) {
+  private String createArtifactName (boolean includeVersion, boolean applicationArtifact) {
 
     StringBuilder nameBuilder;
 
-    nameBuilder = new StringBuilder(applicationName).append('-').append(project.getVersion());
+    nameBuilder = new StringBuilder(applicationName);
+
+    if (includeVersion) {
+      nameBuilder.append('-').append(project.getVersion());
+    }
 
     if (project.getArtifact().getClassifier() != null) {
       nameBuilder.append('-').append(project.getArtifact().getClassifier());
@@ -436,7 +445,7 @@ public class GenerateWrapperMojo extends AbstractMojo {
 
   private String createJarArtifactPath (String outputPath, boolean applicationArtifact) {
 
-    return new StringBuilder(outputPath).append(System.getProperty("file.separator")).append(createArtifactName(applicationArtifact)).append(".jar").toString();
+    return new StringBuilder(outputPath).append(System.getProperty("file.separator")).append(createArtifactName(true, applicationArtifact)).append(".jar").toString();
   }
 
   private void createJar (File jarFile, File directoryToJar)
