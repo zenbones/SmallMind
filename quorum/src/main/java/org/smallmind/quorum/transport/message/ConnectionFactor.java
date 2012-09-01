@@ -63,6 +63,16 @@ public class ConnectionFactor implements ExceptionListener {
   private void createConnection ()
     throws TransportException, JMSException {
 
+    if (connection != null) {
+      try {
+        connection.stop();
+        connection.close();
+      }
+      catch (JMSException jmsException) {
+        LoggerManager.getLogger(ConnectionFactor.class).error(jmsException);
+      }
+    }
+
     connection = managedObjects.createConnection();
     connection.setExceptionListener(this);
   }
