@@ -36,15 +36,22 @@ public final class NTPTime {
 
   private static final SecureRandom RANDOM = new SecureRandom();
 
-  public static long getOffset (String[] hostNames)
-    throws IOException {
+  private final String[] hostNames;
+
+  public NTPTime (String[] hostNames) {
 
     if ((hostNames == null) || (hostNames.length == 0)) {
       throw new IllegalArgumentException("No host names provided");
     }
 
+    this.hostNames = hostNames;
+  }
+
+  public final long getOffset (int timeoutMillis)
+    throws IOException {
+
     NTPUDPClient client = new NTPUDPClient();
-    client.setDefaultTimeout(10000);
+    client.setDefaultTimeout(timeoutMillis);
 
     client.open();
 
