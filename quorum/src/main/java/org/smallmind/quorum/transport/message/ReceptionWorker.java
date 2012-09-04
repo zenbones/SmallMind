@@ -44,13 +44,15 @@ public class ReceptionWorker implements Runnable {
   private final Map<String, MessageTarget> targetMap;
   private final SynchronousQueue<Message> messageRendezvous;
   private final ConcurrentLinkedQueue<TopicOperator> operatorQueue;
+  private final long ntpOffset;
 
-  public ReceptionWorker (MessageStrategy messageStrategy, Map<String, MessageTarget> targetMap, SynchronousQueue<Message> messageRendezvous, ConcurrentLinkedQueue<TopicOperator> operatorQueue) {
+  public ReceptionWorker (MessageStrategy messageStrategy, Map<String, MessageTarget> targetMap, SynchronousQueue<Message> messageRendezvous, ConcurrentLinkedQueue<TopicOperator> operatorQueue, long ntpOffset) {
 
     this.messageStrategy = messageStrategy;
     this.targetMap = targetMap;
     this.messageRendezvous = messageRendezvous;
     this.operatorQueue = operatorQueue;
+    this.ntpOffset = ntpOffset;
   }
 
   public void stop ()
@@ -106,6 +108,7 @@ public class ReceptionWorker implements Runnable {
 
             responseMessage.setJMSCorrelationID(requestMessage.getJMSMessageID());
             responseMessage.setStringProperty(MessageProperty.INSTANCE.getKey(), transmissionInstance);
+            responseMessage.setLongProperty(MessageProperty.TIME.getKey(), System.currentTimeMillis() + ntpOffset);
 
             topicOperator.publish(responseMessage);
           }

@@ -48,13 +48,15 @@ public class ReceptionListener implements SessionEmployer, MessageListener {
   private final ConnectionFactor requestConnectionFactor;
   private final Queue requestQueue;
   private final SynchronousQueue<Message> messageRendezvous;
+  private final long ntpOffset;
 
-  public ReceptionListener (ConnectionFactor requestConnectionFactor, Queue requestQueue, SynchronousQueue<Message> messageRendezvous)
+  public ReceptionListener (ConnectionFactor requestConnectionFactor, Queue requestQueue, SynchronousQueue<Message> messageRendezvous, long ntpOffset)
     throws JMSException {
 
     this.requestConnectionFactor = requestConnectionFactor;
     this.requestQueue = requestQueue;
     this.messageRendezvous = messageRendezvous;
+    this.ntpOffset = ntpOffset;
 
     requestConnectionFactor.createConsumer(this);
   }
@@ -85,7 +87,7 @@ public class ReceptionListener implements SessionEmployer, MessageListener {
 
     try {
 
-      long timeInQueue = System.currentTimeMillis() - message.getJMSTimestamp();
+      long timeInQueue = System.currentTimeMillis() + ntpOffset - message.getLongProperty(MessageProperty.TIME.getKey());
 
       InstrumentationManager.instrumentWithChronometer(TransportManager.getTransport(), (timeInQueue >= 0) ? timeInQueue : 0, new MetricProperty("destination", MetricDestination.REQUEST_QUEUE.getDisplay()));
       InstrumentationManager.execute(new ChronometerInstrument(TransportManager.getTransport(), new MetricProperty("event", MetricEvent.ACQUIRE_WORKER.getDisplay())) {

@@ -26,6 +26,7 @@
  */
 package org.smallmind.quorum.transport.message;
 
+import java.io.IOException;
 import java.util.UUID;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
@@ -37,6 +38,7 @@ import javax.jms.Topic;
 import org.smallmind.instrument.ChronometerInstrumentAndReturn;
 import org.smallmind.instrument.InstrumentationManager;
 import org.smallmind.instrument.MetricProperty;
+import org.smallmind.nutsnbolts.ntp.NTPTime;
 import org.smallmind.nutsnbolts.util.SelfDestructiveMap;
 import org.smallmind.quorum.transport.InvocationSignal;
 import org.smallmind.quorum.transport.TransportException;
@@ -53,15 +55,18 @@ public class MessageTransmitter {
   private final TransmissionListener[] transmissionListeners;
   private final ConnectionFactor[] requestConnectionFactors;
   private final String instanceId = UUID.randomUUID().toString();
+  private final long ntpOffset;
   private final long timeoutSeconds;
 
-  public MessageTransmitter (TransportManagedObjects requestManagedObjects, TransportManagedObjects responseManagedObjects, MessagePolicy messagePolicy, ReconnectionPolicy reconnectionPolicy, MessageStrategy messageStrategy, int clusterSize, int concurrencyLimit, int timeoutSeconds)
-    throws JMSException, TransportException {
+  public MessageTransmitter (TransportManagedObjects requestManagedObjects, TransportManagedObjects responseManagedObjects, MessagePolicy messagePolicy, ReconnectionPolicy reconnectionPolicy, MessageStrategy messageStrategy, NTPTime ntpTime, int clusterSize, int concurrencyLimit, int timeoutSeconds)
+    throws IOException, JMSException, TransportException {
 
     int requestIndex = 0;
 
     this.messageStrategy = messageStrategy;
     this.timeoutSeconds = timeoutSeconds;
+
+    ntpOffset = (ntpTime == null) ? 0 : ntpTime.getOffset(10000);
 
     callbackMap = new SelfDestructiveMap<String, TransmissionCallback>(timeoutSeconds);
 
@@ -80,7 +85,7 @@ public class MessageTransmitter {
 
     transmissionListeners = new TransmissionListener[clusterSize];
     for (int index = 0; index < transmissionListeners.length; index++) {
-      transmissionListeners[index] = new TransmissionListener(this, new ConnectionFactor(responseManagedObjects, messagePolicy, reconnectionPolicy), (Topic)responseManagedObjects.getDestination());
+      transmissionListeners[index] = new TransmissionListener(this, new ConnectionFactor(responseManagedObjects, messagePolicy, reconnectionPolicy), (Topic)responseManagedObjects.getDestination(), ntpOffset);
     }
   }
 
@@ -119,7 +124,6 @@ public class MessageTransmitter {
       Message requestMessage;
       AsynchronousTransmissionCallback asynchronousCallback;
       SynchronousTransmissionCallback previousCallback;
-      String correlationId;
 
       requestMessage = InstrumentationManager.execute(new ChronometerInstrumentAndReturn<Message>(TransportManager.getTransport(), new MetricProperty("event", MetricEvent.CONSTRUCT_MESSAGE.getDisplay())) {
 
@@ -133,13 +137,14 @@ public class MessageTransmitter {
 
           requestMessage.setStringProperty(MessageProperty.INSTANCE.getKey(), instanceId);
           requestMessage.setStringProperty(MessageProperty.SERVICE.getKey(), serviceSelector);
+          requestMessage.setLongProperty(MessageProperty.TIME.getKey(), System.currentTimeMillis() + ntpOffset);
 
           return requestMessage;
         }
       });
 
       queueOperator.send(requestMessage);
-      if ((previousCallback = (SynchronousTransmissionCallback)callbackMap.putIfAbsent(correlationId = requestMessage.getJMSMessageID(), asynchronousCallback = new AsynchronousTransmissionCallback(messageStrategy, timeoutSeconds))) != null) {
+      if ((previousCallback = (SynchronousTransmissionCallback)callbackMap.putIfAbsent(requestMessage.getJMSMessageID(), asynchronousCallback = new AsynchronousTransmissionCallback(messageStrategy, timeoutSeconds))) != null) {
 
         return previousCallback;
       }
