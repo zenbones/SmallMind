@@ -55,8 +55,9 @@ public class MessageTransmitter {
   private final TransmissionListener[] transmissionListeners;
   private final ConnectionFactor[] requestConnectionFactors;
   private final String instanceId = UUID.randomUUID().toString();
-  private final long ntpOffset;
   private final long timeoutSeconds;
+
+  private long ntpOffset;
 
   public MessageTransmitter (TransportManagedObjects requestManagedObjects, TransportManagedObjects responseManagedObjects, MessagePolicy messagePolicy, ReconnectionPolicy reconnectionPolicy, MessageStrategy messageStrategy, NTPTime ntpTime, int clusterSize, int concurrencyLimit, int timeoutSeconds)
     throws IOException, JMSException, TransportException {
@@ -66,7 +67,13 @@ public class MessageTransmitter {
     this.messageStrategy = messageStrategy;
     this.timeoutSeconds = timeoutSeconds;
 
-    ntpOffset = (ntpTime == null) ? 0 : ntpTime.getOffset(10000);
+    try {
+      ntpOffset = (ntpTime == null) ? 0 : ntpTime.getOffset(10000);
+    }
+    catch (IOException ioException) {
+      ntpOffset = 0;
+      LoggerManager.getLogger(MessageTransmitter.class).warn(ioException, "Unable to acquire ntp offset time");
+    }
 
     callbackMap = new SelfDestructiveMap<String, TransmissionCallback>(timeoutSeconds);
 

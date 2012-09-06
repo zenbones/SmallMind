@@ -37,6 +37,7 @@ import javax.jms.Queue;
 import javax.jms.Topic;
 import org.smallmind.nutsnbolts.ntp.NTPTime;
 import org.smallmind.quorum.transport.TransportException;
+import org.smallmind.scribe.pen.LoggerManager;
 
 public class MessageReceiver {
 
@@ -54,7 +55,13 @@ public class MessageReceiver {
     long ntpOffset;
     int topicIndex = 0;
 
-    ntpOffset = (ntpTime == null) ? 0 : ntpTime.getOffset(10000);
+    try {
+      ntpOffset = (ntpTime == null) ? 0 : ntpTime.getOffset(10000);
+    }
+    catch (IOException ioException) {
+      ntpOffset = 0;
+      LoggerManager.getLogger(MessageReceiver.class).warn(ioException, "Unable to acquire ntp offset time");
+    }
 
     for (MessageTarget messageTarget : messageTargets) {
       targetMap.put(messageTarget.getServiceInterface().getName(), messageTarget);
