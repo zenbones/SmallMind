@@ -34,6 +34,7 @@ import java.security.SecureRandom;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Random;
+import java.util.concurrent.TimeUnit;
 import org.aspectj.lang.ProceedingJoinPoint;
 import org.aspectj.lang.annotation.Around;
 import org.aspectj.lang.annotation.Aspect;
@@ -196,7 +197,7 @@ public class CacheAsAspect {
           executedMethod = methodSignature.getMethod();
         }
 
-        InstrumentationManager.instrumentWithChronometer(PersistenceManager.getPersistence(), stop - start, new MetricProperty("durable", ormDao.getManagedClass().getSimpleName()), new MetricProperty("method", executedMethod.getName()), new MetricProperty("source", metricSource));
+        InstrumentationManager.instrumentWithChronometer(PersistenceManager.getPersistence(), stop - start, TimeUnit.MILLISECONDS, new MetricProperty("durable", ormDao.getManagedClass().getSimpleName()), new MetricProperty("method", executedMethod.getName()), new MetricProperty("source", metricSource));
       }
     }
   }

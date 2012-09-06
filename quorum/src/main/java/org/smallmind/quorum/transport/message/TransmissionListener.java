@@ -26,6 +26,7 @@
  */
 package org.smallmind.quorum.transport.message;
 
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import javax.jms.Destination;
 import javax.jms.JMSException;
@@ -90,7 +91,7 @@ public class TransmissionListener implements SessionEmployer, MessageListener {
 
       long timeInTopic = System.currentTimeMillis() + ntpOffset - message.getLongProperty(MessageProperty.TIME.getKey());
 
-      InstrumentationManager.instrumentWithChronometer(TransportManager.getTransport(), (timeInTopic >= 0) ? timeInTopic : 0, new MetricProperty("destination", MetricDestination.RESPONSE_TOPIC.getDisplay()));
+      InstrumentationManager.instrumentWithChronometer(TransportManager.getTransport(), (timeInTopic >= 0) ? timeInTopic : 0, TimeUnit.MILLISECONDS, new MetricProperty("destination", MetricDestination.RESPONSE_TOPIC.getDisplay()));
     }
     catch (JMSException jmsException) {
       LoggerManager.getLogger(ReceptionListener.class).error(jmsException);

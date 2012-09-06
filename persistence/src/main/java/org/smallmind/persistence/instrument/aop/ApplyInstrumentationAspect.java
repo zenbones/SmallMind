@@ -27,6 +27,7 @@
 package org.smallmind.persistence.instrument.aop;
 
 import java.lang.reflect.Method;
+import java.util.concurrent.TimeUnit;
 import org.aspectj.lang.ProceedingJoinPoint;
 import org.aspectj.lang.annotation.Around;
 import org.aspectj.lang.annotation.Aspect;
@@ -61,7 +62,7 @@ public class ApplyInstrumentationAspect {
         stop = System.currentTimeMillis();
         executedMethod = ((MethodSignature)thisJoinPoint.getSignature()).getMethod();
 
-        InstrumentationManager.instrumentWithChronometer(PersistenceManager.getPersistence(), stop - start, new MetricProperty("durable", ormDao.getManagedClass().getSimpleName()), new MetricProperty("method", executedMethod.getName()), new MetricProperty("source", ormDao.getMetricSource()));
+        InstrumentationManager.instrumentWithChronometer(PersistenceManager.getPersistence(), stop - start, TimeUnit.MILLISECONDS, new MetricProperty("durable", ormDao.getManagedClass().getSimpleName()), new MetricProperty("method", executedMethod.getName()), new MetricProperty("source", ormDao.getMetricSource()));
       }
     }
   }

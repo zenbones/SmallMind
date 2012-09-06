@@ -27,6 +27,7 @@
 package org.smallmind.quorum.pool.complex;
 
 import java.util.LinkedList;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import org.smallmind.instrument.Clocks;
 import org.smallmind.instrument.InstrumentationManager;
@@ -85,7 +86,7 @@ public class ComponentPin<C> {
       componentPool.reportLeaseTimeNanos(leaseTime);
     }
 
-    InstrumentationManager.instrumentWithChronometer(PoolManager.getPool(), leaseTime, new MetricProperty("event", MetricEvent.PROCESSING.getDisplay()));
+    InstrumentationManager.instrumentWithChronometer(PoolManager.getPool(), leaseTime, TimeUnit.NANOSECONDS, new MetricProperty("event", MetricEvent.PROCESSING.getDisplay()));
 
     if (deconstructionCoordinator != null) {
       deconstructionCoordinator.free();
