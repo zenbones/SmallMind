@@ -48,15 +48,13 @@ public class TransmissionListener implements SessionEmployer, MessageListener {
   private final ConnectionFactor responseConnectionFactor;
   private final Topic responseTopic;
   private final String selector;
-  private final long ntpOffset;
 
-  public TransmissionListener (MessageTransmitter messageTransmitter, ConnectionFactor responseConnectionFactor, Topic responseTopic, long ntpOffset)
+  public TransmissionListener (MessageTransmitter messageTransmitter, ConnectionFactor responseConnectionFactor, Topic responseTopic)
     throws JMSException {
 
     this.messageTransmitter = messageTransmitter;
     this.responseConnectionFactor = responseConnectionFactor;
     this.responseTopic = responseTopic;
-    this.ntpOffset = ntpOffset;
 
     selector = MessageProperty.INSTANCE.getKey() + "='" + messageTransmitter.getInstanceId() + "'";
 
@@ -89,7 +87,7 @@ public class TransmissionListener implements SessionEmployer, MessageListener {
 
     try {
 
-      long timeInTopic = System.currentTimeMillis() + ntpOffset - message.getLongProperty(MessageProperty.TIME.getKey());
+      long timeInTopic = System.currentTimeMillis() - message.getJMSTimestamp();
 
       InstrumentationManager.instrumentWithChronometer(TransportManager.getTransport(), (timeInTopic >= 0) ? timeInTopic : 0, TimeUnit.MILLISECONDS, new MetricProperty("destination", MetricDestination.RESPONSE_TOPIC.getDisplay()));
     }

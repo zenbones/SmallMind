@@ -38,7 +38,6 @@ import javax.jms.Topic;
 import org.smallmind.instrument.ChronometerInstrumentAndReturn;
 import org.smallmind.instrument.InstrumentationManager;
 import org.smallmind.instrument.MetricProperty;
-import org.smallmind.nutsnbolts.ntp.NTPTime;
 import org.smallmind.nutsnbolts.util.SelfDestructiveMap;
 import org.smallmind.quorum.transport.InvocationSignal;
 import org.smallmind.quorum.transport.TransportException;
@@ -57,23 +56,13 @@ public class MessageTransmitter {
   private final String instanceId = UUID.randomUUID().toString();
   private final long timeoutSeconds;
 
-  private long ntpOffset;
-
-  public MessageTransmitter (TransportManagedObjects requestManagedObjects, TransportManagedObjects responseManagedObjects, MessagePolicy messagePolicy, ReconnectionPolicy reconnectionPolicy, MessageStrategy messageStrategy, NTPTime ntpTime, int clusterSize, int concurrencyLimit, int timeoutSeconds)
+  public MessageTransmitter (TransportManagedObjects requestManagedObjects, TransportManagedObjects responseManagedObjects, MessagePolicy messagePolicy, ReconnectionPolicy reconnectionPolicy, MessageStrategy messageStrategy, int clusterSize, int concurrencyLimit, int timeoutSeconds)
     throws IOException, JMSException, TransportException {
 
     int requestIndex = 0;
 
     this.messageStrategy = messageStrategy;
     this.timeoutSeconds = timeoutSeconds;
-
-    try {
-      ntpOffset = (ntpTime == null) ? 0 : ntpTime.getOffset(10000);
-    }
-    catch (IOException ioException) {
-      ntpOffset = 0;
-      LoggerManager.getLogger(MessageTransmitter.class).warn(ioException, "Unable to acquire ntp offset time");
-    }
 
     callbackMap = new SelfDestructiveMap<String, TransmissionCallback>(timeoutSeconds);
 
@@ -92,7 +81,7 @@ public class MessageTransmitter {
 
     transmissionListeners = new TransmissionListener[clusterSize];
     for (int index = 0; index < transmissionListeners.length; index++) {
-      transmissionListeners[index] = new TransmissionListener(this, new ConnectionFactor(responseManagedObjects, messagePolicy, reconnectionPolicy), (Topic)responseManagedObjects.getDestination(), ntpOffset);
+      transmissionListeners[index] = new TransmissionListener(this, new ConnectionFactor(responseManagedObjects, messagePolicy, reconnectionPolicy), (Topic)responseManagedObjects.getDestination());
     }
   }
 
@@ -144,7 +133,6 @@ public class MessageTransmitter {
 
           requestMessage.setStringProperty(MessageProperty.INSTANCE.getKey(), instanceId);
           requestMessage.setStringProperty(MessageProperty.SERVICE.getKey(), serviceSelector);
-          requestMessage.setLongProperty(MessageProperty.TIME.getKey(), System.currentTimeMillis() + ntpOffset);
 
           return requestMessage;
         }

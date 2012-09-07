@@ -35,9 +35,7 @@ import javax.jms.JMSException;
 import javax.jms.Message;
 import javax.jms.Queue;
 import javax.jms.Topic;
-import org.smallmind.nutsnbolts.ntp.NTPTime;
 import org.smallmind.quorum.transport.TransportException;
-import org.smallmind.scribe.pen.LoggerManager;
 
 public class MessageReceiver {
 
@@ -46,22 +44,13 @@ public class MessageReceiver {
   private final ReceptionWorker[] receptionWorkers;
   private final ConnectionFactor[] responseConnectionFactors;
 
-  public MessageReceiver (TransportManagedObjects requestManagedObjects, TransportManagedObjects responseManagedObjects, MessagePolicy messagePolicy, ReconnectionPolicy reconnectionPolicy, MessageStrategy messageStrategy, NTPTime ntpTime, int clusterSize, int concurrencyLimit, MessageTarget... messageTargets)
+  public MessageReceiver (TransportManagedObjects requestManagedObjects, TransportManagedObjects responseManagedObjects, MessagePolicy messagePolicy, ReconnectionPolicy reconnectionPolicy, MessageStrategy messageStrategy, int clusterSize, int concurrencyLimit, MessageTarget... messageTargets)
     throws IOException, JMSException, TransportException {
 
     ConcurrentLinkedQueue<TopicOperator> operatorQueue;
     SynchronousQueue<Message> messageRendezvous = new SynchronousQueue<Message>(true);
     HashMap<String, MessageTarget> targetMap = new HashMap<String, MessageTarget>();
-    long ntpOffset;
     int topicIndex = 0;
-
-    try {
-      ntpOffset = (ntpTime == null) ? 0 : ntpTime.getOffset(10000);
-    }
-    catch (IOException ioException) {
-      ntpOffset = 0;
-      LoggerManager.getLogger(MessageReceiver.class).warn(ioException, "Unable to acquire ntp offset time");
-    }
 
     for (MessageTarget messageTarget : messageTargets) {
       targetMap.put(messageTarget.getServiceInterface().getName(), messageTarget);
@@ -69,7 +58,7 @@ public class MessageReceiver {
 
     receptionListeners = new ReceptionListener[clusterSize];
     for (int index = 0; index < receptionListeners.length; index++) {
-      receptionListeners[index] = new ReceptionListener(new ConnectionFactor(requestManagedObjects, messagePolicy, reconnectionPolicy), (Queue)requestManagedObjects.getDestination(), messageRendezvous, ntpOffset);
+      receptionListeners[index] = new ReceptionListener(new ConnectionFactor(requestManagedObjects, messagePolicy, reconnectionPolicy), (Queue)requestManagedObjects.getDestination(), messageRendezvous);
     }
 
     responseConnectionFactors = new ConnectionFactor[clusterSize];
@@ -87,7 +76,7 @@ public class MessageReceiver {
 
     receptionWorkers = new ReceptionWorker[concurrencyLimit];
     for (int index = 0; index < receptionWorkers.length; index++) {
-      new Thread(receptionWorkers[index] = new ReceptionWorker(messageStrategy, targetMap, messageRendezvous, operatorQueue, ntpOffset)).start();
+      new Thread(receptionWorkers[index] = new ReceptionWorker(messageStrategy, targetMap, messageRendezvous, operatorQueue)).start();
     }
   }
 
