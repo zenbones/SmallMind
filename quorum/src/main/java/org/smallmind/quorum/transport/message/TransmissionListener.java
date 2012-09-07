@@ -89,6 +89,7 @@ public class TransmissionListener implements SessionEmployer, MessageListener {
 
       long timeInTopic = System.currentTimeMillis() - message.getJMSTimestamp();
 
+      LoggerManager.getLogger(TransmissionListener.class).debug("response message received(%s)...", message.getJMSMessageID());
       InstrumentationManager.instrumentWithChronometer(TransportManager.getTransport(), (timeInTopic >= 0) ? timeInTopic : 0, TimeUnit.MILLISECONDS, new MetricProperty("destination", MetricDestination.RESPONSE_TOPIC.getDisplay()));
     }
     catch (JMSException jmsException) {

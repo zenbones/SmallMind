@@ -31,6 +31,7 @@ import javax.jms.JMSException;
 import javax.jms.Message;
 import javax.jms.Session;
 import javax.jms.Topic;
+import org.smallmind.scribe.pen.LoggerManager;
 
 public class TopicOperator implements SessionEmployer {
 
@@ -65,5 +66,6 @@ public class TopicOperator implements SessionEmployer {
     throws JMSException {
 
     responseConnectionFactor.getProducer(this).send(message);
+    LoggerManager.getLogger(TopicOperator.class).debug("response message sent(%s)...", message.getJMSMessageID());
   }
 }

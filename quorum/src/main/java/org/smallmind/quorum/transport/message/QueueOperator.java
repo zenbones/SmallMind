@@ -31,6 +31,7 @@ import javax.jms.JMSException;
 import javax.jms.Message;
 import javax.jms.Queue;
 import javax.jms.Session;
+import org.smallmind.scribe.pen.LoggerManager;
 
 public class QueueOperator implements SessionEmployer {
 
@@ -65,5 +66,6 @@ public class QueueOperator implements SessionEmployer {
     throws JMSException {
 
     requestConnectionFactor.getProducer(this).send(message);
+    LoggerManager.getLogger(QueueOperator.class).debug("request message sent(%s)...", message.getJMSMessageID());
   }
 }
