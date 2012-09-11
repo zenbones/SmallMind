@@ -41,4 +41,6 @@ public interface JugglingPin<R> {
     throws JugglerResourceException;
 
   public abstract boolean recover ();
+
+  public abstract String describe ();
 }

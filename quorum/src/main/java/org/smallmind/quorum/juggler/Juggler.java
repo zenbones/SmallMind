@@ -158,9 +158,11 @@ public class Juggler<P, R> implements BlackList<R> {
 
     if (sourcePins.remove(blackPin)) {
       blackMap.put(System.currentTimeMillis(), blackPin);
+      LoggerManager.getLogger(Juggler.class).info("Added resource(%s) to black list", blackPin.describe());
     }
     else if (targetPins.remove(blackPin)) {
       blackMap.put(System.currentTimeMillis(), blackPin);
+      LoggerManager.getLogger(Juggler.class).info("Added resource(%s) to black list", blackPin.describe());
     }
   }
 
@@ -255,6 +257,7 @@ public class Juggler<P, R> implements BlackList<R> {
 
                 if ((recoveredPin = blackMap.remove(firstEntry.getKey())) != null) {
                   targetPins.add(recoveredPin);
+                  LoggerManager.getLogger(Juggler.class).info("Recovered resource(%s) from black list", recoveredPin.describe());
                 }
                 else {
                   LoggerManager.getLogger(ProviderRecoveryWorker.class).fatal("We've lost a resource(%s), which should never occur - please notify a system administrator", managedClass.getSimpleName());

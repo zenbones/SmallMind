@@ -67,4 +67,10 @@ public class PooledConnectionJugglingPin extends AbstractJugglingPin<PooledConne
       return false;
     }
   }
+
+  @Override
+  public String describe () {
+
+    return dataSource.toString();
+  }
 }
