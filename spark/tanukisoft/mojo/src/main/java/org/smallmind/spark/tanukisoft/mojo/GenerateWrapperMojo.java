@@ -142,6 +142,11 @@ public class GenerateWrapperMojo extends AbstractMojo {
   private String umask;
 
   /**
+   * @parameter default-value=0
+   */
+  private int waitAfterStartup;
+
+  /**
    * @parameter default-value="java"
    */
   private String javaCommand;
@@ -257,6 +262,8 @@ public class GenerateWrapperMojo extends AbstractMojo {
     if ((umask != null) && (umask.length() > 0)) {
       freemarkerMap.put("umask", umask);
     }
+
+    freemarkerMap.put("waitAfterStartup", String.valueOf(waitAfterStartup));
 
     if (appParameters == null) {
       freemarkerMap.put("appParameters", new String[] {wrapperListener});
