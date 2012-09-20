@@ -31,7 +31,7 @@ import java.util.Collections;
 import java.util.List;
 import javax.persistence.Query;
 import org.smallmind.persistence.Durable;
-import org.smallmind.persistence.PersistenceMode;
+import org.smallmind.persistence.UpdateMode;
 import org.smallmind.persistence.cache.VectoredDao;
 import org.smallmind.persistence.orm.DaoManager;
 import org.smallmind.persistence.orm.ProxySession;
@@ -97,7 +97,7 @@ public abstract class JPADao<I extends Serializable & Comparable<I>, D extends D
 
       if ((durable = acquire(durableClass, id)) != null) {
 
-        return vectoredDao.persist(durableClass, durable, PersistenceMode.SOFT);
+        return vectoredDao.persist(durableClass, durable, UpdateMode.SOFT);
       }
     }
 
@@ -130,7 +130,7 @@ public abstract class JPADao<I extends Serializable & Comparable<I>, D extends D
 
     if (vectoredDao != null) {
 
-      return vectoredDao.persist(durableClass, persistentDurable, PersistenceMode.HARD);
+      return vectoredDao.persist(durableClass, persistentDurable, UpdateMode.HARD);
     }
 
     return persistentDurable;

@@ -28,6 +28,8 @@ package org.smallmind.persistence.orm.hibernate;
 
 import org.hibernate.Session;
 import org.hibernate.SessionFactory;
+import org.hibernate.dialect.Dialect;
+import org.hibernate.engine.spi.SessionFactoryImplementor;
 import org.hibernate.metadata.ClassMetadata;
 import org.smallmind.persistence.orm.ProxySession;
 import org.smallmind.persistence.orm.ProxyTransaction;
@@ -54,6 +56,11 @@ public class HibernateProxySession extends ProxySession<Session> {
   public ClassMetadata getClassMetadata (Class entityClass) {
 
     return sessionFactory.getClassMetadata(entityClass);
+  }
+
+  public Dialect getDialect () {
+
+    return ((SessionFactoryImplementor)sessionFactory).getDialect();
   }
 
   public HibernateProxyTransaction beginTransaction () {

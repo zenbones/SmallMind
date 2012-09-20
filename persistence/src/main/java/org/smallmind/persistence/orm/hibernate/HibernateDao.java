@@ -40,7 +40,7 @@ import org.hibernate.criterion.Projections;
 import org.hibernate.criterion.Restrictions;
 import org.hibernate.transform.Transformers;
 import org.smallmind.persistence.Durable;
-import org.smallmind.persistence.PersistenceMode;
+import org.smallmind.persistence.UpdateMode;
 import org.smallmind.persistence.cache.VectoredDao;
 import org.smallmind.persistence.orm.DaoManager;
 import org.smallmind.persistence.orm.ProxySession;
@@ -107,7 +107,7 @@ public abstract class HibernateDao<I extends Serializable & Comparable<I>, D ext
 
       if ((durable = acquire(durableClass, id)) != null) {
 
-        return vectoredDao.persist(durableClass, durable, PersistenceMode.SOFT);
+        return vectoredDao.persist(durableClass, durable, UpdateMode.SOFT);
       }
     }
 
@@ -218,7 +218,7 @@ public abstract class HibernateDao<I extends Serializable & Comparable<I>, D ext
 
     if (vectoredDao != null) {
 
-      return vectoredDao.persist(durableClass, persistentDurable, PersistenceMode.HARD);
+      return vectoredDao.persist(durableClass, persistentDurable, UpdateMode.HARD);
     }
 
     return persistentDurable;

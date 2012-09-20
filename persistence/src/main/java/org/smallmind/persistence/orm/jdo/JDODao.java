@@ -34,7 +34,7 @@ import java.util.List;
 import javax.jdo.Query;
 import org.smallmind.nutsnbolts.util.IterableIterator;
 import org.smallmind.persistence.Durable;
-import org.smallmind.persistence.PersistenceMode;
+import org.smallmind.persistence.UpdateMode;
 import org.smallmind.persistence.cache.VectoredDao;
 import org.smallmind.persistence.orm.ProxySession;
 import org.smallmind.persistence.orm.VectorAwareORMDao;
@@ -94,7 +94,7 @@ public abstract class JDODao<I extends Serializable & Comparable<I>, D extends D
 
       if ((durable = acquire(durableClass, id)) != null) {
 
-        return vectoredDao.persist(durableClass, durable, PersistenceMode.SOFT);
+        return vectoredDao.persist(durableClass, durable, UpdateMode.SOFT);
       }
     }
 
@@ -145,7 +145,7 @@ public abstract class JDODao<I extends Serializable & Comparable<I>, D extends D
 
     if (vectoredDao != null) {
 
-      return vectoredDao.persist(durableClass, persistentDurable, PersistenceMode.HARD);
+      return vectoredDao.persist(durableClass, persistentDurable, UpdateMode.HARD);
     }
 
     return persistentDurable;

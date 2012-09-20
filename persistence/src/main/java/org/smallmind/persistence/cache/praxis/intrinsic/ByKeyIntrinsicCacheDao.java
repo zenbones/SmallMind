@@ -29,7 +29,7 @@ package org.smallmind.persistence.cache.praxis.intrinsic;
 import java.io.Serializable;
 import java.util.Comparator;
 import org.smallmind.persistence.Durable;
-import org.smallmind.persistence.PersistenceMode;
+import org.smallmind.persistence.UpdateMode;
 import org.smallmind.persistence.cache.AbstractCacheDao;
 import org.smallmind.persistence.cache.CacheDomain;
 import org.smallmind.persistence.cache.DurableKey;
@@ -44,7 +44,7 @@ public class ByKeyIntrinsicCacheDao<I extends Serializable & Comparable<I>, D ex
     super(cacheDomain);
   }
 
-  public D persist (Class<D> durableClass, D durable, PersistenceMode mode) {
+  public D persist (Class<D> durableClass, D durable, UpdateMode mode) {
 
     if (durable != null) {
 

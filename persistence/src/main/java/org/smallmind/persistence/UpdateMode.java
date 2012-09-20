@@ -26,7 +26,7 @@
  */
 package org.smallmind.persistence;
 
-public enum PersistenceMode {
+public enum UpdateMode {
 
   SOFT, HARD
 }

@@ -30,7 +30,7 @@ import java.io.Serializable;
 import java.util.Comparator;
 import org.smallmind.nutsnbolts.lang.UnknownSwitchCaseException;
 import org.smallmind.persistence.Durable;
-import org.smallmind.persistence.PersistenceMode;
+import org.smallmind.persistence.UpdateMode;
 import org.smallmind.persistence.cache.AbstractCacheDao;
 import org.smallmind.persistence.cache.CASValue;
 import org.smallmind.persistence.cache.CacheDomain;
@@ -46,7 +46,7 @@ public class ByKeyExtrinsicCacheDao<I extends Serializable & Comparable<I>, D ex
     super(cacheDomain);
   }
 
-  public D persist (Class<D> durableClass, D durable, PersistenceMode mode) {
+  public D persist (Class<D> durableClass, D durable, UpdateMode mode) {
 
     if (durable != null) {
 

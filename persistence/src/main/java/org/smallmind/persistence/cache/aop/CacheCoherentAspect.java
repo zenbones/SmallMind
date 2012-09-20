@@ -40,7 +40,7 @@ import org.smallmind.instrument.InstrumentationManager;
 import org.smallmind.instrument.MetricProperty;
 import org.smallmind.persistence.Durable;
 import org.smallmind.persistence.PersistenceManager;
-import org.smallmind.persistence.PersistenceMode;
+import org.smallmind.persistence.UpdateMode;
 import org.smallmind.persistence.cache.VectoredDao;
 import org.smallmind.persistence.cache.praxis.intrinsic.IntrinsicRoster;
 import org.smallmind.persistence.instrument.aop.Instrumented;
@@ -79,7 +79,7 @@ public class CacheCoherentAspect {
             return durable;
           }
 
-          return vectoredDao.persist(ormDao.getManagedClass(), durable, PersistenceMode.SOFT);
+          return vectoredDao.persist(ormDao.getManagedClass(), durable, UpdateMode.SOFT);
         }
 
         return null;
@@ -102,7 +102,7 @@ public class CacheCoherentAspect {
           cacheConsistentElements = new IntrinsicRoster<Durable>();
           for (Object element : list) {
             if (element != null) {
-              cacheConsistentElements.add(vectoredDao.persist(ormDao.getManagedClass(), (Durable)element, PersistenceMode.SOFT));
+              cacheConsistentElements.add(vectoredDao.persist(ormDao.getManagedClass(), (Durable)element, UpdateMode.SOFT));
             }
             else {
               cacheConsistentElements.add(null);
