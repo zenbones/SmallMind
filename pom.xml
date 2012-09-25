@@ -121,6 +121,7 @@
     <module>plumber</module>
     <module>spark</module>
     <module>swing</module>
+    <module>javafx</module>
     <module>wicket</module>
     <module>liquibase</module>
   </modules>
@@ -354,7 +355,7 @@
       <dependency>
         <groupId>org.quartz-scheduler</groupId>
         <artifactId>quartz</artifactId>
-        <version>2.1.3</version>
+        <version>2.1.6</version>
       </dependency>
       <dependency>
         <groupId>net.sf.ehcache</groupId>
@@ -395,6 +396,13 @@
         <groupId>org.apache.wicket</groupId>
         <artifactId>wicket-extensions</artifactId>
         <version>1.5.7</version>
+      </dependency>
+      <dependency>
+        <groupId>com.oracle</groupId>
+        <artifactId>javafx-rt</artifactId>
+        <version>2.2</version>
+        <scope>system</scope>
+        <systemPath>${javafx.home}/JavaFX 2.2 Runtime/lib/jfxrt.jar</systemPath>
       </dependency>
       <dependency>
         <groupId>org.codehaus.jackson</groupId>
