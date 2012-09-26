@@ -24,27 +24,24 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.javafx;
+package org.smallmind.nutsnbolts.layout;
 
-import javafx.scene.layout.Pane;
+public enum Gap {
 
-public class ParaboxPane extends Pane {
+  RELATED {
+    @Override
+    public int getGap (Platform platform) {
 
-  @Override
-  protected double computePrefWidth (double height) {
+      return platform.getRelatedGap();
+    }
+  },
+  UNRELATED {
+    @Override
+    public int getGap (Platform platform) {
 
-    return super.computePrefWidth(height);
-  }
+      return platform.getUnrelatedGap();
+    }
+  };
 
-  @Override
-  protected double computePrefHeight (double width) {
-
-    return super.computePrefHeight(width);
-  }
-
-  @Override
-  protected void layoutChildren () {
-
-    super.layoutChildren();
-  }
+  public abstract int getGap (Platform platform);
 }

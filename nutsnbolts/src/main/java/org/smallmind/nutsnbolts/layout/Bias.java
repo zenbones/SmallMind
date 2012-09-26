@@ -24,27 +24,52 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.javafx;
+package org.smallmind.nutsnbolts.layout;
 
-import javafx.scene.layout.Pane;
+public enum Bias {
 
-public class ParaboxPane extends Pane {
+  HORIZONTAL {
+    @Override
+    public int getBiasedMeasurement (Size size) {
 
-  @Override
-  protected double computePrefWidth (double height) {
+      return size.getWidth();
+    }
 
-    return super.computePrefWidth(height);
-  }
+    @Override
+    public int getUnbiasedMeasurement (Size size) {
 
-  @Override
-  protected double computePrefHeight (double width) {
+      return size.getHeight();
+    }
 
-    return super.computePrefHeight(width);
-  }
+    @Override
+    public Size getSize (int biasedMeasurement, int unbiasedMeasurement) {
 
-  @Override
-  protected void layoutChildren () {
+      return new Size(biasedMeasurement, unbiasedMeasurement);
+    }
+  },
+  VERTICAL {
+    @Override
+    public int getBiasedMeasurement (Size size) {
 
-    super.layoutChildren();
-  }
+      return size.getHeight();
+    }
+
+    @Override
+    public int getUnbiasedMeasurement (Size size) {
+
+      return size.getWidth();
+    }
+
+    @Override
+    public Size getSize (int biasedMeasurement, int unbiasedMeasurement) {
+
+      return new Size(unbiasedMeasurement, biasedMeasurement);
+    }
+  };
+
+  public abstract int getBiasedMeasurement (Size size);
+
+  public abstract int getUnbiasedMeasurement (Size size);
+
+  public abstract Size getSize (int biasedMeasurement, int unbiasedMeasurement);
 }

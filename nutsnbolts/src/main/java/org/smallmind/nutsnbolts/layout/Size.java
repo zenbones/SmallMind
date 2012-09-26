@@ -24,27 +24,26 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.javafx;
+package org.smallmind.nutsnbolts.layout;
 
-import javafx.scene.layout.Pane;
+public class Size {
 
-public class ParaboxPane extends Pane {
+  private int width;
+  private int height;
 
-  @Override
-  protected double computePrefWidth (double height) {
+  public Size (int width, int height) {
 
-    return super.computePrefWidth(height);
+    this.width = width;
+    this.height = height;
   }
 
-  @Override
-  protected double computePrefHeight (double width) {
+  public int getWidth () {
 
-    return super.computePrefHeight(width);
+    return width;
   }
 
-  @Override
-  protected void layoutChildren () {
+  public int getHeight () {
 
-    super.layoutChildren();
+    return height;
   }
 }

@@ -24,27 +24,19 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.javafx;
+package org.smallmind.nutsnbolts.layout;
 
-import javafx.scene.layout.Pane;
+import org.smallmind.nutsnbolts.lang.FormattedRuntimeException;
 
-public class ParaboxPane extends Pane {
+public class LayoutException extends FormattedRuntimeException {
 
-  @Override
-  protected double computePrefWidth (double height) {
+  public LayoutException () {
 
-    return super.computePrefWidth(height);
+    super();
   }
 
-  @Override
-  protected double computePrefHeight (double width) {
+  public LayoutException (String message, Object... args) {
 
-    return super.computePrefHeight(width);
-  }
-
-  @Override
-  protected void layoutChildren () {
-
-    super.layoutChildren();
+    super(message, args);
   }
 }

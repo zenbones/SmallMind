@@ -24,27 +24,52 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.javafx;
+package org.smallmind.nutsnbolts.layout;
 
-import javafx.scene.layout.Pane;
+public class ParaboxConstraint {
 
-public class ParaboxPane extends Pane {
+  private double growX;
+  private double growY;
+  private double shrinkX;
+  private double shrinkY;
 
-  @Override
-  protected double computePrefWidth (double height) {
+  public double getGrowX () {
 
-    return super.computePrefWidth(height);
+    return growX;
   }
 
-  @Override
-  protected double computePrefHeight (double width) {
+  public void setGrowX (double growX) {
 
-    return super.computePrefHeight(width);
+    this.growX = growX;
   }
 
-  @Override
-  protected void layoutChildren () {
+  public double getGrowY () {
 
-    super.layoutChildren();
+    return growY;
+  }
+
+  public void setGrowY (double growY) {
+
+    this.growY = growY;
+  }
+
+  public double getShrinkX () {
+
+    return shrinkX;
+  }
+
+  public void setShrinkX (double shrinkX) {
+
+    this.shrinkX = shrinkX;
+  }
+
+  public double getShrinkY () {
+
+    return shrinkY;
+  }
+
+  public void setShrinkY (double shrinkY) {
+
+    this.shrinkY = shrinkY;
   }
 }

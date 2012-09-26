@@ -24,27 +24,55 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.javafx;
+package org.smallmind.nutsnbolts.layout;
 
-import javafx.scene.layout.Pane;
+public abstract class ParaboxElement<C> {
 
-public class ParaboxPane extends Pane {
+  private C component;
+  private ParaboxConstraint constraint;
 
-  @Override
-  protected double computePrefWidth (double height) {
+  public ParaboxElement (C component, ParaboxConstraint constraint) {
 
-    return super.computePrefWidth(height);
+    this.component = component;
+    this.constraint = constraint;
   }
 
-  @Override
-  protected double computePrefHeight (double width) {
+  public abstract Size getComponentMinimumSize ();
 
-    return super.computePrefHeight(width);
+  public abstract Size getComponentPreferredSize ();
+
+  public C getComponent () {
+
+    return component;
   }
 
-  @Override
-  protected void layoutChildren () {
+  public ParaboxConstraint getConstraint () {
 
-    super.layoutChildren();
+    return constraint;
+  }
+
+  public Size getMinimumSize () {
+
+    if ((constraint.getShrinkX() > 0) && (constraint.getShrinkY() > 0)) {
+
+      return getComponentMinimumSize();
+    }
+    else if (constraint.getShrinkX() > 0) {
+
+      return new Size(getComponentMinimumSize().getWidth(), getComponentPreferredSize().getHeight());
+    }
+    else if (constraint.getShrinkY() > 0) {
+
+      return new Size(getComponentPreferredSize().getWidth(), getComponentMinimumSize().getHeight());
+    }
+    else {
+
+      return getComponentPreferredSize();
+    }
+  }
+
+  public Size getPreferredSize () {
+
+    return getComponentPreferredSize();
   }
 }
