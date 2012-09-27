@@ -82,6 +82,18 @@ public enum Bias {
 
       return element.getMaximumHeight();
     }
+
+    @Override
+    public double getBiasedGrow (ParaboxElement<?> element) {
+
+      return element.getConstraint().getGrowX();
+    }
+
+    @Override
+    public double getBiasedShrink (ParaboxElement<?> element) {
+
+      return element.getConstraint().getShrinkX();
+    }
   },
   VERTICAL {
     @Override
@@ -137,6 +149,18 @@ public enum Bias {
 
       return element.getMaximumWidth();
     }
+
+    @Override
+    public double getBiasedGrow (ParaboxElement<?> element) {
+
+      return element.getConstraint().getGrowY();
+    }
+
+    @Override
+    public double getBiasedShrink (ParaboxElement<?> element) {
+
+      return element.getConstraint().getShrinkY();
+    }
   };
 
   public abstract Size getSize (double biasedMeasurement, double unbiasedMeasurement);
@@ -156,4 +180,8 @@ public enum Bias {
   public abstract double getMaximumBiasedMeasurement (ParaboxElement<?> element);
 
   public abstract double getMaximumUnbiasedMeasurement (ParaboxElement<?> element);
+
+  public abstract double getBiasedGrow (ParaboxElement<?> element);
+
+  public abstract double getBiasedShrink (ParaboxElement<?> element);
 }

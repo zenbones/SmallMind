@@ -26,32 +26,7 @@
  */
 package org.smallmind.nutsnbolts.layout;
 
-public enum Platform {
+public enum Flow {
 
-  UNKNOWN {
-    @Override
-    public double getRelatedGap () {
-
-      return 5.0D;
-    }
-
-    @Override
-    public double getUnrelatedGap () {
-
-      return 10.0D;
-    }
-
-    @Override
-    public Orientation getOrientation () {
-
-      return Orientation.getDefaultOrientation();
-    }
-  };
-
-  public abstract double getRelatedGap ();
-
-  public abstract double getUnrelatedGap ();
-
-  //ComponentOrientation.getOrientation(rb.getLocale()))
-  public abstract Orientation getOrientation ();
+  FIRST_TO_LAST, LAST_TO_FIRST
 }

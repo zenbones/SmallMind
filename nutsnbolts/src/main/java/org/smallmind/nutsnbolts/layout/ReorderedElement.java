@@ -26,32 +26,24 @@
  */
 package org.smallmind.nutsnbolts.layout;
 
-public enum Platform {
+public class ReorderedElement<E extends ParaboxElement<?>> {
 
-  UNKNOWN {
-    @Override
-    public double getRelatedGap () {
+  private E reorderedElement;
+  private int originalIndex;
 
-      return 5.0D;
-    }
+  public ReorderedElement (E reorderedElement, int originalIndex) {
 
-    @Override
-    public double getUnrelatedGap () {
+    this.reorderedElement = reorderedElement;
+    this.originalIndex = originalIndex;
+  }
 
-      return 10.0D;
-    }
+  public E getReorderedElement () {
 
-    @Override
-    public Orientation getOrientation () {
+    return reorderedElement;
+  }
 
-      return Orientation.getDefaultOrientation();
-    }
-  };
+  public int getOriginalIndex () {
 
-  public abstract double getRelatedGap ();
-
-  public abstract double getUnrelatedGap ();
-
-  //ComponentOrientation.getOrientation(rb.getLocale()))
-  public abstract Orientation getOrientation ();
+    return originalIndex;
+  }
 }

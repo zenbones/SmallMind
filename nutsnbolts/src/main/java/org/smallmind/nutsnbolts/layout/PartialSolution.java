@@ -26,32 +26,34 @@
  */
 package org.smallmind.nutsnbolts.layout;
 
-public enum Platform {
+public class PartialSolution {
 
-  UNKNOWN {
-    @Override
-    public double getRelatedGap () {
+  private double position;
+  private double measurement;
 
-      return 5.0D;
-    }
+  public PartialSolution (double position, double measurement) {
 
-    @Override
-    public double getUnrelatedGap () {
+    this.position = position;
+    this.measurement = measurement;
+  }
 
-      return 10.0D;
-    }
+  public double getPosition () {
 
-    @Override
-    public Orientation getOrientation () {
+    return position;
+  }
 
-      return Orientation.getDefaultOrientation();
-    }
-  };
+  public void setPosition (double position) {
 
-  public abstract double getRelatedGap ();
+    this.position = position;
+  }
 
-  public abstract double getUnrelatedGap ();
+  public double getMeasurement () {
 
-  //ComponentOrientation.getOrientation(rb.getLocale()))
-  public abstract Orientation getOrientation ();
+    return measurement;
+  }
+
+  public void setMeasurement (double measurement) {
+
+    this.measurement = measurement;
+  }
 }

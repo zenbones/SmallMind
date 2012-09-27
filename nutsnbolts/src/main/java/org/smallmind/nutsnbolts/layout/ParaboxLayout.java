@@ -26,7 +26,10 @@
  */
 package org.smallmind.nutsnbolts.layout;
 
-import java.util.Collection;
+import java.util.Iterator;
+import java.util.LinkedList;
+import java.util.List;
+import org.smallmind.nutsnbolts.lang.UnknownSwitchCaseException;
 
 public class ParaboxLayout<E extends ParaboxElement<?>> {
 
@@ -34,9 +37,9 @@ public class ParaboxLayout<E extends ParaboxElement<?>> {
   private Bias bias;
   private Alignment biasedAlignment;
   private Alignment unbiasedAlignment;
-  private Double unbiasedMinimumMeasurement;
-  private Double unbiasedPreferredMeasurement;
-  private Double unbiasedMaximumMeasurement;
+  private Double minimumUnbiasedMeasurement;
+  private Double preferredUnbiasedMeasurement;
+  private Double maximumUnbiasedMeasurement;
   private double gap;
 
   public ParaboxLayout (ParaboxContainer container) {
@@ -126,48 +129,48 @@ public class ParaboxLayout<E extends ParaboxElement<?>> {
     return this;
   }
 
-  public Double getUnbiasedMinimumMeasurement () {
+  public Double getMinimumUnbiasedMeasurement () {
 
-    return unbiasedMinimumMeasurement;
+    return minimumUnbiasedMeasurement;
   }
 
-  public ParaboxLayout<E> setUnbiasedMinimumMeasurement (Double unbiasedMinimumMeasurement) {
+  public ParaboxLayout<E> setMinimumUnbiasedMeasurement (Double minimumUnbiasedMeasurement) {
 
-    this.unbiasedMinimumMeasurement = unbiasedMinimumMeasurement;
+    this.minimumUnbiasedMeasurement = minimumUnbiasedMeasurement;
 
     return this;
   }
 
-  public Double getUnbiasedPreferredMeasurement () {
+  public Double getPreferredUnbiasedMeasurement () {
 
-    return unbiasedPreferredMeasurement;
+    return preferredUnbiasedMeasurement;
   }
 
-  public ParaboxLayout<E> setUnbiasedPreferredMeasurement (Double unbiasedPreferredMeasurement) {
+  public ParaboxLayout<E> setPreferredUnbiasedMeasurement (Double preferredUnbiasedMeasurement) {
 
-    this.unbiasedPreferredMeasurement = unbiasedPreferredMeasurement;
+    this.preferredUnbiasedMeasurement = preferredUnbiasedMeasurement;
 
     return this;
   }
 
-  public Double getUnbiasedMaximumMeasurement () {
+  public Double getMaximumUnbiasedMeasurement () {
 
-    return unbiasedMaximumMeasurement;
+    return maximumUnbiasedMeasurement;
   }
 
-  public ParaboxLayout<E> setUnbiasedMaximumMeasurement (Double unbiasedMaximumMeasurement) {
+  public ParaboxLayout<E> setMaximumUnbiasedMeasurement (Double maximumUnbiasedMeasurement) {
 
-    this.unbiasedMaximumMeasurement = unbiasedMaximumMeasurement;
+    this.maximumUnbiasedMeasurement = maximumUnbiasedMeasurement;
 
     return this;
   }
 
-  public Size calculateMinimumSize (Collection<E> elements) {
+  public Size calculateMinimumContainerSize (List<E> elements) {
 
-    return getBias().getSize(calculateMinimumBiasedMeasurement(elements), calculateMinimumUnbiasedMeasurement(elements));
+    return getBias().getSize(calculateMinimumBiasedContainerMeasurement(elements), calculateMinimumUnbiasedContainerMeasurement(elements));
   }
 
-  private double calculateMinimumBiasedMeasurement (Collection<E> elements) {
+  private double calculateMinimumBiasedContainerMeasurement (List<E> elements) {
 
     boolean first = true;
     double total = 0.0D;
@@ -183,35 +186,34 @@ public class ParaboxLayout<E extends ParaboxElement<?>> {
     return total;
   }
 
-  private double calculateMinimumUnbiasedMeasurement (Collection<E> elements) {
+  private double calculateMinimumUnbiasedContainerMeasurement (List<E> elements) {
 
-    if (unbiasedMinimumMeasurement != null) {
+    double maxAscent = 0;
+    double maxDescent = 0;
 
-      return unbiasedMinimumMeasurement;
-    }
-    else {
+    for (E element : elements) {
 
-      double greatest = 0;
+      double currentMeasurement = (minimumUnbiasedMeasurement != null) ? minimumUnbiasedMeasurement : getBias().getMinimumUnbiasedMeasurement(element);
+      double currentAscent = (!unbiasedAlignment.equals(Alignment.BASELINE)) ? currentMeasurement : element.getBaseline(bias.getSize(0, currentMeasurement));
+      double currentDescent;
 
-      for (E element : elements) {
-
-        double current;
-
-        if ((current = getBias().getMinimumUnbiasedMeasurement(element)) > greatest) {
-          greatest = current;
-        }
+      if (currentAscent > maxAscent) {
+        maxAscent = currentAscent;
       }
-
-      return greatest;
+      if ((currentDescent = (currentMeasurement - currentAscent)) > maxDescent) {
+        maxDescent = currentDescent;
+      }
     }
+
+    return maxAscent + maxDescent;
   }
 
-  public Size calculatePreferredSize (Collection<E> elements) {
+  public Size calculatePreferredContainerSize (List<E> elements) {
 
-    return getBias().getSize(calculatePreferredBiasedMeasurement(elements), calculatePreferredUnbiasedMeasurement(elements));
+    return getBias().getSize(calculatePreferredBiasedContainerMeasurement(elements), calculatePreferredUnbiasedContainerMeasurement(elements));
   }
 
-  private double calculatePreferredBiasedMeasurement (Collection<E> elements) {
+  private double calculatePreferredBiasedContainerMeasurement (List<E> elements) {
 
     boolean first = true;
     double total = 0;
@@ -227,31 +229,241 @@ public class ParaboxLayout<E extends ParaboxElement<?>> {
     return total;
   }
 
-  private double calculatePreferredUnbiasedMeasurement (Collection<E> elements) {
+  private double calculatePreferredUnbiasedContainerMeasurement (List<E> elements) {
 
-    if (unbiasedPreferredMeasurement != null) {
+    double maxAscent = 0;
+    double maxDescent = 0;
 
-      return unbiasedPreferredMeasurement;
-    }
-    else {
+    for (E element : elements) {
 
-      double greatest = 0;
+      double currentMeasurement = (preferredUnbiasedMeasurement != null) ? preferredUnbiasedMeasurement : getBias().getPreferredUnbiasedMeasurement(element);
+      double currentAscent = (!unbiasedAlignment.equals(Alignment.BASELINE)) ? currentMeasurement : element.getBaseline(bias.getSize(0, currentMeasurement));
+      double currentDescent;
 
-      for (E element : elements) {
-
-        double current;
-
-        if ((current = getBias().getPreferredUnbiasedMeasurement(element)) > greatest) {
-          greatest = current;
-        }
+      if (currentAscent > maxAscent) {
+        maxAscent = currentAscent;
       }
-
-      return greatest;
+      if ((currentDescent = (currentMeasurement - currentAscent)) > maxDescent) {
+        maxDescent = currentDescent;
+      }
     }
+
+    return maxAscent + maxDescent;
   }
 
-  public void doLayout (double width, double height, Collection<E> elements) {
+  public void doLayout (double width, double height, List<E> elements) {
 
+  }
 
+  private PartialSolution[] doBiasedLayout (double biasedContainerMeasure, List<E> elements) {
+
+    PartialSolution[] partialSolutions = new PartialSolution[(elements == null) ? 0 : elements.size()];
+
+    if (elements != null) {
+
+      double preferredBiasedContainerMeasure;
+
+      if (biasedContainerMeasure <= calculateMinimumBiasedContainerMeasurement(elements)) {
+
+        double top = 0;
+        int index = 0;
+
+        for (E element : elements) {
+          partialSolutions[index++] = new PartialSolution(top, bias.getMinimumBiasedMeasurement(element));
+          top += gap;
+        }
+      }
+      else if (biasedContainerMeasure <= (preferredBiasedContainerMeasure = calculatePreferredBiasedContainerMeasurement(elements))) {
+
+        double[] preferredBiasedMeasurements = new double[elements.size()];
+        double[] fat = new double[elements.size()];
+        double totalShrink = 0;
+        double totalFat = 0;
+        double top = 0;
+        int index;
+
+        index = 0;
+        for (E element : elements) {
+          totalShrink += bias.getBiasedShrink(element);
+          totalFat += (fat[index++] = (preferredBiasedMeasurements[index] = bias.getPreferredBiasedMeasurement(element)) - bias.getMinimumBiasedMeasurement(element));
+        }
+
+        index = 0;
+        for (E element : elements) {
+
+          double totalRatio = (totalShrink + totalFat == 0) ? 0 : (bias.getBiasedShrink(element) + fat[index]) / (totalShrink + totalFat);
+
+          partialSolutions[index++] = new PartialSolution(top, preferredBiasedMeasurements[index] - (totalRatio * (preferredBiasedContainerMeasure - biasedContainerMeasure)));
+          top += gap;
+        }
+      }
+      else {
+
+        LinkedList<ReorderedElement<E>> reorderedElements = new LinkedList<ReorderedElement<E>>();
+        double[] maximumBiasedMeasurements = new double[elements.size()];
+        double unused = biasedContainerMeasure - preferredBiasedContainerMeasure;
+        double totalGrow = 0;
+        int index = 0;
+
+        for (E element : elements) {
+
+          double grow;
+
+          if ((grow = bias.getBiasedGrow(element)) > 0) {
+            totalGrow += grow;
+            reorderedElements.add(new ReorderedElement<E>(element, index));
+          }
+
+          partialSolutions[index] = new PartialSolution(0, bias.getPreferredBiasedMeasurement(element));
+          maximumBiasedMeasurements[index++] = bias.getMaximumBiasedMeasurement(element);
+        }
+
+        if (!reorderedElements.isEmpty()) {
+          do {
+
+            Iterator<ReorderedElement<E>> reorderedElementIter = reorderedElements.iterator();
+            double used = 0;
+            double spentGrowth = 0;
+
+            while (reorderedElementIter.hasNext()) {
+
+              ReorderedElement<E> reorderedElement = reorderedElementIter.next();
+              double increasedMeasurement;
+              double currentUnused;
+              double currentGrow;
+
+              if ((increasedMeasurement = partialSolutions[reorderedElement.getOriginalIndex()].getMeasurement() + (currentUnused = (((currentGrow = bias.getBiasedGrow(reorderedElement.getReorderedElement())) / totalGrow) * unused))) < maximumBiasedMeasurements[reorderedElement.getOriginalIndex()]) {
+                used += currentUnused;
+                partialSolutions[reorderedElement.getOriginalIndex()].setMeasurement(increasedMeasurement);
+              }
+              else {
+                used += maximumBiasedMeasurements[reorderedElement.getOriginalIndex()] - partialSolutions[reorderedElement.getOriginalIndex()].getMeasurement();
+                spentGrowth += currentGrow;
+                partialSolutions[reorderedElement.getOriginalIndex()].setMeasurement(maximumBiasedMeasurements[reorderedElement.getOriginalIndex()]);
+                reorderedElementIter.remove();
+              }
+            }
+
+            unused -= used;
+            totalGrow -= spentGrowth;
+
+          } while ((!reorderedElements.isEmpty()) && (unused >= 1.0));
+        }
+
+        switch (biasedAlignment) {
+          case FIRST:
+
+            break;
+          case LAST:
+
+            break;
+          case LEADING:
+
+            break;
+          case TRAILING:
+
+            break;
+          case CENTER:
+
+            break;
+          case BASELINE:
+
+            break;
+          default:
+            throw new UnknownSwitchCaseException(biasedAlignment.name());
+        }
+      }
+    }
+
+    return partialSolutions;
+  }
+
+  private PartialSolution[] doUnbiasedLayout (double unbiasedContainerMeasurement, List<E> elements) {
+
+    PartialSolution[] partialSolutions = new PartialSolution[(elements == null) ? 0 : elements.size()];
+
+    if (elements != null) {
+
+      BaselineCalculations<E> baselineCalculations = (unbiasedAlignment.equals(Alignment.BASELINE)) ? new BaselineCalculations<E>(bias, maximumUnbiasedMeasurement, unbiasedContainerMeasurement, elements) : null;
+      double elementMeasurement;
+      int index = 0;
+
+      for (E element : elements) {
+        if (unbiasedContainerMeasurement <= (elementMeasurement = (minimumUnbiasedMeasurement != null) ? minimumUnbiasedMeasurement : getBias().getMinimumUnbiasedMeasurement(element))) {
+          partialSolutions[index++] = new PartialSolution(0, elementMeasurement);
+        }
+        else if (unbiasedContainerMeasurement <= (elementMeasurement = (maximumUnbiasedMeasurement != null) ? maximumUnbiasedMeasurement : bias.getMaximumUnbiasedMeasurement(element))) {
+          partialSolutions[index++] = new PartialSolution(0, unbiasedContainerMeasurement);
+        }
+        else {
+          switch (unbiasedAlignment) {
+            case FIRST:
+              partialSolutions[index++] = new PartialSolution(0, elementMeasurement);
+              break;
+            case LAST:
+              partialSolutions[index++] = new PartialSolution(unbiasedContainerMeasurement - elementMeasurement, elementMeasurement);
+              break;
+            case LEADING:
+              if (!bias.equals(container.getPlatform().getOrientation().getBias())) {
+                partialSolutions[index++] = new PartialSolution(0, elementMeasurement);
+              }
+              else {
+                switch (container.getPlatform().getOrientation().getFlow()) {
+                  case FIRST_TO_LAST:
+                    partialSolutions[index++] = new PartialSolution(0, elementMeasurement);
+                    break;
+                  case LAST_TO_FIRST:
+                    partialSolutions[index++] = new PartialSolution(unbiasedContainerMeasurement - elementMeasurement, elementMeasurement);
+                    break;
+                  default:
+                    throw new UnknownSwitchCaseException(container.getPlatform().getOrientation().getFlow().name());
+                }
+              }
+              break;
+            case TRAILING:
+              if (!bias.equals(container.getPlatform().getOrientation().getBias())) {
+                partialSolutions[index++] = new PartialSolution(unbiasedContainerMeasurement - elementMeasurement, elementMeasurement);
+              }
+              else {
+                switch (container.getPlatform().getOrientation().getFlow()) {
+                  case FIRST_TO_LAST:
+                    partialSolutions[index++] = new PartialSolution(unbiasedContainerMeasurement - elementMeasurement, elementMeasurement);
+                    break;
+                  case LAST_TO_FIRST:
+                    partialSolutions[index++] = new PartialSolution(0, elementMeasurement);
+                    break;
+                  default:
+                    throw new UnknownSwitchCaseException(container.getPlatform().getOrientation().getFlow().name());
+                }
+              }
+              break;
+            case CENTER:
+              partialSolutions[index++] = new PartialSolution((unbiasedContainerMeasurement - elementMeasurement) / 2.0D, elementMeasurement);
+              break;
+            case BASELINE:
+
+              if (baselineCalculations == null) {
+                throw new NullPointerException();
+              }
+
+              double top;
+
+              if ((top = baselineCalculations.getIdealizedBaseline() - baselineCalculations.getElementAscentsDescents()[index].getWidth()) < 0) {
+                top = 0;
+              }
+              else if (top + elementMeasurement > unbiasedContainerMeasurement) {
+                top += unbiasedContainerMeasurement - (top + elementMeasurement);
+              }
+
+              partialSolutions[index++] = new PartialSolution(top, elementMeasurement);
+              break;
+            default:
+              throw new UnknownSwitchCaseException(unbiasedAlignment.name());
+          }
+        }
+      }
+    }
+
+    return partialSolutions;
   }
 }

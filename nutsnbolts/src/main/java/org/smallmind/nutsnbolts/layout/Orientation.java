@@ -26,32 +26,31 @@
  */
 package org.smallmind.nutsnbolts.layout;
 
-public enum Platform {
+public class Orientation {
 
-  UNKNOWN {
-    @Override
-    public double getRelatedGap () {
+  private static final Orientation DEFAULT = new Orientation(Bias.HORIZONTAL, Flow.FIRST_TO_LAST);
 
-      return 5.0D;
-    }
+  private Bias bias;
+  private Flow flow;
 
-    @Override
-    public double getUnrelatedGap () {
+  public static Orientation getDefaultOrientation () {
 
-      return 10.0D;
-    }
+    return DEFAULT;
+  }
 
-    @Override
-    public Orientation getOrientation () {
+  public Orientation (Bias bias, Flow flow) {
 
-      return Orientation.getDefaultOrientation();
-    }
-  };
+    this.bias = bias;
+    this.flow = flow;
+  }
 
-  public abstract double getRelatedGap ();
+  public Bias getBias () {
 
-  public abstract double getUnrelatedGap ();
+    return bias;
+  }
 
-  //ComponentOrientation.getOrientation(rb.getLocale()))
-  public abstract Orientation getOrientation ();
+  public Flow getFlow () {
+
+    return flow;
+  }
 }

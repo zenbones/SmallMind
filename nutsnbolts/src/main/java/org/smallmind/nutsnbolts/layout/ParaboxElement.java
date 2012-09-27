@@ -49,6 +49,8 @@ public abstract class ParaboxElement<C> {
 
   public abstract double getComponentMaximumHeight ();
 
+  public abstract double getBaseline (Size size);
+
   public C getComponent () {
 
     return component;
