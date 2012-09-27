@@ -187,7 +187,7 @@ public class ParaboxLayout<E extends ParaboxElement<?>> {
 
     if (unbiasedMinimumMeasurement != null) {
 
-      return unbiasedMaximumMeasurement;
+      return unbiasedMinimumMeasurement;
     }
     else {
 
@@ -251,6 +251,7 @@ public class ParaboxLayout<E extends ParaboxElement<?>> {
   }
 
   public void doLayout (double width, double height, Collection<E> elements) {
+
 
   }
 }

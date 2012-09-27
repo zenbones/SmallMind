@@ -30,6 +30,24 @@ public enum Bias {
 
   HORIZONTAL {
     @Override
+    public Size getSize (double biasedMeasurement, double unbiasedMeasurement) {
+
+      return new Size(biasedMeasurement, unbiasedMeasurement);
+    }
+
+    @Override
+    public double getBiasedMeasurement (double width, double height) {
+
+      return width;
+    }
+
+    @Override
+    public double getUnbiasedMeasurement (double width, double height) {
+
+      return height;
+    }
+
+    @Override
     public double getMinimumBiasedMeasurement (ParaboxElement<?> element) {
 
       return element.getMaximumWidth();
@@ -64,14 +82,26 @@ public enum Bias {
 
       return element.getMaximumHeight();
     }
-
+  },
+  VERTICAL {
     @Override
     public Size getSize (double biasedMeasurement, double unbiasedMeasurement) {
 
-      return new Size(biasedMeasurement, unbiasedMeasurement);
+      return new Size(unbiasedMeasurement, biasedMeasurement);
     }
-  },
-  VERTICAL {
+
+    @Override
+    public double getBiasedMeasurement (double width, double height) {
+
+      return height;
+    }
+
+    @Override
+    public double getUnbiasedMeasurement (double width, double height) {
+
+      return width;
+    }
+
     @Override
     public double getMinimumBiasedMeasurement (ParaboxElement<?> element) {
 
@@ -107,13 +137,13 @@ public enum Bias {
 
       return element.getMaximumWidth();
     }
-
-    @Override
-    public Size getSize (double biasedMeasurement, double unbiasedMeasurement) {
-
-      return new Size(unbiasedMeasurement, biasedMeasurement);
-    }
   };
+
+  public abstract Size getSize (double biasedMeasurement, double unbiasedMeasurement);
+
+  public abstract double getBiasedMeasurement (double width, double height);
+
+  public abstract double getUnbiasedMeasurement (double width, double height);
 
   public abstract double getMinimumBiasedMeasurement (ParaboxElement<?> element);
 
@@ -126,6 +156,4 @@ public enum Bias {
   public abstract double getMaximumBiasedMeasurement (ParaboxElement<?> element);
 
   public abstract double getMaximumUnbiasedMeasurement (ParaboxElement<?> element);
-
-  public abstract Size getSize (double biasedMeasurement, double unbiasedMeasurement);
 }
