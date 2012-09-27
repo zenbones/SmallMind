@@ -50,7 +50,7 @@ public enum Bias {
     @Override
     public double getMinimumBiasedMeasurement (ParaboxElement<?> element) {
 
-      return element.getMaximumWidth();
+      return element.getMinimumWidth();
     }
 
     @Override
@@ -117,7 +117,7 @@ public enum Bias {
     @Override
     public double getMinimumBiasedMeasurement (ParaboxElement<?> element) {
 
-      return element.getMaximumHeight();
+      return element.getMinimumHeight();
     }
 
     @Override

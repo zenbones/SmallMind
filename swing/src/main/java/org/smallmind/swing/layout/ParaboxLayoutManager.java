@@ -40,6 +40,7 @@ import org.smallmind.nutsnbolts.layout.ParaboxConstraint;
 import org.smallmind.nutsnbolts.layout.ParaboxContainer;
 import org.smallmind.nutsnbolts.layout.ParaboxLayout;
 import org.smallmind.nutsnbolts.layout.Platform;
+import org.smallmind.nutsnbolts.layout.ReadableParaboxConstraint;
 
 public class ParaboxLayoutManager implements ParaboxContainer, LayoutManager2 {
 
@@ -61,7 +62,7 @@ public class ParaboxLayoutManager implements ParaboxContainer, LayoutManager2 {
 
   public ParaboxLayoutManager (Bias bias, Gap gap) {
 
-    this(bias, gap.getGap(PLATFORM));
+    this(bias, gap, Alignment.LEADING, Alignment.CENTER);
   }
 
   public ParaboxLayoutManager (Bias bias, double gap) {
@@ -71,7 +72,7 @@ public class ParaboxLayoutManager implements ParaboxContainer, LayoutManager2 {
 
   public ParaboxLayoutManager (Bias bias, Gap gap, Alignment biasedAlignment, Alignment unbiasedAlignment) {
 
-    this(bias, gap.getGap(PLATFORM), biasedAlignment, unbiasedAlignment);
+    paraboxLayout = new ParaboxLayout<SwingParaboxElement>(this, bias, gap, biasedAlignment, unbiasedAlignment);
   }
 
   public ParaboxLayoutManager (Bias bias, double gap, Alignment biasedAlignment, Alignment unbiasedAlignment) {
@@ -88,7 +89,7 @@ public class ParaboxLayoutManager implements ParaboxContainer, LayoutManager2 {
   @Override
   public void addLayoutComponent (Component comp, Object constraints) {
 
-    elements.add(new SwingParaboxElement(comp, (ParaboxConstraint)constraints));
+    elements.add(new SwingParaboxElement(comp, (ReadableParaboxConstraint)constraints));
   }
 
   @Override
