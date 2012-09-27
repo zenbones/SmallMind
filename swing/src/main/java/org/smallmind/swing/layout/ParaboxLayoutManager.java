@@ -148,6 +148,7 @@ public class ParaboxLayoutManager implements ParaboxContainer, LayoutManager2 {
 
   @Override
   public void invalidateLayout (Container target) {
+
   }
 
   @Override
