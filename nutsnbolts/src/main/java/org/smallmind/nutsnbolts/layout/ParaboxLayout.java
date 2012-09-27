@@ -34,10 +34,10 @@ public class ParaboxLayout<E extends ParaboxElement<?>> {
   private Bias bias;
   private Alignment biasedAlignment;
   private Alignment unbiasedAlignment;
-  private Integer unbiasedMinimumMeasurement;
-  private Integer unbiasedPreferredMeasurement;
-  private Integer unbiasedMaximumMeasurement;
-  private int gap;
+  private Double unbiasedMinimumMeasurement;
+  private Double unbiasedPreferredMeasurement;
+  private Double unbiasedMaximumMeasurement;
+  private double gap;
 
   public ParaboxLayout (ParaboxContainer container) {
 
@@ -54,7 +54,7 @@ public class ParaboxLayout<E extends ParaboxElement<?>> {
     this(container, bias, gap.getGap(container.getPlatform()));
   }
 
-  public ParaboxLayout (ParaboxContainer container, Bias bias, int gap) {
+  public ParaboxLayout (ParaboxContainer container, Bias bias, double gap) {
 
     this(container, bias, gap, Alignment.LEADING, Alignment.CENTER);
   }
@@ -64,7 +64,7 @@ public class ParaboxLayout<E extends ParaboxElement<?>> {
     this(container, bias, gap.getGap(container.getPlatform()), biasedAlignment, unbiasedAlignment);
   }
 
-  public ParaboxLayout (ParaboxContainer container, Bias bias, int gap, Alignment biasedAlignment, Alignment unbiasedAlignment) {
+  public ParaboxLayout (ParaboxContainer container, Bias bias, double gap, Alignment biasedAlignment, Alignment unbiasedAlignment) {
 
     this.container = container;
     this.bias = bias;
@@ -85,7 +85,7 @@ public class ParaboxLayout<E extends ParaboxElement<?>> {
     return this;
   }
 
-  public int getGap () {
+  public double getGap () {
 
     return gap;
   }
@@ -95,7 +95,7 @@ public class ParaboxLayout<E extends ParaboxElement<?>> {
     return setGap(gap.getGap(container.getPlatform()));
   }
 
-  public ParaboxLayout<E> setGap (int gap) {
+  public ParaboxLayout<E> setGap (double gap) {
 
     this.gap = gap;
 
@@ -126,36 +126,36 @@ public class ParaboxLayout<E extends ParaboxElement<?>> {
     return this;
   }
 
-  public Integer getUnbiasedMinimumMeasurement () {
+  public Double getUnbiasedMinimumMeasurement () {
 
     return unbiasedMinimumMeasurement;
   }
 
-  public ParaboxLayout<E> setUnbiasedMinimumMeasurement (Integer unbiasedMinimumMeasurement) {
+  public ParaboxLayout<E> setUnbiasedMinimumMeasurement (Double unbiasedMinimumMeasurement) {
 
     this.unbiasedMinimumMeasurement = unbiasedMinimumMeasurement;
 
     return this;
   }
 
-  public Integer getUnbiasedPreferredMeasurement () {
+  public Double getUnbiasedPreferredMeasurement () {
 
     return unbiasedPreferredMeasurement;
   }
 
-  public ParaboxLayout<E> setUnbiasedPreferredMeasurement (Integer unbiasedPreferredMeasurement) {
+  public ParaboxLayout<E> setUnbiasedPreferredMeasurement (Double unbiasedPreferredMeasurement) {
 
     this.unbiasedPreferredMeasurement = unbiasedPreferredMeasurement;
 
     return this;
   }
 
-  public Integer getUnbiasedMaximumMeasurement () {
+  public Double getUnbiasedMaximumMeasurement () {
 
     return unbiasedMaximumMeasurement;
   }
 
-  public ParaboxLayout<E> setUnbiasedMaximumMeasurement (Integer unbiasedMaximumMeasurement) {
+  public ParaboxLayout<E> setUnbiasedMaximumMeasurement (Double unbiasedMaximumMeasurement) {
 
     this.unbiasedMaximumMeasurement = unbiasedMaximumMeasurement;
 
@@ -167,13 +167,13 @@ public class ParaboxLayout<E extends ParaboxElement<?>> {
     return getBias().getSize(calculateMinimumBiasedMeasurement(elements), calculateMinimumUnbiasedMeasurement(elements));
   }
 
-  private int calculateMinimumBiasedMeasurement (Collection<E> elements) {
+  private double calculateMinimumBiasedMeasurement (Collection<E> elements) {
 
     boolean first = true;
-    int total = 0;
+    double total = 0.0D;
 
     for (E element : elements) {
-      total += getBias().getBiasedMeasurement(element.getMinimumSize());
+      total += getBias().getMinimumBiasedMeasurement(element);
       if (!first) {
         total += gap;
       }
@@ -183,7 +183,7 @@ public class ParaboxLayout<E extends ParaboxElement<?>> {
     return total;
   }
 
-  private int calculateMinimumUnbiasedMeasurement (Collection<E> elements) {
+  private double calculateMinimumUnbiasedMeasurement (Collection<E> elements) {
 
     if (unbiasedMinimumMeasurement != null) {
 
@@ -191,13 +191,13 @@ public class ParaboxLayout<E extends ParaboxElement<?>> {
     }
     else {
 
-      int greatest = 0;
+      double greatest = 0;
 
       for (E element : elements) {
 
-        int current;
+        double current;
 
-        if ((current = getBias().getUnbiasedMeasurement(element.getMinimumSize())) > greatest) {
+        if ((current = getBias().getMinimumUnbiasedMeasurement(element)) > greatest) {
           greatest = current;
         }
       }
@@ -211,13 +211,13 @@ public class ParaboxLayout<E extends ParaboxElement<?>> {
     return getBias().getSize(calculatePreferredBiasedMeasurement(elements), calculatePreferredUnbiasedMeasurement(elements));
   }
 
-  private int calculatePreferredBiasedMeasurement (Collection<E> elements) {
+  private double calculatePreferredBiasedMeasurement (Collection<E> elements) {
 
     boolean first = true;
-    int total = 0;
+    double total = 0;
 
     for (E element : elements) {
-      total += getBias().getBiasedMeasurement(element.getPreferredSize());
+      total += getBias().getPreferredBiasedMeasurement(element);
       if (!first) {
         total += gap;
       }
@@ -227,7 +227,7 @@ public class ParaboxLayout<E extends ParaboxElement<?>> {
     return total;
   }
 
-  private int calculatePreferredUnbiasedMeasurement (Collection<E> elements) {
+  private double calculatePreferredUnbiasedMeasurement (Collection<E> elements) {
 
     if (unbiasedPreferredMeasurement != null) {
 
@@ -235,13 +235,13 @@ public class ParaboxLayout<E extends ParaboxElement<?>> {
     }
     else {
 
-      int greatest = 0;
+      double greatest = 0;
 
       for (E element : elements) {
 
-        int current;
+        double current;
 
-        if ((current = getBias().getUnbiasedMeasurement(element.getPreferredSize())) > greatest) {
+        if ((current = getBias().getPreferredUnbiasedMeasurement(element)) > greatest) {
           greatest = current;
         }
       }
@@ -250,7 +250,7 @@ public class ParaboxLayout<E extends ParaboxElement<?>> {
     }
   }
 
-  public void doLayout (int width, int height, Collection<E> elements) {
+  public void doLayout (double width, double height, Collection<E> elements) {
 
   }
 }

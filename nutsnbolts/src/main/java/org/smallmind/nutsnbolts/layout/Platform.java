@@ -30,19 +30,19 @@ public enum Platform {
 
   UNKNOWN {
     @Override
-    public int getRelatedGap () {
+    public double getRelatedGap () {
 
-      return 5;
+      return 5.0D;
     }
 
     @Override
-    public int getUnrelatedGap () {
+    public double getUnrelatedGap () {
 
-      return 10;
+      return 10.0D;
     }
   };
 
-  public abstract int getRelatedGap ();
+  public abstract double getRelatedGap ();
 
-  public abstract int getUnrelatedGap ();
+  public abstract double getUnrelatedGap ();
 }

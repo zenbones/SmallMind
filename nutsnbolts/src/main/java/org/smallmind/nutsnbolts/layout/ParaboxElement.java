@@ -37,9 +37,17 @@ public abstract class ParaboxElement<C> {
     this.constraint = constraint;
   }
 
-  public abstract Size getComponentMinimumSize ();
+  public abstract double getComponentMinimumWidth ();
 
-  public abstract Size getComponentPreferredSize ();
+  public abstract double getComponentMinimumHeight ();
+
+  public abstract double getComponentPreferredWidth ();
+
+  public abstract double getComponentPreferredHeight ();
+
+  public abstract double getComponentMaximumWidth ();
+
+  public abstract double getComponentMaximumHeight ();
 
   public C getComponent () {
 
@@ -51,28 +59,33 @@ public abstract class ParaboxElement<C> {
     return constraint;
   }
 
-  public Size getMinimumSize () {
+  public double getMinimumWidth () {
 
-    if ((constraint.getShrinkX() > 0) && (constraint.getShrinkY() > 0)) {
-
-      return getComponentMinimumSize();
-    }
-    else if (constraint.getShrinkX() > 0) {
-
-      return new Size(getComponentMinimumSize().getWidth(), getComponentPreferredSize().getHeight());
-    }
-    else if (constraint.getShrinkY() > 0) {
-
-      return new Size(getComponentPreferredSize().getWidth(), getComponentMinimumSize().getHeight());
-    }
-    else {
-
-      return getComponentPreferredSize();
-    }
+    return (constraint.getShrinkX() > 0) ? getComponentMinimumWidth() : getComponentPreferredWidth();
   }
 
-  public Size getPreferredSize () {
+  public double getMinimumHeight () {
 
-    return getComponentPreferredSize();
+    return (constraint.getShrinkY() > 0) ? getComponentMinimumHeight() : getComponentPreferredHeight();
+  }
+
+  public double getPreferredWidth () {
+
+    return getComponentPreferredWidth();
+  }
+
+  public double getPreferredHeight () {
+
+    return getComponentPreferredHeight();
+  }
+
+  public double getMaximumWidth () {
+
+    return (constraint.getGrowX() > 0) ? getComponentMaximumWidth() : getComponentPreferredWidth();
+  }
+
+  public double getMaximumHeight () {
+
+    return (constraint.getGrowY() > 0) ? getComponentMaximumHeight() : getComponentPreferredHeight();
   }
 }

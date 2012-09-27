@@ -30,46 +30,102 @@ public enum Bias {
 
   HORIZONTAL {
     @Override
-    public int getBiasedMeasurement (Size size) {
+    public double getMinimumBiasedMeasurement (ParaboxElement<?> element) {
 
-      return size.getWidth();
+      return element.getMaximumWidth();
     }
 
     @Override
-    public int getUnbiasedMeasurement (Size size) {
+    public double getMinimumUnbiasedMeasurement (ParaboxElement<?> element) {
 
-      return size.getHeight();
+      return element.getMinimumHeight();
     }
 
     @Override
-    public Size getSize (int biasedMeasurement, int unbiasedMeasurement) {
+    public double getPreferredBiasedMeasurement (ParaboxElement<?> element) {
+
+      return element.getPreferredWidth();
+    }
+
+    @Override
+    public double getPreferredUnbiasedMeasurement (ParaboxElement<?> element) {
+
+      return element.getPreferredHeight();
+    }
+
+    @Override
+    public double getMaximumBiasedMeasurement (ParaboxElement<?> element) {
+
+      return element.getMaximumWidth();
+    }
+
+    @Override
+    public double getMaximumUnbiasedMeasurement (ParaboxElement<?> element) {
+
+      return element.getMaximumHeight();
+    }
+
+    @Override
+    public Size getSize (double biasedMeasurement, double unbiasedMeasurement) {
 
       return new Size(biasedMeasurement, unbiasedMeasurement);
     }
   },
   VERTICAL {
     @Override
-    public int getBiasedMeasurement (Size size) {
+    public double getMinimumBiasedMeasurement (ParaboxElement<?> element) {
 
-      return size.getHeight();
+      return element.getMaximumHeight();
     }
 
     @Override
-    public int getUnbiasedMeasurement (Size size) {
+    public double getMinimumUnbiasedMeasurement (ParaboxElement<?> element) {
 
-      return size.getWidth();
+      return element.getMinimumWidth();
     }
 
     @Override
-    public Size getSize (int biasedMeasurement, int unbiasedMeasurement) {
+    public double getPreferredBiasedMeasurement (ParaboxElement<?> element) {
+
+      return element.getPreferredHeight();
+    }
+
+    @Override
+    public double getPreferredUnbiasedMeasurement (ParaboxElement<?> element) {
+
+      return element.getPreferredWidth();
+    }
+
+    @Override
+    public double getMaximumBiasedMeasurement (ParaboxElement<?> element) {
+
+      return element.getMaximumHeight();
+    }
+
+    @Override
+    public double getMaximumUnbiasedMeasurement (ParaboxElement<?> element) {
+
+      return element.getMaximumWidth();
+    }
+
+    @Override
+    public Size getSize (double biasedMeasurement, double unbiasedMeasurement) {
 
       return new Size(unbiasedMeasurement, biasedMeasurement);
     }
   };
 
-  public abstract int getBiasedMeasurement (Size size);
+  public abstract double getMinimumBiasedMeasurement (ParaboxElement<?> element);
 
-  public abstract int getUnbiasedMeasurement (Size size);
+  public abstract double getMinimumUnbiasedMeasurement (ParaboxElement<?> element);
 
-  public abstract Size getSize (int biasedMeasurement, int unbiasedMeasurement);
+  public abstract double getPreferredBiasedMeasurement (ParaboxElement<?> element);
+
+  public abstract double getPreferredUnbiasedMeasurement (ParaboxElement<?> element);
+
+  public abstract double getMaximumBiasedMeasurement (ParaboxElement<?> element);
+
+  public abstract double getMaximumUnbiasedMeasurement (ParaboxElement<?> element);
+
+  public abstract Size getSize (double biasedMeasurement, double unbiasedMeasurement);
 }

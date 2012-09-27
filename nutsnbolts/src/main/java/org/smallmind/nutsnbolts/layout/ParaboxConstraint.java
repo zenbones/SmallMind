@@ -33,14 +33,36 @@ public class ParaboxConstraint {
   private double shrinkX;
   private double shrinkY;
 
+  public ParaboxConstraint mayGrow () {
+
+    return mayGrowX().mayGrowY();
+  }
+
+  public ParaboxConstraint setGrow (double growX, double growY) {
+
+    return setGrowX(growX).setGrowY(growY);
+  }
+
   public double getGrowX () {
 
     return growX;
   }
 
-  public void setGrowX (double growX) {
+  public ParaboxConstraint mayGrowX () {
+
+    return setGrowX(0.5D);
+  }
+
+  public ParaboxConstraint setGrowX (double growX) {
 
     this.growX = growX;
+
+    return this;
+  }
+
+  public ParaboxConstraint mayGrowY () {
+
+    return setGrowY(0.5D);
   }
 
   public double getGrowY () {
@@ -48,9 +70,21 @@ public class ParaboxConstraint {
     return growY;
   }
 
-  public void setGrowY (double growY) {
+  public ParaboxConstraint setGrowY (double growY) {
 
     this.growY = growY;
+
+    return this;
+  }
+
+  public ParaboxConstraint mayShrink () {
+
+    return mayShrinkX().mayShrinkY();
+  }
+
+  public ParaboxConstraint setShrink (double shrinkX, double shrinkY) {
+
+    return setShrinkX(shrinkX).setShrinkY(shrinkY);
   }
 
   public double getShrinkX () {
@@ -58,9 +92,16 @@ public class ParaboxConstraint {
     return shrinkX;
   }
 
-  public void setShrinkX (double shrinkX) {
+  public ParaboxConstraint mayShrinkX () {
+
+    return setShrinkX(0.5D);
+  }
+
+  public ParaboxConstraint setShrinkX (double shrinkX) {
 
     this.shrinkX = shrinkX;
+
+    return this;
   }
 
   public double getShrinkY () {
@@ -68,8 +109,15 @@ public class ParaboxConstraint {
     return shrinkY;
   }
 
-  public void setShrinkY (double shrinkY) {
+  public ParaboxConstraint mayShrinkY () {
+
+    return setShrinkY(0.5D);
+  }
+
+  public ParaboxConstraint setShrinkY (double shrinkY) {
 
     this.shrinkY = shrinkY;
+
+    return this;
   }
 }
