@@ -32,6 +32,9 @@ import java.awt.Dimension;
 import java.awt.LayoutManager2;
 import java.util.Iterator;
 import java.util.LinkedList;
+import org.smallmind.nutsnbolts.layout.Alignment;
+import org.smallmind.nutsnbolts.layout.Bias;
+import org.smallmind.nutsnbolts.layout.Gap;
 import org.smallmind.nutsnbolts.layout.Pair;
 import org.smallmind.nutsnbolts.layout.ParaboxConstraint;
 import org.smallmind.nutsnbolts.layout.ParaboxContainer;
@@ -40,42 +43,52 @@ import org.smallmind.nutsnbolts.layout.Platform;
 
 public class ParaboxLayoutManager implements ParaboxContainer, LayoutManager2 {
 
-  private ParaboxLayout<SwingParaboxElement> paraboxLayout = new ParaboxLayout<SwingParaboxElement>(this);
-  private Platform platform = new SwingParaboxPlatform();
-  private LinkedList<SwingParaboxElement> elements = new LinkedList<SwingParaboxElement>();
+  private static final Platform PLATFORM = new SwingParaboxPlatform();
+
+  private final ParaboxLayout<SwingParaboxElement> paraboxLayout;
+
+  private final LinkedList<SwingParaboxElement> elements = new LinkedList<SwingParaboxElement>();
+
+  public ParaboxLayoutManager () {
+
+    this(Bias.HORIZONTAL);
+  }
+
+  public ParaboxLayoutManager (Bias bias) {
+
+    this(bias, Gap.RELATED);
+  }
+
+  public ParaboxLayoutManager (Bias bias, Gap gap) {
+
+    this(bias, gap.getGap(PLATFORM));
+  }
+
+  public ParaboxLayoutManager (Bias bias, double gap) {
+
+    this(bias, gap, Alignment.LEADING, Alignment.CENTER);
+  }
+
+  public ParaboxLayoutManager (Bias bias, Gap gap, Alignment biasedAlignment, Alignment unbiasedAlignment) {
+
+    this(bias, gap.getGap(PLATFORM), biasedAlignment, unbiasedAlignment);
+  }
+
+  public ParaboxLayoutManager (Bias bias, double gap, Alignment biasedAlignment, Alignment unbiasedAlignment) {
+
+    paraboxLayout = new ParaboxLayout<SwingParaboxElement>(this, bias, gap, biasedAlignment, unbiasedAlignment);
+  }
 
   @Override
   public Platform getPlatform () {
 
-    return platform;
+    return PLATFORM;
   }
 
   @Override
   public void addLayoutComponent (Component comp, Object constraints) {
 
     elements.add(new SwingParaboxElement(comp, (ParaboxConstraint)constraints));
-  }
-
-  @Override
-  public Dimension maximumLayoutSize (Container target) {
-
-  }
-
-  @Override
-  public float getLayoutAlignmentX (Container target) {
-
-    return 0;  //To change body of implemented methods use File | Settings | File Templates.
-  }
-
-  @Override
-  public float getLayoutAlignmentY (Container target) {
-
-    return 0;  //To change body of implemented methods use File | Settings | File Templates.
-  }
-
-  @Override
-  public void invalidateLayout (Container target) {
-    //To change body of implemented methods use File | Settings | File Templates.
   }
 
   @Override
@@ -98,6 +111,18 @@ public class ParaboxLayoutManager implements ParaboxContainer, LayoutManager2 {
   }
 
   @Override
+  public float getLayoutAlignmentX (Container target) {
+
+    return 0.5F;
+  }
+
+  @Override
+  public float getLayoutAlignmentY (Container target) {
+
+    return 0.5F;
+  }
+
+  @Override
   public Dimension preferredLayoutSize (Container parent) {
 
     Pair size = paraboxLayout.calculatePreferredContainerSize(elements);
@@ -114,8 +139,20 @@ public class ParaboxLayoutManager implements ParaboxContainer, LayoutManager2 {
   }
 
   @Override
+  public Dimension maximumLayoutSize (Container target) {
+
+    Pair size = paraboxLayout.calculateMaximumContainerSize(elements);
+
+    return new Dimension((int)size.getFirst(), (int)size.getSecond());
+  }
+
+  @Override
+  public void invalidateLayout (Container target) {
+  }
+
+  @Override
   public void layoutContainer (Container parent) {
 
-//    paraboxLayout.doLayout();
+    paraboxLayout.doLayout(parent.getWidth(), parent.getHeight(), elements);
   }
 }

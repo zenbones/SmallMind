@@ -91,6 +91,7 @@ public class SwingParaboxElement extends ParaboxElement<Component> {
 
   @Override
   public void applyLayout (Pair position, Pair size) {
-    //To change body of implemented methods use File | Settings | File Templates.
+
+    getComponent().setBounds((int)position.getFirst(), (int)position.getSecond(), (int)size.getFirst(), (int)size.getSecond());
   }
 }

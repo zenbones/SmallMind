@@ -167,97 +167,26 @@ public class ParaboxLayout<E extends ParaboxElement<?>> {
 
   public Pair calculateMinimumContainerSize (List<E> elements) {
 
-    return getBias().getBiasedPair(calculateMinimumBiasedContainerMeasurement(elements), calculateMinimumUnbiasedContainerMeasurement(elements));
-  }
-
-  private double calculateMinimumBiasedContainerMeasurement (List<E> elements) {
-
-    boolean first = true;
-    double total = 0.0D;
-
-    for (E element : elements) {
-      total += getBias().getMinimumBiasedMeasurement(element);
-      if (!first) {
-        total += gap;
-      }
-      first = false;
-    }
-
-    return total;
-  }
-
-  private double calculateMinimumUnbiasedContainerMeasurement (List<E> elements) {
-
-    double maxAscent = 0;
-    double maxDescent = 0;
-
-    for (E element : elements) {
-
-      double currentMeasurement = (minimumUnbiasedMeasurement != null) ? minimumUnbiasedMeasurement : getBias().getMinimumUnbiasedMeasurement(element);
-      double currentAscent = (!unbiasedAlignment.equals(Alignment.BASELINE)) ? currentMeasurement : element.getBaseline(bias, currentMeasurement);
-      double currentDescent;
-
-      if (currentAscent > maxAscent) {
-        maxAscent = currentAscent;
-      }
-      if ((currentDescent = (currentMeasurement - currentAscent)) > maxDescent) {
-        maxDescent = currentDescent;
-      }
-    }
-
-    return maxAscent + maxDescent;
+    return getBias().getBiasedPair(calculateBiasedContainerMeasurement(TapeMeasure.MINIMUM, elements), calculateUnbiasedContainerMeasurement(TapeMeasure.MINIMUM, minimumUnbiasedMeasurement, elements));
   }
 
   public Pair calculatePreferredContainerSize (List<E> elements) {
 
-    return getBias().getBiasedPair(calculatePreferredBiasedContainerMeasurement(elements), calculatePreferredUnbiasedContainerMeasurement(elements));
+    return getBias().getBiasedPair(calculateBiasedContainerMeasurement(TapeMeasure.PREFERRED, elements), calculateUnbiasedContainerMeasurement(TapeMeasure.PREFERRED, preferredUnbiasedMeasurement, elements));
   }
 
-  private double calculatePreferredBiasedContainerMeasurement (List<E> elements) {
+  public Pair calculateMaximumContainerSize (List<E> elements) {
 
-    boolean first = true;
-    double total = 0;
-
-    for (E element : elements) {
-      total += getBias().getPreferredBiasedMeasurement(element);
-      if (!first) {
-        total += gap;
-      }
-      first = false;
-    }
-
-    return total;
+    return getBias().getBiasedPair(calculateBiasedContainerMeasurement(TapeMeasure.MAXIMUM, elements), calculateUnbiasedContainerMeasurement(TapeMeasure.MAXIMUM, maximumUnbiasedMeasurement, elements));
   }
 
-  private double calculatePreferredUnbiasedContainerMeasurement (List<E> elements) {
-
-    double maxAscent = 0;
-    double maxDescent = 0;
-
-    for (E element : elements) {
-
-      double currentMeasurement = (preferredUnbiasedMeasurement != null) ? preferredUnbiasedMeasurement : getBias().getPreferredUnbiasedMeasurement(element);
-      double currentAscent = (!unbiasedAlignment.equals(Alignment.BASELINE)) ? currentMeasurement : element.getBaseline(bias, currentMeasurement);
-      double currentDescent;
-
-      if (currentAscent > maxAscent) {
-        maxAscent = currentAscent;
-      }
-      if ((currentDescent = (currentMeasurement - currentAscent)) > maxDescent) {
-        maxDescent = currentDescent;
-      }
-    }
-
-    return maxAscent + maxDescent;
-  }
-
-  private double calculateMinimumBiasedContainerMeasurement (List<E> elements) {
+  private double calculateBiasedContainerMeasurement (TapeMeasure tapeMeasure, List<E> elements) {
 
     boolean first = true;
     double total = 0.0D;
 
     for (E element : elements) {
-      total += getBias().getMinimumBiasedMeasurement(element);
+      total += tapeMeasure.getBiasedMeasure(bias, element);
       if (!first) {
         total += gap;
       }
@@ -267,14 +196,14 @@ public class ParaboxLayout<E extends ParaboxElement<?>> {
     return total;
   }
 
-  private double calculateMinimumUnbiasedContainerMeasurement (List<E> elements) {
+  private double calculateUnbiasedContainerMeasurement (TapeMeasure tapeMeasure, Double unbiasedMeasurementOverride, List<E> elements) {
 
     double maxAscent = 0;
     double maxDescent = 0;
 
     for (E element : elements) {
 
-      double currentMeasurement = (minimumUnbiasedMeasurement != null) ? minimumUnbiasedMeasurement : getBias().getMinimumUnbiasedMeasurement(element);
+      double currentMeasurement = (unbiasedMeasurementOverride != null) ? unbiasedMeasurementOverride : tapeMeasure.getUnbiasedMeasure(bias, element);
       double currentAscent = (!unbiasedAlignment.equals(Alignment.BASELINE)) ? currentMeasurement : element.getBaseline(bias, currentMeasurement);
       double currentDescent;
 
@@ -296,7 +225,7 @@ public class ParaboxLayout<E extends ParaboxElement<?>> {
     int index = 0;
 
     for (E element : elements) {
-
+      element.applyLayout(bias.getBiasedPair(biasedPartialSolutions[index].getPosition(), unbiasedPartialSolutions[index].getPosition()), bias.getBiasedPair(biasedPartialSolutions[index].getMeasurement(), unbiasedPartialSolutions[index++].getMeasurement()));
     }
   }
 
@@ -308,7 +237,7 @@ public class ParaboxLayout<E extends ParaboxElement<?>> {
 
       double preferredBiasedContainerMeasure;
 
-      if (biasedContainerMeasure <= calculateMinimumBiasedContainerMeasurement(elements)) {
+      if (biasedContainerMeasure <= calculateBiasedContainerMeasurement(TapeMeasure.MINIMUM, elements)) {
 
         double currentMeasure;
         double top = 0;
@@ -319,7 +248,7 @@ public class ParaboxLayout<E extends ParaboxElement<?>> {
           top += currentMeasure + gap;
         }
       }
-      else if (biasedContainerMeasure <= (preferredBiasedContainerMeasure = calculatePreferredBiasedContainerMeasurement(elements))) {
+      else if (biasedContainerMeasure <= (preferredBiasedContainerMeasure = calculateBiasedContainerMeasurement(TapeMeasure.PREFERRED, elements))) {
 
         double[] preferredBiasedMeasurements = new double[elements.size()];
         double[] fat = new double[elements.size()];

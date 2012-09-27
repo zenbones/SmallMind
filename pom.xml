@@ -402,7 +402,7 @@
         <artifactId>javafx-rt</artifactId>
         <version>2.2</version>
         <scope>system</scope>
-        <systemPath>${javafx.home}/JavaFX 2.2 Runtime/lib/jfxrt.jar</systemPath>
+        <systemPath>${javafx.home}/jfxrt.jar</systemPath>
       </dependency>
       <dependency>
         <groupId>org.codehaus.jackson</groupId>
