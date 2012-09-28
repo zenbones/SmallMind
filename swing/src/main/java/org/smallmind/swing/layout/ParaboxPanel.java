@@ -32,6 +32,7 @@ import org.smallmind.nutsnbolts.layout.Alignment;
 import org.smallmind.nutsnbolts.layout.Bias;
 import org.smallmind.nutsnbolts.layout.Gap;
 import org.smallmind.nutsnbolts.layout.ParaboxConstraint;
+import org.smallmind.nutsnbolts.layout.Spec;
 
 public class ParaboxPanel extends JPanel {
 
@@ -68,6 +69,13 @@ public class ParaboxPanel extends JPanel {
   public ParaboxPanel addComponent (Component component) {
 
     add(component);
+
+    return this;
+  }
+
+  public ParaboxPanel addComponent (Component component, Spec spec) {
+
+    add(component, spec);
 
     return this;
   }

@@ -40,6 +40,7 @@ import org.smallmind.nutsnbolts.layout.ParaboxConstraint;
 import org.smallmind.nutsnbolts.layout.ParaboxContainer;
 import org.smallmind.nutsnbolts.layout.ParaboxLayout;
 import org.smallmind.nutsnbolts.layout.Platform;
+import org.smallmind.nutsnbolts.layout.Spec;
 
 public class ParaboxLayoutManager implements ParaboxContainer, LayoutManager2 {
 
@@ -88,7 +89,7 @@ public class ParaboxLayoutManager implements ParaboxContainer, LayoutManager2 {
   @Override
   public void addLayoutComponent (Component comp, Object constraints) {
 
-    elements.add(new SwingParaboxElement(comp, (ParaboxConstraint)constraints));
+    elements.add(new SwingParaboxElement(comp, (constraints instanceof Spec) ? ((Spec)constraints).staticConstraint() : (ParaboxConstraint)constraints));
   }
 
   @Override
