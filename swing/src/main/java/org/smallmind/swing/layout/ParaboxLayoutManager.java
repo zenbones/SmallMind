@@ -30,14 +30,17 @@ import java.awt.Component;
 import java.awt.Container;
 import java.awt.Dimension;
 import java.awt.LayoutManager2;
+import java.util.Iterator;
 import java.util.LinkedList;
+import org.smallmind.nutsnbolts.layout.Pair;
+import org.smallmind.nutsnbolts.layout.ParaboxConstraint;
 import org.smallmind.nutsnbolts.layout.ParaboxContainer;
 import org.smallmind.nutsnbolts.layout.ParaboxLayout;
 import org.smallmind.nutsnbolts.layout.Platform;
 
 public class ParaboxLayoutManager implements ParaboxContainer, LayoutManager2 {
 
-  private ParaboxLayout paraboxLayout = new ParaboxLayout(this);
+  private ParaboxLayout<SwingParaboxElement> paraboxLayout = new ParaboxLayout<SwingParaboxElement>(this);
   private Platform platform = new SwingParaboxPlatform();
   private LinkedList<SwingParaboxElement> elements = new LinkedList<SwingParaboxElement>();
 
@@ -50,12 +53,12 @@ public class ParaboxLayoutManager implements ParaboxContainer, LayoutManager2 {
   @Override
   public void addLayoutComponent (Component comp, Object constraints) {
 
+    elements.add(new SwingParaboxElement(comp, (ParaboxConstraint)constraints));
   }
 
   @Override
   public Dimension maximumLayoutSize (Container target) {
 
-    return null;  //To change body of implemented methods use File | Settings | File Templates.
   }
 
   @Override
@@ -77,24 +80,37 @@ public class ParaboxLayoutManager implements ParaboxContainer, LayoutManager2 {
 
   @Override
   public void addLayoutComponent (String name, Component comp) {
-    //To change body of implemented methods use File | Settings | File Templates.
+
+    elements.add(new SwingParaboxElement(comp));
   }
 
   @Override
   public void removeLayoutComponent (Component comp) {
-    //To change body of implemented methods use File | Settings | File Templates.
+
+    Iterator<SwingParaboxElement> elementIter = elements.iterator();
+
+    while (elementIter.hasNext()) {
+      if (elementIter.next().getComponent().equals(comp)) {
+        elementIter.remove();
+        break;
+      }
+    }
   }
 
   @Override
   public Dimension preferredLayoutSize (Container parent) {
 
-    return null;  //To change body of implemented methods use File | Settings | File Templates.
+    Pair size = paraboxLayout.calculatePreferredContainerSize(elements);
+
+    return new Dimension((int)size.getFirst(), (int)size.getSecond());
   }
 
   @Override
   public Dimension minimumLayoutSize (Container parent) {
 
-    return null;  //To change body of implemented methods use File | Settings | File Templates.
+    Pair size = paraboxLayout.calculateMinimumContainerSize(elements);
+
+    return new Dimension((int)size.getFirst(), (int)size.getSecond());
   }
 
   @Override
