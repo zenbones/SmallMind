@@ -26,38 +26,77 @@
  */
 package org.smallmind.nutsnbolts.layout;
 
-public class ImmutableParaboxConstraint implements ReadableParaboxConstraint {
+public class MutableParaboxConstraint extends ParaboxConstraint {
 
-  private double growX;
-  private double growY;
-  private double shrinkX;
-  private double shrinkY;
+  protected MutableParaboxConstraint () {
 
-  public ImmutableParaboxConstraint (double growX, double growY, double shrinkX, double shrinkY) {
-
-    this.growX = growX;
-    this.growY = growY;
-    this.shrinkX = shrinkX;
-    this.shrinkY = shrinkY;
   }
 
-  public double getGrowX () {
+  public MutableParaboxConstraint mayGrow () {
 
-    return growX;
+    return mayGrowX().mayGrowY();
   }
 
-  public double getGrowY () {
+  public MutableParaboxConstraint setGrow (double growX, double growY) {
 
-    return growY;
+    return setGrowX(growX).setGrowY(growY);
   }
 
-  public double getShrinkX () {
+  public MutableParaboxConstraint mayGrowX () {
 
-    return shrinkX;
+    return setGrowX(0.5D);
   }
 
-  public double getShrinkY () {
+  public MutableParaboxConstraint setGrowX (double growX) {
 
-    return shrinkY;
+    setGrowX(growX);
+
+    return this;
+  }
+
+  public MutableParaboxConstraint mayGrowY () {
+
+    return setGrowY(0.5D);
+  }
+
+  public MutableParaboxConstraint setGrowY (double growY) {
+
+    setGrowY(growY);
+
+    return this;
+  }
+
+  public MutableParaboxConstraint mayShrink () {
+
+    return mayShrinkX().mayShrinkY();
+  }
+
+  public MutableParaboxConstraint setShrink (double shrinkX, double shrinkY) {
+
+    return setShrinkX(shrinkX).setShrinkY(shrinkY);
+  }
+
+  public MutableParaboxConstraint mayShrinkX () {
+
+    return setShrinkX(0.5D);
+  }
+
+  public MutableParaboxConstraint setShrinkX (double shrinkX) {
+
+    setShrinkX(shrinkX);
+
+    return this;
+  }
+
+  public MutableParaboxConstraint mayShrinkY () {
+
+    return setShrinkY(0.5D);
+  }
+
+  public MutableParaboxConstraint setShrinkY (double shrinkY) {
+
+    setShrinkY(shrinkY);
+
+    return this;
   }
 }

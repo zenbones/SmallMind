@@ -31,18 +31,17 @@ import org.smallmind.nutsnbolts.layout.Bias;
 import org.smallmind.nutsnbolts.layout.Pair;
 import org.smallmind.nutsnbolts.layout.ParaboxConstraint;
 import org.smallmind.nutsnbolts.layout.ParaboxElement;
-import org.smallmind.nutsnbolts.layout.ReadableParaboxConstraint;
 
 public class SwingParaboxElement extends ParaboxElement<Component> {
 
   public SwingParaboxElement (Component component) {
 
-    super(component, ParaboxConstraint.getDeafultInstance());
+    super(component, ParaboxConstraint.immutable());
   }
 
-  public SwingParaboxElement (Component component, ReadableParaboxConstraint constraint) {
+  public SwingParaboxElement (Component component, ParaboxConstraint constraint) {
 
-    super(component, (constraint == null) ? ParaboxConstraint.getDeafultInstance() : constraint);
+    super(component, (constraint == null) ? ParaboxConstraint.immutable() : constraint);
   }
 
   @Override

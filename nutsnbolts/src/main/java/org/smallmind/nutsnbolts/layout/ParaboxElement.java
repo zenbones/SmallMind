@@ -29,9 +29,9 @@ package org.smallmind.nutsnbolts.layout;
 public abstract class ParaboxElement<C> {
 
   private C component;
-  private ReadableParaboxConstraint constraint;
+  private ParaboxConstraint constraint;
 
-  public ParaboxElement (C component, ReadableParaboxConstraint constraint) {
+  public ParaboxElement (C component, ParaboxConstraint constraint) {
 
     this.component = component;
     this.constraint = constraint;
@@ -58,7 +58,7 @@ public abstract class ParaboxElement<C> {
     return component;
   }
 
-  public ReadableParaboxConstraint getConstraint () {
+  public ParaboxConstraint getConstraint () {
 
     return constraint;
   }

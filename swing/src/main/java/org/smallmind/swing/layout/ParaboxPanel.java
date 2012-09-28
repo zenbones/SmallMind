@@ -31,7 +31,7 @@ import javax.swing.JPanel;
 import org.smallmind.nutsnbolts.layout.Alignment;
 import org.smallmind.nutsnbolts.layout.Bias;
 import org.smallmind.nutsnbolts.layout.Gap;
-import org.smallmind.nutsnbolts.layout.ReadableParaboxConstraint;
+import org.smallmind.nutsnbolts.layout.ParaboxConstraint;
 
 public class ParaboxPanel extends JPanel {
 
@@ -72,7 +72,7 @@ public class ParaboxPanel extends JPanel {
     return this;
   }
 
-  public ParaboxPanel addComponent (Component component, ReadableParaboxConstraint constraint) {
+  public ParaboxPanel addComponent (Component component, ParaboxConstraint constraint) {
 
     add(component, constraint);
 

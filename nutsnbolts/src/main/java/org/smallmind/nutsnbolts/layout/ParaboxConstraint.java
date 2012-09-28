@@ -26,28 +26,77 @@
  */
 package org.smallmind.nutsnbolts.layout;
 
-public class ParaboxConstraint implements ReadableParaboxConstraint {
+public class ParaboxConstraint {
 
-  private static ImmutableParaboxConstraint DEFAULT_INSTANCE = new ImmutableParaboxConstraint(0, 0, 0, 0);
+  private static final ParaboxConstraint IMMUTABLE_RIGID_INSTANCE = new ParaboxConstraint();
+  private static final ParaboxConstraint IMMUTABLE_GROW_INSTANCE = new ParaboxConstraint(0.5D, 0.5D, 0.0D, 0.0D);
+  private static final ParaboxConstraint IMMUTABLE_GROW_X_INSTANCE = new ParaboxConstraint(0.5D, 0.0D, 0.0D, 0.0D);
+  private static final ParaboxConstraint IMMUTABLE_GROW_Y_INSTANCE = new ParaboxConstraint(0.0D, 0.5D, 0.0D, 0.0D);
+  private static final ParaboxConstraint IMMUTABLE_SHRINK_INSTANCE = new ParaboxConstraint(0.0D, 0.0D, 0.5D, 0.5D);
+  private static final ParaboxConstraint IMMUTABLE_SHRINK_X_INSTANCE = new ParaboxConstraint(0.0D, 0.0D, 0.5D, 0.0D);
+  private static final ParaboxConstraint IMMUTABLE_SHRINK_Y_INSTANCE = new ParaboxConstraint(0.0D, 0.0D, 0.0D, 0.5D);
+  private static final ParaboxConstraint IMMUTABLE_GROW_AND_SHRINK_INSTANCE = new ParaboxConstraint(0.5D, 0.5D, 0.5D, 0.5D);
 
   private double growX;
   private double growY;
   private double shrinkX;
   private double shrinkY;
 
-  public static ImmutableParaboxConstraint getDeafultInstance () {
+  public static ParaboxConstraint immutable () {
 
-    return DEFAULT_INSTANCE;
+    return IMMUTABLE_RIGID_INSTANCE;
   }
 
-  public ParaboxConstraint mayGrow () {
+  public static ParaboxConstraint expand () {
 
-    return mayGrowX().mayGrowY();
+    return IMMUTABLE_GROW_INSTANCE;
   }
 
-  public ParaboxConstraint setGrow (double growX, double growY) {
+  public static ParaboxConstraint expandX () {
 
-    return setGrowX(growX).setGrowY(growY);
+    return IMMUTABLE_GROW_X_INSTANCE;
+  }
+
+  public static ParaboxConstraint expandY () {
+
+    return IMMUTABLE_GROW_Y_INSTANCE;
+  }
+
+  public static ParaboxConstraint contract () {
+
+    return IMMUTABLE_SHRINK_INSTANCE;
+  }
+
+  public static ParaboxConstraint contractX () {
+
+    return IMMUTABLE_SHRINK_X_INSTANCE;
+  }
+
+  public static ParaboxConstraint contractY () {
+
+    return IMMUTABLE_SHRINK_Y_INSTANCE;
+  }
+
+  public static ParaboxConstraint stretch () {
+
+    return IMMUTABLE_GROW_AND_SHRINK_INSTANCE;
+  }
+
+  public static MutableParaboxConstraint create () {
+
+    return new MutableParaboxConstraint();
+  }
+
+  public ParaboxConstraint () {
+
+  }
+
+  public ParaboxConstraint (double growX, double growY, double shrinkX, double shrinkY) {
+
+    this.growX = growX;
+    this.growY = growY;
+    this.shrinkX = shrinkX;
+    this.shrinkY = shrinkY;
   }
 
   public double getGrowX () {
@@ -55,21 +104,9 @@ public class ParaboxConstraint implements ReadableParaboxConstraint {
     return growX;
   }
 
-  public ParaboxConstraint mayGrowX () {
-
-    return setGrowX(0.5D);
-  }
-
-  public ParaboxConstraint setGrowX (double growX) {
+  private void setGrowX (double growX) {
 
     this.growX = growX;
-
-    return this;
-  }
-
-  public ParaboxConstraint mayGrowY () {
-
-    return setGrowY(0.5D);
   }
 
   public double getGrowY () {
@@ -77,21 +114,9 @@ public class ParaboxConstraint implements ReadableParaboxConstraint {
     return growY;
   }
 
-  public ParaboxConstraint setGrowY (double growY) {
+  private void setGrowY (double growY) {
 
     this.growY = growY;
-
-    return this;
-  }
-
-  public ParaboxConstraint mayShrink () {
-
-    return mayShrinkX().mayShrinkY();
-  }
-
-  public ParaboxConstraint setShrink (double shrinkX, double shrinkY) {
-
-    return setShrinkX(shrinkX).setShrinkY(shrinkY);
   }
 
   public double getShrinkX () {
@@ -99,16 +124,9 @@ public class ParaboxConstraint implements ReadableParaboxConstraint {
     return shrinkX;
   }
 
-  public ParaboxConstraint mayShrinkX () {
-
-    return setShrinkX(0.5D);
-  }
-
-  public ParaboxConstraint setShrinkX (double shrinkX) {
+  private void setShrinkX (double shrinkX) {
 
     this.shrinkX = shrinkX;
-
-    return this;
   }
 
   public double getShrinkY () {
@@ -116,15 +134,8 @@ public class ParaboxConstraint implements ReadableParaboxConstraint {
     return shrinkY;
   }
 
-  public ParaboxConstraint mayShrinkY () {
-
-    return setShrinkY(0.5D);
-  }
-
-  public ParaboxConstraint setShrinkY (double shrinkY) {
+  private void setShrinkY (double shrinkY) {
 
     this.shrinkY = shrinkY;
-
-    return this;
   }
 }
