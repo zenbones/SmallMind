@@ -30,6 +30,7 @@ import java.awt.Component;
 import java.awt.Container;
 import java.awt.Dimension;
 import java.awt.LayoutManager2;
+import java.util.LinkedList;
 import org.smallmind.nutsnbolts.layout.ParaboxContainer;
 import org.smallmind.nutsnbolts.layout.ParaboxLayout;
 import org.smallmind.nutsnbolts.layout.Platform;
@@ -37,7 +38,8 @@ import org.smallmind.nutsnbolts.layout.Platform;
 public class ParaboxLayoutManager implements ParaboxContainer, LayoutManager2 {
 
   private ParaboxLayout paraboxLayout = new ParaboxLayout(this);
-  private Platform platform = new ParaboxSwingPlatform();
+  private Platform platform = new SwingParaboxPlatform();
+  private LinkedList<SwingParaboxElement> elements = new LinkedList<SwingParaboxElement>();
 
   @Override
   public Platform getPlatform () {

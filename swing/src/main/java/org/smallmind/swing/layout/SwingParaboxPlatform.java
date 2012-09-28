@@ -33,11 +33,11 @@ import org.smallmind.nutsnbolts.layout.Flow;
 import org.smallmind.nutsnbolts.layout.Orientation;
 import org.smallmind.nutsnbolts.layout.Platform;
 
-public class ParaboxSwingPlatform implements Platform {
+public class SwingParaboxPlatform implements Platform {
 
   private Orientation orientation;
 
-  public ParaboxSwingPlatform () {
+  public SwingParaboxPlatform () {
 
     ComponentOrientation componentOrientation = ComponentOrientation.getOrientation(Locale.getDefault());
 

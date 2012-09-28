@@ -29,9 +29,9 @@ package org.smallmind.nutsnbolts.layout;
 public abstract class ParaboxElement<C> {
 
   private C component;
-  private ParaboxConstraint constraint;
+  private ReadableParaboxConstraint constraint;
 
-  public ParaboxElement (C component, ParaboxConstraint constraint) {
+  public ParaboxElement (C component, ReadableParaboxConstraint constraint) {
 
     this.component = component;
     this.constraint = constraint;
@@ -49,7 +49,7 @@ public abstract class ParaboxElement<C> {
 
   public abstract double getComponentMaximumHeight ();
 
-  public abstract double getBaseline (Pair pair);
+  public abstract double getBaseline (Bias bias, double measurement);
 
   public abstract void applyLayout (Pair position, Pair size);
 
@@ -58,7 +58,7 @@ public abstract class ParaboxElement<C> {
     return component;
   }
 
-  public ParaboxConstraint getConstraint () {
+  public ReadableParaboxConstraint getConstraint () {
 
     return constraint;
   }

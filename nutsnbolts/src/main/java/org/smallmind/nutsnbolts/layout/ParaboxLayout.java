@@ -194,7 +194,7 @@ public class ParaboxLayout<E extends ParaboxElement<?>> {
     for (E element : elements) {
 
       double currentMeasurement = (minimumUnbiasedMeasurement != null) ? minimumUnbiasedMeasurement : getBias().getMinimumUnbiasedMeasurement(element);
-      double currentAscent = (!unbiasedAlignment.equals(Alignment.BASELINE)) ? currentMeasurement : element.getBaseline(bias.getBiasedPair(0, currentMeasurement));
+      double currentAscent = (!unbiasedAlignment.equals(Alignment.BASELINE)) ? currentMeasurement : element.getBaseline(bias, currentMeasurement);
       double currentDescent;
 
       if (currentAscent > maxAscent) {
@@ -237,7 +237,7 @@ public class ParaboxLayout<E extends ParaboxElement<?>> {
     for (E element : elements) {
 
       double currentMeasurement = (preferredUnbiasedMeasurement != null) ? preferredUnbiasedMeasurement : getBias().getPreferredUnbiasedMeasurement(element);
-      double currentAscent = (!unbiasedAlignment.equals(Alignment.BASELINE)) ? currentMeasurement : element.getBaseline(bias.getBiasedPair(0, currentMeasurement));
+      double currentAscent = (!unbiasedAlignment.equals(Alignment.BASELINE)) ? currentMeasurement : element.getBaseline(bias, currentMeasurement);
       double currentDescent;
 
       if (currentAscent > maxAscent) {

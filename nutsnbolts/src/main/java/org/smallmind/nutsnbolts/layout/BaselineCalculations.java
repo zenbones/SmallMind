@@ -43,7 +43,7 @@ public class BaselineCalculations<E extends ParaboxElement<?>> {
     for (E element : elements) {
 
       double currentMeasurement = Math.min(unbiasedContainerMeasurement, (maximumUnbiasedMeasurement != null) ? maximumUnbiasedMeasurement : bias.getMaximumUnbiasedMeasurement(element));
-      double currentAscent = element.getBaseline(bias.getBiasedPair(0, currentMeasurement));
+      double currentAscent = element.getBaseline(bias, currentMeasurement);
       double currentDescent;
 
       if (currentAscent > maxAscent) {

@@ -26,28 +26,19 @@
  */
 package org.smallmind.nutsnbolts.layout;
 
-public class ParaboxConstraint implements ReadableParaboxConstraint {
-
-  private static ImmutableParaboxConstraint DEFAULT_INSTANCE = new ImmutableParaboxConstraint(0, 0, 0, 0);
+public class ImmutableParaboxConstraint implements ReadableParaboxConstraint {
 
   private double growX;
   private double growY;
   private double shrinkX;
   private double shrinkY;
 
-  public static ImmutableParaboxConstraint getDeafultInstance () {
+  public ImmutableParaboxConstraint (double growX, double growY, double shrinkX, double shrinkY) {
 
-    return DEFAULT_INSTANCE;
-  }
-
-  public ParaboxConstraint mayGrow () {
-
-    return mayGrowX().mayGrowY();
-  }
-
-  public ParaboxConstraint setGrow (double growX, double growY) {
-
-    return setGrowX(growX).setGrowY(growY);
+    this.growX = growX;
+    this.growY = growY;
+    this.shrinkX = shrinkX;
+    this.shrinkY = shrinkY;
   }
 
   public double getGrowX () {
@@ -55,43 +46,9 @@ public class ParaboxConstraint implements ReadableParaboxConstraint {
     return growX;
   }
 
-  public ParaboxConstraint mayGrowX () {
-
-    return setGrowX(0.5D);
-  }
-
-  public ParaboxConstraint setGrowX (double growX) {
-
-    this.growX = growX;
-
-    return this;
-  }
-
-  public ParaboxConstraint mayGrowY () {
-
-    return setGrowY(0.5D);
-  }
-
   public double getGrowY () {
 
     return growY;
-  }
-
-  public ParaboxConstraint setGrowY (double growY) {
-
-    this.growY = growY;
-
-    return this;
-  }
-
-  public ParaboxConstraint mayShrink () {
-
-    return mayShrinkX().mayShrinkY();
-  }
-
-  public ParaboxConstraint setShrink (double shrinkX, double shrinkY) {
-
-    return setShrinkX(shrinkX).setShrinkY(shrinkY);
   }
 
   public double getShrinkX () {
@@ -99,32 +56,8 @@ public class ParaboxConstraint implements ReadableParaboxConstraint {
     return shrinkX;
   }
 
-  public ParaboxConstraint mayShrinkX () {
-
-    return setShrinkX(0.5D);
-  }
-
-  public ParaboxConstraint setShrinkX (double shrinkX) {
-
-    this.shrinkX = shrinkX;
-
-    return this;
-  }
-
   public double getShrinkY () {
 
     return shrinkY;
-  }
-
-  public ParaboxConstraint mayShrinkY () {
-
-    return setShrinkY(0.5D);
-  }
-
-  public ParaboxConstraint setShrinkY (double shrinkY) {
-
-    this.shrinkY = shrinkY;
-
-    return this;
   }
 }
