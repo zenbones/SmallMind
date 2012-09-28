@@ -1,22 +1,22 @@
 /*
  * Copyright (c) 2007, 2008, 2009, 2010, 2011, 2012 David Berkman
- * 
+ *
  * This file is part of the SmallMind Code Project.
- * 
+ *
  * The SmallMind Code Project is free software, you can redistribute
  * it and/or modify it under the terms of GNU Affero General Public
  * License as published by the Free Software Foundation, either version 3
  * of the License, or (at your option) any later version.
- * 
+ *
  * The SmallMind Code Project is distributed in the hope that it will
  * be useful, but WITHOUT ANY WARRANTY; without even the implied warranty
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * General Public License for more details.
- * 
+ *
  * You should have received a copy of the the GNU Affero General Public
  * License, along with The SmallMind Code Project. If not, see
  * <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under the GNU Affero GPL version 3 section 7
  * ------------------------------------------------------------------
  * If you modify this Program, or any covered work, by linking or
@@ -26,24 +26,23 @@
  */
 package org.smallmind.nutsnbolts.layout;
 
-import java.util.List;
 import org.smallmind.nutsnbolts.lang.UnknownSwitchCaseException;
 
-public class ParallelGroup extends Group<ParallelGroup> {
+public class ParallelGroup<C> extends Group<C, ParallelGroup> {
 
   private Alignment alignment;
-  private Double minimumUnbiasedMeasurement;
-  private Double preferredUnbiasedMeasurement;
-  private Double maximumUnbiasedMeasurement;
+  private Double minimumOverrideMeasurement;
+  private Double preferredOverrideMeasurement;
+  private Double maximumOverrideMeasurement;
 
-  public ParallelGroup (Bias bias) {
+  public ParallelGroup (ParaboxLayout<C> layout, Bias bias) {
 
-    this(bias, Alignment.CENTER);
+    this(layout, bias, Alignment.CENTER);
   }
 
-  public ParallelGroup (Bias bias, Alignment alignment) {
+  public ParallelGroup (ParaboxLayout<C> layout, Bias bias, Alignment alignment) {
 
-    super(bias);
+    super(layout, bias);
 
     this.alignment = alignment;
   }
@@ -60,63 +59,63 @@ public class ParallelGroup extends Group<ParallelGroup> {
     return this;
   }
 
-  public Double getMinimumUnbiasedMeasurement () {
+  public Double getMinimumOverrideMeasurement () {
 
-    return minimumUnbiasedMeasurement;
+    return minimumOverrideMeasurement;
   }
 
-  public ParallelGroup setMinimumUnbiasedMeasurement (Double minimumUnbiasedMeasurement) {
+  public ParallelGroup setMinimumOverrideMeasurement (Double minimumOverrideMeasurement) {
 
-    this.minimumUnbiasedMeasurement = minimumUnbiasedMeasurement;
+    this.minimumOverrideMeasurement = minimumOverrideMeasurement;
 
     return this;
   }
 
-  public Double getPreferredUnbiasedMeasurement () {
+  public Double getPreferredOverrideMeasurement () {
 
-    return preferredUnbiasedMeasurement;
+    return preferredOverrideMeasurement;
   }
 
-  public ParallelGroup setPreferredUnbiasedMeasurement (Double preferredUnbiasedMeasurement) {
+  public ParallelGroup setPreferredOverrideMeasurement (Double preferredOverrideMeasurement) {
 
-    this.preferredUnbiasedMeasurement = preferredUnbiasedMeasurement;
+    this.preferredOverrideMeasurement = preferredOverrideMeasurement;
 
     return this;
   }
 
-  public Double getMaximumUnbiasedMeasurement () {
+  public Double getMaximumOverrideMeasurement () {
 
-    return maximumUnbiasedMeasurement;
+    return maximumOverrideMeasurement;
   }
 
-  public ParallelGroup setMaximumUnbiasedMeasurement (Double maximumUnbiasedMeasurement) {
+  public ParallelGroup setMaximumOverrideMeasurement (Double maximumOverrideMeasurement) {
 
-    this.maximumUnbiasedMeasurement = maximumUnbiasedMeasurement;
+    this.maximumOverrideMeasurement = maximumOverrideMeasurement;
 
     return this;
   }
 
-  public Pair calculateMinimumContainerSize (List<E> elements) {
+  public double calculateMinimumMeasurement () {
 
-    return getBias().constructPair(calculateBiasedContainerMeasurement(TapeMeasure.MINIMUM, elements), calculateUnbiasedContainerMeasurement(TapeMeasure.MINIMUM, minimumUnbiasedMeasurement, elements));
+    return calculateMeasurement(TapeMeasure.MINIMUM, minimumOverrideMeasurement);
   }
 
-  public Pair calculatePreferredContainerSize (List<E> elements) {
+  public double calculatePreferredMeasurement () {
 
-    return getBias().constructPair(calculateBiasedContainerMeasurement(TapeMeasure.PREFERRED, elements), calculateUnbiasedContainerMeasurement(TapeMeasure.PREFERRED, preferredUnbiasedMeasurement, elements));
+    return calculateMeasurement(TapeMeasure.PREFERRED, preferredOverrideMeasurement);
   }
 
-  public Pair calculateMaximumContainerSize (List<E> elements) {
+  public double calculateMaximumMeasurement () {
 
-    return getBias().constructPair(calculateBiasedContainerMeasurement(TapeMeasure.MAXIMUM, elements), calculateUnbiasedContainerMeasurement(TapeMeasure.MAXIMUM, maximumUnbiasedMeasurement, elements));
+    return calculateMeasurement(TapeMeasure.MAXIMUM, maximumOverrideMeasurement);
   }
 
-  private double calculateMeasurement (TapeMeasure tapeMeasure, Double unbiasedMeasurementOverride, List<ParaboxElement<?>> elements) {
+  private synchronized double calculateMeasurement (TapeMeasure tapeMeasure, Double unbiasedMeasurementOverride) {
 
     double maxAscent = 0;
     double maxDescent = 0;
 
-    for (ParaboxElement<?> element : elements) {
+    for (ParaboxElement<?> element : getElements()) {
 
       double currentMeasurement = (unbiasedMeasurementOverride != null) ? unbiasedMeasurementOverride : tapeMeasure.getMeasure(getBias(), element);
       double currentAscent = (!alignment.equals(Alignment.BASELINE)) ? currentMeasurement : element.getBaseline(getBias(), currentMeasurement);
@@ -134,71 +133,65 @@ public class ParallelGroup extends Group<ParallelGroup> {
   }
 
   @Override
-  public void doLayout (double position, double measurement) {
-    //To change body of implemented methods use File | Settings | File Templates.
-  }
+  public synchronized void doLayout (double containerPosition, double containerMeasurement) {
 
-  private PartialSolution[] doLayout (double unbiasedContainerMeasurement, List<E> elements) {
+    if (!getElements().isEmpty()) {
 
-    PartialSolution[] partialSolutions = new PartialSolution[(elements == null) ? 0 : elements.size()];
-
-    if (elements != null) {
-
-      BaselineCalculations<E> baselineCalculations = (alignment.equals(Alignment.BASELINE)) ? new BaselineCalculations<E>(bias, maximumUnbiasedMeasurement, unbiasedContainerMeasurement, elements) : null;
+      BaselineCalculations baselineCalculations = (alignment.equals(Alignment.BASELINE)) ? new BaselineCalculations(getBias(), maximumOverrideMeasurement, containerMeasurement, getElements()) : null;
       double elementMeasurement;
       int index = 0;
 
-      for (E element : elements) {
-        if (unbiasedContainerMeasurement <= (elementMeasurement = (minimumUnbiasedMeasurement != null) ? minimumUnbiasedMeasurement : getBias().getMinimumUnbiasedMeasurement(element))) {
-          partialSolutions[index++] = new PartialSolution(0, elementMeasurement);
+      for (ParaboxElement<?> element : getElements()) {
+        if (containerMeasurement <= (elementMeasurement = (minimumOverrideMeasurement != null) ? minimumOverrideMeasurement : getBias().getMinimumMeasurement(element))) {
+          element.applyLayout(getBias(), containerPosition, elementMeasurement);
         }
-        else if (unbiasedContainerMeasurement <= (elementMeasurement = (maximumUnbiasedMeasurement != null) ? maximumUnbiasedMeasurement : bias.getMaximumUnbiasedMeasurement(element))) {
-          partialSolutions[index++] = new PartialSolution(0, unbiasedContainerMeasurement);
+        else if (containerMeasurement <= (elementMeasurement = (maximumOverrideMeasurement != null) ? maximumOverrideMeasurement : getBias().getMaximumMeasurement(element))) {
+          element.applyLayout(getBias(), containerPosition, containerMeasurement);
         }
         else {
           switch (alignment) {
             case FIRST:
-              partialSolutions[index++] = new PartialSolution(0, elementMeasurement);
+              element.applyLayout(getBias(), containerPosition, elementMeasurement);
               break;
             case LAST:
-              partialSolutions[index++] = new PartialSolution(unbiasedContainerMeasurement - elementMeasurement, elementMeasurement);
+              element.applyLayout(getBias(), containerPosition + containerMeasurement - elementMeasurement, elementMeasurement);
               break;
             case LEADING:
-              if (!bias.equals(container.getPlatform().getOrientation().getBias())) {
-                partialSolutions[index++] = new PartialSolution(0, elementMeasurement);
+              if (!getBias().equals(getLayout().getContainer().getPlatform().getOrientation().getBias())) {
+                element.applyLayout(getBias(), containerPosition, elementMeasurement);
               }
               else {
-                switch (container.getPlatform().getOrientation().getFlow()) {
+                switch (getLayout().getContainer().getPlatform().getOrientation().getFlow()) {
                   case FIRST_TO_LAST:
-                    partialSolutions[index++] = new PartialSolution(0, elementMeasurement);
+                    element.applyLayout(getBias(), containerPosition, elementMeasurement);
                     break;
                   case LAST_TO_FIRST:
-                    partialSolutions[index++] = new PartialSolution(unbiasedContainerMeasurement - elementMeasurement, elementMeasurement);
+                    element.applyLayout(getBias(), containerPosition + containerMeasurement - elementMeasurement, elementMeasurement);
                     break;
                   default:
-                    throw new UnknownSwitchCaseException(container.getPlatform().getOrientation().getFlow().name());
+                    throw new UnknownSwitchCaseException(getLayout().getContainer().getPlatform().getOrientation().getFlow().name());
                 }
               }
               break;
             case TRAILING:
-              if (!bias.equals(container.getPlatform().getOrientation().getBias())) {
-                partialSolutions[index++] = new PartialSolution(unbiasedContainerMeasurement - elementMeasurement, elementMeasurement);
+              if (!getBias().equals(getLayout().getContainer().getPlatform().getOrientation().getBias())) {
+                element.applyLayout(getBias(), containerPosition + containerMeasurement - elementMeasurement, elementMeasurement);
               }
               else {
-                switch (container.getPlatform().getOrientation().getFlow()) {
+                switch (getLayout().getContainer().getPlatform().getOrientation().getFlow()) {
                   case FIRST_TO_LAST:
-                    partialSolutions[index++] = new PartialSolution(unbiasedContainerMeasurement - elementMeasurement, elementMeasurement);
+                    element.applyLayout(getBias(), containerPosition + containerMeasurement - elementMeasurement, elementMeasurement);
                     break;
                   case LAST_TO_FIRST:
-                    partialSolutions[index++] = new PartialSolution(0, elementMeasurement);
+                    element.applyLayout(getBias(), containerPosition, elementMeasurement);
                     break;
                   default:
-                    throw new UnknownSwitchCaseException(container.getPlatform().getOrientation().getFlow().name());
+                    throw new UnknownSwitchCaseException(getLayout().getContainer().getPlatform().getOrientation().getFlow().name());
                 }
               }
               break;
             case CENTER:
-              partialSolutions[index++] = new PartialSolution((unbiasedContainerMeasurement - elementMeasurement) / 2.0D, elementMeasurement);
+              element.applyLayout(getBias(), containerPosition + ((containerMeasurement - elementMeasurement) / 2.0D), elementMeasurement);
               break;
             case BASELINE:
 
@@ -211,11 +204,11 @@ public class ParallelGroup extends Group<ParallelGroup> {
               if ((top = baselineCalculations.getIdealizedBaseline() - baselineCalculations.getElementAscentsDescents()[index].getFirst()) < 0) {
                 top = 0;
               }
-              else if (top + elementMeasurement > unbiasedContainerMeasurement) {
-                top += unbiasedContainerMeasurement - (top + elementMeasurement);
+              else if (top + elementMeasurement > containerMeasurement) {
+                top += containerMeasurement - (top + elementMeasurement);
               }
 
-              partialSolutions[index++] = new PartialSolution(top, elementMeasurement);
+              element.applyLayout(getBias(), containerPosition + top, elementMeasurement);
               break;
             default:
               throw new UnknownSwitchCaseException(alignment.name());
@@ -223,7 +216,5 @@ public class ParallelGroup extends Group<ParallelGroup> {
         }
       }
     }
-
-    return partialSolutions;
   }
 }
