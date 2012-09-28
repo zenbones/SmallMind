@@ -68,19 +68,19 @@ public class ParaboxLayout<C> {
     return this;
   }
 
-  public Pair calculateMinimumContainerSize (List<E> elements) {
+  public Pair calculateMinimumSize () {
 
-    return getBias().getBiasedPair(calculateBiasedContainerMeasurement(TapeMeasure.MINIMUM, elements), calculateUnbiasedContainerMeasurement(TapeMeasure.MINIMUM, minimumUnbiasedMeasurement, elements));
+    return new Pair(horizontalGroup.calculateMinimumMeasurement(), verticalGroup.calculateMinimumMeasurement());
   }
 
-  public Pair calculatePreferredContainerSize (List<E> elements) {
+  public Pair calculatePreferredSize () {
 
-    return getBias().getBiasedPair(calculateBiasedContainerMeasurement(TapeMeasure.PREFERRED, elements), calculateUnbiasedContainerMeasurement(TapeMeasure.PREFERRED, preferredUnbiasedMeasurement, elements));
+    return new Pair(horizontalGroup.calculatePreferredMeasurement(), verticalGroup.calculatePreferredMeasurement());
   }
 
-  public Pair calculateMaximumContainerSize (List<E> elements) {
+  public Pair calculateMaximumSize () {
 
-    return getBias().getBiasedPair(calculateBiasedContainerMeasurement(TapeMeasure.MAXIMUM, elements), calculateUnbiasedContainerMeasurement(TapeMeasure.MAXIMUM, maximumUnbiasedMeasurement, elements));
+    return new Pair(horizontalGroup.calculateMaximumMeasurement(), verticalGroup.calculateMaximumMeasurement());
   }
 
   public void doLayout (double width, double height, List<ParaboxElement<?>> elements) {

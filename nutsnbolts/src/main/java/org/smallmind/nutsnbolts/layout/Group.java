@@ -17,6 +17,12 @@ public abstract class Group<C, G extends Group> {
 
   protected abstract void doLayout (double containerPosition, double containerMeasurement);
 
+  public abstract double calculateMinimumMeasurement ();
+
+  public abstract double calculatePreferredMeasurement ();
+
+  public abstract double calculateMaximumMeasurement ();
+
   protected ParaboxLayout<C> getLayout () {
 
     return layout;
