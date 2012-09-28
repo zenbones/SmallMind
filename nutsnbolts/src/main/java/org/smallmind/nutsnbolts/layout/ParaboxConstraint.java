@@ -36,6 +36,8 @@ public class ParaboxConstraint {
   private static final ParaboxConstraint IMMUTABLE_SHRINK_X_INSTANCE = new ParaboxConstraint(0.0D, 0.0D, 0.5D, 0.0D);
   private static final ParaboxConstraint IMMUTABLE_SHRINK_Y_INSTANCE = new ParaboxConstraint(0.0D, 0.0D, 0.0D, 0.5D);
   private static final ParaboxConstraint IMMUTABLE_GROW_AND_SHRINK_INSTANCE = new ParaboxConstraint(0.5D, 0.5D, 0.5D, 0.5D);
+  private static final ParaboxConstraint IMMUTABLE_GROW_X_AND_SHRINK_X_INSTANCE = new ParaboxConstraint(0.5D, 0.0D, 0.5D, 0.0D);
+  private static final ParaboxConstraint IMMUTABLE_GROW_Y_AND_SHRINK_Y_INSTANCE = new ParaboxConstraint(0.0D, 0.5D, 0.0D, 0.5D);
 
   private double growX;
   private double growY;
@@ -80,6 +82,16 @@ public class ParaboxConstraint {
   public static ParaboxConstraint stretch () {
 
     return IMMUTABLE_GROW_AND_SHRINK_INSTANCE;
+  }
+
+  public static ParaboxConstraint stretchX () {
+
+    return IMMUTABLE_GROW_X_AND_SHRINK_X_INSTANCE;
+  }
+
+  public static ParaboxConstraint stretchY () {
+
+    return IMMUTABLE_GROW_Y_AND_SHRINK_Y_INSTANCE;
   }
 
   public static MutableParaboxConstraint create () {

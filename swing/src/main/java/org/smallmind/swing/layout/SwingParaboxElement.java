@@ -31,6 +31,7 @@ import org.smallmind.nutsnbolts.layout.Bias;
 import org.smallmind.nutsnbolts.layout.Pair;
 import org.smallmind.nutsnbolts.layout.ParaboxConstraint;
 import org.smallmind.nutsnbolts.layout.ParaboxElement;
+import org.smallmind.nutsnbolts.layout.Spec;
 
 public class SwingParaboxElement extends ParaboxElement<Component> {
 
@@ -42,6 +43,11 @@ public class SwingParaboxElement extends ParaboxElement<Component> {
   public SwingParaboxElement (Component component, ParaboxConstraint constraint) {
 
     super(component, (constraint == null) ? ParaboxConstraint.immutable() : constraint);
+  }
+
+  public SwingParaboxElement (Component component, Spec spec) {
+
+    super(component, (spec == null) ? ParaboxConstraint.immutable() : spec.staticConstraint());
   }
 
   @Override

@@ -31,6 +31,11 @@ public abstract class ParaboxElement<C> {
   private C component;
   private ParaboxConstraint constraint;
 
+  public ParaboxElement (C component, Spec spec) {
+
+    this(component, spec.staticConstraint());
+  }
+
   public ParaboxElement (C component, ParaboxConstraint constraint) {
 
     this.component = component;
