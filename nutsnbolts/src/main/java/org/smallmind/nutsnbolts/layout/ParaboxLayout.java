@@ -165,9 +165,9 @@ public class ParaboxLayout<E extends ParaboxElement<?>> {
     return this;
   }
 
-  public Size calculateMinimumContainerSize (List<E> elements) {
+  public Pair calculateMinimumContainerSize (List<E> elements) {
 
-    return getBias().getSize(calculateMinimumBiasedContainerMeasurement(elements), calculateMinimumUnbiasedContainerMeasurement(elements));
+    return getBias().getBiasedPair(calculateMinimumBiasedContainerMeasurement(elements), calculateMinimumUnbiasedContainerMeasurement(elements));
   }
 
   private double calculateMinimumBiasedContainerMeasurement (List<E> elements) {
@@ -194,7 +194,7 @@ public class ParaboxLayout<E extends ParaboxElement<?>> {
     for (E element : elements) {
 
       double currentMeasurement = (minimumUnbiasedMeasurement != null) ? minimumUnbiasedMeasurement : getBias().getMinimumUnbiasedMeasurement(element);
-      double currentAscent = (!unbiasedAlignment.equals(Alignment.BASELINE)) ? currentMeasurement : element.getBaseline(bias.getSize(0, currentMeasurement));
+      double currentAscent = (!unbiasedAlignment.equals(Alignment.BASELINE)) ? currentMeasurement : element.getBaseline(bias.getBiasedPair(0, currentMeasurement));
       double currentDescent;
 
       if (currentAscent > maxAscent) {
@@ -208,9 +208,9 @@ public class ParaboxLayout<E extends ParaboxElement<?>> {
     return maxAscent + maxDescent;
   }
 
-  public Size calculatePreferredContainerSize (List<E> elements) {
+  public Pair calculatePreferredContainerSize (List<E> elements) {
 
-    return getBias().getSize(calculatePreferredBiasedContainerMeasurement(elements), calculatePreferredUnbiasedContainerMeasurement(elements));
+    return getBias().getBiasedPair(calculatePreferredBiasedContainerMeasurement(elements), calculatePreferredUnbiasedContainerMeasurement(elements));
   }
 
   private double calculatePreferredBiasedContainerMeasurement (List<E> elements) {
@@ -237,7 +237,7 @@ public class ParaboxLayout<E extends ParaboxElement<?>> {
     for (E element : elements) {
 
       double currentMeasurement = (preferredUnbiasedMeasurement != null) ? preferredUnbiasedMeasurement : getBias().getPreferredUnbiasedMeasurement(element);
-      double currentAscent = (!unbiasedAlignment.equals(Alignment.BASELINE)) ? currentMeasurement : element.getBaseline(bias.getSize(0, currentMeasurement));
+      double currentAscent = (!unbiasedAlignment.equals(Alignment.BASELINE)) ? currentMeasurement : element.getBaseline(bias.getBiasedPair(0, currentMeasurement));
       double currentDescent;
 
       if (currentAscent > maxAscent) {
@@ -253,6 +253,13 @@ public class ParaboxLayout<E extends ParaboxElement<?>> {
 
   public void doLayout (double width, double height, List<E> elements) {
 
+    PartialSolution[] biasedPartialSolutions = doBiasedLayout(bias.getBiasedMeasurement(width, height), elements);
+    PartialSolution[] unbiasedPartialSolutions = doUnbiasedLayout(bias.getUnbiasedMeasurement(width, height), elements);
+    int index = 0;
+
+    for (E element : elements) {
+
+    }
   }
 
   private PartialSolution[] doBiasedLayout (double biasedContainerMeasure, List<E> elements) {
@@ -491,7 +498,7 @@ public class ParaboxLayout<E extends ParaboxElement<?>> {
 
               double top;
 
-              if ((top = baselineCalculations.getIdealizedBaseline() - baselineCalculations.getElementAscentsDescents()[index].getWidth()) < 0) {
+              if ((top = baselineCalculations.getIdealizedBaseline() - baselineCalculations.getElementAscentsDescents()[index].getFirst()) < 0) {
                 top = 0;
               }
               else if (top + elementMeasurement > unbiasedContainerMeasurement) {

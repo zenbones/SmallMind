@@ -30,12 +30,12 @@ import java.util.List;
 
 public class BaselineCalculations<E extends ParaboxElement<?>> {
 
-  private Size[] elementAscentsDescents;
+  private Pair[] elementAscentsDescents;
   private double idealizedBaseline;
 
   public BaselineCalculations (Bias bias, Double maximumUnbiasedMeasurement, double unbiasedContainerMeasurement, List<E> elements) {
 
-    elementAscentsDescents = new Size[elements.size()];
+    elementAscentsDescents = new Pair[elements.size()];
     double maxAscent = 0;
     double maxDescent = 0;
     int index = 0;
@@ -43,7 +43,7 @@ public class BaselineCalculations<E extends ParaboxElement<?>> {
     for (E element : elements) {
 
       double currentMeasurement = Math.min(unbiasedContainerMeasurement, (maximumUnbiasedMeasurement != null) ? maximumUnbiasedMeasurement : bias.getMaximumUnbiasedMeasurement(element));
-      double currentAscent = element.getBaseline(bias.getSize(0, currentMeasurement));
+      double currentAscent = element.getBaseline(bias.getBiasedPair(0, currentMeasurement));
       double currentDescent;
 
       if (currentAscent > maxAscent) {
@@ -53,7 +53,7 @@ public class BaselineCalculations<E extends ParaboxElement<?>> {
         maxDescent = currentDescent;
       }
 
-      elementAscentsDescents[index++] = new Size(currentAscent, currentDescent);
+      elementAscentsDescents[index++] = new Pair(currentAscent, currentDescent);
     }
 
     idealizedBaseline = maxAscent + (Math.max(0, unbiasedContainerMeasurement - (maxAscent + maxDescent)) / 2);
@@ -64,7 +64,7 @@ public class BaselineCalculations<E extends ParaboxElement<?>> {
     return idealizedBaseline;
   }
 
-  public Size[] getElementAscentsDescents () {
+  public Pair[] getElementAscentsDescents () {
 
     return elementAscentsDescents;
   }

@@ -49,7 +49,9 @@ public abstract class ParaboxElement<C> {
 
   public abstract double getComponentMaximumHeight ();
 
-  public abstract double getBaseline (Size size);
+  public abstract double getBaseline (Pair pair);
+
+  public abstract void applyLayout (Pair position, Pair size);
 
   public C getComponent () {
 

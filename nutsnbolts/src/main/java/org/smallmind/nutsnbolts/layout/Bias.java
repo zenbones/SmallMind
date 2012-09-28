@@ -30,9 +30,9 @@ public enum Bias {
 
   HORIZONTAL {
     @Override
-    public Size getSize (double biasedMeasurement, double unbiasedMeasurement) {
+    public Pair getBiasedPair (double biasedMeasurement, double unbiasedMeasurement) {
 
-      return new Size(biasedMeasurement, unbiasedMeasurement);
+      return new Pair(biasedMeasurement, unbiasedMeasurement);
     }
 
     @Override
@@ -97,9 +97,9 @@ public enum Bias {
   },
   VERTICAL {
     @Override
-    public Size getSize (double biasedMeasurement, double unbiasedMeasurement) {
+    public Pair getBiasedPair (double biasedMeasurement, double unbiasedMeasurement) {
 
-      return new Size(unbiasedMeasurement, biasedMeasurement);
+      return new Pair(unbiasedMeasurement, biasedMeasurement);
     }
 
     @Override
@@ -163,7 +163,7 @@ public enum Bias {
     }
   };
 
-  public abstract Size getSize (double biasedMeasurement, double unbiasedMeasurement);
+  public abstract Pair getBiasedPair (double biasedMeasurement, double unbiasedMeasurement);
 
   public abstract double getBiasedMeasurement (double width, double height);
 

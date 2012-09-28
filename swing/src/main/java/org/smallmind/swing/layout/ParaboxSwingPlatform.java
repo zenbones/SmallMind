@@ -24,26 +24,41 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.nutsnbolts.layout;
+package org.smallmind.swing.layout;
 
-public class Size {
+import java.awt.ComponentOrientation;
+import java.util.Locale;
+import org.smallmind.nutsnbolts.layout.Bias;
+import org.smallmind.nutsnbolts.layout.Flow;
+import org.smallmind.nutsnbolts.layout.Orientation;
+import org.smallmind.nutsnbolts.layout.Platform;
 
-  private double width;
-  private double height;
+public class ParaboxSwingPlatform implements Platform {
 
-  public Size (double width, double height) {
+  private Orientation orientation;
 
-    this.width = width;
-    this.height = height;
+  public ParaboxSwingPlatform () {
+
+    ComponentOrientation componentOrientation = ComponentOrientation.getOrientation(Locale.getDefault());
+
+    orientation = new Orientation(componentOrientation.isHorizontal() ? Bias.HORIZONTAL : Bias.VERTICAL, componentOrientation.isLeftToRight() ? Flow.FIRST_TO_LAST : Flow.LAST_TO_FIRST);
   }
 
-  public double getWidth () {
+  @Override
+  public double getRelatedGap () {
 
-    return width;
+    return 5.0D;
   }
 
-  public double getHeight () {
+  @Override
+  public double getUnrelatedGap () {
 
-    return height;
+    return 10.0D;
+  }
+
+  @Override
+  public Orientation getOrientation () {
+
+    return orientation;
   }
 }

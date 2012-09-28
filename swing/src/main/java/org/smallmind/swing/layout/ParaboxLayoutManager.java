@@ -30,15 +30,19 @@ import java.awt.Component;
 import java.awt.Container;
 import java.awt.Dimension;
 import java.awt.LayoutManager2;
+import org.smallmind.nutsnbolts.layout.ParaboxContainer;
 import org.smallmind.nutsnbolts.layout.ParaboxLayout;
+import org.smallmind.nutsnbolts.layout.Platform;
 
-public class ParaboxLayoutManager implements LayoutManager2 {
+public class ParaboxLayoutManager implements ParaboxContainer, LayoutManager2 {
 
-  private ParaboxLayout paraboxLayout;
+  private ParaboxLayout paraboxLayout = new ParaboxLayout(this);
+  private Platform platform = new ParaboxSwingPlatform();
 
-  public ParaboxLayoutManager () {
+  @Override
+  public Platform getPlatform () {
 
-
+    return platform;
   }
 
   @Override
@@ -93,6 +97,7 @@ public class ParaboxLayoutManager implements LayoutManager2 {
 
   @Override
   public void layoutContainer (Container parent) {
-    //To change body of implemented methods use File | Settings | File Templates.
+
+//    paraboxLayout.doLayout();
   }
 }
