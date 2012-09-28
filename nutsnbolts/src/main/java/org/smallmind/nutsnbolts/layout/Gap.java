@@ -28,6 +28,13 @@ package org.smallmind.nutsnbolts.layout;
 
 public enum Gap {
 
+  NONE {
+    @Override
+    public double getGap (Platform platform) {
+
+      return 0.0D;
+    }
+  },
   RELATED {
     @Override
     public double getGap (Platform platform) {
