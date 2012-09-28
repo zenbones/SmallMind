@@ -30,158 +30,102 @@ public enum Bias {
 
   HORIZONTAL {
     @Override
-    public Pair getBiasedPair (double biasedMeasurement, double unbiasedMeasurement) {
+    public Pair constructPair (double biasedMeasurement, double unbiasedMeasurement) {
 
       return new Pair(biasedMeasurement, unbiasedMeasurement);
     }
 
     @Override
-    public double getBiasedMeasurement (double width, double height) {
+    public double getValue (double width, double height) {
 
       return width;
     }
 
     @Override
-    public double getUnbiasedMeasurement (double width, double height) {
-
-      return height;
-    }
-
-    @Override
-    public double getMinimumBiasedMeasurement (ParaboxElement<?> element) {
+    public double getMinimumMeasurement (ParaboxElement<?> element) {
 
       return element.getMinimumWidth();
     }
 
     @Override
-    public double getMinimumUnbiasedMeasurement (ParaboxElement<?> element) {
-
-      return element.getMinimumHeight();
-    }
-
-    @Override
-    public double getPreferredBiasedMeasurement (ParaboxElement<?> element) {
+    public double getPreferredMeasurement (ParaboxElement<?> element) {
 
       return element.getPreferredWidth();
     }
 
     @Override
-    public double getPreferredUnbiasedMeasurement (ParaboxElement<?> element) {
-
-      return element.getPreferredHeight();
-    }
-
-    @Override
-    public double getMaximumBiasedMeasurement (ParaboxElement<?> element) {
+    public double getMaximumMeasurement (ParaboxElement<?> element) {
 
       return element.getMaximumWidth();
     }
 
     @Override
-    public double getMaximumUnbiasedMeasurement (ParaboxElement<?> element) {
-
-      return element.getMaximumHeight();
-    }
-
-    @Override
-    public double getBiasedGrow (ParaboxElement<?> element) {
+    public double getGrow (ParaboxElement<?> element) {
 
       return element.getConstraint().getGrowX();
     }
 
     @Override
-    public double getBiasedShrink (ParaboxElement<?> element) {
+    public double getShrink (ParaboxElement<?> element) {
 
       return element.getConstraint().getShrinkX();
     }
   },
   VERTICAL {
     @Override
-    public Pair getBiasedPair (double biasedMeasurement, double unbiasedMeasurement) {
+    public Pair constructPair (double biasedMeasurement, double unbiasedMeasurement) {
 
       return new Pair(unbiasedMeasurement, biasedMeasurement);
     }
 
     @Override
-    public double getBiasedMeasurement (double width, double height) {
+    public double getValue (double width, double height) {
 
       return height;
     }
 
     @Override
-    public double getUnbiasedMeasurement (double width, double height) {
-
-      return width;
-    }
-
-    @Override
-    public double getMinimumBiasedMeasurement (ParaboxElement<?> element) {
+    public double getMinimumMeasurement (ParaboxElement<?> element) {
 
       return element.getMinimumHeight();
     }
 
     @Override
-    public double getMinimumUnbiasedMeasurement (ParaboxElement<?> element) {
-
-      return element.getMinimumWidth();
-    }
-
-    @Override
-    public double getPreferredBiasedMeasurement (ParaboxElement<?> element) {
+    public double getPreferredMeasurement (ParaboxElement<?> element) {
 
       return element.getPreferredHeight();
     }
 
     @Override
-    public double getPreferredUnbiasedMeasurement (ParaboxElement<?> element) {
-
-      return element.getPreferredWidth();
-    }
-
-    @Override
-    public double getMaximumBiasedMeasurement (ParaboxElement<?> element) {
+    public double getMaximumMeasurement (ParaboxElement<?> element) {
 
       return element.getMaximumHeight();
     }
 
     @Override
-    public double getMaximumUnbiasedMeasurement (ParaboxElement<?> element) {
-
-      return element.getMaximumWidth();
-    }
-
-    @Override
-    public double getBiasedGrow (ParaboxElement<?> element) {
+    public double getGrow (ParaboxElement<?> element) {
 
       return element.getConstraint().getGrowY();
     }
 
     @Override
-    public double getBiasedShrink (ParaboxElement<?> element) {
+    public double getShrink (ParaboxElement<?> element) {
 
       return element.getConstraint().getShrinkY();
     }
   };
 
-  public abstract Pair getBiasedPair (double biasedMeasurement, double unbiasedMeasurement);
+  public abstract Pair constructPair (double biasedMeasurement, double unbiasedMeasurement);
 
-  public abstract double getBiasedMeasurement (double width, double height);
+  public abstract double getValue (double width, double height);
 
-  public abstract double getUnbiasedMeasurement (double width, double height);
+  public abstract double getMinimumMeasurement (ParaboxElement<?> element);
 
-  public abstract double getMinimumBiasedMeasurement (ParaboxElement<?> element);
+  public abstract double getPreferredMeasurement (ParaboxElement<?> element);
 
-  public abstract double getMinimumUnbiasedMeasurement (ParaboxElement<?> element);
+  public abstract double getMaximumMeasurement (ParaboxElement<?> element);
 
-  public abstract double getPreferredBiasedMeasurement (ParaboxElement<?> element);
+  public abstract double getGrow (ParaboxElement<?> element);
 
-  public abstract double getPreferredUnbiasedMeasurement (ParaboxElement<?> element);
-
-  public abstract double getMaximumBiasedMeasurement (ParaboxElement<?> element);
-
-  public abstract double getMaximumUnbiasedMeasurement (ParaboxElement<?> element);
-
-  public abstract double getBiasedGrow (ParaboxElement<?> element);
-
-  public abstract double getBiasedShrink (ParaboxElement<?> element);
+  public abstract double getShrink (ParaboxElement<?> element);
 }

@@ -89,7 +89,7 @@ public class SwingParaboxElement extends ParaboxElement<Component> {
   @Override
   public double getBaseline (Bias bias, double measurement) {
 
-    Pair biasedPair = bias.getBiasedPair(0, measurement);
+    Pair biasedPair = bias.constructPair(0, measurement);
     int swingBaseline;
 
     return ((swingBaseline = getComponent().getBaseline((int)biasedPair.getFirst(), (int)biasedPair.getSecond())) < 0) ? measurement : swingBaseline;

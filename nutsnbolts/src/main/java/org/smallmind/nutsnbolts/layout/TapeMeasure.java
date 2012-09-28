@@ -30,45 +30,25 @@ public enum TapeMeasure {
 
   MINIMUM {
     @Override
-    public double getBiasedMeasure (Bias bias, ParaboxElement<?> element) {
+    public double getMeasure (Bias bias, ParaboxElement<?> element) {
 
-      return bias.getMinimumBiasedMeasurement(element);
-    }
-
-    @Override
-    public double getUnbiasedMeasure (Bias bias, ParaboxElement<?> element) {
-
-      return bias.getMinimumUnbiasedMeasurement(element);
+      return bias.getMinimumMeasurement(element);
     }
   },
   PREFERRED {
     @Override
-    public double getBiasedMeasure (Bias bias, ParaboxElement<?> element) {
+    public double getMeasure (Bias bias, ParaboxElement<?> element) {
 
-      return bias.getPreferredBiasedMeasurement(element);
-    }
-
-    @Override
-    public double getUnbiasedMeasure (Bias bias, ParaboxElement<?> element) {
-
-      return bias.getPreferredUnbiasedMeasurement(element);
+      return bias.getPreferredMeasurement(element);
     }
   },
   MAXIMUM {
     @Override
-    public double getBiasedMeasure (Bias bias, ParaboxElement<?> element) {
+    public double getMeasure (Bias bias, ParaboxElement<?> element) {
 
-      return bias.getMaximumBiasedMeasurement(element);
-    }
-
-    @Override
-    public double getUnbiasedMeasure (Bias bias, ParaboxElement<?> element) {
-
-      return bias.getMaximumUnbiasedMeasurement(element);
+      return bias.getMaximumMeasurement(element);
     }
   };
 
-  public abstract double getBiasedMeasure (Bias bias, ParaboxElement<?> element);
-
-  public abstract double getUnbiasedMeasure (Bias bias, ParaboxElement<?> element);
+  public abstract double getMeasure (Bias bias, ParaboxElement<?> element);
 }

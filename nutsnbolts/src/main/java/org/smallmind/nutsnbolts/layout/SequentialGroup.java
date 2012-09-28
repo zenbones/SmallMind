@@ -98,28 +98,28 @@ public class SequentialGroup extends Group<SequentialGroup> {
     return this;
   }
 
-  public Pair calculateMinimumContainerSize (List<E> elements) {
+  public double calculateMinimumMeasurement (List<E> elements) {
 
-    return getBias().getBiasedPair(calculateBiasedContainerMeasurement(TapeMeasure.MINIMUM, elements), calculateUnbiasedContainerMeasurement(TapeMeasure.MINIMUM, minimumUnbiasedMeasurement, elements));
+    return calculateMeasurement(TapeMeasure.MINIMUM, elements);
   }
 
-  public Pair calculatePreferredContainerSize (List<E> elements) {
+  public double calculatePreferredMeasurement (List<E> elements) {
 
-    return getBias().getBiasedPair(calculateBiasedContainerMeasurement(TapeMeasure.PREFERRED, elements), calculateUnbiasedContainerMeasurement(TapeMeasure.PREFERRED, preferredUnbiasedMeasurement, elements));
+    return calculateMeasurement(TapeMeasure.PREFERRED, elements);
   }
 
-  public Pair calculateMaximumContainerSize (List<E> elements) {
+  public double calculateMaximumMeasurement (List<E> elements) {
 
-    return getBias().getBiasedPair(calculateBiasedContainerMeasurement(TapeMeasure.MAXIMUM, elements), calculateUnbiasedContainerMeasurement(TapeMeasure.MAXIMUM, maximumUnbiasedMeasurement, elements));
+    return calculateMeasurement(TapeMeasure.MAXIMUM, elements);
   }
 
-  private double calculateContainerMeasurement (TapeMeasure tapeMeasure, List<E> elements) {
+  private double calculateMeasurement (TapeMeasure tapeMeasure, List<ParaboxElement<?>> elements) {
 
     boolean first = true;
     double total = 0.0D;
 
-    for (E element : elements) {
-      total += tapeMeasure.getBiasedMeasure(bias, element);
+    for (ParaboxElement<?> element : elements) {
+      total += tapeMeasure.getMeasure(getBias(), element);
       if (!first) {
         total += gap;
       }
@@ -129,26 +129,31 @@ public class SequentialGroup extends Group<SequentialGroup> {
     return total;
   }
 
-  private PartialSolution[] doLayout (double biasedContainerMeasure, List<E> elements) {
+  @Override
+  public void doLayout (double position, double measurement) {
+    //To change body of implemented methods use File | Settings | File Templates.
+  }
+
+  private PartialSolution[] doLayout (double containerMeasure, List<E> elements) {
 
     PartialSolution[] partialSolutions = new PartialSolution[(elements == null) ? 0 : elements.size()];
 
     if (elements != null) {
 
-      double preferredBiasedContainerMeasure;
+      double preferredContainerMeasure;
 
-      if (biasedContainerMeasure <= calculateBiasedContainerMeasurement(TapeMeasure.MINIMUM, elements)) {
+      if (containerMeasure <= calculateMeasurement(TapeMeasure.MINIMUM, elements)) {
 
         double currentMeasure;
         double top = 0;
         int index = 0;
 
         for (E element : elements) {
-          partialSolutions[index++] = new PartialSolution(top, currentMeasure = bias.getMinimumBiasedMeasurement(element));
+          partialSolutions[index++] = new PartialSolution(top, currentMeasure = bias.getMinimumMeasurement(element));
           top += currentMeasure + gap;
         }
       }
-      else if (biasedContainerMeasure <= (preferredBiasedContainerMeasure = calculateBiasedContainerMeasurement(TapeMeasure.PREFERRED, elements))) {
+      else if (containerMeasure <= (preferredContainerMeasure = calculateMeasurement(TapeMeasure.PREFERRED, elements))) {
 
         double[] preferredBiasedMeasurements = new double[elements.size()];
         double[] fat = new double[elements.size()];
@@ -160,16 +165,16 @@ public class SequentialGroup extends Group<SequentialGroup> {
 
         index = 0;
         for (E element : elements) {
-          totalShrink += bias.getBiasedShrink(element);
-          totalFat += (fat[index++] = (preferredBiasedMeasurements[index] = bias.getPreferredBiasedMeasurement(element)) - bias.getMinimumBiasedMeasurement(element));
+          totalShrink += bias.getShrink(element);
+          totalFat += (fat[index++] = (preferredBiasedMeasurements[index] = bias.getPreferredMeasurement(element)) - bias.getMinimumMeasurement(element));
         }
 
         index = 0;
         for (E element : elements) {
 
-          double totalRatio = (totalShrink + totalFat == 0) ? 0 : (bias.getBiasedShrink(element) + fat[index]) / (totalShrink + totalFat);
+          double totalRatio = (totalShrink + totalFat == 0) ? 0 : (bias.getShrink(element) + fat[index]) / (totalShrink + totalFat);
 
-          partialSolutions[index++] = new PartialSolution(top, currentMeasure = preferredBiasedMeasurements[index] - (totalRatio * (preferredBiasedContainerMeasure - biasedContainerMeasure)));
+          partialSolutions[index++] = new PartialSolution(top, currentMeasure = preferredBiasedMeasurements[index] - (totalRatio * (preferredContainerMeasure - containerMeasure)));
           top += currentMeasure + gap;
         }
       }
@@ -177,7 +182,7 @@ public class SequentialGroup extends Group<SequentialGroup> {
 
         LinkedList<ReorderedElement<E>> reorderedElements = new LinkedList<ReorderedElement<E>>();
         double[] maximumBiasedMeasurements = new double[elements.size()];
-        double unused = biasedContainerMeasure - preferredBiasedContainerMeasure;
+        double unused = containerMeasure - preferredContainerMeasure;
         double totalGrow = 0;
         int index = 0;
 
@@ -185,13 +190,13 @@ public class SequentialGroup extends Group<SequentialGroup> {
 
           double grow;
 
-          if ((grow = bias.getBiasedGrow(element)) > 0) {
+          if ((grow = bias.getGrow(element)) > 0) {
             totalGrow += grow;
             reorderedElements.add(new ReorderedElement<E>(element, index));
           }
 
-          partialSolutions[index] = new PartialSolution(0, bias.getPreferredBiasedMeasurement(element));
-          maximumBiasedMeasurements[index++] = bias.getMaximumBiasedMeasurement(element);
+          partialSolutions[index] = new PartialSolution(0, bias.getPreferredMeasurement(element));
+          maximumBiasedMeasurements[index++] = bias.getMaximumMeasurement(element);
         }
 
         if (!reorderedElements.isEmpty()) {
@@ -208,7 +213,7 @@ public class SequentialGroup extends Group<SequentialGroup> {
               double currentUnused;
               double currentGrow;
 
-              if ((increasedMeasurement = partialSolutions[reorderedElement.getOriginalIndex()].getMeasurement() + (currentUnused = (((currentGrow = bias.getBiasedGrow(reorderedElement.getReorderedElement())) / totalGrow) * unused))) < maximumBiasedMeasurements[reorderedElement.getOriginalIndex()]) {
+              if ((increasedMeasurement = partialSolutions[reorderedElement.getOriginalIndex()].getMeasurement() + (currentUnused = (((currentGrow = bias.getGrow(reorderedElement.getReorderedElement())) / totalGrow) * unused))) < maximumBiasedMeasurements[reorderedElement.getOriginalIndex()]) {
                 used += currentUnused;
                 partialSolutions[reorderedElement.getOriginalIndex()].setMeasurement(increasedMeasurement);
               }
@@ -231,7 +236,7 @@ public class SequentialGroup extends Group<SequentialGroup> {
             adjustPartialPositions(0, true, partialSolutions);
             break;
           case LAST:
-            adjustPartialPositions(biasedContainerMeasure, false, partialSolutions);
+            adjustPartialPositions(containerMeasure, false, partialSolutions);
             break;
           case LEADING:
             if (!bias.equals(container.getPlatform().getOrientation().getBias())) {
@@ -243,7 +248,7 @@ public class SequentialGroup extends Group<SequentialGroup> {
                   adjustPartialPositions(0, true, partialSolutions);
                   break;
                 case LAST_TO_FIRST:
-                  adjustPartialPositions(biasedContainerMeasure, false, partialSolutions);
+                  adjustPartialPositions(containerMeasure, false, partialSolutions);
                   break;
                 default:
                   throw new UnknownSwitchCaseException(container.getPlatform().getOrientation().getFlow().name());
@@ -252,12 +257,12 @@ public class SequentialGroup extends Group<SequentialGroup> {
             break;
           case TRAILING:
             if (!bias.equals(container.getPlatform().getOrientation().getBias())) {
-              adjustPartialPositions(biasedContainerMeasure, false, partialSolutions);
+              adjustPartialPositions(containerMeasure, false, partialSolutions);
             }
             else {
               switch (container.getPlatform().getOrientation().getFlow()) {
                 case FIRST_TO_LAST:
-                  adjustPartialPositions(biasedContainerMeasure, false, partialSolutions);
+                  adjustPartialPositions(containerMeasure, false, partialSolutions);
                   break;
                 case LAST_TO_FIRST:
                   adjustPartialPositions(0, true, partialSolutions);

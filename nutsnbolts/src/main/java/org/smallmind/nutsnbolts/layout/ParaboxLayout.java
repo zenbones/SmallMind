@@ -31,10 +31,36 @@ import java.util.List;
 public class ParaboxLayout {
 
   private ParaboxContainer container;
+  private Group horizontalGroup;
+  private Group verticalGroup;
 
   public ParaboxLayout (ParaboxContainer container) {
 
-    this(container, Bias.HORIZONTAL);
+    this.container = container;
+  }
+
+  public Group getHorizontalGroup () {
+
+    return horizontalGroup;
+  }
+
+  public ParaboxLayout setHorizontalGroup (Group horizontalGroup) {
+
+    this.horizontalGroup = horizontalGroup;
+
+    return this;
+  }
+
+  public Group getVerticalGroup () {
+
+    return verticalGroup;
+  }
+
+  public ParaboxLayout setVerticalGroup (Group verticalGroup) {
+
+    this.verticalGroup = verticalGroup;
+
+    return this;
   }
 
   public Pair calculateMinimumContainerSize (List<E> elements) {
@@ -52,15 +78,16 @@ public class ParaboxLayout {
     return getBias().getBiasedPair(calculateBiasedContainerMeasurement(TapeMeasure.MAXIMUM, elements), calculateUnbiasedContainerMeasurement(TapeMeasure.MAXIMUM, maximumUnbiasedMeasurement, elements));
   }
 
-  public void doLayout (double width, double height, List<E> elements) {
+  public void doLayout (double width, double height, List<ParaboxElement<?>> elements) {
 
-    PartialSolution[] biasedPartialSolutions = doBiasedLayout(bias.getBiasedMeasurement(width, height), elements);
-    PartialSolution[] unbiasedPartialSolutions = doUnbiasedLayout(bias.getUnbiasedMeasurement(width, height), elements);
-    int index = 0;
-
-    for (E element : elements) {
-      element.applyLayout(bias.getBiasedPair(biasedPartialSolutions[index].getPosition(), unbiasedPartialSolutions[index].getPosition()), bias.getBiasedPair(biasedPartialSolutions[index].getMeasurement(), unbiasedPartialSolutions[index++].getMeasurement()));
+    if (horizontalGroup == null) {
+      throw new LayoutException("No horizontal group has been set on this layout");
     }
-  }
+    if (verticalGroup == null) {
+      throw new LayoutException("No vertical group has been set on this layout");
+    }
 
+    horizontalGroup.doLayout(0, width);
+    verticalGroup.doLayout(0, height);
+  }
 }

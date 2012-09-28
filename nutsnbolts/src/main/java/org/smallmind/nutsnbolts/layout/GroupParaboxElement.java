@@ -41,37 +41,37 @@ public class GroupParaboxElement<G extends Group> extends ParaboxElement<G> {
   @Override
   public double getComponentMinimumWidth () {
 
-    return (getComponent().getBias().equals(Bias.HORIZONTAL)) ? : 0;
+    return (getComponent().getBias().equals(Bias.HORIZONTAL)) ?:0;
   }
 
   @Override
   public double getComponentMinimumHeight () {
 
-    return (getComponent().getBias().equals(Bias.VERTICAL)) ? : 0;
+    return (getComponent().getBias().equals(Bias.VERTICAL)) ?:0;
   }
 
   @Override
   public double getComponentPreferredWidth () {
 
-    return (getComponent().getBias().equals(Bias.HORIZONTAL)) ? : 0;
+    return (getComponent().getBias().equals(Bias.HORIZONTAL)) ?:0;
   }
 
   @Override
   public double getComponentPreferredHeight () {
 
-    return (getComponent().getBias().equals(Bias.VERTICAL)) ? : 0;
+    return (getComponent().getBias().equals(Bias.VERTICAL)) ?:0;
   }
 
   @Override
   public double getComponentMaximumWidth () {
 
-    return (getComponent().getBias().equals(Bias.HORIZONTAL)) ? : 0;
+    return (getComponent().getBias().equals(Bias.HORIZONTAL)) ?:0;
   }
 
   @Override
   public double getComponentMaximumHeight () {
 
-    return (getComponent().getBias().equals(Bias.VERTICAL)) ? : 0;
+    return (getComponent().getBias().equals(Bias.VERTICAL)) ?:0;
   }
 
   @Override
@@ -83,6 +83,6 @@ public class GroupParaboxElement<G extends Group> extends ParaboxElement<G> {
   @Override
   public void applyLayout (Pair position, Pair size) {
 
-    getComponent().doLayout(position.getFirst(), position.getSecond(), size.getFirst(), size.getSecond());
+    getComponent().doLayout(getComponent().getBias().getValue(position.getFirst(), position.getSecond()), getComponent().getBias().getValue(size.getFirst(), size.getSecond()));
   }
 }

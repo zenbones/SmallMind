@@ -4,7 +4,7 @@ public abstract class Group<G extends Group> {
 
   private Bias bias;
 
-  public Group (Bias bias) {
+  protected Group (Bias bias) {
 
     this.bias = bias;
   }
@@ -14,5 +14,5 @@ public abstract class Group<G extends Group> {
     return bias;
   }
 
-  public abstract void doLayout (double x, double y, double width, double height);
+  public abstract void doLayout (double position, double measurement);
 }

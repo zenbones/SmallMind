@@ -98,28 +98,28 @@ public class ParallelGroup extends Group<ParallelGroup> {
 
   public Pair calculateMinimumContainerSize (List<E> elements) {
 
-    return getBias().getBiasedPair(calculateBiasedContainerMeasurement(TapeMeasure.MINIMUM, elements), calculateUnbiasedContainerMeasurement(TapeMeasure.MINIMUM, minimumUnbiasedMeasurement, elements));
+    return getBias().constructPair(calculateBiasedContainerMeasurement(TapeMeasure.MINIMUM, elements), calculateUnbiasedContainerMeasurement(TapeMeasure.MINIMUM, minimumUnbiasedMeasurement, elements));
   }
 
   public Pair calculatePreferredContainerSize (List<E> elements) {
 
-    return getBias().getBiasedPair(calculateBiasedContainerMeasurement(TapeMeasure.PREFERRED, elements), calculateUnbiasedContainerMeasurement(TapeMeasure.PREFERRED, preferredUnbiasedMeasurement, elements));
+    return getBias().constructPair(calculateBiasedContainerMeasurement(TapeMeasure.PREFERRED, elements), calculateUnbiasedContainerMeasurement(TapeMeasure.PREFERRED, preferredUnbiasedMeasurement, elements));
   }
 
   public Pair calculateMaximumContainerSize (List<E> elements) {
 
-    return getBias().getBiasedPair(calculateBiasedContainerMeasurement(TapeMeasure.MAXIMUM, elements), calculateUnbiasedContainerMeasurement(TapeMeasure.MAXIMUM, maximumUnbiasedMeasurement, elements));
+    return getBias().constructPair(calculateBiasedContainerMeasurement(TapeMeasure.MAXIMUM, elements), calculateUnbiasedContainerMeasurement(TapeMeasure.MAXIMUM, maximumUnbiasedMeasurement, elements));
   }
 
-  private double calculateContainerMeasurement (TapeMeasure tapeMeasure, Double unbiasedMeasurementOverride, List<E> elements) {
+  private double calculateMeasurement (TapeMeasure tapeMeasure, Double unbiasedMeasurementOverride, List<ParaboxElement<?>> elements) {
 
     double maxAscent = 0;
     double maxDescent = 0;
 
-    for (E element : elements) {
+    for (ParaboxElement<?> element : elements) {
 
-      double currentMeasurement = (unbiasedMeasurementOverride != null) ? unbiasedMeasurementOverride : tapeMeasure.getUnbiasedMeasure(bias, element);
-      double currentAscent = (!alignment.equals(Alignment.BASELINE)) ? currentMeasurement : element.getBaseline(bias, currentMeasurement);
+      double currentMeasurement = (unbiasedMeasurementOverride != null) ? unbiasedMeasurementOverride : tapeMeasure.getMeasure(getBias(), element);
+      double currentAscent = (!alignment.equals(Alignment.BASELINE)) ? currentMeasurement : element.getBaseline(getBias(), currentMeasurement);
       double currentDescent;
 
       if (currentAscent > maxAscent) {
@@ -131,6 +131,11 @@ public class ParallelGroup extends Group<ParallelGroup> {
     }
 
     return maxAscent + maxDescent;
+  }
+
+  @Override
+  public void doLayout (double position, double measurement) {
+    //To change body of implemented methods use File | Settings | File Templates.
   }
 
   private PartialSolution[] doLayout (double unbiasedContainerMeasurement, List<E> elements) {
