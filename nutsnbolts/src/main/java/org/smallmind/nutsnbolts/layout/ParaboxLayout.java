@@ -265,18 +265,20 @@ public class ParaboxLayout<E extends ParaboxElement<?>> {
 
       if (biasedContainerMeasure <= calculateMinimumBiasedContainerMeasurement(elements)) {
 
+        double currentMeasure;
         double top = 0;
         int index = 0;
 
         for (E element : elements) {
-          partialSolutions[index++] = new PartialSolution(top, bias.getMinimumBiasedMeasurement(element));
-          top += gap;
+          partialSolutions[index++] = new PartialSolution(top, currentMeasure = bias.getMinimumBiasedMeasurement(element));
+          top += currentMeasure + gap;
         }
       }
       else if (biasedContainerMeasure <= (preferredBiasedContainerMeasure = calculatePreferredBiasedContainerMeasurement(elements))) {
 
         double[] preferredBiasedMeasurements = new double[elements.size()];
         double[] fat = new double[elements.size()];
+        double currentMeasure;
         double totalShrink = 0;
         double totalFat = 0;
         double top = 0;
@@ -293,8 +295,8 @@ public class ParaboxLayout<E extends ParaboxElement<?>> {
 
           double totalRatio = (totalShrink + totalFat == 0) ? 0 : (bias.getBiasedShrink(element) + fat[index]) / (totalShrink + totalFat);
 
-          partialSolutions[index++] = new PartialSolution(top, preferredBiasedMeasurements[index] - (totalRatio * (preferredBiasedContainerMeasure - biasedContainerMeasure)));
-          top += gap;
+          partialSolutions[index++] = new PartialSolution(top, currentMeasure = preferredBiasedMeasurements[index] - (totalRatio * (preferredBiasedContainerMeasure - biasedContainerMeasure)));
+          top += currentMeasure + gap;
         }
       }
       else {
@@ -352,23 +354,50 @@ public class ParaboxLayout<E extends ParaboxElement<?>> {
 
         switch (biasedAlignment) {
           case FIRST:
-
+            adjustPartialPositions(0, true, partialSolutions);
             break;
           case LAST:
-
+            adjustPartialPositions(biasedContainerMeasure, false, partialSolutions);
             break;
           case LEADING:
-
+            if (!bias.equals(container.getPlatform().getOrientation().getBias())) {
+              adjustPartialPositions(0, true, partialSolutions);
+            }
+            else {
+              switch (container.getPlatform().getOrientation().getFlow()) {
+                case FIRST_TO_LAST:
+                  adjustPartialPositions(0, true, partialSolutions);
+                  break;
+                case LAST_TO_FIRST:
+                  adjustPartialPositions(biasedContainerMeasure, false, partialSolutions);
+                  break;
+                default:
+                  throw new UnknownSwitchCaseException(container.getPlatform().getOrientation().getFlow().name());
+              }
+            }
             break;
           case TRAILING:
-
+            if (!bias.equals(container.getPlatform().getOrientation().getBias())) {
+              adjustPartialPositions(biasedContainerMeasure, false, partialSolutions);
+            }
+            else {
+              switch (container.getPlatform().getOrientation().getFlow()) {
+                case FIRST_TO_LAST:
+                  adjustPartialPositions(biasedContainerMeasure, false, partialSolutions);
+                  break;
+                case LAST_TO_FIRST:
+                  adjustPartialPositions(0, true, partialSolutions);
+                  break;
+                default:
+                  throw new UnknownSwitchCaseException(container.getPlatform().getOrientation().getFlow().name());
+              }
+            }
             break;
           case CENTER:
-
+            adjustPartialPositions(unused / 2, true, partialSolutions);
             break;
           case BASELINE:
-
-            break;
+            throw new UnsupportedOperationException("Attempt to use BASELINE alignment in the biased orientation");
           default:
             throw new UnknownSwitchCaseException(biasedAlignment.name());
         }
@@ -376,6 +405,20 @@ public class ParaboxLayout<E extends ParaboxElement<?>> {
     }
 
     return partialSolutions;
+  }
+
+  private void adjustPartialPositions (double top, Boolean forward, PartialSolution[] partialSolutions) {
+
+    for (PartialSolution partialSolution : partialSolutions) {
+      if (forward) {
+        partialSolution.setPosition(top);
+        top += partialSolution.getMeasurement() + gap;
+      }
+      else {
+        partialSolution.setPosition(top -= partialSolution.getMeasurement());
+        top -= gap;
+      }
+    }
   }
 
   private PartialSolution[] doUnbiasedLayout (double unbiasedContainerMeasurement, List<E> elements) {
