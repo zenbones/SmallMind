@@ -26,64 +26,8 @@
  */
 package org.smallmind.swing.layout;
 
-import java.awt.Component;
 import javax.swing.JPanel;
-import org.smallmind.nutsnbolts.layout.Alignment;
-import org.smallmind.nutsnbolts.layout.Bias;
-import org.smallmind.nutsnbolts.layout.Gap;
-import org.smallmind.nutsnbolts.layout.ParaboxConstraint;
-import org.smallmind.nutsnbolts.layout.Spec;
 
 public class ParaboxPanel extends JPanel {
 
-  public ParaboxPanel () {
-
-    this(Bias.HORIZONTAL);
-  }
-
-  public ParaboxPanel (Bias bias) {
-
-    this(bias, Gap.RELATED);
-  }
-
-  public ParaboxPanel (Bias bias, Gap gap) {
-
-    this(bias, gap, Alignment.LEADING, Alignment.CENTER);
-  }
-
-  public ParaboxPanel (Bias bias, double gap) {
-
-    this(bias, gap, Alignment.LEADING, Alignment.CENTER);
-  }
-
-  public ParaboxPanel (Bias bias, Gap gap, Alignment biasedAlignment, Alignment unbiasedAlignment) {
-
-    super(new ParaboxLayoutManager(bias, gap, biasedAlignment, unbiasedAlignment));
-  }
-
-  public ParaboxPanel (Bias bias, double gap, Alignment biasedAlignment, Alignment unbiasedAlignment) {
-
-    super(new ParaboxLayoutManager(bias, gap, biasedAlignment, unbiasedAlignment));
-  }
-
-  public ParaboxPanel addComponent (Component component) {
-
-    add(component);
-
-    return this;
-  }
-
-  public ParaboxPanel addComponent (Component component, Spec spec) {
-
-    add(component, spec);
-
-    return this;
-  }
-
-  public ParaboxPanel addComponent (Component component, ParaboxConstraint constraint) {
-
-    add(component, constraint);
-
-    return this;
-  }
 }
