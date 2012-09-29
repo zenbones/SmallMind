@@ -142,7 +142,7 @@ public class SequentialGroup<C> extends Group<C, SequentialGroup> {
 
         for (ParaboxElement<?> element : getElements()) {
 
-          element.applyLayout(getBias(), containerPosition + top, currentMeasure = getBias().getMinimumMeasurement(element));
+          element.applyLayout(getBias(), containerPosition + top, currentMeasure = element.getMinimumMeasurement(getBias()));
           top += currentMeasure + gap;
         }
       }
@@ -158,14 +158,14 @@ public class SequentialGroup<C> extends Group<C, SequentialGroup> {
 
         index = 0;
         for (ParaboxElement<?> element : getElements()) {
-          totalShrink += getBias().getShrink(element);
-          totalFat += (fat[index++] = (preferredBiasedMeasurements[index] = getBias().getPreferredMeasurement(element)) - getBias().getMinimumMeasurement(element));
+          totalShrink += element.getConstraint().getShrink();
+          totalFat += (fat[index++] = (preferredBiasedMeasurements[index] = element.getPreferredMeasurement(getBias())) - element.getMinimumMeasurement(getBias()));
         }
 
         index = 0;
         for (ParaboxElement<?> element : getElements()) {
 
-          double totalRatio = (totalShrink + totalFat == 0) ? 0 : (getBias().getShrink(element) + fat[index]) / (totalShrink + totalFat);
+          double totalRatio = (totalShrink + totalFat == 0) ? 0 : (element.getConstraint().getShrink() + fat[index]) / (totalShrink + totalFat);
 
           element.applyLayout(getBias(), containerPosition + top, currentMeasure = preferredBiasedMeasurements[index] - (totalRatio * (preferredContainerMeasure - containerMeasurement))));
           top += currentMeasure + gap;
@@ -185,13 +185,13 @@ public class SequentialGroup<C> extends Group<C, SequentialGroup> {
 
           double grow;
 
-          if ((grow = getBias().getGrow(element)) > 0) {
+          if ((grow = element.getConstraint().getGrow()) > 0) {
             totalGrow += grow;
             reorderedElements.add(new ReorderedElement(element, index));
           }
 
-          partialSolutions[index] = new PartialSolution(containerPosition, getBias().getPreferredMeasurement(element));
-          maximumBiasedMeasurements[index++] = getBias().getMaximumMeasurement(element);
+          partialSolutions[index] = new PartialSolution(containerPosition, element.getPreferredMeasurement(getBias()));
+          maximumBiasedMeasurements[index++] = element.getMaximumMeasurement(getBias());
         }
 
         if (!reorderedElements.isEmpty()) {
@@ -208,7 +208,7 @@ public class SequentialGroup<C> extends Group<C, SequentialGroup> {
               double currentUnused;
               double currentGrow;
 
-              if ((increasedMeasurement = partialSolutions[reorderedElement.getOriginalIndex()].getMeasurement() + (currentUnused = (((currentGrow = getBias().getGrow(reorderedElement.getReorderedElement())) / totalGrow) * unused))) < maximumBiasedMeasurements[reorderedElement.getOriginalIndex()]) {
+              if ((increasedMeasurement = partialSolutions[reorderedElement.getOriginalIndex()].getMeasurement() + (currentUnused = ((currentGrow = reorderedElement.getReorderedElement().getConstraint().getGrow()) / totalGrow * unused))) < maximumBiasedMeasurements[reorderedElement.getOriginalIndex()]) {
                 used += currentUnused;
                 partialSolutions[reorderedElement.getOriginalIndex()].setMeasurement(increasedMeasurement);
               }

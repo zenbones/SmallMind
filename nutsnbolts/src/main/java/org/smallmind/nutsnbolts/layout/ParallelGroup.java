@@ -142,10 +142,10 @@ public class ParallelGroup<C> extends Group<C, ParallelGroup> {
       int index = 0;
 
       for (ParaboxElement<?> element : getElements()) {
-        if (containerMeasurement <= (elementMeasurement = (minimumOverrideMeasurement != null) ? minimumOverrideMeasurement : getBias().getMinimumMeasurement(element))) {
+        if (containerMeasurement <= (elementMeasurement = (minimumOverrideMeasurement != null) ? minimumOverrideMeasurement : element.getMinimumMeasurement(getBias()))) {
           element.applyLayout(getBias(), containerPosition, elementMeasurement);
         }
-        else if (containerMeasurement <= (elementMeasurement = (maximumOverrideMeasurement != null) ? maximumOverrideMeasurement : getBias().getMaximumMeasurement(element))) {
+        else if (containerMeasurement <= (elementMeasurement = (maximumOverrideMeasurement != null) ? maximumOverrideMeasurement : element.getMaximumMeasurement(getBias()))) {
           element.applyLayout(getBias(), containerPosition, containerMeasurement);
         }
         else {

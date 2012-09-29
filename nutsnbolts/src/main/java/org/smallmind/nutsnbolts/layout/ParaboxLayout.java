@@ -83,7 +83,7 @@ public class ParaboxLayout<C> {
     return new Pair(horizontalGroup.calculateMaximumMeasurement(), verticalGroup.calculateMaximumMeasurement());
   }
 
-  public void doLayout (double width, double height, List<ParaboxElement<?>> elements) {
+  public void doLayout (double width, double height) {
 
     if (horizontalGroup == null) {
       throw new LayoutException("No horizontal group has been set on this layout");

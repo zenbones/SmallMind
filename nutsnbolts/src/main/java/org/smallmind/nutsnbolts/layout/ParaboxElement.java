@@ -1,22 +1,22 @@
 /*
  * Copyright (c) 2007, 2008, 2009, 2010, 2011, 2012 David Berkman
- * 
+ *
  * This file is part of the SmallMind Code Project.
- * 
+ *
  * The SmallMind Code Project is free software, you can redistribute
  * it and/or modify it under the terms of GNU Affero General Public
  * License as published by the Free Software Foundation, either version 3
  * of the License, or (at your option) any later version.
- * 
+ *
  * The SmallMind Code Project is distributed in the hope that it will
  * be useful, but WITHOUT ANY WARRANTY; without even the implied warranty
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * General Public License for more details.
- * 
+ *
  * You should have received a copy of the the GNU Affero General Public
  * License, along with The SmallMind Code Project. If not, see
  * <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under the GNU Affero GPL version 3 section 7
  * ------------------------------------------------------------------
  * If you modify this Program, or any covered work, by linking or
@@ -42,17 +42,11 @@ public abstract class ParaboxElement<C> {
     this.constraint = constraint;
   }
 
-  public abstract double getComponentMinimumWidth ();
+  public abstract double getComponentMinimumMeasurement (Bias bias);
 
-  public abstract double getComponentMinimumHeight ();
+  public abstract double getComponentPreferredMeasurement (Bias bias);
 
-  public abstract double getComponentPreferredWidth ();
-
-  public abstract double getComponentPreferredHeight ();
-
-  public abstract double getComponentMaximumWidth ();
-
-  public abstract double getComponentMaximumHeight ();
+  public abstract double getComponentMaximumMeasurement (Bias bias);
 
   public abstract double getBaseline (Bias bias, double measurement);
 
@@ -68,33 +62,19 @@ public abstract class ParaboxElement<C> {
     return constraint;
   }
 
-  public double getMinimumWidth () {
+  public double getMinimumMeasurement (Bias bias) {
 
-    return (constraint.getShrinkX() > 0) ? getComponentMinimumWidth() : getComponentPreferredWidth();
+    return (constraint.getShrink() > 0) ? getComponentMinimumMeasurement(bias) : getComponentPreferredMeasurement(bias);
   }
 
-  public double getMinimumHeight () {
+  public double getPreferredMeasurement (Bias bias) {
 
-    return (constraint.getShrinkY() > 0) ? getComponentMinimumHeight() : getComponentPreferredHeight();
+    return getComponentPreferredMeasurement(bias);
   }
 
-  public double getPreferredWidth () {
+  public double getMaximumMeasurement (Bias bias) {
 
-    return getComponentPreferredWidth();
+    return (constraint.getGrow() > 0) ? getComponentMaximumMeasurement(bias) : getComponentPreferredMeasurement(bias);
   }
 
-  public double getPreferredHeight () {
-
-    return getComponentPreferredHeight();
-  }
-
-  public double getMaximumWidth () {
-
-    return (constraint.getGrowX() > 0) ? getComponentMaximumWidth() : getComponentPreferredWidth();
-  }
-
-  public double getMaximumHeight () {
-
-    return (constraint.getGrowY() > 0) ? getComponentMaximumHeight() : getComponentPreferredHeight();
-  }
 }
