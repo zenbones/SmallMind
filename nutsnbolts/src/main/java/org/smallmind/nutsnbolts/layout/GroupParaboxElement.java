@@ -26,7 +26,7 @@
  */
 package org.smallmind.nutsnbolts.layout;
 
-public class GroupParaboxElement<G extends Group> extends ParaboxElement<G> {
+public class GroupParaboxElement<G extends Group> extends ParaboxElement<G> implements LinearPart {
 
   public GroupParaboxElement (G group, Spec spec) {
 
@@ -68,7 +68,8 @@ public class GroupParaboxElement<G extends Group> extends ParaboxElement<G> {
     return measurement;
   }
 
-  public void applyLayout (Bias bias, double position, double measurement, LayoutTailor tailor) {
+  @Override
+  public void applyLayout (double position, double measurement, LayoutTailor tailor) {
 
     getPart().doLayout(position, measurement, tailor);
   }

@@ -86,10 +86,8 @@ public class SwingParaboxElement extends ParaboxElement<Component> {
     return getPart().getMaximumSize().getHeight();
   }
 
-  @Override
   public double getBaseline (Bias bias, double measurement) {
 
-    Pair biasedPair = bias.constructPair(0, measurement);
     int swingBaseline;
 
     return ((swingBaseline = getPart().getBaseline((int)biasedPair.getFirst(), (int)biasedPair.getSecond())) < 0) ? measurement : swingBaseline;

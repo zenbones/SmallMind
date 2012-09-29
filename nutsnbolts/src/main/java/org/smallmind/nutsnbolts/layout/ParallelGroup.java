@@ -35,12 +35,12 @@ public class ParallelGroup<C> extends Group<C, ParallelGroup> {
   private Double preferredOverrideMeasurement;
   private Double maximumOverrideMeasurement;
 
-  public ParallelGroup (ParaboxLayout<C> layout, Bias bias) {
+  protected ParallelGroup (ParaboxLayout<C> layout, Bias bias) {
 
     this(layout, bias, Alignment.CENTER);
   }
 
-  public ParallelGroup (ParaboxLayout<C> layout, Bias bias, Alignment alignment) {
+  protected ParallelGroup (ParaboxLayout<C> layout, Bias bias, Alignment alignment) {
 
     super(layout, bias);
 

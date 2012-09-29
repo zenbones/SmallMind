@@ -28,34 +28,5 @@ package org.smallmind.nutsnbolts.layout;
 
 public enum Bias {
 
-  HORIZONTAL {
-    @Override
-    public Pair constructPair (double biasedMeasurement, double unbiasedMeasurement) {
-
-      return new Pair(biasedMeasurement, unbiasedMeasurement);
-    }
-
-    @Override
-    public double getValue (double width, double height) {
-
-      return width;
-    }
-  },
-  VERTICAL {
-    @Override
-    public Pair constructPair (double biasedMeasurement, double unbiasedMeasurement) {
-
-      return new Pair(unbiasedMeasurement, biasedMeasurement);
-    }
-
-    @Override
-    public double getValue (double width, double height) {
-
-      return height;
-    }
-  };
-
-  public abstract Pair constructPair (double biasedMeasurement, double unbiasedMeasurement);
-
-  public abstract double getValue (double width, double height);
+  HORIZONTAL, VERTICAL
 }

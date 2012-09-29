@@ -65,6 +65,10 @@ public abstract class Group<C, G extends Group> {
 
   public synchronized void add (Group<C, ?> group, ParaboxConstraint constraint) {
 
+    if (!group.getBias().equals(bias)) {
+      throw new LayoutException("A group with bias(%s) can not be held by a parent with bias(%s)", group.getBias(), bias);
+    }
+
     elements.add(new GroupParaboxElement<Group>(group, constraint));
   }
 

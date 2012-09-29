@@ -26,6 +26,8 @@
  */
 package org.smallmind.nutsnbolts.layout;
 
+import java.util.List;
+
 public class ParaboxLayout<C> {
 
   private ParaboxContainer<C> container;
@@ -81,7 +83,9 @@ public class ParaboxLayout<C> {
     return new Pair(horizontalGroup.calculateMaximumMeasurement(), verticalGroup.calculateMaximumMeasurement());
   }
 
-  public void doLayout (double width, double height) {
+  public void doLayout (double width, double height, List<C> componentList) {
+
+    LayoutTailor tailor;
 
     if (horizontalGroup == null) {
       throw new LayoutException("No horizontal group has been set on this layout");
@@ -90,7 +94,9 @@ public class ParaboxLayout<C> {
       throw new LayoutException("No vertical group has been set on this layout");
     }
 
-    horizontalGroup.doLayout(0, width);
-    verticalGroup.doLayout(0, height);
+    horizontalGroup.doLayout(0, width, tailor = new LayoutTailor(componentList));
+    verticalGroup.doLayout(0, height, tailor);
+
+    tailor.cleanup();
   }
 }
