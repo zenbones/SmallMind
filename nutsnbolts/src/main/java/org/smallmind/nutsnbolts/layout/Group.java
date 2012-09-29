@@ -73,7 +73,7 @@ public abstract class Group<C, G extends Group> {
     Iterator<ParaboxElement<?>> elementIter = elements.iterator();
 
     while (elementIter.hasNext()) {
-      if (elementIter.next().getComponent().equals(component)) {
+      if (elementIter.next().getPart().equals(component)) {
         elementIter.remove();
         break;
       }

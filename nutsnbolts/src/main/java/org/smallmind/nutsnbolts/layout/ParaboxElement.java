@@ -26,21 +26,23 @@
  */
 package org.smallmind.nutsnbolts.layout;
 
-public abstract class ParaboxElement<C> {
+public abstract class ParaboxElement<P> {
 
-  private C component;
+  private P part;
   private ParaboxConstraint constraint;
 
-  public ParaboxElement (C component, Spec spec) {
+  public ParaboxElement (P part, Spec spec) {
 
-    this(component, spec.staticConstraint());
+    this(part, spec.staticConstraint());
   }
 
-  public ParaboxElement (C component, ParaboxConstraint constraint) {
+  public ParaboxElement (P part, ParaboxConstraint constraint) {
 
-    this.component = component;
+    this.part = part;
     this.constraint = constraint;
   }
+
+  public abstract Dimensionality getDimensionality ();
 
   public abstract double getComponentMinimumMeasurement (Bias bias);
 
@@ -50,11 +52,9 @@ public abstract class ParaboxElement<C> {
 
   public abstract double getBaseline (Bias bias, double measurement);
 
-  public abstract void applyLayout (Bias bias, double position, double measurement, LayoutTailor tailor);
+  public P getPart () {
 
-  public C getComponent () {
-
-    return component;
+    return part;
   }
 
   public ParaboxConstraint getConstraint () {
