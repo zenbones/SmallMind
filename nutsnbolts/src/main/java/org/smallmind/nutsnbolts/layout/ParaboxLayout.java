@@ -51,6 +51,10 @@ public class ParaboxLayout<C> {
 
   public ParaboxLayout setHorizontalGroup (Group horizontalGroup) {
 
+    if (!verticalGroup.getBias().equals(Bias.HORIZONTAL)) {
+      throw new LayoutException("The horizontal group must be set with a group whose bias is actually horizontal");
+    }
+
     this.horizontalGroup = horizontalGroup;
 
     return this;
@@ -62,6 +66,10 @@ public class ParaboxLayout<C> {
   }
 
   public ParaboxLayout setVerticalGroup (Group verticalGroup) {
+
+    if (!verticalGroup.getBias().equals(Bias.VERTICAL)) {
+      throw new LayoutException("The vertical group must be set with a group whose bias is actually vertical");
+    }
 
     this.verticalGroup = verticalGroup;
 
