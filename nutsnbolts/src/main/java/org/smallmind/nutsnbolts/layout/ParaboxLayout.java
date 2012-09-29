@@ -26,8 +26,6 @@
  */
 package org.smallmind.nutsnbolts.layout;
 
-import java.util.List;
-
 public class ParaboxLayout<C> {
 
   private ParaboxContainer<C> container;
