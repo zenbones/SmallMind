@@ -63,8 +63,8 @@ public class GroupParaboxElement<G extends Group> extends ParaboxElement<G> {
   }
 
   @Override
-  public void applyLayout (Pair position, Pair size) {
+  public void applyLayout (Bias bias, double position, double measurement, LayoutTailor tailor) {
 
-    getComponent().doLayout(getComponent().getBias().getValue(position.getFirst(), position.getSecond()), getComponent().getBias().getValue(size.getFirst(), size.getSecond()));
+    getComponent().doLayout(position, measurement, tailor);
   }
 }

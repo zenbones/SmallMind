@@ -15,7 +15,7 @@ public abstract class Group<C, G extends Group> {
     this.bias = bias;
   }
 
-  protected abstract void doLayout (double containerPosition, double containerMeasurement);
+  protected abstract void doLayout (double containerPosition, double containerMeasurement, LayoutTailor tailor);
 
   public abstract double calculateMinimumMeasurement ();
 

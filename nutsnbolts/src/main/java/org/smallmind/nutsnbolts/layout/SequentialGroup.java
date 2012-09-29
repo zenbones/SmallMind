@@ -129,7 +129,7 @@ public class SequentialGroup<C> extends Group<C, SequentialGroup> {
   }
 
   @Override
-  public synchronized void doLayout (double containerPosition, double containerMeasurement) {
+  public synchronized void doLayout (double containerPosition, double containerMeasurement, LayoutTailor tailor) {
 
     if (!getElements().isEmpty()) {
 
@@ -142,7 +142,7 @@ public class SequentialGroup<C> extends Group<C, SequentialGroup> {
 
         for (ParaboxElement<?> element : getElements()) {
 
-          element.applyLayout(getBias(), containerPosition + top, currentMeasure = element.getMinimumMeasurement(getBias()));
+          tailor.applyLayout(getBias(), containerPosition + top, currentMeasure = element.getMinimumMeasurement(getBias()), element);
           top += currentMeasure + gap;
         }
       }
@@ -167,7 +167,7 @@ public class SequentialGroup<C> extends Group<C, SequentialGroup> {
 
           double totalRatio = (totalShrink + totalFat == 0) ? 0 : (element.getConstraint().getShrink() + fat[index]) / (totalShrink + totalFat);
 
-          element.applyLayout(getBias(), containerPosition + top, currentMeasure = preferredBiasedMeasurements[index] - (totalRatio * (preferredContainerMeasure - containerMeasurement))));
+          tailor.applyLayout(getBias(), containerPosition + top, currentMeasure = preferredBiasedMeasurements[index] - (totalRatio * (preferredContainerMeasure - containerMeasurement)), element);
           top += currentMeasure + gap;
         }
       }
@@ -276,7 +276,7 @@ public class SequentialGroup<C> extends Group<C, SequentialGroup> {
 
         index = 0;
         for (ParaboxElement<?> element : getElements()) {
-          element.applyLayout(getBias(), partialSolutions[index].getPosition(), partialSolutions[index++].getMeasurement());
+          tailor.applyLayout(getBias(), partialSolutions[index].getPosition(), partialSolutions[index++].getMeasurement(), element);
         }
       }
     }

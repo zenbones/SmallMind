@@ -50,7 +50,7 @@ public abstract class ParaboxElement<C> {
 
   public abstract double getBaseline (Bias bias, double measurement);
 
-  public abstract void applyLayout (Pair position, Pair size);
+  public abstract void applyLayout (Bias bias, double position, double measurement, LayoutTailor tailor);
 
   public C getComponent () {
 
@@ -76,5 +76,4 @@ public abstract class ParaboxElement<C> {
 
     return (constraint.getGrow() > 0) ? getComponentMaximumMeasurement(bias) : getComponentPreferredMeasurement(bias);
   }
-
 }
