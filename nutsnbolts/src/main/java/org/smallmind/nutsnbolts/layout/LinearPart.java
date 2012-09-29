@@ -28,5 +28,5 @@ package org.smallmind.nutsnbolts.layout;
 
 public interface LinearPart {
 
-  public abstract void applyLayout (double position, double measurement, LayoutTailor tailor);
+  public abstract void applyLayout (Bias bias, double position, double measurement, LayoutTailor tailor);
 }

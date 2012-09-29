@@ -52,10 +52,6 @@ public class ParaboxLayout<C> {
 
   public ParaboxLayout setHorizontalGroup (Group horizontalGroup) {
 
-    if (!verticalGroup.getBias().equals(Bias.HORIZONTAL)) {
-      throw new LayoutException("The horizontal group must be set with a group whose bias is actually horizontal");
-    }
-
     this.horizontalGroup = horizontalGroup;
 
     return this;
@@ -68,10 +64,6 @@ public class ParaboxLayout<C> {
 
   public ParaboxLayout setVerticalGroup (Group verticalGroup) {
 
-    if (!verticalGroup.getBias().equals(Bias.VERTICAL)) {
-      throw new LayoutException("The vertical group must be set with a group whose bias is actually vertical");
-    }
-
     this.verticalGroup = verticalGroup;
 
     return this;
@@ -79,17 +71,17 @@ public class ParaboxLayout<C> {
 
   public Pair calculateMinimumSize () {
 
-    return new Pair(horizontalGroup.calculateMinimumMeasurement(), verticalGroup.calculateMinimumMeasurement());
+    return new Pair(horizontalGroup.calculateMinimumMeasurement(Bias.HORIZONTAL), verticalGroup.calculateMinimumMeasurement(Bias.VERTICAL));
   }
 
   public Pair calculatePreferredSize () {
 
-    return new Pair(horizontalGroup.calculatePreferredMeasurement(), verticalGroup.calculatePreferredMeasurement());
+    return new Pair(horizontalGroup.calculatePreferredMeasurement(Bias.HORIZONTAL), verticalGroup.calculatePreferredMeasurement(Bias.VERTICAL));
   }
 
   public Pair calculateMaximumSize () {
 
-    return new Pair(horizontalGroup.calculateMaximumMeasurement(), verticalGroup.calculateMaximumMeasurement());
+    return new Pair(horizontalGroup.calculateMaximumMeasurement(Bias.HORIZONTAL), verticalGroup.calculateMaximumMeasurement(Bias.VERTICAL));
   }
 
   public void doLayout (double width, double height, C... components) {
@@ -108,9 +100,49 @@ public class ParaboxLayout<C> {
       throw new LayoutException("No vertical group has been set on this layout");
     }
 
-    horizontalGroup.doLayout(0, width, tailor = new LayoutTailor(componentList));
-    verticalGroup.doLayout(0, height, tailor);
+    horizontalGroup.doLayout(Bias.HORIZONTAL, 0, width, tailor = new LayoutTailor(componentList));
+    verticalGroup.doLayout(Bias.VERTICAL, 0, height, tailor);
 
     tailor.cleanup();
+  }
+
+  public ParallelGroup<C> parallel () {
+
+    return new ParallelGroup<C>(this);
+  }
+
+  public ParallelGroup<C> parallel (Alignment alignment) {
+
+    return new ParallelGroup<C>(this, alignment);
+  }
+
+  public SequentialGroup<C> sequential () {
+
+    return new SequentialGroup<C>(this);
+  }
+
+  public SequentialGroup<C> sequential (Gap gap) {
+
+    return new SequentialGroup<C>(this, gap);
+  }
+
+  public SequentialGroup<C> sequential (double gap) {
+
+    return new SequentialGroup<C>(this, gap);
+  }
+
+  public SequentialGroup<C> sequential (Justification justification) {
+
+    return new SequentialGroup<C>(this, justification);
+  }
+
+  public SequentialGroup<C> sequential (Gap gap, Justification justification) {
+
+    return new SequentialGroup<C>(this, gap, justification);
+  }
+
+  public SequentialGroup<C> sequential (double gap, Justification justification) {
+
+    return new SequentialGroup<C>(this, gap, justification);
   }
 }

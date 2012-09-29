@@ -47,19 +47,19 @@ public class GroupParaboxElement<G extends Group> extends ParaboxElement<G> impl
   @Override
   public double getComponentMinimumMeasurement (Bias bias) {
 
-    return getPart().calculateMinimumMeasurement();
+    return getPart().calculateMinimumMeasurement(bias);
   }
 
   @Override
   public double getComponentPreferredMeasurement (Bias bias) {
 
-    return getPart().calculatePreferredMeasurement();
+    return getPart().calculatePreferredMeasurement(bias);
   }
 
   @Override
   public double getComponentMaximumMeasurement (Bias bias) {
 
-    return getPart().calculateMaximumMeasurement();
+    return getPart().calculateMaximumMeasurement(bias);
   }
 
   @Override
@@ -69,8 +69,8 @@ public class GroupParaboxElement<G extends Group> extends ParaboxElement<G> impl
   }
 
   @Override
-  public void applyLayout (double position, double measurement, LayoutTailor tailor) {
+  public void applyLayout (Bias bias, double position, double measurement, LayoutTailor tailor) {
 
-    getPart().doLayout(position, measurement, tailor);
+    getPart().doLayout(bias, position, measurement, tailor);
   }
 }

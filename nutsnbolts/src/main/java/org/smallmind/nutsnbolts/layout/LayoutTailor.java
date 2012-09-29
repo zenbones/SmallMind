@@ -54,7 +54,7 @@ public class LayoutTailor {
           throw new LayoutException("No layout group may be added to more than a single parent (do not store or otherwise re-use groups)");
         }
 
-        ((LinearPart)element).applyLayout(position, measurement, this);
+        ((LinearPart)element).applyLayout(bias, position, measurement, this);
         completedSet.add(element.getPart());
         break;
       case PLANE:

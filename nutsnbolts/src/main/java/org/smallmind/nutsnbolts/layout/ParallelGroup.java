@@ -35,14 +35,14 @@ public class ParallelGroup<C> extends Group<C, ParallelGroup> {
   private Double preferredOverrideMeasurement;
   private Double maximumOverrideMeasurement;
 
-  protected ParallelGroup (ParaboxLayout<C> layout, Bias bias) {
+  protected ParallelGroup (ParaboxLayout<C> layout) {
 
-    this(layout, bias, Alignment.CENTER);
+    this(layout, Alignment.CENTER);
   }
 
-  protected ParallelGroup (ParaboxLayout<C> layout, Bias bias, Alignment alignment) {
+  protected ParallelGroup (ParaboxLayout<C> layout, Alignment alignment) {
 
-    super(layout, bias);
+    super(layout);
 
     this.alignment = alignment;
   }
@@ -95,30 +95,33 @@ public class ParallelGroup<C> extends Group<C, ParallelGroup> {
     return this;
   }
 
-  public double calculateMinimumMeasurement () {
+  @Override
+  public double calculateMinimumMeasurement (Bias bias) {
 
-    return calculateMeasurement(TapeMeasure.MINIMUM, minimumOverrideMeasurement);
+    return calculateMeasurement(bias, TapeMeasure.MINIMUM, minimumOverrideMeasurement);
   }
 
-  public double calculatePreferredMeasurement () {
+  @Override
+  public double calculatePreferredMeasurement (Bias bias) {
 
-    return calculateMeasurement(TapeMeasure.PREFERRED, preferredOverrideMeasurement);
+    return calculateMeasurement(bias, TapeMeasure.PREFERRED, preferredOverrideMeasurement);
   }
 
-  public double calculateMaximumMeasurement () {
+  @Override
+  public double calculateMaximumMeasurement (Bias bias) {
 
-    return calculateMeasurement(TapeMeasure.MAXIMUM, maximumOverrideMeasurement);
+    return calculateMeasurement(bias, TapeMeasure.MAXIMUM, maximumOverrideMeasurement);
   }
 
-  private synchronized double calculateMeasurement (TapeMeasure tapeMeasure, Double unbiasedMeasurementOverride) {
+  private synchronized double calculateMeasurement (Bias bias, TapeMeasure tapeMeasure, Double unbiasedMeasurementOverride) {
 
     double maxAscent = 0;
     double maxDescent = 0;
 
     for (ParaboxElement<?> element : getElements()) {
 
-      double currentMeasurement = (unbiasedMeasurementOverride != null) ? unbiasedMeasurementOverride : tapeMeasure.getMeasure(getBias(), element);
-      double currentAscent = (!alignment.equals(Alignment.BASELINE)) ? currentMeasurement : element.getBaseline(getBias(), currentMeasurement);
+      double currentMeasurement = (unbiasedMeasurementOverride != null) ? unbiasedMeasurementOverride : tapeMeasure.getMeasure(bias, element);
+      double currentAscent = (!alignment.equals(Alignment.BASELINE)) ? currentMeasurement : element.getBaseline(bias, currentMeasurement);
       double currentDescent;
 
       if (currentAscent > maxAscent) {
@@ -133,40 +136,40 @@ public class ParallelGroup<C> extends Group<C, ParallelGroup> {
   }
 
   @Override
-  public synchronized void doLayout (double containerPosition, double containerMeasurement, LayoutTailor tailor) {
+  public synchronized void doLayout (Bias bias, double containerPosition, double containerMeasurement, LayoutTailor tailor) {
 
     if (!getElements().isEmpty()) {
 
-      BaselineCalculations baselineCalculations = (alignment.equals(Alignment.BASELINE)) ? new BaselineCalculations(getBias(), maximumOverrideMeasurement, containerMeasurement, getElements()) : null;
+      BaselineCalculations baselineCalculations = (alignment.equals(Alignment.BASELINE)) ? new BaselineCalculations(bias, maximumOverrideMeasurement, containerMeasurement, getElements()) : null;
       double elementMeasurement;
       int index = 0;
 
       for (ParaboxElement<?> element : getElements()) {
-        if (containerMeasurement <= (elementMeasurement = (minimumOverrideMeasurement != null) ? minimumOverrideMeasurement : element.getMinimumMeasurement(getBias()))) {
-          tailor.applyLayout(getBias(), containerPosition, elementMeasurement, element);
+        if (containerMeasurement <= (elementMeasurement = (minimumOverrideMeasurement != null) ? minimumOverrideMeasurement : element.getMinimumMeasurement(bias))) {
+          tailor.applyLayout(bias, containerPosition, elementMeasurement, element);
         }
-        else if (containerMeasurement <= (elementMeasurement = (maximumOverrideMeasurement != null) ? maximumOverrideMeasurement : element.getMaximumMeasurement(getBias()))) {
-          tailor.applyLayout(getBias(), containerPosition, containerMeasurement, element);
+        else if (containerMeasurement <= (elementMeasurement = (maximumOverrideMeasurement != null) ? maximumOverrideMeasurement : element.getMaximumMeasurement(bias))) {
+          tailor.applyLayout(bias, containerPosition, containerMeasurement, element);
         }
         else {
           switch (alignment) {
             case FIRST:
-              tailor.applyLayout(getBias(), containerPosition, elementMeasurement, element);
+              tailor.applyLayout(bias, containerPosition, elementMeasurement, element);
               break;
             case LAST:
-              tailor.applyLayout(getBias(), containerPosition + containerMeasurement - elementMeasurement, elementMeasurement, element);
+              tailor.applyLayout(bias, containerPosition + containerMeasurement - elementMeasurement, elementMeasurement, element);
               break;
             case LEADING:
-              if (!getBias().equals(getLayout().getContainer().getPlatform().getOrientation().getBias())) {
-                tailor.applyLayout(getBias(), containerPosition, elementMeasurement, element);
+              if (!bias.equals(getLayout().getContainer().getPlatform().getOrientation().getBias())) {
+                tailor.applyLayout(bias, containerPosition, elementMeasurement, element);
               }
               else {
                 switch (getLayout().getContainer().getPlatform().getOrientation().getFlow()) {
                   case FIRST_TO_LAST:
-                    tailor.applyLayout(getBias(), containerPosition, elementMeasurement, element);
+                    tailor.applyLayout(bias, containerPosition, elementMeasurement, element);
                     break;
                   case LAST_TO_FIRST:
-                    tailor.applyLayout(getBias(), containerPosition + containerMeasurement - elementMeasurement, elementMeasurement, element);
+                    tailor.applyLayout(bias, containerPosition + containerMeasurement - elementMeasurement, elementMeasurement, element);
                     break;
                   default:
                     throw new UnknownSwitchCaseException(getLayout().getContainer().getPlatform().getOrientation().getFlow().name());
@@ -174,16 +177,16 @@ public class ParallelGroup<C> extends Group<C, ParallelGroup> {
               }
               break;
             case TRAILING:
-              if (!getBias().equals(getLayout().getContainer().getPlatform().getOrientation().getBias())) {
-                tailor.applyLayout(getBias(), containerPosition + containerMeasurement - elementMeasurement, elementMeasurement, element);
+              if (!bias.equals(getLayout().getContainer().getPlatform().getOrientation().getBias())) {
+                tailor.applyLayout(bias, containerPosition + containerMeasurement - elementMeasurement, elementMeasurement, element);
               }
               else {
                 switch (getLayout().getContainer().getPlatform().getOrientation().getFlow()) {
                   case FIRST_TO_LAST:
-                    tailor.applyLayout(getBias(), containerPosition + containerMeasurement - elementMeasurement, elementMeasurement, element);
+                    tailor.applyLayout(bias, containerPosition + containerMeasurement - elementMeasurement, elementMeasurement, element);
                     break;
                   case LAST_TO_FIRST:
-                    tailor.applyLayout(getBias(), containerPosition, elementMeasurement, element);
+                    tailor.applyLayout(bias, containerPosition, elementMeasurement, element);
                     break;
                   default:
                     throw new UnknownSwitchCaseException(getLayout().getContainer().getPlatform().getOrientation().getFlow().name());
@@ -191,7 +194,7 @@ public class ParallelGroup<C> extends Group<C, ParallelGroup> {
               }
               break;
             case CENTER:
-              tailor.applyLayout(getBias(), containerPosition + ((containerMeasurement - elementMeasurement) / 2.0D), elementMeasurement, element);
+              tailor.applyLayout(bias, containerPosition + ((containerMeasurement - elementMeasurement) / 2.0D), elementMeasurement, element);
               break;
             case BASELINE:
 
@@ -208,7 +211,7 @@ public class ParallelGroup<C> extends Group<C, ParallelGroup> {
                 top += containerMeasurement - (top + elementMeasurement);
               }
 
-              tailor.applyLayout(getBias(), containerPosition + top, elementMeasurement, element);
+              tailor.applyLayout(bias, containerPosition + top, elementMeasurement, element);
               break;
             default:
               throw new UnknownSwitchCaseException(alignment.name());

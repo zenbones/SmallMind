@@ -32,31 +32,24 @@ import java.util.LinkedList;
 public abstract class Group<C, G extends Group> {
 
   private ParaboxLayout<C> layout;
-  private Bias bias;
   private LinkedList<ParaboxElement<?>> elements = new LinkedList<ParaboxElement<?>>();
 
-  protected Group (ParaboxLayout<C> layout, Bias bias) {
+  protected Group (ParaboxLayout<C> layout) {
 
     this.layout = layout;
-    this.bias = bias;
   }
 
-  protected abstract void doLayout (double containerPosition, double containerMeasurement, LayoutTailor tailor);
+  protected abstract void doLayout (Bias bias, double containerPosition, double containerMeasurement, LayoutTailor tailor);
 
-  public abstract double calculateMinimumMeasurement ();
+  public abstract double calculateMinimumMeasurement (Bias bias);
 
-  public abstract double calculatePreferredMeasurement ();
+  public abstract double calculatePreferredMeasurement (Bias bias);
 
-  public abstract double calculateMaximumMeasurement ();
+  public abstract double calculateMaximumMeasurement (Bias bias);
 
   protected ParaboxLayout<C> getLayout () {
 
     return layout;
-  }
-
-  public Bias getBias () {
-
-    return bias;
   }
 
   protected LinkedList<ParaboxElement<?>> getElements () {
@@ -90,10 +83,6 @@ public abstract class Group<C, G extends Group> {
   }
 
   public synchronized void add (Group<C, ?> group, ParaboxConstraint constraint) {
-
-    if (!group.getBias().equals(bias)) {
-      throw new LayoutException("A group with bias(%s) can not be held by a parent with bias(%s)", group.getBias(), bias);
-    }
 
     elements.add(new GroupParaboxElement<Group>(group, constraint));
   }
