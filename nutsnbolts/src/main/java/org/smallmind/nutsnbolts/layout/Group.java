@@ -57,34 +57,46 @@ public abstract class Group<C, G extends Group> {
     return elements;
   }
 
-  public synchronized void add (C component) {
+  public synchronized Group<C, G> add (C component) {
 
     add(component, ParaboxConstraint.immutable());
+
+    return this;
   }
 
-  public synchronized void add (C component, Spec spec) {
+  public synchronized Group<C, G> add (C component, Spec spec) {
 
     add(component, spec.staticConstraint());
+
+    return this;
   }
 
-  public synchronized void add (C component, ParaboxConstraint constraint) {
+  public synchronized Group<C, G> add (C component, ParaboxConstraint constraint) {
 
     elements.add(layout.getContainer().constructElement(component, constraint));
+
+    return this;
   }
 
-  public synchronized void add (Group<C, ?> group) {
+  public synchronized Group<C, G> add (Group<C, ?> group) {
 
     add(group, ParaboxConstraint.immutable());
+
+    return this;
   }
 
-  public synchronized void add (Group<C, ?> group, Spec spec) {
+  public synchronized Group<C, G> add (Group<C, ?> group, Spec spec) {
 
     add(group, spec.staticConstraint());
+
+    return this;
   }
 
-  public synchronized void add (Group<C, ?> group, ParaboxConstraint constraint) {
+  public synchronized Group<C, G> add (Group<C, ?> group, ParaboxConstraint constraint) {
 
     elements.add(new GroupParaboxElement<Group>(group, constraint));
+
+    return this;
   }
 
   public synchronized void remove (C component) {

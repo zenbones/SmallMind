@@ -30,12 +30,18 @@ import java.awt.Component;
 import java.awt.Container;
 import java.awt.Dimension;
 import java.awt.LayoutManager2;
+import org.smallmind.nutsnbolts.layout.Alignment;
+import org.smallmind.nutsnbolts.layout.Gap;
+import org.smallmind.nutsnbolts.layout.Group;
+import org.smallmind.nutsnbolts.layout.Justification;
 import org.smallmind.nutsnbolts.layout.Pair;
 import org.smallmind.nutsnbolts.layout.ParaboxConstraint;
 import org.smallmind.nutsnbolts.layout.ParaboxContainer;
 import org.smallmind.nutsnbolts.layout.ParaboxElement;
 import org.smallmind.nutsnbolts.layout.ParaboxLayout;
+import org.smallmind.nutsnbolts.layout.ParallelGroup;
 import org.smallmind.nutsnbolts.layout.Platform;
+import org.smallmind.nutsnbolts.layout.SequentialGroup;
 
 public class ParaboxLayoutManager implements ParaboxContainer<Component>, LayoutManager2 {
 
@@ -120,5 +126,59 @@ public class ParaboxLayoutManager implements ParaboxContainer<Component>, Layout
   public void layoutContainer (Container parent) {
 
     paraboxLayout.doLayout(parent.getWidth(), parent.getHeight(), parent.getComponents());
+  }
+
+  public ParaboxLayoutManager setHorizontalGroup (Group horizontalGroup) {
+
+    paraboxLayout.setHorizontalGroup(horizontalGroup);
+
+    return this;
+  }
+
+  public ParaboxLayoutManager setVerticalGroup (Group verticalGroup) {
+
+    paraboxLayout.setVerticalGroup(verticalGroup);
+
+    return this;
+  }
+
+  public ParallelGroup<Component> parallel () {
+
+    return paraboxLayout.parallel();
+  }
+
+  public ParallelGroup<Component> parallel (Alignment alignment) {
+
+    return paraboxLayout.parallel(alignment);
+  }
+
+  public SequentialGroup<Component> sequential () {
+
+    return paraboxLayout.sequential();
+  }
+
+  public SequentialGroup<Component> sequential (Gap gap) {
+
+    return paraboxLayout.sequential(gap);
+  }
+
+  public SequentialGroup<Component> sequential (double gap) {
+
+    return paraboxLayout.sequential(gap);
+  }
+
+  public SequentialGroup<Component> sequential (Justification justification) {
+
+    return paraboxLayout.sequential(justification);
+  }
+
+  public SequentialGroup<Component> sequential (Gap gap, Justification justification) {
+
+    return paraboxLayout.sequential(gap, justification);
+  }
+
+  public SequentialGroup<Component> sequential (double gap, Justification justification) {
+
+    return paraboxLayout.sequential(gap, justification);
   }
 }
