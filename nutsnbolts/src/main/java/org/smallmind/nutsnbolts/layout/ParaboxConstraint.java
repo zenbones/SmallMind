@@ -28,7 +28,7 @@ package org.smallmind.nutsnbolts.layout;
 
 public class ParaboxConstraint {
 
-  private static final ParaboxConstraint IMMUTABLE_RIGID_INSTANCE = new ParaboxConstraint();
+  private static final ParaboxConstraint IMMUTABLE_RIGID_INSTANCE = new ParaboxConstraint(0.0D, 0.0D);
   private static final ParaboxConstraint IMMUTABLE_GROW_INSTANCE = new ParaboxConstraint(0.5D, 0.0D);
   private static final ParaboxConstraint IMMUTABLE_SHRINK_INSTANCE = new ParaboxConstraint(0.0D, 0.5D);
   private static final ParaboxConstraint IMMUTABLE_GROW_AND_SHRINK_INSTANCE = new ParaboxConstraint(0.5D, 0.5D);
