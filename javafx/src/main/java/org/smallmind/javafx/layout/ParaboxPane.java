@@ -150,9 +150,19 @@ public class ParaboxPane extends Region implements ParaboxContainer<Node> {
     return paraboxLayout.sequentialBox();
   }
 
+  public SequentialBox sequentialBox (boolean greedy) {
+
+    return paraboxLayout.sequentialBox(greedy);
+  }
+
   public SequentialBox sequentialBox (Gap gap) {
 
     return paraboxLayout.sequentialBox(gap);
+  }
+
+  public SequentialBox sequentialBox (Gap gap, boolean greedy) {
+
+    return paraboxLayout.sequentialBox(gap, greedy);
   }
 
   public SequentialBox sequentialBox (double gap) {
@@ -160,9 +170,19 @@ public class ParaboxPane extends Region implements ParaboxContainer<Node> {
     return paraboxLayout.sequentialBox(gap);
   }
 
+  public SequentialBox sequentialBox (double gap, boolean greedy) {
+
+    return paraboxLayout.sequentialBox(gap, greedy);
+  }
+
   public SequentialBox sequentialBox (Justification justification) {
 
     return paraboxLayout.sequentialBox(justification);
+  }
+
+  public SequentialBox sequentialBox (Justification justification, boolean greedy) {
+
+    return paraboxLayout.sequentialBox(justification, greedy);
   }
 
   public SequentialBox sequentialBox (Gap gap, Justification justification) {
@@ -170,8 +190,18 @@ public class ParaboxPane extends Region implements ParaboxContainer<Node> {
     return paraboxLayout.sequentialBox(gap, justification);
   }
 
+  public SequentialBox sequentialBox (Gap gap, Justification justification, boolean greedy) {
+
+    return paraboxLayout.sequentialBox(gap, justification, greedy);
+  }
+
   public SequentialBox sequentialBox (double gap, Justification justification) {
 
     return paraboxLayout.sequentialBox(gap, justification);
+  }
+
+  public SequentialBox sequentialBox (double gap, Justification justification, boolean greedy) {
+
+    return paraboxLayout.sequentialBox(gap, justification, greedy);
   }
 }

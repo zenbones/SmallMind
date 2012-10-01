@@ -161,9 +161,19 @@ public class ParaboxLayout {
     return new SequentialBox(this);
   }
 
+  public SequentialBox sequentialBox (boolean greedy) {
+
+    return new SequentialBox(this, greedy);
+  }
+
   public SequentialBox sequentialBox (Gap gap) {
 
     return new SequentialBox(this, gap);
+  }
+
+  public SequentialBox sequentialBox (Gap gap, boolean greedy) {
+
+    return new SequentialBox(this, gap, greedy);
   }
 
   public SequentialBox sequentialBox (double gap) {
@@ -171,9 +181,19 @@ public class ParaboxLayout {
     return new SequentialBox(this, gap);
   }
 
+  public SequentialBox sequentialBox (double gap, boolean greedy) {
+
+    return new SequentialBox(this, gap, greedy);
+  }
+
   public SequentialBox sequentialBox (Justification justification) {
 
     return new SequentialBox(this, justification);
+  }
+
+  public SequentialBox sequentialBox (Justification justification, boolean greedy) {
+
+    return new SequentialBox(this, justification, greedy);
   }
 
   public SequentialBox sequentialBox (Gap gap, Justification justification) {
@@ -181,8 +201,18 @@ public class ParaboxLayout {
     return new SequentialBox(this, gap, justification);
   }
 
+  public SequentialBox sequentialBox (Gap gap, Justification justification, boolean greedy) {
+
+    return new SequentialBox(this, gap, justification, greedy);
+  }
+
   public SequentialBox sequentialBox (double gap, Justification justification) {
 
     return new SequentialBox(this, gap, justification);
+  }
+
+  public SequentialBox sequentialBox (double gap, Justification justification, boolean greedy) {
+
+    return new SequentialBox(this, gap, justification, greedy);
   }
 }

@@ -34,10 +34,16 @@ public class SequentialBox extends Box<SequentialBox> {
 
   private Justification justification;
   private double gap;
+  private boolean greedy;
 
   protected SequentialBox (ParaboxLayout layout) {
 
     this(layout, Gap.UNRELATED);
+  }
+
+  protected SequentialBox (ParaboxLayout layout, boolean greedy) {
+
+    this(layout, Gap.UNRELATED, greedy);
   }
 
   protected SequentialBox (ParaboxLayout layout, Gap gap) {
@@ -45,9 +51,19 @@ public class SequentialBox extends Box<SequentialBox> {
     this(layout, gap.getGap(layout.getContainer().getPlatform()));
   }
 
+  protected SequentialBox (ParaboxLayout layout, Gap gap, boolean greedy) {
+
+    this(layout, gap.getGap(layout.getContainer().getPlatform()), greedy);
+  }
+
   protected SequentialBox (ParaboxLayout layout, double gap) {
 
     this(layout, gap, Justification.LEADING);
+  }
+
+  protected SequentialBox (ParaboxLayout layout, double gap, boolean greedy) {
+
+    this(layout, gap, Justification.LEADING, greedy);
   }
 
   protected SequentialBox (ParaboxLayout layout, Justification justification) {
@@ -55,17 +71,33 @@ public class SequentialBox extends Box<SequentialBox> {
     this(layout, Gap.UNRELATED, justification);
   }
 
+  protected SequentialBox (ParaboxLayout layout, Justification justification, boolean greedy) {
+
+    this(layout, Gap.UNRELATED, justification, greedy);
+  }
+
   protected SequentialBox (ParaboxLayout layout, Gap gap, Justification justification) {
 
     this(layout, gap.getGap(layout.getContainer().getPlatform()), justification);
   }
 
+  protected SequentialBox (ParaboxLayout layout, Gap gap, Justification justification, boolean greedy) {
+
+    this(layout, gap.getGap(layout.getContainer().getPlatform()), justification, greedy);
+  }
+
   protected SequentialBox (ParaboxLayout layout, double gap, Justification justification) {
+
+    this(layout, gap, justification, false);
+  }
+
+  protected SequentialBox (ParaboxLayout layout, double gap, Justification justification, boolean greedy) {
 
     super(SequentialBox.class, layout);
 
     this.justification = justification;
     this.gap = gap;
+    this.greedy = greedy;
   }
 
   public double getGap () {
@@ -97,6 +129,18 @@ public class SequentialBox extends Box<SequentialBox> {
     return this;
   }
 
+  public boolean isGreedy () {
+
+    return greedy;
+  }
+
+  public SequentialBox setGreedy (boolean greedy) {
+
+    this.greedy = greedy;
+
+    return this;
+  }
+
   @Override
   public double calculateMinimumMeasurement (Bias bias, LayoutTailor tailor) {
 
@@ -112,7 +156,7 @@ public class SequentialBox extends Box<SequentialBox> {
   @Override
   public double calculateMaximumMeasurement (Bias bias, LayoutTailor tailor) {
 
-    return Integer.MAX_VALUE;
+    return greedy ? Integer.MAX_VALUE : calculateMeasurement(bias, TapeMeasure.MAXIMUM, tailor);
   }
 
   private synchronized double calculateMeasurement (Bias bias, TapeMeasure tapeMeasure, LayoutTailor tailor) {
