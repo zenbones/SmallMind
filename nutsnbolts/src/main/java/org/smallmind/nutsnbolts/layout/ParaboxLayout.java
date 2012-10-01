@@ -69,19 +69,49 @@ public class ParaboxLayout {
     return this;
   }
 
+  public double calculateMinimumWidth () {
+
+    return getHorizontalPerimeterRequirements() + horizontalBox.calculateMinimumMeasurement(Bias.HORIZONTAL, null);
+  }
+
+  public double calculateMinimumHeight () {
+
+    return getVerticalPerimeterRequirements() + verticalBox.calculateMinimumMeasurement(Bias.VERTICAL, null);
+  }
+
   public Pair calculateMinimumSize () {
 
-    return new Pair(getHorizontalPerimeterRequirements() + horizontalBox.calculateMinimumMeasurement(Bias.HORIZONTAL, null), getVerticalPerimeterRequirements() + verticalBox.calculateMinimumMeasurement(Bias.VERTICAL, null));
+    return new Pair(calculateMinimumWidth(), calculateMinimumHeight());
+  }
+
+  public double calculatePreferredWidth () {
+
+    return getHorizontalPerimeterRequirements() + horizontalBox.calculatePreferredMeasurement(Bias.HORIZONTAL, null);
+  }
+
+  public double calculatePreferredHeight () {
+
+    return getVerticalPerimeterRequirements() + verticalBox.calculatePreferredMeasurement(Bias.VERTICAL, null);
   }
 
   public Pair calculatePreferredSize () {
 
-    return new Pair(getHorizontalPerimeterRequirements() + horizontalBox.calculatePreferredMeasurement(Bias.HORIZONTAL, null), getVerticalPerimeterRequirements() + verticalBox.calculatePreferredMeasurement(Bias.VERTICAL, null));
+    return new Pair(calculatePreferredWidth(), calculatePreferredHeight());
+  }
+
+  public double calculateMaximumWidth () {
+
+    return getHorizontalPerimeterRequirements() + horizontalBox.calculateMaximumMeasurement(Bias.HORIZONTAL, null);
+  }
+
+  public double calculateMaximumHeight () {
+
+    return getVerticalPerimeterRequirements() + verticalBox.calculateMaximumMeasurement(Bias.VERTICAL, null);
   }
 
   public Pair calculateMaximumSize () {
 
-    return new Pair(getHorizontalPerimeterRequirements() + horizontalBox.calculateMaximumMeasurement(Bias.HORIZONTAL, null), getVerticalPerimeterRequirements() + verticalBox.calculateMaximumMeasurement(Bias.VERTICAL, null));
+    return new Pair(calculateMaximumWidth(), calculateMaximumHeight());
   }
 
   private double getHorizontalPerimeterRequirements () {

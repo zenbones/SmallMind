@@ -62,10 +62,6 @@ public class SwingParaboxPlatform implements ParaboxPlatform {
     PERIMETER = new Perimeter(containerGap, containerGap, containerGap, containerGap);
   }
 
-  public SwingParaboxPlatform () {
-
-  }
-
   @Override
   public double getRelatedGap () {
 

@@ -26,33 +26,38 @@
  */
 package org.smallmind.javafx.layout;
 
+import org.smallmind.nutsnbolts.layout.Bias;
+import org.smallmind.nutsnbolts.layout.Flow;
 import org.smallmind.nutsnbolts.layout.Orientation;
 import org.smallmind.nutsnbolts.layout.ParaboxPlatform;
 import org.smallmind.nutsnbolts.layout.Perimeter;
 
 public class JavaFxParaboxPlatform implements ParaboxPlatform {
 
+  private static final Perimeter PERIMETER = new Perimeter(10.0D, 10.0D, 10.0D, 10.0D);
+  private static final Orientation ORIENTATION = new Orientation(Bias.HORIZONTAL, Flow.FIRST_TO_LAST);
+
   @Override
   public double getRelatedGap () {
 
-    return 0;
+    return 5.0D;
   }
 
   @Override
   public double getUnrelatedGap () {
 
-    return 0;
+    return 10.0D;
   }
 
   @Override
   public Perimeter getFramePerimeter () {
 
-    return null;
+    return PERIMETER;
   }
 
   @Override
   public Orientation getOrientation () {
 
-    return null;
+    return ORIENTATION;
   }
 }

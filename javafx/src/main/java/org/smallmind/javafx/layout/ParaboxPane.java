@@ -26,25 +26,152 @@
  */
 package org.smallmind.javafx.layout;
 
-import javafx.scene.layout.Pane;
+import javafx.scene.Node;
+import javafx.scene.layout.Region;
+import org.smallmind.nutsnbolts.layout.Alignment;
+import org.smallmind.nutsnbolts.layout.Box;
+import org.smallmind.nutsnbolts.layout.Constraint;
+import org.smallmind.nutsnbolts.layout.Gap;
+import org.smallmind.nutsnbolts.layout.Justification;
+import org.smallmind.nutsnbolts.layout.ParaboxContainer;
+import org.smallmind.nutsnbolts.layout.ParaboxElement;
+import org.smallmind.nutsnbolts.layout.ParaboxLayout;
+import org.smallmind.nutsnbolts.layout.ParaboxPlatform;
+import org.smallmind.nutsnbolts.layout.ParallelBox;
+import org.smallmind.nutsnbolts.layout.SequentialBox;
 
-public class ParaboxPane extends Pane {
+public class ParaboxPane extends Region implements ParaboxContainer<Node> {
 
-  @Override
-  protected double computePrefWidth (double height) {
+  private static final ParaboxPlatform PLATFORM = new JavaFxParaboxPlatform();
 
-    return super.computePrefWidth(height);
+  private final ParaboxLayout paraboxLayout;
+
+  public ParaboxPane () {
+
+    paraboxLayout = new ParaboxLayout(this);
   }
 
   @Override
-  protected double computePrefHeight (double width) {
+  public ParaboxPlatform getPlatform () {
 
-    return super.computePrefHeight(width);
+    return PLATFORM;
+  }
+
+  @Override
+  protected double computeMinWidth (double v) {
+
+    return paraboxLayout.calculateMinimumWidth();
+  }
+
+  @Override
+  protected double computeMinHeight (double v) {
+
+    return paraboxLayout.calculateMinimumWidth();
+  }
+
+  @Override
+  protected double computePrefWidth (double v) {
+
+    return paraboxLayout.calculatePreferredWidth();
+  }
+
+  @Override
+  protected double computePrefHeight (double v) {
+
+    return paraboxLayout.calculatePreferredWidth();
+  }
+
+  @Override
+  protected double computeMaxWidth (double v) {
+
+    return paraboxLayout.calculateMaximumWidth();
+  }
+
+  @Override
+  protected double computeMaxHeight (double v) {
+
+    return paraboxLayout.calculateMaximumWidth();
   }
 
   @Override
   protected void layoutChildren () {
 
-    super.layoutChildren();
+    paraboxLayout.doLayout(getWidth(), getHeight(), getChildrenUnmodifiable());
+  }
+
+  @Override
+  public ParaboxElement<Node> constructElement (Node node, Constraint constraint) {
+
+    return new JavaFxParaboxElement(node, constraint);
+  }
+
+  @Override
+  public void nativelyAddComponent (Node node) {
+
+    getChildren().add(node);
+  }
+
+  public Box<?> getHorizontalBox () {
+
+    return paraboxLayout.getHorizontalBox();
+  }
+
+  public ParaboxPane setHorizontalBox (Box<?> horizontalBox) {
+
+    paraboxLayout.setHorizontalBox(horizontalBox);
+
+    return this;
+  }
+
+  public Box<?> getVerticalBox () {
+
+    return paraboxLayout.getVerticalBox();
+  }
+
+  public ParaboxPane setVerticalBox (Box<?> verticalBox) {
+
+    paraboxLayout.setVerticalBox(verticalBox);
+
+    return this;
+  }
+
+  public ParallelBox parallelBox () {
+
+    return paraboxLayout.parallelBox();
+  }
+
+  public ParallelBox parallelBox (Alignment alignment) {
+
+    return paraboxLayout.parallelBox(alignment);
+  }
+
+  public SequentialBox sequentialBox () {
+
+    return paraboxLayout.sequentialBox();
+  }
+
+  public SequentialBox sequentialBox (Gap gap) {
+
+    return paraboxLayout.sequentialBox(gap);
+  }
+
+  public SequentialBox sequentialBox (double gap) {
+
+    return paraboxLayout.sequentialBox(gap);
+  }
+
+  public SequentialBox sequentialBox (Justification justification) {
+
+    return paraboxLayout.sequentialBox(justification);
+  }
+
+  public SequentialBox sequentialBox (Gap gap, Justification justification) {
+
+    return paraboxLayout.sequentialBox(gap, justification);
+  }
+
+  public SequentialBox sequentialBox (double gap, Justification justification) {
+
+    return paraboxLayout.sequentialBox(gap, justification);
   }
 }
