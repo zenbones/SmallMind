@@ -31,9 +31,9 @@ import java.awt.Container;
 import java.awt.Dimension;
 import java.awt.LayoutManager2;
 import org.smallmind.nutsnbolts.layout.Alignment;
+import org.smallmind.nutsnbolts.layout.Box;
 import org.smallmind.nutsnbolts.layout.Constraint;
 import org.smallmind.nutsnbolts.layout.Gap;
-import org.smallmind.nutsnbolts.layout.Group;
 import org.smallmind.nutsnbolts.layout.Justification;
 import org.smallmind.nutsnbolts.layout.LayoutException;
 import org.smallmind.nutsnbolts.layout.Pair;
@@ -41,8 +41,8 @@ import org.smallmind.nutsnbolts.layout.ParaboxContainer;
 import org.smallmind.nutsnbolts.layout.ParaboxElement;
 import org.smallmind.nutsnbolts.layout.ParaboxLayout;
 import org.smallmind.nutsnbolts.layout.ParaboxPlatform;
-import org.smallmind.nutsnbolts.layout.ParallelGroup;
-import org.smallmind.nutsnbolts.layout.SequentialGroup;
+import org.smallmind.nutsnbolts.layout.ParallelBox;
+import org.smallmind.nutsnbolts.layout.SequentialBox;
 
 public class ParaboxLayoutManager implements ParaboxContainer<Component>, LayoutManager2 {
 
@@ -176,67 +176,67 @@ public class ParaboxLayoutManager implements ParaboxContainer<Component>, Layout
     paraboxLayout.doLayout(parent.getWidth(), parent.getHeight(), parent.getComponents());
   }
 
-  public Group<?> getHorizontalGroup () {
+  public Box<?> getHorizontalBox () {
 
-    return paraboxLayout.getHorizontalGroup();
+    return paraboxLayout.getHorizontalBox();
   }
 
-  public ParaboxLayoutManager setHorizontalGroup (Group<?> horizontalGroup) {
+  public ParaboxLayoutManager setHorizontalBox (Box<?> horizontalBox) {
 
-    paraboxLayout.setHorizontalGroup(horizontalGroup);
+    paraboxLayout.setHorizontalBox(horizontalBox);
 
     return this;
   }
 
-  public Group<?> getVerticalGroup () {
+  public Box<?> getVerticalBox () {
 
-    return paraboxLayout.getVerticalGroup();
+    return paraboxLayout.getVerticalBox();
   }
 
-  public ParaboxLayoutManager setVerticalGroup (Group<?> verticalGroup) {
+  public ParaboxLayoutManager setVerticalBox (Box<?> verticalBox) {
 
-    paraboxLayout.setVerticalGroup(verticalGroup);
+    paraboxLayout.setVerticalBox(verticalBox);
 
     return this;
   }
 
-  public ParallelGroup parallelGroup () {
+  public ParallelBox parallelBox () {
 
-    return paraboxLayout.parallelGroup();
+    return paraboxLayout.parallelBox();
   }
 
-  public ParallelGroup parallelGroup (Alignment alignment) {
+  public ParallelBox parallelBox (Alignment alignment) {
 
-    return paraboxLayout.parallelGroup(alignment);
+    return paraboxLayout.parallelBox(alignment);
   }
 
-  public SequentialGroup sequentialGroup () {
+  public SequentialBox sequentialBox () {
 
-    return paraboxLayout.sequentialGroup();
+    return paraboxLayout.sequentialBox();
   }
 
-  public SequentialGroup sequentialGroup (Gap gap) {
+  public SequentialBox sequentialBox (Gap gap) {
 
-    return paraboxLayout.sequentialGroup(gap);
+    return paraboxLayout.sequentialBox(gap);
   }
 
-  public SequentialGroup sequentialGroup (double gap) {
+  public SequentialBox sequentialBox (double gap) {
 
-    return paraboxLayout.sequentialGroup(gap);
+    return paraboxLayout.sequentialBox(gap);
   }
 
-  public SequentialGroup sequentialGroup (Justification justification) {
+  public SequentialBox sequentialBox (Justification justification) {
 
-    return paraboxLayout.sequentialGroup(justification);
+    return paraboxLayout.sequentialBox(justification);
   }
 
-  public SequentialGroup sequentialGroup (Gap gap, Justification justification) {
+  public SequentialBox sequentialBox (Gap gap, Justification justification) {
 
-    return paraboxLayout.sequentialGroup(gap, justification);
+    return paraboxLayout.sequentialBox(gap, justification);
   }
 
-  public SequentialGroup sequentialGroup (double gap, Justification justification) {
+  public SequentialBox sequentialBox (double gap, Justification justification) {
 
-    return paraboxLayout.sequentialGroup(gap, justification);
+    return paraboxLayout.sequentialBox(gap, justification);
   }
 }

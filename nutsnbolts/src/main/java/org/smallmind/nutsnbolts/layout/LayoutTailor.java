@@ -62,7 +62,7 @@ public class LayoutTailor {
       case LINE:
 
         if (completedSet.contains(element.getPart())) {
-          throw new LayoutException("No layout group may be added to more than a single parent (do not store or otherwise re-use groups)");
+          throw new LayoutException("No layout box may be added to more than a single parent (do not store or otherwise re-use boxes)");
         }
 
         ((LinearPart)element).applyLayout(bias, position, measurement, this);
@@ -73,14 +73,14 @@ public class LayoutTailor {
         PartialSolution partialSolution;
 
         if (completedSet.contains(element.getPart())) {
-          throw new LayoutException("The layout component (%s) must be added to a single horizontal and a single vertical group, and no more", element.getPart());
+          throw new LayoutException("The layout component (%s) must be added to a single horizontal and a single vertical box, and no more", element.getPart());
         }
 
         if ((partialSolution = solutionMap.remove(element.getPart())) == null) {
           solutionMap.put(element.getPart(), new PartialSolution(bias, position, measurement));
         }
         else if (partialSolution.getBias().equals(bias)) {
-          throw new LayoutException("The layout component (%s) must be added to a single horizontal and a single vertical group, and no more", element.getPart());
+          throw new LayoutException("The layout component (%s) must be added to a single horizontal and a single vertical box, and no more", element.getPart());
         }
         else {
           switch (bias) {
@@ -113,10 +113,10 @@ public class LayoutTailor {
         Map.Entry<Object, PartialSolution> solutionEntry = solutionEntryIter.next();
 
         if (solutionEntry.getValue() == null) {
-          throw new LayoutException("The layout component (%s) must be added to a single horizontal and a single vertical group", solutionEntry.getKey());
+          throw new LayoutException("The layout component (%s) must be added to a single horizontal and a single vertical box", solutionEntry.getKey());
         }
         else {
-          throw new LayoutException("The layout component (%s) was only added to a %s group, and must be constrained in both directions", solutionEntry.getKey(), solutionEntry.getValue().getBias());
+          throw new LayoutException("The layout component (%s) was only added to a %s box, and must be constrained in both directions", solutionEntry.getKey(), solutionEntry.getValue().getBias());
         }
       }
     }
