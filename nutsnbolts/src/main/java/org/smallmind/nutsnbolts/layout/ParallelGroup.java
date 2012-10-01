@@ -37,7 +37,7 @@ public class ParallelGroup<C> extends Group<C, ParallelGroup> {
 
   protected ParallelGroup (ParaboxLayout<C> layout) {
 
-    this(layout, Alignment.CENTER);
+    this(layout, Alignment.LEADING);
   }
 
   protected ParallelGroup (ParaboxLayout<C> layout, Alignment alignment) {

@@ -35,6 +35,7 @@ import org.smallmind.nutsnbolts.layout.Constraint;
 import org.smallmind.nutsnbolts.layout.Gap;
 import org.smallmind.nutsnbolts.layout.Group;
 import org.smallmind.nutsnbolts.layout.Justification;
+import org.smallmind.nutsnbolts.layout.LayoutException;
 import org.smallmind.nutsnbolts.layout.Pair;
 import org.smallmind.nutsnbolts.layout.ParaboxContainer;
 import org.smallmind.nutsnbolts.layout.ParaboxElement;
@@ -47,9 +48,12 @@ public class ParaboxLayoutManager implements ParaboxContainer<Component>, Layout
 
   private static final Platform PLATFORM = new SwingParaboxPlatform();
 
+  private final Container container;
   private final ParaboxLayout<Component> paraboxLayout;
 
-  public ParaboxLayoutManager () {
+  public ParaboxLayoutManager (Container container) {
+
+    this.container = container;
 
     paraboxLayout = new ParaboxLayout<Component>(this);
   }
@@ -78,13 +82,38 @@ public class ParaboxLayoutManager implements ParaboxContainer<Component>, Layout
   @Override
   public float getLayoutAlignmentX (Container target) {
 
+    if (target != container) {
+      throw new LayoutException("All layout operations must occur upon this manager's parent container");
+    }
+
     return 0.5F;
   }
 
   @Override
   public float getLayoutAlignmentY (Container target) {
 
+    if (target != container) {
+      throw new LayoutException("All layout operations must occur upon this manager's parent container");
+    }
+
     return 0.5F;
+  }
+
+  @Override
+  public void nativelyAddComponent (Component component) {
+
+    boolean matched = false;
+
+    for (Component containedComponent : container.getComponents()) {
+      if (containedComponent == component) {
+        matched = true;
+        break;
+      }
+    }
+
+    if (!matched) {
+      container.add(component);
+    }
   }
 
   @Override
@@ -96,6 +125,10 @@ public class ParaboxLayoutManager implements ParaboxContainer<Component>, Layout
   @Override
   public Dimension preferredLayoutSize (Container parent) {
 
+    if (parent != container) {
+      throw new LayoutException("All layout operations must occur upon this manager's parent container");
+    }
+
     Pair size = paraboxLayout.calculatePreferredSize();
 
     return new Dimension((int)size.getFirst(), (int)size.getSecond());
@@ -104,13 +137,21 @@ public class ParaboxLayoutManager implements ParaboxContainer<Component>, Layout
   @Override
   public Dimension minimumLayoutSize (Container parent) {
 
+    if (parent != container) {
+      throw new LayoutException("All layout operations must occur upon this manager's parent container");
+    }
+
     Pair size = paraboxLayout.calculateMinimumSize();
 
     return new Dimension((int)size.getFirst(), (int)size.getSecond());
   }
 
   @Override
-  public Dimension maximumLayoutSize (Container target) {
+  public Dimension maximumLayoutSize (Container parent) {
+
+    if (parent != container) {
+      throw new LayoutException("All layout operations must occur upon this manager's parent container");
+    }
 
     Pair size = paraboxLayout.calculateMaximumSize();
 
@@ -118,12 +159,19 @@ public class ParaboxLayoutManager implements ParaboxContainer<Component>, Layout
   }
 
   @Override
-  public void invalidateLayout (Container target) {
+  public void invalidateLayout (Container parent) {
 
+    if (parent != container) {
+      throw new LayoutException("All layout operations must occur upon this manager's parent container");
+    }
   }
 
   @Override
   public void layoutContainer (Container parent) {
+
+    if (parent != container) {
+      throw new LayoutException("All layout operations must occur upon this manager's parent container");
+    }
 
     paraboxLayout.doLayout(parent.getWidth(), parent.getHeight(), parent.getComponents());
   }
@@ -142,42 +190,42 @@ public class ParaboxLayoutManager implements ParaboxContainer<Component>, Layout
     return this;
   }
 
-  public ParallelGroup<Component> parallel () {
+  public ParallelGroup<Component> parallelGroup () {
 
     return paraboxLayout.parallelGroup();
   }
 
-  public ParallelGroup<Component> parallel (Alignment alignment) {
+  public ParallelGroup<Component> parallelGroup (Alignment alignment) {
 
     return paraboxLayout.parallelGroup(alignment);
   }
 
-  public SequentialGroup<Component> sequential () {
+  public SequentialGroup<Component> sequentialGroup () {
 
     return paraboxLayout.sequentialGroup();
   }
 
-  public SequentialGroup<Component> sequential (Gap gap) {
+  public SequentialGroup<Component> sequentialGroup (Gap gap) {
 
     return paraboxLayout.sequentialGroup(gap);
   }
 
-  public SequentialGroup<Component> sequential (double gap) {
+  public SequentialGroup<Component> sequentialGroup (double gap) {
 
     return paraboxLayout.sequentialGroup(gap);
   }
 
-  public SequentialGroup<Component> sequential (Justification justification) {
+  public SequentialGroup<Component> sequentialGroup (Justification justification) {
 
     return paraboxLayout.sequentialGroup(justification);
   }
 
-  public SequentialGroup<Component> sequential (Gap gap, Justification justification) {
+  public SequentialGroup<Component> sequentialGroup (Gap gap, Justification justification) {
 
     return paraboxLayout.sequentialGroup(gap, justification);
   }
 
-  public SequentialGroup<Component> sequential (double gap, Justification justification) {
+  public SequentialGroup<Component> sequentialGroup (double gap, Justification justification) {
 
     return paraboxLayout.sequentialGroup(gap, justification);
   }

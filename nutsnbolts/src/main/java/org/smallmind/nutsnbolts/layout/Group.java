@@ -66,6 +66,7 @@ public abstract class Group<C, G extends Group> {
 
   public synchronized Group<C, G> add (C component, Constraint constraint) {
 
+    getLayout().getContainer().nativelyAddComponent(component);
     elements.add(layout.getContainer().constructElement(component, constraint));
 
     return this;

@@ -37,7 +37,7 @@ public class SequentialGroup<C> extends Group<C, SequentialGroup> {
 
   protected SequentialGroup (ParaboxLayout<C> layout) {
 
-    this(layout, Gap.RELATED);
+    this(layout, Gap.UNRELATED);
   }
 
   protected SequentialGroup (ParaboxLayout<C> layout, Gap gap) {
@@ -47,12 +47,12 @@ public class SequentialGroup<C> extends Group<C, SequentialGroup> {
 
   protected SequentialGroup (ParaboxLayout<C> layout, double gap) {
 
-    this(layout, gap, Justification.CENTER);
+    this(layout, gap, Justification.LEADING);
   }
 
   protected SequentialGroup (ParaboxLayout<C> layout, Justification justification) {
 
-    this(layout, Gap.RELATED, justification);
+    this(layout, Gap.UNRELATED, justification);
   }
 
   protected SequentialGroup (ParaboxLayout<C> layout, Gap gap, Justification justification) {
