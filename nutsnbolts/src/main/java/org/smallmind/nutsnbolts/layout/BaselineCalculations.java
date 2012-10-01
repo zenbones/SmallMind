@@ -33,7 +33,7 @@ public class BaselineCalculations {
   private Pair[] elementAscentsDescents;
   private double idealizedBaseline;
 
-  public BaselineCalculations (Bias bias, Double maximumOverrideMeasurement, double containerMeasurement, List<ParaboxElement<?>> elements) {
+  public BaselineCalculations (Bias bias, Double maximumOverrideMeasurement, double containerMeasurement, List<ParaboxElement<?>> elements, LayoutTailor tailor) {
 
     elementAscentsDescents = new Pair[elements.size()];
     double maxAscent = 0;
@@ -42,7 +42,7 @@ public class BaselineCalculations {
 
     for (ParaboxElement<?> element : elements) {
 
-      double currentMeasurement = Math.min(containerMeasurement, (maximumOverrideMeasurement != null) ? maximumOverrideMeasurement : element.getMaximumMeasurement(bias));
+      double currentMeasurement = Math.min(containerMeasurement, (maximumOverrideMeasurement != null) ? maximumOverrideMeasurement : element.getMaximumMeasurement(bias, tailor));
       double currentAscent = element.getBaseline(bias, currentMeasurement);
       double currentDescent;
 

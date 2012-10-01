@@ -30,5 +30,5 @@ public interface ParaboxContainer<C> {
 
   public Platform getPlatform ();
 
-  public ParaboxElement<C> constructElement (C component, ParaboxConstraint constraint);
+  public ParaboxElement<C> constructElement (C component, Constraint constraint);
 }

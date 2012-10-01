@@ -29,14 +29,9 @@ package org.smallmind.nutsnbolts.layout;
 public abstract class ParaboxElement<P> {
 
   private P part;
-  private ParaboxConstraint constraint;
+  private Constraint constraint;
 
-  public ParaboxElement (P part, Spec spec) {
-
-    this(part, spec.staticConstraint());
-  }
-
-  public ParaboxElement (P part, ParaboxConstraint constraint) {
+  public ParaboxElement (P part, Constraint constraint) {
 
     this.part = part;
     this.constraint = constraint;
@@ -44,11 +39,11 @@ public abstract class ParaboxElement<P> {
 
   public abstract Dimensionality getDimensionality ();
 
-  public abstract double getComponentMinimumMeasurement (Bias bias);
+  public abstract double getPartMinimumMeasurement (Bias bias, LayoutTailor tailor);
 
-  public abstract double getComponentPreferredMeasurement (Bias bias);
+  public abstract double getPartPreferredMeasurement (Bias bias, LayoutTailor tailor);
 
-  public abstract double getComponentMaximumMeasurement (Bias bias);
+  public abstract double getPartMaximumMeasurement (Bias bias, LayoutTailor tailor);
 
   public abstract double getBaseline (Bias bias, double measurement);
 
@@ -57,23 +52,62 @@ public abstract class ParaboxElement<P> {
     return part;
   }
 
-  public ParaboxConstraint getConstraint () {
+  public Constraint getConstraint () {
 
     return constraint;
   }
 
-  public double getMinimumMeasurement (Bias bias) {
+  public double getMinimumMeasurement (Bias bias, LayoutTailor tailor) {
 
-    return (constraint.getShrink() > 0) ? getComponentMinimumMeasurement(bias) : getComponentPreferredMeasurement(bias);
+    if (tailor == null) {
+
+      return (constraint.getShrink() > 0) ? getPartMinimumMeasurement(bias, tailor) : getPartPreferredMeasurement(bias, tailor);
+    }
+    else {
+
+      Double measurement;
+
+      if ((measurement = tailor.lookup(part, bias, TapeMeasure.MINIMUM)) == null) {
+        tailor.store(part, bias, TapeMeasure.MINIMUM, measurement = (constraint.getShrink() > 0) ? getPartMinimumMeasurement(bias, tailor) : getPartPreferredMeasurement(bias, tailor));
+      }
+
+      return measurement;
+    }
   }
 
-  public double getPreferredMeasurement (Bias bias) {
+  public double getPreferredMeasurement (Bias bias, LayoutTailor tailor) {
 
-    return getComponentPreferredMeasurement(bias);
+    if (tailor == null) {
+
+      return getPartPreferredMeasurement(bias, tailor);
+    }
+    else {
+
+      Double measurement;
+
+      if ((measurement = tailor.lookup(part, bias, TapeMeasure.PREFERRED)) == null) {
+        tailor.store(part, bias, TapeMeasure.PREFERRED, measurement = getPartPreferredMeasurement(bias, tailor));
+      }
+
+      return measurement;
+    }
   }
 
-  public double getMaximumMeasurement (Bias bias) {
+  public double getMaximumMeasurement (Bias bias, LayoutTailor tailor) {
 
-    return (constraint.getGrow() > 0) ? getComponentMaximumMeasurement(bias) : getComponentPreferredMeasurement(bias);
+    if (tailor == null) {
+
+      return (constraint.getGrow() > 0) ? getPartMaximumMeasurement(bias, tailor) : getPartPreferredMeasurement(bias, tailor);
+    }
+    else {
+
+      Double measurement;
+
+      if ((measurement = tailor.lookup(part, bias, TapeMeasure.MAXIMUM)) == null) {
+        tailor.store(part, bias, TapeMeasure.MAXIMUM, measurement = (constraint.getGrow() > 0) ? getPartMaximumMeasurement(bias, tailor) : getPartPreferredMeasurement(bias, tailor));
+      }
+
+      return measurement;
+    }
   }
 }

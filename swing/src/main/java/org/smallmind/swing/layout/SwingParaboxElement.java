@@ -29,12 +29,12 @@ package org.smallmind.swing.layout;
 import java.awt.Component;
 import org.smallmind.nutsnbolts.layout.Bias;
 import org.smallmind.nutsnbolts.layout.ComponentParaboxElement;
+import org.smallmind.nutsnbolts.layout.Constraint;
 import org.smallmind.nutsnbolts.layout.Pair;
-import org.smallmind.nutsnbolts.layout.ParaboxConstraint;
 
 public class SwingParaboxElement extends ComponentParaboxElement<Component> {
 
-  public SwingParaboxElement (Component component, ParaboxConstraint constraint) {
+  public SwingParaboxElement (Component component, Constraint constraint) {
 
     super(component, constraint);
   }

@@ -41,11 +41,11 @@ public abstract class Group<C, G extends Group> {
 
   protected abstract void doLayout (Bias bias, double containerPosition, double containerMeasurement, LayoutTailor tailor);
 
-  public abstract double calculateMinimumMeasurement (Bias bias);
+  public abstract double calculateMinimumMeasurement (Bias bias, LayoutTailor tailor);
 
-  public abstract double calculatePreferredMeasurement (Bias bias);
+  public abstract double calculatePreferredMeasurement (Bias bias, LayoutTailor tailor);
 
-  public abstract double calculateMaximumMeasurement (Bias bias);
+  public abstract double calculateMaximumMeasurement (Bias bias, LayoutTailor tailor);
 
   protected ParaboxLayout<C> getLayout () {
 
@@ -59,19 +59,12 @@ public abstract class Group<C, G extends Group> {
 
   public synchronized Group<C, G> add (C component) {
 
-    add(component, ParaboxConstraint.immutable());
+    add(component, Constraint.immutable());
 
     return this;
   }
 
-  public synchronized Group<C, G> add (C component, Spec spec) {
-
-    add(component, spec.staticConstraint());
-
-    return this;
-  }
-
-  public synchronized Group<C, G> add (C component, ParaboxConstraint constraint) {
+  public synchronized Group<C, G> add (C component, Constraint constraint) {
 
     elements.add(layout.getContainer().constructElement(component, constraint));
 
@@ -80,19 +73,12 @@ public abstract class Group<C, G extends Group> {
 
   public synchronized Group<C, G> add (Group<C, ?> group) {
 
-    add(group, ParaboxConstraint.immutable());
+    add(group, Constraint.stretch());
 
     return this;
   }
 
-  public synchronized Group<C, G> add (Group<C, ?> group, Spec spec) {
-
-    add(group, spec.staticConstraint());
-
-    return this;
-  }
-
-  public synchronized Group<C, G> add (Group<C, ?> group, ParaboxConstraint constraint) {
+  public synchronized Group<C, G> add (Group<C, ?> group, Constraint constraint) {
 
     elements.add(new GroupParaboxElement<Group>(group, constraint));
 

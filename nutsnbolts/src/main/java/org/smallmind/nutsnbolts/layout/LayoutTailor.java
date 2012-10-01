@@ -35,6 +35,7 @@ import org.smallmind.nutsnbolts.lang.UnknownSwitchCaseException;
 
 public class LayoutTailor {
 
+  private HashMap<Sizing, Double> measurementMap = new HashMap<Sizing, Double>();
   private HashMap<Object, PartialSolution> solutionMap = new HashMap<Object, PartialSolution>();
   private HashSet<Object> completedSet = new HashSet<Object>();
 
@@ -43,6 +44,16 @@ public class LayoutTailor {
     for (Object component : componentList) {
       solutionMap.put(component, null);
     }
+  }
+
+  public void store (Object part, Bias bias, TapeMeasure tapeMeasure, double measurement) {
+
+    measurementMap.put(new Sizing(part, bias, tapeMeasure), measurement);
+  }
+
+  public Double lookup (Object part, Bias bias, TapeMeasure tapeMeasure) {
+
+    return measurementMap.get(new Sizing(part, bias, tapeMeasure));
   }
 
   public void applyLayout (Bias bias, double position, double measurement, ParaboxElement<?> element) {

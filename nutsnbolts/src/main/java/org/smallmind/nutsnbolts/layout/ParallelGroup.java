@@ -96,31 +96,31 @@ public class ParallelGroup<C> extends Group<C, ParallelGroup> {
   }
 
   @Override
-  public double calculateMinimumMeasurement (Bias bias) {
+  public double calculateMinimumMeasurement (Bias bias, LayoutTailor tailor) {
 
-    return calculateMeasurement(bias, TapeMeasure.MINIMUM, minimumOverrideMeasurement);
+    return calculateMeasurement(bias, TapeMeasure.MINIMUM, minimumOverrideMeasurement, tailor);
   }
 
   @Override
-  public double calculatePreferredMeasurement (Bias bias) {
+  public double calculatePreferredMeasurement (Bias bias, LayoutTailor tailor) {
 
-    return calculateMeasurement(bias, TapeMeasure.PREFERRED, preferredOverrideMeasurement);
+    return calculateMeasurement(bias, TapeMeasure.PREFERRED, preferredOverrideMeasurement, tailor);
   }
 
   @Override
-  public double calculateMaximumMeasurement (Bias bias) {
+  public double calculateMaximumMeasurement (Bias bias, LayoutTailor tailor) {
 
-    return calculateMeasurement(bias, TapeMeasure.MAXIMUM, maximumOverrideMeasurement);
+    return calculateMeasurement(bias, TapeMeasure.MAXIMUM, maximumOverrideMeasurement, tailor);
   }
 
-  private synchronized double calculateMeasurement (Bias bias, TapeMeasure tapeMeasure, Double unbiasedMeasurementOverride) {
+  private synchronized double calculateMeasurement (Bias bias, TapeMeasure tapeMeasure, Double unbiasedMeasurementOverride, LayoutTailor tailor) {
 
     double maxAscent = 0;
     double maxDescent = 0;
 
     for (ParaboxElement<?> element : getElements()) {
 
-      double currentMeasurement = (unbiasedMeasurementOverride != null) ? unbiasedMeasurementOverride : tapeMeasure.getMeasure(bias, element);
+      double currentMeasurement = (unbiasedMeasurementOverride != null) ? unbiasedMeasurementOverride : tapeMeasure.getMeasure(bias, element, tailor);
       double currentAscent = (!alignment.equals(Alignment.BASELINE)) ? currentMeasurement : element.getBaseline(bias, currentMeasurement);
       double currentDescent;
 
@@ -140,15 +140,15 @@ public class ParallelGroup<C> extends Group<C, ParallelGroup> {
 
     if (!getElements().isEmpty()) {
 
-      BaselineCalculations baselineCalculations = (alignment.equals(Alignment.BASELINE)) ? new BaselineCalculations(bias, maximumOverrideMeasurement, containerMeasurement, getElements()) : null;
+      BaselineCalculations baselineCalculations = (alignment.equals(Alignment.BASELINE)) ? new BaselineCalculations(bias, maximumOverrideMeasurement, containerMeasurement, getElements(), tailor) : null;
       double elementMeasurement;
       int index = 0;
 
       for (ParaboxElement<?> element : getElements()) {
-        if (containerMeasurement <= (elementMeasurement = (minimumOverrideMeasurement != null) ? minimumOverrideMeasurement : element.getMinimumMeasurement(bias))) {
+        if (containerMeasurement <= (elementMeasurement = (minimumOverrideMeasurement != null) ? minimumOverrideMeasurement : element.getMinimumMeasurement(bias, tailor))) {
           tailor.applyLayout(bias, containerPosition, elementMeasurement, element);
         }
-        else if (containerMeasurement <= (elementMeasurement = (maximumOverrideMeasurement != null) ? maximumOverrideMeasurement : element.getMaximumMeasurement(bias))) {
+        else if (containerMeasurement <= (elementMeasurement = (maximumOverrideMeasurement != null) ? maximumOverrideMeasurement : element.getMaximumMeasurement(bias, tailor))) {
           tailor.applyLayout(bias, containerPosition, containerMeasurement, element);
         }
         else {
@@ -208,7 +208,7 @@ public class ParallelGroup<C> extends Group<C, ParallelGroup> {
                 top = 0;
               }
               else if (top + elementMeasurement > containerMeasurement) {
-                top += containerMeasurement - (top + elementMeasurement);
+                top = containerMeasurement - elementMeasurement;
               }
 
               tailor.applyLayout(bias, containerPosition + top, elementMeasurement, element);

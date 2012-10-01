@@ -28,12 +28,7 @@ package org.smallmind.nutsnbolts.layout;
 
 public class GroupParaboxElement<G extends Group> extends ParaboxElement<G> implements LinearPart {
 
-  public GroupParaboxElement (G group, Spec spec) {
-
-    this(group, spec.staticConstraint());
-  }
-
-  public GroupParaboxElement (G group, ParaboxConstraint constraint) {
+  public GroupParaboxElement (G group, Constraint constraint) {
 
     super(group, constraint);
   }
@@ -45,21 +40,21 @@ public class GroupParaboxElement<G extends Group> extends ParaboxElement<G> impl
   }
 
   @Override
-  public double getComponentMinimumMeasurement (Bias bias) {
+  public double getPartMinimumMeasurement (Bias bias, LayoutTailor tailor) {
 
-    return getPart().calculateMinimumMeasurement(bias);
+    return getPart().calculateMinimumMeasurement(bias, tailor);
   }
 
   @Override
-  public double getComponentPreferredMeasurement (Bias bias) {
+  public double getPartPreferredMeasurement (Bias bias, LayoutTailor tailor) {
 
-    return getPart().calculatePreferredMeasurement(bias);
+    return getPart().calculatePreferredMeasurement(bias, tailor);
   }
 
   @Override
-  public double getComponentMaximumMeasurement (Bias bias) {
+  public double getPartMaximumMeasurement (Bias bias, LayoutTailor tailor) {
 
-    return getPart().calculateMaximumMeasurement(bias);
+    return getPart().calculateMaximumMeasurement(bias, tailor);
   }
 
   @Override

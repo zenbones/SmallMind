@@ -26,29 +26,43 @@
  */
 package org.smallmind.nutsnbolts.layout;
 
-public enum TapeMeasure {
+public class Sizing {
 
-  MINIMUM {
-    @Override
-    public double getMeasure (Bias bias, ParaboxElement<?> element, LayoutTailor tailor) {
+  private Object part;
+  private Bias bias;
+  private TapeMeasure tapeMeasure;
 
-      return element.getMinimumMeasurement(bias, tailor);
-    }
-  },
-  PREFERRED {
-    @Override
-    public double getMeasure (Bias bias, ParaboxElement<?> element, LayoutTailor tailor) {
+  public Sizing (Object part, Bias bias, TapeMeasure tapeMeasure) {
 
-      return element.getPreferredMeasurement(bias, tailor);
-    }
-  },
-  MAXIMUM {
-    @Override
-    public double getMeasure (Bias bias, ParaboxElement<?> element, LayoutTailor tailor) {
+    this.part = part;
+    this.bias = bias;
+    this.tapeMeasure = tapeMeasure;
+  }
 
-      return element.getMaximumMeasurement(bias, tailor);
-    }
-  };
+  public Object getPart () {
 
-  public abstract double getMeasure (Bias bias, ParaboxElement<?> element, LayoutTailor tailor);
+    return part;
+  }
+
+  public Bias getBias () {
+
+    return bias;
+  }
+
+  public TapeMeasure getTapeMeasure () {
+
+    return tapeMeasure;
+  }
+
+  @Override
+  public int hashCode () {
+
+    return part.hashCode() ^ bias.hashCode() ^ tapeMeasure.hashCode();
+  }
+
+  @Override
+  public boolean equals (Object obj) {
+
+    return (obj instanceof Sizing) && ((Sizing)obj).getPart().equals(part) && ((Sizing)obj).getBias().equals(bias) && ((Sizing)obj).getTapeMeasure().equals(tapeMeasure);
+  }
 }

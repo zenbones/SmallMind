@@ -98,30 +98,30 @@ public class SequentialGroup<C> extends Group<C, SequentialGroup> {
   }
 
   @Override
-  public double calculateMinimumMeasurement (Bias bias) {
+  public double calculateMinimumMeasurement (Bias bias, LayoutTailor tailor) {
 
-    return calculateMeasurement(bias, TapeMeasure.MINIMUM);
+    return calculateMeasurement(bias, TapeMeasure.MINIMUM, tailor);
   }
 
   @Override
-  public double calculatePreferredMeasurement (Bias bias) {
+  public double calculatePreferredMeasurement (Bias bias, LayoutTailor tailor) {
 
-    return calculateMeasurement(bias, TapeMeasure.PREFERRED);
+    return calculateMeasurement(bias, TapeMeasure.PREFERRED, tailor);
   }
 
   @Override
-  public double calculateMaximumMeasurement (Bias bias) {
+  public double calculateMaximumMeasurement (Bias bias, LayoutTailor tailor) {
 
-    return calculateMeasurement(bias, TapeMeasure.MAXIMUM);
+    return calculateMeasurement(bias, TapeMeasure.MAXIMUM, tailor);
   }
 
-  private synchronized double calculateMeasurement (Bias bias, TapeMeasure tapeMeasure) {
+  private synchronized double calculateMeasurement (Bias bias, TapeMeasure tapeMeasure, LayoutTailor tailor) {
 
     boolean first = true;
     double total = 0.0D;
 
     for (ParaboxElement<?> element : getElements()) {
-      total += tapeMeasure.getMeasure(bias, element);
+      total += tapeMeasure.getMeasure(bias, element, tailor);
       if (!first) {
         total += gap;
       }
@@ -138,18 +138,18 @@ public class SequentialGroup<C> extends Group<C, SequentialGroup> {
 
       double preferredContainerMeasure;
 
-      if (containerMeasurement <= calculateMeasurement(bias, TapeMeasure.MINIMUM)) {
+      if (containerMeasurement <= calculateMeasurement(bias, TapeMeasure.MINIMUM, tailor)) {
 
         double currentMeasure;
         double top = 0;
 
         for (ParaboxElement<?> element : getElements()) {
 
-          tailor.applyLayout(bias, containerPosition + top, currentMeasure = element.getMinimumMeasurement(bias), element);
+          tailor.applyLayout(bias, containerPosition + top, currentMeasure = element.getMinimumMeasurement(bias, tailor), element);
           top += currentMeasure + gap;
         }
       }
-      else if (containerMeasurement <= (preferredContainerMeasure = calculateMeasurement(bias, TapeMeasure.PREFERRED))) {
+      else if (containerMeasurement <= (preferredContainerMeasure = calculateMeasurement(bias, TapeMeasure.PREFERRED, tailor))) {
 
         double[] preferredBiasedMeasurements = new double[getElements().size()];
         double[] fat = new double[getElements().size()];
@@ -162,7 +162,7 @@ public class SequentialGroup<C> extends Group<C, SequentialGroup> {
         index = 0;
         for (ParaboxElement<?> element : getElements()) {
           totalShrink += element.getConstraint().getShrink();
-          totalFat += (fat[index++] = (preferredBiasedMeasurements[index] = element.getPreferredMeasurement(bias)) - element.getMinimumMeasurement(bias));
+          totalFat += (fat[index++] = (preferredBiasedMeasurements[index] = element.getPreferredMeasurement(bias, tailor)) - element.getMinimumMeasurement(bias, tailor));
         }
 
         index = 0;
@@ -192,8 +192,8 @@ public class SequentialGroup<C> extends Group<C, SequentialGroup> {
             reorderedElements.add(new ReorderedElement(element, index));
           }
 
-          tentativeMeasurements[index] = element.getPreferredMeasurement(bias);
-          maximumMeasurements[index++] = element.getMaximumMeasurement(bias);
+          tentativeMeasurements[index] = element.getPreferredMeasurement(bias, tailor);
+          maximumMeasurements[index++] = element.getMaximumMeasurement(bias, tailor);
         }
 
         if (!reorderedElements.isEmpty()) {

@@ -71,17 +71,17 @@ public class ParaboxLayout<C> {
 
   public Pair calculateMinimumSize () {
 
-    return new Pair(horizontalGroup.calculateMinimumMeasurement(Bias.HORIZONTAL), verticalGroup.calculateMinimumMeasurement(Bias.VERTICAL));
+    return new Pair(horizontalGroup.calculateMinimumMeasurement(Bias.HORIZONTAL, null), verticalGroup.calculateMinimumMeasurement(Bias.VERTICAL, null));
   }
 
   public Pair calculatePreferredSize () {
 
-    return new Pair(horizontalGroup.calculatePreferredMeasurement(Bias.HORIZONTAL), verticalGroup.calculatePreferredMeasurement(Bias.VERTICAL));
+    return new Pair(horizontalGroup.calculatePreferredMeasurement(Bias.HORIZONTAL, null), verticalGroup.calculatePreferredMeasurement(Bias.VERTICAL, null));
   }
 
   public Pair calculateMaximumSize () {
 
-    return new Pair(horizontalGroup.calculateMaximumMeasurement(Bias.HORIZONTAL), verticalGroup.calculateMaximumMeasurement(Bias.VERTICAL));
+    return new Pair(horizontalGroup.calculateMaximumMeasurement(Bias.HORIZONTAL, null), verticalGroup.calculateMaximumMeasurement(Bias.VERTICAL, null));
   }
 
   public void doLayout (double width, double height, C... components) {
@@ -106,42 +106,42 @@ public class ParaboxLayout<C> {
     tailor.cleanup();
   }
 
-  public ParallelGroup<C> parallel () {
+  public ParallelGroup<C> parallelGroup () {
 
     return new ParallelGroup<C>(this);
   }
 
-  public ParallelGroup<C> parallel (Alignment alignment) {
+  public ParallelGroup<C> parallelGroup (Alignment alignment) {
 
     return new ParallelGroup<C>(this, alignment);
   }
 
-  public SequentialGroup<C> sequential () {
+  public SequentialGroup<C> sequentialGroup () {
 
     return new SequentialGroup<C>(this);
   }
 
-  public SequentialGroup<C> sequential (Gap gap) {
+  public SequentialGroup<C> sequentialGroup (Gap gap) {
 
     return new SequentialGroup<C>(this, gap);
   }
 
-  public SequentialGroup<C> sequential (double gap) {
+  public SequentialGroup<C> sequentialGroup (double gap) {
 
     return new SequentialGroup<C>(this, gap);
   }
 
-  public SequentialGroup<C> sequential (Justification justification) {
+  public SequentialGroup<C> sequentialGroup (Justification justification) {
 
     return new SequentialGroup<C>(this, justification);
   }
 
-  public SequentialGroup<C> sequential (Gap gap, Justification justification) {
+  public SequentialGroup<C> sequentialGroup (Gap gap, Justification justification) {
 
     return new SequentialGroup<C>(this, gap, justification);
   }
 
-  public SequentialGroup<C> sequential (double gap, Justification justification) {
+  public SequentialGroup<C> sequentialGroup (double gap, Justification justification) {
 
     return new SequentialGroup<C>(this, gap, justification);
   }

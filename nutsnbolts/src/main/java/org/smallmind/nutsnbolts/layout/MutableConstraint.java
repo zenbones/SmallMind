@@ -26,29 +26,31 @@
  */
 package org.smallmind.nutsnbolts.layout;
 
-public enum TapeMeasure {
+public class MutableConstraint extends Constraint {
 
-  MINIMUM {
-    @Override
-    public double getMeasure (Bias bias, ParaboxElement<?> element, LayoutTailor tailor) {
+  protected MutableConstraint () {
 
-      return element.getMinimumMeasurement(bias, tailor);
-    }
-  },
-  PREFERRED {
-    @Override
-    public double getMeasure (Bias bias, ParaboxElement<?> element, LayoutTailor tailor) {
+  }
 
-      return element.getPreferredMeasurement(bias, tailor);
-    }
-  },
-  MAXIMUM {
-    @Override
-    public double getMeasure (Bias bias, ParaboxElement<?> element, LayoutTailor tailor) {
+  public MutableConstraint mayGrow () {
 
-      return element.getMaximumMeasurement(bias, tailor);
-    }
-  };
+    return setGrow(0.5D);
+  }
 
-  public abstract double getMeasure (Bias bias, ParaboxElement<?> element, LayoutTailor tailor);
+  public MutableConstraint setGrow (double grow) {
+
+    setGrow(grow);
+
+    return this;
+  }
+
+  public MutableConstraint mayShrink () {
+
+    return mayShrink();
+  }
+
+  public MutableConstraint setShrink (double shrink) {
+
+    return setShrink(shrink);
+  }
 }

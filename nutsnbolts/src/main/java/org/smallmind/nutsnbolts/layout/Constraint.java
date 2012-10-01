@@ -26,46 +26,46 @@
  */
 package org.smallmind.nutsnbolts.layout;
 
-public class ParaboxConstraint {
+public class Constraint {
 
-  private static final ParaboxConstraint IMMUTABLE_RIGID_INSTANCE = new ParaboxConstraint(0.0D, 0.0D);
-  private static final ParaboxConstraint IMMUTABLE_GROW_INSTANCE = new ParaboxConstraint(0.5D, 0.0D);
-  private static final ParaboxConstraint IMMUTABLE_SHRINK_INSTANCE = new ParaboxConstraint(0.0D, 0.5D);
-  private static final ParaboxConstraint IMMUTABLE_GROW_AND_SHRINK_INSTANCE = new ParaboxConstraint(0.5D, 0.5D);
+  private static final Constraint IMMUTABLE_RIGID_INSTANCE = new Constraint(0.0D, 0.0D);
+  private static final Constraint IMMUTABLE_GROW_INSTANCE = new Constraint(0.5D, 0.0D);
+  private static final Constraint IMMUTABLE_SHRINK_INSTANCE = new Constraint(0.0D, 0.5D);
+  private static final Constraint IMMUTABLE_GROW_AND_SHRINK_INSTANCE = new Constraint(0.5D, 0.5D);
 
   private double grow;
   private double shrink;
 
-  public static ParaboxConstraint immutable () {
+  public static Constraint immutable () {
 
     return IMMUTABLE_RIGID_INSTANCE;
   }
 
-  public static ParaboxConstraint expand () {
+  public static Constraint expand () {
 
     return IMMUTABLE_GROW_INSTANCE;
   }
 
-  public static ParaboxConstraint contract () {
+  public static Constraint contract () {
 
     return IMMUTABLE_SHRINK_INSTANCE;
   }
 
-  public static ParaboxConstraint stretch () {
+  public static Constraint stretch () {
 
     return IMMUTABLE_GROW_AND_SHRINK_INSTANCE;
   }
 
-  public static MutableParaboxConstraint create () {
+  public static MutableConstraint create () {
 
-    return new MutableParaboxConstraint();
+    return new MutableConstraint();
   }
 
-  public ParaboxConstraint () {
+  public Constraint () {
 
   }
 
-  public ParaboxConstraint (double grow, double shrink) {
+  public Constraint (double grow, double shrink) {
 
     this.grow = grow;
     this.shrink = shrink;
