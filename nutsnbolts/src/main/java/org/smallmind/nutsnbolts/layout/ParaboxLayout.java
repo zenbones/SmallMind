@@ -71,10 +71,18 @@ public class ParaboxLayout {
 
   public double calculateMinimumWidth () {
 
+    if (horizontalBox == null) {
+      throw new LayoutException("No horizontal box has been set on this layout");
+    }
+
     return getHorizontalPerimeterRequirements() + horizontalBox.calculateMinimumMeasurement(Bias.HORIZONTAL, null);
   }
 
   public double calculateMinimumHeight () {
+
+    if (verticalBox == null) {
+      throw new LayoutException("No vertical box has been set on this layout");
+    }
 
     return getVerticalPerimeterRequirements() + verticalBox.calculateMinimumMeasurement(Bias.VERTICAL, null);
   }
@@ -86,10 +94,18 @@ public class ParaboxLayout {
 
   public double calculatePreferredWidth () {
 
+    if (horizontalBox == null) {
+      throw new LayoutException("No horizontal box has been set on this layout");
+    }
+
     return getHorizontalPerimeterRequirements() + horizontalBox.calculatePreferredMeasurement(Bias.HORIZONTAL, null);
   }
 
   public double calculatePreferredHeight () {
+
+    if (verticalBox == null) {
+      throw new LayoutException("No vertical box has been set on this layout");
+    }
 
     return getVerticalPerimeterRequirements() + verticalBox.calculatePreferredMeasurement(Bias.VERTICAL, null);
   }
@@ -101,10 +117,18 @@ public class ParaboxLayout {
 
   public double calculateMaximumWidth () {
 
+    if (horizontalBox == null) {
+      throw new LayoutException("No horizontal box has been set on this layout");
+    }
+
     return getHorizontalPerimeterRequirements() + horizontalBox.calculateMaximumMeasurement(Bias.HORIZONTAL, null);
   }
 
   public double calculateMaximumHeight () {
+
+    if (verticalBox == null) {
+      throw new LayoutException("No vertical box has been set on this layout");
+    }
 
     return getVerticalPerimeterRequirements() + verticalBox.calculateMaximumMeasurement(Bias.VERTICAL, null);
   }
