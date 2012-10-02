@@ -12,6 +12,11 @@
   <description>JavaFX Extensions</description>
   <dependencies>
     <dependency>
+      <groupId>org.smallmind</groupId>
+      <artifactId>smallmind-nutsnbolts</artifactId>
+      <version>${project.version}</version>
+    </dependency>
+    <dependency>
       <groupId>com.oracle</groupId>
       <artifactId>javafx-rt</artifactId>
     </dependency>
