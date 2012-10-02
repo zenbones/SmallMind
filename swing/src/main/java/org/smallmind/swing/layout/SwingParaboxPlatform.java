@@ -28,6 +28,10 @@ package org.smallmind.swing.layout;
 
 import java.awt.ComponentOrientation;
 import java.util.Locale;
+import javax.swing.JButton;
+import javax.swing.JTextField;
+import javax.swing.LayoutStyle;
+import javax.swing.SwingConstants;
 import org.smallmind.nutsnbolts.layout.Bias;
 import org.smallmind.nutsnbolts.layout.Flow;
 import org.smallmind.nutsnbolts.layout.Orientation;
@@ -36,14 +40,26 @@ import org.smallmind.nutsnbolts.layout.Perimeter;
 
 public class SwingParaboxPlatform implements ParaboxPlatform {
 
-  private static final Perimeter PERIMETER = new Perimeter(10.0D, 10.0D, 10.0D, 10.0D);
+  private static final Perimeter PERIMETER;
   private static final Orientation ORIENTATION;
+  private static final double RELATED_GAP;
+  private static final double UNRELATED_GAP;
 
   static {
 
     ComponentOrientation componentOrientation = ComponentOrientation.getOrientation(Locale.getDefault());
+    LayoutStyle layoutStyle = LayoutStyle.getInstance();
+    JButton button = new JButton();
+    JTextField textField = new JTextField();
+    double containerGap;
 
     ORIENTATION = new Orientation(componentOrientation.isHorizontal() ? Bias.HORIZONTAL : Bias.VERTICAL, componentOrientation.isLeftToRight() ? Flow.FIRST_TO_LAST : Flow.LAST_TO_FIRST);
+
+    containerGap = layoutStyle.getContainerGap(button, SwingConstants.EAST, null);
+
+    RELATED_GAP = layoutStyle.getPreferredGap(button, textField, LayoutStyle.ComponentPlacement.RELATED, SwingConstants.EAST, null);
+    UNRELATED_GAP = layoutStyle.getPreferredGap(button, textField, LayoutStyle.ComponentPlacement.UNRELATED, SwingConstants.EAST, null);
+    PERIMETER = new Perimeter(containerGap, containerGap, containerGap, containerGap);
   }
 
   public SwingParaboxPlatform () {
@@ -53,13 +69,13 @@ public class SwingParaboxPlatform implements ParaboxPlatform {
   @Override
   public double getRelatedGap () {
 
-    return 5.0D;
+    return RELATED_GAP;
   }
 
   @Override
   public double getUnrelatedGap () {
 
-    return 10.0D;
+    return UNRELATED_GAP;
   }
 
   @Override
