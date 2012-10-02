@@ -30,25 +30,25 @@ public enum Gap {
 
   NONE {
     @Override
-    public double getGap (Platform platform) {
+    public double getGap (ParaboxPlatform platform) {
 
       return 0.0D;
     }
   },
   RELATED {
     @Override
-    public double getGap (Platform platform) {
+    public double getGap (ParaboxPlatform platform) {
 
       return platform.getRelatedGap();
     }
   },
   UNRELATED {
     @Override
-    public double getGap (Platform platform) {
+    public double getGap (ParaboxPlatform platform) {
 
       return platform.getUnrelatedGap();
     }
   };
 
-  public abstract double getGap (Platform platform);
+  public abstract double getGap (ParaboxPlatform platform);
 }

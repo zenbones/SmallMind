@@ -29,40 +29,40 @@ package org.smallmind.nutsnbolts.layout;
 import java.util.Arrays;
 import java.util.List;
 
-public class ParaboxLayout<C> {
+public class ParaboxLayout {
 
-  private ParaboxContainer<C> container;
+  private ParaboxContainer container;
   private Group horizontalGroup;
   private Group verticalGroup;
 
-  public ParaboxLayout (ParaboxContainer<C> container) {
+  public ParaboxLayout (ParaboxContainer container) {
 
     this.container = container;
   }
 
-  public ParaboxContainer<C> getContainer () {
+  public ParaboxContainer getContainer () {
 
     return container;
   }
 
-  public Group getHorizontalGroup () {
+  public Group<?> getHorizontalGroup () {
 
     return horizontalGroup;
   }
 
-  public ParaboxLayout setHorizontalGroup (Group horizontalGroup) {
+  public ParaboxLayout setHorizontalGroup (Group<?> horizontalGroup) {
 
     this.horizontalGroup = horizontalGroup;
 
     return this;
   }
 
-  public Group getVerticalGroup () {
+  public Group<?> getVerticalGroup () {
 
     return verticalGroup;
   }
 
-  public ParaboxLayout setVerticalGroup (Group verticalGroup) {
+  public ParaboxLayout setVerticalGroup (Group<?> verticalGroup) {
 
     this.verticalGroup = verticalGroup;
 
@@ -71,25 +71,35 @@ public class ParaboxLayout<C> {
 
   public Pair calculateMinimumSize () {
 
-    return new Pair(horizontalGroup.calculateMinimumMeasurement(Bias.HORIZONTAL, null), verticalGroup.calculateMinimumMeasurement(Bias.VERTICAL, null));
+    return new Pair(getHorizontalPerimeterRequirements() + horizontalGroup.calculateMinimumMeasurement(Bias.HORIZONTAL, null), getVerticalPerimeterRequirements() + verticalGroup.calculateMinimumMeasurement(Bias.VERTICAL, null));
   }
 
   public Pair calculatePreferredSize () {
 
-    return new Pair(horizontalGroup.calculatePreferredMeasurement(Bias.HORIZONTAL, null), verticalGroup.calculatePreferredMeasurement(Bias.VERTICAL, null));
+    return new Pair(getHorizontalPerimeterRequirements() + horizontalGroup.calculatePreferredMeasurement(Bias.HORIZONTAL, null), getVerticalPerimeterRequirements() + verticalGroup.calculatePreferredMeasurement(Bias.VERTICAL, null));
   }
 
   public Pair calculateMaximumSize () {
 
-    return new Pair(horizontalGroup.calculateMaximumMeasurement(Bias.HORIZONTAL, null), verticalGroup.calculateMaximumMeasurement(Bias.VERTICAL, null));
+    return new Pair(getHorizontalPerimeterRequirements() + horizontalGroup.calculateMaximumMeasurement(Bias.HORIZONTAL, null), getVerticalPerimeterRequirements() + verticalGroup.calculateMaximumMeasurement(Bias.VERTICAL, null));
   }
 
-  public void doLayout (double width, double height, C... components) {
+  private double getHorizontalPerimeterRequirements () {
+
+    return container.getPlatform().getFramePerimeter().getLeft() + container.getPlatform().getFramePerimeter().getRight();
+  }
+
+  private double getVerticalPerimeterRequirements () {
+
+    return container.getPlatform().getFramePerimeter().getTop() + container.getPlatform().getFramePerimeter().getBottom();
+  }
+
+  public void doLayout (double width, double height, Object... components) {
 
     doLayout(width, height, Arrays.asList(components));
   }
 
-  public void doLayout (double width, double height, List<C> componentList) {
+  public void doLayout (double width, double height, List componentList) {
 
     LayoutTailor tailor;
 
@@ -100,49 +110,49 @@ public class ParaboxLayout<C> {
       throw new LayoutException("No vertical group has been set on this layout");
     }
 
-    horizontalGroup.doLayout(Bias.HORIZONTAL, 0, width, tailor = new LayoutTailor(componentList));
-    verticalGroup.doLayout(Bias.VERTICAL, 0, height, tailor);
+    horizontalGroup.doLayout(Bias.HORIZONTAL, container.getPlatform().getFramePerimeter().getLeft(), width - getHorizontalPerimeterRequirements(), tailor = new LayoutTailor(componentList));
+    verticalGroup.doLayout(Bias.VERTICAL, container.getPlatform().getFramePerimeter().getTop(), height - getVerticalPerimeterRequirements(), tailor);
 
     tailor.cleanup();
   }
 
-  public ParallelGroup<C> parallelGroup () {
+  public ParallelGroup parallelGroup () {
 
-    return new ParallelGroup<C>(this);
+    return new ParallelGroup(this);
   }
 
-  public ParallelGroup<C> parallelGroup (Alignment alignment) {
+  public ParallelGroup parallelGroup (Alignment alignment) {
 
-    return new ParallelGroup<C>(this, alignment);
+    return new ParallelGroup(this, alignment);
   }
 
-  public SequentialGroup<C> sequentialGroup () {
+  public SequentialGroup sequentialGroup () {
 
-    return new SequentialGroup<C>(this);
+    return new SequentialGroup(this);
   }
 
-  public SequentialGroup<C> sequentialGroup (Gap gap) {
+  public SequentialGroup sequentialGroup (Gap gap) {
 
-    return new SequentialGroup<C>(this, gap);
+    return new SequentialGroup(this, gap);
   }
 
-  public SequentialGroup<C> sequentialGroup (double gap) {
+  public SequentialGroup sequentialGroup (double gap) {
 
-    return new SequentialGroup<C>(this, gap);
+    return new SequentialGroup(this, gap);
   }
 
-  public SequentialGroup<C> sequentialGroup (Justification justification) {
+  public SequentialGroup sequentialGroup (Justification justification) {
 
-    return new SequentialGroup<C>(this, justification);
+    return new SequentialGroup(this, justification);
   }
 
-  public SequentialGroup<C> sequentialGroup (Gap gap, Justification justification) {
+  public SequentialGroup sequentialGroup (Gap gap, Justification justification) {
 
-    return new SequentialGroup<C>(this, gap, justification);
+    return new SequentialGroup(this, gap, justification);
   }
 
-  public SequentialGroup<C> sequentialGroup (double gap, Justification justification) {
+  public SequentialGroup sequentialGroup (double gap, Justification justification) {
 
-    return new SequentialGroup<C>(this, gap, justification);
+    return new SequentialGroup(this, gap, justification);
   }
 }

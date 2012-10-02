@@ -26,11 +26,38 @@
  */
 package org.smallmind.nutsnbolts.layout;
 
-public interface Platform {
+public class Perimeter {
 
-  public abstract double getRelatedGap ();
+  private double top;
+  private double left;
+  private double bottom;
+  private double right;
 
-  public abstract double getUnrelatedGap ();
+  public Perimeter (double top, double left, double bottom, double right) {
 
-  public abstract Orientation getOrientation ();
+    this.top = top;
+    this.left = left;
+    this.bottom = bottom;
+    this.right = right;
+  }
+
+  public double getTop () {
+
+    return top;
+  }
+
+  public double getLeft () {
+
+    return left;
+  }
+
+  public double getBottom () {
+
+    return bottom;
+  }
+
+  public double getRight () {
+
+    return right;
+  }
 }

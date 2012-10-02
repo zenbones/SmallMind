@@ -29,13 +29,15 @@ package org.smallmind.nutsnbolts.layout;
 import java.util.Iterator;
 import java.util.LinkedList;
 
-public abstract class Group<C, G extends Group> {
+public abstract class Group<G extends Group<G>> {
 
-  private ParaboxLayout<C> layout;
+  private ParaboxLayout layout;
   private LinkedList<ParaboxElement<?>> elements = new LinkedList<ParaboxElement<?>>();
+  private Class<G> managedClass;
 
-  protected Group (ParaboxLayout<C> layout) {
+  protected Group (Class<G> managedClass, ParaboxLayout layout) {
 
+    this.managedClass = managedClass;
     this.layout = layout;
   }
 
@@ -47,7 +49,7 @@ public abstract class Group<C, G extends Group> {
 
   public abstract double calculateMaximumMeasurement (Bias bias, LayoutTailor tailor);
 
-  protected ParaboxLayout<C> getLayout () {
+  protected ParaboxLayout getLayout () {
 
     return layout;
   }
@@ -57,36 +59,36 @@ public abstract class Group<C, G extends Group> {
     return elements;
   }
 
-  public synchronized Group<C, G> add (C component) {
+  public synchronized <C> G add (C component) {
 
     add(component, Constraint.immutable());
 
-    return this;
+    return managedClass.cast(this);
   }
 
-  public synchronized Group<C, G> add (C component, Constraint constraint) {
+  public synchronized G add (Object component, Constraint constraint) {
 
     getLayout().getContainer().nativelyAddComponent(component);
     elements.add(layout.getContainer().constructElement(component, constraint));
 
-    return this;
+    return managedClass.cast(this);
   }
 
-  public synchronized Group<C, G> add (Group<C, ?> group) {
+  public synchronized G add (Group<?> group) {
 
     add(group, Constraint.stretch());
 
-    return this;
+    return managedClass.cast(this);
   }
 
-  public synchronized Group<C, G> add (Group<C, ?> group, Constraint constraint) {
+  public synchronized G add (Group<?> group, Constraint constraint) {
 
-    elements.add(new GroupParaboxElement<Group>(group, constraint));
+    elements.add(new GroupParaboxElement(group, constraint));
 
-    return this;
+    return managedClass.cast(this);
   }
 
-  public synchronized void remove (C component) {
+  public synchronized void remove (Object component) {
 
     Iterator<ParaboxElement<?>> elementIter = elements.iterator();
 

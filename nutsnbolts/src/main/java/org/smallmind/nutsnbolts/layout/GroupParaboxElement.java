@@ -26,9 +26,9 @@
  */
 package org.smallmind.nutsnbolts.layout;
 
-public class GroupParaboxElement<G extends Group> extends ParaboxElement<G> implements LinearPart {
+public class GroupParaboxElement extends ParaboxElement<Group<?>> implements LinearPart {
 
-  public GroupParaboxElement (G group, Constraint constraint) {
+  public GroupParaboxElement (Group<?> group, Constraint constraint) {
 
     super(group, constraint);
   }

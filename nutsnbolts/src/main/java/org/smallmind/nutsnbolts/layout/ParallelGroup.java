@@ -28,21 +28,21 @@ package org.smallmind.nutsnbolts.layout;
 
 import org.smallmind.nutsnbolts.lang.UnknownSwitchCaseException;
 
-public class ParallelGroup<C> extends Group<C, ParallelGroup> {
+public class ParallelGroup extends Group<ParallelGroup> {
 
   private Alignment alignment;
   private Double minimumOverrideMeasurement;
   private Double preferredOverrideMeasurement;
   private Double maximumOverrideMeasurement;
 
-  protected ParallelGroup (ParaboxLayout<C> layout) {
+  protected ParallelGroup (ParaboxLayout layout) {
 
     this(layout, Alignment.LEADING);
   }
 
-  protected ParallelGroup (ParaboxLayout<C> layout, Alignment alignment) {
+  protected ParallelGroup (ParaboxLayout layout, Alignment alignment) {
 
-    super(layout);
+    super(ParallelGroup.class, layout);
 
     this.alignment = alignment;
   }

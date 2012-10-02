@@ -28,7 +28,7 @@ package org.smallmind.nutsnbolts.layout;
 
 public class Constraint {
 
-  private static final Constraint IMMUTABLE_RIGID_INSTANCE = new Constraint(0.0D, 0.0D);
+  private static final Constraint IMMUTABLE_RIGID_INSTANCE = new Constraint();
   private static final Constraint IMMUTABLE_GROW_INSTANCE = new Constraint(0.5D, 0.0D);
   private static final Constraint IMMUTABLE_SHRINK_INSTANCE = new Constraint(0.0D, 0.5D);
   private static final Constraint IMMUTABLE_GROW_AND_SHRINK_INSTANCE = new Constraint(0.5D, 0.5D);

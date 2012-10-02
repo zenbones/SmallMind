@@ -30,39 +30,39 @@ import java.util.Iterator;
 import java.util.LinkedList;
 import org.smallmind.nutsnbolts.lang.UnknownSwitchCaseException;
 
-public class SequentialGroup<C> extends Group<C, SequentialGroup> {
+public class SequentialGroup extends Group<SequentialGroup> {
 
   private Justification justification;
   private double gap;
 
-  protected SequentialGroup (ParaboxLayout<C> layout) {
+  protected SequentialGroup (ParaboxLayout layout) {
 
     this(layout, Gap.UNRELATED);
   }
 
-  protected SequentialGroup (ParaboxLayout<C> layout, Gap gap) {
+  protected SequentialGroup (ParaboxLayout layout, Gap gap) {
 
     this(layout, gap.getGap(layout.getContainer().getPlatform()));
   }
 
-  protected SequentialGroup (ParaboxLayout<C> layout, double gap) {
+  protected SequentialGroup (ParaboxLayout layout, double gap) {
 
     this(layout, gap, Justification.LEADING);
   }
 
-  protected SequentialGroup (ParaboxLayout<C> layout, Justification justification) {
+  protected SequentialGroup (ParaboxLayout layout, Justification justification) {
 
     this(layout, Gap.UNRELATED, justification);
   }
 
-  protected SequentialGroup (ParaboxLayout<C> layout, Gap gap, Justification justification) {
+  protected SequentialGroup (ParaboxLayout layout, Gap gap, Justification justification) {
 
     this(layout, gap.getGap(layout.getContainer().getPlatform()), justification);
   }
 
-  protected SequentialGroup (ParaboxLayout<C> layout, double gap, Justification justification) {
+  protected SequentialGroup (ParaboxLayout layout, double gap, Justification justification) {
 
-    super(layout);
+    super(SequentialGroup.class, layout);
 
     this.justification = justification;
     this.gap = gap;
@@ -112,7 +112,7 @@ public class SequentialGroup<C> extends Group<C, SequentialGroup> {
   @Override
   public double calculateMaximumMeasurement (Bias bias, LayoutTailor tailor) {
 
-    return calculateMeasurement(bias, TapeMeasure.MAXIMUM, tailor);
+    return Integer.MAX_VALUE;
   }
 
   private synchronized double calculateMeasurement (Bias bias, TapeMeasure tapeMeasure, LayoutTailor tailor) {

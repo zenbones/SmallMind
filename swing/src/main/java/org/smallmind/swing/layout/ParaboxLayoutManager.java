@@ -40,26 +40,26 @@ import org.smallmind.nutsnbolts.layout.Pair;
 import org.smallmind.nutsnbolts.layout.ParaboxContainer;
 import org.smallmind.nutsnbolts.layout.ParaboxElement;
 import org.smallmind.nutsnbolts.layout.ParaboxLayout;
+import org.smallmind.nutsnbolts.layout.ParaboxPlatform;
 import org.smallmind.nutsnbolts.layout.ParallelGroup;
-import org.smallmind.nutsnbolts.layout.Platform;
 import org.smallmind.nutsnbolts.layout.SequentialGroup;
 
 public class ParaboxLayoutManager implements ParaboxContainer<Component>, LayoutManager2 {
 
-  private static final Platform PLATFORM = new SwingParaboxPlatform();
+  private static final ParaboxPlatform PLATFORM = new SwingParaboxPlatform();
 
   private final Container container;
-  private final ParaboxLayout<Component> paraboxLayout;
+  private final ParaboxLayout paraboxLayout;
 
   public ParaboxLayoutManager (Container container) {
 
     this.container = container;
 
-    paraboxLayout = new ParaboxLayout<Component>(this);
+    paraboxLayout = new ParaboxLayout(this);
   }
 
   @Override
-  public Platform getPlatform () {
+  public ParaboxPlatform getPlatform () {
 
     return PLATFORM;
   }
@@ -176,56 +176,66 @@ public class ParaboxLayoutManager implements ParaboxContainer<Component>, Layout
     paraboxLayout.doLayout(parent.getWidth(), parent.getHeight(), parent.getComponents());
   }
 
-  public ParaboxLayoutManager setHorizontalGroup (Group horizontalGroup) {
+  public Group<?> getHorizontalGroup () {
+
+    return paraboxLayout.getHorizontalGroup();
+  }
+
+  public ParaboxLayoutManager setHorizontalGroup (Group<?> horizontalGroup) {
 
     paraboxLayout.setHorizontalGroup(horizontalGroup);
 
     return this;
   }
 
-  public ParaboxLayoutManager setVerticalGroup (Group verticalGroup) {
+  public Group<?> getVerticalGroup () {
+
+    return paraboxLayout.getVerticalGroup();
+  }
+
+  public ParaboxLayoutManager setVerticalGroup (Group<?> verticalGroup) {
 
     paraboxLayout.setVerticalGroup(verticalGroup);
 
     return this;
   }
 
-  public ParallelGroup<Component> parallelGroup () {
+  public ParallelGroup parallelGroup () {
 
     return paraboxLayout.parallelGroup();
   }
 
-  public ParallelGroup<Component> parallelGroup (Alignment alignment) {
+  public ParallelGroup parallelGroup (Alignment alignment) {
 
     return paraboxLayout.parallelGroup(alignment);
   }
 
-  public SequentialGroup<Component> sequentialGroup () {
+  public SequentialGroup sequentialGroup () {
 
     return paraboxLayout.sequentialGroup();
   }
 
-  public SequentialGroup<Component> sequentialGroup (Gap gap) {
+  public SequentialGroup sequentialGroup (Gap gap) {
 
     return paraboxLayout.sequentialGroup(gap);
   }
 
-  public SequentialGroup<Component> sequentialGroup (double gap) {
+  public SequentialGroup sequentialGroup (double gap) {
 
     return paraboxLayout.sequentialGroup(gap);
   }
 
-  public SequentialGroup<Component> sequentialGroup (Justification justification) {
+  public SequentialGroup sequentialGroup (Justification justification) {
 
     return paraboxLayout.sequentialGroup(justification);
   }
 
-  public SequentialGroup<Component> sequentialGroup (Gap gap, Justification justification) {
+  public SequentialGroup sequentialGroup (Gap gap, Justification justification) {
 
     return paraboxLayout.sequentialGroup(gap, justification);
   }
 
-  public SequentialGroup<Component> sequentialGroup (double gap, Justification justification) {
+  public SequentialGroup sequentialGroup (double gap, Justification justification) {
 
     return paraboxLayout.sequentialGroup(gap, justification);
   }

@@ -24,53 +24,15 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.swing.layout;
+package org.smallmind.nutsnbolts.layout;
 
-import java.awt.ComponentOrientation;
-import java.util.Locale;
-import org.smallmind.nutsnbolts.layout.Bias;
-import org.smallmind.nutsnbolts.layout.Flow;
-import org.smallmind.nutsnbolts.layout.Orientation;
-import org.smallmind.nutsnbolts.layout.ParaboxPlatform;
-import org.smallmind.nutsnbolts.layout.Perimeter;
+public interface ParaboxPlatform {
 
-public class SwingParaboxPlatform implements ParaboxPlatform {
+  public abstract double getRelatedGap ();
 
-  private static final Perimeter PERIMETER = new Perimeter(10.0D, 10.0D, 10.0D, 10.0D);
-  private static final Orientation ORIENTATION;
+  public abstract double getUnrelatedGap ();
 
-  static {
+  public abstract Perimeter getFramePerimeter ();
 
-    ComponentOrientation componentOrientation = ComponentOrientation.getOrientation(Locale.getDefault());
-
-    ORIENTATION = new Orientation(componentOrientation.isHorizontal() ? Bias.HORIZONTAL : Bias.VERTICAL, componentOrientation.isLeftToRight() ? Flow.FIRST_TO_LAST : Flow.LAST_TO_FIRST);
-  }
-
-  public SwingParaboxPlatform () {
-
-  }
-
-  @Override
-  public double getRelatedGap () {
-
-    return 5.0D;
-  }
-
-  @Override
-  public double getUnrelatedGap () {
-
-    return 10.0D;
-  }
-
-  @Override
-  public Perimeter getFramePerimeter () {
-
-    return PERIMETER;
-  }
-
-  @Override
-  public Orientation getOrientation () {
-
-    return ORIENTATION;
-  }
+  public abstract Orientation getOrientation ();
 }
