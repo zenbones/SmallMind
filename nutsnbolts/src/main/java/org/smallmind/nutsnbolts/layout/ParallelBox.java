@@ -118,17 +118,19 @@ public class ParallelBox extends Box<ParallelBox> {
     double maxAscent = 0;
     double maxDescent = 0;
 
-    for (ParaboxElement<?> element : getElements()) {
+    if (!getElements().isEmpty()) {
+      for (ParaboxElement<?> element : getElements()) {
 
-      double currentMeasurement = (unbiasedMeasurementOverride != null) ? unbiasedMeasurementOverride : tapeMeasure.getMeasure(bias, element, tailor);
-      double currentAscent = (!alignment.equals(Alignment.BASELINE)) ? currentMeasurement : element.getBaseline(bias, currentMeasurement);
-      double currentDescent;
+        double currentMeasurement = (unbiasedMeasurementOverride != null) ? unbiasedMeasurementOverride : tapeMeasure.getMeasure(bias, element, tailor);
+        double currentAscent = (!alignment.equals(Alignment.BASELINE)) ? currentMeasurement : element.getBaseline(bias, currentMeasurement);
+        double currentDescent;
 
-      if (currentAscent > maxAscent) {
-        maxAscent = currentAscent;
-      }
-      if ((currentDescent = (currentMeasurement - currentAscent)) > maxDescent) {
-        maxDescent = currentDescent;
+        if (currentAscent > maxAscent) {
+          maxAscent = currentAscent;
+        }
+        if ((currentDescent = (currentMeasurement - currentAscent)) > maxDescent) {
+          maxDescent = currentDescent;
+        }
       }
     }
 

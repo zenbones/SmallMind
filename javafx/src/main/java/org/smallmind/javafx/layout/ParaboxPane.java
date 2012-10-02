@@ -26,6 +26,7 @@
  */
 package org.smallmind.javafx.layout;
 
+import java.util.List;
 import javafx.scene.Node;
 import javafx.scene.layout.Region;
 import org.smallmind.nutsnbolts.layout.Alignment;
@@ -108,7 +109,11 @@ public class ParaboxPane extends Region implements ParaboxContainer<Node> {
   @Override
   public void nativelyAddComponent (Node node) {
 
-    getChildren().add(node);
+    List<Node> children;
+
+    if (!(children = getChildren()).contains(node)) {
+      children.add(node);
+    }
   }
 
   public Box<?> getHorizontalBox () {

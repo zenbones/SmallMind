@@ -161,15 +161,19 @@ public class SequentialBox extends Box<SequentialBox> {
 
   private synchronized double calculateMeasurement (Bias bias, TapeMeasure tapeMeasure, LayoutTailor tailor) {
 
-    boolean first = true;
     double total = 0.0D;
 
-    for (ParaboxElement<?> element : getElements()) {
-      total += tapeMeasure.getMeasure(bias, element, tailor);
-      if (!first) {
-        total += gap;
+    if (!getElements().isEmpty()) {
+
+      boolean first = true;
+
+      for (ParaboxElement<?> element : getElements()) {
+        total += tapeMeasure.getMeasure(bias, element, tailor);
+        if (!first) {
+          total += gap;
+        }
+        first = false;
       }
-      first = false;
     }
 
     return total;
