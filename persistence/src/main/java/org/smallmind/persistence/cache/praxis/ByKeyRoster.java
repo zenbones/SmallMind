@@ -42,7 +42,7 @@ import org.smallmind.persistence.cache.VectoredDao;
 import org.smallmind.persistence.cache.praxis.intrinsic.IntrinsicRoster;
 import org.smallmind.persistence.orm.DaoManager;
 import org.smallmind.persistence.orm.ORMDao;
-import org.smallmind.persistence.orm.VectorAwareORMDao;
+import org.smallmind.persistence.VectorAwareDurableDao;
 import org.terracotta.annotations.InstrumentedClass;
 
 @InstrumentedClass
@@ -75,7 +75,7 @@ public class ByKeyRoster<I extends Serializable & Comparable<I>, D extends Durab
     ORMDao<I, D> ormDao;
     VectoredDao<I, D> vectoredDao;
 
-    if (((ormDao = getORMDao()) instanceof VectorAwareORMDao) && ((vectoredDao = ((VectorAwareORMDao<I, D>)ormDao).getVectoredDao()) != null)) {
+    if (((ormDao = getORMDao()) instanceof VectorAwareDurableDao) && ((vectoredDao = ((VectorAwareDurableDao<I, D>)ormDao).getVectoredDao()) != null)) {
 
       LinkedList<D> prefetchList = new LinkedList<D>();
       Map<DurableKey<I, D>, D> prefetchMap = vectoredDao.get(durableClass, keyRoster);
@@ -87,7 +87,7 @@ public class ByKeyRoster<I extends Serializable & Comparable<I>, D extends Durab
         if ((durable = prefetchMap.get(durableKey)) != null) {
           prefetchList.add(durable);
         }
-        else if ((durable = ((VectorAwareORMDao<I, D>)getORMDao()).acquire(durableClass, getORMDao().getIdFromString(durableKey.getIdAsString()))) != null) {
+        else if ((durable = ((VectorAwareDurableDao<I, D>)getORMDao()).acquire(durableClass, getORMDao().getIdFromString(durableKey.getIdAsString()))) != null) {
           prefetchList.add(durable);
         }
       }

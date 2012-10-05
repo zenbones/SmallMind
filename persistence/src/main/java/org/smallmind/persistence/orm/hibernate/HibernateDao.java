@@ -41,13 +41,14 @@ import org.hibernate.criterion.Restrictions;
 import org.hibernate.transform.Transformers;
 import org.smallmind.persistence.Durable;
 import org.smallmind.persistence.UpdateMode;
+import org.smallmind.persistence.VectorAwareDurableDao;
 import org.smallmind.persistence.cache.VectoredDao;
 import org.smallmind.persistence.orm.DaoManager;
+import org.smallmind.persistence.orm.ORMDao;
 import org.smallmind.persistence.orm.ProxySession;
-import org.smallmind.persistence.orm.VectorAwareORMDao;
 import org.smallmind.persistence.sql.SqlType;
 
-public abstract class HibernateDao<I extends Serializable & Comparable<I>, D extends Durable<I>> extends VectorAwareORMDao<I, D> {
+public abstract class HibernateDao<I extends Serializable & Comparable<I>, D extends Durable<I>> extends VectorAwareDurableDao<I, D> implements ORMDao<I, D> {
 
   private HibernateProxySession proxySession;
 
@@ -76,11 +77,6 @@ public abstract class HibernateDao<I extends Serializable & Comparable<I>, D ext
   public ProxySession getSession () {
 
     return proxySession;
-  }
-
-  public I getId (D durable) {
-
-    return durable.getId();
   }
 
   public D get (I id) {

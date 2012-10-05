@@ -35,13 +35,13 @@ import org.aspectj.lang.reflect.MethodSignature;
 import org.smallmind.instrument.InstrumentationManager;
 import org.smallmind.instrument.MetricProperty;
 import org.smallmind.persistence.PersistenceManager;
-import org.smallmind.persistence.orm.VectorAwareORMDao;
+import org.smallmind.persistence.VectorAwareDurableDao;
 
 @Aspect
 public class ApplyInstrumentationAspect {
 
-  @Around(value = "@within(instrumented) && execution(@org.smallmind.persistence.instrument.aop.ApplyInstrumentation * * (..)) && this(ormDao)", argNames = "thisJoinPoint, instrumented, ormDao")
-  public Object aroundApplyStatisticsMethod (ProceedingJoinPoint thisJoinPoint, Instrumented instrumented, VectorAwareORMDao ormDao)
+  @Around(value = "@within(instrumented) && execution(@org.smallmind.persistence.instrument.aop.ApplyInstrumentation * * (..)) && this(durableDao)", argNames = "thisJoinPoint, instrumented, durableDao")
+  public Object aroundApplyStatisticsMethod (ProceedingJoinPoint thisJoinPoint, Instrumented instrumented, VectorAwareDurableDao durableDao)
     throws Throwable {
 
     Method executedMethod;
@@ -62,7 +62,7 @@ public class ApplyInstrumentationAspect {
         stop = System.currentTimeMillis();
         executedMethod = ((MethodSignature)thisJoinPoint.getSignature()).getMethod();
 
-        InstrumentationManager.instrumentWithChronometer(PersistenceManager.getPersistence(), stop - start, TimeUnit.MILLISECONDS, new MetricProperty("durable", ormDao.getManagedClass().getSimpleName()), new MetricProperty("method", executedMethod.getName()), new MetricProperty("source", ormDao.getMetricSource()));
+        InstrumentationManager.instrumentWithChronometer(PersistenceManager.getPersistence(), stop - start, TimeUnit.MILLISECONDS, new MetricProperty("durable", durableDao.getManagedClass().getSimpleName()), new MetricProperty("method", executedMethod.getName()), new MetricProperty("source", durableDao.getMetricSource()));
       }
     }
   }

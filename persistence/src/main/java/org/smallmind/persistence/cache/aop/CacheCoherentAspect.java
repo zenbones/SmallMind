@@ -44,13 +44,13 @@ import org.smallmind.persistence.UpdateMode;
 import org.smallmind.persistence.cache.VectoredDao;
 import org.smallmind.persistence.cache.praxis.intrinsic.IntrinsicRoster;
 import org.smallmind.persistence.instrument.aop.Instrumented;
-import org.smallmind.persistence.orm.VectorAwareORMDao;
+import org.smallmind.persistence.VectorAwareDurableDao;
 
 @Aspect
 public class CacheCoherentAspect {
 
-  @Around(value = "execution(@CacheCoherent * * (..)) && this(ormDao)", argNames = "thisJoinPoint, ormDao")
-  public Object aroundCacheCoherentMethod (ProceedingJoinPoint thisJoinPoint, VectorAwareORMDao ormDao)
+  @Around(value = "execution(@CacheCoherent * * (..)) && this(durableDao)", argNames = "thisJoinPoint, durableDao")
+  public Object aroundCacheCoherentMethod (ProceedingJoinPoint thisJoinPoint, VectorAwareDurableDao durableDao)
     throws Throwable {
 
     Annotation instrumentedAnnotation;
@@ -59,17 +59,17 @@ public class CacheCoherentAspect {
     long start = 0;
     long stop;
 
-    instrumentedAnnotation = ormDao.getClass().getAnnotation(Instrumented.class);
+    instrumentedAnnotation = durableDao.getClass().getAnnotation(Instrumented.class);
     if (timingEnabled = (instrumentedAnnotation != null) && ((Instrumented)instrumentedAnnotation).value()) {
       start = System.currentTimeMillis();
     }
 
     try {
 
-      VectoredDao vectoredDao = ormDao.getVectoredDao();
+      VectoredDao vectoredDao = durableDao.getVectoredDao();
       Type returnType;
 
-      if (ormDao.getManagedClass().equals(((MethodSignature)thisJoinPoint.getSignature()).getReturnType())) {
+      if (durableDao.getManagedClass().equals(((MethodSignature)thisJoinPoint.getSignature()).getReturnType())) {
 
         Durable durable;
 
@@ -79,14 +79,14 @@ public class CacheCoherentAspect {
             return durable;
           }
 
-          return vectoredDao.persist(ormDao.getManagedClass(), durable, UpdateMode.SOFT);
+          return vectoredDao.persist(durableDao.getManagedClass(), durable, UpdateMode.SOFT);
         }
 
         return null;
       }
       else if (List.class.isAssignableFrom(((MethodSignature)thisJoinPoint.getSignature()).getReturnType())) {
-        if ((!((returnType = (executedMethod = ((MethodSignature)thisJoinPoint.getSignature()).getMethod()).getGenericReturnType()) instanceof ParameterizedType)) || (!ormDao.getManagedClass().equals(((ParameterizedType)returnType).getActualTypeArguments()[0]))) {
-          throw new CacheAutomationError("Methods annotated with @CacheCoherent which return a List type must be parameterized as <? extends List<%s>>", ormDao.getManagedClass().getSimpleName());
+        if ((!((returnType = (executedMethod = ((MethodSignature)thisJoinPoint.getSignature()).getMethod()).getGenericReturnType()) instanceof ParameterizedType)) || (!durableDao.getManagedClass().equals(((ParameterizedType)returnType).getActualTypeArguments()[0]))) {
+          throw new CacheAutomationError("Methods annotated with @CacheCoherent which return a List type must be parameterized as <? extends List<%s>>", durableDao.getManagedClass().getSimpleName());
         }
 
         List list;
@@ -102,7 +102,7 @@ public class CacheCoherentAspect {
           cacheConsistentElements = new IntrinsicRoster<Durable>();
           for (Object element : list) {
             if (element != null) {
-              cacheConsistentElements.add(vectoredDao.persist(ormDao.getManagedClass(), (Durable)element, UpdateMode.SOFT));
+              cacheConsistentElements.add(vectoredDao.persist(durableDao.getManagedClass(), (Durable)element, UpdateMode.SOFT));
             }
             else {
               cacheConsistentElements.add(null);
@@ -115,8 +115,8 @@ public class CacheCoherentAspect {
         return null;
       }
       else if (Iterable.class.isAssignableFrom(((MethodSignature)thisJoinPoint.getSignature()).getReturnType())) {
-        if ((!((returnType = (executedMethod = ((MethodSignature)thisJoinPoint.getSignature()).getMethod()).getGenericReturnType()) instanceof ParameterizedType)) || (!ormDao.getManagedClass().equals(((ParameterizedType)returnType).getActualTypeArguments()[0]))) {
-          throw new CacheAutomationError("Methods annotated with @CacheCoherent which return an Iterable type must be parameterized as <? extends Iterable<%s>>", ormDao.getManagedClass().getSimpleName());
+        if ((!((returnType = (executedMethod = ((MethodSignature)thisJoinPoint.getSignature()).getMethod()).getGenericReturnType()) instanceof ParameterizedType)) || (!durableDao.getManagedClass().equals(((ParameterizedType)returnType).getActualTypeArguments()[0]))) {
+          throw new CacheAutomationError("Methods annotated with @CacheCoherent which return an Iterable type must be parameterized as <? extends Iterable<%s>>", durableDao.getManagedClass().getSimpleName());
         }
 
         Iterable iterable;
@@ -127,13 +127,13 @@ public class CacheCoherentAspect {
             return iterable;
           }
 
-          return new CacheCoherentIterator(iterable.iterator(), ormDao.getManagedClass(), vectoredDao);
+          return new CacheCoherentIterator(iterable.iterator(), durableDao.getManagedClass(), vectoredDao);
         }
 
         return null;
       }
       else {
-        throw new CacheAutomationError("Methods annotated with @CacheCoherent must return either the managed Class(%s), a parameterized List <? extends List<%s>>, or a parameterized Iterable <? extends Iterable<%s>>", ormDao.getManagedClass().getSimpleName(), ormDao.getManagedClass().getSimpleName(), ormDao.getManagedClass().getSimpleName());
+        throw new CacheAutomationError("Methods annotated with @CacheCoherent must return either the managed Class(%s), a parameterized List <? extends List<%s>>, or a parameterized Iterable <? extends Iterable<%s>>", durableDao.getManagedClass().getSimpleName(), durableDao.getManagedClass().getSimpleName(), durableDao.getManagedClass().getSimpleName());
       }
     }
     finally {
@@ -144,7 +144,7 @@ public class CacheCoherentAspect {
           executedMethod = ((MethodSignature)thisJoinPoint.getSignature()).getMethod();
         }
 
-        InstrumentationManager.instrumentWithChronometer(PersistenceManager.getPersistence(), stop - start, TimeUnit.MILLISECONDS, new MetricProperty("durable", ormDao.getManagedClass().getSimpleName()), new MetricProperty("method", executedMethod.getName()), new MetricProperty("source", ormDao.getMetricSource()));
+        InstrumentationManager.instrumentWithChronometer(PersistenceManager.getPersistence(), stop - start, TimeUnit.MILLISECONDS, new MetricProperty("durable", durableDao.getManagedClass().getSimpleName()), new MetricProperty("method", executedMethod.getName()), new MetricProperty("source", durableDao.getMetricSource()));
       }
     }
   }

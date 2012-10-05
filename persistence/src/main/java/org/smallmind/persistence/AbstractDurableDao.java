@@ -24,7 +24,7 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.persistence.orm;
+package org.smallmind.persistence;
 
 import java.io.Serializable;
 import java.lang.reflect.Method;
@@ -33,17 +33,16 @@ import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.util.Arrays;
 import java.util.concurrent.atomic.AtomicReference;
-import org.smallmind.persistence.Durable;
-import org.smallmind.persistence.Identifier;
 import org.smallmind.persistence.instrument.MetricSource;
+import org.smallmind.persistence.orm.ORMInitializationException;
 
-public abstract class AbstractORMDao<I extends Serializable & Comparable<I>, D extends Durable<I>> implements ORMDao<I, D> {
+public abstract class AbstractDurableDao<I extends Serializable & Comparable<I>, D extends Durable<I>> implements DurableDao<I, D> {
 
   private TypeInference idTypeInference = new TypeInference();
   private TypeInference durableTypeInference = new TypeInference();
   private AtomicReference<Method> fromStringMethodRef = new AtomicReference<Method>();
 
-  public AbstractORMDao () {
+  public AbstractDurableDao () {
 
     Class currentClass = this.getClass();
     Type superType;
@@ -149,6 +148,11 @@ public abstract class AbstractORMDao<I extends Serializable & Comparable<I>, D e
   public String getMetricSource () {
 
     return MetricSource.ORM.getDisplay();
+  }
+
+  public I getId (D durable) {
+
+    return durable.getId();
   }
 
   private static class TypeInference {

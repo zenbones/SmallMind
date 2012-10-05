@@ -24,40 +24,17 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.persistence.orm;
+package org.smallmind.persistence;
 
 import java.io.Serializable;
-import java.util.List;
-import org.smallmind.persistence.Durable;
-import org.smallmind.persistence.DurableDao;
 
-public interface ORMDao<I extends Serializable & Comparable<I>, D extends Durable<I>> extends DurableDao<I, D> {
+public interface DurableDao<I extends Serializable & Comparable<I>, D extends Durable<I>> extends Dao<I, D> {
 
-  public abstract String getDataSource ();
+  public abstract Class<D> getManagedClass ();
 
-  public abstract ProxySession getSession ();
+  public abstract Class<I> getIdClass ();
 
-  public abstract D detach (D durable);
+  public abstract I getIdFromString (String value);
 
-  public abstract D get (I id);
-
-  public abstract D persist (D durable);
-
-  public abstract D persist (Class<D> durableClass, D durable);
-
-  public abstract void delete (D durable);
-
-  public abstract List<D> list ();
-
-  public abstract List<D> list (int fetchSize);
-
-  public abstract List<D> list (I greaterThan, int fetchSize);
-
-  public abstract Iterable<D> scroll ();
-
-  public abstract Iterable<D> scroll (int fetchSize);
-
-  public abstract Iterable<D> scrollById (I greaterThan, int fetchSize);
-
-  public abstract long size ();
+  public abstract I getId (D durable);
 }
