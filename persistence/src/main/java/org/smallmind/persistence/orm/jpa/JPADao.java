@@ -137,14 +137,40 @@ public abstract class JPADao<I extends Serializable & Comparable<I>, D extends D
     });
   }
 
-  public List<D> list (int fetchSize) {
+  public List<D> list (final int fetchSize) {
 
-    throw new UnsupportedOperationException();
+    return listByQuery(new QueryDetails() {
+
+      @Override
+      public String getQueryString () {
+
+        return "select entity from " + getManagedClass().getSimpleName() + " entity";
+      }
+
+      @Override
+      public Query completeQuery (Query query) {
+
+        return query.setMaxResults(fetchSize);
+      }
+    });
   }
 
-  public List<D> list (I greaterThan, int fetchSize) {
+  public List<D> list (final I greaterThan, final int fetchSize) {
 
-    throw new UnsupportedOperationException();
+    return listByQuery(new QueryDetails() {
+
+      @Override
+      public String getQueryString () {
+
+        return "select entity from " + getManagedClass().getSimpleName() + " entity where entity.id > ?";
+      }
+
+      @Override
+      public Query completeQuery (Query query) {
+
+        return query.setParameter("id", greaterThan).setMaxResults(fetchSize);
+      }
+    });
   }
 
   public Iterable<D> scroll () {
