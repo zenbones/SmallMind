@@ -51,11 +51,6 @@ public abstract class JDODao<I extends Serializable & Comparable<I>, D extends D
     super(proxySession, vectoredDao);
   }
 
-  public D get (I id) {
-
-    return get(getManagedClass(), id);
-  }
-
   public D get (Class<D> durableClass, I id) {
 
     VectoredDao<I, D> vectoredDao;
@@ -112,11 +107,6 @@ public abstract class JDODao<I extends Serializable & Comparable<I>, D extends D
     return getManagedClass().cast(getSession().getNativeSession().detachCopy(object));
   }
 
-  public D persist (D durable) {
-
-    return persist(getManagedClass(), durable);
-  }
-
   public D persist (Class<D> durableClass, D durable) {
 
     D persistentDurable;
@@ -130,11 +120,6 @@ public abstract class JDODao<I extends Serializable & Comparable<I>, D extends D
     }
 
     return persistentDurable;
-  }
-
-  public void delete (D durable) {
-
-    delete(getManagedClass(), durable);
   }
 
   public void delete (Class<D> durableClass, D durable) {

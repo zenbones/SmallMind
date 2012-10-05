@@ -71,4 +71,22 @@ public abstract class AbstractOrmDao<I extends Serializable & Comparable<I>, D e
 
     return proxySession.isCacheEnabled();
   }
+
+  @Override
+  public D get (I id) {
+
+    return get(getManagedClass(), id);
+  }
+
+  @Override
+  public D persist (D durable) {
+
+    return persist(getManagedClass(), durable);
+  }
+
+  @Override
+  public void delete (D durable) {
+
+    delete(getManagedClass(), durable);
+  }
 }

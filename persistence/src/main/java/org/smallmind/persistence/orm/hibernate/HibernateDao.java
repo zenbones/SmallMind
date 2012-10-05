@@ -58,11 +58,6 @@ public abstract class HibernateDao<I extends Serializable & Comparable<I>, D ext
     super(proxySession, vectoredDao);
   }
 
-  public D get (I id) {
-
-    return get(getManagedClass(), id);
-  }
-
   public D get (Class<D> durableClass, I id) {
 
     VectoredDao<I, D> vectoredDao;
@@ -173,11 +168,6 @@ public abstract class HibernateDao<I extends Serializable & Comparable<I>, D ext
     });
   }
 
-  public D persist (D durable) {
-
-    return persist(getManagedClass(), durable);
-  }
-
   public D persist (Class<D> durableClass, D durable) {
 
     D persistentDurable;
@@ -197,11 +187,6 @@ public abstract class HibernateDao<I extends Serializable & Comparable<I>, D ext
     }
 
     return persistentDurable;
-  }
-
-  public void delete (D durable) {
-
-    delete(getManagedClass(), durable);
   }
 
   public void delete (Class<D> durableClass, D durable) {
