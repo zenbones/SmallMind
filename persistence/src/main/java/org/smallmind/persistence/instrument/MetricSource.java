@@ -28,7 +28,7 @@ package org.smallmind.persistence.instrument;
 
 public enum MetricSource {
 
-  ORM("Orm"), TERRACOTTA("Terracotta"), MEMCACHED("Memcached"), EHCACHE("Ehcache");
+  ORM("Orm"), TERRACOTTA("Terracotta"), MEMCACHED("Memcached"), EHCACHE("Ehcache"), CASSANDRA("Cassandra");
 
   private String display;
 
