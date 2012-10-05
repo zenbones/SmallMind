@@ -29,18 +29,14 @@ package org.smallmind.persistence.orm.jpa;
 import java.io.Serializable;
 import java.util.Collections;
 import java.util.List;
+import javax.persistence.EntityManager;
 import javax.persistence.Query;
 import org.smallmind.persistence.Durable;
 import org.smallmind.persistence.UpdateMode;
-import org.smallmind.persistence.VectorAwareDurableDao;
 import org.smallmind.persistence.cache.VectoredDao;
-import org.smallmind.persistence.orm.DaoManager;
-import org.smallmind.persistence.orm.ORMDao;
-import org.smallmind.persistence.orm.ProxySession;
+import org.smallmind.persistence.orm.AbstractOrmDao;
 
-public abstract class JPADao<I extends Serializable & Comparable<I>, D extends Durable<I>> extends VectorAwareDurableDao<I, D> implements ORMDao<I, D> {
-
-  private JPAProxySession proxySession;
+public abstract class JPADao<I extends Serializable & Comparable<I>, D extends Durable<I>> extends AbstractOrmDao<I, D, EntityManager> {
 
   public JPADao (JPAProxySession proxySession) {
 
@@ -50,23 +46,6 @@ public abstract class JPADao<I extends Serializable & Comparable<I>, D extends D
   public JPADao (JPAProxySession proxySession, VectoredDao<I, D> vectoredDao) {
 
     super(proxySession, vectoredDao);
-
-    this.proxySession = proxySession;
-  }
-
-  public void register () {
-
-    DaoManager.register(getManagedClass(), this);
-  }
-
-  public String getDataSource () {
-
-    return proxySession.getDataSource();
-  }
-
-  public ProxySession getSession () {
-
-    return proxySession;
   }
 
   public D get (I id) {
@@ -103,7 +82,7 @@ public abstract class JPADao<I extends Serializable & Comparable<I>, D extends D
   @Override
   public D acquire (Class<D> durableClass, I id) {
 
-    return durableClass.cast(proxySession.getEntityManager().find(durableClass, id));
+    return durableClass.cast(getSession().getNativeSession().find(durableClass, id));
   }
 
   public D persist (D durable) {
@@ -116,12 +95,12 @@ public abstract class JPADao<I extends Serializable & Comparable<I>, D extends D
     D persistentDurable;
     VectoredDao<I, D> vectoredDao = getVectoredDao();
 
-    if (proxySession.getEntityManager().contains(durable)) {
+    if (getSession().getNativeSession().contains(durable)) {
       persistentDurable = durable;
     }
     else {
-      persistentDurable = getManagedClass().cast(proxySession.getEntityManager().merge(durable));
-      proxySession.flush();
+      persistentDurable = getManagedClass().cast(getSession().getNativeSession().merge(durable));
+      getSession().flush();
     }
 
     if (vectoredDao != null) {
@@ -141,14 +120,14 @@ public abstract class JPADao<I extends Serializable & Comparable<I>, D extends D
 
     VectoredDao<I, D> vectoredDao = getVectoredDao();
 
-    if (!proxySession.getEntityManager().contains(durable)) {
-      proxySession.getEntityManager().remove(proxySession.getEntityManager().find(durable.getClass(), durable.getId()));
+    if (!getSession().getNativeSession().contains(durable)) {
+      getSession().getNativeSession().remove(getSession().getNativeSession().find(durable.getClass(), durable.getId()));
     }
     else {
-      proxySession.getEntityManager().remove(durable);
+      getSession().getNativeSession().remove(durable);
     }
 
-    proxySession.flush();
+    getSession().flush();
 
     if (vectoredDao != null) {
       vectoredDao.delete(durableClass, durable);
@@ -235,6 +214,6 @@ public abstract class JPADao<I extends Serializable & Comparable<I>, D extends D
 
   public Query constructQuery (QueryDetails queryDetails) {
 
-    return queryDetails.completeQuery(proxySession.getEntityManager().createQuery(queryDetails.getQueryString()));
+    return queryDetails.completeQuery(getSession().getNativeSession().createQuery(queryDetails.getQueryString()));
   }
 }

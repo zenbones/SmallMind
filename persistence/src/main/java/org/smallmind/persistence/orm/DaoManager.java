@@ -74,7 +74,7 @@ public class DaoManager implements StaticManager {
     return null;
   }
 
-  public static <I extends Serializable & Comparable<I>, D extends Durable<I>> ORMDao<I, D> get (Class<D> durableClass) {
+  public static <I extends Serializable & Comparable<I>, D extends Durable<I>> ORMDao<I, D, ?> get (Class<D> durableClass) {
 
     return DAO_MAP_LOCAL.get().get(durableClass);
   }

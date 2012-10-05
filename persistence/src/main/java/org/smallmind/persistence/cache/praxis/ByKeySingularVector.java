@@ -44,7 +44,7 @@ import org.terracotta.annotations.InstrumentedClass;
 @InstrumentedClass
 public class ByKeySingularVector<I extends Serializable & Comparable<I>, D extends Durable<I>> extends DurableVector<I, D> {
 
-  private transient volatile ORMDao<I, D> ormDao;
+  private transient volatile ORMDao<I, D, ?> ormDao;
 
   private DurableKey<I, D> durableKey;
 
@@ -55,7 +55,7 @@ public class ByKeySingularVector<I extends Serializable & Comparable<I>, D exten
     this.durableKey = durableKey;
   }
 
-  private ORMDao<I, D> getORMDao () {
+  private ORMDao<I, D, ?> getORMDao () {
 
     if (ormDao == null) {
       if ((ormDao = DaoManager.get(durableKey.getDurableClass())) == null) {
@@ -69,7 +69,7 @@ public class ByKeySingularVector<I extends Serializable & Comparable<I>, D exten
   private D getDurable () {
 
     D durable;
-    ORMDao<I, D> ormDao;
+    ORMDao<I, D, ?> ormDao;
 
     if ((durable = (ormDao = getORMDao()).get(ormDao.getIdFromString(durableKey.getIdAsString()))) == null) {
       throw new CacheOperationException("Unable to locate the requested durable(%s) instance(%s)", durableKey.getDurableClass().getSimpleName(), durableKey.getIdAsString());

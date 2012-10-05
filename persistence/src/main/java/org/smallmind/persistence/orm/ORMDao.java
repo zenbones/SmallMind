@@ -31,11 +31,11 @@ import java.util.List;
 import org.smallmind.persistence.Durable;
 import org.smallmind.persistence.DurableDao;
 
-public interface ORMDao<I extends Serializable & Comparable<I>, D extends Durable<I>> extends DurableDao<I, D> {
+public interface ORMDao<I extends Serializable & Comparable<I>, D extends Durable<I>, N> extends DurableDao<I, D> {
 
   public abstract String getDataSource ();
 
-  public abstract ProxySession getSession ();
+  public abstract ProxySession<N> getSession ();
 
   public abstract D detach (D durable);
 

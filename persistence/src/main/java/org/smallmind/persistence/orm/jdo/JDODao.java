@@ -31,19 +31,15 @@ import java.util.Collections;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
+import javax.jdo.PersistenceManager;
 import javax.jdo.Query;
 import org.smallmind.nutsnbolts.util.IterableIterator;
 import org.smallmind.persistence.Durable;
 import org.smallmind.persistence.UpdateMode;
-import org.smallmind.persistence.VectorAwareDurableDao;
 import org.smallmind.persistence.cache.VectoredDao;
-import org.smallmind.persistence.orm.DaoManager;
-import org.smallmind.persistence.orm.ORMDao;
-import org.smallmind.persistence.orm.ProxySession;
+import org.smallmind.persistence.orm.AbstractOrmDao;
 
-public abstract class JDODao<I extends Serializable & Comparable<I>, D extends Durable<I>> extends VectorAwareDurableDao<I, D> implements ORMDao<I, D> {
-
-  private JDOProxySession proxySession;
+public abstract class JDODao<I extends Serializable & Comparable<I>, D extends Durable<I>> extends AbstractOrmDao<I, D, PersistenceManager> {
 
   public JDODao (JDOProxySession proxySession) {
 
@@ -53,23 +49,6 @@ public abstract class JDODao<I extends Serializable & Comparable<I>, D extends D
   public JDODao (JDOProxySession proxySession, VectoredDao<I, D> vectoredDao) {
 
     super(proxySession, vectoredDao);
-
-    this.proxySession = proxySession;
-  }
-
-  public void register () {
-
-    DaoManager.register(getManagedClass(), this);
-  }
-
-  public String getDataSource () {
-
-    return proxySession.getDataSource();
-  }
-
-  public ProxySession getSession () {
-
-    return proxySession;
   }
 
   public D get (I id) {
@@ -106,7 +85,7 @@ public abstract class JDODao<I extends Serializable & Comparable<I>, D extends D
   @Override
   public D acquire (Class<D> durableClass, I id) {
 
-    return durableClass.cast(proxySession.getPersistenceManager().getObjectById(durableClass, id));
+    return durableClass.cast(getSession().getNativeSession().getObjectById(durableClass, id));
   }
 
   public List<D> list () {
@@ -114,7 +93,7 @@ public abstract class JDODao<I extends Serializable & Comparable<I>, D extends D
     LinkedList<D> instanceList;
     Iterator instanceIter;
 
-    instanceIter = proxySession.getPersistenceManager().getExtent(getManagedClass()).iterator();
+    instanceIter = getSession().getNativeSession().getExtent(getManagedClass()).iterator();
     instanceList = new LinkedList<D>();
     while (instanceIter.hasNext()) {
       instanceList.add(getManagedClass().cast(instanceIter.next()));
@@ -125,12 +104,12 @@ public abstract class JDODao<I extends Serializable & Comparable<I>, D extends D
 
   public Iterable<D> scroll () {
 
-    return new IterableIterator<D>(proxySession.getPersistenceManager().getExtent(getManagedClass()).iterator());
+    return new IterableIterator<D>(getSession().getNativeSession().getExtent(getManagedClass()).iterator());
   }
 
   public D detach (D object) {
 
-    return getManagedClass().cast(proxySession.getPersistenceManager().detachCopy(object));
+    return getManagedClass().cast(getSession().getNativeSession().detachCopy(object));
   }
 
   public D persist (D durable) {
@@ -143,7 +122,7 @@ public abstract class JDODao<I extends Serializable & Comparable<I>, D extends D
     D persistentDurable;
     VectoredDao<I, D> vectoredDao = getVectoredDao();
 
-    persistentDurable = durableClass.cast(proxySession.getPersistenceManager().makePersistent(durable));
+    persistentDurable = durableClass.cast(getSession().getNativeSession().makePersistent(durable));
 
     if (vectoredDao != null) {
 
@@ -162,7 +141,7 @@ public abstract class JDODao<I extends Serializable & Comparable<I>, D extends D
 
     VectoredDao<I, D> vectoredDao = getVectoredDao();
 
-    proxySession.getPersistenceManager().deletePersistent(durable);
+    getSession().getNativeSession().deletePersistent(durable);
 
     if (vectoredDao != null) {
       vectoredDao.delete(durableClass, durable);
@@ -189,7 +168,7 @@ public abstract class JDODao<I extends Serializable & Comparable<I>, D extends D
     Query query;
     Class[] importClasses;
 
-    query = proxySession.getPersistenceManager().newQuery(queryDetails.getQuery());
+    query = getSession().getNativeSession().newQuery(queryDetails.getQuery());
     query.setIgnoreCache(queryDetails.getIgnoreCache());
 
     if ((importClasses = queryDetails.getImports()) != null) {

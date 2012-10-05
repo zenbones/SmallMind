@@ -27,9 +27,9 @@
 package org.smallmind.persistence.cache.aop;
 
 import org.aspectj.lang.JoinPoint;
+import org.smallmind.nutsnbolts.reflection.aop.AOPUtility;
 import org.smallmind.nutsnbolts.reflection.bean.BeanUtility;
 import org.smallmind.persistence.Durable;
-import org.smallmind.nutsnbolts.reflection.aop.AOPUtility;
 import org.smallmind.persistence.cache.VectorIndex;
 
 public class VectorIndices {

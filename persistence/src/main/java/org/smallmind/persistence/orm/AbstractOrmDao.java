@@ -24,35 +24,51 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.persistence;
+package org.smallmind.persistence.orm;
 
-import org.smallmind.instrument.config.MetricConfiguration;
-import org.smallmind.instrument.config.MetricConfigurationProvider;
-import org.smallmind.nutsnbolts.reflection.type.converter.StringConverterFactory;
+import java.io.Serializable;
+import org.smallmind.persistence.Durable;
+import org.smallmind.persistence.VectorAwareDurableDao;
+import org.smallmind.persistence.cache.VectoredDao;
+import org.smallmind.persistence.instrument.MetricSource;
 
-public class Persistence implements MetricConfigurationProvider {
+public abstract class AbstractOrmDao<I extends Serializable & Comparable<I>, D extends Durable<I>, N> extends VectorAwareDurableDao<I, D> implements ORMDao<I, D, N> {
 
-  private MetricConfiguration metricConfiguration;
-  private StringConverterFactory stringConverterFactory;
+  private ProxySession<N> proxySession;
 
-  public Persistence (StringConverterFactory stringConverterFactory, MetricConfiguration metricConfiguration) {
+  public AbstractOrmDao (ProxySession<N> proxySession, VectoredDao<I, D> vectoredDao) {
 
-    this.stringConverterFactory = stringConverterFactory;
-    this.metricConfiguration = metricConfiguration;
+    super(vectoredDao);
+
+    this.proxySession = proxySession;
   }
 
   public void register () {
 
-    PersistenceManager.register(this);
+    DaoManager.register(getManagedClass(), this);
   }
 
-  public StringConverterFactory getStringConverterFactory () {
+  @Override
+  public String getMetricSource () {
 
-    return stringConverterFactory;
+    return MetricSource.ORM.getDisplay();
   }
 
-  public MetricConfiguration getMetricConfiguration () {
+  @Override
+  public String getDataSource () {
 
-    return metricConfiguration;
+    return proxySession.getDataSource();
+  }
+
+  @Override
+  public ProxySession<N> getSession () {
+
+    return proxySession;
+  }
+
+  @Override
+  public boolean isCacheEnabled () {
+
+    return proxySession.isCacheEnabled();
   }
 }

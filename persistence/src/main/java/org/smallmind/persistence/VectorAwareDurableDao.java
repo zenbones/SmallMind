@@ -31,25 +31,25 @@ import org.smallmind.persistence.cache.VectorAware;
 import org.smallmind.persistence.cache.VectorKey;
 import org.smallmind.persistence.cache.VectoredDao;
 import org.smallmind.persistence.cache.aop.Vector;
-import org.smallmind.persistence.orm.ProxySession;
 
 public abstract class VectorAwareDurableDao<I extends Serializable & Comparable<I>, D extends Durable<I>> extends AbstractDurableDao<I, D> implements VectorAware<I, D> {
 
-  private ProxySession proxySession;
   private VectoredDao<I, D> vectoredDao;
 
-  public VectorAwareDurableDao (ProxySession proxySession, VectoredDao<I, D> vectoredDao) {
+  public VectorAwareDurableDao (VectoredDao<I, D> vectoredDao) {
 
-    this.proxySession = proxySession;
     this.vectoredDao = vectoredDao;
   }
+
+  public abstract boolean isCacheEnabled ();
 
   @Override
   public VectoredDao<I, D> getVectoredDao () {
 
-    return proxySession.isCacheEnabled() ? vectoredDao : null;
+    return isCacheEnabled() ? vectoredDao : null;
   }
 
+  @Override
   public void deleteVector (D durable, Vector vector) {
 
     VectoredDao<I, D> vectoredDao;
@@ -60,6 +60,7 @@ public abstract class VectorAwareDurableDao<I extends Serializable & Comparable<
     }
   }
 
+  @Override
   public void updateInVector (D durable, Vector vector) {
 
     VectoredDao<I, D> vectoredDao;
@@ -70,6 +71,7 @@ public abstract class VectorAwareDurableDao<I extends Serializable & Comparable<
     }
   }
 
+  @Override
   public void removeFromVector (D durable, Vector vector) {
 
     VectoredDao<I, D> vectoredDao;

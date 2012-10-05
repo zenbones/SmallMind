@@ -43,11 +43,11 @@ import org.smallmind.instrument.InstrumentationManager;
 import org.smallmind.instrument.MetricProperty;
 import org.smallmind.persistence.Durable;
 import org.smallmind.persistence.PersistenceManager;
+import org.smallmind.persistence.VectorAwareDurableDao;
 import org.smallmind.persistence.cache.DurableVector;
 import org.smallmind.persistence.cache.VectorKey;
 import org.smallmind.persistence.cache.VectoredDao;
 import org.smallmind.persistence.instrument.aop.Instrumented;
-import org.smallmind.persistence.VectorAwareDurableDao;
 
 @Aspect
 public class CacheAsAspect {

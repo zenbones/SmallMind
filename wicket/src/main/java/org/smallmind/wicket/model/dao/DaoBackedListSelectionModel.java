@@ -40,10 +40,10 @@ public class DaoBackedListSelectionModel<I extends Serializable & Comparable<I>,
   private transient List<D> selectionList;
   private transient boolean attached = false;
 
-  private ORMDao<I, D> backingDao;
+  private ORMDao<I, D, ?> backingDao;
   private List<I> idList;
 
-  public DaoBackedListSelectionModel (ORMDao<I, D> backingDao) {
+  public DaoBackedListSelectionModel (ORMDao<I, D, ?> backingDao) {
 
     this.backingDao = backingDao;
 

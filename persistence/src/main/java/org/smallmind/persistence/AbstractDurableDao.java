@@ -33,7 +33,6 @@ import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.util.Arrays;
 import java.util.concurrent.atomic.AtomicReference;
-import org.smallmind.persistence.instrument.MetricSource;
 import org.smallmind.persistence.orm.ORMInitializationException;
 
 public abstract class AbstractDurableDao<I extends Serializable & Comparable<I>, D extends Durable<I>> implements DurableDao<I, D> {
@@ -143,11 +142,6 @@ public abstract class AbstractDurableDao<I extends Serializable & Comparable<I>,
     }
 
     throw new ORMInitializationException("Id class is neither a String, an Enum, a primitive type, nor a primitive wrapper, and does not implement Identifier, so you need to override getIdFromString(String value)");
-  }
-
-  public String getMetricSource () {
-
-    return MetricSource.ORM.getDisplay();
   }
 
   public I getId (D durable) {

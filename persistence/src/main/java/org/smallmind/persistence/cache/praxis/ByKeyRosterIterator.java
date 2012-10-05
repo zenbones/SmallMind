@@ -35,10 +35,10 @@ import org.smallmind.persistence.orm.ORMDao;
 
 public class ByKeyRosterIterator<I extends Serializable & Comparable<I>, D extends Durable<I>> implements ListIterator<D> {
 
-  private final ORMDao<I, D> ormDao;
+  private final ORMDao<I, D, ?> ormDao;
   private final ListIterator<DurableKey<I, D>> keyListIterator;
 
-  public ByKeyRosterIterator (ORMDao<I, D> ormDao, ListIterator<DurableKey<I, D>> keyListIterator) {
+  public ByKeyRosterIterator (ORMDao<I, D, ?> ormDao, ListIterator<DurableKey<I, D>> keyListIterator) {
 
     this.ormDao = ormDao;
     this.keyListIterator = keyListIterator;

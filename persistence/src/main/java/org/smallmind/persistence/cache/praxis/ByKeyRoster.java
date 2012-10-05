@@ -36,19 +36,19 @@ import java.util.List;
 import java.util.ListIterator;
 import java.util.Map;
 import org.smallmind.persistence.Durable;
+import org.smallmind.persistence.VectorAwareDurableDao;
 import org.smallmind.persistence.cache.CacheOperationException;
 import org.smallmind.persistence.cache.DurableKey;
 import org.smallmind.persistence.cache.VectoredDao;
 import org.smallmind.persistence.cache.praxis.intrinsic.IntrinsicRoster;
 import org.smallmind.persistence.orm.DaoManager;
 import org.smallmind.persistence.orm.ORMDao;
-import org.smallmind.persistence.VectorAwareDurableDao;
 import org.terracotta.annotations.InstrumentedClass;
 
 @InstrumentedClass
 public class ByKeyRoster<I extends Serializable & Comparable<I>, D extends Durable<I>> implements Roster<D> {
 
-  private transient volatile ORMDao<I, D> ormDao;
+  private transient volatile ORMDao<I, D, ?> ormDao;
 
   private final Roster<DurableKey<I, D>> keyRoster;
   private final Class<D> durableClass;
@@ -59,7 +59,7 @@ public class ByKeyRoster<I extends Serializable & Comparable<I>, D extends Durab
     this.keyRoster = keyRoster;
   }
 
-  private ORMDao<I, D> getORMDao () {
+  private ORMDao<I, D, ?> getORMDao () {
 
     if (ormDao == null) {
       if ((ormDao = DaoManager.get(durableClass)) == null) {
@@ -72,7 +72,7 @@ public class ByKeyRoster<I extends Serializable & Comparable<I>, D extends Durab
 
   public List<D> prefetch () {
 
-    ORMDao<I, D> ormDao;
+    ORMDao<I, D, ?> ormDao;
     VectoredDao<I, D> vectoredDao;
 
     if (((ormDao = getORMDao()) instanceof VectorAwareDurableDao) && ((vectoredDao = ((VectorAwareDurableDao<I, D>)ormDao).getVectoredDao()) != null)) {

@@ -34,6 +34,7 @@ import org.hibernate.Criteria;
 import org.hibernate.Query;
 import org.hibernate.SQLQuery;
 import org.hibernate.ScrollMode;
+import org.hibernate.Session;
 import org.hibernate.criterion.DetachedCriteria;
 import org.hibernate.criterion.Order;
 import org.hibernate.criterion.Projections;
@@ -41,16 +42,11 @@ import org.hibernate.criterion.Restrictions;
 import org.hibernate.transform.Transformers;
 import org.smallmind.persistence.Durable;
 import org.smallmind.persistence.UpdateMode;
-import org.smallmind.persistence.VectorAwareDurableDao;
 import org.smallmind.persistence.cache.VectoredDao;
-import org.smallmind.persistence.orm.DaoManager;
-import org.smallmind.persistence.orm.ORMDao;
-import org.smallmind.persistence.orm.ProxySession;
+import org.smallmind.persistence.orm.AbstractOrmDao;
 import org.smallmind.persistence.sql.SqlType;
 
-public abstract class HibernateDao<I extends Serializable & Comparable<I>, D extends Durable<I>> extends VectorAwareDurableDao<I, D> implements ORMDao<I, D> {
-
-  private HibernateProxySession proxySession;
+public abstract class HibernateDao<I extends Serializable & Comparable<I>, D extends Durable<I>> extends AbstractOrmDao<I, D, Session> {
 
   public HibernateDao (HibernateProxySession proxySession) {
 
@@ -60,23 +56,6 @@ public abstract class HibernateDao<I extends Serializable & Comparable<I>, D ext
   public HibernateDao (HibernateProxySession proxySession, VectoredDao<I, D> vectoredDao) {
 
     super(proxySession, vectoredDao);
-
-    this.proxySession = proxySession;
-  }
-
-  public void register () {
-
-    DaoManager.register(getManagedClass(), this);
-  }
-
-  public String getDataSource () {
-
-    return proxySession.getDataSource();
-  }
-
-  public ProxySession getSession () {
-
-    return proxySession;
   }
 
   public D get (I id) {
@@ -113,12 +92,12 @@ public abstract class HibernateDao<I extends Serializable & Comparable<I>, D ext
   @Override
   public D acquire (Class<D> durableClass, I id) {
 
-    return durableClass.cast(proxySession.getSession().get(durableClass, id));
+    return durableClass.cast(getSession().getNativeSession().get(durableClass, id));
   }
 
   public List<D> list () {
 
-    return Collections.checkedList(proxySession.getSession().createCriteria(getManagedClass()).list(), getManagedClass());
+    return Collections.checkedList(getSession().getNativeSession().createCriteria(getManagedClass()).list(), getManagedClass());
   }
 
   public List<D> list (int maxResults) {
@@ -128,7 +107,7 @@ public abstract class HibernateDao<I extends Serializable & Comparable<I>, D ext
 
   public List<D> list (int maxResults, int fetchSize) {
 
-    return Collections.checkedList(proxySession.getSession().createCriteria(getManagedClass()).setMaxResults(maxResults).setFetchSize(fetchSize).list(), getManagedClass());
+    return Collections.checkedList(getSession().getNativeSession().createCriteria(getManagedClass()).setMaxResults(maxResults).setFetchSize(fetchSize).list(), getManagedClass());
   }
 
   public List<D> list (I greaterThan, int maxResults) {
@@ -150,12 +129,12 @@ public abstract class HibernateDao<I extends Serializable & Comparable<I>, D ext
 
   public Iterable<D> scroll () {
 
-    return new ScrollIterator<D>(proxySession.getSession().createCriteria(getManagedClass()).scroll(ScrollMode.FORWARD_ONLY), getManagedClass());
+    return new ScrollIterator<D>(getSession().getNativeSession().createCriteria(getManagedClass()).scroll(ScrollMode.FORWARD_ONLY), getManagedClass());
   }
 
   public Iterable<D> scroll (int fetchSize) {
 
-    return new ScrollIterator<D>(proxySession.getSession().createCriteria(getManagedClass()).setFetchSize(fetchSize).scroll(ScrollMode.FORWARD_ONLY), getManagedClass());
+    return new ScrollIterator<D>(getSession().getNativeSession().createCriteria(getManagedClass()).setFetchSize(fetchSize).scroll(ScrollMode.FORWARD_ONLY), getManagedClass());
   }
 
   public Iterable<D> scrollById (final I greaterThan, final int fetchSize) {
@@ -204,12 +183,12 @@ public abstract class HibernateDao<I extends Serializable & Comparable<I>, D ext
     D persistentDurable;
     VectoredDao<I, D> vectoredDao = getVectoredDao();
 
-    if (proxySession.getSession().contains(durable)) {
+    if (getSession().getNativeSession().contains(durable)) {
       persistentDurable = durable;
     }
     else {
-      persistentDurable = getManagedClass().cast(proxySession.getSession().merge(durable));
-      proxySession.flush();
+      persistentDurable = getManagedClass().cast(getSession().getNativeSession().merge(durable));
+      getSession().flush();
     }
 
     if (vectoredDao != null) {
@@ -229,14 +208,14 @@ public abstract class HibernateDao<I extends Serializable & Comparable<I>, D ext
 
     VectoredDao<I, D> vectoredDao = getVectoredDao();
 
-    if (!proxySession.getSession().contains(durable)) {
-      proxySession.getSession().delete(proxySession.getSession().load(durable.getClass(), durable.getId()));
+    if (!getSession().getNativeSession().contains(durable)) {
+      getSession().getNativeSession().delete(getSession().getNativeSession().load(durable.getClass(), durable.getId()));
     }
     else {
-      proxySession.getSession().delete(durable);
+      getSession().getNativeSession().delete(durable);
     }
 
-    proxySession.flush();
+    getSession().flush();
 
     if (vectoredDao != null) {
       vectoredDao.delete(durableClass, durable);
@@ -388,19 +367,19 @@ public abstract class HibernateDao<I extends Serializable & Comparable<I>, D ext
 
   public SQLQuery constructSQLQuery (SQLQueryDetails sqlQueryDetails) {
 
-    return sqlQueryDetails.completeSQLQuery((SQLQuery)proxySession.getSession().createSQLQuery(sqlQueryDetails.getSQLQueryString()).setCacheable(true));
+    return sqlQueryDetails.completeSQLQuery((SQLQuery)getSession().getNativeSession().createSQLQuery(sqlQueryDetails.getSQLQueryString()).setCacheable(true));
   }
 
   public Query constructQuery (QueryDetails queryDetails) {
 
-    return queryDetails.completeQuery(proxySession.getSession().createQuery(queryDetails.getQueryString()).setCacheable(true));
+    return queryDetails.completeQuery(getSession().getNativeSession().createQuery(queryDetails.getQueryString()).setCacheable(true));
   }
 
   public Criteria constructCriteria (CriteriaDetails criteriaDetails) {
 
     Criteria criteria;
 
-    criteria = (criteriaDetails.getAlias() == null) ? proxySession.getSession().createCriteria(getManagedClass()) : proxySession.getSession().createCriteria(getManagedClass(), criteriaDetails.getAlias());
+    criteria = (criteriaDetails.getAlias() == null) ? getSession().getNativeSession().createCriteria(getManagedClass()) : getSession().getNativeSession().createCriteria(getManagedClass(), criteriaDetails.getAlias());
 
     return criteriaDetails.completeCriteria(criteria).setCacheable(true);
   }
