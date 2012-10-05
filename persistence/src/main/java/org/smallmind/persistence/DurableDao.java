@@ -27,6 +27,7 @@
 package org.smallmind.persistence;
 
 import java.io.Serializable;
+import java.util.List;
 
 public interface DurableDao<I extends Serializable & Comparable<I>, D extends Durable<I>> extends Dao<I, D> {
 
@@ -37,4 +38,18 @@ public interface DurableDao<I extends Serializable & Comparable<I>, D extends Du
   public abstract I getIdFromString (String value);
 
   public abstract I getId (D durable);
+
+  public abstract D get (I id);
+
+  public abstract D persist (D durable);
+
+  public abstract D persist (Class<D> durableClass, D durable);
+
+  public abstract void delete (D durable);
+
+  public abstract List<D> list ();
+
+  public abstract List<D> list (int fetchSize);
+
+  public abstract List<D> list (I greaterThan, int fetchSize);
 }
