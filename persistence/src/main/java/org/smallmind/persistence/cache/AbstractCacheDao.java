@@ -57,7 +57,9 @@ public abstract class AbstractCacheDao<I extends Comparable<I>, D extends Durabl
 
   public D get (Class<D> durableClass, I id) {
 
-    return acquire(durableClass, id);
+    DurableKey<I, D> durableKey = new DurableKey<I, D>(durableClass, id);
+
+    return getInstanceCache(durableClass).get(durableKey.getKey());
   }
 
   public Map<DurableKey<I, D>, D> get (Class<D> durableClass, List<DurableKey<I, D>> durableKeys) {
@@ -84,13 +86,6 @@ public abstract class AbstractCacheDao<I extends Comparable<I>, D extends Durabl
     }
 
     return resultMap;
-  }
-
-  public D acquire (Class<D> durableClass, I id) {
-
-    DurableKey<I, D> durableKey = new DurableKey<I, D>(durableClass, id);
-
-    return getInstanceCache(durableClass).get(durableKey.getKey());
   }
 
   public void delete (Class<D> durableClass, D durable) {
