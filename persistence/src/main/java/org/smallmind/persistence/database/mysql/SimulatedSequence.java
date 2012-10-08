@@ -50,6 +50,11 @@ public class SimulatedSequence extends Sequence {
     this.incrementBy = incrementBy;
   }
 
+  public void register () {
+
+    SequenceManager.register(this);
+  }
+
   @Override
   public long nextLong (String name) {
 

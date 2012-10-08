@@ -81,7 +81,7 @@ public class ByKeyExtrinsicCacheDao<I extends Serializable & Comparable<I>, D ex
           break;
         }
 
-        vectorCopy = (!getVectorCache(vectorKey.getElementClass()).requiresCopyOnDistributedCASOperation()) ? null : (casValue.getValue() == null) ? null : casValue.getValue().copy();
+        vectorCopy = (!getVectorCache(vectorKey.getElementClass()).requiresCopyOnDistributedCASOperation()) ? null : casValue.getValue().copy();
         if (!casValue.getValue().add(durable)) {
           break;
         }
@@ -105,7 +105,7 @@ public class ByKeyExtrinsicCacheDao<I extends Serializable & Comparable<I>, D ex
           break;
         }
 
-        vectorCopy = (!getVectorCache(vectorKey.getElementClass()).requiresCopyOnDistributedCASOperation()) ? null : (casValue.getValue() == null) ? null : casValue.getValue().copy();
+        vectorCopy = (!getVectorCache(vectorKey.getElementClass()).requiresCopyOnDistributedCASOperation()) ? null : casValue.getValue().copy();
         if (!casValue.getValue().remove(durable)) {
           break;
         }
