@@ -26,27 +26,14 @@
  */
 package org.smallmind.persistence;
 
-import org.smallmind.nutsnbolts.lang.FormattedRuntimeException;
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
 
-public class PersistenceException extends FormattedRuntimeException {
+@Target(ElementType.TYPE)
+@Retention(RetentionPolicy.RUNTIME)
+public @interface NaturalKeys {
 
-  public PersistenceException () {
-
-    super();
-  }
-
-  public PersistenceException (String message, Object... args) {
-
-    super(message, args);
-  }
-
-  public PersistenceException (Throwable throwable, String message, Object... args) {
-
-    super(throwable, message, args);
-  }
-
-  public PersistenceException (Throwable throwable) {
-
-    super(throwable);
-  }
+  public abstract String[] value ();
 }
