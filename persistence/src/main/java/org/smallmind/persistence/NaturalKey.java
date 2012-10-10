@@ -29,6 +29,7 @@ package org.smallmind.persistence;
 import java.lang.reflect.Field;
 import java.util.Arrays;
 import java.util.concurrent.ConcurrentHashMap;
+import org.smallmind.nutsnbolts.reflection.type.TypeUtility;
 
 public class NaturalKey<D extends Durable<? extends Comparable>> {
 
@@ -53,10 +54,23 @@ public class NaturalKey<D extends Durable<? extends Comparable>> {
       naturalKeyFields = new Field[naturalKeys.value().length];
       for (String fieldName : naturalKeys.value()) {
         try {
-          Field currentField = durableClass.getField(fieldName);
 
-          currentField.setAccessible(true);
-          naturalKeyFields[index++] = currentField;
+          Class<?> currentClass = durableClass;
+          Field currentField = null;
+
+          do {
+            try {
+              currentField = currentClass.getDeclaredField(fieldName);
+              currentField.setAccessible(true);
+              naturalKeyFields[index++] = currentField;
+            }
+            catch (NoSuchFieldException n) {
+            }
+          } while ((currentField != null) && ((currentClass = currentClass.getSuperclass()) != null));
+
+          if (currentField == null) {
+            throw new NoSuchFieldException(fieldName);
+          }
         }
         catch (NoSuchFieldException noSuchFieldException) {
           throw new PersistenceException(noSuchFieldException);
@@ -95,8 +109,8 @@ public class NaturalKey<D extends Durable<? extends Comparable>> {
     int index = 0;
 
     for (Field naturalKeyField : getNaturalKeyFields(durableClass)) {
-      if (!naturalKeyField.getType().equals(naturalKeyFieldValues[index++].getClass())) {
-        throw new PersistenceException("Field values must match both order and type of the wide durables' natural keys(%s)", Arrays.toString(getNaturalKeyFields(durableClass)));
+      if (!TypeUtility.isEssentiallyTheSameAs(naturalKeyField.getType(), naturalKeyFieldValues[index++].getClass())) {
+        throw new PersistenceException("Field values must match both order and type of the durables' natural keys(%s)", Arrays.toString(getNaturalKeyFields(durableClass)));
       }
     }
   }

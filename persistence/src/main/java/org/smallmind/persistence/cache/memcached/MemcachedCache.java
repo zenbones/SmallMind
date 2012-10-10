@@ -49,6 +49,11 @@ public class MemcachedCache<V> implements PersistenceCache<String, V> {
     this.timeToLiveSeconds = timeToLiveSeconds;
   }
 
+  public MemcachedClient getMemcachedClient () {
+
+    return memcachedClient;
+  }
+
   @Override
   public boolean requiresCopyOnDistributedCASOperation () {
 
