@@ -34,7 +34,7 @@ import org.smallmind.persistence.cache.VectorIndex;
 
 public class VectorIndices {
 
-  // Called from CachedWithAspect
+  // Called from ORMBasedCachedWithAspect
   public static VectorIndex[] getVectorIndexes (Vector vector, Durable durable) {
 
     VectorIndex[] indices;
@@ -51,7 +51,7 @@ public class VectorIndices {
     return indices;
   }
 
-  // Called from CacheAsAspect
+  // Called from ORMBasedCacheAsAspect
   public static VectorIndex[] getVectorIndexes (Vector vector, JoinPoint joinPoint) {
 
     VectorIndex[] indices;

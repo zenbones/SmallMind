@@ -27,22 +27,62 @@
 package org.smallmind.persistence.orm;
 
 import java.io.Serializable;
+import org.smallmind.persistence.AbstractCacheAwareManagedDao;
 import org.smallmind.persistence.Durable;
-import org.smallmind.persistence.DurableDao;
+import org.smallmind.persistence.cache.VectoredDao;
 
-public interface ORMDao<I extends Serializable & Comparable<I>, D extends Durable<I>, N> extends DurableDao<I, D> {
+public abstract class ORMDao<I extends Serializable & Comparable<I>, D extends Durable<I>, N> extends AbstractCacheAwareManagedDao<I, D> implements RelationalDao<I, D, N> {
 
-  public abstract String getDataSource ();
+  private ProxySession<N> proxySession;
 
-  public abstract ProxySession<N> getSession ();
+  public ORMDao (ProxySession<N> proxySession, VectoredDao<I, D> vectoredDao) {
 
-  public abstract D detach (D durable);
+    super(proxySession.getDatabase(), vectoredDao);
 
-  public abstract Iterable<D> scroll ();
+    this.proxySession = proxySession;
+  }
 
-  public abstract Iterable<D> scroll (int fetchSize);
+  public void register () {
 
-  public abstract Iterable<D> scrollById (I greaterThan, int fetchSize);
+    DaoManager.register(getManagedClass(), this);
+  }
 
-  public abstract long size ();
+  @Override
+  public String getDataSource () {
+
+    return proxySession.getDataSource();
+  }
+
+  @Override
+  public ProxySession<N> getSession () {
+
+    return proxySession;
+  }
+
+  @Override
+  public boolean isCacheEnabled () {
+
+    return proxySession.isCacheEnabled();
+  }
+
+  // The acquire() method gets the managed object directly from the underlying data source (no vector, no cascade)
+  public abstract D acquire (Class<D> durableClass, I id);
+
+  @Override
+  public D get (I id) {
+
+    return get(getManagedClass(), id);
+  }
+
+  @Override
+  public D persist (D durable) {
+
+    return persist(getManagedClass(), durable);
+  }
+
+  @Override
+  public void delete (D durable) {
+
+    delete(getManagedClass(), durable);
+  }
 }

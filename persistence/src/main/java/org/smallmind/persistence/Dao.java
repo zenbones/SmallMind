@@ -28,8 +28,6 @@ package org.smallmind.persistence;
 
 public interface Dao<I, P> {
 
-  public abstract String getMetricSource ();
-
   public abstract P get (Class<P> persistentClass, I id);
 
   public abstract void delete (Class<P> persistentClass, P persistent);

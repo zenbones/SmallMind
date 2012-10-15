@@ -35,16 +35,19 @@ import java.util.Arrays;
 import java.util.concurrent.atomic.AtomicReference;
 import org.smallmind.persistence.orm.ORMInitializationException;
 
-public abstract class AbstractDurableDao<I extends Serializable & Comparable<I>, D extends Durable<I>> implements DurableDao<I, D> {
+public abstract class AbstractManagedDao<I extends Serializable & Comparable<I>, D extends Durable<I>> implements ManagedDao<I, D> {
 
-  private TypeInference idTypeInference = new TypeInference();
-  private TypeInference durableTypeInference = new TypeInference();
-  private AtomicReference<Method> fromStringMethodRef = new AtomicReference<Method>();
+  private final TypeInference idTypeInference = new TypeInference();
+  private final TypeInference durableTypeInference = new TypeInference();
+  private final AtomicReference<Method> fromStringMethodRef = new AtomicReference<Method>();
+  private final String metricSource;
 
-  public AbstractDurableDao () {
+  public AbstractManagedDao (String metricSource) {
 
     Class currentClass = this.getClass();
     Type superType;
+
+    this.metricSource = metricSource;
 
     do {
       if (((superType = currentClass.getGenericSuperclass()) != null) && (superType instanceof ParameterizedType)) {
@@ -63,6 +66,11 @@ public abstract class AbstractDurableDao<I extends Serializable & Comparable<I>,
         }
       }
     } while ((currentClass = currentClass.getSuperclass()) != null);
+  }
+
+  public String getMetricSource () {
+
+    return metricSource;
   }
 
   public Class<D> getManagedClass () {

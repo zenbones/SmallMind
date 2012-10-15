@@ -24,21 +24,18 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.persistence.instrument;
+package org.smallmind.persistence;
 
-public enum MetricSource {
+import java.io.Serializable;
+import java.util.List;
 
-  MYSQL("MySql"), TERRACOTTA("Terracotta"), MEMCACHED("Memcached"), EHCACHE("Ehcache"), CASSANDRA("Cassandra");
+public interface WideDurableDao<I extends Serializable & Comparable<I>, D extends Durable<I>> extends WideDao<I, D> {
 
-  private String display;
+  public abstract List<D> get (I id);
 
-  private MetricSource (String display) {
+  public abstract D[] persist (I id, D... durables);
 
-    this.display = display;
-  }
+  public abstract D[] persist (I id, Class<D> durableClass, D... durables);
 
-  public String getDisplay () {
-
-    return display;
-  }
+  public abstract void delete (I id, D... durables);
 }

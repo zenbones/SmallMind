@@ -44,9 +44,9 @@ public class JDOProxySession extends ProxySession<PersistenceManager> {
 
   private PersistenceManagerFactory persistenceManagerFactory;
 
-  public JDOProxySession (String dataSourceKey, PersistenceManagerFactory persistenceManagerFactor, boolean boundaryEnforced, boolean cacheEnabled) {
+  public JDOProxySession (String database, String dataSourceKey, PersistenceManagerFactory persistenceManagerFactor, boolean boundaryEnforced, boolean cacheEnabled) {
 
-    super(dataSourceKey, boundaryEnforced, cacheEnabled);
+    super(database, dataSourceKey, boundaryEnforced, cacheEnabled);
 
     this.persistenceManagerFactory = persistenceManagerFactor;
   }

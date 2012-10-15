@@ -31,14 +31,6 @@ import java.util.List;
 
 public interface DurableDao<I extends Serializable & Comparable<I>, D extends Durable<I>> extends Dao<I, D> {
 
-  public abstract Class<D> getManagedClass ();
-
-  public abstract Class<I> getIdClass ();
-
-  public abstract I getIdFromString (String value);
-
-  public abstract I getId (D durable);
-
   public abstract D get (I id);
 
   public abstract D persist (D durable);

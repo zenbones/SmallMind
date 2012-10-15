@@ -43,10 +43,10 @@ import org.hibernate.transform.Transformers;
 import org.smallmind.persistence.Durable;
 import org.smallmind.persistence.UpdateMode;
 import org.smallmind.persistence.cache.VectoredDao;
-import org.smallmind.persistence.orm.AbstractOrmDao;
+import org.smallmind.persistence.orm.ORMDao;
 import org.smallmind.persistence.sql.SqlType;
 
-public abstract class HibernateDao<I extends Serializable & Comparable<I>, D extends Durable<I>> extends AbstractOrmDao<I, D, Session> {
+public abstract class HibernateDao<I extends Serializable & Comparable<I>, D extends Durable<I>> extends ORMDao<I, D, Session> {
 
   public HibernateDao (HibernateProxySession proxySession) {
 

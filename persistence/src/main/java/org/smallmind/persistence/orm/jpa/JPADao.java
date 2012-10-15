@@ -34,9 +34,9 @@ import javax.persistence.Query;
 import org.smallmind.persistence.Durable;
 import org.smallmind.persistence.UpdateMode;
 import org.smallmind.persistence.cache.VectoredDao;
-import org.smallmind.persistence.orm.AbstractOrmDao;
+import org.smallmind.persistence.orm.ORMDao;
 
-public abstract class JPADao<I extends Serializable & Comparable<I>, D extends Durable<I>> extends AbstractOrmDao<I, D, EntityManager> {
+public abstract class JPADao<I extends Serializable & Comparable<I>, D extends Durable<I>> extends ORMDao<I, D, EntityManager> {
 
   public JPADao (JPAProxySession proxySession) {
 

@@ -43,12 +43,14 @@ public abstract class ProxySession<N> {
     }
   };
 
+  private String database;
   private String dataSource;
   private boolean boundaryEnforced;
   private boolean cacheEnabled;
 
-  public ProxySession (String dataSource, boolean boundaryEnforced, boolean cacheEnabled) {
+  public ProxySession (String database, String dataSource, boolean boundaryEnforced, boolean cacheEnabled) {
 
+    this.database = database;
     this.dataSource = dataSource;
     this.boundaryEnforced = boundaryEnforced;
     this.cacheEnabled = cacheEnabled;
@@ -57,6 +59,11 @@ public abstract class ProxySession<N> {
   public void register () {
 
     SessionManager.register(dataSource, this);
+  }
+
+  public String getDatabase () {
+
+    return database;
   }
 
   public String getDataSource () {

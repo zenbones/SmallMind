@@ -24,21 +24,12 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.persistence.instrument;
+package org.smallmind.persistence.cache;
 
-public enum MetricSource {
+import java.io.Serializable;
+import org.smallmind.persistence.Durable;
 
-  MYSQL("MySql"), TERRACOTTA("Terracotta"), MEMCACHED("Memcached"), EHCACHE("Ehcache"), CASSANDRA("Cassandra");
+public interface CacheAwareDao<I extends Serializable & Comparable<I>, D extends Durable<I>> {
 
-  private String display;
-
-  private MetricSource (String display) {
-
-    this.display = display;
-  }
-
-  public String getDisplay () {
-
-    return display;
-  }
+  public abstract VectoredDao<I, D> getVectoredDao ();
 }

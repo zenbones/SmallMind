@@ -34,14 +34,14 @@ import org.aspectj.lang.annotation.Aspect;
 import org.aspectj.lang.reflect.MethodSignature;
 import org.smallmind.instrument.InstrumentationManager;
 import org.smallmind.instrument.MetricProperty;
-import org.smallmind.persistence.CacheAwareDurableDao;
+import org.smallmind.persistence.AbstractCacheAwareManagedDao;
 import org.smallmind.persistence.PersistenceManager;
 
 @Aspect
 public class ApplyInstrumentationAspect {
 
   @Around(value = "@within(instrumented) && execution(@org.smallmind.persistence.instrument.aop.ApplyInstrumentation * * (..)) && this(durableDao)", argNames = "thisJoinPoint, instrumented, durableDao")
-  public Object aroundApplyStatisticsMethod (ProceedingJoinPoint thisJoinPoint, Instrumented instrumented, CacheAwareDurableDao durableDao)
+  public Object aroundApplyStatisticsMethod (ProceedingJoinPoint thisJoinPoint, Instrumented instrumented, AbstractCacheAwareManagedDao durableDao)
     throws Throwable {
 
     Method executedMethod;

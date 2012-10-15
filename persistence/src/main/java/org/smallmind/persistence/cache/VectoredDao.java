@@ -35,6 +35,8 @@ import org.smallmind.persistence.UpdateMode;
 
 public interface VectoredDao<I extends Comparable<I>, D extends Durable<I>> extends Dao<I, D> {
 
+  public abstract String getMetricSource ();
+
   public abstract Map<DurableKey<I, D>, D> get (Class<D> durableClass, List<DurableKey<I, D>> durableKeys);
 
   public abstract D persist (Class<D> durableClass, D durable, UpdateMode mode);

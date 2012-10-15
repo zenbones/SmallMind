@@ -24,18 +24,25 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.persistence.cache;
+package org.smallmind.persistence.orm;
 
+import java.io.Serializable;
 import org.smallmind.persistence.Durable;
+import org.smallmind.persistence.DurableDao;
 
-public interface CacheAware<I extends Comparable<I>, D extends Durable<I>> {
+public interface RelationalDao<I extends Serializable & Comparable<I>, D extends Durable<I>, N> extends DurableDao<I, D> {
 
-  public abstract String getMetricSource ();
+  public abstract String getDataSource ();
 
-  public abstract Class<D> getManagedClass ();
+  public abstract ProxySession<N> getSession ();
 
-  // The acquire() method gets the managed object directly from the underlying data source (no vector, no cascade)
-  public abstract D acquire (Class<D> durableClass, I id);
+  public abstract D detach (D durable);
 
-  public abstract VectoredDao<I, D> getVectoredDao ();
+  public abstract Iterable<D> scroll ();
+
+  public abstract Iterable<D> scroll (int fetchSize);
+
+  public abstract Iterable<D> scrollById (I greaterThan, int fetchSize);
+
+  public abstract long size ();
 }

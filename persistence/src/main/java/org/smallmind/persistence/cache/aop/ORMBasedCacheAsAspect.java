@@ -41,21 +41,21 @@ import org.aspectj.lang.annotation.Aspect;
 import org.aspectj.lang.reflect.MethodSignature;
 import org.smallmind.instrument.InstrumentationManager;
 import org.smallmind.instrument.MetricProperty;
-import org.smallmind.persistence.CacheAwareDurableDao;
 import org.smallmind.persistence.Durable;
 import org.smallmind.persistence.PersistenceManager;
 import org.smallmind.persistence.cache.DurableVector;
 import org.smallmind.persistence.cache.VectorKey;
 import org.smallmind.persistence.cache.VectoredDao;
 import org.smallmind.persistence.instrument.aop.Instrumented;
+import org.smallmind.persistence.orm.ORMDao;
 
 @Aspect
-public class CacheAsAspect {
+public class ORMBasedCacheAsAspect {
 
   private static final Random RANDOM = new SecureRandom();
 
-  @Around(value = "execution(@CacheAs * * (..)) && @annotation(cacheAs) && this(cacheAware)", argNames = "thisJoinPoint, cacheAs, cacheAware")
-  public Object aroundCacheAsMethod (ProceedingJoinPoint thisJoinPoint, CacheAs cacheAs, CacheAwareDurableDao cacheAware)
+  @Around(value = "execution(@CacheAs * * (..)) && @annotation(cacheAs) && this(ormDao)", argNames = "thisJoinPoint, cacheAs, ormDao")
+  public Object aroundCacheAsMethod (ProceedingJoinPoint thisJoinPoint, CacheAs cacheAs, ORMDao ormDao)
     throws Throwable {
 
     Annotation instrumentedAnnotation;
@@ -66,7 +66,7 @@ public class CacheAsAspect {
     long start = 0;
     long stop;
 
-    instrumentedAnnotation = cacheAware.getClass().getAnnotation(Instrumented.class);
+    instrumentedAnnotation = ormDao.getClass().getAnnotation(Instrumented.class);
     if (timingEnabled = (instrumentedAnnotation != null) && ((Instrumented)instrumentedAnnotation).value()) {
       start = System.currentTimeMillis();
     }
@@ -85,7 +85,7 @@ public class CacheAsAspect {
         throw new CacheAutomationError("The stochastic(%d) attribute of a @CacheAs annotation can not be negative", cacheAs.time().stochastic());
       }
 
-      if (cacheAware.getManagedClass().equals(methodSignature.getReturnType())) {
+      if (ormDao.getManagedClass().equals(methodSignature.getReturnType())) {
         if (cacheAs.ordered()) {
           throw new CacheAutomationError("A method annotated with @CacheAs which does not return an Iterable type can't be ordered", cacheAs.comparator().getClass().getName());
         }
@@ -98,8 +98,8 @@ public class CacheAsAspect {
 
         VectoredDao vectoredDao;
 
-        if ((vectoredDao = cacheAware.getVectoredDao()) == null) {
-          metricSource = cacheAware.getMetricSource();
+        if ((vectoredDao = ormDao.getVectoredDao()) == null) {
+          metricSource = ormDao.getMetricSource();
 
           return thisJoinPoint.proceed();
         }
@@ -108,7 +108,7 @@ public class CacheAsAspect {
           VectorKey vectorKey;
           DurableVector vector;
 
-          vectorKey = new VectorKey(VectorIndices.getVectorIndexes(cacheAs.value(), thisJoinPoint), cacheAware.getManagedClass(), Classifications.get(CacheAs.class, thisJoinPoint, cacheAs.value()));
+          vectorKey = new VectorKey(VectorIndices.getVectorIndexes(cacheAs.value(), thisJoinPoint), ormDao.getManagedClass(), Classifications.get(CacheAs.class, thisJoinPoint, cacheAs.value()));
 
           if ((vector = vectoredDao.getVector(vectorKey)) != null) {
             if (!vector.isAlive()) {
@@ -123,7 +123,7 @@ public class CacheAsAspect {
 
           Durable durable;
 
-          metricSource = cacheAware.getMetricSource();
+          metricSource = ormDao.getMetricSource();
 
           if ((durable = (Durable)thisJoinPoint.proceed()) != null) {
 
@@ -138,14 +138,14 @@ public class CacheAsAspect {
           throw new CacheAutomationError("A method annotated with @CacheAs has registered a comparator(%s) but is not ordered", cacheAs.comparator().getClass().getName());
         }
 
-        if ((!((returnType = (executedMethod = methodSignature.getMethod()).getGenericReturnType()) instanceof ParameterizedType)) || (!cacheAware.getManagedClass().equals(((ParameterizedType)returnType).getActualTypeArguments()[0]))) {
-          throw new CacheAutomationError("Methods annotated with @CacheAs which return an Iterable type must be parameterized to <? extends Iterable<%s>>", cacheAware.getManagedClass().getSimpleName());
+        if ((!((returnType = (executedMethod = methodSignature.getMethod()).getGenericReturnType()) instanceof ParameterizedType)) || (!ormDao.getManagedClass().equals(((ParameterizedType)returnType).getActualTypeArguments()[0]))) {
+          throw new CacheAutomationError("Methods annotated with @CacheAs which return an Iterable type must be parameterized to <? extends Iterable<%s>>", ormDao.getManagedClass().getSimpleName());
         }
 
         VectoredDao vectoredDao;
 
-        if ((vectoredDao = cacheAware.getVectoredDao()) == null) {
-          metricSource = cacheAware.getMetricSource();
+        if ((vectoredDao = ormDao.getVectoredDao()) == null) {
+          metricSource = ormDao.getMetricSource();
 
           return thisJoinPoint.proceed();
         }
@@ -154,7 +154,7 @@ public class CacheAsAspect {
           VectorKey vectorKey;
           DurableVector vector;
 
-          vectorKey = new VectorKey(VectorIndices.getVectorIndexes(cacheAs.value(), thisJoinPoint), cacheAware.getManagedClass(), Classifications.get(CacheAs.class, thisJoinPoint, cacheAs.value()));
+          vectorKey = new VectorKey(VectorIndices.getVectorIndexes(cacheAs.value(), thisJoinPoint), ormDao.getManagedClass(), Classifications.get(CacheAs.class, thisJoinPoint, cacheAs.value()));
 
           if ((vector = vectoredDao.getVector(vectorKey)) != null) {
             if (!vector.isAlive()) {
@@ -169,7 +169,7 @@ public class CacheAsAspect {
 
           Iterable iterable;
 
-          metricSource = cacheAware.getMetricSource();
+          metricSource = ormDao.getMetricSource();
 
           if ((iterable = (Iterable)thisJoinPoint.proceed()) != null) {
             vector = vectoredDao.persistVector(vectorKey, vectoredDao.createVector(vectorKey, iterable, cacheAs.comparator().equals(Comparator.class) ? null : cacheAs.comparator().newInstance(), cacheAs.max(), getTimeToLiveSeconds(cacheAs), cacheAs.ordered()));
@@ -181,7 +181,7 @@ public class CacheAsAspect {
         }
       }
       else {
-        throw new CacheAutomationError("Methods annotated with @CacheAs must either return their managed type(%s), or an Iterable parameterized to their managed type <? extends Iterable<%s>>", cacheAware.getManagedClass().getSimpleName(), cacheAware.getManagedClass().getSimpleName());
+        throw new CacheAutomationError("Methods annotated with @CacheAs must either return their managed type(%s), or an Iterable parameterized to their managed type <? extends Iterable<%s>>", ormDao.getManagedClass().getSimpleName(), ormDao.getManagedClass().getSimpleName());
       }
     }
     catch (Throwable throwable) {
@@ -197,7 +197,7 @@ public class CacheAsAspect {
           executedMethod = methodSignature.getMethod();
         }
 
-        InstrumentationManager.instrumentWithChronometer(PersistenceManager.getPersistence(), stop - start, TimeUnit.MILLISECONDS, new MetricProperty("durable", cacheAware.getManagedClass().getSimpleName()), new MetricProperty("method", executedMethod.getName()), new MetricProperty("source", metricSource));
+        InstrumentationManager.instrumentWithChronometer(PersistenceManager.getPersistence(), stop - start, TimeUnit.MILLISECONDS, new MetricProperty("durable", ormDao.getManagedClass().getSimpleName()), new MetricProperty("method", executedMethod.getName()), new MetricProperty("source", metricSource));
       }
     }
   }

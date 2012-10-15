@@ -46,9 +46,9 @@ public class HibernateProxySession extends ProxySession<Session> {
 
   private SessionFactory sessionFactory;
 
-  public HibernateProxySession (String dataSourceKey, SessionFactory sessionFactory, boolean boundaryEnforced, boolean cacheEnabled) {
+  public HibernateProxySession (String database, String dataSourceKey, SessionFactory sessionFactory, boolean boundaryEnforced, boolean cacheEnabled) {
 
-    super(dataSourceKey, boundaryEnforced, cacheEnabled);
+    super(database, dataSourceKey, boundaryEnforced, cacheEnabled);
 
     this.sessionFactory = sessionFactory;
   }

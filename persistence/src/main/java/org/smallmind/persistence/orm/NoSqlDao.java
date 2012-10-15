@@ -27,66 +27,44 @@
 package org.smallmind.persistence.orm;
 
 import java.io.Serializable;
+import java.util.List;
+import org.smallmind.persistence.AbstractCacheAwareManagedDao;
 import org.smallmind.persistence.Durable;
-import org.smallmind.persistence.CacheAwareDurableDao;
+import org.smallmind.persistence.WideDurableDao;
 import org.smallmind.persistence.cache.VectoredDao;
-import org.smallmind.persistence.instrument.MetricSource;
 
-public abstract class AbstractOrmDao<I extends Serializable & Comparable<I>, D extends Durable<I>, N> extends CacheAwareDurableDao<I, D> implements ORMDao<I, D, N> {
+public abstract class NoSqlDao<I extends Serializable & Comparable<I>, D extends Durable<I>> extends AbstractCacheAwareManagedDao<I, D> implements WideDurableDao<I, D> {
 
-  private ProxySession<N> proxySession;
+  private boolean cacheEnabled;
 
-  public AbstractOrmDao (ProxySession<N> proxySession, VectoredDao<I, D> vectoredDao) {
+  public NoSqlDao (String metricSource, VectoredDao<I, D> vectoredDao, boolean cacheEnabled) {
 
-    super(vectoredDao);
+    super(metricSource, vectoredDao);
 
-    this.proxySession = proxySession;
-  }
-
-  public void register () {
-
-    DaoManager.register(getManagedClass(), this);
-  }
-
-  @Override
-  public String getMetricSource () {
-
-    return MetricSource.ORM.getDisplay();
-  }
-
-  @Override
-  public String getDataSource () {
-
-    return proxySession.getDataSource();
-  }
-
-  @Override
-  public ProxySession<N> getSession () {
-
-    return proxySession;
+    this.cacheEnabled = cacheEnabled;
   }
 
   @Override
   public boolean isCacheEnabled () {
 
-    return proxySession.isCacheEnabled();
+    return cacheEnabled;
   }
 
   @Override
-  public D get (I id) {
+  public List<D> get (I id) {
 
     return get(getManagedClass(), id);
   }
 
   @Override
-  public D persist (D durable) {
+  public D[] persist (I id, D... durables) {
 
-    return persist(getManagedClass(), durable);
+    return persist(id, getManagedClass(), durables);
   }
 
   @Override
-  public void delete (D durable) {
+  public void delete (I id, D... durables) {
 
-    delete(getManagedClass(), durable);
+    delete(id, getManagedClass(), durables);
   }
 }
