@@ -27,16 +27,14 @@
 package org.smallmind.persistence;
 
 import java.io.Serializable;
-import org.smallmind.persistence.cache.VectorAware;
-import org.smallmind.persistence.cache.VectorKey;
+import org.smallmind.persistence.cache.CacheAware;
 import org.smallmind.persistence.cache.VectoredDao;
-import org.smallmind.persistence.cache.aop.Vector;
 
-public abstract class VectorAwareDurableDao<I extends Serializable & Comparable<I>, D extends Durable<I>> extends AbstractDurableDao<I, D> implements VectorAware<I, D> {
+public abstract class CacheAwareDurableDao<I extends Serializable & Comparable<I>, D extends Durable<I>> extends AbstractDurableDao<I, D> implements CacheAware<I, D> {
 
   private VectoredDao<I, D> vectoredDao;
 
-  public VectorAwareDurableDao (VectoredDao<I, D> vectoredDao) {
+  public CacheAwareDurableDao (VectoredDao<I, D> vectoredDao) {
 
     this.vectoredDao = vectoredDao;
   }
@@ -47,38 +45,5 @@ public abstract class VectorAwareDurableDao<I extends Serializable & Comparable<
   public VectoredDao<I, D> getVectoredDao () {
 
     return isCacheEnabled() ? vectoredDao : null;
-  }
-
-  @Override
-  public void deleteVector (D durable, Vector vector) {
-
-    VectoredDao<I, D> vectoredDao;
-
-    if ((vectoredDao = getVectoredDao()) != null) {
-
-      vectoredDao.deleteVector(new VectorKey<D>(vector, durable, getManagedClass()));
-    }
-  }
-
-  @Override
-  public void updateInVector (D durable, Vector vector) {
-
-    VectoredDao<I, D> vectoredDao;
-
-    if ((vectoredDao = getVectoredDao()) != null) {
-
-      vectoredDao.updateInVector(new VectorKey<D>(vector, durable, getManagedClass()), durable);
-    }
-  }
-
-  @Override
-  public void removeFromVector (D durable, Vector vector) {
-
-    VectoredDao<I, D> vectoredDao;
-
-    if ((vectoredDao = getVectoredDao()) != null) {
-
-      vectoredDao.removeFromVector(new VectorKey<D>(vector, durable, getManagedClass()), durable);
-    }
   }
 }

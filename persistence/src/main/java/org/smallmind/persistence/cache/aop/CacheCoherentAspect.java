@@ -38,10 +38,10 @@ import org.aspectj.lang.annotation.Aspect;
 import org.aspectj.lang.reflect.MethodSignature;
 import org.smallmind.instrument.InstrumentationManager;
 import org.smallmind.instrument.MetricProperty;
+import org.smallmind.persistence.CacheAwareDurableDao;
 import org.smallmind.persistence.Durable;
 import org.smallmind.persistence.PersistenceManager;
 import org.smallmind.persistence.UpdateMode;
-import org.smallmind.persistence.VectorAwareDurableDao;
 import org.smallmind.persistence.cache.VectoredDao;
 import org.smallmind.persistence.cache.praxis.intrinsic.IntrinsicRoster;
 import org.smallmind.persistence.instrument.aop.Instrumented;
@@ -50,7 +50,7 @@ import org.smallmind.persistence.instrument.aop.Instrumented;
 public class CacheCoherentAspect {
 
   @Around(value = "execution(@CacheCoherent * * (..)) && this(durableDao)", argNames = "thisJoinPoint, durableDao")
-  public Object aroundCacheCoherentMethod (ProceedingJoinPoint thisJoinPoint, VectorAwareDurableDao durableDao)
+  public Object aroundCacheCoherentMethod (ProceedingJoinPoint thisJoinPoint, CacheAwareDurableDao durableDao)
     throws Throwable {
 
     Annotation instrumentedAnnotation;
