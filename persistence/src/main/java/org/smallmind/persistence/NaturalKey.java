@@ -34,9 +34,48 @@ import org.smallmind.nutsnbolts.reflection.type.TypeUtility;
 public class NaturalKey<D extends Durable<? extends Comparable>> {
 
   private static ConcurrentHashMap<Class<? extends Durable>, Field[]> NATURAL_KEY_MAP = new ConcurrentHashMap<Class<? extends Durable>, Field[]>();
+  private static ConcurrentHashMap<Class<? extends Durable>, Field[]> NON_KEY_MAP = new ConcurrentHashMap<Class<? extends Durable>, Field[]>();
 
   private Class<? extends Durable> durableClass;
   private Object[] naturalKeyFieldValues;
+
+  public static Field[] getNonKeyFields (Class<? extends Durable> durableClass) {
+
+    Field[] nonKeyFields;
+
+    if ((nonKeyFields = NON_KEY_MAP.get(durableClass)) == null) {
+
+      Field[] naturalKeyFields = getNaturalKeyFields(durableClass);
+      Field[] durableFields = DurableFields.getFields(durableClass);
+
+      nonKeyFields = new Field[durableFields.length - naturalKeyFields.length];
+
+      if (nonKeyFields.length > 0) {
+
+        int index = 0;
+
+        for (Field durableField : durableFields) {
+
+          boolean matched = false;
+
+          for (Field naturalKeyField : naturalKeyFields) {
+            if (durableField.equals(naturalKeyField)) {
+              matched = true;
+              break;
+            }
+          }
+
+          if (!matched) {
+            nonKeyFields[index++] = durableField;
+          }
+        }
+      }
+
+      NON_KEY_MAP.put(durableClass, nonKeyFields);
+    }
+
+    return nonKeyFields;
+  }
 
   public static Field[] getNaturalKeyFields (Class<? extends Durable> durableClass) {
 

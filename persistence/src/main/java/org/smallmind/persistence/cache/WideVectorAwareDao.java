@@ -29,7 +29,7 @@ package org.smallmind.persistence.cache;
 import java.io.Serializable;
 import org.smallmind.persistence.Durable;
 
-public interface CacheAwareDao<I extends Serializable & Comparable<I>, D extends Durable<I>> {
+public interface WideVectorAwareDao<I extends Serializable & Comparable<I>, D extends Durable<I>> {
 
-  public abstract VectoredDao<I, D> getVectoredDao ();
+  public abstract WideVectoredDao<I, D> getWideVectoredDao ();
 }

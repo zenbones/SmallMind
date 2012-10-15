@@ -24,28 +24,12 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.persistence;
+package org.smallmind.persistence.cache;
 
 import java.io.Serializable;
-import org.smallmind.persistence.cache.CacheAwareDao;
-import org.smallmind.persistence.cache.VectoredDao;
+import org.smallmind.persistence.Durable;
 
-public abstract class AbstractCacheAwareManagedDao<I extends Serializable & Comparable<I>, D extends Durable<I>> extends AbstractManagedDao<I, D> implements CacheAwareDao<I, D> {
+public interface VectorAwareDao<I extends Serializable & Comparable<I>, D extends Durable<I>> {
 
-  private VectoredDao<I, D> vectoredDao;
-
-  public AbstractCacheAwareManagedDao (String metricSource, VectoredDao<I, D> vectoredDao) {
-
-    super(metricSource);
-
-    this.vectoredDao = vectoredDao;
-  }
-
-  public abstract boolean isCacheEnabled ();
-
-  @Override
-  public VectoredDao<I, D> getVectoredDao () {
-
-    return isCacheEnabled() ? vectoredDao : null;
-  }
+  public abstract VectoredDao<I, D> getVectoredDao ();
 }

@@ -24,20 +24,18 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.persistence;
+package org.smallmind.persistence.cache;
 
-import java.io.Serializable;
 import java.util.List;
+import org.smallmind.persistence.Durable;
 
-public interface WideDurableDao<I extends Serializable & Comparable<I>, D extends Durable<I>> extends WideDao<I, D> {
+public interface WideVectoredDao<I extends Comparable<I>, D extends Durable<I>> {
 
-  public abstract List<D> get (Class<?> parentClass, I id);
+  public abstract String getMetricSource ();
 
-  public abstract D[] persist (Class<?> parentClass, I id, D... durables);
+  public abstract List<D> get (Class<?> parentClass, I id, Class<D> durableClass);
 
-  public abstract D[] persist (Class<?> parentClass, I id, Class<D> durableClass, D... durables);
+  public abstract List<D> persist (Class<?> parentClass, I id, Class<D> durableClass, List<D> durables);
 
-  public abstract D[] persist (Class<?> parentClass, I id, Class<D> durableClass, List<D> durables);
-
-  public abstract void delete (Class<?> parentClass, I id, D... durables);
+  public abstract void delete (Class<?> parentClass, I id, Class<D> durableClass);
 }

@@ -27,19 +27,20 @@
 package org.smallmind.persistence.nosql;
 
 import java.io.Serializable;
+import java.util.Arrays;
 import java.util.List;
-import org.smallmind.persistence.AbstractCacheAwareManagedDao;
+import org.smallmind.persistence.AbstractWideVectorAwareManagedDao;
 import org.smallmind.persistence.Durable;
 import org.smallmind.persistence.WideDurableDao;
-import org.smallmind.persistence.cache.VectoredDao;
+import org.smallmind.persistence.cache.WideVectoredDao;
 
-public abstract class NoSqlDao<I extends Serializable & Comparable<I>, D extends Durable<I>> extends AbstractCacheAwareManagedDao<I, D> implements WideDurableDao<I, D> {
+public abstract class NoSqlDao<I extends Serializable & Comparable<I>, D extends Durable<I>> extends AbstractWideVectorAwareManagedDao<I, D> implements WideDurableDao<I, D> {
 
   private boolean cacheEnabled;
 
-  public NoSqlDao (String metricSource, VectoredDao<I, D> vectoredDao, boolean cacheEnabled) {
+  public NoSqlDao (String metricSource, WideVectoredDao<I, D> wideVectoredDao, boolean cacheEnabled) {
 
-    super(metricSource, vectoredDao);
+    super(metricSource, wideVectoredDao);
 
     this.cacheEnabled = cacheEnabled;
   }
@@ -51,20 +52,32 @@ public abstract class NoSqlDao<I extends Serializable & Comparable<I>, D extends
   }
 
   @Override
-  public List<D> get (I id) {
+  public List<D> get (Class<?> parentClass, I id) {
 
-    return get(getManagedClass(), id);
+    return get(parentClass, id, getManagedClass());
   }
 
   @Override
-  public D[] persist (I id, D... durables) {
+  public D[] persist (Class<?> parentClass, I id, D... durables) {
 
-    return persist(id, getManagedClass(), durables);
+    return persist(parentClass, id, getManagedClass(), durables);
   }
 
   @Override
-  public void delete (I id, D... durables) {
+  public D[] persist (Class<?> parentClass, I id, Class<D> durableClass, D... durables) {
 
-    delete(id, getManagedClass(), durables);
+    return persist(parentClass, id, durableClass, Arrays.asList(durables));
+  }
+
+  @Override
+  public void delete (Class<?> parentClass, I id, D... durables) {
+
+    delete(parentClass, id, getManagedClass(), durables);
+  }
+
+  @Override
+  public void delete (Class<?> parentClass, I id, Class<D> durableClass, D... durables) {
+
+    delete(parentClass, id, durableClass, Arrays.asList(durables));
   }
 }

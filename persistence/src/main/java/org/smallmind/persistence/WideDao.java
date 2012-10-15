@@ -30,7 +30,9 @@ import java.util.List;
 
 public interface WideDao<I, P> {
 
-  public abstract List<P> get (Class<P> persistentClass, I id);
+  public abstract List<P> get (Class<?> parentClass, I id, Class<P> persistentClass);
 
-  public abstract void delete (I id, Class<P> persistentClass, P... persistents);
+  public abstract void delete (Class<?> parentClass, I id, Class<P> persistentClass, P... persistents);
+
+  public abstract void delete (Class<?> parentClass, I id, Class<P> persistentClass, List<P> persistents);
 }

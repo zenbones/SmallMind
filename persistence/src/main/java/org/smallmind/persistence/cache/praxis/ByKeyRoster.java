@@ -40,8 +40,8 @@ import org.smallmind.persistence.cache.CacheOperationException;
 import org.smallmind.persistence.cache.DurableKey;
 import org.smallmind.persistence.cache.VectoredDao;
 import org.smallmind.persistence.cache.praxis.intrinsic.IntrinsicRoster;
-import org.smallmind.persistence.orm.ORMDao;
 import org.smallmind.persistence.orm.DaoManager;
+import org.smallmind.persistence.orm.ORMDao;
 import org.terracotta.annotations.InstrumentedClass;
 
 @InstrumentedClass

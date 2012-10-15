@@ -27,11 +27,11 @@
 package org.smallmind.persistence.orm;
 
 import java.io.Serializable;
-import org.smallmind.persistence.AbstractCacheAwareManagedDao;
+import org.smallmind.persistence.AbstractVectorAwareManagedDao;
 import org.smallmind.persistence.Durable;
 import org.smallmind.persistence.cache.VectoredDao;
 
-public abstract class ORMDao<I extends Serializable & Comparable<I>, D extends Durable<I>, N> extends AbstractCacheAwareManagedDao<I, D> implements RelationalDao<I, D, N> {
+public abstract class ORMDao<I extends Serializable & Comparable<I>, D extends Durable<I>, N> extends AbstractVectorAwareManagedDao<I, D> implements RelationalDao<I, D, N> {
 
   private ProxySession<N> proxySession;
 

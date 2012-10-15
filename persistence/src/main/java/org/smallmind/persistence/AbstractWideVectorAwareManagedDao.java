@@ -27,17 +27,25 @@
 package org.smallmind.persistence;
 
 import java.io.Serializable;
-import java.util.List;
+import org.smallmind.persistence.cache.WideVectorAwareDao;
+import org.smallmind.persistence.cache.WideVectoredDao;
 
-public interface WideDurableDao<I extends Serializable & Comparable<I>, D extends Durable<I>> extends WideDao<I, D> {
+public abstract class AbstractWideVectorAwareManagedDao<I extends Serializable & Comparable<I>, D extends Durable<I>> extends AbstractManagedDao<I, D> implements WideVectorAwareDao<I, D> {
 
-  public abstract List<D> get (Class<?> parentClass, I id);
+  private WideVectoredDao<I, D> wideVectoredDao;
 
-  public abstract D[] persist (Class<?> parentClass, I id, D... durables);
+  public AbstractWideVectorAwareManagedDao (String metricSource, WideVectoredDao<I, D> wideVectoredDao) {
 
-  public abstract D[] persist (Class<?> parentClass, I id, Class<D> durableClass, D... durables);
+    super(metricSource);
 
-  public abstract D[] persist (Class<?> parentClass, I id, Class<D> durableClass, List<D> durables);
+    this.wideVectoredDao = wideVectoredDao;
+  }
 
-  public abstract void delete (Class<?> parentClass, I id, D... durables);
+  public abstract boolean isCacheEnabled ();
+
+  @Override
+  public WideVectoredDao<I, D> getWideVectoredDao () {
+
+    return isCacheEnabled() ? wideVectoredDao : null;
+  }
 }
