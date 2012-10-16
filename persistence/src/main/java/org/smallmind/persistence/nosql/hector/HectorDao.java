@@ -78,7 +78,7 @@ public abstract class HectorDao<W extends Serializable & Comparable<W>, I extend
   public abstract Serializer<W> getSerializer ();
 
   @Override
-  public List<D> get (Class<Durable<W>> parentClass, W parentId, Class<D> durableClass) {
+  public List<D> get (Class<? extends Durable<W>> parentClass, W parentId, Class<D> durableClass) {
 
     List<D> durables;
     WideVectoredDao<W, I, D> wideVectoredDao;
@@ -240,7 +240,7 @@ public abstract class HectorDao<W extends Serializable & Comparable<W>, I extend
   }
 
   @Override
-  public List<D> persist (Class<Durable<W>> parentClass, W parentId, Class<D> durableClass, List<D> durables) {
+  public List<D> persist (Class<? extends Durable<W>> parentClass, W parentId, Class<D> durableClass, List<D> durables) {
 
     if ((durables != null) && (!durables.isEmpty())) {
 
@@ -338,7 +338,7 @@ public abstract class HectorDao<W extends Serializable & Comparable<W>, I extend
   }
 
   @Override
-  public void delete (Class<Durable<W>> parentClass, W parentId, Class<D> durableClass, List<D> durables) {
+  public void delete (Class<? extends Durable<W>> parentClass, W parentId, Class<D> durableClass, List<D> durables) {
 
     if ((durables != null) && (!durables.isEmpty())) {
 

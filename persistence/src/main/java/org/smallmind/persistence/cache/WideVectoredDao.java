@@ -34,9 +34,9 @@ public interface WideVectoredDao<W extends Serializable & Comparable<W>, I exten
 
   public abstract String getMetricSource ();
 
-  public abstract List<D> get (Class<?> parentClass, W parentId, Class<D> durableClass);
+  public abstract List<D> get (Class<? extends Durable<W>> parentClass, W parentId, Class<D> durableClass);
 
-  public abstract List<D> persist (Class<?> parentClass, W parentId, Class<D> durableClass, List<D> durables);
+  public abstract List<D> persist (Class<? extends Durable<W>> parentClass, W parentId, Class<D> durableClass, List<D> durables);
 
-  public abstract void delete (Class<?> parentClass, W parentId, Class<D> durableClass);
+  public abstract void delete (Class<? extends Durable<W>> parentClass, W parentId, Class<D> durableClass);
 }

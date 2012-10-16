@@ -52,31 +52,43 @@ public abstract class NoSqlDao<W extends Serializable & Comparable<W>, I extends
   }
 
   @Override
-  public List<D> get (Class<Durable<W>> parentClass, W parentId) {
+  public List<D> get (Class<? extends Durable<W>> parentClass, W parentId) {
 
     return get(parentClass, parentId, getManagedClass());
   }
 
   @Override
-  public List<D> persist (Class<Durable<W>> parentClass, W parentId, D... durables) {
+  public List<D> persist (Class<? extends Durable<W>> parentClass, W parentId, D... durables) {
 
     return persist(parentClass, parentId, getManagedClass(), durables);
   }
 
   @Override
-  public List<D> persist (Class<Durable<W>> parentClass, W parentId, Class<D> durableClass, D... durables) {
+  public List<D> persist (Class<? extends Durable<W>> parentClass, W parentId, List<D> durables) {
+
+    return persist(parentClass, parentId, getManagedClass(), durables);
+  }
+
+  @Override
+  public List<D> persist (Class<? extends Durable<W>> parentClass, W parentId, Class<D> durableClass, D... durables) {
 
     return persist(parentClass, parentId, durableClass, Arrays.asList(durables));
   }
 
   @Override
-  public void delete (Class<Durable<W>> parentClass, W parentId, D... durables) {
+  public void delete (Class<? extends Durable<W>> parentClass, W parentId, D... durables) {
 
     delete(parentClass, parentId, getManagedClass(), durables);
   }
 
   @Override
-  public void delete (Class<Durable<W>> parentClass, W parentId, Class<D> durableClass, D... durables) {
+  public void delete (Class<? extends Durable<W>> parentClass, W parentId, List<D> durables) {
+
+    delete(parentClass, parentId, getManagedClass(), durables);
+  }
+
+  @Override
+  public void delete (Class<? extends Durable<W>> parentClass, W parentId, Class<D> durableClass, D... durables) {
 
     delete(parentClass, parentId, durableClass, Arrays.asList(durables));
   }

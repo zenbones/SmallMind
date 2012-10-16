@@ -36,7 +36,7 @@ public class WideDurableKey<W extends Comparable<W>, D extends Durable<?>> imple
   private Class<D> durableClass;
   private String key;
 
-  public WideDurableKey (Class<?> parentClass, W parentId, Class<D> durableClass) {
+  public WideDurableKey (Class<? extends Durable<W>> parentClass, W parentId, Class<D> durableClass) {
 
     this.durableClass = durableClass;
 

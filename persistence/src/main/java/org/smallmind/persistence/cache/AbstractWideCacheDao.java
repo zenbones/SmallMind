@@ -52,7 +52,7 @@ public abstract class AbstractWideCacheDao<W extends Serializable & Comparable<W
   }
 
   @Override
-  public List<D> get (Class<?> parentClass, W parentId, Class<D> durableClass) {
+  public List<D> get (Class<? extends Durable<W>> parentClass, W parentId, Class<D> durableClass) {
 
     WideDurableKey<W, D> wideDurableKey = new WideDurableKey<W, D>(parentClass, parentId, durableClass);
 
@@ -60,7 +60,7 @@ public abstract class AbstractWideCacheDao<W extends Serializable & Comparable<W
   }
 
   @Override
-  public void delete (Class<?> parentClass, W parentId, Class<D> durableClass) {
+  public void delete (Class<? extends Durable<W>> parentClass, W parentId, Class<D> durableClass) {
 
     WideDurableKey<W, D> wideDurableKey = new WideDurableKey<W, D>(parentClass, parentId, durableClass);
 
