@@ -24,14 +24,48 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.persistence.cache.praxis;
+package org.smallmind.persistence.cache.memcached.spring;
 
-import java.io.Serializable;
-import java.util.List;
+import java.io.IOException;
+import org.smallmind.persistence.cache.memcached.MemcachedCacheDomain;
+import org.smallmind.persistence.cache.praxis.extrinsic.WideExtrinsicCacheDao;
+import org.springframework.beans.factory.FactoryBean;
+import org.springframework.beans.factory.InitializingBean;
 
-public interface Roster<T> extends Serializable, List<T> {
+public class MemcachedWideCacheDaoFactoryBean implements FactoryBean<WideExtrinsicCacheDao>, InitializingBean {
 
-  public abstract void addFirst (T element);
+  private WideExtrinsicCacheDao memcachedWideCacheDao;
+  private MemcachedCacheDomain memcachedCacheDomain;
 
-  public abstract T removeLast ();
+  public void setMemcachedCacheDomain (MemcachedCacheDomain memcachedCacheDomain) {
+
+    this.memcachedCacheDomain = memcachedCacheDomain;
+  }
+
+  @Override
+  public void afterPropertiesSet ()
+    throws IOException {
+
+    if (memcachedCacheDomain != null) {
+      memcachedWideCacheDao = new WideExtrinsicCacheDao(memcachedCacheDomain);
+    }
+  }
+
+  @Override
+  public WideExtrinsicCacheDao getObject () {
+
+    return memcachedWideCacheDao;
+  }
+
+  @Override
+  public Class<?> getObjectType () {
+
+    return WideExtrinsicCacheDao.class;
+  }
+
+  @Override
+  public boolean isSingleton () {
+
+    return true;
+  }
 }

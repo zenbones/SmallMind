@@ -24,14 +24,29 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.persistence.cache.praxis;
+package org.smallmind.persistence.cache.praxis.extrinsic;
 
 import java.io.Serializable;
 import java.util.List;
+import org.smallmind.persistence.Durable;
+import org.smallmind.persistence.cache.AbstractWideCacheDao;
+import org.smallmind.persistence.cache.CacheDomain;
+import org.smallmind.persistence.cache.WideDurableKey;
 
-public interface Roster<T> extends Serializable, List<T> {
+public class WideExtrinsicCacheDao<W extends Serializable & Comparable<W>, I extends Comparable<I>, D extends Durable<I>> extends AbstractWideCacheDao<W, I, D> {
 
-  public abstract void addFirst (T element);
+  public WideExtrinsicCacheDao (CacheDomain<I, D> cacheDomain) {
 
-  public abstract T removeLast ();
+    super(cacheDomain);
+  }
+
+  @Override
+  public List<D> persist (Class<?> parentClass, W parentId, Class<D> durableClass, List<D> durables) {
+
+    WideDurableKey<W, D> wideDurableKey = new WideDurableKey<W, D>(parentClass, parentId, durableClass);
+
+    getWideInstanceCache(durableClass).set(wideDurableKey.getKey(), durables, 0);
+
+    return durables;
+  }
 }
