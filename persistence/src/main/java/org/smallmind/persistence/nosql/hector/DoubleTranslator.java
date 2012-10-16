@@ -24,28 +24,25 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.persistence;
+package org.smallmind.persistence.nosql.hector;
 
-import java.io.Serializable;
-import org.smallmind.persistence.cache.WideVectorAwareDao;
-import org.smallmind.persistence.cache.WideVectoredDao;
+import me.prettyprint.cassandra.serializers.DoubleSerializer;
+import me.prettyprint.hector.api.beans.Composite;
 
-public abstract class AbstractWideVectorAwareManagedDao<W extends Serializable & Comparable<W>, I extends Serializable & Comparable<I>, D extends Durable<I>> extends AbstractManagedDao<I, D> implements WideVectorAwareDao<W, I, D> {
+public class DoubleTranslator implements NaturalKeyTranslator<Double> {
 
-  private WideVectoredDao<W, I, D> wideVectoredDao;
+  public String getHectorType () {
 
-  public AbstractWideVectorAwareManagedDao (String metricSource, WideVectoredDao<W, I, D> wideVectoredDao) {
-
-    super(metricSource);
-
-    this.wideVectoredDao = wideVectoredDao;
+    return "DoubleType";
   }
 
-  public abstract boolean isCacheEnabled ();
+  public Object getKeyValue (Double value) {
 
-  @Override
-  public WideVectoredDao<W, I, D> getWideVectoredDao () {
+    return value;
+  }
 
-    return isCacheEnabled() ? wideVectoredDao : null;
+  public Double getFieldValue (Class<?> fieldType, int index, Composite columnName) {
+
+    return columnName.get(index, DoubleSerializer.get());
   }
 }

@@ -26,16 +26,17 @@
  */
 package org.smallmind.persistence.cache;
 
+import java.io.Serializable;
 import java.util.List;
 import org.smallmind.persistence.Durable;
 
-public interface WideVectoredDao<I extends Comparable<I>, D extends Durable<I>> {
+public interface WideVectoredDao<W extends Serializable & Comparable<W>, I extends Comparable<I>, D extends Durable<I>> {
 
   public abstract String getMetricSource ();
 
-  public abstract List<D> get (Class<?> parentClass, I id, Class<D> durableClass);
+  public abstract List<D> get (Class<?> parentClass, W parentId, Class<D> durableClass);
 
-  public abstract List<D> persist (Class<?> parentClass, I id, Class<D> durableClass, List<D> durables);
+  public abstract List<D> persist (Class<?> parentClass, W parentId, Class<D> durableClass, List<D> durables);
 
-  public abstract void delete (Class<?> parentClass, I id, Class<D> durableClass);
+  public abstract void delete (Class<?> parentClass, W parentId, Class<D> durableClass);
 }

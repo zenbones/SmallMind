@@ -24,15 +24,25 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.persistence;
+package org.smallmind.persistence.nosql.hector;
 
-import java.util.List;
+import me.prettyprint.cassandra.serializers.StringSerializer;
+import me.prettyprint.hector.api.beans.Composite;
 
-public interface WideDao<I, P> {
+public class StringTranslator implements NaturalKeyTranslator<String> {
 
-  public abstract List<P> get (Class<?> parentClass, I id, Class<P> persistentClass);
+  public String getHectorType () {
 
-  public abstract void delete (Class<?> parentClass, I id, Class<P> persistentClass, P... persistents);
+    return "UTF8Type";
+  }
 
-  public abstract void delete (Class<?> parentClass, I id, Class<P> persistentClass, List<P> persistents);
+  public Object getKeyValue (String value) {
+
+    return value;
+  }
+
+  public String getFieldValue (Class<?> fieldType, int index, Composite columnName) {
+
+    return columnName.get(index, StringSerializer.get());
+  }
 }

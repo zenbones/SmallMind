@@ -24,28 +24,13 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.persistence;
+package org.smallmind.persistence.cache;
 
 import java.io.Serializable;
-import org.smallmind.persistence.cache.WideVectorAwareDao;
-import org.smallmind.persistence.cache.WideVectoredDao;
+import java.util.List;
+import org.smallmind.persistence.Durable;
 
-public abstract class AbstractWideVectorAwareManagedDao<W extends Serializable & Comparable<W>, I extends Serializable & Comparable<I>, D extends Durable<I>> extends AbstractManagedDao<I, D> implements WideVectorAwareDao<W, I, D> {
+public interface WideCacheDao<W extends Serializable & Comparable<W>, I extends Comparable<I>, D extends Durable<I>> extends WideVectoredDao<W, I, D> {
 
-  private WideVectoredDao<W, I, D> wideVectoredDao;
-
-  public AbstractWideVectorAwareManagedDao (String metricSource, WideVectoredDao<W, I, D> wideVectoredDao) {
-
-    super(metricSource);
-
-    this.wideVectoredDao = wideVectoredDao;
-  }
-
-  public abstract boolean isCacheEnabled ();
-
-  @Override
-  public WideVectoredDao<W, I, D> getWideVectoredDao () {
-
-    return isCacheEnabled() ? wideVectoredDao : null;
-  }
+  public PersistenceCache<String, List> getWideInstanceCache (Class<D> durableClass);
 }

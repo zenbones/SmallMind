@@ -37,6 +37,18 @@ public class DurableFields {
 
   private static final ConcurrentHashMap<Class<? extends Durable>, Field[]> FIELD_MAP = new ConcurrentHashMap<Class<? extends Durable>, Field[]>();
 
+  public static Field getField (Class<? extends Durable> durableClass, String name) {
+
+    for (Field durableField : getFields(durableClass)) {
+      if (durableField.getName().equals(name)) {
+
+        return durableField;
+      }
+    }
+
+    return null;
+  }
+
   public static Field[] getFields (Class<? extends Durable> durableClass) {
 
     Field[] fields;

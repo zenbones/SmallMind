@@ -26,6 +26,7 @@
  */
 package org.smallmind.persistence.cache;
 
+import java.util.List;
 import org.smallmind.persistence.Durable;
 
 public interface CacheDomain<I extends Comparable<I>, D extends Durable<I>> {
@@ -33,6 +34,8 @@ public interface CacheDomain<I extends Comparable<I>, D extends Durable<I>> {
   public abstract String getMetricSource ();
 
   public abstract PersistenceCache<String, D> getInstanceCache (Class<D> managedClass);
+
+  public abstract PersistenceCache<String, List> getWideInstanceCache (Class<D> managedClass);
 
   public abstract PersistenceCache<String, DurableVector> getVectorCache (Class<D> managedClass);
 }

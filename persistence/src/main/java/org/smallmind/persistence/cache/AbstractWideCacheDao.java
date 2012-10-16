@@ -24,28 +24,46 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.persistence;
+package org.smallmind.persistence.cache;
 
 import java.io.Serializable;
-import org.smallmind.persistence.cache.WideVectorAwareDao;
-import org.smallmind.persistence.cache.WideVectoredDao;
+import java.util.List;
+import org.smallmind.persistence.Durable;
 
-public abstract class AbstractWideVectorAwareManagedDao<W extends Serializable & Comparable<W>, I extends Serializable & Comparable<I>, D extends Durable<I>> extends AbstractManagedDao<I, D> implements WideVectorAwareDao<W, I, D> {
+public abstract class AbstractWideCacheDao<W extends Serializable & Comparable<W>, I extends Comparable<I>, D extends Durable<I>> implements WideCacheDao<W, I, D> {
 
-  private WideVectoredDao<W, I, D> wideVectoredDao;
+  private CacheDomain<I, D> cacheDomain;
 
-  public AbstractWideVectorAwareManagedDao (String metricSource, WideVectoredDao<W, I, D> wideVectoredDao) {
+  public AbstractWideCacheDao (CacheDomain<I, D> cacheDomain) {
 
-    super(metricSource);
-
-    this.wideVectoredDao = wideVectoredDao;
+    this.cacheDomain = cacheDomain;
   }
 
-  public abstract boolean isCacheEnabled ();
+  @Override
+  public String getMetricSource () {
+
+    return cacheDomain.getMetricSource();
+  }
 
   @Override
-  public WideVectoredDao<W, I, D> getWideVectoredDao () {
+  public PersistenceCache<String, List> getWideInstanceCache (Class<D> durableClass) {
 
-    return isCacheEnabled() ? wideVectoredDao : null;
+    return cacheDomain.getWideInstanceCache(durableClass);
+  }
+
+  @Override
+  public List<D> get (Class<?> parentClass, W parentId, Class<D> durableClass) {
+
+    WideDurableKey<W, D> wideDurableKey = new WideDurableKey<W, D>(parentClass, parentId, durableClass);
+
+    return getWideInstanceCache(durableClass).get(wideDurableKey.getKey());
+  }
+
+  @Override
+  public void delete (Class<?> parentClass, W parentId, Class<D> durableClass) {
+
+    WideDurableKey<W, D> wideDurableKey = new WideDurableKey<W, D>(parentClass, parentId, durableClass);
+
+    getWideInstanceCache(durableClass).remove(wideDurableKey.getKey());
   }
 }

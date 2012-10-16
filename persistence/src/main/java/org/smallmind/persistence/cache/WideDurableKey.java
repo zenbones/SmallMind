@@ -24,28 +24,60 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.persistence;
+package org.smallmind.persistence.cache;
 
 import java.io.Serializable;
-import org.smallmind.persistence.cache.WideVectorAwareDao;
-import org.smallmind.persistence.cache.WideVectoredDao;
+import org.smallmind.persistence.Durable;
+import org.terracotta.annotations.InstrumentedClass;
 
-public abstract class AbstractWideVectorAwareManagedDao<W extends Serializable & Comparable<W>, I extends Serializable & Comparable<I>, D extends Durable<I>> extends AbstractManagedDao<I, D> implements WideVectorAwareDao<W, I, D> {
+@InstrumentedClass
+public class WideDurableKey<W extends Comparable<W>, D extends Durable<?>> implements Serializable {
 
-  private WideVectoredDao<W, I, D> wideVectoredDao;
+  private Class<D> durableClass;
+  private String key;
 
-  public AbstractWideVectorAwareManagedDao (String metricSource, WideVectoredDao<W, I, D> wideVectoredDao) {
+  public WideDurableKey (Class<?> parentClass, W parentId, Class<D> durableClass) {
 
-    super(metricSource);
+    this.durableClass = durableClass;
 
-    this.wideVectoredDao = wideVectoredDao;
+    StringBuilder keyBuilder = new StringBuilder(parentClass.getSimpleName());
+
+    keyBuilder.append('[');
+    keyBuilder.append(durableClass.getSimpleName());
+    keyBuilder.append(']');
+    keyBuilder.append('=');
+    keyBuilder.append(parentId);
+
+    key = keyBuilder.toString();
   }
 
-  public abstract boolean isCacheEnabled ();
+  public Class<D> getDurableClass () {
 
-  @Override
-  public WideVectoredDao<W, I, D> getWideVectoredDao () {
+    return durableClass;
+  }
 
-    return isCacheEnabled() ? wideVectoredDao : null;
+  public String getKey () {
+
+    return key;
+  }
+
+  public String getParentIdAsString () {
+
+    return key.substring(key.indexOf('=') + 1);
+  }
+
+  public String toString () {
+
+    return key;
+  }
+
+  public int hashCode () {
+
+    return key.hashCode();
+  }
+
+  public boolean equals (Object obj) {
+
+    return (obj instanceof WideDurableKey) && key.equals(((WideDurableKey)obj).getKey());
   }
 }

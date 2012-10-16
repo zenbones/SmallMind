@@ -29,15 +29,21 @@ package org.smallmind.persistence;
 import java.io.Serializable;
 import java.util.List;
 
-public interface WideDurableDao<I extends Serializable & Comparable<I>, D extends Durable<I>> extends WideDao<I, D> {
+public interface WideDurableDao<W extends Serializable & Comparable<W>, I extends Serializable & Comparable<I>, D extends Durable<I>> {
 
-  public abstract List<D> get (Class<?> parentClass, I id);
+  public abstract List<D> get (Class<Durable<W>> parentClass, W parentId);
 
-  public abstract D[] persist (Class<?> parentClass, I id, D... durables);
+  public abstract List<D> get (Class<Durable<W>> parentClass, W parentId, Class<D> durableClass);
 
-  public abstract D[] persist (Class<?> parentClass, I id, Class<D> durableClass, D... durables);
+  public abstract List<D> persist (Class<Durable<W>> parentClass, W parentId, D... durables);
 
-  public abstract D[] persist (Class<?> parentClass, I id, Class<D> durableClass, List<D> durables);
+  public abstract List<D> persist (Class<Durable<W>> parentClass, W parentId, Class<D> durableClass, D... durables);
 
-  public abstract void delete (Class<?> parentClass, I id, D... durables);
+  public abstract List<D> persist (Class<Durable<W>> parentClass, W parentId, Class<D> durableClass, List<D> durables);
+
+  public abstract void delete (Class<Durable<W>> parentClass, W parentId, D... durables);
+
+  public abstract void delete (Class<Durable<W>> parentClass, W parentId, Class<D> durableClass, D... durables);
+
+  public abstract void delete (Class<Durable<W>> parentClass, W parentId, Class<D> durableClass, List<D> durables);
 }

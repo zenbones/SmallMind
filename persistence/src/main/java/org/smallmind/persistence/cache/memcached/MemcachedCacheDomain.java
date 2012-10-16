@@ -26,6 +26,7 @@
  */
 package org.smallmind.persistence.cache.memcached;
 
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import net.rubyeye.xmemcached.MemcachedClient;
@@ -40,6 +41,7 @@ public class MemcachedCacheDomain<I extends Comparable<I>, D extends Durable<I>>
   private final MemcachedClient memcachedClient;
   private final Map<Class<D>, Integer> timeTiLiveOverrideMap;
   private final ConcurrentHashMap<Class<D>, MemcachedCache<D>> instanceCacheMap = new ConcurrentHashMap<Class<D>, MemcachedCache<D>>();
+  private final ConcurrentHashMap<Class<D>, MemcachedCache<List>> wideInstanceCacheMap = new ConcurrentHashMap<Class<D>, MemcachedCache<List>>();
   private final ConcurrentHashMap<Class<D>, MemcachedCache<DurableVector>> vectorCacheMap = new ConcurrentHashMap<Class<D>, MemcachedCache<DurableVector>>();
   private final String discriminator;
   private final int timeToLiveSeconds;
@@ -77,6 +79,22 @@ public class MemcachedCacheDomain<I extends Comparable<I>, D extends Durable<I>>
     }
 
     return instanceCache;
+  }
+
+  @Override
+  public PersistenceCache<String, List> getWideInstanceCache (Class<D> managedClass) {
+
+    MemcachedCache<List> wideInstanceCache;
+
+    if ((wideInstanceCache = wideInstanceCacheMap.get(managedClass)) == null) {
+      synchronized (wideInstanceCacheMap) {
+        if ((wideInstanceCache = wideInstanceCacheMap.get(managedClass)) == null) {
+          wideInstanceCacheMap.put(managedClass, wideInstanceCache = new MemcachedCache<List>(memcachedClient, discriminator, List.class, getTimeToLiveSeconds(managedClass)));
+        }
+      }
+    }
+
+    return wideInstanceCache;
   }
 
   @Override
