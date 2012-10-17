@@ -27,22 +27,39 @@
 package org.smallmind.persistence.nosql.hector;
 
 import me.prettyprint.cassandra.serializers.DoubleSerializer;
+import me.prettyprint.cassandra.service.template.ColumnFamilyResult;
+import me.prettyprint.hector.api.Serializer;
 import me.prettyprint.hector.api.beans.Composite;
 
-public class DoubleTranslator implements NaturalKeyTranslator<Double> {
+public class DoubleTranslator implements HectorTranslator<Double, Double> {
 
+  @Override
   public String getHectorType () {
 
     return "DoubleType";
   }
 
-  public Object getKeyValue (Double value) {
+  @Override
+  public Serializer<Double> getSerializer () {
+
+    return DoubleSerializer.get();
+  }
+
+  @Override
+  public Double toHectorValue (Double value) {
 
     return value;
   }
 
-  public Double getFieldValue (Class<?> fieldType, int index, Composite columnName) {
+  @Override
+  public Double toEntityValue (Class<?> fieldType, int index, Composite columnName) {
 
     return columnName.get(index, DoubleSerializer.get());
+  }
+
+  @Override
+  public Double toEntityValue (Class<?> fieldType, Composite columnName, ColumnFamilyResult<Composite, Composite> hectorResult) {
+
+    return hectorResult.getDouble(columnName);
   }
 }

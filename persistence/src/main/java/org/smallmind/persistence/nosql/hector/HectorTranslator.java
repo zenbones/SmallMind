@@ -26,13 +26,19 @@
  */
 package org.smallmind.persistence.nosql.hector;
 
+import me.prettyprint.cassandra.service.template.ColumnFamilyResult;
+import me.prettyprint.hector.api.Serializer;
 import me.prettyprint.hector.api.beans.Composite;
 
-public interface NaturalKeyTranslator<T> {
+public interface HectorTranslator<T, H> {
 
-  public String getHectorType ();
+  public abstract String getHectorType ();
 
-  public Object getKeyValue (T value);
+  public abstract Serializer<H> getSerializer ();
 
-  public T getFieldValue (Class<?> fieldType, int index, Composite columnName);
+  public abstract H toHectorValue (T value);
+
+  public abstract T toEntityValue (Class<?> fieldType, int index, Composite columnName);
+
+  public abstract T toEntityValue (Class<?> fieldType, Composite columnName, ColumnFamilyResult<Composite, Composite> hectorResult);
 }

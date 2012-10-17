@@ -27,26 +27,44 @@
 package org.smallmind.persistence.nosql.hector;
 
 import me.prettyprint.cassandra.serializers.StringSerializer;
+import me.prettyprint.cassandra.service.template.ColumnFamilyResult;
+import me.prettyprint.hector.api.Serializer;
 import me.prettyprint.hector.api.beans.Composite;
 import org.smallmind.persistence.PersistenceException;
 
-public class EnumTranslator implements NaturalKeyTranslator<Enum<?>> {
+public class EnumTranslator implements HectorTranslator<Enum<?>, String> {
 
+  @Override
   public String getHectorType () {
 
     return "UTF8Type";
   }
 
   @Override
-  public Object getKeyValue (Enum<?> value) {
+  public Serializer<String> getSerializer () {
+
+    return StringSerializer.get();
+  }
+
+  @Override
+  public String toHectorValue (Enum<?> value) {
 
     return value.name();
   }
 
   @Override
-  public Enum<?> getFieldValue (Class<?> fieldType, int index, Composite columnName) {
+  public Enum<?> toEntityValue (Class<?> fieldType, int index, Composite columnName) {
 
-    String enumName = columnName.get(index, StringSerializer.get());
+    return fromName(fieldType, columnName.get(index, StringSerializer.get()));
+  }
+
+  @Override
+  public Enum<?> toEntityValue (Class<?> fieldType, Composite columnName, ColumnFamilyResult<Composite, Composite> hectorResult) {
+
+    return fromName(fieldType, hectorResult.getString(columnName));
+  }
+
+  private Enum<?> fromName (Class<?> fieldType, String enumName) {
 
     for (Object enumConstant : fieldType.getEnumConstants()) {
       if (((Enum)enumConstant).name().equals(enumName)) {
@@ -56,5 +74,6 @@ public class EnumTranslator implements NaturalKeyTranslator<Enum<?>> {
     }
 
     throw new PersistenceException("Unable to locate matching enum constant(%s) for field of type(%s)", enumName, fieldType.getName());
+
   }
 }

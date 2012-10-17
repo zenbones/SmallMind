@@ -27,22 +27,39 @@
 package org.smallmind.persistence.nosql.hector;
 
 import me.prettyprint.cassandra.serializers.BooleanSerializer;
+import me.prettyprint.cassandra.service.template.ColumnFamilyResult;
+import me.prettyprint.hector.api.Serializer;
 import me.prettyprint.hector.api.beans.Composite;
 
-public class BooleanTranslator implements NaturalKeyTranslator<Boolean> {
+public class BooleanTranslator implements HectorTranslator<Boolean, Boolean> {
 
+  @Override
   public String getHectorType () {
 
     return "BooleanType";
   }
 
-  public Object getKeyValue (Boolean value) {
+  @Override
+  public Serializer<Boolean> getSerializer () {
+
+    return BooleanSerializer.get();
+  }
+
+  @Override
+  public Boolean toHectorValue (Boolean value) {
 
     return value;
   }
 
-  public Boolean getFieldValue (Class<?> fieldType, int index, Composite columnName) {
+  @Override
+  public Boolean toEntityValue (Class<?> fieldType, int index, Composite columnName) {
 
     return columnName.get(index, BooleanSerializer.get());
+  }
+
+  @Override
+  public Boolean toEntityValue (Class<?> fieldType, Composite columnName, ColumnFamilyResult<Composite, Composite> hectorResult) {
+
+    return hectorResult.getBoolean(columnName);
   }
 }

@@ -50,8 +50,8 @@ public class ByKeyExtrinsicVector<I extends Serializable & Comparable<I>, D exte
     ExtrinsicRoster<DurableKey<I, D>> keyRoster = new ExtrinsicRoster<DurableKey<I, D>>();
     int index = 0;
 
-    for (Durable durable : durables) {
-      keyRoster.add(new DurableKey<I, D>(durableClass, (I)durable.getId()));
+    for (D durable : durables) {
+      keyRoster.add(new DurableKey<I, D>(durableClass, durable.getId()));
       if ((maxSize > 0) && (++index == maxSize)) {
         break;
       }

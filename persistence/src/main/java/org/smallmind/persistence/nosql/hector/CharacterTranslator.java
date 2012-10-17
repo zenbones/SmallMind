@@ -27,22 +27,39 @@
 package org.smallmind.persistence.nosql.hector;
 
 import me.prettyprint.cassandra.serializers.StringSerializer;
+import me.prettyprint.cassandra.service.template.ColumnFamilyResult;
+import me.prettyprint.hector.api.Serializer;
 import me.prettyprint.hector.api.beans.Composite;
 
-public class CharacterTranslator implements NaturalKeyTranslator<Character> {
+public class CharacterTranslator implements HectorTranslator<Character, String> {
 
+  @Override
   public String getHectorType () {
 
     return "UTF8Type";
   }
 
-  public Object getKeyValue (Character value) {
+  @Override
+  public Serializer<String> getSerializer () {
+
+    return StringSerializer.get();
+  }
+
+  @Override
+  public String toHectorValue (Character value) {
 
     return new String(new char[] {value});
   }
 
-  public Character getFieldValue (Class<?> fieldType, int index, Composite columnName) {
+  @Override
+  public Character toEntityValue (Class<?> fieldType, int index, Composite columnName) {
 
     return columnName.get(index, StringSerializer.get()).charAt(0);
+  }
+
+  @Override
+  public Character toEntityValue (Class<?> fieldType, Composite columnName, ColumnFamilyResult<Composite, Composite> hectorResult) {
+
+    return hectorResult.getString(columnName).charAt(0);
   }
 }

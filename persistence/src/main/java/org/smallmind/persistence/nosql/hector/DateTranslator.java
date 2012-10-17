@@ -28,22 +28,39 @@ package org.smallmind.persistence.nosql.hector;
 
 import java.util.Date;
 import me.prettyprint.cassandra.serializers.DateSerializer;
+import me.prettyprint.cassandra.service.template.ColumnFamilyResult;
+import me.prettyprint.hector.api.Serializer;
 import me.prettyprint.hector.api.beans.Composite;
 
-public class DateTranslator implements NaturalKeyTranslator<Date> {
+public class DateTranslator implements HectorTranslator<Date, Date> {
 
+  @Override
   public String getHectorType () {
 
     return "DateType";
   }
 
-  public Object getKeyValue (Date value) {
+  @Override
+  public Serializer<Date> getSerializer () {
+
+    return DateSerializer.get();
+  }
+
+  @Override
+  public Date toHectorValue (Date value) {
 
     return value;
   }
 
-  public Date getFieldValue (Class<?> fieldType, int index, Composite columnName) {
+  @Override
+  public Date toEntityValue (Class<?> fieldType, int index, Composite columnName) {
 
     return columnName.get(index, DateSerializer.get());
+  }
+
+  @Override
+  public Date toEntityValue (Class<?> fieldType, Composite columnName, ColumnFamilyResult<Composite, Composite> hectorResult) {
+
+    return hectorResult.getDate(columnName);
   }
 }

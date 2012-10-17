@@ -29,10 +29,10 @@ package org.smallmind.persistence;
 import java.io.Serializable;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
-import java.lang.reflect.ParameterizedType;
-import java.lang.reflect.Type;
 import java.util.Arrays;
+import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
+import org.smallmind.nutsnbolts.reflection.type.GenericUtility;
 import org.smallmind.persistence.orm.ORMInitializationException;
 
 public abstract class AbstractManagedDao<I extends Serializable & Comparable<I>, D extends Durable<I>> implements ManagedDao<I, D> {
@@ -44,28 +44,19 @@ public abstract class AbstractManagedDao<I extends Serializable & Comparable<I>,
 
   public AbstractManagedDao (String metricSource) {
 
-    Class currentClass = this.getClass();
-    Type superType;
-
     this.metricSource = metricSource;
 
-    do {
-      if (((superType = currentClass.getGenericSuperclass()) != null) && (superType instanceof ParameterizedType)) {
+    List<Class<?>> typeArguments = GenericUtility.getTypeArguments(AbstractManagedDao.class, this.getClass());
 
-        Type[] parameterTypes;
-
-        if ((parameterTypes = ((ParameterizedType)superType).getActualTypeArguments()).length == 2) {
-
-          if (parameterTypes[0] instanceof Class) {
-            idTypeInference.addPossibility((Class)parameterTypes[0]);
-          }
-
-          if (parameterTypes[1] instanceof Class) {
-            durableTypeInference.addPossibility((Class)parameterTypes[1]);
-          }
-        }
+    if (typeArguments.size() == 2) {
+      if (typeArguments.get(0) != null) {
+        idTypeInference.addPossibility(typeArguments.get(0));
       }
-    } while ((currentClass = currentClass.getSuperclass()) != null);
+      if (typeArguments.get(1) != null) {
+        durableTypeInference.addPossibility(typeArguments.get(1));
+
+      }
+    }
   }
 
   public String getMetricSource () {
