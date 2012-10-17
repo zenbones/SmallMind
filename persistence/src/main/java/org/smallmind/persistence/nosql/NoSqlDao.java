@@ -29,6 +29,8 @@ package org.smallmind.persistence.nosql;
 import java.io.Serializable;
 import java.util.Arrays;
 import java.util.List;
+import org.smallmind.nutsnbolts.reflection.type.GenericUtility;
+import org.smallmind.nutsnbolts.reflection.type.TypeInference;
 import org.smallmind.persistence.AbstractWideVectorAwareManagedDao;
 import org.smallmind.persistence.Durable;
 import org.smallmind.persistence.WideDurableDao;
@@ -36,6 +38,7 @@ import org.smallmind.persistence.cache.WideVectoredDao;
 
 public abstract class NoSqlDao<W extends Serializable & Comparable<W>, I extends Serializable & Comparable<I>, D extends Durable<I>> extends AbstractWideVectorAwareManagedDao<W, I, D> implements WideDurableDao<W, I, D> {
 
+  private final TypeInference parentIdTypeInference = new TypeInference();
   private boolean cacheEnabled;
 
   public NoSqlDao (String metricSource, WideVectoredDao<W, I, D> wideVectoredDao, boolean cacheEnabled) {
@@ -43,6 +46,19 @@ public abstract class NoSqlDao<W extends Serializable & Comparable<W>, I extends
     super(metricSource, wideVectoredDao);
 
     this.cacheEnabled = cacheEnabled;
+
+    List<Class<?>> typeArguments = GenericUtility.getTypeArguments(NoSqlDao.class, this.getClass());
+
+    if (typeArguments.size() == 3) {
+      if (typeArguments.get(0) != null) {
+        parentIdTypeInference.addPossibility(typeArguments.get(0));
+      }
+    }
+  }
+
+  public Class<I> getParentIdClass () {
+
+    return parentIdTypeInference.getInference();
   }
 
   @Override

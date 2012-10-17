@@ -29,10 +29,10 @@ package org.smallmind.persistence;
 import java.io.Serializable;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
-import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
 import org.smallmind.nutsnbolts.reflection.type.GenericUtility;
+import org.smallmind.nutsnbolts.reflection.type.TypeInference;
 import org.smallmind.persistence.orm.ORMInitializationException;
 
 public abstract class AbstractManagedDao<I extends Serializable & Comparable<I>, D extends Durable<I>> implements ManagedDao<I, D> {
@@ -72,6 +72,11 @@ public abstract class AbstractManagedDao<I extends Serializable & Comparable<I>,
   public Class<I> getIdClass () {
 
     return idTypeInference.getInference();
+  }
+
+  public I getId (D durable) {
+
+    return durable.getId();
   }
 
   public I getIdFromString (String value) {
@@ -143,41 +148,4 @@ public abstract class AbstractManagedDao<I extends Serializable & Comparable<I>,
     throw new ORMInitializationException("Id class is neither a String, an Enum, a primitive type, nor a primitive wrapper, and does not implement Identifier, so you need to override getIdFromString(String value)");
   }
 
-  public I getId (D durable) {
-
-    return durable.getId();
-  }
-
-  private static class TypeInference {
-
-    Class[] possibilities;
-
-    public void addPossibility (Class clazz) {
-
-      if (possibilities == null) {
-        possibilities = new Class[] {clazz};
-      }
-      else {
-
-        Class[] expandedPossibilities = new Class[possibilities.length + 1];
-
-        System.arraycopy(possibilities, 0, expandedPossibilities, 0, possibilities.length);
-        expandedPossibilities[possibilities.length] = clazz;
-
-        possibilities = expandedPossibilities;
-      }
-    }
-
-    public Class getInference () {
-
-      if (possibilities == null) {
-        throw new ORMInitializationException("No class inference could be made, please override the appropriate method to statically declare an appropriate type");
-      }
-      else if (possibilities.length > 1) {
-        throw new ORMInitializationException("Multiple inferences were possible (%s), please override the appropriate method to statically declare the appropriate type", Arrays.toString(possibilities));
-      }
-
-      return possibilities[0];
-    }
-  }
 }

@@ -62,10 +62,6 @@ public abstract class HectorDao<W extends Serializable & Comparable<W>, I extend
 
   public abstract I createId ();
 
-  public abstract HectorTranslator getIdTranslator ();
-
-  public abstract HectorTranslator getParentIdTranslator ();
-
   @Override
   public List<D> get (Class<? extends Durable<W>> parentClass, W parentId, Class<D> durableClass) {
 
@@ -80,7 +76,7 @@ public abstract class HectorDao<W extends Serializable & Comparable<W>, I extend
       }
     }
 
-    if ((hectorResult = hectorTemplate.queryColumns(new Composite(parentClass.getSimpleName(), getParentIdTranslator().toHectorValue(parentId)))).hasResults()) {
+    if ((hectorResult = hectorTemplate.queryColumns(new Composite(parentClass.getSimpleName(), HectorType.getTranslator(getParentIdClass(), "parentId").toHectorValue(parentId)))).hasResults()) {
 
       HashMap<NaturalKey, D> naturalMap = new HashMap<NaturalKey, D>();
 
@@ -119,7 +115,7 @@ public abstract class HectorDao<W extends Serializable & Comparable<W>, I extend
 
         try {
           if (nonKeyFieldName.equals("id")) {
-            nonKeyField.set(durable, getIdTranslator().toEntityValue(getIdClass(), columnName, hectorResult));
+            nonKeyField.set(durable, HectorType.getTranslator(getIdClass(), "id").toEntityValue(getIdClass(), columnName, hectorResult));
           }
           else {
 
@@ -199,7 +195,7 @@ public abstract class HectorDao<W extends Serializable & Comparable<W>, I extend
 
     if ((durables != null) && (!durables.isEmpty())) {
 
-      ColumnFamilyUpdater<Composite, Composite> updater = hectorTemplate.createUpdater(new Composite(parentClass.getSimpleName(), getParentIdTranslator().toHectorValue(parentId)));
+      ColumnFamilyUpdater<Composite, Composite> updater = hectorTemplate.createUpdater(new Composite(parentClass.getSimpleName(), HectorType.getTranslator(getParentIdClass(), "parentId").toHectorValue(parentId)));
       WideVectoredDao<W, I, D> wideVectoredDao;
 
       try {
@@ -222,7 +218,10 @@ public abstract class HectorDao<W extends Serializable & Comparable<W>, I extend
             nonKeyComposite.add(nonKeyField.getName());
 
             if (nonKeyField.getName().equals("id")) {
-              updater.setValue(nonKeyComposite, getIdTranslator().toHectorValue(id), getIdTranslator().getSerializer());
+
+              HectorTranslator idTranslator = HectorType.getTranslator(getIdClass(), "id");
+
+              updater.setValue(nonKeyComposite, idTranslator.toHectorValue(id), idTranslator.getSerializer());
             }
             else {
 
@@ -307,7 +306,7 @@ public abstract class HectorDao<W extends Serializable & Comparable<W>, I extend
 
     if ((durables != null) && (!durables.isEmpty())) {
 
-      ColumnFamilyUpdater<Composite, Composite> updater = hectorTemplate.createUpdater(new Composite(parentClass.getSimpleName(), getParentIdTranslator().toHectorValue(parentId)));
+      ColumnFamilyUpdater<Composite, Composite> updater = hectorTemplate.createUpdater(new Composite(parentClass.getSimpleName(), HectorType.getTranslator(getParentIdClass(), "parentId").toHectorValue(parentId)));
       WideVectoredDao<W, I, D> wideVectoredDao;
 
       try {
