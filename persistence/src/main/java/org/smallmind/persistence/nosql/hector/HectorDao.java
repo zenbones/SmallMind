@@ -29,7 +29,6 @@ package org.smallmind.persistence.nosql.hector;
 import java.io.Serializable;
 import java.lang.reflect.Field;
 import java.util.Collections;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
@@ -121,56 +120,7 @@ public abstract class HectorDao<W extends Serializable & Comparable<W>, I extend
 
             Class<?> nonKeyType = nonKeyField.getType();
 
-            if (Date.class.isAssignableFrom(nonKeyType)) {
-              nonKeyField.set(durable, hectorResult.getDate(columnName));
-            }
-            else if (nonKeyType.isEnum()) {
-
-              String enumName = hectorResult.getString(columnName);
-              boolean matched = false;
-
-              for (Object enumConstant : nonKeyType.getEnumConstants()) {
-                if (((Enum)enumConstant).name().equals(enumName)) {
-                  nonKeyField.set(durable, enumConstant);
-                  matched = true;
-                  break;
-                }
-              }
-
-              if (!matched) {
-                throw new PersistenceException("Unable to locate matching enum constant(%s) for field(%s) of type(%s)", enumName, nonKeyFieldName, nonKeyType.getName());
-              }
-            }
-            else if (CharSequence.class.isAssignableFrom(nonKeyType)) {
-              nonKeyField.set(durable, hectorResult.getString(columnName));
-            }
-            else if (long.class.equals(nonKeyType) || (Long.class.equals(nonKeyType))) {
-              nonKeyField.setLong(durable, hectorResult.getLong(columnName));
-            }
-            else if (boolean.class.equals(nonKeyType) || (Boolean.class.equals(nonKeyType))) {
-              nonKeyField.setBoolean(durable, hectorResult.getBoolean(columnName));
-            }
-            else if (int.class.equals(nonKeyType) || (Integer.class.equals(nonKeyType))) {
-              nonKeyField.setInt(durable, hectorResult.getLong(columnName).intValue());
-            }
-            else if (double.class.equals(nonKeyType) || (Double.class.equals(nonKeyType))) {
-              nonKeyField.setDouble(durable, hectorResult.getDouble(columnName));
-            }
-            else if (float.class.equals(nonKeyType) || (Float.class.equals(nonKeyType))) {
-              nonKeyField.setFloat(durable, hectorResult.getDouble(columnName).floatValue());
-            }
-            else if (char.class.equals(nonKeyType) || (Character.class.equals(nonKeyType))) {
-              nonKeyField.setChar(durable, hectorResult.getString(columnName).charAt(0));
-            }
-            else if (short.class.equals(nonKeyType) || (Short.class.equals(nonKeyType))) {
-              nonKeyField.setShort(durable, hectorResult.getLong(columnName).shortValue());
-            }
-            else if (byte.class.equals(nonKeyType) || (Byte.class.equals(nonKeyType))) {
-              nonKeyField.setByte(durable, hectorResult.getLong(columnName).byteValue());
-            }
-            else {
-              throw new PersistenceException("Unknown field(%s) type(%s)", nonKeyField.getName(), nonKeyType.getName());
-            }
+            nonKeyField.set(durable, HectorType.getTranslator(nonKeyType, nonKeyFieldName).toEntityValue(nonKeyType, columnName, hectorResult));
           }
         }
         catch (IllegalAccessException illegalAccessException) {
@@ -212,7 +162,7 @@ public abstract class HectorDao<W extends Serializable & Comparable<W>, I extend
             Composite nonKeyComposite = new Composite();
 
             for (Field naturalKeyField : NaturalKey.getNaturalKeyFields(durableClass)) {
-              nonKeyComposite.add(HectorType.getTranslator(naturalKeyField.getType(), naturalKeyField.getName()).toHectorValue(naturalKeyField.getType().cast(naturalKeyField.get(durable))));
+              nonKeyComposite.add(HectorType.getTranslator(naturalKeyField.getType(), naturalKeyField.getName()).toHectorValue(naturalKeyField.get(durable)));
             }
 
             nonKeyComposite.add(nonKeyField.getName());
@@ -225,46 +175,16 @@ public abstract class HectorDao<W extends Serializable & Comparable<W>, I extend
             }
             else {
 
-              Class<?> nonKeyType = nonKeyField.getType();
+              Object nonKeyValue = nonKeyField.get(durable);
 
-              if (nonKeyField.get(durable) == null) {
+              if (nonKeyValue == null) {
                 updater.deleteColumn(nonKeyComposite);
               }
-              else if (Date.class.isAssignableFrom(nonKeyType)) {
-                updater.setDate(nonKeyComposite, (Date)nonKeyField.get(durable));
-              }
-              else if (nonKeyType.isEnum()) {
-                updater.setString(nonKeyComposite, ((Enum)nonKeyField.get(durable)).name());
-              }
-              else if (CharSequence.class.isAssignableFrom(nonKeyType)) {
-                updater.setString(nonKeyComposite, nonKeyField.get(durable).toString());
-              }
-              else if (long.class.equals(nonKeyType) || (Long.class.equals(nonKeyType))) {
-                updater.setLong(nonKeyComposite, nonKeyField.getLong(durable));
-              }
-              else if (boolean.class.equals(nonKeyType) || (Boolean.class.equals(nonKeyType))) {
-                updater.setBoolean(nonKeyComposite, nonKeyField.getBoolean(durable));
-              }
-              else if (int.class.equals(nonKeyType) || (Integer.class.equals(nonKeyType))) {
-                updater.setLong(nonKeyComposite, (long)nonKeyField.getInt(durable));
-              }
-              else if (double.class.equals(nonKeyType) || (Double.class.equals(nonKeyType))) {
-                updater.setDouble(nonKeyComposite, nonKeyField.getDouble(durable));
-              }
-              else if (float.class.equals(nonKeyType) || (Float.class.equals(nonKeyType))) {
-                updater.setDouble(nonKeyComposite, (double)nonKeyField.getFloat(durable));
-              }
-              else if (char.class.equals(nonKeyType) || (Character.class.equals(nonKeyType))) {
-                updater.setString(nonKeyComposite, new String(new char[] {nonKeyField.getChar(durable)}));
-              }
-              else if (short.class.equals(nonKeyType) || (Short.class.equals(nonKeyType))) {
-                updater.setLong(nonKeyComposite, (long)nonKeyField.getShort(durable));
-              }
-              else if (byte.class.equals(nonKeyType) || (Byte.class.equals(nonKeyType))) {
-                updater.setLong(nonKeyComposite, (long)nonKeyField.getByte(durable));
-              }
               else {
-                throw new PersistenceException("Unknown field(%s) type(%s)", nonKeyField.getName(), nonKeyType.getName());
+
+                HectorTranslator nonKeyTranslator = HectorType.getTranslator(nonKeyField.getType(), nonKeyField.getName());
+
+                updater.setValue(nonKeyComposite, nonKeyTranslator.toHectorValue(nonKeyValue), nonKeyTranslator.getSerializer());
               }
             }
           }
