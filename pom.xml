@@ -105,6 +105,8 @@
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <nexus.release.repository.id>nexus</nexus.release.repository.id>
     <nexus.release.repository.url>${nexus.server}/nexus/content/repositories/releases</nexus.release.repository.url>
+    <javafx.runtime.lib.jar>${env.JAVAFX_RUNTIME}/lib/jfxrt.jar</javafx.runtime.lib.jar>
+    <javafx.tools.ant.jar>${env.JAVAFX_SDK}/lib/ant-javafx.jar</javafx.tools.ant.jar>
   </properties>
   <modules>
     <module>license</module>
@@ -407,7 +409,7 @@
         <artifactId>javafx-rt</artifactId>
         <version>2.2</version>
         <scope>system</scope>
-        <systemPath>c:/javafx/jfxrt.jar</systemPath>
+        <systemPath>${javafx.runtime.lib.jar}</systemPath>
       </dependency>
       <dependency>
         <groupId>org.codehaus.jackson</groupId>

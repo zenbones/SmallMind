@@ -210,7 +210,7 @@ public class SequentialBox extends Box<SequentialBox> {
         index = 0;
         for (ParaboxElement<?> element : getElements()) {
           totalShrink += element.getConstraint().getShrink();
-          totalFat += (fat[index++] = (preferredBiasedMeasurements[index] = element.getPreferredMeasurement(bias, tailor)) - element.getMinimumMeasurement(bias, tailor));
+          totalFat += (fat[index] = (preferredBiasedMeasurements[index++] = element.getPreferredMeasurement(bias, tailor)) - element.getMinimumMeasurement(bias, tailor));
         }
 
         index = 0;
@@ -218,7 +218,7 @@ public class SequentialBox extends Box<SequentialBox> {
 
           double totalRatio = (totalShrink + totalFat == 0) ? 0 : (element.getConstraint().getShrink() + fat[index]) / (totalShrink + totalFat);
 
-          tailor.applyLayout(bias, containerPosition + top, currentMeasure = preferredBiasedMeasurements[index] - (totalRatio * (preferredContainerMeasure - containerMeasurement)), element);
+          tailor.applyLayout(bias, containerPosition + top, currentMeasure = preferredBiasedMeasurements[index++] - (totalRatio * (preferredContainerMeasure - containerMeasurement)), element);
           top += currentMeasure + gap;
         }
       }
