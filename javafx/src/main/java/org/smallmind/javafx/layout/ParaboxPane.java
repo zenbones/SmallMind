@@ -67,7 +67,7 @@ public class ParaboxPane extends Region implements ParaboxContainer<Node> {
   @Override
   protected double computeMinHeight (double v) {
 
-    return paraboxLayout.calculateMinimumWidth();
+    return paraboxLayout.calculateMinimumHeight();
   }
 
   @Override
@@ -79,7 +79,7 @@ public class ParaboxPane extends Region implements ParaboxContainer<Node> {
   @Override
   protected double computePrefHeight (double v) {
 
-    return paraboxLayout.calculatePreferredWidth();
+    return paraboxLayout.calculatePreferredHeight();
   }
 
   @Override
@@ -91,7 +91,7 @@ public class ParaboxPane extends Region implements ParaboxContainer<Node> {
   @Override
   protected double computeMaxHeight (double v) {
 
-    return paraboxLayout.calculateMaximumWidth();
+    return paraboxLayout.calculateMaximumHeight();
   }
 
   @Override
