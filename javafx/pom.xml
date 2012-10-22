@@ -19,6 +19,8 @@
     <dependency>
       <groupId>com.oracle</groupId>
       <artifactId>javafx-rt</artifactId>
+      <scope>system</scope>
+      <systemPath>${javafx.runtime.lib.jar}</systemPath>
     </dependency>
   </dependencies>
   <build>
