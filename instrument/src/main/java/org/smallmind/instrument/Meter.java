@@ -79,7 +79,7 @@ public class Meter implements Metric, Metered, Clocked, Stoppable {
     m5Average = ExponentiallyWeightedMovingAverage.lastFiveMinutes(tickInterval, tickTimeUnit);
     m15Average = ExponentiallyWeightedMovingAverage.lastFifteenMinutes(tickInterval, tickTimeUnit);
 
-    this.future = SCHEDULED_EXECUTOR.scheduleAtFixedRate(new Runnable() {
+    future = SCHEDULED_EXECUTOR.scheduleAtFixedRate(new Runnable() {
 
       @Override
       public void run () {
