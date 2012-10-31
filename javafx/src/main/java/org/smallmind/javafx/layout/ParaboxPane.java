@@ -27,6 +27,7 @@
 package org.smallmind.javafx.layout;
 
 import java.util.List;
+import javafx.geometry.Insets;
 import javafx.scene.Node;
 import javafx.scene.layout.Region;
 import org.smallmind.nutsnbolts.layout.Alignment;
@@ -39,6 +40,7 @@ import org.smallmind.nutsnbolts.layout.ParaboxElement;
 import org.smallmind.nutsnbolts.layout.ParaboxLayout;
 import org.smallmind.nutsnbolts.layout.ParaboxPlatform;
 import org.smallmind.nutsnbolts.layout.ParallelBox;
+import org.smallmind.nutsnbolts.layout.Perimeter;
 import org.smallmind.nutsnbolts.layout.SequentialBox;
 
 public class ParaboxPane extends Region implements ParaboxContainer<Node> {
@@ -50,6 +52,11 @@ public class ParaboxPane extends Region implements ParaboxContainer<Node> {
   public ParaboxPane () {
 
     paraboxLayout = new ParaboxLayout(this);
+  }
+
+  public ParaboxPane (Insets insets) {
+
+    paraboxLayout = new ParaboxLayout(new Perimeter(insets.getTop(), insets.getLeft(), insets.getBottom(), insets.getRight()), this);
   }
 
   @Override

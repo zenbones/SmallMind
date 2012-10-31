@@ -31,12 +31,20 @@ import java.util.List;
 
 public class ParaboxLayout {
 
-  private ParaboxContainer container;
+  private final ParaboxContainer container;
+  private final Perimeter perimeter;
+
   private Box horizontalBox;
   private Box verticalBox;
 
   public ParaboxLayout (ParaboxContainer container) {
 
+    this(container.getPlatform().getFramePerimeter(), container);
+  }
+
+  public ParaboxLayout (Perimeter perimeter, ParaboxContainer container) {
+
+    this.perimeter = perimeter;
     this.container = container;
   }
 
@@ -140,12 +148,12 @@ public class ParaboxLayout {
 
   private double getHorizontalPerimeterRequirements () {
 
-    return container.getPlatform().getFramePerimeter().getLeft() + container.getPlatform().getFramePerimeter().getRight();
+    return perimeter.getLeft() + perimeter.getRight();
   }
 
   private double getVerticalPerimeterRequirements () {
 
-    return container.getPlatform().getFramePerimeter().getTop() + container.getPlatform().getFramePerimeter().getBottom();
+    return perimeter.getTop() + perimeter.getBottom();
   }
 
   public void doLayout (double width, double height, Object... components) {
@@ -164,8 +172,8 @@ public class ParaboxLayout {
       throw new LayoutException("No vertical box has been set on this layout");
     }
 
-    horizontalBox.doLayout(Bias.HORIZONTAL, container.getPlatform().getFramePerimeter().getLeft(), width - getHorizontalPerimeterRequirements(), tailor = new LayoutTailor(componentList));
-    verticalBox.doLayout(Bias.VERTICAL, container.getPlatform().getFramePerimeter().getTop(), height - getVerticalPerimeterRequirements(), tailor);
+    horizontalBox.doLayout(Bias.HORIZONTAL, perimeter.getLeft(), width - getHorizontalPerimeterRequirements(), tailor = new LayoutTailor(componentList));
+    verticalBox.doLayout(Bias.VERTICAL, perimeter.getTop(), height - getVerticalPerimeterRequirements(), tailor);
 
     tailor.cleanup();
   }
