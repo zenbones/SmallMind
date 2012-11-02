@@ -45,7 +45,7 @@ import org.smallmind.quorum.pool.complex.ComponentPool;
 import org.springframework.beans.factory.DisposableBean;
 import org.springframework.beans.factory.InitializingBean;
 
-public class DynamicDriverManagerPooledDataSourceInitializingBean implements InitializingBean, DisposableBean {
+public class DynamicDriverManagerPooledDataSourceInitializingBean implements InitializingBean, DisposableBean, DataSourceFactory {
 
   /*
   jdbc.driver.class_name.<pool name> (required)
