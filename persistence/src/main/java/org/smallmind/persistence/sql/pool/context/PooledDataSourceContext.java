@@ -24,9 +24,21 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.persistence.sql.pool.spring;
+package org.smallmind.persistence.sql.pool.context;
 
-public interface DriverManagerPooledDataSourceProviderFactory {
+import org.smallmind.nutsnbolts.context.Context;
 
-  public abstract DriverManagerPooledDataSourceProvider getDataSourceProvider (String dataSourceKey);
+public class PooledDataSourceContext implements Context {
+
+  private String contextualPart;
+
+  public PooledDataSourceContext (String contextualPart) {
+
+    this.contextualPart = contextualPart;
+  }
+
+  public String getContextualPart () {
+
+    return contextualPart;
+  }
 }

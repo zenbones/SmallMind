@@ -24,41 +24,49 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.persistence.sql.pool.spring;
+package org.smallmind.persistence.sql.pool.context;
 
-import javax.sql.DataSource;
-import org.springframework.beans.factory.FactoryBean;
+import org.smallmind.quorum.pool.ComponentPoolException;
 
-public class DynamicDriverManagerPooledDataSourceFactoryBean implements FactoryBean<DataSource> {
+public class DefaultContextualPoolNameTranslator implements ContextualPoolNameTranslator {
 
-  private DynamicDriverManagerPooledDataSourceInitializingBean initializingBean;
-  private String dataSourceKey;
+  private String baseName;
+  private char separator;
 
-  public void setDataSourceKey (String dataSourceKey) {
+  public DefaultContextualPoolNameTranslator (String baseName, char separator) {
 
-    this.dataSourceKey = dataSourceKey;
-  }
-
-  public void setInitializingBean (DynamicDriverManagerPooledDataSourceInitializingBean initializingBean) {
-
-    this.initializingBean = initializingBean;
+    this.baseName = baseName;
+    this.separator = separator;
   }
 
   @Override
-  public boolean isSingleton () {
+  public String getBaseName () {
 
-    return true;
+    return baseName;
   }
 
   @Override
-  public Class<?> getObjectType () {
+  public String getPoolName (String contextualPart) {
 
-    return DataSource.class;
+    return baseName + separator + contextualPart;
   }
 
   @Override
-  public DataSource getObject () {
+  public String getContextualPartFromPoolName (String poolName)
+    throws ComponentPoolException {
 
-    return initializingBean.getDataSource(dataSourceKey);
+    if (!poolName.startsWith(baseName)) {
+      throw new ComponentPoolException("Unable to parse pool name(%s)", poolName);
+    }
+
+    if (poolName.length() == baseName.length()) {
+
+      return null;
+    }
+    else if (!(poolName.charAt(baseName.length()) == separator)) {
+      throw new ComponentPoolException("Unable to parse pool name(%s)", poolName);
+    }
+
+    return poolName.substring(baseName.length() + 1);
   }
 }

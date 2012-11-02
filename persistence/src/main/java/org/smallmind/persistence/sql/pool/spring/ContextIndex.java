@@ -26,39 +26,24 @@
  */
 package org.smallmind.persistence.sql.pool.spring;
 
-import javax.sql.DataSource;
-import org.springframework.beans.factory.FactoryBean;
+public class ContextIndex {
 
-public class DynamicDriverManagerPooledDataSourceFactoryBean implements FactoryBean<DataSource> {
+  private String context;
+  private int index;
 
-  private DynamicDriverManagerPooledDataSourceInitializingBean initializingBean;
-  private String dataSourceKey;
+  public ContextIndex (String context, int index) {
 
-  public void setDataSourceKey (String dataSourceKey) {
-
-    this.dataSourceKey = dataSourceKey;
+    this.context = context;
+    this.index = index;
   }
 
-  public void setInitializingBean (DynamicDriverManagerPooledDataSourceInitializingBean initializingBean) {
+  public String getContext () {
 
-    this.initializingBean = initializingBean;
+    return context;
   }
 
-  @Override
-  public boolean isSingleton () {
+  public int getIndex () {
 
-    return true;
-  }
-
-  @Override
-  public Class<?> getObjectType () {
-
-    return DataSource.class;
-  }
-
-  @Override
-  public DataSource getObject () {
-
-    return initializingBean.getDataSource(dataSourceKey);
+    return index;
   }
 }

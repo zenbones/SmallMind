@@ -24,41 +24,16 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.persistence.sql.pool.spring;
+package org.smallmind.persistence.sql.pool.context;
 
-import javax.sql.DataSource;
-import org.springframework.beans.factory.FactoryBean;
+import org.smallmind.quorum.pool.ComponentPoolException;
 
-public class DynamicDriverManagerPooledDataSourceFactoryBean implements FactoryBean<DataSource> {
+public interface ContextualPoolNameTranslator {
 
-  private DynamicDriverManagerPooledDataSourceInitializingBean initializingBean;
-  private String dataSourceKey;
+  public abstract String getBaseName ();
 
-  public void setDataSourceKey (String dataSourceKey) {
+  public abstract String getPoolName (String contextualPart);
 
-    this.dataSourceKey = dataSourceKey;
-  }
-
-  public void setInitializingBean (DynamicDriverManagerPooledDataSourceInitializingBean initializingBean) {
-
-    this.initializingBean = initializingBean;
-  }
-
-  @Override
-  public boolean isSingleton () {
-
-    return true;
-  }
-
-  @Override
-  public Class<?> getObjectType () {
-
-    return DataSource.class;
-  }
-
-  @Override
-  public DataSource getObject () {
-
-    return initializingBean.getDataSource(dataSourceKey);
-  }
+  public abstract String getContextualPartFromPoolName (String poolName)
+    throws ComponentPoolException;
 }

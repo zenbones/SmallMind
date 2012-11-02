@@ -30,18 +30,14 @@ import java.sql.SQLException;
 import javax.sql.PooledConnection;
 import org.smallmind.persistence.sql.pool.ConnectionEndpoint;
 import org.smallmind.persistence.sql.pool.DriverManagerComponentInstanceFactory;
-import org.smallmind.persistence.sql.pool.PooledDataSource;
 import org.smallmind.quorum.pool.ComponentPoolException;
 import org.smallmind.quorum.pool.complex.ComplexPoolConfig;
 import org.smallmind.quorum.pool.complex.ComponentPool;
 
-public class DriverManagerPooledDataSourceProvider {
+public class PooledConnectionComponentPoolFactory {
 
-  private final PooledDataSource dataSource;
-  private final ComponentPool<PooledConnection> componentPool;
-
-  public DriverManagerPooledDataSourceProvider (String poolName, String driverClassName, String validationQuery, int maxStatements, ComplexPoolConfig poolConfig, DatabaseConnection... connections)
-    throws ComponentPoolException, SQLException {
+  public static ComponentPool<PooledConnection> constructComponentPool (String poolName, String driverClassName, String validationQuery, int maxStatements, ComplexPoolConfig poolConfig, DatabaseConnection... connections)
+    throws SQLException, ComponentPoolException {
 
     DriverManagerComponentInstanceFactory connectionInstanceFactory = new DriverManagerComponentInstanceFactory(driverClassName, maxStatements, createConnectionEndpoints(connections));
 
@@ -49,27 +45,10 @@ public class DriverManagerPooledDataSourceProvider {
       connectionInstanceFactory.setValidationQuery(validationQuery);
     }
 
-    dataSource = new PooledDataSource(componentPool = new ComponentPool<PooledConnection>(poolName, connectionInstanceFactory).setComplexPoolConfig(poolConfig));
+    return new ComponentPool<PooledConnection>(poolName, connectionInstanceFactory).setComplexPoolConfig(poolConfig);
   }
 
-  public PooledDataSource getPooledDataSource () {
-
-    return dataSource;
-  }
-
-  public void startup ()
-    throws ComponentPoolException {
-
-    componentPool.startup();
-  }
-
-  public void shutdown ()
-    throws ComponentPoolException {
-
-    componentPool.shutdown();
-  }
-
-  private ConnectionEndpoint[] createConnectionEndpoints (DatabaseConnection... databaseConnections) {
+  private static ConnectionEndpoint[] createConnectionEndpoints (DatabaseConnection... databaseConnections) {
 
     if (databaseConnections == null) {
 

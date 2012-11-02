@@ -32,6 +32,10 @@ public class DatabaseConnection {
   private String user;
   private String password;
 
+  public DatabaseConnection () {
+
+  }
+
   public DatabaseConnection (String jdbcUrl, String user, String password) {
 
     this.jdbcUrl = jdbcUrl;
@@ -67,5 +71,10 @@ public class DatabaseConnection {
   public void setPassword (String password) {
 
     this.password = password;
+  }
+
+  public boolean isComplete () {
+
+    return (jdbcUrl != null) && (user != null) && (password != null);
   }
 }

@@ -62,7 +62,7 @@ public abstract class HectorDao<W extends Serializable & Comparable<W>, I extend
   public abstract I createId ();
 
   @Override
-  public List<D> get (Class<? extends Durable<W>> parentClass, W parentId, Class<D> durableClass) {
+  public List<D> get (String context, Class<? extends Durable<W>> parentClass, W parentId, Class<D> durableClass) {
 
     List<D> durables;
     WideVectoredDao<W, I, D> wideVectoredDao;
@@ -75,7 +75,7 @@ public abstract class HectorDao<W extends Serializable & Comparable<W>, I extend
       }
     }
 
-    if ((hectorResult = hectorTemplate.queryColumns(new Composite(parentClass.getSimpleName(), HectorType.getTranslator(getParentIdClass(), "parentId").toHectorValue(parentId)))).hasResults()) {
+    if ((hectorResult = hectorTemplate.queryColumns(new Composite(context, parentClass.getSimpleName(), HectorType.getTranslator(getParentIdClass(), "parentId").toHectorValue(parentId)))).hasResults()) {
 
       HashMap<NaturalKey, D> naturalMap = new HashMap<NaturalKey, D>();
 
@@ -141,11 +141,11 @@ public abstract class HectorDao<W extends Serializable & Comparable<W>, I extend
   }
 
   @Override
-  public List<D> persist (Class<? extends Durable<W>> parentClass, W parentId, Class<D> durableClass, List<D> durables) {
+  public List<D> persist (String context, Class<? extends Durable<W>> parentClass, W parentId, Class<D> durableClass, List<D> durables) {
 
     if ((durables != null) && (!durables.isEmpty())) {
 
-      ColumnFamilyUpdater<Composite, Composite> updater = hectorTemplate.createUpdater(new Composite(parentClass.getSimpleName(), HectorType.getTranslator(getParentIdClass(), "parentId").toHectorValue(parentId)));
+      ColumnFamilyUpdater<Composite, Composite> updater = hectorTemplate.createUpdater(new Composite(context, parentClass.getSimpleName(), HectorType.getTranslator(getParentIdClass(), "parentId").toHectorValue(parentId)));
       WideVectoredDao<W, I, D> wideVectoredDao;
 
       try {
@@ -222,11 +222,11 @@ public abstract class HectorDao<W extends Serializable & Comparable<W>, I extend
   }
 
   @Override
-  public void delete (Class<? extends Durable<W>> parentClass, W parentId, Class<D> durableClass, List<D> durables) {
+  public void delete (String context, Class<? extends Durable<W>> parentClass, W parentId, Class<D> durableClass, List<D> durables) {
 
     if ((durables != null) && (!durables.isEmpty())) {
 
-      ColumnFamilyUpdater<Composite, Composite> updater = hectorTemplate.createUpdater(new Composite(parentClass.getSimpleName(), HectorType.getTranslator(getParentIdClass(), "parentId").toHectorValue(parentId)));
+      ColumnFamilyUpdater<Composite, Composite> updater = hectorTemplate.createUpdater(new Composite(context, parentClass.getSimpleName(), HectorType.getTranslator(getParentIdClass(), "parentId").toHectorValue(parentId)));
       WideVectoredDao<W, I, D> wideVectoredDao;
 
       try {

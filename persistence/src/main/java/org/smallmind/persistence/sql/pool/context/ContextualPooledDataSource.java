@@ -24,45 +24,47 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.persistence.sql.pool;
+package org.smallmind.persistence.sql.pool.context;
 
 import java.sql.Connection;
 import java.sql.SQLException;
+import java.util.HashMap;
 import javax.sql.PooledConnection;
-import org.smallmind.persistence.sql.DataSourceManager;
+import org.smallmind.nutsnbolts.context.ContextFactory;
+import org.smallmind.nutsnbolts.context.ExpectedContexts;
+import org.smallmind.persistence.sql.pool.AbstractPooledDataSource;
 import org.smallmind.quorum.pool.ComponentPoolException;
 import org.smallmind.quorum.pool.complex.ComponentPool;
 
-public class PooledDataSource extends AbstractPooledDataSource {
+@ExpectedContexts(PooledDataSourceContext.class)
+public class ContextualPooledDataSource extends AbstractPooledDataSource {
 
-  private ComponentPool<PooledConnection> componentPool;
-  private String key;
+  private final HashMap<String, ComponentPool<PooledConnection>> componentPoolMap = new HashMap<String, ComponentPool<PooledConnection>>();
+  private final String baseName;
 
-  public PooledDataSource (ComponentPool<PooledConnection> componentPool) {
+  public ContextualPooledDataSource (ContextualPoolNameTranslator poolNameTranslator, ComponentPool<PooledConnection>... componentPools)
+    throws ComponentPoolException {
 
-    this(componentPool.getPoolName(), componentPool);
+    baseName = poolNameTranslator.getBaseName();
+    for (ComponentPool<PooledConnection> componentPool : componentPools) {
+      componentPoolMap.put(poolNameTranslator.getContextualPartFromPoolName(componentPool.getPoolName()), componentPool);
+    }
   }
 
-  public PooledDataSource (String key, ComponentPool<PooledConnection> componentPool) {
-
-    this.key = key;
-    this.componentPool = componentPool;
-  }
-
-  public void register () {
-
-    DataSourceManager.register(key, this);
-  }
-
-  public String getKey () {
-
-    return key;
-  }
-
+  @Override
   public Connection getConnection ()
     throws SQLException {
 
     try {
+
+      PooledDataSourceContext pooledDataSourceContext = ContextFactory.getContext(PooledDataSourceContext.class);
+      ComponentPool<PooledConnection> componentPool;
+      String contextualPart;
+
+      if ((componentPool = componentPoolMap.get(contextualPart = (pooledDataSourceContext == null) ? null : pooledDataSourceContext.getContextualPart())) == null) {
+        throw new ComponentPoolException("Unable to locate component pool for base name(%s) and context(%s)", baseName, contextualPart);
+      }
+
       return componentPool.getComponent().getConnection();
     }
     catch (ComponentPoolException componentPoolException) {
@@ -74,13 +76,17 @@ public class PooledDataSource extends AbstractPooledDataSource {
   public void startup ()
     throws ComponentPoolException {
 
-    componentPool.startup();
+    for (ComponentPool<PooledConnection> componentPool : componentPoolMap.values()) {
+      componentPool.startup();
+    }
   }
 
   @Override
   public void shutdown ()
     throws ComponentPoolException {
 
-    componentPool.shutdown();
+    for (ComponentPool<PooledConnection> componentPool : componentPoolMap.values()) {
+      componentPool.shutdown();
+    }
   }
 }

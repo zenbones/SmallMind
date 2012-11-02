@@ -28,6 +28,8 @@ package org.smallmind.persistence.sql.pool.spring;
 
 import java.sql.SQLException;
 import javax.sql.DataSource;
+import org.smallmind.persistence.sql.pool.AbstractPooledDataSource;
+import org.smallmind.persistence.sql.pool.PooledDataSource;
 import org.smallmind.quorum.pool.ComponentPoolException;
 import org.smallmind.quorum.pool.complex.ComplexPoolConfig;
 import org.springframework.beans.factory.DisposableBean;
@@ -36,7 +38,7 @@ import org.springframework.beans.factory.InitializingBean;
 
 public class DriverManagerPooledDataSourceFactoryBean implements FactoryBean<DataSource>, InitializingBean, DisposableBean {
 
-  private DriverManagerPooledDataSourceProvider dataSourceProvider;
+  private AbstractPooledDataSource dataSource;
   private ComplexPoolConfig poolConfig;
   private DatabaseConnection[] connections;
   private String driverClassName;
@@ -78,15 +80,15 @@ public class DriverManagerPooledDataSourceFactoryBean implements FactoryBean<Dat
   public void afterPropertiesSet ()
     throws SQLException, ComponentPoolException {
 
-    dataSourceProvider = new DriverManagerPooledDataSourceProvider(poolName, driverClassName, validationQuery, maxStatements, poolConfig, connections);
-    dataSourceProvider.startup();
+    dataSource = new PooledDataSource(PooledConnectionComponentPoolFactory.constructComponentPool(poolName, driverClassName, validationQuery, maxStatements, poolConfig, connections));
+    dataSource.startup();
   }
 
   @Override
   public void destroy ()
     throws ComponentPoolException {
 
-    dataSourceProvider.shutdown();
+    dataSource.shutdown();
   }
 
   @Override
@@ -104,6 +106,6 @@ public class DriverManagerPooledDataSourceFactoryBean implements FactoryBean<Dat
   @Override
   public DataSource getObject () {
 
-    return dataSourceProvider.getPooledDataSource();
+    return dataSource;
   }
 }
