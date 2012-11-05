@@ -39,10 +39,10 @@ public abstract class ComponentParaboxElement<C> extends ParaboxElement<C> imple
       double maximumMeasurement;
 
       if ((minimumMeasurement = getMinimumMeasurement(bias, null)) > (preferredMeasurement = getPreferredMeasurement(bias, null))) {
-        throw new LayoutException("Layout component(%s) must yield min(%d)<=pref(%d) along the bias(%s)", component, minimumMeasurement, preferredMeasurement, bias.name());
+        throw new LayoutException("Layout component(%s) must yield min(%.2f)<=pref(%.2f) along the bias(%s)", component, minimumMeasurement, preferredMeasurement, bias.name());
       }
       if (preferredMeasurement > (maximumMeasurement = getMaximumMeasurement(bias, null))) {
-        throw new LayoutException("Layout component(%s) must yield pref(%d)<=max(%d) along the bias(%s)", component, preferredMeasurement, maximumMeasurement, bias.name());
+        throw new LayoutException("Layout component(%s) must yield pref(%.2f)<=max(%.2f) along the bias(%s)", component, preferredMeasurement, maximumMeasurement, bias.name());
       }
     }
   }
