@@ -28,6 +28,7 @@ package org.smallmind.persistence.cache.memcached;
 
 import java.util.Arrays;
 import java.util.Map;
+import java.util.zip.Deflater;
 import net.rubyeye.xmemcached.GetsResponse;
 import net.rubyeye.xmemcached.MemcachedClient;
 import org.smallmind.persistence.cache.CASValue;
@@ -173,6 +174,22 @@ public class MemcachedCache<V> implements PersistenceCache<String, V> {
 
   private String getDiscriminatedKey (String key) {
 
-    return new StringBuilder(discriminator).append('[').append(key).append(']').toString();
+    String descriminatedKey;
+    byte[] keyBytes;
+
+    if ((keyBytes = (descriminatedKey = new StringBuilder(discriminator).append('[').append(key).append(']').toString()).getBytes()).length > 250) {
+
+      Deflater deflater = new Deflater(5, true);
+      byte[] buffer = new byte[251];
+      int bufferedBytes;
+
+      deflater.setInput(keyBytes);
+      deflater.finish();
+      bufferedBytes = deflater.deflate(buffer);
+
+      return new String(buffer, 0, bufferedBytes);
+    }
+
+    return descriminatedKey;
   }
 }
