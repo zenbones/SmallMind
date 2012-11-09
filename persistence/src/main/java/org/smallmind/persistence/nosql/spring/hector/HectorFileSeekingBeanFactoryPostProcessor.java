@@ -24,62 +24,26 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.persistence.orm.spring.hibernate;
+package org.smallmind.persistence.nosql.spring.hector;
 
-import java.lang.annotation.Annotation;
 import java.util.HashMap;
 import java.util.HashSet;
+import org.smallmind.persistence.NaturalKeys;
+import org.smallmind.persistence.nosql.hector.HectorDao;
 import org.smallmind.persistence.orm.DataSource;
-import org.smallmind.persistence.orm.hibernate.HibernateDao;
 import org.smallmind.persistence.spring.ManagedDaoSupport;
 import org.springframework.beans.BeansException;
 import org.springframework.beans.FatalBeanException;
 import org.springframework.beans.factory.config.BeanFactoryPostProcessor;
 import org.springframework.beans.factory.config.ConfigurableListableBeanFactory;
 
-public class HibernateAnnotationSeekingBeanFactoryPostProcessor implements BeanFactoryPostProcessor {
+public class HectorFileSeekingBeanFactoryPostProcessor implements BeanFactoryPostProcessor {
 
-  private static final HashMap<String, HashSet<Class>> ANNOTATED_CLASS_DATA_SOURCE_MAP = new HashMap<String, HashSet<Class>>();
+  private static final HashMap<String, HashSet<Class>> HECTOR_DATA_SOURCE_MAP = new HashMap<String, HashSet<Class>>();
 
-  private static final Class[] NO_CLASSES = new Class[0];
+  public static HashSet<Class> getHectorTypes (String keyspaceName) {
 
-  private Class<? extends Annotation>[] markedAnnotations;
-
-  public static Class[] getAnnotatedClasses () {
-
-    return getAnnotatedClasses(null);
-  }
-
-  public static Class[] getAnnotatedClasses (String dataSourceKey) {
-
-    Class[] annotatedClasses;
-    HashSet<Class> annotatedClassSet;
-
-    if ((annotatedClassSet = ANNOTATED_CLASS_DATA_SOURCE_MAP.get(dataSourceKey)) == null) {
-      return NO_CLASSES;
-    }
-
-    annotatedClasses = new Class[annotatedClassSet.size()];
-    annotatedClassSet.toArray(annotatedClasses);
-
-    return annotatedClasses;
-  }
-
-  public void setMarkedAnnotations (Class<? extends Annotation>[] markedAnnotations) {
-
-    this.markedAnnotations = markedAnnotations;
-  }
-
-  private boolean hasMarkedAnnotation (Class persistentClass) {
-
-    for (Class<? extends Annotation> markedAnnotation : markedAnnotations) {
-      if (persistentClass.isAnnotationPresent(markedAnnotation)) {
-
-        return true;
-      }
-    }
-
-    return false;
+    return HECTOR_DATA_SOURCE_MAP.get(keyspaceName);
   }
 
   public void postProcessBeanFactory (ConfigurableListableBeanFactory configurableListableBeanFactory)
@@ -87,27 +51,29 @@ public class HibernateAnnotationSeekingBeanFactoryPostProcessor implements BeanF
 
     Class<?> beanClass;
     Class persistentClass;
-    Annotation dataSourceAnnotation;
-    HashSet<Class> annotatedClassSet;
+    HashSet<Class> hectorTypes;
+    DataSource dataSource;
     String dataSourceKey = null;
 
     for (String beanName : configurableListableBeanFactory.getBeanDefinitionNames()) {
       if ((beanClass = configurableListableBeanFactory.getType(beanName)) != null) {
-        if (HibernateDao.class.isAssignableFrom(beanClass)) {
-          if ((dataSourceAnnotation = beanClass.getAnnotation(DataSource.class)) != null) {
-            dataSourceKey = ((DataSource)dataSourceAnnotation).value();
+        if (HectorDao.class.isAssignableFrom(beanClass)) {
+          if ((dataSource = beanClass.getAnnotation(DataSource.class)) != null) {
+            dataSourceKey = dataSource.value();
           }
 
-          if ((annotatedClassSet = ANNOTATED_CLASS_DATA_SOURCE_MAP.get(dataSourceKey)) == null) {
-            ANNOTATED_CLASS_DATA_SOURCE_MAP.put(dataSourceKey, annotatedClassSet = new HashSet<Class>());
+          if ((hectorTypes = HECTOR_DATA_SOURCE_MAP.get(dataSourceKey)) == null) {
+            HECTOR_DATA_SOURCE_MAP.put(dataSourceKey, hectorTypes = new HashSet<Class>());
           }
 
           if ((persistentClass = ManagedDaoSupport.findDurableClass(beanClass)) == null) {
             throw new FatalBeanException("No inference of the Durable class for type(" + beanClass.getName() + ") was possible");
           }
-          else if (hasMarkedAnnotation(persistentClass)) {
-            annotatedClassSet.add(persistentClass);
+          if (persistentClass.getAnnotation(NaturalKeys.class) == null) {
+            throw new FatalBeanException("Missing annotation(" + NaturalKeys.class.getSimpleName() + ") on durable type(" + persistentClass.getSimpleName() + ")");
           }
+
+          hectorTypes.add(persistentClass);
         }
       }
     }

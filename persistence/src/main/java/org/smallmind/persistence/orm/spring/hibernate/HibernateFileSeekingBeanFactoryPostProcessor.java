@@ -26,14 +26,11 @@
  */
 package org.smallmind.persistence.orm.spring.hibernate;
 
-import java.lang.annotation.Annotation;
-import java.lang.reflect.ParameterizedType;
-import java.lang.reflect.Type;
 import java.net.URL;
 import java.util.HashMap;
-import org.smallmind.persistence.Durable;
 import org.smallmind.persistence.orm.DataSource;
 import org.smallmind.persistence.orm.hibernate.HibernateDao;
+import org.smallmind.persistence.spring.ManagedDaoSupport;
 import org.springframework.beans.BeansException;
 import org.springframework.beans.FatalBeanException;
 import org.springframework.beans.factory.config.BeanFactoryPostProcessor;
@@ -71,7 +68,7 @@ public class HibernateFileSeekingBeanFactoryPostProcessor implements BeanFactory
 
     Class<?> beanClass;
     Class persistentClass;
-    Annotation dataSourceAnnotation;
+    DataSource dataSource;
     HashMap<Class, UrlResource> hbmResourceMap;
     URL hbmURL;
     String dataSourceKey = null;
@@ -82,15 +79,15 @@ public class HibernateFileSeekingBeanFactoryPostProcessor implements BeanFactory
     for (String beanName : configurableListableBeanFactory.getBeanDefinitionNames()) {
       if ((beanClass = configurableListableBeanFactory.getType(beanName)) != null) {
         if (HibernateDao.class.isAssignableFrom(beanClass)) {
-          if ((dataSourceAnnotation = beanClass.getAnnotation(DataSource.class)) != null) {
-            dataSourceKey = ((DataSource)dataSourceAnnotation).value();
+          if ((dataSource = beanClass.getAnnotation(DataSource.class)) != null) {
+            dataSourceKey = dataSource.value();
           }
 
           if ((hbmResourceMap = HBM_DATA_SOURCE_MAP.get(dataSourceKey)) == null) {
             HBM_DATA_SOURCE_MAP.put(dataSourceKey, hbmResourceMap = new HashMap<Class, UrlResource>());
           }
 
-          if ((persistentClass = findDurableClass(beanClass)) == null) {
+          if ((persistentClass = ManagedDaoSupport.findDurableClass(beanClass)) == null) {
             throw new FatalBeanException("No inference of the Durable class for type(" + beanClass.getName() + ") was possible");
           }
 
@@ -111,35 +108,5 @@ public class HibernateFileSeekingBeanFactoryPostProcessor implements BeanFactory
         }
       }
     }
-  }
-
-  private Class findDurableClass (Class beanClass) {
-
-    Class currentClass = beanClass;
-    Type superType;
-    Type returnType;
-
-    try {
-      if ((returnType = ((ParameterizedType)beanClass.getMethod("getManagedClass").getGenericReturnType()).getActualTypeArguments()[0]) instanceof Class) {
-
-        return (Class)returnType;
-      }
-    }
-    catch (NoSuchMethodException noSuchMethodException) {
-      throw new FatalBeanException("HibernateDao classes are expected to contain the method getManagedClass()", noSuchMethodException);
-    }
-
-    do {
-      if (((superType = currentClass.getGenericSuperclass()) != null) && (superType instanceof ParameterizedType)) {
-        for (Type genericType : ((ParameterizedType)superType).getActualTypeArguments()) {
-          if ((genericType instanceof Class) && Durable.class.isAssignableFrom((Class)genericType)) {
-
-            return (Class)genericType;
-          }
-        }
-      }
-    } while ((currentClass = currentClass.getSuperclass()) != null);
-
-    return null;
   }
 }
