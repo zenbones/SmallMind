@@ -88,16 +88,11 @@ public class HectorSchemaVerifier {
   private static String composeTypeAlias (Class<? extends Durable> durableType) {
 
     StringBuilder aliasBuilder = new StringBuilder("(");
-    boolean first = true;
 
     for (Field naturalKeyField : NaturalKey.getNaturalKeyFields(durableType)) {
-      if (!first) {
-        aliasBuilder.append(',');
-      }
-      aliasBuilder.append(HectorType.getTranslator(naturalKeyField.getType(), naturalKeyField.getName()).getHectorType());
-      first = false;
+      aliasBuilder.append(HectorType.getTranslator(naturalKeyField.getType(), naturalKeyField.getName()).getHectorType()).append(',');
     }
 
-    return aliasBuilder.append(')').toString();
+    return aliasBuilder.append("UTF8Type)").toString();
   }
 }
