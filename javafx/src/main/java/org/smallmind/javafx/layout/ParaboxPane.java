@@ -92,13 +92,13 @@ public class ParaboxPane extends Region implements ParaboxContainer<Node> {
   @Override
   protected double computeMaxWidth (double v) {
 
-    return paraboxLayout.calculateMaximumWidth();
+    return Double.MAX_VALUE;
   }
 
   @Override
   protected double computeMaxHeight (double v) {
 
-    return paraboxLayout.calculateMaximumHeight();
+    return Double.MAX_VALUE;
   }
 
   @Override
