@@ -32,6 +32,14 @@
     </plugins>
     <resources>
       <resource>
+        <directory>${basedir}/src/main/java</directory>
+        <filtering>false</filtering>
+        <includes>
+          <include>**/*.fxml</include>
+          <include>**/*.css</include>
+        </includes>
+      </resource>
+      <resource>
         <directory>src/main/resources/xsd</directory>
         <filtering>false</filtering>
       </resource>
