@@ -79,6 +79,7 @@ public class SliderSkin extends SkinBase<Slider, SliderBehavior> {
     };
 
     trackOverlay.getStyleClass().setAll("track-overlay");
+    trackOverlay.setMouseTransparent(true);
 
     thumb = new StackPane();
     thumb.getStyleClass().setAll("thumb");
@@ -105,18 +106,6 @@ public class SliderSkin extends SkinBase<Slider, SliderBehavior> {
       }
     });
 
-    trackOverlay.setOnMousePressed(new EventHandler<MouseEvent>() {
-
-      @Override
-      public void handle (MouseEvent me) {
-
-        if (!thumb.isPressed()) {
-          track.getOnMousePressed().handle((MouseEvent)me.copyFor(track, track));
-          me.consume();
-        }
-      }
-    });
-
     track.setOnMouseReleased(new EventHandler<MouseEvent>() {
 
       @Override
@@ -124,16 +113,6 @@ public class SliderSkin extends SkinBase<Slider, SliderBehavior> {
         //Nothing being done with the second param in sliderBehavior
         //So, passing a dummy value
         getBehavior().trackRelease(me, 0.0f);
-      }
-    });
-
-    trackOverlay.setOnMouseReleased(new EventHandler<MouseEvent>() {
-
-      @Override
-      public void handle (MouseEvent me) {
-
-        track.getOnMouseReleased().handle((MouseEvent)me.copyFor(track, track));
-        me.consume();
       }
     });
 
