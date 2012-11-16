@@ -65,7 +65,7 @@ public class VectorLiteral extends AnnotationLiteral<Vector> implements Vector {
   }
 
   @Override
-  public Key[] value () {
+  public Key[] keys () {
 
     return keys;
   }
