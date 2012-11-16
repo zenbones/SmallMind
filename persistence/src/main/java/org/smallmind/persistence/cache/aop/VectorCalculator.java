@@ -40,13 +40,13 @@ public class VectorCalculator {
 
     VectorIndex[] indices;
 
-    indices = new VectorIndex[vector.keys().length];
-    for (int count = 0; count < vector.keys().length; count++) {
+    indices = new VectorIndex[vector.value().length];
+    for (int count = 0; count < vector.value().length; count++) {
 
       Object indexValue;
 
-      indexValue = (!vector.keys()[count].constant().equals("")) ? vector.keys()[count].constant() : getValue(durable, vector.keys()[count].value(), vector.keys()[count].nullable());
-      indices[count] = new VectorIndex(vector.keys()[count].value(), indexValue, vector.keys()[count].alias());
+      indexValue = (!vector.value()[count].constant().equals("")) ? vector.value()[count].constant() : getValue(durable, vector.value()[count].value(), vector.value()[count].nullable());
+      indices[count] = new VectorIndex(vector.value()[count].value(), indexValue, vector.value()[count].alias());
     }
 
     return new VectorArtifact(vector.namespace(), indices);
@@ -57,13 +57,13 @@ public class VectorCalculator {
 
     VectorIndex[] indices;
 
-    indices = new VectorIndex[vector.keys().length];
-    for (int count = 0; count < vector.keys().length; count++) {
+    indices = new VectorIndex[vector.value().length];
+    for (int count = 0; count < vector.value().length; count++) {
 
       Object indexValue;
 
-      indexValue = (!vector.keys()[count].constant().equals("")) ? vector.keys()[count].constant() : getValue(joinPoint, vector.keys()[count].value(), vector.keys()[count].nullable());
-      indices[count] = new VectorIndex(vector.keys()[count].value(), indexValue, vector.keys()[count].alias());
+      indexValue = (!vector.value()[count].constant().equals("")) ? vector.value()[count].constant() : getValue(joinPoint, vector.value()[count].value(), vector.value()[count].nullable());
+      indices[count] = new VectorIndex(vector.value()[count].value(), indexValue, vector.value()[count].alias());
     }
 
     return new VectorArtifact(vector.namespace(), indices);

@@ -36,7 +36,7 @@ public @interface Vector {
 
   public abstract String namespace ();
 
-  public abstract Key[] keys ();
+  public abstract Key[] value ();
 
   public abstract String classifier () default "";
 
