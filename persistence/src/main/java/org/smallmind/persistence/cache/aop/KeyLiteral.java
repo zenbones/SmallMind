@@ -27,50 +27,41 @@
 package org.smallmind.persistence.cache.aop;
 
 import org.smallmind.nutsnbolts.lang.AnnotationLiteral;
-import org.smallmind.persistence.Durable;
 
 public class KeyLiteral extends AnnotationLiteral<Key> implements Key {
 
-  private Class<? extends Durable> with;
-  private String on;
+  private String value;
   private String constant;
   private String alias;
   private boolean nullable;
 
-  public KeyLiteral (Class<? extends Durable> with, String on) {
+  public KeyLiteral (String value) {
 
-    this(with, on, "", "", false);
+    this(value, "", "", false);
   }
 
-  public KeyLiteral (Class<? extends Durable> with, String on, String alias) {
+  public KeyLiteral (String value, String alias) {
 
-    this(with, on, alias, "", false);
+    this(value, alias, "", false);
   }
 
-  public KeyLiteral (Class<? extends Durable> with, String on, String alias, String constant) {
+  public KeyLiteral (String value, String alias, String constant) {
 
-    this(with, on, alias, constant, false);
+    this(value, alias, constant, false);
   }
 
-  public KeyLiteral (Class<? extends Durable> with, String on, String alias, String constant, boolean nullable) {
+  public KeyLiteral (String value, String alias, String constant, boolean nullable) {
 
-    this.with = with;
-    this.on = on;
+    this.value = value;
     this.alias = alias;
     this.constant = constant;
     this.nullable = nullable;
   }
 
   @Override
-  public Class<? extends Durable> with () {
+  public String value () {
 
-    return with;
-  }
-
-  @Override
-  public String on () {
-
-    return on;
+    return value;
   }
 
   @Override

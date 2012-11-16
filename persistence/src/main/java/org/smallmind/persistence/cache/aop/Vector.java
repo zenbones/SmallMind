@@ -34,7 +34,9 @@ import java.lang.annotation.Target;
 @Retention(RetentionPolicy.RUNTIME)
 public @interface Vector {
 
-  public abstract Key[] value ();
+  public abstract String namespace ();
+
+  public abstract Key[] keys ();
 
   public abstract String classifier () default "";
 

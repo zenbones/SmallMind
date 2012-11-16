@@ -74,10 +74,10 @@ public class ORMBasedCachedWithAspect {
 
             switch (onPersist) {
               case INSERT:
-                vectoredDao.updateInVector(new VectorKey(VectorIndices.getVectorIndexes(update.value(), operand.getDurable()), ormDao.getManagedClass(), Classifications.get(CachedWith.class, null, update.value())), indexingDurable);
+                vectoredDao.updateInVector(new VectorKey(VectorCalculator.getVectorArtifact(update.value(), operand.getDurable()), ormDao.getManagedClass(), Classifications.get(CachedWith.class, null, update.value())), indexingDurable);
                 break;
               case REMOVE:
-                vectoredDao.removeFromVector(new VectorKey(VectorIndices.getVectorIndexes(update.value(), operand.getDurable()), ormDao.getManagedClass(), Classifications.get(CachedWith.class, null, update.value())), indexingDurable);
+                vectoredDao.removeFromVector(new VectorKey(VectorCalculator.getVectorArtifact(update.value(), operand.getDurable()), ormDao.getManagedClass(), Classifications.get(CachedWith.class, null, update.value())), indexingDurable);
                 break;
               default:
                 throw new UnknownSwitchCaseException(onPersist.name());
@@ -95,7 +95,7 @@ public class ORMBasedCachedWithAspect {
 
             Operand operand = executeProxy(invalidate.proxy(), ormDao, indexingDurable);
 
-            vectoredDao.deleteVector(new VectorKey(VectorIndices.getVectorIndexes(invalidate.value(), operand.getDurable()), ormDao.getManagedClass(), Classifications.get(CachedWith.class, null, invalidate.value())));
+            vectoredDao.deleteVector(new VectorKey(VectorCalculator.getVectorArtifact(invalidate.value(), operand.getDurable()), ormDao.getManagedClass(), Classifications.get(CachedWith.class, null, invalidate.value())));
           }
         }
       }
@@ -127,7 +127,7 @@ public class ORMBasedCachedWithAspect {
 
             Operand operand = executeProxy(update.proxy(), ormDao, indexingDurable);
 
-            vectoredDao.removeFromVector(new VectorKey(VectorIndices.getVectorIndexes(update.value(), operand.getDurable()), ormDao.getManagedClass(), Classifications.get(CachedWith.class, null, update.value())), indexingDurable);
+            vectoredDao.removeFromVector(new VectorKey(VectorCalculator.getVectorArtifact(update.value(), operand.getDurable()), ormDao.getManagedClass(), Classifications.get(CachedWith.class, null, update.value())), indexingDurable);
           }
         }
       }
@@ -141,7 +141,7 @@ public class ORMBasedCachedWithAspect {
 
             Operand operand = executeProxy(invalidate.proxy(), ormDao, indexingDurable);
 
-            vectoredDao.deleteVector(new VectorKey(VectorIndices.getVectorIndexes(invalidate.value(), operand.getDurable()), ormDao.getManagedClass(), Classifications.get(CachedWith.class, null, invalidate.value())));
+            vectoredDao.deleteVector(new VectorKey(VectorCalculator.getVectorArtifact(invalidate.value(), operand.getDurable()), ormDao.getManagedClass(), Classifications.get(CachedWith.class, null, invalidate.value())));
           }
         }
       }

@@ -108,7 +108,7 @@ public class ORMBasedCacheAsAspect {
           VectorKey vectorKey;
           DurableVector vector;
 
-          vectorKey = new VectorKey(VectorIndices.getVectorIndexes(cacheAs.value(), thisJoinPoint), ormDao.getManagedClass(), Classifications.get(CacheAs.class, thisJoinPoint, cacheAs.value()));
+          vectorKey = new VectorKey(VectorCalculator.getVectorArtifact(cacheAs.value(), thisJoinPoint), ormDao.getManagedClass(), Classifications.get(CacheAs.class, thisJoinPoint, cacheAs.value()));
 
           if ((vector = vectoredDao.getVector(vectorKey)) != null) {
             if (!vector.isAlive()) {
@@ -154,7 +154,7 @@ public class ORMBasedCacheAsAspect {
           VectorKey vectorKey;
           DurableVector vector;
 
-          vectorKey = new VectorKey(VectorIndices.getVectorIndexes(cacheAs.value(), thisJoinPoint), ormDao.getManagedClass(), Classifications.get(CacheAs.class, thisJoinPoint, cacheAs.value()));
+          vectorKey = new VectorKey(VectorCalculator.getVectorArtifact(cacheAs.value(), thisJoinPoint), ormDao.getManagedClass(), Classifications.get(CacheAs.class, thisJoinPoint, cacheAs.value()));
 
           if ((vector = vectoredDao.getVector(vectorKey)) != null) {
             if (!vector.isAlive()) {

@@ -24,61 +24,26 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.persistence.cache.aop;
+package org.smallmind.persistence.cache;
 
-import org.smallmind.nutsnbolts.lang.AnnotationLiteral;
+public class VectorArtifact {
 
-public class VectorLiteral extends AnnotationLiteral<Vector> implements Vector {
+  private String vectorNamespace;
+  private VectorIndex[] vectorIndices;
 
-  private String namespace;
-  private Key[] keys;
-  private String classifier;
-  private boolean asParameter;
+  public VectorArtifact (String vectorNamespace, VectorIndex[] vectorIndices) {
 
-  public VectorLiteral (String namespace, Key[] keys) {
-
-    this(namespace, keys, "", false);
+    this.vectorNamespace = vectorNamespace;
+    this.vectorIndices = vectorIndices;
   }
 
-  public VectorLiteral (String namespace, Key[] keys, String classifier) {
+  public String getVectorNamespace () {
 
-    this(namespace, keys, classifier, false);
+    return vectorNamespace;
   }
 
-  public VectorLiteral (String namespace, Key[] keys, boolean asParameter) {
+  public VectorIndex[] getVectorIndices () {
 
-    this(namespace, keys, "", asParameter);
-  }
-
-  public VectorLiteral (String namespace, Key[] keys, String classifier, boolean asParameter) {
-
-    this.namespace = namespace();
-    this.keys = keys;
-    this.classifier = classifier;
-    this.asParameter = asParameter;
-  }
-
-  @Override
-  public String namespace () {
-
-    return namespace;
-  }
-
-  @Override
-  public Key[] keys () {
-
-    return keys;
-  }
-
-  @Override
-  public String classifier () {
-
-    return classifier;
-  }
-
-  @Override
-  public boolean asParameter () {
-
-    return asParameter;
+    return vectorIndices;
   }
 }

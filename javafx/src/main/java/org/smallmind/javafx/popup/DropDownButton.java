@@ -24,61 +24,39 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.persistence.cache.aop;
+package org.smallmind.javafx.popup;
 
-import org.smallmind.nutsnbolts.lang.AnnotationLiteral;
+import javafx.scene.Node;
+import javafx.scene.control.ButtonBase;
 
-public class VectorLiteral extends AnnotationLiteral<Vector> implements Vector {
+public class DropDownButton extends ButtonBase {
 
-  private String namespace;
-  private Key[] keys;
-  private String classifier;
-  private boolean asParameter;
+  public DropDownButton () {
 
-  public VectorLiteral (String namespace, Key[] keys) {
+    super();
 
-    this(namespace, keys, "", false);
+    setSkinClassName(DropDownButtonSkin.class.getName());
+    setFocusTraversable(true);
   }
 
-  public VectorLiteral (String namespace, Key[] keys, String classifier) {
+  public DropDownButton (String text) {
 
-    this(namespace, keys, classifier, false);
+    super(text);
+
+    setSkinClassName(DropDownButtonSkin.class.getName());
+    setFocusTraversable(true);
   }
 
-  public VectorLiteral (String namespace, Key[] keys, boolean asParameter) {
+  public DropDownButton (String text, Node image) {
 
-    this(namespace, keys, "", asParameter);
-  }
+    super(text, image);
 
-  public VectorLiteral (String namespace, Key[] keys, String classifier, boolean asParameter) {
-
-    this.namespace = namespace();
-    this.keys = keys;
-    this.classifier = classifier;
-    this.asParameter = asParameter;
+    setSkinClassName(DropDownButtonSkin.class.getName());
+    setFocusTraversable(true);
   }
 
   @Override
-  public String namespace () {
+  public void fire () {
 
-    return namespace;
-  }
-
-  @Override
-  public Key[] keys () {
-
-    return keys;
-  }
-
-  @Override
-  public String classifier () {
-
-    return classifier;
-  }
-
-  @Override
-  public boolean asParameter () {
-
-    return asParameter;
   }
 }

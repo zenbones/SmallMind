@@ -30,42 +30,43 @@ import org.aspectj.lang.JoinPoint;
 import org.smallmind.nutsnbolts.reflection.aop.AOPUtility;
 import org.smallmind.nutsnbolts.reflection.bean.BeanUtility;
 import org.smallmind.persistence.Durable;
+import org.smallmind.persistence.cache.VectorArtifact;
 import org.smallmind.persistence.cache.VectorIndex;
 
-public class VectorIndices {
+public class VectorCalculator {
 
   // Called from ORMBasedCachedWithAspect
-  public static VectorIndex[] getVectorIndexes (Vector vector, Durable durable) {
+  public static VectorArtifact getVectorArtifact (Vector vector, Durable durable) {
 
     VectorIndex[] indices;
 
-    indices = new VectorIndex[vector.value().length];
-    for (int count = 0; count < vector.value().length; count++) {
+    indices = new VectorIndex[vector.keys().length];
+    for (int count = 0; count < vector.keys().length; count++) {
 
       Object indexValue;
 
-      indexValue = (!vector.value()[count].constant().equals("")) ? vector.value()[count].constant() : getValue(durable, vector.value()[count].on(), vector.value()[count].nullable());
-      indices[count] = new VectorIndex(vector.value()[count].with(), vector.value()[count].on(), indexValue, vector.value()[count].alias());
+      indexValue = (!vector.keys()[count].constant().equals("")) ? vector.keys()[count].constant() : getValue(durable, vector.keys()[count].value(), vector.keys()[count].nullable());
+      indices[count] = new VectorIndex(vector.keys()[count].value(), indexValue, vector.keys()[count].alias());
     }
 
-    return indices;
+    return new VectorArtifact(vector.namespace(), indices);
   }
 
   // Called from ORMBasedCacheAsAspect
-  public static VectorIndex[] getVectorIndexes (Vector vector, JoinPoint joinPoint) {
+  public static VectorArtifact getVectorArtifact (Vector vector, JoinPoint joinPoint) {
 
     VectorIndex[] indices;
 
-    indices = new VectorIndex[vector.value().length];
-    for (int count = 0; count < vector.value().length; count++) {
+    indices = new VectorIndex[vector.keys().length];
+    for (int count = 0; count < vector.keys().length; count++) {
 
       Object indexValue;
 
-      indexValue = (!vector.value()[count].constant().equals("")) ? vector.value()[count].constant() : getValue(joinPoint, vector.value()[count].on(), vector.value()[count].nullable());
-      indices[count] = new VectorIndex(vector.value()[count].with(), vector.value()[count].on(), indexValue, vector.value()[count].alias());
+      indexValue = (!vector.keys()[count].constant().equals("")) ? vector.keys()[count].constant() : getValue(joinPoint, vector.keys()[count].value(), vector.keys()[count].nullable());
+      indices[count] = new VectorIndex(vector.keys()[count].value(), indexValue, vector.keys()[count].alias());
     }
 
-    return indices;
+    return new VectorArtifact(vector.namespace(), indices);
   }
 
   public static Object getValue (JoinPoint joinPoint, String parameterName, boolean nullable) {

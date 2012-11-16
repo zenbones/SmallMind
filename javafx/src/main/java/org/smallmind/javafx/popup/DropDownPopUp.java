@@ -24,61 +24,13 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.persistence.cache.aop;
+package org.smallmind.javafx.popup;
 
-import org.smallmind.nutsnbolts.lang.AnnotationLiteral;
+import javafx.scene.control.PopupControl;
 
-public class VectorLiteral extends AnnotationLiteral<Vector> implements Vector {
+public class DropDownPopUp extends PopupControl {
 
-  private String namespace;
-  private Key[] keys;
-  private String classifier;
-  private boolean asParameter;
+  public DropDownPopUp () {
 
-  public VectorLiteral (String namespace, Key[] keys) {
-
-    this(namespace, keys, "", false);
-  }
-
-  public VectorLiteral (String namespace, Key[] keys, String classifier) {
-
-    this(namespace, keys, classifier, false);
-  }
-
-  public VectorLiteral (String namespace, Key[] keys, boolean asParameter) {
-
-    this(namespace, keys, "", asParameter);
-  }
-
-  public VectorLiteral (String namespace, Key[] keys, String classifier, boolean asParameter) {
-
-    this.namespace = namespace();
-    this.keys = keys;
-    this.classifier = classifier;
-    this.asParameter = asParameter;
-  }
-
-  @Override
-  public String namespace () {
-
-    return namespace;
-  }
-
-  @Override
-  public Key[] keys () {
-
-    return keys;
-  }
-
-  @Override
-  public String classifier () {
-
-    return classifier;
-  }
-
-  @Override
-  public boolean asParameter () {
-
-    return asParameter;
   }
 }

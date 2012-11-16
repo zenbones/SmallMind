@@ -51,14 +51,19 @@ public class EncryptionUtilities {
 
   public static String hexEncode (byte[] bytes) {
 
+    return hexEncode(bytes, 0, bytes.length);
+  }
+
+  public static String hexEncode (byte[] bytes, int offset, int length) {
+
     StringBuilder encodingBuilder;
 
     encodingBuilder = new StringBuilder();
-    for (byte b : bytes) {
-      if ((b < 0x10) && (b >= 0)) {
+    for (int index = offset; index < offset + length; index++) {
+      if ((bytes[index] < 0x10) && (bytes[index] >= 0)) {
         encodingBuilder.append('0');
       }
-      encodingBuilder.append(Integer.toHexString(b & 0xff));
+      encodingBuilder.append(Integer.toHexString(bytes[index] & 0xff));
     }
 
     return encodingBuilder.toString();

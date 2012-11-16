@@ -31,7 +31,7 @@ import org.smallmind.persistence.Durable;
 import org.smallmind.persistence.cache.aop.CachedWith;
 import org.smallmind.persistence.cache.aop.Classifications;
 import org.smallmind.persistence.cache.aop.Vector;
-import org.smallmind.persistence.cache.aop.VectorIndices;
+import org.smallmind.persistence.cache.aop.VectorCalculator;
 import org.terracotta.annotations.InstrumentedClass;
 
 @InstrumentedClass
@@ -42,19 +42,19 @@ public class VectorKey<D extends Durable> implements Serializable {
 
   public VectorKey (Vector vector, D durable, Class<D> elementClass) {
 
-    this(VectorIndices.getVectorIndexes(vector, durable), elementClass, Classifications.get(CachedWith.class, null, vector));
+    this(VectorCalculator.getVectorArtifact(vector, durable), elementClass, Classifications.get(CachedWith.class, null, vector));
   }
 
-  public VectorKey (VectorIndex[] vectorIndices, Class<D> elementClass) {
+  public VectorKey (VectorArtifact vectorArtifact, Class<D> elementClass) {
 
-    this(vectorIndices, elementClass, null);
+    this(vectorArtifact, elementClass, null);
   }
 
-  public VectorKey (VectorIndex[] vectorIndices, Class<D> elementClass, String classification) {
+  public VectorKey (VectorArtifact vectorArtifact, Class<D> elementClass, String classification) {
 
     this.elementClass = elementClass;
 
-    key = buildKey(vectorIndices, classification);
+    key = buildKey(vectorArtifact, classification);
   }
 
   public String getKey () {
@@ -67,20 +67,21 @@ public class VectorKey<D extends Durable> implements Serializable {
     return elementClass;
   }
 
-  private String buildKey (VectorIndex[] vectorIndices, String classification) {
+  private String buildKey (VectorArtifact vectorArtifact, String classification) {
 
     StringBuilder keyBuilder;
     boolean indexed = false;
 
     keyBuilder = new StringBuilder(elementClass.getSimpleName());
 
+    keyBuilder.append(':').append(vectorArtifact.getVectorNamespace());
     keyBuilder.append('[');
-    for (VectorIndex index : vectorIndices) {
+    for (VectorIndex index : vectorArtifact.getVectorIndices()) {
       if (indexed) {
         keyBuilder.append(',');
       }
 
-      keyBuilder.append(index.getIndexClass().getSimpleName()).append('.').append((index.getIndexAlias().length() > 0) ? index.getIndexAlias() : index.getIndexField()).append('=').append((index.getIndexValue() == null) ? "null" : index.getIndexValue());
+      keyBuilder.append((index.getIndexAlias().length() > 0) ? index.getIndexAlias() : index.getIndexField()).append('=').append((index.getIndexValue() == null) ? "null" : index.getIndexValue());
 
       indexed = true;
     }
