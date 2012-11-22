@@ -40,9 +40,6 @@ public class DropDownButtonSkin extends SkinBase<DropDownButton, ButtonBehavior<
 
     super(dropDownButton, new ButtonBehavior<DropDownButton>(dropDownButton));
 
-    getStylesheets().add(DropDownButton.class.getResource("DropDownButton.css").toExternalForm());
-    getStyleClass().add("drop-down-box");
-
     label = new Label("Foo Bar");
     label.getStyleClass().add("label");
     label.setMnemonicParsing(false);

@@ -35,23 +35,27 @@ public class DropDownButton extends ButtonBase {
 
     super();
 
-    setSkinClassName(DropDownButtonSkin.class.getName());
-    setFocusTraversable(true);
+    initialize();
   }
 
   public DropDownButton (String text) {
 
     super(text);
 
-    setSkinClassName(DropDownButtonSkin.class.getName());
-    setFocusTraversable(true);
+    initialize();
   }
 
   public DropDownButton (String text, Node image) {
 
     super(text, image);
 
-    setSkinClassName(DropDownButtonSkin.class.getName());
+    initialize();
+  }
+
+  private void initialize () {
+
+    getStylesheets().add(DropDownButton.class.getResource("DropDownButton.css").toExternalForm());
+    getStyleClass().add("drop-down-box");
     setFocusTraversable(true);
   }
 
