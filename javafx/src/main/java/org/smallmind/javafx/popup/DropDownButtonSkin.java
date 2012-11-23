@@ -40,14 +40,29 @@ public class DropDownButtonSkin extends SkinBase<DropDownButton, ButtonBehavior<
 
     super(dropDownButton, new ButtonBehavior<DropDownButton>(dropDownButton));
 
-    label = new Label("Foo Bar");
+    StackPane region;
+
+    label = new Label();
     label.getStyleClass().add("label");
     label.setMnemonicParsing(false);
+
+    label.textProperty().bind(dropDownButton.textProperty());
+    label.graphicProperty().bind(dropDownButton.graphicProperty());
+    label.alignmentProperty().bind(dropDownButton.alignmentProperty());
+    label.contentDisplayProperty().bind(dropDownButton.contentDisplayProperty());
+    label.ellipsisStringProperty().bind(dropDownButton.ellipsisStringProperty());
+    label.fontProperty().bind(dropDownButton.fontProperty());
+    label.graphicTextGapProperty().bind(dropDownButton.graphicTextGapProperty());
+    label.textAlignmentProperty().bind(dropDownButton.textAlignmentProperty());
+    label.textFillProperty().bind(dropDownButton.textFillProperty());
+    label.textOverrunProperty().bind(dropDownButton.textOverrunProperty());
+    label.underlineProperty().bind(dropDownButton.underlineProperty());
+    label.wrapTextProperty().bind(dropDownButton.wrapTextProperty());
 
     openButton = new StackPane();
     openButton.getStyleClass().add("open-button");
 
-    StackPane region = new StackPane();
+    region = new StackPane();
     region.getStyleClass().add("arrow");
     openButton.getChildren().addAll(region);
 
