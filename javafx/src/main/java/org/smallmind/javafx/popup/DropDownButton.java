@@ -26,8 +26,12 @@
  */
 package org.smallmind.javafx.popup;
 
+import javafx.beans.value.ChangeListener;
+import javafx.beans.value.ObservableValue;
+import javafx.event.EventHandler;
 import javafx.scene.Node;
 import javafx.scene.control.ButtonBase;
+import javafx.scene.input.KeyEvent;
 
 public class DropDownButton extends ButtonBase {
 
@@ -57,10 +61,36 @@ public class DropDownButton extends ButtonBase {
     getStylesheets().add(DropDownButton.class.getResource("DropDownButton.css").toExternalForm());
     getStyleClass().add("drop-down-box");
     setFocusTraversable(true);
+
+    focusedProperty().addListener(new ChangeListener<Boolean>() {
+
+      @Override
+      public void changed (ObservableValue<? extends Boolean> observableValue, Boolean oldBoolean, Boolean newBoolean) {
+
+        if (!newBoolean) {
+          System.out.println("focus lost****************************");
+        }
+      }
+    });
+
+    onKeyTypedProperty().set(new EventHandler<KeyEvent>() {
+
+      @Override
+      public void handle (KeyEvent keyEvent) {
+
+        if (!(keyEvent.isAltDown() || keyEvent.isControlDown() || keyEvent.isMetaDown() || keyEvent.isShiftDown() || keyEvent.isShortcutDown())) {
+          if ((keyEvent.getCharacter().length() == 1) && (keyEvent.getCharacter().charAt(0) == '\u001B')) {
+            keyEvent.consume();
+            System.out.println("escaped***********************");
+          }
+        }
+      }
+    });
   }
 
   @Override
   public void fire () {
 
+    System.out.println("fire************************************");
   }
 }
