@@ -55,7 +55,7 @@ public class JavaErrorDialog extends AbstractDialog {
     @Override
     public void set (EventHandler<ErrorEvent> eventHandler) {
 
-      setEventHandler(ErrorEvent.ANY, new WeakEventHandler<ErrorEvent>(JavaErrorDialog.this, ErrorEvent.ERROR_OCCURRED, eventHandler));
+      setEventHandler(ErrorEvent.ERROR_OCCURRED, new WeakEventHandler<ErrorEvent>(JavaErrorDialog.this, ErrorEvent.ERROR_OCCURRED, eventHandler));
 
       super.set(eventHandler);
     }
