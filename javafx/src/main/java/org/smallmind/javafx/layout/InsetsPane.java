@@ -87,7 +87,6 @@ public class InsetsPane extends Region {
   private double computeMeasurement (Cut cut, Bias bias) {
 
     double measurement = 0;
-    double gutter;
 
     for (Node child : getManagedChildren()) {
 
