@@ -28,6 +28,7 @@ package org.smallmind.javafx.dialog;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
+import com.sun.javafx.scene.control.WeakEventHandler;
 import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.SimpleObjectProperty;
 import javafx.event.ActionEvent;
@@ -49,7 +50,16 @@ public class JavaErrorDialog extends AbstractDialog {
 
   private static final Image BUG_IMAGE = new Image(ClassLoader.getSystemResourceAsStream("org/smallmind/javafx/dialog/dialog_bug.png"));
 
-  private ObjectProperty<EventHandler<ErrorEvent>> onError = new SimpleObjectProperty<EventHandler<ErrorEvent>>();
+  private ObjectProperty<EventHandler<ErrorEvent>> onError = new SimpleObjectProperty<EventHandler<ErrorEvent>>() {
+
+    @Override
+    public void set (EventHandler<ErrorEvent> eventHandler) {
+
+      setEventHandler(ErrorEvent.ANY, new WeakEventHandler<ErrorEvent>(JavaErrorDialog.this, ErrorEvent.ERROR_OCCURRED, eventHandler));
+
+      super.set(eventHandler);
+    }
+  };
 
   public static JavaErrorDialog showJavaErrorDialog (Object source, Exception exception) {
 
@@ -113,11 +123,7 @@ public class JavaErrorDialog extends AbstractDialog {
       @Override
       public void handle (WindowEvent windowEvent) {
 
-        EventHandler<ErrorEvent> errorEventHandler;
-
-        if ((errorEventHandler = onError.get()) != null) {
-          errorEventHandler.handle(new ErrorEvent(ErrorEvent.ERROR_OCCURRED, source, exception));
-        }
+        fireEvent(new ErrorEvent(ErrorEvent.ERROR_OCCURRED, source, exception));
       }
     });
   }
