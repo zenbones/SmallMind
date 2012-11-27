@@ -50,7 +50,7 @@ public class JavaErrorDialog extends AbstractDialog {
 
   private static final Image BUG_IMAGE = new Image(ClassLoader.getSystemResourceAsStream("org/smallmind/javafx/dialog/dialog_bug.png"));
 
-  private ObjectProperty<EventHandler<ErrorEvent>> onError = new SimpleObjectProperty<EventHandler<ErrorEvent>>() {
+  private ObjectProperty<EventHandler<ErrorEvent>> onErrorProperty = new SimpleObjectProperty<EventHandler<ErrorEvent>>() {
 
     @Override
     public void set (EventHandler<ErrorEvent> eventHandler) {
@@ -130,16 +130,16 @@ public class JavaErrorDialog extends AbstractDialog {
 
   public EventHandler<ErrorEvent> getOnError () {
 
-    return onError.get();
+    return onErrorProperty.get();
   }
 
   public void setOnError (EventHandler<ErrorEvent> eventHandler) {
 
-    onError.set(eventHandler);
+    onErrorProperty.set(eventHandler);
   }
 
   public ObjectProperty<EventHandler<ErrorEvent>> onErrorProperty () {
 
-    return onError;
+    return onErrorProperty;
   }
 }
