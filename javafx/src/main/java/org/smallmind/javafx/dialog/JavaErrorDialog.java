@@ -31,6 +31,7 @@ import java.io.StringWriter;
 import com.sun.javafx.scene.control.WeakEventHandler;
 import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.SimpleObjectProperty;
+import javafx.beans.value.ObservableValue;
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
 import javafx.geometry.Insets;
@@ -51,6 +52,16 @@ public class JavaErrorDialog extends AbstractDialog {
   private static final Image BUG_IMAGE = new Image(ClassLoader.getSystemResourceAsStream("org/smallmind/javafx/dialog/dialog_bug.png"));
 
   private ObjectProperty<EventHandler<ErrorEvent>> onErrorProperty = new SimpleObjectProperty<EventHandler<ErrorEvent>>() {
+
+    @Override
+    public void bind (ObservableValue<? extends EventHandler<ErrorEvent>> observableValue) {
+
+      if (observableValue.getValue() != null) {
+        setEventHandler(ErrorEvent.ERROR_OCCURRED, new WeakEventHandler<ErrorEvent>(JavaErrorDialog.this, ErrorEvent.ERROR_OCCURRED, observableValue.getValue()));
+      }
+
+      super.bind(observableValue);
+    }
 
     @Override
     public void set (EventHandler<ErrorEvent> eventHandler) {
