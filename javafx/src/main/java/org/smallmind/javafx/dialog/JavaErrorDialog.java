@@ -49,7 +49,7 @@ import org.smallmind.nutsnbolts.layout.Constraint;
 
 public class JavaErrorDialog extends AbstractDialog {
 
-  private static final Image BUG_IMAGE = new Image(ClassLoader.getSystemResourceAsStream("org/smallmind/javafx/dialog/dialog_bug.png"));
+  private static final Image BUG_IMAGE = new Image(Thread.currentThread().getContextClassLoader().getResourceAsStream("org/smallmind/javafx/dialog/dialog_bug.png"));
 
   private ObjectProperty<EventHandler<ErrorEvent>> onErrorProperty = new SimpleObjectProperty<EventHandler<ErrorEvent>>() {
 
