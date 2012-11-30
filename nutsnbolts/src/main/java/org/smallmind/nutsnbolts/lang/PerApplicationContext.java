@@ -24,20 +24,33 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.quorum.pool;
+package org.smallmind.nutsnbolts.lang;
 
-import org.smallmind.nutsnbolts.lang.PerApplicationContext;
-import org.smallmind.nutsnbolts.lang.PerApplicationDataManager;
+import java.util.concurrent.ConcurrentHashMap;
 
-public class PoolManager implements PerApplicationDataManager {
+public class PerApplicationContext {
 
-  public static void register (Pool pool) {
+  private static InheritableThreadLocal<ConcurrentHashMap<Class<? extends PerApplicationDataManager>, Object>> PER_APPLICATION_MAP_LOCAL = new InheritableThreadLocal<ConcurrentHashMap<Class<? extends PerApplicationDataManager>, Object>>();
 
-    PerApplicationContext.setPerApplicationData(PoolManager.class, pool);
+  private ConcurrentHashMap<Class<? extends PerApplicationDataManager>, Object> perApplicationMap = new ConcurrentHashMap<Class<? extends PerApplicationDataManager>, Object>();
+
+  public PerApplicationContext () {
+
+    prepareThread();
   }
 
-  public static Pool getPool () {
+  public void prepareThread () {
 
-    return PerApplicationContext.getPerApplicationData(PoolManager.class, Pool.class);
+    PER_APPLICATION_MAP_LOCAL.set(perApplicationMap);
+  }
+
+  public static void setPerApplicationData (Class<? extends PerApplicationDataManager> clazz, Object data) {
+
+    PER_APPLICATION_MAP_LOCAL.get().put(clazz, data);
+  }
+
+  public static <K> K getPerApplicationData (Class<? extends PerApplicationDataManager> clazz, Class<K> type) {
+
+    return type.cast(PER_APPLICATION_MAP_LOCAL.get().get(clazz));
   }
 }

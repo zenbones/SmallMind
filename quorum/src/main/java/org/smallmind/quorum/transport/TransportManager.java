@@ -26,19 +26,18 @@
  */
 package org.smallmind.quorum.transport;
 
-import org.smallmind.nutsnbolts.lang.StaticManager;
+import org.smallmind.nutsnbolts.lang.PerApplicationContext;
+import org.smallmind.nutsnbolts.lang.PerApplicationDataManager;
 
-public class TransportManager implements StaticManager {
-
-  private static InheritableThreadLocal<Transport> TRANSPORT_LOCAL = new InheritableThreadLocal<Transport>();
+public class TransportManager implements PerApplicationDataManager {
 
   public static void register (Transport transport) {
 
-    TRANSPORT_LOCAL.set(transport);
+    PerApplicationContext.setPerApplicationData(TransportManager.class, transport);
   }
 
   public static Transport getTransport () {
 
-    return TRANSPORT_LOCAL.get();
+    return PerApplicationContext.getPerApplicationData(TransportManager.class, Transport.class);
   }
 }

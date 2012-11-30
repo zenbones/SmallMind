@@ -28,20 +28,19 @@ package org.smallmind.instrument;
 
 import java.util.concurrent.TimeUnit;
 import org.smallmind.instrument.config.MetricConfigurationProvider;
-import org.smallmind.nutsnbolts.lang.StaticManager;
+import org.smallmind.nutsnbolts.lang.PerApplicationContext;
+import org.smallmind.nutsnbolts.lang.PerApplicationDataManager;
 
-public class InstrumentationManager implements StaticManager {
-
-  private static InheritableThreadLocal<MetricRegistry> METRIC_REGISTRY_LOCAL = new InheritableThreadLocal<MetricRegistry>();
+public class InstrumentationManager implements PerApplicationDataManager {
 
   public static void register (MetricRegistry metricRegistry) {
 
-    METRIC_REGISTRY_LOCAL.set(metricRegistry);
+    PerApplicationContext.setPerApplicationData(InstrumentationManager.class, metricRegistry);
   }
 
   public static MetricRegistry getMetricRegistry () {
 
-    return METRIC_REGISTRY_LOCAL.get();
+    return PerApplicationContext.getPerApplicationData(InstrumentationManager.class, MetricRegistry.class);
   }
 
   public static <M extends Metric> void execute (Instrument<M> instrument)

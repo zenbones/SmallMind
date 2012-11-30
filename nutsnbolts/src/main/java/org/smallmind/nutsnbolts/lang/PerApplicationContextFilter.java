@@ -26,6 +26,36 @@
  */
 package org.smallmind.nutsnbolts.lang;
 
-public interface StaticManager {
+import java.io.IOException;
+import javax.servlet.Filter;
+import javax.servlet.FilterChain;
+import javax.servlet.FilterConfig;
+import javax.servlet.ServletException;
+import javax.servlet.ServletRequest;
+import javax.servlet.ServletResponse;
 
+public class PerApplicationContextFilter implements Filter {
+
+  private PerApplicationContext perApplicationContext;
+
+  @Override
+  public void init (FilterConfig filterConfig) {
+
+    if ((perApplicationContext = (PerApplicationContext)filterConfig.getServletContext().getAttribute(PerApplicationContext.class.getName())) == null) {
+      filterConfig.getServletContext().setAttribute(PerApplicationContext.class.getName(), perApplicationContext = new PerApplicationContext());
+    }
+  }
+
+  @Override
+  public void doFilter (ServletRequest request, ServletResponse response, FilterChain chain)
+    throws IOException, ServletException {
+
+    perApplicationContext.prepareThread();
+    chain.doFilter(request, response);
+  }
+
+  @Override
+  public void destroy () {
+
+  }
 }

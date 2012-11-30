@@ -26,19 +26,18 @@
  */
 package org.smallmind.persistence;
 
-import org.smallmind.nutsnbolts.lang.StaticManager;
+import org.smallmind.nutsnbolts.lang.PerApplicationContext;
+import org.smallmind.nutsnbolts.lang.PerApplicationDataManager;
 
-public class PersistenceManager implements StaticManager {
-
-  private static InheritableThreadLocal<Persistence> PERSISTENCE_LOCAL = new InheritableThreadLocal<Persistence>();
+public class PersistenceManager implements PerApplicationDataManager {
 
   public static void register (Persistence persistence) {
 
-    PERSISTENCE_LOCAL.set(persistence);
+    PerApplicationContext.setPerApplicationData(PersistenceManager.class, persistence);
   }
 
   public static Persistence getPersistence () {
 
-    return PERSISTENCE_LOCAL.get();
+    return PerApplicationContext.getPerApplicationData(PersistenceManager.class, Persistence.class);
   }
 }

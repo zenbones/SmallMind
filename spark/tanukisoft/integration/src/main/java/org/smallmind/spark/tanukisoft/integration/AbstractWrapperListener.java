@@ -26,12 +26,13 @@
  */
 package org.smallmind.spark.tanukisoft.integration;
 
+import org.smallmind.nutsnbolts.lang.PerApplicationContext;
 import org.smallmind.nutsnbolts.util.PropertyExpander;
 import org.smallmind.nutsnbolts.util.SystemPropertyMode;
 import org.tanukisoftware.wrapper.WrapperListener;
 import org.tanukisoftware.wrapper.WrapperManager;
 
-public abstract class AbstractWrapperListener implements WrapperListener {
+public abstract class AbstractWrapperListener extends PerApplicationContext implements WrapperListener {
 
   private static final int NO_ERROR_CODE = 0;
   private static final int STACK_TRACE_ERROR_CODE = 2;

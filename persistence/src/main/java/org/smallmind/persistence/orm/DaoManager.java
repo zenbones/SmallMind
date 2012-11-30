@@ -27,35 +27,31 @@
 package org.smallmind.persistence.orm;
 
 import java.io.Serializable;
-import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
-import org.smallmind.nutsnbolts.lang.StaticManager;
+import org.smallmind.nutsnbolts.lang.PerApplicationContext;
+import org.smallmind.nutsnbolts.lang.PerApplicationDataManager;
 import org.smallmind.persistence.Durable;
 
-public class DaoManager implements StaticManager {
+public class DaoManager implements PerApplicationDataManager {
 
-  private static final InheritableThreadLocal<Map<Class<? extends Durable>, ORMDao>> DAO_MAP_LOCAL = new InheritableThreadLocal<Map<Class<? extends Durable>, ORMDao>>() {
+  static {
 
-    @Override
-    protected Map<Class<? extends Durable>, ORMDao> initialValue () {
-
-      return new ConcurrentHashMap<Class<? extends Durable>, ORMDao>();
-    }
-  };
+    PerApplicationContext.setPerApplicationData(DaoManager.class, new ConcurrentHashMap<Class<? extends Durable>, ORMDao>());
+  }
 
   public static void register (Class<? extends Durable> durableClass, ORMDao ormDao) {
 
-    DAO_MAP_LOCAL.get().put(durableClass, ormDao);
+    PerApplicationContext.getPerApplicationData(DaoManager.class, ConcurrentHashMap.class).put(durableClass, ormDao);
   }
 
   public static Class<? extends Durable> findDurableClass (String name) {
 
     boolean isSimple = name.indexOf('.') < 0;
 
-    for (Class<? extends Durable> durableClass : DAO_MAP_LOCAL.get().keySet()) {
-      if ((isSimple) ? durableClass.getSimpleName().equals(name) : durableClass.getName().equals(name)) {
+    for (Object durableClass : PerApplicationContext.getPerApplicationData(DaoManager.class, ConcurrentHashMap.class).keySet()) {
+      if ((isSimple) ? ((Class)durableClass).getSimpleName().equals(name) : ((Class)durableClass).getName().equals(name)) {
 
-        return durableClass;
+        return (Class)durableClass;
       }
     }
 
@@ -68,7 +64,7 @@ public class DaoManager implements StaticManager {
 
     if ((durableClass = findDurableClass(name)) != null) {
 
-      return DAO_MAP_LOCAL.get().get(durableClass);
+      return (ORMDao)PerApplicationContext.getPerApplicationData(DaoManager.class, ConcurrentHashMap.class).get(durableClass);
     }
 
     return null;
@@ -76,6 +72,6 @@ public class DaoManager implements StaticManager {
 
   public static <I extends Serializable & Comparable<I>, D extends Durable<I>> ORMDao<I, D, ?> get (Class<D> durableClass) {
 
-    return DAO_MAP_LOCAL.get().get(durableClass);
+    return (ORMDao)PerApplicationContext.getPerApplicationData(DaoManager.class, ConcurrentHashMap.class).get(durableClass);
   }
 }

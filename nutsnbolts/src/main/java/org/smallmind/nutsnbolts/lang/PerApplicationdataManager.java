@@ -24,20 +24,8 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.quorum.pool;
+package org.smallmind.nutsnbolts.lang;
 
-import org.smallmind.nutsnbolts.lang.PerApplicationContext;
-import org.smallmind.nutsnbolts.lang.PerApplicationDataManager;
+public interface PerApplicationDataManager {
 
-public class PoolManager implements PerApplicationDataManager {
-
-  public static void register (Pool pool) {
-
-    PerApplicationContext.setPerApplicationData(PoolManager.class, pool);
-  }
-
-  public static Pool getPool () {
-
-    return PerApplicationContext.getPerApplicationData(PoolManager.class, Pool.class);
-  }
 }

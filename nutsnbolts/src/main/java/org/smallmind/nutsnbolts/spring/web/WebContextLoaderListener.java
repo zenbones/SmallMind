@@ -27,11 +27,16 @@
 package org.smallmind.nutsnbolts.spring.web;
 
 import javax.servlet.ServletContextEvent;
+import org.smallmind.nutsnbolts.lang.PerApplicationContext;
 import org.springframework.web.context.ContextLoaderListener;
 
 public class WebContextLoaderListener extends ContextLoaderListener {
 
   public void contextInitialized (ServletContextEvent servletContextEvent) {
+
+    if (servletContextEvent.getServletContext().getAttribute(PerApplicationContext.class.getName()) == null) {
+      servletContextEvent.getServletContext().setAttribute(PerApplicationContext.class.getName(), new PerApplicationContext());
+    }
 
     super.contextInitialized(servletContextEvent);
   }

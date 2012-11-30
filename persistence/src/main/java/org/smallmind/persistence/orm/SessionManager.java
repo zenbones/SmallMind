@@ -26,24 +26,20 @@
  */
 package org.smallmind.persistence.orm;
 
-import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
-import org.smallmind.nutsnbolts.lang.StaticManager;
+import org.smallmind.nutsnbolts.lang.PerApplicationContext;
+import org.smallmind.nutsnbolts.lang.PerApplicationDataManager;
 
-public class SessionManager implements StaticManager {
+public class SessionManager implements PerApplicationDataManager {
 
-  private static final InheritableThreadLocal<Map<String, ProxySession>> SESSION_MAP_LOCAL = new InheritableThreadLocal<Map<String, ProxySession>>() {
+  static {
 
-    @Override
-    protected Map<String, ProxySession> initialValue () {
-
-      return new ConcurrentHashMap<String, ProxySession>();
-    }
-  };
+    PerApplicationContext.setPerApplicationData(SessionManager.class, new ConcurrentHashMap<String, ProxySession>());
+  }
 
   public static void register (String dataSourceKey, ProxySession proxySession) {
 
-    SESSION_MAP_LOCAL.get().put(dataSourceKey, proxySession);
+    PerApplicationContext.getPerApplicationData(SessionManager.class, ConcurrentHashMap.class).put(dataSourceKey, proxySession);
   }
 
   public static ProxySession getSession () {
@@ -55,7 +51,7 @@ public class SessionManager implements StaticManager {
 
     ProxySession proxySession;
 
-    if ((proxySession = SESSION_MAP_LOCAL.get().get(dataSourceKey)) == null) {
+    if ((proxySession = (ProxySession)PerApplicationContext.getPerApplicationData(SessionManager.class, ConcurrentHashMap.class).get(dataSourceKey)) == null) {
       throw new ORMInitializationException("No ProxySession was mapped to the data source value(%s)", dataSourceKey);
     }
 

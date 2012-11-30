@@ -26,33 +26,29 @@
  */
 package org.smallmind.persistence.sql;
 
-import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import javax.sql.DataSource;
-import org.smallmind.nutsnbolts.lang.StaticManager;
+import org.smallmind.nutsnbolts.lang.PerApplicationContext;
+import org.smallmind.nutsnbolts.lang.PerApplicationDataManager;
 import org.smallmind.persistence.orm.ORMInitializationException;
 
-public class DataSourceManager implements StaticManager {
+public class DataSourceManager implements PerApplicationDataManager {
 
-  private static final InheritableThreadLocal<Map<String, DataSource>> SOURCE_MAP_LOCAL = new InheritableThreadLocal<Map<String, DataSource>>() {
+  static {
 
-    @Override
-    protected Map<String, DataSource> initialValue () {
-
-      return new ConcurrentHashMap<String, DataSource>();
-    }
-  };
+    PerApplicationContext.setPerApplicationData(DataSourceManager.class, new ConcurrentHashMap<String, DataSource>());
+  }
 
   public static void register (String key, DataSource dataSource) {
 
-    SOURCE_MAP_LOCAL.get().put(key, dataSource);
+    PerApplicationContext.getPerApplicationData(DataSourceManager.class, ConcurrentHashMap.class).put(key, dataSource);
   }
 
   public static DataSource getDataSource (String key) {
 
     DataSource dataSource;
 
-    if ((dataSource = SOURCE_MAP_LOCAL.get().get(key)) == null) {
+    if ((dataSource = (DataSource)PerApplicationContext.getPerApplicationData(DataSourceManager.class, ConcurrentHashMap.class).get(key)) == null) {
       throw new ORMInitializationException("No DataSource was mapped to the key(%s)", key);
     }
 
