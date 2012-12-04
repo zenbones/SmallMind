@@ -147,7 +147,6 @@ public class OptionDialog extends AbstractDialog {
       public void handle (WindowEvent windowEvent) {
 
         String validationMessage;
-        WarningDialog warningDialog;
 
         if ((optionPane != null) && ((validationMessage = optionPane.validateOption(dialogState)) != null)) {
           WarningDialog.showWarningDialog(validationMessage);
