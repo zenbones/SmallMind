@@ -77,6 +77,18 @@ public class ParaboxLayout {
     return this;
   }
 
+  public void removeAll () {
+
+    horizontalBox.removeAll();
+    verticalBox.removeAll();
+  }
+
+  public void remove (Object object) {
+
+    horizontalBox.remove(object);
+    verticalBox.remove(object);
+  }
+
   public double calculateMinimumWidth () {
 
     if (horizontalBox == null) {

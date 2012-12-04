@@ -24,15 +24,46 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.nutsnbolts.layout;
+package org.smallmind.javafx.dialog;
 
-public interface ParaboxContainer<C> {
+import org.smallmind.javafx.layout.ParaboxPane;
 
-  public abstract ParaboxPlatform getPlatform ();
+public abstract class OptionPane extends ParaboxPane {
 
-  public abstract ParaboxElement<C> constructElement (C component, Constraint constraint);
+  private OptionDialog optionDialog;
+  private boolean initialized = false;
 
-  public abstract void nativelyAddComponent (C component);
+  public OptionDialog getOptionDialog () {
 
-  public abstract void nativelyRemoveComponent (C component);
+    return optionDialog;
+  }
+
+  public DialogState getDialogState () {
+
+    return optionDialog.getDialogState();
+  }
+
+  public void setDialogSate (DialogState dialogState) {
+
+    optionDialog.setDialogState(dialogState);
+  }
+
+  public void initialize (OptionDialog optionDialog) {
+
+    this.optionDialog = optionDialog;
+
+    initialized = true;
+  }
+
+  public void closeParent () {
+
+    if (!initialized) {
+      throw new IllegalStateException("Parent dialog was never initialized");
+    }
+
+    optionDialog.hide();
+  }
+
+  public abstract String validateOption (DialogState dialogState);
+
 }

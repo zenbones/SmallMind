@@ -34,6 +34,12 @@ public class BoxParaboxElement extends ParaboxElement<Box<?>> implements LinearP
   }
 
   @Override
+  public boolean isNativeComponent () {
+
+    return false;
+  }
+
+  @Override
   public Dimensionality getDimensionality () {
 
     return Dimensionality.LINE;

@@ -65,6 +65,16 @@ public class ParaboxPane extends Region implements ParaboxContainer<Node> {
     return PLATFORM;
   }
 
+  public void removeAll () {
+
+    paraboxLayout.removeAll();
+  }
+
+  public void remove (Node node) {
+
+    paraboxLayout.remove(node);
+  }
+
   @Override
   protected double computeMinWidth (double v) {
 
@@ -121,6 +131,12 @@ public class ParaboxPane extends Region implements ParaboxContainer<Node> {
     if (!(children = getChildren()).contains(node)) {
       children.add(node);
     }
+  }
+
+  @Override
+  public void nativelyRemoveComponent (Node component) {
+
+    getChildren().remove(component);
   }
 
   public Box<?> getHorizontalBox () {

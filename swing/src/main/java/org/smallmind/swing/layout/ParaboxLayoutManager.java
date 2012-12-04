@@ -74,9 +74,15 @@ public class ParaboxLayoutManager implements ParaboxContainer<Component>, Layout
 
   }
 
+  public void removeAll () {
+
+    paraboxLayout.removeAll();
+  }
+
   @Override
   public void removeLayoutComponent (Component comp) {
 
+    paraboxLayout.remove(comp);
   }
 
   @Override
@@ -114,6 +120,12 @@ public class ParaboxLayoutManager implements ParaboxContainer<Component>, Layout
     if (!matched) {
       container.add(component);
     }
+  }
+
+  @Override
+  public void nativelyRemoveComponent (Component component) {
+
+    container.remove(component);
   }
 
   @Override

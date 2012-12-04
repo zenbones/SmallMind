@@ -24,15 +24,14 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.nutsnbolts.layout;
+package org.smallmind.javafx;
 
-public interface ParaboxContainer<C> {
+import org.smallmind.nutsnbolts.lang.FormattedRuntimeException;
 
-  public abstract ParaboxPlatform getPlatform ();
+public class ImageNotFoundException extends FormattedRuntimeException {
 
-  public abstract ParaboxElement<C> constructElement (C component, Constraint constraint);
+  public ImageNotFoundException (Exception exception) {
 
-  public abstract void nativelyAddComponent (C component);
-
-  public abstract void nativelyRemoveComponent (C component);
+    super(exception);
+  }
 }

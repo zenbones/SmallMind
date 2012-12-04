@@ -68,7 +68,7 @@ public abstract class Box<B extends Box<B>> {
 
   public synchronized B add (Object component, Constraint constraint) {
 
-    getLayout().getContainer().nativelyAddComponent(component);
+    layout.getContainer().nativelyAddComponent(component);
     elements.add(layout.getContainer().constructElement(component, constraint));
 
     return managedClass.cast(this);
@@ -88,15 +88,57 @@ public abstract class Box<B extends Box<B>> {
     return managedClass.cast(this);
   }
 
-  public synchronized void remove (Object component) {
+  public synchronized void removeAll () {
 
     Iterator<ParaboxElement<?>> elementIter = elements.iterator();
 
     while (elementIter.hasNext()) {
-      if (elementIter.next().getPart().equals(component)) {
-        elementIter.remove();
-        break;
+
+      ParaboxElement<?> element = elementIter.next();
+
+      if (element.isNativeComponent()) {
+        layout.getContainer().nativelyRemoveComponent(element.getPart());
+      }
+      else {
+        ((Box)element.getPart()).removeAll();
+      }
+
+      elementIter.remove();
+    }
+  }
+
+  public boolean remove (Object component) {
+
+    Iterator<ParaboxElement<?>> elementIter = elements.iterator();
+
+    while (elementIter.hasNext()) {
+
+      ParaboxElement<?> element = elementIter.next();
+
+      if (element.isNativeComponent()) {
+        if (element.getPart().equals(component)) {
+          layout.getContainer().nativelyRemoveComponent(component);
+
+          elementIter.remove();
+
+          return true;
+        }
+      }
+      else {
+        if (element.getPart().equals(component)) {
+          ((Box)element.getPart()).removeAll();
+
+          elementIter.remove();
+
+          return true;
+        }
+        else if (((Box)element.getPart()).remove(component)) {
+
+          return true;
+        }
       }
     }
+
+    return false;
   }
 }

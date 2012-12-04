@@ -24,15 +24,19 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.nutsnbolts.layout;
+package org.smallmind.javafx.dialog;
 
-public interface ParaboxContainer<C> {
+public class WarningDialog extends OptionDialog {
 
-  public abstract ParaboxPlatform getPlatform ();
+  public static void showWarningDialog (String warningText) {
 
-  public abstract ParaboxElement<C> constructElement (C component, Constraint constraint);
+    WarningDialog warningDialog = new WarningDialog(warningText);
 
-  public abstract void nativelyAddComponent (C component);
+    warningDialog.resizeAndRelocateAndShow();
+  }
 
-  public abstract void nativelyRemoveComponent (C component);
+  public WarningDialog (String warningText) {
+
+    super(warningText, OptionType.WARNING);
+  }
 }

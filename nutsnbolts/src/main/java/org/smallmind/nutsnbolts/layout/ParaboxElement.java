@@ -37,6 +37,8 @@ public abstract class ParaboxElement<P> {
     this.constraint = constraint;
   }
 
+  public abstract boolean isNativeComponent ();
+
   public abstract Dimensionality getDimensionality ();
 
   public abstract double getPartMinimumMeasurement (Bias bias, LayoutTailor tailor);

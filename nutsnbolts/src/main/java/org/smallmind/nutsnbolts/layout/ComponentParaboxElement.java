@@ -54,6 +54,12 @@ public abstract class ComponentParaboxElement<C> extends ParaboxElement<C> imple
   public abstract double getComponentMaximumMeasurement (Bias bias);
 
   @Override
+  public boolean isNativeComponent () {
+
+    return true;
+  }
+
+  @Override
   public Dimensionality getDimensionality () {
 
     return Dimensionality.PLANE;

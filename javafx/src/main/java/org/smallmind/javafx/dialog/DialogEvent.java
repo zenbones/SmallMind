@@ -24,15 +24,34 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.nutsnbolts.layout;
+package org.smallmind.javafx.dialog;
 
-public interface ParaboxContainer<C> {
+import javafx.event.Event;
+import javafx.event.EventType;
 
-  public abstract ParaboxPlatform getPlatform ();
+public class DialogEvent extends Event {
 
-  public abstract ParaboxElement<C> constructElement (C component, Constraint constraint);
+  public static final EventType<DialogEvent> ANY = new EventType<DialogEvent>(Event.ANY);
+  public static final EventType<DialogEvent> DIALOG_COMPLETED = new EventType<DialogEvent>(DialogEvent.ANY, "DIALOG_COMPLETED");
 
-  public abstract void nativelyAddComponent (C component);
+  private final Object source;
+  private final DialogState dialogState;
 
-  public abstract void nativelyRemoveComponent (C component);
+  protected DialogEvent (EventType<DialogEvent> eventType, Object source, DialogState dialogState) {
+
+    super(eventType);
+
+    this.source = source;
+    this.dialogState = dialogState;
+  }
+
+  public Object getSource () {
+
+    return source;
+  }
+
+  public DialogState getDialogState () {
+
+    return dialogState;
+  }
 }

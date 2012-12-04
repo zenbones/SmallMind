@@ -24,15 +24,27 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.nutsnbolts.layout;
+package org.smallmind.javafx.dialog;
 
-public interface ParaboxContainer<C> {
+public class OptionButton {
 
-  public abstract ParaboxPlatform getPlatform ();
+  private String buttonName;
+  private DialogState buttonState;
 
-  public abstract ParaboxElement<C> constructElement (C component, Constraint constraint);
+  public OptionButton (String buttonName, DialogState buttonState) {
 
-  public abstract void nativelyAddComponent (C component);
+    this.buttonName = buttonName;
+    this.buttonState = buttonState;
+  }
 
-  public abstract void nativelyRemoveComponent (C component);
+  public String getName () {
+
+    return buttonName;
+  }
+
+  public DialogState getButtonState () {
+
+    return buttonState;
+  }
+
 }

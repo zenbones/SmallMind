@@ -24,13 +24,28 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.javafx.popup;
+package org.smallmind.javafx.dialog;
 
-import javafx.scene.control.PopupControl;
+public enum OptionType {
 
-public class DropDownPopUp extends PopupControl {
+  INFO("Info Message", "info"), WARNING("Warning Message", "warning"), QUESTION("Question", "question"), STOP("Error Message", "stop"), BUG("Bug", "bug"), PROGRESS("Progress", "progress");
 
-  public DropDownPopUp () {
+  private final String title;
+  private final String imageType;
 
+  OptionType (String title, String imageType) {
+
+    this.title = title;
+    this.imageType = imageType;
+  }
+
+  public String getTitle () {
+
+    return title;
+  }
+
+  public String getImageType () {
+
+    return imageType;
   }
 }

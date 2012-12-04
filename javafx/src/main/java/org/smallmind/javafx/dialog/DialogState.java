@@ -24,15 +24,9 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.nutsnbolts.layout;
+package org.smallmind.javafx.dialog;
 
-public interface ParaboxContainer<C> {
+public enum DialogState {
 
-  public abstract ParaboxPlatform getPlatform ();
-
-  public abstract ParaboxElement<C> constructElement (C component, Constraint constraint);
-
-  public abstract void nativelyAddComponent (C component);
-
-  public abstract void nativelyRemoveComponent (C component);
+  COMPLETE, INCOMPLETE, YES, NO, CANCEL, CONTINUE, OK, APPLY
 }
