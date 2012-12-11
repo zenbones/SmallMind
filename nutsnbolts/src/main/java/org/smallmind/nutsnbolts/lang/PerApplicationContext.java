@@ -32,11 +32,13 @@ public class PerApplicationContext {
 
   private static InheritableThreadLocal<ConcurrentHashMap<Class<? extends PerApplicationDataManager>, Object>> PER_APPLICATION_MAP_LOCAL = new InheritableThreadLocal<ConcurrentHashMap<Class<? extends PerApplicationDataManager>, Object>>();
 
-  private ConcurrentHashMap<Class<? extends PerApplicationDataManager>, Object> perApplicationMap = new ConcurrentHashMap<Class<? extends PerApplicationDataManager>, Object>();
+  private ConcurrentHashMap<Class<? extends PerApplicationDataManager>, Object> perApplicationMap;
 
   public PerApplicationContext () {
 
-    prepareThread();
+    if ((perApplicationMap = PER_APPLICATION_MAP_LOCAL.get()) == null) {
+      PER_APPLICATION_MAP_LOCAL.set(perApplicationMap = new ConcurrentHashMap<Class<? extends PerApplicationDataManager>, Object>());
+    }
   }
 
   public void prepareThread () {
