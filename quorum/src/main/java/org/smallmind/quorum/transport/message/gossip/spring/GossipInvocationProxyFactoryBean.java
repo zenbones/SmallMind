@@ -27,15 +27,15 @@
 package org.smallmind.quorum.transport.message.gossip.spring;
 
 import java.lang.reflect.Proxy;
-import org.smallmind.quorum.transport.message.MessageInvocationProxyFactory;
-import org.smallmind.quorum.transport.message.MessageTransmitter;
+import org.smallmind.quorum.transport.message.gossip.GossipInvocationProxyFactory;
+import org.smallmind.quorum.transport.message.gossip.GossipTransmitter;
 import org.springframework.beans.factory.FactoryBean;
 import org.springframework.beans.factory.InitializingBean;
 
 public class GossipInvocationProxyFactoryBean implements InitializingBean, FactoryBean {
 
   private Class<?> serviceInterface;
-  private MessageTransmitter messageTransmitter;
+  private GossipTransmitter gossipTransmitter;
   private Proxy serviceProxy;
 
   public void setServiceInterface (Class<?> serviceInterface) {
@@ -43,16 +43,16 @@ public class GossipInvocationProxyFactoryBean implements InitializingBean, Facto
     this.serviceInterface = serviceInterface;
   }
 
-  public void setMessageTransmitter (MessageTransmitter messageTransmitter) {
+  public void setGossipTransmitter (GossipTransmitter gossipTransmitter) {
 
-    this.messageTransmitter = messageTransmitter;
+    this.gossipTransmitter = gossipTransmitter;
   }
 
   @Override
   public void afterPropertiesSet ()
     throws Exception {
 
-    serviceProxy = MessageInvocationProxyFactory.generateProxy(messageTransmitter, serviceInterface);
+    serviceProxy = GossipInvocationProxyFactory.generateProxy(gossipTransmitter, serviceInterface);
   }
 
   @Override
