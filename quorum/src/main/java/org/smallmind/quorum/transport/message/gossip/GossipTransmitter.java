@@ -111,12 +111,12 @@ public class GossipTransmitter {
         public Message withChronometer ()
           throws Exception {
 
-          Message requestMessage;
+          Message gossipMessage;
 
-          requestMessage = messageStrategy.wrapInMessage(topicOperator.getTopicSession(), invocationSignal);
-          requestMessage.setStringProperty(MessageProperty.SERVICE.getKey(), serviceSelector);
+          gossipMessage = messageStrategy.wrapInMessage(topicOperator.getTopicSession(), invocationSignal);
+          gossipMessage.setStringProperty(MessageProperty.SERVICE.getKey(), serviceSelector);
 
-          return requestMessage;
+          return gossipMessage;
         }
       });
 

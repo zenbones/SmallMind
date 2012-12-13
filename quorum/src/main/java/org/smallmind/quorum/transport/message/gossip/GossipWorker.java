@@ -72,9 +72,9 @@ public class GossipWorker implements Runnable {
     try {
       while (!stopped.get()) {
 
-        Message requestMessage;
+        Message gossipMessage;
 
-        if ((requestMessage = messageRendezvous.poll(1, TimeUnit.SECONDS)) != null) {
+        if ((gossipMessage = messageRendezvous.poll(1, TimeUnit.SECONDS)) != null) {
 
           InstrumentationManager.instrumentWithChronometer(TransportManager.getTransport(), Clocks.EPOCH.getClock().getTimeNanoseconds() - idleStart, TimeUnit.NANOSECONDS, new MetricProperty("event", MetricEvent.WORKER_IDLE.getDisplay()));
 
@@ -83,14 +83,14 @@ public class GossipWorker implements Runnable {
             GossipTarget gossipTarget;
             String serviceSelector;
 
-            if ((serviceSelector = requestMessage.getStringProperty(MessageProperty.SERVICE.getKey())) == null) {
+            if ((serviceSelector = gossipMessage.getStringProperty(MessageProperty.SERVICE.getKey())) == null) {
               throw new TransportException("Missing message property(%s)", MessageProperty.SERVICE.getKey());
             }
             else if ((gossipTarget = targetMap.get(serviceSelector)) == null) {
               throw new TransportException("Unknown service selector(%s)", serviceSelector);
             }
 
-            gossipTarget.handleMessage(messageStrategy, requestMessage);
+            gossipTarget.handleMessage(messageStrategy, gossipMessage);
           }
           catch (Throwable throwable) {
             LoggerManager.getLogger(GossipWorker.class).error(throwable);

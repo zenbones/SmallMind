@@ -52,7 +52,6 @@ public class GossipReceiver {
 
     SynchronousQueue<Message> messageRendezvous = new SynchronousQueue<Message>(true);
     HashMap<String, GossipTarget> targetMap = new HashMap<String, GossipTarget>();
-    int topicIndex = 0;
 
     for (GossipTarget gossipTarget : gossipTargets) {
       targetMap.put(gossipTarget.getServiceInterface().getName(), gossipTarget);
@@ -81,14 +80,14 @@ public class GossipReceiver {
       for (GossipListener gossipListener : gossipListeners) {
         gossipListener.close();
       }
-      for (ConnectionFactor responseConnectionFactor : gossipConnectionFactors) {
-        responseConnectionFactor.stop();
+      for (ConnectionFactor gossipConnectionFactor : gossipConnectionFactors) {
+        gossipConnectionFactor.stop();
       }
       for (GossipWorker gossipWorker : gossipWorkers) {
         gossipWorker.stop();
       }
-      for (ConnectionFactor responseConnectionFactor : gossipConnectionFactors) {
-        responseConnectionFactor.close();
+      for (ConnectionFactor gossipConnectionFactor : gossipConnectionFactors) {
+        gossipConnectionFactor.close();
       }
     }
   }

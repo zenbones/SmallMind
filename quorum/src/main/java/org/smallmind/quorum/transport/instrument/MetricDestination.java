@@ -28,7 +28,7 @@ package org.smallmind.quorum.transport.instrument;
 
 public enum MetricDestination {
 
-  REQUEST_QUEUE("Request Queue"), RESPONSE_TOPIC("Response Topic");
+  REQUEST_QUEUE("Request Queue"), RESPONSE_TOPIC("Response Topic"), GOSSIP_TOPIC("Gossip Topic");
 
   private String display;
 
