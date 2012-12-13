@@ -24,14 +24,14 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.quorum.transport.message;
+package org.smallmind.quorum.transport.message.gossip;
 
 import java.lang.reflect.Proxy;
 
-public class InvocationProxyFactory {
+public class GossipInvocationProxyFactory {
 
-  public static Proxy generateProxy (MessageTransmitter messageTransmitter, Class serviceInterface) {
+  public static Proxy generateProxy (GossipTransmitter gossipTransmitter, Class serviceInterface) {
 
-    return (Proxy)Proxy.newProxyInstance(serviceInterface.getClassLoader(), new Class[] {serviceInterface}, new MessageInvocationHandler(messageTransmitter, serviceInterface));
+    return (Proxy)Proxy.newProxyInstance(serviceInterface.getClassLoader(), new Class[] {serviceInterface}, new GossipInvocationHandler(gossipTransmitter, serviceInterface));
   }
 }

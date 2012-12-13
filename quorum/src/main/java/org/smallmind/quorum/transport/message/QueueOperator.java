@@ -35,13 +35,13 @@ import org.smallmind.scribe.pen.LoggerManager;
 
 public class QueueOperator implements SessionEmployer {
 
-  private final ConnectionFactor requestConnectionFactor;
+  private final ConnectionFactor connectionFactor;
   private final Queue requestQueue;
 
-  public QueueOperator (ConnectionFactor requestConnectionFactor, Queue requestQueue) {
+  public QueueOperator (ConnectionFactor connectionFactor, Queue queue) {
 
-    this.requestConnectionFactor = requestConnectionFactor;
-    this.requestQueue = requestQueue;
+    this.connectionFactor = connectionFactor;
+    this.requestQueue = queue;
   }
 
   @Override
@@ -56,16 +56,16 @@ public class QueueOperator implements SessionEmployer {
     return null;
   }
 
-  public Session getRequestSession ()
+  public Session getQueueSession ()
     throws JMSException {
 
-    return requestConnectionFactor.getSession(this);
+    return connectionFactor.getSession(this);
   }
 
   public void send (Message message)
     throws JMSException {
 
-    requestConnectionFactor.getProducer(this).send(message);
-    LoggerManager.getLogger(QueueOperator.class).debug("request message sent(%s)...", message.getJMSMessageID());
+    connectionFactor.getProducer(this).send(message);
+    LoggerManager.getLogger(QueueOperator.class).debug("queue message sent(%s)...", message.getJMSMessageID());
   }
 }

@@ -24,10 +24,9 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.quorum.transport.message;
+package org.smallmind.quorum.transport.message.gossip;
 
 import java.util.Map;
-import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.SynchronousQueue;
 import java.util.concurrent.TimeUnit;
@@ -39,23 +38,23 @@ import org.smallmind.instrument.MetricProperty;
 import org.smallmind.quorum.transport.TransportException;
 import org.smallmind.quorum.transport.TransportManager;
 import org.smallmind.quorum.transport.instrument.MetricEvent;
+import org.smallmind.quorum.transport.message.MessageProperty;
+import org.smallmind.quorum.transport.message.MessageStrategy;
 import org.smallmind.scribe.pen.LoggerManager;
 
-public class ReceptionWorker implements Runnable {
+public class GossipWorker implements Runnable {
 
   private final AtomicBoolean stopped = new AtomicBoolean(false);
   private final CountDownLatch exitLatch = new CountDownLatch(1);
   private final MessageStrategy messageStrategy;
-  private final Map<String, MessageTarget> targetMap;
+  private final Map<String, GossipTarget> targetMap;
   private final SynchronousQueue<Message> messageRendezvous;
-  private final ConcurrentLinkedQueue<TopicOperator> operatorQueue;
 
-  public ReceptionWorker (MessageStrategy messageStrategy, Map<String, MessageTarget> targetMap, SynchronousQueue<Message> messageRendezvous, ConcurrentLinkedQueue<TopicOperator> operatorQueue) {
+  public GossipWorker (MessageStrategy messageStrategy, Map<String, GossipTarget> targetMap, SynchronousQueue<Message> messageRendezvous) {
 
     this.messageStrategy = messageStrategy;
     this.targetMap = targetMap;
     this.messageRendezvous = messageRendezvous;
-    this.operatorQueue = operatorQueue;
   }
 
   public void stop ()
@@ -79,50 +78,22 @@ public class ReceptionWorker implements Runnable {
 
           InstrumentationManager.instrumentWithChronometer(TransportManager.getTransport(), Clocks.EPOCH.getClock().getTimeNanoseconds() - idleStart, TimeUnit.NANOSECONDS, new MetricProperty("event", MetricEvent.WORKER_IDLE.getDisplay()));
 
-          TopicOperator topicOperator;
-
-          if ((topicOperator = operatorQueue.poll()) == null) {
-            throw new TransportException("Unable to take a TopicOperator, which should never happen - please contact your system administrator");
-          }
-
           try {
 
-            Message responseMessage;
-            String transmissionInstance;
+            GossipTarget gossipTarget;
+            String serviceSelector;
 
-            if ((transmissionInstance = requestMessage.getStringProperty(MessageProperty.INSTANCE.getKey())) == null) {
-              throw new TransportException("Missing message property(%s)", MessageProperty.INSTANCE.getKey());
+            if ((serviceSelector = requestMessage.getStringProperty(MessageProperty.SERVICE.getKey())) == null) {
+              throw new TransportException("Missing message property(%s)", MessageProperty.SERVICE.getKey());
+            }
+            else if ((gossipTarget = targetMap.get(serviceSelector)) == null) {
+              throw new TransportException("Unknown service selector(%s)", serviceSelector);
             }
 
-            try {
-
-              MessageTarget messageTarget;
-              String serviceSelector;
-
-              if ((serviceSelector = requestMessage.getStringProperty(MessageProperty.SERVICE.getKey())) == null) {
-                throw new TransportException("Missing message property(%s)", MessageProperty.SERVICE.getKey());
-              }
-              else if ((messageTarget = targetMap.get(serviceSelector)) == null) {
-                throw new TransportException("Unknown service selector(%s)", serviceSelector);
-              }
-
-              responseMessage = messageTarget.handleMessage(topicOperator.getTopicSession(), messageStrategy, requestMessage);
-            }
-            catch (Exception exception) {
-              responseMessage = messageStrategy.wrapInMessage(topicOperator.getTopicSession(), exception);
-              responseMessage.setBooleanProperty(MessageProperty.EXCEPTION.getKey(), true);
-            }
-
-            responseMessage.setJMSCorrelationID(requestMessage.getJMSMessageID());
-            responseMessage.setStringProperty(MessageProperty.INSTANCE.getKey(), transmissionInstance);
-
-            topicOperator.publish(responseMessage);
+            gossipTarget.handleMessage(messageStrategy, requestMessage);
           }
           catch (Throwable throwable) {
-            LoggerManager.getLogger(ReceptionWorker.class).error(throwable);
-          }
-          finally {
-            operatorQueue.add(topicOperator);
+            LoggerManager.getLogger(GossipWorker.class).error(throwable);
           }
 
           idleStart = Clocks.EPOCH.getClock().getTimeNanoseconds();
@@ -130,7 +101,7 @@ public class ReceptionWorker implements Runnable {
       }
     }
     catch (Exception exception) {
-      LoggerManager.getLogger(ReceptionWorker.class).error(exception);
+      LoggerManager.getLogger(GossipWorker.class).error(exception);
     }
     finally {
       exitLatch.countDown();

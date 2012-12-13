@@ -33,8 +33,8 @@ import java.sql.Statement;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicLong;
 import javax.sql.DataSource;
-import org.smallmind.persistence.DataIntegrityException;
 import org.smallmind.persistence.database.Sequence;
+import org.smallmind.scribe.pen.LoggerManager;
 
 public class SimulatedSequence extends Sequence {
 
@@ -109,8 +109,14 @@ public class SimulatedSequence extends Sequence {
               nextValue = atomicBoundary.get() + currentOffset;
             }
             else if (currentOffset == incrementBy) {
-              atomicBoundary.set(nextValue = getLastInsertId());
-              atomicOffset.set(0);
+              try {
+                atomicBoundary.set(nextValue = getLastInsertId());
+                atomicOffset.set(0);
+              }
+              catch (SimulatedSequenceDisasterException simulatedSequenceDisasterException) {
+                LoggerManager.getLogger(SimulatedSequence.class).error(simulatedSequenceDisasterException);
+                atomicOffset.set(incrementBy - 1);
+              }
             }
           } while (currentOffset > incrementBy);
         }
@@ -136,7 +142,7 @@ public class SimulatedSequence extends Sequence {
             return resultSet.getLong(1);
           }
           else {
-            throw new DataIntegrityException("No sequence(%s) has been generated", name);
+            throw new SimulatedSequenceDisasterException("No sequence(%s) has been generated", name);
           }
         }
         finally {
@@ -152,7 +158,7 @@ public class SimulatedSequence extends Sequence {
         }
       }
       catch (SQLException sqlException) {
-        throw new DataIntegrityException(sqlException);
+        throw new SimulatedSequenceDisasterException(sqlException, "Unable to update sequence(%s), name");
       }
     }
   }

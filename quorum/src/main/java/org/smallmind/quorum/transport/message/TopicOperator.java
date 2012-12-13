@@ -35,19 +35,19 @@ import org.smallmind.scribe.pen.LoggerManager;
 
 public class TopicOperator implements SessionEmployer {
 
-  private final ConnectionFactor responseConnectionFactor;
-  private final Topic responseTopic;
+  private final ConnectionFactor connectionFactor;
+  private final Topic topic;
 
-  public TopicOperator (ConnectionFactor responseConnectionFactor, Topic responseTopic) {
+  public TopicOperator (ConnectionFactor connectionFactor, Topic topic) {
 
-    this.responseConnectionFactor = responseConnectionFactor;
-    this.responseTopic = responseTopic;
+    this.connectionFactor = connectionFactor;
+    this.topic = topic;
   }
 
   @Override
   public Destination getDestination () {
 
-    return responseTopic;
+    return topic;
   }
 
   @Override
@@ -56,16 +56,16 @@ public class TopicOperator implements SessionEmployer {
     return null;
   }
 
-  public Session getResponseSession ()
+  public Session getTopicSession ()
     throws JMSException {
 
-    return responseConnectionFactor.getSession(this);
+    return connectionFactor.getSession(this);
   }
 
   public void publish (Message message)
     throws JMSException {
 
-    responseConnectionFactor.getProducer(this).send(message);
-    LoggerManager.getLogger(TopicOperator.class).debug("response message sent(%s)...", message.getJMSMessageID());
+    connectionFactor.getProducer(this).send(message);
+    LoggerManager.getLogger(TopicOperator.class).debug("topic message sent(%s)...", message.getJMSMessageID());
   }
 }

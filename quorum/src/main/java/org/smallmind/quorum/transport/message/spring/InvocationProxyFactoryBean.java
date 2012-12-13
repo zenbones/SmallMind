@@ -27,7 +27,7 @@
 package org.smallmind.quorum.transport.message.spring;
 
 import java.lang.reflect.Proxy;
-import org.smallmind.quorum.transport.message.InvocationProxyFactory;
+import org.smallmind.quorum.transport.message.MessageInvocationProxyFactory;
 import org.smallmind.quorum.transport.message.MessageTransmitter;
 import org.springframework.beans.factory.FactoryBean;
 import org.springframework.beans.factory.InitializingBean;
@@ -52,7 +52,7 @@ public class InvocationProxyFactoryBean implements InitializingBean, FactoryBean
   public void afterPropertiesSet ()
     throws Exception {
 
-    serviceProxy = InvocationProxyFactory.generateProxy(messageTransmitter, serviceInterface);
+    serviceProxy = MessageInvocationProxyFactory.generateProxy(messageTransmitter, serviceInterface);
   }
 
   @Override

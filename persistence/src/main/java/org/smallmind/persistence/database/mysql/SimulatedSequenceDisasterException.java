@@ -24,21 +24,19 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.quorum.transport.instrument;
+package org.smallmind.persistence.database.mysql;
 
-public enum MetricEvent {
+import org.smallmind.nutsnbolts.lang.FormattedRuntimeException;
 
-  INVOCATION("Invocation"), ACQUIRE_QUEUE("Acquire Queue"), ACQUIRE_TOPIC("Acquire Topic"), CONSTRUCT_MESSAGE("Construct Message"), ACQUIRE_WORKER("Acquire Worker"), WORKER_IDLE("Worker Idle"), COMPLETE_CALLBACK("Complete Callback");
+public class SimulatedSequenceDisasterException extends FormattedRuntimeException {
 
-  private String display;
+  public SimulatedSequenceDisasterException (String message, Object... args) {
 
-  private MetricEvent (String display) {
-
-    this.display = display;
+    super(message, args);
   }
 
-  public String getDisplay () {
+  public SimulatedSequenceDisasterException (Throwable throwable, String message, Object... args) {
 
-    return display;
+    super(throwable, message, args);
   }
 }

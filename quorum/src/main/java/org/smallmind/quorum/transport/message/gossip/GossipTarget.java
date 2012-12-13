@@ -24,21 +24,15 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.quorum.transport.instrument;
+package org.smallmind.quorum.transport.message.gossip;
 
-public enum MetricEvent {
+import javax.jms.Message;
+import org.smallmind.quorum.transport.message.MessageStrategy;
 
-  INVOCATION("Invocation"), ACQUIRE_QUEUE("Acquire Queue"), ACQUIRE_TOPIC("Acquire Topic"), CONSTRUCT_MESSAGE("Construct Message"), ACQUIRE_WORKER("Acquire Worker"), WORKER_IDLE("Worker Idle"), COMPLETE_CALLBACK("Complete Callback");
+public interface GossipTarget {
 
-  private String display;
+  public abstract Class getServiceInterface ();
 
-  private MetricEvent (String display) {
-
-    this.display = display;
-  }
-
-  public String getDisplay () {
-
-    return display;
-  }
+  public abstract void handleMessage (MessageStrategy messageStrategy, Message message)
+    throws Exception;
 }

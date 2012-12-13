@@ -24,21 +24,14 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.quorum.transport.instrument;
+package org.smallmind.quorum.transport.message;
 
-public enum MetricEvent {
+import java.lang.reflect.Proxy;
 
-  INVOCATION("Invocation"), ACQUIRE_QUEUE("Acquire Queue"), ACQUIRE_TOPIC("Acquire Topic"), CONSTRUCT_MESSAGE("Construct Message"), ACQUIRE_WORKER("Acquire Worker"), WORKER_IDLE("Worker Idle"), COMPLETE_CALLBACK("Complete Callback");
+public class MessageInvocationProxyFactory {
 
-  private String display;
+  public static Proxy generateProxy (MessageTransmitter messageTransmitter, Class serviceInterface) {
 
-  private MetricEvent (String display) {
-
-    this.display = display;
-  }
-
-  public String getDisplay () {
-
-    return display;
+    return (Proxy)Proxy.newProxyInstance(serviceInterface.getClassLoader(), new Class[] {serviceInterface}, new MessageInvocationHandler(messageTransmitter, serviceInterface));
   }
 }

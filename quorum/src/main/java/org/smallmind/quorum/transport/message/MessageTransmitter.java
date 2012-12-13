@@ -129,7 +129,7 @@ public class MessageTransmitter {
 
           Message requestMessage;
 
-          requestMessage = messageStrategy.wrapInMessage(queueOperator.getRequestSession(), invocationSignal);
+          requestMessage = messageStrategy.wrapInMessage(queueOperator.getQueueSession(), invocationSignal);
 
           requestMessage.setStringProperty(MessageProperty.INSTANCE.getKey(), instanceId);
           requestMessage.setStringProperty(MessageProperty.SERVICE.getKey(), serviceSelector);
