@@ -174,7 +174,7 @@ public class GenerateWrapperMojo extends AbstractMojo {
   /**
    * @parameter default-value=true
    */
-  private boolean versionedExplosion;
+  private boolean includeVersion;
 
   /**
    * @parameter default-value=false
@@ -200,9 +200,9 @@ public class GenerateWrapperMojo extends AbstractMojo {
       throw new MojoExecutionException(String.format("Unknown operating system type(%s) - valid choices are %s", operatingSystem, Arrays.toString(OSType.values())), throwable);
     }
 
-    createDirectory("bin", binDirectory = new File(project.getBuild().getDirectory() + System.getProperty("file.separator") + applicationDir + System.getProperty("file.separator") + createArtifactName(versionedExplosion, false) + System.getProperty("file.separator") + "bin"));
-    createDirectory("lib", libDirectory = new File(project.getBuild().getDirectory() + System.getProperty("file.separator") + applicationDir + System.getProperty("file.separator") + createArtifactName(versionedExplosion, false) + System.getProperty("file.separator") + "lib"));
-    createDirectory("conf", confDirectory = new File(project.getBuild().getDirectory() + System.getProperty("file.separator") + applicationDir + System.getProperty("file.separator") + createArtifactName(versionedExplosion, false) + System.getProperty("file.separator") + "conf"));
+    createDirectory("bin", binDirectory = new File(project.getBuild().getDirectory() + System.getProperty("file.separator") + applicationDir + System.getProperty("file.separator") + createArtifactName(includeVersion, false) + System.getProperty("file.separator") + "bin"));
+    createDirectory("lib", libDirectory = new File(project.getBuild().getDirectory() + System.getProperty("file.separator") + applicationDir + System.getProperty("file.separator") + createArtifactName(includeVersion, false) + System.getProperty("file.separator") + "lib"));
+    createDirectory("conf", confDirectory = new File(project.getBuild().getDirectory() + System.getProperty("file.separator") + applicationDir + System.getProperty("file.separator") + createArtifactName(includeVersion, false) + System.getProperty("file.separator") + "conf"));
 
     if (licenseFile != null) {
       try {

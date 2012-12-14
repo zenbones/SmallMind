@@ -1,0 +1,122 @@
+<?xml version="1.0" encoding="utf-8"?>
+<jnlp spec="${jnlpSpec}" xmlns:jfx="http://javafx.com" href="${href}">
+  <information>
+    <title>${title}</title>
+    <vendor>${vendor}</vendor>
+    <description>${description}</description>
+    [#if offlineAllowed]
+    <offline-allowed/>
+    [/#if]
+  </information>
+  <resources>
+    <jfx:javafx-runtime version="${runtimeVersion}" href="${runtimeLocation}"/>
+  </resources>
+  <resources>
+    <j2se version="1.6+" java-vm-args="-Xms64m -Xmx256m"  href="http://java.sun.com/products/autodl/j2se"/>
+    <jar href="game-javafx-admin-2.3.0.jar" size="103783" download="eager" />
+    <jar href="antlr-2.7.7.jar" size="445288" download="eager" />
+    <jar href="antlr-3.2.jar" size="895124" download="eager" />
+    <jar href="antlr-runtime-3.2.jar" size="151989" download="eager" />
+    <jar href="aopalliance-1.0.jar" size="4467" download="eager" />
+    <jar href="asm-3.3.1.jar" size="43581" download="eager" />
+    <jar href="aspectjrt-1.6.11.jar" size="116219" download="eager" />
+    <jar href="avro-1.4.0-cassandra-1.jar" size="596381" download="eager" />
+    <jar href="bsh-2.0b4.jar" size="281694" download="eager" />
+    <jar href="c3p0-0.9.1.2.jar" size="610790" download="eager" />
+    <jar href="cassandra-all-1.1.5.jar" size="2227823" download="eager" />
+    <jar href="cassandra-thrift-1.1.0.jar" size="932055" download="eager" />
+    <jar href="cglib-2.2.2.jar" size="287192" download="eager" />
+    <jar href="commons-beanutils-1.8.3.jar" size="232019" download="eager" />
+    <jar href="commons-cli-1.1.jar" size="36174" download="eager" />
+    <jar href="commons-codec-1.2.jar" size="30085" download="eager" />
+    <jar href="commons-collections-3.2.1.jar" size="575389" download="eager" />
+    <jar href="commons-lang-2.4.jar" size="261809" download="eager" />
+    <jar href="commons-logging-1.1.1.jar" size="60686" download="eager" />
+    <jar href="commons-pool-1.5.3.jar" size="96203" download="eager" />
+    <jar href="compress-lzf-0.8.4.jar" size="25489" download="eager" />
+    <jar href="concurrentlinkedhashmap-lru-1.3.jar" size="54345" download="eager" />
+    <jar href="dom4j-1.6.1.jar" size="313898" download="eager" />
+    <jar href="game-hessian-2.3.0.jar" size="11432" download="eager" />
+    <jar href="game-persistence-2.3.0.jar" size="231199" download="eager" />
+    <jar href="guava-r09.jar" size="1143921" download="eager" />
+    <jar href="hamcrest-core-1.1.jar" size="76643" download="eager" />
+    <jar href="hector-core-1.1-1.jar" size="543374" download="eager" />
+    <jar href="hessian-4.0.7.jar" size="384337" download="eager" />
+    <jar href="hibernate-commons-annotations-4.0.1.Final.jar" size="81271" download="eager" />
+    <jar href="hibernate-core-4.1.0.Final.jar" size="4317092" download="eager" />
+    <jar href="hibernate-jpa-2.0-api-1.0.1.Final.jar" size="102661" download="eager" />
+    <jar href="high-scale-lib-1.1.2.jar" size="96046" download="eager" />
+    <jar href="httpclient-4.1.1.jar" size="351132" download="eager" />
+    <jar href="httpcore-4.1.jar" size="181041" download="eager" />
+    <jar href="jackson-core-asl-1.9.2.jar" size="228286" download="eager" />
+    <jar href="jackson-mapper-asl-1.9.7.jar" size="780301" download="eager" />
+    <jar href="jamm-0.2.5.jar" size="7733" download="eager" />
+    <jar href="javassist-3.12.1.GA.jar" size="644148" download="eager" />
+    <jar href="javassist-3.15.0-GA.jar" size="648253" download="eager" />
+    <jar href="jboss-logging-3.1.0.CR2.jar" size="60539" download="eager" />
+    <jar href="jboss-transaction-api_1.1_spec-1.0.0.Final.jar" size="11209" download="eager" />
+    <jar href="jcommander-1.27.jar" size="55585" download="eager" />
+    <jar href="jetty-6.1.22.jar" size="536866" download="eager" />
+    <jar href="jetty-util-6.1.22.jar" size="176973" download="eager" />
+    <jar href="jfxrt.jar" size="13322700" download="eager" />
+    <jar href="jline-0.9.94.jar" size="87325" download="eager" />
+    <jar href="joda-time-2.1.jar" size="570478" download="eager" />
+    <jar href="jpa-api-2.0-cr-1.jar" size="98356" download="eager" />
+    <jar href="json-simple-1.1.jar" size="16046" download="eager" />
+    <jar href="junit-4.10.jar" size="253160" download="eager" />
+    <jar href="libthrift-0.7.0.jar" size="301547" download="eager" />
+    <jar href="liquibase-core-2.0.5.jar" size="926426" download="eager" />
+    <jar href="log4j-1.2.16.jar" size="481535" download="eager" />
+    <jar href="metrics-core-2.0.3.jar" size="80800" download="eager" />
+    <jar href="mysql-connector-java-5.1.20.jar" size="802721" download="eager" />
+    <jar href="quartz-2.1.6.jar" size="561737" download="eager" />
+    <jar href="scheduling-base-1.6.1-SNAPSHOT.jar" size="17732" download="eager" />
+    <jar href="scheduling-quartz-1.6.1-SNAPSHOT.jar" size="29638" download="eager" />
+    <jar href="scribe-apache-1.6.1-SNAPSHOT.jar" size="18073" download="eager" />
+    <jar href="scribe-ink-indigenous-1.6.1-SNAPSHOT.jar" size="23891" download="eager" />
+    <jar href="scribe-pen-1.6.1-SNAPSHOT.jar" size="118085" download="eager" />
+    <jar href="scribe-slf4j-1.6.1-SNAPSHOT.jar" size="19970" download="eager" />
+    <jar href="scribe-spring-1.6.1-SNAPSHOT.jar" size="17518" download="eager" />
+    <jar href="servlet-api-2.5-20081211.jar" size="134133" download="eager" />
+    <jar href="servlet-api-2.5.jar" size="105112" download="eager" />
+    <jar href="shiro-core-1.2.0.jar" size="365343" download="eager" />
+    <jar href="shiro-spring-1.2.0.jar" size="25044" download="eager" />
+    <jar href="shiro-web-1.2.0.jar" size="141314" download="eager" />
+    <jar href="slf4j-api-1.6.1.jar" size="25496" download="eager" />
+    <jar href="slf4j-log4j12-1.6.1.jar" size="9753" download="eager" />
+    <jar href="smallmind-instrument-1.6.1-SNAPSHOT.jar" size="101768" download="eager" />
+    <jar href="smallmind-javafx-1.6.1-SNAPSHOT.jar" size="78718" download="eager" />
+    <jar href="smallmind-liquibase-1.6.1-SNAPSHOT.jar" size="21781" download="eager" />
+    <jar href="smallmind-nutsnbolts-1.6.1-SNAPSHOT.jar" size="341696" download="eager" />
+    <jar href="smallmind-persistence-1.6.1-SNAPSHOT.jar" size="342750" download="eager" />
+    <jar href="smallmind-quorum-1.6.1-SNAPSHOT.jar" size="203287" download="eager" />
+    <jar href="snakeyaml-1.6.jar" size="232121" download="eager" />
+    <jar href="snappy-java-1.0.4.1.jar" size="995968" download="eager" />
+    <jar href="snaptree-0.1.jar" size="55066" download="eager" />
+    <jar href="speed4j-0.9.jar" size="26156" download="eager" />
+    <jar href="spring-aop-3.1.2.RELEASE.jar" size="332641" download="eager" />
+    <jar href="spring-asm-3.1.2.RELEASE.jar" size="53082" download="eager" />
+    <jar href="spring-beans-3.1.2.RELEASE.jar" size="592232" download="eager" />
+    <jar href="spring-context-3.1.2.RELEASE.jar" size="832018" download="eager" />
+    <jar href="spring-core-3.1.2.RELEASE.jar" size="449649" download="eager" />
+    <jar href="spring-expression-3.1.2.RELEASE.jar" size="176087" download="eager" />
+    <jar href="spring-jdbc-3.1.2.RELEASE.jar" size="404535" download="eager" />
+    <jar href="spring-orm-3.1.2.RELEASE.jar" size="379860" download="eager" />
+    <jar href="spring-test-3.1.2.RELEASE.jar" size="229461" download="eager" />
+    <jar href="spring-tx-3.1.2.RELEASE.jar" size="245031" download="eager" />
+    <jar href="spring-web-3.1.2.RELEASE.jar" size="548703" download="eager" />
+    <jar href="stringtemplate-3.2.jar" size="172023" download="eager" />
+    <jar href="substrate-foundation-2.3.0.jar" size="10487" download="eager" />
+    <jar href="substrate-persistence-2.3.0.jar" size="151484" download="eager" />
+    <jar href="substrate-security-2.3.0.jar" size="11237" download="eager" />
+    <jar href="testng-6.8.jar" size="813398" download="eager" />
+    <jar href="uuid-3.2.0.jar" size="13501" download="eager" />
+    <jar href="xmemcached-1.3.8.jar" size="427823" download="eager" />
+    <jar href="xml-apis-1.0.b2.jar" size="109318" download="eager" />
+  </resources>
+  <applet-desc  width="800" height="600" main-class="com.javafx.main.NoJavaFXFallback"  name="Game JavaFx Admin">
+    <param name="requiredFXVersion" value="2.0"/>
+  </applet-desc>
+  <jfx:javafx-desc  width="800" height="600" main-class="com.glu.epoxy.game.javafx.admin.AdminApplication"  name="Game JavaFx Admin"/>
+  <update check="background"/>
+</jnlp>
