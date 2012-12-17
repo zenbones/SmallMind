@@ -263,7 +263,7 @@
       <dependency>
         <groupId>org.aspectj</groupId>
         <artifactId>aspectjrt</artifactId>
-        <version>1.6.11</version>
+        <version>1.7.1</version>
       </dependency>
       <dependency>
         <groupId>org.springframework</groupId>
@@ -497,7 +497,7 @@
             <dependency>
               <groupId>org.aspectj</groupId>
               <artifactId>aspectjtools</artifactId>
-              <version>1.6.11</version>
+              <version>1.7.1</version>
             </dependency>
           </dependencies>
         </plugin>
@@ -552,8 +552,8 @@
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-compiler-plugin</artifactId>
         <configuration>
-          <source>7</source>
-          <target>7</target>
+          <source>1.7</source>
+          <target>1.7</target>
         </configuration>
       </plugin>
       <plugin>
@@ -563,10 +563,19 @@
             <id>attach-sources</id>
             <phase>verify</phase>
             <goals>
-              <goal>jar-no-fork</goal>
+              <goal>jar</goal>
             </goals>
           </execution>
         </executions>
+      </plugin>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-surefire-plugin</artifactId>
+        <configuration>
+          <useSystemClassLoader>false</useSystemClassLoader>
+          <groups>unit</groups>
+          <forkMode>always</forkMode>
+        </configuration>
       </plugin>
       <!--
       <plugin>

@@ -41,7 +41,10 @@
         </executions>
         <configuration>
           <verbose>true</verbose>
-          <complianceLevel>1.6</complianceLevel>
+          <source>1.7</source>
+          <target>1.7</target>
+          <complianceLevel>1.7</complianceLevel>
+          <showWeaveInfo>true</showWeaveInfo>
           <aspectLibraries>
             <aspectLibrary>
               <groupId>org.smallmind</groupId>
