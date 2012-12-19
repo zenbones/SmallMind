@@ -283,23 +283,23 @@ public class GenerateWrapperMojo extends AbstractMojo {
     freemarkerMap.put("classpathElements", classpathElementList);
 
     additionalDependencies = (dependencies != null) ? Arrays.asList(dependencies) : null;
-    for (Object artifact : project.getRuntimeArtifacts()) {
+    for (Artifact artifact : project.getRuntimeArtifacts()) {
       try {
         if (verbose) {
-          getLog().info(String.format("Copying dependency(%s)...", ((org.apache.maven.artifact.Artifact)artifact).getFile().getName()));
+          getLog().info(String.format("Copying dependency(%s)...", artifact.getFile().getName()));
         }
 
         if (additionalDependencies != null) {
           aditionalDependencyIter = additionalDependencies.iterator();
           while (aditionalDependencyIter.hasNext()) {
-            if (aditionalDependencyIter.next().matchesArtifact((Artifact)artifact)) {
+            if (aditionalDependencyIter.next().matchesArtifact(artifact)) {
               aditionalDependencyIter.remove();
             }
           }
         }
 
-        classpathElementList.add(((Artifact)artifact).getFile().getName());
-        copyToDestination(((Artifact)artifact).getFile(), libDirectory.getAbsolutePath(), ((Artifact)artifact).getFile().getName());
+        classpathElementList.add(artifact.getFile().getName());
+        copyToDestination(artifact.getFile(), libDirectory.getAbsolutePath(), artifact.getFile().getName());
       }
       catch (IOException ioException) {
         throw new MojoExecutionException(String.format("Problem in copying a dependency(%s) into the application library", artifact), ioException);
@@ -308,15 +308,15 @@ public class GenerateWrapperMojo extends AbstractMojo {
 
     if (additionalDependencies != null) {
       for (Dependency dependency : additionalDependencies) {
-        for (Object artifact : project.getDependencyArtifacts()) {
-          if (dependency.matchesArtifact(((Artifact)artifact))) {
+        for (Artifact artifact : project.getDependencyArtifacts()) {
+          if (dependency.matchesArtifact(artifact)) {
             try {
               if (verbose) {
-                getLog().info(String.format("Copying additional dependency(%s)...", ((org.apache.maven.artifact.Artifact)artifact).getFile().getName()));
+                getLog().info(String.format("Copying additional dependency(%s)...", artifact.getFile().getName()));
               }
 
-              classpathElementList.add(((Artifact)artifact).getFile().getName());
-              copyToDestination(((Artifact)artifact).getFile(), libDirectory.getAbsolutePath(), ((Artifact)artifact).getFile().getName());
+              classpathElementList.add(artifact.getFile().getName());
+              copyToDestination(artifact.getFile(), libDirectory.getAbsolutePath(), artifact.getFile().getName());
             }
             catch (IOException ioException) {
               throw new MojoExecutionException(String.format("Problem in copying an additional dependency(%s) into the application library", artifact), ioException);

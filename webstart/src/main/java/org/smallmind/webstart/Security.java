@@ -26,58 +26,61 @@
  */
 package org.smallmind.webstart;
 
-import org.smallmind.nutsnbolts.lang.UnknownSwitchCaseException;
+public class Security {
 
-public enum RuntimeVersion {
+  private String keystore;
+  private String storepass;
+  private String keypass;
+  private String alias;
+  private boolean verbose = false;
 
-  TWO_POINT_ONE_PLUS("2.1+") {
-    @Override
-    public String getLocation (OSType osType) {
+  public String getKeystore () {
 
-      switch (osType) {
-        case WINDOWS_X86_64:
-          return "http://javadl.sun.com/webapps/download/GetFile/javafx-latest/windows-i586/javafx2.jnlp";
-        default:
-          throw new UnknownSwitchCaseException(osType.name());
-      }
-    }
-  };
-
-  private String code;
-
-  private RuntimeVersion (String code) {
-
-    this.code = code;
+    return keystore;
   }
 
-  public abstract String getLocation (OSType osType);
+  public void setKeystore (String keystore) {
 
-  public String getCode () {
-
-    return code;
+    this.keystore = keystore;
   }
 
-  public static RuntimeVersion fromCode (String code) {
+  public String getStorepass () {
 
-    for (RuntimeVersion runtimeVersion : RuntimeVersion.values()) {
-      if (runtimeVersion.getCode().equals(code)) {
-
-        return runtimeVersion;
-      }
-    }
-
-    throw new IllegalArgumentException(code);
+    return storepass;
   }
 
-  public static String[] getValidCodes () {
+  public void setStorepass (String storepass) {
 
-    String[] validCodes = new String[RuntimeVersion.values().length];
-    int index = 0;
+    this.storepass = storepass;
+  }
 
-    for (RuntimeVersion runtimeVersion : RuntimeVersion.values()) {
-      validCodes[index++] = runtimeVersion.getCode();
-    }
+  public String getKeypass () {
 
-    return validCodes;
+    return keypass;
+  }
+
+  public void setKeypass (String keypass) {
+
+    this.keypass = keypass;
+  }
+
+  public String getAlias () {
+
+    return alias;
+  }
+
+  public void setAlias (String alias) {
+
+    this.alias = alias;
+  }
+
+  public boolean isVerbose () {
+
+    return verbose;
+  }
+
+  public void setVerbose (boolean verbose) {
+
+    this.verbose = verbose;
   }
 }

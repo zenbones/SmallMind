@@ -29,14 +29,26 @@ package org.smallmind.webstart;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.nio.channels.FileChannel;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.jar.JarEntry;
+import java.util.jar.JarOutputStream;
+import java.util.jar.Manifest;
+import freemarker.template.Configuration;
+import freemarker.template.Template;
 import org.apache.maven.artifact.Artifact;
 import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.project.MavenProject;
+import org.smallmind.nutsnbolts.freemarker.ClassPathTemplateLoader;
+import org.smallmind.nutsnbolts.io.FileIterator;
+import org.smallmind.nutsnbolts.util.SingleItemIterator;
 
 /**
  * @goal generate-webstart
@@ -46,6 +58,8 @@ import org.apache.maven.project.MavenProject;
  * @threadSafe
  */
 public class GenerateWebstartMojo extends AbstractMojo {
+
+  private static final String RESOURCE_BASE_PATH = GenerateWebstartMojo.class.getPackage().getName().replace('.', '/');
 
   /**
    * @parameter expression="${project}"
@@ -66,9 +80,47 @@ public class GenerateWebstartMojo extends AbstractMojo {
   private String javafxRuntime;
 
   /**
+   * @parameter
+   * @required
+   */
+  private String javaVersion;
+
+  /**
+   * @parameter default-value="-Xms64m -Xmx256m"
+   */
+  private String jvmArgs;
+
+  /**
    * @parameter default-value="1.0"
    */
   private String jnlpSpec;
+
+  /**
+   * @parameter
+   * @required
+   */
+  private String mainClass;
+
+  /**
+   * @parameter default-value=800
+   */
+  private int width;
+
+  /**
+   * @parameter default-value=600
+   */
+  private int height;
+
+  /**
+   * @parameter
+   * @required
+   */
+  private Dependency javafx;
+
+  /**
+   * @parameter
+   */
+  private Security signjar;
 
   /**
    * @parameter expression="${project.artifactId}"
@@ -76,7 +128,7 @@ public class GenerateWebstartMojo extends AbstractMojo {
   private String applicationName;
 
   /**
-   * @parameter expression="${project.artifactId}.jnlp"
+   * @parameter expression="${project.artifactId}-${project.version}.jnlp"
    */
   private String href;
 
@@ -126,9 +178,12 @@ public class GenerateWebstartMojo extends AbstractMojo {
 
     File deployDirectory;
     HashMap<String, Object> freemarkerMap;
+    LinkedList<JNLPDependency> dependencyList;
     OSType osType;
-    RuntimeVersion runtimeVersion;
+    JavaFXRuntimeVersion runtimeVersion;
+    J2SEVersion j2seVersion;
     String runtimeLocation;
+    boolean javafxFound = false;
 
     try {
       osType = OSType.valueOf(operatingSystem.replace('-', '_').toUpperCase());
@@ -138,10 +193,10 @@ public class GenerateWebstartMojo extends AbstractMojo {
     }
 
     try {
-      runtimeVersion = RuntimeVersion.fromCode(javafxRuntime);
+      runtimeVersion = JavaFXRuntimeVersion.fromCode(javafxRuntime);
     }
     catch (Throwable throwable) {
-      throw new MojoExecutionException(String.format("Unknown javafx runtime type(%s) - valid choices are %s", javafxRuntime, Arrays.toString(RuntimeVersion.getValidCodes())), throwable);
+      throw new MojoExecutionException(String.format("Unknown javafx runtime type(%s) - valid choices are %s", javafxRuntime, Arrays.toString(JavaFXRuntimeVersion.getValidCodes())), throwable);
     }
 
     try {
@@ -149,6 +204,13 @@ public class GenerateWebstartMojo extends AbstractMojo {
     }
     catch (Throwable throwable) {
       throw new MojoExecutionException(String.format("The javafx runtime (%s) is not available on os type (%s)", runtimeVersion.getCode(), osType.name()), throwable);
+    }
+
+    try {
+      j2seVersion = J2SEVersion.fromCode(javaVersion);
+    }
+    catch (Throwable throwable) {
+      throw new MojoExecutionException(String.format("Unknown java version(%s) - valid choices are %s", javaVersion, Arrays.toString(J2SEVersion.getValidCodes())), throwable);
     }
 
     freemarkerMap = new HashMap<String, Object>();
@@ -160,23 +222,97 @@ public class GenerateWebstartMojo extends AbstractMojo {
     freemarkerMap.put("offlineAllowed", offlineAllowed);
     freemarkerMap.put("runtimeVersion", runtimeVersion.getCode());
     freemarkerMap.put("runtimeLocation", runtimeLocation);
+    freemarkerMap.put("j2seVersion", j2seVersion.getCode());
+    freemarkerMap.put("jvmArgs", jvmArgs);
+    freemarkerMap.put("j2seLocation", j2seVersion.getLocation());
+    freemarkerMap.put("mainClass", mainClass);
+    freemarkerMap.put("width", width);
+    freemarkerMap.put("height", height);
 
     createDirectory("deploy", deployDirectory = new File(project.getBuild().getDirectory() + System.getProperty("file.separator") + deployDir));
 
-    for (Object artifact : project.getRuntimeArtifacts()) {
-      try {
-        if (verbose) {
-          getLog().info(String.format("Copying dependency(%s)...", ((org.apache.maven.artifact.Artifact)artifact).getFile().getName()));
-        }
+    dependencyList = new LinkedList<>();
+    copyDependencies(project.getRuntimeArtifacts(), deployDirectory, dependencyList);
 
-        //TODO: do this
-//        classpathElementList.add(((Artifact)artifact).getFile().getName());
-        copyToDestination(((Artifact)artifact).getFile(), deployDirectory.getAbsolutePath(), ((Artifact)artifact).getFile().getName());
-      }
-      catch (IOException ioException) {
-        throw new MojoExecutionException(String.format("Problem in copying a dependency(%s) into the application library", artifact), ioException);
+    for (Artifact artifact : project.getDependencyArtifacts()) {
+      if (javafx.matchesArtifact(artifact)) {
+        copyDependencies(new SingleItemIterator<Artifact>(artifact), deployDirectory, dependencyList);
+        javafxFound = true;
+        break;
       }
     }
+    if (!javafxFound) {
+      throw new MojoExecutionException("Project does not reference the javafx dependency(group = %s, artifactId = %s)", javafx.getGroupId(), javafx.getArtifactId());
+    }
+
+    Collections.sort(dependencyList);
+
+    if (!project.getArtifact().getType().equals("jar")) {
+
+      File jarFile;
+
+      jarFile = new File(createJarArtifactPath(project.getBuild().getDirectory()));
+
+      try {
+
+        long fileSize;
+
+        if (verbose) {
+          getLog().info(String.format("Creating and copying output jar(%s)...", jarFile.getName()));
+        }
+
+        createJar(jarFile, new File(project.getBuild().getOutputDirectory()));
+        fileSize = copyToDestination(jarFile, deployDirectory.getAbsolutePath(), jarFile.getName());
+        dependencyList.addFirst(new JNLPDependency(jarFile.getName(), fileSize));
+      }
+      catch (IOException ioException) {
+        throw new MojoExecutionException(String.format("Problem in creating or copying the output jar(%s) into the deployment directory", jarFile.getName()), ioException);
+      }
+    }
+    else {
+      try {
+
+        long fileSize;
+
+        if (verbose) {
+          getLog().info(String.format("Copying build artifact(%s)...", project.getArtifact().getFile().getName()));
+        }
+
+        fileSize = copyToDestination(project.getArtifact().getFile(), deployDirectory.getAbsolutePath(), project.getArtifact().getFile().getName());
+        dependencyList.addFirst(new JNLPDependency(project.getArtifact().getFile().getName(), fileSize));
+      }
+      catch (IOException ioException) {
+        throw new MojoExecutionException(String.format("Problem in copying the build artifact(%s) into the deployment directory", project.getArtifact()), ioException);
+      }
+    }
+
+    if (signjar != null) {
+      try {
+        for (JNLPDependency dependency : dependencyList) {
+          if (dependency.getName().endsWith(".jar")) {
+            getLog().info(String.format("Signing jar(%s)...", dependency.getName()));
+
+            if (signjar.isVerbose()) {
+              sun.security.tools.JarSigner.main(new String[] {"-verbose", "-keystore", signjar.getKeystore(), "-storepass", signjar.getStorepass(), "-keypass", signjar.getKeypass(), "-sigfile", "SIGNATURE", deployDirectory.getAbsolutePath() + System.getProperty("file.separator") + dependency.getName(), signjar.getAlias()});
+            }
+            else {
+              sun.security.tools.JarSigner.main(new String[] {"-keystore", signjar.getKeystore(), "-storepass", signjar.getStorepass(), "-keypass", signjar.getKeypass(), "-sigfile", "SIGNATURE", deployDirectory.getAbsolutePath() + System.getProperty("file.separator") + dependency.getName(), signjar.getAlias()});
+            }
+          }
+        }
+      }
+      catch (Exception exception) {
+        throw new MojoExecutionException("Unable to sign jar files...", exception);
+      }
+    }
+
+    freemarkerMap.put("jnlpDependencies", dependencyList);
+
+    if (verbose) {
+      getLog().info("Processing the configuration template...");
+    }
+
+    processFreemarkerTemplate(getTemplateFilePath(), deployDirectory, createArtifactName() + ".jnlp", freemarkerMap);
   }
 
   private void createDirectory (String dirType, File dirFile)
@@ -189,7 +325,7 @@ public class GenerateWebstartMojo extends AbstractMojo {
     }
   }
 
-  public void copyToDestination (File file, String destinationPath, String destinationName)
+  public long copyToDestination (File file, String destinationPath, String destinationName)
     throws IOException {
 
     FileInputStream inputStream;
@@ -206,5 +342,142 @@ public class GenerateWebstartMojo extends AbstractMojo {
     }
     outputStream.close();
     inputStream.close();
+
+    return currentPosition;
+  }
+
+  public void copyDependencies (Iterable<Artifact> artifactIterable, File deployDirectory, List<JNLPDependency> dependencyList)
+    throws MojoExecutionException {
+
+    for (Artifact artifact : artifactIterable) {
+
+      boolean matched = false;
+
+      for (JNLPDependency jnlpDependency : dependencyList) {
+        if (jnlpDependency.getName().equals(artifact.getFile().getName())) {
+          matched = true;
+          break;
+        }
+      }
+
+      if (!matched) {
+        try {
+
+          long fileSize;
+
+          if (verbose) {
+            getLog().info(String.format("Copying dependency(%s)...", artifact.getFile().getName()));
+          }
+
+          fileSize = copyToDestination(artifact.getFile(), deployDirectory.getAbsolutePath(), artifact.getFile().getName());
+          dependencyList.add(new JNLPDependency(artifact.getFile().getName(), fileSize));
+        }
+        catch (IOException ioException) {
+          throw new MojoExecutionException(String.format("Problem in copying a dependency(%s) into the deployment directory", artifact), ioException);
+        }
+      }
+    }
+  }
+
+  private String createArtifactName () {
+
+    StringBuilder nameBuilder;
+
+    nameBuilder = new StringBuilder(applicationName).append('-').append(project.getVersion());
+
+    if (project.getArtifact().getClassifier() != null) {
+      nameBuilder.append('-').append(project.getArtifact().getClassifier());
+    }
+
+    return nameBuilder.toString();
+  }
+
+  private String createJarArtifactPath (String outputPath) {
+
+    return new StringBuilder(outputPath).append(System.getProperty("file.separator")).append(createArtifactName()).append(".jar").toString();
+  }
+
+  private void createJar (File jarFile, File directoryToJar)
+    throws IOException {
+
+    FileOutputStream fileOutputStream;
+    JarOutputStream jarOutputStream;
+    JarEntry jarEntry;
+
+    fileOutputStream = new FileOutputStream(jarFile);
+    jarOutputStream = new JarOutputStream(fileOutputStream, new Manifest());
+    for (File outputFile : new FileIterator(directoryToJar)) {
+      if (!outputFile.equals(jarFile)) {
+        jarEntry = new JarEntry(outputFile.getCanonicalPath().substring(directoryToJar.getAbsolutePath().length() + 1).replace(System.getProperty("file.separator"), "/"));
+        jarEntry.setTime(outputFile.lastModified());
+        jarOutputStream.putNextEntry(jarEntry);
+        squeezeFile(jarOutputStream, outputFile);
+      }
+    }
+    jarOutputStream.close();
+    fileOutputStream.close();
+  }
+
+  private void squeezeFile (JarOutputStream jarOutputStream, File outputFile)
+    throws IOException {
+
+    FileInputStream inputStream;
+    byte[] buffer = new byte[8192];
+    int bytesRead;
+
+    inputStream = new FileInputStream(outputFile);
+    while ((bytesRead = inputStream.read(buffer)) >= 0) {
+      jarOutputStream.write(buffer, 0, bytesRead);
+    }
+    inputStream.close();
+  }
+
+  private String getTemplateFilePath () {
+
+    StringBuilder pathBuilder;
+
+    pathBuilder = new StringBuilder(RESOURCE_BASE_PATH).append("/deploy/freemarker.jnlp.in");
+
+    return pathBuilder.toString();
+  }
+
+  private void processFreemarkerTemplate (String templatePath, File outputDir, String destinationName, HashMap<String, Object> interpolationMap)
+    throws MojoExecutionException {
+
+    Configuration freemarkerConf;
+    Template freemarkerTemplate;
+    FileWriter fileWriter;
+
+    freemarkerConf = new Configuration();
+    freemarkerConf.setTagSyntax(freemarker.template.Configuration.SQUARE_BRACKET_TAG_SYNTAX);
+    freemarkerConf.setTemplateLoader(new ClassPathTemplateLoader(GenerateWebstartMojo.class));
+
+    try {
+      freemarkerTemplate = freemarkerConf.getTemplate(templatePath);
+    }
+    catch (IOException ioException) {
+      throw new MojoExecutionException(String.format("Unable to load template(%s) for translation", destinationName), ioException);
+    }
+
+    try {
+      fileWriter = new FileWriter(outputDir.getAbsolutePath() + System.getProperty("file.separator") + destinationName);
+    }
+    catch (IOException ioException) {
+      throw new MojoExecutionException(String.format("Problem in creating a writer for the template(%s) file", destinationName), ioException);
+    }
+
+    try {
+      freemarkerTemplate.process(interpolationMap, fileWriter);
+    }
+    catch (Exception exception) {
+      throw new MojoExecutionException(String.format("Problem in processing the template(%s)", destinationName), exception);
+    }
+
+    try {
+      fileWriter.close();
+    }
+    catch (IOException ioException) {
+      throw new MojoExecutionException(String.format("Problem in closing the template(%s) writer", destinationName), ioException);
+    }
   }
 }
