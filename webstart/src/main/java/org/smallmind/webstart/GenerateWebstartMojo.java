@@ -120,7 +120,7 @@ public class GenerateWebstartMojo extends AbstractMojo {
   /**
    * @parameter
    */
-  private Security signjar;
+  private SigningInfo signjar;
 
   /**
    * @parameter expression="${project.artifactId}"

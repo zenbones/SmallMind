@@ -26,7 +26,7 @@
  */
 package org.smallmind.webstart;
 
-public class Security {
+public class SigningInfo {
 
   private String keystore;
   private String storepass;
