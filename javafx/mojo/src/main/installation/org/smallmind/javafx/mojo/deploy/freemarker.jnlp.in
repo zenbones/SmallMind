@@ -19,6 +19,12 @@
   </resources>
   <applet-desc width="${width}" height="${height}" main-class="com.javafx.main.NoJavaFXFallback" name="${title}">
     <param name="requiredFXVersion" value="2.0"/>
+    [#list jnlpParameters as jnlpParameter]
+    <param name="${jnlpParameter.name}" value="${jnlpParameter.value}"/>
+    [/#list]
+    [#list jnlpArguments as jnlpArgument]
+    <argument>${jnlpArgument}</argument>
+    [/#list]
   </applet-desc>
   <jfx:javafx-desc width="${width}" height="${height}" main-class="${mainClass}" name="${title}"/>
   <update check="background"/>

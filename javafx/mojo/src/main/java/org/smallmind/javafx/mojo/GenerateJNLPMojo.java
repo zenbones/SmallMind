@@ -51,15 +51,17 @@ import org.smallmind.nutsnbolts.io.FileIterator;
 import org.smallmind.nutsnbolts.util.SingleItemIterator;
 
 /**
- * @goal generate-webstart
+ * @goal generate-jnlp
  * @phase package
  * @requiresDependencyResolution runtime
  * @description Generates A Webstart Javafx-based Deployment
  * @threadSafe
  */
-public class GenerateWebstartMojo extends AbstractMojo {
+public class GenerateJNLPMojo extends AbstractMojo {
 
-  private static final String RESOURCE_BASE_PATH = GenerateWebstartMojo.class.getPackage().getName().replace('.', '/');
+  private static final JNLParameter[] NO_PARAMETERS = new JNLParameter[0];
+  private static final String[] NO_ARGS = new String[0];
+  private static final String RESOURCE_BASE_PATH = GenerateJNLPMojo.class.getPackage().getName().replace('.', '/');
 
   /**
    * @parameter expression="${project}"
@@ -121,6 +123,16 @@ public class GenerateWebstartMojo extends AbstractMojo {
    * @parameter
    */
   private SigningInfo signjar;
+
+  /**
+   * @parameter
+   */
+  private JNLParameter[] jnlpParameters;
+
+  /**
+   * @parameter
+   */
+  private String[] jnlpArguments;
 
   /**
    * @parameter expression="${project.artifactId}"
@@ -228,6 +240,8 @@ public class GenerateWebstartMojo extends AbstractMojo {
     freemarkerMap.put("mainClass", mainClass);
     freemarkerMap.put("width", width);
     freemarkerMap.put("height", height);
+    freemarkerMap.put("jnlpParameters", (jnlpParameters != null) ? jnlpParameters : NO_PARAMETERS);
+    freemarkerMap.put("jnlpArguments", (jnlpArguments != null) ? jnlpArguments : NO_ARGS);
 
     createDirectory("deploy", deployDirectory = new File(project.getBuild().getDirectory() + System.getProperty("file.separator") + deployDir));
 
@@ -450,7 +464,7 @@ public class GenerateWebstartMojo extends AbstractMojo {
 
     freemarkerConf = new Configuration();
     freemarkerConf.setTagSyntax(freemarker.template.Configuration.SQUARE_BRACKET_TAG_SYNTAX);
-    freemarkerConf.setTemplateLoader(new ClassPathTemplateLoader(GenerateWebstartMojo.class));
+    freemarkerConf.setTemplateLoader(new ClassPathTemplateLoader(GenerateJNLPMojo.class));
 
     try {
       freemarkerTemplate = freemarkerConf.getTemplate(templatePath);

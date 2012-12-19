@@ -60,7 +60,7 @@ import org.smallmind.nutsnbolts.io.FileIterator;
  */
 public class GenerateWrapperMojo extends AbstractMojo {
 
-  private static final String[] NOTHING = new String[0];
+  private static final String[] NO_ARGS = new String[0];
   private static final String RESOURCE_BASE_PATH = GenerateWrapperMojo.class.getPackage().getName().replace('.', '/');
 
   /**
@@ -241,7 +241,7 @@ public class GenerateWrapperMojo extends AbstractMojo {
     freemarkerMap.put("applicationDescription", (applicationDescription != null) ? applicationDescription : String.format("%s generated project", GenerateWrapperMojo.class.getSimpleName()));
     freemarkerMap.put("javaCommand", javaCommand);
     freemarkerMap.put("wrapperListener", wrapperListener);
-    freemarkerMap.put("jvmArgs", (jvmArgs != null) ? jvmArgs : NOTHING);
+    freemarkerMap.put("jvmArgs", (jvmArgs != null) ? jvmArgs : NO_ARGS);
 
     if (jvmInitMemoryMB > 0) {
       freemarkerMap.put("jvmInitMemoryMB", jvmInitMemoryMB);
@@ -277,7 +277,7 @@ public class GenerateWrapperMojo extends AbstractMojo {
       freemarkerMap.put("appParameters", modifiedAppParameters);
     }
 
-    freemarkerMap.put("serviceDependencies", (serviceDependencies != null) ? serviceDependencies : NOTHING);
+    freemarkerMap.put("serviceDependencies", (serviceDependencies != null) ? serviceDependencies : NO_ARGS);
 
     classpathElementList = new LinkedList<String>();
     freemarkerMap.put("classpathElements", classpathElementList);
