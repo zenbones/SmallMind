@@ -1,52 +1,25 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
-  <modelVersion>4.0.0</modelVersion>
+   <modelVersion>4.0.0</modelVersion>
 
-  <parent>
-    <groupId>org.smallmind</groupId>
-    <artifactId>smallmind</artifactId>
-    <version>1.6.1-SNAPSHOT</version>
-  </parent>
-  <artifactId>smallmind-javafx</artifactId>
-  <packaging>jar</packaging>
-  <name>JavaFX</name>
-  <description>JavaFX Extensions</description>
-  <dependencies>
-    <dependency>
+   <parent>
       <groupId>org.smallmind</groupId>
-      <artifactId>smallmind-nutsnbolts</artifactId>
-      <version>${project.version}</version>
-    </dependency>
-    <dependency>
-      <groupId>com.oracle</groupId>
-      <artifactId>javafx-rt</artifactId>
-      <scope>system</scope>
-      <systemPath>${javafx.runtime.lib.jar}</systemPath>
-    </dependency>
-  </dependencies>
-  <build>
-    <plugins>
-      <plugin>
-        <groupId>org.smallmind</groupId>
-        <artifactId>smallmind-license-plugin</artifactId>
-      </plugin>
-    </plugins>
-    <resources>
-      <resource>
-        <directory>${basedir}/src/main/java</directory>
-        <filtering>false</filtering>
-        <includes>
-          <include>**/*.fxml</include>
-          <include>**/*.css</include>
-        </includes>
-      </resource>
-      <resource>
-        <directory>src/main/resources/xsd</directory>
-        <filtering>false</filtering>
-      </resource>
-      <resource>
-        <directory>src/main/resources/image</directory>
-        <filtering>false</filtering>
-      </resource>
-    </resources>
-  </build>
+      <artifactId>smallmind</artifactId>
+      <version>1.6.1-SNAPSHOT</version>
+   </parent>
+   <artifactId>smallmind-javafx</artifactId>
+   <name>JavaFX</name>
+   <description>JavaFX Projects</description>
+   <packaging>pom</packaging>
+   <modules>
+      <module>extras</module>
+      <module>mojo</module>
+   </modules>
+   <build>
+      <plugins>
+         <plugin>
+            <groupId>org.smallmind</groupId>
+            <artifactId>smallmind-license-plugin</artifactId>
+         </plugin>
+      </plugins>
+   </build>
 </project>

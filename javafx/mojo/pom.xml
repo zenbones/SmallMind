@@ -3,14 +3,21 @@
 
   <parent>
     <groupId>org.smallmind</groupId>
-    <artifactId>spark-tanukisoft</artifactId>
+    <artifactId>smallmind-javafx</artifactId>
     <version>1.6.1-SNAPSHOT</version>
   </parent>
-  <artifactId>spark-tanukisoft-mojo</artifactId>
-  <name>Spark-Tanukisoft-Mojo</name>
-  <description>Tanukisoft Wrapper Maven Plugin</description>
+  <artifactId>smallmind-javafx-mojo</artifactId>
+  <name>Smallmind-JavaFX-Mojo</name>
+  <description>JavaFX Maven Plugin</description>
   <packaging>maven-plugin</packaging>
   <dependencies>
+    <dependency>
+      <groupId>com.sun</groupId>
+      <artifactId>tools</artifactId>
+      <scope>system</scope>
+      <version>${java.version}</version>
+      <systemPath>${java.tools.jar}</systemPath>
+    </dependency>
     <dependency>
       <groupId>org.smallmind</groupId>
       <artifactId>smallmind-nutsnbolts</artifactId>
@@ -37,12 +44,18 @@
     </dependency>
   </dependencies>
   <build>
-    <finalName>maven-tanukisoft-plugin-${project.version}</finalName>
+    <finalName>maven-javafx-plugin-${project.version}</finalName>
     <resources>
       <resource>
         <directory>src/main/installation</directory>
         <filtering>false</filtering>
       </resource>
     </resources>
+    <plugins>
+      <plugin>
+        <groupId>org.smallmind</groupId>
+        <artifactId>smallmind-license-plugin</artifactId>
+      </plugin>
+    </plugins>
   </build>
 </project>

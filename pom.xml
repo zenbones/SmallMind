@@ -127,7 +127,6 @@
     <module>swing</module>
     <module>javafx</module>
     <module>wicket</module>
-    <module>webstart</module>
     <module>liquibase</module>
   </modules>
   <dependencyManagement>
