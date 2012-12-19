@@ -37,7 +37,6 @@
     </dependency>
   </dependencies>
   <build>
-    <finalName>maven-tanukisoft-plugin-${project.version}</finalName>
     <resources>
       <resource>
         <directory>src/main/installation</directory>
