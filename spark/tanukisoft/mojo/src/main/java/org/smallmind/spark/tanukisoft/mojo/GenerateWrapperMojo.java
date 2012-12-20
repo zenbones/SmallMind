@@ -418,18 +418,18 @@ public class GenerateWrapperMojo extends AbstractMojo {
 
       try {
         if (verbose) {
-          getLog().info(String.format("Creating application jar(%s)...", jarFile.getName()));
+          getLog().info(String.format("Creating aggregated jar(%s)...", jarFile.getName()));
         }
 
         createJar(jarFile, new File(project.getBuild().getDirectory() + System.getProperty("file.separator") + applicationDir));
       }
       catch (IOException ioException) {
-        throw new MojoExecutionException(String.format("Problem in creating the application jar(%s)", jarFile.getName()), ioException);
+        throw new MojoExecutionException(String.format("Problem in creating the aggregated jar(%s)", jarFile.getName()), ioException);
       }
     }
   }
 
-  private String createArtifactName (boolean includeVersion, boolean applicationArtifact) {
+  private String createArtifactName (boolean includeVersion, boolean aggregateArtifact) {
 
     StringBuilder nameBuilder;
 
@@ -443,16 +443,16 @@ public class GenerateWrapperMojo extends AbstractMojo {
       nameBuilder.append('-').append(project.getArtifact().getClassifier());
     }
 
-    if (applicationArtifact) {
+    if (aggregateArtifact) {
       nameBuilder.append("-app");
     }
 
     return nameBuilder.toString();
   }
 
-  private String createJarArtifactPath (String outputPath, boolean applicationArtifact) {
+  private String createJarArtifactPath (String outputPath, boolean aggregateArtifact) {
 
-    return new StringBuilder(outputPath).append(System.getProperty("file.separator")).append(createArtifactName(true, applicationArtifact)).append(".jar").toString();
+    return new StringBuilder(outputPath).append(System.getProperty("file.separator")).append(createArtifactName(true, aggregateArtifact)).append(".jar").toString();
   }
 
   private void createJar (File jarFile, File directoryToJar)

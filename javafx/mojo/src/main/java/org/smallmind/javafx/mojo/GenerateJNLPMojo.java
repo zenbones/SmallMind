@@ -54,7 +54,7 @@ import org.smallmind.nutsnbolts.util.SingleItemIterator;
  * @goal generate-jnlp
  * @phase package
  * @requiresDependencyResolution runtime
- * @description Generates A Webstart Javafx-based Deployment
+ * @description Generates A Webstart Javafx-based Project
  * @threadSafe
  */
 public class GenerateJNLPMojo extends AbstractMojo {
@@ -140,11 +140,6 @@ public class GenerateJNLPMojo extends AbstractMojo {
   private String applicationName;
 
   /**
-   * @parameter expression="${project.artifactId}-${project.version}.jnlp"
-   */
-  private String href;
-
-  /**
    * @parameter expression="${project.artifactId}"
    */
   private String title;
@@ -165,7 +160,7 @@ public class GenerateJNLPMojo extends AbstractMojo {
   private boolean offlineAllowed;
 
   /**
-   * @parameter default-value="deploy"
+   * @parameter default-value="jnlp"
    */
   private String deployDir;
 
@@ -227,7 +222,7 @@ public class GenerateJNLPMojo extends AbstractMojo {
 
     freemarkerMap = new HashMap<String, Object>();
     freemarkerMap.put("jnlpSpec", jnlpSpec);
-    freemarkerMap.put("href", href);
+    freemarkerMap.put("href", createArtifactName(includeVersion, false));
     freemarkerMap.put("title", title);
     freemarkerMap.put("vendor", vendor);
     freemarkerMap.put("description", description);
@@ -243,7 +238,7 @@ public class GenerateJNLPMojo extends AbstractMojo {
     freemarkerMap.put("jnlpParameters", (jnlpParameters != null) ? jnlpParameters : NO_PARAMETERS);
     freemarkerMap.put("jnlpArguments", (jnlpArguments != null) ? jnlpArguments : NO_ARGS);
 
-    createDirectory("deploy", deployDirectory = new File(project.getBuild().getDirectory() + System.getProperty("file.separator") + deployDir));
+    createDirectory("deploy", deployDirectory = new File(project.getBuild().getDirectory() + System.getProperty("file.separator") + deployDir + System.getProperty("file.separator") + createArtifactName(includeVersion, false) + System.getProperty("file.separator")));
 
     dependencyList = new LinkedList<>();
     copyDependencies(project.getRuntimeArtifacts(), deployDirectory, dependencyList);
@@ -265,7 +260,7 @@ public class GenerateJNLPMojo extends AbstractMojo {
 
       File jarFile;
 
-      jarFile = new File(createJarArtifactPath(project.getBuild().getDirectory()));
+      jarFile = new File(createJarArtifactPath(project.getBuild().getDirectory(), false));
 
       try {
 
@@ -326,7 +321,25 @@ public class GenerateJNLPMojo extends AbstractMojo {
       getLog().info("Processing the configuration template...");
     }
 
-    processFreemarkerTemplate(getTemplateFilePath(), deployDirectory, createArtifactName() + ".jnlp", freemarkerMap);
+    processFreemarkerTemplate(getTemplateFilePath(), deployDirectory, createArtifactName(includeVersion, false) + ".jnlp", freemarkerMap);
+
+    if (createJar) {
+
+      File jarFile;
+
+      jarFile = new File(createJarArtifactPath(project.getBuild().getDirectory(), true));
+
+      try {
+        if (verbose) {
+          getLog().info(String.format("Creating aggregated jar(%s)...", jarFile.getName()));
+        }
+
+        createJar(jarFile, new File(project.getBuild().getDirectory() + System.getProperty("file.separator") + deployDir));
+      }
+      catch (IOException ioException) {
+        throw new MojoExecutionException(String.format("Problem in creating the aggregated jar(%s)", jarFile.getName()), ioException);
+      }
+    }
   }
 
   private void createDirectory (String dirType, File dirFile)
@@ -393,22 +406,30 @@ public class GenerateJNLPMojo extends AbstractMojo {
     }
   }
 
-  private String createArtifactName () {
+  private String createArtifactName (boolean includeVersion, boolean aggregateArtifact) {
 
     StringBuilder nameBuilder;
 
-    nameBuilder = new StringBuilder(applicationName).append('-').append(project.getVersion());
+    nameBuilder = new StringBuilder(applicationName);
+
+    if (includeVersion) {
+      nameBuilder.append('-').append(project.getVersion());
+    }
 
     if (project.getArtifact().getClassifier() != null) {
       nameBuilder.append('-').append(project.getArtifact().getClassifier());
     }
 
+    if (aggregateArtifact) {
+      nameBuilder.append("-jnlp");
+    }
+
     return nameBuilder.toString();
   }
 
-  private String createJarArtifactPath (String outputPath) {
+  private String createJarArtifactPath (String outputPath, boolean aggregateArtifact) {
 
-    return new StringBuilder(outputPath).append(System.getProperty("file.separator")).append(createArtifactName()).append(".jar").toString();
+    return new StringBuilder(outputPath).append(System.getProperty("file.separator")).append(createArtifactName(true, aggregateArtifact)).append(".jar").toString();
   }
 
   private void createJar (File jarFile, File directoryToJar)
