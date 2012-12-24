@@ -9,6 +9,7 @@ import java.nio.channels.SelectionKey;
 import java.nio.channels.Selector;
 import java.nio.channels.SocketChannel;
 import java.util.Arrays;
+import java.util.Iterator;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -44,29 +45,35 @@ public class Websocket {
     channel.register(selector = Selector.open(), SelectionKey.OP_CONNECT | SelectionKey.OP_READ);
     channel.connect(new InetSocketAddress(uri.getHost().toLowerCase(), (uri.getPort() != -1) ? uri.getPort() : uri.getScheme().equals("ws") ? 80 : 443));
 
-    int kn;
     while (true) {
-      if ((kn = selector.select(1000)) > 0) {
-        for (SelectionKey key : selector.selectedKeys()) {
+      if (selector.select(1000) > 0) {
+
+        Iterator<SelectionKey> keyIter = selector.selectedKeys().iterator();
+
+        while (keyIter.hasNext()) {
+
+          SelectionKey key = keyIter.next();
+
           if (key.isConnectable()) {
-            System.out.println("connectable...");
             channel.finishConnect();
-            System.out.println("handshake...");
             channel.write(ByteBuffer.wrap(ClientHandshake.constructRequest(uri, protocols)));
-            channel.write(ByteBuffer.wrap(stuff().getBytes()));
           }
-          if (key.isReadable()) {
-            System.out.println("readable...");
+          else if (key.isReadable()) {
             responseStream = new ByteArrayOutputStream();
-            responseBuffer = ByteBuffer.wrap(new byte[241]);
+            responseBuffer = ByteBuffer.wrap(new byte[32]);
 
             do {
               channel.read((ByteBuffer)responseBuffer.rewind());
               responseStream.write(responseBuffer.array(), 0, responseBuffer.position());
-            } while (responseBuffer.position() == responseBuffer.limit());
+            } while (responseBuffer.position() > 0);
 
-            System.out.print(new String(responseStream.toByteArray()));
+            if (responseStream.size() > 0) {
+              System.out.println("readable...");
+              System.out.print(new String(responseStream.toByteArray()));
+            }
           }
+
+          keyIter.remove();
         }
       }
     }
