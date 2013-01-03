@@ -41,14 +41,14 @@ import java.util.concurrent.atomic.AtomicReference;
 
 public class Websocket {
 
-  private SocketChannel channel;
   private Selector selector;
   private AtomicReference<ReadyState> readyStateRef = new AtomicReference<>(ReadyState.CONNECTING);
   private String url;
 
   public Websocket (URI uri, String... protocols)
-    throws IOException, SyntaxException {
+    throws IOException, SyntaxException, InterruptedException {
 
+    SocketChannel initChannel;
     ByteArrayOutputStream responseStream;
     ByteBuffer responseBuffer;
 
@@ -67,40 +67,50 @@ public class Websocket {
     }
 
     url = uri.toString();
-    channel = (SocketChannel)SocketChannel.open().configureBlocking(false);
-    channel.register(selector = Selector.open(), SelectionKey.OP_CONNECT | SelectionKey.OP_READ);
-    channel.connect(new InetSocketAddress(uri.getHost().toLowerCase(), (uri.getPort() != -1) ? uri.getPort() : uri.getScheme().equals("ws") ? 80 : 443));
+    initChannel = (SocketChannel)SocketChannel.open().configureBlocking(false);
+    initChannel.register(selector = Selector.open(), SelectionKey.OP_CONNECT | SelectionKey.OP_READ);
+    initChannel.connect(new InetSocketAddress(uri.getHost().toLowerCase(), (uri.getPort() != -1) ? uri.getPort() : uri.getScheme().equals("ws") ? 80 : 443));
 
     while (true) {
-      if (selector.select(1000) > 0) {
+      if (selector.select() > 0) {
 
         Iterator<SelectionKey> keyIter = selector.selectedKeys().iterator();
 
         while (keyIter.hasNext()) {
 
           SelectionKey key = keyIter.next();
+          SocketChannel readyChannel = (SocketChannel)key.channel();
+
+          keyIter.remove();
 
           if (key.isConnectable()) {
-            channel.finishConnect();
-            channel.write(ByteBuffer.wrap(ClientHandshake.constructRequest(uri, protocols)));
+            System.out.println("connectable...");
+            if (readyChannel.isConnectionPending()) {
+              readyChannel.finishConnect();
+            }
+
+            readyChannel.write(ByteBuffer.wrap(ClientHandshake.constructRequest(uri, protocols)));
           }
           else if (key.isReadable()) {
+            System.out.println("readable...");
             responseStream = new ByteArrayOutputStream();
-            responseBuffer = ByteBuffer.wrap(new byte[32]);
 
             do {
-              channel.read((ByteBuffer)responseBuffer.rewind());
+
+              responseBuffer = ByteBuffer.wrap(new byte[2048]);
+
+              System.out.println(readyChannel.read(responseBuffer));
               responseStream.write(responseBuffer.array(), 0, responseBuffer.position());
             } while (responseBuffer.position() > 0);
 
             if (responseStream.size() > 0) {
-              System.out.println("readable...");
               System.out.print(new String(responseStream.toByteArray()));
             }
           }
-
-          keyIter.remove();
         }
+      }
+      else {
+        initChannel.register(selector = Selector.open(), SelectionKey.OP_CONNECT | SelectionKey.OP_READ);
       }
     }
   }
