@@ -41,7 +41,7 @@ import org.smallmind.nutsnbolts.lang.UnknownSwitchCaseException;
 import org.smallmind.nutsnbolts.util.ThreadLocalRandom;
 import org.smallmind.scribe.pen.LoggerManager;
 
-public abstract class Websocket2 {
+public abstract class Websocket {
 
   private final Socket socket;
   private final MessageWorker messageWorker;
@@ -49,7 +49,7 @@ public abstract class Websocket2 {
   private final String url;
   private final byte[] rawBuffer = new byte[1024];
 
-  public Websocket2 (URI uri, String... protocols)
+  public Websocket (URI uri, String... protocols)
     throws IOException, NoSuchAlgorithmException, WebsocketException {
 
     Thread workerThread;
@@ -183,7 +183,7 @@ public abstract class Websocket2 {
         }
       }
       catch (Exception exception) {
-        LoggerManager.getLogger(Websocket2.class).error(exception);
+        LoggerManager.getLogger(Websocket.class).error(exception);
       }
       finally {
         exitLatch.countDown();

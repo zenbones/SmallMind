@@ -34,7 +34,7 @@ public class Foo {
     throws Exception {
 
     System.out.println("testing...");
-    new Websocket2(URI.create("ws://devg2tc-1.aws.glu.com:8080/game-web-server/websocket")) {
+    new Websocket(URI.create("ws://devg2tc-1.aws.glu.com:8080/game-web-server/websocket")) {
 
       @Override
       public void onMessage (String message) {
