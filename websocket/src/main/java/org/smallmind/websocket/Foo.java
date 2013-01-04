@@ -38,7 +38,8 @@ public class Foo {
 
       @Override
       public void onError (Exception exception) {
-        //To change body of implemented methods use File | Settings | File Templates.
+
+        throw new RuntimeException(exception);
       }
 
       @Override
@@ -54,7 +55,8 @@ public class Foo {
 
       @Override
       public void onBinary (byte[] message) {
-        //To change body of implemented methods use File | Settings | File Templates.
+
+        System.out.println(new String(message));
       }
     };
 

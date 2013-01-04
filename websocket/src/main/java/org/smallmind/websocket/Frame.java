@@ -125,11 +125,11 @@ public class Frame {
       message = new byte[length];
     }
     else if (length == 126) {
-      message = new byte[(buffer[2] << 8) + buffer[3]];
+      message = new byte[((buffer[2] & 0xFF) << 8) + (buffer[3] & 0xFF)];
       start = 4;
     }
     else {
-      message = new byte[(buffer[6] << 24) + (buffer[7] << 16) + (buffer[8] << 8) + buffer[9]];
+      message = new byte[((buffer[6] & 0xFF) << 24) + ((buffer[7] & 0xFF) << 16) + ((buffer[8] & 0xFF) << 8) + (buffer[9] & 0xFF)];
       start = 10;
     }
 
