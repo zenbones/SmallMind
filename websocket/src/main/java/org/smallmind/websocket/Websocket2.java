@@ -33,9 +33,11 @@ import java.net.URI;
 import java.nio.ByteBuffer;
 import java.security.NoSuchAlgorithmException;
 import java.util.Arrays;
+import java.util.LinkedList;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
+import org.smallmind.nutsnbolts.lang.UnknownSwitchCaseException;
 import org.smallmind.nutsnbolts.util.ThreadLocalRandom;
 import org.smallmind.scribe.pen.LoggerManager;
 
@@ -45,9 +47,10 @@ public abstract class Websocket2 {
   private final MessageWorker messageWorker;
   private final AtomicReference<ReadyState> readyStateRef = new AtomicReference<>(ReadyState.CONNECTING);
   private final String url;
+  private final byte[] rawBuffer = new byte[1024];
 
   public Websocket2 (URI uri, String... protocols)
-    throws IOException, NoSuchAlgorithmException, SyntaxException {
+    throws IOException, NoSuchAlgorithmException, WebsocketException {
 
     Thread workerThread;
     byte[] keyBytes = new byte[16];
@@ -75,7 +78,7 @@ public abstract class Websocket2 {
 
     // initial handshake request
     socket.getOutputStream().write(Handshake.constructRequest(uri, keyBytes, protocols));
-    Handshake.validateResponse(readData(), keyBytes, protocols);
+    Handshake.validateResponse(new String(readData()), keyBytes, protocols);
     readyStateRef.set(ReadyState.OPEN);
 
     workerThread = new Thread(messageWorker = new MessageWorker());
@@ -91,22 +94,22 @@ public abstract class Websocket2 {
     socket.getOutputStream().write(buffer.array(), buffer.position(), buffer.limit() - buffer.position());
   }
 
-  private String readData ()
-    throws IOException {
+  private byte[] readData ()
+    throws IOException, WebsocketException {
 
     ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
-    byte[] buffer = new byte[1024];
 
-    socket.getOutputStream().write(Frame.pong());
+    // TODO: Should NOT need to do this
+    socket.getOutputStream().write(Frame.pong(new byte[0]));
     do {
 
       int bytesRead;
 
-      bytesRead = socket.getInputStream().read(buffer);
-      outputStream.write(buffer, 0, bytesRead);
+      bytesRead = socket.getInputStream().read(rawBuffer);
+      outputStream.write(rawBuffer, 0, bytesRead);
     } while (socket.getInputStream().available() > 0);
 
-    return new String(outputStream.toByteArray());
+    return outputStream.toByteArray();
   }
 
   public String url () {
@@ -133,6 +136,7 @@ public abstract class Websocket2 {
 
     private CountDownLatch exitLatch = new CountDownLatch(1);
     private AtomicBoolean aborted = new AtomicBoolean(false);
+    private LinkedList<Data> dataList = new LinkedList<>();
 
     public void abort ()
       throws InterruptedException {
@@ -148,11 +152,38 @@ public abstract class Websocket2 {
 
       try {
         while (!aborted.get()) {
-          onMessage(readData());
+
+          Data data;
+
+          if ((data = Frame.decode(readData())).isFinal()) {
+            switch (data.getOpCode()) {
+              case CONTINUATION:
+                break;
+              case TEXT:
+                break;
+              case BINARY:
+                break;
+              case CLOSE:
+                break;
+              case PING:
+                break;
+              case PONG:
+                break;
+              default:
+                throw new UnknownSwitchCaseException(data.getOpCode().name());
+            }
+          }
+          else {
+            if (!((data.getOpCode() == OpCode.TEXT) || (data.getOpCode() == OpCode.BINARY))) {
+              throw new WebsocketException("All control frames must be marked as final");
+            }
+
+            dataList.add(data);
+          }
         }
       }
-      catch (IOException ioException) {
-        LoggerManager.getLogger(Websocket2.class).error(ioException);
+      catch (Exception exception) {
+        LoggerManager.getLogger(Websocket2.class).error(exception);
       }
       finally {
         exitLatch.countDown();

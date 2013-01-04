@@ -30,17 +30,106 @@ import java.util.concurrent.ThreadLocalRandom;
 
 public class Frame {
 
-  public static byte[] pong () {
+  public static byte[] ping (byte[] message)
+    throws WebsocketException {
 
-    byte[] out = new byte[6];
+    return control(OpCode.PING, message);
+  }
+
+  public static byte[] pong (byte[] message)
+    throws WebsocketException {
+
+    return control(OpCode.PONG, message);
+  }
+
+  private static byte[] control (OpCode opCode, byte[] message)
+    throws WebsocketException {
+
+    if (message.length > 125) {
+      throw new WebsocketException("Control frame data length exceeds 125 bytes");
+    }
+
+    return data(opCode, message);
+  }
+
+  public static byte[] binary (byte[] message) {
+
+    return data(OpCode.BINARY, message);
+  }
+
+  private static byte[] data (OpCode opCode, byte[] message) {
+
+    int start = (message.length < 126) ? 6 : (message.length < 65536) ? 8 : 14;
+    byte[] out = new byte[message.length + start];
     byte[] mask = new byte[4];
 
-    out[0] = (byte)0x8A;
-    out[1] = (byte)0x80;
-
     ThreadLocalRandom.current().nextBytes(mask);
-    System.arraycopy(mask, 0, out, 2, 4);
+
+    out[0] = (byte)(0x80 | opCode.getCode());
+
+    if (message.length < 126) {
+      out[1] = (byte)(0x80 | message.length);
+
+      System.arraycopy(mask, 0, out, 2, 4);
+    }
+    else if (message.length < 65536) {
+      out[1] = (byte)(0x80 | 126);
+      out[2] = (byte)(message.length >>> 8);
+      out[3] = (byte)(message.length & 0xFF);
+
+      System.arraycopy(mask, 0, out, 4, 4);
+    }
+    else {
+      out[1] = (byte)(0x80 | 127);
+      // largest array will never be more than 2^31-1
+      out[2] = 0;
+      out[3] = 0;
+      out[4] = 0;
+      out[5] = 0;
+      out[6] = (byte)(message.length >>> 24);
+      out[7] = (byte)(message.length >>> 16);
+      out[8] = (byte)(message.length >>> 8);
+      out[9] = (byte)(message.length & 0xFF);
+
+      System.arraycopy(mask, 0, out, 10, 4);
+    }
+
+    for (int index = 0; index < message.length; index++) {
+      out[index + start] = (byte)(message[index] ^ mask[index % 4]);
+    }
 
     return out;
+  }
+
+  public static Data decode (byte[] buffer)
+    throws SyntaxException {
+
+    OpCode opCode;
+    boolean fin;
+    int start;
+    byte[] message;
+    byte length;
+
+    if ((opCode = OpCode.convert(buffer[0])) == null) {
+      throw new SyntaxException("Unknown op code(%d)", buffer[0] & 0xF);
+    }
+    fin = (buffer[0] & 0x80) != 0;
+
+    if ((length = (byte)(buffer[1] & 0x7F)) < 126) {
+      start = 2;
+      message = new byte[length];
+    }
+    else if (length == 126) {
+      message = new byte[(buffer[2] << 8) + buffer[3]];
+      start = 4;
+    }
+    else {
+      message = new byte[(buffer[6] << 24) + (buffer[7] << 16) + (buffer[8] << 8) + buffer[9]];
+      start = 10;
+    }
+
+    System.arraycopy(buffer, start, message, 0, message.length);
+
+    return new Data(fin, opCode, message);
   }
 }
