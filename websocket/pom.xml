@@ -28,6 +28,30 @@
         <groupId>org.smallmind</groupId>
         <artifactId>smallmind-license-plugin</artifactId>
       </plugin>
+      <plugin>
+        <artifactId>maven-assembly-plugin</artifactId>
+        <configuration>
+          <descriptorRefs>
+            <descriptorRef>jar-with-dependencies</descriptorRef>
+          </descriptorRefs>
+          <finalName>foo-${project.version}</finalName>
+          <appendAssemblyId>false</appendAssemblyId>
+          <archive>
+            <manifest>
+              <mainClass>org.smallmind.websocket.Foo</mainClass>
+            </manifest>
+          </archive>
+        </configuration>
+        <executions>
+          <execution>
+            <id>make-assembly</id>
+            <phase>package</phase>
+            <goals>
+              <goal>single</goal>
+            </goals>
+          </execution>
+        </executions>
+      </plugin>
     </plugins>
   </build>
 </project>

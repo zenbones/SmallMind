@@ -26,20 +26,29 @@
  */
 package org.smallmind.websocket;
 
+import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.StringReader;
 import java.net.URI;
+import java.security.NoSuchAlgorithmException;
+import java.util.HashMap;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import org.smallmind.nutsnbolts.http.Base64Codec;
-import org.smallmind.nutsnbolts.util.ThreadLocalRandom;
+import org.smallmind.nutsnbolts.security.EncryptionUtilities;
+import org.smallmind.nutsnbolts.security.HashAlgorithm;
 
 public class ClientHandshake {
 
-  public static byte[] constructRequest (URI uri, String... protocols)
+  private static final Pattern HTTP_STATUS_PATTERN = Pattern.compile("HTTP/(\\d+\\.\\d+)\\s(\\d+)\\s(.+)");
+  private static final Pattern HTTP_HEADER_PATTERN = Pattern.compile("([^:]+):\\s*(.+)\\s*");
+
+//  HTTP-Version SP Status-Code SP Reason-Phrase
+
+  public static byte[] constructRequest (URI uri, byte[] keyBytes, String... protocols)
     throws IOException {
 
     StringBuilder handshakeBuilder = new StringBuilder();
-    byte[] keyBytes = new byte[16];
-
-    ThreadLocalRandom.current().nextBytes(keyBytes);
 
     handshakeBuilder.append("GET ").append((uri.getPath() == null) || (uri.getPath().length() == 0) ? "/" : uri.getPath());
     if ((uri.getQuery() != null) && (uri.getQuery().length() > 0)) {
@@ -74,21 +83,82 @@ public class ClientHandshake {
     return handshakeBuilder.toString().getBytes();
   }
 
-  public static void validateResponse (String response) {
+  public static void validateResponse (String response, byte[] keyBytes, String... protocols)
+    throws IOException, NoSuchAlgorithmException, SyntaxException {
 
-    /*
-    HTTP/1.1 101 Switching Protocols
-Server: Apache-Coyote/1.1
-Upgrade: websocket
-Connection: upgrade
-Sec-WebSocket-Accept: u58zgW+m3iGeL3qiduB/XPwkurQ=
-Transfer-Encoding: chunked
-Date: Fri, 21 Dec 2012 22:54:11 GMT
-Connection: close
-     */
+    BufferedReader reader = new BufferedReader(new StringReader(response));
+    HashMap<String, String> fieldMap;
+    Matcher httpStatusMatcher;
+    String httpStatus;
+    String httpField;
 
-    /*
-    Sec-WebSocket-Protocol: chat
-     */
+    do {
+      httpStatus = reader.readLine();
+    } while ((httpStatus != null) && (httpStatus.length() == 0));
+
+    if (httpStatus == null) {
+      throw new SyntaxException("The handshake response could not be parsed");
+    }
+    if (!(httpStatusMatcher = HTTP_STATUS_PATTERN.matcher(httpStatus)).matches()) {
+      throw new SyntaxException("The http status line(%s) of the handshake response could not be parsed", httpStatus);
+    }
+    if (!httpStatusMatcher.group(2).equals("101")) {
+      throw new SyntaxException("Incorrect http status code(%s) in the handshake response", httpStatusMatcher.group(2));
+    }
+
+    fieldMap = new HashMap<>();
+    while (((httpField = reader.readLine()) != null) && (httpField.length() > 0)) {
+
+      Matcher fieldMatcher;
+
+      if (!(fieldMatcher = HTTP_HEADER_PATTERN.matcher(httpField)).matches()) {
+        throw new SyntaxException("The http header line(%s) of the handshake response could not be parsed", httpField);
+      }
+
+      if (!fieldMap.containsKey(fieldMatcher.group(1))) {
+        fieldMap.put(fieldMatcher.group(1), fieldMatcher.group(2));
+      }
+    }
+
+    if (!fieldMap.containsKey("Upgrade")) {
+      throw new SyntaxException("The http header does not contain an 'Upgrade' field");
+    }
+    if (!fieldMap.get("Upgrade").equalsIgnoreCase("websocket")) {
+      throw new SyntaxException("The 'Upgrade' field(%s) of the http header does not contain the value 'websocket'", fieldMap.get("Upgrade"));
+    }
+
+    if (!fieldMap.containsKey("Connection")) {
+      throw new SyntaxException("The http header does not contain a 'Connection' field");
+    }
+    if (!fieldMap.get("Connection").equalsIgnoreCase("upgrade")) {
+      throw new SyntaxException("The 'Connection' field(%s) of the http header does not contain the value 'upgrade'", fieldMap.get("Connection"));
+    }
+
+    if (!fieldMap.containsKey("Sec-WebSocket-Accept")) {
+      throw new SyntaxException("The http header does not contain a 'Sec-WebSocket-Accept' field");
+    }
+    if (!fieldMap.get("Sec-WebSocket-Accept").equals(Base64Codec.encode(EncryptionUtilities.hash(HashAlgorithm.SHA_1, (Base64Codec.encode(keyBytes) + "258EAFA5-E914-47DA-95CA-C5AB0DC85B11").getBytes())))) {
+      throw new SyntaxException("The 'Sec-WebSocket-Accept' field(%s) of the http header does not contain the correct value", fieldMap.get("Sec-WebSocket-Accept"));
+    }
+
+    if (fieldMap.containsKey("Sec-WebSocket-Protocol")) {
+
+      boolean matched = false;
+
+      for (String protocol : protocols) {
+        if (protocol.equals(fieldMap.get("Sec-WebSocket-Protocol"))) {
+          matched = true;
+          break;
+        }
+      }
+
+      if (!matched) {
+        throw new SyntaxException("The 'Sec-WebSocket-Protocol' field(%s) of the http header does not contain one of the requested sub-protocols", fieldMap.get("Sec-WebSocket-Protocol"));
+      }
+    }
+
+    if (fieldMap.containsKey("Sec-WebSocket-Extensions")) {
+      throw new SyntaxException("This client does not support the use of websocket extensions");
+    }
   }
 }
