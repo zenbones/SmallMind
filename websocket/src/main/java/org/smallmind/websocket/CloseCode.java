@@ -26,40 +26,28 @@
  */
 package org.smallmind.websocket;
 
-import java.net.URI;
+public enum CloseCode {
 
-public class Foo {
+  NORMAL(1000), GOING_AWAY(1001), PROTOCOL_ERROR(1002), UNKNOWN_DATA_TYPE(1003), DATA_TYPE_CONVERSION_ERROR(1007), POLICY_VIOLATION(1008), MESSAGE_TOO_LARGE(1009), MISSING_EXTENSION(1010), SERVER_ERROR(1011);
+  private int code;
 
-  public static void main (String... args)
-    throws Exception {
+  private CloseCode (int code) {
 
-    System.out.println("testing...");
-    new Websocket(URI.create("ws://devg2tc-1.aws.glu.com:8080/game-web-server/websocket")) {
+    this.code = code;
+  }
 
-      @Override
-      public void onError (Exception exception) {
+  public int getCode () {
 
-        throw new RuntimeException(exception);
-      }
+    return code;
+  }
 
-      @Override
-      public void onPong (byte[] message) {
-        //To change body of implemented methods use File | Settings | File Templates.
-      }
+  public byte[] getCodeAsBytes () {
 
-      @Override
-      public void onText (String message) {
+    byte[] out = new byte[2];
 
-        System.out.println(message);
-      }
+    out[0] = (byte)(code >>> 8);
+    out[1] = (byte)(code & 0xFF);
 
-      @Override
-      public void onBinary (byte[] message) {
-
-        System.out.println(new String(message));
-      }
-    };
-
-    Thread.sleep(30000);
+    return out;
   }
 }

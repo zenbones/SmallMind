@@ -42,6 +42,26 @@ public class Frame {
     return control(OpCode.PONG, message);
   }
 
+  public static byte[] close (byte[] status, String reason)
+    throws WebsocketException {
+
+    byte[] message;
+
+    if (reason == null) {
+      message = status;
+    }
+    else {
+
+      byte[] reasonsBytes = reason.getBytes();
+
+      message = new byte[reasonsBytes.length + 2];
+      System.arraycopy(status, 0, message, 0, 2);
+      System.arraycopy(reasonsBytes, 0, message, 2, reasonsBytes.length);
+    }
+
+    return control(OpCode.CLOSE, message);
+  }
+
   private static byte[] control (OpCode opCode, byte[] message)
     throws WebsocketException {
 
@@ -106,7 +126,7 @@ public class Frame {
     return out;
   }
 
-  public static Data decode (byte[] buffer)
+  public static Fragment decode (byte[] buffer)
     throws SyntaxException {
 
     OpCode opCode;
@@ -135,6 +155,6 @@ public class Frame {
 
     System.arraycopy(buffer, start, message, 0, message.length);
 
-    return new Data(fin, opCode, message);
+    return new Fragment(fin, opCode, message);
   }
 }

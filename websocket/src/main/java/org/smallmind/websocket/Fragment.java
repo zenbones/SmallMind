@@ -26,32 +26,31 @@
  */
 package org.smallmind.websocket;
 
-public enum OpCode {
+public class Fragment {
 
-  CONTINUATION((byte)0x0), TEXT((byte)0x1), BINARY((byte)0x2), CLOSE((byte)0x8), PING((byte)0x9), PONG((byte)0xA);
-  private byte code;
+  private OpCode opCode;
+  private boolean fin;
+  private byte[] message;
 
-  private OpCode (byte code) {
+  public Fragment (boolean fin, OpCode opCode, byte[] message) {
 
-    this.code = code;
+    this.fin = fin;
+    this.opCode = opCode;
+    this.message = message;
   }
 
-  public static OpCode convert (byte singleByte) {
+  public boolean isFinal () {
 
-    byte maskedValue = (byte)(singleByte & 0xF);
-
-    for (OpCode opCode : OpCode.values()) {
-      if (opCode.getCode() == maskedValue) {
-
-        return opCode;
-      }
-    }
-
-    return null;
+    return fin;
   }
 
-  public byte getCode () {
+  public OpCode getOpCode () {
 
-    return code;
+    return opCode;
+  }
+
+  public byte[] getMessage () {
+
+    return message;
   }
 }
