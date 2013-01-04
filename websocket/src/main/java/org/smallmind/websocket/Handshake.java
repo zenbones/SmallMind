@@ -38,7 +38,7 @@ import org.smallmind.nutsnbolts.http.Base64Codec;
 import org.smallmind.nutsnbolts.security.EncryptionUtilities;
 import org.smallmind.nutsnbolts.security.HashAlgorithm;
 
-public class ClientHandshake {
+public class Handshake {
 
   private static final Pattern HTTP_STATUS_PATTERN = Pattern.compile("HTTP/(\\d+\\.\\d+)\\s(\\d+)\\s(.+)");
   private static final Pattern HTTP_HEADER_PATTERN = Pattern.compile("([^:]+):\\s*(.+)\\s*");

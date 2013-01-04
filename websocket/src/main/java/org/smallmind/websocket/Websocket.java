@@ -89,7 +89,7 @@ public class Websocket {
               readyChannel.finishConnect();
             }
 
-            readyChannel.write(ByteBuffer.wrap(ClientHandshake.constructRequest(uri, protocols)));
+            readyChannel.write(ByteBuffer.wrap(Handshake.constructRequest(uri, protocols)));
           }
           else if (key.isReadable()) {
             System.out.println("readable...");

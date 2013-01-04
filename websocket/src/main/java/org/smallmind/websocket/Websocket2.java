@@ -74,8 +74,8 @@ public abstract class Websocket2 {
     socket.setTcpNoDelay(true);
 
     // initial handshake request
-    socket.getOutputStream().write(ClientHandshake.constructRequest(uri, keyBytes, protocols));
-    ClientHandshake.validateResponse(readData(), keyBytes, protocols);
+    socket.getOutputStream().write(Handshake.constructRequest(uri, keyBytes, protocols));
+    Handshake.validateResponse(readData(), keyBytes, protocols);
     readyStateRef.set(ReadyState.OPEN);
 
     workerThread = new Thread(messageWorker = new MessageWorker());
