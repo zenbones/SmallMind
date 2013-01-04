@@ -30,21 +30,25 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.net.Socket;
 import java.net.URI;
-import java.nio.ByteBuffer;
 import java.security.NoSuchAlgorithmException;
 import java.util.Arrays;
+import java.util.Iterator;
 import java.util.LinkedList;
+import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
+import com.sun.org.apache.xml.internal.security.utils.Base64;
 import org.smallmind.nutsnbolts.lang.UnknownSwitchCaseException;
+import org.smallmind.nutsnbolts.security.EncryptionUtilities;
+import org.smallmind.nutsnbolts.security.HashAlgorithm;
 import org.smallmind.nutsnbolts.util.ThreadLocalRandom;
-import org.smallmind.scribe.pen.LoggerManager;
 
 public abstract class Websocket {
 
   private final Socket socket;
   private final MessageWorker messageWorker;
+  private final ConcurrentLinkedQueue<String> pingKeyQueue = new ConcurrentLinkedQueue<>();
   private final AtomicReference<ReadyState> readyStateRef = new AtomicReference<>(ReadyState.CONNECTING);
   private final String url;
   private final byte[] rawBuffer = new byte[1024];
@@ -86,12 +90,51 @@ public abstract class Websocket {
     workerThread.start();
   }
 
-  public abstract void onMessage (String message);
+  public abstract void onError (Exception exception);
 
-  public void send (ByteBuffer buffer)
+  public abstract void onPong (byte[] message);
+
+  public abstract void onText (String message);
+
+  public abstract void onBinary (byte[] message);
+
+  public void ping (byte[] buffer)
+    throws IOException, WebsocketException {
+
+    //TODO: closed check
+
+    try {
+      pingKeyQueue.add(Base64.encode(EncryptionUtilities.hash(HashAlgorithm.SHA_1, buffer)));
+      write(Frame.ping(buffer));
+    }
+    catch (NoSuchAlgorithmException noSuchAlgorithmException) {
+      throw new WebsocketException(noSuchAlgorithmException);
+    }
+  }
+
+  public void text (String message)
     throws IOException {
 
-    socket.getOutputStream().write(buffer.array(), buffer.position(), buffer.limit() - buffer.position());
+    //TODO: closed check
+    write(Frame.text(message));
+  }
+
+  public void binary (byte[] buffer)
+    throws IOException {
+
+    //TODO: closed check
+    write(Frame.binary(buffer));
+  }
+
+  public void close () {
+
+    // TODO:
+  }
+
+  private void write (byte[] buffer)
+    throws IOException {
+
+    socket.getOutputStream().write(buffer);
   }
 
   private byte[] readData ()
@@ -108,6 +151,7 @@ public abstract class Websocket {
       bytesRead = socket.getInputStream().read(rawBuffer);
       outputStream.write(rawBuffer, 0, bytesRead);
     } while (socket.getInputStream().available() > 0);
+    outputStream.close();
 
     return outputStream.toByteArray();
   }
@@ -152,38 +196,102 @@ public abstract class Websocket {
 
       try {
         while (!aborted.get()) {
+          try {
 
-          Data data;
+            Data data;
 
-          if ((data = Frame.decode(readData())).isFinal()) {
-            switch (data.getOpCode()) {
-              case CONTINUATION:
-                break;
-              case TEXT:
-                break;
-              case BINARY:
-                break;
-              case CLOSE:
-                break;
-              case PING:
-                break;
-              case PONG:
-                break;
-              default:
-                throw new UnknownSwitchCaseException(data.getOpCode().name());
+            if ((data = Frame.decode(readData())).isFinal()) {
+              switch (data.getOpCode()) {
+                case CONTINUATION:
+                  if (dataList.isEmpty()) {
+                    throw new WebsocketException("No continuation exists to terminate");
+                  }
+
+                  try {
+                    ByteArrayOutputStream fragmentStream = new ByteArrayOutputStream();
+
+                    for (Data fragmentedData : dataList) {
+                      fragmentStream.write(fragmentedData.getMessage());
+                    }
+                    fragmentStream.write(data.getMessage());
+                    fragmentStream.close();
+
+                    switch (dataList.getFirst().getOpCode()) {
+                      case TEXT:
+                        onText(new String(fragmentStream.toByteArray()));
+                        break;
+                      case BINARY:
+                        onBinary(fragmentStream.toByteArray());
+                        break;
+                      default:
+                        throw new WebsocketException("The current continuation starts with an illegal op code(%s)", dataList.getFirst().getOpCode().name());
+                    }
+                  }
+                  finally {
+                    dataList.clear();
+                  }
+                  break;
+                case TEXT:
+                  if (!dataList.isEmpty()) {
+                    dataList.clear();
+                    throw new WebsocketException("Expecting the final frame of a continuation");
+                  }
+
+                  onText(new String(data.getMessage()));
+                  break;
+                case BINARY:
+                  if (!dataList.isEmpty()) {
+                    dataList.clear();
+                    throw new WebsocketException("Expecting the final frame of a continuation");
+                  }
+
+                  onBinary(data.getMessage());
+                  break;
+                case CLOSE:
+                  // TODO:
+                  break;
+                case PING:
+                  socket.getOutputStream().write(Frame.pong(data.getMessage()));
+                  break;
+                case PONG:
+
+                  Iterator<String> pingKeyIter = pingKeyQueue.iterator();
+                  String pongKey = Base64.encode(EncryptionUtilities.hash(HashAlgorithm.SHA_1, data.getMessage()));
+
+                  while (pingKeyIter.hasNext()) {
+
+                    String pingKey = pingKeyIter.next();
+
+                    pingKeyIter.remove();
+                    if (pongKey.equals(pingKey)) {
+                      onPong(data.getMessage());
+                      break;
+                    }
+                  }
+                  break;
+                default:
+                  throw new UnknownSwitchCaseException(data.getOpCode().name());
+              }
+            }
+            else {
+              if (!(data.getOpCode().equals(OpCode.CONTINUATION) || data.getOpCode().equals(OpCode.TEXT) || data.getOpCode().equals(OpCode.BINARY))) {
+                throw new WebsocketException("All control frames must be marked as final");
+              }
+              if ((data.getOpCode().equals(OpCode.TEXT) || data.getOpCode().equals(OpCode.BINARY)) && (!dataList.isEmpty())) {
+                dataList.clear();
+                throw new WebsocketException("Starting a new continuation before the previous continuation has terminated");
+              }
+              if (data.getOpCode().equals(OpCode.CONTINUATION) && dataList.isEmpty()) {
+                throw new WebsocketException("The first frame of a continuation must have an op code != 0");
+              }
+
+              dataList.add(data);
             }
           }
-          else {
-            if (!((data.getOpCode() == OpCode.TEXT) || (data.getOpCode() == OpCode.BINARY))) {
-              throw new WebsocketException("All control frames must be marked as final");
-            }
-
-            dataList.add(data);
+          catch (Exception exception) {
+            onError(exception);
           }
         }
-      }
-      catch (Exception exception) {
-        LoggerManager.getLogger(Websocket.class).error(exception);
       }
       finally {
         exitLatch.countDown();

@@ -37,9 +37,24 @@ public class Foo {
     new Websocket(URI.create("ws://devg2tc-1.aws.glu.com:8080/game-web-server/websocket")) {
 
       @Override
-      public void onMessage (String message) {
+      public void onError (Exception exception) {
+        //To change body of implemented methods use File | Settings | File Templates.
+      }
+
+      @Override
+      public void onPong (byte[] message) {
+        //To change body of implemented methods use File | Settings | File Templates.
+      }
+
+      @Override
+      public void onText (String message) {
 
         System.out.println(message);
+      }
+
+      @Override
+      public void onBinary (byte[] message) {
+        //To change body of implemented methods use File | Settings | File Templates.
       }
     };
 

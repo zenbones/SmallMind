@@ -34,4 +34,9 @@ public class WebsocketException extends FormattedException {
 
     super(message, args);
   }
+
+  public WebsocketException (Throwable throwable) {
+
+    super(throwable);
+  }
 }

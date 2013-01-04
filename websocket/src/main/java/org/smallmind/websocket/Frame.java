@@ -52,6 +52,11 @@ public class Frame {
     return data(opCode, message);
   }
 
+  public static byte[] text (String message) {
+
+    return data(OpCode.TEXT, message.getBytes());
+  }
+
   public static byte[] binary (byte[] message) {
 
     return data(OpCode.BINARY, message);
