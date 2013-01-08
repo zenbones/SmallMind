@@ -185,16 +185,47 @@ public abstract class Websocket implements AutoCloseable {
     throws IOException, WebsocketException {
 
     ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+    boolean complete = false;
 
     // TODO: Should NOT need to do this
     socket.getOutputStream().write(Frame.pong(new byte[0]));
+
     do {
+      do {
 
-      int bytesRead;
+        int bytesRead;
 
-      bytesRead = socket.getInputStream().read(rawBuffer);
-      outputStream.write(rawBuffer, 0, bytesRead);
-    } while (socket.getInputStream().available() > 0);
+        bytesRead = socket.getInputStream().read(rawBuffer);
+        outputStream.write(rawBuffer, 0, bytesRead);
+      } while (socket.getInputStream().available() > 0);
+
+      if (readyStateRef.get().equals(ReadyState.CONNECTING)) {
+        complete = true;
+      }
+      else {
+        if (outputStream.size() >= 2) {
+
+          byte length = (byte)(outputStream.toByteArray()[1] & 0x7F);
+
+          if (length < 126) {
+            complete = outputStream.size() == length + 2;
+          }
+          else if ((length == 126) && (outputStream.size() >= 4)) {
+
+            byte[] currentArray = outputStream.toByteArray();
+
+            complete = outputStream.size() == ((currentArray[2] & 0xFF) << 8) + (currentArray[3] & 0xFF) + 4;
+          }
+          else if (outputStream.size() >= 10) {
+
+            byte[] currentArray = outputStream.toByteArray();
+
+            complete = outputStream.size() == ((currentArray[6] & 0xFF) << 24) + ((currentArray[7] & 0xFF) << 16) + ((currentArray[8] & 0xFF) << 8) + (currentArray[9] & 0xFF) + 10;
+          }
+        }
+      }
+    } while (!complete);
+
     outputStream.close();
 
     return outputStream.toByteArray();
