@@ -38,7 +38,6 @@ import java.security.KeyPairGenerator;
 import java.security.KeyRep;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
-import java.util.HashMap;
 import javax.crypto.BadPaddingException;
 import javax.crypto.Cipher;
 import javax.crypto.IllegalBlockSizeException;
@@ -46,8 +45,6 @@ import javax.crypto.KeyGenerator;
 import javax.crypto.NoSuchPaddingException;
 
 public class EncryptionUtilities {
-
-  private static final HashMap<HashAlgorithm, MessageDigest> DIGEST_MAP = new HashMap<HashAlgorithm, MessageDigest>();
 
   public static String hexEncode (byte[] bytes) {
 
@@ -84,16 +81,7 @@ public class EncryptionUtilities {
   public static byte[] hash (HashAlgorithm algorithm, byte[] toBeHashed)
     throws NoSuchAlgorithmException {
 
-    MessageDigest messageDigest;
-
-    synchronized (DIGEST_MAP) {
-      if ((messageDigest = DIGEST_MAP.get(algorithm)) == null) {
-        messageDigest = MessageDigest.getInstance(algorithm.getAlgorithmName());
-        DIGEST_MAP.put(algorithm, messageDigest);
-      }
-    }
-
-    return messageDigest.digest(toBeHashed);
+    return MessageDigest.getInstance(algorithm.getAlgorithmName()).digest(toBeHashed);
   }
 
   public static Key generateKey (SymmetricAlgorithm algorithm)

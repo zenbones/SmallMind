@@ -29,17 +29,16 @@ package org.smallmind.swing.tree;
 import java.util.Iterator;
 import javax.swing.event.TreeModelEvent;
 import javax.swing.event.TreeModelListener;
-import javax.swing.tree.TreeModel;
 import javax.swing.tree.TreePath;
-import org.smallmind.nutsnbolts.util.SmallMindTree;
-import org.smallmind.nutsnbolts.util.SmallMindTreeNode;
+import org.smallmind.nutsnbolts.util.Tree;
+import org.smallmind.nutsnbolts.util.TreeNode;
 import org.smallmind.nutsnbolts.util.WeakEventListenerList;
 
-public class SmallMindTreeModel extends SmallMindTree implements TreeModel {
+public class TreeModel extends Tree implements javax.swing.tree.TreeModel {
 
   private WeakEventListenerList<TreeModelListener> listenerList;
 
-  public SmallMindTreeModel (SmallMindTreeNode root) {
+  public TreeModel (TreeNode root) {
 
     super(root);
     listenerList = new WeakEventListenerList<TreeModelListener>();
@@ -57,27 +56,27 @@ public class SmallMindTreeModel extends SmallMindTree implements TreeModel {
 
   public Object getChild (Object parent, int childIndex) {
 
-    return ((SmallMindTreeNode)parent).getChildAt(childIndex);
+    return ((TreeNode)parent).getChildAt(childIndex);
   }
 
   public int getChildCount (Object parent) {
 
-    return ((SmallMindTreeNode)parent).getChildCount();
+    return ((TreeNode)parent).getChildCount();
   }
 
   public int getIndexOfChild (Object parent, Object child) {
 
-    return ((SmallMindTreeNode)parent).getIndex((SmallMindTreeNode)child);
+    return ((TreeNode)parent).getIndex((TreeNode)child);
   }
 
   public boolean isLeaf (Object node) {
 
-    return ((SmallMindTreeNode)node).isLeaf();
+    return ((TreeNode)node).isLeaf();
   }
 
   public void valueForPathChanged (TreePath path, Object newValue) {
 
-    SmallMindTreeNode lastNode = (SmallMindTreeNode)path.getLastPathComponent();
+    TreeNode lastNode = (TreeNode)path.getLastPathComponent();
     Object[] children = {};
     int[] childIndices = {};
 
@@ -121,7 +120,7 @@ public class SmallMindTreeModel extends SmallMindTree implements TreeModel {
         }
       }
       else {
-        if (((SmallMindTreeNode)pathArray[count - 1]).getIndex((SmallMindTreeNode)pathArray[count]) < 0) {
+        if (((TreeNode)pathArray[count - 1]).getIndex((TreeNode)pathArray[count]) < 0) {
           return false;
         }
       }

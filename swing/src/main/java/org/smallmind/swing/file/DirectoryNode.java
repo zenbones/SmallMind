@@ -28,10 +28,9 @@ package org.smallmind.swing.file;
 
 import java.util.Comparator;
 import java.util.Enumeration;
-import javax.swing.tree.TreeNode;
-import org.smallmind.nutsnbolts.util.SmallMindTreeNode;
+import org.smallmind.nutsnbolts.util.TreeNode;
 
-public class DirectoryNode extends SmallMindTreeNode {
+public class DirectoryNode extends TreeNode {
 
   private boolean instantiated = false;
 
@@ -63,7 +62,7 @@ public class DirectoryNode extends SmallMindTreeNode {
     return super.children();
   }
 
-  public TreeNode getChildAt (int childIndex) {
+  public javax.swing.tree.TreeNode getChildAt (int childIndex) {
 
     instantiateChildren();
 
@@ -77,14 +76,14 @@ public class DirectoryNode extends SmallMindTreeNode {
     return super.getChildCount();
   }
 
-  public int getIndex (TreeNode node) {
+  public int getIndex (javax.swing.tree.TreeNode node) {
 
     instantiateChildren();
 
     return super.getIndex(node);
   }
 
-  public void sortChildren (Comparator<TreeNode> sort) {
+  public void sortChildren (Comparator<javax.swing.tree.TreeNode> sort) {
 
     instantiateChildren();
 

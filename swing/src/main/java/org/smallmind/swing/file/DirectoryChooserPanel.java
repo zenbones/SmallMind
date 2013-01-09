@@ -50,7 +50,7 @@ import javax.swing.event.TreeSelectionEvent;
 import javax.swing.event.TreeSelectionListener;
 import javax.swing.tree.TreeSelectionModel;
 import org.smallmind.nutsnbolts.util.WeakEventListenerList;
-import org.smallmind.swing.tree.SmallMindTreeModel;
+import org.smallmind.swing.tree.TreeModel;
 
 public class DirectoryChooserPanel extends JPanel implements ActionListener, ItemListener, TreeSelectionListener, DocumentListener {
 
@@ -148,7 +148,7 @@ public class DirectoryChooserPanel extends JPanel implements ActionListener, Ite
 
   private void setRoot (File file) {
 
-    directoryTree.setModel(new SmallMindTreeModel(new DirectoryNode(new Directory(file.getAbsolutePath()))));
+    directoryTree.setModel(new TreeModel(new DirectoryNode(new Directory(file.getAbsolutePath()))));
   }
 
   private synchronized void fireDirectoryChosen (DirectoryChoiceEvent directoryChoiceEvent) {

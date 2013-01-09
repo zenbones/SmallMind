@@ -33,33 +33,32 @@ import java.util.Comparator;
 import java.util.Enumeration;
 import java.util.LinkedList;
 import javax.swing.tree.MutableTreeNode;
-import javax.swing.tree.TreeNode;
 import javax.swing.tree.TreePath;
 
-public class SmallMindTreeNode implements Cloneable, Serializable, MutableTreeNode {
+public class TreeNode implements Cloneable, Serializable, MutableTreeNode {
 
-  private SmallMindTreeNode parent;
+  private TreeNode parent;
   private Object userObject;
-  protected LinkedList<TreeNode> childList;
+  protected LinkedList<javax.swing.tree.TreeNode> childList;
   private boolean allowsChildren;
 
-  public SmallMindTreeNode () {
+  public TreeNode () {
 
     this(null, true);
   }
 
-  public SmallMindTreeNode (Object userObject) {
+  public TreeNode (Object userObject) {
 
     this(userObject, true);
   }
 
-  public SmallMindTreeNode (Object userObject, boolean allowsChildren) {
+  public TreeNode (Object userObject, boolean allowsChildren) {
 
     parent = null;
     this.userObject = userObject;
     this.allowsChildren = allowsChildren;
     if (allowsChildren) {
-      childList = new LinkedList<TreeNode>();
+      childList = new LinkedList<javax.swing.tree.TreeNode>();
     }
     else {
       childList = null;
@@ -71,7 +70,7 @@ public class SmallMindTreeNode implements Cloneable, Serializable, MutableTreeNo
     if (allowsChildren != newAllowsChildren) {
       allowsChildren = newAllowsChildren;
       if (allowsChildren) {
-        childList = new LinkedList<TreeNode>();
+        childList = new LinkedList<javax.swing.tree.TreeNode>();
       }
       else {
         childList = null;
@@ -92,7 +91,7 @@ public class SmallMindTreeNode implements Cloneable, Serializable, MutableTreeNo
     return Collections.enumeration(childList);
   }
 
-  public synchronized TreeNode getChildAt (int childIndex) {
+  public synchronized javax.swing.tree.TreeNode getChildAt (int childIndex) {
 
     if (!allowsChildren) {
       return null;
@@ -108,7 +107,7 @@ public class SmallMindTreeNode implements Cloneable, Serializable, MutableTreeNo
     return childList.size();
   }
 
-  public synchronized int getIndex (TreeNode node) {
+  public synchronized int getIndex (javax.swing.tree.TreeNode node) {
 
     if (!allowsChildren) {
       return -1;
@@ -118,14 +117,14 @@ public class SmallMindTreeNode implements Cloneable, Serializable, MutableTreeNo
 
   public synchronized int getUserObjectIndex (Object childUserObject) {
 
-    SmallMindTreeNode childNode;
+    TreeNode childNode;
     int count;
 
     if (!allowsChildren) {
       return -1;
     }
     for (count = 0; count < childList.size(); count++) {
-      childNode = (SmallMindTreeNode)childList.get(count);
+      childNode = (TreeNode)childList.get(count);
       if (childNode.getUserObject() != null) {
         if (childNode.getUserObject().equals(childUserObject)) {
           return count;
@@ -135,14 +134,14 @@ public class SmallMindTreeNode implements Cloneable, Serializable, MutableTreeNo
     return -1;
   }
 
-  public synchronized TreeNode getParent () {
+  public synchronized javax.swing.tree.TreeNode getParent () {
 
     return parent;
   }
 
   public synchronized void setParent (MutableTreeNode parent) {
 
-    this.parent = (SmallMindTreeNode)parent;
+    this.parent = (TreeNode)parent;
   }
 
   public synchronized Object getUserObject () {
@@ -155,19 +154,19 @@ public class SmallMindTreeNode implements Cloneable, Serializable, MutableTreeNo
     this.userObject = userObject;
   }
 
-  public synchronized void sortChildren (Comparator<TreeNode> sort) {
+  public synchronized void sortChildren (Comparator<javax.swing.tree.TreeNode> sort) {
 
     if (allowsChildren) {
       Collections.sort(childList, sort);
     }
   }
 
-  public synchronized TreeNode getPrevInThread () {
+  public synchronized javax.swing.tree.TreeNode getPrevInThread () {
 
     return parent;
   }
 
-  public synchronized TreeNode getNextInThread () {
+  public synchronized javax.swing.tree.TreeNode getNextInThread () {
 
     if (!allowsChildren) {
       return null;
@@ -180,8 +179,8 @@ public class SmallMindTreeNode implements Cloneable, Serializable, MutableTreeNo
 
   public synchronized TreePath getTreePath () {
 
-    ArrayList<TreeNode> pathList = new ArrayList<TreeNode>();
-    TreeNode curNode = this;
+    ArrayList<javax.swing.tree.TreeNode> pathList = new ArrayList<javax.swing.tree.TreeNode>();
+    javax.swing.tree.TreeNode curNode = this;
     Object[] thisNodesPath;
 
     pathList.add(curNode);
@@ -224,10 +223,10 @@ public class SmallMindTreeNode implements Cloneable, Serializable, MutableTreeNo
 
   public synchronized void remove (int childIndex) {
 
-    SmallMindTreeNode child;
+    TreeNode child;
 
     if (allowsChildren) {
-      child = (SmallMindTreeNode)childList.get(childIndex);
+      child = (TreeNode)childList.get(childIndex);
       childList.remove(childIndex);
       child.setParent(null);
     }
@@ -257,5 +256,4 @@ public class SmallMindTreeNode implements Cloneable, Serializable, MutableTreeNo
       return "null";
     }
   }
-
 }

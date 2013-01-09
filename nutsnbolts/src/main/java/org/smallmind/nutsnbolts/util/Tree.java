@@ -26,11 +26,11 @@
  */
 package org.smallmind.nutsnbolts.util;
 
-public class SmallMindTree {
+public class Tree {
 
-  private SmallMindTreeNode root;
+  private TreeNode root;
 
-  public SmallMindTree (SmallMindTreeNode root) {
+  public Tree (TreeNode root) {
 
     this.root = root;
   }
@@ -40,7 +40,7 @@ public class SmallMindTree {
     return root;
   }
 
-  public void setRoot (SmallMindTreeNode root) {
+  public void setRoot (TreeNode root) {
 
     this.root = root;
   }
