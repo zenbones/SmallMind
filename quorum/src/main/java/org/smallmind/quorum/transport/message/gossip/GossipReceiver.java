@@ -43,9 +43,8 @@ import org.smallmind.quorum.transport.message.TransportManagedObjects;
 public class GossipReceiver {
 
   private final AtomicBoolean closed = new AtomicBoolean(false);
-  private final GossipListener[] gossipListeners;
+  private final GossipListener gossipListener;
   private final GossipWorker[] gossipWorkers;
-  private final ConnectionFactor[] gossipConnectionFactors;
 
   public GossipReceiver (TransportManagedObjects gossipManagedObjects, MessagePolicy messagePolicy, ReconnectionPolicy reconnectionPolicy, MessageStrategy messageStrategy, int clusterSize, int concurrencyLimit, GossipTarget... gossipTargets)
     throws IOException, JMSException, TransportException {
@@ -57,15 +56,7 @@ public class GossipReceiver {
       targetMap.put(gossipTarget.getServiceInterface().getName(), gossipTarget);
     }
 
-    gossipListeners = new GossipListener[clusterSize];
-    for (int index = 0; index < gossipListeners.length; index++) {
-      gossipListeners[index] = new GossipListener(new ConnectionFactor(gossipManagedObjects, messagePolicy, reconnectionPolicy), (Topic)gossipManagedObjects.getDestination(), messageRendezvous);
-    }
-
-    gossipConnectionFactors = new ConnectionFactor[clusterSize];
-    for (int index = 0; index < gossipConnectionFactors.length; index++) {
-      gossipConnectionFactors[index] = new ConnectionFactor(gossipManagedObjects, messagePolicy, reconnectionPolicy);
-    }
+    gossipListener = new GossipListener(new ConnectionFactor(gossipManagedObjects, messagePolicy, reconnectionPolicy), (Topic)gossipManagedObjects.getDestination(), messageRendezvous);
 
     gossipWorkers = new GossipWorker[concurrencyLimit];
     for (int index = 0; index < gossipWorkers.length; index++) {
@@ -77,17 +68,10 @@ public class GossipReceiver {
     throws JMSException, InterruptedException {
 
     if (closed.compareAndSet(false, true)) {
-      for (GossipListener gossipListener : gossipListeners) {
-        gossipListener.close();
-      }
-      for (ConnectionFactor gossipConnectionFactor : gossipConnectionFactors) {
-        gossipConnectionFactor.stop();
-      }
+      gossipListener.close();
+
       for (GossipWorker gossipWorker : gossipWorkers) {
         gossipWorker.stop();
-      }
-      for (ConnectionFactor gossipConnectionFactor : gossipConnectionFactors) {
-        gossipConnectionFactor.close();
       }
     }
   }
