@@ -46,7 +46,7 @@ public class GossipReceiver {
   private final GossipListener gossipListener;
   private final GossipWorker[] gossipWorkers;
 
-  public GossipReceiver (TransportManagedObjects gossipManagedObjects, MessagePolicy messagePolicy, ReconnectionPolicy reconnectionPolicy, MessageStrategy messageStrategy, int clusterSize, int concurrencyLimit, GossipTarget... gossipTargets)
+  public GossipReceiver (TransportManagedObjects gossipManagedObjects, MessagePolicy messagePolicy, ReconnectionPolicy reconnectionPolicy, MessageStrategy messageStrategy, int concurrencyLimit, GossipTarget... gossipTargets)
     throws IOException, JMSException, TransportException {
 
     SynchronousQueue<Message> messageRendezvous = new SynchronousQueue<Message>(true);
