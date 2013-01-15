@@ -163,7 +163,7 @@ public abstract class HibernateDao<I extends Serializable & Comparable<I>, D ext
       @Override
       public Criteria completeCriteria (Criteria criteria) {
 
-        return criteria.addOrder(Order.desc("id")).setProjection(Projections.id()).setMaxResults(1);
+        return criteria.setProjection(Projections.max("id"));
       }
     });
   }
