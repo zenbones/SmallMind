@@ -107,7 +107,6 @@
     <nexus.release.repository.url>${nexus.server}/nexus/content/repositories/releases</nexus.release.repository.url>
     <java.tools.jar>${env.JAVA_HOME}/lib/tools.jar</java.tools.jar>
     <javafx.runtime.lib.jar>${env.JAVAFX_RUNTIME}/lib/jfxrt.jar</javafx.runtime.lib.jar>
-    <javafx.tools.ant.jar>${env.JAVAFX_SDK}/lib/ant-javafx.jar</javafx.tools.ant.jar>
   </properties>
   <modules>
     <module>license</module>
