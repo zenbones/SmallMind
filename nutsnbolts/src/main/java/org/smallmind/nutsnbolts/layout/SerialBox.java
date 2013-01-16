@@ -30,70 +30,70 @@ import java.util.Iterator;
 import java.util.LinkedList;
 import org.smallmind.nutsnbolts.lang.UnknownSwitchCaseException;
 
-public class SequentialBox extends Box<SequentialBox> {
+public class SerialBox extends Box<SerialBox> {
 
   private Justification justification;
   private double gap;
   private boolean greedy;
 
-  protected SequentialBox (ParaboxLayout layout) {
+  protected SerialBox (ParaboxLayout layout) {
 
     this(layout, Gap.UNRELATED);
   }
 
-  protected SequentialBox (ParaboxLayout layout, boolean greedy) {
+  protected SerialBox (ParaboxLayout layout, boolean greedy) {
 
     this(layout, Gap.UNRELATED, greedy);
   }
 
-  protected SequentialBox (ParaboxLayout layout, Gap gap) {
+  protected SerialBox (ParaboxLayout layout, Gap gap) {
 
     this(layout, gap.getGap(layout.getContainer().getPlatform()));
   }
 
-  protected SequentialBox (ParaboxLayout layout, Gap gap, boolean greedy) {
+  protected SerialBox (ParaboxLayout layout, Gap gap, boolean greedy) {
 
     this(layout, gap.getGap(layout.getContainer().getPlatform()), greedy);
   }
 
-  protected SequentialBox (ParaboxLayout layout, double gap) {
+  protected SerialBox (ParaboxLayout layout, double gap) {
 
     this(layout, gap, Justification.LEADING);
   }
 
-  protected SequentialBox (ParaboxLayout layout, double gap, boolean greedy) {
+  protected SerialBox (ParaboxLayout layout, double gap, boolean greedy) {
 
     this(layout, gap, Justification.LEADING, greedy);
   }
 
-  protected SequentialBox (ParaboxLayout layout, Justification justification) {
+  protected SerialBox (ParaboxLayout layout, Justification justification) {
 
     this(layout, Gap.UNRELATED, justification);
   }
 
-  protected SequentialBox (ParaboxLayout layout, Justification justification, boolean greedy) {
+  protected SerialBox (ParaboxLayout layout, Justification justification, boolean greedy) {
 
     this(layout, Gap.UNRELATED, justification, greedy);
   }
 
-  protected SequentialBox (ParaboxLayout layout, Gap gap, Justification justification) {
+  protected SerialBox (ParaboxLayout layout, Gap gap, Justification justification) {
 
     this(layout, gap.getGap(layout.getContainer().getPlatform()), justification);
   }
 
-  protected SequentialBox (ParaboxLayout layout, Gap gap, Justification justification, boolean greedy) {
+  protected SerialBox (ParaboxLayout layout, Gap gap, Justification justification, boolean greedy) {
 
     this(layout, gap.getGap(layout.getContainer().getPlatform()), justification, greedy);
   }
 
-  protected SequentialBox (ParaboxLayout layout, double gap, Justification justification) {
+  protected SerialBox (ParaboxLayout layout, double gap, Justification justification) {
 
     this(layout, gap, justification, false);
   }
 
-  protected SequentialBox (ParaboxLayout layout, double gap, Justification justification, boolean greedy) {
+  protected SerialBox (ParaboxLayout layout, double gap, Justification justification, boolean greedy) {
 
-    super(SequentialBox.class, layout);
+    super(SerialBox.class, layout);
 
     this.justification = justification;
     this.gap = gap;
@@ -105,12 +105,12 @@ public class SequentialBox extends Box<SequentialBox> {
     return gap;
   }
 
-  public SequentialBox setGap (Gap gap) {
+  public SerialBox setGap (Gap gap) {
 
     return setGap(gap.getGap(getLayout().getContainer().getPlatform()));
   }
 
-  public SequentialBox setGap (double gap) {
+  public SerialBox setGap (double gap) {
 
     this.gap = gap;
 
@@ -122,7 +122,7 @@ public class SequentialBox extends Box<SequentialBox> {
     return justification;
   }
 
-  public SequentialBox setJustification (Justification justification) {
+  public SerialBox setJustification (Justification justification) {
 
     this.justification = justification;
 
@@ -134,7 +134,7 @@ public class SequentialBox extends Box<SequentialBox> {
     return greedy;
   }
 
-  public SequentialBox setGreedy (boolean greedy) {
+  public SerialBox setGreedy (boolean greedy) {
 
     this.greedy = greedy;
 

@@ -41,7 +41,7 @@ import org.smallmind.nutsnbolts.layout.ParaboxLayout;
 import org.smallmind.nutsnbolts.layout.ParaboxPlatform;
 import org.smallmind.nutsnbolts.layout.ParallelBox;
 import org.smallmind.nutsnbolts.layout.Perimeter;
-import org.smallmind.nutsnbolts.layout.SequentialBox;
+import org.smallmind.nutsnbolts.layout.SerialBox;
 
 public class ParaboxPane extends Region implements ParaboxContainer<Node> {
 
@@ -173,63 +173,63 @@ public class ParaboxPane extends Region implements ParaboxContainer<Node> {
     return paraboxLayout.parallelBox(alignment);
   }
 
-  public SequentialBox sequentialBox () {
+  public SerialBox serialBox () {
 
-    return paraboxLayout.sequentialBox();
+    return paraboxLayout.serialBox();
   }
 
-  public SequentialBox sequentialBox (boolean greedy) {
+  public SerialBox serialBox (boolean greedy) {
 
-    return paraboxLayout.sequentialBox(greedy);
+    return paraboxLayout.serialBox(greedy);
   }
 
-  public SequentialBox sequentialBox (Gap gap) {
+  public SerialBox serialBox (Gap gap) {
 
-    return paraboxLayout.sequentialBox(gap);
+    return paraboxLayout.serialBox(gap);
   }
 
-  public SequentialBox sequentialBox (Gap gap, boolean greedy) {
+  public SerialBox serialBox (Gap gap, boolean greedy) {
 
-    return paraboxLayout.sequentialBox(gap, greedy);
+    return paraboxLayout.serialBox(gap, greedy);
   }
 
-  public SequentialBox sequentialBox (double gap) {
+  public SerialBox serialBox (double gap) {
 
-    return paraboxLayout.sequentialBox(gap);
+    return paraboxLayout.serialBox(gap);
   }
 
-  public SequentialBox sequentialBox (double gap, boolean greedy) {
+  public SerialBox serialBox (double gap, boolean greedy) {
 
-    return paraboxLayout.sequentialBox(gap, greedy);
+    return paraboxLayout.serialBox(gap, greedy);
   }
 
-  public SequentialBox sequentialBox (Justification justification) {
+  public SerialBox serialBox (Justification justification) {
 
-    return paraboxLayout.sequentialBox(justification);
+    return paraboxLayout.serialBox(justification);
   }
 
-  public SequentialBox sequentialBox (Justification justification, boolean greedy) {
+  public SerialBox serialBox (Justification justification, boolean greedy) {
 
-    return paraboxLayout.sequentialBox(justification, greedy);
+    return paraboxLayout.serialBox(justification, greedy);
   }
 
-  public SequentialBox sequentialBox (Gap gap, Justification justification) {
+  public SerialBox serialBox (Gap gap, Justification justification) {
 
-    return paraboxLayout.sequentialBox(gap, justification);
+    return paraboxLayout.serialBox(gap, justification);
   }
 
-  public SequentialBox sequentialBox (Gap gap, Justification justification, boolean greedy) {
+  public SerialBox serialBox (Gap gap, Justification justification, boolean greedy) {
 
-    return paraboxLayout.sequentialBox(gap, justification, greedy);
+    return paraboxLayout.serialBox(gap, justification, greedy);
   }
 
-  public SequentialBox sequentialBox (double gap, Justification justification) {
+  public SerialBox serialBox (double gap, Justification justification) {
 
-    return paraboxLayout.sequentialBox(gap, justification);
+    return paraboxLayout.serialBox(gap, justification);
   }
 
-  public SequentialBox sequentialBox (double gap, Justification justification, boolean greedy) {
+  public SerialBox serialBox (double gap, Justification justification, boolean greedy) {
 
-    return paraboxLayout.sequentialBox(gap, justification, greedy);
+    return paraboxLayout.serialBox(gap, justification, greedy);
   }
 }

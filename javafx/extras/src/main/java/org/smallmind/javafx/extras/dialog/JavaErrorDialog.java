@@ -113,8 +113,8 @@ public class JavaErrorDialog extends AbstractDialog {
       }
     });
 
-    root.setHorizontalBox(root.parallelBox(Alignment.TRAILING).add(root.sequentialBox().add(exceptionImageView).add(warningScroll, Constraint.stretch())).add(continueButton));
-    root.setVerticalBox(root.sequentialBox().add(root.parallelBox().add(exceptionImageView).add(warningScroll, Constraint.stretch())).add(continueButton));
+    root.setHorizontalBox(root.parallelBox(Alignment.TRAILING).add(root.serialBox().add(exceptionImageView).add(warningScroll, Constraint.stretch())).add(continueButton));
+    root.setVerticalBox(root.serialBox().add(root.parallelBox().add(exceptionImageView).add(warningScroll, Constraint.stretch())).add(continueButton));
 
     setOnHiding(new EventHandler<WindowEvent>() {
 

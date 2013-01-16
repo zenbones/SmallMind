@@ -44,7 +44,7 @@ import org.smallmind.nutsnbolts.layout.Constraint;
 import org.smallmind.nutsnbolts.layout.Gap;
 import org.smallmind.nutsnbolts.layout.Justification;
 import org.smallmind.nutsnbolts.layout.ParallelBox;
-import org.smallmind.nutsnbolts.layout.SequentialBox;
+import org.smallmind.nutsnbolts.layout.SerialBox;
 
 public class OptionDialog extends AbstractDialog {
 
@@ -96,7 +96,7 @@ public class OptionDialog extends AbstractDialog {
 
     ParaboxPane root = new ParaboxPane();
     ParallelBox optionHorizontalBox;
-    SequentialBox optionVerticalBox;
+    SerialBox optionVerticalBox;
     Separator separator = new Separator();
     Label optionLabel;
     ImageView optionImage;
@@ -123,18 +123,18 @@ public class OptionDialog extends AbstractDialog {
     }
 
     buttonPane = new ParaboxPane(new Insets(0, 0, 0, 0));
-    buttonPane.setHorizontalBox(buttonPane.sequentialBox(Justification.TRAILING));
+    buttonPane.setHorizontalBox(buttonPane.serialBox(Justification.TRAILING));
     buttonPane.setVerticalBox(buttonPane.parallelBox());
     replaceButtons(optionButtons);
 
     root.setHorizontalBox(root.parallelBox()
-      .add(root.sequentialBox().add(optionImage).add((optionHorizontalBox = root.parallelBox()).add(optionLabel)))
+      .add(root.serialBox().add(optionImage).add((optionHorizontalBox = root.parallelBox()).add(optionLabel)))
       .add(separator, Constraint.stretch())
       .add(buttonPane, Constraint.stretch()));
 
-    root.setVerticalBox(root.sequentialBox()
-      .add(root.parallelBox().add(optionImage).add((optionVerticalBox = root.sequentialBox()).add(optionLabel)))
-      .add(root.sequentialBox(Gap.RELATED).add(separator).add(buttonPane)));
+    root.setVerticalBox(root.serialBox()
+      .add(root.parallelBox().add(optionImage).add((optionVerticalBox = root.serialBox()).add(optionLabel)))
+      .add(root.serialBox(Gap.RELATED).add(separator).add(buttonPane)));
 
     if (this.optionPane != null) {
       optionHorizontalBox.add(optionPane);

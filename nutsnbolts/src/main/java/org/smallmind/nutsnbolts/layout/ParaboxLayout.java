@@ -200,63 +200,63 @@ public class ParaboxLayout {
     return new ParallelBox(this, alignment);
   }
 
-  public SequentialBox sequentialBox () {
+  public SerialBox serialBox () {
 
-    return new SequentialBox(this);
+    return new SerialBox(this);
   }
 
-  public SequentialBox sequentialBox (boolean greedy) {
+  public SerialBox serialBox (boolean greedy) {
 
-    return new SequentialBox(this, greedy);
+    return new SerialBox(this, greedy);
   }
 
-  public SequentialBox sequentialBox (Gap gap) {
+  public SerialBox serialBox (Gap gap) {
 
-    return new SequentialBox(this, gap);
+    return new SerialBox(this, gap);
   }
 
-  public SequentialBox sequentialBox (Gap gap, boolean greedy) {
+  public SerialBox serialBox (Gap gap, boolean greedy) {
 
-    return new SequentialBox(this, gap, greedy);
+    return new SerialBox(this, gap, greedy);
   }
 
-  public SequentialBox sequentialBox (double gap) {
+  public SerialBox serialBox (double gap) {
 
-    return new SequentialBox(this, gap);
+    return new SerialBox(this, gap);
   }
 
-  public SequentialBox sequentialBox (double gap, boolean greedy) {
+  public SerialBox serialBox (double gap, boolean greedy) {
 
-    return new SequentialBox(this, gap, greedy);
+    return new SerialBox(this, gap, greedy);
   }
 
-  public SequentialBox sequentialBox (Justification justification) {
+  public SerialBox serialBox (Justification justification) {
 
-    return new SequentialBox(this, justification);
+    return new SerialBox(this, justification);
   }
 
-  public SequentialBox sequentialBox (Justification justification, boolean greedy) {
+  public SerialBox serialBox (Justification justification, boolean greedy) {
 
-    return new SequentialBox(this, justification, greedy);
+    return new SerialBox(this, justification, greedy);
   }
 
-  public SequentialBox sequentialBox (Gap gap, Justification justification) {
+  public SerialBox serialBox (Gap gap, Justification justification) {
 
-    return new SequentialBox(this, gap, justification);
+    return new SerialBox(this, gap, justification);
   }
 
-  public SequentialBox sequentialBox (Gap gap, Justification justification, boolean greedy) {
+  public SerialBox serialBox (Gap gap, Justification justification, boolean greedy) {
 
-    return new SequentialBox(this, gap, justification, greedy);
+    return new SerialBox(this, gap, justification, greedy);
   }
 
-  public SequentialBox sequentialBox (double gap, Justification justification) {
+  public SerialBox serialBox (double gap, Justification justification) {
 
-    return new SequentialBox(this, gap, justification);
+    return new SerialBox(this, gap, justification);
   }
 
-  public SequentialBox sequentialBox (double gap, Justification justification, boolean greedy) {
+  public SerialBox serialBox (double gap, Justification justification, boolean greedy) {
 
-    return new SequentialBox(this, gap, justification, greedy);
+    return new SerialBox(this, gap, justification, greedy);
   }
 }
