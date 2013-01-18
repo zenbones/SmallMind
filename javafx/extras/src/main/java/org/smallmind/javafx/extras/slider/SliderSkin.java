@@ -42,11 +42,9 @@ import javafx.util.StringConverter;
 public class SliderSkin extends SkinBase<Slider, SliderBehavior> {
 
   private static final double AXIS_GAP = 2;
-
   private final StackPane track;
   private final StackPane trackOverlay;
   private final StackPane thumb;
-
   private SliderAxis axis;
   private Point2D dragStart;
   private double preDragThumbPos;
@@ -365,6 +363,13 @@ public class SliderSkin extends SkinBase<Slider, SliderBehavior> {
       setTickLabelFormatter(getSkinnable().getLabelFormatter());
 
       setAutoRanging(false);
+    }
+
+    @Override
+    public void resizeRelocate (double x, double y, double width, double height) {
+
+      super.resizeRelocate(x, y, width, height);
+      layoutChildren();
     }
 
     @Override
