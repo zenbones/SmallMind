@@ -233,36 +233,39 @@ public class SliderSkin extends SkinBase<Slider, SliderBehavior> {
     double sliderValue;
     double sliderMin;
     double sliderMax;
+    double axisLength;
     double endCap;
     double offset;
 
     if (getSkinnable().getOrientation() == Orientation.HORIZONTAL) {
 
       trackLength = width - (endCap = Math.max(thumbWidth, trackRadius * 2));
+      axisLength = trackLength - (2 * trackRadius);
       offset = Math.max(thumbHeight / 2, trackRadius);
 
       track.resizeRelocate(x + (endCap / 2), y + offset - trackRadius, trackLength, trackRadius * 2);
-      thumb.resizeRelocate(x + (endCap / 2) + (((sliderValue = getSkinnable().getValue()) - (sliderMin = getSkinnable().getMin())) / ((sliderMax = getSkinnable().getMax()) - sliderMin) * trackLength) - (thumbWidth / 2), y + offset - (thumbHeight / 2), thumbWidth, thumbHeight);
+      thumb.resizeRelocate(x + (endCap / 2) + trackRadius + (((sliderValue = getSkinnable().getValue()) - (sliderMin = getSkinnable().getMin())) / ((sliderMax = getSkinnable().getMax()) - sliderMin) * axisLength) - (thumbWidth / 2), y + offset - (thumbHeight / 2), thumbWidth, thumbHeight);
       trackOverlay.resizeRelocate(x + (endCap / 2), y + offset - trackRadius, ((sliderValue - sliderMin) / (sliderMax - sliderMin)) * trackLength, trackRadius * 2);
 
       if (axis != null) {
-        axis.resizeRelocate(x + (endCap / 2) + trackRadius, y + offset + trackRadius + AXIS_GAP, trackLength - (2 * trackRadius), axis.prefHeight(-1));
+        axis.resizeRelocate(x + (endCap / 2) + trackRadius, y + offset + trackRadius + AXIS_GAP, axisLength, axis.prefHeight(-1));
       }
     }
     else {
 
       trackLength = height - (endCap = Math.max(thumbHeight, trackRadius * 2));
+      axisLength = trackLength - (2 * trackRadius);
       offset = Math.max(thumbWidth / 2, trackRadius);
 
       track.resizeRelocate(x + offset - trackRadius, y + (endCap / 2), trackRadius * 2, trackLength);
-      thumb.resizeRelocate(x + offset - (thumbWidth / 2), y + (endCap / 2) + trackLength - (((sliderValue = getSkinnable().getValue()) - (sliderMin = getSkinnable().getMin())) / ((sliderMax = getSkinnable().getMax()) - sliderMin) * trackLength) - (thumbHeight / 2), thumbWidth, thumbHeight);
+      thumb.resizeRelocate(x + offset - (thumbWidth / 2), y + (endCap / 2) + trackRadius + axisLength - (((sliderValue = getSkinnable().getValue()) - (sliderMin = getSkinnable().getMin())) / ((sliderMax = getSkinnable().getMax()) - sliderMin) * axisLength) - (thumbHeight / 2), thumbWidth, thumbHeight);
 
       double overlayLength = ((sliderValue - sliderMin) / (sliderMax - sliderMin)) * trackLength;
 
       trackOverlay.resizeRelocate(x + offset - trackRadius, y + (endCap / 2) + trackLength - overlayLength, trackRadius * 2, overlayLength);
 
       if (axis != null) {
-        axis.resizeRelocate(x + offset + trackRadius + AXIS_GAP, y + (endCap / 2) + trackRadius, axis.prefWidth(-1), trackLength - (2 * trackRadius));
+        axis.resizeRelocate(x + offset + trackRadius + AXIS_GAP, y + (endCap / 2) + trackRadius, axis.prefWidth(-1), axisLength);
       }
     }
   }
