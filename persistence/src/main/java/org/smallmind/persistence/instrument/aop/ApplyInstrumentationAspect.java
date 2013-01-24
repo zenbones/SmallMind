@@ -40,7 +40,7 @@ import org.smallmind.persistence.PersistenceManager;
 @Aspect
 public class ApplyInstrumentationAspect {
 
-  @Around(value = "@within(instrumented) && execution(@org.smallmind.persistence.instrument.aop.ApplyInstrumentation * * (..)) && this(durableDao)", argNames = "thisJoinPoint, instrumented, durableDao")
+  @Around(value = "@within(instrumented) && execution(@ApplyInstrumentation * * (..)) && this(durableDao)", argNames = "thisJoinPoint, instrumented, durableDao")
   public Object aroundApplyStatisticsMethod (ProceedingJoinPoint thisJoinPoint, Instrumented instrumented, AbstractVectorAwareManagedDao durableDao)
     throws Throwable {
 
