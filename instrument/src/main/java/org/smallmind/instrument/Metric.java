@@ -26,7 +26,19 @@
  */
 package org.smallmind.instrument;
 
-public interface Metric {
+import org.smallmind.instrument.context.MetricContext;
+import org.smallmind.nutsnbolts.context.ContextFactory;
+
+public abstract class Metric {
 
   public abstract void clear ();
+
+  public void contextualize () {
+
+    MetricContext metricContext;
+
+    if ((metricContext = ContextFactory.getContext(MetricContext.class)) != null) {
+
+    }
+  }
 }
