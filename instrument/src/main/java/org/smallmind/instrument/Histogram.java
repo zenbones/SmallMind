@@ -29,7 +29,7 @@ package org.smallmind.instrument;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
 
-public class Histogram implements Metric, Estimating, Statistician {
+public class Histogram extends Metric implements Estimating, Statistician {
 
   private static final class ArrayCache extends ThreadLocal<double[]> {
 
@@ -44,7 +44,6 @@ public class Histogram implements Metric, Estimating, Statistician {
   private final AtomicReference<double[]> variance = new AtomicReference<double[]>(new double[] {-1, 0}); // M, S
   private final AtomicLong count = new AtomicLong(0);
   private final ArrayCache arrayCache = new ArrayCache();
-
   private final Sample sample;
   private final AtomicLong min = new AtomicLong(Long.MAX_VALUE);
   private final AtomicLong max = new AtomicLong(Long.MIN_VALUE);

@@ -26,10 +26,11 @@
  */
 package org.smallmind.instrument.context;
 
+import java.io.Serializable;
 import org.smallmind.instrument.MetricProperty;
 import org.smallmind.instrument.MetricType;
 
-public abstract class MetricSnapshot {
+public abstract class MetricSnapshot implements Serializable {
 
   private MetricProperty[] properties;
   private String domain;

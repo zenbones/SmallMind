@@ -34,7 +34,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 import org.smallmind.nutsnbolts.time.TimeUtilities;
 
-public class Meter implements Metric, Metered, Temporal, Stoppable {
+public class Meter extends Metric implements Metered, Temporal, Stoppable {
 
   private static final ScheduledExecutorService SCHEDULED_EXECUTOR = Executors.newScheduledThreadPool(2, new ThreadFactory() {
 
@@ -48,7 +48,6 @@ public class Meter implements Metric, Metered, Temporal, Stoppable {
       return thread;
     }
   });
-
   private final ExponentiallyWeightedMovingAverage m1Average;
   private final ExponentiallyWeightedMovingAverage m5Average;
   private final ExponentiallyWeightedMovingAverage m15Average;

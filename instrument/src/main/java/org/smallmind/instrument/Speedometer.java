@@ -29,7 +29,7 @@ package org.smallmind.instrument;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 
-public class Speedometer implements Metric, Tracked, Temporal, Stoppable {
+public class Speedometer extends Metric implements Tracked, Temporal, Stoppable {
 
   private final Meter rateMeter;
   private final Meter quantityMeter;

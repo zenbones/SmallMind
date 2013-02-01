@@ -27,8 +27,9 @@
 package org.smallmind.instrument.context;
 
 import java.util.concurrent.ConcurrentLinkedQueue;
+import org.smallmind.nutsnbolts.context.Context;
 
-public class MetricContext {
+public class MetricContext implements Context {
 
   private ConcurrentLinkedQueue<MetricSnapshot> snapshotQueue = new ConcurrentLinkedQueue<>();
 

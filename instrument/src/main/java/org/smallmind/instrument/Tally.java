@@ -28,7 +28,7 @@ package org.smallmind.instrument;
 
 import java.util.concurrent.atomic.AtomicLong;
 
-public class Tally implements Metric, Countable {
+public class Tally extends Metric implements Countable {
 
   private final AtomicLong count;
 

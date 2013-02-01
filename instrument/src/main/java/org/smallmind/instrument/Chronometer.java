@@ -28,7 +28,7 @@ package org.smallmind.instrument;
 
 import java.util.concurrent.TimeUnit;
 
-public class Chronometer implements Metric, Metered, Estimating, Timed, Statistician, Temporal, Stoppable {
+public class Chronometer extends Metric implements Metered, Estimating, Timed, Statistician, Temporal, Stoppable {
 
   private final Histogram histogram;
   private final Meter meter;
