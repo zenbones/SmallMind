@@ -138,11 +138,11 @@ public class ExponentiallyDecayingSample implements Sample {
   }
 
   @Override
-  public Snapshot getSnapshot () {
+  public Statistics getStatistics () {
 
     lock.readLock().lock();
     try {
-      return new Snapshot(values.values());
+      return new Statistics(values.values());
     }
     finally {
       lock.readLock().unlock();

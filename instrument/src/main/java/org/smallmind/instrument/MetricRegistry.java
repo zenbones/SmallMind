@@ -34,8 +34,8 @@ import org.smallmind.instrument.jmx.DefaultJMXNamingPolicy;
 import org.smallmind.instrument.jmx.HistogramMonitor;
 import org.smallmind.instrument.jmx.JMXNamingPolicy;
 import org.smallmind.instrument.jmx.MeterMonitor;
-import org.smallmind.instrument.jmx.RegisterMonitor;
 import org.smallmind.instrument.jmx.SpeedometerMonitor;
+import org.smallmind.instrument.jmx.TallyMonitor;
 import org.smallmind.nutsnbolts.lang.UnknownSwitchCaseException;
 
 public class MetricRegistry {
@@ -80,8 +80,8 @@ public class MetricRegistry {
             DynamicMBean mBean;
 
             switch (builder.getType()) {
-              case REGISTER:
-                mBean = new RegisterMonitor((Register)metric);
+              case TALLY:
+                mBean = new TallyMonitor((Tally)metric);
                 break;
               case METER:
                 mBean = new MeterMonitor((Meter)metric);

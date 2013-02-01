@@ -24,9 +24,25 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.instrument;
+package org.smallmind.instrument.jmx;
 
-public interface Shutterbug {
+import javax.management.StandardMBean;
+import org.smallmind.instrument.Tally;
 
-  public abstract Snapshot getSnapshot ();
+public class TallyMonitor extends StandardMBean implements TallyMonitorMXBean {
+
+  private Tally tally;
+
+  public TallyMonitor (Tally tally) {
+
+    super(TallyMonitorMXBean.class, true);
+
+    this.tally = tally;
+  }
+
+  @Override
+  public long getCount () {
+
+    return tally.getCount();
+  }
 }

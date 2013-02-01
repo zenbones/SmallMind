@@ -29,7 +29,7 @@ package org.smallmind.instrument;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
 
-public class Histogram implements Metric, Estimating, Shutterbug {
+public class Histogram implements Metric, Estimating, Statistician {
 
   private static final class ArrayCache extends ThreadLocal<double[]> {
 
@@ -122,9 +122,9 @@ public class Histogram implements Metric, Estimating, Shutterbug {
   }
 
   @Override
-  public Snapshot getSnapshot () {
+  public Statistics getStatistics () {
 
-    return sample.getSnapshot();
+    return sample.getStatistics();
   }
 
   private void setMax (long potentialMax) {

@@ -26,18 +26,18 @@
  */
 package org.smallmind.instrument.aop;
 
-import org.aspectj.lang.ProceedingJoinPoint;
-import org.aspectj.lang.annotation.Around;
-import org.aspectj.lang.annotation.Aspect;
-import org.smallmind.instrument.Metrics;
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
 
-@Aspect
-public class RegisterMetricAspect extends MetricAspect {
+@Target({ElementType.CONSTRUCTOR, ElementType.METHOD})
+@Retention(RetentionPolicy.RUNTIME)
+public @interface TallyMetric {
 
-  @Around(value = "(execution(@RegisterMetric * * (..)) || initialization(@RegisterMetric new(..))) && @annotation(registerMetric)", argNames = "thisJoinPoint, registerMetric")
-  public Object aroundRegisterMetricMethod (ProceedingJoinPoint thisJoinPoint, RegisterMetric registerMetric)
-    throws Throwable {
+  public abstract JMX value ();
 
-    return engage(thisJoinPoint, registerMetric.value(), registerMetric.alias(), Metrics.buildRegister(registerMetric.initialCount()));
-  }
+  public abstract String alias () default "";
+
+  public abstract int initialCount () default 0;
 }

@@ -34,7 +34,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 import org.smallmind.nutsnbolts.time.TimeUtilities;
 
-public class Meter implements Metric, Metered, Clocked, Stoppable {
+public class Meter implements Metric, Metered, Temporal, Stoppable {
 
   private static final ScheduledExecutorService SCHEDULED_EXECUTOR = Executors.newScheduledThreadPool(2, new ThreadFactory() {
 

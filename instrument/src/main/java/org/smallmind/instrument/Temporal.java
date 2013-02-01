@@ -26,7 +26,7 @@
  */
 package org.smallmind.instrument;
 
-public enum MetricType {
+public interface Temporal {
 
-  TALLY, METER, HISTOGRAM, SPEEDOMETER, CHRONOMETER
+  public abstract Clock getClock ();
 }

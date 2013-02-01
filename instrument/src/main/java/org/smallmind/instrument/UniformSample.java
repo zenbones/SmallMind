@@ -103,7 +103,7 @@ public class UniformSample implements Sample {
   }
 
   @Override
-  public Snapshot getSnapshot () {
+  public Statistics getStatistics () {
 
     int currentSize = size();
     List<Long> copy = new ArrayList<Long>(currentSize);
@@ -112,6 +112,6 @@ public class UniformSample implements Sample {
       copy.add(values.get(i));
     }
 
-    return new Snapshot(copy);
+    return new Statistics(copy);
   }
 }

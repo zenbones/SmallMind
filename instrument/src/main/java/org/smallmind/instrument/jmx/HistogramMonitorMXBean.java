@@ -27,8 +27,8 @@
 package org.smallmind.instrument.jmx;
 
 import org.smallmind.instrument.Estimating;
-import org.smallmind.instrument.Ranking;
+import org.smallmind.instrument.Stratified;
 
-public interface HistogramMonitorMXBean extends Estimating, Ranking {
+public interface HistogramMonitorMXBean extends Estimating, Stratified {
 
 }

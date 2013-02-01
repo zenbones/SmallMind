@@ -122,36 +122,36 @@ public class ChronometerMonitor extends StandardMBean implements ChronometerMoni
   @Override
   public double getMedian () {
 
-    return chronometer.getSnapshot().getMedian();
+    return chronometer.getStatistics().getMedian();
   }
 
   @Override
   public double get75thPercentile () {
 
-    return chronometer.getSnapshot().get75thPercentile();
+    return chronometer.getStatistics().get75thPercentile();
   }
 
   @Override
   public double get95thPercentile () {
 
-    return chronometer.getSnapshot().get95thPercentile();
+    return chronometer.getStatistics().get95thPercentile();
   }
 
   @Override
   public double get98thPercentile () {
 
-    return chronometer.getSnapshot().get98thPercentile();
+    return chronometer.getStatistics().get98thPercentile();
   }
 
   @Override
   public double get99thPercentile () {
 
-    return chronometer.getSnapshot().get99thPercentile();
+    return chronometer.getStatistics().get99thPercentile();
   }
 
   @Override
   public double get999thPercentile () {
 
-    return chronometer.getSnapshot().get999thPercentile();
+    return chronometer.getStatistics().get999thPercentile();
   }
 }

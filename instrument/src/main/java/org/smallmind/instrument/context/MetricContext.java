@@ -26,26 +26,14 @@
  */
 package org.smallmind.instrument.context;
 
-import org.smallmind.instrument.MetricProperty;
+import java.util.concurrent.ConcurrentLinkedQueue;
 
-public abstract class MetricContext {
+public class MetricContext {
 
-  private MetricProperty[] properties;
-  private String domain;
+  private ConcurrentLinkedQueue<MetricSnapshot> snapshotQueue = new ConcurrentLinkedQueue<>();
 
-  public MetricContext (String domain, MetricProperty... properties) {
+  public void addSnapshot (MetricSnapshot snapshot) {
 
-    this.domain = domain;
-    this.properties = properties;
-  }
-
-  public String getDomain () {
-
-    return domain;
-  }
-
-  public MetricProperty[] getProperties () {
-
-    return properties;
+    snapshotQueue.add(snapshot);
   }
 }

@@ -24,25 +24,9 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.instrument.jmx;
+package org.smallmind.instrument;
 
-import javax.management.StandardMBean;
-import org.smallmind.instrument.Register;
+public interface Statistician {
 
-public class RegisterMonitor extends StandardMBean implements RegisterMonitorMXBean {
-
-  private Register register;
-
-  public RegisterMonitor (Register register) {
-
-    super(RegisterMonitorMXBean.class, true);
-
-    this.register = register;
-  }
-
-  @Override
-  public long getCount () {
-
-    return register.getCount();
-  }
+  public abstract Statistics getStatistics ();
 }

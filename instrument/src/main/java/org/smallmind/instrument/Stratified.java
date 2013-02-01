@@ -24,14 +24,19 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.instrument.context;
+package org.smallmind.instrument;
 
-import org.smallmind.instrument.MetricProperty;
+public interface Stratified {
 
-public class TimingContext extends MetricContext {
+  public abstract double getMedian ();
 
-  public TimingContext (String domain, MetricProperty... properties) {
+  public abstract double get75thPercentile ();
 
-    super(domain, properties);
-  }
+  public abstract double get95thPercentile ();
+
+  public abstract double get98thPercentile ();
+
+  public abstract double get99thPercentile ();
+
+  public abstract double get999thPercentile ();
 }

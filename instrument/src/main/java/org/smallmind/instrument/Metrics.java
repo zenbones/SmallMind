@@ -30,9 +30,9 @@ import java.util.concurrent.TimeUnit;
 
 public class Metrics {
 
-  public static RegisterBuilder buildRegister (int initialCount) {
+  public static TallyBuilder buildTally (int initialCount) {
 
-    return new RegisterBuilder(initialCount);
+    return new TallyBuilder(initialCount);
   }
 
   public static MeterBuilder buildMeter (long tickInterval, TimeUnit tickTimeUnit) {
@@ -89,31 +89,31 @@ public class Metrics {
     public abstract M construct ();
   }
 
-  private static class RegisterBuilder implements MetricBuilder<Register> {
+  private static class TallyBuilder implements MetricBuilder<Tally> {
 
     private int initialCount;
 
-    public RegisterBuilder (int initialCount) {
+    public TallyBuilder (int initialCount) {
 
       this.initialCount = initialCount;
     }
 
     @Override
-    public Class<Register> getMetricClass () {
+    public Class<Tally> getMetricClass () {
 
-      return Register.class;
+      return Tally.class;
     }
 
     @Override
     public MetricType getType () {
 
-      return MetricType.REGISTER;
+      return MetricType.TALLY;
     }
 
     @Override
-    public Register construct () {
+    public Tally construct () {
 
-      return new Register(initialCount);
+      return new Tally(initialCount);
     }
   }
 

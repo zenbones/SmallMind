@@ -85,36 +85,36 @@ public class HistogramMonitor extends StandardMBean implements HistogramMonitorM
   @Override
   public double getMedian () {
 
-    return histogram.getSnapshot().getMedian();
+    return histogram.getStatistics().getMedian();
   }
 
   @Override
   public double get75thPercentile () {
 
-    return histogram.getSnapshot().get75thPercentile();
+    return histogram.getStatistics().get75thPercentile();
   }
 
   @Override
   public double get95thPercentile () {
 
-    return histogram.getSnapshot().get95thPercentile();
+    return histogram.getStatistics().get95thPercentile();
   }
 
   @Override
   public double get98thPercentile () {
 
-    return histogram.getSnapshot().get98thPercentile();
+    return histogram.getStatistics().get98thPercentile();
   }
 
   @Override
   public double get99thPercentile () {
 
-    return histogram.getSnapshot().get99thPercentile();
+    return histogram.getStatistics().get99thPercentile();
   }
 
   @Override
   public double get999thPercentile () {
 
-    return histogram.getSnapshot().get999thPercentile();
+    return histogram.getStatistics().get999thPercentile();
   }
 }

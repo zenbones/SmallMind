@@ -29,7 +29,7 @@ package org.smallmind.instrument;
 import java.util.Arrays;
 import java.util.Collection;
 
-public class Snapshot implements Ranking {
+public class Statistics implements Stratified {
 
   private static final double MEDIAN_Q = 0.5;
   private static final double P75_Q = 0.75;
@@ -40,7 +40,7 @@ public class Snapshot implements Ranking {
 
   private final double[] values;
 
-  public Snapshot (Collection<Long> values) {
+  public Statistics (Collection<Long> values) {
 
     Object[] copy = values.toArray();
 
@@ -52,7 +52,7 @@ public class Snapshot implements Ranking {
     Arrays.sort(this.values);
   }
 
-  public Snapshot (double[] values) {
+  public Statistics (double[] values) {
 
     this.values = new double[values.length];
     System.arraycopy(values, 0, this.values, 0, values.length);

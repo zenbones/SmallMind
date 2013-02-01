@@ -24,9 +24,31 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.instrument;
+package org.smallmind.instrument.context;
 
-public interface Clocked {
+import org.smallmind.instrument.MetricProperty;
+import org.smallmind.instrument.MetricType;
 
-  public abstract Clock getClock ();
+public abstract class MetricSnapshot {
+
+  private MetricProperty[] properties;
+  private String domain;
+
+  protected MetricSnapshot (String domain, MetricProperty... properties) {
+
+    this.domain = domain;
+    this.properties = properties;
+  }
+
+  public abstract MetricType getMetricType ();
+
+  public String getDomain () {
+
+    return domain;
+  }
+
+  public MetricProperty[] getProperties () {
+
+    return properties;
+  }
 }

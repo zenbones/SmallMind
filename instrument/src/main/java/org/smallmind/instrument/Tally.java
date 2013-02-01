@@ -26,17 +26,51 @@
  */
 package org.smallmind.instrument;
 
-public interface Ranking {
+import java.util.concurrent.atomic.AtomicLong;
 
-  public abstract double getMedian ();
+public class Tally implements Metric, Countable {
 
-  public abstract double get75thPercentile ();
+  private final AtomicLong count;
 
-  public abstract double get95thPercentile ();
+  public Tally () {
 
-  public abstract double get98thPercentile ();
+    this(0);
+  }
 
-  public abstract double get99thPercentile ();
+  public Tally (int initialCount) {
 
-  public abstract double get999thPercentile ();
+    this.count = new AtomicLong(initialCount);
+  }
+
+  @Override
+  public void clear () {
+
+    count.set(0);
+  }
+
+  public void inc () {
+
+    count.incrementAndGet();
+  }
+
+  public void inc (long n) {
+
+    count.addAndGet(n);
+  }
+
+  public void dec () {
+
+    count.decrementAndGet();
+  }
+
+  public void dec (long n) {
+
+    count.addAndGet(0 - n);
+  }
+
+  @Override
+  public long getCount () {
+
+    return count.get();
+  }
 }

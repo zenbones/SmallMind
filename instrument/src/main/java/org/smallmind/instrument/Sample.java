@@ -26,7 +26,7 @@
  */
 package org.smallmind.instrument;
 
-public interface Sample extends Shutterbug {
+public interface Sample extends Statistician {
 
   public abstract Samples getType ();
 

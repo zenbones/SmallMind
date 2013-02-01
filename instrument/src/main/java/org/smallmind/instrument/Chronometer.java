@@ -28,7 +28,7 @@ package org.smallmind.instrument;
 
 import java.util.concurrent.TimeUnit;
 
-public class Chronometer implements Metric, Metered, Estimating, Timed, Shutterbug, Clocked, Stoppable {
+public class Chronometer implements Metric, Metered, Estimating, Timed, Statistician, Temporal, Stoppable {
 
   private final Histogram histogram;
   private final Meter meter;
@@ -144,9 +144,9 @@ public class Chronometer implements Metric, Metered, Estimating, Timed, Shutterb
   }
 
   @Override
-  public Snapshot getSnapshot () {
+  public Statistics getStatistics () {
 
-    return new Snapshot(histogram.getSnapshot().getValues());
+    return new Statistics(histogram.getStatistics().getValues());
   }
 
   @Override

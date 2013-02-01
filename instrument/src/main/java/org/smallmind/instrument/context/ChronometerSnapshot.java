@@ -24,53 +24,21 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.instrument;
+package org.smallmind.instrument.context;
 
-import java.util.concurrent.atomic.AtomicLong;
+import org.smallmind.instrument.MetricProperty;
+import org.smallmind.instrument.MetricType;
 
-public class Register implements Metric, Countable {
+public class ChronometerSnapshot extends MetricSnapshot {
 
-  private final AtomicLong count;
+  public ChronometerSnapshot (String domain, MetricProperty... properties) {
 
-  public Register () {
-
-    this(0);
-  }
-
-  public Register (int initialCount) {
-
-    this.count = new AtomicLong(initialCount);
+    super(domain, properties);
   }
 
   @Override
-  public void clear () {
+  public MetricType getMetricType () {
 
-    count.set(0);
-  }
-
-  public void inc () {
-
-    count.incrementAndGet();
-  }
-
-  public void inc (long n) {
-
-    count.addAndGet(n);
-  }
-
-  public void dec () {
-
-    count.decrementAndGet();
-  }
-
-  public void dec (long n) {
-
-    count.addAndGet(0 - n);
-  }
-
-  @Override
-  public long getCount () {
-
-    return count.get();
+    return MetricType.CHRONOMETER;
   }
 }

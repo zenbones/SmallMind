@@ -28,6 +28,6 @@ package org.smallmind.instrument.jmx;
 
 import org.smallmind.instrument.Countable;
 
-public interface RegisterMonitorMXBean extends Countable {
+public interface TallyMonitorMXBean extends Countable {
 
 }
