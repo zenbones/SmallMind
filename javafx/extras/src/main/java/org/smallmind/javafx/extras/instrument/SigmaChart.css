@@ -1,0 +1,22 @@
+.sigma-chart .axis-label { -fx-text-fill: #666666; }
+
+.sigma-chart .default-color0.chart-area-symbol { -fx-background-color: #008e00, #ffffff; }
+.sigma-chart .default-color1.chart-area-symbol { -fx-background-color: #6bb200, #ffffff; }
+.sigma-chart .default-color2.chart-area-symbol { -fx-background-color: #b2b300, #ffffff; }
+.sigma-chart .default-color3.chart-area-symbol { -fx-background-color: #b27d00, #ffffff; }
+.sigma-chart .default-color4.chart-area-symbol { -fx-background-color: #b25900, #ffffff; }
+.sigma-chart .default-color5.chart-area-symbol { -fx-background-color: #b20000, #ffffff; }
+
+.sigma-chart .default-color0.chart-series-area-line { -fx-stroke: #008e00; }
+.sigma-chart .default-color1.chart-series-area-line { -fx-stroke: #6bb200; }
+.sigma-chart .default-color2.chart-series-area-line { -fx-stroke: #b2b300; }
+.sigma-chart .default-color3.chart-series-area-line { -fx-stroke: #b27d00; }
+.sigma-chart .default-color4.chart-series-area-line { -fx-stroke: #b25900; }
+.sigma-chart .default-color5.chart-series-area-line { -fx-stroke: #b20000; }
+
+.sigma-chart .default-color0.chart-series-area-fill { -fx-fill: #00cc0055; }
+.sigma-chart .default-color1.chart-series-area-fill { -fx-fill: #99ff0055; }
+.sigma-chart .default-color2.chart-series-area-fill { -fx-fill: #ffff0055; }
+.sigma-chart .default-color3.chart-series-area-fill { -fx-fill: #ffb20055; }
+.sigma-chart .default-color4.chart-series-area-fill { -fx-fill: #ff660055; }
+.sigma-chart .default-color5.chart-series-area-fill { -fx-fill: #ff000055; }
