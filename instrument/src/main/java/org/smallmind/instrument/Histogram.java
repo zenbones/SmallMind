@@ -31,21 +31,12 @@ import java.util.concurrent.atomic.AtomicReference;
 
 public class Histogram extends Metric implements Estimating, Statistician {
 
-  private static final class ArrayCache extends ThreadLocal<double[]> {
-
-    @Override
-    protected double[] initialValue () {
-
-      return new double[2];
-    }
-  }
-
+  private final AtomicLong min = new AtomicLong(Long.MAX_VALUE);
   // These are for the Welford algorithm for calculating running variance without floating-point doom.
-  private final AtomicReference<double[]> variance = new AtomicReference<double[]>(new double[] {-1, 0}); // M, S
+  private final AtomicReference<double[]> variance = new AtomicReference<double[]>(new double[] {-1, 0});
   private final AtomicLong count = new AtomicLong(0);
   private final ArrayCache arrayCache = new ArrayCache();
   private final Sample sample;
-  private final AtomicLong min = new AtomicLong(Long.MAX_VALUE);
   private final AtomicLong max = new AtomicLong(Long.MIN_VALUE);
   private final AtomicLong sum = new AtomicLong(0);
 
@@ -91,10 +82,34 @@ public class Histogram extends Metric implements Estimating, Statistician {
     return (getCount() > 0) ? max.get() : 0.0;
   }
 
+  private void setMax (long potentialMax) {
+
+    boolean done = false;
+
+    while (!done) {
+
+      long currentMax = max.get();
+
+      done = currentMax >= potentialMax || max.compareAndSet(currentMax, potentialMax);
+    }
+  }
+
   @Override
   public double getMin () {
 
     return (getCount() > 0) ? min.get() : 0.0;
+  }
+
+  private void setMin (long potentialMin) {
+
+    boolean done = false;
+
+    while (!done) {
+
+      long currentMin = min.get();
+
+      done = currentMin <= potentialMin || min.compareAndSet(currentMin, potentialMin);
+    }
   }
 
   @Override
@@ -126,30 +141,6 @@ public class Histogram extends Metric implements Estimating, Statistician {
     return sample.getStatistics();
   }
 
-  private void setMax (long potentialMax) {
-
-    boolean done = false;
-
-    while (!done) {
-
-      long currentMax = max.get();
-
-      done = currentMax >= potentialMax || max.compareAndSet(currentMax, potentialMax);
-    }
-  }
-
-  private void setMin (long potentialMin) {
-
-    boolean done = false;
-
-    while (!done) {
-
-      long currentMin = min.get();
-
-      done = currentMin <= potentialMin || min.compareAndSet(currentMin, potentialMin);
-    }
-  }
-
   private void updateVariance (long value) {
 
     boolean done = false;
@@ -178,6 +169,15 @@ public class Histogram extends Metric implements Estimating, Statistician {
         // recycle the old array into the cache
         arrayCache.set(oldValues);
       }
+    }
+  }
+
+  private static final class ArrayCache extends ThreadLocal<double[]> {
+
+    @Override
+    protected double[] initialValue () {
+
+      return new double[2];
     }
   }
 }
