@@ -42,8 +42,7 @@ public class MeterMonitor extends StandardMBean implements MeterMonitorMXBean {
   }
 
   @Override
-  public TimeUnit
-  getRateTimeUnit () {
+  public TimeUnit getRateTimeUnit () {
 
     return meter.getRateTimeUnit();
   }
