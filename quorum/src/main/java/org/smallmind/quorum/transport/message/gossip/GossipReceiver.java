@@ -28,7 +28,8 @@ package org.smallmind.quorum.transport.message.gossip;
 
 import java.io.IOException;
 import java.util.HashMap;
-import java.util.concurrent.SynchronousQueue;
+import java.util.concurrent.LinkedTransferQueue;
+import java.util.concurrent.TransferQueue;
 import java.util.concurrent.atomic.AtomicBoolean;
 import javax.jms.JMSException;
 import javax.jms.Message;
@@ -49,7 +50,7 @@ public class GossipReceiver {
   public GossipReceiver (TransportManagedObjects gossipManagedObjects, MessagePolicy messagePolicy, ReconnectionPolicy reconnectionPolicy, MessageStrategy messageStrategy, int concurrencyLimit, GossipTarget... gossipTargets)
     throws IOException, JMSException, TransportException {
 
-    SynchronousQueue<Message> messageRendezvous = new SynchronousQueue<Message>(true);
+    TransferQueue<Message> messageRendezvous = new LinkedTransferQueue<Message>();
     HashMap<String, GossipTarget> targetMap = new HashMap<String, GossipTarget>();
 
     for (GossipTarget gossipTarget : gossipTargets) {

@@ -29,8 +29,8 @@ package org.smallmind.quorum.transport.message;
 import java.util.Map;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.SynchronousQueue;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TransferQueue;
 import java.util.concurrent.atomic.AtomicBoolean;
 import javax.jms.Message;
 import org.smallmind.instrument.Clocks;
@@ -47,10 +47,10 @@ public class ReceptionWorker implements Runnable {
   private final CountDownLatch exitLatch = new CountDownLatch(1);
   private final MessageStrategy messageStrategy;
   private final Map<String, MessageTarget> targetMap;
-  private final SynchronousQueue<Message> messageRendezvous;
+  private final TransferQueue<Message> messageRendezvous;
   private final ConcurrentLinkedQueue<TopicOperator> operatorQueue;
 
-  public ReceptionWorker (MessageStrategy messageStrategy, Map<String, MessageTarget> targetMap, SynchronousQueue<Message> messageRendezvous, ConcurrentLinkedQueue<TopicOperator> operatorQueue) {
+  public ReceptionWorker (MessageStrategy messageStrategy, Map<String, MessageTarget> targetMap, TransferQueue<Message> messageRendezvous, ConcurrentLinkedQueue<TopicOperator> operatorQueue) {
 
     this.messageStrategy = messageStrategy;
     this.targetMap = targetMap;

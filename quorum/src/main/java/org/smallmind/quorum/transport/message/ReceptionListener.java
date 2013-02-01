@@ -26,8 +26,8 @@
  */
 package org.smallmind.quorum.transport.message;
 
-import java.util.concurrent.SynchronousQueue;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TransferQueue;
 import java.util.concurrent.atomic.AtomicBoolean;
 import javax.jms.Destination;
 import javax.jms.JMSException;
@@ -47,9 +47,9 @@ public class ReceptionListener implements SessionEmployer, MessageListener {
   private final AtomicBoolean closed = new AtomicBoolean(false);
   private final ConnectionFactor requestConnectionFactor;
   private final Queue requestQueue;
-  private final SynchronousQueue<Message> messageRendezvous;
+  private final TransferQueue<Message> messageRendezvous;
 
-  public ReceptionListener (ConnectionFactor requestConnectionFactor, Queue requestQueue, SynchronousQueue<Message> messageRendezvous)
+  public ReceptionListener (ConnectionFactor requestConnectionFactor, Queue requestQueue, TransferQueue<Message> messageRendezvous)
     throws JMSException {
 
     this.requestConnectionFactor = requestConnectionFactor;
@@ -98,7 +98,7 @@ public class ReceptionListener implements SessionEmployer, MessageListener {
           boolean success;
 
           do {
-            success = messageRendezvous.offer(message, 1, TimeUnit.SECONDS);
+            success = messageRendezvous.tryTransfer(message, 1, TimeUnit.SECONDS);
           } while ((!closed.get()) && (!success));
         }
       });

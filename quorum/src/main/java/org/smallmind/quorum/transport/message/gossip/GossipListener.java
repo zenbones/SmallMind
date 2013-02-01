@@ -26,8 +26,8 @@
  */
 package org.smallmind.quorum.transport.message.gossip;
 
-import java.util.concurrent.SynchronousQueue;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TransferQueue;
 import java.util.concurrent.atomic.AtomicBoolean;
 import javax.jms.Destination;
 import javax.jms.JMSException;
@@ -50,9 +50,9 @@ public class GossipListener implements SessionEmployer, MessageListener {
   private final AtomicBoolean closed = new AtomicBoolean(false);
   private final ConnectionFactor gossipConnectionFactor;
   private final Topic gossipTopic;
-  private final SynchronousQueue<Message> messageRendezvous;
+  private final TransferQueue<Message> messageRendezvous;
 
-  public GossipListener (ConnectionFactor gossipConnectionFactor, Topic gossipTopic, SynchronousQueue<Message> messageRendezvous)
+  public GossipListener (ConnectionFactor gossipConnectionFactor, Topic gossipTopic, TransferQueue<Message> messageRendezvous)
     throws JMSException {
 
     this.gossipConnectionFactor = gossipConnectionFactor;
@@ -101,7 +101,7 @@ public class GossipListener implements SessionEmployer, MessageListener {
           boolean success;
 
           do {
-            success = messageRendezvous.offer(message, 1, TimeUnit.SECONDS);
+            success = messageRendezvous.tryTransfer(message, 1, TimeUnit.SECONDS);
           } while ((!closed.get()) && (!success));
         }
       });

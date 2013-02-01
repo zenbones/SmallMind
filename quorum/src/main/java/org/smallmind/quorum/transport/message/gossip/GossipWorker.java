@@ -28,8 +28,8 @@ package org.smallmind.quorum.transport.message.gossip;
 
 import java.util.Map;
 import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.SynchronousQueue;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TransferQueue;
 import java.util.concurrent.atomic.AtomicBoolean;
 import javax.jms.Message;
 import org.smallmind.instrument.Clocks;
@@ -48,9 +48,9 @@ public class GossipWorker implements Runnable {
   private final CountDownLatch exitLatch = new CountDownLatch(1);
   private final MessageStrategy messageStrategy;
   private final Map<String, GossipTarget> targetMap;
-  private final SynchronousQueue<Message> messageRendezvous;
+  private final TransferQueue<Message> messageRendezvous;
 
-  public GossipWorker (MessageStrategy messageStrategy, Map<String, GossipTarget> targetMap, SynchronousQueue<Message> messageRendezvous) {
+  public GossipWorker (MessageStrategy messageStrategy, Map<String, GossipTarget> targetMap, TransferQueue<Message> messageRendezvous) {
 
     this.messageStrategy = messageStrategy;
     this.targetMap = targetMap;
