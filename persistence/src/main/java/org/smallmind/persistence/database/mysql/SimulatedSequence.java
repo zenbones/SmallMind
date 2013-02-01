@@ -157,8 +157,14 @@ public class SimulatedSequence extends Sequence {
           }
         }
       }
+      catch (SimulatedSequenceDisasterException simulatedSequenceDisasterException) {
+        throw simulatedSequenceDisasterException;
+      }
       catch (SQLException sqlException) {
-        throw new SimulatedSequenceDisasterException(sqlException, "Unable to update sequence(%s), name");
+        throw new SimulatedSequenceDisasterException(sqlException, "Unable to update sequence(%s)", name);
+      }
+      catch (Throwable throwable) {
+        throw new SimulatedSequenceDisasterException(throwable, "Unknown exception encountered in sequence(%s) update", name);
       }
     }
   }
