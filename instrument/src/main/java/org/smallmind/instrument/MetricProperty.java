@@ -26,7 +26,9 @@
  */
 package org.smallmind.instrument;
 
-public class MetricProperty {
+import java.io.Serializable;
+
+public class MetricProperty implements Serializable {
 
   private String key;
   private String value;

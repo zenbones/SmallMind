@@ -27,6 +27,8 @@
 package org.smallmind.instrument;
 
 import java.util.concurrent.TimeUnit;
+import org.smallmind.instrument.context.MetricItem;
+import org.smallmind.instrument.context.MetricSnapshot;
 
 public class Chronometer extends Metric implements Metered, Estimating, Timed, Statistician, Temporal, Stoppable {
 
@@ -45,11 +47,19 @@ public class Chronometer extends Metric implements Metered, Estimating, Timed, S
   @Override
   public void clear () {
 
+    MetricSnapshot snapshot;
+
     meter.clear();
     histogram.clear();
+
+    if ((snapshot = getMetricSnapshot()) != null) {
+      snapshot.addItem(new MetricItem<Long>("duration", 0L));
+    }
   }
 
   public void update (long duration) {
+
+    MetricSnapshot snapshot;
 
     if (duration < 0) {
       throw new InstrumentationException("Chronometer durations must be >= 0");
@@ -57,6 +67,10 @@ public class Chronometer extends Metric implements Metered, Estimating, Timed, S
 
     histogram.update(duration);
     meter.mark();
+
+    if ((snapshot = getMetricSnapshot()) != null) {
+      snapshot.addItem(new MetricItem<Long>("duration", duration));
+    }
   }
 
   @Override

@@ -26,24 +26,26 @@
  */
 package org.smallmind.instrument.context;
 
-import java.util.LinkedList;
-import java.util.List;
-import java.util.concurrent.ConcurrentLinkedQueue;
-import org.smallmind.nutsnbolts.context.Context;
+import java.io.Serializable;
 
-public class MetricContext implements Context {
+public class MetricItem<S extends Serializable> implements Serializable {
 
-  private final ConcurrentLinkedQueue<MetricSnapshot> snapshotQueue = new ConcurrentLinkedQueue<>();
+  private String key;
+  private S value;
 
-  public MetricSnapshot addSnapshot (MetricSnapshot snapshot) {
+  public MetricItem (String key, S value) {
 
-    snapshotQueue.add(snapshot);
-
-    return snapshot;
+    this.key = key;
+    this.value = value;
   }
 
-  public List<MetricSnapshot> getSnapshots () {
+  public String getKey () {
 
-    return new LinkedList<MetricSnapshot>(snapshotQueue);
+    return key;
+  }
+
+  public S getValue () {
+
+    return value;
   }
 }

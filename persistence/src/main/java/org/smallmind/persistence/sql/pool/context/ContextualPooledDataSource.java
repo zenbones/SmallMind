@@ -31,12 +31,10 @@ import java.sql.SQLException;
 import java.util.HashMap;
 import javax.sql.PooledConnection;
 import org.smallmind.nutsnbolts.context.ContextFactory;
-import org.smallmind.nutsnbolts.context.ExpectedContexts;
 import org.smallmind.persistence.sql.pool.AbstractPooledDataSource;
 import org.smallmind.quorum.pool.ComponentPoolException;
 import org.smallmind.quorum.pool.complex.ComponentPool;
 
-@ExpectedContexts(PooledDataSourceContext.class)
 public class ContextualPooledDataSource extends AbstractPooledDataSource {
 
   private final HashMap<String, ComponentPool<PooledConnection>> componentPoolMap = new HashMap<String, ComponentPool<PooledConnection>>();
@@ -62,7 +60,7 @@ public class ContextualPooledDataSource extends AbstractPooledDataSource {
       String contextualPart;
 
       if ((componentPool = componentPoolMap.get(contextualPart = (pooledDataSourceContext == null) ? null : pooledDataSourceContext.getContextualPart())) == null) {
-        throw new ComponentPoolException("Unable to locate component pool for base name(%s) and context(%s)", baseName, contextualPart);
+        throw new ComponentPoolException("Unable to locate component pool for base name(%s) and context(%s)", baseName, contextualPart == null ? "null" : contextualPart);
       }
 
       return componentPool.getComponent().getConnection();

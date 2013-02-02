@@ -27,19 +27,21 @@
 package org.smallmind.instrument.context;
 
 import java.io.Serializable;
+import java.util.LinkedList;
 import org.smallmind.instrument.MetricProperty;
 
 public class MetricSnapshot implements Serializable {
 
+  private LinkedList<MetricItem> itemList;
   private MetricProperty[] properties;
   private String domain;
-  private long duration;
 
-  public MetricSnapshot (long duration, String domain, MetricProperty... properties) {
+  public MetricSnapshot (MetricAddress metricAddress) {
 
-    this.duration = duration;
-    this.domain = domain;
-    this.properties = properties;
+    domain = metricAddress.getDomain();
+    properties = metricAddress.getProperties();
+
+    itemList = new LinkedList<>();
   }
 
   public String getDomain () {
@@ -52,8 +54,8 @@ public class MetricSnapshot implements Serializable {
     return properties;
   }
 
-  public long getDuration () {
+  public synchronized void addItem (MetricItem item) {
 
-    return duration;
+    itemList.add(item);
   }
 }

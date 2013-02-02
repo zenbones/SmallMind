@@ -159,7 +159,7 @@ public class ContextFactory {
 
         expectedContexts = new Context[contextClasses.length];
         for (int count = 0; count < contextClasses.length; count++) {
-          if ((expectedContext = getContext(contextClasses[count])) == null) {
+          if (((expectedContext = getContext(contextClasses[count])) == null) && contextAnnotation.required()) {
             throw new ContextException("Context(%s) has not been instantiated", contextClasses[count].getName());
           }
           expectedContexts[count] = expectedContext;

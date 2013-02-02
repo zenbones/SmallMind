@@ -32,6 +32,8 @@ import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
+import org.smallmind.instrument.context.MetricItem;
+import org.smallmind.instrument.context.MetricSnapshot;
 import org.smallmind.nutsnbolts.time.TimeUtilities;
 
 public class Meter extends Metric implements Metered, Temporal, Stoppable {
@@ -93,11 +95,17 @@ public class Meter extends Metric implements Metered, Temporal, Stoppable {
   @Override
   public void clear () {
 
+    MetricSnapshot snapshot;
+
     startTime.set(clock.getTimeMilliseconds());
     count.set(0);
     m15Average.clear();
     m15Average.clear();
     m15Average.clear();
+
+    if ((snapshot = getMetricSnapshot()) != null) {
+      snapshot.addItem(new MetricItem<Long>("count", 0L));
+    }
   }
 
   public void mark () {
@@ -107,10 +115,17 @@ public class Meter extends Metric implements Metered, Temporal, Stoppable {
 
   public void mark (long n) {
 
-    count.addAndGet(n);
+    MetricSnapshot snapshot;
+    long current;
+
+    current = count.addAndGet(n);
     m1Average.update(n);
     m5Average.update(n);
     m15Average.update(n);
+
+    if ((snapshot = getMetricSnapshot()) != null) {
+      snapshot.addItem(new MetricItem<Long>("count", current));
+    }
   }
 
   @Override

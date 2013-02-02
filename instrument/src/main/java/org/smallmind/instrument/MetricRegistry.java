@@ -41,18 +41,17 @@ import org.smallmind.nutsnbolts.lang.UnknownSwitchCaseException;
 public class MetricRegistry {
 
   private final ConcurrentHashMap<MetricKey, Metric> metricMap = new ConcurrentHashMap<MetricKey, Metric>();
-
   private MBeanServer server;
   private JMXNamingPolicy jmxNamingPolicy = new DefaultJMXNamingPolicy();
-
-  public void setServer (MBeanServer server) {
-
-    this.server = server;
-  }
 
   public MBeanServer getServer () {
 
     return server;
+  }
+
+  public void setServer (MBeanServer server) {
+
+    this.server = server;
   }
 
   public void setJmxNamingPolicy (JMXNamingPolicy jmxNamingPolicy) {
@@ -73,7 +72,7 @@ public class MetricRegistry {
     if ((metric = builder.getMetricClass().cast(metricMap.get(metricKey))) == null) {
       synchronized (metricMap) {
         if ((metric = builder.getMetricClass().cast(metricMap.get(metricKey))) == null) {
-          metricMap.put(metricKey, metric = builder.construct());
+          metricMap.put(metricKey, metric = builder.getMetricClass().cast(new NamedMetric(builder.construct(), domain, properties).getProxy()));
 
           if (server != null) {
 

@@ -28,6 +28,8 @@ package org.smallmind.instrument;
 
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
+import org.smallmind.instrument.context.MetricItem;
+import org.smallmind.instrument.context.MetricSnapshot;
 
 public class Histogram extends Metric implements Estimating, Statistician {
 
@@ -47,22 +49,38 @@ public class Histogram extends Metric implements Estimating, Statistician {
 
   public void clear () {
 
+    MetricSnapshot snapshot;
+
     sample.clear();
     count.set(0);
     max.set(Long.MIN_VALUE);
     min.set(Long.MAX_VALUE);
     sum.set(0);
     variance.set(new double[] {-1, 0});
+
+    if ((snapshot = getMetricSnapshot()) != null) {
+      snapshot.addItem(new MetricItem<Long>("count", 0L));
+      snapshot.addItem(new MetricItem<Long>("sum", 0L));
+    }
   }
 
   public void update (long value) {
 
-    count.incrementAndGet();
+    MetricSnapshot snapshot;
+    long currentCount;
+    long currentSum;
+
+    currentCount = count.incrementAndGet();
     sample.update(value);
     setMax(value);
     setMin(value);
-    sum.getAndAdd(value);
+    currentSum = sum.getAndAdd(value);
     updateVariance(value);
+
+    if ((snapshot = getMetricSnapshot()) != null) {
+      snapshot.addItem(new MetricItem<Long>("count", currentCount));
+      snapshot.addItem(new MetricItem<Long>("sum", currentSum));
+    }
   }
 
   @Override

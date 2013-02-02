@@ -28,6 +28,8 @@ package org.smallmind.instrument;
 
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
+import org.smallmind.instrument.context.MetricItem;
+import org.smallmind.instrument.context.MetricSnapshot;
 
 public class Speedometer extends Metric implements Tracked, Temporal, Stoppable {
 
@@ -45,10 +47,16 @@ public class Speedometer extends Metric implements Tracked, Temporal, Stoppable 
   @Override
   public void clear () {
 
+    MetricSnapshot snapshot;
+
     rateMeter.clear();
     quantityMeter.clear();
     min.set(Long.MAX_VALUE);
     max.set(Long.MIN_VALUE);
+
+    if ((snapshot = getMetricSnapshot()) != null) {
+      snapshot.addItem(new MetricItem<Long>("quantity", 0L));
+    }
   }
 
   public void update () {
@@ -58,10 +66,16 @@ public class Speedometer extends Metric implements Tracked, Temporal, Stoppable 
 
   public void update (long quantity) {
 
+    MetricSnapshot snapshot;
+
     rateMeter.mark();
     quantityMeter.mark(quantity);
     setMax(quantity);
     setMin(quantity);
+
+    if ((snapshot = getMetricSnapshot()) != null) {
+      snapshot.addItem(new MetricItem<Long>("quantity", quantity));
+    }
   }
 
   @Override

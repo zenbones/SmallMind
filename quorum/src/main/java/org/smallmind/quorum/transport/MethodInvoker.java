@@ -37,7 +37,6 @@ public class MethodInvoker {
 
   private static final Class[] EMPTY_SIGNATURE = new Class[0];
   private static final Class[] OBJECT_SIGNATURE = {Object.class};
-
   private final HashMap<FauxMethod, Method> methodMap;
   private final Class[] proxyInterfaces;
   private final Object targetObject;
@@ -45,7 +44,7 @@ public class MethodInvoker {
   public MethodInvoker (Object targetObject, Class[] proxyInterfaces)
     throws NoSuchMethodException {
 
-    Class endpointClass;
+    Class<?> endpointClass;
     Method toStringMethod;
     Method hashCodeMethod;
     Method equalsMethod;
@@ -82,7 +81,9 @@ public class MethodInvoker {
 
     if (invocationSignal.containsContexts()) {
       for (Context context : invocationSignal.getContexts()) {
-        ContextFactory.pushContext(context);
+        if (context != null) {
+          ContextFactory.pushContext(context);
+        }
       }
     }
 
@@ -100,7 +101,9 @@ public class MethodInvoker {
     finally {
       if (invocationSignal.containsContexts()) {
         for (Context context : invocationSignal.getContexts()) {
-          ContextFactory.popContext(context);
+          if (context != null) {
+            ContextFactory.popContext(context);
+          }
         }
       }
     }

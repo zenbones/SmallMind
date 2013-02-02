@@ -24,26 +24,44 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.instrument.context;
+package org.smallmind.instrument;
 
-import java.util.LinkedList;
-import java.util.List;
-import java.util.concurrent.ConcurrentLinkedQueue;
-import org.smallmind.nutsnbolts.context.Context;
+import java.lang.reflect.InvocationHandler;
+import java.lang.reflect.Method;
+import java.lang.reflect.Proxy;
+import org.smallmind.instrument.context.MetricAddress;
+import org.smallmind.nutsnbolts.context.ContextFactory;
 
-public class MetricContext implements Context {
+public class NamedMetric implements InvocationHandler {
 
-  private final ConcurrentLinkedQueue<MetricSnapshot> snapshotQueue = new ConcurrentLinkedQueue<>();
+  private Metric metric;
+  private Metric proxyMetric;
+  private MetricAddress metricAddress;
 
-  public MetricSnapshot addSnapshot (MetricSnapshot snapshot) {
+  public NamedMetric (Metric metric, String domain, MetricProperty... properties) {
 
-    snapshotQueue.add(snapshot);
+    this.metric = metric;
 
-    return snapshot;
+    metricAddress = new MetricAddress(domain, properties);
+    proxyMetric = (Metric)Proxy.newProxyInstance(NamedMetric.class.getClassLoader(), new Class[] {metric.getClass()}, this);
   }
 
-  public List<MetricSnapshot> getSnapshots () {
+  public Metric getProxy () {
 
-    return new LinkedList<MetricSnapshot>(snapshotQueue);
+    return proxyMetric;
+  }
+
+  @Override
+  public Object invoke (Object proxy, Method method, Object[] args)
+    throws Throwable {
+
+    ContextFactory.pushContext(metricAddress);
+    try {
+
+      return method.invoke(metric, args);
+    }
+    finally {
+      ContextFactory.popContext(MetricAddress.class);
+    }
   }
 }

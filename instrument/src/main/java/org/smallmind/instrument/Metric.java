@@ -26,19 +26,29 @@
  */
 package org.smallmind.instrument;
 
+import org.smallmind.instrument.context.MetricAddress;
 import org.smallmind.instrument.context.MetricContext;
+import org.smallmind.instrument.context.MetricSnapshot;
 import org.smallmind.nutsnbolts.context.ContextFactory;
 
 public abstract class Metric {
 
   public abstract void clear ();
 
-  public void contextualize () {
+  public MetricSnapshot getMetricSnapshot () {
 
     MetricContext metricContext;
 
     if ((metricContext = ContextFactory.getContext(MetricContext.class)) != null) {
 
+      MetricAddress metricAddress;
+
+      if ((metricAddress = ContextFactory.getContext(MetricAddress.class)) != null) {
+
+        return metricContext.addSnapshot(new MetricSnapshot(metricAddress));
+      }
     }
+
+    return null;
   }
 }
