@@ -26,6 +26,8 @@
  */
 package org.smallmind.instrument.context;
 
+import java.util.LinkedList;
+import java.util.List;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import org.smallmind.nutsnbolts.context.Context;
 
@@ -36,5 +38,10 @@ public class MetricContext implements Context {
   public void addSnapshot (MetricSnapshot snapshot) {
 
     snapshotQueue.add(snapshot);
+  }
+
+  public List<MetricSnapshot> getSnapshots () {
+
+    return new LinkedList<MetricSnapshot>(snapshotQueue);
   }
 }

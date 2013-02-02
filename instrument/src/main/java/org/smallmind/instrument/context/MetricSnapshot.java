@@ -28,20 +28,19 @@ package org.smallmind.instrument.context;
 
 import java.io.Serializable;
 import org.smallmind.instrument.MetricProperty;
-import org.smallmind.instrument.MetricType;
 
-public abstract class MetricSnapshot implements Serializable {
+public class MetricSnapshot implements Serializable {
 
   private MetricProperty[] properties;
   private String domain;
+  private long duration;
 
-  protected MetricSnapshot (String domain, MetricProperty... properties) {
+  public MetricSnapshot (long duration, String domain, MetricProperty... properties) {
 
+    this.duration = duration;
     this.domain = domain;
     this.properties = properties;
   }
-
-  public abstract MetricType getMetricType ();
 
   public String getDomain () {
 
@@ -51,5 +50,10 @@ public abstract class MetricSnapshot implements Serializable {
   public MetricProperty[] getProperties () {
 
     return properties;
+  }
+
+  public long getDuration () {
+
+    return duration;
   }
 }
