@@ -28,9 +28,6 @@ package org.smallmind.instrument;
 
 import java.util.concurrent.TimeUnit;
 import org.smallmind.instrument.config.MetricConfigurationProvider;
-import org.smallmind.instrument.context.MetricContext;
-import org.smallmind.instrument.context.MetricSnapshot;
-import org.smallmind.nutsnbolts.context.ContextFactory;
 
 public abstract class ChronometerInstrument extends Instrument<Chronometer> {
 
@@ -60,15 +57,7 @@ public abstract class ChronometerInstrument extends Instrument<Chronometer> {
     withChronometer();
 
     if (chronometer != null) {
-
-      MetricContext metricContext;
-      long duration;
-
-      chronometer.update(chronometer.getLatencyTimeUnit().convert(duration = chronometer.getClock().getTimeNanoseconds() - startTime, TimeUnit.NANOSECONDS));
-
-      if ((metricContext = ContextFactory.getContext(MetricContext.class)) != null) {
-        metricContext.addSnapshot(new MetricSnapshot(duration, getArguments().getDomain(), getArguments().getProperties()));
-      }
+      chronometer.update(chronometer.getLatencyTimeUnit().convert(chronometer.getClock().getTimeNanoseconds() - startTime, TimeUnit.NANOSECONDS));
     }
   }
 }
