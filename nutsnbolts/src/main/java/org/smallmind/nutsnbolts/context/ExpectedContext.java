@@ -35,7 +35,7 @@ import java.lang.annotation.Target;
 @Target({ElementType.TYPE})
 @Retention(RetentionPolicy.RUNTIME)
 @Inherited
-public @interface ExpectedContexts {
+public @interface ExpectedContext {
 
   public abstract Class<? extends Context>[] value ();
 

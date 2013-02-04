@@ -146,11 +146,11 @@ public class ContextFactory {
   public static Context[] getExpectedContexts (Class<?> expectingClass)
     throws ContextException {
 
-    ExpectedContexts contextAnnotation;
+    ExpectedContext contextAnnotation;
     Context[] expectedContexts;
     Class<? extends Context>[] contextClasses;
 
-    if ((contextAnnotation = expectingClass.getAnnotation(ExpectedContexts.class)) != null) {
+    if ((contextAnnotation = expectingClass.getAnnotation(ExpectedContext.class)) != null) {
       try {
 
         Context expectedContext;

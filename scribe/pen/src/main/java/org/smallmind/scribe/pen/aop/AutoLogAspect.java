@@ -40,7 +40,7 @@ import org.smallmind.scribe.pen.probe.Probe;
 import org.smallmind.scribe.pen.probe.ProbeFactory;
 
 @Aspect
-public class LoggingAspect {
+public class AutoLogAspect {
 
   private static final Class[] PARSE_SIGNATURE = new Class[] {String.class};
 
@@ -118,7 +118,7 @@ public class LoggingAspect {
     stopProbe();
   }
 
-  @AfterReturning("(execution(@AutoLog * * (..)) || initialization(@AutoLog new(..))) && @annotation(AutoLog)")
+  @AfterReturning("(execution(@AutoLog * * (..)) || initialization(@AutoLog new(..)))")
   public void afterReturnFromMethodToBeLogged () {
 
     stopProbe();
@@ -130,7 +130,7 @@ public class LoggingAspect {
     abortProbe(throwable);
   }
 
-  @AfterThrowing(pointcut = "(execution(@AutoLog * * (..)) || initialization(@AutoLog new(..))) && @annotation(AutoLog)", throwing = "throwable", argNames = "throwable")
+  @AfterThrowing(pointcut = "(execution(@AutoLog * * (..)) || initialization(@AutoLog new(..)))", throwing = "throwable", argNames = "throwable")
   public void afterThrowFromMethodToBeLogged (Throwable throwable) {
 
     abortProbe(throwable);
