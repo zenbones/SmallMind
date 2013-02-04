@@ -89,7 +89,7 @@ public class Metrics {
     public abstract M construct ();
   }
 
-  private static class TallyBuilder implements MetricBuilder<Tally> {
+  private static class TallyBuilder implements MetricBuilder<TallyImpl> {
 
     private int initialCount;
 
@@ -99,9 +99,9 @@ public class Metrics {
     }
 
     @Override
-    public Class<Tally> getMetricClass () {
+    public Class<TallyImpl> getMetricClass () {
 
-      return Tally.class;
+      return TallyImpl.class;
     }
 
     @Override
@@ -111,13 +111,13 @@ public class Metrics {
     }
 
     @Override
-    public Tally construct () {
+    public TallyImpl construct () {
 
-      return new Tally(initialCount);
+      return new TallyImpl(initialCount);
     }
   }
 
-  private static class MeterBuilder implements MetricBuilder<Meter> {
+  private static class MeterBuilder implements MetricBuilder<MeterImpl> {
 
     private Clocks clocks;
     private TimeUnit tickTimeUnit;
@@ -131,9 +131,9 @@ public class Metrics {
     }
 
     @Override
-    public Class<Meter> getMetricClass () {
+    public Class<MeterImpl> getMetricClass () {
 
-      return Meter.class;
+      return MeterImpl.class;
     }
 
     @Override
@@ -143,13 +143,13 @@ public class Metrics {
     }
 
     @Override
-    public Meter construct () {
+    public MeterImpl construct () {
 
-      return new Meter(tickInterval, tickTimeUnit, clocks.getClock());
+      return new MeterImpl(tickInterval, tickTimeUnit, clocks.getClock());
     }
   }
 
-  private static class HistogramBuilder implements MetricBuilder<Histogram> {
+  private static class HistogramBuilder implements MetricBuilder<HistogramImpl> {
 
     private Samples samples;
 
@@ -159,9 +159,9 @@ public class Metrics {
     }
 
     @Override
-    public Class<Histogram> getMetricClass () {
+    public Class<HistogramImpl> getMetricClass () {
 
-      return Histogram.class;
+      return HistogramImpl.class;
     }
 
     @Override
@@ -171,13 +171,13 @@ public class Metrics {
     }
 
     @Override
-    public Histogram construct () {
+    public HistogramImpl construct () {
 
-      return new Histogram(samples);
+      return new HistogramImpl(samples);
     }
   }
 
-  private static class SpeedometerBuilder implements MetricBuilder<Speedometer> {
+  private static class SpeedometerBuilder implements MetricBuilder<SpeedometerImpl> {
 
     private Clocks clocks;
     private TimeUnit tickTimeUnit;
@@ -191,9 +191,9 @@ public class Metrics {
     }
 
     @Override
-    public Class<Speedometer> getMetricClass () {
+    public Class<SpeedometerImpl> getMetricClass () {
 
-      return Speedometer.class;
+      return SpeedometerImpl.class;
     }
 
     @Override
@@ -203,13 +203,13 @@ public class Metrics {
     }
 
     @Override
-    public Speedometer construct () {
+    public SpeedometerImpl construct () {
 
-      return new Speedometer(tickInterval, tickTimeUnit, clocks.getClock());
+      return new SpeedometerImpl(tickInterval, tickTimeUnit, clocks.getClock());
     }
   }
 
-  private static class ChronometerBuilder implements MetricBuilder<Chronometer> {
+  private static class ChronometerBuilder implements MetricBuilder<ChronometerImpl> {
 
     private Samples samples;
     private Clocks clocks;
@@ -227,9 +227,9 @@ public class Metrics {
     }
 
     @Override
-    public Class<Chronometer> getMetricClass () {
+    public Class<ChronometerImpl> getMetricClass () {
 
-      return Chronometer.class;
+      return ChronometerImpl.class;
     }
 
     @Override
@@ -239,9 +239,9 @@ public class Metrics {
     }
 
     @Override
-    public Chronometer construct () {
+    public ChronometerImpl construct () {
 
-      return new Chronometer(samples, durationUnit, tickInterval, tickTimeUnit, clocks.getClock());
+      return new ChronometerImpl(samples, durationUnit, tickInterval, tickTimeUnit, clocks.getClock());
     }
   }
 }

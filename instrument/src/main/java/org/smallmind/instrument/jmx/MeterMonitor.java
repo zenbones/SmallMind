@@ -28,13 +28,13 @@ package org.smallmind.instrument.jmx;
 
 import java.util.concurrent.TimeUnit;
 import javax.management.StandardMBean;
-import org.smallmind.instrument.Meter;
+import org.smallmind.instrument.MeterImpl;
 
 public class MeterMonitor extends StandardMBean implements MeterMonitorMXBean {
 
-  private Meter meter;
+  private MeterImpl meter;
 
-  public MeterMonitor (Meter meter) {
+  public MeterMonitor (MeterImpl meter) {
 
     super(MeterMonitorMXBean.class, true);
 

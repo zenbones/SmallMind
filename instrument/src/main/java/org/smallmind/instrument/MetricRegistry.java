@@ -80,19 +80,19 @@ public class MetricRegistry {
 
             switch (builder.getType()) {
               case TALLY:
-                mBean = new TallyMonitor((Tally)metric);
+                mBean = new TallyMonitor((TallyImpl)metric);
                 break;
               case METER:
-                mBean = new MeterMonitor((Meter)metric);
+                mBean = new MeterMonitor((MeterImpl)metric);
                 break;
               case HISTOGRAM:
-                mBean = new HistogramMonitor((Histogram)metric);
+                mBean = new HistogramMonitor((HistogramImpl)metric);
                 break;
               case SPEEDOMETER:
-                mBean = new SpeedometerMonitor((Speedometer)metric);
+                mBean = new SpeedometerMonitor((SpeedometerImpl)metric);
                 break;
               case CHRONOMETER:
-                mBean = new ChronometerMonitor((Chronometer)metric);
+                mBean = new ChronometerMonitor((ChronometerImpl)metric);
                 break;
               default:
                 throw new UnknownSwitchCaseException(builder.getType().name());

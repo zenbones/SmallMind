@@ -1,189 +1,40 @@
-/*
- * Copyright (c) 2007, 2008, 2009, 2010, 2011, 2012, 2013 David Berkman
- * 
- * This file is part of the SmallMind Code Project.
- * 
- * The SmallMind Code Project is free software, you can redistribute
- * it and/or modify it under the terms of GNU Affero General Public
- * License as published by the Free Software Foundation, either version 3
- * of the License, or (at your option) any later version.
- * 
- * The SmallMind Code Project is distributed in the hope that it will
- * be useful, but WITHOUT ANY WARRANTY; without even the implied warranty
- * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
- * General Public License for more details.
- * 
- * You should have received a copy of the the GNU Affero General Public
- * License, along with The SmallMind Code Project. If not, see
- * <http://www.gnu.org/licenses/>.
- * 
- * Additional permission under the GNU Affero GPL version 3 section 7
- * ------------------------------------------------------------------
- * If you modify this Program, or any covered work, by linking or
- * combining it with other code, such other code is not for that reason
- * alone subject to any of the requirements of the GNU Affero GPL
- * version 3.
- */
 package org.smallmind.instrument;
 
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicLong;
-import org.smallmind.instrument.context.MetricItem;
-import org.smallmind.instrument.context.MetricSnapshot;
 
-public class Speedometer extends Metric implements Tracked, Temporal, Stoppable {
+public interface Speedometer extends Tracked, Temporal, Stoppable {
 
-  private final Meter rateMeter;
-  private final Meter quantityMeter;
-  private final AtomicLong min = new AtomicLong(Long.MAX_VALUE);
-  private final AtomicLong max = new AtomicLong(Long.MIN_VALUE);
+  public abstract void clear ();
 
-  public Speedometer (long tickInterval, TimeUnit tickTimeUnit, Clock clock) {
+  public abstract void update ();
 
-    rateMeter = new Meter(tickInterval, tickTimeUnit, clock);
-    quantityMeter = new Meter(tickInterval, tickTimeUnit, clock);
-  }
+  public abstract void update (long quantity);
 
-  @Override
-  public void clear () {
+  public abstract Clock getClock ();
 
-    MetricSnapshot snapshot;
+  public abstract TimeUnit getRateTimeUnit ();
 
-    rateMeter.clear();
-    quantityMeter.clear();
-    min.set(Long.MAX_VALUE);
-    max.set(Long.MIN_VALUE);
+  public abstract long getCount ();
 
-    if ((snapshot = getMetricSnapshot()) != null) {
-      snapshot.addItem(new MetricItem<Long>("quantity", 0L));
-    }
-  }
+  public abstract double getOneMinuteAvgRate ();
 
-  public void update () {
+  public abstract double getOneMinuteAvgVelocity ();
 
-    update(1);
-  }
+  public abstract double getFiveMinuteAvgRate ();
 
-  public void update (long quantity) {
+  public abstract double getFiveMinuteAvgVelocity ();
 
-    MetricSnapshot snapshot;
+  public abstract double getFifteenMinuteAvgRate ();
 
-    rateMeter.mark();
-    quantityMeter.mark(quantity);
-    setMax(quantity);
-    setMin(quantity);
+  public abstract double getFifteenMinuteAvgVelocity ();
 
-    if ((snapshot = getMetricSnapshot()) != null) {
-      snapshot.addItem(new MetricItem<Long>("quantity", quantity));
-    }
-  }
+  public abstract double getAverageRate ();
 
-  @Override
-  public Clock getClock () {
+  public abstract double getAverageVelocity ();
 
-    return rateMeter.getClock();
-  }
+  public abstract double getMax ();
 
-  @Override
-  public TimeUnit getRateTimeUnit () {
+  public abstract double getMin ();
 
-    return rateMeter.getRateTimeUnit();
-  }
-
-  @Override
-  public long getCount () {
-
-    return rateMeter.getCount();
-  }
-
-  @Override
-  public double getOneMinuteAvgRate () {
-
-    return rateMeter.getOneMinuteAvgRate();
-  }
-
-  @Override
-  public double getOneMinuteAvgVelocity () {
-
-    return quantityMeter.getOneMinuteAvgRate() / rateMeter.getOneMinuteAvgRate();
-  }
-
-  @Override
-  public double getFiveMinuteAvgRate () {
-
-    return rateMeter.getFiveMinuteAvgRate();
-  }
-
-  @Override
-  public double getFiveMinuteAvgVelocity () {
-
-    return quantityMeter.getFiveMinuteAvgRate() / rateMeter.getFiveMinuteAvgRate();
-  }
-
-  @Override
-  public double getFifteenMinuteAvgRate () {
-
-    return rateMeter.getFifteenMinuteAvgRate();
-  }
-
-  @Override
-  public double getFifteenMinuteAvgVelocity () {
-
-    return quantityMeter.getFifteenMinuteAvgRate() / rateMeter.getFifteenMinuteAvgRate();
-  }
-
-  @Override
-  public double getAverageRate () {
-
-    return rateMeter.getAverageRate();
-  }
-
-  @Override
-  public double getAverageVelocity () {
-
-    return quantityMeter.getAverageRate() / rateMeter.getAverageRate();
-  }
-
-  @Override
-  public double getMax () {
-
-    return (getCount() > 0) ? max.get() : 0.0;
-  }
-
-  private void setMax (long potentialMax) {
-
-    boolean done = false;
-
-    while (!done) {
-
-      long currentMax = max.get();
-
-      done = currentMax >= potentialMax || max.compareAndSet(currentMax, potentialMax);
-    }
-  }
-
-  @Override
-  public double getMin () {
-
-    return (getCount() > 0) ? min.get() : 0.0;
-  }
-
-  private void setMin (long potentialMin) {
-
-    boolean done = false;
-
-    while (!done) {
-
-      long currentMin = min.get();
-
-      done = currentMin <= potentialMin || min.compareAndSet(currentMin, potentialMin);
-    }
-  }
-
-  @Override
-  public void stop () {
-
-    rateMeter.stop();
-    quantityMeter.stop();
-  }
+  public abstract void stop ();
 }

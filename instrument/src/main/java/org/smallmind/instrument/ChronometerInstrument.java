@@ -29,23 +29,23 @@ package org.smallmind.instrument;
 import java.util.concurrent.TimeUnit;
 import org.smallmind.instrument.config.MetricConfigurationProvider;
 
-public abstract class ChronometerInstrument extends Instrument<Chronometer> {
+public abstract class ChronometerInstrument extends Instrument<ChronometerImpl> {
 
   public ChronometerInstrument (MetricConfigurationProvider provider, MetricProperty... properties) {
 
-    super(((provider == null) || (provider.getMetricConfiguration() == null) || (!provider.getMetricConfiguration().isInstrumented())) ? null : new InstrumentationArguments<Chronometer>(Metrics.buildChronometer(provider.getMetricConfiguration().getSamples(), TimeUnit.MILLISECONDS, provider.getMetricConfiguration().getTickInterval(), provider.getMetricConfiguration().getTickTimeUnit()), provider.getMetricConfiguration().getMetricDomain().getDomain(), properties));
+    super(((provider == null) || (provider.getMetricConfiguration() == null) || (!provider.getMetricConfiguration().isInstrumented())) ? null : new InstrumentationArguments<ChronometerImpl>(Metrics.buildChronometer(provider.getMetricConfiguration().getSamples(), TimeUnit.MILLISECONDS, provider.getMetricConfiguration().getTickInterval(), provider.getMetricConfiguration().getTickTimeUnit()), provider.getMetricConfiguration().getMetricDomain().getDomain(), properties));
   }
 
-  public ChronometerInstrument (Metrics.MetricBuilder<Chronometer> builder, String domain, MetricProperty... properties) {
+  public ChronometerInstrument (Metrics.MetricBuilder<ChronometerImpl> builder, String domain, MetricProperty... properties) {
 
-    super(new InstrumentationArguments<Chronometer>(builder, domain, properties));
+    super(new InstrumentationArguments<ChronometerImpl>(builder, domain, properties));
   }
 
   public abstract void withChronometer ()
     throws Exception;
 
   @Override
-  public final void with (Chronometer chronometer)
+  public final void with (ChronometerImpl chronometer)
     throws Exception {
 
     long startTime = 0;

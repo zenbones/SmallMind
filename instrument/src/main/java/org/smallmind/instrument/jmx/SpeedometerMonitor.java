@@ -28,13 +28,13 @@ package org.smallmind.instrument.jmx;
 
 import java.util.concurrent.TimeUnit;
 import javax.management.StandardMBean;
-import org.smallmind.instrument.Speedometer;
+import org.smallmind.instrument.SpeedometerImpl;
 
 public class SpeedometerMonitor extends StandardMBean implements SpeedometerMonitorMXBean {
 
-  private Speedometer speedometer;
+  private SpeedometerImpl speedometer;
 
-  public SpeedometerMonitor (Speedometer speedometer) {
+  public SpeedometerMonitor (SpeedometerImpl speedometer) {
 
     super(SpeedometerMonitorMXBean.class, true);
 

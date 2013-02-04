@@ -27,13 +27,13 @@
 package org.smallmind.instrument.jmx;
 
 import javax.management.StandardMBean;
-import org.smallmind.instrument.Histogram;
+import org.smallmind.instrument.HistogramImpl;
 
 public class HistogramMonitor extends StandardMBean implements HistogramMonitorMXBean {
 
-  private Histogram histogram;
+  private HistogramImpl histogram;
 
-  public HistogramMonitor (Histogram histogram) {
+  public HistogramMonitor (HistogramImpl histogram) {
 
     super(HistogramMonitorMXBean.class, true);
 
