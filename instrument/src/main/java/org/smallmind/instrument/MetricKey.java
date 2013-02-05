@@ -65,6 +65,6 @@ public class MetricKey {
   @Override
   public boolean equals (Object obj) {
 
-    return (obj instanceof MetricKey) && ((MetricKey)obj).getDomain().equals(domain) && Arrays.equals(((MetricKey)obj).getProperties(), properties);
+    return (obj instanceof MetricKey) && ((MetricKey)obj).getType().equals(type) && ((MetricKey)obj).getDomain().equals(domain) && Arrays.equals(((MetricKey)obj).getProperties(), properties);
   }
 }

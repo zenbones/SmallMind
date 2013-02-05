@@ -26,10 +26,10 @@
  */
 package org.smallmind.instrument.context;
 
+import java.util.Arrays;
 import org.smallmind.instrument.MetricProperty;
-import org.smallmind.nutsnbolts.context.Context;
 
-public class MetricAddress implements Context {
+public class MetricAddress {
 
   private String domain;
   private MetricProperty[] properties;
@@ -48,5 +48,17 @@ public class MetricAddress implements Context {
   public MetricProperty[] getProperties () {
 
     return properties;
+  }
+
+  @Override
+  public int hashCode () {
+
+    return domain.hashCode() ^ ((properties == null) ? 0 : Arrays.hashCode(properties));
+  }
+
+  @Override
+  public boolean equals (Object obj) {
+
+    return (obj instanceof MetricAddress) && ((MetricAddress)obj).getDomain().equals(domain) && Arrays.equals(((MetricAddress)obj).getProperties(), properties);
   }
 }

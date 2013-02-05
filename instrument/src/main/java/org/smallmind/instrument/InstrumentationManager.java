@@ -61,6 +61,18 @@ public class InstrumentationManager implements PerApplicationDataManager {
     return instrumentAndReturn.with((((metricRegistry = getMetricRegistry()) == null) || ((arguments = instrumentAndReturn.getArguments()) == null)) ? null : metricRegistry.instrument(arguments.getBuilder(), arguments.getDomain(), arguments.getProperties()));
   }
 
+  public static void instrumentWithTally (MetricConfigurationProvider provider, MetricProperty... properties) {
+
+    instrumentWithTally(provider, 1, properties);
+  }
+
+  public static void instrumentWithTally (MetricConfigurationProvider provider, long count, MetricProperty... properties) {
+
+    if ((provider != null) && (provider.getMetricConfiguration() != null) && provider.getMetricConfiguration().isInstrumented()) {
+      getMetricRegistry().instrument(Metrics.buildTally(0), provider.getMetricConfiguration().getMetricDomain().getDomain(), properties).inc(count);
+    }
+  }
+
   public static void instrumentWithMeter (MetricConfigurationProvider provider, MetricProperty... properties) {
 
     instrumentWithMeter(provider, 1, properties);
@@ -70,6 +82,13 @@ public class InstrumentationManager implements PerApplicationDataManager {
 
     if ((provider != null) && (provider.getMetricConfiguration() != null) && provider.getMetricConfiguration().isInstrumented()) {
       getMetricRegistry().instrument(Metrics.buildMeter(provider.getMetricConfiguration().getTickInterval(), provider.getMetricConfiguration().getTickTimeUnit(), Clocks.EPOCH), provider.getMetricConfiguration().getMetricDomain().getDomain(), properties).mark(quantity);
+    }
+  }
+
+  public static void instrumentWithHistogram (MetricConfigurationProvider provider, long value, MetricProperty... properties) {
+
+    if ((provider != null) && (provider.getMetricConfiguration() != null) && provider.getMetricConfiguration().isInstrumented()) {
+      getMetricRegistry().instrument(Metrics.buildHistogram(provider.getMetricConfiguration().getSamples()), provider.getMetricConfiguration().getMetricDomain().getDomain(), properties).update(value);
     }
   }
 

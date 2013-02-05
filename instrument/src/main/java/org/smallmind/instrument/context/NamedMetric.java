@@ -24,12 +24,13 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.instrument;
+package org.smallmind.instrument.context;
 
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
-import org.smallmind.instrument.context.MetricAddress;
+import org.smallmind.instrument.Metric;
+import org.smallmind.instrument.MetricProperty;
 import org.smallmind.nutsnbolts.context.ContextFactory;
 
 public class NamedMetric implements InvocationHandler {
@@ -55,13 +56,19 @@ public class NamedMetric implements InvocationHandler {
   public Object invoke (Object proxy, Method method, Object[] args)
     throws Throwable {
 
-    ContextFactory.pushContext(metricAddress);
+    MetricContext metricContext;
+
+    if ((metricContext = ContextFactory.getContext(MetricContext.class)) == null) {
+      ContextFactory.pushContext(metricContext = new MetricContext());
+    }
+
+    metricContext.pushSnapshot(metricAddress);
     try {
 
       return method.invoke(metric, args);
     }
     finally {
-      ContextFactory.popContext(MetricAddress.class);
+      metricContext.popSnapshot();
     }
   }
 }

@@ -26,25 +26,55 @@
  */
 package org.smallmind.instrument.context;
 
+import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.concurrent.ConcurrentLinkedQueue;
 import org.smallmind.nutsnbolts.context.Context;
 
 public class MetricContext implements Context {
 
-  private final ConcurrentLinkedQueue<MetricSnapshot> snapshotQueue = new ConcurrentLinkedQueue<>();
+  private final LinkedList<MetricSnapshot> arabesqueQueue = new LinkedList<>();
+  private final LinkedList<MetricSnapshot> outputList = new LinkedList<>();
+  private final long startTime;
 
-  public MetricSnapshot addSnapshot (MetricSnapshot snapshot) {
+  protected MetricContext () {
 
-    snapshotQueue.add(snapshot);
+    startTime = System.currentTimeMillis();
+  }
 
-    return snapshot;
+  public long getStartTime () {
+
+    return startTime;
+  }
+
+  public MetricSnapshot pushSnapshot (MetricAddress metricAddress) {
+
+    MetricSnapshot metricSnapshot;
+
+    arabesqueQueue.addFirst(metricSnapshot = new MetricSnapshot(metricAddress));
+    outputList.addLast(metricSnapshot);
+
+    return metricSnapshot;
+  }
+
+  public void popSnapshot () {
+
+    arabesqueQueue.removeFirst();
+  }
+
+  public MetricSnapshot getSnapshot () {
+
+    if (arabesqueQueue.isEmpty()) {
+
+      return null;
+    }
+
+    return arabesqueQueue.getFirst();
   }
 
   public List<MetricSnapshot> getSnapshots () {
 
-    return new LinkedList<MetricSnapshot>(snapshotQueue);
+    return Collections.unmodifiableList(outputList);
   }
 
   @Override
@@ -53,8 +83,8 @@ public class MetricContext implements Context {
     StringBuilder contextBuilder = new StringBuilder();
     boolean firstContext = true;
 
-    for (MetricSnapshot snapshot : snapshotQueue) {
-      if (firstContext) {
+    for (MetricSnapshot snapshot : outputList) {
+      if (!firstContext) {
         contextBuilder.append(',');
       }
 

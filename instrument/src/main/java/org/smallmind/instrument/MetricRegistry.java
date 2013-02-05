@@ -29,6 +29,7 @@ package org.smallmind.instrument;
 import java.util.concurrent.ConcurrentHashMap;
 import javax.management.DynamicMBean;
 import javax.management.MBeanServer;
+import org.smallmind.instrument.context.NamedMetric;
 import org.smallmind.instrument.jmx.ChronometerMonitor;
 import org.smallmind.instrument.jmx.DefaultJMXNamingPolicy;
 import org.smallmind.instrument.jmx.HistogramMonitor;
@@ -43,6 +44,7 @@ public class MetricRegistry {
   private final ConcurrentHashMap<MetricKey, Metric> metricMap = new ConcurrentHashMap<MetricKey, Metric>();
   private MBeanServer server;
   private JMXNamingPolicy jmxNamingPolicy = new DefaultJMXNamingPolicy();
+  private boolean tracing = false;
 
   public MBeanServer getServer () {
 
@@ -59,6 +61,11 @@ public class MetricRegistry {
     this.jmxNamingPolicy = jmxNamingPolicy;
   }
 
+  public void setTracing (boolean tracing) {
+
+    this.tracing = tracing;
+  }
+
   public void register () {
 
     InstrumentationManager.register(this);
@@ -72,7 +79,8 @@ public class MetricRegistry {
     if ((metric = builder.getMetricClass().cast(metricMap.get(metricKey))) == null) {
       synchronized (metricMap) {
         if ((metric = builder.getMetricClass().cast(metricMap.get(metricKey))) == null) {
-          metricMap.put(metricKey, metric = builder.getMetricClass().cast(new NamedMetric(builder.construct(), domain, properties).getProxy()));
+
+          metricMap.put(metricKey, metric = (tracing) ? builder.getMetricClass().cast(new NamedMetric(builder.construct(), domain, properties).getProxy()) : builder.construct());
 
           if (server != null) {
 

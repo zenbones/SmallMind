@@ -26,7 +26,6 @@
  */
 package org.smallmind.instrument;
 
-import org.smallmind.instrument.context.MetricAddress;
 import org.smallmind.instrument.context.MetricContext;
 import org.smallmind.instrument.context.MetricSnapshot;
 import org.smallmind.nutsnbolts.context.ContextFactory;
@@ -39,12 +38,7 @@ public abstract class MetricImpl<M extends Metric> implements Metric<M> {
 
     if ((metricContext = ContextFactory.getContext(MetricContext.class)) != null) {
 
-      MetricAddress metricAddress;
-
-      if ((metricAddress = ContextFactory.getContext(MetricAddress.class)) != null) {
-
-        return metricContext.addSnapshot(new MetricSnapshot(metricAddress));
-      }
+      return metricContext.getSnapshot();
     }
 
     return null;

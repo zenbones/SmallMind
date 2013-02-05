@@ -29,7 +29,6 @@ package org.smallmind.instrument.config;
 import java.util.concurrent.TimeUnit;
 import org.smallmind.instrument.Samples;
 
-// This class has no direct use in the instrumentation API, but is made available for use by instrumentation clients
 public class MetricConfiguration {
 
   private MetricDomain metricDomain = new UnsetMetricDomain();
