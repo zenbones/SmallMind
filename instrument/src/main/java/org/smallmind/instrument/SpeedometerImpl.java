@@ -31,7 +31,7 @@ import java.util.concurrent.atomic.AtomicLong;
 import org.smallmind.instrument.context.MetricItem;
 import org.smallmind.instrument.context.MetricSnapshot;
 
-public class SpeedometerImpl extends Metric implements Speedometer {
+public class SpeedometerImpl extends MetricImpl<Speedometer> implements Speedometer {
 
   private final MeterImpl rateMeter;
   private final MeterImpl quantityMeter;
@@ -42,6 +42,12 @@ public class SpeedometerImpl extends Metric implements Speedometer {
 
     rateMeter = new MeterImpl(tickInterval, tickTimeUnit, clock);
     quantityMeter = new MeterImpl(tickInterval, tickTimeUnit, clock);
+  }
+
+  @Override
+  public Class<Speedometer> getInterface () {
+
+    return Speedometer.class;
   }
 
   @Override

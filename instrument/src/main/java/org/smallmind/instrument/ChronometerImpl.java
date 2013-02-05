@@ -30,7 +30,7 @@ import java.util.concurrent.TimeUnit;
 import org.smallmind.instrument.context.MetricItem;
 import org.smallmind.instrument.context.MetricSnapshot;
 
-public class ChronometerImpl extends Metric implements Chronometer {
+public class ChronometerImpl extends MetricImpl<Chronometer> implements Chronometer {
 
   private final HistogramImpl histogram;
   private final MeterImpl meter;
@@ -42,6 +42,12 @@ public class ChronometerImpl extends Metric implements Chronometer {
 
     meter = new MeterImpl(tickInterval, tickTimeUnit, clock);
     histogram = new HistogramImpl(samples);
+  }
+
+  @Override
+  public Class<Chronometer> getInterface () {
+
+    return Chronometer.class;
   }
 
   @Override

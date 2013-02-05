@@ -27,13 +27,13 @@
 package org.smallmind.instrument.jmx;
 
 import javax.management.StandardMBean;
-import org.smallmind.instrument.TallyImpl;
+import org.smallmind.instrument.Tally;
 
 public class TallyMonitor extends StandardMBean implements TallyMonitorMXBean {
 
-  private TallyImpl tally;
+  private Tally tally;
 
-  public TallyMonitor (TallyImpl tally) {
+  public TallyMonitor (Tally tally) {
 
     super(TallyMonitorMXBean.class, true);
 

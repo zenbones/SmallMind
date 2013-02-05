@@ -24,56 +24,29 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.instrument.jmx;
+package org.smallmind.instrument;
 
-import java.util.concurrent.TimeUnit;
-import javax.management.StandardMBean;
-import org.smallmind.instrument.Meter;
+import org.smallmind.instrument.context.MetricAddress;
+import org.smallmind.instrument.context.MetricContext;
+import org.smallmind.instrument.context.MetricSnapshot;
+import org.smallmind.nutsnbolts.context.ContextFactory;
 
-public class MeterMonitor extends StandardMBean implements MeterMonitorMXBean {
+public abstract class MetricImpl<M extends Metric> implements Metric<M> {
 
-  private Meter meter;
+  public MetricSnapshot getMetricSnapshot () {
 
-  public MeterMonitor (Meter meter) {
+    MetricContext metricContext;
 
-    super(MeterMonitorMXBean.class, true);
+    if ((metricContext = ContextFactory.getContext(MetricContext.class)) != null) {
 
-    this.meter = meter;
-  }
+      MetricAddress metricAddress;
 
-  @Override
-  public TimeUnit getRateTimeUnit () {
+      if ((metricAddress = ContextFactory.getContext(MetricAddress.class)) != null) {
 
-    return meter.getRateTimeUnit();
-  }
+        return metricContext.addSnapshot(new MetricSnapshot(metricAddress));
+      }
+    }
 
-  @Override
-  public long getCount () {
-
-    return meter.getCount();
-  }
-
-  @Override
-  public double getOneMinuteAvgRate () {
-
-    return meter.getOneMinuteAvgRate();
-  }
-
-  @Override
-  public double getFiveMinuteAvgRate () {
-
-    return meter.getFiveMinuteAvgRate();
-  }
-
-  @Override
-  public double getFifteenMinuteAvgRate () {
-
-    return meter.getFifteenMinuteAvgRate();
-  }
-
-  @Override
-  public double getAverageRate () {
-
-    return meter.getAverageRate();
+    return null;
   }
 }

@@ -43,7 +43,7 @@ public class NamedMetric implements InvocationHandler {
     this.metric = metric;
 
     metricAddress = new MetricAddress(domain, properties);
-    proxyMetric = (Metric)Proxy.newProxyInstance(NamedMetric.class.getClassLoader(), new Class[] {metric.getClass()}, this);
+    proxyMetric = (Metric)Proxy.newProxyInstance(NamedMetric.class.getClassLoader(), new Class[] {metric.getInterface()}, this);
   }
 
   public Metric getProxy () {

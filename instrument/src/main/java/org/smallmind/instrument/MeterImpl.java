@@ -36,7 +36,7 @@ import org.smallmind.instrument.context.MetricItem;
 import org.smallmind.instrument.context.MetricSnapshot;
 import org.smallmind.nutsnbolts.time.TimeUtilities;
 
-public class MeterImpl extends Metric implements Meter {
+public class MeterImpl extends MetricImpl<Meter> implements Meter {
 
   private static final ScheduledExecutorService SCHEDULED_EXECUTOR = Executors.newScheduledThreadPool(2, new ThreadFactory() {
 
@@ -90,6 +90,12 @@ public class MeterImpl extends Metric implements Meter {
         m15Average.tick();
       }
     }, tickInterval, tickInterval, tickTimeUnit);
+  }
+
+  @Override
+  public Class<Meter> getInterface () {
+
+    return Meter.class;
   }
 
   @Override

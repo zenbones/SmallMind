@@ -31,7 +31,7 @@ import java.util.concurrent.atomic.AtomicReference;
 import org.smallmind.instrument.context.MetricItem;
 import org.smallmind.instrument.context.MetricSnapshot;
 
-public class HistogramImpl extends Metric implements Histogram {
+public class HistogramImpl extends MetricImpl<Histogram> implements Histogram {
 
   private final AtomicLong min = new AtomicLong(Long.MAX_VALUE);
   // These are for the Welford algorithm for calculating running variance without floating-point doom.
@@ -45,6 +45,12 @@ public class HistogramImpl extends Metric implements Histogram {
   public HistogramImpl (Samples samples) {
 
     sample = samples.createSample();
+  }
+
+  @Override
+  public Class<Histogram> getInterface () {
+
+    return Histogram.class;
   }
 
   @Override

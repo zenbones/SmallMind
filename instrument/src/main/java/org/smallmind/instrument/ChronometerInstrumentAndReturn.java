@@ -29,23 +29,23 @@ package org.smallmind.instrument;
 import java.util.concurrent.TimeUnit;
 import org.smallmind.instrument.config.MetricConfigurationProvider;
 
-public abstract class ChronometerInstrumentAndReturn<T> extends InstrumentAndReturn<ChronometerImpl, T> {
+public abstract class ChronometerInstrumentAndReturn<T> extends InstrumentAndReturn<Chronometer, T> {
 
   public ChronometerInstrumentAndReturn (MetricConfigurationProvider provider, MetricProperty... properties) {
 
-    super(((provider == null) || (provider.getMetricConfiguration() == null) || (!provider.getMetricConfiguration().isInstrumented())) ? null : new InstrumentationArguments<ChronometerImpl>(Metrics.buildChronometer(provider.getMetricConfiguration().getSamples(), TimeUnit.MILLISECONDS, provider.getMetricConfiguration().getTickInterval(), provider.getMetricConfiguration().getTickTimeUnit()), provider.getMetricConfiguration().getMetricDomain().getDomain(), properties));
+    super(((provider == null) || (provider.getMetricConfiguration() == null) || (!provider.getMetricConfiguration().isInstrumented())) ? null : new InstrumentationArguments<Chronometer>(Metrics.buildChronometer(provider.getMetricConfiguration().getSamples(), TimeUnit.MILLISECONDS, provider.getMetricConfiguration().getTickInterval(), provider.getMetricConfiguration().getTickTimeUnit()), provider.getMetricConfiguration().getMetricDomain().getDomain(), properties));
   }
 
-  public ChronometerInstrumentAndReturn (Metrics.MetricBuilder<ChronometerImpl> builder, String domain, MetricProperty... properties) {
+  public ChronometerInstrumentAndReturn (Metrics.MetricBuilder<Chronometer> builder, String domain, MetricProperty... properties) {
 
-    super(new InstrumentationArguments<ChronometerImpl>(builder, domain, properties));
+    super(new InstrumentationArguments<Chronometer>(builder, domain, properties));
   }
 
   public abstract T withChronometer ()
     throws Exception;
 
   @Override
-  public final T with (ChronometerImpl chronometer)
+  public final T with (Chronometer chronometer)
     throws Exception {
 
     T result;

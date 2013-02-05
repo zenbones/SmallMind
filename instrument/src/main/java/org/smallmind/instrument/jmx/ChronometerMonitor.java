@@ -28,13 +28,13 @@ package org.smallmind.instrument.jmx;
 
 import java.util.concurrent.TimeUnit;
 import javax.management.StandardMBean;
-import org.smallmind.instrument.ChronometerImpl;
+import org.smallmind.instrument.Chronometer;
 
 public class ChronometerMonitor extends StandardMBean implements ChronometerMonitorMXBean {
 
-  private ChronometerImpl chronometer;
+  private Chronometer chronometer;
 
-  public ChronometerMonitor (ChronometerImpl chronometer) {
+  public ChronometerMonitor (Chronometer chronometer) {
 
     super(ChronometerMonitorMXBean.class, true);
 

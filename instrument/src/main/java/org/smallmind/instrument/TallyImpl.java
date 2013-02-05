@@ -30,7 +30,7 @@ import java.util.concurrent.atomic.AtomicLong;
 import org.smallmind.instrument.context.MetricItem;
 import org.smallmind.instrument.context.MetricSnapshot;
 
-public class TallyImpl extends Metric implements Tally {
+public class TallyImpl extends MetricImpl<Tally> implements Tally {
 
   private final AtomicLong count;
 
@@ -42,6 +42,12 @@ public class TallyImpl extends Metric implements Tally {
   public TallyImpl (int initialCount) {
 
     this.count = new AtomicLong(initialCount);
+  }
+
+  @Override
+  public Class<Tally> getInterface () {
+
+    return Tally.class;
   }
 
   @Override

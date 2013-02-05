@@ -84,7 +84,7 @@ public class InstrumentationManager implements PerApplicationDataManager {
 
     if ((provider != null) && (provider.getMetricConfiguration() != null) && provider.getMetricConfiguration().isInstrumented()) {
 
-      ChronometerImpl chronometer;
+      Chronometer chronometer;
 
       (chronometer = getMetricRegistry().instrument(Metrics.buildChronometer(provider.getMetricConfiguration().getSamples(), TimeUnit.MILLISECONDS, provider.getMetricConfiguration().getTickInterval(), provider.getMetricConfiguration().getTickTimeUnit(), Clocks.EPOCH), provider.getMetricConfiguration().getMetricDomain().getDomain(), properties)).update(chronometer.getLatencyTimeUnit().convert(duration, durationTimeUnit));
     }
