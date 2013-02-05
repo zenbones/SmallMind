@@ -48,4 +48,10 @@ public class MetricItem<S extends Serializable> implements Serializable {
 
     return value;
   }
+
+  @Override
+  public String toString () {
+
+    return new StringBuilder(key).append('=').append(value).toString();
+  }
 }

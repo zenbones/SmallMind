@@ -46,4 +46,22 @@ public class MetricContext implements Context {
 
     return new LinkedList<MetricSnapshot>(snapshotQueue);
   }
+
+  @Override
+  public String toString () {
+
+    StringBuilder contextBuilder = new StringBuilder();
+    boolean firstContext = true;
+
+    for (MetricSnapshot snapshot : snapshotQueue) {
+      if (firstContext) {
+        contextBuilder.append(',');
+      }
+
+      contextBuilder.append('[').append(snapshot).append(']');
+      firstContext = false;
+    }
+
+    return contextBuilder.toString();
+  }
 }

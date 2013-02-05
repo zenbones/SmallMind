@@ -50,6 +50,12 @@ public class MetricProperty implements Serializable {
   }
 
   @Override
+  public String toString () {
+
+    return new StringBuilder(key).append('=').append(value).toString();
+  }
+
+  @Override
   public int hashCode () {
 
     return key.hashCode() ^ value.hashCode();

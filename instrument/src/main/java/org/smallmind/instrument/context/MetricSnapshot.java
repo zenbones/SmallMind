@@ -58,4 +58,35 @@ public class MetricSnapshot implements Serializable {
 
     itemList.add(item);
   }
+
+  @Override
+  public synchronized String toString () {
+
+    StringBuilder snapshotBuilder = new StringBuilder(domain);
+    boolean firstProperty = true;
+    boolean firstItem = true;
+
+    snapshotBuilder.append(':');
+    for (MetricProperty property : properties) {
+      if (!firstProperty) {
+        snapshotBuilder.append(',');
+      }
+
+      snapshotBuilder.append(property);
+      firstProperty = false;
+    }
+
+    snapshotBuilder.append('(');
+    for (MetricItem item : itemList) {
+      if (!firstItem) {
+        snapshotBuilder.append(',');
+      }
+
+      snapshotBuilder.append(item);
+      firstItem = false;
+    }
+    snapshotBuilder.append(')');
+
+    return snapshotBuilder.toString();
+  }
 }
