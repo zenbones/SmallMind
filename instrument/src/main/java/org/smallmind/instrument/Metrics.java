@@ -89,11 +89,11 @@ public class Metrics {
     public abstract M construct ();
   }
 
-  private static class TallyBuilder implements MetricBuilder<Tally> {
+  public static class TallyBuilder implements MetricBuilder<Tally> {
 
     private int initialCount;
 
-    public TallyBuilder (int initialCount) {
+    private TallyBuilder (int initialCount) {
 
       this.initialCount = initialCount;
     }
@@ -117,7 +117,7 @@ public class Metrics {
     }
   }
 
-  private static class MeterBuilder implements MetricBuilder<Meter> {
+  public static class MeterBuilder implements MetricBuilder<Meter> {
 
     private Clocks clocks;
     private TimeUnit tickTimeUnit;
@@ -149,7 +149,7 @@ public class Metrics {
     }
   }
 
-  private static class HistogramBuilder implements MetricBuilder<Histogram> {
+  public static class HistogramBuilder implements MetricBuilder<Histogram> {
 
     private Samples samples;
 
@@ -177,7 +177,7 @@ public class Metrics {
     }
   }
 
-  private static class SpeedometerBuilder implements MetricBuilder<Speedometer> {
+  public static class SpeedometerBuilder implements MetricBuilder<Speedometer> {
 
     private Clocks clocks;
     private TimeUnit tickTimeUnit;
@@ -209,7 +209,7 @@ public class Metrics {
     }
   }
 
-  private static class ChronometerBuilder implements MetricBuilder<Chronometer> {
+  public static class ChronometerBuilder implements MetricBuilder<Chronometer> {
 
     private Samples samples;
     private Clocks clocks;
