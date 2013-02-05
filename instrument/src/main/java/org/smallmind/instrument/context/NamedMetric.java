@@ -31,10 +31,18 @@ import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
 import org.smallmind.instrument.Metric;
 import org.smallmind.instrument.MetricProperty;
-import org.smallmind.nutsnbolts.context.ContextFactory;
 
 public class NamedMetric implements InvocationHandler {
 
+  private static final ThreadLocal<MetricContext> ACCESSIBLE_METRIC_CONTEXT_LOCAL = new ThreadLocal<>();
+  private static final ThreadLocal<MetricContext> METRIC_CONTEXT_LOCAL = new ThreadLocal<MetricContext>() {
+
+    @Override
+    protected MetricContext initialValue () {
+
+      return new MetricContext();
+    }
+  };
   private Metric metric;
   private Metric proxyMetric;
   private MetricAddress metricAddress;
@@ -45,6 +53,11 @@ public class NamedMetric implements InvocationHandler {
 
     metricAddress = new MetricAddress(domain, properties);
     proxyMetric = (Metric)Proxy.newProxyInstance(NamedMetric.class.getClassLoader(), new Class[] {metric.getInterface()}, this);
+  }
+
+  public static MetricContext getMetricContext () {
+
+    return ACCESSIBLE_METRIC_CONTEXT_LOCAL.get();
   }
 
   public Metric getProxy () {
@@ -58,17 +71,20 @@ public class NamedMetric implements InvocationHandler {
 
     MetricContext metricContext;
 
-    if ((metricContext = ContextFactory.getContext(MetricContext.class)) == null) {
-      ContextFactory.pushContext(metricContext = new MetricContext());
+    (metricContext = METRIC_CONTEXT_LOCAL.get()).pushSnapshot(metricAddress);
+
+    if (ACCESSIBLE_METRIC_CONTEXT_LOCAL.get() == null) {
+      ACCESSIBLE_METRIC_CONTEXT_LOCAL.set(metricContext);
     }
 
-    metricContext.pushSnapshot(metricAddress);
     try {
 
       return method.invoke(metric, args);
     }
     finally {
-      metricContext.popSnapshot();
+      if (METRIC_CONTEXT_LOCAL.get().popSnapshot() == 0) {
+        ACCESSIBLE_METRIC_CONTEXT_LOCAL.remove();
+      }
     }
   }
 }

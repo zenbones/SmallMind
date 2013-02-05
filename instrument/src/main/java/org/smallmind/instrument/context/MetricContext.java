@@ -29,15 +29,15 @@ package org.smallmind.instrument.context;
 import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
-import org.smallmind.nutsnbolts.context.Context;
+import org.smallmind.scribe.pen.LoggerManager;
 
-public class MetricContext implements Context {
+public class MetricContext {
 
-  private final LinkedList<MetricSnapshot> arabesqueQueue = new LinkedList<>();
-  private final LinkedList<MetricSnapshot> outputList = new LinkedList<>();
+  private final LinkedList<MetricSnapshot> snapshotList = new LinkedList<>();
   private final long startTime;
+  private int callDepth = 0;
 
-  protected MetricContext () {
+  public MetricContext () {
 
     startTime = System.currentTimeMillis();
   }
@@ -47,34 +47,31 @@ public class MetricContext implements Context {
     return startTime;
   }
 
-  public MetricSnapshot pushSnapshot (MetricAddress metricAddress) {
+  public void pushSnapshot (MetricAddress metricAddress) {
 
-    MetricSnapshot metricSnapshot;
-
-    arabesqueQueue.addFirst(metricSnapshot = new MetricSnapshot(metricAddress));
-    outputList.addLast(metricSnapshot);
-
-    return metricSnapshot;
+    if (callDepth++ == 0) {
+      snapshotList.add(new MetricSnapshot(metricAddress));
+    }
   }
 
-  public void popSnapshot () {
+  public int popSnapshot () {
 
-    arabesqueQueue.removeFirst();
+    return --callDepth;
   }
 
   public MetricSnapshot getSnapshot () {
 
-    if (arabesqueQueue.isEmpty()) {
+    if (snapshotList.isEmpty()) {
 
       return null;
     }
 
-    return arabesqueQueue.getFirst();
+    return snapshotList.getLast();
   }
 
   public List<MetricSnapshot> getSnapshots () {
 
-    return Collections.unmodifiableList(outputList);
+    return Collections.unmodifiableList(snapshotList);
   }
 
   @Override
@@ -83,7 +80,7 @@ public class MetricContext implements Context {
     StringBuilder contextBuilder = new StringBuilder();
     boolean firstContext = true;
 
-    for (MetricSnapshot snapshot : outputList) {
+    for (MetricSnapshot snapshot : snapshotList) {
       if (!firstContext) {
         contextBuilder.append(',');
       }
@@ -93,5 +90,15 @@ public class MetricContext implements Context {
     }
 
     return contextBuilder.toString();
+  }
+
+  @Override
+  protected void finalize () throws Throwable {
+
+    if (!snapshotList.isEmpty()) {
+      LoggerManager.getLogger(MetricContext.class).info(this);
+    }
+
+    super.finalize();
   }
 }

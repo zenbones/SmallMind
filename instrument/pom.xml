@@ -17,6 +17,11 @@
       <scope>compile</scope>
     </dependency>
     <dependency>
+      <groupId>org.smallmind</groupId>
+      <artifactId>scribe-pen</artifactId>
+      <scope>compile</scope>
+    </dependency>
+    <dependency>
       <groupId>org.rrd4j</groupId>
       <artifactId>rrd4j</artifactId>
       <scope>compile</scope>
