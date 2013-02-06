@@ -27,8 +27,6 @@
 package org.smallmind.instrument;
 
 import java.util.concurrent.TimeUnit;
-import org.smallmind.instrument.context.MetricItem;
-import org.smallmind.instrument.context.MetricSnapshot;
 
 public class ChronometerImpl extends MetricImpl<Chronometer> implements Chronometer {
 
@@ -45,28 +43,16 @@ public class ChronometerImpl extends MetricImpl<Chronometer> implements Chronome
   }
 
   @Override
-  public Class<Chronometer> getInterface () {
-
-    return Chronometer.class;
-  }
-
-  @Override
   public void clear () {
-
-    MetricSnapshot snapshot;
 
     meter.clear();
     histogram.clear();
 
-    if ((snapshot = getMetricSnapshot()) != null) {
-      snapshot.addItem(new MetricItem<Long>("duration", 0L));
-    }
+    addMetricItem("duration", 0L);
   }
 
   @Override
   public void update (long duration) {
-
-    MetricSnapshot snapshot;
 
     if (duration < 0) {
       throw new InstrumentationException("Chronometer durations must be >= 0");
@@ -75,9 +61,7 @@ public class ChronometerImpl extends MetricImpl<Chronometer> implements Chronome
     histogram.update(duration);
     meter.mark();
 
-    if ((snapshot = getMetricSnapshot()) != null) {
-      snapshot.addItem(new MetricItem<Long>("duration", duration));
-    }
+    addMetricItem("duration", duration);
   }
 
   @Override

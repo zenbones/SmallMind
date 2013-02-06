@@ -32,8 +32,6 @@ import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
-import org.smallmind.instrument.context.MetricItem;
-import org.smallmind.instrument.context.MetricSnapshot;
 import org.smallmind.nutsnbolts.time.TimeUtilities;
 
 public class MeterImpl extends MetricImpl<Meter> implements Meter {
@@ -93,15 +91,7 @@ public class MeterImpl extends MetricImpl<Meter> implements Meter {
   }
 
   @Override
-  public Class<Meter> getInterface () {
-
-    return Meter.class;
-  }
-
-  @Override
   public void clear () {
-
-    MetricSnapshot snapshot;
 
     startTime.set(clock.getTimeMilliseconds());
     count.set(0);
@@ -109,9 +99,7 @@ public class MeterImpl extends MetricImpl<Meter> implements Meter {
     m15Average.clear();
     m15Average.clear();
 
-    if ((snapshot = getMetricSnapshot()) != null) {
-      snapshot.addItem(new MetricItem<Long>("count", 0L));
-    }
+    addMetricItem("count", 0L);
   }
 
   @Override
@@ -123,7 +111,6 @@ public class MeterImpl extends MetricImpl<Meter> implements Meter {
   @Override
   public void mark (long n) {
 
-    MetricSnapshot snapshot;
     long current;
 
     current = count.addAndGet(n);
@@ -131,9 +118,7 @@ public class MeterImpl extends MetricImpl<Meter> implements Meter {
     m5Average.update(n);
     m15Average.update(n);
 
-    if ((snapshot = getMetricSnapshot()) != null) {
-      snapshot.addItem(new MetricItem<Long>("count", current));
-    }
+    addMetricItem("count", current);
   }
 
   @Override

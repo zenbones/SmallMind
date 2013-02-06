@@ -26,21 +26,25 @@
  */
 package org.smallmind.instrument;
 
+import java.io.Serializable;
 import org.smallmind.instrument.context.MetricContext;
+import org.smallmind.instrument.context.MetricContextFactory;
+import org.smallmind.instrument.context.MetricItem;
 import org.smallmind.instrument.context.MetricSnapshot;
-import org.smallmind.instrument.context.NamedMetric;
 
 public abstract class MetricImpl<M extends Metric> implements Metric<M> {
 
-  public MetricSnapshot getMetricSnapshot () {
+  public <S extends Serializable> void addMetricItem (String key, S item) {
 
     MetricContext metricContext;
 
-    if ((metricContext = NamedMetric.getMetricContext()) != null) {
+    if ((metricContext = MetricContextFactory.getMetricContext()) != null) {
 
-      return metricContext.getSnapshot();
+      MetricSnapshot metricSnapshot;
+
+      if ((metricSnapshot = metricContext.getSnapshot()) != null) {
+        metricSnapshot.addItem(new MetricItem<S>(key, item));
+      }
     }
-
-    return null;
   }
 }

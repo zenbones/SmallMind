@@ -24,15 +24,41 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.instrument;
+package org.smallmind.instrument.context;
 
-public interface Tally extends Metric<Tally>, Countable {
+import java.lang.reflect.Method;
+import org.smallmind.instrument.Chronometer;
+import org.smallmind.instrument.MetricProperty;
+import org.smallmind.nutsnbolts.lang.StaticInitializationError;
 
-  public abstract void inc ();
+public class ChronometerNamedMetric extends NamedMetric<Chronometer> {
 
-  public abstract void inc (long n);
+  private static final Method[] UPDATING_METHODS;
 
-  public abstract void dec ();
+  static {
 
-  public abstract void dec (long n);
+    try {
+      UPDATING_METHODS = new Method[] {Chronometer.class.getMethod("update", long.class)};
+    }
+    catch (NoSuchMethodException noSuchMethodException) {
+      throw new StaticInitializationError(noSuchMethodException);
+    }
+  }
+
+  public ChronometerNamedMetric (Chronometer chronometer, String domain, MetricProperty... properties) {
+
+    super(chronometer, domain, properties);
+  }
+
+  @Override
+  public Class<Chronometer> getMetricClass () {
+
+    return Chronometer.class;
+  }
+
+  @Override
+  public Method[] getUpdatingMethods () {
+
+    return UPDATING_METHODS;
+  }
 }

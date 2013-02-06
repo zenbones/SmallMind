@@ -24,11 +24,35 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.instrument;
+package org.smallmind.instrument.context;
 
-public interface Meter extends Metric<Meter>, Metered, Temporal, Stoppable {
+import org.smallmind.instrument.Chronometer;
+import org.smallmind.instrument.Histogram;
+import org.smallmind.instrument.Meter;
+import org.smallmind.instrument.Metric;
+import org.smallmind.instrument.MetricProperty;
+import org.smallmind.instrument.MetricType;
+import org.smallmind.instrument.Speedometer;
+import org.smallmind.instrument.Tally;
+import org.smallmind.nutsnbolts.lang.UnknownSwitchCaseException;
 
-  public abstract void mark ();
+public class NamedMetricFactory {
 
-  public abstract void mark (long n);
+  public static NamedMetric createNamedMetric (MetricType metricType, Metric metric, String domain, MetricProperty... properties) {
+
+    switch (metricType) {
+      case TALLY:
+        return new TallyNamedMetric((Tally)metric, domain, properties);
+      case METER:
+        return new MeterNamedMetric((Meter)metric, domain, properties);
+      case HISTOGRAM:
+        return new HistogramNamedMetric((Histogram)metric, domain, properties);
+      case SPEEDOMETER:
+        return new SpeedometerNamedMetric((Speedometer)metric, domain, properties);
+      case CHRONOMETER:
+        return new ChronometerNamedMetric((Chronometer)metric, domain, properties);
+      default:
+        throw new UnknownSwitchCaseException(metricType.name());
+    }
+  }
 }

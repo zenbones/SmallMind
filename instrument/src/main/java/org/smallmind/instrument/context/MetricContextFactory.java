@@ -24,15 +24,34 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.instrument;
+package org.smallmind.instrument.context;
 
-public interface Tally extends Metric<Tally>, Countable {
+import org.smallmind.scribe.pen.LoggerManager;
 
-  public abstract void inc ();
+public class MetricContextFactory {
 
-  public abstract void inc (long n);
+  private static final ThreadLocal<MetricContext> METRIC_CONTEXT_LOCAL = new ThreadLocal<MetricContext>() {
 
-  public abstract void dec ();
+    @Override
+    protected MetricContext initialValue () {
 
-  public abstract void dec (long n);
+      return new MetricContext();
+    }
+  };
+
+  public static MetricContext getMetricContext () {
+
+    return METRIC_CONTEXT_LOCAL.get();
+  }
+
+  public static void pushMetricContext () {
+
+    METRIC_CONTEXT_LOCAL.set(new MetricContext());
+  }
+
+  public static void popMetricContext () {
+
+    LoggerManager.getLogger(MetricContext.class).info(METRIC_CONTEXT_LOCAL.get());
+    METRIC_CONTEXT_LOCAL.remove();
+  }
 }

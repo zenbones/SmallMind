@@ -28,8 +28,6 @@ package org.smallmind.instrument;
 
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
-import org.smallmind.instrument.context.MetricItem;
-import org.smallmind.instrument.context.MetricSnapshot;
 
 public class HistogramImpl extends MetricImpl<Histogram> implements Histogram {
 
@@ -48,15 +46,7 @@ public class HistogramImpl extends MetricImpl<Histogram> implements Histogram {
   }
 
   @Override
-  public Class<Histogram> getInterface () {
-
-    return Histogram.class;
-  }
-
-  @Override
   public void clear () {
-
-    MetricSnapshot snapshot;
 
     sample.clear();
     count.set(0);
@@ -65,16 +55,13 @@ public class HistogramImpl extends MetricImpl<Histogram> implements Histogram {
     sum.set(0);
     variance.set(new double[] {-1, 0});
 
-    if ((snapshot = getMetricSnapshot()) != null) {
-      snapshot.addItem(new MetricItem<Long>("count", 0L));
-      snapshot.addItem(new MetricItem<Long>("sum", 0L));
-    }
+    addMetricItem("count", 0L);
+    addMetricItem("sum", 0L);
   }
 
   @Override
   public void update (long value) {
 
-    MetricSnapshot snapshot;
     long currentCount;
     long currentSum;
 
@@ -85,10 +72,8 @@ public class HistogramImpl extends MetricImpl<Histogram> implements Histogram {
     currentSum = sum.getAndAdd(value);
     updateVariance(value);
 
-    if ((snapshot = getMetricSnapshot()) != null) {
-      snapshot.addItem(new MetricItem<Long>("count", currentCount));
-      snapshot.addItem(new MetricItem<Long>("sum", currentSum));
-    }
+    addMetricItem("count", currentCount);
+    addMetricItem("sum", currentSum);
   }
 
   @Override

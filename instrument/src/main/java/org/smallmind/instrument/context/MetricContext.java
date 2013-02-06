@@ -29,13 +29,12 @@ package org.smallmind.instrument.context;
 import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
-import org.smallmind.scribe.pen.LoggerManager;
 
 public class MetricContext {
 
-  private final LinkedList<MetricSnapshot> snapshotList = new LinkedList<>();
+  private final LinkedList<MetricSnapshot> arabesqueQueue = new LinkedList<>();
+  private final LinkedList<MetricSnapshot> outputList = new LinkedList<>();
   private final long startTime;
-  private int callDepth = 0;
 
   public MetricContext () {
 
@@ -49,29 +48,30 @@ public class MetricContext {
 
   public void pushSnapshot (MetricAddress metricAddress) {
 
-    if (callDepth++ == 0) {
-      snapshotList.add(new MetricSnapshot(metricAddress));
-    }
+    MetricSnapshot metricSnapshot;
+
+    arabesqueQueue.addFirst(metricSnapshot = new MetricSnapshot(metricAddress));
+    outputList.addLast(metricSnapshot);
   }
 
-  public int popSnapshot () {
+  public void popSnapshot () {
 
-    return --callDepth;
+    arabesqueQueue.removeFirst();
   }
 
   public MetricSnapshot getSnapshot () {
 
-    if (snapshotList.isEmpty()) {
+    if (arabesqueQueue.isEmpty()) {
 
       return null;
     }
 
-    return snapshotList.getLast();
+    return arabesqueQueue.getFirst();
   }
 
   public List<MetricSnapshot> getSnapshots () {
 
-    return Collections.unmodifiableList(snapshotList);
+    return Collections.unmodifiableList(outputList);
   }
 
   @Override
@@ -80,7 +80,7 @@ public class MetricContext {
     StringBuilder contextBuilder = new StringBuilder();
     boolean firstContext = true;
 
-    for (MetricSnapshot snapshot : snapshotList) {
+    for (MetricSnapshot snapshot : outputList) {
       if (!firstContext) {
         contextBuilder.append(',');
       }
@@ -90,15 +90,5 @@ public class MetricContext {
     }
 
     return contextBuilder.toString();
-  }
-
-  @Override
-  protected void finalize () throws Throwable {
-
-    if (!snapshotList.isEmpty()) {
-      LoggerManager.getLogger(MetricContext.class).info(this);
-    }
-
-    super.finalize();
   }
 }

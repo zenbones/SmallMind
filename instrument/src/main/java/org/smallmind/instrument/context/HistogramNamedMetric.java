@@ -24,15 +24,41 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.instrument;
+package org.smallmind.instrument.context;
 
-public interface Tally extends Metric<Tally>, Countable {
+import java.lang.reflect.Method;
+import org.smallmind.instrument.Histogram;
+import org.smallmind.instrument.MetricProperty;
+import org.smallmind.nutsnbolts.lang.StaticInitializationError;
 
-  public abstract void inc ();
+public class HistogramNamedMetric extends NamedMetric<Histogram> {
 
-  public abstract void inc (long n);
+  private static final Method[] UPDATING_METHODS;
 
-  public abstract void dec ();
+  static {
 
-  public abstract void dec (long n);
+    try {
+      UPDATING_METHODS = new Method[] {Histogram.class.getMethod("update", long.class)};
+    }
+    catch (NoSuchMethodException noSuchMethodException) {
+      throw new StaticInitializationError(noSuchMethodException);
+    }
+  }
+
+  public HistogramNamedMetric (Histogram histogram, String domain, MetricProperty... properties) {
+
+    super(histogram, domain, properties);
+  }
+
+  @Override
+  public Class<Histogram> getMetricClass () {
+
+    return Histogram.class;
+  }
+
+  @Override
+  public Method[] getUpdatingMethods () {
+
+    return UPDATING_METHODS;
+  }
 }

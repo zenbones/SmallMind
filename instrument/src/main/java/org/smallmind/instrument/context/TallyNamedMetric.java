@@ -24,15 +24,41 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.instrument;
+package org.smallmind.instrument.context;
 
-public interface Tally extends Metric<Tally>, Countable {
+import java.lang.reflect.Method;
+import org.smallmind.instrument.MetricProperty;
+import org.smallmind.instrument.Tally;
+import org.smallmind.nutsnbolts.lang.StaticInitializationError;
 
-  public abstract void inc ();
+public class TallyNamedMetric extends NamedMetric<Tally> {
 
-  public abstract void inc (long n);
+  private static final Method[] UPDATING_METHODS;
 
-  public abstract void dec ();
+  static {
 
-  public abstract void dec (long n);
+    try {
+      UPDATING_METHODS = new Method[] {Tally.class.getMethod("inc"), Tally.class.getMethod("inc", long.class), Tally.class.getMethod("dec"), Tally.class.getMethod("dec", long.class)};
+    }
+    catch (NoSuchMethodException noSuchMethodException) {
+      throw new StaticInitializationError(noSuchMethodException);
+    }
+  }
+
+  public TallyNamedMetric (Tally tally, String domain, MetricProperty... properties) {
+
+    super(tally, domain, properties);
+  }
+
+  @Override
+  public Class<Tally> getMetricClass () {
+
+    return Tally.class;
+  }
+
+  @Override
+  public Method[] getUpdatingMethods () {
+
+    return UPDATING_METHODS;
+  }
 }

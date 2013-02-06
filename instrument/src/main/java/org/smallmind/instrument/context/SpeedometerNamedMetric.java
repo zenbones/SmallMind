@@ -24,15 +24,41 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.instrument;
+package org.smallmind.instrument.context;
 
-public interface Tally extends Metric<Tally>, Countable {
+import java.lang.reflect.Method;
+import org.smallmind.instrument.MetricProperty;
+import org.smallmind.instrument.Speedometer;
+import org.smallmind.nutsnbolts.lang.StaticInitializationError;
 
-  public abstract void inc ();
+public class SpeedometerNamedMetric extends NamedMetric<Speedometer> {
 
-  public abstract void inc (long n);
+  private static final Method[] UPDATING_METHODS;
 
-  public abstract void dec ();
+  static {
 
-  public abstract void dec (long n);
+    try {
+      UPDATING_METHODS = new Method[] {Speedometer.class.getMethod("update"), Speedometer.class.getMethod("update", long.class)};
+    }
+    catch (NoSuchMethodException noSuchMethodException) {
+      throw new StaticInitializationError(noSuchMethodException);
+    }
+  }
+
+  public SpeedometerNamedMetric (Speedometer speedometer, String domain, MetricProperty... properties) {
+
+    super(speedometer, domain, properties);
+  }
+
+  @Override
+  public Class<Speedometer> getMetricClass () {
+
+    return Speedometer.class;
+  }
+
+  @Override
+  public Method[] getUpdatingMethods () {
+
+    return UPDATING_METHODS;
+  }
 }

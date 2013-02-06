@@ -29,7 +29,7 @@ package org.smallmind.instrument;
 import java.util.concurrent.ConcurrentHashMap;
 import javax.management.DynamicMBean;
 import javax.management.MBeanServer;
-import org.smallmind.instrument.context.NamedMetric;
+import org.smallmind.instrument.context.NamedMetricFactory;
 import org.smallmind.instrument.jmx.ChronometerMonitor;
 import org.smallmind.instrument.jmx.DefaultJMXNamingPolicy;
 import org.smallmind.instrument.jmx.HistogramMonitor;
@@ -80,7 +80,7 @@ public class MetricRegistry {
       synchronized (metricMap) {
         if ((metric = builder.getMetricClass().cast(metricMap.get(metricKey))) == null) {
 
-          metricMap.put(metricKey, metric = (tracing) ? builder.getMetricClass().cast(new NamedMetric(builder.construct(), domain, properties).getProxy()) : builder.construct());
+          metricMap.put(metricKey, metric = (tracing) ? builder.getMetricClass().cast(NamedMetricFactory.createNamedMetric(builder.getType(), builder.construct(), domain, properties).getProxy()) : builder.construct());
 
           if (server != null) {
 
