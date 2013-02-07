@@ -51,12 +51,6 @@ public class HistogramNamedMetric extends NamedMetric<Histogram> {
   }
 
   @Override
-  public Class<Histogram> getMetricClass () {
-
-    return Histogram.class;
-  }
-
-  @Override
   public Method[] getUpdatingMethods () {
 
     return UPDATING_METHODS;

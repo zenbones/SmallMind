@@ -58,7 +58,7 @@ public class MetricSupplier {
     METRIC_MAP_LOCAL.get().get(key).pop();
   }
 
-  public static <M extends Metric> M get (String key, Class<M> metricClass) {
+  public static <M extends Metric<M>> M get (String key, Class<M> metricClass) {
 
     LinkedList<Metric> metricList;
 

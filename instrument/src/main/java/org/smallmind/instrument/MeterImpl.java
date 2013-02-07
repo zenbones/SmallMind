@@ -91,6 +91,12 @@ public class MeterImpl extends MetricImpl<Meter> implements Meter {
   }
 
   @Override
+  public Class<Meter> getMetricClass () {
+
+    return Meter.class;
+  }
+
+  @Override
   public void clear () {
 
     startTime.set(clock.getTimeMilliseconds());

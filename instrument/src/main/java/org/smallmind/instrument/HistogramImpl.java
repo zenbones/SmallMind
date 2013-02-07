@@ -60,6 +60,12 @@ public class HistogramImpl extends MetricImpl<Histogram> implements Histogram {
   }
 
   @Override
+  public Class<Histogram> getMetricClass () {
+
+    return Histogram.class;
+  }
+
+  @Override
   public void update (long value) {
 
     long currentCount;

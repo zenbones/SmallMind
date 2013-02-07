@@ -32,7 +32,21 @@ import org.smallmind.instrument.context.MetricContextFactory;
 import org.smallmind.instrument.context.MetricItem;
 import org.smallmind.instrument.context.MetricSnapshot;
 
-public abstract class MetricImpl<M extends Metric> implements Metric<M> {
+public abstract class MetricImpl<M extends Metric<M>> implements Metric<M> {
+
+  private String subspace;
+
+  public String getSubspace () {
+
+    return subspace;
+  }
+
+  public M setSubspace (String subspace) {
+
+    this.subspace = subspace;
+
+    return getMetricClass().cast(this);
+  }
 
   public <S extends Serializable> void addMetricItem (String key, S item) {
 
@@ -43,7 +57,7 @@ public abstract class MetricImpl<M extends Metric> implements Metric<M> {
       MetricSnapshot metricSnapshot;
 
       if ((metricSnapshot = metricContext.getSnapshot()) != null) {
-        metricSnapshot.addItem(new MetricItem<S>(key, item));
+        metricSnapshot.addItem(new MetricItem<S>((subspace == null) ? key : subspace + '.' + key, item));
       }
     }
   }

@@ -80,7 +80,7 @@ public class Metrics {
     return new ChronometerBuilder(samples, durationUnit, tickInterval, tickTimeUnit, clocks);
   }
 
-  public static interface MetricBuilder<M extends Metric> {
+  public static interface MetricBuilder<M extends Metric<M>> {
 
     public abstract Class<M> getMetricClass ();
 

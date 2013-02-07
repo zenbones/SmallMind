@@ -26,7 +26,7 @@
  */
 package org.smallmind.instrument;
 
-public class InstrumentationArguments<M extends Metric> {
+public class InstrumentationArguments<M extends Metric<M>> {
 
   private Metrics.MetricBuilder<M> builder;
   private MetricProperty[] properties;

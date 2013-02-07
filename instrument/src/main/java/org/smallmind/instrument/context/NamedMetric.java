@@ -32,7 +32,7 @@ import java.lang.reflect.Proxy;
 import org.smallmind.instrument.Metric;
 import org.smallmind.instrument.MetricProperty;
 
-public abstract class NamedMetric<M extends Metric> implements InvocationHandler {
+public abstract class NamedMetric<M extends Metric<M>> implements InvocationHandler {
 
   private M metric;
   private M proxyMetric;
@@ -43,10 +43,8 @@ public abstract class NamedMetric<M extends Metric> implements InvocationHandler
     this.metric = metric;
 
     metricAddress = new MetricAddress(domain, properties);
-    proxyMetric = getMetricClass().cast(Proxy.newProxyInstance(NamedMetric.class.getClassLoader(), new Class[] {getMetricClass()}, this));
+    proxyMetric = metric.getMetricClass().cast(Proxy.newProxyInstance(NamedMetric.class.getClassLoader(), new Class[] {metric.getMetricClass()}, this));
   }
-
-  public abstract Class<M> getMetricClass ();
 
   public abstract Method[] getUpdatingMethods ();
 

@@ -26,7 +26,7 @@
  */
 package org.smallmind.instrument;
 
-public abstract class Instrument<M extends Metric> {
+public abstract class Instrument<M extends Metric<M>> {
 
   private InstrumentationArguments<M> arguments;
 

@@ -44,6 +44,12 @@ public class SpeedometerImpl extends MetricImpl<Speedometer> implements Speedome
   }
 
   @Override
+  public Class<Speedometer> getMetricClass () {
+
+    return Speedometer.class;
+  }
+
+  @Override
   public void clear () {
 
     rateMeter.clear();

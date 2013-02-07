@@ -51,12 +51,6 @@ public class TallyNamedMetric extends NamedMetric<Tally> {
   }
 
   @Override
-  public Class<Tally> getMetricClass () {
-
-    return Tally.class;
-  }
-
-  @Override
   public Method[] getUpdatingMethods () {
 
     return UPDATING_METHODS;

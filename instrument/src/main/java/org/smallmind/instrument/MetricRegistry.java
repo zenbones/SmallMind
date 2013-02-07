@@ -41,7 +41,7 @@ import org.smallmind.nutsnbolts.lang.UnknownSwitchCaseException;
 
 public class MetricRegistry {
 
-  private final ConcurrentHashMap<MetricKey, Metric> metricMap = new ConcurrentHashMap<MetricKey, Metric>();
+  private final ConcurrentHashMap<MetricKey, Metric<?>> metricMap = new ConcurrentHashMap<MetricKey, Metric<?>>();
   private MBeanServer server;
   private JMXNamingPolicy jmxNamingPolicy = new DefaultJMXNamingPolicy();
   private boolean tracing = false;
@@ -71,7 +71,7 @@ public class MetricRegistry {
     InstrumentationManager.register(this);
   }
 
-  public <M extends Metric> M instrument (Metrics.MetricBuilder<M> builder, String domain, MetricProperty... properties) {
+  public <M extends Metric<M>> M instrument (Metrics.MetricBuilder<M> builder, String domain, MetricProperty... properties) {
 
     M metric;
     MetricKey metricKey = new MetricKey(builder.getType(), domain, properties);

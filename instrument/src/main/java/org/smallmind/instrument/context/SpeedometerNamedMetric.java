@@ -51,12 +51,6 @@ public class SpeedometerNamedMetric extends NamedMetric<Speedometer> {
   }
 
   @Override
-  public Class<Speedometer> getMetricClass () {
-
-    return Speedometer.class;
-  }
-
-  @Override
   public Method[] getUpdatingMethods () {
 
     return UPDATING_METHODS;

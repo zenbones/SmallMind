@@ -43,6 +43,12 @@ public class ChronometerImpl extends MetricImpl<Chronometer> implements Chronome
   }
 
   @Override
+  public Class<Chronometer> getMetricClass () {
+
+    return Chronometer.class;
+  }
+
+  @Override
   public void clear () {
 
     meter.clear();

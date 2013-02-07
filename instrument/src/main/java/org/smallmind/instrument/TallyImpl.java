@@ -43,6 +43,12 @@ public class TallyImpl extends MetricImpl<Tally> implements Tally {
   }
 
   @Override
+  public Class<Tally> getMetricClass () {
+
+    return Tally.class;
+  }
+
+  @Override
   public void clear () {
 
     count.set(0);

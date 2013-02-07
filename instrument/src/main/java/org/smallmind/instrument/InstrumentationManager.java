@@ -43,7 +43,7 @@ public class InstrumentationManager implements PerApplicationDataManager {
     return PerApplicationContext.getPerApplicationData(InstrumentationManager.class, MetricRegistry.class);
   }
 
-  public static <M extends Metric> void execute (Instrument<M> instrument)
+  public static <M extends Metric<M>> void execute (Instrument<M> instrument)
     throws Exception {
 
     MetricRegistry metricRegistry;
@@ -52,7 +52,7 @@ public class InstrumentationManager implements PerApplicationDataManager {
     instrument.with((((metricRegistry = getMetricRegistry()) == null) || ((arguments = instrument.getArguments()) == null)) ? null : metricRegistry.instrument(arguments.getBuilder(), arguments.getDomain(), arguments.getProperties()));
   }
 
-  public static <M extends Metric, T> T execute (InstrumentAndReturn<M, T> instrumentAndReturn)
+  public static <M extends Metric<M>, T> T execute (InstrumentAndReturn<M, T> instrumentAndReturn)
     throws Exception {
 
     MetricRegistry metricRegistry;

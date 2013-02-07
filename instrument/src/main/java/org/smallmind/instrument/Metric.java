@@ -26,7 +26,9 @@
  */
 package org.smallmind.instrument;
 
-public interface Metric<M extends Metric> {
+public interface Metric<M extends Metric<M>> {
+
+  public abstract Class<M> getMetricClass ();
 
   public abstract void clear ();
 }

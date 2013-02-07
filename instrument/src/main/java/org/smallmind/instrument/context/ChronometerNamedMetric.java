@@ -51,12 +51,6 @@ public class ChronometerNamedMetric extends NamedMetric<Chronometer> {
   }
 
   @Override
-  public Class<Chronometer> getMetricClass () {
-
-    return Chronometer.class;
-  }
-
-  @Override
   public Method[] getUpdatingMethods () {
 
     return UPDATING_METHODS;

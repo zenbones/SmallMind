@@ -51,12 +51,6 @@ public class MeterNamedMetric extends NamedMetric<Meter> {
   }
 
   @Override
-  public Class<Meter> getMetricClass () {
-
-    return Meter.class;
-  }
-
-  @Override
   public Method[] getUpdatingMethods () {
 
     return UPDATING_METHODS;
