@@ -50,7 +50,7 @@ public abstract class NamedMetric<M extends Metric> implements InvocationHandler
 
   public abstract Method[] getUpdatingMethods ();
 
-  public Metric getProxy () {
+  public M getProxy () {
 
     return proxyMetric;
   }
@@ -60,11 +60,12 @@ public abstract class NamedMetric<M extends Metric> implements InvocationHandler
     throws Throwable {
 
     MetricContext metricContext;
+    boolean pushed = false;
 
     if ((metricContext = MetricContextFactory.getMetricContext()) != null) {
       for (Method updatingMethod : getUpdatingMethods()) {
         if (method.equals(updatingMethod)) {
-          metricContext.pushSnapshot(metricAddress);
+          pushed = metricContext.pushSnapshot(metricAddress);
           break;
         }
       }
@@ -75,7 +76,7 @@ public abstract class NamedMetric<M extends Metric> implements InvocationHandler
       return method.invoke(metric, args);
     }
     finally {
-      if (metricContext != null) {
+      if (pushed) {
         metricContext.popSnapshot();
       }
     }

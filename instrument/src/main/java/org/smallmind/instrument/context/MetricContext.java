@@ -46,12 +46,14 @@ public class MetricContext {
     return startTime;
   }
 
-  public void pushSnapshot (MetricAddress metricAddress) {
+  public boolean pushSnapshot (MetricAddress metricAddress) {
 
     MetricSnapshot metricSnapshot;
 
     arabesqueQueue.addFirst(metricSnapshot = new MetricSnapshot(metricAddress));
     outputList.addLast(metricSnapshot);
+
+    return true;
   }
 
   public void popSnapshot () {
@@ -67,6 +69,11 @@ public class MetricContext {
     }
 
     return arabesqueQueue.getFirst();
+  }
+
+  public boolean isEmpty () {
+
+    return outputList.isEmpty();
   }
 
   public List<MetricSnapshot> getSnapshots () {

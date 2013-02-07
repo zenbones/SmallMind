@@ -51,7 +51,12 @@ public class MetricContextFactory {
 
   public static void popMetricContext () {
 
-    LoggerManager.getLogger(MetricContext.class).info(METRIC_CONTEXT_LOCAL.get());
+    MetricContext metricContext;
+
+    if (!(metricContext = METRIC_CONTEXT_LOCAL.get()).isEmpty()) {
+      LoggerManager.getLogger(MetricContext.class).info(metricContext);
+    }
+
     METRIC_CONTEXT_LOCAL.remove();
   }
 }
