@@ -27,19 +27,21 @@
 package org.smallmind.instrument;
 
 import java.util.concurrent.TimeUnit;
+import org.smallmind.instrument.context.MetricItem;
+import org.smallmind.instrument.context.MetricSnapshot;
 
 public class ChronometerImpl extends MetricImpl<Chronometer> implements Chronometer {
 
-  private final HistogramImpl histogram;
-  private final MeterImpl meter;
+  private final Histogram histogram;
+  private final Meter meter;
   private final TimeUnit durationTimeUnit;
 
   public ChronometerImpl (Samples samples, TimeUnit durationTimeUnit, long tickInterval, TimeUnit tickTimeUnit, Clock clock) {
 
     this.durationTimeUnit = durationTimeUnit;
 
-    meter = new MeterImpl(tickInterval, tickTimeUnit, clock);
-    histogram = new HistogramImpl(samples);
+    meter = new MeterImpl(tickInterval, tickTimeUnit, clock).setName("meter");
+    histogram = new HistogramImpl(samples).setName("histogram");
   }
 
   @Override
@@ -51,10 +53,14 @@ public class ChronometerImpl extends MetricImpl<Chronometer> implements Chronome
   @Override
   public void clear () {
 
+    MetricSnapshot metricSnapshot;
+
     meter.clear();
     histogram.clear();
 
-    addMetricItem("duration", 0L);
+    if ((metricSnapshot = getMetricSnapshot()) != null) {
+      metricSnapshot.addItem(new MetricItem<Long>("duration", 0L));
+    }
   }
 
   @Override
@@ -64,10 +70,14 @@ public class ChronometerImpl extends MetricImpl<Chronometer> implements Chronome
       throw new InstrumentationException("Chronometer durations must be >= 0");
     }
 
+    MetricSnapshot metricSnapshot;
+
     histogram.update(duration);
     meter.mark();
 
-    addMetricItem("duration", duration);
+    if ((metricSnapshot = getMetricSnapshot()) != null) {
+      metricSnapshot.addItem(new MetricItem<Long>("duration", duration));
+    }
   }
 
   @Override

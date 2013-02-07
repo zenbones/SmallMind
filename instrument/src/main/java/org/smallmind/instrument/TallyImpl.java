@@ -27,6 +27,8 @@
 package org.smallmind.instrument;
 
 import java.util.concurrent.atomic.AtomicLong;
+import org.smallmind.instrument.context.MetricItem;
+import org.smallmind.instrument.context.MetricSnapshot;
 
 public class TallyImpl extends MetricImpl<Tally> implements Tally {
 
@@ -51,49 +53,65 @@ public class TallyImpl extends MetricImpl<Tally> implements Tally {
   @Override
   public void clear () {
 
+    MetricSnapshot metricSnapshot;
+
     count.set(0);
 
-    addMetricItem("count", 0L);
+    if ((metricSnapshot = getMetricSnapshot()) != null) {
+      metricSnapshot.addItem(new MetricItem<Long>("count", 0L));
+    }
   }
 
   @Override
   public void inc () {
 
+    MetricSnapshot metricSnapshot;
     long current;
 
     current = count.incrementAndGet();
 
-    addMetricItem("count", current);
+    if ((metricSnapshot = getMetricSnapshot()) != null) {
+      metricSnapshot.addItem(new MetricItem<Long>("count", current));
+    }
   }
 
   @Override
   public void inc (long n) {
 
+    MetricSnapshot metricSnapshot;
     long current;
 
     current = count.addAndGet(n);
 
-    addMetricItem("count", current);
+    if ((metricSnapshot = getMetricSnapshot()) != null) {
+      metricSnapshot.addItem(new MetricItem<Long>("count", current));
+    }
   }
 
   @Override
   public void dec () {
 
+    MetricSnapshot metricSnapshot;
     long current;
 
     current = count.decrementAndGet();
 
-    addMetricItem("count", current);
+    if ((metricSnapshot = getMetricSnapshot()) != null) {
+      metricSnapshot.addItem(new MetricItem<Long>("count", current));
+    }
   }
 
   @Override
   public void dec (long n) {
 
+    MetricSnapshot metricSnapshot;
     long current;
 
     current = count.addAndGet(0 - n);
 
-    addMetricItem("count", current);
+    if ((metricSnapshot = getMetricSnapshot()) != null) {
+      metricSnapshot.addItem(new MetricItem<Long>("count", current));
+    }
   }
 
   @Override

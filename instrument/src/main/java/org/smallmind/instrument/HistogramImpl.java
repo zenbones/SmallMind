@@ -28,6 +28,8 @@ package org.smallmind.instrument;
 
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
+import org.smallmind.instrument.context.MetricItem;
+import org.smallmind.instrument.context.MetricSnapshot;
 
 public class HistogramImpl extends MetricImpl<Histogram> implements Histogram {
 
@@ -46,40 +48,72 @@ public class HistogramImpl extends MetricImpl<Histogram> implements Histogram {
   }
 
   @Override
-  public void clear () {
-
-    sample.clear();
-    count.set(0);
-    max.set(Long.MIN_VALUE);
-    min.set(Long.MAX_VALUE);
-    sum.set(0);
-    variance.set(new double[] {-1, 0});
-
-    addMetricItem("count", 0L);
-    addMetricItem("sum", 0L);
-  }
-
-  @Override
   public Class<Histogram> getMetricClass () {
 
     return Histogram.class;
   }
 
   @Override
+  public void clear () {
+
+    MetricSnapshot metricSnapshot;
+
+    sample.clear();
+    count.set(0);
+    sum.set(0);
+    min.set(Long.MAX_VALUE);
+    max.set(Long.MIN_VALUE);
+    variance.set(new double[] {-1, 0});
+
+    if ((metricSnapshot = getMetricSnapshot()) != null) {
+      metricSnapshot.addItem(new MetricItem<Long>("count", 0L));
+      metricSnapshot.addItem(new MetricItem<Long>("sum", 0L));
+      metricSnapshot.addItem(new MetricItem<String>("min", "n/a"));
+      metricSnapshot.addItem(new MetricItem<String>("max", "n/a"));
+      metricSnapshot.addItem(new MetricItem<Double>("avg", 0.0));
+      metricSnapshot.addItem(new MetricItem<Double>("std dev", 0.0));
+      metricSnapshot.addItem(new MetricItem<Double>("75th pctl", 0.0));
+      metricSnapshot.addItem(new MetricItem<Double>("95th pctl", 0.0));
+      metricSnapshot.addItem(new MetricItem<Double>("98th pctl", 0.0));
+      metricSnapshot.addItem(new MetricItem<Double>("99th pctl", 0.0));
+      metricSnapshot.addItem(new MetricItem<Double>("999th pctl", 0.0));
+    }
+  }
+
+  @Override
   public void update (long value) {
 
+    MetricSnapshot metricSnapshot;
+    double[] currentValues;
     long currentCount;
     long currentSum;
+    long currentMin;
+    long currentMax;
 
     currentCount = count.incrementAndGet();
-    sample.update(value);
-    setMax(value);
-    setMin(value);
     currentSum = sum.getAndAdd(value);
-    updateVariance(value);
+    currentMin = setMin(value);
+    currentMax = setMax(value);
+    currentValues = updateVariance(value);
+    sample.update(value);
 
-    addMetricItem("count", currentCount);
-    addMetricItem("sum", currentSum);
+    if ((metricSnapshot = getMetricSnapshot()) != null) {
+
+      Statistics currentStatistics = sample.getStatistics();
+
+      metricSnapshot.addItem(new MetricItem<Long>("count", currentCount));
+      metricSnapshot.addItem(new MetricItem<Long>("sum", currentSum));
+      metricSnapshot.addItem(new MetricItem<Long>("min", currentMin));
+      metricSnapshot.addItem(new MetricItem<Long>("max", currentMax));
+      metricSnapshot.addItem(new MetricItem<Double>("avg", (currentCount > 0) ? currentSum / (double)currentCount : 0.0));
+      metricSnapshot.addItem(new MetricItem<Double>("std dev", (currentCount > 0) ? Math.sqrt((currentCount <= 1) ? 0.0 : currentValues[1] / (currentCount - 1)) : 0.0));
+      metricSnapshot.addItem(new MetricItem<Double>("median", currentStatistics.getMedian()));
+      metricSnapshot.addItem(new MetricItem<Double>("75th pctl", currentStatistics.get75thPercentile()));
+      metricSnapshot.addItem(new MetricItem<Double>("95th pctl", currentStatistics.get95thPercentile()));
+      metricSnapshot.addItem(new MetricItem<Double>("98th pctl", currentStatistics.get98thPercentile()));
+      metricSnapshot.addItem(new MetricItem<Double>("99th pctl", currentStatistics.get99thPercentile()));
+      metricSnapshot.addItem(new MetricItem<Double>("999th pctl", currentStatistics.get999thPercentile()));
+    }
   }
 
   @Override
@@ -100,16 +134,16 @@ public class HistogramImpl extends MetricImpl<Histogram> implements Histogram {
     return (getCount() > 0) ? max.get() : 0.0;
   }
 
-  private void setMax (long potentialMax) {
+  private long setMax (long potentialMax) {
 
-    boolean done = false;
+    boolean replaced = false;
+    long currentMax;
 
-    while (!done) {
+    do {
+      currentMax = max.get();
+    } while (!(currentMax >= potentialMax || (replaced = max.compareAndSet(currentMax, potentialMax))));
 
-      long currentMax = max.get();
-
-      done = currentMax >= potentialMax || max.compareAndSet(currentMax, potentialMax);
-    }
+    return replaced ? potentialMax : currentMax;
   }
 
   @Override
@@ -118,16 +152,16 @@ public class HistogramImpl extends MetricImpl<Histogram> implements Histogram {
     return (getCount() > 0) ? min.get() : 0.0;
   }
 
-  private void setMin (long potentialMin) {
+  private long setMin (long potentialMin) {
 
-    boolean done = false;
+    boolean replaced = false;
+    long currentMin;
 
-    while (!done) {
+    do {
+      currentMin = min.get();
+    } while (!(currentMin <= potentialMin || (replaced = min.compareAndSet(currentMin, potentialMin))));
 
-      long currentMin = min.get();
-
-      done = currentMin <= potentialMin || min.compareAndSet(currentMin, potentialMin);
-    }
+    return replaced ? potentialMin : currentMin;
   }
 
   @Override
@@ -159,14 +193,16 @@ public class HistogramImpl extends MetricImpl<Histogram> implements Histogram {
     return sample.getStatistics();
   }
 
-  private void updateVariance (long value) {
+  private double[] updateVariance (long value) {
 
-    boolean done = false;
+    boolean done;
+    double[] newValues;
 
-    while (!done) {
+    do {
 
       double[] oldValues = variance.get();
-      double[] newValues = arrayCache.get();
+
+      newValues = arrayCache.get();
 
       if (oldValues[0] == -1) {
         newValues[0] = value;
@@ -187,7 +223,9 @@ public class HistogramImpl extends MetricImpl<Histogram> implements Histogram {
         // recycle the old array into the cache
         arrayCache.set(oldValues);
       }
-    }
+    } while (!done);
+
+    return newValues;
   }
 
   private static final class ArrayCache extends ThreadLocal<double[]> {

@@ -28,19 +28,20 @@ package org.smallmind.instrument;
 
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
+import org.smallmind.instrument.context.MetricItem;
 import org.smallmind.instrument.context.MetricSnapshot;
 
 public class SpeedometerImpl extends MetricImpl<Speedometer> implements Speedometer {
 
-  private final MeterImpl rateMeter;
-  private final MeterImpl quantityMeter;
+  private final Meter rateMeter;
+  private final Meter quantityMeter;
   private final AtomicLong min = new AtomicLong(Long.MAX_VALUE);
   private final AtomicLong max = new AtomicLong(Long.MIN_VALUE);
 
   public SpeedometerImpl (long tickInterval, TimeUnit tickTimeUnit, Clock clock) {
 
-    rateMeter = new MeterImpl(tickInterval, tickTimeUnit, clock);
-    quantityMeter = new MeterImpl(tickInterval, tickTimeUnit, clock);
+    rateMeter = new MeterImpl(tickInterval, tickTimeUnit, clock).setName("rate");
+    quantityMeter = new MeterImpl(tickInterval, tickTimeUnit, clock).setName("quantity");
   }
 
   @Override
@@ -52,12 +53,17 @@ public class SpeedometerImpl extends MetricImpl<Speedometer> implements Speedome
   @Override
   public void clear () {
 
+    MetricSnapshot metricSnapshot;
+
     rateMeter.clear();
     quantityMeter.clear();
-    min.set(Long.MAX_VALUE);
     max.set(Long.MIN_VALUE);
+    min.set(Long.MAX_VALUE);
 
-    addMetricItem("quantity", 0L);
+    if ((metricSnapshot = getMetricSnapshot()) != null) {
+      metricSnapshot.addItem(new MetricItem<String>("min", "n/a"));
+      metricSnapshot.addItem(new MetricItem<String>("max", "n/a"));
+    }
   }
 
   @Override
@@ -69,14 +75,19 @@ public class SpeedometerImpl extends MetricImpl<Speedometer> implements Speedome
   @Override
   public void update (long quantity) {
 
-    MetricSnapshot snapshot;
+    MetricSnapshot metricSnapshot;
+    long currentMin;
+    long currentMax;
 
     rateMeter.mark();
     quantityMeter.mark(quantity);
-    setMax(quantity);
-    setMin(quantity);
+    currentMin = setMin(quantity);
+    currentMax = setMax(quantity);
 
-    addMetricItem("quantity", quantity);
+    if ((metricSnapshot = getMetricSnapshot()) != null) {
+      metricSnapshot.addItem(new MetricItem<Long>("min", currentMin));
+      metricSnapshot.addItem(new MetricItem<Long>("max", currentMax));
+    }
   }
 
   @Override
@@ -151,16 +162,16 @@ public class SpeedometerImpl extends MetricImpl<Speedometer> implements Speedome
     return (getCount() > 0) ? max.get() : 0.0;
   }
 
-  private void setMax (long potentialMax) {
+  private long setMax (long potentialMax) {
 
-    boolean done = false;
+    boolean replaced = false;
+    long currentMax;
 
-    while (!done) {
+    do {
+      currentMax = max.get();
+    } while (!(currentMax >= potentialMax || (replaced = max.compareAndSet(currentMax, potentialMax))));
 
-      long currentMax = max.get();
-
-      done = currentMax >= potentialMax || max.compareAndSet(currentMax, potentialMax);
-    }
+    return replaced ? potentialMax : currentMax;
   }
 
   @Override
@@ -169,16 +180,16 @@ public class SpeedometerImpl extends MetricImpl<Speedometer> implements Speedome
     return (getCount() > 0) ? min.get() : 0.0;
   }
 
-  private void setMin (long potentialMin) {
+  private long setMin (long potentialMin) {
 
-    boolean done = false;
+    boolean replaced = false;
+    long currentMin;
 
-    while (!done) {
+    do {
+      currentMin = min.get();
+    } while (!(currentMin <= potentialMin || (replaced = min.compareAndSet(currentMin, potentialMin))));
 
-      long currentMin = min.get();
-
-      done = currentMin <= potentialMin || min.compareAndSet(currentMin, potentialMin);
-    }
+    return replaced ? potentialMin : currentMin;
   }
 
   @Override

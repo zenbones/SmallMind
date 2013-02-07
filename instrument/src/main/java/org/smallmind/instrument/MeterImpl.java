@@ -32,6 +32,8 @@ import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
+import org.smallmind.instrument.context.MetricItem;
+import org.smallmind.instrument.context.MetricSnapshot;
 import org.smallmind.nutsnbolts.time.TimeUtilities;
 
 public class MeterImpl extends MetricImpl<Meter> implements Meter {
@@ -99,13 +101,20 @@ public class MeterImpl extends MetricImpl<Meter> implements Meter {
   @Override
   public void clear () {
 
+    MetricSnapshot metricSnapshot;
+
     startTime.set(clock.getTimeMilliseconds());
     count.set(0);
     m15Average.clear();
     m15Average.clear();
     m15Average.clear();
 
-    addMetricItem("count", 0L);
+    if ((metricSnapshot = getMetricSnapshot()) != null) {
+      metricSnapshot.addItem(new MetricItem<Long>("count", 0L));
+      metricSnapshot.addItem(new MetricItem<Double>("1 min avg", 0.0));
+      metricSnapshot.addItem(new MetricItem<Double>("5 min avg", 0.0));
+      metricSnapshot.addItem(new MetricItem<Double>("15 min avg", 0.0));
+    }
   }
 
   @Override
@@ -117,6 +126,7 @@ public class MeterImpl extends MetricImpl<Meter> implements Meter {
   @Override
   public void mark (long n) {
 
+    MetricSnapshot metricSnapshot;
     long current;
 
     current = count.addAndGet(n);
@@ -124,7 +134,12 @@ public class MeterImpl extends MetricImpl<Meter> implements Meter {
     m5Average.update(n);
     m15Average.update(n);
 
-    addMetricItem("count", current);
+    if ((metricSnapshot = getMetricSnapshot()) != null) {
+      metricSnapshot.addItem(new MetricItem<Long>("count", current));
+      metricSnapshot.addItem(new MetricItem<Double>("1 min avg", m1Average.getMovingAverage(tickTimeUnit)));
+      metricSnapshot.addItem(new MetricItem<Double>("5 min avg", m5Average.getMovingAverage(tickTimeUnit)));
+      metricSnapshot.addItem(new MetricItem<Double>("15 min avg", m15Average.getMovingAverage(tickTimeUnit)));
+    }
   }
 
   @Override

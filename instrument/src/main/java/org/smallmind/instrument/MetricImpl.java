@@ -26,39 +26,35 @@
  */
 package org.smallmind.instrument;
 
-import java.io.Serializable;
 import org.smallmind.instrument.context.MetricContext;
 import org.smallmind.instrument.context.MetricContextFactory;
-import org.smallmind.instrument.context.MetricItem;
 import org.smallmind.instrument.context.MetricSnapshot;
 
 public abstract class MetricImpl<M extends Metric<M>> implements Metric<M> {
 
-  private String subspace;
+  private String name;
 
-  public String getSubspace () {
+  public String getName () {
 
-    return subspace;
+    return name;
   }
 
-  public M setSubspace (String subspace) {
+  public M setName (String name) {
 
-    this.subspace = subspace;
+    this.name = name;
 
     return getMetricClass().cast(this);
   }
 
-  public <S extends Serializable> void addMetricItem (String key, S item) {
+  public MetricSnapshot getMetricSnapshot () {
 
     MetricContext metricContext;
 
     if ((metricContext = MetricContextFactory.getMetricContext()) != null) {
 
-      MetricSnapshot metricSnapshot;
-
-      if ((metricSnapshot = metricContext.getSnapshot()) != null) {
-        metricSnapshot.addItem(new MetricItem<S>((subspace == null) ? key : subspace + '.' + key, item));
-      }
+      return metricContext.getSnapshot();
     }
+
+    return null;
   }
 }
