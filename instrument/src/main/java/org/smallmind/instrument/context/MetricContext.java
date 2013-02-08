@@ -73,7 +73,19 @@ public class MetricContext {
 
   public boolean isEmpty () {
 
-    return outputList.isEmpty();
+    if (outputList.isEmpty()) {
+
+      return true;
+    }
+
+    for (MetricSnapshot snapshot : outputList) {
+      if (!snapshot.isEmpty()) {
+
+        return false;
+      }
+    }
+
+    return true;
   }
 
   public List<MetricSnapshot> getSnapshots () {
@@ -88,12 +100,14 @@ public class MetricContext {
     boolean firstContext = true;
 
     for (MetricSnapshot snapshot : outputList) {
-      if (!firstContext) {
-        contextBuilder.append(',');
-      }
+      if (!snapshot.isEmpty()) {
+        if (!firstContext) {
+          contextBuilder.append(',');
+        }
 
-      contextBuilder.append('[').append(snapshot).append(']');
-      firstContext = false;
+        contextBuilder.append('[').append(snapshot).append(']');
+        firstContext = false;
+      }
     }
 
     return contextBuilder.toString();

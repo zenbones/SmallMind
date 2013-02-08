@@ -54,13 +54,18 @@ public class MetricSnapshot implements Serializable {
     return properties;
   }
 
-  public synchronized void addItem (MetricItem item) {
+  public boolean isEmpty () {
+
+    return itemList.isEmpty();
+  }
+
+  public void addItem (MetricItem item) {
 
     itemList.add(item);
   }
 
   @Override
-  public synchronized String toString () {
+  public String toString () {
 
     StringBuilder snapshotBuilder = new StringBuilder(domain);
     boolean firstProperty = true;
