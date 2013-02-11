@@ -32,6 +32,7 @@ import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
+import org.smallmind.instrument.context.MetricFact;
 import org.smallmind.instrument.context.MetricItem;
 import org.smallmind.instrument.context.MetricSnapshot;
 import org.smallmind.nutsnbolts.time.TimeUtilities;
@@ -110,10 +111,18 @@ public class MeterImpl extends MetricImpl<Meter> implements Meter {
     m15Average.clear();
 
     if ((metricSnapshot = getMetricSnapshot()) != null) {
-      metricSnapshot.addItem(new MetricItem<Long>("count", 0L));
-      metricSnapshot.addItem(new MetricItem<Double>("1 min avg", 0.0));
-      metricSnapshot.addItem(new MetricItem<Double>("5 min avg", 0.0));
-      metricSnapshot.addItem(new MetricItem<Double>("15 min avg", 0.0));
+      if (metricSnapshot.willTrace(MetricFact.COUNT)) {
+        metricSnapshot.addItem(new MetricItem<Long>("count", 0L));
+      }
+      if (metricSnapshot.willTrace(MetricFact.M1_AVG)) {
+        metricSnapshot.addItem(new MetricItem<Double>("1 min avg", 0.0));
+      }
+      if (metricSnapshot.willTrace(MetricFact.M5_AVG)) {
+        metricSnapshot.addItem(new MetricItem<Double>("5 min avg", 0.0));
+      }
+      if (metricSnapshot.willTrace(MetricFact.M15_AVG)) {
+        metricSnapshot.addItem(new MetricItem<Double>("15 min avg", 0.0));
+      }
     }
   }
 
@@ -135,10 +144,18 @@ public class MeterImpl extends MetricImpl<Meter> implements Meter {
     m15Average.update(n);
 
     if ((metricSnapshot = getMetricSnapshot()) != null) {
-      metricSnapshot.addItem(new MetricItem<Long>("count", current));
-      metricSnapshot.addItem(new MetricItem<Double>("1 min avg", m1Average.getMovingAverage(tickTimeUnit)));
-      metricSnapshot.addItem(new MetricItem<Double>("5 min avg", m5Average.getMovingAverage(tickTimeUnit)));
-      metricSnapshot.addItem(new MetricItem<Double>("15 min avg", m15Average.getMovingAverage(tickTimeUnit)));
+      if (metricSnapshot.willTrace(MetricFact.COUNT)) {
+        metricSnapshot.addItem(new MetricItem<Long>("count", current));
+      }
+      if (metricSnapshot.willTrace(MetricFact.M1_AVG)) {
+        metricSnapshot.addItem(new MetricItem<Double>("1 min avg", m1Average.getMovingAverage(tickTimeUnit)));
+      }
+      if (metricSnapshot.willTrace(MetricFact.M5_AVG)) {
+        metricSnapshot.addItem(new MetricItem<Double>("5 min avg", m5Average.getMovingAverage(tickTimeUnit)));
+      }
+      if (metricSnapshot.willTrace(MetricFact.M15_AVG)) {
+        metricSnapshot.addItem(new MetricItem<Double>("15 min avg", m15Average.getMovingAverage(tickTimeUnit)));
+      }
     }
   }
 

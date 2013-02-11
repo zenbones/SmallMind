@@ -28,6 +28,7 @@ package org.smallmind.instrument;
 
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
+import org.smallmind.instrument.context.MetricFact;
 import org.smallmind.instrument.context.MetricItem;
 import org.smallmind.instrument.context.MetricSnapshot;
 
@@ -66,17 +67,42 @@ public class HistogramImpl extends MetricImpl<Histogram> implements Histogram {
     variance.set(new double[] {-1, 0});
 
     if ((metricSnapshot = getMetricSnapshot()) != null) {
-      metricSnapshot.addItem(new MetricItem<Long>("count", 0L));
-      metricSnapshot.addItem(new MetricItem<Long>("sum", 0L));
-      metricSnapshot.addItem(new MetricItem<String>("min", "n/a"));
-      metricSnapshot.addItem(new MetricItem<String>("max", "n/a"));
-      metricSnapshot.addItem(new MetricItem<Double>("avg", 0.0));
-      metricSnapshot.addItem(new MetricItem<Double>("std dev", 0.0));
-      metricSnapshot.addItem(new MetricItem<Double>("75th pctl", 0.0));
-      metricSnapshot.addItem(new MetricItem<Double>("95th pctl", 0.0));
-      metricSnapshot.addItem(new MetricItem<Double>("98th pctl", 0.0));
-      metricSnapshot.addItem(new MetricItem<Double>("99th pctl", 0.0));
-      metricSnapshot.addItem(new MetricItem<Double>("999th pctl", 0.0));
+      if (metricSnapshot.willTrace(MetricFact.COUNT)) {
+        metricSnapshot.addItem(new MetricItem<Long>("count", 0L));
+      }
+      if (metricSnapshot.willTrace(MetricFact.SUM)) {
+        metricSnapshot.addItem(new MetricItem<Long>("sum", 0L));
+      }
+      if (metricSnapshot.willTrace(MetricFact.MIN)) {
+        metricSnapshot.addItem(new MetricItem<String>("min", "n/a"));
+      }
+      if (metricSnapshot.willTrace(MetricFact.MAX)) {
+        metricSnapshot.addItem(new MetricItem<String>("max", "n/a"));
+      }
+      if (metricSnapshot.willTrace(MetricFact.AVG)) {
+        metricSnapshot.addItem(new MetricItem<Double>("avg", 0.0));
+      }
+      if (metricSnapshot.willTrace(MetricFact.STD_DEV)) {
+        metricSnapshot.addItem(new MetricItem<Double>("std dev", 0.0));
+      }
+      if (metricSnapshot.willTrace(MetricFact.MEDIAN)) {
+        metricSnapshot.addItem(new MetricItem<Double>("median", 0.0));
+      }
+      if (metricSnapshot.willTrace(MetricFact.P75_Q)) {
+        metricSnapshot.addItem(new MetricItem<Double>("75th pctl", 0.0));
+      }
+      if (metricSnapshot.willTrace(MetricFact.P95_Q)) {
+        metricSnapshot.addItem(new MetricItem<Double>("95th pctl", 0.0));
+      }
+      if (metricSnapshot.willTrace(MetricFact.P98_Q)) {
+        metricSnapshot.addItem(new MetricItem<Double>("98th pctl", 0.0));
+      }
+      if (metricSnapshot.willTrace(MetricFact.P99_Q)) {
+        metricSnapshot.addItem(new MetricItem<Double>("99th pctl", 0.0));
+      }
+      if (metricSnapshot.willTrace(MetricFact.P999_Q)) {
+        metricSnapshot.addItem(new MetricItem<Double>("999th pctl", 0.0));
+      }
     }
   }
 
@@ -101,18 +127,42 @@ public class HistogramImpl extends MetricImpl<Histogram> implements Histogram {
 
       Statistics currentStatistics = sample.getStatistics();
 
-      metricSnapshot.addItem(new MetricItem<Long>("count", currentCount));
-      metricSnapshot.addItem(new MetricItem<Long>("sum", currentSum));
-      metricSnapshot.addItem(new MetricItem<Long>("min", currentMin));
-      metricSnapshot.addItem(new MetricItem<Long>("max", currentMax));
-      metricSnapshot.addItem(new MetricItem<Double>("avg", (currentCount > 0) ? currentSum / (double)currentCount : 0.0));
-      metricSnapshot.addItem(new MetricItem<Double>("std dev", (currentCount > 0) ? Math.sqrt((currentCount <= 1) ? 0.0 : currentValues[1] / (currentCount - 1)) : 0.0));
-      metricSnapshot.addItem(new MetricItem<Double>("median", currentStatistics.getMedian()));
-      metricSnapshot.addItem(new MetricItem<Double>("75th pctl", currentStatistics.get75thPercentile()));
-      metricSnapshot.addItem(new MetricItem<Double>("95th pctl", currentStatistics.get95thPercentile()));
-      metricSnapshot.addItem(new MetricItem<Double>("98th pctl", currentStatistics.get98thPercentile()));
-      metricSnapshot.addItem(new MetricItem<Double>("99th pctl", currentStatistics.get99thPercentile()));
-      metricSnapshot.addItem(new MetricItem<Double>("999th pctl", currentStatistics.get999thPercentile()));
+      if (metricSnapshot.willTrace(MetricFact.COUNT)) {
+        metricSnapshot.addItem(new MetricItem<Long>("count", currentCount));
+      }
+      if (metricSnapshot.willTrace(MetricFact.SUM)) {
+        metricSnapshot.addItem(new MetricItem<Long>("sum", currentSum));
+      }
+      if (metricSnapshot.willTrace(MetricFact.MIN)) {
+        metricSnapshot.addItem(new MetricItem<Long>("min", currentMin));
+      }
+      if (metricSnapshot.willTrace(MetricFact.MAX)) {
+        metricSnapshot.addItem(new MetricItem<Long>("max", currentMax));
+      }
+      if (metricSnapshot.willTrace(MetricFact.AVG)) {
+        metricSnapshot.addItem(new MetricItem<Double>("avg", (currentCount > 0) ? currentSum / (double)currentCount : 0.0));
+      }
+      if (metricSnapshot.willTrace(MetricFact.STD_DEV)) {
+        metricSnapshot.addItem(new MetricItem<Double>("std dev", (currentCount > 0) ? Math.sqrt((currentCount <= 1) ? 0.0 : currentValues[1] / (currentCount - 1)) : 0.0));
+      }
+      if (metricSnapshot.willTrace(MetricFact.MEDIAN)) {
+        metricSnapshot.addItem(new MetricItem<Double>("median", currentStatistics.getMedian()));
+      }
+      if (metricSnapshot.willTrace(MetricFact.P75_Q)) {
+        metricSnapshot.addItem(new MetricItem<Double>("75th pctl", currentStatistics.get75thPercentile()));
+      }
+      if (metricSnapshot.willTrace(MetricFact.P95_Q)) {
+        metricSnapshot.addItem(new MetricItem<Double>("95th pctl", currentStatistics.get95thPercentile()));
+      }
+      if (metricSnapshot.willTrace(MetricFact.P98_Q)) {
+        metricSnapshot.addItem(new MetricItem<Double>("98th pctl", currentStatistics.get98thPercentile()));
+      }
+      if (metricSnapshot.willTrace(MetricFact.P99_Q)) {
+        metricSnapshot.addItem(new MetricItem<Double>("99th pctl", currentStatistics.get99thPercentile()));
+      }
+      if (metricSnapshot.willTrace(MetricFact.P999_Q)) {
+        metricSnapshot.addItem(new MetricItem<Double>("999th pctl", currentStatistics.get999thPercentile()));
+      }
     }
   }
 

@@ -26,37 +26,26 @@
  */
 package org.smallmind.instrument.context;
 
-import org.smallmind.scribe.pen.LoggerManager;
+import java.util.HashSet;
+import org.smallmind.instrument.context.MetricFact;
+import scala.actors.threadpool.Arrays;
 
-public class MetricContextFactory {
+public class TracingOptions {
 
-  private static final ThreadLocal<MetricContext> METRIC_CONTEXT_LOCAL = new ThreadLocal<MetricContext>() {
+  private final HashSet<MetricFact> factSet;
 
-    @Override
-    protected MetricContext initialValue () {
+  public TracingOptions (MetricFact... facts) {
 
-      return new MetricContext();
-    }
-  };
-
-  public static MetricContext getMetricContext () {
-
-    return METRIC_CONTEXT_LOCAL.get();
+    factSet = new HashSet<MetricFact>(Arrays.asList(facts));
   }
 
-  public static void pushMetricContext () {
+  public boolean isEmpty () {
 
-    METRIC_CONTEXT_LOCAL.set(new MetricContext());
+    return factSet.isEmpty();
   }
 
-  public static void popMetricContext () {
+  public boolean contains (MetricFact fact) {
 
-    MetricContext metricContext;
-
-    if (!(metricContext = METRIC_CONTEXT_LOCAL.get()).isEmpty()) {
-      LoggerManager.getLogger(MetricContext.class).info(metricContext);
-    }
-
-    METRIC_CONTEXT_LOCAL.remove();
+    return factSet.contains(fact) || factSet.contains(MetricFact.ALL);
   }
 }

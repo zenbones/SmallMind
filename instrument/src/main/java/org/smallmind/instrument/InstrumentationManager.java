@@ -28,10 +28,14 @@ package org.smallmind.instrument;
 
 import java.util.concurrent.TimeUnit;
 import org.smallmind.instrument.config.MetricConfigurationProvider;
+import org.smallmind.instrument.context.MetricContext;
 import org.smallmind.nutsnbolts.lang.PerApplicationContext;
 import org.smallmind.nutsnbolts.lang.PerApplicationDataManager;
+import org.smallmind.scribe.pen.LoggerManager;
 
 public class InstrumentationManager implements PerApplicationDataManager {
+
+  private static final ThreadLocal<MetricContext> METRIC_CONTEXT_LOCAL = new ThreadLocal<MetricContext>();
 
   public static void register (MetricRegistry metricRegistry) {
 
@@ -41,6 +45,29 @@ public class InstrumentationManager implements PerApplicationDataManager {
   public static MetricRegistry getMetricRegistry () {
 
     return PerApplicationContext.getPerApplicationData(InstrumentationManager.class, MetricRegistry.class);
+  }
+
+  public static MetricContext getMetricContext () {
+
+    return METRIC_CONTEXT_LOCAL.get();
+  }
+
+  public static void pushMetricContext () {
+
+    MetricRegistry metricRegistry;
+
+    METRIC_CONTEXT_LOCAL.set(new MetricContext(((metricRegistry = InstrumentationManager.getMetricRegistry()) == null) ? null : metricRegistry.getTracingOptions()));
+  }
+
+  public static void popMetricContext () {
+
+    MetricContext metricContext;
+
+    if (!(metricContext = METRIC_CONTEXT_LOCAL.get()).isEmpty()) {
+      LoggerManager.getLogger(MetricContext.class).info(metricContext);
+    }
+
+    METRIC_CONTEXT_LOCAL.remove();
   }
 
   public static <M extends Metric<M>> void execute (Instrument<M> instrument)

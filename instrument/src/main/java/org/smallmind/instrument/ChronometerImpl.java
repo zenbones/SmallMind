@@ -27,6 +27,7 @@
 package org.smallmind.instrument;
 
 import java.util.concurrent.TimeUnit;
+import org.smallmind.instrument.context.MetricFact;
 import org.smallmind.instrument.context.MetricItem;
 import org.smallmind.instrument.context.MetricSnapshot;
 
@@ -59,7 +60,9 @@ public class ChronometerImpl extends MetricImpl<Chronometer> implements Chronome
     histogram.clear();
 
     if ((metricSnapshot = getMetricSnapshot()) != null) {
-      metricSnapshot.addItem(new MetricItem<Long>("duration", 0L));
+      if (metricSnapshot.willTrace(MetricFact.DURATION)) {
+        metricSnapshot.addItem(new MetricItem<Long>("duration", 0L));
+      }
     }
   }
 
@@ -76,7 +79,9 @@ public class ChronometerImpl extends MetricImpl<Chronometer> implements Chronome
     meter.mark();
 
     if ((metricSnapshot = getMetricSnapshot()) != null) {
-      metricSnapshot.addItem(new MetricItem<Long>("duration", duration));
+      if (metricSnapshot.willTrace(MetricFact.DURATION)) {
+        metricSnapshot.addItem(new MetricItem<Long>("duration", duration));
+      }
     }
   }
 

@@ -24,36 +24,9 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.instrument;
+package org.smallmind.instrument.context;
 
-import org.smallmind.instrument.context.MetricContext;
-import org.smallmind.instrument.context.MetricSnapshot;
+public enum MetricFact {
 
-public abstract class MetricImpl<M extends Metric<M>> implements Metric<M> {
-
-  private String name;
-
-  public String getName () {
-
-    return name;
-  }
-
-  public M setName (String name) {
-
-    this.name = name;
-
-    return getMetricClass().cast(this);
-  }
-
-  public MetricSnapshot getMetricSnapshot () {
-
-    MetricContext metricContext;
-
-    if ((metricContext = InstrumentationManager.getMetricContext()) != null) {
-
-      return metricContext.getSnapshot();
-    }
-
-    return null;
-  }
+  ALL, COUNT, MIN, MAX, SUM, AVG, MEDIAN, STD_DEV, M1_AVG, M5_AVG, M15_AVG, P75_Q, P95_Q, P98_Q, P99_Q, P999_Q, DURATION
 }

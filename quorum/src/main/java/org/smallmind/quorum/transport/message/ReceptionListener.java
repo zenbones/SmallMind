@@ -37,7 +37,6 @@ import javax.jms.Queue;
 import org.smallmind.instrument.ChronometerInstrument;
 import org.smallmind.instrument.InstrumentationManager;
 import org.smallmind.instrument.MetricProperty;
-import org.smallmind.instrument.context.MetricContextFactory;
 import org.smallmind.quorum.transport.TransportManager;
 import org.smallmind.quorum.transport.instrument.MetricDestination;
 import org.smallmind.quorum.transport.instrument.MetricEvent;
@@ -88,7 +87,7 @@ public class ReceptionListener implements SessionEmployer, MessageListener {
 
       long timeInQueue = System.currentTimeMillis() - message.getJMSTimestamp();
 
-      MetricContextFactory.pushMetricContext();
+      InstrumentationManager.pushMetricContext();
 
       LoggerManager.getLogger(QueueOperator.class).debug("request message received(%s)...", message.getJMSMessageID());
       InstrumentationManager.instrumentWithChronometer(TransportManager.getTransport(), (timeInQueue >= 0) ? timeInQueue : 0, TimeUnit.MILLISECONDS, new MetricProperty("destination", MetricDestination.REQUEST_QUEUE.getDisplay()));
@@ -110,7 +109,7 @@ public class ReceptionListener implements SessionEmployer, MessageListener {
       LoggerManager.getLogger(ReceptionListener.class).error(exception);
     }
     finally {
-      MetricContextFactory.popMetricContext();
+      InstrumentationManager.popMetricContext();
     }
   }
 }

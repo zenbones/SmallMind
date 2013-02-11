@@ -27,6 +27,7 @@
 package org.smallmind.instrument;
 
 import java.util.concurrent.atomic.AtomicLong;
+import org.smallmind.instrument.context.MetricFact;
 import org.smallmind.instrument.context.MetricItem;
 import org.smallmind.instrument.context.MetricSnapshot;
 
@@ -97,7 +98,9 @@ public class TallyImpl extends MetricImpl<Tally> implements Tally {
     current = count.decrementAndGet();
 
     if ((metricSnapshot = getMetricSnapshot()) != null) {
-      metricSnapshot.addItem(new MetricItem<Long>("count", current));
+      if (metricSnapshot.willTrace(MetricFact.COUNT)) {
+        metricSnapshot.addItem(new MetricItem<Long>("count", current));
+      }
     }
   }
 
@@ -110,7 +113,9 @@ public class TallyImpl extends MetricImpl<Tally> implements Tally {
     current = count.addAndGet(0 - n);
 
     if ((metricSnapshot = getMetricSnapshot()) != null) {
-      metricSnapshot.addItem(new MetricItem<Long>("count", current));
+      if (metricSnapshot.willTrace(MetricFact.COUNT)) {
+        metricSnapshot.addItem(new MetricItem<Long>("count", current));
+      }
     }
   }
 

@@ -32,11 +32,14 @@ import org.smallmind.instrument.MetricProperty;
 
 public class MetricSnapshot implements Serializable {
 
+  private TracingOptions tracingOptions;
   private LinkedList<MetricItem> itemList;
   private MetricProperty[] properties;
   private String domain;
 
-  public MetricSnapshot (MetricAddress metricAddress) {
+  public MetricSnapshot (MetricAddress metricAddress, TracingOptions tracingOptions) {
+
+    this.tracingOptions = tracingOptions;
 
     domain = metricAddress.getDomain();
     properties = metricAddress.getProperties();
@@ -52,6 +55,11 @@ public class MetricSnapshot implements Serializable {
   public MetricProperty[] getProperties () {
 
     return properties;
+  }
+
+  public boolean willTrace (MetricFact fact) {
+
+    return tracingOptions.contains(fact);
   }
 
   public boolean isEmpty () {

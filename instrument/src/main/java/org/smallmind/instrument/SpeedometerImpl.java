@@ -28,6 +28,7 @@ package org.smallmind.instrument;
 
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
+import org.smallmind.instrument.context.MetricFact;
 import org.smallmind.instrument.context.MetricItem;
 import org.smallmind.instrument.context.MetricSnapshot;
 
@@ -61,8 +62,12 @@ public class SpeedometerImpl extends MetricImpl<Speedometer> implements Speedome
     min.set(Long.MAX_VALUE);
 
     if ((metricSnapshot = getMetricSnapshot()) != null) {
-      metricSnapshot.addItem(new MetricItem<String>("min", "n/a"));
-      metricSnapshot.addItem(new MetricItem<String>("max", "n/a"));
+      if (metricSnapshot.willTrace(MetricFact.MIN)) {
+        metricSnapshot.addItem(new MetricItem<String>("min", "n/a"));
+      }
+      if (metricSnapshot.willTrace(MetricFact.MAX)) {
+        metricSnapshot.addItem(new MetricItem<String>("max", "n/a"));
+      }
     }
   }
 
@@ -85,8 +90,12 @@ public class SpeedometerImpl extends MetricImpl<Speedometer> implements Speedome
     currentMax = setMax(quantity);
 
     if ((metricSnapshot = getMetricSnapshot()) != null) {
-      metricSnapshot.addItem(new MetricItem<Long>("min", currentMin));
-      metricSnapshot.addItem(new MetricItem<Long>("max", currentMax));
+      if (metricSnapshot.willTrace(MetricFact.MIN)) {
+        metricSnapshot.addItem(new MetricItem<Long>("min", currentMin));
+      }
+      if (metricSnapshot.willTrace(MetricFact.MAX)) {
+        metricSnapshot.addItem(new MetricItem<Long>("max", currentMax));
+      }
     }
   }
 

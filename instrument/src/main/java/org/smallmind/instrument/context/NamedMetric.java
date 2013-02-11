@@ -29,6 +29,7 @@ package org.smallmind.instrument.context;
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
+import org.smallmind.instrument.InstrumentationManager;
 import org.smallmind.instrument.Metric;
 import org.smallmind.instrument.MetricProperty;
 
@@ -60,7 +61,7 @@ public abstract class NamedMetric<M extends Metric<M>> implements InvocationHand
     MetricContext metricContext;
     boolean pushed = false;
 
-    if ((metricContext = MetricContextFactory.getMetricContext()) != null) {
+    if ((metricContext = InstrumentationManager.getMetricContext()) != null) {
       for (Method updatingMethod : getUpdatingMethods()) {
         if (method.equals(updatingMethod)) {
           pushed = metricContext.pushSnapshot(metricAddress);

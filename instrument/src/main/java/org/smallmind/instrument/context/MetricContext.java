@@ -32,11 +32,14 @@ import java.util.List;
 
 public class MetricContext {
 
+  private final TracingOptions tracingOptions;
   private final LinkedList<MetricSnapshot> arabesqueQueue = new LinkedList<>();
   private final LinkedList<MetricSnapshot> outputList = new LinkedList<>();
   private final long startTime;
 
-  public MetricContext () {
+  public MetricContext (TracingOptions tracingOptions) {
+
+    this.tracingOptions = tracingOptions;
 
     startTime = System.currentTimeMillis();
   }
@@ -50,7 +53,7 @@ public class MetricContext {
 
     MetricSnapshot metricSnapshot;
 
-    arabesqueQueue.addFirst(metricSnapshot = new MetricSnapshot(metricAddress));
+    arabesqueQueue.addFirst(metricSnapshot = new MetricSnapshot(metricAddress, tracingOptions));
     outputList.addLast(metricSnapshot);
 
     return true;
