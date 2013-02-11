@@ -62,118 +62,100 @@ public class GenerateJNLPMojo extends AbstractMojo {
   private static final JNLParameter[] NO_PARAMETERS = new JNLParameter[0];
   private static final String[] NO_ARGS = new String[0];
   private static final String RESOURCE_BASE_PATH = GenerateJNLPMojo.class.getPackage().getName().replace('.', '/');
-
   /**
    * @parameter expression="${project}"
    * @readonly
    */
   private MavenProject project;
-
   /**
    * @parameter
    * @required
    */
   private String operatingSystem;
-
   /**
    * @parameter
    * @required
    */
   private String javafxRuntime;
-
   /**
    * @parameter
    * @required
    */
   private String javaVersion;
-
   /**
    * @parameter default-value="-Xms64m -Xmx256m"
    */
   private String jvmArgs;
-
   /**
    * @parameter default-value="1.0"
    */
   private String jnlpSpec;
-
   /**
    * @parameter
    * @required
    */
   private String mainClass;
-
   /**
    * @parameter default-value=800
    */
   private int width;
-
   /**
    * @parameter default-value=600
    */
   private int height;
-
   /**
    * @parameter
    * @required
    */
   private Dependency javafx;
-
   /**
    * @parameter
    */
   private SigningInfo signjar;
-
   /**
    * @parameter
    */
   private JNLParameter[] jnlpParameters;
-
   /**
    * @parameter
    */
   private String[] jnlpArguments;
-
   /**
    * @parameter expression="${project.artifactId}"
    */
   private String applicationName;
-
   /**
    * @parameter expression="${project.artifactId}"
    */
   private String title;
-
   /**
    * @parameter expression="${project.groupId}"
    */
   private String vendor;
-
   /**
    * @parameter expression="${project.artifactId}"
    */
   private String description;
-
   /**
    * @parameter default-value=true
    */
   private boolean offlineAllowed;
-
   /**
    * @parameter default-value="jnlp"
    */
   private String deployDir;
-
   /**
    * @parameter default-value=true
    */
   private boolean createJar;
-
   /**
    * @parameter default-value=true
    */
   private boolean includeVersion;
-
+  /**
+   * @parameter default-value=true
+   */
+  private boolean includeHref;
   /**
    * @parameter default-value=false
    */
@@ -222,7 +204,6 @@ public class GenerateJNLPMojo extends AbstractMojo {
 
     freemarkerMap = new HashMap<String, Object>();
     freemarkerMap.put("jnlpSpec", jnlpSpec);
-    freemarkerMap.put("href", createArtifactName(includeVersion, false));
     freemarkerMap.put("title", title);
     freemarkerMap.put("vendor", vendor);
     freemarkerMap.put("description", description);
@@ -237,6 +218,10 @@ public class GenerateJNLPMojo extends AbstractMojo {
     freemarkerMap.put("height", height);
     freemarkerMap.put("jnlpParameters", (jnlpParameters != null) ? jnlpParameters : NO_PARAMETERS);
     freemarkerMap.put("jnlpArguments", (jnlpArguments != null) ? jnlpArguments : NO_ARGS);
+
+    if (includeHref) {
+      freemarkerMap.put("href", createArtifactName(includeVersion, false));
+    }
 
     createDirectory("deploy", deployDirectory = new File(project.getBuild().getDirectory() + System.getProperty("file.separator") + deployDir + System.getProperty("file.separator") + createArtifactName(includeVersion, false) + System.getProperty("file.separator")));
 

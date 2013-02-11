@@ -78,9 +78,11 @@ public class CSVReader {
     }
   }
 
-  public synchronized void setTrimFields (boolean trimFields) {
+  public synchronized CSVReader setTrimFields (boolean trimFields) {
 
     this.trimFields = trimFields;
+
+    return this;
   }
 
   public synchronized String[] getHeaders () {
