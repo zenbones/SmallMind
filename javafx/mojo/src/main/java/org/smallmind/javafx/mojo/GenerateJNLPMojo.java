@@ -204,6 +204,8 @@ public class GenerateJNLPMojo extends AbstractMojo {
 
     freemarkerMap = new HashMap<String, Object>();
     freemarkerMap.put("jnlpSpec", jnlpSpec);
+    freemarkerMap.put("includeHref", includeHref);
+    freemarkerMap.put("href", createArtifactName(includeVersion, false));
     freemarkerMap.put("title", title);
     freemarkerMap.put("vendor", vendor);
     freemarkerMap.put("description", description);
@@ -218,10 +220,6 @@ public class GenerateJNLPMojo extends AbstractMojo {
     freemarkerMap.put("height", height);
     freemarkerMap.put("jnlpParameters", (jnlpParameters != null) ? jnlpParameters : NO_PARAMETERS);
     freemarkerMap.put("jnlpArguments", (jnlpArguments != null) ? jnlpArguments : NO_ARGS);
-
-    if (includeHref) {
-      freemarkerMap.put("href", createArtifactName(includeVersion, false));
-    }
 
     createDirectory("deploy", deployDirectory = new File(project.getBuild().getDirectory() + System.getProperty("file.separator") + deployDir + System.getProperty("file.separator") + createArtifactName(includeVersion, false) + System.getProperty("file.separator")));
 

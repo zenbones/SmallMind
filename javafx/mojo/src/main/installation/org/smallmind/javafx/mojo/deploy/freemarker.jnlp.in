@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<jnlp spec="${jnlpSpec}" xmlns:jfx="http://javafx.com" href="${href}">
+<jnlp spec="${jnlpSpec}" xmlns:jfx="http://javafx.com"[#if includeHref] href="${href}"[/#if]>
   <information>
     <title>${title}</title>
     <vendor>${vendor}</vendor>
