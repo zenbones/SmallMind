@@ -27,16 +27,17 @@
 package org.smallmind.instrument.context;
 
 import java.util.HashSet;
-import org.smallmind.instrument.context.MetricFact;
 import scala.actors.threadpool.Arrays;
 
 public class TracingOptions {
 
-  private final HashSet<MetricFact> factSet;
+  private HashSet<MetricFact> factSet;
 
-  public TracingOptions (MetricFact... facts) {
+  public TracingOptions setFactSet (MetricFact... facts) {
 
     factSet = new HashSet<MetricFact>(Arrays.asList(facts));
+
+    return this;
   }
 
   public boolean isEmpty () {
