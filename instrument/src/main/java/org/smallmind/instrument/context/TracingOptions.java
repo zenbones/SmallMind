@@ -26,8 +26,8 @@
  */
 package org.smallmind.instrument.context;
 
+import java.util.Arrays;
 import java.util.HashSet;
-import scala.actors.threadpool.Arrays;
 
 public class TracingOptions {
 
