@@ -72,7 +72,7 @@ public class InstrumentationManager implements PerApplicationDataManager {
       METRIC_CONTEXT_LOCAL.set(appendedMetricContext);
     }
     else {
-
+      currentMetricContext.append(appendedMetricContext);
     }
   }
 
