@@ -47,10 +47,10 @@ public class ReceptionWorker implements Runnable {
   private final CountDownLatch exitLatch = new CountDownLatch(1);
   private final MessageStrategy messageStrategy;
   private final Map<String, MessageTarget> targetMap;
-  private final TransferQueue<Message> messageRendezvous;
+  private final TransferQueue<MessagePlus> messageRendezvous;
   private final ConcurrentLinkedQueue<TopicOperator> operatorQueue;
 
-  public ReceptionWorker (MessageStrategy messageStrategy, Map<String, MessageTarget> targetMap, TransferQueue<Message> messageRendezvous, ConcurrentLinkedQueue<TopicOperator> operatorQueue) {
+  public ReceptionWorker (MessageStrategy messageStrategy, Map<String, MessageTarget> targetMap, TransferQueue<MessagePlus> messageRendezvous, ConcurrentLinkedQueue<TopicOperator> operatorQueue) {
 
     this.messageStrategy = messageStrategy;
     this.targetMap = targetMap;
@@ -73,10 +73,11 @@ public class ReceptionWorker implements Runnable {
     try {
       while (!stopped.get()) {
 
-        Message requestMessage;
+        MessagePlus messagePlus;
 
-        if ((requestMessage = messageRendezvous.poll(1, TimeUnit.SECONDS)) != null) {
+        if ((messagePlus = messageRendezvous.poll(1, TimeUnit.SECONDS)) != null) {
 
+          InstrumentationManager.setMetricContext(messagePlus.getMetricContext());
           InstrumentationManager.instrumentWithChronometer(TransportManager.getTransport(), Clocks.EPOCH.getClock().getTimeNanoseconds() - idleStart, TimeUnit.NANOSECONDS, new MetricProperty("event", MetricEvent.WORKER_IDLE.getDisplay()));
 
           TopicOperator topicOperator;
@@ -90,7 +91,7 @@ public class ReceptionWorker implements Runnable {
             Message responseMessage;
             String transmissionInstance;
 
-            if ((transmissionInstance = requestMessage.getStringProperty(MessageProperty.INSTANCE.getKey())) == null) {
+            if ((transmissionInstance = messagePlus.getMessage().getStringProperty(MessageProperty.INSTANCE.getKey())) == null) {
               throw new TransportException("Missing message property(%s)", MessageProperty.INSTANCE.getKey());
             }
 
@@ -99,21 +100,21 @@ public class ReceptionWorker implements Runnable {
               MessageTarget messageTarget;
               String serviceSelector;
 
-              if ((serviceSelector = requestMessage.getStringProperty(MessageProperty.SERVICE.getKey())) == null) {
+              if ((serviceSelector = messagePlus.getMessage().getStringProperty(MessageProperty.SERVICE.getKey())) == null) {
                 throw new TransportException("Missing message property(%s)", MessageProperty.SERVICE.getKey());
               }
               else if ((messageTarget = targetMap.get(serviceSelector)) == null) {
                 throw new TransportException("Unknown service selector(%s)", serviceSelector);
               }
 
-              responseMessage = messageTarget.handleMessage(topicOperator.getTopicSession(), messageStrategy, requestMessage);
+              responseMessage = messageTarget.handleMessage(topicOperator.getTopicSession(), messageStrategy, messagePlus.getMessage());
             }
             catch (Exception exception) {
               responseMessage = messageStrategy.wrapInMessage(topicOperator.getTopicSession(), exception);
               responseMessage.setBooleanProperty(MessageProperty.EXCEPTION.getKey(), true);
             }
 
-            responseMessage.setJMSCorrelationID(requestMessage.getJMSMessageID());
+            responseMessage.setJMSCorrelationID(messagePlus.getMessage().getJMSMessageID());
             responseMessage.setStringProperty(MessageProperty.INSTANCE.getKey(), transmissionInstance);
 
             topicOperator.publish(responseMessage);
@@ -123,6 +124,7 @@ public class ReceptionWorker implements Runnable {
           }
           finally {
             operatorQueue.add(topicOperator);
+            InstrumentationManager.publishMetricContext();
           }
 
           idleStart = Clocks.EPOCH.getClock().getTimeNanoseconds();

@@ -41,6 +41,7 @@ import org.smallmind.quorum.transport.TransportManager;
 import org.smallmind.quorum.transport.instrument.MetricDestination;
 import org.smallmind.quorum.transport.instrument.MetricEvent;
 import org.smallmind.quorum.transport.message.ConnectionFactor;
+import org.smallmind.quorum.transport.message.MessagePlus;
 import org.smallmind.quorum.transport.message.QueueOperator;
 import org.smallmind.quorum.transport.message.SessionEmployer;
 import org.smallmind.scribe.pen.LoggerManager;
@@ -50,9 +51,9 @@ public class GossipListener implements SessionEmployer, MessageListener {
   private final AtomicBoolean closed = new AtomicBoolean(false);
   private final ConnectionFactor gossipConnectionFactor;
   private final Topic gossipTopic;
-  private final TransferQueue<Message> messageRendezvous;
+  private final TransferQueue<MessagePlus> messageRendezvous;
 
-  public GossipListener (ConnectionFactor gossipConnectionFactor, Topic gossipTopic, TransferQueue<Message> messageRendezvous)
+  public GossipListener (ConnectionFactor gossipConnectionFactor, Topic gossipTopic, TransferQueue<MessagePlus> messageRendezvous)
     throws JMSException {
 
     this.gossipConnectionFactor = gossipConnectionFactor;
@@ -90,6 +91,8 @@ public class GossipListener implements SessionEmployer, MessageListener {
 
       long timeInQueue = System.currentTimeMillis() - message.getJMSTimestamp();
 
+      InstrumentationManager.createMetricContext();
+
       LoggerManager.getLogger(QueueOperator.class).debug("gossip message received(%s)...", message.getJMSMessageID());
       InstrumentationManager.instrumentWithChronometer(TransportManager.getTransport(), (timeInQueue >= 0) ? timeInQueue : 0, TimeUnit.MILLISECONDS, new MetricProperty("destination", MetricDestination.GOSSIP_TOPIC.getDisplay()));
       InstrumentationManager.execute(new ChronometerInstrument(TransportManager.getTransport(), new MetricProperty("event", MetricEvent.ACQUIRE_WORKER.getDisplay())) {
@@ -101,13 +104,16 @@ public class GossipListener implements SessionEmployer, MessageListener {
           boolean success;
 
           do {
-            success = messageRendezvous.tryTransfer(message, 1, TimeUnit.SECONDS);
+            success = messageRendezvous.tryTransfer(new MessagePlus(message, InstrumentationManager.getMetricContext()), 1, TimeUnit.SECONDS);
           } while ((!closed.get()) && (!success));
         }
       });
     }
     catch (Exception exception) {
       LoggerManager.getLogger(GossipListener.class).error(exception);
+    }
+    finally {
+      InstrumentationManager.removeMetricContext();
     }
   }
 }

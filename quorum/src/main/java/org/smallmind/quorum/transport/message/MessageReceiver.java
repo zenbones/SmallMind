@@ -33,7 +33,6 @@ import java.util.concurrent.LinkedTransferQueue;
 import java.util.concurrent.TransferQueue;
 import java.util.concurrent.atomic.AtomicBoolean;
 import javax.jms.JMSException;
-import javax.jms.Message;
 import javax.jms.Queue;
 import javax.jms.Topic;
 import org.smallmind.quorum.transport.TransportException;
@@ -49,7 +48,7 @@ public class MessageReceiver {
     throws IOException, JMSException, TransportException {
 
     ConcurrentLinkedQueue<TopicOperator> operatorQueue;
-    TransferQueue<Message> messageRendezvous = new LinkedTransferQueue<Message>();
+    TransferQueue<MessagePlus> messageRendezvous = new LinkedTransferQueue<MessagePlus>();
     HashMap<String, MessageTarget> targetMap = new HashMap<String, MessageTarget>();
     int topicIndex = 0;
 

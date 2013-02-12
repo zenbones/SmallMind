@@ -28,13 +28,13 @@ package org.smallmind.quorum.transport.message;
 
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicReference;
-import javax.jms.Message;
+import org.smallmind.instrument.InstrumentationManager;
 import org.smallmind.quorum.transport.TransportTimeoutException;
 
 public class AsynchronousTransmissionCallback implements TransmissionCallback {
 
   private final CountDownLatch resultLatch = new CountDownLatch(1);
-  private final AtomicReference<Message> responseMessageRef = new AtomicReference<Message>();
+  private final AtomicReference<MessagePlus> messagePlusRef = new AtomicReference<MessagePlus>();
   private final MessageStrategy messageStrategy;
   private final long timeoutSeconds;
 
@@ -54,24 +54,26 @@ public class AsynchronousTransmissionCallback implements TransmissionCallback {
   public Object getResult ()
     throws Exception {
 
-    Message responseMessage;
+    MessagePlus messagePlus;
 
     resultLatch.await();
 
-    if ((responseMessage = responseMessageRef.get()) == null) {
+    if ((messagePlus = messagePlusRef.get()) == null) {
       throw new TransportTimeoutException("The timeout(%d) seconds was exceeded while waiting for a response", timeoutSeconds);
     }
 
-    if (responseMessage.getBooleanProperty(MessageProperty.EXCEPTION.getKey())) {
-      throw (Exception)messageStrategy.unwrapFromMessage(responseMessage);
+    InstrumentationManager.appendMetricContext(messagePlus.getMetricContext());
+
+    if (messagePlus.getMessage().getBooleanProperty(MessageProperty.EXCEPTION.getKey())) {
+      throw (Exception)messageStrategy.unwrapFromMessage(messagePlus.getMessage());
     }
 
-    return messageStrategy.unwrapFromMessage(responseMessage);
+    return messageStrategy.unwrapFromMessage(messagePlus.getMessage());
   }
 
-  public void setResponseMessage (Message responseMessage) {
+  public void setResponseMessage (MessagePlus messagePlus) {
 
-    responseMessageRef.set(responseMessage);
+    messagePlusRef.set(messagePlus);
 
     resultLatch.countDown();
   }

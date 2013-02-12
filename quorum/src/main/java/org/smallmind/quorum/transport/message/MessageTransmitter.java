@@ -151,23 +151,23 @@ public class MessageTransmitter {
     }
   }
 
-  public void completeCallback (Message responseMessage) {
+  public void completeCallback (MessagePlus messagePlus) {
 
     try {
 
       TransmissionCallback previousCallback;
       String correlationId;
 
-      if ((previousCallback = callbackMap.get(correlationId = responseMessage.getJMSCorrelationID())) == null) {
-        if ((previousCallback = callbackMap.putIfAbsent(correlationId, new SynchronousTransmissionCallback(messageStrategy, responseMessage))) != null) {
+      if ((previousCallback = callbackMap.get(correlationId = messagePlus.getMessage().getJMSCorrelationID())) == null) {
+        if ((previousCallback = callbackMap.putIfAbsent(correlationId, new SynchronousTransmissionCallback(messageStrategy, messagePlus))) != null) {
           if (previousCallback instanceof AsynchronousTransmissionCallback) {
-            ((AsynchronousTransmissionCallback)previousCallback).setResponseMessage(responseMessage);
+            ((AsynchronousTransmissionCallback)previousCallback).setResponseMessage(messagePlus);
           }
         }
       }
       else {
         if (previousCallback instanceof AsynchronousTransmissionCallback) {
-          ((AsynchronousTransmissionCallback)previousCallback).setResponseMessage(responseMessage);
+          ((AsynchronousTransmissionCallback)previousCallback).setResponseMessage(messagePlus);
         }
       }
     }

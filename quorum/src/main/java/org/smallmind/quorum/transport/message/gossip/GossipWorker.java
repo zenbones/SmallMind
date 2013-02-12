@@ -31,13 +31,13 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TransferQueue;
 import java.util.concurrent.atomic.AtomicBoolean;
-import javax.jms.Message;
 import org.smallmind.instrument.Clocks;
 import org.smallmind.instrument.InstrumentationManager;
 import org.smallmind.instrument.MetricProperty;
 import org.smallmind.quorum.transport.TransportException;
 import org.smallmind.quorum.transport.TransportManager;
 import org.smallmind.quorum.transport.instrument.MetricEvent;
+import org.smallmind.quorum.transport.message.MessagePlus;
 import org.smallmind.quorum.transport.message.MessageProperty;
 import org.smallmind.quorum.transport.message.MessageStrategy;
 import org.smallmind.scribe.pen.LoggerManager;
@@ -48,9 +48,9 @@ public class GossipWorker implements Runnable {
   private final CountDownLatch exitLatch = new CountDownLatch(1);
   private final MessageStrategy messageStrategy;
   private final Map<String, GossipTarget> targetMap;
-  private final TransferQueue<Message> messageRendezvous;
+  private final TransferQueue<MessagePlus> messageRendezvous;
 
-  public GossipWorker (MessageStrategy messageStrategy, Map<String, GossipTarget> targetMap, TransferQueue<Message> messageRendezvous) {
+  public GossipWorker (MessageStrategy messageStrategy, Map<String, GossipTarget> targetMap, TransferQueue<MessagePlus> messageRendezvous) {
 
     this.messageStrategy = messageStrategy;
     this.targetMap = targetMap;
@@ -72,10 +72,11 @@ public class GossipWorker implements Runnable {
     try {
       while (!stopped.get()) {
 
-        Message gossipMessage;
+        MessagePlus messagePlus;
 
-        if ((gossipMessage = messageRendezvous.poll(1, TimeUnit.SECONDS)) != null) {
+        if ((messagePlus = messageRendezvous.poll(1, TimeUnit.SECONDS)) != null) {
 
+          InstrumentationManager.setMetricContext(messagePlus.getMetricContext());
           InstrumentationManager.instrumentWithChronometer(TransportManager.getTransport(), Clocks.EPOCH.getClock().getTimeNanoseconds() - idleStart, TimeUnit.NANOSECONDS, new MetricProperty("event", MetricEvent.WORKER_IDLE.getDisplay()));
 
           try {
@@ -83,17 +84,20 @@ public class GossipWorker implements Runnable {
             GossipTarget gossipTarget;
             String serviceSelector;
 
-            if ((serviceSelector = gossipMessage.getStringProperty(MessageProperty.SERVICE.getKey())) == null) {
+            if ((serviceSelector = messagePlus.getMessage().getStringProperty(MessageProperty.SERVICE.getKey())) == null) {
               throw new TransportException("Missing message property(%s)", MessageProperty.SERVICE.getKey());
             }
             else if ((gossipTarget = targetMap.get(serviceSelector)) == null) {
               throw new TransportException("Unknown service selector(%s)", serviceSelector);
             }
 
-            gossipTarget.handleMessage(messageStrategy, gossipMessage);
+            gossipTarget.handleMessage(messageStrategy, messagePlus.getMessage());
           }
           catch (Throwable throwable) {
             LoggerManager.getLogger(GossipWorker.class).error(throwable);
+          }
+          finally {
+            InstrumentationManager.publishMetricContext();
           }
 
           idleStart = Clocks.EPOCH.getClock().getTimeNanoseconds();

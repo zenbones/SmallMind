@@ -49,6 +49,11 @@ public class MetricContext {
     return startTime;
   }
 
+  public void append (MetricContext metricContext) {
+
+    outputList.addAll(metricContext.getSnapshots());
+  }
+
   public boolean pushSnapshot (MetricAddress metricAddress) {
 
     MetricSnapshot metricSnapshot;

@@ -32,10 +32,10 @@ import java.util.concurrent.LinkedTransferQueue;
 import java.util.concurrent.TransferQueue;
 import java.util.concurrent.atomic.AtomicBoolean;
 import javax.jms.JMSException;
-import javax.jms.Message;
 import javax.jms.Topic;
 import org.smallmind.quorum.transport.TransportException;
 import org.smallmind.quorum.transport.message.ConnectionFactor;
+import org.smallmind.quorum.transport.message.MessagePlus;
 import org.smallmind.quorum.transport.message.MessagePolicy;
 import org.smallmind.quorum.transport.message.MessageStrategy;
 import org.smallmind.quorum.transport.message.ReconnectionPolicy;
@@ -50,7 +50,7 @@ public class GossipReceiver {
   public GossipReceiver (TransportManagedObjects gossipManagedObjects, MessagePolicy messagePolicy, ReconnectionPolicy reconnectionPolicy, MessageStrategy messageStrategy, int concurrencyLimit, GossipTarget... gossipTargets)
     throws IOException, JMSException, TransportException {
 
-    TransferQueue<Message> messageRendezvous = new LinkedTransferQueue<Message>();
+    TransferQueue<MessagePlus> messageRendezvous = new LinkedTransferQueue<MessagePlus>();
     HashMap<String, GossipTarget> targetMap = new HashMap<String, GossipTarget>();
 
     for (GossipTarget gossipTarget : gossipTargets) {

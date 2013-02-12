@@ -47,9 +47,9 @@ public class ReceptionListener implements SessionEmployer, MessageListener {
   private final AtomicBoolean closed = new AtomicBoolean(false);
   private final ConnectionFactor requestConnectionFactor;
   private final Queue requestQueue;
-  private final TransferQueue<Message> messageRendezvous;
+  private final TransferQueue<MessagePlus> messageRendezvous;
 
-  public ReceptionListener (ConnectionFactor requestConnectionFactor, Queue requestQueue, TransferQueue<Message> messageRendezvous)
+  public ReceptionListener (ConnectionFactor requestConnectionFactor, Queue requestQueue, TransferQueue<MessagePlus> messageRendezvous)
     throws JMSException {
 
     this.requestConnectionFactor = requestConnectionFactor;
@@ -87,7 +87,7 @@ public class ReceptionListener implements SessionEmployer, MessageListener {
 
       long timeInQueue = System.currentTimeMillis() - message.getJMSTimestamp();
 
-      InstrumentationManager.pushMetricContext();
+      InstrumentationManager.createMetricContext();
 
       LoggerManager.getLogger(QueueOperator.class).debug("request message received(%s)...", message.getJMSMessageID());
       InstrumentationManager.instrumentWithChronometer(TransportManager.getTransport(), (timeInQueue >= 0) ? timeInQueue : 0, TimeUnit.MILLISECONDS, new MetricProperty("destination", MetricDestination.REQUEST_QUEUE.getDisplay()));
@@ -100,7 +100,7 @@ public class ReceptionListener implements SessionEmployer, MessageListener {
           boolean success;
 
           do {
-            success = messageRendezvous.tryTransfer(message, 1, TimeUnit.SECONDS);
+            success = messageRendezvous.tryTransfer(new MessagePlus(message, InstrumentationManager.getMetricContext()), 1, TimeUnit.SECONDS);
           } while ((!closed.get()) && (!success));
         }
       });
@@ -109,7 +109,7 @@ public class ReceptionListener implements SessionEmployer, MessageListener {
       LoggerManager.getLogger(ReceptionListener.class).error(exception);
     }
     finally {
-      InstrumentationManager.popMetricContext();
+      InstrumentationManager.removeMetricContext();
     }
   }
 }

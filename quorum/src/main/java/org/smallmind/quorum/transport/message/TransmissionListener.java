@@ -89,25 +89,25 @@ public class TransmissionListener implements SessionEmployer, MessageListener {
 
       long timeInTopic = System.currentTimeMillis() - message.getJMSTimestamp();
 
+      InstrumentationManager.createMetricContext();
+
       LoggerManager.getLogger(TransmissionListener.class).debug("response message received(%s)...", message.getJMSMessageID());
       InstrumentationManager.instrumentWithChronometer(TransportManager.getTransport(), (timeInTopic >= 0) ? timeInTopic : 0, TimeUnit.MILLISECONDS, new MetricProperty("destination", MetricDestination.RESPONSE_TOPIC.getDisplay()));
-    }
-    catch (JMSException jmsException) {
-      LoggerManager.getLogger(ReceptionListener.class).error(jmsException);
-    }
 
-    try {
       InstrumentationManager.execute(new ChronometerInstrument(TransportManager.getTransport(), new MetricProperty("event", MetricEvent.COMPLETE_CALLBACK.getDisplay())) {
 
         @Override
         public void withChronometer () {
 
-          messageTransmitter.completeCallback(message);
+          messageTransmitter.completeCallback(new MessagePlus(message, InstrumentationManager.getMetricContext()));
         }
       });
     }
     catch (Exception exception) {
       LoggerManager.getLogger(ReceptionListener.class).error(exception);
+    }
+    finally {
+      InstrumentationManager.removeMetricContext();
     }
   }
 }

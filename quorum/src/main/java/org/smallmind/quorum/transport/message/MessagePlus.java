@@ -24,27 +24,29 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.quorum.transport;
+package org.smallmind.quorum.transport.message;
 
-import org.smallmind.instrument.config.MetricConfiguration;
-import org.smallmind.instrument.config.MetricConfigurationProvider;
+import javax.jms.Message;
+import org.smallmind.instrument.context.MetricContext;
 
-public class Transport implements MetricConfigurationProvider {
+public class MessagePlus {
 
-  private MetricConfiguration metricConfiguration;
+  private Message message;
+  private MetricContext metricContext;
 
-  public Transport (MetricConfiguration metricConfiguration) {
+  public MessagePlus (Message message, MetricContext metricContext) {
 
-    this.metricConfiguration = metricConfiguration;
+    this.message = message;
+    this.metricContext = metricContext;
   }
 
-  public void register () {
+  public Message getMessage () {
 
-    TransportManager.register(this);
+    return message;
   }
 
-  public MetricConfiguration getMetricConfiguration () {
+  public MetricContext getMetricContext () {
 
-    return metricConfiguration;
+    return metricContext;
   }
 }

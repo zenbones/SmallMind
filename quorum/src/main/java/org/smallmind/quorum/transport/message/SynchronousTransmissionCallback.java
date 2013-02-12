@@ -26,17 +26,17 @@
  */
 package org.smallmind.quorum.transport.message;
 
-import javax.jms.Message;
+import org.smallmind.instrument.InstrumentationManager;
 
 public class SynchronousTransmissionCallback implements TransmissionCallback {
 
   private final MessageStrategy messageStrategy;
-  private final Message responseMessage;
+  private final MessagePlus messagePlus;
 
-  public SynchronousTransmissionCallback (MessageStrategy messageStrategy, Message responseMessage) {
+  public SynchronousTransmissionCallback (MessageStrategy messageStrategy, MessagePlus messagePlus) {
 
     this.messageStrategy = messageStrategy;
-    this.responseMessage = responseMessage;
+    this.messagePlus = messagePlus;
   }
 
   @Override
@@ -47,10 +47,12 @@ public class SynchronousTransmissionCallback implements TransmissionCallback {
   public synchronized Object getResult ()
     throws Exception {
 
-    if (responseMessage.getBooleanProperty(MessageProperty.EXCEPTION.getKey())) {
-      throw (Exception)messageStrategy.unwrapFromMessage(responseMessage);
+    InstrumentationManager.appendMetricContext(messagePlus.getMetricContext());
+
+    if (messagePlus.getMessage().getBooleanProperty(MessageProperty.EXCEPTION.getKey())) {
+      throw (Exception)messageStrategy.unwrapFromMessage(messagePlus.getMessage());
     }
 
-    return messageStrategy.unwrapFromMessage(responseMessage);
+    return messageStrategy.unwrapFromMessage(messagePlus.getMessage());
   }
 }

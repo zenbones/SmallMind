@@ -52,14 +52,31 @@ public class InstrumentationManager implements PerApplicationDataManager {
     return METRIC_CONTEXT_LOCAL.get();
   }
 
-  public static void pushMetricContext () {
+  public static void setMetricContext (MetricContext metricContext) {
+
+    METRIC_CONTEXT_LOCAL.set(metricContext);
+  }
+
+  public static void createMetricContext () {
 
     MetricRegistry metricRegistry;
 
-    METRIC_CONTEXT_LOCAL.set(new MetricContext(((metricRegistry = InstrumentationManager.getMetricRegistry()) == null) ? null : metricRegistry.getTracingOptions()));
+    setMetricContext(new MetricContext(((metricRegistry = InstrumentationManager.getMetricRegistry()) == null) ? null : metricRegistry.getTracingOptions()));
   }
 
-  public static MetricContext popMetricContext () {
+  public static void appendMetricContext (MetricContext appendedMetricContext) {
+
+    MetricContext currentMetricContext;
+
+    if ((currentMetricContext = METRIC_CONTEXT_LOCAL.get()) == null) {
+      METRIC_CONTEXT_LOCAL.set(appendedMetricContext);
+    }
+    else {
+
+    }
+  }
+
+  public static MetricContext removeMetricContext () {
 
     MetricContext metricContext = METRIC_CONTEXT_LOCAL.get();
 
@@ -72,7 +89,7 @@ public class InstrumentationManager implements PerApplicationDataManager {
 
     MetricContext metricContext;
 
-    if (((metricContext = popMetricContext()) != null) && (!metricContext.isEmpty())) {
+    if (((metricContext = removeMetricContext()) != null) && (!metricContext.isEmpty())) {
       LoggerManager.getLogger(MetricContext.class).info(metricContext);
     }
   }
