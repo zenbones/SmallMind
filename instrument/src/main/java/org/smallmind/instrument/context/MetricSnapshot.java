@@ -59,7 +59,7 @@ public class MetricSnapshot implements Serializable {
 
   public boolean willTrace (MetricFact fact) {
 
-    return tracingOptions.contains(fact);
+    return (tracingOptions != null) && tracingOptions.contains(fact);
   }
 
   public boolean isEmpty () {
