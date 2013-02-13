@@ -89,7 +89,7 @@ public class InstrumentationManager implements PerApplicationDataManager {
 
     MetricContext metricContext;
 
-    if (((metricContext = removeMetricContext()) != null) && (!metricContext.isEmpty())) {
+    if (((metricContext = removeMetricContext()) != null) && metricContext.hasAged() && (!metricContext.isEmpty())) {
       LoggerManager.getLogger(MetricContext.class).info(metricContext);
     }
   }

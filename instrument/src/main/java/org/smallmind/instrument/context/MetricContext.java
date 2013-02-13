@@ -44,9 +44,9 @@ public class MetricContext {
     startTime = System.currentTimeMillis();
   }
 
-  public long getStartTime () {
+  public boolean hasAged () {
 
-    return startTime;
+    return System.currentTimeMillis() - startTime >= tracingOptions.getMinimumLiveMilliseconds();
   }
 
   public void append (MetricContext metricContext) {

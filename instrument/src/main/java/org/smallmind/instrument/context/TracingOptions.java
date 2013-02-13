@@ -32,6 +32,22 @@ import java.util.HashSet;
 public class TracingOptions {
 
   private HashSet<MetricFact> factSet;
+  private long minimumLiveMilliseconds = 0;
+
+  public long getMinimumLiveMilliseconds () {
+
+    return minimumLiveMilliseconds;
+  }
+
+  public void setMinimumLiveMilliseconds (long minimumLiveMilliseconds) {
+
+    this.minimumLiveMilliseconds = minimumLiveMilliseconds;
+  }
+
+  public HashSet<MetricFact> getFactSet () {
+
+    return factSet;
+  }
 
   public TracingOptions setFactSet (MetricFact... facts) {
 
