@@ -24,7 +24,7 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.nutsnbolts.spring.web;
+package org.smallmind.nutsnbolts.lang.web;
 
 import java.io.IOException;
 import javax.servlet.Filter;
