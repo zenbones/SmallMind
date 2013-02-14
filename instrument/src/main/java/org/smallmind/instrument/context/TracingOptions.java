@@ -44,11 +44,6 @@ public class TracingOptions {
     this.minimumLiveMilliseconds = minimumLiveMilliseconds;
   }
 
-  public HashSet<MetricFact> getFactSet () {
-
-    return factSet;
-  }
-
   public TracingOptions setFactSet (MetricFact... facts) {
 
     factSet = new HashSet<MetricFact>(Arrays.asList(facts));
