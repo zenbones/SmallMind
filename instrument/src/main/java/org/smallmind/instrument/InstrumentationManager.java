@@ -68,10 +68,7 @@ public class InstrumentationManager implements PerApplicationDataManager {
 
     MetricContext currentMetricContext;
 
-    if ((currentMetricContext = METRIC_CONTEXT_LOCAL.get()) == null) {
-      METRIC_CONTEXT_LOCAL.set(appendedMetricContext);
-    }
-    else {
+    if ((currentMetricContext = METRIC_CONTEXT_LOCAL.get()) != null) {
       currentMetricContext.append(appendedMetricContext);
     }
   }
