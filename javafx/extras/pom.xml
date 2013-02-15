@@ -17,6 +17,11 @@
       <version>${project.version}</version>
     </dependency>
     <dependency>
+      <groupId>org.smallmind</groupId>
+      <artifactId>scribe-pen</artifactId>
+      <version>${project.version}</version>
+    </dependency>
+    <dependency>
       <groupId>com.oracle</groupId>
       <artifactId>javafx-rt</artifactId>
       <scope>system</scope>
