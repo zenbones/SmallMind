@@ -66,7 +66,9 @@ public class MetricContext {
 
   public void popSnapshot () {
 
-    arabesqueQueue.removeFirst();
+    if (!arabesqueQueue.isEmpty()) {
+      arabesqueQueue.removeFirst();
+    }
   }
 
   public MetricSnapshot getSnapshot () {
