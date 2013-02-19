@@ -46,7 +46,9 @@ public class MetricContext {
 
   public boolean hasAged () {
 
-    return System.currentTimeMillis() - startTime >= tracingOptions.getMinimumLiveMilliseconds();
+    long minimumLiveSeconds;
+
+    return ((minimumLiveSeconds = tracingOptions.getMinimumLiveMilliseconds()) >= 0) && (System.currentTimeMillis() - startTime >= minimumLiveSeconds);
   }
 
   public void append (MetricContext metricContext) {
