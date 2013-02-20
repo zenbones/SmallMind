@@ -53,7 +53,9 @@ public class MetricContext {
 
   public void append (MetricContext metricContext) {
 
-    outputList.addAll(metricContext.getSnapshots());
+    if (this != metricContext) {
+      outputList.addAll(metricContext.getSnapshots());
+    }
   }
 
   public boolean pushSnapshot (MetricAddress metricAddress) {
