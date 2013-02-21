@@ -54,7 +54,12 @@ public class MetricContext {
   public void append (MetricContext metricContext) {
 
     if (this != metricContext) {
-      outputList.addAll(metricContext.getSnapshots());
+
+      List<MetricSnapshot> appendList;
+
+      if (((appendList = metricContext.getSnapshots()) != null) && (!appendList.isEmpty())) {
+        outputList.addAll(metricContext.getSnapshots());
+      }
     }
   }
 
