@@ -40,7 +40,6 @@ public class ComponentPin<C> {
   private final ComponentPool<C> componentPool;
   private final ComponentInstance<C> componentInstance;
   private final AtomicBoolean terminated = new AtomicBoolean(false);
-
   private DeconstructionCoordinator deconstructionCoordinator;
   private long leaseStartNanos;
 
@@ -86,7 +85,7 @@ public class ComponentPin<C> {
       componentPool.reportLeaseTimeNanos(leaseTime);
     }
 
-    InstrumentationManager.instrumentWithChronometer(PoolManager.getPool(), leaseTime, TimeUnit.NANOSECONDS, new MetricProperty("event", MetricEvent.PROCESSING.getDisplay()));
+    InstrumentationManager.instrumentWithChronometer(PoolManager.getPool(), leaseTime, TimeUnit.NANOSECONDS, new MetricProperty("pool", componentPool.getPoolName()), new MetricProperty("event", MetricEvent.PROCESSING.getDisplay()));
 
     if (deconstructionCoordinator != null) {
       deconstructionCoordinator.free();

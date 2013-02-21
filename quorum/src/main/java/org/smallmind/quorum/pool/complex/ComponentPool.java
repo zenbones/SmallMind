@@ -48,7 +48,6 @@ public class ComponentPool<C> {
   private final ComponentInstanceFactory<C> componentInstanceFactory;
   private final ComponentPinManager<C> componentPinManager;
   private final String name;
-
   private ComplexPoolConfig complexPoolConfig = new ComplexPoolConfig();
 
   public ComponentPool (String name, ComponentInstanceFactory<C> componentInstanceFactory)
@@ -180,7 +179,7 @@ public class ComponentPool<C> {
 
     try {
 
-      return InstrumentationManager.execute(new ChronometerInstrumentAndReturn<C>(PoolManager.getPool(), new MetricProperty("event", MetricEvent.WAITING.getDisplay())) {
+      return InstrumentationManager.execute(new ChronometerInstrumentAndReturn<C>(PoolManager.getPool(), new MetricProperty("pool", getPoolName()), new MetricProperty("event", MetricEvent.WAITING.getDisplay())) {
 
         @Override
         public C withChronometer () throws Exception {

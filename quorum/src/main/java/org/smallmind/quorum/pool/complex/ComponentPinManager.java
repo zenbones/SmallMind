@@ -378,13 +378,13 @@ public class ComponentPinManager<C> {
 
     int freeSize;
 
-    InstrumentationManager.instrumentWithSpeedometer(PoolManager.getPool(), freeSize = freeQueue.size(), new MetricProperty("size", MetricSize.FREE.getDisplay()));
-    InstrumentationManager.instrumentWithSpeedometer(PoolManager.getPool(), getPoolSize() - freeSize, new MetricProperty("size", MetricSize.PROCESSING.getDisplay()));
+    InstrumentationManager.instrumentWithSpeedometer(PoolManager.getPool(), freeSize = freeQueue.size(), new MetricProperty("pool", componentPool.getPoolName()), new MetricProperty("size", MetricSize.FREE.getDisplay()));
+    InstrumentationManager.instrumentWithSpeedometer(PoolManager.getPool(), getPoolSize() - freeSize, new MetricProperty("pool", componentPool.getPoolName()), new MetricProperty("size", MetricSize.PROCESSING.getDisplay()));
   }
 
   private void trackTimeout () {
 
-    InstrumentationManager.instrumentWithMeter(PoolManager.getPool(), new MetricProperty("event", MetricEvent.TIMEOUT.getDisplay()));
+    InstrumentationManager.instrumentWithMeter(PoolManager.getPool(), new MetricProperty("pool", componentPool.getPoolName()), new MetricProperty("pool", componentPool.getPoolName()), new MetricProperty("event", MetricEvent.TIMEOUT.getDisplay()));
   }
 
   public StackTrace[] getExistentialStackTraces () {
