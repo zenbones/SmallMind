@@ -52,17 +52,17 @@ public abstract class AbstractWideCacheDao<W extends Serializable & Comparable<W
   }
 
   @Override
-  public List<D> get (Class<? extends Durable<W>> parentClass, W parentId, Class<D> durableClass) {
+  public List<D> get (String context, Class<? extends Durable<W>> parentClass, W parentId, Class<D> durableClass) {
 
-    WideDurableKey<W, D> wideDurableKey = new WideDurableKey<W, D>(parentClass, parentId, durableClass);
+    WideDurableKey<W, D> wideDurableKey = new WideDurableKey<W, D>(context, parentClass, parentId, durableClass);
 
     return getWideInstanceCache(durableClass).get(wideDurableKey.getKey());
   }
 
   @Override
-  public void delete (Class<? extends Durable<W>> parentClass, W parentId, Class<D> durableClass) {
+  public void delete (String context, Class<? extends Durable<W>> parentClass, W parentId, Class<D> durableClass) {
 
-    WideDurableKey<W, D> wideDurableKey = new WideDurableKey<W, D>(parentClass, parentId, durableClass);
+    WideDurableKey<W, D> wideDurableKey = new WideDurableKey<W, D>(context, parentClass, parentId, durableClass);
 
     getWideInstanceCache(durableClass).remove(wideDurableKey.getKey());
   }

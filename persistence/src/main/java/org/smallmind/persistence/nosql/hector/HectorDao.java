@@ -69,7 +69,7 @@ public abstract class HectorDao<W extends Serializable & Comparable<W>, I extend
     ColumnFamilyResult<Composite, Composite> hectorResult;
 
     if (isCacheEnabled() && ((wideVectoredDao = getWideVectoredDao()) != null)) {
-      if ((durables = wideVectoredDao.get(parentClass, parentId, durableClass)) != null) {
+      if ((durables = wideVectoredDao.get(context, parentClass, parentId, durableClass)) != null) {
 
         return durables;
       }
@@ -131,7 +131,7 @@ public abstract class HectorDao<W extends Serializable & Comparable<W>, I extend
       durables = new LinkedList<D>(naturalMap.values());
 
       if (isCacheEnabled() && ((wideVectoredDao = getWideVectoredDao()) != null)) {
-        wideVectoredDao.persist(parentClass, parentId, durableClass, durables);
+        wideVectoredDao.persist(context, parentClass, parentId, durableClass, durables);
       }
 
       return durables;
@@ -198,7 +198,7 @@ public abstract class HectorDao<W extends Serializable & Comparable<W>, I extend
 
         List<D> cachedInstance;
 
-        if ((cachedInstance = wideVectoredDao.get(parentClass, parentId, durableClass)) != null) {
+        if ((cachedInstance = wideVectoredDao.get(context, parentClass, parentId, durableClass)) != null) {
           for (D durable : durables) {
 
             int cachedIndex;
@@ -211,7 +211,7 @@ public abstract class HectorDao<W extends Serializable & Comparable<W>, I extend
             }
           }
 
-          wideVectoredDao.persist(parentClass, parentId, durableClass, durables);
+          wideVectoredDao.persist(context, parentClass, parentId, durableClass, durables);
         }
       }
 
@@ -253,12 +253,12 @@ public abstract class HectorDao<W extends Serializable & Comparable<W>, I extend
 
         List<D> cachedInstance;
 
-        if ((cachedInstance = wideVectoredDao.get(parentClass, parentId, durableClass)) != null) {
+        if ((cachedInstance = wideVectoredDao.get(context, parentClass, parentId, durableClass)) != null) {
           for (D durable : durables) {
             cachedInstance.remove(durable);
           }
 
-          wideVectoredDao.persist(parentClass, parentId, durableClass, durables);
+          wideVectoredDao.persist(context, parentClass, parentId, durableClass, durables);
         }
       }
 

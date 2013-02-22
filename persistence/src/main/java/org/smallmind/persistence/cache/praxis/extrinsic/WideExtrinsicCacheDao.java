@@ -41,9 +41,9 @@ public class WideExtrinsicCacheDao<W extends Serializable & Comparable<W>, I ext
   }
 
   @Override
-  public List<D> persist (Class<? extends Durable<W>> parentClass, W parentId, Class<D> durableClass, List<D> durables) {
+  public List<D> persist (String context, Class<? extends Durable<W>> parentClass, W parentId, Class<D> durableClass, List<D> durables) {
 
-    WideDurableKey<W, D> wideDurableKey = new WideDurableKey<W, D>(parentClass, parentId, durableClass);
+    WideDurableKey<W, D> wideDurableKey = new WideDurableKey<W, D>(context, parentClass, parentId, durableClass);
 
     getWideInstanceCache(durableClass).set(wideDurableKey.getKey(), durables, 0);
 
