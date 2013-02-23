@@ -27,6 +27,9 @@
 package org.smallmind.persistence.cache.memcached.spring;
 
 import java.util.LinkedList;
+import org.smallmind.nutsnbolts.lang.FormattedRuntimeException;
+import org.smallmind.nutsnbolts.util.Spread;
+import org.smallmind.nutsnbolts.util.SpreadParserException;
 import org.smallmind.persistence.cache.memcached.MemcachedServer;
 import org.springframework.beans.factory.FactoryBean;
 import org.springframework.beans.factory.InitializingBean;
@@ -34,28 +37,42 @@ import org.springframework.beans.factory.InitializingBean;
 public class MemcachedServerFactoryBean implements FactoryBean<MemcachedServer[]>, InitializingBean {
 
   private MemcachedServer[] serverArray;
-  private String servers;
+  private String serverPattern;
+  private String serverSpread;
 
-  public void setServers (String servers) {
+  public void setServerPattern (String serverPattern) {
 
-    this.servers = servers;
+    this.serverPattern = serverPattern;
+  }
+
+  public void setServerSpread (String serverSpread) {
+
+    this.serverSpread = serverSpread;
   }
 
   @Override
-  public void afterPropertiesSet () {
+  public void afterPropertiesSet ()
+    throws SpreadParserException {
 
-    if ((servers != null) && (servers.length() > 0)) {
+    if ((serverPattern != null) && (serverPattern.length() > 0) && (serverSpread != null) && (serverSpread.length() > 0)) {
 
       LinkedList<MemcachedServer> serverList;
+      int[] serverNumbers = Spread.calculate(serverSpread);
+      int poundPos;
       int colonPos;
 
-      serverList = new LinkedList<MemcachedServer>();
-      for (String server : servers.split(",", -1)) {
-        if ((colonPos = server.indexOf(':')) >= 0) {
-          serverList.add(new MemcachedServer(server.substring(0, colonPos), Integer.parseInt(server.substring(colonPos + 1))));
+      if ((poundPos = serverPattern.indexOf('#')) < 0) {
+        throw new FormattedRuntimeException("The server pattern(%s) must include a '#' sign", serverPattern);
+      }
+
+      colonPos = serverPattern.indexOf(':');
+      serverList = new LinkedList<>();
+      for (int serverNumber : serverNumbers) {
+        if (colonPos >= 0) {
+          serverList.add(new MemcachedServer(serverPattern.substring(0, poundPos) + serverNumber + serverPattern.substring(poundPos + 1), Integer.parseInt(serverPattern.substring(colonPos + 1))));
         }
         else {
-          serverList.add(new MemcachedServer(server, 11211));
+          serverList.add(new MemcachedServer(serverPattern.substring(0, poundPos) + serverNumber + serverPattern.substring(poundPos + 1), 11211));
         }
       }
 

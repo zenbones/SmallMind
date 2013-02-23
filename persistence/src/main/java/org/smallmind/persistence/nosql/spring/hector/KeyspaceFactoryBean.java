@@ -35,28 +35,35 @@ import me.prettyprint.hector.api.Cluster;
 import me.prettyprint.hector.api.HConsistencyLevel;
 import me.prettyprint.hector.api.Keyspace;
 import me.prettyprint.hector.api.factory.HFactory;
+import org.smallmind.nutsnbolts.lang.FormattedRuntimeException;
+import org.smallmind.nutsnbolts.util.Spread;
+import org.smallmind.nutsnbolts.util.SpreadParserException;
 import org.springframework.beans.factory.FactoryBean;
 import org.springframework.beans.factory.InitializingBean;
 
 public class KeyspaceFactoryBean implements FactoryBean<Keyspace>, InitializingBean {
 
   private static final Class[] SCHEMA_VERIFIER_SIGNATURE = new Class[] {Cluster.class, Keyspace.class, String.class, int.class};
-
   private static final HashMap<String, ThriftCluster> CLUSTER_MAP = new HashMap<String, ThriftCluster>();
   private static final HashMap<ConsistencyPair, ConfigurableConsistencyLevel> CONSISTENCY_LEVEL_MAP = new HashMap<ConsistencyPair, ConfigurableConsistencyLevel>();
-
   private Keyspace keyspace;
   private HConsistencyLevel defaultReadConsistencyLevel = HConsistencyLevel.QUORUM;
   private HConsistencyLevel defaultWriteConsistencyLevel = HConsistencyLevel.QUORUM;
-  private String cassandraServers;
+  private String serverPattern;
+  private String serverSpread;
   private String clusterName;
   private String keyspaceName;
   private String replicationStrategyClass;
   private int replicationFactor;
 
-  public void setCassandraServers (String cassandraServers) {
+  public void setServerPattern (String serverPattern) {
 
-    this.cassandraServers = cassandraServers;
+    this.serverPattern = serverPattern;
+  }
+
+  public void setServerSpread (String serverSpread) {
+
+    this.serverSpread = serverSpread;
   }
 
   public void setClusterName (String clusterName) {
@@ -91,16 +98,26 @@ public class KeyspaceFactoryBean implements FactoryBean<Keyspace>, InitializingB
 
   @Override
   public synchronized void afterPropertiesSet ()
-    throws NoSuchMethodException, InstantiationException, IllegalAccessException, InvocationTargetException {
+    throws SpreadParserException, NoSuchMethodException, InstantiationException, IllegalAccessException, InvocationTargetException {
 
-    if ((cassandraServers != null) && (cassandraServers.length() > 0)) {
+    if ((serverPattern != null) && (serverPattern.length() > 0) && (serverSpread != null) && (serverSpread.length() > 0)) {
 
       ThriftCluster thriftCluster;
       ConfigurableConsistencyLevel consistencyLevelPolicy;
       ConsistencyPair consistencyPair = new ConsistencyPair(defaultReadConsistencyLevel, defaultWriteConsistencyLevel);
+      StringBuilder serverBuilder = new StringBuilder();
+      int poundPos;
 
-      if ((thriftCluster = CLUSTER_MAP.get(cassandraServers)) == null) {
-        CLUSTER_MAP.put(cassandraServers, thriftCluster = new ThriftCluster(clusterName, new CassandraHostConfigurator(cassandraServers)));
+      if ((poundPos = serverPattern.indexOf('#')) < 0) {
+        throw new FormattedRuntimeException("The server pattern(%s) must include a '#' sign", serverPattern);
+      }
+
+      for (int serverNumber : Spread.calculate(serverSpread)) {
+        serverBuilder.append(serverPattern.substring(0, poundPos)).append(serverNumber).append(serverPattern.substring(poundPos + 1));
+      }
+
+      if ((thriftCluster = CLUSTER_MAP.get(serverBuilder.toString())) == null) {
+        CLUSTER_MAP.put(serverBuilder.toString(), thriftCluster = new ThriftCluster(clusterName, new CassandraHostConfigurator(serverBuilder.toString())));
       }
 
       if ((consistencyLevelPolicy = CONSISTENCY_LEVEL_MAP.get(consistencyPair)) == null) {
