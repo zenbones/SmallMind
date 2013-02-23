@@ -211,7 +211,7 @@ public abstract class HectorDao<W extends Serializable & Comparable<W>, I extend
             }
           }
 
-          wideVectoredDao.persist(context, parentClass, parentId, durableClass, durables);
+          wideVectoredDao.persist(context, parentClass, parentId, durableClass, cachedInstance);
         }
       }
 
@@ -258,7 +258,7 @@ public abstract class HectorDao<W extends Serializable & Comparable<W>, I extend
             cachedInstance.remove(durable);
           }
 
-          wideVectoredDao.persist(context, parentClass, parentId, durableClass, durables);
+          wideVectoredDao.persist(context, parentClass, parentId, durableClass, cachedInstance);
         }
       }
 
