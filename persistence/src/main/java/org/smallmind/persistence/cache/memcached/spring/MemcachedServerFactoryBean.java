@@ -27,7 +27,6 @@
 package org.smallmind.persistence.cache.memcached.spring;
 
 import java.util.LinkedList;
-import org.smallmind.nutsnbolts.lang.FormattedRuntimeException;
 import org.smallmind.nutsnbolts.util.Spread;
 import org.smallmind.nutsnbolts.util.SpreadParserException;
 import org.smallmind.persistence.cache.memcached.MemcachedServer;
@@ -54,25 +53,28 @@ public class MemcachedServerFactoryBean implements FactoryBean<MemcachedServer[]
   public void afterPropertiesSet ()
     throws SpreadParserException {
 
-    if ((serverPattern != null) && (serverPattern.length() > 0) && (serverSpread != null) && (serverSpread.length() > 0)) {
+    if ((serverPattern != null) && (serverPattern.length() > 0)) {
 
-      LinkedList<MemcachedServer> serverList;
-      int[] serverNumbers = Spread.calculate(serverSpread);
+      LinkedList<MemcachedServer> serverList = new LinkedList<>();
+      int colonPos = serverPattern.indexOf(':');
       int poundPos;
-      int colonPos;
 
       if ((poundPos = serverPattern.indexOf('#')) < 0) {
-        throw new FormattedRuntimeException("The server pattern(%s) must include a '#' sign", serverPattern);
-      }
-
-      colonPos = serverPattern.indexOf(':');
-      serverList = new LinkedList<>();
-      for (int serverNumber : serverNumbers) {
         if (colonPos >= 0) {
-          serverList.add(new MemcachedServer(serverPattern.substring(0, poundPos) + serverNumber + serverPattern.substring(poundPos + 1), Integer.parseInt(serverPattern.substring(colonPos + 1))));
+          serverList.add(new MemcachedServer(serverPattern.substring(0, colonPos), Integer.parseInt(serverPattern.substring(colonPos + 1))));
         }
         else {
-          serverList.add(new MemcachedServer(serverPattern.substring(0, poundPos) + serverNumber + serverPattern.substring(poundPos + 1), 11211));
+          serverList.add(new MemcachedServer(serverPattern, 11211));
+        }
+      }
+      else {
+        for (int serverNumber : Spread.calculate(serverSpread)) {
+          if (colonPos >= 0) {
+            serverList.add(new MemcachedServer(serverPattern.substring(0, poundPos) + serverNumber + serverPattern.substring(poundPos, colonPos), Integer.parseInt(serverPattern.substring(colonPos + 1))));
+          }
+          else {
+            serverList.add(new MemcachedServer(serverPattern.substring(0, poundPos) + serverNumber + serverPattern.substring(poundPos + 1), 11211));
+          }
         }
       }
 

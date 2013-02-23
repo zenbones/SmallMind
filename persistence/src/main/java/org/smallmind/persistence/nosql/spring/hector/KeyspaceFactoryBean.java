@@ -35,7 +35,6 @@ import me.prettyprint.hector.api.Cluster;
 import me.prettyprint.hector.api.HConsistencyLevel;
 import me.prettyprint.hector.api.Keyspace;
 import me.prettyprint.hector.api.factory.HFactory;
-import org.smallmind.nutsnbolts.lang.FormattedRuntimeException;
 import org.smallmind.nutsnbolts.util.Spread;
 import org.smallmind.nutsnbolts.util.SpreadParserException;
 import org.springframework.beans.factory.FactoryBean;
@@ -100,7 +99,7 @@ public class KeyspaceFactoryBean implements FactoryBean<Keyspace>, InitializingB
   public synchronized void afterPropertiesSet ()
     throws SpreadParserException, NoSuchMethodException, InstantiationException, IllegalAccessException, InvocationTargetException {
 
-    if ((serverPattern != null) && (serverPattern.length() > 0) && (serverSpread != null) && (serverSpread.length() > 0)) {
+    if ((serverPattern != null) && (serverPattern.length() > 0)) {
 
       ThriftCluster thriftCluster;
       ConfigurableConsistencyLevel consistencyLevelPolicy;
@@ -109,11 +108,12 @@ public class KeyspaceFactoryBean implements FactoryBean<Keyspace>, InitializingB
       int poundPos;
 
       if ((poundPos = serverPattern.indexOf('#')) < 0) {
-        throw new FormattedRuntimeException("The server pattern(%s) must include a '#' sign", serverPattern);
+        serverBuilder.append(serverPattern);
       }
-
-      for (int serverNumber : Spread.calculate(serverSpread)) {
-        serverBuilder.append(serverPattern.substring(0, poundPos)).append(serverNumber).append(serverPattern.substring(poundPos + 1));
+      else {
+        for (int serverNumber : Spread.calculate(serverSpread)) {
+          serverBuilder.append(serverPattern.substring(0, poundPos)).append(serverNumber).append(serverPattern.substring(poundPos + 1));
+        }
       }
 
       if ((thriftCluster = CLUSTER_MAP.get(serverBuilder.toString())) == null) {
