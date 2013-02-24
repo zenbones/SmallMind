@@ -111,8 +111,15 @@ public class KeyspaceFactoryBean implements FactoryBean<Keyspace>, InitializingB
         serverBuilder.append(serverPattern);
       }
       else {
+
+        boolean first = true;
+
         for (int serverNumber : Spread.calculate(serverSpread)) {
+          if (!first) {
+            serverBuilder.append(',');
+          }
           serverBuilder.append(serverPattern.substring(0, poundPos)).append(serverNumber).append(serverPattern.substring(poundPos + 1));
+          first = false;
         }
       }
 
