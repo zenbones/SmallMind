@@ -28,6 +28,8 @@ package org.smallmind.persistence.nosql.spring.hector;
 
 import java.lang.reflect.InvocationTargetException;
 import java.util.HashMap;
+import me.prettyprint.cassandra.connection.LoadBalancingPolicy;
+import me.prettyprint.cassandra.connection.RoundRobinBalancingPolicy;
 import me.prettyprint.cassandra.model.ConfigurableConsistencyLevel;
 import me.prettyprint.cassandra.service.CassandraHostConfigurator;
 import me.prettyprint.cassandra.service.ThriftCluster;
@@ -48,12 +50,15 @@ public class KeyspaceFactoryBean implements FactoryBean<Keyspace>, InitializingB
   private Keyspace keyspace;
   private HConsistencyLevel defaultReadConsistencyLevel = HConsistencyLevel.QUORUM;
   private HConsistencyLevel defaultWriteConsistencyLevel = HConsistencyLevel.QUORUM;
+  private LoadBalancingPolicy loadBalancingPolicy = new RoundRobinBalancingPolicy();
   private String serverPattern;
   private String serverSpread;
   private String clusterName;
   private String keyspaceName;
   private String replicationStrategyClass;
+  private long waitTimeWhenExhausted = 5000;
   private int replicationFactor;
+  private int maxActive = 50;
 
   public void setServerPattern (String serverPattern) {
 
@@ -85,6 +90,11 @@ public class KeyspaceFactoryBean implements FactoryBean<Keyspace>, InitializingB
     this.defaultWriteConsistencyLevel = defaultWriteConsistencyLevel;
   }
 
+  public void setLoadBalancingPolicy (LoadBalancingPolicy loadBalancingPolicy) {
+
+    this.loadBalancingPolicy = loadBalancingPolicy;
+  }
+
   public void setReplicationStrategyClass (String replicationStrategyClass) {
 
     this.replicationStrategyClass = replicationStrategyClass;
@@ -93,6 +103,16 @@ public class KeyspaceFactoryBean implements FactoryBean<Keyspace>, InitializingB
   public void setReplicationFactor (int replicationFactor) {
 
     this.replicationFactor = replicationFactor;
+  }
+
+  public void setMaxActive (int maxActive) {
+
+    this.maxActive = maxActive;
+  }
+
+  public void setWaitTimeWhenExhausted (long waitTimeWhenExhausted) {
+
+    this.waitTimeWhenExhausted = waitTimeWhenExhausted;
   }
 
   @Override
@@ -125,6 +145,9 @@ public class KeyspaceFactoryBean implements FactoryBean<Keyspace>, InitializingB
 
       if ((thriftCluster = CLUSTER_MAP.get(serverBuilder.toString())) == null) {
         CLUSTER_MAP.put(serverBuilder.toString(), thriftCluster = new ThriftCluster(clusterName, new CassandraHostConfigurator(serverBuilder.toString())));
+        thriftCluster.getConfigurator().setLoadBalancingPolicy(loadBalancingPolicy);
+        thriftCluster.getConfigurator().setMaxActive(maxActive);
+        thriftCluster.getConfigurator().setMaxWaitTimeWhenExhausted(waitTimeWhenExhausted);
       }
 
       if ((consistencyLevelPolicy = CONSISTENCY_LEVEL_MAP.get(consistencyPair)) == null) {
