@@ -34,6 +34,8 @@ import org.smallmind.scribe.pen.Level;
 
 public class ScribeLoggerAdapter extends MarkerIgnoringBase implements LocationAwareLogger {
 
+  private static enum TranslatorState {CHAR, ESCAPE, VAR}
+
   private org.smallmind.scribe.pen.Logger logger;
 
   public ScribeLoggerAdapter (org.smallmind.scribe.pen.Logger logger) {
@@ -51,6 +53,53 @@ public class ScribeLoggerAdapter extends MarkerIgnoringBase implements LocationA
     return logger.getLevel().noGreater(Level.TRACE);
   }
 
+  private String translateFormat (String format) {
+
+    StringBuilder formatBuilder = new StringBuilder();
+    TranslatorState state = TranslatorState.CHAR;
+
+    for (int index = 0; index < format.length(); index++) {
+
+      char currentChar = format.charAt(index);
+
+      switch (state) {
+        case CHAR:
+          if (currentChar == '\\') {
+            state = TranslatorState.ESCAPE;
+          }
+          else if (currentChar == '{') {
+            state = TranslatorState.VAR;
+          }
+          else {
+            formatBuilder.append(currentChar);
+          }
+          break;
+        case ESCAPE:
+          formatBuilder.append(currentChar);
+          state = TranslatorState.CHAR;
+          break;
+        case VAR:
+          if (currentChar == '{') {
+            formatBuilder.append('{');
+          }
+          else {
+            if (currentChar == '}') {
+              formatBuilder.append("%s");
+            }
+            else {
+              formatBuilder.append('{').append(currentChar);
+            }
+            state = TranslatorState.CHAR;
+          }
+          break;
+        default:
+          throw new UnknownSwitchCaseException(state.name());
+      }
+    }
+
+    return formatBuilder.toString();
+  }
+
   public void trace (String msg) {
 
     logger.trace(msg);
@@ -58,17 +107,17 @@ public class ScribeLoggerAdapter extends MarkerIgnoringBase implements LocationA
 
   public void trace (String format, Object arg1) {
 
-    logger.trace(format, arg1);
+    logger.trace(translateFormat(format), arg1);
   }
 
   public void trace (String format, Object arg1, Object arg2) {
 
-    logger.trace(format, arg1, arg2);
+    logger.trace(translateFormat(format), arg1, arg2);
   }
 
   public void trace (String format, Object[] args) {
 
-    logger.trace(format, args);
+    logger.trace(translateFormat(format), args);
   }
 
   public void trace (String msg, Throwable throwable) {
@@ -88,17 +137,17 @@ public class ScribeLoggerAdapter extends MarkerIgnoringBase implements LocationA
 
   public void debug (String format, Object arg1) {
 
-    logger.debug(format, arg1);
+    logger.debug(translateFormat(format), arg1);
   }
 
   public void debug (String format, Object arg1, Object arg2) {
 
-    logger.debug(format, arg1, arg2);
+    logger.debug(translateFormat(format), arg1, arg2);
   }
 
   public void debug (String format, Object[] args) {
 
-    logger.debug(format, args);
+    logger.debug(translateFormat(format), args);
   }
 
   public void debug (String msg, Throwable throwable) {
@@ -113,17 +162,17 @@ public class ScribeLoggerAdapter extends MarkerIgnoringBase implements LocationA
 
   public void info (String format, Object arg1) {
 
-    logger.info(format, arg1);
+    logger.info(translateFormat(format), arg1);
   }
 
   public void info (String format, Object arg1, Object arg2) {
 
-    logger.info(format, arg1, arg2);
+    logger.info(translateFormat(format), arg1, arg2);
   }
 
   public void info (String format, Object[] args) {
 
-    logger.info(format, args);
+    logger.info(translateFormat(format), args);
   }
 
   public void info (String msg, Throwable throwable) {
@@ -143,17 +192,17 @@ public class ScribeLoggerAdapter extends MarkerIgnoringBase implements LocationA
 
   public void warn (String format, Object arg1) {
 
-    logger.warn(format, arg1);
+    logger.warn(translateFormat(format), arg1);
   }
 
   public void warn (String format, Object arg1, Object arg2) {
 
-    logger.warn(format, arg1, arg2);
+    logger.warn(translateFormat(format), arg1, arg2);
   }
 
   public void warn (String format, Object[] args) {
 
-    logger.warn(format, args);
+    logger.warn(translateFormat(format), args);
   }
 
   public void warn (String msg, Throwable throwable) {
@@ -173,17 +222,17 @@ public class ScribeLoggerAdapter extends MarkerIgnoringBase implements LocationA
 
   public void error (String format, Object arg1) {
 
-    logger.error(format, arg1);
+    logger.error(translateFormat(format), arg1);
   }
 
   public void error (String format, Object arg1, Object arg2) {
 
-    logger.error(format, arg1, arg2);
+    logger.error(translateFormat(format), arg1, arg2);
   }
 
   public void error (String format, Object[] args) {
 
-    logger.error(format, args);
+    logger.error(translateFormat(format), args);
   }
 
   public void error (String msg, Throwable throwable) {
