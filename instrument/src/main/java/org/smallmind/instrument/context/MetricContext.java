@@ -118,6 +118,7 @@ public class MetricContext {
     StringBuilder contextBuilder = new StringBuilder();
     boolean firstContext = true;
 
+    contextBuilder.append(System.currentTimeMillis() - startTime).append('-');
     for (MetricSnapshot snapshot : outputList) {
       if (!snapshot.isEmpty()) {
         if (!firstContext) {
