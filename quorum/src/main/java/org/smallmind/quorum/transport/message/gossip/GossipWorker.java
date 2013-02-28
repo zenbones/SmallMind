@@ -77,7 +77,7 @@ public class GossipWorker implements Runnable {
         if ((messagePlus = messageRendezvous.poll(1, TimeUnit.SECONDS)) != null) {
 
           InstrumentationManager.setMetricContext(messagePlus.getMetricContext());
-          InstrumentationManager.instrumentWithChronometer(TransportManager.getTransport(), Clocks.EPOCH.getClock().getTimeNanoseconds() - idleStart, TimeUnit.NANOSECONDS, new MetricProperty("event", MetricEvent.WORKER_IDLE.getDisplay()));
+          InstrumentationManager.instrumentWithChronometer(TransportManager.getTransport(), Clocks.EPOCH.getClock().getTimeNanoseconds() - idleStart, TimeUnit.NANOSECONDS, new MetricProperty("gossip", "true"), new MetricProperty("event", MetricEvent.WORKER_IDLE.getDisplay()));
 
           try {
 

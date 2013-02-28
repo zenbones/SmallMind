@@ -85,7 +85,7 @@ public class ReceptionListener implements SessionEmployer, MessageListener {
 
     try {
 
-      long timeInQueue = System.currentTimeMillis() - message.getJMSTimestamp();
+      long timeInQueue = System.currentTimeMillis() - message.getLongProperty(MessageProperty.CLOCK.getKey());
 
       InstrumentationManager.createMetricContext();
 

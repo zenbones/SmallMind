@@ -116,6 +116,7 @@ public class ReceptionWorker implements Runnable {
 
             responseMessage.setJMSCorrelationID(messagePlus.getMessage().getJMSMessageID());
             responseMessage.setStringProperty(MessageProperty.INSTANCE.getKey(), transmissionInstance);
+            responseMessage.setLongProperty(MessageProperty.CLOCK.getKey(), System.currentTimeMillis());
 
             topicOperator.publish(responseMessage);
           }

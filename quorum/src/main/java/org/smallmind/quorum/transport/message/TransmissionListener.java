@@ -87,7 +87,7 @@ public class TransmissionListener implements SessionEmployer, MessageListener {
 
     try {
 
-      long timeInTopic = System.currentTimeMillis() - message.getJMSTimestamp();
+      long timeInTopic = System.currentTimeMillis() - message.getLongProperty(MessageProperty.CLOCK.getKey());
 
       InstrumentationManager.createMetricContext();
 

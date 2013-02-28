@@ -51,7 +51,7 @@ public class GossipInvocationHandler implements InvocationHandler {
   public Object invoke (Object proxy, final Method method, final Object[] args)
     throws Throwable {
 
-    InstrumentationManager.execute(new ChronometerInstrument(TransportManager.getTransport(), new MetricProperty("event", MetricEvent.INVOCATION.getDisplay()), new MetricProperty("service", serviceInterface.getSimpleName()), new MetricProperty("method", method.getName())) {
+    InstrumentationManager.execute(new ChronometerInstrument(TransportManager.getTransport(), new MetricProperty("gossip", "true"), new MetricProperty("event", MetricEvent.INVOCATION.getDisplay()), new MetricProperty("service", serviceInterface.getSimpleName()), new MetricProperty("method", method.getName())) {
 
       @Override
       public void withChronometer ()

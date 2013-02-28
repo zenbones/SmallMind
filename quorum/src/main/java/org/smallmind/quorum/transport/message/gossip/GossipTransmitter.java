@@ -81,7 +81,7 @@ public class GossipTransmitter {
 
     final TopicOperator topicOperator;
 
-    topicOperator = InstrumentationManager.execute(new ChronometerInstrumentAndReturn<TopicOperator>(TransportManager.getTransport(), new MetricProperty("event", MetricEvent.ACQUIRE_TOPIC.getDisplay())) {
+    topicOperator = InstrumentationManager.execute(new ChronometerInstrumentAndReturn<TopicOperator>(TransportManager.getTransport(), new MetricProperty("gossip", "true"), new MetricProperty("event", MetricEvent.ACQUIRE_TOPIC.getDisplay())) {
 
       @Override
       public TopicOperator withChronometer ()
@@ -105,7 +105,7 @@ public class GossipTransmitter {
 
       Message gossipMessage;
 
-      gossipMessage = InstrumentationManager.execute(new ChronometerInstrumentAndReturn<Message>(TransportManager.getTransport(), new MetricProperty("event", MetricEvent.CONSTRUCT_MESSAGE.getDisplay())) {
+      gossipMessage = InstrumentationManager.execute(new ChronometerInstrumentAndReturn<Message>(TransportManager.getTransport(), new MetricProperty("gossip", "true"), new MetricProperty("event", MetricEvent.CONSTRUCT_MESSAGE.getDisplay())) {
 
         @Override
         public Message withChronometer ()
@@ -115,6 +115,7 @@ public class GossipTransmitter {
 
           gossipMessage = messageStrategy.wrapInMessage(topicOperator.getTopicSession(), invocationSignal);
           gossipMessage.setStringProperty(MessageProperty.SERVICE.getKey(), serviceSelector);
+          gossipMessage.setLongProperty(MessageProperty.CLOCK.getKey(), System.currentTimeMillis());
 
           return gossipMessage;
         }

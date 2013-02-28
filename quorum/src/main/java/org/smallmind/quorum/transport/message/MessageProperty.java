@@ -28,8 +28,7 @@ package org.smallmind.quorum.transport.message;
 
 public enum MessageProperty {
 
-  SERVICE("service"), INSTANCE("instance"), EXCEPTION("exception");
-
+  SERVICE("service"), INSTANCE("instance"), CLOCK("clock"), EXCEPTION("exception");
   private String key;
 
   private MessageProperty (String key) {

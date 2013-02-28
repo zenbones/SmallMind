@@ -61,7 +61,7 @@ public class InvocationGossipTarget implements GossipTarget {
 
     invocationSignal = (InvocationSignal)messageStrategy.unwrapFromMessage(message);
 
-    InstrumentationManager.execute(new ChronometerInstrument(TransportManager.getTransport(), new MetricProperty("event", MetricEvent.INVOCATION.getDisplay()), new MetricProperty("service", serviceInterface.getSimpleName()), new MetricProperty("method", invocationSignal.getFauxMethod().getName())) {
+    InstrumentationManager.execute(new ChronometerInstrument(TransportManager.getTransport(), new MetricProperty("gossip", "true"), new MetricProperty("event", MetricEvent.INVOCATION.getDisplay()), new MetricProperty("service", serviceInterface.getSimpleName()), new MetricProperty("method", invocationSignal.getFauxMethod().getName())) {
 
       @Override
       public void withChronometer ()

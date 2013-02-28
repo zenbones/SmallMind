@@ -133,6 +133,7 @@ public class MessageTransmitter {
 
           requestMessage.setStringProperty(MessageProperty.INSTANCE.getKey(), instanceId);
           requestMessage.setStringProperty(MessageProperty.SERVICE.getKey(), serviceSelector);
+          requestMessage.setLongProperty(MessageProperty.CLOCK.getKey(), System.currentTimeMillis());
 
           return requestMessage;
         }
