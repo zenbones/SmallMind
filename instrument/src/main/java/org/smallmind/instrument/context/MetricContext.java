@@ -73,7 +73,7 @@ public class MetricContext {
     return true;
   }
 
-  public void popSnapshot () {
+  public synchronized void popSnapshot () {
 
     if (!arabesqueQueue.isEmpty()) {
       arabesqueQueue.removeFirst();
