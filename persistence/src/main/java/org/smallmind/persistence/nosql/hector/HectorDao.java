@@ -62,6 +62,18 @@ public abstract class HectorDao<W extends Serializable & Comparable<W>, I extend
   public abstract I createId ();
 
   @Override
+  public void remove (String context, Class<? extends Durable<W>> parentClass, W parentId, Class<D> durableClass) {
+
+    WideVectoredDao<W, I, D> wideVectoredDao;
+
+    hectorTemplate.deleteRow(new Composite(context, parentClass.getSimpleName(), HectorType.getTranslator(getParentIdClass(), "parentId").toHectorValue(parentId)));
+
+    if (isCacheEnabled() && ((wideVectoredDao = getWideVectoredDao()) != null)) {
+      wideVectoredDao.delete(context, parentClass, parentId, durableClass);
+    }
+  }
+
+  @Override
   public List<D> get (String context, Class<? extends Durable<W>> parentClass, W parentId, Class<D> durableClass) {
 
     List<D> durables;

@@ -31,6 +31,10 @@ import java.util.List;
 
 public interface WideDurableDao<W extends Serializable & Comparable<W>, I extends Serializable & Comparable<I>, D extends Durable<I>> {
 
+  public abstract void remove (String context, Class<? extends Durable<W>> parentClass, W parentId);
+
+  public abstract void remove (String context, Class<? extends Durable<W>> parentClass, W parentId, Class<D> durableClass);
+
   public abstract List<D> get (String context, Class<? extends Durable<W>> parentClass, W parentId);
 
   public abstract List<D> get (String context, Class<? extends Durable<W>> parentClass, W parentId, Class<D> durableClass);

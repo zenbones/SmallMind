@@ -68,6 +68,12 @@ public abstract class NoSqlDao<W extends Serializable & Comparable<W>, I extends
   }
 
   @Override
+  public void remove (String context, Class<? extends Durable<W>> parentClass, W parentId) {
+
+    remove(context, parentClass, parentId, getManagedClass());
+  }
+
+  @Override
   public List<D> get (String context, Class<? extends Durable<W>> parentClass, W parentId) {
 
     return get(context, parentClass, parentId, getManagedClass());
