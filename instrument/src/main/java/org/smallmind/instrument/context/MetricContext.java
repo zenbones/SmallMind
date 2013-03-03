@@ -29,11 +29,12 @@ package org.smallmind.instrument.context;
 import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.concurrent.ConcurrentLinkedDeque;
 
 public class MetricContext {
 
   private final TracingOptions tracingOptions;
-  private final LinkedList<MetricSnapshot> arabesqueQueue = new LinkedList<>();
+  private final ConcurrentLinkedDeque<MetricSnapshot> arabesqueQueue = new ConcurrentLinkedDeque<>();
   private final LinkedList<MetricSnapshot> outputList = new LinkedList<>();
   private final long startTime;
 
@@ -73,7 +74,7 @@ public class MetricContext {
     return true;
   }
 
-  public synchronized void popSnapshot () {
+  public void popSnapshot () {
 
     if (!arabesqueQueue.isEmpty()) {
       arabesqueQueue.removeFirst();
