@@ -99,6 +99,7 @@ public class ReceptionWorker implements Runnable {
 
               MessageTarget messageTarget;
               String serviceSelector;
+              long startTime;
 
               if ((serviceSelector = messagePlus.getMessage().getStringProperty(MessageProperty.SERVICE.getKey())) == null) {
                 throw new TransportException("Missing message property(%s)", MessageProperty.SERVICE.getKey());
@@ -107,7 +108,9 @@ public class ReceptionWorker implements Runnable {
                 throw new TransportException("Unknown service selector(%s)", serviceSelector);
               }
 
+              startTime = System.currentTimeMillis();
               responseMessage = messageTarget.handleMessage(topicOperator.getTopicSession(), messageStrategy, messagePlus.getMessage());
+              LoggerManager.getLogger(ReceptionWorker.class).info("%s %d ms:", serviceSelector, System.currentTimeMillis() - startTime);
             }
             catch (Exception exception) {
               responseMessage = messageStrategy.wrapInMessage(topicOperator.getTopicSession(), exception);
