@@ -91,7 +91,7 @@ public class TransmissionListener implements SessionEmployer, MessageListener {
 
       InstrumentationManager.createMetricContext();
 
-      LoggerManager.getLogger(TransmissionListener.class).debug("response message received(%s)...", message.getJMSMessageID());
+      LoggerManager.getLogger(TransmissionListener.class).debug("response message received(%s) in %d ms...", message.getJMSMessageID(), timeInTopic);
       InstrumentationManager.instrumentWithChronometer(TransportManager.getTransport(), (timeInTopic >= 0) ? timeInTopic : 0, TimeUnit.MILLISECONDS, new MetricProperty("destination", MetricDestination.RESPONSE_TOPIC.getDisplay()));
 
       InstrumentationManager.execute(new ChronometerInstrument(TransportManager.getTransport(), new MetricProperty("event", MetricEvent.COMPLETE_CALLBACK.getDisplay())) {

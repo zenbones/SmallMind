@@ -36,6 +36,7 @@ import org.smallmind.quorum.transport.InvocationSignal;
 import org.smallmind.quorum.transport.MethodInvoker;
 import org.smallmind.quorum.transport.TransportManager;
 import org.smallmind.quorum.transport.instrument.MetricEvent;
+import org.smallmind.scribe.pen.LoggerManager;
 
 public class InvocationMessageTarget implements MessageTarget {
 
@@ -63,15 +64,26 @@ public class InvocationMessageTarget implements MessageTarget {
 
     invocationSignal = (InvocationSignal)messageStrategy.unwrapFromMessage(message);
 
-    result = InstrumentationManager.execute(new ChronometerInstrumentAndReturn<Serializable>(TransportManager.getTransport(), new MetricProperty("event", MetricEvent.INVOCATION.getDisplay()), new MetricProperty("service", serviceInterface.getSimpleName()), new MetricProperty("method", invocationSignal.getFauxMethod().getName())) {
+    long startTime = System.currentTimeMillis();
 
-      @Override
-      public Serializable withChronometer ()
-        throws Exception {
+    try {
+      result = InstrumentationManager.execute(new ChronometerInstrumentAndReturn<Serializable>(TransportManager.getTransport(), new MetricProperty("event", MetricEvent.INVOCATION.getDisplay()), new MetricProperty("service", serviceInterface.getSimpleName()), new MetricProperty("method", invocationSignal.getFauxMethod().getName())) {
 
-        return (Serializable)methodInvoker.remoteInvocation(invocationSignal);
-      }
-    });
+        @Override
+        public Serializable withChronometer ()
+          throws Exception {
+
+          return (Serializable)methodInvoker.remoteInvocation(invocationSignal);
+        }
+      });
+
+      LoggerManager.getLogger(InvocationMessageTarget.class).info("%s.%s() %d ms", serviceInterface.getSimpleName(), invocationSignal.getFauxMethod().getName(), System.currentTimeMillis() - startTime);
+    }
+    catch (Exception exception) {
+      LoggerManager.getLogger(InvocationMessageTarget.class).info("%s.%s() %d ms - %s", serviceInterface.getSimpleName(), invocationSignal.getFauxMethod().getName(), System.currentTimeMillis() - startTime, exception.getMessage());
+
+      throw exception;
+    }
 
     return InstrumentationManager.execute(new ChronometerInstrumentAndReturn<Message>(TransportManager.getTransport(), new MetricProperty("event", MetricEvent.CONSTRUCT_MESSAGE.getDisplay())) {
 
