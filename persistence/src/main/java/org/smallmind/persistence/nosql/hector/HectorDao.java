@@ -46,6 +46,7 @@ import org.smallmind.persistence.NaturalKey;
 import org.smallmind.persistence.PersistenceException;
 import org.smallmind.persistence.cache.WideVectoredDao;
 import org.smallmind.persistence.nosql.NoSqlDao;
+import org.smallmind.scribe.pen.LoggerManager;
 
 public abstract class HectorDao<W extends Serializable & Comparable<W>, I extends Serializable & Comparable<I>, D extends Durable<I>> extends NoSqlDao<W, I, D> {
 
@@ -148,6 +149,9 @@ public abstract class HectorDao<W extends Serializable & Comparable<W>, I extend
 
       return durables;
     }
+
+    //TODO: Can be removed...
+    LoggerManager.getLogger(HectorDao.class).warn("Empty query(context=%s, parent=%s, parentId=%s) on %s", context, parentClass.getSimpleName(), parentId.toString(), hectorResult.getHostUsed().getHost());
 
     return Collections.emptyList();
   }

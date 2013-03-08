@@ -56,6 +56,7 @@ public class KeyspaceFactoryBean implements FactoryBean<Keyspace>, InitializingB
   private String clusterName;
   private String keyspaceName;
   private String replicationStrategyClass;
+  private boolean verify = false;
   private long waitTimeWhenExhausted = 5000;
   private int replicationFactor;
   private int maxActive = 50;
@@ -115,6 +116,11 @@ public class KeyspaceFactoryBean implements FactoryBean<Keyspace>, InitializingB
     this.waitTimeWhenExhausted = waitTimeWhenExhausted;
   }
 
+  public void setVerify (boolean verify) {
+
+    this.verify = verify;
+  }
+
   @Override
   public synchronized void afterPropertiesSet ()
     throws SpreadParserException, NoSuchMethodException, InstantiationException, IllegalAccessException, InvocationTargetException {
@@ -144,10 +150,14 @@ public class KeyspaceFactoryBean implements FactoryBean<Keyspace>, InitializingB
       }
 
       if ((thriftCluster = CLUSTER_MAP.get(serverBuilder.toString())) == null) {
-        CLUSTER_MAP.put(serverBuilder.toString(), thriftCluster = new ThriftCluster(clusterName, new CassandraHostConfigurator(serverBuilder.toString())));
-        thriftCluster.getConfigurator().setLoadBalancingPolicy(loadBalancingPolicy);
-        thriftCluster.getConfigurator().setMaxActive(maxActive);
-        thriftCluster.getConfigurator().setMaxWaitTimeWhenExhausted(waitTimeWhenExhausted);
+
+        CassandraHostConfigurator cassandraHostConfigurator = new CassandraHostConfigurator(serverBuilder.toString());
+
+        cassandraHostConfigurator.setLoadBalancingPolicy(loadBalancingPolicy);
+        cassandraHostConfigurator.setMaxActive(maxActive);
+        cassandraHostConfigurator.setMaxWaitTimeWhenExhausted(waitTimeWhenExhausted);
+
+        CLUSTER_MAP.put(serverBuilder.toString(), thriftCluster = new ThriftCluster(clusterName, cassandraHostConfigurator));
       }
 
       if ((consistencyLevelPolicy = CONSISTENCY_LEVEL_MAP.get(consistencyPair)) == null) {
@@ -158,7 +168,9 @@ public class KeyspaceFactoryBean implements FactoryBean<Keyspace>, InitializingB
 
       keyspace = HFactory.createKeyspace(keyspaceName, thriftCluster, consistencyLevelPolicy);
 
-      HectorSchemaVerifier.verify(thriftCluster, keyspace, replicationStrategyClass, replicationFactor);
+      if (verify) {
+        HectorSchemaVerifier.verify(thriftCluster, keyspace, replicationStrategyClass, replicationFactor);
+      }
     }
   }
 
