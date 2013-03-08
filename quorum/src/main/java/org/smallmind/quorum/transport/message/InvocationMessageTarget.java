@@ -29,7 +29,6 @@ package org.smallmind.quorum.transport.message;
 import java.io.Serializable;
 import javax.jms.Message;
 import javax.jms.Session;
-import com.sun.xml.internal.bind.v2.TODO;
 import org.smallmind.instrument.ChronometerInstrumentAndReturn;
 import org.smallmind.instrument.InstrumentationManager;
 import org.smallmind.instrument.MetricProperty;
