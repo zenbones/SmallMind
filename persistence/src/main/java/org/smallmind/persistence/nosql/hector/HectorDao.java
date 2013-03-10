@@ -147,6 +147,16 @@ public abstract class HectorDao<W extends Serializable & Comparable<W>, I extend
         wideVectoredDao.persist(context, parentClass, parentId, durableClass, durables);
       }
 
+      //TODO: Can be removed...
+      if (parentId.equals(374699L) || parentId.equals(374700L) || parentId.equals(374701L) || parentId.equals(374702L) || parentId.equals(374703L) || parentId.equals(1012440L) || parentId.equals(1012441L) || parentId.equals(1012442L) || parentId.equals(1012507L)) {
+        if (durables.isEmpty()) {
+          LoggerManager.getLogger(HectorDao.class).warn("Empty query(context=%s, parent=%s, parentId=%s) on %s", context, parentClass.getSimpleName(), parentId.toString(), hectorResult.getHostUsed().getHost());
+        }
+        else {
+          LoggerManager.getLogger(HectorDao.class).warn("Full query(context=%s, parent=%s, parentId=%s) on %s", context, parentClass.getSimpleName(), parentId.toString(), hectorResult.getHostUsed().getHost());
+        }
+      }
+
       return durables;
     }
 
