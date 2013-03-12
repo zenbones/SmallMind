@@ -52,9 +52,11 @@ public class InvocationMessageTarget implements MessageTarget {
     methodInvoker = new MethodInvoker(targetObject, new Class[] {this.serviceInterface = serviceInterface});
   }
 
-  public void setLogLevel (Level logLevel) {
+  public InvocationMessageTarget setLogLevel (Level logLevel) {
 
     this.logLevel = logLevel;
+
+    return this;
   }
 
   @Override
