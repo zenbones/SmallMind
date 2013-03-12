@@ -89,7 +89,7 @@ public class ReceptionListener implements SessionEmployer, MessageListener {
 
       InstrumentationManager.createMetricContext();
 
-      LoggerManager.getLogger(QueueOperator.class).debug("request message received(%s)...", message.getJMSMessageID());
+      LoggerManager.getLogger(QueueOperator.class).debug("request message received(%s) in %d ms...", message.getJMSMessageID(), timeInQueue);
       InstrumentationManager.instrumentWithChronometer(TransportManager.getTransport(), (timeInQueue >= 0) ? timeInQueue : 0, TimeUnit.MILLISECONDS, new MetricProperty("destination", MetricDestination.REQUEST_QUEUE.getDisplay()));
       InstrumentationManager.execute(new ChronometerInstrument(TransportManager.getTransport(), new MetricProperty("event", MetricEvent.ACQUIRE_WORKER.getDisplay())) {
 

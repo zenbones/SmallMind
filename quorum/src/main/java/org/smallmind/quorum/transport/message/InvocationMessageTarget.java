@@ -27,6 +27,7 @@
 package org.smallmind.quorum.transport.message;
 
 import java.io.Serializable;
+import java.util.concurrent.TimeUnit;
 import javax.jms.Message;
 import javax.jms.Session;
 import org.smallmind.instrument.ChronometerInstrumentAndReturn;
@@ -36,17 +37,24 @@ import org.smallmind.quorum.transport.InvocationSignal;
 import org.smallmind.quorum.transport.MethodInvoker;
 import org.smallmind.quorum.transport.TransportManager;
 import org.smallmind.quorum.transport.instrument.MetricEvent;
+import org.smallmind.scribe.pen.Level;
 import org.smallmind.scribe.pen.LoggerManager;
 
 public class InvocationMessageTarget implements MessageTarget {
 
   private MethodInvoker methodInvoker;
   private Class serviceInterface;
+  private Level logLevel = Level.DEBUG;
 
   public InvocationMessageTarget (Object targetObject, Class serviceInterface)
     throws NoSuchMethodException {
 
     methodInvoker = new MethodInvoker(targetObject, new Class[] {this.serviceInterface = serviceInterface});
+  }
+
+  public void setLogLevel (Level logLevel) {
+
+    this.logLevel = logLevel;
   }
 
   @Override
@@ -59,29 +67,21 @@ public class InvocationMessageTarget implements MessageTarget {
   public Message handleMessage (final Session session, final MessageStrategy messageStrategy, Message message)
     throws Exception {
 
-    final InvocationSignal invocationSignal;
     final Serializable result;
-
-    invocationSignal = (InvocationSignal)messageStrategy.unwrapFromMessage(message);
-
-    // TODO: Integrate logging with instrumentation
+    InvocationSignal invocationSignal = (InvocationSignal)messageStrategy.unwrapFromMessage(message);
     long startTime = System.currentTimeMillis();
 
     try {
-      result = InstrumentationManager.execute(new ChronometerInstrumentAndReturn<Serializable>(TransportManager.getTransport(), new MetricProperty("event", MetricEvent.INVOCATION.getDisplay()), new MetricProperty("service", serviceInterface.getSimpleName()), new MetricProperty("method", invocationSignal.getFauxMethod().getName())) {
 
-        @Override
-        public Serializable withChronometer ()
-          throws Exception {
+      long totalTime;
 
-          return (Serializable)methodInvoker.remoteInvocation(invocationSignal);
-        }
-      });
+      result = (Serializable)methodInvoker.remoteInvocation(invocationSignal);
 
-      LoggerManager.getLogger(InvocationMessageTarget.class).info("%s.%s() %d ms", serviceInterface.getSimpleName(), invocationSignal.getFauxMethod().getName(), System.currentTimeMillis() - startTime);
+      InstrumentationManager.instrumentWithChronometer(TransportManager.getTransport(), totalTime = System.currentTimeMillis() - startTime, TimeUnit.MILLISECONDS, new MetricProperty("event", MetricEvent.INVOCATION.getDisplay()), new MetricProperty("service", serviceInterface.getSimpleName()), new MetricProperty("method", invocationSignal.getFauxMethod().getName()));
+      LoggerManager.getLogger(InvocationMessageTarget.class).log(logLevel, "%s.%s() %d ms", serviceInterface.getSimpleName(), invocationSignal.getFauxMethod().getName(), totalTime);
     }
     catch (Exception exception) {
-      LoggerManager.getLogger(InvocationMessageTarget.class).info("%s.%s() %d ms - %s", serviceInterface.getSimpleName(), invocationSignal.getFauxMethod().getName(), System.currentTimeMillis() - startTime, exception.getMessage());
+      LoggerManager.getLogger(InvocationMessageTarget.class).log(logLevel, "%s.%s() %d ms - %s", serviceInterface.getSimpleName(), invocationSignal.getFauxMethod().getName(), System.currentTimeMillis() - startTime, exception.getMessage());
 
       throw exception;
     }

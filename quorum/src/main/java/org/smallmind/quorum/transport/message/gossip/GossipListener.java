@@ -94,7 +94,7 @@ public class GossipListener implements SessionEmployer, MessageListener {
 
       InstrumentationManager.createMetricContext();
 
-      LoggerManager.getLogger(QueueOperator.class).debug("gossip message received(%s)...", message.getJMSMessageID());
+      LoggerManager.getLogger(QueueOperator.class).debug("gossip message received(%s) in %d ms...", message.getJMSMessageID(), timeInQueue);
       InstrumentationManager.instrumentWithChronometer(TransportManager.getTransport(), (timeInQueue >= 0) ? timeInQueue : 0, TimeUnit.MILLISECONDS, new MetricProperty("destination", MetricDestination.GOSSIP_TOPIC.getDisplay()));
       InstrumentationManager.execute(new ChronometerInstrument(TransportManager.getTransport(), new MetricProperty("gossip", "true"), new MetricProperty("event", MetricEvent.ACQUIRE_WORKER.getDisplay())) {
 
