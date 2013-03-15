@@ -26,6 +26,9 @@
  */
 package org.smallmind.quorum.transport.message;
 
+import java.io.ByteArrayOutputStream;
+import java.io.NotSerializableException;
+import java.io.ObjectOutputStream;
 import java.io.Serializable;
 import java.util.concurrent.TimeUnit;
 import javax.jms.Message;
@@ -33,6 +36,7 @@ import javax.jms.Session;
 import org.smallmind.instrument.ChronometerInstrumentAndReturn;
 import org.smallmind.instrument.InstrumentationManager;
 import org.smallmind.instrument.MetricProperty;
+import org.smallmind.nutsnbolts.lang.FormattedRuntimeException;
 import org.smallmind.quorum.transport.InvocationSignal;
 import org.smallmind.quorum.transport.MethodInvoker;
 import org.smallmind.quorum.transport.TransportManager;
@@ -70,8 +74,8 @@ public class InvocationMessageTarget implements MessageTarget {
     throws Exception {
 
     final Serializable result;
-    InvocationSignal invocationSignal = (InvocationSignal)messageStrategy.unwrapFromMessage(message);
-    long startTime = System.currentTimeMillis();
+    final InvocationSignal invocationSignal = (InvocationSignal)messageStrategy.unwrapFromMessage(message);
+    final long startTime = System.currentTimeMillis();
 
     try {
 
@@ -94,7 +98,32 @@ public class InvocationMessageTarget implements MessageTarget {
       public Message withChronometer ()
         throws Exception {
 
-        return messageStrategy.wrapInMessage(session, result);
+        //TODO: Debug, to be removed when serialization failure solved
+        try {
+
+          return messageStrategy.wrapInMessage(session, result);
+        }
+        catch (Exception exception) {
+          if (exception.getMessage().equals("Failed to serialize object")) {
+
+            ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
+            ObjectOutputStream objectOutputStream = new ObjectOutputStream(byteArrayOutputStream);
+
+            try {
+              objectOutputStream.writeObject(result);
+            }
+            catch (NotSerializableException n) {
+              throw new FormattedRuntimeException("No serializable class(%s) in return type(%s) from service(%s)", n.getMessage(), result.getClass().isArray() ? result.getClass().getComponentType().getName() + "[]" : result.getClass().getName(), serviceInterface.getSimpleName() + "." + invocationSignal.getFauxMethod().getName() + "()");
+            }
+
+            objectOutputStream.close();
+            byteArrayOutputStream.close();
+
+            throw new FormattedRuntimeException("HornetQ doesn't like to serialize I guess...");
+          }
+
+          throw exception;
+        }
       }
     });
   }
