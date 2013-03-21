@@ -28,7 +28,7 @@ package org.smallmind.cloud.multicast.event;
 
 import java.util.Arrays;
 
-public class EventMessageKey {
+public class EventMessageKey implements Comparable<EventMessageKey> {
 
   private byte[] keyArray;
 
@@ -43,20 +43,19 @@ public class EventMessageKey {
     return keyArray;
   }
 
+  @Override
+  public int compareTo (EventMessageKey eventMessageKey) {
+
+    return hashCode() - eventMessageKey.hashCode();
+  }
+
   public int hashCode () {
 
-    int hashCode = 0;
-
-    for (byte keyByte : keyArray) {
-      hashCode += keyByte;
-    }
-
-    return hashCode;
+    return Arrays.hashCode(keyArray);
   }
 
   public boolean equals (Object object) {
 
     return (object instanceof EventMessageKey) && Arrays.equals(keyArray, ((EventMessageKey)object).getKey());
   }
-
 }

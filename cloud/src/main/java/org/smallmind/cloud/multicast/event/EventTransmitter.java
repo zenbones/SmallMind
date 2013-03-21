@@ -39,10 +39,8 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicBoolean;
 import org.smallmind.cloud.multicast.EventMessageException;
 import org.smallmind.nutsnbolts.lang.UnknownSwitchCaseException;
+import org.smallmind.nutsnbolts.util.SelfDestructiveMap;
 import org.smallmind.nutsnbolts.util.UniqueId;
-import org.smallmind.quorum.cache.CacheException;
-import org.smallmind.quorum.cache.KeyLock;
-import org.smallmind.quorum.cache.indigenous.UnorderedCache;
 import org.smallmind.scribe.pen.Logger;
 
 public class EventTransmitter implements Runnable {
@@ -50,11 +48,10 @@ public class EventTransmitter implements Runnable {
   private static final int SO_TIMEOUT = 1000;
   private static final int TTL = 3;
   private static final byte[] EMPTY_ID = new byte[UniqueId.byteSize()];
-
   private Logger logger;
   private CountDownLatch exitLatch;
   private AtomicBoolean finished = new AtomicBoolean(false);
-  private UnorderedCache<EventMessageKey, EventMessageMold, EventMessageCacheEntry> messageCache;
+  private SelfDestructiveMap<EventMessageKey, EventMessageMold> messageCache;
   private MulticastEventHandler eventHandler;
   private MulticastSocket multicastSocket;
   private InetAddress multicastInetAddr;
@@ -68,7 +65,7 @@ public class EventTransmitter implements Runnable {
   }
 
   public EventTransmitter (MulticastEventHandler eventHandler, Logger logger, InetAddress multicastInetAddr, int multicastPort, int messageSegmentSize)
-    throws IOException, CacheException {
+    throws Exception {
 
     Thread receiverThread;
 
@@ -79,7 +76,7 @@ public class EventTransmitter implements Runnable {
     this.messageSegmentSize = messageSegmentSize;
 
     messageBufferSize = messageSegmentSize + EventMessage.MESSAGE_HEADER_SIZE;
-    messageCache = new UnorderedCache<EventMessageKey, EventMessageMold, EventMessageCacheEntry>(EventTransmitter.class.getSimpleName(), new EventMessageCacheSource(), new EventMessageCacheExpirationPolicy(60));
+    messageCache = new SelfDestructiveMap<>(60, 3);
 
     multicastSocket = new MulticastSocket(multicastPort);
     multicastSocket.setReuseAddress(true);
@@ -197,7 +194,6 @@ public class EventTransmitter implements Runnable {
 
   public void run () {
 
-    KeyLock keyLock = new KeyLock();
     EventMessageMold messageMold;
     MulticastEvent multicastEvent;
     DatagramPacket messagePacket;
@@ -233,7 +229,15 @@ public class EventTransmitter implements Runnable {
             messageType = MessageType.getMessageType(translationBuffer.getInt());
             messageLength = translationBuffer.getInt();
 
-            messageMold = messageCache.get(keyLock, messageKey);
+            if ((messageMold = messageCache.get(messageKey)) == null) {
+
+              EventMessageMold prevMessageMold;
+
+              if ((prevMessageMold = messageCache.putIfAbsent(messageKey, new EventMessageMold())) != null) {
+                messageMold = prevMessageMold;
+              }
+            }
+
             switch (messageType) {
               case HEADER:
                 messageMold.setMessageLength(messageLength);
@@ -249,7 +253,6 @@ public class EventTransmitter implements Runnable {
             }
 
             if (messageMold.isComplete()) {
-              messageCache.remove(keyLock, messageKey);
               multicastEvent = (MulticastEvent)messageMold.unmoldMessageBody();
               eventHandler.deliverEvent(multicastEvent);
             }

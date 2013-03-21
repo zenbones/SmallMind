@@ -32,8 +32,9 @@ import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.util.Iterator;
 import java.util.TreeMap;
+import org.smallmind.nutsnbolts.util.SelfDestructive;
 
-public class EventMessageMold {
+public class EventMessageMold implements SelfDestructive {
 
   private TreeMap<Integer, byte[]> messageSegmentMap;
   private int messageLength = 0;
@@ -42,6 +43,11 @@ public class EventMessageMold {
   public EventMessageMold () {
 
     messageSegmentMap = new TreeMap<Integer, byte[]>();
+  }
+
+  @Override
+  public void destroy () {
+
   }
 
   public void setMessageLength (int messageLength) {
@@ -85,5 +91,4 @@ public class EventMessageMold {
 
     return unmoldedObject;
   }
-
 }
