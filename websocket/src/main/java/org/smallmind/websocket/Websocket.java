@@ -376,7 +376,7 @@ public abstract class Websocket implements AutoCloseable {
             }
           }
           catch (SocketTimeoutException socketTimeoutException) {
-
+            // TODO: Do something here
           }
           catch (Exception exception) {
             onError(exception);
