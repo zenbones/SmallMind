@@ -418,14 +418,9 @@
         <systemPath>${javafx.runtime.lib.jar}</systemPath>
       </dependency>
       <dependency>
-        <groupId>org.codehaus.jackson</groupId>
-        <artifactId>jackson-core-lgpl</artifactId>
-        <version>1.5.6</version>
-      </dependency>
-      <dependency>
-        <groupId>org.codehaus.jackson</groupId>
-        <artifactId>jackson-mapper-lgpl</artifactId>
-        <version>1.5.6</version>
+        <groupId>com.fasterxml.jackson.core</groupId>
+        <artifactId>jackson-core</artifactId>
+        <version>2.2.1</version>
       </dependency>
     </dependencies>
   </dependencyManagement>
