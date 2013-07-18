@@ -28,7 +28,9 @@ package org.smallmind.wicket.component.google.visualization.flot;
 
 import org.apache.wicket.Component;
 import org.apache.wicket.behavior.Behavior;
-import org.apache.wicket.markup.html.IHeaderResponse;
+import org.apache.wicket.markup.head.IHeaderResponse;
+import org.apache.wicket.markup.head.JavaScriptHeaderItem;
+import org.apache.wicket.markup.head.StringHeaderItem;
 import org.apache.wicket.model.IModel;
 import org.apache.wicket.request.resource.JavaScriptResourceReference;
 import org.smallmind.wicket.behavior.JavaScriptNamespaceBehavior;
@@ -63,9 +65,9 @@ public class FlotVisualizationPanel extends VisualizationPanel {
 
         super.renderHead(component, response);
 
-        response.renderString("<!--[if IE]>");
-        response.renderJavaScriptReference(new JavaScriptResourceReference(FlotVisualizationPanel.class, "api/excanvas.js"));
-        response.renderString("<![endif]-->");
+        response.render(StringHeaderItem.forString("<!--[if IE]>"));
+        response.render(JavaScriptHeaderItem.forReference(new JavaScriptResourceReference(FlotVisualizationPanel.class, "api/excanvas.js")));
+        response.render(StringHeaderItem.forString("<![endif]-->"));
       }
     });
     add(new Behavior() {
@@ -74,10 +76,10 @@ public class FlotVisualizationPanel extends VisualizationPanel {
       public void renderHead (Component component, IHeaderResponse response) {
 
         super.renderHead(component, response);
-        response.renderJavaScriptReference(new JavaScriptResourceReference(FlotVisualizationPanel.class, "api/jquery.js"));
-        response.renderJavaScriptReference(new JavaScriptResourceReference(FlotVisualizationPanel.class, "api/jquery.flot.js"));
-        response.renderJavaScriptReference(new JavaScriptResourceReference(FlotVisualizationPanel.class, "api/jquery.flot.stack.js"));
-        response.renderJavaScriptReference(new JavaScriptResourceReference(FlotVisualizationPanel.class, "api/visualization.flot.js"));
+        response.render(JavaScriptHeaderItem.forReference(new JavaScriptResourceReference(FlotVisualizationPanel.class, "api/jquery.js")));
+        response.render(JavaScriptHeaderItem.forReference(new JavaScriptResourceReference(FlotVisualizationPanel.class, "api/jquery.flot.js")));
+        response.render(JavaScriptHeaderItem.forReference(new JavaScriptResourceReference(FlotVisualizationPanel.class, "api/jquery.flot.stack.js")));
+        response.render(JavaScriptHeaderItem.forReference(new JavaScriptResourceReference(FlotVisualizationPanel.class, "api/visualization.flot.js")));
       }
     });
   }

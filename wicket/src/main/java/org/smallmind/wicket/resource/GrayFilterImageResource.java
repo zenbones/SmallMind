@@ -55,10 +55,10 @@ public class GrayFilterImageResource extends RenderedDynamicImageResource {
   }
 
   @Override
-  protected boolean render (Graphics2D g2) {
+  protected boolean render (Graphics2D graphics, Attributes attributes) {
 
-    g2.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 1.0F));
-    g2.drawImage(grayImage, 0, 0, getWidth(), getHeight(), null);
+    graphics.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 1.0F));
+    graphics.drawImage(grayImage, 0, 0, getWidth(), getHeight(), null);
 
     return true;
   }

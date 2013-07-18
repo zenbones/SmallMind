@@ -92,12 +92,12 @@ public class TabPanel extends Panel {
 
     Tab selectedTab;
 
-    target.addComponent(tabList.get(selectedIndex).setSelected(false));
+    target.add(tabList.get(selectedIndex).setSelected(false));
     selectedTab = tabList.get(index).setSelected(true);
     tabContents.replace(selectedTab.getPanel("tabPanel"));
 
-    target.addComponent(tabContents);
-    target.addComponent(selectedTab);
+    target.add(tabContents);
+    target.add(selectedTab);
 
     selectedIndex = index;
 

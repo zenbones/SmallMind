@@ -28,7 +28,8 @@ package org.smallmind.wicket.behavior;
 
 import org.apache.wicket.Component;
 import org.apache.wicket.behavior.Behavior;
-import org.apache.wicket.markup.html.IHeaderResponse;
+import org.apache.wicket.markup.head.IHeaderResponse;
+import org.apache.wicket.markup.head.JavaScriptHeaderItem;
 import org.apache.wicket.request.resource.JavaScriptResourceReference;
 
 public class JavaScriptNamespaceBehavior extends Behavior {
@@ -49,10 +50,10 @@ public class JavaScriptNamespaceBehavior extends Behavior {
   public void renderHead (Component component, IHeaderResponse response) {
 
     super.renderHead(component, response);
-    response.renderJavaScriptReference(new JavaScriptResourceReference(JavaScriptNamespaceBehavior.class, "JavaScriptNamespaceBehavior.js"), JavaScriptNamespaceBehavior.class.getName());
+    response.render(JavaScriptHeaderItem.forReference(new JavaScriptResourceReference(JavaScriptNamespaceBehavior.class, "JavaScriptNamespaceBehavior.js"), JavaScriptNamespaceBehavior.class.getName()));
 
     if (namespace != null) {
-      response.renderJavaScript("SMALLMIND.namespace.manager.register('" + namespace + "');", JavaScriptNamespaceBehavior.class.getName() + '.' + namespace);
+      response.render(JavaScriptHeaderItem.forScript("SMALLMIND.namespace.manager.register('" + namespace + "');", JavaScriptNamespaceBehavior.class.getName() + '.' + namespace));
     }
   }
 }

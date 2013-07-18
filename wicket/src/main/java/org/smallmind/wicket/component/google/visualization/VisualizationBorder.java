@@ -30,7 +30,8 @@ import java.util.HashSet;
 import org.apache.wicket.Component;
 import org.apache.wicket.ajax.AjaxRequestTarget;
 import org.apache.wicket.behavior.Behavior;
-import org.apache.wicket.markup.html.IHeaderResponse;
+import org.apache.wicket.markup.head.IHeaderResponse;
+import org.apache.wicket.markup.head.JavaScriptHeaderItem;
 import org.apache.wicket.markup.html.basic.Label;
 import org.apache.wicket.markup.html.border.Border;
 import org.apache.wicket.model.AbstractReadOnlyModel;
@@ -53,7 +54,7 @@ public abstract class VisualizationBorder extends Border {
       public void renderHead (Component component, IHeaderResponse response) {
 
         super.renderHead(component, response);
-        response.renderJavaScript("google.load('visualization', '" + VisualizationInfo.getVersion() + "');", VisualizationBorder.class.getName());
+        response.render(JavaScriptHeaderItem.forScript("google.load('visualization', '" + VisualizationInfo.getVersion() + "');", VisualizationBorder.class.getName()));
       }
     });
 
@@ -68,29 +69,6 @@ public abstract class VisualizationBorder extends Border {
   protected void addRenderingPanel (String id) {
 
     panelIdSet.add(id);
-  }
-
-  private class VisualizationBorderScriptModel extends AbstractReadOnlyModel<String> {
-
-    @Override
-    public String getObject () {
-
-      StringBuilder scriptBuilder = new StringBuilder();
-
-      scriptBuilder.append(buildTableScript());
-      scriptBuilder.append("SMALLMIND.visualization.flot.").append(getMarkupId()).append(".loadData  = function () {");
-
-      for (String panelId : panelIdSet) {
-        scriptBuilder.append("SMALLMIND.visualization.flot.").append(panelId).append(".drawChart(").append("SMALLMIND.visualization.flot.").append(getMarkupId()).append('.').append("data);");
-      }
-
-      scriptBuilder.append("};");
-      scriptBuilder.append("google.setOnLoadCallback(").append("SMALLMIND.visualization.flot.").append(getMarkupId()).append(".loadData);");
-
-      panelIdSet.clear();
-
-      return scriptBuilder.toString();
-    }
   }
 
   public void loadData (AjaxRequestTarget target) {
@@ -148,5 +126,28 @@ public abstract class VisualizationBorder extends Border {
     }
 
     return scriptBuilder.toString();
+  }
+
+  private class VisualizationBorderScriptModel extends AbstractReadOnlyModel<String> {
+
+    @Override
+    public String getObject () {
+
+      StringBuilder scriptBuilder = new StringBuilder();
+
+      scriptBuilder.append(buildTableScript());
+      scriptBuilder.append("SMALLMIND.visualization.flot.").append(getMarkupId()).append(".loadData  = function () {");
+
+      for (String panelId : panelIdSet) {
+        scriptBuilder.append("SMALLMIND.visualization.flot.").append(panelId).append(".drawChart(").append("SMALLMIND.visualization.flot.").append(getMarkupId()).append('.').append("data);");
+      }
+
+      scriptBuilder.append("};");
+      scriptBuilder.append("google.setOnLoadCallback(").append("SMALLMIND.visualization.flot.").append(getMarkupId()).append(".loadData);");
+
+      panelIdSet.clear();
+
+      return scriptBuilder.toString();
+    }
   }
 }

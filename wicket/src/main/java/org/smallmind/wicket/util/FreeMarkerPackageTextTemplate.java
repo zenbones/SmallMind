@@ -37,29 +37,23 @@ import org.smallmind.nutsnbolts.freemarker.ClassPathTemplateLoader;
 
 public class FreeMarkerPackageTextTemplate extends TextTemplate {
 
-  private static ConcurrentHashMap<Class<?>, Configuration> CONFIG_MAP = new ConcurrentHashMap<Class<?>, Configuration>();
-
+  private static ConcurrentHashMap<Class<?>, Configuration> CONFIG_MAP = new ConcurrentHashMap<>();
   private Template freeMarkerTemplate;
 
-  public FreeMarkerPackageTextTemplate (Class<?> clazz) {
-
-    this(clazz, null);
-  }
-
-  public FreeMarkerPackageTextTemplate (Class<?> clazz, String fileName) {
+  public FreeMarkerPackageTextTemplate (Class<?> scopeClass, String fileName) {
 
     Configuration freemarkerConf;
 
-    if ((freemarkerConf = CONFIG_MAP.get(clazz)) == null) {
+    if ((freemarkerConf = CONFIG_MAP.get(scopeClass)) == null) {
       freemarkerConf = new Configuration();
       freemarkerConf.setTagSyntax(freemarker.template.Configuration.SQUARE_BRACKET_TAG_SYNTAX);
-      freemarkerConf.setTemplateLoader(new ClassPathTemplateLoader(clazz, true));
+      freemarkerConf.setTemplateLoader(new ClassPathTemplateLoader(scopeClass, true));
 
-      CONFIG_MAP.put(clazz, freemarkerConf);
+      CONFIG_MAP.put(scopeClass, freemarkerConf);
     }
 
     try {
-      freeMarkerTemplate = freemarkerConf.getTemplate((fileName == null) ? clazz.getSimpleName() + ".js" : fileName);
+      freeMarkerTemplate = freemarkerConf.getTemplate((fileName == null) ? scopeClass.getSimpleName() + ".js" : fileName);
     }
     catch (IOException ioException) {
       throw new RuntimeException(ioException);

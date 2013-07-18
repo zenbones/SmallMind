@@ -29,7 +29,8 @@ package org.smallmind.wicket.behavior.freemarker;
 import java.util.Map;
 import org.apache.wicket.Component;
 import org.apache.wicket.behavior.Behavior;
-import org.apache.wicket.markup.html.IHeaderResponse;
+import org.apache.wicket.markup.head.IHeaderResponse;
+import org.apache.wicket.markup.head.JavaScriptHeaderItem;
 import org.smallmind.wicket.util.FreeMarkerPackageTextTemplate;
 
 public class FreeMarkerJavaScriptBehavior extends Behavior {
@@ -61,6 +62,6 @@ public class FreeMarkerJavaScriptBehavior extends Behavior {
     Class<?> interpolatedClass = (scopeClass != null) ? scopeClass : component.getClass();
     String interpolatedFileName = (fileName == null) ? component.getClass().getSimpleName() + ".js" : fileName;
 
-    response.renderJavaScript(new FreeMarkerPackageTextTemplate(interpolatedClass, interpolatedFileName).asString(rootModel), interpolatedClass.getName() + ":" + interpolatedFileName);
+    response.render(JavaScriptHeaderItem.forScript(new FreeMarkerPackageTextTemplate(interpolatedClass, interpolatedFileName).asString(rootModel), interpolatedClass.getName() + ":" + interpolatedFileName));
   }
 }

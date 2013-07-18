@@ -29,9 +29,9 @@ package org.smallmind.wicket.model.dao;
 import java.io.Serializable;
 import java.util.LinkedList;
 import java.util.List;
-import org.apache.wicket.IClusterable;
 import org.apache.wicket.model.IDetachable;
 import org.apache.wicket.model.IModel;
+import org.apache.wicket.util.io.IClusterable;
 import org.smallmind.persistence.Durable;
 import org.smallmind.persistence.orm.ORMDao;
 
@@ -39,7 +39,6 @@ public class DaoBackedListSelectionModel<I extends Serializable & Comparable<I>,
 
   private transient List<D> selectionList;
   private transient boolean attached = false;
-
   private ORMDao<I, D, ?> backingDao;
   private List<I> idList;
 

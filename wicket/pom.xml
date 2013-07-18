@@ -43,16 +43,6 @@
     </dependency>
     <dependency>
       <groupId>org.apache.wicket</groupId>
-      <artifactId>wicket-util</artifactId>
-      <scope>compile</scope>
-    </dependency>
-    <dependency>
-      <groupId>org.apache.wicket</groupId>
-      <artifactId>wicket-request</artifactId>
-      <scope>compile</scope>
-    </dependency>
-    <dependency>
-      <groupId>org.apache.wicket</groupId>
       <artifactId>wicket-extensions</artifactId>
       <scope>compile</scope>
     </dependency>

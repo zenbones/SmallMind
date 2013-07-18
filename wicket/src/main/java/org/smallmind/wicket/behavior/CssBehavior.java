@@ -31,7 +31,8 @@ import java.util.Map;
 import java.util.Properties;
 import org.apache.wicket.Component;
 import org.apache.wicket.behavior.Behavior;
-import org.apache.wicket.markup.html.IHeaderResponse;
+import org.apache.wicket.markup.head.CssHeaderItem;
+import org.apache.wicket.markup.head.IHeaderResponse;
 import org.apache.wicket.util.template.PackageTextTemplate;
 
 public class CssBehavior extends Behavior {
@@ -90,6 +91,6 @@ public class CssBehavior extends Behavior {
     Class<?> interpolatedClass = (scopeClass != null) ? scopeClass : component.getClass();
     String interpolatedFileName = (fileName != null) ? fileName : (scopeClass != null) ? scopeClass.getSimpleName() + ".css" : component.getClass().getSimpleName() + ".css";
 
-    response.renderCSS(new PackageTextTemplate(interpolatedClass, interpolatedFileName).asString(substitutionMap), interpolatedClass.getName() + ":" + interpolatedFileName);
+    response.render(CssHeaderItem.forCSS(new PackageTextTemplate(interpolatedClass, interpolatedFileName).asString(substitutionMap), interpolatedClass.getName() + ":" + interpolatedFileName));
   }
 }

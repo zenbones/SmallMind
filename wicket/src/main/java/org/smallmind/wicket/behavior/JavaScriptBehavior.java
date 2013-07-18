@@ -29,7 +29,8 @@ package org.smallmind.wicket.behavior;
 import java.util.Map;
 import org.apache.wicket.Component;
 import org.apache.wicket.behavior.Behavior;
-import org.apache.wicket.markup.html.IHeaderResponse;
+import org.apache.wicket.markup.head.IHeaderResponse;
+import org.apache.wicket.markup.head.JavaScriptHeaderItem;
 import org.apache.wicket.util.template.PackageTextTemplate;
 
 public class JavaScriptBehavior extends Behavior {
@@ -76,6 +77,6 @@ public class JavaScriptBehavior extends Behavior {
     Class<?> interpolatedClass = (scopeClass != null) ? scopeClass : component.getClass();
     String interpolatedFileName = (fileName == null) ? component.getClass().getSimpleName() + ".js" : fileName;
 
-    response.renderJavaScript(new PackageTextTemplate(interpolatedClass, interpolatedFileName).asString(substitutionMap), interpolatedClass.getName() + ":" + interpolatedFileName);
+    response.render(JavaScriptHeaderItem.forScript(new PackageTextTemplate(interpolatedClass, interpolatedFileName).asString(substitutionMap), interpolatedClass.getName() + ":" + interpolatedFileName));
   }
 }
