@@ -50,7 +50,7 @@ public class AsynchronousAppender implements Appender, Runnable {
 
     this.internalAppender = internalAppender;
 
-    publishQueue = new LinkedBlockingQueue<Record>();
+    publishQueue = new LinkedBlockingQueue<>(bufferSize);
 
     exitLatch = new CountDownLatch(1);
 
@@ -59,14 +59,14 @@ public class AsynchronousAppender implements Appender, Runnable {
     publishThread.start();
   }
 
-  public void setName (String name) {
-
-    internalAppender.setName(name);
-  }
-
   public String getName () {
 
     return internalAppender.getName();
+  }
+
+  public void setName (String name) {
+
+    internalAppender.setName(name);
   }
 
   public void clearFilters () {
@@ -79,11 +79,6 @@ public class AsynchronousAppender implements Appender, Runnable {
     internalAppender.setFilter(filter);
   }
 
-  public void setFilters (List<Filter> filterList) {
-
-    internalAppender.setFilters(filterList);
-  }
-
   public void addFilter (Filter filter) {
 
     internalAppender.addFilter(filter);
@@ -92,6 +87,11 @@ public class AsynchronousAppender implements Appender, Runnable {
   public Filter[] getFilters () {
 
     return internalAppender.getFilters();
+  }
+
+  public void setFilters (List<Filter> filterList) {
+
+    internalAppender.setFilters(filterList);
   }
 
   public ErrorHandler getErrorHandler () {
@@ -104,14 +104,14 @@ public class AsynchronousAppender implements Appender, Runnable {
     internalAppender.setErrorHandler(errorHandler);
   }
 
-  public void setFormatter (Formatter formatter) {
-
-    internalAppender.setFormatter(formatter);
-  }
-
   public Formatter getFormatter () {
 
     return internalAppender.getFormatter();
+  }
+
+  public void setFormatter (Formatter formatter) {
+
+    internalAppender.setFormatter(formatter);
   }
 
   public boolean requiresFormatter () {
@@ -144,8 +144,8 @@ public class AsynchronousAppender implements Appender, Runnable {
     try {
       finish();
     }
-    catch (InterruptedException interuptedException) {
-      throw new LoggerException(interuptedException);
+    catch (InterruptedException interruptedException) {
+      throw new LoggerException(interruptedException);
     }
 
     internalAppender.close();
