@@ -24,19 +24,19 @@
       <optional>true</optional>
     </dependency>
     <dependency>
-      <groupId>asm</groupId>
+      <groupId>org.ow2.asm</groupId>
       <artifactId>asm-commons</artifactId>
       <scope>compile</scope>
       <optional>true</optional>
     </dependency>
     <dependency>
-      <groupId>asm</groupId>
+      <groupId>org.ow2.asm</groupId>
       <artifactId>asm-analysis</artifactId>
       <scope>compile</scope>
       <optional>true</optional>
     </dependency>
     <dependency>
-      <groupId>asm</groupId>
+      <groupId>org.ow2.asm</groupId>
       <artifactId>asm-util</artifactId>
       <scope>compile</scope>
       <optional>true</optional>

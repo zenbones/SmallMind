@@ -36,11 +36,9 @@ import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.UUID;
 import org.objectweb.asm.AnnotationVisitor;
-import org.objectweb.asm.Attribute;
 import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.ClassVisitor;
 import org.objectweb.asm.ClassWriter;
-import org.objectweb.asm.FieldVisitor;
 import org.objectweb.asm.Label;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
@@ -48,8 +46,8 @@ import org.objectweb.asm.util.CheckClassAdapter;
 
 public class ProxyGenerator {
 
-  private static final HashMap<ClassLoader, ProxyClassLoader> LOADER_MAP = new HashMap<ClassLoader, ProxyClassLoader>();
-  private static final HashMap<ParseKey, Class> INTERFACE_MAP = new HashMap<ParseKey, Class>();
+  private static final HashMap<ClassLoader, ProxyClassLoader> LOADER_MAP = new HashMap<>();
+  private static final HashMap<ParseKey, Class> INTERFACE_MAP = new HashMap<>();
   private static final String INVOCATION_HANDLER = "L" + InvocationHandler.class.getName().replace('.', '/') + ";";
 
   public static <T> T createProxy (Class<T> parseClass, InvocationHandler handler, Class<? extends Annotation>... allowedAnnotationClasses) {
@@ -100,7 +98,7 @@ public class ProxyGenerator {
           checkClassAdapter = new CheckClassAdapter(classWriter, true);
 
           currentClass = parseClass;
-          methodTrackerSet = new HashSet<MethodTracker>();
+          methodTrackerSet = new HashSet<>();
           do {
             if (currentClass.equals(Object.class)) {
               currentClass = ObjectImpersonator.class;
@@ -217,7 +215,7 @@ public class ProxyGenerator {
     @Override
     public boolean equals (Object obj) {
 
-      return (obj instanceof MethodTracker) && ((MethodTracker)obj).getName().equals(name) && (description == null) ? ((MethodTracker)obj).getDescription() == null : description.equals(((MethodTracker)obj).getDescription());
+      return (obj instanceof MethodTracker) && ((MethodTracker)obj).getName().equals(name) && ((description == null) ? ((MethodTracker)obj).getDescription() == null : description.equals(((MethodTracker)obj).getDescription()));
     }
   }
 
@@ -234,7 +232,7 @@ public class ProxyGenerator {
     }
   }
 
-  private static class ProxyClassVisitor implements ClassVisitor {
+  private static class ProxyClassVisitor extends ClassVisitor {
 
     private ClassVisitor nextClassVisitor;
     private Class parseClass;
@@ -245,6 +243,8 @@ public class ProxyGenerator {
     private boolean initialized;
 
     public ProxyClassVisitor (ClassVisitor nextClassVisitor, Class parseClass, Class currentClass, String[] allowedAnnotationSignatures, HashSet<MethodTracker> methodTrackerSet, boolean initialized) {
+
+      super(Opcodes.ASM4);
 
       this.nextClassVisitor = nextClassVisitor;
       this.parseClass = parseClass;
@@ -266,32 +266,6 @@ public class ProxyGenerator {
 
         nextClassVisitor.visitField(Opcodes.ACC_PRIVATE, "$proxy$_handler", INVOCATION_HANDLER, null, null).visitEnd();
       }
-    }
-
-    public void visitSource (String source, String debug) {
-
-    }
-
-    public void visitOuterClass (String owner, String name, String desc) {
-
-    }
-
-    public AnnotationVisitor visitAnnotation (String desc, boolean visible) {
-
-      return null;
-    }
-
-    public void visitAttribute (Attribute attribute) {
-
-    }
-
-    public void visitInnerClass (String name, String outerName, String innerName, int access) {
-
-    }
-
-    public FieldVisitor visitField (int access, String name, String desc, String signature, Object value) {
-
-      return null;
     }
 
     private void createConstructor (String signature, String[] exceptions) {
@@ -376,7 +350,7 @@ public class ProxyGenerator {
               String[] parameters;
               LinkedList<String> parameterList;
 
-              parameterList = new LinkedList<String>();
+              parameterList = new LinkedList<>();
               for (String parameter : new ParameterIterator(desc.substring(1, desc.indexOf(')')))) {
                 parameterList.add(parameter);
               }
@@ -631,12 +605,14 @@ public class ProxyGenerator {
     }
   }
 
-  private static class ProxyMethodVisitor implements MethodVisitor {
+  private static class ProxyMethodVisitor extends MethodVisitor {
 
     private MethodVisitor nextMethodVisitor;
     private String[] allowedAnnotationSignatures;
 
     public ProxyMethodVisitor (MethodVisitor nextMethodVisitor, String[] allowedAnnotationSignatures) {
+
+      super(Opcodes.ASM4);
 
       this.nextMethodVisitor = nextMethodVisitor;
       this.allowedAnnotationSignatures = allowedAnnotationSignatures;
@@ -665,86 +641,6 @@ public class ProxyGenerator {
       }
 
       return null;
-    }
-
-    public void visitAttribute (Attribute attr) {
-
-    }
-
-    public void visitFrame (int type, int nLocal, Object[] local, int nStack, Object[] stack) {
-
-    }
-
-    public void visitCode () {
-
-    }
-
-    public void visitInsn (int opcode) {
-
-    }
-
-    public void visitIntInsn (int opcode, int operand) {
-
-    }
-
-    public void visitVarInsn (int opcode, int var) {
-
-    }
-
-    public void visitTypeInsn (int opcode, String type) {
-
-    }
-
-    public void visitFieldInsn (int opcode, String owner, String name, String desc) {
-
-    }
-
-    public void visitMethodInsn (int opcode, String owner, String name, String desc) {
-
-    }
-
-    public void visitJumpInsn (int opcode, Label label) {
-
-    }
-
-    public void visitLabel (Label label) {
-
-    }
-
-    public void visitLdcInsn (Object cst) {
-
-    }
-
-    public void visitIincInsn (int var, int increment) {
-
-    }
-
-    public void visitTableSwitchInsn (int min, int max, Label dflt, Label[] labels) {
-
-    }
-
-    public void visitLookupSwitchInsn (Label dflt, int[] keys, Label[] labels) {
-
-    }
-
-    public void visitMultiANewArrayInsn (String desc, int dims) {
-
-    }
-
-    public void visitTryCatchBlock (Label start, Label end, Label handler, String type) {
-
-    }
-
-    public void visitLocalVariable (String name, String desc, String signature, Label start, Label end, int index) {
-
-    }
-
-    public void visitLineNumber (int line, Label start) {
-
-    }
-
-    public void visitMaxs (int maxStack, int maxLocals) {
-
     }
 
     public void visitEnd () {
