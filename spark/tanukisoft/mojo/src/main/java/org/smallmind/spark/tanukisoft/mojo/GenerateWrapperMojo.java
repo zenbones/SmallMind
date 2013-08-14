@@ -38,9 +38,6 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.jar.JarEntry;
-import java.util.jar.JarOutputStream;
-import java.util.jar.Manifest;
 import freemarker.template.Configuration;
 import freemarker.template.Template;
 import org.apache.maven.artifact.Artifact;
@@ -49,7 +46,6 @@ import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.MojoFailureException;
 import org.apache.maven.project.MavenProject;
 import org.smallmind.nutsnbolts.freemarker.ClassPathTemplateLoader;
-import org.smallmind.nutsnbolts.io.FileIterator;
 
 /**
  * @goal generate-wrapper
@@ -62,120 +58,101 @@ public class GenerateWrapperMojo extends AbstractMojo {
 
   private static final String[] NO_ARGS = new String[0];
   private static final String RESOURCE_BASE_PATH = GenerateWrapperMojo.class.getPackage().getName().replace('.', '/');
-
   /**
    * @parameter expression="${project}"
    * @readonly
    */
   private MavenProject project;
-
   /**
    * @parameter
    */
   private File licenseFile;
-
   /**
    * @parameter
    */
   private Dependency[] dependencies;
-
   /**
    * @parameter
    * @required
    */
   private String operatingSystem;
-
   /**
    * @parameter
    * @required
    */
   private String wrapperListener;
-
   /**
    * @parameter default-value="application"
    */
   private String applicationDir;
-
   /**
    * @parameter expression="${project.artifactId}"
    */
   private String applicationName;
-
   /**
    * @parameter expression="${project.name}"
    */
   private String applicationLongName;
-
   /**
    * @parameter expression="${project.description}"
    */
   private String applicationDescription;
-
   /**
    * @parameter
    */
   private String[] jvmArgs;
-
   /**
    * @parameter default-value=0
    */
   private int jvmInitMemoryMB;
-
   /**
    * @parameter default-value=0
    */
   private int jvmMaxMemoryMB;
-
   /**
    * @parameter
    */
   private String runAs;
-
   /**
    * @parameter
    */
   private String withPassword;
-
   /**
    * @parameter
    */
   private String umask;
-
   /**
    * @parameter default-value=0
    */
   private int waitAfterStartup;
-
   /**
    * @parameter default-value="java"
    */
   private String javaCommand;
-
   /**
    * @parameter
    */
   private String[] appParameters;
-
   /**
    * @parameter
    */
   private String[] serviceDependencies;
-
   /**
    * @parameter
    */
   private String[] configurations;
-
   /**
    * @parameter default-value=true
    */
-  private boolean createJar;
-
+  private boolean createArtifact;
+  /**
+   * @parameter default-value="zip"
+   */
+  private String compression;
   /**
    * @parameter default-value=true
    */
   private boolean includeVersion;
-
   /**
    * @parameter default-value=false
    */
@@ -188,6 +165,7 @@ public class GenerateWrapperMojo extends AbstractMojo {
     File libDirectory;
     File confDirectory;
     OSType osType;
+    CompressionType compressionType;
     HashMap<String, Object> freemarkerMap;
     LinkedList<String> classpathElementList;
     List<Dependency> additionalDependencies;
@@ -200,9 +178,16 @@ public class GenerateWrapperMojo extends AbstractMojo {
       throw new MojoExecutionException(String.format("Unknown operating system type(%s) - valid choices are %s", operatingSystem, Arrays.toString(OSType.values())), throwable);
     }
 
-    createDirectory("bin", binDirectory = new File(project.getBuild().getDirectory() + System.getProperty("file.separator") + applicationDir + System.getProperty("file.separator") + createArtifactName(includeVersion, false) + System.getProperty("file.separator") + "bin"));
-    createDirectory("lib", libDirectory = new File(project.getBuild().getDirectory() + System.getProperty("file.separator") + applicationDir + System.getProperty("file.separator") + createArtifactName(includeVersion, false) + System.getProperty("file.separator") + "lib"));
-    createDirectory("conf", confDirectory = new File(project.getBuild().getDirectory() + System.getProperty("file.separator") + applicationDir + System.getProperty("file.separator") + createArtifactName(includeVersion, false) + System.getProperty("file.separator") + "conf"));
+    try {
+      compressionType = CompressionType.valueOf(compression.replace('-', '_').toUpperCase());
+    }
+    catch (Throwable throwable) {
+      throw new MojoExecutionException(String.format("Unknown compression type(%s) - valid choices are %s", compression, Arrays.toString(CompressionType.values())), throwable);
+    }
+
+    createDirectory("bin", binDirectory = new File(project.getBuild().getDirectory() + System.getProperty("file.separator") + applicationDir + System.getProperty("file.separator") + constructArtifactName(includeVersion, false) + System.getProperty("file.separator") + "bin"));
+    createDirectory("lib", libDirectory = new File(project.getBuild().getDirectory() + System.getProperty("file.separator") + applicationDir + System.getProperty("file.separator") + constructArtifactName(includeVersion, false) + System.getProperty("file.separator") + "lib"));
+    createDirectory("conf", confDirectory = new File(project.getBuild().getDirectory() + System.getProperty("file.separator") + applicationDir + System.getProperty("file.separator") + constructArtifactName(includeVersion, false) + System.getProperty("file.separator") + "conf"));
 
     if (licenseFile != null) {
       try {
@@ -330,14 +315,14 @@ public class GenerateWrapperMojo extends AbstractMojo {
 
       File jarFile;
 
-      jarFile = new File(createJarArtifactPath(project.getBuild().getDirectory(), false));
+      jarFile = new File(constructCompressedArtifactPath(project.getBuild().getDirectory(), CompressionType.JAR, false));
 
       try {
         if (verbose) {
           getLog().info(String.format("Creating and copying output jar(%s)...", jarFile.getName()));
         }
 
-        createJar(jarFile, new File(project.getBuild().getOutputDirectory()));
+        CompressionType.JAR.compress(jarFile, new File(project.getBuild().getOutputDirectory()));
         classpathElementList.add(jarFile.getName());
         copyToDestination(jarFile, libDirectory.getAbsolutePath(), jarFile.getName());
       }
@@ -410,26 +395,26 @@ public class GenerateWrapperMojo extends AbstractMojo {
 
     processFreemarkerTemplate(getWrapperFilePath("conf", "freemarker.wrapper.conf.in"), confDirectory, "wrapper.conf", freemarkerMap);
 
-    if (createJar) {
+    if (createArtifact) {
 
-      File jarFile;
+      File compressedFile;
 
-      jarFile = new File(createJarArtifactPath(project.getBuild().getDirectory(), true));
+      compressedFile = new File(constructCompressedArtifactPath(project.getBuild().getDirectory(), compressionType, true));
 
       try {
         if (verbose) {
-          getLog().info(String.format("Creating aggregated jar(%s)...", jarFile.getName()));
+          getLog().info(String.format("Creating aggregated %s(%s)...", compressionType.getExtension(), compressedFile.getName()));
         }
 
-        createJar(jarFile, new File(project.getBuild().getDirectory() + System.getProperty("file.separator") + applicationDir));
+        compressionType.compress(compressedFile, new File(project.getBuild().getDirectory() + System.getProperty("file.separator") + applicationDir));
       }
       catch (IOException ioException) {
-        throw new MojoExecutionException(String.format("Problem in creating the aggregated jar(%s)", jarFile.getName()), ioException);
+        throw new MojoExecutionException(String.format("Problem in creating the aggregated %s(%s)", compressionType.getExtension(), compressedFile.getName()), ioException);
       }
     }
   }
 
-  private String createArtifactName (boolean includeVersion, boolean aggregateArtifact) {
+  private String constructArtifactName (boolean includeVersion, boolean aggregateArtifact) {
 
     StringBuilder nameBuilder;
 
@@ -450,44 +435,9 @@ public class GenerateWrapperMojo extends AbstractMojo {
     return nameBuilder.toString();
   }
 
-  private String createJarArtifactPath (String outputPath, boolean aggregateArtifact) {
+  private String constructCompressedArtifactPath (String outputPath, CompressionType artifactCompressionType, boolean aggregateArtifact) {
 
-    return new StringBuilder(outputPath).append(System.getProperty("file.separator")).append(createArtifactName(true, aggregateArtifact)).append(".jar").toString();
-  }
-
-  private void createJar (File jarFile, File directoryToJar)
-    throws IOException {
-
-    FileOutputStream fileOutputStream;
-    JarOutputStream jarOutputStream;
-    JarEntry jarEntry;
-
-    fileOutputStream = new FileOutputStream(jarFile);
-    jarOutputStream = new JarOutputStream(fileOutputStream, new Manifest());
-    for (File outputFile : new FileIterator(directoryToJar)) {
-      if (!outputFile.equals(jarFile)) {
-        jarEntry = new JarEntry(outputFile.getCanonicalPath().substring(directoryToJar.getAbsolutePath().length() + 1).replace(System.getProperty("file.separator"), "/"));
-        jarEntry.setTime(outputFile.lastModified());
-        jarOutputStream.putNextEntry(jarEntry);
-        squeezeFile(jarOutputStream, outputFile);
-      }
-    }
-    jarOutputStream.close();
-    fileOutputStream.close();
-  }
-
-  private void squeezeFile (JarOutputStream jarOutputStream, File outputFile)
-    throws IOException {
-
-    FileInputStream inputStream;
-    byte[] buffer = new byte[8192];
-    int bytesRead;
-
-    inputStream = new FileInputStream(outputFile);
-    while ((bytesRead = inputStream.read(buffer)) >= 0) {
-      jarOutputStream.write(buffer, 0, bytesRead);
-    }
-    inputStream.close();
+    return new StringBuilder(outputPath).append(System.getProperty("file.separator")).append(constructArtifactName(true, aggregateArtifact)).append('.').append(artifactCompressionType.getExtension()).toString();
   }
 
   private void processFreemarkerTemplate (String templatePath, File outputDir, String destinationName, HashMap<String, Object> interpolationMap)

@@ -27,6 +27,7 @@
 package org.smallmind.spark.tanukisoft.mojo;
 
 import java.io.File;
+import java.util.Arrays;
 import org.apache.maven.artifact.Artifact;
 import org.apache.maven.artifact.factory.ArtifactFactory;
 import org.apache.maven.artifact.installer.ArtifactInstallationException;
@@ -46,41 +47,49 @@ import org.apache.maven.project.MavenProject;
 public class InstallWrapperMojo extends AbstractMojo {
 
   /**
-   * @parameter expression="${project}"
-   * @readonly
-   */
-  private MavenProject project;
-
-  /**
    * @component
    * @readonly
    */
   ArtifactFactory artifactFactory;
-
   /**
    * @component
    * @readonly
    */
   ArtifactInstaller artifactInstaller;
-
+  /**
+   * @parameter expression="${project}"
+   * @readonly
+   */
+  private MavenProject project;
   /**
    * @parameter expression="${localRepository}"
    * @readonly
    */
   private ArtifactRepository localRepository;
-
   /**
    * @parameter expression="${project.artifactId}"
    */
   private String applicationName;
+  /**
+   * @parameter default-value="zip"
+   */
+  private String compression;
 
   public void execute ()
     throws MojoExecutionException, MojoFailureException {
 
     Artifact applicationArtifact;
+    CompressionType compressionType;
     StringBuilder pathBuilder;
 
-    applicationArtifact = artifactFactory.createArtifactWithClassifier(project.getGroupId(), project.getArtifactId(), project.getVersion(), "jar", (project.getArtifact().getClassifier() == null) ? "app" : project.getArtifact().getClassifier() + "-app");
+    try {
+      compressionType = CompressionType.valueOf(compression.replace('-', '_').toUpperCase());
+    }
+    catch (Throwable throwable) {
+      throw new MojoExecutionException(String.format("Unknown compression type(%s) - valid choices are %s", compression, Arrays.toString(CompressionType.values())), throwable);
+    }
+
+    applicationArtifact = artifactFactory.createArtifactWithClassifier(project.getGroupId(), project.getArtifactId(), project.getVersion(), compressionType.getExtension(), (project.getArtifact().getClassifier() == null) ? "app" : project.getArtifact().getClassifier() + "-app");
     pathBuilder = new StringBuilder(project.getBuild().getDirectory()).append(System.getProperty("file.separator")).append(applicationName).append('-').append(project.getVersion());
 
     if (project.getArtifact().getClassifier() != null) {
@@ -88,7 +97,7 @@ public class InstallWrapperMojo extends AbstractMojo {
       pathBuilder.append(project.getArtifact().getClassifier());
     }
 
-    pathBuilder.append("-app").append(".jar");
+    pathBuilder.append("-app").append('.').append(compressionType.getExtension());
 
     try {
       artifactInstaller.install(new File(pathBuilder.toString()), applicationArtifact, localRepository);
