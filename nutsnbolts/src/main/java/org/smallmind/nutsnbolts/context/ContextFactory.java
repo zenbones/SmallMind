@@ -178,19 +178,6 @@ public class ContextFactory {
     return null;
   }
 
-  public static void setContext (Context context) {
-
-    ContextStackThreadLocal threadLocal;
-
-    synchronized (CONTEXT_MAP) {
-      if ((threadLocal = CONTEXT_MAP.get(context.getClass())) == null) {
-        CONTEXT_MAP.put(context.getClass(), threadLocal = new ContextStackThreadLocal());
-      }
-    }
-
-    threadLocal.get().set(context);
-  }
-
   public static void pushContext (Context context) {
 
     ContextStackThreadLocal threadLocal;
@@ -230,6 +217,12 @@ public class ContextFactory {
     protected ContextStack initialValue () {
 
       return new ContextStack();
+    }
+
+    @Override
+    protected ContextStack childValue (ContextStack parentValue) {
+
+      return super.childValue(parentValue);    //To change body of overridden methods use File | Settings | File Templates.
     }
   }
 }

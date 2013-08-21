@@ -27,6 +27,7 @@
 package org.smallmind.nutsnbolts.context;
 
 import java.util.LinkedList;
+import java.util.List;
 
 public class ContextStack {
 
@@ -35,6 +36,16 @@ public class ContextStack {
   public ContextStack () {
 
     contextList = new LinkedList<Context>();
+  }
+
+  public ContextStack (ContextStack contextStack) {
+
+    contextList = new LinkedList<>(contextStack.getInternalList());
+  }
+
+  private List<Context> getInternalList () {
+
+    return contextList;
   }
 
   public synchronized boolean isEmpty () {
@@ -49,12 +60,6 @@ public class ContextStack {
     }
 
     return contextList.getFirst();
-  }
-
-  public synchronized void set (Context context) {
-
-    pop();
-    push(context);
   }
 
   public synchronized void push (Context context) {
