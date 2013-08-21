@@ -5,7 +5,7 @@
   <import resource="classpath:org/smallmind/instrument/metric.xml"/>
 
   <!-- Collect Spring Initialized Hibernate Resources -->
-  <bean class="org.smallmind.persistence.orm.spring.hibernate.HibernateAnnotationSeekingBeanFactoryPostProcessor">
+  <bean class="org.smallmind.persistence.orm.spring.hibernate.AnnotationSeekingBeanFactoryPostProcessor">
     <property name="markedAnnotations">
       <list>
         <value>javax.persistence.Entity</value>
@@ -13,7 +13,7 @@
     </property>
   </bean>
 
-  <bean class="org.smallmind.persistence.orm.spring.hibernate.HibernateFileSeekingBeanFactoryPostProcessor"/>
+  <bean class="org.smallmind.persistence.orm.spring.hibernate.FileSeekingBeanFactoryPostProcessor"/>
 
   <bean id="persistence" class="org.smallmind.persistence.Persistence" init-method="register">
     <constructor-arg index="0">

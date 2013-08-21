@@ -44,11 +44,11 @@
   </bean>
 
   <!-- Session and Transaction -->
-  <bean id="schemaSessionFactory" class="org.smallmind.persistence.orm.spring.hibernate.AnnotationAwareLocalSessionFactoryBean">
+  <bean id="schemaSessionFactory" class="org.smallmind.persistence.orm.spring.hibernate.EntitySeekingSessionFactoryBean">
     <property name="dataSourceKey" value="schema"/>
     <property name="dataSource" ref="schemaPooledDataSource"/>
     <property name="mappingLocations">
-      <bean class="org.smallmind.persistence.orm.spring.hibernate.HibernateFileSeekingFactoryBean">
+      <bean class="org.smallmind.persistence.orm.spring.hibernate.FileSeekingFactoryBean">
         <property name="dataSourceKey" value="schema"/>
       </bean>
     </property>

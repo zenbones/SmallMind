@@ -38,17 +38,17 @@ import org.springframework.beans.factory.config.ConfigurableListableBeanFactory;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.UrlResource;
 
-public class HibernateFileSeekingBeanFactoryPostProcessor implements BeanFactoryPostProcessor {
+public class FileSeekingBeanFactoryPostProcessor implements BeanFactoryPostProcessor {
 
   private static final HashMap<String, HashMap<Class, UrlResource>> HBM_DATA_SOURCE_MAP = new HashMap<String, HashMap<Class, UrlResource>>();
   private static final UrlResource[] NO_RESOURCES = new UrlResource[0];
 
   public static Resource[] getHibernateResources () {
 
-    return getHibernateResources(null);
+    return getResources(null);
   }
 
-  public static Resource[] getHibernateResources (String dataSourceKey) {
+  public static Resource[] getResources (String dataSourceKey) {
 
     UrlResource[] hbmResources;
     HashMap<Class, UrlResource> hbmResourceMap;

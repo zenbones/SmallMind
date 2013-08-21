@@ -33,7 +33,7 @@
   </bean>
 
   <!-- JDO Persistence Manager -->
-  <bean id="persistenceManagerFactory" class="org.smallmind.persistence.orm.spring.jdo.LocalPersistenceManagerFactoryBean">
+  <bean id="persistenceManagerFactory" class="org.smallmind.persistence.orm.spring.jdo.EntitySeekingPersistenceManagerFactoryBean">
     <property name="dataSource" ref="schemaPooledDataSource"/>
     <property name="properties">
       <props>

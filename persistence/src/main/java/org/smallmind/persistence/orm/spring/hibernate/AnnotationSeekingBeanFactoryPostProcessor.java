@@ -37,7 +37,7 @@ import org.springframework.beans.FatalBeanException;
 import org.springframework.beans.factory.config.BeanFactoryPostProcessor;
 import org.springframework.beans.factory.config.ConfigurableListableBeanFactory;
 
-public class HibernateAnnotationSeekingBeanFactoryPostProcessor implements BeanFactoryPostProcessor {
+public class AnnotationSeekingBeanFactoryPostProcessor implements BeanFactoryPostProcessor {
 
   private static final HashMap<String, HashSet<Class>> ANNOTATED_CLASS_DATA_SOURCE_MAP = new HashMap<String, HashSet<Class>>();
 
