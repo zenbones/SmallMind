@@ -36,19 +36,17 @@ import org.smallmind.quorum.transport.InvocationSignal;
 
 public class RemoteInvocationHandler implements Serializable, InvocationHandler {
 
-  private Class endpointInterface;
   private RemoteTarget remoteTarget;
 
-  public RemoteInvocationHandler (Class endpointInterface, RemoteTarget remoteTarget)
+  public RemoteInvocationHandler (RemoteTarget remoteTarget)
     throws NamingException {
 
-    this.endpointInterface = endpointInterface;
     this.remoteTarget = remoteTarget;
   }
 
   public Object invoke (Object proxy, Method method, Object[] args)
     throws Throwable {
 
-    return remoteTarget.remoteInvocation(new InvocationSignal(ContextFactory.getExpectedContexts(endpointInterface), new FauxMethod(method), args));
+    return remoteTarget.remoteInvocation(new InvocationSignal(ContextFactory.getExpectedContexts(method), new FauxMethod(method), args));
   }
 }

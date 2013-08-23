@@ -27,6 +27,7 @@
 package org.smallmind.nutsnbolts.context;
 
 import java.lang.reflect.Array;
+import java.lang.reflect.Method;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.Map;
@@ -34,19 +35,6 @@ import java.util.Map;
 public class ContextFactory {
 
   private static final Map<Class<? extends Context>, ContextStackThreadLocal> CONTEXT_MAP = new HashMap<Class<? extends Context>, ContextStackThreadLocal>();
-
-  public static boolean exists (Class<? extends Context> contextClass) {
-
-    ContextStackThreadLocal threadLocal;
-
-    synchronized (CONTEXT_MAP) {
-      if ((threadLocal = CONTEXT_MAP.get(contextClass)) == null) {
-        return false;
-      }
-    }
-
-    return !threadLocal.get().isEmpty();
-  }
 
   public static <C extends Context> void importContextTrace (Class<C> contextClass, C... contexts) {
 
@@ -112,7 +100,7 @@ public class ContextFactory {
     }
   }
 
-  public static boolean containsContext (Class<? extends Context> contextClass) {
+  public static boolean exists (Class<? extends Context> contextClass) {
 
     ContextStackThreadLocal threadLocal;
 
@@ -143,39 +131,33 @@ public class ContextFactory {
     return context;
   }
 
-  public static Context[] getExpectedContexts (Class<?> expectingClass)
+  public static Context[] getExpectedContexts (Method method)
     throws ContextException {
 
-    ExpectedContext contextAnnotation;
-    Context[] expectedContexts;
-    Class<? extends Context>[] contextClasses;
+    ExpectedContexts expectedContexts;
+    LinkedList<Context> contextList = new LinkedList<>();
+    Context[] contexts;
 
-    if ((contextAnnotation = expectingClass.getAnnotation(ExpectedContext.class)) != null) {
-      try {
+    if ((expectedContexts = method.getAnnotation(ExpectedContexts.class)) != null) {
+      for (ExpectedContext expectedContext : expectedContexts.value()) {
 
-        Context expectedContext;
+        Context context;
 
-        contextClasses = contextAnnotation.value();
-
-        expectedContexts = new Context[contextClasses.length];
-        for (int count = 0; count < contextClasses.length; count++) {
-          if (((expectedContext = getContext(contextClasses[count])) == null) && contextAnnotation.required()) {
-            throw new ContextException("Context(%s) has not been instantiated", contextClasses[count].getName());
+        if ((context = getContext(expectedContext.value())) == null) {
+          if (expectedContext.required()) {
+            throw new ContextException("Context(%s) has not been instantiated", expectedContext.value());
           }
-          expectedContexts[count] = expectedContext;
         }
-
-        return expectedContexts;
-      }
-      catch (ContextException contextException) {
-        throw contextException;
-      }
-      catch (Exception exception) {
-        throw new ContextException(exception);
+        else {
+          contextList.add(context);
+        }
       }
     }
 
-    return null;
+    contexts = new Context[contextList.size()];
+    contextList.toArray(contexts);
+
+    return contexts;
   }
 
   public static void pushContext (Context context) {

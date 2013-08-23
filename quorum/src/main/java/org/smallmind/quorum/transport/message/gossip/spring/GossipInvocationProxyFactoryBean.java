@@ -32,7 +32,7 @@ import org.smallmind.quorum.transport.message.gossip.GossipTransmitter;
 import org.springframework.beans.factory.FactoryBean;
 import org.springframework.beans.factory.InitializingBean;
 
-public class GossipInvocationProxyFactoryBean implements InitializingBean, FactoryBean {
+public class GossipInvocationProxyFactoryBean implements InitializingBean, FactoryBean<Proxy> {
 
   private Class<?> serviceInterface;
   private GossipTransmitter gossipTransmitter;
@@ -56,7 +56,7 @@ public class GossipInvocationProxyFactoryBean implements InitializingBean, Facto
   }
 
   @Override
-  public Object getObject () throws Exception {
+  public Proxy getObject () throws Exception {
 
     return serviceProxy;
   }
