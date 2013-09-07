@@ -1,0 +1,116 @@
+package org.smallmind.nutsnbolts.security;
+
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Hashtable;
+import java.util.UUID;
+import javax.naming.Context;
+import javax.naming.NamingEnumeration;
+import javax.naming.NamingException;
+import javax.naming.directory.DirContext;
+import javax.naming.directory.InitialDirContext;
+import javax.naming.directory.SearchControls;
+import javax.naming.directory.SearchResult;
+import org.apache.shiro.authc.AuthenticationException;
+import org.apache.shiro.authc.AuthenticationInfo;
+import org.apache.shiro.authc.AuthenticationToken;
+import org.apache.shiro.authc.SimpleAuthenticationInfo;
+import org.apache.shiro.authc.credential.CredentialsMatcher;
+import org.apache.shiro.authc.credential.HashedCredentialsMatcher;
+import org.apache.shiro.authz.AuthorizationInfo;
+import org.apache.shiro.authz.SimpleAuthorizationInfo;
+import org.apache.shiro.crypto.hash.Hash;
+import org.apache.shiro.crypto.hash.Sha1Hash;
+import org.apache.shiro.subject.PrincipalCollection;
+import org.apache.shiro.util.ByteSource;
+import org.apache.shiro.util.SimpleByteSource;
+
+public class ActiveDirectoryLdapRealm extends LdapAuthorizingRealm {
+
+  private static final CredentialsMatcher CREDENTIALS_MATCHER = new HashedCredentialsMatcher(Sha1Hash.ALGORITHM_NAME);
+  private static final String[] RETURNED_ATTRIBUTES = {"sn", "givenName", "mail"};
+  private static HashSet<String> ROLE_SET;
+  private LdapConnectionDetails connectionDetails;
+  private String searchPath;
+
+  static {
+
+    ROLE_SET = new HashSet<String>();
+    ROLE_SET.add(RoleType.ADMIN.getCode());
+  }
+
+  public void setConnectionDetails (LdapConnectionDetails connectionDetails) {
+
+    this.connectionDetails = connectionDetails;
+  }
+
+  public void setSearchPath (String searchPath) {
+
+    this.searchPath = searchPath;
+  }
+
+  @Override
+  public CredentialsMatcher getCredentialsMatcher () {
+
+    return CREDENTIALS_MATCHER;
+  }
+
+  @Override
+  protected AuthorizationInfo doGetAuthorizationInfo (PrincipalCollection principals) {
+
+    return new SimpleAuthorizationInfo(Collections.unmodifiableSet(ROLE_SET));
+  }
+
+  @Override
+  protected AuthenticationInfo doGetAuthenticationInfo (AuthenticationToken token)
+    throws AuthenticationException {
+
+    try {
+
+      SearchControls searchControls;
+      NamingEnumeration answer;
+      String searchFilter;
+
+      searchFilter = "(&(objectClass=user)(sAMAccountName=" + token.getPrincipal() + "))";
+
+      searchControls = new SearchControls();
+      searchControls.setReturningAttributes(RETURNED_ATTRIBUTES);
+      searchControls.setSearchScope(SearchControls.SUBTREE_SCOPE);
+      searchControls.setCountLimit(1);
+
+      answer = getLdapContext(connectionDetails.getUserName(), connectionDetails.getPassword()).search(searchPath, searchFilter, searchControls);
+      if (answer.hasMoreElements()) {
+        if (((SearchResult)answer.next()).getAttributes() != null) {
+          getLdapContext(token.getPrincipal().toString() + "@glu.com", new String((char[])token.getCredentials()));
+
+          Hash sha1Hash;
+          ByteSource salt;
+
+          sha1Hash = new Sha1Hash(new String((char[])token.getCredentials()), salt = new SimpleByteSource(UUID.randomUUID().toString()));
+
+          return new SimpleAuthenticationInfo(token.getPrincipal(), sha1Hash.getBytes(), salt, getName());
+        }
+      }
+    }
+    catch (NamingException namingException) {
+      throw new AuthenticationException(namingException);
+    }
+
+    return null;
+  }
+
+  private DirContext getLdapContext (String user, String password)
+    throws NamingException {
+
+    Hashtable<String, String> env;
+
+    env = new Hashtable<String, String>();
+    env.put(Context.INITIAL_CONTEXT_FACTORY, "com.sun.jndi.ldap.LdapCtxFactory");
+    env.put(Context.PROVIDER_URL, "ldap://" + connectionDetails.getHost() + ":" + connectionDetails.getPort() + "/" + connectionDetails.getRootNamespace());
+    env.put(Context.SECURITY_AUTHENTICATION, "simple");
+    env.put(Context.SECURITY_PRINCIPAL, user);
+    env.put(Context.SECURITY_CREDENTIALS, password);
+
+    return new InitialDirContext(env);
+  }
+}
