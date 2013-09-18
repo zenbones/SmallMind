@@ -52,8 +52,7 @@ import org.smallmind.nutsnbolts.security.HashAlgorithm;
 
 public class Postman {
 
-  private final HashMap<MD5Key, Template> templateMap = new HashMap<MD5Key, Template>();
-
+  private final HashMap<SHA256Key, Template> templateMap = new HashMap<>();
   private Session session;
   private Configuration freemarkerConf;
 
@@ -139,11 +138,11 @@ public class Postman {
 
           Template template;
           StringWriter templateWriter;
-          MD5Key md5Key = new MD5Key(EncryptionUtilities.hash(HashAlgorithm.MD5, bodyWriter.toString().getBytes()));
+          SHA256Key sha256Key = new SHA256Key(EncryptionUtilities.hash(HashAlgorithm.SHA_256, bodyWriter.toString().getBytes()));
 
           synchronized (templateMap) {
-            if ((template = templateMap.get(md5Key)) == null) {
-              templateMap.put(md5Key, template = new Template(new String(md5Key.getMd5Hash()), new CharArrayReader(bodyWriter.toCharArray()), freemarkerConf));
+            if ((template = templateMap.get(sha256Key)) == null) {
+              templateMap.put(sha256Key, template = new Template(new String(sha256Key.getHash()), new CharArrayReader(bodyWriter.toCharArray()), freemarkerConf));
             }
           }
 
@@ -182,30 +181,30 @@ public class Postman {
     }
   }
 
-  private class MD5Key {
+  private class SHA256Key {
 
-    private byte[] md5Hash;
+    private byte[] hash;
 
-    public MD5Key (byte[] md5Hash) {
+    public SHA256Key (byte[] hash) {
 
-      this.md5Hash = md5Hash;
+      this.hash = hash;
     }
 
-    public byte[] getMd5Hash () {
+    public byte[] getHash () {
 
-      return md5Hash;
+      return hash;
     }
 
     @Override
     public int hashCode () {
 
-      return Arrays.hashCode(md5Hash);
+      return Arrays.hashCode(hash);
     }
 
     @Override
     public boolean equals (Object obj) {
 
-      return (obj instanceof MD5Key) && Arrays.equals(md5Hash, ((MD5Key)obj).getMd5Hash());
+      return (obj instanceof SHA256Key) && Arrays.equals(hash, ((SHA256Key)obj).getHash());
     }
   }
 }

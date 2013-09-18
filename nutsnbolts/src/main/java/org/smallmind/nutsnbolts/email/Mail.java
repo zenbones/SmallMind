@@ -187,5 +187,4 @@ public class Mail {
 
     return attachments;
   }
-
 }
