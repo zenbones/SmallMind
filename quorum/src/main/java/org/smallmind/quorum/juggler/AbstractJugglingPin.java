@@ -29,17 +29,20 @@ package org.smallmind.quorum.juggler;
 public abstract class AbstractJugglingPin<R> implements JugglingPin<R> {
 
   @Override
-  public void start () {
+  public void start ()
+    throws JugglerResourceException {
 
   }
 
   @Override
-  public void stop () {
+  public void stop ()
+    throws JugglerResourceException {
 
   }
 
   @Override
-  public void close () {
+  public void close ()
+    throws JugglerResourceException {
 
   }
 }

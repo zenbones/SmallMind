@@ -29,6 +29,7 @@ package org.smallmind.quorum.juggler;
 import java.security.SecureRandom;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Iterator;
 import java.util.Map;
 import java.util.concurrent.ConcurrentSkipListMap;
 import java.util.concurrent.CountDownLatch;
@@ -37,14 +38,11 @@ import org.smallmind.scribe.pen.LoggerManager;
 
 public class Juggler<P, R> implements BlackList<R> {
 
-  private static enum State {DECONSTRUCTED, INITIALIZED, STARTED, STOPPED}
-
   private final SecureRandom random = new SecureRandom();
   private final JugglingPinFactory<P, R> jugglingPinFactory;
   private final P[] providers;
   private final Class<P> managedClass;
   private final int recoveryCheckSeconds;
-
   private ProviderRecoveryWorker recoveryWorker = null;
   private ArrayList<JugglingPin<R>> sourcePins;
   private ArrayList<JugglingPin<R>> targetPins;
@@ -56,6 +54,14 @@ public class Juggler<P, R> implements BlackList<R> {
     this(managedClass, recoveryCheckSeconds, jugglingPinFactory, generateArray(provider, size));
   }
 
+  public Juggler (Class<P> managedClass, int recoveryCheckSeconds, JugglingPinFactory<P, R> jugglingPinFactory, P... providers) {
+
+    this.managedClass = managedClass;
+    this.recoveryCheckSeconds = recoveryCheckSeconds;
+    this.jugglingPinFactory = jugglingPinFactory;
+    this.providers = providers;
+  }
+
   private static <P> P[] generateArray (P provider, int size) {
 
     P[] array = (P[])new Object[size];
@@ -63,14 +69,6 @@ public class Juggler<P, R> implements BlackList<R> {
     Arrays.fill(array, provider);
 
     return array;
-  }
-
-  public Juggler (Class<P> managedClass, int recoveryCheckSeconds, JugglingPinFactory<P, R> jugglingPinFactory, P... providers) {
-
-    this.managedClass = managedClass;
-    this.recoveryCheckSeconds = recoveryCheckSeconds;
-    this.jugglingPinFactory = jugglingPinFactory;
-    this.providers = providers;
   }
 
   public synchronized void initialize ()
@@ -93,15 +91,29 @@ public class Juggler<P, R> implements BlackList<R> {
     }
   }
 
-  public synchronized void startup ()
-    throws JugglerResourceException {
+  public synchronized void startup () {
 
     if (state.equals(State.INITIALIZED)) {
 
       Thread recoveryThread;
+      Iterator<JugglingPin<R>> sourcePinIter = sourcePins.iterator();
 
-      for (JugglingPin<R> pin : sourcePins) {
-        pin.start();
+      while (sourcePinIter.hasNext()) {
+
+        JugglingPin<R> pin = sourcePinIter.next();
+
+        try {
+          pin.start();
+        }
+        catch (JugglerResourceException jugglerResourceException) {
+          try {
+            LoggerManager.getLogger(Juggler.class).error(jugglerResourceException);
+          }
+          finally {
+            sourcePinIter.remove();
+            blackMap.put(System.currentTimeMillis(), pin);
+          }
+        }
       }
 
       if (recoveryCheckSeconds > 0) {
@@ -220,6 +232,8 @@ public class Juggler<P, R> implements BlackList<R> {
       state = State.DECONSTRUCTED;
     }
   }
+
+  private static enum State {DECONSTRUCTED, INITIALIZED, STARTED, STOPPED}
 
   private class ProviderRecoveryWorker implements Runnable {
 
