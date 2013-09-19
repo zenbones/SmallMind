@@ -26,15 +26,17 @@
  */
 package org.smallmind.quorum.juggler;
 
+import java.lang.reflect.Method;
+
 public interface JugglingPin<R> {
 
-  public abstract void start ()
+  public abstract void start (Method method, Object... args)
     throws JugglerResourceException;
 
-  public abstract void stop ()
+  public abstract void stop (Method method, Object... args)
     throws JugglerResourceException;
 
-  public abstract void close ()
+  public abstract void close (Method method, Object... args)
     throws JugglerResourceException;
 
   public abstract R obtain ()

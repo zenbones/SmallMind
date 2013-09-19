@@ -26,6 +26,7 @@
  */
 package org.smallmind.quorum.juggler;
 
+import java.lang.reflect.Method;
 import java.security.SecureRandom;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -93,6 +94,11 @@ public class Juggler<P, R> implements BlackList<R> {
 
   public synchronized void startup () {
 
+    startup(null);
+  }
+
+  public synchronized void startup (Method method, Object... args) {
+
     if (state.equals(State.INITIALIZED)) {
 
       Thread recoveryThread;
@@ -103,7 +109,7 @@ public class Juggler<P, R> implements BlackList<R> {
         JugglingPin<R> pin = sourcePinIter.next();
 
         try {
-          pin.start();
+          pin.start(method, args);
         }
         catch (JugglerResourceException jugglerResourceException) {
           try {
@@ -180,6 +186,11 @@ public class Juggler<P, R> implements BlackList<R> {
 
   public synchronized void shutdown () {
 
+    shutdown(null);
+  }
+
+  public synchronized void shutdown (Method method, Object... args) {
+
     if (state.equals(State.STARTED)) {
       if (recoveryWorker != null) {
         try {
@@ -192,7 +203,7 @@ public class Juggler<P, R> implements BlackList<R> {
 
       for (JugglingPin<R> pin : sourcePins) {
         try {
-          pin.stop();
+          pin.stop(method, args);
         }
         catch (Exception exception) {
           LoggerManager.getLogger(Juggler.class).error(exception);
@@ -203,7 +214,7 @@ public class Juggler<P, R> implements BlackList<R> {
         JugglingPin<R> pin = targetPins.remove(0);
 
         try {
-          pin.stop();
+          pin.stop(method, args);
         }
         catch (Exception exception) {
           LoggerManager.getLogger(Juggler.class).error(exception);
@@ -219,10 +230,15 @@ public class Juggler<P, R> implements BlackList<R> {
 
   public synchronized void deconstruct () {
 
+    deconstruct(null);
+  }
+
+  public synchronized void deconstruct (Method method, Object... args) {
+
     if (state.equals(State.STOPPED)) {
       for (JugglingPin<R> pin : sourcePins) {
         try {
-          pin.close();
+          pin.close(method, args);
         }
         catch (Exception exception) {
           LoggerManager.getLogger(Juggler.class).error(exception);

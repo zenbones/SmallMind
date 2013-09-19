@@ -26,22 +26,42 @@
  */
 package org.smallmind.quorum.juggler;
 
+import java.lang.reflect.Method;
+
 public abstract class AbstractJugglingPin<R> implements JugglingPin<R> {
 
+  public final void start ()
+    throws JugglerResourceException {
+
+    start(null);
+  }
+
   @Override
-  public void start ()
+  public void start (Method method, Object... args)
     throws JugglerResourceException {
 
   }
 
+  public final void stop ()
+    throws JugglerResourceException {
+
+    stop(null);
+  }
+
   @Override
-  public void stop ()
+  public void stop (Method method, Object... args)
     throws JugglerResourceException {
 
   }
 
+  public final void close ()
+    throws JugglerResourceException {
+
+    close(null);
+  }
+
   @Override
-  public void close ()
+  public void close (Method method, Object... args)
     throws JugglerResourceException {
 
   }
