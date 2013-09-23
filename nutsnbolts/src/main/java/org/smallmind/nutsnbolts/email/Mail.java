@@ -43,7 +43,7 @@ public class Mail {
 
   public Mail (String from, String to, File... attachments) {
 
-    this(from, to, null, null, null, null, null, attachments);
+    this(from, to, null, null, null, null, (String)null, attachments);
   }
 
   public Mail (String from, String to, String body, File... attachments) {
@@ -71,6 +71,11 @@ public class Mail {
     this(from, to, replyTo, cc, null, subject, new StringReader(body), attachments);
   }
 
+  public Mail (String from, String to, String replyTo, String cc, String bcc, String subject, String body, File... attachments) {
+
+    this(from, to, replyTo, cc, bcc, subject, new StringReader(body), attachments);
+  }
+
   public Mail (String from, String to, String replyTo, String cc, String subject, Reader bodyReader, File... attachments) {
 
     this(from, to, replyTo, cc, null, subject, bodyReader, attachments);
@@ -88,49 +93,9 @@ public class Mail {
     this.attachments = attachments;
   }
 
-  public void setFrom (String from) {
-
-    this.from = from;
-  }
-
-  public void setTo (String to) {
-
-    this.to = to;
-  }
-
-  public void setReplyTo (String replyTo) {
-
-    this.replyTo = replyTo;
-  }
-
-  public void setCc (String cc) {
-
-    this.cc = cc;
-  }
-
-  public void setBcc (String bcc) {
-
-    this.bcc = bcc;
-  }
-
-  public void setSubject (String subject) {
-
-    this.subject = subject;
-  }
-
   public void setBody (String body) {
 
     setBodyReader(new StringReader(body));
-  }
-
-  public void setBodyReader (Reader bodyReader) {
-
-    this.bodyReader = bodyReader;
-  }
-
-  public void setAttachments (File[] attachments) {
-
-    this.attachments = attachments;
   }
 
   public void addAttachment (File attachment) {
@@ -153,9 +118,19 @@ public class Mail {
     return from;
   }
 
+  public void setFrom (String from) {
+
+    this.from = from;
+  }
+
   public String getTo () {
 
     return to;
+  }
+
+  public void setTo (String to) {
+
+    this.to = to;
   }
 
   public String getReplyTo () {
@@ -163,9 +138,19 @@ public class Mail {
     return replyTo;
   }
 
+  public void setReplyTo (String replyTo) {
+
+    this.replyTo = replyTo;
+  }
+
   public String getCc () {
 
     return cc;
+  }
+
+  public void setCc (String cc) {
+
+    this.cc = cc;
   }
 
   public String getBcc () {
@@ -173,9 +158,19 @@ public class Mail {
     return bcc;
   }
 
+  public void setBcc (String bcc) {
+
+    this.bcc = bcc;
+  }
+
   public String getSubject () {
 
     return subject;
+  }
+
+  public void setSubject (String subject) {
+
+    this.subject = subject;
   }
 
   public Reader getBodyReader () {
@@ -183,8 +178,18 @@ public class Mail {
     return bodyReader;
   }
 
+  public void setBodyReader (Reader bodyReader) {
+
+    this.bodyReader = bodyReader;
+  }
+
   public File[] getAttachments () {
 
     return attachments;
+  }
+
+  public void setAttachments (File[] attachments) {
+
+    this.attachments = attachments;
   }
 }
