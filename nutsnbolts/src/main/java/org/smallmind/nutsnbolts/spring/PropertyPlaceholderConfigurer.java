@@ -33,12 +33,14 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.Map;
-import java.util.Properties;
 import java.util.SortedMap;
 import java.util.TreeMap;
 import org.smallmind.nutsnbolts.resource.Resource;
 import org.smallmind.nutsnbolts.resource.ResourceParser;
 import org.smallmind.nutsnbolts.resource.ResourceTypeFactory;
+import org.smallmind.nutsnbolts.spring.property.PropertyEntry;
+import org.smallmind.nutsnbolts.spring.property.PropertyFileType;
+import org.smallmind.nutsnbolts.spring.property.PropertyHandler;
 import org.smallmind.nutsnbolts.util.DotNotationComparator;
 import org.smallmind.nutsnbolts.util.DotNotationException;
 import org.smallmind.nutsnbolts.util.PropertyExpander;
@@ -59,7 +61,6 @@ import org.springframework.core.PriorityOrdered;
 public class PropertyPlaceholderConfigurer implements BeanFactoryPostProcessor, BeanFactoryAware, BeanNameAware, Ordered, PriorityOrdered {
 
   private final TreeMap<String, String> debugMap = new TreeMap<String, String>(new DotNotationComparator());
-
   private BeanFactory beanFactory;
   private KeyDebugger keyDebugger;
   private LinkedList<String> locationList = new LinkedList<String>();
@@ -85,14 +86,14 @@ public class PropertyPlaceholderConfigurer implements BeanFactoryPostProcessor, 
     this.beanName = beanName;
   }
 
-  public void setOrder (int order) {
-
-    this.order = order;
-  }
-
   public int getOrder () {
 
     return order;
+  }
+
+  public void setOrder (int order) {
+
+    this.order = order;
   }
 
   public void setSystemPropertyMode (SystemPropertyMode systemPropertyMode) {
@@ -150,9 +151,9 @@ public class PropertyPlaceholderConfigurer implements BeanFactoryPostProcessor, 
       throw new RuntimeBeansException(propertyExpanderException);
     }
 
+    System.out.println("---------------- Property Loading ----------------");
     for (String location : locationList) {
 
-      Properties locationProperties = new Properties();
       Resource locationResource;
       InputStream inputStream;
 
@@ -162,7 +163,25 @@ public class PropertyPlaceholderConfigurer implements BeanFactoryPostProcessor, 
           throw new IOException("No stream available for resource(" + locationResource + ")");
         }
         else {
-          locationProperties.load(inputStream);
+
+          PropertyHandler<?> propertyHandler;
+          PropertyFileType propertyFileType;
+          int lastDotPos;
+
+          if ((lastDotPos = locationResource.getPath().lastIndexOf('.')) >= 0) {
+            if ((propertyFileType = PropertyFileType.forExtension(locationResource.getPath().substring(lastDotPos + 1))) == null) {
+              propertyFileType = PropertyFileType.PROPERTIES;
+            }
+          }
+          else {
+            propertyFileType = PropertyFileType.PROPERTIES;
+          }
+
+          propertyHandler = propertyFileType.getPropertyHandler(inputStream);
+          System.out.println("[" + propertyFileType.name() + ":" + locationResource.getPath() + "]");
+          for (PropertyEntry propertyEntry : propertyHandler) {
+            propertyMap.put(propertyEntry.getKey(), propertyEntry.getValue());
+          }
         }
       }
       catch (Exception exception) {
@@ -170,11 +189,8 @@ public class PropertyPlaceholderConfigurer implements BeanFactoryPostProcessor, 
           throw new RuntimeBeansException(exception);
         }
       }
-
-      for (Map.Entry propertyEntry : locationProperties.entrySet()) {
-        propertyMap.put(propertyEntry.getKey().toString(), propertyEntry.getValue().toString());
-      }
     }
+    System.out.println("--------------------------------------------------");
 
     SpringPropertyAccessor.setInstance(valueResolver = new PropertyPlaceholderStringValueResolver(propertyMap, ignoreUnresolvableProperties, systemPropertyMode, searchSystemEnvironment));
 
