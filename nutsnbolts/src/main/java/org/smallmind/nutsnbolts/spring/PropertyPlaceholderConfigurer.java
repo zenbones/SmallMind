@@ -55,10 +55,9 @@ import org.springframework.beans.factory.config.BeanDefinition;
 import org.springframework.beans.factory.config.BeanDefinitionVisitor;
 import org.springframework.beans.factory.config.BeanFactoryPostProcessor;
 import org.springframework.beans.factory.config.ConfigurableListableBeanFactory;
-import org.springframework.core.Ordered;
 import org.springframework.core.PriorityOrdered;
 
-public class PropertyPlaceholderConfigurer implements BeanFactoryPostProcessor, BeanFactoryAware, BeanNameAware, Ordered, PriorityOrdered {
+public class PropertyPlaceholderConfigurer implements BeanFactoryPostProcessor, BeanFactoryAware, BeanNameAware, PriorityOrdered {
 
   private final TreeMap<String, String> debugMap = new TreeMap<String, String>(new DotNotationComparator());
   private BeanFactory beanFactory;
@@ -86,6 +85,7 @@ public class PropertyPlaceholderConfigurer implements BeanFactoryPostProcessor, 
     this.beanName = beanName;
   }
 
+  @Override
   public int getOrder () {
 
     return order;

@@ -36,13 +36,11 @@ import org.smallmind.nutsnbolts.util.DotNotationException;
 import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.config.BeanFactoryPostProcessor;
 import org.springframework.beans.factory.config.ConfigurableListableBeanFactory;
-import org.springframework.core.Ordered;
 import org.springframework.core.PriorityOrdered;
 
-public class SystemPropertyInitializingBean implements BeanFactoryPostProcessor, Ordered, PriorityOrdered {
+public class SystemPropertyInitializingBean implements BeanFactoryPostProcessor, PriorityOrdered {
 
   private final TreeMap<String, String> debugMap = new TreeMap<String, String>(new AlphaNumericComparator<String>());
-
   private HashMap<String, String> propertyMap;
   private KeyDebugger keyDebugger;
   private boolean override;
@@ -59,14 +57,15 @@ public class SystemPropertyInitializingBean implements BeanFactoryPostProcessor,
     return Collections.unmodifiableSortedMap(debugMap);
   }
 
-  public void setOrder (int order) {
-
-    this.order = order;
-  }
-
+  @Override
   public int getOrder () {
 
     return order;
+  }
+
+  public void setOrder (int order) {
+
+    this.order = order;
   }
 
   public void setOverride (boolean override) {
