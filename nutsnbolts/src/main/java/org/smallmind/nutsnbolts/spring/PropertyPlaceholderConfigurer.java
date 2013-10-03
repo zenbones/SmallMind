@@ -132,6 +132,7 @@ public class PropertyPlaceholderConfigurer implements BeanFactoryPostProcessor, 
     keyDebugger = new KeyDebugger(debugPatterns);
   }
 
+  @Override
   public void postProcessBeanFactory (ConfigurableListableBeanFactory beanFactoryToProcess)
     throws BeansException {
 
