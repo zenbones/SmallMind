@@ -1,22 +1,22 @@
 /*
  * Copyright (c) 2007, 2008, 2009, 2010, 2011, 2012, 2013 David Berkman
- * 
+ *
  * This file is part of the SmallMind Code Project.
- * 
+ *
  * The SmallMind Code Project is free software, you can redistribute
  * it and/or modify it under the terms of GNU Affero General Public
  * License as published by the Free Software Foundation, either version 3
  * of the License, or (at your option) any later version.
- * 
+ *
  * The SmallMind Code Project is distributed in the hope that it will
  * be useful, but WITHOUT ANY WARRANTY; without even the implied warranty
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License for more details.
- * 
+ *
  * You should have received a copy of the the GNU Affero General Public
  * License, along with the SmallMind Code Project. If not, see
  * <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under the GNU Affero GPL version 3 section 7
  * ------------------------------------------------------------------
  * If you modify this Program, or any covered work, by linking or
@@ -32,6 +32,7 @@ import java.lang.reflect.Proxy;
 import org.smallmind.instrument.InstrumentationManager;
 import org.smallmind.instrument.Metric;
 import org.smallmind.instrument.MetricProperty;
+import org.smallmind.instrument.event.MetricEvent;
 
 public abstract class NamedMetric<M extends Metric<M>> implements InvocationHandler {
 
@@ -72,7 +73,12 @@ public abstract class NamedMetric<M extends Metric<M>> implements InvocationHand
 
     try {
 
-      return method.invoke(metric, args);
+      Object result;
+
+      result = method.invoke(metric, args);
+      InstrumentationManager.getMetricRegistry().fireMetricEvent(new MetricEvent(metric, metricAddress, method, args));
+
+      return result;
     }
     finally {
       if (pushed) {
