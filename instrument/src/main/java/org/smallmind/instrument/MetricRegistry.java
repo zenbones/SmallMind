@@ -26,7 +26,9 @@
  */
 package org.smallmind.instrument;
 
+import java.util.Arrays;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentLinkedQueue;
 import javax.management.DynamicMBean;
 import javax.management.MBeanServer;
 import org.smallmind.instrument.context.NamedMetricFactory;
@@ -48,7 +50,7 @@ public class MetricRegistry {
   private MBeanServer server;
   private JMXNamingPolicy jmxNamingPolicy = new DefaultJMXNamingPolicy();
   private TracingOptions tracingOptions;
-  private MetricEventListener[] metricEventListeners;
+  private ConcurrentLinkedQueue<MetricEventListener> metricEventListenerQueue = new ConcurrentLinkedQueue<>();
 
   public MBeanServer getServer () {
 
@@ -77,7 +79,7 @@ public class MetricRegistry {
 
   public void setMetricEventListeners (MetricEventListener[] metricEventListeners) {
 
-    this.metricEventListeners = metricEventListeners;
+    metricEventListenerQueue.addAll(Arrays.asList(metricEventListeners));
   }
 
   public void register () {
@@ -85,10 +87,20 @@ public class MetricRegistry {
     InstrumentationManager.register(this);
   }
 
+  public void addMetricEventListener (MetricEventListener metricEventListener) {
+
+    metricEventListenerQueue.add(metricEventListener);
+  }
+
+  public void removeMetricEventListener (MetricEventListener metricEventListener) {
+
+    metricEventListenerQueue.remove(metricEventListener);
+  }
+
   public void fireMetricEvent (MetricEvent metricEvent) {
 
-    if ((metricEventListeners != null) && (metricEventListeners.length > 0)) {
-      for (MetricEventListener metricEventListener : metricEventListeners) {
+    if (!metricEventListenerQueue.isEmpty()) {
+      for (MetricEventListener metricEventListener : metricEventListenerQueue) {
         metricEventListener.metricTriggered(metricEvent);
       }
     }

@@ -31,13 +31,27 @@ import org.smallmind.instrument.MetricProperty;
 
 public class MetricAddress {
 
-  private String domain;
-  private MetricProperty[] properties;
+  private final String domain;
+  private final MetricProperty[] properties;
+  private final String key;
 
   public MetricAddress (String domain, MetricProperty... properties) {
 
+    StringBuilder keyBuilder = new StringBuilder(domain).append(':');
+    boolean first = true;
+
     this.domain = domain;
     this.properties = properties;
+
+    for (MetricProperty property : properties) {
+      if (!first) {
+        keyBuilder.append(',');
+      }
+      first = false;
+      keyBuilder.append(property.getKey()).append('=').append(property.getValue());
+    }
+
+    key = keyBuilder.toString();
   }
 
   public String getDomain () {
@@ -48,6 +62,12 @@ public class MetricAddress {
   public MetricProperty[] getProperties () {
 
     return properties;
+  }
+
+  @Override
+  public String toString () {
+
+    return key;
   }
 
   @Override
