@@ -36,7 +36,7 @@ import org.smallmind.instrument.InstrumentationManager;
 import org.smallmind.instrument.MetricProperty;
 import org.smallmind.quorum.transport.TransportException;
 import org.smallmind.quorum.transport.TransportManager;
-import org.smallmind.quorum.transport.instrument.MetricEvent;
+import org.smallmind.quorum.transport.instrument.MetricInteraction;
 import org.smallmind.quorum.transport.message.MessagePlus;
 import org.smallmind.quorum.transport.message.MessageProperty;
 import org.smallmind.quorum.transport.message.MessageStrategy;
@@ -77,7 +77,7 @@ public class GossipWorker implements Runnable {
         if ((messagePlus = messageRendezvous.poll(1, TimeUnit.SECONDS)) != null) {
 
           InstrumentationManager.setMetricContext(messagePlus.getMetricContext());
-          InstrumentationManager.instrumentWithChronometer(TransportManager.getTransport(), Clocks.EPOCH.getClock().getTimeNanoseconds() - idleStart, TimeUnit.NANOSECONDS, new MetricProperty("gossip", "true"), new MetricProperty("event", MetricEvent.WORKER_IDLE.getDisplay()));
+          InstrumentationManager.instrumentWithChronometer(TransportManager.getTransport(), Clocks.EPOCH.getClock().getTimeNanoseconds() - idleStart, TimeUnit.NANOSECONDS, new MetricProperty("gossip", "true"), new MetricProperty("event", MetricInteraction.WORKER_IDLE.getDisplay()));
 
           try {
 

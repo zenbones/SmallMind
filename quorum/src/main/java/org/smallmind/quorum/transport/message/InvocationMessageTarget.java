@@ -36,7 +36,7 @@ import org.smallmind.instrument.MetricProperty;
 import org.smallmind.quorum.transport.InvocationSignal;
 import org.smallmind.quorum.transport.MethodInvoker;
 import org.smallmind.quorum.transport.TransportManager;
-import org.smallmind.quorum.transport.instrument.MetricEvent;
+import org.smallmind.quorum.transport.instrument.MetricInteraction;
 import org.smallmind.scribe.pen.Level;
 import org.smallmind.scribe.pen.LoggerManager;
 
@@ -79,7 +79,7 @@ public class InvocationMessageTarget implements MessageTarget {
 
       result = (Serializable)methodInvoker.remoteInvocation(invocationSignal);
 
-      InstrumentationManager.instrumentWithChronometer(TransportManager.getTransport(), totalTime = System.currentTimeMillis() - startTime, TimeUnit.MILLISECONDS, new MetricProperty("event", MetricEvent.INVOCATION.getDisplay()), new MetricProperty("service", serviceInterface.getSimpleName()), new MetricProperty("method", invocationSignal.getFauxMethod().getName()));
+      InstrumentationManager.instrumentWithChronometer(TransportManager.getTransport(), totalTime = System.currentTimeMillis() - startTime, TimeUnit.MILLISECONDS, new MetricProperty("event", MetricInteraction.INVOCATION.getDisplay()), new MetricProperty("service", serviceInterface.getSimpleName()), new MetricProperty("method", invocationSignal.getFauxMethod().getName()));
       LoggerManager.getLogger(InvocationMessageTarget.class).log(logLevel, "%s.%s() %d ms", serviceInterface.getSimpleName(), invocationSignal.getFauxMethod().getName(), totalTime);
     }
     catch (Exception exception) {
@@ -88,7 +88,7 @@ public class InvocationMessageTarget implements MessageTarget {
       throw exception;
     }
 
-    return InstrumentationManager.execute(new ChronometerInstrumentAndReturn<Message>(TransportManager.getTransport(), new MetricProperty("event", MetricEvent.CONSTRUCT_MESSAGE.getDisplay())) {
+    return InstrumentationManager.execute(new ChronometerInstrumentAndReturn<Message>(TransportManager.getTransport(), new MetricProperty("event", MetricInteraction.CONSTRUCT_MESSAGE.getDisplay())) {
 
       @Override
       public Message withChronometer ()

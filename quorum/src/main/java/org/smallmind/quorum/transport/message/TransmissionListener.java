@@ -38,7 +38,7 @@ import org.smallmind.instrument.InstrumentationManager;
 import org.smallmind.instrument.MetricProperty;
 import org.smallmind.quorum.transport.TransportManager;
 import org.smallmind.quorum.transport.instrument.MetricDestination;
-import org.smallmind.quorum.transport.instrument.MetricEvent;
+import org.smallmind.quorum.transport.instrument.MetricInteraction;
 import org.smallmind.scribe.pen.LoggerManager;
 
 public class TransmissionListener implements SessionEmployer, MessageListener {
@@ -94,7 +94,7 @@ public class TransmissionListener implements SessionEmployer, MessageListener {
       LoggerManager.getLogger(TransmissionListener.class).debug("response message received(%s) in %d ms...", message.getJMSMessageID(), timeInTopic);
       InstrumentationManager.instrumentWithChronometer(TransportManager.getTransport(), (timeInTopic >= 0) ? timeInTopic : 0, TimeUnit.MILLISECONDS, new MetricProperty("destination", MetricDestination.RESPONSE_TOPIC.getDisplay()));
 
-      InstrumentationManager.execute(new ChronometerInstrument(TransportManager.getTransport(), new MetricProperty("event", MetricEvent.COMPLETE_CALLBACK.getDisplay())) {
+      InstrumentationManager.execute(new ChronometerInstrument(TransportManager.getTransport(), new MetricProperty("event", MetricInteraction.COMPLETE_CALLBACK.getDisplay())) {
 
         @Override
         public void withChronometer () {

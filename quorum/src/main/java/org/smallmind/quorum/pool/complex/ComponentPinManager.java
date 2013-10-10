@@ -39,7 +39,7 @@ import org.smallmind.instrument.MetricProperty;
 import org.smallmind.nutsnbolts.lang.StackTrace;
 import org.smallmind.quorum.pool.ComponentPoolException;
 import org.smallmind.quorum.pool.PoolManager;
-import org.smallmind.quorum.pool.instrument.MetricEvent;
+import org.smallmind.quorum.pool.instrument.MetricInteraction;
 import org.smallmind.quorum.pool.instrument.MetricSize;
 import org.smallmind.scribe.pen.LoggerManager;
 
@@ -384,7 +384,7 @@ public class ComponentPinManager<C> {
 
   private void trackTimeout () {
 
-    InstrumentationManager.instrumentWithMeter(PoolManager.getPool(), new MetricProperty("pool", componentPool.getPoolName()), new MetricProperty("pool", componentPool.getPoolName()), new MetricProperty("event", MetricEvent.TIMEOUT.getDisplay()));
+    InstrumentationManager.instrumentWithMeter(PoolManager.getPool(), new MetricProperty("pool", componentPool.getPoolName()), new MetricProperty("pool", componentPool.getPoolName()), new MetricProperty("event", MetricInteraction.TIMEOUT.getDisplay()));
   }
 
   public StackTrace[] getExistentialStackTraces () {

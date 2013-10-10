@@ -33,7 +33,7 @@ import org.smallmind.instrument.MetricProperty;
 import org.smallmind.quorum.transport.InvocationSignal;
 import org.smallmind.quorum.transport.MethodInvoker;
 import org.smallmind.quorum.transport.TransportManager;
-import org.smallmind.quorum.transport.instrument.MetricEvent;
+import org.smallmind.quorum.transport.instrument.MetricInteraction;
 import org.smallmind.quorum.transport.message.MessageStrategy;
 
 public class InvocationGossipTarget implements GossipTarget {
@@ -61,7 +61,7 @@ public class InvocationGossipTarget implements GossipTarget {
 
     invocationSignal = (InvocationSignal)messageStrategy.unwrapFromMessage(message);
 
-    InstrumentationManager.execute(new ChronometerInstrument(TransportManager.getTransport(), new MetricProperty("gossip", "true"), new MetricProperty("event", MetricEvent.INVOCATION.getDisplay()), new MetricProperty("service", serviceInterface.getSimpleName()), new MetricProperty("method", invocationSignal.getFauxMethod().getName())) {
+    InstrumentationManager.execute(new ChronometerInstrument(TransportManager.getTransport(), new MetricProperty("gossip", "true"), new MetricProperty("event", MetricInteraction.INVOCATION.getDisplay()), new MetricProperty("service", serviceInterface.getSimpleName()), new MetricProperty("method", invocationSignal.getFauxMethod().getName())) {
 
       @Override
       public void withChronometer ()

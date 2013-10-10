@@ -42,7 +42,7 @@ import org.smallmind.nutsnbolts.util.SelfDestructiveMap;
 import org.smallmind.quorum.transport.InvocationSignal;
 import org.smallmind.quorum.transport.TransportException;
 import org.smallmind.quorum.transport.TransportManager;
-import org.smallmind.quorum.transport.instrument.MetricEvent;
+import org.smallmind.quorum.transport.instrument.MetricInteraction;
 import org.smallmind.scribe.pen.LoggerManager;
 
 public class MessageTransmitter {
@@ -95,7 +95,7 @@ public class MessageTransmitter {
 
     final QueueOperator queueOperator;
 
-    queueOperator = InstrumentationManager.execute(new ChronometerInstrumentAndReturn<QueueOperator>(TransportManager.getTransport(), new MetricProperty("event", MetricEvent.ACQUIRE_QUEUE.getDisplay())) {
+    queueOperator = InstrumentationManager.execute(new ChronometerInstrumentAndReturn<QueueOperator>(TransportManager.getTransport(), new MetricProperty("event", MetricInteraction.ACQUIRE_QUEUE.getDisplay())) {
 
       @Override
       public QueueOperator withChronometer ()
@@ -121,7 +121,7 @@ public class MessageTransmitter {
       AsynchronousTransmissionCallback asynchronousCallback;
       SynchronousTransmissionCallback previousCallback;
 
-      requestMessage = InstrumentationManager.execute(new ChronometerInstrumentAndReturn<Message>(TransportManager.getTransport(), new MetricProperty("event", MetricEvent.CONSTRUCT_MESSAGE.getDisplay())) {
+      requestMessage = InstrumentationManager.execute(new ChronometerInstrumentAndReturn<Message>(TransportManager.getTransport(), new MetricProperty("event", MetricInteraction.CONSTRUCT_MESSAGE.getDisplay())) {
 
         @Override
         public Message withChronometer ()

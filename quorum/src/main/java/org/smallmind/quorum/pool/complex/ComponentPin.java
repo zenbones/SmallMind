@@ -33,7 +33,7 @@ import org.smallmind.instrument.Clocks;
 import org.smallmind.instrument.InstrumentationManager;
 import org.smallmind.instrument.MetricProperty;
 import org.smallmind.quorum.pool.PoolManager;
-import org.smallmind.quorum.pool.instrument.MetricEvent;
+import org.smallmind.quorum.pool.instrument.MetricInteraction;
 
 public class ComponentPin<C> {
 
@@ -85,7 +85,7 @@ public class ComponentPin<C> {
       componentPool.reportLeaseTimeNanos(leaseTime);
     }
 
-    InstrumentationManager.instrumentWithChronometer(PoolManager.getPool(), leaseTime, TimeUnit.NANOSECONDS, new MetricProperty("pool", componentPool.getPoolName()), new MetricProperty("event", MetricEvent.PROCESSING.getDisplay()));
+    InstrumentationManager.instrumentWithChronometer(PoolManager.getPool(), leaseTime, TimeUnit.NANOSECONDS, new MetricProperty("pool", componentPool.getPoolName()), new MetricProperty("event", MetricInteraction.PROCESSING.getDisplay()));
 
     if (deconstructionCoordinator != null) {
       deconstructionCoordinator.free();

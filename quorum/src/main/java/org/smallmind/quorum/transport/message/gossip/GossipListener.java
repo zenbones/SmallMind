@@ -39,7 +39,7 @@ import org.smallmind.instrument.InstrumentationManager;
 import org.smallmind.instrument.MetricProperty;
 import org.smallmind.quorum.transport.TransportManager;
 import org.smallmind.quorum.transport.instrument.MetricDestination;
-import org.smallmind.quorum.transport.instrument.MetricEvent;
+import org.smallmind.quorum.transport.instrument.MetricInteraction;
 import org.smallmind.quorum.transport.message.ConnectionFactor;
 import org.smallmind.quorum.transport.message.MessagePlus;
 import org.smallmind.quorum.transport.message.MessageProperty;
@@ -96,7 +96,7 @@ public class GossipListener implements SessionEmployer, MessageListener {
 
       LoggerManager.getLogger(QueueOperator.class).debug("gossip message received(%s) in %d ms...", message.getJMSMessageID(), timeInQueue);
       InstrumentationManager.instrumentWithChronometer(TransportManager.getTransport(), (timeInQueue >= 0) ? timeInQueue : 0, TimeUnit.MILLISECONDS, new MetricProperty("destination", MetricDestination.GOSSIP_TOPIC.getDisplay()));
-      InstrumentationManager.execute(new ChronometerInstrument(TransportManager.getTransport(), new MetricProperty("gossip", "true"), new MetricProperty("event", MetricEvent.ACQUIRE_WORKER.getDisplay())) {
+      InstrumentationManager.execute(new ChronometerInstrument(TransportManager.getTransport(), new MetricProperty("gossip", "true"), new MetricProperty("event", MetricInteraction.ACQUIRE_WORKER.getDisplay())) {
 
         @Override
         public void withChronometer ()

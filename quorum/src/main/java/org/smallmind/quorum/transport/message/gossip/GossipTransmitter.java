@@ -39,7 +39,7 @@ import org.smallmind.instrument.MetricProperty;
 import org.smallmind.quorum.transport.InvocationSignal;
 import org.smallmind.quorum.transport.TransportException;
 import org.smallmind.quorum.transport.TransportManager;
-import org.smallmind.quorum.transport.instrument.MetricEvent;
+import org.smallmind.quorum.transport.instrument.MetricInteraction;
 import org.smallmind.quorum.transport.message.ConnectionFactor;
 import org.smallmind.quorum.transport.message.MessagePolicy;
 import org.smallmind.quorum.transport.message.MessageProperty;
@@ -81,7 +81,7 @@ public class GossipTransmitter {
 
     final TopicOperator topicOperator;
 
-    topicOperator = InstrumentationManager.execute(new ChronometerInstrumentAndReturn<TopicOperator>(TransportManager.getTransport(), new MetricProperty("gossip", "true"), new MetricProperty("event", MetricEvent.ACQUIRE_TOPIC.getDisplay())) {
+    topicOperator = InstrumentationManager.execute(new ChronometerInstrumentAndReturn<TopicOperator>(TransportManager.getTransport(), new MetricProperty("gossip", "true"), new MetricProperty("event", MetricInteraction.ACQUIRE_TOPIC.getDisplay())) {
 
       @Override
       public TopicOperator withChronometer ()
@@ -105,7 +105,7 @@ public class GossipTransmitter {
 
       Message gossipMessage;
 
-      gossipMessage = InstrumentationManager.execute(new ChronometerInstrumentAndReturn<Message>(TransportManager.getTransport(), new MetricProperty("gossip", "true"), new MetricProperty("event", MetricEvent.CONSTRUCT_MESSAGE.getDisplay())) {
+      gossipMessage = InstrumentationManager.execute(new ChronometerInstrumentAndReturn<Message>(TransportManager.getTransport(), new MetricProperty("gossip", "true"), new MetricProperty("event", MetricInteraction.CONSTRUCT_MESSAGE.getDisplay())) {
 
         @Override
         public Message withChronometer ()

@@ -40,7 +40,7 @@ import org.smallmind.quorum.pool.complex.event.ComponentPoolEventListener;
 import org.smallmind.quorum.pool.complex.event.ErrorReportingComponentPoolEvent;
 import org.smallmind.quorum.pool.complex.event.LeaseTimeReportingComponentPoolEvent;
 import org.smallmind.quorum.pool.complex.jmx.ComponentPoolMonitor;
-import org.smallmind.quorum.pool.instrument.MetricEvent;
+import org.smallmind.quorum.pool.instrument.MetricInteraction;
 
 public class ComponentPool<C> {
 
@@ -179,7 +179,7 @@ public class ComponentPool<C> {
 
     try {
 
-      return InstrumentationManager.execute(new ChronometerInstrumentAndReturn<C>(PoolManager.getPool(), new MetricProperty("pool", getPoolName()), new MetricProperty("event", MetricEvent.WAITING.getDisplay())) {
+      return InstrumentationManager.execute(new ChronometerInstrumentAndReturn<C>(PoolManager.getPool(), new MetricProperty("pool", getPoolName()), new MetricProperty("event", MetricInteraction.WAITING.getDisplay())) {
 
         @Override
         public C withChronometer () throws Exception {
