@@ -63,7 +63,7 @@ public class LoggerManager {
     synchronized (LoggerManager.class) {
       if (!TEMPLATE_SET.contains(template)) {
         TEMPLATE_SET.add(template);
-        reassociateAllLoggers();
+        reAssociateAllLoggers();
       }
     }
   }
@@ -72,7 +72,7 @@ public class LoggerManager {
 
     synchronized (LoggerManager.class) {
       if (TEMPLATE_SET.remove(template)) {
-        reassociateAllLoggers();
+        reAssociateAllLoggers();
       }
     }
   }
@@ -117,7 +117,7 @@ public class LoggerManager {
     }
   }
 
-  private static void reassociateAllLoggers () {
+  private static void reAssociateAllLoggers () {
 
     for (Logger logger : LOGGER_MAP.values()) {
       associateTemplate(logger);
