@@ -157,6 +157,10 @@ public class GenerateWrapperMojo extends AbstractMojo {
    * @parameter default-value=false
    */
   private boolean verbose;
+  /**
+   * @parameter default-value=false
+   */
+  private boolean neutered;
 
   public void execute ()
     throws MojoExecutionException, MojoFailureException {
@@ -356,37 +360,40 @@ public class GenerateWrapperMojo extends AbstractMojo {
       throw new MojoExecutionException(String.format("Problem in copying the wrapper library(%s) into the application library", osType.getLibrary()), ioException);
     }
 
-    try {
-      if (verbose) {
-        getLog().info(String.format("Copying wrapper executable(%s)...", osType.getExecutable()));
+    // Marking the build as 'neutered' will remove any proprietary executable or shared objects from the application (which consequently will not run)
+    if (!neutered) {
+      try {
+        if (verbose) {
+          getLog().info(String.format("Copying wrapper executable(%s)...", osType.getExecutable()));
+        }
+
+        copyToDestination(GenerateWrapperMojo.class.getClassLoader().getResourceAsStream(getWrapperFilePath("bin", osType.getExecutable())), binDirectory.getAbsolutePath(), osType.getExecutable());
+      }
+      catch (IOException ioException) {
+        throw new MojoExecutionException(String.format("Problem in copying the wrapper executable(%s) into the application binaries", osType.getExecutable()), ioException);
       }
 
-      copyToDestination(GenerateWrapperMojo.class.getClassLoader().getResourceAsStream(getWrapperFilePath("bin", osType.getExecutable())), binDirectory.getAbsolutePath(), osType.getExecutable());
-    }
-    catch (IOException ioException) {
-      throw new MojoExecutionException(String.format("Problem in copying the wrapper executable(%s) into the application binaries", osType.getExecutable()), ioException);
-    }
+      try {
+        if (verbose) {
+          getLog().info("Copying wrapper scripts...");
+        }
 
-    try {
-      if (verbose) {
-        getLog().info("Copying wrapper scripts...");
+        switch (osType.getOsStyle()) {
+          case UNIX:
+            processFreemarkerTemplate(getWrapperFilePath("bin", "freemarker.sh.script.in"), binDirectory, applicationName + ".sh", freemarkerMap);
+            break;
+          case WINDOWS:
+            copyToDestination(GenerateWrapperMojo.class.getClassLoader().getResourceAsStream(getWrapperFilePath("bin", "App.bat.in")), binDirectory.getAbsolutePath(), applicationName + ".bat");
+            copyToDestination(GenerateWrapperMojo.class.getClassLoader().getResourceAsStream(getWrapperFilePath("bin", "InstallApp-NT.bat.in")), binDirectory.getAbsolutePath(), "Install" + applicationName + "-NT.bat");
+            copyToDestination(GenerateWrapperMojo.class.getClassLoader().getResourceAsStream(getWrapperFilePath("bin", "UninstallApp-NT.bat.in")), binDirectory.getAbsolutePath(), "Uninstall" + applicationName + "-NT.bat");
+            break;
+          default:
+            throw new MojoExecutionException(String.format("Unknown os style(%s)", osType.getOsStyle().name()));
+        }
       }
-
-      switch (osType.getOsStyle()) {
-        case UNIX:
-          processFreemarkerTemplate(getWrapperFilePath("bin", "freemarker.sh.script.in"), binDirectory, applicationName + ".sh", freemarkerMap);
-          break;
-        case WINDOWS:
-          copyToDestination(GenerateWrapperMojo.class.getClassLoader().getResourceAsStream(getWrapperFilePath("bin", "App.bat.in")), binDirectory.getAbsolutePath(), applicationName + ".bat");
-          copyToDestination(GenerateWrapperMojo.class.getClassLoader().getResourceAsStream(getWrapperFilePath("bin", "InstallApp-NT.bat.in")), binDirectory.getAbsolutePath(), "Install" + applicationName + "-NT.bat");
-          copyToDestination(GenerateWrapperMojo.class.getClassLoader().getResourceAsStream(getWrapperFilePath("bin", "UninstallApp-NT.bat.in")), binDirectory.getAbsolutePath(), "Uninstall" + applicationName + "-NT.bat");
-          break;
-        default:
-          throw new MojoExecutionException(String.format("Unknown os style(%s)", osType.getOsStyle().name()));
+      catch (IOException ioException) {
+        throw new MojoExecutionException("Problem in copying the wrapper scripts into the application binaries", ioException);
       }
-    }
-    catch (IOException ioException) {
-      throw new MojoExecutionException("Problem in copying the wrapper scripts into the application binaries", ioException);
     }
 
     if (verbose) {
