@@ -348,20 +348,20 @@ public class GenerateWrapperMojo extends AbstractMojo {
       }
     }
 
-    try {
-      if (verbose) {
-        getLog().info(String.format("Copying wrapper library(%s)...", osType.getLibrary()));
-      }
-
-      copyToDestination(GenerateWrapperMojo.class.getClassLoader().getResourceAsStream(getWrapperFilePath("lib", osType.getLibrary())), libDirectory.getAbsolutePath(), osType.getLibrary());
-      copyToDestination(GenerateWrapperMojo.class.getClassLoader().getResourceAsStream(getWrapperFilePath("lib", osType.getLibrary())), libDirectory.getAbsolutePath(), osType.getOsStyle().getLibrary());
-    }
-    catch (IOException ioException) {
-      throw new MojoExecutionException(String.format("Problem in copying the wrapper library(%s) into the application library", osType.getLibrary()), ioException);
-    }
-
     // Marking the build as 'neutered' will remove any proprietary executable or shared objects from the application (which consequently will not run)
     if (!neutered) {
+      try {
+        if (verbose) {
+          getLog().info(String.format("Copying wrapper library(%s)...", osType.getLibrary()));
+        }
+
+        copyToDestination(GenerateWrapperMojo.class.getClassLoader().getResourceAsStream(getWrapperFilePath("lib", osType.getLibrary())), libDirectory.getAbsolutePath(), osType.getLibrary());
+        copyToDestination(GenerateWrapperMojo.class.getClassLoader().getResourceAsStream(getWrapperFilePath("lib", osType.getLibrary())), libDirectory.getAbsolutePath(), osType.getOsStyle().getLibrary());
+      }
+      catch (IOException ioException) {
+        throw new MojoExecutionException(String.format("Problem in copying the wrapper library(%s) into the application library", osType.getLibrary()), ioException);
+      }
+
       try {
         if (verbose) {
           getLog().info(String.format("Copying wrapper executable(%s)...", osType.getExecutable()));
