@@ -93,23 +93,22 @@ public class PatternFormatter implements Formatter {
 
   private static final Pattern CONVERSION_PATTERN = Pattern.compile("%%|(\\{([^{}]+))?%((\\+|-)?(\\d+))?(\\.(\\d+))?(!(\\+|-)([^!]*)!)?([dtnlmTCMNLFwzprsuiabexy])(([^{%]+)\\})?");
   private static final StaticPatternRule DOUBLE_PERCENT_RULE = new StaticPatternRule("%");
-
   private PatternRule[] patternRules;
   private Timestamp timestamp;
 
   public PatternFormatter ()
     throws LoggerException {
 
-    this("%d %n %+5l [%T] - %m", DateFormatTimestamp.getDefaultInstance());
+    this(DateFormatTimestamp.getDefaultInstance(), "%d %n %+5l [%T] - %m");
   }
 
   public PatternFormatter (String format)
     throws LoggerException {
 
-    this(format, DateFormatTimestamp.getDefaultInstance());
+    this(DateFormatTimestamp.getDefaultInstance(), format);
   }
 
-  public PatternFormatter (String format, Timestamp timestamp)
+  public PatternFormatter (Timestamp timestamp, String format)
     throws LoggerException {
 
     this.timestamp = timestamp;

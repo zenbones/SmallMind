@@ -43,48 +43,96 @@ public class XMLFormatter implements Formatter {
 
   private Timestamp timestamp;
   private XMLElement[] xmlElements;
+  private String newLine;
   private int indent;
 
   public XMLFormatter () {
 
-    this(3, XMLElement.values(), DateFormatTimestamp.getDefaultInstance());
+    this(3, System.getProperty("line.separator"), DateFormatTimestamp.getDefaultInstance(), XMLElement.values());
+  }
+
+  public XMLFormatter (String newLine) {
+
+    this(3, newLine, DateFormatTimestamp.getDefaultInstance(), XMLElement.values());
   }
 
   public XMLFormatter (Timestamp timestamp) {
 
-    this(3, XMLElement.values(), timestamp);
+    this(3, System.getProperty("line.separator"), timestamp, XMLElement.values());
+  }
+
+  public XMLFormatter (String newLine, Timestamp timestamp) {
+
+    this(3, newLine, timestamp, XMLElement.values());
   }
 
   public XMLFormatter (int indent) {
 
-    this(indent, XMLElement.values(), DateFormatTimestamp.getDefaultInstance());
+    this(indent, System.getProperty("line.separator"), DateFormatTimestamp.getDefaultInstance(), XMLElement.values());
+  }
+
+  public XMLFormatter (int indent, String newLine) {
+
+    this(indent, newLine, DateFormatTimestamp.getDefaultInstance(), XMLElement.values());
   }
 
   public XMLFormatter (int indent, Timestamp timestamp) {
 
-    this(indent, XMLElement.values(), timestamp);
+    this(indent, System.getProperty("line.separator"), timestamp, XMLElement.values());
   }
 
-  public XMLFormatter (XMLElement[] xmlElements) {
+  public XMLFormatter (int indent, String newLine, Timestamp timestamp) {
 
-    this(3, xmlElements, DateFormatTimestamp.getDefaultInstance());
+    this(indent, newLine, timestamp, XMLElement.values());
   }
 
-  public XMLFormatter (XMLElement[] xmlElements, Timestamp timestamp) {
+  public XMLFormatter (XMLElement... xmlElements) {
 
-    this(3, xmlElements, timestamp);
+    this(3, System.getProperty("line.separator"), DateFormatTimestamp.getDefaultInstance(), xmlElements);
   }
 
-  public XMLFormatter (int indent, XMLElement[] xmlElements) {
+  public XMLFormatter (String newLine, XMLElement... xmlElements) {
 
-    this(indent, xmlElements, DateFormatTimestamp.getDefaultInstance());
+    this(3, newLine, DateFormatTimestamp.getDefaultInstance(), xmlElements);
   }
 
-  public XMLFormatter (int indent, XMLElement[] xmlElements, Timestamp timestamp) {
+  public XMLFormatter (Timestamp timestamp, XMLElement... xmlElements) {
+
+    this(3, System.getProperty("line.separator"), timestamp, xmlElements);
+  }
+
+  public XMLFormatter (String newLine, Timestamp timestamp, XMLElement... xmlElements) {
+
+    this(3, newLine, timestamp, xmlElements);
+  }
+
+  public XMLFormatter (int indent, XMLElement... xmlElements) {
+
+    this(indent, System.getProperty("line.separator"), DateFormatTimestamp.getDefaultInstance(), xmlElements);
+  }
+
+  public XMLFormatter (int indent, String newLine, XMLElement... xmlElements) {
+
+    this(indent, newLine, DateFormatTimestamp.getDefaultInstance(), xmlElements);
+  }
+
+  public XMLFormatter (int indent, String newLine, Timestamp timestamp, XMLElement... xmlElements) {
 
     this.indent = indent;
+    this.newLine = newLine;
     this.xmlElements = xmlElements;
     this.timestamp = timestamp;
+  }
+
+  private static int findRepeatedStackElements (StackTraceElement singleElement, StackTraceElement[] prevStackTrace) {
+
+    for (int count = 0; count < prevStackTrace.length; count++) {
+      if (singleElement.equals(prevStackTrace[count])) {
+        return prevStackTrace.length - count;
+      }
+    }
+
+    return -1;
   }
 
   public int getIndent () {
@@ -95,6 +143,16 @@ public class XMLFormatter implements Formatter {
   public void setIndent (int indent) {
 
     this.indent = indent;
+  }
+
+  public String getNewLine () {
+
+    return newLine;
+  }
+
+  public void setNewLine (String newLine) {
+
+    this.newLine = newLine;
   }
 
   public Timestamp getTimestamp () {
@@ -220,7 +278,7 @@ public class XMLFormatter implements Formatter {
         formatBuilder.append(throwable.getClass().getCanonicalName());
         formatBuilder.append(": ");
         formatBuilder.append(throwable.getMessage());
-        formatBuilder.append(System.getProperty("line.separator"));
+        formatBuilder.append(newLine);
 
         for (StackTraceElement singleElement : throwable.getStackTrace()) {
 
@@ -231,14 +289,14 @@ public class XMLFormatter implements Formatter {
               formatBuilder.append("   ... ");
               formatBuilder.append(repeatedElements);
               formatBuilder.append(" more");
-              formatBuilder.append(System.getProperty("line.separator"));
+              formatBuilder.append(newLine);
               break;
             }
           }
 
           formatBuilder.append("   at ");
           formatBuilder.append(singleElement.toString());
-          formatBuilder.append(System.getProperty("line.separator"));
+          formatBuilder.append(newLine);
         }
 
         prevStackTrace = throwable.getStackTrace();
@@ -246,17 +304,6 @@ public class XMLFormatter implements Formatter {
 
       appendLine(formatBuilder, "</stack-trace>", level);
     }
-  }
-
-  private static int findRepeatedStackElements (StackTraceElement singleElement, StackTraceElement[] prevStackTrace) {
-
-    for (int count = 0; count < prevStackTrace.length; count++) {
-      if (singleElement.equals(prevStackTrace[count])) {
-        return prevStackTrace.length - count;
-      }
-    }
-
-    return -1;
   }
 
   private void appendProbeReport (StringBuilder formatBuilder, Record record, ProbeReport probeReport, Collection<Filter> filterCollection, int level) {
@@ -359,7 +406,7 @@ public class XMLFormatter implements Formatter {
       formatBuilder.append("</");
       formatBuilder.append(tagName);
       formatBuilder.append(">");
-      formatBuilder.append(System.getProperty("line.separator"));
+      formatBuilder.append(newLine);
     }
   }
 
@@ -367,7 +414,7 @@ public class XMLFormatter implements Formatter {
 
     appendIndent(formatBuilder, level);
     formatBuilder.append(content);
-    formatBuilder.append(System.getProperty("line.separator"));
+    formatBuilder.append(newLine);
   }
 
   private void appendIndent (StringBuilder formatBuilder, int level) {
