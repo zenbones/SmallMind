@@ -218,7 +218,7 @@ public class XMLFormatter implements Formatter {
       }
     }
 
-    appendLine(formatBuilder, "</log-record>", 0);
+    appendFinalLine(formatBuilder, "</log-record>", 0);
 
     return formatBuilder.toString();
   }
@@ -415,6 +415,13 @@ public class XMLFormatter implements Formatter {
     appendIndent(formatBuilder, level);
     formatBuilder.append(content);
     formatBuilder.append(newLine);
+  }
+
+  private void appendFinalLine (StringBuilder formatBuilder, String content, int level) {
+
+    appendIndent(formatBuilder, level);
+    formatBuilder.append(content);
+    formatBuilder.append(System.getProperty("line.separator"));
   }
 
   private void appendIndent (StringBuilder formatBuilder, int level) {
