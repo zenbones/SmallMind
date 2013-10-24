@@ -39,6 +39,7 @@ public class ContextFactory {
   public static <C extends Context> void importContextTrace (Class<C> contextClass, C... contexts) {
 
     ContextStackThreadLocal threadLocal;
+    ContextStack contextStack;
 
     if ((contexts != null) && (contexts.length > 0)) {
       synchronized (CONTEXT_MAP) {
@@ -47,8 +48,12 @@ public class ContextFactory {
         }
       }
 
+      if ((contextStack = threadLocal.get()) == null) {
+        threadLocal.set(contextStack = new ContextStack());
+      }
+
       for (C context : contexts) {
-        threadLocal.get().push(context);
+        contextStack.push(context);
       }
     }
   }
@@ -103,10 +108,11 @@ public class ContextFactory {
   public static boolean exists (Class<? extends Context> contextClass) {
 
     ContextStackThreadLocal threadLocal;
+    ContextStack contextStack;
 
     synchronized (CONTEXT_MAP) {
 
-      return ((threadLocal = CONTEXT_MAP.get(contextClass)) != null) && (!threadLocal.get().isEmpty());
+      return ((threadLocal = CONTEXT_MAP.get(contextClass)) != null) && ((contextStack = threadLocal.get()) != null) && (!contextStack.isEmpty());
     }
   }
 
@@ -114,6 +120,7 @@ public class ContextFactory {
     throws ContextException {
 
     ContextStackThreadLocal threadLocal;
+    ContextStack contextStack;
     C context;
 
     synchronized (CONTEXT_MAP) {
@@ -123,7 +130,7 @@ public class ContextFactory {
       }
     }
 
-    if ((context = contextClass.cast(threadLocal.get().peek())) == null) {
+    if (((contextStack = threadLocal.get()) == null) || ((context = contextClass.cast(contextStack.peek())) == null)) {
 
       return null;
     }
@@ -163,6 +170,7 @@ public class ContextFactory {
   public static void pushContext (Context context) {
 
     ContextStackThreadLocal threadLocal;
+    ContextStack contextStack;
 
     synchronized (CONTEXT_MAP) {
       if ((threadLocal = CONTEXT_MAP.get(context.getClass())) == null) {
@@ -170,7 +178,11 @@ public class ContextFactory {
       }
     }
 
-    threadLocal.get().push(context);
+    if ((contextStack = threadLocal.get()) == null) {
+      threadLocal.set(contextStack = new ContextStack());
+    }
+
+    contextStack.push(context);
   }
 
   public static Context popContext (Context context) {
@@ -181,13 +193,14 @@ public class ContextFactory {
   public static <C extends Context> C popContext (Class<C> contextClass) {
 
     ContextStackThreadLocal threadLocal;
+    ContextStack contextStack;
 
     synchronized (CONTEXT_MAP) {
       threadLocal = CONTEXT_MAP.get(contextClass);
     }
 
-    if (threadLocal != null) {
-      return contextClass.cast(threadLocal.get().pop());
+    if ((threadLocal != null) && ((contextStack = threadLocal.get()) != null)) {
+      return contextClass.cast(contextStack.pop());
     }
 
     return null;
