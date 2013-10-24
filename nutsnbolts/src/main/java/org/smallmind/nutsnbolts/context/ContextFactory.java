@@ -111,9 +111,10 @@ public class ContextFactory {
     ContextStack<C> contextStack;
 
     synchronized (CONTEXT_MAP) {
-
-      return ((threadLocal = (ContextStackThreadLocal<C>)CONTEXT_MAP.get(contextClass)) != null) && ((contextStack = threadLocal.get()) != null) && (!contextStack.isEmpty());
+      threadLocal = (ContextStackThreadLocal<C>)CONTEXT_MAP.get(contextClass);
     }
+
+    return (threadLocal != null) && ((contextStack = threadLocal.get()) != null) && (!contextStack.isEmpty());
   }
 
   public static <C extends Context> C getContext (Class<C> contextClass)
@@ -124,13 +125,10 @@ public class ContextFactory {
     C context;
 
     synchronized (CONTEXT_MAP) {
-      if ((threadLocal = (ContextStackThreadLocal<C>)CONTEXT_MAP.get(contextClass)) == null) {
-
-        return null;
-      }
+      threadLocal = (ContextStackThreadLocal<C>)CONTEXT_MAP.get(contextClass);
     }
 
-    if (((contextStack = threadLocal.get()) == null) || ((context = contextStack.peek()) == null)) {
+    if ((threadLocal == null) || ((contextStack = threadLocal.get()) == null) || ((context = contextStack.peek()) == null)) {
 
       return null;
     }
