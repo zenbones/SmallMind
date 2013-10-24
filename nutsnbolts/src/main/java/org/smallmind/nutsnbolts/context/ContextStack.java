@@ -29,21 +29,21 @@ package org.smallmind.nutsnbolts.context;
 import java.util.LinkedList;
 import java.util.List;
 
-public class ContextStack {
+public class ContextStack<C extends Context> {
 
-  private final LinkedList<Context> contextList;
+  private final LinkedList<C> contextList;
 
   public ContextStack () {
 
-    contextList = new LinkedList<Context>();
+    contextList = new LinkedList<C>();
   }
 
-  public ContextStack (ContextStack contextStack) {
+  public ContextStack (ContextStack<C> contextStack) {
 
     contextList = new LinkedList<>(contextStack.getInternalList());
   }
 
-  private List<Context> getInternalList () {
+  private List<C> getInternalList () {
 
     return contextList;
   }
@@ -53,7 +53,7 @@ public class ContextStack {
     return contextList.isEmpty();
   }
 
-  public synchronized Context peek () {
+  public synchronized C peek () {
 
     if (contextList.isEmpty()) {
       return null;
@@ -62,7 +62,7 @@ public class ContextStack {
     return contextList.getFirst();
   }
 
-  public synchronized void push (Context context) {
+  public synchronized void push (C context) {
 
     if (context instanceof LifecycleAware) {
       ((LifecycleAware)context).beforePush();
@@ -71,11 +71,11 @@ public class ContextStack {
     contextList.addFirst(context);
   }
 
-  public synchronized Context pop () {
+  public synchronized C pop () {
 
     if (!contextList.isEmpty()) {
 
-      Context context = contextList.removeFirst();
+      C context = contextList.removeFirst();
 
       if (context instanceof LifecycleAware) {
         ((LifecycleAware)context).afterPop();
