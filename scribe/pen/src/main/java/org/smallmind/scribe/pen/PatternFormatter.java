@@ -134,7 +134,7 @@ public class PatternFormatter implements Formatter {
     LinkedList<PatternRule> ruleList;
     int index = 0;
 
-    ruleList = new LinkedList<PatternRule>();
+    ruleList = new LinkedList<>();
     while (conversionMatcher.find(index)) {
       if (index < conversionMatcher.start()) {
         ruleList.add(new StaticPatternRule(format.substring(index, conversionMatcher.start())));

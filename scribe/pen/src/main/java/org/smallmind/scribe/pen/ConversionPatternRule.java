@@ -38,35 +38,41 @@ import org.smallmind.scribe.pen.probe.UpdateProbeEntry;
 
 public class ConversionPatternRule implements PatternRule {
 
-  private static enum Padding {
-
-    LEFT, RIGHT, NONE
-  }
-
   private String header;
   private String footer;
-  private String multilinePrefix;
+  private String multiLinePrefix;
   private Padding padding;
   private boolean prefixFirstLine;
   private char conversion;
   private int width;
   private int precision;
 
-  public ConversionPatternRule (String header, String paddingString, String widthString, String precisionString, String firstLineString, String multilinePrefix, String conversionString, String footer) {
+  public ConversionPatternRule (String header, String paddingString, String widthString, String precisionString, String firstLineString, String multiLinePrefix, String conversionString, String footer) {
 
-    this(header, (paddingString == null) ? Padding.NONE : (paddingString.equals("+") ? Padding.RIGHT : Padding.LEFT), (widthString == null) ? -1 : Integer.parseInt(widthString), (precisionString == null) ? -1 : Integer.parseInt(precisionString), !("-".equals(firstLineString)), (multilinePrefix == null) ? System.getProperty("line.separator") + '\t' : multilinePrefix, conversionString.charAt(0), footer);
+    this(header, (paddingString == null) ? Padding.NONE : (paddingString.equals("+") ? Padding.RIGHT : Padding.LEFT), (widthString == null) ? -1 : Integer.parseInt(widthString), (precisionString == null) ? -1 : Integer.parseInt(precisionString), !("-".equals(firstLineString)), (multiLinePrefix == null) ? System.getProperty("line.separator") + '\t' : multiLinePrefix, conversionString.charAt(0), footer);
   }
 
-  public ConversionPatternRule (String header, Padding padding, int width, int precision, boolean prefixFirstLine, String multilinePrefix, char conversion, String footer) {
+  public ConversionPatternRule (String header, Padding padding, int width, int precision, boolean prefixFirstLine, String multiLinePrefix, char conversion, String footer) {
 
     this.header = stripSlashes(header);
     this.padding = padding;
     this.width = width;
     this.precision = precision;
     this.prefixFirstLine = prefixFirstLine;
-    this.multilinePrefix = stripSlashes(multilinePrefix);
+    this.multiLinePrefix = stripSlashes(multiLinePrefix);
     this.conversion = conversion;
     this.footer = stripSlashes(footer);
+  }
+
+  private static int findRepeatedStackElements (StackTraceElement singleElement, StackTraceElement[] prevStackTrace) {
+
+    for (int count = 0; count < prevStackTrace.length; count++) {
+      if (singleElement.equals(prevStackTrace[count])) {
+        return prevStackTrace.length - count;
+      }
+    }
+
+    return -1;
   }
 
   public String getHeader () {
@@ -131,7 +137,7 @@ public class ConversionPatternRule implements PatternRule {
 
     Record filterRecord;
     LogicalContext logicalContext;
-    Throwable throwable;
+    Throwable throwable = record.getThrown();
     Parameter[] parameters;
     ProbeReport probeReport;
 
@@ -150,7 +156,15 @@ public class ConversionPatternRule implements PatternRule {
         return trimToWidthAndPad(record.getLevel().name());
       case 'm':
 
-        return trimToWidthAndPad(record.getMessage());
+        String message;
+
+        if ((message = record.getMessage()) == null) {
+          if (throwable != null) {
+            message = throwable.getMessage();
+          }
+        }
+
+        return trimToWidthAndPad(message);
       case 'T':
 
         return trimToWidthAndPad(record.getThreadName());
@@ -185,14 +199,14 @@ public class ConversionPatternRule implements PatternRule {
 
         return null;
       case 'w':
-        if ((throwable = record.getThrown()) != null) {
+        if (throwable != null) {
 
           StringBuilder stackBuilder = new StringBuilder();
           StackTraceElement[] prevStackTrace = null;
           int repeatedElements;
 
-          if (prefixFirstLine && (multilinePrefix != null)) {
-            stackBuilder.append(multilinePrefix);
+          if (prefixFirstLine && (multiLinePrefix != null)) {
+            stackBuilder.append(multiLinePrefix);
           }
 
           do {
@@ -200,8 +214,8 @@ public class ConversionPatternRule implements PatternRule {
               stackBuilder.append("Exception in thread ");
             }
             else {
-              if (prefixFirstLine && (multilinePrefix != null)) {
-                stackBuilder.append(multilinePrefix);
+              if (prefixFirstLine && (multiLinePrefix != null)) {
+                stackBuilder.append(multiLinePrefix);
               }
               stackBuilder.append("Caused by: ");
             }
@@ -211,8 +225,8 @@ public class ConversionPatternRule implements PatternRule {
             stackBuilder.append(throwable.getMessage());
 
             for (StackTraceElement singleElement : throwable.getStackTrace()) {
-              if (multilinePrefix != null) {
-                stackBuilder.append(multilinePrefix);
+              if (multiLinePrefix != null) {
+                stackBuilder.append(multiLinePrefix);
               }
 
               if (prevStackTrace != null) {
@@ -247,8 +261,8 @@ public class ConversionPatternRule implements PatternRule {
               break;
             }
 
-            if ((prefixFirstLine || (parameterBuilder.length() > 0)) && (multilinePrefix != null)) {
-              parameterBuilder.append(multilinePrefix);
+            if ((prefixFirstLine || (parameterBuilder.length() > 0)) && (multiLinePrefix != null)) {
+              parameterBuilder.append(multiLinePrefix);
             }
 
             parameterBuilder.append(parameter.getKey());
@@ -274,33 +288,33 @@ public class ConversionPatternRule implements PatternRule {
 
           StringBuilder correlatorBuilder = new StringBuilder();
 
-          if (prefixFirstLine && (multilinePrefix != null)) {
-            correlatorBuilder.append(multilinePrefix);
+          if (prefixFirstLine && (multiLinePrefix != null)) {
+            correlatorBuilder.append(multiLinePrefix);
           }
 
           correlatorBuilder.append("Thread Identifier: ");
           correlatorBuilder.append(probeReport.getCorrelator().getThreadIdentifier());
 
-          if (multilinePrefix != null) {
-            correlatorBuilder.append(multilinePrefix);
+          if (multiLinePrefix != null) {
+            correlatorBuilder.append(multiLinePrefix);
           }
           correlatorBuilder.append("Parent Identifier: ");
           correlatorBuilder.append(probeReport.getCorrelator().getParentIdentifier());
 
-          if (multilinePrefix != null) {
-            correlatorBuilder.append(multilinePrefix);
+          if (multiLinePrefix != null) {
+            correlatorBuilder.append(multiLinePrefix);
           }
           correlatorBuilder.append("Identifier: ");
           correlatorBuilder.append(probeReport.getCorrelator().getIdentifier());
 
-          if (multilinePrefix != null) {
-            correlatorBuilder.append(multilinePrefix);
+          if (multiLinePrefix != null) {
+            correlatorBuilder.append(multiLinePrefix);
           }
           correlatorBuilder.append("Frame: ");
           correlatorBuilder.append(probeReport.getCorrelator().getFrame());
 
-          if (multilinePrefix != null) {
-            correlatorBuilder.append(multilinePrefix);
+          if (multiLinePrefix != null) {
+            correlatorBuilder.append(multiLinePrefix);
           }
           correlatorBuilder.append("Instance: ");
           correlatorBuilder.append(probeReport.getCorrelator().getInstance());
@@ -368,8 +382,8 @@ public class ConversionPatternRule implements PatternRule {
             }
 
             if (!skipStatement) {
-              if ((prefixFirstLine || (statementBuilder.length() > 0)) && (multilinePrefix != null)) {
-                statementBuilder.append(multilinePrefix);
+              if ((prefixFirstLine || (statementBuilder.length() > 0)) && (multiLinePrefix != null)) {
+                statementBuilder.append(multiLinePrefix);
               }
 
               statementBuilder.append(statement.getMessage());
@@ -410,8 +424,8 @@ public class ConversionPatternRule implements PatternRule {
 
               boolean listInitiated = false;
 
-              if ((prefixFirstLine || (metricBuilder.length() > 0)) && (multilinePrefix != null)) {
-                metricBuilder.append(multilinePrefix);
+              if ((prefixFirstLine || (metricBuilder.length() > 0)) && (multiLinePrefix != null)) {
+                metricBuilder.append(multiLinePrefix);
               }
 
               metricBuilder.append(metricMilieu.getMetric().getTitle());
@@ -439,17 +453,6 @@ public class ConversionPatternRule implements PatternRule {
       default:
         throw new UnknownSwitchCaseException("%c", conversion);
     }
-  }
-
-  private static int findRepeatedStackElements (StackTraceElement singleElement, StackTraceElement[] prevStackTrace) {
-
-    for (int count = 0; count < prevStackTrace.length; count++) {
-      if (singleElement.equals(prevStackTrace[count])) {
-        return prevStackTrace.length - count;
-      }
-    }
-
-    return -1;
   }
 
   private String trimToDotPrecision (String field) {
@@ -523,5 +526,10 @@ public class ConversionPatternRule implements PatternRule {
     }
 
     return field;
+  }
+
+  private static enum Padding {
+
+    LEFT, RIGHT, NONE
   }
 }

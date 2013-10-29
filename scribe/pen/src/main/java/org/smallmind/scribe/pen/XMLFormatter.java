@@ -196,7 +196,19 @@ public class XMLFormatter implements Formatter {
           appendElement(formatBuilder, "level", record.getLevel().name(), 1);
           break;
         case MESSAGE:
-          appendElement(formatBuilder, "message", record.getMessage(), 1);
+
+          String message;
+
+          if ((message = record.getMessage()) == null) {
+
+            Throwable throwable;
+
+            if ((throwable = record.getThrown()) != null) {
+              message = throwable.getMessage();
+            }
+          }
+
+          appendElement(formatBuilder, "message", message, 1);
           break;
         case THREAD:
           appendThreadInfo(formatBuilder, record.getThreadName(), record.getThreadID(), 1);
