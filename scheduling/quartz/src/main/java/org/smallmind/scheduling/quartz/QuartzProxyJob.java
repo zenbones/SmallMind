@@ -37,7 +37,7 @@ import org.smallmind.scribe.pen.LoggerManager;
 
 public abstract class QuartzProxyJob implements ProxyJob, Job {
 
-  private LinkedList<Exception> exceptionList;
+  private LinkedList<Throwable> throwableList;
   private JobStatus status = JobStatus.SUCCESS;
   private Date startTime;
   private Date stopTime;
@@ -45,24 +45,28 @@ public abstract class QuartzProxyJob implements ProxyJob, Job {
 
   public QuartzProxyJob () {
 
-    exceptionList = new LinkedList<Exception>();
+    throwableList = new LinkedList<>();
   }
 
+  @Override
   public JobStatus getJobStatus () {
 
     return status;
   }
 
+  @Override
   public Date getStartTime () {
 
     return startTime;
   }
 
+  @Override
   public Date getStopTime () {
 
     return stopTime;
   }
 
+  @Override
   public synchronized void incCount () {
 
     count++;
@@ -73,41 +77,51 @@ public abstract class QuartzProxyJob implements ProxyJob, Job {
     count += additional;
   }
 
+  @Override
   public synchronized int getCount () {
 
     return count;
   }
 
-  public synchronized Exception[] getExceptions () {
+  @Override
+  public synchronized Throwable[] getThrowables () {
 
-    if (!exceptionList.isEmpty()) {
+    if (!throwableList.isEmpty()) {
 
-      Exception[] exceptions;
+      Throwable[] throwables;
 
-      exceptions = new Exception[exceptionList.size()];
-      exceptionList.toArray(exceptions);
+      throwables = new Exception[throwableList.size()];
+      throwableList.toArray(throwables);
 
-      return exceptions;
+      return throwables;
     }
 
     return null;
   }
 
-  public synchronized void setException (Exception exception) {
+  @Override
+  public synchronized void setThrowable (Throwable throwable) {
 
-    setException(exception, true);
+    setThrowable(throwable, true);
   }
 
-  public synchronized void setException (Exception exception, boolean isFailure) {
+  public synchronized void setThrowable (Throwable throwable, boolean isFailure) {
 
-    exceptionList.add(exception);
-    LoggerManager.getLogger(this.getClass()).error(exception);
+    throwableList.add(throwable);
 
     if (isFailure) {
       status = JobStatus.FAILURE;
     }
+
+    if (terminateOnError() && (throwable instanceof Error)) {
+      LoggerManager.getLogger(this.getClass()).fatal(throwable);
+    }
+    else {
+      LoggerManager.getLogger(this.getClass()).error(throwable);
+    }
   }
 
+  @Override
   public void execute (JobExecutionContext jobExecutionContext)
     throws JobExecutionException {
 
@@ -116,9 +130,15 @@ public abstract class QuartzProxyJob implements ProxyJob, Job {
       proceed();
       shutdown();
     }
-    catch (Exception exception) {
-      setException(exception);
-      throw new JobExecutionException(exception);
+    catch (Throwable throwable) {
+      setThrowable(throwable);
+
+      if (terminateOnError() && (throwable instanceof Error)) {
+        System.exit(1);
+      }
+      else {
+        throw new JobExecutionException(throwable);
+      }
     }
     finally {
       stopTime = new Date();

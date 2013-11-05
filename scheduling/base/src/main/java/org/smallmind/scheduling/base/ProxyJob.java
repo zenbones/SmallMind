@@ -32,6 +32,8 @@ public interface ProxyJob {
 
   public abstract boolean logOnZeroCount ();
 
+  public abstract boolean terminateOnError ();
+
   public abstract JobStatus getJobStatus ();
 
   public abstract int getCount ();
@@ -42,9 +44,9 @@ public interface ProxyJob {
 
   public abstract Date getStopTime ();
 
-  public abstract Exception[] getExceptions ();
+  public abstract Throwable[] getThrowables ();
 
-  public abstract void setException (Exception exception);
+  public abstract void setThrowable (Throwable throwable);
 
   public abstract void proceed ()
     throws Exception;
