@@ -208,7 +208,7 @@ public class XMLFormatter implements Formatter {
             }
           }
 
-          appendElement(formatBuilder, "message", message, 1);
+          appendElement(formatBuilder, "message", "<![CDATA[ " + message + " ]]>", 1);
           break;
         case THREAD:
           appendThreadInfo(formatBuilder, record.getThreadName(), record.getThreadID(), 1);
@@ -275,7 +275,7 @@ public class XMLFormatter implements Formatter {
     int repeatedElements;
 
     if (throwable != null) {
-      appendLine(formatBuilder, "<stack-trace>", level);
+      appendLine(formatBuilder, "<stack-trace><![CDATA[", level);
 
       do {
         appendIndent(formatBuilder, level + 1);
@@ -314,7 +314,7 @@ public class XMLFormatter implements Formatter {
         prevStackTrace = throwable.getStackTrace();
       } while ((throwable = throwable.getCause()) != null);
 
-      appendLine(formatBuilder, "</stack-trace>", level);
+      appendLine(formatBuilder, "]]></stack-trace>", level);
     }
   }
 
