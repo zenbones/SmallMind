@@ -61,7 +61,7 @@ public class SelfDestructiveKey<K extends Comparable<K>> implements Comparable<S
 
     if ((comparison = ignitionTime - key.getIgnitionTime()) == 0) {
 
-      return (mapKey == null) ? ((key.getMapKey() == null) ? 0 : -1) : mapKey.compareTo(key.getMapKey());
+      return (mapKey == null) ? ((key.getMapKey() == null) ? 0 : -1) : ((key.getMapKey() == null) ? 1 : mapKey.compareTo(key.getMapKey()));
     }
 
     return (int)comparison;
