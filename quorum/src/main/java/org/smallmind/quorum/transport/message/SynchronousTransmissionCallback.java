@@ -27,6 +27,7 @@
 package org.smallmind.quorum.transport.message;
 
 import org.smallmind.instrument.InstrumentationManager;
+import org.smallmind.nutsnbolts.time.Duration;
 
 public class SynchronousTransmissionCallback implements TransmissionCallback {
 
@@ -40,7 +41,7 @@ public class SynchronousTransmissionCallback implements TransmissionCallback {
   }
 
   @Override
-  public void destroy () {
+  public void destroy (Duration timeoutDuration) {
 
   }
 

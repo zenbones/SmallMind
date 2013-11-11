@@ -36,9 +36,11 @@ import java.net.SocketTimeoutException;
 import java.nio.ByteBuffer;
 import java.util.Arrays;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import org.smallmind.cloud.multicast.EventMessageException;
 import org.smallmind.nutsnbolts.lang.UnknownSwitchCaseException;
+import org.smallmind.nutsnbolts.time.Duration;
 import org.smallmind.nutsnbolts.util.SelfDestructiveMap;
 import org.smallmind.nutsnbolts.util.UniqueId;
 import org.smallmind.scribe.pen.Logger;
@@ -76,7 +78,7 @@ public class EventTransmitter implements Runnable {
     this.messageSegmentSize = messageSegmentSize;
 
     messageBufferSize = messageSegmentSize + EventMessage.MESSAGE_HEADER_SIZE;
-    messageCache = new SelfDestructiveMap<>(60, 3);
+    messageCache = new SelfDestructiveMap<>(new Duration(60, TimeUnit.SECONDS), new Duration(3, TimeUnit.SECONDS));
 
     multicastSocket = new MulticastSocket(multicastPort);
     multicastSocket.setReuseAddress(true);

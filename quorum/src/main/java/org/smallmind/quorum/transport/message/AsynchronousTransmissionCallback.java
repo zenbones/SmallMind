@@ -29,23 +29,25 @@ package org.smallmind.quorum.transport.message;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicReference;
 import org.smallmind.instrument.InstrumentationManager;
+import org.smallmind.nutsnbolts.time.Duration;
 import org.smallmind.quorum.transport.TransportTimeoutException;
 
 public class AsynchronousTransmissionCallback implements TransmissionCallback {
 
   private final CountDownLatch resultLatch = new CountDownLatch(1);
-  private final AtomicReference<MessagePlus> messagePlusRef = new AtomicReference<MessagePlus>();
+  private final AtomicReference<Duration> timeoutDurationRef = new AtomicReference<>();
+  private final AtomicReference<MessagePlus> messagePlusRef = new AtomicReference<>();
   private final MessageStrategy messageStrategy;
-  private final long timeoutSeconds;
 
-  public AsynchronousTransmissionCallback (MessageStrategy messageStrategy, long timeoutSeconds) {
+  public AsynchronousTransmissionCallback (MessageStrategy messageStrategy) {
 
     this.messageStrategy = messageStrategy;
-    this.timeoutSeconds = timeoutSeconds;
   }
 
   @Override
-  public void destroy () {
+  public void destroy (Duration timeoutDuration) {
+
+    timeoutDurationRef.set(timeoutDuration);
 
     resultLatch.countDown();
   }
@@ -59,7 +61,10 @@ public class AsynchronousTransmissionCallback implements TransmissionCallback {
     resultLatch.await();
 
     if ((messagePlus = messagePlusRef.get()) == null) {
-      throw new TransportTimeoutException("The timeout(%d) seconds was exceeded while waiting for a response", timeoutSeconds);
+
+      Duration timeoutDuration = timeoutDurationRef.get();
+
+      throw new TransportTimeoutException("The timeout(%s) milliseconds was exceeded while waiting for a response", (timeoutDuration == null) ? "unknown" : String.valueOf(timeoutDuration.toMilliseconds()));
     }
 
     InstrumentationManager.appendMetricContext(messagePlus.getMetricContext());

@@ -26,7 +26,9 @@
  */
 package org.smallmind.nutsnbolts.util;
 
+import org.smallmind.nutsnbolts.time.Duration;
+
 public interface SelfDestructive {
 
-  public abstract void destroy ();
+  public abstract void destroy (Duration timeoutDuration);
 }

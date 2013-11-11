@@ -38,6 +38,7 @@ import javax.jms.Topic;
 import org.smallmind.instrument.ChronometerInstrumentAndReturn;
 import org.smallmind.instrument.InstrumentationManager;
 import org.smallmind.instrument.MetricProperty;
+import org.smallmind.nutsnbolts.time.Duration;
 import org.smallmind.nutsnbolts.util.SelfDestructiveMap;
 import org.smallmind.quorum.transport.InvocationSignal;
 import org.smallmind.quorum.transport.TransportException;
@@ -54,7 +55,6 @@ public class MessageTransmitter {
   private final TransmissionListener[] transmissionListeners;
   private final ConnectionFactor[] requestConnectionFactors;
   private final String instanceId = UUID.randomUUID().toString();
-  private final long timeoutSeconds;
 
   public MessageTransmitter (TransportManagedObjects requestManagedObjects, TransportManagedObjects responseManagedObjects, MessagePolicy messagePolicy, ReconnectionPolicy reconnectionPolicy, MessageStrategy messageStrategy, int clusterSize, int concurrencyLimit, int timeoutSeconds)
     throws IOException, JMSException, TransportException {
@@ -62,16 +62,15 @@ public class MessageTransmitter {
     int requestIndex = 0;
 
     this.messageStrategy = messageStrategy;
-    this.timeoutSeconds = timeoutSeconds;
 
-    callbackMap = new SelfDestructiveMap<String, TransmissionCallback>(timeoutSeconds);
+    callbackMap = new SelfDestructiveMap<>(new Duration(timeoutSeconds, TimeUnit.SECONDS));
 
     requestConnectionFactors = new ConnectionFactor[clusterSize];
     for (int index = 0; index < requestConnectionFactors.length; index++) {
       requestConnectionFactors[index] = new ConnectionFactor(requestManagedObjects, messagePolicy, reconnectionPolicy);
     }
 
-    operatorQueue = new LinkedBlockingQueue<QueueOperator>();
+    operatorQueue = new LinkedBlockingQueue<>();
     for (int index = 0; index < Math.max(clusterSize, concurrencyLimit); index++) {
       operatorQueue.add(new QueueOperator(requestConnectionFactors[requestIndex], (Queue)requestManagedObjects.getDestination()));
       if (++requestIndex == requestConnectionFactors.length) {
@@ -140,7 +139,7 @@ public class MessageTransmitter {
       });
 
       queueOperator.send(requestMessage);
-      if ((previousCallback = (SynchronousTransmissionCallback)callbackMap.putIfAbsent(requestMessage.getJMSMessageID(), asynchronousCallback = new AsynchronousTransmissionCallback(messageStrategy, timeoutSeconds))) != null) {
+      if ((previousCallback = (SynchronousTransmissionCallback)callbackMap.putIfAbsent(requestMessage.getJMSMessageID(), asynchronousCallback = new AsynchronousTransmissionCallback(messageStrategy))) != null) {
 
         return previousCallback;
       }

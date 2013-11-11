@@ -32,6 +32,7 @@ import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.util.Iterator;
 import java.util.TreeMap;
+import org.smallmind.nutsnbolts.time.Duration;
 import org.smallmind.nutsnbolts.util.SelfDestructive;
 
 public class EventMessageMold implements SelfDestructive {
@@ -46,7 +47,7 @@ public class EventMessageMold implements SelfDestructive {
   }
 
   @Override
-  public void destroy () {
+  public void destroy (Duration timeoutDuration) {
 
   }
 
