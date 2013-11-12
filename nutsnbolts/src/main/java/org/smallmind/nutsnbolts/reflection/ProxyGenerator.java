@@ -254,6 +254,7 @@ public class ProxyGenerator {
       this.initialized = initialized;
     }
 
+    @Override
     public void visit (int version, int access, String name, String signature, String superName, String[] interfaces) {
 
       if (!initialized) {
@@ -301,6 +302,7 @@ public class ProxyGenerator {
       }
     }
 
+    @Override
     public MethodVisitor visitMethod (int access, String name, String desc, String signature, String[] exceptions) {
 
       MethodTracker methodTracker;
@@ -567,6 +569,7 @@ public class ProxyGenerator {
       return null;
     }
 
+    @Override
     public void visitEnd () {
 
       createConstructor(null, null);
@@ -618,11 +621,13 @@ public class ProxyGenerator {
       this.allowedAnnotationSignatures = allowedAnnotationSignatures;
     }
 
+    @Override
     public AnnotationVisitor visitAnnotationDefault () {
 
       return nextMethodVisitor.visitAnnotationDefault();
     }
 
+    @Override
     public AnnotationVisitor visitAnnotation (String desc, boolean visible) {
 
       if (isAllowedAnnotation(desc, allowedAnnotationSignatures)) {
@@ -633,6 +638,7 @@ public class ProxyGenerator {
       return null;
     }
 
+    @Override
     public AnnotationVisitor visitParameterAnnotation (int parameter, String desc, boolean visible) {
 
       if (isAllowedAnnotation(desc, allowedAnnotationSignatures)) {
@@ -643,6 +649,7 @@ public class ProxyGenerator {
       return null;
     }
 
+    @Override
     public void visitEnd () {
 
       nextMethodVisitor.visitEnd();
