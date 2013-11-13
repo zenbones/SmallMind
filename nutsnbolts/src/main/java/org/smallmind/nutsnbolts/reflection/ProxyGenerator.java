@@ -35,6 +35,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
 import org.objectweb.asm.AnnotationVisitor;
 import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.ClassVisitor;
@@ -46,8 +47,8 @@ import org.objectweb.asm.util.CheckClassAdapter;
 
 public class ProxyGenerator {
 
+  private static final ConcurrentHashMap<ParseKey, Class> INTERFACE_MAP = new ConcurrentHashMap<>();
   private static final HashMap<ClassLoader, ProxyClassLoader> LOADER_MAP = new HashMap<>();
-  private static final HashMap<ParseKey, Class> INTERFACE_MAP = new HashMap<>();
   private static final String INVOCATION_HANDLER = "L" + InvocationHandler.class.getName().replace('.', '/') + ";";
 
   public static <T> T createProxy (Class<T> parseClass, InvocationHandler handler, Class<? extends Annotation>... allowedAnnotationClasses) {
