@@ -498,7 +498,7 @@ public class ProxyGenerator {
                     proxyVisitor.visitInsn(Opcodes.IRETURN);
                     break;
                   case 'S':
-                    proxyVisitor.visitInsn(Opcodes.ARETURN);
+                    proxyVisitor.visitInsn(Opcodes.IRETURN);
                     break;
                   case 'I':
                     proxyVisitor.visitInsn(Opcodes.IRETURN);
