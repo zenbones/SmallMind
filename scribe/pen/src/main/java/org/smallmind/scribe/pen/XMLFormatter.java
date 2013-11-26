@@ -41,88 +41,11 @@ import org.smallmind.scribe.pen.probe.UpdateProbeEntry;
 
 public class XMLFormatter implements Formatter {
 
-  private Timestamp timestamp;
-  private XMLElement[] xmlElements;
-  private String newLine;
-  private int indent;
-
-  public XMLFormatter () {
-
-    this(3, System.getProperty("line.separator"), DateFormatTimestamp.getDefaultInstance(), XMLElement.values());
-  }
-
-  public XMLFormatter (String newLine) {
-
-    this(3, newLine, DateFormatTimestamp.getDefaultInstance(), XMLElement.values());
-  }
-
-  public XMLFormatter (Timestamp timestamp) {
-
-    this(3, System.getProperty("line.separator"), timestamp, XMLElement.values());
-  }
-
-  public XMLFormatter (String newLine, Timestamp timestamp) {
-
-    this(3, newLine, timestamp, XMLElement.values());
-  }
-
-  public XMLFormatter (int indent) {
-
-    this(indent, System.getProperty("line.separator"), DateFormatTimestamp.getDefaultInstance(), XMLElement.values());
-  }
-
-  public XMLFormatter (int indent, String newLine) {
-
-    this(indent, newLine, DateFormatTimestamp.getDefaultInstance(), XMLElement.values());
-  }
-
-  public XMLFormatter (int indent, Timestamp timestamp) {
-
-    this(indent, System.getProperty("line.separator"), timestamp, XMLElement.values());
-  }
-
-  public XMLFormatter (int indent, String newLine, Timestamp timestamp) {
-
-    this(indent, newLine, timestamp, XMLElement.values());
-  }
-
-  public XMLFormatter (XMLElement... xmlElements) {
-
-    this(3, System.getProperty("line.separator"), DateFormatTimestamp.getDefaultInstance(), xmlElements);
-  }
-
-  public XMLFormatter (String newLine, XMLElement... xmlElements) {
-
-    this(3, newLine, DateFormatTimestamp.getDefaultInstance(), xmlElements);
-  }
-
-  public XMLFormatter (Timestamp timestamp, XMLElement... xmlElements) {
-
-    this(3, System.getProperty("line.separator"), timestamp, xmlElements);
-  }
-
-  public XMLFormatter (String newLine, Timestamp timestamp, XMLElement... xmlElements) {
-
-    this(3, newLine, timestamp, xmlElements);
-  }
-
-  public XMLFormatter (int indent, XMLElement... xmlElements) {
-
-    this(indent, System.getProperty("line.separator"), DateFormatTimestamp.getDefaultInstance(), xmlElements);
-  }
-
-  public XMLFormatter (int indent, String newLine, XMLElement... xmlElements) {
-
-    this(indent, newLine, DateFormatTimestamp.getDefaultInstance(), xmlElements);
-  }
-
-  public XMLFormatter (int indent, String newLine, Timestamp timestamp, XMLElement... xmlElements) {
-
-    this.indent = indent;
-    this.newLine = newLine;
-    this.xmlElements = xmlElements;
-    this.timestamp = timestamp;
-  }
+  private Timestamp timestamp = DateFormatTimestamp.getDefaultInstance();
+  private XMLElement[] xmlElements = XMLElement.values();
+  private String newLine = System.getProperty("line.separator");
+  private boolean cdata = false;
+  private int indent = 3;
 
   private static int findRepeatedStackElements (StackTraceElement singleElement, StackTraceElement[] prevStackTrace) {
 
@@ -135,44 +58,39 @@ public class XMLFormatter implements Formatter {
     return -1;
   }
 
-  public int getIndent () {
-
-    return indent;
-  }
-
-  public void setIndent (int indent) {
-
-    this.indent = indent;
-  }
-
-  public String getNewLine () {
-
-    return newLine;
-  }
-
-  public void setNewLine (String newLine) {
-
-    this.newLine = newLine;
-  }
-
-  public Timestamp getTimestamp () {
-
-    return timestamp;
-  }
-
-  public void setTimestamp (Timestamp timestamp) {
-
-    this.timestamp = timestamp;
-  }
-
-  public XMLElement[] getXmlElements () {
-
-    return xmlElements;
-  }
-
-  public void setXmlElements (XMLElement[] xmlElements) {
+  public XMLFormatter setXmlElements (XMLElement[] xmlElements) {
 
     this.xmlElements = xmlElements;
+
+    return this;
+  }
+
+  public XMLFormatter setTimestamp (Timestamp timestamp) {
+
+    this.timestamp = timestamp;
+
+    return this;
+  }
+
+  public XMLFormatter setNewLine (String newLine) {
+
+    this.newLine = newLine;
+
+    return this;
+  }
+
+  public XMLFormatter setCdata (boolean cdata) {
+
+    this.cdata = cdata;
+
+    return this;
+  }
+
+  public XMLFormatter setIndent (int indent) {
+
+    this.indent = indent;
+
+    return this;
   }
 
   public String format (Record record, Collection<Filter> filterCollection) {
@@ -184,16 +102,16 @@ public class XMLFormatter implements Formatter {
     for (XMLElement xmlElement : xmlElements) {
       switch (xmlElement) {
         case DATE:
-          appendElement(formatBuilder, "date", timestamp.getTimestamp(new Date(record.getMillis())), 1);
+          appendElement(formatBuilder, "date", timestamp.getTimestamp(new Date(record.getMillis())), false, 1);
           break;
         case MILLISECONDS:
-          appendElement(formatBuilder, "milliseconds", String.valueOf(record.getMillis()), 1);
+          appendElement(formatBuilder, "milliseconds", String.valueOf(record.getMillis()), false, 1);
           break;
         case LOGGER_NAME:
-          appendElement(formatBuilder, "logger", record.getLoggerName(), 1);
+          appendElement(formatBuilder, "logger", record.getLoggerName(), false, 1);
           break;
         case LEVEL:
-          appendElement(formatBuilder, "level", record.getLevel().name(), 1);
+          appendElement(formatBuilder, "level", record.getLevel().name(), false, 1);
           break;
         case MESSAGE:
 
@@ -208,7 +126,7 @@ public class XMLFormatter implements Formatter {
             }
           }
 
-          appendElement(formatBuilder, "message", "<![CDATA[ " + message + " ]]>", 1);
+          appendElement(formatBuilder, "message", message, cdata, 1);
           break;
         case THREAD:
           appendThreadInfo(formatBuilder, record.getThreadName(), record.getThreadID(), 1);
@@ -239,8 +157,8 @@ public class XMLFormatter implements Formatter {
 
     if ((threadName != null) || (threadId > 0)) {
       appendLine(formatBuilder, "<thread>", level);
-      appendElement(formatBuilder, "name", threadName, level + 1);
-      appendElement(formatBuilder, "id", (threadId > 0) ? String.valueOf(threadId) : null, level + 1);
+      appendElement(formatBuilder, "name", threadName, false, level + 1);
+      appendElement(formatBuilder, "id", (threadId > 0) ? String.valueOf(threadId) : null, false, level + 1);
       appendLine(formatBuilder, "</thread>", level);
     }
   }
@@ -249,11 +167,11 @@ public class XMLFormatter implements Formatter {
 
     if ((logicalContext != null) && (logicalContext.isFilled())) {
       appendLine(formatBuilder, "<context>", level);
-      appendElement(formatBuilder, "class", logicalContext.getClassName(), level + 1);
-      appendElement(formatBuilder, "method", logicalContext.getMethodName(), level + 1);
-      appendElement(formatBuilder, "native", String.valueOf(logicalContext.isNativeMethod()), level + 1);
-      appendElement(formatBuilder, "line", ((!logicalContext.isNativeMethod()) && (logicalContext.getLineNumber() > 0)) ? String.valueOf(logicalContext.getLineNumber()) : null, level + 1);
-      appendElement(formatBuilder, "file", logicalContext.getFileName(), level + 1);
+      appendElement(formatBuilder, "class", logicalContext.getClassName(), false, level + 1);
+      appendElement(formatBuilder, "method", logicalContext.getMethodName(), false, level + 1);
+      appendElement(formatBuilder, "native", String.valueOf(logicalContext.isNativeMethod()), false, level + 1);
+      appendElement(formatBuilder, "line", ((!logicalContext.isNativeMethod()) && (logicalContext.getLineNumber() > 0)) ? String.valueOf(logicalContext.getLineNumber()) : null, false, level + 1);
+      appendElement(formatBuilder, "file", logicalContext.getFileName(), false, level + 1);
       appendLine(formatBuilder, "</context>", level);
     }
   }
@@ -263,7 +181,7 @@ public class XMLFormatter implements Formatter {
     if (parameters.length > 0) {
       appendLine(formatBuilder, "<parameters>", level);
       for (Parameter parameter : parameters) {
-        appendElement(formatBuilder, parameter.getKey(), parameter.getValue().toString(), level + 1);
+        appendElement(formatBuilder, parameter.getKey(), parameter.getValue().toString(), cdata, level + 1);
       }
       appendLine(formatBuilder, "</parameters>", level);
     }
@@ -275,7 +193,7 @@ public class XMLFormatter implements Formatter {
     int repeatedElements;
 
     if (throwable != null) {
-      appendLine(formatBuilder, "<stack-trace><![CDATA[", level);
+      appendLine(formatBuilder, (cdata) ? "<stack-trace><![CDATA[" : "<stack-trace>", level);
 
       do {
         appendIndent(formatBuilder, level + 1);
@@ -314,7 +232,7 @@ public class XMLFormatter implements Formatter {
         prevStackTrace = throwable.getStackTrace();
       } while ((throwable = throwable.getCause()) != null);
 
-      appendLine(formatBuilder, "]]></stack-trace>", level);
+      appendLine(formatBuilder, (cdata) ? "]]></stack-trace>" : "</stack-trace>", level);
     }
   }
 
@@ -322,7 +240,7 @@ public class XMLFormatter implements Formatter {
 
     if (probeReport != null) {
       appendLine(formatBuilder, "<probe-report>", level);
-      appendElement(formatBuilder, "first", String.valueOf(probeReport.isFirst()), level + 1);
+      appendElement(formatBuilder, "first", String.valueOf(probeReport.isFirst()), false, level + 1);
       appendCorrelator(formatBuilder, probeReport.getCorrelator(), level + 1);
       appendProbeEntry(formatBuilder, record, probeReport.getProbeEntry(), filterCollection, level + 1);
       appendLine(formatBuilder, "</probe-report>", level);
@@ -332,11 +250,11 @@ public class XMLFormatter implements Formatter {
   private void appendCorrelator (StringBuilder formatBuilder, Correlator correlator, int level) {
 
     appendLine(formatBuilder, "<correlator>", level);
-    appendElement(formatBuilder, "thread-identifier", Arrays.toString(correlator.getThreadIdentifier()), level + 1);
-    appendElement(formatBuilder, "parent-identifier", Arrays.toString(correlator.getParentIdentifier()), level + 1);
-    appendElement(formatBuilder, "identifier", Arrays.toString(correlator.getIdentifier()), level + 1);
-    appendElement(formatBuilder, "frame", String.valueOf(correlator.getFrame()), level + 1);
-    appendElement(formatBuilder, "instance", String.valueOf(correlator.getInstance()), level + 1);
+    appendElement(formatBuilder, "thread-identifier", Arrays.toString(correlator.getThreadIdentifier()), false, level + 1);
+    appendElement(formatBuilder, "parent-identifier", Arrays.toString(correlator.getParentIdentifier()), false, level + 1);
+    appendElement(formatBuilder, "identifier", Arrays.toString(correlator.getIdentifier()), false, level + 1);
+    appendElement(formatBuilder, "frame", String.valueOf(correlator.getFrame()), false, level + 1);
+    appendElement(formatBuilder, "instance", String.valueOf(correlator.getInstance()), false, level + 1);
     appendLine(formatBuilder, "</correlator>", level);
   }
 
@@ -346,16 +264,16 @@ public class XMLFormatter implements Formatter {
 
     if (probeEntry != null) {
       appendLine(formatBuilder, "<probe-entry>", level);
-      appendElement(formatBuilder, "status", probeEntry.getProbeStatus().name(), level + 1);
+      appendElement(formatBuilder, "status", probeEntry.getProbeStatus().name(), false, level + 1);
 
       if (probeEntry instanceof UpdateProbeEntry) {
-        appendElement(formatBuilder, "updated", String.valueOf(((UpdateProbeEntry)probeEntry).getUpdateTime()), level + 1);
-        appendElement(formatBuilder, "count", String.valueOf(((UpdateProbeEntry)probeEntry).getUpdateCount()), level + 1);
+        appendElement(formatBuilder, "updated", String.valueOf(((UpdateProbeEntry)probeEntry).getUpdateTime()), false, level + 1);
+        appendElement(formatBuilder, "count", String.valueOf(((UpdateProbeEntry)probeEntry).getUpdateCount()), false, level + 1);
       }
       else if (probeEntry instanceof CompleteOrAbortProbeEntry) {
-        appendElement(formatBuilder, "started", String.valueOf(((CompleteOrAbortProbeEntry)probeEntry).getStartTime()), level + 1);
-        appendElement(formatBuilder, "stopped", String.valueOf(((CompleteOrAbortProbeEntry)probeEntry).getStopTime()), level + 1);
-        appendElement(formatBuilder, "elapsed", String.valueOf(((CompleteOrAbortProbeEntry)probeEntry).getStopTime() - ((CompleteOrAbortProbeEntry)probeEntry).getStartTime()), level + 1);
+        appendElement(formatBuilder, "started", String.valueOf(((CompleteOrAbortProbeEntry)probeEntry).getStartTime()), false, level + 1);
+        appendElement(formatBuilder, "stopped", String.valueOf(((CompleteOrAbortProbeEntry)probeEntry).getStopTime()), false, level + 1);
+        appendElement(formatBuilder, "elapsed", String.valueOf(((CompleteOrAbortProbeEntry)probeEntry).getStopTime() - ((CompleteOrAbortProbeEntry)probeEntry).getStartTime()), false, level + 1);
       }
       else {
         throw new IllegalArgumentException("Unknown instance type of ProbeEntry(" + probeEntry.getClass().getCanonicalName() + ")");
@@ -376,7 +294,7 @@ public class XMLFormatter implements Formatter {
         }
 
         if (!skipStatement) {
-          appendElement(formatBuilder, "statement", statement.getMessage(), level + 1);
+          appendElement(formatBuilder, "statement", statement.getMessage(), cdata, level + 1);
         }
       }
 
@@ -397,7 +315,7 @@ public class XMLFormatter implements Formatter {
         if (!skipMetric) {
           appendLine(formatBuilder, "<" + metricMilieu.getMetric().getTitle() + ">", level + 1);
           for (String key : metricMilieu.getMetric().getKeys()) {
-            appendElement(formatBuilder, key, metricMilieu.getMetric().getData(key).toString(), level + 2);
+            appendElement(formatBuilder, key, metricMilieu.getMetric().getData(key).toString(), cdata, level + 2);
           }
           appendLine(formatBuilder, "</" + metricMilieu.getMetric().getTitle() + ">", level + 1);
         }
@@ -407,14 +325,24 @@ public class XMLFormatter implements Formatter {
     }
   }
 
-  private void appendElement (StringBuilder formatBuilder, String tagName, String value, int level) {
+  private void appendElement (StringBuilder formatBuilder, String tagName, String value, boolean includeCDATA, int level) {
 
     if (value != null) {
       appendIndent(formatBuilder, level);
       formatBuilder.append("<");
       formatBuilder.append(tagName);
       formatBuilder.append(">");
+
+      if (includeCDATA) {
+        formatBuilder.append("<![CDATA[");
+      }
+
       formatBuilder.append(value);
+
+      if (includeCDATA) {
+        formatBuilder.append("]]>");
+      }
+
       formatBuilder.append("</");
       formatBuilder.append(tagName);
       formatBuilder.append(">");
