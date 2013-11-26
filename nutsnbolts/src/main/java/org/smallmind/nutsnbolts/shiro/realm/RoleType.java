@@ -24,63 +24,21 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.nutsnbolts.security.realm;
+package org.smallmind.nutsnbolts.shiro.realm;
 
-public class LdapConnectionDetails {
+public enum RoleType {
 
-  private String host;
-  private String rootNamespace;
-  private String userName;
-  private String password;
-  private int port;
+  ADMIN("ADMIN");
 
-  public String getUserName () {
+  private String code;
 
-    return userName;
+  private RoleType (String code) {
+
+    this.code = code;
   }
 
-  public void setUserName (String userName) {
+  public String getCode () {
 
-    this.userName = userName;
-  }
-
-  public String getPassword () {
-
-    return password;
-  }
-
-  public void setPassword (String password) {
-
-    this.password = password;
-  }
-
-  public String getHost () {
-
-    return host;
-  }
-
-  public void setHost (String host) {
-
-    this.host = host;
-  }
-
-  public int getPort () {
-
-    return port;
-  }
-
-  public void setPort (int port) {
-
-    this.port = port;
-  }
-
-  public String getRootNamespace () {
-
-    return rootNamespace;
-  }
-
-  public void setRootNamespace (String rootNamespace) {
-
-    this.rootNamespace = rootNamespace;
+    return code;
   }
 }

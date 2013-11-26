@@ -24,11 +24,11 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.nutsnbolts.security.realm.spring;
+package org.smallmind.nutsnbolts.shiro.realm.spring;
 
 import org.apache.shiro.realm.AuthorizingRealm;
-import org.smallmind.nutsnbolts.security.realm.LdapAuthorizingRealm;
-import org.smallmind.nutsnbolts.security.realm.LdapConnectionDetails;
+import org.smallmind.nutsnbolts.shiro.realm.LdapAuthorizingRealm;
+import org.smallmind.nutsnbolts.shiro.realm.LdapConnectionDetails;
 import org.springframework.beans.factory.FactoryBean;
 import org.springframework.beans.factory.InitializingBean;
 

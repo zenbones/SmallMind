@@ -24,7 +24,7 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.nutsnbolts.security.realm;
+package org.smallmind.nutsnbolts.shiro.realm;
 
 import java.util.Collections;
 import java.util.HashSet;
