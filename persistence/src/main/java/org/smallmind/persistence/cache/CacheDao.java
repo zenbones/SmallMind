@@ -26,9 +26,10 @@
  */
 package org.smallmind.persistence.cache;
 
+import java.io.Serializable;
 import org.smallmind.persistence.Durable;
 
-public interface CacheDao<I extends Comparable<I>, D extends Durable<I>> extends VectoredDao<I, D> {
+public interface CacheDao<I extends Serializable & Comparable<I>, D extends Durable<I>> extends VectoredDao<I, D> {
 
   public PersistenceCache<String, D> getInstanceCache (Class<D> durableClass);
 

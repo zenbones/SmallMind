@@ -30,7 +30,7 @@ import java.io.Serializable;
 import java.util.List;
 import org.smallmind.persistence.Durable;
 
-public interface WideVectoredDao<W extends Serializable & Comparable<W>, I extends Comparable<I>, D extends Durable<I>> {
+public interface WideVectoredDao<W extends Serializable & Comparable<W>, I extends Serializable & Comparable<I>, D extends Durable<I>> {
 
   public abstract String getMetricSource ();
 

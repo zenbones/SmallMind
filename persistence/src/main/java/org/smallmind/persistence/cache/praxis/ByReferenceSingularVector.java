@@ -26,6 +26,7 @@
  */
 package org.smallmind.persistence.cache.praxis;
 
+import java.io.Serializable;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
@@ -37,7 +38,7 @@ import org.terracotta.annotations.AutolockWrite;
 import org.terracotta.annotations.InstrumentedClass;
 
 @InstrumentedClass
-public class ByReferenceSingularVector<I extends Comparable<I>, D extends Durable<I>> extends DurableVector<I, D> {
+public class ByReferenceSingularVector<I extends Serializable & Comparable<I>, D extends Durable<I>> extends DurableVector<I, D> {
 
   private D durable;
 

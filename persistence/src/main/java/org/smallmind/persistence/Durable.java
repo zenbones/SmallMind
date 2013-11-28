@@ -28,7 +28,7 @@ package org.smallmind.persistence;
 
 import java.io.Serializable;
 
-public interface Durable<I extends Comparable<I>> extends Serializable, Comparable<Durable<I>> {
+public interface Durable<I extends Serializable & Comparable<I>> extends Serializable, Comparable<Durable<I>> {
 
   public abstract I getId ();
 

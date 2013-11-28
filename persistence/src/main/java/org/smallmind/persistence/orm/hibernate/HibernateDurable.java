@@ -26,9 +26,10 @@
  */
 package org.smallmind.persistence.orm.hibernate;
 
+import java.io.Serializable;
 import org.smallmind.persistence.AbstractDurable;
 
-public abstract class HibernateDurable<I extends Comparable<I>> extends AbstractDurable<I> {
+public abstract class HibernateDurable<I extends Serializable & Comparable<I>> extends AbstractDurable<I> {
 
   private I id;
 

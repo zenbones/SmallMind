@@ -30,7 +30,7 @@ import java.io.Serializable;
 import java.util.List;
 import org.smallmind.persistence.Durable;
 
-public abstract class AbstractWideCacheDao<W extends Serializable & Comparable<W>, I extends Comparable<I>, D extends Durable<I>> implements WideCacheDao<W, I, D> {
+public abstract class AbstractWideCacheDao<W extends Serializable & Comparable<W>, I extends Serializable & Comparable<I>, D extends Durable<I>> implements WideCacheDao<W, I, D> {
 
   private CacheDomain<I, D> cacheDomain;
 

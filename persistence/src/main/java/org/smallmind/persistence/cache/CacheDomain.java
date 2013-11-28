@@ -26,10 +26,11 @@
  */
 package org.smallmind.persistence.cache;
 
+import java.io.Serializable;
 import java.util.List;
 import org.smallmind.persistence.Durable;
 
-public interface CacheDomain<I extends Comparable<I>, D extends Durable<I>> {
+public interface CacheDomain<I extends Serializable & Comparable<I>, D extends Durable<I>> {
 
   public abstract String getMetricSource ();
 

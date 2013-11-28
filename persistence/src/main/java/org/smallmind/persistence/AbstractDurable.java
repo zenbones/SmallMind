@@ -26,11 +26,12 @@
  */
 package org.smallmind.persistence;
 
+import java.io.Serializable;
 import java.lang.reflect.Field;
 import java.util.HashSet;
 import java.util.Set;
 
-public abstract class AbstractDurable<I extends Comparable<I>> implements Durable<I> {
+public abstract class AbstractDurable<I extends Serializable & Comparable<I>> implements Durable<I> {
 
   private static final ThreadLocal<Set<Durable>> IN_USE_SET_LOCAL = new ThreadLocal<Set<Durable>>() {
 

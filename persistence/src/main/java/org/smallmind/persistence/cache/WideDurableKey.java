@@ -31,7 +31,7 @@ import org.smallmind.persistence.Durable;
 import org.terracotta.annotations.InstrumentedClass;
 
 @InstrumentedClass
-public class WideDurableKey<W extends Comparable<W>, D extends Durable<?>> implements Serializable {
+public class WideDurableKey<W extends Serializable & Comparable<W>, D extends Durable<?>> implements Serializable {
 
   private Class<D> durableClass;
   private String key;

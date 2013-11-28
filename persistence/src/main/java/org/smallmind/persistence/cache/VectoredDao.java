@@ -26,6 +26,7 @@
  */
 package org.smallmind.persistence.cache;
 
+import java.io.Serializable;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
@@ -33,7 +34,7 @@ import org.smallmind.persistence.Dao;
 import org.smallmind.persistence.Durable;
 import org.smallmind.persistence.UpdateMode;
 
-public interface VectoredDao<I extends Comparable<I>, D extends Durable<I>> extends Dao<I, D> {
+public interface VectoredDao<I extends Serializable & Comparable<I>, D extends Durable<I>> extends Dao<I, D> {
 
   public abstract String getMetricSource ();
 

@@ -26,12 +26,13 @@
  */
 package org.smallmind.persistence.cache;
 
+import java.io.Serializable;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import org.smallmind.persistence.Durable;
 
-public abstract class AbstractCacheDao<I extends Comparable<I>, D extends Durable<I>> implements CacheDao<I, D> {
+public abstract class AbstractCacheDao<I extends Serializable & Comparable<I>, D extends Durable<I>> implements CacheDao<I, D> {
 
   private CacheDomain<I, D> cacheDomain;
 

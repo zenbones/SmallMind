@@ -33,7 +33,7 @@ import org.smallmind.persistence.cache.AbstractWideCacheDao;
 import org.smallmind.persistence.cache.CacheDomain;
 import org.smallmind.persistence.cache.WideDurableKey;
 
-public class WideExtrinsicCacheDao<W extends Serializable & Comparable<W>, I extends Comparable<I>, D extends Durable<I>> extends AbstractWideCacheDao<W, I, D> {
+public class WideExtrinsicCacheDao<W extends Serializable & Comparable<W>, I extends Serializable & Comparable<I>, D extends Durable<I>> extends AbstractWideCacheDao<W, I, D> {
 
   public WideExtrinsicCacheDao (CacheDomain<I, D> cacheDomain) {
 

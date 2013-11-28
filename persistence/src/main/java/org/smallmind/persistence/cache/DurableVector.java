@@ -33,7 +33,7 @@ import org.smallmind.persistence.Durable;
 import org.terracotta.annotations.InstrumentedClass;
 
 @InstrumentedClass
-public abstract class DurableVector<I extends Comparable<I>, D extends Durable<I>> implements Serializable, Iterable<D> {
+public abstract class DurableVector<I extends Serializable & Comparable<I>, D extends Durable<I>> implements Serializable, Iterable<D> {
 
   private Comparator<D> comparator;
   private boolean ordered;

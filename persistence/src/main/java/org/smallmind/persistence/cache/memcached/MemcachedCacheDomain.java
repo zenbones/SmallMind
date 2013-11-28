@@ -26,6 +26,7 @@
  */
 package org.smallmind.persistence.cache.memcached;
 
+import java.io.Serializable;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -36,7 +37,7 @@ import org.smallmind.persistence.cache.DurableVector;
 import org.smallmind.persistence.cache.PersistenceCache;
 import org.smallmind.persistence.instrument.MetricSource;
 
-public class MemcachedCacheDomain<I extends Comparable<I>, D extends Durable<I>> implements CacheDomain<I, D> {
+public class MemcachedCacheDomain<I extends Serializable & Comparable<I>, D extends Durable<I>> implements CacheDomain<I, D> {
 
   private final MemcachedClient memcachedClient;
   private final Map<Class<D>, Integer> timeTiLiveOverrideMap;
