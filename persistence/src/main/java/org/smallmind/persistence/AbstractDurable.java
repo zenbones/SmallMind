@@ -32,13 +32,12 @@ import java.util.Set;
 
 public abstract class AbstractDurable<I extends Comparable<I>> implements Durable<I> {
 
-  private static final long serialVersionUID = 1L;
   private static final ThreadLocal<Set<Durable>> IN_USE_SET_LOCAL = new ThreadLocal<Set<Durable>>() {
 
     @Override
     protected Set<Durable> initialValue () {
 
-      return new HashSet<Durable>();
+      return new HashSet<>();
     }
   };
 
