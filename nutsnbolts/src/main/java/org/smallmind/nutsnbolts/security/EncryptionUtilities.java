@@ -38,6 +38,8 @@ import java.security.KeyPairGenerator;
 import java.security.KeyRep;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.security.PrivateKey;
+import java.security.PublicKey;
 import javax.crypto.BadPaddingException;
 import javax.crypto.Cipher;
 import javax.crypto.IllegalBlockSizeException;
@@ -109,7 +111,7 @@ public class EncryptionUtilities {
     ObjectOutputStream keyOutputStream;
     ByteArrayOutputStream byteOutputStream;
 
-    keyRep = new KeyRep(KeyRep.Type.SECRET, key.getAlgorithm(), key.getFormat(), key.getEncoded());
+    keyRep = new KeyRep((key instanceof PublicKey) ? KeyRep.Type.PUBLIC : (key instanceof PrivateKey) ? KeyRep.Type.PRIVATE : KeyRep.Type.SECRET, key.getAlgorithm(), key.getFormat(), key.getEncoded());
     byteOutputStream = new ByteArrayOutputStream();
     keyOutputStream = new ObjectOutputStream(byteOutputStream);
     keyOutputStream.writeObject(keyRep);
