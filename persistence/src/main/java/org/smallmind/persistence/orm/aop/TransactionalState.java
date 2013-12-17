@@ -39,25 +39,25 @@ public class TransactionalState {
     return isInTransaction(null);
   }
 
-  public static boolean isInTransaction (String dataSource) {
+  public static boolean isInTransaction (String dataSourceKey) {
 
-    return currentTransaction(dataSource) != null;
+    return currentTransaction(dataSourceKey) != null;
   }
 
-  public static ProxyTransaction currentTransaction (String dataSource) {
+  public static ProxyTransaction currentTransaction (String dataSourceKey) {
 
     LinkedList<RollbackAwareBoundarySet<ProxyTransaction>> transactionSetStack;
 
     if ((transactionSetStack = TRANSACTION_SET_STACK_LOCAL.get()) != null) {
       for (RollbackAwareBoundarySet<ProxyTransaction> transactionSet : transactionSetStack) {
         for (ProxyTransaction proxyTransaction : transactionSet) {
-          if (dataSource == null) {
-            if (proxyTransaction.getSession().getDataSource() == null) {
+          if (dataSourceKey == null) {
+            if (proxyTransaction.getSession().getDataSourceKey() == null) {
 
               return proxyTransaction;
             }
           }
-          else if (dataSource.equals(proxyTransaction.getSession().getDataSource())) {
+          else if (dataSourceKey.equals(proxyTransaction.getSession().getDataSourceKey())) {
 
             return proxyTransaction;
           }
@@ -70,16 +70,16 @@ public class TransactionalState {
 
   public static boolean withinBoundary (ProxySession proxySession) {
 
-    return withinBoundary(proxySession.getDataSource());
+    return withinBoundary(proxySession.getDataSourceKey());
   }
 
-  public static boolean withinBoundary (String dataSource) {
+  public static boolean withinBoundary (String dataSourceKey) {
 
     LinkedList<RollbackAwareBoundarySet<ProxyTransaction>> transactionSetStack;
 
     if ((transactionSetStack = TRANSACTION_SET_STACK_LOCAL.get()) != null) {
       for (RollbackAwareBoundarySet<ProxyTransaction> transactionSet : transactionSetStack) {
-        if (transactionSet.allows(dataSource)) {
+        if (transactionSet.allows(dataSourceKey)) {
           return true;
         }
       }

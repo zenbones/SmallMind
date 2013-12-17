@@ -32,7 +32,7 @@ import org.smallmind.persistence.DurableDao;
 
 public interface RelationalDao<I extends Serializable & Comparable<I>, D extends Durable<I>, N> extends DurableDao<I, D> {
 
-  public abstract String getDataSource ();
+  public abstract String getDataSourceKey ();
 
   public abstract ProxySession<N> getSession ();
 

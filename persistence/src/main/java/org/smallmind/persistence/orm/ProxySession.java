@@ -43,32 +43,32 @@ public abstract class ProxySession<N> {
     }
   };
 
-  private String database;
-  private String dataSource;
+  private String dataSourceType;
+  private String dataSourceKey;
   private boolean boundaryEnforced;
   private boolean cacheEnabled;
 
-  public ProxySession (String database, String dataSource, boolean boundaryEnforced, boolean cacheEnabled) {
+  public ProxySession (String dataSourceType, String dataSourceKey, boolean boundaryEnforced, boolean cacheEnabled) {
 
-    this.database = database;
-    this.dataSource = dataSource;
+    this.dataSourceType = dataSourceType;
+    this.dataSourceKey = dataSourceKey;
     this.boundaryEnforced = boundaryEnforced;
     this.cacheEnabled = cacheEnabled;
   }
 
   public void register () {
 
-    SessionManager.register(dataSource, this);
+    SessionManager.register(dataSourceKey, this);
   }
 
-  public String getDatabase () {
+  public String getDataSourceType () {
 
-    return database;
+    return dataSourceType;
   }
 
-  public String getDataSource () {
+  public String getDataSourceKey () {
 
-    return dataSource;
+    return dataSourceKey;
   }
 
   public boolean isBoundaryEnforced () {

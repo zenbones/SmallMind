@@ -37,7 +37,7 @@ public abstract class ORMDao<I extends Serializable & Comparable<I>, D extends D
 
   public ORMDao (ProxySession<N> proxySession, VectoredDao<I, D> vectoredDao) {
 
-    super(proxySession.getDatabase(), vectoredDao);
+    super(proxySession.getDataSourceType(), vectoredDao);
 
     this.proxySession = proxySession;
   }
@@ -48,9 +48,9 @@ public abstract class ORMDao<I extends Serializable & Comparable<I>, D extends D
   }
 
   @Override
-  public String getDataSource () {
+  public String getDataSourceKey () {
 
-    return proxySession.getDataSource();
+    return proxySession.getDataSourceKey();
   }
 
   @Override
