@@ -49,37 +49,40 @@ public class DurableFields {
     return null;
   }
 
-  public static Field[] getFields (Class<? extends Durable> durableClass) {
+  public static Field[] getFields (final Class<? extends Durable> durableClass) {
 
     Field[] fields;
 
     if ((fields = FIELD_MAP.get(durableClass)) == null) {
+      synchronized (durableClass) {
+        if ((fields = FIELD_MAP.get(durableClass)) == null) {
+          Class<?> currentClass = durableClass;
+          LinkedList<Field> fieldList = new LinkedList<Field>();
 
-      Class<?> currentClass = durableClass;
-      LinkedList<Field> fieldList = new LinkedList<Field>();
+          do {
+            for (Field field : currentClass.getDeclaredFields()) {
+              if (!Modifier.isStatic(field.getModifiers())) {
+                field.setAccessible(true);
+                fieldList.add(field);
+              }
+            }
 
-      do {
-        for (Field field : currentClass.getDeclaredFields()) {
-          if (!Modifier.isStatic(field.getModifiers())) {
-            field.setAccessible(true);
-            fieldList.add(field);
-          }
+          } while ((currentClass = currentClass.getSuperclass()) != null);
+
+          Collections.sort(fieldList, new Comparator<Field>() {
+
+            public int compare (Field field1, Field field2) {
+
+              return field1.getName().compareToIgnoreCase(field2.getName());
+            }
+          });
+
+          fields = new Field[fieldList.size()];
+          fieldList.toArray(fields);
+
+          FIELD_MAP.put(durableClass, fields);
         }
-
-      } while ((currentClass = currentClass.getSuperclass()) != null);
-
-      Collections.sort(fieldList, new Comparator<Field>() {
-
-        public int compare (Field field1, Field field2) {
-
-          return field1.getName().compareToIgnoreCase(field2.getName());
-        }
-      });
-
-      fields = new Field[fieldList.size()];
-      fieldList.toArray(fields);
-
-      FIELD_MAP.put(durableClass, fields);
+      }
     }
 
     return fields;
