@@ -54,7 +54,6 @@ public abstract class AbstractManagedDao<I extends Serializable & Comparable<I>,
       }
       if (typeArguments.get(1) != null) {
         durableTypeInference.addPossibility(typeArguments.get(1));
-
       }
     }
   }
