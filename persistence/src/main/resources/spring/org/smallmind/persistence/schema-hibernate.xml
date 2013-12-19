@@ -82,10 +82,11 @@
 
   <!--Proxy Session-->
   <bean id="schemaProxySession" class="org.smallmind.persistence.orm.hibernate.HibernateProxySession" init-method="register">
-    <constructor-arg index="0" value="schema"/>
-    <constructor-arg index="1" ref="schemaSessionFactory"/>
-    <constructor-arg index="2" value="true"/>
+    <constructor-arg index="0" value="orm"/>
+    <constructor-arg index="1" value="schema"/>
+    <constructor-arg index="2" ref="schemaSessionFactory"/>
     <constructor-arg index="3" value="true"/>
+    <constructor-arg index="4" value="true"/>
   </bean>
 
 </beans>
