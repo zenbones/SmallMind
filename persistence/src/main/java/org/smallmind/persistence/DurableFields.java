@@ -35,7 +35,7 @@ import java.util.concurrent.ConcurrentHashMap;
 
 public class DurableFields {
 
-  private static final ConcurrentHashMap<Class<? extends Durable>, Field[]> FIELD_MAP = new ConcurrentHashMap<Class<? extends Durable>, Field[]>();
+  private static final ConcurrentHashMap<Class<? extends Durable>, Field[]> FIELD_MAP = new ConcurrentHashMap<>();
 
   public static Field getField (Class<? extends Durable> durableClass, String name) {
 
@@ -57,11 +57,11 @@ public class DurableFields {
       synchronized (durableClass) {
         if ((fields = FIELD_MAP.get(durableClass)) == null) {
           Class<?> currentClass = durableClass;
-          LinkedList<Field> fieldList = new LinkedList<Field>();
+          LinkedList<Field> fieldList = new LinkedList<>();
 
           do {
             for (Field field : currentClass.getDeclaredFields()) {
-              if (!Modifier.isStatic(field.getModifiers())) {
+              if (!(field.isSynthetic() || Modifier.isStatic(field.getModifiers()) || Modifier.isTransient(field.getModifiers()))) {
                 field.setAccessible(true);
                 fieldList.add(field);
               }
