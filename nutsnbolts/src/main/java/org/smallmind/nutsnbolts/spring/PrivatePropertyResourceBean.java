@@ -60,7 +60,7 @@ public class PrivatePropertyResourceBean implements BeanFactoryPostProcessor, Pr
     this.order = order;
   }
 
-  public void setLocation (List<String> locations) {
+  public void setLocations (List<String> locations) {
 
     this.locations = locations;
   }
