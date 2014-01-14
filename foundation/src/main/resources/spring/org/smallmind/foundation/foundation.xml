@@ -17,12 +17,12 @@
   </bean>
 
   <bean id="allProperties" class="org.smallmind.nutsnbolts.spring.PropertyPlaceholderConfigurer">
-    <property name="order" value="2"/>
+    <property name="order" value="3"/>
     <property name="ignoreResourceNotFound" value="true"/>
     <property name="ignoreUnresolvableProperties" value="false"/>
     <property name="systemPropertyMode" value="OVERRIDE"/>
     <property name="searchSystemEnvironment" value="true"/>
-    <property name="locations">
+    <property name="firstLocations">
       <list>
         <value>classpath:com/smallmind/foundation/global.properties</value>
         <value>classpath:com/smallmind/foundation/database-${SMALLMIND_DATABASE}.properties</value>
@@ -36,6 +36,10 @@
         <value>classpath:com/smallmind/${SMALLMIND_MODULE}/${SMALLMIND_PRODUCT}/database-${SMALLMIND_DATABASE}.properties</value>
         <value>classpath:com/smallmind/${SMALLMIND_MODULE}/${SMALLMIND_PRODUCT}/${SMALLMIND_ENVIRONMENT}/application.properties</value>
         <value>classpath:com/smallmind/${SMALLMIND_MODULE}/${SMALLMIND_PRODUCT}/${SMALLMIND_ENVIRONMENT}/database-${SMALLMIND_DATABASE}.properties</value>
+      </list>
+    </property>
+    <property name="lastLocations">
+      <list>
         <value>file:${user.home}/.m2/local.properties</value>
         <value>file:${user.home}/.m2/database-${SMALLMIND_DATABASE}.properties</value>
       </list>

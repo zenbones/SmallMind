@@ -28,7 +28,6 @@ package org.smallmind.nutsnbolts.spring;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedList;
@@ -59,10 +58,11 @@ import org.springframework.core.PriorityOrdered;
 
 public class PropertyPlaceholderConfigurer implements BeanFactoryPostProcessor, BeanFactoryAware, BeanNameAware, PriorityOrdered {
 
-  private final TreeMap<String, String> debugMap = new TreeMap<String, String>(new DotNotationComparator());
+  private final TreeMap<String, String> debugMap = new TreeMap<>(new DotNotationComparator());
   private BeanFactory beanFactory;
   private KeyDebugger keyDebugger;
-  private LinkedList<String> locationList = new LinkedList<String>();
+  private LinkedList<String> firstLocations = new LinkedList<>();
+  private LinkedList<String> lastLocations = new LinkedList<>();
   private String beanName;
   private SystemPropertyMode systemPropertyMode = SystemPropertyMode.FALLBACK;
   private boolean ignoreResourceNotFound = false;
@@ -116,14 +116,14 @@ public class PropertyPlaceholderConfigurer implements BeanFactoryPostProcessor, 
     this.searchSystemEnvironment = searchSystemEnvironment;
   }
 
-  public void setLocation (String location) {
+  public void setFirstLocations (LinkedList<String> firstLocations) {
 
-    locationList.add(location);
+    this.firstLocations = firstLocations;
   }
 
-  public void setLocations (String[] locations) {
+  public void setLastLocations (LinkedList<String> lastLocations) {
 
-    locationList.addAll(Arrays.asList(locations));
+    this.lastLocations = lastLocations;
   }
 
   public void setDebugKeys (String[] debugPatterns)
@@ -137,7 +137,7 @@ public class PropertyPlaceholderConfigurer implements BeanFactoryPostProcessor, 
     throws BeansException {
 
     PropertyPlaceholderStringValueResolver valueResolver;
-    Map<String, String> propertyMap = new HashMap<String, String>();
+    Map<String, String> propertyMap = new HashMap<>();
     ResourceParser resourceParser;
     PropertyExpander locationExpander;
     BeanDefinitionVisitor beanDefinitionVisitor;
@@ -153,43 +153,14 @@ public class PropertyPlaceholderConfigurer implements BeanFactoryPostProcessor, 
     }
 
     System.out.println("---------------- Property Loading ----------------");
-    for (String location : locationList) {
-
-      Resource locationResource;
-      InputStream inputStream;
-
-      try {
-        locationResource = resourceParser.parseResource(locationExpander.expand(location));
-        if ((inputStream = locationResource.getInputStream()) == null) {
-          throw new IOException("No stream available for resource(" + locationResource + ")");
-        }
-        else {
-
-          PropertyHandler<?> propertyHandler;
-          PropertyFileType propertyFileType;
-          int lastDotPos;
-
-          if ((lastDotPos = locationResource.getPath().lastIndexOf('.')) >= 0) {
-            if ((propertyFileType = PropertyFileType.forExtension(locationResource.getPath().substring(lastDotPos + 1))) == null) {
-              propertyFileType = PropertyFileType.PROPERTIES;
-            }
-          }
-          else {
-            propertyFileType = PropertyFileType.PROPERTIES;
-          }
-
-          propertyHandler = propertyFileType.getPropertyHandler(inputStream);
-          System.out.println("[" + propertyFileType.name() + ":" + locationResource.getPath() + "]");
-          for (PropertyEntry propertyEntry : propertyHandler) {
-            propertyMap.put(propertyEntry.getKey(), propertyEntry.getValue());
-          }
-        }
-      }
-      catch (Exception exception) {
-        if ((!ignoreResourceNotFound) || (!(exception instanceof IOException))) {
-          throw new RuntimeBeansException(exception);
-        }
-      }
+    for (String location : firstLocations) {
+      extractProperties(resourceParser, locationExpander, propertyMap, location);
+    }
+    for (String location : PrivatePropertyResourceBean.getLocations()) {
+      extractProperties(resourceParser, locationExpander, propertyMap, location);
+    }
+    for (String location : lastLocations) {
+      extractProperties(resourceParser, locationExpander, propertyMap, location);
     }
     System.out.println("--------------------------------------------------");
 
@@ -224,5 +195,44 @@ public class PropertyPlaceholderConfigurer implements BeanFactoryPostProcessor, 
     }
 
     beanFactoryToProcess.resolveAliases(valueResolver);
+  }
+
+  private void extractProperties (ResourceParser resourceParser, PropertyExpander locationExpander, Map<String, String> propertyMap, String location) {
+
+    Resource locationResource;
+    InputStream inputStream;
+
+    try {
+      locationResource = resourceParser.parseResource(locationExpander.expand(location));
+      if ((inputStream = locationResource.getInputStream()) == null) {
+        throw new IOException("No stream available for resource(" + locationResource + ")");
+      }
+      else {
+
+        PropertyHandler<?> propertyHandler;
+        PropertyFileType propertyFileType;
+        int lastDotPos;
+
+        if ((lastDotPos = locationResource.getPath().lastIndexOf('.')) >= 0) {
+          if ((propertyFileType = PropertyFileType.forExtension(locationResource.getPath().substring(lastDotPos + 1))) == null) {
+            propertyFileType = PropertyFileType.PROPERTIES;
+          }
+        }
+        else {
+          propertyFileType = PropertyFileType.PROPERTIES;
+        }
+
+        propertyHandler = propertyFileType.getPropertyHandler(inputStream);
+        System.out.println("[" + propertyFileType.name() + ":" + locationResource.getPath() + "]");
+        for (PropertyEntry propertyEntry : propertyHandler) {
+          propertyMap.put(propertyEntry.getKey(), propertyEntry.getValue());
+        }
+      }
+    }
+    catch (Exception exception) {
+      if ((!ignoreResourceNotFound) || (!(exception instanceof IOException))) {
+        throw new RuntimeBeansException(exception);
+      }
+    }
   }
 }
