@@ -1,22 +1,22 @@
 /*
  * Copyright (c) 2007, 2008, 2009, 2010, 2011, 2012, 2013 David Berkman
- * 
+ *
  * This file is part of the SmallMind Code Project.
- * 
+ *
  * The SmallMind Code Project is free software, you can redistribute
  * it and/or modify it under the terms of GNU Affero General Public
  * License as published by the Free Software Foundation, either version 3
  * of the License, or (at your option) any later version.
- * 
+ *
  * The SmallMind Code Project is distributed in the hope that it will
  * be useful, but WITHOUT ANY WARRANTY; without even the implied warranty
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License for more details.
- * 
+ *
  * You should have received a copy of the the GNU Affero General Public
  * License, along with the SmallMind Code Project. If not, see
  * <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under the GNU Affero GPL version 3 section 7
  * ------------------------------------------------------------------
  * If you modify this Program, or any covered work, by linking or
@@ -31,6 +31,7 @@ import java.io.InputStream;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedList;
+import java.util.List;
 import java.util.Map;
 import java.util.SortedMap;
 import java.util.TreeMap;
@@ -61,8 +62,8 @@ public class PropertyPlaceholderConfigurer implements BeanFactoryPostProcessor, 
   private final TreeMap<String, String> debugMap = new TreeMap<>(new DotNotationComparator());
   private BeanFactory beanFactory;
   private KeyDebugger keyDebugger;
-  private LinkedList<String> firstLocations = new LinkedList<>();
-  private LinkedList<String> lastLocations = new LinkedList<>();
+  private List<String> firstLocations = new LinkedList<>();
+  private List<String> lastLocations = new LinkedList<>();
   private String beanName;
   private SystemPropertyMode systemPropertyMode = SystemPropertyMode.FALLBACK;
   private boolean ignoreResourceNotFound = false;
@@ -116,12 +117,12 @@ public class PropertyPlaceholderConfigurer implements BeanFactoryPostProcessor, 
     this.searchSystemEnvironment = searchSystemEnvironment;
   }
 
-  public void setFirstLocations (LinkedList<String> firstLocations) {
+  public void setFirstLocations (List<String> firstLocations) {
 
     this.firstLocations = firstLocations;
   }
 
-  public void setLastLocations (LinkedList<String> lastLocations) {
+  public void setLastLocations (List<String> lastLocations) {
 
     this.lastLocations = lastLocations;
   }
