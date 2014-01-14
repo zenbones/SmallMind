@@ -49,7 +49,12 @@ public class SpringJobFactory implements JobFactory {
 
     Map<String, ? extends Job> jobMap;
 
-    jobMap = applicationContext.getBeansOfType(bundle.getJobDetail().getJobClass());
+    try {
+      jobMap = applicationContext.getBeansOfType(bundle.getJobDetail().getJobClass());
+    }
+    catch (Throwable throwable) {
+      throw new FormattedSchedulerException(throwable);
+    }
 
     if (jobMap.size() == 0) {
       throw new FormattedSchedulerException("No job(%s) of type(%s) is present in the application context", bundle.getJobDetail().getKey(), bundle.getJobDetail().getJobClass().getName());

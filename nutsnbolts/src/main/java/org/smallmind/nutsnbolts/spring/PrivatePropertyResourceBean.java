@@ -27,6 +27,7 @@
 package org.smallmind.nutsnbolts.spring;
 
 import java.util.LinkedList;
+import java.util.List;
 import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.config.BeanFactoryPostProcessor;
 import org.springframework.beans.factory.config.ConfigurableListableBeanFactory;
@@ -36,7 +37,7 @@ public class PrivatePropertyResourceBean implements BeanFactoryPostProcessor, Pr
 
   private static final LinkedList<String> LOCATION_LIST = new LinkedList<>();
 
-  private String location;
+  private List<String> locations = new LinkedList<>();
   private int order;
 
   public static String[] getLocations () {
@@ -59,15 +60,15 @@ public class PrivatePropertyResourceBean implements BeanFactoryPostProcessor, Pr
     this.order = order;
   }
 
-  public void setLocation (String location) {
+  public void setLocation (List<String> locations) {
 
-    this.location = location;
+    this.locations = locations;
   }
 
   @Override
   // We exist as a post processor merely to get into the first 'special' initialization phase
   public void postProcessBeanFactory (ConfigurableListableBeanFactory beanFactory) throws BeansException {
 
-    LOCATION_LIST.add(location);
+    LOCATION_LIST.addAll(locations);
   }
 }
