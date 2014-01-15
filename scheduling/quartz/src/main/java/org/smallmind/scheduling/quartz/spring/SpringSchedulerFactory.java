@@ -30,11 +30,14 @@ import java.util.Properties;
 import org.quartz.Scheduler;
 import org.quartz.SchedulerException;
 import org.quartz.impl.StdSchedulerFactory;
+import org.smallmind.scribe.pen.LoggerManager;
 import org.springframework.beans.BeansException;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationContextAware;
+import org.springframework.context.ApplicationListener;
+import org.springframework.context.event.ContextClosedEvent;
 
-public class SpringSchedulerFactory extends StdSchedulerFactory implements ApplicationContextAware {
+public class SpringSchedulerFactory extends StdSchedulerFactory implements ApplicationContextAware, ApplicationListener<ContextClosedEvent> {
 
   private SpringJobFactory jobFactory;
 
@@ -45,10 +48,25 @@ public class SpringSchedulerFactory extends StdSchedulerFactory implements Appli
   }
 
   @Override
-  public void setApplicationContext (ApplicationContext applicationContext)
+  public synchronized void setApplicationContext (ApplicationContext applicationContext)
     throws BeansException {
 
     jobFactory = new SpringJobFactory(applicationContext);
+  }
+
+  @Override
+  public void onApplicationEvent (ContextClosedEvent event) {
+
+    try {
+      Scheduler scheduler;
+
+      if ((scheduler = super.getScheduler()) != null) {
+        scheduler.shutdown(true);
+      }
+    }
+    catch (SchedulerException schedulerException) {
+      LoggerManager.getLogger(SpringSchedulerFactory.class).error(schedulerException);
+    }
   }
 
   @Override

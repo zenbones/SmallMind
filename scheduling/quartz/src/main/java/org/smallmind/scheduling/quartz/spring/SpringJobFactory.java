@@ -32,7 +32,6 @@ import org.quartz.Scheduler;
 import org.quartz.SchedulerException;
 import org.quartz.spi.JobFactory;
 import org.quartz.spi.TriggerFiredBundle;
-import org.smallmind.scribe.pen.LoggerManager;
 import org.springframework.context.ApplicationContext;
 
 public class SpringJobFactory implements JobFactory {
@@ -48,16 +47,7 @@ public class SpringJobFactory implements JobFactory {
   public Job newJob (TriggerFiredBundle bundle, Scheduler scheduler)
     throws SchedulerException {
 
-    Map<String, ? extends Job> jobMap;
-
-    try {
-      jobMap = applicationContext.getBeansOfType(bundle.getJobDetail().getJobClass());
-    }
-    catch (Throwable throwable) {
-      LoggerManager.getLogger(SpringJobFactory.class).fatal(throwable);
-
-      return new DeadHeadQuartzProxyJob(bundle.getJobDetail().getJobClass());
-    }
+    Map<String, ? extends Job> jobMap = applicationContext.getBeansOfType(bundle.getJobDetail().getJobClass());
 
     if (jobMap.size() == 0) {
       throw new FormattedSchedulerException("No job(%s) of type(%s) is present in the application context", bundle.getJobDetail().getKey(), bundle.getJobDetail().getJobClass().getName());
