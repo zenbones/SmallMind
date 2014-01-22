@@ -35,16 +35,23 @@ import java.sql.Connection;
 import java.sql.SQLException;
 import javax.sql.DataSource;
 import javax.xml.parsers.ParserConfigurationException;
+import liquibase.CatalogAndSchema;
 import liquibase.Liquibase;
 import liquibase.database.Database;
 import liquibase.database.DatabaseFactory;
 import liquibase.database.jvm.JdbcConnection;
-import liquibase.diff.Diff;
+import liquibase.diff.DiffGeneratorFactory;
 import liquibase.diff.DiffResult;
+import liquibase.diff.compare.CompareControl;
+import liquibase.diff.output.DiffOutputControl;
+import liquibase.diff.output.changelog.DiffToChangeLog;
 import liquibase.exception.LiquibaseException;
 import liquibase.resource.ClassLoaderResourceAccessor;
 import liquibase.resource.FileSystemResourceAccessor;
 import liquibase.resource.ResourceAccessor;
+import liquibase.snapshot.DatabaseSnapshot;
+import liquibase.snapshot.SnapshotControl;
+import liquibase.snapshot.SnapshotGeneratorFactory;
 import org.smallmind.nutsnbolts.lang.UnknownSwitchCaseException;
 import org.smallmind.persistence.orm.aop.Transactional;
 import org.springframework.beans.factory.InitializingBean;
@@ -146,17 +153,29 @@ public class SpringLiquibase implements InitializingBean {
             break;
           case GENERATE:
 
-            Diff diff;
+            SnapshotControl snapshotControl;
+            CompareControl compareControl;
+            DatabaseSnapshot originalDatabaseSnapshot;
             DiffResult diffResult;
+            DiffToChangeLog changeLogWriter;
             Database database;
+            String snapshotTypes = null;
 
-            diff = new Diff(database = DatabaseFactory.getInstance().findCorrectDatabaseImplementation(new JdbcConnection(dataSource.getConnection())), database.getDefaultSchemaName());
-            diffResult = diff.compare();
-            diffResult.setChangeSetAuthor("auto.generated");
-            diffResult.setChangeSetContext(contexts);
-            diffResult.setDataDir(outputDir);
+            snapshotControl = new SnapshotControl(database = DatabaseFactory.getInstance().findCorrectDatabaseImplementation(new JdbcConnection(dataSource.getConnection())), snapshotTypes);
+            compareControl = new CompareControl(new CompareControl.SchemaComparison[] {new CompareControl.SchemaComparison(new CatalogAndSchema(database.getDefaultCatalogName(), database.getDefaultSchemaName()), new CatalogAndSchema(database.getDefaultCatalogName(), database.getDefaultSchemaName()))}, snapshotTypes);
 
-            diffResult.printChangeLog(new PrintStream(new File((((outputDir == null) || (outputDir.length() == 0)) ? System.getProperty("java.io.tmpdir") : outputDir) + System.getProperty("file.separator") + outputLog)), database);
+            originalDatabaseSnapshot = SnapshotGeneratorFactory.getInstance().createSnapshot(compareControl.getSchemas(CompareControl.DatabaseRole.REFERENCE), database, snapshotControl);
+            diffResult = DiffGeneratorFactory.getInstance().compare(originalDatabaseSnapshot, SnapshotGeneratorFactory.getInstance().createSnapshot(compareControl.getSchemas(CompareControl.DatabaseRole.REFERENCE), null, snapshotControl), compareControl);
+
+            DiffOutputControl diffOutputControl = new DiffOutputControl(false, false, false);
+            diffOutputControl.setDataDir(null);
+
+            changeLogWriter = new DiffToChangeLog(diffResult, diffOutputControl);
+
+            changeLogWriter.setChangeSetAuthor("auto.generated");
+            changeLogWriter.setChangeSetContext(contexts);
+
+            changeLogWriter.print(new PrintStream(new File((((outputDir == null) || (outputDir.length() == 0)) ? System.getProperty("java.io.tmpdir") : outputDir) + System.getProperty("file.separator") + outputLog)));
             break;
           default:
             throw new UnknownSwitchCaseException(goal.name());
