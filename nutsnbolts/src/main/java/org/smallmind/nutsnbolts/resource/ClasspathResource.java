@@ -42,6 +42,13 @@ public class ClasspathResource extends AbstractResource {
 
   public InputStream getInputStream () {
 
-    return Thread.currentThread().getContextClassLoader().getResourceAsStream(getPath());
+    String path = getPath();
+
+    if ((path == null) || path.isEmpty()) {
+
+      return null;
+    }
+
+    return Thread.currentThread().getContextClassLoader().getResourceAsStream((path.charAt(0) == '/' ) ? path.substring(1) : path);
   }
 }

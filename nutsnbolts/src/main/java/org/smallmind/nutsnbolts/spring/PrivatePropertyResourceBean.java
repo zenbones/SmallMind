@@ -67,7 +67,8 @@ public class PrivatePropertyResourceBean implements BeanFactoryPostProcessor, Pr
 
   @Override
   // We exist as a post processor merely to get into the first 'special' initialization phase
-  public void postProcessBeanFactory (ConfigurableListableBeanFactory beanFactory) throws BeansException {
+  public void postProcessBeanFactory (ConfigurableListableBeanFactory beanFactory)
+    throws BeansException {
 
     LOCATION_LIST.addAll(locations);
   }
