@@ -175,7 +175,7 @@ public class SpringLiquibase implements InitializingBean {
             changeLogWriter.setChangeSetAuthor("auto.generated");
             changeLogWriter.setChangeSetContext(contexts);
 
-            changeLogWriter.print(new PrintStream(new File((((outputDir == null) || (outputDir.length() == 0)) ? System.getProperty("java.io.tmpdir") : outputDir) + System.getProperty("file.separator") + outputLog)));
+            changeLogWriter.print(new PrintStream(new File((((outputDir == null) || outputDir.isEmpty()) ? System.getProperty("java.io.tmpdir") : outputDir) + System.getProperty("file.separator") + (((outputLog == null) || outputLog.isEmpty()) ? "liquibase.changelog" : outputLog))));
             break;
           default:
             throw new UnknownSwitchCaseException(goal.name());
