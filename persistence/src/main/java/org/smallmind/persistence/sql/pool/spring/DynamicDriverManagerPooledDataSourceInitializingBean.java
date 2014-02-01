@@ -54,6 +54,7 @@ public class DynamicDriverManagerPooledDataSourceInitializingBean implements Ini
   jdbc.password.<pool name>.<context>.<#> (required, for at least connection '0')
   jdbc.max_statements.<pool name> (optional - defaults to '0')
   jdbc.validation_query.<pool name> (optional - defaults to 'select 1')
+  jdbc.pool.test_on_create.<pool name> (optional - defaults to 'false')
   jdbc.pool.test_on_acquire.<pool name> (optional - defaults to 'false')
   jdbc.pool.initial_size.<pool name> (optional - defaults to '0')
   jdbc.pool.min_size.<pool name> (optional - defaults to '0')
@@ -134,6 +135,7 @@ public class DynamicDriverManagerPooledDataSourceInitializingBean implements Ini
     ComplexPoolConfig complexPoolConfig = new ComplexPoolConfig();
     HashMap<String, HashMap<Integer, DatabaseConnection>> preContextMap = new HashMap<String, HashMap<Integer, DatabaseConnection>>();
     HashMap<String, DatabaseConnection[]> postContextMap = new HashMap<String, DatabaseConnection[]>();
+    Option<Boolean> testOnCreateOption;
     Option<Boolean> testOnAcquireOption;
     Option<Long> acquireWaitTimeMillisOption;
     Option<Long> connectionTimeoutMillisOption;
@@ -211,6 +213,9 @@ public class DynamicDriverManagerPooledDataSourceInitializingBean implements Ini
     maxStatementsOption = springPropertyAccessor.asInt("jdbc.max_statements." + poolName);
     validationQuery = springPropertyAccessor.asString("jdbc.validation_query." + poolName);
 
+    if (!(testOnCreateOption = springPropertyAccessor.asBoolean("jdbc.pool.test_on_create." + poolName)).isNone()) {
+      complexPoolConfig.setTestOnCreate(testOnCreateOption.get());
+    }
     if (!(testOnAcquireOption = springPropertyAccessor.asBoolean("jdbc.pool.test_on_acquire." + poolName)).isNone()) {
       complexPoolConfig.setTestOnAcquire(testOnAcquireOption.get());
     }
