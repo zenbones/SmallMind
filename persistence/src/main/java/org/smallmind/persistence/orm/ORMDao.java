@@ -31,11 +31,11 @@ import org.smallmind.persistence.AbstractVectorAwareManagedDao;
 import org.smallmind.persistence.Durable;
 import org.smallmind.persistence.cache.VectoredDao;
 
-public abstract class ORMDao<I extends Serializable & Comparable<I>, D extends Durable<I>, N> extends AbstractVectorAwareManagedDao<I, D> implements RelationalDao<I, D, N> {
+public abstract class ORMDao<I extends Serializable & Comparable<I>, D extends Durable<I>, F, N> extends AbstractVectorAwareManagedDao<I, D> implements RelationalDao<I, D, F, N> {
 
-  private ProxySession<N> proxySession;
+  private ProxySession<F, N> proxySession;
 
-  public ORMDao (ProxySession<N> proxySession, VectoredDao<I, D> vectoredDao) {
+  public ORMDao (ProxySession<F, N> proxySession, VectoredDao<I, D> vectoredDao) {
 
     super(proxySession.getDataSourceType(), vectoredDao);
 
@@ -54,7 +54,7 @@ public abstract class ORMDao<I extends Serializable & Comparable<I>, D extends D
   }
 
   @Override
-  public ProxySession<N> getSession () {
+  public ProxySession<F, N> getSession () {
 
     return proxySession;
   }

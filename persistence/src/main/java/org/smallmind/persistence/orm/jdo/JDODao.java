@@ -32,6 +32,7 @@ import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import javax.jdo.PersistenceManager;
+import javax.jdo.PersistenceManagerFactory;
 import javax.jdo.Query;
 import org.smallmind.nutsnbolts.util.IterableIterator;
 import org.smallmind.persistence.Durable;
@@ -39,7 +40,7 @@ import org.smallmind.persistence.UpdateMode;
 import org.smallmind.persistence.cache.VectoredDao;
 import org.smallmind.persistence.orm.ORMDao;
 
-public abstract class JDODao<I extends Serializable & Comparable<I>, D extends Durable<I>> extends ORMDao<I, D, PersistenceManager> {
+public abstract class JDODao<I extends Serializable & Comparable<I>, D extends Durable<I>> extends ORMDao<I, D, PersistenceManagerFactory, PersistenceManager> {
 
   public JDODao (JDOProxySession proxySession) {
 

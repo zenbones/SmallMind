@@ -36,7 +36,7 @@ import org.smallmind.persistence.orm.aop.NonTransactionalState;
 import org.smallmind.persistence.orm.aop.RollbackAwareBoundarySet;
 import org.smallmind.persistence.orm.aop.TransactionalState;
 
-public class JPAProxySession extends ProxySession<EntityManager> {
+public class JPAProxySession extends ProxySession<EntityManagerFactory, EntityManager> {
 
   private final ThreadLocal<EntityManager> managerThreadLocal = new ThreadLocal<EntityManager>();
   private final ThreadLocal<JPAProxyTransaction> transactionThreadLocal = new ThreadLocal<JPAProxyTransaction>();
@@ -89,6 +89,13 @@ public class JPAProxySession extends ProxySession<EntityManager> {
     return ((entityManager = managerThreadLocal.get()) == null) || (!entityManager.isOpen());
   }
 
+  @Override
+  public EntityManagerFactory getNativeSessionFactory () {
+
+    return entityManagerFactory;
+  }
+
+  @Override
   public EntityManager getNativeSession () {
 
     return getEntityManager();

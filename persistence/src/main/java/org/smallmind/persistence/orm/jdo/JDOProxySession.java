@@ -37,7 +37,7 @@ import org.smallmind.persistence.orm.aop.NonTransactionalState;
 import org.smallmind.persistence.orm.aop.RollbackAwareBoundarySet;
 import org.smallmind.persistence.orm.aop.TransactionalState;
 
-public class JDOProxySession extends ProxySession<PersistenceManager> {
+public class JDOProxySession extends ProxySession<PersistenceManagerFactory, PersistenceManager> {
 
   private final ThreadLocal<PersistenceManager> managerThreadLocal = new ThreadLocal<PersistenceManager>();
   private final ThreadLocal<JDOProxyTransaction> transactionThreadLocal = new ThreadLocal<JDOProxyTransaction>();
@@ -94,6 +94,13 @@ public class JDOProxySession extends ProxySession<PersistenceManager> {
     return ((persistenceManager = managerThreadLocal.get()) == null) || (persistenceManager.isClosed());
   }
 
+  @Override
+  public PersistenceManagerFactory getNativeSessionFactory () {
+
+    return persistenceManagerFactory;
+  }
+
+  @Override
   public PersistenceManager getNativeSession () {
 
     return getPersistenceManager();

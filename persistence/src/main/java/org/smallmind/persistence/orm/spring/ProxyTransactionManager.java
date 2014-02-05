@@ -33,14 +33,21 @@ import org.springframework.transaction.TransactionDefinition;
 import org.springframework.transaction.TransactionException;
 import org.springframework.transaction.TransactionStatus;
 import org.springframework.transaction.TransactionUsageException;
+import org.springframework.transaction.support.ResourceTransactionManager;
 
-public class ProxyTransactionManager implements PlatformTransactionManager {
+public class ProxyTransactionManager implements PlatformTransactionManager, ResourceTransactionManager {
 
   private ProxySession proxySession;
 
   public ProxyTransactionManager (ProxySession proxySession) {
 
     this.proxySession = proxySession;
+  }
+
+  @Override
+  public Object getResourceFactory () {
+
+    return proxySession.getNativeSession();
   }
 
   public TransactionStatus getTransaction (TransactionDefinition transactionDefinition)

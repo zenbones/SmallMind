@@ -35,6 +35,7 @@ import org.hibernate.Query;
 import org.hibernate.SQLQuery;
 import org.hibernate.ScrollMode;
 import org.hibernate.Session;
+import org.hibernate.SessionFactory;
 import org.hibernate.criterion.DetachedCriteria;
 import org.hibernate.criterion.Order;
 import org.hibernate.criterion.Projections;
@@ -46,7 +47,7 @@ import org.smallmind.persistence.cache.VectoredDao;
 import org.smallmind.persistence.orm.ORMDao;
 import org.smallmind.persistence.sql.SqlType;
 
-public abstract class HibernateDao<I extends Serializable & Comparable<I>, D extends Durable<I>> extends ORMDao<I, D, Session> {
+public abstract class HibernateDao<I extends Serializable & Comparable<I>, D extends Durable<I>> extends ORMDao<I, D, SessionFactory, Session> {
 
   public HibernateDao (HibernateProxySession proxySession) {
 

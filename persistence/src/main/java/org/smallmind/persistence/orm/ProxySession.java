@@ -26,7 +26,7 @@
  */
 package org.smallmind.persistence.orm;
 
-public abstract class ProxySession<N> {
+public abstract class ProxySession<F, N> {
 
   private final ThreadLocal<Boolean> boundaryEnforcedThreadLocal = new ThreadLocal<Boolean>() {
 
@@ -90,6 +90,8 @@ public abstract class ProxySession<N> {
 
     cacheEnabledThreadLocal.set(cacheEnabled);
   }
+
+  public abstract F getNativeSessionFactory ();
 
   public abstract N getNativeSession ();
 

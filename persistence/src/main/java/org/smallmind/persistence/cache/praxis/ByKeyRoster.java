@@ -47,7 +47,7 @@ import org.terracotta.annotations.InstrumentedClass;
 @InstrumentedClass
 public class ByKeyRoster<I extends Serializable & Comparable<I>, D extends Durable<I>> implements Roster<D> {
 
-  private transient volatile ORMDao<I, D, ?> ormDao;
+  private transient volatile ORMDao<I, D, ?, ?> ormDao;
 
   private final Roster<DurableKey<I, D>> keyRoster;
   private final Class<D> durableClass;
@@ -58,7 +58,7 @@ public class ByKeyRoster<I extends Serializable & Comparable<I>, D extends Durab
     this.keyRoster = keyRoster;
   }
 
-  private ORMDao<I, D, ?> getORMDao () {
+  private ORMDao<I, D, ?, ?> getORMDao () {
 
     if (ormDao == null) {
       if ((ormDao = DaoManager.get(durableClass)) == null) {
@@ -71,7 +71,7 @@ public class ByKeyRoster<I extends Serializable & Comparable<I>, D extends Durab
 
   public List<D> prefetch () {
 
-    ORMDao<I, D, ?> ormDao;
+    ORMDao<I, D, ?, ?> ormDao;
     VectoredDao<I, D> vectoredDao;
 
     if ((vectoredDao = (ormDao = getORMDao()).getVectoredDao()) != null) {

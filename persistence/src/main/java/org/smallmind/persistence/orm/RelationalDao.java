@@ -30,11 +30,11 @@ import java.io.Serializable;
 import org.smallmind.persistence.Durable;
 import org.smallmind.persistence.DurableDao;
 
-public interface RelationalDao<I extends Serializable & Comparable<I>, D extends Durable<I>, N> extends DurableDao<I, D> {
+public interface RelationalDao<I extends Serializable & Comparable<I>, D extends Durable<I>, F, N> extends DurableDao<I, D> {
 
   public abstract String getDataSourceKey ();
 
-  public abstract ProxySession<N> getSession ();
+  public abstract ProxySession<F, N> getSession ();
 
   public abstract D detach (D durable);
 

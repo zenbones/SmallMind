@@ -70,7 +70,7 @@ public class DaoManager implements PerApplicationDataManager {
     return null;
   }
 
-  public static <I extends Serializable & Comparable<I>, D extends Durable<I>> ORMDao<I, D, ?> get (Class<D> durableClass) {
+  public static <I extends Serializable & Comparable<I>, D extends Durable<I>> ORMDao<I, D, ?, ?> get (Class<D> durableClass) {
 
     return (ORMDao)PerApplicationContext.getPerApplicationData(DaoManager.class, ConcurrentHashMap.class).get(durableClass);
   }

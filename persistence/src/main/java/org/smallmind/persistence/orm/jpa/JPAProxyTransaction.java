@@ -31,6 +31,7 @@ import org.smallmind.persistence.orm.ProxyTransaction;
 import org.smallmind.persistence.orm.ProxyTransactionException;
 import org.smallmind.persistence.orm.TransactionEndState;
 import org.smallmind.persistence.orm.TransactionPostProcessException;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 public class JPAProxyTransaction extends ProxyTransaction<JPAProxySession> {
 
@@ -42,6 +43,7 @@ public class JPAProxyTransaction extends ProxyTransaction<JPAProxySession> {
     super(proxySession);
 
     this.transaction = transaction;
+    TransactionSynchronizationManager.bindResource(proxySession.getNativeSessionFactory(), proxySession.getNativeSession());
   }
 
   public boolean isCompleted () {
@@ -71,6 +73,7 @@ public class JPAProxyTransaction extends ProxyTransaction<JPAProxySession> {
         rollback(throwable);
       }
       finally {
+        TransactionSynchronizationManager.unbindResource(getSession().getNativeSessionFactory());
         getSession().close();
       }
 
@@ -108,6 +111,7 @@ public class JPAProxyTransaction extends ProxyTransaction<JPAProxySession> {
           thrownDuringRollback = (thrownDuringRollback == null) ? throwable : (throwable.getCause() != throwable) ? throwable : throwable.initCause(thrownDuringRollback);
         }
         finally {
+          TransactionSynchronizationManager.unbindResource(getSession().getNativeSessionFactory());
           getSession().close();
 
           try {
