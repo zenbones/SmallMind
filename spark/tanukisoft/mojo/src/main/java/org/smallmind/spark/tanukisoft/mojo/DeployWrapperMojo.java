@@ -36,6 +36,7 @@ import org.apache.maven.artifact.repository.ArtifactRepository;
 import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.MojoFailureException;
+import org.apache.maven.plugins.annotations.Component;
 import org.apache.maven.plugins.annotations.LifecyclePhase;
 import org.apache.maven.plugins.annotations.Mojo;
 import org.apache.maven.plugins.annotations.Parameter;
@@ -45,9 +46,9 @@ import org.apache.maven.project.MavenProject;
 @Mojo(name = "deploy-wrapper", defaultPhase = LifecyclePhase.DEPLOY, threadSafe = true)
 public class DeployWrapperMojo extends AbstractMojo {
 
-  @Parameter(readonly = true)
+  @Component
   ArtifactFactory artifactFactory;
-  @Parameter(readonly = true)
+  @Component
   ArtifactDeployer artifactDeployer;
   @Parameter(readonly = true, property = "project")
   private MavenProject project;
