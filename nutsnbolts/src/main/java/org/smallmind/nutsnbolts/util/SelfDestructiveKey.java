@@ -65,14 +65,14 @@ public class SelfDestructiveKey<K extends Comparable<K>> implements Comparable<S
   @Override
   public int compareTo (SelfDestructiveKey<K> key) {
 
-    long comparison;
+    int comparison;
 
-    if ((comparison = ignitionTime - key.getIgnitionTime()) == 0) {
+    if ((comparison = Long.compare(ignitionTime, key.getIgnitionTime())) == 0) {
 
       return (mapKey == null) ? ((key.getMapKey() == null) ? 0 : -1) : ((key.getMapKey() == null) ? 1 : mapKey.compareTo(key.getMapKey()));
     }
 
-    return (int)comparison;
+    return comparison;
   }
 
   @Override

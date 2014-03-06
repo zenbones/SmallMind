@@ -165,7 +165,7 @@ public class DriverManagerPreparedStatementCache implements StatementEventListen
       lastAccesssTime = System.currentTimeMillis();
     }
 
-    public long getLastAccesssTime () {
+    public long getLastAccessTime () {
 
       return lastAccesssTime;
     }
@@ -179,7 +179,7 @@ public class DriverManagerPreparedStatementCache implements StatementEventListen
 
     public int compareTo (TimeKey timeKey) {
 
-      return (int)(lastAccesssTime - timeKey.getLastAccesssTime());
+      return Long.compare(lastAccesssTime, timeKey.getLastAccessTime());
     }
   }
 

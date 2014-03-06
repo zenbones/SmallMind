@@ -255,11 +255,11 @@ public class UniqueId implements Comparable<UniqueId> {
 
   private int compareTimeBytes (UniqueId uniqueId) {
 
-    return (int)(Bytes.getLong(Arrays.copyOfRange(this.asByteArray(), 8, 16)) - Bytes.getLong(Arrays.copyOfRange(uniqueId.asByteArray(), 8, 16)));
+    return Long.compare(Bytes.getLong(Arrays.copyOfRange(this.asByteArray(), 8, 16)), Bytes.getLong(Arrays.copyOfRange(uniqueId.asByteArray(), 8, 16)));
   }
 
   private int compareCountBytes (UniqueId uniqueId) {
 
-    return Bytes.getShort(Arrays.copyOfRange(this.asByteArray(), 16, 18)) - Bytes.getShort(Arrays.copyOfRange(uniqueId.asByteArray(), 16, 18));
+    return Short.compare(Bytes.getShort(Arrays.copyOfRange(this.asByteArray(), 16, 18)), Bytes.getShort(Arrays.copyOfRange(uniqueId.asByteArray(), 16, 18)));
   }
 }

@@ -138,14 +138,14 @@ public class DeconstructionQueue {
     @Override
     public int compareTo (IgnitionKey key) {
 
-      long comparison;
+      int comparison;
 
-      if ((comparison = ignitionTime - key.getIgnitionTime()) == 0) {
+      if ((comparison = Long.compare(ignitionTime, key.getIgnitionTime())) == 0) {
 
         return ordinal - key.getOrdinal();
       }
 
-      return (int)comparison;
+      return comparison;
     }
 
     @Override
