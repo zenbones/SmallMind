@@ -44,122 +44,69 @@ import org.apache.maven.artifact.Artifact;
 import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.MojoFailureException;
+import org.apache.maven.plugins.annotations.LifecyclePhase;
+import org.apache.maven.plugins.annotations.Mojo;
+import org.apache.maven.plugins.annotations.Parameter;
+import org.apache.maven.plugins.annotations.ResolutionScope;
 import org.apache.maven.project.MavenProject;
 import org.smallmind.nutsnbolts.freemarker.ClassPathTemplateLoader;
 
-/**
- * @goal generate-wrapper
- * @phase package
- * @requiresDependencyResolution runtime
- * @description Generates Tanukisoft based os service wrappers
- * @threadSafe
- */
+// Generates Tanukisoft based os service wrappers
+@Mojo(name = "generate-wrapper", defaultPhase = LifecyclePhase.PACKAGE, requiresDependencyResolution = ResolutionScope.RUNTIME, threadSafe = true)
 public class GenerateWrapperMojo extends AbstractMojo {
 
   private static final String[] NO_ARGS = new String[0];
   private static final String RESOURCE_BASE_PATH = GenerateWrapperMojo.class.getPackage().getName().replace('.', '/');
-  /**
-   * @parameter expression="${project}"
-   * @readonly
-   */
+
+  @Parameter(readonly = true, property = "project")
   private MavenProject project;
-  /**
-   * @parameter
-   */
+  @Parameter
   private File licenseFile;
-  /**
-   * @parameter
-   */
+  @Parameter
   private Dependency[] dependencies;
-  /**
-   * @parameter
-   * @required
-   */
+  @Parameter(required = true)
   private String operatingSystem;
-  /**
-   * @parameter
-   * @required
-   */
+  @Parameter(required = true)
   private String wrapperListener;
-  /**
-   * @parameter default-value="application"
-   */
+  @Parameter(defaultValue = "application")
   private String applicationDir;
-  /**
-   * @parameter expression="${project.artifactId}"
-   */
+  @Parameter(property = "project.artifactId")
   private String applicationName;
-  /**
-   * @parameter expression="${project.name}"
-   */
+  @Parameter(property = "project.name")
   private String applicationLongName;
-  /**
-   * @parameter expression="${project.description}"
-   */
+  @Parameter(property = "project.description")
   private String applicationDescription;
-  /**
-   * @parameter
-   */
+  @Parameter
   private String[] jvmArgs;
-  /**
-   * @parameter default-value=0
-   */
+  @Parameter(defaultValue = "0")
   private int jvmInitMemoryMB;
-  /**
-   * @parameter default-value=0
-   */
+  @Parameter(defaultValue = "0")
   private int jvmMaxMemoryMB;
-  /**
-   * @parameter
-   */
+  @Parameter
   private String runAs;
-  /**
-   * @parameter
-   */
+  @Parameter
   private String withPassword;
-  /**
-   * @parameter
-   */
+  @Parameter
   private String umask;
-  /**
-   * @parameter default-value=0
-   */
+  @Parameter(defaultValue = "0")
   private int waitAfterStartup;
-  /**
-   * @parameter default-value="java"
-   */
+  @Parameter(defaultValue = "java")
   private String javaCommand;
-  /**
-   * @parameter
-   */
+  @Parameter
   private String[] appParameters;
-  /**
-   * @parameter
-   */
+  @Parameter
   private String[] serviceDependencies;
-  /**
-   * @parameter
-   */
+  @Parameter
   private String[] configurations;
-  /**
-   * @parameter default-value=true
-   */
+  @Parameter(defaultValue = "true")
   private boolean createArtifact;
-  /**
-   * @parameter default-value="zip"
-   */
+  @Parameter(defaultValue = "zip")
   private String compression;
-  /**
-   * @parameter default-value=true
-   */
+  @Parameter(defaultValue = "true")
   private boolean includeVersion;
-  /**
-   * @parameter default-value=false
-   */
+  @Parameter(defaultValue = "false")
   private boolean verbose;
-  /**
-   * @parameter default-value=false
-   */
+  @Parameter(defaultValue = "false")
   private boolean neutered;
 
   public void execute ()

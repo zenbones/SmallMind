@@ -7,40 +7,24 @@ import java.io.IOException;
 import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.MojoFailureException;
+import org.apache.maven.plugins.annotations.LifecyclePhase;
+import org.apache.maven.plugins.annotations.Mojo;
+import org.apache.maven.plugins.annotations.Parameter;
 import org.apache.maven.project.MavenProject;
 
-/**
- * @goal install-license-files
- * @phase prepare-package
- * @description Installs license files for inclusion in distribution artifacts
- * @threadSafe
- */
+// Installs license files for inclusion in distribution artifacts
+@Mojo(name = "install-license-files", defaultPhase = LifecyclePhase.PREPARE_PACKAGE, threadSafe = true)
 public class TargetLicenseMojo extends AbstractMojo {
 
-  /**
-   * @parameter expression="${project}"
-   * @readonly
-   */
+  @Parameter(readonly = true, property = "project")
   private MavenProject project;
-
-  /**
-   * @parameter
-   */
+  @Parameter
   private Root root;
-
-  /**
-   * @parameter
-   */
+  @Parameter
   private Rule[] rules;
-
-  /**
-   * @parameter
-   */
+  @Parameter
   private String[] licenses;
-
-  /**
-   * @parameter default-value=false
-   */
+  @Parameter(defaultValue = "false")
   private boolean verbose;
 
   @Override

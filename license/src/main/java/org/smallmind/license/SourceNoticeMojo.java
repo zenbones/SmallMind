@@ -12,16 +12,15 @@ import org.apache.maven.model.Resource;
 import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.MojoFailureException;
+import org.apache.maven.plugins.annotations.LifecyclePhase;
+import org.apache.maven.plugins.annotations.Mojo;
+import org.apache.maven.plugins.annotations.Parameter;
 import org.apache.maven.project.MavenProject;
 import org.smallmind.license.stencil.JavaDocStencil;
 import org.smallmind.license.stencil.Stencil;
 
-/**
- * @goal generate-notice-headers
- * @phase process-sources
- * @description Generates and/or replaces notice headers in source files
- * @threadSafe
- */
+// Generates and/or replaces notice headers in source files
+@Mojo(name = "generate-notice-headers", defaultPhase = LifecyclePhase.PROCESS_SOURCES, threadSafe = true)
 public class SourceNoticeMojo extends AbstractMojo {
 
   private static final Stencil[] DEFAULT_STENCILS = new Stencil[] {new JavaDocStencil()};
@@ -31,45 +30,21 @@ public class SourceNoticeMojo extends AbstractMojo {
     FIRST, LAST, COMPLETED, TERMINATED
   }
 
-  /**
-   * @parameter expression="${project}"
-   * @readonly
-   */
+  @Parameter(readonly = true, property = "project")
   private MavenProject project;
-
-  /**
-   * @parameter
-   */
+  @Parameter
   private Root root;
-
-  /**
-   * @parameter
-   */
+  @Parameter
   private Stencil[] stencils;
-
-  /**
-   * @parameter
-   */
+  @Parameter
   private Rule[] rules;
-
-  /**
-   * @parameter default-value=false
-   */
+  @Parameter(defaultValue = "false")
   private boolean allowNoticeRemoval;
-
-  /**
-   * @parameter default-value=true
-   */
+  @Parameter(defaultValue = "true")
   private boolean includeResources;
-
-  /**
-   * @parameter default-value=false
-   */
+  @Parameter(defaultValue = "false")
   private boolean includeTests;
-
-  /**
-   * @parameter default-value=false
-   */
+  @Parameter(defaultValue = "false")
   private boolean verbose;
 
   //TODO: Excludes, Seek/Process Optimization

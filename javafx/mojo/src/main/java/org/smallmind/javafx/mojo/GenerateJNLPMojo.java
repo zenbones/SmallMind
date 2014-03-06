@@ -45,120 +45,68 @@ import freemarker.template.Template;
 import org.apache.maven.artifact.Artifact;
 import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugin.MojoExecutionException;
+import org.apache.maven.plugins.annotations.LifecyclePhase;
+import org.apache.maven.plugins.annotations.Mojo;
+import org.apache.maven.plugins.annotations.Parameter;
+import org.apache.maven.plugins.annotations.ResolutionScope;
 import org.apache.maven.project.MavenProject;
 import org.smallmind.nutsnbolts.freemarker.ClassPathTemplateLoader;
 import org.smallmind.nutsnbolts.io.FileIterator;
 import org.smallmind.nutsnbolts.util.SingleItemIterator;
 
-/**
- * @goal generate-jnlp
- * @phase package
- * @requiresDependencyResolution runtime
- * @description Generates A Webstart Javafx-based Project
- * @threadSafe
- */
+// Generates A Webstart Javafx-based Project
+@Mojo(name = "generate-jnlp", defaultPhase = LifecyclePhase.PACKAGE, requiresDependencyResolution = ResolutionScope.RUNTIME, threadSafe = true)
 public class GenerateJNLPMojo extends AbstractMojo {
 
   private static final JNLParameter[] NO_PARAMETERS = new JNLParameter[0];
   private static final String[] NO_ARGS = new String[0];
   private static final String RESOURCE_BASE_PATH = GenerateJNLPMojo.class.getPackage().getName().replace('.', '/');
-  /**
-   * @parameter expression="${project}"
-   * @readonly
-   */
+
+  @Parameter(readonly = true, property = "project")
   private MavenProject project;
-  /**
-   * @parameter
-   * @required
-   */
+  @Parameter(required = true)
   private String operatingSystem;
-  /**
-   * @parameter
-   * @required
-   */
+  @Parameter(required = true)
   private String javafxRuntime;
-  /**
-   * @parameter
-   * @required
-   */
+  @Parameter(required = true)
   private String javaVersion;
-  /**
-   * @parameter default-value="-Xms64m -Xmx256m"
-   */
+  @Parameter(defaultValue = "-Xms64m -Xmx256m")
   private String jvmArgs;
-  /**
-   * @parameter default-value="1.0"
-   */
+  @Parameter(defaultValue = "1.0")
   private String jnlpSpec;
-  /**
-   * @parameter
-   * @required
-   */
+  @Parameter(required = true)
   private String mainClass;
-  /**
-   * @parameter default-value=800
-   */
+  @Parameter(defaultValue = "800")
   private int width;
-  /**
-   * @parameter default-value=600
-   */
+  @Parameter(defaultValue = "600")
   private int height;
-  /**
-   * @parameter
-   * @required
-   */
+  @Parameter(required = true)
   private Dependency javafx;
-  /**
-   * @parameter
-   */
+  @Parameter
   private SigningInfo signjar;
-  /**
-   * @parameter
-   */
+  @Parameter
   private JNLParameter[] jnlpParameters;
-  /**
-   * @parameter
-   */
+  @Parameter
   private String[] jnlpArguments;
-  /**
-   * @parameter expression="${project.artifactId}"
-   */
+  @Parameter(property = "project.artifactId")
   private String applicationName;
-  /**
-   * @parameter expression="${project.artifactId}"
-   */
+  @Parameter(property = "project.artifactId")
   private String title;
-  /**
-   * @parameter expression="${project.groupId}"
-   */
+  @Parameter(property = "roject.groupId")
   private String vendor;
-  /**
-   * @parameter expression="${project.artifactId}"
-   */
+  @Parameter(property = "project.artifactId")
   private String description;
-  /**
-   * @parameter default-value=true
-   */
+  @Parameter(defaultValue = "true")
   private boolean offlineAllowed;
-  /**
-   * @parameter default-value="jnlp"
-   */
+  @Parameter(defaultValue = "jnlp")
   private String deployDir;
-  /**
-   * @parameter default-value=true
-   */
+  @Parameter(defaultValue = "true")
   private boolean createJar;
-  /**
-   * @parameter default-value=true
-   */
+  @Parameter(defaultValue = "true")
   private boolean includeVersion;
-  /**
-   * @parameter default-value=true
-   */
+  @Parameter(defaultValue = "true")
   private boolean includeHref;
-  /**
-   * @parameter default-value=false
-   */
+  @Parameter(defaultValue = "false")
   private boolean verbose;
 
   @Override

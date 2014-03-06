@@ -35,43 +35,24 @@ import org.apache.maven.artifact.repository.ArtifactRepository;
 import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.MojoFailureException;
+import org.apache.maven.plugins.annotations.LifecyclePhase;
+import org.apache.maven.plugins.annotations.Mojo;
+import org.apache.maven.plugins.annotations.Parameter;
 import org.apache.maven.project.MavenProject;
 
-/**
- * @goal install-jnlp
- * @phase install
- * @description Installs A Webstart Javafx-based Project
- * @threadSafe
- */
+// Installs A Webstart Javafx-based Project
+@Mojo(name = "install-jnlp", defaultPhase = LifecyclePhase.INSTALL, threadSafe = true)
 public class InstallJNLPMojo extends AbstractMojo {
 
-  /**
-   * @parameter expression="${project}"
-   * @readonly
-   */
+  @Parameter(readonly = true, property = "project")
   private MavenProject project;
-
-  /**
-   * @component
-   * @readonly
-   */
+  @Parameter(readonly = true)
   ArtifactFactory artifactFactory;
-
-  /**
-   * @component
-   * @readonly
-   */
+  @Parameter(readonly = true)
   ArtifactInstaller artifactInstaller;
-
-  /**
-   * @parameter expression="${localRepository}"
-   * @readonly
-   */
+  @Parameter(readonly = true)
   private ArtifactRepository localRepository;
-
-  /**
-   * @parameter expression="${project.artifactId}"
-   */
+  @Parameter(property = "project.artifactId")
   private String artifactName;
 
   public void execute ()

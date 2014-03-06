@@ -35,37 +35,28 @@ import javax.xml.validation.Validator;
 import org.apache.maven.model.Resource;
 import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugin.MojoExecutionException;
+import org.apache.maven.plugins.annotations.LifecyclePhase;
+import org.apache.maven.plugins.annotations.Mojo;
+import org.apache.maven.plugins.annotations.Parameter;
+import org.apache.maven.plugins.annotations.ResolutionScope;
 import org.xml.sax.SAXException;
 import org.xml.sax.SAXParseException;
 import org.xml.sax.helpers.DefaultHandler;
 
-/**
- * @goal validate-xml
- * @phase validate
- * @requiresDependencyResolution runtime
- * @description Validates XML against W3C XSD
- * @threadSafe
- */
+// Validates XML against W3C XSD
+@Mojo(name = "validate-xml", defaultPhase = LifecyclePhase.VALIDATE, requiresDependencyResolution = ResolutionScope.RUNTIME, threadSafe = true)
 public class XMLValidationMojo extends AbstractMojo {
 
   private static final SchemaFactory SCHEMA_FACTORY = SchemaFactory.newInstance(XMLConstants.W3C_XML_SCHEMA_NS_URI);
   private static final ValidationErrorHandler ERROR_HANDLER = new ValidationErrorHandler();
 
-  /**
-   * @parameter expression="${project.resources}"
-   * @readonly
-   */
+  @Parameter(readonly = true, property = "project.resources")
   private List<Resource> projectResources;
 
-  /**
-   * @parameter
-   * @required
-   */
+  @Parameter(required = true)
   private String w3c;
 
-  /**
-   * @parameter
-   */
+  @Parameter
   private List<XSD> schemas;
 
   public void execute ()

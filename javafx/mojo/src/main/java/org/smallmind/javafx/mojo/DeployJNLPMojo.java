@@ -35,48 +35,26 @@ import org.apache.maven.artifact.repository.ArtifactRepository;
 import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.MojoFailureException;
+import org.apache.maven.plugins.annotations.LifecyclePhase;
+import org.apache.maven.plugins.annotations.Mojo;
+import org.apache.maven.plugins.annotations.Parameter;
 import org.apache.maven.project.MavenProject;
 
-/**
- * @goal deploy-jnlp
- * @phase deploy
- * @description Deploys A Webstart Javafx-based Project
- * @threadSafe
- */
+// Deploys A Webstart Javafx-based Project
+@Mojo(name = "deploy-jnlp", defaultPhase = LifecyclePhase.DEPLOY, threadSafe = true)
 public class DeployJNLPMojo extends AbstractMojo {
 
-  /**
-   * @parameter expression="${project}"
-   * @readonly
-   */
+  @Parameter(readonly = true, property = "project")
   private MavenProject project;
-
-  /**
-   * @component
-   * @readonly
-   */
+  @Parameter(readonly = true)
   ArtifactFactory artifactFactory;
-
-  /**
-   * @component
-   * @readonly
-   */
+  @Parameter(readonly = true)
   ArtifactDeployer artifactDeployer;
-
-  /**
-   * @parameter expression="${localRepository}"
-   * @readonly
-   */
+  @Parameter(readonly = true, property = "localRepository")
   private ArtifactRepository localRepository;
-
-  /**
-   * @parameter default-value="${project.distributionManagementArtifactRepository}"
-   */
+  @Parameter(defaultValue = "${project.distributionManagementArtifactRepository}")
   private ArtifactRepository deploymentRepository;
-
-  /**
-   * @parameter expression="${project.artifactId}"
-   */
+  @Parameter(property = "project.artifactId")
   private String artifactName;
 
   public void execute ()
