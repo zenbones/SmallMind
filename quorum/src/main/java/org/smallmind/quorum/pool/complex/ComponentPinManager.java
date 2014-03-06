@@ -205,7 +205,7 @@ public class ComponentPinManager<C> {
 
         workerThread.join(componentPool.getComplexPoolConfig().getCreationTimeoutMillis());
         if (creationWorker.abort()) {
-          throw new ComponentCreationException("Exceeded element timeout(%d) waiting on element creation", componentPool.getComplexPoolConfig().getCreationTimeoutMillis());
+          throw new ComponentCreationException("Exceeded element timeout(%d) waiting on element creation (pool size = %d, free size = %d)", componentPool.getComplexPoolConfig().getCreationTimeoutMillis(), getPoolSize(), getFreeSize());
         }
         else {
           componentInstance = creationWorker.getComponentInstance();

@@ -55,6 +55,54 @@
         <groupId>org.smallmind</groupId>
         <artifactId>smallmind-license-plugin</artifactId>
       </plugin>
+      <!--
+      <plugin>
+        <groupId>org.smallmind</groupId>
+        <artifactId>smallmind-javafx-mojo</artifactId>
+        <executions>
+          <execution>
+            <id>generate</id>
+            <goals>
+              <goal>generate-jnlp</goal>
+            </goals>
+          </execution>
+          <execution>
+            <id>install</id>
+            <goals>
+              <goal>install-jnlp</goal>
+            </goals>
+          </execution>
+          <execution>
+            <id>deploy</id>
+            <goals>
+              <goal>deploy-jnlp</goal>
+            </goals>
+          </execution>
+        </executions>
+        <configuration>
+          <operatingSystem>WINDOWS_X86_64</operatingSystem>
+          <javaVersion>1.7+</javaVersion>
+          <javafxRuntime>2.1+</javafxRuntime>
+          <mainClass>com.mycompany..module.AdminApplication</mainClass>
+          <signjar>
+            <keystore>${project.basedir}/src/main/resources/jnlp/keystore.jks</keystore>
+            <storepass>store password</storepass>
+            <keypass>keystore password</keypass>
+            <alias>signFiles</alias>
+          </signjar>
+          <javafx>
+            <groupId>com.oracle</groupId>
+            <artifactId>javafx-rt</artifactId>
+          </javafx>
+          <jnlpParameters>
+            <jnlpParameter>
+              <name>ENV_PARAM_NAME</name>
+              <value>ENV_PARAM_VALUE</value>
+            </jnlpParameter>
+          </jnlpParameters>
+        </configuration>
+      </plugin>
+      -->
     </plugins>
   </build>
 </project>
