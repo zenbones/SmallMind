@@ -181,7 +181,11 @@ public class XMLFormatter implements Formatter {
     if (parameters.length > 0) {
       appendLine(formatBuilder, "<parameters>", level);
       for (Parameter parameter : parameters) {
-        appendElement(formatBuilder, parameter.getKey(), parameter.getValue().toString(), cdata, level + 1);
+
+        String key = parameter.getKey();
+        Object value = parameter.getValue();
+
+        appendElement(formatBuilder, (key == null) ? "null" : key, (value == null) ? "null" : value.toString(), cdata, level + 1);
       }
       appendLine(formatBuilder, "</parameters>", level);
     }
