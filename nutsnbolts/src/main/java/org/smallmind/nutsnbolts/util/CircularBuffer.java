@@ -82,7 +82,8 @@ public class CircularBuffer {
       try {
         wait(millis);
       }
-      catch (InterruptedException i) {
+      catch (InterruptedException interruptedException) {
+        throw new RuntimeException(interruptedException);
       }
     }
 
@@ -97,7 +98,7 @@ public class CircularBuffer {
 
   public synchronized void write (byte[] data, int off, int length) {
 
-    int totalBytes = 0;
+    int totalBytes = off;
     int bytesWritten;
 
     if (closed) {
@@ -114,7 +115,8 @@ public class CircularBuffer {
         try {
           wait();
         }
-        catch (InterruptedException i) {
+        catch (InterruptedException interruptedException) {
+          throw new RuntimeException(interruptedException);
         }
       }
     } while (totalBytes < length);

@@ -93,8 +93,8 @@ public class GossipWorker implements Runnable {
 
             gossipTarget.handleMessage(messageStrategy, messagePlus.getMessage());
           }
-          catch (Throwable throwable) {
-            LoggerManager.getLogger(GossipWorker.class).error(throwable);
+          catch (Exception exception) {
+            LoggerManager.getLogger(GossipWorker.class).error(exception);
           }
           finally {
             InstrumentationManager.publishMetricContext();

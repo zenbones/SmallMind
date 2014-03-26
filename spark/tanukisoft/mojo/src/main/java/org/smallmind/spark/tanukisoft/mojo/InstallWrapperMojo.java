@@ -69,8 +69,8 @@ public class InstallWrapperMojo extends AbstractMojo {
     try {
       compressionType = CompressionType.valueOf(compression.replace('-', '_').toUpperCase());
     }
-    catch (Throwable throwable) {
-      throw new MojoExecutionException(String.format("Unknown compression type(%s) - valid choices are %s", compression, Arrays.toString(CompressionType.values())), throwable);
+    catch (Exception exception) {
+      throw new MojoExecutionException(String.format("Unknown compression type(%s) - valid choices are %s", compression, Arrays.toString(CompressionType.values())), exception);
     }
 
     applicationArtifact = artifactFactory.createArtifactWithClassifier(project.getGroupId(), project.getArtifactId(), project.getVersion(), compressionType.getExtension(), (project.getArtifact().getClassifier() == null) ? "app" : project.getArtifact().getClassifier() + "-app");

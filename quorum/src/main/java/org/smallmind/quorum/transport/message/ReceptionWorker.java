@@ -120,8 +120,8 @@ public class ReceptionWorker implements Runnable {
 
             topicOperator.publish(responseMessage);
           }
-          catch (Throwable throwable) {
-            LoggerManager.getLogger(ReceptionWorker.class).error(throwable);
+          catch (Exception exception) {
+            LoggerManager.getLogger(ReceptionWorker.class).error(exception);
           }
           finally {
             operatorQueue.add(topicOperator);

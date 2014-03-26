@@ -141,12 +141,12 @@ public abstract class AbstractAppender implements Appender {
         throw new LoggerException("No formatter set for log output on this appender(%s)", this.getClass().getCanonicalName());
       }
     }
-    catch (Throwable throwable) {
+    catch (Exception exception) {
       if (errorHandler == null) {
-        throwable.printStackTrace();
+        exception.printStackTrace();
       }
       else {
-        handleError(errorHandler, record, (Exception)throwable);
+        handleError(errorHandler, record, exception);
       }
     }
   }

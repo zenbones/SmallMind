@@ -125,29 +125,29 @@ public class GenerateJNLPMojo extends AbstractMojo {
     try {
       osType = OSType.valueOf(operatingSystem.replace('-', '_').toUpperCase());
     }
-    catch (Throwable throwable) {
-      throw new MojoExecutionException(String.format("Unknown operating system type(%s) - valid choices are %s", operatingSystem, Arrays.toString(OSType.values())), throwable);
+    catch (Exception exception) {
+      throw new MojoExecutionException(String.format("Unknown operating system type(%s) - valid choices are %s", operatingSystem, Arrays.toString(OSType.values())), exception);
     }
 
     try {
       runtimeVersion = JavaFXRuntimeVersion.fromCode(javafxRuntime);
     }
-    catch (Throwable throwable) {
-      throw new MojoExecutionException(String.format("Unknown javafx runtime type(%s) - valid choices are %s", javafxRuntime, Arrays.toString(JavaFXRuntimeVersion.getValidCodes())), throwable);
+    catch (Exception exception) {
+      throw new MojoExecutionException(String.format("Unknown javafx runtime type(%s) - valid choices are %s", javafxRuntime, Arrays.toString(JavaFXRuntimeVersion.getValidCodes())), exception);
     }
 
     try {
       runtimeLocation = runtimeVersion.getLocation(osType);
     }
-    catch (Throwable throwable) {
-      throw new MojoExecutionException(String.format("The javafx runtime (%s) is not available on os type (%s)", runtimeVersion.getCode(), osType.name()), throwable);
+    catch (Exception exception) {
+      throw new MojoExecutionException(String.format("The javafx runtime (%s) is not available on os type (%s)", runtimeVersion.getCode(), osType.name()), exception);
     }
 
     try {
       j2seVersion = J2SEVersion.fromCode(javaVersion);
     }
-    catch (Throwable throwable) {
-      throw new MojoExecutionException(String.format("Unknown java version(%s) - valid choices are %s", javaVersion, Arrays.toString(J2SEVersion.getValidCodes())), throwable);
+    catch (Exception exception) {
+      throw new MojoExecutionException(String.format("Unknown java version(%s) - valid choices are %s", javaVersion, Arrays.toString(J2SEVersion.getValidCodes())), exception);
     }
 
     freemarkerMap = new HashMap<String, Object>();

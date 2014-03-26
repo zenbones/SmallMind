@@ -163,8 +163,8 @@ public class JDKAppenderWrapper extends Handler {
     try {
       appender.close();
     }
-    catch (LoggerException loggerException) {
-      throw new SecurityException(loggerException);
+    catch (LoggerException | InterruptedException exception) {
+      throw new SecurityException(exception);
     }
   }
 

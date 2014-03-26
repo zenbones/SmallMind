@@ -57,5 +57,5 @@ public interface Appender {
   public abstract void publish (Record record);
 
   public abstract void close ()
-    throws LoggerException;
+    throws InterruptedException, LoggerException;
 }

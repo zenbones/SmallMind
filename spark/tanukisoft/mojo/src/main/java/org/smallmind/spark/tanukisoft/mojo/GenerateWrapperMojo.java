@@ -125,15 +125,15 @@ public class GenerateWrapperMojo extends AbstractMojo {
     try {
       osType = OSType.valueOf(operatingSystem.replace('-', '_').toUpperCase());
     }
-    catch (Throwable throwable) {
-      throw new MojoExecutionException(String.format("Unknown operating system type(%s) - valid choices are %s", operatingSystem, Arrays.toString(OSType.values())), throwable);
+    catch (Exception exception) {
+      throw new MojoExecutionException(String.format("Unknown operating system type(%s) - valid choices are %s", operatingSystem, Arrays.toString(OSType.values())), exception);
     }
 
     try {
       compressionType = CompressionType.valueOf(compression.replace('-', '_').toUpperCase());
     }
-    catch (Throwable throwable) {
-      throw new MojoExecutionException(String.format("Unknown compression type(%s) - valid choices are %s", compression, Arrays.toString(CompressionType.values())), throwable);
+    catch (Exception exception) {
+      throw new MojoExecutionException(String.format("Unknown compression type(%s) - valid choices are %s", compression, Arrays.toString(CompressionType.values())), exception);
     }
 
     createDirectory("bin", binDirectory = new File(project.getBuild().getDirectory() + System.getProperty("file.separator") + applicationDir + System.getProperty("file.separator") + constructArtifactName(includeVersion, false) + System.getProperty("file.separator") + "bin"));

@@ -139,14 +139,9 @@ public class AsynchronousAppender implements Appender, Runnable {
   }
 
   public void close ()
-    throws LoggerException {
+    throws InterruptedException, LoggerException {
 
-    try {
-      finish();
-    }
-    catch (InterruptedException interruptedException) {
-      throw new LoggerException(interruptedException);
-    }
+    finish();
 
     internalAppender.close();
   }

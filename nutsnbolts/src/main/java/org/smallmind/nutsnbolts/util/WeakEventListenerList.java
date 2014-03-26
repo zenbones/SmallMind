@@ -158,7 +158,8 @@ public class WeakEventListenerList<E extends EventListener> implements Iterable<
             parentMap.remove(reference).removeListener(reference);
           }
         }
-        catch (InterruptedException i) {
+        catch (InterruptedException interruptedException) {
+          finished.set(true);
         }
       }
 

@@ -53,7 +53,7 @@ public class RMIDaemonInitializingBean implements InitializingBean {
 
   @Override
   public void afterPropertiesSet ()
-    throws IOException {
+    throws IOException, InterruptedException {
 
     int retryCount = 0;
 
@@ -67,12 +67,7 @@ public class RMIDaemonInitializingBean implements InitializingBean {
         }
 
         Runtime.getRuntime().exec("rmid");
-
-        try {
-          Thread.sleep(retryDelayMilliseconds);
-        }
-        catch (InterruptedException i) {
-        }
+        Thread.sleep(retryDelayMilliseconds);
       }
     } while (activationSystem == null);
   }

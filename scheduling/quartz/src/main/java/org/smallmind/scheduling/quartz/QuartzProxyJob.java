@@ -124,8 +124,8 @@ public abstract class QuartzProxyJob implements ProxyJob, Job {
     try {
       proceed();
     }
-    catch (Throwable throwable) {
-      setThrowable(throwable);
+    catch (Exception exception) {
+      setThrowable(exception);
     }
     finally {
       stopTime = new Date();
@@ -137,8 +137,8 @@ public abstract class QuartzProxyJob implements ProxyJob, Job {
       try {
         cleanup();
       }
-      catch (Throwable throwable) {
-        LoggerManager.getLogger(this.getClass()).error(throwable);
+      catch (Exception exception) {
+        LoggerManager.getLogger(this.getClass()).error(exception);
       }
     }
   }
