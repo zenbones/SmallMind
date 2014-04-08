@@ -26,11 +26,10 @@
  */
 package org.smallmind.nutsnbolts.csv;
 
-import java.io.Closeable;
 import java.io.IOException;
 import java.io.OutputStream;
 
-public class CSVWriter implements Closeable {
+public class CSVWriter implements AutoCloseable {
 
   private static char[] ESCAPED_CHARS = {'"', ',', '\n', '\r', '\f'};
 
