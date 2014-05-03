@@ -28,6 +28,7 @@ package org.smallmind.persistence.orm.hibernate;
 
 import org.hibernate.dialect.function.SQLFunctionTemplate;
 import org.hibernate.type.IntegerType;
+import org.hibernate.type.TimestampType;
 
 public class HSQLDialect extends org.hibernate.dialect.HSQLDialect {
 
@@ -36,5 +37,6 @@ public class HSQLDialect extends org.hibernate.dialect.HSQLDialect {
     super();
 
     registerFunction("org_smallmind_day_diff", new SQLFunctionTemplate(IntegerType.INSTANCE, "timestampdiff(SQL_TSI_DAY, ?1, ?2)"));
+    registerFunction("org_smallmind_date_sub_minutes", new SQLFunctionTemplate(TimestampType.INSTANCE, "timstampadd(SQL_TSI_MINUTE, -?2, ?1)"));
   }
 }
