@@ -37,5 +37,5 @@ import java.lang.annotation.Target;
 @Inherited
 public @interface ExpectedContexts {
 
-  public abstract ExpectedContext[] value ();
+  public abstract Class<? extends Context>[] value ();
 }
