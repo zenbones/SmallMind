@@ -194,22 +194,22 @@
       <dependency>
         <groupId>org.apache.maven</groupId>
         <artifactId>maven-plugin-api</artifactId>
-        <version>3.1.1</version>
-      </dependency>
-      <dependency>
-        <groupId>org.apache.maven.plugin-tools</groupId>
-        <artifactId>maven-plugin-annotations</artifactId>
-        <version>3.2</version>
+        <version>3.2.1</version>
       </dependency>
       <dependency>
         <groupId>org.apache.maven</groupId>
         <artifactId>maven-core</artifactId>
-        <version>3.1.1</version>
+        <version>3.2.1</version>
       </dependency>
       <dependency>
         <groupId>org.apache.maven</groupId>
         <artifactId>maven-compat</artifactId>
-        <version>3.1.1</version>
+        <version>3.2.1</version>
+      </dependency>
+      <dependency>
+        <groupId>org.apache.maven.plugin-tools</groupId>
+        <artifactId>maven-plugin-annotations</artifactId>
+        <version>3.3</version>
       </dependency>
       <dependency>
         <groupId>org.scala-lang</groupId>
@@ -239,7 +239,7 @@
       <dependency>
         <groupId>org.testng</groupId>
         <artifactId>testng</artifactId>
-        <version>6.8.7</version>
+        <version>6.8.8</version>
       </dependency>
       <dependency>
         <groupId>org.freemarker</groupId>
@@ -254,87 +254,87 @@
       <dependency>
         <groupId>org.yaml</groupId>
         <artifactId>snakeyaml</artifactId>
-        <version>1.5</version>
+        <version>1.13</version>
       </dependency>
       <dependency>
         <groupId>org.rrd4j</groupId>
         <artifactId>rrd4j</artifactId>
-        <version>2.1.1</version>
+        <version>2.2</version>
       </dependency>
       <dependency>
         <groupId>org.ow2.asm</groupId>
         <artifactId>asm-commons</artifactId>
-        <version>4.2</version>
+        <version>5.0.2</version>
       </dependency>
       <dependency>
         <groupId>org.ow2.asm</groupId>
         <artifactId>asm-analysis</artifactId>
-        <version>4.2</version>
+        <version>5.0.2</version>
       </dependency>
       <dependency>
         <groupId>org.ow2.asm</groupId>
         <artifactId>asm-util</artifactId>
-        <version>4.2</version>
+        <version>5.0.2</version>
       </dependency>
       <dependency>
         <groupId>org.aspectj</groupId>
         <artifactId>aspectjrt</artifactId>
-        <version>1.7.3</version>
+        <version>1.8.0</version>
       </dependency>
       <dependency>
         <groupId>org.springframework</groupId>
         <artifactId>spring-beans</artifactId>
-        <version>3.2.3.RELEASE</version>
+        <version>4.0.3.RELEASE</version>
       </dependency>
       <dependency>
         <groupId>org.springframework</groupId>
         <artifactId>spring-context</artifactId>
-        <version>3.2.3.RELEASE</version>
+        <version>4.0.3.RELEASE</version>
       </dependency>
       <dependency>
         <groupId>org.springframework</groupId>
         <artifactId>spring-jdbc</artifactId>
-        <version>3.2.3.RELEASE</version>
+        <version>4.0.3.RELEASE</version>
       </dependency>
       <dependency>
         <groupId>org.springframework</groupId>
         <artifactId>spring-tx</artifactId>
-        <version>3.2.3.RELEASE</version>
+        <version>4.0.3.RELEASE</version>
       </dependency>
       <dependency>
         <groupId>org.springframework</groupId>
         <artifactId>spring-orm</artifactId>
-        <version>3.2.3.RELEASE</version>
+        <version>4.0.3.RELEASE</version>
       </dependency>
       <dependency>
         <groupId>org.springframework</groupId>
         <artifactId>spring-web</artifactId>
-        <version>3.2.3.RELEASE</version>
+        <version>4.0.3.RELEASE</version>
       </dependency>
       <dependency>
         <groupId>org.springframework</groupId>
         <artifactId>spring-test</artifactId>
-        <version>3.2.3.RELEASE</version>
+        <version>4.0.3.RELEASE</version>
       </dependency>
       <dependency>
         <groupId>org.slf4j</groupId>
         <artifactId>slf4j-api</artifactId>
-        <version>1.7.6</version>
+        <version>1.7.7</version>
       </dependency>
       <dependency>
         <groupId>org.slf4j</groupId>
         <artifactId>slf4j-simple</artifactId>
-        <version>1.7.6</version>
+        <version>1.7.7</version>
       </dependency>
       <dependency>
         <groupId>commons-logging</groupId>
         <artifactId>commons-logging</artifactId>
-        <version>1.1.1</version>
+        <version>1.1.3</version>
       </dependency>
       <dependency>
         <groupId>log4j</groupId>
         <artifactId>log4j</artifactId>
-        <version>1.2.16</version>
+        <version>1.2.17</version>
       </dependency>
       <dependency>
         <groupId>org.syslog4j</groupId>
@@ -344,12 +344,12 @@
       <dependency>
         <groupId>org.apache.shiro</groupId>
         <artifactId>shiro-core</artifactId>
-        <version>1.2.2</version>
+        <version>1.2.3</version>
       </dependency>
       <dependency>
         <groupId>org.apache.shiro</groupId>
         <artifactId>shiro-spring</artifactId>
-        <version>1.2.2</version>
+        <version>1.2.3</version>
       </dependency>
       <dependency>
         <groupId>org.liquibase</groupId>
@@ -364,22 +364,22 @@
       <dependency>
         <groupId>org.hibernate</groupId>
         <artifactId>hibernate-core</artifactId>
-        <version>4.3.0.Final</version>
+        <version>4.3.5.Final</version>
+      </dependency>
+      <dependency>
+        <groupId>org.hibernate</groupId>
+        <artifactId>hibernate-validator</artifactId>
+        <version>5.1.1.Final</version>
+      </dependency>
+      <dependency>
+        <groupId>org.hibernate</groupId>
+        <artifactId>hibernate-search</artifactId>
+        <version>4.5.1.Final</version>
       </dependency>
       <dependency>
         <groupId>org.hibernate.common</groupId>
         <artifactId>hibernate-commons-annotations</artifactId>
         <version>4.0.4.Final</version>
-      </dependency>
-      <dependency>
-        <groupId>org.hibernate</groupId>
-        <artifactId>hibernate-validator</artifactId>
-        <version>5.0.2.Final</version>
-      </dependency>
-      <dependency>
-        <groupId>org.hibernate</groupId>
-        <artifactId>hibernate-search</artifactId>
-        <version>4.4.2.Final</version>
       </dependency>
       <dependency>
         <groupId>org.hibernate.javax.persistence</groupId>
@@ -389,47 +389,47 @@
       <dependency>
         <groupId>org.hsqldb</groupId>
         <artifactId>hsqldb</artifactId>
-        <version>2.3.1</version>
+        <version>2.3.2</version>
       </dependency>
       <dependency>
         <groupId>org.hectorclient</groupId>
         <artifactId>hector-core</artifactId>
-        <version>1.1-2</version>
+        <version>1.1-4</version>
       </dependency>
       <dependency>
         <groupId>org.quartz-scheduler</groupId>
         <artifactId>quartz</artifactId>
-        <version>2.2.0</version>
+        <version>2.2.1</version>
       </dependency>
       <dependency>
         <groupId>net.sf.ehcache</groupId>
         <artifactId>ehcache-core</artifactId>
-        <version>2.4.3</version>
+        <version>2.6.9</version>
       </dependency>
       <dependency>
         <groupId>com.googlecode.xmemcached</groupId>
         <artifactId>xmemcached</artifactId>
-        <version>1.3.8</version>
+        <version>2.0.0</version>
       </dependency>
       <dependency>
         <groupId>commons-net</groupId>
         <artifactId>commons-net</artifactId>
-        <version>3.1</version>
+        <version>3.3</version>
       </dependency>
       <dependency>
         <groupId>org.terracotta.toolkit</groupId>
-        <artifactId>terracotta-toolkit-1.1</artifactId>
-        <version>2.1.0</version>
+        <artifactId>terracotta-toolkit-1.6</artifactId>
+        <version>5.5.0</version>
       </dependency>
       <dependency>
         <groupId>org.apache.wicket</groupId>
         <artifactId>wicket-core</artifactId>
-        <version>6.9.1</version>
+        <version>6.15.0</version>
       </dependency>
       <dependency>
         <groupId>org.apache.wicket</groupId>
         <artifactId>wicket-extensions</artifactId>
-        <version>6.9.1</version>
+        <version>6.15.0</version>
       </dependency>
       <dependency>
         <groupId>com.oracle</groupId>
@@ -441,12 +441,12 @@
       <dependency>
         <groupId>com.fasterxml.jackson.core</groupId>
         <artifactId>jackson-core</artifactId>
-        <version>2.2.1</version>
+        <version>2.3.3</version>
       </dependency>
       <dependency>
         <groupId>org.eclipse.jgit</groupId>
         <artifactId>org.eclipse.jgit</artifactId>
-        <version>3.0.0.201306101825-r</version>
+        <version>3.3.2.201404171909-r</version>
       </dependency>
     </dependencies>
   </dependencyManagement>
@@ -480,7 +480,7 @@
         <plugin>
           <groupId>org.apache.maven.plugins</groupId>
           <artifactId>maven-surefire-plugin</artifactId>
-          <version>2.16</version>
+          <version>2.17</version>
         </plugin>
         <plugin>
           <groupId>org.apache.maven.plugins</groupId>
@@ -505,17 +505,17 @@
         <plugin>
           <groupId>org.apache.maven.plugins</groupId>
           <artifactId>maven-plugin-plugin</artifactId>
-          <version>3.2</version>
+          <version>3.3</version>
         </plugin>
         <plugin>
           <groupId>org.apache.maven.plugins</groupId>
           <artifactId>maven-gpg-plugin</artifactId>
-          <version>1.4</version>
+          <version>1.5</version>
         </plugin>
         <plugin>
           <groupId>org.apache.maven.plugins</groupId>
           <artifactId>maven-release-plugin</artifactId>
-          <version>2.4.2</version>
+          <version>2.5</version>
           <configuration>
             <autoVersionSubmodules>true</autoVersionSubmodules>
           </configuration>
@@ -523,12 +523,12 @@
         <plugin>
           <groupId>org.codehaus.mojo</groupId>
           <artifactId>aspectj-maven-plugin</artifactId>
-          <version>1.5</version>
+          <version>1.6</version>
           <dependencies>
             <dependency>
               <groupId>org.aspectj</groupId>
               <artifactId>aspectjtools</artifactId>
-              <version>1.7.3</version>
+              <version>1.8.0</version>
             </dependency>
           </dependencies>
         </plugin>

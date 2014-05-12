@@ -26,6 +26,8 @@
  */
 package org.smallmind.persistence.cache.ehcache;
 
+import net.sf.ehcache.config.MemoryUnit;
+
 public class HeapMemory {
 
   private MemoryUnit unit;
@@ -59,10 +61,5 @@ public class HeapMemory {
   public void setUnit (MemoryUnit unit) {
 
     this.unit = unit;
-  }
-
-  public String toString () {
-
-    return size + unit.getCode();
   }
 }

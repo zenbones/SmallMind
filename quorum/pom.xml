@@ -46,7 +46,7 @@
     </dependency>
     <dependency>
       <groupId>org.terracotta.toolkit</groupId>
-      <artifactId>terracotta-toolkit-1.1</artifactId>
+      <artifactId>terracotta-toolkit-1.6</artifactId>
       <scope>compile</scope>
       <optional>true</optional>
     </dependency>

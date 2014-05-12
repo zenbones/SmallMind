@@ -29,10 +29,10 @@ package org.smallmind.persistence.cache.ehcache.spring;
 import net.sf.ehcache.Cache;
 import net.sf.ehcache.CacheManager;
 import net.sf.ehcache.config.CacheConfiguration;
+import net.sf.ehcache.config.MemoryUnit;
 import net.sf.ehcache.config.TerracottaConfiguration;
 import net.sf.ehcache.store.MemoryStoreEvictionPolicy;
 import org.smallmind.persistence.cache.ehcache.HeapMemory;
-import org.smallmind.persistence.cache.ehcache.MemoryUnit;
 import org.smallmind.persistence.cache.ehcache.TransactionalMode;
 import org.springframework.beans.factory.FactoryBean;
 import org.springframework.beans.factory.InitializingBean;
@@ -50,7 +50,6 @@ public class EhcacheFactoryBean implements FactoryBean<Cache>, InitializingBean 
   private long timeToLiveSeconds = 0;
   private int maxElementsInMemory = Integer.MAX_VALUE;
   private int maxElementsOnDisk = 0;
-  private boolean eternal = false;
   private boolean overflowToOffHeap = false;
   private boolean diskPersistent = false;
   private boolean statistics = false;
@@ -67,11 +66,6 @@ public class EhcacheFactoryBean implements FactoryBean<Cache>, InitializingBean 
   public void setMaxElementsInMemory (int maxElementsInMemory) {
 
     this.maxElementsInMemory = maxElementsInMemory;
-  }
-
-  public void setEternal (boolean eternal) {
-
-    this.eternal = eternal;
   }
 
   public void setTimeToIdleSeconds (long timeToIdleSeconds) {
@@ -152,14 +146,14 @@ public class EhcacheFactoryBean implements FactoryBean<Cache>, InitializingBean 
     }
 
     CacheConfiguration configuration;
+    net.sf.ehcache.config.MemoryUnit l;
 
     configuration = new CacheConfiguration(name, maxElementsInMemory)
-      .overflowToDisk(false).eternal(eternal)
       .timeToIdleSeconds(timeToIdleSeconds)
       .timeToLiveSeconds(timeToLiveSeconds)
       .memoryStoreEvictionPolicy(memoryStoreEvictionPolicy)
       .maxElementsOnDisk(maxElementsOnDisk).overflowToOffHeap(overflowToOffHeap).diskPersistent(diskPersistent)
-      .maxMemoryOffHeap(maxMemoryOffHeap.toString())
+      .maxBytesLocalOffHeap(maxMemoryOffHeap.getSize(), maxMemoryOffHeap.getUnit())
       .statistics(statistics)
       .logging(logging)
       .copyOnRead(copyOnRead)
@@ -173,7 +167,7 @@ public class EhcacheFactoryBean implements FactoryBean<Cache>, InitializingBean 
     }
 
     if (terracottaMode != null) {
-      configuration.terracotta(new TerracottaConfiguration().clustered(true).consistency(TerracottaConfiguration.Consistency.STRONG).valueMode(terracottaMode).storageStrategy(TerracottaConfiguration.StorageStrategy.CLASSIC));
+      configuration.terracotta(new TerracottaConfiguration().clustered(true).consistency(TerracottaConfiguration.Consistency.STRONG).valueMode(terracottaMode));
     }
 
     cacheManager.addCache(cache = new Cache(configuration));
