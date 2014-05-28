@@ -29,8 +29,9 @@ package org.smallmind.persistence.orm.spring.jpa;
 import javax.persistence.spi.PersistenceUnitTransactionType;
 import javax.sql.DataSource;
 import org.springframework.orm.jpa.persistenceunit.MutablePersistenceUnitInfo;
+import org.springframework.orm.jpa.persistenceunit.PersistenceUnitPostProcessor;
 
-public class JTAPersistenceUnitPostProcessor {
+public class JTAPersistenceUnitPostProcessor implements PersistenceUnitPostProcessor {
 
   private DataSource dataSource;
   private boolean jtaEnabled = false;
