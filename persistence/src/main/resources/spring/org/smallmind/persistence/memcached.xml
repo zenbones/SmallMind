@@ -5,7 +5,8 @@
     <property name="poolSize" value="${memcached.pool.size.max}"/>
     <property name="servers">
       <bean class="org.smallmind.persistence.cache.memcached.spring.MemcachedServerFactoryBean">
-        <property name="servers" value="${memcached.servers}"/>
+        <property name="serverPattern" value="${memcached.server_pattern}"/>
+        <property name="serverSpread" value="${memcached.server_spread}"/>
       </bean>
     </property>
   </bean>

@@ -44,10 +44,11 @@
   </bean>
 
   <bean id="proxySession" class="org.smallmind.persistence.orm.jdo.JDOProxySession">
-    <constructor-arg index="0" value="schema"/>
-    <constructor-arg index="1" ref="persistenceManagerFactory"/>
-    <constructor-arg index="2" value="true"/>
+    <constructor-arg index="0" value="orm"/>
+    <constructor-arg index="1" value="schema"/>
+    <constructor-arg index="2" ref="persistenceManagerFactory"/>
     <constructor-arg index="3" value="true"/>
+    <constructor-arg index="4" value="true"/>
   </bean>
 
   <!-- AspectJ Transaction Management -->
@@ -55,7 +56,6 @@
 
   <bean id="schemaPoolMonitor" class="org.smallmind.quorum.pool.complex.jmx.ComponentPoolMonitor">
     <constructor-arg index="0" ref="schemaDBPool"/>
-    <constructor-arg index="1" value="org.smallmind.quorum.pool.jmx.ComponentPoolMonitor.test"/>
   </bean>
 
 </beans>

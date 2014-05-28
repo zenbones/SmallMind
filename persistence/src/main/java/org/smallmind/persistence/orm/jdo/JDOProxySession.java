@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2008, 2009, 2010, 2011, 2012, 2013 David Berkman
+ * Copyright (c) 2007, 2008, 2009, 2010, 2011, 2012, 2013, 2014 David Berkman
  * 
  * This file is part of the SmallMind Code Project.
  * 
@@ -39,8 +39,8 @@ import org.smallmind.persistence.orm.aop.TransactionalState;
 
 public class JDOProxySession extends ProxySession<PersistenceManagerFactory, PersistenceManager> {
 
-  private final ThreadLocal<PersistenceManager> managerThreadLocal = new ThreadLocal<PersistenceManager>();
-  private final ThreadLocal<JDOProxyTransaction> transactionThreadLocal = new ThreadLocal<JDOProxyTransaction>();
+  private final ThreadLocal<PersistenceManager> managerThreadLocal = new ThreadLocal<>();
+  private final ThreadLocal<JDOProxyTransaction> transactionThreadLocal = new ThreadLocal<>();
 
   private PersistenceManagerFactory persistenceManagerFactory;
 
