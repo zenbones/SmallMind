@@ -37,7 +37,7 @@ import org.smallmind.quorum.pool.complex.ComponentPool;
 
 public class ContextualPooledDataSource extends AbstractPooledDataSource {
 
-  private final HashMap<String, ComponentPool<PooledConnection>> componentPoolMap = new HashMap<String, ComponentPool<PooledConnection>>();
+  private final HashMap<String, ComponentPool<PooledConnection>> componentPoolMap = new HashMap<>();
   private final String baseName;
 
   public ContextualPooledDataSource (ContextualPoolNameTranslator poolNameTranslator, ComponentPool<PooledConnection>... componentPools)

@@ -36,14 +36,14 @@ import java.util.TreeMap;
 import javax.sql.StatementEvent;
 import javax.sql.StatementEventListener;
 
-public class DriverManagerPreparedStatementCache implements StatementEventListener {
+public class PooledPreparedStatementCache implements StatementEventListener {
 
   private TreeMap<TimeKey, String> timeMap;
   private HashMap<ArgumentKey, LinkedList<String>> argumentMap;
   private HashMap<String, StatementWrapper> statementMap;
   private int maxStatements;
 
-  public DriverManagerPreparedStatementCache (int maxStatements) {
+  public PooledPreparedStatementCache (int maxStatements) {
 
     this.maxStatements = maxStatements;
 
@@ -52,7 +52,7 @@ public class DriverManagerPreparedStatementCache implements StatementEventListen
     statementMap = new HashMap<String, StatementWrapper>();
   }
 
-  public synchronized PreparedStatement cachePreparedStatement (Object[] args, DriverManagerPooledPreparedStatement pooledStatement) {
+  public synchronized PreparedStatement cachePreparedStatement (Object[] args, PooledPreparedStatement pooledStatement) {
 
     TimeKey timeKey;
     ArgumentKey argumentKey;
@@ -104,7 +104,7 @@ public class DriverManagerPreparedStatementCache implements StatementEventListen
 
     StatementWrapper statementWrapper;
 
-    if ((statementWrapper = statementMap.get(((DriverManagerStatementEvent)event).getStatementId())) != null) {
+    if ((statementWrapper = statementMap.get(((PooledPreparedStatementEvent)event).getStatementId())) != null) {
       statementWrapper.free();
     }
   }
@@ -114,7 +114,7 @@ public class DriverManagerPreparedStatementCache implements StatementEventListen
     StatementWrapper statementWrapper;
     LinkedList<String> statementIdList;
 
-    if ((statementWrapper = statementMap.remove(((DriverManagerStatementEvent)event).getStatementId())) != null) {
+    if ((statementWrapper = statementMap.remove(((PooledPreparedStatementEvent)event).getStatementId())) != null) {
       timeMap.remove(statementWrapper.getTimeKey());
 
       (statementIdList = argumentMap.get(statementWrapper.getArgumentKey())).remove(statementWrapper.getPooledStatement().getStatementId());
@@ -214,10 +214,10 @@ public class DriverManagerPreparedStatementCache implements StatementEventListen
 
     private TimeKey timeKey;
     private ArgumentKey argumentKey;
-    private DriverManagerPooledPreparedStatement pooledStatement;
+    private PooledPreparedStatement pooledStatement;
     private boolean inUse;
 
-    public StatementWrapper (TimeKey timeKey, ArgumentKey argumentKey, DriverManagerPooledPreparedStatement pooledStatement) {
+    public StatementWrapper (TimeKey timeKey, ArgumentKey argumentKey, PooledPreparedStatement pooledStatement) {
 
       this.timeKey = timeKey;
       this.argumentKey = argumentKey;
@@ -236,7 +236,7 @@ public class DriverManagerPreparedStatementCache implements StatementEventListen
       return argumentKey;
     }
 
-    public DriverManagerPooledPreparedStatement getPooledStatement () {
+    public PooledPreparedStatement getPooledStatement () {
 
       return pooledStatement;
     }

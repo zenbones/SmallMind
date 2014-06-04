@@ -37,21 +37,21 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import javax.sql.StatementEvent;
 import javax.sql.StatementEventListener;
 
-public class DriverManagerPooledPreparedStatement implements InvocationHandler {
+public class PooledPreparedStatement implements InvocationHandler {
 
-  private DriverManagerPooledConnection pooledConnection;
+  private AbstractPooledConnection<?> pooledConnection;
   private PreparedStatement actualStatement;
   private PreparedStatement proxyStatement;
   private String statementId;
   private AtomicBoolean closed = new AtomicBoolean(false);
 
-  public DriverManagerPooledPreparedStatement (DriverManagerPooledConnection pooledConnection, PreparedStatement actualStatement) {
+  public PooledPreparedStatement (AbstractPooledConnection<?> pooledConnection, PreparedStatement actualStatement) {
 
     this.pooledConnection = pooledConnection;
     this.actualStatement = actualStatement;
 
     statementId = UUID.randomUUID().toString();
-    proxyStatement = (PreparedStatement)(Proxy.newProxyInstance(DriverManagerPooledPreparedStatement.class.getClassLoader(), new Class[] {PreparedStatement.class}, this));
+    proxyStatement = (PreparedStatement)(Proxy.newProxyInstance(PooledPreparedStatement.class.getClassLoader(), new Class[] {PreparedStatement.class}, this));
   }
 
   public Object invoke (Object proxy, Method method, Object[] args)
@@ -59,7 +59,7 @@ public class DriverManagerPooledPreparedStatement implements InvocationHandler {
 
     if (method.getName().equals("close")) {
 
-      StatementEvent event = new DriverManagerStatementEvent(pooledConnection, actualStatement, statementId);
+      StatementEvent event = new PooledPreparedStatementEvent(pooledConnection, actualStatement, statementId);
 
       for (StatementEventListener listener : pooledConnection.getStatementEventListeners()) {
         listener.statementClosed(event);
@@ -74,7 +74,7 @@ public class DriverManagerPooledPreparedStatement implements InvocationHandler {
       catch (Throwable throwable) {
         if (throwable instanceof SQLException) {
 
-          StatementEvent event = new DriverManagerStatementEvent(pooledConnection, actualStatement, (SQLException)throwable, statementId);
+          StatementEvent event = new PooledPreparedStatementEvent(pooledConnection, actualStatement, (SQLException)throwable, statementId);
 
           for (StatementEventListener listener : pooledConnection.getStatementEventListeners()) {
             listener.statementErrorOccurred(event);

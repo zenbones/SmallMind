@@ -45,7 +45,7 @@ public class PooledConnectionComponentPoolFactory {
       connectionInstanceFactory.setValidationQuery(validationQuery);
     }
 
-    return new ComponentPool<PooledConnection>(poolName, connectionInstanceFactory).setComplexPoolConfig(poolConfig);
+    return new ComponentPool<>(poolName, connectionInstanceFactory).setComplexPoolConfig(poolConfig);
   }
 
   private static ConnectionEndpoint[] createConnectionEndpoints (DatabaseConnection... databaseConnections) {

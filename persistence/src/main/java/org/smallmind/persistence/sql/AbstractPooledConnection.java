@@ -31,27 +31,26 @@ import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
-import java.lang.reflect.UndeclaredThrowableException;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.atomic.AtomicBoolean;
+import javax.sql.CommonDataSource;
 import javax.sql.ConnectionEvent;
 import javax.sql.ConnectionEventListener;
-import javax.sql.DataSource;
 import javax.sql.PooledConnection;
 import javax.sql.StatementEventListener;
 import org.smallmind.nutsnbolts.lang.Existential;
 import org.smallmind.nutsnbolts.lang.StaticInitializationError;
 
-public class DriverManagerPooledConnection implements PooledConnection, InvocationHandler {
+public abstract class AbstractPooledConnection<D extends CommonDataSource> implements PooledConnection, InvocationHandler {
 
   private static final Method CLOSE_METHOD;
 
-  private final DriverManagerPreparedStatementCache statementCache;
+  private final PooledPreparedStatementCache statementCache;
 
-  private DataSource dataSource;
+  private D dataSource;
   private Connection actualConnection;
   private Connection proxyConnection;
   private ConcurrentLinkedQueue<ConnectionEventListener> connectionEventListenerQueue;
@@ -69,19 +68,7 @@ public class DriverManagerPooledConnection implements PooledConnection, Invocati
     }
   }
 
-  public DriverManagerPooledConnection (DriverManagerDataSource dataSource, int maxStatements)
-    throws SQLException {
-
-    this(dataSource, dataSource.getConnection(), maxStatements);
-  }
-
-  public DriverManagerPooledConnection (DriverManagerDataSource dataSource, String user, String password, int maxStatements)
-    throws SQLException {
-
-    this(dataSource, dataSource.getConnection(user, password), maxStatements);
-  }
-
-  private DriverManagerPooledConnection (DriverManagerDataSource dataSource, Connection actualConnection, int maxStatements)
+  public AbstractPooledConnection (D dataSource, Connection actualConnection, int maxStatements)
     throws SQLException {
 
     this.dataSource = dataSource;
@@ -92,25 +79,27 @@ public class DriverManagerPooledConnection implements PooledConnection, Invocati
     }
 
     creationMilliseconds = System.currentTimeMillis();
-    proxyConnection = (Connection)Proxy.newProxyInstance(DriverManagerDataSource.class.getClassLoader(), new Class[] {Connection.class, Existential.class}, this);
+    proxyConnection = (Connection)Proxy.newProxyInstance(dataSource.getClass().getClassLoader(), new Class[] {Connection.class, Existential.class}, this);
 
-    connectionEventListenerQueue = new ConcurrentLinkedQueue<ConnectionEventListener>();
-    statementEventListenerQueue = new ConcurrentLinkedQueue<StatementEventListener>();
+    connectionEventListenerQueue = new ConcurrentLinkedQueue<>();
+    statementEventListenerQueue = new ConcurrentLinkedQueue<>();
 
     if (maxStatements == 0) {
       statementCache = null;
     }
     else {
-      addStatementEventListener(statementCache = new DriverManagerPreparedStatementCache(maxStatements));
+      addStatementEventListener(statementCache = new PooledPreparedStatementCache(maxStatements));
     }
   }
+
+  public abstract ConnectionEvent getConnectionEvent (SQLException sqlException);
 
   public Object invoke (Object proxy, Method method, Object[] args)
     throws Throwable {
 
     if (CLOSE_METHOD.equals(method)) {
 
-      ConnectionEvent event = new ConnectionEvent(this);
+      ConnectionEvent event = getConnectionEvent(null);
 
       for (ConnectionEventListener listener : connectionEventListenerQueue) {
         listener.connectionClosed(event);
@@ -126,7 +115,7 @@ public class DriverManagerPooledConnection implements PooledConnection, Invocati
 
           synchronized (statementCache) {
             if ((preparedStatement = statementCache.getPreparedStatement(args)) == null) {
-              preparedStatement = statementCache.cachePreparedStatement(args, new DriverManagerPooledPreparedStatement(this, (PreparedStatement)method.invoke(actualConnection, args)));
+              preparedStatement = statementCache.cachePreparedStatement(args, new PooledPreparedStatement(this, (PreparedStatement)method.invoke(actualConnection, args)));
             }
           }
 
@@ -145,7 +134,7 @@ public class DriverManagerPooledConnection implements PooledConnection, Invocati
 
         if (closestCause instanceof SQLException) {
 
-          ConnectionEvent event = new ConnectionEvent(this, (SQLException)closestCause);
+          ConnectionEvent event = getConnectionEvent((SQLException)closestCause);
 
           for (ConnectionEventListener listener : connectionEventListenerQueue) {
             listener.connectionErrorOccurred(event);
@@ -195,12 +184,12 @@ public class DriverManagerPooledConnection implements PooledConnection, Invocati
     try {
       close();
     }
-    catch (SQLException sqlExecption) {
+    catch (SQLException sqlException) {
 
       PrintWriter logWriter;
 
       if ((logWriter = getLogWriter()) != null) {
-        sqlExecption.printStackTrace(logWriter);
+        sqlException.printStackTrace(logWriter);
       }
     }
   }

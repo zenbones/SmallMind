@@ -36,7 +36,7 @@ import org.smallmind.nutsnbolts.spring.RuntimeBeansException;
 import org.smallmind.nutsnbolts.spring.SpringPropertyAccessor;
 import org.smallmind.nutsnbolts.util.Option;
 import org.smallmind.persistence.sql.pool.AbstractPooledDataSource;
-import org.smallmind.persistence.sql.pool.PooledDataSource;
+import org.smallmind.persistence.sql.pool.DefaultPooledDataSource;
 import org.smallmind.persistence.sql.pool.context.ContextualPooledDataSource;
 import org.smallmind.persistence.sql.pool.context.DefaultContextualPoolNameTranslator;
 import org.smallmind.quorum.pool.ComponentPoolException;
@@ -45,7 +45,7 @@ import org.smallmind.quorum.pool.complex.ComponentPool;
 import org.springframework.beans.factory.DisposableBean;
 import org.springframework.beans.factory.InitializingBean;
 
-public class DynamicDriverManagerPooledDataSourceInitializingBean implements InitializingBean, DisposableBean, DataSourceFactory {
+public class DynamicPooledDataSourceInitializingBean implements InitializingBean, DisposableBean, DataSourceFactory {
 
   /*
   jdbc.driver.class_name.<pool name> (required)
@@ -133,8 +133,8 @@ public class DynamicDriverManagerPooledDataSourceInitializingBean implements Ini
     throws SQLException, ComponentPoolException {
 
     ComplexPoolConfig complexPoolConfig = new ComplexPoolConfig();
-    HashMap<String, HashMap<Integer, DatabaseConnection>> preContextMap = new HashMap<String, HashMap<Integer, DatabaseConnection>>();
-    HashMap<String, DatabaseConnection[]> postContextMap = new HashMap<String, DatabaseConnection[]>();
+    HashMap<String, HashMap<Integer, DatabaseConnection>> preContextMap = new HashMap<>();
+    HashMap<String, DatabaseConnection[]> postContextMap = new HashMap<>();
     Option<Boolean> testOnCreateOption;
     Option<Boolean> testOnAcquireOption;
     Option<Long> acquireWaitTimeMillisOption;
@@ -173,7 +173,7 @@ public class DynamicDriverManagerPooledDataSourceInitializingBean implements Ini
     for (Map.Entry<String, HashMap<Integer, DatabaseConnection>> contextEntry : preContextMap.entrySet()) {
 
       HashMap<Integer, DatabaseConnection> connectionMap = contextEntry.getValue();
-      LinkedList<DatabaseConnection> connectionList = new LinkedList<DatabaseConnection>();
+      LinkedList<DatabaseConnection> connectionList = new LinkedList<>();
       DatabaseConnection[] connections;
       int index = 0;
 
@@ -243,7 +243,7 @@ public class DynamicDriverManagerPooledDataSourceInitializingBean implements Ini
 
     if (postContextMap.size() == 1) {
 
-      return new PooledDataSource(PooledConnectionComponentPoolFactory.constructComponentPool(poolName, driverClassName, validationQuery, maxStatementsOption.isNone() ? 0 : maxStatementsOption.get(), complexPoolConfig, postContextMap.get(null)));
+      return new DefaultPooledDataSource(PooledConnectionComponentPoolFactory.constructComponentPool(poolName, driverClassName, validationQuery, maxStatementsOption.isNone() ? 0 : maxStatementsOption.get(), complexPoolConfig, postContextMap.get(null)));
     }
     else {
 
@@ -277,7 +277,7 @@ public class DynamicDriverManagerPooledDataSourceInitializingBean implements Ini
     DatabaseConnection databaseConnection;
 
     if ((connectionMap = contextMap.get(contextIndex.getContext())) == null) {
-      contextMap.put(contextIndex.getContext(), connectionMap = new HashMap<Integer, DatabaseConnection>());
+      contextMap.put(contextIndex.getContext(), connectionMap = new HashMap<>());
     }
 
     if ((databaseConnection = connectionMap.get(contextIndex.getIndex())) == null) {

@@ -29,14 +29,14 @@ package org.smallmind.persistence.sql.pool.spring;
 import java.sql.SQLException;
 import javax.sql.DataSource;
 import org.smallmind.persistence.sql.pool.AbstractPooledDataSource;
-import org.smallmind.persistence.sql.pool.PooledDataSource;
+import org.smallmind.persistence.sql.pool.DefaultPooledDataSource;
 import org.smallmind.quorum.pool.ComponentPoolException;
 import org.smallmind.quorum.pool.complex.ComplexPoolConfig;
 import org.springframework.beans.factory.DisposableBean;
 import org.springframework.beans.factory.FactoryBean;
 import org.springframework.beans.factory.InitializingBean;
 
-public class DriverManagerPooledDataSourceFactoryBean implements FactoryBean<DataSource>, InitializingBean, DisposableBean {
+public class PooledDataSourceFactoryBean implements FactoryBean<DataSource>, InitializingBean, DisposableBean {
 
   private AbstractPooledDataSource dataSource;
   private ComplexPoolConfig poolConfig;
@@ -80,7 +80,7 @@ public class DriverManagerPooledDataSourceFactoryBean implements FactoryBean<Dat
   public void afterPropertiesSet ()
     throws SQLException, ComponentPoolException {
 
-    dataSource = new PooledDataSource(PooledConnectionComponentPoolFactory.constructComponentPool(poolName, driverClassName, validationQuery, maxStatements, poolConfig, connections));
+    dataSource = new DefaultPooledDataSource(PooledConnectionComponentPoolFactory.constructComponentPool(poolName, driverClassName, validationQuery, maxStatements, poolConfig, connections));
     dataSource.startup();
   }
 

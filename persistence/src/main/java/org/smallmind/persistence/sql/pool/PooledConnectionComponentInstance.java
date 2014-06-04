@@ -41,7 +41,7 @@ public class PooledConnectionComponentInstance implements ComponentInstance<Pool
 
   private final ComponentPool<PooledConnection> componentPool;
   private final PooledConnection pooledConnection;
-  private final AtomicReference<StackTraceElement[]> stackTraceReference = new AtomicReference<StackTraceElement[]>();
+  private final AtomicReference<StackTraceElement[]> stackTraceReference = new AtomicReference<>();
   private final AtomicBoolean closed = new AtomicBoolean(false);
 
   private PreparedStatement validationStatement;

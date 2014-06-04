@@ -49,7 +49,7 @@ public class PooledConnectionComponentInstanceFactory implements ComponentInstan
 
   public PooledConnectionComponentInstanceFactory (int recoveryCheckSeconds, ConnectionPoolDataSource... dataSources) {
 
-    pooledConnectionJuggler = new Juggler<ConnectionPoolDataSource, PooledConnection>(ConnectionPoolDataSource.class, recoveryCheckSeconds, new PooledConnectionJugglingPinFactory(), dataSources);
+    pooledConnectionJuggler = new Juggler<>(ConnectionPoolDataSource.class, recoveryCheckSeconds, new PooledConnectionJugglingPinFactory(), dataSources);
   }
 
   @Override
