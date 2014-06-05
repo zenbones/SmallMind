@@ -28,8 +28,9 @@ package org.smallmind.persistence.sql.pool;
 
 import java.sql.SQLException;
 import javax.sql.ConnectionPoolDataSource;
-import org.smallmind.persistence.sql.DefaultConnectionPoolDataSource;
+import javax.sql.PooledConnection;
 import org.smallmind.persistence.sql.DriverManagerDataSource;
+import org.smallmind.persistence.sql.OmnivorousConnectionPoolDataSource;
 
 public class DriverManagerComponentInstanceFactory extends PooledConnectionComponentInstanceFactory {
 
@@ -59,7 +60,7 @@ public class DriverManagerComponentInstanceFactory extends PooledConnectionCompo
 
   public DriverManagerComponentInstanceFactory (int maxStatements, DriverManagerDataSource... dataSources) {
 
-    super(60, constructConnectionPoolDataSources(maxStatements, dataSources));
+    super(60, PooledConnection.class, constructConnectionPoolDataSources(maxStatements, dataSources));
   }
 
   private static DriverManagerDataSource[] constructDataSources (String driverClassName, ConnectionEndpoint... endpoints)
@@ -79,7 +80,7 @@ public class DriverManagerComponentInstanceFactory extends PooledConnectionCompo
     ConnectionPoolDataSource[] connectionPoolDataSources = new ConnectionPoolDataSource[dataSources.length];
 
     for (int index = 0; index < dataSources.length; index++) {
-      connectionPoolDataSources[index] = new DefaultConnectionPoolDataSource(dataSources[index], maxStatements);
+      connectionPoolDataSources[index] = new OmnivorousConnectionPoolDataSource<>(dataSources[index], PooledConnection.class, maxStatements);
     }
 
     return connectionPoolDataSources;

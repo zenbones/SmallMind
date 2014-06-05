@@ -37,16 +37,16 @@ import org.smallmind.quorum.pool.complex.ComponentInstance;
 import org.smallmind.quorum.pool.complex.ComponentPool;
 import org.smallmind.scribe.pen.LoggerManager;
 
-public class PooledConnectionComponentInstance implements ComponentInstance<PooledConnection>, ConnectionEventListener {
+public class PooledConnectionComponentInstance<P extends PooledConnection> implements ComponentInstance<P>, ConnectionEventListener {
 
-  private final ComponentPool<PooledConnection> componentPool;
-  private final PooledConnection pooledConnection;
+  private final ComponentPool<P> componentPool;
+  private final P pooledConnection;
   private final AtomicReference<StackTraceElement[]> stackTraceReference = new AtomicReference<>();
   private final AtomicBoolean closed = new AtomicBoolean(false);
 
   private PreparedStatement validationStatement;
 
-  public PooledConnectionComponentInstance (ComponentPool<PooledConnection> componentPool, PooledConnection pooledConnection)
+  public PooledConnectionComponentInstance (ComponentPool<P> componentPool, P pooledConnection)
     throws SQLException {
 
     this.componentPool = componentPool;
@@ -55,7 +55,7 @@ public class PooledConnectionComponentInstance implements ComponentInstance<Pool
     pooledConnection.addConnectionEventListener(this);
   }
 
-  public PooledConnectionComponentInstance (ComponentPool<PooledConnection> componentPool, PooledConnection pooledConnection, String validationQuery)
+  public PooledConnectionComponentInstance (ComponentPool<P> componentPool, P pooledConnection, String validationQuery)
     throws SQLException {
 
     this(componentPool, pooledConnection);
@@ -123,7 +123,7 @@ public class PooledConnectionComponentInstance implements ComponentInstance<Pool
     }
   }
 
-  public PooledConnection serve () {
+  public P serve () {
 
     if (componentPool.getComplexPoolConfig().isExistentiallyAware()) {
       stackTraceReference.set(Thread.currentThread().getStackTrace());

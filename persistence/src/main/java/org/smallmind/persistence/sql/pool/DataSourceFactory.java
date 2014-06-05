@@ -24,41 +24,18 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.persistence.sql.pool.spring;
+package org.smallmind.persistence.sql.pool;
 
+import java.sql.SQLException;
 import javax.sql.CommonDataSource;
-import org.springframework.beans.factory.FactoryBean;
+import javax.sql.PooledConnection;
 
-public class DynamicPooledDataSourceFactoryBean implements FactoryBean<CommonDataSource> {
+public interface DataSourceFactory<D extends CommonDataSource, P extends PooledConnection> {
 
-  private DataSourceLocator dataSourceLocator;
-  private String dataSourceKey;
+  public abstract Class<P> getPooledConnectionClass ();
 
-  public void setDataSourceKey (String dataSourceKey) {
+  public abstract Class<D> getDataSourceClass ();
 
-    this.dataSourceKey = dataSourceKey;
-  }
-
-  public void setDataSourceLocator (DataSourceLocator dataSourceLocator) {
-
-    this.dataSourceLocator = dataSourceLocator;
-  }
-
-  @Override
-  public boolean isSingleton () {
-
-    return true;
-  }
-
-  @Override
-  public Class<?> getObjectType () {
-
-    return CommonDataSource.class;
-  }
-
-  @Override
-  public CommonDataSource getObject () {
-
-    return dataSourceLocator.getDataSource(dataSourceKey);
-  }
+  public abstract D constructDataSource (String jdbcUrl, String user, String password)
+    throws SQLException;
 }

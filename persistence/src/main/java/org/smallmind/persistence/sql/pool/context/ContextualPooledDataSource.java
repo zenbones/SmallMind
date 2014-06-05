@@ -29,22 +29,25 @@ package org.smallmind.persistence.sql.pool.context;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.HashMap;
+import javax.sql.DataSource;
 import javax.sql.PooledConnection;
 import org.smallmind.nutsnbolts.context.ContextFactory;
 import org.smallmind.persistence.sql.pool.AbstractPooledDataSource;
 import org.smallmind.quorum.pool.ComponentPoolException;
 import org.smallmind.quorum.pool.complex.ComponentPool;
 
-public class ContextualPooledDataSource extends AbstractPooledDataSource {
+public class ContextualPooledDataSource extends AbstractPooledDataSource<DataSource, PooledConnection> implements DataSource {
 
-  private final HashMap<String, ComponentPool<PooledConnection>> componentPoolMap = new HashMap<>();
+  private final HashMap<String, ComponentPool<? extends PooledConnection>> componentPoolMap = new HashMap<>();
   private final String baseName;
 
-  public ContextualPooledDataSource (ContextualPoolNameTranslator poolNameTranslator, ComponentPool<PooledConnection>... componentPools)
+  public ContextualPooledDataSource (ContextualPoolNameTranslator poolNameTranslator, ComponentPool<? extends PooledConnection>... componentPools)
     throws ComponentPoolException {
 
+    super(DataSource.class, PooledConnection.class);
+
     baseName = poolNameTranslator.getBaseName();
-    for (ComponentPool<PooledConnection> componentPool : componentPools) {
+    for (ComponentPool<? extends PooledConnection> componentPool : componentPools) {
       componentPoolMap.put(poolNameTranslator.getContextualPartFromPoolName(componentPool.getPoolName()), componentPool);
     }
   }
@@ -56,7 +59,7 @@ public class ContextualPooledDataSource extends AbstractPooledDataSource {
     try {
 
       PooledDataSourceContext pooledDataSourceContext = ContextFactory.getContext(PooledDataSourceContext.class);
-      ComponentPool<PooledConnection> componentPool;
+      ComponentPool<? extends PooledConnection> componentPool;
       String contextualPart;
 
       if ((componentPool = componentPoolMap.get(contextualPart = (pooledDataSourceContext == null) ? null : pooledDataSourceContext.getContextualPart())) == null) {
@@ -70,11 +73,16 @@ public class ContextualPooledDataSource extends AbstractPooledDataSource {
     }
   }
 
+  public Connection getConnection (String username, String password) {
+
+    throw new UnsupportedOperationException("Please properly configure the underlying resource managed by the pool which is represented by this DataSource");
+  }
+
   @Override
   public void startup ()
     throws ComponentPoolException {
 
-    for (ComponentPool<PooledConnection> componentPool : componentPoolMap.values()) {
+    for (ComponentPool<? extends PooledConnection> componentPool : componentPoolMap.values()) {
       componentPool.startup();
     }
   }
@@ -83,7 +91,7 @@ public class ContextualPooledDataSource extends AbstractPooledDataSource {
   public void shutdown ()
     throws ComponentPoolException {
 
-    for (ComponentPool<PooledConnection> componentPool : componentPoolMap.values()) {
+    for (ComponentPool<? extends PooledConnection> componentPool : componentPoolMap.values()) {
       componentPool.shutdown();
     }
   }

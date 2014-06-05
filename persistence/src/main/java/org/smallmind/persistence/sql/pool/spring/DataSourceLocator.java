@@ -27,38 +27,8 @@
 package org.smallmind.persistence.sql.pool.spring;
 
 import javax.sql.CommonDataSource;
-import org.springframework.beans.factory.FactoryBean;
 
-public class DynamicPooledDataSourceFactoryBean implements FactoryBean<CommonDataSource> {
+public interface DataSourceLocator {
 
-  private DataSourceLocator dataSourceLocator;
-  private String dataSourceKey;
-
-  public void setDataSourceKey (String dataSourceKey) {
-
-    this.dataSourceKey = dataSourceKey;
-  }
-
-  public void setDataSourceLocator (DataSourceLocator dataSourceLocator) {
-
-    this.dataSourceLocator = dataSourceLocator;
-  }
-
-  @Override
-  public boolean isSingleton () {
-
-    return true;
-  }
-
-  @Override
-  public Class<?> getObjectType () {
-
-    return CommonDataSource.class;
-  }
-
-  @Override
-  public CommonDataSource getObject () {
-
-    return dataSourceLocator.getDataSource(dataSourceKey);
-  }
+  public abstract CommonDataSource getDataSource (String dataSourceKey);
 }

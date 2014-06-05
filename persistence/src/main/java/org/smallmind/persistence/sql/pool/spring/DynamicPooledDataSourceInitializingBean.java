@@ -30,13 +30,14 @@ import java.sql.SQLException;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.Map;
-import javax.sql.DataSource;
+import javax.sql.CommonDataSource;
 import javax.sql.PooledConnection;
 import org.smallmind.nutsnbolts.spring.RuntimeBeansException;
 import org.smallmind.nutsnbolts.spring.SpringPropertyAccessor;
 import org.smallmind.nutsnbolts.util.Option;
 import org.smallmind.persistence.sql.pool.AbstractPooledDataSource;
-import org.smallmind.persistence.sql.pool.DefaultPooledDataSource;
+import org.smallmind.persistence.sql.pool.DataSourceFactory;
+import org.smallmind.persistence.sql.pool.PooledDataSourceFactory;
 import org.smallmind.persistence.sql.pool.context.ContextualPooledDataSource;
 import org.smallmind.persistence.sql.pool.context.DefaultContextualPoolNameTranslator;
 import org.smallmind.quorum.pool.ComponentPoolException;
@@ -45,10 +46,9 @@ import org.smallmind.quorum.pool.complex.ComponentPool;
 import org.springframework.beans.factory.DisposableBean;
 import org.springframework.beans.factory.InitializingBean;
 
-public class DynamicPooledDataSourceInitializingBean implements InitializingBean, DisposableBean, DataSourceFactory {
+public class DynamicPooledDataSourceInitializingBean implements InitializingBean, DisposableBean, DataSourceLocator {
 
   /*
-  jdbc.driver.class_name.<pool name> (required)
   jdbc.url.<pool name>.<context>.<#> (required, for at least connection '0')
   jdbc.user.<pool name>.<context>.<#> (required, for at least connection '0')
   jdbc.password.<pool name>.<context>.<#> (required, for at least connection '0')
@@ -69,16 +69,16 @@ public class DynamicPooledDataSourceInitializingBean implements InitializingBean
   private final HashMap<String, AbstractPooledDataSource> dataSourceMap = new HashMap<String, AbstractPooledDataSource>();
   private final HashMap<String, String> poolNameMap = new HashMap<String, String>();
 
-  private String[] poolNames;
+  private Map<String, DataSourceFactory<?, ?>> factoryMap;
 
-  public void setPoolNames (String[] poolNames) {
+  public void setFactoryMap (Map<String, DataSourceFactory<?, ?>> factoryMap) {
 
-    this.poolNames = poolNames;
+    this.factoryMap = factoryMap;
   }
 
-  public DataSource getDataSource (String dataSourceKey) {
+  public CommonDataSource getDataSource (String dataSourceKey) {
 
-    DataSource dataSource;
+    CommonDataSource dataSource;
     String poolName;
 
     if ((poolName = poolNameMap.get(dataSourceKey)) == null) {
@@ -97,7 +97,7 @@ public class DynamicPooledDataSourceInitializingBean implements InitializingBean
 
     SpringPropertyAccessor springPropertyAccessor = new SpringPropertyAccessor();
 
-    for (String poolName : poolNames) {
+    for (String poolName : factoryMap.keySet()) {
 
       dataSourceMap.put(poolName, parsePoolDefinition(springPropertyAccessor, poolName));
     }
@@ -145,7 +145,6 @@ public class DynamicPooledDataSourceInitializingBean implements InitializingBean
     Option<Integer> maxSizeOption;
     Option<Integer> maxIdleSecondsOption;
     Option<Integer> maxLeaseTimeSecondsOption;
-    String driverClassName;
     String validationQuery;
     String urlPrefix = "jdbc.url." + poolName + ".";
     String userPrefix = "jdbc.user." + poolName + ".";
@@ -206,10 +205,6 @@ public class DynamicPooledDataSourceInitializingBean implements InitializingBean
       postContextMap.put(contextEntry.getKey(), connections);
     }
 
-    if ((driverClassName = springPropertyAccessor.asString("jdbc.driver.class_name." + poolName)) == null) {
-      throw new RuntimeBeansException("Database connection pool(%s) must have a defined driver class name", poolName);
-    }
-
     maxStatementsOption = springPropertyAccessor.asInt("jdbc.max_statements." + poolName);
     validationQuery = springPropertyAccessor.asString("jdbc.validation_query." + poolName);
 
@@ -243,16 +238,16 @@ public class DynamicPooledDataSourceInitializingBean implements InitializingBean
 
     if (postContextMap.size() == 1) {
 
-      return new DefaultPooledDataSource(PooledConnectionComponentPoolFactory.constructComponentPool(poolName, driverClassName, validationQuery, maxStatementsOption.isNone() ? 0 : maxStatementsOption.get(), complexPoolConfig, postContextMap.get(null)));
+      return PooledDataSourceFactory.createPooledDataSource(poolName, factoryMap.get(poolName), validationQuery, maxStatementsOption.isNone() ? 0 : maxStatementsOption.get(), complexPoolConfig, postContextMap.get(null));
     }
     else {
 
-      ComponentPool<PooledConnection>[] componentPools = new ComponentPool[postContextMap.size()];
+      ComponentPool<? extends PooledConnection>[] componentPools = new ComponentPool[postContextMap.size()];
       DefaultContextualPoolNameTranslator poolNameTranslator = new DefaultContextualPoolNameTranslator(poolName, ':');
       int index = 0;
 
       for (Map.Entry<String, DatabaseConnection[]> contextEntry : postContextMap.entrySet()) {
-        componentPools[index++] = PooledConnectionComponentPoolFactory.constructComponentPool(poolNameTranslator.getPoolName(contextEntry.getKey()), driverClassName, validationQuery, maxStatementsOption.isNone() ? 0 : maxStatementsOption.get(), complexPoolConfig, contextEntry.getValue());
+        componentPools[index++] = PooledConnectionComponentPoolFactory.constructComponentPool(poolNameTranslator.getPoolName(contextEntry.getKey()), factoryMap.get(poolName), validationQuery, maxStatementsOption.isNone() ? 0 : maxStatementsOption.get(), complexPoolConfig, contextEntry.getValue());
       }
 
       return new ContextualPooledDataSource(poolNameTranslator, componentPools);

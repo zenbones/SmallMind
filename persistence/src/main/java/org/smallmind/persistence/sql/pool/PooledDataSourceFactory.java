@@ -26,61 +26,26 @@
  */
 package org.smallmind.persistence.sql.pool;
 
-import java.sql.Connection;
 import java.sql.SQLException;
+import javax.sql.CommonDataSource;
 import javax.sql.PooledConnection;
-import org.smallmind.persistence.sql.DataSourcePerApplicationManager;
+import javax.sql.XAConnection;
+import javax.sql.XADataSource;
+import org.smallmind.persistence.sql.pool.spring.DatabaseConnection;
+import org.smallmind.persistence.sql.pool.spring.PooledConnectionComponentPoolFactory;
 import org.smallmind.quorum.pool.ComponentPoolException;
+import org.smallmind.quorum.pool.complex.ComplexPoolConfig;
 import org.smallmind.quorum.pool.complex.ComponentPool;
 
-public class DefaultPooledDataSource extends AbstractPooledDataSource {
+public class PooledDataSourceFactory {
 
-  private ComponentPool<PooledConnection> componentPool;
-  private String key;
+  public static <D extends CommonDataSource> AbstractPooledDataSource createPooledDataSource (String poolName, DataSourceFactory<D, ? extends PooledConnection> dataSourceFactory, String validationQuery, int maxStatements, ComplexPoolConfig poolConfig, DatabaseConnection[] connections)
+    throws SQLException, ComponentPoolException {
 
-  public DefaultPooledDataSource (ComponentPool<PooledConnection> componentPool) {
-
-    this(componentPool.getPoolName(), componentPool);
-  }
-
-  public DefaultPooledDataSource (String key, ComponentPool<PooledConnection> componentPool) {
-
-    this.key = key;
-    this.componentPool = componentPool;
-  }
-
-  public void register () {
-
-    DataSourcePerApplicationManager.register(key, this);
-  }
-
-  public String getKey () {
-
-    return key;
-  }
-
-  public Connection getConnection ()
-    throws SQLException {
-
-    try {
-      return componentPool.getComponent().getConnection();
+    if (XADataSource.class.isAssignableFrom(dataSourceFactory.getDataSourceClass())) {
+      return new XAPooledDataSource((ComponentPool<XAConnection>)PooledConnectionComponentPoolFactory.<D>constructComponentPool(poolName, dataSourceFactory, validationQuery, maxStatements, poolConfig, connections));
     }
-    catch (ComponentPoolException componentPoolException) {
-      throw new SQLException(componentPoolException);
-    }
-  }
 
-  @Override
-  public void startup ()
-    throws ComponentPoolException {
-
-    componentPool.startup();
-  }
-
-  @Override
-  public void shutdown ()
-    throws ComponentPoolException {
-
-    componentPool.shutdown();
+    return new PooledDataSource((ComponentPool<PooledConnection>)PooledConnectionComponentPoolFactory.<D>constructComponentPool(poolName, dataSourceFactory, validationQuery, maxStatements, poolConfig, connections));
   }
 }

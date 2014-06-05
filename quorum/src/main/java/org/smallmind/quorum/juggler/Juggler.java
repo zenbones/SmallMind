@@ -26,6 +26,7 @@
  */
 package org.smallmind.quorum.juggler;
 
+import java.lang.reflect.Array;
 import java.lang.reflect.Method;
 import java.security.SecureRandom;
 import java.util.ArrayList;
@@ -42,7 +43,8 @@ public class Juggler<P, R> implements BlackList<R> {
   private final SecureRandom random = new SecureRandom();
   private final JugglingPinFactory<P, R> jugglingPinFactory;
   private final P[] providers;
-  private final Class<P> managedClass;
+  private final Class<P> providerClass;
+  private final Class<R> resourceClass;
   private final int recoveryCheckSeconds;
   private ProviderRecoveryWorker recoveryWorker = null;
   private ArrayList<JugglingPin<R>> sourcePins;
@@ -50,22 +52,23 @@ public class Juggler<P, R> implements BlackList<R> {
   private ConcurrentSkipListMap<Long, JugglingPin<R>> blackMap;
   private State state = State.DECONSTRUCTED;
 
-  public Juggler (Class<P> managedClass, int recoveryCheckSeconds, JugglingPinFactory<P, R> jugglingPinFactory, P provider, int size) {
+  public Juggler (Class<P> providerClass, Class<R> resourceClass, int recoveryCheckSeconds, JugglingPinFactory<P, R> jugglingPinFactory, P provider, int size) {
 
-    this(managedClass, recoveryCheckSeconds, jugglingPinFactory, generateArray(provider, size));
+    this(providerClass, resourceClass, recoveryCheckSeconds, jugglingPinFactory, generateArray(provider, providerClass, size));
   }
 
-  public Juggler (Class<P> managedClass, int recoveryCheckSeconds, JugglingPinFactory<P, R> jugglingPinFactory, P... providers) {
+  public Juggler (Class<P> providerClass, Class<R> resourceClass, int recoveryCheckSeconds, JugglingPinFactory<P, R> jugglingPinFactory, P... providers) {
 
-    this.managedClass = managedClass;
+    this.providerClass = providerClass;
+    this.resourceClass = resourceClass;
     this.recoveryCheckSeconds = recoveryCheckSeconds;
     this.jugglingPinFactory = jugglingPinFactory;
     this.providers = providers;
   }
 
-  private static <P> P[] generateArray (P provider, int size) {
+  private static <P> P[] generateArray (P provider, Class<P> providerClass, int size) {
 
-    P[] array = (P[])new Object[size];
+    P[] array = (P[])Array.newInstance(providerClass, size);
 
     Arrays.fill(array, provider);
 
@@ -76,12 +79,12 @@ public class Juggler<P, R> implements BlackList<R> {
     throws JugglerResourceCreationException {
 
     if (state.equals(State.DECONSTRUCTED)) {
-      sourcePins = new ArrayList<JugglingPin<R>>(providers.length);
-      targetPins = new ArrayList<JugglingPin<R>>(providers.length);
-      blackMap = new ConcurrentSkipListMap<Long, JugglingPin<R>>();
+      sourcePins = new ArrayList<>(providers.length);
+      targetPins = new ArrayList<>(providers.length);
+      blackMap = new ConcurrentSkipListMap<>();
 
       for (P provider : providers) {
-        targetPins.add(jugglingPinFactory.createJugglingPin(this, provider));
+        targetPins.add(jugglingPinFactory.createJugglingPin(provider, resourceClass));
       }
 
       while (!targetPins.isEmpty()) {
@@ -169,7 +172,7 @@ public class Juggler<P, R> implements BlackList<R> {
       }
     }
 
-    throw new NoAvailableJugglerResourceException("All available resources(%s) have been black listed", managedClass.getSimpleName());
+    throw new NoAvailableJugglerResourceException("All available resources(%s) have been black listed", providerClass.getSimpleName());
   }
 
   public synchronized void addToBlackList (JugglingPin<R> blackPin) {
@@ -290,7 +293,7 @@ public class Juggler<P, R> implements BlackList<R> {
                   LoggerManager.getLogger(Juggler.class).info("Recovered resource(%s) from black list", recoveredPin.describe());
                 }
                 else {
-                  LoggerManager.getLogger(ProviderRecoveryWorker.class).fatal("We've lost a resource(%s), which should never occur - please notify a system administrator", managedClass.getSimpleName());
+                  LoggerManager.getLogger(ProviderRecoveryWorker.class).fatal("We've lost a resource(%s), which should never occur - please notify a system administrator", providerClass.getSimpleName());
                 }
               }
             }

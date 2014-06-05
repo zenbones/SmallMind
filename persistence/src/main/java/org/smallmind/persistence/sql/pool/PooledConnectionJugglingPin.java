@@ -32,22 +32,24 @@ import javax.sql.PooledConnection;
 import org.smallmind.quorum.juggler.AbstractJugglingPin;
 import org.smallmind.quorum.juggler.JugglerResourceException;
 
-public class PooledConnectionJugglingPin extends AbstractJugglingPin<PooledConnection> {
+public class PooledConnectionJugglingPin<P extends PooledConnection> extends AbstractJugglingPin<P> {
 
   private ConnectionPoolDataSource dataSource;
+  private Class<P> pooledConnectionClass;
 
-  public PooledConnectionJugglingPin (ConnectionPoolDataSource dataSource) {
+  public PooledConnectionJugglingPin (ConnectionPoolDataSource dataSource, Class<P> pooledConnectionClass) {
 
     this.dataSource = dataSource;
+    this.pooledConnectionClass = pooledConnectionClass;
   }
 
   @Override
-  public PooledConnection obtain ()
+  public P obtain ()
     throws JugglerResourceException {
 
     try {
 
-      return dataSource.getPooledConnection();
+      return pooledConnectionClass.cast(dataSource.getPooledConnection());
     }
     catch (SQLException sqlException) {
       throw new JugglerResourceException(sqlException);

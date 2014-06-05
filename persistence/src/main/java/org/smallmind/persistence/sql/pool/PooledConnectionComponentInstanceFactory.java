@@ -37,19 +37,19 @@ import org.smallmind.quorum.pool.complex.ComponentInstance;
 import org.smallmind.quorum.pool.complex.ComponentInstanceFactory;
 import org.smallmind.quorum.pool.complex.ComponentPool;
 
-public class PooledConnectionComponentInstanceFactory implements ComponentInstanceFactory<PooledConnection> {
+public class PooledConnectionComponentInstanceFactory<P extends PooledConnection> implements ComponentInstanceFactory<P> {
 
-  private Juggler<ConnectionPoolDataSource, PooledConnection> pooledConnectionJuggler;
+  private Juggler<ConnectionPoolDataSource, P> pooledConnectionJuggler;
   private String validationQuery = "select 1";
 
-  public PooledConnectionComponentInstanceFactory (ConnectionPoolDataSource... dataSources) {
+  public PooledConnectionComponentInstanceFactory (Class<P> pooledConnectionClass, ConnectionPoolDataSource... dataSources) {
 
-    this(0, dataSources);
+    this(0, pooledConnectionClass, dataSources);
   }
 
-  public PooledConnectionComponentInstanceFactory (int recoveryCheckSeconds, ConnectionPoolDataSource... dataSources) {
+  public PooledConnectionComponentInstanceFactory (int recoveryCheckSeconds, Class<P> pooledConnectionClass, ConnectionPoolDataSource... dataSources) {
 
-    pooledConnectionJuggler = new Juggler<>(ConnectionPoolDataSource.class, recoveryCheckSeconds, new PooledConnectionJugglingPinFactory(), dataSources);
+    pooledConnectionJuggler = new Juggler<>(ConnectionPoolDataSource.class, pooledConnectionClass, recoveryCheckSeconds, new PooledConnectionJugglingPinFactory<P>(), dataSources);
   }
 
   @Override
@@ -76,10 +76,10 @@ public class PooledConnectionComponentInstanceFactory implements ComponentInstan
     this.validationQuery = validationQuery;
   }
 
-  public ComponentInstance<PooledConnection> createInstance (ComponentPool<PooledConnection> componentPool)
+  public ComponentInstance<P> createInstance (ComponentPool<P> componentPool)
     throws NoAvailableJugglerResourceException, SQLException {
 
-    return new PooledConnectionComponentInstance(componentPool, pooledConnectionJuggler.pickResource(), validationQuery);
+    return new PooledConnectionComponentInstance<P>(componentPool, pooledConnectionJuggler.pickResource(), validationQuery);
   }
 
   @Override

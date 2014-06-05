@@ -27,19 +27,21 @@
 package org.smallmind.persistence.sql.pool.spring;
 
 import java.sql.SQLException;
+import javax.sql.CommonDataSource;
 import javax.sql.PooledConnection;
 import org.smallmind.persistence.sql.pool.ConnectionEndpoint;
-import org.smallmind.persistence.sql.pool.DriverManagerComponentInstanceFactory;
+import org.smallmind.persistence.sql.pool.DataSourceComponentInstanceFactory;
+import org.smallmind.persistence.sql.pool.DataSourceFactory;
 import org.smallmind.quorum.pool.ComponentPoolException;
 import org.smallmind.quorum.pool.complex.ComplexPoolConfig;
 import org.smallmind.quorum.pool.complex.ComponentPool;
 
 public class PooledConnectionComponentPoolFactory {
 
-  public static ComponentPool<PooledConnection> constructComponentPool (String poolName, String driverClassName, String validationQuery, int maxStatements, ComplexPoolConfig poolConfig, DatabaseConnection... connections)
+  public static <D extends CommonDataSource> ComponentPool<? extends PooledConnection> constructComponentPool (String poolName, DataSourceFactory<D, ? extends PooledConnection> dataSourceFactory, String validationQuery, int maxStatements, ComplexPoolConfig poolConfig, DatabaseConnection... connections)
     throws SQLException, ComponentPoolException {
 
-    DriverManagerComponentInstanceFactory connectionInstanceFactory = new DriverManagerComponentInstanceFactory(driverClassName, maxStatements, createConnectionEndpoints(connections));
+    DataSourceComponentInstanceFactory<D, ? extends PooledConnection> connectionInstanceFactory = new DataSourceComponentInstanceFactory<>(dataSourceFactory, maxStatements, createConnectionEndpoints(connections));
 
     if (validationQuery != null) {
       connectionInstanceFactory.setValidationQuery(validationQuery);

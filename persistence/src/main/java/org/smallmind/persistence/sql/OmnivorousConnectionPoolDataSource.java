@@ -34,33 +34,35 @@ import javax.sql.CommonDataSource;
 import javax.sql.ConnectionPoolDataSource;
 import javax.sql.PooledConnection;
 
-public class DefaultConnectionPoolDataSource<D extends CommonDataSource> implements ConnectionPoolDataSource {
+public class OmnivorousConnectionPoolDataSource<D extends CommonDataSource, P extends PooledConnection> implements ConnectionPoolDataSource {
 
   private D dataSource;
+  private Class<P> pooledConnectionClass;
   private int maxStatements = 0;
 
-  public DefaultConnectionPoolDataSource (D dataSource) {
+  public OmnivorousConnectionPoolDataSource (D dataSource, Class<P> pooledConnectionClass) {
 
     this.dataSource = dataSource;
+    this.pooledConnectionClass = pooledConnectionClass;
   }
 
-  public DefaultConnectionPoolDataSource (D dataSource, int maxStatements) {
+  public OmnivorousConnectionPoolDataSource (D dataSource, Class<P> pooledConnectionClass, int maxStatements) {
 
-    this(dataSource);
+    this(dataSource, pooledConnectionClass);
 
     this.maxStatements = maxStatements;
   }
 
-  public PooledConnection getPooledConnection ()
+  public P getPooledConnection ()
     throws SQLException {
 
-    return PooledConnectionFactory.createPooledConnection(dataSource, maxStatements);
+    return pooledConnectionClass.cast(PooledConnectionFactory.createPooledConnection(dataSource, maxStatements));
   }
 
-  public PooledConnection getPooledConnection (String user, String password)
+  public P getPooledConnection (String user, String password)
     throws SQLException {
 
-    return PooledConnectionFactory.createPooledConnection(dataSource, user, password, maxStatements);
+    return pooledConnectionClass.cast(PooledConnectionFactory.createPooledConnection(dataSource, user, password, maxStatements));
   }
 
   public Logger getParentLogger () throws SQLFeatureNotSupportedException {

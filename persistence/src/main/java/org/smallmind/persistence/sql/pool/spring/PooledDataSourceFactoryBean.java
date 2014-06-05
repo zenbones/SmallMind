@@ -27,21 +27,23 @@
 package org.smallmind.persistence.sql.pool.spring;
 
 import java.sql.SQLException;
-import javax.sql.DataSource;
+import javax.sql.CommonDataSource;
+import javax.sql.PooledConnection;
 import org.smallmind.persistence.sql.pool.AbstractPooledDataSource;
-import org.smallmind.persistence.sql.pool.DefaultPooledDataSource;
+import org.smallmind.persistence.sql.pool.DataSourceFactory;
+import org.smallmind.persistence.sql.pool.PooledDataSourceFactory;
 import org.smallmind.quorum.pool.ComponentPoolException;
 import org.smallmind.quorum.pool.complex.ComplexPoolConfig;
 import org.springframework.beans.factory.DisposableBean;
 import org.springframework.beans.factory.FactoryBean;
 import org.springframework.beans.factory.InitializingBean;
 
-public class PooledDataSourceFactoryBean implements FactoryBean<DataSource>, InitializingBean, DisposableBean {
+public class PooledDataSourceFactoryBean<D extends CommonDataSource, P extends PooledConnection> implements FactoryBean<CommonDataSource>, InitializingBean, DisposableBean {
 
   private AbstractPooledDataSource dataSource;
+  private DataSourceFactory<D, P> dataSourceFactory;
   private ComplexPoolConfig poolConfig;
   private DatabaseConnection[] connections;
-  private String driverClassName;
   private String poolName;
   private String validationQuery;
   private int maxStatements;
@@ -51,9 +53,9 @@ public class PooledDataSourceFactoryBean implements FactoryBean<DataSource>, Ini
     this.poolName = poolName;
   }
 
-  public void setDriverClassName (String driverClassName) {
+  public void setDataSourceFactory (DataSourceFactory<D, P> dataSourceFactory) {
 
-    this.driverClassName = driverClassName;
+    this.dataSourceFactory = dataSourceFactory;
   }
 
   public void setConnections (DatabaseConnection[] connections) {
@@ -80,7 +82,7 @@ public class PooledDataSourceFactoryBean implements FactoryBean<DataSource>, Ini
   public void afterPropertiesSet ()
     throws SQLException, ComponentPoolException {
 
-    dataSource = new DefaultPooledDataSource(PooledConnectionComponentPoolFactory.constructComponentPool(poolName, driverClassName, validationQuery, maxStatements, poolConfig, connections));
+    dataSource = PooledDataSourceFactory.createPooledDataSource(poolName, dataSourceFactory, validationQuery, maxStatements, poolConfig, connections);
     dataSource.startup();
   }
 
@@ -100,11 +102,11 @@ public class PooledDataSourceFactoryBean implements FactoryBean<DataSource>, Ini
   @Override
   public Class<?> getObjectType () {
 
-    return DataSource.class;
+    return CommonDataSource.class;
   }
 
   @Override
-  public DataSource getObject () {
+  public CommonDataSource getObject () {
 
     return dataSource;
   }

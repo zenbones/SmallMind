@@ -27,15 +27,17 @@
 package org.smallmind.persistence.sql.pool;
 
 import java.io.PrintWriter;
-import java.sql.Connection;
 import java.sql.SQLFeatureNotSupportedException;
 import java.util.logging.Logger;
-import javax.sql.DataSource;
+import javax.sql.CommonDataSource;
+import javax.sql.PooledConnection;
 import org.smallmind.quorum.pool.ComponentPoolException;
 
-public abstract class AbstractPooledDataSource implements DataSource {
+public abstract class AbstractPooledDataSource<D extends CommonDataSource, P extends PooledConnection> implements CommonDataSource {
 
-  private PrintWriter logWriter;
+  private final Class<D> dataSourceClass;
+  private final Class<P> pooledConnectionClass;
+  private final PrintWriter logWriter;
 
   public abstract void startup ()
     throws ComponentPoolException;
@@ -43,14 +45,22 @@ public abstract class AbstractPooledDataSource implements DataSource {
   public abstract void shutdown ()
     throws ComponentPoolException;
 
-  public AbstractPooledDataSource () {
+  public AbstractPooledDataSource (Class<D> dataSourceClass, Class<P> pooledConnectionClass) {
+
+    this.dataSourceClass = dataSourceClass;
+    this.pooledConnectionClass = pooledConnectionClass;
 
     logWriter = new PrintWriter(new PooledLogWriter());
   }
 
-  public Connection getConnection (String username, String password) {
+  public Class<D> getDataSourceClass () {
 
-    throw new UnsupportedOperationException("Please properly configure the underlying resource managed by the pool which is represented by this DataSource");
+    return dataSourceClass;
+  }
+
+  public Class<P> getPooledConnectionClass () {
+
+    return pooledConnectionClass;
   }
 
   public Logger getParentLogger () throws SQLFeatureNotSupportedException {

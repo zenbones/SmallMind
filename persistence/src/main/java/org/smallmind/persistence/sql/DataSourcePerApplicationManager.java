@@ -27,6 +27,7 @@
 package org.smallmind.persistence.sql;
 
 import java.util.concurrent.ConcurrentHashMap;
+import javax.sql.CommonDataSource;
 import javax.sql.DataSource;
 import org.smallmind.nutsnbolts.lang.PerApplicationContext;
 import org.smallmind.nutsnbolts.lang.PerApplicationDataManager;
@@ -36,17 +37,17 @@ public class DataSourcePerApplicationManager implements PerApplicationDataManage
 
   static {
 
-    PerApplicationContext.setPerApplicationData(DataSourcePerApplicationManager.class, new ConcurrentHashMap<String, DataSource>());
+    PerApplicationContext.setPerApplicationData(DataSourcePerApplicationManager.class, new ConcurrentHashMap<String, CommonDataSource>());
   }
 
-  public static void register (String key, DataSource dataSource) {
+  public static void register (String key, CommonDataSource dataSource) {
 
     PerApplicationContext.getPerApplicationData(DataSourcePerApplicationManager.class, ConcurrentHashMap.class).put(key, dataSource);
   }
 
-  public static DataSource getDataSource (String key) {
+  public static CommonDataSource getDataSource (String key) {
 
-    DataSource dataSource;
+    CommonDataSource dataSource;
 
     if ((dataSource = (DataSource)PerApplicationContext.getPerApplicationData(DataSourcePerApplicationManager.class, ConcurrentHashMap.class).get(key)) == null) {
       throw new ORMInitializationException("No DataSource was mapped to the key(%s)", key);
