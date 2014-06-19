@@ -33,11 +33,11 @@ import org.smallmind.nutsnbolts.xml.sax.ElementExtender;
 
 public class PropertiesElementExtender extends AbstractElementExtender {
 
-  private HashMap<String, String> propertyMap;
+  private HashMap<String, Object> propertyMap;
 
   public PropertiesElementExtender () {
 
-    propertyMap = new HashMap<String, String>();
+    propertyMap = new HashMap<>();
   }
 
   @Override

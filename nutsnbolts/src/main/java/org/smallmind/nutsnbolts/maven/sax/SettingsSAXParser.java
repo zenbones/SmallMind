@@ -37,7 +37,7 @@ import org.xml.sax.SAXException;
 
 public class SettingsSAXParser {
 
-  public static HashMap<String, String> parse (String profile)
+  public static HashMap<String, Object> parse (String profile)
     throws IOException, SAXException, ParserConfigurationException {
 
     SettingsDocumentExtender settingsDocumentExtender;

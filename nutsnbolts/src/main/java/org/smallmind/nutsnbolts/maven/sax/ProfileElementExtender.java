@@ -31,7 +31,7 @@ import org.smallmind.nutsnbolts.xml.sax.AbstractElementExtender;
 
 public class ProfileElementExtender extends AbstractElementExtender {
 
-  private HashMap<String, String> propertyMap;
+  private HashMap<String, Object> propertyMap;
   private String id;
 
   public String getId () {
@@ -44,12 +44,12 @@ public class ProfileElementExtender extends AbstractElementExtender {
     this.id = id;
   }
 
-  public HashMap<String, String> getPropertyMap () {
+  public HashMap<String, Object> getPropertyMap () {
 
     return propertyMap;
   }
 
-  public void setPropertyMap (HashMap<String, String> propertyMap) {
+  public void setPropertyMap (HashMap<String, Object> propertyMap) {
 
     this.propertyMap = propertyMap;
   }

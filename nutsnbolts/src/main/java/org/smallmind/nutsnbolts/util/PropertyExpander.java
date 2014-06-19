@@ -81,21 +81,21 @@ public class PropertyExpander {
   public String expand (String expansion)
     throws PropertyExpanderException {
 
-    return expand(expansion, new StringBuilder(expansion), Collections.<String, String>emptyMap()).toString();
+    return expand(expansion, new StringBuilder(expansion), Collections.<String, Object>emptyMap()).toString();
   }
 
-  public String expand (String expansion, Map<String, String> expansionMap)
+  public String expand (String expansion, Map<String, Object> expansionMap)
     throws PropertyExpanderException {
 
     return expand(expansion, new StringBuilder(expansion), expansionMap).toString();
   }
 
-  private StringBuilder expand (String originalExpansion, StringBuilder expansionBuilder, Map<String, String> expansionMap)
+  private StringBuilder expand (String originalExpansion, StringBuilder expansionBuilder, Map<String, Object> expansionMap)
     throws PropertyExpanderException {
 
     HashSet<String> encounteredKeySet;
     String expansionKey;
-    String expansionValue;
+    Object expansionValue;
     int arabesqueCount = 0;
     int parsePos = 0;
     int prefixPos;
@@ -103,7 +103,7 @@ public class PropertyExpander {
     int suffixPos;
     int markerPos = -1;
 
-    encounteredKeySet = new HashSet<String>();
+    encounteredKeySet = new HashSet<>();
     while ((prefixPos = expansionBuilder.indexOf(prefix, parsePos)) >= 0) {
       arabesqueCount++;
       parsePos = prefixPos + prefix.length();
@@ -164,14 +164,17 @@ public class PropertyExpander {
       }
 
       if (expansionValue != null) {
+
+        String expansionValueAsString = expansionValue.toString();
+
         if (encounteredKeySet.contains(expansionKey)) {
           throw new PropertyExpanderException("Circular reference to property(%s%s%s) within the expansion sub-template(%s)", prefix, expansionKey, suffix, expansionBuilder.toString());
         }
 
         encounteredKeySet.add(expansionKey);
-        expansionBuilder.replace(prefixPos, suffixPos + suffix.length(), expansionValue);
+        expansionBuilder.replace(prefixPos, suffixPos + suffix.length(), expansionValueAsString);
         parsePos = prefixPos;
-        markerPos += expansionValue.length() - (suffixPos + suffix.length() - prefixPos);
+        markerPos += expansionValueAsString.length() - (suffixPos + suffix.length() - prefixPos);
       }
     }
 

@@ -138,7 +138,7 @@ public class PropertyPlaceholderConfigurer implements BeanFactoryPostProcessor, 
     throws BeansException {
 
     PropertyPlaceholderStringValueResolver valueResolver;
-    Map<String, String> propertyMap = new HashMap<>();
+    Map<String, Object> propertyMap = new HashMap<>();
     ResourceParser resourceParser;
     PropertyExpander locationExpander;
     BeanDefinitionVisitor beanDefinitionVisitor;
@@ -168,9 +168,9 @@ public class PropertyPlaceholderConfigurer implements BeanFactoryPostProcessor, 
     SpringPropertyAccessor.setInstance(valueResolver = new PropertyPlaceholderStringValueResolver(propertyMap, ignoreUnresolvableProperties, systemPropertyMode, searchSystemEnvironment));
 
     if ((keyDebugger != null) && keyDebugger.willDebug()) {
-      for (Map.Entry<String, String> propertyEntry : propertyMap.entrySet()) {
+      for (Map.Entry<String, Object> propertyEntry : propertyMap.entrySet()) {
         if (keyDebugger.matches(propertyEntry.getKey())) {
-          debugMap.put(propertyEntry.getKey(), valueResolver.resolveStringValue(propertyEntry.getValue()));
+          debugMap.put(propertyEntry.getKey(), valueResolver.resolveStringValue(propertyEntry.getValue().toString()));
         }
       }
 
@@ -198,7 +198,7 @@ public class PropertyPlaceholderConfigurer implements BeanFactoryPostProcessor, 
     beanFactoryToProcess.resolveAliases(valueResolver);
   }
 
-  private void extractProperties (ResourceParser resourceParser, PropertyExpander locationExpander, Map<String, String> propertyMap, String location) {
+  private void extractProperties (ResourceParser resourceParser, PropertyExpander locationExpander, Map<String, Object> propertyMap, String location) {
 
     Resource locationResource;
     InputStream inputStream;

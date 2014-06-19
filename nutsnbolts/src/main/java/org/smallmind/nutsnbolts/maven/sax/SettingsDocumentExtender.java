@@ -37,19 +37,19 @@ import org.xml.sax.Attributes;
 public class SettingsDocumentExtender extends AbstractDocumentExtender {
 
   private String profile;
-  private HashMap<String, String> propertyMap;
+  private HashMap<String, Object> propertyMap;
 
   public SettingsDocumentExtender (String profile) {
 
     this.profile = profile;
   }
 
-  public HashMap<String, String> getPropertyMap () {
+  public HashMap<String, Object> getPropertyMap () {
 
     return propertyMap;
   }
 
-  public void setPropertyMap (HashMap<String, String> propertyMap) {
+  public void setPropertyMap (HashMap<String, Object> propertyMap) {
 
     this.propertyMap = propertyMap;
   }

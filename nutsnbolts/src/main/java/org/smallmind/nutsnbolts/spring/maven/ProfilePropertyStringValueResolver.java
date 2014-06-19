@@ -37,7 +37,7 @@ import org.springframework.util.StringValueResolver;
 public class ProfilePropertyStringValueResolver implements StringValueResolver {
 
   private PropertyExpander propertyExpander;
-  private HashMap<String, String> propertyMap;
+  private HashMap<String, Object> propertyMap;
   private boolean active = true;
 
   public ProfilePropertyStringValueResolver (String profile, boolean ignoreResourceNotFound, boolean ignoreUnresolvableProperties)
