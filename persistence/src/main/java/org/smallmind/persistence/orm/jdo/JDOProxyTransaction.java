@@ -68,12 +68,12 @@ public class JDOProxyTransaction extends ProxyTransaction<JDOProxySession> {
       try {
         getSession().flush();
         transaction.commit();
+        TransactionSynchronizationManager.unbindResource(getSession().getNativeSessionFactory());
       }
       catch (Throwable throwable) {
         rollback(throwable);
       }
       finally {
-        TransactionSynchronizationManager.unbindResource(getSession().getNativeSessionFactory());
         getSession().close();
       }
 
@@ -106,12 +106,12 @@ public class JDOProxyTransaction extends ProxyTransaction<JDOProxySession> {
       else {
         try {
           transaction.rollback();
+          TransactionSynchronizationManager.unbindResource(getSession().getNativeSessionFactory());
         }
         catch (Throwable throwable) {
           thrownDuringRollback = (thrownDuringRollback == null) ? throwable : (throwable.getCause() != throwable) ? throwable : throwable.initCause(thrownDuringRollback);
         }
         finally {
-          TransactionSynchronizationManager.unbindResource(getSession().getNativeSessionFactory());
           getSession().close();
 
           try {
