@@ -8,7 +8,7 @@
   </parent>
   <groupId>org.smallmind</groupId>
   <artifactId>smallmind</artifactId>
-  <version>1.7.2-SNAPSHOT</version>
+  <version>1.7.3-SNAPSHOT</version>
   <packaging>pom</packaging>
   <name>Parent</name>
   <description>Parent POM</description>
@@ -364,7 +364,7 @@
       <dependency>
         <groupId>org.hibernate</groupId>
         <artifactId>hibernate-core</artifactId>
-        <version>4.3.5.Final</version>
+        <version>4.3.6.Final</version>
       </dependency>
       <dependency>
         <groupId>org.hibernate</groupId>
@@ -379,7 +379,7 @@
       <dependency>
         <groupId>org.hibernate.common</groupId>
         <artifactId>hibernate-commons-annotations</artifactId>
-        <version>4.0.4.Final</version>
+        <version>4.0.5.Final</version>
       </dependency>
       <dependency>
         <groupId>org.hibernate.javax.persistence</groupId>
