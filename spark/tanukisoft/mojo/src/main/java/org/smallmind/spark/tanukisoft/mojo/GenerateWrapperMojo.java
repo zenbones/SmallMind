@@ -98,12 +98,14 @@ public class GenerateWrapperMojo extends AbstractMojo {
   private String[] serviceDependencies;
   @Parameter
   private String[] configurations;
-  @Parameter(defaultValue = "true")
-  private boolean createArtifact;
   @Parameter(defaultValue = "zip")
   private String compression;
   @Parameter(defaultValue = "true")
+  private boolean createArtifact;
+  @Parameter(defaultValue = "true")
   private boolean includeVersion;
+  @Parameter(defaultValue = "true")
+  private boolean compactClasspath;
   @Parameter(defaultValue = "false")
   private boolean verbose;
   @Parameter(defaultValue = "false")
@@ -217,6 +219,9 @@ public class GenerateWrapperMojo extends AbstractMojo {
 
     classpathElementList = new LinkedList<String>();
     freemarkerMap.put("classpathElements", classpathElementList);
+    if (compactClasspath) {
+      classpathElementList.add("lib/*");
+    }
 
     additionalDependencies = (dependencies != null) ? Arrays.asList(dependencies) : null;
     for (Artifact artifact : project.getRuntimeArtifacts()) {
@@ -234,7 +239,9 @@ public class GenerateWrapperMojo extends AbstractMojo {
           }
         }
 
-        classpathElementList.add(artifact.getFile().getName());
+        if (!compactClasspath) {
+          classpathElementList.add(artifact.getFile().getName());
+        }
         copyToDestination(artifact.getFile(), libDirectory.getAbsolutePath(), artifact.getFile().getName());
       }
       catch (IOException ioException) {
@@ -251,7 +258,9 @@ public class GenerateWrapperMojo extends AbstractMojo {
                 getLog().info(String.format("Copying additional dependency(%s)...", artifact.getFile().getName()));
               }
 
-              classpathElementList.add(artifact.getFile().getName());
+              if (!compactClasspath) {
+                classpathElementList.add(artifact.getFile().getName());
+              }
               copyToDestination(artifact.getFile(), libDirectory.getAbsolutePath(), artifact.getFile().getName());
             }
             catch (IOException ioException) {
@@ -274,7 +283,10 @@ public class GenerateWrapperMojo extends AbstractMojo {
         }
 
         CompressionType.JAR.compress(jarFile, new File(project.getBuild().getOutputDirectory()));
-        classpathElementList.add(jarFile.getName());
+
+        if (!compactClasspath) {
+          classpathElementList.add(jarFile.getName());
+        }
         copyToDestination(jarFile, libDirectory.getAbsolutePath(), jarFile.getName());
       }
       catch (IOException ioException) {
@@ -287,7 +299,9 @@ public class GenerateWrapperMojo extends AbstractMojo {
           getLog().info(String.format("Copying build artifact(%s)...", project.getArtifact().getFile().getName()));
         }
 
-        classpathElementList.add(project.getArtifact().getFile().getName());
+        if (!compactClasspath) {
+          classpathElementList.add(project.getArtifact().getFile().getName());
+        }
         copyToDestination(project.getArtifact().getFile(), libDirectory.getAbsolutePath(), project.getArtifact().getFile().getName());
       }
       catch (IOException ioException) {
