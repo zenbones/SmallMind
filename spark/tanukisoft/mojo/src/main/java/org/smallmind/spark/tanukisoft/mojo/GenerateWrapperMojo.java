@@ -220,7 +220,7 @@ public class GenerateWrapperMojo extends AbstractMojo {
     classpathElementList = new LinkedList<String>();
     freemarkerMap.put("classpathElements", classpathElementList);
     if (compactClasspath) {
-      classpathElementList.add("lib/*");
+      classpathElementList.add("*");
     }
 
     additionalDependencies = (dependencies != null) ? Arrays.asList(dependencies) : null;
