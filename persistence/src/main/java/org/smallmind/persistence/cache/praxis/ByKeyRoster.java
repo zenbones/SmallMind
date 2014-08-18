@@ -40,7 +40,7 @@ import org.smallmind.persistence.cache.CacheOperationException;
 import org.smallmind.persistence.cache.DurableKey;
 import org.smallmind.persistence.cache.VectoredDao;
 import org.smallmind.persistence.cache.praxis.intrinsic.IntrinsicRoster;
-import org.smallmind.persistence.orm.DaoManager;
+import org.smallmind.persistence.orm.OrmDaoManager;
 import org.smallmind.persistence.orm.ORMDao;
 import org.terracotta.annotations.InstrumentedClass;
 
@@ -61,7 +61,7 @@ public class ByKeyRoster<I extends Serializable & Comparable<I>, D extends Durab
   private ORMDao<I, D, ?, ?> getORMDao () {
 
     if (ormDao == null) {
-      if ((ormDao = DaoManager.get(durableClass)) == null) {
+      if ((ormDao = OrmDaoManager.get(durableClass)) == null) {
         throw new CacheOperationException("Unable to locate an implementation of ORMDao within DaoManager for the requested durable(%s)", durableClass.getSimpleName());
       }
     }

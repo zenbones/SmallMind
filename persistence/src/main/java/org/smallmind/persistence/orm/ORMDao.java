@@ -44,7 +44,7 @@ public abstract class ORMDao<I extends Serializable & Comparable<I>, D extends D
 
   public void register () {
 
-    DaoManager.register(getManagedClass(), this);
+    OrmDaoManager.register(getManagedClass(), this);
   }
 
   @Override

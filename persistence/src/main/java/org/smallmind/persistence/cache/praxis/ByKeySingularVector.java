@@ -35,7 +35,7 @@ import org.smallmind.persistence.Durable;
 import org.smallmind.persistence.cache.CacheOperationException;
 import org.smallmind.persistence.cache.DurableKey;
 import org.smallmind.persistence.cache.DurableVector;
-import org.smallmind.persistence.orm.DaoManager;
+import org.smallmind.persistence.orm.OrmDaoManager;
 import org.smallmind.persistence.orm.ORMDao;
 import org.terracotta.annotations.AutolockRead;
 import org.terracotta.annotations.AutolockWrite;
@@ -58,7 +58,7 @@ public class ByKeySingularVector<I extends Serializable & Comparable<I>, D exten
   private ORMDao<I, D, ?, ?> getORMDao () {
 
     if (ormDao == null) {
-      if ((ormDao = DaoManager.get(durableKey.getDurableClass())) == null) {
+      if ((ormDao = OrmDaoManager.get(durableKey.getDurableClass())) == null) {
         throw new CacheOperationException("Unable to locate an implementation of ORMDao within DaoManager for the requested durable(%s)", durableKey.getDurableClass().getSimpleName());
       }
     }
