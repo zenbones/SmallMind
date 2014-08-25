@@ -1,22 +1,22 @@
 /*
  * Copyright (c) 2007, 2008, 2009, 2010, 2011, 2012, 2013, 2014 David Berkman
- * 
+ *
  * This file is part of the SmallMind Code Project.
- * 
+ *
  * The SmallMind Code Project is free software, you can redistribute
  * it and/or modify it under the terms of GNU Affero General Public
  * License as published by the Free Software Foundation, either version 3
  * of the License, or (at your option) any later version.
- * 
+ *
  * The SmallMind Code Project is distributed in the hope that it will
  * be useful, but WITHOUT ANY WARRANTY; without even the implied warranty
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License for more details.
- * 
+ *
  * You should have received a copy of the the GNU Affero General Public
  * License, along with the SmallMind Code Project. If not, see
  * <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under the GNU Affero GPL version 3 section 7
  * ------------------------------------------------------------------
  * If you modify this Program, or any covered work, by linking or
@@ -36,21 +36,21 @@ public class GatingClassLoader extends ClassLoader {
   private final HashMap<String, ClassGateTicket> ticketMap;
 
   private ClassGate[] classGates;
-  private int reloadInterval;
+  private int gracePeriodSeconds;
 
-  public GatingClassLoader (int reloadInterval, ClassGate... classGates) {
+  public GatingClassLoader (int gracePeriodSeconds, ClassGate... classGates) {
 
-    this(null, reloadInterval, classGates);
+    this(null, gracePeriodSeconds, classGates);
   }
 
-  public GatingClassLoader (ClassLoader parent, int reloadInterval, ClassGate... classGates) {
+  public GatingClassLoader (ClassLoader parent, int gracePeriodSeconds, ClassGate... classGates) {
 
     super(parent);
 
     this.classGates = classGates;
-    this.reloadInterval = reloadInterval;
+    this.gracePeriodSeconds = gracePeriodSeconds;
 
-    ticketMap = new HashMap<String, ClassGateTicket>();
+    ticketMap = new HashMap<>();
   }
 
   public ClassGate[] getClassGates () {
@@ -75,7 +75,7 @@ public class GatingClassLoader extends ClassLoader {
 
           definedClass = defineClass(name, classData, 0, classData.length);
 
-          if (reloadInterval >= 0) {
+          if (gracePeriodSeconds >= 0) {
             synchronized (ticketMap) {
               ticketMap.put(name, new ClassGateTicket(classGate, classStreamTicket.getTimeStamp()));
             }
@@ -122,13 +122,13 @@ public class GatingClassLoader extends ClassLoader {
     ClassGateTicket classGateTicket;
 
     if ((gatedClass = findLoadedClass(name)) != null) {
-      if (reloadInterval >= 0) {
+      if (gracePeriodSeconds >= 0) {
         synchronized (ticketMap) {
           classGateTicket = ticketMap.get(name);
         }
 
         if (classGateTicket.getTimeStamp() != ClassGate.STATIC_CLASS) {
-          if (System.currentTimeMillis() >= (classGateTicket.getTimeStamp() + (reloadInterval * 1000))) {
+          if (System.currentTimeMillis() >= (classGateTicket.getTimeStamp() + (gracePeriodSeconds * 1000))) {
             if (classGateTicket.getClassGate().getLastModDate(name) > classGateTicket.getTimeStamp()) {
               throw new StaleClassLoaderException(name);
             }
