@@ -33,27 +33,14 @@ import org.smallmind.nutsnbolts.util.Some;
 
 public class SpringPropertyAccessor {
 
-  private static PropertyPlaceholderStringValueResolver INSTANCE;
+  PropertyPlaceholderStringValueResolver stringValueResolver;
+  private final Set<String> keySet;
 
-  private Set<String> keySet;
+  public SpringPropertyAccessor (PropertyPlaceholderStringValueResolver stringValueResolver) {
 
-  public static synchronized void setInstance (PropertyPlaceholderStringValueResolver instance) {
+    this.stringValueResolver = stringValueResolver;
 
-    INSTANCE = instance;
-  }
-
-  private static synchronized PropertyPlaceholderStringValueResolver getInstance () {
-
-    if (INSTANCE == null) {
-      throw new RuntimeBeansException("No instance(%s) has been set - please report this error to your operations team", PropertyPlaceholderStringValueResolver.class.getSimpleName());
-    }
-
-    return INSTANCE;
-  }
-
-  public SpringPropertyAccessor () {
-
-    keySet = getInstance().getKeySet();
+    keySet = stringValueResolver.getKeySet();
   }
 
   public Set<String> getKeySet () {
@@ -68,7 +55,7 @@ public class SpringPropertyAccessor {
       return null;
     }
 
-    return getInstance().resolveStringValue("${" + key + "}");
+    return stringValueResolver.resolveStringValue("${" + key + "}");
   }
 
   public Option<Boolean> asBoolean (String key) {

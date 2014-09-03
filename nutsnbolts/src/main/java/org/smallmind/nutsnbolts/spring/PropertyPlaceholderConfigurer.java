@@ -165,7 +165,7 @@ public class PropertyPlaceholderConfigurer implements BeanFactoryPostProcessor, 
     }
     System.out.println("--------------------------------------------------");
 
-    SpringPropertyAccessor.setInstance(valueResolver = new PropertyPlaceholderStringValueResolver(propertyMap, ignoreUnresolvableProperties, systemPropertyMode, searchSystemEnvironment));
+    SpringPropertyAccessorManager.register(new SpringPropertyAccessor(valueResolver = new PropertyPlaceholderStringValueResolver(propertyMap, ignoreUnresolvableProperties, systemPropertyMode, searchSystemEnvironment)));
 
     if ((keyDebugger != null) && keyDebugger.willDebug()) {
       for (Map.Entry<String, Object> propertyEntry : propertyMap.entrySet()) {

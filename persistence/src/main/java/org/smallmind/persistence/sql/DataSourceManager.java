@@ -33,23 +33,23 @@ import org.smallmind.nutsnbolts.lang.PerApplicationContext;
 import org.smallmind.nutsnbolts.lang.PerApplicationDataManager;
 import org.smallmind.persistence.orm.ORMInitializationException;
 
-public class DataSourcePerApplicationManager implements PerApplicationDataManager {
+public class DataSourceManager implements PerApplicationDataManager {
 
   static {
 
-    PerApplicationContext.setPerApplicationData(DataSourcePerApplicationManager.class, new ConcurrentHashMap<String, CommonDataSource>());
+    PerApplicationContext.setPerApplicationData(DataSourceManager.class, new ConcurrentHashMap<String, CommonDataSource>());
   }
 
   public static void register (String key, CommonDataSource dataSource) {
 
-    PerApplicationContext.getPerApplicationData(DataSourcePerApplicationManager.class, ConcurrentHashMap.class).put(key, dataSource);
+    PerApplicationContext.getPerApplicationData(DataSourceManager.class, ConcurrentHashMap.class).put(key, dataSource);
   }
 
   public static CommonDataSource getDataSource (String key) {
 
     CommonDataSource dataSource;
 
-    if ((dataSource = (DataSource)PerApplicationContext.getPerApplicationData(DataSourcePerApplicationManager.class, ConcurrentHashMap.class).get(key)) == null) {
+    if ((dataSource = (DataSource)PerApplicationContext.getPerApplicationData(DataSourceManager.class, ConcurrentHashMap.class).get(key)) == null) {
       throw new ORMInitializationException("No DataSource was mapped to the key(%s)", key);
     }
 
