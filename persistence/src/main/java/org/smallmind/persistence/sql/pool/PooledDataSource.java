@@ -30,7 +30,7 @@ import java.sql.Connection;
 import java.sql.SQLException;
 import javax.sql.DataSource;
 import javax.sql.PooledConnection;
-import org.smallmind.persistence.sql.DataSourcePerApplicationManager;
+import org.smallmind.persistence.sql.DataSourceManager;
 import org.smallmind.quorum.pool.ComponentPoolException;
 import org.smallmind.quorum.pool.complex.ComponentPool;
 
@@ -54,7 +54,7 @@ public class PooledDataSource extends AbstractPooledDataSource<DataSource, Poole
 
   public void register () {
 
-    DataSourcePerApplicationManager.register(key, this);
+    DataSourceManager.register(key, this);
   }
 
   public String getKey () {

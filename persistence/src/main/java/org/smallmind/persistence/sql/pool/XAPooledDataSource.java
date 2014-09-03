@@ -29,7 +29,7 @@ package org.smallmind.persistence.sql.pool;
 import java.sql.SQLException;
 import javax.sql.XAConnection;
 import javax.sql.XADataSource;
-import org.smallmind.persistence.sql.DataSourcePerApplicationManager;
+import org.smallmind.persistence.sql.DataSourceManager;
 import org.smallmind.quorum.pool.ComponentPoolException;
 import org.smallmind.quorum.pool.complex.ComponentPool;
 
@@ -53,7 +53,7 @@ public class XAPooledDataSource extends AbstractPooledDataSource<XADataSource, X
 
   public void register () {
 
-    DataSourcePerApplicationManager.register(key, this);
+    DataSourceManager.register(key, this);
   }
 
   public String getKey () {
