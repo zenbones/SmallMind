@@ -29,7 +29,7 @@ package org.smallmind.scribe.pen;
 import java.io.File;
 import java.util.Date;
 
-public abstract class Rollover {
+public class Rollover {
 
   private RolloverRule[] rules;
   private Timestamp timestamp;
