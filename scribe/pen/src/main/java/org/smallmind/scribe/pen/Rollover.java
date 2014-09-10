@@ -31,30 +31,25 @@ import java.util.Date;
 
 public abstract class Rollover {
 
+  private RolloverRule[] rules;
   private Timestamp timestamp;
   private char separator;
 
-  public Rollover () {
+  public Rollover (RolloverRule... rules) {
 
-    this('-', DateFormatTimestamp.getDefaultInstance());
+    this(DateFormatTimestamp.getDefaultInstance(), rules);
   }
 
-  public Rollover (char separator, Timestamp timestamp) {
+  public Rollover (Timestamp timestamp, RolloverRule... rules) {
+
+    this(timestamp, '-', rules);
+  }
+
+  public Rollover (Timestamp timestamp, char separator, RolloverRule... rules) {
 
     this.timestamp = timestamp;
     this.separator = separator;
-  }
-
-  public abstract boolean willRollover (File logFile, long bytesToBeWritten);
-
-  public char getSeparator () {
-
-    return separator;
-  }
-
-  public void setSeparator (char separator) {
-
-    this.separator = separator;
+    this.rules = rules;
   }
 
   public Timestamp getTimestamp () {
@@ -67,8 +62,35 @@ public abstract class Rollover {
     this.timestamp = timestamp;
   }
 
+  public char getSeparator () {
+
+    return separator;
+  }
+
+  public void setSeparator (char separator) {
+
+    this.separator = separator;
+  }
+
   public String getTimestampSuffix (Date date) {
 
     return timestamp.getTimestamp(date);
+  }
+
+  public void setRules (RolloverRule[] rules) {
+
+    this.rules = rules;
+  }
+
+  public boolean willRollover (File logFile, long bytesToBeWritten) {
+
+    for (RolloverRule rule : rules) {
+      if (rule.willRollover(logFile, bytesToBeWritten)) {
+
+        return true;
+      }
+    }
+
+    return false;
   }
 }

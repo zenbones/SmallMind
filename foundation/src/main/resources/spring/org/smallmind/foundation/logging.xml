@@ -42,7 +42,7 @@
     <property name="formatter" ref="patternFormatter"/>
   </bean>
 
-  <bean id="timestampRollover" class="org.smallmind.scribe.pen.TimestampRollover">
+  <bean id="timestampRollover" class="org.smallmind.scribe.pen.TimestampRolloverRule">
     <property name="timestampQuantifier" value="TOP_OF_DAY"/>
     <property name="separator" value="-"/>
     <property name="timestamp" ref="shortTimestamp"/>

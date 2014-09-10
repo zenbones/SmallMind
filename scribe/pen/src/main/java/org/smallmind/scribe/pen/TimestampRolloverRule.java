@@ -30,25 +30,18 @@ import java.io.File;
 import java.util.Calendar;
 import org.smallmind.nutsnbolts.lang.UnknownSwitchCaseException;
 
-public class TimestampRollover extends Rollover {
+public class TimestampRolloverRule implements RolloverRule {
 
   private TimestampQuantifier timestampQuantifier;
 
-  public TimestampRollover () {
+  public TimestampRolloverRule () {
 
     this(TimestampQuantifier.TOP_OF_DAY);
   }
 
-  public TimestampRollover (TimestampQuantifier timestampQuantifier) {
+  public TimestampRolloverRule (TimestampQuantifier timestampQuantifier) {
 
     super();
-
-    this.timestampQuantifier = timestampQuantifier;
-  }
-
-  public TimestampRollover (TimestampQuantifier timestampQuantifier, char separator, Timestamp timestamp) {
-
-    super(separator, timestamp);
 
     this.timestampQuantifier = timestampQuantifier;
   }
