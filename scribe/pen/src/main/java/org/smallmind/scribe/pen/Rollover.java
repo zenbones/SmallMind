@@ -35,6 +35,10 @@ public class Rollover {
   private Timestamp timestamp;
   private char separator;
 
+  public Rollover () {
+
+  }
+
   public Rollover (RolloverRule... rules) {
 
     this(DateFormatTimestamp.getDefaultInstance(), rules);
