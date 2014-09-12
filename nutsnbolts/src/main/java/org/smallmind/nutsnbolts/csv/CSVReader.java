@@ -1,22 +1,22 @@
 /*
  * Copyright (c) 2007, 2008, 2009, 2010, 2011, 2012, 2013, 2014 David Berkman
- * 
+ *
  * This file is part of the SmallMind Code Project.
- * 
+ *
  * The SmallMind Code Project is free software, you can redistribute
  * it and/or modify it under the terms of GNU Affero General Public
  * License as published by the Free Software Foundation, either version 3
  * of the License, or (at your option) any later version.
- * 
+ *
  * The SmallMind Code Project is distributed in the hope that it will
  * be useful, but WITHOUT ANY WARRANTY; without even the implied warranty
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License for more details.
- * 
+ *
  * You should have received a copy of the the GNU Affero General Public
  * License, along with the SmallMind Code Project. If not, see
  * <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under the GNU Affero GPL version 3 section 7
  * ------------------------------------------------------------------
  * If you modify this Program, or any covered work, by linking or
@@ -111,14 +111,14 @@ public class CSVReader implements AutoCloseable {
     return readLine(trimFields);
   }
 
-  private synchronized String[] readLine (boolean trimCurrentLine)
+  private synchronized String[] readLine (boolean trimFields)
     throws IOException, CSVParseException {
 
     LinkedList<String> fieldList;
     String[] fields;
     String singleLine;
 
-    fieldList = new LinkedList<String>();
+    fieldList = new LinkedList<>();
     while (true) {
       if ((singleLine = reader.readLine()) != null) {
         for (int count = 0; count < singleLine.length(); count++) {
@@ -126,7 +126,7 @@ public class CSVReader implements AutoCloseable {
             case UNQOUTED:
               switch (singleLine.charAt(count)) {
                 case ',':
-                  appendField(fieldList, trimCurrentLine);
+                  appendField(fieldList, trimFields);
                   break;
                 case '\"':
                   if (fieldBuilder.length() > 0) {
@@ -164,7 +164,7 @@ public class CSVReader implements AutoCloseable {
           fieldBuilder.append(System.getProperty("line.separator"));
         }
         else {
-          appendField(fieldList, trimCurrentLine);
+          appendField(fieldList, trimFields);
 
           fields = new String[fieldList.size()];
           fieldList.toArray(fields);
@@ -183,9 +183,9 @@ public class CSVReader implements AutoCloseable {
     }
   }
 
-  private void appendField (LinkedList<String> fieldList, boolean trimCurrentLine) {
+  private void appendField (LinkedList<String> fieldList, boolean trimFields) {
 
-    fieldList.add((trimCurrentLine) ? fieldBuilder.toString().trim() : fieldBuilder.toString());
+    fieldList.add((trimFields) ? fieldBuilder.toString().trim() : fieldBuilder.toString());
     fieldBuilder.setLength(0);
   }
 
