@@ -114,6 +114,16 @@ public class AsynchronousAppender implements Appender, Runnable {
     internalAppender.setFormatter(formatter);
   }
 
+  public boolean isActive () {
+
+    return internalAppender.isActive();
+  }
+
+  public void setActive (boolean active) {
+
+    internalAppender.setActive(active);
+  }
+
   public boolean requiresFormatter () {
 
     return internalAppender.requiresFormatter();

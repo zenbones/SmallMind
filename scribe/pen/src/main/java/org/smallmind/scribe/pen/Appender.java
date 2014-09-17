@@ -52,6 +52,10 @@ public interface Appender {
 
   public abstract Formatter getFormatter ();
 
+  public abstract boolean isActive ();
+
+  public abstract void setActive (boolean active);
+
   public abstract boolean requiresFormatter ();
 
   public abstract void publish (Record record);

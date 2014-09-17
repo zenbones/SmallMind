@@ -150,7 +150,9 @@ public class JDKAppenderWrapper extends Handler {
 
   public void publish (LogRecord record) {
 
-    appender.publish(((RecordWrapper)record).getRecord());
+    if (appender.isActive()) {
+      appender.publish(((RecordWrapper)record).getRecord());
+    }
   }
 
   public void flush () {

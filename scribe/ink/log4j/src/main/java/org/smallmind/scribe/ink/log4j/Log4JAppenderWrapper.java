@@ -74,7 +74,9 @@ public class Log4JAppenderWrapper implements org.apache.log4j.Appender {
 
   public void doAppend (LoggingEvent loggingEvent) {
 
-    appender.publish(((RecordWrapper)loggingEvent).getRecord());
+    if (appender.isActive()) {
+      appender.publish(((RecordWrapper)loggingEvent).getRecord());
+    }
   }
 
   public void close () {

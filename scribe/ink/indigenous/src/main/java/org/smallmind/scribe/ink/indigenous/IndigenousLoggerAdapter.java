@@ -176,7 +176,9 @@ public class IndigenousLoggerAdapter implements LoggerAdapter {
     }
 
     for (Appender appender : appenderList) {
-      appender.publish(record);
+      if (appender.isActive()) {
+        appender.publish(record);
+      }
     }
   }
 }

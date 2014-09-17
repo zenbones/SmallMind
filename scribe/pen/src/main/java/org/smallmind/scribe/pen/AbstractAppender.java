@@ -35,6 +35,7 @@ public abstract class AbstractAppender implements Appender {
   private ErrorHandler errorHandler;
   private ConcurrentLinkedQueue<Filter> filterList;
   private String name;
+  private boolean active = true;
 
   public AbstractAppender () {
 
@@ -123,6 +124,16 @@ public abstract class AbstractAppender implements Appender {
   public Formatter getFormatter () {
 
     return formatter;
+  }
+
+  public boolean isActive () {
+
+    return active;
+  }
+
+  public void setActive (boolean active) {
+
+    this.active = active;
   }
 
   public void publish (Record record) {
