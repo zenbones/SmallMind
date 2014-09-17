@@ -41,6 +41,8 @@ import org.smallmind.scribe.pen.probe.ProbeReport;
 
 public class IndigenousRecord implements Record, RecordWrapper {
 
+  private static final Parameter[] NO_PARAMETERS = new Parameter[0];
+
   private ProbeReport probeReport;
   private LogicalContext logicalContext;
   private Discriminator discriminator;
@@ -67,7 +69,7 @@ public class IndigenousRecord implements Record, RecordWrapper {
 
     millis = System.currentTimeMillis();
 
-    parameterMap = new HashMap<String, Serializable>();
+    parameterMap = new HashMap<>();
 
     threadId = Thread.currentThread().getId();
     threadName = Thread.currentThread().getName();
@@ -126,15 +128,22 @@ public class IndigenousRecord implements Record, RecordWrapper {
 
   public Parameter[] getParameters () {
 
-    Parameter[] parameters;
-    int index = 0;
+    if (parameterMap.isEmpty()) {
 
-    parameters = new Parameter[parameterMap.size()];
-    for (Map.Entry<String, Serializable> entry : parameterMap.entrySet()) {
-      parameters[index++] = new Parameter(entry.getKey(), entry.getValue());
+      return NO_PARAMETERS;
     }
+    else {
 
-    return parameters;
+      Parameter[] parameters;
+      int index = 0;
+
+      parameters = new Parameter[parameterMap.size()];
+      for (Map.Entry<String, Serializable> entry : parameterMap.entrySet()) {
+        parameters[index++] = new Parameter(entry.getKey(), entry.getValue());
+      }
+
+      return parameters;
+    }
   }
 
   public LogicalContext getLogicalContext () {

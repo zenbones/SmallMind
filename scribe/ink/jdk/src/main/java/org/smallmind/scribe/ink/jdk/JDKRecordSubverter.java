@@ -41,6 +41,8 @@ import org.smallmind.scribe.pen.probe.ProbeReport;
 
 public class JDKRecordSubverter extends LogRecord implements RecordWrapper {
 
+  private static final Parameter[] NO_PARAMETERS = new Parameter[0];
+
   private JDKRecord jdkRecord;
   private ProbeReport probeReport;
   private LogicalContext logicalContext;
@@ -143,15 +145,22 @@ public class JDKRecordSubverter extends LogRecord implements RecordWrapper {
 
     public Parameter[] getParameters () {
 
-      Parameter[] parameters;
-      int index = 0;
+      if (parameterMap.isEmpty()) {
 
-      parameters = new Parameter[parameterMap.size()];
-      for (Map.Entry<String, Serializable> entry : parameterMap.entrySet()) {
-        parameters[index++] = new Parameter(entry.getKey(), entry.getValue());
+        return NO_PARAMETERS;
       }
+      else {
 
-      return parameters;
+        Parameter[] parameters;
+        int index = 0;
+
+        parameters = new Parameter[parameterMap.size()];
+        for (Map.Entry<String, Serializable> entry : parameterMap.entrySet()) {
+          parameters[index++] = new Parameter(entry.getKey(), entry.getValue());
+        }
+
+        return parameters;
+      }
     }
 
     public LogicalContext getLogicalContext () {
