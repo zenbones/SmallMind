@@ -8,7 +8,7 @@
   </parent>
   <groupId>org.smallmind</groupId>
   <artifactId>smallmind</artifactId>
-  <version>1.7.9-SNAPSHOT</version>
+  <version>1.7.10-SNAPSHOT</version>
   <packaging>pom</packaging>
   <name>Parent</name>
   <description>Parent POM</description>
@@ -234,7 +234,7 @@
       <dependency>
         <groupId>tanukisoft</groupId>
         <artifactId>wrapper</artifactId>
-        <version>3.2.3</version>
+        <version>3.5.25</version>
       </dependency>
       <dependency>
         <groupId>org.testng</groupId>
