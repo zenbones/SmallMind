@@ -77,7 +77,9 @@ public class LdapContextCreator extends ContextCreator {
     env = new Hashtable<>();
     env.put(Context.INITIAL_CONTEXT_FACTORY, "com.sun.jndi.ldap.LdapCtxFactory");
     env.put(Context.PROVIDER_URL, "ldap" + (getConnectionDetails().useTLS() ? "s" : "") + "://" + getConnectionDetails().getHost() + ":" + getConnectionDetails().getPort() + "/" + getConnectionDetails().getRootNamespace());
-    env.put(Context.SECURITY_PROTOCOL, "ssl");
+    if (getConnectionDetails().useTLS()) {
+      env.put(Context.SECURITY_PROTOCOL, "ssl");
+    }
     env.put(Context.SECURITY_AUTHENTICATION, "simple");
     env.put(Context.SECURITY_PRINCIPAL, getConnectionDetails().getUserName());
     env.put(Context.SECURITY_CREDENTIALS, getConnectionDetails().getPassword());
