@@ -45,14 +45,16 @@ public class PooledJavaContextComponentInstanceFactory extends AbstractComponent
   private String rootNamespace;
   private String userContext;
   private String password;
+  private boolean tls;
   private int port;
 
-  public PooledJavaContextComponentInstanceFactory (StorageType storageType, String contextPath, String host, int port, String rootNamespace, String userContext, String password) {
+  public PooledJavaContextComponentInstanceFactory (StorageType storageType, String contextPath, String host, int port, boolean tls, String rootNamespace, String userContext, String password) {
 
     this.storageType = storageType;
     this.contextPath = contextPath;
     this.host = host;
     this.port = port;
+    this.tls = tls;
     this.rootNamespace = rootNamespace;
     this.userContext = userContext;
     this.password = password;
@@ -67,7 +69,7 @@ public class PooledJavaContextComponentInstanceFactory extends AbstractComponent
 
     env = new Hashtable<String, Object>();
     env.put(Context.URL_PKG_PREFIXES, "org.smallmind.cloud.namespace");
-    env.put(JavaContext.CONNECTION_DETAILS, new NamingConnectionDetails(host, port, rootNamespace, userContext, password));
+    env.put(JavaContext.CONNECTION_DETAILS, new NamingConnectionDetails(host, port, tls, rootNamespace, userContext, password));
     env.put(JavaContext.CONTEXT_STORE, storageType.getBackingStore());
     env.put(JavaContext.CONTEXT_MODIFIABLE, "true");
     env.put(JavaContext.POOLED_CONNECTION, "true");

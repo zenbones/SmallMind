@@ -32,12 +32,14 @@ public class NamingConnectionDetails {
   private String rootNamespace;
   private String userName;
   private String password;
+  private boolean tls = false;
   private int port;
 
-  public NamingConnectionDetails (String host, int port, String rootNamespace, String userName, String password) {
+  public NamingConnectionDetails (String host, int port, boolean tls, String rootNamespace, String userName, String password) {
 
     this.host = host;
     this.port = port;
+    this.tls = tls;
     this.rootNamespace = rootNamespace;
     this.userName = userName;
     this.password = password;
@@ -51,6 +53,11 @@ public class NamingConnectionDetails {
   public int getPort () {
 
     return port;
+  }
+
+  public boolean useTLS () {
+
+    return tls;
   }
 
   public String getRootNamespace () {
