@@ -72,26 +72,15 @@ public class LdapContextCreator extends ContextCreator {
   public DirContext getInitialContext ()
     throws NamingException {
 
-    InitialDirContext initLdapContext;
-    DirContext rootLdapContext;
     Hashtable<String, String> env;
-    String rootUrl;
 
-    env = new Hashtable<String, String>();
+    env = new Hashtable<>();
+    env.put(Context.PROVIDER_URL, "ldap" + (getConnectionDetails().useTLS() ? "s" : "") + "://" + getConnectionDetails().getHost() + ":" + getConnectionDetails().getPort() + "/" + getConnectionDetails().getRootNamespace());
+    env.put(Context.SECURITY_PROTOCOL, "ssl");
     env.put(Context.SECURITY_AUTHENTICATION, "simple");
     env.put(Context.SECURITY_PRINCIPAL, getConnectionDetails().getUserName());
     env.put(Context.SECURITY_CREDENTIALS, getConnectionDetails().getPassword());
 
-    initLdapContext = new InitialDirContext(env);
-    rootUrl = "ldap://" + getConnectionDetails().getHost() + ":" + getConnectionDetails().getPort() + "/" + getConnectionDetails().getRootNamespace();
-
-    try {
-      rootLdapContext = (DirContext)initLdapContext.lookup(rootUrl);
-    }
-    catch (NamingException originalNamingException) {
-      throw (NamingException)new NamingException(rootUrl).initCause(originalNamingException);
-    }
-
-    return rootLdapContext;
+    return new InitialDirContext(env);
   }
 }
