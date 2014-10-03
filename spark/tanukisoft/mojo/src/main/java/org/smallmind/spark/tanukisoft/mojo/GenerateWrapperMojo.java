@@ -1,22 +1,22 @@
 /*
  * Copyright (c) 2007, 2008, 2009, 2010, 2011, 2012, 2013, 2014 David Berkman
- * 
+ *
  * This file is part of the SmallMind Code Project.
- * 
+ *
  * The SmallMind Code Project is free software, you can redistribute
  * it and/or modify it under the terms of GNU Affero General Public
  * License as published by the Free Software Foundation, either version 3
  * of the License, or (at your option) any later version.
- * 
+ *
  * The SmallMind Code Project is distributed in the hope that it will
  * be useful, but WITHOUT ANY WARRANTY; without even the implied warranty
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License for more details.
- * 
+ *
  * You should have received a copy of the the GNU Affero General Public
  * License, along with the SmallMind Code Project. If not, see
  * <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under the GNU Affero GPL version 3 section 7
  * ------------------------------------------------------------------
  * If you modify this Program, or any covered work, by linking or
@@ -108,209 +108,209 @@ public class GenerateWrapperMojo extends AbstractMojo {
   private boolean compactClasspath;
   @Parameter(defaultValue = "false")
   private boolean verbose;
-  @Parameter(defaultValue = "false")
-  private boolean neutered;
+  @Parameter(defaultValue = "true")
+  private boolean engaged;
 
   public void execute ()
     throws MojoExecutionException, MojoFailureException {
 
-    File binDirectory;
-    File libDirectory;
-    File confDirectory;
-    OSType osType;
-    CompressionType compressionType;
-    HashMap<String, Object> freemarkerMap;
-    LinkedList<String> classpathElementList;
-    List<Dependency> additionalDependencies;
-    Iterator<Dependency> aditionalDependencyIter;
+    if (engaged) {
 
-    try {
-      osType = OSType.valueOf(operatingSystem.replace('-', '_').toUpperCase());
-    }
-    catch (Exception exception) {
-      throw new MojoExecutionException(String.format("Unknown operating system type(%s) - valid choices are %s", operatingSystem, Arrays.toString(OSType.values())), exception);
-    }
+      File binDirectory;
+      File libDirectory;
+      File confDirectory;
+      OSType osType;
+      CompressionType compressionType;
+      HashMap<String, Object> freemarkerMap;
+      LinkedList<String> classpathElementList;
+      List<Dependency> additionalDependencies;
+      Iterator<Dependency> aditionalDependencyIter;
 
-    try {
-      compressionType = CompressionType.valueOf(compression.replace('-', '_').toUpperCase());
-    }
-    catch (Exception exception) {
-      throw new MojoExecutionException(String.format("Unknown compression type(%s) - valid choices are %s", compression, Arrays.toString(CompressionType.values())), exception);
-    }
-
-    createDirectory("bin", binDirectory = new File(project.getBuild().getDirectory() + System.getProperty("file.separator") + applicationDir + System.getProperty("file.separator") + constructArtifactName(includeVersion, false) + System.getProperty("file.separator") + "bin"));
-    createDirectory("lib", libDirectory = new File(project.getBuild().getDirectory() + System.getProperty("file.separator") + applicationDir + System.getProperty("file.separator") + constructArtifactName(includeVersion, false) + System.getProperty("file.separator") + "lib"));
-    createDirectory("conf", confDirectory = new File(project.getBuild().getDirectory() + System.getProperty("file.separator") + applicationDir + System.getProperty("file.separator") + constructArtifactName(includeVersion, false) + System.getProperty("file.separator") + "conf"));
-
-    if (licenseFile != null) {
       try {
-        if (verbose) {
-          getLog().info(String.format("Copying license file(%s)...", licenseFile.getAbsolutePath()));
+        osType = OSType.valueOf(operatingSystem.replace('-', '_').toUpperCase());
+      }
+      catch (Exception exception) {
+        throw new MojoExecutionException(String.format("Unknown operating system type(%s) - valid choices are %s", operatingSystem, Arrays.toString(OSType.values())), exception);
+      }
+
+      try {
+        compressionType = CompressionType.valueOf(compression.replace('-', '_').toUpperCase());
+      }
+      catch (Exception exception) {
+        throw new MojoExecutionException(String.format("Unknown compression type(%s) - valid choices are %s", compression, Arrays.toString(CompressionType.values())), exception);
+      }
+
+      createDirectory("bin", binDirectory = new File(project.getBuild().getDirectory() + System.getProperty("file.separator") + applicationDir + System.getProperty("file.separator") + constructArtifactName(includeVersion, false) + System.getProperty("file.separator") + "bin"));
+      createDirectory("lib", libDirectory = new File(project.getBuild().getDirectory() + System.getProperty("file.separator") + applicationDir + System.getProperty("file.separator") + constructArtifactName(includeVersion, false) + System.getProperty("file.separator") + "lib"));
+      createDirectory("conf", confDirectory = new File(project.getBuild().getDirectory() + System.getProperty("file.separator") + applicationDir + System.getProperty("file.separator") + constructArtifactName(includeVersion, false) + System.getProperty("file.separator") + "conf"));
+
+      if (licenseFile != null) {
+        try {
+          if (verbose) {
+            getLog().info(String.format("Copying license file(%s)...", licenseFile.getAbsolutePath()));
+          }
+
+          copyToDestination(new FileInputStream(licenseFile), confDirectory.getAbsolutePath(), licenseFile.getName());
         }
-
-        copyToDestination(new FileInputStream(licenseFile), confDirectory.getAbsolutePath(), licenseFile.getName());
+        catch (IOException ioException) {
+          throw new MojoExecutionException("Problem in copying your license file into the application conf directory", ioException);
+        }
       }
-      catch (IOException ioException) {
-        throw new MojoExecutionException("Problem in copying your license file into the application conf directory", ioException);
+
+      if (configurations != null) {
+        for (String configuration : configurations) {
+
+          File configurationFile = new File(configuration);
+
+          try {
+            if (verbose) {
+              getLog().info(String.format("Copying configuration(%s)...", configurationFile.getName()));
+            }
+
+            copyToDestination(configurationFile, confDirectory.getAbsolutePath(), configurationFile.getName());
+          }
+          catch (IOException ioException) {
+            throw new MojoExecutionException(String.format("Problem in copying the configuration(%s) into the application conf directory", configurationFile.getAbsolutePath()), ioException);
+          }
+        }
       }
-    }
 
-    if (configurations != null) {
-      for (String configuration : configurations) {
+      freemarkerMap = new HashMap<String, Object>();
+      freemarkerMap.put("applicationName", applicationName);
+      freemarkerMap.put("applicationLongName", applicationLongName);
+      freemarkerMap.put("applicationDescription", (applicationDescription != null) ? applicationDescription : String.format("%s generated project", GenerateWrapperMojo.class.getSimpleName()));
+      freemarkerMap.put("javaCommand", javaCommand);
+      freemarkerMap.put("wrapperListener", wrapperListener);
+      freemarkerMap.put("jvmArgs", (jvmArgs != null) ? jvmArgs : NO_ARGS);
 
-        File configurationFile = new File(configuration);
+      if (jvmInitMemoryMB > 0) {
+        freemarkerMap.put("jvmInitMemoryMB", jvmInitMemoryMB);
+      }
+
+      if (jvmMaxMemoryMB > 0) {
+        freemarkerMap.put("jvmMaxMemoryMB", jvmMaxMemoryMB);
+      }
+
+      if ((runAs != null) && (runAs.length() > 0)) {
+        freemarkerMap.put("runAs", runAs);
+      }
+
+      if ((withPassword != null) && (withPassword.length()) > 0) {
+        freemarkerMap.put("withPassword", withPassword);
+      }
+
+      if ((umask != null) && (umask.length() > 0)) {
+        freemarkerMap.put("umask", umask);
+      }
+
+      freemarkerMap.put("waitAfterStartup", String.valueOf(waitAfterStartup));
+
+      if (appParameters == null) {
+        freemarkerMap.put("appParameters", new String[] {wrapperListener});
+      }
+      else {
+
+        String[] modifiedAppParameters = new String[appParameters.length + 1];
+
+        modifiedAppParameters[0] = wrapperListener;
+        System.arraycopy(appParameters, 0, modifiedAppParameters, 1, appParameters.length);
+        freemarkerMap.put("appParameters", modifiedAppParameters);
+      }
+
+      freemarkerMap.put("serviceDependencies", (serviceDependencies != null) ? serviceDependencies : NO_ARGS);
+
+      classpathElementList = new LinkedList<String>();
+      freemarkerMap.put("classpathElements", classpathElementList);
+      if (compactClasspath) {
+        classpathElementList.add("*");
+      }
+
+      additionalDependencies = (dependencies != null) ? Arrays.asList(dependencies) : null;
+      for (Artifact artifact : project.getRuntimeArtifacts()) {
+        try {
+          if (verbose) {
+            getLog().info(String.format("Copying dependency(%s)...", artifact.getFile().getName()));
+          }
+
+          if (additionalDependencies != null) {
+            aditionalDependencyIter = additionalDependencies.iterator();
+            while (aditionalDependencyIter.hasNext()) {
+              if (aditionalDependencyIter.next().matchesArtifact(artifact)) {
+                aditionalDependencyIter.remove();
+              }
+            }
+          }
+
+          if (!compactClasspath) {
+            classpathElementList.add(artifact.getFile().getName());
+          }
+          copyToDestination(artifact.getFile(), libDirectory.getAbsolutePath(), artifact.getFile().getName());
+        }
+        catch (IOException ioException) {
+          throw new MojoExecutionException(String.format("Problem in copying a dependency(%s) into the application library", artifact), ioException);
+        }
+      }
+
+      if (additionalDependencies != null) {
+        for (Dependency dependency : additionalDependencies) {
+          for (Artifact artifact : project.getDependencyArtifacts()) {
+            if (dependency.matchesArtifact(artifact)) {
+              try {
+                if (verbose) {
+                  getLog().info(String.format("Copying additional dependency(%s)...", artifact.getFile().getName()));
+                }
+
+                if (!compactClasspath) {
+                  classpathElementList.add(artifact.getFile().getName());
+                }
+                copyToDestination(artifact.getFile(), libDirectory.getAbsolutePath(), artifact.getFile().getName());
+              }
+              catch (IOException ioException) {
+                throw new MojoExecutionException(String.format("Problem in copying an additional dependency(%s) into the application library", artifact), ioException);
+              }
+            }
+          }
+        }
+      }
+
+      if (!project.getArtifact().getType().equals("jar")) {
+
+        File jarFile;
+
+        jarFile = new File(constructCompressedArtifactPath(project.getBuild().getDirectory(), CompressionType.JAR, false));
 
         try {
           if (verbose) {
-            getLog().info(String.format("Copying configuration(%s)...", configurationFile.getName()));
+            getLog().info(String.format("Creating and copying output jar(%s)...", jarFile.getName()));
           }
 
-          copyToDestination(configurationFile, confDirectory.getAbsolutePath(), configurationFile.getName());
+          CompressionType.JAR.compress(jarFile, new File(project.getBuild().getOutputDirectory()));
+
+          if (!compactClasspath) {
+            classpathElementList.add(jarFile.getName());
+          }
+          copyToDestination(jarFile, libDirectory.getAbsolutePath(), jarFile.getName());
         }
         catch (IOException ioException) {
-          throw new MojoExecutionException(String.format("Problem in copying the configuration(%s) into the application conf directory", configurationFile.getAbsolutePath()), ioException);
+          throw new MojoExecutionException(String.format("Problem in creating or copying the output jar(%s) into the application library", jarFile.getName()), ioException);
         }
       }
-    }
-
-    freemarkerMap = new HashMap<String, Object>();
-    freemarkerMap.put("applicationName", applicationName);
-    freemarkerMap.put("applicationLongName", applicationLongName);
-    freemarkerMap.put("applicationDescription", (applicationDescription != null) ? applicationDescription : String.format("%s generated project", GenerateWrapperMojo.class.getSimpleName()));
-    freemarkerMap.put("javaCommand", javaCommand);
-    freemarkerMap.put("wrapperListener", wrapperListener);
-    freemarkerMap.put("jvmArgs", (jvmArgs != null) ? jvmArgs : NO_ARGS);
-
-    if (jvmInitMemoryMB > 0) {
-      freemarkerMap.put("jvmInitMemoryMB", jvmInitMemoryMB);
-    }
-
-    if (jvmMaxMemoryMB > 0) {
-      freemarkerMap.put("jvmMaxMemoryMB", jvmMaxMemoryMB);
-    }
-
-    if ((runAs != null) && (runAs.length() > 0)) {
-      freemarkerMap.put("runAs", runAs);
-    }
-
-    if ((withPassword != null) && (withPassword.length()) > 0) {
-      freemarkerMap.put("withPassword", withPassword);
-    }
-
-    if ((umask != null) && (umask.length() > 0)) {
-      freemarkerMap.put("umask", umask);
-    }
-
-    freemarkerMap.put("waitAfterStartup", String.valueOf(waitAfterStartup));
-
-    if (appParameters == null) {
-      freemarkerMap.put("appParameters", new String[] {wrapperListener});
-    }
-    else {
-
-      String[] modifiedAppParameters = new String[appParameters.length + 1];
-
-      modifiedAppParameters[0] = wrapperListener;
-      System.arraycopy(appParameters, 0, modifiedAppParameters, 1, appParameters.length);
-      freemarkerMap.put("appParameters", modifiedAppParameters);
-    }
-
-    freemarkerMap.put("serviceDependencies", (serviceDependencies != null) ? serviceDependencies : NO_ARGS);
-
-    classpathElementList = new LinkedList<String>();
-    freemarkerMap.put("classpathElements", classpathElementList);
-    if (compactClasspath) {
-      classpathElementList.add("*");
-    }
-
-    additionalDependencies = (dependencies != null) ? Arrays.asList(dependencies) : null;
-    for (Artifact artifact : project.getRuntimeArtifacts()) {
-      try {
-        if (verbose) {
-          getLog().info(String.format("Copying dependency(%s)...", artifact.getFile().getName()));
-        }
-
-        if (additionalDependencies != null) {
-          aditionalDependencyIter = additionalDependencies.iterator();
-          while (aditionalDependencyIter.hasNext()) {
-            if (aditionalDependencyIter.next().matchesArtifact(artifact)) {
-              aditionalDependencyIter.remove();
-            }
+      else {
+        try {
+          if (verbose) {
+            getLog().info(String.format("Copying build artifact(%s)...", project.getArtifact().getFile().getName()));
           }
-        }
 
-        if (!compactClasspath) {
-          classpathElementList.add(artifact.getFile().getName());
-        }
-        copyToDestination(artifact.getFile(), libDirectory.getAbsolutePath(), artifact.getFile().getName());
-      }
-      catch (IOException ioException) {
-        throw new MojoExecutionException(String.format("Problem in copying a dependency(%s) into the application library", artifact), ioException);
-      }
-    }
-
-    if (additionalDependencies != null) {
-      for (Dependency dependency : additionalDependencies) {
-        for (Artifact artifact : project.getDependencyArtifacts()) {
-          if (dependency.matchesArtifact(artifact)) {
-            try {
-              if (verbose) {
-                getLog().info(String.format("Copying additional dependency(%s)...", artifact.getFile().getName()));
-              }
-
-              if (!compactClasspath) {
-                classpathElementList.add(artifact.getFile().getName());
-              }
-              copyToDestination(artifact.getFile(), libDirectory.getAbsolutePath(), artifact.getFile().getName());
-            }
-            catch (IOException ioException) {
-              throw new MojoExecutionException(String.format("Problem in copying an additional dependency(%s) into the application library", artifact), ioException);
-            }
+          if (!compactClasspath) {
+            classpathElementList.add(project.getArtifact().getFile().getName());
           }
+          copyToDestination(project.getArtifact().getFile(), libDirectory.getAbsolutePath(), project.getArtifact().getFile().getName());
+        }
+        catch (IOException ioException) {
+          throw new MojoExecutionException(String.format("Problem in copying the build artifact(%s) into the application library", project.getArtifact()), ioException);
         }
       }
-    }
 
-    if (!project.getArtifact().getType().equals("jar")) {
-
-      File jarFile;
-
-      jarFile = new File(constructCompressedArtifactPath(project.getBuild().getDirectory(), CompressionType.JAR, false));
-
-      try {
-        if (verbose) {
-          getLog().info(String.format("Creating and copying output jar(%s)...", jarFile.getName()));
-        }
-
-        CompressionType.JAR.compress(jarFile, new File(project.getBuild().getOutputDirectory()));
-
-        if (!compactClasspath) {
-          classpathElementList.add(jarFile.getName());
-        }
-        copyToDestination(jarFile, libDirectory.getAbsolutePath(), jarFile.getName());
-      }
-      catch (IOException ioException) {
-        throw new MojoExecutionException(String.format("Problem in creating or copying the output jar(%s) into the application library", jarFile.getName()), ioException);
-      }
-    }
-    else {
-      try {
-        if (verbose) {
-          getLog().info(String.format("Copying build artifact(%s)...", project.getArtifact().getFile().getName()));
-        }
-
-        if (!compactClasspath) {
-          classpathElementList.add(project.getArtifact().getFile().getName());
-        }
-        copyToDestination(project.getArtifact().getFile(), libDirectory.getAbsolutePath(), project.getArtifact().getFile().getName());
-      }
-      catch (IOException ioException) {
-        throw new MojoExecutionException(String.format("Problem in copying the build artifact(%s) into the application library", project.getArtifact()), ioException);
-      }
-    }
-
-    // Marking the build as 'neutered' will remove any proprietary executable or shared objects from the application (which consequently will not run)
-    if (!neutered) {
       try {
         if (verbose) {
           getLog().info(String.format("Copying wrapper library(%s)...", osType.getLibrary()));
@@ -355,29 +355,29 @@ public class GenerateWrapperMojo extends AbstractMojo {
       catch (IOException ioException) {
         throw new MojoExecutionException("Problem in copying the wrapper scripts into the application binaries", ioException);
       }
-    }
 
-    if (verbose) {
-      getLog().info("Processing the configuration template...");
-    }
-
-    processFreemarkerTemplate(getWrapperFilePath("conf", "freemarker.wrapper.conf.in"), confDirectory, "wrapper.conf", freemarkerMap);
-
-    if (createArtifact) {
-
-      File compressedFile;
-
-      compressedFile = new File(constructCompressedArtifactPath(project.getBuild().getDirectory(), compressionType, true));
-
-      try {
-        if (verbose) {
-          getLog().info(String.format("Creating aggregated %s(%s)...", compressionType.getExtension(), compressedFile.getName()));
-        }
-
-        compressionType.compress(compressedFile, new File(project.getBuild().getDirectory() + System.getProperty("file.separator") + applicationDir));
+      if (verbose) {
+        getLog().info("Processing the configuration template...");
       }
-      catch (IOException ioException) {
-        throw new MojoExecutionException(String.format("Problem in creating the aggregated %s(%s)", compressionType.getExtension(), compressedFile.getName()), ioException);
+
+      processFreemarkerTemplate(getWrapperFilePath("conf", "freemarker.wrapper.conf.in"), confDirectory, "wrapper.conf", freemarkerMap);
+
+      if (createArtifact) {
+
+        File compressedFile;
+
+        compressedFile = new File(constructCompressedArtifactPath(project.getBuild().getDirectory(), compressionType, true));
+
+        try {
+          if (verbose) {
+            getLog().info(String.format("Creating aggregated %s(%s)...", compressionType.getExtension(), compressedFile.getName()));
+          }
+
+          compressionType.compress(compressedFile, new File(project.getBuild().getDirectory() + System.getProperty("file.separator") + applicationDir));
+        }
+        catch (IOException ioException) {
+          throw new MojoExecutionException(String.format("Problem in creating the aggregated %s(%s)", compressionType.getExtension(), compressedFile.getName()), ioException);
+        }
       }
     }
   }
