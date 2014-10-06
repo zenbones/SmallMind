@@ -92,7 +92,7 @@ public class GenerateJNLPMojo extends AbstractMojo {
   private String applicationName;
   @Parameter(property = "project.artifactId")
   private String title;
-  @Parameter(property = "roject.groupId")
+  @Parameter(property = "project.groupId")
   private String vendor;
   @Parameter(property = "project.artifactId")
   private String description;
@@ -108,167 +108,172 @@ public class GenerateJNLPMojo extends AbstractMojo {
   private boolean includeHref;
   @Parameter(defaultValue = "false")
   private boolean verbose;
+  @Parameter(defaultValue = "true")
+  private boolean engaged;
 
   @Override
   public void execute ()
     throws MojoExecutionException {
 
-    File deployDirectory;
-    HashMap<String, Object> freemarkerMap;
-    LinkedList<JNLPDependency> dependencyList;
-    OSType osType;
-    JavaFXRuntimeVersion runtimeVersion;
-    J2SEVersion j2seVersion;
-    String runtimeLocation;
-    boolean javafxFound = false;
+    if (engaged) {
 
-    try {
-      osType = OSType.valueOf(operatingSystem.replace('-', '_').toUpperCase());
-    }
-    catch (Exception exception) {
-      throw new MojoExecutionException(String.format("Unknown operating system type(%s) - valid choices are %s", operatingSystem, Arrays.toString(OSType.values())), exception);
-    }
-
-    try {
-      runtimeVersion = JavaFXRuntimeVersion.fromCode(javafxRuntime);
-    }
-    catch (Exception exception) {
-      throw new MojoExecutionException(String.format("Unknown javafx runtime type(%s) - valid choices are %s", javafxRuntime, Arrays.toString(JavaFXRuntimeVersion.getValidCodes())), exception);
-    }
-
-    try {
-      runtimeLocation = runtimeVersion.getLocation(osType);
-    }
-    catch (Exception exception) {
-      throw new MojoExecutionException(String.format("The javafx runtime (%s) is not available on os type (%s)", runtimeVersion.getCode(), osType.name()), exception);
-    }
-
-    try {
-      j2seVersion = J2SEVersion.fromCode(javaVersion);
-    }
-    catch (Exception exception) {
-      throw new MojoExecutionException(String.format("Unknown java version(%s) - valid choices are %s", javaVersion, Arrays.toString(J2SEVersion.getValidCodes())), exception);
-    }
-
-    freemarkerMap = new HashMap<String, Object>();
-    freemarkerMap.put("jnlpSpec", jnlpSpec);
-    freemarkerMap.put("includeHref", includeHref);
-    freemarkerMap.put("href", createArtifactName(includeVersion, false));
-    freemarkerMap.put("title", title);
-    freemarkerMap.put("vendor", vendor);
-    freemarkerMap.put("description", description);
-    freemarkerMap.put("offlineAllowed", offlineAllowed);
-    freemarkerMap.put("runtimeVersion", runtimeVersion.getCode());
-    freemarkerMap.put("runtimeLocation", runtimeLocation);
-    freemarkerMap.put("j2seVersion", j2seVersion.getCode());
-    freemarkerMap.put("jvmArgs", jvmArgs);
-    freemarkerMap.put("j2seLocation", j2seVersion.getLocation());
-    freemarkerMap.put("mainClass", mainClass);
-    freemarkerMap.put("width", width);
-    freemarkerMap.put("height", height);
-    freemarkerMap.put("jnlpParameters", (jnlpParameters != null) ? jnlpParameters : NO_PARAMETERS);
-    freemarkerMap.put("jnlpArguments", (jnlpArguments != null) ? jnlpArguments : NO_ARGS);
-
-    createDirectory("deploy", deployDirectory = new File(project.getBuild().getDirectory() + System.getProperty("file.separator") + deployDir + System.getProperty("file.separator") + createArtifactName(includeVersion, false) + System.getProperty("file.separator")));
-
-    dependencyList = new LinkedList<>();
-    copyDependencies(project.getRuntimeArtifacts(), deployDirectory, dependencyList);
-
-    for (Artifact artifact : project.getDependencyArtifacts()) {
-      if (javafx.matchesArtifact(artifact)) {
-        copyDependencies(new SingleItemIterator<Artifact>(artifact), deployDirectory, dependencyList);
-        javafxFound = true;
-        break;
-      }
-    }
-    if (!javafxFound) {
-      throw new MojoExecutionException("Project does not reference the javafx dependency(group = %s, artifactId = %s)", javafx.getGroupId(), javafx.getArtifactId());
-    }
-
-    Collections.sort(dependencyList);
-
-    if (!project.getArtifact().getType().equals("jar")) {
-
-      File jarFile;
-
-      jarFile = new File(createJarArtifactPath(project.getBuild().getDirectory(), false));
+      File deployDirectory;
+      HashMap<String, Object> freemarkerMap;
+      LinkedList<JNLPDependency> dependencyList;
+      OSType osType;
+      JavaFXRuntimeVersion runtimeVersion;
+      J2SEVersion j2seVersion;
+      String runtimeLocation;
+      boolean javafxFound = false;
 
       try {
+        osType = OSType.valueOf(operatingSystem.replace('-', '_').toUpperCase());
+      }
+      catch (Exception exception) {
+        throw new MojoExecutionException(String.format("Unknown operating system type(%s) - valid choices are %s", operatingSystem, Arrays.toString(OSType.values())), exception);
+      }
 
-        long fileSize;
+      try {
+        runtimeVersion = JavaFXRuntimeVersion.fromCode(javafxRuntime);
+      }
+      catch (Exception exception) {
+        throw new MojoExecutionException(String.format("Unknown javafx runtime type(%s) - valid choices are %s", javafxRuntime, Arrays.toString(JavaFXRuntimeVersion.getValidCodes())), exception);
+      }
 
-        if (verbose) {
-          getLog().info(String.format("Creating and copying output jar(%s)...", jarFile.getName()));
+      try {
+        runtimeLocation = runtimeVersion.getLocation(osType);
+      }
+      catch (Exception exception) {
+        throw new MojoExecutionException(String.format("The javafx runtime (%s) is not available on os type (%s)", runtimeVersion.getCode(), osType.name()), exception);
+      }
+
+      try {
+        j2seVersion = J2SEVersion.fromCode(javaVersion);
+      }
+      catch (Exception exception) {
+        throw new MojoExecutionException(String.format("Unknown java version(%s) - valid choices are %s", javaVersion, Arrays.toString(J2SEVersion.getValidCodes())), exception);
+      }
+
+      freemarkerMap = new HashMap<String, Object>();
+      freemarkerMap.put("jnlpSpec", jnlpSpec);
+      freemarkerMap.put("includeHref", includeHref);
+      freemarkerMap.put("href", createArtifactName(includeVersion, false));
+      freemarkerMap.put("title", title);
+      freemarkerMap.put("vendor", vendor);
+      freemarkerMap.put("description", description);
+      freemarkerMap.put("offlineAllowed", offlineAllowed);
+      freemarkerMap.put("runtimeVersion", runtimeVersion.getCode());
+      freemarkerMap.put("runtimeLocation", runtimeLocation);
+      freemarkerMap.put("j2seVersion", j2seVersion.getCode());
+      freemarkerMap.put("jvmArgs", jvmArgs);
+      freemarkerMap.put("j2seLocation", j2seVersion.getLocation());
+      freemarkerMap.put("mainClass", mainClass);
+      freemarkerMap.put("width", width);
+      freemarkerMap.put("height", height);
+      freemarkerMap.put("jnlpParameters", (jnlpParameters != null) ? jnlpParameters : NO_PARAMETERS);
+      freemarkerMap.put("jnlpArguments", (jnlpArguments != null) ? jnlpArguments : NO_ARGS);
+
+      createDirectory("deploy", deployDirectory = new File(project.getBuild().getDirectory() + System.getProperty("file.separator") + deployDir + System.getProperty("file.separator") + createArtifactName(includeVersion, false) + System.getProperty("file.separator")));
+
+      dependencyList = new LinkedList<>();
+      copyDependencies(project.getRuntimeArtifacts(), deployDirectory, dependencyList);
+
+      for (Artifact artifact : project.getDependencyArtifacts()) {
+        if (javafx.matchesArtifact(artifact)) {
+          copyDependencies(new SingleItemIterator<Artifact>(artifact), deployDirectory, dependencyList);
+          javafxFound = true;
+          break;
         }
-
-        createJar(jarFile, new File(project.getBuild().getOutputDirectory()));
-        fileSize = copyToDestination(jarFile, deployDirectory.getAbsolutePath(), jarFile.getName());
-        dependencyList.addFirst(new JNLPDependency(jarFile.getName(), fileSize));
       }
-      catch (IOException ioException) {
-        throw new MojoExecutionException(String.format("Problem in creating or copying the output jar(%s) into the deployment directory", jarFile.getName()), ioException);
+      if (!javafxFound) {
+        throw new MojoExecutionException("Project does not reference the javafx dependency(group = %s, artifactId = %s)", javafx.getGroupId(), javafx.getArtifactId());
       }
-    }
-    else {
-      try {
 
-        long fileSize;
+      Collections.sort(dependencyList);
 
-        if (verbose) {
-          getLog().info(String.format("Copying build artifact(%s)...", project.getArtifact().getFile().getName()));
+      if (!project.getArtifact().getType().equals("jar")) {
+
+        File jarFile;
+
+        jarFile = new File(createJarArtifactPath(project.getBuild().getDirectory(), false));
+
+        try {
+
+          long fileSize;
+
+          if (verbose) {
+            getLog().info(String.format("Creating and copying output jar(%s)...", jarFile.getName()));
+          }
+
+          createJar(jarFile, new File(project.getBuild().getOutputDirectory()));
+          fileSize = copyToDestination(jarFile, deployDirectory.getAbsolutePath(), jarFile.getName());
+          dependencyList.addFirst(new JNLPDependency(jarFile.getName(), fileSize));
         }
-
-        fileSize = copyToDestination(project.getArtifact().getFile(), deployDirectory.getAbsolutePath(), project.getArtifact().getFile().getName());
-        dependencyList.addFirst(new JNLPDependency(project.getArtifact().getFile().getName(), fileSize));
+        catch (IOException ioException) {
+          throw new MojoExecutionException(String.format("Problem in creating or copying the output jar(%s) into the deployment directory", jarFile.getName()), ioException);
+        }
       }
-      catch (IOException ioException) {
-        throw new MojoExecutionException(String.format("Problem in copying the build artifact(%s) into the deployment directory", project.getArtifact()), ioException);
+      else {
+        try {
+
+          long fileSize;
+
+          if (verbose) {
+            getLog().info(String.format("Copying build artifact(%s)...", project.getArtifact().getFile().getName()));
+          }
+
+          fileSize = copyToDestination(project.getArtifact().getFile(), deployDirectory.getAbsolutePath(), project.getArtifact().getFile().getName());
+          dependencyList.addFirst(new JNLPDependency(project.getArtifact().getFile().getName(), fileSize));
+        }
+        catch (IOException ioException) {
+          throw new MojoExecutionException(String.format("Problem in copying the build artifact(%s) into the deployment directory", project.getArtifact()), ioException);
+        }
       }
-    }
 
-    if (signjar != null) {
-      try {
-        for (JNLPDependency dependency : dependencyList) {
-          if (dependency.getName().endsWith(".jar")) {
-            getLog().info(String.format("Signing jar(%s)...", dependency.getName()));
+      if (signjar != null) {
+        try {
+          for (JNLPDependency dependency : dependencyList) {
+            if (dependency.getName().endsWith(".jar")) {
+              getLog().info(String.format("Signing jar(%s)...", dependency.getName()));
 
-            if (signjar.isVerbose()) {
-              sun.security.tools.JarSigner.main(new String[] {"-verbose", "-keystore", signjar.getKeystore(), "-storepass", signjar.getStorepass(), "-keypass", signjar.getKeypass(), "-sigfile", "SIGNATURE", deployDirectory.getAbsolutePath() + System.getProperty("file.separator") + dependency.getName(), signjar.getAlias()});
-            }
-            else {
-              sun.security.tools.JarSigner.main(new String[] {"-keystore", signjar.getKeystore(), "-storepass", signjar.getStorepass(), "-keypass", signjar.getKeypass(), "-sigfile", "SIGNATURE", deployDirectory.getAbsolutePath() + System.getProperty("file.separator") + dependency.getName(), signjar.getAlias()});
+              if (signjar.isVerbose()) {
+                sun.security.tools.JarSigner.main(new String[] {"-verbose", "-keystore", signjar.getKeystore(), "-storepass", signjar.getStorepass(), "-keypass", signjar.getKeypass(), "-sigfile", "SIGNATURE", deployDirectory.getAbsolutePath() + System.getProperty("file.separator") + dependency.getName(), signjar.getAlias()});
+              }
+              else {
+                sun.security.tools.JarSigner.main(new String[] {"-keystore", signjar.getKeystore(), "-storepass", signjar.getStorepass(), "-keypass", signjar.getKeypass(), "-sigfile", "SIGNATURE", deployDirectory.getAbsolutePath() + System.getProperty("file.separator") + dependency.getName(), signjar.getAlias()});
+              }
             }
           }
         }
-      }
-      catch (Exception exception) {
-        throw new MojoExecutionException("Unable to sign jar files...", exception);
-      }
-    }
-
-    freemarkerMap.put("jnlpDependencies", dependencyList);
-
-    if (verbose) {
-      getLog().info("Processing the configuration template...");
-    }
-
-    processFreemarkerTemplate(getTemplateFilePath(), deployDirectory, createArtifactName(includeVersion, false) + ".jnlp", freemarkerMap);
-
-    if (createJar) {
-
-      File jarFile;
-
-      jarFile = new File(createJarArtifactPath(project.getBuild().getDirectory(), true));
-
-      try {
-        if (verbose) {
-          getLog().info(String.format("Creating aggregated jar(%s)...", jarFile.getName()));
+        catch (Exception exception) {
+          throw new MojoExecutionException("Unable to sign jar files...", exception);
         }
-
-        createJar(jarFile, new File(project.getBuild().getDirectory() + System.getProperty("file.separator") + deployDir));
       }
-      catch (IOException ioException) {
-        throw new MojoExecutionException(String.format("Problem in creating the aggregated jar(%s)", jarFile.getName()), ioException);
+
+      freemarkerMap.put("jnlpDependencies", dependencyList);
+
+      if (verbose) {
+        getLog().info("Processing the configuration template...");
+      }
+
+      processFreemarkerTemplate(getTemplateFilePath(), deployDirectory, createArtifactName(includeVersion, false) + ".jnlp", freemarkerMap);
+
+      if (createJar) {
+
+        File jarFile;
+
+        jarFile = new File(createJarArtifactPath(project.getBuild().getDirectory(), true));
+
+        try {
+          if (verbose) {
+            getLog().info(String.format("Creating aggregated jar(%s)...", jarFile.getName()));
+          }
+
+          createJar(jarFile, new File(project.getBuild().getDirectory() + System.getProperty("file.separator") + deployDir));
+        }
+        catch (IOException ioException) {
+          throw new MojoExecutionException(String.format("Problem in creating the aggregated jar(%s)", jarFile.getName()), ioException);
+        }
       }
     }
   }

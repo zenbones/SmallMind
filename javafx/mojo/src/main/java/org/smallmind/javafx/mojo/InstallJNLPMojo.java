@@ -55,28 +55,33 @@ public class InstallJNLPMojo extends AbstractMojo {
   private ArtifactRepository localRepository;
   @Parameter(property = "project.artifactId")
   private String artifactName;
+  @Parameter(defaultValue = "true")
+  private boolean engaged;
 
   public void execute ()
     throws MojoExecutionException, MojoFailureException {
 
-    Artifact applicationArtifact;
-    StringBuilder pathBuilder;
+    if (engaged) {
 
-    applicationArtifact = artifactFactory.createArtifactWithClassifier(project.getGroupId(), project.getArtifactId(), project.getVersion(), "jar", (project.getArtifact().getClassifier() == null) ? "jnlp" : project.getArtifact().getClassifier() + "-jnlp");
-    pathBuilder = new StringBuilder(project.getBuild().getDirectory()).append(System.getProperty("file.separator")).append(artifactName).append('-').append(project.getVersion());
+      Artifact applicationArtifact;
+      StringBuilder pathBuilder;
 
-    if (project.getArtifact().getClassifier() != null) {
-      pathBuilder.append('-');
-      pathBuilder.append(project.getArtifact().getClassifier());
-    }
+      applicationArtifact = artifactFactory.createArtifactWithClassifier(project.getGroupId(), project.getArtifactId(), project.getVersion(), "jar", (project.getArtifact().getClassifier() == null) ? "jnlp" : project.getArtifact().getClassifier() + "-jnlp");
+      pathBuilder = new StringBuilder(project.getBuild().getDirectory()).append(System.getProperty("file.separator")).append(artifactName).append('-').append(project.getVersion());
 
-    pathBuilder.append("-jnlp").append(".jar");
+      if (project.getArtifact().getClassifier() != null) {
+        pathBuilder.append('-');
+        pathBuilder.append(project.getArtifact().getClassifier());
+      }
 
-    try {
-      artifactInstaller.install(new File(pathBuilder.toString()), applicationArtifact, localRepository);
-    }
-    catch (ArtifactInstallationException artifactInstallationException) {
-      throw new MojoExecutionException("Unable to install the jnlp artifact(" + artifactName + ")", artifactInstallationException);
+      pathBuilder.append("-jnlp").append(".jar");
+
+      try {
+        artifactInstaller.install(new File(pathBuilder.toString()), applicationArtifact, localRepository);
+      }
+      catch (ArtifactInstallationException artifactInstallationException) {
+        throw new MojoExecutionException("Unable to install the jnlp artifact(" + artifactName + ")", artifactInstallationException);
+      }
     }
   }
 }
