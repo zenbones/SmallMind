@@ -72,6 +72,7 @@ public class ComponentCreationWorker<C> implements Runnable {
     try {
       componentInstance = componentPool.getComponentInstanceFactory().createInstance(componentPool);
       if ((!stateRef.compareAndSet(null, State.COMPLETED)) && (componentInstance != null)) {
+        LoggerManager.getLogger(ComponentCreationWorker.class).error("Completed connection is being closed due to a request in the %s state - you may want to increase the connection wait time", stateRef.get().name());
         componentInstance.close();
       }
     }
