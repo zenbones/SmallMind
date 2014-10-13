@@ -59,8 +59,13 @@ public class StringUtilities {
 
   public static String toCamelCase (String anyCase, char wordMarker) {
 
+    return toCamelCase(anyCase, wordMarker, true);
+  }
+
+  public static String toCamelCase (String anyCase, char wordMarker, boolean startUpper) {
+
     StringBuilder camelBuilder;
-    boolean upper = true;
+    boolean upper = startUpper;
 
     camelBuilder = new StringBuilder();
 
