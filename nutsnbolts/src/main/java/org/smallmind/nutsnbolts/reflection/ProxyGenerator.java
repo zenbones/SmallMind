@@ -245,7 +245,7 @@ public class ProxyGenerator {
 
     public ProxyClassVisitor (ClassVisitor nextClassVisitor, Class parseClass, Class currentClass, String[] allowedAnnotationSignatures, HashSet<MethodTracker> methodTrackerSet, boolean initialized) {
 
-      super(Opcodes.ASM4);
+      super(Opcodes.ASM5);
 
       this.nextClassVisitor = nextClassVisitor;
       this.parseClass = parseClass;
@@ -616,7 +616,7 @@ public class ProxyGenerator {
 
     public ProxyMethodVisitor (MethodVisitor nextMethodVisitor, String[] allowedAnnotationSignatures) {
 
-      super(Opcodes.ASM4);
+      super(Opcodes.ASM5);
 
       this.nextMethodVisitor = nextMethodVisitor;
       this.allowedAnnotationSignatures = allowedAnnotationSignatures;
