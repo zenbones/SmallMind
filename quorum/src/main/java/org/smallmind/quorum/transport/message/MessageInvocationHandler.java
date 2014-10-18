@@ -57,7 +57,7 @@ public class MessageInvocationHandler implements InvocationHandler {
       public Object withChronometer ()
         throws Exception {
 
-        return messageTransmitter.sendMessage(new InvocationSignal(ContextFactory.getExpectedContexts(method), new FauxMethod(method), args), serviceInterface.getName()).getResult();
+        return messageTransmitter.sendMessage(new InvocationSignal(ContextFactory.getContextsOn(method), new FauxMethod(method), args), serviceInterface.getName()).getResult();
       }
     });
   }

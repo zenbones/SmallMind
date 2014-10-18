@@ -47,6 +47,6 @@ public class RemoteInvocationHandler implements Serializable, InvocationHandler 
   public Object invoke (Object proxy, Method method, Object[] args)
     throws Throwable {
 
-    return remoteTarget.remoteInvocation(new InvocationSignal(ContextFactory.getExpectedContexts(method), new FauxMethod(method), args));
+    return remoteTarget.remoteInvocation(new InvocationSignal(ContextFactory.getContextsOn(method), new FauxMethod(method), args));
   }
 }

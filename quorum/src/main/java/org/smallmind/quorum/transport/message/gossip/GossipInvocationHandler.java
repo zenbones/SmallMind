@@ -57,7 +57,7 @@ public class GossipInvocationHandler implements InvocationHandler {
       public void withChronometer ()
         throws Exception {
 
-        gossipTransmitter.sendMessage(new InvocationSignal(ContextFactory.getExpectedContexts(method), new FauxMethod(method), args), serviceInterface.getName());
+        gossipTransmitter.sendMessage(new InvocationSignal(ContextFactory.getContextsOn(method), new FauxMethod(method), args), serviceInterface.getName());
       }
     });
 
