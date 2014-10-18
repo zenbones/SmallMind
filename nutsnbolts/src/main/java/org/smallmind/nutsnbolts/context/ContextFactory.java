@@ -125,7 +125,7 @@ public class ContextFactory {
     return getContextsOn(method, Context.class);
   }
 
-  public static Context[] getContextsOn (Method method, Class<? extends Context> baseContextClass)
+  public static Context[] getContextsOn (Method method, Class<? extends Context>... baseContextClasses)
     throws ContextException {
 
     Context[] contexts;
@@ -141,10 +141,13 @@ public class ContextFactory {
 
       Context context;
 
-      if (baseContextClass.isAssignableFrom(contextEntry.getKey())) {
-        if ((context = contextEntry.getValue().peek()) != null) {
-          requiredClasses.remove(contextEntry.getKey());
-          contextList.add(context);
+      for (Class<? extends Context> baseContextClass : baseContextClasses) {
+        if (baseContextClass.isAssignableFrom(contextEntry.getKey())) {
+          if ((context = contextEntry.getValue().peek()) != null) {
+            requiredClasses.remove(contextEntry.getKey());
+            contextList.add(context);
+          }
+          break;
         }
       }
     }
