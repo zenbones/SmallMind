@@ -29,15 +29,14 @@ package org.smallmind.nutsnbolts.reflection.type.converter;
 import java.util.Date;
 import org.joda.time.format.DateTimeFormatter;
 import org.joda.time.format.ISODateTimeFormat;
-import org.smallmind.nutsnbolts.reflection.type.PrimitiveType;
 
 public class DateStringConverter implements StringConverter<Date> {
 
   private static final DateTimeFormatter ISO_DATE_TIME_FORMATTER = ISODateTimeFormat.dateTime();
 
-  public PrimitiveType getPrimitiveType () {
+  public Class<Date> getType () {
 
-    return PrimitiveType.DATE;
+    return Date.class;
   }
 
   public Date convert (String value) {

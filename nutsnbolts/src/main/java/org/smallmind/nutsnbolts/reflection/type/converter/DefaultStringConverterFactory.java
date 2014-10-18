@@ -28,7 +28,6 @@ package org.smallmind.nutsnbolts.reflection.type.converter;
 
 import java.util.Date;
 import java.util.concurrent.ConcurrentHashMap;
-import org.smallmind.nutsnbolts.reflection.type.PrimitiveType;
 
 public class DefaultStringConverterFactory implements StringConverterFactory {
 
@@ -47,11 +46,7 @@ public class DefaultStringConverterFactory implements StringConverterFactory {
     this(new DateStringConverter());
   }
 
-  public DefaultStringConverterFactory (StringConverter dateStringConverter) {
-
-    if (!dateStringConverter.getPrimitiveType().equals(PrimitiveType.DATE)) {
-      throw new IllegalArgumentException("Optional StringConverter for 'Date' must declare the proper PrimitiveType(" + dateStringConverter.getPrimitiveType().name() + ")");
-    }
+  public DefaultStringConverterFactory (StringConverter<Date> dateStringConverter) {
 
     converterMap.put(Long.class, new LongStringConverter());
     converterMap.put(Character.class, new CharacterStringConverter());

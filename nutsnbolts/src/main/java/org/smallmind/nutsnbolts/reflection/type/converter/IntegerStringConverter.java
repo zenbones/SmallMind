@@ -26,17 +26,15 @@
  */
 package org.smallmind.nutsnbolts.reflection.type.converter;
 
-import org.smallmind.nutsnbolts.reflection.type.PrimitiveType;
-
 public class IntegerStringConverter implements StringConverter<Integer> {
 
-  public PrimitiveType getPrimitiveType () {
+  public Class<Integer> getType () {
 
-    return PrimitiveType.INTEGER;
+    return Integer.class;
   }
 
   public Integer convert (String value) {
 
-    return Integer.parseInt(value);
+    return (value == null) ? null : Integer.parseInt(value);
   }
 }

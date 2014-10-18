@@ -26,17 +26,15 @@
  */
 package org.smallmind.nutsnbolts.reflection.type.converter;
 
-import org.smallmind.nutsnbolts.reflection.type.PrimitiveType;
-
 public class BooleanStringConverter implements StringConverter<Boolean> {
 
-  public PrimitiveType getPrimitiveType () {
+  public Class<Boolean> getType () {
 
-    return PrimitiveType.BOOLEAN;
+    return Boolean.class;
   }
 
   public Boolean convert (String value) {
 
-    return Boolean.parseBoolean(value);
+    return (value == null) ? null : Boolean.parseBoolean(value);
   }
 }

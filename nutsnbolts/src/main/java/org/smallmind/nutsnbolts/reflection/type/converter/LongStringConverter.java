@@ -26,17 +26,15 @@
  */
 package org.smallmind.nutsnbolts.reflection.type.converter;
 
-import org.smallmind.nutsnbolts.reflection.type.PrimitiveType;
-
 public class LongStringConverter implements StringConverter<Long> {
 
-  public PrimitiveType getPrimitiveType () {
+  public Class<Long> getType () {
 
-    return PrimitiveType.LONG;
+    return Long.class;
   }
 
   public Long convert (String value) {
 
-    return Long.parseLong(value);
+    return (value == null) ? null : Long.parseLong(value);
   }
 }

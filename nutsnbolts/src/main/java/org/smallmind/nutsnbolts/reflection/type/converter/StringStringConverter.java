@@ -26,13 +26,11 @@
  */
 package org.smallmind.nutsnbolts.reflection.type.converter;
 
-import org.smallmind.nutsnbolts.reflection.type.PrimitiveType;
-
 public class StringStringConverter implements StringConverter<String> {
 
-  public PrimitiveType getPrimitiveType () {
+  public Class<String> getType () {
 
-    return PrimitiveType.STRING;
+    return String.class;
   }
 
   public String convert (String value) {

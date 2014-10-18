@@ -26,17 +26,15 @@
  */
 package org.smallmind.nutsnbolts.reflection.type.converter;
 
-import org.smallmind.nutsnbolts.reflection.type.PrimitiveType;
-
 public class FloatStringConverter implements StringConverter<Float> {
 
-  public PrimitiveType getPrimitiveType () {
+  public Class<Float> getType () {
 
-    return PrimitiveType.FLOAT;
+    return Float.class;
   }
 
   public Float convert (String value) {
 
-    return Float.parseFloat(value);
+    return (value == null) ? null : Float.parseFloat(value);
   }
 }

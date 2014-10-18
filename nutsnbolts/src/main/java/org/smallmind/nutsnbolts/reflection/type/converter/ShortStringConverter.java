@@ -26,17 +26,15 @@
  */
 package org.smallmind.nutsnbolts.reflection.type.converter;
 
-import org.smallmind.nutsnbolts.reflection.type.PrimitiveType;
-
 public class ShortStringConverter implements StringConverter<Short> {
 
-  public PrimitiveType getPrimitiveType () {
+  public Class<Short> getType () {
 
-    return PrimitiveType.SHORT;
+    return Short.class;
   }
 
   public Short convert (String value) {
 
-    return Short.parseShort(value);
+    return (value == null) ? null : Short.parseShort(value);
   }
 }

@@ -26,17 +26,15 @@
  */
 package org.smallmind.nutsnbolts.reflection.type.converter;
 
-import org.smallmind.nutsnbolts.reflection.type.PrimitiveType;
-
 public class ByteStringConverter implements StringConverter<Byte> {
 
-  public PrimitiveType getPrimitiveType () {
+  public Class<Byte> getType () {
 
-    return PrimitiveType.BYTE;
+    return Byte.class;
   }
 
   public Byte convert (String value) {
 
-    return Byte.parseByte(value);
+    return (value == null) ? null : Byte.parseByte(value);
   }
 }

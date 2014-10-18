@@ -26,8 +26,6 @@
  */
 package org.smallmind.nutsnbolts.reflection.type.converter;
 
-import org.smallmind.nutsnbolts.reflection.type.PrimitiveType;
-
 public class EnumStringConverter<E extends Enum<E>> implements StringConverter<E> {
 
   private Class<E> enumClass;
@@ -37,13 +35,13 @@ public class EnumStringConverter<E extends Enum<E>> implements StringConverter<E
     this.enumClass = enumClass;
   }
 
-  public PrimitiveType getPrimitiveType () {
+  public Class<E> getType () {
 
-    return PrimitiveType.ENUM;
+    return enumClass;
   }
 
   public E convert (String value) {
 
-    return Enum.valueOf(enumClass, value);
+    return (value == null) ? null : Enum.valueOf(enumClass, value);
   }
 }

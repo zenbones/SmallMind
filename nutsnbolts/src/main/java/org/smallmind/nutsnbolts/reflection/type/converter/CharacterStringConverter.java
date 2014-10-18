@@ -26,16 +26,19 @@
  */
 package org.smallmind.nutsnbolts.reflection.type.converter;
 
-import org.smallmind.nutsnbolts.reflection.type.PrimitiveType;
-
 public class CharacterStringConverter implements StringConverter<Character> {
 
-  public PrimitiveType getPrimitiveType () {
+  public Class<Character> getType () {
 
-    return PrimitiveType.CHARACTER;
+    return Character.class;
   }
 
   public Character convert (String value) {
+
+    if ((value == null) || (value.length() == 0)) {
+
+      return null;
+    }
 
     return value.charAt(0);
   }

@@ -29,7 +29,6 @@ package org.smallmind.nutsnbolts.reflection.bean;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;
 import java.util.concurrent.ConcurrentHashMap;
-import org.smallmind.nutsnbolts.reflection.type.PrimitiveType;
 import org.smallmind.nutsnbolts.reflection.type.converter.DefaultStringConverterFactory;
 import org.smallmind.nutsnbolts.reflection.type.converter.StringConversionException;
 import org.smallmind.nutsnbolts.reflection.type.converter.StringConverter;
@@ -88,13 +87,13 @@ public class BeanUtility {
     }
   }
 
-  public static PrimitiveType executeSet (Object target, String methodName, String value)
+  public static Class<?> executeSet (Object target, String methodName, String value)
     throws BeanAccessException, BeanInvocationException {
 
     return executeSet(DefaultStringConverterFactory.getInstance(), target, methodName, value);
   }
 
-  public static PrimitiveType executeSet (StringConverterFactory stringConverterFactory, Object target, String methodName, String value)
+  public static Class<?> executeSet (StringConverterFactory stringConverterFactory, Object target, String methodName, String value)
     throws BeanAccessException, BeanInvocationException {
 
     MethodTool setterTool;
@@ -118,7 +117,7 @@ public class BeanUtility {
       setterTool = acquireSetterTool(stringConverterFactory, currentTarget, methodComponents[methodComponents.length - 1]);
       setterTool.getMethod().invoke(currentTarget, ((value == null) || (value.length() == 0)) ? null : setterTool.getConverter().convert(value));
 
-      return setterTool.getConverter().getPrimitiveType();
+      return setterTool.getConverter().getType();
     }
     catch (BeanAccessException beanAccessException) {
       throw beanAccessException;
