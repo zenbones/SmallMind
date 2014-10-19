@@ -61,7 +61,7 @@ public class DefaultStringConverterFactory implements StringConverterFactory {
 
     if (supplementalStringConverters != null) {
       for (StringConverter<?> supplementalStringConverter : supplementalStringConverters) {
-        converterMap.put(supplementalStringConverter.getClass(), supplementalStringConverter);
+        converterMap.put(supplementalStringConverter.getType(), supplementalStringConverter);
       }
     }
 
