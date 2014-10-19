@@ -33,7 +33,6 @@ public class DefaultStringConverterFactory implements StringConverterFactory {
 
   private static final StringConverter[] NO_SUPPLEMENTAL_CONVERTERS = new StringConverter[0];
   private static final StringConverterFactory INSTANCE = new DefaultStringConverterFactory();
-  private static final Class[] KNOWN_CONVERSIONS = new Class[] {Long.class, Character.class, Integer.class, Byte.class, Short.class, Float.class, Double.class, Boolean.class, String.class, Date.class};
 
   private final ConcurrentHashMap<Class, StringConverter<?>> converterMap = new ConcurrentHashMap<Class, StringConverter<?>>();
 
@@ -73,20 +72,19 @@ public class DefaultStringConverterFactory implements StringConverterFactory {
   public StringConverter getStringConverter (Class parameterClass)
     throws StringConversionException {
 
+    StringConverter<?> stringConverter;
     Class convergedClass;
 
-    if ((convergedClass = getConvergedClass(parameterClass)).isEnum()) {
-
-      StringConverter stringConverter;
-
-      if ((stringConverter = converterMap.get(convergedClass)) == null) {
+    if ((stringConverter = converterMap.get(convergedClass = getConvergedClass(parameterClass))) == null) {
+      if (convergedClass.isEnum()) {
         converterMap.put(convergedClass, stringConverter = new EnumStringConverter((Class<? extends Enum<?>>)convergedClass));
       }
-
-      return stringConverter;
+      else {
+        throw new StringConversionException("No known converter for type(%s)", convergedClass.getName());
+      }
     }
 
-    return converterMap.get(convergedClass);
+    return stringConverter;
   }
 
   private static Class getConvergedClass (Class parameterClass)
@@ -119,22 +117,7 @@ public class DefaultStringConverterFactory implements StringConverterFactory {
       }
     }
 
-    if (!(parameterClass.isEnum() || isKnownConversion(parameterClass))) {
-      throw new StringConversionException("Can't convert to a 'setter' value of type(%s)", parameterClass.getName());
-    }
-
     return parameterClass;
   }
 
-  private static boolean isKnownConversion (Class parameterClass) {
-
-    for (Class knownClass : KNOWN_CONVERSIONS) {
-      if (knownClass.equals(parameterClass)) {
-
-        return true;
-      }
-    }
-
-    return false;
-  }
 }
