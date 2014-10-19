@@ -53,8 +53,10 @@ public class DefaultStringConverterFactory implements StringConverterFactory {
     converterMap.put(Boolean.class, new BooleanStringConverter());
     converterMap.put(String.class, new StringStringConverter());
 
-    for (StringConverter<?> supplementalStringConverter : supplementalStringConverters) {
-      converterMap.put(supplementalStringConverter.getClass(), supplementalStringConverter);
+    if (supplementalStringConverters != null) {
+      for (StringConverter<?> supplementalStringConverter : supplementalStringConverters) {
+        converterMap.put(supplementalStringConverter.getClass(), supplementalStringConverter);
+      }
     }
 
     if (!converterMap.containsKey(Date.class)) {
