@@ -41,12 +41,7 @@ public class DefaultStringConverterFactory implements StringConverterFactory {
     return INSTANCE;
   }
 
-  public DefaultStringConverterFactory () {
-
-    this(new DateStringConverter());
-  }
-
-  public DefaultStringConverterFactory (StringConverter<Date> dateStringConverter) {
+  public DefaultStringConverterFactory (StringConverter<?>... supplementalStringConverters) {
 
     converterMap.put(Long.class, new LongStringConverter());
     converterMap.put(Character.class, new CharacterStringConverter());
@@ -58,7 +53,13 @@ public class DefaultStringConverterFactory implements StringConverterFactory {
     converterMap.put(Boolean.class, new BooleanStringConverter());
     converterMap.put(String.class, new StringStringConverter());
 
-    converterMap.put(Date.class, dateStringConverter);
+    for (StringConverter<?> supplementalStringConverter : supplementalStringConverters) {
+      converterMap.put(supplementalStringConverter.getClass(), supplementalStringConverter);
+    }
+
+    if (!converterMap.containsKey(Date.class)) {
+      converterMap.put(Date.class, new DateStringConverter());
+    }
   }
 
   public StringConverter getStringConverter (Class parameterClass)
