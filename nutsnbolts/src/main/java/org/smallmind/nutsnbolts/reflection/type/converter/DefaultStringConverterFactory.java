@@ -31,6 +31,7 @@ import java.util.concurrent.ConcurrentHashMap;
 
 public class DefaultStringConverterFactory implements StringConverterFactory {
 
+  private static final StringConverter[] NO_SUPPLEMENTAL_CONVERTERS = new StringConverter[0];
   private static final StringConverterFactory INSTANCE = new DefaultStringConverterFactory();
   private static final Class[] KNOWN_CONVERSIONS = new Class[] {Long.class, Character.class, Integer.class, Byte.class, Short.class, Float.class, Double.class, Boolean.class, String.class, Date.class};
 
@@ -39,6 +40,11 @@ public class DefaultStringConverterFactory implements StringConverterFactory {
   public static StringConverterFactory getInstance () {
 
     return INSTANCE;
+  }
+
+  public DefaultStringConverterFactory () {
+
+    this(NO_SUPPLEMENTAL_CONVERTERS);
   }
 
   public DefaultStringConverterFactory (StringConverter<?>... supplementalStringConverters) {
