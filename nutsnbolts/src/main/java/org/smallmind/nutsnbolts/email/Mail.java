@@ -26,14 +26,14 @@
  */
 package org.smallmind.nutsnbolts.email;
 
-import java.io.File;
 import java.io.Reader;
 import java.io.StringReader;
+import javax.activation.DataSource;
 
 public class Mail {
 
   private Reader bodyReader;
-  private File[] attachments;
+  private DataSource[] attachments;
   private String from = null;
   private String to = null;
   private String replyTo = null;
@@ -41,47 +41,47 @@ public class Mail {
   private String bcc = null;
   private String subject = null;
 
-  public Mail (String from, String to, File... attachments) {
+  public Mail (String from, String to, DataSource... attachments) {
 
     this(from, to, null, null, null, null, (String)null, attachments);
   }
 
-  public Mail (String from, String to, String body, File... attachments) {
+  public Mail (String from, String to, String body, DataSource... attachments) {
 
     this(from, to, null, null, null, null, new StringReader(body), attachments);
   }
 
-  public Mail (String from, String to, Reader bodyReader, File... attachments) {
+  public Mail (String from, String to, Reader bodyReader, DataSource... attachments) {
 
     this(from, to, null, null, null, null, bodyReader, attachments);
   }
 
-  public Mail (String from, String to, String subject, String body, File... attachments) {
+  public Mail (String from, String to, String subject, String body, DataSource... attachments) {
 
     this(from, to, null, null, null, subject, new StringReader(body), attachments);
   }
 
-  public Mail (String from, String to, String subject, Reader bodyReader, File... attachments) {
+  public Mail (String from, String to, String subject, Reader bodyReader, DataSource... attachments) {
 
     this(from, to, null, null, null, subject, bodyReader, attachments);
   }
 
-  public Mail (String from, String to, String replyTo, String cc, String subject, String body, File... attachments) {
+  public Mail (String from, String to, String replyTo, String cc, String subject, String body, DataSource... attachments) {
 
     this(from, to, replyTo, cc, null, subject, new StringReader(body), attachments);
   }
 
-  public Mail (String from, String to, String replyTo, String cc, String bcc, String subject, String body, File... attachments) {
+  public Mail (String from, String to, String replyTo, String cc, String bcc, String subject, String body, DataSource... attachments) {
 
     this(from, to, replyTo, cc, bcc, subject, new StringReader(body), attachments);
   }
 
-  public Mail (String from, String to, String replyTo, String cc, String subject, Reader bodyReader, File... attachments) {
+  public Mail (String from, String to, String replyTo, String cc, String subject, Reader bodyReader, DataSource... attachments) {
 
     this(from, to, replyTo, cc, null, subject, bodyReader, attachments);
   }
 
-  public Mail (String from, String to, String replyTo, String cc, String bcc, String subject, Reader bodyReader, File... attachments) {
+  public Mail (String from, String to, String replyTo, String cc, String bcc, String subject, Reader bodyReader, DataSource... attachments) {
 
     this.from = from;
     this.to = to;
@@ -98,14 +98,13 @@ public class Mail {
     setBodyReader(new StringReader(body));
   }
 
-  public void addAttachment (File attachment) {
+  public void addAttachment (DataSource attachment) {
 
     if (attachments == null) {
-      attachments = new File[] {attachment};
-    }
-    else {
+      attachments = new DataSource[] {attachment};
+    } else {
 
-      File[] moreAttachments = new File[attachments.length + 1];
+      DataSource[] moreAttachments = new DataSource[attachments.length + 1];
 
       System.arraycopy(attachments, 0, moreAttachments, 0, attachments.length);
       moreAttachments[attachments.length] = attachment;
@@ -183,12 +182,12 @@ public class Mail {
     this.bodyReader = bodyReader;
   }
 
-  public File[] getAttachments () {
+  public DataSource[] getAttachments () {
 
     return attachments;
   }
 
-  public void setAttachments (File[] attachments) {
+  public void setAttachments (DataSource[] attachments) {
 
     this.attachments = attachments;
   }

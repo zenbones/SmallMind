@@ -28,13 +28,12 @@ package org.smallmind.nutsnbolts.email;
 
 import java.io.CharArrayReader;
 import java.io.CharArrayWriter;
-import java.io.File;
 import java.io.StringWriter;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.HashMap;
 import javax.activation.DataHandler;
-import javax.activation.FileDataSource;
+import javax.activation.DataSource;
 import javax.mail.Address;
 import javax.mail.Message;
 import javax.mail.MessagingException;
@@ -83,13 +82,13 @@ public class Postman {
   }
 
   public void send (Mail mail)
-    throws MailDeliveryException {
+   throws MailDeliveryException {
 
     send(mail, null);
   }
 
   public void send (Mail mail, HashMap<String, Object> interpolationMap)
-    throws MailDeliveryException {
+   throws MailDeliveryException {
 
     MimeMessage message = new MimeMessage(session);
     Multipart multipart = new MimeMultipart();
@@ -133,8 +132,7 @@ public class Postman {
 
         if (interpolationMap == null) {
           textPart.setText(bodyWriter.toString());
-        }
-        else {
+        } else {
 
           Template template;
           StringWriter templateWriter;
@@ -154,27 +152,25 @@ public class Postman {
       }
 
       if ((mail.getAttachments() != null) && (mail.getAttachments().length > 0)) {
-        for (File attachment : mail.getAttachments()) {
+        for (DataSource attachment : mail.getAttachments()) {
 
           MimeBodyPart filePart = new MimeBodyPart();
-          FileDataSource dataSource = new FileDataSource(attachment);
 
-          filePart.setDataHandler(new DataHandler(dataSource));
-          filePart.setFileName(dataSource.getName());
+          filePart.setDataHandler(new DataHandler(attachment));
+          filePart.setFileName(attachment.getName());
           multipart.addBodyPart(filePart);
         }
       }
 
       message.setContent(multipart);
       Transport.send(message);
-    }
-    catch (Exception exception) {
+    } catch (Exception exception) {
       throw new MailDeliveryException(exception);
     }
   }
 
   private void addRecipients (Message message, Message.RecipientType type, String addresses)
-    throws MessagingException {
+   throws MessagingException {
 
     for (String address : addresses.split(",")) {
       message.addRecipient(type, new InternetAddress(address.trim()));
