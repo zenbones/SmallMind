@@ -29,6 +29,7 @@ package org.smallmind.quorum.pool.complex;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
+import org.smallmind.scribe.pen.LoggerManager;
 
 public class DeconstructionCoordinator {
 
@@ -77,6 +78,7 @@ public class DeconstructionCoordinator {
   public void ignite (DeconstructionFuse ignitionFuse, boolean withPrejudice) {
 
     if (terminated.compareAndSet(false, true)) {
+      LoggerManager.getLogger(DeconstructionCoordinator.class).info("ComponentPin being terminated due to fuse(%s) ignition", ignitionFuse.getClass().getSimpleName());
       shutdown(ignitionFuse);
       componentPin.kaboom(withPrejudice);
     }

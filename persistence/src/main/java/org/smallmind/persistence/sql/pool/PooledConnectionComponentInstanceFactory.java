@@ -79,7 +79,7 @@ public class PooledConnectionComponentInstanceFactory<P extends PooledConnection
   public ComponentInstance<P> createInstance (ComponentPool<P> componentPool)
     throws NoAvailableJugglerResourceException, SQLException {
 
-    return new PooledConnectionComponentInstance<P>(componentPool, pooledConnectionJuggler.pickResource(), validationQuery);
+    return new PooledConnectionComponentInstance<>(componentPool, pooledConnectionJuggler.pickResource(), validationQuery);
   }
 
   @Override

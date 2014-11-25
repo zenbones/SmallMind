@@ -162,12 +162,12 @@ public class ComponentPinManager<C> {
       int maxPoolSize = componentPool.getComplexPoolConfig().getMaxPoolSize();
       int currentSize = size.get();
 
-      if ((forced || (currentSize > minPoolSize)) && ((maxPoolSize == 0) || (currentSize < maxPoolSize))) {
+      if ((forced || (currentSize < minPoolSize)) && ((maxPoolSize == 0) || (currentSize < maxPoolSize))) {
         backingLock.writeLock().lock();
         try {
           currentSize = size.get();
 
-          if ((forced || (currentSize > minPoolSize)) && ((maxPoolSize == 0) || (currentSize < maxPoolSize))) {
+          if ((forced || (currentSize < minPoolSize)) && ((maxPoolSize == 0) || (currentSize < maxPoolSize))) {
 
             ComponentPin<C> componentPin;
             ComponentInstance<C> componentInstance;
@@ -205,7 +205,7 @@ public class ComponentPinManager<C> {
 
         workerThread.join(componentPool.getComplexPoolConfig().getCreationTimeoutMillis());
         if (creationWorker.abort()) {
-          throw new ComponentCreationException("Exceeded element timeout(%d) waiting on element creation (pool size = %d, free size = %d)", componentPool.getComplexPoolConfig().getCreationTimeoutMillis(), getPoolSize(), getFreeSize());
+          throw new ComponentCreationException("Exceeded timeout(%d) waiting on element creation (pool size = %d, free size = %d)", componentPool.getComplexPoolConfig().getCreationTimeoutMillis(), getPoolSize(), getFreeSize());
         }
         else {
           componentInstance = creationWorker.getComponentInstance();
