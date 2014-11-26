@@ -131,7 +131,7 @@ public class Postman {
         MimeBodyPart textPart = new MimeBodyPart();
 
         if (interpolationMap == null) {
-          textPart.setText(bodyWriter.toString());
+          textPart.setText(bodyWriter.toString(), "utf-8", mail.isHtml() ? "html" : "plain");
         } else {
 
           Template template;

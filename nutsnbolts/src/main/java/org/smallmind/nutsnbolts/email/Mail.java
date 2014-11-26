@@ -40,6 +40,7 @@ public class Mail {
   private String cc = null;
   private String bcc = null;
   private String subject = null;
+  private boolean html = false;
 
   public Mail (String from, String to, DataSource... attachments) {
 
@@ -110,6 +111,18 @@ public class Mail {
       moreAttachments[attachments.length] = attachment;
       attachments = moreAttachments;
     }
+  }
+
+  public boolean isHtml () {
+
+    return html;
+  }
+
+  public Mail setHtml () {
+
+    this.html = true;
+
+    return this;
   }
 
   public String getFrom () {
