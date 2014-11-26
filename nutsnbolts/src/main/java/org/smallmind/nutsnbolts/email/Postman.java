@@ -145,7 +145,7 @@ public class Postman {
           }
 
           template.process(interpolationMap, templateWriter = new StringWriter());
-          textPart.setText(templateWriter.toString());
+          textPart.setText(templateWriter.toString(), "utf-8", mail.isHtml() ? "html" : "plain");
         }
 
         multipart.addBodyPart(textPart);
