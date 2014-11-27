@@ -98,10 +98,10 @@ RUN_AS_USER=${runAs}
 #BRIEF_USAGE=true
 
 # flag for using upstart when installing (rather than init.d rc.d)
-USE_UPSTART=${useUpstart?c}
+USE_UPSTART=[#if useUpstart]true[/#if]
 
 # flag for using systemd when installing
-USE_SYSTEMD=${useSystemD?c}
+USE_SYSTEMD=[#if useSystemD]true[/#if]
 
 # When installing on On Mac OSX platforms, the following domain will be used to
 #  prefix the plist file name.
