@@ -1145,7 +1145,7 @@ installUpstart() {
         echo "start on runlevel [2345]" >> "/etc/init/${APP_NAME}.conf"
         echo "stop on runlevel [!2345]" >> "/etc/init/${APP_NAME}.conf"
         echo "env LANG=${LANG}" >> "/etc/init/${APP_NAME}.conf"
-       echo "exec \"${REALPATH}\" upstartinternal" >> "/etc/init/${APP_NAME}.conf"
+        echo "exec \"${REALPATH}\" upstartinternal" >> "/etc/init/${APP_NAME}.conf"
     fi
 }
 
