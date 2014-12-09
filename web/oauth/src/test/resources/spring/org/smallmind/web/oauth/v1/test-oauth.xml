@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-3.0.xsd">
+
+  <import resource="classpath:org/smallmind/web/grizzly/grizzly.xml"/>
+
+  <!-- OAuth Resources -->
+  <bean id="oauthConfig" class="org.smallmind.web.oauth.v1.OAuthConfiguration">
+    <property name="userLoginService" ref="v1UserLoginService"/>
+    <property name="ssoCookieName" value="icix_sso"/>
+    <property name="oauthProtocolLeaseDuration">
+      <bean class="org.smallmind.nutsnbolts.time.Duration">
+        <constructor-arg index="0" name="time" value="10"/>
+        <constructor-arg index="1" name="timeUnit" value="MINUTES"/>
+      </bean>
+    </property>
+    <property name="oauthTokenGrantDuration">
+      <bean class="org.smallmind.nutsnbolts.time.Duration">
+        <constructor-arg index="0" name="time" value="20"/>
+        <constructor-arg index="1" name="timeUnit" value="HOURS"/>
+      </bean>
+    </property>
+    <property name="registrationMap">
+      <map>
+        <entry key="1">
+          <bean class="org.smallmind.web.oauth.v1.OAuthRegistration">
+            <property name="oauthUri" value="http://${oauth.host.server}:${oauth.port.server}${grizzly.rest_path}/v1/oauth/authorization"/>
+            <property name="loginUri" value="http://${oauth.host.node}:${oauth.port.node}${grizzly.rest_path}/login/display"/>
+            <property name="redirectUri" value="http://${grizzly.host}:${grizzly.port}${grizzly.rest_path}/spoof/exchange"/>
+            <property name="sha256Secret" value="v8WIMT03YHGMxRyuHI6O0m2m96bRnODSemWc46FbIkQ="/>
+          </bean>
+        </entry>
+      </map>
+    </property>
+  </bean>
+
+  <bean id="v1OAuthResource" class="org.smallmind.web.oauth.v1.OAuthResource">
+    <property name="oauthConfiguration" ref="oauthConfig"/>
+  </bean>
+
+  <bean class="org.smallmind.web.oauth.v1.ClientResource">
+    <property name="clientId" value="1"/>
+    <property name="restUri" value="http://${grizzly.host}:${grizzly.port}${grizzly.rest_path}"/>
+  </bean>
+
+  <bean class="org.smallmind.web.oauth.v1.TestLoginPageResource">
+    <property name="oauthConfiguration" ref="oauthConfig"/>
+  </bean>
+
+</beans>

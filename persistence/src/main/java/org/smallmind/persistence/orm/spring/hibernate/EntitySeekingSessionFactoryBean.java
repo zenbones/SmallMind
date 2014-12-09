@@ -38,7 +38,7 @@ public class EntitySeekingSessionFactoryBean extends LocalSessionFactoryBean {
   }
 
   @Override
-  public void setAnnotatedClasses (Class<?>[] annotatedClasses) {
+  public void setAnnotatedClasses (Class<?>... annotatedClasses) {
 
     super.setAnnotatedClasses(AnnotationSeekingBeanFactoryPostProcessor.getAnnotatedClasses(dataSourceKey));
   }

@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-3.0.xsd">
+
+  <bean id="hk2ResourceBeanPostProcessor" class="org.smallmind.web.jersey.spring.HK2ResourceBeanPostProcessor"/>
+
+  <bean id="restHttpServer" class="org.smallmind.web.grizzly.GrizzlyInitializingBean">
+    <property name="host" value="${grizzly.host}"/>
+    <property name="port" value="${grizzly.port}"/>
+    <property name="contextPath" value="${grizzly.context_path}"/>
+    <property name="restPath" value="${grizzly.rest_path}"/>
+    <property name="soapPath" value="${grizzly.soap_path}"/>
+  </bean>
+
+  <bean class="org.smallmind.web.grizzly.ServletInstaller">
+    <property name="displayName" value="Jolokia Agent"/>
+    <property name="servletClass" value="org.jolokia.http.AgentServlet"/>
+    <property name="urlPattern" value="/jolokia/*"/>
+  </bean>
+
+</beans>

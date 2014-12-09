@@ -2,8 +2,6 @@
 <beans xmlns="http://www.springframework.org/schema/beans" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.springframework.org/schema/beans
            http://www.springframework.org/schema/beans/spring-beans-3.0.xsd">
 
-  <import resource="classpath:org/smallmind/foundation/logging.xml"/>
-
   <bean class="org.smallmind.nutsnbolts.spring.SystemPropertyInitializingBean">
     <property name="order" value="1"/>
     <property name="propertyMap">
@@ -24,18 +22,18 @@
     <property name="searchSystemEnvironment" value="true"/>
     <property name="firstLocations">
       <list>
-        <value>classpath:com/smallmind/foundation/global.properties</value>
-        <value>classpath:com/smallmind/foundation/database-${SMALLMIND_DATABASE}.properties</value>
-        <value>classpath:com/smallmind/foundation/${SMALLMIND_ENVIRONMENT}/environment.properties</value>
-        <value>classpath:com/smallmind/foundation/${SMALLMIND_ENVIRONMENT}/database-${SMALLMIND_DATABASE}.properties</value>
-        <value>classpath:com/smallmind/${SMALLMIND_MODULE}/application.properties</value>
-        <value>classpath:com/smallmind/${SMALLMIND_MODULE}/database-${SMALLMIND_DATABASE}.properties</value>
-        <value>classpath:com/smallmind/${SMALLMIND_MODULE}/${SMALLMIND_ENVIRONMENT}/application.properties</value>
-        <value>classpath:com/smallmind/${SMALLMIND_MODULE}/${SMALLMIND_ENVIRONMENT}/database-${SMALLMIND_DATABASE}.properties</value>
-        <value>classpath:com/smallmind/${SMALLMIND_MODULE}/${SMALLMIND_PRODUCT}/application.properties</value>
-        <value>classpath:com/smallmind/${SMALLMIND_MODULE}/${SMALLMIND_PRODUCT}/database-${SMALLMIND_DATABASE}.properties</value>
-        <value>classpath:com/smallmind/${SMALLMIND_MODULE}/${SMALLMIND_PRODUCT}/${SMALLMIND_ENVIRONMENT}/application.properties</value>
-        <value>classpath:com/smallmind/${SMALLMIND_MODULE}/${SMALLMIND_PRODUCT}/${SMALLMIND_ENVIRONMENT}/database-${SMALLMIND_DATABASE}.properties</value>
+        <value>classpath:org/smallmind/foundation/global.properties</value>
+        <value>classpath:org/smallmind/foundation/database-${SMALLMIND_DATABASE}.properties</value>
+        <value>classpath:org/smallmind/foundation/${SMALLMIND_ENVIRONMENT}/environment.properties</value>
+        <value>classpath:org/smallmind/foundation/${SMALLMIND_ENVIRONMENT}/database-${SMALLMIND_DATABASE}.properties</value>
+        <value>classpath:org/smallmind/${SMALLMIND_MODULE}/application.properties</value>
+        <value>classpath:org/smallmind/${SMALLMIND_MODULE}/database-${SMALLMIND_DATABASE}.properties</value>
+        <value>classpath:org/smallmind/${SMALLMIND_MODULE}/${SMALLMIND_ENVIRONMENT}/application.properties</value>
+        <value>classpath:org/smallmind/${SMALLMIND_MODULE}/${SMALLMIND_ENVIRONMENT}/database-${SMALLMIND_DATABASE}.properties</value>
+        <value>classpath:org/smallmind/${SMALLMIND_MODULE}/${SMALLMIND_PRODUCT}/application.properties</value>
+        <value>classpath:org/smallmind/${SMALLMIND_MODULE}/${SMALLMIND_PRODUCT}/database-${SMALLMIND_DATABASE}.properties</value>
+        <value>classpath:org/smallmind/${SMALLMIND_MODULE}/${SMALLMIND_PRODUCT}/${SMALLMIND_ENVIRONMENT}/application.properties</value>
+        <value>classpath:org/smallmind/${SMALLMIND_MODULE}/${SMALLMIND_PRODUCT}/${SMALLMIND_ENVIRONMENT}/database-${SMALLMIND_DATABASE}.properties</value>
       </list>
     </property>
     <property name="lastLocations">
