@@ -5,8 +5,13 @@
 
   <!-- OAuth Resources -->
   <bean id="oauthConfig" class="org.smallmind.web.oauth.v1.OAuthConfiguration">
-    <property name="userLoginService" ref="v1UserLoginService"/>
-    <property name="ssoCookieName" value="icix_sso"/>
+    <property name="userLoginService">
+      <bean class="org.smallmind.web.oauth.v1.credentials.MockUserLoginService">
+        <property name="user" value="testuser"/>
+        <property name="password" value="testpassword"/>
+      </bean>
+    </property>
+    <property name="ssoCookieName" value="smallmind_sso"/>
     <property name="oauthProtocolLeaseDuration">
       <bean class="org.smallmind.nutsnbolts.time.Duration">
         <constructor-arg index="0" name="time" value="10"/>

@@ -38,7 +38,7 @@ public class SpoofingOAuthTest {
   public void test ()
     throws Exception {
 
-    System.setProperty("ICIX_ENVIRONMENT", "test");
+    System.setProperty("SMALLMIND_ENVIRONMENT", "test");
     System.setProperty("grizzly.host", "localhost");
     System.setProperty("grizzly.port", "9015");
 

@@ -11,10 +11,12 @@
     <property name="soapPath" value="${grizzly.soap_path}"/>
   </bean>
 
+  <!--
   <bean class="org.smallmind.web.grizzly.ServletInstaller">
     <property name="displayName" value="Jolokia Agent"/>
     <property name="servletClass" value="org.jolokia.http.AgentServlet"/>
     <property name="urlPattern" value="/jolokia/*"/>
   </bean>
+  -->
 
 </beans>

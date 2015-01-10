@@ -336,7 +336,7 @@ FOOTER
         var encryptedCookie = CryptoJS.AES.encrypt("{\"user\": \"" + document.getElementById("username").value + "\", \"password\": \"" + document.getElementById("password").value + "\", \"created\": " + new Date().getTime() + "}", aesKey, {iv: aesIV, mode: CryptoJS.mode.CBC, padding: CryptoJS.pad.Pkcs7});
         var encryptedAESKey = jsEncrypt.encrypt(CryptoJS.enc.Base64.stringify(aesKey));
 
-        document.cookie = "icix_sso=" + encodeURIComponent(encryptedAESKey + "." + encryptedCookie) + "; path=/";
+        document.cookie = "smallmind_sso=" + encodeURIComponent(encryptedAESKey + "." + encryptedCookie) + "; path=/";
 
         var queryParams = parseQueryString();
         var flashbackLocation = queryParams["authorization_uri"] + "?";

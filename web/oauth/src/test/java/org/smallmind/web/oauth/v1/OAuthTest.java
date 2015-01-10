@@ -42,8 +42,8 @@ import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
-//@Test(groups = "integ")
-public class OAuthTest { //extends JerseyTest {
+@Test(groups = "integ")
+public class OAuthTest extends JerseyTest {
 
   private ClassPathXmlApplicationContext context;
 
@@ -51,7 +51,7 @@ public class OAuthTest { //extends JerseyTest {
   public void beforeClass ()
       throws Exception {
 
- //   setUp();
+    setUp();
   }
 
   @AfterClass
@@ -60,14 +60,14 @@ public class OAuthTest { //extends JerseyTest {
     context.close();
   }
 
- //@Override
+  @Override
   protected TestContainerFactory getTestContainerFactory ()
       throws TestContainerException {
 
     return new ExternalTestContainerFactory();
   }
 
- // @Override
+  @Override
   protected ResourceConfig configure () {
 
     new PerApplicationContext();
@@ -77,20 +77,20 @@ public class OAuthTest { //extends JerseyTest {
     System.setProperty(ExternalTestContainerFactory.JERSEY_TEST_HOST, "localhost");
     System.setProperty(TestProperties.CONTAINER_PORT, "9015");
 
-    System.setProperty("ICIX_ENVIRONMENT", "test");
+    System.setProperty("SMALLMIND_ENVIRONMENT", "test");
 
     context = new ClassPathXmlApplicationContext("org/smallmind/foundation/foundation.xml", "org/smallmind/scribe/spring/test-logging.xml", "org/smallmind/web/oauth/v1/test-oauth.xml");
 
     return new ResourceConfig(ClientResource.class);
   }
 
-  //@Test
+  @Test
   public void test ()
       throws IOException {
 
-//    String rawResponse = target().path("/rest/spoof/login").request(MediaType.APPLICATION_FORM_URLENCODED).get(String.class);
- //   OAuthGrant oauthGrant = JsonCodec.read(rawResponse, OAuthGrant.class);
+    String rawResponse = target().path("/rest/spoof/login").request(MediaType.APPLICATION_FORM_URLENCODED).get(String.class);
+    OAuthGrant oauthGrant = JsonCodec.read(rawResponse, OAuthGrant.class);
 
-//    Assert.assertNotNull(oauthGrant.getAccessToken());
+    Assert.assertNotNull(oauthGrant.getAccessToken());
   }
 }
