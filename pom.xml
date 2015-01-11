@@ -122,6 +122,7 @@
     <module>scheduling</module>
     <module>seda</module>
     <module>plumber</module>
+    <module>identity</module>
     <module>web</module>
     <module>spark</module>
     <module>swing</module>
