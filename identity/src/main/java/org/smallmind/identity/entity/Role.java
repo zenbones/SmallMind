@@ -32,5 +32,4 @@ public class Role extends HibernateDurable<Long> {
 
   private Class<? extends Association<Long>> entity;
   private String name;
-  private Long organizationId;
 }
