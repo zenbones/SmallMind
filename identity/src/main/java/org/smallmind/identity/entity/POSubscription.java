@@ -26,10 +26,7 @@
  */
 package org.smallmind.identity.entity;
 
-import org.smallmind.persistence.orm.hibernate.HibernateDurable;
+public class POSubscription extends Subscription {
 
-public abstract class Billing extends HibernateDurable<Long> {
-
-  private Long billingContactId;
-  private Long billingAddressId;
+  private String terms;
 }

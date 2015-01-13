@@ -26,7 +26,7 @@
  */
 package org.smallmind.identity.entity;
 
-public class POBilling extends Billing {
+public abstract class LocalUser extends User {
 
-  private String terms;
+  private String password;
 }

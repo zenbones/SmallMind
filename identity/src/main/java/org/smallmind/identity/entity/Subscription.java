@@ -26,11 +26,10 @@
  */
 package org.smallmind.identity.entity;
 
-public class CreditCardBilling extends Billing {
+import org.smallmind.persistence.orm.hibernate.HibernateDurable;
 
-  private CreditCardType creditCardType;
-  private String creditCardNumber;
-  private String securityCode;
-  private Long creditCardContactId;
-  private Long creditCardAddressId;
+public abstract class Subscription extends HibernateDurable<Long> {
+
+  private Long billingContactId;
+  private Long billingAddressId;
 }

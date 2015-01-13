@@ -26,7 +26,11 @@
  */
 package org.smallmind.identity.entity;
 
-public abstract class User extends Contact {
+public class CreditCardSubscription extends Subscription {
 
-  private String handle;
+  private CreditCardType creditCardType;
+  private String creditCardNumber;
+  private String securityCode;
+  private Long creditCardContactId;
+  private Long creditCardAddressId;
 }
