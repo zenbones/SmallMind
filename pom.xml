@@ -108,7 +108,10 @@
     <nexus.release.repository.url>${nexus.server}/nexus/content/repositories/releases</nexus.release.repository.url>
     <java.tools.jar>${env.JAVA_HOME}/lib/tools.jar</java.tools.jar>
     <javafx.runtime.lib.jar>${env.JAVAFX_RUNTIME}/lib/jfxrt.jar</javafx.runtime.lib.jar>
+    <jackson.version>2.5.0</jackson.version>
+    <jersey.version>2.9.1</jersey.version>
   </properties>
+
   <modules>
     <module>license</module>
     <module>validation</module>
@@ -130,6 +133,7 @@
     <module>wicket</module>
     <module>liquibase</module>
   </modules>
+
   <dependencyManagement>
     <dependencies>
       <dependency>
@@ -487,72 +491,72 @@
       <dependency>
         <groupId>com.fasterxml.jackson.core</groupId>
         <artifactId>jackson-core</artifactId>
-        <version>2.5.0</version>
+        <version>${jackson.version}</version>
       </dependency>
       <dependency>
         <groupId>com.fasterxml.jackson.core</groupId>
         <artifactId>jackson-databind</artifactId>
-        <version>2.5.0</version>
+        <version>${jackson.version}</version>
       </dependency>
       <dependency>
         <groupId>com.fasterxml.jackson.core</groupId>
         <artifactId>jackson-annotations</artifactId>
-        <version>2.5.0</version>
+        <version>${jackson.version}</version>
       </dependency>
       <dependency>
         <groupId>com.fasterxml.jackson.datatype</groupId>
         <artifactId>jackson-datatype-json-org</artifactId>
-        <version>2.5.0</version>
+        <version>${jackson.version}</version>
       </dependency>
       <dependency>
         <groupId>com.fasterxml.jackson.module</groupId>
         <artifactId>jackson-module-jaxb-annotations</artifactId>
-        <version>2.5.0</version>
+        <version>${jackson.version}</version>
       </dependency>
       <dependency>
         <groupId>org.glassfish.jersey.core</groupId>
         <artifactId>jersey-server</artifactId>
-        <version>2.9.1</version>
+        <version>${jersey.version}</version>
       </dependency>
       <dependency>
         <groupId>org.glassfish.jersey.core</groupId>
         <artifactId>jersey-client</artifactId>
-        <version>2.9.1</version>
+        <version>${jersey.version}</version>
       </dependency>
       <dependency>
         <groupId>org.glassfish.jersey.media</groupId>
         <artifactId>jersey-media-json-jackson</artifactId>
-        <version>2.9.1</version>
+        <version>${jersey.version}</version>
       </dependency>
       <dependency>
         <groupId>org.glassfish.jersey.containers</groupId>
         <artifactId>jersey-container-servlet</artifactId>
-        <version>2.9.1</version>
+        <version>${jersey.version}</version>
       </dependency>
       <dependency>
         <groupId>org.glassfish.jersey.containers</groupId>
         <artifactId>jersey-container-servlet-core</artifactId>
-        <version>2.9.1</version>
+        <version>${jersey.version}</version>
       </dependency>
       <dependency>
         <groupId>org.glassfish.jersey.containers</groupId>
         <artifactId>jersey-container-grizzly2-http</artifactId>
-        <version>2.9.1</version>
+        <version>${jersey.version}</version>
       </dependency>
       <dependency>
         <groupId>org.glassfish.jersey.test-framework.providers</groupId>
         <artifactId>jersey-test-framework-provider-inmemory</artifactId>
-        <version>2.9.1</version>
+        <version>${jersey.version}</version>
       </dependency>
       <dependency>
         <groupId>org.glassfish.jersey.test-framework.providers</groupId>
         <artifactId>jersey-test-framework-provider-grizzly2</artifactId>
-        <version>2.9.1</version>
+        <version>${jersey.version}</version>
       </dependency>
       <dependency>
         <groupId>org.glassfish.jersey.test-framework.providers</groupId>
         <artifactId>jersey-test-framework-provider-external</artifactId>
-        <version>2.9.1</version>
+        <version>${jersey.version}</version>
       </dependency>
       <dependency>
         <groupId>javax.ws.rs</groupId>
