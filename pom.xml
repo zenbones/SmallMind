@@ -108,8 +108,10 @@
     <nexus.release.repository.url>${nexus.server}/nexus/content/repositories/releases</nexus.release.repository.url>
     <java.tools.jar>${env.JAVA_HOME}/lib/tools.jar</java.tools.jar>
     <javafx.runtime.lib.jar>${env.JAVAFX_RUNTIME}/lib/jfxrt.jar</javafx.runtime.lib.jar>
+    <spring.version>4.0.3.RELEASE</spring.version>
     <jackson.version>2.5.0</jackson.version>
-    <jersey.version>2.9.1</jersey.version>
+    <jersey.version>2.14</jersey.version>
+    <grizzly.version>2.3.18</grizzly.version>
   </properties>
 
   <modules>
@@ -309,42 +311,42 @@
       <dependency>
         <groupId>org.springframework</groupId>
         <artifactId>spring-beans</artifactId>
-        <version>4.0.3.RELEASE</version>
+        <version>${spring.version}</version>
       </dependency>
       <dependency>
         <groupId>org.springframework</groupId>
         <artifactId>spring-context</artifactId>
-        <version>4.0.3.RELEASE</version>
+        <version>${spring.version}</version>
       </dependency>
       <dependency>
         <groupId>org.springframework</groupId>
         <artifactId>spring-jdbc</artifactId>
-        <version>4.0.3.RELEASE</version>
+        <version>${spring.version}</version>
       </dependency>
       <dependency>
         <groupId>org.springframework</groupId>
         <artifactId>spring-tx</artifactId>
-        <version>4.0.3.RELEASE</version>
+        <version>${spring.version}</version>
       </dependency>
       <dependency>
         <groupId>org.springframework</groupId>
         <artifactId>spring-orm</artifactId>
-        <version>4.0.3.RELEASE</version>
+        <version>${spring.version}</version>
       </dependency>
       <dependency>
         <groupId>org.springframework</groupId>
         <artifactId>spring-web</artifactId>
-        <version>4.0.3.RELEASE</version>
+        <version>${spring.version}</version>
       </dependency>
       <dependency>
         <groupId>org.springframework</groupId>
         <artifactId>spring-webmvc</artifactId>
-        <version>4.0.3.RELEASE</version>
+        <version>${spring.version}</version>
       </dependency>
       <dependency>
         <groupId>org.springframework</groupId>
         <artifactId>spring-test</artifactId>
-        <version>4.0.3.RELEASE</version>
+        <version>${spring.version}</version>
       </dependency>
       <dependency>
         <groupId>org.slf4j</groupId>
@@ -596,27 +598,27 @@
       <dependency>
         <groupId>org.glassfish.grizzly</groupId>
         <artifactId>grizzly-framework</artifactId>
-        <version>2.3.16</version>
+        <version>${grizzly.version}</version>
       </dependency>
       <dependency>
         <groupId>org.glassfish.grizzly</groupId>
         <artifactId>grizzly-http</artifactId>
-        <version>2.3.16</version>
+        <version>${grizzly.version}</version>
       </dependency>
       <dependency>
         <groupId>org.glassfish.grizzly</groupId>
         <artifactId>grizzly-http-servlet</artifactId>
-        <version>2.3.16</version>
+        <version>${grizzly.version}</version>
       </dependency>
       <dependency>
         <groupId>org.glassfish.grizzly</groupId>
         <artifactId>grizzly-http-servlet-server</artifactId>
-        <version>2.3.16</version>
+        <version>${grizzly.version}</version>
       </dependency>
       <dependency>
         <groupId>org.glassfish.grizzly</groupId>
         <artifactId>grizzly-http-server-jaxws</artifactId>
-        <version>2.3.16</version>
+        <version>${grizzly.version}</version>
       </dependency>
       <dependency>
         <groupId>org.eclipse.jgit</groupId>
