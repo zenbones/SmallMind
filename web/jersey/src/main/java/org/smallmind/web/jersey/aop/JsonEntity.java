@@ -24,21 +24,9 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.web.jersey.jackson;
+package org.smallmind.web.jersey.aop;
 
-import org.smallmind.web.jersey.aop.EntityParamResolver;
-import org.smallmind.web.jersey.aop.EntityTypeFilter;
-import org.smallmind.web.jersey.spring.SpringBasedResourceConfig;
-import org.springframework.context.ApplicationContext;
+public interface JsonEntity {
 
-public class JsonResourceConfig extends SpringBasedResourceConfig {
-
-  public JsonResourceConfig (ApplicationContext applicationContext) {
-
-    super(applicationContext);
-
-    register(JsonProvider.class);
-    register(EntityTypeFilter.class);
-    register(new EntityParamResolver.Binder());
-  }
+  public <T> T getParameter (int index, Class<T> clazz);
 }

@@ -24,21 +24,14 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.web.jersey.jackson;
+package org.smallmind.nutsnbolts.reflection.aop;
 
-import org.smallmind.web.jersey.aop.EntityParamResolver;
-import org.smallmind.web.jersey.aop.EntityTypeFilter;
-import org.smallmind.web.jersey.spring.SpringBasedResourceConfig;
-import org.springframework.context.ApplicationContext;
+import org.smallmind.nutsnbolts.lang.FormattedRuntimeException;
 
-public class JsonResourceConfig extends SpringBasedResourceConfig {
+public class MissingAnnotationException extends FormattedRuntimeException {
 
-  public JsonResourceConfig (ApplicationContext applicationContext) {
+  public MissingAnnotationException (String message, Object... args) {
 
-    super(applicationContext);
-
-    register(JsonProvider.class);
-    register(EntityTypeFilter.class);
-    register(new EntityParamResolver.Binder());
+    super(message, args);
   }
 }

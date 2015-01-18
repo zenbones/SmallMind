@@ -24,15 +24,30 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.web.jersey.spi;
+package org.smallmind.web.jersey.aop;
 
-import java.lang.annotation.ElementType;
-import java.lang.annotation.Retention;
-import java.lang.annotation.RetentionPolicy;
-import java.lang.annotation.Target;
+import java.io.IOException;
+import javax.ws.rs.container.ContainerRequestContext;
+import javax.ws.rs.container.ContainerRequestFilter;
+import javax.ws.rs.container.ResourceInfo;
+import javax.ws.rs.core.Context;
+import javax.ws.rs.ext.Provider;
 
-@Retention(RetentionPolicy.RUNTIME)
-@Target(ElementType.PARAMETER)
-public @interface JsonParameter {
+@Provider
+@EntityType
+public class EntityTypeFilter implements ContainerRequestFilter {
 
+  @Context
+  ResourceInfo resourceInfo;
+
+  @Override
+  public void filter (ContainerRequestContext requestContext)
+    throws IOException {
+
+    EntityType entityType;
+
+    if ((entityType = resourceInfo.getResourceMethod().getAnnotation(EntityType.class)) != null) {
+      EntityTranslator.storeEntityType(entityType.value());
+    }
+  }
 }

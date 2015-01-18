@@ -38,7 +38,7 @@ public class AOPUtility {
     throws BeanAccessException, BeanInvocationException {
 
     Object argumentValue;
-    MethodSignature methodSignature = ((MethodSignature)joinPoint.getSignature());
+    MethodSignature methodSignature = ((MethodSignature) joinPoint.getSignature());
     String[] parameterNames;
     String baseParameter;
     String parameterGetter = null;
@@ -46,8 +46,7 @@ public class AOPUtility {
 
     if ((dotPos = parameterName.indexOf('.')) < 0) {
       baseParameter = parameterName;
-    }
-    else {
+    } else {
       baseParameter = parameterName.substring(0, dotPos);
       parameterGetter = parameterName.substring(dotPos + 1);
     }
@@ -60,8 +59,7 @@ public class AOPUtility {
         if (argumentValue == null) {
           if (methodSignature.getParameterTypes()[index].isPrimitive()) {
             throw new BeanAccessException("A 'null' parameter can't be assigned to the primitive type '%s'", methodSignature.getParameterTypes()[index]);
-          }
-          else if (!nullable) {
+          } else if (!nullable) {
             throw new NullPointerException("Null value in a non-nullable parameter access");
           }
         }

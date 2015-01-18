@@ -24,13 +24,10 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.web.jersey.spi;
+package org.smallmind.web.jersey.aop;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
-import javax.servlet.http.HttpServletRequest;
-import javax.ws.rs.container.ResourceContext;
-import javax.ws.rs.core.Context;
 import org.glassfish.hk2.api.Factory;
 import org.glassfish.hk2.api.InjectionResolver;
 import org.glassfish.hk2.api.ServiceLocator;
@@ -44,22 +41,22 @@ import org.glassfish.jersey.server.model.Parameter;
 import org.glassfish.jersey.server.spi.internal.ValueFactoryProvider;
 
 @Singleton
-public class JsonParameterResolver {
+public class EntityParamResolver {
 
   @Singleton
-  public static final class JsonParameterInjectionResolver extends ParamInjectionResolver<JsonParameter> {
+  public static final class EntityParamInjectionResolver extends ParamInjectionResolver<EntityParam> {
 
-    public JsonParameterInjectionResolver () {
+    public EntityParamInjectionResolver () {
 
-      super(JsonParameterValueFactoryProvider.class);
+      super(EntityParamValueFactoryProvider.class);
     }
   }
 
   @Singleton
-  public static class JsonParameterValueFactoryProvider extends AbstractValueFactoryProvider {
+  public static class EntityParamValueFactoryProvider extends AbstractValueFactoryProvider {
 
     @Inject
-    public JsonParameterValueFactoryProvider (final MultivaluedParameterExtractorProvider extractorProvider, final ServiceLocator injector) {
+    public EntityParamValueFactoryProvider (final MultivaluedParameterExtractorProvider extractorProvider, final ServiceLocator injector) {
 
       super(extractorProvider, injector, Parameter.Source.UNKNOWN);
     }
@@ -67,28 +64,33 @@ public class JsonParameterResolver {
     @Override
     protected Factory<?> createValueFactory (final Parameter parameter) {
 
-      final Class<?> classType;
+      Class<?> paramClass;
+      EntityParam entityParam;
 
-      if ((classType = parameter.getRawType()) == null) {
+      if (((paramClass = parameter.getRawType()) == null) || ((entityParam = parameter.getAnnotation(EntityParam.class)) == null)) {
 
         return null;
       }
 
-      return new JsonParameterRequestValueFactory();
+      return new EntityParamRequestValueFactory(entityParam.value(), paramClass);
     }
   }
 
-  private static class JsonParameterRequestValueFactory extends AbstractContainerRequestValueFactory<Object> {
+  private static class EntityParamRequestValueFactory extends AbstractContainerRequestValueFactory<Object> {
 
-    @Context
-    private ResourceContext context;
+    private Class<?> paramClass;
+    private int paramIndex;
+
+    public EntityParamRequestValueFactory (int paramIndex, Class<?> paramClass) {
+
+      this.paramIndex = paramIndex;
+      this.paramClass = paramClass;
+    }
 
     @Override
     public Object provide () {
 
-      final HttpServletRequest request = context.getResource(HttpServletRequest.class);
-
-      return null;
+      return EntityTranslator.getParameter(getContainerRequest(), paramIndex, paramClass);
     }
   }
 
@@ -97,9 +99,9 @@ public class JsonParameterResolver {
     @Override
     protected void configure () {
 
-      bind(JsonParameterValueFactoryProvider.class).to(ValueFactoryProvider.class).in(Singleton.class);
-      bind(JsonParameterInjectionResolver.class).to(
-        new TypeLiteral<InjectionResolver<JsonParameter>>() {
+      bind(EntityParamValueFactoryProvider.class).to(ValueFactoryProvider.class).in(Singleton.class);
+      bind(EntityParamInjectionResolver.class).to(
+        new TypeLiteral<InjectionResolver<EntityParam>>() {
         }
       ).in(Singleton.class);
     }

@@ -24,21 +24,17 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.web.jersey.jackson;
+package org.smallmind.web.jersey.aop;
 
-import org.smallmind.web.jersey.aop.EntityParamResolver;
-import org.smallmind.web.jersey.aop.EntityTypeFilter;
-import org.smallmind.web.jersey.spring.SpringBasedResourceConfig;
-import org.springframework.context.ApplicationContext;
+import org.aspectj.lang.annotation.After;
+import org.aspectj.lang.annotation.Aspect;
 
-public class JsonResourceConfig extends SpringBasedResourceConfig {
+@Aspect
+public class EntityTypeAspect {
 
-  public JsonResourceConfig (ApplicationContext applicationContext) {
+  @After(value = "execution(@EntityType * * (..)) && @annotation(entityType)", argNames = "entityType")
+  public void aroundEntityTypeMethod (EntityType entityType) {
 
-    super(applicationContext);
-
-    register(JsonProvider.class);
-    register(EntityTypeFilter.class);
-    register(new EntityParamResolver.Binder());
+    EntityTranslator.clearEntity();
   }
 }
