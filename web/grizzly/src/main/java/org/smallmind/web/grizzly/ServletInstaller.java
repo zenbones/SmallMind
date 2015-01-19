@@ -26,10 +26,12 @@
  */
 package org.smallmind.web.grizzly;
 
+import java.util.Map;
 import javax.servlet.Servlet;
 
 public class ServletInstaller {
 
+  private Map<String, String> initParameters;
   private Class<? extends Servlet> servletClass;
   private String displayName;
   private String urlPattern;
@@ -52,6 +54,16 @@ public class ServletInstaller {
   public void setServletClass (Class<? extends Servlet> servletClass) {
 
     this.servletClass = servletClass;
+  }
+
+  public Map<String, String> getInitParameters () {
+
+    return initParameters;
+  }
+
+  public void setInitParameters (Map<String, String> initParameters) {
+
+    this.initParameters = initParameters;
   }
 
   public String getUrlPattern () {

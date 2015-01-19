@@ -26,13 +26,16 @@
  */
 package org.smallmind.web.grizzly;
 
+import java.util.Map;
 import javax.servlet.Filter;
 
 public class FilterInstaller {
 
+  private Map<String, String> initParameters;
   private Class<? extends Filter> filterClass;
   private String displayName;
   private String urlPattern;
+  private boolean matchAfter = false;
 
   public String getDisplayName () {
 
@@ -52,6 +55,26 @@ public class FilterInstaller {
   public void setFilterClass (Class<? extends Filter> filterClass) {
 
     this.filterClass = filterClass;
+  }
+
+  public Map<String, String> getInitParameters () {
+
+    return initParameters;
+  }
+
+  public void setInitParameters (Map<String, String> initParameters) {
+
+    this.initParameters = initParameters;
+  }
+
+  public boolean isMatchAfter () {
+
+    return matchAfter;
+  }
+
+  public void setMatchAfter (boolean matchAfter) {
+
+    this.matchAfter = matchAfter;
   }
 
   public String getUrlPattern () {
