@@ -32,9 +32,8 @@ import java.net.BindException;
 import java.util.EnumSet;
 import java.util.LinkedList;
 import javax.servlet.DispatcherType;
+import javax.servlet.Filter;
 import javax.servlet.Servlet;
-import org.smallmind.web.jersey.jackson.JsonResourceConfig;
-import org.smallmind.web.jersey.spring.ExposedApplicationContext;
 import org.glassfish.grizzly.http.server.HttpHandler;
 import org.glassfish.grizzly.http.server.HttpServer;
 import org.glassfish.grizzly.http.server.NetworkListener;
@@ -42,6 +41,8 @@ import org.glassfish.grizzly.jaxws.JaxwsHandler;
 import org.glassfish.grizzly.servlet.WebappContext;
 import org.glassfish.jersey.servlet.ServletContainer;
 import org.smallmind.nutsnbolts.lang.web.PerApplicationContextFilter;
+import org.smallmind.web.jersey.jackson.JsonResourceConfig;
+import org.smallmind.web.jersey.spring.ExposedApplicationContext;
 import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.DisposableBean;
 import org.springframework.beans.factory.config.BeanPostProcessor;
@@ -56,6 +57,7 @@ public class GrizzlyInitializingBean implements DisposableBean, ApplicationConte
   private static final Class[] NO_ARG_SIGNATURE = new Class[0];
   private HttpServer httpServer;
   private LinkedList<WebService> serviceList = new LinkedList<>();
+  private LinkedList<FilterInstaller> filterInstallerList = new LinkedList<>();
   private LinkedList<ServletInstaller> servletInstallerList = new LinkedList<>();
   private String host;
   private String contextPath;
@@ -110,6 +112,21 @@ public class GrizzlyInitializingBean implements DisposableBean, ApplicationConte
       webappContext.addFilter("per-application-data", new PerApplicationContextFilter()).addMappingForUrlPatterns(EnumSet.of(DispatcherType.REQUEST), restPath + "/*");
       webappContext.addListener("org.springframework.web.context.request.RequestContextListener");
 
+      for (FilterInstaller filterInstaller : filterInstallerList) {
+        try {
+
+          Constructor<? extends Filter> filterConstructor;
+          Filter filter;
+          String urlPattern;
+
+          filterConstructor = filterInstaller.getFilterClass().getConstructor(NO_ARG_SIGNATURE);
+          filter = filterConstructor.newInstance();
+
+          webappContext.addFilter(filterInstaller.getDisplayName(), filter).addMappingForUrlPatterns(EnumSet.of(DispatcherType.REQUEST), (urlPattern = filterInstaller.getUrlPattern()) == null ? "/" : urlPattern);
+        } catch (Exception exception) {
+          throw new GrizzlyInitializationException(exception);
+        }
+      }
       for (ServletInstaller servletInstaller : servletInstallerList) {
         try {
 
@@ -121,8 +138,7 @@ public class GrizzlyInitializingBean implements DisposableBean, ApplicationConte
           servlet = servletConstructor.newInstance();
 
           webappContext.addServlet(servletInstaller.getDisplayName(), servlet).addMapping((urlPattern = servletInstaller.getUrlPattern()) == null ? "/" : urlPattern);
-        }
-        catch (Exception exception) {
+        } catch (Exception exception) {
           throw new GrizzlyInitializationException(exception);
         }
       }
@@ -138,8 +154,7 @@ public class GrizzlyInitializingBean implements DisposableBean, ApplicationConte
 
       try {
         httpServer.start();
-      }
-      catch (IOException ioException) {
+      } catch (IOException ioException) {
         if (!(ioException instanceof BindException)) {
           throw new GrizzlyInitializationException(ioException);
         }
@@ -163,11 +178,12 @@ public class GrizzlyInitializingBean implements DisposableBean, ApplicationConte
   public Object postProcessAfterInitialization (Object bean, String beanName) throws BeansException {
 
     ServicePath servicePath;
-    if (bean instanceof ServletInstaller) {
-      servletInstallerList.add((ServletInstaller)bean);
-    }
 
-    if ((servicePath = bean.getClass().getAnnotation(ServicePath.class)) != null) {
+    if (bean instanceof FilterInstaller) {
+      filterInstallerList.add((FilterInstaller) bean);
+    } else if (bean instanceof ServletInstaller) {
+      servletInstallerList.add((ServletInstaller) bean);
+    } else if ((servicePath = bean.getClass().getAnnotation(ServicePath.class)) != null) {
       serviceList.add(new WebService(servicePath.value(), bean));
     }
 
