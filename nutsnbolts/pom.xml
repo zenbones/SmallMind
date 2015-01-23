@@ -13,7 +13,7 @@
   <dependencies>
     <dependency>
       <groupId>javax.mail</groupId>
-      <artifactId>javax.mail-api</artifactId>
+      <artifactId>mail</artifactId>
       <scope>compile</scope>
       <optional>true</optional>
     </dependency>
