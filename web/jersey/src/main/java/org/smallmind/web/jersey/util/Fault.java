@@ -26,7 +26,6 @@
  */
 package org.smallmind.web.jersey.util;
 
-import java.io.IOException;
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlElement;
@@ -45,8 +44,7 @@ public class Fault {
 
   }
 
-  public Fault (Throwable throwable)
-    throws IOException {
+  public Fault (Throwable throwable) {
 
     StackTraceElement[] stackTraceElements;
     int index = 0;

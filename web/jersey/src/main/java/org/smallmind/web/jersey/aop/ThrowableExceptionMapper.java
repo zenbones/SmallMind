@@ -30,13 +30,14 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.ext.ExceptionMapper;
 import javax.ws.rs.ext.Provider;
+import org.smallmind.web.jersey.util.Fault;
 
 @Provider
 public class ThrowableExceptionMapper implements ExceptionMapper<Throwable> {
 
   @Override
-  public Response toResponse (Throwable exception) {
+  public Response toResponse (Throwable throwable) {
 
-    return Response.status(500).entity(exception).type(MediaType.APPLICATION_JSON).build();
+    return Response.status(500).entity(new Fault(throwable)).type(MediaType.APPLICATION_JSON).build();
   }
 }
