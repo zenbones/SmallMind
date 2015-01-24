@@ -26,15 +26,28 @@
  */
 package org.smallmind.web.jersey.aop;
 
-import org.aspectj.lang.annotation.After;
+import org.aspectj.lang.ProceedingJoinPoint;
+import org.aspectj.lang.annotation.Around;
 import org.aspectj.lang.annotation.Aspect;
+import org.aspectj.lang.reflect.MethodSignature;
 
 @Aspect
 public class EntityTypeAspect {
 
-  @After(value = "execution(@EntityType * * (..)) && @annotation(entityType)", argNames = "entityType")
-  public void aroundEntityTypeMethod (EntityType entityType) {
+  @Around(value = "execution(@EntityType * * (..)) && @annotation(entityType)", argNames = "thisJoinPoint, entityType")
+  public Object aroundEntityTypeMethod (ProceedingJoinPoint thisJoinPoint, EntityType entityType)
+    throws Throwable {
 
-    EntityTranslator.clearEntity();
+    try {
+
+      Object returnValue;
+
+      EntityTranslator.validateParameters(thisJoinPoint.getTarget(), ((MethodSignature)thisJoinPoint.getSignature()).getMethod(), thisJoinPoint.getArgs());
+      EntityTranslator.validateReturnValue(thisJoinPoint.getTarget(), ((MethodSignature)thisJoinPoint.getSignature()).getMethod(), returnValue = thisJoinPoint.proceed());
+
+      return returnValue;
+    } finally {
+      EntityTranslator.clearEntity();
+    }
   }
 }

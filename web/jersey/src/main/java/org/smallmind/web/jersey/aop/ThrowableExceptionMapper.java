@@ -24,23 +24,19 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.web.jersey.jackson;
+package org.smallmind.web.jersey.aop;
 
-import org.smallmind.web.jersey.aop.EntityParamResolver;
-import org.smallmind.web.jersey.aop.EntityTypeFilter;
-import org.smallmind.web.jersey.aop.ThrowableExceptionMapper;
-import org.smallmind.web.jersey.spring.SpringBasedResourceConfig;
-import org.springframework.context.ApplicationContext;
+import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.Response;
+import javax.ws.rs.ext.ExceptionMapper;
+import javax.ws.rs.ext.Provider;
 
-public class JsonResourceConfig extends SpringBasedResourceConfig {
+@Provider
+public class ThrowableExceptionMapper implements ExceptionMapper<Throwable> {
 
-  public JsonResourceConfig (ApplicationContext applicationContext) {
+  @Override
+  public Response toResponse (Throwable exception) {
 
-    super(applicationContext);
-
-    register(JsonProvider.class);
-    register(ThrowableExceptionMapper.class);
-    register(EntityTypeFilter.class);
-    register(new EntityParamResolver.Binder());
+    return Response.status(500).entity(exception).type(MediaType.APPLICATION_JSON).build();
   }
 }

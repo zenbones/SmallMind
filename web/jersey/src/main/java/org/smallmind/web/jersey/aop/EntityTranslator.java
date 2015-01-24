@@ -26,13 +26,26 @@
  */
 package org.smallmind.web.jersey.aop;
 
+import java.lang.reflect.Method;
+import java.util.Set;
+import javax.validation.ConstraintViolation;
+import javax.validation.ConstraintViolationException;
+import javax.validation.Validation;
+import javax.validation.executable.ExecutableValidator;
 import org.glassfish.jersey.server.ContainerRequest;
+import org.hibernate.validator.HibernateValidator;
 import org.smallmind.nutsnbolts.reflection.aop.MissingAnnotationException;
 
 public class EntityTranslator {
 
   private static final ThreadLocal<JsonEntity> JSON_ENTITY_LOCAL = new ThreadLocal<>();
   private static final ThreadLocal<Class<? extends JsonEntity>> JSON_ENTITY_CLASS_LOCAL = new ThreadLocal<>();
+  private static final ExecutableValidator EXECUTABLE_VALIDATOR;
+
+  static {
+
+    EXECUTABLE_VALIDATOR = Validation.byProvider(HibernateValidator.class).configure().buildValidatorFactory().getValidator().forExecutables();
+  }
 
   public static <E extends JsonEntity> void storeEntityType (Class<E> clazz) {
 
@@ -61,5 +74,23 @@ public class EntityTranslator {
   public static void clearEntity () {
 
     JSON_ENTITY_LOCAL.remove();
+  }
+
+  public static <T> void validateParameters (T object, Method method, Object[] parameters) {
+
+    Set<ConstraintViolation<T>> constraintViolationSet;
+
+    if (!(constraintViolationSet = EXECUTABLE_VALIDATOR.validateParameters(object, method, parameters)).isEmpty()) {
+      throw new ConstraintViolationException(constraintViolationSet);
+    }
+  }
+
+  public static <T> void validateReturnValue (T object, Method method, Object returnValue) {
+
+    Set<ConstraintViolation<T>> constraintViolationSet;
+
+    if (!(constraintViolationSet = EXECUTABLE_VALIDATOR.validateReturnValue(object, method, returnValue)).isEmpty()) {
+      throw new ConstraintViolationException(constraintViolationSet);
+    }
   }
 }
