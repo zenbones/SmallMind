@@ -26,40 +26,45 @@
  */
 package org.smallmind.web.jersey.aop;
 
-import org.glassfish.jersey.server.ContainerRequest;
-import org.smallmind.nutsnbolts.reflection.aop.MissingAnnotationException;
+import java.util.Arrays;
+import java.util.Set;
+import javax.validation.ConstraintViolation;
+import javax.validation.Path;
 
-public class EntityTranslator {
+public class ValidationException extends RuntimeException {
 
-  private static final ThreadLocal<JsonEntity> JSON_ENTITY_LOCAL = new ThreadLocal<>();
-  private static final ThreadLocal<Class<? extends JsonEntity>> JSON_ENTITY_CLASS_LOCAL = new ThreadLocal<>();
+  public <T> ValidationException (Set<ConstraintViolation<T>> constraintViolationSet) {
 
-  public static <E extends JsonEntity> void storeEntityType (Class<E> clazz) {
-
-    JSON_ENTITY_CLASS_LOCAL.set(clazz);
+    super(convert(constraintViolationSet));
   }
 
-  public static <T> T getParameter (ContainerRequest containerRequest, int index, Class<T> clazz)
-    throws MissingAnnotationException {
+  private static <T> String convert (Set<ConstraintViolation<T>> constraintViolationSet) {
 
-    JsonEntity jsonEntity;
+    Violation[] violations = new Violation[constraintViolationSet.size()];
+    int index = 0;
 
-    if ((jsonEntity = JSON_ENTITY_LOCAL.get()) == null) {
-
-      Class<? extends JsonEntity> entityClass;
-
-      if ((entityClass = JSON_ENTITY_CLASS_LOCAL.get()) == null) {
-        throw new MissingAnnotationException("Missing annotation(%s)", ResourceMethod.class.getName());
-      }
-
-      JSON_ENTITY_LOCAL.set(jsonEntity = containerRequest.readEntity(entityClass));
+    for (ConstraintViolation<?> constraintViolation : constraintViolationSet) {
+      violations[index++] = new Violation(constraintViolation);
     }
 
-    return jsonEntity.getParameter(index, clazz);
+    return Arrays.toString(violations);
   }
 
-  public static void clearEntity () {
+  private static class Violation {
 
-    JSON_ENTITY_LOCAL.remove();
+    private Path propertyPath;
+    private String message;
+
+    public Violation (ConstraintViolation<?> constraintViolation) {
+
+      propertyPath = constraintViolation.getPropertyPath();
+      message = constraintViolation.getMessage();
+    }
+
+    @Override
+    public String toString () {
+
+      return new StringBuilder("[propertyPath = ").append(propertyPath).append(", meassge = ").append(message).append(']').toString();
+    }
   }
 }
