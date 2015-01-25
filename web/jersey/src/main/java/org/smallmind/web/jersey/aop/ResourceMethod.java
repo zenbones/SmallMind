@@ -26,28 +26,18 @@
  */
 package org.smallmind.web.jersey.aop;
 
-import java.io.IOException;
-import javax.ws.rs.container.ContainerRequestContext;
-import javax.ws.rs.container.ContainerRequestFilter;
-import javax.ws.rs.container.ResourceInfo;
-import javax.ws.rs.core.Context;
-import javax.ws.rs.ext.Provider;
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
+import javax.ws.rs.NameBinding;
 
-@Provider
-@EntityType
-public class EntityTypeFilter implements ContainerRequestFilter {
+@Retention(RetentionPolicy.RUNTIME)
+@Target({ElementType.TYPE, ElementType.METHOD})
+@NameBinding
+public @interface ResourceMethod {
 
-  @Context
-  ResourceInfo resourceInfo;
+  public abstract Class<? extends JsonEntity> value () default JsonEntity.class;
 
-  @Override
-  public void filter (ContainerRequestContext requestContext)
-    throws IOException {
-
-    EntityType entityType;
-
-    if ((entityType = resourceInfo.getResourceMethod().getAnnotation(EntityType.class)) != null) {
-      EntityTranslator.storeEntityType(entityType.value());
-    }
-  }
+  public abstract boolean validate () default false;
 }

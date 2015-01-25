@@ -24,30 +24,39 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.web.jersey.jackson;
+package org.smallmind.web.jersey.aop;
 
-import org.smallmind.web.jersey.aop.EntityParamResolver;
-import org.smallmind.web.jersey.aop.ResourceMethodFilter;
-import org.smallmind.web.jersey.spring.SpringBasedResourceConfig;
-import org.smallmind.web.jersey.fault.ThrowableExceptionMapper;
-import org.springframework.context.ApplicationContext;
+import java.lang.reflect.Method;
+import java.util.Set;
+import javax.validation.ConstraintViolation;
+import javax.validation.Validation;
+import javax.validation.executable.ExecutableValidator;
+import org.hibernate.validator.HibernateValidator;
 
-public class JsonResourceConfig extends SpringBasedResourceConfig {
+public class EntityValidator {
 
-  public JsonResourceConfig (ApplicationContext applicationContext, JsonResourceExtensions jsonResourceExtensions) {
+  private static final ExecutableValidator EXECUTABLE_VALIDATOR;
 
-    super(applicationContext);
+  static {
 
-    register(JsonProvider.class);
+    EXECUTABLE_VALIDATOR = Validation.byProvider(HibernateValidator.class).configure().buildValidatorFactory().getValidator().forExecutables();
+  }
 
-    if ((jsonResourceExtensions != null) && jsonResourceExtensions.isSupportEntityParameters()) {
-      register(ResourceMethodFilter.class);
-      register(new EntityParamResolver.Binder());
+  public static <T> void validateParameters (T object, Method method, Object[] parameters) {
+
+    Set<ConstraintViolation<T>> constraintViolationSet;
+
+    if (!(constraintViolationSet = EXECUTABLE_VALIDATOR.validateParameters(object, method, parameters)).isEmpty()) {
+      throw new ValidationException(constraintViolationSet);
     }
+  }
 
-    if ((jsonResourceExtensions != null) && jsonResourceExtensions.isSupportThrowableTranslation()) {
-      property("jersey.config.server.response.setStatusOverSendError", "true");
-      register(ThrowableExceptionMapper.class);
+  public static <T> void validateReturnValue (T object, Method method, Object returnValue) {
+
+    Set<ConstraintViolation<T>> constraintViolationSet;
+
+    if (!(constraintViolationSet = EXECUTABLE_VALIDATOR.validateReturnValue(object, method, returnValue)).isEmpty()) {
+      throw new ValidationException(constraintViolationSet);
     }
   }
 }

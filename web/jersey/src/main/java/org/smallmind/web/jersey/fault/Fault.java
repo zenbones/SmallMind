@@ -24,8 +24,9 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.web.jersey.util;
+package org.smallmind.web.jersey.fault;
 
+import java.io.IOException;
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlElement;
@@ -39,15 +40,19 @@ public class Fault {
   private FaultElement[] elements;
   private String throwableType;
   private String message;
+  private NativeObject nativeObject;
 
   public Fault () {
 
   }
 
-  public Fault (Throwable throwable) {
+  public Fault (Throwable throwable)
+    throws IOException {
 
     StackTraceElement[] stackTraceElements;
     int index = 0;
+
+    nativeObject = new NativeObject(throwable);
 
     throwableType = throwable.getClass().getName();
     message = throwable.getMessage();
@@ -118,6 +123,17 @@ public class Fault {
   public void setElements (FaultElement[] elements) {
 
     this.elements = elements;
+  }
+
+  @XmlElement(name = "native", required = false, nillable = false)
+  public NativeObject getNativeObject () {
+
+    return nativeObject;
+  }
+
+  public void setNativeObject (NativeObject nativeObject) {
+
+    this.nativeObject = nativeObject;
   }
 
   @Override

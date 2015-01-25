@@ -79,7 +79,6 @@ public class EntityParamResolver {
   private static class EntityParamRequestValueFactory extends AbstractContainerRequestValueFactory<Object> {
 
     private Class<?> paramClass;
-    private boolean allowNull;
     private int paramIndex;
 
     public EntityParamRequestValueFactory (int paramIndex, Class<?> paramClass) {
@@ -102,7 +101,7 @@ public class EntityParamResolver {
 
       bind(EntityParamValueFactoryProvider.class).to(ValueFactoryProvider.class).in(Singleton.class);
       bind(EntityParamInjectionResolver.class).to(new TypeLiteral<InjectionResolver<EntityParam>>() {
-      }
+                                                  }
       ).in(Singleton.class);
     }
   }

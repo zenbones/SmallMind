@@ -24,30 +24,55 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.web.jersey.jackson;
+package org.smallmind.web.jersey.fault;
 
-import org.smallmind.web.jersey.aop.EntityParamResolver;
-import org.smallmind.web.jersey.aop.ResourceMethodFilter;
-import org.smallmind.web.jersey.spring.SpringBasedResourceConfig;
-import org.smallmind.web.jersey.fault.ThrowableExceptionMapper;
-import org.springframework.context.ApplicationContext;
+import java.io.IOException;
+import java.io.PrintStream;
+import java.io.PrintWriter;
 
-public class JsonResourceConfig extends SpringBasedResourceConfig {
+public class FaultWrappingException extends IOException {
 
-  public JsonResourceConfig (ApplicationContext applicationContext, JsonResourceExtensions jsonResourceExtensions) {
+  private Fault fault;
 
-    super(applicationContext);
+  public FaultWrappingException (Fault fault) {
 
-    register(JsonProvider.class);
+    super(fault.getMessage());
 
-    if ((jsonResourceExtensions != null) && jsonResourceExtensions.isSupportEntityParameters()) {
-      register(ResourceMethodFilter.class);
-      register(new EntityParamResolver.Binder());
+    this.fault = fault;
+
+    if (fault.getElements() != null) {
+
+      StackTraceElement[] stackTrack = new StackTraceElement[fault.getElements().length];
+      int index = 0;
+
+      for (FaultElement faultElement : fault.getElements()) {
+        stackTrack[index++] = new StackTraceElement(faultElement.getDeclaringType(), faultElement.getFunctionName(), faultElement.getFileName(), faultElement.getLineNumber());
+      }
+
+      setStackTrace(stackTrack);
     }
+  }
 
-    if ((jsonResourceExtensions != null) && jsonResourceExtensions.isSupportThrowableTranslation()) {
-      property("jersey.config.server.response.setStatusOverSendError", "true");
-      register(ThrowableExceptionMapper.class);
-    }
+  public Fault getFault () {
+
+    return fault;
+  }
+
+  @Override
+  public void printStackTrace () {
+
+    printStackTrace(System.out);
+  }
+
+  @Override
+  public void printStackTrace (PrintStream stream) {
+
+    stream.print(fault.toString());
+  }
+
+  @Override
+  public void printStackTrace (PrintWriter writer) {
+
+    writer.print(fault.toString());
   }
 }

@@ -24,20 +24,14 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.web.jersey.aop;
+package org.smallmind.web.jersey.fault;
 
-import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.Response;
-import javax.ws.rs.ext.ExceptionMapper;
-import javax.ws.rs.ext.Provider;
-import org.smallmind.web.jersey.util.Fault;
+import java.io.IOException;
 
-@Provider
-public class ThrowableExceptionMapper implements ExceptionMapper<Throwable> {
+public class ResourceInvocationException extends IOException {
 
-  @Override
-  public Response toResponse (Throwable throwable) {
+  public ResourceInvocationException (Throwable throwable) {
 
-    return Response.status(500).entity(new Fault(throwable)).type(MediaType.APPLICATION_JSON).build();
+    super(throwable.getMessage(), throwable);
   }
 }

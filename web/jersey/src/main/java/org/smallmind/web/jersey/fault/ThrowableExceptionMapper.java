@@ -24,18 +24,25 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.web.jersey.aop;
+package org.smallmind.web.jersey.fault;
 
-import java.lang.annotation.ElementType;
-import java.lang.annotation.Retention;
-import java.lang.annotation.RetentionPolicy;
-import java.lang.annotation.Target;
-import javax.ws.rs.NameBinding;
+import java.io.IOException;
+import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.Response;
+import javax.ws.rs.ext.ExceptionMapper;
+import javax.ws.rs.ext.Provider;
+import org.smallmind.web.jersey.fault.Fault;
 
-@Retention(RetentionPolicy.RUNTIME)
-@Target({ElementType.TYPE, ElementType.METHOD})
-@NameBinding
-public @interface EntityType {
+@Provider
+public class ThrowableExceptionMapper implements ExceptionMapper<Throwable> {
 
-  public abstract Class<? extends JsonEntity> value () default JsonEntity.class;
+  @Override
+  public Response toResponse (Throwable throwable) {
+
+    try {
+      return Response.status(500).type(MediaType.APPLICATION_JSON).entity(new Fault(throwable)).build();
+    } catch (IOException ioException) {
+      return Response.status(500).type(MediaType.TEXT_HTML_TYPE).entity(ioException.getMessage()).build();
+    }
+  }
 }

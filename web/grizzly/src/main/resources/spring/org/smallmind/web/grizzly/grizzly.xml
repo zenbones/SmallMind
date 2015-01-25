@@ -9,6 +9,12 @@
     <property name="contextPath" value="${grizzly.context_path}"/>
     <property name="restPath" value="${grizzly.rest_path}"/>
     <property name="soapPath" value="${grizzly.soap_path}"/>
+    <property name="jsonResourceExtensions">
+      <bean class="org.smallmind.web.jersey.jackson.JsonResourceExtensions">
+        <property name="supportEntityParameters" value="true"/>
+        <property name="supportThrowableTranslation" value="true"/>
+      </bean>
+    </property>
   </bean>
 
   <!--

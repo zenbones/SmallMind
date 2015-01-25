@@ -40,8 +40,7 @@ import javax.ws.rs.core.MultivaluedMap;
 import javax.ws.rs.ext.MessageBodyReader;
 import javax.ws.rs.ext.MessageBodyWriter;
 import javax.ws.rs.ext.Provider;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.module.jaxb.JaxbAnnotationIntrospector;
+import org.smallmind.web.jersey.util.JsonCodec;
 
 @Provider
 @Consumes({MediaType.APPLICATION_JSON, "text/json"})
@@ -49,7 +48,6 @@ import com.fasterxml.jackson.module.jaxb.JaxbAnnotationIntrospector;
 public class JsonProvider implements MessageBodyReader<Object>, MessageBodyWriter<Object> {
 
   private static final ThreadLocal<ByteArrayOutputStream> WRITE_BUFFER_LOCAL = new ThreadLocal<>();
-  private static final ObjectMapper objectMapper = new ObjectMapper().setAnnotationIntrospector(new JaxbAnnotationIntrospector());
 
   @Override
   public boolean isReadable (Class<?> type, Type genericType, Annotation[] annotations, MediaType mediaType) {
@@ -61,7 +59,7 @@ public class JsonProvider implements MessageBodyReader<Object>, MessageBodyWrite
   public Object readFrom (Class<Object> type, Type genericType, Annotation[] annotations, MediaType mediaType, MultivaluedMap<String, String> httpHeaders, InputStream entityStream)
     throws IOException, WebApplicationException {
 
-    return objectMapper.readValue(entityStream, type);
+    return JsonCodec.read(entityStream, type);
   }
 
   @Override
@@ -76,11 +74,10 @@ public class JsonProvider implements MessageBodyReader<Object>, MessageBodyWrite
     WRITE_BUFFER_LOCAL.set(new ByteArrayOutputStream());
 
     try {
-      objectMapper.writeValue(WRITE_BUFFER_LOCAL.get(), o);
+      JsonCodec.writeToStream(WRITE_BUFFER_LOCAL.get(), o);
 
       return WRITE_BUFFER_LOCAL.get().size();
-    }
-    catch (Throwable throwable) {
+    } catch (Throwable throwable) {
       throw new WebApplicationException(throwable);
     }
   }
@@ -95,8 +92,7 @@ public class JsonProvider implements MessageBodyReader<Object>, MessageBodyWrite
       }
 
       entityStream.write(WRITE_BUFFER_LOCAL.get().toByteArray());
-    }
-    finally {
+    } finally {
       WRITE_BUFFER_LOCAL.remove();
     }
   }

@@ -24,30 +24,14 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.web.jersey.aop;
+package org.smallmind.web.jersey.fault;
 
-import org.aspectj.lang.ProceedingJoinPoint;
-import org.aspectj.lang.annotation.Around;
-import org.aspectj.lang.annotation.Aspect;
-import org.aspectj.lang.reflect.MethodSignature;
+import java.io.IOException;
 
-@Aspect
-public class EntityTypeAspect {
+public class ObjectInstantiationException extends IOException {
 
-  @Around(value = "execution(@EntityType * * (..)) && @annotation(entityType)", argNames = "thisJoinPoint, entityType")
-  public Object aroundEntityTypeMethod (ProceedingJoinPoint thisJoinPoint, EntityType entityType)
-    throws Throwable {
+  public ObjectInstantiationException (ClassNotFoundException cause) {
 
-    try {
-
-      Object returnValue;
-
-      EntityTranslator.validateParameters(thisJoinPoint.getTarget(), ((MethodSignature)thisJoinPoint.getSignature()).getMethod(), thisJoinPoint.getArgs());
-      EntityTranslator.validateReturnValue(thisJoinPoint.getTarget(), ((MethodSignature)thisJoinPoint.getSignature()).getMethod(), returnValue = thisJoinPoint.proceed());
-
-      return returnValue;
-    } finally {
-      EntityTranslator.clearEntity();
-    }
+    super(cause.getMessage(), cause);
   }
 }

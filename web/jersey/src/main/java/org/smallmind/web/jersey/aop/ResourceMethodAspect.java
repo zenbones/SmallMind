@@ -24,30 +24,37 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.web.jersey.jackson;
+package org.smallmind.web.jersey.aop;
 
-import org.smallmind.web.jersey.aop.EntityParamResolver;
-import org.smallmind.web.jersey.aop.ResourceMethodFilter;
-import org.smallmind.web.jersey.spring.SpringBasedResourceConfig;
-import org.smallmind.web.jersey.fault.ThrowableExceptionMapper;
-import org.springframework.context.ApplicationContext;
+import org.aspectj.lang.ProceedingJoinPoint;
+import org.aspectj.lang.annotation.Around;
+import org.aspectj.lang.annotation.Aspect;
+import org.aspectj.lang.reflect.MethodSignature;
 
-public class JsonResourceConfig extends SpringBasedResourceConfig {
+@Aspect
+public class ResourceMethodAspect {
 
-  public JsonResourceConfig (ApplicationContext applicationContext, JsonResourceExtensions jsonResourceExtensions) {
+  @Around(value = "execution(@org.smallmind.web.jersey.aop.ResourceMethod * * (..)) && @annotation(resourceMethod)", argNames = "thisJoinPoint, entityType")
+  public Object aroundEntityTypeMethod (ProceedingJoinPoint thisJoinPoint, ResourceMethod resourceMethod)
+    throws Throwable {
 
-    super(applicationContext);
+    try {
 
-    register(JsonProvider.class);
+      Object returnValue;
 
-    if ((jsonResourceExtensions != null) && jsonResourceExtensions.isSupportEntityParameters()) {
-      register(ResourceMethodFilter.class);
-      register(new EntityParamResolver.Binder());
-    }
+      if (resourceMethod.validate()) {
+        EntityValidator.validateParameters(thisJoinPoint.getTarget(), ((MethodSignature)thisJoinPoint.getSignature()).getMethod(), thisJoinPoint.getArgs());
+      }
 
-    if ((jsonResourceExtensions != null) && jsonResourceExtensions.isSupportThrowableTranslation()) {
-      property("jersey.config.server.response.setStatusOverSendError", "true");
-      register(ThrowableExceptionMapper.class);
+      returnValue = thisJoinPoint.proceed();
+
+      if (resourceMethod.validate()) {
+        EntityValidator.validateReturnValue(thisJoinPoint.getTarget(), ((MethodSignature)thisJoinPoint.getSignature()).getMethod(), returnValue);
+      }
+
+      return returnValue;
+    } finally {
+      EntityTranslator.clearEntity();
     }
   }
 }

@@ -26,56 +26,55 @@
  */
 package org.smallmind.web.jersey.util;
 
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.MapperFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.module.jaxb.JaxbAnnotationModule;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-
 public class JsonCodec {
 
   private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper().registerModule(new JaxbAnnotationModule()).configure(MapperFeature.USE_WRAPPER_NAME_AS_PROPERTY_NAME, true);
 
-  public static <T> T read(byte[] bytes, Class<T> clazz)
-      throws IOException {
+  public static <T> T read (byte[] bytes, Class<T> clazz)
+    throws IOException {
 
     return OBJECT_MAPPER.readValue(bytes, clazz);
   }
 
-  public static <T> T read(String aString, Class<T> clazz)
-      throws IOException {
+  public static <T> T read (String aString, Class<T> clazz)
+    throws IOException {
 
     return OBJECT_MAPPER.readValue(aString, clazz);
   }
 
-  public static <T> T read(InputStream inputStream, Class<T> clazz)
-      throws IOException {
+  public static <T> T read (InputStream inputStream, Class<T> clazz)
+    throws IOException {
 
     return OBJECT_MAPPER.readValue(inputStream, clazz);
   }
 
-  public static byte[] writeAsBytes(Object obj)
-      throws JsonProcessingException {
+  public static byte[] writeAsBytes (Object obj)
+    throws JsonProcessingException {
 
     return OBJECT_MAPPER.writeValueAsBytes(obj);
   }
 
-  public static String writeAsString(Object obj)
-      throws JsonProcessingException {
+  public static String writeAsString (Object obj)
+    throws JsonProcessingException {
 
     return OBJECT_MAPPER.writeValueAsString(obj);
   }
 
-  public static void writeToStream(OutputStream outputStream, Object obj)
-      throws IOException {
+  public static void writeToStream (OutputStream outputStream, Object obj)
+    throws IOException {
 
     OBJECT_MAPPER.writeValue(outputStream, obj);
   }
 
-  public static <T> T convert(Object obj, Class<T> clazz) {
+  public static <T> T convert (Object obj, Class<T> clazz) {
 
     return OBJECT_MAPPER.convertValue(obj, clazz);
   }

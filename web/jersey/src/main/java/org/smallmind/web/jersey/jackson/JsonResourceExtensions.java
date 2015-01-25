@@ -26,28 +26,28 @@
  */
 package org.smallmind.web.jersey.jackson;
 
-import org.smallmind.web.jersey.aop.EntityParamResolver;
-import org.smallmind.web.jersey.aop.ResourceMethodFilter;
-import org.smallmind.web.jersey.spring.SpringBasedResourceConfig;
-import org.smallmind.web.jersey.fault.ThrowableExceptionMapper;
-import org.springframework.context.ApplicationContext;
+public class JsonResourceExtensions {
 
-public class JsonResourceConfig extends SpringBasedResourceConfig {
+  private boolean supportEntityParameters = false;
+  private boolean supportThrowableTranslation = false;
 
-  public JsonResourceConfig (ApplicationContext applicationContext, JsonResourceExtensions jsonResourceExtensions) {
+  public boolean isSupportEntityParameters () {
 
-    super(applicationContext);
+    return supportEntityParameters;
+  }
 
-    register(JsonProvider.class);
+  public void setSupportEntityParameters (boolean supportEntityParameters) {
 
-    if ((jsonResourceExtensions != null) && jsonResourceExtensions.isSupportEntityParameters()) {
-      register(ResourceMethodFilter.class);
-      register(new EntityParamResolver.Binder());
-    }
+    this.supportEntityParameters = supportEntityParameters;
+  }
 
-    if ((jsonResourceExtensions != null) && jsonResourceExtensions.isSupportThrowableTranslation()) {
-      property("jersey.config.server.response.setStatusOverSendError", "true");
-      register(ThrowableExceptionMapper.class);
-    }
+  public boolean isSupportThrowableTranslation () {
+
+    return supportThrowableTranslation;
+  }
+
+  public void setSupportThrowableTranslation (boolean supportThrowableTranslation) {
+
+    this.supportThrowableTranslation = supportThrowableTranslation;
   }
 }

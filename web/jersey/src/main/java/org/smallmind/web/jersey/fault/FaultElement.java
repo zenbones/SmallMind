@@ -24,7 +24,7 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.web.jersey.util;
+package org.smallmind.web.jersey.fault;
 
 import java.util.Objects;
 import javax.xml.bind.annotation.XmlAccessType;

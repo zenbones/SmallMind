@@ -24,30 +24,30 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.web.jersey.jackson;
+package org.smallmind.web.jersey.aop;
 
-import org.smallmind.web.jersey.aop.EntityParamResolver;
-import org.smallmind.web.jersey.aop.ResourceMethodFilter;
-import org.smallmind.web.jersey.spring.SpringBasedResourceConfig;
-import org.smallmind.web.jersey.fault.ThrowableExceptionMapper;
-import org.springframework.context.ApplicationContext;
+import java.io.IOException;
+import javax.ws.rs.container.ContainerRequestContext;
+import javax.ws.rs.container.ContainerRequestFilter;
+import javax.ws.rs.container.ResourceInfo;
+import javax.ws.rs.core.Context;
+import javax.ws.rs.ext.Provider;
 
-public class JsonResourceConfig extends SpringBasedResourceConfig {
+@Provider
+@ResourceMethod
+public class ResourceMethodFilter implements ContainerRequestFilter {
 
-  public JsonResourceConfig (ApplicationContext applicationContext, JsonResourceExtensions jsonResourceExtensions) {
+  @Context
+  ResourceInfo resourceInfo;
 
-    super(applicationContext);
+  @Override
+  public void filter (ContainerRequestContext requestContext)
+    throws IOException {
 
-    register(JsonProvider.class);
+    ResourceMethod resourceMethod;
 
-    if ((jsonResourceExtensions != null) && jsonResourceExtensions.isSupportEntityParameters()) {
-      register(ResourceMethodFilter.class);
-      register(new EntityParamResolver.Binder());
-    }
-
-    if ((jsonResourceExtensions != null) && jsonResourceExtensions.isSupportThrowableTranslation()) {
-      property("jersey.config.server.response.setStatusOverSendError", "true");
-      register(ThrowableExceptionMapper.class);
+    if ((resourceMethod = resourceInfo.getResourceMethod().getAnnotation(ResourceMethod.class)) != null) {
+      EntityTranslator.storeEntityType(resourceMethod.value());
     }
   }
 }

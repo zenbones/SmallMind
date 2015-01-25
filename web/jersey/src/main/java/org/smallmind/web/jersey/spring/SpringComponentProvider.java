@@ -74,11 +74,9 @@ public class SpringComponentProvider implements ComponentProvider {
 
       if ((beanNames == null) || (beanNames.length == 0)) {
         LoggerManager.getLogger(SpringComponentProvider.class).warn("The Spring context failed to contain a bean of type(%s) - unable to bind into HK2 ", component.getName());
-      }
-      else if (beanNames.length > 1) {
+      } else if (beanNames.length > 1) {
         LoggerManager.getLogger(SpringComponentProvider.class).warn("The Spring context contained multiple beans of type(%s) - unable to bind into HK2", component.getName());
-      }
-      else {
+      } else {
 
         DynamicConfiguration dynamicConfiguration = Injections.getConfiguration(serviceLocator);
         ServiceBindingBuilder serviceBindingBuilder = Injections.newFactoryBinder(new SpringManagedBeanFactory(serviceLocator, applicationContext, beanNames[0]));
