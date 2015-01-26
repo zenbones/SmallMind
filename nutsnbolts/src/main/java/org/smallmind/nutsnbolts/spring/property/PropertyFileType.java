@@ -34,7 +34,7 @@ import org.yaml.snakeyaml.Yaml;
 
 public enum PropertyFileType {
 
-  PROPERTIES("properties") {
+  PROPERTIES(new String[]{"properties"}) {
     @Override
     public PropertyHandler<?> getPropertyHandler (InputStream inputStream)
       throws IOException {
@@ -46,7 +46,7 @@ public enum PropertyFileType {
       return new PropertiesPropertyHandler(properties);
     }
   },
-  YAML("yaml") {
+  YAML(new String[]{"yaml", "yml"}) {
     @Override
     public PropertyHandler<?> getPropertyHandler (InputStream inputStream) {
 
@@ -55,19 +55,21 @@ public enum PropertyFileType {
       return new YamlPropertyHandler((Map<String, Object>)yaml.load(inputStream));
     }
   };
-  private String extension;
+  private String[] extensions;
 
-  private PropertyFileType (String extension) {
+  private PropertyFileType (String[] extensions) {
 
-    this.extension = extension;
+    this.extensions = extensions;
   }
 
   public static PropertyFileType forExtension (String extension) {
 
     for (PropertyFileType propertyFileType : PropertyFileType.values()) {
-      if (propertyFileType.getExtension().equals(extension)) {
+      for (String possibleExtension : propertyFileType.getExtensions()) {
+        if (possibleExtension.equals(extension)) {
 
-        return propertyFileType;
+          return propertyFileType;
+        }
       }
     }
 
@@ -77,8 +79,8 @@ public enum PropertyFileType {
   public abstract PropertyHandler<?> getPropertyHandler (InputStream inputStream)
     throws IOException;
 
-  public String getExtension () {
+  public String[] getExtensions () {
 
-    return extension;
+    return extensions;
   }
 }
