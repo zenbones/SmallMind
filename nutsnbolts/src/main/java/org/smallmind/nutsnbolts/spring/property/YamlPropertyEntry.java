@@ -29,9 +29,9 @@ package org.smallmind.nutsnbolts.spring.property;
 public class YamlPropertyEntry implements PropertyEntry {
 
   private String key;
-  private String value;
+  private Object value;
 
-  public YamlPropertyEntry (String key, String value) {
+  public YamlPropertyEntry (String key, Object value) {
 
     this.key = key;
     this.value = value;
@@ -44,7 +44,7 @@ public class YamlPropertyEntry implements PropertyEntry {
   }
 
   @Override
-  public String getValue () {
+  public Object getValue () {
 
     return value;
   }

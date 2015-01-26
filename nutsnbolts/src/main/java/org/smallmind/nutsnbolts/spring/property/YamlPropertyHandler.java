@@ -53,8 +53,7 @@ public class YamlPropertyHandler implements PropertyHandler<YamlPropertyEntry> {
     while (!iteratorList.isEmpty()) {
       if (!iteratorList.peekFirst().getIterator().hasNext()) {
         iteratorList.pop();
-      }
-      else {
+      } else {
 
         return true;
       }
@@ -74,8 +73,7 @@ public class YamlPropertyHandler implements PropertyHandler<YamlPropertyEntry> {
       iteratorList.push(new NamedIteration(((Map<String, Object>)entry.getValue()).entrySet().iterator()));
 
       return next();
-    }
-    else if (entry.getValue() instanceof List) {
+    } else if (entry.getValue() instanceof List) {
 
       LinkedHashMap<String, Object> interpolatedMap = new LinkedHashMap<>();
       int index = 0;
@@ -87,8 +85,7 @@ public class YamlPropertyHandler implements PropertyHandler<YamlPropertyEntry> {
       iteratorList.push(new NamedIteration(interpolatedMap.entrySet().iterator()));
 
       return next();
-    }
-    else {
+    } else {
 
       StringBuilder keyBuilder = new StringBuilder();
       boolean first = true;
@@ -101,7 +98,7 @@ public class YamlPropertyHandler implements PropertyHandler<YamlPropertyEntry> {
         keyBuilder.insert(0, namedIteration.getName());
       }
 
-      return new YamlPropertyEntry(keyBuilder.toString(), entry.getValue().toString());
+      return new YamlPropertyEntry(keyBuilder.toString(), entry.getValue());
     }
   }
 

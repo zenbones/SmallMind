@@ -148,8 +148,7 @@ public class PropertyPlaceholderConfigurer implements BeanFactoryPostProcessor, 
 
     try {
       locationExpander = new PropertyExpander(true, SystemPropertyMode.OVERRIDE, true);
-    }
-    catch (PropertyExpanderException propertyExpanderException) {
+    } catch (PropertyExpanderException propertyExpanderException) {
       throw new RuntimeBeansException(propertyExpanderException);
     }
 
@@ -170,7 +169,10 @@ public class PropertyPlaceholderConfigurer implements BeanFactoryPostProcessor, 
     if ((keyDebugger != null) && keyDebugger.willDebug()) {
       for (Map.Entry<String, Object> propertyEntry : propertyMap.entrySet()) {
         if (keyDebugger.matches(propertyEntry.getKey())) {
-          debugMap.put(propertyEntry.getKey(), valueResolver.resolveStringValue(propertyEntry.getValue().toString()));
+
+          Object value;
+
+          debugMap.put(propertyEntry.getKey(), valueResolver.resolveStringValue(((value = propertyEntry.getValue()) == null) ? "" : value.toString()));
         }
       }
 
@@ -188,8 +190,7 @@ public class PropertyPlaceholderConfigurer implements BeanFactoryPostProcessor, 
         beanDefinition = beanFactoryToProcess.getBeanDefinition(beanName);
         try {
           beanDefinitionVisitor.visitBeanDefinition(beanDefinition);
-        }
-        catch (BeanDefinitionStoreException beanDefinitionStoreException) {
+        } catch (BeanDefinitionStoreException beanDefinitionStoreException) {
           throw new BeanDefinitionStoreException(beanDefinition.getResourceDescription(), beanName, beanDefinitionStoreException.getMessage());
         }
       }
@@ -207,8 +208,7 @@ public class PropertyPlaceholderConfigurer implements BeanFactoryPostProcessor, 
       locationResource = resourceParser.parseResource(locationExpander.expand(location));
       if ((inputStream = locationResource.getInputStream()) == null) {
         throw new IOException("No stream available for resource(" + locationResource + ")");
-      }
-      else {
+      } else {
 
         PropertyHandler<?> propertyHandler;
         PropertyFileType propertyFileType;
@@ -218,8 +218,7 @@ public class PropertyPlaceholderConfigurer implements BeanFactoryPostProcessor, 
           if ((propertyFileType = PropertyFileType.forExtension(locationResource.getPath().substring(lastDotPos + 1))) == null) {
             propertyFileType = PropertyFileType.PROPERTIES;
           }
-        }
-        else {
+        } else {
           propertyFileType = PropertyFileType.PROPERTIES;
         }
 
@@ -229,8 +228,7 @@ public class PropertyPlaceholderConfigurer implements BeanFactoryPostProcessor, 
           propertyMap.put(propertyEntry.getKey(), propertyEntry.getValue());
         }
       }
-    }
-    catch (Exception exception) {
+    } catch (Exception exception) {
       if ((!ignoreResourceNotFound) || (!(exception instanceof IOException))) {
         throw new RuntimeBeansException(exception);
       }

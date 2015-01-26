@@ -30,5 +30,5 @@ public interface PropertyEntry {
 
   public abstract String getKey ();
 
-  public abstract String getValue ();
+  public abstract Object getValue ();
 }

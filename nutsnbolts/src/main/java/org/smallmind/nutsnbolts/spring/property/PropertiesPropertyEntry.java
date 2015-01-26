@@ -44,8 +44,8 @@ public class PropertiesPropertyEntry implements PropertyEntry {
   }
 
   @Override
-  public String getValue () {
+  public Object getValue () {
 
-    return entry.getValue().toString();
+    return entry.getValue();
   }
 }
