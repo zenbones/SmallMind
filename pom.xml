@@ -568,12 +568,17 @@
       <dependency>
         <groupId>org.glassfish.hk2</groupId>
         <artifactId>hk2</artifactId>
-        <version>2.3.0-b07</version>
+        <version>2.4.0-b08</version>
+      </dependency>
+      <dependency>
+        <groupId>org.glassfish.hk2</groupId>
+        <artifactId>hk2-utils</artifactId>
+        <version>2.4.0-b08</version>
       </dependency>
       <dependency>
         <groupId>org.glassfish.hk2</groupId>
         <artifactId>spring-bridge</artifactId>
-        <version>2.3.0-b07</version>
+        <version>2.4.0-b08</version>
       </dependency>
       <dependency>
         <groupId>javax.el</groupId>
