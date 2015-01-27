@@ -39,6 +39,11 @@ import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.NewCookie;
 import javax.ws.rs.core.Response;
+import org.smallmind.nutsnbolts.http.Base64Codec;
+import org.smallmind.nutsnbolts.http.HexCodec;
+import org.smallmind.nutsnbolts.security.EncryptionUtilities;
+import org.smallmind.nutsnbolts.security.HashAlgorithm;
+import org.smallmind.scribe.pen.LoggerManager;
 import org.smallmind.web.oauth.GrantType;
 import org.smallmind.web.oauth.OAuthProtocolException;
 import org.smallmind.web.oauth.ResponseType;
@@ -50,11 +55,6 @@ import org.smallmind.web.oauth.ServerErrorJsonResponse;
 import org.smallmind.web.oauth.ServerErrorRedirectResponse;
 import org.smallmind.web.oauth.ServerLoginRedirectRequest;
 import org.smallmind.web.oauth.TokenType;
-import org.smallmind.nutsnbolts.http.Base64Codec;
-import org.smallmind.nutsnbolts.http.HexCodec;
-import org.smallmind.nutsnbolts.security.EncryptionUtilities;
-import org.smallmind.nutsnbolts.security.HashAlgorithm;
-import org.smallmind.scribe.pen.LoggerManager;
 
 @Path("/v1/oauth")
 public class OAuthResource {
@@ -88,11 +88,9 @@ public class OAuthResource {
 
       if (!ResponseType.CODE.getParameter().equals(serverAuthorizationRequest.getResponseType())) {
         return Response.status(Response.Status.FOUND).location(URI.create(ServerErrorRedirectResponse.redirectUri(serverAuthorizationRequest.getRedirectUri()).setError("unsupported_response_type").setErrorDescription("only 'code' response types are supported").setState(serverAuthorizationRequest.getState()).build())).build();
-      }
-      else if ((oauthRegistration = oauthConfiguration.getRegistrationMap().get(serverAuthorizationRequest.getClientId())) == null) {
+      } else if ((oauthRegistration = oauthConfiguration.getRegistrationMap().get(serverAuthorizationRequest.getClientId())) == null) {
         return Response.status(Response.Status.FOUND).location(URI.create(ServerErrorRedirectResponse.redirectUri(serverAuthorizationRequest.getRedirectUri()).setError("unauthorized_client").setErrorDescription("unregistered client id").setState(serverAuthorizationRequest.getState()).build())).build();
-      }
-      else if ((!oauthRegistration.isUnsafeRedirection()) && (!oauthRegistration.getRedirectUri().equals(serverAuthorizationRequest.getRedirectUri()))) {
+      } else if ((!oauthRegistration.isUnsafeRedirection()) && (!oauthRegistration.getRedirectUri().equals(serverAuthorizationRequest.getRedirectUri()))) {
         return Response.status(Response.Status.FOUND).location(URI.create(ServerErrorRedirectResponse.redirectUri(serverAuthorizationRequest.getRedirectUri()).setError("unauthorized_client").setErrorDescription("mismatching redirect uri").setState(serverAuthorizationRequest.getState()).build())).build();
       }
 
@@ -104,14 +102,12 @@ public class OAuthResource {
       if ((serverAuthorizationRequest.getAuthData() != null) && (!serverAuthorizationRequest.getAuthData().isEmpty())) {
         try {
           ssoAuthData = MungedCodec.decrypt(SSOAuthData.class, cookieValue = serverAuthorizationRequest.getAuthData(), true);
-        }
-        catch (Exception exception) {
+        } catch (Exception exception) {
           LoggerManager.getLogger(OAuthResource.class).error(exception);
 
           return Response.status(Response.Status.FOUND).location(URI.create(ServerErrorRedirectResponse.redirectUri(serverAuthorizationRequest.getRedirectUri()).setError("server_error").setErrorDescription(exception.getMessage()).setState(serverAuthorizationRequest.getState()).build())).build();
         }
-      }
-      else {
+      } else {
 
         Cookie[] cookies;
 
@@ -120,8 +116,7 @@ public class OAuthResource {
             if (cookie.getName().equals(oauthConfiguration.getSsoCookieName())) {
               try {
                 ssoAuthData = MungedCodec.decrypt(SSOAuthData.class, cookieValue = HexCodec.hexDecode(cookie.getValue()), true);
-              }
-              catch (Exception exception) {
+              } catch (Exception exception) {
                 LoggerManager.getLogger(OAuthResource.class).error(exception);
 
                 return Response.status(Response.Status.FOUND).location(URI.create(ServerErrorRedirectResponse.redirectUri(serverAuthorizationRequest.getRedirectUri()).setError("server_error").setErrorDescription(exception.getMessage()).setState(serverAuthorizationRequest.getState()).build())).build();
@@ -136,8 +131,7 @@ public class OAuthResource {
         if (System.currentTimeMillis() - ssoAuthData.getCreated() <= oauthConfiguration.getOauthProtocolLeaseDuration().toMilliseconds()) {
           try {
             userLogin = oauthConfiguration.getUserLoginService().validate(userName = ssoAuthData.getUser(), ssoAuthData.getPassword());
-          }
-          catch (Exception exception) {
+          } catch (Exception exception) {
             LoggerManager.getLogger(OAuthResource.class).error(exception);
 
             return Response.status(Response.Status.FOUND).location(URI.create(ServerErrorRedirectResponse.redirectUri(serverAuthorizationRequest.getRedirectUri()).setError("server_error").setErrorDescription(exception.getMessage()).setState(serverAuthorizationRequest.getState()).build())).build();
@@ -150,15 +144,13 @@ public class OAuthResource {
         String loginUri;
 
         return Response.status(Response.Status.FOUND).location(URI.create(ServerLoginRedirectRequest.loginUri(((loginUri = serverAuthorizationRequest.getLoginUri()) != null) ? loginUri : oauthRegistration.getLoginUri()).setAuthorizationUri(oauthRegistration.getOauthUri()).setUserName(userName).setResponseType(serverAuthorizationRequest.getResponseType()).setClientId(serverAuthorizationRequest.getClientId()).setRedirectUri(serverAuthorizationRequest.getRedirectUri()).setState(serverAuthorizationRequest.getState()).build())).build();
-      }
-      else {
+      } else {
 
         String code;
 
         try {
           code = MungedCodec.encrypt(new AccessCode(serverAuthorizationRequest.getClientId(), userLogin), false);
-        }
-        catch (Exception exception) {
+        } catch (Exception exception) {
           LoggerManager.getLogger(OAuthResource.class).error(exception);
 
           return Response.status(Response.Status.FOUND).location(URI.create(ServerErrorRedirectResponse.redirectUri(serverAuthorizationRequest.getRedirectUri()).setError("server_error").setErrorDescription(exception.getMessage()).setState(serverAuthorizationRequest.getState()).build())).build();
@@ -166,8 +158,7 @@ public class OAuthResource {
 
         return Response.status(Response.Status.FOUND).cookie(new NewCookie(oauthConfiguration.getSsoCookieName(), HexCodec.hexEncode(cookieValue))).location(URI.create(ServerAuthorizationRedirectResponse.redirectUri(serverAuthorizationRequest.getRedirectUri()).setCode(code).setState(serverAuthorizationRequest.getState()).build())).build();
       }
-    }
-    catch (OAuthProtocolException oauthProtocolException) {
+    } catch (OAuthProtocolException oauthProtocolException) {
       LoggerManager.getLogger(OAuthResource.class).error(oauthProtocolException);
 
       if (serverAuthorizationRequest != null) {
@@ -199,18 +190,16 @@ public class OAuthResource {
 
       if ((oauthRegistration = oauthConfiguration.getRegistrationMap().get(serverAccessTokenRequest.getClientId())) == null) {
         return crossSiteAnoint(Response.status(Response.Status.BAD_REQUEST)).entity(ServerErrorJsonResponse.instance().setError("invalid_client").setErrorDescription("unregistered client id").build()).type(MediaType.APPLICATION_JSON).build();
-      }
-      else if ((!oauthRegistration.isUnsafeRedirection()) && (!oauthRegistration.getRedirectUri().equals(serverAccessTokenRequest.getRedirectUri()))) {
+      } else if ((!oauthRegistration.isUnsafeRedirection()) && (!oauthRegistration.getRedirectUri().equals(serverAccessTokenRequest.getRedirectUri()))) {
         return crossSiteAnoint(Response.status(Response.Status.UNAUTHORIZED)).entity(ServerErrorJsonResponse.instance().setError("invalid_client").setErrorDescription("mismatching redirect uri").build()).type(MediaType.APPLICATION_JSON).build();
       }
 
       if (oauthRegistration.getSha256Secret() != null) {
         try {
-          if (!oauthRegistration.getSha256Secret().equals(Base64Codec.encode(EncryptionUtilities.hash(HashAlgorithm.SHA_256, serverAccessTokenRequest.getClientSecret().getBytes())))) {
+          if (!oauthRegistration.getSha256Secret().equals(Base64Codec.encode(EncryptionUtilities.hash(HashAlgorithm.SHA_256, MungedCodec.decrypt(String.class, serverAccessTokenRequest.getClientSecret(), true).getBytes())))) {
             return crossSiteAnoint(Response.status(Response.Status.UNAUTHORIZED)).entity(ServerErrorJsonResponse.instance().setError("invalid_client").setErrorDescription("failed client application authentication").build()).type(MediaType.APPLICATION_JSON).build();
           }
-        }
-        catch (Exception exception) {
+        } catch (Exception exception) {
           LoggerManager.getLogger(OAuthResource.class).error(exception);
 
           return crossSiteAnoint(Response.status(Response.Status.BAD_REQUEST)).entity(ServerErrorJsonResponse.instance().setError("server_error").setErrorDescription(exception.getMessage()).build()).type(MediaType.APPLICATION_JSON).build();
@@ -223,8 +212,7 @@ public class OAuthResource {
 
         try {
           accessCode = MungedCodec.decrypt(AccessCode.class, serverAccessTokenRequest.getCode(), false);
-        }
-        catch (Exception exception) {
+        } catch (Exception exception) {
           LoggerManager.getLogger(OAuthResource.class).error(exception);
 
           return crossSiteAnoint(Response.status(Response.Status.UNAUTHORIZED)).entity(ServerErrorJsonResponse.instance().setError("invalid_client").setErrorDescription("could not parse code").build()).type(MediaType.APPLICATION_JSON).build();
@@ -240,28 +228,24 @@ public class OAuthResource {
         }
 
         return emitAccessToken(new AccessToken(accessCode, oauthConfiguration.getOauthTokenGrantDuration()));
-      }
-      else if (GrantType.REFRESH_TOKEN.getParameter().equals(serverAccessTokenRequest.getGrantType())) {
+      } else if (GrantType.REFRESH_TOKEN.getParameter().equals(serverAccessTokenRequest.getGrantType())) {
 
         RefreshToken refreshToken;
 
         try {
           refreshToken = MungedCodec.decrypt(RefreshToken.class, serverAccessTokenRequest.getRefreshToken(), false);
-        }
-        catch (Exception exception) {
+        } catch (Exception exception) {
           LoggerManager.getLogger(OAuthResource.class).error(exception);
 
           return crossSiteAnoint(Response.status(Response.Status.UNAUTHORIZED)).entity(ServerErrorJsonResponse.instance().setError("invalid_client").setErrorDescription("could not parse refresh token").build()).type(MediaType.APPLICATION_JSON).build();
         }
 
         return emitAccessToken(new AccessToken(refreshToken, oauthConfiguration.getOauthTokenGrantDuration()));
-      }
-      else {
+      } else {
 
         return crossSiteAnoint(Response.status(Response.Status.BAD_REQUEST)).entity(ServerErrorJsonResponse.instance().setError("unsupported_grant_type").setErrorDescription("only 'authorization_code' and 'refresh_token' grant types are supported").build()).type(MediaType.APPLICATION_JSON).build();
       }
-    }
-    catch (OAuthProtocolException oauthProtocolException) {
+    } catch (OAuthProtocolException oauthProtocolException) {
       LoggerManager.getLogger(OAuthResource.class).error(oauthProtocolException);
 
       return crossSiteAnoint(Response.status(Response.Status.BAD_REQUEST)).entity(ServerErrorJsonResponse.instance().setError("server_error").setErrorDescription(oauthProtocolException.getMessage()).build()).type(MediaType.APPLICATION_JSON).build();
@@ -277,8 +261,7 @@ public class OAuthResource {
     try {
       mungedAccessToken = MungedCodec.encrypt(accessToken, false);
       mungedRefreshToken = MungedCodec.encrypt(new RefreshToken(accessToken), false);
-    }
-    catch (Exception exception) {
+    } catch (Exception exception) {
       LoggerManager.getLogger(OAuthResource.class).error(exception);
 
       return crossSiteAnoint(Response.status(Response.Status.BAD_REQUEST)).entity(ServerErrorJsonResponse.instance().setError("server_error").setErrorDescription(exception.getMessage()).build()).type(MediaType.APPLICATION_JSON).build();
@@ -298,8 +281,7 @@ public class OAuthResource {
 
     try {
       return Response.ok(MungedCodec.toJsonString(MungedCodec.decrypt(AccessToken.class, accessToken, false).getUserLogin()), MediaType.APPLICATION_JSON).build();
-    }
-    catch (Exception exception) {
+    } catch (Exception exception) {
       LoggerManager.getLogger(OAuthResource.class).error(exception);
 
       return Response.status(Response.Status.BAD_REQUEST).entity(ServerErrorJsonResponse.instance().setError("server_error").setErrorDescription(exception.getMessage()).build()).type(MediaType.APPLICATION_JSON).build();

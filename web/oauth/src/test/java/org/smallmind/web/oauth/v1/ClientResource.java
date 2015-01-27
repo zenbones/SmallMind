@@ -33,11 +33,6 @@ import javax.ws.rs.Path;
 import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Response;
-import org.smallmind.web.oauth.ClientAccessTokenFromCodeRequest;
-import org.smallmind.web.oauth.ClientAuthorizationRequest;
-import org.smallmind.web.oauth.GrantType;
-import org.smallmind.web.oauth.OAuthProtocolException;
-import org.smallmind.web.oauth.ResponseType;
 import org.apache.http.HttpEntity;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpPost;
@@ -45,6 +40,11 @@ import org.apache.http.entity.ContentType;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.HttpClients;
 import org.apache.http.util.EntityUtils;
+import org.smallmind.web.oauth.ClientAccessTokenFromCodeRequest;
+import org.smallmind.web.oauth.ClientAuthorizationRequest;
+import org.smallmind.web.oauth.GrantType;
+import org.smallmind.web.oauth.OAuthProtocolException;
+import org.smallmind.web.oauth.ResponseType;
 
 @Path("/spoof")
 public class ClientResource {
@@ -72,11 +72,11 @@ public class ClientResource {
     throws IOException, OAuthProtocolException {
 
     String oauthGet = ClientAuthorizationRequest.locationUri(restUri + "/v1/oauth/authorization")
-      .setResponseType(ResponseType.CODE.getParameter())
-      .setClientId(clientId)
-      .setRedirectUri(restUri + "/spoof/exchange")
-      .setState("my-application-state")
-      .build();
+                        .setResponseType(ResponseType.CODE.getParameter())
+                        .setClientId(clientId)
+                        .setRedirectUri(restUri + "/spoof/exchange")
+                        .setState("my-application-state")
+                        .build();
 
     response.sendRedirect(oauthGet);
 
@@ -86,7 +86,7 @@ public class ClientResource {
   @Path("/exchange")
   @GET
   public String exchange (@QueryParam("code") String code)
-    throws IOException, OAuthProtocolException {
+    throws Exception {
 
     HttpPost httpPost = new HttpPost(restUri + "/v1/oauth/token");
     String jsonTokenPostEntity = ClientAccessTokenFromCodeRequest.instance().setClientId(clientId).setGrantType(GrantType.AUTHORIZATION_CODE.getParameter()).setCode(code).setRedirectUri(restUri + "/spoof/exchange").setClientSecret("monkeys eat smores").build();

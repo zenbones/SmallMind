@@ -28,6 +28,7 @@ package org.smallmind.web.oauth;
 
 import org.smallmind.nutsnbolts.http.HTTPCodec;
 import org.smallmind.nutsnbolts.util.Tuple;
+import org.smallmind.web.oauth.v1.MungedCodec;
 
 public class ClientAccessTokenFromCodeRequest {
 
@@ -74,9 +75,10 @@ public class ClientAccessTokenFromCodeRequest {
     return this;
   }
 
-  public ClientAccessTokenFromCodeRequest setClientSecret (String clientSecret) {
+  public ClientAccessTokenFromCodeRequest setClientSecret (String clientSecret)
+    throws Exception {
 
-    this.clientSecret = clientSecret;
+    this.clientSecret = MungedCodec.encrypt(clientSecret, true);
 
     return this;
   }
