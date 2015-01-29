@@ -24,22 +24,17 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.web.jersey.jackson;
+package org.smallmind.web.jersey.fault;
 
+import org.glassfish.jersey.server.ResourceConfig;
 import org.smallmind.web.jersey.spring.ResourceConfigExtension;
-import org.smallmind.web.jersey.spring.SpringBasedResourceConfig;
-import org.springframework.context.ApplicationContext;
 
-public class JsonResourceConfig extends SpringBasedResourceConfig {
+public class ThrowableTranslationResourceConfigExtension extends ResourceConfigExtension {
 
-  public JsonResourceConfig (ApplicationContext applicationContext, ResourceConfigExtension[] extensions) {
+  @Override
+  public void apply (ResourceConfig resourceConfig) {
 
-    super(applicationContext);
-
-    register(JsonProvider.class);
-
-    for (ResourceConfigExtension extension : extensions) {
-      extension.apply(this);
-    }
+    resourceConfig.property("jersey.config.server.response.setStatusOverSendError", "true");
+    resourceConfig.register(ThrowableExceptionMapper.class);
   }
 }

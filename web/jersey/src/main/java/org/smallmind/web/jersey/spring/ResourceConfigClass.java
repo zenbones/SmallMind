@@ -24,30 +24,27 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.web.jersey.jackson;
+package org.smallmind.web.jersey.spring;
 
-public class JsonResourceExtensions {
+import org.glassfish.jersey.server.ResourceConfig;
 
-  private boolean supportEntityParameters = false;
-  private boolean supportThrowableTranslation = false;
+public class ResourceConfigClass extends ResourceConfigExtension {
 
-  public boolean isSupportEntityParameters () {
+  Class<?> value;
 
-    return supportEntityParameters;
+  public Class<?> getValue () {
+
+    return value;
   }
 
-  public void setSupportEntityParameters (boolean supportEntityParameters) {
+  public void setValue (Class<?> value) {
 
-    this.supportEntityParameters = supportEntityParameters;
+    this.value = value;
   }
 
-  public boolean isSupportThrowableTranslation () {
+  @Override
+  public void apply (ResourceConfig resourceConfig) {
 
-    return supportThrowableTranslation;
-  }
-
-  public void setSupportThrowableTranslation (boolean supportThrowableTranslation) {
-
-    this.supportThrowableTranslation = supportThrowableTranslation;
+    resourceConfig.register(value);
   }
 }

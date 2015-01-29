@@ -45,8 +45,8 @@ import org.glassfish.grizzly.servlet.WebappContext;
 import org.glassfish.jersey.servlet.ServletContainer;
 import org.smallmind.nutsnbolts.lang.web.PerApplicationContextFilter;
 import org.smallmind.web.jersey.jackson.JsonResourceConfig;
-import org.smallmind.web.jersey.jackson.JsonResourceExtensions;
 import org.smallmind.web.jersey.spring.ExposedApplicationContext;
+import org.smallmind.web.jersey.spring.ResourceConfigExtension;
 import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.DisposableBean;
 import org.springframework.beans.factory.config.BeanPostProcessor;
@@ -63,7 +63,7 @@ public class GrizzlyInitializingBean implements DisposableBean, ApplicationConte
   private LinkedList<WebService> serviceList = new LinkedList<>();
   private LinkedList<FilterInstaller> filterInstallerList = new LinkedList<>();
   private LinkedList<ServletInstaller> servletInstallerList = new LinkedList<>();
-  private JsonResourceExtensions jsonResourceExtensions;
+  private ResourceConfigExtension[] resourceConfigExtensions;
   private String host;
   private String contextPath;
   private String restPath;
@@ -96,9 +96,9 @@ public class GrizzlyInitializingBean implements DisposableBean, ApplicationConte
     this.soapPath = soapPath;
   }
 
-  public void setJsonResourceExtensions (JsonResourceExtensions jsonResourceExtensions) {
+  public void setResourceConfigExtensions (ResourceConfigExtension[] resourceConfigExtensions) {
 
-    this.jsonResourceExtensions = jsonResourceExtensions;
+    this.resourceConfigExtensions = resourceConfigExtensions;
   }
 
   public void setDebug (boolean debug) {
@@ -118,7 +118,7 @@ public class GrizzlyInitializingBean implements DisposableBean, ApplicationConte
       httpServer.addListener(new NetworkListener("grizzly2", host, port));
 
       WebappContext webappContext = new WebappContext("Grizzly Application Context");
-      webappContext.addServlet("JAX-RS Application", new ServletContainer(new JsonResourceConfig(ExposedApplicationContext.getApplicationContext(), jsonResourceExtensions))).addMapping(restPath + "/*");
+      webappContext.addServlet("JAX-RS Application", new ServletContainer(new JsonResourceConfig(ExposedApplicationContext.getApplicationContext(), resourceConfigExtensions))).addMapping(restPath + "/*");
       webappContext.addFilter("per-application-data", new PerApplicationContextFilter()).addMappingForUrlPatterns(EnumSet.of(DispatcherType.REQUEST), restPath + "/*");
       webappContext.addListener("org.springframework.web.context.request.RequestContextListener");
 

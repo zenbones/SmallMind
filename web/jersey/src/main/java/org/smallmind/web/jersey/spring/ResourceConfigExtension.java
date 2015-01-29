@@ -24,22 +24,11 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.web.jersey.jackson;
+package org.smallmind.web.jersey.spring;
 
-import org.smallmind.web.jersey.spring.ResourceConfigExtension;
-import org.smallmind.web.jersey.spring.SpringBasedResourceConfig;
-import org.springframework.context.ApplicationContext;
+import org.glassfish.jersey.server.ResourceConfig;
 
-public class JsonResourceConfig extends SpringBasedResourceConfig {
+public abstract class ResourceConfigExtension {
 
-  public JsonResourceConfig (ApplicationContext applicationContext, ResourceConfigExtension[] extensions) {
-
-    super(applicationContext);
-
-    register(JsonProvider.class);
-
-    for (ResourceConfigExtension extension : extensions) {
-      extension.apply(this);
-    }
-  }
+  public abstract void apply (ResourceConfig resourceConfig);
 }

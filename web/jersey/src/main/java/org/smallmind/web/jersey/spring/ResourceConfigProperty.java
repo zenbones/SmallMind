@@ -24,22 +24,38 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.web.jersey.jackson;
+package org.smallmind.web.jersey.spring;
 
-import org.smallmind.web.jersey.spring.ResourceConfigExtension;
-import org.smallmind.web.jersey.spring.SpringBasedResourceConfig;
-import org.springframework.context.ApplicationContext;
+import org.glassfish.jersey.server.ResourceConfig;
 
-public class JsonResourceConfig extends SpringBasedResourceConfig {
+public class ResourceConfigProperty extends ResourceConfigExtension {
 
-  public JsonResourceConfig (ApplicationContext applicationContext, ResourceConfigExtension[] extensions) {
+  private String name;
+  private Object value;
 
-    super(applicationContext);
+  public String getName () {
 
-    register(JsonProvider.class);
+    return name;
+  }
 
-    for (ResourceConfigExtension extension : extensions) {
-      extension.apply(this);
-    }
+  public void setName (String name) {
+
+    this.name = name;
+  }
+
+  public Object getValue () {
+
+    return value;
+  }
+
+  public void setValue (Object value) {
+
+    this.value = value;
+  }
+
+  @Override
+  public void apply (ResourceConfig resourceConfig) {
+
+    resourceConfig.property(name, value);
   }
 }
