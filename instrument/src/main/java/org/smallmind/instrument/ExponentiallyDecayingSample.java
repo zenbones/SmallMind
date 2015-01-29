@@ -28,10 +28,10 @@ package org.smallmind.instrument;
 
 import java.util.ArrayList;
 import java.util.concurrent.ConcurrentSkipListMap;
+import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
-import org.smallmind.nutsnbolts.util.ThreadLocalRandom;
 
 /**
  * Uses Cormode et al's forward-decayiny priority reservoir sampling method to produce a statistically
@@ -84,8 +84,7 @@ public class ExponentiallyDecayingSample implements Sample {
       count.set(0);
       startTime.set(currentTimeInSeconds());
       nextScaleTime.set(clock.getTimeMilliseconds() + RESCALE_THRESHOLD);
-    }
-    finally {
+    } finally {
       lock.writeLock().unlock();
     }
   }
@@ -109,8 +108,7 @@ public class ExponentiallyDecayingSample implements Sample {
 
       if (newCount <= reservoirSize) {
         values.put(priority, value);
-      }
-      else {
+      } else {
         Double first = values.firstKey();
         if (first < priority) {
           if (values.putIfAbsent(priority, value) == null) {
@@ -121,8 +119,7 @@ public class ExponentiallyDecayingSample implements Sample {
           }
         }
       }
-    }
-    finally {
+    } finally {
       lock.readLock().unlock();
     }
   }
@@ -143,8 +140,7 @@ public class ExponentiallyDecayingSample implements Sample {
     lock.readLock().lock();
     try {
       return new Statistics(values.values());
-    }
-    finally {
+    } finally {
       lock.readLock().unlock();
     }
   }
@@ -194,8 +190,7 @@ public class ExponentiallyDecayingSample implements Sample {
 
         // make sure the counter is in sync with the number of stored samples.
         count.set(values.size());
-      }
-      finally {
+      } finally {
         lock.writeLock().unlock();
       }
     }

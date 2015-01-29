@@ -39,7 +39,6 @@ import java.util.Arrays;
 public abstract class AnnotationLiteral<A extends Annotation> implements Annotation, Serializable {
 
   private static final Object[] EMPTY_OBJECT_ARRAY = new Object[0];
-  private static final long serialVersionUID = 1L;
 
   private Class<A> annotationType;
 
@@ -56,14 +55,11 @@ public abstract class AnnotationLiteral<A extends Annotation> implements Annotat
   private Class<A> getAnnotationType (Class<?> definedClazz) {
 
     Type superClazz = definedClazz.getGenericSuperclass();
-
-    Class<A> clazz = null;
+    Class<A> clazz;
 
     if (superClazz.equals(Object.class)) {
       throw new RuntimeException("Super class must be A parametrized type!");
-    }
-
-    else if (superClazz instanceof ParameterizedType) {
+    } else if (superClazz instanceof ParameterizedType) {
       ParameterizedType paramType = (ParameterizedType)superClazz;
       Type[] actualArgs = paramType.getActualTypeArguments();
 
@@ -74,19 +70,15 @@ public abstract class AnnotationLiteral<A extends Annotation> implements Annotat
         if (type instanceof Class) {
           clazz = (Class<A>)type;
           return clazz;
-        }
-        else {
+        } else {
           throw new RuntimeException("Not a class type!");
         }
-      }
-      else {
+      } else {
         throw new RuntimeException("More than one parametric type!");
       }
-    }
-    else {
+    } else {
       return getAnnotationType((Class<?>)superClazz);
     }
-
   }
 
   @Override
@@ -128,52 +120,57 @@ public abstract class AnnotationLiteral<A extends Annotation> implements Annotat
 
           if (valueClass.isPrimitive() && annotValueClass.isPrimitive()) {
             if ((valueClass != Float.TYPE && annotValue != Float.TYPE)
-              || (valueClass != Double.TYPE && annotValue != Double.TYPE)) {
+                  || (valueClass != Double.TYPE && annotValue != Double.TYPE)) {
               if (value != annotValue) {
                 return false;
               }
-
             }
-          }
-          else if (valueClass.isArray() && annotValueClass.isArray()) {
+          } else if (valueClass.isArray() && annotValueClass.isArray()) {
             Class<?> type = valueClass.getComponentType();
             if (type.isPrimitive()) {
               if (Long.TYPE == type) {
-                if (!Arrays.equals(((Long[])value), (Long[])annotValue)) return false;
+                if (!Arrays.equals(((Long[])value), (Long[])annotValue)) {
+                  return false;
+                }
+              } else if (Integer.TYPE == type) {
+                if (!Arrays.equals(((Integer[])value), (Integer[])annotValue)) {
+                  return false;
+                }
+              } else if (Short.TYPE == type) {
+                if (!Arrays.equals(((Short[])value), (Short[])annotValue)) {
+                  return false;
+                }
+              } else if (Double.TYPE == type) {
+                if (!Arrays.equals(((Double[])value), (Double[])annotValue)) {
+                  return false;
+                }
+              } else if (Float.TYPE == type) {
+                if (!Arrays.equals(((Float[])value), (Float[])annotValue)) {
+                  return false;
+                }
+              } else if (Boolean.TYPE == type) {
+                if (!Arrays.equals(((Boolean[])value), (Boolean[])annotValue)) {
+                  return false;
+                }
+              } else if (Byte.TYPE == type) {
+                if (!Arrays.equals(((Byte[])value), (Byte[])annotValue)) {
+                  return false;
+                }
+              } else if (Character.TYPE == type) {
+                if (!Arrays.equals(((Character[])value), (Character[])annotValue)) {
+                  return false;
+                }
               }
-              else if (Integer.TYPE == type) {
-                if (!Arrays.equals(((Integer[])value), (Integer[])annotValue)) return false;
-              }
-              else if (Short.TYPE == type) {
-                if (!Arrays.equals(((Short[])value), (Short[])annotValue)) return false;
-              }
-              else if (Double.TYPE == type) {
-                if (!Arrays.equals(((Double[])value), (Double[])annotValue)) return false;
-              }
-              else if (Float.TYPE == type) {
-                if (!Arrays.equals(((Float[])value), (Float[])annotValue)) return false;
-              }
-              else if (Boolean.TYPE == type) {
-                if (!Arrays.equals(((Boolean[])value), (Boolean[])annotValue)) return false;
-              }
-              else if (Byte.TYPE == type) {
-                if (!Arrays.equals(((Byte[])value), (Byte[])annotValue)) return false;
-              }
-              else if (Character.TYPE == type) {
-                if (!Arrays.equals(((Character[])value), (Character[])annotValue)) return false;
+            } else {
+              if (!Arrays.equals(((Object[])value), (Object[])annotValue)) {
+                return false;
               }
             }
-            else {
-              if (!Arrays.equals(((Object[])value), (Object[])annotValue)) return false;
-            }
-          }
-
-          else if (value != null && annotValue != null) {
+          } else if (value != null && annotValue != null) {
             if (!value.equals(annotValue)) {
               return false;
             }
           }
-
         }
 
         return true;
@@ -193,11 +190,9 @@ public abstract class AnnotationLiteral<A extends Annotation> implements Annotat
       }
 
       return method.invoke(instance, EMPTY_OBJECT_ARRAY);
-    }
-    catch (Exception e) {
+    } catch (Exception e) {
       throw new RuntimeException("Exception in method call : " + method.getName(), e);
-    }
-    finally {
+    } finally {
       AccessController.doPrivileged(new PrivilegedActionForAccessibleObject(method, access));
     }
   }
@@ -226,34 +221,25 @@ public abstract class AnnotationLiteral<A extends Annotation> implements Annotat
         if (type.isPrimitive()) {
           if (Long.TYPE == type) {
             value = Arrays.hashCode((Long[])object);
-          }
-          else if (Integer.TYPE == type) {
+          } else if (Integer.TYPE == type) {
             value = Arrays.hashCode((Integer[])object);
-          }
-          else if (Short.TYPE == type) {
+          } else if (Short.TYPE == type) {
             value = Arrays.hashCode((Short[])object);
-          }
-          else if (Double.TYPE == type) {
+          } else if (Double.TYPE == type) {
             value = Arrays.hashCode((Double[])object);
-          }
-          else if (Float.TYPE == type) {
+          } else if (Float.TYPE == type) {
             value = Arrays.hashCode((Float[])object);
-          }
-          else if (Boolean.TYPE == type) {
+          } else if (Boolean.TYPE == type) {
             value = Arrays.hashCode((Long[])object);
-          }
-          else if (Byte.TYPE == type) {
+          } else if (Byte.TYPE == type) {
             value = Arrays.hashCode((Byte[])object);
-          }
-          else if (Character.TYPE == type) {
+          } else if (Character.TYPE == type) {
             value = Arrays.hashCode((Character[])object);
           }
-        }
-        else {
+        } else {
           value = Arrays.hashCode((Object[])object);
         }
-      }
-      else {
+      } else {
         value = object.hashCode();
       }
 

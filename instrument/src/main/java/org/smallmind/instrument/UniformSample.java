@@ -28,9 +28,9 @@ package org.smallmind.instrument;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicLongArray;
-import org.smallmind.nutsnbolts.util.ThreadLocalRandom;
 
 /**
  * Uses Vitter's Algorithm R to produce a statistically representative sample.
@@ -79,8 +79,7 @@ public class UniformSample implements Sample {
 
     if (updatedCount <= values.length()) {
       values.set((int)updatedCount - 1, value);
-    }
-    else {
+    } else {
 
       long randomLong = nextLong(updatedCount);
 

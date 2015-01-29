@@ -27,11 +27,11 @@
 package org.smallmind.cloud.multicast.event;
 
 import java.nio.ByteBuffer;
-import org.smallmind.nutsnbolts.util.UniqueId;
+import org.smallmind.nutsnbolts.util.SnowflakeId;
 
 public abstract class EventMessage {
 
-  public static final int MESSAGE_HEADER_SIZE = UniqueId.byteSize() + 16;
+  public static final int MESSAGE_HEADER_SIZE = SnowflakeId.byteSize() + 16;
 
   private ByteBuffer translationBuffer;
 

@@ -27,7 +27,7 @@
 package org.smallmind.scribe.pen.probe;
 
 import java.util.LinkedList;
-import org.smallmind.nutsnbolts.util.UniqueId;
+import org.smallmind.nutsnbolts.util.SnowflakeId;
 import org.smallmind.scribe.pen.Discriminator;
 import org.smallmind.scribe.pen.Level;
 import org.smallmind.scribe.pen.Logger;
@@ -43,7 +43,7 @@ public class ProbeStack {
 
     this.parentIdentifier = parentIdentifier;
 
-    threadIdentifier = UniqueId.newInstance().asByteArray();
+    threadIdentifier = SnowflakeId.newInstance().asByteArray();
     probeList = new LinkedList<Probe>();
   }
 
@@ -71,7 +71,7 @@ public class ProbeStack {
 
     Probe probe;
 
-    probeList.addFirst(probe = new Probe(logger, discriminator, level, new Correlator(threadIdentifier, probeList.isEmpty() ? parentIdentifier : probeList.getFirst().getCorrelator().getIdentifier(), UniqueId.newInstance().asByteArray(), probeList.size(), instance++), title, probeList.isEmpty()));
+    probeList.addFirst(probe = new Probe(logger, discriminator, level, new Correlator(threadIdentifier, probeList.isEmpty() ? parentIdentifier : probeList.getFirst().getCorrelator().getIdentifier(), SnowflakeId.newInstance().asByteArray(), probeList.size(), instance++), title, probeList.isEmpty()));
 
     return probe;
   }

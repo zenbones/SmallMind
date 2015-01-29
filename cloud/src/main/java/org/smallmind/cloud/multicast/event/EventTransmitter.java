@@ -42,14 +42,14 @@ import org.smallmind.cloud.multicast.EventMessageException;
 import org.smallmind.nutsnbolts.lang.UnknownSwitchCaseException;
 import org.smallmind.nutsnbolts.time.Duration;
 import org.smallmind.nutsnbolts.util.SelfDestructiveMap;
-import org.smallmind.nutsnbolts.util.UniqueId;
+import org.smallmind.nutsnbolts.util.SnowflakeId;
 import org.smallmind.scribe.pen.Logger;
 
 public class EventTransmitter implements Runnable {
 
   private static final int SO_TIMEOUT = 1000;
   private static final int TTL = 3;
-  private static final byte[] EMPTY_ID = new byte[UniqueId.byteSize()];
+  private static final byte[] EMPTY_ID = new byte[SnowflakeId.byteSize()];
   private Logger logger;
   private CountDownLatch exitLatch;
   private AtomicBoolean finished = new AtomicBoolean(false);
@@ -104,7 +104,7 @@ public class EventTransmitter implements Runnable {
       bodyBuffer = objectToByteArray(multicastEvent);
 
       if (multicastEvent != null) {
-        messageId = UniqueId.newInstance().asByteArray();
+        messageId = SnowflakeId.newInstance().asByteArray();
       }
       else {
         messageId = EMPTY_ID;
@@ -205,7 +205,7 @@ public class EventTransmitter implements Runnable {
     boolean packetReceived;
     int messageLength;
     int messageIndex;
-    byte[] messageKeyBuffer = new byte[UniqueId.byteSize()];
+    byte[] messageKeyBuffer = new byte[SnowflakeId.byteSize()];
     byte[] messageBuffer = new byte[messageBufferSize];
     byte[] messageSegment;
 

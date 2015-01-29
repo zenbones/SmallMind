@@ -37,6 +37,7 @@ import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 import javax.net.ssl.SSLSocketFactory;
@@ -44,7 +45,6 @@ import org.smallmind.nutsnbolts.http.Base64Codec;
 import org.smallmind.nutsnbolts.lang.UnknownSwitchCaseException;
 import org.smallmind.nutsnbolts.security.EncryptionUtilities;
 import org.smallmind.nutsnbolts.security.HashAlgorithm;
-import org.smallmind.nutsnbolts.util.ThreadLocalRandom;
 
 public abstract class Websocket implements AutoCloseable {
 

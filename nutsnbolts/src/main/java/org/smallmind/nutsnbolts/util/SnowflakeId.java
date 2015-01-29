@@ -27,14 +27,12 @@
 package org.smallmind.nutsnbolts.util;
 
 import java.math.BigInteger;
-import java.net.InetAddress;
-import java.net.NetworkInterface;
 import java.security.SecureRandom;
 import java.util.Arrays;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 
-public class UniqueId implements Comparable<UniqueId> {
+public class SnowflakeId implements Comparable<SnowflakeId> {
 
   private static final int[] DOT_OFFSET_0 = {0, 0, 0};
   private static final int[] DOT_OFFSET_1 = {0, 0, 0};
@@ -64,11 +62,8 @@ public class UniqueId implements Comparable<UniqueId> {
     byte[] macAddress;
 
     try {
-      if (((macAddress = NetworkInterface.getByInetAddress(InetAddress.getLocalHost()).getHardwareAddress()) == null) || (macAddress.length == 0)) {
-        RANDOM.nextBytes(macAddress = new byte[6]);
-      }
-    }
-    catch (Exception exception) {
+      macAddress = MacAddress.getBytes();
+    } catch (Exception exception) {
       RANDOM.nextBytes(macAddress = new byte[6]);
     }
 
@@ -79,9 +74,24 @@ public class UniqueId implements Comparable<UniqueId> {
     RANDOM.nextBytes(JVM_BYTES);
   }
 
+  public SnowflakeId () {
+
+    uniqueArray = generateByteArray();
+  }
+
+  public SnowflakeId (byte[] uniqueArray) {
+
+    this.uniqueArray = uniqueArray;
+  }
+
   public static int byteSize () {
 
     return 18;
+  }
+
+  public static SnowflakeId newInstance () {
+
+    return new SnowflakeId();
   }
 
   private byte[] generateByteArray () {
@@ -93,8 +103,7 @@ public class UniqueId implements Comparable<UniqueId> {
     do {
       if ((currentCount = ATOMIC_COUNT.incrementAndGet()) < Short.MAX_VALUE) {
         currentTime = ATOMIC_TIME.get();
-      }
-      else if (currentCount == Short.MAX_VALUE) {
+      } else if (currentCount == Short.MAX_VALUE) {
         ATOMIC_TIME.set(currentTime = Math.max(ATOMIC_TIME.get() + 1, System.currentTimeMillis()));
         ATOMIC_COUNT.set(currentCount = Short.MIN_VALUE);
       }
@@ -104,27 +113,12 @@ public class UniqueId implements Comparable<UniqueId> {
       throw new IllegalStateException("Current time value should never be '0'");
     }
 
-    System.arraycopy(MAC_BYTES, 0, bytes, 0, 6);
-    System.arraycopy(JVM_BYTES, 0, bytes, 6, 2);
-    System.arraycopy(Bytes.getBytes(currentTime), 0, bytes, 8, 8);
+    System.arraycopy(Bytes.getBytes(currentTime), 0, bytes, 0, 8);
+    System.arraycopy(MAC_BYTES, 0, bytes, 8, 6);
+    System.arraycopy(JVM_BYTES, 0, bytes, 14, 2);
     System.arraycopy(Bytes.getBytes((short)currentCount), 0, bytes, 16, 2);
 
     return bytes;
-  }
-
-  public static UniqueId newInstance () {
-
-    return new UniqueId();
-  }
-
-  public UniqueId () {
-
-    uniqueArray = generateByteArray();
-  }
-
-  public UniqueId (byte[] uniqueArray) {
-
-    this.uniqueArray = uniqueArray;
   }
 
   public byte[] asByteArray () {
@@ -206,18 +200,18 @@ public class UniqueId implements Comparable<UniqueId> {
   @Override
   public boolean equals (Object obj) {
 
-    return (obj instanceof UniqueId) && Arrays.equals(uniqueArray, ((UniqueId)obj).asByteArray());
+    return (obj instanceof SnowflakeId) && Arrays.equals(uniqueArray, ((SnowflakeId)obj).asByteArray());
   }
 
-  public int compareTo (UniqueId uniqueId) {
+  public int compareTo (SnowflakeId snowflakeId) {
 
     int comparison;
 
-    if ((comparison = compareTimeBytes(uniqueId)) == 0) {
-      if ((comparison = compareCountBytes(uniqueId)) == 0) {
-        if ((comparison = compareIPBytes(uniqueId)) == 0) {
+    if ((comparison = compareTimeBytes(snowflakeId)) == 0) {
+      if ((comparison = compareCountBytes(snowflakeId)) == 0) {
+        if ((comparison = compareMacBytes(snowflakeId)) == 0) {
 
-          return compareJVMBytes(uniqueId);
+          return compareJVMBytes(snowflakeId);
         }
       }
     }
@@ -225,12 +219,12 @@ public class UniqueId implements Comparable<UniqueId> {
     return comparison;
   }
 
-  private int compareIPBytes (UniqueId uniqueId) {
+  private int compareMacBytes (SnowflakeId snowflakeId) {
 
     int comparison;
 
-    for (int count = 0; count < 6; count++) {
-      if ((comparison = this.asByteArray()[count] - uniqueId.asByteArray()[count]) != 0) {
+    for (int count = 8; count < 14; count++) {
+      if ((comparison = this.asByteArray()[count] - snowflakeId.asByteArray()[count]) != 0) {
 
         return comparison;
       }
@@ -239,12 +233,12 @@ public class UniqueId implements Comparable<UniqueId> {
     return 0;
   }
 
-  private int compareJVMBytes (UniqueId uniqueId) {
+  private int compareJVMBytes (SnowflakeId snowflakeId) {
 
     int comparison;
 
-    for (int count = 6; count < 8; count++) {
-      if ((comparison = this.asByteArray()[count] - uniqueId.asByteArray()[count]) != 0) {
+    for (int count = 14; count < 16; count++) {
+      if ((comparison = this.asByteArray()[count] - snowflakeId.asByteArray()[count]) != 0) {
 
         return comparison;
       }
@@ -253,13 +247,13 @@ public class UniqueId implements Comparable<UniqueId> {
     return 0;
   }
 
-  private int compareTimeBytes (UniqueId uniqueId) {
+  private int compareTimeBytes (SnowflakeId snowflakeId) {
 
-    return Long.compare(Bytes.getLong(Arrays.copyOfRange(this.asByteArray(), 8, 16)), Bytes.getLong(Arrays.copyOfRange(uniqueId.asByteArray(), 8, 16)));
+    return Long.compare(Bytes.getLong(Arrays.copyOfRange(this.asByteArray(), 0, 8)), Bytes.getLong(Arrays.copyOfRange(snowflakeId.asByteArray(), 0, 8)));
   }
 
-  private int compareCountBytes (UniqueId uniqueId) {
+  private int compareCountBytes (SnowflakeId snowflakeId) {
 
-    return Short.compare(Bytes.getShort(Arrays.copyOfRange(this.asByteArray(), 16, 18)), Bytes.getShort(Arrays.copyOfRange(uniqueId.asByteArray(), 16, 18)));
+    return Short.compare(Bytes.getShort(Arrays.copyOfRange(this.asByteArray(), 16, 18)), Bytes.getShort(Arrays.copyOfRange(snowflakeId.asByteArray(), 16, 18)));
   }
 }
