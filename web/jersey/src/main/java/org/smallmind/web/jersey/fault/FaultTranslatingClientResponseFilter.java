@@ -41,7 +41,7 @@ public class FaultTranslatingClientResponseFilter implements ClientResponseFilte
   public void filter (ClientRequestContext requestContext, ClientResponseContext responseContext)
     throws IOException {
 
-    if ((responseContext.getStatus() == 500) && responseContext.getMediaType().equals(MediaType.APPLICATION_JSON_TYPE) && responseContext.hasEntity()) {
+    if ((responseContext.getStatus() == 500) && MediaType.APPLICATION_JSON_TYPE.equals(responseContext.getMediaType()) && responseContext.hasEntity()) {
 
       Fault fault;
       NativeObject nativeObject;

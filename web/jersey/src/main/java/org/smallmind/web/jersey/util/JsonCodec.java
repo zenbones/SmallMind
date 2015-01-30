@@ -29,6 +29,7 @@ package org.smallmind.web.jersey.util;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.MapperFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -54,6 +55,12 @@ public class JsonCodec {
     throws IOException {
 
     return OBJECT_MAPPER.readValue(inputStream, clazz);
+  }
+
+  public static <T> T read (JsonParser parser, Class<T> clazz)
+    throws IOException {
+
+    return OBJECT_MAPPER.readValue(parser, clazz);
   }
 
   public static byte[] writeAsBytes (Object obj)

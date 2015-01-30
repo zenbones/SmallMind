@@ -34,7 +34,7 @@ import javax.ws.rs.ext.Provider;
 
 @Provider
 @ResourceMethod
-public class ResourceMethodFilter implements ContainerRequestFilter {
+public class ResourceMethodRequestFilter implements ContainerRequestFilter {
 
   @Context
   ResourceInfo resourceInfo;
