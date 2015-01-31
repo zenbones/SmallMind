@@ -26,40 +26,22 @@
  */
 package org.smallmind.web.jersey.aop;
 
-import org.glassfish.jersey.server.ContainerRequest;
-import org.smallmind.nutsnbolts.reflection.aop.MissingAnnotationException;
+import org.smallmind.nutsnbolts.lang.FormattedRuntimeException;
 
-public class EntityTranslator {
+public class ParameterProcessingException extends FormattedRuntimeException {
 
-  private static final ThreadLocal<JsonEntity> JSON_ENTITY_LOCAL = new ThreadLocal<>();
-  private static final ThreadLocal<Class<? extends JsonEntity>> JSON_ENTITY_CLASS_LOCAL = new ThreadLocal<>();
+  public ParameterProcessingException (String message, Object... args) {
 
-  public static <E extends JsonEntity> void storeEntityType (Class<E> clazz) {
-
-    JSON_ENTITY_CLASS_LOCAL.set(clazz);
+    super(message, args);
   }
 
-  public static <T> T getParameter (ContainerRequest containerRequest, int index, Class<T> clazz, ParameterAnnotations parameterAnnotations)
-    throws MissingAnnotationException {
+  public ParameterProcessingException (Throwable throwable) {
 
-    JsonEntity jsonEntity;
-
-    if ((jsonEntity = JSON_ENTITY_LOCAL.get()) == null) {
-
-      Class<? extends JsonEntity> entityClass;
-
-      if ((entityClass = JSON_ENTITY_CLASS_LOCAL.get()) == null) {
-        throw new MissingAnnotationException("Missing annotation(%s)", ResourceMethod.class.getName());
-      }
-
-      JSON_ENTITY_LOCAL.set(jsonEntity = containerRequest.readEntity(entityClass));
-    }
-
-    return jsonEntity.getParameter(index, clazz, parameterAnnotations);
+    super(throwable);
   }
 
-  public static void clearEntity () {
+  public ParameterProcessingException (Throwable throwable, String message, Object... args) {
 
-    JSON_ENTITY_LOCAL.remove();
+    super(throwable, message, args);
   }
 }

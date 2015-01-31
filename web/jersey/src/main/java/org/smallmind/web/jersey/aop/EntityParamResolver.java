@@ -72,25 +72,27 @@ public class EntityParamResolver {
         return null;
       }
 
-      return new EntityParamRequestValueFactory(entityParam.value(), paramClass);
+      return new EntityParamRequestValueFactory(entityParam.value(), paramClass, new ParameterAnnotations(parameter.getAnnotations()));
     }
   }
 
   private static class EntityParamRequestValueFactory extends AbstractContainerRequestValueFactory<Object> {
 
+    private ParameterAnnotations parameterAnnotations;
     private Class<?> paramClass;
     private int paramIndex;
 
-    public EntityParamRequestValueFactory (int paramIndex, Class<?> paramClass) {
+    public EntityParamRequestValueFactory (int paramIndex, Class<?> paramClass, ParameterAnnotations parameterAnnotations) {
 
       this.paramIndex = paramIndex;
       this.paramClass = paramClass;
+      this.parameterAnnotations = parameterAnnotations;
     }
 
     @Override
     public Object provide () {
 
-      return EntityTranslator.getParameter(getContainerRequest(), paramIndex, paramClass);
+      return EntityTranslator.getParameter(getContainerRequest(), paramIndex, paramClass, parameterAnnotations);
     }
   }
 
