@@ -38,8 +38,10 @@ public class JsonResourceConfig extends SpringBasedResourceConfig {
 
     register(JsonProvider.class);
 
-    for (ResourceConfigExtension extension : extensions) {
-      extension.apply(this);
+    if (extensions != null) {
+      for (ResourceConfigExtension extension : extensions) {
+        extension.apply(this);
+      }
     }
   }
 }
