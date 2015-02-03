@@ -80,11 +80,11 @@ public class EntityParamResolver {
 
     private ParameterAnnotations parameterAnnotations;
     private Class<?> paramClass;
-    private int paramIndex;
+    private String paramKey;
 
-    public EntityParamRequestValueFactory (int paramIndex, Class<?> paramClass, ParameterAnnotations parameterAnnotations) {
+    public EntityParamRequestValueFactory (String paramKey, Class<?> paramClass, ParameterAnnotations parameterAnnotations) {
 
-      this.paramIndex = paramIndex;
+      this.paramKey = paramKey;
       this.paramClass = paramClass;
       this.parameterAnnotations = parameterAnnotations;
     }
@@ -92,7 +92,7 @@ public class EntityParamResolver {
     @Override
     public Object provide () {
 
-      return EntityTranslator.getParameter(getContainerRequest(), paramIndex, paramClass, parameterAnnotations);
+      return EntityTranslator.getParameter(getContainerRequest(), paramKey, paramClass, parameterAnnotations);
     }
   }
 

@@ -27,42 +27,42 @@
 package org.smallmind.web.jersey.aop;
 
 import java.lang.reflect.Constructor;
+import java.util.Map;
 import javax.xml.bind.annotation.adapters.XmlAdapter;
 import javax.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
 import org.smallmind.web.jersey.util.JsonCodec;
 
-public abstract class AbstractJsonEntity implements JsonEntity {
+public abstract class AbstractMappedJsonEntity implements JsonEntity {
 
   private static final Class[] NO_ARG_SIGNATURE = new Class[0];
 
-  private Object[] arguments;
+  private Map<String, Object> arguments;
 
-  public AbstractJsonEntity () {
+  public AbstractMappedJsonEntity () {
 
   }
 
-  public AbstractJsonEntity (Object[] arguments) {
+  public AbstractMappedJsonEntity (Map<String, Object> arguments) {
 
     this.arguments = arguments;
   }
 
-  public Object[] getArguments () {
+  public Map<String, Object> getArguments () {
 
     return arguments;
   }
 
-  public void setArguments (Object[] arguments) {
+  public void setArguments (Map<String, Object> arguments) {
 
     this.arguments = arguments;
   }
 
   @Override
-  public <T> T getParameter (int index, Class<T> clazz, ParameterAnnotations parameterAnnotations) {
+  public <T> T getParameter (String key, Class<T> clazz, ParameterAnnotations parameterAnnotations) {
 
-    if (index >= arguments.length) {
+    Object obj;
 
-      return null;
-    } else {
+    if ((obj = arguments.get(key)) != null) {
 
       XmlJavaTypeAdapter xmlJavaTypeAdapter;
 
@@ -78,14 +78,16 @@ public abstract class AbstractJsonEntity implements JsonEntity {
 
           xmlAdapter = adapterConstructor.newInstance();
 
-          return JsonCodec.convert(xmlAdapter.unmarshal(arguments[index]), clazz);
+          return JsonCodec.convert(xmlAdapter.unmarshal(obj), clazz);
         } catch (Exception exception) {
           throw new ParameterProcessingException(exception);
         }
       } else {
 
-        return JsonCodec.convert(arguments[index], clazz);
+        return JsonCodec.convert(obj, clazz);
       }
     }
+
+    return null;
   }
 }
