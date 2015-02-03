@@ -85,44 +85,25 @@
         </plugins>
       </build>
     </profile>    
-    <!--
     <profile>
       <id>nexus</id>
       <distributionManagement>
         <repository>
-          <id>${nexus.release.repository.id}</id>
+          <id>${nexus.releases.id}</id>
           <name>Nexus Release Repository</name>
-          <url>${nexus.release.repository.url}</url>
+          <url>${nexus.releases.url}</url>
         </repository>
         <snapshotRepository>
-          <id>${nexus.release.repository.id}</id>
+          <id>${nexus.snapshots.id}</id>
           <name>Nexus Snapshot Repository</name>
-          <url>${nexus.server}/nexus/content/repositories/snapshots</url>
+          <url>${nexus.snapshots.url}</url>
         </snapshotRepository>
-      </distributionManagement>
-    </profile>
-    -->
-    <profile>
-      <id>nexus</id>
-      <distributionManagement>
-        <snapshotRepository>
-          <id>nexus</id>
-          <name>forio-snapshots</name>
-          <url>https://dev.forio.com/repository/content/repositories/libs-snapshots-local</url>
-        </snapshotRepository>
-        <repository>
-          <id>nexus</id>
-          <name>forio-releases</name>
-          <url>https://dev.forio.com/repository/content/repositories/libs-releases-local</url>
-        </repository>
       </distributionManagement>
     </profile>
   </profiles>
 
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-    <nexus.release.repository.id>nexus</nexus.release.repository.id>
-    <nexus.release.repository.url>${nexus.server}/nexus/content/repositories/releases</nexus.release.repository.url>
     <java.tools.jar>${env.JAVA_HOME}/lib/tools.jar</java.tools.jar>
     <javafx.runtime.lib.jar>${env.JAVAFX_RUNTIME}/lib/jfxrt.jar</javafx.runtime.lib.jar>
     <spring.version>4.0.3.RELEASE</spring.version>
