@@ -84,7 +84,8 @@
           </plugin>
         </plugins>
       </build>
-    </profile>
+    </profile>    
+    <!--
     <profile>
       <id>nexus</id>
       <distributionManagement>
@@ -98,6 +99,22 @@
           <name>Nexus Snapshot Repository</name>
           <url>${nexus.server}/nexus/content/repositories/snapshots</url>
         </snapshotRepository>
+      </distributionManagement>
+    </profile>
+    -->
+    <profile>
+      <id>nexus</id>
+      <distributionManagement>
+        <snapshotRepository>
+          <id>nexus</id>
+          <name>forio-snapshots</name>
+          <url>https://dev.forio.com/repository/content/repositories/libs-snapshots-local</url>
+        </snapshotRepository>
+        <repository>
+          <id>nexus</id>
+          <name>forio-releases</name>
+          <url>https://dev.forio.com/repository/content/repositories/libs-releases-local</url>
+        </repository>
       </distributionManagement>
     </profile>
   </profiles>
