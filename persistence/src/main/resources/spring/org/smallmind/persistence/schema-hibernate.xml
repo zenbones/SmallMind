@@ -8,8 +8,14 @@
   <bean class="org.smallmind.liquibase.spring.SpringLiquibase">
     <property name="dataSource" ref="schemaPooledDataSource"/>
     <property name="source" value="CLASSPATH"/>
-    <property name="changeLog" value="database/schema/schema.xml"/>
     <property name="goal" value="${liquibase.goal}"/>
+    <property name="changeLogs">
+      <list>
+        <bean class="org.smallmind.liquibase.spring.ChangeLog">
+          <property name="input" value="database/schema/schema.xml"/>
+        </bean>
+      </list>
+    </property>
   </bean>
 
   <!-- Connection Pooling -->

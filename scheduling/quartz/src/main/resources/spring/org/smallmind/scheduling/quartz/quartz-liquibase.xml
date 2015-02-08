@@ -6,9 +6,15 @@
   <bean id="quartzLiquibase" class="org.smallmind.liquibase.spring.SpringLiquibase">
     <property name="dataSource" ref="quartzDataSource"/>
     <property name="source" value="CLASSPATH"/>
-    <property name="changeLog" value="com/glu/job/quartz-changelog.xml"/>
-    <property name="outputLog" value="quartz-changelog.xml"/>
     <property name="goal" value="UPDATE"/>
+    <property name="changeLogs">
+      <list>
+        <bean class="org.smallmind.liquibase.spring.ChangeLog">
+          <property name="input" value="com/glu/job/quartz-changelog.xml"/>
+          <property name="output" value="quartz-changelog.xml"/>
+        </bean>
+      </list>
+    </property>
   </bean>
 
   <!-- Data Source -->
