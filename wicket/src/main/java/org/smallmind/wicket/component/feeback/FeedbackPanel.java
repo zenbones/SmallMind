@@ -54,7 +54,7 @@ public class FeedbackPanel extends Panel {
     feedbackMessageListModel = new FeedbackMessageListModel();
 
     add(new FeedbackListView("feedbackRow", feedbackMessageListModel));
-    add(new AttributeAppender("style", true, new FeedbackDisplayModel(feedbackMessageListModel), ";"));
+    add(new AttributeAppender("style", new FeedbackDisplayModel(feedbackMessageListModel), ";"));
 
     cssProperties = skinManager.getProperties((WebApplication)getApplication(), FeedbackPanel.class);
     add(new CssBehavior(cssProperties));

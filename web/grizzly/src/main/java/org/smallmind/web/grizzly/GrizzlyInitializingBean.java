@@ -62,6 +62,7 @@ public class GrizzlyInitializingBean implements DisposableBean, ApplicationConte
   private HttpServer httpServer;
   private LinkedList<WebService> serviceList = new LinkedList<>();
   private LinkedList<FilterInstaller> filterInstallerList = new LinkedList<>();
+  private LinkedList<ListenerInstaller> listenerInstallerList = new LinkedList<>();
   private LinkedList<ServletInstaller> servletInstallerList = new LinkedList<>();
   private ResourceConfigExtension[] resourceConfigExtensions;
   private String host;
@@ -143,6 +144,12 @@ public class GrizzlyInitializingBean implements DisposableBean, ApplicationConte
           throw new GrizzlyInitializationException(exception);
         }
       }
+      for (ListenerInstaller listenerInstaller : listenerInstallerList) {
+        webappContext.addListener(listenerInstaller.getListenerClass());
+        for (Map.Entry<String, String> parameterEntry : listenerInstaller.getContextParameters().entrySet()) {
+          webappContext.addContextInitParameter(parameterEntry.getKey(), parameterEntry.getValue());
+        }
+      }
       for (ServletInstaller servletInstaller : servletInstallerList) {
         try {
 
@@ -203,6 +210,8 @@ public class GrizzlyInitializingBean implements DisposableBean, ApplicationConte
 
     if (bean instanceof FilterInstaller) {
       filterInstallerList.add((FilterInstaller)bean);
+    } else if (bean instanceof ListenerInstaller) {
+      listenerInstallerList.add((ListenerInstaller)bean);
     } else if (bean instanceof ServletInstaller) {
       servletInstallerList.add((ServletInstaller)bean);
     } else if ((servicePath = bean.getClass().getAnnotation(ServicePath.class)) != null) {
