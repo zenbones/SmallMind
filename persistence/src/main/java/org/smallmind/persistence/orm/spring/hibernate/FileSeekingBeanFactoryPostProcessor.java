@@ -79,6 +79,9 @@ public class FileSeekingBeanFactoryPostProcessor implements BeanFactoryPostProce
     for (String beanName : configurableListableBeanFactory.getBeanDefinitionNames()) {
       if ((beanClass = configurableListableBeanFactory.getType(beanName)) != null) {
         if (HibernateDao.class.isAssignableFrom(beanClass)) {
+
+          boolean mapped = false;
+
           if ((dataSource = beanClass.getAnnotation(DataSource.class)) != null) {
             dataSourceKey = dataSource.value();
           }
@@ -91,12 +94,13 @@ public class FileSeekingBeanFactoryPostProcessor implements BeanFactoryPostProce
             throw new FatalBeanException("No inference of the Durable class for type(" + beanClass.getName() + ") was possible");
           }
 
-          while ((persistentClass != null) && (!hbmResourceMap.containsKey(persistentClass))) {
+          while ((persistentClass != null) && (!mapped) && (!hbmResourceMap.containsKey(persistentClass))) {
             packageRemnant = persistentClass.getPackage().getName().replace('.', '/');
             hbmFileName = persistentClass.getSimpleName() + ".hbm.xml";
             do {
               if ((hbmURL = configurableListableBeanFactory.getBeanClassLoader().getResource((packageRemnant.length() > 0) ? packageRemnant + '/' + hbmFileName : hbmFileName)) != null) {
                 hbmResourceMap.put(persistentClass, new UrlResource(hbmURL));
+                mapped = true;
                 break;
               }
 
