@@ -27,6 +27,7 @@
 package org.smallmind.wicket.property;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.util.Properties;
 import java.util.WeakHashMap;
 import org.apache.wicket.protocol.http.WebApplication;
@@ -41,16 +42,17 @@ public class PropertyFactory {
     Properties properties;
 
     if ((properties = PROPERTY_MAP.get(resourcePath)) == null) {
-      properties = new Properties();
-
-      try {
-        properties.load(webApplication.getServletContext().getResourceAsStream(resourcePath));
-      }
-      catch (IOException ioException) {
+      try (InputStream inputStream = webApplication.getServletContext().getResourceAsStream(resourcePath)) {
+        if (inputStream == null) {
+          throw new PropertyException("Unable to locate properties at resource(%s)", resourcePath);
+        } else {
+          properties = new Properties();
+          properties.load(webApplication.getServletContext().getResourceAsStream(resourcePath));
+          PROPERTY_MAP.put(resourcePath, properties);
+        }
+      } catch (IOException ioException) {
         throw new PropertyException(ioException);
       }
-
-      PROPERTY_MAP.put(resourcePath, properties);
     }
 
     return properties;
