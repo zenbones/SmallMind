@@ -49,20 +49,18 @@ import org.hibernate.usertype.UserType;
 
 public class SerializableBlobUserType implements UserType, ParameterizedType {
 
-  private String dataSource;
   private boolean compressed;
   private boolean immutable;
 
   public void setParameterValues (Properties parameters) {
 
-    dataSource = parameters.getProperty("dataSource");
     compressed = Boolean.parseBoolean(parameters.getProperty("compressed", "false"));
     immutable = Boolean.parseBoolean(parameters.getProperty("immutable", "false"));
   }
 
   public int[] sqlTypes () {
 
-    return new int[] {Types.BLOB};
+    return new int[]{Types.BLOB};
   }
 
   public Class returnedClass () {
@@ -127,19 +125,16 @@ public class SerializableBlobUserType implements UserType, ParameterizedType {
       try {
 
         return value.getClass().getMethod("clone").invoke(value);
-      }
-      catch (Exception exception) {
+      } catch (Exception exception) {
         throw new HibernateException(exception);
       }
-    }
-    else {
+    } else {
       try {
 
         Constructor<?> copyConstructor = value.getClass().getConstructor(value.getClass());
 
         return copyConstructor.newInstance(value);
-      }
-      catch (Exception exception) {
+      } catch (Exception exception) {
 
         return fromByteArray(toByteArray(value));
       }
@@ -153,7 +148,9 @@ public class SerializableBlobUserType implements UserType, ParameterizedType {
 
   private byte[] toByteArray (Object value) {
 
-    if (value == null) return null;
+    if (value == null) {
+      return null;
+    }
 
     ByteArrayOutputStream baos = new ByteArrayOutputStream((value instanceof SizeAwareSerializable) ? ((SizeAwareSerializable)value).approximateSize() / (compressed ? 4 : 1) : 1024);
     ObjectOutputStream oos;
@@ -163,8 +160,7 @@ public class SerializableBlobUserType implements UserType, ParameterizedType {
       oos.close();
 
       return baos.toByteArray();
-    }
-    catch (IOException ioException) {
+    } catch (IOException ioException) {
       throw new HibernateException(ioException);
     }
   }
@@ -181,8 +177,7 @@ public class SerializableBlobUserType implements UserType, ParameterizedType {
       ois.close();
 
       return value;
-    }
-    catch (Exception exception) {
+    } catch (Exception exception) {
       throw new HibernateException(exception);
     }
   }
