@@ -32,40 +32,41 @@ import org.apache.wicket.markup.html.form.RadioGroup;
 import org.apache.wicket.markup.html.list.Loop;
 import org.apache.wicket.markup.html.list.LoopItem;
 import org.apache.wicket.markup.html.panel.Panel;
+import org.apache.wicket.model.IModel;
 import org.apache.wicket.model.Model;
 
 public abstract class EnumRadioPanel<E extends Enum> extends Panel {
 
-  private E selection;
-
   public EnumRadioPanel (String id, Class<E> enumClass) {
 
-    this(id, enumClass, null);
+    this(id, enumClass, new Model<E>());
   }
 
-  public EnumRadioPanel (String id, Class<E> enumClass, E selection) {
+  public EnumRadioPanel (String id, Class<E> enumClass, final IModel<E> selectionModel) {
 
-    super(id);
+    super(id, selectionModel);
 
     final E[] enumerations = enumClass.getEnumConstants();
 
     RadioGroup<E> radioGroup;
 
-    this.selection = selection;
+    setOutputMarkupId(true);
 
-    add(radioGroup = new RadioGroup<E>("enumRadioGroup", new Model<E>(selection)));
-    radioGroup.add(new Loop("enumRadioLoop", new Model<Integer>(enumerations.length)) {
+    add(radioGroup = new RadioGroup<E>("enumRadioGroup", selectionModel));
+    radioGroup.add(new Loop("enumRadioLoop", new Model<>(enumerations.length)) {
 
       @Override
       protected void populateItem (LoopItem item) {
 
-        item.add(new Label("enumRadioLabel", new Model<String>(enumerations[item.getIndex()].toString())));
+        item.add(new Label("enumRadioLabel", new Model<>(enumerations[item.getIndex()].toString())));
         item.add(new AjaxRadio<E>("enumRadioButton", new Model<E>(enumerations[item.getIndex()])) {
 
           @Override
           public void onClick (E selection, AjaxRequestTarget target) {
 
-            EnumRadioPanel.this.selection = selection;
+            selectionModel.setObject(selection);
+            target.add(EnumRadioPanel.this);
+
             EnumRadioPanel.this.onClick(selection, target);
           }
         });
@@ -73,9 +74,14 @@ public abstract class EnumRadioPanel<E extends Enum> extends Panel {
     });
   }
 
+  public IModel<E> getSelectionModel () {
+
+    return (IModel<E>)getDefaultModel();
+  }
+
   public E getSelection () {
 
-    return selection;
+    return (E)getDefaultModelObject();
   }
 
   public abstract void onClick (E selection, AjaxRequestTarget target);
