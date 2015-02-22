@@ -34,6 +34,7 @@ import org.apache.wicket.markup.html.list.LoopItem;
 import org.apache.wicket.markup.html.panel.Panel;
 import org.apache.wicket.model.IModel;
 import org.apache.wicket.model.Model;
+import org.smallmind.nutsnbolts.util.StringUtilities;
 
 public abstract class EnumRadioPanel<E extends Enum> extends Panel {
 
@@ -58,7 +59,7 @@ public abstract class EnumRadioPanel<E extends Enum> extends Panel {
       @Override
       protected void populateItem (LoopItem item) {
 
-        item.add(new Label("enumRadioLabel", new Model<>(enumerations[item.getIndex()].toString())));
+        item.add(new Label("enumRadioLabel", new Model<>(StringUtilities.toDisplayCase(enumerations[item.getIndex()].name(), '_'))));
         item.add(new AjaxRadio<E>("enumRadioButton", new Model<E>(enumerations[item.getIndex()])) {
 
           @Override
