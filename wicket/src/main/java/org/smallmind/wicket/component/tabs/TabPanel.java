@@ -59,7 +59,7 @@ public class TabPanel extends Panel {
 
     this.selectedIndex = selectedIndex;
 
-    tabList = new LinkedList<Tab>();
+    tabList = new LinkedList<>();
 
     setOutputMarkupId(true);
 
@@ -74,18 +74,22 @@ public class TabPanel extends Panel {
     add(new CssBehavior(Tab.class, "Tab.css", cssProperties));
   }
 
-  public synchronized void setSelectionChangedCallback (SelectionChangedCallback selectionChangedCallback) {
+  public synchronized TabPanel setSelectionChangedCallback (SelectionChangedCallback selectionChangedCallback) {
 
     this.selectionChangedCallback = selectionChangedCallback;
+
+    return this;
   }
 
-  public synchronized void addTab (ITab tab) {
+  public synchronized TabPanel addTab (ITab tab) {
 
     if (tabList.size() == selectedIndex) {
       tabContents.add(tab.getPanel("tabPanel"));
     }
 
     tabList.add(new Tab("tab", this, tab, tabList.size(), tabList.size() == selectedIndex));
+
+    return this;
   }
 
   public synchronized void setSelectedIndex (final AjaxRequestTarget target, int index) {
