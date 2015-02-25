@@ -39,4 +39,9 @@ public class JugglerResourceException extends FormattedException {
 
     super(message, args);
   }
+
+  public JugglerResourceException (Throwable throwable, String message, Object... args) {
+
+    super(throwable, message, args);
+  }
 }

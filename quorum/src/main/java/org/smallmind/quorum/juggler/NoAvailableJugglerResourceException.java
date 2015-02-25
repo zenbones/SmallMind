@@ -28,8 +28,8 @@ package org.smallmind.quorum.juggler;
 
 public class NoAvailableJugglerResourceException extends JugglerResourceException {
 
-  public NoAvailableJugglerResourceException (String message, Object... args) {
+  public NoAvailableJugglerResourceException (Throwable throwable, String message, Object... args) {
 
-    super(message, args);
+    super(throwable, message, args);
   }
 }

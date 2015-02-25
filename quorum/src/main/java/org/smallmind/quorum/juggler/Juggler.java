@@ -40,6 +40,8 @@ import org.smallmind.scribe.pen.LoggerManager;
 
 public class Juggler<P, R> implements BlackList<R> {
 
+  private static enum State {DECONSTRUCTED, INITIALIZED, STARTED, STOPPED}
+
   private final SecureRandom random = new SecureRandom();
   private final JugglingPinFactory<P, R> jugglingPinFactory;
   private final P[] providers;
@@ -49,7 +51,7 @@ public class Juggler<P, R> implements BlackList<R> {
   private ProviderRecoveryWorker recoveryWorker = null;
   private ArrayList<JugglingPin<R>> sourcePins;
   private ArrayList<JugglingPin<R>> targetPins;
-  private ConcurrentSkipListMap<Long, JugglingPin<R>> blackMap;
+  private ConcurrentSkipListMap<Long, BlacklistEntry<R>> blacklistMap;
   private State state = State.DECONSTRUCTED;
 
   public Juggler (Class<P> providerClass, Class<R> resourceClass, int recoveryCheckSeconds, JugglingPinFactory<P, R> jugglingPinFactory, P provider, int size) {
@@ -81,7 +83,7 @@ public class Juggler<P, R> implements BlackList<R> {
     if (state.equals(State.DECONSTRUCTED)) {
       sourcePins = new ArrayList<>(providers.length);
       targetPins = new ArrayList<>(providers.length);
-      blackMap = new ConcurrentSkipListMap<>();
+      blacklistMap = new ConcurrentSkipListMap<>();
 
       for (P provider : providers) {
         targetPins.add(jugglingPinFactory.createJugglingPin(provider, resourceClass));
@@ -113,14 +115,12 @@ public class Juggler<P, R> implements BlackList<R> {
 
         try {
           pin.start(method, args);
-        }
-        catch (JugglerResourceException jugglerResourceException) {
+        } catch (JugglerResourceException jugglerResourceException) {
           try {
             LoggerManager.getLogger(Juggler.class).error(jugglerResourceException);
-          }
-          finally {
+          } finally {
             sourcePinIter.remove();
-            blackMap.put(System.currentTimeMillis(), pin);
+            blacklistMap.put(System.currentTimeMillis(), new BlacklistEntry<>(pin, jugglerResourceException));
           }
         }
       }
@@ -161,29 +161,44 @@ public class Juggler<P, R> implements BlackList<R> {
         targetPins.add(pin);
 
         return resource;
-      }
-      catch (Exception exception) {
+      } catch (Exception exception) {
         try {
           LoggerManager.getLogger(Juggler.class).error(exception);
-        }
-        finally {
-          blackMap.put(System.currentTimeMillis(), pin);
+        } finally {
+          blacklistMap.put(System.currentTimeMillis(), new BlacklistEntry<>(pin, exception));
         }
       }
     }
 
-    throw new NoAvailableJugglerResourceException("All available resources(%s) have been black listed", providerClass.getSimpleName());
+    throw generateTerminatingException();
   }
 
-  public synchronized void addToBlackList (JugglingPin<R> blackPin) {
+  private NoAvailableJugglerResourceException generateTerminatingException () {
 
-    if (sourcePins.remove(blackPin)) {
-      blackMap.put(System.currentTimeMillis(), blackPin);
-      LoggerManager.getLogger(Juggler.class).info("Added resource(%s) to black list", blackPin.describe());
+    NoAvailableJugglerResourceException noAvailableJugglerResourceException = null;
+    boolean first = true;
+
+    for (BlacklistEntry<R> blacklistEntry : blacklistMap.descendingMap().values()) {
+      if (first) {
+        noAvailableJugglerResourceException = new NoAvailableJugglerResourceException(blacklistEntry.getThrowable(), "All available resources(%s) have been black listed", providerClass.getSimpleName());
+      } else {
+        noAvailableJugglerResourceException.addSuppressed(blacklistEntry.getThrowable());
+      }
+      first = false;
     }
-    else if (targetPins.remove(blackPin)) {
-      blackMap.put(System.currentTimeMillis(), blackPin);
-      LoggerManager.getLogger(Juggler.class).info("Added resource(%s) to black list", blackPin.describe());
+
+    return noAvailableJugglerResourceException;
+  }
+
+  @Override
+  public synchronized void addToBlackList (BlacklistEntry<R> blacklistEntry) {
+
+    if (sourcePins.remove(blacklistEntry.getJugglingPin())) {
+      blacklistMap.put(System.currentTimeMillis(), blacklistEntry);
+      LoggerManager.getLogger(Juggler.class).info("Added resource(%s) to black list", blacklistEntry.getJugglingPin().describe());
+    } else if (targetPins.remove(blacklistEntry.getJugglingPin())) {
+      blacklistMap.put(System.currentTimeMillis(), blacklistEntry);
+      LoggerManager.getLogger(Juggler.class).info("Added resource(%s) to black list", blacklistEntry.getJugglingPin().describe());
     }
   }
 
@@ -198,8 +213,7 @@ public class Juggler<P, R> implements BlackList<R> {
       if (recoveryWorker != null) {
         try {
           recoveryWorker.abort();
-        }
-        catch (InterruptedException interruptedException) {
+        } catch (InterruptedException interruptedException) {
           LoggerManager.getLogger(Juggler.class).error(interruptedException);
         }
       }
@@ -207,8 +221,7 @@ public class Juggler<P, R> implements BlackList<R> {
       for (JugglingPin<R> pin : sourcePins) {
         try {
           pin.stop(method, args);
-        }
-        catch (Exception exception) {
+        } catch (Exception exception) {
           LoggerManager.getLogger(Juggler.class).error(exception);
         }
       }
@@ -218,11 +231,9 @@ public class Juggler<P, R> implements BlackList<R> {
 
         try {
           pin.stop(method, args);
-        }
-        catch (Exception exception) {
+        } catch (Exception exception) {
           LoggerManager.getLogger(Juggler.class).error(exception);
-        }
-        finally {
+        } finally {
           sourcePins.add(pin);
         }
       }
@@ -242,8 +253,7 @@ public class Juggler<P, R> implements BlackList<R> {
       for (JugglingPin<R> pin : sourcePins) {
         try {
           pin.close(method, args);
-        }
-        catch (Exception exception) {
+        } catch (Exception exception) {
           LoggerManager.getLogger(Juggler.class).error(exception);
         }
       }
@@ -251,8 +261,6 @@ public class Juggler<P, R> implements BlackList<R> {
       state = State.DECONSTRUCTED;
     }
   }
-
-  private static enum State {DECONSTRUCTED, INITIALIZED, STARTED, STOPPED}
 
   private class ProviderRecoveryWorker implements Runnable {
 
@@ -280,27 +288,25 @@ public class Juggler<P, R> implements BlackList<R> {
       try {
         while (!terminationLatch.await(3, TimeUnit.SECONDS)) {
 
-          Map.Entry<Long, JugglingPin<R>> firstEntry;
+          Map.Entry<Long, BlacklistEntry<R>> firstEntry;
 
-          while (((firstEntry = blackMap.firstEntry()) != null) && ((firstEntry.getKey() + recoveryCheckMillis) <= System.currentTimeMillis())) {
-            if (firstEntry.getValue().recover()) {
+          while (((firstEntry = blacklistMap.firstEntry()) != null) && ((firstEntry.getKey() + recoveryCheckMillis) <= System.currentTimeMillis())) {
+            if (firstEntry.getValue().getJugglingPin().recover()) {
               synchronized (Juggler.this) {
 
                 JugglingPin<R> recoveredPin;
 
-                if ((recoveredPin = blackMap.remove(firstEntry.getKey())) != null) {
+                if ((recoveredPin = blacklistMap.remove(firstEntry.getKey()).getJugglingPin()) != null) {
                   targetPins.add(recoveredPin);
                   LoggerManager.getLogger(Juggler.class).info("Recovered resource(%s) from black list", recoveredPin.describe());
-                }
-                else {
+                } else {
                   LoggerManager.getLogger(ProviderRecoveryWorker.class).fatal("We've lost a resource(%s), which should never occur - please notify a system administrator", providerClass.getSimpleName());
                 }
               }
             }
           }
         }
-      }
-      catch (InterruptedException interruptedException) {
+      } catch (InterruptedException interruptedException) {
         LoggerManager.getLogger(ProviderRecoveryWorker.class).error(interruptedException);
       }
 

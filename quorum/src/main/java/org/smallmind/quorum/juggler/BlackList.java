@@ -28,7 +28,5 @@ package org.smallmind.quorum.juggler;
 
 public interface BlackList<R> {
 
-
-
-  public abstract void addToBlackList (JugglingPin<R> blackPin);
+  public abstract void addToBlackList (BlacklistEntry<R> blacklistEntry);
 }
