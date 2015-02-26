@@ -1,0 +1,54 @@
+package org.smallmind.web.jaxws;
+
+import java.util.ArrayList;
+import java.util.List;
+import org.eclipse.aether.artifact.Artifact;
+import org.eclipse.aether.graph.DependencyNode;
+
+final class ClassPathNodeListGenerator extends PreorderNodeListGenerator {
+
+  private final List<DependencyNode> endorsedNodes;
+  private boolean endorsed;
+
+  public ClassPathNodeListGenerator () {
+
+    endorsedNodes = new ArrayList<DependencyNode>(8);
+    endorsed = false;
+  }
+
+  public void setEndorsed (boolean endorsed) {
+
+    this.endorsed = endorsed;
+  }
+
+  @Override
+  public List<DependencyNode> getNodes () {
+
+    List<DependencyNode> retVal = new ArrayList<DependencyNode>(super.getNodes());
+    if (endorsed) {
+      retVal.retainAll(endorsedNodes);
+    }
+    else {
+      retVal.removeAll(endorsedNodes);
+    }
+    return retVal;
+  }
+
+  @Override
+  public boolean visitEnter (DependencyNode node) {
+
+    Artifact a = node.getDependency().getArtifact();
+    if ("jaxws-api".equals(a.getArtifactId()) || "jaxb-api".equals(a.getArtifactId())
+      || "saaj-api".equals(a.getArtifactId()) || "jsr181-api".equals(a.getArtifactId())
+      || "javax.annotation".equals(a.getArtifactId())
+      || "javax.annotation-api".equals(a.getArtifactId())
+      || "webservices-api".equals(a.getArtifactId())) {
+      endorsedNodes.add(node);
+    }
+    else if (a.getArtifactId().startsWith("javax.xml.ws")
+      || a.getArtifactId().startsWith("javax.xml.bind")) {
+      endorsedNodes.add(node);
+    }
+    return super.visitEnter(node);
+  }
+}

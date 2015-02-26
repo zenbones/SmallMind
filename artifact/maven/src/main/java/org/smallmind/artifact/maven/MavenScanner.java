@@ -1,0 +1,168 @@
+package org.smallmind.artifact.maven;
+
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedList;
+import java.util.concurrent.CountDownLatch;
+import org.apache.maven.settings.building.SettingsBuildingException;
+import org.eclipse.aether.DefaultRepositorySystemSession;
+import org.eclipse.aether.artifact.Artifact;
+import org.eclipse.aether.collection.DependencyCollectionException;
+import org.eclipse.aether.resolution.ArtifactResolutionException;
+import org.eclipse.aether.resolution.DependencyResolutionException;
+import org.smallmind.nutsnbolts.lang.ClassGate;
+import org.smallmind.nutsnbolts.lang.ClasspathClassGate;
+import org.smallmind.nutsnbolts.lang.GatingClassLoader;
+import org.smallmind.nutsnbolts.time.Duration;
+import org.smallmind.scribe.pen.LoggerManager;
+
+public class MavenScanner {
+
+  private static enum State {STARTED, STOPPED}
+
+  private final LinkedList<MavenScannerListener> listenerList = new LinkedList<>();
+  private final Duration cycleDuration;
+  private final MavenCoordinate[] mavenCoordinates;
+  private final Artifact[] artifacts;
+  private final String repositoryId;
+  private final boolean offline;
+  private ScannerWorker scannerWorker;
+  private State state = State.STOPPED;
+
+  public MavenScanner (String respositoryId, boolean offline, Duration cycleDuration, MavenCoordinate... mavenCoordinates) {
+
+    if (mavenCoordinates == null) {
+      throw new IllegalArgumentException("Must provide some maven coordinates");
+    }
+
+    this.repositoryId = respositoryId;
+    this.cycleDuration = cycleDuration;
+    this.offline = offline;
+    this.mavenCoordinates = mavenCoordinates;
+
+    artifacts = new Artifact[mavenCoordinates.length];
+  }
+
+  public synchronized void addMavenScannerListener (MavenScannerListener listener) {
+
+    listenerList.add(listener);
+  }
+
+  public synchronized void removeMavenScannerListener (MavenScannerListener listener) {
+
+    listenerList.remove(listener);
+  }
+
+  public synchronized void start ()
+    throws SettingsBuildingException, DependencyCollectionException, DependencyResolutionException, ArtifactResolutionException {
+
+    if (state.equals(State.STOPPED)) {
+
+      Thread workerThread;
+
+      updateArtifact();
+
+      workerThread = new Thread(scannerWorker = new ScannerWorker());
+      workerThread.setDaemon(true);
+      workerThread.start();
+
+      state = State.STARTED;
+    }
+  }
+
+  public synchronized void stop ()
+    throws InterruptedException {
+
+    if (state.equals(State.STARTED)) {
+      if (scannerWorker != null) {
+        scannerWorker.stop();
+      }
+
+      state = State.STOPPED;
+    }
+  }
+
+  private synchronized void updateArtifact ()
+    throws SettingsBuildingException, DependencyCollectionException, DependencyResolutionException, ArtifactResolutionException {
+
+    MavenRepository mavenRepository = new MavenRepository(repositoryId, offline);
+    DefaultRepositorySystemSession session = mavenRepository.generateSession();
+    MavenScannerEvent event;
+    HashMap<Artifact, Artifact> artifactDeltaMap = new HashMap<>();
+    HashSet<Artifact> dependentArtifactSet = new HashSet<>();
+    LinkedList<ClassGate> classGateList = new LinkedList<>();
+
+    for (int index = 0; index < mavenCoordinates.length; index++) {
+
+      Artifact currentArtifact = mavenRepository.acquireArtifact(session, mavenCoordinates[index]);
+
+      if (!currentArtifact.equals(artifacts[index])) {
+
+        Artifact[] dependentArtifacts = mavenRepository.resolve(session, currentArtifact);
+
+        for (Artifact dependentArtifact : dependentArtifacts) {
+          if (dependentArtifactSet.add(dependentArtifact)) {
+            classGateList.add(new ClasspathClassGate(dependentArtifact.getFile().getAbsolutePath()));
+          }
+        }
+
+        artifactDeltaMap.put(currentArtifact, artifacts[index]);
+        artifacts[index] = currentArtifact;
+      }
+    }
+
+    if (!classGateList.isEmpty()) {
+
+      GatingClassLoader gatingClassLoader;
+      ClassGate[] classGates;
+
+      classGates = new ClassGate[classGateList.size()];
+      classGateList.toArray(classGates);
+
+      gatingClassLoader = new GatingClassLoader(Thread.currentThread().getContextClassLoader(), -1, classGates);
+      event = new MavenScannerEvent(this, artifactDeltaMap, artifacts, gatingClassLoader);
+
+      for (MavenScannerListener listener : listenerList) {
+        listener.artifactChange(event);
+      }
+    }
+  }
+
+  @Override
+  protected void finalize ()
+    throws InterruptedException {
+
+    stop();
+  }
+
+  private class ScannerWorker implements Runnable {
+
+    private CountDownLatch finishLatch = new CountDownLatch(1);
+    private CountDownLatch exitLatch = new CountDownLatch(1);
+
+    public void stop ()
+      throws InterruptedException {
+
+      finishLatch.countDown();
+      exitLatch.await();
+    }
+
+    @Override
+    public void run () {
+
+      try {
+        while (!finishLatch.await(cycleDuration.getTime(), cycleDuration.getTimeUnit())) {
+          try {
+            updateArtifact();
+          } catch (Exception exception) {
+            LoggerManager.getLogger(MavenScanner.class).error(exception);
+          }
+        }
+      } catch (InterruptedException interruptedException) {
+        finishLatch.countDown();
+      } finally {
+        exitLatch.countDown();
+      }
+    }
+  }
+}

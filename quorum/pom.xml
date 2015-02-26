@@ -4,7 +4,7 @@
   <parent>
     <groupId>org.smallmind</groupId>
     <artifactId>smallmind</artifactId>
-    <version>1.8.2-SNAPSHOT</version>
+    <version>1.8.3-SNAPSHOT</version>
   </parent>
   <artifactId>smallmind-quorum</artifactId>
   <name>Quorum</name>
@@ -39,14 +39,8 @@
       <optional>true</optional>
     </dependency>
     <dependency>
-      <groupId>org.hibernate</groupId>
-      <artifactId>hibernate-core</artifactId>
-      <scope>compile</scope>
-      <optional>true</optional>
-    </dependency>
-    <dependency>
-      <groupId>org.terracotta.toolkit</groupId>
-      <artifactId>terracotta-toolkit-1.6</artifactId>
+      <groupId>tanukisoft</groupId>
+      <artifactId>wrapper</artifactId>
       <scope>compile</scope>
       <optional>true</optional>
     </dependency>

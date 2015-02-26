@@ -89,16 +89,13 @@ public class MethodInvoker {
 
     try {
       return serviceMethod.invoke(targetObject, invocationSignal.getArgs());
-    }
-    catch (InvocationTargetException invocationTargetException) {
+    } catch (InvocationTargetException invocationTargetException) {
       if ((invocationTargetException.getCause() != null) && (invocationTargetException.getCause() instanceof Exception)) {
         throw (Exception)invocationTargetException.getCause();
-      }
-      else {
+      } else {
         throw invocationTargetException;
       }
-    }
-    finally {
+    } finally {
       if (invocationSignal.containsContexts()) {
         for (Context context : invocationSignal.getContexts()) {
           if (context != null) {

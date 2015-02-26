@@ -64,8 +64,7 @@ public class ComponentPool<C> {
     if ((PoolManager.getPool() != null) && ((metricConfiguration = PoolManager.getPool().getMetricConfiguration()) != null) && metricConfiguration.isInstrumented() && ((metricRegistry = InstrumentationManager.getMetricRegistry()) != null) && (metricRegistry.getServer() != null)) {
       try {
         metricRegistry.getServer().registerMBean(new ComponentPoolMonitor(this), new ObjectName(metricConfiguration.getMetricDomain().getDomain() + ":" + "pool=" + name));
-      }
-      catch (Exception exception) {
+      } catch (Exception exception) {
         throw new ComponentPoolException(exception);
       }
     }
@@ -139,8 +138,7 @@ public class ComponentPool<C> {
 
     try {
       componentInstanceFactory.initialize();
-    }
-    catch (Exception exception) {
+    } catch (Exception exception) {
       throw new ComponentPoolException(exception);
     }
 
@@ -148,8 +146,7 @@ public class ComponentPool<C> {
 
     try {
       componentInstanceFactory.startup();
-    }
-    catch (Exception exception) {
+    } catch (Exception exception) {
       throw new ComponentPoolException(exception);
     }
   }
@@ -159,8 +156,7 @@ public class ComponentPool<C> {
 
     try {
       componentInstanceFactory.shutdown();
-    }
-    catch (Exception exception) {
+    } catch (Exception exception) {
       throw new ComponentPoolException(exception);
     }
 
@@ -168,8 +164,7 @@ public class ComponentPool<C> {
 
     try {
       componentInstanceFactory.deconstruct();
-    }
-    catch (Exception exception) {
+    } catch (Exception exception) {
       throw new ComponentPoolException(exception);
     }
   }
@@ -187,8 +182,7 @@ public class ComponentPool<C> {
           return componentPinManager.serve().serve();
         }
       });
-    }
-    catch (Exception exception) {
+    } catch (Exception exception) {
       throw new ComponentPoolException(exception);
     }
   }

@@ -75,16 +75,13 @@ public class ComponentCreationWorker<C> implements Runnable {
         LoggerManager.getLogger(ComponentCreationWorker.class).error("Completed connection is being closed due to a request in the %s state - you may want to increase the connection wait time", stateRef.get().name());
         componentInstance.close();
       }
-    }
-    catch (Exception exception) {
+    } catch (Exception exception) {
       if (!stateRef.compareAndSet(null, State.TERMINATED)) {
         LoggerManager.getLogger(ComponentCreationWorker.class).error(exception);
-      }
-      else {
+      } else {
         this.exception = exception;
       }
-    }
-    finally {
+    } finally {
       terminationLatch.countDown();
     }
   }

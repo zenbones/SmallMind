@@ -47,7 +47,7 @@ public class ComponentPoolMonitor extends NotificationBroadcasterSupport impleme
 
   public ComponentPoolMonitor (ComponentPool componentPool) {
 
-    super(new MBeanNotificationInfo(new String[] {CreationErrorOccurredNotification.TYPE}, CreationErrorOccurredNotification.class.getName(), "Creation Error Occurred"), new MBeanNotificationInfo(new String[] {ComponentLeaseTimeNotification.TYPE}, ComponentLeaseTimeNotification.class.getName(), "Component Lease Time"));
+    super(new MBeanNotificationInfo(new String[]{CreationErrorOccurredNotification.TYPE}, CreationErrorOccurredNotification.class.getName(), "Creation Error Occurred"), new MBeanNotificationInfo(new String[]{ComponentLeaseTimeNotification.TYPE}, ComponentLeaseTimeNotification.class.getName(), "Component Lease Time"));
 
     this.componentPool = componentPool;
   }

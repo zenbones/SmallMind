@@ -8,7 +8,7 @@
   </parent>
   <groupId>org.smallmind</groupId>
   <artifactId>smallmind</artifactId>
-  <version>1.8.2-SNAPSHOT</version>
+  <version>1.8.3-SNAPSHOT</version>
   <packaging>pom</packaging>
   <name>Parent</name>
   <description>Parent POM</description>
@@ -106,6 +106,7 @@
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <java.tools.jar>${env.JAVA_HOME}/lib/tools.jar</java.tools.jar>
     <javafx.runtime.lib.jar>${env.JAVAFX_RUNTIME}/lib/jfxrt.jar</javafx.runtime.lib.jar>
+    <aether.version>1.0.2.v20150114</aether.version>
     <spring.version>4.0.3.RELEASE</spring.version>
     <jackson.version>2.5.0</jackson.version>
     <jersey.version>2.14</jersey.version>
@@ -121,11 +122,11 @@
     <module>foundation</module>
     <module>quorum</module>
     <module>persistence</module>
-    <module>cloud</module>
     <module>scheduling</module>
     <module>seda</module>
     <module>plumber</module>
     <module>identity</module>
+    <module>artifact</module>
     <module>web</module>
     <module>spark</module>
     <module>swing</module>
@@ -235,6 +236,51 @@
         <groupId>org.apache.maven.plugin-tools</groupId>
         <artifactId>maven-plugin-annotations</artifactId>
         <version>3.3</version>
+      </dependency>
+      <dependency>
+        <groupId>org.apache.maven</groupId>
+        <artifactId>maven-aether-provider</artifactId>
+        <version>3.2.2</version>
+      </dependency>
+      <dependency>
+        <groupId>org.eclipse.aether</groupId>
+        <artifactId>aether-api</artifactId>
+        <version>${aether.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.eclipse.aether</groupId>
+        <artifactId>aether-impl</artifactId>
+        <version>${aether.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.eclipse.aether</groupId>
+        <artifactId>aether-util</artifactId>
+        <version>${aether.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.eclipse.aether</groupId>
+        <artifactId>aether-spi</artifactId>
+        <version>${aether.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.eclipse.aether</groupId>
+        <artifactId>aether-connector-basic</artifactId>
+        <version>${aether.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.eclipse.aether</groupId>
+        <artifactId>aether-transport-http</artifactId>
+        <version>${aether.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.eclipse.aether</groupId>
+        <artifactId>aether-transport-file</artifactId>
+        <version>${aether.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.eclipse.aether</groupId>
+        <artifactId>aether-transport-wagon</artifactId>
+        <version>${aether.version}</version>
       </dependency>
       <dependency>
         <groupId>org.scala-lang</groupId>

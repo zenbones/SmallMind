@@ -145,8 +145,7 @@ public class MessageTransmitter {
       }
 
       return asynchronousCallback;
-    }
-    finally {
+    } finally {
       operatorQueue.put(queueOperator);
     }
   }
@@ -164,12 +163,10 @@ public class MessageTransmitter {
             ((AsynchronousTransmissionCallback)previousCallback).setResponseMessage(messagePlus);
           }
         }
-      }
-      else if (previousCallback instanceof AsynchronousTransmissionCallback) {
+      } else if (previousCallback instanceof AsynchronousTransmissionCallback) {
         ((AsynchronousTransmissionCallback)previousCallback).setResponseMessage(messagePlus);
       }
-    }
-    catch (JMSException jmsException) {
+    } catch (JMSException jmsException) {
       LoggerManager.getLogger(MessageTransmitter.class).error(jmsException);
     }
   }

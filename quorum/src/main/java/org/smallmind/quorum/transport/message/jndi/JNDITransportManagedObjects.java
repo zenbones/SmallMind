@@ -55,14 +55,12 @@ public class JNDITransportManagedObjects implements TransportManagedObjects {
       javaEnvironment = messageConnectionDetails.getContextPool().getComponent();
       try {
         queueConnectionFactory = (QueueConnectionFactory)javaEnvironment.lookup(messageConnectionDetails.getConnectionFactoryName());
-      }
-      finally {
+      } finally {
         javaEnvironment.close();
       }
 
       return queueConnectionFactory.createQueueConnection(messageConnectionDetails.getUserName(), messageConnectionDetails.getPassword());
-    }
-    catch (Exception exception) {
+    } catch (Exception exception) {
       throw new TransportException(exception);
     }
   }
@@ -79,14 +77,12 @@ public class JNDITransportManagedObjects implements TransportManagedObjects {
       javaEnvironment = messageConnectionDetails.getContextPool().getComponent();
       try {
         queue = (Queue)javaEnvironment.lookup(messageConnectionDetails.getDestinationName());
-      }
-      finally {
+      } finally {
         javaEnvironment.close();
       }
 
       return queue;
-    }
-    catch (Exception exception) {
+    } catch (Exception exception) {
       throw new TransportException(exception);
     }
   }

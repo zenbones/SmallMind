@@ -70,33 +70,27 @@ public class ComponentPool<T extends PooledComponent> {
       if ((simplePoolConfig.getMaxPoolSize() == 0) || (usedList.size() < simplePoolConfig.getMaxPoolSize())) {
         try {
           component = componentFactory.createComponent();
-        }
-        catch (Exception e) {
+        } catch (Exception e) {
           throw new ComponentPoolException(e);
         }
-      }
-      else {
+      } else {
         try {
           do {
             wait(simplePoolConfig.getAcquireWaitTimeMillis());
 
             if (closed.get()) {
               throw new ComponentPoolException("Pool has been closed");
-            }
-            else if (!freeList.isEmpty()) {
+            } else if (!freeList.isEmpty()) {
               component = freeList.removeFirst();
-            }
-            else if (simplePoolConfig.getAcquireWaitTimeMillis() > 0) {
+            } else if (simplePoolConfig.getAcquireWaitTimeMillis() > 0) {
               throw new ComponentPoolException("ComponentPool(%s) is completely booked", componentFactory.getClass().getSimpleName());
             }
           } while (component == null);
-        }
-        catch (InterruptedException i) {
+        } catch (InterruptedException i) {
           throw new ComponentPoolException(i);
         }
       }
-    }
-    else {
+    } else {
       component = freeList.removeFirst();
     }
 
@@ -115,8 +109,7 @@ public class ComponentPool<T extends PooledComponent> {
       if (simplePoolConfig.getMaxPoolSize() > 0) {
         notify();
       }
-    }
-    else {
+    } else {
       component.terminate();
     }
 
@@ -153,8 +146,7 @@ public class ComponentPool<T extends PooledComponent> {
         for (T component : freeList) {
           component.terminate();
         }
-      }
-      finally {
+      } finally {
         exitLatch.countDown();
       }
     }

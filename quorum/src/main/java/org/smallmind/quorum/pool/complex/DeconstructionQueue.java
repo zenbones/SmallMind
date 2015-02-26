@@ -100,8 +100,7 @@ public class DeconstructionQueue {
             }
           }
         }
-      }
-      catch (InterruptedException interruptedException) {
+      } catch (InterruptedException interruptedException) {
         LoggerManager.getLogger(DeconstructionQueue.class).error(interruptedException);
       }
 

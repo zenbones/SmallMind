@@ -109,11 +109,9 @@ public class GossipListener implements SessionEmployer, MessageListener {
           } while ((!closed.get()) && (!success));
         }
       });
-    }
-    catch (Exception exception) {
+    } catch (Exception exception) {
       LoggerManager.getLogger(GossipListener.class).error(exception);
-    }
-    finally {
+    } finally {
       InstrumentationManager.removeMetricContext();
     }
   }

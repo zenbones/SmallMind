@@ -1,0 +1,30 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+
+  <parent>
+    <groupId>org.smallmind</groupId>
+    <artifactId>smallmind-scribe</artifactId>
+    <version>1.8.2-SNAPSHOT</version>
+  </parent>
+  <artifactId>scribe-slf4j</artifactId>
+  <name>Scribe-SLF4J</name>
+  <description>SLF4J Redirection</description>
+  <packaging>jar</packaging>
+  <dependencies>
+    <dependency>
+      <groupId>org.smallmind</groupId>
+      <artifactId>smallmind-nutsnbolts</artifactId>
+      <scope>compile</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.smallmind</groupId>
+      <artifactId>scribe-pen</artifactId>
+      <scope>compile</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.slf4j</groupId>
+      <artifactId>slf4j-api</artifactId>
+      <scope>compile</scope>
+    </dependency>
+  </dependencies>
+</project>

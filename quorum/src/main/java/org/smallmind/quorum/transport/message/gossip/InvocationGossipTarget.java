@@ -44,7 +44,7 @@ public class InvocationGossipTarget implements GossipTarget {
   public InvocationGossipTarget (Object targetObject, Class serviceInterface)
     throws NoSuchMethodException {
 
-    methodInvoker = new MethodInvoker(targetObject, new Class[] {this.serviceInterface = serviceInterface});
+    methodInvoker = new MethodInvoker(targetObject, new Class[]{this.serviceInterface = serviceInterface});
   }
 
   @Override

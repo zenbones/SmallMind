@@ -67,8 +67,7 @@ public class ConnectionFactor implements ExceptionListener {
       try {
         connection.stop();
         connection.close();
-      }
-      catch (JMSException jmsException) {
+      } catch (JMSException jmsException) {
         LoggerManager.getLogger(ConnectionFactor.class).error(jmsException);
       }
     }
@@ -87,8 +86,7 @@ public class ConnectionFactor implements ExceptionListener {
       if ((session = sessionMap.get(sessionEmployer)) == null) {
         sessionMap.put(sessionEmployer, session = connection.createSession(false, messagePolicy.getAcknowledgeMode().getJmsValue()));
       }
-    }
-    finally {
+    } finally {
       lock.readLock().unlock();
     }
 
@@ -106,8 +104,7 @@ public class ConnectionFactor implements ExceptionListener {
         producerMap.put(sessionEmployer, producer = getSession(sessionEmployer).createProducer(sessionEmployer.getDestination()));
         messagePolicy.apply(producer);
       }
-    }
-    finally {
+    } finally {
       lock.readLock().unlock();
     }
 
@@ -126,8 +123,7 @@ public class ConnectionFactor implements ExceptionListener {
       consumerMap.put(sessionEmployer, consumer = (((selector = sessionEmployer.getMessageSelector()) == null) ? getSession(sessionEmployer).createConsumer(sessionEmployer.getDestination()) : getSession(sessionEmployer).createConsumer(sessionEmployer.getDestination(), selector, false)));
       consumer.setMessageListener((MessageListener)sessionEmployer);
       connection.start();
-    }
-    finally {
+    } finally {
       lock.readLock().unlock();
     }
   }
@@ -184,23 +180,20 @@ public class ConnectionFactor implements ExceptionListener {
           }
 
           success = true;
-        }
-        catch (Exception exception) {
+        } catch (Exception exception) {
           lastException = exception;
         }
       }
 
       if (success) {
         LoggerManager.getLogger(ConnectionFactor.class).info("Successful reconnection after JMS provider failure");
-      }
-      else {
+      } else {
 
         TransportException transportException = new TransportException("Unable to reconnection within max attempts(%d)", reconnectionPolicy.getReconnectionAttempts());
 
         LoggerManager.getLogger(ConnectionFactor.class).error((lastException != null) ? transportException.initCause(lastException) : transportException);
       }
-    }
-    finally {
+    } finally {
       lock.writeLock().unlock();
     }
   }

@@ -102,14 +102,12 @@ public class ReceptionWorker implements Runnable {
 
               if ((serviceSelector = messagePlus.getMessage().getStringProperty(MessageProperty.SERVICE.getKey())) == null) {
                 throw new TransportException("Missing message property(%s)", MessageProperty.SERVICE.getKey());
-              }
-              else if ((messageTarget = targetMap.get(serviceSelector)) == null) {
+              } else if ((messageTarget = targetMap.get(serviceSelector)) == null) {
                 throw new TransportException("Unknown service selector(%s)", serviceSelector);
               }
 
               responseMessage = messageTarget.handleMessage(topicOperator.getTopicSession(), messageStrategy, messagePlus.getMessage());
-            }
-            catch (Exception exception) {
+            } catch (Exception exception) {
               responseMessage = messageStrategy.wrapInMessage(topicOperator.getTopicSession(), exception);
               responseMessage.setBooleanProperty(MessageProperty.EXCEPTION.getKey(), true);
             }
@@ -119,11 +117,9 @@ public class ReceptionWorker implements Runnable {
             responseMessage.setLongProperty(MessageProperty.CLOCK.getKey(), System.currentTimeMillis());
 
             topicOperator.publish(responseMessage);
-          }
-          catch (Exception exception) {
+          } catch (Exception exception) {
             LoggerManager.getLogger(ReceptionWorker.class).error(exception);
-          }
-          finally {
+          } finally {
             operatorQueue.add(topicOperator);
             InstrumentationManager.publishMetricContext();
           }
@@ -131,11 +127,9 @@ public class ReceptionWorker implements Runnable {
           idleStart = Clocks.EPOCH.getClock().getTimeNanoseconds();
         }
       }
-    }
-    catch (Exception exception) {
+    } catch (Exception exception) {
       LoggerManager.getLogger(ReceptionWorker.class).error(exception);
-    }
-    finally {
+    } finally {
       exitLatch.countDown();
     }
   }

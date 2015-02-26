@@ -81,26 +81,22 @@ public class ComponentPinManager<C> {
         stateRef.set(State.STARTED);
 
         trackSize();
-      }
-      catch (Exception exception) {
+      } catch (Exception exception) {
         freeQueue.clear();
         backingMap.clear();
         size.set(0);
         stateRef.set(State.STOPPED);
 
         throw new ComponentPoolException(exception);
-      }
-      finally {
+      } finally {
         backingLock.writeLock().unlock();
       }
-    }
-    else {
+    } else {
       try {
         while (State.STARTING.equals(stateRef.get())) {
           Thread.sleep(100);
         }
-      }
-      catch (InterruptedException interruptedException) {
+      } catch (InterruptedException interruptedException) {
         throw new ComponentPoolException(interruptedException);
       }
     }
@@ -144,8 +140,7 @@ public class ComponentPinManager<C> {
 
         return componentPin;
       }
-    }
-    catch (InterruptedException interruptedException) {
+    } catch (InterruptedException interruptedException) {
       throw new ComponentPoolException(interruptedException);
     }
 
@@ -177,8 +172,7 @@ public class ComponentPinManager<C> {
 
             return componentPin;
           }
-        }
-        finally {
+        } finally {
           backingLock.writeLock().unlock();
         }
       }
@@ -206,19 +200,15 @@ public class ComponentPinManager<C> {
         workerThread.join(componentPool.getComplexPoolConfig().getCreationTimeoutMillis());
         if (creationWorker.abort()) {
           throw new ComponentCreationException("Exceeded timeout(%d) waiting on element creation (pool size = %d, free size = %d)", componentPool.getComplexPoolConfig().getCreationTimeoutMillis(), getPoolSize(), getFreeSize());
-        }
-        else {
+        } else {
           componentInstance = creationWorker.getComponentInstance();
         }
-      }
-      else {
+      } else {
         componentInstance = componentPool.getComponentInstanceFactory().createInstance(componentPool);
       }
-    }
-    catch (ComponentCreationException componentCreationException) {
+    } catch (ComponentCreationException componentCreationException) {
       throw componentCreationException;
-    }
-    catch (Exception exception) {
+    } catch (Exception exception) {
       throw new ComponentCreationException(exception);
     }
 
@@ -244,8 +234,7 @@ public class ComponentPinManager<C> {
     backingLock.readLock().lock();
     try {
       componentPin = backingMap.get(componentInstance);
-    }
-    finally {
+    } finally {
       backingLock.readLock().unlock();
     }
 
@@ -254,13 +243,11 @@ public class ComponentPinManager<C> {
 
       if (componentPin.isTerminated()) {
         terminate(componentPin.getComponentInstance());
-      }
-      else {
+      } else {
         if (State.STARTED.equals(stateRef.get())) {
           try {
             freeQueue.put(componentPin);
-          }
-          catch (InterruptedException interruptedException) {
+          } catch (InterruptedException interruptedException) {
             LoggerManager.getLogger(ComponentPinManager.class).error(interruptedException);
           }
         }
@@ -277,8 +264,7 @@ public class ComponentPinManager<C> {
     backingLock.writeLock().lock();
     try {
       componentPin = backingMap.remove(componentInstance);
-    }
-    finally {
+    } finally {
       backingLock.writeLock().unlock();
     }
 
@@ -288,8 +274,7 @@ public class ComponentPinManager<C> {
 
       try {
         componentPin.getComponentInstance().close();
-      }
-      catch (Exception exception) {
+      } catch (Exception exception) {
         LoggerManager.getLogger(ComponentPinManager.class).error(exception);
       }
 
@@ -300,8 +285,7 @@ public class ComponentPinManager<C> {
         if ((replacementComponentPin = addComponentPin(false)) != null) {
           freeQueue.put(replacementComponentPin);
         }
-      }
-      catch (Exception exception) {
+      } catch (Exception exception) {
         LoggerManager.getLogger(ComponentPinManager.class).error(exception);
       }
 
@@ -326,8 +310,7 @@ public class ComponentPinManager<C> {
           keys = backingMap.keySet();
           activeComponents = new ComponentInstance[keys.size()];
           keys.toArray(activeComponents);
-        }
-        finally {
+        } finally {
           backingLock.readLock().unlock();
         }
 
@@ -340,20 +323,17 @@ public class ComponentPinManager<C> {
 
       try {
         deconstructionQueue.shutdown();
-      }
-      catch (InterruptedException interruptedException) {
+      } catch (InterruptedException interruptedException) {
         LoggerManager.getLogger(ComponentPinManager.class).error(interruptedException);
       }
 
       stateRef.set(State.STOPPED);
-    }
-    else {
+    } else {
       try {
         while (State.STOPPING.equals(stateRef.get())) {
           Thread.sleep(100);
         }
-      }
-      catch (InterruptedException interruptedException) {
+      } catch (InterruptedException interruptedException) {
         throw new ComponentPoolException(interruptedException);
       }
     }
@@ -399,8 +379,7 @@ public class ComponentPinManager<C> {
           stackTraceList.add(new StackTrace(componentPin.getExistentialStackTrace()));
         }
       }
-    }
-    finally {
+    } finally {
       backingLock.readLock().unlock();
     }
 

@@ -32,6 +32,6 @@ public class MessageInvocationProxyFactory {
 
   public static Proxy generateProxy (MessageTransmitter messageTransmitter, Class serviceInterface) {
 
-    return (Proxy)Proxy.newProxyInstance(serviceInterface.getClassLoader(), new Class[] {serviceInterface}, new MessageInvocationHandler(messageTransmitter, serviceInterface));
+    return (Proxy)Proxy.newProxyInstance(serviceInterface.getClassLoader(), new Class[]{serviceInterface}, new MessageInvocationHandler(messageTransmitter, serviceInterface));
   }
 }

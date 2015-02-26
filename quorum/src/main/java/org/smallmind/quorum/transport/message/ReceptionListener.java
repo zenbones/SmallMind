@@ -104,11 +104,9 @@ public class ReceptionListener implements SessionEmployer, MessageListener {
           } while ((!closed.get()) && (!success));
         }
       });
-    }
-    catch (Exception exception) {
+    } catch (Exception exception) {
       LoggerManager.getLogger(ReceptionListener.class).error(exception);
-    }
-    finally {
+    } finally {
       InstrumentationManager.removeMetricContext();
     }
   }

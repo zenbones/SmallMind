@@ -32,6 +32,6 @@ public class GossipInvocationProxyFactory {
 
   public static Proxy generateProxy (GossipTransmitter gossipTransmitter, Class serviceInterface) {
 
-    return (Proxy)Proxy.newProxyInstance(serviceInterface.getClassLoader(), new Class[] {serviceInterface}, new GossipInvocationHandler(gossipTransmitter, serviceInterface));
+    return (Proxy)Proxy.newProxyInstance(serviceInterface.getClassLoader(), new Class[]{serviceInterface}, new GossipInvocationHandler(gossipTransmitter, serviceInterface));
   }
 }

@@ -56,6 +56,6 @@ public class RemoteProxyFactory {
     rmiContext.close();
     initContext.close();
 
-    return endpointInterface.cast(Proxy.newProxyInstance(RemoteInvocationHandler.class.getClassLoader(), new Class[] {endpointInterface}, new RemoteInvocationHandler(remoteTarget)));
+    return endpointInterface.cast(Proxy.newProxyInstance(RemoteInvocationHandler.class.getClassLoader(), new Class[]{endpointInterface}, new RemoteInvocationHandler(remoteTarget)));
   }
 }

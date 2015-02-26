@@ -49,7 +49,7 @@ public class InvocationMessageTarget implements MessageTarget {
   public InvocationMessageTarget (Object targetObject, Class serviceInterface)
     throws NoSuchMethodException {
 
-    methodInvoker = new MethodInvoker(targetObject, new Class[] {this.serviceInterface = serviceInterface});
+    methodInvoker = new MethodInvoker(targetObject, new Class[]{this.serviceInterface = serviceInterface});
   }
 
   public InvocationMessageTarget setLogLevel (Level logLevel) {
@@ -81,8 +81,7 @@ public class InvocationMessageTarget implements MessageTarget {
 
       InstrumentationManager.instrumentWithChronometer(TransportManager.getTransport(), totalTime = System.currentTimeMillis() - startTime, TimeUnit.MILLISECONDS, new MetricProperty("event", MetricInteraction.INVOCATION.getDisplay()), new MetricProperty("service", serviceInterface.getSimpleName()), new MetricProperty("method", invocationSignal.getFauxMethod().getName()));
       LoggerManager.getLogger(InvocationMessageTarget.class).log(logLevel, "%s.%s() %d ms", serviceInterface.getSimpleName(), invocationSignal.getFauxMethod().getName(), totalTime);
-    }
-    catch (Exception exception) {
+    } catch (Exception exception) {
       LoggerManager.getLogger(InvocationMessageTarget.class).log(logLevel, "%s.%s() %d ms - %s", serviceInterface.getSimpleName(), invocationSignal.getFauxMethod().getName(), System.currentTimeMillis() - startTime, exception.getMessage());
 
       throw exception;

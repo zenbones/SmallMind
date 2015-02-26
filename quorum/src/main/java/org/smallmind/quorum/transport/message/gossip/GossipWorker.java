@@ -86,28 +86,23 @@ public class GossipWorker implements Runnable {
 
             if ((serviceSelector = messagePlus.getMessage().getStringProperty(MessageProperty.SERVICE.getKey())) == null) {
               throw new TransportException("Missing message property(%s)", MessageProperty.SERVICE.getKey());
-            }
-            else if ((gossipTarget = targetMap.get(serviceSelector)) == null) {
+            } else if ((gossipTarget = targetMap.get(serviceSelector)) == null) {
               throw new TransportException("Unknown service selector(%s)", serviceSelector);
             }
 
             gossipTarget.handleMessage(messageStrategy, messagePlus.getMessage());
-          }
-          catch (Exception exception) {
+          } catch (Exception exception) {
             LoggerManager.getLogger(GossipWorker.class).error(exception);
-          }
-          finally {
+          } finally {
             InstrumentationManager.publishMetricContext();
           }
 
           idleStart = Clocks.EPOCH.getClock().getTimeNanoseconds();
         }
       }
-    }
-    catch (Exception exception) {
+    } catch (Exception exception) {
       LoggerManager.getLogger(GossipWorker.class).error(exception);
-    }
-    finally {
+    } finally {
       exitLatch.countDown();
     }
   }

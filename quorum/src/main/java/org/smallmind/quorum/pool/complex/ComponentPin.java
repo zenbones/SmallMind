@@ -67,8 +67,7 @@ public class ComponentPin<C> {
     try {
 
       return componentInstance.serve();
-    }
-    finally {
+    } finally {
       if (deconstructionCoordinator != null) {
         deconstructionCoordinator.serve();
       }

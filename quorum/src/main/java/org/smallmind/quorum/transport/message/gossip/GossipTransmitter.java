@@ -122,8 +122,7 @@ public class GossipTransmitter {
       });
 
       topicOperator.publish(gossipMessage);
-    }
-    finally {
+    } finally {
       operatorQueue.put(topicOperator);
     }
   }

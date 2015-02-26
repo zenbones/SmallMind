@@ -102,11 +102,9 @@ public class TransmissionListener implements SessionEmployer, MessageListener {
           messageTransmitter.completeCallback(new MessagePlus(message, InstrumentationManager.getMetricContext()));
         }
       });
-    }
-    catch (Exception exception) {
+    } catch (Exception exception) {
       LoggerManager.getLogger(ReceptionListener.class).error(exception);
-    }
-    finally {
+    } finally {
       InstrumentationManager.removeMetricContext();
     }
   }
