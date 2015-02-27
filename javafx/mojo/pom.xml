@@ -57,10 +57,6 @@
       </resource>
     </resources>
     <plugins>
-      <plugin>
-        <groupId>org.smallmind</groupId>
-        <artifactId>smallmind-license-plugin</artifactId>
-      </plugin>
       <!--
       <plugin>
         <groupId>org.smallmind</groupId>

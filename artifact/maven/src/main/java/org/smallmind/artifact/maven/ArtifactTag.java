@@ -24,37 +24,44 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.web.jaxws;
+package org.smallmind.artifact.maven;
 
-import org.eclipse.aether.graph.DependencyNode;
+import java.io.File;
+import org.eclipse.aether.artifact.Artifact;
 
-public class PreorderNodeListGenerator
-  extends AbstractDepthFirstNodeListGenerator {
+public class ArtifactTag {
 
-  /**
-   * Creates a new preorder list generator.
-   */
-  public PreorderNodeListGenerator () {
+  private Artifact artifact;
+  private long lastModTime;
 
+  public ArtifactTag (Artifact artifact) {
+
+    File artifactFile;
+
+    this.artifact = artifact;
+
+    lastModTime = ((artifactFile = artifact.getFile()) == null) ? 0 : artifactFile.lastModified();
+  }
+
+  public Artifact getArtifact () {
+
+    return artifact;
+  }
+
+  public long getLastModTime () {
+
+    return lastModTime;
   }
 
   @Override
-  public boolean visitEnter (DependencyNode node) {
+  public int hashCode () {
 
-    if (!setVisited(node)) {
-      return false;
-    }
-
-    if (node.getDependency() != null) {
-      nodes.add(node);
-    }
-
-    return true;
+    return artifact.hashCode() ^ (int)lastModTime;
   }
 
   @Override
-  public boolean visitLeave (DependencyNode node) {
+  public boolean equals (Object obj) {
 
-    return true;
+    return (obj instanceof ArtifactTag) && artifact.equals(((ArtifactTag)obj).getArtifact()) && ((!artifact.isSnapshot()) || (lastModTime == ((ArtifactTag)obj).getLastModTime()));
   }
 }

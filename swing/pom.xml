@@ -23,12 +23,6 @@
     </dependency>
   </dependencies>
   <build>
-    <plugins>
-      <plugin>
-        <groupId>org.smallmind</groupId>
-        <artifactId>smallmind-license-plugin</artifactId>
-      </plugin>
-    </plugins>
     <resources>
       <resource>
         <directory>src/main/resources/xsd</directory>
@@ -39,5 +33,11 @@
         <filtering>false</filtering>
       </resource>
     </resources>
+    <plugins>
+      <plugin>
+        <groupId>org.smallmind</groupId>
+        <artifactId>smallmind-license-plugin</artifactId>
+      </plugin>
+    </plugins>
   </build>
 </project>

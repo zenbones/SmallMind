@@ -84,11 +84,5 @@
         <filtering>false</filtering>
       </testResource>
     </testResources>
-    <plugins>
-      <plugin>
-        <groupId>org.smallmind</groupId>
-        <artifactId>smallmind-license-plugin</artifactId>
-      </plugin>
-    </plugins>
   </build>
 </project>

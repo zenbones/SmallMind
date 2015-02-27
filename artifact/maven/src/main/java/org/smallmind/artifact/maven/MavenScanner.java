@@ -1,3 +1,29 @@
+/*
+ * Copyright (c) 2007, 2008, 2009, 2010, 2011, 2012, 2013, 2014, 2015 David Berkman
+ * 
+ * This file is part of the SmallMind Code Project.
+ * 
+ * The SmallMind Code Project is free software, you can redistribute
+ * it and/or modify it under the terms of GNU Affero General Public
+ * License as published by the Free Software Foundation, either version 3
+ * of the License, or (at your option) any later version.
+ * 
+ * The SmallMind Code Project is distributed in the hope that it will
+ * be useful, but WITHOUT ANY WARRANTY; without even the implied warranty
+ * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+ * General Public License for more details.
+ * 
+ * You should have received a copy of the the GNU Affero General Public
+ * License, along with the SmallMind Code Project. If not, see
+ * <http://www.gnu.org/licenses/>.
+ * 
+ * Additional permission under the GNU Affero GPL version 3 section 7
+ * ------------------------------------------------------------------
+ * If you modify this Program, or any covered work, by linking or
+ * combining it with other code, such other code is not for that reason
+ * alone subject to any of the requirements of the GNU Affero GPL
+ * version 3.
+ */
 package org.smallmind.artifact.maven;
 
 import java.util.HashMap;
@@ -23,7 +49,7 @@ public class MavenScanner {
   private final LinkedList<MavenScannerListener> listenerList = new LinkedList<>();
   private final Duration cycleDuration;
   private final MavenCoordinate[] mavenCoordinates;
-  private final Artifact[] artifacts;
+  private final ArtifactTag[] artifactTags;
   private final String repositoryId;
   private final boolean offline;
   private ScannerWorker scannerWorker;
@@ -40,7 +66,7 @@ public class MavenScanner {
     this.offline = offline;
     this.mavenCoordinates = mavenCoordinates;
 
-    artifacts = new Artifact[mavenCoordinates.length];
+    artifactTags = new ArtifactTag[mavenCoordinates.length];
   }
 
   public synchronized void addMavenScannerListener (MavenScannerListener listener) {
@@ -94,11 +120,11 @@ public class MavenScanner {
 
     for (int index = 0; index < mavenCoordinates.length; index++) {
 
-      Artifact currentArtifact = mavenRepository.acquireArtifact(session, mavenCoordinates[index]);
+      ArtifactTag currentArtifactTag = new ArtifactTag(mavenRepository.acquireArtifact(session, mavenCoordinates[index]));
 
-      if (!currentArtifact.equals(artifacts[index])) {
+      if (!currentArtifactTag.equals(artifactTags[index])) {
 
-        Artifact[] dependentArtifacts = mavenRepository.resolve(session, currentArtifact);
+        Artifact[] dependentArtifacts = mavenRepository.resolve(session, currentArtifactTag.getArtifact());
 
         for (Artifact dependentArtifact : dependentArtifacts) {
           if (dependentArtifactSet.add(dependentArtifact)) {
@@ -106,8 +132,8 @@ public class MavenScanner {
           }
         }
 
-        artifactDeltaMap.put(currentArtifact, artifacts[index]);
-        artifacts[index] = currentArtifact;
+        artifactDeltaMap.put(currentArtifactTag.getArtifact(), artifactTags[index].getArtifact());
+        artifactTags[index] = currentArtifactTag;
       }
     }
 
@@ -120,7 +146,7 @@ public class MavenScanner {
       classGateList.toArray(classGates);
 
       gatingClassLoader = new GatingClassLoader(Thread.currentThread().getContextClassLoader(), -1, classGates);
-      event = new MavenScannerEvent(this, artifactDeltaMap, artifacts, gatingClassLoader);
+      event = new MavenScannerEvent(this, artifactDeltaMap, artifactTags, gatingClassLoader);
 
       for (MavenScannerListener listener : listenerList) {
         listener.artifactChange(event);
