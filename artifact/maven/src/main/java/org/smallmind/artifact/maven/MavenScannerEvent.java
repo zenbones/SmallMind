@@ -44,7 +44,7 @@ public class MavenScannerEvent extends EventObject {
     this.classLoader = classLoader;
 
     artifacts = new Artifact[artifactTags.length];
-    for (int index = 0; index <= artifacts.length; index++) {
+    for (int index = 0; index < artifacts.length; index++) {
       artifacts[index] = (artifactTags[index] == null) ? null : artifactTags[index].getArtifact();
     }
   }
