@@ -34,13 +34,19 @@ import freemarker.cache.TemplateLoader;
 public class ClassPathTemplateLoader implements TemplateLoader {
 
   ClassLoader classLoader;
-  private Class<?> anchorClass;
   boolean relative;
+  private Class<?> anchorClass;
 
   public ClassPathTemplateLoader () {
 
+    this(Thread.currentThread().getContextClassLoader());
+  }
+
+  public ClassPathTemplateLoader (ClassLoader classLoader) {
+
+    this.classLoader = classLoader;
+
     relative = false;
-    classLoader = Thread.currentThread().getContextClassLoader();
   }
 
   public ClassPathTemplateLoader (Class<?> anchorClass) {
@@ -77,8 +83,7 @@ public class ClassPathTemplateLoader implements TemplateLoader {
 
       pathBuilder.append('/').append(name);
       source = new ClassPathTemplateSource(classLoader, pathBuilder.toString());
-    }
-    else {
+    } else {
       source = new ClassPathTemplateSource(classLoader, name);
     }
 
