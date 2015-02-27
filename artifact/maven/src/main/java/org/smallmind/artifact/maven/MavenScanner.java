@@ -132,7 +132,7 @@ public class MavenScanner {
           }
         }
 
-        artifactDeltaMap.put(currentArtifactTag.getArtifact(), artifactTags[index].getArtifact());
+        artifactDeltaMap.put(currentArtifactTag.getArtifact(), (artifactTags[index] == null) ? null : artifactTags[index].getArtifact());
         artifactTags[index] = currentArtifactTag;
       }
     }
