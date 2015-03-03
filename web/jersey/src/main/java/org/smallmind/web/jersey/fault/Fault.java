@@ -49,10 +49,18 @@ public class Fault {
   public Fault (Throwable throwable)
     throws IOException {
 
+    this(throwable, true);
+  }
+
+  public Fault (Throwable throwable, boolean includeNativeEncoding)
+    throws IOException {
+
     StackTraceElement[] stackTraceElements;
     int index = 0;
 
-    nativeObject = new NativeObject(throwable);
+    if (includeNativeEncoding) {
+      nativeObject = new NativeObject(throwable);
+    }
 
     throwableType = throwable.getClass().getName();
     message = throwable.getMessage();
