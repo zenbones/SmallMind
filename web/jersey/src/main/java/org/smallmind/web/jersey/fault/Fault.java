@@ -69,6 +69,8 @@ public class Fault {
   public Fault (FaultElement context, Throwable throwable, boolean includeNativeEncoding)
     throws IOException {
 
+    this.context = context;
+
     StackTraceElement[] stackTraceElements;
     int index = 0;
 
