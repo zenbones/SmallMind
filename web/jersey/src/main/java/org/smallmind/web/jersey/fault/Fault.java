@@ -30,6 +30,7 @@ import java.io.IOException;
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlElement;
+import javax.xml.bind.annotation.XmlElementRef;
 import javax.xml.bind.annotation.XmlRootElement;
 
 @XmlRootElement(name = "fault")
@@ -37,6 +38,7 @@ import javax.xml.bind.annotation.XmlRootElement;
 public class Fault {
 
   private Fault cause;
+  private FaultElement context;
   private FaultElement[] elements;
   private String throwableType;
   private String message;
@@ -49,10 +51,16 @@ public class Fault {
   public Fault (Throwable throwable)
     throws IOException {
 
-    this(throwable, true);
+    this(null, throwable, true);
   }
 
   public Fault (Throwable throwable, boolean includeNativeEncoding)
+    throws IOException {
+
+    this(null, throwable, includeNativeEncoding);
+  }
+
+  public Fault (FaultElement context, Throwable throwable, boolean includeNativeEncoding)
     throws IOException {
 
     StackTraceElement[] stackTraceElements;
@@ -89,6 +97,17 @@ public class Fault {
     return -1;
   }
 
+  @XmlElementRef(name = "context", required = false)
+  public FaultElement getContext () {
+
+    return context;
+  }
+
+  public void setContext (FaultElement context) {
+
+    this.context = context;
+  }
+
   @XmlElement(name = "type", required = false, nillable = false)
   public String getThrowableType () {
 
@@ -111,7 +130,7 @@ public class Fault {
     this.message = message;
   }
 
-  @XmlElement(name = "cause", required = false, nillable = false)
+  @XmlElementRef(name = "cause", required = false)
   public Fault getCause () {
 
     return cause;
@@ -133,7 +152,7 @@ public class Fault {
     this.elements = elements;
   }
 
-  @XmlElement(name = "native", required = false, nillable = false)
+  @XmlElementRef(name = "native", required = false)
   public NativeObject getNativeObject () {
 
     return nativeObject;
@@ -147,9 +166,13 @@ public class Fault {
   @Override
   public String toString () {
 
-    StringBuilder lineBuilder = new StringBuilder();
+    StringBuilder lineBuilder = new StringBuilder("Error in process ");
 
-    return print(lineBuilder.append("Error in process "));
+    if (context != null) {
+      lineBuilder.append("at ").append(context).append(' ');
+    }
+
+    return print(lineBuilder);
   }
 
   private String print (StringBuilder lineBuilder) {
