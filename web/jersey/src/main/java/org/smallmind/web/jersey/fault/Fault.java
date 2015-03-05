@@ -54,6 +54,12 @@ public class Fault {
     this(null, throwable, true);
   }
 
+  public Fault (FaultElement context, Throwable throwable)
+    throws IOException {
+
+    this(context, throwable, true);
+  }
+
   public Fault (Throwable throwable, boolean includeNativeEncoding)
     throws IOException {
 
