@@ -45,6 +45,22 @@ public class FaultElement {
 
   }
 
+  public FaultElement (String declaringType, String functionName) {
+
+    this.declaringType = declaringType;
+    this.functionName = functionName;
+
+    lineNumber = -1;
+  }
+
+  public FaultElement (String declaringType, String functionName, String fileName, int lineNumber) {
+
+    this.declaringType = declaringType;
+    this.functionName = functionName;
+    this.fileName = fileName;
+    this.lineNumber = lineNumber;
+  }
+
   public FaultElement (StackTraceElement stackTraceElement) {
 
     declaringType = stackTraceElement.getClassName();
