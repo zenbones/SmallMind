@@ -35,12 +35,12 @@ import org.smallmind.persistence.orm.aop.TransactionalState;
 
 public class PostProcessProxyFactory {
 
-  public static Proxy generatePostProcessProxy (String dataSourceKey, Class proxyInterface, Object target, TransactionEndState endState, ProcessPriority priority) {
+  public static Proxy generatePostProcessProxy (String sessionSourceKey, Class proxyInterface, Object target, TransactionEndState endState, ProcessPriority priority) {
 
     ProxyTransaction proxyTransaction;
 
-    if ((proxyTransaction = TransactionalState.currentTransaction(dataSourceKey)) == null) {
-      throw new ProxyTransactionException("No current transaction for the requested data source(%s)", dataSourceKey);
+    if ((proxyTransaction = TransactionalState.currentTransaction(sessionSourceKey)) == null) {
+      throw new ProxyTransactionException("No current transaction for the requested data source(%s)", sessionSourceKey);
     }
 
     return generatePostProcessProxy(proxyTransaction, proxyInterface, target, endState, priority);

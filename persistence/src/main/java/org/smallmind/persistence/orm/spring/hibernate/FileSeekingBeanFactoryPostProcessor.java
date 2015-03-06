@@ -28,7 +28,7 @@ package org.smallmind.persistence.orm.spring.hibernate;
 
 import java.net.URL;
 import java.util.HashMap;
-import org.smallmind.persistence.orm.DataSource;
+import org.smallmind.persistence.orm.SessionSource;
 import org.smallmind.persistence.orm.hibernate.HibernateDao;
 import org.smallmind.persistence.spring.ManagedDaoSupport;
 import org.springframework.beans.BeansException;
@@ -48,12 +48,12 @@ public class FileSeekingBeanFactoryPostProcessor implements BeanFactoryPostProce
     return getResources(null);
   }
 
-  public static Resource[] getResources (String dataSourceKey) {
+  public static Resource[] getResources (String sessionSourceKey) {
 
     UrlResource[] hbmResources;
     HashMap<Class, UrlResource> hbmResourceMap;
 
-    if ((hbmResourceMap = HBM_DATA_SOURCE_MAP.get(dataSourceKey)) == null) {
+    if ((hbmResourceMap = HBM_DATA_SOURCE_MAP.get(sessionSourceKey)) == null) {
       return NO_RESOURCES;
     }
 
@@ -68,10 +68,10 @@ public class FileSeekingBeanFactoryPostProcessor implements BeanFactoryPostProce
 
     Class<?> beanClass;
     Class persistentClass;
-    DataSource dataSource;
+    SessionSource sessionSource;
     HashMap<Class, UrlResource> hbmResourceMap;
     URL hbmURL;
-    String dataSourceKey = null;
+    String sessionSourceKey = null;
     String packageRemnant;
     String hbmFileName;
     int lastSlashIndex;
@@ -82,12 +82,12 @@ public class FileSeekingBeanFactoryPostProcessor implements BeanFactoryPostProce
 
           boolean mapped = false;
 
-          if ((dataSource = beanClass.getAnnotation(DataSource.class)) != null) {
-            dataSourceKey = dataSource.value();
+          if ((sessionSource = beanClass.getAnnotation(SessionSource.class)) != null) {
+            sessionSourceKey = sessionSource.value();
           }
 
-          if ((hbmResourceMap = HBM_DATA_SOURCE_MAP.get(dataSourceKey)) == null) {
-            HBM_DATA_SOURCE_MAP.put(dataSourceKey, hbmResourceMap = new HashMap<Class, UrlResource>());
+          if ((hbmResourceMap = HBM_DATA_SOURCE_MAP.get(sessionSourceKey)) == null) {
+            HBM_DATA_SOURCE_MAP.put(sessionSourceKey, hbmResourceMap = new HashMap<Class, UrlResource>());
           }
 
           if ((persistentClass = ManagedDaoSupport.findDurableClass(beanClass)) == null) {

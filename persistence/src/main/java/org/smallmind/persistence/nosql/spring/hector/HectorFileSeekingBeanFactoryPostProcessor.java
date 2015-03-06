@@ -30,7 +30,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import org.smallmind.persistence.NaturalKeys;
 import org.smallmind.persistence.nosql.hector.HectorDao;
-import org.smallmind.persistence.orm.DataSource;
+import org.smallmind.persistence.orm.SessionSource;
 import org.smallmind.persistence.spring.ManagedDaoSupport;
 import org.springframework.beans.BeansException;
 import org.springframework.beans.FatalBeanException;
@@ -52,18 +52,18 @@ public class HectorFileSeekingBeanFactoryPostProcessor implements BeanFactoryPos
     Class<?> beanClass;
     Class persistentClass;
     HashSet<Class> hectorTypes;
-    DataSource dataSource;
-    String dataSourceKey = null;
+    SessionSource sessionSource;
+    String sessionSourceKey = null;
 
     for (String beanName : configurableListableBeanFactory.getBeanDefinitionNames()) {
       if ((beanClass = configurableListableBeanFactory.getType(beanName)) != null) {
         if (HectorDao.class.isAssignableFrom(beanClass)) {
-          if ((dataSource = beanClass.getAnnotation(DataSource.class)) != null) {
-            dataSourceKey = dataSource.value();
+          if ((sessionSource = beanClass.getAnnotation(SessionSource.class)) != null) {
+            sessionSourceKey = sessionSource.value();
           }
 
-          if ((hectorTypes = HECTOR_DATA_SOURCE_MAP.get(dataSourceKey)) == null) {
-            HECTOR_DATA_SOURCE_MAP.put(dataSourceKey, hectorTypes = new HashSet<Class>());
+          if ((hectorTypes = HECTOR_DATA_SOURCE_MAP.get(sessionSourceKey)) == null) {
+            HECTOR_DATA_SOURCE_MAP.put(sessionSourceKey, hectorTypes = new HashSet<Class>());
           }
 
           if ((persistentClass = ManagedDaoSupport.findDurableClass(beanClass)) == null) {

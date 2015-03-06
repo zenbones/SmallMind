@@ -37,9 +37,9 @@ public class SessionManager implements PerApplicationDataManager {
     PerApplicationContext.setPerApplicationData(SessionManager.class, new ConcurrentHashMap<String, ProxySession>());
   }
 
-  public static void register (String dataSourceKey, ProxySession proxySession) {
+  public static void register (String sessionSourceKey, ProxySession proxySession) {
 
-    PerApplicationContext.getPerApplicationData(SessionManager.class, ConcurrentHashMap.class).put(dataSourceKey, proxySession);
+    PerApplicationContext.getPerApplicationData(SessionManager.class, ConcurrentHashMap.class).put(sessionSourceKey, proxySession);
   }
 
   public static ProxySession getSession () {
@@ -47,12 +47,12 @@ public class SessionManager implements PerApplicationDataManager {
     return getSession(null);
   }
 
-  public static ProxySession getSession (String dataSourceKey) {
+  public static ProxySession getSession (String sessionSourceKey) {
 
     ProxySession proxySession;
 
-    if ((proxySession = (ProxySession)PerApplicationContext.getPerApplicationData(SessionManager.class, ConcurrentHashMap.class).get(dataSourceKey)) == null) {
-      throw new ORMInitializationException("No ProxySession was mapped to the data source value(%s)", dataSourceKey);
+    if ((proxySession = (ProxySession)PerApplicationContext.getPerApplicationData(SessionManager.class, ConcurrentHashMap.class).get(sessionSourceKey)) == null) {
+      throw new ORMInitializationException("No ProxySession was mapped to the data source value(%s)", sessionSourceKey);
     }
 
     return proxySession;
@@ -63,8 +63,8 @@ public class SessionManager implements PerApplicationDataManager {
     closeSession(null);
   }
 
-  public static void closeSession (String dataSourceKey) {
+  public static void closeSession (String sessionSourceKey) {
 
-    getSession(dataSourceKey).close();
+    getSession(sessionSourceKey).close();
   }
 }

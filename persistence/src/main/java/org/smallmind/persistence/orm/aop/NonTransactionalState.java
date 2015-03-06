@@ -39,17 +39,17 @@ public class NonTransactionalState {
     return isInSession(null);
   }
 
-  public static boolean isInSession (String dataSourceKey) {
+  public static boolean isInSession (String sessionSourceKey) {
 
-    return currentSession(dataSourceKey) != null;
+    return currentSession(sessionSourceKey) != null;
   }
 
-  public static ProxySession currentSession (String dataSourceKey) {
+  public static ProxySession currentSession (String sessionSourceKey) {
 
     LinkedList<BoundarySet<ProxySession>> sessionSetStack;
     ProxyTransaction currentTransaction;
 
-    if ((currentTransaction = TransactionalState.currentTransaction(dataSourceKey)) != null) {
+    if ((currentTransaction = TransactionalState.currentTransaction(sessionSourceKey)) != null) {
 
       return currentTransaction.getSession();
     }
@@ -57,13 +57,13 @@ public class NonTransactionalState {
     if ((sessionSetStack = SESSION_SET_STACK_LOCAL.get()) != null) {
       for (BoundarySet<ProxySession> sessionSet : sessionSetStack) {
         for (ProxySession proxySession : sessionSet) {
-          if (dataSourceKey == null) {
-            if (proxySession.getDataSourceKey() == null) {
+          if (sessionSourceKey == null) {
+            if (proxySession.getSessionSourceKey() == null) {
 
               return proxySession;
             }
           }
-          else if (dataSourceKey.equals(proxySession.getDataSourceKey())) {
+          else if (sessionSourceKey.equals(proxySession.getSessionSourceKey())) {
 
             return proxySession;
           }

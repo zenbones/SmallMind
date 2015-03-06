@@ -30,9 +30,9 @@ public class RollbackAwareBoundarySet<T> extends BoundarySet<T> {
 
   private boolean rollbackOnly;
 
-  public RollbackAwareBoundarySet (String dataSourceKeys[], boolean implicit, boolean rollbackOnly) {
+  public RollbackAwareBoundarySet (String sessionSourceKeys[], boolean implicit, boolean rollbackOnly) {
 
-    super(dataSourceKeys, implicit);
+    super(sessionSourceKeys, implicit);
 
     this.rollbackOnly = rollbackOnly;
   }

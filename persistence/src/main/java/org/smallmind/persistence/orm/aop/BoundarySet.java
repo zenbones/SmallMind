@@ -31,38 +31,38 @@ import org.smallmind.persistence.orm.ProxySession;
 
 public class BoundarySet<T> extends HashSet<T> {
 
-  private String[] dataSourceKeys;
+  private String[] sessionSourceKeys;
   private boolean implicit;
 
-  public BoundarySet (String dataSourceKeys[], boolean implicit) {
+  public BoundarySet (String sessionSourceKeys[], boolean implicit) {
 
     super();
 
-    this.dataSourceKeys = dataSourceKeys;
+    this.sessionSourceKeys = sessionSourceKeys;
     this.implicit = implicit;
   }
 
   public boolean isImplicit () {
 
-    return implicit && (dataSourceKeys.length == 0);
+    return implicit && (sessionSourceKeys.length == 0);
   }
 
   public boolean allows (ProxySession proxySession) {
 
-    return allows(proxySession.getDataSourceKey());
+    return allows(proxySession.getSessionSourceKey());
   }
 
-  public boolean allows (String dataSourceKey) {
+  public boolean allows (String sessionSourceKey) {
 
-    if (dataSourceKeys.length == 0) {
-      return isImplicit() || (dataSourceKey == null);
+    if (sessionSourceKeys.length == 0) {
+      return isImplicit() || (sessionSourceKey == null);
     }
     else if (isImplicit()) {
       throw new IllegalArgumentException("Boundary annotation (@NonTransaction or @Transactional) is marked as implicit, but explicitly lists data sources");
     }
-    else if (dataSourceKey != null) {
-      for (String boundarySource : dataSourceKeys) {
-        if (dataSourceKey.equals(boundarySource)) {
+    else if (sessionSourceKey != null) {
+      for (String boundarySource : sessionSourceKeys) {
+        if (sessionSourceKey.equals(boundarySource)) {
           return true;
         }
       }

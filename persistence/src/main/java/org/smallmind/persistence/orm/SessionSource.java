@@ -24,22 +24,18 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.persistence.orm.spring.hibernate;
+package org.smallmind.persistence.orm;
 
-import org.springframework.orm.hibernate4.LocalSessionFactoryBean;
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Inherited;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
 
-public class EntitySeekingSessionFactoryBean extends LocalSessionFactoryBean {
+@Target({ElementType.TYPE})
+@Retention(RetentionPolicy.RUNTIME)
+@Inherited
+public @interface SessionSource {
 
-  private String sessionSourceKey;
-
-  public void setSessionSourceKey (String sessionSourceKey) {
-
-    this.sessionSourceKey = sessionSourceKey;
-  }
-
-  @Override
-  public void setAnnotatedClasses (Class<?>... annotatedClasses) {
-
-    super.setAnnotatedClasses(AnnotationSeekingBeanFactoryPostProcessor.getAnnotatedClasses(sessionSourceKey));
-  }
+  public abstract String value ();
 }

@@ -31,12 +31,12 @@ import org.springframework.core.io.Resource;
 
 public class FileSeekingFactoryBean implements FactoryBean<Resource[]> {
 
-  private String dataSourceKey;
+  private String sessionSourceKey;
   private Resource[] additionalResources;
 
-  public void setDataSourceKey (String dataSourceKey) {
+  public void setSessionSourceKey (String sessionSourceKey) {
 
-    this.dataSourceKey = dataSourceKey;
+    this.sessionSourceKey = sessionSourceKey;
   }
 
   public void setAdditionalResources (Resource[] additionalResources) {
@@ -48,7 +48,7 @@ public class FileSeekingFactoryBean implements FactoryBean<Resource[]> {
 
     Resource[] dataSourceResources;
 
-    dataSourceResources = FileSeekingBeanFactoryPostProcessor.getResources(dataSourceKey);
+    dataSourceResources = FileSeekingBeanFactoryPostProcessor.getResources(sessionSourceKey);
 
     if ((additionalResources == null) || additionalResources.length == 0) {
 

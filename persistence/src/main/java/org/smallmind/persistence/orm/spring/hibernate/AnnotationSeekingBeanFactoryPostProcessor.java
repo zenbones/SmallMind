@@ -29,7 +29,7 @@ package org.smallmind.persistence.orm.spring.hibernate;
 import java.lang.annotation.Annotation;
 import java.util.HashMap;
 import java.util.HashSet;
-import org.smallmind.persistence.orm.DataSource;
+import org.smallmind.persistence.orm.SessionSource;
 import org.smallmind.persistence.orm.hibernate.HibernateDao;
 import org.smallmind.persistence.spring.ManagedDaoSupport;
 import org.springframework.beans.BeansException;
@@ -50,12 +50,12 @@ public class AnnotationSeekingBeanFactoryPostProcessor implements BeanFactoryPos
     return getAnnotatedClasses(null);
   }
 
-  public static Class[] getAnnotatedClasses (String dataSourceKey) {
+  public static Class[] getAnnotatedClasses (String sessionSourceKey) {
 
     Class[] annotatedClasses;
     HashSet<Class> annotatedClassSet;
 
-    if ((annotatedClassSet = ANNOTATED_CLASS_DATA_SOURCE_MAP.get(dataSourceKey)) == null) {
+    if ((annotatedClassSet = ANNOTATED_CLASS_DATA_SOURCE_MAP.get(sessionSourceKey)) == null) {
       return NO_CLASSES;
     }
 
@@ -89,17 +89,17 @@ public class AnnotationSeekingBeanFactoryPostProcessor implements BeanFactoryPos
     Class persistentClass;
     Annotation dataSourceAnnotation;
     HashSet<Class> annotatedClassSet;
-    String dataSourceKey = null;
+    String sessionSourceKey = null;
 
     for (String beanName : configurableListableBeanFactory.getBeanDefinitionNames()) {
       if ((beanClass = configurableListableBeanFactory.getType(beanName)) != null) {
         if (HibernateDao.class.isAssignableFrom(beanClass)) {
-          if ((dataSourceAnnotation = beanClass.getAnnotation(DataSource.class)) != null) {
-            dataSourceKey = ((DataSource)dataSourceAnnotation).value();
+          if ((dataSourceAnnotation = beanClass.getAnnotation(SessionSource.class)) != null) {
+            sessionSourceKey = ((SessionSource)dataSourceAnnotation).value();
           }
 
-          if ((annotatedClassSet = ANNOTATED_CLASS_DATA_SOURCE_MAP.get(dataSourceKey)) == null) {
-            ANNOTATED_CLASS_DATA_SOURCE_MAP.put(dataSourceKey, annotatedClassSet = new HashSet<Class>());
+          if ((annotatedClassSet = ANNOTATED_CLASS_DATA_SOURCE_MAP.get(sessionSourceKey)) == null) {
+            ANNOTATED_CLASS_DATA_SOURCE_MAP.put(sessionSourceKey, annotatedClassSet = new HashSet<Class>());
           }
 
           if ((persistentClass = ManagedDaoSupport.findDurableClass(beanClass)) == null) {

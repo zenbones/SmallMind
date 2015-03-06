@@ -48,9 +48,9 @@ public abstract class ORMDao<I extends Serializable & Comparable<I>, D extends D
   }
 
   @Override
-  public String getDataSourceKey () {
+  public String getSessionSourceKey () {
 
-    return proxySession.getDataSourceKey();
+    return proxySession.getSessionSourceKey();
   }
 
   @Override

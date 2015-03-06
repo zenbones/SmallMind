@@ -43,9 +43,9 @@ public class JPAProxySession extends ProxySession<EntityManagerFactory, EntityMa
 
   private EntityManagerFactory entityManagerFactory;
 
-  public JPAProxySession (String database, String dataSourceKey, EntityManagerFactory entityManagerFactory, boolean boundaryEnforced, boolean cacheEnabled) {
+  public JPAProxySession (String dataSourceType, String sessionSourceKey, EntityManagerFactory entityManagerFactory, boolean boundaryEnforced, boolean cacheEnabled) {
 
-    super(database, dataSourceKey, boundaryEnforced, cacheEnabled);
+    super(dataSourceType, sessionSourceKey, boundaryEnforced, cacheEnabled);
 
     this.entityManagerFactory = entityManagerFactory;
   }

@@ -44,21 +44,21 @@ public abstract class ProxySession<F, N> {
   };
 
   private String dataSourceType;
-  private String dataSourceKey;
+  private String sessionSourceKey;
   private boolean boundaryEnforced;
   private boolean cacheEnabled;
 
-  public ProxySession (String dataSourceType, String dataSourceKey, boolean boundaryEnforced, boolean cacheEnabled) {
+  public ProxySession (String dataSourceType, String sessionSourceKey, boolean boundaryEnforced, boolean cacheEnabled) {
 
     this.dataSourceType = dataSourceType;
-    this.dataSourceKey = dataSourceKey;
+    this.sessionSourceKey = sessionSourceKey;
     this.boundaryEnforced = boundaryEnforced;
     this.cacheEnabled = cacheEnabled;
   }
 
   public void register () {
 
-    SessionManager.register(dataSourceKey, this);
+    SessionManager.register(sessionSourceKey, this);
   }
 
   public String getDataSourceType () {
@@ -66,9 +66,9 @@ public abstract class ProxySession<F, N> {
     return dataSourceType;
   }
 
-  public String getDataSourceKey () {
+  public String getSessionSourceKey () {
 
-    return dataSourceKey;
+    return sessionSourceKey;
   }
 
   public boolean isBoundaryEnforced () {

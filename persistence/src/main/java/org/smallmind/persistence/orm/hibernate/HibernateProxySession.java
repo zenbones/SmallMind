@@ -39,16 +39,16 @@ import org.smallmind.persistence.orm.aop.NonTransactionalState;
 import org.smallmind.persistence.orm.aop.RollbackAwareBoundarySet;
 import org.smallmind.persistence.orm.aop.TransactionalState;
 
-public class HibernateProxySession extends ProxySession<SessionFactory, Session> {
+public class  HibernateProxySession extends ProxySession<SessionFactory, Session> {
 
   private final ThreadLocal<Session> managerThreadLocal = new ThreadLocal<Session>();
   private final ThreadLocal<HibernateProxyTransaction> transactionThreadLocal = new ThreadLocal<HibernateProxyTransaction>();
 
   private SessionFactory sessionFactory;
 
-  public HibernateProxySession (String dataSourceType, String dataSourceKey, SessionFactory sessionFactory, boolean boundaryEnforced, boolean cacheEnabled) {
+  public HibernateProxySession (String dataSourceType, String sessionSourceKey, SessionFactory sessionFactory, boolean boundaryEnforced, boolean cacheEnabled) {
 
-    super(dataSourceType, dataSourceKey, boundaryEnforced, cacheEnabled);
+    super(dataSourceType, sessionSourceKey, boundaryEnforced, cacheEnabled);
 
     this.sessionFactory = sessionFactory;
   }

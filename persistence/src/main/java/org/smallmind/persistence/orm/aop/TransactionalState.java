@@ -39,25 +39,25 @@ public class TransactionalState {
     return isInTransaction(null);
   }
 
-  public static boolean isInTransaction (String dataSourceKey) {
+  public static boolean isInTransaction (String sessionSourceKey) {
 
-    return currentTransaction(dataSourceKey) != null;
+    return currentTransaction(sessionSourceKey) != null;
   }
 
-  public static ProxyTransaction currentTransaction (String dataSourceKey) {
+  public static ProxyTransaction currentTransaction (String sessionSourceKey) {
 
     LinkedList<RollbackAwareBoundarySet<ProxyTransaction>> transactionSetStack;
 
     if ((transactionSetStack = TRANSACTION_SET_STACK_LOCAL.get()) != null) {
       for (RollbackAwareBoundarySet<ProxyTransaction> transactionSet : transactionSetStack) {
         for (ProxyTransaction proxyTransaction : transactionSet) {
-          if (dataSourceKey == null) {
-            if (proxyTransaction.getSession().getDataSourceKey() == null) {
+          if (sessionSourceKey == null) {
+            if (proxyTransaction.getSession().getSessionSourceKey() == null) {
 
               return proxyTransaction;
             }
           }
-          else if (dataSourceKey.equals(proxyTransaction.getSession().getDataSourceKey())) {
+          else if (sessionSourceKey.equals(proxyTransaction.getSession().getSessionSourceKey())) {
 
             return proxyTransaction;
           }
@@ -70,16 +70,16 @@ public class TransactionalState {
 
   public static boolean withinBoundary (ProxySession proxySession) {
 
-    return withinBoundary(proxySession.getDataSourceKey());
+    return withinBoundary(proxySession.getSessionSourceKey());
   }
 
-  public static boolean withinBoundary (String dataSourceKey) {
+  public static boolean withinBoundary (String sessionSourceKey) {
 
     LinkedList<RollbackAwareBoundarySet<ProxyTransaction>> transactionSetStack;
 
     if ((transactionSetStack = TRANSACTION_SET_STACK_LOCAL.get()) != null) {
       for (RollbackAwareBoundarySet<ProxyTransaction> transactionSet : transactionSetStack) {
-        if (transactionSet.allows(dataSourceKey)) {
+        if (transactionSet.allows(sessionSourceKey)) {
           return true;
         }
       }
