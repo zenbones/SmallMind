@@ -31,8 +31,9 @@ import java.util.concurrent.TimeUnit;
 public class Duration {
 
   private static final Duration NONE = new Duration(0, TimeUnit.SECONDS);
-  TimeUnit timeUnit;
-  long time;
+
+  private TimeUnit timeUnit;
+  private long time;
 
   public Duration (long time, TimeUnit timeUnit) {
 
