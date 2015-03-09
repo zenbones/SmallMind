@@ -8,7 +8,7 @@
   </parent>
   <groupId>org.smallmind</groupId>
   <artifactId>smallmind</artifactId>
-  <version>1.8.5</version>
+  <version>1.8.6-SNAPSHOT</version>
   <packaging>pom</packaging>
   <name>Parent</name>
   <description>Parent POM</description>
@@ -29,7 +29,7 @@
     <connection>scm:git:git://github.com/zenbones/SmallMind.git</connection>
     <developerConnection>scm:git:git@github.com:zenbones/SmallMind.git</developerConnection>
     <url>http://github.com/zenbones/SmallMind.git</url>
-    <tag>smallmind-1.8.5</tag>
+    <tag>HEAD</tag>
   </scm>
   <developers>
     <developer>
