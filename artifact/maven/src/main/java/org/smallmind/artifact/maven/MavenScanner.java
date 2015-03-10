@@ -177,13 +177,13 @@ public class MavenScanner {
     public void run () {
 
       try {
-        while (!finishLatch.await(cycleDuration.getTime(), cycleDuration.getTimeUnit())) {
+        do {
           try {
             updateArtifact();
           } catch (Exception exception) {
             LoggerManager.getLogger(MavenScanner.class).error(exception);
           }
-        }
+        } while (!finishLatch.await(cycleDuration.getTime(), cycleDuration.getTimeUnit()));
       } catch (InterruptedException interruptedException) {
         finishLatch.countDown();
       } finally {
