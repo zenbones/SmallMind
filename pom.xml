@@ -281,11 +281,6 @@
         <version>${aether.version}</version>
       </dependency>
       <dependency>
-        <groupId>org.scala-lang</groupId>
-        <artifactId>scala-library</artifactId>
-        <version>2.8.0</version>
-      </dependency>
-      <dependency>
         <groupId>org.jboss.javaee</groupId>
         <artifactId>jboss-jms-api</artifactId>
         <version>1.1.0.GA</version>
