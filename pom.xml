@@ -106,8 +106,8 @@
     <javafx.runtime.lib.jar>${env.JAVAFX_RUNTIME}/lib/jfxrt.jar</javafx.runtime.lib.jar>
     <aether.version>1.0.2.v20150114</aether.version>
     <spring.version>4.0.3.RELEASE</spring.version>
-    <jackson.version>2.5.0</jackson.version>
-    <jersey.version>2.14</jersey.version>
+    <jackson.version>2.5.1</jackson.version>
+    <jersey.version>2.16</jersey.version>
     <grizzly.version>2.3.18</grizzly.version>
   </properties>
 
