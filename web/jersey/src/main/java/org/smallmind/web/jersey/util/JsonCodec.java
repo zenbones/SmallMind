@@ -45,6 +45,12 @@ public class JsonCodec {
     return OBJECT_MAPPER.readValue(bytes, clazz);
   }
 
+  public static <T> T read (byte[] bytes, int offset, int len, Class<T> clazz)
+    throws IOException {
+
+    return OBJECT_MAPPER.readValue(bytes, offset, len, clazz);
+  }
+
   public static <T> T read (String aString, Class<T> clazz)
     throws IOException {
 
