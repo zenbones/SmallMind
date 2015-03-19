@@ -26,6 +26,7 @@
  */
 package org.smallmind.web.jersey.fault;
 
+import java.io.Serializable;
 import java.util.Objects;
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
@@ -34,7 +35,7 @@ import javax.xml.bind.annotation.XmlRootElement;
 
 @XmlRootElement(name = "element")
 @XmlAccessorType(XmlAccessType.PROPERTY)
-public class FaultElement {
+public class FaultElement implements Serializable {
 
   private String declaringType;
   private String functionName;

@@ -29,6 +29,7 @@ package org.smallmind.web.jersey.fault;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.ObjectOutputStream;
+import java.io.Serializable;
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlElement;
@@ -36,7 +37,7 @@ import javax.xml.bind.annotation.XmlRootElement;
 
 @XmlRootElement(name = "native")
 @XmlAccessorType(XmlAccessType.PROPERTY)
-public class NativeObject {
+public class NativeObject implements Serializable {
 
   private NativeLanguage language;
   private byte[] bytes;
