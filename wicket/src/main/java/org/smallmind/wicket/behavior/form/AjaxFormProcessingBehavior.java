@@ -65,6 +65,16 @@ public abstract class AjaxFormProcessingBehavior extends Behavior {
     super.bind(component);
   }
 
+  public FeedbackPanel getFeedbackPanel () {
+
+    return feedbackPanel;
+  }
+
+  public Form getForm () {
+
+    return form;
+  }
+
   public void process (final AjaxRequestTarget target) {
 
     form.process(new IFormSubmitter() {
