@@ -33,10 +33,10 @@ import org.apache.wicket.markup.html.form.Form;
 import org.apache.wicket.markup.html.form.IFormSubmitter;
 import org.apache.wicket.markup.html.panel.FeedbackPanel;
 
-public abstract class AjaxFormProcessingBehavior extends Behavior {
+public abstract class AjaxFormProcessingBehavior<T> extends Behavior {
 
   private FeedbackPanel feedbackPanel;
-  private Form form;
+  private Form<T> form;
 
   public AjaxFormProcessingBehavior () {
 
@@ -60,7 +60,7 @@ public abstract class AjaxFormProcessingBehavior extends Behavior {
       throw new IllegalArgumentException("Not a Form");
     }
 
-    form = (Form)component;
+    form = (Form<T>)component;
 
     super.bind(component);
   }
@@ -70,7 +70,7 @@ public abstract class AjaxFormProcessingBehavior extends Behavior {
     return feedbackPanel;
   }
 
-  public Form getForm () {
+  public Form<T> getForm () {
 
     return form;
   }
@@ -79,7 +79,7 @@ public abstract class AjaxFormProcessingBehavior extends Behavior {
 
     form.process(new IFormSubmitter() {
       @Override
-      public Form<?> getForm () {
+      public Form<T> getForm () {
 
         return form;
       }
