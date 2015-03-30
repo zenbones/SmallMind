@@ -7,6 +7,7 @@
     <property name="host" value="${grizzly.host}"/>
     <property name="port" value="${grizzly.port}"/>
     <property name="contextPath" value="${grizzly.context_path}"/>
+    <property name="staticPath" value="${grizzly.static_path}"/>
     <property name="restPath" value="${grizzly.rest_path}"/>
     <property name="soapPath" value="${grizzly.soap_path}"/>
     <property name="resourceConfigExtensions">

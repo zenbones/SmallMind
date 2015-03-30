@@ -37,6 +37,7 @@ import javax.servlet.Filter;
 import javax.servlet.FilterRegistration;
 import javax.servlet.Servlet;
 import javax.servlet.ServletRegistration;
+import org.glassfish.grizzly.http.server.CLStaticHttpHandler;
 import org.glassfish.grizzly.http.server.HttpHandler;
 import org.glassfish.grizzly.http.server.HttpServer;
 import org.glassfish.grizzly.http.server.NetworkListener;
@@ -66,9 +67,10 @@ public class GrizzlyInitializingBean implements DisposableBean, ApplicationConte
   private LinkedList<ServletInstaller> servletInstallerList = new LinkedList<>();
   private ResourceConfigExtension[] resourceConfigExtensions;
   private String host;
-  private String contextPath;
-  private String restPath;
-  private String soapPath;
+  private String contextPath = "/context";
+  private String staticPath = "/static";
+  private String restPath = "/rest";
+  private String soapPath = "/soap";
   private int port;
   private boolean debug = false;
 
@@ -85,6 +87,11 @@ public class GrizzlyInitializingBean implements DisposableBean, ApplicationConte
   public void setContextPath (String contextPath) {
 
     this.contextPath = contextPath;
+  }
+
+  public void setStaticPath (String staticPath) {
+
+    this.staticPath = staticPath;
   }
 
   public void setRestPath (String restPath) {
@@ -117,8 +124,9 @@ public class GrizzlyInitializingBean implements DisposableBean, ApplicationConte
       }
       httpServer = new HttpServer();
       httpServer.addListener(new NetworkListener("grizzly2", host, port));
+      httpServer.getServerConfiguration().addHttpHandler(new CLStaticHttpHandler(GrizzlyInitializingBean.class.getClassLoader(), "/"), staticPath);
 
-      WebappContext webappContext = new WebappContext("Grizzly Application Context");
+      WebappContext webappContext = new WebappContext("Grizzly Application Context", contextPath);
       webappContext.addServlet("JAX-RS Application", new ServletContainer(new JsonResourceConfig(ExposedApplicationContext.getApplicationContext(), resourceConfigExtensions))).addMapping(restPath + "/*");
       webappContext.addFilter("per-application-data", new PerApplicationContextFilter()).addMappingForUrlPatterns(EnumSet.of(DispatcherType.REQUEST), restPath + "/*");
       webappContext.addListener("org.springframework.web.context.request.RequestContextListener");
