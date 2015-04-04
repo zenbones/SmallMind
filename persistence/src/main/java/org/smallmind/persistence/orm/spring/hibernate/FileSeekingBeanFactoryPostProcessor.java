@@ -80,28 +80,25 @@ public class FileSeekingBeanFactoryPostProcessor implements BeanFactoryPostProce
       if ((beanClass = configurableListableBeanFactory.getType(beanName)) != null) {
         if (HibernateDao.class.isAssignableFrom(beanClass)) {
 
-          boolean mapped = false;
-
           if ((sessionSource = beanClass.getAnnotation(SessionSource.class)) != null) {
             sessionSourceKey = sessionSource.value();
           }
 
           if ((hbmResourceMap = HBM_DATA_SOURCE_MAP.get(sessionSourceKey)) == null) {
-            HBM_DATA_SOURCE_MAP.put(sessionSourceKey, hbmResourceMap = new HashMap<Class, UrlResource>());
+            HBM_DATA_SOURCE_MAP.put(sessionSourceKey, hbmResourceMap = new HashMap<>());
           }
 
           if ((persistentClass = ManagedDaoSupport.findDurableClass(beanClass)) == null) {
             throw new FatalBeanException("No inference of the Durable class for type(" + beanClass.getName() + ") was possible");
           }
 
-          while ((persistentClass != null) && (!mapped) && (!hbmResourceMap.containsKey(persistentClass))) {
+          // Stop when we find a parent class which has already been mapped, signifying the rest of the tree has been previously processed
+          while ((persistentClass != null) && (!hbmResourceMap.containsKey(persistentClass))) {
             packageRemnant = persistentClass.getPackage().getName().replace('.', '/');
             hbmFileName = persistentClass.getSimpleName() + ".hbm.xml";
             do {
               if ((hbmURL = configurableListableBeanFactory.getBeanClassLoader().getResource((packageRemnant.length() > 0) ? packageRemnant + '/' + hbmFileName : hbmFileName)) != null) {
                 hbmResourceMap.put(persistentClass, new UrlResource(hbmURL));
-                mapped = true;
-                break;
               }
 
               packageRemnant = packageRemnant.length() > 0 ? packageRemnant.substring(0, (lastSlashIndex = packageRemnant.lastIndexOf('/')) >= 0 ? lastSlashIndex : 0) : null;
