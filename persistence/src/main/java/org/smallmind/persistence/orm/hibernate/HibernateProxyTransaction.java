@@ -31,7 +31,6 @@ import org.smallmind.persistence.orm.ProxyTransaction;
 import org.smallmind.persistence.orm.ProxyTransactionException;
 import org.smallmind.persistence.orm.TransactionEndState;
 import org.smallmind.persistence.orm.TransactionPostProcessException;
-import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 public class HibernateProxyTransaction extends ProxyTransaction<HibernateProxySession> {
 
@@ -43,7 +42,6 @@ public class HibernateProxyTransaction extends ProxyTransaction<HibernateProxySe
     super(proxySession);
 
     this.transaction = transaction;
-    TransactionSynchronizationManager.bindResource(proxySession.getNativeSessionFactory(), proxySession.getNativeSession());
   }
 
   public boolean isCompleted () {
@@ -60,28 +58,22 @@ public class HibernateProxyTransaction extends ProxyTransaction<HibernateProxySe
 
     if (isRollbackOnly()) {
       rollback(new ProxyTransactionException("Transaction has been set to allow rollback only"));
-    }
-    else if (!getSession().getNativeSession().isConnected()) {
+    } else if (!getSession().getNativeSession().isConnected()) {
       throw new ProxyTransactionException("The current Transaction can't commit because the Session is no longer open");
-    }
-    else {
+    } else {
       try {
         getSession().flush();
         transaction.commit();
-        TransactionSynchronizationManager.unbindResource(getSession().getNativeSessionFactory());
-      }
-      catch (Throwable throwable) {
+      } catch (Throwable throwable) {
         rollback(throwable);
-      }
-      finally {
+      } finally {
         getSession().close();
       }
 
       if (!rolledBack) {
         try {
           applyPostProcesses(TransactionEndState.COMMIT);
-        }
-        catch (TransactionPostProcessException transactionPostProcessException) {
+        } catch (TransactionPostProcessException transactionPostProcessException) {
           throw new ProxyTransactionException(transactionPostProcessException);
         }
       }
@@ -102,22 +94,17 @@ public class HibernateProxyTransaction extends ProxyTransaction<HibernateProxySe
 
       if (!getSession().getNativeSession().isConnected()) {
         throw new ProxyTransactionException("The current Transaction can't rollback because the Session is no longer open");
-      }
-      else {
+      } else {
         try {
           transaction.rollback();
-          TransactionSynchronizationManager.unbindResource(getSession().getNativeSessionFactory());
-        }
-        catch (Throwable throwable) {
+        } catch (Throwable throwable) {
           thrownDuringRollback = (thrownDuringRollback == null) ? throwable : (throwable.getCause() != throwable) ? throwable : throwable.initCause(thrownDuringRollback);
-        }
-        finally {
+        } finally {
           getSession().close();
 
           try {
             applyPostProcesses(TransactionEndState.ROLLBACK);
-          }
-          catch (TransactionPostProcessException transactionPostProcessException) {
+          } catch (TransactionPostProcessException transactionPostProcessException) {
             thrownDuringRollback = (thrownDuringRollback == null) ? new ProxyTransactionException(transactionPostProcessException) : new ProxyTransactionException(transactionPostProcessException).initCause(thrownDuringRollback);
           }
         }
@@ -125,8 +112,7 @@ public class HibernateProxyTransaction extends ProxyTransaction<HibernateProxySe
         if (thrownDuringRollback != null) {
           if (thrownDuringRollback instanceof ProxyTransactionException) {
             throw (ProxyTransactionException)thrownDuringRollback;
-          }
-          else {
+          } else {
             throw new ProxyTransactionException(thrownDuringRollback);
           }
         }
