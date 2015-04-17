@@ -74,7 +74,7 @@ public class HTTPCodec {
 
       char singleChar;
 
-      if ((singleChar = pairBuilder.charAt(index)) == '&') {
+      if ((singleChar = queryString.charAt(index)) == '&') {
         decodeTuple(tuple, pairBuilder);
         pairBuilder.delete(0, pairBuilder.length());
       } else {
