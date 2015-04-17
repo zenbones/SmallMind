@@ -50,6 +50,20 @@ public class HTTPCodec {
     return dataBuilder.toString();
   }
 
+  private static boolean isIgnoredKey (String key, String[] ignoredKeys) {
+
+    if ((ignoredKeys != null) && (ignoredKeys.length > 0)) {
+      for (String ignoredKey : ignoredKeys) {
+        if (ignoredKey.equals(key)) {
+
+          return true;
+        }
+      }
+    }
+
+    return false;
+  }
+
   public static Tuple<String, String> urlDecode (String queryString)
     throws UnsupportedEncodingException {
 
@@ -82,21 +96,7 @@ public class HTTPCodec {
       throw new UnsupportedEncodingException("Not a standard hex encoded query string");
     }
 
-    tuple.addPair(pairBuilder.substring(0, equalsPos), pairBuilder.substring(equalsPos + 1));
-  }
-
-  private static boolean isIgnoredKey (String key, String[] ignoredKeys) {
-
-    if ((ignoredKeys != null) && (ignoredKeys.length > 0)) {
-      for (String ignoredKey : ignoredKeys) {
-        if (ignoredKey.equals(key)) {
-
-          return true;
-        }
-      }
-    }
-
-    return false;
+    tuple.addPair(HexCodec.hexDecode(pairBuilder.substring(0, equalsPos)), HexCodec.hexDecode(pairBuilder.substring(equalsPos + 1)));
   }
 }
 
