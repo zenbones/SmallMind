@@ -26,11 +26,10 @@
  */
 package org.smallmind.nutsnbolts.http;
 
+import java.io.UnsupportedEncodingException;
 import org.smallmind.nutsnbolts.util.Tuple;
 
 public class HTTPCodec {
-
-  static final String validHex = "1234567890ABCDEFabcdef";
 
   public static String urlEncode (Tuple<String, String> tuple, String... ignoredKeys) {
 
@@ -49,6 +48,41 @@ public class HTTPCodec {
       dataBuilder.append(isIgnoredKey(key, ignoredKeys) ? tuple.getValue(count) : HexCodec.hexEncode(tuple.getValue(count)));
     }
     return dataBuilder.toString();
+  }
+
+  public static Tuple<String, String> urlDecode (String queryString)
+    throws UnsupportedEncodingException {
+
+    Tuple<String, String> tuple = new Tuple<>();
+    StringBuilder pairBuilder = new StringBuilder();
+
+    for (int index = 0; index < queryString.length(); index++) {
+
+      char singleChar;
+
+      if ((singleChar = pairBuilder.charAt(index)) == '&') {
+        decodeTuple(tuple, pairBuilder);
+        pairBuilder.delete(0, pairBuilder.length());
+      } else {
+        pairBuilder.append(singleChar);
+      }
+    }
+
+    decodeTuple(tuple, pairBuilder);
+
+    return tuple;
+  }
+
+  private static void decodeTuple (Tuple<String, String> tuple, StringBuilder pairBuilder)
+    throws UnsupportedEncodingException {
+
+    int equalsPos;
+
+    if ((equalsPos = pairBuilder.indexOf("=")) < 0) {
+      throw new UnsupportedEncodingException("Not a standard hex encoded query string");
+    }
+
+    tuple.addPair(pairBuilder.substring(0, equalsPos), pairBuilder.substring(equalsPos + 1));
   }
 
   private static boolean isIgnoredKey (String key, String[] ignoredKeys) {
