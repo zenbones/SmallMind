@@ -194,12 +194,12 @@ public class Tuple<K, V> implements Serializable, Cloneable {
     return allValues;
   }
 
-  public synchronized boolean isKey (K key) {
+  public synchronized boolean containsKey (K key) {
 
     return keys.contains(key);
   }
 
-  public synchronized boolean isKeyValuePair (K key, V value) {
+  public synchronized boolean containsKeyValuePair (K key, V value) {
 
     for (int count = 0; count < size(); count++) {
       if ((keys.get(count)).equals(key)) {
@@ -214,7 +214,7 @@ public class Tuple<K, V> implements Serializable, Cloneable {
 
   public synchronized Object clone () {
 
-    Tuple<K, V> tuple = new Tuple<K, V>();
+    Tuple<K, V> tuple = new Tuple<>();
 
     for (int count = 0; count < size(); count++) {
       tuple.addPair(getKey(count), getValue(count));
