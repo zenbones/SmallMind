@@ -26,35 +26,61 @@
  */
 package org.smallmind.web.grizzly;
 
-// @ServicePath("/<service Uri>")
-public class WebService {
+public class SSLInfo {
 
-  private String path;
-  private Object service;
+  private String keystore;
+  private String keystorePassword;
+  private boolean requireClientAuth = true;
+  private boolean proxyMode = false;
+  private int port = 443;
 
-  public WebService (String path, Object service) {
+  public int getPort () {
 
-    this.path = path;
-    this.service = service;
+    return port;
   }
 
-  public String getPath () {
+  public void setPort (int port) {
 
-    return path;
+    this.port = port;
   }
 
-  public void setPath (String path) {
+  public String getKeystore () {
 
-    this.path = path;
+    return keystore;
   }
 
-  public Object getService () {
+  public void setKeystore (String keystore) {
 
-    return service;
+    this.keystore = keystore;
   }
 
-  public void setService (Object service) {
+  public String getKeystorePassword () {
 
-    this.service = service;
+    return keystorePassword;
+  }
+
+  public void setKeystorePassword (String keystorePassword) {
+
+    this.keystorePassword = keystorePassword;
+  }
+
+  public boolean isRequireClientAuth () {
+
+    return requireClientAuth;
+  }
+
+  public void setRequireClientAuth (boolean requireClientAuth) {
+
+    this.requireClientAuth = requireClientAuth;
+  }
+
+  public boolean isProxyMode () {
+
+    return proxyMode;
+  }
+
+  public void setProxyMode (boolean proxyMode) {
+
+    this.proxyMode = proxyMode;
   }
 }

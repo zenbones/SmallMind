@@ -43,6 +43,8 @@ import org.glassfish.grizzly.http.server.HttpServer;
 import org.glassfish.grizzly.http.server.NetworkListener;
 import org.glassfish.grizzly.jaxws.JaxwsHandler;
 import org.glassfish.grizzly.servlet.WebappContext;
+import org.glassfish.grizzly.ssl.SSLContextConfigurator;
+import org.glassfish.grizzly.ssl.SSLEngineConfigurator;
 import org.glassfish.jersey.servlet.ServletContainer;
 import org.smallmind.nutsnbolts.lang.web.PerApplicationContextFilter;
 import org.smallmind.web.jersey.jackson.JsonResourceConfig;
@@ -66,6 +68,7 @@ public class GrizzlyInitializingBean implements DisposableBean, ApplicationConte
   private LinkedList<ListenerInstaller> listenerInstallerList = new LinkedList<>();
   private LinkedList<ServletInstaller> servletInstallerList = new LinkedList<>();
   private ResourceConfigExtension[] resourceConfigExtensions;
+  private SSLInfo sslInfo;
   private String host;
   private String contextPath = "/context";
   private String staticPath = "/static";
@@ -82,6 +85,11 @@ public class GrizzlyInitializingBean implements DisposableBean, ApplicationConte
   public void setPort (int port) {
 
     this.port = port;
+  }
+
+  public void setSslInfo (SSLInfo sslInfo) {
+
+    this.sslInfo = sslInfo;
   }
 
   public void setContextPath (String contextPath) {
@@ -117,13 +125,21 @@ public class GrizzlyInitializingBean implements DisposableBean, ApplicationConte
   @Override
   public synchronized void onApplicationEvent (ApplicationEvent event) {
 
+    NetworkListener secureNetworkListener = null;
+
     if (event instanceof ContextRefreshedEvent) {
 
       if (debug) {
         System.setProperty("com.sun.xml.ws.transport.http.HttpAdapter.dump", "true");
       }
+
       httpServer = new HttpServer();
       httpServer.addListener(new NetworkListener("grizzly2", host, port));
+
+      if (sslInfo != null) {
+        httpServer.addListener(secureNetworkListener = generateSecureNetworkListener(sslInfo));
+      }
+
       httpServer.getServerConfiguration().addHttpHandler(new CLStaticHttpHandler(GrizzlyInitializingBean.class.getClassLoader(), "/"), staticPath);
 
       WebappContext webappContext = new WebappContext("Grizzly Application Context", contextPath);
@@ -191,6 +207,10 @@ public class GrizzlyInitializingBean implements DisposableBean, ApplicationConte
 
       try {
         httpServer.start();
+
+        if (secureNetworkListener != null) {
+          secureNetworkListener.getFilterChain().add(secureNetworkListener.getFilterChain().size() - 1, new ClientAuthProxyFilter(sslInfo.isProxyMode()));
+        }
       } catch (IOException ioException) {
         if (!(ioException instanceof BindException)) {
           throw new GrizzlyInitializationException(ioException);
@@ -235,5 +255,26 @@ public class GrizzlyInitializingBean implements DisposableBean, ApplicationConte
     if (httpServer != null) {
       httpServer.shutdown();
     }
+  }
+
+  public NetworkListener generateSecureNetworkListener (SSLInfo sslInfo) {
+
+    NetworkListener secureListener = new NetworkListener("grizzly2Secure", host, sslInfo.getPort());
+    SSLContextConfigurator sslContext = new SSLContextConfigurator();
+
+    secureListener.setSecure(true);
+
+    sslContext.setKeyStoreFile(sslInfo.getKeystore());
+    sslContext.setKeyStorePass(sslInfo.getKeystorePassword());
+    sslContext.setTrustStoreFile(sslInfo.getKeystore());
+    sslContext.setTrustStorePass(sslInfo.getKeystorePassword());
+
+        /* Note: clientMode (2nd param) means server does not
+         * authenticate to client - which we never want
+         */
+    SSLEngineConfigurator sslEngineConfig = new SSLEngineConfigurator(sslContext, false, sslInfo.isRequireClientAuth(), true);
+    secureListener.setSSLEngineConfig(sslEngineConfig);
+
+    return secureListener;
   }
 }
