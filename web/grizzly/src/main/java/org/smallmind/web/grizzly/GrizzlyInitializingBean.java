@@ -74,7 +74,7 @@ public class GrizzlyInitializingBean implements DisposableBean, ApplicationConte
   private String staticPath = "/static";
   private String restPath = "/rest";
   private String soapPath = "/soap";
-  private int port;
+  private int port = 80;
   private boolean debug = false;
 
   public void setHost (String host) {
