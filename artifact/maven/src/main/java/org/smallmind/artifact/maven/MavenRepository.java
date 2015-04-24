@@ -120,7 +120,7 @@ public class MavenRepository {
     mirrorSelector = getMirrorSelector(settings);
     authenticationSelector = getAuthenticationSelector(settings);
 
-    remoteRepositoryList = initRepositories(mirrorSelector, settings);
+    remoteRepositoryList = initRepositories(authenticationSelector, mirrorSelector, settings);
   }
 
   public DefaultRepositorySystemSession generateSession () {
@@ -233,17 +233,17 @@ public class MavenRepository {
     return buffer.toString();
   }
 
-  private List<RemoteRepository> initRepositories (MirrorSelector mirrorSelector, Settings settings) {
+  private List<RemoteRepository> initRepositories (AuthenticationSelector authenticationSelector, MirrorSelector mirrorSelector, Settings settings) {
 
     LinkedList<RemoteRepository> remoteRepositoryList = new LinkedList<>();
 
     for (Profile profile : settings.getProfiles()) {
       if (isProfileActive(settings, profile)) {
         for (Repository repository : profile.getRepositories()) {
-          constructRemoteRepository(mirrorSelector, remoteRepositoryList, repository);
+          constructRemoteRepository(authenticationSelector, mirrorSelector, remoteRepositoryList, repository);
         }
         for (Repository repository : profile.getPluginRepositories()) {
-          constructRemoteRepository(mirrorSelector, remoteRepositoryList, repository);
+          constructRemoteRepository(authenticationSelector, mirrorSelector, remoteRepositoryList, repository);
         }
       }
     }
@@ -257,15 +257,16 @@ public class MavenRepository {
              (profile.getActivation() != null && profile.getActivation().isActiveByDefault());
   }
 
-  private void constructRemoteRepository (MirrorSelector mirrorSelector, List<RemoteRepository> remoteRepositoryList, Repository repository) {
+  private void constructRemoteRepository (AuthenticationSelector authenticationSelector, MirrorSelector mirrorSelector, List<RemoteRepository> remoteRepositoryList, Repository repository) {
 
     RemoteRepository remoteRepository = new RemoteRepository.Builder(repository.getId(), repository.getLayout(), repository.getUrl())
                                           .setReleasePolicy(new RepositoryPolicy(true, RepositoryPolicy.UPDATE_POLICY_ALWAYS, RepositoryPolicy.CHECKSUM_POLICY_WARN))
                                           .setSnapshotPolicy(new RepositoryPolicy(true, RepositoryPolicy.UPDATE_POLICY_ALWAYS, RepositoryPolicy.CHECKSUM_POLICY_WARN))
                                           .build();
     RemoteRepository mirrorRepository = mirrorSelector.getMirror(remoteRepository);
+    RemoteRepository coercedRepository = (mirrorRepository != null) ? mirrorRepository : remoteRepository;
 
-    remoteRepositoryList.add((mirrorRepository != null) ? mirrorRepository : remoteRepository);
+    remoteRepositoryList.add(new RemoteRepository.Builder(coercedRepository).setAuthentication(authenticationSelector.getAuthentication(coercedRepository)).build());
   }
 
   private ProxySelector getProxySelector (Settings settings) {
