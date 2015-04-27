@@ -105,6 +105,7 @@ public class SystemPropertyInitializingBean implements BeanFactoryPostProcessor,
 
     if ((keyDebugger != null) && keyDebugger.willDebug()) {
       debugMap.put("user.home", System.getProperty("user.home"));
+      debugMap.put("java.io.tmpdir", System.getProperty("java.io.tmpdir"));
 
       System.out.println("---------------- System Properties ---------------");
       for (Map.Entry<String, String> debugEntry : debugMap.entrySet()) {
