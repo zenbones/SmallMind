@@ -41,15 +41,9 @@ import org.smallmind.nutsnbolts.util.Tuple;
 @Path("/login")
 public class TestLoginPageResource {
 
-  private OAuthConfiguration oauthConfiguration;
-
   @Context
   private HttpServletRequest request;
 
-  public void setOauthConfiguration (OAuthConfiguration oauthConfiguration) {
-
-    this.oauthConfiguration = oauthConfiguration;
-  }
 
   @Path("/display")
   @GET
@@ -68,7 +62,7 @@ public class TestLoginPageResource {
       }
     }
 
-    paramTuple.setPair("auth_data", MungedCodec.encrypt(new SSOAuthData("test", "foobar"), true));
+    paramTuple.setPair("auth_data", MungedCodec.encrypt(new SSOAuthData("test", "foobar")));
 
     return Response.status(Response.Status.FOUND).location(URI.create(URIUtilities.composeWithQueryParameters(paramMap.get("authorization_uri")[0], paramTuple))).build();
   }

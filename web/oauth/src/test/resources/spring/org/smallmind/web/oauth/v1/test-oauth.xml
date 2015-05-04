@@ -5,8 +5,8 @@
 
   <!-- OAuth Resources -->
   <bean id="oauthConfig" class="org.smallmind.web.oauth.v1.OAuthConfiguration">
-    <property name="userLoginService">
-      <bean class="org.smallmind.web.oauth.v1.credentials.MockUserLoginService">
+    <property name="secretService">
+      <bean class="org.smallmind.web.oauth.v1.credentials.MockSecretService">
         <property name="user" value="testuser"/>
         <property name="password" value="testpassword"/>
       </bean>
@@ -31,7 +31,7 @@
             <property name="oauthUri" value="http://${oauth.host.server}:${oauth.port.server}${grizzly.rest_path}/v1/oauth/authorization"/>
             <property name="loginUri" value="http://${oauth.host.node}:${oauth.port.node}${grizzly.rest_path}/login/display"/>
             <property name="redirectUri" value="http://${grizzly.host}:${grizzly.port}${grizzly.rest_path}/spoof/exchange"/>
-            <property name="sha256Secret" value="v8WIMT03YHGMxRyuHI6O0m2m96bRnODSemWc46FbIkQ="/>
+            <property name="secret" value="ourlittlesecret"/>
           </bean>
         </entry>
       </map>
@@ -47,8 +47,6 @@
     <property name="restUri" value="http://${grizzly.host}:${grizzly.port}${grizzly.rest_path}"/>
   </bean>
 
-  <bean class="org.smallmind.web.oauth.v1.TestLoginPageResource">
-    <property name="oauthConfiguration" ref="oauthConfig"/>
-  </bean>
+  <bean class="org.smallmind.web.oauth.v1.TestLoginPageResource"/>
 
 </beans>

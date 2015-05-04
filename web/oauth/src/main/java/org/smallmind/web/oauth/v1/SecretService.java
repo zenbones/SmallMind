@@ -24,21 +24,12 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.quorum.transport.instrument;
+package org.smallmind.web.oauth.v1;
 
-public enum MetricInteraction {
+public interface SecretService<J extends JWTToken> {
 
-  INVOCATION("Invocation"), ACQUIRE_QUEUE("Acquire Queue"), ACQUIRE_TOPIC("Acquire Topic"), CONSTRUCT_MESSAGE("Construct Message"), ACQUIRE_WORKER("Acquire Worker"), WORKER_IDLE("Worker Idle"), COMPLETE_CALLBACK("Complete Callback");
+  public abstract Class<J> getSecretClass ();
 
-  private String display;
-
-  private MetricInteraction (String display) {
-
-    this.display = display;
-  }
-
-  public String getDisplay () {
-
-    return display;
-  }
+  public abstract J validate(String user, String password)
+      throws Exception;
 }

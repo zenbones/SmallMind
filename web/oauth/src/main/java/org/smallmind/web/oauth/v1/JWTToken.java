@@ -26,29 +26,13 @@
  */
 package org.smallmind.web.oauth.v1;
 
-import javax.xml.bind.annotation.XmlAccessType;
-import javax.xml.bind.annotation.XmlAccessorType;
-import javax.xml.bind.annotation.XmlElement;
-import javax.xml.bind.annotation.XmlRootElement;
+public interface JWTToken {
 
-@XmlRootElement(name = "login")
-@XmlAccessorType(XmlAccessType.PROPERTY)
-public class UserLogin {
+  public abstract String getSub ();
 
-  private String[] roles;
+  public abstract void setSub (String sub);
 
-  public UserLogin() {
+  public abstract long getExp ();
 
-  }
-
-  @XmlElement(name = "roles", required = false, nillable = false)
-  public String[] getRoles() {
-
-    return roles;
-  }
-
-  public void setRoles(String[] roles) {
-
-    this.roles = roles;
-  }
+  public abstract void setExp (long exp);
 }

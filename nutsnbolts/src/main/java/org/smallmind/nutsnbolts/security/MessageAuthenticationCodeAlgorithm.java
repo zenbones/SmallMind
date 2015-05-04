@@ -24,10 +24,21 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.web.oauth.v1;
+package org.smallmind.nutsnbolts.security;
 
-public interface UserLoginService {
+public enum MessageAuthenticationCodeAlgorithm implements SecurityAlgorithm {
 
-  public abstract UserLogin validate(String user, String password)
-      throws Exception;
+  HMAC_MD5("HmacMD5"), HMAC_SHA_1("HmacSHA1"), HMAC_SHA_256("HmacSHA256");
+
+  private String algorithmName;
+
+  private MessageAuthenticationCodeAlgorithm (String algorithmName) {
+
+    this.algorithmName = algorithmName;
+  }
+
+  public String getAlgorithmName () {
+
+    return algorithmName;
+  }
 }

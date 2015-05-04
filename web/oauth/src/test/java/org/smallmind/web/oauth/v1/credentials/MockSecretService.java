@@ -26,10 +26,9 @@
  */
 package org.smallmind.web.oauth.v1.credentials;
 
-import org.smallmind.web.oauth.v1.UserLogin;
-import org.smallmind.web.oauth.v1.UserLoginService;
+import org.smallmind.web.oauth.v1.SecretService;
 
-public class MockUserLoginService implements UserLoginService {
+public class MockSecretService implements SecretService<MockSecret> {
 
   private String user;
   private String password;
@@ -45,11 +44,17 @@ public class MockUserLoginService implements UserLoginService {
   }
 
   @Override
-  public UserLogin validate(String user, String password) {
+  public Class<MockSecret> getSecretClass () {
+
+    return MockSecret.class;
+  }
+
+  @Override
+  public MockSecret validate(String user, String password) {
 
     if (this.user.equals(user) && this.password.equals(password)) {
 
-      return new UserLogin();
+      return new MockSecret();
     }
 
     return null;

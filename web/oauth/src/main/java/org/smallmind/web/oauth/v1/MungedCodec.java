@@ -83,7 +83,7 @@ public class MungedCodec {
     return JsonCodec.writeAsString(obj);
   }
 
-  public static String encrypt(Object obj, boolean doubleMunged)
+  public static String encrypt(Object obj)
       throws Exception {
 
     Key aesKey;
@@ -92,10 +92,10 @@ public class MungedCodec {
     ThreadLocalRandom.current().nextBytes(aesKeyBytes);
     aesKey = new SecretKeySpec(aesKeyBytes, "AES");
 
-    return Base64Codec.encode(EncryptionUtilities.encrypt(PUBLIC_KEY, (doubleMunged) ? Base64Codec.encode(aesKeyBytes).getBytes() : aesKeyBytes)) + '.' + Base64Codec.encode(Encryption.AES.encrypt(aesKey, JsonCodec.writeAsBytes(obj)));
+    return Base64Codec.encode(EncryptionUtilities.hexEncode(EncryptionUtilities.encrypt(PUBLIC_KEY,  aesKeyBytes))) + '.' + EncryptionUtilities.hexEncode(Encryption.AES.encrypt(aesKey, JsonCodec.writeAsBytes(obj)));
   }
 
-  public static <T> T decrypt(Class<T> clazz, String toBeDecrypted, boolean aesDoubleMunged)
+  public static <T> T decrypt(Class<T> clazz, String toBeDecrypted)
       throws Exception {
 
     Key aesKey;
@@ -106,13 +106,9 @@ public class MungedCodec {
       throw new IllegalArgumentException("Encrypted value is in an unknown format (expecting munged key.encrypted)");
     }
 
-    aesKeyBytes = EncryptionUtilities.decrypt(PRIVATE_KEY, Base64Codec.decode(toBeDecrypted.substring(0, dotPos)));
-    if (aesDoubleMunged) {
-      aesKeyBytes = Base64Codec.decode(aesKeyBytes);
-    }
-
+    aesKeyBytes = EncryptionUtilities.decrypt(PRIVATE_KEY, EncryptionUtilities.hexDecode(toBeDecrypted.substring(0, dotPos)));
     aesKey = new SecretKeySpec(aesKeyBytes, "AES");
 
-    return JsonCodec.read(Encryption.AES.decrypt(aesKey, Base64Codec.decode(toBeDecrypted.substring(dotPos + 1))), clazz);
+    return JsonCodec.read(Encryption.AES.decrypt(aesKey, EncryptionUtilities.hexDecode(toBeDecrypted.substring(dotPos + 1))), clazz);
   }
 }

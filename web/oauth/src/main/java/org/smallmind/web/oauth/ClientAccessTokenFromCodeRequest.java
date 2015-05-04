@@ -78,7 +78,7 @@ public class ClientAccessTokenFromCodeRequest {
   public ClientAccessTokenFromCodeRequest setClientSecret (String clientSecret)
     throws Exception {
 
-    this.clientSecret = MungedCodec.encrypt(clientSecret, true);
+    this.clientSecret = MungedCodec.encrypt(clientSecret);
 
     return this;
   }

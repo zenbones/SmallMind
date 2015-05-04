@@ -5,7 +5,7 @@
 
   <!-- OAuth Resources -->
   <bean id="oauthConfig" class="org.smallmind.web.oauth.v1.OAuthConfiguration">
-    <property name="userLoginService" ref="v1UserLoginService"/>
+    <!-- <property name="secretService" ref=""/> -->
     <property name="ssoCookieName" value="smallmind_sso"/>
     <property name="oauthProtocolLeaseDuration">
       <bean class="org.smallmind.nutsnbolts.time.Duration">
@@ -26,7 +26,7 @@
             <property name="oauthUri" value="http://${oauth.host.server}:${oauth.port.server}${grizzly.rest_path}/v1/oauth/authorization"/>
             <property name="loginUri" value="http://${oauth.host.node}:${oauth.port.node}#/login"/>
             <property name="redirectUri" value="http://${grizzly.host}:${grizzly.port}${grizzly.rest_path}/spoof/exchange"/>
-            <property name="sha256Secret" value="v8WIMT03YHGMxRyuHI6O0m2m96bRnODSemWc46FbIkQ="/>
+            <property name="secret" value="ourlittlesecret"/>
           </bean>
         </entry>
         <entry key="2">
@@ -34,7 +34,7 @@
             <property name="oauthUri" value="http://${oauth.host.server}:${oauth.port.server}${grizzly.rest_path}/v1/oauth/authorization"/>
             <property name="loginUri" value="http://${oauth.host.node}:${oauth.port.node}#/login"/>
             <property name="redirectUri" value="http://10.10.3.40/test3/index.asp"/>
-            <property name="sha256Secret" value="v8WIMT03YHGMxRyuHI6O0m2m96bRnODSemWc46FbIkQ="/>
+            <property name="secret" value="ourlittlesecret"/>
           </bean>
         </entry>
         <entry key="3">
@@ -43,7 +43,7 @@
             <property name="loginUri" value="http://${oauth.host.node}:${oauth.port.node}#/login"/>
             <property name="unsafeRedirection" value="true"/>
             <property name="redirectUri" value="http://${oauth.host.node}:${oauth.port.node}#/oauth"/>
-            <property name="sha256Secret" value="v8WIMT03YHGMxRyuHI6O0m2m96bRnODSemWc46FbIkQ="/>
+            <property name="secret" value="ourlittlesecret"/>
           </bean>
         </entry>
       </map>

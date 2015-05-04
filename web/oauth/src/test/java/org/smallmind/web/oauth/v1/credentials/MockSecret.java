@@ -24,64 +24,44 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.web.oauth.v1;
+package org.smallmind.web.oauth.v1.credentials;
 
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlElement;
-import javax.xml.bind.annotation.XmlElementRef;
 import javax.xml.bind.annotation.XmlRootElement;
+import org.smallmind.web.oauth.v1.JWTToken;
 
-@XmlRootElement(name = "code")
+@XmlRootElement(name = "secret")
 @XmlAccessorType(XmlAccessType.PROPERTY)
-public class AccessCode {
+public class MockSecret implements JWTToken {
 
-  private UserLogin userLogin;
-  private String clientId;
-  private long created;
+  private String sub;
+  private long exp;
 
-  public AccessCode () {
+  @Override
+  @XmlElement(name = "sub", required = true, nillable = false)
+  public String getSub () {
 
+    return sub;
   }
 
-  public AccessCode (String clientId, UserLogin userLogin) {
+  @Override
+  public void setSub (String sub) {
 
-    this.clientId = clientId;
-    this.userLogin = userLogin;
-
-    created = System.currentTimeMillis();
+    this.sub = sub;
   }
 
-  @XmlElement(name = "clientId", required = true, nillable = false)
-  public String getClientId () {
+  @Override
+  @XmlElement(name = "exp", required = true, nillable = false)
+  public long getExp () {
 
-    return clientId;
+    return exp;
   }
 
-  public void setClientId (String clientId) {
+  @Override
+  public void setExp (long exp) {
 
-    this.clientId = clientId;
-  }
-
-  @XmlElement(name = "created", required = true, nillable = false)
-  public long getCreated () {
-
-    return created;
-  }
-
-  public void setCreated (long created) {
-
-    this.created = created;
-  }
-
-  @XmlElementRef(required = true)
-  public UserLogin getUserLogin () {
-
-    return userLogin;
-  }
-
-  public void setUserLogin (UserLogin userLogin) {
-
-    this.userLogin = userLogin;
+    this.exp = exp;
   }
 }

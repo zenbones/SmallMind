@@ -31,40 +31,30 @@ import java.security.InvalidKeyException;
 import java.security.Key;
 import java.security.NoSuchAlgorithmException;
 import javax.crypto.BadPaddingException;
-import javax.crypto.Cipher;
 import javax.crypto.IllegalBlockSizeException;
 import javax.crypto.NoSuchPaddingException;
 import javax.crypto.spec.IvParameterSpec;
+import org.smallmind.nutsnbolts.security.EncryptionUtilities;
 
 public enum Encryption {
 
   AES {
 
     // {0xE8, 0x0D, 0x9A, 0x29, 0x93, 0x8E, 0x2D, 0x1B, 0xF7, 0xA7, 0x19, 0xD5, 0x84, 0x18, 0x6C, 0xB9}
-    private final byte[] iv = new byte[] {-24, 13, -102, 41, -109, -114, 45, 27, -9, -89, 25, -43, -124, 24, 108, -71};
+    private final byte[] iv = new byte[]{-24, 13, -102, 41, -109, -114, 45, 27, -9, -89, 25, -43, -124, 24, 108, -71};
 
     @Override
     public byte[] encrypt (Key key, byte[] toBeEncrypted)
       throws NoSuchAlgorithmException, InvalidAlgorithmParameterException, NoSuchPaddingException, InvalidKeyException, IllegalBlockSizeException, BadPaddingException {
 
-      Cipher cipher;
-
-      cipher = Cipher.getInstance("AES/CBC/PKCS5Padding");
-      cipher.init(Cipher.ENCRYPT_MODE, key, new IvParameterSpec(iv));
-
-      return cipher.doFinal(toBeEncrypted);
+      return EncryptionUtilities.encrypt(key, "AES/CBC/PKCS5Padding", toBeEncrypted, new IvParameterSpec(iv));
     }
 
     @Override
     public byte[] decrypt (Key key, byte[] encrypted)
       throws NoSuchAlgorithmException, NoSuchPaddingException, InvalidKeyException, InvalidAlgorithmParameterException, IllegalBlockSizeException, BadPaddingException {
 
-      Cipher cipher;
-
-      cipher = Cipher.getInstance("AES/CBC/PKCS5Padding");
-      cipher.init(Cipher.DECRYPT_MODE, key, new IvParameterSpec(iv));
-
-      return cipher.doFinal(encrypted);
+      return EncryptionUtilities.decrypt(key, "AES/CBC/PKCS5Padding", encrypted, new IvParameterSpec(iv));
     }
   };
 

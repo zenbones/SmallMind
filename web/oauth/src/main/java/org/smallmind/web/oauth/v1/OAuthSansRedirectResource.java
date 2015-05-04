@@ -91,14 +91,14 @@ public class OAuthSansRedirectResource {
         return crossSiteAnoint(Response.status(Response.Status.BAD_REQUEST)).entity(ServerErrorFormEncodedResponse.instance().setError("unauthorized_client").setErrorDescription("mismatching redirect uri").setState(serverAuthorizationRequest.getState()).build()).build();
       }
 
-      UserLogin userLogin = null;
+      JWTToken jwtToken = null;
       SSOAuthData ssoAuthData = null;
       String cookieValue = null;
       String userName = null;
 
       if ((serverAuthorizationRequest.getAuthData() != null) && (!serverAuthorizationRequest.getAuthData().isEmpty())) {
         try {
-          ssoAuthData = MungedCodec.decrypt(SSOAuthData.class, cookieValue = serverAuthorizationRequest.getAuthData(), true);
+          ssoAuthData = MungedCodec.decrypt(SSOAuthData.class, cookieValue = serverAuthorizationRequest.getAuthData());
         }
         catch (Exception exception) {
           LoggerManager.getLogger(OAuthResource.class).error(exception);
@@ -114,7 +114,7 @@ public class OAuthSansRedirectResource {
           for (Cookie cookie : request.getCookies()) {
             if (cookie.getName().equals(oauthConfiguration.getSsoCookieName())) {
               try {
-                ssoAuthData = MungedCodec.decrypt(SSOAuthData.class, cookieValue = HexCodec.hexDecode(cookie.getValue()), true);
+                ssoAuthData = MungedCodec.decrypt(SSOAuthData.class, cookieValue = HexCodec.hexDecode(cookie.getValue()));
               }
               catch (Exception exception) {
                 LoggerManager.getLogger(OAuthResource.class).error(exception);
@@ -130,7 +130,7 @@ public class OAuthSansRedirectResource {
       if (ssoAuthData != null) {
         if (System.currentTimeMillis() - ssoAuthData.getCreated() <= oauthConfiguration.getOauthProtocolLeaseDuration().toMilliseconds()) {
           try {
-            userLogin = oauthConfiguration.getUserLoginService().validate(userName = ssoAuthData.getUser(), ssoAuthData.getPassword());
+            jwtToken = oauthConfiguration.getSecretService().validate(userName = ssoAuthData.getUser(), ssoAuthData.getPassword());
           }
           catch (Exception exception) {
             LoggerManager.getLogger(OAuthResource.class).error(exception);
@@ -140,15 +140,18 @@ public class OAuthSansRedirectResource {
         }
       }
 
-      if (userLogin == null) {
+      if (jwtToken == null) {
         return crossSiteAnoint(Response.status(Response.Status.OK)).entity(ServerLoginFormEncodedRequest.instance().setAuthorizationUri(oauthRegistration.getOauthUri()).setUserName(userName).setResponseType(serverAuthorizationRequest.getResponseType()).setClientId(serverAuthorizationRequest.getClientId()).setRedirectUri(serverAuthorizationRequest.getRedirectUri()).setState(serverAuthorizationRequest.getState()).build()).build();
       }
       else {
 
         String code;
 
+        jwtToken.setSub(serverAuthorizationRequest.getClientId());
+        jwtToken.setExp(System.currentTimeMillis() / 1000);
+
         try {
-          code = MungedCodec.encrypt(new AccessCode(serverAuthorizationRequest.getClientId(), userLogin), false);
+          code = JWTCodec.encode(jwtToken, oauthRegistration.getSecret());
         }
         catch (Exception exception) {
           LoggerManager.getLogger(OAuthResource.class).error(exception);

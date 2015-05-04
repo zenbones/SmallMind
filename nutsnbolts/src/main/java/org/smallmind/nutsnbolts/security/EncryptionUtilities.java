@@ -31,6 +31,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
+import java.security.InvalidAlgorithmParameterException;
 import java.security.InvalidKeyException;
 import java.security.Key;
 import java.security.KeyPair;
@@ -40,11 +41,14 @@ import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.security.PrivateKey;
 import java.security.PublicKey;
+import java.security.spec.AlgorithmParameterSpec;
 import javax.crypto.BadPaddingException;
 import javax.crypto.Cipher;
 import javax.crypto.IllegalBlockSizeException;
 import javax.crypto.KeyGenerator;
+import javax.crypto.Mac;
 import javax.crypto.NoSuchPaddingException;
+import javax.crypto.spec.SecretKeySpec;
 
 public class EncryptionUtilities {
 
@@ -86,6 +90,17 @@ public class EncryptionUtilities {
     return MessageDigest.getInstance(algorithm.getAlgorithmName()).digest(toBeHashed);
   }
 
+  public static byte[] encrypt (MessageAuthenticationCodeAlgorithm algorithm, byte[] secret, byte[] data)
+    throws NoSuchAlgorithmException, InvalidKeyException {
+
+    Mac mac = Mac.getInstance(algorithm.getAlgorithmName());
+    SecretKeySpec secret_key = new SecretKeySpec(secret, algorithm.getAlgorithmName());
+
+    mac.init(secret_key);
+
+    return mac.doFinal(data);
+  }
+
   public static Key generateKey (SymmetricAlgorithm algorithm)
     throws NoSuchAlgorithmException {
 
@@ -118,8 +133,7 @@ public class EncryptionUtilities {
 
     try {
       return byteOutputStream.toByteArray();
-    }
-    finally {
+    } finally {
       keyOutputStream.close();
     }
   }
@@ -135,8 +149,7 @@ public class EncryptionUtilities {
 
     try {
       return (Key)keyInputStream.readObject();
-    }
-    finally {
+    } finally {
       keyInputStream.close();
     }
   }
@@ -144,11 +157,37 @@ public class EncryptionUtilities {
   public static byte[] encrypt (Key key, byte[] toBeEncrypted)
     throws NoSuchAlgorithmException, NoSuchPaddingException, InvalidKeyException, IllegalBlockSizeException, BadPaddingException {
 
+    return encrypt(key, null, toBeEncrypted);
+  }
+
+  public static byte[] encrypt (Key key, String specificAlgorithm, byte[] toBeEncrypted)
+    throws NoSuchAlgorithmException, NoSuchPaddingException, InvalidKeyException, IllegalBlockSizeException, BadPaddingException {
+
     Cipher cipher;
     byte[] data;
 
-    cipher = Cipher.getInstance(key.getAlgorithm());
+    cipher = Cipher.getInstance((specificAlgorithm == null) ? key.getAlgorithm() : specificAlgorithm);
     cipher.init(Cipher.ENCRYPT_MODE, key);
+
+    data = toBeEncrypted;
+
+    return cipher.doFinal(data);
+  }
+
+  public static byte[] encrypt (Key key, byte[] toBeEncrypted, AlgorithmParameterSpec algorithmParameterSpec)
+    throws NoSuchAlgorithmException, InvalidAlgorithmParameterException, NoSuchPaddingException, InvalidKeyException, IllegalBlockSizeException, BadPaddingException {
+
+    return encrypt(key, null, toBeEncrypted, algorithmParameterSpec);
+  }
+
+  public static byte[] encrypt (Key key, String specificAlgorithm, byte[] toBeEncrypted, AlgorithmParameterSpec algorithmParameterSpec)
+    throws NoSuchAlgorithmException, InvalidAlgorithmParameterException, NoSuchPaddingException, InvalidKeyException, IllegalBlockSizeException, BadPaddingException {
+
+    Cipher cipher;
+    byte[] data;
+
+    cipher = Cipher.getInstance((specificAlgorithm == null) ? key.getAlgorithm() : specificAlgorithm);
+    cipher.init(Cipher.ENCRYPT_MODE, key, algorithmParameterSpec);
 
     data = toBeEncrypted;
 
@@ -158,10 +197,33 @@ public class EncryptionUtilities {
   public static byte[] decrypt (Key key, byte[] toBeDecrypted)
     throws NoSuchAlgorithmException, NoSuchPaddingException, InvalidKeyException, IllegalBlockSizeException, BadPaddingException {
 
+    return decrypt(key, null, toBeDecrypted);
+  }
+
+  public static byte[] decrypt (Key key, String specificAlgorithm, byte[] toBeDecrypted)
+    throws NoSuchAlgorithmException, NoSuchPaddingException, InvalidKeyException, IllegalBlockSizeException, BadPaddingException {
+
     Cipher cipher;
 
-    cipher = Cipher.getInstance(key.getAlgorithm());
+    cipher = Cipher.getInstance((specificAlgorithm == null) ? key.getAlgorithm() : specificAlgorithm);
     cipher.init(Cipher.DECRYPT_MODE, key);
+
+    return cipher.doFinal(toBeDecrypted);
+  }
+
+  public static byte[] decrypt (Key key, byte[] toBeDecrypted, AlgorithmParameterSpec algorithmParameterSpec)
+    throws NoSuchAlgorithmException, InvalidAlgorithmParameterException, NoSuchPaddingException, InvalidKeyException, IllegalBlockSizeException, BadPaddingException {
+
+    return decrypt(key, null, toBeDecrypted, algorithmParameterSpec);
+  }
+
+  public static byte[] decrypt (Key key, String specificAlgorithm, byte[] toBeDecrypted, AlgorithmParameterSpec algorithmParameterSpec)
+    throws NoSuchAlgorithmException, InvalidAlgorithmParameterException, NoSuchPaddingException, InvalidKeyException, IllegalBlockSizeException, BadPaddingException {
+
+    Cipher cipher;
+
+    cipher = Cipher.getInstance((specificAlgorithm == null) ? key.getAlgorithm() : specificAlgorithm);
+    cipher.init(Cipher.DECRYPT_MODE, key, algorithmParameterSpec);
 
     return cipher.doFinal(toBeDecrypted);
   }

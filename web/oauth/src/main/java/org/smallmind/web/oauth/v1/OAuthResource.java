@@ -29,7 +29,6 @@ package org.smallmind.web.oauth.v1;
 import java.net.URI;
 import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
-import javax.ws.rs.FormParam;
 import javax.ws.rs.GET;
 import javax.ws.rs.OPTIONS;
 import javax.ws.rs.POST;
@@ -39,10 +38,8 @@ import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.NewCookie;
 import javax.ws.rs.core.Response;
-import org.smallmind.nutsnbolts.http.Base64Codec;
 import org.smallmind.nutsnbolts.http.HexCodec;
-import org.smallmind.nutsnbolts.security.EncryptionUtilities;
-import org.smallmind.nutsnbolts.security.HashAlgorithm;
+import org.smallmind.nutsnbolts.time.Duration;
 import org.smallmind.scribe.pen.LoggerManager;
 import org.smallmind.web.oauth.GrantType;
 import org.smallmind.web.oauth.OAuthProtocolException;
@@ -94,14 +91,14 @@ public class OAuthResource {
         return Response.status(Response.Status.FOUND).location(URI.create(ServerErrorRedirectResponse.redirectUri(serverAuthorizationRequest.getRedirectUri()).setError("unauthorized_client").setErrorDescription("mismatching redirect uri").setState(serverAuthorizationRequest.getState()).build())).build();
       }
 
-      UserLogin userLogin = null;
+      JWTToken jwtToken = null;
       SSOAuthData ssoAuthData = null;
       String cookieValue = null;
       String userName = null;
 
       if ((serverAuthorizationRequest.getAuthData() != null) && (!serverAuthorizationRequest.getAuthData().isEmpty())) {
         try {
-          ssoAuthData = MungedCodec.decrypt(SSOAuthData.class, cookieValue = serverAuthorizationRequest.getAuthData(), true);
+          ssoAuthData = MungedCodec.decrypt(SSOAuthData.class, cookieValue = serverAuthorizationRequest.getAuthData());
         } catch (Exception exception) {
           LoggerManager.getLogger(OAuthResource.class).error(exception);
 
@@ -115,7 +112,7 @@ public class OAuthResource {
           for (Cookie cookie : request.getCookies()) {
             if (cookie.getName().equals(oauthConfiguration.getSsoCookieName())) {
               try {
-                ssoAuthData = MungedCodec.decrypt(SSOAuthData.class, cookieValue = HexCodec.hexDecode(cookie.getValue()), true);
+                ssoAuthData = MungedCodec.decrypt(SSOAuthData.class, cookieValue = HexCodec.hexDecode(cookie.getValue()));
               } catch (Exception exception) {
                 LoggerManager.getLogger(OAuthResource.class).error(exception);
 
@@ -130,7 +127,7 @@ public class OAuthResource {
       if (ssoAuthData != null) {
         if (System.currentTimeMillis() - ssoAuthData.getCreated() <= oauthConfiguration.getOauthProtocolLeaseDuration().toMilliseconds()) {
           try {
-            userLogin = oauthConfiguration.getUserLoginService().validate(userName = ssoAuthData.getUser(), ssoAuthData.getPassword());
+            jwtToken = oauthConfiguration.getSecretService().validate(userName = ssoAuthData.getUser(), ssoAuthData.getPassword());
           } catch (Exception exception) {
             LoggerManager.getLogger(OAuthResource.class).error(exception);
 
@@ -139,7 +136,7 @@ public class OAuthResource {
         }
       }
 
-      if (userLogin == null) {
+      if (jwtToken == null) {
 
         String loginUri;
 
@@ -148,8 +145,11 @@ public class OAuthResource {
 
         String code;
 
+        jwtToken.setSub(serverAuthorizationRequest.getClientId());
+        jwtToken.setExp(System.currentTimeMillis() / 1000);
+
         try {
-          code = MungedCodec.encrypt(new AccessCode(serverAuthorizationRequest.getClientId(), userLogin), false);
+          code = JWTCodec.encode(jwtToken, oauthRegistration.getSecret());
         } catch (Exception exception) {
           LoggerManager.getLogger(OAuthResource.class).error(exception);
 
@@ -194,9 +194,9 @@ public class OAuthResource {
         return crossSiteAnoint(Response.status(Response.Status.UNAUTHORIZED)).entity(ServerErrorJsonResponse.instance().setError("invalid_client").setErrorDescription("mismatching redirect uri").build()).type(MediaType.APPLICATION_JSON).build();
       }
 
-      if (oauthRegistration.getSha256Secret() != null) {
+      if (oauthRegistration.getSecret() != null) {
         try {
-          if (!oauthRegistration.getSha256Secret().equals(Base64Codec.encode(EncryptionUtilities.hash(HashAlgorithm.SHA_256, MungedCodec.decrypt(String.class, serverAccessTokenRequest.getClientSecret(), true).getBytes())))) {
+          if (!oauthRegistration.getSecret().equals(MungedCodec.decrypt(String.class, serverAccessTokenRequest.getClientSecret()))) {
             return crossSiteAnoint(Response.status(Response.Status.UNAUTHORIZED)).entity(ServerErrorJsonResponse.instance().setError("invalid_client").setErrorDescription("failed client application authentication").build()).type(MediaType.APPLICATION_JSON).build();
           }
         } catch (Exception exception) {
@@ -208,39 +208,39 @@ public class OAuthResource {
 
       if (GrantType.AUTHORIZATION_CODE.getParameter().equals(serverAccessTokenRequest.getGrantType())) {
 
-        AccessCode accessCode;
+        JWTToken jwtToken;
 
         try {
-          accessCode = MungedCodec.decrypt(AccessCode.class, serverAccessTokenRequest.getCode(), false);
+          jwtToken = (JWTToken)JWTCodec.decode(serverAccessTokenRequest.getCode(), serverAccessTokenRequest.getClientSecret(), oauthConfiguration.getSecretService().getSecretClass());
         } catch (Exception exception) {
           LoggerManager.getLogger(OAuthResource.class).error(exception);
 
           return crossSiteAnoint(Response.status(Response.Status.UNAUTHORIZED)).entity(ServerErrorJsonResponse.instance().setError("invalid_client").setErrorDescription("could not parse code").build()).type(MediaType.APPLICATION_JSON).build();
         }
 
-        if (!accessCode.getClientId().equals(serverAccessTokenRequest.getClientId())) {
+        if (!jwtToken.getSub().equals(serverAccessTokenRequest.getClientId())) {
 
           return crossSiteAnoint(Response.status(Response.Status.UNAUTHORIZED)).entity(ServerErrorJsonResponse.instance().setError("invalid_client").setErrorDescription("code does not belong to this client").build()).type(MediaType.APPLICATION_JSON).build();
         }
-        if (System.currentTimeMillis() - accessCode.getCreated() > oauthConfiguration.getOauthTokenGrantDuration().toMilliseconds()) {
+        if (System.currentTimeMillis() - (jwtToken.getExp() * 1000) > oauthConfiguration.getOauthTokenGrantDuration().toMilliseconds()) {
 
           return crossSiteAnoint(Response.status(Response.Status.UNAUTHORIZED)).entity(ServerErrorJsonResponse.instance().setError("invalid_client").setErrorDescription("stale code").build()).type(MediaType.APPLICATION_JSON).build();
         }
 
-        return emitAccessToken(new AccessToken(accessCode, oauthConfiguration.getOauthTokenGrantDuration()));
+        return emitAccessToken(jwtToken, oauthConfiguration.getOauthTokenGrantDuration(), serverAccessTokenRequest.getClientSecret());
       } else if (GrantType.REFRESH_TOKEN.getParameter().equals(serverAccessTokenRequest.getGrantType())) {
 
-        RefreshToken refreshToken;
+        JWTToken jwtToken;
 
         try {
-          refreshToken = MungedCodec.decrypt(RefreshToken.class, serverAccessTokenRequest.getRefreshToken(), false);
+          jwtToken = (JWTToken)JWTCodec.decode(serverAccessTokenRequest.getRefreshToken(), serverAccessTokenRequest.getClientSecret(), oauthConfiguration.getSecretService().getSecretClass());
         } catch (Exception exception) {
           LoggerManager.getLogger(OAuthResource.class).error(exception);
 
           return crossSiteAnoint(Response.status(Response.Status.UNAUTHORIZED)).entity(ServerErrorJsonResponse.instance().setError("invalid_client").setErrorDescription("could not parse refresh token").build()).type(MediaType.APPLICATION_JSON).build();
         }
 
-        return emitAccessToken(new AccessToken(refreshToken, oauthConfiguration.getOauthTokenGrantDuration()));
+        return emitAccessToken(jwtToken, oauthConfiguration.getOauthTokenGrantDuration(), serverAccessTokenRequest.getClientSecret());
       } else {
 
         return crossSiteAnoint(Response.status(Response.Status.BAD_REQUEST)).entity(ServerErrorJsonResponse.instance().setError("unsupported_grant_type").setErrorDescription("only 'authorization_code' and 'refresh_token' grant types are supported").build()).type(MediaType.APPLICATION_JSON).build();
@@ -252,39 +252,24 @@ public class OAuthResource {
     }
   }
 
-  private Response emitAccessToken (AccessToken accessToken)
+  private Response emitAccessToken (JWTToken jwtToken, Duration grantDuration, String key)
     throws OAuthProtocolException {
 
-    String mungedAccessToken;
-    String mungedRefreshToken;
+    String accessToken;
+    String refreshToken;
+    long now = System.currentTimeMillis();
 
     try {
-      mungedAccessToken = MungedCodec.encrypt(accessToken, false);
-      mungedRefreshToken = MungedCodec.encrypt(new RefreshToken(accessToken), false);
+      jwtToken.setExp((now + grantDuration.toMilliseconds()) / 1000);
+      accessToken = JWTCodec.encode(jwtToken, key);
+      jwtToken.setExp(now / 1000);
+      refreshToken = JWTCodec.encode(jwtToken, key);
     } catch (Exception exception) {
       LoggerManager.getLogger(OAuthResource.class).error(exception);
 
       return crossSiteAnoint(Response.status(Response.Status.BAD_REQUEST)).entity(ServerErrorJsonResponse.instance().setError("server_error").setErrorDescription(exception.getMessage()).build()).type(MediaType.APPLICATION_JSON).build();
     }
 
-    return crossSiteAnoint(Response.ok(ServerAccessTokenResponse.instance().setTokenType(TokenType.BEARER.getParameter()).setAccessToken(mungedAccessToken).setRefreshToken(mungedRefreshToken).setExpiresIn(String.valueOf(oauthConfiguration.getOauthTokenGrantDuration().getTimeUnit().toSeconds(oauthConfiguration.getOauthTokenGrantDuration().getTime()))).build(), MediaType.APPLICATION_JSON)).build();
-  }
-
-  @Path("/profile")
-  @POST
-  @Produces(MediaType.APPLICATION_JSON)
-  public Response profile (@FormParam("token_type") String tokenType, @FormParam("access_token") String accessToken) {
-
-    if (!TokenType.BEARER.getParameter().equals(tokenType)) {
-      return Response.status(Response.Status.BAD_REQUEST).entity(ServerErrorJsonResponse.instance().setError("unsupported_token_type").setErrorDescription("only 'bearer' token types are supported").build()).type(MediaType.APPLICATION_JSON).build();
-    }
-
-    try {
-      return Response.ok(MungedCodec.toJsonString(MungedCodec.decrypt(AccessToken.class, accessToken, false).getUserLogin()), MediaType.APPLICATION_JSON).build();
-    } catch (Exception exception) {
-      LoggerManager.getLogger(OAuthResource.class).error(exception);
-
-      return Response.status(Response.Status.BAD_REQUEST).entity(ServerErrorJsonResponse.instance().setError("server_error").setErrorDescription(exception.getMessage()).build()).type(MediaType.APPLICATION_JSON).build();
-    }
+    return crossSiteAnoint(Response.ok(ServerAccessTokenResponse.instance().setTokenType(TokenType.BEARER.getParameter()).setAccessToken(accessToken).setRefreshToken(refreshToken).setExpiresIn(String.valueOf(oauthConfiguration.getOauthTokenGrantDuration().getTimeUnit().toSeconds(oauthConfiguration.getOauthTokenGrantDuration().getTime()))).build(), MediaType.APPLICATION_JSON)).build();
   }
 }

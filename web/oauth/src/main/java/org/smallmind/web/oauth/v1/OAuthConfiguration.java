@@ -32,19 +32,19 @@ import org.smallmind.nutsnbolts.time.Duration;
 public class OAuthConfiguration {
 
   private Map<String, OAuthRegistration> registrationMap;
-  private UserLoginService userLoginService;
+  private SecretService secretService;
   private Duration oauthProtocolLeaseDuration;
   private Duration oauthTokenGrantDuration;
   private String ssoCookieName;
 
-  public UserLoginService getUserLoginService () {
+  public SecretService getSecretService () {
 
-    return userLoginService;
+    return secretService;
   }
 
-  public void setUserLoginService (UserLoginService userLoginService) {
+  public void setSecretService (SecretService secretService) {
 
-    this.userLoginService = userLoginService;
+    this.secretService = secretService;
   }
 
   public Map<String, OAuthRegistration> getRegistrationMap () {

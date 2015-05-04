@@ -30,6 +30,7 @@ import java.io.Serializable;
 import java.lang.reflect.Field;
 import java.util.HashSet;
 import java.util.Set;
+import org.smallmind.nutsnbolts.lang.TypeMismatchException;
 
 public abstract class AbstractDurable<I extends Serializable & Comparable<I>> implements Durable<I> {
 
@@ -43,6 +44,10 @@ public abstract class AbstractDurable<I extends Serializable & Comparable<I>> im
   };
 
   public int compareTo (Durable<I> durable) {
+
+    if (!this.getClass().isAssignableFrom(durable.getClass())) {
+      throw new TypeMismatchException("Comparison must be made with a type which extends %s", this.getClass().getSimpleName());
+    }
 
     if (getId() == null) {
       if (durable.getId() == null) {

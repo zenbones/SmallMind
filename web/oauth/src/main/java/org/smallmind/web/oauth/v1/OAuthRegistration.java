@@ -31,7 +31,7 @@ public class OAuthRegistration {
   private String oauthUri;
   private String loginUri;
   private String redirectUri;
-  private String sha256Secret;
+  private String secret;
   private boolean unsafeRedirection = false;
 
   public String getOauthUri () {
@@ -64,14 +64,14 @@ public class OAuthRegistration {
     this.redirectUri = redirectUri;
   }
 
-  public String getSha256Secret () {
+  public String getSecret () {
 
-    return sha256Secret;
+    return secret;
   }
 
-  public void setSha256Secret (String sha256Secret) {
+  public void setSecret (String secret) {
 
-    this.sha256Secret = sha256Secret;
+    this.secret = secret;
   }
 
   public boolean isUnsafeRedirection () {
