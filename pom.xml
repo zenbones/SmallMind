@@ -795,8 +795,9 @@
               <artifactId>smallmind</artifactId>
             </root>
             <licenses>
-              <license>COPYING</license>
-              <license>COPYING.LESSER</license>
+              <license>AGPL</license>
+              <license>AGPL.LESSER</license>
+              <license>MIT</license>
             </licenses>
             <includeTests>true</includeTests>
             <rules>
