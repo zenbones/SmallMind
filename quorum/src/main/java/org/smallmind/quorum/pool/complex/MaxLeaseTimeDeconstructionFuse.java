@@ -12,17 +12,16 @@
  * 
  * ...or...
  * 
- * 2) The terms of the MIT license as published by the Open Source
- * Initiative
+ * 2) The terms of the Apache License, Version 2.0.
  * 
  * The SmallMind Code Project is distributed in the hope that it will
  * be useful, but WITHOUT ANY WARRANTY; without even the implied warranty
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
- * General Public License or MIT License for more details.
+ * General Public License or Apache License for more details.
  * 
  * You should have received a copy of the GNU Affero General Public License
- * and the MIT License along with the SmallMind Code Project. If not, see
- * <http://www.gnu.org/licenses/> or <http://opensource.org/licenses/MIT>.
+ * and the Apache License along with the SmallMind Code Project. If not, see
+ * <http://www.gnu.org/licenses/> or <http://www.apache.org/licenses/LICENSE-2.0>.
  * 
  * Additional permission under the GNU Affero GPL version 3 section 7
  * ------------------------------------------------------------------

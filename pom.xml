@@ -797,7 +797,7 @@
             <licenses>
               <license>AGPL</license>
               <license>AGPL.LESSER</license>
-              <license>MIT</license>
+              <license>APACHE</license>
             </licenses>
             <includeTests>true</includeTests>
             <rules>
