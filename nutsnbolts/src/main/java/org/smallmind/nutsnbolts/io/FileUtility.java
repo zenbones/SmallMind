@@ -112,6 +112,10 @@ public class FileUtility {
           public FileVisitResult postVisitDirectory (Path dir, IOException exc)
             throws IOException {
 
+            if (exc != null) {
+              throw exc;
+            }
+
             try {
               Files.delete(dir);
             } catch (DirectoryNotEmptyException directoryNotEmptyException) {
