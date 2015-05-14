@@ -33,9 +33,11 @@
 package org.smallmind.nutsnbolts.command.template;
 
 import java.io.InputStream;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Set;
 import org.smallmind.nutsnbolts.command.CommandLineException;
 import org.smallmind.nutsnbolts.command.sax.OptionsDocumentExtender;
 import org.smallmind.nutsnbolts.lang.UnknownSwitchCaseException;
@@ -84,16 +86,48 @@ public class Template {
     return shortName;
   }
 
-  public synchronized void setOptionList (LinkedList<Option> optionList) {
+  public synchronized List<Option> getRootOptionList () {
+
+    return Collections.unmodifiableList(optionList);
+  }
+
+  public synchronized Set<Option> getOptionSet () {
+
+    return Collections.unmodifiableSet(optionSet);
+  }
+
+  public synchronized void setOptionList (LinkedList<Option> optionList)
+    throws CommandLineException {
 
     this.optionList = optionList;
 
-    optionSet.addAll(optionList);
+    addOptions(optionList);
   }
 
-  public synchronized void addOptions (LinkedList<Option> optionList) {
+  public synchronized void addOptions (LinkedList<Option> optionList)
+    throws CommandLineException {
 
-    optionSet.addAll(optionList);
+    for (Option option : optionList) {
+
+      if (((option.getName() == null) || option.getName().isEmpty()) && (option.getFlag() == null)) {
+        throw new CommandLineException("All options must have either their 'name' or 'flag' set");
+      }
+
+      for (Option heldOption : optionSet) {
+        if ((option.getName() != null) && (!option.getName().isEmpty())) {
+          if (option.getName().equals(heldOption.getName())) {
+            throw new CommandLineException("All options must have a unique 'name', '%s' has been used", option.getName());
+          }
+        }
+        if (option.getFlag() != null) {
+          if (option.getFlag().equals(heldOption.getFlag())) {
+            throw new CommandLineException("All options must have a unique 'flag', '%s' has been used", option.getFlag().toString());
+          }
+        }
+      }
+
+      optionSet.add(option);
+    }
   }
 
   public synchronized String toString () {

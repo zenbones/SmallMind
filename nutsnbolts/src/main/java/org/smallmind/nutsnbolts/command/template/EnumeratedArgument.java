@@ -41,14 +41,28 @@ public class EnumeratedArgument extends Argument {
     this.values = values;
   }
 
-  public String[] getValues () {
 
-    return values;
-  }
 
   @Override
   public ArgumentType getType () {
 
     return ArgumentType.ENUMERATED;
+  }
+
+  public String[] getValues () {
+
+    return values;
+  }
+
+  public boolean matches (String argument) {
+
+    for (String value : values) {
+      if (value.equals(argument)) {
+
+        return true;
+      }
+    }
+
+    return false;
   }
 }
