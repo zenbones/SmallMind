@@ -33,6 +33,7 @@
 package org.smallmind.nutsnbolts.command.sax;
 
 import java.util.LinkedList;
+import org.smallmind.nutsnbolts.command.CommandLineException;
 import org.smallmind.nutsnbolts.command.template.Option;
 import org.smallmind.nutsnbolts.xml.sax.AbstractElementExtender;
 import org.smallmind.nutsnbolts.xml.sax.ElementExtender;
@@ -49,7 +50,7 @@ public class OptionElementExtender extends AbstractElementExtender {
   }
 
   @Override
-  public void startElement (String namespaceURI, String localName, String qName, Attributes atts) throws SAXException {
+  public void startElement (String namespaceURI, String localName, String qName, Attributes atts) {
 
     String flag;
 
@@ -57,7 +58,8 @@ public class OptionElementExtender extends AbstractElementExtender {
   }
 
   @Override
-  public void completedChildElement (ElementExtender elementExtender) throws SAXException {
+  public void completedChildElement (ElementExtender elementExtender)
+    throws SAXException {
 
     LinkedList<Option> optionList;
 
@@ -67,7 +69,11 @@ public class OptionElementExtender extends AbstractElementExtender {
       }
 
       option.setOptionList(optionList);
-      ((OptionsDocumentExtender)getDocumentExtender()).getTemplate().addOptions(optionList);
+      try {
+        ((OptionsDocumentExtender)getDocumentExtender()).getTemplate().addOptions(optionList);
+      } catch (CommandLineException commandLineException) {
+        throw new SAXException(commandLineException);
+      }
     }
     if (elementExtender instanceof ArgumentsElementExtender) {
       option.setArgument(((ArgumentsElementExtender)elementExtender).getArgument());

@@ -36,7 +36,6 @@ import java.util.LinkedList;
 import org.smallmind.nutsnbolts.command.template.Option;
 import org.smallmind.nutsnbolts.xml.sax.AbstractElementExtender;
 import org.smallmind.nutsnbolts.xml.sax.ElementExtender;
-import org.xml.sax.SAXException;
 
 public class OptionsElementExtender extends AbstractElementExtender {
 
@@ -48,7 +47,7 @@ public class OptionsElementExtender extends AbstractElementExtender {
   }
 
   @Override
-  public void completedChildElement (ElementExtender elementExtender) throws SAXException {
+  public void completedChildElement (ElementExtender elementExtender) {
 
     if (elementExtender instanceof OptionElementExtender) {
       optionList.add(((OptionElementExtender)elementExtender).getOption());

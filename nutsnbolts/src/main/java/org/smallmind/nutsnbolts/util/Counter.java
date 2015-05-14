@@ -46,21 +46,28 @@ public class Counter {
     this.count = count;
   }
 
-  public int inc () {
+  public int incAndGet () {
 
-    count++;
-    return count;
+    return ++count;
   }
 
-  public int dec () {
+  public int getAndInc () {
 
-    count--;
-    return count;
+    return count++;
   }
 
-  public int getCount () {
+  public int decAndGet () {
+
+    return --count;
+  }
+
+  public int getAndDec () {
+
+    return count--;
+  }
+
+  public int get () {
 
     return count;
   }
-
 }

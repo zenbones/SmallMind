@@ -35,7 +35,6 @@ package org.smallmind.nutsnbolts.command.sax;
 import org.smallmind.nutsnbolts.command.template.Argument;
 import org.smallmind.nutsnbolts.xml.sax.AbstractElementExtender;
 import org.smallmind.nutsnbolts.xml.sax.ElementExtender;
-import org.xml.sax.SAXException;
 
 public class ArgumentsElementExtender extends AbstractElementExtender {
 
@@ -47,7 +46,7 @@ public class ArgumentsElementExtender extends AbstractElementExtender {
   }
 
   @Override
-  public void completedChildElement (ElementExtender elementExtender) throws SAXException {
+  public void completedChildElement (ElementExtender elementExtender)  {
 
     if (elementExtender instanceof ArgumentCompiler) {
 

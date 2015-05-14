@@ -34,10 +34,12 @@ package org.smallmind.nutsnbolts.command;
 
 import java.util.Arrays;
 import java.util.HashSet;
+import java.util.LinkedList;
 import org.smallmind.nutsnbolts.command.template.EnumeratedArgument;
 import org.smallmind.nutsnbolts.command.template.Option;
 import org.smallmind.nutsnbolts.command.template.Template;
 import org.smallmind.nutsnbolts.lang.UnknownSwitchCaseException;
+import org.smallmind.nutsnbolts.util.Counter;
 
 public class CommandLineParser {
 
@@ -46,67 +48,18 @@ public class CommandLineParser {
 
     OptionSet optionSet = new OptionSet();
     HashSet<Option> unusedSet = new HashSet<>(template.getOptionSet());
+    HashSet<Option> usedSet = new HashSet<>();
+    Counter argCounter = new Counter(-1);
     Option matchingOption;
     String matchingArgument;
-    int argIndex = 0;
     int flagIndex;
 
-    while (argIndex < args.length) {
-      if (args[argIndex].startsWith("-")) {
-        if (args[argIndex].length() == 1) {
-          throw new CommandLineException("Missing option after '-'");
-        }
-
-        flagIndex = 1;
-        while (flagIndex < args[argIndex].length()) {
-          if ((matchingOption = findUnusedOptionByFlag(unusedSet, args[argIndex].charAt(flagIndex++))) == null) {
-
-            return null;
-          }
-
-          switch (matchingOption.getArgument().getType()) {
-            case NONE:
-              optionSet.addOption(matchingOption.getName());
-              break;
-            case SINGLE:
-              if (flagIndex == args[argIndex].length()) {
-                throw new CommandLineException("Missing argument for option with flag(%s)", matchingOption.getFlag().toString());
-              }
-
-              optionSet.addArgument(matchingOption.getName(), args[argIndex].substring(flagIndex));
-              flagIndex = args[argIndex].length();
-              break;
-            case LIST:
-              if (flagIndex == args[argIndex].length()) {
-                throw new CommandLineException("Missing argument for option with flag(%s)", matchingOption.getFlag().toString());
-              }
-
-              optionSet.addArgument(matchingOption.getName(), args[argIndex].substring(flagIndex));
-
-              
-
-              flagIndex = args[argIndex].length();
-              break;
-            case ENUMERATED:
-              if (flagIndex == args[argIndex].length()) {
-                throw new CommandLineException("Missing argument for option with flag(%s)", matchingOption.getFlag().toString());
-              }
-              if (!(((EnumeratedArgument)matchingOption.getArgument()).matches(matchingArgument = args[argIndex].substring(flagIndex)))) {
-                throw new CommandLineException("Argument for the option with flag(%s) is not within its bound %s", matchingOption.getFlag().toString(), Arrays.toString(((EnumeratedArgument)matchingOption.getArgument()).getValues()));
-              }
-
-              optionSet.addArgument(matchingOption.getName(), matchingArgument);
-              flagIndex = args[argIndex].length();
-              break;
-            default:
-              throw new UnknownSwitchCaseException(matchingOption.getArgument().getType().name());
-          }
-        }
-      } else if (args[argIndex].startsWith("--")) {
-        if (args[argIndex].length() == 2) {
+    while (argCounter.getAndInc() < args.length) {
+      if (args[argCounter.get()].startsWith("--")) {
+        if (args[argCounter.get()].length() == 2) {
           throw new CommandLineException("Missing option after '--'");
         }
-        if ((matchingOption = findUnusedOptionByName(unusedSet, args[argIndex].substring(2))) == null) {
+        if ((matchingOption = findUnusedOptionByName(unusedSet, usedSet, args[argCounter.get()].substring(2))) == null) {
 
           return null;
         }
@@ -116,27 +69,137 @@ public class CommandLineParser {
             optionSet.addOption(matchingOption.getName());
             break;
           case SINGLE:
+            optionSet.addArgument(matchingOption.getName(), obtainArgument(null, argCounter, args));
             break;
           case LIST:
+            for (String argument : obtainArguments(null, argCounter, args)) {
+              optionSet.addArgument(matchingOption.getName(), argument);
+            }
             break;
           case ENUMERATED:
+            if (!(((EnumeratedArgument)matchingOption.getArgument()).matches(matchingArgument = obtainArgument(null, argCounter, args)))) {
+              throw new CommandLineException("Argument for the option with flag(%s) is not within its bound %s", matchingOption.getFlag().toString(), Arrays.toString(((EnumeratedArgument)matchingOption.getArgument()).getValues()));
+            }
+
+            optionSet.addArgument(matchingOption.getName(), matchingArgument);
             break;
           default:
             throw new UnknownSwitchCaseException(matchingOption.getArgument().getType().name());
+        }
+      } else if (args[argCounter.get()].startsWith("-")) {
+        if (args[argCounter.get()].length() == 1) {
+          throw new CommandLineException("Missing option after '-'");
+        }
+
+        flagIndex = 1;
+        while (flagIndex < args[argCounter.get()].length()) {
+          if ((matchingOption = findUnusedOptionByFlag(unusedSet, usedSet, args[argCounter.get()].charAt(flagIndex++))) == null) {
+
+            return null;
+          }
+
+          switch (matchingOption.getArgument().getType()) {
+            case NONE:
+              optionSet.addOption(matchingOption.getName());
+              break;
+            case SINGLE:
+              optionSet.addArgument(matchingOption.getName(), obtainArgument(args[argCounter.get()].substring(flagIndex), argCounter, args));
+              flagIndex = args[argCounter.get()].length();
+              break;
+            case LIST:
+              for (String argument : obtainArguments(args[argCounter.get()].substring(flagIndex), argCounter, args)) {
+                optionSet.addArgument(matchingOption.getName(), argument);
+              }
+              flagIndex = args[argCounter.get()].length();
+              break;
+            case ENUMERATED:
+              if (!(((EnumeratedArgument)matchingOption.getArgument()).matches(matchingArgument = obtainArgument(args[argCounter.get()].substring(flagIndex), argCounter, args)))) {
+                throw new CommandLineException("Argument for the option with flag(%s) is not within its bound %s", matchingOption.getFlag().toString(), Arrays.toString(((EnumeratedArgument)matchingOption.getArgument()).getValues()));
+              }
+
+              optionSet.addArgument(matchingOption.getName(), matchingArgument);
+              flagIndex = args[argCounter.get()].length();
+              break;
+            default:
+              throw new UnknownSwitchCaseException(matchingOption.getArgument().getType().name());
+          }
         }
       } else {
         throw new CommandLineException("Expected an option, which must start with either '--' or '-'");
       }
     }
 
+    for (Option unusedOption : unusedSet) {
+      if (unusedOption.isRequired()) {
+        throw new CommandLineException("Missing required option");
+      }
+    }
+
+    for (Option usedOption : usedSet) {
+      if (usedOption.getParent() != null) {
+        if (!usedSet.contains(usedOption.getParent())) {
+          throw new CommandLineException("User of dependent option without specifying its parent");
+        }
+      }
+    }
+
     return optionSet;
   }
 
-  private static Option findUnusedOptionByFlag (HashSet<Option> unusedSet, Character flag) {
+  private static String[] obtainArguments (String currentString, Counter argCounter, String[] args)
+    throws CommandLineException {
+
+    String[] arguments;
+    LinkedList<String> argumentList = new LinkedList<>();
+
+    do {
+      argumentList.add(obtainArgument(argumentList.isEmpty() ? currentString : null, argCounter, args));
+    } while ((argCounter.get() < args.length) && (args[argCounter.get()].charAt(0) != '-'));
+
+    arguments = new String[argumentList.size()];
+    argumentList.toArray(arguments);
+
+    return arguments;
+  }
+
+  private static String obtainArgument (String currentString, Counter argCounter, String[] args)
+    throws CommandLineException {
+
+    String argument;
+
+    if ((currentString != null) && (!currentString.isEmpty())) {
+      argument = currentString;
+    } else if (args[argCounter.get()].charAt(0) != '-') {
+      argument = args[argCounter.getAndInc()];
+    } else {
+      throw new CommandLineException("Missing argument for option marked as requiring arguments");
+    }
+
+    if ((argument.charAt(0) == '\'') || (argument.charAt(0) == '"')) {
+
+      char delimiter = argument.charAt(0);
+
+      while ((argCounter.get() < args.length) && (argument.charAt(argument.length() - 1) != delimiter)) {
+        argument += ' ' + args[argCounter.getAndInc()];
+      }
+
+      if (argument.charAt(argument.length() - 1) != delimiter) {
+        throw new CommandLineException("Unterminated quote delimited argument");
+      }
+
+      return argument;
+    } else {
+
+      return argument;
+    }
+  }
+
+  private static Option findUnusedOptionByFlag (HashSet<Option> unusedSet, HashSet<Option> usedSet, Character flag) {
 
     for (Option option : unusedSet) {
       if (flag.equals(option.getFlag())) {
         unusedSet.remove(option);
+        usedSet.add(option);
 
         return option;
       }
@@ -145,11 +208,12 @@ public class CommandLineParser {
     return null;
   }
 
-  private static Option findUnusedOptionByName (HashSet<Option> unusedSet, String name) {
+  private static Option findUnusedOptionByName (HashSet<Option> unusedSet, HashSet<Option> usedSet, String name) {
 
     for (Option option : unusedSet) {
       if (name.equals(option.getName())) {
         unusedSet.remove(option);
+        usedSet.add(option);
 
         return option;
       }

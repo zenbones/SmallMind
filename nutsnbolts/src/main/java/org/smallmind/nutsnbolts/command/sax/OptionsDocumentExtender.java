@@ -32,6 +32,7 @@
  */
 package org.smallmind.nutsnbolts.command.sax;
 
+import org.smallmind.nutsnbolts.command.CommandLineException;
 import org.smallmind.nutsnbolts.command.template.Template;
 import org.smallmind.nutsnbolts.util.StringUtilities;
 import org.smallmind.nutsnbolts.xml.sax.AbstractDocumentExtender;
@@ -62,10 +63,15 @@ public class OptionsDocumentExtender extends AbstractDocumentExtender {
   }
 
   @Override
-  public void completedChildElement (ElementExtender elementExtender) throws SAXException {
+  public void completedChildElement (ElementExtender elementExtender)
+    throws SAXException {
 
     if (elementExtender instanceof OptionsElementExtender) {
-      template.setOptionList(((OptionsElementExtender)elementExtender).getOptionList());
+      try {
+        template.setOptionList(((OptionsElementExtender)elementExtender).getOptionList());
+      } catch (CommandLineException commandLineException) {
+        throw new SAXException(commandLineException);
+      }
     }
   }
 }
