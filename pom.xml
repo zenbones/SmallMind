@@ -122,7 +122,6 @@
     <module>persistence</module>
     <module>scheduling</module>
     <module>seda</module>
-    <module>plumber</module>
     <module>identity</module>
     <module>artifact</module>
     <module>web</module>

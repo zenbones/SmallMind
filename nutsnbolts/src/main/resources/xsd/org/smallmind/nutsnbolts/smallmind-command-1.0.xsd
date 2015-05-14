@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema" targetNamespace="http://www.smallmind.org/schema/nutsnbolts/command" xmlns="http://www.smallmind.org/schema/nutsnbolts/command" elementFormDefault="qualified">
+
+  <xs:element name="options">
+    <xs:complexType>
+      <xs:choice minOccurs="1" maxOccurs="unbounded">
+        <xs:element ref="option"/>
+      </xs:choice>
+    </xs:complexType>
+  </xs:element>
+
+  <xs:element name="option">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element ref="arguments"/>
+        <xs:element ref="options" minOccurs="0"/>
+      </xs:sequence>
+      <xs:attribute name="name" type="optionName"/>
+      <xs:attribute name="flag" type="optionFlag"/>
+      <xs:attribute name="required" type="xs:boolean" default="false"/>
+    </xs:complexType>
+  </xs:element>
+
+  <xs:element name="arguments">
+    <xs:complexType>
+      <xs:choice>
+        <xs:element ref="none"/>
+        <xs:element name="single" type="xs:string"/>
+        <xs:element name="list" type="xs:string"/>
+        <xs:element ref="enumerated"/>
+      </xs:choice>
+    </xs:complexType>
+  </xs:element>
+
+  <xs:element name="none">
+    <xs:complexType>
+    </xs:complexType>
+  </xs:element>
+
+  <xs:element name="enumerated">
+    <xs:complexType>
+      <xs:sequence minOccurs="1" maxOccurs="unbounded">
+        <xs:element name="value" type="xs:string"/>
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+
+  <xs:simpleType name="optionName">
+    <xs:restriction base="xs:string">
+      <xs:pattern value="[A-Za-z][-._A-Za-z0-9]*"/>
+    </xs:restriction>
+  </xs:simpleType>
+
+  <xs:simpleType name="optionFlag">
+    <xs:restriction base="xs:string">
+      <xs:pattern value="[A-Za-z]"/>
+    </xs:restriction>
+  </xs:simpleType>
+</xs:schema>

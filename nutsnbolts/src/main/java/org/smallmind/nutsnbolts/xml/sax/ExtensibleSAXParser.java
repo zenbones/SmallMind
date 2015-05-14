@@ -94,8 +94,8 @@ public class ExtensibleSAXParser implements ContentHandler {
 
     this.documentExtender = documentExtender;
 
-    extenderStack = new LinkedList<SAXExtender>();
-    contentStack = new LinkedList<StringBuilder>();
+    extenderStack = new LinkedList<>();
+    contentStack = new LinkedList<>();
 
     documentTerminated = false;
   }
@@ -194,5 +194,4 @@ public class ExtensibleSAXParser implements ContentHandler {
     throws SAXException {
 
   }
-
 }
