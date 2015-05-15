@@ -58,22 +58,6 @@ public class OptionSet {
     (optionMap.get(option)).add(argument);
   }
 
-  public synchronized boolean containsOption (String option) {
-
-    return optionMap.containsKey(option);
-  }
-
-  public synchronized boolean containsAllOptions (String[] options) {
-
-    for (String option : options) {
-      if (!containsOption(option)) {
-        return false;
-      }
-    }
-
-    return true;
-  }
-
   public synchronized String[] getOptions () {
 
     String[] options;
@@ -84,11 +68,40 @@ public class OptionSet {
     return options;
   }
 
-  public synchronized String getArgument (String option) {
+  public synchronized boolean containsOption (String name) {
+
+    return containsOption(name, null);
+  }
+
+  public synchronized boolean containsOption (Character flag) {
+
+    return containsOption(null, flag);
+  }
+
+  public synchronized boolean containsOption (String name, Character flag) {
+
+    return optionMap.containsKey(name) || optionMap.containsKey((flag == null) ? null : flag.toString());
+  }
+
+  public synchronized String getArgument (String name) {
+
+    return getArgument(name, null);
+  }
+
+  public synchronized String getArgument (char flag) {
+
+    return getArgument(null, flag);
+  }
+
+  public synchronized String getArgument (String name, Character flag) {
 
     LinkedList<String> argumentList;
 
-    if ((argumentList = optionMap.get(option)) != null) {
+    if ((argumentList = optionMap.get(name)) == null) {
+      argumentList = optionMap.get((flag == null) ? null : flag.toString());
+    }
+
+    if (argumentList != null) {
       if (!argumentList.isEmpty()) {
         return argumentList.getFirst();
       }
@@ -97,12 +110,26 @@ public class OptionSet {
     return null;
   }
 
-  public synchronized String[] getArguments (String option) {
+  public synchronized String[] getArguments (String name) {
+
+    return getArguments(name, null);
+  }
+
+  public synchronized String[] getArguments (char flag) {
+
+    return getArguments(null, flag);
+  }
+
+  public synchronized String[] getArguments (String name, Character flag) {
 
     LinkedList<String> argumentList;
     String[] arguments = null;
 
-    if ((argumentList = optionMap.get(option)) != null) {
+    if ((argumentList = optionMap.get(name)) == null) {
+      argumentList = optionMap.get((flag == null) ? null : flag.toString());
+    }
+
+    if (argumentList != null) {
       arguments = new String[argumentList.size()];
       argumentList.toArray(arguments);
     }

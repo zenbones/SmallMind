@@ -54,14 +54,13 @@ public class CommandLineParser {
     String matchingArgument;
     int flagIndex;
 
-    while (argCounter.getAndInc() < args.length) {
+    while (argCounter.incAndGet() < args.length) {
       if (args[argCounter.get()].startsWith("--")) {
         if (args[argCounter.get()].length() == 2) {
           throw new CommandLineException("Missing option after '--'");
         }
         if ((matchingOption = findUnusedOptionByName(unusedSet, usedSet, args[argCounter.get()].substring(2))) == null) {
-
-          return null;
+          throw new CommandLineException("No such option name '--%s'", args[argCounter.get()].substring(2));
         }
 
         switch (matchingOption.getArgument().getType()) {
@@ -93,9 +92,11 @@ public class CommandLineParser {
 
         flagIndex = 1;
         while (flagIndex < args[argCounter.get()].length()) {
-          if ((matchingOption = findUnusedOptionByFlag(unusedSet, usedSet, args[argCounter.get()].charAt(flagIndex++))) == null) {
 
-            return null;
+          char flagChar;
+
+          if ((matchingOption = findUnusedOptionByFlag(unusedSet, usedSet, flagChar = args[argCounter.get()].charAt(flagIndex++))) == null) {
+            throw new CommandLineException("No such option flag '-%s'", String.valueOf(flagChar));
           }
 
           switch (matchingOption.getArgument().getType()) {
@@ -125,25 +126,30 @@ public class CommandLineParser {
           }
         }
       } else {
-        throw new CommandLineException("Expected an option, which must start with either '--' or '-'");
+        throw new CommandLineException("Was not expecting arguments, but an option, which must start with either '--' or '-'");
       }
     }
 
     for (Option unusedOption : unusedSet) {
       if (unusedOption.isRequired()) {
-        throw new CommandLineException("Missing required option");
+        throw new CommandLineException("Missing required option '%s'", getOptionName(unusedOption));
       }
     }
 
     for (Option usedOption : usedSet) {
       if (usedOption.getParent() != null) {
         if (!usedSet.contains(usedOption.getParent())) {
-          throw new CommandLineException("User of dependent option without specifying its parent");
+          throw new CommandLineException("User of dependent option '%s' without specifying its parent '%s'", getOptionName(usedOption), getOptionName(usedOption.getParent()));
         }
       }
     }
 
     return optionSet;
+  }
+
+  private static String getOptionName (Option option) {
+
+    return ((option.getName() != null) && (!option.getName().isEmpty())) ? "--" + option.getName() : "-" + option.getFlag().toString();
   }
 
   private static String[] obtainArguments (String currentString, Counter argCounter, String[] args)
@@ -154,7 +160,7 @@ public class CommandLineParser {
 
     do {
       argumentList.add(obtainArgument(argumentList.isEmpty() ? currentString : null, argCounter, args));
-    } while ((argCounter.get() < args.length) && (args[argCounter.get()].charAt(0) != '-'));
+    } while ((argCounter.get() + 1 < args.length) && (args[argCounter.get() + 1].charAt(0) != '-'));
 
     arguments = new String[argumentList.size()];
     argumentList.toArray(arguments);
@@ -169,8 +175,8 @@ public class CommandLineParser {
 
     if ((currentString != null) && (!currentString.isEmpty())) {
       argument = currentString;
-    } else if (args[argCounter.get()].charAt(0) != '-') {
-      argument = args[argCounter.getAndInc()];
+    } else if (args[argCounter.incAndGet()].charAt(0) != '-') {
+      argument = args[argCounter.get()];
     } else {
       throw new CommandLineException("Missing argument for option marked as requiring arguments");
     }
@@ -179,8 +185,8 @@ public class CommandLineParser {
 
       char delimiter = argument.charAt(0);
 
-      while ((argCounter.get() < args.length) && (argument.charAt(argument.length() - 1) != delimiter)) {
-        argument += ' ' + args[argCounter.getAndInc()];
+      while ((argument.charAt(argument.length() - 1) != delimiter) && (argCounter.get() + 1 < args.length)) {
+        argument += ' ' + args[argCounter.incAndGet()];
       }
 
       if (argument.charAt(argument.length() - 1) != delimiter) {
