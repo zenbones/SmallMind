@@ -122,7 +122,7 @@ public class GenerateWrapperMojo extends AbstractMojo {
   private boolean engaged;
 
   public void execute ()
-   throws MojoExecutionException, MojoFailureException {
+    throws MojoExecutionException, MojoFailureException {
 
     if (engaged) {
 
@@ -138,12 +138,18 @@ public class GenerateWrapperMojo extends AbstractMojo {
 
       try {
         osType = OSType.valueOf(operatingSystem.replace('-', '_').toUpperCase());
+        if (verbose) {
+          getLog().info(String.format("Using os type(%s)...", osType.name()));
+        }
       } catch (Exception exception) {
         throw new MojoExecutionException(String.format("Unknown operating system type(%s) - valid choices are %s", operatingSystem, Arrays.toString(OSType.values())), exception);
       }
 
       try {
         compressionType = CompressionType.valueOf(compression.replace('-', '_').toUpperCase());
+        if (verbose) {
+          getLog().info(String.format("Using compression type(%s)...", compressionType.name()));
+        }
       } catch (Exception exception) {
         throw new MojoExecutionException(String.format("Unknown compression type(%s) - valid choices are %s", compression, Arrays.toString(CompressionType.values())), exception);
       }
@@ -211,7 +217,7 @@ public class GenerateWrapperMojo extends AbstractMojo {
       freemarkerMap.put("waitAfterStartup", String.valueOf(waitAfterStartup));
 
       if (appParameters == null) {
-        freemarkerMap.put("appParameters", new String[] {wrapperListener});
+        freemarkerMap.put("appParameters", new String[]{wrapperListener});
       } else {
 
         String[] modifiedAppParameters = new String[appParameters.length + 1];
@@ -315,8 +321,8 @@ public class GenerateWrapperMojo extends AbstractMojo {
           getLog().info(String.format("Copying wrapper library(%s)...", osType.getLibrary()));
         }
 
-        copyToDestination(GenerateWrapperMojo.class.getClassLoader().getResourceAsStream(getWrapperFilePath("lib", osType.getLibrary())), libDirectory.getAbsolutePath(), osType.getLibrary());
-        copyToDestination(GenerateWrapperMojo.class.getClassLoader().getResourceAsStream(getWrapperFilePath("lib", osType.getLibrary())), libDirectory.getAbsolutePath(), osType.getOsStyle().getLibrary());
+        copyToDestination(getResourceAsStream(getWrapperFilePath("lib", osType.getLibrary())), libDirectory.getAbsolutePath(), osType.getLibrary());
+        copyToDestination(getResourceAsStream(getWrapperFilePath("lib", osType.getLibrary())), libDirectory.getAbsolutePath(), osType.getOsStyle().getLibrary());
       } catch (IOException ioException) {
         throw new MojoExecutionException(String.format("Problem in copying the wrapper library(%s) into the application library", osType.getLibrary()), ioException);
       }
@@ -326,7 +332,7 @@ public class GenerateWrapperMojo extends AbstractMojo {
           getLog().info(String.format("Copying wrapper executable(%s)...", osType.getExecutable()));
         }
 
-        copyToDestination(GenerateWrapperMojo.class.getClassLoader().getResourceAsStream(getWrapperFilePath("bin", osType.getExecutable())), binDirectory.getAbsolutePath(), osType.getExecutable());
+        copyToDestination(getResourceAsStream(getWrapperFilePath("bin", osType.getExecutable())), binDirectory.getAbsolutePath(), osType.getExecutable());
       } catch (IOException ioException) {
         throw new MojoExecutionException(String.format("Problem in copying the wrapper executable(%s) into the application binaries", osType.getExecutable()), ioException);
       }
@@ -341,9 +347,9 @@ public class GenerateWrapperMojo extends AbstractMojo {
             processFreemarkerTemplate(getWrapperFilePath("bin", "freemarker.sh.script.in"), binDirectory, applicationName + ".sh", freemarkerMap);
             break;
           case WINDOWS:
-            copyToDestination(GenerateWrapperMojo.class.getClassLoader().getResourceAsStream(getWrapperFilePath("bin", "App.bat.in")), binDirectory.getAbsolutePath(), applicationName + ".bat");
-            copyToDestination(GenerateWrapperMojo.class.getClassLoader().getResourceAsStream(getWrapperFilePath("bin", "InstallApp-NT.bat.in")), binDirectory.getAbsolutePath(), "Install" + applicationName + "-NT.bat");
-            copyToDestination(GenerateWrapperMojo.class.getClassLoader().getResourceAsStream(getWrapperFilePath("bin", "UninstallApp-NT.bat.in")), binDirectory.getAbsolutePath(), "Uninstall" + applicationName + "-NT.bat");
+            copyToDestination(getResourceAsStream(getWrapperFilePath("bin", "App.bat.in")), binDirectory.getAbsolutePath(), applicationName + ".bat");
+            copyToDestination(getResourceAsStream(getWrapperFilePath("bin", "InstallApp-NT.bat.in")), binDirectory.getAbsolutePath(), "Install" + applicationName + "-NT.bat");
+            copyToDestination(getResourceAsStream(getWrapperFilePath("bin", "UninstallApp-NT.bat.in")), binDirectory.getAbsolutePath(), "Uninstall" + applicationName + "-NT.bat");
             break;
           default:
             throw new MojoExecutionException(String.format("Unknown os style(%s)", osType.getOsStyle().name()));
@@ -404,7 +410,7 @@ public class GenerateWrapperMojo extends AbstractMojo {
   }
 
   private void processFreemarkerTemplate (String templatePath, File outputDir, String destinationName, HashMap<String, Object> interpolationMap)
-   throws MojoExecutionException {
+    throws MojoExecutionException {
 
     Configuration freemarkerConf;
     Template freemarkerTemplate;
@@ -440,7 +446,7 @@ public class GenerateWrapperMojo extends AbstractMojo {
   }
 
   private void createDirectory (String dirType, File dirFile)
-   throws MojoExecutionException {
+    throws MojoExecutionException {
 
     if (!dirFile.isDirectory()) {
       if (!dirFile.mkdirs()) {
@@ -462,8 +468,20 @@ public class GenerateWrapperMojo extends AbstractMojo {
     return pathBuilder.toString();
   }
 
+  private InputStream getResourceAsStream (String filePath)
+    throws MojoExecutionException {
+
+    InputStream inputStream;
+
+    if ((inputStream = GenerateWrapperMojo.class.getClassLoader().getResourceAsStream(filePath)) == null) {
+      throw new MojoExecutionException(String.format("Unable to find resource at the specified path(%s)", filePath));
+    }
+
+    return inputStream;
+  }
+
   public void copyToDestination (File file, String destinationPath, String destinationName)
-   throws IOException {
+    throws IOException {
 
     FileInputStream inputStream;
     FileOutputStream outputStream;
@@ -482,7 +500,7 @@ public class GenerateWrapperMojo extends AbstractMojo {
   }
 
   public void copyToDestination (InputStream inputStream, String destinationPath, String destinationName)
-   throws IOException {
+    throws IOException {
 
     FileOutputStream outputStream;
     byte[] buffer = new byte[8192];
