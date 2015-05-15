@@ -187,7 +187,7 @@ public class GenerateWrapperMojo extends AbstractMojo {
         }
       }
 
-      freemarkerMap = new HashMap<String, Object>();
+      freemarkerMap = new HashMap<>();
       freemarkerMap.put("applicationName", applicationName);
       freemarkerMap.put("applicationLongName", applicationLongName);
       freemarkerMap.put("applicationDescription", (applicationDescription != null) ? applicationDescription : String.format("%s generated project", GenerateWrapperMojo.class.getSimpleName()));
