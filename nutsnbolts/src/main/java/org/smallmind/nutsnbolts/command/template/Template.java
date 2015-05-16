@@ -172,7 +172,7 @@ public class Template {
           lineBuilder.append(' ').append(((SingleArgument)option.getArgument()).getDescription());
           break;
         case LIST:
-          lineBuilder.append(' ').append(((SingleArgument)option.getArgument()).getDescription()).append("...");
+          lineBuilder.append(' ').append(((ListArgument)option.getArgument()).getDescription()).append("...");
           break;
         case ENUMERATED:
           lineBuilder.append(" (");
