@@ -37,6 +37,7 @@ import java.security.SecureRandom;
 import java.util.Arrays;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
+import org.smallmind.nutsnbolts.security.EncryptionUtilities;
 
 public class SnowflakeId implements Comparable<SnowflakeId> {
 
@@ -135,6 +136,11 @@ public class SnowflakeId implements Comparable<SnowflakeId> {
   public BigInteger generateBigInteger () {
 
     return new BigInteger(uniqueArray);
+  }
+
+  public String generateHexEncoding () {
+
+    return EncryptionUtilities.hexEncode(uniqueArray);
   }
 
   public String generateCompactString () {
