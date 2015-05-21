@@ -16,7 +16,7 @@ rem
 
 rem -----------------------------------------------------------------------------
 rem These settings can be modified to fit the needs of your application
-rem Optimized for use with version 3.5.25-pro of the Wrapper.
+rem Optimized for use with version 3.5.26 of the Wrapper.
 
 rem The base name for the Wrapper binary.
 set _WRAPPER_BASE=wrapper
@@ -134,12 +134,6 @@ if [%_COMMAND%]==[console] (
     ) else (
         %_WRAPPER_EXE% -i "%_WRAPPER_CONF%" -- %_PARAMETERS%
     )
-) else if [%_COMMAND%]==[update] (
-    if [%_PASS_THROUGH%]==[] (
-        %_WRAPPER_EXE% -u "%_WRAPPER_CONF%" %_PARAMETERS%
-    ) else (
-        %_WRAPPER_EXE% -u "%_WRAPPER_CONF%" -- %_PARAMETERS%
-    )
 ) else if [%_COMMAND%]==[pause] (
     %_WRAPPER_EXE% -a "%_WRAPPER_CONF%"
 ) else if [%_COMMAND%]==[resume] (
@@ -168,9 +162,9 @@ if not [%_COMMAND%]==[] (
     echo.
 )
 if [%_PASS_THROUGH%]==[] ( 
-    echo Usage: %0 [ console : start : pause : resume : stop : restart : install : update : remove : status ]
+    echo Usage: %0 [ console : start : pause : resume : stop : restart : install : remove : status ]
 ) else (
-    echo Usage: %0 [ console {JavaAppArgs} : start : pause : resume : stop : restart : install {JavaAppArgs} : update {JavaAppArgs} : remove : status ]
+    echo Usage: %0 [ console {JavaAppArgs} : start : pause : resume : stop : restart : install {JavaAppArgs} : remove : status ]
 )
 pause
 goto :eof
