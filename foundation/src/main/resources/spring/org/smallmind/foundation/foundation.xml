@@ -39,7 +39,6 @@
     <property name="lastLocations">
       <list>
         <value>file:${user.home}/.m2/local.properties</value>
-        <value>file:${user.home}/.m2/database-${SMALLMIND_DATABASE}.properties</value>
       </list>
     </property>
   </bean>

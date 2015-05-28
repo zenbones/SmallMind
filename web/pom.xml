@@ -17,6 +17,7 @@
     <module>jaxws</module>
     <module>websocket</module>
     <module>oauth</module>
+    <module>schema</module>
   </modules>
   <build>
     <plugins>

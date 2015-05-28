@@ -113,13 +113,13 @@
 
   <modules>
     <module>license</module>
-    <module>validation</module>
     <module>nutsnbolts</module>
     <module>scribe</module>
     <module>instrument</module>
     <module>foundation</module>
     <module>quorum</module>
     <module>persistence</module>
+    <module>throng</module>
     <module>scheduling</module>
     <module>seda</module>
     <module>identity</module>
@@ -186,7 +186,7 @@
       </dependency>
       <dependency>
         <groupId>org.smallmind</groupId>
-        <artifactId>smallmind-cloud</artifactId>
+        <artifactId>throng-worker</artifactId>
         <version>${project.version}</version>
       </dependency>
       <dependency>

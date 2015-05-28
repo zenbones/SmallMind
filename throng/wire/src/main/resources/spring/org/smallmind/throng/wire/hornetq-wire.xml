@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://www.springframework.org/schema/beans" xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-4.1.xsd">
+
+  <bean id="hornetQTransportConfigurationList" class="org.smallmind.throng.wire.jms.hornetq.spring.DynamicHornetQTransportConfigurationListFactoryBean"/>
+
+  <bean id="volatileTalkManagedObjectFactory" class="org.smallmind.throng.wire.jms.hornetq.HornetQManagedObjectFactory">
+    <constructor-arg index="0" name="user" value="${jms.user}"/>
+    <constructor-arg index="1" name="password" value="${jms.password}"/>
+    <constructor-arg index="2" name="destinationName" value="volatile.talk.requestQueue"/>
+    <constructor-arg index="3" name="destinationType" value="QUEUE"/>
+    <constructor-arg index="4" name="transportConfigurations" ref="hornetQTransportConfigurationList"/>
+  </bean>
+
+  <bean id="volatileWhisperManagedObjectFactory" class="org.smallmind.throng.wire.jms.hornetq.HornetQManagedObjectFactory">
+    <constructor-arg index="0" name="user" value="${jms.user}"/>
+    <constructor-arg index="1" name="password" value="${jms.password}"/>
+    <constructor-arg index="2" name="destinationName" value="volatile.whisper.requestTopic"/>
+    <constructor-arg index="3" name="destinationType" value="TOPIC"/>
+    <constructor-arg index="4" name="transportConfigurations" ref="hornetQTransportConfigurationList"/>
+  </bean>
+
+  <bean id="volatileResponseManagedObjectFactory" class="org.smallmind.throng.wire.jms.hornetq.HornetQManagedObjectFactory">
+    <constructor-arg index="0" name="user" value="${jms.user}"/>
+    <constructor-arg index="1" name="password" value="${jms.password}"/>
+    <constructor-arg index="2" name="destinationName" value="volatile.responseTopic"/>
+    <constructor-arg index="3" name="destinationType" value="TOPIC"/>
+    <constructor-arg index="4" name="transportConfigurations" ref="hornetQTransportConfigurationList"/>
+  </bean>
+
+  <bean id="routingFactories" class="org.smallmind.throng.wire.jms.RoutingFactories">
+    <constructor-arg index="0" name="requestQueueFactory" ref="volatileTalkManagedObjectFactory"/>
+    <constructor-arg index="1" name="requestTopicFactory" ref="volatileWhisperManagedObjectFactory"/>
+    <constructor-arg index="2" name="responseTopicFactory" ref="volatileResponseManagedObjectFactory"/>
+  </bean>
+
+  <bean id="transportMetricConfiguration" class="org.smallmind.instrument.config.MetricConfiguration">
+    <property name="instrumented" value="${metric.statistics.transport}"/>
+    <property name="samples" value="${metric.samples}"/>
+    <property name="metricDomain">
+      <bean class="org.smallmind.instrument.config.StringMetricDomain">
+        <constructor-arg index="0" value="org.smallmind.transport.instrument"/>
+      </bean>
+    </property>
+  </bean>
+
+  <bean id="messagePolicy" class="org.smallmind.throng.wire.jms.MessagePolicy">
+    <property name="timeToLive" value="300000"/>
+  </bean>
+
+  <bean id="reconnectionPolicy" class="org.smallmind.throng.wire.jms.ReconnectionPolicy">
+    <property name="reconnectionAttempts" value="${jms.reconnection_attempts}"/>
+    <property name="reconnectionDelayMilliseconds" value="${jms.reconnection_delay_milliseconds}"/>
+  </bean>
+
+  <bean id="jsonSignalCodec" class="org.smallmind.throng.wire.JsonSignalCodec"/>
+
+  <bean id="jmsRequestTransport" class="org.smallmind.throng.wire.jms.JmsRequestTransport" destroy-method="close">
+    <constructor-arg index="0" name="metricConfiguration" ref="transportMetricConfiguration"/>
+    <constructor-arg index="1" name="routingFactories" ref="routingFactories"/>
+    <constructor-arg index="2" name="messagePolicy" ref="messagePolicy"/>
+    <constructor-arg index="3" name="reconnectionPolicy" ref="reconnectionPolicy"/>
+    <constructor-arg index="4" name="signalCodec" ref="jsonSignalCodec"/>
+    <constructor-arg index="5" name="clusterSize" value="${wire.cluster_size}"/>
+    <constructor-arg index="6" name="concurrencyLimit" value="${wire.concurrency_limit}"/>
+    <constructor-arg index="7" name="maximumMessageLength" value="${jms.maximum_message_length}"/>
+    <constructor-arg index="8" name="timeoutSeconds" value="${wire.timeout_seconds}"/>
+  </bean>
+
+  <bean id="jmsResponseTransport" class="org.smallmind.throng.wire.jms.JmsResponseTransport" destroy-method="close">
+    <constructor-arg index="0" name="metricConfiguration" ref="transportMetricConfiguration"/>
+    <constructor-arg index="1" name="routingFactories" ref="routingFactories"/>
+    <constructor-arg index="2" name="messagePolicy" ref="messagePolicy"/>
+    <constructor-arg index="3" name="reconnectionPolicy" ref="reconnectionPolicy"/>
+    <constructor-arg index="4" name="signalCodec" ref="jsonSignalCodec"/>
+    <constructor-arg index="5" name="clusterSize" value="${wire.cluster_size}"/>
+    <constructor-arg index="6" name="concurrencyLimit" value="${wire.concurrency_limit}"/>
+    <constructor-arg index="7" name="maximumMessageLength" value="${jms.maximum_message_length}"/>
+  </bean>
+
+</beans>
+
+
