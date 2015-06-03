@@ -47,7 +47,7 @@ import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import org.smallmind.nutsnbolts.calendar.Month;
 import org.smallmind.nutsnbolts.util.WeakEventListenerList;
-import org.smallmind.swing.ComponentUtilities;
+import org.smallmind.swing.ComponentUtility;
 import org.smallmind.swing.spinner.DefaultSpinnerRenderer;
 import org.smallmind.swing.spinner.IntegerSpinnerModel;
 import org.smallmind.swing.spinner.Spinner;
@@ -84,7 +84,7 @@ public class DateField extends JPanel implements ChangeListener, ItemListener {
     dayInMonthComboBox.setBackground(SystemColor.text);
     dayInMonthComboBox.setFocusable(false);
     dayInMonthComboBox.setFont(dayInMonthComboBox.getFont().deriveFont(Font.PLAIN));
-    ComponentUtilities.setPreferredHeight(dayInMonthComboBox, ComponentUtilities.getPreferredHeight(monthSpinner));
+    ComponentUtility.setPreferredHeight(dayInMonthComboBox, ComponentUtility.getPreferredHeight(monthSpinner));
 
     dayInMonthComboBox.setSelectedIndex(initialDate.getDay() - 1);
 

@@ -61,9 +61,9 @@ import javax.swing.event.ListDataListener;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import javax.swing.filechooser.FileFilter;
-import org.smallmind.nutsnbolts.util.StringUtilities;
+import org.smallmind.nutsnbolts.util.StringUtility;
 import org.smallmind.nutsnbolts.util.WeakEventListenerList;
-import org.smallmind.swing.ColorUtilities;
+import org.smallmind.swing.ColorUtility;
 import org.smallmind.swing.SmallMindGrayFilter;
 import org.smallmind.swing.dialog.DialogState;
 import org.smallmind.swing.dialog.OptionButton;
@@ -144,7 +144,7 @@ public class FileChooserPanel extends JPanel implements ComponentListener, Mouse
     editFolderButton.setToolTipText("rename a document or folder");
     editFolderButton.addActionListener(this);
 
-    chooseButton = new JButton(StringUtilities.toDisplayCase(state.name(), '_'));
+    chooseButton = new JButton(StringUtility.toDisplayCase(state.name(), '_'));
     chooseButton.setFocusable(false);
     chooseButton.addActionListener(this);
 
@@ -155,7 +155,7 @@ public class FileChooserPanel extends JPanel implements ComponentListener, Mouse
     filterComboBox = new JComboBox(filterComboBoxModel = new FilterComboBoxModel(filter));
     filterComboBox.setEditable(false);
     filterComboBox.setRenderer(new FilterListCellRenderer());
-    filterComboBox.setBackground(ColorUtilities.TEXT_COLOR);
+    filterComboBox.setBackground(ColorUtility.TEXT_COLOR);
     filterComboBox.setFocusable(false);
     filterComboBox.addActionListener(this);
 

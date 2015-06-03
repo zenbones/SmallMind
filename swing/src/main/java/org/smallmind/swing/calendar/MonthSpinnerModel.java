@@ -34,7 +34,7 @@ package org.smallmind.swing.calendar;
 
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
-import org.smallmind.nutsnbolts.calendar.CalendarUtilities;
+import org.smallmind.nutsnbolts.calendar.CalendarUtility;
 import org.smallmind.nutsnbolts.calendar.Month;
 import org.smallmind.nutsnbolts.util.WeakEventListenerList;
 import org.smallmind.swing.spinner.EdgeAwareSpinnerModel;
@@ -46,7 +46,7 @@ public class MonthSpinnerModel implements EdgeAwareSpinnerModel {
 
   public MonthSpinnerModel (int month) {
 
-    this.month = CalendarUtilities.getMonth(month);
+    this.month = CalendarUtility.getMonth(month);
 
     listenerList = new WeakEventListenerList<ChangeListener>();
   }
@@ -63,12 +63,12 @@ public class MonthSpinnerModel implements EdgeAwareSpinnerModel {
 
   public Object getMinimumValue () {
 
-    return CalendarUtilities.getMonth(1);
+    return CalendarUtility.getMonth(1);
   }
 
   public Object getMaximumValue () {
 
-    return CalendarUtilities.getMonth(12);
+    return CalendarUtility.getMonth(12);
   }
 
   public Object getValue () {
@@ -90,12 +90,12 @@ public class MonthSpinnerModel implements EdgeAwareSpinnerModel {
 
   public Object getNextValue () {
 
-    return CalendarUtilities.getMonth((month.ordinal() < 11) ? month.ordinal() + 2 : month.ordinal() + 1);
+    return CalendarUtility.getMonth((month.ordinal() < 11) ? month.ordinal() + 2 : month.ordinal() + 1);
   }
 
   public Object getPreviousValue () {
 
-    return CalendarUtilities.getMonth((month.ordinal() > 0) ? month.ordinal() : month.ordinal() + 1);
+    return CalendarUtility.getMonth((month.ordinal() > 0) ? month.ordinal() : month.ordinal() + 1);
   }
 
 }

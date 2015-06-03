@@ -49,7 +49,7 @@ import java.util.concurrent.atomic.AtomicReference;
 import javax.net.ssl.SSLSocketFactory;
 import org.smallmind.nutsnbolts.http.Base64Codec;
 import org.smallmind.nutsnbolts.lang.UnknownSwitchCaseException;
-import org.smallmind.nutsnbolts.security.EncryptionUtilities;
+import org.smallmind.nutsnbolts.security.EncryptionUtility;
 import org.smallmind.nutsnbolts.security.HashAlgorithm;
 
 public abstract class Websocket implements AutoCloseable {
@@ -120,7 +120,7 @@ public abstract class Websocket implements AutoCloseable {
     }
 
     try {
-      pingKeyQueue.add(Base64Codec.encode(EncryptionUtilities.hash(HashAlgorithm.SHA_1, buffer)));
+      pingKeyQueue.add(Base64Codec.encode(EncryptionUtility.hash(HashAlgorithm.SHA_1, buffer)));
       write(Frame.ping(buffer));
     }
     catch (NoSuchAlgorithmException noSuchAlgorithmException) {
@@ -349,7 +349,7 @@ public abstract class Websocket implements AutoCloseable {
                 case PONG:
 
                   Iterator<String> pingKeyIter = pingKeyQueue.iterator();
-                  String pongKey = Base64Codec.encode(EncryptionUtilities.hash(HashAlgorithm.SHA_1, fragment.getMessage()));
+                  String pongKey = Base64Codec.encode(EncryptionUtility.hash(HashAlgorithm.SHA_1, fragment.getMessage()));
 
                   while (pingKeyIter.hasNext()) {
 

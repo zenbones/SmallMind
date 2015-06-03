@@ -32,7 +32,7 @@
  */
 package org.smallmind.nutsnbolts.calendar;
 
-import org.smallmind.nutsnbolts.util.StringUtilities;
+import org.smallmind.nutsnbolts.util.StringUtility;
 
 public enum Day {
 
@@ -40,7 +40,7 @@ public enum Day {
 
   public String getDisplayName () {
 
-    return StringUtilities.toDisplayCase(this.name());
+    return StringUtility.toDisplayCase(this.name());
   }
 
 }

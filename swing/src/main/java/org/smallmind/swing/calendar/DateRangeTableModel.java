@@ -36,7 +36,7 @@ import java.util.Calendar;
 import java.util.GregorianCalendar;
 import javax.swing.event.TableModelListener;
 import javax.swing.table.TableModel;
-import org.smallmind.nutsnbolts.calendar.CalendarUtilities;
+import org.smallmind.nutsnbolts.calendar.CalendarUtility;
 import org.smallmind.nutsnbolts.util.WeakEventListenerList;
 
 public class DateRangeTableModel implements TableModel {
@@ -63,8 +63,8 @@ public class DateRangeTableModel implements TableModel {
     if ((month < 1) || (month > 12)) {
       throw new IllegalArgumentException("Parameter 'month' must be between 1 and 12");
     }
-    if ((day < 1) || (day > CalendarUtilities.getDaysInMonth(year, month))) {
-      throw new IllegalArgumentException("Parameter 'day' must be between 1 and " + CalendarUtilities.getDaysInMonth(year, month));
+    if ((day < 1) || (day > CalendarUtility.getDaysInMonth(year, month))) {
+      throw new IllegalArgumentException("Parameter 'day' must be between 1 and " + CalendarUtility.getDaysInMonth(year, month));
     }
 
     eventList = new WeakEventListenerList<TableModelListener>();
@@ -73,7 +73,7 @@ public class DateRangeTableModel implements TableModel {
     anchorMonth = month;
     anchorDay = 1;
 
-    if ((underrunDays = CalendarUtilities.getDayOfWeek(year, month, 1) - 1) > 0) {
+    if ((underrunDays = CalendarUtility.getDayOfWeek(year, month, 1) - 1) > 0) {
       underunFlag = true;
       anchorDay -= underrunDays;
       if (anchorDay < 1) {
@@ -83,7 +83,7 @@ public class DateRangeTableModel implements TableModel {
           anchorYear--;
         }
 
-        anchorDay += CalendarUtilities.getDaysInMonth(anchorYear, anchorMonth);
+        anchorDay += CalendarUtility.getDaysInMonth(anchorYear, anchorMonth);
       }
     }
 
@@ -104,7 +104,7 @@ public class DateRangeTableModel implements TableModel {
         todayColumn = ((accumulatedDays + today.get(Calendar.DAY_OF_MONTH)) % 7) - 1;
       }
 
-      accumulatedDays += CalendarUtilities.getDaysInMonth(currentYear, currentMonth) - currentDay + 1;
+      accumulatedDays += CalendarUtility.getDaysInMonth(currentYear, currentMonth) - currentDay + 1;
       currentDay = 1;
       currentMonth++;
       if (currentMonth > 12) {
@@ -176,23 +176,23 @@ public class DateRangeTableModel implements TableModel {
       throw new IndexOutOfBoundsException("Date is before the start of calendar(" + calendarDate + ")");
     }
     else if (calendarDate.getYear() > anchorYear) {
-      indexDays += CalendarUtilities.getDaysInMonth(anchorYear, anchorMonth) - anchorDay;
+      indexDays += CalendarUtility.getDaysInMonth(anchorYear, anchorMonth) - anchorDay;
       for (int count = anchorMonth + 1; count <= 12; count++) {
-        indexDays += CalendarUtilities.getDaysInMonth(anchorYear, count);
+        indexDays += CalendarUtility.getDaysInMonth(anchorYear, count);
       }
     }
     else if (calendarDate.getMonth() < anchorMonth) {
       throw new IndexOutOfBoundsException("Date is before the start of calendar(" + calendarDate + ")");
     }
     else if (calendarDate.getMonth() > anchorMonth) {
-      indexDays += CalendarUtilities.getDaysInMonth(anchorYear, anchorMonth) - anchorDay;
+      indexDays += CalendarUtility.getDaysInMonth(anchorYear, anchorMonth) - anchorDay;
     }
     else if (calendarDate.getDay() < anchorDay) {
       throw new IndexOutOfBoundsException("Date is before the start of calendar(" + calendarDate + ")");
     }
 
     for (int count = (calendarDate.getYear() == anchorYear) ? (anchorMonth + 1) : 1; count < calendarDate.getMonth(); count++) {
-      indexDays += CalendarUtilities.getDaysInMonth(calendarDate.getYear(), count);
+      indexDays += CalendarUtility.getDaysInMonth(calendarDate.getYear(), count);
     }
 
     indexDays += (calendarDate.getDay() - (((calendarDate.getYear() == anchorYear) && (calendarDate.getMonth() == anchorMonth)) ? anchorDay : 0));
@@ -230,8 +230,8 @@ public class DateRangeTableModel implements TableModel {
     int currentDay = anchorDay;
     int indexDays = (rowIndex * 7) + columnIndex;
 
-    while ((currentDay + indexDays) > CalendarUtilities.getDaysInMonth(currentYear, currentMonth)) {
-      indexDays -= CalendarUtilities.getDaysInMonth(currentYear, currentMonth) - currentDay;
+    while ((currentDay + indexDays) > CalendarUtility.getDaysInMonth(currentYear, currentMonth)) {
+      indexDays -= CalendarUtility.getDaysInMonth(currentYear, currentMonth) - currentDay;
       currentDay = 0;
       currentMonth++;
       if (currentMonth > 12) {

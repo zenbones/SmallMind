@@ -45,7 +45,6 @@ import javax.swing.JButton;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTextArea;
-import javax.swing.JTextField;
 import javax.swing.JToggleButton;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
@@ -53,7 +52,7 @@ import javax.swing.text.BadLocationException;
 import javax.swing.text.Document;
 import org.smallmind.nutsnbolts.lang.UnknownSwitchCaseException;
 import org.smallmind.nutsnbolts.util.WeakEventListenerList;
-import org.smallmind.swing.ComponentUtilities;
+import org.smallmind.swing.ComponentUtility;
 
 public class FormulaTextField extends JPanel implements ActionListener, ItemListener, DocumentListener {
 
@@ -166,9 +165,9 @@ public class FormulaTextField extends JPanel implements ActionListener, ItemList
     add(collapsedPanel, "field");
     add(expandedPanel, "area");
 
-    setMinimumSize(new Dimension(144, ComponentUtilities.getMinimumHeight(collapsedTextField)));
-    setPreferredSize(new Dimension(Math.min(ComponentUtilities.getPreferredWidth(collapsedTextField) + 44, Short.MAX_VALUE), ComponentUtilities.getPreferredHeight(collapsedTextField)));
-    setMaximumSize(new Dimension(Short.MAX_VALUE, ComponentUtilities.getMaximumHeight(collapsedTextField)));
+    setMinimumSize(new Dimension(144, ComponentUtility.getMinimumHeight(collapsedTextField)));
+    setPreferredSize(new Dimension(Math.min(ComponentUtility.getPreferredWidth(collapsedTextField) + 44, Short.MAX_VALUE), ComponentUtility.getPreferredHeight(collapsedTextField)));
+    setMaximumSize(new Dimension(Short.MAX_VALUE, ComponentUtility.getMaximumHeight(collapsedTextField)));
 
     cardState = CardState.COLLAPSED;
   }
@@ -232,9 +231,9 @@ public class FormulaTextField extends JPanel implements ActionListener, ItemList
         cardState = CardState.EXPANDED;
         break;
       case EXPANDED:
-        setMinimumSize(new Dimension(ComponentUtilities.getMinimumWidth(expandedScrollPane), ComponentUtilities.getMinimumHeight(collapsedTextField)));
-        setPreferredSize(new Dimension(ComponentUtilities.getPreferredWidth(expandedScrollPane), ComponentUtilities.getPreferredHeight(collapsedTextField)));
-        setMaximumSize(new Dimension(ComponentUtilities.getMaximumWidth(expandedScrollPane), ComponentUtilities.getMaximumHeight(collapsedTextField)));
+        setMinimumSize(new Dimension(ComponentUtility.getMinimumWidth(expandedScrollPane), ComponentUtility.getMinimumHeight(collapsedTextField)));
+        setPreferredSize(new Dimension(ComponentUtility.getPreferredWidth(expandedScrollPane), ComponentUtility.getPreferredHeight(collapsedTextField)));
+        setMaximumSize(new Dimension(ComponentUtility.getMaximumWidth(expandedScrollPane), ComponentUtility.getMaximumHeight(collapsedTextField)));
 
         cardState = CardState.COLLAPSED;
         break;

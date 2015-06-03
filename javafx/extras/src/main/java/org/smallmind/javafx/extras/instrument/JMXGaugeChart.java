@@ -43,7 +43,7 @@ import javax.management.MBeanServerConnection;
 import javax.management.ObjectName;
 import javafx.application.Platform;
 import org.smallmind.javafx.extras.dialog.JavaErrorDialog;
-import org.smallmind.nutsnbolts.util.StringUtilities;
+import org.smallmind.nutsnbolts.util.StringUtility;
 
 public class JMXGaugeChart extends GaugeChart {
 
@@ -85,7 +85,7 @@ public class JMXGaugeChart extends GaugeChart {
 
     setTitle("Attribute/get");
     getXAxis().setLabel("Time");
-    getYAxis().setLabel("Quantity/" + StringUtilities.toDisplayCase(rateTimeUnit, '_'));
+    getYAxis().setLabel("Quantity/" + StringUtility.toDisplayCase(rateTimeUnit, '_'));
 
     future = SCHEDULED_EXECUTOR.scheduleAtFixedRate(new Runnable() {
 

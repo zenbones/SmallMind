@@ -30,41 +30,41 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.quorum.namespace.java;
+package org.smallmind.nutsnbolts.zip;
 
-import java.util.Hashtable;
-import javax.naming.InvalidNameException;
-import javax.naming.directory.DirContext;
-import org.smallmind.quorum.namespace.java.backingStore.NameTranslator;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.OutputStream;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipOutputStream;
+import org.smallmind.nutsnbolts.io.FileIterator;
 
-public class NamingEnumerationUtilities {
+public class ZipUtility {
 
-  protected static String convertName (String name, NameTranslator nameTranslator)
-    throws InvalidNameException {
+  public static void compressDirectory (File directory, OutputStream outputStream)
+    throws IOException {
 
-    return nameTranslator.fromExternalStringToInternalString(name);
-  }
+    ZipOutputStream zipOutputStream;
+    byte[] buffer = new byte[8192];
 
-  protected static String convertClassName (String className, Class internalDirContextClass) {
+    zipOutputStream = new ZipOutputStream(outputStream);
+    for (File file : new FileIterator(directory)) {
 
-    if (className != null) {
-      if (className.equals(internalDirContextClass.getName())) {
+      FileInputStream fileInputStream;
+      int bytesRead;
 
-        return JavaContext.class.getName();
+      fileInputStream = new FileInputStream(file);
+      zipOutputStream.putNextEntry(new ZipEntry(file.getCanonicalPath()));
+
+      while ((bytesRead = fileInputStream.read(buffer)) > 0) {
+        zipOutputStream.write(buffer, 0, bytesRead);
       }
+
+      zipOutputStream.closeEntry();
+      fileInputStream.close();
     }
 
-    return className;
-  }
-
-  protected static Object convertObject (Object boundObject, Class internalDirContextClass, Hashtable<String, Object> environment, NameTranslator nameTranslator, JavaNameParser nameParser, boolean modifiable) {
-
-    if (boundObject != null) {
-      if (boundObject.getClass().equals(internalDirContextClass)) {
-
-        return new JavaContext(environment, (DirContext)boundObject, nameTranslator, nameParser, modifiable);
-      }
-    }
-    return boundObject;
+    zipOutputStream.close();
   }
 }

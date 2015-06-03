@@ -39,7 +39,7 @@ import javax.swing.JLabel;
 import javax.swing.JList;
 import javax.swing.ListCellRenderer;
 import javax.swing.filechooser.FileFilter;
-import org.smallmind.swing.ColorUtilities;
+import org.smallmind.swing.ColorUtility;
 
 public class FilterListCellRenderer implements ListCellRenderer {
 
@@ -52,8 +52,8 @@ public class FilterListCellRenderer implements ListCellRenderer {
     cellLabel.setOpaque(true);
 
     if (isSelected) {
-      cellLabel.setBackground(ColorUtilities.HIGHLIGHT_COLOR);
-      cellLabel.setBorder(BorderFactory.createCompoundBorder(BorderFactory.createLineBorder(Color.LIGHT_GRAY, 1), BorderFactory.createMatteBorder(1, 1, 1, 1, ColorUtilities.HIGHLIGHT_COLOR)));
+      cellLabel.setBackground(ColorUtility.HIGHLIGHT_COLOR);
+      cellLabel.setBorder(BorderFactory.createCompoundBorder(BorderFactory.createLineBorder(Color.LIGHT_GRAY, 1), BorderFactory.createMatteBorder(1, 1, 1, 1, ColorUtility.HIGHLIGHT_COLOR)));
     }
     else {
       cellLabel.setBackground(list.getBackground());

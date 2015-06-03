@@ -30,22 +30,31 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.web.oauth;
+package org.smallmind.nutsnbolts.http;
 
-import org.smallmind.nutsnbolts.http.HTTPCodec;
-import org.smallmind.nutsnbolts.util.Tuple;
+import org.smallmind.nutsnbolts.lang.StackTraceUtility;
 
-public class URIUtilities {
+public final class HTMLUtility {
 
-  public static String composeWithQueryParameters (String baseUri, Tuple<String, String> paramTuple) {
+  public static String convertLineBreaks (String javaString) {
 
-    int poundPos;
+    StringBuilder htmlBuilder;
 
-    if ((poundPos = baseUri.indexOf('#')) < 0) {
-
-      return baseUri + '?' + HTTPCodec.urlEncode(paramTuple);
+    htmlBuilder = new StringBuilder();
+    for (int count = 0; count < javaString.length(); count++) {
+      if (javaString.charAt(count) == '\n') {
+        htmlBuilder.append("<br>");
+      }
+      else if (javaString.charAt(count) != '\r') {
+        htmlBuilder.append(javaString.charAt(count));
+      }
     }
 
-    return ((baseUri.charAt(poundPos - 1) == '/') ? baseUri.substring(0, poundPos - 1) : baseUri.substring(0, poundPos)) + '?' + HTTPCodec.urlEncode(paramTuple) + baseUri.substring(poundPos);
+    return htmlBuilder.toString();
+  }
+
+  public static String convertThrowable (Throwable throwable) {
+
+    return convertLineBreaks(StackTraceUtility.obtainStackTraceAsString(throwable));
   }
 }

@@ -30,59 +30,53 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.web.oauth;
+package org.smallmind.nutsnbolts.calendar;
 
-import org.smallmind.nutsnbolts.util.Tuple;
+public class CalendarUtility {
 
-public class ServerAuthorizationRedirectResponse {
+  //   year month[1-12] day[1-31] weekday[1-7](SUNDAY-SATURDAY) hour[0-23] minute[0-59]
 
-  private String redirectUri;
-  private String code;
-  private String state;
+  private static final int[] DAYS_IN_MONTH = {31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31};
 
-  private ServerAuthorizationRedirectResponse (String redirectUri) {
+  public static Month getMonth (int month) {
 
-    if ((redirectUri == null) || redirectUri.isEmpty()) {
-      throw new NullPointerException("redirect uri");
+    return Month.values()[month - 1];
+  }
+
+  public static Day getDay (int dayOfWeek) {
+
+    return Day.values()[dayOfWeek - 1];
+  }
+
+  public static int getDaysInYear (int year) {
+
+    return ((year % 4) == 0) ? 366 : 365;
+  }
+
+  public static int getDaysInMonth (int year, int month) {
+
+    if (month == 2) {
+      if ((year % 4) == 0) {
+        return 29;
+      }
     }
 
-    this.redirectUri = redirectUri;
+    return DAYS_IN_MONTH[month - 1];
   }
 
-  public static ServerAuthorizationRedirectResponse redirectUri (String redirectUri) {
+  public static int getDayOfWeek (int year, int month, int day) {
 
-    return new ServerAuthorizationRedirectResponse(redirectUri);
+    int weekday;
+    int monthArtifact;
+    int adjustedYear;
+    int adjustedMonth;
+
+    monthArtifact = (14 - month) / 12;
+    adjustedYear = year - monthArtifact;
+    adjustedMonth = (month - 2) + (12 * monthArtifact);
+    weekday = ((day + adjustedYear + (adjustedYear / 4) - (adjustedYear / 100) + (adjustedYear / 400) + (31 * adjustedMonth / 12)) % 7) + 1;
+
+    return weekday;
   }
 
-  public ServerAuthorizationRedirectResponse setCode (String code) {
-
-    this.code = code;
-
-    return this;
-  }
-
-  public ServerAuthorizationRedirectResponse setState (String state) {
-
-    this.state = state;
-
-    return this;
-  }
-
-  public String build ()
-    throws OAuthProtocolException {
-
-    if ((code == null) || code.isEmpty()) {
-      throw new MissingParameterException("missing code");
-    }
-
-    Tuple<String, String> paramTuple = new Tuple<>();
-
-    paramTuple.addPair("code", code);
-
-    if ((state != null) && (!state.isEmpty())) {
-      paramTuple.addPair("state", state);
-    }
-
-    return URIUtility.composeWithQueryParameters(redirectUri, paramTuple);
-  }
 }

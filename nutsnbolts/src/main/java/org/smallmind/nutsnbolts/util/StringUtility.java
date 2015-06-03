@@ -32,7 +32,7 @@
  */
 package org.smallmind.nutsnbolts.util;
 
-public class StringUtilities {
+public class StringUtility {
 
   public static String toDisplayCase (String anyCase) {
 

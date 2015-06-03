@@ -100,12 +100,12 @@ public class JavaNamingEnumeration<T> implements NamingEnumeration<T> {
 
     enumObject = internalEnumeration.next();
     isRelative = ((NameClassPair)enumObject).isRelative();
-    name = NamingEnumerationUtilities.convertName(((NameClassPair)enumObject).getName(), nameTranslator);
-    className = NamingEnumerationUtilities.convertClassName(((NameClassPair)enumObject).getClassName(), internalDirContextClass);
+    name = NamingEnumerationUtility.convertName(((NameClassPair)enumObject).getName(), nameTranslator);
+    className = NamingEnumerationUtility.convertClassName(((NameClassPair)enumObject).getClassName(), internalDirContextClass);
 
     try {
       if (enumObject instanceof SearchResult) {
-        boundObject = NamingEnumerationUtilities.convertObject(((SearchResult)enumObject).getObject(), internalDirContextClass, environment, nameTranslator, nameParser, modifiable);
+        boundObject = NamingEnumerationUtility.convertObject(((SearchResult)enumObject).getObject(), internalDirContextClass, environment, nameTranslator, nameParser, modifiable);
         resultAttributes = ((SearchResult)enumObject).getAttributes();
 
         typeConstructor = typeClass.getConstructor(SEARCH_RESULT_SIGNATURE);
@@ -113,7 +113,7 @@ public class JavaNamingEnumeration<T> implements NamingEnumeration<T> {
         return typeConstructor.newInstance(name, className, boundObject, resultAttributes, isRelative);
       }
       if (enumObject instanceof Binding) {
-        boundObject = NamingEnumerationUtilities.convertObject(((Binding)enumObject).getObject(), internalDirContextClass, environment, nameTranslator, nameParser, modifiable);
+        boundObject = NamingEnumerationUtility.convertObject(((Binding)enumObject).getObject(), internalDirContextClass, environment, nameTranslator, nameParser, modifiable);
 
         typeConstructor = typeClass.getConstructor(BINDING_SIGNATURE);
 

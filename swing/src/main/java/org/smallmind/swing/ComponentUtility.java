@@ -35,7 +35,7 @@ package org.smallmind.swing;
 import java.awt.Dimension;
 import javax.swing.JComponent;
 
-public class ComponentUtilities {
+public class ComponentUtility {
 
   public static void setWidth (JComponent component, int width) {
 

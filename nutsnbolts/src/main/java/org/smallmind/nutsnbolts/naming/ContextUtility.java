@@ -30,59 +30,35 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.web.oauth;
+package org.smallmind.nutsnbolts.naming;
 
-import org.smallmind.nutsnbolts.util.Tuple;
+import javax.naming.NameNotFoundException;
+import javax.naming.NamingException;
+import javax.naming.directory.DirContext;
 
-public class ServerAuthorizationRedirectResponse {
+public class ContextUtility {
 
-  private String redirectUri;
-  private String code;
-  private String state;
+  public static void ensureContext (DirContext dirContext, String namingPath)
+    throws NamingException {
 
-  private ServerAuthorizationRedirectResponse (String redirectUri) {
+    StringBuilder pathSoFar;
+    String[] pathArray;
+    int count;
 
-    if ((redirectUri == null) || redirectUri.isEmpty()) {
-      throw new NullPointerException("redirect uri");
+    pathArray = namingPath.split("/", -1);
+    pathSoFar = new StringBuilder();
+    for (count = 0; count < pathArray.length; count++) {
+      if (pathSoFar.length() > 0) {
+        pathSoFar.append('/');
+      }
+      pathSoFar.append(pathArray[count]);
+      try {
+        dirContext.lookup(pathSoFar.toString());
+      }
+      catch (NameNotFoundException n) {
+        dirContext.createSubcontext(pathSoFar.toString());
+      }
     }
-
-    this.redirectUri = redirectUri;
   }
 
-  public static ServerAuthorizationRedirectResponse redirectUri (String redirectUri) {
-
-    return new ServerAuthorizationRedirectResponse(redirectUri);
-  }
-
-  public ServerAuthorizationRedirectResponse setCode (String code) {
-
-    this.code = code;
-
-    return this;
-  }
-
-  public ServerAuthorizationRedirectResponse setState (String state) {
-
-    this.state = state;
-
-    return this;
-  }
-
-  public String build ()
-    throws OAuthProtocolException {
-
-    if ((code == null) || code.isEmpty()) {
-      throw new MissingParameterException("missing code");
-    }
-
-    Tuple<String, String> paramTuple = new Tuple<>();
-
-    paramTuple.addPair("code", code);
-
-    if ((state != null) && (!state.isEmpty())) {
-      paramTuple.addPair("state", state);
-    }
-
-    return URIUtility.composeWithQueryParameters(redirectUri, paramTuple);
-  }
 }

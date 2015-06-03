@@ -40,7 +40,7 @@ import javafx.scene.control.ChoiceBox;
 import javafx.util.StringConverter;
 import org.smallmind.nutsnbolts.util.AlphaNumericComparator;
 import org.smallmind.nutsnbolts.util.AlphaNumericConverter;
-import org.smallmind.nutsnbolts.util.StringUtilities;
+import org.smallmind.nutsnbolts.util.StringUtility;
 
 public class EnumChoiceBox<E extends Enum<E>> extends ChoiceBox<E> {
 
@@ -78,7 +78,7 @@ public class EnumChoiceBox<E extends Enum<E>> extends ChoiceBox<E> {
       @Override
       public String toString (E enumerated) {
 
-        return StringUtilities.toDisplayCase(enumerated.name(), '_');
+        return StringUtility.toDisplayCase(enumerated.name(), '_');
       }
     }));
 
@@ -87,13 +87,13 @@ public class EnumChoiceBox<E extends Enum<E>> extends ChoiceBox<E> {
       @Override
       public String toString (E enumerated) {
 
-        return StringUtilities.toDisplayCase(enumerated.name(), '_');
+        return StringUtility.toDisplayCase(enumerated.name(), '_');
       }
 
       @Override
       public E fromString (String name) {
 
-        String staticName = StringUtilities.toStaticFieldName(name, '_');
+        String staticName = StringUtility.toStaticFieldName(name, '_');
 
         for (E enumerated : getEnumClass().getEnumConstants()) {
           if (enumerated.name().equals(staticName)) {

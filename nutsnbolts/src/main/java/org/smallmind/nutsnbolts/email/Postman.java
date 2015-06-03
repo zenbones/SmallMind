@@ -52,7 +52,7 @@ import javax.mail.internet.MimeMessage;
 import javax.mail.internet.MimeMultipart;
 import freemarker.template.Configuration;
 import freemarker.template.Template;
-import org.smallmind.nutsnbolts.security.EncryptionUtilities;
+import org.smallmind.nutsnbolts.security.EncryptionUtility;
 import org.smallmind.nutsnbolts.security.HashAlgorithm;
 
 public class Postman {
@@ -142,7 +142,7 @@ public class Postman {
 
           Template template;
           StringWriter templateWriter;
-          SHA256Key sha256Key = new SHA256Key(EncryptionUtilities.hash(HashAlgorithm.SHA_256, bodyWriter.toString().getBytes()));
+          SHA256Key sha256Key = new SHA256Key(EncryptionUtility.hash(HashAlgorithm.SHA_256, bodyWriter.toString().getBytes()));
 
           synchronized (templateMap) {
             if ((template = templateMap.get(sha256Key)) == null) {

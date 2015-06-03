@@ -34,7 +34,7 @@ package org.smallmind.nutsnbolts.command.sax;
 
 import org.smallmind.nutsnbolts.command.CommandLineException;
 import org.smallmind.nutsnbolts.command.template.Template;
-import org.smallmind.nutsnbolts.util.StringUtilities;
+import org.smallmind.nutsnbolts.util.StringUtility;
 import org.smallmind.nutsnbolts.xml.sax.AbstractDocumentExtender;
 import org.smallmind.nutsnbolts.xml.sax.ElementExtender;
 import org.smallmind.nutsnbolts.xml.sax.SAXExtender;
@@ -59,7 +59,7 @@ public class OptionsDocumentExtender extends AbstractDocumentExtender {
   public ElementExtender getElementExtender (SAXExtender parent, String namespaceURI, String localName, String qName, Attributes atts)
     throws Exception {
 
-    return (ElementExtender)Class.forName(OptionsDocumentExtender.class.getPackage().getName() + "." + StringUtilities.toCamelCase(qName, '-') + "ElementExtender").newInstance();
+    return (ElementExtender)Class.forName(OptionsDocumentExtender.class.getPackage().getName() + "." + StringUtility.toCamelCase(qName, '-') + "ElementExtender").newInstance();
   }
 
   @Override

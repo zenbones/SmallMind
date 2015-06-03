@@ -56,7 +56,7 @@ import javax.crypto.Mac;
 import javax.crypto.NoSuchPaddingException;
 import javax.crypto.spec.SecretKeySpec;
 
-public class EncryptionUtilities {
+public class EncryptionUtility {
 
   public static String hexEncode (byte[] bytes) {
 

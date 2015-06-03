@@ -32,7 +32,7 @@
  */
 package org.smallmind.nutsnbolts.lang;
 
-public class StackTraceUtilities {
+public class StackTraceUtility {
 
   public static String[] obtainStackTraceAsArray (Throwable throwable) {
 

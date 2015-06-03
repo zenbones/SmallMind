@@ -140,6 +140,6 @@ public class ServerLoginRedirectRequest {
       paramTuple.addPair("user_name", userName);
     }
 
-    return URIUtilities.composeWithQueryParameters(loginUri, paramTuple);
+    return URIUtility.composeWithQueryParameters(loginUri, paramTuple);
   }
 }

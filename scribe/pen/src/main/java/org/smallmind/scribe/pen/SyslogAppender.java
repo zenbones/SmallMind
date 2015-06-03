@@ -41,7 +41,7 @@ import org.productivity.java.syslog4j.SyslogIF;
 import org.productivity.java.syslog4j.impl.message.structured.StructuredSyslogMessage;
 import org.productivity.java.syslog4j.impl.net.udp.UDPNetSyslogConfig;
 import org.smallmind.nutsnbolts.http.Base64Codec;
-import org.smallmind.nutsnbolts.lang.StackTraceUtilities;
+import org.smallmind.nutsnbolts.lang.StackTraceUtility;
 import org.smallmind.nutsnbolts.lang.UnknownSwitchCaseException;
 import org.springframework.beans.factory.InitializingBean;
 
@@ -249,7 +249,7 @@ public class SyslogAppender implements Appender, InitializingBean {
       }
 
       if ((throwable = record.getThrown()) != null) {
-        logParamMap.put("stack-trace", (base64EncodeStackTraces) ? Base64Codec.encode(StackTraceUtilities.obtainStackTraceAsString(throwable)) : StackTraceUtilities.obtainStackTraceAsString(throwable));
+        logParamMap.put("stack-trace", (base64EncodeStackTraces) ? Base64Codec.encode(StackTraceUtility.obtainStackTraceAsString(throwable)) : StackTraceUtility.obtainStackTraceAsString(throwable));
       }
 
       if (((logicalContext = record.getLogicalContext()) != null) && logicalContext.isFilled()) {

@@ -32,57 +32,20 @@
  */
 package org.smallmind.web.oauth;
 
+import org.smallmind.nutsnbolts.http.HTTPCodec;
 import org.smallmind.nutsnbolts.util.Tuple;
 
-public class ServerAuthorizationRedirectResponse {
+public class URIUtility {
 
-  private String redirectUri;
-  private String code;
-  private String state;
+  public static String composeWithQueryParameters (String baseUri, Tuple<String, String> paramTuple) {
 
-  private ServerAuthorizationRedirectResponse (String redirectUri) {
+    int poundPos;
 
-    if ((redirectUri == null) || redirectUri.isEmpty()) {
-      throw new NullPointerException("redirect uri");
+    if ((poundPos = baseUri.indexOf('#')) < 0) {
+
+      return baseUri + '?' + HTTPCodec.urlEncode(paramTuple);
     }
 
-    this.redirectUri = redirectUri;
-  }
-
-  public static ServerAuthorizationRedirectResponse redirectUri (String redirectUri) {
-
-    return new ServerAuthorizationRedirectResponse(redirectUri);
-  }
-
-  public ServerAuthorizationRedirectResponse setCode (String code) {
-
-    this.code = code;
-
-    return this;
-  }
-
-  public ServerAuthorizationRedirectResponse setState (String state) {
-
-    this.state = state;
-
-    return this;
-  }
-
-  public String build ()
-    throws OAuthProtocolException {
-
-    if ((code == null) || code.isEmpty()) {
-      throw new MissingParameterException("missing code");
-    }
-
-    Tuple<String, String> paramTuple = new Tuple<>();
-
-    paramTuple.addPair("code", code);
-
-    if ((state != null) && (!state.isEmpty())) {
-      paramTuple.addPair("state", state);
-    }
-
-    return URIUtility.composeWithQueryParameters(redirectUri, paramTuple);
+    return ((baseUri.charAt(poundPos - 1) == '/') ? baseUri.substring(0, poundPos - 1) : baseUri.substring(0, poundPos)) + '?' + HTTPCodec.urlEncode(paramTuple) + baseUri.substring(poundPos);
   }
 }

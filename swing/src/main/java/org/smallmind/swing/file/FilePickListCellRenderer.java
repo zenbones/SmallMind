@@ -41,7 +41,7 @@ import javax.swing.ImageIcon;
 import javax.swing.JLabel;
 import javax.swing.JList;
 import javax.swing.ListCellRenderer;
-import org.smallmind.swing.ColorUtilities;
+import org.smallmind.swing.ColorUtility;
 
 public class FilePickListCellRenderer implements ListCellRenderer {
 
@@ -57,8 +57,8 @@ public class FilePickListCellRenderer implements ListCellRenderer {
 
     cellLabel = new JLabel((((File)value).getName().length() > 20) ? ((File)value).getName().substring(0, 20) + "..." : ((File)value).getName(), ((File)value).isDirectory() ? FOLDER_ICON : DOCUMENT_ICON, JLabel.LEFT);
     cellLabel.setOpaque(true);
-    cellLabel.setBackground(isSelected ? ColorUtilities.HIGHLIGHT_COLOR : list.getBackground());
-    cellLabel.setBorder(BorderFactory.createCompoundBorder(BorderFactory.createMatteBorder(1, 1, 1, 1, isSelected ? Color.LIGHT_GRAY : list.getBackground()), BorderFactory.createMatteBorder(1, 1, 1, 1, isSelected ? ColorUtilities.HIGHLIGHT_COLOR : list.getBackground())));
+    cellLabel.setBackground(isSelected ? ColorUtility.HIGHLIGHT_COLOR : list.getBackground());
+    cellLabel.setBorder(BorderFactory.createCompoundBorder(BorderFactory.createMatteBorder(1, 1, 1, 1, isSelected ? Color.LIGHT_GRAY : list.getBackground()), BorderFactory.createMatteBorder(1, 1, 1, 1, isSelected ? ColorUtility.HIGHLIGHT_COLOR : list.getBackground())));
     cellLabel.setToolTipText(((File)value).getName());
     rowHeight.set((int)cellLabel.getPreferredSize().getHeight());
 

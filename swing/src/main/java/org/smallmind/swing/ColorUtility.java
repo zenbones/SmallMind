@@ -35,7 +35,7 @@ package org.smallmind.swing;
 import java.awt.Color;
 import javax.swing.UIManager;
 
-public class ColorUtilities {
+public class ColorUtility {
 
   /*
    desktop: Color of the desktop background

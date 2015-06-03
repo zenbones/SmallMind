@@ -57,7 +57,7 @@ import javax.swing.event.ListDataListener;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import org.smallmind.nutsnbolts.util.WeakEventListenerList;
-import org.smallmind.swing.ColorUtilities;
+import org.smallmind.swing.ColorUtility;
 
 public class Banner extends JComponent implements Scrollable, Accessible, MouseListener, ListSelectionListener, ListDataListener {
 
@@ -83,7 +83,7 @@ public class Banner extends JComponent implements Scrollable, Accessible, MouseL
     actionMap.put("selectRight", new SelectRightAction());
 
     setOpaque(true);
-    setBackground(ColorUtilities.TEXT_COLOR);
+    setBackground(ColorUtility.TEXT_COLOR);
 
     setListModel(listModel);
     setListSelectionModel(new DefaultListSelectionModel());

@@ -41,7 +41,7 @@ import java.util.HashMap;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import org.smallmind.nutsnbolts.http.Base64Codec;
-import org.smallmind.nutsnbolts.security.EncryptionUtilities;
+import org.smallmind.nutsnbolts.security.EncryptionUtility;
 import org.smallmind.nutsnbolts.security.HashAlgorithm;
 
 public class Handshake {
@@ -143,7 +143,7 @@ public class Handshake {
     if (!fieldMap.containsKey("Sec-WebSocket-Accept")) {
       throw new SyntaxException("The http header does not contain a 'Sec-WebSocket-Accept' field");
     }
-    if (!fieldMap.get("Sec-WebSocket-Accept").equals(Base64Codec.encode(EncryptionUtilities.hash(HashAlgorithm.SHA_1, (Base64Codec.encode(keyBytes) + "258EAFA5-E914-47DA-95CA-C5AB0DC85B11").getBytes())))) {
+    if (!fieldMap.get("Sec-WebSocket-Accept").equals(Base64Codec.encode(EncryptionUtility.hash(HashAlgorithm.SHA_1, (Base64Codec.encode(keyBytes) + "258EAFA5-E914-47DA-95CA-C5AB0DC85B11").getBytes())))) {
       throw new SyntaxException("The 'Sec-WebSocket-Accept' field(%s) of the http header does not contain the correct value", fieldMap.get("Sec-WebSocket-Accept"));
     }
 

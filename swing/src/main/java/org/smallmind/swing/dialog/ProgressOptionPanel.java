@@ -37,7 +37,7 @@ import java.awt.GridBagLayout;
 import java.awt.Insets;
 import javax.swing.JLabel;
 import javax.swing.JProgressBar;
-import org.smallmind.swing.ComponentUtilities;
+import org.smallmind.swing.ComponentUtility;
 import org.smallmind.swing.panel.OptionPanel;
 
 public class ProgressOptionPanel extends OptionPanel implements ProgressOperator, DialogListener {
@@ -60,7 +60,7 @@ public class ProgressOptionPanel extends OptionPanel implements ProgressOperator
 
     if (withLabel) {
       processLabel = new JLabel("X");
-      ComponentUtilities.setPreferredHeight(processLabel, processLabel.getPreferredSize().height);
+      ComponentUtility.setPreferredHeight(processLabel, processLabel.getPreferredSize().height);
       processLabel.setText("");
     }
 

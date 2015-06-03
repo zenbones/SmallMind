@@ -41,7 +41,7 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
-import org.smallmind.web.oauth.URIUtilities;
+import org.smallmind.web.oauth.URIUtility;
 import org.smallmind.nutsnbolts.util.Tuple;
 
 @Path("/login")
@@ -70,6 +70,6 @@ public class TestLoginPageResource {
 
     paramTuple.setPair("auth_data", MungedCodec.encrypt(new SSOAuthData("test", "foobar")));
 
-    return Response.status(Response.Status.FOUND).location(URI.create(URIUtilities.composeWithQueryParameters(paramMap.get("authorization_uri")[0], paramTuple))).build();
+    return Response.status(Response.Status.FOUND).location(URI.create(URIUtility.composeWithQueryParameters(paramMap.get("authorization_uri")[0], paramTuple))).build();
   }
 }

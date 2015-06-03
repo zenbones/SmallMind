@@ -44,7 +44,7 @@ import javax.crypto.spec.SecretKeySpec;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import org.smallmind.nutsnbolts.http.Base64Codec;
 import org.smallmind.nutsnbolts.lang.StaticInitializationError;
-import org.smallmind.nutsnbolts.security.EncryptionUtilities;
+import org.smallmind.nutsnbolts.security.EncryptionUtility;
 import org.smallmind.web.jersey.util.JsonCodec;
 
 /*
@@ -76,7 +76,7 @@ public class MungedCodec {
       byteArrayOutputStream.close();
       inputStream.close();
 
-      PRIVATE_KEY = (PrivateKey) EncryptionUtilities.deserializeKey(byteArrayOutputStream.toByteArray());
+      PRIVATE_KEY = (PrivateKey) EncryptionUtility.deserializeKey(byteArrayOutputStream.toByteArray());
       PUBLIC_KEY = KeyFactory.getInstance("RSA").generatePublic(new X509EncodedKeySpec(Base64Codec.decode("MIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQCbk6FT5T1aubaPHpvpcgRGqAOWYIOMMzgxI96rzIr/SxZ0c2hhjvVd5JoEy5n4wzEuXWQpgCDsgSWmO92Nx6UWzLOnbGnIkffPbX4sHg45MWxamDdz4Q6XY8vojitMbIrumG+RjnnTR+YSXG/12Eb5TBvlNTdq31AM8eeMRPMjfQIDAQAB")));
     } catch (Exception exception) {
       throw new StaticInitializationError(exception);
@@ -98,7 +98,7 @@ public class MungedCodec {
     ThreadLocalRandom.current().nextBytes(aesKeyBytes);
     aesKey = new SecretKeySpec(aesKeyBytes, "AES");
 
-    return Base64Codec.encode(EncryptionUtilities.hexEncode(EncryptionUtilities.encrypt(PUBLIC_KEY,  aesKeyBytes))) + '.' + EncryptionUtilities.hexEncode(Encryption.AES.encrypt(aesKey, JsonCodec.writeAsBytes(obj)));
+    return Base64Codec.encode(EncryptionUtility.hexEncode(EncryptionUtility.encrypt(PUBLIC_KEY, aesKeyBytes))) + '.' + EncryptionUtility.hexEncode(Encryption.AES.encrypt(aesKey, JsonCodec.writeAsBytes(obj)));
   }
 
   public static <T> T decrypt(Class<T> clazz, String toBeDecrypted)
@@ -112,9 +112,9 @@ public class MungedCodec {
       throw new IllegalArgumentException("Encrypted value is in an unknown format (expecting munged key.encrypted)");
     }
 
-    aesKeyBytes = EncryptionUtilities.decrypt(PRIVATE_KEY, EncryptionUtilities.hexDecode(toBeDecrypted.substring(0, dotPos)));
+    aesKeyBytes = EncryptionUtility.decrypt(PRIVATE_KEY, EncryptionUtility.hexDecode(toBeDecrypted.substring(0, dotPos)));
     aesKey = new SecretKeySpec(aesKeyBytes, "AES");
 
-    return JsonCodec.read(Encryption.AES.decrypt(aesKey, EncryptionUtilities.hexDecode(toBeDecrypted.substring(dotPos + 1))), clazz);
+    return JsonCodec.read(Encryption.AES.decrypt(aesKey, EncryptionUtility.hexDecode(toBeDecrypted.substring(dotPos + 1))), clazz);
   }
 }

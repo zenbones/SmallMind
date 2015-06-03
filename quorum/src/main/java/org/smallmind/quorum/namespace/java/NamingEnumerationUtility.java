@@ -30,59 +30,41 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.web.oauth;
+package org.smallmind.quorum.namespace.java;
 
-import org.smallmind.nutsnbolts.util.Tuple;
+import java.util.Hashtable;
+import javax.naming.InvalidNameException;
+import javax.naming.directory.DirContext;
+import org.smallmind.quorum.namespace.java.backingStore.NameTranslator;
 
-public class ServerAuthorizationRedirectResponse {
+public class NamingEnumerationUtility {
 
-  private String redirectUri;
-  private String code;
-  private String state;
+  protected static String convertName (String name, NameTranslator nameTranslator)
+    throws InvalidNameException {
 
-  private ServerAuthorizationRedirectResponse (String redirectUri) {
+    return nameTranslator.fromExternalStringToInternalString(name);
+  }
 
-    if ((redirectUri == null) || redirectUri.isEmpty()) {
-      throw new NullPointerException("redirect uri");
+  protected static String convertClassName (String className, Class internalDirContextClass) {
+
+    if (className != null) {
+      if (className.equals(internalDirContextClass.getName())) {
+
+        return JavaContext.class.getName();
+      }
     }
 
-    this.redirectUri = redirectUri;
+    return className;
   }
 
-  public static ServerAuthorizationRedirectResponse redirectUri (String redirectUri) {
+  protected static Object convertObject (Object boundObject, Class internalDirContextClass, Hashtable<String, Object> environment, NameTranslator nameTranslator, JavaNameParser nameParser, boolean modifiable) {
 
-    return new ServerAuthorizationRedirectResponse(redirectUri);
-  }
+    if (boundObject != null) {
+      if (boundObject.getClass().equals(internalDirContextClass)) {
 
-  public ServerAuthorizationRedirectResponse setCode (String code) {
-
-    this.code = code;
-
-    return this;
-  }
-
-  public ServerAuthorizationRedirectResponse setState (String state) {
-
-    this.state = state;
-
-    return this;
-  }
-
-  public String build ()
-    throws OAuthProtocolException {
-
-    if ((code == null) || code.isEmpty()) {
-      throw new MissingParameterException("missing code");
+        return new JavaContext(environment, (DirContext)boundObject, nameTranslator, nameParser, modifiable);
+      }
     }
-
-    Tuple<String, String> paramTuple = new Tuple<>();
-
-    paramTuple.addPair("code", code);
-
-    if ((state != null) && (!state.isEmpty())) {
-      paramTuple.addPair("state", state);
-    }
-
-    return URIUtility.composeWithQueryParameters(redirectUri, paramTuple);
+    return boundObject;
   }
 }

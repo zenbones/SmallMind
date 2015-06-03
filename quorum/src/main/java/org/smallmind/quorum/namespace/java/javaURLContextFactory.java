@@ -37,7 +37,7 @@ import java.util.Hashtable;
 import javax.naming.Context;
 import javax.naming.Name;
 import javax.naming.spi.ObjectFactory;
-import org.smallmind.nutsnbolts.util.StringUtilities;
+import org.smallmind.nutsnbolts.util.StringUtility;
 import org.smallmind.quorum.namespace.java.backingStore.ContextCreator;
 import org.smallmind.quorum.namespace.java.backingStore.NameTranslator;
 import org.smallmind.quorum.namespace.java.backingStore.NamingConnectionDetails;
@@ -74,11 +74,11 @@ public class javaURLContextFactory implements ObjectFactory {
 
       backingStore = (String)environment.get(JavaContext.CONTEXT_STORE);
 
-      contextCreatorClass = Class.forName(ContextCreator.class.getPackage().getName() + '.' + backingStore + '.' + StringUtilities.toDisplayCase(backingStore) + ContextCreator.class.getSimpleName());
+      contextCreatorClass = Class.forName(ContextCreator.class.getPackage().getName() + '.' + backingStore + '.' + StringUtility.toDisplayCase(backingStore) + ContextCreator.class.getSimpleName());
       contextCreatorConstructor = contextCreatorClass.getConstructor(CONTEXT_CREATOR_SIGNATURE);
       contextCreator = (ContextCreator)contextCreatorConstructor.newInstance((NamingConnectionDetails)environment.get(JavaContext.CONNECTION_DETAILS));
 
-      nameTranslatorClass = Class.forName(NameTranslator.class.getPackage().getName() + '.' + backingStore + '.' + StringUtilities.toDisplayCase(backingStore) + NameTranslator.class.getSimpleName());
+      nameTranslatorClass = Class.forName(NameTranslator.class.getPackage().getName() + '.' + backingStore + '.' + StringUtility.toDisplayCase(backingStore) + NameTranslator.class.getSimpleName());
       nameTranslatorConstructor = nameTranslatorClass.getConstructor(NAME_TRANSLATOR_SIGNATURE);
       nameTranslator = (NameTranslator)nameTranslatorConstructor.newInstance(contextCreator);
 

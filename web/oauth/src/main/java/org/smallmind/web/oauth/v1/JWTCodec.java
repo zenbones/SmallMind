@@ -38,7 +38,7 @@ import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
 import org.smallmind.nutsnbolts.http.Base64Codec;
 import org.smallmind.nutsnbolts.lang.StaticInitializationError;
-import org.smallmind.nutsnbolts.security.EncryptionUtilities;
+import org.smallmind.nutsnbolts.security.EncryptionUtility;
 import org.smallmind.nutsnbolts.security.MessageAuthenticationCodeAlgorithm;
 import org.smallmind.web.jersey.util.JsonCodec;
 
@@ -60,7 +60,7 @@ public class JWTCodec {
 
     String encodedClaims = Base64Codec.encode(JsonCodec.writeAsBytes(claims));
     String prologue = ENCODED_HEADER + '.' + encodedClaims;
-    String epilogue = Base64Codec.encode(EncryptionUtilities.encrypt(MessageAuthenticationCodeAlgorithm.HMAC_SHA_256, key.getBytes(), prologue.getBytes()));
+    String epilogue = Base64Codec.encode(EncryptionUtility.encrypt(MessageAuthenticationCodeAlgorithm.HMAC_SHA_256, key.getBytes(), prologue.getBytes()));
 
     return prologue + '.' + epilogue;
   }
@@ -73,7 +73,7 @@ public class JWTCodec {
     if ((parts = jwtToken.split("\\.", -1)).length != 3) {
       throw new UnsupportedEncodingException("Not a JWT token");
     }
-    if (!parts[2].equals(Base64Codec.encode(EncryptionUtilities.encrypt(MessageAuthenticationCodeAlgorithm.HMAC_SHA_256, key.getBytes(), (parts[0] + '.' + parts[1]).getBytes())))) {
+    if (!parts[2].equals(Base64Codec.encode(EncryptionUtility.encrypt(MessageAuthenticationCodeAlgorithm.HMAC_SHA_256, key.getBytes(), (parts[0] + '.' + parts[1]).getBytes())))) {
       throw new UnsupportedEncodingException("Not a JWT token");
     }
 

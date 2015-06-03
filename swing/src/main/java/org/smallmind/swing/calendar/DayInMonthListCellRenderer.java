@@ -44,8 +44,8 @@ import javax.swing.JLabel;
 import javax.swing.JList;
 import javax.swing.JPanel;
 import javax.swing.ListCellRenderer;
-import org.smallmind.nutsnbolts.calendar.CalendarUtilities;
-import org.smallmind.swing.ComponentUtilities;
+import org.smallmind.nutsnbolts.calendar.CalendarUtility;
+import org.smallmind.swing.ComponentUtility;
 
 public class DayInMonthListCellRenderer implements ListCellRenderer {
 
@@ -94,15 +94,15 @@ public class DayInMonthListCellRenderer implements ListCellRenderer {
     boolean shady = false;
     int dayOfWeek;
 
-    dayOfWeek = CalendarUtilities.getDayOfWeek(model.getYear(), model.getMonth(), (Integer)value);
+    dayOfWeek = CalendarUtility.getDayOfWeek(model.getYear(), model.getMonth(), (Integer)value);
     for (int day = 2; day <= (Integer)value; day++) {
-      if (CalendarUtilities.getDayOfWeek(model.getYear(), model.getMonth(), day) == 1) {
+      if (CalendarUtility.getDayOfWeek(model.getYear(), model.getMonth(), day) == 1) {
         shady = !shady;
       }
     }
 
-    dayOfWeekLabel.setText(CalendarUtilities.getDay(dayOfWeek).name().substring(0, 1));
-    ComponentUtilities.setPreferredWidth(dayOfWeekLabel, 20);
+    dayOfWeekLabel.setText(CalendarUtility.getDay(dayOfWeek).name().substring(0, 1));
+    ComponentUtility.setPreferredWidth(dayOfWeekLabel, 20);
 
     dayLabel.setText(value.toString());
 

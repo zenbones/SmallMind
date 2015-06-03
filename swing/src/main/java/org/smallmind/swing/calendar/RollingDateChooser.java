@@ -54,7 +54,7 @@ import javax.swing.event.TableColumnModelEvent;
 import javax.swing.event.TableColumnModelListener;
 import javax.swing.table.TableCellRenderer;
 import org.smallmind.nutsnbolts.util.WeakEventListenerList;
-import org.smallmind.swing.ComponentUtilities;
+import org.smallmind.swing.ComponentUtility;
 import org.smallmind.swing.icon.VerticalTextIcon;
 
 public class RollingDateChooser extends JPanel implements ListSelectionListener, TableColumnModelListener {
@@ -284,7 +284,7 @@ public class RollingDateChooser extends JPanel implements ListSelectionListener,
       monthIcon = new VerticalTextIcon(monthLabel.getFontMetrics(monthLabel.getFont().deriveFont(Font.BOLD)), (month == 0) ? " " : MONTHS[month - 1], VerticalTextIcon.ROTATE_LEFT);
       monthLabel.setIcon(monthIcon);
 
-      ComponentUtilities.setPreferredHeight(monthLabel, height);
+      ComponentUtility.setPreferredHeight(monthLabel, height);
 
       constraint.anchor = GridBagConstraints.NORTHWEST;
       constraint.fill = GridBagConstraints.NONE;

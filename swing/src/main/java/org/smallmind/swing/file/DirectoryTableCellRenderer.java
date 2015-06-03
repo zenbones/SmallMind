@@ -40,7 +40,7 @@ import javax.swing.ImageIcon;
 import javax.swing.JLabel;
 import javax.swing.JTable;
 import javax.swing.table.TableCellRenderer;
-import org.smallmind.swing.ColorUtilities;
+import org.smallmind.swing.ColorUtility;
 
 public class DirectoryTableCellRenderer implements TableCellRenderer {
 
@@ -64,8 +64,8 @@ public class DirectoryTableCellRenderer implements TableCellRenderer {
     cellLabel.setVerticalTextPosition(JLabel.TOP);
 
     if (isSelected) {
-      cellLabel.setBackground(ColorUtilities.HIGHLIGHT_COLOR);
-      cellLabel.setBorder(BorderFactory.createCompoundBorder(BorderFactory.createLineBorder(Color.LIGHT_GRAY, 1), BorderFactory.createMatteBorder(1, 1, 3, 1, ColorUtilities.HIGHLIGHT_COLOR)));
+      cellLabel.setBackground(ColorUtility.HIGHLIGHT_COLOR);
+      cellLabel.setBorder(BorderFactory.createCompoundBorder(BorderFactory.createLineBorder(Color.LIGHT_GRAY, 1), BorderFactory.createMatteBorder(1, 1, 3, 1, ColorUtility.HIGHLIGHT_COLOR)));
     }
     else {
       cellLabel.setBackground(table.getBackground());

@@ -41,7 +41,7 @@ import java.util.concurrent.atomic.AtomicLong;
 import org.smallmind.instrument.context.MetricFact;
 import org.smallmind.instrument.context.MetricItem;
 import org.smallmind.instrument.context.MetricSnapshot;
-import org.smallmind.nutsnbolts.time.TimeUtilities;
+import org.smallmind.nutsnbolts.time.TimeUtility;
 
 public class MeterImpl extends MetricImpl<Meter> implements Meter {
 
@@ -212,7 +212,7 @@ public class MeterImpl extends MetricImpl<Meter> implements Meter {
     }
     else {
 
-      return (((double)currentCount) / (clock.getTimeMilliseconds() - startTime.get())) * TimeUtilities.convertToDouble(1, tickTimeUnit, TimeUnit.MILLISECONDS);
+      return (((double)currentCount) / (clock.getTimeMilliseconds() - startTime.get())) * TimeUtility.convertToDouble(1, tickTimeUnit, TimeUnit.MILLISECONDS);
     }
   }
 

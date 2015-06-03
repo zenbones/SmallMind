@@ -39,7 +39,7 @@ import org.w3c.dom.NamedNodeMap;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 
-public class XMLUtilities {
+public class XMLUtility {
 
   public static String toString (Node node) {
 

@@ -102,6 +102,6 @@ public class ServerErrorRedirectResponse {
       paramTuple.addPair("state", state);
     }
 
-    return URIUtilities.composeWithQueryParameters(redirectUri, paramTuple);
+    return URIUtility.composeWithQueryParameters(redirectUri, paramTuple);
   }
 }

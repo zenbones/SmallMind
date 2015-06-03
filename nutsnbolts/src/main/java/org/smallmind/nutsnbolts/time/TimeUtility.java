@@ -30,59 +30,14 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.web.oauth;
+package org.smallmind.nutsnbolts.time;
 
-import org.smallmind.nutsnbolts.util.Tuple;
+import java.util.concurrent.TimeUnit;
 
-public class ServerAuthorizationRedirectResponse {
+public class TimeUtility {
 
-  private String redirectUri;
-  private String code;
-  private String state;
+  public static double convertToDouble (long fromTime, TimeUnit fromTimeUnit, TimeUnit toTimeUnit) {
 
-  private ServerAuthorizationRedirectResponse (String redirectUri) {
-
-    if ((redirectUri == null) || redirectUri.isEmpty()) {
-      throw new NullPointerException("redirect uri");
-    }
-
-    this.redirectUri = redirectUri;
-  }
-
-  public static ServerAuthorizationRedirectResponse redirectUri (String redirectUri) {
-
-    return new ServerAuthorizationRedirectResponse(redirectUri);
-  }
-
-  public ServerAuthorizationRedirectResponse setCode (String code) {
-
-    this.code = code;
-
-    return this;
-  }
-
-  public ServerAuthorizationRedirectResponse setState (String state) {
-
-    this.state = state;
-
-    return this;
-  }
-
-  public String build ()
-    throws OAuthProtocolException {
-
-    if ((code == null) || code.isEmpty()) {
-      throw new MissingParameterException("missing code");
-    }
-
-    Tuple<String, String> paramTuple = new Tuple<>();
-
-    paramTuple.addPair("code", code);
-
-    if ((state != null) && (!state.isEmpty())) {
-      paramTuple.addPair("state", state);
-    }
-
-    return URIUtility.composeWithQueryParameters(redirectUri, paramTuple);
+    return (fromTimeUnit.ordinal() >= toTimeUnit.ordinal()) ? (double)toTimeUnit.convert(fromTime, fromTimeUnit) : ((double)fromTime) / fromTimeUnit.convert(1, toTimeUnit);
   }
 }

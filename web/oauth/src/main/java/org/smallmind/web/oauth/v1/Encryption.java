@@ -40,7 +40,7 @@ import javax.crypto.BadPaddingException;
 import javax.crypto.IllegalBlockSizeException;
 import javax.crypto.NoSuchPaddingException;
 import javax.crypto.spec.IvParameterSpec;
-import org.smallmind.nutsnbolts.security.EncryptionUtilities;
+import org.smallmind.nutsnbolts.security.EncryptionUtility;
 
 public enum Encryption {
 
@@ -53,14 +53,14 @@ public enum Encryption {
     public byte[] encrypt (Key key, byte[] toBeEncrypted)
       throws NoSuchAlgorithmException, InvalidAlgorithmParameterException, NoSuchPaddingException, InvalidKeyException, IllegalBlockSizeException, BadPaddingException {
 
-      return EncryptionUtilities.encrypt(key, "AES/CBC/PKCS5Padding", toBeEncrypted, new IvParameterSpec(iv));
+      return EncryptionUtility.encrypt(key, "AES/CBC/PKCS5Padding", toBeEncrypted, new IvParameterSpec(iv));
     }
 
     @Override
     public byte[] decrypt (Key key, byte[] encrypted)
       throws NoSuchAlgorithmException, NoSuchPaddingException, InvalidKeyException, InvalidAlgorithmParameterException, IllegalBlockSizeException, BadPaddingException {
 
-      return EncryptionUtilities.decrypt(key, "AES/CBC/PKCS5Padding", encrypted, new IvParameterSpec(iv));
+      return EncryptionUtility.decrypt(key, "AES/CBC/PKCS5Padding", encrypted, new IvParameterSpec(iv));
     }
   };
 

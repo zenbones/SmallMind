@@ -41,7 +41,7 @@ import javax.swing.SwingConstants;
 import javax.swing.UIManager;
 import javax.swing.border.Border;
 import javax.swing.tree.TreeCellRenderer;
-import org.smallmind.swing.ColorUtilities;
+import org.smallmind.swing.ColorUtility;
 
 public class DirectoryTreeCellRenderer implements TreeCellRenderer {
 
@@ -50,7 +50,7 @@ public class DirectoryTreeCellRenderer implements TreeCellRenderer {
   private static final ImageIcon FOLDERS = new ImageIcon(ClassLoader.getSystemResource("org/smallmind/swing/system/folders_16.png"));
 
   private static Border SELECTED_BORDER = BorderFactory.createCompoundBorder(BorderFactory.createLineBorder(UIManager.getDefaults().getColor("textHighlight").darker()), BorderFactory.createEmptyBorder(1, 1, 1, 1));
-  private static Border INVISIBLE_BORDER = BorderFactory.createCompoundBorder(BorderFactory.createLineBorder(ColorUtilities.TEXT_COLOR), BorderFactory.createEmptyBorder(1, 1, 1, 1));
+  private static Border INVISIBLE_BORDER = BorderFactory.createCompoundBorder(BorderFactory.createLineBorder(ColorUtility.TEXT_COLOR), BorderFactory.createEmptyBorder(1, 1, 1, 1));
 
   public Component getTreeCellRendererComponent (JTree tree, Object value, boolean selected, boolean expanded, boolean leaf, int row, boolean hasFocus) {
 
