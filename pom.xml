@@ -119,7 +119,7 @@
     <module>foundation</module>
     <module>quorum</module>
     <module>persistence</module>
-    <module>throng</module>
+    <module>phalanx</module>
     <module>scheduling</module>
     <module>seda</module>
     <module>identity</module>
