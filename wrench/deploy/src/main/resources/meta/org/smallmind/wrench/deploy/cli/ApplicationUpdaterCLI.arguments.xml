@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<options xmlns="http://www.smallmind.org/schema/nutsnbolts/command" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.smallmind.org/schema/nutsnbolts/command http://www.smallmind.org/schema/nutsnbolts/smallmind-command-1.0.xsd">
+  <option name="os" flag="o">
+    <arguments>
+      <single>operating system</single>
+    </arguments>
+  </option>
+  <option name="app-user" flag="u" required="true">
+    <arguments>
+      <single>application user</single>
+    </arguments>
+  </option>
+  <option name="install-dir" flag="i" required="true">
+    <arguments>
+      <single>installation directory</single>
+    </arguments>
+  </option>
+  <option name="nexus-host" flag="h" required="true">
+    <arguments>
+      <single>nexus host</single>
+    </arguments>
+  </option>
+  <option name="nexus-user" flag="n" required="true">
+    <arguments>
+      <single>nexus user</single>
+    </arguments>
+  </option>
+  <option name="nexus-password" flag="p" required="true">
+    <arguments>
+      <single>nexus password</single>
+    </arguments>
+  </option>
+  <option name="repository" flag="r">
+    <arguments>
+      <single>repository type</single>
+    </arguments>
+  </option>
+  <option name="group-id" flag="g" required="true">
+    <arguments>
+      <single>groupId</single>
+    </arguments>
+  </option>
+  <option name="artifact-id" flag="a" required="true">
+    <arguments>
+      <single>artifactId</single>
+    </arguments>
+  </option>
+  <option name="version" flag="v" required="true">
+    <arguments>
+      <single>version</single>
+    </arguments>
+  </option>
+  <option name="classifier" flag="c">
+    <arguments>
+      <single>classifier</single>
+    </arguments>
+  </option>
+  <option name="extension" flag="e">
+    <arguments>
+      <single>artifact extension</single>
+    </arguments>
+  </option>
+  <option name="env" flag="x">
+    <arguments>
+      <list>env vars</list>
+    </arguments>
+  </option>
+  <option name="decorators" flag="d">
+    <arguments>
+      <list>decorator classes</list>
+    </arguments>
+  </option>
+</options>

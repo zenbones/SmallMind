@@ -1,0 +1,10 @@
+# ${artifactId} - ${applicationName}
+description "${applicationName}"
+author "Tanuki Software Ltd. <info@tanukisoftware.com>"
+start on runlevel [2345]
+stop on runlevel [!2345]
+env LANG=en_US.UTF-8
+[#list envVars as envVar]
+env ${envVar}
+[/#list]
+exec "${installDir}/${artifactId}/bin/${artifactId}${batchExtension}" upstartinternal
