@@ -30,13 +30,13 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.wrench.deploy.spring;
+package org.smallmind.forge.deploy.spring;
 
 import java.io.File;
-import org.smallmind.wrench.deploy.ApplicationUpdater;
-import org.smallmind.wrench.deploy.Decorator;
-import org.smallmind.wrench.deploy.OperatingSystem;
-import org.smallmind.wrench.deploy.Repository;
+import org.smallmind.forge.deploy.ApplicationUpdater;
+import org.smallmind.forge.deploy.Decorator;
+import org.smallmind.forge.deploy.OperatingSystem;
+import org.smallmind.forge.deploy.Repository;
 import org.springframework.beans.factory.InitializingBean;
 
 public class ApplicationUpdaterInitializingBean implements InitializingBean {

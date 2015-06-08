@@ -6,9 +6,9 @@
     <artifactId>smallmind</artifactId>
     <version>1.8.8-SNAPSHOT</version>
   </parent>
-  <artifactId>smallmind-wrench</artifactId>
+  <artifactId>smallmind-forge</artifactId>
   <packaging>pom</packaging>
-  <name>Smallmind Wrench</name>
+  <name>Smallmind Forge</name>
   <description>Deployment and Operations Tools</description>
 
   <modules>

@@ -30,7 +30,7 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.wrench.deploy;
+package org.smallmind.forge.deploy;
 
 import java.io.File;
 import java.io.IOException;
@@ -72,7 +72,7 @@ public class UpstartDecorator implements Decorator {
     freemarkerConf.setTagSyntax(freemarker.template.Configuration.SQUARE_BRACKET_TAG_SYNTAX);
 
     try {
-      UPSTART_TEMPLATE = new Template("upstart template", new InputStreamReader(UpstartDecorator.class.getClassLoader().getResourceAsStream("org/smallmind/wrench/deploy/upstart-install.freemarker.in")), freemarkerConf);
+      UPSTART_TEMPLATE = new Template("upstart template", new InputStreamReader(UpstartDecorator.class.getClassLoader().getResourceAsStream("org/smallmind/forge/deploy/upstart-install.freemarker.in")), freemarkerConf);
     } catch (IOException ioException) {
       throw new StaticInitializationError(ioException);
     }

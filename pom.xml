@@ -130,7 +130,7 @@
     <module>javafx</module>
     <module>wicket</module>
     <module>liquibase</module>
-    <module>wrench</module>
+    <module>forge</module>
   </modules>
 
   <dependencyManagement>

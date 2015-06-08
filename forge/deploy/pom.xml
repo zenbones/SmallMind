@@ -3,11 +3,11 @@
 
   <parent>
     <groupId>org.smallmind</groupId>
-    <artifactId>smallmind-wrench</artifactId>
+    <artifactId>smallmind-forge</artifactId>
     <version>1.8.8-SNAPSHOT</version>
   </parent>
-  <artifactId>wrench-deploy</artifactId>
-  <name>Wrench-Deploy</name>
+  <artifactId>forge-deploy</artifactId>
+  <name>Forge-Deploy</name>
   <description>Deployment Automation</description>
   <packaging>jar</packaging>
 
