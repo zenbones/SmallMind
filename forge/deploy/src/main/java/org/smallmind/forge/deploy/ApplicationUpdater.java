@@ -79,7 +79,7 @@ public class ApplicationUpdater {
     ZipExploder.explode(zipFile, installDir, true);
     Files.deleteIfExists(zipFile.toPath());
 
-    Files.createDirectories(applicationRootPath.resolve("logs"));
+    Files.createDirectories(applicationRootPath.resolve("log"));
 
     for (Decorator decorator : decorators) {
       System.out.println("Applying decorator(" + decorator.getClass().getSimpleName() + ")...");
