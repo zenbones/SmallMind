@@ -25,7 +25,7 @@ public class MockRequestTransport implements RequestTransport {
   private final MockMessageRouter messageRouter;
   private final SignalCodec signalCodec;
   private final SelfDestructiveMap<String, TransmissionCallback> callbackMap;
-  private final String callerId = UUID.randomUUID().toString();
+  private final String transportId = UUID.randomUUID().toString();
 
   public MockRequestTransport (MockMessageRouter messageRouter, final SignalCodec signalCodec, int timeoutSeconds) {
 
@@ -38,7 +38,7 @@ public class MockRequestTransport implements RequestTransport {
       @Override
       public boolean match (MockMessageProperties properties) {
 
-        return properties.getHeader(WireProperty.CALLER_ID.getKey()).equals(callerId);
+        return properties.getHeader(WireProperty.TRANSPORT_ID.getKey()).equals(transportId);
       }
 
       @Override
@@ -54,9 +54,9 @@ public class MockRequestTransport implements RequestTransport {
   }
 
   @Override
-  public String getCallerId () {
+  public String getTransportId () {
 
-    return callerId;
+    return transportId;
   }
 
   @Override
@@ -82,7 +82,7 @@ public class MockRequestTransport implements RequestTransport {
     String messageId = UUID.randomUUID().toString();
 
     if (!inOnly) {
-      message.getProperties().setHeader(WireProperty.CALLER_ID.getKey(), callerId);
+      message.getProperties().setHeader(WireProperty.TRANSPORT_ID.getKey(), transportId);
     }
 
     message.getProperties().setMessageId(messageId);

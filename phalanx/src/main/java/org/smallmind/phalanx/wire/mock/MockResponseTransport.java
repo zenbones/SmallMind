@@ -35,7 +35,7 @@ public class MockResponseTransport implements ResponseTransport {
       public void handle (MockMessage message) {
 
         try {
-          invocationCircuit.handle(MockResponseTransport.this, signalCodec, (String)message.getProperties().getHeader(WireProperty.CALLER_ID.getKey()), message.getProperties().getMessageId(), signalCodec.decode(message.getBytes(), 0, message.getBytes().length, InvocationSignal.class));
+          invocationCircuit.handle(MockResponseTransport.this, signalCodec, (String)message.getProperties().getHeader(WireProperty.TRANSPORT_ID.getKey()), message.getProperties().getMessageId(), signalCodec.decode(message.getBytes(), 0, message.getBytes().length, InvocationSignal.class));
         } catch (Exception exception) {
           LoggerManager.getLogger(MockResponseTransport.class).error(exception);
         }
@@ -53,7 +53,7 @@ public class MockResponseTransport implements ResponseTransport {
       public void handle (MockMessage message) {
 
         try {
-          invocationCircuit.handle(MockResponseTransport.this, signalCodec, (String)message.getProperties().getHeader(WireProperty.CALLER_ID.getKey()), message.getProperties().getMessageId(), signalCodec.decode(message.getBytes(), 0, message.getBytes().length, InvocationSignal.class));
+          invocationCircuit.handle(MockResponseTransport.this, signalCodec, (String)message.getProperties().getHeader(WireProperty.TRANSPORT_ID.getKey()), message.getProperties().getMessageId(), signalCodec.decode(message.getBytes(), 0, message.getBytes().length, InvocationSignal.class));
         } catch (Exception exception) {
           LoggerManager.getLogger(MockResponseTransport.class).error(exception);
         }
@@ -75,12 +75,12 @@ public class MockResponseTransport implements ResponseTransport {
   }
 
   @Override
-  public void transmit (String callerId, String correlationId, boolean error, String nativeType, Object result)
+  public void transmit (String transportId, String correlationId, boolean error, String nativeType, Object result)
     throws Exception {
 
     MockMessage message = new MockMessage(signalCodec.encode(new ResultSignal(error, nativeType, result)));
 
-    message.getProperties().setHeader(WireProperty.CALLER_ID.getKey(), callerId);
+    message.getProperties().setHeader(WireProperty.TRANSPORT_ID.getKey(), transportId);
     message.getProperties().setContentType(signalCodec.getContentType());
     message.getProperties().setMessageId(UUID.randomUUID().toString());
     message.getProperties().setTimestamp(new Date());

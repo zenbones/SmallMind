@@ -7,7 +7,7 @@ public interface ResponseTransport {
   public abstract void register (Class<?> serviceInterface, WiredService targetService)
     throws Exception;
 
-  public abstract void transmit (String callerId, String correlationId, boolean error, String nativeType, Object result)
+  public abstract void transmit (String transportId, String correlationId, boolean error, String nativeType, Object result)
     throws Throwable;
 
   public abstract void close ()

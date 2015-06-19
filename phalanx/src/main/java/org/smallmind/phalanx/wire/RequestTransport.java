@@ -4,7 +4,7 @@ import java.util.Map;
 
 public interface RequestTransport {
 
-  public abstract String getCallerId ();
+  public abstract String getTransportId ();
 
   public abstract void transmitInOnly (Address address, Map<String, Object> arguments, WireContext... contexts)
     throws Throwable;
