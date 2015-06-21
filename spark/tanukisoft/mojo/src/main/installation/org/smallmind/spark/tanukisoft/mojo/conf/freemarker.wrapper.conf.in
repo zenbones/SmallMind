@@ -92,6 +92,11 @@ wrapper.java.maxmemory=${jvmMaxMemoryMB?string.computer}
 wrapper.app.parameter.${appParameter_index + 1}=${appParameter}
 [/#list]
 
+# Environment Args
+[#list envArgs as envArg]
+set.${envArg.name}=${envArg.value}
+[/#list]
+
 #********************************************************************
 # Wrapper Logging Properties
 #********************************************************************
