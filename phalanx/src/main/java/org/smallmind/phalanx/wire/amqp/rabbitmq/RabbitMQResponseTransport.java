@@ -4,6 +4,9 @@ import java.io.IOException;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.TransferQueue;
 import java.util.concurrent.atomic.AtomicBoolean;
+import org.smallmind.instrument.config.MetricConfiguration;
+import org.smallmind.instrument.config.MetricConfigurationProvider;
+import org.smallmind.nutsnbolts.util.SnowflakeId;
 import org.smallmind.phalanx.wire.ResponseTransport;
 import org.smallmind.phalanx.wire.SignalCodec;
 import org.smallmind.phalanx.wire.TransportException;
@@ -11,9 +14,6 @@ import org.smallmind.phalanx.wire.WireInvocationCircuit;
 import org.smallmind.phalanx.wire.WiredService;
 import org.smallmind.phalanx.worker.WorkManager;
 import org.smallmind.phalanx.worker.WorkerFactory;
-import org.smallmind.instrument.config.MetricConfiguration;
-import org.smallmind.instrument.config.MetricConfigurationProvider;
-import org.smallmind.nutsnbolts.util.SnowflakeId;
 
 public class RabbitMQResponseTransport extends WorkManager<InvocationWorker, RabbitMQMessage> implements MetricConfigurationProvider, WorkerFactory<InvocationWorker, RabbitMQMessage>, ResponseTransport {
 
@@ -57,9 +57,11 @@ public class RabbitMQResponseTransport extends WorkManager<InvocationWorker, Rab
   }
 
   @Override
-  public void register (Class<?> serviceInterface, WiredService targetService) throws Exception {
+  public String register (Class<?> serviceInterface, WiredService targetService) throws Exception {
 
     invocationCircuit.register(serviceInterface, targetService);
+
+    return instanceId;
   }
 
   @Override

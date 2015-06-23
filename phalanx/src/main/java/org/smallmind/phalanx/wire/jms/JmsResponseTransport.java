@@ -7,6 +7,12 @@ import javax.jms.BytesMessage;
 import javax.jms.JMSException;
 import javax.jms.Message;
 import javax.jms.Topic;
+import org.smallmind.instrument.ChronometerInstrumentAndReturn;
+import org.smallmind.instrument.InstrumentationManager;
+import org.smallmind.instrument.MetricProperty;
+import org.smallmind.instrument.config.MetricConfiguration;
+import org.smallmind.instrument.config.MetricConfigurationProvider;
+import org.smallmind.nutsnbolts.util.SnowflakeId;
 import org.smallmind.phalanx.wire.MetricType;
 import org.smallmind.phalanx.wire.ResponseTransport;
 import org.smallmind.phalanx.wire.ResultSignal;
@@ -18,12 +24,6 @@ import org.smallmind.phalanx.wire.WireProperty;
 import org.smallmind.phalanx.wire.WiredService;
 import org.smallmind.phalanx.worker.WorkManager;
 import org.smallmind.phalanx.worker.WorkerFactory;
-import org.smallmind.instrument.ChronometerInstrumentAndReturn;
-import org.smallmind.instrument.InstrumentationManager;
-import org.smallmind.instrument.MetricProperty;
-import org.smallmind.instrument.config.MetricConfiguration;
-import org.smallmind.instrument.config.MetricConfigurationProvider;
-import org.smallmind.nutsnbolts.util.SnowflakeId;
 
 public class JmsResponseTransport extends WorkManager<InvocationWorker, Message> implements MetricConfigurationProvider, WorkerFactory<InvocationWorker, Message>, ResponseTransport {
 
@@ -79,10 +79,12 @@ public class JmsResponseTransport extends WorkManager<InvocationWorker, Message>
   }
 
   @Override
-  public void register (Class<?> serviceInterface, WiredService targetService)
+  public String register (Class<?> serviceInterface, WiredService targetService)
     throws NoSuchMethodException, ServiceDefinitionException {
 
     invocationCircuit.register(serviceInterface, targetService);
+
+    return instanceId;
   }
 
   @Override

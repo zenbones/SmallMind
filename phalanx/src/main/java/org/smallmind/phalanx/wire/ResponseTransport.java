@@ -4,7 +4,7 @@ public interface ResponseTransport {
 
   public abstract String getInstanceId ();
 
-  public abstract void register (Class<?> serviceInterface, WiredService targetService)
+  public abstract String register (Class<?> serviceInterface, WiredService targetService)
     throws Exception;
 
   public abstract void transmit (String transportId, String correlationId, boolean error, String nativeType, Object result)

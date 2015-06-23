@@ -68,10 +68,12 @@ public class MockResponseTransport implements ResponseTransport {
   }
 
   @Override
-  public void register (Class<?> serviceInterface, WiredService targetService)
+  public String register (Class<?> serviceInterface, WiredService targetService)
     throws NoSuchMethodException, ServiceDefinitionException {
 
     invocationCircuit.register(serviceInterface, targetService);
+
+    return instanceId;
   }
 
   @Override
