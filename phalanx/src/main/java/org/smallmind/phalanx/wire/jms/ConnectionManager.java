@@ -163,7 +163,7 @@ public class ConnectionManager implements ExceptionListener {
         LoggerManager.getLogger(ConnectionManager.class).info("Successful reconnection after JMS provider failure");
       } else {
 
-        TransportException transportException = new TransportException("Unable to reconnection within max attempts(%d)", reconnectionPolicy.getReconnectionAttempts());
+        TransportException transportException = new TransportException("Unable to reconnect within max attempts(%d)", reconnectionPolicy.getReconnectionAttempts());
 
         LoggerManager.getLogger(ConnectionManager.class).error((lastException != null) ? transportException.initCause(lastException) : transportException);
       }

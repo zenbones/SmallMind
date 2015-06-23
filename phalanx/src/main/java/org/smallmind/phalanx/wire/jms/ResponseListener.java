@@ -28,7 +28,7 @@ public class ResponseListener implements SessionEmployer, MessageListener {
   private final String selector;
   private final byte[] buffer;
 
-  public ResponseListener (JmsRequestTransport requestTransport, ConnectionManager responseConnectionManager, Topic responseTopic, SignalCodec signalCodec, String transportId, int maximumMessageLength)
+  public ResponseListener (JmsRequestTransport requestTransport, ConnectionManager responseConnectionManager, Topic responseTopic, SignalCodec signalCodec, String callerId, int maximumMessageLength)
     throws JMSException {
 
     this.requestTransport = requestTransport;
@@ -37,7 +37,7 @@ public class ResponseListener implements SessionEmployer, MessageListener {
     this.signalCodec = signalCodec;
 
     buffer = new byte[maximumMessageLength];
-    selector = WireProperty.TRANSPORT_ID.getKey() + "='" + transportId + "'";
+    selector = WireProperty.CALLER_ID.getKey() + "='" + callerId + "'";
 
     responseConnectionManager.createConsumer(this);
   }

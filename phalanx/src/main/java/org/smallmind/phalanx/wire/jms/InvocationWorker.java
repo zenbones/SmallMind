@@ -55,7 +55,7 @@ public class InvocationWorker extends Worker<Message> {
         public void withChronometer ()
           throws JMSException {
 
-          invocationCircuit.handle(responseTransport, signalCodec, message.getStringProperty(WireProperty.TRANSPORT_ID.getKey()), message.getJMSMessageID(), invocationSignal);
+          invocationCircuit.handle(responseTransport, signalCodec, message.getStringProperty(WireProperty.CALLER_ID.getKey()), message.getJMSMessageID(), invocationSignal);
         }
       });
     }

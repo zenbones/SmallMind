@@ -27,21 +27,21 @@ import org.smallmind.scribe.pen.LoggerManager;
 
 public class RequestMessageRouter extends MessageRouter {
 
-  private static final String TRANSPORT_ID_AMQP_KEY = "x-opt-" + WireProperty.TRANSPORT_ID.getKey();
+  private static final String CALLER_ID_AMQP_KEY = "x-opt-" + WireProperty.CALLER_ID.getKey();
 
   private final RabbitMQRequestTransport requestTransport;
   private final SignalCodec signalCodec;
-  private final String transportId;
+  private final String callerId;
   private final int index;
   private final int ttlSeconds;
 
-  public RequestMessageRouter (RabbitMQConnector connector, NameConfiguration nameConfiguration, RabbitMQRequestTransport requestTransport, SignalCodec signalCodec, String transportId, int index, int ttlSeconds) {
+  public RequestMessageRouter (RabbitMQConnector connector, NameConfiguration nameConfiguration, RabbitMQRequestTransport requestTransport, SignalCodec signalCodec, String callerId, int index, int ttlSeconds) {
 
     super(connector, nameConfiguration);
 
     this.requestTransport = requestTransport;
     this.signalCodec = signalCodec;
-    this.transportId = transportId;
+    this.callerId = callerId;
     this.index = index;
     this.ttlSeconds = ttlSeconds;
   }
@@ -52,15 +52,15 @@ public class RequestMessageRouter extends MessageRouter {
 
     String queueName;
 
-    channel.queueDeclare(queueName = getResponseQueueName() + "-" + transportId, false, false, true, null);
-    channel.queueBind(queueName, getResponseExchangeName(), transportId);
+    channel.queueDeclare(queueName = getResponseQueueName() + "-" + callerId, false, false, true, null);
+    channel.queueBind(queueName, getResponseExchangeName(), callerId);
   }
 
   @Override
   public void installConsumer (Channel channel)
     throws IOException {
 
-    channel.basicConsume(getResponseQueueName() + "-" + transportId, true, getResponseQueueName() + "-" + transportId + "[" + index + "]", false, false, null, new DefaultConsumer(channel) {
+    channel.basicConsume(getResponseQueueName() + "-" + callerId, true, getResponseQueueName() + "-" + callerId + "[" + index + "]", false, false, null, new DefaultConsumer(channel) {
 
       @Override
       public synchronized void handleDelivery (String consumerTag, Envelope envelope, final AMQP.BasicProperties properties, final byte[] body) {
@@ -110,7 +110,7 @@ public class RequestMessageRouter extends MessageRouter {
         HashMap<String, Object> headerMap = new HashMap<>();
 
         if (!inOnly) {
-          headerMap.put(TRANSPORT_ID_AMQP_KEY, transportId);
+          headerMap.put(CALLER_ID_AMQP_KEY, callerId);
         }
 
         AMQP.BasicProperties properties = new AMQP.BasicProperties.Builder()

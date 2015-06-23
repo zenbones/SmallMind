@@ -32,7 +32,7 @@ public class RabbitMQRequestTransport implements MetricConfigurationProvider, Re
   private final SelfDestructiveMap<String, TransmissionCallback> callbackMap;
   private final LinkedBlockingQueue<RequestMessageRouter> routerQueue;
   private final RequestMessageRouter[] requestMessageRouters;
-  private final String transportId = SnowflakeId.newInstance().generateDottedString();
+  private final String callerId = SnowflakeId.newInstance().generateDottedString();
 
   public RabbitMQRequestTransport (MetricConfiguration metricConfiguration, RabbitMQConnector rabbitMQConnector, NameConfiguration nameConfiguration, SignalCodec signalCodec, int clusterSize, int concurrencyLimit, int timeoutSeconds)
     throws IOException, InterruptedException {
@@ -46,7 +46,7 @@ public class RabbitMQRequestTransport implements MetricConfigurationProvider, Re
 
     requestMessageRouters = new RequestMessageRouter[clusterSize];
     for (int index = 0; index < requestMessageRouters.length; index++) {
-      requestMessageRouters[index] = new RequestMessageRouter(rabbitMQConnector, nameConfiguration, this, signalCodec, transportId, index, timeoutSeconds * 3);
+      requestMessageRouters[index] = new RequestMessageRouter(rabbitMQConnector, nameConfiguration, this, signalCodec, callerId, index, timeoutSeconds * 3);
       requestMessageRouters[index].initialize();
     }
 
@@ -66,9 +66,9 @@ public class RabbitMQRequestTransport implements MetricConfigurationProvider, Re
   }
 
   @Override
-  public String getTransportId () {
+  public String getCallerId () {
 
-    return transportId;
+    return callerId;
   }
 
   @Override

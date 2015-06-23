@@ -71,7 +71,7 @@ public class RabbitMQResponseTransport extends WorkManager<InvocationWorker, Rab
   }
 
   @Override
-  public void transmit (String transportId, String correlationId, boolean error, String nativeType, Object result) throws Throwable {
+  public void transmit (String callerId, String correlationId, boolean error, String nativeType, Object result) throws Throwable {
 
     ResponseMessageRouter responseMessageRouter;
 
@@ -79,7 +79,7 @@ public class RabbitMQResponseTransport extends WorkManager<InvocationWorker, Rab
       throw new TransportException("Unable to take a ResponseMessageRouter, which should never happen - please contact your system administrator");
     }
 
-    responseMessageRouter.publish(transportId, correlationId, error, nativeType, result);
+    responseMessageRouter.publish(callerId, correlationId, error, nativeType, result);
   }
 
   @Override

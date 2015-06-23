@@ -16,7 +16,7 @@ import org.smallmind.instrument.config.MetricConfiguration;
 
 public class InvocationWorker extends Worker<RabbitMQMessage> {
 
-  private static final String TRANSPORT_ID_AMQP_KEY = "x-opt-" + WireProperty.TRANSPORT_ID.getKey();
+  private static final String CALLER_ID_AMQP_KEY = "x-opt-" + WireProperty.CALLER_ID.getKey();
 
   private final ResponseTransport responseTransport;
   private final WireInvocationCircuit invocationCircuit;
@@ -44,16 +44,16 @@ public class InvocationWorker extends Worker<RabbitMQMessage> {
       public void withChronometer ()
         throws JMSException {
 
-        invocationCircuit.handle(responseTransport, signalCodec, getTransportId(message.getProperties().getHeaders()), message.getProperties().getMessageId(), invocationSignal);
+        invocationCircuit.handle(responseTransport, signalCodec, getCallerId(message.getProperties().getHeaders()), message.getProperties().getMessageId(), invocationSignal);
       }
     });
   }
 
-  private String getTransportId (Map<String, Object> headers) {
+  private String getCallerId (Map<String, Object> headers) {
 
-    if ((headers != null) && (headers.containsKey(TRANSPORT_ID_AMQP_KEY))) {
+    if ((headers != null) && (headers.containsKey(CALLER_ID_AMQP_KEY))) {
 
-      return headers.get(TRANSPORT_ID_AMQP_KEY).toString();
+      return headers.get(CALLER_ID_AMQP_KEY).toString();
     }
 
     return null;

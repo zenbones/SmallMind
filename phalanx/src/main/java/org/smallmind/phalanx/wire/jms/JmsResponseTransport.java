@@ -94,7 +94,7 @@ public class JmsResponseTransport extends WorkManager<InvocationWorker, Message>
   }
 
   @Override
-  public void transmit (String transportId, String correlationId, boolean error, String nativeType, Object result)
+  public void transmit (String callerId, String correlationId, boolean error, String nativeType, Object result)
     throws Exception {
 
     TopicOperator topicOperator;
@@ -103,10 +103,10 @@ public class JmsResponseTransport extends WorkManager<InvocationWorker, Message>
       throw new TransportException("Unable to take a TopicOperator, which should never happen - please contact your system administrator");
     }
 
-    topicOperator.send(constructMessage(transportId, correlationId, topicOperator, new ResultSignal(error, nativeType, result)));
+    topicOperator.send(constructMessage(callerId, correlationId, topicOperator, new ResultSignal(error, nativeType, result)));
   }
 
-  private Message constructMessage (final String transportId, final String correlationId, final TopicOperator topicOperator, final ResultSignal resultSignal)
+  private Message constructMessage (final String callerId, final String correlationId, final TopicOperator topicOperator, final ResultSignal resultSignal)
     throws Exception {
 
     return InstrumentationManager.execute(new ChronometerInstrumentAndReturn<Message>(this, new MetricProperty("event", MetricType.CONSTRUCT_MESSAGE.getDisplay())) {
@@ -122,7 +122,7 @@ public class JmsResponseTransport extends WorkManager<InvocationWorker, Message>
         responseMessage.writeBytes(signalCodec.encode(resultSignal));
 
         responseMessage.setJMSCorrelationID(correlationId);
-        responseMessage.setStringProperty(WireProperty.TRANSPORT_ID.getKey(), transportId);
+        responseMessage.setStringProperty(WireProperty.CALLER_ID.getKey(), callerId);
         responseMessage.setStringProperty(WireProperty.CONTENT_TYPE.getKey(), signalCodec.getContentType());
         responseMessage.setLongProperty(WireProperty.CLOCK.getKey(), System.currentTimeMillis());
 

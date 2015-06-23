@@ -80,12 +80,12 @@ public class ResponseMessageRouter extends MessageRouter {
     });
   }
 
-  public String publish (String transportId, String correlationId, boolean error, String nativeType, Object result)
+  public String publish (String callerId, String correlationId, boolean error, String nativeType, Object result)
     throws Exception {
 
     RabbitMQMessage rabbitMQMessage = constructMessage(correlationId, error, nativeType, result);
 
-    send(transportId, getResponseExchangeName(), rabbitMQMessage.getProperties(), rabbitMQMessage.getBody());
+    send(callerId, getResponseExchangeName(), rabbitMQMessage.getProperties(), rabbitMQMessage.getBody());
 
     return rabbitMQMessage.getProperties().getMessageId();
   }

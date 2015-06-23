@@ -45,7 +45,7 @@ public class JmsRequestTransport implements MetricConfigurationProvider, Request
   private final ConnectionManager[] talkRequestConnectionManagers;
   private final ConnectionManager[] whisperRequestConnectionManagers;
   private final ResponseListener[] responseListeners;
-  private final String transportId = SnowflakeId.newInstance().generateDottedString();
+  private final String callerId = SnowflakeId.newInstance().generateDottedString();
 
   public JmsRequestTransport (MetricConfiguration metricConfiguration, RoutingFactories routingFactories, MessagePolicy messagePolicy, ReconnectionPolicy reconnectionPolicy, SignalCodec signalCodec, int clusterSize, int concurrencyLimit, int maximumMessageLength, int timeoutSeconds)
     throws IOException, JMSException, TransportException {
@@ -84,14 +84,14 @@ public class JmsRequestTransport implements MetricConfigurationProvider, Request
 
     responseListeners = new ResponseListener[clusterSize];
     for (int index = 0; index < responseListeners.length; index++) {
-      responseListeners[index] = new ResponseListener(this, new ConnectionManager(routingFactories.getResponseTopicFactory(), messagePolicy, reconnectionPolicy), (Topic)routingFactories.getResponseTopicFactory().getDestination(), signalCodec, transportId, maximumMessageLength);
+      responseListeners[index] = new ResponseListener(this, new ConnectionManager(routingFactories.getResponseTopicFactory(), messagePolicy, reconnectionPolicy), (Topic)routingFactories.getResponseTopicFactory().getDestination(), signalCodec, callerId, maximumMessageLength);
     }
   }
 
   @Override
-  public String getTransportId () {
+  public String getCallerId () {
 
-    return transportId;
+    return callerId;
   }
 
   @Override
@@ -216,7 +216,7 @@ public class JmsRequestTransport implements MetricConfigurationProvider, Request
         requestMessage.writeBytes(signalCodec.encode(new InvocationSignal(inOnly, address, arguments, contexts)));
 
         if (!inOnly) {
-          requestMessage.setStringProperty(WireProperty.TRANSPORT_ID.getKey(), transportId);
+          requestMessage.setStringProperty(WireProperty.CALLER_ID.getKey(), callerId);
         }
 
         requestMessage.setStringProperty(WireProperty.CONTENT_TYPE.getKey(), signalCodec.getContentType());
