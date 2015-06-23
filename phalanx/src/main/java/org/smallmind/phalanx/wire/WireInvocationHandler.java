@@ -107,7 +107,7 @@ public class WireInvocationHandler implements InvocationHandler {
       }
     }
 
-    location = (instanceIdExtractor != null) ? new WhisperLocation(instanceIdExtractor.getInstanceId(argumentMap, wireContexts), version, serviceName, new Function(method)) : new TalkLocation(version, serviceName, new Function(method));
+    location = (method.getAnnotation(Whisper.class) != null) ? new WhisperLocation(instanceIdExtractor.getInstanceId(argumentMap, wireContexts), version, serviceName, new Function(method)) : new TalkLocation(version, serviceName, new Function(method));
 
     if (method.getAnnotation(InOnly.class) != null) {
 
