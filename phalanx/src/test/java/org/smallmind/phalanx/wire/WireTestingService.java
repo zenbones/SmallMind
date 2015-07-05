@@ -3,7 +3,7 @@ package org.smallmind.phalanx.wire;
 import java.util.Date;
 import org.smallmind.nutsnbolts.context.ExpectedContexts;
 
-public interface WireTestingService extends WiredService {
+public interface WireTestingService {
 
   public abstract boolean hasContext ();
 

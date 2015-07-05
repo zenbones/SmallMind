@@ -3,7 +3,7 @@ package org.smallmind.phalanx.wire;
 import java.util.Date;
 import org.smallmind.nutsnbolts.context.ContextFactory;
 
-public class WireTestingServiceImpl implements WireTestingService {
+public class WireTestingServiceImpl implements WireTestingService, WiredService {
 
   @Override
   public int getVersion () {
@@ -15,6 +15,13 @@ public class WireTestingServiceImpl implements WireTestingService {
   public String getServiceName () {
 
     return "WireTestService";
+  }
+
+  @Override
+  public void setResponseTransport (ResponseTransport responseTransport)
+    throws Exception {
+
+    responseTransport.register(WireTestingServiceImpl.class, this);
   }
 
   @Override
