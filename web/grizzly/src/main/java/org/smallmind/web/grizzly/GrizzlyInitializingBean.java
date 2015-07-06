@@ -270,10 +270,10 @@ public class GrizzlyInitializingBean implements DisposableBean, ApplicationConte
 
     secureListener.setSecure(true);
 
-    sslContext.setKeyStoreFile(sslInfo.getKeystore());
-    sslContext.setKeyStorePass(sslInfo.getKeystorePassword());
-    sslContext.setTrustStoreFile(sslInfo.getKeystore());
-    sslContext.setTrustStorePass(sslInfo.getKeystorePassword());
+    sslContext.setKeyStoreFile(sslInfo.getKeyStoreFile());
+    sslContext.setKeyStorePass(sslInfo.getKeyStorePassword());
+    sslContext.setTrustStoreFile(sslInfo.getTrustStoreFile());
+    sslContext.setTrustStorePass(sslInfo.getTrustStorePassword());
 
     /* Note: clientMode (2nd param) means server does not
     *  authenticate to client - which we never want

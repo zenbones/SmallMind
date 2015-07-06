@@ -34,9 +34,11 @@ package org.smallmind.web.grizzly;
 
 public class SSLInfo {
 
-  private String keystore;
-  private String keystorePassword;
-  private boolean requireClientAuth = true;
+  private String keyStoreFile;
+  private String keyStorePassword;
+  private String trustStoreFile;
+  private String trustStorePassword;
+  private boolean requireClientAuth = false;
   private boolean proxyMode = false;
   private int port = 443;
 
@@ -50,24 +52,44 @@ public class SSLInfo {
     this.port = port;
   }
 
-  public String getKeystore () {
+  public String getKeyStoreFile () {
 
-    return keystore;
+    return keyStoreFile;
   }
 
-  public void setKeystore (String keystore) {
+  public void setKeyStoreFile (String keyStoreFile) {
 
-    this.keystore = keystore;
+    this.keyStoreFile = keyStoreFile;
   }
 
-  public String getKeystorePassword () {
+  public String getKeyStorePassword () {
 
-    return keystorePassword;
+    return keyStorePassword;
   }
 
-  public void setKeystorePassword (String keystorePassword) {
+  public void setKeyStorePassword (String keyStorePassword) {
 
-    this.keystorePassword = keystorePassword;
+    this.keyStorePassword = keyStorePassword;
+  }
+
+  public String getTrustStoreFile () {
+
+    return trustStoreFile;
+  }
+
+  public void setTrustStoreFile (String trustStoreFile) {
+
+    this.trustStoreFile = trustStoreFile;
+  }
+
+  public String getTrustStorePassword () {
+
+    return trustStorePassword;
+  }
+
+  public void setTrustStorePassword (String trustStorePassword) {
+
+    this.trustStorePassword = trustStorePassword;
   }
 
   public boolean isRequireClientAuth () {

@@ -104,10 +104,10 @@
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <java.tools.jar>${env.JAVA_HOME}/lib/tools.jar</java.tools.jar>
     <aether.version>1.0.2.v20150114</aether.version>
-    <grizzly.version>2.3.18</grizzly.version>
+    <grizzly.version>2.3.21</grizzly.version>
     <hornetq.version>2.4.5.Final</hornetq.version>
     <jackson.version>2.5.1</jackson.version>
-    <jersey.version>2.16</jersey.version>
+    <jersey.version>2.19</jersey.version>
     <spring.version>4.0.3.RELEASE</spring.version>
   </properties>
 

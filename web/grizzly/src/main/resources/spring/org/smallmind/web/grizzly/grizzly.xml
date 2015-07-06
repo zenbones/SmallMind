@@ -27,4 +27,13 @@
   </bean>
   -->
 
+  <!--
+  keytool -genkey -alias keyAlias -keyalg RSA -keypass changeit -storepass changeit keystore keystore.jks
+  keytool -export -alias keyAlias -storepass changeit -file server.cer -keystore keystore.jks
+
+  ...and if needed...
+
+  keytool -import -v -trustcacerts -alias keyAlias -file server.cer -keystore cacerts.jks -keypass changeit
+  -->
+
 </beans>

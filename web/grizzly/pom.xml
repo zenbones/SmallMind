@@ -34,7 +34,7 @@
     </dependency>
     <dependency>
       <groupId>org.glassfish.jersey.core</groupId>
-      <artifactId>jersey-client</artifactId>
+      <artifactId>jersey-server</artifactId>
       <scope>compile</scope>
     </dependency>
     <dependency>
