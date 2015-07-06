@@ -37,8 +37,13 @@ import java.util.concurrent.atomic.AtomicLong;
 
 public class MockMemcachedClient<T> {
 
-  private HashMap<String, Holder<T>> internalMap = new HashMap<String, Holder<T>>();
+  private HashMap<String, Holder<T>> internalMap = new HashMap<>();
   private AtomicLong counter = new AtomicLong(0);
+
+  public long getOpTimeout () {
+
+    return 5000L;
+  }
 
   public synchronized T get (String key) {
 
@@ -61,7 +66,7 @@ public class MockMemcachedClient<T> {
       return null;
     }
 
-    return new MockGetsResponse<T>(holder.getValue(), holder.getCas());
+    return new MockGetsResponse<T>(holder.getCas(), holder.getValue());
   }
 
   public synchronized boolean cas (String key, int expiration, T value, long cas) {
@@ -81,14 +86,30 @@ public class MockMemcachedClient<T> {
     return false;
   }
 
-  private class Holder<T> {
+  public synchronized boolean delete (String key, long cas) {
 
-    private T value;
+    Holder<T> holder;
+
+    if (((holder = internalMap.get(key)) == null) || holder.isExpired()) {
+
+      return true;
+    } else if (cas == holder.getCas()) {
+      internalMap.remove(key);
+
+      return true;
+    }
+
+    return false;
+  }
+
+  private class Holder<U extends T> {
+
+    private U value;
     private long cas;
     private long creation;
     private int expiration;
 
-    public Holder (int expiration, T value) {
+    public Holder (int expiration, U value) {
 
       if (expiration < 0) {
         throw new IllegalArgumentException();

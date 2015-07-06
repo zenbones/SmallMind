@@ -37,7 +37,7 @@ public class MockGetsResponse<T> {
   private T value;
   private long cas;
 
-  public MockGetsResponse (T value, long cas) {
+  public MockGetsResponse (long cas, T value) {
 
     this.value = value;
     this.cas = cas;
