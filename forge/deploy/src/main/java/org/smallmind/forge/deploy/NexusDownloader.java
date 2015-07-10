@@ -76,6 +76,7 @@ public class NexusDownloader {
     }
 
     try (CloseableHttpResponse response = httpclient.execute(target, new HttpGet(getBuilder.toString()))) {
+
       if (response.getStatusLine().getStatusCode() != 200) {
         throw new IOException("Could not locate requested artifact");
       }
@@ -87,8 +88,12 @@ public class NexusDownloader {
 
       try (InputStream inputStream = response.getEntity().getContent(); FileOutputStream fileOutputStream = new FileOutputStream(file)) {
 
+        TextProgressBar downloadProgressBar;
         long bytesWritten = 0;
         int bytesRead;
+
+        downloadProgressBar = new TextProgressBar(bytesAvailable, "bytes", 2);
+        downloadProgressBar.update(0);
 
         do {
           if ((bytesRead = inputStream.read(buffer)) < 0) {
@@ -96,8 +101,11 @@ public class NexusDownloader {
           } else {
             fileOutputStream.write(buffer, 0, bytesRead);
             bytesWritten += bytesRead;
+            downloadProgressBar.update(bytesWritten);
           }
         } while (bytesWritten < bytesAvailable);
+
+        downloadProgressBar.update(bytesAvailable);
       }
     }
   }
