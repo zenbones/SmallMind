@@ -9,4 +9,5 @@ import java.lang.annotation.Target;
 @Retention(RetentionPolicy.RUNTIME)
 public @interface Whisper {
 
+  public abstract Class<? extends InstanceIdExtractor> value ();
 }

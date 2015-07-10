@@ -5,6 +5,7 @@ import java.lang.annotation.Annotation;
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
 import java.util.HashMap;
+import java.util.concurrent.ConcurrentHashMap;
 import org.smallmind.nutsnbolts.context.Context;
 import org.smallmind.nutsnbolts.context.ContextFactory;
 
@@ -15,20 +16,19 @@ public class WireInvocationHandler implements InvocationHandler {
   private static final String[] NO_NAMES = new String[0];
   private static final String[] SINGLE_OBJECT_NAME = new String[]{"obj"};
   private final RequestTransport transport;
+  private final ConcurrentHashMap<Class<? extends InstanceIdExtractor>, InstanceIdExtractor> instanceIdExtractorMap = new ConcurrentHashMap<>();
   private final HashMap<Method, String[]> methodMap = new HashMap<>();
   private final Class serviceInterface;
-  private final InstanceIdExtractor instanceIdExtractor;
   private final String serviceName;
   private final int version;
 
-  public WireInvocationHandler (RequestTransport transport, int version, String serviceName, Class<?> serviceInterface, InstanceIdExtractor instanceIdExtractor)
+  public WireInvocationHandler (RequestTransport transport, int version, String serviceName, Class<?> serviceInterface)
     throws Exception {
 
     this.transport = transport;
     this.version = version;
     this.serviceName = serviceName;
     this.serviceInterface = serviceInterface;
-    this.instanceIdExtractor = instanceIdExtractor;
 
     for (Method method : serviceInterface.getMethods()) {
 
@@ -74,6 +74,7 @@ public class WireInvocationHandler implements InvocationHandler {
     HashMap<String, Object> argumentMap = null;
     Context[] expectedContexts;
     WireContext[] wireContexts = null;
+    Whisper whisper;
     Location location;
     String[] argumentNames;
 
@@ -107,7 +108,22 @@ public class WireInvocationHandler implements InvocationHandler {
       }
     }
 
-    location = (method.getAnnotation(Whisper.class) != null) ? new WhisperLocation(instanceIdExtractor.getInstanceId(argumentMap, wireContexts), version, serviceName, new Function(method)) : new TalkLocation(version, serviceName, new Function(method));
+    if ((whisper = method.getAnnotation(Whisper.class)) != null) {
+
+      InstanceIdExtractor instanceIdExtractor;
+      String instanceId;
+
+      if ((instanceIdExtractor = instanceIdExtractorMap.get(whisper.value())) == null) {
+        instanceIdExtractorMap.put(whisper.value(), whisper.value().newInstance());
+      }
+      if ((instanceId = instanceIdExtractor.getInstanceId(argumentMap, wireContexts)) == null) {
+        throw new MissingInstanceIdException("Whisper invocations require an instance id(%s)", whisper.value().getName());
+      }
+
+      location = new WhisperLocation(instanceId, version, serviceName, new Function(method));
+    } else {
+      location = new TalkLocation(version, serviceName, new Function(method));
+    }
 
     if (method.getAnnotation(InOnly.class) != null) {
 
