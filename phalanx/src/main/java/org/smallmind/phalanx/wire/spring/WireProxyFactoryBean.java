@@ -1,7 +1,6 @@
 package org.smallmind.phalanx.wire.spring;
 
 import java.lang.reflect.Proxy;
-import org.smallmind.phalanx.wire.InstanceIdExtractor;
 import org.smallmind.phalanx.wire.RequestTransport;
 import org.smallmind.phalanx.wire.WireProxyFactory;
 import org.springframework.beans.factory.FactoryBean;
@@ -11,7 +10,6 @@ public class WireProxyFactoryBean implements InitializingBean, FactoryBean<Proxy
 
   private Proxy serviceProxy;
   private RequestTransport requestTransport;
-  private InstanceIdExtractor instanceIdExtractor;
   private Class<?> serviceInterface;
   private String serviceName;
   private int version;
@@ -36,16 +34,11 @@ public class WireProxyFactoryBean implements InitializingBean, FactoryBean<Proxy
     this.version = version;
   }
 
-  public void setInstanceIdExtractor (InstanceIdExtractor instanceIdExtractor) {
-
-    this.instanceIdExtractor = instanceIdExtractor;
-  }
-
   @Override
   public void afterPropertiesSet ()
     throws Exception {
 
-    serviceProxy = WireProxyFactory.generateProxy(requestTransport, version, serviceName, serviceInterface, instanceIdExtractor);
+    serviceProxy = WireProxyFactory.generateProxy(requestTransport, version, serviceName, serviceInterface);
   }
 
   @Override
