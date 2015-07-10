@@ -3,6 +3,7 @@ package org.smallmind.forge.deploy;
 public class TextProgressBar {
 
   private String measure;
+  private boolean done;
   private double total;
   private int segmentPercent;
   private int numberOfSegments;
@@ -17,7 +18,13 @@ public class TextProgressBar {
     numberOfSegments = (100 / segmentPercent) + ((100 % segmentPercent == 0) ? 0 : 1);
   }
 
-  public void update (long current) {
+  public synchronized void close () {
+
+    done = true;
+    System.out.println();
+  }
+
+  public synchronized void update (long current) {
 
     if (current > total) {
       throw new IllegalArgumentException("Current values must be <= " + total);
@@ -26,7 +33,7 @@ public class TextProgressBar {
     double currentPercent = (current / total) * 100;
     int currentSegment = (int)(currentPercent / segmentPercent);
 
-    if ((currentSegment != previousSegment) || (current == total)) {
+    if ((!done) && (currentSegment != previousSegment)) {
       System.out.print("\r[");
       for (int tail = 0; tail < currentSegment; tail++) {
         System.out.print("=");
@@ -49,6 +56,7 @@ public class TextProgressBar {
       System.out.print(measure);
 
       if (current == total) {
+        done = true;
         System.out.println(")");
       } else {
         System.out.print(")");
