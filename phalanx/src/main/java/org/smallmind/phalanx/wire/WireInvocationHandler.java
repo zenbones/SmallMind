@@ -114,7 +114,7 @@ public class WireInvocationHandler implements InvocationHandler {
       String instanceId;
 
       if ((instanceIdExtractor = instanceIdExtractorMap.get(whisper.value())) == null) {
-        instanceIdExtractorMap.put(whisper.value(), whisper.value().newInstance());
+        instanceIdExtractorMap.put(whisper.value(), instanceIdExtractor = whisper.value().newInstance());
       }
       if ((instanceId = instanceIdExtractor.getInstanceId(argumentMap, wireContexts)) == null) {
         throw new MissingInstanceIdException("Whisper invocations require an instance id(%s)", whisper.value().getName());
