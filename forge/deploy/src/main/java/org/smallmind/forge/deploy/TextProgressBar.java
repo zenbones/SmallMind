@@ -3,7 +3,7 @@ package org.smallmind.forge.deploy;
 public class TextProgressBar {
 
   private String measure;
-  private boolean done;
+  private boolean done = false;
   private double total;
   private int segmentPercent;
   private int numberOfSegments;
