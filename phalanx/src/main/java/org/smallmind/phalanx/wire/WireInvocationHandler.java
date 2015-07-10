@@ -88,8 +88,8 @@ public class WireInvocationHandler implements InvocationHandler {
     if ((args != null) && (args.length > 0)) {
       argumentMap = new HashMap<>();
       for (int index = 0; index < args.length; index++) {
-        if (!(args[index] instanceof Serializable)) {
-          throw new TransportException("The argument(index = %d, name = %s) is not Serializable", index, argumentNames[index]);
+        if ((args[index] != null) && (!(args[index] instanceof Serializable))) {
+          throw new TransportException("The argument(index=%d, name=%s, class=%s) is not Serializable", index, argumentNames[index], args[index].getClass().getName());
         }
 
         argumentMap.put(argumentNames[index], args[index]);

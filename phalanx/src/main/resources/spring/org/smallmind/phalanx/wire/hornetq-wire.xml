@@ -52,7 +52,10 @@
     <property name="reconnectionDelayMilliseconds" value="${jms.reconnection_delay_milliseconds}"/>
   </bean>
 
-  <bean id="jsonSignalCodec" class="org.smallmind.phalanx.wire.JsonSignalCodec"/>
+  <bean id="jsonSignalCodec" class="org.smallmind.phalanx.wire.JsonSignalCodec">
+    <property name="verbose" value="true"/>
+    <property name="verboseLogLevel" value="DEBUG"/>
+  </bean>
 
   <bean id="jmsRequestTransport" class="org.smallmind.phalanx.wire.jms.JmsRequestTransport" destroy-method="close">
     <constructor-arg index="0" name="metricConfiguration" ref="transportMetricConfiguration"/>

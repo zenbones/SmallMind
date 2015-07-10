@@ -19,7 +19,10 @@
 
   <bean id="nameConfiguration" class="org.smallmind.phalanx.wire.amqp.rabbitmq.NameConfiguration"/>
 
-  <bean id="jsonSignalCodec" class="org.smallmind.phalanx.wire.JsonSignalCodec"/>
+  <bean id="jsonSignalCodec" class="org.smallmind.phalanx.wire.JsonSignalCodec">
+    <property name="verbose" value="true"/>
+    <property name="verboseLogLevel" value="DEBUG"/>
+  </bean>
 
   <bean id="rabbitmqRequestTransport" class="org.smallmind.phalanx.wire.amqp.rabbitmq.RabbitMQRequestTransport" destroy-method="close">
     <constructor-arg index="0" name="metricConfiguration" ref="transportMetricConfiguration"/>

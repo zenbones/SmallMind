@@ -3,7 +3,10 @@
 
   <bean id="mockMessageRouter" class="org.smallmind.phalanx.wire.mock.MockMessageRouter"/>
 
-  <bean id="jsonSignalCodec" class="org.smallmind.phalanx.wire.JsonSignalCodec"/>
+  <bean id="jsonSignalCodec" class="org.smallmind.phalanx.wire.JsonSignalCodec">
+    <property name="verbose" value="true"/>
+    <property name="verboseLogLevel" value="DEBUG"/>
+  </bean>
 
   <bean id="mockRequestTransport" class="org.smallmind.phalanx.wire.mock.MockRequestTransport">
     <constructor-arg index="0" name="messageRouter" ref="mockMessageRouter"/>
