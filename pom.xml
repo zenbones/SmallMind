@@ -881,6 +881,14 @@
         <directory>src/main/resources/liquibase</directory>
         <filtering>false</filtering>
       </resource>
+      <resource>
+        <directory>src/main/resources/freemarker</directory>
+        <filtering>false</filtering>
+      </resource>
+      <resource>
+        <directory>src/main/resources/meta</directory>
+        <filtering>false</filtering>
+      </resource>
     </resources>
     <testResources>
       <testResource>
@@ -893,6 +901,14 @@
       </testResource>
       <testResource>
         <directory>src/test/resources/liquibase</directory>
+        <filtering>false</filtering>
+      </testResource>
+      <testResource>
+        <directory>src/test/resources/freemarker</directory>
+        <filtering>false</filtering>
+      </testResource>
+      <testResource>
+        <directory>src/test/resources/meta</directory>
         <filtering>false</filtering>
       </testResource>
     </testResources>
