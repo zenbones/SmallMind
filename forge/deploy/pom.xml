@@ -53,5 +53,24 @@
       <scope>compile</scope>
     </dependency>
   </dependencies>
-
+  <build>
+    <plugins>
+      <plugin>
+        <groupId>com.jolira</groupId>
+        <artifactId>onejar-maven-plugin</artifactId>
+        <executions>
+          <execution>
+            <goals>
+              <goal>one-jar</goal>
+            </goals>
+          </execution>
+        </executions>
+        <configuration>
+          <mainClass>org.smallmind.forge.deploy.cli.ApplicationUpdaterCLI</mainClass>
+          <classifier>onejar</classifier>
+          <attachToBuild>true</attachToBuild>
+        </configuration>
+      </plugin>
+    </plugins>
+  </build>
 </project>
