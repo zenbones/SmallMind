@@ -32,17 +32,41 @@
  */
 package org.smallmind.web.grizzly;
 
-import org.smallmind.nutsnbolts.lang.FormattedRuntimeException;
+import java.net.URL;
 
-public class GrizzlyInitializationException extends FormattedRuntimeException {
+public class SSLStore {
 
-  public GrizzlyInitializationException (String message, Object... args) {
+  private String resource;
+  private String password;
 
-    super(message, args);
+  public String getFile () {
+
+    URL resourceURL;
+
+    if ((resourceURL = Thread.currentThread().getContextClassLoader().getResource(resource)) == null) {
+      throw new GrizzlyInitializationException("Missing keystore resource(%s)", resource);
+    }
+
+    return resourceURL.getFile();
   }
 
-  public GrizzlyInitializationException (Throwable throwable) {
+  public String getResource () {
 
-    super(throwable);
+    return resource;
+  }
+
+  public void setResource (String resource) {
+
+    this.resource = resource;
+  }
+
+  public String getPassword () {
+
+    return password;
+  }
+
+  public void setPassword (String password) {
+
+    this.password = password;
   }
 }

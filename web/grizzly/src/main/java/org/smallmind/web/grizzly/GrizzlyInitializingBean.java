@@ -266,19 +266,26 @@ public class GrizzlyInitializingBean implements DisposableBean, ApplicationConte
   public NetworkListener generateSecureNetworkListener (SSLInfo sslInfo) {
 
     NetworkListener secureListener = new NetworkListener("grizzly2Secure", host, sslInfo.getPort());
-    SSLContextConfigurator sslContext = new SSLContextConfigurator();
+    SSLContextConfigurator sslContextConfigurator = new SSLContextConfigurator();
 
     secureListener.setSecure(true);
 
-    sslContext.setKeyStoreFile(sslInfo.getKeyStoreFile());
-    sslContext.setKeyStorePass(sslInfo.getKeyStorePassword());
-    sslContext.setTrustStoreFile(sslInfo.getTrustStoreFile());
-    sslContext.setTrustStorePass(sslInfo.getTrustStorePassword());
+    if (sslInfo.getKeySSLStore() != null) {
+      sslContextConfigurator.setKeyStoreFile(sslInfo.getKeySSLStore().getFile());
+      sslContextConfigurator.setKeyStorePass(sslInfo.getKeySSLStore().getPassword());
+    }
+
+    if (sslInfo.getTrustSSLStore() != null) {
+      sslContextConfigurator.setTrustStoreFile(sslInfo.getTrustSSLStore().getFile());
+      sslContextConfigurator.setTrustStorePass(sslInfo.getTrustSSLStore().getPassword());
+    }
+
+    sslContextConfigurator.validateConfiguration(true);
 
     /* Note: clientMode (2nd param) means server does not
     *  authenticate to client - which we never want
     */
-    SSLEngineConfigurator sslEngineConfig = new SSLEngineConfigurator(sslContext, false, sslInfo.isRequireClientAuth(), true);
+    SSLEngineConfigurator sslEngineConfig = new SSLEngineConfigurator(sslContextConfigurator.createSSLContext(), false, sslInfo.isRequireClientAuth(), true);
     secureListener.setSSLEngineConfig(sslEngineConfig);
 
     return secureListener;

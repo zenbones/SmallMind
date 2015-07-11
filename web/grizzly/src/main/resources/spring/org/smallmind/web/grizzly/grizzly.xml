@@ -28,7 +28,7 @@
   -->
 
   <!--
-  keytool -genkey -alias keyAlias -keyalg RSA -keypass changeit -storepass changeit keystore keystore.jks
+  keytool -genkey -alias keyAlias -keyalg RSA -keypass changeit -storepass changeit -keystore keystore.jks
   keytool -export -alias keyAlias -storepass changeit -file server.cer -keystore keystore.jks
 
   ...and if needed...
