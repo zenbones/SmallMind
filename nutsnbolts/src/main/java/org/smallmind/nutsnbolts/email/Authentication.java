@@ -36,12 +36,28 @@ import javax.mail.Authenticator;
 
 public class Authentication {
 
+  public static final Authentication NONE = new Authentication(AuthType.NONE);
+
   private AuthType type;
   private String[] data;
 
-  public Authentication (AuthType type, String... data) {
+  public Authentication () {
+
+  }
+
+  private Authentication (AuthType type, String... data) {
 
     this.type = type;
+    this.data = data;
+  }
+
+  public void setType (AuthType type) {
+
+    this.type = type;
+  }
+
+  public void setData (String[] data) {
+
     this.data = data;
   }
 

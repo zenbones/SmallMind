@@ -32,7 +32,6 @@
  */
 package org.smallmind.scribe.pen;
 
-import org.smallmind.nutsnbolts.email.AuthType;
 import org.smallmind.nutsnbolts.email.Authentication;
 import org.smallmind.nutsnbolts.email.Mail;
 import org.smallmind.nutsnbolts.email.Postman;
@@ -46,7 +45,7 @@ public class EmailAppender extends AbstractAppender {
 
   public EmailAppender (String smtpServer, int smtpPort) {
 
-    this(smtpServer, smtpPort, new Authentication(AuthType.NONE), false);
+    this(smtpServer, smtpPort, Authentication.NONE, false);
   }
 
   public EmailAppender (String smtpServer, int smtpPort, Authentication authentication) {
@@ -56,7 +55,7 @@ public class EmailAppender extends AbstractAppender {
 
   public EmailAppender (String smtpServer, int smtpPort, boolean secure) {
 
-    this(smtpServer, smtpPort, new Authentication(AuthType.NONE), secure);
+    this(smtpServer, smtpPort, Authentication.NONE, secure);
   }
 
   public EmailAppender (String smtpServer, int smtpPort, Authentication authentication, boolean secure) {

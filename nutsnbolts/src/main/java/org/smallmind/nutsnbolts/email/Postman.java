@@ -67,7 +67,7 @@ public class Postman {
 
   public Postman (String host, int port) {
 
-    this(host, port, new Authentication(AuthType.NONE), false);
+    this(host, port, Authentication.NONE, false);
   }
 
   public Postman (String host, int port, Authentication authentication) {
@@ -77,7 +77,7 @@ public class Postman {
 
   public Postman (String host, int port, boolean secure) {
 
-    this(host, port, new Authentication(AuthType.NONE), secure);
+    this(host, port, Authentication.NONE, secure);
   }
 
   public Postman (String host, int port, Authentication authentication, boolean secure) {
@@ -88,13 +88,13 @@ public class Postman {
   }
 
   public void send (Mail mail)
-   throws MailDeliveryException {
+    throws MailDeliveryException {
 
     send(mail, null);
   }
 
   public void send (Mail mail, HashMap<String, Object> interpolationMap)
-   throws MailDeliveryException {
+    throws MailDeliveryException {
 
     MimeMessage message = new MimeMessage(session);
     Multipart multipart = new MimeMultipart();
@@ -103,7 +103,7 @@ public class Postman {
       message.setFrom(new InternetAddress(mail.getFrom().trim()));
 
       if (mail.getReplyTo() != null) {
-        message.setReplyTo(new Address[] {new InternetAddress(mail.getReplyTo())});
+        message.setReplyTo(new Address[]{new InternetAddress(mail.getReplyTo())});
       }
       if (mail.getTo() != null) {
         addRecipients(message, Message.RecipientType.TO, mail.getTo());
@@ -176,7 +176,7 @@ public class Postman {
   }
 
   private void addRecipients (Message message, Message.RecipientType type, String addresses)
-   throws MessagingException {
+    throws MessagingException {
 
     for (String address : addresses.split(",")) {
       message.addRecipient(type, new InternetAddress(address.trim()));
