@@ -39,24 +39,24 @@ public enum AuthType {
 
   NONE {
     @Override
-    public Authenticator getAuthenticator (Object... data) {
+    public Authenticator getAuthenticator (String... data) {
 
       return null;
     }
   },
   LOGIN {
     @Override
-    public Authenticator getAuthenticator (final Object... data) {
+    public Authenticator getAuthenticator (final String... data) {
 
       return new Authenticator() {
 
         protected PasswordAuthentication getPasswordAuthentication () {
 
-          return new PasswordAuthentication((String)data[0], (String)data[1]);
+          return new PasswordAuthentication(data[0], data[1]);
         }
       };
     }
   };
 
-  public abstract Authenticator getAuthenticator (Object... data);
+  public abstract Authenticator getAuthenticator (String... data);
 }

@@ -37,9 +37,9 @@ import javax.mail.Authenticator;
 public class Authentication {
 
   private AuthType type;
-  private Object[] data;
+  private String[] data;
 
-  public Authentication (AuthType type, Object... data) {
+  public Authentication (AuthType type, String... data) {
 
     this.type = type;
     this.data = data;
