@@ -111,11 +111,17 @@ public class MavenRepository {
   public MavenRepository (String repositoryId, boolean offline)
     throws SettingsBuildingException {
 
+    this(System.getProperty("user.home") + "/.m2", repositoryId, offline);
+  }
+
+  public MavenRepository (String settingsDirectory, String repositoryId, boolean offline)
+    throws SettingsBuildingException {
+
     DefaultSettingsBuildingRequest request = new DefaultSettingsBuildingRequest();
 
     this.offline = offline;
 
-    request.setGlobalSettingsFile(new File(System.getProperty("user.home") + "/.m2/settings.xml"));
+    request.setGlobalSettingsFile(new File(settingsDirectory + "/settings.xml"));
     settings = new DefaultSettingsBuilderFactory().newInstance().build(request).getEffectiveSettings();
 
     profileList = settings.getProfiles();
