@@ -54,22 +54,35 @@ public class MavenScanner {
 
   private final LinkedList<MavenScannerListener> listenerList = new LinkedList<>();
   private final Duration cycleDuration;
+  private final MavenRepository mavenRepository;
   private final MavenCoordinate[] mavenCoordinates;
   private final ArtifactTag[] artifactTags;
-  private final String repositoryId;
-  private final boolean offline;
   private ScannerWorker scannerWorker;
   private State state = State.STOPPED;
 
-  public MavenScanner (String respositoryId, boolean offline, Duration cycleDuration, MavenCoordinate... mavenCoordinates) {
+  public MavenScanner (String repositoryId, boolean offline, Duration cycleDuration, MavenCoordinate... mavenCoordinates)
+    throws SettingsBuildingException {
 
+    this(new MavenRepository(repositoryId, offline), cycleDuration, mavenCoordinates);
+  }
+
+  public MavenScanner (String settingsDirectory, String repositoryId, boolean offline, Duration cycleDuration, MavenCoordinate... mavenCoordinates)
+    throws SettingsBuildingException {
+
+    this(new MavenRepository(settingsDirectory, repositoryId, offline), cycleDuration, mavenCoordinates);
+  }
+
+  private MavenScanner (MavenRepository mavenRepository, Duration cycleDuration, MavenCoordinate... mavenCoordinates) {
+
+    if (cycleDuration == null) {
+      throw new IllegalArgumentException("Must provide a cycle duration");
+    }
     if (mavenCoordinates == null) {
       throw new IllegalArgumentException("Must provide some maven coordinates");
     }
 
-    this.repositoryId = respositoryId;
+    this.mavenRepository = mavenRepository;
     this.cycleDuration = cycleDuration;
-    this.offline = offline;
     this.mavenCoordinates = mavenCoordinates;
 
     artifactTags = new ArtifactTag[mavenCoordinates.length];
@@ -117,7 +130,6 @@ public class MavenScanner {
   private synchronized void updateArtifact ()
     throws SettingsBuildingException, DependencyCollectionException, DependencyResolutionException, ArtifactResolutionException {
 
-    MavenRepository mavenRepository = new MavenRepository(repositoryId, offline);
     DefaultRepositorySystemSession session = mavenRepository.generateSession();
     MavenScannerEvent event;
     HashMap<Artifact, Artifact> artifactDeltaMap = new HashMap<>();
