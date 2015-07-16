@@ -121,7 +121,7 @@ public class MavenRepository {
 
     this.offline = offline;
 
-    request.setGlobalSettingsFile(new File(settingsDirectory + "/settings.xml"));
+    request.setGlobalSettingsFile(new File(((settingsDirectory == null) ? System.getProperty("user.home") + "/.m2" : settingsDirectory) + "/settings.xml"));
     settings = new DefaultSettingsBuilderFactory().newInstance().build(request).getEffectiveSettings();
 
     profileList = settings.getProfiles();
