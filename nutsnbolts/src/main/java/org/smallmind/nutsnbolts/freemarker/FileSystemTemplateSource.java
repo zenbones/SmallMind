@@ -34,37 +34,41 @@ package org.smallmind.nutsnbolts.freemarker;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
 
 public class FileSystemTemplateSource {
 
   private InputStream inputStream;
-  private ClassLoader classLoader;
-  private String name;
+  private Path templatePath;
 
-  public FileSystemTemplateSource (ClassLoader classLoader, String name) {
+  public FileSystemTemplateSource (Path templatePath) {
 
-    this.classLoader = classLoader;
-    this.name = name;
+    this.templatePath = templatePath;
+  }
 
-    inputStream = classLoader.getResourceAsStream(name);
+  public Path getTemplatePath () {
+
+    return templatePath;
+  }
+
+  public long getLastModified ()
+    throws IOException {
+
+    return Files.getLastModifiedTime(templatePath).toMillis();
   }
 
   public boolean exists () {
 
-    return inputStream != null;
+    return Files.isRegularFile(templatePath);
   }
 
-  public ClassLoader getClassLoader () {
+  public synchronized InputStream getInputStream ()
+    throws IOException {
 
-    return classLoader;
-  }
-
-  public String getName () {
-
-    return name;
-  }
-
-  public synchronized InputStream getInputStream () {
+    if (inputStream == null) {
+      inputStream = Files.newInputStream(templatePath);
+    }
 
     return inputStream;
   }
@@ -80,12 +84,12 @@ public class FileSystemTemplateSource {
   @Override
   public int hashCode () {
 
-    return classLoader.hashCode() ^ name.hashCode();
+    return templatePath.hashCode();
   }
 
   @Override
   public boolean equals (Object obj) {
 
-    return (obj instanceof FileSystemTemplateSource) && ((FileSystemTemplateSource)obj).getClassLoader().equals(classLoader) && ((FileSystemTemplateSource)obj).getName().equals(name);
+    return (obj instanceof FileSystemTemplateSource) && ((FileSystemTemplateSource) obj).getTemplatePath().equals(templatePath);
   }
 }
