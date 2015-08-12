@@ -15,6 +15,11 @@
       <single>installation directory</single>
     </arguments>
   </option>
+  <option name="progress-bar" flag="b">
+    <arguments>
+      <single>emulate a graphical progress bar</single>
+    </arguments>
+  </option>
   <option name="nexus-host" flag="h" required="true">
     <arguments>
       <single>nexus host</single>
