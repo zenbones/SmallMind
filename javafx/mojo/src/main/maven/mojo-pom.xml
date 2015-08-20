@@ -1,0 +1,42 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+
+  <dependencies>
+    <dependency>
+      <groupId>org.smallmind</groupId>
+      <artifactId>smallmind-javafx-mojo</artifactId>
+      <scope>compile</scope>
+    </dependency>
+  </dependencies>
+
+  <build>
+    <plugins>
+      <plugin>
+        <groupId>org.smallmind</groupId>
+        <artifactId>smallmind-javafx-mojo</artifactId>
+        <configuration>
+          <operatingSystem>WINDOWS_X86_64</operatingSystem>
+          <javaVersion>1.7+</javaVersion>
+          <javafxRuntime>2.1+</javafxRuntime>
+          <mainClass>com.mycompany..module.AdminApplication</mainClass>
+          <signjar>
+            <keystore>${project.basedir}/src/main/resources/jnlp/keystore.jks</keystore>
+            <storepass>store password</storepass>
+            <keypass>keystore password</keypass>
+            <alias>signFiles</alias>
+          </signjar>
+          <javafx>
+            <groupId>com.oracle</groupId>
+            <artifactId>javafx-rt</artifactId>
+          </javafx>
+          <jnlpParameters>
+            <jnlpParameter>
+              <name>ENV_PARAM_NAME</name>
+              <value>ENV_PARAM_VALUE</value>
+            </jnlpParameter>
+          </jnlpParameters>
+        </configuration>
+      </plugin>
+    </plugins>
+  </build>
+
+</project>

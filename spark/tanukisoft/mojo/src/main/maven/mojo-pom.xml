@@ -93,43 +93,43 @@
       <scope>compile</scope>
     </dependency>
   </dependencies>
+
   <build>
     <plugins>
       <plugin>
         <groupId>org.smallmind</groupId>
         <artifactId>spark-tanukisoft-mojo</artifactId>
-        <executions>
-          <execution>
-            <id>generate</id>
-            <goals>
-              <goal>generate-wrapper</goal>
-            </goals>
-          </execution>
-          <execution>
-            <id>install</id>
-            <goals>
-              <goal>install-wrapper</goal>
-            </goals>
-          </execution>
-          <execution>
-            <id>deploy</id>
-            <goals>
-              <goal>deploy-wrapper</goal>
-            </goals>
-          </execution>
-        </executions>
         <configuration>
+          <skip>false</skip>
           <licenseFile>${user.home}/.m2/wrapper-license.conf</licenseFile>
+          <runAs>root</runAs>
+          <useUpstart>true</useUpstart>
+          <compression>zip</compression>
+          <includeVersion>false</includeVersion>
           <operatingSystem>${tanukisoft.wrapper.os}</operatingSystem>
           <wrapperListener>org.smallmind.spark.tanukisoft.integration.spring.ClassPathXmlSpringContextWrapperListener</wrapperListener>
-          <jvmInitMemoryMB>64</jvmInitMemoryMB>
-          <jvmMaxMemoryMB>256</jvmMaxMemoryMB>
+          <jvmInitMemoryMB>512</jvmInitMemoryMB>
+          <jvmMaxMemoryMB>512</jvmMaxMemoryMB>
           <appParameters>
             <appParameter>com/mydomain/spring1.xml</appParameter>
             <appParameter>com/mydomain/spring2.xml</appParameter>
           </appParameters>
           <jvmArgs>
             <jvmArg>-server</jvmArg>
+            <jvmArg>-XX:PermSize=128m</jvmArg>
+            <jvmArg>-XX:+AggressiveOpts</jvmArg>
+            <jvmArg>-XX:+UseCompressedOops</jvmArg>
+            <jvmArg>-XX:+DoEscapeAnalysis</jvmArg>
+            <jvmArg>-XX:+UseConcMarkSweepGC</jvmArg>
+            <jvmArg>-XX:+UseParNewGC</jvmArg>
+            <jvmArg>-XX:ParallelGCThreads=16</jvmArg>
+            <!--
+            <jvmArg>-XX:+UnlockExperimentalVMOptions</jvmArg>
+            <jvmArg>-XX:+UseG1GC</jvmArg>
+            -->
+            <jvmArg>-XX:+UseNUMA</jvmArg>
+            <jvmArg>-Xdebug</jvmArg>
+            <jvmArg>-Xrunjdwp:transport=dt_socket,address=8178,server=y,suspend=n</jvmArg>
             <jvmArg>-Dtc.config=../conf/tc-config.xml</jvmArg>
           </jvmArgs>
           <configurations>

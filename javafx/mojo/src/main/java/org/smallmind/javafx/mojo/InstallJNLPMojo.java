@@ -61,13 +61,13 @@ public class InstallJNLPMojo extends AbstractMojo {
   private ArtifactRepository localRepository;
   @Parameter(property = "project.artifactId")
   private String artifactName;
-  @Parameter(defaultValue = "true")
-  private boolean engaged;
+  @Parameter(defaultValue = "false")
+  private boolean skip;
 
   public void execute ()
     throws MojoExecutionException, MojoFailureException {
 
-    if (engaged) {
+    if (!skip) {
 
       Artifact applicationArtifact;
       StringBuilder pathBuilder;

@@ -64,13 +64,13 @@ public class InstallWrapperMojo extends AbstractMojo {
   private String applicationName;
   @Parameter(defaultValue = "zip")
   private String compression;
-  @Parameter(defaultValue = "true")
-  private boolean engaged;
+  @Parameter(defaultValue = "false")
+  private boolean skip;
 
   public void execute ()
     throws MojoExecutionException, MojoFailureException {
 
-    if (engaged) {
+    if (!skip) {
 
       Artifact applicationArtifact;
       CompressionType compressionType;

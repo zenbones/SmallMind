@@ -121,13 +121,13 @@ public class GenerateWrapperMojo extends AbstractMojo {
   private boolean compactClasspath;
   @Parameter(defaultValue = "false")
   private boolean verbose;
-  @Parameter(defaultValue = "true")
-  private boolean engaged;
+  @Parameter(defaultValue = "false")
+  private boolean skip;
 
   public void execute ()
     throws MojoExecutionException, MojoFailureException {
 
-    if (engaged) {
+    if (!skip) {
 
       File binDirectory;
       File libDirectory;

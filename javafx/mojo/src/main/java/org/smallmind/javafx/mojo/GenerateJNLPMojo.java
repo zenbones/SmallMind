@@ -114,14 +114,14 @@ public class GenerateJNLPMojo extends AbstractMojo {
   private boolean includeHref;
   @Parameter(defaultValue = "false")
   private boolean verbose;
-  @Parameter(defaultValue = "true")
-  private boolean engaged;
+  @Parameter(defaultValue = "false")
+  private boolean skip;
 
   @Override
   public void execute ()
     throws MojoExecutionException {
 
-    if (engaged) {
+    if (!skip) {
 
       File deployDirectory;
       HashMap<String, Object> freemarkerMap;
@@ -134,29 +134,25 @@ public class GenerateJNLPMojo extends AbstractMojo {
 
       try {
         osType = OSType.valueOf(operatingSystem.replace('-', '_').toUpperCase());
-      }
-      catch (Exception exception) {
+      } catch (Exception exception) {
         throw new MojoExecutionException(String.format("Unknown operating system type(%s) - valid choices are %s", operatingSystem, Arrays.toString(OSType.values())), exception);
       }
 
       try {
         runtimeVersion = JavaFXRuntimeVersion.fromCode(javafxRuntime);
-      }
-      catch (Exception exception) {
+      } catch (Exception exception) {
         throw new MojoExecutionException(String.format("Unknown javafx runtime type(%s) - valid choices are %s", javafxRuntime, Arrays.toString(JavaFXRuntimeVersion.getValidCodes())), exception);
       }
 
       try {
         runtimeLocation = runtimeVersion.getLocation(osType);
-      }
-      catch (Exception exception) {
+      } catch (Exception exception) {
         throw new MojoExecutionException(String.format("The javafx runtime (%s) is not available on os type (%s)", runtimeVersion.getCode(), osType.name()), exception);
       }
 
       try {
         j2seVersion = J2SEVersion.fromCode(javaVersion);
-      }
-      catch (Exception exception) {
+      } catch (Exception exception) {
         throw new MojoExecutionException(String.format("Unknown java version(%s) - valid choices are %s", javaVersion, Arrays.toString(J2SEVersion.getValidCodes())), exception);
       }
 
@@ -214,12 +210,10 @@ public class GenerateJNLPMojo extends AbstractMojo {
           createJar(jarFile, new File(project.getBuild().getOutputDirectory()));
           fileSize = copyToDestination(jarFile, deployDirectory.getAbsolutePath(), jarFile.getName());
           dependencyList.addFirst(new JNLPDependency(jarFile.getName(), fileSize));
-        }
-        catch (IOException ioException) {
+        } catch (IOException ioException) {
           throw new MojoExecutionException(String.format("Problem in creating or copying the output jar(%s) into the deployment directory", jarFile.getName()), ioException);
         }
-      }
-      else {
+      } else {
         try {
 
           long fileSize;
@@ -230,8 +224,7 @@ public class GenerateJNLPMojo extends AbstractMojo {
 
           fileSize = copyToDestination(project.getArtifact().getFile(), deployDirectory.getAbsolutePath(), project.getArtifact().getFile().getName());
           dependencyList.addFirst(new JNLPDependency(project.getArtifact().getFile().getName(), fileSize));
-        }
-        catch (IOException ioException) {
+        } catch (IOException ioException) {
           throw new MojoExecutionException(String.format("Problem in copying the build artifact(%s) into the deployment directory", project.getArtifact()), ioException);
         }
       }
@@ -243,15 +236,13 @@ public class GenerateJNLPMojo extends AbstractMojo {
               getLog().info(String.format("Signing jar(%s)...", dependency.getName()));
 
               if (signjar.isVerbose()) {
-                sun.security.tools.JarSigner.main(new String[] {"-verbose", "-keystore", signjar.getKeystore(), "-storepass", signjar.getStorepass(), "-keypass", signjar.getKeypass(), "-sigfile", "SIGNATURE", deployDirectory.getAbsolutePath() + System.getProperty("file.separator") + dependency.getName(), signjar.getAlias()});
-              }
-              else {
-                sun.security.tools.JarSigner.main(new String[] {"-keystore", signjar.getKeystore(), "-storepass", signjar.getStorepass(), "-keypass", signjar.getKeypass(), "-sigfile", "SIGNATURE", deployDirectory.getAbsolutePath() + System.getProperty("file.separator") + dependency.getName(), signjar.getAlias()});
+                sun.security.tools.JarSigner.main(new String[]{"-verbose", "-keystore", signjar.getKeystore(), "-storepass", signjar.getStorepass(), "-keypass", signjar.getKeypass(), "-sigfile", "SIGNATURE", deployDirectory.getAbsolutePath() + System.getProperty("file.separator") + dependency.getName(), signjar.getAlias()});
+              } else {
+                sun.security.tools.JarSigner.main(new String[]{"-keystore", signjar.getKeystore(), "-storepass", signjar.getStorepass(), "-keypass", signjar.getKeypass(), "-sigfile", "SIGNATURE", deployDirectory.getAbsolutePath() + System.getProperty("file.separator") + dependency.getName(), signjar.getAlias()});
               }
             }
           }
-        }
-        catch (Exception exception) {
+        } catch (Exception exception) {
           throw new MojoExecutionException("Unable to sign jar files...", exception);
         }
       }
@@ -276,8 +267,7 @@ public class GenerateJNLPMojo extends AbstractMojo {
           }
 
           createJar(jarFile, new File(project.getBuild().getDirectory() + System.getProperty("file.separator") + deployDir));
-        }
-        catch (IOException ioException) {
+        } catch (IOException ioException) {
           throw new MojoExecutionException(String.format("Problem in creating the aggregated jar(%s)", jarFile.getName()), ioException);
         }
       }
@@ -340,8 +330,7 @@ public class GenerateJNLPMojo extends AbstractMojo {
 
           fileSize = copyToDestination(artifact.getFile(), deployDirectory.getAbsolutePath(), artifact.getFile().getName());
           dependencyList.add(new JNLPDependency(artifact.getFile().getName(), fileSize));
-        }
-        catch (IOException ioException) {
+        } catch (IOException ioException) {
           throw new MojoExecutionException(String.format("Problem in copying a dependency(%s) into the deployment directory", artifact), ioException);
         }
       }
@@ -431,29 +420,25 @@ public class GenerateJNLPMojo extends AbstractMojo {
 
     try {
       freemarkerTemplate = freemarkerConf.getTemplate(templatePath);
-    }
-    catch (IOException ioException) {
+    } catch (IOException ioException) {
       throw new MojoExecutionException(String.format("Unable to load template(%s) for translation", destinationName), ioException);
     }
 
     try {
       fileWriter = new FileWriter(outputDir.getAbsolutePath() + System.getProperty("file.separator") + destinationName);
-    }
-    catch (IOException ioException) {
+    } catch (IOException ioException) {
       throw new MojoExecutionException(String.format("Problem in creating a writer for the template(%s) file", destinationName), ioException);
     }
 
     try {
       freemarkerTemplate.process(interpolationMap, fileWriter);
-    }
-    catch (Exception exception) {
+    } catch (Exception exception) {
       throw new MojoExecutionException(String.format("Problem in processing the template(%s)", destinationName), exception);
     }
 
     try {
       fileWriter.close();
-    }
-    catch (IOException ioException) {
+    } catch (IOException ioException) {
       throw new MojoExecutionException(String.format("Problem in closing the template(%s) writer", destinationName), ioException);
     }
   }
