@@ -8,7 +8,7 @@
   </parent>
   <groupId>org.smallmind</groupId>
   <artifactId>smallmind</artifactId>
-  <version>1.8.8-SNAPSHOT</version>
+  <version>1.8.9-SNAPSHOT</version>
   <packaging>pom</packaging>
   <name>Parent</name>
   <description>Parent POM</description>
@@ -122,7 +122,6 @@
     <module>phalanx</module>
     <module>scheduling</module>
     <module>seda</module>
-    <module>identity</module>
     <module>artifact</module>
     <module>web</module>
     <module>spark</module>
