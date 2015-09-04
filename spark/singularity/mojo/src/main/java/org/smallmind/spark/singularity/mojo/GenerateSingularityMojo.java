@@ -61,6 +61,8 @@ public class GenerateSingularityMojo extends AbstractMojo {
   private MavenProject project;
   @Parameter(defaultValue = "singularity")
   private String singularityBuildDir;
+  @Parameter
+  private String mainClass;
   @Parameter(defaultValue = "false")
   private boolean verbose;
 

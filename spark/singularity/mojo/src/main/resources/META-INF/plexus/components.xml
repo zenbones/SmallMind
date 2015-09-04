@@ -3,7 +3,7 @@
   <components>
     <component>
       <role>org.apache.maven.lifecycle.mapping.LifecycleMapping</role>
-      <role-hint>tanukisoft</role-hint>
+      <role-hint>singularity</role-hint>
       <implementation>
         org.apache.maven.lifecycle.mapping.DefaultLifecycleMapping
       </implementation>

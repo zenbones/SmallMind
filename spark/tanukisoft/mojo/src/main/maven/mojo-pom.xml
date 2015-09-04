@@ -99,6 +99,7 @@
       <plugin>
         <groupId>org.smallmind</groupId>
         <artifactId>spark-tanukisoft-mojo</artifactId>
+        <extensions>true</extensions>
         <configuration>
           <skip>false</skip>
           <licenseFile>${user.home}/.m2/wrapper-license.conf</licenseFile>
