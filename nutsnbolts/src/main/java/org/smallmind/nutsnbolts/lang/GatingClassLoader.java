@@ -35,7 +35,10 @@ package org.smallmind.nutsnbolts.lang;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
+import java.util.Enumeration;
 import java.util.HashMap;
+import java.util.LinkedList;
+import org.smallmind.nutsnbolts.util.IteratorEnumeration;
 
 public class GatingClassLoader extends ClassLoader {
 
@@ -67,6 +70,50 @@ public class GatingClassLoader extends ClassLoader {
   public ClassGate[] getClassGates () {
 
     return classGates;
+  }
+
+  @Override
+  public synchronized Class loadClass (String name, boolean resolve)
+    throws ClassNotFoundException {
+
+    Class gatedClass;
+    ClassGateTicket classGateTicket;
+
+    if ((gatedClass = findLoadedClass(name)) != null) {
+      if (gracePeriodSeconds >= 0) {
+        synchronized (ticketMap) {
+          classGateTicket = ticketMap.get(name);
+        }
+
+        if (classGateTicket.getTimeStamp() != ClassGate.STATIC_CLASS) {
+          if (System.currentTimeMillis() >= (classGateTicket.getTimeStamp() + (gracePeriodSeconds * 1000))) {
+            if (classGateTicket.getClassGate().getLastModDate(name) > classGateTicket.getTimeStamp()) {
+              throw new StaleClassLoaderException(name);
+            }
+          }
+        }
+      }
+    } else {
+      if (getParent() != null) {
+        try {
+          gatedClass = getParent().loadClass(name);
+        } catch (ClassNotFoundException c) {
+          gatedClass = findClass(name);
+        }
+      } else {
+        try {
+          gatedClass = findSystemClass(name);
+        } catch (ClassNotFoundException c) {
+          gatedClass = findClass(name);
+        }
+      }
+    }
+
+    if (resolve) {
+      resolveClass(gatedClass);
+    }
+
+    return gatedClass;
   }
 
   @Override
@@ -121,62 +168,7 @@ public class GatingClassLoader extends ClassLoader {
   }
 
   @Override
-  public Class loadClass (String name)
-    throws ClassNotFoundException {
-
-    return loadClass(name, false);
-  }
-
-  @Override
-  public synchronized Class loadClass (String name, boolean resolve)
-    throws ClassNotFoundException {
-
-    Class gatedClass;
-    ClassGateTicket classGateTicket;
-
-    if ((gatedClass = findLoadedClass(name)) != null) {
-      if (gracePeriodSeconds >= 0) {
-        synchronized (ticketMap) {
-          classGateTicket = ticketMap.get(name);
-        }
-
-        if (classGateTicket.getTimeStamp() != ClassGate.STATIC_CLASS) {
-          if (System.currentTimeMillis() >= (classGateTicket.getTimeStamp() + (gracePeriodSeconds * 1000))) {
-            if (classGateTicket.getClassGate().getLastModDate(name) > classGateTicket.getTimeStamp()) {
-              throw new StaleClassLoaderException(name);
-            }
-          }
-        }
-      }
-    }
-
-    if (gatedClass == null) {
-      try {
-        gatedClass = findClass(name);
-      } catch (ClassNotFoundException c) {
-      }
-    }
-
-    if (getParent() != null) {
-      try {
-        gatedClass = getParent().loadClass(name);
-      } catch (ClassNotFoundException c) {
-      }
-    }
-
-    if (gatedClass == null) {
-      gatedClass = findSystemClass(name);
-    }
-
-    if (resolve) {
-      resolveClass(gatedClass);
-    }
-
-    return gatedClass;
-  }
-
-  @Override
-  public URL getResource (String name) {
+  public URL findResource (String name) {
 
     URL resourceURL;
 
@@ -189,23 +181,26 @@ public class GatingClassLoader extends ClassLoader {
       }
     }
 
-    return super.getResource(name);
+    return null;
   }
 
   @Override
-  public InputStream getResourceAsStream (String name) {
+  protected Enumeration<URL> findResources (String name) {
 
-    InputStream resourceStream;
+    LinkedList<URL> urlList = new LinkedList<>();
 
     for (ClassGate classGate : classGates) {
+
+      URL resourceURL;
+
       try {
-        if ((resourceStream = classGate.getResourceAsStream(name)) != null) {
-          return resourceStream;
+        if ((resourceURL = classGate.getResource(name)) != null) {
+          urlList.add(resourceURL);
         }
       } catch (Exception exception) {
       }
     }
 
-    return super.getResourceAsStream(name);
+    return new IteratorEnumeration<>(urlList.iterator());
   }
 }

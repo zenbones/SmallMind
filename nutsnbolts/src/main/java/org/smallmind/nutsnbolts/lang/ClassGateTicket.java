@@ -52,5 +52,4 @@ public class ClassGateTicket {
 
     return timeStamp;
   }
-
 }

@@ -54,7 +54,6 @@ public class ClassStreamTicket {
 
     return timeStamp;
   }
-
 }
 
 
