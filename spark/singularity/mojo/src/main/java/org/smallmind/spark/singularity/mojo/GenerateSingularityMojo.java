@@ -32,6 +32,18 @@
  */
 package org.smallmind.spark.singularity.mojo;
 
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.nio.channels.FileChannel;
+import java.nio.file.FileVisitResult;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.SimpleFileVisitor;
+import java.nio.file.attribute.BasicFileAttributes;
+import org.apache.maven.artifact.Artifact;
 import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.MojoFailureException;
@@ -47,9 +59,90 @@ public class GenerateSingularityMojo extends AbstractMojo {
 
   @Parameter(readonly = true, property = "project")
   private MavenProject project;
+  @Parameter(defaultValue = "singularity")
+  private String singularityBuildDir;
+  @Parameter(defaultValue = "false")
+  private boolean verbose;
 
   public void execute ()
     throws MojoExecutionException, MojoFailureException {
 
+    Path buildPath;
+
+    try {
+      Files.createDirectories(buildPath = Paths.get(project.getBuild().getDirectory(), singularityBuildDir));
+    } catch (IOException ioException) {
+      throw new MojoExecutionException("Unable to create a build directory", ioException);
+    }
+
+    for (Artifact artifact : project.getRuntimeArtifacts()) {
+      try {
+        if (verbose) {
+          getLog().info(String.format("Copying dependency(%s)...", artifact.getFile().getName()));
+        }
+
+        copyToDestination(artifact.getFile(), buildPath.resolve(artifact.getFile().getName()));
+      } catch (IOException ioException) {
+        throw new MojoExecutionException(String.format("Problem in copying a dependency(%s) into the application library", artifact), ioException);
+      }
+    }
+
+    try {
+      Files.walkFileTree(Paths.get(project.getBuild().getDirectory(), "classes"), new CopyFileVisitor(buildPath));
+    } catch (IOException ioException) {
+      throw new MojoExecutionException("Unable to copy the classes directory into the build path", ioException);
+    }
+  }
+
+  public void copyToDestination (File file, Path destinationPath)
+    throws IOException {
+
+    FileInputStream inputStream;
+    FileOutputStream outputStream;
+    FileChannel readChannel;
+    FileChannel writeChannel;
+    long bytesTransferred;
+    long currentPosition = 0;
+
+    readChannel = (inputStream = new FileInputStream(file)).getChannel();
+    writeChannel = (outputStream = new FileOutputStream(destinationPath.toFile())).getChannel();
+    while ((currentPosition < readChannel.size()) && (bytesTransferred = readChannel.transferTo(currentPosition, 8192, writeChannel)) >= 0) {
+      currentPosition += bytesTransferred;
+    }
+    outputStream.close();
+    inputStream.close();
+  }
+
+  public class CopyFileVisitor extends SimpleFileVisitor<Path> {
+
+    private final Path targetPath;
+    private Path sourcePath;
+
+    public CopyFileVisitor (Path targetPath) {
+
+      this.targetPath = targetPath;
+    }
+
+    @Override
+    public FileVisitResult preVisitDirectory (final Path dir, final BasicFileAttributes attrs)
+      throws IOException {
+
+      if (sourcePath == null) {
+        sourcePath = dir;
+      }
+
+      Files.createDirectories(targetPath.resolve(sourcePath.relativize(dir)));
+
+      return FileVisitResult.CONTINUE;
+    }
+
+    @Override
+    public FileVisitResult visitFile (final Path file, final BasicFileAttributes attrs)
+      throws IOException {
+
+      Files.copy(file, targetPath.resolve(sourcePath.relativize(file)));
+
+      return FileVisitResult.CONTINUE;
+    }
   }
 }
