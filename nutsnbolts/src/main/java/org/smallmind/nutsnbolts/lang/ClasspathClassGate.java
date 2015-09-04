@@ -63,7 +63,7 @@ public class ClasspathClassGate implements ClassGate {
 
     this.pathComponents = pathComponents;
 
-    filePathMap = new HashMap<String, String>();
+    filePathMap = new HashMap<>();
   }
 
   public long getLastModDate (String name) {
