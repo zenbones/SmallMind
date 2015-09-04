@@ -44,6 +44,11 @@ public class GatingClassLoader extends ClassLoader {
   private ClassGate[] classGates;
   private int gracePeriodSeconds;
 
+  static {
+
+    ClassLoader.registerAsParallelCapable();
+  }
+
   public GatingClassLoader (int gracePeriodSeconds, ClassGate... classGates) {
 
     this(null, gracePeriodSeconds, classGates);
@@ -64,6 +69,7 @@ public class GatingClassLoader extends ClassLoader {
     return classGates;
   }
 
+  @Override
   public Class findClass (String name)
     throws ClassNotFoundException {
 
@@ -89,8 +95,7 @@ public class GatingClassLoader extends ClassLoader {
 
           return definedClass;
         }
-      }
-      catch (Exception exception) {
+      } catch (Exception exception) {
         throw new ClassNotFoundException("Exception encountered while attempting to define class (" + name + ")", exception);
       }
     }
@@ -115,12 +120,14 @@ public class GatingClassLoader extends ClassLoader {
     return classData;
   }
 
+  @Override
   public Class loadClass (String name)
     throws ClassNotFoundException {
 
     return loadClass(name, false);
   }
 
+  @Override
   public synchronized Class loadClass (String name, boolean resolve)
     throws ClassNotFoundException {
 
@@ -146,16 +153,14 @@ public class GatingClassLoader extends ClassLoader {
     if (gatedClass == null) {
       try {
         gatedClass = findClass(name);
-      }
-      catch (ClassNotFoundException c) {
+      } catch (ClassNotFoundException c) {
       }
     }
 
     if (getParent() != null) {
       try {
         gatedClass = getParent().loadClass(name);
-      }
-      catch (ClassNotFoundException c) {
+      } catch (ClassNotFoundException c) {
       }
     }
 
@@ -180,14 +185,14 @@ public class GatingClassLoader extends ClassLoader {
         if ((resourceURL = classGate.getResource(name)) != null) {
           return resourceURL;
         }
-      }
-      catch (Exception exception) {
+      } catch (Exception exception) {
       }
     }
 
     return super.getResource(name);
   }
 
+  @Override
   public InputStream getResourceAsStream (String name) {
 
     InputStream resourceStream;
@@ -197,8 +202,7 @@ public class GatingClassLoader extends ClassLoader {
         if ((resourceStream = classGate.getResourceAsStream(name)) != null) {
           return resourceStream;
         }
-      }
-      catch (Exception exception) {
+      } catch (Exception exception) {
       }
     }
 
