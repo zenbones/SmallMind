@@ -168,6 +168,29 @@ public class GatingClassLoader extends ClassLoader {
   }
 
   @Override
+  public InputStream getResourceAsStream (String name) {
+
+    InputStream resourceStream;
+
+    if ((resourceStream = super.getResourceAsStream(name)) != null) {
+
+      return resourceStream;
+    }
+
+    for (ClassGate classGate : classGates) {
+      try {
+        if ((resourceStream = classGate.getResourceAsStream(name)) != null) {
+
+          return resourceStream;
+        }
+      } catch (Exception exception) {
+      }
+    }
+
+    return null;
+  }
+
+  @Override
   public URL findResource (String name) {
 
     URL resourceURL;
@@ -175,6 +198,7 @@ public class GatingClassLoader extends ClassLoader {
     for (ClassGate classGate : classGates) {
       try {
         if ((resourceURL = classGate.getResource(name)) != null) {
+
           return resourceURL;
         }
       } catch (Exception exception) {
