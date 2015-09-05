@@ -9,7 +9,7 @@
   <artifactId>forge-deploy</artifactId>
   <name>Forge-Deploy</name>
   <description>Deployment Automation</description>
-  <packaging>jar</packaging>
+  <packaging>singularity</packaging>
 
   <dependencies>
     <dependency>
@@ -31,19 +31,11 @@
   <build>
     <plugins>
       <plugin>
-        <groupId>com.jolira</groupId>
-        <artifactId>onejar-maven-plugin</artifactId>
-        <executions>
-          <execution>
-            <goals>
-              <goal>one-jar</goal>
-            </goals>
-          </execution>
-        </executions>
+        <groupId>org.smallmind</groupId>
+        <artifactId>spark-singularity-mojo</artifactId>
+        <extensions>true</extensions>
         <configuration>
           <mainClass>org.smallmind.forge.deploy.cli.ApplicationUpdaterCLI</mainClass>
-          <classifier>onejar</classifier>
-          <attachToBuild>true</attachToBuild>
         </configuration>
       </plugin>
     </plugins>

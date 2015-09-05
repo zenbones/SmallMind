@@ -816,9 +816,9 @@
           </configuration>
         </plugin>
         <plugin>
-          <groupId>com.jolira</groupId>
-          <artifactId>onejar-maven-plugin</artifactId>
-          <version>1.4.4</version>
+          <groupId>org.smallmind</groupId>
+          <artifactId>spark-singularity-mojo</artifactId>
+          <version>${project.version}</version>
         </plugin>
       </plugins>
     </pluginManagement>
