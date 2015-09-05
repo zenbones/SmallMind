@@ -30,7 +30,7 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.spark.tanukisoft.mojo;
+package org.smallmind.nutsnbolts.maven;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -47,7 +47,7 @@ public enum CompressionType {
 
   JAR("jar") {
     @Override
-    public void compress (File compressedFile, File directoryToCompress)
+    public void compress (File compressedFile, File directoryToCompress, Manifest manifest)
       throws IOException {
 
       FileOutputStream fileOutputStream;
@@ -55,7 +55,7 @@ public enum CompressionType {
       JarEntry jarEntry;
 
       fileOutputStream = new FileOutputStream(compressedFile);
-      jarOutputStream = new JarOutputStream(fileOutputStream, new Manifest());
+      jarOutputStream = new JarOutputStream(fileOutputStream, (manifest == null) ? new Manifest() : manifest);
       for (File outputFile : new FileIterator(directoryToCompress)) {
         if (!outputFile.equals(compressedFile)) {
           jarEntry = new JarEntry(outputFile.getCanonicalPath().substring(directoryToCompress.getAbsolutePath().length() + 1).replace(System.getProperty("file.separator"), "/"));
@@ -84,8 +84,12 @@ public enum CompressionType {
   },
   ZIP("zip") {
     @Override
-    public void compress (File compressedFile, File directoryToCompress)
+    public void compress (File compressedFile, File directoryToCompress, Manifest manifest)
       throws IOException {
+
+      if (manifest != null) {
+        throw new IllegalArgumentException("Zip files do not use a manifest");
+      }
 
       FileOutputStream fileOutputStream;
       ZipOutputStream zipOutputStream;
@@ -119,14 +123,21 @@ public enum CompressionType {
       inputStream.close();
     }
   };
+
   private String extension;
 
-  private CompressionType (String extension) {
+  CompressionType (String extension) {
 
     this.extension = extension;
   }
 
-  public abstract void compress (File compressedFile, File directoryToCompress)
+  public void compress (File compressedFile, File directoryToCompress)
+    throws IOException {
+
+    compress(compressedFile, directoryToCompress, null);
+  }
+
+  public abstract void compress (File compressedFile, File directoryToCompress, Manifest manifest)
     throws IOException;
 
   public String getExtension () {

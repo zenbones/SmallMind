@@ -47,6 +47,7 @@ import org.apache.maven.plugins.annotations.LifecyclePhase;
 import org.apache.maven.plugins.annotations.Mojo;
 import org.apache.maven.plugins.annotations.Parameter;
 import org.apache.maven.project.MavenProject;
+import org.smallmind.nutsnbolts.maven.CompressionType;
 
 // Installs Tanukisoft based os service wrappers
 @Mojo(name = "install-wrapper", defaultPhase = LifecyclePhase.INSTALL, threadSafe = true)

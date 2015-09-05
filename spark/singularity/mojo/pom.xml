@@ -13,6 +13,11 @@
   <dependencies>
     <dependency>
       <groupId>org.smallmind</groupId>
+      <artifactId>smallmind-nutsnbolts</artifactId>
+      <scope>compile</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.smallmind</groupId>
       <artifactId>spark-singularity-boot</artifactId>
       <scope>compile</scope>
     </dependency>

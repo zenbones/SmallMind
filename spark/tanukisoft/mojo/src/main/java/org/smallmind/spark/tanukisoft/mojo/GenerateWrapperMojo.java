@@ -56,6 +56,7 @@ import org.apache.maven.plugins.annotations.Parameter;
 import org.apache.maven.plugins.annotations.ResolutionScope;
 import org.apache.maven.project.MavenProject;
 import org.smallmind.nutsnbolts.freemarker.ClassPathTemplateLoader;
+import org.smallmind.nutsnbolts.maven.CompressionType;
 
 // Generates Tanukisoft based os service wrappers
 @Mojo(name = "generate-wrapper", defaultPhase = LifecyclePhase.PACKAGE, requiresDependencyResolution = ResolutionScope.RUNTIME, threadSafe = true)
@@ -484,7 +485,7 @@ public class GenerateWrapperMojo extends AbstractMojo {
     return inputStream;
   }
 
-  public void copyToDestination (File file, String destinationPath, String destinationName)
+  private void copyToDestination (File file, String destinationPath, String destinationName)
     throws IOException {
 
     FileInputStream inputStream;
@@ -503,7 +504,7 @@ public class GenerateWrapperMojo extends AbstractMojo {
     inputStream.close();
   }
 
-  public void copyToDestination (InputStream inputStream, String destinationPath, String destinationName)
+  private void copyToDestination (InputStream inputStream, String destinationPath, String destinationName)
     throws IOException {
 
     FileOutputStream outputStream;

@@ -46,8 +46,10 @@ import java.nio.file.SimpleFileVisitor;
 import java.nio.file.StandardOpenOption;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.List;
+import java.util.jar.Attributes;
 import java.util.jar.JarEntry;
 import java.util.jar.JarInputStream;
+import java.util.jar.Manifest;
 import org.apache.maven.artifact.Artifact;
 import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugin.MojoExecutionException;
@@ -57,6 +59,8 @@ import org.apache.maven.plugins.annotations.Mojo;
 import org.apache.maven.plugins.annotations.Parameter;
 import org.apache.maven.plugins.annotations.ResolutionScope;
 import org.apache.maven.project.MavenProject;
+import org.smallmind.nutsnbolts.maven.CompressionType;
+import org.smallmind.spark.singularity.boot.SingularityEntryPoint;
 
 // Generates Singularity based one jar applications
 @Mojo(name = "generate-singularity", defaultPhase = LifecyclePhase.PACKAGE, requiresDependencyResolution = ResolutionScope.RUNTIME, threadSafe = true)
@@ -103,11 +107,15 @@ public class GenerateSingularityMojo extends AbstractMojo {
 
     for (Artifact artifact : project.getRuntimeArtifacts()) {
       try {
+
+        Path libraryPath;
+
         if (verbose) {
           getLog().info(String.format("Copying dependency(%s)...", artifact.getFile().getName()));
         }
 
-        copyToDestination(artifact.getFile(), buildPath.resolve(artifact.getFile().getName()));
+        Files.createDirectories(libraryPath = buildPath.resolve("META-INF").resolve("singularity"));
+        copyToDestination(artifact.getFile(), libraryPath.resolve(artifact.getFile().getName()));
       } catch (IOException ioException) {
         throw new MojoExecutionException(String.format("Problem in copying a dependency(%s) into the build directory", artifact), ioException);
       }
@@ -118,9 +126,34 @@ public class GenerateSingularityMojo extends AbstractMojo {
     } catch (IOException ioException) {
       throw new MojoExecutionException("Unable to copy the classes directory into the build path", ioException);
     }
+
+    try {
+
+      Manifest manifest = new Manifest();
+      Attributes attributes = manifest.getMainAttributes();
+
+      attributes.put(Attributes.Name.MAIN_CLASS, SingularityEntryPoint.class.getName());
+      attributes.put(new Attributes.Name("Singularity-Class"), mainClass);
+      attributes.put(Attributes.Name.MANIFEST_VERSION, "1.0");
+
+      CompressionType.JAR.compress(Paths.get(project.getBuild().getDirectory(), constructArtifactName()).toFile(), buildPath.toFile(), manifest);
+    } catch (IOException ioException) {
+      throw new MojoExecutionException("Problem constructing the executable jar", ioException);
+    }
   }
 
-  public void copyToDestination (File file, Path destinationPath)
+  private String constructArtifactName () {
+
+    StringBuilder nameBuilder = new StringBuilder(project.getArtifactId()).append('-').append(project.getVersion());
+
+    if (project.getArtifact().getClassifier() != null) {
+      nameBuilder.append('-').append(project.getArtifact().getClassifier());
+    }
+
+    return nameBuilder.append(".jar").toString();
+  }
+
+  private void copyToDestination (File file, Path destinationPath)
     throws IOException {
 
     FileInputStream inputStream;

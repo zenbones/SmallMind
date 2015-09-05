@@ -39,7 +39,7 @@ import java.net.URLConnection;
 import java.net.URLStreamHandler;
 import java.net.URLStreamHandlerFactory;
 
-public class SingularityClassGate {
+public class SingularityClassLoader {
 
   static {
 
