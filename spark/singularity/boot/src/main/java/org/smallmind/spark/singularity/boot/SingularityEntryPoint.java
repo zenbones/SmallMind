@@ -53,7 +53,7 @@ public class SingularityEntryPoint {
 
     try (JarInputStream jarInputStream = new JarInputStream(codeSource.getLocation().openStream())) {
       manifest = jarInputStream.getManifest();
-      Thread.currentThread().setContextClassLoader(new SingularityClassLoader(Thread.currentThread().getContextClassLoader(), jarInputStream));
+      Thread.currentThread().setContextClassLoader(new SingularityClassLoader(Thread.currentThread().getContextClassLoader(), codeSource.getLocation(), jarInputStream));
     }
 
     if ((mainClass = manifest.getMainAttributes().getValue(new Attributes.Name("Singularity-Class"))) != null) {
