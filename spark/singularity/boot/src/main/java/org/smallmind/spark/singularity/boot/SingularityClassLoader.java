@@ -32,9 +32,11 @@
  */
 package org.smallmind.spark.singularity.boot;
 
+import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.ObjectInputStream;
 import java.net.URL;
 import java.util.Enumeration;
 import java.util.HashMap;
@@ -52,29 +54,42 @@ public class SingularityClassLoader extends ClassLoader {
   }
 
   public SingularityClassLoader (ClassLoader parent, URL jarURL, JarInputStream jarInputStream)
-    throws IOException {
+    throws IOException, ClassNotFoundException {
 
     super(parent);
 
+    SingularityIndex singularityIndex = null;
     JarEntry jarEntry;
 
     while ((jarEntry = jarInputStream.getNextJarEntry()) != null) {
       if (!jarEntry.isDirectory()) {
-        if (!jarEntry.getName().startsWith("META-INF/")) {
-          urlMap.put(jarEntry.getName(), new URL("jar", "localhost", jarURL.toExternalForm() + "!/" + jarEntry.getName()));
-        } else if (jarEntry.getName().startsWith("META-INF/singularity/") && jarEntry.getName().endsWith(".jar")) {
-          try (JarInputStream innerJarInputStream = new JarInputStream(new CloseIgnoringInputStream(jarInputStream))) {
+        if (jarEntry.getName().equals("META-INF/index/singularity.idx")) {
+          ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
 
-            JarEntry innerJarEntry;
+          int singleByte;
 
-            while ((innerJarEntry = innerJarInputStream.getNextJarEntry()) != null) {
-              if (!(innerJarEntry.isDirectory() || innerJarEntry.getName().startsWith("META-INF/"))) {
-                urlMap.put(innerJarEntry.getName(), new URL("singularity", "localhost", jarURL.toExternalForm() + "!!/" + jarEntry.getName() + "!/" + innerJarEntry.getName()));
-              }
-            }
+          while ((singleByte = jarInputStream.read()) >= 0) {
+            byteArrayOutputStream.write(singleByte);
           }
+          byteArrayOutputStream.close();
+
+          try (ObjectInputStream objectInputStream = new ObjectInputStream(new ByteArrayInputStream(byteArrayOutputStream.toByteArray()))) {
+            singularityIndex = (SingularityIndex)objectInputStream.readObject();
+          }
+          break;
         }
       }
+    }
+
+    if (singularityIndex == null) {
+      throw new IOException("Missing singularity index");
+    }
+
+    for (SingularityIndex.URLEntry urlEntry : singularityIndex.getJarURLEntryIterable(jarURL.toExternalForm())) {
+      urlMap.put(urlEntry.getEntryName(), urlEntry.getEntryURL());
+    }
+    for (SingularityIndex.URLEntry urlEntry : singularityIndex.getSingularityURLEntryIterable(jarURL.toExternalForm())) {
+      urlMap.put(urlEntry.getEntryName(), urlEntry.getEntryURL());
     }
   }
 

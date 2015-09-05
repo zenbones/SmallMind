@@ -36,6 +36,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.ObjectOutputStream;
 import java.io.OutputStream;
 import java.nio.channels.FileChannel;
 import java.nio.file.FileVisitResult;
@@ -48,6 +49,7 @@ import java.nio.file.attribute.BasicFileAttributes;
 import java.util.List;
 import java.util.jar.Attributes;
 import java.util.jar.JarEntry;
+import java.util.jar.JarFile;
 import java.util.jar.JarInputStream;
 import java.util.jar.Manifest;
 import org.apache.maven.artifact.Artifact;
@@ -60,7 +62,9 @@ import org.apache.maven.plugins.annotations.Parameter;
 import org.apache.maven.plugins.annotations.ResolutionScope;
 import org.apache.maven.project.MavenProject;
 import org.smallmind.nutsnbolts.maven.CompressionType;
+import org.smallmind.nutsnbolts.util.EnumerationIterator;
 import org.smallmind.spark.singularity.boot.SingularityEntryPoint;
+import org.smallmind.spark.singularity.boot.SingularityIndex;
 
 // Generates Singularity based one jar applications
 @Mojo(name = "generate-singularity", defaultPhase = LifecyclePhase.PACKAGE, requiresDependencyResolution = ResolutionScope.RUNTIME, threadSafe = true)
@@ -80,11 +84,16 @@ public class GenerateSingularityMojo extends AbstractMojo {
   public void execute ()
     throws MojoExecutionException, MojoFailureException {
 
+    SingularityIndex singularityIndex = new SingularityIndex();
     Path buildPath;
+    Path libraryPath;
+    Path indexPath;
     boolean bootClassesFound = false;
 
     try {
       Files.createDirectories(buildPath = Paths.get(project.getBuild().getDirectory(), singularityBuildDir));
+      Files.createDirectories(libraryPath = buildPath.resolve("META-INF").resolve("singularity"));
+      Files.createDirectories(indexPath = buildPath.resolve("META-INF").resolve("index"));
     } catch (IOException ioException) {
       throw new MojoExecutionException("Unable to create a build directory", ioException);
     }
@@ -92,7 +101,7 @@ public class GenerateSingularityMojo extends AbstractMojo {
     for (Artifact pluginArtifact : pluginArtifacts) {
       if (pluginArtifact.getGroupId().equals("org.smallmind") && pluginArtifact.getArtifactId().equals("spark-singularity-boot")) {
         try {
-          copyBootClasses(pluginArtifact.getFile(), buildPath);
+          copyBootClasses(singularityIndex, pluginArtifact.getFile(), buildPath);
         } catch (IOException ioException) {
           throw new MojoExecutionException("Problem in copying boot classes into the build directory", ioException);
         }
@@ -106,25 +115,43 @@ public class GenerateSingularityMojo extends AbstractMojo {
     }
 
     for (Artifact artifact : project.getRuntimeArtifacts()) {
+      if (verbose) {
+        getLog().info(String.format("Copying dependency(%s)...", artifact.getFile().getName()));
+      }
+
       try {
 
-        Path libraryPath;
+        JarFile jarFile;
 
-        if (verbose) {
-          getLog().info(String.format("Copying dependency(%s)...", artifact.getFile().getName()));
+        jarFile = new JarFile(artifact.getFile());
+        for (JarEntry jarEntry : new EnumerationIterator<>(jarFile.entries())) {
+          singularityIndex.addInverseJarEntry(jarEntry.getName(), artifact.getFile().getName());
         }
 
-        Files.createDirectories(libraryPath = buildPath.resolve("META-INF").resolve("singularity"));
         copyToDestination(artifact.getFile(), libraryPath.resolve(artifact.getFile().getName()));
       } catch (IOException ioException) {
         throw new MojoExecutionException(String.format("Problem in copying a dependency(%s) into the build directory", artifact), ioException);
       }
     }
 
+    if (verbose) {
+      getLog().info("Copying classes directory...");
+    }
     try {
-      Files.walkFileTree(Paths.get(project.getBuild().getDirectory(), "classes"), new CopyFileVisitor(buildPath));
+      Files.walkFileTree(Paths.get(project.getBuild().getDirectory(), "classes"), new CopyFileVisitor(singularityIndex, buildPath));
     } catch (IOException ioException) {
       throw new MojoExecutionException("Unable to copy the classes directory into the build path", ioException);
+    }
+
+    if (verbose) {
+      getLog().info("Creating singularity index...");
+    }
+    try {
+      try (ObjectOutputStream objectOutputStream = new ObjectOutputStream(new FileOutputStream(indexPath.resolve("singularity.idx").toFile()))) {
+        objectOutputStream.writeObject(singularityIndex);
+      }
+    } catch (IOException ioException) {
+      throw new MojoExecutionException("Unable to write the singuarity index", ioException);
     }
 
     try {
@@ -135,6 +162,10 @@ public class GenerateSingularityMojo extends AbstractMojo {
       attributes.put(Attributes.Name.MAIN_CLASS, SingularityEntryPoint.class.getName());
       attributes.put(new Attributes.Name("Singularity-Class"), mainClass);
       attributes.put(Attributes.Name.MANIFEST_VERSION, "1.0");
+
+      if (verbose) {
+        getLog().info("Compressing output jar...");
+      }
 
       CompressionType.JAR.compress(Paths.get(project.getBuild().getDirectory(), constructArtifactName()).toFile(), buildPath.toFile(), manifest);
     } catch (IOException ioException) {
@@ -172,7 +203,7 @@ public class GenerateSingularityMojo extends AbstractMojo {
     inputStream.close();
   }
 
-  private void copyBootClasses (File jarFile, Path destinationPath)
+  private void copyBootClasses (SingularityIndex singularityIndex, File jarFile, Path destinationPath)
     throws IOException {
 
     byte[] buffer = new byte[1024];
@@ -183,6 +214,9 @@ public class GenerateSingularityMojo extends AbstractMojo {
 
       while ((jarEntry = jarInputStream.getNextJarEntry()) != null) {
         if ((!jarEntry.isDirectory()) && jarEntry.getName().startsWith("org/smallmind/spark/singularity/boot/")) {
+          if (verbose) {
+            getLog().info(String.format("Copying boot class(%s)...", jarEntry.getName()));
+          }
 
           Files.createDirectories(destinationPath.resolve(jarEntry.getName().substring(0, jarEntry.getName().lastIndexOf('/'))));
 
@@ -198,6 +232,8 @@ public class GenerateSingularityMojo extends AbstractMojo {
               totalBytesRead += bytesRead;
             } while (totalBytesRead < totalBytesToRead);
           }
+
+          singularityIndex.addFileName(jarEntry.getName());
         }
       }
     }
@@ -205,11 +241,13 @@ public class GenerateSingularityMojo extends AbstractMojo {
 
   private static class CopyFileVisitor extends SimpleFileVisitor<Path> {
 
+    private final SingularityIndex singularityIndex;
     private final Path targetPath;
     private Path sourcePath;
 
-    public CopyFileVisitor (Path targetPath) {
+    public CopyFileVisitor (SingularityIndex singularityIndex, Path targetPath) {
 
+      this.singularityIndex = singularityIndex;
       this.targetPath = targetPath;
     }
 
@@ -230,7 +268,10 @@ public class GenerateSingularityMojo extends AbstractMojo {
     public FileVisitResult visitFile (final Path file, final BasicFileAttributes attrs)
       throws IOException {
 
-      Files.copy(file, targetPath.resolve(sourcePath.relativize(file)));
+      Path jarPath;
+
+      Files.copy(file, targetPath.resolve(jarPath = sourcePath.relativize(file)));
+      singularityIndex.addFileName(jarPath.toString().replace(System.getProperty("file.separator"), "/"));
 
       return FileVisitResult.CONTINUE;
     }
