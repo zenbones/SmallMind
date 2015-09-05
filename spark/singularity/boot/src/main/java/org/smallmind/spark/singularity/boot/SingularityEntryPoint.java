@@ -33,37 +33,36 @@
 package org.smallmind.spark.singularity.boot;
 
 import java.io.IOException;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.security.CodeSource;
 import java.security.ProtectionDomain;
-import java.util.Map;
+import java.util.jar.Attributes;
 import java.util.jar.JarInputStream;
 import java.util.jar.Manifest;
 
 public class SingularityEntryPoint {
 
-  /*
-  Build-Jdk:1.7.0_71
-Built-By:david_000
-Manifest-Version:1.0
-Created-By:Apache Maven 3.2.5
-Main-Class:org.smallmind.spark.singularity.boot.SingularityEntryPoint
-Archiver-Version:Plexus Archiver
-   */
-
   public static void main (String... args)
-    throws IOException {
+    throws IOException, ClassNotFoundException, NoSuchMethodException, IllegalAccessException, InvocationTargetException {
 
     ProtectionDomain protectionDomain = SingularityEntryPoint.class.getProtectionDomain();
     CodeSource codeSource = protectionDomain.getCodeSource();
     Manifest manifest;
+    String mainClass;
 
     try (JarInputStream jarInputStream = new JarInputStream(codeSource.getLocation().openStream())) {
       manifest = jarInputStream.getManifest();
     }
 
-    System.out.println(manifest.getMainAttributes().size());
-    for (Map.Entry<Object, Object> entry : manifest.getMainAttributes().entrySet()) {
-      System.out.println(entry.getKey().toString() + ":" + entry.getValue().toString());
+    if ((mainClass = manifest.getMainAttributes().getValue(new Attributes.Name("Singularity-Class"))) != null) {
+      if (!mainClass.equals(SingularityEntryPoint.class.getName())) {
+
+        Class<?> clazz = Thread.currentThread().getContextClassLoader().loadClass(mainClass);
+        Method main = clazz.getMethod("main", String[].class);
+
+        main.invoke(null, new Object[]{args});
+      }
     }
   }
 }
