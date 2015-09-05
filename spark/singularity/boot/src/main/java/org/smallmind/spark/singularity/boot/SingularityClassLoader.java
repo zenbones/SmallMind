@@ -47,6 +47,7 @@ public class SingularityClassLoader extends ClassLoader {
   static {
 
     ClassLoader.registerAsParallelCapable();
+    URL.setURLStreamHandlerFactory(new SingularityJarURLStreamHandlerFactory());
   }
 
   public SingularityClassLoader (ClassLoader parent, URL jarURL, JarInputStream jarInputStream)
