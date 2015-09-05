@@ -60,8 +60,10 @@ public enum CompressionType {
         if (!outputFile.equals(compressedFile)) {
           jarEntry = new JarEntry(outputFile.getCanonicalPath().substring(directoryToCompress.getAbsolutePath().length() + 1).replace(System.getProperty("file.separator"), "/"));
           jarEntry.setTime(outputFile.lastModified());
+          jarEntry.setCompressedSize(-1);
           jarOutputStream.putNextEntry(jarEntry);
           squeezeFileIntoJar(jarOutputStream, outputFile);
+          jarOutputStream.closeEntry();
         }
       }
       jarOutputStream.close();
@@ -103,6 +105,7 @@ public enum CompressionType {
           zipEntry.setTime(outputFile.lastModified());
           zipOutputStream.putNextEntry(zipEntry);
           squeezeFileIntoZip(zipOutputStream, outputFile);
+          zipOutputStream.closeEntry();
         }
       }
       zipOutputStream.close();
