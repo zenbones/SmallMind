@@ -33,8 +33,11 @@
 package org.smallmind.spark.singularity.boot;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.URL;
+import java.util.Enumeration;
 import java.util.HashMap;
+import java.util.LinkedList;
 import java.util.jar.JarEntry;
 import java.util.jar.JarInputStream;
 
@@ -69,6 +72,95 @@ public class SingularityClassLoader extends ClassLoader {
         }
       }
     }
+  }
+
+  @Override
+  public Class findClass (String name)
+    throws ClassNotFoundException {
+
+    Class definedClass;
+    ClassStreamTicket classStreamTicket;
+    InputStream classInputStream;
+    byte[] classData;
+
+    for (ClassGate classGate : classGates) {
+      try {
+        if ((classStreamTicket = classGate.getClassAsTicket(name)) != null) {
+          classInputStream = classStreamTicket.getInputStream();
+          classData = getClassData(classInputStream);
+          classInputStream.close();
+
+          definedClass = defineClass(name, classData, 0, classData.length);
+
+          if (gracePeriodSeconds >= 0) {
+            synchronized (ticketMap) {
+              ticketMap.put(name, new ClassGateTicket(classGate, classStreamTicket.getTimeStamp()));
+            }
+          }
+
+          return definedClass;
+        }
+      } catch (Exception exception) {
+        throw new ClassNotFoundException("Exception encountered while attempting to define class (" + name + ")", exception);
+      }
+    }
+
+    throw new ClassNotFoundException(name);
+  }
+
+  private byte[] getClassData (InputStream classInputStream)
+    throws IOException {
+
+    byte[] classData;
+    int dataLength;
+    int totalBytesRead = 0;
+    int bytesRead;
+
+    dataLength = classInputStream.available();
+    classData = new byte[dataLength];
+    while (totalBytesRead < dataLength) {
+      bytesRead = classInputStream.read(classData, totalBytesRead, dataLength - totalBytesRead);
+      totalBytesRead += bytesRead;
+    }
+    return classData;
+  }
+
+  @Override
+  public URL findResource (String name) {
+
+    URL resourceURL;
+
+    for (ClassGate classGate : classGates) {
+      try {
+        if ((resourceURL = classGate.getResource(name)) != null) {
+
+          return resourceURL;
+        }
+      } catch (Exception exception) {
+      }
+    }
+
+    return null;
+  }
+
+  @Override
+  protected Enumeration<URL> findResources (String name) {
+
+    LinkedList<URL> urlList = new LinkedList<>();
+
+    for (ClassGate classGate : classGates) {
+
+      URL resourceURL;
+
+      try {
+        if ((resourceURL = classGate.getResource(name)) != null) {
+          urlList.add(resourceURL);
+        }
+      } catch (Exception exception) {
+      }
+    }
+
+    return new IteratorEnumeration<>(urlList.iterator());
   }
 }
 
