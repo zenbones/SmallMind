@@ -37,11 +37,11 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.jar.JarInputStream;
 
-public class JarJarInputStream extends InputStream implements Closeable {
+public class CloseIgnoringInputStream extends InputStream implements Closeable {
 
   private JarInputStream jarInputStream;
 
-  public JarJarInputStream (JarInputStream jarInputStream) {
+  public CloseIgnoringInputStream (JarInputStream jarInputStream) {
 
     this.jarInputStream = jarInputStream;
   }

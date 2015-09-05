@@ -74,8 +74,8 @@ public class SingularityJarURLConnection extends URLConnection {
         String innerInnerEntryName = url.getPath().substring(singBangPos + 2);
 
         while ((innerJarEntry = innerJarInputStream.getNextJarEntry()) != null) {
-          if (!innerJarEntry.getName().equals(innerInnerEntryName)) {
-            return jarInputStream;
+          if (innerJarEntry.getName().equals(innerInnerEntryName)) {
+            return innerJarInputStream;
           }
         }
       }
