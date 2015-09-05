@@ -74,11 +74,42 @@ public class SingularityClassLoader extends ClassLoader {
   }
 
   @Override
+  public synchronized Class loadClass (String name, boolean resolve)
+    throws ClassNotFoundException {
+
+    Class singularityClass;
+
+    System.out.println("********0:" + name);
+    if ((singularityClass = findLoadedClass(name)) == null) {
+      if (getParent() != null) {
+        try {
+          singularityClass = getParent().loadClass(name);
+        } catch (ClassNotFoundException c) {
+          singularityClass = findClass(name);
+        }
+      } else {
+        try {
+          singularityClass = findSystemClass(name);
+        } catch (ClassNotFoundException c) {
+          singularityClass = findClass(name);
+        }
+      }
+    }
+
+    if (resolve) {
+      resolveClass(singularityClass);
+    }
+
+    return singularityClass;
+  }
+
+  @Override
   public synchronized Class findClass (String name)
     throws ClassNotFoundException {
 
     URL classURL;
 
+    System.out.println("********1:" + name);
     if ((classURL = urlMap.get(name.replace('.', '/') + ".class")) != null) {
 
       try {
