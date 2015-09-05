@@ -48,7 +48,7 @@ public class SingularityJarURLConnection extends URLConnection {
   public void connect ()
     throws IOException {
     // Do your job here. As of now it merely prints "Connected!".
-    System.out.println("Connected!");
+    System.out.println("Connected:" + getURL().toExternalForm());
   }
 
   @Override
