@@ -30,6 +30,12 @@
               <package>
                 org.smallmind:spark-singularity-mojo:generate-singularity
               </package>
+              <install>
+                org.apache.maven.plugins:maven-install-plugin:install
+              </install>
+              <deploy>
+                org.apache.maven.plugins:maven-deploy-plugin:deploy
+              </deploy>
             </phases>
           </lifecycle>
         </lifecycles>
