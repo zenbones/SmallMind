@@ -62,7 +62,7 @@ public class SingularityEntryPoint {
         Class<?> clazz = Thread.currentThread().getContextClassLoader().loadClass(mainClass);
         Method main = clazz.getMethod("main", String[].class);
 
-        main.invoke(null, new Object[]{args});
+        main.invoke(null, args);
       }
     }
   }
