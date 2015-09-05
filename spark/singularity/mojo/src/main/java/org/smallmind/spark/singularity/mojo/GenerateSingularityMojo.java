@@ -36,13 +36,18 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.OutputStream;
 import java.nio.channels.FileChannel;
 import java.nio.file.FileVisitResult;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.SimpleFileVisitor;
+import java.nio.file.StandardOpenOption;
 import java.nio.file.attribute.BasicFileAttributes;
+import java.util.List;
+import java.util.jar.JarEntry;
+import java.util.jar.JarInputStream;
 import org.apache.maven.artifact.Artifact;
 import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugin.MojoExecutionException;
@@ -59,6 +64,8 @@ public class GenerateSingularityMojo extends AbstractMojo {
 
   @Parameter(readonly = true, property = "project")
   private MavenProject project;
+  @Parameter(readonly = true, property = "plugin.artifacts")
+  protected List<Artifact> pluginArtifacts;
   @Parameter(defaultValue = "singularity")
   private String singularityBuildDir;
   @Parameter
@@ -70,11 +77,28 @@ public class GenerateSingularityMojo extends AbstractMojo {
     throws MojoExecutionException, MojoFailureException {
 
     Path buildPath;
+    boolean bootClassesFound = false;
 
     try {
       Files.createDirectories(buildPath = Paths.get(project.getBuild().getDirectory(), singularityBuildDir));
     } catch (IOException ioException) {
       throw new MojoExecutionException("Unable to create a build directory", ioException);
+    }
+
+    for (Artifact pluginArtifact : pluginArtifacts) {
+      if (pluginArtifact.getGroupId().equals("org.smallmind") && pluginArtifact.getArtifactId().equals("spark-singularity-boot")) {
+        try {
+          copyBootClasses(pluginArtifact.getFile(), buildPath);
+        } catch (IOException ioException) {
+          throw new MojoExecutionException("Problem in copying boot classes into the build directory", ioException);
+        }
+
+        bootClassesFound = true;
+        break;
+      }
+    }
+    if (!bootClassesFound) {
+      throw new MojoExecutionException("Unable to locate the boot class dependencies");
     }
 
     for (Artifact artifact : project.getRuntimeArtifacts()) {
@@ -85,7 +109,7 @@ public class GenerateSingularityMojo extends AbstractMojo {
 
         copyToDestination(artifact.getFile(), buildPath.resolve(artifact.getFile().getName()));
       } catch (IOException ioException) {
-        throw new MojoExecutionException(String.format("Problem in copying a dependency(%s) into the application library", artifact), ioException);
+        throw new MojoExecutionException(String.format("Problem in copying a dependency(%s) into the build directory", artifact), ioException);
       }
     }
 
@@ -115,7 +139,38 @@ public class GenerateSingularityMojo extends AbstractMojo {
     inputStream.close();
   }
 
-  public class CopyFileVisitor extends SimpleFileVisitor<Path> {
+  private void copyBootClasses (File jarFile, Path destinationPath)
+    throws IOException {
+
+    byte[] buffer = new byte[1024];
+
+    try (JarInputStream jarInputStream = new JarInputStream(new FileInputStream(jarFile))) {
+
+      JarEntry jarEntry;
+
+      while ((jarEntry = jarInputStream.getNextJarEntry()) != null) {
+        if ((!jarEntry.isDirectory()) && jarEntry.getName().startsWith("org/smallmind/spark/singularity/boot/")) {
+
+          Files.createDirectories(destinationPath.resolve(jarEntry.getName().substring(0, jarEntry.getName().lastIndexOf('/'))));
+
+          try (OutputStream outputStream = Files.newOutputStream(destinationPath.resolve(jarEntry.getName()), StandardOpenOption.CREATE, StandardOpenOption.WRITE, StandardOpenOption.TRUNCATE_EXISTING)) {
+
+            long totalBytesToRead = jarEntry.getSize();
+            int totalBytesRead = 0;
+            int bytesRead;
+
+            do {
+              bytesRead = jarInputStream.read(buffer, 0, (int)Math.min(buffer.length, totalBytesToRead - totalBytesRead));
+              outputStream.write(buffer, 0, bytesRead);
+              totalBytesRead += bytesRead;
+            } while (totalBytesRead < totalBytesToRead);
+          }
+        }
+      }
+    }
+  }
+
+  private static class CopyFileVisitor extends SimpleFileVisitor<Path> {
 
     private final Path targetPath;
     private Path sourcePath;

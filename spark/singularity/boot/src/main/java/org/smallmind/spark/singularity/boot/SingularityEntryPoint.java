@@ -32,8 +32,12 @@
  */
 package org.smallmind.spark.singularity.boot;
 
+import java.io.IOException;
 import java.security.CodeSource;
 import java.security.ProtectionDomain;
+import java.util.Map;
+import java.util.jar.JarInputStream;
+import java.util.jar.Manifest;
 
 public class SingularityEntryPoint {
 
@@ -46,11 +50,20 @@ Main-Class:org.smallmind.spark.singularity.boot.SingularityEntryPoint
 Archiver-Version:Plexus Archiver
    */
 
-  public static void main (String... args) {
+  public static void main (String... args)
+    throws IOException {
 
-    Class cls = SingularityEntryPoint.class;
-    ProtectionDomain pDomain = cls.getProtectionDomain();
-    CodeSource cSource = pDomain.getCodeSource();
-    System.out.println(cSource.getLocation().toString());
+    ProtectionDomain protectionDomain = SingularityEntryPoint.class.getProtectionDomain();
+    CodeSource codeSource = protectionDomain.getCodeSource();
+    Manifest manifest;
+
+    try (JarInputStream jarInputStream = new JarInputStream(codeSource.getLocation().openStream())) {
+      manifest = jarInputStream.getManifest();
+    }
+
+    System.out.println(manifest.getMainAttributes().size());
+    for (Map.Entry<Object, Object> entry : manifest.getMainAttributes().entrySet()) {
+      System.out.println(entry.getKey().toString() + ":" + entry.getValue().toString());
+    }
   }
 }
