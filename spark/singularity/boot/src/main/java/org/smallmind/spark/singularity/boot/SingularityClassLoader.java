@@ -38,8 +38,10 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.ObjectInputStream;
 import java.net.URL;
+import java.util.Collections;
 import java.util.Enumeration;
 import java.util.HashMap;
+import java.util.NoSuchElementException;
 import java.util.jar.JarEntry;
 import java.util.jar.JarInputStream;
 
@@ -165,7 +167,43 @@ public class SingularityClassLoader extends ClassLoader {
   @Override
   protected Enumeration<URL> findResources (String name) {
 
-    return null;
+    URL resourceURL;
+
+    if ((resourceURL = findResource(name)) == null) {
+
+      return Collections.emptyEnumeration();
+    }
+
+    return new SingleEnumeration<>(resourceURL);
+  }
+
+  private static class SingleEnumeration<T> implements Enumeration<T> {
+
+    private T value;
+    private boolean used = false;
+
+    public SingleEnumeration (T value) {
+
+      this.value = value;
+    }
+
+    @Override
+    public synchronized boolean hasMoreElements () {
+
+      return !used;
+    }
+
+    @Override
+    public synchronized T nextElement () {
+
+      if (used) {
+        throw new NoSuchElementException();
+      }
+
+      used = true;
+
+      return value;
+    }
   }
 }
 
