@@ -88,6 +88,7 @@ public class GenerateSingularityMojo extends AbstractMojo {
     Path buildPath;
     Path libraryPath;
     Path indexPath;
+    Path classesPath;
     boolean bootClassesFound = false;
 
     try {
@@ -134,13 +135,16 @@ public class GenerateSingularityMojo extends AbstractMojo {
       }
     }
 
-    if (verbose) {
-      getLog().info("Copying classes directory...");
-    }
-    try {
-      Files.walkFileTree(Paths.get(project.getBuild().getDirectory(), "classes"), new CopyFileVisitor(singularityIndex, buildPath));
-    } catch (IOException ioException) {
-      throw new MojoExecutionException("Unable to copy the classes directory into the build path", ioException);
+
+    if (Files.exists(classesPath = Paths.get(project.getBuild().getDirectory(), "classes"))) {
+      if (verbose) {
+        getLog().info("Copying classes directory...");
+      }
+      try {
+        Files.walkFileTree(classesPath, new CopyFileVisitor(singularityIndex, buildPath));
+      } catch (IOException ioException) {
+        throw new MojoExecutionException("Unable to copy the classes directory into the build path", ioException);
+      }
     }
 
     if (verbose) {
