@@ -32,6 +32,7 @@
  */
 package org.smallmind.spark.singularity.boot;
 
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
@@ -58,14 +59,17 @@ public class SingularityClassLoader extends ClassLoader {
     JarEntry jarEntry;
 
     while ((jarEntry = jarInputStream.getNextJarEntry()) != null) {
-      if (jarEntry.getName().startsWith("META-INF/singularity/") && jarEntry.getName().endsWith(".jar")) {
+      if (!jarEntry.getName().startsWith("META-INF/")) {
+        System.out.println("********$:" + jarEntry.getName());
+        urlMap.put(jarEntry.getName(), new URL("jar", "localhost", jarURL.toExternalForm() + "!/" + jarEntry.getName()));
+      } else if (jarEntry.getName().startsWith("META-INF/singularity/") && jarEntry.getName().endsWith(".jar")) {
         try (JarInputStream innerJarInputStream = new JarInputStream(new JarJarInputStream(jarInputStream))) {
 
           JarEntry innerJarEntry;
 
           while ((innerJarEntry = innerJarInputStream.getNextJarEntry()) != null) {
             if (!innerJarEntry.getName().startsWith("META-INF/")) {
-              urlMap.put(innerJarEntry.getName(), new URL("singularity", "localhost", jarURL.toExternalForm() + "!!" + jarEntry.getName() + "!" + innerJarEntry.getName()));
+              urlMap.put(innerJarEntry.getName(), new URL("singularity", "localhost", jarURL.toExternalForm() + "!!/" + jarEntry.getName() + "!/" + innerJarEntry.getName()));
             }
           }
         }
@@ -81,17 +85,16 @@ public class SingularityClassLoader extends ClassLoader {
 
     System.out.println("********0:" + name);
     if ((singularityClass = findLoadedClass(name)) == null) {
-      if (getParent() != null) {
-        try {
+      try {
+        System.out.println("********1:" + name);
+        singularityClass = findClass(name);
+      } catch (ClassNotFoundException c) {
+        if (getParent() != null) {
+          System.out.println("********2:" + name);
           singularityClass = getParent().loadClass(name);
-        } catch (ClassNotFoundException c) {
-          singularityClass = findClass(name);
-        }
-      } else {
-        try {
+        } else {
+          System.out.println("********3:" + name);
           singularityClass = findSystemClass(name);
-        } catch (ClassNotFoundException c) {
-          singularityClass = findClass(name);
         }
       }
     }
@@ -109,9 +112,9 @@ public class SingularityClassLoader extends ClassLoader {
 
     URL classURL;
 
-    System.out.println("********1:" + name);
+    System.out.println("********4:" + name);
     if ((classURL = urlMap.get(name.replace('.', '/') + ".class")) != null) {
-
+      System.out.println("********5:" + classURL.toExternalForm());
       try {
 
         InputStream classInputStream;
@@ -123,6 +126,8 @@ public class SingularityClassLoader extends ClassLoader {
 
         return defineClass(name, classData, 0, classData.length);
       } catch (Exception exception) {
+        // TODO: remove
+        exception.printStackTrace();
         throw new ClassNotFoundException("Exception encountered while attempting to define class (" + name + ")", exception);
       }
     }
@@ -133,18 +138,14 @@ public class SingularityClassLoader extends ClassLoader {
   private byte[] getClassData (InputStream classInputStream)
     throws IOException {
 
-    byte[] classData;
-    int dataLength;
-    int totalBytesRead = 0;
-    int bytesRead;
+    ByteArrayOutputStream classDataOutputStream = new ByteArrayOutputStream();
+    int singleByte;
 
-    dataLength = classInputStream.available();
-    classData = new byte[dataLength];
-    while (totalBytesRead < dataLength) {
-      bytesRead = classInputStream.read(classData, totalBytesRead, dataLength - totalBytesRead);
-      totalBytesRead += bytesRead;
+    while ((singleByte = classInputStream.read()) >= 0) {
+      classDataOutputStream.write(singleByte);
     }
-    return classData;
+
+    return classDataOutputStream.toByteArray();
   }
 
   @Override

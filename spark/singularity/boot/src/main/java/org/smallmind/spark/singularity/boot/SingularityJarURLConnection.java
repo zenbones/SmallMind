@@ -32,10 +32,13 @@
  */
 package org.smallmind.spark.singularity.boot;
 
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
 import java.net.URLConnection;
+import java.util.jar.JarEntry;
+import java.util.jar.JarInputStream;
 
 public class SingularityJarURLConnection extends URLConnection {
 
@@ -47,15 +50,38 @@ public class SingularityJarURLConnection extends URLConnection {
   @Override
   public void connect ()
     throws IOException {
-    // Do your job here. As of now it merely prints "Connected!".
-    System.out.println("Connected:" + getURL().toExternalForm());
+
   }
 
   @Override
   public InputStream getInputStream ()
     throws IOException {
 
-    return null;
+    JarInputStream jarInputStream;
+    JarEntry jarEntry;
+    String innerEntryName;
+    int doubleBangPos = url.getPath().indexOf("!!/");
+    int singBangPos = url.getPath().indexOf("!/", doubleBangPos + 3);
+
+    jarInputStream = new JarInputStream(new URL(url.getPath().substring(0, doubleBangPos)).openStream());
+    innerEntryName = url.getPath().substring(doubleBangPos + 3, singBangPos);
+
+    while ((jarEntry = jarInputStream.getNextJarEntry()) != null) {
+      if (jarEntry.getName().equals(innerEntryName)) {
+
+        JarInputStream innerJarInputStream = new JarInputStream(jarInputStream);
+        JarEntry innerJarEntry;
+        String innerInnerEntryName = url.getPath().substring(singBangPos + 2);
+
+        while ((innerJarEntry = innerJarInputStream.getNextJarEntry()) != null) {
+          if (!innerJarEntry.getName().equals(innerInnerEntryName)) {
+            return jarInputStream;
+          }
+        }
+      }
+    }
+
+    throw new FileNotFoundException(url.getPath());
   }
 
   @Override
