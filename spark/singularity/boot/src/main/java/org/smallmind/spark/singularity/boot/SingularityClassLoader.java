@@ -41,13 +41,24 @@ import java.net.URL;
 import java.util.Collections;
 import java.util.Enumeration;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.NoSuchElementException;
+import java.util.jar.Attributes;
 import java.util.jar.JarEntry;
 import java.util.jar.JarInputStream;
+import java.util.jar.Manifest;
 
 public class SingularityClassLoader extends ClassLoader {
 
   private final HashMap<String, URL> urlMap = new HashMap<>();
+  private final HashSet<String> packageSet = new HashSet<>();
+  private final URL sealBase;
+  private final String specificationTitle;
+  private final String specificationVersion;
+  private final String specificationVendor;
+  private final String implementationTitle;
+  private final String implementationVersion;
+  private final String implementationVendor;
 
   static {
 
@@ -55,13 +66,15 @@ public class SingularityClassLoader extends ClassLoader {
     URL.setURLStreamHandlerFactory(new SingularityJarURLStreamHandlerFactory());
   }
 
-  public SingularityClassLoader (ClassLoader parent, URL jarURL, JarInputStream jarInputStream)
+  public SingularityClassLoader (ClassLoader parent, Manifest manifest, URL jarURL, JarInputStream jarInputStream)
     throws IOException, ClassNotFoundException {
 
     super(parent);
 
     SingularityIndex singularityIndex = null;
+    Attributes mainAttributes = manifest.getMainAttributes();
     JarEntry jarEntry;
+    String sealed;
 
     while ((jarEntry = jarInputStream.getNextJarEntry()) != null) {
       if (!jarEntry.isDirectory()) {
@@ -92,6 +105,23 @@ public class SingularityClassLoader extends ClassLoader {
     }
     for (SingularityIndex.URLEntry urlEntry : singularityIndex.getSingularityURLEntryIterable(jarURL.toExternalForm())) {
       urlMap.put(urlEntry.getEntryName(), urlEntry.getEntryURL());
+    }
+
+    specificationTitle = mainAttributes.getValue(Attributes.Name.SPECIFICATION_TITLE);
+    specificationVersion = mainAttributes.getValue(Attributes.Name.SPECIFICATION_VERSION);
+    specificationVendor = mainAttributes.getValue(Attributes.Name.SPECIFICATION_VENDOR);
+    implementationTitle = mainAttributes.getValue(Attributes.Name.IMPLEMENTATION_TITLE);
+    implementationVersion = mainAttributes.getValue(Attributes.Name.IMPLEMENTATION_VERSION);
+    implementationVendor = mainAttributes.getValue(Attributes.Name.IMPLEMENTATION_VENDOR);
+
+    if ((sealed = mainAttributes.getValue(Attributes.Name.SEALED)) != null) {
+      if (Boolean.parseBoolean(sealed)) {
+        sealBase = jarURL;
+      } else {
+        sealBase = null;
+      }
+    } else {
+      sealBase = null;
     }
   }
 
@@ -136,6 +166,8 @@ public class SingularityClassLoader extends ClassLoader {
         classData = getClassData(classInputStream);
         classInputStream.close();
 
+        definePackage(name);
+
         return defineClass(name, classData, 0, classData.length);
       } catch (Exception exception) {
         throw new ClassNotFoundException("Exception encountered while attempting to define class (" + name + ")", exception);
@@ -143,6 +175,17 @@ public class SingularityClassLoader extends ClassLoader {
     }
 
     throw new ClassNotFoundException(name);
+  }
+
+  private void definePackage (String name) {
+
+    String packageName;
+    int lastDotPos = name.lastIndexOf('.');
+
+    packageName = name.substring(0, lastDotPos);
+    if (packageSet.add(packageName)) {
+      definePackage(packageName, specificationTitle, specificationVersion, specificationVendor, implementationTitle, implementationVersion, implementationVendor, sealBase);
+    }
   }
 
   private byte[] getClassData (InputStream classInputStream)
@@ -161,7 +204,12 @@ public class SingularityClassLoader extends ClassLoader {
   @Override
   public URL findResource (String name) {
 
-    return urlMap.get(name);
+    if (name == null) {
+
+      return null;
+    } else {
+      return urlMap.get((name.charAt(0) == '/') ? name.substring(1) : name);
+    }
   }
 
   @Override

@@ -37,15 +37,16 @@ import java.io.InputStream;
 import java.net.URL;
 import java.util.Enumeration;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedList;
 import org.smallmind.nutsnbolts.util.IteratorEnumeration;
 
 public class GatingClassLoader extends ClassLoader {
 
   private final HashMap<String, ClassGateTicket> ticketMap;
-
-  private ClassGate[] classGates;
-  private int gracePeriodSeconds;
+  private final HashSet<String> packageSet = new HashSet<>();
+  private final ClassGate[] classGates;
+  private final int gracePeriodSeconds;
 
   static {
 
@@ -132,6 +133,8 @@ public class GatingClassLoader extends ClassLoader {
           classData = getClassData(classInputStream);
           classInputStream.close();
 
+          definePackage(name);
+
           definedClass = defineClass(name, classData, 0, classData.length);
 
           if (gracePeriodSeconds >= 0) {
@@ -148,6 +151,17 @@ public class GatingClassLoader extends ClassLoader {
     }
 
     throw new ClassNotFoundException(name);
+  }
+
+  private void definePackage (String name) {
+
+    String packageName;
+    int lastDotPos = name.lastIndexOf('.');
+
+    packageName = name.substring(0, lastDotPos);
+    if (packageSet.add(packageName)) {
+      definePackage(packageName, System.getProperty("java.vm.specification.name"), System.getProperty("java.vm.specification.version"), System.getProperty("java.vm.specification.vendor"), System.getProperty("java.specification.name"), System.getProperty("java.specification.version"), System.getProperty("java.specification.vendor"), null);
+    }
   }
 
   private byte[] getClassData (InputStream classInputStream)

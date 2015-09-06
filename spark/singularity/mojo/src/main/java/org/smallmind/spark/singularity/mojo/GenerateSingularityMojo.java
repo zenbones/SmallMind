@@ -135,7 +135,6 @@ public class GenerateSingularityMojo extends AbstractMojo {
       }
     }
 
-
     if (Files.exists(classesPath = Paths.get(project.getBuild().getDirectory(), "classes"))) {
       if (verbose) {
         getLog().info("Copying classes directory...");
@@ -165,6 +164,14 @@ public class GenerateSingularityMojo extends AbstractMojo {
 
       attributes.put(Attributes.Name.MAIN_CLASS, SingularityEntryPoint.class.getName());
       attributes.put(new Attributes.Name("Singularity-Class"), mainClass);
+
+      attributes.put(Attributes.Name.SPECIFICATION_TITLE, System.getProperty("java.vm.specification.name"));
+      attributes.put(Attributes.Name.SPECIFICATION_VERSION, System.getProperty("java.vm.specification.version"));
+      attributes.put(Attributes.Name.SPECIFICATION_VENDOR, System.getProperty("java.vm.specification.vendor"));
+      attributes.put(Attributes.Name.IMPLEMENTATION_TITLE, System.getProperty("java.specification.name"));
+      attributes.put(Attributes.Name.IMPLEMENTATION_VERSION, System.getProperty("java.specification.version"));
+      attributes.put(Attributes.Name.IMPLEMENTATION_VENDOR, System.getProperty("java.specification.vendor"));
+
       attributes.put(Attributes.Name.MANIFEST_VERSION, "1.0");
 
       if (verbose) {
