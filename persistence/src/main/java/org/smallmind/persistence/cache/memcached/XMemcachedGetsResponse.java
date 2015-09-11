@@ -30,26 +30,28 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.persistence.cache.memcached.mock;
+package org.smallmind.persistence.cache.memcached;
 
-public class MockGetsResponse<T> {
+import net.rubyeye.xmemcached.GetsResponse;
 
-  private T value;
-  private long cas;
+public class XMemcachedGetsResponse<T> implements ProxyGetsResponse<T> {
 
-  public MockGetsResponse (long cas, T value) {
+  private GetsResponse<T> getsResponse;
 
-    this.value = value;
-    this.cas = cas;
+  public XMemcachedGetsResponse (GetsResponse<T> getsResponse) {
+
+    this.getsResponse = getsResponse;
   }
 
+  @Override
   public T getValue () {
 
-    return value;
+    return getsResponse.getValue();
   }
 
+  @Override
   public long getCas () {
 
-    return cas;
+    return getsResponse.getCas();
   }
 }

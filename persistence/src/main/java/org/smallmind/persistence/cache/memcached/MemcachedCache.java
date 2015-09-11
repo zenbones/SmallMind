@@ -35,19 +35,18 @@ package org.smallmind.persistence.cache.memcached;
 import java.util.Arrays;
 import java.util.Map;
 import net.rubyeye.xmemcached.GetsResponse;
-import net.rubyeye.xmemcached.MemcachedClient;
 import org.smallmind.persistence.cache.CASValue;
 import org.smallmind.persistence.cache.CacheOperationException;
 import org.smallmind.persistence.cache.PersistenceCache;
 
 public class MemcachedCache<V> implements PersistenceCache<String, V> {
 
-  private MemcachedClient memcachedClient;
+  private ProxyMemcachedClient memcachedClient;
   private Class<V> valueClass;
   private String discriminator;
   private int timeToLiveSeconds;
 
-  public MemcachedCache (MemcachedClient memcachedClient, String discriminator, Class<V> valueClass, int timeToLiveSeconds) {
+  public MemcachedCache (ProxyMemcachedClient memcachedClient, String discriminator, Class<V> valueClass, int timeToLiveSeconds) {
 
     this.valueClass = valueClass;
     this.memcachedClient = memcachedClient;
@@ -55,7 +54,7 @@ public class MemcachedCache<V> implements PersistenceCache<String, V> {
     this.timeToLiveSeconds = timeToLiveSeconds;
   }
 
-  public MemcachedClient getMemcachedClient () {
+  public ProxyMemcachedClient getMemcachedClient () {
 
     return memcachedClient;
   }
@@ -79,8 +78,7 @@ public class MemcachedCache<V> implements PersistenceCache<String, V> {
     try {
 
       return valueClass.cast(memcachedClient.get(getDiscriminatedKey(key)));
-    }
-    catch (Exception exception) {
+    } catch (Exception exception) {
       throw new CacheOperationException(exception);
     }
   }
@@ -92,8 +90,7 @@ public class MemcachedCache<V> implements PersistenceCache<String, V> {
     try {
 
       return memcachedClient.get(Arrays.asList(keys));
-    }
-    catch (Exception exception) {
+    } catch (Exception exception) {
       throw new CacheOperationException(exception);
     }
   }
@@ -103,8 +100,7 @@ public class MemcachedCache<V> implements PersistenceCache<String, V> {
 
     try {
       memcachedClient.set(getDiscriminatedKey(key), (timeToLiveSeconds <= 0) ? getDefaultTimeToLiveSeconds() : timeToLiveSeconds, value);
-    }
-    catch (Exception exception) {
+    } catch (Exception exception) {
       throw new CacheOperationException(exception);
     }
   }
@@ -114,7 +110,7 @@ public class MemcachedCache<V> implements PersistenceCache<String, V> {
 
     try {
 
-      GetsResponse<V> getsResponse;
+      ProxyGetsResponse<V> getsResponse;
       String discriminatedKey = getDiscriminatedKey(key);
 
       if (((getsResponse = memcachedClient.gets(discriminatedKey)) != null) && (getsResponse.getValue() != null)) {
@@ -130,8 +126,7 @@ public class MemcachedCache<V> implements PersistenceCache<String, V> {
       }
 
       return null;
-    }
-    catch (Exception exception) {
+    } catch (Exception exception) {
       throw new CacheOperationException(exception);
     }
   }
@@ -140,7 +135,7 @@ public class MemcachedCache<V> implements PersistenceCache<String, V> {
   public CASValue<V> getViaCas (String key) {
 
     try {
-      GetsResponse<V> getsResponse;
+      ProxyGetsResponse<V> getsResponse;
 
       if ((getsResponse = memcachedClient.gets(getDiscriminatedKey(key))) == null) {
 
@@ -148,8 +143,7 @@ public class MemcachedCache<V> implements PersistenceCache<String, V> {
       }
 
       return new CASValue<V>(getsResponse.getValue(), getsResponse.getCas());
-    }
-    catch (Exception exception) {
+    } catch (Exception exception) {
       throw new CacheOperationException(exception);
     }
   }
@@ -160,8 +154,7 @@ public class MemcachedCache<V> implements PersistenceCache<String, V> {
     try {
 
       return memcachedClient.cas(getDiscriminatedKey(key), (timeToLiveSeconds <= 0) ? getDefaultTimeToLiveSeconds() : timeToLiveSeconds, value, version);
-    }
-    catch (Exception exception) {
+    } catch (Exception exception) {
       throw new CacheOperationException(exception);
     }
   }
@@ -171,8 +164,7 @@ public class MemcachedCache<V> implements PersistenceCache<String, V> {
 
     try {
       memcachedClient.delete(getDiscriminatedKey(key));
-    }
-    catch (Exception exception) {
+    } catch (Exception exception) {
       throw new CacheOperationException(exception);
     }
   }

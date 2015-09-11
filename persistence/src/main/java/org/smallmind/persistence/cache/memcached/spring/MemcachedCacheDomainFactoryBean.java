@@ -34,20 +34,20 @@ package org.smallmind.persistence.cache.memcached.spring;
 
 import java.io.IOException;
 import java.util.Map;
-import net.rubyeye.xmemcached.MemcachedClient;
 import org.smallmind.persistence.cache.memcached.MemcachedCacheDomain;
+import org.smallmind.persistence.cache.memcached.ProxyMemcachedClient;
 import org.springframework.beans.factory.FactoryBean;
 import org.springframework.beans.factory.InitializingBean;
 
 public class MemcachedCacheDomainFactoryBean implements FactoryBean<MemcachedCacheDomain>, InitializingBean {
 
   private MemcachedCacheDomain memcachedCacheDomain;
-  private MemcachedClient memcachedClient;
+  private ProxyMemcachedClient memcachedClient;
   private Map<Class, Integer> timeToLiveOverrideMap;
   private String discriminator;
   private int timeToLiveSeconds;
 
-  public void setMemcachedClient (MemcachedClient memcachedClient) {
+  public void setMemcachedClient (ProxyMemcachedClient memcachedClient) {
 
     this.memcachedClient = memcachedClient;
   }

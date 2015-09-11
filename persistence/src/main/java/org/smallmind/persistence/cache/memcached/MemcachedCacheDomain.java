@@ -36,7 +36,6 @@ import java.io.Serializable;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
-import net.rubyeye.xmemcached.MemcachedClient;
 import org.smallmind.persistence.Durable;
 import org.smallmind.persistence.cache.CacheDomain;
 import org.smallmind.persistence.cache.DurableVector;
@@ -45,20 +44,20 @@ import org.smallmind.persistence.instrument.MetricSource;
 
 public class MemcachedCacheDomain<I extends Serializable & Comparable<I>, D extends Durable<I>> implements CacheDomain<I, D> {
 
-  private final MemcachedClient memcachedClient;
+  private final ProxyMemcachedClient memcachedClient;
   private final Map<Class<D>, Integer> timeTiLiveOverrideMap;
-  private final ConcurrentHashMap<Class<D>, MemcachedCache<D>> instanceCacheMap = new ConcurrentHashMap<Class<D>, MemcachedCache<D>>();
-  private final ConcurrentHashMap<Class<D>, MemcachedCache<List>> wideInstanceCacheMap = new ConcurrentHashMap<Class<D>, MemcachedCache<List>>();
-  private final ConcurrentHashMap<Class<D>, MemcachedCache<DurableVector>> vectorCacheMap = new ConcurrentHashMap<Class<D>, MemcachedCache<DurableVector>>();
+  private final ConcurrentHashMap<Class<D>, MemcachedCache<D>> instanceCacheMap = new ConcurrentHashMap<>();
+  private final ConcurrentHashMap<Class<D>, MemcachedCache<List>> wideInstanceCacheMap = new ConcurrentHashMap<>();
+  private final ConcurrentHashMap<Class<D>, MemcachedCache<DurableVector>> vectorCacheMap = new ConcurrentHashMap<>();
   private final String discriminator;
   private final int timeToLiveSeconds;
 
-  public MemcachedCacheDomain (MemcachedClient memcachedClient, String discriminator, int timeToLiveSeconds) {
+  public MemcachedCacheDomain (ProxyMemcachedClient memcachedClient, String discriminator, int timeToLiveSeconds) {
 
     this(memcachedClient, discriminator, timeToLiveSeconds, null);
   }
 
-  public MemcachedCacheDomain (MemcachedClient memcachedClient, String discriminator, int timeToLiveSeconds, Map<Class<D>, Integer> timeTiLiveOverrideMap) {
+  public MemcachedCacheDomain (ProxyMemcachedClient memcachedClient, String discriminator, int timeToLiveSeconds, Map<Class<D>, Integer> timeTiLiveOverrideMap) {
 
     this.memcachedClient = memcachedClient;
     this.discriminator = discriminator;
@@ -80,7 +79,7 @@ public class MemcachedCacheDomain<I extends Serializable & Comparable<I>, D exte
     if ((instanceCache = instanceCacheMap.get(managedClass)) == null) {
       synchronized (instanceCacheMap) {
         if ((instanceCache = instanceCacheMap.get(managedClass)) == null) {
-          instanceCacheMap.put(managedClass, instanceCache = new MemcachedCache<D>(memcachedClient, discriminator, managedClass, getTimeToLiveSeconds(managedClass)));
+          instanceCacheMap.put(managedClass, instanceCache = new MemcachedCache<>(memcachedClient, discriminator, managedClass, getTimeToLiveSeconds(managedClass)));
         }
       }
     }
@@ -96,7 +95,7 @@ public class MemcachedCacheDomain<I extends Serializable & Comparable<I>, D exte
     if ((wideInstanceCache = wideInstanceCacheMap.get(managedClass)) == null) {
       synchronized (wideInstanceCacheMap) {
         if ((wideInstanceCache = wideInstanceCacheMap.get(managedClass)) == null) {
-          wideInstanceCacheMap.put(managedClass, wideInstanceCache = new MemcachedCache<List>(memcachedClient, discriminator, List.class, getTimeToLiveSeconds(managedClass)));
+          wideInstanceCacheMap.put(managedClass, wideInstanceCache = new MemcachedCache<>(memcachedClient, discriminator, List.class, getTimeToLiveSeconds(managedClass)));
         }
       }
     }
@@ -112,7 +111,7 @@ public class MemcachedCacheDomain<I extends Serializable & Comparable<I>, D exte
     if ((vectorCache = vectorCacheMap.get(managedClass)) == null) {
       synchronized (vectorCacheMap) {
         if ((vectorCache = vectorCacheMap.get(managedClass)) == null) {
-          vectorCacheMap.put(managedClass, vectorCache = new MemcachedCache<DurableVector>(memcachedClient, discriminator, DurableVector.class, getTimeToLiveSeconds(managedClass)));
+          vectorCacheMap.put(managedClass, vectorCache = new MemcachedCache<>(memcachedClient, discriminator, DurableVector.class, getTimeToLiveSeconds(managedClass)));
         }
       }
     }

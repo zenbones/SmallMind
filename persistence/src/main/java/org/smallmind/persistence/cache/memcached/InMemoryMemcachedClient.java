@@ -30,14 +30,16 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.persistence.cache.memcached.mock;
+package org.smallmind.persistence.cache.memcached;
 
+import java.util.Collection;
 import java.util.HashMap;
+import java.util.Map;
 import java.util.concurrent.atomic.AtomicLong;
 
-public class MockMemcachedClient<T> {
+public class InMemoryMemcachedClient implements ProxyMemcachedClient {
 
-  private HashMap<String, Holder<T>> internalMap = new HashMap<>();
+  private HashMap<String, Holder<?>> internalMap = new HashMap<>();
   private AtomicLong counter = new AtomicLong(0);
 
   public long getOpTimeout () {
@@ -45,11 +47,18 @@ public class MockMemcachedClient<T> {
     return 5000L;
   }
 
-  public synchronized T get (String key) {
+  @Override
+  public <T> ProxyGetsResponse<T> createGetsResponse (long cas, T value) {
+
+    return new InMemoryGetsResponse<>(cas, value);
+  }
+
+  @Override
+  public synchronized <T> T get (String key) {
 
     Holder<T> holder;
 
-    if (((holder = internalMap.get(key)) == null) || holder.isExpired()) {
+    if (((holder = (Holder<T>)internalMap.get(key)) == null) || holder.isExpired()) {
 
       return null;
     }
@@ -57,28 +66,55 @@ public class MockMemcachedClient<T> {
     return holder.getValue();
   }
 
-  public synchronized MockGetsResponse<T> gets (String key) {
+  @Override
+  public synchronized <T> Map<String, T> get (Collection<String> keys) {
+
+    Map<String, T> resultMap = new HashMap<>();
+
+    for (String key : keys) {
+
+      T result;
+
+      if ((result = get(key)) != null) {
+        resultMap.put(key, result);
+      }
+    }
+
+    return resultMap;
+  }
+
+  @Override
+  public synchronized <T> ProxyGetsResponse<T> gets (String key) {
 
     Holder<T> holder;
 
-    if (((holder = internalMap.get(key)) == null) || holder.isExpired()) {
+    if (((holder = (Holder<T>)internalMap.get(key)) == null) || holder.isExpired()) {
 
       return null;
     }
 
-    return new MockGetsResponse<T>(holder.getCas(), holder.getValue());
+    return new InMemoryGetsResponse<T>(holder.getCas(), holder.getValue());
   }
 
-  public synchronized boolean cas (String key, int expiration, T value, long cas) {
+  @Override
+  public synchronized <T> boolean set (String key, int expiration, T value) {
+
+    internalMap.put(key, new Holder<>(expiration, value));
+
+    return true;
+  }
+
+  @Override
+  public synchronized <T> boolean cas (String key, int expiration, T value, long cas) {
 
     Holder<T> holder;
 
-    if (((holder = internalMap.get(key)) == null) || holder.isExpired()) {
-      internalMap.put(key, new Holder<T>(expiration, value));
+    if (((holder = (Holder<T>)internalMap.get(key)) == null) || holder.isExpired()) {
+      internalMap.put(key, new Holder(expiration, value));
 
       return true;
     } else if (cas == holder.getCas()) {
-      internalMap.put(key, new Holder<T>(expiration, value));
+      internalMap.put(key, new Holder<>(expiration, value));
 
       return true;
     }
@@ -86,9 +122,18 @@ public class MockMemcachedClient<T> {
     return false;
   }
 
+  @Override
+  public synchronized boolean delete (String key) {
+
+    internalMap.remove(key);
+
+    return true;
+  }
+
+  @Override
   public synchronized boolean delete (String key, long cas) {
 
-    Holder<T> holder;
+    Holder holder;
 
     if (((holder = internalMap.get(key)) == null) || holder.isExpired()) {
 
@@ -102,14 +147,19 @@ public class MockMemcachedClient<T> {
     return false;
   }
 
-  private class Holder<U extends T> {
+  @Override
+  public void shutdown () {
 
-    private U value;
+  }
+
+  private class Holder<T> {
+
+    private T value;
     private long cas;
     private long creation;
     private int expiration;
 
-    public Holder (int expiration, U value) {
+    public Holder (int expiration, T value) {
 
       if (expiration < 0) {
         throw new IllegalArgumentException();
