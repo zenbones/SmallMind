@@ -71,7 +71,7 @@ public abstract class ORMDao<I extends Serializable & Comparable<I>, D extends D
     return proxySession.isCacheEnabled();
   }
 
-  // The acquire() method gets the managed object directly from the underlying data source (no vector, no cascade)
+  // The acquire() method casGet the managed object directly from the underlying data source (no vector, no cascade)
   public abstract D acquire (Class<D> durableClass, I id);
 
   @Override

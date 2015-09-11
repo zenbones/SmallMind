@@ -56,9 +56,9 @@ public class XMemcachedMemcachedClient implements ProxyMemcachedClient {
   }
 
   @Override
-  public <T> ProxyGetsResponse<T> createGetsResponse (long cas, T value) {
+  public <T> ProxyCASResponse<T> createCASResponse (long cas, T value) {
 
-    return new XMemcachedGetsResponse<>(new GetsResponse<>(cas, value));
+    return new XMemcachedCASResponse<>(new GetsResponse<>(cas, value));
   }
 
   @Override
@@ -76,10 +76,10 @@ public class XMemcachedMemcachedClient implements ProxyMemcachedClient {
   }
 
   @Override
-  public <T> ProxyGetsResponse<T> gets (String key)
+  public <T> ProxyCASResponse<T> casGet (String key)
     throws TimeoutException, InterruptedException, MemcachedException {
 
-    return new XMemcachedGetsResponse<>(memcachedClient.<T>gets(key));
+    return new XMemcachedCASResponse<>(memcachedClient.<T>gets(key));
   }
 
   @Override
@@ -90,7 +90,7 @@ public class XMemcachedMemcachedClient implements ProxyMemcachedClient {
   }
 
   @Override
-  public <T> boolean cas (String key, int expiration, T value, long cas)
+  public <T> boolean casSet (String key, int expiration, T value, long cas)
     throws TimeoutException, InterruptedException, MemcachedException {
 
     return memcachedClient.cas(key, expiration, value, cas);
@@ -104,7 +104,7 @@ public class XMemcachedMemcachedClient implements ProxyMemcachedClient {
   }
 
   @Override
-  public boolean delete (String key, long cas)
+  public boolean casDelete (String key, long cas)
     throws TimeoutException, InterruptedException, MemcachedException {
 
     return memcachedClient.delete(key, cas);

@@ -32,12 +32,12 @@
  */
 package org.smallmind.persistence.cache.memcached;
 
-public class InMemoryGetsResponse<T> implements ProxyGetsResponse<T> {
+public class InMemoryCASResponse<T> implements ProxyCASResponse<T> {
 
   private T value;
   private long cas;
 
-  public InMemoryGetsResponse (long cas, T value) {
+  public InMemoryCASResponse (long cas, T value) {
 
     this.value = value;
     this.cas = cas;

@@ -39,7 +39,7 @@ public interface ProxyMemcachedClient {
 
   long getOpTimeout ();
 
-  <T> ProxyGetsResponse<T> createGetsResponse (long cas, T value);
+  <T> ProxyCASResponse<T> createCASResponse (long cas, T value);
 
   <T> T get (String key)
     throws Exception;
@@ -47,19 +47,19 @@ public interface ProxyMemcachedClient {
   <T> Map<String, T> get (Collection<String> keys)
     throws Exception;
 
-  <T> ProxyGetsResponse<T> gets (String key)
+  <T> ProxyCASResponse<T> casGet (String key)
     throws Exception;
 
   <T> boolean set (String key, int expiration, T value)
     throws Exception;
 
-  <T> boolean cas (String key, int expiration, T value, long cas)
+  <T> boolean casSet (String key, int expiration, T value, long cas)
     throws Exception;
 
   boolean delete (String key)
     throws Exception;
 
-  boolean delete (String key, long cas)
+  boolean casDelete (String key, long cas)
     throws Exception;
 
   void shutdown ()

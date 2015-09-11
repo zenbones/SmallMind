@@ -34,7 +34,6 @@ package org.smallmind.persistence.cache.memcached;
 
 import java.util.Arrays;
 import java.util.Map;
-import net.rubyeye.xmemcached.GetsResponse;
 import org.smallmind.persistence.cache.CASValue;
 import org.smallmind.persistence.cache.CacheOperationException;
 import org.smallmind.persistence.cache.PersistenceCache;
@@ -110,16 +109,16 @@ public class MemcachedCache<V> implements PersistenceCache<String, V> {
 
     try {
 
-      ProxyGetsResponse<V> getsResponse;
+      ProxyCASResponse<V> getsResponse;
       String discriminatedKey = getDiscriminatedKey(key);
 
-      if (((getsResponse = memcachedClient.gets(discriminatedKey)) != null) && (getsResponse.getValue() != null)) {
+      if (((getsResponse = memcachedClient.casGet(discriminatedKey)) != null) && (getsResponse.getValue() != null)) {
 
         return getsResponse.getValue();
       }
 
-      while (!memcachedClient.cas(discriminatedKey, (timeToLiveSeconds <= 0) ? getDefaultTimeToLiveSeconds() : timeToLiveSeconds, value, 0)) {
-        if (((getsResponse = memcachedClient.gets(discriminatedKey)) != null) && (getsResponse.getValue() != null)) {
+      while (!memcachedClient.casSet(discriminatedKey, (timeToLiveSeconds <= 0) ? getDefaultTimeToLiveSeconds() : timeToLiveSeconds, value, 0)) {
+        if (((getsResponse = memcachedClient.casGet(discriminatedKey)) != null) && (getsResponse.getValue() != null)) {
 
           return getsResponse.getValue();
         }
@@ -135,9 +134,9 @@ public class MemcachedCache<V> implements PersistenceCache<String, V> {
   public CASValue<V> getViaCas (String key) {
 
     try {
-      ProxyGetsResponse<V> getsResponse;
+      ProxyCASResponse<V> getsResponse;
 
-      if ((getsResponse = memcachedClient.gets(getDiscriminatedKey(key))) == null) {
+      if ((getsResponse = memcachedClient.casGet(getDiscriminatedKey(key))) == null) {
 
         return CASValue.nullInstance();
       }
@@ -153,7 +152,7 @@ public class MemcachedCache<V> implements PersistenceCache<String, V> {
 
     try {
 
-      return memcachedClient.cas(getDiscriminatedKey(key), (timeToLiveSeconds <= 0) ? getDefaultTimeToLiveSeconds() : timeToLiveSeconds, value, version);
+      return memcachedClient.casSet(getDiscriminatedKey(key), (timeToLiveSeconds <= 0) ? getDefaultTimeToLiveSeconds() : timeToLiveSeconds, value, version);
     } catch (Exception exception) {
       throw new CacheOperationException(exception);
     }

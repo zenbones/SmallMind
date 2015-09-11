@@ -48,9 +48,9 @@ public class InMemoryMemcachedClient implements ProxyMemcachedClient {
   }
 
   @Override
-  public <T> ProxyGetsResponse<T> createGetsResponse (long cas, T value) {
+  public <T> ProxyCASResponse<T> createCASResponse (long cas, T value) {
 
-    return new InMemoryGetsResponse<>(cas, value);
+    return new InMemoryCASResponse<>(cas, value);
   }
 
   @Override
@@ -84,7 +84,7 @@ public class InMemoryMemcachedClient implements ProxyMemcachedClient {
   }
 
   @Override
-  public synchronized <T> ProxyGetsResponse<T> gets (String key) {
+  public synchronized <T> ProxyCASResponse<T> casGet (String key) {
 
     Holder<T> holder;
 
@@ -93,7 +93,7 @@ public class InMemoryMemcachedClient implements ProxyMemcachedClient {
       return null;
     }
 
-    return new InMemoryGetsResponse<T>(holder.getCas(), holder.getValue());
+    return new InMemoryCASResponse<T>(holder.getCas(), holder.getValue());
   }
 
   @Override
@@ -105,7 +105,7 @@ public class InMemoryMemcachedClient implements ProxyMemcachedClient {
   }
 
   @Override
-  public synchronized <T> boolean cas (String key, int expiration, T value, long cas) {
+  public synchronized <T> boolean casSet (String key, int expiration, T value, long cas) {
 
     Holder<T> holder;
 
@@ -131,7 +131,7 @@ public class InMemoryMemcachedClient implements ProxyMemcachedClient {
   }
 
   @Override
-  public synchronized boolean delete (String key, long cas) {
+  public synchronized boolean casDelete (String key, long cas) {
 
     Holder holder;
 

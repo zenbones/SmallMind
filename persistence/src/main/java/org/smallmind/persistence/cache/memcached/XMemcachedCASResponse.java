@@ -32,9 +32,26 @@
  */
 package org.smallmind.persistence.cache.memcached;
 
-public interface ProxyGetsResponse<T> {
+import net.rubyeye.xmemcached.GetsResponse;
 
-  T getValue ();
+public class XMemcachedCASResponse<T> implements ProxyCASResponse<T> {
 
-  long getCas ();
+  private GetsResponse<T> getsResponse;
+
+  public XMemcachedCASResponse (GetsResponse<T> getsResponse) {
+
+    this.getsResponse = getsResponse;
+  }
+
+  @Override
+  public T getValue () {
+
+    return getsResponse.getValue();
+  }
+
+  @Override
+  public long getCas () {
+
+    return getsResponse.getCas();
+  }
 }
