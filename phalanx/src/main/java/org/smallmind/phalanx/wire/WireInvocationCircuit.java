@@ -6,6 +6,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import org.smallmind.scribe.pen.LoggerManager;
 import org.smallmind.web.jersey.fault.Fault;
 import org.smallmind.web.jersey.fault.FaultElement;
+import org.smallmind.web.jersey.fault.FaultWrappingException;
 
 public class WireInvocationCircuit {
 
@@ -72,7 +73,7 @@ public class WireInvocationCircuit {
       } catch (Exception exception) {
         if (!invocationSignal.isInOnly()) {
           error = true;
-          result = new Fault(new FaultElement(invocationSignal.getAddress().getLocation().getService(), invocationSignal.getAddress().getLocation().getFunction().getName()), exception);
+          result = (exception instanceof FaultWrappingException) ? ((FaultWrappingException)exception).getFault() : new Fault(new FaultElement(invocationSignal.getAddress().getLocation().getService(), invocationSignal.getAddress().getLocation().getFunction().getName()), exception);
         }
       }
 

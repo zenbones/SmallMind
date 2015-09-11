@@ -52,7 +52,7 @@ public class ThrowableExceptionMapper implements ExceptionMapper<Throwable> {
 
     try {
 
-      return Response.status(500).type(MediaType.APPLICATION_JSON).entity(new Fault(throwable)).build();
+      return Response.status(500).type(MediaType.APPLICATION_JSON).entity((throwable instanceof FaultWrappingException) ? ((FaultWrappingException)throwable).getFault() : new Fault(throwable)).build();
     } catch (IOException ioException) {
 
       return Response.status(500).type(MediaType.TEXT_HTML_TYPE).entity(ioException.getMessage()).build();
