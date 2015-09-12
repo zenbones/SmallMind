@@ -79,7 +79,14 @@ public class XMemcachedMemcachedClient implements ProxyMemcachedClient {
   public <T> ProxyCASResponse<T> casGet (String key)
     throws TimeoutException, InterruptedException, MemcachedException {
 
-    return new XMemcachedCASResponse<>(memcachedClient.<T>gets(key));
+    GetsResponse<T> getsResponse;
+
+    if ((getsResponse = memcachedClient.<T>gets(key)) == null) {
+
+      return null;
+    }
+
+    return new XMemcachedCASResponse<>(getsResponse);
   }
 
   @Override
