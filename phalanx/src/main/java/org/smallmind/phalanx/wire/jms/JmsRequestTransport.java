@@ -10,10 +10,17 @@ import javax.jms.JMSException;
 import javax.jms.Message;
 import javax.jms.Queue;
 import javax.jms.Topic;
+import org.smallmind.instrument.ChronometerInstrumentAndReturn;
+import org.smallmind.instrument.InstrumentationManager;
+import org.smallmind.instrument.MetricProperty;
+import org.smallmind.instrument.config.MetricConfiguration;
+import org.smallmind.instrument.config.MetricConfigurationProvider;
+import org.smallmind.nutsnbolts.time.Duration;
+import org.smallmind.nutsnbolts.util.SelfDestructiveMap;
+import org.smallmind.nutsnbolts.util.SnowflakeId;
 import org.smallmind.phalanx.wire.Address;
 import org.smallmind.phalanx.wire.AsynchronousTransmissionCallback;
 import org.smallmind.phalanx.wire.InvocationSignal;
-import org.smallmind.phalanx.wire.LocationType;
 import org.smallmind.phalanx.wire.MetricType;
 import org.smallmind.phalanx.wire.RequestTransport;
 import org.smallmind.phalanx.wire.ResultSignal;
@@ -21,18 +28,8 @@ import org.smallmind.phalanx.wire.SignalCodec;
 import org.smallmind.phalanx.wire.SynchronousTransmissionCallback;
 import org.smallmind.phalanx.wire.TransmissionCallback;
 import org.smallmind.phalanx.wire.TransportException;
-import org.smallmind.phalanx.wire.WhisperLocation;
 import org.smallmind.phalanx.wire.WireContext;
 import org.smallmind.phalanx.wire.WireProperty;
-import org.smallmind.instrument.ChronometerInstrumentAndReturn;
-import org.smallmind.instrument.InstrumentationManager;
-import org.smallmind.instrument.MetricProperty;
-import org.smallmind.instrument.config.MetricConfiguration;
-import org.smallmind.instrument.config.MetricConfigurationProvider;
-import org.smallmind.nutsnbolts.lang.UnknownSwitchCaseException;
-import org.smallmind.nutsnbolts.time.Duration;
-import org.smallmind.nutsnbolts.util.SelfDestructiveMap;
-import org.smallmind.nutsnbolts.util.SnowflakeId;
 
 public class JmsRequestTransport implements MetricConfigurationProvider, RequestTransport {
 
@@ -101,19 +98,19 @@ public class JmsRequestTransport implements MetricConfigurationProvider, Request
   }
 
   @Override
-  public void transmitInOnly (Address address, Map<String, Object> arguments, WireContext... contexts)
+  public void transmitInOnly (String serviceGroup, String instanceId, Address address, Map<String, Object> arguments, WireContext... contexts)
     throws Exception {
 
-    transmit(true, address, arguments, contexts);
+    transmit(true, serviceGroup, instanceId, address, arguments, contexts);
   }
 
   @Override
-  public Object transmitInOut (Address address, Map<String, Object> arguments, WireContext... contexts)
+  public Object transmitInOut (String serviceGroup, String instanceId, Address address, Map<String, Object> arguments, WireContext... contexts)
     throws Throwable {
 
     TransmissionCallback transmissionCallback;
 
-    if ((transmissionCallback = transmit(false, address, arguments, contexts)) != null) {
+    if ((transmissionCallback = transmit(false, serviceGroup, instanceId, address, arguments, contexts)) != null) {
 
       return transmissionCallback.getResult(signalCodec);
     }
@@ -121,21 +118,11 @@ public class JmsRequestTransport implements MetricConfigurationProvider, Request
     return null;
   }
 
-  private TransmissionCallback transmit (boolean inOnly, Address address, Map<String, Object> arguments, WireContext... contexts)
+  private TransmissionCallback transmit (boolean inOnly, String serviceGroup, String instanceId, Address address, Map<String, Object> arguments, WireContext... contexts)
     throws Exception {
 
-    final MessageHandler messageHandler;
-
-    switch (address.getLocation().getType()) {
-      case TALK:
-        messageHandler = acquireMessageHandler(talkQueue);
-        break;
-      case WHISPER:
-        messageHandler = acquireMessageHandler(whisperQueue);
-        break;
-      default:
-        throw new UnknownSwitchCaseException(address.getLocation().getType().name());
-    }
+    LinkedBlockingQueue<MessageHandler> messageQueue = (instanceId == null) ? talkQueue : whisperQueue;
+    final MessageHandler messageHandler = acquireMessageHandler(messageQueue);
 
     try {
 
@@ -143,10 +130,10 @@ public class JmsRequestTransport implements MetricConfigurationProvider, Request
       SynchronousTransmissionCallback previousCallback;
       Message requestMessage;
 
-      messageHandler.send(requestMessage = constructMessage(messageHandler, inOnly, address, arguments, contexts));
+      messageHandler.send(requestMessage = constructMessage(messageHandler, inOnly, serviceGroup, instanceId, address, arguments, contexts));
 
       if (!inOnly) {
-        if ((previousCallback = (SynchronousTransmissionCallback)callbackMap.putIfAbsent(requestMessage.getJMSMessageID(), asynchronousCallback = new AsynchronousTransmissionCallback(address.getLocation().getService(), address.getLocation().getFunction().getName()))) != null) {
+        if ((previousCallback = (SynchronousTransmissionCallback)callbackMap.putIfAbsent(requestMessage.getJMSMessageID(), asynchronousCallback = new AsynchronousTransmissionCallback(address.getService(), address.getFunction().getName()))) != null) {
 
           return previousCallback;
         }
@@ -157,22 +144,7 @@ public class JmsRequestTransport implements MetricConfigurationProvider, Request
         return null;
       }
     } finally {
-      returnMessageHandler(address.getLocation().getType(), messageHandler);
-    }
-  }
-
-  private void returnMessageHandler (LocationType locationType, MessageHandler messageHandler)
-    throws InterruptedException, UnknownSwitchCaseException {
-
-    switch (locationType) {
-      case TALK:
-        talkQueue.put(messageHandler);
-        break;
-      case WHISPER:
-        whisperQueue.put(messageHandler);
-        break;
-      default:
-        throw new UnknownSwitchCaseException(locationType.name());
+      messageQueue.put(messageHandler);
     }
   }
 
@@ -200,7 +172,7 @@ public class JmsRequestTransport implements MetricConfigurationProvider, Request
     });
   }
 
-  private Message constructMessage (final MessageHandler messageHandler, final boolean inOnly, final Address address, final Map<String, Object> arguments, final WireContext... contexts)
+  private Message constructMessage (final MessageHandler messageHandler, final boolean inOnly, final String serviceGroup, final String instanceId, final Address address, final Map<String, Object> arguments, final WireContext... contexts)
     throws Exception {
 
     return InstrumentationManager.execute(new ChronometerInstrumentAndReturn<Message>(this, new MetricProperty("event", MetricType.CONSTRUCT_MESSAGE.getDisplay())) {
@@ -221,9 +193,10 @@ public class JmsRequestTransport implements MetricConfigurationProvider, Request
 
         requestMessage.setStringProperty(WireProperty.CONTENT_TYPE.getKey(), signalCodec.getContentType());
         requestMessage.setLongProperty(WireProperty.CLOCK.getKey(), System.currentTimeMillis());
+        requestMessage.setStringProperty(WireProperty.SERVICE_GROUP.getKey(), serviceGroup);
 
-        if (address.getLocation().getType().equals(LocationType.WHISPER)) {
-          requestMessage.setStringProperty(WireProperty.INSTANCE_ID.getKey(), ((WhisperLocation)address.getLocation()).getInstanceId());
+        if (instanceId != null) {
+          requestMessage.setStringProperty(WireProperty.INSTANCE_ID.getKey(), instanceId);
         }
 
         return requestMessage;

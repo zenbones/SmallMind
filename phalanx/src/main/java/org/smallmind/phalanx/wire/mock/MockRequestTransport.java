@@ -4,20 +4,18 @@ import java.util.Date;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
+import org.smallmind.nutsnbolts.time.Duration;
+import org.smallmind.nutsnbolts.util.SelfDestructiveMap;
 import org.smallmind.phalanx.wire.Address;
 import org.smallmind.phalanx.wire.AsynchronousTransmissionCallback;
 import org.smallmind.phalanx.wire.InvocationSignal;
-import org.smallmind.phalanx.wire.LocationType;
 import org.smallmind.phalanx.wire.RequestTransport;
 import org.smallmind.phalanx.wire.ResultSignal;
 import org.smallmind.phalanx.wire.SignalCodec;
 import org.smallmind.phalanx.wire.SynchronousTransmissionCallback;
 import org.smallmind.phalanx.wire.TransmissionCallback;
-import org.smallmind.phalanx.wire.WhisperLocation;
 import org.smallmind.phalanx.wire.WireContext;
 import org.smallmind.phalanx.wire.WireProperty;
-import org.smallmind.nutsnbolts.time.Duration;
-import org.smallmind.nutsnbolts.util.SelfDestructiveMap;
 import org.smallmind.scribe.pen.LoggerManager;
 
 public class MockRequestTransport implements RequestTransport {
@@ -35,6 +33,7 @@ public class MockRequestTransport implements RequestTransport {
     callbackMap = new SelfDestructiveMap<>(new Duration(timeoutSeconds, TimeUnit.SECONDS));
 
     messageRouter.getResponseTopic().addListener(new MockMessageListener() {
+
       @Override
       public boolean match (MockMessageProperties properties) {
 
@@ -60,20 +59,20 @@ public class MockRequestTransport implements RequestTransport {
   }
 
   @Override
-  public void transmitInOnly (Address address, Map<String, Object> arguments, WireContext... contexts)
+  public void transmitInOnly (String serviceGroup, String instanceId, Address address, Map<String, Object> arguments, WireContext... contexts)
     throws Exception {
 
-    transmit(true, address, arguments, contexts);
+    transmit(true, serviceGroup, instanceId, address, arguments, contexts);
   }
 
   @Override
-  public Object transmitInOut (Address address, Map<String, Object> arguments, WireContext... contexts)
+  public Object transmitInOut (String serviceGroup, String instanceId, Address address, Map<String, Object> arguments, WireContext... contexts)
     throws Throwable {
 
-    return transmit(false, address, arguments, contexts).getResult(signalCodec);
+    return transmit(false, serviceGroup, instanceId, address, arguments, contexts).getResult(signalCodec);
   }
 
-  private TransmissionCallback transmit (boolean inOnly, Address address, Map<String, Object> arguments, WireContext... contexts)
+  private TransmissionCallback transmit (boolean inOnly, String serviceGroup, String instanceId, Address address, Map<String, Object> arguments, WireContext... contexts)
     throws Exception {
 
     MockMessage message = new MockMessage(signalCodec.encode(new InvocationSignal(inOnly, address, arguments, contexts)));
@@ -89,16 +88,17 @@ public class MockRequestTransport implements RequestTransport {
     message.getProperties().setTimestamp(new Date());
     message.getProperties().setContentType(signalCodec.getContentType());
     message.getProperties().setHeader(WireProperty.CLOCK.getKey(), System.currentTimeMillis());
+    message.getProperties().setHeader(WireProperty.SERVICE_GROUP.getKey(), serviceGroup);
 
-    if (address.getLocation().getType().equals(LocationType.WHISPER)) {
-      message.getProperties().setHeader(WireProperty.INSTANCE_ID.getKey(), ((WhisperLocation)address.getLocation()).getInstanceId());
+    if (instanceId != null) {
+      message.getProperties().setHeader(WireProperty.INSTANCE_ID.getKey(), instanceId);
       messageRouter.getWhisperRequestTopic().send(message);
     } else {
       messageRouter.getTalkRequestQueue().send(message);
     }
 
     if (!inOnly) {
-      if ((previousCallback = (SynchronousTransmissionCallback)callbackMap.putIfAbsent(messageId, asynchronousCallback = new AsynchronousTransmissionCallback(address.getLocation().getService(), address.getLocation().getFunction().getName()))) != null) {
+      if ((previousCallback = (SynchronousTransmissionCallback)callbackMap.putIfAbsent(messageId, asynchronousCallback = new AsynchronousTransmissionCallback(address.getService(), address.getFunction().getName()))) != null) {
 
         return previousCallback;
       }

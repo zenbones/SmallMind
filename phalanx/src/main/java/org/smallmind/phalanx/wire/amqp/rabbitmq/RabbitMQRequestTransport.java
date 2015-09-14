@@ -5,16 +5,6 @@ import java.util.Map;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
-import org.smallmind.phalanx.wire.Address;
-import org.smallmind.phalanx.wire.AsynchronousTransmissionCallback;
-import org.smallmind.phalanx.wire.RequestTransport;
-import org.smallmind.phalanx.wire.ResultSignal;
-import org.smallmind.phalanx.wire.SignalCodec;
-import org.smallmind.phalanx.wire.SynchronousTransmissionCallback;
-import org.smallmind.phalanx.wire.TransmissionCallback;
-import org.smallmind.phalanx.wire.TransportException;
-import org.smallmind.phalanx.wire.WireContext;
-import org.smallmind.phalanx.wire.MetricType;
 import org.smallmind.instrument.ChronometerInstrumentAndReturn;
 import org.smallmind.instrument.InstrumentationManager;
 import org.smallmind.instrument.MetricProperty;
@@ -23,6 +13,16 @@ import org.smallmind.instrument.config.MetricConfigurationProvider;
 import org.smallmind.nutsnbolts.time.Duration;
 import org.smallmind.nutsnbolts.util.SelfDestructiveMap;
 import org.smallmind.nutsnbolts.util.SnowflakeId;
+import org.smallmind.phalanx.wire.Address;
+import org.smallmind.phalanx.wire.AsynchronousTransmissionCallback;
+import org.smallmind.phalanx.wire.MetricType;
+import org.smallmind.phalanx.wire.RequestTransport;
+import org.smallmind.phalanx.wire.ResultSignal;
+import org.smallmind.phalanx.wire.SignalCodec;
+import org.smallmind.phalanx.wire.SynchronousTransmissionCallback;
+import org.smallmind.phalanx.wire.TransmissionCallback;
+import org.smallmind.phalanx.wire.TransportException;
+import org.smallmind.phalanx.wire.WireContext;
 
 public class RabbitMQRequestTransport implements MetricConfigurationProvider, RequestTransport {
 
@@ -72,19 +72,19 @@ public class RabbitMQRequestTransport implements MetricConfigurationProvider, Re
   }
 
   @Override
-  public void transmitInOnly (Address address, Map<String, Object> arguments, WireContext... contexts)
+  public void transmitInOnly (String serviceGroup, String instanceId, Address address, Map<String, Object> arguments, WireContext... contexts)
     throws Exception {
 
-    transmit(true, address, arguments, contexts);
+    transmit(true, serviceGroup, instanceId, address, arguments, contexts);
   }
 
   @Override
-  public Object transmitInOut (Address address, Map<String, Object> arguments, WireContext... contexts)
+  public Object transmitInOut (String serviceGroup, String instanceId, Address address, Map<String, Object> arguments, WireContext... contexts)
     throws Throwable {
 
     TransmissionCallback transmissionCallback;
 
-    if ((transmissionCallback = transmit(false, address, arguments, contexts)) != null) {
+    if ((transmissionCallback = transmit(false, serviceGroup, instanceId, address, arguments, contexts)) != null) {
 
       return transmissionCallback.getResult(signalCodec);
     }
@@ -92,7 +92,7 @@ public class RabbitMQRequestTransport implements MetricConfigurationProvider, Re
     return null;
   }
 
-  private TransmissionCallback transmit (boolean inOnly, Address address, Map<String, Object> arguments, WireContext... contexts)
+  private TransmissionCallback transmit (boolean inOnly, String serviceGroup, String instanceId, Address address, Map<String, Object> arguments, WireContext... contexts)
     throws Exception {
 
     final RequestMessageRouter requestMessageRouter = acquireRequestMessageRouter();
@@ -103,10 +103,10 @@ public class RabbitMQRequestTransport implements MetricConfigurationProvider, Re
       SynchronousTransmissionCallback previousCallback;
       String messageId;
 
-      messageId = requestMessageRouter.publish(inOnly, address, arguments, contexts);
+      messageId = requestMessageRouter.publish(inOnly, serviceGroup, instanceId, address, arguments, contexts);
 
       if (!inOnly) {
-        if ((previousCallback = (SynchronousTransmissionCallback)callbackMap.putIfAbsent(messageId, asynchronousCallback = new AsynchronousTransmissionCallback(address.getLocation().getService(), address.getLocation().getFunction().getName()))) != null) {
+        if ((previousCallback = (SynchronousTransmissionCallback)callbackMap.putIfAbsent(messageId, asynchronousCallback = new AsynchronousTransmissionCallback(address.getService(), address.getFunction().getName()))) != null) {
 
           return previousCallback;
         }

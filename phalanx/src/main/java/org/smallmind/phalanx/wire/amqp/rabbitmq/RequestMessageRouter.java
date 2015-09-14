@@ -5,15 +5,6 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
-import org.smallmind.phalanx.wire.Address;
-import org.smallmind.phalanx.wire.InvocationSignal;
-import org.smallmind.phalanx.wire.LocationType;
-import org.smallmind.phalanx.wire.ResultSignal;
-import org.smallmind.phalanx.wire.SignalCodec;
-import org.smallmind.phalanx.wire.WhisperLocation;
-import org.smallmind.phalanx.wire.WireContext;
-import org.smallmind.phalanx.wire.WireProperty;
-import org.smallmind.phalanx.wire.MetricType;
 import com.rabbitmq.client.AMQP;
 import com.rabbitmq.client.Channel;
 import com.rabbitmq.client.DefaultConsumer;
@@ -23,6 +14,13 @@ import org.smallmind.instrument.ChronometerInstrumentAndReturn;
 import org.smallmind.instrument.InstrumentationManager;
 import org.smallmind.instrument.MetricProperty;
 import org.smallmind.nutsnbolts.util.SnowflakeId;
+import org.smallmind.phalanx.wire.Address;
+import org.smallmind.phalanx.wire.InvocationSignal;
+import org.smallmind.phalanx.wire.MetricType;
+import org.smallmind.phalanx.wire.ResultSignal;
+import org.smallmind.phalanx.wire.SignalCodec;
+import org.smallmind.phalanx.wire.WireContext;
+import org.smallmind.phalanx.wire.WireProperty;
 import org.smallmind.scribe.pen.LoggerManager;
 
 public class RequestMessageRouter extends MessageRouter {
@@ -88,12 +86,12 @@ public class RequestMessageRouter extends MessageRouter {
     });
   }
 
-  public String publish (final boolean inOnly, final Address address, final Map<String, Object> arguments, final WireContext... contexts)
+  public String publish (final boolean inOnly, final String serviceGroup, final String instanceId, final Address address, final Map<String, Object> arguments, final WireContext... contexts)
     throws Exception {
 
     RabbitMQMessage rabbitMQMessage = constructMessage(inOnly, address, arguments, contexts);
 
-    send(address.getLocation().getType().equals(LocationType.WHISPER) ? ((WhisperLocation)address.getLocation()).getInstanceId() : "", getRequestExchangeName(), rabbitMQMessage.getProperties(), rabbitMQMessage.getBody());
+    send((instanceId == null) ? serviceGroup : serviceGroup + "[" + instanceId + "]", getRequestExchangeName(), rabbitMQMessage.getProperties(), rabbitMQMessage.getBody());
 
     return rabbitMQMessage.getProperties().getMessageId();
   }

@@ -7,9 +7,6 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import javax.jms.ConnectionFactory;
 import javax.jms.Queue;
 import javax.jms.Topic;
-import org.smallmind.phalanx.wire.jms.MessageBroker;
-import org.smallmind.phalanx.wire.jms.spring.ConnectionFactoryReference;
-import org.smallmind.phalanx.wire.jms.spring.DestinationReference;
 import org.hornetq.api.core.TransportConfiguration;
 import org.hornetq.core.config.Configuration;
 import org.hornetq.core.config.impl.ConfigurationImpl;
@@ -25,6 +22,9 @@ import org.hornetq.jms.server.config.impl.JMSQueueConfigurationImpl;
 import org.hornetq.jms.server.config.impl.TopicConfigurationImpl;
 import org.hornetq.jms.server.embedded.EmbeddedJMS;
 import org.smallmind.nutsnbolts.lang.UnknownSwitchCaseException;
+import org.smallmind.phalanx.wire.jms.MessageBroker;
+import org.smallmind.phalanx.wire.jms.spring.ConnectionFactoryReference;
+import org.smallmind.phalanx.wire.jms.spring.DestinationReference;
 import org.springframework.beans.factory.InitializingBean;
 
 public class HornetQMessageBrokerInitializingBean implements MessageBroker, InitializingBean {

@@ -3,16 +3,16 @@ package org.smallmind.phalanx.wire.amqp.rabbitmq;
 import java.util.Map;
 import java.util.concurrent.TransferQueue;
 import javax.jms.JMSException;
+import org.smallmind.instrument.ChronometerInstrument;
+import org.smallmind.instrument.InstrumentationManager;
+import org.smallmind.instrument.MetricProperty;
+import org.smallmind.instrument.config.MetricConfiguration;
 import org.smallmind.phalanx.wire.InvocationSignal;
 import org.smallmind.phalanx.wire.ResponseTransport;
 import org.smallmind.phalanx.wire.SignalCodec;
 import org.smallmind.phalanx.wire.WireInvocationCircuit;
 import org.smallmind.phalanx.wire.WireProperty;
 import org.smallmind.phalanx.worker.Worker;
-import org.smallmind.instrument.ChronometerInstrument;
-import org.smallmind.instrument.InstrumentationManager;
-import org.smallmind.instrument.MetricProperty;
-import org.smallmind.instrument.config.MetricConfiguration;
 
 public class InvocationWorker extends Worker<RabbitMQMessage> {
 
@@ -38,7 +38,7 @@ public class InvocationWorker extends Worker<RabbitMQMessage> {
     final InvocationSignal invocationSignal;
 
     invocationSignal = signalCodec.decode(message.getBody(), 0, message.getBody().length, InvocationSignal.class);
-    InstrumentationManager.execute(new ChronometerInstrument(this, new MetricProperty("operation", "invoke"), new MetricProperty("service", invocationSignal.getAddress().getLocation().getService()), new MetricProperty("method", invocationSignal.getAddress().getLocation().getFunction().getName())) {
+    InstrumentationManager.execute(new ChronometerInstrument(this, new MetricProperty("operation", "invoke"), new MetricProperty("service", invocationSignal.getAddress().getService()), new MetricProperty("method", invocationSignal.getAddress().getFunction().getName())) {
 
       @Override
       public void withChronometer ()

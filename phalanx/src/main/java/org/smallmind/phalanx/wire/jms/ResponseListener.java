@@ -8,14 +8,14 @@ import javax.jms.JMSException;
 import javax.jms.Message;
 import javax.jms.MessageListener;
 import javax.jms.Topic;
+import org.smallmind.instrument.ChronometerInstrument;
+import org.smallmind.instrument.InstrumentationManager;
+import org.smallmind.instrument.MetricProperty;
 import org.smallmind.phalanx.wire.MetricType;
 import org.smallmind.phalanx.wire.ResultSignal;
 import org.smallmind.phalanx.wire.SignalCodec;
 import org.smallmind.phalanx.wire.TransportException;
 import org.smallmind.phalanx.wire.WireProperty;
-import org.smallmind.instrument.ChronometerInstrument;
-import org.smallmind.instrument.InstrumentationManager;
-import org.smallmind.instrument.MetricProperty;
 import org.smallmind.scribe.pen.LoggerManager;
 
 public class ResponseListener implements SessionEmployer, MessageListener {

@@ -1,11 +1,11 @@
 package org.smallmind.phalanx.wire.amqp.rabbitmq.spring;
 
 import java.util.ArrayList;
-import org.smallmind.phalanx.wire.amqp.rabbitmq.RabbitMQConnector;
 import com.rabbitmq.client.Address;
 import com.rabbitmq.client.ConnectionFactory;
 import org.smallmind.nutsnbolts.spring.SpringPropertyAccessor;
 import org.smallmind.nutsnbolts.spring.SpringPropertyAccessorManager;
+import org.smallmind.phalanx.wire.amqp.rabbitmq.RabbitMQConnector;
 import org.springframework.beans.factory.FactoryBean;
 import org.springframework.beans.factory.InitializingBean;
 

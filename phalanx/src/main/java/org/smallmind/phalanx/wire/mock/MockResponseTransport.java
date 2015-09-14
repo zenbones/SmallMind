@@ -25,6 +25,7 @@ public class MockResponseTransport implements ResponseTransport {
     this.signalCodec = signalCodec;
 
     messageRouter.getTalkRequestQueue().addListener(new MockMessageListener() {
+
       @Override
       public boolean match (MockMessageProperties properties) {
 
@@ -43,6 +44,7 @@ public class MockResponseTransport implements ResponseTransport {
     });
 
     messageRouter.getWhisperRequestTopic().addListener(new MockMessageListener() {
+
       @Override
       public boolean match (MockMessageProperties properties) {
 

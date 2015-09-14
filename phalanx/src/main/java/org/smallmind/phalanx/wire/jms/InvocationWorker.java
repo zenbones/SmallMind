@@ -4,6 +4,10 @@ import java.util.concurrent.TransferQueue;
 import javax.jms.BytesMessage;
 import javax.jms.JMSException;
 import javax.jms.Message;
+import org.smallmind.instrument.ChronometerInstrument;
+import org.smallmind.instrument.InstrumentationManager;
+import org.smallmind.instrument.MetricProperty;
+import org.smallmind.instrument.config.MetricConfiguration;
 import org.smallmind.phalanx.wire.InvocationSignal;
 import org.smallmind.phalanx.wire.ResponseTransport;
 import org.smallmind.phalanx.wire.SignalCodec;
@@ -11,13 +15,8 @@ import org.smallmind.phalanx.wire.TransportException;
 import org.smallmind.phalanx.wire.WireInvocationCircuit;
 import org.smallmind.phalanx.wire.WireProperty;
 import org.smallmind.phalanx.worker.Worker;
-import org.smallmind.instrument.ChronometerInstrument;
-import org.smallmind.instrument.InstrumentationManager;
-import org.smallmind.instrument.MetricProperty;
-import org.smallmind.instrument.config.MetricConfiguration;
 
 public class InvocationWorker extends Worker<Message> {
-
 
   private final ResponseTransport responseTransport;
   private final WireInvocationCircuit invocationCircuit;
@@ -25,7 +24,7 @@ public class InvocationWorker extends Worker<Message> {
 
   private final byte[] buffer;
 
-  public InvocationWorker (MetricConfiguration metricConfiguration,  TransferQueue<Message> workTransferQueue, ResponseTransport responseTransport, WireInvocationCircuit invocationCircuit, SignalCodec signalCodec, int maximumMessageLength) {
+  public InvocationWorker (MetricConfiguration metricConfiguration, TransferQueue<Message> workTransferQueue, ResponseTransport responseTransport, WireInvocationCircuit invocationCircuit, SignalCodec signalCodec, int maximumMessageLength) {
 
     super(metricConfiguration, workTransferQueue);
 
@@ -42,14 +41,13 @@ public class InvocationWorker extends Worker<Message> {
 
     if (((BytesMessage)message).getBodyLength() > buffer.length) {
       throw new TransportException("Message length exceeds maximum capacity %d > %d", ((BytesMessage)message).getBodyLength(), buffer.length);
-    }
-    else {
+    } else {
 
       final InvocationSignal invocationSignal;
 
       ((BytesMessage)message).readBytes(buffer);
       invocationSignal = signalCodec.decode(buffer, 0, (int)((BytesMessage)message).getBodyLength(), InvocationSignal.class);
-      InstrumentationManager.execute(new ChronometerInstrument(this, new MetricProperty("operation", "invoke"), new MetricProperty("service", invocationSignal.getAddress().getLocation().getService()), new MetricProperty("method", invocationSignal.getAddress().getLocation().getFunction().getName())) {
+      InstrumentationManager.execute(new ChronometerInstrument(this, new MetricProperty("operation", "invoke"), new MetricProperty("service", invocationSignal.getAddress().getService()), new MetricProperty("method", invocationSignal.getAddress().getFunction().getName())) {
 
         @Override
         public void withChronometer ()

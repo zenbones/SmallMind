@@ -19,14 +19,16 @@ public class WireInvocationHandler implements InvocationHandler {
   private final ConcurrentHashMap<Class<? extends InstanceIdExtractor>, InstanceIdExtractor> instanceIdExtractorMap = new ConcurrentHashMap<>();
   private final HashMap<Method, String[]> methodMap = new HashMap<>();
   private final Class serviceInterface;
+  private final String serviceGroup;
   private final String serviceName;
   private final int version;
 
-  public WireInvocationHandler (RequestTransport transport, int version, String serviceName, Class<?> serviceInterface)
+  public WireInvocationHandler (RequestTransport transport, String serviceGroup, int version, String serviceName, Class<?> serviceInterface)
     throws Exception {
 
     this.transport = transport;
     this.version = version;
+    this.serviceGroup = serviceGroup;
     this.serviceName = serviceName;
     this.serviceInterface = serviceInterface;
 
@@ -75,8 +77,8 @@ public class WireInvocationHandler implements InvocationHandler {
     Context[] expectedContexts;
     WireContext[] wireContexts = null;
     Whisper whisper;
-    Location location;
     String[] argumentNames;
+    String instanceId;
 
     if ((argumentNames = methodMap.get(method)) == null) {
       throw new MissingInvocationException("No method(%s) available in the service interface(%s)", method.getName(), serviceInterface.getName());
@@ -111,7 +113,6 @@ public class WireInvocationHandler implements InvocationHandler {
     if ((whisper = method.getAnnotation(Whisper.class)) != null) {
 
       InstanceIdExtractor instanceIdExtractor;
-      String instanceId;
 
       if ((instanceIdExtractor = instanceIdExtractorMap.get(whisper.value())) == null) {
         instanceIdExtractorMap.put(whisper.value(), instanceIdExtractor = whisper.value().newInstance());
@@ -119,10 +120,8 @@ public class WireInvocationHandler implements InvocationHandler {
       if ((instanceId = instanceIdExtractor.getInstanceId(argumentMap, wireContexts)) == null) {
         throw new MissingInstanceIdException("Whisper invocations require an instance id(%s)", whisper.value().getName());
       }
-
-      location = new WhisperLocation(instanceId, version, serviceName, new Function(method));
     } else {
-      location = new TalkLocation(version, serviceName, new Function(method));
+      instanceId = null;
     }
 
     if (method.getAnnotation(InOnly.class) != null) {
@@ -134,12 +133,12 @@ public class WireInvocationHandler implements InvocationHandler {
         throw new ServiceDefinitionException("The method(%s) in service interface(%s) is marked as @InOnly but declares an Exception list", method.getName(), serviceInterface.getName());
       }
 
-      transport.transmitInOnly(new Address(location), argumentMap, wireContexts);
+      transport.transmitInOnly(serviceGroup, instanceId, new Address(version, serviceName, new Function(method)), argumentMap, wireContexts);
 
       return null;
     } else {
 
-      return transport.transmitInOut(new Address(location), argumentMap, wireContexts);
+      return transport.transmitInOut(serviceGroup, instanceId, new Address(version, serviceName, new Function(method)), argumentMap, wireContexts);
     }
   }
 }

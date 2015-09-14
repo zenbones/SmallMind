@@ -11,6 +11,7 @@ public class WireProxyFactoryBean implements InitializingBean, FactoryBean<Proxy
   private Proxy serviceProxy;
   private RequestTransport requestTransport;
   private Class<?> serviceInterface;
+  private String serviceGroup;
   private String serviceName;
   private int version;
 
@@ -22,6 +23,11 @@ public class WireProxyFactoryBean implements InitializingBean, FactoryBean<Proxy
   public void setRequestTransport (RequestTransport requestTransport) {
 
     this.requestTransport = requestTransport;
+  }
+
+  public void setServiceGroup (String serviceGroup) {
+
+    this.serviceGroup = serviceGroup;
   }
 
   public void setServiceName (String serviceName) {
@@ -38,7 +44,7 @@ public class WireProxyFactoryBean implements InitializingBean, FactoryBean<Proxy
   public void afterPropertiesSet ()
     throws Exception {
 
-    serviceProxy = WireProxyFactory.generateProxy(requestTransport, version, serviceName, serviceInterface);
+    serviceProxy = WireProxyFactory.generateProxy(requestTransport, serviceGroup, version, serviceName, serviceInterface);
   }
 
   @Override

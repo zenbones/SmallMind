@@ -14,15 +14,12 @@ import org.smallmind.scribe.pen.LoggerManager;
 
 public class WorkManager<W extends Worker<T>, T> implements MetricConfigurationProvider {
 
-  private static enum State {STOPPED, STARTING, STARTED, STOPPING}
-
   private final AtomicReference<State> stateRef = new AtomicReference<>(State.STOPPED);
   private final MetricConfiguration metricConfiguration;
   private final TransferQueue<T> transferQueue;
   private final Class<W> workerClass;
   private final int concurrencyLimit;
   private W[] workers;
-
   public WorkManager (MetricConfiguration metricConfiguration, Class<W> workerClass, int concurrencyLimit) {
 
     this.metricConfiguration = metricConfiguration;
@@ -105,5 +102,7 @@ public class WorkManager<W extends Worker<T>, T> implements MetricConfigurationP
       }
     }
   }
+
+  private static enum State {STOPPED, STARTING, STARTED, STOPPING}
 }
 

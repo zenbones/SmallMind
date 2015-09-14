@@ -3,10 +3,6 @@ package org.smallmind.phalanx.wire.amqp.rabbitmq;
 import java.io.IOException;
 import java.util.Date;
 import java.util.concurrent.TimeUnit;
-import org.smallmind.phalanx.wire.ResultSignal;
-import org.smallmind.phalanx.wire.SignalCodec;
-import org.smallmind.phalanx.wire.MetricType;
-import org.smallmind.phalanx.wire.jms.QueueOperator;
 import com.rabbitmq.client.AMQP;
 import com.rabbitmq.client.Channel;
 import com.rabbitmq.client.DefaultConsumer;
@@ -15,22 +11,28 @@ import org.smallmind.instrument.ChronometerInstrumentAndReturn;
 import org.smallmind.instrument.InstrumentationManager;
 import org.smallmind.instrument.MetricProperty;
 import org.smallmind.nutsnbolts.util.SnowflakeId;
+import org.smallmind.phalanx.wire.MetricType;
+import org.smallmind.phalanx.wire.ResultSignal;
+import org.smallmind.phalanx.wire.SignalCodec;
+import org.smallmind.phalanx.wire.jms.QueueOperator;
 import org.smallmind.scribe.pen.LoggerManager;
 
 public class ResponseMessageRouter extends MessageRouter {
 
   private final RabbitMQResponseTransport responseTransport;
   private final SignalCodec signalCodec;
+  private final String serviceGroup;
   private final String instanceId;
   private final int index;
   private final int ttlSeconds;
 
-  public ResponseMessageRouter (RabbitMQConnector connector, NameConfiguration nameConfiguration, RabbitMQResponseTransport responseTransport, SignalCodec signalCodec, String instanceId, int index, int ttlSeconds) {
+  public ResponseMessageRouter (RabbitMQConnector connector, NameConfiguration nameConfiguration, RabbitMQResponseTransport responseTransport, SignalCodec signalCodec, String serviceGroup, String instanceId, int index, int ttlSeconds) {
 
     super(connector, nameConfiguration);
 
     this.responseTransport = responseTransport;
     this.signalCodec = signalCodec;
+    this.serviceGroup = serviceGroup;
     this.instanceId = instanceId;
     this.index = index;
     this.ttlSeconds = ttlSeconds;
@@ -43,10 +45,10 @@ public class ResponseMessageRouter extends MessageRouter {
     String queueName;
 
     channel.queueDeclare(getTalkQueueName(), false, false, false, null);
-    channel.queueBind(getTalkQueueName(), getRequestExchangeName(), "");
+    channel.queueBind(getTalkQueueName(), getRequestExchangeName(), serviceGroup);
 
     channel.queueDeclare(queueName = getWhisperQueueName() + "-" + instanceId, false, false, true, null);
-    channel.queueBind(queueName, getRequestExchangeName(), instanceId);
+    channel.queueBind(queueName, getRequestExchangeName(), serviceGroup + "[" + instanceId + "]");
   }
 
   @Override

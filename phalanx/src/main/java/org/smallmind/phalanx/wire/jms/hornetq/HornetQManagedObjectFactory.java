@@ -4,13 +4,13 @@ import javax.jms.Connection;
 import javax.jms.ConnectionFactory;
 import javax.jms.Destination;
 import javax.jms.JMSException;
-import org.smallmind.phalanx.wire.TransportException;
-import org.smallmind.phalanx.wire.jms.ManagedObjectFactory;
-import org.smallmind.phalanx.wire.jms.spring.DestinationType;
 import org.hornetq.api.core.TransportConfiguration;
 import org.hornetq.api.jms.HornetQJMSClient;
 import org.hornetq.api.jms.JMSFactoryType;
 import org.smallmind.nutsnbolts.lang.UnknownSwitchCaseException;
+import org.smallmind.phalanx.wire.TransportException;
+import org.smallmind.phalanx.wire.jms.ManagedObjectFactory;
+import org.smallmind.phalanx.wire.jms.spring.DestinationType;
 
 public class HornetQManagedObjectFactory implements ManagedObjectFactory {
 

@@ -6,10 +6,10 @@ import javax.jms.Destination;
 import javax.jms.JMSException;
 import javax.jms.Message;
 import javax.jms.MessageListener;
-import org.smallmind.phalanx.wire.MetricType;
-import org.smallmind.phalanx.wire.WireProperty;
 import org.smallmind.instrument.InstrumentationManager;
 import org.smallmind.instrument.MetricProperty;
+import org.smallmind.phalanx.wire.MetricType;
+import org.smallmind.phalanx.wire.WireProperty;
 import org.smallmind.scribe.pen.LoggerManager;
 
 public class RequestListener implements SessionEmployer, MessageListener {
@@ -20,14 +20,14 @@ public class RequestListener implements SessionEmployer, MessageListener {
   private final Destination requestDestination;
   private final String selector;
 
-  public RequestListener (JmsResponseTransport jmsResponseTransport, ConnectionManager requestConnectionManager, Destination requestDestination, String instanceId)
+  public RequestListener (JmsResponseTransport jmsResponseTransport, ConnectionManager requestConnectionManager, Destination requestDestination, String serviceGroup, String instanceId)
     throws JMSException {
 
     this.jmsResponseTransport = jmsResponseTransport;
     this.requestConnectionManager = requestConnectionManager;
     this.requestDestination = requestDestination;
 
-    selector = (instanceId == null) ? null : WireProperty.INSTANCE_ID.getKey() + "='" + instanceId + "'";
+    selector = (instanceId == null) ? WireProperty.SERVICE_GROUP.getKey() + "='" + serviceGroup + "'" : WireProperty.SERVICE_GROUP.getKey() + "='" + serviceGroup + "' AND " + WireProperty.INSTANCE_ID.getKey() + "='" + instanceId + "'";
 
     requestConnectionManager.createConsumer(this);
   }

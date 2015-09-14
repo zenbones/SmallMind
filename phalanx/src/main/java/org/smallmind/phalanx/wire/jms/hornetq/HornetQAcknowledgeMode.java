@@ -1,8 +1,8 @@
 package org.smallmind.phalanx.wire.jms.hornetq;
 
 import javax.jms.Session;
-import org.smallmind.phalanx.wire.jms.AcknowledgeMode;
 import org.hornetq.api.jms.HornetQJMSConstants;
+import org.smallmind.phalanx.wire.jms.AcknowledgeMode;
 
 public enum HornetQAcknowledgeMode implements AcknowledgeMode {
 

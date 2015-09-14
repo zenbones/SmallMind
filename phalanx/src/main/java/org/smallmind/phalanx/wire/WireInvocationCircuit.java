@@ -32,15 +32,15 @@ public class WireInvocationCircuit {
         Methodology methodology;
         Object[] arguments;
 
-        if ((methodInvoker = invokerMap.get(new ServiceKey(invocationSignal.getAddress().getLocation().getVersion(), invocationSignal.getAddress().getLocation().getService()))) == null) {
-          throw new ServiceDefinitionException("Unregistered service(version = %d, name = %s)", invocationSignal.getAddress().getLocation().getVersion(), invocationSignal.getAddress().getLocation().getService());
+        if ((methodInvoker = invokerMap.get(new ServiceKey(invocationSignal.getAddress().getVersion(), invocationSignal.getAddress().getService()))) == null) {
+          throw new ServiceDefinitionException("Unregistered service(version = %d, name = %s)", invocationSignal.getAddress().getVersion(), invocationSignal.getAddress().getService());
         }
-        if ((invocationFunction = invocationSignal.getAddress().getLocation().getFunction()).isPartial()) {
+        if ((invocationFunction = invocationSignal.getAddress().getFunction()).isPartial()) {
 
           Function completeFunction;
 
           if ((completeFunction = methodInvoker.match(invocationFunction)) == null) {
-            throw new MissingInvocationException("Unable to locate the proper method for the partial function(%s) of service(%s)", invocationFunction.getName(), invocationSignal.getAddress().getLocation().getService());
+            throw new MissingInvocationException("Unable to locate the proper method for the partial function(%s) of service(%s)", invocationFunction.getName(), invocationSignal.getAddress().getService());
           }
 
           invocationFunction = completeFunction;
@@ -54,10 +54,10 @@ public class WireInvocationCircuit {
             ArgumentInfo argumentInfo;
 
             if ((argumentInfo = methodology.getArgumentInfo(argumentEntry.getKey())) == null) {
-              throw new MismatchedArgumentException("Invocation argument(%s) on method(%s) of service(%s) can't be matched by name", argumentEntry.getKey(), invocationFunction.getName(), invocationSignal.getAddress().getLocation().getService());
+              throw new MismatchedArgumentException("Invocation argument(%s) on method(%s) of service(%s) can't be matched by name", argumentEntry.getKey(), invocationFunction.getName(), invocationSignal.getAddress().getService());
             }
             if (argumentInfo.getIndex() >= arguments.length) {
-              throw new MismatchedArgumentException("Invocation argument(%s) on method(%s) of service(%s) maps to a non-existent argument index(%d)", argumentEntry.getKey(), invocationFunction.getName(), invocationSignal.getAddress().getLocation().getService(), argumentInfo.getIndex());
+              throw new MismatchedArgumentException("Invocation argument(%s) on method(%s) of service(%s) maps to a non-existent argument index(%d)", argumentEntry.getKey(), invocationFunction.getName(), invocationSignal.getAddress().getService(), argumentInfo.getIndex());
             }
 
             arguments[argumentInfo.getIndex()] = signalCodec.extractObject(argumentEntry.getValue(), argumentInfo.getParameterType());
@@ -73,7 +73,7 @@ public class WireInvocationCircuit {
       } catch (Exception exception) {
         if (!invocationSignal.isInOnly()) {
           error = true;
-          result = (exception instanceof FaultWrappingException) ? ((FaultWrappingException)exception).getFault() : new Fault(new FaultElement(invocationSignal.getAddress().getLocation().getService(), invocationSignal.getAddress().getLocation().getFunction().getName()), exception);
+          result = (exception instanceof FaultWrappingException) ? ((FaultWrappingException)exception).getFault() : new Fault(new FaultElement(invocationSignal.getAddress().getService(), invocationSignal.getAddress().getFunction().getName()), exception);
         }
       }
 

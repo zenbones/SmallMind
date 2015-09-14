@@ -37,7 +37,7 @@ public class JmsResponseTransport extends WorkManager<InvocationWorker, Message>
   private final String instanceId = SnowflakeId.newInstance().generateDottedString();
   private final int maximumMessageLength;
 
-  public JmsResponseTransport (MetricConfiguration metricConfiguration, RoutingFactories routingFactories, MessagePolicy messagePolicy, ReconnectionPolicy reconnectionPolicy, SignalCodec signalCodec, int clusterSize, int concurrencyLimit, int maximumMessageLength)
+  public JmsResponseTransport (MetricConfiguration metricConfiguration, RoutingFactories routingFactories, MessagePolicy messagePolicy, ReconnectionPolicy reconnectionPolicy, SignalCodec signalCodec, String serviceGroup, int clusterSize, int concurrencyLimit, int maximumMessageLength)
     throws InterruptedException, JMSException, TransportException {
 
     super(metricConfiguration, InvocationWorker.class, concurrencyLimit);
@@ -49,11 +49,11 @@ public class JmsResponseTransport extends WorkManager<InvocationWorker, Message>
 
     talkRequestListeners = new RequestListener[clusterSize];
     for (int index = 0; index < talkRequestListeners.length; index++) {
-      talkRequestListeners[index] = new RequestListener(this, new ConnectionManager(routingFactories.getRequestQueueFactory(), messagePolicy, reconnectionPolicy), routingFactories.getRequestQueueFactory().getDestination(), null);
+      talkRequestListeners[index] = new RequestListener(this, new ConnectionManager(routingFactories.getRequestQueueFactory(), messagePolicy, reconnectionPolicy), routingFactories.getRequestQueueFactory().getDestination(), serviceGroup, null);
     }
     whisperRequestListeners = new RequestListener[clusterSize];
     for (int index = 0; index < whisperRequestListeners.length; index++) {
-      whisperRequestListeners[index] = new RequestListener(this, new ConnectionManager(routingFactories.getRequestQueueFactory(), messagePolicy, reconnectionPolicy), routingFactories.getRequestTopicFactory().getDestination(), instanceId);
+      whisperRequestListeners[index] = new RequestListener(this, new ConnectionManager(routingFactories.getRequestQueueFactory(), messagePolicy, reconnectionPolicy), routingFactories.getRequestTopicFactory().getDestination(), serviceGroup, instanceId);
     }
 
     responseConnectionManagers = new ConnectionManager[clusterSize];
