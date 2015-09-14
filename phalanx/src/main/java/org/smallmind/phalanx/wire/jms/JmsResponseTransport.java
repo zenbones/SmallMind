@@ -104,6 +104,7 @@ public class JmsResponseTransport extends WorkManager<InvocationWorker, Message>
     }
 
     topicOperator.send(constructMessage(callerId, correlationId, topicOperator, new ResultSignal(error, nativeType, result)));
+    responseQueue.add(topicOperator);
   }
 
   private Message constructMessage (final String callerId, final String correlationId, final TopicOperator topicOperator, final ResultSignal resultSignal)

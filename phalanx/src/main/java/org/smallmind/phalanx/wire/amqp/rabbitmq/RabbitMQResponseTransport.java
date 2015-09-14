@@ -80,6 +80,7 @@ public class RabbitMQResponseTransport extends WorkManager<InvocationWorker, Rab
     }
 
     responseMessageRouter.publish(callerId, correlationId, error, nativeType, result);
+    responseQueue.add(responseMessageRouter);
   }
 
   @Override
