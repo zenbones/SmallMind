@@ -42,21 +42,22 @@ public class ResponseMessageRouter extends MessageRouter {
   public final void bindQueues (Channel channel)
     throws IOException {
 
-    String queueName;
+    String talkQueueName;
+    String whisperQueueName;
 
-    channel.queueDeclare(getTalkQueueName(), false, false, false, null);
-    channel.queueBind(getTalkQueueName(), getRequestExchangeName(), serviceGroup);
+    channel.queueDeclare(talkQueueName = getTalkQueueName() + "-" + serviceGroup, false, false, false, null);
+    channel.queueBind(talkQueueName, getRequestExchangeName(), serviceGroup);
 
-    channel.queueDeclare(queueName = getWhisperQueueName() + "-" + instanceId, false, false, true, null);
-    channel.queueBind(queueName, getRequestExchangeName(), serviceGroup + "[" + instanceId + "]");
+    channel.queueDeclare(whisperQueueName = getWhisperQueueName() + "-" + serviceGroup + "[" + instanceId + "]", false, false, true, null);
+    channel.queueBind(whisperQueueName, getRequestExchangeName(), serviceGroup + "[" + instanceId + "]");
   }
 
   @Override
   public void installConsumer (Channel channel)
     throws IOException {
 
-    installConsumerInternal(channel, getTalkQueueName());
-    installConsumerInternal(channel, getWhisperQueueName() + "-" + instanceId);
+    installConsumerInternal(channel, getTalkQueueName() + "-" + serviceGroup);
+    installConsumerInternal(channel, getWhisperQueueName() + "-" + serviceGroup + "[" + instanceId + "]");
   }
 
   private void installConsumerInternal (Channel channel, String queueName)
