@@ -33,39 +33,25 @@
 package org.smallmind.web.jersey.util;
 
 import java.io.Serializable;
-import java.util.LinkedHashMap;
-import java.util.Map;
-import javax.xml.bind.annotation.adapters.XmlAdapter;
+import javax.xml.bind.annotation.XmlAccessType;
+import javax.xml.bind.annotation.XmlAccessorType;
+import javax.xml.bind.annotation.XmlRootElement;
+import javax.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
 
-public class PropertyMapXmlAdapter extends XmlAdapter<LinkedHashMap<String, Serializable>, PropertyMap> {
+@XmlRootElement(name = "object")
+@XmlAccessorType(XmlAccessType.PROPERTY)
+@XmlJavaTypeAdapter(JsonObjectXmlAdapter.class)
+public class JsonObject<T> implements Serializable {
 
-  @Override
-  public PropertyMap unmarshal (LinkedHashMap<String, Serializable> map) throws Exception {
+  private T value;
 
-    if (map == null) {
+  public JsonObject (T value) {
 
-      return null;
-    } else {
-
-      PropertyMap propertyMap = new PropertyMap();
-
-      for (Map.Entry<String, Serializable> entry : map.entrySet()) {
-        propertyMap.put(entry.getKey(), entry.getValue());
-      }
-
-      return propertyMap;
-    }
+    this.value = value;
   }
 
-  @Override
-  public LinkedHashMap<String, Serializable> marshal (PropertyMap propertyMap) throws Exception {
+  public T getValue () {
 
-    LinkedHashMap<String, Serializable> objectMap = new LinkedHashMap<>();
-
-    for (Map.Entry<String, Serializable> propertyEntry : propertyMap.entrySet()) {
-      objectMap.put(propertyEntry.getKey(), propertyEntry.getValue());
-    }
-
-    return objectMap.isEmpty() ? null : objectMap;
+    return value;
   }
 }

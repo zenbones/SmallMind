@@ -32,34 +32,27 @@
  */
 package org.smallmind.web.jersey.util;
 
-import java.io.Serializable;
 import java.util.LinkedHashMap;
-import java.util.Map;
-import javax.xml.bind.annotation.XmlAccessType;
-import javax.xml.bind.annotation.XmlAccessorType;
-import javax.xml.bind.annotation.XmlRootElement;
-import javax.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
+import javax.xml.bind.annotation.adapters.XmlAdapter;
+import com.fasterxml.jackson.core.JsonProcessingException;
 
-@XmlRootElement(name = "properties")
-@XmlAccessorType(XmlAccessType.PROPERTY)
-@XmlJavaTypeAdapter(PropertyMapXmlAdapter.class)
-public class PropertyMap extends LinkedHashMap<String, Serializable> {
+public class JsonObjectXmlAdapter extends XmlAdapter<LinkedHashMap<String, Object>, JsonObject<?>> {
 
-  public PropertyMap () {
+  @Override
+  public JsonObject<?> unmarshal (LinkedHashMap<String, Object> map) {
 
-    super();
+    return new JsonObject<>(JsonCodec.convert(map.get("value"), JsonCodec.convert(map.get("clazz"), Class.class)));
   }
 
-  public PropertyMap (Map<? extends String, ? extends Serializable>... maps) {
+  @Override
+  public LinkedHashMap<String, Object> marshal (JsonObject<?> jsonObject)
+    throws JsonProcessingException {
 
-    super();
+    LinkedHashMap<String, Object> wrapperMap = new LinkedHashMap<>();
 
-    if ((maps != null) && (maps.length > 0)) {
-      for (Map<? extends String, ? extends Serializable> map : maps) {
-        if (map != null) {
-          putAll(map);
-        }
-      }
-    }
+    wrapperMap.put("clazz", jsonObject.getValue().getClass());
+    wrapperMap.put("value", jsonObject.getValue());
+
+    return wrapperMap;
   }
 }

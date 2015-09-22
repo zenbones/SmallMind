@@ -39,7 +39,7 @@ import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlElementRef;
 import javax.xml.bind.annotation.XmlRootElement;
-import org.smallmind.web.jersey.util.PropertyMap;
+import org.smallmind.web.jersey.util.JsonObject;
 
 @XmlRootElement(name = "fault")
 @XmlAccessorType(XmlAccessType.PROPERTY)
@@ -48,7 +48,7 @@ public class Fault implements Serializable {
   private Fault cause;
   private FaultElement context;
   private FaultElement[] elements;
-  private PropertyMap propertyMap;
+  private JsonObject<?> information;
   private String throwableType;
   private String message;
   private NativeObject nativeObject;
@@ -169,24 +169,15 @@ public class Fault implements Serializable {
     this.elements = elements;
   }
 
-  @XmlElementRef(name = "properties")
-  public PropertyMap getPropertyMap () {
+  @XmlElementRef(name = "information")
+  public JsonObject<?> getInformation () {
 
-    return propertyMap;
+    return information;
   }
 
-  public void setPropertyMap (PropertyMap propertyMap) {
+  public Fault setInformation (JsonObject<?> information) {
 
-    this.propertyMap = propertyMap;
-  }
-
-  public synchronized <S extends Serializable> Fault addProperty (String key, S value) {
-
-    if (propertyMap == null) {
-      propertyMap = new PropertyMap();
-    }
-
-    propertyMap.put(key, value);
+    this.information = information;
 
     return this;
   }
