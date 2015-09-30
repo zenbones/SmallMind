@@ -40,61 +40,114 @@ import java.nio.file.Files;
 import java.nio.file.LinkOption;
 import java.nio.file.Path;
 import java.nio.file.SimpleFileVisitor;
+import java.nio.file.StandardCopyOption;
 import java.nio.file.attribute.BasicFileAttributes;
 import org.smallmind.nutsnbolts.util.TimeArithmetic;
 
 public class FileUtility {
 
-  public static void deleteTree (Path directory)
+  public static void copyTree (Path source, Path destination)
     throws IOException {
 
-    deleteTree(directory, null, null, true);
   }
 
-  public static void deleteTree (Path directory, final FileFilter fileFilter)
+  public static void copyTree (final Path source, final Path destination, final FileFilter fileFilter)
     throws IOException {
 
-    deleteTree(directory, fileFilter, null, true);
-  }
-
-  public static void deleteTree (Path directory, final TimeArithmetic timeArithmetic)
-    throws IOException {
-
-    deleteTree(directory, null, timeArithmetic, true);
-  }
-
-  public static void deleteTree (Path directory, final boolean throwErrorOnDirectoryNotEmpty)
-    throws IOException {
-
-    deleteTree(directory, null, null, throwErrorOnDirectoryNotEmpty);
-  }
-
-  public static void deleteTree (Path directory, final FileFilter fileFilter, final TimeArithmetic timeArithmetic)
-    throws IOException {
-
-    deleteTree(directory, fileFilter, timeArithmetic, true);
-  }
-
-  public static void deleteTree (Path directory, final FileFilter fileFilter, final boolean throwErrorOnDirectoryNotEmpty)
-    throws IOException {
-
-    deleteTree(directory, fileFilter, null, throwErrorOnDirectoryNotEmpty);
-  }
-
-  public static void deleteTree (Path directory, final TimeArithmetic timeArithmetic, final boolean throwErrorOnDirectoryNotEmpty)
-    throws IOException {
-
-    deleteTree(directory, null, timeArithmetic, throwErrorOnDirectoryNotEmpty);
-  }
-
-  public static void deleteTree (Path directory, final FileFilter fileFilter, final TimeArithmetic timeArithmetic, final boolean throwErrorOnDirectoryNotEmpty)
-    throws IOException {
-
-    if (Files.exists(directory, LinkOption.NOFOLLOW_LINKS)) {
-      if (!Files.isDirectory(directory, LinkOption.NOFOLLOW_LINKS)) {
-        Files.delete(directory);
+    if (Files.exists(source, LinkOption.NOFOLLOW_LINKS)) {
+      if (!Files.isDirectory(source, LinkOption.NOFOLLOW_LINKS)) {
+        if (!Files.exists(destination)) {
+          if (destination.getParent() != null) {
+            Files.createDirectories(destination.getParent());
+          }
+          Files.copy(source, destination, StandardCopyOption.COPY_ATTRIBUTES);
+        } else if (Files.isDirectory(destination)) {
+          Files.copy(source, destination.resolve(source.getFileName()), StandardCopyOption.REPLACE_EXISTING, StandardCopyOption.COPY_ATTRIBUTES);
+        } else {
+          Files.copy(source, destination, StandardCopyOption.REPLACE_EXISTING, StandardCopyOption.COPY_ATTRIBUTES);
+        }
       } else {
-        Files.walkFileTree(directory, new SimpleFileVisitor<Path>() {
+        Files.createDirectories(destination);
+        Files.walkFileTree(source, new SimpleFileVisitor<Path>() {
+
+          @Override
+          public FileVisitResult visitFile (Path file, BasicFileAttributes attrs)
+            throws IOException {
+
+            if ((fileFilter == null) || fileFilter.accept(file.toFile())) {
+              Files.copy(file, destination.resolve(source.relativize(file)), StandardCopyOption.REPLACE_EXISTING, StandardCopyOption.COPY_ATTRIBUTES);
+            }
+
+            return FileVisitResult.CONTINUE;
+          }
+
+          @Override
+          public FileVisitResult postVisitDirectory (Path dir, IOException exc)
+            throws IOException {
+
+            if (exc != null) {
+              throw exc;
+            }
+
+            Files.createDirectories(destination.resolve(source.relativize(dir)));
+
+            return FileVisitResult.CONTINUE;
+          }
+        });
+      }
+    }
+  }
+
+  public static void deleteTree (Path target)
+    throws IOException {
+
+    deleteTree(target, null, null, true);
+  }
+
+  public static void deleteTree (Path target, final FileFilter fileFilter)
+    throws IOException {
+
+    deleteTree(target, fileFilter, null, true);
+  }
+
+  public static void deleteTree (Path target, final TimeArithmetic timeArithmetic)
+    throws IOException {
+
+    deleteTree(target, null, timeArithmetic, true);
+  }
+
+  public static void deleteTree (Path target, final boolean throwErrorOnDirectoryNotEmpty)
+    throws IOException {
+
+    deleteTree(target, null, null, throwErrorOnDirectoryNotEmpty);
+  }
+
+  public static void deleteTree (Path target, final FileFilter fileFilter, final TimeArithmetic timeArithmetic)
+    throws IOException {
+
+    deleteTree(target, fileFilter, timeArithmetic, true);
+  }
+
+  public static void deleteTree (Path target, final FileFilter fileFilter, final boolean throwErrorOnDirectoryNotEmpty)
+    throws IOException {
+
+    deleteTree(target, fileFilter, null, throwErrorOnDirectoryNotEmpty);
+  }
+
+  public static void deleteTree (Path target, final TimeArithmetic timeArithmetic, final boolean throwErrorOnDirectoryNotEmpty)
+    throws IOException {
+
+    deleteTree(target, null, timeArithmetic, throwErrorOnDirectoryNotEmpty);
+  }
+
+  public static void deleteTree (Path target, final FileFilter fileFilter, final TimeArithmetic timeArithmetic, final boolean throwErrorOnDirectoryNotEmpty)
+    throws IOException {
+
+    if (Files.exists(target, LinkOption.NOFOLLOW_LINKS)) {
+      if (!Files.isDirectory(target, LinkOption.NOFOLLOW_LINKS)) {
+        Files.delete(target);
+      } else {
+        Files.walkFileTree(target, new SimpleFileVisitor<Path>() {
 
           @Override
           public FileVisitResult visitFile (Path file, BasicFileAttributes attrs)
