@@ -49,6 +49,7 @@ public class FileUtility {
   public static void copyTree (Path source, Path destination)
     throws IOException {
 
+    copyTree(source, destination, null);
   }
 
   public static void copyTree (final Path source, final Path destination, final FileFilter fileFilter)
