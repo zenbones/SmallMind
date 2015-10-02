@@ -30,14 +30,21 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.web.jersey.util;
+package org.smallmind.nutsnbolts.json;
 
-import org.smallmind.nutsnbolts.lang.FormattedRuntimeException;
+import javax.xml.bind.annotation.adapters.XmlAdapter;
 
-public class XmlAdapterParamConversionException extends FormattedRuntimeException {
+public class BooleanXmlAdapter extends XmlAdapter<String, Boolean> {
 
-  public XmlAdapterParamConversionException (Throwable throwable) {
+  @Override
+  public Boolean unmarshal (String value) {
 
-    super(throwable);
+    return Boolean.parseBoolean(value);
+  }
+
+  @Override
+  public String marshal (Boolean value) {
+
+    return (value == null) ? null : (value) ? "true" : "false";
   }
 }

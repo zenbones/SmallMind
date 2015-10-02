@@ -30,21 +30,14 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.web.jersey.util;
+package org.smallmind.persistence.query;
 
-import javax.xml.bind.annotation.adapters.XmlAdapter;
+import java.io.Serializable;
+import javax.xml.bind.annotation.XmlAccessType;
+import javax.xml.bind.annotation.XmlAccessorType;
 
-public class BooleanXmlAdapter extends XmlAdapter<String, Boolean> {
+@XmlAccessorType(XmlAccessType.PROPERTY)
+public abstract class WhereValue<T> implements Serializable {
 
-  @Override
-  public Boolean unmarshal (String value) {
-
-    return Boolean.parseBoolean(value);
-  }
-
-  @Override
-  public String marshal (Boolean value) {
-
-    return (value == null) ? null : (value) ? "true" : "false";
-  }
+  public abstract T getValue ();
 }

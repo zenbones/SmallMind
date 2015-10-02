@@ -1,28 +1,28 @@
 /*
  * Copyright (c) 2007, 2008, 2009, 2010, 2011, 2012, 2013, 2014, 2015 David Berkman
- *
+ * 
  * This file is part of the SmallMind Code Project.
- *
+ * 
  * The SmallMind Code Project is free software, you can redistribute
  * it and/or modify it under either, at your discretion...
- *
+ * 
  * 1) The terms of GNU Affero General Public License as published by the
  * Free Software Foundation, either version 3 of the License, or (at
  * your option) any later version.
- *
+ * 
  * ...or...
- *
+ * 
  * 2) The terms of the Apache License, Version 2.0.
- *
+ * 
  * The SmallMind Code Project is distributed in the hope that it will
  * be useful, but WITHOUT ANY WARRANTY; without even the implied warranty
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License or Apache License for more details.
- *
+ * 
  * You should have received a copy of the GNU Affero General Public License
  * and the Apache License along with the SmallMind Code Project. If not, see
  * <http://www.gnu.org/licenses/> or <http://www.apache.org/licenses/LICENSE-2.0>.
- *
+ * 
  * Additional permission under the GNU Affero GPL version 3 section 7
  * ------------------------------------------------------------------
  * If you modify this Program, or any covered work, by linking or
@@ -30,14 +30,52 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.web.jersey.util;
+package org.smallmind.persistence.query;
 
-import org.smallmind.nutsnbolts.lang.FormattedRuntimeException;
+import java.io.Serializable;
+import java.util.Arrays;
+import java.util.HashSet;
+import javax.xml.bind.annotation.XmlAccessType;
+import javax.xml.bind.annotation.XmlAccessorType;
+import javax.xml.bind.annotation.XmlElement;
+import javax.xml.bind.annotation.XmlRootElement;
+import javax.xml.bind.annotation.XmlTransient;
 
-public class XmlAdapterParamConversionException extends FormattedRuntimeException {
+@XmlRootElement(name = "where")
+@XmlAccessorType(XmlAccessType.PROPERTY)
+public class Where implements Serializable {
 
-  public XmlAdapterParamConversionException (Throwable throwable) {
+  private HashSet<WhereField> fieldSet;
 
-    super(throwable);
+  public Where () {
+
+  }
+
+  public Where (WhereField... fields) {
+
+    fieldSet = new HashSet<>(Arrays.asList(fields));
+  }
+
+  @XmlTransient
+  public synchronized boolean isEmpty () {
+
+    return (fieldSet == null) || fieldSet.isEmpty();
+  }
+
+  @XmlElement(name = "fields", required = false, nillable = false)
+  public synchronized WhereField[] getFields () {
+
+    WhereField[] fields = new WhereField[fieldSet == null ? 0 : fieldSet.size()];
+
+    if (fieldSet != null) {
+      fieldSet.toArray(fields);
+    }
+
+    return fields;
+  }
+
+  public synchronized void setFields (WhereField... fields) {
+
+    this.fieldSet = new HashSet<>(Arrays.asList(fields));
   }
 }

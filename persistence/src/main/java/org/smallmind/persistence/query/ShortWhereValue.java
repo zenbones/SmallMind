@@ -30,28 +30,34 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.web.jersey.util;
+package org.smallmind.persistence.query;
 
-import javax.xml.bind.annotation.adapters.XmlAdapter;
-import org.joda.time.DateTime;
-import org.joda.time.format.DateTimeFormat;
-import org.joda.time.format.DateTimeFormatter;
-import org.joda.time.format.ISODateTimeFormat;
+import javax.xml.bind.annotation.XmlElement;
+import javax.xml.bind.annotation.XmlRootElement;
 
-public class DateTimeXmlAdapter extends XmlAdapter<String, DateTime> {
+@XmlRootElement(name = "short")
+public class ShortWhereValue extends WhereValue<Short> {
 
-  private static DateTimeFormatter ISO_DATE_FORMATTER = ISODateTimeFormat.dateTime();
-  private static DateTimeFormatter DATE_FORMATTER = DateTimeFormat.forPattern("yyyy-MM-dd");
+  private Short value;
 
-  @Override
-  public DateTime unmarshal (String value) {
+  public ShortWhereValue () {
 
-    return (value == null) ? null : (value.contains("T")) ? ISO_DATE_FORMATTER.parseDateTime(value) : DATE_FORMATTER.parseDateTime(value);
+  }
+
+  public ShortWhereValue (Short value) {
+
+    this.value = value;
   }
 
   @Override
-  public String marshal (DateTime dateTime) {
+  @XmlElement(name = "value", required = true, nillable = false)
+  public Short getValue () {
 
-    return (dateTime == null) ? null : ISO_DATE_FORMATTER.print(dateTime);
+    return value;
+  }
+
+  public void setValue (Short value) {
+
+    this.value = value;
   }
 }

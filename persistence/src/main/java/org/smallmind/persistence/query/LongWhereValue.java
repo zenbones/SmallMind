@@ -30,30 +30,34 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.web.jersey.util;
+package org.smallmind.persistence.query;
 
-import javax.xml.bind.annotation.adapters.XmlAdapter;
-import org.smallmind.nutsnbolts.reflection.type.GenericUtility;
-import org.smallmind.nutsnbolts.util.EnumUtility;
+import javax.xml.bind.annotation.XmlElement;
+import javax.xml.bind.annotation.XmlRootElement;
 
-public class EnumXmlAdapter<E extends Enum<E>> extends XmlAdapter<String, E> {
+@XmlRootElement(name = "long")
+public class LongWhereValue extends WhereValue<Long> {
 
-  private Class<E> enumClass;
+  private Long value;
 
-  public EnumXmlAdapter () {
+  public LongWhereValue () {
 
-    enumClass = (Class<E>)GenericUtility.getTypeArguments(EnumXmlAdapter.class, this.getClass()).get(0);
+  }
+
+  public LongWhereValue (Long value) {
+
+    this.value = value;
   }
 
   @Override
-  public E unmarshal (String value) {
+  @XmlElement(name = "value", required = true, nillable = false)
+  public Long getValue () {
 
-    return (value == null) ? null : Enum.valueOf(enumClass, EnumUtility.toEnumName(value));
+    return value;
   }
 
-  @Override
-  public String marshal (E enumeration) {
+  public void setValue (Long value) {
 
-    return (enumeration == null) ? null : enumeration.toString();
+    this.value = value;
   }
 }
