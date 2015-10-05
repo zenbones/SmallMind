@@ -41,7 +41,7 @@ public class JsonObjectXmlAdapter extends XmlAdapter<LinkedHashMap<String, Objec
   @Override
   public JsonObject<?> unmarshal (LinkedHashMap<String, Object> map) {
 
-    return new JsonObject<>(JsonCodec.convert(map.get("value"), JsonCodec.convert(map.get("clazz"), Class.class)));
+    return new JsonObject<>(JsonCodec.convert(map.get("value"), JsonCodec.convert(map.get("class"), Class.class)));
   }
 
   @Override
@@ -50,7 +50,7 @@ public class JsonObjectXmlAdapter extends XmlAdapter<LinkedHashMap<String, Objec
 
     LinkedHashMap<String, Object> wrapperMap = new LinkedHashMap<>();
 
-    wrapperMap.put("clazz", jsonObject.getValue().getClass());
+    wrapperMap.put("class", jsonObject.getValue().getClass());
     wrapperMap.put("value", jsonObject.getValue());
 
     return wrapperMap;

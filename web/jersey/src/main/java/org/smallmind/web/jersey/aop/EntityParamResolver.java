@@ -109,8 +109,8 @@ public class EntityParamResolver {
 
       bind(EntityParamValueFactoryProvider.class).to(ValueFactoryProvider.class).in(Singleton.class);
       bind(EntityParamInjectionResolver.class).to(new TypeLiteral<InjectionResolver<EntityParam>>() {
-                                                  }
-      ).in(Singleton.class);
+
+      }).in(Singleton.class);
     }
   }
 }
