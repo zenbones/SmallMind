@@ -38,12 +38,37 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.ext.ExceptionMapper;
 import javax.ws.rs.ext.Provider;
+import org.smallmind.nutsnbolts.reflection.type.GenericUtility;
 
 @Provider
 public class ThrowableExceptionMapper implements ExceptionMapper<Throwable> {
 
+  private ExceptionMapper[] mappers;
+
+  public ThrowableExceptionMapper (ExceptionMapper... mappers) {
+
+    this.mappers = mappers;
+  }
+
   @Override
   public Response toResponse (Throwable throwable) {
+
+    if (mappers != null) {
+      for (ExceptionMapper mapper : mappers) {
+
+        Class<? extends Throwable> mappedThrowableClass = (Class<? extends Throwable>)GenericUtility.getTypeArguments(ExceptionMapper.class, mapper.getClass()).get(0);
+
+        if (mappedThrowableClass.isAssignableFrom(throwable.getClass())) {
+
+          Response response;
+
+          if ((response = mapper.toResponse(throwable)) != null) {
+
+            return response;
+          }
+        }
+      }
+    }
 
     if (throwable instanceof WebApplicationException) {
 

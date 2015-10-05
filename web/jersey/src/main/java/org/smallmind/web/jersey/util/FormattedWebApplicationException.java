@@ -30,25 +30,15 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.web.jersey.fault;
+package org.smallmind.web.jersey.util;
 
-import javax.ws.rs.ext.ExceptionMapper;
-import org.glassfish.jersey.server.ResourceConfig;
-import org.smallmind.web.jersey.spring.ResourceConfigExtension;
+import javax.ws.rs.WebApplicationException;
+import javax.ws.rs.core.Response;
 
-public class ThrowableTranslationResourceConfigExtension extends ResourceConfigExtension {
+public class FormattedWebApplicationException extends WebApplicationException {
 
-  private ExceptionMapper[] mappers;
+  public FormattedWebApplicationException (Response.Status status, String message, Object... args) {
 
-  public void setMappers (ExceptionMapper[] mappers) {
-
-    this.mappers = mappers;
-  }
-
-  @Override
-  public void apply (ResourceConfig resourceConfig) {
-
-    resourceConfig.property("jersey.config.server.response.setStatusOverSendError", "true");
-    resourceConfig.register(new ThrowableExceptionMapper(mappers));
+    super(String.format(message, args), status);
   }
 }
