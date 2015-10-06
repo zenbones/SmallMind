@@ -32,22 +32,8 @@
  */
 package org.smallmind.web.jersey.fault;
 
-import org.glassfish.jersey.server.ResourceConfig;
-import org.smallmind.web.jersey.spring.ResourceConfigExtension;
+import javax.ws.rs.ext.ExceptionMapper;
 
-public class ThrowableTranslationResourceConfigExtension extends ResourceConfigExtension {
+public abstract class ConcreteExceptionMapper<T extends Throwable> implements ExceptionMapper<T> {
 
-  private ConcreteExceptionMapper[] mappers;
-
-  public void setMappers (ConcreteExceptionMapper[] mappers) {
-
-    this.mappers = mappers;
-  }
-
-  @Override
-  public void apply (ResourceConfig resourceConfig) {
-
-    resourceConfig.property("jersey.config.server.response.setStatusOverSendError", "true");
-    resourceConfig.register(new ThrowableExceptionMapper(mappers));
-  }
 }
