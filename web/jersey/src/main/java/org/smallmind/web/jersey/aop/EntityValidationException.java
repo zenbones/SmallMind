@@ -32,37 +32,45 @@
  */
 package org.smallmind.web.jersey.aop;
 
-import java.lang.reflect.Method;
+import java.util.Arrays;
 import java.util.Set;
 import javax.validation.ConstraintViolation;
-import javax.validation.Validation;
-import javax.validation.executable.ExecutableValidator;
-import org.hibernate.validator.HibernateValidator;
+import javax.validation.Path;
 
-public class EntityValidator {
+public class EntityValidationException extends javax.validation.ValidationException {
 
-  private static final ExecutableValidator EXECUTABLE_VALIDATOR;
+  public <T> EntityValidationException (Set<ConstraintViolation<T>> constraintViolationSet) {
 
-  static {
-
-    EXECUTABLE_VALIDATOR = Validation.byProvider(HibernateValidator.class).configure().buildValidatorFactory().getValidator().forExecutables();
+    super(convert(constraintViolationSet));
   }
 
-  public static <T> void validateParameters (T object, Method method, Object[] parameters) {
+  private static <T> String convert (Set<ConstraintViolation<T>> constraintViolationSet) {
 
-    Set<ConstraintViolation<T>> constraintViolationSet;
+    Violation[] violations = new Violation[constraintViolationSet.size()];
+    int index = 0;
 
-    if (!(constraintViolationSet = EXECUTABLE_VALIDATOR.validateParameters(object, method, parameters)).isEmpty()) {
-      throw new EntityValidationException(constraintViolationSet);
+    for (ConstraintViolation<?> constraintViolation : constraintViolationSet) {
+      violations[index++] = new Violation(constraintViolation);
     }
+
+    return Arrays.toString(violations);
   }
 
-  public static <T> void validateReturnValue (T object, Method method, Object returnValue) {
+  private static class Violation {
 
-    Set<ConstraintViolation<T>> constraintViolationSet;
+    private Path propertyPath;
+    private String message;
 
-    if (!(constraintViolationSet = EXECUTABLE_VALIDATOR.validateReturnValue(object, method, returnValue)).isEmpty()) {
-      throw new EntityValidationException(constraintViolationSet);
+    public Violation (ConstraintViolation<?> constraintViolation) {
+
+      propertyPath = constraintViolation.getPropertyPath();
+      message = constraintViolation.getMessage();
+    }
+
+    @Override
+    public String toString () {
+
+      return new StringBuilder("[propertyPath = ").append(propertyPath).append(", message = ").append(message).append(']').toString();
     }
   }
 }
