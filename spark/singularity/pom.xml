@@ -8,7 +8,7 @@
    </parent>
    <artifactId>spark-singularity</artifactId>
    <name>Spark-Singularity</name>
-   <description>Constructuion Of Singularity Jar Files</description>
+   <description>Construction Of Singularity Jar Files</description>
    <packaging>pom</packaging>
    <modules>
       <module>boot</module>
