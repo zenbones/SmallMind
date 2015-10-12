@@ -726,16 +726,33 @@
           <groupId>org.apache.maven.plugins</groupId>
           <artifactId>maven-surefire-plugin</artifactId>
           <version>2.18.1</version>
+          <configuration>
+            <useSystemClassLoader>false</useSystemClassLoader>
+            <groups>unit</groups>
+          </configuration>
         </plugin>
         <plugin>
           <groupId>org.apache.maven.plugins</groupId>
           <artifactId>maven-source-plugin</artifactId>
           <version>2.2.1</version>
+          <executions>
+            <execution>
+              <id>attach-sources</id>
+              <phase>verify</phase>
+              <goals>
+                <goal>jar</goal>
+              </goals>
+            </execution>
+          </executions>
         </plugin>
         <plugin>
           <groupId>org.apache.maven.plugins</groupId>
           <artifactId>maven-compiler-plugin</artifactId>
           <version>3.1</version>
+          <configuration>
+            <source>1.7</source>
+            <target>1.7</target>
+          </configuration>
         </plugin>
         <plugin>
           <groupId>org.apache.maven.plugins</groupId>
@@ -751,6 +768,22 @@
           <groupId>org.apache.maven.plugins</groupId>
           <artifactId>maven-plugin-plugin</artifactId>
           <version>3.3</version>
+          <executions>
+            <execution>
+              <id>default-descriptor</id>
+              <goals>
+                <goal>descriptor</goal>
+              </goals>
+              <phase>process-classes</phase>
+            </execution>
+            <execution>
+              <id>help-descriptor</id>
+              <goals>
+                <goal>helpmojo</goal>
+              </goals>
+              <phase>process-classes</phase>
+            </execution>
+          </executions>
         </plugin>
         <plugin>
           <groupId>org.apache.maven.plugins</groupId>
@@ -831,50 +864,18 @@
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-compiler-plugin</artifactId>
-        <configuration>
-          <source>1.7</source>
-          <target>1.7</target>
-        </configuration>
       </plugin>
       <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-source-plugin</artifactId>
-        <executions>
-          <execution>
-            <id>attach-sources</id>
-            <phase>verify</phase>
-            <goals>
-              <goal>jar</goal>
-            </goals>
-          </execution>
-        </executions>
       </plugin>
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-surefire-plugin</artifactId>
-        <configuration>
-          <useSystemClassLoader>false</useSystemClassLoader>
-          <groups>unit</groups>
-        </configuration>
       </plugin>
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-plugin-plugin</artifactId>
-        <executions>
-          <execution>
-            <id>default-descriptor</id>
-            <goals>
-              <goal>descriptor</goal>
-            </goals>
-            <phase>process-classes</phase>
-          </execution>
-          <execution>
-            <id>help-descriptor</id>
-            <goals>
-              <goal>helpmojo</goal>
-            </goals>
-            <phase>process-classes</phase>
-          </execution>
-        </executions>
       </plugin>
     </plugins>
     <resources>
