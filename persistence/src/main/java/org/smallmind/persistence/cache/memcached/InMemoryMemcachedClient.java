@@ -163,6 +163,21 @@ public class InMemoryMemcachedClient implements ProxyMemcachedClient {
   }
 
   @Override
+  public synchronized <T> T getAndTouch (String key, int expiration) {
+
+    Holder<T> holder;
+
+    if (((holder = (Holder<T>)internalMap.get(key)) == null) || holder.isExpired()) {
+
+      return null;
+    }
+
+    holder.touch(expiration);
+
+    return holder.getValue();
+  }
+
+  @Override
   public void shutdown () {
 
   }

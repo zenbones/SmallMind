@@ -65,6 +65,9 @@ public interface ProxyMemcachedClient {
   boolean touch (String key, int expiration)
     throws Exception;
 
+  <T> T getAndTouch (String key, int expiration)
+    throws Exception;
+
   void shutdown ()
     throws Exception;
 }

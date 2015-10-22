@@ -125,6 +125,13 @@ public class XMemcachedMemcachedClient implements ProxyMemcachedClient {
   }
 
   @Override
+  public <T> T getAndTouch (String key, int expiration)
+    throws TimeoutException, InterruptedException, MemcachedException {
+
+    return memcachedClient.getAndTouch(key, expiration);
+  }
+
+  @Override
   public void shutdown ()
     throws IOException {
 
