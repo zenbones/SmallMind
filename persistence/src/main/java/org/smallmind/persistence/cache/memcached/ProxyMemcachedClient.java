@@ -62,6 +62,9 @@ public interface ProxyMemcachedClient {
   boolean casDelete (String key, long cas)
     throws Exception;
 
+  boolean touch (String key, int expiration)
+    throws Exception;
+
   void shutdown ()
     throws Exception;
 }

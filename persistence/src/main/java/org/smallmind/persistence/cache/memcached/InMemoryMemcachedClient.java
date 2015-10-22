@@ -148,6 +148,21 @@ public class InMemoryMemcachedClient implements ProxyMemcachedClient {
   }
 
   @Override
+  public synchronized boolean touch (String key, int expiration) {
+
+    Holder<?> holder;
+
+    if (((holder = internalMap.get(key)) == null) || holder.isExpired()) {
+
+      return false;
+    }
+
+    holder.touch(expiration);
+
+    return true;
+  }
+
+  @Override
   public void shutdown () {
 
   }
@@ -180,6 +195,13 @@ public class InMemoryMemcachedClient implements ProxyMemcachedClient {
     public long getCas () {
 
       return cas;
+    }
+
+    public void touch (int expiration) {
+
+      this.expiration = expiration;
+
+      creation = System.currentTimeMillis();
     }
 
     public boolean isExpired () {
