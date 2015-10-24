@@ -32,7 +32,6 @@
  */
 package org.smallmind.quorum.pool.complex;
 
-import java.util.LinkedList;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import org.smallmind.instrument.Clocks;
@@ -50,8 +49,6 @@ public class ComponentPin<C> {
   private long leaseStartNanos;
 
   protected ComponentPin (ComponentPool<C> componentPool, DeconstructionQueue deconstructionQueue, ComponentInstance<C> componentInstance) {
-
-    LinkedList<DeconstructionFuse> fuseList;
 
     this.componentPool = componentPool;
     this.componentInstance = componentInstance;

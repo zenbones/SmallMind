@@ -68,8 +68,7 @@ public abstract class AbstractPooledConnection<D extends CommonDataSource> imple
 
     try {
       CLOSE_METHOD = Connection.class.getMethod("close");
-    }
-    catch (NoSuchMethodException noSuchMethodException) {
+    } catch (NoSuchMethodException noSuchMethodException) {
       throw new StaticInitializationError(noSuchMethodException);
     }
   }
@@ -85,15 +84,14 @@ public abstract class AbstractPooledConnection<D extends CommonDataSource> imple
     }
 
     creationMilliseconds = System.currentTimeMillis();
-    proxyConnection = (Connection)Proxy.newProxyInstance(dataSource.getClass().getClassLoader(), new Class[] {Connection.class, Existential.class}, this);
+    proxyConnection = (Connection)Proxy.newProxyInstance(dataSource.getClass().getClassLoader(), new Class[]{Connection.class, Existential.class}, this);
 
     connectionEventListenerQueue = new ConcurrentLinkedQueue<>();
     statementEventListenerQueue = new ConcurrentLinkedQueue<>();
 
     if (maxStatements == 0) {
       statementCache = null;
-    }
-    else {
+    } else {
       addStatementEventListener(statementCache = new PooledPreparedStatementCache(maxStatements));
     }
   }
@@ -112,8 +110,7 @@ public abstract class AbstractPooledConnection<D extends CommonDataSource> imple
       }
 
       return null;
-    }
-    else {
+    } else {
       try {
         if ((statementCache != null) && PreparedStatement.class.isAssignableFrom(method.getReturnType())) {
 
@@ -126,13 +123,11 @@ public abstract class AbstractPooledConnection<D extends CommonDataSource> imple
           }
 
           return preparedStatement;
-        }
-        else {
+        } else {
 
           return method.invoke(actualConnection, args);
         }
-      }
-      catch (Throwable throwable) {
+      } catch (Throwable throwable) {
 
         Throwable closestCause;
 
@@ -172,13 +167,11 @@ public abstract class AbstractPooledConnection<D extends CommonDataSource> imple
         if (statementCache != null) {
           try {
             statementCache.close();
-          }
-          finally {
+          } finally {
             removeStatementEventListener(statementCache);
           }
         }
-      }
-      finally {
+      } finally {
         actualConnection.close();
       }
     }
@@ -189,8 +182,7 @@ public abstract class AbstractPooledConnection<D extends CommonDataSource> imple
 
     try {
       close();
-    }
-    catch (SQLException sqlException) {
+    } catch (SQLException sqlException) {
 
       PrintWriter logWriter;
 

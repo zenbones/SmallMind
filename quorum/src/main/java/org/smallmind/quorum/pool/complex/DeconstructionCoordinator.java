@@ -47,7 +47,7 @@ public class DeconstructionCoordinator {
 
     this.componentPin = componentPin;
 
-    fuseList = new LinkedList<DeconstructionFuse>();
+    fuseList = new LinkedList<>();
 
     if (componentPool.getComplexPoolConfig().getMaxLeaseTimeSeconds() > 0) {
       fuseList.add(new MaxLeaseTimeDeconstructionFuse(componentPool, deconstructionQueue, this));
