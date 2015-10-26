@@ -73,7 +73,7 @@ public class SpringPropertyAccessor {
       return None.none();
     }
 
-    return new Some<Boolean>(Boolean.parseBoolean(stringValue));
+    return new Some<>(Boolean.parseBoolean(stringValue));
   }
 
   public Option<Long> asLong (String key) {
@@ -86,7 +86,7 @@ public class SpringPropertyAccessor {
     }
 
     try {
-      return new Some<Long>(Long.parseLong(stringValue));
+      return new Some<>(Long.parseLong(stringValue));
     }
     catch (NumberFormatException numberFormatException) {
       throw new RuntimeBeansException("The value of key(%s) must interpolate as an long(%s)", key, stringValue);
@@ -103,7 +103,7 @@ public class SpringPropertyAccessor {
     }
 
     try {
-      return new Some<Integer>(Integer.parseInt(stringValue));
+      return new Some<>(Integer.parseInt(stringValue));
     }
     catch (NumberFormatException numberFormatException) {
       throw new RuntimeBeansException("The value of key(%s) must interpolate as an int(%s)", key, stringValue);
