@@ -42,6 +42,7 @@ import java.util.Properties;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import org.hibernate.HibernateException;
 import org.hibernate.engine.spi.SessionImplementor;
+import org.hibernate.type.TextType;
 import org.hibernate.usertype.ParameterizedType;
 import org.hibernate.usertype.UserType;
 import org.smallmind.web.jersey.util.JsonCodec;
@@ -80,7 +81,7 @@ public class VersionedJsonUserType<V extends Version<V>> implements UserType, Pa
   @Override
   public int[] sqlTypes () {
 
-    return new int[]{Types.VARCHAR, Types.LONGNVARCHAR};
+    return new int[]{Types.VARCHAR, TextType.INSTANCE.sqlType()};
   }
 
   @Override
@@ -149,7 +150,7 @@ public class VersionedJsonUserType<V extends Version<V>> implements UserType, Pa
 
     if (value == null) {
       st.setNull(index, Types.VARCHAR);
-      st.setNull(index + 1, Types.LONGNVARCHAR);
+      st.setNull(index + 1, TextType.INSTANCE.sqlType());
     } else {
 
       st.setString(index, ((VersionedJson<?>)value).getVersion().toString());
