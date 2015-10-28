@@ -40,57 +40,71 @@ import java.sql.Types;
 import java.util.Properties;
 import org.hibernate.HibernateException;
 import org.hibernate.engine.spi.SessionImplementor;
-import org.hibernate.usertype.EnhancedUserType;
 import org.hibernate.usertype.ParameterizedType;
+import org.hibernate.usertype.UserType;
 
-public class EnumUserType implements ParameterizedType, EnhancedUserType {
+public class EnumUserType implements UserType, ParameterizedType {
 
   private Class<Enum> enumClass;
 
+  @Override
   public void setParameterValues (Properties parameters) {
 
     String enumClassName = parameters.getProperty("enumClassName");
 
     try {
       enumClass = (Class<Enum>)Class.forName(enumClassName);
-    }
-    catch (ClassNotFoundException classNotFoundException) {
+    } catch (ClassNotFoundException classNotFoundException) {
       throw new HibernateException("Enum class not found", classNotFoundException);
     }
   }
 
-  public int[] sqlTypes () {
+  @Override
+  public boolean isMutable () {
 
-    return new int[] {Types.VARCHAR};
+    return false;
   }
 
+  @Override
   public Class returnedClass () {
 
     return enumClass;
   }
 
-  public Object assemble (Serializable cached, Object owner)
-    throws HibernateException {
+  @Override
+  public int[] sqlTypes () {
+
+    return new int[]{Types.VARCHAR};
+  }
+
+  @Override
+  public Object assemble (Serializable cached, Object owner) {
 
     return cached;
   }
 
-  public Serializable disassemble (Object value)
-    throws HibernateException {
+  @Override
+  public Serializable disassemble (Object value) {
 
     return (Enum)value;
   }
 
-  public int hashCode (Object x)
-    throws HibernateException {
+  @Override
+  public Object deepCopy (Object value) {
 
-    return x.hashCode();
+    return value;
   }
 
-  public Object replace (Object original, Object target, Object owner)
-    throws HibernateException {
+  @Override
+  public Object replace (Object original, Object target, Object owner) {
 
     return original;
+  }
+
+  @Override
+  public int hashCode (Object x) {
+
+    return (x == null) ? 0 : x.hashCode();
   }
 
   public boolean equals (Object x, Object y)
@@ -114,35 +128,8 @@ public class EnumUserType implements ParameterizedType, EnhancedUserType {
 
     if (value == null) {
       st.setNull(index, Types.VARCHAR);
-    }
-    else {
+    } else {
       st.setString(index, ((Enum)value).name());
     }
-  }
-
-  public Object deepCopy (Object value)
-    throws HibernateException {
-
-    return value;
-  }
-
-  public boolean isMutable () {
-
-    return false;
-  }
-
-  public Object fromXMLString (String xmlValue) {
-
-    return Enum.valueOf(enumClass, xmlValue);
-  }
-
-  public String objectToSQLString (Object value) {
-
-    return '\'' + ((Enum)value).name() + '\'';
-  }
-
-  public String toXMLString (Object value) {
-
-    return ((Enum)value).name();
   }
 }

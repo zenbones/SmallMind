@@ -50,8 +50,9 @@ import org.hibernate.usertype.UserType;
 
 public class ObjectUserType implements UserType, ParameterizedType {
 
-  private Class embeddedClass;
+  private Class<?> embeddedClass;
 
+  @Override
   public void setParameterValues (Properties parameters) {
 
     String objectClassName = parameters.getProperty("embeddedClassName");
@@ -62,45 +63,63 @@ public class ObjectUserType implements UserType, ParameterizedType {
       if (!Serializable.class.isAssignableFrom(embeddedClass)) {
         throw new HibernateException("Embedded class(" + embeddedClass + ") must be Serializable");
       }
-    }
-    catch (ClassNotFoundException cnfe) {
-      throw new HibernateException(cnfe);
+    } catch (ClassNotFoundException classNotFoundException) {
+      throw new HibernateException(classNotFoundException);
     }
   }
 
-  public Object assemble (Serializable cached, Object owner)
-    throws HibernateException {
+  @Override
+  public boolean isMutable () {
+
+    return false;
+  }
+
+  @Override
+  public Class returnedClass () {
+
+    return embeddedClass;
+  }
+
+  @Override
+  public int[] sqlTypes () {
+
+    return new int[]{Types.VARBINARY};
+  }
+
+  @Override
+  public Object assemble (Serializable cached, Object owner) {
 
     return cached;
   }
 
-  public Object deepCopy (Object value)
-    throws HibernateException {
-
-    return value;
-  }
-
-  public Serializable disassemble (Object value)
-    throws HibernateException {
+  @Override
+  public Serializable disassemble (Object value) {
 
     return (Serializable)value;
   }
 
-  public boolean equals (Object x, Object y)
-    throws HibernateException {
+  @Override
+  public Object deepCopy (Object value) {
 
-    return x == y;
+    return value;
   }
 
-  public int hashCode (Object x)
-    throws HibernateException {
+  @Override
+  public Object replace (Object original, Object target, Object owner) {
 
-    return x.hashCode();
+    return original;
   }
 
-  public boolean isMutable () {
+  @Override
+  public boolean equals (Object x, Object y) {
 
-    return false;
+    return (x == y) || ((x != null) && x.equals(y));
+  }
+
+  @Override
+  public int hashCode (Object x) {
+
+    return (x == null )? 0 : x.hashCode();
   }
 
   @Override
@@ -111,8 +130,7 @@ public class ObjectUserType implements UserType, ParameterizedType {
 
     try {
       return rs.wasNull() ? null : new ObjectInputStream(new ByteArrayInputStream(bytes)).readObject();
-    }
-    catch (Exception exception) {
+    } catch (Exception exception) {
       throw new HibernateException(exception);
     }
   }
@@ -123,35 +141,18 @@ public class ObjectUserType implements UserType, ParameterizedType {
 
     if (value == null) {
       st.setNull(index, Types.VARBINARY);
-    }
-    else {
+    } else {
 
       ByteArrayOutputStream byteStream;
 
       try {
         new ObjectOutputStream(byteStream = new ByteArrayOutputStream()).writeObject(value);
-      }
-      catch (IOException ioException) {
+      } catch (IOException ioException) {
         throw new HibernateException(ioException);
       }
 
       st.setBytes(index, byteStream.toByteArray());
     }
   }
-
-  public Object replace (Object original, Object target, Object owner)
-    throws HibernateException {
-
-    return original;
-  }
-
-  public Class returnedClass () {
-
-    return embeddedClass;
-  }
-
-  public int[] sqlTypes () {
-
-    return new int[] {Types.VARBINARY};
-  }
 }
+

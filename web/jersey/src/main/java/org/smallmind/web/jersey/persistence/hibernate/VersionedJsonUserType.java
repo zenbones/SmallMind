@@ -30,21 +30,40 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.persistence.orm.hibernate;
+package org.smallmind.web.jersey.persistence.hibernate;
 
+import java.io.IOException;
 import java.io.Serializable;
-import java.sql.Array;
-import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.Arrays;
-import org.apache.commons.lang.ArrayUtils;
+import java.sql.Types;
+import java.util.Properties;
+import com.fasterxml.jackson.core.JsonProcessingException;
 import org.hibernate.HibernateException;
 import org.hibernate.engine.spi.SessionImplementor;
+import org.hibernate.usertype.ParameterizedType;
 import org.hibernate.usertype.UserType;
+import org.smallmind.web.jersey.util.JsonCodec;
 
-public class LongArrayUserType implements UserType {
+public class VersionedJsonUserType<V extends Version<V>> implements UserType, ParameterizedType {
+
+  private VersionFactory<V> versionFactory;
+
+  public void setParameterValues (Properties parameters) {
+
+    String versionFactoryClassName = parameters.getProperty("versionFactoryClassName");
+
+    try {
+
+      Class<? extends VersionFactory<V>> versionFactoryClass;
+
+      versionFactoryClass = (Class<? extends VersionFactory<V>>)Class.forName(versionFactoryClassName);
+      versionFactory = versionFactoryClass.newInstance();
+    } catch (Exception exception) {
+      throw new HibernateException(exception);
+    }
+  }
 
   @Override
   public boolean isMutable () {
@@ -53,15 +72,15 @@ public class LongArrayUserType implements UserType {
   }
 
   @Override
-  public Class<long[]> returnedClass () {
+  public Class returnedClass () {
 
-    return long[].class;
+    return VersionedJson.class;
   }
 
   @Override
   public int[] sqlTypes () {
 
-    return new int[]{java.sql.Types.ARRAY};
+    return new int[]{Types.VARCHAR, Types.LONGNVARCHAR};
   }
 
   @Override
@@ -91,35 +110,54 @@ public class LongArrayUserType implements UserType {
   @Override
   public boolean equals (Object x, Object y) {
 
-    return (x == y) || ((x != null) && Arrays.equals((long[])x, (long[])y));
+    return (x == y) || ((x != null) && x.equals(y));
   }
 
   @Override
   public int hashCode (Object x) {
 
-    return Arrays.hashCode((long[])x);
+    return (x == null) ? 0 : x.hashCode();
   }
 
   @Override
-  public Object nullSafeGet (final ResultSet rs, final String[] names, final SessionImplementor sessionImplementor, final Object owner)
+  public Object nullSafeGet (ResultSet rs, String[] names, SessionImplementor session, Object owner)
     throws HibernateException, SQLException {
 
-    Array array = rs.getArray(names[0]);
-    Long[] javaArray = (Long[])array.getArray();
+    String versionAsString;
 
-    return ArrayUtils.toPrimitive(javaArray);
+    if ((versionAsString = rs.getString(names[0])) != null) {
+
+      V version = versionFactory.fromString(versionAsString);
+      String jsonAsString;
+
+      if ((jsonAsString = rs.getString(names[1])) != null) {
+
+        try {
+          return JsonCodec.read(jsonAsString, version.getVersionedJsonClass());
+        } catch (IOException ioException) {
+          throw new HibernateException(ioException);
+        }
+      }
+    }
+
+    return null;
   }
 
   @Override
-  public void nullSafeSet (final PreparedStatement statement, final Object object, final int i, final SessionImplementor sessionImplementor)
+  public void nullSafeSet (PreparedStatement st, Object value, int index, SessionImplementor session)
     throws HibernateException, SQLException {
 
-    Connection connection = statement.getConnection();
+    if (value == null) {
+      st.setNull(index, Types.VARCHAR);
+      st.setNull(index + 1, Types.LONGNVARCHAR);
+    } else {
 
-    long[] castObject = (long[])object;
-    Long[] longs = ArrayUtils.toObject(castObject);
-    Array array = connection.createArrayOf("long", longs);
-
-    statement.setArray(i, array);
+      st.setString(index, ((VersionedJson<?>)value).getVersion().toString());
+      try {
+        st.setString(index + 1, JsonCodec.writeAsString(value));
+      } catch (JsonProcessingException jsonProcessingException) {
+        throw new HibernateException(jsonProcessingException);
+      }
+    }
   }
 }
