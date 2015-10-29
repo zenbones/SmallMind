@@ -34,8 +34,6 @@ package org.smallmind.persistence.query;
 
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlRootElement;
-import javax.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
-import org.smallmind.nutsnbolts.json.BooleanXmlAdapter;
 
 @XmlRootElement(name = "boolean")
 public class BooleanWhereValue extends WhereValue<Boolean> {
@@ -52,7 +50,6 @@ public class BooleanWhereValue extends WhereValue<Boolean> {
   }
 
   @Override
-  @XmlJavaTypeAdapter(BooleanXmlAdapter.class)
   @XmlElement(name = "value", required = true, nillable = false)
   public Boolean getValue () {
 
