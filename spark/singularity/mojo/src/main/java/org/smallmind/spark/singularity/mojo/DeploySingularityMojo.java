@@ -69,9 +69,9 @@ public class DeploySingularityMojo extends AbstractMojo {
     StringBuilder pathBuilder;
 
     if (project.getArtifact().getClassifier() == null) {
-      applicationArtifact = artifactFactory.createArtifact(project.getGroupId(), project.getArtifactId(), project.getVersion(), "compile", "jar");
+      applicationArtifact = artifactFactory.createArtifact(project.getGroupId(), project.getArtifactId(), project.getVersion(), "compile", "singularity");
     } else {
-      applicationArtifact = artifactFactory.createArtifactWithClassifier(project.getGroupId(), project.getArtifactId(), project.getVersion(), "jar", project.getArtifact().getClassifier());
+      applicationArtifact = artifactFactory.createArtifactWithClassifier(project.getGroupId(), project.getArtifactId(), project.getVersion(), "singularity", project.getArtifact().getClassifier());
     }
 
     pathBuilder = new StringBuilder(project.getBuild().getDirectory()).append(System.getProperty("file.separator")).append(project.getArtifactId()).append('-').append(project.getVersion());
@@ -81,7 +81,7 @@ public class DeploySingularityMojo extends AbstractMojo {
       pathBuilder.append(project.getArtifact().getClassifier());
     }
 
-    pathBuilder.append(".jar");
+    pathBuilder.append(".singularity");
 
     try {
       artifactDeployer.deploy(new File(pathBuilder.toString()), applicationArtifact, deploymentRepository, localRepository);

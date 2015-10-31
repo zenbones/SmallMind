@@ -70,10 +70,10 @@ import org.smallmind.spark.singularity.boot.SingularityIndex;
 @Mojo(name = "generate-singularity", defaultPhase = LifecyclePhase.PACKAGE, requiresDependencyResolution = ResolutionScope.RUNTIME, threadSafe = true)
 public class GenerateSingularityMojo extends AbstractMojo {
 
-  @Parameter(readonly = true, property = "project")
-  private MavenProject project;
   @Parameter(readonly = true, property = "plugin.artifacts")
   protected List<Artifact> pluginArtifacts;
+  @Parameter(readonly = true, property = "project")
+  private MavenProject project;
   @Parameter(defaultValue = "singularity")
   private String singularityBuildDir;
   @Parameter
@@ -154,7 +154,7 @@ public class GenerateSingularityMojo extends AbstractMojo {
         objectOutputStream.writeObject(singularityIndex);
       }
     } catch (IOException ioException) {
-      throw new MojoExecutionException("Unable to write the singuarity index", ioException);
+      throw new MojoExecutionException("Unable to write the singularity index", ioException);
     }
 
     try {
@@ -192,7 +192,7 @@ public class GenerateSingularityMojo extends AbstractMojo {
       nameBuilder.append('-').append(project.getArtifact().getClassifier());
     }
 
-    return nameBuilder.append(".jar").toString();
+    return nameBuilder.append(".singularity").toString();
   }
 
   private void copyToDestination (File file, Path destinationPath)
@@ -238,7 +238,7 @@ public class GenerateSingularityMojo extends AbstractMojo {
             int bytesRead;
 
             do {
-              bytesRead = jarInputStream.read(buffer, 0, (int)Math.min(buffer.length, totalBytesToRead - totalBytesRead));
+              bytesRead = jarInputStream.read(buffer, 0, (int) Math.min(buffer.length, totalBytesToRead - totalBytesRead));
               outputStream.write(buffer, 0, bytesRead);
               totalBytesRead += bytesRead;
             } while (totalBytesRead < totalBytesToRead);
