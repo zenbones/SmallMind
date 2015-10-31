@@ -4,7 +4,7 @@
   <parent>
     <groupId>org.smallmind</groupId>
     <artifactId>smallmind-javafx</artifactId>
-    <version>1.8.9-SNAPSHOT</version>
+    <version>1.8.9</version>
   </parent>
   <artifactId>smallmind-javafx-mojo</artifactId>
   <name>Smallmind-JavaFX-Mojo</name>
