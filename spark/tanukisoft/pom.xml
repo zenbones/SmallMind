@@ -4,7 +4,7 @@
    <parent>
       <groupId>org.smallmind</groupId>
       <artifactId>smallmind-spark</artifactId>
-      <version>1.8.11</version>
+      <version>1.8.12-SNAPSHOT</version>
    </parent>
    <artifactId>spark-tanukisoft</artifactId>
    <name>Spark-Tanukisoft</name>
