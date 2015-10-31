@@ -53,9 +53,11 @@ import java.util.jar.JarFile;
 import java.util.jar.JarInputStream;
 import java.util.jar.Manifest;
 import org.apache.maven.artifact.Artifact;
+import org.apache.maven.artifact.factory.ArtifactFactory;
 import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.MojoFailureException;
+import org.apache.maven.plugins.annotations.Component;
 import org.apache.maven.plugins.annotations.LifecyclePhase;
 import org.apache.maven.plugins.annotations.Mojo;
 import org.apache.maven.plugins.annotations.Parameter;
@@ -72,6 +74,8 @@ public class GenerateSingularityMojo extends AbstractMojo {
 
   @Parameter(readonly = true, property = "plugin.artifacts")
   protected List<Artifact> pluginArtifacts;
+  @Component
+  ArtifactFactory artifactFactory;
   @Parameter(readonly = true, property = "project")
   private MavenProject project;
   @Parameter(defaultValue = "singularity")
@@ -84,11 +88,13 @@ public class GenerateSingularityMojo extends AbstractMojo {
   public void execute ()
     throws MojoExecutionException, MojoFailureException {
 
+    Artifact applicationArtifact;
     SingularityIndex singularityIndex = new SingularityIndex();
     Path buildPath;
     Path libraryPath;
     Path indexPath;
     Path classesPath;
+    File compressedFile;
     boolean bootClassesFound = false;
 
     try {
@@ -178,10 +184,15 @@ public class GenerateSingularityMojo extends AbstractMojo {
         getLog().info("Compressing output jar...");
       }
 
-      CompressionType.JAR.compress(Paths.get(project.getBuild().getDirectory(), constructArtifactName()).toFile(), buildPath.toFile(), manifest);
+      CompressionType.JAR.compress(compressedFile = Paths.get(project.getBuild().getDirectory(), constructArtifactName()).toFile(), buildPath.toFile(), manifest);
     } catch (IOException ioException) {
       throw new MojoExecutionException("Problem constructing the executable jar", ioException);
     }
+
+    applicationArtifact = artifactFactory.createArtifact(project.getGroupId(), project.getArtifactId(), project.getVersion(), "compile", "jar");
+    applicationArtifact.setFile(compressedFile);
+
+    project.addAttachedArtifact(applicationArtifact);
   }
 
   private String constructArtifactName () {
@@ -192,7 +203,7 @@ public class GenerateSingularityMojo extends AbstractMojo {
       nameBuilder.append('-').append(project.getArtifact().getClassifier());
     }
 
-    return nameBuilder.append(".singularity").toString();
+    return nameBuilder.append(".jar").toString();
   }
 
   private void copyToDestination (File file, Path destinationPath)
