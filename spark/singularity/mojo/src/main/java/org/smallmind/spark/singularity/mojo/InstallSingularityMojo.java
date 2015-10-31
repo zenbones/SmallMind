@@ -64,6 +64,7 @@ public class InstallSingularityMojo extends AbstractMojo {
     throws MojoExecutionException, MojoFailureException {
 
     Artifact applicationArtifact;
+    File artifactAscFile;
     StringBuilder pathBuilder;
 
     if (project.getArtifact().getClassifier() == null) {
@@ -80,6 +81,10 @@ public class InstallSingularityMojo extends AbstractMojo {
     }
 
     pathBuilder.append(".jar");
+
+    if ((artifactAscFile = new File(pathBuilder.toString() + ".asc")).isFile()) {
+      applicationArtifact.addMetadata(new AscArtifactMetadata(applicationArtifact, artifactAscFile));
+    }
 
     try {
       artifactInstaller.install(new File(pathBuilder.toString()), applicationArtifact, localRepository);
