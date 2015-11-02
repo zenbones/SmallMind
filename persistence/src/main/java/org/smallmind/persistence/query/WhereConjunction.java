@@ -74,7 +74,7 @@ public abstract class WhereConjunction implements WhereCriterion {
   @XmlElementRefs({@XmlElementRef(type = WhereField.class), @XmlElementRef(type = AndWhereConjunction.class), @XmlElementRef(type = OrWhereConjunction.class)})
   public synchronized WhereCriterion[] getCriteria () {
 
-    WhereCriterion[] criteria = new WhereField[criterionSet == null ? 0 : criterionSet.size()];
+    WhereCriterion[] criteria = new WhereCriterion[criterionSet == null ? 0 : criterionSet.size()];
 
     if (criterionSet != null) {
       criterionSet.toArray(criteria);
