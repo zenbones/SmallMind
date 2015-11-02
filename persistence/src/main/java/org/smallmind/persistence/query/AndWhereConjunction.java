@@ -32,35 +32,20 @@
  */
 package org.smallmind.persistence.query;
 
-import java.io.Serializable;
-import javax.xml.bind.annotation.XmlAccessType;
-import javax.xml.bind.annotation.XmlAccessorType;
-import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlRootElement;
+import javax.xml.bind.annotation.XmlTransient;
 
-@XmlRootElement(name = "where")
-@XmlAccessorType(XmlAccessType.PROPERTY)
-public class Where implements Serializable {
+@XmlRootElement(name = "and")
+public class AndWhereConjunction extends WhereConjunction {
 
-  private WhereConjunction rootConjunction;
-
-  public Where () {
+  public AndWhereConjunction () {
 
   }
 
-  public Where (WhereConjunction rootConjunction) {
+  @Override
+  @XmlTransient
+  public ConjunctionType getConjunctionType () {
 
-    this.rootConjunction = rootConjunction;
-  }
-
-  @XmlElement(name = "root", required = false, nillable = false)
-  public WhereConjunction getRootConjunction () {
-
-    return rootConjunction;
-  }
-
-  public void setRootConjunction (WhereConjunction rootConjunction) {
-
-    this.rootConjunction = rootConjunction;
+    return ConjunctionType.AND;
   }
 }

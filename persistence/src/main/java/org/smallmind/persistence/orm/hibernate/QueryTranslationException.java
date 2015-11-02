@@ -30,37 +30,14 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.persistence.query;
+package org.smallmind.persistence.orm.hibernate;
 
-import java.io.Serializable;
-import javax.xml.bind.annotation.XmlAccessType;
-import javax.xml.bind.annotation.XmlAccessorType;
-import javax.xml.bind.annotation.XmlElement;
-import javax.xml.bind.annotation.XmlRootElement;
+import org.smallmind.nutsnbolts.lang.FormattedRuntimeException;
 
-@XmlRootElement(name = "where")
-@XmlAccessorType(XmlAccessType.PROPERTY)
-public class Where implements Serializable {
+public class QueryTranslationException extends FormattedRuntimeException {
 
-  private WhereConjunction rootConjunction;
+  public QueryTranslationException (String message, Object... args) {
 
-  public Where () {
-
-  }
-
-  public Where (WhereConjunction rootConjunction) {
-
-    this.rootConjunction = rootConjunction;
-  }
-
-  @XmlElement(name = "root", required = false, nillable = false)
-  public WhereConjunction getRootConjunction () {
-
-    return rootConjunction;
-  }
-
-  public void setRootConjunction (WhereConjunction rootConjunction) {
-
-    this.rootConjunction = rootConjunction;
+    super(message, args);
   }
 }

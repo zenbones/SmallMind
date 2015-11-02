@@ -32,35 +32,59 @@
  */
 package org.smallmind.persistence.query;
 
-import java.io.Serializable;
+import java.util.Arrays;
+import java.util.HashSet;
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlElement;
-import javax.xml.bind.annotation.XmlRootElement;
+import javax.xml.bind.annotation.XmlElementRef;
+import javax.xml.bind.annotation.XmlElementRefs;
+import javax.xml.bind.annotation.XmlTransient;
 
-@XmlRootElement(name = "where")
 @XmlAccessorType(XmlAccessType.PROPERTY)
-public class Where implements Serializable {
+public abstract class WhereConjunction implements WhereCriterion {
 
-  private WhereConjunction rootConjunction;
+  private HashSet<WhereCriterion> criterionSet;
 
-  public Where () {
+  public WhereConjunction () {
 
   }
 
-  public Where (WhereConjunction rootConjunction) {
+  public WhereConjunction (WhereCriterion... criteria) {
 
-    this.rootConjunction = rootConjunction;
+    criterionSet = new HashSet<>(Arrays.asList(criteria));
   }
 
-  @XmlElement(name = "root", required = false, nillable = false)
-  public WhereConjunction getRootConjunction () {
+  public abstract ConjunctionType getConjunctionType ();
 
-    return rootConjunction;
+  @Override
+  @XmlTransient
+  public CriterionType getCriterionType () {
+
+    return CriterionType.CONJUNCTION;
   }
 
-  public void setRootConjunction (WhereConjunction rootConjunction) {
+  @XmlTransient
+  public synchronized boolean isEmpty () {
 
-    this.rootConjunction = rootConjunction;
+    return (criterionSet == null) || criterionSet.isEmpty();
+  }
+
+  @XmlElement(name = "criteria", required = false, nillable = false)
+  @XmlElementRefs({@XmlElementRef(type = WhereField.class), @XmlElementRef(type = AndWhereConjunction.class), @XmlElementRef(type = OrWhereConjunction.class)})
+  public synchronized WhereCriterion[] getCriteria () {
+
+    WhereCriterion[] criteria = new WhereField[criterionSet == null ? 0 : criterionSet.size()];
+
+    if (criterionSet != null) {
+      criterionSet.toArray(criteria);
+    }
+
+    return criteria;
+  }
+
+  public synchronized void setCriteria (WhereCriterion... criteria) {
+
+    this.criterionSet = new HashSet<>(Arrays.asList(criteria));
   }
 }
