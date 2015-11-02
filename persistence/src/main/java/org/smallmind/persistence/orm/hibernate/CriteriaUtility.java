@@ -49,22 +49,36 @@ public class CriteriaUtility {
 
   public static Criteria apply (Where where, Criteria criteria) {
 
-    return criteria.add(walkConjunction(where.getRootConjunction()));
+    if (where != null) {
+
+      Criterion walkedCriterion;
+
+      if ((walkedCriterion = walkConjunction(where.getRootConjunction())) != null) {
+        return criteria.add(walkedCriterion);
+      }
+    }
+
+    return criteria;
   }
 
   private static Criterion walkConjunction (WhereConjunction whereConjunction) {
 
-    if (whereConjunction.isEmpty()) {
-      throw new QueryTranslationException("Empty conjunction in 'where' clause");
+    if ((whereConjunction == null) || whereConjunction.isEmpty()) {
+
+      return null;
     }
 
-    Criterion[] criteria;
     LinkedList<Criterion> criterionList = new LinkedList<>();
 
     for (WhereCriterion whereCriterion : whereConjunction.getCriteria()) {
       switch (whereCriterion.getCriterionType()) {
         case CONJUNCTION:
-          criterionList.add(walkConjunction((WhereConjunction)whereCriterion));
+
+          Criterion walkedCriterion;
+
+          if ((walkedCriterion = walkConjunction((WhereConjunction)whereCriterion)) != null) {
+            criterionList.add(walkedCriterion);
+          }
           break;
         case FIELD:
           criterionList.add(walkField((WhereField)whereCriterion));
@@ -74,16 +88,24 @@ public class CriteriaUtility {
       }
     }
 
-    criteria = new Criterion[criterionList.size()];
-    criterionList.toArray(criteria);
+    if (criterionList.isEmpty()) {
 
-    switch (whereConjunction.getConjunctionType()) {
-      case AND:
-        return Restrictions.and(criteria);
-      case OR:
-        return Restrictions.and(criteria);
-      default:
-        throw new UnknownSwitchCaseException(whereConjunction.getConjunctionType().name());
+      return null;
+    } else {
+
+      Criterion[] criteria;
+
+      criteria = new Criterion[criterionList.size()];
+      criterionList.toArray(criteria);
+
+      switch (whereConjunction.getConjunctionType()) {
+        case AND:
+          return Restrictions.and(criteria);
+        case OR:
+          return Restrictions.and(criteria);
+        default:
+          throw new UnknownSwitchCaseException(whereConjunction.getConjunctionType().name());
+      }
     }
   }
 
