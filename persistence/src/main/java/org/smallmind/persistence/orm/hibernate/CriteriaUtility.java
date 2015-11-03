@@ -102,7 +102,7 @@ public class CriteriaUtility {
         case AND:
           return Restrictions.and(criteria);
         case OR:
-          return Restrictions.and(criteria);
+          return Restrictions.or(criteria);
         default:
           throw new UnknownSwitchCaseException(whereConjunction.getConjunctionType().name());
       }
