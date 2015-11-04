@@ -32,18 +32,18 @@
  */
 package org.smallmind.persistence.query;
 
-import java.io.Serializable;
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlElementRef;
 import javax.xml.bind.annotation.XmlElementRefs;
 import javax.xml.bind.annotation.XmlRootElement;
+import javax.xml.bind.annotation.XmlTransient;
 import javax.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
 
 @XmlRootElement(name = "field")
 @XmlAccessorType(XmlAccessType.PROPERTY)
-public class WhereField implements Serializable {
+public class WhereField implements WhereCriterion {
 
   private WhereValue value;
   private WhereOperation operation;
@@ -58,6 +58,13 @@ public class WhereField implements Serializable {
     this.name = name;
     this.operation = operation;
     this.value = value;
+  }
+
+  @Override
+  @XmlTransient
+  public CriterionType getCriterionType () {
+
+    return CriterionType.FIELD;
   }
 
   @XmlElement(name = "name", required = true, nillable = false)
