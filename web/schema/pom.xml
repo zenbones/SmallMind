@@ -4,7 +4,7 @@
   <parent>
     <groupId>org.smallmind</groupId>
     <artifactId>smallmind-web</artifactId>
-    <version>2.1.0-SNAPSHOT</version>
+    <version>2.1.1-SNAPSHOT</version>
   </parent>
   <artifactId>schema-validation-plugin</artifactId>
   <name>Schema-Validation-Plugin</name>
@@ -27,12 +27,4 @@
       <scope>compile</scope>
     </dependency>
   </dependencies>
-  <build>
-    <plugins>
-      <plugin>
-        <groupId>org.smallmind</groupId>
-        <artifactId>smallmind-license-plugin</artifactId>
-      </plugin>
-    </plugins>
-  </build>
 </project>
