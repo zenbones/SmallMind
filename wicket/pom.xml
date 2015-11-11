@@ -72,5 +72,11 @@
         </includes>
       </resource>
     </resources>
+    <plugins>
+      <plugin>
+        <groupId>org.smallmind</groupId>
+        <artifactId>smallmind-license-plugin</artifactId>
+      </plugin>
+    </plugins>
   </build>
 </project>
