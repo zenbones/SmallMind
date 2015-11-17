@@ -33,7 +33,6 @@
 package org.smallmind.scribe.pen;
 
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.Date;
 import org.smallmind.nutsnbolts.lang.UnknownSwitchCaseException;
 import org.smallmind.scribe.pen.adapter.LoggingBlueprintsFactory;
@@ -99,7 +98,7 @@ public class XMLFormatter implements Formatter {
     return this;
   }
 
-  public String format (Record record, Collection<Filter> filterCollection) {
+  public String format (Record record, Filter[] filters) {
 
     StringBuilder formatBuilder = new StringBuilder();
 
@@ -147,7 +146,7 @@ public class XMLFormatter implements Formatter {
           appendStackTrace(formatBuilder, record.getThrown(), 1);
           break;
         case PROBE_REPORT:
-          appendProbeReport(formatBuilder, record, record.getProbeReport(), filterCollection, 1);
+          appendProbeReport(formatBuilder, record, record.getProbeReport(), filters, 1);
           break;
         default:
           throw new UnknownSwitchCaseException(xmlElement.name());
@@ -210,8 +209,7 @@ public class XMLFormatter implements Formatter {
 
         if (prevStackTrace == null) {
           formatBuilder.append("Exception in thread ");
-        }
-        else {
+        } else {
           formatBuilder.append("Caused by: ");
         }
 
@@ -246,13 +244,13 @@ public class XMLFormatter implements Formatter {
     }
   }
 
-  private void appendProbeReport (StringBuilder formatBuilder, Record record, ProbeReport probeReport, Collection<Filter> filterCollection, int level) {
+  private void appendProbeReport (StringBuilder formatBuilder, Record record, ProbeReport probeReport, Filter[] filters, int level) {
 
     if (probeReport != null) {
       appendLine(formatBuilder, "<probe-report>", level);
       appendElement(formatBuilder, "first", String.valueOf(probeReport.isFirst()), false, level + 1);
       appendCorrelator(formatBuilder, probeReport.getCorrelator(), level + 1);
-      appendProbeEntry(formatBuilder, record, probeReport.getProbeEntry(), filterCollection, level + 1);
+      appendProbeEntry(formatBuilder, record, probeReport.getProbeEntry(), filters, level + 1);
       appendLine(formatBuilder, "</probe-report>", level);
     }
   }
@@ -268,7 +266,7 @@ public class XMLFormatter implements Formatter {
     appendLine(formatBuilder, "</correlator>", level);
   }
 
-  private void appendProbeEntry (StringBuilder formatBuilder, Record record, ProbeEntry probeEntry, Collection<Filter> filterCollection, int level) {
+  private void appendProbeEntry (StringBuilder formatBuilder, Record record, ProbeEntry probeEntry, Filter[] filters, int level) {
 
     Record filterRecord;
 
@@ -279,31 +277,16 @@ public class XMLFormatter implements Formatter {
       if (probeEntry instanceof UpdateProbeEntry) {
         appendElement(formatBuilder, "updated", String.valueOf(((UpdateProbeEntry)probeEntry).getUpdateTime()), false, level + 1);
         appendElement(formatBuilder, "count", String.valueOf(((UpdateProbeEntry)probeEntry).getUpdateCount()), false, level + 1);
-      }
-      else if (probeEntry instanceof CompleteOrAbortProbeEntry) {
+      } else if (probeEntry instanceof CompleteOrAbortProbeEntry) {
         appendElement(formatBuilder, "started", String.valueOf(((CompleteOrAbortProbeEntry)probeEntry).getStartTime()), false, level + 1);
         appendElement(formatBuilder, "stopped", String.valueOf(((CompleteOrAbortProbeEntry)probeEntry).getStopTime()), false, level + 1);
         appendElement(formatBuilder, "elapsed", String.valueOf(((CompleteOrAbortProbeEntry)probeEntry).getStopTime() - ((CompleteOrAbortProbeEntry)probeEntry).getStartTime()), false, level + 1);
-      }
-      else {
+      } else {
         throw new IllegalArgumentException("Unknown instance type of ProbeEntry(" + probeEntry.getClass().getCanonicalName() + ")");
       }
 
       for (Statement statement : probeEntry.getStatements()) {
-
-        boolean skipStatement = false;
-
-        if (!filterCollection.isEmpty()) {
-          filterRecord = LoggingBlueprintsFactory.getLoggingBlueprints().filterRecord(record, statement.getDiscriminator(), statement.getLevel());
-          for (Filter filter : filterCollection) {
-            if (!filter.willLog(filterRecord)) {
-              skipStatement = true;
-              break;
-            }
-          }
-        }
-
-        if (!skipStatement) {
+        if (!FilterUtility.willBeFiltered(record, statement.getDiscriminator(), statement.getLevel(), filters)) {
           appendElement(formatBuilder, "statement", statement.getMessage(), cdata, level + 1);
         }
       }
@@ -312,9 +295,9 @@ public class XMLFormatter implements Formatter {
 
         boolean skipMetric = false;
 
-        if (!filterCollection.isEmpty()) {
+        if ((filters != null) && (filters.length > 0)) {
           filterRecord = LoggingBlueprintsFactory.getLoggingBlueprints().filterRecord(record, metricMilieu.getDiscriminator(), metricMilieu.getLevel());
-          for (Filter filter : filterCollection) {
+          for (Filter filter : filters) {
             if (!filter.willLog(filterRecord)) {
               skipMetric = true;
               break;

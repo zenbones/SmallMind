@@ -32,7 +32,7 @@
  */
 package org.smallmind.scribe.pen;
 
-public class ConsoleAppender extends AbstractAppender {
+public class ConsoleAppender extends AbstractFormattedAppender {
 
   public ConsoleAppender () {
 
@@ -47,11 +47,6 @@ public class ConsoleAppender extends AbstractAppender {
   public ConsoleAppender (Formatter formatter, ErrorHandler errorHandler) {
 
     super(formatter, errorHandler);
-  }
-
-  public boolean requiresFormatter () {
-
-    return true;
   }
 
   public synchronized void handleOutput (String formattedOutput) {

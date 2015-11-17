@@ -32,7 +32,6 @@
  */
 package org.smallmind.scribe.ink.log4j;
 
-import java.util.Collection;
 import org.apache.log4j.Layout;
 import org.apache.log4j.spi.LoggingEvent;
 import org.smallmind.scribe.pen.Filter;
@@ -48,7 +47,7 @@ public class Log4JFormatterAdapter implements Formatter {
     this.layout = layout;
   }
 
-  public String format (Record record, Collection<Filter> filterCollection) {
+  public String format (Record record, Filter[] filters) {
 
     StringBuilder formatBuilder = new StringBuilder();
     String header;

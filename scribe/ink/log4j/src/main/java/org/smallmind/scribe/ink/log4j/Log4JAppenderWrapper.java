@@ -36,6 +36,7 @@ import org.apache.log4j.Layout;
 import org.apache.log4j.spi.ErrorHandler;
 import org.apache.log4j.spi.Filter;
 import org.apache.log4j.spi.LoggingEvent;
+import org.smallmind.scribe.pen.AbstractFormattedAppender;
 import org.smallmind.scribe.pen.Appender;
 import org.smallmind.scribe.pen.adapter.RecordWrapper;
 
@@ -91,12 +92,17 @@ public class Log4JAppenderWrapper implements org.apache.log4j.Appender {
     // Appenders are shared objects. So we can't let Log4J handle the close method> Bad Log4J.
   }
 
+  public ErrorHandler getErrorHandler () {
+
+    throw new UnsupportedOperationException("Unsupported native Log4J method");
+  }
+
   public void setErrorHandler (ErrorHandler errorHandler) {
 
     appender.setErrorHandler(new Log4JErrorHandlerAdapter(errorHandler));
   }
 
-  public ErrorHandler getErrorHandler () {
+  public Layout getLayout () {
 
     throw new UnsupportedOperationException("Unsupported native Log4J method");
   }
@@ -106,14 +112,9 @@ public class Log4JAppenderWrapper implements org.apache.log4j.Appender {
     appender.setFormatter(new Log4JFormatterAdapter(layout));
   }
 
-  public Layout getLayout () {
-
-    throw new UnsupportedOperationException("Unsupported native Log4J method");
-  }
-
   public boolean requiresLayout () {
 
-    return appender.requiresFormatter();
+    return appender instanceof AbstractFormattedAppender;
   }
 
   public int hashCode () {

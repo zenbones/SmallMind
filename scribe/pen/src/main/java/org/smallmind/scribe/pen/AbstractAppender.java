@@ -62,7 +62,7 @@ public abstract class AbstractAppender implements Appender {
     filterList = new ConcurrentLinkedQueue<Filter>();
   }
 
-  public abstract void handleOutput (String formattedOutput)
+  public abstract void handleOutput (Record record)
     throws Exception;
 
   public void handleError (ErrorHandler errorHandler, Record record, Exception exception) {
@@ -70,38 +70,38 @@ public abstract class AbstractAppender implements Appender {
     errorHandler.process(record, exception, "Fatal error in appender(%s)", this.getClass().getCanonicalName());
   }
 
+  @Override
   public String getName () {
 
     return name;
   }
 
+  @Override
   public void setName (String name) {
 
     this.name = name;
   }
 
+  @Override
   public synchronized void clearFilters () {
 
     filterList.clear();
   }
 
+  @Override
   public synchronized void setFilter (Filter filter) {
 
     filterList.clear();
     filterList.add(filter);
   }
 
-  public synchronized void setFilters (List<Filter> replacementFilterList) {
-
-    filterList.clear();
-    filterList.addAll(replacementFilterList);
-  }
-
+  @Override
   public synchronized void addFilter (Filter filter) {
 
     filterList.add(filter);
   }
 
+  @Override
   public synchronized Filter[] getFilters () {
 
     Filter[] filters;
@@ -112,36 +112,50 @@ public abstract class AbstractAppender implements Appender {
     return filters;
   }
 
-  public void setErrorHandler (ErrorHandler errorHandler) {
+  @Override
+  public synchronized void setFilters (List<Filter> replacementFilterList) {
 
-    this.errorHandler = errorHandler;
+    filterList.clear();
+    filterList.addAll(replacementFilterList);
   }
 
+  @Override
   public ErrorHandler getErrorHandler () {
 
     return errorHandler;
   }
 
-  public void setFormatter (Formatter formatter) {
+  @Override
+  public void setErrorHandler (ErrorHandler errorHandler) {
 
-    this.formatter = formatter;
+    this.errorHandler = errorHandler;
   }
 
+  @Override
   public Formatter getFormatter () {
 
     return formatter;
   }
 
+  @Override
+  public void setFormatter (Formatter formatter) {
+
+    this.formatter = formatter;
+  }
+
+  @Override
   public boolean isActive () {
 
     return active;
   }
 
+  @Override
   public void setActive (boolean active) {
 
     this.active = active;
   }
 
+  @Override
   public void publish (Record record) {
 
     try {
@@ -151,23 +165,17 @@ public abstract class AbstractAppender implements Appender {
         }
       }
 
-      if (formatter != null) {
-        handleOutput(formatter.format(record, filterList));
-      }
-      else if (requiresFormatter()) {
-        throw new LoggerException("No formatter set for log output on this appender(%s)", this.getClass().getCanonicalName());
-      }
-    }
-    catch (Exception exception) {
+      handleOutput(record);
+    } catch (Exception exception) {
       if (errorHandler == null) {
         exception.printStackTrace();
-      }
-      else {
+      } else {
         handleError(errorHandler, record, exception);
       }
     }
   }
 
+  @Override
   public void close ()
     throws LoggerException {
 

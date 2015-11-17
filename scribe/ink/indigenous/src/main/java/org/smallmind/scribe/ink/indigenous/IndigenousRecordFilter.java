@@ -54,76 +54,91 @@ public class IndigenousRecordFilter implements Record, RecordWrapper {
     this.level = level;
   }
 
+  @Override
   public Record getRecord () {
 
     return this;
   }
 
+  @Override
   public Object getNativeLogEntry () {
 
     return this;
   }
 
+  @Override
   public ProbeReport getProbeReport () {
 
     return record.getProbeReport();
   }
 
+  @Override
   public String getLoggerName () {
 
     return record.getLoggerName();
   }
 
+  @Override
   public Discriminator getDiscriminator () {
 
     return discriminator;
   }
 
+  @Override
   public Level getLevel () {
 
     return level;
   }
 
+  @Override
   public Throwable getThrown () {
 
     return record.getThrown();
   }
 
+  @Override
   public void addParameter (String key, Serializable value) {
 
     throw new UnsupportedOperationException();
   }
 
+  @Override
   public Parameter[] getParameters () {
 
     return record.getParameters();
   }
 
+  @Override
   public String getMessage () {
 
     return record.getMessage();
   }
 
+  @Override
   public LogicalContext getLogicalContext () {
 
     return record.getLogicalContext();
   }
 
+  @Override
   public long getThreadID () {
 
     return record.getThreadID();
   }
 
+  @Override
   public String getThreadName () {
 
     return record.getThreadName();
   }
 
+  @Override
   public long getSequenceNumber () {
 
     return record.getSequenceNumber();
   }
 
+  @Override
   public long getMillis () {
 
     return record.getMillis();

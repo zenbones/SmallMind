@@ -130,11 +130,6 @@ public class AsynchronousAppender implements Appender, Runnable {
     internalAppender.setActive(active);
   }
 
-  public boolean requiresFormatter () {
-
-    return internalAppender.requiresFormatter();
-  }
-
   public void publish (Record record) {
 
     try {
@@ -143,12 +138,10 @@ public class AsynchronousAppender implements Appender, Runnable {
       }
 
       publishQueue.put(record);
-    }
-    catch (Exception exception) {
+    } catch (Exception exception) {
       if (internalAppender.getErrorHandler() == null) {
         exception.printStackTrace();
-      }
-      else {
+      } else {
         internalAppender.getErrorHandler().process(record, exception, "Fatal error in appender(%s)", this.getClass().getCanonicalName());
       }
     }
@@ -185,12 +178,10 @@ public class AsynchronousAppender implements Appender, Runnable {
           internalAppender.publish(record);
         }
       }
-    }
-    catch (InterruptedException interruptedException) {
+    } catch (InterruptedException interruptedException) {
       finished.set(true);
       LoggerManager.getLogger(AsynchronousAppender.class).error(interruptedException);
-    }
-    finally {
+    } finally {
       exitLatch.countDown();
     }
   }

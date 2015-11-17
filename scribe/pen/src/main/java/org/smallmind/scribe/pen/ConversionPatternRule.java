@@ -32,10 +32,9 @@
  */
 package org.smallmind.scribe.pen;
 
-import java.util.Collection;
+import java.util.Arrays;
 import java.util.Date;
 import org.smallmind.nutsnbolts.lang.UnknownSwitchCaseException;
-import org.smallmind.scribe.pen.adapter.LoggingBlueprintsFactory;
 import org.smallmind.scribe.pen.probe.CompleteOrAbortProbeEntry;
 import org.smallmind.scribe.pen.probe.MetricMilieu;
 import org.smallmind.scribe.pen.probe.ProbeReport;
@@ -123,11 +122,9 @@ public class ConversionPatternRule implements PatternRule {
         }
 
         slashed = false;
-      }
-      else if (slashedString.charAt(count) == '\\') {
+      } else if (slashedString.charAt(count) == '\\') {
         slashed = true;
-      }
-      else {
+      } else {
         strippedBuffer.append(slashedString.charAt(count));
       }
     }
@@ -139,9 +136,8 @@ public class ConversionPatternRule implements PatternRule {
     return strippedBuffer.toString();
   }
 
-  public String convert (Record record, Collection<Filter> filterCollection, Timestamp timestamp) {
+  public String convert (Record record, Filter[] filters, Timestamp timestamp) {
 
-    Record filterRecord;
     LogicalContext logicalContext;
     Throwable throwable = record.getThrown();
     Parameter[] parameters;
@@ -218,8 +214,7 @@ public class ConversionPatternRule implements PatternRule {
           do {
             if (prevStackTrace == null) {
               stackBuilder.append("Exception in thread ");
-            }
-            else {
+            } else {
               if (prefixFirstLine && (multiLinePrefix != null)) {
                 stackBuilder.append(multiLinePrefix);
               }
@@ -299,19 +294,19 @@ public class ConversionPatternRule implements PatternRule {
           }
 
           correlatorBuilder.append("Thread Identifier: ");
-          correlatorBuilder.append(probeReport.getCorrelator().getThreadIdentifier());
+          correlatorBuilder.append(Arrays.toString(probeReport.getCorrelator().getThreadIdentifier()));
 
           if (multiLinePrefix != null) {
             correlatorBuilder.append(multiLinePrefix);
           }
           correlatorBuilder.append("Parent Identifier: ");
-          correlatorBuilder.append(probeReport.getCorrelator().getParentIdentifier());
+          correlatorBuilder.append(Arrays.toString(probeReport.getCorrelator().getParentIdentifier()));
 
           if (multiLinePrefix != null) {
             correlatorBuilder.append(multiLinePrefix);
           }
           correlatorBuilder.append("Identifier: ");
-          correlatorBuilder.append(probeReport.getCorrelator().getIdentifier());
+          correlatorBuilder.append(Arrays.toString(probeReport.getCorrelator().getIdentifier()));
 
           if (multiLinePrefix != null) {
             correlatorBuilder.append(multiLinePrefix);
@@ -324,6 +319,8 @@ public class ConversionPatternRule implements PatternRule {
           }
           correlatorBuilder.append("Instance: ");
           correlatorBuilder.append(probeReport.getCorrelator().getInstance());
+
+          return correlatorBuilder.toString();
         }
 
         return null;
@@ -370,24 +367,11 @@ public class ConversionPatternRule implements PatternRule {
           int statementCount = 0;
 
           for (Statement statement : probeReport.getProbeEntry().getStatements()) {
-
-            boolean skipStatement = false;
-
             if ((precision > 0) && (++statementCount > precision)) {
               break;
             }
 
-            if (!filterCollection.isEmpty()) {
-              filterRecord = LoggingBlueprintsFactory.getLoggingBlueprints().filterRecord(record, statement.getDiscriminator(), statement.getLevel());
-              for (Filter filter : filterCollection) {
-                if (!filter.willLog(filterRecord)) {
-                  skipStatement = true;
-                  break;
-                }
-              }
-            }
-
-            if (!skipStatement) {
+            if (!FilterUtility.willBeFiltered(record, statement.getDiscriminator(), statement.getLevel(), filters)) {
               if ((prefixFirstLine || (statementBuilder.length() > 0)) && (multiLinePrefix != null)) {
                 statementBuilder.append(multiLinePrefix);
               }
@@ -409,24 +393,11 @@ public class ConversionPatternRule implements PatternRule {
           int metricCount = 0;
 
           for (MetricMilieu metricMilieu : probeReport.getProbeEntry().getMetricMilieus()) {
-
-            boolean skipMetric = false;
-
             if ((precision > 0) && (++metricCount > precision)) {
               break;
             }
 
-            if (!filterCollection.isEmpty()) {
-              filterRecord = LoggingBlueprintsFactory.getLoggingBlueprints().filterRecord(record, metricMilieu.getDiscriminator(), metricMilieu.getLevel());
-              for (Filter filter : filterCollection) {
-                if (!filter.willLog(filterRecord)) {
-                  skipMetric = true;
-                  break;
-                }
-              }
-            }
-
-            if (!skipMetric) {
+            if (!FilterUtility.willBeFiltered(record, metricMilieu.getDiscriminator(), metricMilieu.getLevel(), filters)) {
 
               boolean listInitiated = false;
 
@@ -525,8 +496,7 @@ public class ConversionPatternRule implements PatternRule {
         default:
           throw new UnknownSwitchCaseException(padding.name());
       }
-    }
-    else if (width > 0) {
+    } else if (width > 0) {
 
       return field.substring(0, width);
     }

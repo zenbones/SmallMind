@@ -43,9 +43,6 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.jar.JarEntry;
-import java.util.jar.JarOutputStream;
-import java.util.jar.Manifest;
 import freemarker.template.Configuration;
 import freemarker.template.Template;
 import org.apache.maven.artifact.Artifact;
@@ -57,7 +54,7 @@ import org.apache.maven.plugins.annotations.Parameter;
 import org.apache.maven.plugins.annotations.ResolutionScope;
 import org.apache.maven.project.MavenProject;
 import org.smallmind.nutsnbolts.freemarker.ClassPathTemplateLoader;
-import org.smallmind.nutsnbolts.io.FileIterator;
+import org.smallmind.nutsnbolts.maven.CompressionType;
 import org.smallmind.nutsnbolts.util.SingleItemIterator;
 
 // Generates A Webstart Javafx-based Project
@@ -182,7 +179,7 @@ public class GenerateJNLPMojo extends AbstractMojo {
 
       for (Artifact artifact : project.getDependencyArtifacts()) {
         if (javafx.matchesArtifact(artifact)) {
-          copyDependencies(new SingleItemIterator<Artifact>(artifact), deployDirectory, dependencyList);
+          copyDependencies(new SingleItemIterator<>(artifact), deployDirectory, dependencyList);
           javafxFound = true;
           break;
         }
@@ -207,7 +204,7 @@ public class GenerateJNLPMojo extends AbstractMojo {
             getLog().info(String.format("Creating and copying output jar(%s)...", jarFile.getName()));
           }
 
-          createJar(jarFile, new File(project.getBuild().getOutputDirectory()));
+          CompressionType.JAR.compress(jarFile, new File(project.getBuild().getOutputDirectory()));
           fileSize = copyToDestination(jarFile, deployDirectory.getAbsolutePath(), jarFile.getName());
           dependencyList.addFirst(new JNLPDependency(jarFile.getName(), fileSize));
         } catch (IOException ioException) {
@@ -266,7 +263,7 @@ public class GenerateJNLPMojo extends AbstractMojo {
             getLog().info(String.format("Creating aggregated jar(%s)...", jarFile.getName()));
           }
 
-          createJar(jarFile, new File(project.getBuild().getDirectory() + System.getProperty("file.separator") + deployDir));
+          CompressionType.JAR.compress(jarFile, new File(project.getBuild().getDirectory() + System.getProperty("file.separator") + deployDir));
         } catch (IOException ioException) {
           throw new MojoExecutionException(String.format("Problem in creating the aggregated jar(%s)", jarFile.getName()), ioException);
         }
@@ -361,41 +358,6 @@ public class GenerateJNLPMojo extends AbstractMojo {
   private String createJarArtifactPath (String outputPath, boolean aggregateArtifact) {
 
     return new StringBuilder(outputPath).append(System.getProperty("file.separator")).append(createArtifactName(true, aggregateArtifact)).append(".jar").toString();
-  }
-
-  private void createJar (File jarFile, File directoryToJar)
-    throws IOException {
-
-    FileOutputStream fileOutputStream;
-    JarOutputStream jarOutputStream;
-    JarEntry jarEntry;
-
-    fileOutputStream = new FileOutputStream(jarFile);
-    jarOutputStream = new JarOutputStream(fileOutputStream, new Manifest());
-    for (File outputFile : new FileIterator(directoryToJar)) {
-      if (!outputFile.equals(jarFile)) {
-        jarEntry = new JarEntry(outputFile.getCanonicalPath().substring(directoryToJar.getAbsolutePath().length() + 1).replace(System.getProperty("file.separator"), "/"));
-        jarEntry.setTime(outputFile.lastModified());
-        jarOutputStream.putNextEntry(jarEntry);
-        squeezeFile(jarOutputStream, outputFile);
-      }
-    }
-    jarOutputStream.close();
-    fileOutputStream.close();
-  }
-
-  private void squeezeFile (JarOutputStream jarOutputStream, File outputFile)
-    throws IOException {
-
-    FileInputStream inputStream;
-    byte[] buffer = new byte[8192];
-    int bytesRead;
-
-    inputStream = new FileInputStream(outputFile);
-    while ((bytesRead = inputStream.read(buffer)) >= 0) {
-      jarOutputStream.write(buffer, 0, bytesRead);
-    }
-    inputStream.close();
   }
 
   private String getTemplateFilePath () {

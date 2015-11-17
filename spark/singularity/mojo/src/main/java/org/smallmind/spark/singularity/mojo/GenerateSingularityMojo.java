@@ -39,13 +39,11 @@ import java.io.IOException;
 import java.io.ObjectOutputStream;
 import java.io.OutputStream;
 import java.nio.channels.FileChannel;
-import java.nio.file.FileVisitResult;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.nio.file.SimpleFileVisitor;
 import java.nio.file.StandardOpenOption;
-import java.nio.file.attribute.BasicFileAttributes;
+import java.util.Enumeration;
 import java.util.List;
 import java.util.jar.Attributes;
 import java.util.jar.JarEntry;
@@ -64,7 +62,6 @@ import org.apache.maven.plugins.annotations.Parameter;
 import org.apache.maven.plugins.annotations.ResolutionScope;
 import org.apache.maven.project.MavenProject;
 import org.smallmind.nutsnbolts.maven.CompressionType;
-import org.smallmind.nutsnbolts.util.EnumerationIterator;
 import org.smallmind.spark.singularity.boot.SingularityEntryPoint;
 import org.smallmind.spark.singularity.boot.SingularityIndex;
 
@@ -128,11 +125,11 @@ public class GenerateSingularityMojo extends AbstractMojo {
 
       try {
 
-        JarFile jarFile;
+        JarFile jarFile = new JarFile(artifact.getFile());
+        Enumeration<JarEntry> jarEntryEnum = jarFile.entries();
 
-        jarFile = new JarFile(artifact.getFile());
-        for (JarEntry jarEntry : new EnumerationIterator<>(jarFile.entries())) {
-          singularityIndex.addInverseJarEntry(jarEntry.getName(), artifact.getFile().getName());
+        while (jarEntryEnum.hasMoreElements()) {
+          singularityIndex.addInverseJarEntry(jarEntryEnum.nextElement().getName(), artifact.getFile().getName());
         }
 
         copyToDestination(artifact.getFile(), libraryPath.resolve(artifact.getFile().getName()));
@@ -249,7 +246,7 @@ public class GenerateSingularityMojo extends AbstractMojo {
             int bytesRead;
 
             do {
-              bytesRead = jarInputStream.read(buffer, 0, (int) Math.min(buffer.length, totalBytesToRead - totalBytesRead));
+              bytesRead = jarInputStream.read(buffer, 0, (int)Math.min(buffer.length, totalBytesToRead - totalBytesRead));
               outputStream.write(buffer, 0, bytesRead);
               totalBytesRead += bytesRead;
             } while (totalBytesRead < totalBytesToRead);
@@ -258,44 +255,6 @@ public class GenerateSingularityMojo extends AbstractMojo {
           singularityIndex.addFileName(jarEntry.getName());
         }
       }
-    }
-  }
-
-  private static class CopyFileVisitor extends SimpleFileVisitor<Path> {
-
-    private final SingularityIndex singularityIndex;
-    private final Path targetPath;
-    private Path sourcePath;
-
-    public CopyFileVisitor (SingularityIndex singularityIndex, Path targetPath) {
-
-      this.singularityIndex = singularityIndex;
-      this.targetPath = targetPath;
-    }
-
-    @Override
-    public FileVisitResult preVisitDirectory (final Path dir, final BasicFileAttributes attrs)
-      throws IOException {
-
-      if (sourcePath == null) {
-        sourcePath = dir;
-      }
-
-      Files.createDirectories(targetPath.resolve(sourcePath.relativize(dir)));
-
-      return FileVisitResult.CONTINUE;
-    }
-
-    @Override
-    public FileVisitResult visitFile (final Path file, final BasicFileAttributes attrs)
-      throws IOException {
-
-      Path jarPath;
-
-      Files.copy(file, targetPath.resolve(jarPath = sourcePath.relativize(file)));
-      singularityIndex.addFileName(jarPath.toString().replace(System.getProperty("file.separator"), "/"));
-
-      return FileVisitResult.CONTINUE;
     }
   }
 }

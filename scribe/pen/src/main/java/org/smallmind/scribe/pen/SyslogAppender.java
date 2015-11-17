@@ -32,8 +32,8 @@
  */
 package org.smallmind.scribe.pen;
 
+import java.io.IOException;
 import java.util.HashMap;
-import java.util.List;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import org.productivity.java.syslog4j.Syslog;
 import org.productivity.java.syslog4j.SyslogConfigIF;
@@ -45,7 +45,7 @@ import org.smallmind.nutsnbolts.lang.StackTraceUtility;
 import org.smallmind.nutsnbolts.lang.UnknownSwitchCaseException;
 import org.springframework.beans.factory.InitializingBean;
 
-public class SyslogAppender implements Appender, InitializingBean {
+public class SyslogAppender extends AbstractAppender implements InitializingBean {
 
   private SyslogIF syslog;
   private ErrorHandler errorHandler;
@@ -57,13 +57,13 @@ public class SyslogAppender implements Appender, InitializingBean {
   private boolean base64EncodeStackTraces = false;
   private int syslogPort = 514;
 
-  public SyslogAppender() {
+  public SyslogAppender () {
 
     filterList = new ConcurrentLinkedQueue<>();
   }
 
   @Override
-  public void afterPropertiesSet() throws Exception {
+  public void afterPropertiesSet () {
 
     SyslogConfigIF config = new UDPNetSyslogConfig();
 
@@ -75,249 +75,142 @@ public class SyslogAppender implements Appender, InitializingBean {
     syslog = Syslog.createInstance("logging", config);
   }
 
-  public String getSyslogHost() {
+  public String getSyslogHost () {
 
     return syslogHost;
   }
 
-  public void setSyslogHost(String syslogHost) {
+  public void setSyslogHost (String syslogHost) {
 
     this.syslogHost = syslogHost;
   }
 
-  public int getSyslogPort() {
+  public int getSyslogPort () {
 
     return syslogPort;
   }
 
-  public void setSyslogPort(int syslogPort) {
+  public void setSyslogPort (int syslogPort) {
 
     this.syslogPort = syslogPort;
   }
 
-  public String getFacility() {
+  public String getFacility () {
 
     return facility;
   }
 
-  public void setFacility(String facility) {
+  public void setFacility (String facility) {
 
     this.facility = facility;
   }
 
-  public boolean isBase64EncodeStackTraces() {
+  public boolean isBase64EncodeStackTraces () {
 
     return base64EncodeStackTraces;
   }
 
-  public void setBase64EncodeStackTraces(boolean base64EncodeStackTraces) {
+  public void setBase64EncodeStackTraces (boolean base64EncodeStackTraces) {
 
     this.base64EncodeStackTraces = base64EncodeStackTraces;
   }
 
   @Override
-  public String getName() {
-
-    return name;
-  }
-
-  @Override
-  public void setName(String name) {
-
-    this.name = name;
-  }
-
-  @Override
-  public synchronized void clearFilters() {
-
-    filterList.clear();
-  }
-
-  @Override
-  public synchronized void setFilter(Filter filter) {
-
-    filterList.clear();
-    filterList.add(filter);
-  }
-
-  @Override
-  public synchronized void setFilters(List<Filter> replacementFilterList) {
-
-    filterList.clear();
-    filterList.addAll(replacementFilterList);
-  }
-
-  @Override
-  public synchronized void addFilter(Filter filter) {
-
-    filterList.add(filter);
-  }
-
-  @Override
-  public synchronized Filter[] getFilters() {
-
-    Filter[] filters;
-
-    filters = new Filter[filterList.size()];
-    filterList.toArray(filters);
-
-    return filters;
-  }
-
-  @Override
-  public void setErrorHandler(ErrorHandler errorHandler) {
-
-    this.errorHandler = errorHandler;
-  }
-
-  @Override
-  public ErrorHandler getErrorHandler() {
-
-    return errorHandler;
-  }
-
-  @Override
-  public void setFormatter(Formatter formatter) {
+  public void setFormatter (Formatter formatter) {
 
     throw new LoggerRuntimeException("The %s does not take external Formatters", SyslogAppender.class.getSimpleName());
   }
 
   @Override
-  public Formatter getFormatter() {
+  public void handleOutput (Record record)
+    throws IOException {
 
-    return null;
-  }
+    StructuredSyslogMessage message;
+    HashMap<String, HashMap<String, String>> idMap = new HashMap<>();
+    HashMap<String, String> logParamMap;
+    LogicalContext logicalContext;
+    Parameter[] parameters;
+    Throwable throwable;
+    String threadName;
+    long threadId;
 
-  @Override
-  public boolean requiresFormatter() {
+    idMap.put("log", logParamMap = new HashMap<>());
+    logParamMap.put("timestamp", String.valueOf(record.getMillis()));
+    logParamMap.put("logger", record.getLoggerName());
 
-    return false;
-  }
+    threadName = record.getThreadName();
+    threadId = record.getThreadID();
+    if ((threadName != null) || (threadId > 0)) {
 
-  @Override
-  public boolean isActive() {
+      HashMap<String, String> threadParamMap;
 
-    return active;
-  }
-
-  @Override
-  public void setActive(boolean active) {
-
-    this.active = active;
-  }
-
-  public void handleError(ErrorHandler errorHandler, Record record, Exception exception) {
-
-    errorHandler.process(record, exception, "Fatal error in appender(%s)", this.getClass().getCanonicalName());
-  }
-
-  public void publish(Record record) {
-
-    try {
-      for (Filter filter : filterList) {
-        if (!filter.willLog(record)) {
-          return;
-        }
+      idMap.put("thread", threadParamMap = new HashMap<>());
+      if (threadName != null) {
+        threadParamMap.put("name", threadName);
       }
-
-      StructuredSyslogMessage message;
-      HashMap<String, HashMap<String, String>> idMap = new HashMap<>();
-      HashMap<String, String> logParamMap;
-      LogicalContext logicalContext;
-      Parameter[] parameters;
-      Throwable throwable;
-      String threadName;
-      long threadId;
-
-      idMap.put("log", logParamMap = new HashMap<>());
-      logParamMap.put("timestamp", String.valueOf(record.getMillis()));
-      logParamMap.put("logger", record.getLoggerName());
-
-      threadName = record.getThreadName();
-      threadId = record.getThreadID();
-      if ((threadName != null) || (threadId > 0)) {
-
-        HashMap<String, String> threadParamMap;
-
-        idMap.put("thread", threadParamMap = new HashMap<>());
-        if (threadName != null) {
-          threadParamMap.put("name", threadName);
-        }
-        if (threadId > 0) {
-          threadParamMap.put("id", String.valueOf(threadId));
-        }
-      }
-
-      if ((throwable = record.getThrown()) != null) {
-        logParamMap.put("stack-trace", (base64EncodeStackTraces) ? Base64Codec.encode(StackTraceUtility.obtainStackTraceAsString(throwable)) : StackTraceUtility.obtainStackTraceAsString(throwable));
-      }
-
-      if (((logicalContext = record.getLogicalContext()) != null) && logicalContext.isFilled()) {
-
-        HashMap<String, String> contextParamMap;
-        int lineNumber;
-
-        idMap.put("context", contextParamMap = new HashMap<>());
-        contextParamMap.put("class", logicalContext.getClassName());
-        contextParamMap.put("method", logicalContext.getMethodName());
-        contextParamMap.put("native", String.valueOf(logicalContext.isNativeMethod()));
-        contextParamMap.put("file", logicalContext.getFileName());
-        if ((!logicalContext.isNativeMethod()) && ((lineNumber = logicalContext.getLineNumber()) > 0)) {
-          contextParamMap.put("line", String.valueOf(lineNumber));
-        }
-      }
-
-      if ((parameters = record.getParameters()).length > 0) {
-
-        HashMap<String, String> parameterParamMap;
-
-        idMap.put("parameters", parameterParamMap = new HashMap<>());
-        for (Parameter parameter : parameters) {
-
-          String key = parameter.getKey();
-          Object value = parameter.getValue();
-
-          parameterParamMap.put((key == null) ? "null" : key, (value == null) ? "null" : value.toString());
-        }
-      }
-
-      message = new StructuredSyslogMessage(String.valueOf(record.getSequenceNumber()), idMap, record.getMessage());
-
-      switch (record.getLevel()) {
-        case FATAL:
-          syslog.critical(message);
-          break;
-        case ERROR:
-          syslog.error(message);
-          break;
-        case WARN:
-          syslog.warn(message);
-          break;
-        case INFO:
-          syslog.info(message);
-          break;
-        case DEBUG:
-          syslog.debug(message);
-          break;
-        case TRACE:
-          syslog.debug(message);
-          break;
-        case OFF:
-          break;
-        default:
-          throw new UnknownSwitchCaseException(record.getLevel().name());
-      }
-    } catch (Exception exception) {
-      if (errorHandler == null) {
-        exception.printStackTrace();
-      } else {
-        handleError(errorHandler, record, exception);
+      if (threadId > 0) {
+        threadParamMap.put("id", String.valueOf(threadId));
       }
     }
-  }
 
-  public void close()
-      throws LoggerException {
+    if ((throwable = record.getThrown()) != null) {
+      logParamMap.put("stack-trace", (base64EncodeStackTraces) ? Base64Codec.encode(StackTraceUtility.obtainStackTraceAsString(throwable)) : StackTraceUtility.obtainStackTraceAsString(throwable));
+    }
 
+    if (((logicalContext = record.getLogicalContext()) != null) && logicalContext.isFilled()) {
+
+      HashMap<String, String> contextParamMap;
+      int lineNumber;
+
+      idMap.put("context", contextParamMap = new HashMap<>());
+      contextParamMap.put("class", logicalContext.getClassName());
+      contextParamMap.put("method", logicalContext.getMethodName());
+      contextParamMap.put("native", String.valueOf(logicalContext.isNativeMethod()));
+      contextParamMap.put("file", logicalContext.getFileName());
+      if ((!logicalContext.isNativeMethod()) && ((lineNumber = logicalContext.getLineNumber()) > 0)) {
+        contextParamMap.put("line", String.valueOf(lineNumber));
+      }
+    }
+
+    if ((parameters = record.getParameters()).length > 0) {
+
+      HashMap<String, String> parameterParamMap;
+
+      idMap.put("parameters", parameterParamMap = new HashMap<>());
+      for (Parameter parameter : parameters) {
+
+        String key = parameter.getKey();
+        Object value = parameter.getValue();
+
+        parameterParamMap.put((key == null) ? "null" : key, (value == null) ? "null" : value.toString());
+      }
+    }
+
+    message = new StructuredSyslogMessage(String.valueOf(record.getSequenceNumber()), idMap, record.getMessage());
+
+    switch (record.getLevel()) {
+      case FATAL:
+        syslog.critical(message);
+        break;
+      case ERROR:
+        syslog.error(message);
+        break;
+      case WARN:
+        syslog.warn(message);
+        break;
+      case INFO:
+        syslog.info(message);
+        break;
+      case DEBUG:
+        syslog.debug(message);
+        break;
+      case TRACE:
+        syslog.debug(message);
+        break;
+      case OFF:
+        break;
+      default:
+        throw new UnknownSwitchCaseException(record.getLevel().name());
+    }
   }
 }

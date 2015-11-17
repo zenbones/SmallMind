@@ -32,7 +32,6 @@
  */
 package org.smallmind.scribe.ink.jdk;
 
-import java.util.Collection;
 import java.util.logging.Formatter;
 import java.util.logging.LogRecord;
 import org.smallmind.scribe.pen.Filter;
@@ -52,7 +51,7 @@ public class JDKFormatterAdapter implements org.smallmind.scribe.pen.Formatter {
     return formatter;
   }
 
-  public String format (Record record, Collection<Filter> filterCollection) {
+  public String format (Record record, Filter[] filters) {
 
     StringBuilder formatBuilder = new StringBuilder();
     String header;

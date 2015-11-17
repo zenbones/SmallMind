@@ -36,7 +36,7 @@ import org.smallmind.nutsnbolts.email.Authentication;
 import org.smallmind.nutsnbolts.email.Mail;
 import org.smallmind.nutsnbolts.email.Postman;
 
-public class EmailAppender extends AbstractAppender {
+public class EmailAppender extends AbstractFormattedAppender {
 
   private Postman postman;
   private String from;
@@ -94,10 +94,5 @@ public class EmailAppender extends AbstractAppender {
     throws Exception {
 
     postman.send(new Mail(from, to, subject, output));
-  }
-
-  public boolean requiresFormatter () {
-
-    return true;
   }
 }

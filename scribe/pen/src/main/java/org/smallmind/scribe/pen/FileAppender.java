@@ -38,7 +38,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.Date;
 
-public class FileAppender extends AbstractAppender {
+public class FileAppender extends AbstractFormattedAppender {
 
   private BufferedOutputStream fileOutputStream;
   private File logFile;
@@ -124,11 +124,6 @@ public class FileAppender extends AbstractAppender {
     this.rollover = rollover;
 
     setLogFile(logFile);
-  }
-
-  public boolean requiresFormatter () {
-
-    return true;
   }
 
   public Rollover getRollover () {
