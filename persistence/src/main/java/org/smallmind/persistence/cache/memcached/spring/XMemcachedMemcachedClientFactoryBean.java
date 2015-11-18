@@ -111,11 +111,12 @@ public class XMemcachedMemcachedClientFactoryBean implements FactoryBean<XMemcac
 
   public void shutdown () {
 
-    if (memcachedClient != null)
+    if (memcachedClient != null) {
       try {
         memcachedClient.shutdown();
       } catch (IOException e) {
         LoggerManager.getLogger(XMemcachedMemcachedClientFactoryBean.class).error(e);
       }
+    }
   }
 }
