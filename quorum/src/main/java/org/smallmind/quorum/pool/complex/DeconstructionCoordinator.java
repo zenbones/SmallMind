@@ -84,7 +84,7 @@ public class DeconstructionCoordinator {
   public void ignite (DeconstructionFuse ignitionFuse, boolean withPrejudice) {
 
     if (terminated.compareAndSet(false, true)) {
-      LoggerManager.getLogger(DeconstructionCoordinator.class).info("ComponentPin being terminated due to fuse(%s) ignition", ignitionFuse.getClass().getSimpleName());
+      LoggerManager.getLogger(DeconstructionCoordinator.class).debug("ComponentPin being terminated due to fuse(%s) ignition", ignitionFuse.getClass().getSimpleName());
       shutdown(ignitionFuse);
       componentPin.kaboom(withPrejudice);
     }
