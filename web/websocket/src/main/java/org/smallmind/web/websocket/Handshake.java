@@ -51,7 +51,7 @@ public class Handshake {
 
 //  HTTP-Version SP Status-Code SP Reason-Phrase
 
-  public static byte[] constructRequest (URI uri, byte[] keyBytes, String... protocols)
+  public static byte[] constructRequest (int protocolVersion, URI uri, byte[] keyBytes, String... protocols)
     throws IOException {
 
     StringBuilder handshakeBuilder = new StringBuilder();
@@ -83,13 +83,13 @@ public class Handshake {
       handshakeBuilder.append('\n');
     }
 
-    handshakeBuilder.append("Sec-WebSocket-Version: 13\n");
+    handshakeBuilder.append("Sec-WebSocket-Version: ").append(protocolVersion).append('\n');
     handshakeBuilder.append('\n');
 
     return handshakeBuilder.toString().getBytes();
   }
 
-  public static void validateResponse (String response, byte[] keyBytes, String... protocols)
+  public static String validateResponse (String response, byte[] keyBytes, String... protocols)
     throws IOException, NoSuchAlgorithmException, SyntaxException {
 
     BufferedReader reader = new BufferedReader(new StringReader(response));
@@ -97,6 +97,7 @@ public class Handshake {
     Matcher httpStatusMatcher;
     String httpStatus;
     String httpField;
+    String negotiatedProtocol = "";
 
     do {
       httpStatus = reader.readLine();
@@ -153,6 +154,7 @@ public class Handshake {
 
       for (String protocol : protocols) {
         if (protocol.equals(fieldMap.get("Sec-WebSocket-Protocol"))) {
+          negotiatedProtocol = protocol;
           matched = true;
           break;
         }
@@ -166,5 +168,7 @@ public class Handshake {
     if (fieldMap.containsKey("Sec-WebSocket-Extensions")) {
       throw new SyntaxException("This client does not support the use of websocket extensions");
     }
+
+    return negotiatedProtocol;
   }
 }

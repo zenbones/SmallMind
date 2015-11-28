@@ -37,26 +37,25 @@ import java.util.concurrent.ThreadLocalRandom;
 public class Frame {
 
   public static byte[] ping (byte[] message)
-    throws WebsocketException {
+    throws WebSocketException {
 
     return control(OpCode.PING, message);
   }
 
   public static byte[] pong (byte[] message)
-    throws WebsocketException {
+    throws WebSocketException {
 
     return control(OpCode.PONG, message);
   }
 
   public static byte[] close (byte[] status, String reason)
-    throws WebsocketException {
+    throws WebSocketException {
 
     byte[] message;
 
     if (reason == null) {
       message = status;
-    }
-    else {
+    } else {
 
       byte[] reasonsBytes = reason.getBytes();
 
@@ -69,26 +68,26 @@ public class Frame {
   }
 
   private static byte[] control (OpCode opCode, byte[] message)
-    throws WebsocketException {
+    throws WebSocketException {
 
     if (message.length > 125) {
-      throw new WebsocketException("Control frame data length exceeds 125 bytes");
+      throw new WebSocketException("Control frame data length exceeds 125 bytes");
     }
 
-    return data(opCode, message);
+    return data(opCode, message, true);
   }
 
-  public static byte[] text (String message) {
+  public static byte[] text (String message, boolean fin) {
 
-    return data(OpCode.TEXT, message.getBytes());
+    return data(OpCode.TEXT, message.getBytes(), fin);
   }
 
-  public static byte[] binary (byte[] message) {
+  public static byte[] binary (byte[] message, boolean fin) {
 
-    return data(OpCode.BINARY, message);
+    return data(OpCode.BINARY, message, fin);
   }
 
-  private static byte[] data (OpCode opCode, byte[] message) {
+  private static byte[] data (OpCode opCode, byte[] message, boolean fin) {
 
     int start = (message.length < 126) ? 6 : (message.length < 65536) ? 8 : 14;
     byte[] out = new byte[message.length + start];
@@ -96,21 +95,19 @@ public class Frame {
 
     ThreadLocalRandom.current().nextBytes(mask);
 
-    out[0] = (byte)(0x80 | opCode.getCode());
+    out[0] = (byte)((fin ? 0x80 : 0x0) | opCode.getCode());
 
     if (message.length < 126) {
       out[1] = (byte)(0x80 | message.length);
 
       System.arraycopy(mask, 0, out, 2, 4);
-    }
-    else if (message.length < 65536) {
+    } else if (message.length < 65536) {
       out[1] = (byte)(0x80 | 126);
       out[2] = (byte)(message.length >>> 8);
       out[3] = (byte)(message.length & 0xFF);
 
       System.arraycopy(mask, 0, out, 4, 4);
-    }
-    else {
+    } else {
       out[1] = (byte)(0x80 | 127);
       // largest array will never be more than 2^31-1
       out[2] = 0;
@@ -149,12 +146,10 @@ public class Frame {
     if ((length = (byte)(buffer[1] & 0x7F)) < 126) {
       start = 2;
       message = new byte[length];
-    }
-    else if (length == 126) {
+    } else if (length == 126) {
       message = new byte[((buffer[2] & 0xFF) << 8) + (buffer[3] & 0xFF)];
       start = 4;
-    }
-    else {
+    } else {
       message = new byte[((buffer[6] & 0xFF) << 24) + ((buffer[7] & 0xFF) << 16) + ((buffer[8] & 0xFF) << 8) + (buffer[9] & 0xFF)];
       start = 10;
     }

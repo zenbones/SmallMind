@@ -32,7 +32,7 @@
  */
 package org.smallmind.web.websocket;
 
-public class SyntaxException extends WebsocketException {
+public class SyntaxException extends WebSocketException {
 
   public SyntaxException (String message, Object... args) {
 

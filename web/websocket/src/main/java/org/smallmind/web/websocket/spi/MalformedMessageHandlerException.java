@@ -30,32 +30,19 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.web.websocket;
+package org.smallmind.web.websocket.spi;
 
-public enum CloseCode {
+import org.smallmind.nutsnbolts.lang.FormattedRuntimeException;
 
-  NORMAL(1000), GOING_AWAY(1001), PROTOCOL_ERROR(1002), UNKNOWN_DATA_TYPE(1003), RESERVED(1004), NO_STATUS_CODE(1005), CLOSED_ABNORMALLY(1006), DATA_TYPE_CONVERSION_ERROR(1007), POLICY_VIOLATION(1008),
-  MESSAGE_TOO_LARGE(1009), MISSING_EXTENSION(1010), SERVER_ERROR(1011), SERVICE_RESTART(1012), TRY_AGAIN_LATER(1013), TLS_HANDSHAKE_FAILURE(1015);
+public class MalformedMessageHandlerException extends FormattedRuntimeException {
 
-  private int code;
+  public MalformedMessageHandlerException (String message, Object... args) {
 
-  private CloseCode (int code) {
-
-    this.code = code;
+    super(message, args);
   }
 
-  public int getCode () {
+  public MalformedMessageHandlerException (Throwable throwable) {
 
-    return code;
-  }
-
-  public byte[] getCodeAsBytes () {
-
-    byte[] out = new byte[2];
-
-    out[0] = (byte)(code >>> 8);
-    out[1] = (byte)(code & 0xFF);
-
-    return out;
+    super(throwable);
   }
 }

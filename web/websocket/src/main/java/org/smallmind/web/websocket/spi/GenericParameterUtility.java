@@ -30,9 +30,40 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.web.websocket;
+package org.smallmind.web.websocket.spi;
 
-public enum ReadyState {
+import java.lang.reflect.ParameterizedType;
+import java.lang.reflect.Type;
+import javax.websocket.Decoder;
 
-  CONNECTING, OPEN, CLOSING, CLOSED
+public class GenericParameterUtility {
+
+  public static Class<?> getTypeParameter (Class<?> objectClass, Class<?> targetInterface) {
+
+    Decoder d;
+    Class<?> currentClass = objectClass;
+
+    do {
+      for (Type interfaceType : currentClass.getGenericInterfaces()) {
+        if (interfaceType instanceof ParameterizedType) {
+
+          Type rawType;
+
+          if (((rawType = ((ParameterizedType)interfaceType).getRawType()) instanceof Class) && targetInterface.isAssignableFrom((Class)rawType)) {
+
+            Type[] typeArguments;
+
+            if ((typeArguments = ((ParameterizedType)interfaceType).getActualTypeArguments()).length == 1) {
+              if (typeArguments[0] instanceof Class) {
+
+                return (Class)typeArguments[0];
+              }
+            }
+          }
+        }
+      }
+    } while ((currentClass = currentClass.getSuperclass()) != null);
+
+    throw new MalformedMessageHandlerException("Unable to determine the parameterized type of %s(%s)", targetInterface.getName(), objectClass.getName());
+  }
 }
