@@ -49,6 +49,17 @@ public enum CloseCode {
     return code;
   }
 
+  public static CloseCode fromCode (int code) {
+
+    for (CloseCode closeCode : CloseCode.values()) {
+      if (closeCode.getCode() == code) {
+        return closeCode;
+      }
+    }
+
+    return CloseCode.NO_STATUS_CODE;
+  }
+
   public byte[] getCodeAsBytes () {
 
     byte[] out = new byte[2];

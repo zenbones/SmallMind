@@ -64,6 +64,7 @@ public abstract class WebSocket implements AutoCloseable {
   private final AtomicLong idleMilliseconds = new AtomicLong(0);
   private final AtomicInteger maxBinaryBufferSize = new AtomicInteger(Integer.MAX_VALUE);
   private final AtomicInteger maxTextBufferSize = new AtomicInteger(Integer.MAX_VALUE);
+  private final URI uri;
   private final String url;
   private final String negotiatedProtocol;
   private final boolean secure;
@@ -76,6 +77,8 @@ public abstract class WebSocket implements AutoCloseable {
 
     Thread workerThread;
     byte[] keyBytes = new byte[16];
+
+    this.uri = uri;
 
     ThreadLocalRandom.current().nextBytes(keyBytes);
 
@@ -266,6 +269,11 @@ public abstract class WebSocket implements AutoCloseable {
   public boolean isSecure () {
 
     return secure;
+  }
+
+  public URI getUri () {
+
+    return uri;
   }
 
   public String url () {

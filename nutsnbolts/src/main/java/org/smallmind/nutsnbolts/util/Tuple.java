@@ -34,8 +34,11 @@ package org.smallmind.nutsnbolts.util;
 
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 public class Tuple<K, V> implements Serializable, Cloneable {
@@ -80,8 +83,7 @@ public class Tuple<K, V> implements Serializable, Cloneable {
 
     if ((keyIndex = keys.indexOf(key)) < 0) {
       addPair(key, value);
-    }
-    else {
+    } else {
       setValue(keyIndex, value);
     }
   }
@@ -92,8 +94,7 @@ public class Tuple<K, V> implements Serializable, Cloneable {
 
     if ((keyIndex = keys.indexOf(key)) < 0) {
       addPair(index, key, value);
-    }
-    else {
+    } else {
       setValue(keyIndex, value);
     }
   }
@@ -218,6 +219,24 @@ public class Tuple<K, V> implements Serializable, Cloneable {
     return false;
   }
 
+  public synchronized Map<K, List<V>> asMap () {
+
+    Map<K, List<V>> map = new HashMap<>();
+
+    for (int count = 0; count < size(); count++) {
+
+      List<V> valueList;
+
+      if ((valueList = map.get(keys.get(count))) == null) {
+        map.put(keys.get(count), valueList = new LinkedList<>());
+      }
+
+      valueList.add(values.get(count));
+    }
+
+    return map;
+  }
+
   public synchronized Object clone () {
 
     Tuple<K, V> tuple = new Tuple<>();
@@ -246,5 +265,4 @@ public class Tuple<K, V> implements Serializable, Cloneable {
     dataBuilder.append(")");
     return dataBuilder.toString();
   }
-
 }

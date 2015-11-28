@@ -35,10 +35,12 @@ package org.smallmind.web.websocket.spi;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.Reader;
+import java.io.UnsupportedEncodingException;
 import java.net.URI;
 import java.nio.ByteBuffer;
 import java.security.Principal;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -52,6 +54,9 @@ import javax.websocket.PongMessage;
 import javax.websocket.RemoteEndpoint;
 import javax.websocket.Session;
 import javax.websocket.WebSocketContainer;
+import org.smallmind.nutsnbolts.http.HTTPCodec;
+import org.smallmind.nutsnbolts.util.SnowflakeId;
+import org.smallmind.web.websocket.CloseCode;
 import org.smallmind.web.websocket.ConnectionState;
 import org.smallmind.web.websocket.WebSocket;
 
@@ -60,6 +65,8 @@ public class SessionImpl implements Session {
   private final WebSocket webSocket;
   private final WebSocketContainer container;
   private final EndpointConfig endpointConfig;
+  private final Map<String, Object> userPropertyMap = new HashMap<>();
+  private final String id = SnowflakeId.newInstance().generateHexEncoding();
   private MessageHandler textMessageHandler;
   private MessageHandler binaryMessageHandler;
   private MessageHandler pongMessageHandler;
@@ -306,50 +313,47 @@ public class SessionImpl implements Session {
   }
 
   @Override
-  public RemoteEndpoint.Async getAsyncRemote () {
+  public void close ()
+    throws IOException {
 
-    return null;
-  }
-
-  @Override
-  public RemoteEndpoint.Basic getBasicRemote () {
-
-    return null;
-  }
-
-  @Override
-  public String getId () {
-
-    return null;
-  }
-
-  @Override
-  public void close () throws IOException {
-
+    try {
+      webSocket.close();
+    } catch (Exception exception) {
+      throw new IOException(exception);
+    }
   }
 
   @Override
   public void close (CloseReason closeReason)
     throws IOException {
 
+    try {
+      webSocket.close(CloseCode.fromCode(closeReason.getCloseCode().getCode()), closeReason.getReasonPhrase());
+    } catch (Exception exception) {
+      throw new IOException(exception);
+    }
   }
 
   @Override
   public URI getRequestURI () {
 
-    return null;
-  }
-
-  @Override
-  public Map<String, List<String>> getRequestParameterMap () {
-
-    return null;
+    return webSocket.getUri();
   }
 
   @Override
   public String getQueryString () {
 
-    return null;
+    return webSocket.getUri().getQuery();
+  }
+
+  @Override
+  public Map<String, List<String>> getRequestParameterMap () {
+
+    try {
+      return HTTPCodec.urlDecode(webSocket.getUri().getQuery()).asMap();
+    } catch (UnsupportedEncodingException unsupportedEncodingException) {
+      throw new SessionRuntimeException(unsupportedEncodingException);
+    }
   }
 
   @Override
@@ -361,7 +365,7 @@ public class SessionImpl implements Session {
   @Override
   public Map<String, Object> getUserProperties () {
 
-    return null;
+    return userPropertyMap;
   }
 
   @Override
@@ -372,6 +376,28 @@ public class SessionImpl implements Session {
 
   @Override
   public Set<Session> getOpenSessions () {
+
+    HashSet<Session> sessionSet = new HashSet<>();
+
+    sessionSet.add(this);
+
+    return sessionSet;
+  }
+
+  @Override
+  public String getId () {
+
+    return id;
+  }
+
+  @Override
+  public RemoteEndpoint.Async getAsyncRemote () {
+
+    return null;
+  }
+
+  @Override
+  public RemoteEndpoint.Basic getBasicRemote () {
 
     return null;
   }
