@@ -141,36 +141,24 @@ public abstract class WebSocket implements AutoCloseable {
     }
   }
 
-  public void text (String message)
-    throws IOException, WebSocketException {
-
-    text(message, true);
-  }
-
-  public synchronized void text (String message, boolean fin)
+  public synchronized void text (String message)
     throws IOException, WebSocketException {
 
     if (connectionStateRef.get().equals(ConnectionState.CLOSING) || connectionStateRef.get().equals(ConnectionState.CLOSED)) {
       throw new WebSocketException("The websocket has been closed");
     }
 
-    write(Frame.text(message, fin));
+    write(Frame.text(message));
   }
 
-  public void binary (byte[] buffer)
-    throws IOException, WebSocketException {
-
-    binary(buffer, true);
-  }
-
-  public synchronized void binary (byte[] buffer, boolean fin)
+  public synchronized void binary (byte[] buffer)
     throws IOException, WebSocketException {
 
     if (connectionStateRef.get().equals(ConnectionState.CLOSING) || connectionStateRef.get().equals(ConnectionState.CLOSED)) {
       throw new WebSocketException("The websocket has been closed");
     }
 
-    write(Frame.binary(buffer, true));
+    write(Frame.binary(buffer));
   }
 
   @Override

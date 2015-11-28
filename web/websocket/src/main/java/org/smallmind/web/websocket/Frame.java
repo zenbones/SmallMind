@@ -74,20 +74,20 @@ public class Frame {
       throw new WebSocketException("Control frame data length exceeds 125 bytes");
     }
 
-    return data(opCode, message, true);
+    return data(opCode, message);
   }
 
-  public static byte[] text (String message, boolean fin) {
+  public static byte[] text (String message) {
 
-    return data(OpCode.TEXT, message.getBytes(), fin);
+    return data(OpCode.TEXT, message.getBytes());
   }
 
-  public static byte[] binary (byte[] message, boolean fin) {
+  public static byte[] binary (byte[] message) {
 
-    return data(OpCode.BINARY, message, fin);
+    return data(OpCode.BINARY, message);
   }
 
-  private static byte[] data (OpCode opCode, byte[] message, boolean fin) {
+  private static byte[] data (OpCode opCode, byte[] message) {
 
     int start = (message.length < 126) ? 6 : (message.length < 65536) ? 8 : 14;
     byte[] out = new byte[message.length + start];
@@ -95,7 +95,7 @@ public class Frame {
 
     ThreadLocalRandom.current().nextBytes(mask);
 
-    out[0] = (byte)((fin ? 0x80 : 0x0) | opCode.getCode());
+    out[0] = (byte)(0x80 | opCode.getCode());
 
     if (message.length < 126) {
       out[1] = (byte)(0x80 | message.length);

@@ -65,7 +65,7 @@ public class SessionImpl implements Session {
   private final WebSocket webSocket;
   private final WebSocketContainer container;
   private final EndpointConfig endpointConfig;
-  private final Map<String, Object> userPropertyMap = new HashMap<>();
+  private final HashMap<Class<? extends Decoder>, Decoder> decoderInstanceMap = new HashMap<>();
   private final String id = SnowflakeId.newInstance().generateHexEncoding();
   private MessageHandler textMessageHandler;
   private MessageHandler binaryMessageHandler;
@@ -165,19 +165,47 @@ public class SessionImpl implements Session {
 
     for (Class<? extends Decoder> decoderClass : endpointConfig.getDecoders()) {
       if ((Decoder.Text.class.isAssignableFrom(decoderClass)) && clazz.isAssignableFrom(GenericParameterUtility.getTypeParameter(decoderClass, Decoder.Text.class))) {
-        assignTextMessageHandler(new DecodedStringHandler<>((Decoder.Text)decoderClass.newInstance(), messageHandler));
+
+        Decoder decoder;
+
+        if ((decoder = decoderInstanceMap.get(decoderClass)) == null) {
+          decoderInstanceMap.put(decoderClass, decoder = decoderClass.newInstance());
+        }
+
+        assignTextMessageHandler(new DecodedStringHandler<>((Decoder.Text)decoder, messageHandler));
         assigned = true;
       }
       if ((Decoder.TextStream.class.isAssignableFrom(decoderClass)) && clazz.isAssignableFrom(GenericParameterUtility.getTypeParameter(decoderClass, Decoder.TextStream.class))) {
-        assignTextMessageHandler(new DecodedReaderHandler<>((Decoder.TextStream)decoderClass.newInstance(), messageHandler));
+
+        Decoder decoder;
+
+        if ((decoder = decoderInstanceMap.get(decoderClass)) == null) {
+          decoderInstanceMap.put(decoderClass, decoder = decoderClass.newInstance());
+        }
+
+        assignTextMessageHandler(new DecodedReaderHandler<>((Decoder.TextStream)decoder, messageHandler));
         assigned = true;
       }
       if ((Decoder.Binary.class.isAssignableFrom(decoderClass)) && clazz.isAssignableFrom(GenericParameterUtility.getTypeParameter(decoderClass, Decoder.Binary.class))) {
-        assignBinaryMessageHandler(new DecodedByteBufferHandler<>((Decoder.Binary)decoderClass.newInstance(), messageHandler));
+
+        Decoder decoder;
+
+        if ((decoder = decoderInstanceMap.get(decoderClass)) == null) {
+          decoderInstanceMap.put(decoderClass, decoder = decoderClass.newInstance());
+        }
+
+        assignBinaryMessageHandler(new DecodedByteBufferHandler<>((Decoder.Binary)decoder, messageHandler));
         assigned = true;
       }
       if ((Decoder.BinaryStream.class.isAssignableFrom(decoderClass)) && clazz.isAssignableFrom(GenericParameterUtility.getTypeParameter(decoderClass, Decoder.BinaryStream.class))) {
-        assignBinaryMessageHandler(new DecodedInputStreamHandler<>((Decoder.BinaryStream)decoderClass.newInstance(), messageHandler));
+
+        Decoder decoder;
+
+        if ((decoder = decoderInstanceMap.get(decoderClass)) == null) {
+          decoderInstanceMap.put(decoderClass, decoder = decoderClass.newInstance());
+        }
+
+        assignBinaryMessageHandler(new DecodedInputStreamHandler<>((Decoder.BinaryStream)decoder, messageHandler));
         assigned = true;
       }
     }
@@ -365,7 +393,7 @@ public class SessionImpl implements Session {
   @Override
   public Map<String, Object> getUserProperties () {
 
-    return userPropertyMap;
+    return endpointConfig.getUserProperties();
   }
 
   @Override

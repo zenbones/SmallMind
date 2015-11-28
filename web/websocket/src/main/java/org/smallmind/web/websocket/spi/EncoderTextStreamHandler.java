@@ -32,12 +32,28 @@
  */
 package org.smallmind.web.websocket.spi;
 
-import org.smallmind.nutsnbolts.lang.FormattedRuntimeException;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.OutputStreamWriter;
+import javax.websocket.EncodeException;
+import javax.websocket.Encoder;
 
-public class SessionRuntimeException extends FormattedRuntimeException {
+public class EncoderTextStreamHandler<T> implements EncoderHandler<T> {
 
-  public SessionRuntimeException (Throwable throwable) {
+  private Encoder.TextStream<T> encoder;
 
-    super(throwable);
+  public EncoderTextStreamHandler (Encoder.TextStream<T> encoder) {
+
+    this.encoder = encoder;
+  }
+
+  public byte[] encode (Object object)
+    throws IOException, EncodeException {
+
+    ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
+
+    encoder.encode((T)object, new OutputStreamWriter(new ByteArrayOutputStream()));
+
+    return byteArrayOutputStream.toByteArray();
   }
 }
