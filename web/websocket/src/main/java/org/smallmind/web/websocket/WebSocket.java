@@ -45,6 +45,8 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
 import javax.net.ssl.SSLSocketFactory;
 import org.smallmind.nutsnbolts.http.Base64Codec;
@@ -58,10 +60,15 @@ public abstract class WebSocket implements AutoCloseable {
   private final MessageWorker messageWorker;
   private final ConcurrentLinkedQueue<String> pingKeyQueue = new ConcurrentLinkedQueue<>();
   private final AtomicReference<ConnectionState> connectionStateRef = new AtomicReference<>(ConnectionState.CONNECTING);
+  private final AtomicLong maxIdleTimeoutMilliseconds = new AtomicLong(0);
+  private final AtomicLong idleMilliseconds = new AtomicLong(0);
+  private final AtomicInteger maxBinaryBufferSize = new AtomicInteger(Integer.MAX_VALUE);
+  private final AtomicInteger maxTextBufferSize = new AtomicInteger(Integer.MAX_VALUE);
   private final String url;
   private final String negotiatedProtocol;
   private final boolean secure;
   private final byte[] rawBuffer = new byte[1024];
+  private final long soTimeout = 1000;
   private final int protocolVersion = 13;
 
   public WebSocket (URI uri, String... protocols)
@@ -96,7 +103,7 @@ public abstract class WebSocket implements AutoCloseable {
       secure = false;
     }
     socket.setTcpNoDelay(true);
-    socket.setSoTimeout(1000);
+    socket.setSoTimeout((int)soTimeout);
 
     // initial handshake request
     socket.getOutputStream().write(Handshake.constructRequest(protocolVersion, uri, keyBytes, protocols));
@@ -198,6 +205,7 @@ public abstract class WebSocket implements AutoCloseable {
   private void write (byte[] buffer)
     throws IOException {
 
+    idleMilliseconds.set(0);
     socket.getOutputStream().write(buffer);
   }
 
@@ -206,9 +214,6 @@ public abstract class WebSocket implements AutoCloseable {
 
     ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
     boolean complete = false;
-
-    // TODO: Should NOT need to do this
-    socket.getOutputStream().write(Frame.pong(new byte[0]));
 
     do {
       do {
@@ -283,6 +288,36 @@ public abstract class WebSocket implements AutoCloseable {
     return "";
   }
 
+  public int getMaxBinaryBufferSize () {
+
+    return maxBinaryBufferSize.get();
+  }
+
+  public void setMaxBinaryBufferSize (int size) {
+
+    maxBinaryBufferSize.set(size);
+  }
+
+  public int getMaxTextBufferSize () {
+
+    return maxTextBufferSize.get();
+  }
+
+  public void setMaxTextBufferSize (int size) {
+
+    maxTextBufferSize.set(size);
+  }
+
+  public long getMaxIdleTimeoutMilliseconds () {
+
+    return maxIdleTimeoutMilliseconds.get();
+  }
+
+  public void setMaxIdleTimeoutMilliseconds (long milliseconds) {
+
+    maxIdleTimeoutMilliseconds.set(milliseconds);
+  }
+
   private class MessageWorker implements Runnable {
 
     private CountDownLatch exitLatch = new CountDownLatch(1);
@@ -309,6 +344,7 @@ public abstract class WebSocket implements AutoCloseable {
             Fragment fragment;
 
             if ((fragment = Frame.decode(read())).isFinal()) {
+              idleMilliseconds.set(0);
               switch (fragment.getOpCode()) {
                 case CONTINUATION:
                   if (fragmentList.isEmpty()) {
@@ -326,10 +362,21 @@ public abstract class WebSocket implements AutoCloseable {
 
                     switch (fragmentList.getFirst().getOpCode()) {
                       case TEXT:
-                        onText(new String(fragmentStream.toByteArray()));
+
+                        String asString = new String(fragmentStream.toByteArray());
+
+                        if (asString.length() > maxTextBufferSize.get()) {
+                          close(CloseCode.MESSAGE_TOO_LARGE, "exceeded maximum text buffer size");
+                        } else {
+                          onText(asString);
+                        }
                         break;
                       case BINARY:
-                        onBinary(fragmentStream.toByteArray());
+                        if (fragmentStream.size() > maxTextBufferSize.get()) {
+                          close(CloseCode.MESSAGE_TOO_LARGE, "exceeded maximum binary buffer size");
+                        } else {
+                          onBinary(fragmentStream.toByteArray());
+                        }
                         break;
                       default:
                         throw new WebSocketException("The current continuation starts with an illegal op code(%s)", fragmentList.getFirst().getOpCode().name());
@@ -344,7 +391,13 @@ public abstract class WebSocket implements AutoCloseable {
                     throw new WebSocketException("Expecting the final frame of a continuation");
                   }
 
-                  onText(new String(fragment.getMessage()));
+                  String asString = new String(fragment.getMessage());
+
+                  if (asString.length() > maxTextBufferSize.get()) {
+                    close(CloseCode.MESSAGE_TOO_LARGE, "exceeded maximum text buffer size");
+                  } else {
+                    onText(asString);
+                  }
                   break;
                 case BINARY:
                   if (!fragmentList.isEmpty()) {
@@ -352,7 +405,11 @@ public abstract class WebSocket implements AutoCloseable {
                     throw new WebSocketException("Expecting the final frame of a continuation");
                   }
 
-                  onBinary(fragment.getMessage());
+                  if (fragment.getMessage().length > maxTextBufferSize.get()) {
+                    close(CloseCode.MESSAGE_TOO_LARGE, "exceeded maximum binary buffer size");
+                  } else {
+                    onBinary(fragment.getMessage());
+                  }
                   break;
                 case CLOSE:
 
@@ -404,7 +461,18 @@ public abstract class WebSocket implements AutoCloseable {
               fragmentList.add(fragment);
             }
           } catch (SocketTimeoutException socketTimeoutException) {
-            // TODO: Do something here
+
+            long idleTimeoutMilliseconds;
+
+            if ((idleTimeoutMilliseconds = maxIdleTimeoutMilliseconds.get()) > 0) {
+              if (idleMilliseconds.addAndGet(soTimeout) >= idleTimeoutMilliseconds) {
+                try {
+                  close(CloseCode.GOING_AWAY, "max idle timeout exceeded");
+                } catch (Exception exception) {
+                  onError(exception);
+                }
+              }
+            }
           } catch (Exception exception) {
             onError(exception);
           }

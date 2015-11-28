@@ -272,34 +272,37 @@ public class SessionImpl implements Session {
   @Override
   public long getMaxIdleTimeout () {
 
-    return 0;
+    return webSocket.getMaxIdleTimeoutMilliseconds();
   }
 
   @Override
   public void setMaxIdleTimeout (long milliseconds) {
 
+    webSocket.setMaxIdleTimeoutMilliseconds(milliseconds);
   }
 
   @Override
   public int getMaxBinaryMessageBufferSize () {
 
-    return 0;
+    return webSocket.getMaxBinaryBufferSize();
   }
 
   @Override
   public void setMaxBinaryMessageBufferSize (int length) {
 
+    webSocket.setMaxBinaryBufferSize(length);
   }
 
   @Override
   public int getMaxTextMessageBufferSize () {
 
-    return 0;
+    return webSocket.getMaxTextBufferSize();
   }
 
   @Override
   public void setMaxTextMessageBufferSize (int length) {
 
+    webSocket.setMaxTextBufferSize(length);
   }
 
   @Override
