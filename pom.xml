@@ -3,7 +3,7 @@
 
   <groupId>org.smallmind</groupId>
   <artifactId>smallmind</artifactId>
-  <version>2.1.1-SNAPSHOT</version>
+  <version>2.1.4-SNAPSHOT</version>
   <packaging>pom</packaging>
   <name>Parent</name>
   <description>Parent POM</description>
@@ -219,27 +219,27 @@
       <dependency>
         <groupId>org.apache.maven</groupId>
         <artifactId>maven-plugin-api</artifactId>
-        <version>3.2.2</version>
+        <version>3.3.9</version>
       </dependency>
       <dependency>
         <groupId>org.apache.maven</groupId>
         <artifactId>maven-core</artifactId>
-        <version>3.2.2</version>
+        <version>3.3.9</version>
       </dependency>
       <dependency>
         <groupId>org.apache.maven</groupId>
         <artifactId>maven-compat</artifactId>
-        <version>3.2.2</version>
+        <version>3.3.9</version>
       </dependency>
       <dependency>
         <groupId>org.apache.maven.plugin-tools</groupId>
         <artifactId>maven-plugin-annotations</artifactId>
-        <version>3.3</version>
+        <version>3.4</version>
       </dependency>
       <dependency>
         <groupId>org.apache.maven</groupId>
         <artifactId>maven-aether-provider</artifactId>
-        <version>3.2.2</version>
+        <version>3.3.9</version>
       </dependency>
       <dependency>
         <groupId>org.eclipse.aether</groupId>
@@ -727,7 +727,7 @@
         <plugin>
           <groupId>org.apache.maven.plugins</groupId>
           <artifactId>maven-surefire-plugin</artifactId>
-          <version>2.18.1</version>
+          <version>2.19</version>
           <configuration>
             <useSystemClassLoader>false</useSystemClassLoader>
             <groups>unit</groups>
@@ -736,7 +736,7 @@
         <plugin>
           <groupId>org.apache.maven.plugins</groupId>
           <artifactId>maven-source-plugin</artifactId>
-          <version>2.2.1</version>
+          <version>2.4</version>
           <executions>
             <execution>
               <id>attach-sources</id>
@@ -750,7 +750,7 @@
         <plugin>
           <groupId>org.apache.maven.plugins</groupId>
           <artifactId>maven-compiler-plugin</artifactId>
-          <version>3.1</version>
+          <version>3.3</version>
           <configuration>
             <source>1.7</source>
             <target>1.7</target>
@@ -759,17 +759,17 @@
         <plugin>
           <groupId>org.apache.maven.plugins</groupId>
           <artifactId>maven-javadoc-plugin</artifactId>
-          <version>2.9.1</version>
+          <version>2.10.3</version>
         </plugin>
         <plugin>
           <groupId>org.apache.maven.plugins</groupId>
           <artifactId>maven-war-plugin</artifactId>
-          <version>2.4</version>
+          <version>2.6</version>
         </plugin>
         <plugin>
           <groupId>org.apache.maven.plugins</groupId>
           <artifactId>maven-plugin-plugin</artifactId>
-          <version>3.3</version>
+          <version>3.4</version>
           <executions>
             <execution>
               <id>default-descriptor</id>
@@ -795,7 +795,7 @@
         <plugin>
           <groupId>org.apache.maven.plugins</groupId>
           <artifactId>maven-release-plugin</artifactId>
-          <version>2.5</version>
+          <version>2.5.3</version>
           <configuration>
             <autoVersionSubmodules>true</autoVersionSubmodules>
           </configuration>

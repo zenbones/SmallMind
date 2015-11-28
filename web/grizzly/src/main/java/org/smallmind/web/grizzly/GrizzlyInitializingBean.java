@@ -153,9 +153,11 @@ public class GrizzlyInitializingBean implements DisposableBean, ApplicationConte
         httpServer.addListener(secureNetworkListener = generateSecureNetworkListener(sslInfo));
       }
 
-      for (NetworkListener networkListener : httpServer.getListeners()) {
+      if ((addOns != null) && (addOns.length > 0)) {
         for (AddOn addOn : addOns)
-          networkListener.registerAddOn(addOn);
+          for (NetworkListener networkListener : httpServer.getListeners()) {
+            networkListener.registerAddOn(addOn);
+          }
       }
 
       httpServer.getServerConfiguration().addHttpHandler(new CLStaticHttpHandler(GrizzlyInitializingBean.class.getClassLoader(), "/"), staticPath);
