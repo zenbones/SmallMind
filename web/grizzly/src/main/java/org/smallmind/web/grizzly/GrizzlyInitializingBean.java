@@ -33,15 +33,12 @@
 package org.smallmind.web.grizzly;
 
 import java.io.IOException;
-import java.lang.reflect.Constructor;
 import java.net.BindException;
 import java.util.EnumSet;
 import java.util.LinkedList;
 import java.util.Map;
 import javax.servlet.DispatcherType;
-import javax.servlet.Filter;
 import javax.servlet.FilterRegistration;
-import javax.servlet.Servlet;
 import javax.servlet.ServletRegistration;
 import org.glassfish.grizzly.http.server.AddOn;
 import org.glassfish.grizzly.http.server.CLStaticHttpHandler;
@@ -68,7 +65,6 @@ import org.springframework.context.event.ContextRefreshedEvent;
 
 public class GrizzlyInitializingBean implements DisposableBean, ApplicationContextAware, ApplicationListener, BeanPostProcessor {
 
-  private static final Class[] NO_ARG_SIGNATURE = new Class[0];
   private HttpServer httpServer;
   private LinkedList<WebService> serviceList = new LinkedList<>();
   private LinkedList<FilterInstaller> filterInstallerList = new LinkedList<>();
@@ -172,14 +168,9 @@ public class GrizzlyInitializingBean implements DisposableBean, ApplicationConte
 
           FilterRegistration filterRegistration;
           Map<String, String> initParameters;
-          Constructor<? extends Filter> filterConstructor;
-          Filter filter;
           String urlPattern;
 
-          filterConstructor = filterInstaller.getFilterClass().getConstructor(NO_ARG_SIGNATURE);
-          filter = filterConstructor.newInstance();
-
-          filterRegistration = webappContext.addFilter(filterInstaller.getDisplayName(), filter);
+          filterRegistration = webappContext.addFilter(filterInstaller.getDisplayName(), filterInstaller.getFilter());
           filterRegistration.addMappingForUrlPatterns(EnumSet.of(DispatcherType.REQUEST), filterInstaller.isMatchAfter(), (urlPattern = filterInstaller.getUrlPattern()) == null ? "/" : urlPattern);
           if ((initParameters = filterInstaller.getInitParameters()) != null) {
             filterRegistration.setInitParameters(initParameters);
@@ -189,9 +180,13 @@ public class GrizzlyInitializingBean implements DisposableBean, ApplicationConte
         }
       }
       for (ListenerInstaller listenerInstaller : listenerInstallerList) {
-        webappContext.addListener(listenerInstaller.getListenerClass());
-        for (Map.Entry<String, String> parameterEntry : listenerInstaller.getContextParameters().entrySet()) {
-          webappContext.addContextInitParameter(parameterEntry.getKey(), parameterEntry.getValue());
+        try {
+          webappContext.addListener(listenerInstaller.getListener());
+          for (Map.Entry<String, String> parameterEntry : listenerInstaller.getContextParameters().entrySet()) {
+            webappContext.addContextInitParameter(parameterEntry.getKey(), parameterEntry.getValue());
+          }
+        } catch (Exception exception) {
+          throw new GrizzlyInitializationException(exception);
         }
       }
       for (ServletInstaller servletInstaller : servletInstallerList) {
@@ -199,14 +194,9 @@ public class GrizzlyInitializingBean implements DisposableBean, ApplicationConte
 
           ServletRegistration servletRegistration;
           Map<String, String> initParameters;
-          Constructor<? extends Servlet> servletConstructor;
-          Servlet servlet;
           String urlPattern;
 
-          servletConstructor = servletInstaller.getServletClass().getConstructor(NO_ARG_SIGNATURE);
-          servlet = servletConstructor.newInstance();
-
-          servletRegistration = webappContext.addServlet(servletInstaller.getDisplayName(), servlet);
+          servletRegistration = webappContext.addServlet(servletInstaller.getDisplayName(), servletInstaller.getServlet());
           servletRegistration.addMapping((urlPattern = servletInstaller.getUrlPattern()) == null ? "/" : urlPattern);
           if ((initParameters = servletInstaller.getInitParameters()) != null) {
             servletRegistration.setInitParameters(initParameters);

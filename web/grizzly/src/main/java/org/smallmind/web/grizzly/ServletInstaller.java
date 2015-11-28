@@ -37,8 +37,9 @@ import javax.servlet.Servlet;
 
 public class ServletInstaller {
 
-  private Map<String, String> initParameters;
+  private Servlet servlet;
   private Class<? extends Servlet> servletClass;
+  private Map<String, String> initParameters;
   private String displayName;
   private String urlPattern;
 
@@ -52,9 +53,15 @@ public class ServletInstaller {
     this.displayName = displayName;
   }
 
-  public Class<? extends Servlet> getServletClass () {
+  public Servlet getServlet ()
+    throws InstantiationException, IllegalAccessException {
 
-    return servletClass;
+    return (servlet != null) ? servlet : servletClass.newInstance();
+  }
+
+  public void setServlet (Servlet servlet) {
+
+    this.servlet = servlet;
   }
 
   public void setServletClass (Class<? extends Servlet> servletClass) {

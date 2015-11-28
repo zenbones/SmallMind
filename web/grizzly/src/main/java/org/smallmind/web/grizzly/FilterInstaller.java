@@ -37,8 +37,9 @@ import javax.servlet.Filter;
 
 public class FilterInstaller {
 
-  private Map<String, String> initParameters;
+  private Filter filter;
   private Class<? extends Filter> filterClass;
+  private Map<String, String> initParameters;
   private String displayName;
   private String urlPattern;
   private boolean matchAfter = false;
@@ -53,9 +54,15 @@ public class FilterInstaller {
     this.displayName = displayName;
   }
 
-  public Class<? extends Filter> getFilterClass () {
+  public Filter getFilter ()
+    throws InstantiationException, IllegalAccessException {
 
-    return filterClass;
+    return (filter != null) ? filter : filterClass.newInstance();
+  }
+
+  public void setFilter (Filter filter) {
+
+    this.filter = filter;
   }
 
   public void setFilterClass (Class<? extends Filter> filterClass) {

@@ -37,12 +37,19 @@ import java.util.Map;
 
 public class ListenerInstaller {
 
-  private Map<String, String> contextParameters;
+  private EventListener eventListener;
   private Class<? extends EventListener> listenerClass;
+  private Map<String, String> contextParameters;
 
-  public Class<? extends EventListener> getListenerClass () {
+  public EventListener getListener ()
+    throws InstantiationException, IllegalAccessException {
 
-    return listenerClass;
+    return (eventListener != null) ? eventListener : listenerClass.newInstance();
+  }
+
+  public void setEventListener (EventListener eventListener) {
+
+    this.eventListener = eventListener;
   }
 
   public void setListenerClass (Class<? extends EventListener> listenerClass) {
