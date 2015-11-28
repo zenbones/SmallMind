@@ -40,4 +40,5 @@
   keytool -import -alias trustAlias -keypass changeit -keystore server.jks -file server.cer
   -->
 
+  <!-- WebSocketEngine.getEngine().register("/websocket", "/myapp/*", new ChannelWebSocketApplication()); -->
 </beans>
