@@ -9,7 +9,7 @@
   <artifactId>forge-deploy</artifactId>
   <name>Forge-Deploy</name>
   <description>Deployment Automation</description>
-  <packaging>singularity</packaging>
+  <packaging>jar</packaging>
 
   <dependencies>
     <dependency>
@@ -28,6 +28,7 @@
       <scope>compile</scope>
     </dependency>
   </dependencies>
+  <!--
   <build>
     <plugins>
       <plugin>
@@ -40,4 +41,5 @@
       </plugin>
     </plugins>
   </build>
+  -->
 </project>
