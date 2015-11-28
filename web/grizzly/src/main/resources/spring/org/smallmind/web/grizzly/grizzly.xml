@@ -17,6 +17,11 @@
         <bean class="org.smallmind.web.jersey.fault.ThrowableTranslationResourceConfigExtension"/>
       </list>
     </property>
+    <property name="addOns">
+      <list>
+        <bean class="org.glassfish.grizzly.websockets.WebSocketAddOn"/>
+      </list>
+    </property>
   </bean>
 
   <!--

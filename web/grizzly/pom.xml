@@ -68,6 +68,12 @@
       <scope>compile</scope>
     </dependency>
     <dependency>
+      <groupId>org.glassfish.grizzly</groupId>
+      <artifactId>grizzly-websockets-server</artifactId>
+      <scope>compile</scope>
+      <optional>true</optional>
+    </dependency>
+    <dependency>
       <groupId>org.glassfish.hk2</groupId>
       <artifactId>hk2-utils</artifactId>
       <scope>compile</scope>

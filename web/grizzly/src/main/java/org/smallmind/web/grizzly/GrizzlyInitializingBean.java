@@ -43,6 +43,7 @@ import javax.servlet.Filter;
 import javax.servlet.FilterRegistration;
 import javax.servlet.Servlet;
 import javax.servlet.ServletRegistration;
+import org.glassfish.grizzly.http.server.AddOn;
 import org.glassfish.grizzly.http.server.CLStaticHttpHandler;
 import org.glassfish.grizzly.http.server.HttpHandler;
 import org.glassfish.grizzly.http.server.HttpServer;
@@ -74,6 +75,7 @@ public class GrizzlyInitializingBean implements DisposableBean, ApplicationConte
   private LinkedList<ListenerInstaller> listenerInstallerList = new LinkedList<>();
   private LinkedList<ServletInstaller> servletInstallerList = new LinkedList<>();
   private ResourceConfigExtension[] resourceConfigExtensions;
+  private AddOn[] addOns;
   private SSLInfo sslInfo;
   private String host;
   private String contextPath = "/context";
@@ -123,6 +125,11 @@ public class GrizzlyInitializingBean implements DisposableBean, ApplicationConte
     this.resourceConfigExtensions = resourceConfigExtensions;
   }
 
+  public void setAddOns (AddOn[] addOns) {
+
+    this.addOns = addOns;
+  }
+
   public void setDebug (boolean debug) {
 
     this.debug = debug;
@@ -144,6 +151,11 @@ public class GrizzlyInitializingBean implements DisposableBean, ApplicationConte
 
       if (sslInfo != null) {
         httpServer.addListener(secureNetworkListener = generateSecureNetworkListener(sslInfo));
+      }
+
+      for (NetworkListener networkListener : httpServer.getListeners()) {
+        for (AddOn addOn : addOns)
+          networkListener.registerAddOn(addOn);
       }
 
       httpServer.getServerConfiguration().addHttpHandler(new CLStaticHttpHandler(GrizzlyInitializingBean.class.getClassLoader(), "/"), staticPath);
