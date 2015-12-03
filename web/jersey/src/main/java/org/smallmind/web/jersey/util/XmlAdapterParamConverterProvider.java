@@ -44,7 +44,7 @@ import javax.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
 @Provider
 public class XmlAdapterParamConverterProvider implements ParamConverterProvider {
 
-  private final ConcurrentHashMap<Class<? extends XmlAdapter>, ParamConverter<?>> converterMap = new ConcurrentHashMap<>();
+  private final ConcurrentHashMap<Class<? extends XmlAdapter>, ParamConverter<?>> CONVERTER_MAP= new ConcurrentHashMap<>();
 
   @Override
   public <T> ParamConverter<T> getConverter (final Class<T> rawType, final Type genericType, final Annotation[] annotations) {
@@ -58,11 +58,11 @@ public class XmlAdapterParamConverterProvider implements ParamConverterProvider 
 
           ParamConverter<?> paramConverter;
 
-          if ((paramConverter = converterMap.get(xmlAdapterClass)) == null) {
-            synchronized (converterMap) {
-              if ((paramConverter = converterMap.get(xmlAdapterClass)) == null) {
+          if ((paramConverter = CONVERTER_MAP.get(xmlAdapterClass)) == null) {
+            synchronized (CONVERTER_MAP) {
+              if ((paramConverter = CONVERTER_MAP.get(xmlAdapterClass)) == null) {
                 try {
-                  converterMap.put(xmlAdapterClass, new XmlAdapterParamConverter<T>(xmlAdapterClass.newInstance()));
+                  CONVERTER_MAP.put(xmlAdapterClass, new XmlAdapterParamConverter<T>(xmlAdapterClass.newInstance()));
                 } catch (InstantiationException | IllegalAccessException exception) {
                   throw new XmlAdapterParamConversionException(exception);
                 }

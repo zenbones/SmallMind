@@ -40,7 +40,7 @@ import org.aspectj.lang.reflect.MethodSignature;
 @Aspect
 public class ResourceMethodAspect {
 
-  @Around(value = "execution(@org.smallmind.web.jersey.aop.ResourceMethod * * (..)) && @annotation(resourceMethod)", argNames = "thisJoinPoint, entityType")
+  @Around(value = "execution(@org.smallmind.web.jersey.aop.ResourceMethod * * (..)) && @annotation(resourceMethod)", argNames = "thisJoinPoint, resourceMethod")
   public Object aroundEntityTypeMethod (ProceedingJoinPoint thisJoinPoint, ResourceMethod resourceMethod)
     throws Throwable {
 

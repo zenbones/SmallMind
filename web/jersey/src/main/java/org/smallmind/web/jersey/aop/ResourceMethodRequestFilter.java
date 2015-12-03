@@ -32,15 +32,23 @@
  */
 package org.smallmind.web.jersey.aop;
 
+import java.io.IOException;
+import java.util.concurrent.ConcurrentHashMap;
 import javax.ws.rs.container.ContainerRequestContext;
 import javax.ws.rs.container.ContainerRequestFilter;
+import javax.ws.rs.container.ContainerResponseContext;
+import javax.ws.rs.container.ContainerResponseFilter;
 import javax.ws.rs.container.ResourceInfo;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.ext.Provider;
+import javax.xml.bind.annotation.adapters.XmlAdapter;
+import javax.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
 
 @Provider
 @ResourceMethod
-public class ResourceMethodRequestFilter implements ContainerRequestFilter {
+public class ResourceMethodRequestFilter implements ContainerRequestFilter, ContainerResponseFilter {
+
+  private static final ConcurrentHashMap<Class<? extends XmlAdapter>, XmlAdapter> ADAPTER_MAP = new ConcurrentHashMap<>();
 
   @Context
   ResourceInfo resourceInfo;
@@ -52,6 +60,41 @@ public class ResourceMethodRequestFilter implements ContainerRequestFilter {
 
     if ((resourceMethod = resourceInfo.getResourceMethod().getAnnotation(ResourceMethod.class)) != null) {
       EntityTranslator.storeEntityType(resourceMethod.value());
+    }
+  }
+
+  @Override
+  public void filter (ContainerRequestContext requestContext, ContainerResponseContext responseContext)
+    throws IOException {
+
+    XmlJavaTypeAdapter xmlJavaTypeAdapter;
+
+    if ((xmlJavaTypeAdapter = resourceInfo.getResourceMethod().getAnnotation(XmlJavaTypeAdapter.class)) != null) {
+
+      Class<? extends XmlAdapter> xmlAdapterClass;
+
+      if ((xmlAdapterClass = ((XmlJavaTypeAdapter)xmlJavaTypeAdapter).value()) != null) {
+
+        XmlAdapter xmlAdapter;
+
+        if ((xmlAdapter = ADAPTER_MAP.get(xmlAdapterClass)) == null) {
+          synchronized (ADAPTER_MAP) {
+            if ((xmlAdapter = ADAPTER_MAP.get(xmlAdapterClass)) == null) {
+              try {
+                ADAPTER_MAP.put(xmlAdapterClass, xmlAdapter = xmlAdapterClass.newInstance());
+              } catch (InstantiationException | IllegalAccessException exception) {
+                throw new IOException(exception);
+              }
+            }
+          }
+        }
+
+        try {
+          responseContext.setEntity(xmlAdapter.marshal(responseContext.getEntity()));
+        } catch (Exception exception) {
+          throw new IOException(exception);
+        }
+      }
     }
   }
 }
