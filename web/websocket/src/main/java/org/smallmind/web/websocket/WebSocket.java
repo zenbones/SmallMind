@@ -60,6 +60,7 @@ public abstract class WebSocket implements AutoCloseable {
   private final MessageWorker messageWorker;
   private final ConcurrentLinkedQueue<String> pingKeyQueue = new ConcurrentLinkedQueue<>();
   private final AtomicReference<ConnectionState> connectionStateRef = new AtomicReference<>(ConnectionState.CONNECTING);
+  private final AtomicReference<CloseListener> closeListenerRef = new AtomicReference<>();
   private final AtomicLong maxIdleTimeoutMilliseconds = new AtomicLong(0);
   private final AtomicLong idleMilliseconds = new AtomicLong(0);
   private final AtomicInteger maxBinaryBufferSize = new AtomicInteger(Integer.MAX_VALUE);
@@ -161,6 +162,11 @@ public abstract class WebSocket implements AutoCloseable {
     write(Frame.binary(buffer));
   }
 
+  public void addCloseListener (CloseListener closeListener) {
+
+    closeListenerRef.set(closeListener);
+  }
+
   @Override
   public void close ()
     throws IOException, WebSocketException, InterruptedException {
@@ -177,16 +183,25 @@ public abstract class WebSocket implements AutoCloseable {
   public void close (CloseCode closeCode, String reason)
     throws IOException, WebSocketException, InterruptedException {
 
-    close(closeCode.getCodeAsBytes(), reason);
+    close(closeCode, reason, true);
   }
 
-  private void close (byte[] status, String reason)
+  private void close (CloseCode closeCode, String reason, boolean writeFrame)
     throws IOException, WebSocketException, InterruptedException {
 
     if (connectionStateRef.compareAndSet(ConnectionState.OPEN, ConnectionState.CLOSING)) {
+
+      CloseListener closeListener;
+
+      if ((closeListener = closeListenerRef.get()) != null) {
+        closeListener.onClose(closeCode.getCode(), reason);
+      }
+
       try {
         messageWorker.abort();
-        write(Frame.close(status, reason));
+        if (writeFrame) {
+          write(Frame.close(closeCode.getCodeAsBytes(), reason));
+        }
       } finally {
         connectionStateRef.set(ConnectionState.CLOSED);
       }
@@ -408,17 +423,15 @@ public abstract class WebSocket implements AutoCloseable {
                   }
                   break;
                 case CLOSE:
-
-                  byte[] status;
-
                   if (fragment.getMessage().length < 2) {
-                    status = CloseCode.SERVER_ERROR.getCodeAsBytes();
+                    close(CloseCode.SERVER_ERROR, null, false);
                   } else {
-                    status = new byte[2];
-                    System.arraycopy(fragment.getMessage(), 0, status, 0, 2);
-                  }
 
-                  close(status, null);
+                    byte[] status = new byte[2];
+
+                    System.arraycopy(fragment.getMessage(), 0, status, 0, 2);
+                    close(CloseCode.fromBytes(status), null, false);
+                  }
                   break;
                 case PING:
                   socket.getOutputStream().write(Frame.pong(fragment.getMessage()));

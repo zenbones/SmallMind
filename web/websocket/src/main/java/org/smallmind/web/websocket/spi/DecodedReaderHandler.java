@@ -36,16 +36,20 @@ import java.io.IOException;
 import java.io.Reader;
 import javax.websocket.DecodeException;
 import javax.websocket.Decoder;
+import javax.websocket.Endpoint;
 import javax.websocket.MessageHandler;
-import org.smallmind.scribe.pen.LoggerManager;
 
 public class DecodedReaderHandler<T> implements MessageHandler.Whole<Reader> {
 
+  private SessionImpl session;
+  private Endpoint endpoint;
   private Decoder.TextStream<T> decoder;
   private MessageHandler.Whole<T> handler;
 
-  public DecodedReaderHandler (Decoder.TextStream<T> decoder, MessageHandler.Whole<T> handler) {
+  public DecodedReaderHandler (SessionImpl session, Endpoint endpoint, Decoder.TextStream<T> decoder, MessageHandler.Whole<T> handler) {
 
+    this.session = session;
+    this.endpoint = endpoint;
     this.decoder = decoder;
     this.handler = handler;
   }
@@ -56,7 +60,7 @@ public class DecodedReaderHandler<T> implements MessageHandler.Whole<Reader> {
     try {
       handler.onMessage(decoder.decode(message));
     } catch (DecodeException | IOException exception) {
-      LoggerManager.getLogger(DecodedStringHandler.class).error(exception);
+      endpoint.onError(session, exception);
     }
   }
 }

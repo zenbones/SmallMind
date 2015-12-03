@@ -38,6 +38,7 @@ import java.io.Reader;
 import java.io.UnsupportedEncodingException;
 import java.net.URI;
 import java.nio.ByteBuffer;
+import java.security.NoSuchAlgorithmException;
 import java.security.Principal;
 import java.util.Collections;
 import java.util.HashMap;
@@ -45,9 +46,11 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicReference;
+import javax.websocket.ClientEndpointConfig;
 import javax.websocket.CloseReason;
 import javax.websocket.Decoder;
-import javax.websocket.EndpointConfig;
+import javax.websocket.Endpoint;
 import javax.websocket.Extension;
 import javax.websocket.MessageHandler;
 import javax.websocket.PongMessage;
@@ -57,25 +60,90 @@ import javax.websocket.WebSocketContainer;
 import org.smallmind.nutsnbolts.http.HTTPCodec;
 import org.smallmind.nutsnbolts.util.SnowflakeId;
 import org.smallmind.web.websocket.CloseCode;
+import org.smallmind.web.websocket.CloseListener;
 import org.smallmind.web.websocket.ConnectionState;
 import org.smallmind.web.websocket.WebSocket;
+import org.smallmind.web.websocket.WebSocketException;
 
-public class SessionImpl implements Session {
+public class SessionImpl implements Session, CloseListener {
 
   private final WebSocket webSocket;
   private final WebSocketContainer container;
-  private final EndpointConfig endpointConfig;
+  private final Endpoint endpoint;
+  private final ClientEndpointConfig endpointConfig;
+  private final AtomicReference<MessageHandler> textMessageHandlerRef = new AtomicReference<>();
+  private final AtomicReference<MessageHandler> binaryMessageHandlerRef = new AtomicReference<>();
+  private final AtomicReference<MessageHandler> pongMessageHandlerRef = new AtomicReference<>();
   private final HashMap<Class<? extends Decoder>, Decoder> decoderInstanceMap = new HashMap<>();
   private final String id = SnowflakeId.newInstance().generateHexEncoding();
-  private MessageHandler textMessageHandler;
-  private MessageHandler binaryMessageHandler;
-  private MessageHandler pongMessageHandler;
 
-  public SessionImpl (WebSocket webSocket, WebSocketContainer container, EndpointConfig endpointConfig) {
+  public SessionImpl (WebSocketContainer container, URI uri, final Endpoint endpoint, ClientEndpointConfig endpointConfig)
+    throws IOException, NoSuchAlgorithmException, WebSocketException {
 
-    this.webSocket = webSocket;
+    String[] preferredSubProtocols = null;
+
     this.container = container;
+    this.endpoint = endpoint;
     this.endpointConfig = endpointConfig;
+
+    if ((endpointConfig.getPreferredSubprotocols() != null) && (!endpointConfig.getPreferredSubprotocols().isEmpty())) {
+      preferredSubProtocols = new String[endpointConfig.getPreferredSubprotocols().size()];
+      endpointConfig.getPreferredSubprotocols().toArray(preferredSubProtocols);
+    }
+
+    webSocket = new WebSocket(uri, preferredSubProtocols) {
+
+      @Override
+      public void onError (Exception exception) {
+
+        endpoint.onError(SessionImpl.this, exception);
+      }
+
+      @Override
+      public void onPong (byte[] message) {
+
+        MessageHandler pongMessageHandler;
+
+        if ((pongMessageHandler = pongMessageHandlerRef.get()) != null) {
+          if (pongMessageHandler instanceof MessageHandler.Whole) {
+            ((MessageHandler.Whole)pongMessageHandler).onMessage(message);
+          } else {
+            ((MessageHandler.Partial)pongMessageHandler).onMessage(message, true);
+          }
+        }
+      }
+
+      @Override
+      public void onText (String message) {
+
+        MessageHandler textMessageHandler;
+
+        if ((textMessageHandler = textMessageHandlerRef.get()) != null) {
+          if (textMessageHandler instanceof MessageHandler.Whole) {
+            ((MessageHandler.Whole)textMessageHandler).onMessage(message);
+          } else {
+            ((MessageHandler.Partial)textMessageHandler).onMessage(message, true);
+          }
+        }
+      }
+
+      @Override
+      public void onBinary (byte[] message) {
+
+        MessageHandler binaryMessageHandler;
+
+        if ((binaryMessageHandler = binaryMessageHandlerRef.get()) != null) {
+          if (binaryMessageHandler instanceof MessageHandler.Whole) {
+            ((MessageHandler.Whole)binaryMessageHandler).onMessage(message);
+          } else {
+            ((MessageHandler.Partial)binaryMessageHandler).onMessage(message, true);
+          }
+        }
+      }
+    };
+
+    webSocket.addCloseListener(this);
+    endpoint.onOpen(this, endpointConfig);
   }
 
   @Override
@@ -145,7 +213,7 @@ public class SessionImpl implements Session {
       assigned = true;
     }
     if (ByteBuffer.class.isAssignableFrom(clazz)) {
-      assignBinaryMessageHandler(binaryMessageHandler);
+      assignBinaryMessageHandler(messageHandler);
       assigned = true;
     }
     if (byte[].class.isAssignableFrom(clazz)) {
@@ -172,7 +240,7 @@ public class SessionImpl implements Session {
           decoderInstanceMap.put(decoderClass, decoder = decoderClass.newInstance());
         }
 
-        assignTextMessageHandler(new DecodedStringHandler<>((Decoder.Text)decoder, messageHandler));
+        assignTextMessageHandler(new DecodedStringHandler<>(this, endpoint, (Decoder.Text)decoder, messageHandler));
         assigned = true;
       }
       if ((Decoder.TextStream.class.isAssignableFrom(decoderClass)) && clazz.isAssignableFrom(GenericParameterUtility.getTypeParameter(decoderClass, Decoder.TextStream.class))) {
@@ -183,7 +251,7 @@ public class SessionImpl implements Session {
           decoderInstanceMap.put(decoderClass, decoder = decoderClass.newInstance());
         }
 
-        assignTextMessageHandler(new DecodedReaderHandler<>((Decoder.TextStream)decoder, messageHandler));
+        assignTextMessageHandler(new DecodedReaderHandler<>(this, endpoint, (Decoder.TextStream)decoder, messageHandler));
         assigned = true;
       }
       if ((Decoder.Binary.class.isAssignableFrom(decoderClass)) && clazz.isAssignableFrom(GenericParameterUtility.getTypeParameter(decoderClass, Decoder.Binary.class))) {
@@ -194,7 +262,7 @@ public class SessionImpl implements Session {
           decoderInstanceMap.put(decoderClass, decoder = decoderClass.newInstance());
         }
 
-        assignBinaryMessageHandler(new DecodedByteBufferHandler<>((Decoder.Binary)decoder, messageHandler));
+        assignBinaryMessageHandler(new DecodedByteBufferHandler<>(this, endpoint, (Decoder.Binary)decoder, messageHandler));
         assigned = true;
       }
       if ((Decoder.BinaryStream.class.isAssignableFrom(decoderClass)) && clazz.isAssignableFrom(GenericParameterUtility.getTypeParameter(decoderClass, Decoder.BinaryStream.class))) {
@@ -205,7 +273,7 @@ public class SessionImpl implements Session {
           decoderInstanceMap.put(decoderClass, decoder = decoderClass.newInstance());
         }
 
-        assignBinaryMessageHandler(new DecodedInputStreamHandler<>((Decoder.BinaryStream)decoder, messageHandler));
+        assignBinaryMessageHandler(new DecodedInputStreamHandler<>(this, endpoint, (Decoder.BinaryStream)decoder, messageHandler));
         assigned = true;
       }
     }
@@ -215,43 +283,40 @@ public class SessionImpl implements Session {
 
   private void assignTextMessageHandler (MessageHandler messageHandler) {
 
-    if (textMessageHandler != null) {
+    if (!textMessageHandlerRef.compareAndSet(null, messageHandler)) {
       throw new IllegalStateException("Session is already assigned a text message handler");
     }
-
-    textMessageHandler = messageHandler;
   }
 
   private void assignBinaryMessageHandler (MessageHandler messageHandler) {
 
-    if (binaryMessageHandler != null) {
+    if (!binaryMessageHandlerRef.compareAndSet(null, messageHandler)) {
       throw new IllegalStateException("Session is already assigned a binary message handler");
     }
-
-    binaryMessageHandler = messageHandler;
   }
 
   private void assignPongMessageHandler (MessageHandler messageHandler) {
 
-    if (pongMessageHandler != null) {
+    if (!pongMessageHandlerRef.compareAndSet(null, messageHandler)) {
       throw new IllegalStateException("Session is already assigned a pong message handler");
     }
-
-    pongMessageHandler = messageHandler;
   }
 
   @Override
   public synchronized Set<MessageHandler> getMessageHandlers () {
 
-    Set<MessageHandler> handlerSet = new HashSet<MessageHandler>();
+    Set<MessageHandler> handlerSet = new HashSet<>();
+    MessageHandler textMessageHandler;
+    MessageHandler binaryMessageHandler;
+    MessageHandler pongMessageHandler;
 
-    if (textMessageHandler != null) {
+    if ((textMessageHandler = textMessageHandlerRef.get()) != null) {
       handlerSet.add(textMessageHandler);
     }
-    if (binaryMessageHandler != null) {
+    if ((binaryMessageHandler = binaryMessageHandlerRef.get()) != null) {
       handlerSet.add(binaryMessageHandler);
     }
-    if (pongMessageHandler != null) {
+    if ((pongMessageHandler = pongMessageHandlerRef.get()) != null) {
       handlerSet.add(pongMessageHandler);
     }
 
@@ -262,15 +327,9 @@ public class SessionImpl implements Session {
   public synchronized void removeMessageHandler (MessageHandler handler) {
 
     if (handler != null) {
-      if (handler.equals(textMessageHandler)) {
-        textMessageHandler = null;
-      }
-      if (handler.equals(binaryMessageHandler)) {
-        binaryMessageHandler = null;
-      }
-      if (handler.equals(pongMessageHandler)) {
-        pongMessageHandler = null;
-      }
+      textMessageHandlerRef.compareAndSet(handler, null);
+      binaryMessageHandlerRef.compareAndSet(handler, null);
+      pongMessageHandlerRef.compareAndSet(handler, null);
     }
   }
 
@@ -341,24 +400,28 @@ public class SessionImpl implements Session {
   }
 
   @Override
-  public void close ()
-    throws IOException {
+  public void onClose (int code, String reason) {
+
+    endpoint.onClose(this, new CloseReason(javax.websocket.CloseReason.CloseCodes.getCloseCode(code), reason));
+  }
+
+  @Override
+  public void close () {
 
     try {
-      webSocket.close();
+      webSocket.close(CloseCode.NORMAL, CloseCode.NORMAL.name());
     } catch (Exception exception) {
-      throw new IOException(exception);
+      endpoint.onError(this, exception);
     }
   }
 
   @Override
-  public void close (CloseReason closeReason)
-    throws IOException {
+  public void close (CloseReason closeReason) {
 
     try {
       webSocket.close(CloseCode.fromCode(closeReason.getCloseCode().getCode()), closeReason.getReasonPhrase());
     } catch (Exception exception) {
-      throw new IOException(exception);
+      endpoint.onError(this, exception);
     }
   }
 
@@ -421,12 +484,12 @@ public class SessionImpl implements Session {
   @Override
   public RemoteEndpoint.Async getAsyncRemote () {
 
-    return null;
+    return new RemoteEndpointImpl.Async(this, webSocket, endpoint, endpointConfig);
   }
 
   @Override
   public RemoteEndpoint.Basic getBasicRemote () {
 
-    return null;
+    return new RemoteEndpointImpl.Basic(this, webSocket, endpoint, endpointConfig);
   }
 }

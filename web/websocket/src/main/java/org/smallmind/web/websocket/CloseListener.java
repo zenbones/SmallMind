@@ -32,48 +32,7 @@
  */
 package org.smallmind.web.websocket;
 
-import org.smallmind.nutsnbolts.util.Bytes;
+public interface CloseListener {
 
-public enum CloseCode {
-
-  NORMAL(1000), GOING_AWAY(1001), PROTOCOL_ERROR(1002), UNKNOWN_DATA_TYPE(1003), RESERVED(1004), NO_STATUS_CODE(1005), CLOSED_ABNORMALLY(1006), DATA_TYPE_CONVERSION_ERROR(1007), POLICY_VIOLATION(1008),
-  MESSAGE_TOO_LARGE(1009), MISSING_EXTENSION(1010), SERVER_ERROR(1011), SERVICE_RESTART(1012), TRY_AGAIN_LATER(1013), TLS_HANDSHAKE_FAILURE(1015);
-
-  private int code;
-
-  private CloseCode (int code) {
-
-    this.code = code;
-  }
-
-  public static CloseCode fromCode (int code) {
-
-    for (CloseCode closeCode : CloseCode.values()) {
-      if (closeCode.getCode() == code) {
-        return closeCode;
-      }
-    }
-
-    return CloseCode.NO_STATUS_CODE;
-  }
-
-  public static CloseCode fromBytes (byte[] bytes) {
-
-    return fromCode(Bytes.getShort(bytes));
-  }
-
-  public int getCode () {
-
-    return code;
-  }
-
-  public byte[] getCodeAsBytes () {
-
-    byte[] out = new byte[2];
-
-    out[0] = (byte)(code >>> 8);
-    out[1] = (byte)(code & 0xFF);
-
-    return out;
-  }
+  public abstract void onClose (int code, String reason);
 }

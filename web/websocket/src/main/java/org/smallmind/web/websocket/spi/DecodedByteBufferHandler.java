@@ -35,16 +35,20 @@ package org.smallmind.web.websocket.spi;
 import java.nio.ByteBuffer;
 import javax.websocket.DecodeException;
 import javax.websocket.Decoder;
+import javax.websocket.Endpoint;
 import javax.websocket.MessageHandler;
-import org.smallmind.scribe.pen.LoggerManager;
 
 public class DecodedByteBufferHandler<T> implements MessageHandler.Whole<ByteBuffer> {
 
+  private SessionImpl session;
+  private Endpoint endpoint;
   private Decoder.Binary<T> decoder;
   private MessageHandler.Whole<T> handler;
 
-  public DecodedByteBufferHandler (Decoder.Binary<T> decoder, MessageHandler.Whole<T> handler) {
+  public DecodedByteBufferHandler (SessionImpl session, Endpoint endpoint, Decoder.Binary<T> decoder, MessageHandler.Whole<T> handler) {
 
+    this.session = session;
+    this.endpoint = endpoint;
     this.decoder = decoder;
     this.handler = handler;
   }
@@ -57,7 +61,7 @@ public class DecodedByteBufferHandler<T> implements MessageHandler.Whole<ByteBuf
         handler.onMessage(decoder.decode(message));
       }
     } catch (DecodeException decodeException) {
-      LoggerManager.getLogger(DecodedStringHandler.class).error(decodeException);
+      endpoint.onError(session, decodeException);
     }
   }
 }

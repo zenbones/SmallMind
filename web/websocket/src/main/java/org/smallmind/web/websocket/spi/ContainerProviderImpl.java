@@ -40,6 +40,6 @@ public class ContainerProviderImpl extends ContainerProvider {
   @Override
   protected WebSocketContainer getContainer () {
 
-    return null;
+    return new WebSocketContainerImpl();
   }
 }

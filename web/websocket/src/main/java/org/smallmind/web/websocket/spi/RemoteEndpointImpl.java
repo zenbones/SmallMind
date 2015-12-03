@@ -32,30 +32,40 @@
  */
 package org.smallmind.web.websocket.spi;
 
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.io.Writer;
 import java.nio.ByteBuffer;
 import java.util.HashMap;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.atomic.AtomicReference;
 import javax.websocket.EncodeException;
 import javax.websocket.Encoder;
+import javax.websocket.Endpoint;
 import javax.websocket.EndpointConfig;
 import javax.websocket.RemoteEndpoint;
 import javax.websocket.SendHandler;
+import javax.websocket.SendResult;
 import org.smallmind.web.websocket.WebSocket;
 import org.smallmind.web.websocket.WebSocketException;
 
 public class RemoteEndpointImpl implements RemoteEndpoint {
 
+  private final SessionImpl session;
   private final WebSocket webSocket;
+  private final Endpoint endpoint;
   private final HashMap<Class<?>, EncoderHandler<?>> encoderHandlerMap = new HashMap<>();
 
-  public RemoteEndpointImpl (WebSocket webSocket, EndpointConfig endpointConfig)
-    throws InstantiationException, IllegalAccessException {
+  public RemoteEndpointImpl (SessionImpl session, WebSocket webSocket, Endpoint endpoint, EndpointConfig endpointConfig) {
 
+    this.session = session;
     this.webSocket = webSocket;
+    this.endpoint = endpoint;
 
     HashMap<Class<? extends Encoder>, Encoder> encoderInstanceMap = new HashMap<>();
 
@@ -65,7 +75,11 @@ public class RemoteEndpointImpl implements RemoteEndpoint {
         Encoder encoder;
 
         if ((encoder = encoderInstanceMap.get(encoderClass)) == null) {
-          encoderInstanceMap.put(encoderClass, encoder = encoderClass.newInstance());
+          try {
+            encoderInstanceMap.put(encoderClass, encoder = encoderClass.newInstance());
+          } catch (InstantiationException | IllegalAccessException exception) {
+            endpoint.onError(session, exception);
+          }
         }
 
         encoderHandlerMap.put(GenericParameterUtility.getTypeParameter(encoderClass, Encoder.Text.class), new EncoderTextHandler<>((Encoder.Text)encoder));
@@ -75,7 +89,11 @@ public class RemoteEndpointImpl implements RemoteEndpoint {
         Encoder encoder;
 
         if ((encoder = encoderInstanceMap.get(encoderClass)) == null) {
-          encoderInstanceMap.put(encoderClass, encoder = encoderClass.newInstance());
+          try {
+            encoderInstanceMap.put(encoderClass, encoder = encoderClass.newInstance());
+          } catch (InstantiationException | IllegalAccessException exception) {
+            endpoint.onError(session, exception);
+          }
         }
 
         encoderHandlerMap.put(GenericParameterUtility.getTypeParameter(encoderClass, Encoder.TextStream.class), new EncoderTextStreamHandler<>((Encoder.TextStream)encoder));
@@ -85,7 +103,11 @@ public class RemoteEndpointImpl implements RemoteEndpoint {
         Encoder encoder;
 
         if ((encoder = encoderInstanceMap.get(encoderClass)) == null) {
-          encoderInstanceMap.put(encoderClass, encoder = encoderClass.newInstance());
+          try {
+            encoderInstanceMap.put(encoderClass, encoder = encoderClass.newInstance());
+          } catch (InstantiationException | IllegalAccessException exception) {
+            endpoint.onError(session, exception);
+          }
         }
 
         encoderHandlerMap.put(GenericParameterUtility.getTypeParameter(encoderClass, Encoder.Binary.class), new EncoderBinaryHandler<>((Encoder.Binary)encoder));
@@ -95,12 +117,36 @@ public class RemoteEndpointImpl implements RemoteEndpoint {
         Encoder encoder;
 
         if ((encoder = encoderInstanceMap.get(encoderClass)) == null) {
-          encoderInstanceMap.put(encoderClass, encoder = encoderClass.newInstance());
+          try {
+            encoderInstanceMap.put(encoderClass, encoder = encoderClass.newInstance());
+          } catch (InstantiationException | IllegalAccessException exception) {
+            endpoint.onError(session, exception);
+          }
         }
 
         encoderHandlerMap.put(GenericParameterUtility.getTypeParameter(encoderClass, Encoder.BinaryStream.class), new EncoderBinaryStreamHandler<>((Encoder.BinaryStream)encoder));
       }
     }
+  }
+
+  public SessionImpl getSession () {
+
+    return session;
+  }
+
+  public WebSocket getWebSocket () {
+
+    return webSocket;
+  }
+
+  public Endpoint getEndpoint () {
+
+    return endpoint;
+  }
+
+  public HashMap<Class<?>, EncoderHandler<?>> getEncoderHandlerMap () {
+
+    return encoderHandlerMap;
   }
 
   @Override
@@ -126,7 +172,7 @@ public class RemoteEndpointImpl implements RemoteEndpoint {
     try {
       webSocket.ping(applicationData.array());
     } catch (WebSocketException webSocketException) {
-      throw new IOException(webSocketException);
+      endpoint.onError(session, webSocketException);
     }
   }
 
@@ -137,58 +183,129 @@ public class RemoteEndpointImpl implements RemoteEndpoint {
     throw new IOException("pongs are automatically sent in response to pings");
   }
 
-  public class Basic extends RemoteEndpointImpl implements RemoteEndpoint.Basic {
+  public static class Basic extends RemoteEndpointImpl implements RemoteEndpoint.Basic {
 
-    public Basic (WebSocket webSocket, EndpointConfig endpointConfig)
-      throws InstantiationException, IllegalAccessException {
+    private AtomicReference<StringBuilder> partialBuilderRef = new AtomicReference<>();
+    private AtomicReference<ByteArrayOutputStream> partialStreamRef = new AtomicReference<>();
 
-      super(webSocket, endpointConfig);
+    public Basic (SessionImpl session, WebSocket webSocket, Endpoint endpoint, EndpointConfig endpointConfig) {
+
+      super(session, webSocket, endpoint, endpointConfig);
     }
 
     @Override
-    public void sendText (String text)
+    public synchronized void sendText (String text)
       throws IOException {
 
+      if ((partialBuilderRef.get() != null) || (partialStreamRef.get() != null)) {
+        throw new IllegalStateException("Incomplete transmission ongoing in another thread of execution");
+      }
+
       try {
-        webSocket.text(text);
+        getWebSocket().text(text);
       } catch (WebSocketException webSocketException) {
-        throw new IOException(webSocketException);
+        getEndpoint().onError(getSession(), webSocketException);
       }
     }
 
     @Override
-    public void sendBinary (ByteBuffer data)
+    public synchronized void sendBinary (ByteBuffer data)
       throws IOException {
 
+      if ((partialBuilderRef.get() != null) || (partialStreamRef.get() != null)) {
+        throw new IllegalStateException("Incomplete transmission ongoing in another thread of execution");
+      }
+
       try {
-        webSocket.binary(data.array());
+        getWebSocket().binary(data.array());
       } catch (WebSocketException webSocketException) {
-        throw new IOException(webSocketException);
+        getEndpoint().onError(getSession(), webSocketException);
       }
     }
 
     @Override
-    public void sendText (String partialMessage, boolean isLast)
+    public synchronized void sendText (String partialMessage, boolean isLast)
       throws IOException {
 
+      if (partialStreamRef.get() != null) {
+        throw new IllegalStateException("Incomplete transmission ongoing in another thread of execution");
+      }
+
+      if (isLast) {
+        if (partialBuilderRef.get() == null) {
+          sendText(partialMessage);
+        } else {
+
+          String completeText = partialBuilderRef.get().append(partialMessage).toString();
+
+          partialBuilderRef.set(null);
+          sendText(completeText);
+        }
+      } else {
+
+        StringBuilder partialBuilder;
+
+        if ((partialBuilder = partialBuilderRef.get()) == null) {
+          partialBuilderRef.set(partialBuilder = new StringBuilder());
+        }
+        partialBuilder.append(partialMessage);
+      }
     }
 
     @Override
-    public void sendBinary (ByteBuffer partialByte, boolean isLast)
+    public synchronized void sendBinary (ByteBuffer partialByte, boolean isLast)
       throws IOException {
 
+      if (partialBuilderRef.get() != null) {
+        throw new IllegalStateException("Incomplete transmission ongoing in another thread of execution");
+      }
+
+      if (isLast) {
+        if (partialStreamRef.get() == null) {
+          sendBinary(partialByte);
+        } else {
+
+          byte[] completeBuffer;
+
+          partialStreamRef.get().write(partialByte.array());
+          completeBuffer = partialStreamRef.get().toByteArray();
+
+          partialStreamRef.set(null);
+          sendBinary(ByteBuffer.wrap(completeBuffer));
+        }
+      } else {
+
+        ByteArrayOutputStream partialStream;
+
+        if ((partialStream = partialStreamRef.get()) == null) {
+          partialStreamRef.set(partialStream = new ByteArrayOutputStream());
+        }
+        partialStream.write(partialByte.array());
+      }
     }
 
     @Override
-    public OutputStream getSendStream () throws IOException {
+    public synchronized OutputStream getSendStream () throws IOException {
 
-      return null;
+      if ((partialBuilderRef.get() != null) || (partialStreamRef.get() != null)) {
+        throw new IllegalStateException("Incomplete transmission ongoing in another thread of execution");
+      }
+
+      partialStreamRef.set(new ByteArrayOutputStream());
+
+      return new SendStream(this, partialStreamRef);
     }
 
     @Override
-    public Writer getSendWriter () throws IOException {
+    public synchronized Writer getSendWriter () throws IOException {
 
-      return null;
+      if ((partialBuilderRef.get() != null) || (partialStreamRef.get() != null)) {
+        throw new IllegalStateException("Incomplete transmission ongoing in another thread of execution");
+      }
+
+      partialBuilderRef.set(new StringBuilder());
+
+      return new SendWriter(this, partialBuilderRef);
     }
 
     @Override
@@ -197,7 +314,7 @@ public class RemoteEndpointImpl implements RemoteEndpoint {
 
       EncoderHandler<?> encoderHandler;
 
-      if ((encoderHandler = encoderHandlerMap.get(data.getClass())) != null) {
+      if ((encoderHandler = getEncoderHandlerMap().get(data.getClass())) != null) {
         sendBinary(ByteBuffer.wrap(encoderHandler.encode(data)));
       } else {
         sendText(data.toString());
@@ -205,14 +322,13 @@ public class RemoteEndpointImpl implements RemoteEndpoint {
     }
   }
 
-  public class Async extends RemoteEndpointImpl implements RemoteEndpoint.Async {
+  public static class Async extends RemoteEndpointImpl implements RemoteEndpoint.Async {
 
     private AtomicLong sendTimeout = new AtomicLong(0);
 
-    public Async (WebSocket webSocket, EndpointConfig endpointConfig)
-      throws InstantiationException, IllegalAccessException {
+    public Async (SessionImpl session, WebSocket webSocket, Endpoint endpoint, EndpointConfig endpointConfig) {
 
-      super(webSocket, endpointConfig);
+      super(session, webSocket, endpoint, endpointConfig);
     }
 
     @Override
@@ -228,36 +344,268 @@ public class RemoteEndpointImpl implements RemoteEndpoint {
     }
 
     @Override
+    public Future<Void> sendText (final String text) {
+
+      return new SendFuture(new SendRunnable(new SendExecutable() {
+
+        @Override
+        public void execute ()
+          throws IOException {
+
+          try {
+            getWebSocket().text(text);
+          } catch (WebSocketException webSocketException) {
+            getEndpoint().onError(getSession(), webSocketException);
+          }
+        }
+      }));
+    }
+
+    @Override
     public void sendText (String text, SendHandler handler) {
 
+      Future<Void> future = sendText(text);
+
+      try {
+        future.get(getSendTimeout(), TimeUnit.MILLISECONDS);
+        handler.onResult(new SendResult());
+      } catch (InterruptedException | ExecutionException | TimeoutException exception) {
+        handler.onResult(new SendResult(exception));
+      }
     }
 
     @Override
-    public Future<Void> sendText (String text) {
+    public Future<Void> sendBinary (final ByteBuffer data) {
 
-      return null;
-    }
+      return new SendFuture(new SendRunnable(new SendExecutable() {
 
-    @Override
-    public Future<Void> sendBinary (ByteBuffer data) {
+        @Override
+        public void execute ()
+          throws IOException {
 
-      return null;
+          try {
+            getWebSocket().binary(data.array());
+          } catch (WebSocketException webSocketException) {
+            getEndpoint().onError(getSession(), webSocketException);
+          }
+        }
+      }));
     }
 
     @Override
     public void sendBinary (ByteBuffer data, SendHandler handler) {
 
+      Future<Void> future = sendBinary(data);
+
+      try {
+        future.get(getSendTimeout(), TimeUnit.MILLISECONDS);
+        handler.onResult(new SendResult());
+      } catch (InterruptedException | ExecutionException | TimeoutException exception) {
+        handler.onResult(new SendResult(exception));
+      }
     }
 
-    @Override
-    public Future<Void> sendObject (Object data) {
+    public Future<Void> sendObject (final Object data) {
 
-      return null;
+      return new SendFuture(new SendRunnable(new SendExecutable() {
+
+        @Override
+        public void execute ()
+          throws IOException, EncodeException {
+
+          EncoderHandler<?> encoderHandler;
+
+          try {
+            if ((encoderHandler = getEncoderHandlerMap().get(data.getClass())) != null) {
+              getWebSocket().binary(encoderHandler.encode(data));
+            } else {
+              getWebSocket().text(data.toString());
+            }
+          } catch (WebSocketException webSocketException) {
+            getEndpoint().onError(getSession(), webSocketException);
+          }
+        }
+      }));
     }
 
     @Override
     public void sendObject (Object data, SendHandler handler) {
 
+      Future<Void> future = sendObject(data);
+
+      try {
+        future.get(getSendTimeout(), TimeUnit.MILLISECONDS);
+        handler.onResult(new SendResult());
+      } catch (InterruptedException | ExecutionException | TimeoutException exception) {
+        handler.onResult(new SendResult(exception));
+      }
     }
+  }
+
+  private class SendStream extends OutputStream {
+
+    private RemoteEndpointImpl.Basic basicEndpoint;
+    private AtomicReference<ByteArrayOutputStream> partialStreamRef;
+
+    public SendStream (Basic basicEndpoint, AtomicReference<ByteArrayOutputStream> partialStreamRef) {
+
+      this.basicEndpoint = basicEndpoint;
+      this.partialStreamRef = partialStreamRef;
+    }
+
+    @Override
+    public void write (int b) {
+
+      partialStreamRef.get().write(b);
+    }
+
+    @Override
+    public void write (byte[] b, int off, int len) {
+
+      partialStreamRef.get().write(b, off, len);
+    }
+
+    @Override
+    public void write (byte[] b)
+      throws IOException {
+
+      partialStreamRef.get().write(b);
+    }
+
+    @Override
+    public void close ()
+      throws IOException {
+
+      byte[] completeBuffer = partialStreamRef.get().toByteArray();
+
+      partialStreamRef.set(null);
+      basicEndpoint.sendBinary(ByteBuffer.wrap(completeBuffer));
+
+      super.close();
+    }
+  }
+
+  private class SendWriter extends Writer {
+
+    private RemoteEndpointImpl.Basic basicEndpoint;
+    private AtomicReference<StringBuilder> partialBuilderRef;
+
+    public SendWriter (Basic basicEndpoint, AtomicReference<StringBuilder> partialBuilderRef) {
+
+      this.basicEndpoint = basicEndpoint;
+      this.partialBuilderRef = partialBuilderRef;
+    }
+
+    @Override
+    public void write (char[] cbuf, int off, int len) {
+
+      partialBuilderRef.get().append(cbuf, off, len);
+    }
+
+    @Override
+    public void flush () {
+
+    }
+
+    @Override
+    public void close ()
+      throws IOException {
+
+      String completeText = partialBuilderRef.get().toString();
+
+      partialBuilderRef.set(null);
+      basicEndpoint.sendText(completeText);
+    }
+  }
+
+  private class SendFuture implements Future<Void> {
+
+    private SendRunnable sendRunnable;
+    private Thread sendThread;
+
+    public SendFuture (SendRunnable sendRunnable) {
+
+      this.sendRunnable = sendRunnable;
+
+      (sendThread = new Thread(sendRunnable)).start();
+    }
+
+    @Override
+    public boolean cancel (boolean mayInterruptIfRunning) {
+
+      return false;
+    }
+
+    @Override
+    public boolean isCancelled () {
+
+      return false;
+    }
+
+    @Override
+    public boolean isDone () {
+
+      return !sendThread.isAlive();
+    }
+
+    @Override
+    public Void get ()
+      throws InterruptedException, ExecutionException {
+
+      sendThread.join();
+      if (sendRunnable.getThrowable() != null) {
+        throw new ExecutionException(sendRunnable.getThrowable());
+      }
+
+      return null;
+    }
+
+    @Override
+    public Void get (long timeout, TimeUnit unit)
+      throws InterruptedException, ExecutionException, TimeoutException {
+
+      sendThread.join(unit.toMillis(timeout));
+
+      if (sendThread.isAlive()) {
+        throw new TimeoutException();
+      }
+      if (sendRunnable.getThrowable() != null) {
+        throw new ExecutionException(sendRunnable.getThrowable());
+      }
+
+      return null;
+    }
+  }
+
+  private class SendRunnable implements Runnable {
+
+    private SendExecutable executable;
+    private Throwable throwable;
+
+    public SendRunnable (SendExecutable executable) {
+
+      this.executable = executable;
+    }
+
+    public Throwable getThrowable () {
+
+      return throwable;
+    }
+
+    @Override
+    public void run () {
+
+      try {
+        executable.execute();
+      } catch (Throwable throwable) {
+        this.throwable = throwable;
+      }
+    }
+  }
+
+  private abstract class SendExecutable {
+
+    public abstract void execute ()
+      throws Throwable;
   }
 }

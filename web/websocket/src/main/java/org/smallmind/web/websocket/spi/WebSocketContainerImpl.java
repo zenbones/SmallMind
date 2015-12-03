@@ -45,14 +45,9 @@ import javax.websocket.WebSocketContainer;
 public class WebSocketContainerImpl implements WebSocketContainer {
 
   @Override
-  public long getDefaultAsyncSendTimeout () {
+  public Session connectToServer (Class<?> annotatedEndpointClass, URI path) throws DeploymentException, IOException {
 
-    return -1;
-  }
-
-  @Override
-  public void setAsyncSendTimeout (long timeoutmillis) {
-
+    return null;
   }
 
   @Override
@@ -62,7 +57,7 @@ public class WebSocketContainerImpl implements WebSocketContainer {
   }
 
   @Override
-  public Session connectToServer (Class<?> annotatedEndpointClass, URI path) throws DeploymentException, IOException {
+  public Session connectToServer (Class<? extends Endpoint> endpointClass, ClientEndpointConfig cec, URI path) throws DeploymentException, IOException {
 
     return null;
   }
@@ -74,9 +69,14 @@ public class WebSocketContainerImpl implements WebSocketContainer {
   }
 
   @Override
-  public Session connectToServer (Class<? extends Endpoint> endpointClass, ClientEndpointConfig cec, URI path) throws DeploymentException, IOException {
+  public long getDefaultAsyncSendTimeout () {
 
-    return null;
+    return -1;
+  }
+
+  @Override
+  public void setAsyncSendTimeout (long timeoutmillis) {
+
   }
 
   @Override

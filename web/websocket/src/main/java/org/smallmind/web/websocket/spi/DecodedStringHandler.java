@@ -34,16 +34,20 @@ package org.smallmind.web.websocket.spi;
 
 import javax.websocket.DecodeException;
 import javax.websocket.Decoder;
+import javax.websocket.Endpoint;
 import javax.websocket.MessageHandler;
-import org.smallmind.scribe.pen.LoggerManager;
 
 public class DecodedStringHandler<T> implements MessageHandler.Whole<String> {
 
+  private SessionImpl session;
+  private Endpoint endpoint;
   private Decoder.Text<T> decoder;
   private MessageHandler.Whole<T> handler;
 
-  public DecodedStringHandler (Decoder.Text<T> decoder, MessageHandler.Whole<T> handler) {
+  public DecodedStringHandler (SessionImpl session, Endpoint endpoint, Decoder.Text<T> decoder, MessageHandler.Whole<T> handler) {
 
+    this.session = session;
+    this.endpoint = endpoint;
     this.decoder = decoder;
     this.handler = handler;
   }
@@ -56,7 +60,7 @@ public class DecodedStringHandler<T> implements MessageHandler.Whole<String> {
         handler.onMessage(decoder.decode(message));
       }
     } catch (DecodeException decodeException) {
-      LoggerManager.getLogger(DecodedStringHandler.class).error(decodeException);
+      endpoint.onError(session, decodeException);
     }
   }
 }
