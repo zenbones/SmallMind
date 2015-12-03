@@ -57,14 +57,26 @@ public class WebSocketContainerImpl implements WebSocketContainer {
   public Session connectToServer (Class<?> annotatedEndpointClass, URI path)
     throws DeploymentException, IOException {
 
-    return null;
+    AnnotatedEndpoint annotatedEndpoint = new AnnotatedEndpoint(annotatedEndpointClass);
+
+    try {
+      return new SessionImpl(this, path, annotatedEndpoint, annotatedEndpoint.getEndpointConfig());
+    } catch (NoSuchAlgorithmException | WebSocketException exception) {
+      throw new DeploymentException("Unable to instantiate a connection", exception);
+    }
   }
 
   @Override
   public Session connectToServer (Object annotatedEndpointInstance, URI path)
     throws DeploymentException, IOException {
 
-    return null;
+    AnnotatedEndpoint annotatedEndpoint = new AnnotatedEndpoint(annotatedEndpointInstance.getClass());
+
+    try {
+      return new SessionImpl(this, path, annotatedEndpoint, annotatedEndpoint.getEndpointConfig());
+    } catch (NoSuchAlgorithmException | WebSocketException exception) {
+      throw new DeploymentException("Unable to instantiate a connection", exception);
+    }
   }
 
   @Override
