@@ -53,6 +53,7 @@ import org.smallmind.nutsnbolts.http.Base64Codec;
 import org.smallmind.nutsnbolts.lang.UnknownSwitchCaseException;
 import org.smallmind.nutsnbolts.security.EncryptionUtility;
 import org.smallmind.nutsnbolts.security.HashAlgorithm;
+import org.smallmind.nutsnbolts.util.Tuple;
 
 public abstract class WebSocket implements AutoCloseable {
 
@@ -76,7 +77,14 @@ public abstract class WebSocket implements AutoCloseable {
   public WebSocket (URI uri, String... protocols)
     throws IOException, NoSuchAlgorithmException, WebSocketException {
 
+    this(uri, null, protocols);
+  }
+
+  public WebSocket (URI uri, HandshakeListener handshakeListener, String... protocols)
+    throws IOException, NoSuchAlgorithmException, WebSocketException {
+
     Thread workerThread;
+    Tuple<String, String> headerTuple;
     byte[] keyBytes = new byte[16];
 
     this.uri = uri;
@@ -110,8 +118,19 @@ public abstract class WebSocket implements AutoCloseable {
     socket.setSoTimeout((int)soTimeout);
 
     // initial handshake request
-    socket.getOutputStream().write(Handshake.constructRequest(protocolVersion, uri, keyBytes, protocols));
-    negotiatedProtocol = Handshake.validateResponse(new String(read()), keyBytes, protocols);
+    headerTuple = Handshake.constructHeaders(protocolVersion, uri, keyBytes, protocols);
+
+    if (handshakeListener != null) {
+      handshakeListener.beforeRequest(headerTuple);
+    }
+
+    socket.getOutputStream().write(Handshake.constructRequest(uri, headerTuple));
+    negotiatedProtocol = Handshake.validateResponse(headerTuple = new Tuple<>(), new String(read()), keyBytes, protocols);
+
+    if (handshakeListener != null) {
+      handshakeListener.afterResponse(headerTuple);
+    }
+
     connectionStateRef.set(ConnectionState.OPEN);
 
     workerThread = new Thread(messageWorker = new MessageWorker());
@@ -183,12 +202,6 @@ public abstract class WebSocket implements AutoCloseable {
   public void close (CloseCode closeCode, String reason)
     throws IOException, WebSocketException, InterruptedException {
 
-    close(closeCode, reason, true);
-  }
-
-  private void close (CloseCode closeCode, String reason, boolean writeFrame)
-    throws IOException, WebSocketException, InterruptedException {
-
     if (connectionStateRef.compareAndSet(ConnectionState.OPEN, ConnectionState.CLOSING)) {
 
       CloseListener closeListener;
@@ -199,9 +212,7 @@ public abstract class WebSocket implements AutoCloseable {
 
       try {
         messageWorker.abort();
-        if (writeFrame) {
-          write(Frame.close(closeCode.getCodeAsBytes(), reason));
-        }
+        write(Frame.close(closeCode.getCodeAsBytes(), reason));
       } finally {
         connectionStateRef.set(ConnectionState.CLOSED);
       }
@@ -424,13 +435,13 @@ public abstract class WebSocket implements AutoCloseable {
                   break;
                 case CLOSE:
                   if (fragment.getMessage().length < 2) {
-                    close(CloseCode.SERVER_ERROR, null, false);
+                    close(CloseCode.SERVER_ERROR, null);
                   } else {
 
                     byte[] status = new byte[2];
 
                     System.arraycopy(fragment.getMessage(), 0, status, 0, 2);
-                    close(CloseCode.fromBytes(status), null, false);
+                    close(CloseCode.fromBytes(status), null);
                   }
                   break;
                 case PING:

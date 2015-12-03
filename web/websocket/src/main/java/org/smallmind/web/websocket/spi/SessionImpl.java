@@ -91,7 +91,7 @@ public class SessionImpl implements Session, CloseListener {
       endpointConfig.getPreferredSubprotocols().toArray(preferredSubProtocols);
     }
 
-    webSocket = new WebSocket(uri, preferredSubProtocols) {
+    webSocket = new WebSocket(uri, new ConfiguratorHandshakeListener(endpointConfig.getConfigurator()), preferredSubProtocols) {
 
       @Override
       public void onError (Exception exception) {

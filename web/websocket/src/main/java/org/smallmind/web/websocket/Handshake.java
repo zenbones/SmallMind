@@ -37,21 +37,48 @@ import java.io.IOException;
 import java.io.StringReader;
 import java.net.URI;
 import java.security.NoSuchAlgorithmException;
-import java.util.HashMap;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import org.smallmind.nutsnbolts.http.Base64Codec;
 import org.smallmind.nutsnbolts.security.EncryptionUtility;
 import org.smallmind.nutsnbolts.security.HashAlgorithm;
+import org.smallmind.nutsnbolts.util.Tuple;
 
 public class Handshake {
 
   private static final Pattern HTTP_STATUS_PATTERN = Pattern.compile("HTTP/(\\d+\\.\\d+)\\s(\\d+)\\s(.+)");
   private static final Pattern HTTP_HEADER_PATTERN = Pattern.compile("([^:]+):\\s*(.+)\\s*");
 
-//  HTTP-Version SP Status-Code SP Reason-Phrase
+  public static Tuple<String, String> constructHeaders (int protocolVersion, URI uri, byte[] keyBytes, String... protocols)
+    throws IOException {
 
-  public static byte[] constructRequest (int protocolVersion, URI uri, byte[] keyBytes, String... protocols)
+    Tuple<String, String> headerTuple = new Tuple<>();
+
+    headerTuple.addPair("Host", new StringBuilder(uri.getHost().toLowerCase()).append(':').append((uri.getPort() != -1) ? uri.getPort() : uri.getScheme().equals("ws") ? 80 : 443).toString());
+    headerTuple.addPair("Upgrade", "websocket");
+    headerTuple.addPair("Connection", "Upgrade");
+    headerTuple.addPair("Sec-WebSocket-Key", Base64Codec.encode(keyBytes));
+    headerTuple.addPair("Sec-WebSocket-Version", String.valueOf(protocolVersion));
+
+    if ((protocols != null) && (protocols.length > 0)) {
+
+      StringBuilder protocolBuilder = new StringBuilder();
+
+      for (String protocol : protocols) {
+        if (protocolBuilder.length() > 0) {
+          protocolBuilder.append(',');
+        }
+
+        protocolBuilder.append(protocol);
+      }
+
+      headerTuple.addPair("Sec-WebSocket-Protocol", protocolBuilder.toString());
+    }
+
+    return headerTuple;
+  }
+
+  public static byte[] constructRequest (URI uri, Tuple<String, String> headerTuple)
     throws IOException {
 
     StringBuilder handshakeBuilder = new StringBuilder();
@@ -62,38 +89,20 @@ public class Handshake {
     }
     handshakeBuilder.append(" HTTP/1.1").append('\n');
 
-    handshakeBuilder.append("Host: ").append(uri.getHost().toLowerCase()).append(':').append((uri.getPort() != -1) ? uri.getPort() : uri.getScheme().equals("ws") ? 80 : 443).append('\n');
-    handshakeBuilder.append("Upgrade: websocket\n");
-    handshakeBuilder.append("Connection: Upgrade\n");
-    handshakeBuilder.append("Sec-WebSocket-Key: ").append(Base64Codec.encode(keyBytes)).append('\n');
-
-    if ((protocols != null) && (protocols.length > 0)) {
-
-      boolean first = true;
-
-      handshakeBuilder.append("Sec-WebSocket-Protocol: ");
-      for (String protocol : protocols) {
-        if (!first) {
-          handshakeBuilder.append(',');
-        }
-
-        handshakeBuilder.append(protocol);
-        first = false;
+    for (String key : headerTuple.getKeys()) {
+      for (String value : headerTuple.getValues(key)) {
+        handshakeBuilder.append(key).append(": ").append(value).append('\n');
       }
-      handshakeBuilder.append('\n');
     }
-
-    handshakeBuilder.append("Sec-WebSocket-Version: ").append(protocolVersion).append('\n');
     handshakeBuilder.append('\n');
 
     return handshakeBuilder.toString().getBytes();
   }
 
-  public static String validateResponse (String response, byte[] keyBytes, String... protocols)
+  public static String validateResponse (Tuple<String, String> headerTuple, String response, byte[] keyBytes, String... protocols)
     throws IOException, NoSuchAlgorithmException, SyntaxException {
 
     BufferedReader reader = new BufferedReader(new StringReader(response));
-    HashMap<String, String> fieldMap;
     Matcher httpStatusMatcher;
     String httpStatus;
     String httpField;
@@ -113,7 +122,6 @@ public class Handshake {
       throw new SyntaxException("Incorrect http status code(%s) in the handshake response", httpStatusMatcher.group(2));
     }
 
-    fieldMap = new HashMap<>();
     while (((httpField = reader.readLine()) != null) && (httpField.length() > 0)) {
 
       Matcher fieldMatcher;
@@ -122,38 +130,39 @@ public class Handshake {
         throw new SyntaxException("The http header line(%s) of the handshake response could not be parsed", httpField);
       }
 
-      if (!fieldMap.containsKey(fieldMatcher.group(1))) {
-        fieldMap.put(fieldMatcher.group(1), fieldMatcher.group(2));
+      if (!headerTuple.containsKey(fieldMatcher.group(1))) {
+        headerTuple.addPair(fieldMatcher.group(1), fieldMatcher.group(2));
       }
     }
 
-    if (!fieldMap.containsKey("Upgrade")) {
+    if (!headerTuple.containsKey("Upgrade")) {
       throw new SyntaxException("The http header does not contain an 'Upgrade' field");
     }
-    if (!fieldMap.get("Upgrade").equalsIgnoreCase("websocket")) {
-      throw new SyntaxException("The 'Upgrade' field(%s) of the http header does not contain the value 'websocket'", fieldMap.get("Upgrade"));
+    if (!headerTuple.getValue("Upgrade").equalsIgnoreCase("websocket")) {
+      throw new SyntaxException("The 'Upgrade' field(%s) of the http header does not contain the value 'websocket'", headerTuple.getValue("Upgrade"));
     }
 
-    if (!fieldMap.containsKey("Connection")) {
+    if (!headerTuple.containsKey("Connection")) {
       throw new SyntaxException("The http header does not contain a 'Connection' field");
     }
-    if (!fieldMap.get("Connection").equalsIgnoreCase("upgrade")) {
-      throw new SyntaxException("The 'Connection' field(%s) of the http header does not contain the value 'upgrade'", fieldMap.get("Connection"));
+    if (!headerTuple.getValue("Connection").equalsIgnoreCase("upgrade")) {
+      throw new SyntaxException("The 'Connection' field(%s) of the http header does not contain the value 'upgrade'", headerTuple.getValue("Connection"));
     }
 
-    if (!fieldMap.containsKey("Sec-WebSocket-Accept")) {
+    if (!headerTuple.containsKey("Sec-WebSocket-Accept")) {
       throw new SyntaxException("The http header does not contain a 'Sec-WebSocket-Accept' field");
     }
-    if (!fieldMap.get("Sec-WebSocket-Accept").equals(Base64Codec.encode(EncryptionUtility.hash(HashAlgorithm.SHA_1, (Base64Codec.encode(keyBytes) + "258EAFA5-E914-47DA-95CA-C5AB0DC85B11").getBytes())))) {
-      throw new SyntaxException("The 'Sec-WebSocket-Accept' field(%s) of the http header does not contain the correct value", fieldMap.get("Sec-WebSocket-Accept"));
+    if (!headerTuple.getValue("Sec-WebSocket-Accept").equals(Base64Codec.encode(EncryptionUtility.hash(HashAlgorithm.SHA_1, (Base64Codec.encode(keyBytes) + "258EAFA5-E914-47DA-95CA-C5AB0DC85B11").getBytes())))) {
+      throw new SyntaxException("The 'Sec-WebSocket-Accept' field(%s) of the http header does not contain the correct value", headerTuple.getValue("Sec-WebSocket-Accept"));
     }
 
-    if (fieldMap.containsKey("Sec-WebSocket-Protocol")) {
+    if (headerTuple.containsKey("Sec-WebSocket-Protocol")) {
 
+      String headerProtocol = headerTuple.getValue("Sec-WebSocket-Protocol");
       boolean matched = false;
 
       for (String protocol : protocols) {
-        if (protocol.equals(fieldMap.get("Sec-WebSocket-Protocol"))) {
+        if (protocol.equals(headerProtocol)) {
           negotiatedProtocol = protocol;
           matched = true;
           break;
@@ -161,11 +170,11 @@ public class Handshake {
       }
 
       if (!matched) {
-        throw new SyntaxException("The 'Sec-WebSocket-Protocol' field(%s) of the http header does not contain one of the requested sub-protocols", fieldMap.get("Sec-WebSocket-Protocol"));
+        throw new SyntaxException("The 'Sec-WebSocket-Protocol' field(%s) of the http header does not contain one of the requested sub-protocols", headerProtocol);
       }
     }
 
-    if (fieldMap.containsKey("Sec-WebSocket-Extensions")) {
+    if (headerTuple.containsKey("Sec-WebSocket-Extensions")) {
       throw new SyntaxException("This client does not support the use of websocket extensions");
     }
 
