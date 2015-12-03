@@ -34,82 +34,107 @@ package org.smallmind.web.websocket.spi;
 
 import java.io.IOException;
 import java.net.URI;
+import java.security.NoSuchAlgorithmException;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicLong;
 import javax.websocket.ClientEndpointConfig;
 import javax.websocket.DeploymentException;
 import javax.websocket.Endpoint;
 import javax.websocket.Extension;
 import javax.websocket.Session;
 import javax.websocket.WebSocketContainer;
+import org.smallmind.web.websocket.WebSocketException;
 
 public class WebSocketContainerImpl implements WebSocketContainer {
 
+  private final AtomicLong defaultMaxSessionIdleTimeout = new AtomicLong(-1);
+  private final AtomicInteger defaultMaxTextMessageBufferSize = new AtomicInteger(Integer.MAX_VALUE);
+  private final AtomicInteger defaultMaxBinaryMessageBufferSize = new AtomicInteger(Integer.MAX_VALUE);
+  private AtomicLong defaultAsyncSendTimeout = new AtomicLong(-1);
+
   @Override
-  public Session connectToServer (Class<?> annotatedEndpointClass, URI path) throws DeploymentException, IOException {
+  public Session connectToServer (Class<?> annotatedEndpointClass, URI path)
+    throws DeploymentException, IOException {
 
     return null;
   }
 
   @Override
-  public Session connectToServer (Object annotatedEndpointInstance, URI path) throws DeploymentException, IOException {
+  public Session connectToServer (Object annotatedEndpointInstance, URI path)
+    throws DeploymentException, IOException {
 
     return null;
   }
 
   @Override
-  public Session connectToServer (Class<? extends Endpoint> endpointClass, ClientEndpointConfig cec, URI path) throws DeploymentException, IOException {
+  public Session connectToServer (Class<? extends Endpoint> endpointClass, ClientEndpointConfig cec, URI path)
+    throws DeploymentException, IOException {
 
-    return null;
+    try {
+      return new SessionImpl(this, path, endpointClass.newInstance(), cec);
+    } catch (IllegalAccessException | InstantiationException | NoSuchAlgorithmException | WebSocketException exception) {
+      throw new DeploymentException("Unable to instantiate a connection", exception);
+    }
   }
 
   @Override
-  public Session connectToServer (Endpoint endpointInstance, ClientEndpointConfig cec, URI path) throws DeploymentException, IOException {
+  public Session connectToServer (Endpoint endpointInstance, ClientEndpointConfig cec, URI path)
+    throws DeploymentException, IOException {
 
-    return null;
+    try {
+      return new SessionImpl(this, path, endpointInstance, cec);
+    } catch (NoSuchAlgorithmException | WebSocketException exception) {
+      throw new DeploymentException("Unable to instantiate a connection", exception);
+    }
   }
 
   @Override
   public long getDefaultAsyncSendTimeout () {
 
-    return -1;
+    return defaultAsyncSendTimeout.get();
   }
 
   @Override
   public void setAsyncSendTimeout (long timeoutmillis) {
 
+    defaultAsyncSendTimeout.set(timeoutmillis);
   }
 
   @Override
   public long getDefaultMaxSessionIdleTimeout () {
 
-    return 0;
+    return defaultMaxSessionIdleTimeout.get();
   }
 
   @Override
   public void setDefaultMaxSessionIdleTimeout (long timeout) {
 
+    defaultMaxSessionIdleTimeout.set(timeout);
   }
 
   @Override
   public int getDefaultMaxBinaryMessageBufferSize () {
 
-    return 0;
+    return defaultMaxBinaryMessageBufferSize.get();
   }
 
   @Override
   public void setDefaultMaxBinaryMessageBufferSize (int max) {
 
+    defaultMaxBinaryMessageBufferSize.set(max);
   }
 
   @Override
   public int getDefaultMaxTextMessageBufferSize () {
 
-    return 0;
+    return defaultMaxTextMessageBufferSize.get();
   }
 
   @Override
   public void setDefaultMaxTextMessageBufferSize (int max) {
 
+    defaultMaxTextMessageBufferSize.set(max);
   }
 
   @Override

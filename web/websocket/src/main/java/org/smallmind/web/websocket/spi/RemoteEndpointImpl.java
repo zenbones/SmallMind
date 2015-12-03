@@ -324,11 +324,13 @@ public class RemoteEndpointImpl implements RemoteEndpoint {
 
   public static class Async extends RemoteEndpointImpl implements RemoteEndpoint.Async {
 
-    private AtomicLong sendTimeout = new AtomicLong(0);
+    private AtomicLong sendTimeout;
 
     public Async (SessionImpl session, WebSocket webSocket, Endpoint endpoint, EndpointConfig endpointConfig) {
 
       super(session, webSocket, endpoint, endpointConfig);
+
+      sendTimeout = new AtomicLong(session.getContainer().getDefaultAsyncSendTimeout());
     }
 
     @Override
@@ -364,14 +366,7 @@ public class RemoteEndpointImpl implements RemoteEndpoint {
     @Override
     public void sendText (String text, SendHandler handler) {
 
-      Future<Void> future = sendText(text);
-
-      try {
-        future.get(getSendTimeout(), TimeUnit.MILLISECONDS);
-        handler.onResult(new SendResult());
-      } catch (InterruptedException | ExecutionException | TimeoutException exception) {
-        handler.onResult(new SendResult(exception));
-      }
+      waitForFuture(sendText(text), handler);
     }
 
     @Override
@@ -395,14 +390,7 @@ public class RemoteEndpointImpl implements RemoteEndpoint {
     @Override
     public void sendBinary (ByteBuffer data, SendHandler handler) {
 
-      Future<Void> future = sendBinary(data);
-
-      try {
-        future.get(getSendTimeout(), TimeUnit.MILLISECONDS);
-        handler.onResult(new SendResult());
-      } catch (InterruptedException | ExecutionException | TimeoutException exception) {
-        handler.onResult(new SendResult(exception));
-      }
+      waitForFuture(sendBinary(data), handler);
     }
 
     public Future<Void> sendObject (final Object data) {
@@ -431,10 +419,20 @@ public class RemoteEndpointImpl implements RemoteEndpoint {
     @Override
     public void sendObject (Object data, SendHandler handler) {
 
-      Future<Void> future = sendObject(data);
+      waitForFuture(sendObject(data), handler);
+    }
+
+    private void waitForFuture (Future<Void> future, SendHandler handler) {
 
       try {
-        future.get(getSendTimeout(), TimeUnit.MILLISECONDS);
+        long sendTimeout;
+
+        if ((sendTimeout = getSendTimeout()) > 0) {
+          future.get(sendTimeout, TimeUnit.MILLISECONDS);
+        } else {
+          future.get();
+        }
+
         handler.onResult(new SendResult());
       } catch (InterruptedException | ExecutionException | TimeoutException exception) {
         handler.onResult(new SendResult(exception));

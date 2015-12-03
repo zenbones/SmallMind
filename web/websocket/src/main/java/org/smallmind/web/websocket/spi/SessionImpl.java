@@ -142,6 +142,10 @@ public class SessionImpl implements Session, CloseListener {
       }
     };
 
+    webSocket.setMaxIdleTimeoutMilliseconds(container.getDefaultMaxSessionIdleTimeout());
+    webSocket.setMaxTextBufferSize(container.getDefaultMaxTextMessageBufferSize());
+    webSocket.setMaxBinaryBufferSize(container.getDefaultMaxBinaryMessageBufferSize());
+
     webSocket.addCloseListener(this);
     endpoint.onOpen(this, endpointConfig);
   }

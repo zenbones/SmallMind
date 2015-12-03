@@ -62,8 +62,8 @@ public abstract class WebSocket implements AutoCloseable {
   private final ConcurrentLinkedQueue<String> pingKeyQueue = new ConcurrentLinkedQueue<>();
   private final AtomicReference<ConnectionState> connectionStateRef = new AtomicReference<>(ConnectionState.CONNECTING);
   private final AtomicReference<CloseListener> closeListenerRef = new AtomicReference<>();
-  private final AtomicLong maxIdleTimeoutMilliseconds = new AtomicLong(0);
   private final AtomicLong idleMilliseconds = new AtomicLong(0);
+  private final AtomicLong maxIdleTimeoutMilliseconds = new AtomicLong(-1);
   private final AtomicInteger maxBinaryBufferSize = new AtomicInteger(Integer.MAX_VALUE);
   private final AtomicInteger maxTextBufferSize = new AtomicInteger(Integer.MAX_VALUE);
   private final URI uri;
