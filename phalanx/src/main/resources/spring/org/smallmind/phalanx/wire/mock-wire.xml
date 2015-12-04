@@ -11,7 +11,7 @@
   <bean id="mockRequestTransport" class="org.smallmind.phalanx.wire.mock.MockRequestTransport">
     <constructor-arg index="0" name="messageRouter" ref="mockMessageRouter"/>
     <constructor-arg index="1" name="signalCodec" ref="jsonSignalCodec"/>
-    <constructor-arg index="2" name="timeoutSeconds" value="${wire.timeout_seconds}"/>
+    <constructor-arg index="2" name="timeoutSeconds" value="${wire.default_timeout_seconds}"/>
   </bean>
 
   <bean id="mockResponseTransport" class="org.smallmind.phalanx.wire.mock.MockResponseTransport">

@@ -94,22 +94,20 @@ public class MockRequestTransport implements RequestTransport {
   public void transmitInOnly (String serviceGroup, String instanceId, Address address, Map<String, Object> arguments, WireContext... contexts)
     throws Exception {
 
-    transmit(true, serviceGroup, instanceId, address, arguments, contexts);
+    transmit(true, serviceGroup, instanceId, 0, address, arguments, contexts);
   }
 
   @Override
-  public Object transmitInOut (String serviceGroup, String instanceId, Address address, Map<String, Object> arguments, WireContext... contexts)
+  public Object transmitInOut (String serviceGroup, String instanceId, int timeoutSeconds, Address address, Map<String, Object> arguments, WireContext... contexts)
     throws Throwable {
 
-    return transmit(false, serviceGroup, instanceId, address, arguments, contexts).getResult(signalCodec);
+    return transmit(false, serviceGroup, instanceId, timeoutSeconds, address, arguments, contexts).getResult(signalCodec);
   }
 
-  private TransmissionCallback transmit (boolean inOnly, String serviceGroup, String instanceId, Address address, Map<String, Object> arguments, WireContext... contexts)
+  private TransmissionCallback transmit (boolean inOnly, String serviceGroup, String instanceId, int timeoutSeconds, Address address, Map<String, Object> arguments, WireContext... contexts)
     throws Exception {
 
     MockMessage message = new MockMessage(signalCodec.encode(new InvocationSignal(inOnly, address, arguments, contexts)));
-    AsynchronousTransmissionCallback asynchronousCallback;
-    SynchronousTransmissionCallback previousCallback;
     String messageId = UUID.randomUUID().toString();
 
     if (!inOnly) {
@@ -130,7 +128,11 @@ public class MockRequestTransport implements RequestTransport {
     }
 
     if (!inOnly) {
-      if ((previousCallback = (SynchronousTransmissionCallback)callbackMap.putIfAbsent(messageId, asynchronousCallback = new AsynchronousTransmissionCallback(address.getService(), address.getFunction().getName()))) != null) {
+
+      AsynchronousTransmissionCallback asynchronousCallback = new AsynchronousTransmissionCallback(address.getService(), address.getFunction().getName());
+      SynchronousTransmissionCallback previousCallback;
+
+      if ((previousCallback = (SynchronousTransmissionCallback)callbackMap.putIfAbsent(messageId, asynchronousCallback, (timeoutSeconds > 0) ? new Duration(timeoutSeconds, TimeUnit.SECONDS) : null)) != null) {
 
         return previousCallback;
       }

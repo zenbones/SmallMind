@@ -42,7 +42,7 @@ import org.smallmind.nutsnbolts.time.Duration;
 public class SelfDestructiveMap<K extends Comparable<K>, S extends SelfDestructive> {
 
   private final ConcurrentHashMap<K, S> internalMap = new ConcurrentHashMap<K, S>();
-  private final ConcurrentSkipListSet<SelfDestructiveKey<K>> ignitionKeySet = new ConcurrentSkipListSet<SelfDestructiveKey<K>>();
+  private final ConcurrentSkipListSet<SelfDestructiveKey<K>> ignitionKeySet = new ConcurrentSkipListSet<>();
   private final Duration defaultTimeoutDuration;
   private final Duration pulseTimeDuration;
   private IgnitionWorker ignitionWorker;
@@ -79,7 +79,7 @@ public class SelfDestructiveMap<K extends Comparable<K>, S extends SelfDestructi
     S previousValue;
 
     if ((previousValue = internalMap.putIfAbsent(key, value)) == null) {
-      ignitionKeySet.add(new SelfDestructiveKey<>(key, timeoutDuration));
+      ignitionKeySet.add(new SelfDestructiveKey<>(key, (timeoutDuration != null) ? timeoutDuration : defaultTimeoutDuration));
     }
 
     return previousValue;
@@ -132,8 +132,7 @@ public class SelfDestructiveMap<K extends Comparable<K>, S extends SelfDestructi
             }
           }
         }
-      }
-      catch (InterruptedException interruptedException) {
+      } catch (InterruptedException interruptedException) {
         terminationLatch.countDown();
       }
 

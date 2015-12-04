@@ -41,7 +41,7 @@ public class MessagePolicy {
   private DeliveryMode deliveryMode = DeliveryMode.NON_PERSISTENT;
   private boolean disableMessageID = false;
   private boolean disableMessageTimestamp = false;
-  private long timeToLive = 0;
+  private int timeToLiveSeconds = 0;
   private int priority = 4;
 
   public AcknowledgeMode getAcknowledgeMode () {
@@ -69,9 +69,9 @@ public class MessagePolicy {
     this.disableMessageTimestamp = disableMessageTimestamp;
   }
 
-  public void setTimeToLive (long timeToLive) {
+  public void setTimeToLiveSeconds (int timeToLiveSeconds) {
 
-    this.timeToLive = timeToLive;
+    this.timeToLiveSeconds = timeToLiveSeconds;
   }
 
   public void setPriority (int priority) {
@@ -85,7 +85,7 @@ public class MessagePolicy {
     producer.setDeliveryMode(deliveryMode.getJmsValue());
     producer.setDisableMessageID(disableMessageID);
     producer.setDisableMessageTimestamp(disableMessageTimestamp);
-    producer.setTimeToLive(timeToLive);
+    producer.setTimeToLive(timeToLiveSeconds * 1000);
     producer.setPriority(priority);
   }
 }

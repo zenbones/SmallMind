@@ -66,7 +66,7 @@ public class RabbitMQRequestTransport implements MetricConfigurationProvider, Re
   private final RequestMessageRouter[] requestMessageRouters;
   private final String callerId = SnowflakeId.newInstance().generateDottedString();
 
-  public RabbitMQRequestTransport (MetricConfiguration metricConfiguration, RabbitMQConnector rabbitMQConnector, NameConfiguration nameConfiguration, SignalCodec signalCodec, int clusterSize, int concurrencyLimit, int timeoutSeconds)
+  public RabbitMQRequestTransport (MetricConfiguration metricConfiguration, RabbitMQConnector rabbitMQConnector, NameConfiguration nameConfiguration, SignalCodec signalCodec, int clusterSize, int concurrencyLimit, int defaultTimeoutSeconds, int messageTTLSeconds)
     throws IOException, InterruptedException {
 
     int routerIndex = 0;
@@ -74,11 +74,11 @@ public class RabbitMQRequestTransport implements MetricConfigurationProvider, Re
     this.metricConfiguration = metricConfiguration;
     this.signalCodec = signalCodec;
 
-    callbackMap = new SelfDestructiveMap<>(new Duration(timeoutSeconds, TimeUnit.SECONDS));
+    callbackMap = new SelfDestructiveMap<>(new Duration(defaultTimeoutSeconds, TimeUnit.SECONDS));
 
     requestMessageRouters = new RequestMessageRouter[clusterSize];
     for (int index = 0; index < requestMessageRouters.length; index++) {
-      requestMessageRouters[index] = new RequestMessageRouter(rabbitMQConnector, nameConfiguration, this, signalCodec, callerId, index, timeoutSeconds * 3);
+      requestMessageRouters[index] = new RequestMessageRouter(rabbitMQConnector, nameConfiguration, this, signalCodec, callerId, index, messageTTLSeconds);
       requestMessageRouters[index].initialize();
     }
 
@@ -107,16 +107,16 @@ public class RabbitMQRequestTransport implements MetricConfigurationProvider, Re
   public void transmitInOnly (String serviceGroup, String instanceId, Address address, Map<String, Object> arguments, WireContext... contexts)
     throws Exception {
 
-    transmit(true, serviceGroup, instanceId, address, arguments, contexts);
+    transmit(true, serviceGroup, instanceId, 0, address, arguments, contexts);
   }
 
   @Override
-  public Object transmitInOut (String serviceGroup, String instanceId, Address address, Map<String, Object> arguments, WireContext... contexts)
+  public Object transmitInOut (String serviceGroup, String instanceId, int timeoutSeconds, Address address, Map<String, Object> arguments, WireContext... contexts)
     throws Throwable {
 
     TransmissionCallback transmissionCallback;
 
-    if ((transmissionCallback = transmit(false, serviceGroup, instanceId, address, arguments, contexts)) != null) {
+    if ((transmissionCallback = transmit(false, serviceGroup, instanceId, timeoutSeconds, address, arguments, contexts)) != null) {
 
       return transmissionCallback.getResult(signalCodec);
     }
@@ -124,30 +124,31 @@ public class RabbitMQRequestTransport implements MetricConfigurationProvider, Re
     return null;
   }
 
-  private TransmissionCallback transmit (boolean inOnly, String serviceGroup, String instanceId, Address address, Map<String, Object> arguments, WireContext... contexts)
+  private TransmissionCallback transmit (boolean inOnly, String serviceGroup, String instanceId, int timeoutSeconds, Address address, Map<String, Object> arguments, WireContext... contexts)
     throws Exception {
 
     final RequestMessageRouter requestMessageRouter = acquireRequestMessageRouter();
 
     try {
 
-      AsynchronousTransmissionCallback asynchronousCallback;
-      SynchronousTransmissionCallback previousCallback;
       String messageId;
 
       messageId = requestMessageRouter.publish(inOnly, serviceGroup, instanceId, address, arguments, contexts);
 
       if (!inOnly) {
-        if ((previousCallback = (SynchronousTransmissionCallback)callbackMap.putIfAbsent(messageId, asynchronousCallback = new AsynchronousTransmissionCallback(address.getService(), address.getFunction().getName()))) != null) {
+
+        AsynchronousTransmissionCallback asynchronousCallback = new AsynchronousTransmissionCallback(address.getService(), address.getFunction().getName());
+        SynchronousTransmissionCallback previousCallback;
+
+        if ((previousCallback = (SynchronousTransmissionCallback)callbackMap.putIfAbsent(messageId, asynchronousCallback, (timeoutSeconds > 0) ? new Duration(timeoutSeconds, TimeUnit.SECONDS) : null)) != null) {
 
           return previousCallback;
         }
 
         return asynchronousCallback;
-      } else {
-
-        return null;
       }
+
+      return null;
     } finally {
       routerQueue.put(requestMessageRouter);
     }

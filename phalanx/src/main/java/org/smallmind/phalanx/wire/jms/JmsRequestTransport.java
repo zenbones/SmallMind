@@ -76,7 +76,7 @@ public class JmsRequestTransport implements MetricConfigurationProvider, Request
   private final ResponseListener[] responseListeners;
   private final String callerId = SnowflakeId.newInstance().generateDottedString();
 
-  public JmsRequestTransport (MetricConfiguration metricConfiguration, RoutingFactories routingFactories, MessagePolicy messagePolicy, ReconnectionPolicy reconnectionPolicy, SignalCodec signalCodec, int clusterSize, int concurrencyLimit, int maximumMessageLength, int timeoutSeconds)
+  public JmsRequestTransport (MetricConfiguration metricConfiguration, RoutingFactories routingFactories, MessagePolicy messagePolicy, ReconnectionPolicy reconnectionPolicy, SignalCodec signalCodec, int clusterSize, int concurrencyLimit, int maximumMessageLength, int defaultTimeoutSeconds)
     throws IOException, JMSException, TransportException {
 
     int talkIndex = 0;
@@ -85,7 +85,7 @@ public class JmsRequestTransport implements MetricConfigurationProvider, Request
     this.metricConfiguration = metricConfiguration;
     this.signalCodec = signalCodec;
 
-    callbackMap = new SelfDestructiveMap<>(new Duration(timeoutSeconds, TimeUnit.SECONDS));
+    callbackMap = new SelfDestructiveMap<>(new Duration(defaultTimeoutSeconds, TimeUnit.SECONDS));
 
     talkRequestConnectionManagers = new ConnectionManager[clusterSize];
     for (int index = 0; index < talkRequestConnectionManagers.length; index++) {
@@ -133,16 +133,16 @@ public class JmsRequestTransport implements MetricConfigurationProvider, Request
   public void transmitInOnly (String serviceGroup, String instanceId, Address address, Map<String, Object> arguments, WireContext... contexts)
     throws Exception {
 
-    transmit(true, serviceGroup, instanceId, address, arguments, contexts);
+    transmit(true, serviceGroup, instanceId, 0, address, arguments, contexts);
   }
 
   @Override
-  public Object transmitInOut (String serviceGroup, String instanceId, Address address, Map<String, Object> arguments, WireContext... contexts)
+  public Object transmitInOut (String serviceGroup, String instanceId, int timeoutSeconds, Address address, Map<String, Object> arguments, WireContext... contexts)
     throws Throwable {
 
     TransmissionCallback transmissionCallback;
 
-    if ((transmissionCallback = transmit(false, serviceGroup, instanceId, address, arguments, contexts)) != null) {
+    if ((transmissionCallback = transmit(false, serviceGroup, instanceId, timeoutSeconds, address, arguments, contexts)) != null) {
 
       return transmissionCallback.getResult(signalCodec);
     }
@@ -150,7 +150,7 @@ public class JmsRequestTransport implements MetricConfigurationProvider, Request
     return null;
   }
 
-  private TransmissionCallback transmit (boolean inOnly, String serviceGroup, String instanceId, Address address, Map<String, Object> arguments, WireContext... contexts)
+  private TransmissionCallback transmit (boolean inOnly, String serviceGroup, String instanceId, int timeoutSeconds, Address address, Map<String, Object> arguments, WireContext... contexts)
     throws Exception {
 
     LinkedBlockingQueue<MessageHandler> messageQueue = (instanceId == null) ? talkQueue : whisperQueue;
@@ -158,23 +158,24 @@ public class JmsRequestTransport implements MetricConfigurationProvider, Request
 
     try {
 
-      AsynchronousTransmissionCallback asynchronousCallback;
-      SynchronousTransmissionCallback previousCallback;
       Message requestMessage;
 
       messageHandler.send(requestMessage = constructMessage(messageHandler, inOnly, serviceGroup, instanceId, address, arguments, contexts));
 
       if (!inOnly) {
-        if ((previousCallback = (SynchronousTransmissionCallback)callbackMap.putIfAbsent(requestMessage.getJMSMessageID(), asynchronousCallback = new AsynchronousTransmissionCallback(address.getService(), address.getFunction().getName()))) != null) {
+
+        AsynchronousTransmissionCallback asynchronousCallback = new AsynchronousTransmissionCallback(address.getService(), address.getFunction().getName());
+        SynchronousTransmissionCallback previousCallback;
+
+        if ((previousCallback = (SynchronousTransmissionCallback)callbackMap.putIfAbsent(requestMessage.getJMSMessageID(), asynchronousCallback, (timeoutSeconds > 0) ? new Duration(timeoutSeconds, TimeUnit.SECONDS) : null)) != null) {
 
           return previousCallback;
         }
 
         return asynchronousCallback;
-      } else {
-
-        return null;
       }
+
+      return null;
     } finally {
       messageQueue.put(messageHandler);
     }

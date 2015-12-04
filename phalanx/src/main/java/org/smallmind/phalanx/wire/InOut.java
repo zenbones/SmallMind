@@ -32,18 +32,15 @@
  */
 package org.smallmind.phalanx.wire;
 
-import java.util.Map;
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
 
-public interface RequestTransport {
+@Target({ElementType.METHOD})
+@Retention(RetentionPolicy.RUNTIME)
+public @interface InOut {
 
-  public abstract String getCallerId ();
-
-  public abstract void transmitInOnly (String serviceGroup, String instanceId, Address address, Map<String, Object> arguments, WireContext... contexts)
-    throws Throwable;
-
-  public abstract Object transmitInOut (String serviceGroup, String instanceId, int timeoutSeconds, Address address, Map<String, Object> arguments, WireContext... contexts)
-    throws Throwable;
-
-  public abstract void close ()
-    throws Exception;
+  // Any positive value (> 0) will override the default service timeout seconds
+  public abstract int timeoutSeconds ();
 }

@@ -32,10 +32,34 @@
  */
 package org.smallmind.phalanx.wire;
 
+import java.io.ByteArrayInputStream;
+import java.io.ObjectInputStream;
 import org.smallmind.nutsnbolts.util.SelfDestructive;
+import org.smallmind.web.jersey.fault.Fault;
+import org.smallmind.web.jersey.fault.FaultWrappingException;
+import org.smallmind.web.jersey.fault.NativeLanguage;
+import org.smallmind.web.jersey.fault.NativeObject;
 
-public interface TransmissionCallback extends SelfDestructive {
+public abstract class TransmissionCallback implements SelfDestructive {
 
   public abstract Object getResult (SignalCodec signalCodec)
     throws Throwable;
+
+  public void handleError (SignalCodec signalCodec, ResultSignal resultSignal)
+    throws Throwable {
+
+    if (resultSignal.isError()) {
+
+      Fault fault = signalCodec.extractObject(resultSignal.getResult(), Fault.class);
+      NativeObject nativeObject;
+
+      if (((nativeObject = fault.getNativeObject()) != null) && nativeObject.getLanguage().equals(NativeLanguage.JAVA)) {
+        try (ByteArrayInputStream byteArrayInputStream = new ByteArrayInputStream(nativeObject.getBytes()); ObjectInputStream objectInputStream = new ObjectInputStream(byteArrayInputStream)) {
+          throw (Throwable)objectInputStream.readObject();
+        }
+      }
+
+      throw new FaultWrappingException(fault);
+    }
+  }
 }

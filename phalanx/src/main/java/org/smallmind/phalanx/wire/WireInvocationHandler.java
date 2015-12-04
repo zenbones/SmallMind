@@ -170,7 +170,9 @@ public class WireInvocationHandler implements InvocationHandler {
       return null;
     } else {
 
-      return transport.transmitInOut(serviceGroup, instanceId, new Address(version, serviceName, new Function(method)), argumentMap, wireContexts);
+      InOut inOut = method.getAnnotation(InOut.class);
+
+      return transport.transmitInOut(serviceGroup, instanceId, (inOut == null) ? 0 : inOut.timeoutSeconds(), new Address(version, serviceName, new Function(method)), argumentMap, wireContexts);
     }
   }
 }

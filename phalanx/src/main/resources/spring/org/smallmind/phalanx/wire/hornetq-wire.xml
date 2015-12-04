@@ -44,7 +44,7 @@
   </bean>
 
   <bean id="messagePolicy" class="org.smallmind.phalanx.wire.jms.MessagePolicy">
-    <property name="timeToLive" value="300000"/>
+    <property name="timeToLiveSeconds" value="${wire.message_ttl_seconds}"/>
   </bean>
 
   <bean id="reconnectionPolicy" class="org.smallmind.phalanx.wire.jms.ReconnectionPolicy">
@@ -66,7 +66,7 @@
     <constructor-arg index="5" name="clusterSize" value="${wire.cluster_size}"/>
     <constructor-arg index="6" name="concurrencyLimit" value="${wire.concurrency_limit}"/>
     <constructor-arg index="7" name="maximumMessageLength" value="${jms.maximum_message_length}"/>
-    <constructor-arg index="8" name="timeoutSeconds" value="${wire.timeout_seconds}"/>
+    <constructor-arg index="8" name="defaultTimeoutSeconds" value="${wire.default_timeout_seconds}"/>
   </bean>
 
   <bean id="jmsResponseTransport" class="org.smallmind.phalanx.wire.jms.JmsResponseTransport" destroy-method="close">
@@ -75,9 +75,10 @@
     <constructor-arg index="2" name="messagePolicy" ref="messagePolicy"/>
     <constructor-arg index="3" name="reconnectionPolicy" ref="reconnectionPolicy"/>
     <constructor-arg index="4" name="signalCodec" ref="jsonSignalCodec"/>
-    <constructor-arg index="5" name="clusterSize" value="${wire.cluster_size}"/>
-    <constructor-arg index="6" name="concurrencyLimit" value="${wire.concurrency_limit}"/>
-    <constructor-arg index="7" name="maximumMessageLength" value="${jms.maximum_message_length}"/>
+    <constructor-arg index="5" name="serviceGroup" value="default"/>
+    <constructor-arg index="6" name="clusterSize" value="${wire.cluster_size}"/>
+    <constructor-arg index="7" name="concurrencyLimit" value="${wire.concurrency_limit}"/>
+    <constructor-arg index="8" name="maximumMessageLength" value="${jms.maximum_message_length}"/>
   </bean>
 
 </beans>

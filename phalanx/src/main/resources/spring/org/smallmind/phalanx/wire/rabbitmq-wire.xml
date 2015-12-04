@@ -31,7 +31,8 @@
     <constructor-arg index="3" name="signalCodec" ref="jsonSignalCodec"/>
     <constructor-arg index="4" name="clusterSize" value="${wire.cluster_size}"/>
     <constructor-arg index="5" name="concurrencyLimit" value="${wire.concurrency_limit}"/>
-    <constructor-arg index="6" name="timeoutSeconds" value="${wire.timeout_seconds}"/>
+    <constructor-arg index="6" name="defaultTimeoutSeconds" value="${wire.default_timeout_seconds}"/>
+    <constructor-arg index="7" name="messageTTLSeconds" value="${wire.message_ttl_seconds}"/>
   </bean>
 
   <bean id="rabbitmqResponseTransport" class="org.smallmind.phalanx.wire.amqp.rabbitmq.RabbitMQResponseTransport" destroy-method="close">
@@ -40,9 +41,10 @@
     <constructor-arg index="2" name="nameConfiguration" ref="nameConfiguration"/>
     <constructor-arg index="3" name="workerClass" value="org.smallmind.phalanx.wire.amqp.rabbitmq.InvocationWorker"/>
     <constructor-arg index="4" name="signalCodec" ref="jsonSignalCodec"/>
-    <constructor-arg index="5" name="clusterSize" value="${wire.cluster_size}"/>
-    <constructor-arg index="6" name="concurrencyLimit" value="${wire.concurrency_limit}"/>
-    <constructor-arg index="7" name="timeoutSeconds" value="${wire.timeout_seconds}"/>
+    <constructor-arg index="5" name="serviceGroup" value="default"/>
+    <constructor-arg index="6" name="clusterSize" value="${wire.cluster_size}"/>
+    <constructor-arg index="7" name="concurrencyLimit" value="${wire.concurrency_limit}"/>
+    <constructor-arg index="8" name="messageTTLSeconds" value="${wire.message_ttl_seconds}"/>
   </bean>
 
 </beans>
