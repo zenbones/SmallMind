@@ -57,12 +57,12 @@ public class MockRequestTransport implements RequestTransport {
   private final SelfDestructiveMap<String, TransmissionCallback> callbackMap;
   private final String callerId = UUID.randomUUID().toString();
 
-  public MockRequestTransport (MockMessageRouter messageRouter, final SignalCodec signalCodec, int timeoutSeconds) {
+  public MockRequestTransport (MockMessageRouter messageRouter, final SignalCodec signalCodec, int defaultTimeoutSeconds) {
 
     this.messageRouter = messageRouter;
     this.signalCodec = signalCodec;
 
-    callbackMap = new SelfDestructiveMap<>(new Duration(timeoutSeconds, TimeUnit.SECONDS));
+    callbackMap = new SelfDestructiveMap<>(new Duration(defaultTimeoutSeconds, TimeUnit.SECONDS));
 
     messageRouter.getResponseTopic().addListener(new MockMessageListener() {
 
