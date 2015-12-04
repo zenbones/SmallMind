@@ -40,7 +40,7 @@ public class EntityParamResourceConfigExtension extends ResourceConfigExtension 
   @Override
   public void apply (ResourceConfig resourceConfig) {
 
-    resourceConfig.register(ResourceMethodRequestFilter.class);
+    resourceConfig.register(ResourceMethodContainerFilter.class);
     resourceConfig.register(new EntityParamResolver.Binder());
   }
 }
