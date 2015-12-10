@@ -10,6 +10,7 @@
     <property name="staticPath" value="${grizzly.static_path}"/>
     <property name="restPath" value="${grizzly.rest_path}"/>
     <property name="soapPath" value="${grizzly.soap_path}"/>
+    <property name="webSocketPath" value="${grizzly.web_socket_path}"/>
     <property name="resourceConfigExtensions">
       <list>
         <bean class="org.smallmind.web.jersey.aop.EntityParamResourceConfigExtension"/>

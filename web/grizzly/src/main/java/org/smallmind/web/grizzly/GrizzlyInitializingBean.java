@@ -49,6 +49,7 @@ import org.glassfish.grizzly.jaxws.JaxwsHandler;
 import org.glassfish.grizzly.servlet.WebappContext;
 import org.glassfish.grizzly.ssl.SSLContextConfigurator;
 import org.glassfish.grizzly.ssl.SSLEngineConfigurator;
+import org.glassfish.grizzly.websockets.WebSocketEngine;
 import org.glassfish.jersey.servlet.ServletContainer;
 import org.smallmind.nutsnbolts.lang.web.PerApplicationContextFilter;
 import org.smallmind.web.jersey.jackson.JsonResourceConfig;
@@ -70,6 +71,7 @@ public class GrizzlyInitializingBean implements DisposableBean, ApplicationConte
   private LinkedList<FilterInstaller> filterInstallerList = new LinkedList<>();
   private LinkedList<ListenerInstaller> listenerInstallerList = new LinkedList<>();
   private LinkedList<ServletInstaller> servletInstallerList = new LinkedList<>();
+  private LinkedList<WebSocketApplicationInstaller> webSocketApplicationInstallerList = new LinkedList<>();
   private ResourceConfigExtension[] resourceConfigExtensions;
   private AddOn[] addOns;
   private SSLInfo sslInfo;
@@ -78,6 +80,7 @@ public class GrizzlyInitializingBean implements DisposableBean, ApplicationConte
   private String staticPath = "/static";
   private String restPath = "/rest";
   private String soapPath = "/soap";
+  private String webSocketPath = "/websocket";
   private int port = 80;
   private boolean debug = false;
 
@@ -114,6 +117,11 @@ public class GrizzlyInitializingBean implements DisposableBean, ApplicationConte
   public void setSoapPath (String soapPath) {
 
     this.soapPath = soapPath;
+  }
+
+  public void setWebSocketPath (String webSocketPath) {
+
+    this.webSocketPath = webSocketPath;
   }
 
   public void setResourceConfigExtensions (ResourceConfigExtension[] resourceConfigExtensions) {
@@ -205,6 +213,13 @@ public class GrizzlyInitializingBean implements DisposableBean, ApplicationConte
           throw new GrizzlyInitializationException(exception);
         }
       }
+      for (WebSocketApplicationInstaller webSocketApplicationInstaller : webSocketApplicationInstallerList) {
+        try {
+          WebSocketEngine.getEngine().register(webSocketPath, webSocketApplicationInstaller.getUrlPattern(), webSocketApplicationInstaller.getWebSocketApplication());
+        } catch (Exception exception) {
+          throw new GrizzlyInitializationException(exception);
+        }
+      }
 
       webappContext.deploy(httpServer);
 
@@ -252,6 +267,8 @@ public class GrizzlyInitializingBean implements DisposableBean, ApplicationConte
       listenerInstallerList.add((ListenerInstaller)bean);
     } else if (bean instanceof ServletInstaller) {
       servletInstallerList.add((ServletInstaller)bean);
+    } else if (bean instanceof WebSocketApplicationInstaller) {
+      webSocketApplicationInstallerList.add((WebSocketApplicationInstaller)bean);
     } else if ((servicePath = bean.getClass().getAnnotation(ServicePath.class)) != null) {
       serviceList.add(new WebService(servicePath.value(), bean));
     }
