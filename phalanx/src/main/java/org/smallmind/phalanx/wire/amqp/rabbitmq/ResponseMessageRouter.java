@@ -46,6 +46,7 @@ import org.smallmind.nutsnbolts.util.SnowflakeId;
 import org.smallmind.phalanx.wire.MetricType;
 import org.smallmind.phalanx.wire.ResultSignal;
 import org.smallmind.phalanx.wire.SignalCodec;
+import org.smallmind.phalanx.wire.VocalMode;
 import org.smallmind.phalanx.wire.jms.QueueOperator;
 import org.smallmind.scribe.pen.LoggerManager;
 
@@ -74,20 +75,25 @@ public class ResponseMessageRouter extends MessageRouter {
   public final void bindQueues (Channel channel)
     throws IOException {
 
+    String shoutQueueName;
     String talkQueueName;
     String whisperQueueName;
 
+    channel.queueDeclare(shoutQueueName = getShoutQueueName() + "-" + serviceGroup + "[" + instanceId + "]", false, false, true, null);
+    channel.queueBind(shoutQueueName, getRequestExchangeName(), VocalMode.SHOUT.getName() + "-" + serviceGroup);
+
     channel.queueDeclare(talkQueueName = getTalkQueueName() + "-" + serviceGroup, false, false, false, null);
-    channel.queueBind(talkQueueName, getRequestExchangeName(), serviceGroup);
+    channel.queueBind(talkQueueName, getRequestExchangeName(), VocalMode.TALK.getName() + "-" + serviceGroup);
 
     channel.queueDeclare(whisperQueueName = getWhisperQueueName() + "-" + serviceGroup + "[" + instanceId + "]", false, false, true, null);
-    channel.queueBind(whisperQueueName, getRequestExchangeName(), serviceGroup + "[" + instanceId + "]");
+    channel.queueBind(whisperQueueName, getRequestExchangeName(), VocalMode.WHISPER.getName() + "-" + serviceGroup + "[" + instanceId + "]");
   }
 
   @Override
   public void installConsumer (Channel channel)
     throws IOException {
 
+    installConsumerInternal(channel, getShoutQueueName() + "-" + serviceGroup + "[" + instanceId + "]");
     installConsumerInternal(channel, getTalkQueueName() + "-" + serviceGroup);
     installConsumerInternal(channel, getWhisperQueueName() + "-" + serviceGroup + "[" + instanceId + "]");
   }
@@ -120,7 +126,7 @@ public class ResponseMessageRouter extends MessageRouter {
 
     RabbitMQMessage rabbitMQMessage = constructMessage(correlationId, error, nativeType, result);
 
-    send(callerId, getResponseExchangeName(), rabbitMQMessage.getProperties(), rabbitMQMessage.getBody());
+    send("response-" + callerId, getResponseExchangeName(), rabbitMQMessage.getProperties(), rabbitMQMessage.getBody());
 
     return rabbitMQMessage.getProperties().getMessageId();
   }

@@ -51,6 +51,9 @@ import org.smallmind.phalanx.wire.InvocationSignal;
 import org.smallmind.phalanx.wire.MetricType;
 import org.smallmind.phalanx.wire.ResultSignal;
 import org.smallmind.phalanx.wire.SignalCodec;
+import org.smallmind.phalanx.wire.VocalMode;
+import org.smallmind.phalanx.wire.Voice;
+import org.smallmind.phalanx.wire.Whispering;
 import org.smallmind.phalanx.wire.WireContext;
 import org.smallmind.phalanx.wire.WireProperty;
 import org.smallmind.scribe.pen.LoggerManager;
@@ -83,7 +86,7 @@ public class RequestMessageRouter extends MessageRouter {
     String queueName;
 
     channel.queueDeclare(queueName = getResponseQueueName() + "-" + callerId, false, false, true, null);
-    channel.queueBind(queueName, getResponseExchangeName(), callerId);
+    channel.queueBind(queueName, getResponseExchangeName(), "response-" + callerId);
   }
 
   @Override
@@ -118,12 +121,17 @@ public class RequestMessageRouter extends MessageRouter {
     });
   }
 
-  public String publish (final boolean inOnly, final String serviceGroup, final String instanceId, final Address address, final Map<String, Object> arguments, final WireContext... contexts)
+  public String publish (final boolean inOnly, final String serviceGroup, final Voice voice, final Address address, final Map<String, Object> arguments, final WireContext... contexts)
     throws Exception {
 
     RabbitMQMessage rabbitMQMessage = constructMessage(inOnly, address, arguments, contexts);
+    StringBuilder routingKeyBuilder = new StringBuilder(voice.getMode().getName()).append("-").append(serviceGroup);
 
-    send((instanceId == null) ? serviceGroup : serviceGroup + "[" + instanceId + "]", getRequestExchangeName(), rabbitMQMessage.getProperties(), rabbitMQMessage.getBody());
+    if (voice.getMode().equals(VocalMode.WHISPER)) {
+      routingKeyBuilder.append('[').append(((Whispering)voice).get()).append(']');
+    }
+
+    send(routingKeyBuilder.toString(), getRequestExchangeName(), rabbitMQMessage.getProperties(), rabbitMQMessage.getBody());
 
     return rabbitMQMessage.getProperties().getMessageId();
   }

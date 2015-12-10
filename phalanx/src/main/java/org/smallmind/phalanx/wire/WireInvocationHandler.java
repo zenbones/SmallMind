@@ -108,9 +108,9 @@ public class WireInvocationHandler implements InvocationHandler {
     HashMap<String, Object> argumentMap = null;
     Context[] expectedContexts;
     WireContext[] wireContexts = null;
+    Voice voice;
     Whisper whisper;
     String[] argumentNames;
-    String instanceId;
 
     if ((argumentNames = methodMap.get(method)) == null) {
       throw new MissingInvocationException("No method(%s) available in the service interface(%s)", method.getName(), serviceInterface.getName());
@@ -142,9 +142,12 @@ public class WireInvocationHandler implements InvocationHandler {
       }
     }
 
-    if ((whisper = method.getAnnotation(Whisper.class)) != null) {
+    if (method.getAnnotation(Shout.class) != null) {
+      voice = Shouting.instance();
+    } else if ((whisper = method.getAnnotation(Whisper.class)) != null) {
 
       InstanceIdExtractor instanceIdExtractor;
+      String instanceId;
 
       if ((instanceIdExtractor = instanceIdExtractorMap.get(whisper.value())) == null) {
         instanceIdExtractorMap.put(whisper.value(), instanceIdExtractor = whisper.value().newInstance());
@@ -152,8 +155,10 @@ public class WireInvocationHandler implements InvocationHandler {
       if ((instanceId = instanceIdExtractor.getInstanceId(argumentMap, wireContexts)) == null) {
         throw new MissingInstanceIdException("Whisper invocations require an instance id(%s)", whisper.value().getName());
       }
+
+      voice = new Whispering(instanceId);
     } else {
-      instanceId = null;
+      voice = Talking.instance();
     }
 
     if (method.getAnnotation(InOnly.class) != null) {
@@ -165,14 +170,14 @@ public class WireInvocationHandler implements InvocationHandler {
         throw new ServiceDefinitionException("The method(%s) in service interface(%s) is marked as @InOnly but declares an Exception list", method.getName(), serviceInterface.getName());
       }
 
-      transport.transmitInOnly(serviceGroup, instanceId, new Address(version, serviceName, new Function(method)), argumentMap, wireContexts);
+      transport.transmitInOnly(serviceGroup, voice, new Address(version, serviceName, new Function(method)), argumentMap, wireContexts);
 
       return null;
     } else {
 
       InOut inOut = method.getAnnotation(InOut.class);
 
-      return transport.transmitInOut(serviceGroup, instanceId, (inOut == null) ? 0 : inOut.timeoutSeconds(), new Address(version, serviceName, new Function(method)), argumentMap, wireContexts);
+      return transport.transmitInOut(serviceGroup, voice, (inOut == null) ? 0 : inOut.timeoutSeconds(), new Address(version, serviceName, new Function(method)), argumentMap, wireContexts);
     }
   }
 }

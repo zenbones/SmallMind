@@ -85,6 +85,11 @@ public abstract class MessageRouter {
     return nameConfiguration.getResponseQueue();
   }
 
+  public String getShoutQueueName () {
+
+    return nameConfiguration.getShoutQueue();
+  }
+
   public String getTalkQueueName () {
 
     return nameConfiguration.getTalkQueue();
@@ -105,6 +110,7 @@ public abstract class MessageRouter {
         final int nextStamp;
 
         channel = connector.getConnection().createChannel();
+        channel.basicQos(0, 1, false);
         channel.exchangeDeclare(getRequestExchangeName(), "direct", false, false, null);
         channel.exchangeDeclare(getResponseExchangeName(), "direct", false, false, null);
 

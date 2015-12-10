@@ -30,74 +30,21 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.phalanx.wire.amqp.rabbitmq;
+package org.smallmind.phalanx.wire;
 
-public class NameConfiguration {
+public enum VocalMode {
 
-  private String requestExchange = "requestExchange";
-  private String responseExchange = "responseExchange";
-  private String responseQueue = "responseQueue";
-  private String shoutQueue = "shoutQueue";
-  private String talkQueue = "talkQueue";
-  private String whisperQueue = "whisperQueue";
+  WHISPER("whisper"), TALK("talk"), SHOUT("shout");
 
-  public String getRequestExchange () {
+  private String name;
 
-    return requestExchange;
+  VocalMode (String name) {
+
+    this.name = name;
   }
 
-  public void setRequestExchange (String requestExchange) {
+  public String getName () {
 
-    this.requestExchange = requestExchange;
-  }
-
-  public String getResponseExchange () {
-
-    return responseExchange;
-  }
-
-  public void setResponseExchange (String responseExchange) {
-
-    this.responseExchange = responseExchange;
-  }
-
-  public String getResponseQueue () {
-
-    return responseQueue;
-  }
-
-  public void setResponseQueue (String responseQueue) {
-
-    this.responseQueue = responseQueue;
-  }
-
-  public String getShoutQueue () {
-
-    return shoutQueue;
-  }
-
-  public void setShoutQueue (String shoutQueue) {
-
-    this.shoutQueue = shoutQueue;
-  }
-
-  public String getTalkQueue () {
-
-    return talkQueue;
-  }
-
-  public void setTalkQueue (String talkQueue) {
-
-    this.talkQueue = talkQueue;
-  }
-
-  public String getWhisperQueue () {
-
-    return whisperQueue;
-  }
-
-  public void setWhisperQueue (String whisperQueue) {
-
-    this.whisperQueue = whisperQueue;
+    return name;
   }
 }

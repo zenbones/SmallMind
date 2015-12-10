@@ -54,6 +54,7 @@ import org.smallmind.phalanx.wire.SignalCodec;
 import org.smallmind.phalanx.wire.SynchronousTransmissionCallback;
 import org.smallmind.phalanx.wire.TransmissionCallback;
 import org.smallmind.phalanx.wire.TransportException;
+import org.smallmind.phalanx.wire.Voice;
 import org.smallmind.phalanx.wire.WireContext;
 
 public class RabbitMQRequestTransport implements MetricConfigurationProvider, RequestTransport {
@@ -104,19 +105,19 @@ public class RabbitMQRequestTransport implements MetricConfigurationProvider, Re
   }
 
   @Override
-  public void transmitInOnly (String serviceGroup, String instanceId, Address address, Map<String, Object> arguments, WireContext... contexts)
+  public void transmitInOnly (String serviceGroup, Voice voice, Address address, Map<String, Object> arguments, WireContext... contexts)
     throws Exception {
 
-    transmit(true, serviceGroup, instanceId, 0, address, arguments, contexts);
+    transmit(true, serviceGroup, voice, 0, address, arguments, contexts);
   }
 
   @Override
-  public Object transmitInOut (String serviceGroup, String instanceId, int timeoutSeconds, Address address, Map<String, Object> arguments, WireContext... contexts)
+  public Object transmitInOut (String serviceGroup, Voice voice, int timeoutSeconds, Address address, Map<String, Object> arguments, WireContext... contexts)
     throws Throwable {
 
     TransmissionCallback transmissionCallback;
 
-    if ((transmissionCallback = transmit(false, serviceGroup, instanceId, timeoutSeconds, address, arguments, contexts)) != null) {
+    if ((transmissionCallback = transmit(false, serviceGroup, voice, timeoutSeconds, address, arguments, contexts)) != null) {
 
       return transmissionCallback.getResult(signalCodec);
     }
@@ -124,7 +125,7 @@ public class RabbitMQRequestTransport implements MetricConfigurationProvider, Re
     return null;
   }
 
-  private TransmissionCallback transmit (boolean inOnly, String serviceGroup, String instanceId, int timeoutSeconds, Address address, Map<String, Object> arguments, WireContext... contexts)
+  private TransmissionCallback transmit (boolean inOnly, String serviceGroup, Voice voice, int timeoutSeconds, Address address, Map<String, Object> arguments, WireContext... contexts)
     throws Exception {
 
     final RequestMessageRouter requestMessageRouter = acquireRequestMessageRouter();
@@ -133,7 +134,7 @@ public class RabbitMQRequestTransport implements MetricConfigurationProvider, Re
 
       String messageId;
 
-      messageId = requestMessageRouter.publish(inOnly, serviceGroup, instanceId, address, arguments, contexts);
+      messageId = requestMessageRouter.publish(inOnly, serviceGroup, voice, address, arguments, contexts);
 
       if (!inOnly) {
 

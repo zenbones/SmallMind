@@ -63,6 +63,7 @@ public class JmsResponseTransport extends WorkManager<InvocationWorker, Message>
   private final WireInvocationCircuit invocationCircuit = new WireInvocationCircuit();
   private final SignalCodec signalCodec;
   private final ConcurrentLinkedQueue<TopicOperator> responseQueue;
+  private final RequestListener[] shoutRequestListeners;
   private final RequestListener[] talkRequestListeners;
   private final RequestListener[] whisperRequestListeners;
   private final ConnectionManager[] responseConnectionManagers;
@@ -79,13 +80,17 @@ public class JmsResponseTransport extends WorkManager<InvocationWorker, Message>
     this.signalCodec = signalCodec;
     this.maximumMessageLength = maximumMessageLength;
 
+    shoutRequestListeners = new RequestListener[clusterSize];
+    for (int index = 0; index < shoutRequestListeners.length; index++) {
+      shoutRequestListeners[index] = new RequestListener(this, new ConnectionManager(routingFactories.getRequestTopicFactory(), messagePolicy, reconnectionPolicy), routingFactories.getRequestTopicFactory().getDestination(), serviceGroup, null);
+    }
     talkRequestListeners = new RequestListener[clusterSize];
     for (int index = 0; index < talkRequestListeners.length; index++) {
       talkRequestListeners[index] = new RequestListener(this, new ConnectionManager(routingFactories.getRequestQueueFactory(), messagePolicy, reconnectionPolicy), routingFactories.getRequestQueueFactory().getDestination(), serviceGroup, null);
     }
     whisperRequestListeners = new RequestListener[clusterSize];
     for (int index = 0; index < whisperRequestListeners.length; index++) {
-      whisperRequestListeners[index] = new RequestListener(this, new ConnectionManager(routingFactories.getRequestQueueFactory(), messagePolicy, reconnectionPolicy), routingFactories.getRequestTopicFactory().getDestination(), serviceGroup, instanceId);
+      whisperRequestListeners[index] = new RequestListener(this, new ConnectionManager(routingFactories.getRequestTopicFactory(), messagePolicy, reconnectionPolicy), routingFactories.getRequestTopicFactory().getDestination(), serviceGroup, instanceId);
     }
 
     responseConnectionManagers = new ConnectionManager[clusterSize];
@@ -169,6 +174,9 @@ public class JmsResponseTransport extends WorkManager<InvocationWorker, Message>
     throws Exception {
 
     if (closed.compareAndSet(false, true)) {
+      for (RequestListener requestListener : shoutRequestListeners) {
+        requestListener.close();
+      }
       for (RequestListener requestListener : talkRequestListeners) {
         requestListener.close();
       }

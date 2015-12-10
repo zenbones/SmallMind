@@ -38,10 +38,10 @@ public interface RequestTransport {
 
   public abstract String getCallerId ();
 
-  public abstract void transmitInOnly (String serviceGroup, String instanceId, Address address, Map<String, Object> arguments, WireContext... contexts)
+  public abstract void transmitInOnly (String serviceGroup, Voice voice, Address address, Map<String, Object> arguments, WireContext... contexts)
     throws Throwable;
 
-  public abstract Object transmitInOut (String serviceGroup, String instanceId, int timeoutSeconds, Address address, Map<String, Object> arguments, WireContext... contexts)
+  public abstract Object transmitInOut (String serviceGroup, Voice voice, int timeoutSeconds, Address address, Map<String, Object> arguments, WireContext... contexts)
     throws Throwable;
 
   public abstract void close ()

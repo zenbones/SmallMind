@@ -60,6 +60,9 @@ import org.smallmind.phalanx.wire.SignalCodec;
 import org.smallmind.phalanx.wire.SynchronousTransmissionCallback;
 import org.smallmind.phalanx.wire.TransmissionCallback;
 import org.smallmind.phalanx.wire.TransportException;
+import org.smallmind.phalanx.wire.VocalMode;
+import org.smallmind.phalanx.wire.Voice;
+import org.smallmind.phalanx.wire.Whispering;
 import org.smallmind.phalanx.wire.WireContext;
 import org.smallmind.phalanx.wire.WireProperty;
 
@@ -70,9 +73,9 @@ public class JmsRequestTransport implements MetricConfigurationProvider, Request
   private final SignalCodec signalCodec;
   private final SelfDestructiveMap<String, TransmissionCallback> callbackMap;
   private final LinkedBlockingQueue<MessageHandler> talkQueue;
-  private final LinkedBlockingQueue<MessageHandler> whisperQueue;
+  private final LinkedBlockingQueue<MessageHandler> whisperAndShoutQueue;
   private final ConnectionManager[] talkRequestConnectionManagers;
-  private final ConnectionManager[] whisperRequestConnectionManagers;
+  private final ConnectionManager[] whisperAndShoutRequestConnectionManagers;
   private final ResponseListener[] responseListeners;
   private final String callerId = SnowflakeId.newInstance().generateDottedString();
 
@@ -91,9 +94,9 @@ public class JmsRequestTransport implements MetricConfigurationProvider, Request
     for (int index = 0; index < talkRequestConnectionManagers.length; index++) {
       talkRequestConnectionManagers[index] = new ConnectionManager(routingFactories.getRequestQueueFactory(), messagePolicy, reconnectionPolicy);
     }
-    whisperRequestConnectionManagers = new ConnectionManager[clusterSize];
-    for (int index = 0; index < whisperRequestConnectionManagers.length; index++) {
-      whisperRequestConnectionManagers[index] = new ConnectionManager(routingFactories.getRequestTopicFactory(), messagePolicy, reconnectionPolicy);
+    whisperAndShoutRequestConnectionManagers = new ConnectionManager[clusterSize];
+    for (int index = 0; index < whisperAndShoutRequestConnectionManagers.length; index++) {
+      whisperAndShoutRequestConnectionManagers[index] = new ConnectionManager(routingFactories.getRequestTopicFactory(), messagePolicy, reconnectionPolicy);
     }
 
     talkQueue = new LinkedBlockingQueue<>();
@@ -103,10 +106,10 @@ public class JmsRequestTransport implements MetricConfigurationProvider, Request
         talkIndex = 0;
       }
     }
-    whisperQueue = new LinkedBlockingQueue<>();
+    whisperAndShoutQueue = new LinkedBlockingQueue<>();
     for (int index = 0; index < Math.max(clusterSize, concurrencyLimit); index++) {
-      whisperQueue.add(new TopicOperator(whisperRequestConnectionManagers[whisperIndex], (Topic)routingFactories.getRequestTopicFactory().getDestination()));
-      if (++whisperIndex == whisperRequestConnectionManagers.length) {
+      whisperAndShoutQueue.add(new TopicOperator(whisperAndShoutRequestConnectionManagers[whisperIndex], (Topic)routingFactories.getRequestTopicFactory().getDestination()));
+      if (++whisperIndex == whisperAndShoutRequestConnectionManagers.length) {
         whisperIndex = 0;
       }
     }
@@ -130,19 +133,19 @@ public class JmsRequestTransport implements MetricConfigurationProvider, Request
   }
 
   @Override
-  public void transmitInOnly (String serviceGroup, String instanceId, Address address, Map<String, Object> arguments, WireContext... contexts)
+  public void transmitInOnly (String serviceGroup, Voice voice, Address address, Map<String, Object> arguments, WireContext... contexts)
     throws Exception {
 
-    transmit(true, serviceGroup, instanceId, 0, address, arguments, contexts);
+    transmit(true, serviceGroup, voice, 0, address, arguments, contexts);
   }
 
   @Override
-  public Object transmitInOut (String serviceGroup, String instanceId, int timeoutSeconds, Address address, Map<String, Object> arguments, WireContext... contexts)
+  public Object transmitInOut (String serviceGroup, Voice voice, int timeoutSeconds, Address address, Map<String, Object> arguments, WireContext... contexts)
     throws Throwable {
 
     TransmissionCallback transmissionCallback;
 
-    if ((transmissionCallback = transmit(false, serviceGroup, instanceId, timeoutSeconds, address, arguments, contexts)) != null) {
+    if ((transmissionCallback = transmit(false, serviceGroup, voice, timeoutSeconds, address, arguments, contexts)) != null) {
 
       return transmissionCallback.getResult(signalCodec);
     }
@@ -150,17 +153,17 @@ public class JmsRequestTransport implements MetricConfigurationProvider, Request
     return null;
   }
 
-  private TransmissionCallback transmit (boolean inOnly, String serviceGroup, String instanceId, int timeoutSeconds, Address address, Map<String, Object> arguments, WireContext... contexts)
+  private TransmissionCallback transmit (boolean inOnly, String serviceGroup, Voice voice, int timeoutSeconds, Address address, Map<String, Object> arguments, WireContext... contexts)
     throws Exception {
 
-    LinkedBlockingQueue<MessageHandler> messageQueue = (instanceId == null) ? talkQueue : whisperQueue;
+    LinkedBlockingQueue<MessageHandler> messageQueue = voice.getMode().equals(VocalMode.TALK) ? talkQueue : whisperAndShoutQueue;
     final MessageHandler messageHandler = acquireMessageHandler(messageQueue);
 
     try {
 
       Message requestMessage;
 
-      messageHandler.send(requestMessage = constructMessage(messageHandler, inOnly, serviceGroup, instanceId, address, arguments, contexts));
+      messageHandler.send(requestMessage = constructMessage(messageHandler, inOnly, serviceGroup, voice.getMode().equals(VocalMode.WHISPER) ? ((Whispering)voice).get() : null, address, arguments, contexts));
 
       if (!inOnly) {
 
@@ -257,14 +260,14 @@ public class JmsRequestTransport implements MetricConfigurationProvider, Request
     throws JMSException, InterruptedException {
 
     if (closed.compareAndSet(false, true)) {
-      for (ConnectionManager requestConnectionManager : whisperRequestConnectionManagers) {
+      for (ConnectionManager requestConnectionManager : whisperAndShoutRequestConnectionManagers) {
         requestConnectionManager.stop();
       }
       for (ConnectionManager requestConnectionManager : talkRequestConnectionManagers) {
         requestConnectionManager.stop();
       }
 
-      for (ConnectionManager requestConnectionManager : whisperRequestConnectionManagers) {
+      for (ConnectionManager requestConnectionManager : whisperAndShoutRequestConnectionManagers) {
         requestConnectionManager.close();
       }
       for (ConnectionManager requestConnectionManager : talkRequestConnectionManagers) {

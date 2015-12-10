@@ -46,6 +46,9 @@ import org.smallmind.phalanx.wire.ResultSignal;
 import org.smallmind.phalanx.wire.SignalCodec;
 import org.smallmind.phalanx.wire.SynchronousTransmissionCallback;
 import org.smallmind.phalanx.wire.TransmissionCallback;
+import org.smallmind.phalanx.wire.VocalMode;
+import org.smallmind.phalanx.wire.Voice;
+import org.smallmind.phalanx.wire.Whispering;
 import org.smallmind.phalanx.wire.WireContext;
 import org.smallmind.phalanx.wire.WireProperty;
 import org.smallmind.scribe.pen.LoggerManager;
@@ -91,20 +94,20 @@ public class MockRequestTransport implements RequestTransport {
   }
 
   @Override
-  public void transmitInOnly (String serviceGroup, String instanceId, Address address, Map<String, Object> arguments, WireContext... contexts)
+  public void transmitInOnly (String serviceGroup, Voice voice, Address address, Map<String, Object> arguments, WireContext... contexts)
     throws Exception {
 
-    transmit(true, serviceGroup, instanceId, 0, address, arguments, contexts);
+    transmit(true, serviceGroup, voice, 0, address, arguments, contexts);
   }
 
   @Override
-  public Object transmitInOut (String serviceGroup, String instanceId, int timeoutSeconds, Address address, Map<String, Object> arguments, WireContext... contexts)
+  public Object transmitInOut (String serviceGroup, Voice voice, int timeoutSeconds, Address address, Map<String, Object> arguments, WireContext... contexts)
     throws Throwable {
 
-    return transmit(false, serviceGroup, instanceId, timeoutSeconds, address, arguments, contexts).getResult(signalCodec);
+    return transmit(false, serviceGroup, voice, timeoutSeconds, address, arguments, contexts).getResult(signalCodec);
   }
 
-  private TransmissionCallback transmit (boolean inOnly, String serviceGroup, String instanceId, int timeoutSeconds, Address address, Map<String, Object> arguments, WireContext... contexts)
+  private TransmissionCallback transmit (boolean inOnly, String serviceGroup, Voice voice, int timeoutSeconds, Address address, Map<String, Object> arguments, WireContext... contexts)
     throws Exception {
 
     MockMessage message = new MockMessage(signalCodec.encode(new InvocationSignal(inOnly, address, arguments, contexts)));
@@ -120,8 +123,8 @@ public class MockRequestTransport implements RequestTransport {
     message.getProperties().setHeader(WireProperty.CLOCK.getKey(), System.currentTimeMillis());
     message.getProperties().setHeader(WireProperty.SERVICE_GROUP.getKey(), serviceGroup);
 
-    if (instanceId != null) {
-      message.getProperties().setHeader(WireProperty.INSTANCE_ID.getKey(), instanceId);
+    if (voice.getMode().equals(VocalMode.WHISPER)) {
+      message.getProperties().setHeader(WireProperty.INSTANCE_ID.getKey(), ((Whispering)voice).get());
       messageRouter.getWhisperRequestTopic().send(message);
     } else {
       messageRouter.getTalkRequestQueue().send(message);
