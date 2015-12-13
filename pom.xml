@@ -24,7 +24,6 @@
     <connection>scm:git:git://github.com/zenbones/SmallMind.git</connection>
     <developerConnection>scm:git:git@github.com:zenbones/SmallMind.git</developerConnection>
     <url>http://github.com/zenbones/SmallMind.git</url>
-    <tag>smallmind-1.8.7</tag>
   </scm>
   <developers>
     <developer>
