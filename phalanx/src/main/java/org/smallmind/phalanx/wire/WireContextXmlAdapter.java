@@ -42,7 +42,7 @@ import org.smallmind.web.jersey.util.JsonCodec;
 public class WireContextXmlAdapter extends XmlAdapter<Object[], WireContext[]> {
 
   @Override
-  public WireContext[] unmarshal (Object[] objects) throws Exception {
+  public WireContext[] unmarshal (Object[] objects) {
 
     WireContext[] contexts;
     LinkedList<WireContext> contextList = new LinkedList<>();
@@ -73,7 +73,7 @@ public class WireContextXmlAdapter extends XmlAdapter<Object[], WireContext[]> {
   }
 
   @Override
-  public Object[] marshal (WireContext[] wireContexts) throws Exception {
+  public Object[] marshal (WireContext[] wireContexts) {
 
     if (wireContexts == null) {
 
