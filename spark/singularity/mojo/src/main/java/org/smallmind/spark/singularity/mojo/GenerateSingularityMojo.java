@@ -75,6 +75,8 @@ public class GenerateSingularityMojo extends AbstractMojo {
   ArtifactFactory artifactFactory;
   @Parameter(readonly = true, property = "project")
   private MavenProject project;
+  @Parameter
+  private Exclusion[] exclusions;
   @Parameter(defaultValue = "singularity")
   private String singularityBuildDir;
   @Parameter
@@ -119,22 +121,40 @@ public class GenerateSingularityMojo extends AbstractMojo {
     }
 
     for (Artifact artifact : project.getRuntimeArtifacts()) {
-      if (verbose) {
-        getLog().info(String.format("Copying dependency(%s)...", artifact.getFile().getName()));
+
+      boolean excluded = false;
+
+      if ((exclusions != null) && (exclusions.length > 0)) {
+        for (Exclusion exclusion : exclusions) {
+          if (exclusion.matchesArtifact(artifact)) {
+            excluded = true;
+            break;
+          }
+        }
       }
 
-      try {
-
-        JarFile jarFile = new JarFile(artifact.getFile());
-        Enumeration<JarEntry> jarEntryEnum = jarFile.entries();
-
-        while (jarEntryEnum.hasMoreElements()) {
-          singularityIndex.addInverseJarEntry(jarEntryEnum.nextElement().getName(), artifact.getFile().getName());
+      if (excluded) {
+        if (verbose) {
+          getLog().info(String.format("Excluded dependency(%s)...", artifact.getFile().getName()));
+        }
+      } else {
+        if (verbose) {
+          getLog().info(String.format("Copying dependency(%s)...", artifact.getFile().getName()));
         }
 
-        copyToDestination(artifact.getFile(), libraryPath.resolve(artifact.getFile().getName()));
-      } catch (IOException ioException) {
-        throw new MojoExecutionException(String.format("Problem in copying a dependency(%s) into the build directory", artifact), ioException);
+        try {
+
+          JarFile jarFile = new JarFile(artifact.getFile());
+          Enumeration<JarEntry> jarEntryEnum = jarFile.entries();
+
+          while (jarEntryEnum.hasMoreElements()) {
+            singularityIndex.addInverseJarEntry(jarEntryEnum.nextElement().getName(), artifact.getFile().getName());
+          }
+
+          copyToDestination(artifact.getFile(), libraryPath.resolve(artifact.getFile().getName()));
+        } catch (IOException ioException) {
+          throw new MojoExecutionException(String.format("Problem in copying a dependency(%s) into the build directory", artifact), ioException);
+        }
       }
     }
 
