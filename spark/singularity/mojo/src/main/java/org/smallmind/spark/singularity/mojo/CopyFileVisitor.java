@@ -37,6 +37,7 @@ import java.nio.file.FileVisitResult;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.SimpleFileVisitor;
+import java.nio.file.StandardCopyOption;
 import java.nio.file.attribute.BasicFileAttributes;
 import org.smallmind.spark.singularity.boot.SingularityIndex;
 
@@ -71,7 +72,7 @@ public class CopyFileVisitor extends SimpleFileVisitor<Path> {
 
     Path jarPath;
 
-    Files.copy(file, targetPath.resolve(jarPath = sourcePath.relativize(file)));
+    Files.copy(file, targetPath.resolve(jarPath = sourcePath.relativize(file)), StandardCopyOption.REPLACE_EXISTING, StandardCopyOption.COPY_ATTRIBUTES);
     singularityIndex.addFileName(jarPath.toString().replace(System.getProperty("file.separator"), "/"));
 
     return FileVisitResult.CONTINUE;
