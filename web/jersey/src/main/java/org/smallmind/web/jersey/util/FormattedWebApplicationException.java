@@ -35,16 +35,22 @@ package org.smallmind.web.jersey.util;
 import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
+import org.smallmind.web.jersey.fault.Fault;
 
 public class FormattedWebApplicationException extends WebApplicationException {
 
   public FormattedWebApplicationException (Response.Status status, String message, Object... args) {
 
-    this(status, String.format(message, args));
+    this(status, new Fault(String.format(message, args)));
   }
 
-  private FormattedWebApplicationException (Response.Status status, String formattedMessage) {
+  public FormattedWebApplicationException (Response.Status status, Throwable throwable) {
 
-    super(formattedMessage, Response.status(status).type(MediaType.TEXT_PLAIN).entity(formattedMessage).build());
+    this(status, new Fault(throwable, false));
+  }
+
+  public FormattedWebApplicationException (Response.Status status, Fault fault) {
+
+    super(fault.getMessage(), Response.status(status).type(MediaType.APPLICATION_JSON_TYPE).entity(fault).build());
   }
 }

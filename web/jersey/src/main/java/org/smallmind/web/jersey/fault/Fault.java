@@ -39,6 +39,7 @@ import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlElementRef;
 import javax.xml.bind.annotation.XmlRootElement;
+import org.smallmind.scribe.pen.LoggerManager;
 import org.smallmind.web.jersey.util.JsonObject;
 
 @XmlRootElement(name = "fault")
@@ -57,26 +58,34 @@ public class Fault implements Serializable {
 
   }
 
-  public Fault (Throwable throwable)
-    throws IOException {
+  public Fault (String message) {
+
+    this.message = message;
+  }
+
+  public Fault (FaultElement context, String message) {
+
+    this(message);
+
+    this.context = context;
+  }
+
+  public Fault (Throwable throwable) {
 
     this(null, throwable, true);
   }
 
-  public Fault (FaultElement context, Throwable throwable)
-    throws IOException {
+  public Fault (FaultElement context, Throwable throwable) {
 
     this(context, throwable, true);
   }
 
-  public Fault (Throwable throwable, boolean includeNativeEncoding)
-    throws IOException {
+  public Fault (Throwable throwable, boolean includeNativeEncoding) {
 
     this(null, throwable, includeNativeEncoding);
   }
 
-  public Fault (FaultElement context, Throwable throwable, boolean includeNativeEncoding)
-    throws IOException {
+  public Fault (FaultElement context, Throwable throwable, boolean includeNativeEncoding) {
 
     this.context = context;
 
@@ -84,7 +93,11 @@ public class Fault implements Serializable {
     int index = 0;
 
     if (includeNativeEncoding) {
-      nativeObject = new NativeObject(throwable);
+      try {
+        nativeObject = new NativeObject(throwable);
+      } catch (IOException ioException) {
+        LoggerManager.getLogger(Fault.class).error(ioException);
+      }
     }
 
     throwableType = throwable.getClass().getName();
@@ -215,11 +228,14 @@ public class Fault implements Serializable {
     traceBuilder = new StringBuilder();
 
     do {
+
+      String throwableType;
+
       if (prevTrace != null) {
         lineBuilder.append("Caused by: ");
       }
 
-      lineBuilder.append(fault.getThrowableType());
+      lineBuilder.append(((throwableType = fault.getThrowableType()) != null) ? throwableType : "unknown");
       lineBuilder.append(": ");
       lineBuilder.append(fault.getMessage());
       traceBuilder.append(lineBuilder).append(System.getProperty("line.separator"));
