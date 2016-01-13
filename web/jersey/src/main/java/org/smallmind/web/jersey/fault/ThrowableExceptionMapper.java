@@ -32,7 +32,6 @@
  */
 package org.smallmind.web.jersey.fault;
 
-import java.io.IOException;
 import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
@@ -75,12 +74,6 @@ public class ThrowableExceptionMapper implements ExceptionMapper<Throwable> {
       return ((WebApplicationException)throwable).getResponse();
     }
 
-    try {
-
-      return Response.status(500).type(MediaType.APPLICATION_JSON).entity((throwable instanceof FaultWrappingException) ? ((FaultWrappingException)throwable).getFault() : new Fault(throwable)).build();
-    } catch (IOException ioException) {
-
-      return Response.status(500).type(MediaType.TEXT_HTML_TYPE).entity(ioException.getMessage()).build();
-    }
+    return Response.status(500).type(MediaType.APPLICATION_JSON).entity((throwable instanceof FaultWrappingException) ? ((FaultWrappingException)throwable).getFault() : new Fault(throwable)).build();
   }
 }
