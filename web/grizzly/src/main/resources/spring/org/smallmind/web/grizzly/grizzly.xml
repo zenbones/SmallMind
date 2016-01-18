@@ -3,6 +3,13 @@
 
   <bean id="hk2ResourceBeanPostProcessor" class="org.smallmind.web.jersey.spring.HK2ResourceBeanPostProcessor"/>
 
+  <!--
+  <bean id="sslStore" class="org.smallmind.web.grizzly.SSLStore">
+    <property name="password" value="password"/>
+    <property name="resource" value="mycertificate.jks"/>
+  </bean>
+  -->
+
   <bean id="restHttpServer" class="org.smallmind.web.grizzly.GrizzlyInitializingBean">
     <property name="host" value="${grizzly.host}"/>
     <property name="port" value="${grizzly.port}"/>
@@ -18,6 +25,15 @@
         <bean class="org.smallmind.web.jersey.fault.ThrowableTranslationResourceConfigExtension"/>
       </list>
     </property>
+    <!--
+    <property name="sslInfo">
+      <bean class="org.smallmind.web.grizzly.SSLInfo">
+        <property name="port" value="443"/>
+        <property name="keySSLStore" ref="sslStore"/>
+        <property name="trustSSLStore" ref="sslStore"/>
+      </bean>
+    </property>
+    -->
     <!--
     <property name="addOns">
       <list>
