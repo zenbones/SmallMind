@@ -50,8 +50,13 @@ public class URLResource extends AbstractResource {
   }
 
   public InputStream getInputStream ()
-    throws IOException {
+    throws ResourceException {
 
-    return new BufferedInputStream(new URL(getPath()).openStream());
+    try {
+
+      return new BufferedInputStream(new URL(getPath()).openStream());
+    } catch (IOException ioException) {
+      throw new ResourceException(ioException);
+    }
   }
 }

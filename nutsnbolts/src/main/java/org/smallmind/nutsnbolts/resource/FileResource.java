@@ -50,8 +50,13 @@ public class FileResource extends AbstractResource {
   }
 
   public InputStream getInputStream ()
-    throws FileNotFoundException {
+    throws ResourceException {
 
-    return new FileInputStream(new File(getPath()));
+    try {
+
+      return new FileInputStream(new File(getPath()));
+    } catch (FileNotFoundException fileNotFoundException) {
+      throw new ResourceException(fileNotFoundException);
+    }
   }
 }

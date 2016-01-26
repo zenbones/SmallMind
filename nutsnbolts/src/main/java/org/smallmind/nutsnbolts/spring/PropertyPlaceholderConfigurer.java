@@ -42,6 +42,7 @@ import java.util.Map;
 import java.util.SortedMap;
 import java.util.TreeMap;
 import org.smallmind.nutsnbolts.resource.Resource;
+import org.smallmind.nutsnbolts.resource.ResourceException;
 import org.smallmind.nutsnbolts.resource.ResourceParser;
 import org.smallmind.nutsnbolts.resource.ResourceTypeFactory;
 import org.smallmind.nutsnbolts.spring.property.PropertyEntry;
@@ -213,7 +214,7 @@ public class PropertyPlaceholderConfigurer implements BeanFactoryPostProcessor, 
     try {
       locationResource = resourceParser.parseResource(locationExpander.expand(location));
       if ((inputStream = locationResource.getInputStream()) == null) {
-        throw new IOException("No stream available for resource(" + locationResource + ")");
+        throw new ResourceException("No stream available for resource(" + locationResource + ")");
       } else {
 
         PropertyHandler<?> propertyHandler;
@@ -235,7 +236,7 @@ public class PropertyPlaceholderConfigurer implements BeanFactoryPostProcessor, 
         }
       }
     } catch (Exception exception) {
-      if ((!ignoreResourceNotFound) || (!(exception instanceof IOException))) {
+      if ((!ignoreResourceNotFound) || (!(exception instanceof ResourceException))) {
         throw new RuntimeBeansException(exception);
       }
     }
