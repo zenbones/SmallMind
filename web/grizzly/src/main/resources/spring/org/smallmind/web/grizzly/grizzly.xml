@@ -6,7 +6,7 @@
   <!--
   <bean id="sslStore" class="org.smallmind.web.grizzly.SSLStore">
     <property name="password" value="password"/>
-    <property name="resource" value="mycertificate.jks"/>
+    <property name="resource" value="classpath:mycertificate.jks"/>
   </bean>
   -->
 

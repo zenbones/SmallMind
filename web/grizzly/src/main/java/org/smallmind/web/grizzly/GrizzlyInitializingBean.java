@@ -52,6 +52,7 @@ import org.glassfish.grizzly.ssl.SSLEngineConfigurator;
 import org.glassfish.grizzly.websockets.WebSocketEngine;
 import org.glassfish.jersey.servlet.ServletContainer;
 import org.smallmind.nutsnbolts.lang.web.PerApplicationContextFilter;
+import org.smallmind.nutsnbolts.resource.ResourceException;
 import org.smallmind.web.jersey.jackson.JsonResourceConfig;
 import org.smallmind.web.jersey.spring.ExposedApplicationContext;
 import org.smallmind.web.jersey.spring.ResourceConfigExtension;
@@ -154,7 +155,11 @@ public class GrizzlyInitializingBean implements DisposableBean, ApplicationConte
       httpServer.addListener(new NetworkListener("grizzly2", host, port));
 
       if (sslInfo != null) {
-        httpServer.addListener(secureNetworkListener = generateSecureNetworkListener(sslInfo));
+        try {
+          httpServer.addListener(secureNetworkListener = generateSecureNetworkListener(sslInfo));
+        } catch (Exception exception) {
+          throw new GrizzlyInitializationException(exception);
+        }
       }
 
       if ((addOns != null) && (addOns.length > 0)) {
@@ -284,7 +289,8 @@ public class GrizzlyInitializingBean implements DisposableBean, ApplicationConte
     }
   }
 
-  public NetworkListener generateSecureNetworkListener (SSLInfo sslInfo) {
+  public NetworkListener generateSecureNetworkListener (SSLInfo sslInfo)
+    throws IOException, ResourceException {
 
     NetworkListener secureListener = new NetworkListener("grizzly2Secure", host, sslInfo.getPort());
     SSLContextConfigurator sslContextConfigurator = new SSLContextConfigurator();
@@ -292,12 +298,12 @@ public class GrizzlyInitializingBean implements DisposableBean, ApplicationConte
     secureListener.setSecure(true);
 
     if (sslInfo.getKeySSLStore() != null) {
-      sslContextConfigurator.setKeyStoreFile(sslInfo.getKeySSLStore().getFile());
+      sslContextConfigurator.setKeyStoreBytes(sslInfo.getKeySSLStore().getBytes());
       sslContextConfigurator.setKeyStorePass(sslInfo.getKeySSLStore().getPassword());
     }
 
     if (sslInfo.getTrustSSLStore() != null) {
-      sslContextConfigurator.setTrustStoreFile(sslInfo.getTrustSSLStore().getFile());
+      sslContextConfigurator.setTrustStoreBytes(sslInfo.getTrustSSLStore().getBytes());
       sslContextConfigurator.setTrustStorePass(sslInfo.getTrustSSLStore().getPassword());
     }
 

@@ -32,22 +32,37 @@
  */
 package org.smallmind.web.grizzly;
 
-import java.net.URL;
+import java.io.IOException;
+import java.io.InputStream;
+import org.smallmind.nutsnbolts.resource.Resource;
+import org.smallmind.nutsnbolts.resource.ResourceException;
+import org.smallmind.nutsnbolts.resource.ResourceParser;
+import org.smallmind.nutsnbolts.resource.ResourceTypeFactory;
 
 public class SSLStore {
+
+  private static final ResourceParser RESOURCE_PARSER = new ResourceParser(new ResourceTypeFactory());
 
   private String resource;
   private String password;
 
-  public String getFile () {
+  public byte[] getBytes ()
+    throws IOException, ResourceException {
 
-    URL resourceURL;
+    Resource resourceImpl = RESOURCE_PARSER.parseResource(resource);
+    byte[] resourceBuffer;
 
-    if ((resourceURL = Thread.currentThread().getContextClassLoader().getResource(resource)) == null) {
-      throw new GrizzlyInitializationException("Missing keystore resource(%s)", resource);
+    try (InputStream resourceInputStream = resourceImpl.getInputStream()) {
+
+      resourceBuffer = new byte[resourceInputStream.available()];
+      int bytesRead = 0;
+
+      while (bytesRead < resourceBuffer.length) {
+        bytesRead += resourceInputStream.read(resourceBuffer, bytesRead, resourceBuffer.length - bytesRead);
+      }
     }
 
-    return resourceURL.getFile();
+    return resourceBuffer;
   }
 
   public String getResource () {

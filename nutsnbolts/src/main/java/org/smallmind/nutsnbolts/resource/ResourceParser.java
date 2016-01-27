@@ -40,7 +40,7 @@ public class ResourceParser {
 
   public ResourceParser (ResourceFactory... factories) {
 
-    factoryMap = new HashMap<ResourceSchemes, ResourceFactory>();
+    factoryMap = new HashMap<>();
 
     if (factories != null) {
       for (ResourceFactory factory : factories) {
