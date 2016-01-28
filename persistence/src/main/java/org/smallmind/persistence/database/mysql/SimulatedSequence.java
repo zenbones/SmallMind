@@ -75,6 +75,7 @@ public class SimulatedSequence extends Sequence {
       synchronized (DATA_MAP) {
         if ((sequenceData = DATA_MAP.get(name)) == null) {
           DATA_MAP.put(name, sequenceData = new SequenceData(name));
+          sequenceData.insertName();
         }
       }
     }
@@ -87,13 +88,15 @@ public class SimulatedSequence extends Sequence {
     private final AtomicLong atomicBoundary;
     private final AtomicLong atomicOffset = new AtomicLong(0);
     private final String name;
-    private final String sequenceSql;
+    private final String insertSql;
+    private final String updateSql;
 
     public SequenceData (String name) {
 
       this.name = name;
 
-      sequenceSql = "UPDATE " + tableName + " SET next_val=LAST_INSERT_ID(next_val + " + incrementBy + ") where name = '" + name + "'";
+      insertSql = "INSERT IGNORE INTO " + tableName + " (name, next_val) VALUES('" + name + "', 0)";
+      updateSql = "UPDATE " + tableName + " SET next_val=LAST_INSERT_ID(next_val + " + incrementBy + ") where name='" + name + "'";
       atomicBoundary = new AtomicLong(getLastInsertId());
     }
 
@@ -105,21 +108,18 @@ public class SimulatedSequence extends Sequence {
         if (incrementBy == 1) {
 
           nextValue = getLastInsertId();
-        }
-        else {
+        } else {
 
           long currentOffset;
 
           do {
             if ((currentOffset = atomicOffset.incrementAndGet()) < incrementBy) {
               nextValue = atomicBoundary.get() + currentOffset;
-            }
-            else if (currentOffset == incrementBy) {
+            } else if (currentOffset == incrementBy) {
               try {
                 atomicBoundary.set(nextValue = getLastInsertId());
                 atomicOffset.set(0);
-              }
-              catch (SimulatedSequenceDisasterException simulatedSequenceDisasterException) {
+              } catch (SimulatedSequenceDisasterException simulatedSequenceDisasterException) {
                 LoggerManager.getLogger(SimulatedSequence.class).error(simulatedSequenceDisasterException);
                 atomicOffset.set(incrementBy - 1);
               }
@@ -131,45 +131,39 @@ public class SimulatedSequence extends Sequence {
       return nextValue;
     }
 
+    private void insertName () {
+
+      try (Connection connection = dataSource.getConnection(); Statement statement = connection.createStatement(ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_READ_ONLY)) {
+        statement.executeUpdate(insertSql);
+      } catch (SQLException sqlException) {
+        throw new SimulatedSequenceDisasterException(sqlException, "Unable to create sequence(%s)", name);
+      }
+    }
+
     private long getLastInsertId () {
 
-      Connection connection = null;
-      Statement statement = null;
       ResultSet resultSet = null;
 
       try {
-        try {
-          connection = dataSource.getConnection();
-          statement = connection.createStatement(ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_READ_ONLY);
-          statement.executeUpdate(sequenceSql, Statement.RETURN_GENERATED_KEYS);
+        try (Connection connection = dataSource.getConnection(); Statement statement = connection.createStatement(ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_READ_ONLY)) {
+          statement.executeUpdate(updateSql, Statement.RETURN_GENERATED_KEYS);
 
           resultSet = statement.getGeneratedKeys();
           if (resultSet.next()) {
             return resultSet.getLong(1);
-          }
-          else {
+          } else {
             throw new SimulatedSequenceDisasterException("No sequence(%s) has been generated", name);
           }
-        }
-        finally {
+        } finally {
           if (resultSet != null) {
             resultSet.close();
           }
-          if (statement != null) {
-            statement.close();
-          }
-          if (connection != null) {
-            connection.close();
-          }
         }
-      }
-      catch (SimulatedSequenceDisasterException simulatedSequenceDisasterException) {
+      } catch (SimulatedSequenceDisasterException simulatedSequenceDisasterException) {
         throw simulatedSequenceDisasterException;
-      }
-      catch (SQLException sqlException) {
+      } catch (SQLException sqlException) {
         throw new SimulatedSequenceDisasterException(sqlException, "Unable to update sequence(%s)", name);
-      }
-      catch (Throwable throwable) {
+      } catch (Throwable throwable) {
         throw new SimulatedSequenceDisasterException(throwable, "Unknown exception encountered in sequence(%s) update", name);
       }
     }
