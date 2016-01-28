@@ -3,13 +3,6 @@
 
   <bean id="hk2ResourceBeanPostProcessor" class="org.smallmind.web.jersey.spring.HK2ResourceBeanPostProcessor"/>
 
-  <!--
-  <bean id="sslStore" class="org.smallmind.web.grizzly.SSLStore">
-    <property name="password" value="password"/>
-    <property name="resource" value="classpath:mycertificate.jks"/>
-  </bean>
-  -->
-
   <bean id="restHttpServer" class="org.smallmind.web.grizzly.GrizzlyInitializingBean">
     <property name="host" value="${grizzly.host}"/>
     <property name="port" value="${grizzly.port}"/>
@@ -28,9 +21,13 @@
     <!--
     <property name="sslInfo">
       <bean class="org.smallmind.web.grizzly.SSLInfo">
+        <property name="keySSLStore">
+          <bean class="org.smallmind.web.grizzly.SSLStore">
+            <property name="resource" value="classpath:com/mydomain/mycertificate.jks"/>
+            <property name="password" value="changeit"/>
+          </bean>
+        </property>
         <property name="port" value="443"/>
-        <property name="keySSLStore" ref="sslStore"/>
-        <property name="trustSSLStore" ref="sslStore"/>
       </bean>
     </property>
     -->
@@ -49,12 +46,6 @@
     <property name="servletClass" value="org.jolokia.http.AgentServlet"/>
     <property name="urlPattern" value="/jolokia/*"/>
   </bean>
-  -->
-
-  <!--
-  keytool -genkey -alias keyAlias -keyalg RSA -keysize 2048 -keypass changeit -storepass changeit -keystore keystore.jks
-  keytool -export -alias keyAlias -storepass changeit -keystore keystore.jks -file server.cer
-  keytool -import -alias trustAlias -keypass changeit -keystore server.jks -file server.cer
   -->
 
   <!-- WebSocketEngine.getEngine().register("/websocket", "/myapp/*", new ChannelWebSocketApplication()); -->

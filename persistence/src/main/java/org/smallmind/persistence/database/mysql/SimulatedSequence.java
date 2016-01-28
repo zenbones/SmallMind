@@ -44,7 +44,7 @@ import org.smallmind.scribe.pen.LoggerManager;
 
 public class SimulatedSequence extends Sequence {
 
-  private final ConcurrentHashMap<String, SequenceData> DATA_MAP = new ConcurrentHashMap<String, SequenceData>();
+  private final ConcurrentHashMap<String, SequenceData> DATA_MAP = new ConcurrentHashMap<>();
   private final DataSource dataSource;
   private final String tableName;
   private final int incrementBy;
