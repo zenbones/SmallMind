@@ -40,6 +40,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicLong;
 import javax.sql.DataSource;
 import org.smallmind.persistence.database.Sequence;
+import org.smallmind.persistence.database.SequenceManager;
 import org.smallmind.scribe.pen.LoggerManager;
 
 public class SimulatedSequence extends Sequence {

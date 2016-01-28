@@ -34,11 +34,10 @@ package org.smallmind.persistence.database;
 
 import java.util.HashMap;
 import java.util.concurrent.atomic.AtomicLong;
-import org.smallmind.persistence.database.mysql.SequenceManager;
 
 public class InMemorySequence extends Sequence {
 
-  private final HashMap<String, AtomicLong> counterMap = new HashMap<String, AtomicLong>();
+  private final HashMap<String, AtomicLong> counterMap = new HashMap<>();
 
   public void register () {
 

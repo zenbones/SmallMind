@@ -32,8 +32,6 @@
  */
 package org.smallmind.persistence.database;
 
-import org.smallmind.persistence.database.mysql.SequenceManager;
-
 public abstract class Sequence {
 
   public void register () {
