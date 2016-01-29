@@ -16,6 +16,7 @@
     <module>jersey</module>
     <module>jaxws</module>
     <module>websocket</module>
+    <module>reverse</module>
     <module>oauth</module>
     <module>schema</module>
   </modules>
