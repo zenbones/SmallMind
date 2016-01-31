@@ -83,6 +83,7 @@ public class GrizzlyInitializingBean implements DisposableBean, ApplicationConte
   private String soapPath = "/soap";
   private String webSocketPath = "/websocket";
   private int port = 80;
+  private boolean allowInsecure = true;
   private boolean debug = false;
 
   public void setHost (String host) {
@@ -135,6 +136,11 @@ public class GrizzlyInitializingBean implements DisposableBean, ApplicationConte
     this.addOns = addOns;
   }
 
+  public void setAllowInsecure (boolean allowInsecure) {
+
+    this.allowInsecure = allowInsecure;
+  }
+
   public void setDebug (boolean debug) {
 
     this.debug = debug;
@@ -152,7 +158,10 @@ public class GrizzlyInitializingBean implements DisposableBean, ApplicationConte
       }
 
       httpServer = new HttpServer();
-      httpServer.addListener(new NetworkListener("grizzly2", host, port));
+
+      if (allowInsecure) {
+        httpServer.addListener(new NetworkListener("grizzly2", host, port));
+      }
 
       if (sslInfo != null) {
         try {
