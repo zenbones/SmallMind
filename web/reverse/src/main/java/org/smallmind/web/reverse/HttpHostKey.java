@@ -32,6 +32,6 @@
  */
 package org.smallmind.web.reverse;
 
-public interface HttpHostKey {
+public interface HttpHostKey<H extends HttpHostKey<H>> extends Comparable<H> {
 
 }

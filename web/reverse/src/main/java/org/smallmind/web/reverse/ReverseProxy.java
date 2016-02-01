@@ -45,6 +45,11 @@ import org.apache.http.nio.reactor.ConnectingIOReactor;
 import org.apache.http.nio.reactor.IOReactorException;
 import org.apache.http.nio.reactor.ListeningIOReactor;
 import org.apache.http.protocol.ImmutableHttpProcessor;
+import org.apache.http.protocol.RequestConnControl;
+import org.apache.http.protocol.RequestContent;
+import org.apache.http.protocol.RequestExpectContinue;
+import org.apache.http.protocol.RequestTargetHost;
+import org.apache.http.protocol.RequestUserAgent;
 import org.apache.http.protocol.ResponseConnControl;
 import org.apache.http.protocol.ResponseContent;
 import org.apache.http.protocol.ResponseDate;
@@ -55,19 +60,14 @@ public class ReverseProxy {
 
   private final ConnectingIOReactorWorker connectingIOReactorWorker;
   private final ListeningIOReactorWorker listeningIOReactorWorker;
-  private final HttpHostDictionary httpHostDictionary;
-  private final int proxyPort;
-  private final int concurrencyLevel;
 
   public ReverseProxy (int proxyPort, int concurrencyLevel, HttpHostDictionary httpHostDictionary)
     throws IOReactorException {
 
-    this.proxyPort = proxyPort;
-    this.concurrencyLevel = concurrencyLevel;
-    this.httpHostDictionary = httpHostDictionary;
+    IOReactorConfig ioReactorConfig = IOReactorConfig.custom().setIoThreadCount(1).setSoTimeout(3000).setConnectTimeout(3000).build();
 
-    new Thread(connectingIOReactorWorker = new ConnectingIOReactorWorker()).start();
-    new Thread(listeningIOReactorWorker = new ListeningIOReactorWorker(connectingIOReactorWorker.getConnectingIOReactor())).start();
+    new Thread(connectingIOReactorWorker = new ConnectingIOReactorWorker(ioReactorConfig)).start();
+    new Thread(listeningIOReactorWorker = new ListeningIOReactorWorker(proxyPort, concurrencyLevel, ioReactorConfig, httpHostDictionary)).start();
   }
 
   public void shutdown () {
@@ -88,10 +88,10 @@ public class ReverseProxy {
 
     private final ConnectingIOReactor connectingIOReactor;
 
-    public ConnectingIOReactorWorker ()
+    public ConnectingIOReactorWorker (IOReactorConfig ioReactorConfig)
       throws IOReactorException {
 
-      connectingIOReactor = new DefaultConnectingIOReactor(IOReactorConfig.custom().setIoThreadCount(1).setSoTimeout(3000).setConnectTimeout(3000).build());
+      connectingIOReactor = new DefaultConnectingIOReactor(ioReactorConfig);
     }
 
     public ConnectingIOReactor getConnectingIOReactor () {
@@ -121,18 +121,26 @@ public class ReverseProxy {
   private class ListeningIOReactorWorker implements Runnable {
 
     private final ListeningIOReactor listeningIOReactor;
-    private final RequestHandlerMapper requestHandlerMapper;
+    private final HttpAsyncRequester httpAsyncRequester;
+    private final ProxyConnPool connPool;
+    private final HttpHostDictionary httpHostDictionary;
+    private final int proxyPort;
 
-    public ListeningIOReactorWorker (ConnectingIOReactor connectingIOReactor)
+    public ListeningIOReactorWorker (int proxyPort, int concurrencyLevel, IOReactorConfig config, HttpHostDictionary httpHostDictionary)
       throws IOReactorException {
 
-      ProxyConnPool proxyConnPool = new ProxyConnPool(connectingIOReactor, ConnectionConfig.DEFAULT);
+      this.proxyPort = proxyPort;
+      this.httpHostDictionary = httpHostDictionary;
 
-      proxyConnPool.setMaxTotal(concurrencyLevel);
-      proxyConnPool.setDefaultMaxPerRoute(concurrencyLevel);
+      listeningIOReactor = new DefaultListeningIOReactor(config);
 
-      listeningIOReactor = new DefaultListeningIOReactor(IOReactorConfig.custom().setIoThreadCount(1).setSoTimeout(3000).setConnectTimeout(3000).build());
-      requestHandlerMapper = new RequestHandlerMapper(httpHostDictionary, new HttpAsyncRequester(new ImmutableHttpProcessor(new ResponseDate(), new ResponseServer("Test/1.1"), new ResponseContent(), new ResponseConnControl()), new ProxyOutgoingConnectionReuseStrategy()), proxyConnPool);
+      httpAsyncRequester = new HttpAsyncRequester(new ImmutableHttpProcessor(new RequestContent(), new RequestTargetHost(), new RequestConnControl(), new RequestUserAgent("Test/1.1"), new RequestExpectContinue(true)), new ProxyOutgoingConnectionReuseStrategy());
+
+      connPool = new ProxyConnPool(connectingIOReactorWorker.getConnectingIOReactor(), ConnectionConfig.DEFAULT);
+      connPool.setMaxTotal(concurrencyLevel);
+      connPool.setDefaultMaxPerRoute(concurrencyLevel);
+
+      listeningIOReactor.listen(new InetSocketAddress(proxyPort));
     }
 
     public void stop ()
@@ -145,8 +153,7 @@ public class ReverseProxy {
     public void run () {
 
       try {
-        listeningIOReactor.listen(new InetSocketAddress(proxyPort));
-        listeningIOReactor.execute(new DefaultHttpServerIODispatch(new ProxyServiceHandler(new ImmutableHttpProcessor(new ResponseDate(), new ResponseServer("Test/1.1"), new ResponseContent(), new ResponseConnControl()), new ProxyIncomingConnectionReuseStrategy(), requestHandlerMapper), ConnectionConfig.DEFAULT));
+        listeningIOReactor.execute(new DefaultHttpServerIODispatch(new ProxyServiceHandler(new ImmutableHttpProcessor(new ResponseDate(), new ResponseServer("Test/1.1"), new ResponseContent(), new ResponseConnControl()), new ProxyIncomingConnectionReuseStrategy(), new RequestHandlerMapper(httpHostDictionary, httpAsyncRequester, connPool)), ConnectionConfig.DEFAULT));
       } catch (Exception exception) {
         LoggerManager.getLogger(ListeningIOReactorWorker.class).error(exception);
       } finally {
