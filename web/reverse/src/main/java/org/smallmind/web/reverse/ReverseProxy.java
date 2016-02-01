@@ -61,13 +61,13 @@ public class ReverseProxy {
   private final ConnectingIOReactorWorker connectingIOReactorWorker;
   private final ListeningIOReactorWorker listeningIOReactorWorker;
 
-  public ReverseProxy (int proxyPort, int concurrencyLevel, HttpHostDictionary httpHostDictionary)
+  public ReverseProxy (int proxyPort, int concurrencyLimit, HttpHostDictionary httpHostDictionary)
     throws IOReactorException {
 
     IOReactorConfig ioReactorConfig = IOReactorConfig.custom().setIoThreadCount(1).setSoTimeout(3000).setConnectTimeout(3000).build();
 
     new Thread(connectingIOReactorWorker = new ConnectingIOReactorWorker(ioReactorConfig)).start();
-    new Thread(listeningIOReactorWorker = new ListeningIOReactorWorker(proxyPort, concurrencyLevel, ioReactorConfig, httpHostDictionary)).start();
+    new Thread(listeningIOReactorWorker = new ListeningIOReactorWorker(proxyPort, concurrencyLimit, ioReactorConfig, httpHostDictionary)).start();
   }
 
   public void shutdown () {
@@ -126,7 +126,7 @@ public class ReverseProxy {
     private final HttpHostDictionary httpHostDictionary;
     private final int proxyPort;
 
-    public ListeningIOReactorWorker (int proxyPort, int concurrencyLevel, IOReactorConfig config, HttpHostDictionary httpHostDictionary)
+    public ListeningIOReactorWorker (int proxyPort, int concurrencyLimit, IOReactorConfig config, HttpHostDictionary httpHostDictionary)
       throws IOReactorException {
 
       this.proxyPort = proxyPort;
@@ -137,8 +137,8 @@ public class ReverseProxy {
       httpAsyncRequester = new HttpAsyncRequester(new ImmutableHttpProcessor(new RequestContent(), new RequestTargetHost(), new RequestConnControl(), new RequestUserAgent("Test/1.1"), new RequestExpectContinue(true)), new ProxyOutgoingConnectionReuseStrategy());
 
       connPool = new ProxyConnPool(connectingIOReactorWorker.getConnectingIOReactor(), ConnectionConfig.DEFAULT);
-      connPool.setMaxTotal(concurrencyLevel);
-      connPool.setDefaultMaxPerRoute(concurrencyLevel);
+      connPool.setMaxTotal(concurrencyLimit);
+      connPool.setDefaultMaxPerRoute(concurrencyLimit);
 
       listeningIOReactor.listen(new InetSocketAddress(proxyPort));
     }
