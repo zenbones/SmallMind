@@ -51,7 +51,7 @@ public abstract class NamedMetric<M extends Metric<M>> implements InvocationHand
     this.metric = metric;
 
     metricAddress = new MetricAddress(domain, properties);
-    proxyMetric = metric.getMetricClass().cast(Proxy.newProxyInstance(NamedMetric.class.getClassLoader(), new Class[] {metric.getMetricClass()}, this));
+    proxyMetric = metric.getMetricClass().cast(Proxy.newProxyInstance(NamedMetric.class.getClassLoader(), new Class[]{metric.getMetricClass()}, this));
   }
 
   public abstract Method[] getUpdatingMethods ();
@@ -66,30 +66,21 @@ public abstract class NamedMetric<M extends Metric<M>> implements InvocationHand
     throws Throwable {
 
     MetricContext metricContext;
-    boolean pushed = false;
+    Object result = method.invoke(metric, args);
 
     if ((metricContext = InstrumentationManager.getMetricContext()) != null) {
       for (Method updatingMethod : getUpdatingMethods()) {
         if (method.equals(updatingMethod)) {
-          pushed = metricContext.pushSnapshot(metricAddress);
-          break;
+          metricContext.pushSnapshot(metricAddress);
+          try {
+            InstrumentationManager.getMetricRegistry().fireMetricEvent(new MetricEvent(metric, metricAddress, method, args));
+          } finally {
+            metricContext.popSnapshot();
+          }
         }
       }
     }
 
-    try {
-
-      Object result;
-
-      result = method.invoke(metric, args);
-      InstrumentationManager.getMetricRegistry().fireMetricEvent(new MetricEvent(metric, metricAddress, method, args));
-
-      return result;
-    }
-    finally {
-      if (pushed) {
-        metricContext.popSnapshot();
-      }
-    }
+    return result;
   }
 }

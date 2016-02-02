@@ -76,7 +76,6 @@ public class SimulatedSequence extends Sequence {
       synchronized (DATA_MAP) {
         if ((sequenceData = DATA_MAP.get(name)) == null) {
           DATA_MAP.put(name, sequenceData = new SequenceData(name));
-          sequenceData.insertName();
         }
       }
     }
@@ -98,6 +97,8 @@ public class SimulatedSequence extends Sequence {
 
       insertSql = "INSERT IGNORE INTO " + tableName + " (name, next_val) VALUES('" + name + "', 0)";
       updateSql = "UPDATE " + tableName + " SET next_val=LAST_INSERT_ID(next_val + " + incrementBy + ") where name='" + name + "'";
+
+      insertName();
       atomicBoundary = new AtomicLong(getLastInsertId());
     }
 
