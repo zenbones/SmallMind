@@ -136,6 +136,7 @@ public class SimulatedSequence extends Sequence {
     private void insertName () {
 
       try (Connection connection = dataSource.getConnection(); Statement statement = connection.createStatement(ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_READ_ONLY)) {
+        connection.setAutoCommit(true);
         statement.executeUpdate(insertSql);
       } catch (SQLException sqlException) {
         throw new SimulatedSequenceDisasterException(sqlException, "Unable to create sequence(%s)", name);
@@ -144,21 +145,15 @@ public class SimulatedSequence extends Sequence {
 
     private long getLastInsertId () {
 
-      ResultSet resultSet = null;
+      try (Connection connection = dataSource.getConnection(); Statement statement = connection.createStatement(ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_READ_ONLY)) {
+        connection.setAutoCommit(true);
+        statement.executeUpdate(updateSql, Statement.RETURN_GENERATED_KEYS);
 
-      try {
-        try (Connection connection = dataSource.getConnection(); Statement statement = connection.createStatement(ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_READ_ONLY)) {
-          statement.executeUpdate(updateSql, Statement.RETURN_GENERATED_KEYS);
-
-          resultSet = statement.getGeneratedKeys();
+        try (ResultSet resultSet = statement.getGeneratedKeys()) {
           if (resultSet.next()) {
             return resultSet.getLong(1);
           } else {
             throw new SimulatedSequenceDisasterException("No sequence(%s) has been generated", name);
-          }
-        } finally {
-          if (resultSet != null) {
-            resultSet.close();
           }
         }
       } catch (SimulatedSequenceDisasterException simulatedSequenceDisasterException) {
