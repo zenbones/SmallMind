@@ -32,39 +32,33 @@
  */
 package org.smallmind.instrument;
 
-import java.util.concurrent.TimeUnit;
 import org.smallmind.instrument.config.MetricConfigurationProvider;
 
-public abstract class ChronometerInstrumentAndReturn<T> extends InstrumentAndReturn<Chronometer, T> {
+public abstract class DecrementingTallyInstrumentAndReturn<T> extends InstrumentAndReturn<Tally, T> {
 
-  public ChronometerInstrumentAndReturn (MetricConfigurationProvider provider, MetricProperty... properties) {
+  public DecrementingTallyInstrumentAndReturn (MetricConfigurationProvider provider, MetricProperty... properties) {
 
-    super(((provider == null) || (provider.getMetricConfiguration() == null) || (!provider.getMetricConfiguration().isInstrumented())) ? null : new InstrumentationArguments<>(Metrics.buildChronometer(provider.getMetricConfiguration().getSamples(), TimeUnit.MILLISECONDS, provider.getMetricConfiguration().getTickInterval(), provider.getMetricConfiguration().getTickTimeUnit()), provider.getMetricConfiguration().getMetricDomain().getDomain(), properties));
+    super(((provider == null) || (provider.getMetricConfiguration() == null) || (!provider.getMetricConfiguration().isInstrumented())) ? null : new InstrumentationArguments<>(Metrics.buildTally(0), provider.getMetricConfiguration().getMetricDomain().getDomain(), properties));
   }
 
-  public ChronometerInstrumentAndReturn (Metrics.MetricBuilder<Chronometer> builder, String domain, MetricProperty... properties) {
+  public DecrementingTallyInstrumentAndReturn (Metrics.MetricBuilder<Tally> builder, String domain, MetricProperty... properties) {
 
     super(new InstrumentationArguments<>(builder, domain, properties));
   }
 
-  public abstract T withChronometer ()
+  public abstract T withTally ()
     throws Exception;
 
   @Override
-  public final T with (Chronometer chronometer)
+  public final T with (Tally tally)
     throws Exception {
 
     T result;
-    long startTime = 0;
 
-    if (chronometer != null) {
-      startTime = chronometer.getClock().getTimeNanoseconds();
-    }
+    result = withTally();
 
-    result = withChronometer();
-
-    if (chronometer != null) {
-      chronometer.update(chronometer.getLatencyTimeUnit().convert(chronometer.getClock().getTimeNanoseconds() - startTime, TimeUnit.NANOSECONDS));
+    if (tally != null) {
+      tally.dec();
     }
 
     return result;
