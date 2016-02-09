@@ -65,19 +65,23 @@ public abstract class NamedMetric<M extends Metric<M>> implements InvocationHand
   public Object invoke (Object proxy, Method method, Object[] args)
     throws Throwable {
 
-    MetricContext metricContext;
-    Object result = method.invoke(metric, args);
+    MetricContext metricContext = InstrumentationManager.getMetricContext();
+    Object result;
 
-    if ((metricContext = InstrumentationManager.getMetricContext()) != null) {
+    if (metricContext != null) {
+      metricContext.pushSnapshot(metricAddress);
+    }
+    try {
+      result = method.invoke(metric, args);
       for (Method updatingMethod : getUpdatingMethods()) {
         if (method.equals(updatingMethod)) {
-          metricContext.pushSnapshot(metricAddress);
-          try {
-            InstrumentationManager.getMetricRegistry().fireMetricEvent(new MetricEvent(metric, metricAddress, method, args));
-          } finally {
-            metricContext.popSnapshot();
-          }
+          InstrumentationManager.getMetricRegistry().fireMetricEvent(new MetricEvent(metric, metricAddress, method, args));
+          break;
         }
+      }
+    } finally {
+      if (metricContext != null) {
+        metricContext.popSnapshot();
       }
     }
 
