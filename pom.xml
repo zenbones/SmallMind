@@ -82,6 +82,9 @@
                 </goals>
               </execution>
             </executions>
+            <configuration>
+              <passphrase>${gpg.passphrase}</passphrase>
+            </configuration>
           </plugin>
         </plugins>
       </build>
