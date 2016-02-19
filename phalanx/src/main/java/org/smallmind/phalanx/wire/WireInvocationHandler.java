@@ -174,6 +174,9 @@ public class WireInvocationHandler implements InvocationHandler {
 
       return null;
     } else {
+      if (voice.getMode().equals(VocalMode.SHOUT)) {
+        throw new ServiceDefinitionException("The method(%s) in service interface(%s) is marked as @Shout but is not marked @InOnly", method.getName(), serviceInterface.getName());
+      }
 
       InOut inOut = method.getAnnotation(InOut.class);
 
