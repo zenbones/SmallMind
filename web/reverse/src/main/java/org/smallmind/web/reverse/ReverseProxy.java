@@ -59,6 +59,7 @@ import org.smallmind.scribe.pen.LoggerManager;
 public class ReverseProxy {
 
   private final ConnectingIOReactorWorker connectingIOReactorWorker;
+
   private final ListeningIOReactorWorker listeningIOReactorWorker;
 
   public ReverseProxy (int proxyPort, int concurrencyLimit, HttpHostDictionary httpHostDictionary)
@@ -121,15 +122,16 @@ public class ReverseProxy {
   private class ListeningIOReactorWorker implements Runnable {
 
     private final ListeningIOReactor listeningIOReactor;
+
     private final HttpAsyncRequester httpAsyncRequester;
+
     private final ProxyConnPool connPool;
+
     private final HttpHostDictionary httpHostDictionary;
-    private final int proxyPort;
 
     public ListeningIOReactorWorker (int proxyPort, int concurrencyLimit, IOReactorConfig config, HttpHostDictionary httpHostDictionary)
       throws IOReactorException {
 
-      this.proxyPort = proxyPort;
       this.httpHostDictionary = httpHostDictionary;
 
       listeningIOReactor = new DefaultListeningIOReactor(config);
