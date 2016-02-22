@@ -155,7 +155,7 @@ public class RequestMessageRouter extends MessageRouter {
                                             .contentType(signalCodec.getContentType())
                                             .messageId(SnowflakeId.newInstance().generateDottedString())
                                             .timestamp(new Date())
-                                            .expiration(String.valueOf(ttlSeconds * 1000 * 3))
+                                            .expiration(String.valueOf(ttlSeconds * 1000))
                                             .headers(headerMap).build();
 
         return new RabbitMQMessage(properties, signalCodec.encode(new InvocationSignal(inOnly, address, arguments, contexts)));
