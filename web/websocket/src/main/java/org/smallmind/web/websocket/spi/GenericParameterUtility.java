@@ -34,13 +34,11 @@ package org.smallmind.web.websocket.spi;
 
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
-import javax.websocket.Decoder;
 
 public class GenericParameterUtility {
 
   public static Class<?> getTypeParameter (Class<?> objectClass, Class<?> targetInterface) {
 
-    Decoder d;
     Class<?> currentClass = objectClass;
 
     do {
