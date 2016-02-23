@@ -32,6 +32,7 @@
  */
 package org.smallmind.web.grizzly;
 
+import java.io.File;
 import java.io.IOException;
 import java.net.BindException;
 import java.util.EnumSet;
@@ -45,6 +46,7 @@ import org.glassfish.grizzly.http.server.CLStaticHttpHandler;
 import org.glassfish.grizzly.http.server.HttpHandler;
 import org.glassfish.grizzly.http.server.HttpServer;
 import org.glassfish.grizzly.http.server.NetworkListener;
+import org.glassfish.grizzly.http.server.StaticHttpHandler;
 import org.glassfish.grizzly.jaxws.JaxwsHandler;
 import org.glassfish.grizzly.servlet.WebappContext;
 import org.glassfish.grizzly.ssl.SSLContextConfigurator;
@@ -75,6 +77,7 @@ public class GrizzlyInitializingBean implements DisposableBean, ApplicationConte
   private LinkedList<WebSocketApplicationInstaller> webSocketApplicationInstallerList = new LinkedList<>();
   private ResourceConfigExtension[] resourceConfigExtensions;
   private AddOn[] addOns;
+  private File[] documentRoots;
   private SSLInfo sslInfo;
   private String host;
   private String contextPath = "/context";
@@ -124,6 +127,11 @@ public class GrizzlyInitializingBean implements DisposableBean, ApplicationConte
   public void setWebSocketPath (String webSocketPath) {
 
     this.webSocketPath = webSocketPath;
+  }
+
+  public void setDocumentRoots (File[] documentRoots) {
+
+    this.documentRoots = documentRoots;
   }
 
   public void setResourceConfigExtensions (ResourceConfigExtension[] resourceConfigExtensions) {
@@ -179,6 +187,17 @@ public class GrizzlyInitializingBean implements DisposableBean, ApplicationConte
       }
 
       httpServer.getServerConfiguration().addHttpHandler(new CLStaticHttpHandler(GrizzlyInitializingBean.class.getClassLoader(), "/"), staticPath);
+
+      if ((documentRoots != null) && (documentRoots.length > 0)) {
+
+        String[] absolutePaths = new String[documentRoots.length];
+
+        for (int index = 0; index < documentRoots.length; index++) {
+          absolutePaths[index] = documentRoots[index].getAbsolutePath();
+        }
+
+        httpServer.getServerConfiguration().addHttpHandler(new StaticHttpHandler(absolutePaths));
+      }
 
       WebappContext webappContext = new WebappContext("Grizzly Application Context", contextPath);
       webappContext.addServlet("JAX-RS Application", new ServletContainer(new JsonResourceConfig(ExposedApplicationContext.getApplicationContext(), resourceConfigExtensions))).addMapping(restPath + "/*");
