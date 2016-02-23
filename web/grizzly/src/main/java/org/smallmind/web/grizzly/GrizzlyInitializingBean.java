@@ -81,6 +81,7 @@ public class GrizzlyInitializingBean implements DisposableBean, ApplicationConte
   private SSLInfo sslInfo;
   private String host;
   private String contextPath = "/context";
+  private String documentPath = "/document";
   private String staticPath = "/static";
   private String restPath = "/rest";
   private String soapPath = "/soap";
@@ -107,6 +108,11 @@ public class GrizzlyInitializingBean implements DisposableBean, ApplicationConte
   public void setContextPath (String contextPath) {
 
     this.contextPath = contextPath;
+  }
+
+  public void setDocumentPath (String documentPath) {
+
+    this.documentPath = documentPath;
   }
 
   public void setStaticPath (String staticPath) {
@@ -196,7 +202,7 @@ public class GrizzlyInitializingBean implements DisposableBean, ApplicationConte
           absolutePaths[index] = documentRoots[index].getAbsolutePath();
         }
 
-        httpServer.getServerConfiguration().addHttpHandler(new StaticHttpHandler(absolutePaths));
+        httpServer.getServerConfiguration().addHttpHandler(new StaticHttpHandler(absolutePaths), documentPath);
       }
 
       WebappContext webappContext = new WebappContext("Grizzly Application Context", contextPath);
