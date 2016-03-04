@@ -69,7 +69,7 @@ public class HectorFileSeekingBeanFactoryPostProcessor implements BeanFactoryPos
           }
 
           if ((hectorTypes = HECTOR_DATA_SOURCE_MAP.get(sessionSourceKey)) == null) {
-            HECTOR_DATA_SOURCE_MAP.put(sessionSourceKey, hectorTypes = new HashSet<Class>());
+            HECTOR_DATA_SOURCE_MAP.put(sessionSourceKey, hectorTypes = new HashSet<>());
           }
 
           if ((persistentClass = ManagedDaoSupport.findDurableClass(beanClass)) == null) {

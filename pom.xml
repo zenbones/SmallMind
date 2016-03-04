@@ -480,6 +480,11 @@
         <version>1.1-4</version>
       </dependency>
       <dependency>
+        <groupId>org.mongodb.morphia</groupId>
+        <artifactId>morphia</artifactId>
+        <version>1.0.1</version>
+      </dependency>
+      <dependency>
         <groupId>org.hornetq</groupId>
         <artifactId>hornetq-jms-server</artifactId>
         <version>${hornetq.version}</version>

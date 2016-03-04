@@ -65,6 +65,7 @@ public abstract class HibernateDao<I extends Serializable & Comparable<I>, D ext
     super(proxySession, vectoredDao);
   }
 
+  @Override
   public D get (Class<D> durableClass, I id) {
 
     VectoredDao<I, D> vectoredDao;
@@ -75,8 +76,7 @@ public abstract class HibernateDao<I extends Serializable & Comparable<I>, D ext
 
         return durable;
       }
-    }
-    else {
+    } else {
       if ((durable = vectoredDao.get(durableClass, id)) != null) {
 
         return durable;
@@ -97,11 +97,13 @@ public abstract class HibernateDao<I extends Serializable & Comparable<I>, D ext
     return durableClass.cast(getSession().getNativeSession().get(durableClass, id));
   }
 
+  @Override
   public List<D> list () {
 
     return Collections.checkedList(getSession().getNativeSession().createCriteria(getManagedClass()).list(), getManagedClass());
   }
 
+  @Override
   public List<D> list (int maxResults) {
 
     return list(maxResults, maxResults);
@@ -112,6 +114,7 @@ public abstract class HibernateDao<I extends Serializable & Comparable<I>, D ext
     return Collections.checkedList(getSession().getNativeSession().createCriteria(getManagedClass()).setMaxResults(maxResults).setFetchSize(fetchSize).list(), getManagedClass());
   }
 
+  @Override
   public List<D> list (I greaterThan, int maxResults) {
 
     return list(greaterThan, maxResults, maxResults);
@@ -129,16 +132,19 @@ public abstract class HibernateDao<I extends Serializable & Comparable<I>, D ext
     });
   }
 
+  @Override
   public Iterable<D> scroll () {
 
     return new ScrollIterator<D>(getSession().getNativeSession().createCriteria(getManagedClass()).scroll(ScrollMode.FORWARD_ONLY), getManagedClass());
   }
 
+  @Override
   public Iterable<D> scroll (int fetchSize) {
 
     return new ScrollIterator<D>(getSession().getNativeSession().createCriteria(getManagedClass()).setFetchSize(fetchSize).scroll(ScrollMode.FORWARD_ONLY), getManagedClass());
   }
 
+  @Override
   public Iterable<D> scrollById (final I greaterThan, final int fetchSize) {
 
     return scrollByCriteria(new CriteriaDetails() {
@@ -151,6 +157,7 @@ public abstract class HibernateDao<I extends Serializable & Comparable<I>, D ext
     });
   }
 
+  @Override
   public long size () {
 
     return findByCriteria(Long.class, new CriteriaDetails() {
@@ -175,6 +182,7 @@ public abstract class HibernateDao<I extends Serializable & Comparable<I>, D ext
     });
   }
 
+  @Override
   public D persist (Class<D> durableClass, D durable) {
 
     D persistentDurable;
@@ -182,8 +190,7 @@ public abstract class HibernateDao<I extends Serializable & Comparable<I>, D ext
 
     if (getSession().getNativeSession().contains(durable)) {
       persistentDurable = durable;
-    }
-    else {
+    } else {
       persistentDurable = getManagedClass().cast(getSession().getNativeSession().merge(durable));
       getSession().flush();
     }
@@ -196,14 +203,14 @@ public abstract class HibernateDao<I extends Serializable & Comparable<I>, D ext
     return persistentDurable;
   }
 
+  @Override
   public void delete (Class<D> durableClass, D durable) {
 
     VectoredDao<I, D> vectoredDao = getVectoredDao();
 
     if (!getSession().getNativeSession().contains(durable)) {
       getSession().getNativeSession().delete(getSession().getNativeSession().load(durable.getClass(), durable.getId()));
-    }
-    else {
+    } else {
       getSession().getNativeSession().delete(durable);
     }
 
@@ -214,6 +221,7 @@ public abstract class HibernateDao<I extends Serializable & Comparable<I>, D ext
     }
   }
 
+  @Override
   public D detach (D object) {
 
     throw new UnsupportedOperationException("Hibernate has no explicit detached state");
@@ -238,12 +246,10 @@ public abstract class HibernateDao<I extends Serializable & Comparable<I>, D ext
     if (Durable.class.isAssignableFrom(returnType)) {
 
       return returnType.cast(sqlQuery.addEntity(returnType).uniqueResult());
-    }
-    else if (!SqlType.isKnownType(returnType)) {
+    } else if (!SqlType.isKnownType(returnType)) {
 
       return returnType.cast(sqlQuery.setResultTransformer(Transformers.aliasToBean(returnType)).uniqueResult());
-    }
-    else {
+    } else {
 
       Object obj;
 
@@ -270,12 +276,10 @@ public abstract class HibernateDao<I extends Serializable & Comparable<I>, D ext
     if (Durable.class.isAssignableFrom(returnType)) {
 
       return Collections.checkedList(sqlQuery.addEntity(returnType).list(), returnType);
-    }
-    else if (!SqlType.isKnownType(returnType)) {
+    } else if (!SqlType.isKnownType(returnType)) {
 
       return Collections.checkedList(sqlQuery.setResultTransformer(Transformers.aliasToBean(returnType)).list(), returnType);
-    }
-    else {
+    } else {
 
       LinkedList<T> returnList = new LinkedList<T>();
 

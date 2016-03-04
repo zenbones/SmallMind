@@ -38,7 +38,7 @@ import org.smallmind.persistence.orm.ProxyTransaction;
 
 public class TransactionalState {
 
-  private static final ThreadLocal<LinkedList<RollbackAwareBoundarySet<ProxyTransaction>>> TRANSACTION_SET_STACK_LOCAL = new ThreadLocal<LinkedList<RollbackAwareBoundarySet<ProxyTransaction>>>();
+  private static final ThreadLocal<LinkedList<RollbackAwareBoundarySet<ProxyTransaction>>> TRANSACTION_SET_STACK_LOCAL = new ThreadLocal<>();
 
   public static boolean isInTransaction () {
 
@@ -62,8 +62,7 @@ public class TransactionalState {
 
               return proxyTransaction;
             }
-          }
-          else if (sessionSourceKey.equals(proxyTransaction.getSession().getSessionSourceKey())) {
+          } else if (sessionSourceKey.equals(proxyTransaction.getSession().getSessionSourceKey())) {
 
             return proxyTransaction;
           }
@@ -118,7 +117,7 @@ public class TransactionalState {
     LinkedList<RollbackAwareBoundarySet<ProxyTransaction>> transactionSetStack;
 
     if ((transactionSetStack = TRANSACTION_SET_STACK_LOCAL.get()) == null) {
-      TRANSACTION_SET_STACK_LOCAL.set(transactionSetStack = new LinkedList<RollbackAwareBoundarySet<ProxyTransaction>>());
+      TRANSACTION_SET_STACK_LOCAL.set(transactionSetStack = new LinkedList<>());
     }
 
     transactionSetStack.addLast(new RollbackAwareBoundarySet<ProxyTransaction>(transactional.dataSources(), transactional.implicit(), transactional.rollbackOnly()));
@@ -148,12 +147,10 @@ public class TransactionalState {
           try {
             if (transactionSet.isRollbackOnly() || proxyTransaction.isRollbackOnly()) {
               proxyTransaction.rollback();
-            }
-            else {
+            } else {
               proxyTransaction.commit();
             }
-          }
-          catch (Throwable unexpectedThrowable) {
+          } catch (Throwable unexpectedThrowable) {
             if (incompleteTransactionError == null) {
               incompleteTransactionError = new IncompleteTransactionError(transactionSetStack.size(), unexpectedThrowable);
             }
@@ -163,14 +160,12 @@ public class TransactionalState {
         if (incompleteTransactionError != null) {
           throw incompleteTransactionError;
         }
-      }
-      finally {
+      } finally {
         if (transactionSetStack.isEmpty()) {
           TRANSACTION_SET_STACK_LOCAL.remove();
         }
       }
-    }
-    else {
+    } else {
       TRANSACTION_SET_STACK_LOCAL.remove();
     }
   }
@@ -191,8 +186,7 @@ public class TransactionalState {
         for (ProxyTransaction proxyTransaction : transactionSetStack.removeLast()) {
           try {
             proxyTransaction.rollback();
-          }
-          catch (Throwable unexpectedThrowable) {
+          } catch (Throwable unexpectedThrowable) {
             if (incompleteTransactionError == null) {
               incompleteTransactionError = new IncompleteTransactionError(transactionSetStack.size(), unexpectedThrowable);
             }
@@ -202,14 +196,12 @@ public class TransactionalState {
         if (incompleteTransactionError != null) {
           throw incompleteTransactionError;
         }
-      }
-      finally {
+      } finally {
         if (transactionSetStack.isEmpty()) {
           TRANSACTION_SET_STACK_LOCAL.remove();
         }
       }
-    }
-    else {
+    } else {
       TRANSACTION_SET_STACK_LOCAL.remove();
     }
   }

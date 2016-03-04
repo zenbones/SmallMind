@@ -32,9 +32,11 @@
  */
 package org.smallmind.nutsnbolts.util;
 
+import java.lang.management.ManagementFactory;
 import java.math.BigInteger;
 import java.security.SecureRandom;
 import java.util.Arrays;
+import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import org.smallmind.nutsnbolts.security.EncryptionUtility;
@@ -56,30 +58,13 @@ public class SnowflakeId implements Comparable<SnowflakeId> {
 
   private static final SecureRandom RANDOM = new SecureRandom(Bytes.getBytes(System.currentTimeMillis()));
 
-  private static final byte[] MAC_BYTES = new byte[6];
-  private static final byte[] JVM_BYTES = new byte[2];
+  private static final byte[] MAC_BYTES = createMachineIdentifier();
+  private static final byte[] JVM_BYTES = createJVMProcessIdentifier();
 
-  private static final AtomicLong ATOMIC_TIME;
-  private static final AtomicInteger ATOMIC_COUNT;
+  private static final AtomicLong ATOMIC_TIME = new AtomicLong(System.currentTimeMillis());
+  private static final AtomicInteger ATOMIC_COUNT = new AtomicInteger(Short.MIN_VALUE);
 
   private final byte[] uniqueArray;
-
-  static {
-
-    byte[] macAddress;
-
-    try {
-      macAddress = MacAddress.getBytes();
-    } catch (Exception exception) {
-      RANDOM.nextBytes(macAddress = new byte[6]);
-    }
-
-    System.arraycopy(macAddress, 0, MAC_BYTES, 0, 6);
-
-    ATOMIC_TIME = new AtomicLong(System.currentTimeMillis());
-    ATOMIC_COUNT = new AtomicInteger(Short.MIN_VALUE);
-    RANDOM.nextBytes(JVM_BYTES);
-  }
 
   public SnowflakeId () {
 
@@ -99,6 +84,46 @@ public class SnowflakeId implements Comparable<SnowflakeId> {
   public static SnowflakeId newInstance () {
 
     return new SnowflakeId();
+  }
+
+  private static byte[] createMachineIdentifier () {
+
+    byte[] macBytes = new byte[6];
+
+    try {
+
+      byte[] macAddress = MacAddress.getBytes();
+
+      System.arraycopy(macAddress, 0, macBytes, 0, 6);
+    } catch (Exception exception) {
+      RANDOM.nextBytes(macBytes);
+    }
+
+    return macBytes;
+  }
+
+  private static byte[] createJVMProcessIdentifier () {
+
+    try {
+
+      String processName = ManagementFactory.getRuntimeMXBean().getName();
+      int atSignPos;
+
+      if ((atSignPos = processName.indexOf('@')) >= 0) {
+
+        return Bytes.getBytes((short)Integer.parseInt(processName.substring(0, atSignPos)));
+      } else {
+
+        return Bytes.getBytes((short)processName.hashCode());
+      }
+    } catch (Throwable t) {
+
+      byte[] jvmBytes = new byte[2];
+
+      ThreadLocalRandom.current().nextBytes(jvmBytes);
+
+      return jvmBytes;
+    }
   }
 
   private byte[] generateByteArray () {

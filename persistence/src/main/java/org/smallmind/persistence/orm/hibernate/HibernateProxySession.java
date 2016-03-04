@@ -45,12 +45,12 @@ import org.smallmind.persistence.orm.aop.NonTransactionalState;
 import org.smallmind.persistence.orm.aop.RollbackAwareBoundarySet;
 import org.smallmind.persistence.orm.aop.TransactionalState;
 
-public class  HibernateProxySession extends ProxySession<SessionFactory, Session> {
+public class HibernateProxySession extends ProxySession<SessionFactory, Session> {
 
-  private final ThreadLocal<Session> managerThreadLocal = new ThreadLocal<Session>();
-  private final ThreadLocal<HibernateProxyTransaction> transactionThreadLocal = new ThreadLocal<HibernateProxyTransaction>();
+  private final ThreadLocal<Session> managerThreadLocal = new ThreadLocal<>();
+  private final ThreadLocal<HibernateProxyTransaction> transactionThreadLocal = new ThreadLocal<>();
 
-  private SessionFactory sessionFactory;
+  private final SessionFactory sessionFactory;
 
   public HibernateProxySession (String dataSourceType, String sessionSourceKey, SessionFactory sessionFactory, boolean boundaryEnforced, boolean cacheEnabled) {
 
@@ -134,16 +134,13 @@ public class  HibernateProxySession extends ProxySession<SessionFactory, Session
       if ((transactionSet = TransactionalState.obtainBoundary(this)) != null) {
         try {
           transactionSet.add(beginTransaction());
-        }
-        catch (Throwable throwable) {
+        } catch (Throwable throwable) {
           close();
           throw new SessionEnforcementException(throwable);
         }
-      }
-      else if ((sessionSet = NonTransactionalState.obtainBoundary(this)) != null) {
+      } else if ((sessionSet = NonTransactionalState.obtainBoundary(this)) != null) {
         sessionSet.add(this);
-      }
-      else if (isBoundaryEnforced()) {
+      } else if (isBoundaryEnforced()) {
         close();
         throw new SessionEnforcementException("Session was requested outside of any boundary enforcement (@NonTransactional or @Transactional)");
       }
@@ -160,8 +157,7 @@ public class  HibernateProxySession extends ProxySession<SessionFactory, Session
       if ((session = managerThreadLocal.get()) != null) {
         session.close();
       }
-    }
-    finally {
+    } finally {
       managerThreadLocal.set(null);
       transactionThreadLocal.set(null);
     }

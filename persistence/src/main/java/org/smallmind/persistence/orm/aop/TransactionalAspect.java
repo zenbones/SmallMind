@@ -69,8 +69,7 @@ public class TransactionalAspect {
 
     if (transactional.rollbackOnException()) {
       TransactionalState.rollbackBoundary(throwable);
-    }
-    else {
+    } else {
       TransactionalState.commitBoundary(throwable);
     }
   }
@@ -80,8 +79,7 @@ public class TransactionalAspect {
 
     if (transactional.rollbackOnException()) {
       TransactionalState.rollbackBoundary(throwable);
-    }
-    else {
+    } else {
       TransactionalState.commitBoundary(throwable);
     }
   }

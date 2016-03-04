@@ -105,7 +105,7 @@ public class AnnotationSeekingBeanFactoryPostProcessor implements BeanFactoryPos
           }
 
           if ((annotatedClassSet = ANNOTATED_CLASS_DATA_SOURCE_MAP.get(sessionSourceKey)) == null) {
-            ANNOTATED_CLASS_DATA_SOURCE_MAP.put(sessionSourceKey, annotatedClassSet = new HashSet<Class>());
+            ANNOTATED_CLASS_DATA_SOURCE_MAP.put(sessionSourceKey, annotatedClassSet = new HashSet<>());
           }
 
           if ((persistentClass = ManagedDaoSupport.findDurableClass(beanClass)) == null) {

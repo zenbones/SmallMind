@@ -30,88 +30,62 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.persistence.orm.spring.hibernate;
+package org.smallmind.persistence.orm.spring.morphia;
 
-import java.net.URL;
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Set;
 import org.smallmind.persistence.orm.SessionSource;
-import org.smallmind.persistence.orm.hibernate.HibernateDao;
+import org.smallmind.persistence.orm.morphia.MorphiaDao;
 import org.smallmind.persistence.spring.ManagedDaoSupport;
 import org.springframework.beans.BeansException;
 import org.springframework.beans.FatalBeanException;
 import org.springframework.beans.factory.config.BeanFactoryPostProcessor;
 import org.springframework.beans.factory.config.ConfigurableListableBeanFactory;
-import org.springframework.core.io.Resource;
-import org.springframework.core.io.UrlResource;
 
 public class FileSeekingBeanFactoryPostProcessor implements BeanFactoryPostProcessor {
 
-  private static final HashMap<String, HashMap<Class, UrlResource>> HBM_DATA_SOURCE_MAP = new HashMap<>();
-  private static final UrlResource[] NO_RESOURCES = new UrlResource[0];
+  private static final HashMap<String, HashSet<Class>> ENTITY_SOURCE_MAP = new HashMap<>();
 
-  public static Resource[] getHibernateResources () {
+  public static Set<Class> getEntitySet (String sessionSourceKey) {
 
-    return getResources(null);
-  }
+    HashSet<Class> entitySet;
 
-  public static Resource[] getResources (String sessionSourceKey) {
-
-    UrlResource[] hbmResources;
-    HashMap<Class, UrlResource> hbmResourceMap;
-
-    if ((hbmResourceMap = HBM_DATA_SOURCE_MAP.get(sessionSourceKey)) == null) {
-      return NO_RESOURCES;
+    if ((entitySet = ENTITY_SOURCE_MAP.get(sessionSourceKey)) == null) {
+      return Collections.emptySet();
     }
 
-    hbmResources = new UrlResource[hbmResourceMap.size()];
-    hbmResourceMap.values().toArray(hbmResources);
-
-    return hbmResources;
+    return entitySet;
   }
 
+  @Override
   public void postProcessBeanFactory (ConfigurableListableBeanFactory configurableListableBeanFactory)
     throws BeansException {
 
     Class<?> beanClass;
     Class persistentClass;
     SessionSource sessionSource;
-    HashMap<Class, UrlResource> hbmResourceMap;
-    URL hbmURL;
+    HashSet<Class> entitySet;
     String sessionSourceKey = null;
-    String packageRemnant;
-    String hbmFileName;
-    int lastSlashIndex;
 
     for (String beanName : configurableListableBeanFactory.getBeanDefinitionNames()) {
       if ((beanClass = configurableListableBeanFactory.getType(beanName)) != null) {
-        if (HibernateDao.class.isAssignableFrom(beanClass)) {
+        if (MorphiaDao.class.isAssignableFrom(beanClass)) {
 
           if ((sessionSource = beanClass.getAnnotation(SessionSource.class)) != null) {
             sessionSourceKey = sessionSource.value();
           }
 
-          if ((hbmResourceMap = HBM_DATA_SOURCE_MAP.get(sessionSourceKey)) == null) {
-            HBM_DATA_SOURCE_MAP.put(sessionSourceKey, hbmResourceMap = new HashMap<>());
+          if ((entitySet = ENTITY_SOURCE_MAP.get(sessionSourceKey)) == null) {
+            ENTITY_SOURCE_MAP.put(sessionSourceKey, entitySet = new HashSet<>());
           }
 
           if ((persistentClass = ManagedDaoSupport.findDurableClass(beanClass)) == null) {
             throw new FatalBeanException("No inference of the Durable class for type(" + beanClass.getName() + ") was possible");
           }
 
-          // Stop when we find a parent class which has already been mapped, signifying the rest of the tree has been previously processed
-          while ((persistentClass != null) && (!hbmResourceMap.containsKey(persistentClass))) {
-            packageRemnant = persistentClass.getPackage().getName().replace('.', '/');
-            hbmFileName = persistentClass.getSimpleName() + ".hbm.xml";
-            do {
-              if ((hbmURL = configurableListableBeanFactory.getBeanClassLoader().getResource((packageRemnant.length() > 0) ? packageRemnant + '/' + hbmFileName : hbmFileName)) != null) {
-                hbmResourceMap.put(persistentClass, new UrlResource(hbmURL));
-              }
-
-              packageRemnant = packageRemnant.length() > 0 ? packageRemnant.substring(0, (lastSlashIndex = packageRemnant.lastIndexOf('/')) >= 0 ? lastSlashIndex : 0) : null;
-            } while (packageRemnant != null);
-
-            persistentClass = persistentClass.getSuperclass();
-          }
+          entitySet.add(persistentClass);
         }
       }
     }

@@ -152,5 +152,4 @@ public abstract class AbstractManagedDao<I extends Serializable & Comparable<I>,
 
     throw new ORMInitializationException("Id class is neither a String, an Enum, a primitive type, nor a primitive wrapper, and does not implement Identifier, so you need to override getIdFromString(String value)");
   }
-
 }
