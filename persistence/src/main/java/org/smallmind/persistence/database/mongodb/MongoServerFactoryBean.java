@@ -1,8 +1,73 @@
 package org.smallmind.persistence.database.mongodb;
 
-/**
- * Created by david on 3/4/2016.
- */
-public class MongoServerFactoryBean {
+import java.util.LinkedList;
+import org.smallmind.nutsnbolts.util.Spread;
+import org.smallmind.nutsnbolts.util.SpreadParserException;
+import org.springframework.beans.factory.FactoryBean;
+import org.springframework.beans.factory.InitializingBean;
 
+public class MongoServerFactoryBean implements FactoryBean<MongoServer[]>, InitializingBean {
+
+  private MongoServer[] serverArray;
+  private String serverPattern;
+  private String serverSpread;
+
+  public void setServerPattern (String serverPattern) {
+
+    this.serverPattern = serverPattern;
+  }
+
+  public void setServerSpread (String serverSpread) {
+
+    this.serverSpread = serverSpread;
+  }
+
+  @Override
+  public void afterPropertiesSet ()
+    throws SpreadParserException {
+
+    if ((serverPattern != null) && (serverPattern.length() > 0)) {
+
+      LinkedList<MongoServer> serverList = new LinkedList<>();
+      int colonPos = serverPattern.indexOf(':');
+      int poundPos;
+
+      if ((poundPos = serverPattern.indexOf('#')) < 0) {
+        if (colonPos >= 0) {
+          serverList.add(new MongoServer(serverPattern.substring(0, colonPos), Integer.parseInt(serverPattern.substring(colonPos + 1))));
+        } else {
+          serverList.add(new MongoServer(serverPattern, 27017));
+        }
+      } else {
+        for (int serverNumber : Spread.calculate(serverSpread)) {
+          if (colonPos >= 0) {
+            serverList.add(new MongoServer(serverPattern.substring(0, poundPos) + serverNumber + serverPattern.substring(poundPos + 1, colonPos), Integer.parseInt(serverPattern.substring(colonPos + 1))));
+          } else {
+            serverList.add(new MongoServer(serverPattern.substring(0, poundPos) + serverNumber + serverPattern.substring(poundPos + 1), 27017));
+          }
+        }
+      }
+
+      serverArray = new MongoServer[serverList.size()];
+      serverList.toArray(serverArray);
+    }
+  }
+
+  @Override
+  public MongoServer[] getObject () {
+
+    return serverArray;
+  }
+
+  @Override
+  public Class<?> getObjectType () {
+
+    return MongoServer[].class;
+  }
+
+  @Override
+  public boolean isSingleton () {
+
+    return true;
+  }
 }
