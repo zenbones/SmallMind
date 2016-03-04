@@ -132,9 +132,14 @@ public class MorphiaDao<D extends MorphiaDurable> extends ORMDao<ObjectId, D, Da
   @Override
   public D persist (Class<D> durableClass, D durable) {
 
+    return persist(durableClass, durable, WriteConcern.JOURNALED);
+  }
+
+  public D persist (Class<D> durableClass, D durable, WriteConcern writeConcern) {
+
     VectoredDao<ObjectId, D> vectoredDao = getVectoredDao();
 
-    getSession().getNativeSession().save(durable, WriteConcern.JOURNALED);
+    getSession().getNativeSession().save(durable, writeConcern);
 
     if (vectoredDao != null) {
 
@@ -179,20 +184,35 @@ public class MorphiaDao<D extends MorphiaDurable> extends ORMDao<ObjectId, D, Da
 
   public int deleteByQuery (QueryDetails<D> queryDetails) {
 
-    return getSession().getNativeSession().delete(constructQuery(queryDetails)).getN();
+    return deleteByQuery(queryDetails, WriteConcern.JOURNALED);
+  }
+
+  public int deleteByQuery (QueryDetails<D> queryDetails, WriteConcern writeConcern) {
+
+    return getSession().getNativeSession().delete(constructQuery(queryDetails), writeConcern).getN();
   }
 
   public int updateByQuery (UpdateQueryDetails<D> updateQueryDetails) {
 
-    return updateByQuery(updateQueryDetails, false);
+    return updateByQuery(updateQueryDetails, false, WriteConcern.JOURNALED);
   }
 
   public int updateByQuery (UpdateQueryDetails<D> updateQueryDetails, boolean createIfMissing) {
 
+    return updateByQuery(updateQueryDetails, createIfMissing, WriteConcern.JOURNALED);
+  }
+
+  public int updateByQuery (UpdateQueryDetails<D> updateQueryDetails, WriteConcern writeConcern) {
+
+    return updateByQuery(updateQueryDetails, false, writeConcern);
+  }
+
+  public int updateByQuery (UpdateQueryDetails<D> updateQueryDetails, boolean createIfMissing, WriteConcern writeConcern) {
+
     Query<D> query = getSession().getNativeSession().createQuery(getManagedClass());
     UpdateOperations<D> update = getSession().getNativeSession().createUpdateOperations(getManagedClass());
 
-    return getSession().getNativeSession().update(updateQueryDetails.completeQuery(query), updateQueryDetails.completeUpdates(update), createIfMissing).getUpdatedCount();
+    return getSession().getNativeSession().update(updateQueryDetails.completeQuery(query), updateQueryDetails.completeUpdates(update), createIfMissing, writeConcern).getUpdatedCount();
   }
 
   public Query<D> constructQuery (QueryDetails<D> queryDetails) {
