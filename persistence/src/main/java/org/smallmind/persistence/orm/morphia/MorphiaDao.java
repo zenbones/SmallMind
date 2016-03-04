@@ -33,6 +33,7 @@
 package org.smallmind.persistence.orm.morphia;
 
 import java.util.List;
+import com.mongodb.WriteConcern;
 import org.bson.types.ObjectId;
 import org.mongodb.morphia.Datastore;
 import org.mongodb.morphia.mapping.Mapper;
@@ -133,7 +134,7 @@ public class MorphiaDao<D extends MorphiaDurable> extends ORMDao<ObjectId, D, Da
 
     VectoredDao<ObjectId, D> vectoredDao = getVectoredDao();
 
-    getSession().getNativeSession().save(durable);
+    getSession().getNativeSession().save(durable, WriteConcern.JOURNALED);
 
     if (vectoredDao != null) {
 
