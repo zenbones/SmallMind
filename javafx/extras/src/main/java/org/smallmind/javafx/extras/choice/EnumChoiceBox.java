@@ -93,16 +93,7 @@ public class EnumChoiceBox<E extends Enum<E>> extends ChoiceBox<E> {
       @Override
       public E fromString (String name) {
 
-        String staticName = StringUtility.toStaticFieldName(name, '_');
-
-        for (E enumerated : getEnumClass().getEnumConstants()) {
-          if (enumerated.name().equals(staticName)) {
-
-            return enumerated;
-          }
-        }
-
-        return null;
+        return Enum.valueOf(getEnumClass(), StringUtility.toStaticFieldName(name, '_'));
       }
     });
 
