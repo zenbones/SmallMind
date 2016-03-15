@@ -32,37 +32,45 @@
  */
 package org.smallmind.web.jersey.aop;
 
+import java.lang.annotation.Annotation;
+import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
-import java.util.Set;
-import javax.validation.ConstraintViolation;
-import javax.validation.Validation;
-import javax.validation.executable.ExecutableValidator;
-import org.hibernate.validator.HibernateValidator;
+import java.util.LinkedList;
+import java.util.List;
+import javax.validation.ParameterNameProvider;
 
-public class EntityValidator {
+public class EntityParameterNameProvider implements ParameterNameProvider {
 
-  private static final ExecutableValidator EXECUTABLE_VALIDATOR;
+  @Override
+  public List<String> getParameterNames (Constructor<?> constructor) {
 
-  static {
-
-    EXECUTABLE_VALIDATOR = Validation.byProvider(HibernateValidator.class).configure().parameterNameProvider(new EntityParameterNameProvider()).buildValidatorFactory().getValidator().forExecutables();
+    return getNames(constructor.getParameterAnnotations());
   }
 
-  public static <T> void validateParameters (T object, Method method, Object[] parameters) {
+  @Override
+  public List<String> getParameterNames (Method method) {
 
-    Set<ConstraintViolation<T>> constraintViolationSet;
-
-    if (!(constraintViolationSet = EXECUTABLE_VALIDATOR.validateParameters(object, method, parameters)).isEmpty()) {
-      throw new EntityValidationException(constraintViolationSet);
-    }
+    return getNames(method.getParameterAnnotations());
   }
 
-  public static <T> void validateReturnValue (T object, Method method, Object returnValue) {
+  private List<String> getNames (Annotation[][] parameterAnnotationsArray) {
 
-    Set<ConstraintViolation<T>> constraintViolationSet;
+    LinkedList<String> nameList = new LinkedList<>();
 
-    if (!(constraintViolationSet = EXECUTABLE_VALIDATOR.validateReturnValue(object, method, returnValue)).isEmpty()) {
-      throw new EntityValidationException(constraintViolationSet);
+    for (int index = 0; index < parameterAnnotationsArray.length; index++) {
+
+      EntityParam entityParam = null;
+
+      for (Annotation parameterAnnotation : parameterAnnotationsArray[index]) {
+        if (parameterAnnotation instanceof EntityParam) {
+          entityParam = (EntityParam)parameterAnnotation;
+          break;
+        }
+      }
+
+      nameList.add((entityParam == null) ? "argument[" + index + "]" : entityParam.value());
     }
+
+    return nameList;
   }
 }

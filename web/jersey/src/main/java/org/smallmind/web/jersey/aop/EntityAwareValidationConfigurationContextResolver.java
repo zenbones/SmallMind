@@ -32,37 +32,21 @@
  */
 package org.smallmind.web.jersey.aop;
 
-import java.lang.reflect.Method;
-import java.util.Set;
-import javax.validation.ConstraintViolation;
-import javax.validation.Validation;
-import javax.validation.executable.ExecutableValidator;
-import org.hibernate.validator.HibernateValidator;
+import javax.ws.rs.container.ResourceContext;
+import javax.ws.rs.core.Context;
+import javax.ws.rs.ext.ContextResolver;
+import org.glassfish.jersey.server.validation.ValidationConfig;
+import org.glassfish.jersey.server.validation.internal.InjectingConstraintValidatorFactory;
+import org.smallmind.web.jersey.aop.EntityParameterNameProvider;
 
-public class EntityValidator {
+public class EntityAwareValidationConfigurationContextResolver implements ContextResolver<ValidationConfig> {
 
-  private static final ExecutableValidator EXECUTABLE_VALIDATOR;
+  @Context
+  private ResourceContext resourceContext;
 
-  static {
+  @Override
+  public ValidationConfig getContext (final Class<?> type) {
 
-    EXECUTABLE_VALIDATOR = Validation.byProvider(HibernateValidator.class).configure().parameterNameProvider(new EntityParameterNameProvider()).buildValidatorFactory().getValidator().forExecutables();
-  }
-
-  public static <T> void validateParameters (T object, Method method, Object[] parameters) {
-
-    Set<ConstraintViolation<T>> constraintViolationSet;
-
-    if (!(constraintViolationSet = EXECUTABLE_VALIDATOR.validateParameters(object, method, parameters)).isEmpty()) {
-      throw new EntityValidationException(constraintViolationSet);
-    }
-  }
-
-  public static <T> void validateReturnValue (T object, Method method, Object returnValue) {
-
-    Set<ConstraintViolation<T>> constraintViolationSet;
-
-    if (!(constraintViolationSet = EXECUTABLE_VALIDATOR.validateReturnValue(object, method, returnValue)).isEmpty()) {
-      throw new EntityValidationException(constraintViolationSet);
-    }
+    return new ValidationConfig().constraintValidatorFactory(resourceContext.getResource(InjectingConstraintValidatorFactory.class)).parameterNameProvider(new EntityParameterNameProvider());
   }
 }
