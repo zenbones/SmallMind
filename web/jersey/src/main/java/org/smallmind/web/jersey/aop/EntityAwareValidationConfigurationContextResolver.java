@@ -37,7 +37,6 @@ import javax.ws.rs.core.Context;
 import javax.ws.rs.ext.ContextResolver;
 import org.glassfish.jersey.server.validation.ValidationConfig;
 import org.glassfish.jersey.server.validation.internal.InjectingConstraintValidatorFactory;
-import org.smallmind.web.jersey.aop.EntityParameterNameProvider;
 
 public class EntityAwareValidationConfigurationContextResolver implements ContextResolver<ValidationConfig> {
 
