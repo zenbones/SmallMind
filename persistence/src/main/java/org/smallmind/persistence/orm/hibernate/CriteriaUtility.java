@@ -38,22 +38,36 @@ import org.hibernate.criterion.Criterion;
 import org.hibernate.criterion.Order;
 import org.hibernate.criterion.Restrictions;
 import org.smallmind.nutsnbolts.lang.UnknownSwitchCaseException;
+import org.smallmind.persistence.orm.ORMOperationException;
 import org.smallmind.persistence.query.Sort;
 import org.smallmind.persistence.query.SortField;
 import org.smallmind.persistence.query.Where;
 import org.smallmind.persistence.query.WhereConjunction;
 import org.smallmind.persistence.query.WhereCriterion;
 import org.smallmind.persistence.query.WhereField;
+import org.smallmind.persistence.query.WhereOperandTransformer;
 
 public class CriteriaUtility {
 
-  public static Criteria apply (Where where, Criteria criteria) {
+  public static Criteria apply (Criteria criteria, Where where) {
+
+    return apply(criteria, where, new WhereOperandTransformer() {
+
+      @Override
+      public Class<? extends Enum> getEnumType (String type) {
+
+        throw new ORMOperationException("Translation of enum(%s) requires an implementation of a WhereOperandTransformer", type);
+      }
+    });
+  }
+
+  public static Criteria apply (Criteria criteria, Where where, WhereOperandTransformer transformer) {
 
     if (where != null) {
 
       Criterion walkedCriterion;
 
-      if ((walkedCriterion = walkConjunction(where.getRootConjunction())) != null) {
+      if ((walkedCriterion = walkConjunction(where.getRootConjunction(), transformer)) != null) {
         return criteria.add(walkedCriterion);
       }
     }
@@ -61,7 +75,7 @@ public class CriteriaUtility {
     return criteria;
   }
 
-  private static Criterion walkConjunction (WhereConjunction whereConjunction) {
+  private static Criterion walkConjunction (WhereConjunction whereConjunction, WhereOperandTransformer transformer) {
 
     if ((whereConjunction == null) || whereConjunction.isEmpty()) {
 
@@ -76,12 +90,12 @@ public class CriteriaUtility {
 
           Criterion walkedCriterion;
 
-          if ((walkedCriterion = walkConjunction((WhereConjunction)whereCriterion)) != null) {
+          if ((walkedCriterion = walkConjunction((WhereConjunction)whereCriterion, transformer)) != null) {
             criterionList.add(walkedCriterion);
           }
           break;
         case FIELD:
-          criterionList.add(walkField((WhereField)whereCriterion));
+          criterionList.add(walkField((WhereField)whereCriterion, transformer));
           break;
         default:
           throw new UnknownSwitchCaseException(whereCriterion.getCriterionType().name());
@@ -109,32 +123,32 @@ public class CriteriaUtility {
     }
   }
 
-  private static Criterion walkField (WhereField whereField) {
+  private static Criterion walkField (WhereField whereField, WhereOperandTransformer transformer) {
 
     switch (whereField.getOperation()) {
       case LT:
-        return Restrictions.lt(whereField.getName(), whereField.getValue().getValue());
+        return Restrictions.lt(whereField.getName(), whereField.getOperand().extract(transformer));
       case LE:
-        return Restrictions.le(whereField.getName(), whereField.getValue().getValue());
+        return Restrictions.le(whereField.getName(), whereField.getOperand().extract(transformer));
       case EQ:
 
         Object value;
 
-        return ((value = whereField.getValue().getValue()) == null) ? Restrictions.isNull(whereField.getName()) : Restrictions.eq(whereField.getName(), value);
+        return ((value = whereField.getOperand().extract(transformer)) == null) ? Restrictions.isNull(whereField.getName()) : Restrictions.eq(whereField.getName(), value);
       case GE:
-        return Restrictions.ge(whereField.getName(), whereField.getValue().getValue());
+        return Restrictions.ge(whereField.getName(), whereField.getOperand().extract(transformer));
       case GT:
-        return Restrictions.gt(whereField.getName(), whereField.getValue().getValue());
+        return Restrictions.gt(whereField.getName(), whereField.getOperand().extract(transformer));
       case LIKE:
-        return Restrictions.like(whereField.getName(), whereField.getValue().getValue());
+        return Restrictions.like(whereField.getName(), whereField.getOperand().extract(transformer));
       case IN:
-        return Restrictions.in(whereField.getName(), (Object[])whereField.getValue().getValue());
+        return Restrictions.in(whereField.getName(), (Object[])whereField.getOperand().extract(transformer));
       default:
         throw new UnknownSwitchCaseException(whereField.getOperation().name());
     }
   }
 
-  public static Criteria apply (Sort sort, Criteria criteria) {
+  public static Criteria apply (Criteria criteria, Sort sort) {
 
     if ((sort != null) && (!sort.isEmpty())) {
       for (SortField sortField : sort.getFields()) {

@@ -32,32 +32,39 @@
  */
 package org.smallmind.persistence.query;
 
-import javax.xml.bind.annotation.XmlElement;
-import javax.xml.bind.annotation.XmlRootElement;
+import javax.xml.bind.annotation.adapters.XmlAdapter;
+import org.joda.time.DateTime;
+import org.smallmind.nutsnbolts.json.DateTimeXmlAdapter;
 
-@XmlRootElement(name = "short")
-public class ShortWhereValue extends WhereValue<Short> {
+public class ArrayValueXmlAdapter extends XmlAdapter<Object[], Object[]> {
 
-  private Short value;
+  private static final DateTimeXmlAdapter DATE_TIME_XML_ADAPTER = new DateTimeXmlAdapter();
 
-  public ShortWhereValue () {
+  @Override
+  public Object[] unmarshal (Object[] array) throws Exception {
 
-  }
-
-  public ShortWhereValue (Short value) {
-
-    this.value = value;
+    return array;
   }
 
   @Override
-  @XmlElement(name = "value", required = true, nillable = false)
-  public Short getValue () {
+  public Object[] marshal (Object[] array) throws Exception {
 
-    return value;
-  }
+    if (array == null) {
 
-  public void setValue (Short value) {
+      return null;
+    }
 
-    this.value = value;
+    if (DateTime.class.isAssignableFrom(array.getClass().getComponentType())) {
+
+      String[] convertedArray = new String[array.length];
+
+      for (int index = 0; index < array.length; index++) {
+        convertedArray[index] = DATE_TIME_XML_ADAPTER.marshal((DateTime)array[index]);
+      }
+
+      return convertedArray;
+    }
+
+    return array;
   }
 }

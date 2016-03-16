@@ -45,7 +45,7 @@ import javax.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
 @XmlAccessorType(XmlAccessType.PROPERTY)
 public class WhereField implements WhereCriterion {
 
-  private WhereValue value;
+  private WhereOperand operand;
   private WhereOperation operation;
   private String name;
 
@@ -53,11 +53,11 @@ public class WhereField implements WhereCriterion {
 
   }
 
-  public WhereField (String name, WhereOperation operation, WhereValue value) {
+  public WhereField (String name, WhereOperation operation, WhereOperand operand) {
 
     this.name = name;
     this.operation = operation;
-    this.value = value;
+    this.operand = operand;
   }
 
   @Override
@@ -78,17 +78,17 @@ public class WhereField implements WhereCriterion {
     this.name = name;
   }
 
-  @XmlElementRefs({@XmlElementRef(type = BooleanWhereValue.class), @XmlElementRef(type = ByteWhereValue.class), @XmlElementRef(type = CharacterWhereValue.class), @XmlElementRef(type = DateWhereValue.class),
-                    @XmlElementRef(type = DoubleWhereValue.class), @XmlElementRef(type = EnumWhereValue.class), @XmlElementRef(type = FloatWhereValue.class), @XmlElementRef(type = IntegerWhereValue.class),
-                    @XmlElementRef(type = LongWhereValue.class), @XmlElementRef(type = ShortWhereValue.class), @XmlElementRef(type = StringWhereValue.class)})
-  public WhereValue getValue () {
+  @XmlElementRefs({@XmlElementRef(type = ArrayWhereOperand.class), @XmlElementRef(type = BooleanWhereOperand.class), @XmlElementRef(type = ByteWhereOperand.class), @XmlElementRef(type = CharacterWhereOperand.class),
+                    @XmlElementRef(type = DateWhereOperand.class), @XmlElementRef(type = DoubleWhereOperand.class), @XmlElementRef(type = EnumWhereOperand.class), @XmlElementRef(type = FloatWhereOperand.class),
+                    @XmlElementRef(type = IntegerWhereOperand.class), @XmlElementRef(type = LongWhereOperand.class), @XmlElementRef(type = ShortWhereOperand.class), @XmlElementRef(type = StringWhereOperand.class)})
+  public WhereOperand getOperand () {
 
-    return value;
+    return operand;
   }
 
-  public void setValue (WhereValue value) {
+  public void setOperand (WhereOperand operand) {
 
-    this.value = value;
+    this.operand = operand;
   }
 
   @XmlElement(name = "operation", required = true, nillable = false)
@@ -101,17 +101,5 @@ public class WhereField implements WhereCriterion {
   public void setOperation (WhereOperation operation) {
 
     this.operation = operation;
-  }
-
-  @Override
-  public int hashCode () {
-
-    return name.hashCode();
-  }
-
-  @Override
-  public boolean equals (Object obj) {
-
-    return (obj instanceof WhereField) && ((WhereField)obj).getName().equals(name) && ((WhereField)obj).getOperation().equals(operation) && ((WhereField)obj).getValue().getValue().equals(value.getValue());
   }
 }

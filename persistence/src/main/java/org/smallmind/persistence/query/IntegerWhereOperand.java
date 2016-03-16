@@ -35,28 +35,33 @@ package org.smallmind.persistence.query;
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlRootElement;
 
-@XmlRootElement(name = "double")
-public class DoubleWhereValue extends WhereValue<Double> {
+@XmlRootElement(name = "integer")
+public class IntegerWhereOperand extends WhereOperand<Integer> {
 
-  private Double value;
+  private Integer value;
 
-  public DoubleWhereValue () {
+  public IntegerWhereOperand () {
 
   }
 
-  public DoubleWhereValue (Double value) {
+  public IntegerWhereOperand (Integer value) {
 
     this.value = value;
   }
 
   @Override
-  @XmlElement(name = "value", required = true, nillable = false)
-  public Double getValue () {
+  public Integer extract (WhereOperandTransformer transformer) {
 
     return value;
   }
 
-  public void setValue (Double value) {
+  @XmlElement(name = "value", required = true, nillable = false)
+  public Integer getValue () {
+
+    return value;
+  }
+
+  public void setValue (Integer value) {
 
     this.value = value;
   }

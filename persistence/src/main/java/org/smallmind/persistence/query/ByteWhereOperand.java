@@ -35,28 +35,33 @@ package org.smallmind.persistence.query;
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlRootElement;
 
-@XmlRootElement(name = "long")
-public class LongWhereValue extends WhereValue<Long> {
+@XmlRootElement(name = "byte")
+public class ByteWhereOperand extends WhereOperand<Byte> {
 
-  private Long value;
+  private Byte value;
 
-  public LongWhereValue () {
+  public ByteWhereOperand () {
 
   }
 
-  public LongWhereValue (Long value) {
+  public ByteWhereOperand (Byte value) {
 
     this.value = value;
   }
 
   @Override
-  @XmlElement(name = "value", required = true, nillable = false)
-  public Long getValue () {
+  public Byte extract (WhereOperandTransformer transformer) {
 
     return value;
   }
 
-  public void setValue (Long value) {
+  @XmlElement(name = "value", required = true, nillable = false)
+  public Byte getValue () {
+
+    return value;
+  }
+
+  public void setValue (Byte value) {
 
     this.value = value;
   }

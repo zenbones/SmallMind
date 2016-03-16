@@ -32,32 +32,12 @@
  */
 package org.smallmind.persistence.query;
 
-import javax.xml.bind.annotation.XmlElement;
-import javax.xml.bind.annotation.XmlRootElement;
+import java.io.Serializable;
+import javax.xml.bind.annotation.XmlAccessType;
+import javax.xml.bind.annotation.XmlAccessorType;
 
-@XmlRootElement(name = "float")
-public class FloatWhereValue extends WhereValue<Float> {
+@XmlAccessorType(XmlAccessType.PROPERTY)
+public abstract class WhereOperand<T> implements Serializable {
 
-  private Float value;
-
-  public FloatWhereValue () {
-
-  }
-
-  public FloatWhereValue (Float value) {
-
-    this.value = value;
-  }
-
-  @Override
-  @XmlElement(name = "value", required = true, nillable = false)
-  public Float getValue () {
-
-    return value;
-  }
-
-  public void setValue (Float value) {
-
-    this.value = value;
-  }
+  public abstract T extract (WhereOperandTransformer transformer);
 }

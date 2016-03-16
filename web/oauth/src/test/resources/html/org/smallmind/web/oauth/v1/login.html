@@ -333,7 +333,7 @@ FOOTER
         var jsEncrypt = new JSEncrypt();
         jsEncrypt.setPublicKey("MIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQCbk6FT5T1aubaPHpvpcgRGqAOWYIOMMzgxI96rzIr/SxZ0c2hhjvVd5JoEy5n4wzEuXWQpgCDsgSWmO92Nx6UWzLOnbGnIkffPbX4sHg45MWxamDdz4Q6XY8vojitMbIrumG+RjnnTR+YSXG/12Eb5TBvlNTdq31AM8eeMRPMjfQIDAQAB");
 
-        var encryptedCookie = CryptoJS.AES.encrypt("{\"user\": \"" + document.getElementById("username").value + "\", \"password\": \"" + document.getElementById("password").value + "\", \"created\": " + new Date().getTime() + "}", aesKey, {iv: aesIV, mode: CryptoJS.mode.CBC, padding: CryptoJS.pad.Pkcs7});
+        var encryptedCookie = CryptoJS.AES.encrypt("{\"user\": \"" + document.getElementById("username").operand + "\", \"password\": \"" + document.getElementById("password").operand + "\", \"created\": " + new Date().getTime() + "}", aesKey, {iv: aesIV, mode: CryptoJS.mode.CBC, padding: CryptoJS.pad.Pkcs7});
         var encryptedAESKey = jsEncrypt.encrypt(CryptoJS.enc.Base64.stringify(aesKey));
 
         document.cookie = "smallmind_sso=" + encodeURIComponent(encryptedAESKey + "." + encryptedCookie) + "; path=/";

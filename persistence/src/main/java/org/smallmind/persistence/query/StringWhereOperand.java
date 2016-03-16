@@ -32,38 +32,37 @@
  */
 package org.smallmind.persistence.query;
 
-import java.io.Serializable;
-import javax.xml.bind.annotation.XmlAccessType;
-import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlElement;
-import javax.xml.bind.annotation.XmlElementRef;
-import javax.xml.bind.annotation.XmlElementRefs;
 import javax.xml.bind.annotation.XmlRootElement;
 
-@XmlRootElement(name = "where")
-@XmlAccessorType(XmlAccessType.PROPERTY)
-public class Where implements Serializable {
+@XmlRootElement(name = "string")
+public class StringWhereOperand extends WhereOperand<String> {
 
-  private WhereConjunction rootConjunction;
+  private String value;
 
-  public Where () {
+  public StringWhereOperand () {
 
   }
 
-  public Where (WhereConjunction rootConjunction) {
+  public StringWhereOperand (String value) {
 
-    this.rootConjunction = rootConjunction;
+    this.value = value;
   }
 
-  @XmlElement(name = "root", required = false, nillable = false)
-  @XmlElementRefs({@XmlElementRef(type = WhereField.class), @XmlElementRef(type = AndWhereConjunction.class), @XmlElementRef(type = OrWhereConjunction.class)})
-  public WhereConjunction getRootConjunction () {
+  @Override
+  public String extract (WhereOperandTransformer transformer) {
 
-    return rootConjunction;
+    return value;
   }
 
-  public void setRootConjunction (WhereConjunction rootConjunction) {
+  @XmlElement(name = "value", required = true, nillable = false)
+  public String getValue () {
 
-    this.rootConjunction = rootConjunction;
+    return value;
+  }
+
+  public void setValue (String value) {
+
+    this.value = value;
   }
 }

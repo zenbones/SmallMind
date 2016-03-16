@@ -33,7 +33,7 @@
 package org.smallmind.persistence.query;
 
 import java.util.Arrays;
-import java.util.HashSet;
+import java.util.List;
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlElement;
@@ -44,7 +44,7 @@ import javax.xml.bind.annotation.XmlTransient;
 @XmlAccessorType(XmlAccessType.PROPERTY)
 public abstract class WhereConjunction implements WhereCriterion {
 
-  private HashSet<WhereCriterion> criterionSet;
+  private List<WhereCriterion> criterionList;
 
   public WhereConjunction () {
 
@@ -52,7 +52,7 @@ public abstract class WhereConjunction implements WhereCriterion {
 
   public WhereConjunction (WhereCriterion... criteria) {
 
-    criterionSet = new HashSet<>(Arrays.asList(criteria));
+    criterionList = Arrays.asList(criteria);
   }
 
   public abstract ConjunctionType getConjunctionType ();
@@ -67,17 +67,17 @@ public abstract class WhereConjunction implements WhereCriterion {
   @XmlTransient
   public synchronized boolean isEmpty () {
 
-    return (criterionSet == null) || criterionSet.isEmpty();
+    return (criterionList == null) || criterionList.isEmpty();
   }
 
   @XmlElement(name = "criteria", required = false, nillable = false)
   @XmlElementRefs({@XmlElementRef(type = WhereField.class), @XmlElementRef(type = AndWhereConjunction.class), @XmlElementRef(type = OrWhereConjunction.class)})
   public synchronized WhereCriterion[] getCriteria () {
 
-    WhereCriterion[] criteria = new WhereCriterion[criterionSet == null ? 0 : criterionSet.size()];
+    WhereCriterion[] criteria = new WhereCriterion[criterionList == null ? 0 : criterionList.size()];
 
-    if (criterionSet != null) {
-      criterionSet.toArray(criteria);
+    if (criterionList != null) {
+      criterionList.toArray(criteria);
     }
 
     return criteria;
@@ -85,6 +85,6 @@ public abstract class WhereConjunction implements WhereCriterion {
 
   public synchronized void setCriteria (WhereCriterion... criteria) {
 
-    this.criterionSet = new HashSet<>(Arrays.asList(criteria));
+    this.criterionList = Arrays.asList(criteria);
   }
 }

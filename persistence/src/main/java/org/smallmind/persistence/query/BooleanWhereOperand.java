@@ -34,33 +34,36 @@ package org.smallmind.persistence.query;
 
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlRootElement;
-import javax.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
-import org.joda.time.DateTime;
-import org.smallmind.nutsnbolts.json.DateTimeXmlAdapter;
+import javax.xml.bind.annotation.XmlTransient;
 
-@XmlRootElement(name = "date")
-public class DateWhereValue extends WhereValue<DateTime> {
+@XmlRootElement(name = "boolean")
+public class BooleanWhereOperand extends WhereOperand<Boolean> {
 
-  private DateTime value;
+  private Boolean value;
 
-  public DateWhereValue () {
+  public BooleanWhereOperand () {
 
   }
 
-  public DateWhereValue (DateTime value) {
+  public BooleanWhereOperand (Boolean value) {
 
     this.value = value;
   }
 
   @Override
-  @XmlJavaTypeAdapter(DateTimeXmlAdapter.class)
-  @XmlElement(name = "value", required = true, nillable = false)
-  public DateTime getValue () {
+  @XmlTransient
+  public Boolean extract (WhereOperandTransformer transformer) {
 
     return value;
   }
 
-  public void setValue (DateTime value) {
+  @XmlElement(name = "value", required = true, nillable = false)
+  public Boolean getValue () {
+
+    return value;
+  }
+
+  public void setValue (Boolean value) {
 
     this.value = value;
   }

@@ -35,28 +35,33 @@ package org.smallmind.persistence.query;
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlRootElement;
 
-@XmlRootElement(name = "character")
-public class CharacterWhereValue extends WhereValue<Character> {
+@XmlRootElement(name = "long")
+public class LongWhereOperand extends WhereOperand<Long> {
 
-  private Character value;
+  private Long value;
 
-  public CharacterWhereValue () {
+  public LongWhereOperand () {
 
   }
 
-  public CharacterWhereValue (Character value) {
+  public LongWhereOperand (Long value) {
 
     this.value = value;
   }
 
   @Override
-  @XmlElement(name = "value", required = true, nillable = false)
-  public Character getValue () {
+  public Long extract (WhereOperandTransformer transformer) {
 
     return value;
   }
 
-  public void setValue (Character value) {
+  @XmlElement(name = "value", required = true, nillable = false)
+  public Long getValue () {
+
+    return value;
+  }
+
+  public void setValue (Long value) {
 
     this.value = value;
   }

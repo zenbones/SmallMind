@@ -35,28 +35,33 @@ package org.smallmind.persistence.query;
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlRootElement;
 
-@XmlRootElement(name = "boolean")
-public class BooleanWhereValue extends WhereValue<Boolean> {
+@XmlRootElement(name = "short")
+public class ShortWhereOperand extends WhereOperand<Short> {
 
-  private Boolean value;
+  private Short value;
 
-  public BooleanWhereValue () {
+  public ShortWhereOperand () {
 
   }
 
-  public BooleanWhereValue (Boolean value) {
+  public ShortWhereOperand (Short value) {
 
     this.value = value;
   }
 
   @Override
-  @XmlElement(name = "value", required = true, nillable = false)
-  public Boolean getValue () {
+  public Short extract (WhereOperandTransformer transformer) {
 
     return value;
   }
 
-  public void setValue (Boolean value) {
+  @XmlElement(name = "value", required = true, nillable = false)
+  public Short getValue () {
+
+    return value;
+  }
+
+  public void setValue (Short value) {
 
     this.value = value;
   }

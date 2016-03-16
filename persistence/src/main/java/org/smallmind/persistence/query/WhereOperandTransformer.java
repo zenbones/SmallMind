@@ -32,32 +32,7 @@
  */
 package org.smallmind.persistence.query;
 
-import javax.xml.bind.annotation.XmlElement;
-import javax.xml.bind.annotation.XmlRootElement;
+public interface WhereOperandTransformer {
 
-@XmlRootElement(name = "string")
-public class StringWhereValue extends WhereValue<String> {
-
-  private String value;
-
-  public StringWhereValue () {
-
-  }
-
-  public StringWhereValue (String value) {
-
-    this.value = value;
-  }
-
-  @Override
-  @XmlElement(name = "value", required = true, nillable = false)
-  public String getValue () {
-
-    return value;
-  }
-
-  public void setValue (String value) {
-
-    this.value = value;
-  }
+  Class<? extends Enum> getEnumType (String type);
 }
