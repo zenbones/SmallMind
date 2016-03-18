@@ -84,6 +84,7 @@ public class JsonProvider implements MessageBodyReader<Object>, MessageBodyWrite
 
       return WRITE_BUFFER_LOCAL.get().size();
     } catch (Throwable throwable) {
+      WRITE_BUFFER_LOCAL.remove();
       throw new WebApplicationException(throwable);
     }
   }
