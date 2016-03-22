@@ -42,25 +42,20 @@ public class ResourceMethodAspect {
 
   @Around(value = "execution(@org.smallmind.web.jersey.aop.ResourceMethod * * (..)) && @annotation(resourceMethod)", argNames = "thisJoinPoint, resourceMethod")
   public Object aroundEntityTypeMethod (ProceedingJoinPoint thisJoinPoint, ResourceMethod resourceMethod)
-    throws Throwable {
+  throws Throwable {
 
-    try {
+    Object returnValue;
 
-      Object returnValue;
-
-      if (resourceMethod.validate()) {
-        EntityValidator.validateParameters(thisJoinPoint.getTarget(), ((MethodSignature)thisJoinPoint.getSignature()).getMethod(), thisJoinPoint.getArgs());
-      }
-
-      returnValue = thisJoinPoint.proceed();
-
-      if (resourceMethod.validate()) {
-        EntityValidator.validateReturnValue(thisJoinPoint.getTarget(), ((MethodSignature)thisJoinPoint.getSignature()).getMethod(), returnValue);
-      }
-
-      return returnValue;
-    } finally {
-      EntityTranslator.clearEntity();
+    if (resourceMethod.validate()) {
+      EntityValidator.validateParameters(thisJoinPoint.getTarget(), ((MethodSignature)thisJoinPoint.getSignature()).getMethod(), thisJoinPoint.getArgs());
     }
+
+    returnValue = thisJoinPoint.proceed();
+
+    if (resourceMethod.validate()) {
+      EntityValidator.validateReturnValue(thisJoinPoint.getTarget(), ((MethodSignature)thisJoinPoint.getSignature()).getMethod(), returnValue);
+    }
+
+    return returnValue;
   }
 }

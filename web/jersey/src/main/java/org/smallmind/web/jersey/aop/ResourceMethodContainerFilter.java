@@ -65,16 +65,15 @@ public class ResourceMethodContainerFilter implements ContainerRequestFilter, Co
 
   @Override
   public void filter (ContainerRequestContext requestContext, ContainerResponseContext responseContext)
-    throws IOException {
+  throws IOException {
 
-    XmlJavaTypeAdapter xmlJavaTypeAdapter;
+    try {
 
-    if ((xmlJavaTypeAdapter = resourceInfo.getResourceMethod().getAnnotation(XmlJavaTypeAdapter.class)) != null) {
+      XmlJavaTypeAdapter xmlJavaTypeAdapter;
 
-      Class<? extends XmlAdapter> xmlAdapterClass;
+      if ((xmlJavaTypeAdapter = resourceInfo.getResourceMethod().getAnnotation(XmlJavaTypeAdapter.class)) != null) {
 
-      if ((xmlAdapterClass = ((XmlJavaTypeAdapter)xmlJavaTypeAdapter).value()) != null) {
-
+        Class<? extends XmlAdapter> xmlAdapterClass = xmlJavaTypeAdapter.value();
         XmlAdapter xmlAdapter;
 
         if ((xmlAdapter = ADAPTER_MAP.get(xmlAdapterClass)) == null) {
@@ -95,6 +94,8 @@ public class ResourceMethodContainerFilter implements ContainerRequestFilter, Co
           throw new IOException(exception);
         }
       }
+    } finally {
+      EntityTranslator.clearEntity();
     }
   }
 }
