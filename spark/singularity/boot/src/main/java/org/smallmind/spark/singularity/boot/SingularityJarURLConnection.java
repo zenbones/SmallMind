@@ -38,6 +38,7 @@ import java.io.InputStream;
 import java.net.URL;
 import java.net.URLConnection;
 import java.util.jar.JarEntry;
+import java.util.jar.JarFile;
 import java.util.jar.JarInputStream;
 
 public class SingularityJarURLConnection extends URLConnection {
@@ -57,26 +58,26 @@ public class SingularityJarURLConnection extends URLConnection {
   public InputStream getInputStream ()
     throws IOException {
 
-    JarInputStream jarInputStream;
+    JarFile jarFile;
     JarEntry jarEntry;
-    String innerEntryName;
+    String entryName;
     int doubleBangPos = url.getPath().indexOf("!!/");
     int singBangPos = url.getPath().indexOf("!/", doubleBangPos + 3);
 
-    jarInputStream = new JarInputStream(new URL(url.getPath().substring(0, doubleBangPos)).openStream());
-    innerEntryName = url.getPath().substring(doubleBangPos + 3, singBangPos);
+    jarFile = new JarFile(new URL(url.getPath().substring(0, doubleBangPos)).getFile());
+    entryName = url.getPath().substring(doubleBangPos + 3, singBangPos);
 
-    while ((jarEntry = jarInputStream.getNextJarEntry()) != null) {
-      if (jarEntry.getName().equals(innerEntryName)) {
+    if ((jarEntry = jarFile.getJarEntry(entryName)) != null) {
 
-        JarInputStream innerJarInputStream = new JarInputStream(jarInputStream);
-        JarEntry innerJarEntry;
-        String innerInnerEntryName = url.getPath().substring(singBangPos + 2);
+      JarInputStream innerJarInputStream = new JarInputStream(jarFile.getInputStream(jarEntry));
+      JarEntry innerJarEntry;
+      String innerEntryName;
 
-        while ((innerJarEntry = innerJarInputStream.getNextJarEntry()) != null) {
-          if (innerJarEntry.getName().equals(innerInnerEntryName)) {
-            return innerJarInputStream;
-          }
+      innerEntryName = url.getPath().substring(singBangPos + 2);
+
+      while ((innerJarEntry = innerJarInputStream.getNextJarEntry()) != null) {
+        if (innerJarEntry.getName().equals(innerEntryName)) {
+          return innerJarInputStream;
         }
       }
     }
