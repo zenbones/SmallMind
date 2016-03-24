@@ -50,6 +50,12 @@ import java.util.jar.Manifest;
 
 public class SingularityClassLoader extends ClassLoader {
 
+  private static final String[] INOPERABLE_NAMESPACES = new String[] {"javax.xml.", "org.xml.", "org.w3c."};
+  static {
+
+    ClassLoader.registerAsParallelCapable();
+    URL.setURLStreamHandlerFactory(new SingularityJarURLStreamHandlerFactory());
+  }
   private final HashMap<String, URL> urlMap = new HashMap<>();
   private final HashSet<String> packageSet = new HashSet<>();
   private final URL sealBase;
@@ -59,12 +65,6 @@ public class SingularityClassLoader extends ClassLoader {
   private final String implementationTitle;
   private final String implementationVersion;
   private final String implementationVendor;
-
-  static {
-
-    ClassLoader.registerAsParallelCapable();
-    URL.setURLStreamHandlerFactory(new SingularityJarURLStreamHandlerFactory());
-  }
 
   public SingularityClassLoader (ClassLoader parent, Manifest manifest, URL jarURL, JarInputStream jarInputStream)
     throws IOException, ClassNotFoundException {
@@ -154,27 +154,42 @@ public class SingularityClassLoader extends ClassLoader {
   public synchronized Class findClass (String name)
     throws ClassNotFoundException {
 
-    URL classURL;
+    if (isOperableNamespace(name)) {
 
-    if ((classURL = urlMap.get(name.replace('.', '/') + ".class")) != null) {
-      try {
+      URL classURL;
 
-        InputStream classInputStream;
-        byte[] classData;
+      if ((classURL = urlMap.get(name.replace('.', '/') + ".class")) != null) {
+        try {
 
-        classInputStream = classURL.openStream();
-        classData = getClassData(classInputStream);
-        classInputStream.close();
+          InputStream classInputStream;
+          byte[] classData;
 
-        definePackage(name);
+          classInputStream = classURL.openStream();
+          classData = getClassData(classInputStream);
+          classInputStream.close();
 
-        return defineClass(name, classData, 0, classData.length);
-      } catch (Exception exception) {
-        throw new ClassNotFoundException("Exception encountered while attempting to define class (" + name + ")", exception);
+          definePackage(name);
+
+          return defineClass(name, classData, 0, classData.length);
+        } catch (Exception exception) {
+          throw new ClassNotFoundException("Exception encountered while attempting to define class (" + name + ")", exception);
+        }
       }
     }
 
     throw new ClassNotFoundException(name);
+  }
+
+  private boolean isOperableNamespace (String name) {
+
+    for (String inoperableNamespace : INOPERABLE_NAMESPACES) {
+      if (name.startsWith(inoperableNamespace)) {
+
+        return false;
+      }
+    }
+
+    return true;
   }
 
   private void definePackage (String name) {
