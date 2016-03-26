@@ -32,37 +32,10 @@
  */
 package org.smallmind.web.reverse;
 
-import java.io.IOException;
-import org.apache.http.HttpException;
-import org.apache.http.nio.NHttpClientConnection;
-import org.apache.http.nio.protocol.HttpAsyncRequestExecutor;
-import org.smallmind.scribe.pen.LoggerManager;
+public class ProxyConversation {
 
-public class ProxyClientProtocolHandler extends HttpAsyncRequestExecutor {
+  private enum State {READ, WRITE};
 
-  public ProxyClientProtocolHandler () {
+  private final State state = State.READ;
 
-    super();
-  }
-
-  @Override
-  protected void log (final Exception ex) {
-
-    ex.printStackTrace();
-  }
-
-  @Override
-  public void connected (final NHttpClientConnection conn, final Object attachment)
-    throws IOException, HttpException {
-
-    LoggerManager.getLogger(ProxyClientProtocolHandler.class).trace("[proxy->origin] connection open %s", conn);
-    super.connected(conn, attachment);
-  }
-
-  @Override
-  public void closed (final NHttpClientConnection conn) {
-
-    LoggerManager.getLogger(ProxyClientProtocolHandler.class).trace("[proxy->origin] connection closed %s", conn);
-    super.closed(conn);
-  }
 }

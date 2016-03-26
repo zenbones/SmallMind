@@ -32,9 +32,10 @@
  */
 package org.smallmind.web.reverse;
 
-import org.apache.http.HttpRequest;
+import org.smallmind.nutsnbolts.http.HttpMethod;
 
-public interface HttpHostDictionary {
+public abstract class HttpFrame {
 
-  HttpHostEntry lookup (HttpRequest httpRequest);
+  private HttpMethod method;
+  private String version;
 }

@@ -32,37 +32,7 @@
  */
 package org.smallmind.web.reverse;
 
-import org.apache.http.ConnectionReuseStrategy;
-import org.apache.http.nio.NHttpServerConnection;
-import org.apache.http.nio.protocol.HttpAsyncRequestHandlerMapper;
-import org.apache.http.nio.protocol.HttpAsyncService;
-import org.apache.http.protocol.HttpProcessor;
-import org.smallmind.scribe.pen.LoggerManager;
+public class HttpRequest extends HttpFrame {
 
-public class ProxyServiceHandler extends HttpAsyncService {
-
-  public ProxyServiceHandler (final HttpProcessor httpProcessor, final ConnectionReuseStrategy reuseStrategy, final HttpAsyncRequestHandlerMapper handlerResolver) {
-
-    super(httpProcessor, reuseStrategy, null, handlerResolver, null);
-  }
-
-  @Override
-  protected void log (final Exception exception) {
-
-    LoggerManager.getLogger(ProxyServiceHandler.class).error(exception);
-  }
-
-  @Override
-  public void connected (final NHttpServerConnection conn) {
-
-    LoggerManager.getLogger(ProxyServiceHandler.class).trace("[client->proxy] connection open %s", conn);
-    super.connected(conn);
-  }
-
-  @Override
-  public void closed (final NHttpServerConnection conn) {
-
-    LoggerManager.getLogger(ProxyServiceHandler.class).trace("[client->proxy] connection closed %s", conn);
-    super.closed(conn);
-  }
+  private String path;
 }

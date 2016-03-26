@@ -32,6 +32,8 @@
  */
 package org.smallmind.web.reverse;
 
-public interface HttpHostKey<H extends HttpHostKey<H>> extends Comparable<H> {
+public class HttpResponse extends HttpFrame {
 
+  private String reason;
+  private int status;
 }

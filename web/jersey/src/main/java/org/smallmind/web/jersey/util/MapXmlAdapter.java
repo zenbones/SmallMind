@@ -30,46 +30,61 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.web.reverse;
+package org.smallmind.web.jersey.util;
 
-import org.apache.http.HttpHost;
-import org.apache.http.config.ConnectionConfig;
-import org.apache.http.impl.nio.pool.BasicNIOConnPool;
-import org.apache.http.impl.nio.pool.BasicNIOPoolEntry;
-import org.apache.http.nio.NHttpClientConnection;
-import org.apache.http.nio.pool.NIOConnFactory;
-import org.apache.http.nio.reactor.ConnectingIOReactor;
-import org.apache.http.pool.PoolStats;
-import org.smallmind.scribe.pen.LoggerManager;
+import java.util.LinkedHashMap;
+import java.util.Map;
+import javax.xml.bind.annotation.adapters.XmlAdapter;
 
-public class ProxyConnPool extends BasicNIOConnPool {
+public abstract class MapXmlAdapter<M extends Map<K, V>, K, V> extends XmlAdapter<LinkedHashMap<?, ?>, M> {
 
-  public ProxyConnPool (final ConnectingIOReactor ioreactor, final ConnectionConfig config) {
+  public abstract M getEmptyMap ();
 
-    super(ioreactor, config);
+  public abstract Class<K> getKeyClass ();
+
+  public abstract Class<V> getValueClass ();
+
+  private K unmarshalKey (Object obj) {
+
+    return JsonCodec.convert(obj, getKeyClass());
   }
 
-  public ProxyConnPool (final ConnectingIOReactor ioreactor, final NIOConnFactory<HttpHost, NHttpClientConnection> connFactory, final int connectTimeout) {
+  private V unmarshalValue (Object obj) {
 
-    super(ioreactor, connFactory, connectTimeout);
+    return JsonCodec.convert(obj, getValueClass());
   }
 
   @Override
-  public void release (final BasicNIOPoolEntry entry, boolean reusable) {
+  public M unmarshal (LinkedHashMap<?, ?> linkedHashMap) throws Exception {
 
-    LoggerManager.getLogger(ProxyConnPool.class).trace("[proxy->origin] connection released  %s", entry.getConnection());
+    if (linkedHashMap != null) {
 
-    super.release(entry, reusable);
+      M map = getEmptyMap();
 
-    LoggerManager.getLogger(ProxyConnPool.class).trace(new Object() {
-
-      @Override
-      public String toString () {
-
-        PoolStats totals = getTotalStats();
-
-        return String.format("[proxy->origin] [total kept alive: %d; total allocated: %d of %d]", totals.getAvailable(), totals.getLeased() + totals.getAvailable(), totals.getMax());
+      for (Map.Entry<?, ?> entry : linkedHashMap.entrySet()) {
+        map.put(unmarshalKey(entry.getKey()), unmarshalValue(entry.getValue()));
       }
-    });
+
+      return map;
+    }
+
+    return null;
+  }
+
+  @Override
+  public LinkedHashMap<?, ?> marshal (M map) throws Exception {
+
+    if (map != null) {
+
+      LinkedHashMap<K, V> linkedHashMap = new LinkedHashMap<>();
+
+      for (Map.Entry<K, V> entry : map.entrySet()) {
+        linkedHashMap.put(entry.getKey(), entry.getValue());
+      }
+
+      return linkedHashMap;
+    }
+
+    return null;
   }
 }

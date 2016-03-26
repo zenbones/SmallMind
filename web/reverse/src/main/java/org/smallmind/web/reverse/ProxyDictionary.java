@@ -32,26 +32,7 @@
  */
 package org.smallmind.web.reverse;
 
-import org.apache.http.HttpHost;
+public interface ProxyDictionary {
 
-public class HttpHostEntry {
-
-  private final HttpHostKey httpHostKey;
-  private final HttpHost httpHost;
-
-  public HttpHostEntry (HttpHostKey httpHostKey, HttpHost httpHost) {
-
-    this.httpHostKey = httpHostKey;
-    this.httpHost = httpHost;
-  }
-
-  public HttpHostKey getHttpHostKey () {
-
-    return httpHostKey;
-  }
-
-  public HttpHost getHttpHost () {
-
-    return httpHost;
-  }
+  ProxyTarget lookup (HttpRequest httpRequest);
 }

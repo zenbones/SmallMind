@@ -32,25 +32,24 @@
  */
 package org.smallmind.web.reverse;
 
-import org.apache.http.HttpResponse;
-import org.apache.http.impl.DefaultConnectionReuseStrategy;
-import org.apache.http.nio.NHttpConnection;
-import org.apache.http.protocol.HttpContext;
-import org.apache.http.protocol.HttpCoreContext;
-import org.smallmind.scribe.pen.LoggerManager;
+public class ProxyTarget {
 
-public class ProxyIncomingConnectionReuseStrategy extends DefaultConnectionReuseStrategy {
+  private String host;
+  private int port;
 
-  @Override
-  public boolean keepAlive (final HttpResponse response, final HttpContext context) {
+  public ProxyTarget (String host, int port) {
 
-    NHttpConnection conn = (NHttpConnection)context.getAttribute(HttpCoreContext.HTTP_CONNECTION);
-    boolean keepAlive = super.keepAlive(response, context);
+    this.host = host;
+    this.port = port;
+  }
 
-    if (keepAlive) {
-      LoggerManager.getLogger(ProxyIncomingConnectionReuseStrategy.class).trace("[client->proxy] connection kept alive %s", conn);
-    }
+  public String getHost () {
 
-    return keepAlive;
+    return host;
+  }
+
+  public int getPort () {
+
+    return port;
   }
 }
