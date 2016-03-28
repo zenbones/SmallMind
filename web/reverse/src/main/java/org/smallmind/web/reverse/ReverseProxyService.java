@@ -77,7 +77,14 @@ public class ReverseProxyService {
     throws Exception {
 
     CountDownLatch cdl = new CountDownLatch(1);
-    ReverseProxyService reverseProxyService = new ReverseProxyService("0.0.0.0", 9030, null, 3000, 16);
+    ReverseProxyService reverseProxyService = new ReverseProxyService("0.0.0.0", 9030, new ProxyDictionary() {
+
+      @Override
+      public ProxyTarget lookup (HttpRequest httpRequest) {
+
+        return new ProxyTarget("www.google.com", 80);
+      }
+    }, 3000, 16);
 
     cdl.await();
   }
@@ -191,6 +198,7 @@ public class ReverseProxyService {
                 } catch (ProtocolException protocolException) {
                   internalError(selectionKey, protocolException.getSourceSocketChannel(), protocolException.getCannedResponse());
                 } catch (Exception exception) {
+                  exception.printStackTrace();
                   closeSelectionKey(selectionKey);
                 } finally {
                   selectionKeyIter.remove();

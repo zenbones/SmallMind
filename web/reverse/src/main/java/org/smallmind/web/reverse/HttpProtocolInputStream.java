@@ -62,6 +62,7 @@ public class HttpProtocolInputStream extends InputStream {
 
     while (!((buffer[lineIndex] == '\n') && (lastChar == '\r'))) {
       if (lineIndex == buffer.length) {
+        index = lineIndex;
 
         return null;
       }
@@ -69,7 +70,7 @@ public class HttpProtocolInputStream extends InputStream {
     }
 
     try {
-      return new String(buffer, index, lineIndex - 1);
+      return new String(buffer, index, (lineIndex - index - 1));
     } finally {
       index = lineIndex + 1;
     }

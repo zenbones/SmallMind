@@ -49,8 +49,7 @@ public class HttpContentLengthFrameReader implements FrameReader {
     this.contentLength = contentLength;
   }
 
-  public void read (ByteBuffer byteBuffer)
-    throws ProtocolException {
+  public void read (ByteBuffer byteBuffer) {
 
     while ((byteBuffer.remaining() > 0) && (bytesRead++ < contentLength)) {
       byteArrayOutputStream.write(byteBuffer.get());

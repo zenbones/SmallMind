@@ -56,7 +56,7 @@ public abstract class HttpFrame {
     LinkedHashMap<String, HttpHeader> headerMap = new LinkedHashMap<>();
     String line;
 
-    while ((line = inputStream.readLine()) != null) {
+    while (!(line = inputStream.readLine()).isEmpty()) {
 
       HttpHeader header;
       String name;
