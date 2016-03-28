@@ -32,7 +32,32 @@
  */
 package org.smallmind.web.reverse;
 
-public interface ProxyConversation {
+import java.io.ByteArrayOutputStream;
+import java.nio.ByteBuffer;
 
-  FrameReader getFrameReader ();
+public class HttpFrameReader implements FrameReader {
+
+  private ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
+  private boolean lineEnd = false;
+  private int lastChar = 0;
+
+  public void read (ByteBuffer byteBuffer) {
+
+    while (byteBuffer.remaining() > 0) {
+
+      int currentChar;
+
+      byteArrayOutputStream.write(currentChar = byteBuffer.get());
+      if ((currentChar == '\n') && (lastChar == '\r')) {
+        if (lineEnd) {
+          System.out.println(new String(byteArrayOutputStream.toByteArray()));
+        }
+        lineEnd = true;
+      } else if (currentChar != '\r') {
+        lineEnd = false;
+      }
+
+      lastChar = currentChar;
+    }
+  }
 }

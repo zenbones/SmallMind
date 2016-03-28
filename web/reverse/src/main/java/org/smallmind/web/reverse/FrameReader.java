@@ -32,7 +32,9 @@
  */
 package org.smallmind.web.reverse;
 
-public interface ProxyConversation {
+import java.nio.ByteBuffer;
 
-  FrameReader getFrameReader ();
+public interface FrameReader {
+
+  void read (ByteBuffer byteBuffer);
 }

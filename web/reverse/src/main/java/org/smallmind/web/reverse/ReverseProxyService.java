@@ -38,7 +38,6 @@ import java.net.StandardSocketOptions;
 import java.nio.ByteBuffer;
 import java.nio.channels.AsynchronousSocketChannel;
 import java.nio.channels.CompletionHandler;
-import java.nio.channels.SelectableChannel;
 import java.nio.channels.SelectionKey;
 import java.nio.channels.Selector;
 import java.nio.channels.ServerSocketChannel;
@@ -52,6 +51,7 @@ public class ReverseProxyService {
   private static final ByteBuffer NOT_FOUND_BUFFER = ByteBuffer.wrap("HTTP/1.1 404 Not Found\r\n\r\n".getBytes());
   private final ServerSocketChannel serverSocketChannel;
   private final ProxyDictionary dictionary;
+  private final ByteBuffer byteBuffer = ByteBuffer.allocateDirect(8192);
 
   public ReverseProxyService (String host, int port, ProxyDictionary dictionary)
     throws IOException {
@@ -117,7 +117,6 @@ public class ReverseProxyService {
             if (selector.select(1000) > 0) {
 
               Iterator<SelectionKey> selectionKeyIter = selector.selectedKeys().iterator();
-              boolean workDone = true;
 
               while (selectionKeyIter.hasNext()) {
 
@@ -130,21 +129,15 @@ public class ReverseProxyService {
                       final SocketChannel sourceSocketChannel = (SocketChannel)((ServerSocketChannel)selectionKey.channel()).accept().setOption(StandardSocketOptions.SO_KEEPALIVE, true).setOption(StandardSocketOptions.TCP_NODELAY, true).configureBlocking(false);
                       final AsynchronousSocketChannel destinationSocketChannel = AsynchronousSocketChannel.open();
 
+                      sourceSocketChannel.register(selector, SelectionKey.OP_READ, new HttpConversation());
                       destinationSocketChannel.connect(new InetSocketAddress("www.google.com", 80), null, new CompletionHandler<Void, Void>() {
 
                         @Override
                         public void completed (Void result, Void attachment) {
 
-                          System.out.println("Miracles have occurred");
                           try {
                             destinationSocketChannel.setOption(StandardSocketOptions.SO_KEEPALIVE, true).setOption(StandardSocketOptions.TCP_NODELAY, true);
-                            sourceSocketChannel.register(selector, SelectionKey.OP_READ);
-                            System.out.println(sourceSocketChannel.isOpen());
-                            System.out.println(sourceSocketChannel.isRegistered());
-                            System.out.println(sourceSocketChannel.isConnected());
-                            System.out.println(sourceSocketChannel.keyFor(selector).isValid());
                           } catch (IOException ioException) {
-                            ioException.printStackTrace();
                             LoggerManager.getLogger(ReverseProxyService.class).error(ioException);
                           }
                         }
@@ -155,18 +148,17 @@ public class ReverseProxyService {
                           try {
                             sourceSocketChannel.write(NOT_FOUND_BUFFER);
                             sourceSocketChannel.close();
-                          } catch (IOException ioExcption) {
-                            LoggerManager.getLogger(ReverseProxyService.class).error(ioExcption);
+                          } catch (IOException ioException) {
+                            LoggerManager.getLogger(ReverseProxyService.class).error(ioException);
                           }
                         }
                       });
                     } else if (selectionKey.isReadable() && selectionKey.channel().isOpen()) {
-                      System.out.println("Read...");
-                      ByteBuffer b = ByteBuffer.allocate(2048);
-                      ((SocketChannel)selectionKey.channel()).read(b);
-                      b.flip();
-                      System.out.println(new String(b.array()));
-                      selectionKey.interestOps(SelectionKey.OP_WRITE);
+                      byteBuffer.clear();
+                      if (((SocketChannel)selectionKey.channel()).read(byteBuffer) > 0) {
+                        byteBuffer.flip();
+                        ((ProxyConversation)selectionKey.attachment()).getFrameReader().read(byteBuffer);
+                      }
                     } else if (selectionKey.isWritable() && selectionKey.channel().isOpen()) {
                       System.out.println("Write...");
                     }

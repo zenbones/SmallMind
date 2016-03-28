@@ -32,7 +32,13 @@
  */
 package org.smallmind.web.reverse;
 
-public interface ProxyConversation {
+public class HttpConversation implements ProxyConversation {
 
-  FrameReader getFrameReader ();
+  private HttpFrameReader httpFrameReader = new HttpFrameReader();
+
+  @Override
+  public FrameReader getFrameReader () {
+
+    return httpFrameReader;
+  }
 }
