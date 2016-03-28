@@ -36,18 +36,18 @@ import java.nio.channels.SocketChannel;
 
 public class ProtocolException extends Exception {
 
-  private SocketChannel sourceSocketChannel;
+  private SocketChannel sourceChannel;
   private CannedResponse cannedResponse;
 
-  public ProtocolException (SocketChannel sourceSocketChannel, CannedResponse cannedResponse) {
+  public ProtocolException (SocketChannel sourceChannel, CannedResponse cannedResponse) {
 
-    this.sourceSocketChannel = sourceSocketChannel;
+    this.sourceChannel = sourceChannel;
     this.cannedResponse = cannedResponse;
   }
 
   public SocketChannel getSourceSocketChannel () {
 
-    return sourceSocketChannel;
+    return sourceChannel;
   }
 
   public CannedResponse getCannedResponse () {

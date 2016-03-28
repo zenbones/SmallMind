@@ -32,15 +32,16 @@
  */
 package org.smallmind.web.reverse;
 
-import java.io.BufferedInputStream;
+import java.nio.channels.SocketChannel;
 
 public class HttpResponse extends HttpFrame {
 
   private String reason;
   private int status;
 
-  public HttpResponse (String version) {
+  public HttpResponse (SocketChannel sourceChannel, HttpProtocolInputStream inputStream, String version)
+    throws ProtocolException {
 
-    super(version);
+    super(sourceChannel, inputStream, version);
   }
 }

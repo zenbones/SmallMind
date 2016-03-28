@@ -32,18 +32,30 @@
  */
 package org.smallmind.web.reverse;
 
-public class HttpConversation implements ProxyConversation {
+import java.io.ByteArrayOutputStream;
+import java.nio.ByteBuffer;
 
-  private final HttpFrameReader httpFrameReader;
+public class HttpContentLengthFrameReader implements FrameReader {
 
-  public HttpConversation () {
+  private final HttpRequestFrameReader httpRequestFrameReader;
+  private final ByteArrayOutputStream byteArrayOutputStream;
+  private final int contentLength;
+  private int bytesRead = 0;
 
-    httpFrameReader = new HttpFrameReader();
+  public HttpContentLengthFrameReader (HttpRequestFrameReader httpRequestFrameReader, ByteArrayOutputStream byteArrayOutputStream, int contentLength) {
+
+    this.httpRequestFrameReader = httpRequestFrameReader;
+    this.byteArrayOutputStream = byteArrayOutputStream;
+    this.contentLength = contentLength;
   }
 
-  @Override
-  public FrameReader getFrameReader () {
+  public void read (ByteBuffer byteBuffer)
+    throws ProtocolException {
 
-    return httpFrameReader;
+    while ((byteBuffer.remaining() > 0) && (bytesRead++ < contentLength)) {
+      byteArrayOutputStream.write(byteBuffer.get());
+    }
+
+    httpRequestFrameReader.flushBufferToDestination();
   }
 }

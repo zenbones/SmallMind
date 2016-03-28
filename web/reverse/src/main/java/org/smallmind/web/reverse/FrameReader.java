@@ -33,10 +33,9 @@
 package org.smallmind.web.reverse;
 
 import java.nio.ByteBuffer;
-import java.nio.channels.SocketChannel;
 
 public interface FrameReader {
 
-  void read (ReverseProxyService reverseProxyService, SocketChannel sourceSocketChannel, ByteBuffer byteBuffer)
+  void read (ByteBuffer byteBuffer)
     throws ProtocolException;
 }

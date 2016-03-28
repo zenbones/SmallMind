@@ -42,15 +42,15 @@ public abstract class HttpFrame {
   private final LinkedList<HttpHeader> headerList;
   private final String version;
 
-  public HttpFrame (SocketChannel sourceSocketChannel, HttpProtocolInputStream inputStream, String version)
+  public HttpFrame (SocketChannel sourceChannel, HttpProtocolInputStream inputStream, String version)
     throws ProtocolException {
 
     this.version = version;
 
-    headerList = parseHeaders(sourceSocketChannel, inputStream);
+    headerList = parseHeaders(sourceChannel, inputStream);
   }
 
-  private LinkedList<HttpHeader> parseHeaders (SocketChannel sourceSocketChannel, HttpProtocolInputStream inputStream)
+  private LinkedList<HttpHeader> parseHeaders (SocketChannel sourceChannel, HttpProtocolInputStream inputStream)
     throws ProtocolException {
 
     LinkedHashMap<String, HttpHeader> headerMap = new LinkedHashMap<>();
@@ -63,7 +63,7 @@ public abstract class HttpFrame {
       int colonPos;
 
       if ((colonPos = line.indexOf(':')) < 0) {
-        throw new ProtocolException(sourceSocketChannel, CannedResponse.BAD_REQUEST);
+        throw new ProtocolException(sourceChannel, CannedResponse.BAD_REQUEST);
       }
       if ((header = headerMap.get(name = normalizeHeaderName(line.substring(0, colonPos).trim()))) == null) {
         headerMap.put(name, header = new HttpHeader(name));

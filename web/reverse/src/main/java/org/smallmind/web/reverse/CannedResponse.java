@@ -37,7 +37,10 @@ import java.nio.ByteBuffer;
 public enum CannedResponse {
 
   BAD_REQUEST(ByteBuffer.wrap("HTTP/1.1 400 Bad Request\r\n\r\n".getBytes())),
-  NOT_FOUND(ByteBuffer.wrap("HTTP/1.1 404 Not Found\r\n\r\n".getBytes()));
+  NOT_FOUND(ByteBuffer.wrap("HTTP/1.1 404 Not Found\r\n\r\n".getBytes())),
+  LENGTH_REQUIRED(ByteBuffer.wrap("HTTP/1.1 411 Length Required\r\n\r\n".getBytes())),
+  BAD_GATEWAY(ByteBuffer.wrap("HTTP/1.1 502 Bad Gateway\r\n\r\n".getBytes())),
+  GATEWAY_TIMEOUT(ByteBuffer.wrap("HTTP/1.1 504 Gateway Timeout\r\n\r\n".getBytes()));
 
   private ByteBuffer byteBuffer;
 

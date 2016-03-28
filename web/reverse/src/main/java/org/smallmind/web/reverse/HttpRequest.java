@@ -44,33 +44,33 @@ public class HttpRequest extends HttpFrame {
   private HttpMethod method;
   private String path;
 
-  public HttpRequest (SocketChannel sourceSocketChannel, HttpProtocolInputStream inputStream)
+  public HttpRequest (SocketChannel sourceChannel, HttpProtocolInputStream inputStream)
     throws ProtocolException {
 
-    this(sourceSocketChannel, inputStream, parseRequestLine(sourceSocketChannel, inputStream.readLine()));
+    this(sourceChannel, inputStream, parseRequestLine(sourceChannel, inputStream.readLine()));
   }
 
-  private HttpRequest (SocketChannel sourceSocketChannel, HttpProtocolInputStream inputStream, Matcher matcher)
+  private HttpRequest (SocketChannel sourceChannel, HttpProtocolInputStream inputStream, Matcher matcher)
     throws ProtocolException {
 
-    super(sourceSocketChannel, inputStream, matcher.group(3));
+    super(sourceChannel, inputStream, matcher.group(3));
 
     try {
       method = HttpMethod.valueOf(matcher.group(1));
     } catch (Exception exception) {
-      throw new ProtocolException(sourceSocketChannel, CannedResponse.BAD_REQUEST);
+      throw new ProtocolException(sourceChannel, CannedResponse.BAD_REQUEST);
     }
 
     path = matcher.group(2);
   }
 
-  private static Matcher parseRequestLine (SocketChannel sourceSocketChannel, String line)
+  private static Matcher parseRequestLine (SocketChannel sourceChannel, String line)
     throws ProtocolException {
 
     Matcher matcher;
 
     if (!(matcher = REQUEST_LINE_PATTERN.matcher(line)).matches()) {
-      throw new ProtocolException(sourceSocketChannel, CannedResponse.BAD_REQUEST);
+      throw new ProtocolException(sourceChannel, CannedResponse.BAD_REQUEST);
     }
 
     return matcher;
