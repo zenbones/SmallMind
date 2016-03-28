@@ -36,9 +36,9 @@ public class HttpConversation implements ProxyConversation {
 
   private final HttpFrameReader httpFrameReader;
 
-  public HttpConversation (HttpOrigin origin) {
+  public HttpConversation () {
 
-    httpFrameReader = new HttpFrameReader(origin);
+    httpFrameReader = new HttpFrameReader();
   }
 
   @Override

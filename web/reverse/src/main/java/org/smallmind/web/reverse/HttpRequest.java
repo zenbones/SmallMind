@@ -47,10 +47,24 @@ public class HttpRequest extends HttpFrame {
   public HttpRequest (SocketChannel sourceSocketChannel, HttpProtocolInputStream inputStream)
     throws ProtocolException {
 
-    super(parseRequestLine(sourceSocketChannel, inputStream.readLine()));
+    this(sourceSocketChannel, inputStream, parseRequestLine(sourceSocketChannel, inputStream.readLine()));
   }
 
-  private static String parseRequestLine (SocketChannel sourceSocketChannel, String line)
+  private HttpRequest (SocketChannel sourceSocketChannel, HttpProtocolInputStream inputStream, Matcher matcher)
+    throws ProtocolException {
+
+    super(sourceSocketChannel, inputStream, matcher.group(3));
+
+    try {
+      method = HttpMethod.valueOf(matcher.group(1));
+    } catch (Exception exception) {
+      throw new ProtocolException(sourceSocketChannel, CannedResponse.BAD_REQUEST);
+    }
+
+    path = matcher.group(2);
+  }
+
+  private static Matcher parseRequestLine (SocketChannel sourceSocketChannel, String line)
     throws ProtocolException {
 
     Matcher matcher;
@@ -59,6 +73,16 @@ public class HttpRequest extends HttpFrame {
       throw new ProtocolException(sourceSocketChannel, CannedResponse.BAD_REQUEST);
     }
 
-    return matcher.group(3);
+    return matcher;
+  }
+
+  public HttpMethod getMethod () {
+
+    return method;
+  }
+
+  public String getPath () {
+
+    return path;
   }
 }

@@ -34,48 +34,59 @@ package org.smallmind.web.reverse;
 
 import java.io.ByteArrayOutputStream;
 import java.nio.ByteBuffer;
+import java.nio.channels.AsynchronousSocketChannel;
 import java.nio.channels.SocketChannel;
 import org.smallmind.nutsnbolts.lang.UnknownSwitchCaseException;
 
 public class HttpFrameReader implements FrameReader {
 
-  private HttpOrigin origin;
-  private ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
+  private static enum State {META, CONTENT}
+
+  private final ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
+  private State state = State.META;
   private boolean lineEnd = false;
   private int lastChar = 0;
 
-  public HttpFrameReader (HttpOrigin origin) {
-
-    this.origin = origin;
-  }
-
-  public void read (SocketChannel sourceSocketChannel, ByteBuffer byteBuffer)
+  public void read (ReverseProxyService reverseProxyService, SocketChannel sourceSocketChannel, ByteBuffer byteBuffer)
     throws ProtocolException {
 
     while (byteBuffer.remaining() > 0) {
+      switch (state) {
+        case META:
 
-      int currentChar;
+          int currentChar;
 
-      byteArrayOutputStream.write(currentChar = byteBuffer.get());
-      if ((currentChar == '\n') && (lastChar == '\r')) {
-        if (lineEnd) {
-          switch (origin) {
-            case SOURCE:
+          byteArrayOutputStream.write(currentChar = byteBuffer.get());
+
+          if ((currentChar == '\n') && (lastChar == '\r')) {
+            if (lineEnd) {
+
               HttpRequest httpRequest = new HttpRequest(sourceSocketChannel, new HttpProtocolInputStream(byteArrayOutputStream.toByteArray()));
-              System.out.println(httpRequest.getVersion());
-              break;
-            case DESTINATION:
-              break;
-            default:
-              throw new UnknownSwitchCaseException(origin.name());
-          }
-        }
-        lineEnd = true;
-      } else if (currentChar != '\r') {
-        lineEnd = false;
-      }
+              HttpHeader contentLengthHeader;
 
-      lastChar = currentChar;
+              if ((contentLengthHeader = httpRequest.getHeader("Content-Length")) != null) {
+
+              }
+
+              state = State.CONTENT;
+              reverseProxyService.connectDestination(sourceSocketChannel, this, httpRequest);
+            }
+            lineEnd = true;
+          } else if (currentChar != '\r') {
+            lineEnd = false;
+          }
+
+          lastChar = currentChar;
+          break;
+        case CONTENT:
+          break;
+        default:
+          throw new UnknownSwitchCaseException(state.name());
+      }
     }
+  }
+
+  public void registerDestination (AsynchronousSocketChannel destinationChannel) {
+
   }
 }

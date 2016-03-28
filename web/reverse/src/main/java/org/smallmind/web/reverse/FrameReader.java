@@ -37,6 +37,6 @@ import java.nio.channels.SocketChannel;
 
 public interface FrameReader {
 
-  void read (SocketChannel sourceSocketChannel, ByteBuffer byteBuffer)
+  void read (ReverseProxyService reverseProxyService, SocketChannel sourceSocketChannel, ByteBuffer byteBuffer)
     throws ProtocolException;
 }

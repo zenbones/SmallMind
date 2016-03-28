@@ -32,7 +32,34 @@
  */
 package org.smallmind.web.reverse;
 
-public enum HttpOrigin {
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 
-  SOURCE, DESTINATION
+public class HttpHeader {
+
+  private String name;
+  private ArrayList<String> valueList = new ArrayList<>(1);
+
+  public HttpHeader (String name, String... values) {
+
+    this.name = name;
+
+    valueList.addAll(Arrays.asList(values));
+  }
+
+  public String getName () {
+
+    return name;
+  }
+
+  public void addValue (String value) {
+
+    valueList.add(value);
+  }
+
+  public List<String> getValues () {
+
+    return valueList;
+  }
 }

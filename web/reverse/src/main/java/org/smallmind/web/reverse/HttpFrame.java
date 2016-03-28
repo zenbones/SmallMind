@@ -32,17 +32,91 @@
  */
 package org.smallmind.web.reverse;
 
+import java.nio.channels.SocketChannel;
+import java.util.LinkedHashMap;
+import java.util.LinkedList;
+import java.util.List;
+
 public abstract class HttpFrame {
 
-  private String version;
+  private final LinkedList<HttpHeader> headerList;
+  private final String version;
 
-  public HttpFrame (String version) {
+  public HttpFrame (SocketChannel sourceSocketChannel, HttpProtocolInputStream inputStream, String version)
+    throws ProtocolException {
 
     this.version = version;
+
+    headerList = parseHeaders(sourceSocketChannel, inputStream);
+  }
+
+  private LinkedList<HttpHeader> parseHeaders (SocketChannel sourceSocketChannel, HttpProtocolInputStream inputStream)
+    throws ProtocolException {
+
+    LinkedHashMap<String, HttpHeader> headerMap = new LinkedHashMap<>();
+    String line;
+
+    while ((line = inputStream.readLine()) != null) {
+
+      HttpHeader header;
+      String name;
+      int colonPos;
+
+      if ((colonPos = line.indexOf(':')) < 0) {
+        throw new ProtocolException(sourceSocketChannel, CannedResponse.BAD_REQUEST);
+      }
+      if ((header = headerMap.get(name = normalizeHeaderName(line.substring(0, colonPos).trim()))) == null) {
+        headerMap.put(name, header = new HttpHeader(name));
+      }
+
+      header.addValue(line.substring(colonPos + 1).trim());
+    }
+
+    return new LinkedList<>(headerMap.values());
+  }
+
+  private String normalizeHeaderName (String name) {
+
+    StringBuilder normalizedBuilder = new StringBuilder();
+    boolean upperCase = true;
+
+    for (int index = 0; index < name.length(); index++) {
+
+      char singleChar = name.charAt(index);
+
+      if (singleChar == '-') {
+        normalizedBuilder.append('-');
+        upperCase = true;
+      } else if (upperCase) {
+        normalizedBuilder.append(Character.toUpperCase(singleChar));
+        upperCase = false;
+      } else {
+        normalizedBuilder.append(singleChar);
+      }
+    }
+
+    return normalizedBuilder.toString();
   }
 
   public String getVersion () {
 
     return version;
+  }
+
+  public HttpHeader getHeader (String name) {
+
+    for (HttpHeader header : headerList) {
+      if (header.getName().equals(normalizeHeaderName(name.trim()))) {
+
+        return header;
+      }
+    }
+
+    return null;
+  }
+
+  public List<HttpHeader> getHeaders () {
+
+    return headerList;
   }
 }
