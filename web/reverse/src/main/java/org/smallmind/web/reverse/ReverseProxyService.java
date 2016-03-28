@@ -141,7 +141,7 @@ public class ReverseProxyService {
             Socket destinationSocket = new Socket();
 
             destinationSocket.connect(new InetSocketAddress(target.getHost(), target.getPort()), connectTimeoutMillis);
-            httpRequestFrameReader.registerDestination(destinationSocket.getChannel());
+            httpRequestFrameReader.registerDestination(destinationSocket);
           } catch (IOException ioException) {
             httpRequestFrameReader.fail(CannedResponse.NOT_FOUND);
           }
@@ -198,7 +198,6 @@ public class ReverseProxyService {
                 } catch (ProtocolException protocolException) {
                   internalError(selectionKey, protocolException.getSourceSocketChannel(), protocolException.getCannedResponse());
                 } catch (Exception exception) {
-                  exception.printStackTrace();
                   closeSelectionKey(selectionKey);
                 } finally {
                   selectionKeyIter.remove();
@@ -206,7 +205,6 @@ public class ReverseProxyService {
               }
             }
           } catch (Exception exception) {
-            exception.printStackTrace();
             LoggerManager.getLogger(ReverseProxyService.class).error(exception);
           }
         }
