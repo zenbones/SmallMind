@@ -32,50 +32,22 @@
  */
 package org.smallmind.web.reverse;
 
-import java.io.ByteArrayOutputStream;
 import java.nio.ByteBuffer;
-import java.nio.channels.SocketChannel;
-import org.smallmind.nutsnbolts.lang.UnknownSwitchCaseException;
 
-public class HttpFrameReader implements FrameReader {
+public enum CannedResponse {
 
-  private HttpOrigin origin;
-  private ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
-  private boolean lineEnd = false;
-  private int lastChar = 0;
+  BAD_REQUEST(ByteBuffer.wrap("HTTP/1.1 400 Bad Request\r\n\r\n".getBytes())),
+  NOT_FOUND(ByteBuffer.wrap("HTTP/1.1 404 Not Found\r\n\r\n".getBytes()));
 
-  public HttpFrameReader (HttpOrigin origin) {
+  private ByteBuffer byteBuffer;
 
-    this.origin = origin;
+  CannedResponse (ByteBuffer byteBuffer) {
+
+    this.byteBuffer = byteBuffer;
   }
 
-  public void read (SocketChannel sourceSocketChannel, ByteBuffer byteBuffer)
-    throws ProtocolException {
+  public ByteBuffer getByteBuffer () {
 
-    while (byteBuffer.remaining() > 0) {
-
-      int currentChar;
-
-      byteArrayOutputStream.write(currentChar = byteBuffer.get());
-      if ((currentChar == '\n') && (lastChar == '\r')) {
-        if (lineEnd) {
-          switch (origin) {
-            case SOURCE:
-              HttpRequest httpRequest = new HttpRequest(sourceSocketChannel, new HttpProtocolInputStream(byteArrayOutputStream.toByteArray()));
-              System.out.println(httpRequest.getVersion());
-              break;
-            case DESTINATION:
-              break;
-            default:
-              throw new UnknownSwitchCaseException(origin.name());
-          }
-        }
-        lineEnd = true;
-      } else if (currentChar != '\r') {
-        lineEnd = false;
-      }
-
-      lastChar = currentChar;
-    }
+    return byteBuffer;
   }
 }

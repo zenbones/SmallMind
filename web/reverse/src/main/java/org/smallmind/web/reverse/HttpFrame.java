@@ -32,10 +32,17 @@
  */
 package org.smallmind.web.reverse;
 
-import org.smallmind.nutsnbolts.http.HttpMethod;
-
 public abstract class HttpFrame {
 
-  private HttpMethod method;
   private String version;
+
+  public HttpFrame (String version) {
+
+    this.version = version;
+  }
+
+  public String getVersion () {
+
+    return version;
+  }
 }

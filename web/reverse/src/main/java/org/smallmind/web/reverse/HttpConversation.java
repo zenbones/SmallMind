@@ -34,7 +34,12 @@ package org.smallmind.web.reverse;
 
 public class HttpConversation implements ProxyConversation {
 
-  private HttpFrameReader httpFrameReader = new HttpFrameReader();
+  private final HttpFrameReader httpFrameReader;
+
+  public HttpConversation (HttpOrigin origin) {
+
+    httpFrameReader = new HttpFrameReader(origin);
+  }
 
   @Override
   public FrameReader getFrameReader () {

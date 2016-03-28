@@ -48,7 +48,6 @@ import org.smallmind.scribe.pen.LoggerManager;
 
 public class ReverseProxyService {
 
-  private static final ByteBuffer NOT_FOUND_BUFFER = ByteBuffer.wrap("HTTP/1.1 404 Not Found\r\n\r\n".getBytes());
   private final ServerSocketChannel serverSocketChannel;
   private final ProxyDictionary dictionary;
   private final ByteBuffer byteBuffer = ByteBuffer.allocateDirect(8192);
@@ -129,7 +128,7 @@ public class ReverseProxyService {
                       final SocketChannel sourceSocketChannel = (SocketChannel)((ServerSocketChannel)selectionKey.channel()).accept().setOption(StandardSocketOptions.SO_KEEPALIVE, true).setOption(StandardSocketOptions.TCP_NODELAY, true).configureBlocking(false);
                       final AsynchronousSocketChannel destinationSocketChannel = AsynchronousSocketChannel.open();
 
-                      sourceSocketChannel.register(selector, SelectionKey.OP_READ, new HttpConversation());
+                      sourceSocketChannel.register(selector, SelectionKey.OP_READ, new HttpConversation(HttpOrigin.SOURCE));
                       destinationSocketChannel.connect(new InetSocketAddress("www.google.com", 80), null, new CompletionHandler<Void, Void>() {
 
                         @Override
@@ -146,8 +145,9 @@ public class ReverseProxyService {
                         public void failed (Throwable exc, Void attachment) {
 
                           try {
-                            sourceSocketChannel.write(NOT_FOUND_BUFFER);
+                            sourceSocketChannel.write(CannedResponse.NOT_FOUND.getByteBuffer());
                             sourceSocketChannel.close();
+                            closeSelectionKey(selectionKey, true);
                           } catch (IOException ioException) {
                             LoggerManager.getLogger(ReverseProxyService.class).error(ioException);
                           }
@@ -157,7 +157,7 @@ public class ReverseProxyService {
                       byteBuffer.clear();
                       if (((SocketChannel)selectionKey.channel()).read(byteBuffer) > 0) {
                         byteBuffer.flip();
-                        ((ProxyConversation)selectionKey.attachment()).getFrameReader().read(byteBuffer);
+                        ((ProxyConversation)selectionKey.attachment()).getFrameReader().read((SocketChannel)selectionKey.channel(), byteBuffer);
                       }
                     } else if (selectionKey.isWritable() && selectionKey.channel().isOpen()) {
                       System.out.println("Write...");
@@ -166,6 +166,14 @@ public class ReverseProxyService {
                     closeSelectionKey(selectionKey, true);
                   }
                 } catch (Exception exception) {
+                  if (exception instanceof ProtocolException) {
+                    try {
+                      ((ProtocolException)exception).getSourceSocketChannel().write(((ProtocolException)exception).getCannedResponse().getByteBuffer());
+                      ((ProtocolException)exception).getSourceSocketChannel().close();
+                    } catch (IOException ioException) {
+                      LoggerManager.getLogger(ReverseProxyService.class).error(ioException);
+                    }
+                  }
                   closeSelectionKey(selectionKey, true);
                 } finally {
                   selectionKeyIter.remove();

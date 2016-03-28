@@ -32,50 +32,46 @@
  */
 package org.smallmind.web.reverse;
 
-import java.io.ByteArrayOutputStream;
-import java.nio.ByteBuffer;
-import java.nio.channels.SocketChannel;
-import org.smallmind.nutsnbolts.lang.UnknownSwitchCaseException;
+import java.io.InputStream;
 
-public class HttpFrameReader implements FrameReader {
+public class HttpProtocolInputStream extends InputStream {
 
-  private HttpOrigin origin;
-  private ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
-  private boolean lineEnd = false;
-  private int lastChar = 0;
+  private final byte[] buffer;
+  private int index = 0;
 
-  public HttpFrameReader (HttpOrigin origin) {
+  public HttpProtocolInputStream (byte[] buffer) {
 
-    this.origin = origin;
+    this.buffer = buffer;
   }
 
-  public void read (SocketChannel sourceSocketChannel, ByteBuffer byteBuffer)
-    throws ProtocolException {
+  @Override
+  public int read () {
 
-    while (byteBuffer.remaining() > 0) {
+    return (index == buffer.length) ? -1 : buffer[index++];
+  }
 
-      int currentChar;
+  public String readLine () {
 
-      byteArrayOutputStream.write(currentChar = byteBuffer.get());
-      if ((currentChar == '\n') && (lastChar == '\r')) {
-        if (lineEnd) {
-          switch (origin) {
-            case SOURCE:
-              HttpRequest httpRequest = new HttpRequest(sourceSocketChannel, new HttpProtocolInputStream(byteArrayOutputStream.toByteArray()));
-              System.out.println(httpRequest.getVersion());
-              break;
-            case DESTINATION:
-              break;
-            default:
-              throw new UnknownSwitchCaseException(origin.name());
-          }
-        }
-        lineEnd = true;
-      } else if (currentChar != '\r') {
-        lineEnd = false;
+    if (index == buffer.length) {
+
+      return null;
+    }
+
+    int lastChar = 0;
+    int lineIndex = index;
+
+    while (!((buffer[lineIndex] == '\n') && (lastChar == '\r'))) {
+      if (lineIndex == buffer.length) {
+
+        return null;
       }
+      lastChar = buffer[lineIndex++];
+    }
 
-      lastChar = currentChar;
+    try {
+      return new String(buffer, index, lineIndex - 1);
+    } finally {
+      index = lineIndex + 1;
     }
   }
 }

@@ -32,6 +32,7 @@
  */
 package org.smallmind.web.reverse;
 
-public class ProxyFrame {
+public enum HttpOrigin {
 
+  SOURCE, DESTINATION
 }

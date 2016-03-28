@@ -32,50 +32,26 @@
  */
 package org.smallmind.web.reverse;
 
-import java.io.ByteArrayOutputStream;
-import java.nio.ByteBuffer;
 import java.nio.channels.SocketChannel;
-import org.smallmind.nutsnbolts.lang.UnknownSwitchCaseException;
 
-public class HttpFrameReader implements FrameReader {
+public class ProtocolException extends Exception {
 
-  private HttpOrigin origin;
-  private ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
-  private boolean lineEnd = false;
-  private int lastChar = 0;
+  private SocketChannel sourceSocketChannel;
+  private CannedResponse cannedResponse;
 
-  public HttpFrameReader (HttpOrigin origin) {
+  public ProtocolException (SocketChannel sourceSocketChannel, CannedResponse cannedResponse) {
 
-    this.origin = origin;
+    this.sourceSocketChannel = sourceSocketChannel;
+    this.cannedResponse = cannedResponse;
   }
 
-  public void read (SocketChannel sourceSocketChannel, ByteBuffer byteBuffer)
-    throws ProtocolException {
+  public SocketChannel getSourceSocketChannel () {
 
-    while (byteBuffer.remaining() > 0) {
+    return sourceSocketChannel;
+  }
 
-      int currentChar;
+  public CannedResponse getCannedResponse () {
 
-      byteArrayOutputStream.write(currentChar = byteBuffer.get());
-      if ((currentChar == '\n') && (lastChar == '\r')) {
-        if (lineEnd) {
-          switch (origin) {
-            case SOURCE:
-              HttpRequest httpRequest = new HttpRequest(sourceSocketChannel, new HttpProtocolInputStream(byteArrayOutputStream.toByteArray()));
-              System.out.println(httpRequest.getVersion());
-              break;
-            case DESTINATION:
-              break;
-            default:
-              throw new UnknownSwitchCaseException(origin.name());
-          }
-        }
-        lineEnd = true;
-      } else if (currentChar != '\r') {
-        lineEnd = false;
-      }
-
-      lastChar = currentChar;
-    }
+    return cannedResponse;
   }
 }

@@ -32,8 +32,15 @@
  */
 package org.smallmind.web.reverse;
 
+import java.io.BufferedInputStream;
+
 public class HttpResponse extends HttpFrame {
 
   private String reason;
   private int status;
+
+  public HttpResponse (String version) {
+
+    super(version);
+  }
 }

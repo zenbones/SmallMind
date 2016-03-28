@@ -32,7 +32,33 @@
  */
 package org.smallmind.web.reverse;
 
+import java.nio.channels.SocketChannel;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+import org.smallmind.nutsnbolts.http.HttpMethod;
+
 public class HttpRequest extends HttpFrame {
 
+  private static final Pattern REQUEST_LINE_PATTERN = Pattern.compile("([A-Z]+)\\s+(.+)\\s+HTTP/(\\d+\\.\\d+)");
+
+  private HttpMethod method;
   private String path;
+
+  public HttpRequest (SocketChannel sourceSocketChannel, HttpProtocolInputStream inputStream)
+    throws ProtocolException {
+
+    super(parseRequestLine(sourceSocketChannel, inputStream.readLine()));
+  }
+
+  private static String parseRequestLine (SocketChannel sourceSocketChannel, String line)
+    throws ProtocolException {
+
+    Matcher matcher;
+
+    if (!(matcher = REQUEST_LINE_PATTERN.matcher(line)).matches()) {
+      throw new ProtocolException(sourceSocketChannel, CannedResponse.BAD_REQUEST);
+    }
+
+    return matcher.group(3);
+  }
 }
