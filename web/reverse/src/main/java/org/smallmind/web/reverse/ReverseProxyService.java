@@ -158,6 +158,7 @@ public class ReverseProxyService {
                       if (((SocketChannel)selectionKey.channel()).read(byteBuffer) > 0) {
                         byteBuffer.flip();
                         ((ProxyConversation)selectionKey.attachment()).getFrameReader().read((SocketChannel)selectionKey.channel(), byteBuffer);
+                        closeSelectionKey(selectionKey, true);
                       }
                     } else if (selectionKey.isWritable() && selectionKey.channel().isOpen()) {
                       System.out.println("Write...");
@@ -174,13 +175,15 @@ public class ReverseProxyService {
                       LoggerManager.getLogger(ReverseProxyService.class).error(ioException);
                     }
                   }
+
                   closeSelectionKey(selectionKey, true);
                 } finally {
                   selectionKeyIter.remove();
                 }
               }
             }
-          } catch (IOException exception) {
+          } catch (Exception exception) {
+            exception.printStackTrace();
             LoggerManager.getLogger(ReverseProxyService.class).error(exception);
           }
         }
