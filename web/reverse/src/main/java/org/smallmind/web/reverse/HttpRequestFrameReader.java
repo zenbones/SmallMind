@@ -34,7 +34,6 @@ package org.smallmind.web.reverse;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.net.Socket;
 import java.nio.ByteBuffer;
 import java.nio.channels.SelectionKey;
 import java.nio.channels.SocketChannel;
@@ -48,7 +47,7 @@ public class HttpRequestFrameReader implements FrameReader {
   private final SelectionKey selectionKey;
   private final SocketChannel sourceChannel;
   private final AtomicReference<ByteArrayOutputStream> outputStreamRef = new AtomicReference<>(new ByteArrayOutputStream());
-  private final AtomicReference<Socket> destinationSocketRef = new AtomicReference<>();
+  private final AtomicReference<SocketChannel> destinationChannelRef = new AtomicReference<>();
   private final AtomicBoolean failed = new AtomicBoolean(false);
   private boolean lineEnd = false;
   private int connectTimeoutMillis;
@@ -145,22 +144,13 @@ public class HttpRequestFrameReader implements FrameReader {
     }
   }
 
-  public synchronized void registerDestination (Socket destinationSocket) {
+  public synchronized void registerDestination (SocketChannel destinationChannel) {
 
-    destinationSocketRef.set(destinationSocket);
+    if (!failed.get()) {
+      destinationChannelRef.set(destinationChannel);
 
-    if (failed.get()) {
-      closeDestination();
-    } else {
-      try {
-        destinationSocket.setKeepAlive(true);
-        destinationSocket.setTcpNoDelay(true);
-
-        synchronized (destinationSocketRef) {
-          destinationSocketRef.notify();
-        }
-      } catch (IOException ioException) {
-        fail(CannedResponse.BAD_GATEWAY);
+      synchronized (destinationChannelRef) {
+        destinationChannelRef.notify();
       }
     }
   }
@@ -187,10 +177,10 @@ public class HttpRequestFrameReader implements FrameReader {
 
     try {
 
-      Socket destinationSocket;
+      SocketChannel destinationChannel;
 
-      if ((destinationSocket = destinationSocketRef.get()) != null) {
-        destinationSocket.close();
+      if ((destinationChannel = destinationChannelRef.get()) != null) {
+        destinationChannel.close();
       }
     } catch (IOException ioException) {
       LoggerManager.getLogger(HttpRequestFrameReader.class).error(ioException);
@@ -213,26 +203,26 @@ public class HttpRequestFrameReader implements FrameReader {
     @Override
     public void run () {
 
-      Socket destinationSocket = null;
+      SocketChannel destinationChannel = null;
       long start = System.currentTimeMillis();
       long elapsed;
 
       try {
-        while (((elapsed = System.currentTimeMillis() - start) < connectTimeoutMillis) && ((destinationSocket = destinationSocketRef.get()) == null)) {
-          synchronized (destinationSocketRef) {
-            destinationSocketRef.wait(connectTimeoutMillis - elapsed);
+        while (((elapsed = System.currentTimeMillis() - start) < connectTimeoutMillis) && ((destinationChannel = destinationChannelRef.get()) == null)) {
+          synchronized (destinationChannelRef) {
+            destinationChannelRef.wait(connectTimeoutMillis - elapsed);
           }
         }
       } catch (InterruptedException interruptedException) {
         LoggerManager.getLogger(HttpRequestFrameReader.class).error(interruptedException);
       }
 
-      if (destinationSocket == null) {
+      if (destinationChannel == null) {
         fail(CannedResponse.GATEWAY_TIMEOUT);
       } else {
         try {
           LoggerManager.getLogger(HttpRequestFrameReader.class).debug(new ProxyDebug(buffer, offset, length));
-          destinationSocket.getOutputStream().write(buffer, offset, length);
+          destinationChannel.write(ByteBuffer.wrap(buffer, offset, length));
         } catch (IOException ioException) {
           fail(CannedResponse.BAD_GATEWAY);
         }
