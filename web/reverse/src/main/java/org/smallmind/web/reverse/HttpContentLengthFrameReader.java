@@ -60,6 +60,8 @@ public class HttpContentLengthFrameReader implements FrameReader {
       httpFrameReader.writeToBuffer(byteBuffer.get());
     }
 
-    httpFrameReader.flushBufferToTarget(true);
+    if (bytesRead == contentLength) {
+      httpFrameReader.flushBufferToTarget(true);
+    }
   }
 }
