@@ -199,10 +199,11 @@ public class ReverseProxyService {
             }
 
             if (selectedKeyCount > 0) {
+
+              Iterator<SelectionKey> selectionKeyIter = selector.selectedKeys().iterator();
+
               loopLock.lock();
               try {
-                Iterator<SelectionKey> selectionKeyIter = selector.selectedKeys().iterator();
-
                 while (selectionKeyIter.hasNext()) {
 
                   final SelectionKey selectionKey = selectionKeyIter.next();
