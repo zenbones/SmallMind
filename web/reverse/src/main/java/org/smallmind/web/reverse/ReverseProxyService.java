@@ -162,6 +162,7 @@ public class ReverseProxyService {
             } finally {
               loopLock.unlock();
             }
+
             httpRequestFrameReader.registerDestination(destinationChannel);
           } catch (IOException ioException) {
             httpRequestFrameReader.fail(CannedResponse.NOT_FOUND);
