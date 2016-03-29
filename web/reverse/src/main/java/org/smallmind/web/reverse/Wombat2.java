@@ -51,7 +51,7 @@ public class Wombat2 {
                  "Accept-Encoding: gzip, deflate, sdch\r\n" +
                  "Accept-Language: en-US,en;q=0.8\r\n\r\n";
 
-    Socket socket = new Socket("google.com", 80);
+    Socket socket = new Socket("www.forio.com", 80);
     socket.getOutputStream().write(s.getBytes());
 
     byte[] buffer = new byte[8196];

@@ -32,7 +32,6 @@
  */
 package org.smallmind.web.reverse;
 
-import java.nio.channels.SocketChannel;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.LinkedList;
@@ -43,15 +42,15 @@ public abstract class HttpFrame {
   private final LinkedList<HttpHeader> headerList;
   private final String version;
 
-  public HttpFrame (SocketChannel sourceChannel, HttpProtocolInputStream inputStream, String version)
+  public HttpFrame (HttpProtocolInputStream inputStream, String version)
     throws ProtocolException {
 
     this.version = version;
 
-    headerList = parseHeaders(sourceChannel, inputStream);
+    headerList = parseHeaders(inputStream);
   }
 
-  private LinkedList<HttpHeader> parseHeaders (SocketChannel sourceChannel, HttpProtocolInputStream inputStream)
+  private LinkedList<HttpHeader> parseHeaders (HttpProtocolInputStream inputStream)
     throws ProtocolException {
 
     LinkedHashMap<String, HttpHeader> headerMap = new LinkedHashMap<>();
@@ -64,7 +63,7 @@ public abstract class HttpFrame {
       int colonPos;
 
       if ((colonPos = line.indexOf(':')) < 0) {
-        throw new ProtocolException(sourceChannel, CannedResponse.BAD_REQUEST);
+        throw new ProtocolException(CannedResponse.BAD_REQUEST);
       }
       if ((header = headerMap.get(normalizeName = normalizeHeaderName(line.substring(0, colonPos).trim()))) == null) {
         headerMap.put(normalizeName, header = new HttpHeader(normalizeName));

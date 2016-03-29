@@ -34,5 +34,5 @@ package org.smallmind.web.reverse;
 
 public interface ProxyDictionary {
 
-  ProxyTarget lookup (HttpRequest httpRequest);
+  ProxyTarget lookup (HttpRequestFrame httpRequestFrame);
 }

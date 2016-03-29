@@ -32,16 +32,14 @@
  */
 package org.smallmind.web.reverse;
 
-import java.nio.channels.SocketChannel;
-
-public class HttpResponse extends HttpFrame {
+public class HttpResponseFrame extends HttpFrame {
 
   private String reason;
   private int status;
 
-  public HttpResponse (SocketChannel sourceChannel, HttpProtocolInputStream inputStream, String version)
+  public HttpResponseFrame (HttpProtocolInputStream inputStream, String version)
     throws ProtocolException {
 
-    super(sourceChannel, inputStream, version);
+    super(inputStream, version);
   }
 }

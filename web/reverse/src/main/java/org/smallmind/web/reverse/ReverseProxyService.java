@@ -91,9 +91,9 @@ public class ReverseProxyService {
     ReverseProxyService reverseProxyService = new ReverseProxyService("0.0.0.0", 9030, new ProxyDictionary() {
 
       @Override
-      public ProxyTarget lookup (HttpRequest httpRequest) {
+      public ProxyTarget lookup (HttpRequestFrame httpRequest) {
 
-        return new ProxyTarget("www.google.com", 80);
+        return new ProxyTarget("www.forio.com", 80);
       }
     }, 3000, 16);
 
@@ -112,42 +112,28 @@ public class ReverseProxyService {
     eventThread.start();
   }
 
-  public void internalError (SelectionKey selectionKey, SocketChannel sourceChannel, CannedResponse cannedResponse) {
-
-    try {
-      sourceChannel.write(cannedResponse.getByteBuffer());
-      sourceChannel.close();
-    } catch (IOException ioException) {
-      LoggerManager.getLogger(ReverseProxyService.class).error(ioException);
-    }
-
-    closeSelectionKey(selectionKey);
-  }
-
-  private void closeSelectionKey (SelectionKey selectionKey) {
-
-    selectionKey.cancel();
-  }
-
   public void execute (Runnable runnable) {
 
     executorService.execute(runnable);
   }
 
-  public ProxyTarget connectDestination (final SocketChannel sourceChannel, final HttpRequestFrameReader httpRequestFrameReader, HttpRequest httpRequest)
+  public ProxyTarget connectDestination (final HttpRequestFrameReader httpRequestFrameReader, HttpRequestFrame httpRequestFrame)
     throws ProtocolException {
 
     final ProxyTarget target;
 
-    if ((target = dictionary.lookup(httpRequest)) == null) {
-      throw new ProtocolException(sourceChannel, CannedResponse.NOT_FOUND);
+    if ((target = dictionary.lookup(httpRequestFrame)) == null) {
+      throw new ProtocolException(CannedResponse.NOT_FOUND);
     } else {
       execute(new Runnable() {
 
         @Override
         public void run () {
 
-          try (SocketChannel destinationChannel = SocketChannel.open()) {
+          SocketChannel destinationChannel = null;
+
+          try {
+            destinationChannel = SocketChannel.open();
             destinationChannel.socket().connect(new InetSocketAddress(target.getHost(), target.getPort()), connectTimeoutMillis);
             destinationChannel.setOption(StandardSocketOptions.SO_KEEPALIVE, true).setOption(StandardSocketOptions.TCP_NODELAY, true).configureBlocking(false);
 
@@ -165,6 +151,14 @@ public class ReverseProxyService {
 
             httpRequestFrameReader.registerDestination(destinationChannel);
           } catch (IOException ioException) {
+            try {
+              if (destinationChannel != null) {
+                destinationChannel.close();
+              }
+            } catch (IOException closeException) {
+              LoggerManager.getLogger(ReverseProxyService.class).error(closeException);
+            }
+
             httpRequestFrameReader.fail(CannedResponse.NOT_FOUND);
           }
         }
@@ -193,11 +187,13 @@ public class ReverseProxyService {
         while (!stopped) {
           try {
 
-            int selectedKeyCount;
+            int selectedKeyCount = 0;
 
             selectLock.lock();
             try {
               selectedKeyCount = selector.select(100);
+            } catch (IOException ioException) {
+              LoggerManager.getLogger(ReverseProxyService.class).error(ioException);
             } finally {
               selectLock.unlock();
             }
@@ -215,25 +211,39 @@ public class ReverseProxyService {
                     if (selectionKey.isValid()) {
                       if (selectionKey.isAcceptable()) {
 
-                        SocketChannel sourceChannel = (SocketChannel)((ServerSocketChannel)selectionKey.channel()).accept().setOption(StandardSocketOptions.SO_KEEPALIVE, true).setOption(StandardSocketOptions.TCP_NODELAY, true).configureBlocking(false);
+                        SocketChannel sourceChannel = null;
 
-                        sourceChannel.register(selector, SelectionKey.OP_READ, new HttpRequestFrameReader(ReverseProxyService.this, selectionKey, sourceChannel, connectTimeoutMillis));
-                      } else if (selectionKey.isReadable() && selectionKey.channel().isOpen()) {
-                        byteBuffer.clear();
-                        if (((SocketChannel)selectionKey.channel()).read(byteBuffer) > 0) {
-                          byteBuffer.flip();
-                          ((FrameReader)selectionKey.attachment()).read(byteBuffer);
+                        try {
+                          sourceChannel = (SocketChannel)((ServerSocketChannel)selectionKey.channel()).accept().setOption(StandardSocketOptions.SO_KEEPALIVE, true).setOption(StandardSocketOptions.TCP_NODELAY, true).configureBlocking(false);
+                          sourceChannel.register(selector, SelectionKey.OP_READ, new HttpRequestFrameReader(ReverseProxyService.this, sourceChannel, connectTimeoutMillis));
+                        } catch (IOException ioException) {
+                          try {
+                            if (sourceChannel != null) {
+                              sourceChannel.close();
+                            }
+                          } catch (IOException closeException) {
+                            LoggerManager.getLogger(ReverseProxyService.class).error(closeException);
+                          }
                         }
-                      } else if (selectionKey.isWritable() && selectionKey.channel().isOpen()) {
-                        System.out.println("Write...");
+                      } else if (selectionKey.isReadable() && selectionKey.channel().isOpen()) {
+
+                        int bytesRead = 0;
+
+                        try {
+                          byteBuffer.clear();
+                          bytesRead = ((SocketChannel)selectionKey.channel()).read(byteBuffer);
+                        } catch (IOException ioException) {
+                          ((FrameReader)selectionKey.attachment()).fail(CannedResponse.BAD_REQUEST);
+                        }
+
+                        if (bytesRead > 0) {
+                          byteBuffer.flip();
+                          ((FrameReader)selectionKey.attachment()).processInput(selectionKey, byteBuffer);
+                        }
                       }
                     } else {
-                      closeSelectionKey(selectionKey);
+                      selectionKey.cancel();
                     }
-                  } catch (ProtocolException protocolException) {
-                    internalError(selectionKey, protocolException.getSourceSocketChannel(), protocolException.getCannedResponse());
-                  } catch (Exception exception) {
-                    closeSelectionKey(selectionKey);
                   } finally {
                     selectionKeyIter.remove();
                   }

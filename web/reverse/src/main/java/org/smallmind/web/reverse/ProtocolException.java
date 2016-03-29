@@ -32,22 +32,13 @@
  */
 package org.smallmind.web.reverse;
 
-import java.nio.channels.SocketChannel;
-
 public class ProtocolException extends Exception {
 
-  private SocketChannel sourceChannel;
   private CannedResponse cannedResponse;
 
-  public ProtocolException (SocketChannel sourceChannel, CannedResponse cannedResponse) {
+  public ProtocolException (CannedResponse cannedResponse) {
 
-    this.sourceChannel = sourceChannel;
     this.cannedResponse = cannedResponse;
-  }
-
-  public SocketChannel getSourceSocketChannel () {
-
-    return sourceChannel;
   }
 
   public CannedResponse getCannedResponse () {

@@ -32,166 +32,31 @@
  */
 package org.smallmind.web.reverse;
 
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.nio.ByteBuffer;
-import java.nio.channels.SelectionKey;
 import java.nio.channels.SocketChannel;
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 import org.smallmind.scribe.pen.LoggerManager;
 
-public class HttpRequestFrameReader implements FrameReader {
+public class HttpRequestFrameReader extends HttpFrameReader {
 
-  private final ReverseProxyService reverseProxyService;
-  private final SelectionKey selectionKey;
-  private final SocketChannel sourceChannel;
-  private final AtomicReference<ByteArrayOutputStream> outputStreamRef = new AtomicReference<>(new ByteArrayOutputStream());
   private final AtomicReference<SocketChannel> destinationChannelRef = new AtomicReference<>();
-  private final AtomicBoolean failed = new AtomicBoolean(false);
-  private boolean lineEnd = false;
   private int connectTimeoutMillis;
-  private int lastChar = 0;
-  private int writeIndex = 0;
 
-  public HttpRequestFrameReader (ReverseProxyService reverseProxyService, SelectionKey selectionKey, SocketChannel sourceChannel, int connectTimeoutMillis) {
+  public HttpRequestFrameReader (ReverseProxyService reverseProxyService, SocketChannel sourceChannel, int connectTimeoutMillis) {
 
-    this.reverseProxyService = reverseProxyService;
-    this.selectionKey = selectionKey;
-    this.sourceChannel = sourceChannel;
+    super(reverseProxyService, sourceChannel);
+
     this.connectTimeoutMillis = connectTimeoutMillis;
   }
 
-  public void read (ByteBuffer byteBuffer)
-    throws ProtocolException {
+  @Override
+  public void closeChannels (SocketChannel sourceChannel) {
 
     try {
-      while (byteBuffer.remaining() > 0) {
-
-        int currentChar;
-
-        synchronized (outputStreamRef) {
-          outputStreamRef.get().write(currentChar = byteBuffer.get());
-        }
-
-        if ((currentChar == '\n') && (lastChar == '\r')) {
-          if (lineEnd) {
-
-            ProxyTarget proxyTarget;
-            HttpRequest httpRequest;
-            HttpHeader hostHeader;
-            HttpHeader expectHeader;
-
-            HttpHeader bodyHeader;
-
-            synchronized (outputStreamRef) {
-              httpRequest = new HttpRequest(sourceChannel, new HttpProtocolInputStream(outputStreamRef.get().toByteArray()));
-            }
-
-            proxyTarget = reverseProxyService.connectDestination(sourceChannel, this, httpRequest);
-
-            if ((hostHeader = httpRequest.getHeader("Host")) != null) {
-              hostHeader.setValue(proxyTarget.getHost() + ":" + proxyTarget.getPort());
-            } else {
-              httpRequest.addHeader(new HttpHeader("Host").addValue(proxyTarget.getHost() + ":" + proxyTarget.getPort()));
-            }
-
-            try {
-              synchronized (outputStreamRef) {
-                outputStreamRef.set(new ByteArrayOutputStream());
-                outputStreamRef.get().write(httpRequest.toByteArray());
-              }
-            } catch (IOException ioException) {
-              throw new ProtocolException(sourceChannel, CannedResponse.BAD_GATEWAY);
-            }
-
-            if (((expectHeader = httpRequest.getHeader("Expect")) != null) && expectHeader.getValues().get(0).equals("100-continue")) {
-              flushBufferToDestination(false);
-            }
-
-            if ((bodyHeader = httpRequest.getHeader("Content-Length")) != null) {
-
-              int contentLength;
-
-              try {
-                if ((contentLength = Integer.parseInt(bodyHeader.getValues().get(0))) > 0) {
-
-                  HttpContentLengthFrameReader httpContentLengthFrameReader;
-
-                  selectionKey.attach(httpContentLengthFrameReader = new HttpContentLengthFrameReader(this, outputStreamRef, contentLength));
-                  httpContentLengthFrameReader.read(byteBuffer);
-                } else {
-                  flushBufferToDestination(true);
-                }
-              } catch (NumberFormatException numberFormatException) {
-                throw new ProtocolException(sourceChannel, CannedResponse.LENGTH_REQUIRED);
-              }
-            } else if (((bodyHeader = httpRequest.getHeader("Transfer-Encoding")) != null) && bodyHeader.getValues().get(0).equals("chunked")) {
-
-            } else {
-              flushBufferToDestination(true);
-            }
-          }
-          lineEnd = true;
-        } else if (currentChar != '\r') {
-          lineEnd = false;
-        }
-
-        lastChar = currentChar;
-      }
-    } catch (ProtocolException protocolException) {
-      fail(protocolException);
+      sourceChannel.close();
+    } catch (IOException ioException) {
+      LoggerManager.getLogger(HttpRequestFrameReader.class).error(ioException);
     }
-  }
-
-  public synchronized void flushBufferToDestination (boolean complete) {
-
-    if (!failed.get()) {
-      synchronized (outputStreamRef) {
-
-        byte[] buffer;
-
-        reverseProxyService.execute(new FlushWorker(buffer = outputStreamRef.get().toByteArray(), writeIndex, buffer.length));
-        if (complete) {
-          writeIndex = 0;
-          outputStreamRef.set(new ByteArrayOutputStream());
-        } else {
-          writeIndex = buffer.length;
-        }
-      }
-    }
-  }
-
-  public synchronized void registerDestination (SocketChannel destinationChannel) {
-
-    if (!failed.get()) {
-      destinationChannelRef.set(destinationChannel);
-
-      synchronized (destinationChannelRef) {
-        destinationChannelRef.notify();
-      }
-    }
-  }
-
-  public synchronized void fail (ProtocolException protocolException)
-    throws ProtocolException {
-
-    if (failed.compareAndSet(false, true)) {
-      closeDestination();
-    }
-
-    throw protocolException;
-  }
-
-  public synchronized void fail (CannedResponse cannedResponse) {
-
-    if (failed.compareAndSet(false, true)) {
-      closeDestination();
-      reverseProxyService.internalError(selectionKey, sourceChannel, cannedResponse);
-    }
-  }
-
-  private void closeDestination () {
 
     try {
 
@@ -205,46 +70,51 @@ public class HttpRequestFrameReader implements FrameReader {
     }
   }
 
-  private class FlushWorker implements Runnable {
+  public void registerDestination (SocketChannel destinationChannel) {
 
-    private byte[] buffer;
-    private int offset;
-    private int length;
-
-    public FlushWorker (byte[] buffer, int offset, int length) {
-
-      this.buffer = buffer;
-      this.offset = offset;
-      this.length = length;
+    synchronized (destinationChannelRef) {
+      destinationChannelRef.set(destinationChannel);
+      destinationChannelRef.notify();
     }
+  }
 
-    @Override
-    public void run () {
+  @Override
+  public SocketChannel getTargetChannel () {
 
-      SocketChannel destinationChannel = null;
-      long start = System.currentTimeMillis();
-      long elapsed;
+    SocketChannel destinationChannel = null;
+    long start = System.currentTimeMillis();
+    long elapsed;
 
-      try {
-        while (((elapsed = System.currentTimeMillis() - start) < connectTimeoutMillis) && ((destinationChannel = destinationChannelRef.get()) == null)) {
-          synchronized (destinationChannelRef) {
-            destinationChannelRef.wait(connectTimeoutMillis - elapsed);
-          }
-        }
-      } catch (InterruptedException interruptedException) {
-        LoggerManager.getLogger(HttpRequestFrameReader.class).error(interruptedException);
-      }
-
-      if (destinationChannel == null) {
-        fail(CannedResponse.GATEWAY_TIMEOUT);
-      } else {
-        try {
-          LoggerManager.getLogger(HttpRequestFrameReader.class).debug(new ProxyDebug(buffer, offset, length));
-          destinationChannel.write(ByteBuffer.wrap(buffer, offset, length));
-        } catch (IOException ioException) {
-          fail(CannedResponse.BAD_GATEWAY);
+    try {
+      while (((elapsed = System.currentTimeMillis() - start) < connectTimeoutMillis) && ((destinationChannel = destinationChannelRef.get()) == null)) {
+        synchronized (destinationChannelRef) {
+          destinationChannelRef.wait(connectTimeoutMillis - elapsed);
         }
       }
+    } catch (InterruptedException interruptedException) {
+      LoggerManager.getLogger(HttpRequestFrameReader.class).error(interruptedException);
     }
+
+    return destinationChannel;
+  }
+
+  @Override
+  public HttpRequestFrame getHttpFrame (ReverseProxyService reverseProxyService, HttpProtocolInputStream httpProtocolInputStream)
+    throws ProtocolException {
+
+    HttpRequestFrame httpRequestFrame = new HttpRequestFrame(httpProtocolInputStream);
+    ProxyTarget proxyTarget = reverseProxyService.connectDestination(this, httpRequestFrame);
+    HttpHeader hostHeader;
+
+    if ((hostHeader = httpRequestFrame.getHeader("Host")) != null) {
+      hostHeader.setValue(proxyTarget.getHost() + ":" + proxyTarget.getPort());
+    } else {
+      httpRequestFrame.addHeader(new HttpHeader("Host").addValue(proxyTarget.getHost() + ":" + proxyTarget.getPort()));
+    }
+
+    clearBuffer();
+    writeToBuffer(httpRequestFrame.toByteArray());
+
+    return httpRequestFrame;
   }
 }

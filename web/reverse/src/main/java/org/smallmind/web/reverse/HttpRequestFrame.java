@@ -32,45 +32,44 @@
  */
 package org.smallmind.web.reverse;
 
-import java.nio.channels.SocketChannel;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import org.smallmind.nutsnbolts.http.HttpMethod;
 
-public class HttpRequest extends HttpFrame {
+public class HttpRequestFrame extends HttpFrame {
 
   private static final Pattern REQUEST_LINE_PATTERN = Pattern.compile("([A-Z]+)\\s+(.+)\\s+HTTP/(\\d+\\.\\d+)");
 
   private HttpMethod method;
   private String path;
 
-  public HttpRequest (SocketChannel sourceChannel, HttpProtocolInputStream inputStream)
+  public HttpRequestFrame (HttpProtocolInputStream inputStream)
     throws ProtocolException {
 
-    this(sourceChannel, inputStream, parseRequestLine(sourceChannel, inputStream.readLine()));
+    this(inputStream, parseRequestLine(inputStream.readLine()));
   }
 
-  private HttpRequest (SocketChannel sourceChannel, HttpProtocolInputStream inputStream, Matcher matcher)
+  private HttpRequestFrame (HttpProtocolInputStream inputStream, Matcher matcher)
     throws ProtocolException {
 
-    super(sourceChannel, inputStream, matcher.group(3));
+    super(inputStream, matcher.group(3));
 
     try {
       method = HttpMethod.valueOf(matcher.group(1));
     } catch (Exception exception) {
-      throw new ProtocolException(sourceChannel, CannedResponse.BAD_REQUEST);
+      throw new ProtocolException(CannedResponse.BAD_REQUEST);
     }
 
     path = matcher.group(2);
   }
 
-  private static Matcher parseRequestLine (SocketChannel sourceChannel, String line)
+  private static Matcher parseRequestLine (String line)
     throws ProtocolException {
 
     Matcher matcher;
 
     if (!(matcher = REQUEST_LINE_PATTERN.matcher(line)).matches()) {
-      throw new ProtocolException(sourceChannel, CannedResponse.BAD_REQUEST);
+      throw new ProtocolException(CannedResponse.BAD_REQUEST);
     }
 
     return matcher;

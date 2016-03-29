@@ -32,32 +32,33 @@
  */
 package org.smallmind.web.reverse;
 
-import java.io.ByteArrayOutputStream;
 import java.nio.ByteBuffer;
-import java.util.concurrent.atomic.AtomicReference;
+import java.nio.channels.SelectionKey;
 
 public class HttpContentLengthFrameReader implements FrameReader {
 
-  private final HttpRequestFrameReader httpRequestFrameReader;
-  private final AtomicReference<ByteArrayOutputStream> outputStreamRef;
+  private final HttpFrameReader httpFrameReader;
   private final int contentLength;
   private int bytesRead = 0;
 
-  public HttpContentLengthFrameReader (HttpRequestFrameReader httpRequestFrameReader, AtomicReference<ByteArrayOutputStream> outputStreamRef, int contentLength) {
+  public HttpContentLengthFrameReader (HttpFrameReader httpFrameReader, int contentLength) {
 
-    this.httpRequestFrameReader = httpRequestFrameReader;
-    this.outputStreamRef = outputStreamRef;
+    this.httpFrameReader = httpFrameReader;
     this.contentLength = contentLength;
   }
 
-  public void read (ByteBuffer byteBuffer) {
+  @Override
+  public void fail (CannedResponse cannedResponse) {
 
-    synchronized (outputStreamRef) {
-      while ((byteBuffer.remaining() > 0) && (bytesRead++ < contentLength)) {
-        outputStreamRef.get().write(byteBuffer.get());
-      }
+    httpFrameReader.fail(cannedResponse);
+  }
+
+  public void processInput (SelectionKey selectionKey, ByteBuffer byteBuffer) {
+
+    while ((byteBuffer.remaining() > 0) && (bytesRead++ < contentLength)) {
+      httpFrameReader.writeToBuffer(byteBuffer.get());
     }
 
-    httpRequestFrameReader.flushBufferToDestination(true);
+    httpFrameReader.flushBufferToTarget(true);
   }
 }
