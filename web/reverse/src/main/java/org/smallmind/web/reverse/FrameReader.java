@@ -34,10 +34,11 @@ package org.smallmind.web.reverse;
 
 import java.nio.ByteBuffer;
 import java.nio.channels.SelectionKey;
+import java.nio.channels.SocketChannel;
 
 public interface FrameReader {
 
   void processInput (SelectionKey selectionKey, ByteBuffer byteBuffer);
 
-  void fail (CannedResponse cannedResponse);
+  void fail (CannedResponse cannedResponse, SocketChannel failedChannel);
 }

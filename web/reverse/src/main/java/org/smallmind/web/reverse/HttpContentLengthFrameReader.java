@@ -34,6 +34,7 @@ package org.smallmind.web.reverse;
 
 import java.nio.ByteBuffer;
 import java.nio.channels.SelectionKey;
+import java.nio.channels.SocketChannel;
 
 public class HttpContentLengthFrameReader implements FrameReader {
 
@@ -48,9 +49,9 @@ public class HttpContentLengthFrameReader implements FrameReader {
   }
 
   @Override
-  public void fail (CannedResponse cannedResponse) {
+  public void fail (CannedResponse cannedResponse, SocketChannel failedChannel) {
 
-    httpFrameReader.fail(cannedResponse);
+    httpFrameReader.fail(cannedResponse, failedChannel);
   }
 
   public void processInput (SelectionKey selectionKey, ByteBuffer byteBuffer) {

@@ -159,7 +159,7 @@ public class ReverseProxyService {
               LoggerManager.getLogger(ReverseProxyService.class).error(closeException);
             }
 
-            httpRequestFrameReader.fail(CannedResponse.NOT_FOUND);
+            httpRequestFrameReader.fail(CannedResponse.NOT_FOUND, null);
           }
         }
       });
@@ -234,7 +234,7 @@ public class ReverseProxyService {
                           byteBuffer.clear();
                           bytesRead = ((SocketChannel)selectionKey.channel()).read(byteBuffer);
                         } catch (IOException ioException) {
-                          ((FrameReader)selectionKey.attachment()).fail(CannedResponse.BAD_REQUEST);
+                          ((FrameReader)selectionKey.attachment()).fail(CannedResponse.BAD_REQUEST, (SocketChannel)selectionKey.channel());
                         }
 
                         if (bytesRead > 0) {

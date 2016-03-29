@@ -115,7 +115,7 @@ public abstract class HttpFrameReader implements FrameReader {
         lastChar = currentChar;
       }
     } catch (ProtocolException protocolException) {
-      fail(protocolException.getCannedResponse());
+      fail(protocolException.getCannedResponse(), null);
     }
   }
 
@@ -175,10 +175,10 @@ public abstract class HttpFrameReader implements FrameReader {
   }
 
   @Override
-  public void fail (CannedResponse cannedResponse) {
+  public void fail (CannedResponse cannedResponse, SocketChannel failedChannel) {
 
     if (failed.compareAndSet(false, true)) {
-      if (sourceChannel.isOpen()) {
+      if (!sourceChannel.equals(failedChannel)) {
         try {
           sourceChannel.write(cannedResponse.getByteBuffer());
         } catch (IOException ioException) {
@@ -209,13 +209,13 @@ public abstract class HttpFrameReader implements FrameReader {
       SocketChannel targetChannel;
 
       if ((targetChannel = getTargetChannel(sourceChannel)) == null) {
-        fail(CannedResponse.GATEWAY_TIMEOUT);
+        fail(CannedResponse.GATEWAY_TIMEOUT, null);
       } else {
         try {
           LoggerManager.getLogger(HttpRequestFrameReader.class).debug(new ProxyDebug(buffer, offset, length));
           targetChannel.write(ByteBuffer.wrap(buffer, offset, length));
         } catch (IOException ioException) {
-          fail(CannedResponse.BAD_GATEWAY);
+          fail(CannedResponse.BAD_GATEWAY, targetChannel);
         }
       }
     }
