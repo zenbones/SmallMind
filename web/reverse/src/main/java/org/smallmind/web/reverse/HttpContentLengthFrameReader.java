@@ -62,6 +62,7 @@ public class HttpContentLengthFrameReader implements FrameReader {
 
     if (bytesRead == contentLength) {
       httpFrameReader.flushBufferToTarget(true);
+      selectionKey.attach(httpFrameReader);
     }
   }
 }

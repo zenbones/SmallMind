@@ -123,6 +123,7 @@ public abstract class HttpFrameReader implements FrameReader {
 
     synchronized (outputStreamRef) {
       outputStreamRef.set(new ByteArrayOutputStream());
+
       lineEnd = false;
       lastChar = 0;
       writeIndex = 0;
@@ -165,8 +166,7 @@ public abstract class HttpFrameReader implements FrameReader {
 
         reverseProxyService.execute(new FlushWorker(buffer = outputStreamRef.get().toByteArray(), writeIndex, buffer.length));
         if (complete) {
-          writeIndex = 0;
-          outputStreamRef.set(new ByteArrayOutputStream());
+          clearBuffer();
         } else {
           writeIndex = buffer.length;
         }
