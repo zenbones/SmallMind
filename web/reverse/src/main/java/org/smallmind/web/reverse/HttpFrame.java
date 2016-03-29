@@ -42,21 +42,21 @@ public abstract class HttpFrame {
   private final LinkedList<HttpHeader> headerList;
   private final String version;
 
-  public HttpFrame (HttpProtocolInputStream inputStream, String version)
+  public HttpFrame (HttpProtocolInputStream httpProtocolInputStream, String version)
     throws ProtocolException {
 
     this.version = version;
 
-    headerList = parseHeaders(inputStream);
+    headerList = parseHeaders(httpProtocolInputStream);
   }
 
-  private LinkedList<HttpHeader> parseHeaders (HttpProtocolInputStream inputStream)
+  private LinkedList<HttpHeader> parseHeaders (HttpProtocolInputStream httpProtocolInputStream)
     throws ProtocolException {
 
     LinkedHashMap<String, HttpHeader> headerMap = new LinkedHashMap<>();
     String line;
 
-    while (!(line = inputStream.readLine()).isEmpty()) {
+    while (!(line = httpProtocolInputStream.readLine()).isEmpty()) {
 
       HttpHeader header;
       String normalizeName;

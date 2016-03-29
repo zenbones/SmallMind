@@ -117,7 +117,7 @@ public class ReverseProxyService {
     executorService.execute(runnable);
   }
 
-  public ProxyTarget connectDestination (final HttpRequestFrameReader httpRequestFrameReader, HttpRequestFrame httpRequestFrame)
+  public ProxyTarget connectDestination (final SocketChannel sourceSocketChannel, final HttpRequestFrameReader httpRequestFrameReader, HttpRequestFrame httpRequestFrame)
     throws ProtocolException {
 
     final ProxyTarget target;
@@ -141,7 +141,7 @@ public class ReverseProxyService {
             try {
               selectLock.lock();
               try {
-                destinationChannel.register(selector, SelectionKey.OP_READ);
+                destinationChannel.register(selector, SelectionKey.OP_READ, new HttpResponseFrameReader(ReverseProxyService.this, sourceSocketChannel, destinationChannel));
               } finally {
                 selectLock.unlock();
               }

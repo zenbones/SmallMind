@@ -32,50 +32,46 @@
  */
 package org.smallmind.web.reverse;
 
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
+import java.io.IOException;
+import java.nio.channels.SocketChannel;
+import org.smallmind.scribe.pen.LoggerManager;
 
-public class HttpResponseFrame extends HttpFrame {
+public class HttpResponseFrameReader extends HttpFrameReader {
 
-  private static final Pattern RESPONSE_LINE_PATTERN = Pattern.compile("HTTP/(\\d+\\.\\d+)\\s+(\\d+)\\s+(.+)");
+  private SocketChannel destinationChannel;
 
-  private String reason;
-  private int status;
+  public HttpResponseFrameReader (ReverseProxyService reverseProxyService, SocketChannel sourceChannel, SocketChannel destinationChannel) {
 
-  public HttpResponseFrame (HttpProtocolInputStream httpProtocolInputStream)
-    throws ProtocolException {
+    super(reverseProxyService, sourceChannel);
 
-    this(httpProtocolInputStream, parseResponseLine(httpProtocolInputStream.readLine()));
+    this.destinationChannel = destinationChannel;
   }
 
-  private HttpResponseFrame (HttpProtocolInputStream inputStream, Matcher matcher)
-    throws ProtocolException {
+  @Override
+  public void closeChannels (SocketChannel sourceChannel) {
 
-    super(inputStream, matcher.group(1));
-
-    status = Integer.parseInt(matcher.group(2));
-    reason = matcher.group(3);
-  }
-
-  private static Matcher parseResponseLine (String line)
-    throws ProtocolException {
-
-    Matcher matcher;
-
-    if (!(matcher = RESPONSE_LINE_PATTERN.matcher(line)).matches()) {
-      throw new ProtocolException(CannedResponse.BAD_REQUEST);
+    try {
+      destinationChannel.close();
+    } catch (IOException ioException) {
+      LoggerManager.getLogger(HttpRequestFrameReader.class).error(ioException);
     }
 
-    return matcher;
+    try {
+      sourceChannel.close();
+    } catch (IOException ioException) {
+      LoggerManager.getLogger(HttpRequestFrameReader.class).error(ioException);
+    }
   }
 
-  public int getStatus () {
+  @Override
+  public SocketChannel getTargetChannel (SocketChannel sourceChannel) {
 
-    return status;
+    return sourceChannel;
   }
 
-  public String getReason () {
+  @Override
+  public HttpFrame getHttpFrame (ReverseProxyService reverseProxyService, SocketChannel sourceSocketChannel, HttpProtocolInputStream httpProtocolInputStream) throws ProtocolException {
 
-    return reason;
+    return new HttpResponseFrame(httpProtocolInputStream);
   }
 }

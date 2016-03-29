@@ -57,11 +57,11 @@ public abstract class HttpFrameReader implements FrameReader {
     this.sourceChannel = sourceChannel;
   }
 
-  public abstract void closeChannels (SocketChannel socketChannel);
+  public abstract void closeChannels (SocketChannel sourceChannel);
 
-  public abstract SocketChannel getTargetChannel ();
+  public abstract SocketChannel getTargetChannel (SocketChannel sourceChannel);
 
-  public abstract HttpFrame getHttpFrame (ReverseProxyService reverseProxyService, HttpProtocolInputStream httpProtocolInputStream)
+  public abstract HttpFrame getHttpFrame (ReverseProxyService reverseProxyService, SocketChannel sourceSocketChannel, HttpProtocolInputStream httpProtocolInputStream)
     throws ProtocolException;
 
   @Override
@@ -76,7 +76,7 @@ public abstract class HttpFrameReader implements FrameReader {
         if ((currentChar == '\n') && (lastChar == '\r')) {
           if (lineEnd) {
 
-            HttpFrame httpFrame = getHttpFrame(reverseProxyService, new HttpProtocolInputStream(getBufferAsArray()));
+            HttpFrame httpFrame = getHttpFrame(reverseProxyService, sourceChannel, new HttpProtocolInputStream(getBufferAsArray()));
             HttpHeader expectHeader;
             HttpHeader bodyHeader;
 
@@ -208,7 +208,7 @@ public abstract class HttpFrameReader implements FrameReader {
 
       SocketChannel targetChannel;
 
-      if ((targetChannel = getTargetChannel()) == null) {
+      if ((targetChannel = getTargetChannel(sourceChannel)) == null) {
         fail(CannedResponse.GATEWAY_TIMEOUT);
       } else {
         try {

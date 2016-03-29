@@ -79,7 +79,7 @@ public class HttpRequestFrameReader extends HttpFrameReader {
   }
 
   @Override
-  public SocketChannel getTargetChannel () {
+  public SocketChannel getTargetChannel (SocketChannel sourceChannel) {
 
     SocketChannel destinationChannel = null;
     long start = System.currentTimeMillis();
@@ -99,11 +99,11 @@ public class HttpRequestFrameReader extends HttpFrameReader {
   }
 
   @Override
-  public HttpRequestFrame getHttpFrame (ReverseProxyService reverseProxyService, HttpProtocolInputStream httpProtocolInputStream)
+  public HttpRequestFrame getHttpFrame (ReverseProxyService reverseProxyService, SocketChannel sourceSocketChannel, HttpProtocolInputStream httpProtocolInputStream)
     throws ProtocolException {
 
     HttpRequestFrame httpRequestFrame = new HttpRequestFrame(httpProtocolInputStream);
-    ProxyTarget proxyTarget = reverseProxyService.connectDestination(this, httpRequestFrame);
+    ProxyTarget proxyTarget = reverseProxyService.connectDestination(sourceSocketChannel, this, httpRequestFrame);
     HttpHeader hostHeader;
 
     if ((hostHeader = httpRequestFrame.getHeader("Host")) != null) {

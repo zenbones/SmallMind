@@ -43,10 +43,10 @@ public class HttpRequestFrame extends HttpFrame {
   private HttpMethod method;
   private String path;
 
-  public HttpRequestFrame (HttpProtocolInputStream inputStream)
+  public HttpRequestFrame (HttpProtocolInputStream httpProtocolInputStream)
     throws ProtocolException {
 
-    this(inputStream, parseRequestLine(inputStream.readLine()));
+    this(httpProtocolInputStream, parseRequestLine(httpProtocolInputStream.readLine()));
   }
 
   private HttpRequestFrame (HttpProtocolInputStream inputStream, Matcher matcher)
