@@ -44,19 +44,15 @@ import java.util.Iterator;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
-import org.smallmind.scribe.pen.Appender;
-import org.smallmind.scribe.pen.ConsoleAppender;
-import org.smallmind.scribe.pen.DefaultTemplate;
-import org.smallmind.scribe.pen.Enhancer;
-import org.smallmind.scribe.pen.Filter;
-import org.smallmind.scribe.pen.Level;
 import org.smallmind.scribe.pen.LoggerManager;
-import org.smallmind.scribe.pen.XMLFormatter;
 
 public class ReverseProxyService {
 
+  private final CountDownLatch terminationLatch = new CountDownLatch(1);
+  private final AtomicBoolean closed = new AtomicBoolean(false);
   private final ServerSocketChannel serverSocketChannel;
   private final Selector selector;
   private final ProxyDictionary dictionary;
@@ -65,6 +61,7 @@ public class ReverseProxyService {
   private final Lock loopLock = new ReentrantLock(true);
   private final ByteBuffer byteBuffer = ByteBuffer.allocateDirect(8192);
   private final int connectTimeoutMillis;
+  private EventLoop eventLoop;
 
   public ReverseProxyService (String host, int port, ProxyDictionary dictionary, int connectTimeoutMillis, int concurrencyLimit)
     throws IOException {
@@ -83,33 +80,25 @@ public class ReverseProxyService {
     startEventLoop();
   }
 
-  public static void main (String... args)
-    throws Exception {
-
-    LoggerManager.addTemplate(new DefaultTemplate(new Filter[0], new Appender[] {new ConsoleAppender(new XMLFormatter())}, new Enhancer[0], Level.DEBUG, true));
-    CountDownLatch cdl = new CountDownLatch(1);
-    ReverseProxyService reverseProxyService = new ReverseProxyService("0.0.0.0", 9030, new ProxyDictionary() {
-
-      @Override
-      public ProxyTarget lookup (HttpRequestFrame httpRequest) {
-
-        return new ProxyTarget("www.forio.com", 80);
-      }
-    }, 3000, 16);
-
-    cdl.await();
-  }
-
   private void startEventLoop ()
     throws IOException {
 
-    CountDownLatch terminationLatch = new CountDownLatch(1);
-    EventLoop eventLoop;
     Thread eventThread;
 
-    eventThread = new Thread(eventLoop = new EventLoop(terminationLatch));
+    eventThread = new Thread(eventLoop = new EventLoop());
     eventThread.setDaemon(true);
     eventThread.start();
+  }
+
+  public void destroy ()
+    throws IOException, InterruptedException {
+
+    eventLoop.stop();
+
+    if (closed.compareAndSet(false, true)) {
+      selector.close();
+      serverSocketChannel.close();
+    }
   }
 
   public void execute (Runnable runnable) {
@@ -170,18 +159,17 @@ public class ReverseProxyService {
 
   private class EventLoop implements Runnable {
 
-    final CountDownLatch terminationLatch;
+    private boolean stopped = false;
 
-    public EventLoop (CountDownLatch terminationLatch) {
+    public void stop ()
+      throws InterruptedException {
 
-      this.terminationLatch = terminationLatch;
+      stopped = true;
+      terminationLatch.await();
     }
 
     @Override
     public void run () {
-
-      CountDownLatch terminationLatch = new CountDownLatch(1);
-      boolean stopped = false;
 
       try {
         while (!stopped) {
