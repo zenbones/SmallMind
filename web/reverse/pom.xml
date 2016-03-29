@@ -17,6 +17,12 @@
       <scope>compile</scope>
     </dependency>
     <dependency>
+      <groupId>org.smallmind</groupId>
+      <artifactId>scribe-ink-indigenous</artifactId>
+      <optional>true</optional>
+      <scope>compile</scope>
+    </dependency>
+    <dependency>
       <groupId>org.apache.httpcomponents</groupId>
       <artifactId>httpcore</artifactId>
       <scope>compile</scope>

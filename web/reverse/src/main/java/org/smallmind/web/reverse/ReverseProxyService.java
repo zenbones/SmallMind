@@ -45,7 +45,14 @@ import java.util.Iterator;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import org.smallmind.scribe.pen.Appender;
+import org.smallmind.scribe.pen.ConsoleAppender;
+import org.smallmind.scribe.pen.DefaultTemplate;
+import org.smallmind.scribe.pen.Enhancer;
+import org.smallmind.scribe.pen.Filter;
+import org.smallmind.scribe.pen.Level;
 import org.smallmind.scribe.pen.LoggerManager;
+import org.smallmind.scribe.pen.XMLFormatter;
 
 public class ReverseProxyService {
 
@@ -76,6 +83,7 @@ public class ReverseProxyService {
   public static void main (String... args)
     throws Exception {
 
+    LoggerManager.addTemplate(new DefaultTemplate(new Filter[0], new Appender[] {new ConsoleAppender(new XMLFormatter())}, new Enhancer[0], Level.DEBUG, true));
     CountDownLatch cdl = new CountDownLatch(1);
     ReverseProxyService reverseProxyService = new ReverseProxyService("0.0.0.0", 9030, new ProxyDictionary() {
 

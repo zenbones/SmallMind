@@ -34,27 +34,30 @@ package org.smallmind.web.reverse;
 
 import java.io.ByteArrayOutputStream;
 import java.nio.ByteBuffer;
+import java.util.concurrent.atomic.AtomicReference;
 
 public class HttpContentLengthFrameReader implements FrameReader {
 
   private final HttpRequestFrameReader httpRequestFrameReader;
-  private final ByteArrayOutputStream byteArrayOutputStream;
+  private final AtomicReference<ByteArrayOutputStream> outputStreamRef;
   private final int contentLength;
   private int bytesRead = 0;
 
-  public HttpContentLengthFrameReader (HttpRequestFrameReader httpRequestFrameReader, ByteArrayOutputStream byteArrayOutputStream, int contentLength) {
+  public HttpContentLengthFrameReader (HttpRequestFrameReader httpRequestFrameReader, AtomicReference<ByteArrayOutputStream> outputStreamRef, int contentLength) {
 
     this.httpRequestFrameReader = httpRequestFrameReader;
-    this.byteArrayOutputStream = byteArrayOutputStream;
+    this.outputStreamRef = outputStreamRef;
     this.contentLength = contentLength;
   }
 
   public void read (ByteBuffer byteBuffer) {
 
-    while ((byteBuffer.remaining() > 0) && (bytesRead++ < contentLength)) {
-      byteArrayOutputStream.write(byteBuffer.get());
+    synchronized (outputStreamRef) {
+      while ((byteBuffer.remaining() > 0) && (bytesRead++ < contentLength)) {
+        outputStreamRef.get().write(byteBuffer.get());
+      }
     }
 
-    httpRequestFrameReader.flushBufferToDestination();
+    httpRequestFrameReader.flushBufferToDestination(true);
   }
 }
