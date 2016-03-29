@@ -53,13 +53,23 @@ public class HttpHeader {
     return name;
   }
 
-  public void addValue (String value) {
-
-    valueList.add(value);
-  }
-
   public List<String> getValues () {
 
     return valueList;
+  }
+
+  public HttpHeader addValue (String value) {
+
+    valueList.add(value);
+
+    return this;
+  }
+
+  public HttpHeader setValue (String value) {
+
+    valueList.clear();
+    addValue(value);
+
+    return this;
   }
 }

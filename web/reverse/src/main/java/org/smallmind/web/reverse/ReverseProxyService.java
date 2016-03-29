@@ -134,7 +134,7 @@ public class ReverseProxyService {
     executorService.execute(runnable);
   }
 
-  public void connectDestination (final SocketChannel sourceChannel, final HttpRequestFrameReader httpRequestFrameReader, HttpRequest httpRequest)
+  public ProxyTarget connectDestination (final SocketChannel sourceChannel, final HttpRequestFrameReader httpRequestFrameReader, HttpRequest httpRequest)
     throws ProtocolException {
 
     final ProxyTarget target;
@@ -169,6 +169,8 @@ public class ReverseProxyService {
           }
         }
       });
+
+      return target;
     }
   }
 

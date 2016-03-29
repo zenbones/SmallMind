@@ -33,6 +33,7 @@
 package org.smallmind.web.reverse;
 
 import java.nio.channels.SocketChannel;
+import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.List;
@@ -59,14 +60,14 @@ public abstract class HttpFrame {
     while (!(line = inputStream.readLine()).isEmpty()) {
 
       HttpHeader header;
-      String name;
+      String normalizeName;
       int colonPos;
 
       if ((colonPos = line.indexOf(':')) < 0) {
         throw new ProtocolException(sourceChannel, CannedResponse.BAD_REQUEST);
       }
-      if ((header = headerMap.get(name = normalizeHeaderName(line.substring(0, colonPos).trim()))) == null) {
-        headerMap.put(name, header = new HttpHeader(name));
+      if ((header = headerMap.get(normalizeName = normalizeHeaderName(line.substring(0, colonPos).trim()))) == null) {
+        headerMap.put(normalizeName, header = new HttpHeader(normalizeName));
       }
 
       header.addValue(line.substring(colonPos + 1).trim());
@@ -105,8 +106,43 @@ public abstract class HttpFrame {
 
   public HttpHeader getHeader (String name) {
 
+    String normalizedName = normalizeHeaderName(name.trim());
+
     for (HttpHeader header : headerList) {
-      if (header.getName().equals(normalizeHeaderName(name.trim()))) {
+      if (header.getName().equals(normalizedName)) {
+
+        return header;
+      }
+    }
+
+    return null;
+  }
+
+  public void addHeader (HttpHeader header) {
+
+    addHeader(header, false);
+  }
+
+  public void addHeader (HttpHeader header, boolean prepend) {
+
+    if (prepend) {
+      headerList.add(0, header);
+    } else {
+      headerList.add(header);
+    }
+  }
+
+  public HttpHeader removeHeader (String name) {
+
+    Iterator<HttpHeader> headerIter = headerList.iterator();
+    String normalizedName = normalizeHeaderName(name.trim());
+
+    while (headerIter.hasNext()) {
+
+      HttpHeader header;
+
+      if ((header = headerIter.next()).getName().equals(normalizedName)) {
+        headerIter.remove();
 
         return header;
       }

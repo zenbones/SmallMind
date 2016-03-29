@@ -85,4 +85,27 @@ public class HttpRequest extends HttpFrame {
 
     return path;
   }
+
+  public byte[] toByteArray () {
+
+    StringBuilder rewriteBuilder = new StringBuilder();
+
+    rewriteBuilder.append(getMethod().name()).append(' ').append(getPath()).append(" HTTP/").append(getVersion()).append("\r\n");
+    for (HttpHeader header : getHeaders()) {
+
+      int valueIndex = 0;
+
+      rewriteBuilder.append(header.getName()).append(": ");
+      for (String value : header.getValues()) {
+        if (valueIndex++ > 0) {
+          rewriteBuilder.append(", ");
+        }
+        rewriteBuilder.append(value);
+      }
+      rewriteBuilder.append("\r\n");
+    }
+    rewriteBuilder.append("\r\n");
+
+    return rewriteBuilder.toString().getBytes();
+  }
 }

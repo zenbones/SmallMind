@@ -77,15 +77,33 @@ public class HttpRequestFrameReader implements FrameReader {
         if ((currentChar == '\n') && (lastChar == '\r')) {
           if (lineEnd) {
 
+            ProxyTarget proxyTarget;
             HttpRequest httpRequest;
-            HttpHeader bodyHeader;
+            HttpHeader hostHeader;
             HttpHeader expectHeader;
+
+            HttpHeader bodyHeader;
 
             synchronized (outputStreamRef) {
               httpRequest = new HttpRequest(sourceChannel, new HttpProtocolInputStream(outputStreamRef.get().toByteArray()));
             }
 
-            reverseProxyService.connectDestination(sourceChannel, this, httpRequest);
+            proxyTarget = reverseProxyService.connectDestination(sourceChannel, this, httpRequest);
+
+            if ((hostHeader = httpRequest.getHeader("Host")) != null) {
+              hostHeader.setValue(proxyTarget.getHost() + ":" + proxyTarget.getPort());
+            } else {
+              httpRequest.addHeader(new HttpHeader("Host").addValue(proxyTarget.getHost() + ":" + proxyTarget.getPort()));
+            }
+
+            try {
+              synchronized (outputStreamRef) {
+                outputStreamRef.set(new ByteArrayOutputStream());
+                outputStreamRef.get().write(httpRequest.toByteArray());
+              }
+            } catch (IOException ioException) {
+              throw new ProtocolException(sourceChannel, CannedResponse.BAD_GATEWAY);
+            }
 
             if (((expectHeader = httpRequest.getHeader("Expect")) != null) && expectHeader.getValues().get(0).equals("100-continue")) {
               flushBufferToDestination(false);
