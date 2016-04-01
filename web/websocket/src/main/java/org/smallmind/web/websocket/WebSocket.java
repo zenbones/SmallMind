@@ -59,7 +59,7 @@ import org.smallmind.nutsnbolts.util.Tuple;
 public abstract class WebSocket implements AutoCloseable {
 
   private final Socket socket;
-  private final ByteArrayIOStream byteArrayIOStream = new ByteArrayIOStream(23);
+  private final ByteArrayIOStream byteArrayIOStream = new ByteArrayIOStream();
   private final MessageWorker messageWorker;
   private final ConcurrentLinkedQueue<String> pingKeyQueue = new ConcurrentLinkedQueue<>();
   private final AtomicReference<ConnectionState> connectionStateRef = new AtomicReference<>(ConnectionState.CONNECTING);
