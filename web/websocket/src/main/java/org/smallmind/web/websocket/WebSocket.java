@@ -50,6 +50,7 @@ import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
 import javax.net.ssl.SSLSocketFactory;
 import org.smallmind.nutsnbolts.http.Base64Codec;
+import org.smallmind.nutsnbolts.io.ByteArrayIOStream;
 import org.smallmind.nutsnbolts.lang.UnknownSwitchCaseException;
 import org.smallmind.nutsnbolts.security.EncryptionUtility;
 import org.smallmind.nutsnbolts.security.HashAlgorithm;
@@ -57,7 +58,12 @@ import org.smallmind.nutsnbolts.util.Tuple;
 
 public abstract class WebSocket implements AutoCloseable {
 
+  private final AtomicInteger ATTEMPTED_READ = new AtomicInteger(0);
+  private final AtomicInteger INCOMPLETE_READ = new AtomicInteger(0);
+  private final AtomicInteger ERROR_READ = new AtomicInteger(0);
+  private final AtomicInteger FRAGMENTS_READ = new AtomicInteger(0);
   private final Socket socket;
+  private final ByteArrayIOStream byteArrayIOStream = new ByteArrayIOStream(23);
   private final MessageWorker messageWorker;
   private final ConcurrentLinkedQueue<String> pingKeyQueue = new ConcurrentLinkedQueue<>();
   private final AtomicReference<ConnectionState> connectionStateRef = new AtomicReference<>(ConnectionState.CONNECTING);
@@ -115,7 +121,7 @@ public abstract class WebSocket implements AutoCloseable {
       secure = false;
     }
     socket.setTcpNoDelay(true);
-    socket.setSoTimeout((int)soTimeout);
+//    socket.setSoTimeout((int)soTimeout);
 
     // initial handshake request
     headerTuple = Handshake.constructHeaders(protocolVersion, uri, keyBytes, protocols);
@@ -136,6 +142,11 @@ public abstract class WebSocket implements AutoCloseable {
     workerThread = new Thread(messageWorker = new MessageWorker());
     workerThread.setDaemon(true);
     workerThread.start();
+  }
+
+  public void stats () {
+
+    System.out.println("AT:" + ATTEMPTED_READ.get() + ": IR:" + INCOMPLETE_READ.get() + " :ER:" + ERROR_READ.get() + ": FR:" + FRAGMENTS_READ.get());
   }
 
   public abstract void onError (Exception exception);
@@ -229,45 +240,66 @@ public abstract class WebSocket implements AutoCloseable {
   private byte[] read ()
     throws IOException, WebSocketException {
 
-    ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
-    boolean complete = false;
-
     do {
+
+      byte[] availableArray;
+
+      if ((availableArray = extractFrame()) != null) {
+
+        return availableArray;
+      }
+
       do {
 
         int bytesRead;
 
-        bytesRead = socket.getInputStream().read(rawBuffer);
-        outputStream.write(rawBuffer, 0, bytesRead);
+        if ((bytesRead = socket.getInputStream().read(rawBuffer)) >= 0) {
+          byteArrayIOStream.asOutputStream().write(rawBuffer, 0, bytesRead);
+        }
       } while (socket.getInputStream().available() > 0);
 
-      if (connectionStateRef.get().equals(ConnectionState.CONNECTING)) {
-        complete = true;
-      } else {
-        if (outputStream.size() >= 2) {
+      if ((availableArray = extractFrame()) != null) {
 
-          byte length = (byte)(outputStream.toByteArray()[1] & 0x7F);
-
-          if (length < 126) {
-            complete = outputStream.size() == length + 2;
-          } else if ((length == 126) && (outputStream.size() >= 4)) {
-
-            byte[] currentArray = outputStream.toByteArray();
-
-            complete = outputStream.size() == ((currentArray[2] & 0xFF) << 8) + (currentArray[3] & 0xFF) + 4;
-          } else if (outputStream.size() >= 10) {
-
-            byte[] currentArray = outputStream.toByteArray();
-
-            complete = outputStream.size() == ((currentArray[6] & 0xFF) << 24) + ((currentArray[7] & 0xFF) << 16) + ((currentArray[8] & 0xFF) << 8) + (currentArray[9] & 0xFF) + 10;
-          }
-        }
+        return availableArray;
       }
-    } while (!complete);
 
-    outputStream.close();
+    } while (true);
+  }
 
-    return outputStream.toByteArray();
+  private byte[] extractFrame ()
+    throws IOException {
+
+    int availableBytes = byteArrayIOStream.asInputStream().available();
+
+    if (connectionStateRef.get().equals(ConnectionState.CONNECTING)) {
+      if (availableBytes > 0) {
+
+        return byteArrayIOStream.asInputStream().readAvailable();
+      }
+    } else if (availableBytes >= 2) {
+
+      int required = 0;
+      byte length = (byte)(byteArrayIOStream.asInputStream().peek(1) & 0x7F);
+
+      if (length < 126) {
+        required = length + 2;
+      } else if ((length == 126) && (availableBytes >= 4)) {
+        required = ((byteArrayIOStream.asInputStream().peek(2) & 0xFF) << 8) + (byteArrayIOStream.asInputStream().peek(3) & 0xFF) + 4;
+      } else if (availableBytes >= 10) {
+        required = ((byteArrayIOStream.asInputStream().peek(6) & 0xFF) << 24) + ((byteArrayIOStream.asInputStream().peek(7) & 0xFF) << 16) + ((byteArrayIOStream.asInputStream().peek(8) & 0xFF) << 8) + (byteArrayIOStream.asInputStream().peek(9) & 0xFF) + 10;
+      }
+
+      if ((required > 0) && (availableBytes >= required)) {
+
+        byte[] outputArray = new byte[required];
+
+        byteArrayIOStream.asInputStream().read(outputArray);
+
+        return outputArray;
+      }
+    }
+
+    return null;
   }
 
   public int getProtocolVersion () {
@@ -365,7 +397,9 @@ public abstract class WebSocket implements AutoCloseable {
 
             Fragment fragment;
 
+            ATTEMPTED_READ.incrementAndGet();
             if ((fragment = Frame.decode(read())).isFinal()) {
+              FRAGMENTS_READ.incrementAndGet();
               idleMilliseconds.set(0);
               switch (fragment.getOpCode()) {
                 case CONTINUATION:
@@ -467,6 +501,8 @@ public abstract class WebSocket implements AutoCloseable {
                   throw new UnknownSwitchCaseException(fragment.getOpCode().name());
               }
             } else {
+              INCOMPLETE_READ.incrementAndGet();
+
               if (!(fragment.getOpCode().equals(OpCode.CONTINUATION) || fragment.getOpCode().equals(OpCode.TEXT) || fragment.getOpCode().equals(OpCode.BINARY))) {
                 throw new WebSocketException("All control frames must be marked as final");
               }
@@ -482,6 +518,7 @@ public abstract class WebSocket implements AutoCloseable {
             }
           } catch (SocketTimeoutException socketTimeoutException) {
 
+            ERROR_READ.incrementAndGet();
             long idleTimeoutMilliseconds;
 
             if ((idleTimeoutMilliseconds = maxIdleTimeoutMilliseconds.get()) > 0) {
@@ -494,6 +531,8 @@ public abstract class WebSocket implements AutoCloseable {
               }
             }
           } catch (Exception exception) {
+            ERROR_READ.incrementAndGet();
+            exception.printStackTrace();
             onError(exception);
           }
         }
