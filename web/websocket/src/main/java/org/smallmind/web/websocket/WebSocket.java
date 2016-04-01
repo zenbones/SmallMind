@@ -58,10 +58,6 @@ import org.smallmind.nutsnbolts.util.Tuple;
 
 public abstract class WebSocket implements AutoCloseable {
 
-  private final AtomicInteger ATTEMPTED_READ = new AtomicInteger(0);
-  private final AtomicInteger INCOMPLETE_READ = new AtomicInteger(0);
-  private final AtomicInteger ERROR_READ = new AtomicInteger(0);
-  private final AtomicInteger FRAGMENTS_READ = new AtomicInteger(0);
   private final Socket socket;
   private final ByteArrayIOStream byteArrayIOStream = new ByteArrayIOStream(23);
   private final MessageWorker messageWorker;
@@ -142,11 +138,6 @@ public abstract class WebSocket implements AutoCloseable {
     workerThread = new Thread(messageWorker = new MessageWorker());
     workerThread.setDaemon(true);
     workerThread.start();
-  }
-
-  public void stats () {
-
-    System.out.println("AT:" + ATTEMPTED_READ.get() + ": IR:" + INCOMPLETE_READ.get() + " :ER:" + ERROR_READ.get() + ": FR:" + FRAGMENTS_READ.get());
   }
 
   public abstract void onError (Exception exception);
@@ -397,9 +388,7 @@ public abstract class WebSocket implements AutoCloseable {
 
             Fragment fragment;
 
-            ATTEMPTED_READ.incrementAndGet();
             if ((fragment = Frame.decode(read())).isFinal()) {
-              FRAGMENTS_READ.incrementAndGet();
               idleMilliseconds.set(0);
               switch (fragment.getOpCode()) {
                 case CONTINUATION:
@@ -501,8 +490,6 @@ public abstract class WebSocket implements AutoCloseable {
                   throw new UnknownSwitchCaseException(fragment.getOpCode().name());
               }
             } else {
-              INCOMPLETE_READ.incrementAndGet();
-
               if (!(fragment.getOpCode().equals(OpCode.CONTINUATION) || fragment.getOpCode().equals(OpCode.TEXT) || fragment.getOpCode().equals(OpCode.BINARY))) {
                 throw new WebSocketException("All control frames must be marked as final");
               }
@@ -518,7 +505,6 @@ public abstract class WebSocket implements AutoCloseable {
             }
           } catch (SocketTimeoutException socketTimeoutException) {
 
-            ERROR_READ.incrementAndGet();
             long idleTimeoutMilliseconds;
 
             if ((idleTimeoutMilliseconds = maxIdleTimeoutMilliseconds.get()) > 0) {
@@ -531,7 +517,6 @@ public abstract class WebSocket implements AutoCloseable {
               }
             }
           } catch (Exception exception) {
-            ERROR_READ.incrementAndGet();
             exception.printStackTrace();
             onError(exception);
           }
