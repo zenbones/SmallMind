@@ -113,7 +113,6 @@ public class ByteArrayIOStream implements Closeable {
 
             return segmentList.get(segmentIndex)[bytesToSeek];
           }
-
         }
       }
     }

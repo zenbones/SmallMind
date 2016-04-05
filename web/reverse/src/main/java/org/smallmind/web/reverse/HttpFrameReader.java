@@ -103,6 +103,10 @@ public abstract class HttpFrameReader implements FrameReader {
               }
             } else if (((bodyHeader = httpFrame.getHeader("Transfer-Encoding")) != null) && bodyHeader.getValues().get(0).equals("chunked")) {
 
+              HttpChunkedFrameReader httpChunkedFrameReader = new HttpChunkedFrameReader(this);
+
+              selectionKey.attach(httpChunkedFrameReader);
+              httpChunkedFrameReader.processInput(selectionKey, byteBuffer);
             } else {
               flushBufferToTarget(true);
             }
