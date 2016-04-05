@@ -83,14 +83,20 @@ public class FileUtility {
           }
 
           @Override
+          public FileVisitResult preVisitDirectory (Path dir, BasicFileAttributes attrs) throws IOException {
+
+            Files.createDirectories(destination.resolve(source.relativize(dir)));
+
+            return FileVisitResult.CONTINUE;
+          }
+
+          @Override
           public FileVisitResult postVisitDirectory (Path dir, IOException exc)
             throws IOException {
 
             if (exc != null) {
               throw exc;
             }
-
-            Files.createDirectories(destination.resolve(source.relativize(dir)));
 
             return FileVisitResult.CONTINUE;
           }
