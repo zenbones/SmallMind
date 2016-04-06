@@ -42,8 +42,6 @@ import java.nio.channels.ServerSocketChannel;
 import java.nio.channels.SocketChannel;
 import java.util.Iterator;
 import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
@@ -56,7 +54,7 @@ public class ReverseProxyService {
   private final ServerSocketChannel serverSocketChannel;
   private final Selector selector;
   private final ProxyDictionary dictionary;
-  private final ExecutorService executorService;
+  private final ProxyExecutor proxyExecutor;
   private final Lock selectLock = new ReentrantLock(true);
   private final Lock loopLock = new ReentrantLock(true);
   private final ByteBuffer byteBuffer = ByteBuffer.allocateDirect(8192);
@@ -69,7 +67,7 @@ public class ReverseProxyService {
     this.dictionary = dictionary;
     this.connectTimeoutMillis = connectTimeoutMillis;
 
-    executorService = Executors.newFixedThreadPool(concurrencyLimit);
+    proxyExecutor = new ProxyExecutor(concurrencyLimit);
 
     serverSocketChannel = ServerSocketChannel.open();
     serverSocketChannel.configureBlocking(false);
@@ -98,12 +96,13 @@ public class ReverseProxyService {
     if (closed.compareAndSet(false, true)) {
       selector.close();
       serverSocketChannel.close();
+      proxyExecutor.shutdown();
     }
   }
 
-  public void execute (Runnable runnable) {
+  public void execute (SocketChannel sourceChannel, Runnable runnable) {
 
-    executorService.execute(runnable);
+    proxyExecutor.execute(sourceChannel, runnable);
   }
 
   public ProxyTarget lookup (HttpRequestFrame httpRequestFrame)
@@ -120,7 +119,7 @@ public class ReverseProxyService {
 
   public void connectDestination (final SocketChannel sourceSocketChannel, final HttpRequestFrameReader httpRequestFrameReader, final ProxyTarget target) {
 
-    execute(new Runnable() {
+    execute(sourceSocketChannel, new Runnable() {
 
       @Override
       public void run () {

@@ -134,7 +134,7 @@ public abstract class HttpFrameReader implements FrameReader {
     throws IOException {
 
     if (!failed.get()) {
-      reverseProxyService.execute(new FlushWorker(byteArrayIOStream.asInputStream().readAvailable()));
+      reverseProxyService.execute(sourceChannel, new FlushWorker(byteArrayIOStream.asInputStream().readAvailable()));
       if (complete) {
         lineEnd = false;
         lastChar = 0;
