@@ -39,7 +39,7 @@ import org.smallmind.scribe.pen.LoggerManager;
 
 public class HttpRequestFrameReader extends HttpFrameReader {
 
-  private final AtomicReference<SocketChannel> destinationChannelRef = new AtomicReference<>();
+  private final AtomicReference<DestinationTicket> destinationTicketRef = new AtomicReference<>();
   private int connectTimeoutMillis;
 
   public HttpRequestFrameReader (ReverseProxyService reverseProxyService, SocketChannel sourceChannel, int connectTimeoutMillis) {
@@ -60,42 +60,42 @@ public class HttpRequestFrameReader extends HttpFrameReader {
 
     try {
 
-      SocketChannel destinationChannel;
+      DestinationTicket destinationTicket;
 
-      if ((destinationChannel = destinationChannelRef.get()) != null) {
-        destinationChannel.close();
+      if ((destinationTicket = destinationTicketRef.get()) != null) {
+        destinationTicket.getSocketChannel().close();
       }
     } catch (IOException ioException) {
       LoggerManager.getLogger(HttpRequestFrameReader.class).error(ioException);
     }
   }
 
-  public void registerDestination (SocketChannel destinationChannel) {
+  public void registerDestination (ProxyTarget target, SocketChannel destinationChannel) {
 
-    synchronized (destinationChannelRef) {
-      destinationChannelRef.set(destinationChannel);
-      destinationChannelRef.notify();
+    synchronized (destinationTicketRef) {
+      destinationTicketRef.set(new DestinationTicket(target, destinationChannel));
+      destinationTicketRef.notify();
     }
   }
 
   @Override
   public SocketChannel getTargetChannel (SocketChannel sourceChannel) {
 
-    SocketChannel destinationChannel = null;
+    DestinationTicket destinationTicket = null;
     long start = System.currentTimeMillis();
     long elapsed;
 
     try {
-      while (((elapsed = System.currentTimeMillis() - start) < connectTimeoutMillis) && ((destinationChannel = destinationChannelRef.get()) == null)) {
-        synchronized (destinationChannelRef) {
-          destinationChannelRef.wait(connectTimeoutMillis - elapsed);
+      while (((elapsed = System.currentTimeMillis() - start) < connectTimeoutMillis) && ((destinationTicket = destinationTicketRef.get()) == null)) {
+        synchronized (destinationTicketRef) {
+          destinationTicketRef.wait(connectTimeoutMillis - elapsed);
         }
       }
     } catch (InterruptedException interruptedException) {
       LoggerManager.getLogger(HttpRequestFrameReader.class).error(interruptedException);
     }
 
-    return destinationChannel;
+    return (destinationTicket == null) ? null : destinationTicket.getSocketChannel();
   }
 
   @Override
@@ -103,8 +103,23 @@ public class HttpRequestFrameReader extends HttpFrameReader {
     throws ProtocolException {
 
     HttpRequestFrame httpRequestFrame = new HttpRequestFrame(httpProtocolInputStream);
-    ProxyTarget proxyTarget = reverseProxyService.connectDestination(sourceSocketChannel, this, httpRequestFrame);
+    ProxyTarget proxyTarget = reverseProxyService.lookup(httpRequestFrame);
+    DestinationTicket destinationTicket;
     HttpHeader hostHeader;
+
+    if (((destinationTicket = destinationTicketRef.get()) == null) || (!destinationTicket.getProxyTarget().equals(proxyTarget)) || (!destinationTicket.getSocketChannel().isOpen())) {
+      if (destinationTicket != null) {
+        try {
+          destinationTicket.getSocketChannel().close();
+        }catch (IOException ioException) {
+          LoggerManager.getLogger(HttpRequestFrameReader.class).error(ioException);
+        }
+
+        destinationTicketRef.compareAndSet(destinationTicket, null);
+      }
+
+      reverseProxyService.connectDestination(sourceSocketChannel, this, proxyTarget);
+    }
 
     if ((hostHeader = httpRequestFrame.getHeader("Host")) != null) {
       hostHeader.setValue(proxyTarget.getHost() + ":" + proxyTarget.getPort());

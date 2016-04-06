@@ -106,55 +106,58 @@ public class ReverseProxyService {
     executorService.execute(runnable);
   }
 
-  public ProxyTarget connectDestination (final SocketChannel sourceSocketChannel, final HttpRequestFrameReader httpRequestFrameReader, HttpRequestFrame httpRequestFrame)
+  public ProxyTarget lookup (HttpRequestFrame httpRequestFrame)
     throws ProtocolException {
 
-    final ProxyTarget target;
+    ProxyTarget target;
 
     if ((target = dictionary.lookup(httpRequestFrame)) == null) {
       throw new ProtocolException(CannedResponse.NOT_FOUND);
-    } else {
-      execute(new Runnable() {
-
-        @Override
-        public void run () {
-
-          SocketChannel destinationChannel = null;
-
-          try {
-            destinationChannel = SocketChannel.open();
-            destinationChannel.socket().connect(new InetSocketAddress(target.getHost(), target.getPort()), connectTimeoutMillis);
-            destinationChannel.setOption(StandardSocketOptions.SO_KEEPALIVE, true).setOption(StandardSocketOptions.TCP_NODELAY, true).configureBlocking(false);
-
-            loopLock.lock();
-            try {
-              selectLock.lock();
-              try {
-                destinationChannel.register(selector, SelectionKey.OP_READ, new HttpResponseFrameReader(ReverseProxyService.this, sourceSocketChannel, destinationChannel));
-              } finally {
-                selectLock.unlock();
-              }
-            } finally {
-              loopLock.unlock();
-            }
-
-            httpRequestFrameReader.registerDestination(destinationChannel);
-          } catch (IOException ioException) {
-            try {
-              if (destinationChannel != null) {
-                destinationChannel.close();
-              }
-            } catch (IOException closeException) {
-              LoggerManager.getLogger(ReverseProxyService.class).error(closeException);
-            }
-
-            httpRequestFrameReader.fail(CannedResponse.NOT_FOUND, null);
-          }
-        }
-      });
-
-      return target;
     }
+
+    return target;
+  }
+
+  public void connectDestination (final SocketChannel sourceSocketChannel, final HttpRequestFrameReader httpRequestFrameReader, final ProxyTarget target) {
+
+    execute(new Runnable() {
+
+      @Override
+      public void run () {
+
+        SocketChannel destinationChannel = null;
+
+        try {
+          destinationChannel = SocketChannel.open();
+          destinationChannel.socket().connect(new InetSocketAddress(target.getHost(), target.getPort()), connectTimeoutMillis);
+          destinationChannel.setOption(StandardSocketOptions.SO_KEEPALIVE, true).setOption(StandardSocketOptions.TCP_NODELAY, true).configureBlocking(false);
+
+          loopLock.lock();
+          try {
+            selectLock.lock();
+            try {
+              destinationChannel.register(selector, SelectionKey.OP_READ, new HttpResponseFrameReader(ReverseProxyService.this, sourceSocketChannel, destinationChannel));
+            } finally {
+              selectLock.unlock();
+            }
+          } finally {
+            loopLock.unlock();
+          }
+
+          httpRequestFrameReader.registerDestination(target, destinationChannel);
+        } catch (IOException ioException) {
+          try {
+            if (destinationChannel != null) {
+              destinationChannel.close();
+            }
+          } catch (IOException closeException) {
+            LoggerManager.getLogger(ReverseProxyService.class).error(closeException);
+          }
+
+          httpRequestFrameReader.fail(CannedResponse.NOT_FOUND, null);
+        }
+      }
+    });
   }
 
   private class EventLoop implements Runnable {
@@ -228,6 +231,8 @@ public class ReverseProxyService {
                         if (bytesRead > 0) {
                           byteBuffer.flip();
                           ((FrameReader)selectionKey.attachment()).processInput(selectionKey, byteBuffer);
+                        } else if (bytesRead < 0) {
+                          ((FrameReader)selectionKey.attachment()).closeChannels((SocketChannel)selectionKey.channel());
                         }
                       }
                     } else {

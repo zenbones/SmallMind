@@ -49,6 +49,12 @@ public class HttpContentLengthFrameReader implements FrameReader {
   }
 
   @Override
+  public void closeChannels (SocketChannel sourceChannel) {
+
+    httpFrameReader.closeChannels(sourceChannel);
+  }
+
+  @Override
   public void fail (CannedResponse cannedResponse, SocketChannel failedChannel) {
 
     httpFrameReader.fail(cannedResponse, failedChannel);

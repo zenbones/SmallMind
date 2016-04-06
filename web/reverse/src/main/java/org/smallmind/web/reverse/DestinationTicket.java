@@ -32,36 +32,38 @@
  */
 package org.smallmind.web.reverse;
 
-public class ProxyTarget {
+import java.nio.channels.SocketChannel;
 
-  private String host;
-  private int port;
+public class DestinationTicket {
 
-  public ProxyTarget (String host, int port) {
+  private ProxyTarget target;
+  private SocketChannel destinationChannel;
 
-    this.host = host;
-    this.port = port;
+  public DestinationTicket (ProxyTarget target, SocketChannel destinationChannel) {
+
+    this.target = target;
+    this.destinationChannel = destinationChannel;
   }
 
-  public String getHost () {
+  public ProxyTarget getProxyTarget () {
 
-    return host;
+    return target;
   }
 
-  public int getPort () {
+  public SocketChannel getSocketChannel () {
 
-    return port;
+    return destinationChannel;
   }
 
   @Override
   public int hashCode () {
 
-    return host.hashCode() ^ port;
+    return target.hashCode();
   }
 
   @Override
   public boolean equals (Object obj) {
 
-    return (obj instanceof ProxyTarget) && ((ProxyTarget)obj).getHost().equals(host) && (((ProxyTarget)obj).getPort() == port);
+    return (obj instanceof DestinationTicket) && ((DestinationTicket)obj).getProxyTarget().equals(target);
   }
 }

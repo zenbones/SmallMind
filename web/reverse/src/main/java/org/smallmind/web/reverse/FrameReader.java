@@ -40,5 +40,7 @@ public interface FrameReader {
 
   void processInput (SelectionKey selectionKey, ByteBuffer byteBuffer);
 
+  void closeChannels (SocketChannel sourceChannel);
+
   void fail (CannedResponse cannedResponse, SocketChannel failedChannel);
 }

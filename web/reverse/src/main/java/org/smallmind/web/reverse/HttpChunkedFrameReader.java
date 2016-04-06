@@ -44,6 +44,7 @@ public class HttpChunkedFrameReader implements FrameReader {
   private final HttpFrameReader httpFrameReader;
   private State state = State.CHUNK;
   private boolean last = false;
+  private boolean finished = false;
   private int lastChar = 0;
   private int index = 0;
   private byte[] chunkArray = new byte[8];
@@ -51,6 +52,12 @@ public class HttpChunkedFrameReader implements FrameReader {
   public HttpChunkedFrameReader (HttpFrameReader httpFrameReader) {
 
     this.httpFrameReader = httpFrameReader;
+  }
+
+  @Override
+  public void closeChannels (SocketChannel sourceChannel) {
+
+    httpFrameReader.closeChannels(sourceChannel);
   }
 
   @Override
@@ -62,7 +69,7 @@ public class HttpChunkedFrameReader implements FrameReader {
   public void processInput (SelectionKey selectionKey, ByteBuffer byteBuffer) {
 
     try {
-      while ((!last) && (byteBuffer.remaining() > 0)) {
+      while ((!finished) && (byteBuffer.remaining() > 0)) {
 
         byte currentChar;
 
@@ -124,6 +131,7 @@ public class HttpChunkedFrameReader implements FrameReader {
                 if (last) {
                   httpFrameReader.flushBufferToTarget(true);
                   selectionKey.attach(httpFrameReader);
+                  finished = true;
                 } else {
                   state = State.CHUNK;
                   index = 0;
