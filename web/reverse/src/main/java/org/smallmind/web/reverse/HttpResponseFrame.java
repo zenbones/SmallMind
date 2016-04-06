@@ -32,6 +32,7 @@
  */
 package org.smallmind.web.reverse;
 
+import java.io.IOException;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -43,13 +44,13 @@ public class HttpResponseFrame extends HttpFrame {
   private int status;
 
   public HttpResponseFrame (HttpProtocolInputStream httpProtocolInputStream)
-    throws ProtocolException {
+    throws IOException, ProtocolException {
 
     this(httpProtocolInputStream, parseResponseLine(httpProtocolInputStream.readLine()));
   }
 
   private HttpResponseFrame (HttpProtocolInputStream inputStream, Matcher matcher)
-    throws ProtocolException {
+    throws IOException, ProtocolException {
 
     super(inputStream, matcher.group(1));
 

@@ -32,6 +32,8 @@
  */
 package org.smallmind.web.reverse;
 
+import java.io.IOException;
+import java.io.OutputStream;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import org.smallmind.nutsnbolts.http.HttpMethod;
@@ -44,13 +46,13 @@ public class HttpRequestFrame extends HttpFrame {
   private String path;
 
   public HttpRequestFrame (HttpProtocolInputStream httpProtocolInputStream)
-    throws ProtocolException {
+    throws IOException, ProtocolException {
 
     this(httpProtocolInputStream, parseRequestLine(httpProtocolInputStream.readLine()));
   }
 
   private HttpRequestFrame (HttpProtocolInputStream inputStream, Matcher matcher)
-    throws ProtocolException {
+    throws IOException, ProtocolException {
 
     super(inputStream, matcher.group(3));
 
@@ -85,26 +87,30 @@ public class HttpRequestFrame extends HttpFrame {
     return path;
   }
 
-  public byte[] toByteArray () {
+  public void toOutputStream (OutputStream outputStream)
+    throws IOException {
 
-    StringBuilder rewriteBuilder = new StringBuilder();
+    outputStream.write(getMethod().name().getBytes());
+    outputStream.write(' ');
+    outputStream.write(getPath().getBytes());
+    outputStream.write(" HTTP/".getBytes());
+    outputStream.write(getVersion().getBytes());
+    outputStream.write("\r\n".getBytes());
 
-    rewriteBuilder.append(getMethod().name()).append(' ').append(getPath()).append(" HTTP/").append(getVersion()).append("\r\n");
     for (HttpHeader header : getHeaders()) {
 
       int valueIndex = 0;
 
-      rewriteBuilder.append(header.getName()).append(": ");
+      outputStream.write(header.getName().getBytes());
+      outputStream.write(": ".getBytes());
       for (String value : header.getValues()) {
         if (valueIndex++ > 0) {
-          rewriteBuilder.append(", ");
+          outputStream.write(", ".getBytes());
         }
-        rewriteBuilder.append(value);
+        outputStream.write(value.getBytes());
       }
-      rewriteBuilder.append("\r\n");
+      outputStream.write("\r\n".getBytes());
     }
-    rewriteBuilder.append("\r\n");
-
-    return rewriteBuilder.toString().getBytes();
+    outputStream.write("\r\n".getBytes());
   }
 }

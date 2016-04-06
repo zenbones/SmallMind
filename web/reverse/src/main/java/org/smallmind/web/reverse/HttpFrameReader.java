@@ -32,24 +32,22 @@
  */
 package org.smallmind.web.reverse;
 
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.channels.SelectionKey;
 import java.nio.channels.SocketChannel;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicReference;
+import org.smallmind.nutsnbolts.io.ByteArrayIOStream;
 import org.smallmind.scribe.pen.LoggerManager;
 
 public abstract class HttpFrameReader implements FrameReader {
 
   private final ReverseProxyService reverseProxyService;
+  private final ByteArrayIOStream byteArrayIOStream = new ByteArrayIOStream();
   private final SocketChannel sourceChannel;
-  private final AtomicReference<ByteArrayOutputStream> outputStreamRef = new AtomicReference<>(new ByteArrayOutputStream());
   private final AtomicBoolean failed = new AtomicBoolean(false);
   private boolean lineEnd = false;
   private int lastChar = 0;
-  private int writeIndex = 0;
 
   public HttpFrameReader (ReverseProxyService reverseProxyService, SocketChannel sourceChannel) {
 
@@ -59,8 +57,8 @@ public abstract class HttpFrameReader implements FrameReader {
 
   public abstract SocketChannel getTargetChannel (SocketChannel sourceChannel);
 
-  public abstract HttpFrame getHttpFrame (ReverseProxyService reverseProxyService, SocketChannel sourceSocketChannel, HttpProtocolInputStream httpProtocolInputStream)
-    throws ProtocolException;
+  public abstract HttpFrame getHttpFrame (ReverseProxyService reverseProxyService, SocketChannel sourceSocketChannel, HttpProtocolInputStream httpProtocolInputStream, HttpProtocolOutputStream httpProtocolOutputStream)
+    throws IOException, ProtocolException;
 
   @Override
   public void processInput (SelectionKey selectionKey, ByteBuffer byteBuffer) {
@@ -74,9 +72,11 @@ public abstract class HttpFrameReader implements FrameReader {
         if ((currentChar == '\n') && (lastChar == '\r')) {
           if (lineEnd) {
 
-            HttpFrame httpFrame = getHttpFrame(reverseProxyService, sourceChannel, new HttpProtocolInputStream(getBufferAsArray()));
+            HttpFrame httpFrame;
             HttpHeader expectHeader;
             HttpHeader bodyHeader;
+
+            httpFrame = getHttpFrame(reverseProxyService, sourceChannel, new HttpProtocolInputStream(byteArrayIOStream.asInputStream()), new HttpProtocolOutputStream(byteArrayIOStream.asOutputStream()));
 
             if (((expectHeader = httpFrame.getHeader("Expect")) != null) && expectHeader.getValues().get(0).equals("100-continue")) {
               flushBufferToTarget(false);
@@ -108,70 +108,36 @@ public abstract class HttpFrameReader implements FrameReader {
             } else {
               flushBufferToTarget(true);
             }
+          } else {
+            lineEnd = true;
           }
-          lineEnd = true;
         } else if (currentChar != '\r') {
           lineEnd = false;
         }
 
         lastChar = currentChar;
       }
+    } catch (IOException ioException) {
+      fail(CannedResponse.BAD_REQUEST, null);
     } catch (ProtocolException protocolException) {
       fail(protocolException.getCannedResponse(), null);
     }
   }
 
-  public void clearBuffer () {
+  public void writeToBuffer (byte singleByte)
+    throws IOException {
 
-    synchronized (outputStreamRef) {
-      outputStreamRef.set(new ByteArrayOutputStream());
-
-      lineEnd = false;
-      lastChar = 0;
-      writeIndex = 0;
-    }
+    byteArrayIOStream.asOutputStream().write(singleByte);
   }
 
-  public byte[] getBufferAsArray () {
-
-    synchronized (outputStreamRef) {
-
-      return outputStreamRef.get().toByteArray();
-    }
-  }
-
-  public void writeToBuffer (byte singleByte) {
-
-    synchronized (outputStreamRef) {
-      outputStreamRef.get().write(singleByte);
-    }
-  }
-
-  public void writeToBuffer (byte[] bytes) {
-
-    writeToBuffer(bytes, 0, bytes.length);
-  }
-
-  public void writeToBuffer (byte[] bytes, int offset, int length) {
-
-    synchronized (outputStreamRef) {
-      outputStreamRef.get().write(bytes, offset, length);
-    }
-  }
-
-  public synchronized void flushBufferToTarget (boolean complete) {
+  public synchronized void flushBufferToTarget (boolean complete)
+    throws IOException {
 
     if (!failed.get()) {
-      synchronized (outputStreamRef) {
-
-        byte[] buffer;
-
-        reverseProxyService.execute(new FlushWorker(buffer = outputStreamRef.get().toByteArray(), writeIndex, buffer.length));
-        if (complete) {
-          clearBuffer();
-        } else {
-          writeIndex = buffer.length;
-        }
+      reverseProxyService.execute(new FlushWorker(byteArrayIOStream.asInputStream().readAvailable()));
+      if (complete) {
+        lineEnd = false;
+        lastChar = 0;
       }
     }
   }
@@ -195,14 +161,10 @@ public abstract class HttpFrameReader implements FrameReader {
   private class FlushWorker implements Runnable {
 
     private byte[] buffer;
-    private int offset;
-    private int length;
 
-    public FlushWorker (byte[] buffer, int offset, int length) {
+    public FlushWorker (byte[] buffer) {
 
       this.buffer = buffer;
-      this.offset = offset;
-      this.length = length;
     }
 
     @Override
@@ -214,8 +176,8 @@ public abstract class HttpFrameReader implements FrameReader {
         fail(CannedResponse.GATEWAY_TIMEOUT, null);
       } else {
         try {
-          LoggerManager.getLogger(HttpRequestFrameReader.class).debug(new ProxyDebug(buffer, offset, length));
-          targetChannel.write(ByteBuffer.wrap(buffer, offset, length));
+          LoggerManager.getLogger(HttpRequestFrameReader.class).debug(new ProxyDebug(buffer, 0, buffer.length));
+          targetChannel.write(ByteBuffer.wrap(buffer));
         } catch (IOException ioException) {
           fail(CannedResponse.BAD_GATEWAY, targetChannel);
         }

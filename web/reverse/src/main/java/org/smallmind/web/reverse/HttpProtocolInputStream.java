@@ -32,47 +32,61 @@
  */
 package org.smallmind.web.reverse;
 
+import java.io.BufferedInputStream;
+import java.io.IOException;
 import java.io.InputStream;
+import org.smallmind.nutsnbolts.io.ByteArrayIOStream;
 
 public class HttpProtocolInputStream extends InputStream {
 
-  private final byte[] buffer;
+  private final ByteArrayIOStream.ByteArrayInputStream byteArrayInputStream;
+  BufferedInputStream b;
   private int index = 0;
 
-  public HttpProtocolInputStream (byte[] buffer) {
+  public HttpProtocolInputStream (ByteArrayIOStream.ByteArrayInputStream byteArrayInputStream) {
 
-    this.buffer = buffer;
+    this.byteArrayInputStream = byteArrayInputStream;
   }
 
   @Override
-  public int read () {
+  public synchronized void mark (int readlimit) {
 
-    return (index == buffer.length) ? -1 : buffer[index++];
+    byteArrayInputStream.mark(readlimit);
   }
 
-  public String readLine () {
+  @Override
+  public synchronized void reset () throws IOException {
 
-    if (index == buffer.length) {
+    byteArrayInputStream.reset();
+  }
 
-      return null;
+  @Override
+  public int read ()
+    throws IOException {
+
+    return (byteArrayInputStream.available() == 0) ? -1 : byteArrayInputStream.read();
+  }
+
+  public String readLine ()
+    throws IOException {
+
+    if (byteArrayInputStream.available() > 0) {
+
+      StringBuilder lineBuilder = new StringBuilder();
+
+      do {
+
+        int currentChar;
+
+        if (((currentChar = byteArrayInputStream.read()) == '\n') && (lineBuilder.charAt(lineBuilder.length() - 1) == '\r')) {
+
+          return lineBuilder.substring(0, lineBuilder.length() - 1);
+        } else {
+          lineBuilder.append((char)currentChar);
+        }
+      } while (byteArrayInputStream.available() > 0);
     }
 
-    int lastChar = 0;
-    int lineIndex = index;
-
-    while (!((buffer[lineIndex] == '\n') && (lastChar == '\r'))) {
-      if (lineIndex == buffer.length) {
-        index = lineIndex;
-
-        return null;
-      }
-      lastChar = buffer[lineIndex++];
-    }
-
-    try {
-      return new String(buffer, index, (lineIndex - index - 1));
-    } finally {
-      index = lineIndex + 1;
-    }
+    return null;
   }
 }

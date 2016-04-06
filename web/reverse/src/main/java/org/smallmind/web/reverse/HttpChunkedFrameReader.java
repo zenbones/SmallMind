@@ -32,6 +32,7 @@
  */
 package org.smallmind.web.reverse;
 
+import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.channels.SelectionKey;
 import java.nio.channels.SocketChannel;
@@ -145,6 +146,8 @@ public class HttpChunkedFrameReader implements FrameReader {
 
         lastChar = currentChar;
       }
+    } catch (IOException ioException) {
+      fail(CannedResponse.BAD_REQUEST, null);
     } catch (ProtocolException protocolException) {
       fail(protocolException.getCannedResponse(), null);
     }

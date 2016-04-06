@@ -32,6 +32,7 @@
  */
 package org.smallmind.web.reverse;
 
+import java.io.IOException;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.LinkedList;
@@ -43,7 +44,7 @@ public abstract class HttpFrame {
   private final String version;
 
   public HttpFrame (HttpProtocolInputStream httpProtocolInputStream, String version)
-    throws ProtocolException {
+    throws IOException, ProtocolException {
 
     this.version = version;
 
@@ -51,7 +52,7 @@ public abstract class HttpFrame {
   }
 
   private LinkedList<HttpHeader> parseHeaders (HttpProtocolInputStream httpProtocolInputStream)
-    throws ProtocolException {
+    throws IOException, ProtocolException {
 
     LinkedHashMap<String, HttpHeader> headerMap = new LinkedHashMap<>();
     String line;

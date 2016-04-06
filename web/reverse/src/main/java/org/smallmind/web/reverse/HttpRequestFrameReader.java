@@ -99,8 +99,8 @@ public class HttpRequestFrameReader extends HttpFrameReader {
   }
 
   @Override
-  public HttpRequestFrame getHttpFrame (ReverseProxyService reverseProxyService, SocketChannel sourceSocketChannel, HttpProtocolInputStream httpProtocolInputStream)
-    throws ProtocolException {
+  public HttpRequestFrame getHttpFrame (ReverseProxyService reverseProxyService, SocketChannel sourceSocketChannel, HttpProtocolInputStream httpProtocolInputStream, HttpProtocolOutputStream httpProtocolOutputStream)
+    throws IOException, ProtocolException {
 
     HttpRequestFrame httpRequestFrame = new HttpRequestFrame(httpProtocolInputStream);
     ProxyTarget proxyTarget = reverseProxyService.lookup(httpRequestFrame);
@@ -111,7 +111,7 @@ public class HttpRequestFrameReader extends HttpFrameReader {
       if (destinationTicket != null) {
         try {
           destinationTicket.getSocketChannel().close();
-        }catch (IOException ioException) {
+        } catch (IOException ioException) {
           LoggerManager.getLogger(HttpRequestFrameReader.class).error(ioException);
         }
 
@@ -127,8 +127,7 @@ public class HttpRequestFrameReader extends HttpFrameReader {
       httpRequestFrame.addHeader(new HttpHeader("Host").addValue(proxyTarget.getHost() + ":" + proxyTarget.getPort()));
     }
 
-    clearBuffer();
-    writeToBuffer(httpRequestFrame.toByteArray());
+    httpRequestFrame.toOutputStream(httpProtocolOutputStream);
 
     return httpRequestFrame;
   }

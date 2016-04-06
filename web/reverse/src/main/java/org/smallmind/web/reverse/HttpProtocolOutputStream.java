@@ -33,52 +33,21 @@
 package org.smallmind.web.reverse;
 
 import java.io.IOException;
-import java.nio.channels.SocketChannel;
-import org.smallmind.scribe.pen.LoggerManager;
+import java.io.OutputStream;
+import org.smallmind.nutsnbolts.io.ByteArrayIOStream;
 
-public class HttpResponseFrameReader extends HttpFrameReader {
+public class HttpProtocolOutputStream extends OutputStream {
 
-  private SocketChannel destinationChannel;
+  private ByteArrayIOStream.ByteArrayOutputStream byteArrayOutputStream;
 
-  public HttpResponseFrameReader (ReverseProxyService reverseProxyService, SocketChannel sourceChannel, SocketChannel destinationChannel) {
+  public HttpProtocolOutputStream (ByteArrayIOStream.ByteArrayOutputStream byteArrayOutputStream) {
 
-    super(reverseProxyService, sourceChannel);
-
-    this.destinationChannel = destinationChannel;
+    this.byteArrayOutputStream = byteArrayOutputStream;
   }
 
   @Override
-  public void closeChannels (SocketChannel sourceChannel) {
+  public void write (int b) throws IOException {
 
-    try {
-      destinationChannel.close();
-    } catch (IOException ioException) {
-      LoggerManager.getLogger(HttpRequestFrameReader.class).error(ioException);
-    }
-
-    try {
-      sourceChannel.close();
-    } catch (IOException ioException) {
-      LoggerManager.getLogger(HttpRequestFrameReader.class).error(ioException);
-    }
-  }
-
-  @Override
-  public SocketChannel getTargetChannel (SocketChannel sourceChannel) {
-
-    return sourceChannel;
-  }
-
-  @Override
-  public HttpFrame getHttpFrame (ReverseProxyService reverseProxyService, SocketChannel sourceSocketChannel, HttpProtocolInputStream httpProtocolInputStream, HttpProtocolOutputStream httpProtocolOutputStream)
-    throws IOException, ProtocolException {
-
-    HttpResponseFrame httpResponseFrame;
-
-    httpProtocolInputStream.mark(Integer.MAX_VALUE);
-    httpResponseFrame = new HttpResponseFrame(httpProtocolInputStream);
-    httpProtocolInputStream.reset();
-
-    return httpResponseFrame;
+    byteArrayOutputStream.write(b);
   }
 }
