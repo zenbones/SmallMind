@@ -48,7 +48,7 @@ public class HttpResponseFrameReader extends HttpFrameReader {
   }
 
   @Override
-  public void closeChannels (SocketChannel sourceChannel) {
+  public void closeChannels () {
 
     try {
       destinationChannel.close();
@@ -57,16 +57,22 @@ public class HttpResponseFrameReader extends HttpFrameReader {
     }
 
     try {
-      sourceChannel.close();
+      getSourceChannel().close();
     } catch (IOException ioException) {
       LoggerManager.getLogger(HttpRequestFrameReader.class).error(ioException);
     }
   }
 
   @Override
-  public SocketChannel getTargetChannel (SocketChannel sourceChannel) {
+  public SocketChannel getTargetChannel () {
 
-    return sourceChannel;
+    return getSourceChannel();
+  }
+
+  @Override
+  public SocketChannel getDestinationChannel () {
+
+    return destinationChannel;
   }
 
   @Override

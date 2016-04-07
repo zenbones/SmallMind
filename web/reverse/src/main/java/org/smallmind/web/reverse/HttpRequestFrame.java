@@ -77,6 +77,12 @@ public class HttpRequestFrame extends HttpFrame {
     return matcher;
   }
 
+  @Override
+  public HttpDirection getDirection () {
+
+    return HttpDirection.REQUEST;
+  }
+
   public HttpMethod getMethod () {
 
     return method;

@@ -56,9 +56,9 @@ public class HttpChunkedFrameReader implements FrameReader {
   }
 
   @Override
-  public void closeChannels (SocketChannel sourceChannel) {
+  public void closeChannels () {
 
-    httpFrameReader.closeChannels(sourceChannel);
+    httpFrameReader.closeChannels();
   }
 
   @Override

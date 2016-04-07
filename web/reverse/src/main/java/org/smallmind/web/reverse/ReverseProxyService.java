@@ -36,6 +36,7 @@ import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.net.StandardSocketOptions;
 import java.nio.ByteBuffer;
+import java.nio.channels.SelectableChannel;
 import java.nio.channels.SelectionKey;
 import java.nio.channels.Selector;
 import java.nio.channels.ServerSocketChannel;
@@ -97,6 +98,22 @@ public class ReverseProxyService {
       selector.close();
       serverSocketChannel.close();
       proxyExecutor.shutdown();
+    }
+  }
+
+  public SelectionKey keyFor (SelectableChannel selectableChannel) {
+
+    loopLock.lock();
+    try {
+      selectLock.lock();
+      try {
+
+        return selectableChannel.keyFor(selector);
+      } finally {
+        selectLock.unlock();
+      }
+    } finally {
+      loopLock.unlock();
     }
   }
 
@@ -231,7 +248,7 @@ public class ReverseProxyService {
                           byteBuffer.flip();
                           ((FrameReader)selectionKey.attachment()).processInput(selectionKey, byteBuffer);
                         } else if (bytesRead < 0) {
-                          ((FrameReader)selectionKey.attachment()).closeChannels((SocketChannel)selectionKey.channel());
+                          ((FrameReader)selectionKey.attachment()).closeChannels();
                         }
                       }
                     } else {

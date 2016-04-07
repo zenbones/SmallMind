@@ -40,22 +40,25 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import org.smallmind.nutsnbolts.io.ByteArrayIOStream;
 import org.smallmind.scribe.pen.LoggerManager;
 
-public abstract class HttpFrameReader implements FrameReader {
+public abstract class HttpFrameReader extends SourceAwareFrameReader {
 
   private final ReverseProxyService reverseProxyService;
   private final ByteArrayIOStream byteArrayIOStream = new ByteArrayIOStream();
-  private final SocketChannel sourceChannel;
   private final AtomicBoolean failed = new AtomicBoolean(false);
   private boolean lineEnd = false;
   private int lastChar = 0;
 
   public HttpFrameReader (ReverseProxyService reverseProxyService, SocketChannel sourceChannel) {
 
+    super(sourceChannel);
+
     this.reverseProxyService = reverseProxyService;
-    this.sourceChannel = sourceChannel;
   }
 
-  public abstract SocketChannel getTargetChannel (SocketChannel sourceChannel);
+  public abstract SocketChannel getTargetChannel ();
+
+  public abstract SocketChannel getDestinationChannel ()
+    throws ProtocolException;
 
   public abstract HttpFrame getHttpFrame (ReverseProxyService reverseProxyService, SocketChannel sourceSocketChannel, HttpProtocolInputStream httpProtocolInputStream, HttpProtocolOutputStream httpProtocolOutputStream)
     throws IOException, ProtocolException;
@@ -76,7 +79,7 @@ public abstract class HttpFrameReader implements FrameReader {
             HttpHeader expectHeader;
             HttpHeader bodyHeader;
 
-            httpFrame = getHttpFrame(reverseProxyService, sourceChannel, new HttpProtocolInputStream(byteArrayIOStream.asInputStream()), new HttpProtocolOutputStream(byteArrayIOStream.asOutputStream()));
+            httpFrame = getHttpFrame(reverseProxyService, getSourceChannel(), new HttpProtocolInputStream(byteArrayIOStream.asInputStream()), new HttpProtocolOutputStream(byteArrayIOStream.asOutputStream()));
 
             if (((expectHeader = httpFrame.getHeader("Expect")) != null) && expectHeader.getValues().get(0).equals("100-continue")) {
               flushBufferToTarget(false);
@@ -106,7 +109,19 @@ public abstract class HttpFrameReader implements FrameReader {
               selectionKey.attach(httpChunkedFrameReader);
               httpChunkedFrameReader.processInput(selectionKey, byteBuffer);
             } else {
+
+              HttpHeader upgradeHeader;
+
               flushBufferToTarget(true);
+
+              if (httpFrame.getDirection().equals(HttpDirection.RESPONSE) && (((HttpResponseFrame)httpFrame).getStatus() == 101) && ((upgradeHeader = httpFrame.getHeader("Upgrade")) != null) && upgradeHeader.getValues().get(0).equals("websocket")) {
+
+                WebSocketFrameReader destinationWebSocketFrameReader = new WebSocketFrameReader(reverseProxyService, getSourceChannel(), getDestinationChannel(), getSourceChannel());
+
+                reverseProxyService.keyFor(getSourceChannel()).attach(new WebSocketFrameReader(reverseProxyService, getSourceChannel(), getSourceChannel(), getDestinationChannel()));
+                selectionKey.attach(destinationWebSocketFrameReader);
+                destinationWebSocketFrameReader.processInput(selectionKey, byteBuffer);
+              }
             }
           } else {
             lineEnd = true;
@@ -134,7 +149,7 @@ public abstract class HttpFrameReader implements FrameReader {
     throws IOException {
 
     if (!failed.get()) {
-      reverseProxyService.execute(sourceChannel, new FlushWorker(byteArrayIOStream.asInputStream().readAvailable()));
+      reverseProxyService.execute(getSourceChannel(), new FlushWorker(byteArrayIOStream.asInputStream().readAvailable()));
       if (complete) {
         lineEnd = false;
         lastChar = 0;
@@ -146,15 +161,15 @@ public abstract class HttpFrameReader implements FrameReader {
   public void fail (CannedResponse cannedResponse, SocketChannel failedChannel) {
 
     if (failed.compareAndSet(false, true)) {
-      if (!sourceChannel.equals(failedChannel)) {
+      if (!getSourceChannel().equals(failedChannel)) {
         try {
-          sourceChannel.write(cannedResponse.getByteBuffer());
+          getSourceChannel().write(cannedResponse.getByteBuffer());
         } catch (IOException ioException) {
           LoggerManager.getLogger(HttpFrameReader.class).error(ioException);
         }
       }
 
-      closeChannels(sourceChannel);
+      closeChannels();
     }
   }
 
@@ -172,7 +187,7 @@ public abstract class HttpFrameReader implements FrameReader {
 
       SocketChannel targetChannel;
 
-      if ((targetChannel = getTargetChannel(sourceChannel)) == null) {
+      if ((targetChannel = getTargetChannel()) == null) {
         fail(CannedResponse.GATEWAY_TIMEOUT, null);
       } else {
         try {

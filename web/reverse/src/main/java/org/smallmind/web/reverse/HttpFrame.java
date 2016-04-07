@@ -51,6 +51,8 @@ public abstract class HttpFrame {
     headerList = parseHeaders(httpProtocolInputStream);
   }
 
+  public abstract HttpDirection getDirection ();
+
   private LinkedList<HttpHeader> parseHeaders (HttpProtocolInputStream httpProtocolInputStream)
     throws IOException, ProtocolException {
 

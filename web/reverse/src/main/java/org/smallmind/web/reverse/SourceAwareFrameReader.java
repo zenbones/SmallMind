@@ -32,48 +32,19 @@
  */
 package org.smallmind.web.reverse;
 
-import java.io.IOException;
-import java.nio.ByteBuffer;
-import java.nio.channels.SelectionKey;
 import java.nio.channels.SocketChannel;
 
-public class HttpContentLengthFrameReader implements FrameReader {
+public abstract class SourceAwareFrameReader implements FrameReader {
 
-  private final HttpFrameReader httpFrameReader;
-  private final int contentLength;
-  private int bytesRead = 0;
+  private SocketChannel sourceChannel;
 
-  public HttpContentLengthFrameReader (HttpFrameReader httpFrameReader, int contentLength) {
+  public SourceAwareFrameReader (SocketChannel sourceChannel) {
 
-    this.httpFrameReader = httpFrameReader;
-    this.contentLength = contentLength;
+    this.sourceChannel = sourceChannel;
   }
 
-  @Override
-  public void closeChannels () {
+  public SocketChannel getSourceChannel () {
 
-    httpFrameReader.closeChannels();
-  }
-
-  @Override
-  public void fail (CannedResponse cannedResponse, SocketChannel failedChannel) {
-
-    httpFrameReader.fail(cannedResponse, failedChannel);
-  }
-
-  public void processInput (SelectionKey selectionKey, ByteBuffer byteBuffer) {
-
-    try {
-      while ((byteBuffer.remaining() > 0) && (bytesRead++ < contentLength)) {
-        httpFrameReader.writeToBuffer(byteBuffer.get());
-      }
-
-      if (bytesRead == contentLength) {
-        httpFrameReader.flushBufferToTarget(true);
-        selectionKey.attach(httpFrameReader);
-      }
-    } catch (IOException ioException) {
-      fail(CannedResponse.BAD_REQUEST, null);
-    }
+    return sourceChannel;
   }
 }

@@ -50,10 +50,10 @@ public class HttpRequestFrameReader extends HttpFrameReader {
   }
 
   @Override
-  public void closeChannels (SocketChannel sourceChannel) {
+  public void closeChannels () {
 
     try {
-      sourceChannel.close();
+      getSourceChannel().close();
     } catch (IOException ioException) {
       LoggerManager.getLogger(HttpRequestFrameReader.class).error(ioException);
     }
@@ -79,7 +79,7 @@ public class HttpRequestFrameReader extends HttpFrameReader {
   }
 
   @Override
-  public SocketChannel getTargetChannel (SocketChannel sourceChannel) {
+  public SocketChannel getTargetChannel () {
 
     DestinationTicket destinationTicket = null;
     long start = System.currentTimeMillis();
@@ -96,6 +96,19 @@ public class HttpRequestFrameReader extends HttpFrameReader {
     }
 
     return (destinationTicket == null) ? null : destinationTicket.getSocketChannel();
+  }
+
+  @Override
+  public SocketChannel getDestinationChannel ()
+    throws ProtocolException {
+
+    DestinationTicket destinationTicket;
+
+    if ((destinationTicket = destinationTicketRef.get()) == null) {
+      throw new ProtocolException(CannedResponse.BAD_GATEWAY);
+    }
+
+    return destinationTicket.getSocketChannel();
   }
 
   @Override

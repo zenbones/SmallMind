@@ -38,9 +38,9 @@ import java.nio.channels.SocketChannel;
 
 public interface FrameReader {
 
-  void processInput (SelectionKey selectionKey, ByteBuffer byteBuffer);
-
-  void closeChannels (SocketChannel sourceChannel);
+  void closeChannels ();
 
   void fail (CannedResponse cannedResponse, SocketChannel failedChannel);
+
+  void processInput (SelectionKey selectionKey, ByteBuffer byteBuffer);
 }

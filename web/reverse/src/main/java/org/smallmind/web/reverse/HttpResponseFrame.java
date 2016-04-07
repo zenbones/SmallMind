@@ -70,6 +70,12 @@ public class HttpResponseFrame extends HttpFrame {
     return matcher;
   }
 
+  @Override
+  public HttpDirection getDirection () {
+
+    return HttpDirection.RESPONSE;
+  }
+
   public int getStatus () {
 
     return status;
