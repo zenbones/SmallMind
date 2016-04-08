@@ -68,9 +68,9 @@ public abstract class WebSocket implements AutoCloseable {
   private final AtomicLong maxIdleTimeoutMilliseconds = new AtomicLong(-1);
   private final AtomicInteger maxBinaryBufferSize = new AtomicInteger(Integer.MAX_VALUE);
   private final AtomicInteger maxTextBufferSize = new AtomicInteger(Integer.MAX_VALUE);
+  private final HandshakeResponse handshakeResponse;
   private final URI uri;
   private final String url;
-  private final String negotiatedProtocol;
   private final boolean secure;
   private final byte[] rawBuffer = new byte[1024];
   private final long soTimeout = 1000;
@@ -79,10 +79,22 @@ public abstract class WebSocket implements AutoCloseable {
   public WebSocket (URI uri, String... protocols)
     throws IOException, NoSuchAlgorithmException, WebSocketException {
 
-    this(uri, null, protocols);
+    this(uri, null, null, protocols);
+  }
+
+  public WebSocket (URI uri, WebSocketExtension[] extensions, String... protocols)
+    throws IOException, NoSuchAlgorithmException, WebSocketException {
+
+    this(uri, null, extensions, protocols);
   }
 
   public WebSocket (URI uri, HandshakeListener handshakeListener, String... protocols)
+    throws IOException, NoSuchAlgorithmException, WebSocketException {
+
+    this(uri, handshakeListener, null, protocols);
+  }
+
+  public WebSocket (URI uri, HandshakeListener handshakeListener, WebSocketExtension[] extensions, String... protocols)
     throws IOException, NoSuchAlgorithmException, WebSocketException {
 
     Thread workerThread;
@@ -120,14 +132,14 @@ public abstract class WebSocket implements AutoCloseable {
 //    socket.setSoTimeout((int)soTimeout);
 
     // initial handshake request
-    headerTuple = Handshake.constructHeaders(protocolVersion, uri, keyBytes, protocols);
+    headerTuple = Handshake.constructHeaders(protocolVersion, uri, keyBytes, extensions, protocols);
 
     if (handshakeListener != null) {
       handshakeListener.beforeRequest(headerTuple);
     }
 
     socket.getOutputStream().write(Handshake.constructRequest(uri, headerTuple));
-    negotiatedProtocol = Handshake.validateResponse(headerTuple = new Tuple<>(), new String(read()), keyBytes, protocols);
+    handshakeResponse = Handshake.validateResponse(headerTuple = new Tuple<>(), new String(read()), keyBytes, extensions, protocols);
 
     if (handshakeListener != null) {
       handshakeListener.afterResponse(headerTuple);
@@ -300,7 +312,7 @@ public abstract class WebSocket implements AutoCloseable {
 
   public String getNegotiatedProtocol () {
 
-    return negotiatedProtocol;
+    return handshakeResponse.getProtocol();
   }
 
   public boolean isSecure () {
@@ -330,7 +342,7 @@ public abstract class WebSocket implements AutoCloseable {
 
   public String extensions () {
 
-    return "";
+    return HandshakeResponse.getExtensionsAsString(handshakeResponse.getExtensions());
   }
 
   public int getMaxBinaryBufferSize () {

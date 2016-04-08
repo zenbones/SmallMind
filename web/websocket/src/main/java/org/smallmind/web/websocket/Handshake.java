@@ -37,6 +37,7 @@ import java.io.IOException;
 import java.io.StringReader;
 import java.net.URI;
 import java.security.NoSuchAlgorithmException;
+import java.util.LinkedList;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import org.smallmind.nutsnbolts.http.Base64Codec;
@@ -48,11 +49,13 @@ public class Handshake {
 
   private static final Pattern HTTP_STATUS_PATTERN = Pattern.compile("HTTP/(\\d+\\.\\d+)\\s(\\d+)\\s(.+)");
   private static final Pattern HTTP_HEADER_PATTERN = Pattern.compile("([^:]+):\\s*(.+)\\s*");
+  private static final Pattern EXTENSIONS_PATTERN = Pattern.compile("([^\" ,]+)(\\s*;\\s*([^\"= ]+)\\s*=\\s*(([^\"; ])|(\"[^\"]\")))*(\\s*,\\s*([^\" ,]+)(\\s*;\\s*([^\"= ]+)\\s*=\\s*(([^\"; ])|(\"[^\"]\")))*)*");
 
-  public static Tuple<String, String> constructHeaders (int protocolVersion, URI uri, byte[] keyBytes, String... protocols)
+  public static Tuple<String, String> constructHeaders (int protocolVersion, URI uri, byte[] keyBytes, WebSocketExtension[] extensions, String... protocols)
     throws IOException {
 
     Tuple<String, String> headerTuple = new Tuple<>();
+    String extesnionsValue;
 
     headerTuple.addPair("Host", new StringBuilder(uri.getHost().toLowerCase()).append(':').append((uri.getPort() != -1) ? uri.getPort() : uri.getScheme().equals("ws") ? 80 : 443).toString());
     headerTuple.addPair("Upgrade", "websocket");
@@ -73,6 +76,10 @@ public class Handshake {
       }
 
       headerTuple.addPair("Sec-WebSocket-Protocol", protocolBuilder.toString());
+    }
+
+    if ((extesnionsValue = HandshakeResponse.getExtensionsAsString(extensions)) != null) {
+      headerTuple.addPair("Sec-WebSocket-Extensions", extesnionsValue);
     }
 
     return headerTuple;
@@ -99,11 +106,13 @@ public class Handshake {
     return handshakeBuilder.toString().getBytes();
   }
 
-  public static String validateResponse (Tuple<String, String> headerTuple, String response, byte[] keyBytes, String... protocols)
+  public static HandshakeResponse validateResponse (Tuple<String, String> headerTuple, String response, byte[] keyBytes, WebSocketExtension[] installedExtensions, String... protocols)
     throws IOException, NoSuchAlgorithmException, SyntaxException {
 
     BufferedReader reader = new BufferedReader(new StringReader(response));
     Matcher httpStatusMatcher;
+    LinkedList<WebSocketExtension> negotiatedExtensionList = new LinkedList<>();
+    WebSocketExtension[] negotiatedExtensions = null;
     String httpStatus;
     String httpField;
     String negotiatedProtocol = "";
@@ -175,9 +184,69 @@ public class Handshake {
     }
 
     if (headerTuple.containsKey("Sec-WebSocket-Extensions")) {
-      throw new SyntaxException("This client does not support the use of websocket extensions");
+      for (String extensionValue : headerTuple.getValues("Sec-WebSocket-Extensions")) {
+
+        String[] splitExtensionValues;
+
+        if ((splitExtensionValues = extensionValue.split(",", -1)).length == 0) {
+          throw new SyntaxException("The 'Sec-WebSocket-Extensions' contains an empty header value");
+        }
+
+        for (String splitExtensionValue : splitExtensionValues) {
+
+          String[] splitParameterValues = splitExtensionValue.split(";", -1);
+
+          if (splitParameterValues.length > 0) {
+
+            WebSocketExtension negotiatedExtension;
+            LinkedList<ExtensionParameter> parameterList = new LinkedList<>();
+            ExtensionParameter[] parameters;
+            String extensionName;
+
+            if ((extensionName = splitParameterValues[0].trim()).isEmpty()) {
+              throw new SyntaxException("The 'Sec-WebSocket-Extensions' contains an empty extension name");
+            }
+
+            if (splitParameterValues.length > 1) {
+              for (int index = 1; index < splitParameterValues.length; index++) {
+
+                int equalsPos;
+
+                if ((equalsPos = splitParameterValues[index].indexOf('=')) >= 0) {
+
+                  String parameterName;
+                  String parameterValue;
+
+                  if ((parameterName = splitParameterValues[index].substring(0, equalsPos).trim()).isEmpty()) {
+                    throw new SyntaxException("The 'Sec-WebSocket-Extensions' contains an empty parameter name");
+                  }
+                  if ((parameterValue = splitParameterValues[index].substring(equalsPos + 1).trim()).isEmpty()) {
+                    throw new SyntaxException("The 'Sec-WebSocket-Extensions' contains an empty parameter value");
+                  }
+
+                  parameterList.add(new ExtensionParameter(parameterName, parameterValue));
+                }
+              }
+            }
+
+            parameters = new ExtensionParameter[parameterList.size()];
+            parameterList.toArray(parameters);
+
+            negotiatedExtension = new WebSocketExtension(extensionName, parameters);
+            for (WebSocketExtension installedExtension : installedExtensions) {
+              if (installedExtension.equals(negotiatedExtension)) {
+                negotiatedExtensionList.add(negotiatedExtension);
+                break;
+              }
+            }
+          }
+        }
+
+        negotiatedExtensions = new WebSocketExtension[negotiatedExtensionList.size()];
+        negotiatedExtensionList.toArray(negotiatedExtensions);
+      }
     }
 
-    return negotiatedProtocol;
+    return new HandshakeResponse(negotiatedProtocol, negotiatedExtensions);
   }
 }
