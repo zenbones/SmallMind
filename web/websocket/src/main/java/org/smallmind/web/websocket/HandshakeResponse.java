@@ -60,23 +60,15 @@ public class HandshakeResponse {
         if (!firstExtension) {
           extensionBuilder.append(", ");
         }
+        firstExtension = false;
 
         extensionBuilder.append(extension.getName());
 
         if (!(parameterList = extension.getParameters()).isEmpty()) {
-
-          boolean firstParameter = true;
-
           for (Extension.Parameter parameter : parameterList) {
-            if (!firstParameter) {
-              extensionBuilder.append("; ");
-            }
-            extensionBuilder.append(parameter.getName()).append('=').append(parameter.getValue());
-            firstParameter = false;
+            extensionBuilder.append("; ").append(parameter.getName()).append('=').append(parameter.getValue());
           }
         }
-
-        firstExtension = false;
       }
 
       return extensionBuilder.toString();
