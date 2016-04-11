@@ -36,14 +36,14 @@ import java.util.concurrent.ConcurrentHashMap;
 
 public class PerApplicationContext {
 
-  private static InheritableThreadLocal<ConcurrentHashMap<Class<? extends PerApplicationDataManager>, Object>> PER_APPLICATION_MAP_LOCAL = new InheritableThreadLocal<ConcurrentHashMap<Class<? extends PerApplicationDataManager>, Object>>();
+  private static InheritableThreadLocal<ConcurrentHashMap<Class<? extends PerApplicationDataManager>, Object>> PER_APPLICATION_MAP_LOCAL = new InheritableThreadLocal<>();
 
   private ConcurrentHashMap<Class<? extends PerApplicationDataManager>, Object> perApplicationMap;
 
   public PerApplicationContext () {
 
     if ((perApplicationMap = PER_APPLICATION_MAP_LOCAL.get()) == null) {
-      PER_APPLICATION_MAP_LOCAL.set(perApplicationMap = new ConcurrentHashMap<Class<? extends PerApplicationDataManager>, Object>());
+      PER_APPLICATION_MAP_LOCAL.set(perApplicationMap = new ConcurrentHashMap<>());
     }
   }
 
