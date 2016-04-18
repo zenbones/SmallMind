@@ -56,7 +56,7 @@ public class Where implements Serializable {
   }
 
   @XmlElement(name = "root", required = false, nillable = false)
-  @XmlElementRefs({@XmlElementRef(type = WhereField.class), @XmlElementRef(type = AndWhereConjunction.class), @XmlElementRef(type = OrWhereConjunction.class)})
+  @XmlElementRefs({@XmlElementRef(type = AndWhereConjunction.class), @XmlElementRef(type = OrWhereConjunction.class)})
   public WhereConjunction getRootConjunction () {
 
     return rootConjunction;
