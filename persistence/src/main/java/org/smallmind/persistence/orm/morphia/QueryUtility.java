@@ -34,12 +34,15 @@ package org.smallmind.persistence.orm.morphia;
 
 import java.util.Arrays;
 import java.util.LinkedList;
+import org.hibernate.criterion.Order;
 import org.mongodb.morphia.query.Criteria;
 import org.mongodb.morphia.query.CriteriaContainerImpl;
 import org.mongodb.morphia.query.FieldEnd;
 import org.mongodb.morphia.query.Query;
 import org.smallmind.nutsnbolts.lang.UnknownSwitchCaseException;
 import org.smallmind.persistence.orm.ORMOperationException;
+import org.smallmind.persistence.query.Sort;
+import org.smallmind.persistence.query.SortField;
 import org.smallmind.persistence.query.Where;
 import org.smallmind.persistence.query.WhereConjunction;
 import org.smallmind.persistence.query.WhereCriterion;
@@ -179,5 +182,33 @@ public class QueryUtility {
       default:
         throw new UnknownSwitchCaseException(whereField.getOperation().name());
     }
+  }
+
+  public static Query<?> apply (Query<?> query, Sort sort) {
+
+    if ((sort != null) && (!sort.isEmpty())) {
+
+      StringBuilder sortBuilder = new StringBuilder();
+
+      for (SortField sortField : sort.getFields()) {
+        if (sortBuilder.length() > 0) {
+          sortBuilder.append(", ");
+        }
+        switch (sortField.getDirection()) {
+          case ASC:
+            sortBuilder.append(Order.asc(sortField.getName()));
+            break;
+          case DESC:
+            sortBuilder.append('-').append(Order.desc(sortField.getName()));
+            break;
+          default:
+            throw new UnknownSwitchCaseException(sortField.getDirection().name());
+        }
+      }
+
+      return query.order(sortBuilder.toString());
+    }
+
+    return query;
   }
 }

@@ -167,6 +167,11 @@ public class MorphiaDao<D extends MorphiaDurable> extends ORMDao<ObjectId, D, Da
     throw new UnsupportedOperationException("Morphia has no explicit detached state");
   }
 
+  public long countByQuery (QueryDetails<D> queryDetails) {
+
+    return constructQuery(queryDetails).countAll();
+  }
+
   public D findByQuery (QueryDetails<D> queryDetails) {
 
     return constructQuery(queryDetails).get();
