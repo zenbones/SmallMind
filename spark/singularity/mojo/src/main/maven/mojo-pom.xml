@@ -15,7 +15,7 @@
         <artifactId>spark-singularity-mojo</artifactId>
         <extensions>true</extensions>
         <configuration>
-          <mainClass>com.myproject.MainCllass</mainClass>
+          <mainClass>com.myproject.MainClass</mainClass>
         </configuration>
       </plugin>
     </plugins>
