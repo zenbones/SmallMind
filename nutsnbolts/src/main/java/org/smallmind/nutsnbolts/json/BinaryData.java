@@ -130,7 +130,7 @@ public class BinaryData implements Serializable {
     this.encryption = encryption;
   }
 
-  @XmlElement(name = "contentType", required = false, nillable = false)
+  @XmlElement(name = "content_type", required = false, nillable = false)
   public String getContentType () {
 
     return contentType;

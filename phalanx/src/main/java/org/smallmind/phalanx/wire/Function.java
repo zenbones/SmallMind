@@ -121,7 +121,7 @@ public class Function implements Serializable {
     this.name = name;
   }
 
-  @XmlElement(name = "nativeType", required = false, nillable = false)
+  @XmlElement(name = "native_type", required = false, nillable = false)
   public String getNativeType () {
 
     return nativeType;
@@ -132,7 +132,7 @@ public class Function implements Serializable {
     this.nativeType = nativeType;
   }
 
-  @XmlElement(name = "resultType", required = false, nillable = false)
+  @XmlElement(name = "result_type", required = false, nillable = false)
   public String getResultType () {
 
     return resultType;

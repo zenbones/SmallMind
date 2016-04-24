@@ -67,7 +67,7 @@ public class ResultSignal implements Signal {
     this.error = error;
   }
 
-  @XmlElement(name = "nativeType", required = true, nillable = false)
+  @XmlElement(name = "native_type", required = true, nillable = false)
   public String getNativeType () {
 
     return nativeType;

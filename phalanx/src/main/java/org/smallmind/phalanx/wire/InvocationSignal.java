@@ -61,7 +61,7 @@ public class InvocationSignal implements Signal {
     this.contexts = contexts;
   }
 
-  @XmlElement(name = "inOnly", required = false, nillable = false)
+  @XmlElement(name = "in_only", required = false, nillable = false)
   public boolean isInOnly () {
 
     return inOnly;
