@@ -34,7 +34,6 @@ package org.smallmind.persistence.orm.morphia;
 
 import java.util.Arrays;
 import java.util.LinkedList;
-import org.hibernate.criterion.Order;
 import org.mongodb.morphia.query.Criteria;
 import org.mongodb.morphia.query.CriteriaContainerImpl;
 import org.mongodb.morphia.query.FieldEnd;
@@ -196,10 +195,10 @@ public class QueryUtility {
         }
         switch (sortField.getDirection()) {
           case ASC:
-            sortBuilder.append(Order.asc(sortField.getName()));
+            sortBuilder.append(sortField.getName());
             break;
           case DESC:
-            sortBuilder.append('-').append(Order.desc(sortField.getName()));
+            sortBuilder.append('-').append(sortField.getName());
             break;
           default:
             throw new UnknownSwitchCaseException(sortField.getDirection().name());
