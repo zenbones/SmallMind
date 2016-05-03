@@ -125,7 +125,7 @@ public class CriteriaUtility {
 
   private static Criterion walkField (WhereField whereField, WhereOperandTransformer transformer) {
 
-    switch (whereField.getOperation()) {
+    switch (whereField.getOperator()) {
       case LT:
         return Restrictions.lt(whereField.getName(), whereField.getOperand().extract(transformer));
       case LE:
@@ -144,7 +144,7 @@ public class CriteriaUtility {
       case IN:
         return Restrictions.in(whereField.getName(), (Object[])whereField.getOperand().extract(transformer));
       default:
-        throw new UnknownSwitchCaseException(whereField.getOperation().name());
+        throw new UnknownSwitchCaseException(whereField.getOperator().name());
     }
   }
 

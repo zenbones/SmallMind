@@ -32,13 +32,7 @@
  */
 package org.smallmind.persistence.query;
 
-import org.smallmind.nutsnbolts.json.EnumXmlAdapter;
+public enum WhereOperator {
 
-public class WhereOperationEnumXmlAdapter extends EnumXmlAdapter<WhereOperation> {
-
-  @Override
-  public String marshal (WhereOperation enumeration) {
-
-    return super.marshal(enumeration).toLowerCase();
-  }
+  LT, LE, EQ, GE, GT, LIKE, IN
 }

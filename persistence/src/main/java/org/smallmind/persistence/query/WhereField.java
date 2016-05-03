@@ -46,17 +46,17 @@ import javax.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
 public class WhereField implements WhereCriterion {
 
   private WhereOperand operand;
-  private WhereOperation operation;
+  private WhereOperator operator;
   private String name;
 
   public WhereField () {
 
   }
 
-  public WhereField (String name, WhereOperation operation, WhereOperand operand) {
+  public WhereField (String name, WhereOperator operator, WhereOperand operand) {
 
     this.name = name;
-    this.operation = operation;
+    this.operator = operator;
     this.operand = operand;
   }
 
@@ -91,15 +91,15 @@ public class WhereField implements WhereCriterion {
     this.operand = operand;
   }
 
-  @XmlElement(name = "operation", required = true, nillable = false)
-  @XmlJavaTypeAdapter(WhereOperationEnumXmlAdapter.class)
-  public WhereOperation getOperation () {
+  @XmlElement(name = "operator", required = true, nillable = false)
+  @XmlJavaTypeAdapter(WhereOperatorEnumXmlAdapter.class)
+  public WhereOperator getOperator () {
 
-    return operation;
+    return operator;
   }
 
-  public void setOperation (WhereOperation operation) {
+  public void setOperator (WhereOperator operator) {
 
-    this.operation = operation;
+    this.operator = operator;
   }
 }

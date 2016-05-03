@@ -47,7 +47,7 @@ import org.smallmind.persistence.query.WhereConjunction;
 import org.smallmind.persistence.query.WhereCriterion;
 import org.smallmind.persistence.query.WhereField;
 import org.smallmind.persistence.query.WhereOperandTransformer;
-import org.smallmind.persistence.query.WhereOperation;
+import org.smallmind.persistence.query.WhereOperator;
 
 public class QueryUtility {
 
@@ -126,7 +126,7 @@ public class QueryUtility {
 
     FieldEnd<? extends CriteriaContainerImpl> fieldEnd = query.criteria(whereField.getName());
 
-    switch (whereField.getOperation()) {
+    switch (whereField.getOperator()) {
       case LT:
         return fieldEnd.lessThan(whereField.getOperand().extract(transformer));
       case LE:
@@ -149,7 +149,7 @@ public class QueryUtility {
           return fieldEnd.doesNotExist();
         } else if (!(likeValue instanceof String)) {
 
-          throw new ORMOperationException("The operation(%s) requires a String operand", WhereOperation.LIKE.name());
+          throw new ORMOperationException("The operation(%s) requires a String operand", WhereOperator.LIKE.name());
         } else {
           switch (((String)(likeValue)).length()) {
             case 0:
@@ -160,7 +160,7 @@ public class QueryUtility {
               return likeValue.equals("%%") ? fieldEnd.exists() : (((String)likeValue).charAt(0) == '%') ? fieldEnd.startsWith(((String)likeValue).substring(1)) : (((String)likeValue).charAt(1) == '%') ? fieldEnd.endsWith(((String)likeValue).substring(0, 1)) : fieldEnd.equal(likeValue);
             default:
               if (((String)likeValue).substring(1, ((String)likeValue).length() - 1).indexOf('%') >= 0) {
-                throw new ORMOperationException("The operation(%s) allows wildcards('%') only at the  start or end of the operand", WhereOperation.LIKE.name());
+                throw new ORMOperationException("The operation(%s) allows wildcards('%') only at the  start or end of the operand", WhereOperator.LIKE.name());
               } else if (((String)likeValue).startsWith("%") && ((String)likeValue).endsWith("%")) {
 
                 return fieldEnd.contains(((String)likeValue).substring(1, ((String)likeValue).length() - 1));
@@ -179,7 +179,7 @@ public class QueryUtility {
       case IN:
         return fieldEnd.in(Arrays.asList((Object[])whereField.getOperand().extract(transformer)));
       default:
-        throw new UnknownSwitchCaseException(whereField.getOperation().name());
+        throw new UnknownSwitchCaseException(whereField.getOperator().name());
     }
   }
 
