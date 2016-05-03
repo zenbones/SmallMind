@@ -70,7 +70,7 @@ public class EntityValidationException extends javax.validation.ValidationExcept
     @Override
     public String toString () {
 
-      return new StringBuilder("[propertyPath = ").append(propertyPath).append(", message = ").append(message).append(']').toString();
+      return new StringBuilder("(propertyPath = ").append(propertyPath).append(", message = ").append(message).append(')').toString();
     }
   }
 }
