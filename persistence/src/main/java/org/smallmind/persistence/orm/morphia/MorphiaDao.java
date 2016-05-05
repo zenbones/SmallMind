@@ -154,7 +154,7 @@ public class MorphiaDao<D extends MorphiaDurable> extends ORMDao<ObjectId, D, Da
 
     VectoredDao<ObjectId, D> vectoredDao = getVectoredDao();
 
-    getSession().getNativeSession().delete(durableClass, durable);
+    getSession().getNativeSession().delete(durableClass, durable.getId());
 
     if (vectoredDao != null) {
       vectoredDao.delete(durableClass, durable);
