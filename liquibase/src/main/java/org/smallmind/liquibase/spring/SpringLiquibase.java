@@ -172,7 +172,7 @@ public class SpringLiquibase implements InitializingBean {
               originalDatabaseSnapshot = SnapshotGeneratorFactory.getInstance().createSnapshot(compareControl.getSchemas(CompareControl.DatabaseRole.REFERENCE), database, snapshotControl);
               diffResult = DiffGeneratorFactory.getInstance().compare(originalDatabaseSnapshot, SnapshotGeneratorFactory.getInstance().createSnapshot(compareControl.getSchemas(CompareControl.DatabaseRole.REFERENCE), null, snapshotControl), compareControl);
 
-              DiffOutputControl diffOutputControl = new DiffOutputControl(false, false, false, compareControl.getSchemaComparisons());
+              DiffOutputControl diffOutputControl = new DiffOutputControl(false, false, false);
               diffOutputControl.setDataDir(null);
 
               changeLogWriter = new DiffToChangeLog(diffResult, diffOutputControl);
