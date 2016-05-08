@@ -32,9 +32,9 @@
  */
 package org.smallmind.persistence.orm.morphia;
 
+import java.io.Serializable;
 import java.util.List;
 import com.mongodb.WriteConcern;
-import org.bson.types.ObjectId;
 import org.mongodb.morphia.Datastore;
 import org.mongodb.morphia.mapping.Mapper;
 import org.mongodb.morphia.query.Query;
@@ -43,22 +43,22 @@ import org.smallmind.persistence.UpdateMode;
 import org.smallmind.persistence.cache.VectoredDao;
 import org.smallmind.persistence.orm.ORMDao;
 
-public class MorphiaDao<D extends MorphiaDurable> extends ORMDao<ObjectId, D, DatastoreFactory, Datastore> {
+public class MorphiaDao<I extends Serializable & Comparable<I>, D extends MorphiaDurable<I>> extends ORMDao<I, D, DatastoreFactory, Datastore> {
 
   public MorphiaDao (MorphiaProxySession proxySession) {
 
     this(proxySession, null);
   }
 
-  public MorphiaDao (MorphiaProxySession proxySession, VectoredDao<ObjectId, D> vectoredDao) {
+  public MorphiaDao (MorphiaProxySession proxySession, VectoredDao<I, D> vectoredDao) {
 
     super(proxySession, vectoredDao);
   }
 
   @Override
-  public D get (Class<D> durableClass, ObjectId id) {
+  public D get (Class<D> durableClass, I id) {
 
-    VectoredDao<ObjectId, D> vectoredDao;
+    VectoredDao<I, D> vectoredDao;
     D durable;
 
     if ((vectoredDao = getVectoredDao()) == null) {
@@ -82,7 +82,7 @@ public class MorphiaDao<D extends MorphiaDurable> extends ORMDao<ObjectId, D, Da
   }
 
   @Override
-  public D acquire (Class<D> durableClass, ObjectId id) {
+  public D acquire (Class<D> durableClass, I id) {
 
     return durableClass.cast(getSession().getNativeSession().get(durableClass, id));
   }
@@ -100,7 +100,7 @@ public class MorphiaDao<D extends MorphiaDurable> extends ORMDao<ObjectId, D, Da
   }
 
   @Override
-  public List<D> list (ObjectId greaterThan, int maxResults) {
+  public List<D> list (I greaterThan, int maxResults) {
 
     return getSession().getNativeSession().createQuery(getManagedClass()).field(Mapper.ID_KEY).greaterThan(greaterThan).limit(maxResults).asList();
   }
@@ -118,7 +118,7 @@ public class MorphiaDao<D extends MorphiaDurable> extends ORMDao<ObjectId, D, Da
   }
 
   @Override
-  public Iterable<D> scrollById (final ObjectId greaterThan, final int fetchSize) {
+  public Iterable<D> scrollById (final I greaterThan, final int fetchSize) {
 
     return getSession().getNativeSession().createQuery(getManagedClass()).field(Mapper.ID_KEY).greaterThan(greaterThan).batchSize(fetchSize).fetch();
   }
@@ -137,7 +137,7 @@ public class MorphiaDao<D extends MorphiaDurable> extends ORMDao<ObjectId, D, Da
 
   public D persist (Class<D> durableClass, D durable, WriteConcern writeConcern) {
 
-    VectoredDao<ObjectId, D> vectoredDao = getVectoredDao();
+    VectoredDao<I, D> vectoredDao = getVectoredDao();
 
     getSession().getNativeSession().save(durable, writeConcern);
 
@@ -152,7 +152,7 @@ public class MorphiaDao<D extends MorphiaDurable> extends ORMDao<ObjectId, D, Da
   @Override
   public void delete (Class<D> durableClass, D durable) {
 
-    VectoredDao<ObjectId, D> vectoredDao = getVectoredDao();
+    VectoredDao<I, D> vectoredDao = getVectoredDao();
 
     getSession().getNativeSession().delete(durableClass, durable.getId());
 

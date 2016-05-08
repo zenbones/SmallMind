@@ -32,28 +32,23 @@
  */
 package org.smallmind.persistence.orm.morphia;
 
-import org.bson.types.ObjectId;
+import java.io.Serializable;
 import org.mongodb.morphia.annotations.Id;
 import org.smallmind.persistence.AbstractDurable;
 
-public class MorphiaDurable extends AbstractDurable<ObjectId> {
+public class MorphiaDurable<I extends Serializable & Comparable<I>> extends AbstractDurable<I> {
 
   @Id
-  private ObjectId id;
-
-  public MorphiaDurable () {
-
-    id = new ObjectId();
-  }
+  private I id;
 
   @Override
-  public ObjectId getId () {
+  public I getId () {
 
     return id;
   }
 
   @Override
-  public void setId (ObjectId id) {
+  public void setId (I id) {
 
     this.id = id;
   }
