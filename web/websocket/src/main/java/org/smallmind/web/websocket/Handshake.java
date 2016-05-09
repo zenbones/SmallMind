@@ -49,7 +49,6 @@ public class Handshake {
 
   private static final Pattern HTTP_STATUS_PATTERN = Pattern.compile("HTTP/(\\d+\\.\\d+)\\s(\\d+)\\s(.+)");
   private static final Pattern HTTP_HEADER_PATTERN = Pattern.compile("([^:]+):\\s*(.+)\\s*");
-  private static final Pattern EXTENSIONS_PATTERN = Pattern.compile("([^\" ,]+)(\\s*;\\s*([^\"= ]+)\\s*=\\s*(([^\"; ])|(\"[^\"]\")))*(\\s*,\\s*([^\" ,]+)(\\s*;\\s*([^\"= ]+)\\s*=\\s*(([^\"; ])|(\"[^\"]\")))*)*");
 
   public static Tuple<String, String> constructHeaders (int protocolVersion, URI uri, byte[] keyBytes, WebSocketExtension[] extensions, String... protocols)
     throws IOException {

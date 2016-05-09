@@ -32,48 +32,61 @@
  */
 package org.smallmind.persistence.query;
 
-import java.io.Serializable;
-import javax.xml.bind.annotation.XmlAccessType;
-import javax.xml.bind.annotation.XmlAccessorType;
-import javax.xml.bind.annotation.XmlElement;
-import javax.xml.bind.annotation.XmlElementRef;
-import javax.xml.bind.annotation.XmlElementRefs;
-import javax.xml.bind.annotation.XmlRootElement;
+public enum PermitType {
 
-@XmlRootElement(name = "where")
-@XmlAccessorType(XmlAccessType.PROPERTY)
-public class Where implements Serializable {
+  INCLUDE {
+    @Override
+    public void validate (Where where, final String[] fields) {
 
-  private WhereConjunction rootConjunction;
+      WhereUtility.walk(where, new WhereVisitor() {
 
-  public Where () {
+        @Override
+        public void visitConjunction (WhereConjunction conjunction) {
 
-  }
+        }
 
-  public Where (WhereConjunction rootConjunction) {
+        @Override
+        public void visitField (WhereField field) {
 
-    this.rootConjunction = rootConjunction;
-  }
+          if (!contains(field.getName(), fields)) {
+            throw new WhereValidationException("The field(%s) is not permitted in where clauses for this query", field.getName());
+          }
+        }
+      });
+    }
+  }, EXCLUDE {
+    @Override
+    public void validate (Where where, final String[] fields) {
 
-  public void validate (WherePermit permit) {
+      WhereUtility.walk(where, new WhereVisitor() {
 
-    if (permit != null) {
-      if ((permit.getFields() != null) && (permit.getFields().length > 0)) {
-        permit.getType().validate(this, permit.getFields());
+        @Override
+        public void visitConjunction (WhereConjunction conjunction) {
+
+        }
+
+        @Override
+        public void visitField (WhereField field) {
+
+          if (contains(field.getName(), fields)) {
+            throw new WhereValidationException("The field(%s) is not permitted in where clauses for this query", field.getName());
+          }
+        }
+      });
+    }
+  };
+
+  private static boolean contains (String field, String[] fields) {
+
+    for (String matchingField : fields) {
+      if (field.equals(matchingField)) {
+
+        return true;
       }
     }
+
+    return false;
   }
 
-  @XmlElement(name = "root", required = false, nillable = false)
-  @XmlElementRefs({@XmlElementRef(type = AndWhereConjunction.class), @XmlElementRef(type = OrWhereConjunction.class)})
-  public WhereConjunction getRootConjunction () {
-
-    return rootConjunction;
-  }
-
-  public void setRootConjunction (WhereConjunction rootConjunction) {
-
-    this.rootConjunction = rootConjunction;
-  }
-
+  public abstract void validate (Where where, String[] fields);
 }

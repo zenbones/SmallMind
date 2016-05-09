@@ -32,48 +32,12 @@
  */
 package org.smallmind.persistence.query;
 
-import java.io.Serializable;
-import javax.xml.bind.annotation.XmlAccessType;
-import javax.xml.bind.annotation.XmlAccessorType;
-import javax.xml.bind.annotation.XmlElement;
-import javax.xml.bind.annotation.XmlElementRef;
-import javax.xml.bind.annotation.XmlElementRefs;
-import javax.xml.bind.annotation.XmlRootElement;
+import org.smallmind.nutsnbolts.lang.FormattedRuntimeException;
 
-@XmlRootElement(name = "where")
-@XmlAccessorType(XmlAccessType.PROPERTY)
-public class Where implements Serializable {
+public class WhereValidationException extends FormattedRuntimeException {
 
-  private WhereConjunction rootConjunction;
+  public WhereValidationException (String message, Object... args) {
 
-  public Where () {
-
+    super(message, args);
   }
-
-  public Where (WhereConjunction rootConjunction) {
-
-    this.rootConjunction = rootConjunction;
-  }
-
-  public void validate (WherePermit permit) {
-
-    if (permit != null) {
-      if ((permit.getFields() != null) && (permit.getFields().length > 0)) {
-        permit.getType().validate(this, permit.getFields());
-      }
-    }
-  }
-
-  @XmlElement(name = "root", required = false, nillable = false)
-  @XmlElementRefs({@XmlElementRef(type = AndWhereConjunction.class), @XmlElementRef(type = OrWhereConjunction.class)})
-  public WhereConjunction getRootConjunction () {
-
-    return rootConjunction;
-  }
-
-  public void setRootConjunction (WhereConjunction rootConjunction) {
-
-    this.rootConjunction = rootConjunction;
-  }
-
 }

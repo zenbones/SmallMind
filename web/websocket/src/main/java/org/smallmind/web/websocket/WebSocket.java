@@ -129,7 +129,7 @@ public abstract class WebSocket implements AutoCloseable {
       secure = false;
     }
     socket.setTcpNoDelay(true);
-//    socket.setSoTimeout((int)soTimeout);
+    socket.setSoTimeout((int)soTimeout);
 
     // initial handshake request
     headerTuple = Handshake.constructHeaders(protocolVersion, uri, keyBytes, extensions, protocols);

@@ -32,48 +32,24 @@
  */
 package org.smallmind.persistence.query;
 
-import java.io.Serializable;
-import javax.xml.bind.annotation.XmlAccessType;
-import javax.xml.bind.annotation.XmlAccessorType;
-import javax.xml.bind.annotation.XmlElement;
-import javax.xml.bind.annotation.XmlElementRef;
-import javax.xml.bind.annotation.XmlElementRefs;
-import javax.xml.bind.annotation.XmlRootElement;
+public class WherePermit {
 
-@XmlRootElement(name = "where")
-@XmlAccessorType(XmlAccessType.PROPERTY)
-public class Where implements Serializable {
+  private PermitType type;
+  private String[] fields;
 
-  private WhereConjunction rootConjunction;
+  public WherePermit (PermitType type, String... fields) {
 
-  public Where () {
-
+    this.type = type;
+    this.fields = fields;
   }
 
-  public Where (WhereConjunction rootConjunction) {
+  public PermitType getType () {
 
-    this.rootConjunction = rootConjunction;
+    return type;
   }
 
-  public void validate (WherePermit permit) {
+  public String[] getFields () {
 
-    if (permit != null) {
-      if ((permit.getFields() != null) && (permit.getFields().length > 0)) {
-        permit.getType().validate(this, permit.getFields());
-      }
-    }
+    return fields;
   }
-
-  @XmlElement(name = "root", required = false, nillable = false)
-  @XmlElementRefs({@XmlElementRef(type = AndWhereConjunction.class), @XmlElementRef(type = OrWhereConjunction.class)})
-  public WhereConjunction getRootConjunction () {
-
-    return rootConjunction;
-  }
-
-  public void setRootConjunction (WhereConjunction rootConjunction) {
-
-    this.rootConjunction = rootConjunction;
-  }
-
 }
