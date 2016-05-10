@@ -58,7 +58,7 @@ public class DateWhereOperand extends WhereOperand<DateTime> {
     return value;
   }
 
-  @XmlElement(name = "value", required = true, nillable = false)
+  @XmlElement(name = "value", required = true)
   @XmlJavaTypeAdapter(DateTimeXmlAdapter.class)
   public DateTime getValue () {
 

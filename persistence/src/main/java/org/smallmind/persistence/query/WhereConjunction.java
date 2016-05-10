@@ -70,7 +70,7 @@ public abstract class WhereConjunction implements WhereCriterion {
     return (criterionList == null) || criterionList.isEmpty();
   }
 
-  @XmlElement(name = "criteria", required = false, nillable = false)
+  @XmlElement(name = "criteria")
   @XmlElementRefs({@XmlElementRef(type = WhereField.class), @XmlElementRef(type = AndWhereConjunction.class), @XmlElementRef(type = OrWhereConjunction.class)})
   public synchronized WhereCriterion[] getCriteria () {
 

@@ -55,7 +55,7 @@ public class StringWhereOperand extends WhereOperand<String> {
     return value;
   }
 
-  @XmlElement(name = "value", required = true, nillable = false)
+  @XmlElement(name = "value", required = true)
   public String getValue () {
 
     return value;

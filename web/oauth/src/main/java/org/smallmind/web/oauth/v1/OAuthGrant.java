@@ -47,7 +47,7 @@ public class OAuthGrant {
   private String expiresIn;
   private String scope;
 
-  @XmlElement(name = "access_token", required = true, nillable = false)
+  @XmlElement(name = "access_token", required = true)
   public String getAccessToken () {
 
     return accessToken;
@@ -58,7 +58,7 @@ public class OAuthGrant {
     this.accessToken = accessToken;
   }
 
-  @XmlElement(name = "refresh_token", required = false, nillable = false)
+  @XmlElement(name = "refresh_token")
   public String getRefreshToken () {
 
     return refreshToken;
@@ -69,7 +69,7 @@ public class OAuthGrant {
     this.refreshToken = refreshToken;
   }
 
-  @XmlElement(name = "token_type", required = true, nillable = false)
+  @XmlElement(name = "token_type", required = true)
   public String getTokenType () {
 
     return tokenType;
@@ -80,7 +80,7 @@ public class OAuthGrant {
     this.tokenType = tokenType;
   }
 
-  @XmlElement(name = "expires_in", required = true, nillable = false)
+  @XmlElement(name = "expires_in", required = true)
   public String getExpiresIn () {
 
     return expiresIn;
@@ -91,7 +91,7 @@ public class OAuthGrant {
     this.expiresIn = expiresIn;
   }
 
-  @XmlElement(name = "scope", required = true, nillable = false)
+  @XmlElement(name = "scope", required = true)
   public String getScope () {
 
     return scope;

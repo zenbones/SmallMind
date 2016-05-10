@@ -57,7 +57,7 @@ public class BooleanWhereOperand extends WhereOperand<Boolean> {
     return value;
   }
 
-  @XmlElement(name = "value", required = true, nillable = false)
+  @XmlElement(name = "value", required = true)
   public Boolean getValue () {
 
     return value;

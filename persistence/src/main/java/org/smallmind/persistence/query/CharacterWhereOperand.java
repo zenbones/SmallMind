@@ -55,7 +55,7 @@ public class CharacterWhereOperand extends WhereOperand<Character> {
     return value;
   }
 
-  @XmlElement(name = "value", required = true, nillable = false)
+  @XmlElement(name = "value", required = true)
   public Character getValue () {
 
     return value;

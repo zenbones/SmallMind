@@ -52,7 +52,7 @@ public class Color {
     this.color = color;
   }
 
-  @XmlElement(name = "color", required = true, nillable = false)
+  @XmlElement(name = "color", required = true)
   public String getColor () {
 
     return color;

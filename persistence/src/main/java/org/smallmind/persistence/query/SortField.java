@@ -56,13 +56,13 @@ public class SortField implements Serializable {
     this.direction = direction;
   }
 
-  @XmlElement(name = "name", required = true, nillable = false)
+  @XmlElement(name = "name", required = true)
   public String getName () {
 
     return name;
   }
 
-  @XmlElement(name = "direction", required = true, nillable = false)
+  @XmlElement(name = "direction", required = true)
   @XmlJavaTypeAdapter(SortDirectionEnumXmlAdapter.class)
   public SortDirection getDirection () {
 

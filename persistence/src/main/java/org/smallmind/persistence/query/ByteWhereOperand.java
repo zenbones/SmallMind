@@ -55,7 +55,7 @@ public class ByteWhereOperand extends WhereOperand<Byte> {
     return value;
   }
 
-  @XmlElement(name = "value", required = true, nillable = false)
+  @XmlElement(name = "value", required = true)
   public Byte getValue () {
 
     return value;

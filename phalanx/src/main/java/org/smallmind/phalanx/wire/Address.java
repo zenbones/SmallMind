@@ -58,7 +58,7 @@ public class Address implements Serializable {
     this.function = function;
   }
 
-  @XmlElement(name = "version", required = true, nillable = false)
+  @XmlElement(name = "version", required = true)
   public int getVersion () {
 
     return version;
@@ -69,7 +69,7 @@ public class Address implements Serializable {
     this.version = version;
   }
 
-  @XmlElement(name = "service", required = true, nillable = false)
+  @XmlElement(name = "service", required = true)
   public String getService () {
 
     return service;
@@ -80,7 +80,7 @@ public class Address implements Serializable {
     this.service = service;
   }
 
-  @XmlElementRef(required = true)
+  @XmlElementRef
   public Function getFunction () {
 
     return function;

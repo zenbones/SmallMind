@@ -57,7 +57,7 @@ public class SSOAuthData {
     created = System.currentTimeMillis();
   }
 
-  @XmlElement(name = "user", required = true, nillable = false)
+  @XmlElement(name = "user", required = true)
   public String getUser () {
 
     return user;
@@ -68,7 +68,7 @@ public class SSOAuthData {
     this.user = user;
   }
 
-  @XmlElement(name = "password", required = true, nillable = false)
+  @XmlElement(name = "password", required = true)
   public String getPassword () {
 
     return password;
@@ -79,7 +79,7 @@ public class SSOAuthData {
     this.password = password;
   }
 
-  @XmlElement(name = "created", required = true, nillable = false)
+  @XmlElement(name = "created", required = true)
   public long getCreated () {
 
     return created;

@@ -67,7 +67,7 @@ public class WhereField implements WhereCriterion {
     return CriterionType.FIELD;
   }
 
-  @XmlElement(name = "name", required = true, nillable = false)
+  @XmlElement(name = "name", required = true)
   public String getName () {
 
     return name;
@@ -91,7 +91,7 @@ public class WhereField implements WhereCriterion {
     this.operand = operand;
   }
 
-  @XmlElement(name = "operator", required = true, nillable = false)
+  @XmlElement(name = "operator", required = true)
   @XmlJavaTypeAdapter(WhereOperatorEnumXmlAdapter.class)
   public WhereOperator getOperator () {
 

@@ -49,7 +49,7 @@ public class TestWireContext extends WireContext {
     this.message = message;
   }
 
-  @XmlElement(name = "message", required = true, nillable = false)
+  @XmlElement(name = "message", required = true)
   public String getMessage () {
 
     return message;

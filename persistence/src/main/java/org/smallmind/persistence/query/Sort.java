@@ -60,7 +60,7 @@ public class Sort implements Serializable {
     return (fieldSet == null) || fieldSet.isEmpty();
   }
 
-  @XmlElement(name = "fields", required = false, nillable = false)
+  @XmlElement(name = "fields")
   public synchronized SortField[] getFields () {
 
     SortField[] fields = new SortField[fieldSet == null ? 0 : fieldSet.size()];

@@ -34,7 +34,7 @@ package org.smallmind.persistence.query;
 
 public enum PermitType {
 
-  INCLUDE {
+  REQUIRED {
     @Override
     public void validate (Where where, final String[] fields) {
 
@@ -54,7 +54,7 @@ public enum PermitType {
         }
       });
     }
-  }, EXCLUDE {
+  }, EXCLUDED {
     @Override
     public void validate (Where where, final String[] fields) {
 

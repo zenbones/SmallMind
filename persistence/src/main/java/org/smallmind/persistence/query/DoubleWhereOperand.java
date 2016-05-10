@@ -55,7 +55,7 @@ public class DoubleWhereOperand extends WhereOperand<Double> {
     return value;
   }
 
-  @XmlElement(name = "value", required = true, nillable = false)
+  @XmlElement(name = "value", required = true)
   public Double getValue () {
 
     return value;

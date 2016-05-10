@@ -55,7 +55,7 @@ public class IntegerWhereOperand extends WhereOperand<Integer> {
     return value;
   }
 
-  @XmlElement(name = "value", required = true, nillable = false)
+  @XmlElement(name = "value", required = true)
   public Integer getValue () {
 
     return value;

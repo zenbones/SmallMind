@@ -55,7 +55,7 @@ public class FloatWhereOperand extends WhereOperand<Float> {
     return value;
   }
 
-  @XmlElement(name = "value", required = true, nillable = false)
+  @XmlElement(name = "value", required = true)
   public Float getValue () {
 
     return value;

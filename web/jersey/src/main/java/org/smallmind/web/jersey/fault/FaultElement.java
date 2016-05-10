@@ -76,7 +76,7 @@ public class FaultElement implements Serializable {
     lineNumber = stackTraceElement.getLineNumber();
   }
 
-  @XmlElement(name = "type", required = true, nillable = false)
+  @XmlElement(name = "type", required = true)
   public String getDeclaringType () {
 
     return declaringType;
@@ -87,7 +87,7 @@ public class FaultElement implements Serializable {
     this.declaringType = declaringType;
   }
 
-  @XmlElement(name = "function", required = true, nillable = false)
+  @XmlElement(name = "function", required = true)
   public String getFunctionName () {
 
     return functionName;
@@ -98,7 +98,7 @@ public class FaultElement implements Serializable {
     this.functionName = functionName;
   }
 
-  @XmlElement(name = "file", required = true, nillable = false)
+  @XmlElement(name = "file", required = true)
   public String getFileName () {
 
     return fileName;
@@ -109,7 +109,7 @@ public class FaultElement implements Serializable {
     this.fileName = fileName;
   }
 
-  @XmlElement(name = "line", required = true, nillable = false)
+  @XmlElement(name = "line", required = true)
   public int getLineNumber () {
 
     return lineNumber;

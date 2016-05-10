@@ -60,7 +60,7 @@ public class EnumWhereOperand<E extends Enum<E>> extends WhereOperand<E> {
     return (E)Enum.valueOf(transformer.getEnumType(type), value);
   }
 
-  @XmlElement(name = "type", required = true, nillable = false)
+  @XmlElement(name = "type", required = true)
   public String getType () {
 
     return type;
@@ -71,7 +71,7 @@ public class EnumWhereOperand<E extends Enum<E>> extends WhereOperand<E> {
     this.type = type;
   }
 
-  @XmlElement(name = "value", required = true, nillable = false)
+  @XmlElement(name = "value", required = true)
   public String getValue () {
 
     return value;

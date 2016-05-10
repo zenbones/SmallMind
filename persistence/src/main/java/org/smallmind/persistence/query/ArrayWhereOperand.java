@@ -170,7 +170,7 @@ public class ArrayWhereOperand extends WhereOperand<Object[]> {
     }
   }
 
-  @XmlElement(name = "type", required = true, nillable = false)
+  @XmlElement(name = "type", required = true)
   public String getType () {
 
     return type;
@@ -181,7 +181,7 @@ public class ArrayWhereOperand extends WhereOperand<Object[]> {
     this.type = type;
   }
 
-  @XmlElement(name = "value", required = true, nillable = false)
+  @XmlElement(name = "value", required = true)
   @XmlJavaTypeAdapter(ArrayValueXmlAdapter.class)
   public Object[] getValue () {
 

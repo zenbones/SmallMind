@@ -55,7 +55,7 @@ public class ShortWhereOperand extends WhereOperand<Short> {
     return value;
   }
 
-  @XmlElement(name = "value", required = true, nillable = false)
+  @XmlElement(name = "value", required = true)
   public Short getValue () {
 
     return value;

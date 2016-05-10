@@ -55,7 +55,7 @@ public class LongWhereOperand extends WhereOperand<Long> {
     return value;
   }
 
-  @XmlElement(name = "value", required = true, nillable = false)
+  @XmlElement(name = "value", required = true)
   public Long getValue () {
 
     return value;

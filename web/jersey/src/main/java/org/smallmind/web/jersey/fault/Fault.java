@@ -138,7 +138,7 @@ public class Fault implements Serializable {
     this.context = context;
   }
 
-  @XmlElement(name = "type", required = false, nillable = false)
+  @XmlElement(name = "type", required = false)
   public String getThrowableType () {
 
     return throwableType;
@@ -149,7 +149,7 @@ public class Fault implements Serializable {
     this.throwableType = throwableType;
   }
 
-  @XmlElement(name = "message", required = false, nillable = false)
+  @XmlElement(name = "message", required = false)
   public String getMessage () {
 
     return message;
@@ -171,7 +171,7 @@ public class Fault implements Serializable {
     this.cause = cause;
   }
 
-  @XmlElement(name = "trace", required = false, nillable = false)
+  @XmlElement(name = "trace")
   public FaultElement[] getElements () {
 
     return elements;

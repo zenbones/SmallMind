@@ -46,7 +46,7 @@ public class MockSecret implements JWTToken {
   private long exp;
 
   @Override
-  @XmlElement(name = "sub", required = true, nillable = false)
+  @XmlElement(name = "sub", required = true)
   public String getSub () {
 
     return sub;
@@ -59,7 +59,7 @@ public class MockSecret implements JWTToken {
   }
 
   @Override
-  @XmlElement(name = "exp", required = true, nillable = false)
+  @XmlElement(name = "exp", required = true)
   public long getExp () {
 
     return exp;

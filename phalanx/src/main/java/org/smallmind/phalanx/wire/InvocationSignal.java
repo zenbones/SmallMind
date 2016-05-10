@@ -61,7 +61,7 @@ public class InvocationSignal implements Signal {
     this.contexts = contexts;
   }
 
-  @XmlElement(name = "in_only", required = false, nillable = false)
+  @XmlElement(name = "in_only")
   public boolean isInOnly () {
 
     return inOnly;
@@ -72,7 +72,7 @@ public class InvocationSignal implements Signal {
     this.inOnly = inOnly;
   }
 
-  @XmlElementRef(required = true)
+  @XmlElementRef
   public Address getAddress () {
 
     return address;
@@ -84,7 +84,7 @@ public class InvocationSignal implements Signal {
   }
 
   @XmlJavaTypeAdapter(WireContextXmlAdapter.class)
-  @XmlElement(name = "contexts", required = false, nillable = false)
+  @XmlElement(name = "contexts")
   public WireContext[] getContexts () {
 
     return contexts;
@@ -95,7 +95,7 @@ public class InvocationSignal implements Signal {
     this.contexts = contexts;
   }
 
-  @XmlElement(name = "arguments", required = false, nillable = false)
+  @XmlElement(name = "arguments")
   public Map<String, Object> getArguments () {
 
     return arguments;

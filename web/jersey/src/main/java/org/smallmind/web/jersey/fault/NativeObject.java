@@ -63,7 +63,7 @@ public class NativeObject implements Serializable {
     language = NativeLanguage.JAVA;
   }
 
-  @XmlElement(name = "language", required = true, nillable = false)
+  @XmlElement(name = "language", required = true)
   public NativeLanguage getLanguage () {
 
     return language;
@@ -74,7 +74,7 @@ public class NativeObject implements Serializable {
     this.language = language;
   }
 
-  @XmlElement(name = "bytes", required = true, nillable = false)
+  @XmlElement(name = "bytes", required = true)
   public byte[] getBytes () {
 
     return bytes;

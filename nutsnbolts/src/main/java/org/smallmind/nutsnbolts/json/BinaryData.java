@@ -108,7 +108,7 @@ public class BinaryData implements Serializable {
     return encryption != null;
   }
 
-  @XmlElement(name = "encoding", required = true, nillable = false)
+  @XmlElement(name = "encoding", required = true)
   public Encoding getEncoding () {
 
     return encoding;
@@ -119,7 +119,7 @@ public class BinaryData implements Serializable {
     this.encoding = encoding;
   }
 
-  @XmlElement(name = "encryption", required = false, nillable = false)
+  @XmlElement(name = "encryption")
   public Encryption getEncryption () {
 
     return encryption;
@@ -130,7 +130,7 @@ public class BinaryData implements Serializable {
     this.encryption = encryption;
   }
 
-  @XmlElement(name = "content_type", required = false, nillable = false)
+  @XmlElement(name = "content_type")
   public String getContentType () {
 
     return contentType;
@@ -141,7 +141,7 @@ public class BinaryData implements Serializable {
     this.contentType = contentType;
   }
 
-  @XmlElement(name = "data", required = true, nillable = false)
+  @XmlElement(name = "data", required = true)
   public String getData () {
 
     return data;

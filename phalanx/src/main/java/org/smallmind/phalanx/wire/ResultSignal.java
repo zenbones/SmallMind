@@ -56,7 +56,7 @@ public class ResultSignal implements Signal {
     this.result = result;
   }
 
-  @XmlElement(name = "error", required = true, nillable = false)
+  @XmlElement(name = "error", required = true)
   public boolean isError () {
 
     return error;
@@ -67,7 +67,7 @@ public class ResultSignal implements Signal {
     this.error = error;
   }
 
-  @XmlElement(name = "native_type", required = true, nillable = false)
+  @XmlElement(name = "native_type", required = true)
   public String getNativeType () {
 
     return nativeType;
@@ -78,7 +78,7 @@ public class ResultSignal implements Signal {
     this.nativeType = nativeType;
   }
 
-  @XmlElement(name = "result", required = true, nillable = false)
+  @XmlElement(name = "result", required = true)
   public Object getResult () {
 
     return result;

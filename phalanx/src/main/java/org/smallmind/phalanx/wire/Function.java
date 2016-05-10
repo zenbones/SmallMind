@@ -110,7 +110,7 @@ public class Function implements Serializable {
     return (signature == null) || (resultType == null);
   }
 
-  @XmlElement(name = "name", required = true, nillable = false)
+  @XmlElement(name = "name", required = true)
   public String getName () {
 
     return name;
@@ -121,7 +121,7 @@ public class Function implements Serializable {
     this.name = name;
   }
 
-  @XmlElement(name = "native_type", required = false, nillable = false)
+  @XmlElement(name = "native_type")
   public String getNativeType () {
 
     return nativeType;
@@ -132,7 +132,7 @@ public class Function implements Serializable {
     this.nativeType = nativeType;
   }
 
-  @XmlElement(name = "result_type", required = false, nillable = false)
+  @XmlElement(name = "result_type")
   public String getResultType () {
 
     return resultType;
@@ -143,7 +143,7 @@ public class Function implements Serializable {
     this.resultType = resultType;
   }
 
-  @XmlElement(name = "signature", required = false, nillable = false)
+  @XmlElement(name = "signature")
   public String[] getSignature () {
 
     return signature;

@@ -55,16 +55,18 @@ public class Where implements Serializable {
     this.rootConjunction = rootConjunction;
   }
 
-  public void validate (WherePermit permit) {
+  public void validate (WherePermit... permits) {
 
-    if (permit != null) {
-      if ((permit.getFields() != null) && (permit.getFields().length > 0)) {
-        permit.getType().validate(this, permit.getFields());
+    if ((permits != null) && (permits.length > 0)) {
+      for (WherePermit permit : permits) {
+        if ((permit.getFields() != null) && (permit.getFields().length > 0)) {
+          permit.getType().validate(this, permit.getFields());
+        }
       }
     }
   }
 
-  @XmlElement(name = "root", required = false, nillable = false)
+  @XmlElement(name = "root")
   @XmlElementRefs({@XmlElementRef(type = AndWhereConjunction.class), @XmlElementRef(type = OrWhereConjunction.class)})
   public WhereConjunction getRootConjunction () {
 
