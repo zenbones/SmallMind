@@ -375,7 +375,7 @@ public abstract class HibernateDao<I extends Serializable & Comparable<I>, D ext
 
     Criteria criteria;
 
-    criteria = (criteriaDetails.getAlias() == null) ? getSession().getNativeSession().createCriteria(getManagedClass()) : getSession().getNativeSession().createCriteria(getManagedClass(), criteriaDetails.getAlias());
+    criteria = (criteriaDetails.getAlias() == null) ? getSession().getNativeSession().createCriteria(criteriaDetails.getCriteriaClass(getManagedClass())) : getSession().getNativeSession().createCriteria(criteriaDetails.getCriteriaClass(getManagedClass()), criteriaDetails.getAlias());
 
     return criteriaDetails.completeCriteria(criteria).setCacheable(true);
   }

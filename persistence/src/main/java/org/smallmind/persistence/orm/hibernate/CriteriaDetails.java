@@ -33,19 +33,44 @@
 package org.smallmind.persistence.orm.hibernate;
 
 import org.hibernate.Criteria;
+import org.smallmind.persistence.orm.ORMOperationException;
 
 public abstract class CriteriaDetails {
 
+  private Class<?> criteriaClass;
   private String alias;
 
   public CriteriaDetails () {
 
-    this(null);
   }
 
   public CriteriaDetails (String alias) {
 
     this.alias = alias;
+  }
+
+  public CriteriaDetails (Class<?> criteriaClass) {
+
+    this.criteriaClass = criteriaClass;
+  }
+
+  public CriteriaDetails (Class<?> criteriaClass, String alias) {
+
+    this.criteriaClass = criteriaClass;
+    this.alias = alias;
+  }
+
+  public Class<?> getCriteriaClass (Class<?> baseClass) {
+
+    if (criteriaClass == null) {
+
+      return baseClass;
+    } else if (baseClass.isAssignableFrom(criteriaClass)) {
+
+      return criteriaClass;
+    } else {
+      throw new ORMOperationException("The specified criteria class(%s) must be assignable from the base class(%s)", criteriaClass.getSimpleName(), baseClass.getSimpleName());
+    }
   }
 
   public String getAlias () {
