@@ -42,9 +42,9 @@ public @interface Key {
 
   public abstract String value () default "id";
 
-  public abstract String constant () default "";
-
   public abstract String alias () default "";
+
+  public abstract boolean constant () default false;
 
   public abstract boolean nullable () default false;
 }

@@ -37,26 +37,26 @@ import org.smallmind.nutsnbolts.lang.AnnotationLiteral;
 public class KeyLiteral extends AnnotationLiteral<Key> implements Key {
 
   private String value;
-  private String constant;
   private String alias;
+  private boolean constant;
   private boolean nullable;
 
   public KeyLiteral (String value) {
 
-    this(value, "", "", false);
+    this(value, "", false, false);
   }
 
   public KeyLiteral (String value, String alias) {
 
-    this(value, alias, "", false);
+    this(value, alias, false, false);
   }
 
-  public KeyLiteral (String value, String alias, String constant) {
+  public KeyLiteral (String value, String alias, boolean constant) {
 
     this(value, alias, constant, false);
   }
 
-  public KeyLiteral (String value, String alias, String constant, boolean nullable) {
+  public KeyLiteral (String value, String alias, boolean constant, boolean nullable) {
 
     this.value = value;
     this.alias = alias;
@@ -71,15 +71,15 @@ public class KeyLiteral extends AnnotationLiteral<Key> implements Key {
   }
 
   @Override
-  public String constant () {
-
-    return constant;
-  }
-
-  @Override
   public String alias () {
 
     return alias;
+  }
+
+  @Override
+  public boolean constant () {
+
+    return constant;
   }
 
   @Override
