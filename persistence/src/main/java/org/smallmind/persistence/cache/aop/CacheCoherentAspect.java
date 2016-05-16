@@ -75,7 +75,7 @@ public class CacheCoherentAspect {
       VectoredDao vectoredDao = durableDao.getVectoredDao();
       Type returnType;
 
-      if (durableDao.getManagedClass().equals(((MethodSignature)thisJoinPoint.getSignature()).getReturnType())) {
+      if (durableDao.getManagedClass().isAssignableFrom(((MethodSignature)thisJoinPoint.getSignature()).getReturnType())) {
 
         Durable durable;
 
@@ -91,8 +91,8 @@ public class CacheCoherentAspect {
         return null;
       }
       else if (List.class.isAssignableFrom(((MethodSignature)thisJoinPoint.getSignature()).getReturnType())) {
-        if ((!((returnType = (executedMethod = ((MethodSignature)thisJoinPoint.getSignature()).getMethod()).getGenericReturnType()) instanceof ParameterizedType)) || (!durableDao.getManagedClass().equals(((ParameterizedType)returnType).getActualTypeArguments()[0]))) {
-          throw new CacheAutomationError("Methods annotated with @CacheCoherent which return a List type must be parameterized as <? extends List<%s>>", durableDao.getManagedClass().getSimpleName());
+        if ((!((returnType = (executedMethod = ((MethodSignature)thisJoinPoint.getSignature()).getMethod()).getGenericReturnType()) instanceof ParameterizedType)) || (!durableDao.getManagedClass().isAssignableFrom((Class<?>)((ParameterizedType)returnType).getActualTypeArguments()[0]))) {
+          throw new CacheAutomationError("Methods annotated with @CacheCoherent which return a List type must be parameterized as <? extends List<? extends %s>>", durableDao.getManagedClass().getSimpleName());
         }
 
         List list;
@@ -121,8 +121,8 @@ public class CacheCoherentAspect {
         return null;
       }
       else if (Iterable.class.isAssignableFrom(((MethodSignature)thisJoinPoint.getSignature()).getReturnType())) {
-        if ((!((returnType = (executedMethod = ((MethodSignature)thisJoinPoint.getSignature()).getMethod()).getGenericReturnType()) instanceof ParameterizedType)) || (!durableDao.getManagedClass().equals(((ParameterizedType)returnType).getActualTypeArguments()[0]))) {
-          throw new CacheAutomationError("Methods annotated with @CacheCoherent which return an Iterable type must be parameterized as <? extends Iterable<%s>>", durableDao.getManagedClass().getSimpleName());
+        if ((!((returnType = (executedMethod = ((MethodSignature)thisJoinPoint.getSignature()).getMethod()).getGenericReturnType()) instanceof ParameterizedType)) || (!durableDao.getManagedClass().isAssignableFrom((Class<?>)((ParameterizedType)returnType).getActualTypeArguments()[0]))) {
+          throw new CacheAutomationError("Methods annotated with @CacheCoherent which return an Iterable type must be parameterized as <? extends Iterable<? extends %s>>", durableDao.getManagedClass().getSimpleName());
         }
 
         Iterable iterable;

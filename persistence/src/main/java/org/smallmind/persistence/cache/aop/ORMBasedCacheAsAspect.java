@@ -91,7 +91,7 @@ public class ORMBasedCacheAsAspect {
         throw new CacheAutomationError("The stochastic(%d) attribute of a @CacheAs annotation can not be negative", cacheAs.time().stochastic());
       }
 
-      if (ormDao.getManagedClass().equals(methodSignature.getReturnType())) {
+      if (ormDao.getManagedClass().isAssignableFrom(methodSignature.getReturnType())) {
         if (cacheAs.ordered()) {
           throw new CacheAutomationError("A method annotated with @CacheAs which does not return an Iterable type can't be ordered", cacheAs.comparator().getClass().getName());
         }
@@ -144,8 +144,8 @@ public class ORMBasedCacheAsAspect {
           throw new CacheAutomationError("A method annotated with @CacheAs has registered a comparator(%s) but is not ordered", cacheAs.comparator().getClass().getName());
         }
 
-        if ((!((returnType = (executedMethod = methodSignature.getMethod()).getGenericReturnType()) instanceof ParameterizedType)) || (!ormDao.getManagedClass().equals(((ParameterizedType)returnType).getActualTypeArguments()[0]))) {
-          throw new CacheAutomationError("Methods annotated with @CacheAs which return an Iterable type must be parameterized to <? extends Iterable<%s>>", ormDao.getManagedClass().getSimpleName());
+        if ((!((returnType = (executedMethod = methodSignature.getMethod()).getGenericReturnType()) instanceof ParameterizedType)) || (!ormDao.getManagedClass().isAssignableFrom((Class<?>)((ParameterizedType)returnType).getActualTypeArguments()[0]))) {
+          throw new CacheAutomationError("Methods annotated with @CacheAs which return an Iterable type must be parameterized to <? extends Iterable<? extends %s>>", ormDao.getManagedClass().getSimpleName());
         }
 
         VectoredDao vectoredDao;
@@ -187,7 +187,7 @@ public class ORMBasedCacheAsAspect {
         }
       }
       else {
-        throw new CacheAutomationError("Methods annotated with @CacheAs must either return their managed type(%s), or an Iterable parameterized to their managed type <? extends Iterable<%s>>", ormDao.getManagedClass().getSimpleName(), ormDao.getManagedClass().getSimpleName());
+        throw new CacheAutomationError("Methods annotated with @CacheAs must either return their managed type(%s), or an Iterable parameterized to their managed type <? extends Iterable<? extends %s>>", ormDao.getManagedClass().getSimpleName(), ormDao.getManagedClass().getSimpleName());
       }
     }
     catch (Throwable throwable) {
