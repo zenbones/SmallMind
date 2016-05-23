@@ -45,8 +45,7 @@ public class EntityTranslator {
     JSON_ENTITY_CLASS_LOCAL.set(clazz);
   }
 
-  public static <T> T getParameter (ContainerRequest containerRequest, String key, Class<T> clazz, ParameterAnnotations parameterAnnotations)
-    throws MissingAnnotationException {
+  public static <T> T getParameter (ContainerRequest containerRequest, String key, Class<T> clazz, ParameterAnnotations parameterAnnotations) {
 
     JsonEntity jsonEntity;
 
@@ -61,7 +60,13 @@ public class EntityTranslator {
       JSON_ENTITY_LOCAL.set(jsonEntity = containerRequest.readEntity(entityClass));
     }
 
-    return jsonEntity.getParameter(key, clazz, parameterAnnotations);
+    try {
+      return jsonEntity.getParameter(key, clazz, parameterAnnotations);
+    } catch (Throwable throwable) {
+      JSON_ENTITY_LOCAL.remove();
+
+      throw throwable;
+    }
   }
 
   public static void clearEntity () {
