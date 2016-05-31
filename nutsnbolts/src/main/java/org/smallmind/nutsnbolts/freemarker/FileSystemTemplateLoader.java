@@ -35,15 +35,35 @@ package org.smallmind.nutsnbolts.freemarker;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.Reader;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import freemarker.cache.TemplateLoader;
 
 public class FileSystemTemplateLoader implements TemplateLoader {
 
+  private Path basePath;
+
+  public FileSystemTemplateLoader () {
+
+  }
+
+  public FileSystemTemplateLoader (Path basePath) {
+
+    this.basePath = basePath;
+  }
+
   @Override
   public Object findTemplateSource (String name) {
 
-    return new FileSystemTemplateSource(Paths.get(name));
+    if (basePath != null) {
+
+      return new FileSystemTemplateSource(basePath.resolve(name));
+    } else {
+
+      Path filePath;
+
+      return new FileSystemTemplateSource(((filePath = Paths.get(name)).isAbsolute()) ? filePath : Paths.get("/" + name));
+    }
   }
 
   @Override
@@ -51,7 +71,7 @@ public class FileSystemTemplateLoader implements TemplateLoader {
 
     try {
 
-      return ((FileSystemTemplateSource) templateSource).getLastModified();
+      return ((FileSystemTemplateSource)templateSource).getLastModified();
     } catch (IOException ioException) {
 
       return -1;
@@ -61,12 +81,12 @@ public class FileSystemTemplateLoader implements TemplateLoader {
   @Override
   public Reader getReader (Object templateSource, String encoding) throws IOException {
 
-    return new InputStreamReader(((FileSystemTemplateSource) templateSource).getInputStream(), encoding);
+    return new InputStreamReader(((FileSystemTemplateSource)templateSource).getInputStream(), encoding);
   }
 
   @Override
   public void closeTemplateSource (Object templateSource) throws IOException {
 
-    ((FileSystemTemplateSource) templateSource).close();
+    ((FileSystemTemplateSource)templateSource).close();
   }
 }
