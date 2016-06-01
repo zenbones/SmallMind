@@ -62,6 +62,7 @@ public class FileSystemTemplateLoader implements TemplateLoader {
 
       Path filePath;
 
+      // Adding a slash back because freemarker removes starting slashes as a security measure
       return new FileSystemTemplateSource(((filePath = Paths.get(name)).isAbsolute()) ? filePath : Paths.get("/" + name));
     }
   }
