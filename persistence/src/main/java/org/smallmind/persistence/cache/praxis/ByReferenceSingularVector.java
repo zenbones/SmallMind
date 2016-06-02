@@ -36,7 +36,7 @@ import java.io.Serializable;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
-import org.smallmind.nutsnbolts.util.SingleItemIterator;
+import org.smallmind.nutsnbolts.util.SingleItemIterable;
 import org.smallmind.persistence.Durable;
 import org.smallmind.persistence.cache.DurableVector;
 import org.terracotta.annotations.AutolockRead;
@@ -58,7 +58,7 @@ public class ByReferenceSingularVector<I extends Serializable & Comparable<I>, D
   @AutolockRead
   public DurableVector<I, D> copy () {
 
-    return new ByReferenceSingularVector<I, D>(durable, getTimeToLiveSeconds());
+    return new ByReferenceSingularVector<>(durable, getTimeToLiveSeconds());
   }
 
   public boolean isSingular () {
@@ -98,6 +98,6 @@ public class ByReferenceSingularVector<I extends Serializable & Comparable<I>, D
   @AutolockRead
   public synchronized Iterator<D> iterator () {
 
-    return new SingleItemIterator<D>(durable);
+    return new SingleItemIterable<>(durable).iterator();
   }
 }

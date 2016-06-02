@@ -36,13 +36,13 @@ import java.io.Serializable;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
-import org.smallmind.nutsnbolts.util.SingleItemIterator;
+import org.smallmind.nutsnbolts.util.SingleItemIterable;
 import org.smallmind.persistence.Durable;
 import org.smallmind.persistence.cache.CacheOperationException;
 import org.smallmind.persistence.cache.DurableKey;
 import org.smallmind.persistence.cache.DurableVector;
-import org.smallmind.persistence.orm.OrmDaoManager;
 import org.smallmind.persistence.orm.ORMDao;
+import org.smallmind.persistence.orm.OrmDaoManager;
 import org.terracotta.annotations.AutolockRead;
 import org.terracotta.annotations.AutolockWrite;
 import org.terracotta.annotations.InstrumentedClass;
@@ -87,7 +87,7 @@ public class ByKeySingularVector<I extends Serializable & Comparable<I>, D exten
   @AutolockRead
   public DurableVector<I, D> copy () {
 
-    return new ByKeySingularVector<I, D>(durableKey, getTimeToLiveSeconds());
+    return new ByKeySingularVector<>(durableKey, getTimeToLiveSeconds());
   }
 
   public boolean isSingular () {
@@ -99,7 +99,7 @@ public class ByKeySingularVector<I extends Serializable & Comparable<I>, D exten
   public synchronized boolean add (D durable) {
 
     if (!getDurable().equals(durable)) {
-      durableKey = new DurableKey<I, D>(durableKey.getDurableClass(), durable.getId());
+      durableKey = new DurableKey<>(durableKey.getDurableClass(), durable.getId());
 
       return true;
     }
@@ -127,6 +127,6 @@ public class ByKeySingularVector<I extends Serializable & Comparable<I>, D exten
   @AutolockRead
   public synchronized Iterator<D> iterator () {
 
-    return new SingleItemIterator<D>(getDurable());
+    return new SingleItemIterable<>(getDurable()).iterator();
   }
 }

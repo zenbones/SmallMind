@@ -55,7 +55,7 @@ import org.apache.maven.plugins.annotations.ResolutionScope;
 import org.apache.maven.project.MavenProject;
 import org.smallmind.nutsnbolts.freemarker.ClassPathTemplateLoader;
 import org.smallmind.nutsnbolts.maven.CompressionType;
-import org.smallmind.nutsnbolts.util.SingleItemIterator;
+import org.smallmind.nutsnbolts.util.SingleItemIterable;
 
 // Generates A Webstart Javafx-based Project
 @Mojo(name = "generate-jnlp", defaultPhase = LifecyclePhase.PACKAGE, requiresDependencyResolution = ResolutionScope.RUNTIME, threadSafe = true)
@@ -179,7 +179,7 @@ public class GenerateJNLPMojo extends AbstractMojo {
 
       for (Artifact artifact : project.getDependencyArtifacts()) {
         if (javafx.matchesArtifact(artifact)) {
-          copyDependencies(new SingleItemIterator<>(artifact), deployDirectory, dependencyList);
+          copyDependencies(new SingleItemIterable<>(artifact), deployDirectory, dependencyList);
           javafxFound = true;
           break;
         }

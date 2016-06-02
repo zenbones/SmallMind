@@ -70,7 +70,7 @@ public class FileProcessorGopher implements Runnable {
 
     try {
       do {
-        for (File file : new FileIterator(directory, fileFilter)) {
+        for (File file : new FileIterable(directory, fileFilter)) {
           fileProcessorQueue.push(file);
         }
 

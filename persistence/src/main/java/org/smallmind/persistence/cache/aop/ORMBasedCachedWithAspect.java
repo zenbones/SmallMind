@@ -40,7 +40,7 @@ import org.aspectj.lang.ProceedingJoinPoint;
 import org.aspectj.lang.annotation.Around;
 import org.aspectj.lang.annotation.Aspect;
 import org.smallmind.nutsnbolts.lang.UnknownSwitchCaseException;
-import org.smallmind.nutsnbolts.util.SingleItemIterator;
+import org.smallmind.nutsnbolts.util.SingleItemIterable;
 import org.smallmind.persistence.Durable;
 import org.smallmind.persistence.cache.VectorKey;
 import org.smallmind.persistence.cache.VectoredDao;
@@ -240,7 +240,7 @@ public class ORMBasedCachedWithAspect {
 
     if ((finder.method() == null) || (finder.method().length() == 0)) {
 
-      return new SingleItemIterator<Durable>(durable);
+      return new SingleItemIterable<Durable>(durable);
     }
 
     if ((finderMethod = locateMethod(ormDao, finder.method(), ormDao.getManagedClass())) == null) {
@@ -250,7 +250,7 @@ public class ORMBasedCachedWithAspect {
     if ((expectedType = (finder.with().equals(Durable.class) ? durable.getClass() : finder.with())).isAssignableFrom(finderMethod.getReturnType())) {
       try {
 
-        return new SingleItemIterator<Durable>((Durable)finderMethod.invoke(ormDao, durable));
+        return new SingleItemIterable<Durable>((Durable)finderMethod.invoke(ormDao, durable));
       }
       catch (Exception exception) {
         throw new CacheAutomationError(exception);

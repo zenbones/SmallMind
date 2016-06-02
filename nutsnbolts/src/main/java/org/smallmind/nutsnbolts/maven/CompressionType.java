@@ -41,7 +41,7 @@ import java.util.jar.JarOutputStream;
 import java.util.jar.Manifest;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
-import org.smallmind.nutsnbolts.io.FileIterator;
+import org.smallmind.nutsnbolts.io.FileIterable;
 
 public enum CompressionType {
 
@@ -56,7 +56,7 @@ public enum CompressionType {
 
       fileOutputStream = new FileOutputStream(compressedFile);
       jarOutputStream = new JarOutputStream(fileOutputStream, (manifest == null) ? new Manifest() : manifest);
-      for (File outputFile : new FileIterator(directoryToCompress)) {
+      for (File outputFile : new FileIterable(directoryToCompress)) {
         if (!outputFile.equals(compressedFile)) {
           jarEntry = new JarEntry(outputFile.getCanonicalPath().substring(directoryToCompress.getAbsolutePath().length() + 1).replace(System.getProperty("file.separator"), "/"));
           jarEntry.setTime(outputFile.lastModified());
@@ -99,7 +99,7 @@ public enum CompressionType {
 
       fileOutputStream = new FileOutputStream(compressedFile);
       zipOutputStream = new ZipOutputStream(fileOutputStream);
-      for (File outputFile : new FileIterator(directoryToCompress)) {
+      for (File outputFile : new FileIterable(directoryToCompress)) {
         if (!outputFile.equals(compressedFile)) {
           zipEntry = new ZipEntry(outputFile.getCanonicalPath().substring(directoryToCompress.getAbsolutePath().length() + 1).replace(System.getProperty("file.separator"), "/"));
           zipEntry.setTime(outputFile.lastModified());

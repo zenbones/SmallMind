@@ -45,9 +45,6 @@ import java.util.concurrent.atomic.AtomicBoolean;
 public class WeakEventListenerList<E extends EventListener> implements Iterable<E> {
 
   private static final Scrubber SCRUBBER;
-
-  private final LinkedList<WeakReference<E>> referenceList;
-
   static {
     Thread scrubberThread;
 
@@ -56,10 +53,11 @@ public class WeakEventListenerList<E extends EventListener> implements Iterable<
     scrubberThread.setDaemon(true);
     scrubberThread.start();
   }
+  private final LinkedList<WeakReference<E>> referenceList;
 
   public WeakEventListenerList () {
 
-    referenceList = new LinkedList<WeakReference<E>>();
+    referenceList = new LinkedList<>();
   }
 
   public Iterator<E> getListeners () {
@@ -131,8 +129,8 @@ public class WeakEventListenerList<E extends EventListener> implements Iterable<
 
     public Scrubber () {
 
-      referenceQueue = new ReferenceQueue<EventListener>();
-      parentMap = new HashMap<WeakReference<? extends EventListener>, WeakEventListenerList>();
+      referenceQueue = new ReferenceQueue<>();
+      parentMap = new HashMap<>();
 
       exitLatch = new CountDownLatch(1);
     }
@@ -141,7 +139,7 @@ public class WeakEventListenerList<E extends EventListener> implements Iterable<
 
       WeakReference<E> reference;
 
-      reference = new WeakReference<E>(eventListener, referenceQueue);
+      reference = new WeakReference<>(eventListener, referenceQueue);
       parentMap.put(reference, parent);
 
       return reference;
@@ -163,8 +161,7 @@ public class WeakEventListenerList<E extends EventListener> implements Iterable<
           if ((reference = referenceQueue.remove(1000)) != null) {
             parentMap.remove(reference).removeListener(reference);
           }
-        }
-        catch (InterruptedException interruptedException) {
+        } catch (InterruptedException interruptedException) {
           finished.set(true);
         }
       }

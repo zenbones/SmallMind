@@ -23,13 +23,11 @@ import org.smallmind.license.stencil.Stencil;
 @Mojo(name = "generate-notice-headers", defaultPhase = LifecyclePhase.PROCESS_SOURCES, threadSafe = true)
 public class SourceNoticeMojo extends AbstractMojo {
 
-  private static final Stencil[] DEFAULT_STENCILS = new Stencil[] {new JavaDocStencil()};
-
   private static enum NoticeState {
 
     FIRST, LAST, COMPLETED, TERMINATED
   }
-
+  private static final Stencil[] DEFAULT_STENCILS = new Stencil[] {new JavaDocStencil()};
   @Parameter(readonly = true, property = "project")
   private MavenProject project;
   @Parameter
@@ -85,8 +83,7 @@ public class SourceNoticeMojo extends AbstractMojo {
         }
 
         noticeArray = null;
-      }
-      else {
+      } else {
 
         File noticeFile;
 
@@ -98,8 +95,7 @@ public class SourceNoticeMojo extends AbstractMojo {
 
       if (!noticed) {
         getLog().warn(String.format("Unable to acquire the notice file(%s), skipping notice updating...", rule.getNotice()));
-      }
-      else {
+      } else {
         if ((rule.getFileTypes() == null) || (rule.getFileTypes().length == 0)) {
           throw new MojoExecutionException("No file types were specified for rule(" + rule.getId() + ")");
         }
@@ -158,7 +154,7 @@ public class SourceNoticeMojo extends AbstractMojo {
       skipPattern = Pattern.compile(stencil.getSkipLines());
     }
 
-    for (File licensedFile : new LicensedFileIterator(new File(directoryPath), fileFilters)) {
+    for (File licensedFile : new LicensedFileIterable(new File(directoryPath), fileFilters)) {
       if (verbose) {
         getLog().info(String.format(((noticeArray == null) ? "Removing" : "Updating") + " license notice for file(%s)...", licensedFile.getAbsolutePath()));
       }
@@ -190,8 +186,7 @@ public class SourceNoticeMojo extends AbstractMojo {
           if (!licensedFile.delete()) {
             throw new MojoFailureException("Unable to delete file(" + licensedFile.getAbsolutePath() + ")");
           }
-        }
-        catch (Exception exception) {
+        } catch (Exception exception) {
           tempFile.delete();
           throw new MojoExecutionException("Exception during notice processing", exception);
         }
@@ -199,11 +194,9 @@ public class SourceNoticeMojo extends AbstractMojo {
         if (!tempFile.renameTo(licensedFile)) {
           throw new MojoFailureException("Unable to rename temp file(" + tempFile.getAbsolutePath() + ") to processed file(" + licensedFile.getAbsolutePath() + ")");
         }
-      }
-      catch (MojoExecutionException mojoExecutionException) {
+      } catch (MojoExecutionException mojoExecutionException) {
         throw mojoExecutionException;
-      }
-      catch (Exception exception) {
+      } catch (Exception exception) {
         throw new MojoExecutionException("Exception during notice processing", exception);
       }
     }
@@ -223,8 +216,7 @@ public class SourceNoticeMojo extends AbstractMojo {
       while ((singleLine = noticeReader.readLine()) != null) {
         lineList.add(singleLine);
       }
-    }
-    catch (IOException ioException) {
+    } catch (IOException ioException) {
 
       return null;
     }
@@ -260,19 +252,16 @@ public class SourceNoticeMojo extends AbstractMojo {
           case LAST:
             if ((stencil.getLastLine() != null) && singleLine.equals(stencil.getLastLine())) {
               noticeState = NoticeState.COMPLETED;
-            }
-            else if ((singleLine.length() > 0) && (!singleLine.startsWith(generalPrefix))) {
+            } else if ((singleLine.length() > 0) && (!singleLine.startsWith(generalPrefix))) {
               noticeState = NoticeState.TERMINATED;
-            }
-            else if ((singleLine.length() == 0) && stencil.willPrefixBlankLines()) {
+            } else if ((singleLine.length() == 0) && stencil.willPrefixBlankLines()) {
               noticeState = NoticeState.TERMINATED;
             }
             break;
           default:
             throw new MojoFailureException("Unknown or inappropriate notice seeking state(" + noticeState.name() + ")");
         }
-      }
-      else {
+      } else {
         fileWriter.write(singleLine);
         fileWriter.write(System.getProperty("line.separator"));
       }

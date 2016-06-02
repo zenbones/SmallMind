@@ -89,8 +89,7 @@ public class CacheCoherentAspect {
         }
 
         return null;
-      }
-      else if (List.class.isAssignableFrom(((MethodSignature)thisJoinPoint.getSignature()).getReturnType())) {
+      } else if (List.class.isAssignableFrom(((MethodSignature)thisJoinPoint.getSignature()).getReturnType())) {
         if ((!((returnType = (executedMethod = ((MethodSignature)thisJoinPoint.getSignature()).getMethod()).getGenericReturnType()) instanceof ParameterizedType)) || (!durableDao.getManagedClass().isAssignableFrom((Class<?>)((ParameterizedType)returnType).getActualTypeArguments()[0]))) {
           throw new CacheAutomationError("Methods annotated with @CacheCoherent which return a List type must be parameterized as <? extends List<? extends %s>>", durableDao.getManagedClass().getSimpleName());
         }
@@ -109,8 +108,7 @@ public class CacheCoherentAspect {
           for (Object element : list) {
             if (element != null) {
               cacheConsistentElements.add(vectoredDao.persist(durableDao.getManagedClass(), (Durable)element, UpdateMode.SOFT));
-            }
-            else {
+            } else {
               cacheConsistentElements.add(null);
             }
           }
@@ -119,8 +117,7 @@ public class CacheCoherentAspect {
         }
 
         return null;
-      }
-      else if (Iterable.class.isAssignableFrom(((MethodSignature)thisJoinPoint.getSignature()).getReturnType())) {
+      } else if (Iterable.class.isAssignableFrom(((MethodSignature)thisJoinPoint.getSignature()).getReturnType())) {
         if ((!((returnType = (executedMethod = ((MethodSignature)thisJoinPoint.getSignature()).getMethod()).getGenericReturnType()) instanceof ParameterizedType)) || (!durableDao.getManagedClass().isAssignableFrom((Class<?>)((ParameterizedType)returnType).getActualTypeArguments()[0]))) {
           throw new CacheAutomationError("Methods annotated with @CacheCoherent which return an Iterable type must be parameterized as <? extends Iterable<? extends %s>>", durableDao.getManagedClass().getSimpleName());
         }
@@ -133,16 +130,14 @@ public class CacheCoherentAspect {
             return iterable;
           }
 
-          return new CacheCoherentIterator(iterable.iterator(), durableDao.getManagedClass(), vectoredDao);
+          return new CacheCoherentIterable(iterable, durableDao.getManagedClass(), vectoredDao);
         }
 
         return null;
-      }
-      else {
+      } else {
         throw new CacheAutomationError("Methods annotated with @CacheCoherent must return either the managed Class(%s), a parameterized List <? extends List<%s>>, or a parameterized Iterable <? extends Iterable<%s>>", durableDao.getManagedClass().getSimpleName(), durableDao.getManagedClass().getSimpleName(), durableDao.getManagedClass().getSimpleName());
       }
-    }
-    finally {
+    } finally {
       if (timingEnabled) {
         stop = System.currentTimeMillis();
 
