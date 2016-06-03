@@ -51,7 +51,7 @@ public class ORMBasedCachedWithAspect {
 
   private static final ConcurrentHashMap<MethodKey, Method> METHOD_MAP = new ConcurrentHashMap<MethodKey, Method>();
 
-  @Around(value = "execution(* persist (org.smallmind.persistence.Durable+)) && @within(CachedWith) && this(ormDao)", argNames = "thisJoinPoint, ormDao")
+  @Around(value = "(execution(* persist (org.smallmind.persistence.Durable+)) || execution(@Persist * * (org.smallmind.persistence.Durable+))) && @within(CachedWith) && this(ormDao)", argNames = "thisJoinPoint, ormDao")
   public Object aroundPersistMethod (ProceedingJoinPoint thisJoinPoint, ORMDao ormDao)
     throws Throwable {
 
@@ -110,7 +110,7 @@ public class ORMBasedCachedWithAspect {
     }
   }
 
-  @Around(value = "execution(void delete (..)) && @within(CachedWith) && args(durable) && this(ormDao)", argNames = "thisJoinPoint, ormDao, durable")
+  @Around(value = "(execution(void delete (..)) || execution(@Delete * * (..))) && @within(CachedWith) && args(durable) && this(ormDao)", argNames = "thisJoinPoint, ormDao, durable")
   public void aroundDeleteMethod (ProceedingJoinPoint thisJoinPoint, ORMDao ormDao, Durable durable)
     throws Throwable {
 
