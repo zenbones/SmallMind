@@ -67,7 +67,6 @@
           <plugin>
             <groupId>org.sonatype.plugins</groupId>
             <artifactId>nexus-staging-maven-plugin</artifactId>
-            <version>1.6.6</version>
             <extensions>true</extensions>
             <configuration>
               <serverId>oss</serverId>
@@ -116,6 +115,7 @@
     <module>artifact</module>
     <module>liquibase</module>
     <module>instrument</module>
+    <module>memcached</module>
     <module>quorum</module>
     <module>persistence</module>
     <module>phalanx</module>
@@ -167,6 +167,11 @@
       <dependency>
         <groupId>org.smallmind</groupId>
         <artifactId>smallmind-instrument</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.smallmind</groupId>
+        <artifactId>smallmind-memcached</artifactId>
         <version>${project.version}</version>
       </dependency>
       <dependency>
@@ -788,6 +793,11 @@
           <groupId>org.apache.maven.plugins</groupId>
           <artifactId>maven-war-plugin</artifactId>
           <version>2.6</version>
+        </plugin>
+        <plugin>
+          <groupId>org.sonatype.plugins</groupId>
+          <artifactId>nexus-staging-maven-plugin</artifactId>
+          <version>1.6.7</version>
         </plugin>
         <plugin>
           <groupId>org.apache.maven.plugins</groupId>

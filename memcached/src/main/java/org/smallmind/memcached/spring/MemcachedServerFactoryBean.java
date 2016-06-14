@@ -30,12 +30,12 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.persistence.cache.memcached.spring;
+package org.smallmind.memcached.spring;
 
 import java.util.LinkedList;
 import org.smallmind.nutsnbolts.util.Spread;
 import org.smallmind.nutsnbolts.util.SpreadParserException;
-import org.smallmind.persistence.cache.memcached.MemcachedServer;
+import org.smallmind.memcached.MemcachedServer;
 import org.springframework.beans.factory.FactoryBean;
 import org.springframework.beans.factory.InitializingBean;
 

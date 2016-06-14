@@ -30,7 +30,7 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.persistence.cache.memcached;
+package org.smallmind.memcached;
 
 public class InMemoryCASResponse<T> implements ProxyCASResponse<T> {
 

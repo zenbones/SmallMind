@@ -30,7 +30,7 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.persistence.cache.memcached.spring;
+package org.smallmind.memcached.spring;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
@@ -40,8 +40,8 @@ import net.rubyeye.xmemcached.MemcachedClientBuilder;
 import net.rubyeye.xmemcached.XMemcachedClientBuilder;
 import net.rubyeye.xmemcached.command.BinaryCommandFactory;
 import net.rubyeye.xmemcached.impl.KetamaMemcachedSessionLocator;
-import org.smallmind.persistence.cache.memcached.MemcachedServer;
-import org.smallmind.persistence.cache.memcached.XMemcachedMemcachedClient;
+import org.smallmind.memcached.MemcachedServer;
+import org.smallmind.memcached.XMemcachedMemcachedClient;
 import org.smallmind.scribe.pen.LoggerManager;
 import org.springframework.beans.factory.FactoryBean;
 import org.springframework.beans.factory.InitializingBean;

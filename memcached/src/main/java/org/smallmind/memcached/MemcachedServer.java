@@ -30,11 +30,40 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.persistence.cache.memcached;
+package org.smallmind.memcached;
 
-public interface ProxyCASResponse<T> {
+public class MemcachedServer {
 
-  T getValue ();
+  private String host;
+  private int port;
 
-  long getCas ();
+  public MemcachedServer () {
+
+  }
+
+  public MemcachedServer (String host, int port) {
+
+    this.host = host;
+    this.port = port;
+  }
+
+  public String getHost () {
+
+    return host;
+  }
+
+  public void setHost (String host) {
+
+    this.host = host;
+  }
+
+  public int getPort () {
+
+    return port;
+  }
+
+  public void setPort (int port) {
+
+    this.port = port;
+  }
 }

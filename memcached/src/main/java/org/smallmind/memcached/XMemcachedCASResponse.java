@@ -30,44 +30,28 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.persistence.cache.memcached;
+package org.smallmind.memcached;
 
-import java.util.Collection;
-import java.util.Map;
+import net.rubyeye.xmemcached.GetsResponse;
 
-public interface ProxyMemcachedClient {
+public class XMemcachedCASResponse<T> implements ProxyCASResponse<T> {
 
-  long getOpTimeout ();
+  private GetsResponse<T> getsResponse;
 
-  <T> ProxyCASResponse<T> createCASResponse (long cas, T value);
+  public XMemcachedCASResponse (GetsResponse<T> getsResponse) {
 
-  <T> T get (String key)
-    throws Exception;
+    this.getsResponse = getsResponse;
+  }
 
-  <T> Map<String, T> get (Collection<String> keys)
-    throws Exception;
+  @Override
+  public T getValue () {
 
-  <T> ProxyCASResponse<T> casGet (String key)
-    throws Exception;
+    return getsResponse.getValue();
+  }
 
-  <T> boolean set (String key, int expiration, T value)
-    throws Exception;
+  @Override
+  public long getCas () {
 
-  <T> boolean casSet (String key, int expiration, T value, long cas)
-    throws Exception;
-
-  boolean delete (String key)
-    throws Exception;
-
-  boolean casDelete (String key, long cas)
-    throws Exception;
-
-  boolean touch (String key, int expiration)
-    throws Exception;
-
-  <T> T getAndTouch (String key, int expiration)
-    throws Exception;
-
-  void shutdown ()
-    throws Exception;
+    return getsResponse.getCas();
+  }
 }

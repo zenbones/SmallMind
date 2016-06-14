@@ -28,6 +28,11 @@
     </dependency>
     <dependency>
       <groupId>org.smallmind</groupId>
+      <artifactId>smallmind-memcached</artifactId>
+      <scope>compile</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.smallmind</groupId>
       <artifactId>smallmind-quorum</artifactId>
       <scope>compile</scope>
       <optional>true</optional>
@@ -101,12 +106,6 @@
     <dependency>
       <groupId>net.sf.ehcache</groupId>
       <artifactId>ehcache-core</artifactId>
-      <scope>compile</scope>
-      <optional>true</optional>
-    </dependency>
-    <dependency>
-      <groupId>com.googlecode.xmemcached</groupId>
-      <artifactId>xmemcached</artifactId>
       <scope>compile</scope>
       <optional>true</optional>
     </dependency>

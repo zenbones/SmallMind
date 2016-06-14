@@ -34,8 +34,8 @@ package org.smallmind.persistence.cache.memcached.spring;
 
 import java.io.IOException;
 import java.util.Map;
+import org.smallmind.memcached.ProxyMemcachedClient;
 import org.smallmind.persistence.cache.memcached.MemcachedCacheDomain;
-import org.smallmind.persistence.cache.memcached.ProxyMemcachedClient;
 import org.springframework.beans.factory.FactoryBean;
 import org.springframework.beans.factory.InitializingBean;
 
