@@ -136,6 +136,11 @@ public class QueryUtility {
         Object equalValue;
 
         return ((equalValue = whereField.getOperand().extract(transformer)) == null) ? fieldEnd.doesNotExist() : fieldEnd.equal(equalValue);
+      case NE:
+
+        Object notEqualValue;
+
+        return ((notEqualValue = whereField.getOperand().extract(transformer)) == null) ? fieldEnd.exists() : fieldEnd.notEqual(notEqualValue);
       case GE:
         return fieldEnd.greaterThanOrEq(whereField.getOperand().extract(transformer));
       case GT:

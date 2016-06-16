@@ -132,9 +132,14 @@ public class CriteriaUtility {
         return Restrictions.le(whereField.getName(), whereField.getOperand().extract(transformer));
       case EQ:
 
-        Object value;
+        Object equalValue;
 
-        return ((value = whereField.getOperand().extract(transformer)) == null) ? Restrictions.isNull(whereField.getName()) : Restrictions.eq(whereField.getName(), value);
+        return ((equalValue = whereField.getOperand().extract(transformer)) == null) ? Restrictions.isNull(whereField.getName()) : Restrictions.eq(whereField.getName(), equalValue);
+      case NE:
+
+        Object notEqualValue;
+
+        return ((notEqualValue = whereField.getOperand().extract(transformer)) == null) ? Restrictions.isNotNull(whereField.getName()) : Restrictions.ne(whereField.getName(), notEqualValue);
       case GE:
         return Restrictions.ge(whereField.getName(), whereField.getOperand().extract(transformer));
       case GT:
