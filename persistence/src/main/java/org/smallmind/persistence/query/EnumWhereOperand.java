@@ -57,7 +57,16 @@ public class EnumWhereOperand<E extends Enum<E>> extends WhereOperand<E> {
   @XmlTransient
   public E extract (WhereOperandTransformer transformer) {
 
-    return (E)Enum.valueOf(transformer.getEnumType(type), value);
+    Class<? extends Enum> enumClass;
+
+    if (transformer == null) {
+      throw new WhereValidationException("Translation of enum type(%s) requires an implementation of a WhereOperandTransformer", type);
+    }
+    if ((enumClass = transformer.getEnumType(type)) == null) {
+      throw new WhereValidationException("Missing a %s capable of transforming enum type(%s)", WhereOperandTransformer.class.getSimpleName(), type);
+    }
+
+    return (E)Enum.valueOf(enumClass, value);
   }
 
   @XmlElement(name = "type", required = true)

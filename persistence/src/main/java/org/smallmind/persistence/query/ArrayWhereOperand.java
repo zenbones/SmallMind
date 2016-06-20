@@ -160,13 +160,22 @@ public class ArrayWhereOperand extends WhereOperand<Object[]> {
         return stringArray;
       default:
 
-        Enum[] enums = new Enum[value.length];
+        Class<? extends Enum> enumClass;
 
-        for (int index = 0; index < value.length; index++) {
-          enums[index] = (value[index] == null) ? null : Enum.valueOf(transformer.getEnumType(type), value[index].toString());
+        if (transformer == null) {
+          throw new WhereValidationException("Translation of enum type(%s) requires an implementation of a WhereOperandTransformer", type);
+        } else if ((enumClass = transformer.getEnumType(type)) == null) {
+          throw new WhereValidationException("Missing a %s capable of transforming enum type(%s)", WhereOperandTransformer.class.getSimpleName(), type);
+        } else {
+
+          Enum[] enums = new Enum[value.length];
+
+          for (int index = 0; index < value.length; index++) {
+            enums[index] = (value[index] == null) ? null : Enum.valueOf(enumClass, value[index].toString());
+          }
+
+          return enums;
         }
-
-        return enums;
     }
   }
 
