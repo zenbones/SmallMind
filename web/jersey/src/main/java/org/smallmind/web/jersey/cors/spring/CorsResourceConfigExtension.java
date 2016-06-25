@@ -30,26 +30,17 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.web.jersey.cors;
+package org.smallmind.web.jersey.cors.spring;
 
-import javax.ws.rs.container.ContainerRequestContext;
-import javax.ws.rs.container.ContainerResponseContext;
-import javax.ws.rs.container.ContainerResponseFilter;
+import org.glassfish.jersey.server.ResourceConfig;
+import org.smallmind.web.jersey.cors.CorsResponseFilter;
+import org.smallmind.web.jersey.spring.ResourceConfigExtension;
 
-public class CorsResponseFilter implements ContainerResponseFilter {
+public class CorsResourceConfigExtension extends ResourceConfigExtension {
 
   @Override
-  public void filter (ContainerRequestContext requestContext, ContainerResponseContext responseContext) {
+  public void apply (ResourceConfig resourceConfig) {
 
-    String accessControlRequestHeaders;
-
-    if (((accessControlRequestHeaders = requestContext.getHeaderString("Access-Control-Request-Headers")) != null) && (!accessControlRequestHeaders.isEmpty())) {
-      responseContext.getHeaders().add("Access-Control-Allow-Headers", accessControlRequestHeaders);
-    }
-
-    responseContext.getHeaders().add("Access-Control-Allow-Origin", "*");
-    responseContext.getHeaders().add("Access-Control-Allow-Methods", "GET, PUT, POST, DELETE, OPTIONS, HEAD");
-    responseContext.getHeaders().add("Access-Control-Allow-Credentials", "false");
+    resourceConfig.register(CorsResponseFilter.class);
   }
 }
-
