@@ -54,11 +54,11 @@ public class ComponentPinManager<C> {
   private static enum State {STOPPED, STARTING, STARTED, STOPPING}
 
   private final ComponentPool<C> componentPool;
-  private final HashMap<ComponentInstance<C>, ComponentPin<C>> backingMap = new HashMap<ComponentInstance<C>, ComponentPin<C>>();
-  private final LinkedBlockingQueue<ComponentPin<C>> freeQueue = new LinkedBlockingQueue<ComponentPin<C>>();
+  private final HashMap<ComponentInstance<C>, ComponentPin<C>> backingMap = new HashMap<>();
+  private final LinkedBlockingQueue<ComponentPin<C>> freeQueue = new LinkedBlockingQueue<>();
   private final ReentrantReadWriteLock backingLock = new ReentrantReadWriteLock();
   private final DeconstructionQueue deconstructionQueue = new DeconstructionQueue();
-  private final AtomicReference<State> stateRef = new AtomicReference<State>(State.STOPPED);
+  private final AtomicReference<State> stateRef = new AtomicReference<>(State.STOPPED);
   private final AtomicInteger size = new AtomicInteger(0);
 
   public ComponentPinManager (ComponentPool<C> componentPool) {
@@ -117,34 +117,36 @@ public class ComponentPinManager<C> {
 
     ComponentPin<C> componentPin;
 
-    if ((componentPin = freeQueue.poll()) != null) {
-
+    while ((componentPin = freeQueue.poll()) != null) {
       if (componentPool.getComplexPoolConfig().isTestOnAcquire() && (!componentPin.getComponentInstance().validate())) {
-        throw new ComponentValidationException("A free element was acquired, but failed to validate");
+        remove(componentPin, true);
+      } else {
+        trackSize();
+
+        return componentPin;
       }
-
-      trackSize();
-
-      return componentPin;
     }
 
     if ((componentPin = addComponentPin(true)) != null) {
-
       trackSize();
 
       return componentPin;
     }
 
     try {
-      if ((componentPool.getComplexPoolConfig().getAcquireWaitTimeMillis() > 0) && (componentPin = freeQueue.poll(componentPool.getComplexPoolConfig().getAcquireWaitTimeMillis(), TimeUnit.MILLISECONDS)) != null) {
 
+      long acquireWaitTimeMillis = componentPool.getComplexPoolConfig().getAcquireWaitTimeMillis();
+      long start = System.currentTimeMillis();
+
+      while ((acquireWaitTimeMillis > 0) && (componentPin = freeQueue.poll(acquireWaitTimeMillis, TimeUnit.MILLISECONDS)) != null) {
         if (componentPool.getComplexPoolConfig().isTestOnAcquire() && (!componentPin.getComponentInstance().validate())) {
-          throw new ComponentValidationException("A free element was acquired, but failed to validate");
+          remove(componentPin, true);
+          acquireWaitTimeMillis = componentPool.getComplexPoolConfig().getAcquireWaitTimeMillis() - (System.currentTimeMillis() - start);
+        } else {
+          trackSize();
+
+          return componentPin;
         }
-
-        trackSize();
-
-        return componentPin;
       }
     } catch (InterruptedException interruptedException) {
       throw new ComponentPoolException(interruptedException);
@@ -173,7 +175,7 @@ public class ComponentPinManager<C> {
             ComponentPin<C> componentPin;
             ComponentInstance<C> componentInstance;
 
-            backingMap.put(componentInstance = manufactureComponentInstance(), componentPin = new ComponentPin<C>(componentPool, deconstructionQueue, componentInstance));
+            backingMap.put(componentInstance = manufactureComponentInstance(), componentPin = new ComponentPin<>(componentPool, deconstructionQueue, componentInstance));
             size.incrementAndGet();
 
             return componentPin;
@@ -198,7 +200,7 @@ public class ComponentPinManager<C> {
         ComponentCreationWorker<C> creationWorker;
         Thread workerThread;
 
-        creationWorker = new ComponentCreationWorker<C>(componentPool);
+        creationWorker = new ComponentCreationWorker<>(componentPool);
         workerThread = new Thread(creationWorker);
         workerThread.setDaemon(true);
         workerThread.start();
