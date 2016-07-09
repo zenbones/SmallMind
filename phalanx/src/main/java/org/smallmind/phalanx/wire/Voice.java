@@ -32,9 +32,13 @@
  */
 package org.smallmind.phalanx.wire;
 
-public interface Voice<T> {
+public interface Voice<G, I> {
 
   VocalMode getMode ();
 
-  public abstract T get ();
+  Conversation getConversation ();
+
+  G getServiceGroup ();
+
+  I getInstanceId ();
 }

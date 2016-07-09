@@ -37,7 +37,6 @@ import java.lang.annotation.Annotation;
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
 import java.util.HashMap;
-import java.util.concurrent.ConcurrentHashMap;
 import org.smallmind.nutsnbolts.context.Context;
 import org.smallmind.nutsnbolts.context.ContextFactory;
 
@@ -46,23 +45,30 @@ public class WireInvocationHandler implements InvocationHandler {
   private static final Class[] EMPTY_SIGNATURE = new Class[0];
   private static final Class[] OBJECT_SIGNATURE = {Object.class};
   private static final String[] NO_NAMES = new String[0];
-  private static final String[] SINGLE_OBJECT_NAME = new String[]{"obj"};
+  private static final String[] SINGLE_OBJECT_NAME = new String[] {"obj"};
+  private static OneWayConversation ONE_WAY_CONVERSATION = new OneWayConversation();
+  private static TwoWayConversation DEFAULT_TIMEOUT_TWO_WAY_CONVERSATION = new TwoWayConversation();
   private final RequestTransport transport;
-  private final ConcurrentHashMap<Class<? extends InstanceIdExtractor>, InstanceIdExtractor> instanceIdExtractorMap = new ConcurrentHashMap<>();
   private final HashMap<Method, String[]> methodMap = new HashMap<>();
+  private final ParameterExtractor serviceGroupExtractor;
+  private final ParameterExtractor instanceIdExtractor;
   private final Class serviceInterface;
-  private final String serviceGroup;
   private final String serviceName;
   private final int version;
 
-  public WireInvocationHandler (RequestTransport transport, String serviceGroup, int version, String serviceName, Class<?> serviceInterface)
+  public WireInvocationHandler (RequestTransport transport, int version, String serviceName, Class<?> serviceInterface, ParameterExtractor serviceGroupExtractor, ParameterExtractor instanceIdExtractor)
     throws Exception {
 
     this.transport = transport;
     this.version = version;
-    this.serviceGroup = serviceGroup;
     this.serviceName = serviceName;
     this.serviceInterface = serviceInterface;
+    this.serviceGroupExtractor = serviceGroupExtractor;
+    this.instanceIdExtractor = instanceIdExtractor;
+
+    if (serviceGroupExtractor == null) {
+      throw new ServiceDefinitionException("The service interface(%s) has no service group %s defined", serviceInterface.getName(), ParameterExtractor.class.getSimpleName());
+    }
 
     for (Method method : serviceInterface.getMethods()) {
 
@@ -109,7 +115,6 @@ public class WireInvocationHandler implements InvocationHandler {
     Context[] expectedContexts;
     WireContext[] wireContexts = null;
     Voice voice;
-    Whisper whisper;
     String[] argumentNames;
 
     if ((argumentNames = methodMap.get(method)) == null) {
@@ -143,26 +148,14 @@ public class WireInvocationHandler implements InvocationHandler {
     }
 
     if (method.getAnnotation(Shout.class) != null) {
-      voice = Shouting.instance();
-    } else if ((whisper = method.getAnnotation(Whisper.class)) != null) {
-
-      InstanceIdExtractor instanceIdExtractor;
-      String instanceId;
-
-      if ((instanceIdExtractor = instanceIdExtractorMap.get(whisper.value())) == null) {
-        instanceIdExtractorMap.put(whisper.value(), instanceIdExtractor = whisper.value().newInstance());
-      }
-      if ((instanceId = instanceIdExtractor.getInstanceId(argumentMap, wireContexts)) == null) {
-        throw new MissingInstanceIdException("Whisper invocations require an instance id(%s)", whisper.value().getName());
+      voice = new Shouting(serviceGroupExtractor.getParameter(argumentMap, wireContexts));
+    } else if (method.getAnnotation(Whisper.class) != null) {
+      if (instanceIdExtractor == null) {
+        throw new ServiceDefinitionException("The method(%s) in service interface(%s) is marked as @Whisper but no instance id %s has been defined", method.getName(), serviceInterface.getName(), ParameterExtractor.class.getSimpleName());
       }
 
-      voice = new Whispering(instanceId);
-    } else {
-      voice = Talking.instance();
-    }
-
-    if (method.getAnnotation(InOnly.class) != null) {
-
+      voice = new Whispering(serviceGroupExtractor.getParameter(argumentMap, wireContexts), instanceIdExtractor.getParameter(argumentMap, wireContexts));
+    } else if (method.getAnnotation(InOnly.class) != null) {
       if (!method.getReturnType().equals(void.class)) {
         throw new ServiceDefinitionException("The method(%s) in service interface(%s) is marked as @InOnly but does not return 'void'", method.getName(), serviceInterface.getName());
       }
@@ -170,17 +163,14 @@ public class WireInvocationHandler implements InvocationHandler {
         throw new ServiceDefinitionException("The method(%s) in service interface(%s) is marked as @InOnly but declares an Exception list", method.getName(), serviceInterface.getName());
       }
 
-      transport.transmitInOnly(serviceGroup, voice, new Address(version, serviceName, new Function(method)), argumentMap, wireContexts);
-
-      return null;
+      voice = new Talking(ONE_WAY_CONVERSATION, serviceGroupExtractor.getParameter(argumentMap, wireContexts));
     } else {
-      if (voice.getMode().equals(VocalMode.SHOUT)) {
-        throw new ServiceDefinitionException("The method(%s) in service interface(%s) is marked as @Shout but is not marked @InOnly", method.getName(), serviceInterface.getName());
-      }
 
       InOut inOut = method.getAnnotation(InOut.class);
 
-      return transport.transmitInOut(serviceGroup, voice, (inOut == null) ? 0 : inOut.timeoutSeconds(), new Address(version, serviceName, new Function(method)), argumentMap, wireContexts);
+      voice = new Talking((inOut == null) ? DEFAULT_TIMEOUT_TWO_WAY_CONVERSATION : new TwoWayConversation(inOut.timeoutSeconds()), serviceGroupExtractor.getParameter(argumentMap, wireContexts));
     }
+
+    return transport.transmit(voice, new Address(version, serviceName, new Function(method)), argumentMap, wireContexts);
   }
 }

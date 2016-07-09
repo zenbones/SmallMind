@@ -32,70 +32,37 @@
  */
 package org.smallmind.phalanx.wire.spring;
 
-import java.lang.reflect.Proxy;
-import org.smallmind.phalanx.wire.ParameterExtractor;
-import org.smallmind.phalanx.wire.RequestTransport;
-import org.smallmind.phalanx.wire.WireProxyFactory;
+import org.smallmind.phalanx.wire.StaticParameterExtractor;
 import org.springframework.beans.factory.FactoryBean;
 import org.springframework.beans.factory.InitializingBean;
 
-public class WireProxyFactoryBean implements InitializingBean, FactoryBean<Proxy> {
+public class StaticParameterExtractorFactoryBean implements InitializingBean, FactoryBean<StaticParameterExtractor> {
 
-  private Proxy serviceProxy;
-  private RequestTransport requestTransport;
-  private ParameterExtractor serviceGroupExtractor;
-  private ParameterExtractor instanceIdExtractor;
-  private Class<?> serviceInterface;
-  private String serviceName;
-  private int version;
+  private StaticParameterExtractor staticParameterExtractor;
+  private String parameter;
 
-  public void setServiceInterface (Class<?> serviceInterface) {
+  public void setParameter (String parameter) {
 
-    this.serviceInterface = serviceInterface;
-  }
-
-  public void setRequestTransport (RequestTransport requestTransport) {
-
-    this.requestTransport = requestTransport;
-  }
-
-  public void setServiceName (String serviceName) {
-
-    this.serviceName = serviceName;
-  }
-
-  public void setVersion (int version) {
-
-    this.version = version;
-  }
-
-  public void setServiceGroupExtractor (ParameterExtractor serviceGroupExtractor) {
-
-    this.serviceGroupExtractor = serviceGroupExtractor;
-  }
-
-  public void setInstanceIdExtractor (ParameterExtractor instanceIdExtractor) {
-
-    this.instanceIdExtractor = instanceIdExtractor;
+    this.parameter = parameter;
   }
 
   @Override
   public void afterPropertiesSet ()
     throws Exception {
 
-    serviceProxy = WireProxyFactory.generateProxy(requestTransport, version, serviceName, serviceInterface, serviceGroupExtractor, instanceIdExtractor);
+    staticParameterExtractor = new StaticParameterExtractor(parameter);
   }
 
   @Override
-  public Proxy getObject () {
+  public StaticParameterExtractor getObject () {
 
-    return serviceProxy;
+    return staticParameterExtractor;
   }
 
   @Override
   public Class<?> getObjectType () {
 
-    return serviceInterface;
+    return StaticParameterExtractor.class;
   }
 
   @Override

@@ -32,13 +32,30 @@
  */
 package org.smallmind.phalanx.wire;
 
-import java.lang.annotation.ElementType;
-import java.lang.annotation.Retention;
-import java.lang.annotation.RetentionPolicy;
-import java.lang.annotation.Target;
+public class TwoWayConversation implements Conversation<Integer> {
 
-@Target({ElementType.METHOD})
-@Retention(RetentionPolicy.RUNTIME)
-public @interface Whisper {
+  Integer timeout;
 
+  public TwoWayConversation () {
+
+    this(0);
+  }
+
+  public TwoWayConversation (Integer timeout) {
+
+    this.timeout = timeout;
+  }
+
+  @Override
+  public ConversationType getConversationType () {
+
+    return ConversationType.IN_OUT;
+  }
+
+  // Any positive value (> 0) will override the default service timeout seconds
+  @Override
+  public Integer getTimeout () {
+
+    return timeout;
+  }
 }

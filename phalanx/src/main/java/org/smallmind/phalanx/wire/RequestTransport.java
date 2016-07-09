@@ -36,14 +36,13 @@ import java.util.Map;
 
 public interface RequestTransport {
 
-  public abstract String getCallerId ();
+  String getCallerId ();
 
-  public abstract void transmitInOnly (String serviceGroup, Voice voice, Address address, Map<String, Object> arguments, WireContext... contexts)
+  Object transmit (Voice voice, Address address, Map<String, Object> arguments, WireContext... contexts)
     throws Throwable;
 
-  public abstract Object transmitInOut (String serviceGroup, Voice voice, int timeoutSeconds, Address address, Map<String, Object> arguments, WireContext... contexts)
-    throws Throwable;
+  void completeCallback (String correlationId, ResultSignal resultSignal);
 
-  public abstract void close ()
+  void close ()
     throws Exception;
 }

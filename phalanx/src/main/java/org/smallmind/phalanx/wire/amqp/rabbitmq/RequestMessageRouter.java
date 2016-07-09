@@ -53,7 +53,6 @@ import org.smallmind.phalanx.wire.ResultSignal;
 import org.smallmind.phalanx.wire.SignalCodec;
 import org.smallmind.phalanx.wire.VocalMode;
 import org.smallmind.phalanx.wire.Voice;
-import org.smallmind.phalanx.wire.Whispering;
 import org.smallmind.phalanx.wire.WireContext;
 import org.smallmind.phalanx.wire.WireProperty;
 import org.smallmind.scribe.pen.LoggerManager;
@@ -128,7 +127,7 @@ public class RequestMessageRouter extends MessageRouter {
     StringBuilder routingKeyBuilder = new StringBuilder(voice.getMode().getName()).append("-").append(serviceGroup);
 
     if (voice.getMode().equals(VocalMode.WHISPER)) {
-      routingKeyBuilder.append('[').append(((Whispering)voice).get()).append(']');
+      routingKeyBuilder.append('[').append(voice.getInstanceId()).append(']');
     }
 
     send(routingKeyBuilder.toString(), getRequestExchangeName(), rabbitMQMessage.getProperties(), rabbitMQMessage.getBody());

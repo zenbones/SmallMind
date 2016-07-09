@@ -32,13 +32,10 @@
  */
 package org.smallmind.phalanx.wire;
 
-import java.lang.annotation.ElementType;
-import java.lang.annotation.Retention;
-import java.lang.annotation.RetentionPolicy;
-import java.lang.annotation.Target;
+import java.util.HashMap;
 
-@Target({ElementType.METHOD})
-@Retention(RetentionPolicy.RUNTIME)
-public @interface Whisper {
+public interface Vocalizer<V extends Voice> {
 
+  public abstract V getVoice (HashMap<String, Object> argumentMap, WireContext... wireContexts)
+    throws MissingInstanceIdException;
 }

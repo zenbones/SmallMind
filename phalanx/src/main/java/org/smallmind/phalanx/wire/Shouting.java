@@ -32,17 +32,15 @@
  */
 package org.smallmind.phalanx.wire;
 
-public class Shouting implements Voice<Void> {
+public class Shouting implements Voice<String, Void> {
 
-  private static Shouting INSTANCE = new Shouting();
+  private static OneWayConversation ONE_WAY_CONVERSATION = new OneWayConversation();
 
-  private Shouting () {
+  private String serviceGroup;
 
-  }
+  public Shouting (String serviceGroup) {
 
-  public static Shouting instance () {
-
-    return INSTANCE;
+    this.serviceGroup = serviceGroup;
   }
 
   @Override
@@ -51,8 +49,19 @@ public class Shouting implements Voice<Void> {
     return VocalMode.SHOUT;
   }
 
+  public Conversation getConversation () {
+
+    return ONE_WAY_CONVERSATION;
+  }
+
   @Override
-  public Void get () {
+  public String getServiceGroup () {
+
+    return serviceGroup;
+  }
+
+  @Override
+  public Void getInstanceId () {
 
     return null;
   }

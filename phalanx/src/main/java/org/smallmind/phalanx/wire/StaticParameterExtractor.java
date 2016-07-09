@@ -32,13 +32,20 @@
  */
 package org.smallmind.phalanx.wire;
 
-import java.lang.annotation.ElementType;
-import java.lang.annotation.Retention;
-import java.lang.annotation.RetentionPolicy;
-import java.lang.annotation.Target;
+import java.util.HashMap;
 
-@Target({ElementType.METHOD})
-@Retention(RetentionPolicy.RUNTIME)
-public @interface Whisper {
+public class StaticParameterExtractor implements ParameterExtractor {
 
+  private String parameter;
+
+  public StaticParameterExtractor (String parameter) {
+
+    this.parameter = parameter;
+  }
+
+  @Override
+  public String getParameter (HashMap<String, Object> argumentMap, WireContext... wireContexts) throws MissingInstanceIdException {
+
+    return parameter;
+  }
 }

@@ -48,30 +48,26 @@ import org.smallmind.instrument.MetricProperty;
 import org.smallmind.instrument.config.MetricConfiguration;
 import org.smallmind.instrument.config.MetricConfigurationProvider;
 import org.smallmind.nutsnbolts.time.Duration;
-import org.smallmind.nutsnbolts.util.SelfDestructiveMap;
 import org.smallmind.nutsnbolts.util.SnowflakeId;
+import org.smallmind.phalanx.wire.AbstractRequestTransport;
 import org.smallmind.phalanx.wire.Address;
 import org.smallmind.phalanx.wire.AsynchronousTransmissionCallback;
+import org.smallmind.phalanx.wire.ConversationType;
 import org.smallmind.phalanx.wire.InvocationSignal;
 import org.smallmind.phalanx.wire.MetricType;
-import org.smallmind.phalanx.wire.RequestTransport;
-import org.smallmind.phalanx.wire.ResultSignal;
 import org.smallmind.phalanx.wire.SignalCodec;
 import org.smallmind.phalanx.wire.SynchronousTransmissionCallback;
-import org.smallmind.phalanx.wire.TransmissionCallback;
 import org.smallmind.phalanx.wire.TransportException;
 import org.smallmind.phalanx.wire.VocalMode;
 import org.smallmind.phalanx.wire.Voice;
-import org.smallmind.phalanx.wire.Whispering;
 import org.smallmind.phalanx.wire.WireContext;
 import org.smallmind.phalanx.wire.WireProperty;
 
-public class JmsRequestTransport implements MetricConfigurationProvider, RequestTransport {
+public class JmsRequestTransport extends AbstractRequestTransport implements MetricConfigurationProvider {
 
   private final AtomicBoolean closed = new AtomicBoolean(false);
   private final MetricConfiguration metricConfiguration;
   private final SignalCodec signalCodec;
-  private final SelfDestructiveMap<String, TransmissionCallback> callbackMap;
   private final LinkedBlockingQueue<MessageHandler> talkQueue;
   private final LinkedBlockingQueue<MessageHandler> whisperAndShoutQueue;
   private final ConnectionManager[] talkRequestConnectionManagers;
@@ -82,13 +78,13 @@ public class JmsRequestTransport implements MetricConfigurationProvider, Request
   public JmsRequestTransport (MetricConfiguration metricConfiguration, RoutingFactories routingFactories, MessagePolicy messagePolicy, ReconnectionPolicy reconnectionPolicy, SignalCodec signalCodec, int clusterSize, int concurrencyLimit, int maximumMessageLength, int defaultTimeoutSeconds)
     throws IOException, JMSException, TransportException {
 
+    super(defaultTimeoutSeconds);
+
     int talkIndex = 0;
     int whisperIndex = 0;
 
     this.metricConfiguration = metricConfiguration;
     this.signalCodec = signalCodec;
-
-    callbackMap = new SelfDestructiveMap<>(new Duration(defaultTimeoutSeconds, TimeUnit.SECONDS));
 
     talkRequestConnectionManagers = new ConnectionManager[clusterSize];
     for (int index = 0; index < talkRequestConnectionManagers.length; index++) {
@@ -133,49 +129,32 @@ public class JmsRequestTransport implements MetricConfigurationProvider, Request
   }
 
   @Override
-  public void transmitInOnly (String serviceGroup, Voice voice, Address address, Map<String, Object> arguments, WireContext... contexts)
-    throws Exception {
-
-    transmit(true, serviceGroup, voice, 0, address, arguments, contexts);
-  }
-
-  @Override
-  public Object transmitInOut (String serviceGroup, Voice voice, int timeoutSeconds, Address address, Map<String, Object> arguments, WireContext... contexts)
+  public Object transmit (Voice voice, Address address, Map<String, Object> arguments, WireContext... contexts)
     throws Throwable {
-
-    TransmissionCallback transmissionCallback;
-
-    if ((transmissionCallback = transmit(false, serviceGroup, voice, timeoutSeconds, address, arguments, contexts)) != null) {
-
-      return transmissionCallback.getResult(signalCodec);
-    }
-
-    return null;
-  }
-
-  private TransmissionCallback transmit (boolean inOnly, String serviceGroup, Voice voice, int timeoutSeconds, Address address, Map<String, Object> arguments, WireContext... contexts)
-    throws Exception {
 
     LinkedBlockingQueue<MessageHandler> messageQueue = voice.getMode().equals(VocalMode.TALK) ? talkQueue : whisperAndShoutQueue;
     final MessageHandler messageHandler = acquireMessageHandler(messageQueue);
+    boolean inOnly = voice.getConversation().getConversationType().equals(ConversationType.IN_ONLY);
 
     try {
 
       Message requestMessage;
 
-      messageHandler.send(requestMessage = constructMessage(messageHandler, inOnly, serviceGroup, voice.getMode().equals(VocalMode.WHISPER) ? ((Whispering)voice).get() : null, address, arguments, contexts));
+      messageHandler.send(requestMessage = constructMessage(messageHandler, inOnly, (String)voice.getServiceGroup(), voice.getMode().equals(VocalMode.WHISPER) ? (String)voice.getInstanceId() : null, address, arguments, contexts));
 
       if (!inOnly) {
 
         AsynchronousTransmissionCallback asynchronousCallback = new AsynchronousTransmissionCallback(address.getService(), address.getFunction().getName());
         SynchronousTransmissionCallback previousCallback;
+        Object timeoutObject;
+        int timeoutSeconds = (timeoutObject = voice.getConversation().getTimeout()) == null ? 0 : (Integer)timeoutObject;
 
-        if ((previousCallback = (SynchronousTransmissionCallback)callbackMap.putIfAbsent(requestMessage.getJMSMessageID(), asynchronousCallback, (timeoutSeconds > 0) ? new Duration(timeoutSeconds, TimeUnit.SECONDS) : null)) != null) {
+        if ((previousCallback = (SynchronousTransmissionCallback)getCallbackMap().putIfAbsent(requestMessage.getJMSMessageID(), asynchronousCallback, (timeoutSeconds > 0) ? new Duration(timeoutSeconds, TimeUnit.SECONDS) : null)) != null) {
 
-          return previousCallback;
+          return previousCallback.getResult(signalCodec);
         }
 
-        return asynchronousCallback;
+        return asynchronousCallback.getResult(signalCodec);
       }
 
       return null;
@@ -240,21 +219,6 @@ public class JmsRequestTransport implements MetricConfigurationProvider, Request
     });
   }
 
-  public void completeCallback (String correlationId, ResultSignal resultSignal) {
-
-    TransmissionCallback previousCallback;
-
-    if ((previousCallback = callbackMap.get(correlationId)) == null) {
-      if ((previousCallback = callbackMap.putIfAbsent(correlationId, new SynchronousTransmissionCallback(resultSignal))) != null) {
-        if (previousCallback instanceof AsynchronousTransmissionCallback) {
-          ((AsynchronousTransmissionCallback)previousCallback).setResultSignal(resultSignal);
-        }
-      }
-    } else if (previousCallback instanceof AsynchronousTransmissionCallback) {
-      ((AsynchronousTransmissionCallback)previousCallback).setResultSignal(resultSignal);
-    }
-  }
-
   @Override
   public void close ()
     throws JMSException, InterruptedException {
@@ -278,7 +242,7 @@ public class JmsRequestTransport implements MetricConfigurationProvider, Request
         responseListener.close();
       }
 
-      callbackMap.shutdown();
+      getCallbackMap().shutdown();
     }
   }
 }

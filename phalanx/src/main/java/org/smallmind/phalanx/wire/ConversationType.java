@@ -32,13 +32,7 @@
  */
 package org.smallmind.phalanx.wire;
 
-import java.lang.annotation.ElementType;
-import java.lang.annotation.Retention;
-import java.lang.annotation.RetentionPolicy;
-import java.lang.annotation.Target;
+public enum ConversationType {
 
-@Target({ElementType.METHOD})
-@Retention(RetentionPolicy.RUNTIME)
-public @interface Whisper {
-
+  IN_OUT, IN_ONLY
 }

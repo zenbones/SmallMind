@@ -32,13 +32,23 @@
  */
 package org.smallmind.phalanx.wire;
 
-public class Whispering implements Voice<String> {
+public class Whispering implements Voice<String, String> {
 
+  private TwoWayConversation twoWayConversation;
+  private String serviceGroup;
   private String instanceId;
 
-  public Whispering (String instanceId) {
+  public Whispering (String serviceGroup, String instanceId) {
 
+    this(serviceGroup, instanceId, 0);
+  }
+
+  public Whispering (String serviceGroup, String instanceId, Integer timeout) {
+
+    this.serviceGroup = serviceGroup;
     this.instanceId = instanceId;
+
+    twoWayConversation = new TwoWayConversation(timeout);
   }
 
   @Override
@@ -47,8 +57,19 @@ public class Whispering implements Voice<String> {
     return VocalMode.WHISPER;
   }
 
+  public Conversation getConversation () {
+
+    return twoWayConversation;
+  }
+
   @Override
-  public String get () {
+  public String getServiceGroup () {
+
+    return serviceGroup;
+  }
+
+  @Override
+  public String getInstanceId () {
 
     return instanceId;
   }

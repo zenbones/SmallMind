@@ -32,13 +32,36 @@
  */
 package org.smallmind.phalanx.wire;
 
-import java.lang.annotation.ElementType;
-import java.lang.annotation.Retention;
-import java.lang.annotation.RetentionPolicy;
-import java.lang.annotation.Target;
+import java.util.concurrent.TimeUnit;
+import org.smallmind.nutsnbolts.time.Duration;
+import org.smallmind.nutsnbolts.util.SelfDestructiveMap;
 
-@Target({ElementType.METHOD})
-@Retention(RetentionPolicy.RUNTIME)
-public @interface Whisper {
+public abstract class AbstractRequestTransport implements RequestTransport {
 
+  private final SelfDestructiveMap<String, TransmissionCallback> callbackMap;
+
+  public AbstractRequestTransport (int defaultTimeoutSeconds) {
+
+    callbackMap = new SelfDestructiveMap<>(new Duration(defaultTimeoutSeconds, TimeUnit.SECONDS));
+  }
+
+  public SelfDestructiveMap<String, TransmissionCallback> getCallbackMap () {
+
+    return callbackMap;
+  }
+
+  public void completeCallback (String correlationId, ResultSignal resultSignal) {
+
+    TransmissionCallback previousCallback;
+
+    if ((previousCallback = callbackMap.get(correlationId)) == null) {
+      if ((previousCallback = callbackMap.putIfAbsent(correlationId, new SynchronousTransmissionCallback(resultSignal))) != null) {
+        if (previousCallback instanceof AsynchronousTransmissionCallback) {
+          ((AsynchronousTransmissionCallback)previousCallback).setResultSignal(resultSignal);
+        }
+      }
+    } else if (previousCallback instanceof AsynchronousTransmissionCallback) {
+      ((AsynchronousTransmissionCallback)previousCallback).setResultSignal(resultSignal);
+    }
+  }
 }

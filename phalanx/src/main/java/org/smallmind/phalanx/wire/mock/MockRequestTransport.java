@@ -37,35 +37,32 @@ import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 import org.smallmind.nutsnbolts.time.Duration;
-import org.smallmind.nutsnbolts.util.SelfDestructiveMap;
+import org.smallmind.phalanx.wire.AbstractRequestTransport;
 import org.smallmind.phalanx.wire.Address;
 import org.smallmind.phalanx.wire.AsynchronousTransmissionCallback;
+import org.smallmind.phalanx.wire.ConversationType;
 import org.smallmind.phalanx.wire.InvocationSignal;
-import org.smallmind.phalanx.wire.RequestTransport;
 import org.smallmind.phalanx.wire.ResultSignal;
 import org.smallmind.phalanx.wire.SignalCodec;
 import org.smallmind.phalanx.wire.SynchronousTransmissionCallback;
-import org.smallmind.phalanx.wire.TransmissionCallback;
 import org.smallmind.phalanx.wire.VocalMode;
 import org.smallmind.phalanx.wire.Voice;
-import org.smallmind.phalanx.wire.Whispering;
 import org.smallmind.phalanx.wire.WireContext;
 import org.smallmind.phalanx.wire.WireProperty;
 import org.smallmind.scribe.pen.LoggerManager;
 
-public class MockRequestTransport implements RequestTransport {
+public class MockRequestTransport extends AbstractRequestTransport {
 
   private final MockMessageRouter messageRouter;
   private final SignalCodec signalCodec;
-  private final SelfDestructiveMap<String, TransmissionCallback> callbackMap;
   private final String callerId = UUID.randomUUID().toString();
 
   public MockRequestTransport (MockMessageRouter messageRouter, final SignalCodec signalCodec, int defaultTimeoutSeconds) {
 
+    super(defaultTimeoutSeconds);
+
     this.messageRouter = messageRouter;
     this.signalCodec = signalCodec;
-
-    callbackMap = new SelfDestructiveMap<>(new Duration(defaultTimeoutSeconds, TimeUnit.SECONDS));
 
     messageRouter.getResponseTopic().addListener(new MockMessageListener() {
 
@@ -94,24 +91,14 @@ public class MockRequestTransport implements RequestTransport {
   }
 
   @Override
-  public void transmitInOnly (String serviceGroup, Voice voice, Address address, Map<String, Object> arguments, WireContext... contexts)
-    throws Exception {
-
-    transmit(true, serviceGroup, voice, 0, address, arguments, contexts);
-  }
-
-  @Override
-  public Object transmitInOut (String serviceGroup, Voice voice, int timeoutSeconds, Address address, Map<String, Object> arguments, WireContext... contexts)
+  public Object transmit (Voice voice, Address address, Map<String, Object> arguments, WireContext... contexts)
     throws Throwable {
 
-    return transmit(false, serviceGroup, voice, timeoutSeconds, address, arguments, contexts).getResult(signalCodec);
-  }
-
-  private TransmissionCallback transmit (boolean inOnly, String serviceGroup, Voice voice, int timeoutSeconds, Address address, Map<String, Object> arguments, WireContext... contexts)
-    throws Exception {
-
-    MockMessage message = new MockMessage(signalCodec.encode(new InvocationSignal(inOnly, address, arguments, contexts)));
+    MockMessage message;
     String messageId = UUID.randomUUID().toString();
+    boolean inOnly = voice.getConversation().getConversationType().equals(ConversationType.IN_ONLY);
+
+    message = new MockMessage(signalCodec.encode(new InvocationSignal(inOnly, address, arguments, contexts)));
 
     if (!inOnly) {
       message.getProperties().setHeader(WireProperty.CALLER_ID.getKey(), callerId);
@@ -121,10 +108,10 @@ public class MockRequestTransport implements RequestTransport {
     message.getProperties().setTimestamp(new Date());
     message.getProperties().setContentType(signalCodec.getContentType());
     message.getProperties().setHeader(WireProperty.CLOCK.getKey(), System.currentTimeMillis());
-    message.getProperties().setHeader(WireProperty.SERVICE_GROUP.getKey(), serviceGroup);
+    message.getProperties().setHeader(WireProperty.SERVICE_GROUP.getKey(), voice.getServiceGroup());
 
     if (voice.getMode().equals(VocalMode.WHISPER)) {
-      message.getProperties().setHeader(WireProperty.INSTANCE_ID.getKey(), ((Whispering)voice).get());
+      message.getProperties().setHeader(WireProperty.INSTANCE_ID.getKey(), voice.getInstanceId());
       messageRouter.getWhisperRequestTopic().send(message);
     } else {
       messageRouter.getTalkRequestQueue().send(message);
@@ -134,36 +121,25 @@ public class MockRequestTransport implements RequestTransport {
 
       AsynchronousTransmissionCallback asynchronousCallback = new AsynchronousTransmissionCallback(address.getService(), address.getFunction().getName());
       SynchronousTransmissionCallback previousCallback;
+      Object timeoutObject;
+      int timeoutSeconds = (timeoutObject = voice.getConversation().getTimeout()) == null ? 0 : (Integer)timeoutObject;
 
-      if ((previousCallback = (SynchronousTransmissionCallback)callbackMap.putIfAbsent(messageId, asynchronousCallback, (timeoutSeconds > 0) ? new Duration(timeoutSeconds, TimeUnit.SECONDS) : null)) != null) {
+      if ((previousCallback = (SynchronousTransmissionCallback)getCallbackMap().putIfAbsent(messageId, asynchronousCallback, (timeoutSeconds > 0) ? new Duration(timeoutSeconds, TimeUnit.SECONDS) : null)) != null) {
 
-        return previousCallback;
+        return previousCallback.getResult(signalCodec);
       }
 
-      return asynchronousCallback;
+      return asynchronousCallback.getResult(signalCodec);
     } else {
 
       return null;
     }
   }
 
-  public void completeCallback (String correlationId, ResultSignal resultSignal) {
-
-    TransmissionCallback previousCallback;
-
-    if ((previousCallback = callbackMap.get(correlationId)) == null) {
-      if ((previousCallback = callbackMap.putIfAbsent(correlationId, new SynchronousTransmissionCallback(resultSignal))) != null) {
-        if (previousCallback instanceof AsynchronousTransmissionCallback) {
-          ((AsynchronousTransmissionCallback)previousCallback).setResultSignal(resultSignal);
-        }
-      }
-    } else if (previousCallback instanceof AsynchronousTransmissionCallback) {
-      ((AsynchronousTransmissionCallback)previousCallback).setResultSignal(resultSignal);
-    }
-  }
-
   @Override
-  public void close () throws Exception {
+  public void close ()
+    throws Exception {
 
+    getCallbackMap().shutdown();
   }
 }

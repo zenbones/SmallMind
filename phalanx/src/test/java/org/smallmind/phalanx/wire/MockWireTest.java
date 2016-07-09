@@ -33,11 +33,11 @@
 package org.smallmind.phalanx.wire;
 
 import java.util.Date;
-import org.smallmind.phalanx.wire.mock.MockRequestTransport;
-import org.smallmind.phalanx.wire.mock.MockResponseTransport;
 import org.smallmind.nutsnbolts.context.ContextException;
 import org.smallmind.nutsnbolts.context.ContextFactory;
 import org.smallmind.nutsnbolts.lang.PerApplicationContext;
+import org.smallmind.phalanx.wire.mock.MockRequestTransport;
+import org.smallmind.phalanx.wire.mock.MockResponseTransport;
 import org.springframework.context.support.ClassPathXmlApplicationContext;
 import org.testng.Assert;
 import org.testng.annotations.AfterClass;
@@ -80,7 +80,7 @@ public class MockWireTest {
     WireContextManager.register("test", TestWireContext.class);
 
     responseTransport.register(WireTestingService.class, new WireTestingServiceImpl());
-    wireTestingService = (WireTestingService)WireProxyFactory.generateProxy(requestTransport, "test", 1, "WireTestService", WireTestingService.class);
+    wireTestingService = (WireTestingService)WireProxyFactory.generateProxy(requestTransport, 1, "WireTestService", WireTestingService.class, new StaticParameterExtractor("test"), null);
   }
 
   @AfterClass
@@ -137,7 +137,7 @@ public class MockWireTest {
   public void testComplexArguments () {
 
     Date now = new Date();
-    Color[] colors = new Color[]{new Color("red"), new Color("white"), new Color("blue")};
+    Color[] colors = new Color[] {new Color("red"), new Color("white"), new Color("blue")};
 
     Assert.assertEquals(wireTestingService.echoString("The quick brown fox"), "The quick brown fox");
     Assert.assertEquals(wireTestingService.echoDate(now), now);

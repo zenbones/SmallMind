@@ -43,26 +43,23 @@ import org.smallmind.instrument.MetricProperty;
 import org.smallmind.instrument.config.MetricConfiguration;
 import org.smallmind.instrument.config.MetricConfigurationProvider;
 import org.smallmind.nutsnbolts.time.Duration;
-import org.smallmind.nutsnbolts.util.SelfDestructiveMap;
 import org.smallmind.nutsnbolts.util.SnowflakeId;
+import org.smallmind.phalanx.wire.AbstractRequestTransport;
 import org.smallmind.phalanx.wire.Address;
 import org.smallmind.phalanx.wire.AsynchronousTransmissionCallback;
+import org.smallmind.phalanx.wire.ConversationType;
 import org.smallmind.phalanx.wire.MetricType;
-import org.smallmind.phalanx.wire.RequestTransport;
-import org.smallmind.phalanx.wire.ResultSignal;
 import org.smallmind.phalanx.wire.SignalCodec;
 import org.smallmind.phalanx.wire.SynchronousTransmissionCallback;
-import org.smallmind.phalanx.wire.TransmissionCallback;
 import org.smallmind.phalanx.wire.TransportException;
 import org.smallmind.phalanx.wire.Voice;
 import org.smallmind.phalanx.wire.WireContext;
 
-public class RabbitMQRequestTransport implements MetricConfigurationProvider, RequestTransport {
+public class RabbitMQRequestTransport extends AbstractRequestTransport implements MetricConfigurationProvider {
 
   private final AtomicBoolean closed = new AtomicBoolean(false);
   private final MetricConfiguration metricConfiguration;
   private final SignalCodec signalCodec;
-  private final SelfDestructiveMap<String, TransmissionCallback> callbackMap;
   private final LinkedBlockingQueue<RequestMessageRouter> routerQueue;
   private final RequestMessageRouter[] requestMessageRouters;
   private final String callerId = SnowflakeId.newInstance().generateDottedString();
@@ -70,12 +67,12 @@ public class RabbitMQRequestTransport implements MetricConfigurationProvider, Re
   public RabbitMQRequestTransport (MetricConfiguration metricConfiguration, RabbitMQConnector rabbitMQConnector, NameConfiguration nameConfiguration, SignalCodec signalCodec, int clusterSize, int concurrencyLimit, int defaultTimeoutSeconds, int messageTTLSeconds)
     throws IOException, InterruptedException {
 
+    super(defaultTimeoutSeconds);
+
     int routerIndex = 0;
 
     this.metricConfiguration = metricConfiguration;
     this.signalCodec = signalCodec;
-
-    callbackMap = new SelfDestructiveMap<>(new Duration(defaultTimeoutSeconds, TimeUnit.SECONDS));
 
     requestMessageRouters = new RequestMessageRouter[clusterSize];
     for (int index = 0; index < requestMessageRouters.length; index++) {
@@ -105,48 +102,31 @@ public class RabbitMQRequestTransport implements MetricConfigurationProvider, Re
   }
 
   @Override
-  public void transmitInOnly (String serviceGroup, Voice voice, Address address, Map<String, Object> arguments, WireContext... contexts)
-    throws Exception {
-
-    transmit(true, serviceGroup, voice, 0, address, arguments, contexts);
-  }
-
-  @Override
-  public Object transmitInOut (String serviceGroup, Voice voice, int timeoutSeconds, Address address, Map<String, Object> arguments, WireContext... contexts)
+  public Object transmit (Voice voice, Address address, Map<String, Object> arguments, WireContext... contexts)
     throws Throwable {
-
-    TransmissionCallback transmissionCallback;
-
-    if ((transmissionCallback = transmit(false, serviceGroup, voice, timeoutSeconds, address, arguments, contexts)) != null) {
-
-      return transmissionCallback.getResult(signalCodec);
-    }
-
-    return null;
-  }
-
-  private TransmissionCallback transmit (boolean inOnly, String serviceGroup, Voice voice, int timeoutSeconds, Address address, Map<String, Object> arguments, WireContext... contexts)
-    throws Exception {
 
     final RequestMessageRouter requestMessageRouter = acquireRequestMessageRouter();
 
     try {
 
       String messageId;
+      boolean inOnly = voice.getConversation().getConversationType().equals(ConversationType.IN_ONLY);
 
-      messageId = requestMessageRouter.publish(inOnly, serviceGroup, voice, address, arguments, contexts);
+      messageId = requestMessageRouter.publish(inOnly, (String)voice.getServiceGroup(), voice, address, arguments, contexts);
 
       if (!inOnly) {
 
         AsynchronousTransmissionCallback asynchronousCallback = new AsynchronousTransmissionCallback(address.getService(), address.getFunction().getName());
         SynchronousTransmissionCallback previousCallback;
+        Object timeoutObject;
+        int timeoutSeconds = (timeoutObject = voice.getConversation().getTimeout()) == null ? 0 : (Integer)timeoutObject;
 
-        if ((previousCallback = (SynchronousTransmissionCallback)callbackMap.putIfAbsent(messageId, asynchronousCallback, (timeoutSeconds > 0) ? new Duration(timeoutSeconds, TimeUnit.SECONDS) : null)) != null) {
+        if ((previousCallback = (SynchronousTransmissionCallback)getCallbackMap().putIfAbsent(messageId, asynchronousCallback, (timeoutSeconds > 0) ? new Duration(timeoutSeconds, TimeUnit.SECONDS) : null)) != null) {
 
-          return previousCallback;
+          return previousCallback.getResult(signalCodec);
         }
 
-        return asynchronousCallback;
+        return asynchronousCallback.getResult(signalCodec);
       }
 
       return null;
@@ -179,21 +159,6 @@ public class RabbitMQRequestTransport implements MetricConfigurationProvider, Re
     });
   }
 
-  public void completeCallback (String correlationId, ResultSignal resultSignal) {
-
-    TransmissionCallback previousCallback;
-
-    if ((previousCallback = callbackMap.get(correlationId)) == null) {
-      if ((previousCallback = callbackMap.putIfAbsent(correlationId, new SynchronousTransmissionCallback(resultSignal))) != null) {
-        if (previousCallback instanceof AsynchronousTransmissionCallback) {
-          ((AsynchronousTransmissionCallback)previousCallback).setResultSignal(resultSignal);
-        }
-      }
-    } else if (previousCallback instanceof AsynchronousTransmissionCallback) {
-      ((AsynchronousTransmissionCallback)previousCallback).setResultSignal(resultSignal);
-    }
-  }
-
   @Override
   public void close ()
     throws IOException, InterruptedException {
@@ -203,7 +168,7 @@ public class RabbitMQRequestTransport implements MetricConfigurationProvider, Re
         requestMessageRouter.close();
       }
 
-      callbackMap.shutdown();
+      getCallbackMap().shutdown();
     }
   }
 }
