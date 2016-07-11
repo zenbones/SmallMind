@@ -37,5 +37,5 @@ import java.util.HashMap;
 public interface ParameterExtractor {
 
   String getParameter (HashMap<String, Object> argumentMap, WireContext... wireContexts)
-    throws MissingInstanceIdException;
+    throws Exception;
 }
