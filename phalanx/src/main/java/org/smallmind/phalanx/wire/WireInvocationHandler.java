@@ -148,13 +148,13 @@ public class WireInvocationHandler implements InvocationHandler {
     }
 
     if (method.getAnnotation(Shout.class) != null) {
-      voice = new Shouting(serviceGroupExtractor.getParameter(argumentMap, wireContexts));
+      voice = new Shouting(serviceGroupExtractor.getParameter(method, argumentMap, wireContexts));
     } else if (method.getAnnotation(Whisper.class) != null) {
       if (instanceIdExtractor == null) {
         throw new ServiceDefinitionException("The method(%s) in service interface(%s) is marked as @Whisper but no instance id %s has been defined", method.getName(), serviceInterface.getName(), ParameterExtractor.class.getSimpleName());
       }
 
-      voice = new Whispering(serviceGroupExtractor.getParameter(argumentMap, wireContexts), instanceIdExtractor.getParameter(argumentMap, wireContexts));
+      voice = new Whispering(serviceGroupExtractor.getParameter(method, argumentMap, wireContexts), instanceIdExtractor.getParameter(method, argumentMap, wireContexts));
     } else if (method.getAnnotation(InOnly.class) != null) {
       if (!method.getReturnType().equals(void.class)) {
         throw new ServiceDefinitionException("The method(%s) in service interface(%s) is marked as @InOnly but does not return 'void'", method.getName(), serviceInterface.getName());
@@ -163,12 +163,12 @@ public class WireInvocationHandler implements InvocationHandler {
         throw new ServiceDefinitionException("The method(%s) in service interface(%s) is marked as @InOnly but declares an Exception list", method.getName(), serviceInterface.getName());
       }
 
-      voice = new Talking(ONE_WAY_CONVERSATION, serviceGroupExtractor.getParameter(argumentMap, wireContexts));
+      voice = new Talking(ONE_WAY_CONVERSATION, serviceGroupExtractor.getParameter(method, argumentMap, wireContexts));
     } else {
 
       InOut inOut = method.getAnnotation(InOut.class);
 
-      voice = new Talking((inOut == null) ? DEFAULT_TIMEOUT_TWO_WAY_CONVERSATION : new TwoWayConversation(inOut.timeoutSeconds()), serviceGroupExtractor.getParameter(argumentMap, wireContexts));
+      voice = new Talking((inOut == null) ? DEFAULT_TIMEOUT_TWO_WAY_CONVERSATION : new TwoWayConversation(inOut.timeoutSeconds()), serviceGroupExtractor.getParameter(method, argumentMap, wireContexts));
     }
 
     return transport.transmit(voice, new Address(version, serviceName, new Function(method)), argumentMap, wireContexts);
