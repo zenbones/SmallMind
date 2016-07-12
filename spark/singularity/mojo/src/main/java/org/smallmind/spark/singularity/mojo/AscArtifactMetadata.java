@@ -108,7 +108,7 @@ public class AscArtifactMetadata extends AbstractArtifactMetadata {
   @Override
   public void merge (ArtifactMetadata metadata) {
 
-    if (!((AscArtifactMetadata) metadata).getFile().equals(file)) {
+    if (!((AscArtifactMetadata)metadata).getFile().equals(file)) {
       throw new IllegalStateException("Cannot add two different pieces of metadata for key(" + getKey() + ")");
     }
   }
@@ -116,7 +116,7 @@ public class AscArtifactMetadata extends AbstractArtifactMetadata {
   @Override
   public void merge (org.apache.maven.repository.legacy.metadata.ArtifactMetadata metadata) {
 
-    if (!((AscArtifactMetadata) metadata).getFile().equals(file)) {
+    if (!((AscArtifactMetadata)metadata).getFile().equals(file)) {
       throw new IllegalStateException("Cannot add two different pieces of metadata for key(" + getKey() + ")");
     }
   }

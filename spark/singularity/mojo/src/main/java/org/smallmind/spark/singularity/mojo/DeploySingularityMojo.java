@@ -61,37 +61,42 @@ public class DeploySingularityMojo extends AbstractMojo {
   private ArtifactRepository localRepository;
   @Parameter(defaultValue = "${project.distributionManagementArtifactRepository}")
   private ArtifactRepository deploymentRepository;
+  @Parameter(defaultValue = "false")
+  private boolean skip;
 
   public void execute ()
     throws MojoExecutionException, MojoFailureException {
 
-    Artifact applicationArtifact;
-    File artifactAscFile;
-    StringBuilder pathBuilder;
+    if (!skip) {
 
-    if (project.getArtifact().getClassifier() == null) {
-      applicationArtifact = artifactFactory.createArtifact(project.getGroupId(), project.getArtifactId(), project.getVersion(), "compile", "jar");
-    } else {
-      applicationArtifact = artifactFactory.createArtifactWithClassifier(project.getGroupId(), project.getArtifactId(), project.getVersion(), "jar", project.getArtifact().getClassifier());
-    }
+      Artifact applicationArtifact;
+      File artifactAscFile;
+      StringBuilder pathBuilder;
 
-    pathBuilder = new StringBuilder(project.getBuild().getDirectory()).append(System.getProperty("file.separator")).append(project.getArtifactId()).append('-').append(project.getVersion());
+      if (project.getArtifact().getClassifier() == null) {
+        applicationArtifact = artifactFactory.createArtifact(project.getGroupId(), project.getArtifactId(), project.getVersion(), "compile", "jar");
+      } else {
+        applicationArtifact = artifactFactory.createArtifactWithClassifier(project.getGroupId(), project.getArtifactId(), project.getVersion(), "jar", project.getArtifact().getClassifier());
+      }
 
-    if (project.getArtifact().getClassifier() != null) {
-      pathBuilder.append('-');
-      pathBuilder.append(project.getArtifact().getClassifier());
-    }
+      pathBuilder = new StringBuilder(project.getBuild().getDirectory()).append(System.getProperty("file.separator")).append(project.getArtifactId()).append('-').append(project.getVersion());
 
-    pathBuilder.append(".jar");
+      if (project.getArtifact().getClassifier() != null) {
+        pathBuilder.append('-');
+        pathBuilder.append(project.getArtifact().getClassifier());
+      }
 
-    if ((artifactAscFile = new File(pathBuilder.toString() + ".asc")).isFile()) {
-      applicationArtifact.addMetadata(new AscArtifactMetadata(applicationArtifact, artifactAscFile));
-    }
+      pathBuilder.append(".jar");
 
-    try {
-      artifactDeployer.deploy(new File(pathBuilder.toString()), applicationArtifact, deploymentRepository, localRepository);
-    } catch (ArtifactDeploymentException artifactDeploymentException) {
-      throw new MojoExecutionException("Unable to deploy the singularity jar", artifactDeploymentException);
+      if ((artifactAscFile = new File(pathBuilder.toString() + ".asc")).isFile()) {
+        applicationArtifact.addMetadata(new AscArtifactMetadata(applicationArtifact, artifactAscFile));
+      }
+
+      try {
+        artifactDeployer.deploy(new File(pathBuilder.toString()), applicationArtifact, deploymentRepository, localRepository);
+      } catch (ArtifactDeploymentException artifactDeploymentException) {
+        throw new MojoExecutionException("Unable to deploy the singularity jar", artifactDeploymentException);
+      }
     }
   }
 }

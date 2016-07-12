@@ -83,133 +83,138 @@ public class GenerateSingularityMojo extends AbstractMojo {
   private String mainClass;
   @Parameter(defaultValue = "false")
   private boolean verbose;
+  @Parameter(defaultValue = "false")
+  private boolean skip;
 
   public void execute ()
     throws MojoExecutionException, MojoFailureException {
 
-    Artifact applicationArtifact;
-    SingularityIndex singularityIndex = new SingularityIndex();
-    Path buildPath;
-    Path libraryPath;
-    Path indexPath;
-    Path classesPath;
-    File compressedFile;
-    boolean bootClassesFound = false;
+    if (!skip) {
 
-    try {
-      Files.createDirectories(buildPath = Paths.get(project.getBuild().getDirectory(), singularityBuildDir));
-      Files.createDirectories(libraryPath = buildPath.resolve("META-INF").resolve("singularity"));
-      Files.createDirectories(indexPath = buildPath.resolve("META-INF").resolve("index"));
-    } catch (IOException ioException) {
-      throw new MojoExecutionException("Unable to create a build directory", ioException);
-    }
+      Artifact applicationArtifact;
+      SingularityIndex singularityIndex = new SingularityIndex();
+      Path buildPath;
+      Path libraryPath;
+      Path indexPath;
+      Path classesPath;
+      File compressedFile;
+      boolean bootClassesFound = false;
 
-    for (Artifact pluginArtifact : pluginArtifacts) {
-      if (pluginArtifact.getGroupId().equals("org.smallmind") && pluginArtifact.getArtifactId().equals("spark-singularity-boot")) {
-        try {
-          copyBootClasses(singularityIndex, pluginArtifact.getFile(), buildPath);
-        } catch (IOException ioException) {
-          throw new MojoExecutionException("Problem in copying boot classes into the build directory", ioException);
+      try {
+        Files.createDirectories(buildPath = Paths.get(project.getBuild().getDirectory(), singularityBuildDir));
+        Files.createDirectories(libraryPath = buildPath.resolve("META-INF").resolve("singularity"));
+        Files.createDirectories(indexPath = buildPath.resolve("META-INF").resolve("index"));
+      } catch (IOException ioException) {
+        throw new MojoExecutionException("Unable to create a build directory", ioException);
+      }
+
+      for (Artifact pluginArtifact : pluginArtifacts) {
+        if (pluginArtifact.getGroupId().equals("org.smallmind") && pluginArtifact.getArtifactId().equals("spark-singularity-boot")) {
+          try {
+            copyBootClasses(singularityIndex, pluginArtifact.getFile(), buildPath);
+          } catch (IOException ioException) {
+            throw new MojoExecutionException("Problem in copying boot classes into the build directory", ioException);
+          }
+
+          bootClassesFound = true;
+          break;
+        }
+      }
+      if (!bootClassesFound) {
+        throw new MojoExecutionException("Unable to locate the boot class dependencies");
+      }
+
+      for (Artifact artifact : project.getRuntimeArtifacts()) {
+
+        boolean excluded = false;
+
+        if ((exclusions != null) && (exclusions.length > 0)) {
+          for (Exclusion exclusion : exclusions) {
+            if (exclusion.matchesArtifact(artifact)) {
+              excluded = true;
+              break;
+            }
+          }
         }
 
-        bootClassesFound = true;
-        break;
-      }
-    }
-    if (!bootClassesFound) {
-      throw new MojoExecutionException("Unable to locate the boot class dependencies");
-    }
+        if (excluded) {
+          if (verbose) {
+            getLog().info(String.format("Excluded dependency(%s)...", artifact.getFile().getName()));
+          }
+        } else {
+          if (verbose) {
+            getLog().info(String.format("Copying dependency(%s)...", artifact.getFile().getName()));
+          }
 
-    for (Artifact artifact : project.getRuntimeArtifacts()) {
+          try {
 
-      boolean excluded = false;
+            JarFile jarFile = new JarFile(artifact.getFile());
+            Enumeration<JarEntry> jarEntryEnum = jarFile.entries();
 
-      if ((exclusions != null) && (exclusions.length > 0)) {
-        for (Exclusion exclusion : exclusions) {
-          if (exclusion.matchesArtifact(artifact)) {
-            excluded = true;
-            break;
+            while (jarEntryEnum.hasMoreElements()) {
+              singularityIndex.addInverseJarEntry(jarEntryEnum.nextElement().getName(), artifact.getFile().getName());
+            }
+
+            copyToDestination(artifact.getFile(), libraryPath.resolve(artifact.getFile().getName()));
+          } catch (IOException ioException) {
+            throw new MojoExecutionException(String.format("Problem in copying a dependency(%s) into the build directory", artifact), ioException);
           }
         }
       }
 
-      if (excluded) {
+      if (Files.exists(classesPath = Paths.get(project.getBuild().getDirectory(), "classes"))) {
         if (verbose) {
-          getLog().info(String.format("Excluded dependency(%s)...", artifact.getFile().getName()));
+          getLog().info("Copying classes directory...");
         }
-      } else {
-        if (verbose) {
-          getLog().info(String.format("Copying dependency(%s)...", artifact.getFile().getName()));
-        }
-
         try {
-
-          JarFile jarFile = new JarFile(artifact.getFile());
-          Enumeration<JarEntry> jarEntryEnum = jarFile.entries();
-
-          while (jarEntryEnum.hasMoreElements()) {
-            singularityIndex.addInverseJarEntry(jarEntryEnum.nextElement().getName(), artifact.getFile().getName());
-          }
-
-          copyToDestination(artifact.getFile(), libraryPath.resolve(artifact.getFile().getName()));
+          Files.walkFileTree(classesPath, new CopyFileVisitor(singularityIndex, buildPath));
         } catch (IOException ioException) {
-          throw new MojoExecutionException(String.format("Problem in copying a dependency(%s) into the build directory", artifact), ioException);
+          throw new MojoExecutionException("Unable to copy the classes directory into the build path", ioException);
         }
       }
-    }
 
-    if (Files.exists(classesPath = Paths.get(project.getBuild().getDirectory(), "classes"))) {
       if (verbose) {
-        getLog().info("Copying classes directory...");
+        getLog().info("Creating singularity index...");
       }
       try {
-        Files.walkFileTree(classesPath, new CopyFileVisitor(singularityIndex, buildPath));
+        try (ObjectOutputStream objectOutputStream = new ObjectOutputStream(new FileOutputStream(indexPath.resolve("singularity.idx").toFile()))) {
+          objectOutputStream.writeObject(singularityIndex);
+        }
       } catch (IOException ioException) {
-        throw new MojoExecutionException("Unable to copy the classes directory into the build path", ioException);
-      }
-    }
-
-    if (verbose) {
-      getLog().info("Creating singularity index...");
-    }
-    try {
-      try (ObjectOutputStream objectOutputStream = new ObjectOutputStream(new FileOutputStream(indexPath.resolve("singularity.idx").toFile()))) {
-        objectOutputStream.writeObject(singularityIndex);
-      }
-    } catch (IOException ioException) {
-      throw new MojoExecutionException("Unable to write the singularity index", ioException);
-    }
-
-    try {
-
-      Manifest manifest = new Manifest();
-      Attributes attributes = manifest.getMainAttributes();
-
-      attributes.put(Attributes.Name.MAIN_CLASS, SingularityEntryPoint.class.getName());
-      attributes.put(new Attributes.Name("Singularity-Class"), mainClass);
-
-      attributes.put(Attributes.Name.SPECIFICATION_TITLE, System.getProperty("java.vm.specification.name"));
-      attributes.put(Attributes.Name.SPECIFICATION_VERSION, System.getProperty("java.vm.specification.version"));
-      attributes.put(Attributes.Name.SPECIFICATION_VENDOR, System.getProperty("java.vm.specification.vendor"));
-      attributes.put(Attributes.Name.IMPLEMENTATION_TITLE, System.getProperty("java.specification.name"));
-      attributes.put(Attributes.Name.IMPLEMENTATION_VERSION, System.getProperty("java.specification.version"));
-      attributes.put(Attributes.Name.IMPLEMENTATION_VENDOR, System.getProperty("java.specification.vendor"));
-
-      attributes.put(Attributes.Name.MANIFEST_VERSION, "1.0");
-
-      if (verbose) {
-        getLog().info("Compressing output jar...");
+        throw new MojoExecutionException("Unable to write the singularity index", ioException);
       }
 
-      CompressionType.JAR.compress(compressedFile = Paths.get(project.getBuild().getDirectory(), constructArtifactName()).toFile(), buildPath.toFile(), manifest);
-    } catch (IOException ioException) {
-      throw new MojoExecutionException("Problem constructing the executable jar", ioException);
+      try {
+
+        Manifest manifest = new Manifest();
+        Attributes attributes = manifest.getMainAttributes();
+
+        attributes.put(Attributes.Name.MAIN_CLASS, SingularityEntryPoint.class.getName());
+        attributes.put(new Attributes.Name("Singularity-Class"), mainClass);
+
+        attributes.put(Attributes.Name.SPECIFICATION_TITLE, System.getProperty("java.vm.specification.name"));
+        attributes.put(Attributes.Name.SPECIFICATION_VERSION, System.getProperty("java.vm.specification.version"));
+        attributes.put(Attributes.Name.SPECIFICATION_VENDOR, System.getProperty("java.vm.specification.vendor"));
+        attributes.put(Attributes.Name.IMPLEMENTATION_TITLE, System.getProperty("java.specification.name"));
+        attributes.put(Attributes.Name.IMPLEMENTATION_VERSION, System.getProperty("java.specification.version"));
+        attributes.put(Attributes.Name.IMPLEMENTATION_VENDOR, System.getProperty("java.specification.vendor"));
+
+        attributes.put(Attributes.Name.MANIFEST_VERSION, "1.0");
+
+        if (verbose) {
+          getLog().info("Compressing output jar...");
+        }
+
+        CompressionType.JAR.compress(compressedFile = Paths.get(project.getBuild().getDirectory(), constructArtifactName()).toFile(), buildPath.toFile(), manifest);
+      } catch (IOException ioException) {
+        throw new MojoExecutionException("Problem constructing the executable jar", ioException);
+      }
+
+      applicationArtifact = artifactFactory.createArtifact(project.getGroupId(), project.getArtifactId(), project.getVersion(), "compile", "jar");
+      applicationArtifact.setFile(compressedFile);
+
+      project.addAttachedArtifact(applicationArtifact);
     }
-
-    applicationArtifact = artifactFactory.createArtifact(project.getGroupId(), project.getArtifactId(), project.getVersion(), "compile", "jar");
-    applicationArtifact.setFile(compressedFile);
-
-    project.addAttachedArtifact(applicationArtifact);
   }
 
   private String constructArtifactName () {
