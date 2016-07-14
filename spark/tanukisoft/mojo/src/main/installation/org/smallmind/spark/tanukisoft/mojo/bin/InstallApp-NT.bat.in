@@ -2,7 +2,7 @@
 setlocal
 
 rem
-rem Copyright (c) 1999, 2014 Tanuki Software, Ltd.
+rem Copyright (c) 1999, 2016 Tanuki Software, Ltd.
 rem http://www.tanukisoftware.com
 rem All rights reserved.
 rem
@@ -11,34 +11,36 @@ rem You shall use it only in accordance with the terms of the
 rem license agreement you entered into with Tanuki Software.
 rem http://wrapper.tanukisoftware.com/doc/english/licenseOverview.html
 rem
-rem Java Service Wrapper general passthrough startup script.
+rem Java Service Wrapper script - Install as an NT service.
 rem
+
 rem -----------------------------------------------------------------------------
 rem These settings can be modified to fit the needs of your application
-rem Optimized for use with version 3.5.26 of the Wrapper.
+rem Optimized for use with version 3.5.30 of the Wrapper.
 
 rem The base name for the Wrapper binary.
 set _WRAPPER_BASE=wrapper
 
-rem The directory where the Wrapper binary (.exe) file is located, this can be
-rem either a absolute or relative path. If the path contains any special characters, 
-rem please make sure to quote the variable. 
+rem The directory where the Wrapper binary (.exe) file is located. It can be
+rem  either an absolute or a relative path. If the path contains any special 
+rem  characters, please make sure to quote the variable. 
 set _WRAPPER_DIR=
 
-rem The name and location of the Wrapper configuration file.   This will be used
+rem The name and location of the Wrapper configuration file. This will be used
 rem  if the user does not specify a configuration file as the first parameter to
-rem  this script.  It will not be possible to specify a configuration file on the
-rem  command line if _PASS_THROUGH is set. 
+rem  this script.
 rem If a relative path is specified, please note that the location is based on the 
-rem location.
+rem location of the Wrapper executable.
 set _WRAPPER_CONF_DEFAULT="../conf/%_WRAPPER_BASE%.conf"
 
 rem Makes it possible to override the Wrapper configuration file by specifying it
 rem  as the first parameter.
 rem set _WRAPPER_CONF_OVERRIDE=true
 
-rem _PASS_THROUGH tells the script to pass all parameters through to the JVM as
-rem  is.
+rem _PASS_THROUGH tells the script to pass all parameters through to the JVM
+rem  as is.  
+rem  If _WRAPPER_CONF_OVERRIDE is specified then all parameters will be passed.
+rem  If not set then all parameters starting with the second will be passed.
 rem set _PASS_THROUGH=true
 
 rem Do not modify anything beyond this point
@@ -104,7 +106,7 @@ rem
 rem Find the wrapper.conf
 rem
 :conf
-if not [%_WRAPPER_CONF_OVERRIDE%]==[] (
+if [%_WRAPPER_CONF_OVERRIDE%]==[true] (
     set _WRAPPER_CONF="%~f1"
     if not [%_WRAPPER_CONF%]==[""] (
         shift
@@ -117,14 +119,19 @@ rem
 rem Start the Wrapper
 rem
 :startup
+if not [%_PASS_THROUGH%]==[true] (
+	if not [%1]==[] (
+		echo WARNING: Extra arguments will be ignored. Please check usage in the batch file.
+	)
+)
 
-rem Collect an parameters
+rem Collect the application parameters
 :parameters
 set _PARAMETERS=%_PARAMETERS% %1
 shift
 if not [%1]==[] goto :parameters
 
-if [%_PASS_THROUGH%]==[] (
+if not [%_PASS_THROUGH%]==[true] (
     %_WRAPPER_EXE% -i %_WRAPPER_CONF%
 ) else (
     %_WRAPPER_EXE% -i %_WRAPPER_CONF% -- %_PARAMETERS%

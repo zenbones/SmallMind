@@ -32,6 +32,8 @@
  */
 package org.smallmind.spark.tanukisoft.integration;
 
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 import org.smallmind.nutsnbolts.lang.PerApplicationContext;
 import org.smallmind.nutsnbolts.util.PropertyExpander;
 import org.smallmind.nutsnbolts.util.SystemPropertyMode;
@@ -40,8 +42,41 @@ import org.tanukisoftware.wrapper.WrapperManager;
 
 public abstract class AbstractWrapperListener extends PerApplicationContext implements WrapperListener {
 
-  private static final int NO_ERROR_CODE = 0;
   private static final int STACK_TRACE_ERROR_CODE = 2;
+  private static final int MINIMUM_STARTUP_TIMEOUT_SECONDS = 10;
+  private static final int FAIL_SAFE_TIMEOUT_SECONDS = 180;
+
+  public static void main (String... args)
+    throws Throwable {
+
+    if (args.length < 1) {
+      throw new IllegalArgumentException(String.format("First application parameter must be the class of the %s in use", WrapperListener.class.getSimpleName()));
+    } else {
+
+      String[] modifiedArgs;
+      PropertyExpander propertyExpander;
+      String startupTimeoutSeconds = WrapperManager.getProperties().getProperty("wrapper.startup.timeout");
+
+      try {
+        if (Integer.parseInt(startupTimeoutSeconds) < 10) {
+          throw new IllegalStateException(String.format("The property(wrapper.startup.timeout) should be %s >= 10", MINIMUM_STARTUP_TIMEOUT_SECONDS));
+        }
+      } catch (NumberFormatException numberFormatException) {
+        throw new IllegalStateException(String.format("Unable to parse the property(wrapper.startup.timeout) as in integer(%s)", startupTimeoutSeconds));
+      }
+
+      modifiedArgs = new String[args.length];
+      modifiedArgs[0] = startupTimeoutSeconds;
+      System.arraycopy(args, 1, modifiedArgs, 1, args.length - 1);
+
+      propertyExpander = new PropertyExpander(false, SystemPropertyMode.FALLBACK, true);
+      for (int count = 0; count < modifiedArgs.length; count++) {
+        modifiedArgs[count] = propertyExpander.expand(modifiedArgs[count]);
+      }
+
+      WrapperManager.start((WrapperListener)Class.forName(args[0]).newInstance(), modifiedArgs);
+    }
+  }
 
   public abstract void startup (String[] args)
     throws Exception;
@@ -60,50 +95,66 @@ public abstract class AbstractWrapperListener extends PerApplicationContext impl
 
   public Integer start (String[] args) {
 
+    CountDownLatch completedLatch = new CountDownLatch(1);
+
     try {
-      startup(args);
-    }
-    catch (Exception exception) {
+
+      Thread signalThread;
+      String[] trimmedArgs = new String[args.length - 1];
+      int startupTimeoutSeconds = Integer.parseInt(args[0]);
+
+      System.arraycopy(args, 1, trimmedArgs, 0, args.length - 1);
+
+      signalThread = new Thread(new SignalWorker(completedLatch, startupTimeoutSeconds));
+      signalThread.setDaemon(true);
+      signalThread.start();
+
+      startup(trimmedArgs);
+    } catch (Exception exception) {
       exception.printStackTrace();
       return STACK_TRACE_ERROR_CODE;
+    } finally {
+      completedLatch.countDown();
     }
 
     return null;
   }
 
-  public int stop (int event) {
+  public int stop (int exitCode) {
 
     try {
       shutdown();
-    }
-    catch (Exception exception) {
-      exception.printStackTrace();
+    } catch (Throwable throwable) {
+      throwable.printStackTrace();
       return STACK_TRACE_ERROR_CODE;
     }
 
-    return NO_ERROR_CODE;
+    return exitCode;
   }
 
-  public static void main (String... args)
-    throws Exception {
+  private class SignalWorker implements Runnable {
 
-    if (args.length < 1) {
-      throw new IllegalArgumentException(String.format("First application parameter must be the class of the %s in use", WrapperListener.class.getSimpleName()));
+    private CountDownLatch completedLatch;
+    private int startupTimeoutSeconds;
+
+    public SignalWorker (CountDownLatch completedLatch, int startupTimeoutSeconds) {
+
+      this.completedLatch = completedLatch;
+      this.startupTimeoutSeconds = startupTimeoutSeconds;
     }
-    else {
 
-      String[] trimmedArgs;
-      PropertyExpander propertyExpander;
+    @Override
+    public void run () {
 
-      trimmedArgs = new String[args.length - 1];
-      System.arraycopy(args, 1, trimmedArgs, 0, args.length - 1);
+      long startMillis = System.currentTimeMillis();
 
-      propertyExpander = new PropertyExpander(false, SystemPropertyMode.FALLBACK, true);
-      for (int count = 0; count < trimmedArgs.length; count++) {
-        trimmedArgs[count] = propertyExpander.expand(trimmedArgs[count]);
+      try {
+        while ((System.currentTimeMillis() - startMillis < (FAIL_SAFE_TIMEOUT_SECONDS * 1000)) && (!completedLatch.await(startupTimeoutSeconds - 2, TimeUnit.SECONDS))) {
+          WrapperManager.signalStarting(startupTimeoutSeconds);
+        }
+      } catch (InterruptedException interruptedException) {
+        // do nothing
       }
-
-      WrapperManager.start((WrapperListener)Class.forName(args[0]).newInstance(), trimmedArgs);
     }
   }
 }

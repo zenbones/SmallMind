@@ -11,7 +11,7 @@ rem You shall use it only in accordance with the terms of the
 rem license agreement you entered into with Tanuki Software.
 rem http://wrapper.tanukisoftware.com/doc/english/licenseOverview.html
 rem
-rem Java Service Wrapper script - Stop a started NT service.
+rem Java Service Wrapper teardown script.
 rem
 
 rem -----------------------------------------------------------------------------
@@ -120,7 +120,7 @@ if not [%1]==[] (
     echo WARNING: Extra arguments will be ignored. Please check usage in the batch file.
 )
 
-%_WRAPPER_EXE% -p %_WRAPPER_CONF%
+%_WRAPPER_EXE% -td %_WRAPPER_CONF%
 
 if not errorlevel 1 goto :eof
 pause

@@ -2,7 +2,7 @@
 setlocal
 
 rem
-rem Copyright (c) 1999, 2014 Tanuki Software, Ltd.
+rem Copyright (c) 1999, 2016 Tanuki Software, Ltd.
 rem http://www.tanukisoftware.com
 rem All rights reserved.
 rem
@@ -16,22 +16,19 @@ rem
 
 rem -----------------------------------------------------------------------------
 rem These settings can be modified to fit the needs of your application
-rem Optimized for use with version 3.5.26 of the Wrapper.
+rem Optimized for use with version 3.5.30 of the Wrapper.
 
 rem The base name for the Wrapper binary.
 set _WRAPPER_BASE=wrapper
 
-rem The directory where the Wrapper binary (.exe) file is located, this can be
-rem either a absolute or relative path. If the path contains any special characters, 
-rem please make sure to quote the variable. 
+rem The directory where the Wrapper binary (.exe) file is located. It can be
+rem  either an absolute or a relative path. If the path contains any special 
+rem  characters, please make sure to quote the variable. 
 set _WRAPPER_DIR=
 
-rem The name and location of the Wrapper configuration file.   This will be used
+rem The name and location of the Wrapper configuration file. This will be used
 rem  if the user does not specify a configuration file as the first parameter to
-rem  this script.  It will not be possible to specify a configuration file on the
-rem  command line if _PASS_THROUGH is set. 
-rem If a relative path is specified, please note that the location is based on the 
-rem location.
+rem  this script.
 set _WRAPPER_CONF="../conf/%_WRAPPER_BASE%.conf"
 
 rem _FIXED_COMMAND tells the script to use a hard coded command rather than
@@ -124,6 +121,10 @@ if [%_COMMAND%]==[console] (
     ) else (
         %_WRAPPER_EXE% -c "%_WRAPPER_CONF%" -- %_PARAMETERS%
     )
+) else if [%_COMMAND%]==[setup] (
+    call :setup
+) else if [%_COMMAND%]==[teardown] (
+    call :teardown
 ) else if [%_COMMAND%]==[start] (
     call :start
 ) else if [%_COMMAND%]==[stop] (
@@ -133,6 +134,12 @@ if [%_COMMAND%]==[console] (
         %_WRAPPER_EXE% -i "%_WRAPPER_CONF%" %_PARAMETERS%
     ) else (
         %_WRAPPER_EXE% -i "%_WRAPPER_CONF%" -- %_PARAMETERS%
+    )
+) else if [%_COMMAND%]==[installstart] (
+    if [%_PASS_THROUGH%]==[] (
+        %_WRAPPER_EXE% -it "%_WRAPPER_CONF%" %_PARAMETERS%
+    ) else (
+        %_WRAPPER_EXE% -it "%_WRAPPER_CONF%" -- %_PARAMETERS%
     )
 ) else if [%_COMMAND%]==[pause] (
     %_WRAPPER_EXE% -a "%_WRAPPER_CONF%"
@@ -162,14 +169,20 @@ if not [%_COMMAND%]==[] (
     echo.
 )
 if [%_PASS_THROUGH%]==[] ( 
-    echo Usage: %0 [ console : start : pause : resume : stop : restart : install : remove : status ]
+    echo Usage: %0 [ console : setup : teardown : start : pause : resume : stop : restart : install : installstart : remove : status ]
 ) else (
-    echo Usage: %0 [ console {JavaAppArgs} : start : pause : resume : stop : restart : install {JavaAppArgs} : remove : status ]
+    echo Usage: %0 [ console {JavaAppArgs} : setup : teardown : start : pause : resume : stop : restart : install {JavaAppArgs} : installstart {JavaAppArgs} : remove : status ]
 )
 pause
 goto :eof
 
 
+:setup
+    %_WRAPPER_EXE% -su "%_WRAPPER_CONF%"
+    goto :eof
+:teardown
+    %_WRAPPER_EXE% -td "%_WRAPPER_CONF%"
+    goto :eof
 :start
     %_WRAPPER_EXE% -t "%_WRAPPER_CONF%"
     goto :eof
