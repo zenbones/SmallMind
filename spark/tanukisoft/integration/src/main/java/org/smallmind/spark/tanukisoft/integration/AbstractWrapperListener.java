@@ -42,6 +42,7 @@ import org.tanukisoftware.wrapper.WrapperManager;
 
 public abstract class AbstractWrapperListener extends PerApplicationContext implements WrapperListener {
 
+  private final static String DEFAULT_TIMEOUT_SECONDS = "30";
   private static final int STACK_TRACE_ERROR_CODE = 2;
   private static final int MINIMUM_STARTUP_TIMEOUT_SECONDS = 10;
   private static final int FAIL_SAFE_TIMEOUT_SECONDS = 180;
@@ -55,18 +56,20 @@ public abstract class AbstractWrapperListener extends PerApplicationContext impl
 
       String[] modifiedArgs;
       PropertyExpander propertyExpander;
-      String startupTimeoutSeconds = WrapperManager.getProperties().getProperty("wrapper.startup.timeout");
+      String startupTimeoutSeconds;
 
-      try {
-        if (Integer.parseInt(startupTimeoutSeconds) < 10) {
-          throw new IllegalStateException(String.format("The property(wrapper.startup.timeout) should be %s >= 10", MINIMUM_STARTUP_TIMEOUT_SECONDS));
+      if ((startupTimeoutSeconds = WrapperManager.getProperties().getProperty("wrapper.startup.timeout")) != null) {
+        try {
+          if (Integer.parseInt(startupTimeoutSeconds) < 10) {
+            throw new IllegalStateException(String.format("The property(wrapper.startup.timeout) should be %s >= 10", MINIMUM_STARTUP_TIMEOUT_SECONDS));
+          }
+        } catch (NumberFormatException numberFormatException) {
+          throw new IllegalStateException(String.format("Unable to parse the property(wrapper.startup.timeout) as in integer(%s)", startupTimeoutSeconds));
         }
-      } catch (NumberFormatException numberFormatException) {
-        throw new IllegalStateException(String.format("Unable to parse the property(wrapper.startup.timeout) as in integer(%s)", startupTimeoutSeconds));
       }
 
       modifiedArgs = new String[args.length];
-      modifiedArgs[0] = startupTimeoutSeconds;
+      modifiedArgs[0] = (startupTimeoutSeconds == null) ? DEFAULT_TIMEOUT_SECONDS : startupTimeoutSeconds;
       System.arraycopy(args, 1, modifiedArgs, 1, args.length - 1);
 
       propertyExpander = new PropertyExpander(false, SystemPropertyMode.FALLBACK, true);
