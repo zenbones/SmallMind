@@ -46,13 +46,13 @@ import org.smallmind.nutsnbolts.util.TimeArithmetic;
 
 public class FileUtility {
 
-  public static void copyTree (Path source, Path destination)
+  public static void copyTree (Path source, Path destination, FileManipulation... fileManipulations)
     throws IOException {
 
-    copyTree(source, destination, null);
+    copyTree(source, destination, null, fileManipulations);
   }
 
-  public static void copyTree (final Path source, final Path destination, final FileFilter fileFilter)
+  public static void copyTree (final Path source, final Path destination, final FileFilter fileFilter, final FileManipulation... fileManipulations)
     throws IOException {
 
     if (Files.exists(source, LinkOption.NOFOLLOW_LINKS)) {
@@ -75,8 +75,16 @@ public class FileUtility {
           public FileVisitResult visitFile (Path file, BasicFileAttributes attrs)
             throws IOException {
 
+            Path destinationPath;
+
             if ((fileFilter == null) || fileFilter.accept(file.toFile())) {
-              Files.copy(file, destination.resolve(source.relativize(file)), StandardCopyOption.REPLACE_EXISTING, StandardCopyOption.COPY_ATTRIBUTES);
+              Files.copy(file, (destinationPath = destination.resolve(source.relativize(file))), StandardCopyOption.REPLACE_EXISTING, StandardCopyOption.COPY_ATTRIBUTES);
+
+              if (fileManipulations != null) {
+                for (FileManipulation fileManipulation : fileManipulations) {
+                  fileManipulation.manipulateFile(destinationPath);
+                }
+              }
             }
 
             return FileVisitResult.CONTINUE;
@@ -85,7 +93,15 @@ public class FileUtility {
           @Override
           public FileVisitResult preVisitDirectory (Path dir, BasicFileAttributes attrs) throws IOException {
 
-            Files.createDirectories(destination.resolve(source.relativize(dir)));
+            Path destinationPath;
+
+            Files.createDirectories(destinationPath = destination.resolve(source.relativize(dir)));
+
+            if (fileManipulations != null) {
+              for (FileManipulation fileManipulation : fileManipulations) {
+                fileManipulation.manipulateDirectory(destinationPath);
+              }
+            }
 
             return FileVisitResult.CONTINUE;
           }
