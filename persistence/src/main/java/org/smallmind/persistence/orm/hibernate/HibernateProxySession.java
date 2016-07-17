@@ -124,27 +124,34 @@ public class HibernateProxySession extends ProxySession<SessionFactory, Session>
 
     Session session;
 
-    if ((session = managerThreadLocal.get()) == null) {
-      session = sessionFactory.openSession();
-      managerThreadLocal.set(session);
+    do {
+      if ((session = managerThreadLocal.get()) == null) {
+        session = sessionFactory.openSession();
+        managerThreadLocal.set(session);
 
-      RollbackAwareBoundarySet<ProxyTransaction> transactionSet;
-      BoundarySet<ProxySession> sessionSet;
+        RollbackAwareBoundarySet<ProxyTransaction> transactionSet;
+        BoundarySet<ProxySession> sessionSet;
 
-      if ((transactionSet = TransactionalState.obtainBoundary(this)) != null) {
-        try {
-          transactionSet.add(beginTransaction());
-        } catch (Throwable throwable) {
+        if ((transactionSet = TransactionalState.obtainBoundary(this)) != null) {
+          try {
+            transactionSet.add(beginTransaction());
+          } catch (Throwable throwable) {
+            close();
+            throw new SessionEnforcementException(throwable);
+          }
+        } else if ((sessionSet = NonTransactionalState.obtainBoundary(this)) != null) {
+          sessionSet.add(this);
+        } else if (isBoundaryEnforced()) {
           close();
-          throw new SessionEnforcementException(throwable);
+          throw new SessionEnforcementException("Session was requested outside of any boundary enforcement (@NonTransactional or @Transactional)");
         }
-      } else if ((sessionSet = NonTransactionalState.obtainBoundary(this)) != null) {
-        sessionSet.add(this);
-      } else if (isBoundaryEnforced()) {
-        close();
-        throw new SessionEnforcementException("Session was requested outside of any boundary enforcement (@NonTransactional or @Transactional)");
+      } else if (!session.isConnected()) {
+        session = null;
+
+        managerThreadLocal.set(null);
+        transactionThreadLocal.set(null);
       }
-    }
+    } while (session == null);
 
     return session;
   }

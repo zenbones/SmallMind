@@ -111,30 +111,34 @@ public class JPAProxySession extends ProxySession<EntityManagerFactory, EntityMa
 
     EntityManager entityManager;
 
-    if ((entityManager = managerThreadLocal.get()) == null) {
-      entityManager = entityManagerFactory.createEntityManager();
-      managerThreadLocal.set(entityManager);
+    do {
+      if ((entityManager = managerThreadLocal.get()) == null) {
+        entityManager = entityManagerFactory.createEntityManager();
+        managerThreadLocal.set(entityManager);
 
-      RollbackAwareBoundarySet<ProxyTransaction> transactionSet;
-      BoundarySet<ProxySession> sessionSet;
+        RollbackAwareBoundarySet<ProxyTransaction> transactionSet;
+        BoundarySet<ProxySession> sessionSet;
 
-      if ((transactionSet = TransactionalState.obtainBoundary(this)) != null) {
-        try {
-          transactionSet.add(beginTransaction());
-        }
-        catch (Throwable throwable) {
+        if ((transactionSet = TransactionalState.obtainBoundary(this)) != null) {
+          try {
+            transactionSet.add(beginTransaction());
+          } catch (Throwable throwable) {
+            close();
+            throw new SessionEnforcementException(throwable);
+          }
+        } else if ((sessionSet = NonTransactionalState.obtainBoundary(this)) != null) {
+          sessionSet.add(this);
+        } else if (isBoundaryEnforced()) {
           close();
-          throw new SessionEnforcementException(throwable);
+          throw new SessionEnforcementException("Session was requested outside of any boundary enforcement (@NonTransactional or @Transactional)");
         }
+      } else if (!entityManager.isOpen()) {
+        entityManager = null;
+
+        managerThreadLocal.set(null);
+        transactionThreadLocal.set(null);
       }
-      else if ((sessionSet = NonTransactionalState.obtainBoundary(this)) != null) {
-        sessionSet.add(this);
-      }
-      else if (isBoundaryEnforced()) {
-        close();
-        throw new SessionEnforcementException("Session was requested outside of any boundary enforcement (@NonTransactional or @Transactional)");
-      }
-    }
+    } while (entityManager == null);
 
     return entityManager;
   }
@@ -147,8 +151,7 @@ public class JPAProxySession extends ProxySession<EntityManagerFactory, EntityMa
       if ((entityManager = managerThreadLocal.get()) != null) {
         entityManager.close();
       }
-    }
-    finally {
+    } finally {
       managerThreadLocal.set(null);
       transactionThreadLocal.set(null);
     }

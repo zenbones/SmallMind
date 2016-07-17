@@ -116,30 +116,34 @@ public class JDOProxySession extends ProxySession<PersistenceManagerFactory, Per
 
     PersistenceManager persistenceManager;
 
-    if ((persistenceManager = managerThreadLocal.get()) == null) {
-      persistenceManager = persistenceManagerFactory.getPersistenceManager();
-      managerThreadLocal.set(persistenceManager);
+    do {
+      if ((persistenceManager = managerThreadLocal.get()) == null) {
+        persistenceManager = persistenceManagerFactory.getPersistenceManager();
+        managerThreadLocal.set(persistenceManager);
 
-      RollbackAwareBoundarySet<ProxyTransaction> transactionSet;
-      BoundarySet<ProxySession> sessionSet;
+        RollbackAwareBoundarySet<ProxyTransaction> transactionSet;
+        BoundarySet<ProxySession> sessionSet;
 
-      if ((transactionSet = TransactionalState.obtainBoundary(this)) != null) {
-        try {
-          transactionSet.add(beginTransaction());
-        }
-        catch (Throwable throwable) {
+        if ((transactionSet = TransactionalState.obtainBoundary(this)) != null) {
+          try {
+            transactionSet.add(beginTransaction());
+          } catch (Throwable throwable) {
+            close();
+            throw new SessionEnforcementException(throwable);
+          }
+        } else if ((sessionSet = NonTransactionalState.obtainBoundary(this)) != null) {
+          sessionSet.add(this);
+        } else if (isBoundaryEnforced()) {
           close();
-          throw new SessionEnforcementException(throwable);
+          throw new SessionEnforcementException("Session was requested outside of any boundary enforcement (@NonTransactional or @Transactional)");
         }
+      } else if (persistenceManager.isClosed()) {
+        persistenceManager = null;
+
+        managerThreadLocal.set(null);
+        transactionThreadLocal.set(null);
       }
-      else if ((sessionSet = NonTransactionalState.obtainBoundary(this)) != null) {
-        sessionSet.add(this);
-      }
-      else if (isBoundaryEnforced()) {
-        close();
-        throw new SessionEnforcementException("Session was requested outside of any boundary enforcement (@NonTransactional or @Transactional)");
-      }
-    }
+    } while (persistenceManager == null);
 
     return persistenceManager;
   }
@@ -152,8 +156,7 @@ public class JDOProxySession extends ProxySession<PersistenceManagerFactory, Per
       if ((persistenceManager = managerThreadLocal.get()) != null) {
         persistenceManager.close();
       }
-    }
-    finally {
+    } finally {
       managerThreadLocal.set(null);
       transactionThreadLocal.set(null);
     }
