@@ -32,13 +32,24 @@
  */
 package org.smallmind.nutsnbolts.security;
 
-public enum MessageAuthenticationCodeAlgorithm implements SecurityAlgorithm {
+import java.io.IOException;
+import java.security.InvalidKeyException;
+import java.security.Key;
+import java.security.NoSuchAlgorithmException;
+import java.security.NoSuchProviderException;
+import java.security.PrivateKey;
+import java.security.PublicKey;
+import java.security.SignatureException;
+import java.security.spec.InvalidKeySpecException;
+import org.smallmind.nutsnbolts.http.Base64Codec;
 
-  HMAC_MD5("HmacMD5"), HMAC_SHA_1("HmacSHA1"), HMAC_SHA_256("HmacSHA256");
+public enum RSASigningAlgorithm implements SecurityAlgorithm, SigningAlgorithm {
+
+  SHA_256_WITH_RSA("SHA256withRSA");
 
   private String algorithmName;
 
-  private MessageAuthenticationCodeAlgorithm (String algorithmName) {
+  RSASigningAlgorithm (String algorithmName) {
 
     this.algorithmName = algorithmName;
   }
@@ -46,5 +57,25 @@ public enum MessageAuthenticationCodeAlgorithm implements SecurityAlgorithm {
   public String getAlgorithmName () {
 
     return algorithmName;
+  }
+
+  public Key generateKey (AsymmetricKeyType keyType, byte[] secret)
+    throws NoSuchAlgorithmException, InvalidKeySpecException {
+
+    return keyType.generateKey(secret);
+  }
+
+  @Override
+  public byte[] sign (Key key, byte[] data)
+    throws NoSuchProviderException, NoSuchAlgorithmException, InvalidKeyException, SignatureException {
+
+    return EncryptionUtility.sign(this, (PrivateKey)key, data);
+  }
+
+  @Override
+  public boolean verify (Key key, String[] parts)
+    throws IOException, NoSuchProviderException, NoSuchAlgorithmException, InvalidKeyException, SignatureException {
+
+    return EncryptionUtility.verify(this, (PublicKey)key, (parts[0] + "." + parts[1]).getBytes(), Base64Codec.decode(parts[2]));
   }
 }

@@ -32,36 +32,44 @@
  */
 package org.smallmind.web.oauth.v1;
 
-import java.io.UnsupportedEncodingException;
 import java.security.Key;
-import org.smallmind.nutsnbolts.http.Base64Codec;
-import org.smallmind.web.jersey.util.JsonCodec;
+import org.smallmind.nutsnbolts.security.HMACSigningAlgorithm;
+import org.smallmind.nutsnbolts.security.RSASigningAlgorithm;
 
-public class JWTCodec {
+public enum JWTEncryptionAlgorithm {
 
-  public static String encode (Object claims, JWTEncryptionAlgorithm encryptionAlgorithm, Key key)
-    throws Exception {
+  HS256 {
+    @Override
+    public byte[] encrypt (Key key, String prologue)
+      throws Exception {
 
-    String encodedHeader = Base64Codec.encode("{\"typ\":\"JWT\",\r\n \"alg\":\"" + encryptionAlgorithm.name() + "\"}");
-    String encodedClaims = Base64Codec.encode(JsonCodec.writeAsBytes(claims));
-    String prologue = encodedHeader + '.' + encodedClaims;
-    String epilogue = Base64Codec.encode(encryptionAlgorithm.encrypt(key, prologue));
-
-    return prologue + '.' + epilogue;
-  }
-
-  public static <T> T decode (String jwtToken, JWTEncryptionAlgorithm encryptionAlgorithm, Key key, Class<T> claimsClass)
-    throws Exception {
-
-    String[] parts;
-
-    if ((parts = jwtToken.split("\\.", -1)).length != 3) {
-      throw new UnsupportedEncodingException("Not a JWT token");
-    }
-    if (!encryptionAlgorithm.verify(key, parts)) {
-      throw new UnsupportedEncodingException("Not a JWT token");
+      return HMACSigningAlgorithm.HMAC_SHA_256.sign(key, prologue.getBytes());
     }
 
-    return JsonCodec.read(Base64Codec.decode(parts[1]), claimsClass);
-  }
+    @Override
+    public boolean verify (Key key, String[] pieces) throws Exception {
+
+      return HMACSigningAlgorithm.HMAC_SHA_256.verify(key, pieces);
+    }
+  },
+  RS256 {
+    @Override
+    public byte[] encrypt (Key key, String prologue)
+      throws Exception {
+
+      return RSASigningAlgorithm.SHA_256_WITH_RSA.sign(key, prologue.getBytes());
+    }
+
+    @Override
+    public boolean verify (Key key, String[] pieces) throws Exception {
+
+      return RSASigningAlgorithm.SHA_256_WITH_RSA.verify(key, pieces);
+    }
+  };
+
+  public abstract byte[] encrypt (Key key, String prologue)
+    throws Exception;
+
+  public abstract boolean verify (Key key, String[] pieces)
+    throws Exception;
 }

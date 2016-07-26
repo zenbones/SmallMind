@@ -38,7 +38,7 @@ public enum AsymmetricAlgorithm implements SecurityAlgorithm {
 
   private String algorithmName;
 
-  private AsymmetricAlgorithm (String algorithmName) {
+  AsymmetricAlgorithm (String algorithmName) {
 
     this.algorithmName = algorithmName;
   }

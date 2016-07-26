@@ -32,6 +32,7 @@
  */
 package org.smallmind.web.oauth.v1;
 
+import javax.crypto.spec.SecretKeySpec;
 import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
 import javax.ws.rs.GET;
@@ -42,14 +43,15 @@ import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.NewCookie;
 import javax.ws.rs.core.Response;
+import org.smallmind.nutsnbolts.http.HexCodec;
+import org.smallmind.nutsnbolts.security.HMACSigningAlgorithm;
+import org.smallmind.scribe.pen.LoggerManager;
 import org.smallmind.web.oauth.OAuthProtocolException;
 import org.smallmind.web.oauth.ResponseType;
 import org.smallmind.web.oauth.ServerAuthorizationFormEncodedResponse;
 import org.smallmind.web.oauth.ServerAuthorizationRequest;
 import org.smallmind.web.oauth.ServerErrorFormEncodedResponse;
 import org.smallmind.web.oauth.ServerLoginFormEncodedRequest;
-import org.smallmind.nutsnbolts.http.HexCodec;
-import org.smallmind.scribe.pen.LoggerManager;
 
 @Path("/v1/oauthsansredirect")
 public class OAuthSansRedirectResource {
@@ -89,11 +91,9 @@ public class OAuthSansRedirectResource {
 
       if (!ResponseType.CODE.getParameter().equals(serverAuthorizationRequest.getResponseType())) {
         return crossSiteAnoint(Response.status(Response.Status.BAD_REQUEST)).entity(ServerErrorFormEncodedResponse.instance().setError("unsupported_response_type").setErrorDescription("only 'code' response types are supported").setState(serverAuthorizationRequest.getState()).build()).build();
-      }
-      else if ((oauthRegistration = oauthConfiguration.getRegistrationMap().get(serverAuthorizationRequest.getClientId())) == null) {
+      } else if ((oauthRegistration = oauthConfiguration.getRegistrationMap().get(serverAuthorizationRequest.getClientId())) == null) {
         return crossSiteAnoint(Response.status(Response.Status.BAD_REQUEST)).entity(ServerErrorFormEncodedResponse.instance().setError("unauthorized_client").setErrorDescription("unregistered client id").setState(serverAuthorizationRequest.getState()).build()).build();
-      }
-      else if ((!oauthRegistration.isUnsafeRedirection()) && (!oauthRegistration.getRedirectUri().equals(serverAuthorizationRequest.getRedirectUri()))) {
+      } else if ((!oauthRegistration.isUnsafeRedirection()) && (!oauthRegistration.getRedirectUri().equals(serverAuthorizationRequest.getRedirectUri()))) {
         return crossSiteAnoint(Response.status(Response.Status.BAD_REQUEST)).entity(ServerErrorFormEncodedResponse.instance().setError("unauthorized_client").setErrorDescription("mismatching redirect uri").setState(serverAuthorizationRequest.getState()).build()).build();
       }
 
@@ -105,14 +105,12 @@ public class OAuthSansRedirectResource {
       if ((serverAuthorizationRequest.getAuthData() != null) && (!serverAuthorizationRequest.getAuthData().isEmpty())) {
         try {
           ssoAuthData = MungedCodec.decrypt(SSOAuthData.class, cookieValue = serverAuthorizationRequest.getAuthData());
-        }
-        catch (Exception exception) {
+        } catch (Exception exception) {
           LoggerManager.getLogger(OAuthResource.class).error(exception);
 
           return crossSiteAnoint(Response.status(Response.Status.BAD_REQUEST)).entity(ServerErrorFormEncodedResponse.instance().setError("server_error").setErrorDescription(exception.getMessage()).setState(serverAuthorizationRequest.getState()).build()).build();
         }
-      }
-      else {
+      } else {
 
         Cookie[] cookies;
 
@@ -121,8 +119,7 @@ public class OAuthSansRedirectResource {
             if (cookie.getName().equals(oauthConfiguration.getSsoCookieName())) {
               try {
                 ssoAuthData = MungedCodec.decrypt(SSOAuthData.class, cookieValue = HexCodec.hexDecode(cookie.getValue()));
-              }
-              catch (Exception exception) {
+              } catch (Exception exception) {
                 LoggerManager.getLogger(OAuthResource.class).error(exception);
 
                 return crossSiteAnoint(Response.status(Response.Status.BAD_REQUEST)).entity(ServerErrorFormEncodedResponse.instance().setError("server_error").setErrorDescription(exception.getMessage()).setState(serverAuthorizationRequest.getState()).build()).build();
@@ -137,8 +134,7 @@ public class OAuthSansRedirectResource {
         if (System.currentTimeMillis() - ssoAuthData.getCreated() <= oauthConfiguration.getOauthProtocolLeaseDuration().toMilliseconds()) {
           try {
             jwtToken = oauthConfiguration.getSecretService().validate(userName = ssoAuthData.getUser(), ssoAuthData.getPassword());
-          }
-          catch (Exception exception) {
+          } catch (Exception exception) {
             LoggerManager.getLogger(OAuthResource.class).error(exception);
 
             return crossSiteAnoint(Response.status(Response.Status.BAD_REQUEST)).entity(ServerErrorFormEncodedResponse.instance().setError("server_error").setErrorDescription(exception.getMessage()).setState(serverAuthorizationRequest.getState()).build()).build();
@@ -148,8 +144,7 @@ public class OAuthSansRedirectResource {
 
       if (jwtToken == null) {
         return crossSiteAnoint(Response.status(Response.Status.OK)).entity(ServerLoginFormEncodedRequest.instance().setAuthorizationUri(oauthRegistration.getOauthUri()).setUserName(userName).setResponseType(serverAuthorizationRequest.getResponseType()).setClientId(serverAuthorizationRequest.getClientId()).setRedirectUri(serverAuthorizationRequest.getRedirectUri()).setState(serverAuthorizationRequest.getState()).build()).build();
-      }
-      else {
+      } else {
 
         String code;
 
@@ -157,9 +152,8 @@ public class OAuthSansRedirectResource {
         jwtToken.setExp(System.currentTimeMillis() / 1000);
 
         try {
-          code = JWTCodec.encode(jwtToken, oauthRegistration.getSecret());
-        }
-        catch (Exception exception) {
+          code = JWTCodec.encode(jwtToken, JWTEncryptionAlgorithm.HS256, new SecretKeySpec(oauthRegistration.getSecret().getBytes(), HMACSigningAlgorithm.HMAC_SHA_256.getAlgorithmName()));
+        } catch (Exception exception) {
           LoggerManager.getLogger(OAuthResource.class).error(exception);
 
           return crossSiteAnoint(Response.status(Response.Status.BAD_REQUEST)).entity(ServerErrorFormEncodedResponse.instance().setError("server_error").setErrorDescription(exception.getMessage()).setState(serverAuthorizationRequest.getState()).build()).build();
@@ -167,8 +161,7 @@ public class OAuthSansRedirectResource {
 
         return crossSiteAnoint(Response.status(Response.Status.OK)).cookie(new NewCookie(oauthConfiguration.getSsoCookieName(), HexCodec.hexEncode(cookieValue))).entity(ServerAuthorizationFormEncodedResponse.instance().setCode(code).setState(serverAuthorizationRequest.getState()).build()).build();
       }
-    }
-    catch (OAuthProtocolException oauthProtocolException) {
+    } catch (OAuthProtocolException oauthProtocolException) {
       LoggerManager.getLogger(OAuthResource.class).error(oauthProtocolException);
 
       if (serverAuthorizationRequest != null) {

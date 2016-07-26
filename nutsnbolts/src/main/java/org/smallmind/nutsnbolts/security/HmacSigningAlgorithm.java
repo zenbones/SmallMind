@@ -30,38 +30,48 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.web.oauth.v1;
+package org.smallmind.nutsnbolts.security;
 
-import java.io.UnsupportedEncodingException;
+import java.io.IOException;
+import java.security.InvalidKeyException;
 import java.security.Key;
+import java.security.NoSuchAlgorithmException;
+import java.util.Arrays;
+import javax.crypto.spec.SecretKeySpec;
 import org.smallmind.nutsnbolts.http.Base64Codec;
-import org.smallmind.web.jersey.util.JsonCodec;
 
-public class JWTCodec {
+public enum HMACSigningAlgorithm implements SecurityAlgorithm, SigningAlgorithm {
 
-  public static String encode (Object claims, JWTEncryptionAlgorithm encryptionAlgorithm, Key key)
-    throws Exception {
+  HMAC_MD5("HmacMD5"), HMAC_SHA_1("HmacSHA1"), HMAC_SHA_256("HmacSHA256");
 
-    String encodedHeader = Base64Codec.encode("{\"typ\":\"JWT\",\r\n \"alg\":\"" + encryptionAlgorithm.name() + "\"}");
-    String encodedClaims = Base64Codec.encode(JsonCodec.writeAsBytes(claims));
-    String prologue = encodedHeader + '.' + encodedClaims;
-    String epilogue = Base64Codec.encode(encryptionAlgorithm.encrypt(key, prologue));
+  private String algorithmName;
 
-    return prologue + '.' + epilogue;
+  HMACSigningAlgorithm (String algorithmName) {
+
+    this.algorithmName = algorithmName;
   }
 
-  public static <T> T decode (String jwtToken, JWTEncryptionAlgorithm encryptionAlgorithm, Key key, Class<T> claimsClass)
-    throws Exception {
+  public String getAlgorithmName () {
 
-    String[] parts;
+    return algorithmName;
+  }
 
-    if ((parts = jwtToken.split("\\.", -1)).length != 3) {
-      throw new UnsupportedEncodingException("Not a JWT token");
-    }
-    if (!encryptionAlgorithm.verify(key, parts)) {
-      throw new UnsupportedEncodingException("Not a JWT token");
-    }
+  public Key generateKey (byte[] secret) {
 
-    return JsonCodec.read(Base64Codec.decode(parts[1]), claimsClass);
+    return new SecretKeySpec(secret, this.getAlgorithmName());
+  }
+
+  @Override
+  public byte[] sign (Key key, byte[] data)
+    throws NoSuchAlgorithmException, InvalidKeyException {
+
+    return EncryptionUtility.sign(this, key, data);
+  }
+
+  @Override
+  public boolean verify (Key key, String[] parts)
+    throws IOException, NoSuchAlgorithmException, InvalidKeyException {
+
+    return Arrays.equals(EncryptionUtility.sign(this, key, (parts[0] + "." + parts[1]).getBytes()), Base64Codec.decode(parts[2]));
   }
 }

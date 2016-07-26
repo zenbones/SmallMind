@@ -40,14 +40,20 @@ import java.io.ObjectOutputStream;
 import java.security.InvalidAlgorithmParameterException;
 import java.security.InvalidKeyException;
 import java.security.Key;
+import java.security.KeyFactory;
 import java.security.KeyPair;
 import java.security.KeyPairGenerator;
 import java.security.KeyRep;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.security.NoSuchProviderException;
 import java.security.PrivateKey;
 import java.security.PublicKey;
+import java.security.Signature;
+import java.security.SignatureException;
 import java.security.spec.AlgorithmParameterSpec;
+import java.security.spec.InvalidKeySpecException;
+import java.security.spec.PKCS8EncodedKeySpec;
 import javax.crypto.BadPaddingException;
 import javax.crypto.Cipher;
 import javax.crypto.IllegalBlockSizeException;
@@ -96,15 +102,54 @@ public class EncryptionUtility {
     return MessageDigest.getInstance(algorithm.getAlgorithmName()).digest(toBeHashed);
   }
 
-  public static byte[] encrypt (MessageAuthenticationCodeAlgorithm algorithm, byte[] secret, byte[] data)
+  public static byte[] sign (HMACSigningAlgorithm algorithm, byte[] secret, byte[] data)
+    throws NoSuchAlgorithmException, InvalidKeyException {
+
+    return sign(algorithm, new SecretKeySpec(secret, algorithm.getAlgorithmName()), data);
+  }
+
+  public static byte[] sign (HMACSigningAlgorithm algorithm, Key secretKey, byte[] data)
     throws NoSuchAlgorithmException, InvalidKeyException {
 
     Mac mac = Mac.getInstance(algorithm.getAlgorithmName());
-    SecretKeySpec secret_key = new SecretKeySpec(secret, algorithm.getAlgorithmName());
 
-    mac.init(secret_key);
+    mac.init(secretKey);
 
     return mac.doFinal(data);
+  }
+
+  public static byte[] sign (RSASigningAlgorithm algorithm, byte[] secret, byte[] data)
+    throws NoSuchProviderException, NoSuchAlgorithmException, InvalidKeySpecException, InvalidKeyException, SignatureException {
+
+    return sign(algorithm, KeyFactory.getInstance("RSA").generatePrivate(new PKCS8EncodedKeySpec(secret)), data);
+  }
+
+  public static byte[] sign (RSASigningAlgorithm algorithm, PrivateKey privateKey, byte[] data)
+    throws NoSuchProviderException, NoSuchAlgorithmException, InvalidKeyException, SignatureException {
+
+    Signature signature = Signature.getInstance(algorithm.getAlgorithmName(), "BC");
+
+    signature.initSign(privateKey);
+    signature.update(data);
+
+    return signature.sign();
+  }
+
+  public static boolean verify (RSASigningAlgorithm algorithm, byte[] secret, byte[] data, byte[] signedData)
+    throws NoSuchProviderException, NoSuchAlgorithmException, InvalidKeySpecException, InvalidKeyException, SignatureException {
+
+    return verify(algorithm, KeyFactory.getInstance("RSA").generatePublic(new PKCS8EncodedKeySpec(secret)), data, signedData);
+  }
+
+  public static boolean verify (RSASigningAlgorithm algorithm, PublicKey publicKey, byte[] data, byte[] signedData)
+    throws NoSuchProviderException, NoSuchAlgorithmException, InvalidKeyException, SignatureException {
+
+    Signature signature = Signature.getInstance(algorithm.getAlgorithmName(), "BC");
+
+    signature.initVerify(publicKey);
+    signature.update(data);
+
+    return signature.verify(signedData);
   }
 
   public static Key generateKey (SymmetricAlgorithm algorithm)
