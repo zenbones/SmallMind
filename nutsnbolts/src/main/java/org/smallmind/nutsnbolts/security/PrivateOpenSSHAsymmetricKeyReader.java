@@ -32,43 +32,60 @@
  */
 package org.smallmind.nutsnbolts.security;
 
+import java.io.ByteArrayInputStream;
+import java.io.DataInputStream;
 import java.io.IOException;
-import java.security.InvalidKeyException;
+import java.math.BigInteger;
 import java.security.Key;
+import java.security.KeyFactory;
 import java.security.NoSuchAlgorithmException;
-import java.security.NoSuchProviderException;
-import java.security.PrivateKey;
-import java.security.PublicKey;
-import java.security.SignatureException;
+import java.security.spec.InvalidKeySpecException;
+import java.security.spec.RSAPrivateKeySpec;
 import org.smallmind.nutsnbolts.http.Base64Codec;
 
-public enum RSASigningAlgorithm implements SecurityAlgorithm, SigningAlgorithm {
-
-  SHA_256_WITH_RSA("SHA256withRSA");
-
-  private String algorithmName;
-
-  RSASigningAlgorithm (String algorithmName) {
-
-    this.algorithmName = algorithmName;
-  }
-
-  public String getAlgorithmName () {
-
-    return algorithmName;
-  }
+public class PrivateOpenSSHAsymmetricKeyReader implements AsymmetricKeyReader {
 
   @Override
-  public byte[] sign (Key key, byte[] data)
-    throws NoSuchProviderException, NoSuchAlgorithmException, InvalidKeyException, SignatureException {
+  public Key readKey (String raw)
+    throws IOException, NoSuchAlgorithmException, InvalidKeySpecException {
 
-    return EncryptionUtility.sign(this, (PrivateKey)key, data);
+    try (DataInputStream dataInputStream = new DataInputStream(new ByteArrayInputStream(Base64Codec.decode(raw)))) {
+
+      if (dataInputStream.read() != 48) {
+        throw new IOException("Missing id_rsa SEQUENCE");
+      }
+      if (dataInputStream.read() != 130) {
+        throw new IOException("Missing Version marker");
+      }
+
+      dataInputStream.skipBytes(5);
+
+      BigInteger mod = readAsBigInteger(dataInputStream);
+      readAsBigInteger(dataInputStream);
+      BigInteger exp = readAsBigInteger(dataInputStream);
+
+      return KeyFactory.getInstance("RSA").generatePrivate(new RSAPrivateKeySpec(mod, exp));
+    }
   }
 
-  @Override
-  public boolean verify (Key key, String[] parts)
-    throws IOException, NoSuchProviderException, NoSuchAlgorithmException, InvalidKeyException, SignatureException {
+  private BigInteger readAsBigInteger (DataInputStream dataInputStream)
+    throws IOException {
 
-    return EncryptionUtility.verify(this, (PublicKey)key, (parts[0] + "." + parts[1]).getBytes(), Base64Codec.decode(parts[2]));
+    int length;
+
+    dataInputStream.read();
+    if ((length = dataInputStream.read()) >= 0x80) {
+
+      byte[] extended = new byte[4];
+      int bytesToRead = length & 0x7f;
+
+      dataInputStream.readFully(extended, 4 - bytesToRead, bytesToRead);
+      length = new BigInteger(extended).intValue();
+    }
+
+    byte[] data = new byte[length];
+    dataInputStream.readFully(data);
+
+    return new BigInteger(data);
   }
 }

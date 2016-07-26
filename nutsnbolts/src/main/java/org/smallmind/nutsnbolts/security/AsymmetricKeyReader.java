@@ -30,28 +30,12 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.web.jwt;
+package org.smallmind.nutsnbolts.security;
 
 import java.security.Key;
 
-public class AsymmetricJWTKeyMaster implements JWTKeyMaster {
+public interface AsymmetricKeyReader {
 
-  private Key key;
-
-  public AsymmetricJWTKeyMaster (Key key) {
-
-    this.key = key;
-  }
-
-  @Override
-  public JWTEncryptionAlgorithm getEncryptionAlgorithm () {
-
-    return JWTEncryptionAlgorithm.RS256;
-  }
-
-  @Override
-  public Key getKey () {
-
-    return key;
-  }
+  Key readKey (String raw)
+    throws Exception;
 }

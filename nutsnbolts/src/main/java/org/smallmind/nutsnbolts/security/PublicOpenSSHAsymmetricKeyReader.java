@@ -30,28 +30,47 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.web.jwt;
+package org.smallmind.nutsnbolts.security;
 
+import java.io.ByteArrayInputStream;
+import java.io.DataInputStream;
+import java.io.IOException;
+import java.math.BigInteger;
 import java.security.Key;
+import java.security.KeyFactory;
+import java.security.NoSuchAlgorithmException;
+import java.security.spec.InvalidKeySpecException;
+import java.security.spec.RSAPublicKeySpec;
+import org.smallmind.nutsnbolts.http.Base64Codec;
 
-public class AsymmetricJWTKeyMaster implements JWTKeyMaster {
-
-  private Key key;
-
-  public AsymmetricJWTKeyMaster (Key key) {
-
-    this.key = key;
-  }
+public class PublicOpenSSHAsymmetricKeyReader implements AsymmetricKeyReader {
 
   @Override
-  public JWTEncryptionAlgorithm getEncryptionAlgorithm () {
+  public Key readKey (String raw)
+    throws IOException, NoSuchAlgorithmException, InvalidKeySpecException {
 
-    return JWTEncryptionAlgorithm.RS256;
+    try (DataInputStream dataInputStream = new DataInputStream(new ByteArrayInputStream(Base64Codec.decode(raw)))) {
+
+      if (!"ssh-rsa".equals(new String(readBytes(dataInputStream)))) {
+        throw new IOException("Missing RFC-416 'ssh-rsa' prologue");
+      }
+
+      byte[] expBytes = readBytes(dataInputStream);
+      byte[] modBytes = readBytes(dataInputStream);
+      BigInteger exp = new BigInteger(expBytes);
+      BigInteger mod = new BigInteger(modBytes);
+
+      return KeyFactory.getInstance("RSA").generatePublic(new RSAPublicKeySpec(mod, exp));
+    }
   }
 
-  @Override
-  public Key getKey () {
+  private byte[] readBytes (DataInputStream dataInputStream)
+    throws IOException {
 
-    return key;
+    byte[] bytes = new byte[dataInputStream.readInt()];
+
+    dataInputStream.readFully(bytes);
+
+    return bytes;
   }
 }

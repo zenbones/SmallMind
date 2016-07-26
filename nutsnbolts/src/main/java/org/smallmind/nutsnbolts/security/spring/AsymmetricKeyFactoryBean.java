@@ -30,33 +30,51 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.nutsnbolts.security;
+package org.smallmind.nutsnbolts.security.spring;
 
 import java.security.Key;
-import java.security.KeyFactory;
-import java.security.NoSuchAlgorithmException;
-import java.security.spec.InvalidKeySpecException;
-import java.security.spec.X509EncodedKeySpec;
+import org.smallmind.nutsnbolts.security.AsymmetricKeyReader;
+import org.springframework.beans.factory.FactoryBean;
+import org.springframework.beans.factory.InitializingBean;
 
-public enum AsymmetricKeyType {
+public class AsymmetricKeyFactoryBean implements FactoryBean<Key>, InitializingBean {
 
-  PUBLIC {
-    @Override
-    public Key generateKey (byte[] secret)
-      throws NoSuchAlgorithmException, InvalidKeySpecException {
+  private Key key;
+  private AsymmetricKeyReader asymmetricKeyReader;
+  private String raw;
 
-      return KeyFactory.getInstance("RSA").generatePublic(new X509EncodedKeySpec(secret));
-    }
-  },
-  PRIVATE {
-    @Override
-    public Key generateKey (byte[] secret)
-      throws NoSuchAlgorithmException, InvalidKeySpecException {
+  public void setAsymmetricKeyReader (AsymmetricKeyReader asymmetricKeyReader) {
 
-      return KeyFactory.getInstance("RSA").generatePrivate(new X509EncodedKeySpec(secret));
-    }
-  };
+    this.asymmetricKeyReader = asymmetricKeyReader;
+  }
 
-  public abstract Key generateKey (byte[] secret)
-    throws NoSuchAlgorithmException, InvalidKeySpecException;
+  public void setKey (Key key) {
+
+    this.key = key;
+  }
+
+  @Override
+  public boolean isSingleton () {
+
+    return true;
+  }
+
+  @Override
+  public Class<?> getObjectType () {
+
+    return Key.class;
+  }
+
+  @Override
+  public void afterPropertiesSet ()
+    throws Exception {
+
+    key = asymmetricKeyReader.readKey(raw);
+  }
+
+  @Override
+  public Key getObject () throws Exception {
+
+    return key;
+  }
 }
