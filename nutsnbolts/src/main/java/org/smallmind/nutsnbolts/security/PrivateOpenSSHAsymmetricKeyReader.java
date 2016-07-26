@@ -49,7 +49,18 @@ public class PrivateOpenSSHAsymmetricKeyReader implements AsymmetricKeyReader {
   public Key readKey (String raw)
     throws IOException, NoSuchAlgorithmException, InvalidKeySpecException {
 
-    try (DataInputStream dataInputStream = new DataInputStream(new ByteArrayInputStream(Base64Codec.decode(raw)))) {
+    StringBuilder stripedRawBuilder = new StringBuilder();
+
+    for (int index = 0; index < raw.length(); index++) {
+
+      char currentChar = raw.charAt(index);
+
+      if ((currentChar != ' ') && (currentChar != '\n')) {
+        stripedRawBuilder.append(currentChar);
+      }
+    }
+
+    try (DataInputStream dataInputStream = new DataInputStream(new ByteArrayInputStream(Base64Codec.decode(stripedRawBuilder.toString())))) {
 
       if (dataInputStream.read() != 48) {
         throw new IOException("Missing id_rsa SEQUENCE");

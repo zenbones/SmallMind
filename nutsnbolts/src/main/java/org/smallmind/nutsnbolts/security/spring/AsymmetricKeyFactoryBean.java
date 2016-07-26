@@ -48,9 +48,9 @@ public class AsymmetricKeyFactoryBean implements FactoryBean<Key>, InitializingB
     this.asymmetricKeyReader = asymmetricKeyReader;
   }
 
-  public void setKey (Key key) {
+  public void setRaw (String raw) {
 
-    this.key = key;
+    this.raw = raw;
   }
 
   @Override
