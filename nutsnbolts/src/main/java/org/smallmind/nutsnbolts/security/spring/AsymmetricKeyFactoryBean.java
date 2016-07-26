@@ -45,9 +45,9 @@ public class AsymmetricKeyFactoryBean implements FactoryBean<Key>, InitializingB
   private SSHKeyReader keyReader;
   private String raw;
 
-  public void setKey (Key key) {
+  public void setKeyType (AsymmetricKeyType keyType) {
 
-    this.key = key;
+    this.keyType = keyType;
   }
 
   public void setKeyReader (SSHKeyReader keyReader) {
