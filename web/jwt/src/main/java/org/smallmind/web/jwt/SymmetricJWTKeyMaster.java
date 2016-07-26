@@ -30,14 +30,29 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.web.oauth.v1;
+package org.smallmind.web.jwt;
 
-import org.smallmind.web.jwt.JWTToken;
+import java.security.Key;
+import org.smallmind.nutsnbolts.security.HMACSigningAlgorithm;
 
-public interface SecretService<J extends JWTToken> {
+public class SymmetricJWTKeyMaster implements JWTKeyMaster {
 
-  public abstract Class<J> getSecretClass ();
+  private Key key;
 
-  public abstract J validate (String user, String password)
-    throws Exception;
+  public SymmetricJWTKeyMaster (String secret) {
+
+    key = HMACSigningAlgorithm.HMAC_SHA_256.generateKey(secret.getBytes());
+  }
+
+  @Override
+  public JWTEncryptionAlgorithm getEncryptionAlgorithm () {
+
+    return JWTEncryptionAlgorithm.HS256;
+  }
+
+  @Override
+  public Key getKey () {
+
+    return key;
+  }
 }

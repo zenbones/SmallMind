@@ -53,6 +53,11 @@
       <scope>compile</scope>
     </dependency>
     <dependency>
+      <groupId>org.smallmind</groupId>
+      <artifactId>web-jwt</artifactId>
+      <scope>compile</scope>
+    </dependency>
+    <dependency>
       <groupId>org.apache.httpcomponents</groupId>
       <artifactId>httpclient</artifactId>
       <scope>test</scope>

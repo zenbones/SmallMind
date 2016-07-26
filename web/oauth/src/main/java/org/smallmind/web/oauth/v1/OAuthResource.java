@@ -33,7 +33,6 @@
 package org.smallmind.web.oauth.v1;
 
 import java.net.URI;
-import javax.crypto.spec.SecretKeySpec;
 import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
 import javax.ws.rs.GET;
@@ -46,9 +45,11 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.NewCookie;
 import javax.ws.rs.core.Response;
 import org.smallmind.nutsnbolts.http.HexCodec;
-import org.smallmind.nutsnbolts.security.HMACSigningAlgorithm;
 import org.smallmind.nutsnbolts.time.Duration;
 import org.smallmind.scribe.pen.LoggerManager;
+import org.smallmind.web.jwt.JWTCodec;
+import org.smallmind.web.jwt.JWTToken;
+import org.smallmind.web.jwt.SymmetricJWTKeyMaster;
 import org.smallmind.web.oauth.GrantType;
 import org.smallmind.web.oauth.OAuthProtocolException;
 import org.smallmind.web.oauth.ResponseType;
@@ -157,7 +158,7 @@ public class OAuthResource {
         jwtToken.setExp(System.currentTimeMillis() / 1000);
 
         try {
-          code = JWTCodec.encode(jwtToken, JWTEncryptionAlgorithm.HS256, new SecretKeySpec(oauthRegistration.getSecret().getBytes(), HMACSigningAlgorithm.HMAC_SHA_256.getAlgorithmName()));
+          code = JWTCodec.encode(jwtToken, new SymmetricJWTKeyMaster(oauthRegistration.getSecret()));
         } catch (Exception exception) {
           LoggerManager.getLogger(OAuthResource.class).error(exception);
 
@@ -219,7 +220,7 @@ public class OAuthResource {
         JWTToken jwtToken;
 
         try {
-          jwtToken = (JWTToken)JWTCodec.decode(serverAccessTokenRequest.getCode(), JWTEncryptionAlgorithm.HS256, new SecretKeySpec(serverAccessTokenRequest.getClientSecret().getBytes(), HMACSigningAlgorithm.HMAC_SHA_256.getAlgorithmName()), oauthConfiguration.getSecretService().getSecretClass());
+          jwtToken = (JWTToken)JWTCodec.decode(serverAccessTokenRequest.getCode(), new SymmetricJWTKeyMaster(serverAccessTokenRequest.getClientSecret()), oauthConfiguration.getSecretService().getSecretClass());
         } catch (Exception exception) {
           LoggerManager.getLogger(OAuthResource.class).error(exception);
 
@@ -241,7 +242,7 @@ public class OAuthResource {
         JWTToken jwtToken;
 
         try {
-          jwtToken = (JWTToken)JWTCodec.decode(serverAccessTokenRequest.getCode(), JWTEncryptionAlgorithm.HS256, new SecretKeySpec(serverAccessTokenRequest.getClientSecret().getBytes(), HMACSigningAlgorithm.HMAC_SHA_256.getAlgorithmName()), oauthConfiguration.getSecretService().getSecretClass());
+          jwtToken = (JWTToken)JWTCodec.decode(serverAccessTokenRequest.getCode(), new SymmetricJWTKeyMaster(serverAccessTokenRequest.getClientSecret()), oauthConfiguration.getSecretService().getSecretClass());
         } catch (Exception exception) {
           LoggerManager.getLogger(OAuthResource.class).error(exception);
 
@@ -269,9 +270,9 @@ public class OAuthResource {
 
     try {
       jwtToken.setExp((now + grantDuration.toMilliseconds()) / 1000);
-      accessToken = JWTCodec.encode(jwtToken, JWTEncryptionAlgorithm.HS256, new SecretKeySpec(key.getBytes(), HMACSigningAlgorithm.HMAC_SHA_256.getAlgorithmName()));
+      accessToken = JWTCodec.encode(jwtToken, new SymmetricJWTKeyMaster(key));
       jwtToken.setExp(now / 1000);
-      refreshToken = JWTCodec.encode(jwtToken, JWTEncryptionAlgorithm.HS256, new SecretKeySpec(key.getBytes(), HMACSigningAlgorithm.HMAC_SHA_256.getAlgorithmName()));
+      refreshToken = JWTCodec.encode(jwtToken, new SymmetricJWTKeyMaster(key));
     } catch (Exception exception) {
       LoggerManager.getLogger(OAuthResource.class).error(exception);
 

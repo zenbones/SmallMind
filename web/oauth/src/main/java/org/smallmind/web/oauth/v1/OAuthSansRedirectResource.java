@@ -32,7 +32,6 @@
  */
 package org.smallmind.web.oauth.v1;
 
-import javax.crypto.spec.SecretKeySpec;
 import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
 import javax.ws.rs.GET;
@@ -44,8 +43,10 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.NewCookie;
 import javax.ws.rs.core.Response;
 import org.smallmind.nutsnbolts.http.HexCodec;
-import org.smallmind.nutsnbolts.security.HMACSigningAlgorithm;
 import org.smallmind.scribe.pen.LoggerManager;
+import org.smallmind.web.jwt.JWTCodec;
+import org.smallmind.web.jwt.JWTToken;
+import org.smallmind.web.jwt.SymmetricJWTKeyMaster;
 import org.smallmind.web.oauth.OAuthProtocolException;
 import org.smallmind.web.oauth.ResponseType;
 import org.smallmind.web.oauth.ServerAuthorizationFormEncodedResponse;
@@ -152,7 +153,7 @@ public class OAuthSansRedirectResource {
         jwtToken.setExp(System.currentTimeMillis() / 1000);
 
         try {
-          code = JWTCodec.encode(jwtToken, JWTEncryptionAlgorithm.HS256, new SecretKeySpec(oauthRegistration.getSecret().getBytes(), HMACSigningAlgorithm.HMAC_SHA_256.getAlgorithmName()));
+          code = JWTCodec.encode(jwtToken, new SymmetricJWTKeyMaster(oauthRegistration.getSecret()));
         } catch (Exception exception) {
           LoggerManager.getLogger(OAuthResource.class).error(exception);
 

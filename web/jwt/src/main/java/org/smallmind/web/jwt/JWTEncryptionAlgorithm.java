@@ -30,14 +30,46 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.web.oauth.v1;
+package org.smallmind.web.jwt;
 
-import org.smallmind.web.jwt.JWTToken;
+import java.security.Key;
+import org.smallmind.nutsnbolts.security.HMACSigningAlgorithm;
+import org.smallmind.nutsnbolts.security.RSASigningAlgorithm;
 
-public interface SecretService<J extends JWTToken> {
+public enum JWTEncryptionAlgorithm {
 
-  public abstract Class<J> getSecretClass ();
+  HS256 {
+    @Override
+    public byte[] encrypt (Key key, String prologue)
+      throws Exception {
 
-  public abstract J validate (String user, String password)
+      return HMACSigningAlgorithm.HMAC_SHA_256.sign(key, prologue.getBytes());
+    }
+
+    @Override
+    public boolean verify (Key key, String[] pieces) throws Exception {
+
+      return HMACSigningAlgorithm.HMAC_SHA_256.verify(key, pieces);
+    }
+  },
+  RS256 {
+    @Override
+    public byte[] encrypt (Key key, String prologue)
+      throws Exception {
+
+      return RSASigningAlgorithm.SHA_256_WITH_RSA.sign(key, prologue.getBytes());
+    }
+
+    @Override
+    public boolean verify (Key key, String[] pieces) throws Exception {
+
+      return RSASigningAlgorithm.SHA_256_WITH_RSA.verify(key, pieces);
+    }
+  };
+
+  public abstract byte[] encrypt (Key key, String prologue)
+    throws Exception;
+
+  public abstract boolean verify (Key key, String[] pieces)
     throws Exception;
 }

@@ -30,15 +30,13 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.web.oauth.v1;
+package org.smallmind.web.jwt;
 
-public interface JWTToken {
+import java.security.Key;
 
-  public abstract String getSub ();
+public interface JWTKeyMaster {
 
-  public abstract void setSub (String sub);
+  JWTEncryptionAlgorithm getEncryptionAlgorithm ();
 
-  public abstract long getExp ();
-
-  public abstract void setExp (long exp);
+  Key getKey ();
 }

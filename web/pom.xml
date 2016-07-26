@@ -17,6 +17,7 @@
     <module>jaxws</module>
     <module>websocket</module>
     <module>reverse</module>
+    <module>jwt</module>
     <module>oauth</module>
     <module>schema</module>
   </modules>

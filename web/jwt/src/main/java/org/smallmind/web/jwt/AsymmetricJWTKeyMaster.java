@@ -30,46 +30,33 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.web.oauth.v1;
+package org.smallmind.web.jwt;
 
 import java.security.Key;
-import org.smallmind.nutsnbolts.security.HMACSigningAlgorithm;
+import java.security.NoSuchAlgorithmException;
+import java.security.spec.InvalidKeySpecException;
+import org.smallmind.nutsnbolts.security.AsymmetricKeyType;
 import org.smallmind.nutsnbolts.security.RSASigningAlgorithm;
 
-public enum JWTEncryptionAlgorithm {
+public class AsymmetricJWTKeyMaster implements JWTKeyMaster {
 
-  HS256 {
-    @Override
-    public byte[] encrypt (Key key, String prologue)
-      throws Exception {
+  private Key key;
 
-      return HMACSigningAlgorithm.HMAC_SHA_256.sign(key, prologue.getBytes());
-    }
+  public AsymmetricJWTKeyMaster (AsymmetricKeyType keyType, String secret)
+    throws NoSuchAlgorithmException, InvalidKeySpecException {
 
-    @Override
-    public boolean verify (Key key, String[] pieces) throws Exception {
+    key = RSASigningAlgorithm.SHA_256_WITH_RSA.generateKey(keyType, secret.getBytes());
+  }
 
-      return HMACSigningAlgorithm.HMAC_SHA_256.verify(key, pieces);
-    }
-  },
-  RS256 {
-    @Override
-    public byte[] encrypt (Key key, String prologue)
-      throws Exception {
+  @Override
+  public JWTEncryptionAlgorithm getEncryptionAlgorithm () {
 
-      return RSASigningAlgorithm.SHA_256_WITH_RSA.sign(key, prologue.getBytes());
-    }
+    return JWTEncryptionAlgorithm.RS256;
+  }
 
-    @Override
-    public boolean verify (Key key, String[] pieces) throws Exception {
+  @Override
+  public Key getKey () {
 
-      return RSASigningAlgorithm.SHA_256_WITH_RSA.verify(key, pieces);
-    }
-  };
-
-  public abstract byte[] encrypt (Key key, String prologue)
-    throws Exception;
-
-  public abstract boolean verify (Key key, String[] pieces)
-    throws Exception;
+    return key;
+  }
 }

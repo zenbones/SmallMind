@@ -30,27 +30,26 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.web.oauth.v1;
+package org.smallmind.web.jwt;
 
 import java.io.UnsupportedEncodingException;
-import java.security.Key;
 import org.smallmind.nutsnbolts.http.Base64Codec;
 import org.smallmind.web.jersey.util.JsonCodec;
 
 public class JWTCodec {
 
-  public static String encode (Object claims, JWTEncryptionAlgorithm encryptionAlgorithm, Key key)
+  public static String encode (Object claims, JWTKeyMaster keyMaster)
     throws Exception {
 
-    String encodedHeader = Base64Codec.encode("{\"typ\":\"JWT\",\r\n \"alg\":\"" + encryptionAlgorithm.name() + "\"}");
+    String encodedHeader = Base64Codec.encode("{\"typ\":\"JWT\",\r\n \"alg\":\"" + keyMaster.getEncryptionAlgorithm().name() + "\"}");
     String encodedClaims = Base64Codec.encode(JsonCodec.writeAsBytes(claims));
     String prologue = encodedHeader + '.' + encodedClaims;
-    String epilogue = Base64Codec.encode(encryptionAlgorithm.encrypt(key, prologue));
+    String epilogue = Base64Codec.encode(keyMaster.getEncryptionAlgorithm().encrypt(keyMaster.getKey(), prologue));
 
     return prologue + '.' + epilogue;
   }
 
-  public static <T> T decode (String jwtToken, JWTEncryptionAlgorithm encryptionAlgorithm, Key key, Class<T> claimsClass)
+  public static <T> T decode (String jwtToken, JWTKeyMaster keyMaster, Class<T> claimsClass)
     throws Exception {
 
     String[] parts;
@@ -58,7 +57,7 @@ public class JWTCodec {
     if ((parts = jwtToken.split("\\.", -1)).length != 3) {
       throw new UnsupportedEncodingException("Not a JWT token");
     }
-    if (!encryptionAlgorithm.verify(key, parts)) {
+    if (!keyMaster.getEncryptionAlgorithm().verify(keyMaster.getKey(), parts)) {
       throw new UnsupportedEncodingException("Not a JWT token");
     }
 

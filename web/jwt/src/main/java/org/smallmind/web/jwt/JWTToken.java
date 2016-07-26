@@ -30,14 +30,15 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.web.oauth.v1;
+package org.smallmind.web.jwt;
 
-import org.smallmind.web.jwt.JWTToken;
+public interface JWTToken {
 
-public interface SecretService<J extends JWTToken> {
+  public abstract String getSub ();
 
-  public abstract Class<J> getSecretClass ();
+  public abstract void setSub (String sub);
 
-  public abstract J validate (String user, String password)
-    throws Exception;
+  public abstract long getExp ();
+
+  public abstract void setExp (long exp);
 }
