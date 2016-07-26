@@ -38,7 +38,6 @@ import java.io.IOException;
 import java.math.BigInteger;
 import java.security.NoSuchAlgorithmException;
 import java.security.spec.InvalidKeySpecException;
-import java.util.Arrays;
 import org.smallmind.nutsnbolts.http.Base64Codec;
 
 public class X509KeyReader implements SSHKeyReader {
@@ -58,7 +57,6 @@ public class X509KeyReader implements SSHKeyReader {
       }
     }
 
-    System.out.println(Arrays.toString(Base64Codec.decode(stripedRawBuilder.toString())));
     try (DataInputStream dataInputStream = new DataInputStream(new ByteArrayInputStream(Base64Codec.decode(stripedRawBuilder.toString())))) {
 
       if (dataInputStream.read() != 48) {
