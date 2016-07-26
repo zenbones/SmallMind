@@ -30,47 +30,28 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.nutsnbolts.security;
+package org.smallmind.nutsnbolts.security.ssh;
 
-import java.io.ByteArrayInputStream;
-import java.io.DataInputStream;
-import java.io.IOException;
 import java.math.BigInteger;
-import java.security.Key;
-import java.security.KeyFactory;
-import java.security.NoSuchAlgorithmException;
-import java.security.spec.InvalidKeySpecException;
-import java.security.spec.RSAPublicKeySpec;
-import org.smallmind.nutsnbolts.http.Base64Codec;
 
-public class PublicOpenSSHAsymmetricKeyReader implements AsymmetricKeyReader {
+public class SSHKeyFactors {
 
-  @Override
-  public Key readKey (String raw)
-    throws IOException, NoSuchAlgorithmException, InvalidKeySpecException {
+  private BigInteger modulus;
+  private BigInteger exponent;
 
-    try (DataInputStream dataInputStream = new DataInputStream(new ByteArrayInputStream(Base64Codec.decode(raw)))) {
+  public SSHKeyFactors (BigInteger modulus, BigInteger exponent) {
 
-      if (!"ssh-rsa".equals(new String(readBytes(dataInputStream)))) {
-        throw new IOException("Missing RFC-416 'ssh-rsa' prologue");
-      }
-
-      byte[] expBytes = readBytes(dataInputStream);
-      byte[] modBytes = readBytes(dataInputStream);
-      BigInteger exp = new BigInteger(expBytes);
-      BigInteger mod = new BigInteger(modBytes);
-
-      return KeyFactory.getInstance("RSA").generatePublic(new RSAPublicKeySpec(mod, exp));
-    }
+    this.modulus = modulus;
+    this.exponent = exponent;
   }
 
-  private byte[] readBytes (DataInputStream dataInputStream)
-    throws IOException {
+  public BigInteger getModulus () {
 
-    byte[] bytes = new byte[dataInputStream.readInt()];
+    return modulus;
+  }
 
-    dataInputStream.readFully(bytes);
+  public BigInteger getExponent () {
 
-    return bytes;
+    return exponent;
   }
 }

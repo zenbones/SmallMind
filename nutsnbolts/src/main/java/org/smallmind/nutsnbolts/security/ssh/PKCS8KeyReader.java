@@ -30,73 +30,42 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.nutsnbolts.security;
+package org.smallmind.nutsnbolts.security.ssh;
 
 import java.io.ByteArrayInputStream;
 import java.io.DataInputStream;
 import java.io.IOException;
 import java.math.BigInteger;
-import java.security.Key;
-import java.security.KeyFactory;
 import java.security.NoSuchAlgorithmException;
 import java.security.spec.InvalidKeySpecException;
-import java.security.spec.RSAPrivateKeySpec;
 import org.smallmind.nutsnbolts.http.Base64Codec;
 
-public class PrivateOpenSSHAsymmetricKeyReader implements AsymmetricKeyReader {
+public class PKCS8KeyReader implements SSHKeyReader {
 
   @Override
-  public Key readKey (String raw)
-    throws IOException, NoSuchAlgorithmException, InvalidKeySpecException {
+  public SSHKeyFactors extractFactors (String raw)
+    throws IOException, NoSuchAlgorithmException, InvalidKeySpecException, SSHParseException {
 
-    StringBuilder stripedRawBuilder = new StringBuilder();
+    try (DataInputStream dataInputStream = new DataInputStream(new ByteArrayInputStream(Base64Codec.decode(raw)))) {
 
-    for (int index = 0; index < raw.length(); index++) {
-
-      char currentChar = raw.charAt(index);
-
-      if ((currentChar != ' ') && (currentChar != '\n')) {
-        stripedRawBuilder.append(currentChar);
-      }
-    }
-
-    try (DataInputStream dataInputStream = new DataInputStream(new ByteArrayInputStream(Base64Codec.decode(stripedRawBuilder.toString())))) {
-
-      if (dataInputStream.read() != 48) {
-        throw new IOException("Missing id_rsa SEQUENCE");
-      }
-      if (dataInputStream.read() != 130) {
-        throw new IOException("Missing Version marker");
+      if (!"ssh-rsa".equals(new String(readBytes(dataInputStream)))) {
+        throw new SSHParseException("Missing RFC-416 'ssh-rsa' prologue");
       }
 
-      dataInputStream.skipBytes(5);
+      byte[] exponentBytes = readBytes(dataInputStream);
+      byte[] modulusBytes = readBytes(dataInputStream);
 
-      BigInteger mod = readAsBigInteger(dataInputStream);
-      readAsBigInteger(dataInputStream);
-      BigInteger exp = readAsBigInteger(dataInputStream);
-
-      return KeyFactory.getInstance("RSA").generatePrivate(new RSAPrivateKeySpec(mod, exp));
+      return new SSHKeyFactors(new BigInteger(modulusBytes), new BigInteger(exponentBytes));
     }
   }
 
-  private BigInteger readAsBigInteger (DataInputStream dataInputStream)
+  private byte[] readBytes (DataInputStream dataInputStream)
     throws IOException {
 
-    int length;
+    byte[] bytes = new byte[dataInputStream.readInt()];
 
-    dataInputStream.read();
-    if ((length = dataInputStream.read()) >= 0x80) {
+    dataInputStream.readFully(bytes);
 
-      byte[] extended = new byte[4];
-      int bytesToRead = length & 0x7f;
-
-      dataInputStream.readFully(extended, 4 - bytesToRead, bytesToRead);
-      length = new BigInteger(extended).intValue();
-    }
-
-    byte[] data = new byte[length];
-    dataInputStream.readFully(data);
-
-    return new BigInteger(data);
+    return bytes;
   }
 }

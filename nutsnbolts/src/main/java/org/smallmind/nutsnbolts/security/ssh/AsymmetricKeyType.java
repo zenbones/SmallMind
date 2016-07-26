@@ -30,12 +30,36 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.nutsnbolts.security;
+package org.smallmind.nutsnbolts.security.ssh;
 
 import java.security.Key;
+import java.security.KeyFactory;
+import java.security.spec.RSAPrivateKeySpec;
+import java.security.spec.RSAPublicKeySpec;
 
-public interface AsymmetricKeyReader {
+public enum AsymmetricKeyType {
 
-  Key readKey (String raw)
+  PUBLIC {
+    @Override
+    public Key generateKey (SSHKeyReader keyReader, String raw)
+      throws Exception {
+
+      SSHKeyFactors keyFactors = keyReader.extractFactors(raw);
+
+      return KeyFactory.getInstance("RSA").generatePublic(new RSAPublicKeySpec(keyFactors.getModulus(), keyFactors.getExponent()));
+    }
+  },
+  PRIVATE {
+    @Override
+    public Key generateKey (SSHKeyReader keyReader, String raw)
+      throws Exception {
+
+      SSHKeyFactors keyFactors = keyReader.extractFactors(raw);
+
+      return KeyFactory.getInstance("RSA").generatePrivate(new RSAPrivateKeySpec(keyFactors.getModulus(), keyFactors.getExponent()));
+    }
+  };
+
+  public abstract Key generateKey (SSHKeyReader keyReader, String raw)
     throws Exception;
 }

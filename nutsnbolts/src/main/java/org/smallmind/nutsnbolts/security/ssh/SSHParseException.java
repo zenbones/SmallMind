@@ -30,58 +30,15 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.nutsnbolts.security.spring;
+package org.smallmind.nutsnbolts.security.ssh;
 
-import java.security.Key;
-import org.smallmind.nutsnbolts.security.ssh.AsymmetricKeyType;
-import org.smallmind.nutsnbolts.security.ssh.SSHKeyReader;
-import org.springframework.beans.factory.FactoryBean;
-import org.springframework.beans.factory.InitializingBean;
+import org.smallmind.nutsnbolts.lang.FormattedException;
+import org.smallmind.nutsnbolts.lang.FormattedRuntimeException;
 
-public class AsymmetricKeyFactoryBean implements FactoryBean<Key>, InitializingBean {
+public class SSHParseException extends FormattedException {
 
-  private Key key;
-  private AsymmetricKeyType keyType;
-  private SSHKeyReader keyReader;
-  private String raw;
+  public SSHParseException (String message, Object... args) {
 
-  public void setKey (Key key) {
-
-    this.key = key;
-  }
-
-  public void setKeyReader (SSHKeyReader keyReader) {
-
-    this.keyReader = keyReader;
-  }
-
-  public void setRaw (String raw) {
-
-    this.raw = raw;
-  }
-
-  @Override
-  public boolean isSingleton () {
-
-    return true;
-  }
-
-  @Override
-  public Class<?> getObjectType () {
-
-    return Key.class;
-  }
-
-  @Override
-  public void afterPropertiesSet ()
-    throws Exception {
-
-    key = keyType.generateKey(keyReader, raw);
-  }
-
-  @Override
-  public Key getObject () throws Exception {
-
-    return key;
+    super(message, args);
   }
 }
