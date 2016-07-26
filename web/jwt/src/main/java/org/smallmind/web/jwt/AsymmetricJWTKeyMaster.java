@@ -32,9 +32,11 @@
  */
 package org.smallmind.web.jwt;
 
+import java.io.IOException;
 import java.security.Key;
 import java.security.NoSuchAlgorithmException;
 import java.security.spec.InvalidKeySpecException;
+import org.smallmind.nutsnbolts.http.Base64Codec;
 import org.smallmind.nutsnbolts.security.AsymmetricKeyType;
 import org.smallmind.nutsnbolts.security.RSASigningAlgorithm;
 
@@ -43,9 +45,9 @@ public class AsymmetricJWTKeyMaster implements JWTKeyMaster {
   private Key key;
 
   public AsymmetricJWTKeyMaster (AsymmetricKeyType keyType, String secret)
-    throws NoSuchAlgorithmException, InvalidKeySpecException {
+    throws IOException, NoSuchAlgorithmException, InvalidKeySpecException {
 
-    key = RSASigningAlgorithm.SHA_256_WITH_RSA.generateKey(keyType, secret.getBytes());
+    key = RSASigningAlgorithm.SHA_256_WITH_RSA.generateKey(keyType, Base64Codec.decode(secret));
   }
 
   @Override
