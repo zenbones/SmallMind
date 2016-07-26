@@ -37,6 +37,7 @@ import java.security.KeyFactory;
 import java.security.NoSuchAlgorithmException;
 import java.security.spec.InvalidKeySpecException;
 import java.security.spec.PKCS8EncodedKeySpec;
+import java.security.spec.X509EncodedKeySpec;
 
 public enum AsymmetricKeyType {
 
@@ -45,7 +46,7 @@ public enum AsymmetricKeyType {
     public Key generateKey (byte[] secret)
       throws NoSuchAlgorithmException, InvalidKeySpecException {
 
-      return KeyFactory.getInstance("RSA").generatePublic(new PKCS8EncodedKeySpec(secret));
+      return KeyFactory.getInstance("RSA").generatePublic(new X509EncodedKeySpec(secret));
     }
   },
   PRIVATE {
@@ -53,7 +54,7 @@ public enum AsymmetricKeyType {
     public Key generateKey (byte[] secret)
       throws NoSuchAlgorithmException, InvalidKeySpecException {
 
-      return KeyFactory.getInstance("RSA").generatePrivate(new PKCS8EncodedKeySpec(secret));
+      return KeyFactory.getInstance("RSA").generatePrivate(new X509EncodedKeySpec(secret));
     }
   };
 
