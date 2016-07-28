@@ -175,7 +175,7 @@ RUN_LEVEL=20
 # List of files to source prior to executing any commands. Use ';' as delimiter.
 # For example: 
 #  FILES_TO_SOURCE="/home/user/.bashrc;anotherfile;../file3"
-FILES_TO_SOURCE=
+FILES_TO_SOURCE=${filesToSource}
 
 [#noparse]
 # Do not modify anything beyond this point

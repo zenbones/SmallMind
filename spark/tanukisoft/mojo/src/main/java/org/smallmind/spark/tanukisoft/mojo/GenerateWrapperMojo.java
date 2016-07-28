@@ -108,6 +108,8 @@ public class GenerateWrapperMojo extends AbstractMojo {
   private String[] serviceDependencies;
   @Parameter
   private String[] configurations;
+  @Parameter
+  private String[] toSourceFiles;
   @Parameter(defaultValue = "false")
   private boolean useUpstart;
   @Parameter(defaultValue = "false")
@@ -138,7 +140,8 @@ public class GenerateWrapperMojo extends AbstractMojo {
       HashMap<String, Object> freemarkerMap;
       LinkedList<String> classpathElementList;
       List<Dependency> additionalDependencies;
-      Iterator<Dependency> aditionalDependencyIter;
+      Iterator<Dependency> additionalDependencyIter;
+      StringBuilder aggregateFilesToSource;
 
       try {
         osType = OSType.valueOf(operatingSystem.replace('-', '_').toUpperCase());
@@ -191,6 +194,17 @@ public class GenerateWrapperMojo extends AbstractMojo {
         }
       }
 
+      aggregateFilesToSource = new StringBuilder();
+      if (toSourceFiles != null) {
+        for (String toSourceFile : toSourceFiles) {
+          if (aggregateFilesToSource.length() > 0) {
+            aggregateFilesToSource.append(';');
+          }
+
+          aggregateFilesToSource.append(toSourceFile);
+        }
+      }
+
       freemarkerMap = new HashMap<>();
       freemarkerMap.put("applicationName", applicationName);
       freemarkerMap.put("applicationLongName", applicationLongName);
@@ -222,7 +236,7 @@ public class GenerateWrapperMojo extends AbstractMojo {
       freemarkerMap.put("waitAfterStartup", String.valueOf(waitAfterStartup));
 
       if (appParameters == null) {
-        freemarkerMap.put("appParameters", new String[]{wrapperListener});
+        freemarkerMap.put("appParameters", new String[] {wrapperListener});
       } else {
 
         String[] modifiedAppParameters = new String[appParameters.length + 1];
@@ -240,6 +254,8 @@ public class GenerateWrapperMojo extends AbstractMojo {
         classpathElementList.add("*");
       }
 
+      freemarkerMap.put("filesToSource", aggregateFilesToSource.toString());
+
       additionalDependencies = (dependencies != null) ? Arrays.asList(dependencies) : null;
       for (Artifact artifact : project.getRuntimeArtifacts()) {
         try {
@@ -248,10 +264,10 @@ public class GenerateWrapperMojo extends AbstractMojo {
           }
 
           if (additionalDependencies != null) {
-            aditionalDependencyIter = additionalDependencies.iterator();
-            while (aditionalDependencyIter.hasNext()) {
-              if (aditionalDependencyIter.next().matchesArtifact(artifact)) {
-                aditionalDependencyIter.remove();
+            additionalDependencyIter = additionalDependencies.iterator();
+            while (additionalDependencyIter.hasNext()) {
+              if (additionalDependencyIter.next().matchesArtifact(artifact)) {
+                additionalDependencyIter.remove();
               }
             }
           }
