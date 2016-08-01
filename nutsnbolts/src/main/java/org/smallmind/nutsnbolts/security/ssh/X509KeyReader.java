@@ -32,12 +32,14 @@
  */
 package org.smallmind.nutsnbolts.security.ssh;
 
-import java.io.ByteArrayInputStream;
-import java.io.DataInputStream;
 import java.io.IOException;
 import java.math.BigInteger;
 import java.security.NoSuchAlgorithmException;
 import java.security.spec.InvalidKeySpecException;
+import org.bouncycastle.asn1.ASN1BitString;
+import org.bouncycastle.asn1.ASN1Integer;
+import org.bouncycastle.asn1.ASN1ObjectIdentifier;
+import org.bouncycastle.asn1.ASN1Sequence;
 import org.smallmind.nutsnbolts.http.Base64Codec;
 
 public class X509KeyReader implements SSHKeyReader {
@@ -57,58 +59,63 @@ public class X509KeyReader implements SSHKeyReader {
       }
     }
 
-    try (DataInputStream dataInputStream = new DataInputStream(new ByteArrayInputStream(Base64Codec.decode(stripedRawBuilder.toString())))) {
+    ASN1Sequence outerSequence = (ASN1Sequence)ASN1Sequence.fromByteArray(Base64Codec.decode(stripedRawBuilder.toString()));
 
-      if (dataInputStream.read() != 48) {
-        throw new SSHParseException("Missing id_rsa SEQUENCE");
+    if (outerSequence.size() < 1) {
+      throw new SSHParseException("ASN.1 outer sequence is missing elements");
+    } else {
+
+      Object firstObject = outerSequence.getObjectAt(0);
+
+      if (firstObject instanceof ASN1Sequence) {
+
+        if (outerSequence.size() < 2) {
+          throw new SSHParseException("ASN.1 outer sequence is missing elements");
+        } else {
+
+          ASN1Sequence identifierSequence = ((ASN1Sequence)firstObject);
+
+          if ((identifierSequence.size() < 1)) {
+            throw new SSHParseException("ASN.1 identifier sequence is empty");
+          } else {
+
+            ASN1ObjectIdentifier oid = (ASN1ObjectIdentifier)identifierSequence.getObjectAt(0);
+
+            if (!oid.getId().equals("1.2.840.113549.1.1.1")) {
+              throw new IllegalArgumentException("Unknown RSA object id");
+            } else {
+
+              ASN1Sequence dataSequence = (ASN1Sequence)ASN1Sequence.fromByteArray(((ASN1BitString)outerSequence.getObjectAt(1)).getBytes());
+
+              if (dataSequence.size() < 2) {
+                throw new SSHParseException("ASN.1 data sequence is missing elements");
+              }
+
+              BigInteger modulus = ((ASN1Integer)dataSequence.getObjectAt(0)).getValue();
+              BigInteger exponent = ((ASN1Integer)dataSequence.getObjectAt(1)).getValue();
+
+              return new SSHKeyFactors(modulus, exponent);
+            }
+          }
+        }
+      } else {
+
+        if (outerSequence.size() < 4) {
+          throw new SSHParseException("ASN.1 outer sequence is missing elements");
+        } else {
+
+          int version = ((ASN1Integer)firstObject).getValue().intValue();
+
+          if (version != 0 && version != 1) {
+            throw new IllegalArgumentException("Wrong version for RSA key");
+          }
+
+          BigInteger modulus = ((ASN1Integer)outerSequence.getObjectAt(1)).getValue();
+          BigInteger exponent = ((ASN1Integer)outerSequence.getObjectAt(3)).getValue();
+
+          return new SSHKeyFactors(modulus, exponent);
+        }
       }
-      if (dataInputStream.read() != 130) {
-        throw new SSHParseException("Missing Version marker");
-      }
-
-      dataInputStream.skipBytes(5);
-
-      BigInteger modulus;
-
-      try {
-        modulus = readAsBigInteger(dataInputStream);
-        readAsBigInteger(dataInputStream);
-      } catch (SSHParseException sshParseException) {
-        dataInputStream.skipBytes(20);
-        modulus = readAsBigInteger(dataInputStream);
-      }
-
-      BigInteger exponent = readAsBigInteger(dataInputStream);
-
-      return new SSHKeyFactors(modulus, exponent);
     }
-  }
-
-  private BigInteger readAsBigInteger (DataInputStream dataInputStream)
-    throws IOException, SSHParseException {
-
-    if (dataInputStream.read() != 2) {
-      throw new SSHParseException("Missing INTEGER marker");
-    }
-
-    int length = dataInputStream.read();
-
-    if (length >= 0x80) {
-
-      byte[] extended = new byte[4];
-      int bytesToRead = length & 0x7f;
-
-      if (bytesToRead == 0) {
-        bytesToRead = 4;
-      }
-      dataInputStream.readFully(extended, 4 - bytesToRead, bytesToRead);
-      length = new BigInteger(extended).intValue();
-    }
-
-    byte[] data = new byte[length];
-
-    dataInputStream.readFully(data);
-
-    return new BigInteger(data);
   }
 }
