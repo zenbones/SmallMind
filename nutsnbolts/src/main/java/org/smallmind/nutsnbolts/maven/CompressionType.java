@@ -58,7 +58,7 @@ public enum CompressionType {
       jarOutputStream = new JarOutputStream(fileOutputStream, (manifest == null) ? new Manifest() : manifest);
       for (File outputFile : new FileIterable(directoryToCompress)) {
         if (!outputFile.equals(compressedFile)) {
-          jarEntry = new JarEntry(outputFile.getCanonicalPath().substring(directoryToCompress.getAbsolutePath().length() + 1).replace(System.getProperty("file.separator"), "/"));
+          jarEntry = new JarEntry(outputFile.getCanonicalPath().substring(directoryToCompress.getCanonicalPath().length() + 1).replace(System.getProperty("file.separator"), "/"));
           jarEntry.setTime(outputFile.lastModified());
           jarEntry.setCompressedSize(-1);
           jarOutputStream.putNextEntry(jarEntry);
@@ -101,7 +101,7 @@ public enum CompressionType {
       zipOutputStream = new ZipOutputStream(fileOutputStream);
       for (File outputFile : new FileIterable(directoryToCompress)) {
         if (!outputFile.equals(compressedFile)) {
-          zipEntry = new ZipEntry(outputFile.getCanonicalPath().substring(directoryToCompress.getAbsolutePath().length() + 1).replace(System.getProperty("file.separator"), "/"));
+          zipEntry = new ZipEntry(outputFile.getCanonicalPath().substring(directoryToCompress.getCanonicalPath().length() + 1).replace(System.getProperty("file.separator"), "/"));
           zipEntry.setTime(outputFile.lastModified());
           zipOutputStream.putNextEntry(zipEntry);
           squeezeFileIntoZip(zipOutputStream, outputFile);
