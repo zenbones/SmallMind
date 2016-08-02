@@ -34,6 +34,7 @@ package org.smallmind.phalanx.wire.amqp.rabbitmq;
 
 import java.io.IOException;
 import java.util.Date;
+import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicStampedReference;
@@ -65,7 +66,7 @@ public abstract class MessageRouter {
     throws IOException;
 
   public void initialize ()
-    throws IOException {
+    throws IOException, TimeoutException {
 
     ensureChannel(0);
   }
@@ -101,7 +102,7 @@ public abstract class MessageRouter {
   }
 
   public void ensureChannel (int stamp)
-    throws IOException {
+    throws IOException, TimeoutException {
 
     synchronized (channelRef) {
       if (channelRef.getStamp() == stamp) {
@@ -127,8 +128,8 @@ public abstract class MessageRouter {
               if (!closed.get()) {
                 ensureChannel(nextStamp);
               }
-            } catch (IOException ioException) {
-              LoggerManager.getLogger(RabbitMQConnector.class).error(ioException);
+            } catch (IOException | TimeoutException exception) {
+              LoggerManager.getLogger(RabbitMQConnector.class).error(exception);
             }
           }
         });
@@ -138,8 +139,17 @@ public abstract class MessageRouter {
     }
   }
 
+  public void operate (ChannelOperation channelOperation)
+    throws Exception {
+
+    synchronized (channelRef) {
+
+      channelOperation.execute(channelRef.getReference());
+    }
+  }
+
   public void send (String routingKey, String exchangeName, AMQP.BasicProperties properties, byte[] body)
-    throws IOException {
+    throws IOException, TimeoutException {
 
     boolean sent = false;
 
@@ -170,10 +180,12 @@ public abstract class MessageRouter {
   }
 
   public void close ()
-    throws IOException {
+    throws IOException, TimeoutException {
 
     if (closed.compareAndSet(false, true)) {
-      channelRef.getReference().close();
+      synchronized (channelRef) {
+        channelRef.getReference().close();
+      }
     }
   }
 }

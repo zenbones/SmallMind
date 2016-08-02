@@ -34,6 +34,7 @@ package org.smallmind.phalanx.wire.amqp.rabbitmq;
 
 import java.io.IOException;
 import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.TimeoutException;
 import java.util.concurrent.TransferQueue;
 import java.util.concurrent.atomic.AtomicBoolean;
 import org.smallmind.instrument.config.MetricConfiguration;
@@ -57,7 +58,7 @@ public class RabbitMQResponseTransport extends WorkManager<InvocationWorker, Rab
   private final String instanceId = SnowflakeId.newInstance().generateDottedString();
 
   public RabbitMQResponseTransport (MetricConfiguration metricConfiguration, RabbitMQConnector rabbitMQConnector, NameConfiguration nameConfiguration, Class<InvocationWorker> workerClass, SignalCodec signalCodec, String serviceGroup, int clusterSize, int concurrencyLimit, int messageTTLSeconds)
-    throws IOException, InterruptedException {
+    throws IOException, InterruptedException, TimeoutException {
 
     super(metricConfiguration, workerClass, concurrencyLimit);
 
@@ -103,6 +104,24 @@ public class RabbitMQResponseTransport extends WorkManager<InvocationWorker, Rab
   }
 
   @Override
+  public void play ()
+    throws Exception {
+
+    for (ResponseMessageRouter responseMessageRouter : responseMessageRouters) {
+      responseMessageRouter.play();
+    }
+  }
+
+  @Override
+  public void pause ()
+    throws Exception {
+
+    for (ResponseMessageRouter responseMessageRouter : responseMessageRouters) {
+      responseMessageRouter.pause();
+    }
+  }
+
+  @Override
   public void transmit (String callerId, String correlationId, boolean error, String nativeType, Object result) throws Throwable {
 
     ResponseMessageRouter responseMessageRouter;
@@ -116,12 +135,15 @@ public class RabbitMQResponseTransport extends WorkManager<InvocationWorker, Rab
   }
 
   @Override
-  public void close () throws Exception {
+  public void close ()
+    throws IOException, InterruptedException, TimeoutException {
 
     if (closed.compareAndSet(false, true)) {
       for (ResponseMessageRouter responseMessageRouter : responseMessageRouters) {
         responseMessageRouter.close();
       }
+
+      shutDown();
     }
   }
 }

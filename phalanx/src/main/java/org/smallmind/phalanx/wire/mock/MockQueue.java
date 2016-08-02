@@ -40,6 +40,7 @@ import org.smallmind.scribe.pen.LoggerManager;
 public class MockQueue {
 
   private final AtomicBoolean closed = new AtomicBoolean(false);
+  private final AtomicBoolean active = new AtomicBoolean(true);
   private final QueueWorker worker;
   private final ConcurrentLinkedQueue<MockMessage> messageQueue = new ConcurrentLinkedQueue<>();
   private final ArrayList<MockMessageListener> listenerList = new ArrayList<>();
@@ -67,6 +68,16 @@ public class MockQueue {
     }
   }
 
+  public void play () {
+
+    active.set(true);
+  }
+
+  public void pause () {
+
+    active.set(false);
+  }
+
   public void send (MockMessage message) {
 
     messageQueue.add(message);
@@ -89,22 +100,24 @@ public class MockQueue {
     public void run () {
 
       while (!closed.get()) {
+        if (active.get()) {
 
-        MockMessage message;
+          MockMessage message;
 
-        if ((message = messageQueue.poll()) != null) {
-          synchronized (listenerList) {
-            if (listenerIndex >= listenerList.size()) {
-              listenerIndex = 0;
+          if ((message = messageQueue.poll()) != null) {
+            synchronized (listenerList) {
+              if (listenerIndex >= listenerList.size()) {
+                listenerIndex = 0;
+              }
+
+              listenerList.get(listenerIndex++).handle(message);
             }
-
-            listenerList.get(listenerIndex++).handle(message);
-          }
-        } else {
-          try {
-            Thread.sleep(500);
-          } catch (InterruptedException interruptedException) {
-            LoggerManager.getLogger(MockQueue.class).error(interruptedException);
+          } else {
+            try {
+              Thread.sleep(500);
+            } catch (InterruptedException interruptedException) {
+              LoggerManager.getLogger(MockQueue.class).error(interruptedException);
+            }
           }
         }
       }

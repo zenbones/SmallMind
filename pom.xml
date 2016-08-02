@@ -512,12 +512,12 @@
       <dependency>
         <groupId>com.rabbitmq</groupId>
         <artifactId>amqp-client</artifactId>
-        <version>3.5.1</version>
+        <version>3.6.4</version>
       </dependency>
       <dependency>
         <groupId>org.springframework.amqp</groupId>
         <artifactId>spring-rabbit</artifactId>
-        <version>1.4.4.RELEASE</version>
+        <version>1.6.1.RELEASE</version>
       </dependency>
       <dependency>
         <groupId>org.quartz-scheduler</groupId>

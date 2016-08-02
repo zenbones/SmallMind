@@ -33,6 +33,7 @@
 package org.smallmind.phalanx.wire.amqp.rabbitmq;
 
 import java.io.IOException;
+import java.util.concurrent.TimeoutException;
 import com.rabbitmq.client.Address;
 import com.rabbitmq.client.Connection;
 import com.rabbitmq.client.ConnectionFactory;
@@ -49,7 +50,7 @@ public class RabbitMQConnector {
   }
 
   public Connection getConnection ()
-    throws IOException {
+    throws IOException, TimeoutException {
 
     return connectionFactory.newConnection(addresses);
   }

@@ -76,6 +76,18 @@ public class RequestListener implements SessionEmployer, MessageListener {
     return selector;
   }
 
+  public void play ()
+    throws JMSException {
+
+    requestConnectionManager.start();
+  }
+
+  public void pause ()
+    throws JMSException {
+
+    requestConnectionManager.stop();
+  }
+
   public void close ()
     throws JMSException {
 

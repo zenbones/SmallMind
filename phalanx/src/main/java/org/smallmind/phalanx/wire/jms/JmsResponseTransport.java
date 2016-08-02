@@ -131,6 +131,36 @@ public class JmsResponseTransport extends WorkManager<InvocationWorker, Message>
   }
 
   @Override
+  public void play ()
+    throws JMSException {
+
+    for (RequestListener requestListener : shoutRequestListeners) {
+      requestListener.play();
+    }
+    for (RequestListener requestListener : talkRequestListeners) {
+      requestListener.play();
+    }
+    for (RequestListener requestListener : whisperRequestListeners) {
+      requestListener.play();
+    }
+  }
+
+  @Override
+  public void pause ()
+    throws JMSException {
+
+    for (RequestListener requestListener : shoutRequestListeners) {
+      requestListener.pause();
+    }
+    for (RequestListener requestListener : talkRequestListeners) {
+      requestListener.pause();
+    }
+    for (RequestListener requestListener : whisperRequestListeners) {
+      requestListener.pause();
+    }
+  }
+
+  @Override
   public void transmit (String callerId, String correlationId, boolean error, String nativeType, Object result)
     throws Exception {
 
@@ -171,7 +201,7 @@ public class JmsResponseTransport extends WorkManager<InvocationWorker, Message>
 
   @Override
   public void close ()
-    throws Exception {
+    throws JMSException, InterruptedException {
 
     if (closed.compareAndSet(false, true)) {
       for (RequestListener requestListener : shoutRequestListeners) {

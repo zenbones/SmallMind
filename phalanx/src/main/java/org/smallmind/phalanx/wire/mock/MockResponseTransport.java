@@ -111,6 +111,18 @@ public class MockResponseTransport implements ResponseTransport {
   }
 
   @Override
+  public void play () {
+
+    messageRouter.getTalkRequestQueue().play();
+  }
+
+  @Override
+  public void pause () {
+
+    messageRouter.getTalkRequestQueue().pause();
+  }
+
+  @Override
   public void transmit (String callerId, String correlationId, boolean error, String nativeType, Object result)
     throws Exception {
 

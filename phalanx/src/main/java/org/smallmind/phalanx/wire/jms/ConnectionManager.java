@@ -134,6 +134,14 @@ public class ConnectionManager implements ExceptionListener {
     }
   }
 
+  public void start ()
+    throws JMSException {
+
+    if (connection != null) {
+      connection.start();
+    }
+  }
+
   public void stop ()
     throws JMSException {
 

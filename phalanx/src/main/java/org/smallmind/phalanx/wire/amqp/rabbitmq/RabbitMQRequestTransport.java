@@ -36,6 +36,7 @@ import java.io.IOException;
 import java.util.Map;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
 import org.smallmind.instrument.ChronometerInstrumentAndReturn;
 import org.smallmind.instrument.InstrumentationManager;
@@ -65,7 +66,7 @@ public class RabbitMQRequestTransport extends AbstractRequestTransport implement
   private final String callerId = SnowflakeId.newInstance().generateDottedString();
 
   public RabbitMQRequestTransport (MetricConfiguration metricConfiguration, RabbitMQConnector rabbitMQConnector, NameConfiguration nameConfiguration, SignalCodec signalCodec, int clusterSize, int concurrencyLimit, int defaultTimeoutSeconds, int messageTTLSeconds)
-    throws IOException, InterruptedException {
+    throws IOException, InterruptedException, TimeoutException  {
 
     super(defaultTimeoutSeconds);
 
@@ -161,7 +162,7 @@ public class RabbitMQRequestTransport extends AbstractRequestTransport implement
 
   @Override
   public void close ()
-    throws IOException, InterruptedException {
+    throws IOException, InterruptedException, TimeoutException {
 
     if (closed.compareAndSet(false, true)) {
       for (RequestMessageRouter requestMessageRouter : requestMessageRouters) {

@@ -30,24 +30,12 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.phalanx.wire;
+package org.smallmind.phalanx.wire.amqp.rabbitmq;
 
-public interface ResponseTransport {
+import com.rabbitmq.client.Channel;
 
-  public abstract String getInstanceId ();
+public interface ChannelOperation {
 
-  public abstract String register (Class<?> serviceInterface, WiredService targetService)
-    throws Exception;
-
-  public abstract void play ()
-    throws Exception;
-
-  public abstract void pause ()
-    throws Exception;
-
-  public abstract void transmit (String callerId, String correlationId, boolean error, String nativeType, Object result)
-    throws Throwable;
-
-  public abstract void close ()
+  void execute (Channel channel)
     throws Exception;
 }
