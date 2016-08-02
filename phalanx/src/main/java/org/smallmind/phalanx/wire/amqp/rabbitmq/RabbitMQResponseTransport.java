@@ -37,12 +37,14 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.TransferQueue;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicReference;
 import org.smallmind.instrument.config.MetricConfiguration;
 import org.smallmind.instrument.config.MetricConfigurationProvider;
 import org.smallmind.nutsnbolts.util.SnowflakeId;
 import org.smallmind.phalanx.wire.ResponseTransport;
 import org.smallmind.phalanx.wire.SignalCodec;
 import org.smallmind.phalanx.wire.TransportException;
+import org.smallmind.phalanx.wire.TransportState;
 import org.smallmind.phalanx.wire.WireInvocationCircuit;
 import org.smallmind.phalanx.wire.WiredService;
 import org.smallmind.phalanx.worker.WorkManager;
@@ -51,6 +53,7 @@ import org.smallmind.phalanx.worker.WorkerFactory;
 public class RabbitMQResponseTransport extends WorkManager<InvocationWorker, RabbitMQMessage> implements MetricConfigurationProvider, WorkerFactory<InvocationWorker, RabbitMQMessage>, ResponseTransport {
 
   private final AtomicBoolean closed = new AtomicBoolean(false);
+  private final AtomicReference<TransportState> transportStateRef = new AtomicReference<>(TransportState.PLAYING);
   private final WireInvocationCircuit invocationCircuit = new WireInvocationCircuit();
   private final SignalCodec signalCodec;
   private final ConcurrentLinkedQueue<ResponseMessageRouter> responseQueue;
@@ -104,11 +107,21 @@ public class RabbitMQResponseTransport extends WorkManager<InvocationWorker, Rab
   }
 
   @Override
+  public TransportState getState () {
+
+    return transportStateRef.get();
+  }
+
+  @Override
   public void play ()
     throws Exception {
 
-    for (ResponseMessageRouter responseMessageRouter : responseMessageRouters) {
-      responseMessageRouter.play();
+    synchronized (transportStateRef) {
+      if (transportStateRef.compareAndSet(TransportState.PAUSED, TransportState.PLAYING)) {
+        for (ResponseMessageRouter responseMessageRouter : responseMessageRouters) {
+          responseMessageRouter.play();
+        }
+      }
     }
   }
 
@@ -116,8 +129,12 @@ public class RabbitMQResponseTransport extends WorkManager<InvocationWorker, Rab
   public void pause ()
     throws Exception {
 
-    for (ResponseMessageRouter responseMessageRouter : responseMessageRouters) {
-      responseMessageRouter.pause();
+    synchronized (transportStateRef) {
+      if (transportStateRef.compareAndSet(TransportState.PLAYING, TransportState.PAUSED)) {
+        for (ResponseMessageRouter responseMessageRouter : responseMessageRouters) {
+          responseMessageRouter.pause();
+        }
+      }
     }
   }
 
@@ -139,11 +156,15 @@ public class RabbitMQResponseTransport extends WorkManager<InvocationWorker, Rab
     throws IOException, InterruptedException, TimeoutException {
 
     if (closed.compareAndSet(false, true)) {
-      for (ResponseMessageRouter responseMessageRouter : responseMessageRouters) {
-        responseMessageRouter.close();
-      }
+      synchronized (transportStateRef) {
+        transportStateRef.set(TransportState.CLOSED);
 
-      shutDown();
+        for (ResponseMessageRouter responseMessageRouter : responseMessageRouters) {
+          responseMessageRouter.close();
+        }
+
+        shutDown();
+      }
     }
   }
 }

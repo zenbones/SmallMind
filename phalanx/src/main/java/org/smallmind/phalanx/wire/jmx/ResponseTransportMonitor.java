@@ -30,26 +30,40 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.phalanx.wire;
+package org.smallmind.phalanx.wire.jmx;
 
-public interface ResponseTransport {
+import javax.management.StandardMBean;
+import org.smallmind.phalanx.wire.ResponseTransport;
+import org.smallmind.phalanx.wire.TransportState;
 
-  String getInstanceId ();
+public class ResponseTransportMonitor extends StandardMBean implements ResponseTransportMXBean {
 
-  String register (Class<?> serviceInterface, WiredService targetService)
-    throws Exception;
+  private ResponseTransport responseTransport;
 
-  TransportState getState ();
+  public ResponseTransportMonitor (ResponseTransport responseTransport) {
 
-  void play ()
-    throws Exception;
+    super(ResponseTransportMXBean.class, true);
 
-  void pause ()
-    throws Exception;
+    this.responseTransport = responseTransport;
+  }
 
-  void transmit (String callerId, String correlationId, boolean error, String nativeType, Object result)
-    throws Throwable;
+  @Override
+  public TransportState getState () {
 
-  void close ()
-    throws Exception;
+    return responseTransport.getState();
+  }
+
+  @Override
+  public void play ()
+    throws Exception {
+
+    responseTransport.play();
+  }
+
+  @Override
+  public void pause ()
+    throws Exception {
+
+    responseTransport.pause();
+  }
 }

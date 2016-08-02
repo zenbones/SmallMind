@@ -34,11 +34,13 @@ package org.smallmind.phalanx.wire.mock;
 
 import java.util.Date;
 import java.util.UUID;
+import java.util.concurrent.atomic.AtomicReference;
 import org.smallmind.phalanx.wire.InvocationSignal;
 import org.smallmind.phalanx.wire.ResponseTransport;
 import org.smallmind.phalanx.wire.ResultSignal;
 import org.smallmind.phalanx.wire.ServiceDefinitionException;
 import org.smallmind.phalanx.wire.SignalCodec;
+import org.smallmind.phalanx.wire.TransportState;
 import org.smallmind.phalanx.wire.WireInvocationCircuit;
 import org.smallmind.phalanx.wire.WireProperty;
 import org.smallmind.phalanx.wire.WiredService;
@@ -46,6 +48,7 @@ import org.smallmind.scribe.pen.LoggerManager;
 
 public class MockResponseTransport implements ResponseTransport {
 
+  private final AtomicReference<TransportState> transportStateRef = new AtomicReference<>(TransportState.PLAYING);
   private final WireInvocationCircuit invocationCircuit = new WireInvocationCircuit();
   private final MockMessageRouter messageRouter;
   private final SignalCodec signalCodec;
@@ -111,15 +114,29 @@ public class MockResponseTransport implements ResponseTransport {
   }
 
   @Override
+  public TransportState getState () {
+
+    return transportStateRef.get();
+  }
+
+  @Override
   public void play () {
 
-    messageRouter.getTalkRequestQueue().play();
+    synchronized (transportStateRef) {
+      if (transportStateRef.compareAndSet(TransportState.PAUSED, TransportState.PLAYING)) {
+        messageRouter.getTalkRequestQueue().play();
+      }
+    }
   }
 
   @Override
   public void pause () {
 
-    messageRouter.getTalkRequestQueue().pause();
+    synchronized (transportStateRef) {
+      if (transportStateRef.compareAndSet(TransportState.PLAYING, TransportState.PAUSED)) {
+        messageRouter.getTalkRequestQueue().pause();
+      }
+    }
   }
 
   @Override
@@ -141,5 +158,8 @@ public class MockResponseTransport implements ResponseTransport {
   public void close ()
     throws Exception {
 
+    synchronized (transportStateRef) {
+      transportStateRef.set(TransportState.CLOSED);
+    }
   }
 }

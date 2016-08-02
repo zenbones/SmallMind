@@ -66,7 +66,7 @@ public class RabbitMQRequestTransport extends AbstractRequestTransport implement
   private final String callerId = SnowflakeId.newInstance().generateDottedString();
 
   public RabbitMQRequestTransport (MetricConfiguration metricConfiguration, RabbitMQConnector rabbitMQConnector, NameConfiguration nameConfiguration, SignalCodec signalCodec, int clusterSize, int concurrencyLimit, int defaultTimeoutSeconds, int messageTTLSeconds)
-    throws IOException, InterruptedException, TimeoutException  {
+    throws IOException, InterruptedException, TimeoutException {
 
     super(defaultTimeoutSeconds);
 

@@ -30,14 +30,11 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.phalanx.wire;
+package org.smallmind.phalanx.wire.jmx;
 
-public interface ResponseTransport {
+import org.smallmind.phalanx.wire.TransportState;
 
-  String getInstanceId ();
-
-  String register (Class<?> serviceInterface, WiredService targetService)
-    throws Exception;
+public interface ResponseTransportMXBean {
 
   TransportState getState ();
 
@@ -45,11 +42,5 @@ public interface ResponseTransport {
     throws Exception;
 
   void pause ()
-    throws Exception;
-
-  void transmit (String callerId, String correlationId, boolean error, String nativeType, Object result)
-    throws Throwable;
-
-  void close ()
     throws Exception;
 }

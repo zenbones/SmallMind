@@ -35,6 +35,7 @@ package org.smallmind.phalanx.wire.jms;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.TransferQueue;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicReference;
 import javax.jms.BytesMessage;
 import javax.jms.JMSException;
 import javax.jms.Message;
@@ -51,6 +52,7 @@ import org.smallmind.phalanx.wire.ResultSignal;
 import org.smallmind.phalanx.wire.ServiceDefinitionException;
 import org.smallmind.phalanx.wire.SignalCodec;
 import org.smallmind.phalanx.wire.TransportException;
+import org.smallmind.phalanx.wire.TransportState;
 import org.smallmind.phalanx.wire.WireInvocationCircuit;
 import org.smallmind.phalanx.wire.WireProperty;
 import org.smallmind.phalanx.wire.WiredService;
@@ -60,6 +62,7 @@ import org.smallmind.phalanx.worker.WorkerFactory;
 public class JmsResponseTransport extends WorkManager<InvocationWorker, Message> implements MetricConfigurationProvider, WorkerFactory<InvocationWorker, Message>, ResponseTransport {
 
   private final AtomicBoolean closed = new AtomicBoolean(false);
+  private final AtomicReference<TransportState> transportStateRef = new AtomicReference<>(TransportState.PLAYING);
   private final WireInvocationCircuit invocationCircuit = new WireInvocationCircuit();
   private final SignalCodec signalCodec;
   private final ConcurrentLinkedQueue<TopicOperator> responseQueue;
@@ -131,17 +134,27 @@ public class JmsResponseTransport extends WorkManager<InvocationWorker, Message>
   }
 
   @Override
+  public TransportState getState () {
+
+    return transportStateRef.get();
+  }
+
+  @Override
   public void play ()
     throws JMSException {
 
-    for (RequestListener requestListener : shoutRequestListeners) {
-      requestListener.play();
-    }
-    for (RequestListener requestListener : talkRequestListeners) {
-      requestListener.play();
-    }
-    for (RequestListener requestListener : whisperRequestListeners) {
-      requestListener.play();
+    synchronized (transportStateRef) {
+      if (transportStateRef.compareAndSet(TransportState.PAUSED, TransportState.PLAYING)) {
+        for (RequestListener requestListener : shoutRequestListeners) {
+          requestListener.play();
+        }
+        for (RequestListener requestListener : talkRequestListeners) {
+          requestListener.play();
+        }
+        for (RequestListener requestListener : whisperRequestListeners) {
+          requestListener.play();
+        }
+      }
     }
   }
 
@@ -149,14 +162,18 @@ public class JmsResponseTransport extends WorkManager<InvocationWorker, Message>
   public void pause ()
     throws JMSException {
 
-    for (RequestListener requestListener : shoutRequestListeners) {
-      requestListener.pause();
-    }
-    for (RequestListener requestListener : talkRequestListeners) {
-      requestListener.pause();
-    }
-    for (RequestListener requestListener : whisperRequestListeners) {
-      requestListener.pause();
+    synchronized (transportStateRef) {
+      if (transportStateRef.compareAndSet(TransportState.PLAYING, TransportState.PAUSED)) {
+        for (RequestListener requestListener : shoutRequestListeners) {
+          requestListener.pause();
+        }
+        for (RequestListener requestListener : talkRequestListeners) {
+          requestListener.pause();
+        }
+        for (RequestListener requestListener : whisperRequestListeners) {
+          requestListener.pause();
+        }
+      }
     }
   }
 
@@ -204,24 +221,28 @@ public class JmsResponseTransport extends WorkManager<InvocationWorker, Message>
     throws JMSException, InterruptedException {
 
     if (closed.compareAndSet(false, true)) {
-      for (RequestListener requestListener : shoutRequestListeners) {
-        requestListener.close();
-      }
-      for (RequestListener requestListener : talkRequestListeners) {
-        requestListener.close();
-      }
-      for (RequestListener requestListener : whisperRequestListeners) {
-        requestListener.close();
-      }
+      synchronized (transportStateRef) {
+        transportStateRef.set(TransportState.CLOSED);
 
-      for (ConnectionManager responseConnectionManager : responseConnectionManagers) {
-        responseConnectionManager.stop();
-      }
-      for (ConnectionManager responseConnectionManager : responseConnectionManagers) {
-        responseConnectionManager.close();
-      }
+        for (RequestListener requestListener : shoutRequestListeners) {
+          requestListener.close();
+        }
+        for (RequestListener requestListener : talkRequestListeners) {
+          requestListener.close();
+        }
+        for (RequestListener requestListener : whisperRequestListeners) {
+          requestListener.close();
+        }
 
-      shutDown();
+        for (ConnectionManager responseConnectionManager : responseConnectionManagers) {
+          responseConnectionManager.stop();
+        }
+        for (ConnectionManager responseConnectionManager : responseConnectionManagers) {
+          responseConnectionManager.close();
+        }
+
+        shutDown();
+      }
     }
   }
 }

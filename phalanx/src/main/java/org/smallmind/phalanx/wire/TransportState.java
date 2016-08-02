@@ -32,24 +32,7 @@
  */
 package org.smallmind.phalanx.wire;
 
-public interface ResponseTransport {
+public enum TransportState {
 
-  String getInstanceId ();
-
-  String register (Class<?> serviceInterface, WiredService targetService)
-    throws Exception;
-
-  TransportState getState ();
-
-  void play ()
-    throws Exception;
-
-  void pause ()
-    throws Exception;
-
-  void transmit (String callerId, String correlationId, boolean error, String nativeType, Object result)
-    throws Throwable;
-
-  void close ()
-    throws Exception;
+  PLAYING, PAUSED, CLOSED
 }
