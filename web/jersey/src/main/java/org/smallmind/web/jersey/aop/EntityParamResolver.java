@@ -98,7 +98,13 @@ public class EntityParamResolver {
     @Override
     public Object provide () {
 
-      return EntityTranslator.getParameter(getContainerRequest(), paramKey, paramClass, parameterAnnotations);
+      Object obj = EntityTranslator.getParameter(getContainerRequest(), paramKey, paramClass, parameterAnnotations);
+
+      if ((obj == null) && paramClass.isPrimitive()) {
+        throw new ParameterProcessingException("Attempt to assign a 'null' value to primitive argument(%s) of type(%s)", paramKey, paramClass.getSimpleName());
+      }
+
+      return obj;
     }
   }
 
