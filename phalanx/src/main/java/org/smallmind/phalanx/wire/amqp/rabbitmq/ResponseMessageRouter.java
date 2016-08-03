@@ -72,39 +72,46 @@ public class ResponseMessageRouter extends MessageRouter {
   }
 
   @Override
-  public void bindQueues (Channel channel)
+  public void bindQueues ()
     throws IOException {
 
-    String shoutQueueName;
-    String talkQueueName;
-    String whisperQueueName;
+    operate(new ChannelOperation() {
 
-    channel.queueDeclare(shoutQueueName = getShoutQueueName() + "-" + serviceGroup + "[" + instanceId + "]", false, false, true, null);
-    channel.queueBind(shoutQueueName, getRequestExchangeName(), VocalMode.SHOUT.getName() + "-" + serviceGroup);
+      @Override
+      public void execute (Channel channel)
+        throws IOException {
 
-    channel.queueDeclare(talkQueueName = getTalkQueueName() + "-" + serviceGroup, false, false, false, null);
-    channel.queueBind(talkQueueName, getRequestExchangeName(), VocalMode.TALK.getName() + "-" + serviceGroup);
+        String shoutQueueName;
+        String talkQueueName;
+        String whisperQueueName;
 
-    channel.queueDeclare(whisperQueueName = getWhisperQueueName() + "-" + serviceGroup + "[" + instanceId + "]", false, false, true, null);
-    channel.queueBind(whisperQueueName, getRequestExchangeName(), VocalMode.WHISPER.getName() + "-" + serviceGroup + "[" + instanceId + "]");
+        channel.queueDeclare(shoutQueueName = getShoutQueueName() + "-" + serviceGroup + "[" + instanceId + "]", false, false, true, null);
+        channel.queueBind(shoutQueueName, getRequestExchangeName(), VocalMode.SHOUT.getName() + "-" + serviceGroup);
+
+        channel.queueDeclare(talkQueueName = getTalkQueueName() + "-" + serviceGroup, false, false, false, null);
+        channel.queueBind(talkQueueName, getRequestExchangeName(), VocalMode.TALK.getName() + "-" + serviceGroup);
+
+        channel.queueDeclare(whisperQueueName = getWhisperQueueName() + "-" + serviceGroup + "[" + instanceId + "]", false, false, true, null);
+        channel.queueBind(whisperQueueName, getRequestExchangeName(), VocalMode.WHISPER.getName() + "-" + serviceGroup + "[" + instanceId + "]");
+      }
+    });
   }
 
   public void play ()
-    throws Exception {
+    throws IOException {
 
-    operate(new ChannelOperation() {
-
-      @Override
-      public void execute (Channel channel)
-        throws IOException {
-
-        installConsumer(channel);
-      }
-    });
+    installConsumer();
   }
 
   public void pause ()
-    throws Exception {
+    throws IOException {
+
+    unInstallConsumer();
+  }
+
+  @Override
+  public void installConsumer ()
+    throws IOException {
 
     operate(new ChannelOperation() {
 
@@ -112,26 +119,27 @@ public class ResponseMessageRouter extends MessageRouter {
       public void execute (Channel channel)
         throws IOException {
 
-        unInstallConsumer(channel);
+        installConsumerInternal(channel, getShoutQueueName() + "-" + serviceGroup + "[" + instanceId + "]");
+        installConsumerInternal(channel, getTalkQueueName() + "-" + serviceGroup);
+        installConsumerInternal(channel, getWhisperQueueName() + "-" + serviceGroup + "[" + instanceId + "]");
       }
     });
   }
 
-  @Override
-  public void installConsumer (Channel channel)
+  public void unInstallConsumer ()
     throws IOException {
 
-    installConsumerInternal(channel, getShoutQueueName() + "-" + serviceGroup + "[" + instanceId + "]");
-    installConsumerInternal(channel, getTalkQueueName() + "-" + serviceGroup);
-    installConsumerInternal(channel, getWhisperQueueName() + "-" + serviceGroup + "[" + instanceId + "]");
-  }
+    operate(new ChannelOperation() {
 
-  public void unInstallConsumer (Channel channel)
-    throws IOException {
+      @Override
+      public void execute (Channel channel)
+        throws IOException {
 
-    channel.basicCancel(getShoutQueueName() + "-" + serviceGroup + "[" + instanceId + "]");
-    channel.basicCancel(getTalkQueueName() + "-" + serviceGroup);
-    channel.basicCancel(getWhisperQueueName() + "-" + serviceGroup + "[" + instanceId + "]");
+        channel.basicCancel(getShoutQueueName() + "-" + serviceGroup + "[" + instanceId + "]");
+        channel.basicCancel(getTalkQueueName() + "-" + serviceGroup);
+        channel.basicCancel(getWhisperQueueName() + "-" + serviceGroup + "[" + instanceId + "]");
+      }
+    });
   }
 
   private void installConsumerInternal (Channel channel, String queueName)

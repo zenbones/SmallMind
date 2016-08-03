@@ -79,43 +79,59 @@ public class RequestMessageRouter extends MessageRouter {
   }
 
   @Override
-  public final void bindQueues (Channel channel)
+  public final void bindQueues ()
     throws IOException {
 
-    String queueName;
+    operate(new ChannelOperation() {
 
-    channel.queueDeclare(queueName = getResponseQueueName() + "-" + callerId, false, false, true, null);
-    channel.queueBind(queueName, getResponseExchangeName(), "response-" + callerId);
+      @Override
+      public void execute (Channel channel)
+        throws IOException {
+
+        String queueName;
+
+        channel.queueDeclare(queueName = getResponseQueueName() + "-" + callerId, false, false, true, null);
+        channel.queueBind(queueName, getResponseExchangeName(), "response-" + callerId);
+      }
+    });
   }
 
   @Override
-  public void installConsumer (Channel channel)
+  public void installConsumer ()
     throws IOException {
 
-    channel.basicConsume(getResponseQueueName() + "-" + callerId, true, getResponseQueueName() + "-" + callerId + "[" + index + "]", false, false, null, new DefaultConsumer(channel) {
+    operate(new ChannelOperation() {
 
       @Override
-      public synchronized void handleDelivery (String consumerTag, Envelope envelope, final AMQP.BasicProperties properties, final byte[] body) {
+      public void execute (Channel channel)
+        throws IOException {
 
-        try {
+        channel.basicConsume(getResponseQueueName() + "-" + callerId, true, getResponseQueueName() + "-" + callerId + "[" + index + "]", false, false, null, new DefaultConsumer(channel) {
 
-          long timeInTopic = System.currentTimeMillis() - getTimestamp(properties);
+          @Override
+          public synchronized void handleDelivery (String consumerTag, Envelope envelope, final AMQP.BasicProperties properties, final byte[] body) {
 
-          LoggerManager.getLogger(ResponseMessageRouter.class).debug("response message received(%s) in %d ms...", properties.getMessageId(), timeInTopic);
-          InstrumentationManager.instrumentWithChronometer(requestTransport, (timeInTopic >= 0) ? timeInTopic : 0, TimeUnit.MILLISECONDS, new MetricProperty("queue", MetricType.RESPONSE_TOPIC_TRANSIT.getDisplay()));
+            try {
 
-          InstrumentationManager.execute(new ChronometerInstrument(requestTransport, new MetricProperty("event", MetricType.COMPLETE_CALLBACK.getDisplay())) {
+              long timeInTopic = System.currentTimeMillis() - getTimestamp(properties);
 
-            @Override
-            public void withChronometer ()
-              throws Exception {
+              LoggerManager.getLogger(ResponseMessageRouter.class).debug("response message received(%s) in %d ms...", properties.getMessageId(), timeInTopic);
+              InstrumentationManager.instrumentWithChronometer(requestTransport, (timeInTopic >= 0) ? timeInTopic : 0, TimeUnit.MILLISECONDS, new MetricProperty("queue", MetricType.RESPONSE_TOPIC_TRANSIT.getDisplay()));
 
-              requestTransport.completeCallback(properties.getCorrelationId(), signalCodec.decode(body, 0, body.length, ResultSignal.class));
+              InstrumentationManager.execute(new ChronometerInstrument(requestTransport, new MetricProperty("event", MetricType.COMPLETE_CALLBACK.getDisplay())) {
+
+                @Override
+                public void withChronometer ()
+                  throws Exception {
+
+                  requestTransport.completeCallback(properties.getCorrelationId(), signalCodec.decode(body, 0, body.length, ResultSignal.class));
+                }
+              });
+            } catch (Exception exception) {
+              LoggerManager.getLogger(ResponseMessageRouter.class).error(exception);
             }
-          });
-        } catch (Exception exception) {
-          LoggerManager.getLogger(ResponseMessageRouter.class).error(exception);
-        }
+          }
+        });
       }
     });
   }

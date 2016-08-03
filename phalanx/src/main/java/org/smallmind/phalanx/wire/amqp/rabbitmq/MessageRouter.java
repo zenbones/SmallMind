@@ -59,10 +59,10 @@ public abstract class MessageRouter {
     this.nameConfiguration = nameConfiguration;
   }
 
-  public abstract void bindQueues (Channel channel)
+  public abstract void bindQueues ()
     throws IOException;
 
-  public abstract void installConsumer (Channel channel)
+  public abstract void installConsumer ()
     throws IOException;
 
   public void initialize ()
@@ -101,7 +101,7 @@ public abstract class MessageRouter {
     return nameConfiguration.getWhisperQueue();
   }
 
-  public void ensureChannel (int stamp)
+  private void ensureChannel (int stamp)
     throws IOException, TimeoutException {
 
     synchronized (channelRef) {
@@ -115,7 +115,7 @@ public abstract class MessageRouter {
         channel.exchangeDeclare(getRequestExchangeName(), "direct", false, false, null);
         channel.exchangeDeclare(getResponseExchangeName(), "direct", false, false, null);
 
-        bindQueues(channel);
+        bindQueues();
 
         channelRef.set(channel, nextStamp = version.incrementAndGet());
 
@@ -134,13 +134,13 @@ public abstract class MessageRouter {
           }
         });
 
-        installConsumer(channel);
+        installConsumer();
       }
     }
   }
 
   public void operate (ChannelOperation channelOperation)
-    throws Exception {
+    throws IOException {
 
     synchronized (channelRef) {
 

@@ -32,10 +32,11 @@
  */
 package org.smallmind.phalanx.wire.amqp.rabbitmq;
 
+import java.io.IOException;
 import com.rabbitmq.client.Channel;
 
 public interface ChannelOperation {
 
   void execute (Channel channel)
-    throws Exception;
+    throws IOException;
 }
