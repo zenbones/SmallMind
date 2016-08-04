@@ -115,10 +115,7 @@ public abstract class MessageRouter {
         channel.exchangeDeclare(getRequestExchangeName(), "direct", false, false, null);
         channel.exchangeDeclare(getResponseExchangeName(), "direct", false, false, null);
 
-        bindQueues();
-
         channelRef.set(channel, nextStamp = version.incrementAndGet());
-
         channel.addShutdownListener(new ShutdownListener() {
 
           @Override
@@ -134,6 +131,7 @@ public abstract class MessageRouter {
           }
         });
 
+        bindQueues();
         installConsumer();
       }
     }
