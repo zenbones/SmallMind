@@ -135,9 +135,9 @@ public class ResponseMessageRouter extends MessageRouter {
       public void execute (Channel channel)
         throws IOException {
 
-        channel.basicCancel(getShoutQueueName() + "-" + serviceGroup + "[" + instanceId + "]");
-        channel.basicCancel(getTalkQueueName() + "-" + serviceGroup);
-        channel.basicCancel(getWhisperQueueName() + "-" + serviceGroup + "[" + instanceId + "]");
+        channel.basicCancel(getShoutQueueName() + "-" + serviceGroup + "[" + instanceId + "]" + "[" + index + "]");
+        channel.basicCancel(getTalkQueueName() + "-" + serviceGroup + "[" + index + "]");
+        channel.basicCancel(getWhisperQueueName() + "-" + serviceGroup + "[" + instanceId + "]" + "[" + index + "]");
       }
     });
   }
