@@ -85,7 +85,7 @@ public class ResponseMessageRouter extends MessageRouter {
         String talkQueueName;
         String whisperQueueName;
 
-        channel.queueDeclare(shoutQueueName = getShoutQueueName() + "-" + serviceGroup + "[" + instanceId + "]", false, false, true, null);
+        channel.queueDeclare(shoutQueueName = getShoutQueueName() + "-" + serviceGroup, false, false, true, null);
         channel.queueBind(shoutQueueName, getRequestExchangeName(), VocalMode.SHOUT.getName() + "-" + serviceGroup);
 
         channel.queueDeclare(talkQueueName = getTalkQueueName() + "-" + serviceGroup, false, false, false, null);
@@ -119,7 +119,7 @@ public class ResponseMessageRouter extends MessageRouter {
       public void execute (Channel channel)
         throws IOException {
 
-        installConsumerInternal(channel, getShoutQueueName() + "-" + serviceGroup + "[" + instanceId + "]");
+        installConsumerInternal(channel, getShoutQueueName() + "-" + serviceGroup);
         installConsumerInternal(channel, getTalkQueueName() + "-" + serviceGroup);
         installConsumerInternal(channel, getWhisperQueueName() + "-" + serviceGroup + "[" + instanceId + "]");
       }
@@ -135,7 +135,7 @@ public class ResponseMessageRouter extends MessageRouter {
       public void execute (Channel channel)
         throws IOException {
 
-        channel.basicCancel(getShoutQueueName() + "-" + serviceGroup + "[" + instanceId + "]" + "[" + index + "]");
+        channel.basicCancel(getShoutQueueName() + "-" + serviceGroup + "[" + index + "]");
         channel.basicCancel(getTalkQueueName() + "-" + serviceGroup + "[" + index + "]");
         channel.basicCancel(getWhisperQueueName() + "-" + serviceGroup + "[" + instanceId + "]" + "[" + index + "]");
       }
