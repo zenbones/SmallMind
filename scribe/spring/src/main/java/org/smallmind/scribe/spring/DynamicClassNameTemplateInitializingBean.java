@@ -79,8 +79,8 @@ public class DynamicClassNameTemplateInitializingBean implements InitializingBea
     SpringPropertyAccessor springPropertyAccessor = SpringPropertyAccessorManager.getSpringPropertyAccessor();
 
     for (String propertyKey : springPropertyAccessor.getKeySet()) {
-      if (propertyKey.startsWith("log.template.")) {
-        templateMap.put(propertyKey.substring("log.template.".length()), springPropertyAccessor.asString(propertyKey));
+      if (propertyKey.startsWith("log.pattern.")) {
+        templateMap.put(propertyKey.substring("log.pattern.".length()), springPropertyAccessor.asString(propertyKey));
       }
       if (propertyKey.startsWith("log.level.")) {
         levelMap.put(propertyKey.substring("log.level.".length()), springPropertyAccessor.asString(propertyKey));
