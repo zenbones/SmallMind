@@ -61,52 +61,54 @@ public class ORMBasedCachedWithAspect {
     if (((vectoredDao = ormDao.getVectoredDao()) == null) || ((cachedWith = ormDao.getClass().getAnnotation(CachedWith.class)) == null)) {
 
       return thisJoinPoint.proceed();
-    }
-    else {
+    } else {
 
       Durable durable;
 
-      durable = (Durable)thisJoinPoint.proceed();
+      if ((durable = (Durable)thisJoinPoint.proceed()) == null) {
 
-      for (Update update : cachedWith.updates()) {
-        if (executeFilter(update.filter(), ormDao, durable)) {
+        return thisJoinPoint.proceed();
+      } else {
+        for (Update update : cachedWith.updates()) {
+          if (executeFilter(update.filter(), ormDao, durable)) {
 
-          OnPersist onPersist = executeOnPersist(update.onPersist(), ormDao, durable);
-          Iterable<Durable> finderIterable = executeFinder(update.finder(), ormDao, durable);
+            OnPersist onPersist = executeOnPersist(update.onPersist(), ormDao, durable);
+            Iterable<Durable> finderIterable = executeFinder(update.finder(), ormDao, durable);
 
-          for (Durable indexingDurable : finderIterable) {
+            for (Durable indexingDurable : finderIterable) {
 
-            Operand operand = executeProxy(update.proxy(), ormDao, indexingDurable);
+              Operand operand = executeProxy(update.proxy(), ormDao, indexingDurable);
 
-            switch (onPersist) {
-              case INSERT:
-                vectoredDao.updateInVector(new VectorKey(VectorCalculator.getVectorArtifact(update.value(), operand.getDurable()), ormDao.getManagedClass(), Classifications.get(CachedWith.class, null, update.value())), indexingDurable);
-                break;
-              case REMOVE:
-                vectoredDao.removeFromVector(new VectorKey(VectorCalculator.getVectorArtifact(update.value(), operand.getDurable()), ormDao.getManagedClass(), Classifications.get(CachedWith.class, null, update.value())), indexingDurable);
-                break;
-              default:
-                throw new UnknownSwitchCaseException(onPersist.name());
+              switch (onPersist) {
+                case INSERT:
+                  vectoredDao.updateInVector(new VectorKey(VectorCalculator.getVectorArtifact(update.value(), operand.getDurable()), ormDao.getManagedClass(), Classifications.get(CachedWith.class, null, update.value())), indexingDurable);
+                  break;
+                case REMOVE:
+                  vectoredDao.removeFromVector(new VectorKey(VectorCalculator.getVectorArtifact(update.value(), operand.getDurable()), ormDao.getManagedClass(), Classifications.get(CachedWith.class, null, update.value())), indexingDurable);
+                  break;
+                default:
+                  throw new UnknownSwitchCaseException(onPersist.name());
+              }
             }
           }
         }
-      }
 
-      for (Invalidate invalidate : cachedWith.invalidates()) {
-        if (executeFilter(invalidate.filter(), ormDao, durable)) {
+        for (Invalidate invalidate : cachedWith.invalidates()) {
+          if (executeFilter(invalidate.filter(), ormDao, durable)) {
 
-          Iterable<Durable> finderIterable = executeFinder(invalidate.finder(), ormDao, durable);
+            Iterable<Durable> finderIterable = executeFinder(invalidate.finder(), ormDao, durable);
 
-          for (Durable indexingDurable : finderIterable) {
+            for (Durable indexingDurable : finderIterable) {
 
-            Operand operand = executeProxy(invalidate.proxy(), ormDao, indexingDurable);
+              Operand operand = executeProxy(invalidate.proxy(), ormDao, indexingDurable);
 
-            vectoredDao.deleteVector(new VectorKey(VectorCalculator.getVectorArtifact(invalidate.value(), operand.getDurable()), ormDao.getManagedClass(), Classifications.get(CachedWith.class, null, invalidate.value())));
+              vectoredDao.deleteVector(new VectorKey(VectorCalculator.getVectorArtifact(invalidate.value(), operand.getDurable()), ormDao.getManagedClass(), Classifications.get(CachedWith.class, null, invalidate.value())));
+            }
           }
         }
-      }
 
-      return durable;
+        return durable;
+      }
     }
   }
 
@@ -117,11 +119,10 @@ public class ORMBasedCachedWithAspect {
     CachedWith cachedWith;
     VectoredDao vectoredDao;
 
-    if (((vectoredDao = ormDao.getVectoredDao()) == null) || ((cachedWith = ormDao.getClass().getAnnotation(CachedWith.class)) == null)) {
+    if (((vectoredDao = ormDao.getVectoredDao()) == null) || ((cachedWith = ormDao.getClass().getAnnotation(CachedWith.class)) == null) || (durable == null)) {
 
       thisJoinPoint.proceed();
-    }
-    else {
+    } else {
       thisJoinPoint.proceed();
 
       for (Update update : cachedWith.updates()) {
@@ -171,8 +172,7 @@ public class ORMBasedCachedWithAspect {
       try {
 
         return (Boolean)filterMethod.invoke(ormDao, durable);
-      }
-      catch (Exception exception) {
+      } catch (Exception exception) {
         throw new CacheAutomationError(exception);
       }
     }
@@ -197,8 +197,7 @@ public class ORMBasedCachedWithAspect {
       try {
 
         return (OnPersist)onPersistMethod.invoke(ormDao, durable);
-      }
-      catch (Exception exception) {
+      } catch (Exception exception) {
         throw new CacheAutomationError(exception);
       }
     }
@@ -226,8 +225,7 @@ public class ORMBasedCachedWithAspect {
     try {
 
       return new Operand(expectedType, (Durable)proxyMethod.invoke(ormDao, durable));
-    }
-    catch (Exception exception) {
+    } catch (Exception exception) {
       throw new CacheAutomationError(exception);
     }
   }
@@ -240,7 +238,7 @@ public class ORMBasedCachedWithAspect {
 
     if ((finder.method() == null) || (finder.method().length() == 0)) {
 
-      return new SingleItemIterable<Durable>(durable);
+      return new SingleItemIterable<>(durable);
     }
 
     if ((finderMethod = locateMethod(ormDao, finder.method(), ormDao.getManagedClass())) == null) {
@@ -250,13 +248,11 @@ public class ORMBasedCachedWithAspect {
     if ((expectedType = (finder.with().equals(Durable.class) ? durable.getClass() : finder.with())).isAssignableFrom(finderMethod.getReturnType())) {
       try {
 
-        return new SingleItemIterable<Durable>((Durable)finderMethod.invoke(ormDao, durable));
-      }
-      catch (Exception exception) {
+        return new SingleItemIterable<>((Durable)finderMethod.invoke(ormDao, durable));
+      } catch (Exception exception) {
         throw new CacheAutomationError(exception);
       }
-    }
-    else if (!Iterable.class.isAssignableFrom(finderMethod.getReturnType())) {
+    } else if (!Iterable.class.isAssignableFrom(finderMethod.getReturnType())) {
       if ((!((finderReturnType = finderMethod.getGenericReturnType()) instanceof ParameterizedType)) || (!expectedType.isAssignableFrom((Class)((ParameterizedType)finderReturnType).getActualTypeArguments()[0]))) {
         throw new CacheAutomationError("The finder method(%s) must return an Iterable parameterized to %s <? extends Iterable<? extends %s>>", finder.method(), expectedType.getSimpleName(), expectedType.getSimpleName());
       }
@@ -264,12 +260,10 @@ public class ORMBasedCachedWithAspect {
       try {
 
         return (Iterable<Durable>)finderMethod.invoke(ormDao, durable);
-      }
-      catch (Exception exception) {
+      } catch (Exception exception) {
         throw new CacheAutomationError(exception);
       }
-    }
-    else {
+    } else {
       throw new CacheAutomationError("The finder method(%s) must return either a %s type, or an Iterable parameterized to %s <? extends Iterable<? extends %s>>", finder.method(), expectedType.getSimpleName(), expectedType.getSimpleName(), expectedType.getSimpleName());
     }
   }
