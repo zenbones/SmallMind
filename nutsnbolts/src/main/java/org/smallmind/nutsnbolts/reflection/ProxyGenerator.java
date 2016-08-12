@@ -33,10 +33,8 @@
 package org.smallmind.nutsnbolts.reflection;
 
 import java.io.IOException;
-import java.lang.annotation.Annotation;
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Modifier;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
@@ -53,142 +51,79 @@ import org.objectweb.asm.util.CheckClassAdapter;
 
 public class ProxyGenerator {
 
-  private static final ConcurrentHashMap<ParseKey, Class> INTERFACE_MAP = new ConcurrentHashMap<>();
+  private static final ConcurrentHashMap<Class<?>, Class<?>> INTERFACE_MAP = new ConcurrentHashMap<>();
   private static final HashMap<ClassLoader, ProxyClassLoader> LOADER_MAP = new HashMap<>();
   private static final String INVOCATION_HANDLER = "L" + InvocationHandler.class.getName().replace('.', '/') + ";";
 
-  public static <T> T createProxy (Class<T> parseClass, InvocationHandler handler, Class<? extends Annotation>... allowedAnnotationClasses) {
+  public static <T> T createProxy (Class<T> parseClass, InvocationHandler handler, AnnotationFilter annotationFilter) {
 
-    Class<T> extractedClass;
-    ParseKey parseKey;
-    String[] allowedAnnotationSignatures = null;
+    Class<?> extractedClass;
 
-    if (handler == null) {
-      throw new IllegalArgumentException("You must supply a non-null InvocationHandler");
-    }
-
-    int parseClassModifiers = parseClass.getModifiers();
-
-    if (!Modifier.isPublic(parseClassModifiers)) {
-      throw new ByteCodeManipulationException("The proxy class(%s) must be 'public'", parseClass.getName());
-    }
-    if (Modifier.isStatic(parseClassModifiers)) {
-      throw new ByteCodeManipulationException("The proxy class(%s) must not be 'static'", parseClass.getName());
-    }
-    if ((!parseClass.isInterface()) && Modifier.isAbstract(parseClassModifiers)) {
-      throw new ByteCodeManipulationException("A concrete proxy class(%s) must not be 'abstract'", parseClass.getName());
-    }
-
-    if (allowedAnnotationClasses != null) {
-      allowedAnnotationSignatures = new String[allowedAnnotationClasses.length];
-      for (int index = 0; index < allowedAnnotationClasses.length; index++) {
-        allowedAnnotationSignatures[index] = "L" + allowedAnnotationClasses[index].getName().replace('.', '/') + ";";
-      }
-    }
-
-    parseKey = new ParseKey(parseClass, allowedAnnotationSignatures);
-    if ((extractedClass = INTERFACE_MAP.get(parseKey)) == null) {
+    if ((extractedClass = INTERFACE_MAP.get(parseClass)) == null) {
       synchronized (INTERFACE_MAP) {
-        if ((extractedClass = INTERFACE_MAP.get(parseKey)) == null) {
+        if ((extractedClass = INTERFACE_MAP.get(parseClass)) == null) {
 
-          Class currentClass;
-          ClassReader classReader;
-          ClassWriter classWriter;
-          CheckClassAdapter checkClassAdapter;
-          ProxyClassVisitor proxyClassVisitor;
-          ClassLoader parseClassLoader;
-          ProxyClassLoader proxyClassLoader;
-          HashSet<MethodTracker> methodTrackerSet;
-          boolean initialized = false;
+          int parseClassModifiers = parseClass.getModifiers();
 
-          classWriter = new ClassWriter(ClassWriter.COMPUTE_FRAMES);
-          checkClassAdapter = new CheckClassAdapter(classWriter, true);
-
-          currentClass = parseClass;
-          methodTrackerSet = new HashSet<>();
-          do {
-            if (currentClass.equals(Object.class)) {
-              currentClass = ObjectImpersonator.class;
-            }
-
-            try {
-              classReader = new ClassReader(currentClass.getClassLoader().getResourceAsStream(currentClass.getCanonicalName().replace('.', '/') + ".class"));
-            }
-            catch (IOException ioException) {
-              throw new ByteCodeManipulationException(ioException);
-            }
-
-            proxyClassVisitor = new ProxyClassVisitor(checkClassAdapter, parseClass, currentClass, allowedAnnotationSignatures, methodTrackerSet, initialized);
-            classReader.accept(proxyClassVisitor, 0);
-            initialized = true;
-          } while ((currentClass = currentClass.equals(ObjectImpersonator.class) ? null : currentClass.getSuperclass()) != null);
-
-          checkClassAdapter.visitEnd();
-
-          synchronized (LOADER_MAP) {
-            if ((proxyClassLoader = LOADER_MAP.get(parseClassLoader = parseClass.getClassLoader())) == null) {
-              LOADER_MAP.put(parseClassLoader, proxyClassLoader = new ProxyClassLoader(parseClassLoader));
-            }
+          if (!Modifier.isPublic(parseClassModifiers)) {
+            throw new ByteCodeManipulationException("The proxy class(%s) must be 'public'", parseClass.getName());
           }
+          if (Modifier.isStatic(parseClassModifiers)) {
+            throw new ByteCodeManipulationException("The proxy class(%s) must not be 'static'", parseClass.getName());
+          }
+          if ((!parseClass.isInterface()) && Modifier.isAbstract(parseClassModifiers)) {
+            throw new ByteCodeManipulationException("A concrete proxy class(%s) must not be 'abstract'", parseClass.getName());
+          } else {
 
-          INTERFACE_MAP.put(parseKey, extractedClass = proxyClassLoader.extractInterface(parseClass.getName() + "$Proxy$_ExtractedSubclass", classWriter.toByteArray()));
+            Class currentClass;
+            ClassReader classReader;
+            ClassWriter classWriter;
+            CheckClassAdapter checkClassAdapter;
+            ProxyClassVisitor proxyClassVisitor;
+            ClassLoader parseClassLoader;
+            ProxyClassLoader proxyClassLoader;
+            HashSet<MethodTracker> methodTrackerSet;
+            boolean initialized = false;
+
+            classWriter = new ClassWriter(ClassWriter.COMPUTE_FRAMES);
+            checkClassAdapter = new CheckClassAdapter(classWriter, true);
+
+            currentClass = parseClass;
+            methodTrackerSet = new HashSet<>();
+            do {
+              if (currentClass.equals(Object.class)) {
+                currentClass = ObjectImpersonator.class;
+              }
+
+              try {
+                classReader = new ClassReader(currentClass.getClassLoader().getResourceAsStream(currentClass.getCanonicalName().replace('.', '/') + ".class"));
+              } catch (IOException ioException) {
+                throw new ByteCodeManipulationException(ioException);
+              }
+
+              proxyClassVisitor = new ProxyClassVisitor(checkClassAdapter, parseClass, currentClass, annotationFilter, methodTrackerSet, initialized);
+              classReader.accept(proxyClassVisitor, 0);
+              initialized = true;
+            } while ((currentClass = currentClass.equals(ObjectImpersonator.class) ? null : currentClass.getSuperclass()) != null);
+
+            checkClassAdapter.visitEnd();
+
+            synchronized (LOADER_MAP) {
+              if ((proxyClassLoader = LOADER_MAP.get(parseClassLoader = parseClass.getClassLoader())) == null) {
+                LOADER_MAP.put(parseClassLoader, proxyClassLoader = new ProxyClassLoader(parseClassLoader));
+              }
+            }
+
+            INTERFACE_MAP.put(parseClass, extractedClass = proxyClassLoader.extractInterface(parseClass.getName() + "$Proxy$_ExtractedSubclass", classWriter.toByteArray()));
+          }
         }
       }
     }
 
     try {
-      return extractedClass.getConstructor(InvocationHandler.class).newInstance(handler);
-    }
-    catch (Exception exception) {
+      return parseClass.cast(extractedClass.getConstructor(InvocationHandler.class).newInstance(handler));
+    } catch (Exception exception) {
       throw new ByteCodeManipulationException(exception);
-    }
-  }
-
-  private static boolean isAllowedAnnotation (String desc, String[] allowedAnnotationSignatures) {
-
-    if (allowedAnnotationSignatures != null) {
-      for (String annotationSignature : allowedAnnotationSignatures) {
-        if (annotationSignature.equals(desc)) {
-
-          return true;
-        }
-      }
-    }
-
-    return false;
-  }
-
-  private static class ParseKey {
-
-    private Class parseClass;
-    private String[] allowedAnnotationSignatures;
-
-    private ParseKey (Class parseClass, String[] allowedAnnotationSignatures) {
-
-      this.parseClass = parseClass;
-      this.allowedAnnotationSignatures = allowedAnnotationSignatures;
-    }
-
-    public Class getParseClass () {
-
-      return parseClass;
-    }
-
-    public String[] getAllowedAnnotationSignatures () {
-
-      return allowedAnnotationSignatures;
-    }
-
-    @Override
-    public int hashCode () {
-
-      return parseClass.hashCode() ^ Arrays.hashCode(allowedAnnotationSignatures);
-    }
-
-    @Override
-    public boolean equals (Object obj) {
-
-      return (obj instanceof ParseKey) && ((ParseKey)obj).getParseClass().equals(parseClass) && Arrays.equals(((ParseKey)obj).getAllowedAnnotationSignatures(), allowedAnnotationSignatures);
     }
   }
 
@@ -226,7 +161,7 @@ public class ProxyGenerator {
     }
   }
 
-  public static class ProxyClassLoader extends ClassLoader {
+  private static class ProxyClassLoader extends ClassLoader {
 
     public ProxyClassLoader (ClassLoader parent) {
 
@@ -244,19 +179,19 @@ public class ProxyGenerator {
     private ClassVisitor nextClassVisitor;
     private Class parseClass;
     private Class currentClass;
+    private AnnotationFilter annotationFilter;
     private HashSet<MethodTracker> methodTrackerSet;
-    private String[] allowedAnnotationSignatures;
     private boolean constructed = false;
     private boolean initialized;
 
-    public ProxyClassVisitor (ClassVisitor nextClassVisitor, Class parseClass, Class currentClass, String[] allowedAnnotationSignatures, HashSet<MethodTracker> methodTrackerSet, boolean initialized) {
+    public ProxyClassVisitor (ClassVisitor nextClassVisitor, Class parseClass, Class currentClass, AnnotationFilter annotationFilter, HashSet<MethodTracker> methodTrackerSet, boolean initialized) {
 
       super(Opcodes.ASM5);
 
       this.nextClassVisitor = nextClassVisitor;
       this.parseClass = parseClass;
       this.currentClass = currentClass;
-      this.allowedAnnotationSignatures = allowedAnnotationSignatures;
+      this.annotationFilter = annotationFilter;
       this.methodTrackerSet = methodTrackerSet;
       this.initialized = initialized;
     }
@@ -267,8 +202,7 @@ public class ProxyGenerator {
       if (!initialized) {
         if (parseClass.isInterface()) {
           nextClassVisitor.visit(version, Opcodes.ACC_PUBLIC, name + "$Proxy$_ExtractedSubclass", null, "java/lang/Object", new String[] {parseClass.getName().replace('.', '/')});
-        }
-        else {
+        } else {
           nextClassVisitor.visit(version, Opcodes.ACC_PUBLIC | Opcodes.ACC_SUPER, name + "$Proxy$_ExtractedSubclass", null, name, null);
         }
 
@@ -321,8 +255,7 @@ public class ProxyGenerator {
               methodTrackerSet.add(methodTracker);
               createConstructor(signature, exceptions);
             }
-          }
-          else if ((!currentClass.equals(ObjectImpersonator.class)) || name.equals("hashCode") || name.equals("equals") || name.equals("toString")) {
+          } else if ((!currentClass.equals(ObjectImpersonator.class)) || name.equals("hashCode") || name.equals("equals") || name.equals("toString")) {
             if (((access & Opcodes.ACC_PUBLIC) != 0) && ((access & Opcodes.ACC_STATIC) == 0) && ((access & Opcodes.ACC_FINAL) == 0) && ((access & Opcodes.ACC_SYNTHETIC) == 0)) {
 
               MethodVisitor proxyVisitor;
@@ -425,8 +358,7 @@ public class ProxyGenerator {
                     default:
                       throw new ByteCodeManipulationException("Unknown primitive type(%s)", parameters[index]);
                   }
-                }
-                else {
+                } else {
                   proxyVisitor.visitVarInsn(Opcodes.ALOAD, parameterRegisters[index] = variableIndex++);
                 }
 
@@ -477,11 +409,9 @@ public class ProxyGenerator {
                   default:
                     throw new ByteCodeManipulationException("Unknown return type(%s)", returnType);
                 }
-              }
-              else if (returnType.startsWith("L")) {
+              } else if (returnType.startsWith("L")) {
                 proxyVisitor.visitTypeInsn(Opcodes.CHECKCAST, returnType.substring(1, returnType.length() - 1));
-              }
-              else {
+              } else {
                 proxyVisitor.visitTypeInsn(Opcodes.CHECKCAST, returnType);
               }
 
@@ -522,8 +452,7 @@ public class ProxyGenerator {
                   default:
                     throw new ByteCodeManipulationException("Unknown return type(%s)", returnType);
                 }
-              }
-              else {
+              } else {
                 proxyVisitor.visitInsn(Opcodes.ARETURN);
               }
 
@@ -541,8 +470,7 @@ public class ProxyGenerator {
                   proxyVisitor.visitVarInsn(Opcodes.ALOAD, variableIndex);
                   proxyVisitor.visitMethodInsn(Opcodes.INVOKESPECIAL, "java/lang/reflect/UndeclaredThrowableException", "<init>", "(Ljava/lang/Throwable;)V", false);
                   proxyVisitor.visitInsn(Opcodes.ATHROW);
-                }
-                else {
+                } else {
                   proxyVisitor.visitVarInsn(Opcodes.ALOAD, variableIndex);
                   proxyVisitor.visitInsn(Opcodes.ATHROW);
                 }
@@ -567,7 +495,7 @@ public class ProxyGenerator {
 
               proxyVisitor.visitMaxs(12, variableIndex + 2);
 
-              return new ProxyMethodVisitor(proxyVisitor, allowedAnnotationSignatures);
+              return new ProxyMethodVisitor(proxyVisitor, annotationFilter);
             }
           }
         }
@@ -606,8 +534,7 @@ public class ProxyGenerator {
         default:
           if (number <= Byte.MAX_VALUE) {
             methodVisitor.visitIntInsn(Opcodes.BIPUSH, number);
-          }
-          else {
+          } else {
             methodVisitor.visitIntInsn(Opcodes.SIPUSH, number);
           }
           break;
@@ -618,14 +545,14 @@ public class ProxyGenerator {
   private static class ProxyMethodVisitor extends MethodVisitor {
 
     private MethodVisitor nextMethodVisitor;
-    private String[] allowedAnnotationSignatures;
+    private AnnotationFilter annotationFilter;
 
-    public ProxyMethodVisitor (MethodVisitor nextMethodVisitor, String[] allowedAnnotationSignatures) {
+    public ProxyMethodVisitor (MethodVisitor nextMethodVisitor, AnnotationFilter annotationFilter) {
 
       super(Opcodes.ASM5);
 
       this.nextMethodVisitor = nextMethodVisitor;
-      this.allowedAnnotationSignatures = allowedAnnotationSignatures;
+      this.annotationFilter = annotationFilter;
     }
 
     @Override
@@ -637,7 +564,7 @@ public class ProxyGenerator {
     @Override
     public AnnotationVisitor visitAnnotation (String desc, boolean visible) {
 
-      if (isAllowedAnnotation(desc, allowedAnnotationSignatures)) {
+      if ((annotationFilter == null) || annotationFilter.isAllowed(desc)) {
 
         return nextMethodVisitor.visitAnnotation(desc, visible);
       }
@@ -648,7 +575,7 @@ public class ProxyGenerator {
     @Override
     public AnnotationVisitor visitParameterAnnotation (int parameter, String desc, boolean visible) {
 
-      if (isAllowedAnnotation(desc, allowedAnnotationSignatures)) {
+      if ((annotationFilter == null) || annotationFilter.isAllowed(desc)) {
 
         return nextMethodVisitor.visitParameterAnnotation(parameter, desc, visible);
       }

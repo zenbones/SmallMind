@@ -30,30 +30,54 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.nutsnbolts.json;
+package org.smallmind.nutsnbolts.reflection;
 
-import javax.xml.bind.annotation.adapters.XmlAdapter;
-import org.smallmind.nutsnbolts.reflection.type.GenericUtility;
-import org.smallmind.nutsnbolts.util.EnumUtility;
+import org.smallmind.nutsnbolts.lang.UnknownSwitchCaseException;
 
-public abstract class EnumXmlAdapter<E extends Enum<E>> extends XmlAdapter<String, E> {
+public class AnnotationFilter {
 
-  private Class<E> enumClass;
+  private String[] annotationSignatures = null;
+  private PassType passType;
 
-  public EnumXmlAdapter () {
+  public AnnotationFilter (PassType passType, Class... annotationClasses) {
 
-    enumClass = (Class<E>)GenericUtility.getTypeArguments(EnumXmlAdapter.class, this.getClass()).get(0);
+    this.passType = passType;
+
+    if (annotationClasses != null) {
+      annotationSignatures = new String[annotationClasses.length];
+      for (int index = 0; index < annotationSignatures.length; index++) {
+        annotationSignatures[index] = "L" + annotationClasses[index].getName().replace('.', '/') + ";";
+      }
+    }
   }
 
-  @Override
-  public E unmarshal (String value) {
+  public boolean isAllowed (String desc) {
 
-    return (value == null) ? null : Enum.valueOf(enumClass, EnumUtility.toEnumName(value));
-  }
+    switch (passType) {
+      case INCLUDE:
+        if (annotationSignatures != null) {
+          for (String annotationSignature : annotationSignatures) {
+            if (annotationSignature.equals(desc)) {
 
-  @Override
-  public String marshal (E enumeration) {
+              return true;
+            }
+          }
+        }
 
-    return (enumeration == null) ? null : enumeration.toString();
+        return false;
+      case EXCLUDE:
+        if (annotationSignatures != null) {
+          for (String annotationSignature : annotationSignatures) {
+            if (annotationSignature.equals(desc)) {
+
+              return false;
+            }
+          }
+        }
+
+        return true;
+      default:
+        throw new UnknownSwitchCaseException(passType.name());
+    }
   }
 }

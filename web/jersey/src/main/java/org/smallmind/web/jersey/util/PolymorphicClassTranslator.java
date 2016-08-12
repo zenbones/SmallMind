@@ -30,30 +30,28 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.nutsnbolts.json;
+package org.smallmind.web.jersey.util;
 
-import javax.xml.bind.annotation.adapters.XmlAdapter;
-import org.smallmind.nutsnbolts.reflection.type.GenericUtility;
-import org.smallmind.nutsnbolts.util.EnumUtility;
+import java.util.concurrent.ConcurrentHashMap;
 
-public abstract class EnumXmlAdapter<E extends Enum<E>> extends XmlAdapter<String, E> {
+public class PolymorphicClassTranslator {
 
-  private Class<E> enumClass;
+  private static final ConcurrentHashMap<Class<?>, Class<?>> TO_PROXY_CLASS_MAP = new ConcurrentHashMap<>();
+  private static final ConcurrentHashMap<Class<?>, Class<?>> FROM_PROXY_CLASS_MAP = new ConcurrentHashMap<>();
 
-  public EnumXmlAdapter () {
+  public static void addClassRelationship (Class<?> polymorphicSubClass, Class<?> proxySubClass) {
 
-    enumClass = (Class<E>)GenericUtility.getTypeArguments(EnumXmlAdapter.class, this.getClass()).get(0);
+    TO_PROXY_CLASS_MAP.putIfAbsent(polymorphicSubClass, proxySubClass);
+    FROM_PROXY_CLASS_MAP.putIfAbsent(proxySubClass, polymorphicSubClass);
   }
 
-  @Override
-  public E unmarshal (String value) {
+  public static Class<?> getProxyClassForPolymorphicClass (Class<?> polymorphicSubClass) {
 
-    return (value == null) ? null : Enum.valueOf(enumClass, EnumUtility.toEnumName(value));
+    return TO_PROXY_CLASS_MAP.get(polymorphicSubClass);
   }
 
-  @Override
-  public String marshal (E enumeration) {
+  public static Class<?> getPolymorphicClassForProxyClass (Class<?> proxySubClass) {
 
-    return (enumeration == null) ? null : enumeration.toString();
+    return FROM_PROXY_CLASS_MAP.get(proxySubClass);
   }
 }

@@ -42,5 +42,4 @@ public enum Month {
 
     return StringUtility.toDisplayCase(this.name());
   }
-
 }

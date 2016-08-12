@@ -95,25 +95,33 @@ public class ProxyUtility {
     Class[] parsedSignature;
     LinkedList<Class> parsedList;
 
-    parsedList = new LinkedList<Class>();
+    parsedList = new LinkedList<>();
     for (String signature : signatures) {
       switch (signature.charAt(0)) {
         case 'Z':
           parsedList.add(boolean.class);
+          break;
         case 'B':
           parsedList.add(byte.class);
+          break;
         case 'C':
           parsedList.add(char.class);
+          break;
         case 'S':
           parsedList.add(short.class);
+          break;
         case 'I':
           parsedList.add(int.class);
+          break;
         case 'J':
           parsedList.add(long.class);
+          break;
         case 'F':
           parsedList.add(float.class);
+          break;
         case 'D':
           parsedList.add(double.class);
+          break;
         case 'L':
           parsedList.add(getObjectType(signature.substring(1, signature.length() - 1).replace('/', '.')));
           break;

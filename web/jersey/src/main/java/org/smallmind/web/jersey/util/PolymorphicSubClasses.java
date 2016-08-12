@@ -30,30 +30,16 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.nutsnbolts.json;
+package org.smallmind.web.jersey.util;
 
-import javax.xml.bind.annotation.adapters.XmlAdapter;
-import org.smallmind.nutsnbolts.reflection.type.GenericUtility;
-import org.smallmind.nutsnbolts.util.EnumUtility;
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
 
-public abstract class EnumXmlAdapter<E extends Enum<E>> extends XmlAdapter<String, E> {
+@Target(ElementType.TYPE)
+@Retention(RetentionPolicy.RUNTIME)
+public @interface PolymorphicSubClasses {
 
-  private Class<E> enumClass;
-
-  public EnumXmlAdapter () {
-
-    enumClass = (Class<E>)GenericUtility.getTypeArguments(EnumXmlAdapter.class, this.getClass()).get(0);
-  }
-
-  @Override
-  public E unmarshal (String value) {
-
-    return (value == null) ? null : Enum.valueOf(enumClass, EnumUtility.toEnumName(value));
-  }
-
-  @Override
-  public String marshal (E enumeration) {
-
-    return (enumeration == null) ? null : enumeration.toString();
-  }
+  Class[] value ();
 }

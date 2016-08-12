@@ -42,5 +42,4 @@ public enum Day {
 
     return StringUtility.toDisplayCase(this.name());
   }
-
 }

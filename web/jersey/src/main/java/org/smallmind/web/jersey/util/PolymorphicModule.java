@@ -30,30 +30,48 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.nutsnbolts.json;
+package org.smallmind.web.jersey.util;
 
-import javax.xml.bind.annotation.adapters.XmlAdapter;
-import org.smallmind.nutsnbolts.reflection.type.GenericUtility;
-import org.smallmind.nutsnbolts.util.EnumUtility;
+import com.fasterxml.jackson.core.Version;
+import com.fasterxml.jackson.databind.BeanDescription;
+import com.fasterxml.jackson.databind.DeserializationConfig;
+import com.fasterxml.jackson.databind.Module;
+import com.fasterxml.jackson.databind.deser.ValueInstantiator;
+import com.fasterxml.jackson.databind.deser.ValueInstantiators;
+import com.fasterxml.jackson.databind.deser.std.StdValueInstantiator;
+import com.fasterxml.jackson.module.jaxb.PackageVersion;
 
-public abstract class EnumXmlAdapter<E extends Enum<E>> extends XmlAdapter<String, E> {
+public class PolymorphicModule extends Module {
 
-  private Class<E> enumClass;
+  @Override
+  public String getModuleName () {
 
-  public EnumXmlAdapter () {
-
-    enumClass = (Class<E>)GenericUtility.getTypeArguments(EnumXmlAdapter.class, this.getClass()).get(0);
+    return getClass().getName();
   }
 
   @Override
-  public E unmarshal (String value) {
+  public Version version () {
 
-    return (value == null) ? null : Enum.valueOf(enumClass, EnumUtility.toEnumName(value));
+    return PackageVersion.VERSION;
   }
 
   @Override
-  public String marshal (E enumeration) {
+  public void setupModule (final SetupContext context) {
 
-    return (enumeration == null) ? null : enumeration.toString();
+    context.addValueInstantiators(new ValueInstantiators() {
+
+      @Override
+      public ValueInstantiator findValueInstantiator (DeserializationConfig config, BeanDescription beanDesc, ValueInstantiator defaultInstantiator) {
+
+        Class<?> polymorphicSubClass;
+
+        if ((polymorphicSubClass = PolymorphicClassTranslator.getPolymorphicClassForProxyClass(beanDesc.getBeanClass())) != null) {
+
+          return new PolymorphicValueInstantiator((StdValueInstantiator)defaultInstantiator, polymorphicSubClass);
+        }
+
+        return defaultInstantiator;
+      }
+    });
   }
 }

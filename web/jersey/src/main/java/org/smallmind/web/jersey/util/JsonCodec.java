@@ -39,11 +39,12 @@ import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.MapperFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fasterxml.jackson.module.jaxb.JaxbAnnotationModule;
 
 public class JsonCodec {
 
-  private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper().registerModule(new JaxbAnnotationModule()).configure(MapperFeature.USE_WRAPPER_NAME_AS_PROPERTY_NAME, true);
+  private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper().registerModules(new JaxbAnnotationModule(), new PolymorphicModule()).configure(MapperFeature.USE_WRAPPER_NAME_AS_PROPERTY_NAME, true);
 
   public static <T> T read (byte[] bytes, Class<T> clazz)
     throws IOException {
@@ -73,6 +74,12 @@ public class JsonCodec {
     throws IOException {
 
     return OBJECT_MAPPER.readValue(parser, clazz);
+  }
+
+  public static ObjectNode writeAsObjectNode (Object obj)
+    throws JsonProcessingException {
+
+    return OBJECT_MAPPER.valueToTree(obj);
   }
 
   public static byte[] writeAsBytes (Object obj)

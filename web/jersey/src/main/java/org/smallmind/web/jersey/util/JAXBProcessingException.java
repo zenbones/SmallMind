@@ -30,30 +30,19 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.nutsnbolts.json;
+package org.smallmind.web.jersey.util;
 
-import javax.xml.bind.annotation.adapters.XmlAdapter;
-import org.smallmind.nutsnbolts.reflection.type.GenericUtility;
-import org.smallmind.nutsnbolts.util.EnumUtility;
+import org.smallmind.nutsnbolts.lang.FormattedRuntimeException;
 
-public abstract class EnumXmlAdapter<E extends Enum<E>> extends XmlAdapter<String, E> {
+public class JAXBProcessingException extends FormattedRuntimeException {
 
-  private Class<E> enumClass;
+  public JAXBProcessingException (String message, Object... args) {
 
-  public EnumXmlAdapter () {
-
-    enumClass = (Class<E>)GenericUtility.getTypeArguments(EnumXmlAdapter.class, this.getClass()).get(0);
+    super(message, args);
   }
 
-  @Override
-  public E unmarshal (String value) {
+  public JAXBProcessingException (Throwable throwable) {
 
-    return (value == null) ? null : Enum.valueOf(enumClass, EnumUtility.toEnumName(value));
-  }
-
-  @Override
-  public String marshal (E enumeration) {
-
-    return (enumeration == null) ? null : enumeration.toString();
+    super(throwable);
   }
 }

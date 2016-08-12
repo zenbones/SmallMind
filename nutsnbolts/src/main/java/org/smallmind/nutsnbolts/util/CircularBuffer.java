@@ -87,8 +87,7 @@ public class CircularBuffer {
 
       try {
         wait(millis);
-      }
-      catch (InterruptedException interruptedException) {
+      } catch (InterruptedException interruptedException) {
         throw new RuntimeException(interruptedException);
       }
     }
@@ -120,8 +119,7 @@ public class CircularBuffer {
       if (totalBytes < length) {
         try {
           wait();
-        }
-        catch (InterruptedException interruptedException) {
+        } catch (InterruptedException interruptedException) {
           throw new RuntimeException(interruptedException);
         }
       }
@@ -186,8 +184,7 @@ public class CircularBuffer {
           segments[0] = new RangeSegment(position + filled, buffer.length);
           segments[1] = new RangeSegment(0, position);
       }
-    }
-    else {
+    } else {
       switch (state) {
         case READ:
           segments = new RangeSegment[2];
@@ -221,7 +218,5 @@ public class CircularBuffer {
 
       return stop;
     }
-
   }
-
 }

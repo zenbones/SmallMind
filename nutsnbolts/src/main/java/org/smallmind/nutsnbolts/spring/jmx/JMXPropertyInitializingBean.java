@@ -30,30 +30,29 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.nutsnbolts.json;
+package org.smallmind.nutsnbolts.spring.jmx;
 
-import javax.xml.bind.annotation.adapters.XmlAdapter;
-import org.smallmind.nutsnbolts.reflection.type.GenericUtility;
-import org.smallmind.nutsnbolts.util.EnumUtility;
+import org.springframework.beans.factory.config.BeanFactoryPostProcessor;
+import org.springframework.beans.factory.config.ConfigurableListableBeanFactory;
+import org.springframework.core.PriorityOrdered;
 
-public abstract class EnumXmlAdapter<E extends Enum<E>> extends XmlAdapter<String, E> {
+public class JMXPropertyInitializingBean implements BeanFactoryPostProcessor, PriorityOrdered {
 
-  private Class<E> enumClass;
+  private int order;
 
-  public EnumXmlAdapter () {
+  @Override
+  public int getOrder () {
 
-    enumClass = (Class<E>)GenericUtility.getTypeArguments(EnumXmlAdapter.class, this.getClass()).get(0);
+    return order;
+  }
+
+  public void setOrder (int order) {
+
+    this.order = order;
   }
 
   @Override
-  public E unmarshal (String value) {
+  public void postProcessBeanFactory (ConfigurableListableBeanFactory beanFactory) {
 
-    return (value == null) ? null : Enum.valueOf(enumClass, EnumUtility.toEnumName(value));
-  }
-
-  @Override
-  public String marshal (E enumeration) {
-
-    return (enumeration == null) ? null : enumeration.toString();
   }
 }

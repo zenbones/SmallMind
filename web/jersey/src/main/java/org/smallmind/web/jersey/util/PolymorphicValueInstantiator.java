@@ -30,30 +30,42 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.nutsnbolts.json;
+package org.smallmind.web.jersey.util;
 
-import javax.xml.bind.annotation.adapters.XmlAdapter;
-import org.smallmind.nutsnbolts.reflection.type.GenericUtility;
-import org.smallmind.nutsnbolts.util.EnumUtility;
+import java.io.IOException;
+import javax.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
+import com.fasterxml.jackson.databind.DeserializationContext;
+import com.fasterxml.jackson.databind.deser.std.StdValueInstantiator;
+import org.smallmind.nutsnbolts.reflection.AnnotationFilter;
+import org.smallmind.nutsnbolts.reflection.OffloadingInvocationHandler;
+import org.smallmind.nutsnbolts.reflection.PassType;
+import org.smallmind.nutsnbolts.reflection.ProxyGenerator;
 
-public abstract class EnumXmlAdapter<E extends Enum<E>> extends XmlAdapter<String, E> {
+public class PolymorphicValueInstantiator extends StdValueInstantiator {
 
-  private Class<E> enumClass;
+  private Class<?> polymorphicSubClass;
 
-  public EnumXmlAdapter () {
+  public PolymorphicValueInstantiator (StdValueInstantiator src, Class<?> polymorphicSubClass) {
 
-    enumClass = (Class<E>)GenericUtility.getTypeArguments(EnumXmlAdapter.class, this.getClass()).get(0);
+    super(src);
+
+    this.polymorphicSubClass = polymorphicSubClass;
   }
 
   @Override
-  public E unmarshal (String value) {
+  public boolean canCreateUsingDefault () {
 
-    return (value == null) ? null : Enum.valueOf(enumClass, EnumUtility.toEnumName(value));
+    return true;
   }
 
   @Override
-  public String marshal (E enumeration) {
+  public Object createUsingDefault (DeserializationContext ctxt)
+    throws IOException {
 
-    return (enumeration == null) ? null : enumeration.toString();
+    try {
+      return ProxyGenerator.createProxy(polymorphicSubClass, new OffloadingInvocationHandler(polymorphicSubClass.newInstance()), new AnnotationFilter(PassType.EXCLUDE, XmlJavaTypeAdapter.class));
+    } catch (Exception exception) {
+      throw new IOException(exception);
+    }
   }
 }
