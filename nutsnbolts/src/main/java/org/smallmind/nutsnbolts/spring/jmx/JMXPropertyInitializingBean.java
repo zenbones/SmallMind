@@ -32,6 +32,10 @@
  */
 package org.smallmind.nutsnbolts.spring.jmx;
 
+import java.net.InetAddress;
+import java.net.UnknownHostException;
+import org.springframework.beans.BeansException;
+import org.springframework.beans.FatalBeanException;
 import org.springframework.beans.factory.config.BeanFactoryPostProcessor;
 import org.springframework.beans.factory.config.ConfigurableListableBeanFactory;
 import org.springframework.core.PriorityOrdered;
@@ -52,7 +56,13 @@ public class JMXPropertyInitializingBean implements BeanFactoryPostProcessor, Pr
   }
 
   @Override
-  public void postProcessBeanFactory (ConfigurableListableBeanFactory beanFactory) {
+  public void postProcessBeanFactory (ConfigurableListableBeanFactory beanFactory)
+    throws BeansException {
 
+    try {
+      System.setProperty("java.rmi.server.hostname", InetAddress.getLocalHost().getHostName());
+    } catch (UnknownHostException unknownHostException) {
+      throw new FatalBeanException(unknownHostException.getMessage(), unknownHostException);
+    }
   }
 }
