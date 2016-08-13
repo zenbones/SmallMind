@@ -55,40 +55,28 @@ public abstract class PolymorphicXmlAdapter<T> extends XmlAdapter<LinkedHashMap<
   @Override
   public T unmarshal (LinkedHashMap<String, Object> map) {
 
-    PolymorphicSubClasses polymorphicSubClassesAnnotation;
-
-    if ((polymorphicSubClassesAnnotation = baseClass.getAnnotation(PolymorphicSubClasses.class)) == null) {
-      throw new JAXBProcessingException("The class(%s) is missing a %s annotation", baseClass.getName(), PolymorphicSubClasses.class.getSimpleName());
-    } else if (map.size() != 1) {
+    if (map.size() != 1) {
       throw new JAXBProcessingException("The json for the sub-class of class(%s) is improperly formatted", baseClass.getName());
     } else {
 
-      String polymorphicKey = map.keySet().iterator().next();
+      Class<?> polymorphicSubClass;
+      String polymorphicKey;
 
-      for (Class<?> polymorphicSubClass : polymorphicSubClassesAnnotation.value()) {
+      if ((polymorphicSubClass = PolymorphicClassCache.getPolymorphicSubClass(baseClass, polymorphicKey = map.keySet().iterator().next())) == null) {
+        throw new JAXBProcessingException("Unable to map the root element key(%s) to any known sub-class of class(%s) listed in the %s annotation", polymorphicKey, baseClass.getName(), XmlPolymorphicSubClasses.class.getSimpleName());
+      } else {
 
-        XmlRootElement xmlRootElementAnnotation;
+        Class<?> proxySubClass;
 
-        if ((xmlRootElementAnnotation = polymorphicSubClass.getAnnotation(XmlRootElement.class)) == null) {
-          throw new JAXBProcessingException("The sub-class(%s) is missing a %s annotation", polymorphicSubClass.getName(), XmlRootElement.class.getSimpleName());
+        if ((proxySubClass = PolymorphicClassCache.getProxyClassForPolymorphicClass(polymorphicSubClass)) == null) {
+
+          Object proxyObject = ProxyGenerator.createProxy(polymorphicSubClass, null, new AnnotationFilter(PassType.EXCLUDE, XmlJavaTypeAdapter.class));
+
+          PolymorphicClassCache.addClassRelationship(polymorphicSubClass, proxySubClass = proxyObject.getClass());
         }
 
-        if (xmlRootElementAnnotation.name().equals(polymorphicKey)) {
-
-          Class<?> proxySubClass;
-
-          if ((proxySubClass = PolymorphicClassTranslator.getProxyClassForPolymorphicClass(polymorphicSubClass)) == null) {
-
-            Object proxyObject = ProxyGenerator.createProxy(polymorphicSubClass, null, new AnnotationFilter(PassType.EXCLUDE, XmlJavaTypeAdapter.class));
-
-            PolymorphicClassTranslator.addClassRelationship(polymorphicSubClass, proxySubClass = proxyObject.getClass());
-          }
-
-          return (T)JsonCodec.convert(map.get(polymorphicKey), proxySubClass);
-        }
+        return (T)JsonCodec.convert(map.get(polymorphicKey), proxySubClass);
       }
-
-      throw new JAXBProcessingException("Unable to map the root element key(%s) to any known sub-class of class(%s) listed in the %s annotation", polymorphicKey, baseClass.getName(), PolymorphicSubClasses.class.getSimpleName());
     }
   }
 
@@ -109,7 +97,7 @@ public abstract class PolymorphicXmlAdapter<T> extends XmlAdapter<LinkedHashMap<
         LinkedHashMap<String, Object> linkedHashMap = new LinkedHashMap<>();
         Object proxyObject = ProxyGenerator.createProxy(value.getClass(), new OffloadingInvocationHandler(value), new AnnotationFilter(PassType.EXCLUDE, XmlJavaTypeAdapter.class));
 
-        PolymorphicClassTranslator.addClassRelationship(value.getClass(), proxyObject.getClass());
+        PolymorphicClassCache.addClassRelationship(value.getClass(), proxyObject.getClass());
         linkedHashMap.put(xmlRootElementAnnotation.name(), proxyObject);
 
         return linkedHashMap;

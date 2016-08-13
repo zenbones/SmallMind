@@ -65,7 +65,7 @@ public class PolymorphicModule extends Module {
 
         Class<?> polymorphicSubClass;
 
-        if ((polymorphicSubClass = PolymorphicClassTranslator.getPolymorphicClassForProxyClass(beanDesc.getBeanClass())) != null) {
+        if ((polymorphicSubClass = PolymorphicClassCache.getPolymorphicClassForProxyClass(beanDesc.getBeanClass())) != null) {
 
           return new PolymorphicValueInstantiator((StdValueInstantiator)defaultInstantiator, polymorphicSubClass);
         }

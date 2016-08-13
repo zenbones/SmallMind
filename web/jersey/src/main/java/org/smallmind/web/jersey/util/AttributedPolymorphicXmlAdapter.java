@@ -61,46 +61,31 @@ public abstract class AttributedPolymorphicXmlAdapter<T> extends XmlAdapter<Obje
   @Override
   public T unmarshal (ObjectNode objectNode) {
 
-    PolymorphicSubClasses polymorphicSubClassesAnnotation;
+    JsonNode polymorphicKeyNode;
 
-    if ((polymorphicSubClassesAnnotation = baseClass.getAnnotation(PolymorphicSubClasses.class)) == null) {
-      throw new JAXBProcessingException("The class(%s) is missing a %s annotation", baseClass.getName(), PolymorphicSubClasses.class.getSimpleName());
+    if ((polymorphicKeyNode = objectNode.get(getPolymorphicAttributeName())) == null) {
+      throw new JAXBProcessingException("The json for the sub-class of class(%s) is improperly formatted", baseClass.getName());
     } else {
 
-      JsonNode polymorphicKeyNode;
+      Class<?> polymorphicSubClass;
+      String polymorphicKey;
 
-      if ((polymorphicKeyNode = objectNode.get(getPolymorphicAttributeName())) == null) {
-        throw new JAXBProcessingException("The json for the sub-class of class(%s) is improperly formatted", baseClass.getName());
+      if ((polymorphicSubClass = PolymorphicClassCache.getPolymorphicSubClass(baseClass, polymorphicKey = polymorphicKeyNode.asText())) == null) {
+        throw new JAXBProcessingException("Unable to map the root element key(%s) to any known sub-class of class(%s) listed in the %s annotation", polymorphicKey, baseClass.getName(), XmlPolymorphicSubClasses.class.getSimpleName());
       } else {
 
-        String polymorphicKey = polymorphicKeyNode.asText();
+        Class<?> proxySubClass;
 
-        for (Class<?> polymorphicSubClass : polymorphicSubClassesAnnotation.value()) {
+        if ((proxySubClass = PolymorphicClassCache.getProxyClassForPolymorphicClass(polymorphicSubClass)) == null) {
 
-          XmlRootElement xmlRootElementAnnotation;
+          Object proxyObject = ProxyGenerator.createProxy(polymorphicSubClass, null, new AnnotationFilter(PassType.EXCLUDE, XmlJavaTypeAdapter.class));
 
-          if ((xmlRootElementAnnotation = polymorphicSubClass.getAnnotation(XmlRootElement.class)) == null) {
-            throw new JAXBProcessingException("The sub-class(%s) is missing a %s annotation", polymorphicSubClass.getName(), XmlRootElement.class.getSimpleName());
-          }
-
-          if (xmlRootElementAnnotation.name().equals(polymorphicKey)) {
-
-            Class<?> proxySubClass;
-
-            if ((proxySubClass = PolymorphicClassTranslator.getProxyClassForPolymorphicClass(polymorphicSubClass)) == null) {
-
-              Object proxyObject = ProxyGenerator.createProxy(polymorphicSubClass, null, new AnnotationFilter(PassType.EXCLUDE, XmlJavaTypeAdapter.class));
-
-              PolymorphicClassTranslator.addClassRelationship(polymorphicSubClass, proxySubClass = proxyObject.getClass());
-            }
-
-            objectNode.remove(getPolymorphicAttributeName());
-
-            return (T)JsonCodec.convert(objectNode, proxySubClass);
-          }
+          PolymorphicClassCache.addClassRelationship(polymorphicSubClass, proxySubClass = proxyObject.getClass());
         }
 
-        throw new JAXBProcessingException("Unable to map the root element key(%s) to any known sub-class of class(%s) listed in the %s annotation", polymorphicKey, baseClass.getName(), PolymorphicSubClasses.class.getSimpleName());
+        objectNode.remove(getPolymorphicAttributeName());
+
+        return (T)JsonCodec.convert(objectNode, proxySubClass);
       }
     }
   }
@@ -122,7 +107,7 @@ public abstract class AttributedPolymorphicXmlAdapter<T> extends XmlAdapter<Obje
         ObjectNode objectNode;
         Object proxyObject = ProxyGenerator.createProxy(value.getClass(), new OffloadingInvocationHandler(value), new AnnotationFilter(PassType.EXCLUDE, XmlJavaTypeAdapter.class));
 
-        PolymorphicClassTranslator.addClassRelationship(value.getClass(), proxyObject.getClass());
+        PolymorphicClassCache.addClassRelationship(value.getClass(), proxyObject.getClass());
         objectNode = JsonCodec.writeAsObjectNode(proxyObject);
         objectNode.put(getPolymorphicAttributeName(), xmlRootElementAnnotation.name());
 

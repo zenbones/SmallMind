@@ -32,26 +32,14 @@
  */
 package org.smallmind.web.jersey.util;
 
-import java.util.concurrent.ConcurrentHashMap;
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
 
-public class PolymorphicClassTranslator {
+@Target(ElementType.TYPE)
+@Retention(RetentionPolicy.RUNTIME)
+public @interface XmlPolymorphicSubClasses {
 
-  private static final ConcurrentHashMap<Class<?>, Class<?>> TO_PROXY_CLASS_MAP = new ConcurrentHashMap<>();
-  private static final ConcurrentHashMap<Class<?>, Class<?>> FROM_PROXY_CLASS_MAP = new ConcurrentHashMap<>();
-
-  public static void addClassRelationship (Class<?> polymorphicSubClass, Class<?> proxySubClass) {
-
-    TO_PROXY_CLASS_MAP.putIfAbsent(polymorphicSubClass, proxySubClass);
-    FROM_PROXY_CLASS_MAP.putIfAbsent(proxySubClass, polymorphicSubClass);
-  }
-
-  public static Class<?> getProxyClassForPolymorphicClass (Class<?> polymorphicSubClass) {
-
-    return TO_PROXY_CLASS_MAP.get(polymorphicSubClass);
-  }
-
-  public static Class<?> getPolymorphicClassForProxyClass (Class<?> proxySubClass) {
-
-    return FROM_PROXY_CLASS_MAP.get(proxySubClass);
-  }
+  Class[] value ();
 }
