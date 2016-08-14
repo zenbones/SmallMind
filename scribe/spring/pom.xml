@@ -4,7 +4,7 @@
   <parent>
     <groupId>org.smallmind</groupId>
     <artifactId>smallmind-scribe</artifactId>
-    <version>2.4.7</version>
+    <version>2.4.8-SNAPSHOT</version>
   </parent>
   <artifactId>scribe-spring</artifactId>
   <name>Scribe-Spring</name>
