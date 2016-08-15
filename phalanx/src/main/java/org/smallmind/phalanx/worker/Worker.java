@@ -86,7 +86,7 @@ public abstract class Worker<T> implements Runnable, MetricConfigurationProvider
       while (!stopped.get()) {
         try {
 
-          final T transfer;
+          T transfer;
 
           if ((transfer = workTransferQueue.poll(1, TimeUnit.SECONDS)) != null) {
             InstrumentationManager.instrumentWithChronometer(this, Clocks.EPOCH.getClock().getTimeNanoseconds() - idleStart, TimeUnit.NANOSECONDS, new MetricProperty("event", MetricType.WORKER_IDLE.getDisplay()));

@@ -48,9 +48,10 @@ import org.smallmind.phalanx.wire.TransportState;
 import org.smallmind.phalanx.wire.WireInvocationCircuit;
 import org.smallmind.phalanx.wire.WiredService;
 import org.smallmind.phalanx.worker.WorkManager;
+import org.smallmind.phalanx.worker.WorkPipeline;
 import org.smallmind.phalanx.worker.WorkerFactory;
 
-public class RabbitMQResponseTransport extends WorkManager<InvocationWorker, RabbitMQMessage> implements MetricConfigurationProvider, WorkerFactory<InvocationWorker, RabbitMQMessage>, ResponseTransport {
+public class RabbitMQResponseTransport extends WorkPipeline<InvocationWorker, RabbitMQMessage> implements MetricConfigurationProvider, WorkerFactory<InvocationWorker, RabbitMQMessage>, ResponseTransport {
 
   private final AtomicBoolean closed = new AtomicBoolean(false);
   private final AtomicReference<TransportState> transportStateRef = new AtomicReference<>(TransportState.PLAYING);
@@ -63,7 +64,7 @@ public class RabbitMQResponseTransport extends WorkManager<InvocationWorker, Rab
   public RabbitMQResponseTransport (MetricConfiguration metricConfiguration, RabbitMQConnector rabbitMQConnector, NameConfiguration nameConfiguration, Class<InvocationWorker> workerClass, SignalCodec signalCodec, String serviceGroup, int clusterSize, int concurrencyLimit, int messageTTLSeconds)
     throws IOException, InterruptedException, TimeoutException {
 
-    super(metricConfiguration, workerClass, concurrencyLimit);
+    super(metricConfiguration, new WorkManager<>(workerClass, concurrencyLimit));
 
     int routerIndex = 0;
 

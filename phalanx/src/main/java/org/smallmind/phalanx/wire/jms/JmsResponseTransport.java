@@ -57,9 +57,10 @@ import org.smallmind.phalanx.wire.WireInvocationCircuit;
 import org.smallmind.phalanx.wire.WireProperty;
 import org.smallmind.phalanx.wire.WiredService;
 import org.smallmind.phalanx.worker.WorkManager;
+import org.smallmind.phalanx.worker.WorkPipeline;
 import org.smallmind.phalanx.worker.WorkerFactory;
 
-public class JmsResponseTransport extends WorkManager<InvocationWorker, Message> implements MetricConfigurationProvider, WorkerFactory<InvocationWorker, Message>, ResponseTransport {
+public class JmsResponseTransport extends WorkPipeline<InvocationWorker, Message> implements MetricConfigurationProvider, WorkerFactory<InvocationWorker, Message>, ResponseTransport {
 
   private final AtomicBoolean closed = new AtomicBoolean(false);
   private final AtomicReference<TransportState> transportStateRef = new AtomicReference<>(TransportState.PLAYING);
@@ -76,7 +77,7 @@ public class JmsResponseTransport extends WorkManager<InvocationWorker, Message>
   public JmsResponseTransport (MetricConfiguration metricConfiguration, RoutingFactories routingFactories, MessagePolicy messagePolicy, ReconnectionPolicy reconnectionPolicy, SignalCodec signalCodec, String serviceGroup, int clusterSize, int concurrencyLimit, int maximumMessageLength)
     throws InterruptedException, JMSException, TransportException {
 
-    super(metricConfiguration, InvocationWorker.class, concurrencyLimit);
+    super(metricConfiguration, new WorkManager<>(InvocationWorker.class, concurrencyLimit));
 
     int topicIndex = 0;
 
