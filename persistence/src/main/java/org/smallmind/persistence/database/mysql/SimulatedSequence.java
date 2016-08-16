@@ -123,6 +123,8 @@ public class SimulatedSequence extends Sequence {
                 atomicOffset.set(0);
               } catch (SimulatedSequenceDisasterException simulatedSequenceDisasterException) {
                 LoggerManager.getLogger(SimulatedSequence.class).error(simulatedSequenceDisasterException);
+
+                currentOffset = incrementBy + 1;
                 atomicOffset.set(incrementBy - 1);
               }
             }
