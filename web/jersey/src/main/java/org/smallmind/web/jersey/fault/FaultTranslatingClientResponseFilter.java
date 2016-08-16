@@ -55,7 +55,7 @@ public class FaultTranslatingClientResponseFilter implements ClientResponseFilte
       if (((nativeObject = (fault = JsonCodec.read(responseContext.getEntityStream(), Fault.class)).getNativeObject()) != null) && nativeObject.getLanguage().equals(NativeLanguage.JAVA)) {
         try (ByteArrayInputStream byteArrayInputStream = new ByteArrayInputStream(nativeObject.getBytes()); ObjectInputStream objectInputStream = new ObjectInputStream(byteArrayInputStream)) {
           try {
-            throw new ResourceInvocationException((Exception)objectInputStream.readObject());
+            throw new ResourceInvocationException((Throwable)objectInputStream.readObject());
           } catch (ClassNotFoundException classNotFoundException) {
             throw new ObjectInstantiationException(classNotFoundException);
           }
