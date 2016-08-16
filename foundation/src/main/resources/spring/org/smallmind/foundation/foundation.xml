@@ -20,7 +20,7 @@
     <property name="ignoreUnresolvableProperties" value="false"/>
     <property name="systemPropertyMode" value="OVERRIDE"/>
     <property name="searchSystemEnvironment" value="true"/>
-    <property name="firstLocations">
+    <property name="locations">
       <list>
         <value>classpath:org/smallmind/foundation/global.properties</value>
         <value>classpath:org/smallmind/foundation/database-${SMALLMIND_DATABASE}.properties</value>
@@ -34,13 +34,8 @@
         <value>classpath:org/smallmind/${SMALLMIND_MODULE}/${SMALLMIND_PRODUCT}/database-${SMALLMIND_DATABASE}.properties</value>
         <value>classpath:org/smallmind/${SMALLMIND_MODULE}/${SMALLMIND_PRODUCT}/${SMALLMIND_ENVIRONMENT}/application.properties</value>
         <value>classpath:org/smallmind/${SMALLMIND_MODULE}/${SMALLMIND_PRODUCT}/${SMALLMIND_ENVIRONMENT}/database-${SMALLMIND_DATABASE}.properties</value>
-      </list>
-    </property>
-    <property name="lastLocations">
-      <list>
         <value>file:${user.home}/.m2/local.properties</value>
       </list>
     </property>
   </bean>
-
 </beans>

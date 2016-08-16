@@ -32,7 +32,6 @@
  */
 package org.smallmind.nutsnbolts.spring;
 
-import java.io.IOException;
 import java.io.InputStream;
 import java.util.Collections;
 import java.util.HashMap;
@@ -69,8 +68,7 @@ public class PropertyPlaceholderConfigurer implements BeanFactoryPostProcessor, 
   private final TreeMap<String, String> debugMap = new TreeMap<>(new DotNotationComparator());
   private BeanFactory beanFactory;
   private KeyDebugger keyDebugger;
-  private List<String> firstLocations = new LinkedList<>();
-  private List<String> lastLocations = new LinkedList<>();
+  private List<String> locations = new LinkedList<>();
   private String beanName;
   private SystemPropertyMode systemPropertyMode = SystemPropertyMode.FALLBACK;
   private boolean ignoreResourceNotFound = false;
@@ -124,14 +122,9 @@ public class PropertyPlaceholderConfigurer implements BeanFactoryPostProcessor, 
     this.searchSystemEnvironment = searchSystemEnvironment;
   }
 
-  public void setFirstLocations (List<String> firstLocations) {
+  public void setLocations (List<String> locations) {
 
-    this.firstLocations = firstLocations;
-  }
-
-  public void setLastLocations (List<String> lastLocations) {
-
-    this.lastLocations = lastLocations;
+    this.locations = locations;
   }
 
   public void setDebugKeys (String[] debugPatterns)
@@ -160,13 +153,7 @@ public class PropertyPlaceholderConfigurer implements BeanFactoryPostProcessor, 
     }
 
     System.out.println("---------------- Property Loading ----------------");
-    for (String location : firstLocations) {
-      extractProperties(resourceParser, locationExpander, propertyMap, location);
-    }
-    for (String location : PrivatePropertyResourceBean.getLocations()) {
-      extractProperties(resourceParser, locationExpander, propertyMap, location);
-    }
-    for (String location : lastLocations) {
+    for (String location : locations) {
       extractProperties(resourceParser, locationExpander, propertyMap, location);
     }
     System.out.println("--------------------------------------------------");
