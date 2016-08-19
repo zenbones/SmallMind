@@ -45,7 +45,7 @@ public abstract class AbstractManagedDao<I extends Serializable & Comparable<I>,
 
   private final TypeInference idTypeInference = new TypeInference();
   private final TypeInference durableTypeInference = new TypeInference();
-  private final AtomicReference<Method> fromStringMethodRef = new AtomicReference<Method>();
+  private final AtomicReference<Method> fromStringMethodRef = new AtomicReference<>();
   private final String metricSource;
 
   public AbstractManagedDao (String metricSource) {
