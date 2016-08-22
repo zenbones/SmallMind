@@ -63,7 +63,7 @@ public abstract class PolymorphicXmlAdapter<T> extends XmlAdapter<LinkedHashMap<
       String polymorphicKey;
 
       if ((polymorphicSubClass = PolymorphicClassCache.getPolymorphicSubClass(baseClass, polymorphicKey = map.keySet().iterator().next())) == null) {
-        throw new JAXBProcessingException("Unable to map the root element key(%s) to any known sub-class of class(%s) listed in the %s annotation", polymorphicKey, baseClass.getName(), XmlPolymorphicSubClasses.class.getSimpleName());
+        throw new JAXBProcessingException("Unable to map the root element name(%s) to any known sub-class of class(%s) listed in the %s annotation", polymorphicKey, baseClass.getName(), XmlPolymorphicSubClasses.class.getSimpleName());
       } else {
 
         Class<?> proxySubClass;
