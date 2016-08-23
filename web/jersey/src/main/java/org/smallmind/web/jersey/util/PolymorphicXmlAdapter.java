@@ -67,6 +67,7 @@ public abstract class PolymorphicXmlAdapter<T> extends XmlAdapter<LinkedHashMap<
       } else {
 
         Class<?> proxySubClass;
+        Object polymorphicInstance;
 
         if ((proxySubClass = PolymorphicClassCache.getProxyClassForPolymorphicClass(polymorphicSubClass)) == null) {
 
@@ -75,7 +76,15 @@ public abstract class PolymorphicXmlAdapter<T> extends XmlAdapter<LinkedHashMap<
           PolymorphicClassCache.addClassRelationship(polymorphicSubClass, proxySubClass = proxyObject.getClass());
         }
 
-        return (T)JsonCodec.convert(map.get(polymorphicKey), proxySubClass);
+        try {
+          PolymorphicValueInstantiator.setPolymorphicInstance(polymorphicInstance = polymorphicSubClass.newInstance());
+        } catch (Exception exception) {
+          throw new JAXBProcessingException(exception);
+        }
+
+        JsonCodec.convert(map.get(polymorphicKey), proxySubClass);
+
+        return (T)polymorphicInstance;
       }
     }
   }

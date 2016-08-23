@@ -75,6 +75,7 @@ public abstract class AttributedPolymorphicXmlAdapter<T> extends XmlAdapter<Obje
       } else {
 
         Class<?> proxySubClass;
+        Object polymorphicInstance;
 
         if ((proxySubClass = PolymorphicClassCache.getProxyClassForPolymorphicClass(polymorphicSubClass)) == null) {
 
@@ -85,7 +86,15 @@ public abstract class AttributedPolymorphicXmlAdapter<T> extends XmlAdapter<Obje
 
         objectNode.remove(getPolymorphicAttributeName());
 
-        return (T)JsonCodec.convert(objectNode, proxySubClass);
+        try {
+          PolymorphicValueInstantiator.setPolymorphicInstance(polymorphicInstance = polymorphicSubClass.newInstance());
+        } catch (Exception exception) {
+          throw new JAXBProcessingException(exception);
+        }
+
+        JsonCodec.convert(objectNode, proxySubClass);
+
+        return (T)polymorphicInstance;
       }
     }
   }

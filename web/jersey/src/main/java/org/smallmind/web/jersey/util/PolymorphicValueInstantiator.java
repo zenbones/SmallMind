@@ -32,7 +32,6 @@
  */
 package org.smallmind.web.jersey.util;
 
-import java.io.IOException;
 import javax.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
 import com.fasterxml.jackson.databind.DeserializationContext;
 import com.fasterxml.jackson.databind.deser.std.StdValueInstantiator;
@@ -43,6 +42,7 @@ import org.smallmind.nutsnbolts.reflection.ProxyGenerator;
 
 public class PolymorphicValueInstantiator extends StdValueInstantiator {
 
+  private static final ThreadLocal<Object> polymorphicInstanceThreadLocal = new ThreadLocal<>();
   private Class<?> polymorphicSubClass;
 
   public PolymorphicValueInstantiator (StdValueInstantiator src, Class<?> polymorphicSubClass) {
@@ -52,6 +52,11 @@ public class PolymorphicValueInstantiator extends StdValueInstantiator {
     this.polymorphicSubClass = polymorphicSubClass;
   }
 
+  public static void setPolymorphicInstance (Object obj) {
+
+    polymorphicInstanceThreadLocal.set(obj);
+  }
+
   @Override
   public boolean canCreateUsingDefault () {
 
@@ -59,13 +64,18 @@ public class PolymorphicValueInstantiator extends StdValueInstantiator {
   }
 
   @Override
-  public Object createUsingDefault (DeserializationContext ctxt)
-    throws IOException {
+  public Object createUsingDefault (DeserializationContext ctxt) {
 
-    try {
-      return ProxyGenerator.createProxy(polymorphicSubClass, new OffloadingInvocationHandler(polymorphicSubClass.newInstance()), new AnnotationFilter(PassType.EXCLUDE, XmlJavaTypeAdapter.class));
-    } catch (Exception exception) {
-      throw new IOException(exception);
+    Object polymorphicInstance;
+
+    if ((polymorphicInstance = polymorphicInstanceThreadLocal.get()) == null) {
+      throw new JAXBProcessingException("Can not update a 'null' instance of the polymorphic sub-class(%s)", polymorphicSubClass.getName());
+    } else {
+      try {
+        return ProxyGenerator.createProxy(polymorphicSubClass, new OffloadingInvocationHandler(polymorphicInstance), new AnnotationFilter(PassType.EXCLUDE, XmlJavaTypeAdapter.class));
+      } finally {
+        polymorphicInstanceThreadLocal.remove();
+      }
     }
   }
 }
