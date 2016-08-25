@@ -102,7 +102,7 @@ public class MorphiaDao<I extends Serializable & Comparable<I>, D extends Morphi
   @Override
   public List<D> list (I greaterThan, int maxResults) {
 
-    return getSession().getNativeSession().createQuery(getManagedClass()).field(Mapper.ID_KEY).greaterThan(greaterThan).limit(maxResults).asList();
+    return getSession().getNativeSession().createQuery(getManagedClass()).field(Mapper.ID_KEY).greaterThan(greaterThan).order(Mapper.ID_KEY).limit(maxResults).asList();
   }
 
   @Override
@@ -120,7 +120,7 @@ public class MorphiaDao<I extends Serializable & Comparable<I>, D extends Morphi
   @Override
   public Iterable<D> scrollById (final I greaterThan, final int fetchSize) {
 
-    return new AutoCloseMorphiaIterator<>(getSession().getNativeSession().createQuery(getManagedClass()).field(Mapper.ID_KEY).greaterThan(greaterThan).batchSize(fetchSize).fetch());
+    return new AutoCloseMorphiaIterator<>(getSession().getNativeSession().createQuery(getManagedClass()).field(Mapper.ID_KEY).greaterThan(greaterThan).order(Mapper.ID_KEY).batchSize(fetchSize).fetch());
   }
 
   @Override
