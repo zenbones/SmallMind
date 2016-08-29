@@ -33,6 +33,7 @@
 package org.smallmind.persistence.query;
 
 import java.io.Serializable;
+import java.util.HashSet;
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlElement;
@@ -57,10 +58,26 @@ public class Where implements Serializable {
 
   public void validate (WherePermit... permits) {
 
+    final HashSet<String> fieldNameSet = new HashSet<>();
+
+    WhereUtility.walk(this, new WhereVisitor() {
+
+      @Override
+      public void visitConjunction (WhereConjunction conjunction) {
+
+      }
+
+      @Override
+      public void visitField (WhereField field) {
+
+        fieldNameSet.add(field.getName());
+      }
+    });
+
     if ((permits != null) && (permits.length > 0)) {
       for (WherePermit permit : permits) {
         if ((permit.getFields() != null) && (permit.getFields().length > 0)) {
-          permit.getType().validate(this, permit.getFields());
+          permit.getType().validate(fieldNameSet, permit.getFields());
         }
       }
     }
@@ -77,5 +94,4 @@ public class Where implements Serializable {
 
     this.rootConjunction = rootConjunction;
   }
-
 }

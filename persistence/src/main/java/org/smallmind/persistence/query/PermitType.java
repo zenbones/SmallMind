@@ -32,61 +32,31 @@
  */
 package org.smallmind.persistence.query;
 
+import java.util.Set;
+
 public enum PermitType {
 
   REQUIRED {
     @Override
-    public void validate (Where where, final String[] fields) {
+    public void validate (Set<String> fieldNameSet, final String[] fieldNames) {
 
-      WhereUtility.walk(where, new WhereVisitor() {
-
-        @Override
-        public void visitConjunction (WhereConjunction conjunction) {
-
+      for (String fieldName : fieldNames) {
+        if (!fieldNameSet.contains(fieldName)) {
+          throw new WhereValidationException("The field(%s) is required in where clauses for this query", fieldName);
         }
-
-        @Override
-        public void visitField (WhereField field) {
-
-          if (!contains(field.getName(), fields)) {
-            throw new WhereValidationException("The field(%s) is not permitted in where clauses for this query", field.getName());
-          }
-        }
-      });
+      }
     }
   }, EXCLUDED {
     @Override
-    public void validate (Where where, final String[] fields) {
+    public void validate (Set<String> fieldNameSet, final String[] fieldNames) {
 
-      WhereUtility.walk(where, new WhereVisitor() {
-
-        @Override
-        public void visitConjunction (WhereConjunction conjunction) {
-
+      for (String fieldName : fieldNames) {
+        if (fieldNameSet.contains(fieldName)) {
+          throw new WhereValidationException("The field(%s) is not permitted in where clauses for this query", fieldName);
         }
-
-        @Override
-        public void visitField (WhereField field) {
-
-          if (contains(field.getName(), fields)) {
-            throw new WhereValidationException("The field(%s) is not permitted in where clauses for this query", field.getName());
-          }
-        }
-      });
+      }
     }
   };
 
-  private static boolean contains (String field, String[] fields) {
-
-    for (String matchingField : fields) {
-      if (field.equals(matchingField)) {
-
-        return true;
-      }
-    }
-
-    return false;
-  }
-
-  public abstract void validate (Where where, String[] fields);
+  public abstract void validate (Set<String> fieldNameSet, final String[] fieldNames);
 }
