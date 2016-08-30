@@ -32,10 +32,11 @@
  */
 package org.smallmind.nutsnbolts.reflection;
 
+import java.io.Serializable;
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
 
-public class OffloadingInvocationHandler implements InvocationHandler {
+public class OffloadingInvocationHandler implements Serializable, InvocationHandler {
 
   private Object target;
 

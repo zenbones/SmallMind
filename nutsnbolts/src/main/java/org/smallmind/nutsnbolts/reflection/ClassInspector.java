@@ -35,6 +35,7 @@ package org.smallmind.nutsnbolts.reflection;
 import java.io.IOException;
 import java.io.PrintWriter;
 import org.objectweb.asm.ClassReader;
+import org.objectweb.asm.util.ASMifier;
 import org.objectweb.asm.util.TraceClassVisitor;
 
 public class ClassInspector {
@@ -44,15 +45,28 @@ public class ClassInspector {
     ClassReader classReader;
     TraceClassVisitor classVisitor;
 
-    classVisitor = new TraceClassVisitor(new PrintWriter(System.out));
-
     try {
       classReader = new ClassReader(parseClass.getClassLoader().getResourceAsStream(parseClass.getCanonicalName().replace('.', '/') + ".class"));
-    }
-    catch (IOException ioException) {
+    } catch (IOException ioException) {
       throw new ByteCodeManipulationException(ioException);
     }
 
+    classVisitor = new TraceClassVisitor(new PrintWriter(System.out));
+    classReader.accept(classVisitor, 0);
+  }
+
+  public static void asmify (Class parseClass) {
+
+    ClassReader classReader;
+    TraceClassVisitor classVisitor;
+
+    try {
+      classReader = new ClassReader(parseClass.getClassLoader().getResourceAsStream(parseClass.getCanonicalName().replace('.', '/') + ".class"));
+    } catch (IOException ioException) {
+      throw new ByteCodeManipulationException(ioException);
+    }
+
+    classVisitor = new TraceClassVisitor(null, new ASMifier(), new PrintWriter(System.out));
     classReader.accept(classVisitor, 0);
   }
 }
