@@ -32,9 +32,13 @@
  */
 package org.smallmind.persistence.orm.spring.morphia;
 
+import java.util.Set;
+import com.mongodb.BasicDBObject;
 import com.mongodb.MongoClient;
 import org.mongodb.morphia.Datastore;
 import org.mongodb.morphia.Morphia;
+import org.mongodb.morphia.annotations.Entity;
+import org.smallmind.persistence.orm.ORMInitializationException;
 import org.smallmind.persistence.orm.morphia.DatastoreFactory;
 import org.springframework.beans.factory.FactoryBean;
 import org.springframework.beans.factory.InitializingBean;
@@ -45,6 +49,7 @@ public class FileSeekingDatastoreFactoryBean implements FactoryBean<DatastoreFac
   private MongoClient mongoClient;
   private String sessionSourceKey;
   private String databaseName;
+  private boolean enableShards = false;
 
   public void setMongoClient (MongoClient mongoClient) {
 
@@ -59,6 +64,11 @@ public class FileSeekingDatastoreFactoryBean implements FactoryBean<DatastoreFac
   public void setSessionSourceKey (String sessionSourceKey) {
 
     this.sessionSourceKey = sessionSourceKey;
+  }
+
+  public void setEnableShards (boolean enableShards) {
+
+    this.enableShards = enableShards;
   }
 
   public Class getObjectType () {
@@ -79,8 +89,25 @@ public class FileSeekingDatastoreFactoryBean implements FactoryBean<DatastoreFac
   public void afterPropertiesSet () {
 
     Datastore datastore;
+    Set<Class> entitySet;
 
-    datastore = new Morphia(FileSeekingBeanFactoryPostProcessor.getEntitySet(sessionSourceKey)).createDatastore(mongoClient, databaseName);
+    datastore = new Morphia(entitySet = FileSeekingBeanFactoryPostProcessor.getEntitySet(sessionSourceKey)).createDatastore(mongoClient, databaseName);
+
+    if (enableShards) {
+      mongoClient.getDatabase("admin").runCommand(new BasicDBObject("enableSharding", databaseName));
+
+      for (Class<?> entityClass : entitySet) {
+
+        Entity entityAnnotation;
+
+        if ((entityAnnotation = entityClass.getAnnotation(Entity.class)) == null) {
+          throw new ORMInitializationException("The morphia entity(%s) is missing an @%s annotation", entityClass.getName(), Entity.class.getSimpleName());
+        } else {
+          mongoClient.getDatabase("admin").runCommand(new BasicDBObject("shardCollection", databaseName + '.' + entityAnnotation.value()).append("key", new BasicDBObject("_id", "hashed")));
+        }
+      }
+    }
+
     datastore.ensureIndexes();
 
     datastoreFactory = new DatastoreFactory(datastore);
