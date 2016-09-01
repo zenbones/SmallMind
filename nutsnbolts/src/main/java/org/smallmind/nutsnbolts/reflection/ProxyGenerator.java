@@ -51,9 +51,21 @@ import org.objectweb.asm.util.CheckClassAdapter;
 
 public class ProxyGenerator {
 
+  private static final HashMap<String, String> OBJECT_METHOD_MAP = new HashMap<>();
   private static final ConcurrentHashMap<Class<?>, Class<?>> INTERFACE_MAP = new ConcurrentHashMap<>();
   private static final HashMap<ClassLoader, ProxyClassLoader> LOADER_MAP = new HashMap<>();
   private static final String INVOCATION_HANDLER = "L" + InvocationHandler.class.getName().replace('.', '/') + ";";
+
+  static {
+    OBJECT_METHOD_MAP.put("hashCode", "()I");
+    OBJECT_METHOD_MAP.put("equals", "(Ljava/lang/Object;)Z");
+    OBJECT_METHOD_MAP.put("toString", "()Ljava/lang/String;");
+  }
+
+  public static <T> T createProxy (Class<T> parseClass, InvocationHandler handler) {
+
+    return createProxy(parseClass, handler, null);
+  }
 
   public static <T> T createProxy (Class<T> parseClass, InvocationHandler handler, AnnotationFilter annotationFilter) {
 
@@ -255,247 +267,252 @@ public class ProxyGenerator {
               methodTrackerSet.add(methodTracker);
               createConstructor(signature, exceptions);
             }
-          } else if ((!currentClass.equals(ObjectImpersonator.class)) || name.equals("hashCode") || name.equals("equals") || name.equals("toString")) {
-            if (((access & Opcodes.ACC_PUBLIC) != 0) && ((access & Opcodes.ACC_STATIC) == 0) && ((access & Opcodes.ACC_FINAL) == 0) && ((access & Opcodes.ACC_SYNTHETIC) == 0)) {
+          } else {
 
-              MethodVisitor proxyVisitor;
+            String objectMethodDesc;
 
-              methodTrackerSet.add(methodTracker);
-              proxyVisitor = nextClassVisitor.visitMethod(Opcodes.ACC_PUBLIC | Opcodes.ACC_FINAL, name, desc, null, exceptions);
+            if ((!currentClass.equals(ObjectImpersonator.class)) || (((objectMethodDesc = OBJECT_METHOD_MAP.get(name)) != null) && objectMethodDesc.equals(desc))) {
+              if (((access & Opcodes.ACC_PUBLIC) != 0) && ((access & Opcodes.ACC_STATIC) == 0) && ((access & Opcodes.ACC_FINAL) == 0) && ((access & Opcodes.ACC_SYNTHETIC) == 0)) {
 
-              proxyVisitor.visitCode();
-              Label l0 = new Label();
-              Label l1 = new Label();
+                MethodVisitor proxyVisitor;
 
-              Label[] exceptionLabels;
+                methodTrackerSet.add(methodTracker);
+                proxyVisitor = nextClassVisitor.visitMethod(Opcodes.ACC_PUBLIC | Opcodes.ACC_FINAL, name, desc, null, exceptions);
 
-              exceptionLabels = new Label[(exceptions == null) ? 1 : exceptions.length + 1];
+                proxyVisitor.visitCode();
+                Label l0 = new Label();
+                Label l1 = new Label();
 
-              for (int index = 0; index < ((exceptions == null) ? 0 : exceptions.length); index++) {
-                exceptionLabels[index] = new Label();
-                proxyVisitor.visitTryCatchBlock(l0, l1, exceptionLabels[index], exceptions[index]);
-              }
+                Label[] exceptionLabels;
 
-              exceptionLabels[(exceptions == null) ? 0 : exceptions.length] = new Label();
-              proxyVisitor.visitTryCatchBlock(l0, l1, exceptionLabels[(exceptions == null) ? 0 : exceptions.length], "java/lang/Throwable");
+                exceptionLabels = new Label[(exceptions == null) ? 1 : exceptions.length + 1];
 
-              proxyVisitor.visitLabel(l0);
-              proxyVisitor.visitVarInsn(Opcodes.ALOAD, 0);
-              proxyVisitor.visitVarInsn(Opcodes.ALOAD, 0);
-              proxyVisitor.visitFieldInsn(Opcodes.GETFIELD, parseClass.getName().replace('.', '/') + "$Proxy$_ExtractedSubclass", "$proxy$_handler", INVOCATION_HANDLER);
+                for (int index = 0; index < ((exceptions == null) ? 0 : exceptions.length); index++) {
+                  exceptionLabels[index] = new Label();
+                  proxyVisitor.visitTryCatchBlock(l0, l1, exceptionLabels[index], exceptions[index]);
+                }
 
-              proxyVisitor.visitInsn(parseClass.isInterface() ? Opcodes.ICONST_0 : Opcodes.ICONST_1);
-              proxyVisitor.visitLdcInsn(UUID.randomUUID().toString());
-              proxyVisitor.visitLdcInsn(name);
-              proxyVisitor.visitLdcInsn(desc.substring(desc.indexOf(')') + 1));
+                exceptionLabels[(exceptions == null) ? 0 : exceptions.length] = new Label();
+                proxyVisitor.visitTryCatchBlock(l0, l1, exceptionLabels[(exceptions == null) ? 0 : exceptions.length], "java/lang/Throwable");
 
-              String[] parameters;
-              LinkedList<String> parameterList;
+                proxyVisitor.visitLabel(l0);
+                proxyVisitor.visitVarInsn(Opcodes.ALOAD, 0);
+                proxyVisitor.visitVarInsn(Opcodes.ALOAD, 0);
+                proxyVisitor.visitFieldInsn(Opcodes.GETFIELD, parseClass.getName().replace('.', '/') + "$Proxy$_ExtractedSubclass", "$proxy$_handler", INVOCATION_HANDLER);
 
-              parameterList = new LinkedList<>();
-              for (String parameter : new ParameterIterator(desc.substring(1, desc.indexOf(')')))) {
-                parameterList.add(parameter);
-              }
-              parameters = new String[parameterList.size()];
-              parameterList.toArray(parameters);
+                proxyVisitor.visitInsn(parseClass.isInterface() ? Opcodes.ICONST_0 : Opcodes.ICONST_1);
+                proxyVisitor.visitLdcInsn(UUID.randomUUID().toString());
+                proxyVisitor.visitLdcInsn(name);
+                proxyVisitor.visitLdcInsn(desc.substring(desc.indexOf(')') + 1));
 
-              insertNumber(proxyVisitor, parameterList.size());
-              proxyVisitor.visitTypeInsn(Opcodes.ANEWARRAY, "java/lang/String");
-              for (int index = 0; index < parameters.length; index++) {
-                proxyVisitor.visitInsn(Opcodes.DUP);
-                insertNumber(proxyVisitor, index);
-                proxyVisitor.visitLdcInsn(parameters[index]);
-                proxyVisitor.visitInsn(Opcodes.AASTORE);
-              }
+                String[] parameters;
+                LinkedList<String> parameterList;
 
-              int[] parameterRegisters;
-              int variableIndex = 1;
+                parameterList = new LinkedList<>();
+                for (String parameter : new ParameterIterator(desc.substring(1, desc.indexOf(')')))) {
+                  parameterList.add(parameter);
+                }
+                parameters = new String[parameterList.size()];
+                parameterList.toArray(parameters);
 
-              insertNumber(proxyVisitor, parameterList.size());
-              proxyVisitor.visitTypeInsn(Opcodes.ANEWARRAY, "java/lang/Object");
+                insertNumber(proxyVisitor, parameterList.size());
+                proxyVisitor.visitTypeInsn(Opcodes.ANEWARRAY, "java/lang/String");
+                for (int index = 0; index < parameters.length; index++) {
+                  proxyVisitor.visitInsn(Opcodes.DUP);
+                  insertNumber(proxyVisitor, index);
+                  proxyVisitor.visitLdcInsn(parameters[index]);
+                  proxyVisitor.visitInsn(Opcodes.AASTORE);
+                }
 
-              parameterRegisters = new int[parameters.length];
-              for (int index = 0; index < parameters.length; index++) {
-                proxyVisitor.visitInsn(Opcodes.DUP);
-                insertNumber(proxyVisitor, index);
+                int[] parameterRegisters;
+                int variableIndex = 1;
 
-                if (parameters[index].length() == 1) {
-                  switch (parameters[index].charAt(0)) {
+                insertNumber(proxyVisitor, parameterList.size());
+                proxyVisitor.visitTypeInsn(Opcodes.ANEWARRAY, "java/lang/Object");
+
+                parameterRegisters = new int[parameters.length];
+                for (int index = 0; index < parameters.length; index++) {
+                  proxyVisitor.visitInsn(Opcodes.DUP);
+                  insertNumber(proxyVisitor, index);
+
+                  if (parameters[index].length() == 1) {
+                    switch (parameters[index].charAt(0)) {
+                      case 'Z':
+                        proxyVisitor.visitVarInsn(Opcodes.ILOAD, parameterRegisters[index] = variableIndex++);
+                        proxyVisitor.visitMethodInsn(Opcodes.INVOKESTATIC, "java/lang/Boolean", "valueOf", "(Z)Ljava/lang/Boolean;", false);
+                        break;
+                      case 'B':
+                        proxyVisitor.visitVarInsn(Opcodes.ILOAD, parameterRegisters[index] = variableIndex++);
+                        proxyVisitor.visitMethodInsn(Opcodes.INVOKESTATIC, "java/lang/Byte", "valueOf", "(B)Ljava/lang/Byte;", false);
+                        break;
+                      case 'C':
+                        proxyVisitor.visitVarInsn(Opcodes.ILOAD, parameterRegisters[index] = variableIndex++);
+                        proxyVisitor.visitMethodInsn(Opcodes.INVOKESTATIC, "java/lang/Character", "valueOf", "(C)Ljava/lang/Character;", false);
+                        break;
+                      case 'S':
+                        proxyVisitor.visitVarInsn(Opcodes.ILOAD, parameterRegisters[index] = variableIndex++);
+                        proxyVisitor.visitMethodInsn(Opcodes.INVOKESTATIC, "java/lang/Short", "valueOf", "(S)Ljava/lang/Short;", false);
+                        break;
+                      case 'I':
+                        proxyVisitor.visitVarInsn(Opcodes.ILOAD, parameterRegisters[index] = variableIndex++);
+                        proxyVisitor.visitMethodInsn(Opcodes.INVOKESTATIC, "java/lang/Integer", "valueOf", "(I)Ljava/lang/Integer;", false);
+                        break;
+                      case 'J':
+                        proxyVisitor.visitVarInsn(Opcodes.LLOAD, parameterRegisters[index] = variableIndex);
+                        variableIndex += 2;
+                        proxyVisitor.visitMethodInsn(Opcodes.INVOKESTATIC, "java/lang/Long", "valueOf", "(J)Ljava/lang/Long;", false);
+                        break;
+                      case 'F':
+                        proxyVisitor.visitVarInsn(Opcodes.FLOAD, parameterRegisters[index] = variableIndex++);
+                        proxyVisitor.visitMethodInsn(Opcodes.INVOKESTATIC, "java/lang/Float", "valueOf", "(F)Ljava/lang/Float;", false);
+                        break;
+                      case 'D':
+                        proxyVisitor.visitVarInsn(Opcodes.DLOAD, parameterRegisters[index] = variableIndex);
+                        variableIndex += 2;
+                        proxyVisitor.visitMethodInsn(Opcodes.INVOKESTATIC, "java/lang/Double", "valueOf", "(D)Ljava/lang/Double;", false);
+                        break;
+                      default:
+                        throw new ByteCodeManipulationException("Unknown primitive type(%s)", parameters[index]);
+                    }
+                  } else {
+                    proxyVisitor.visitVarInsn(Opcodes.ALOAD, parameterRegisters[index] = variableIndex++);
+                  }
+
+                  proxyVisitor.visitInsn(Opcodes.AASTORE);
+                }
+
+                proxyVisitor.visitMethodInsn(Opcodes.INVOKESTATIC, ProxyUtility.class.getName().replace('.', '/'), "invoke", "(Ljava/lang/Object;" + INVOCATION_HANDLER + "ZLjava/lang/String;Ljava/lang/String;Ljava/lang/String;[Ljava/lang/String;[Ljava/lang/Object;)Ljava/lang/Object;", false);
+
+                String returnType;
+
+                if ((returnType = desc.substring(desc.indexOf(')') + 1)).length() == 1) {
+                  switch (returnType.charAt(0)) {
+                    case 'V':
+                      proxyVisitor.visitInsn(Opcodes.POP);
+                      break;
                     case 'Z':
-                      proxyVisitor.visitVarInsn(Opcodes.ILOAD, parameterRegisters[index] = variableIndex++);
-                      proxyVisitor.visitMethodInsn(Opcodes.INVOKESTATIC, "java/lang/Boolean", "valueOf", "(Z)Ljava/lang/Boolean;", false);
+                      proxyVisitor.visitTypeInsn(Opcodes.CHECKCAST, "java/lang/Boolean");
+                      proxyVisitor.visitMethodInsn(Opcodes.INVOKEVIRTUAL, "java/lang/Boolean", "booleanValue", "()Z", false);
                       break;
                     case 'B':
-                      proxyVisitor.visitVarInsn(Opcodes.ILOAD, parameterRegisters[index] = variableIndex++);
-                      proxyVisitor.visitMethodInsn(Opcodes.INVOKESTATIC, "java/lang/Byte", "valueOf", "(B)Ljava/lang/Byte;", false);
+                      proxyVisitor.visitTypeInsn(Opcodes.CHECKCAST, "java/lang/Byte");
+                      proxyVisitor.visitMethodInsn(Opcodes.INVOKEVIRTUAL, "java/lang/Byte", "byteValue", "()B", false);
                       break;
                     case 'C':
-                      proxyVisitor.visitVarInsn(Opcodes.ILOAD, parameterRegisters[index] = variableIndex++);
-                      proxyVisitor.visitMethodInsn(Opcodes.INVOKESTATIC, "java/lang/Character", "valueOf", "(C)Ljava/lang/Character;", false);
+                      proxyVisitor.visitTypeInsn(Opcodes.CHECKCAST, "java/lang/Character");
+                      proxyVisitor.visitMethodInsn(Opcodes.INVOKEVIRTUAL, "java/lang/Character", "charValue", "()C", false);
                       break;
                     case 'S':
-                      proxyVisitor.visitVarInsn(Opcodes.ILOAD, parameterRegisters[index] = variableIndex++);
-                      proxyVisitor.visitMethodInsn(Opcodes.INVOKESTATIC, "java/lang/Short", "valueOf", "(S)Ljava/lang/Short;", false);
+                      proxyVisitor.visitTypeInsn(Opcodes.CHECKCAST, "java/lang/Short");
+                      proxyVisitor.visitMethodInsn(Opcodes.INVOKEVIRTUAL, "java/lang/Short", "shortValue", "()S", false);
                       break;
                     case 'I':
-                      proxyVisitor.visitVarInsn(Opcodes.ILOAD, parameterRegisters[index] = variableIndex++);
-                      proxyVisitor.visitMethodInsn(Opcodes.INVOKESTATIC, "java/lang/Integer", "valueOf", "(I)Ljava/lang/Integer;", false);
+                      proxyVisitor.visitTypeInsn(Opcodes.CHECKCAST, "java/lang/Integer");
+                      proxyVisitor.visitMethodInsn(Opcodes.INVOKEVIRTUAL, "java/lang/Integer", "intValue", "()I", false);
                       break;
                     case 'J':
-                      proxyVisitor.visitVarInsn(Opcodes.LLOAD, parameterRegisters[index] = variableIndex);
-                      variableIndex += 2;
-                      proxyVisitor.visitMethodInsn(Opcodes.INVOKESTATIC, "java/lang/Long", "valueOf", "(J)Ljava/lang/Long;", false);
+                      proxyVisitor.visitTypeInsn(Opcodes.CHECKCAST, "java/lang/Long");
+                      proxyVisitor.visitMethodInsn(Opcodes.INVOKEVIRTUAL, "java/lang/Long", "longValue", "()J", false);
                       break;
                     case 'F':
-                      proxyVisitor.visitVarInsn(Opcodes.FLOAD, parameterRegisters[index] = variableIndex++);
-                      proxyVisitor.visitMethodInsn(Opcodes.INVOKESTATIC, "java/lang/Float", "valueOf", "(F)Ljava/lang/Float;", false);
+                      proxyVisitor.visitTypeInsn(Opcodes.CHECKCAST, "java/lang/Float");
+                      proxyVisitor.visitMethodInsn(Opcodes.INVOKEVIRTUAL, "java/lang/Float", "floatValue", "()F", false);
                       break;
                     case 'D':
-                      proxyVisitor.visitVarInsn(Opcodes.DLOAD, parameterRegisters[index] = variableIndex);
-                      variableIndex += 2;
-                      proxyVisitor.visitMethodInsn(Opcodes.INVOKESTATIC, "java/lang/Double", "valueOf", "(D)Ljava/lang/Double;", false);
+                      proxyVisitor.visitTypeInsn(Opcodes.CHECKCAST, "java/lang/Double");
+                      proxyVisitor.visitMethodInsn(Opcodes.INVOKEVIRTUAL, "java/lang/Double", "doubleValue", "()D", false);
                       break;
                     default:
-                      throw new ByteCodeManipulationException("Unknown primitive type(%s)", parameters[index]);
+                      throw new ByteCodeManipulationException("Unknown return type(%s)", returnType);
+                  }
+                } else if (returnType.startsWith("L")) {
+                  proxyVisitor.visitTypeInsn(Opcodes.CHECKCAST, returnType.substring(1, returnType.length() - 1));
+                } else {
+                  proxyVisitor.visitTypeInsn(Opcodes.CHECKCAST, returnType);
+                }
+
+                proxyVisitor.visitLabel(l1);
+
+                Label lEnd = null;
+
+                if ((returnType = desc.substring(desc.indexOf(')') + 1)).length() == 1) {
+                  switch (returnType.charAt(0)) {
+                    case 'V':
+                      lEnd = new Label();
+                      proxyVisitor.visitJumpInsn(Opcodes.GOTO, lEnd);
+                      break;
+                    case 'Z':
+                      proxyVisitor.visitInsn(Opcodes.IRETURN);
+                      break;
+                    case 'B':
+                      proxyVisitor.visitInsn(Opcodes.IRETURN);
+                      break;
+                    case 'C':
+                      proxyVisitor.visitInsn(Opcodes.IRETURN);
+                      break;
+                    case 'S':
+                      proxyVisitor.visitInsn(Opcodes.IRETURN);
+                      break;
+                    case 'I':
+                      proxyVisitor.visitInsn(Opcodes.IRETURN);
+                      break;
+                    case 'J':
+                      proxyVisitor.visitInsn(Opcodes.LRETURN);
+                      break;
+                    case 'F':
+                      proxyVisitor.visitInsn(Opcodes.FRETURN);
+                      break;
+                    case 'D':
+                      proxyVisitor.visitInsn(Opcodes.DRETURN);
+                      break;
+                    default:
+                      throw new ByteCodeManipulationException("Unknown return type(%s)", returnType);
                   }
                 } else {
-                  proxyVisitor.visitVarInsn(Opcodes.ALOAD, parameterRegisters[index] = variableIndex++);
+                  proxyVisitor.visitInsn(Opcodes.ARETURN);
                 }
 
-                proxyVisitor.visitInsn(Opcodes.AASTORE);
-              }
+                Label[] extraLabels;
 
-              proxyVisitor.visitMethodInsn(Opcodes.INVOKESTATIC, ProxyUtility.class.getName().replace('.', '/'), "invoke", "(Ljava/lang/Object;" + INVOCATION_HANDLER + "ZLjava/lang/String;Ljava/lang/String;Ljava/lang/String;[Ljava/lang/String;[Ljava/lang/Object;)Ljava/lang/Object;", false);
+                extraLabels = new Label[(exceptions == null) ? 1 : exceptions.length + 1];
+                for (int index = 0; index <= ((exceptions == null) ? 0 : exceptions.length); index++) {
+                  proxyVisitor.visitLabel(exceptionLabels[index]);
+                  proxyVisitor.visitVarInsn(Opcodes.ASTORE, variableIndex);
+                  proxyVisitor.visitLabel(extraLabels[index] = new Label());
 
-              String returnType;
-
-              if ((returnType = desc.substring(desc.indexOf(')') + 1)).length() == 1) {
-                switch (returnType.charAt(0)) {
-                  case 'V':
-                    proxyVisitor.visitInsn(Opcodes.POP);
-                    break;
-                  case 'Z':
-                    proxyVisitor.visitTypeInsn(Opcodes.CHECKCAST, "java/lang/Boolean");
-                    proxyVisitor.visitMethodInsn(Opcodes.INVOKEVIRTUAL, "java/lang/Boolean", "booleanValue", "()Z", false);
-                    break;
-                  case 'B':
-                    proxyVisitor.visitTypeInsn(Opcodes.CHECKCAST, "java/lang/Byte");
-                    proxyVisitor.visitMethodInsn(Opcodes.INVOKEVIRTUAL, "java/lang/Byte", "byteValue", "()B", false);
-                    break;
-                  case 'C':
-                    proxyVisitor.visitTypeInsn(Opcodes.CHECKCAST, "java/lang/Character");
-                    proxyVisitor.visitMethodInsn(Opcodes.INVOKEVIRTUAL, "java/lang/Character", "charValue", "()C", false);
-                    break;
-                  case 'S':
-                    proxyVisitor.visitTypeInsn(Opcodes.CHECKCAST, "java/lang/Short");
-                    proxyVisitor.visitMethodInsn(Opcodes.INVOKEVIRTUAL, "java/lang/Short", "shortValue", "()S", false);
-                    break;
-                  case 'I':
-                    proxyVisitor.visitTypeInsn(Opcodes.CHECKCAST, "java/lang/Integer");
-                    proxyVisitor.visitMethodInsn(Opcodes.INVOKEVIRTUAL, "java/lang/Integer", "intValue", "()I", false);
-                    break;
-                  case 'J':
-                    proxyVisitor.visitTypeInsn(Opcodes.CHECKCAST, "java/lang/Long");
-                    proxyVisitor.visitMethodInsn(Opcodes.INVOKEVIRTUAL, "java/lang/Long", "longValue", "()J", false);
-                    break;
-                  case 'F':
-                    proxyVisitor.visitTypeInsn(Opcodes.CHECKCAST, "java/lang/Float");
-                    proxyVisitor.visitMethodInsn(Opcodes.INVOKEVIRTUAL, "java/lang/Float", "floatValue", "()F", false);
-                    break;
-                  case 'D':
-                    proxyVisitor.visitTypeInsn(Opcodes.CHECKCAST, "java/lang/Double");
-                    proxyVisitor.visitMethodInsn(Opcodes.INVOKEVIRTUAL, "java/lang/Double", "doubleValue", "()D", false);
-                    break;
-                  default:
-                    throw new ByteCodeManipulationException("Unknown return type(%s)", returnType);
+                  if (index == ((exceptions == null) ? 0 : exceptions.length)) {
+                    proxyVisitor.visitTypeInsn(Opcodes.NEW, "java/lang/reflect/UndeclaredThrowableException");
+                    proxyVisitor.visitInsn(Opcodes.DUP);
+                    proxyVisitor.visitVarInsn(Opcodes.ALOAD, variableIndex);
+                    proxyVisitor.visitMethodInsn(Opcodes.INVOKESPECIAL, "java/lang/reflect/UndeclaredThrowableException", "<init>", "(Ljava/lang/Throwable;)V", false);
+                    proxyVisitor.visitInsn(Opcodes.ATHROW);
+                  } else {
+                    proxyVisitor.visitVarInsn(Opcodes.ALOAD, variableIndex);
+                    proxyVisitor.visitInsn(Opcodes.ATHROW);
+                  }
                 }
-              } else if (returnType.startsWith("L")) {
-                proxyVisitor.visitTypeInsn(Opcodes.CHECKCAST, returnType.substring(1, returnType.length() - 1));
-              } else {
-                proxyVisitor.visitTypeInsn(Opcodes.CHECKCAST, returnType);
-              }
 
-              proxyVisitor.visitLabel(l1);
-
-              Label lEnd = null;
-
-              if ((returnType = desc.substring(desc.indexOf(')') + 1)).length() == 1) {
-                switch (returnType.charAt(0)) {
-                  case 'V':
-                    lEnd = new Label();
-                    proxyVisitor.visitJumpInsn(Opcodes.GOTO, lEnd);
-                    break;
-                  case 'Z':
-                    proxyVisitor.visitInsn(Opcodes.IRETURN);
-                    break;
-                  case 'B':
-                    proxyVisitor.visitInsn(Opcodes.IRETURN);
-                    break;
-                  case 'C':
-                    proxyVisitor.visitInsn(Opcodes.IRETURN);
-                    break;
-                  case 'S':
-                    proxyVisitor.visitInsn(Opcodes.IRETURN);
-                    break;
-                  case 'I':
-                    proxyVisitor.visitInsn(Opcodes.IRETURN);
-                    break;
-                  case 'J':
-                    proxyVisitor.visitInsn(Opcodes.LRETURN);
-                    break;
-                  case 'F':
-                    proxyVisitor.visitInsn(Opcodes.FRETURN);
-                    break;
-                  case 'D':
-                    proxyVisitor.visitInsn(Opcodes.DRETURN);
-                    break;
-                  default:
-                    throw new ByteCodeManipulationException("Unknown return type(%s)", returnType);
+                if (lEnd != null) {
+                  proxyVisitor.visitLabel(lEnd);
+                  proxyVisitor.visitInsn(Opcodes.RETURN);
                 }
-              } else {
-                proxyVisitor.visitInsn(Opcodes.ARETURN);
-              }
 
-              Label[] extraLabels;
+                Label lLocal;
 
-              extraLabels = new Label[(exceptions == null) ? 1 : exceptions.length + 1];
-              for (int index = 0; index <= ((exceptions == null) ? 0 : exceptions.length); index++) {
-                proxyVisitor.visitLabel(exceptionLabels[index]);
-                proxyVisitor.visitVarInsn(Opcodes.ASTORE, variableIndex);
-                proxyVisitor.visitLabel(extraLabels[index] = new Label());
-
-                if (index == ((exceptions == null) ? 0 : exceptions.length)) {
-                  proxyVisitor.visitTypeInsn(Opcodes.NEW, "java/lang/reflect/UndeclaredThrowableException");
-                  proxyVisitor.visitInsn(Opcodes.DUP);
-                  proxyVisitor.visitVarInsn(Opcodes.ALOAD, variableIndex);
-                  proxyVisitor.visitMethodInsn(Opcodes.INVOKESPECIAL, "java/lang/reflect/UndeclaredThrowableException", "<init>", "(Ljava/lang/Throwable;)V", false);
-                  proxyVisitor.visitInsn(Opcodes.ATHROW);
-                } else {
-                  proxyVisitor.visitVarInsn(Opcodes.ALOAD, variableIndex);
-                  proxyVisitor.visitInsn(Opcodes.ATHROW);
+                proxyVisitor.visitLabel(lLocal = new Label());
+                proxyVisitor.visitLocalVariable("this", "L" + parseClass.getName().replace('.', '/') + "$Proxy$_ExtractedSubclass;", null, l0, lLocal, 0);
+                for (int index = 0; index < parameters.length; index++) {
+                  proxyVisitor.visitLocalVariable("$proxy$_var" + index, parameters[index], null, l0, lLocal, parameterRegisters[index]);
                 }
+                for (int index = 0; index < ((exceptions == null) ? 0 : exceptions.length); index++) {
+                  proxyVisitor.visitLocalVariable("$proxy$_exc" + index, "L" + exceptions[index] + ";", null, extraLabels[index], exceptionLabels[index + 1], variableIndex);
+                }
+                proxyVisitor.visitLocalVariable("$proxy$_exc" + ((exceptions == null) ? 0 : exceptions.length), "Ljava/lang/Throwable;", null, extraLabels[(exceptions == null) ? 0 : exceptions.length], lLocal, variableIndex);
+
+                proxyVisitor.visitMaxs(12, variableIndex + 2);
+
+                return new ProxyMethodVisitor(proxyVisitor, annotationFilter);
               }
-
-              if (lEnd != null) {
-                proxyVisitor.visitLabel(lEnd);
-                proxyVisitor.visitInsn(Opcodes.RETURN);
-              }
-
-              Label lLocal;
-
-              proxyVisitor.visitLabel(lLocal = new Label());
-              proxyVisitor.visitLocalVariable("this", "L" + parseClass.getName().replace('.', '/') + "$Proxy$_ExtractedSubclass;", null, l0, lLocal, 0);
-              for (int index = 0; index < parameters.length; index++) {
-                proxyVisitor.visitLocalVariable("$proxy$_var" + index, parameters[index], null, l0, lLocal, parameterRegisters[index]);
-              }
-              for (int index = 0; index < ((exceptions == null) ? 0 : exceptions.length); index++) {
-                proxyVisitor.visitLocalVariable("$proxy$_exc" + index, "L" + exceptions[index] + ";", null, extraLabels[index], exceptionLabels[index + 1], variableIndex);
-              }
-              proxyVisitor.visitLocalVariable("$proxy$_exc" + ((exceptions == null) ? 0 : exceptions.length), "Ljava/lang/Throwable;", null, extraLabels[(exceptions == null) ? 0 : exceptions.length], lLocal, variableIndex);
-
-              proxyVisitor.visitMaxs(12, variableIndex + 2);
-
-              return new ProxyMethodVisitor(proxyVisitor, annotationFilter);
             }
           }
         }
