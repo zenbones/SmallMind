@@ -49,6 +49,7 @@ public class FileSeekingDatastoreFactoryBean implements FactoryBean<DatastoreFac
   private MongoClient mongoClient;
   private String sessionSourceKey;
   private String databaseName;
+  private boolean useBulkWriteOperations = false;
   private boolean enableShards = false;
 
   public void setMongoClient (MongoClient mongoClient) {
@@ -64,6 +65,11 @@ public class FileSeekingDatastoreFactoryBean implements FactoryBean<DatastoreFac
   public void setSessionSourceKey (String sessionSourceKey) {
 
     this.sessionSourceKey = sessionSourceKey;
+  }
+
+  public void setUseBulkWriteOperations (boolean useBulkWriteOperations) {
+
+    this.useBulkWriteOperations = useBulkWriteOperations;
   }
 
   public void setEnableShards (boolean enableShards) {
@@ -88,10 +94,13 @@ public class FileSeekingDatastoreFactoryBean implements FactoryBean<DatastoreFac
 
   public void afterPropertiesSet () {
 
+    Morphia morphia;
     Datastore datastore;
     Set<Class> entitySet;
 
-    datastore = new Morphia(entitySet = FileSeekingBeanFactoryPostProcessor.getEntitySet(sessionSourceKey)).createDatastore(mongoClient, databaseName);
+    morphia = new Morphia(entitySet = FileSeekingBeanFactoryPostProcessor.getEntitySet(sessionSourceKey));
+    morphia.setUseBulkWriteOperations(useBulkWriteOperations);
+    datastore = morphia.createDatastore(mongoClient, databaseName);
 
     if (enableShards) {
       mongoClient.getDatabase("admin").runCommand(new BasicDBObject("enableSharding", databaseName));
