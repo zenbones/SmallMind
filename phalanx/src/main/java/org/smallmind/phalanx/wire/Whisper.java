@@ -41,4 +41,6 @@ import java.lang.annotation.Target;
 @Retention(RetentionPolicy.RUNTIME)
 public @interface Whisper {
 
+  // Any positive value (> 0) will override the default service timeout seconds
+  int timeoutSeconds () default 0;
 }
