@@ -233,9 +233,9 @@ public class GenerateJNLPMojo extends AbstractMojo {
               getLog().info(String.format("Signing jar(%s)...", dependency.getName()));
 
               if (signjar.isVerbose()) {
-                sun.security.tools.JarSigner.main(new String[]{"-verbose", "-keystore", signjar.getKeystore(), "-storepass", signjar.getStorepass(), "-keypass", signjar.getKeypass(), "-sigfile", "SIGNATURE", deployDirectory.getAbsolutePath() + System.getProperty("file.separator") + dependency.getName(), signjar.getAlias()});
+                sun.security.tools.jarsigner.Main.main(new String[]{"-verbose", "-keystore", signjar.getKeystore(), "-storepass", signjar.getStorepass(), "-keypass", signjar.getKeypass(), "-sigfile", "SIGNATURE", deployDirectory.getAbsolutePath() + System.getProperty("file.separator") + dependency.getName(), signjar.getAlias()});
               } else {
-                sun.security.tools.JarSigner.main(new String[]{"-keystore", signjar.getKeystore(), "-storepass", signjar.getStorepass(), "-keypass", signjar.getKeypass(), "-sigfile", "SIGNATURE", deployDirectory.getAbsolutePath() + System.getProperty("file.separator") + dependency.getName(), signjar.getAlias()});
+                sun.security.tools.jarsigner.Main.main(new String[]{"-keystore", signjar.getKeystore(), "-storepass", signjar.getStorepass(), "-keypass", signjar.getKeypass(), "-sigfile", "SIGNATURE", deployDirectory.getAbsolutePath() + System.getProperty("file.separator") + dependency.getName(), signjar.getAlias()});
               }
             }
           }

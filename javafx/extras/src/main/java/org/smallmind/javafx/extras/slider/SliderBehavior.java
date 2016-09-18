@@ -34,10 +34,10 @@ package org.smallmind.javafx.extras.slider;
 
 import java.util.ArrayList;
 import java.util.List;
-import com.sun.javafx.Utils;
 import com.sun.javafx.scene.control.behavior.BehaviorBase;
 import com.sun.javafx.scene.control.behavior.KeyBinding;
 import com.sun.javafx.scene.control.behavior.OrientedKeyBinding;
+import com.sun.javafx.util.Utils;
 import javafx.event.EventType;
 import javafx.geometry.Orientation;
 import javafx.scene.control.Control;
@@ -70,7 +70,7 @@ public class SliderBehavior extends BehaviorBase<Slider> {
    * different usage for up/down arrow keys.                                *
    * ***********************************************************************
    */
-  protected static final List<KeyBinding> SLIDER_BINDINGS = new ArrayList<KeyBinding>();
+  protected static final List<KeyBinding> SLIDER_BINDINGS = new ArrayList<>();
 
   static {
     SLIDER_BINDINGS.add(new KeyBinding(TAB, "TraverseNext"));
@@ -100,6 +100,11 @@ public class SliderBehavior extends BehaviorBase<Slider> {
     SLIDER_BINDINGS.add(new KeyBinding(END, KEY_RELEASED, "End"));
   }
 
+  public SliderBehavior (Slider slider) {
+
+    super(slider, SLIDER_BINDINGS);
+  }
+
   @Override
   protected void callAction (String name) {
 
@@ -108,17 +113,6 @@ public class SliderBehavior extends BehaviorBase<Slider> {
     else if ("IncrementValue".equals(name)) incrementValue();
     else if ("DecrementValue".equals(name)) decrementValue();
     else super.callAction(name);
-  }
-
-  public SliderBehavior (Slider slider) {
-
-    super(slider);
-  }
-
-  @Override
-  protected List<KeyBinding> createKeyBindings () {
-
-    return SLIDER_BINDINGS;
   }
 
   /**************************************************************************
@@ -141,8 +135,7 @@ public class SliderBehavior extends BehaviorBase<Slider> {
     if (!slider.isFocused()) slider.requestFocus();
     if (slider.getOrientation().equals(Orientation.HORIZONTAL)) {
       slider.adjustValue(position * (slider.getMax() - slider.getMin()) + slider.getMin());
-    }
-    else {
+    } else {
       slider.adjustValue((1 - position) * (slider.getMax() - slider.getMin()) + slider.getMin());
     }
   }
@@ -182,8 +175,7 @@ public class SliderBehavior extends BehaviorBase<Slider> {
     // compute the nearest tick to this value
     if (slider.getMinorTickCount() != 0) {
       tickSpacing = slider.getMajorTickUnit() / (Math.max(slider.getMinorTickCount(), 0) + 1);
-    }
-    else {
+    } else {
       tickSpacing = slider.getMajorTickUnit();
     }
     int prevTick = (int)((v - slider.getMin()) / tickSpacing);
@@ -220,8 +212,7 @@ public class SliderBehavior extends BehaviorBase<Slider> {
     // tick spacing, tick spacing is used as the decrement value.
     if (slider.isSnapToTicks()) {
       slider.adjustValue(slider.getValue() - computeIncrement());
-    }
-    else {
+    } else {
       slider.decrement();
     }
 
@@ -240,8 +231,7 @@ public class SliderBehavior extends BehaviorBase<Slider> {
     // tick spacing, tick spacing is used as the increment value.
     if (slider.isSnapToTicks()) {
       slider.adjustValue(slider.getValue() + computeIncrement());
-    }
-    else {
+    } else {
       slider.increment();
     }
   }
@@ -253,8 +243,7 @@ public class SliderBehavior extends BehaviorBase<Slider> {
     double tickSpacing = 0;
     if (slider.getMinorTickCount() != 0) {
       tickSpacing = slider.getMajorTickUnit() / (Math.max(slider.getMinorTickCount(), 0) + 1);
-    }
-    else {
+    } else {
       tickSpacing = slider.getMajorTickUnit();
     }
 

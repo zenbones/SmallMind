@@ -35,17 +35,18 @@ package org.smallmind.javafx.extras.slider;
 import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
-import com.sun.javafx.scene.control.skin.SkinBase;
+import com.sun.javafx.scene.control.skin.BehaviorSkinBase;
 import javafx.event.EventHandler;
 import javafx.geometry.Orientation;
 import javafx.geometry.Point2D;
 import javafx.geometry.Side;
 import javafx.scene.chart.ValueAxis;
+import javafx.scene.control.SkinBase;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.StackPane;
 import javafx.util.StringConverter;
 
-public class SliderSkin extends SkinBase<Slider, SliderBehavior> {
+public class SliderSkin extends BehaviorSkinBase<Slider, SliderBehavior> {
 
   private static final double AXIS_GAP = 2;
   private static final double TRACK_RADIUS = 3;
@@ -60,8 +61,8 @@ public class SliderSkin extends SkinBase<Slider, SliderBehavior> {
   public SliderSkin (Slider slider) {
 
     super(slider, new SliderBehavior(slider));
-
-    getStylesheets().add(Slider.class.getResource("Slider.css").toExternalForm());
+    
+    slider.getStylesheets().add(Slider.class.getResource("Slider.css").toExternalForm());
 
     track = new StackPane();
     track.getStyleClass().setAll("track");
@@ -104,9 +105,7 @@ public class SliderSkin extends SkinBase<Slider, SliderBehavior> {
         if (!thumb.isPressed()) {
           if (getSkinnable().getOrientation() == Orientation.HORIZONTAL) {
             getBehavior().trackPress(me, (me.getX() / trackLength));
-          }
-
-          else getBehavior().trackPress(me, (me.getY() / trackLength));
+          } else getBehavior().trackPress(me, (me.getY() / trackLength));
         }
       }
     });
@@ -152,7 +151,7 @@ public class SliderSkin extends SkinBase<Slider, SliderBehavior> {
       }
     });
 
-    requestLayout();
+    slider.requestLayout();
 
     registerChangeListener(slider.minProperty(), "MIN");
     registerChangeListener(slider.maxProperty(), "MAX");
@@ -176,66 +175,54 @@ public class SliderSkin extends SkinBase<Slider, SliderBehavior> {
 
         if ((sliderOrientation == null) || sliderOrientation.equals(Orientation.VERTICAL)) {
           axis.setSide(Side.RIGHT);
-        }
-        else {
+        } else {
           axis.setSide(Side.BOTTOM);
           axis.setTickLabelRotation(90);
         }
       }
-    }
-    else if ("MIN".equals(p)) {
+    } else if ("MIN".equals(p)) {
       if (axis != null) {
         // Should be this - axis.setLowerBound(getSkinnable().getMin()); - but axis is bugged and will label incorrectly
         getChildren().remove(axis);
         getChildren().add(2, axis = new SliderAxis());
       }
-    }
-    else if ("MAX".equals(p)) {
+    } else if ("MAX".equals(p)) {
       if (axis != null) {
         // Should be this - axis.setUpperBound(getSkinnable().getMax()); - but axis is bugged and will label incorrectly
         getChildren().remove(axis);
         getChildren().add(2, axis = new SliderAxis());
       }
-    }
-    else if ("SHOW_TICK_MARKS".equals(p) || "SHOW_TICK_LABELS".equals(p)) {
+    } else if ("SHOW_TICK_MARKS".equals(p) || "SHOW_TICK_LABELS".equals(p)) {
       if (getSkinnable().isShowTickMarks() || getSkinnable().isShowTickLabels()) {
         if (axis == null) {
           getChildren().add(2, axis = new SliderAxis());
         }
-      }
-      else if (axis != null) {
+      } else if (axis != null) {
         getChildren().remove(axis);
         axis = null;
       }
-    }
-    else if ("MAJOR_TICK_UNIT".equals(p)) {
+    } else if ("MAJOR_TICK_UNIT".equals(p)) {
       if (axis != null) {
         axis.setMinorTickCount(getSkinnable().getMinorTickCount());
       }
-    }
-    else if ("MINOR_TICK_COUNT".equals(p)) {
+    } else if ("MINOR_TICK_COUNT".equals(p)) {
       if (axis != null) {
         axis.setMinorTickCount(getSkinnable().getMinorTickCount());
       }
-    }
-    else if ("LABEL_FORMATTER".equals(p)) {
+    } else if ("LABEL_FORMATTER".equals(p)) {
       if (axis != null) {
         axis.setTickLabelFormatter(getSkinnable().getLabelFormatter());
       }
     }
 
-    requestLayout();
+    getSkinnable().requestLayout();
   }
 
   @Override
-  protected void layoutChildren () {
+  protected void layoutChildren (double contentX, double contentY, double contentWidth, double contentHeight) {
 
     double thumbWidth = thumb.prefWidth(-1);
     double thumbHeight = thumb.prefHeight(-1);
-    double x = getInsets().getLeft();
-    double y = getInsets().getTop();
-    double width = getWidth() - (getInsets().getLeft() + getInsets().getRight());
-    double height = getHeight() - (getInsets().getTop() + getInsets().getBottom());
     double sliderValue;
     double sliderMin;
     double sliderMax;
@@ -245,109 +232,100 @@ public class SliderSkin extends SkinBase<Slider, SliderBehavior> {
 
     if (getSkinnable().getOrientation() == Orientation.HORIZONTAL) {
 
-      trackLength = width - (endCap = Math.max(thumbWidth, TRACK_RADIUS * 2));
+      trackLength = contentWidth - (endCap = Math.max(thumbWidth, TRACK_RADIUS * 2));
       axisLength = trackLength - (2 * TRACK_RADIUS);
       offset = Math.max(thumbHeight / 2, TRACK_RADIUS);
 
-      track.resizeRelocate(x + (endCap / 2), y + offset - TRACK_RADIUS, trackLength, TRACK_RADIUS * 2);
-      thumb.resizeRelocate(x + (endCap / 2) + TRACK_RADIUS + (((sliderValue = getSkinnable().getValue()) - (sliderMin = getSkinnable().getMin())) / ((sliderMax = getSkinnable().getMax()) - sliderMin) * axisLength) - (thumbWidth / 2), y + offset - (thumbHeight / 2), thumbWidth, thumbHeight);
-      trackOverlay.resizeRelocate(x + (endCap / 2), y + offset - TRACK_RADIUS, ((sliderValue - sliderMin) / (sliderMax - sliderMin)) * trackLength, TRACK_RADIUS * 2);
+      track.resizeRelocate(contentX + (endCap / 2), contentY + offset - TRACK_RADIUS, trackLength, TRACK_RADIUS * 2);
+      thumb.resizeRelocate(contentX + (endCap / 2) + TRACK_RADIUS + (((sliderValue = getSkinnable().getValue()) - (sliderMin = getSkinnable().getMin())) / ((sliderMax = getSkinnable().getMax()) - sliderMin) * axisLength) - (thumbWidth / 2), contentY + offset - (thumbHeight / 2), thumbWidth, thumbHeight);
+      trackOverlay.resizeRelocate(contentX + (endCap / 2), contentY + offset - TRACK_RADIUS, ((sliderValue - sliderMin) / (sliderMax - sliderMin)) * trackLength, TRACK_RADIUS * 2);
 
       if (axis != null) {
-        axis.resizeRelocate(x + (endCap / 2) + TRACK_RADIUS, y + offset + TRACK_RADIUS + AXIS_GAP, axisLength, axis.prefHeight(-1));
+        axis.resizeRelocate(contentX + (endCap / 2) + TRACK_RADIUS, contentY + offset + TRACK_RADIUS + AXIS_GAP, axisLength, axis.prefHeight(-1));
       }
-    }
-    else {
+    } else {
 
-      trackLength = height - (endCap = Math.max(thumbHeight, TRACK_RADIUS * 2));
+      trackLength = contentHeight - (endCap = Math.max(thumbHeight, TRACK_RADIUS * 2));
       axisLength = trackLength - (2 * TRACK_RADIUS);
       offset = Math.max(thumbWidth / 2, TRACK_RADIUS);
 
-      track.resizeRelocate(x + offset - TRACK_RADIUS, y + (endCap / 2), TRACK_RADIUS * 2, trackLength);
-      thumb.resizeRelocate(x + offset - (thumbWidth / 2), y + (endCap / 2) + TRACK_RADIUS + axisLength - (((sliderValue = getSkinnable().getValue()) - (sliderMin = getSkinnable().getMin())) / ((sliderMax = getSkinnable().getMax()) - sliderMin) * axisLength) - (thumbHeight / 2), thumbWidth, thumbHeight);
+      track.resizeRelocate(contentX + offset - TRACK_RADIUS, contentY + (endCap / 2), TRACK_RADIUS * 2, trackLength);
+      thumb.resizeRelocate(contentX + offset - (thumbWidth / 2), contentY + (endCap / 2) + TRACK_RADIUS + axisLength - (((sliderValue = getSkinnable().getValue()) - (sliderMin = getSkinnable().getMin())) / ((sliderMax = getSkinnable().getMax()) - sliderMin) * axisLength) - (thumbHeight / 2), thumbWidth, thumbHeight);
 
       double overlayLength = ((sliderValue - sliderMin) / (sliderMax - sliderMin)) * trackLength;
 
-      trackOverlay.resizeRelocate(x + offset - TRACK_RADIUS, y + (endCap / 2) + trackLength - overlayLength, TRACK_RADIUS * 2, overlayLength);
+      trackOverlay.resizeRelocate(contentX + offset - TRACK_RADIUS, contentY + (endCap / 2) + trackLength - overlayLength, TRACK_RADIUS * 2, overlayLength);
 
       if (axis != null) {
-        axis.resizeRelocate(x + offset + TRACK_RADIUS + AXIS_GAP, y + (endCap / 2) + TRACK_RADIUS, axis.prefWidth(-1), axisLength);
+        axis.resizeRelocate(contentX + offset + TRACK_RADIUS + AXIS_GAP, contentY + (endCap / 2) + TRACK_RADIUS, axis.prefWidth(-1), axisLength);
       }
     }
   }
 
   @Override
-  protected double computeMinWidth (double height) {
+  protected double computeMinWidth (double height, double topInset, double rightInset, double bottomInset, double leftInset) {
 
     if (getSkinnable().getOrientation() == Orientation.HORIZONTAL) {
-      return (getInsets().getLeft() + (thumb.minWidth(-1) * 3) + getInsets().getRight());
-    }
-    else {
-      return (getInsets().getLeft() + thumb.prefWidth(-1) + getInsets().getRight());
+      return leftInset + (thumb.minWidth(-1) * 3) + rightInset;
+    } else {
+      return leftInset + thumb.prefWidth(-1) + rightInset;
     }
   }
 
   @Override
-  protected double computeMinHeight (double width) {
+  protected double computeMinHeight (double width, double topInset, double rightInset, double bottomInset, double leftInset) {
 
     if (getSkinnable().getOrientation() == Orientation.HORIZONTAL) {
-      return (getInsets().getTop() + thumb.prefHeight(-1) + getInsets().getBottom());
-    }
-    else {
-      return (getInsets().getTop() + (3 * thumb.prefHeight(-1)) + getInsets().getBottom());
+      return topInset + thumb.prefHeight(-1) + bottomInset;
+    } else {
+      return topInset + (3 * thumb.prefHeight(-1)) + bottomInset;
     }
   }
 
   @Override
-  protected double computePrefWidth (double height) {
+  protected double computePrefWidth (double height, double topInset, double rightInset, double bottomInset, double leftInset) {
 
     if (getSkinnable().getOrientation() == Orientation.HORIZONTAL) {
       if (axis != null) {
         return Math.max(getSkinnable().getPrefWidth(), axis.prefWidth(-1));
-      }
-      else {
+      } else {
         return getSkinnable().getPrefWidth();
       }
-    }
-    else {
-      return (getInsets().getLeft()) + Math.max(thumb.prefWidth(-1), track.prefWidth(-1)) + ((axis != null) ? (AXIS_GAP + axis.prefWidth(-1)) : 0) + getInsets().getRight();
+    } else {
+      return leftInset + Math.max(thumb.prefWidth(-1), track.prefWidth(-1)) + ((axis != null) ? (AXIS_GAP + axis.prefWidth(-1)) : 0) + rightInset;
     }
   }
 
   @Override
-  protected double computePrefHeight (double width) {
+  protected double computePrefHeight (double width, double topInset, double rightInset, double bottomInset, double leftInset) {
 
     if (getSkinnable().getOrientation() == Orientation.HORIZONTAL) {
-      return getInsets().getTop() + Math.max(thumb.prefHeight(-1), track.prefHeight(-1)) + ((axis != null) ? (AXIS_GAP + axis.prefHeight(-1)) : 0) + getInsets().getBottom();
-    }
-    else {
+      return topInset + Math.max(thumb.prefHeight(-1), track.prefHeight(-1)) + ((axis != null) ? (AXIS_GAP + axis.prefHeight(-1)) : 0) + bottomInset;
+    } else {
       if (axis != null) {
         return Math.max(getSkinnable().getPrefHeight(), axis.prefHeight(-1));
-      }
-      else {
+      } else {
         return getSkinnable().getPrefHeight();
       }
     }
   }
 
   @Override
-  protected double computeMaxWidth (double height) {
+  protected double computeMaxWidth (double height, double topInset, double rightInset, double bottomInset, double leftInset) {
 
     if (getSkinnable().getOrientation() == Orientation.HORIZONTAL) {
       return Double.MAX_VALUE;
-    }
-    else {
+    } else {
       return getSkinnable().prefWidth(-1);
     }
   }
 
   @Override
-  protected double computeMaxHeight (double width) {
+  protected double computeMaxHeight (double width, double topInset, double rightInset, double bottomInset, double leftInset) {
 
     if (getSkinnable().getOrientation() == Orientation.HORIZONTAL) {
       return getSkinnable().prefHeight(width);
-    }
-    else {
+    } else {
       return Double.MAX_VALUE;
     }
   }
@@ -360,8 +338,7 @@ public class SliderSkin extends SkinBase<Slider, SliderBehavior> {
 
       if ((sliderOrientation == null) || sliderOrientation.equals(Orientation.VERTICAL)) {
         setSide(Side.RIGHT);
-      }
-      else {
+      } else {
         setSide(Side.BOTTOM);
         setTickLabelRotation(90);
       }
@@ -434,8 +411,7 @@ public class SliderSkin extends SkinBase<Slider, SliderBehavior> {
       while (current <= stop) {
         if (index++ == minorTickCount) {
           index = 0;
-        }
-        else {
+        } else {
           if (current >= tickMin) {
             tickList.add(current);
           }

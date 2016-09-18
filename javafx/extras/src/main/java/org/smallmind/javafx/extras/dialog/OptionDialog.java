@@ -32,9 +32,9 @@
  */
 package org.smallmind.javafx.extras.dialog;
 
-import com.sun.javafx.scene.control.WeakEventHandler;
 import javafx.beans.property.ObjectProperty;
 import javafx.event.EventHandler;
+import javafx.event.WeakEventHandler;
 import javafx.geometry.Insets;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
@@ -63,30 +63,11 @@ public class OptionDialog extends AbstractDialog {
     @Override
     public void replaceEventHandler (EventHandler<DialogEvent> eventHandler) {
 
-      setEventHandler(DialogEvent.DIALOG_COMPLETED, new WeakEventHandler<DialogEvent>(OptionDialog.this, DialogEvent.DIALOG_COMPLETED, eventHandler));
+      setEventHandler(DialogEvent.DIALOG_COMPLETED, new WeakEventHandler<>(eventHandler));
     }
   };
 
   private DialogState dialogState;
-
-  public static OptionDialog showOptionDialog (String optionText, OptionType optionType) {
-
-    return showOptionDialog(optionText, optionType, null, NO_BUTTONS);
-  }
-
-  public static OptionDialog showOptionDialog (String optionText, OptionType optionType, OptionButton... optionButtons) {
-
-    return showOptionDialog(optionText, optionType, null, optionButtons);
-  }
-
-  public static OptionDialog showOptionDialog (String optionText, OptionType optionType, OptionPane optionPane, OptionButton... optionButtons) {
-
-    OptionDialog optionDialog = new OptionDialog(optionText, optionType, optionPane, optionButtons);
-
-    optionDialog.resizeAndRelocateAndShow();
-
-    return optionDialog;
-  }
 
   public OptionDialog (String optionText, OptionType optionType) {
 
@@ -114,8 +95,7 @@ public class OptionDialog extends AbstractDialog {
 
     try {
       optionImage = new ImageView(new Image(Thread.currentThread().getContextClassLoader().getResourceAsStream("org/smallmind/javafx/extras/dialog/dialog_" + optionType.getImageType() + ".png")));
-    }
-    catch (Exception exception) {
+    } catch (Exception exception) {
       throw new ImageNotFoundException(exception);
     }
 
@@ -134,13 +114,13 @@ public class OptionDialog extends AbstractDialog {
     replaceButtons(optionButtons);
 
     root.setHorizontalBox(root.parallelBox()
-      .add(root.serialBox().add(optionImage).add((optionHorizontalBox = root.parallelBox()).add(optionLabel)))
-      .add(separator, Constraint.stretch())
-      .add(buttonPane, Constraint.stretch()));
+                            .add(root.serialBox().add(optionImage).add((optionHorizontalBox = root.parallelBox()).add(optionLabel)))
+                            .add(separator, Constraint.stretch())
+                            .add(buttonPane, Constraint.stretch()));
 
     root.setVerticalBox(root.serialBox()
-      .add(root.parallelBox().add(optionImage).add((optionVerticalBox = root.serialBox()).add(optionLabel)))
-      .add(root.serialBox(Gap.RELATED).add(separator).add(buttonPane)));
+                          .add(root.parallelBox().add(optionImage).add((optionVerticalBox = root.serialBox()).add(optionLabel)))
+                          .add(root.serialBox(Gap.RELATED).add(separator).add(buttonPane)));
 
     if (this.optionPane != null) {
       optionHorizontalBox.add(optionPane);
@@ -156,13 +136,31 @@ public class OptionDialog extends AbstractDialog {
 
         if ((optionPane != null) && ((validationMessage = optionPane.validateOption(dialogState)) != null)) {
           WarningDialog.showWarningDialog(validationMessage);
-        }
-        else {
+        } else {
           fireEvent(new DialogEvent(DialogEvent.DIALOG_COMPLETED, OptionDialog.this, dialogState));
           hide();
         }
       }
     });
+  }
+
+  public static OptionDialog showOptionDialog (String optionText, OptionType optionType) {
+
+    return showOptionDialog(optionText, optionType, null, NO_BUTTONS);
+  }
+
+  public static OptionDialog showOptionDialog (String optionText, OptionType optionType, OptionButton... optionButtons) {
+
+    return showOptionDialog(optionText, optionType, null, optionButtons);
+  }
+
+  public static OptionDialog showOptionDialog (String optionText, OptionType optionType, OptionPane optionPane, OptionButton... optionButtons) {
+
+    OptionDialog optionDialog = new OptionDialog(optionText, optionType, optionPane, optionButtons);
+
+    optionDialog.resizeAndRelocateAndShow();
+
+    return optionDialog;
   }
 
   public void resizeAndRelocateAndShow () {
@@ -180,8 +178,7 @@ public class OptionDialog extends AbstractDialog {
 
     if ((optionButtons == null) || (optionButtons.length == 0)) {
       placeButton("Continue", DialogState.CONTINUE, true);
-    }
-    else {
+    } else {
       for (OptionButton optionButton : optionButtons) {
         placeButton(optionButton.getName(), optionButton.getButtonState(), false);
       }

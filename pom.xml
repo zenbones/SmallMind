@@ -94,7 +94,7 @@
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <java.tools.jar>${env.JAVA_HOME}/lib/tools.jar</java.tools.jar>
-    <javafx.runtime.lib.jar>${env.JAVAFX_RUNTIME}/lib/jfxrt.jar</javafx.runtime.lib.jar>
+    <javafx.runtime.lib.jar>${env.JAVAFX_RUNTIME}/lib/ext/jfxrt.jar</javafx.runtime.lib.jar>
     <aether.version>1.0.2.v20150114</aether.version>
     <grizzly.version>2.3.24</grizzly.version>
     <hornetq.version>2.4.5.Final</hornetq.version>

@@ -34,10 +34,10 @@ package org.smallmind.javafx.extras.dialog;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
-import com.sun.javafx.scene.control.WeakEventHandler;
 import javafx.beans.property.ObjectProperty;
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
+import javafx.event.WeakEventHandler;
 import javafx.geometry.Insets;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
@@ -61,20 +61,9 @@ public class JavaErrorDialog extends AbstractDialog {
     @Override
     public void replaceEventHandler (EventHandler<ErrorEvent> eventHandler) {
 
-      setEventHandler(ErrorEvent.ERROR_OCCURRED, new WeakEventHandler<ErrorEvent>(JavaErrorDialog.this, ErrorEvent.ERROR_OCCURRED, eventHandler));
+      setEventHandler(ErrorEvent.ERROR_OCCURRED, new WeakEventHandler<>(eventHandler));
     }
   };
-
-  public static JavaErrorDialog showJavaErrorDialog (Object source, Exception exception) {
-
-    JavaErrorDialog errorDialog = new JavaErrorDialog(source, exception);
-
-    errorDialog.centerOnScreen();
-    errorDialog.show();
-    errorDialog.toFront();
-
-    return errorDialog;
-  }
 
   public JavaErrorDialog (final Object source, final Exception exception) {
 
@@ -130,6 +119,17 @@ public class JavaErrorDialog extends AbstractDialog {
         fireEvent(new ErrorEvent(ErrorEvent.ERROR_OCCURRED, source, exception));
       }
     });
+  }
+
+  public static JavaErrorDialog showJavaErrorDialog (Object source, Exception exception) {
+
+    JavaErrorDialog errorDialog = new JavaErrorDialog(source, exception);
+
+    errorDialog.centerOnScreen();
+    errorDialog.show();
+    errorDialog.toFront();
+
+    return errorDialog;
   }
 
   public EventHandler<ErrorEvent> getOnError () {
