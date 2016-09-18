@@ -94,7 +94,7 @@ public abstract class AbstractManagedDao<I extends Serializable & Comparable<I>,
     }
     if (idClass.isEnum()) {
 
-      return idClass.cast(Enum.valueOf(idClass.asSubclass(Enum.class), value));
+      return (I)(Enum.valueOf(idClass.asSubclass(Enum.class), value));
     }
     if (long.class.equals(idClass) || (Long.class.equals(idClass))) {
 
@@ -144,8 +144,7 @@ public abstract class AbstractManagedDao<I extends Serializable & Comparable<I>,
         }
 
         return idClass.cast(fromStringMethod.invoke(null, value));
-      }
-      catch (Exception exception) {
+      } catch (Exception exception) {
         throw new ORMInitializationException(exception);
       }
     }

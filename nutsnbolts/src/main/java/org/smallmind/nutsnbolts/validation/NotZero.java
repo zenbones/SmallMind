@@ -30,25 +30,39 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.nutsnbolts.json;
+package org.smallmind.nutsnbolts.validation;
 
-import java.time.ZonedDateTime;
-import java.time.format.DateTimeFormatter;
-import javax.xml.bind.annotation.adapters.XmlAdapter;
+import java.lang.annotation.Documented;
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
+import javax.validation.Constraint;
+import javax.validation.Payload;
 
-public class ZonedDateTimeXmlAdapter extends XmlAdapter<String, ZonedDateTime> {
+import static java.lang.annotation.ElementType.ANNOTATION_TYPE;
+import static java.lang.annotation.ElementType.FIELD;
+import static java.lang.annotation.ElementType.METHOD;
+import static java.lang.annotation.ElementType.PARAMETER;
+import static java.lang.annotation.RetentionPolicy.RUNTIME;
 
-  private static DateTimeFormatter ISO_FORMATTER = DateTimeFormatter.ISO_ZONED_DATE_TIME;
+@Documented
+@Retention(RetentionPolicy.RUNTIME)
+@Target({ElementType.FIELD, ElementType.PARAMETER, ElementType.ANNOTATION_TYPE, ElementType.CONSTRUCTOR, ElementType.METHOD})
+@Constraint(validatedBy = NotZeroValidator.class)
+public @interface NotZero {
 
-  @Override
-  public ZonedDateTime unmarshal (String value) {
+  String message () default "Numeric value must be not be zero";
 
-    return (value == null) ? null : (ZonedDateTime)ISO_FORMATTER.parse(value);
-  }
+  Class<?>[] groups () default {};
 
-  @Override
-  public String marshal (ZonedDateTime zonedDateTime) {
+  Class<? extends Payload>[] payload () default {};
 
-    return (zonedDateTime == null) ? null : ISO_FORMATTER.format(zonedDateTime);
+  @Target({FIELD, METHOD, PARAMETER, ANNOTATION_TYPE})
+  @Retention(RUNTIME)
+  @Documented
+  @interface List {
+
+    NotZero[] value ();
   }
 }

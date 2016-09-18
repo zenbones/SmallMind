@@ -30,25 +30,31 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.nutsnbolts.json;
+package org.smallmind.nutsnbolts.validation;
 
-import java.time.ZonedDateTime;
-import java.time.format.DateTimeFormatter;
-import javax.xml.bind.annotation.adapters.XmlAdapter;
+import java.math.BigDecimal;
+import java.math.BigInteger;
+import javax.validation.ConstraintValidator;
+import javax.validation.ConstraintValidatorContext;
 
-public class ZonedDateTimeXmlAdapter extends XmlAdapter<String, ZonedDateTime> {
-
-  private static DateTimeFormatter ISO_FORMATTER = DateTimeFormatter.ISO_ZONED_DATE_TIME;
+public class NotZeroValidator implements ConstraintValidator<NotZero, Number> {
 
   @Override
-  public ZonedDateTime unmarshal (String value) {
+  public void initialize (NotZero constraintAnnotation) {
 
-    return (value == null) ? null : (ZonedDateTime)ISO_FORMATTER.parse(value);
   }
 
   @Override
-  public String marshal (ZonedDateTime zonedDateTime) {
+  public boolean isValid (Number value, ConstraintValidatorContext context) {
 
-    return (zonedDateTime == null) ? null : ISO_FORMATTER.format(zonedDateTime);
+    if (value == null) {
+      return true;
+    } else if (value instanceof BigDecimal) {
+      return ((BigDecimal)value).compareTo(BigDecimal.valueOf(0)) != 0;
+    } else if (value instanceof BigInteger) {
+      return ((BigInteger)value).compareTo(BigInteger.valueOf(0)) != 0;
+    } else {
+      return value.doubleValue() != 0D;
+    }
   }
 }
