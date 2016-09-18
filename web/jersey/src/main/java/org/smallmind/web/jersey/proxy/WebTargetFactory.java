@@ -53,7 +53,7 @@ import org.smallmind.web.jersey.jackson.JsonProvider;
 
 public class WebTargetFactory {
 
-  public static WebTarget manufacture (HttpProtocol protocol, String host, String context)
+  public static WebTarget manufacture (HttpProtocol protocol, String host, int port, String context)
     throws NoSuchAlgorithmException, MalformedURLException, URISyntaxException {
 
     Client client;
@@ -83,6 +83,6 @@ public class WebTargetFactory {
     client.property(ClientProperties.CONNECT_TIMEOUT, 20000);
     client.property(ClientProperties.READ_TIMEOUT, 20000);
 
-    return client.target(new URL(protocol.getScheme(), host, protocol.getPort(), context).toURI());
+    return client.target(new URL(protocol.getScheme(), host, (port > 0) ? port : protocol.getPort(), context).toURI());
   }
 }

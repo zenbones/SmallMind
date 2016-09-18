@@ -47,6 +47,7 @@ public class WebTargetFactoryBean implements FactoryBean<WebTarget>, Initializin
   private HttpProtocol protocol;
   private String host;
   private String context;
+  private int port;
 
   public void setProtocol (HttpProtocol protocol) {
 
@@ -56,6 +57,11 @@ public class WebTargetFactoryBean implements FactoryBean<WebTarget>, Initializin
   public void setHost (String host) {
 
     this.host = host;
+  }
+
+  public void setPort (int port) {
+
+    this.port = port;
   }
 
   public void setContext (String context) {
@@ -79,7 +85,7 @@ public class WebTargetFactoryBean implements FactoryBean<WebTarget>, Initializin
   public void afterPropertiesSet ()
     throws NoSuchAlgorithmException, MalformedURLException, URISyntaxException {
 
-    target = WebTargetFactory.manufacture(protocol, host, context);
+    target = WebTargetFactory.manufacture(protocol, host, port, context);
   }
 
   @Override
