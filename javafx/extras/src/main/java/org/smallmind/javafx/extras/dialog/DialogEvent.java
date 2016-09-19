@@ -37,8 +37,8 @@ import javafx.event.EventType;
 
 public class DialogEvent extends Event {
 
-  public static final EventType<DialogEvent> ANY = new EventType<DialogEvent>(Event.ANY);
-  public static final EventType<DialogEvent> DIALOG_COMPLETED = new EventType<DialogEvent>(DialogEvent.ANY, "DIALOG_COMPLETED");
+  public static final EventType<DialogEvent> ANY = new EventType<>(Event.ANY, "DIALOG_ANY");
+  public static final EventType<DialogEvent> DIALOG_COMPLETED = new EventType<>(DialogEvent.ANY, "DIALOG_COMPLETED");
 
   private final Object source;
   private final DialogState dialogState;

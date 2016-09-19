@@ -236,23 +236,4 @@ public class OptionDialog extends AbstractDialog {
 
     return optionPane;
   }
-
-  /*
-  public synchronized void windowClosing (WindowEvent windowEvent) {
-
-    String validationMessage;
-    WarningDialog warningDialog;
-
-    if ((optionPane != null) && ((validationMessage = optionPane.validateOption(dialogState)) != null)) {
-      warningDialog = new WarningDialog(this, validationMessage);
-      warningDialog.setModal(true);
-      warningDialog.setVisible(true);
-    }
-    else {
-      fireDialogEvent();
-      setVisible(false);
-      dispose();
-    }
-  }
-  */
 }
