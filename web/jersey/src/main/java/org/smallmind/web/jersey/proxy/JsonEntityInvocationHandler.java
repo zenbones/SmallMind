@@ -77,7 +77,7 @@ public class JsonEntityInvocationHandler implements InvocationHandler {
       arguments[index] = new Argument(argumentNames[index], args[index]);
     }
 
-    return target.path(basePath + '/' + method.getName()).request(MediaType.APPLICATION_JSON).post(Entity.entity(new Envelope(arguments), MediaType.APPLICATION_JSON), method.getReturnType());
+    return target.path(basePath + method.getName()).request(MediaType.APPLICATION_JSON).post(Entity.entity(new Envelope(arguments), MediaType.APPLICATION_JSON), method.getReturnType());
   }
 
   private String[] constructArgumentNames (Method method)
