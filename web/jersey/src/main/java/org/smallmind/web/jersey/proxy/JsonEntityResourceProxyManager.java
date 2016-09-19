@@ -33,17 +33,24 @@
 package org.smallmind.web.jersey.proxy;
 
 import java.lang.reflect.Proxy;
-import javax.ws.rs.client.WebTarget;
+import java.util.concurrent.ConcurrentHashMap;
+import org.smallmind.nutsnbolts.lang.PerApplicationContext;
+import org.smallmind.nutsnbolts.lang.PerApplicationDataManager;
 
-public class JsonEntityResourceProxyFactory {
+public class JsonEntityResourceProxyManager implements PerApplicationDataManager {
 
-  public static Proxy generateProxy (WebTarget target, int serviceVersion, String serviceName, Class<?> resourceInterface)
-    throws Exception {
+  static {
 
-    Proxy proxy = (Proxy)Proxy.newProxyInstance(resourceInterface.getClassLoader(), new Class[] {resourceInterface}, new JsonEntityInvocationHandler(target, serviceVersion, serviceName));
+    PerApplicationContext.setPerApplicationData(JsonEntityResourceProxyManager.class, new ConcurrentHashMap<Class<?>, Proxy>());
+  }
 
-    JsonEntityResourceProxyManager.register(resourceInterface, proxy);
+  public static void register (Class<?> resourceInterface, Proxy proxy) {
 
-    return proxy;
+    PerApplicationContext.getPerApplicationData(JsonEntityResourceProxyManager.class, ConcurrentHashMap.class).put(resourceInterface, proxy);
+  }
+
+  public static <T> T getProxy (Class<T> resourceInterface) {
+
+    return resourceInterface.cast(PerApplicationContext.getPerApplicationData(JsonEntityResourceProxyManager.class, ConcurrentHashMap.class).get(resourceInterface));
   }
 }
