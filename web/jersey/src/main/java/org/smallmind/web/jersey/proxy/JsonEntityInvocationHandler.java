@@ -36,6 +36,7 @@ import java.lang.annotation.Annotation;
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
 import java.util.concurrent.ConcurrentHashMap;
+import javax.ws.rs.Path;
 import javax.ws.rs.client.Entity;
 import javax.ws.rs.client.WebTarget;
 import javax.ws.rs.core.MediaType;
@@ -55,12 +56,13 @@ public class JsonEntityInvocationHandler implements InvocationHandler {
     this.serviceVersion = serviceVersion;
     this.serviceName = serviceName;
 
-    basePath = "/v" + serviceVersion + '/' + serviceName + '/';
+    basePath = "/v" + serviceVersion + '/' + serviceName;
   }
 
   @Override
   public Object invoke (Object proxy, Method method, Object[] args) throws Throwable {
 
+    Path pathAnnotation = method.getAnnotation(Path.class);
     Argument[] arguments;
     String[] argumentNames;
 
@@ -77,7 +79,7 @@ public class JsonEntityInvocationHandler implements InvocationHandler {
       arguments[index] = new Argument(argumentNames[index], args[index]);
     }
 
-    return target.path(basePath + method.getName()).request(MediaType.APPLICATION_JSON).post(Entity.entity(new Envelope(arguments), MediaType.APPLICATION_JSON), method.getReturnType());
+    return target.path(basePath + ((pathAnnotation != null) ? pathAnnotation.value() : '/' + method.getName())).request(MediaType.APPLICATION_JSON).post(Entity.entity(new Envelope(arguments), MediaType.APPLICATION_JSON), method.getReturnType());
   }
 
   private String[] constructArgumentNames (Method method)
