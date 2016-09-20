@@ -36,11 +36,13 @@ import java.io.IOException;
 import java.io.Serializable;
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
+import javax.xml.bind.annotation.XmlAnyElement;
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlElementRef;
 import javax.xml.bind.annotation.XmlRootElement;
+import javax.xml.bind.annotation.XmlTransient;
 import org.smallmind.scribe.pen.LoggerManager;
-import org.smallmind.web.jersey.util.JsonObject;
+import org.smallmind.web.jersey.util.JsonCodec;
 
 @XmlRootElement(name = "fault")
 @XmlAccessorType(XmlAccessType.PROPERTY)
@@ -49,7 +51,7 @@ public class Fault implements Serializable {
   private Fault cause;
   private FaultElement context;
   private FaultElement[] elements;
-  private JsonObject<?> information;
+  private Object information;
   private String throwableType;
   private String message;
   private NativeObject nativeObject;
@@ -138,7 +140,7 @@ public class Fault implements Serializable {
     this.context = context;
   }
 
-  @XmlElement(name = "type", required = false)
+  @XmlElement(name = "type")
   public String getThrowableType () {
 
     return throwableType;
@@ -149,7 +151,7 @@ public class Fault implements Serializable {
     this.throwableType = throwableType;
   }
 
-  @XmlElement(name = "message", required = false)
+  @XmlElement(name = "message")
   public String getMessage () {
 
     return message;
@@ -182,13 +184,20 @@ public class Fault implements Serializable {
     this.elements = elements;
   }
 
+  @XmlTransient
+  public <T> T getInformationAs (Class<T> clazz) {
+
+    return (information == null) ? null : JsonCodec.convert(information, clazz);
+  }
+
   @XmlElementRef(name = "information")
-  public JsonObject<?> getInformation () {
+  @XmlAnyElement
+  public Object getInformation () {
 
     return information;
   }
 
-  public Fault setInformation (JsonObject<?> information) {
+  public Fault setInformation (Object information) {
 
     this.information = information;
 
