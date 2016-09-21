@@ -43,7 +43,6 @@ public class JsonEntityResourceProxyManager implements PerApplicationDataManager
 
     PerApplicationContext.setPerApplicationData(JsonEntityResourceProxyManager.class, new ConcurrentHashMap<Class<?>, Proxy>());
   }
-
   public static void register (Class<?> resourceInterface, Proxy proxy) {
 
     PerApplicationContext.getPerApplicationData(JsonEntityResourceProxyManager.class, ConcurrentHashMap.class).put(resourceInterface, proxy);

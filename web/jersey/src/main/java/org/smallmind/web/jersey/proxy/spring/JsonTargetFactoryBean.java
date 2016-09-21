@@ -32,44 +32,41 @@
  */
 package org.smallmind.web.jersey.proxy.spring;
 
-import java.lang.reflect.Proxy;
-import org.smallmind.web.jersey.proxy.JsonEntityResourceProxyFactory;
+import java.net.MalformedURLException;
+import java.net.URISyntaxException;
+import java.security.NoSuchAlgorithmException;
+import org.smallmind.web.jersey.proxy.HttpProtocol;
 import org.smallmind.web.jersey.proxy.JsonTarget;
+import org.smallmind.web.jersey.proxy.JsonTargetFactory;
 import org.springframework.beans.factory.FactoryBean;
 import org.springframework.beans.factory.InitializingBean;
 
-public class JsonEntityResourceProxyFactoryBean implements FactoryBean<Proxy>, InitializingBean {
+public class JsonTargetFactoryBean implements FactoryBean<JsonTarget>, InitializingBean {
 
-  private Proxy proxy;
   private JsonTarget target;
-  private Class<?> resourceInterface;
-  private String serviceName;
-  private int serviceVersion;
+  private HttpProtocol protocol;
+  private String host;
+  private String context;
+  private int port;
 
-  public void setTarget (JsonTarget target) {
+  public void setProtocol (HttpProtocol protocol) {
 
-    this.target = target;
+    this.protocol = protocol;
   }
 
-  public void setResourceInterface (Class<?> resourceInterface) {
+  public void setHost (String host) {
 
-    this.resourceInterface = resourceInterface;
+    this.host = host;
   }
 
-  public void setServiceName (String serviceName) {
+  public void setPort (int port) {
 
-    this.serviceName = serviceName;
+    this.port = port;
   }
 
-  public void setServiceVersion (int serviceVersion) {
+  public void setContext (String context) {
 
-    this.serviceVersion = serviceVersion;
-  }
-
-  @Override
-  public void afterPropertiesSet () throws Exception {
-
-    proxy = JsonEntityResourceProxyFactory.generateProxy(target, serviceVersion, serviceName, resourceInterface);
+    this.context = context;
   }
 
   @Override
@@ -81,12 +78,20 @@ public class JsonEntityResourceProxyFactoryBean implements FactoryBean<Proxy>, I
   @Override
   public Class<?> getObjectType () {
 
-    return Proxy.class;
+    return JsonTarget.class;
   }
 
   @Override
-  public Proxy getObject () throws Exception {
+  public void afterPropertiesSet ()
+    throws NoSuchAlgorithmException, MalformedURLException, URISyntaxException {
 
-    return proxy;
+    target = JsonTargetFactory.manufacture(protocol, host, port, context);
+  }
+
+  @Override
+  public JsonTarget getObject ()
+    throws NoSuchAlgorithmException, MalformedURLException, URISyntaxException {
+
+    return target;
   }
 }

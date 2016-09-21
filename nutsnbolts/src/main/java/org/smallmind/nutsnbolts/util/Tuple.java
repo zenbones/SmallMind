@@ -34,32 +34,37 @@ package org.smallmind.nutsnbolts.util;
 
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.ConcurrentModificationException;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-public class Tuple<K, V> implements Serializable, Cloneable {
+public class Tuple<K, V> implements Serializable, Cloneable, Iterable<Pair<K, V>> {
 
   private ArrayList<K> keys;
   private ArrayList<V> values;
+  private int version = 0;
 
   public Tuple () {
 
-    keys = new ArrayList<K>();
-    values = new ArrayList<V>();
+    keys = new ArrayList<>();
+    values = new ArrayList<>();
   }
 
   public synchronized void clear () {
 
+    version++;
     keys.clear();
     values.clear();
   }
 
   public synchronized void add (Tuple<K, V> tuple) {
 
+    version++;
     for (int count = 0; count < tuple.size(); count++) {
       addPair(tuple.getKey(count), tuple.getValue(count));
     }
@@ -67,12 +72,14 @@ public class Tuple<K, V> implements Serializable, Cloneable {
 
   public synchronized void addPair (K key, V value) {
 
+    version++;
     keys.add(key);
     values.add(value);
   }
 
   public synchronized void addPair (int index, K key, V value) {
 
+    version++;
     keys.add(index, key);
     values.add(index, value);
   }
@@ -81,6 +88,7 @@ public class Tuple<K, V> implements Serializable, Cloneable {
 
     int keyIndex;
 
+    version++;
     if ((keyIndex = keys.indexOf(key)) < 0) {
       addPair(key, value);
     } else {
@@ -92,6 +100,7 @@ public class Tuple<K, V> implements Serializable, Cloneable {
 
     int keyIndex;
 
+    version++;
     if ((keyIndex = keys.indexOf(key)) < 0) {
       addPair(index, key, value);
     } else {
@@ -101,10 +110,17 @@ public class Tuple<K, V> implements Serializable, Cloneable {
 
   public synchronized void removeKey (K key) {
 
-    int index;
+    boolean modified = false;
 
-    while ((index = keys.indexOf(key)) >= 0) {
-      removePair(index);
+    for (int index = keys.size() - 1; index >= 0; index--) {
+      if (keys.get(index).equals(key)) {
+        modified = true;
+        removePair(index);
+      }
+    }
+
+    if (modified) {
+      version++;
     }
   }
 
@@ -113,6 +129,7 @@ public class Tuple<K, V> implements Serializable, Cloneable {
     int index;
 
     if ((index = keys.indexOf(key)) >= 0) {
+      version++;
       return removePair(index);
     }
 
@@ -121,17 +138,20 @@ public class Tuple<K, V> implements Serializable, Cloneable {
 
   public synchronized V removePair (int index) {
 
+    version++;
     keys.remove(index);
     return values.remove(index);
   }
 
   public synchronized void setValue (int index, V value) {
 
+    version++;
     values.set(index, value);
   }
 
   public synchronized void setValue (K key, V value) {
 
+    version++;
     values.set(keys.indexOf(key), value);
   }
 
@@ -191,7 +211,7 @@ public class Tuple<K, V> implements Serializable, Cloneable {
       return null;
     }
 
-    allValues = new ArrayList<V>();
+    allValues = new ArrayList<>();
     for (int count = 0; count < size(); count++) {
       if ((keys.get(count)).equals(key)) {
         allValues.add(values.get(count));
@@ -237,6 +257,12 @@ public class Tuple<K, V> implements Serializable, Cloneable {
     return map;
   }
 
+  @Override
+  public Iterator<Pair<K, V>> iterator () {
+
+    return new PairIterator();
+  }
+
   public synchronized Object clone () {
 
     Tuple<K, V> tuple = new Tuple<>();
@@ -264,5 +290,44 @@ public class Tuple<K, V> implements Serializable, Cloneable {
     }
     dataBuilder.append(")");
     return dataBuilder.toString();
+  }
+
+  private class PairIterator implements Iterator<Pair<K, V>> {
+
+    int index = 0;
+    int version = Tuple.this.version;
+
+    @Override
+    public boolean hasNext () {
+
+      if (version != Tuple.this.version) {
+        throw new ConcurrentModificationException();
+      }
+
+      return index < keys.size();
+    }
+
+    @Override
+    public Pair<K, V> next () {
+
+      if (version != Tuple.this.version) {
+        throw new ConcurrentModificationException();
+      }
+
+      return new Pair<>(keys.get(index), values.get(index++));
+    }
+
+    @Override
+    public void remove () {
+
+      if (version != Tuple.this.version) {
+        throw new ConcurrentModificationException();
+      }
+
+      if (index > 0) {
+        removePair(index - 1);
+        index--;
+      }
+    }
   }
 }

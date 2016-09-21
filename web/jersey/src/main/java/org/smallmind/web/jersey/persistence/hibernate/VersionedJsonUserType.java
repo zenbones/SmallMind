@@ -81,7 +81,7 @@ public class VersionedJsonUserType<V extends Version<V>> implements UserType, Pa
   @Override
   public int[] sqlTypes () {
 
-    return new int[]{Types.VARCHAR, TextType.INSTANCE.sqlType()};
+    return new int[] {Types.VARCHAR, TextType.INSTANCE.sqlType()};
   }
 
   @Override

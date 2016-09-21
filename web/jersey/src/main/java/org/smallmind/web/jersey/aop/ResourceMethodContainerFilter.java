@@ -65,7 +65,7 @@ public class ResourceMethodContainerFilter implements ContainerRequestFilter, Co
 
   @Override
   public void filter (ContainerRequestContext requestContext, ContainerResponseContext responseContext)
-  throws IOException {
+    throws IOException {
 
     try {
 

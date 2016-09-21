@@ -30,68 +30,26 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.web.jersey.proxy.spring;
+package org.smallmind.nutsnbolts.util;
 
-import java.net.MalformedURLException;
-import java.net.URISyntaxException;
-import java.security.NoSuchAlgorithmException;
-import javax.ws.rs.client.WebTarget;
-import org.smallmind.web.jersey.proxy.HttpProtocol;
-import org.smallmind.web.jersey.proxy.WebTargetFactory;
-import org.springframework.beans.factory.FactoryBean;
-import org.springframework.beans.factory.InitializingBean;
+public class Pair<K, V> {
 
-public class WebTargetFactoryBean implements FactoryBean<WebTarget>, InitializingBean {
+  private K first;
+  private V second;
 
-  private WebTarget target;
-  private HttpProtocol protocol;
-  private String host;
-  private String context;
-  private int port;
+  public Pair (K first, V second) {
 
-  public void setProtocol (HttpProtocol protocol) {
-
-    this.protocol = protocol;
+    this.first = first;
+    this.second = second;
   }
 
-  public void setHost (String host) {
+  public K getFirst () {
 
-    this.host = host;
+    return first;
   }
 
-  public void setPort (int port) {
+  public V getSecond () {
 
-    this.port = port;
-  }
-
-  public void setContext (String context) {
-
-    this.context = context;
-  }
-
-  @Override
-  public boolean isSingleton () {
-
-    return true;
-  }
-
-  @Override
-  public Class<?> getObjectType () {
-
-    return WebTarget.class;
-  }
-
-  @Override
-  public void afterPropertiesSet ()
-    throws NoSuchAlgorithmException, MalformedURLException, URISyntaxException {
-
-    target = WebTargetFactory.manufacture(protocol, host, port, context);
-  }
-
-  @Override
-  public WebTarget getObject ()
-    throws NoSuchAlgorithmException, MalformedURLException, URISyntaxException {
-
-    return target;
+    return second;
   }
 }

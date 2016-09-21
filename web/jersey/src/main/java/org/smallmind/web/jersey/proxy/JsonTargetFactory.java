@@ -38,51 +38,32 @@ import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.security.NoSuchAlgorithmException;
 import javax.net.ssl.SSLContext;
-import javax.ws.rs.client.Client;
-import javax.ws.rs.client.ClientBuilder;
-import javax.ws.rs.client.WebTarget;
 import org.apache.http.config.ConnectionConfig;
+import org.apache.http.config.SocketConfig;
+import org.apache.http.impl.client.CloseableHttpClient;
+import org.apache.http.impl.client.HttpClientBuilder;
+import org.apache.http.impl.client.LaxRedirectStrategy;
 import org.apache.http.impl.conn.PoolingHttpClientConnectionManager;
-import org.glassfish.jersey.apache.connector.ApacheClientProperties;
-import org.glassfish.jersey.apache.connector.ApacheConnectorProvider;
-import org.glassfish.jersey.client.ClientConfig;
-import org.glassfish.jersey.client.ClientProperties;
-import org.smallmind.nutsnbolts.lang.UnknownSwitchCaseException;
-import org.smallmind.web.jersey.fault.FaultTranslatingClientResponseFilter;
-import org.smallmind.web.jersey.jackson.JsonProvider;
 
-public class WebTargetFactory {
+public class JsonTargetFactory {
 
-  public static WebTarget manufacture (HttpProtocol protocol, String host, int port, String context)
+  public static JsonTarget manufacture (HttpProtocol protocol, String host, int port, String context)
     throws NoSuchAlgorithmException, MalformedURLException, URISyntaxException {
 
-    Client client;
-    ClientConfig clientConfig = new ClientConfig();
     PoolingHttpClientConnectionManager connectionManager = new PoolingHttpClientConnectionManager();
+    CloseableHttpClient httpClient;
 
     connectionManager.setDefaultConnectionConfig(ConnectionConfig.custom().setCharset(StandardCharsets.UTF_8).build());
-    connectionManager.setMaxTotal(3);
-    connectionManager.setDefaultMaxPerRoute(3);
+    connectionManager.setDefaultSocketConfig(SocketConfig.copy(SocketConfig.DEFAULT).setSoTimeout(20000).setTcpNoDelay(true).build());
 
-    clientConfig.property(ApacheClientProperties.CONNECTION_MANAGER, connectionManager);
-    clientConfig.connectorProvider(new ApacheConnectorProvider());
+    httpClient = HttpClientBuilder.create()
+                   .setConnectionManager(connectionManager)
+                   .setSSLContext(SSLContext.getInstance("SSL"))
+                   .setSSLHostnameVerifier(new TrustAllHostNameVerifier())
+                   .setMaxConnTotal(3)
+                   .setMaxConnPerRoute(3)
+                   .setRedirectStrategy(new LaxRedirectStrategy()).build();
 
-    switch (protocol) {
-      case HTTP:
-        client = ClientBuilder.newClient(clientConfig);
-        break;
-      case HTTPS:
-        System.setProperty("https.protocols", "TLSv1");
-        client = ClientBuilder.newBuilder().withConfig(clientConfig).hostnameVerifier(new TrustAllHostNameVerifier()).sslContext(SSLContext.getInstance("TLSv1")).build();
-        break;
-      default:
-        throw new UnknownSwitchCaseException(protocol.name());
-    }
-
-    client.register(JsonProvider.class).register(new FaultTranslatingClientResponseFilter());
-    client.property(ClientProperties.CONNECT_TIMEOUT, 20000);
-    client.property(ClientProperties.READ_TIMEOUT, 20000);
-
-    return client.target(new URL(protocol.getScheme(), host, (port > 0) ? port : protocol.getPort(), context).toURI());
+    return new JsonTarget(httpClient, new URL(protocol.getScheme(), host, (port > 0) ? port : protocol.getPort(), context).toURI());
   }
 }

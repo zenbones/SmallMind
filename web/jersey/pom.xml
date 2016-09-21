@@ -74,6 +74,11 @@
       <optional>true</optional>
     </dependency>
     <dependency>
+      <groupId>org.apache.httpcomponents</groupId>
+      <artifactId>httpclient</artifactId>
+      <scope>compile</scope>
+    </dependency>
+    <dependency>
       <groupId>com.fasterxml.jackson.core</groupId>
       <artifactId>jackson-core</artifactId>
       <scope>compile</scope>
@@ -116,11 +121,6 @@
     <dependency>
       <groupId>org.glassfish.jersey.ext</groupId>
       <artifactId>jersey-bean-validation</artifactId>
-      <scope>compile</scope>
-    </dependency>
-    <dependency>
-      <groupId>org.glassfish.jersey.core</groupId>
-      <artifactId>jersey-client</artifactId>
       <scope>compile</scope>
     </dependency>
     <dependency>

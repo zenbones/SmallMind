@@ -33,11 +33,10 @@
 package org.smallmind.web.jersey.proxy;
 
 import java.lang.reflect.Proxy;
-import javax.ws.rs.client.WebTarget;
 
 public class JsonEntityResourceProxyFactory {
 
-  public static Proxy generateProxy (WebTarget target, int serviceVersion, String serviceName, Class<?> resourceInterface)
+  public static Proxy generateProxy (JsonTarget target, int serviceVersion, String serviceName, Class<?> resourceInterface)
     throws Exception {
 
     Proxy proxy = (Proxy)Proxy.newProxyInstance(resourceInterface.getClassLoader(), new Class[] {resourceInterface}, new JsonEntityInvocationHandler(target, serviceVersion, serviceName));

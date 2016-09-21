@@ -141,6 +141,6 @@ public class JsonUserType implements UserType, ParameterizedType {
 
   public int[] sqlTypes () {
 
-    return new int[]{Types.LONGVARCHAR};
+    return new int[] {Types.LONGVARCHAR};
   }
 }
