@@ -33,8 +33,8 @@
 package org.smallmind.web.jersey.proxy;
 
 import java.net.MalformedURLException;
+import java.net.URI;
 import java.net.URISyntaxException;
-import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.security.NoSuchAlgorithmException;
 import javax.net.ssl.SSLContext;
@@ -88,6 +88,6 @@ public class JsonTargetFactory {
                    .setMaxConnPerRoute(3)
                    .setRedirectStrategy(new LaxRedirectStrategy()).build();
 
-    return new JsonTarget(httpClient, new URL(protocol.getScheme(), host, (port > 0) ? port : protocol.getPort(), context).toURI());
+    return new JsonTarget(httpClient, URI.create(protocol.getScheme() + "://" + host + ((port > 0) ? ":" + port : "") + ((context != null) ? context : "")));
   }
 }

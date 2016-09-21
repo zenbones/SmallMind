@@ -37,9 +37,7 @@ import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
 import java.util.concurrent.ConcurrentHashMap;
 import javax.ws.rs.Path;
-import org.apache.http.entity.StringEntity;
 import org.smallmind.web.jersey.aop.EntityParam;
-import org.smallmind.web.jersey.util.JsonCodec;
 
 public class JsonEntityInvocationHandler implements InvocationHandler {
 
@@ -78,7 +76,7 @@ public class JsonEntityInvocationHandler implements InvocationHandler {
       arguments[index] = new Argument(argumentNames[index], args[index]);
     }
 
-    return target.path(basePath + ((pathAnnotation != null) ? pathAnnotation.value() : '/' + method.getName())).post(new StringEntity(JsonCodec.writeAsString(new Envelope(arguments))), method.getReturnType());
+    return target.path(basePath + ((pathAnnotation != null) ? pathAnnotation.value() : '/' + method.getName())).post(new JsonHttpEntity(new Envelope(arguments)), method.getReturnType());
   }
 
   private String[] constructArgumentNames (Method method)

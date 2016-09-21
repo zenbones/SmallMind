@@ -37,6 +37,7 @@ import java.io.InputStream;
 import java.net.URI;
 import java.net.URISyntaxException;
 import javax.ws.rs.WebApplicationException;
+import org.apache.http.Header;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpRequest;
 import org.apache.http.HttpResponse;
@@ -122,7 +123,7 @@ public class JsonTarget {
   public <T> T get (Class<T> responseClass)
     throws IOException, URISyntaxException {
 
-    HttpGet httpGet = ((HttpGet)createHttpRequest(HttpMethod.GET));
+    HttpGet httpGet = ((HttpGet)createHttpRequest(HttpMethod.GET, null));
 
     try (CloseableHttpResponse response = httpClient.execute(httpGet)) {
       return convertEntity(response, responseClass);
@@ -132,7 +133,7 @@ public class JsonTarget {
   public <T> T put (HttpEntity entity, Class<T> responseClass)
     throws IOException, URISyntaxException {
 
-    HttpPut httpPut = ((HttpPut)createHttpRequest(HttpMethod.PUT));
+    HttpPut httpPut = ((HttpPut)createHttpRequest(HttpMethod.PUT, entity));
 
     httpPut.setEntity(entity);
 
@@ -144,7 +145,7 @@ public class JsonTarget {
   public <T> T post (HttpEntity entity, Class<T> responseClass)
     throws IOException, URISyntaxException {
 
-    HttpPost httpPost = ((HttpPost)createHttpRequest(HttpMethod.POST));
+    HttpPost httpPost = ((HttpPost)createHttpRequest(HttpMethod.POST, entity));
 
     httpPost.setEntity(entity);
 
@@ -156,7 +157,7 @@ public class JsonTarget {
   public <T> T patch (HttpEntity entity, Class<T> responseClass)
     throws IOException, URISyntaxException {
 
-    HttpPatch httpPatch = ((HttpPatch)createHttpRequest(HttpMethod.PATCH));
+    HttpPatch httpPatch = ((HttpPatch)createHttpRequest(HttpMethod.PATCH, entity));
 
     httpPatch.setEntity(entity);
 
@@ -168,7 +169,7 @@ public class JsonTarget {
   public <T> T delete (Class<T> responseClass)
     throws IOException, URISyntaxException {
 
-    HttpDelete httpDelete = ((HttpDelete)createHttpRequest(HttpMethod.DELETE));
+    HttpDelete httpDelete = ((HttpDelete)createHttpRequest(HttpMethod.DELETE, null));
 
     try (CloseableHttpResponse response = httpClient.execute(httpDelete)) {
       return convertEntity(response, responseClass);
@@ -193,10 +194,10 @@ public class JsonTarget {
       throw new WebApplicationException(statusLine.getReasonPhrase(), statusLine.getStatusCode());
     }
 
-    return JsonCodec.convert(entityInputStream, responseClass);
+    return JsonCodec.read(entityInputStream, responseClass);
   }
 
-  private HttpRequest createHttpRequest (HttpMethod httpMethod)
+  private HttpRequest createHttpRequest (HttpMethod httpMethod, HttpEntity entity)
     throws URISyntaxException {
 
     HttpRequest httpRequest;
@@ -252,11 +253,18 @@ public class JsonTarget {
 
     if (headers != null) {
       for (Pair<String, String> headerPair : headers) {
-        httpRequest.setHeader(headerPair.getFirst(), headerPair.getSecond());
+        httpRequest.addHeader(headerPair.getFirst(), headerPair.getSecond());
       }
     }
 
-    httpRequest.setHeader("Content-type", "application/json");
+    if (entity != null) {
+
+      Header contentTypeHeader;
+
+      if ((contentTypeHeader = entity.getContentType()) != null) {
+        httpRequest.setHeader(contentTypeHeader.getName(), contentTypeHeader.getValue());
+      }
+    }
 
     return httpRequest;
   }
