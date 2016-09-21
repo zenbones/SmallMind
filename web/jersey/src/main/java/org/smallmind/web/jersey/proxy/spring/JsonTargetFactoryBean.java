@@ -48,6 +48,7 @@ public class JsonTargetFactoryBean implements FactoryBean<JsonTarget>, Initializ
   private String host;
   private String context;
   private int port;
+  private int concurrencyLevel = 2;
 
   public void setProtocol (HttpProtocol protocol) {
 
@@ -69,6 +70,11 @@ public class JsonTargetFactoryBean implements FactoryBean<JsonTarget>, Initializ
     this.context = context;
   }
 
+  public void setConcurrencyLevel (int concurrencyLevel) {
+
+    this.concurrencyLevel = concurrencyLevel;
+  }
+
   @Override
   public boolean isSingleton () {
 
@@ -85,7 +91,7 @@ public class JsonTargetFactoryBean implements FactoryBean<JsonTarget>, Initializ
   public void afterPropertiesSet ()
     throws NoSuchAlgorithmException, MalformedURLException, URISyntaxException {
 
-    target = JsonTargetFactory.manufacture(protocol, host, port, context);
+    target = JsonTargetFactory.manufacture(protocol, host, port, context, concurrencyLevel);
   }
 
   @Override

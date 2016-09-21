@@ -47,31 +47,31 @@ import org.apache.http.impl.conn.PoolingHttpClientConnectionManager;
 
 public class JsonTargetFactory {
 
-  public static JsonTarget manufacture (String host)
+  public static JsonTarget manufacture (String host, int concurrencyLevel)
     throws NoSuchAlgorithmException, MalformedURLException, URISyntaxException {
 
-    return manufacture(HttpProtocol.HTTP, host, 0, null);
+    return manufacture(HttpProtocol.HTTP, host, 0, null, concurrencyLevel);
   }
 
-  public static JsonTarget manufacture (HttpProtocol protocol, String host)
+  public static JsonTarget manufacture (HttpProtocol protocol, String host, int concurrencyLevel)
     throws NoSuchAlgorithmException, MalformedURLException, URISyntaxException {
 
-    return manufacture(protocol, host, 0, null);
+    return manufacture(protocol, host, 0, null, concurrencyLevel);
   }
 
-  public static JsonTarget manufacture (HttpProtocol protocol, String host, int port)
+  public static JsonTarget manufacture (HttpProtocol protocol, String host, int port, int concurrencyLevel)
     throws NoSuchAlgorithmException, MalformedURLException, URISyntaxException {
 
-    return manufacture(protocol, host, port, null);
+    return manufacture(protocol, host, port, null, concurrencyLevel);
   }
 
-  public static JsonTarget manufacture (HttpProtocol protocol, String host, String context)
+  public static JsonTarget manufacture (HttpProtocol protocol, String host, String context, int concurrencyLevel)
     throws NoSuchAlgorithmException, MalformedURLException, URISyntaxException {
 
-    return manufacture(protocol, host, 0, context);
+    return manufacture(protocol, host, 0, context, concurrencyLevel);
   }
 
-  public static JsonTarget manufacture (HttpProtocol protocol, String host, int port, String context)
+  public static JsonTarget manufacture (HttpProtocol protocol, String host, int port, String context, int concurrencyLevel)
     throws NoSuchAlgorithmException, MalformedURLException, URISyntaxException {
 
     PoolingHttpClientConnectionManager connectionManager = new PoolingHttpClientConnectionManager();
@@ -84,8 +84,8 @@ public class JsonTargetFactory {
                    .setConnectionManager(connectionManager)
                    .setSSLContext(SSLContext.getInstance("SSL"))
                    .setSSLHostnameVerifier(new TrustAllHostNameVerifier())
-                   .setMaxConnTotal(3)
-                   .setMaxConnPerRoute(3)
+                   .setMaxConnTotal(concurrencyLevel)
+                   .setMaxConnPerRoute(concurrencyLevel)
                    .setRedirectStrategy(new LaxRedirectStrategy()).build();
 
     return new JsonTarget(httpClient, URI.create(protocol.getScheme() + "://" + host + ((port > 0) ? ":" + port : "") + ((context != null) ? context : "")));
