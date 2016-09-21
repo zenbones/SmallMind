@@ -47,6 +47,30 @@ import org.apache.http.impl.conn.PoolingHttpClientConnectionManager;
 
 public class JsonTargetFactory {
 
+  public static JsonTarget manufacture (String host)
+    throws NoSuchAlgorithmException, MalformedURLException, URISyntaxException {
+
+    return manufacture(HttpProtocol.HTTP, host, 0, null);
+  }
+
+  public static JsonTarget manufacture (HttpProtocol protocol, String host)
+    throws NoSuchAlgorithmException, MalformedURLException, URISyntaxException {
+
+    return manufacture(protocol, host, 0, null);
+  }
+
+  public static JsonTarget manufacture (HttpProtocol protocol, String host, int port)
+    throws NoSuchAlgorithmException, MalformedURLException, URISyntaxException {
+
+    return manufacture(protocol, host, port, null);
+  }
+
+  public static JsonTarget manufacture (HttpProtocol protocol, String host, String context)
+    throws NoSuchAlgorithmException, MalformedURLException, URISyntaxException {
+
+    return manufacture(protocol, host, 0, context);
+  }
+
   public static JsonTarget manufacture (HttpProtocol protocol, String host, int port, String context)
     throws NoSuchAlgorithmException, MalformedURLException, URISyntaxException {
 
