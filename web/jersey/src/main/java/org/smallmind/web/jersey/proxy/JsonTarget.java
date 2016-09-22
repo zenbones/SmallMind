@@ -194,7 +194,7 @@ public class JsonTarget {
       throw new WebApplicationException(statusLine.getReasonPhrase(), statusLine.getStatusCode());
     }
 
-    return JsonCodec.read(entityInputStream, responseClass);
+    return JsonCodec.read(String.class.equals(responseClass) ? new QuotedInputStream(entityInputStream) : entityInputStream, responseClass);
   }
 
   private HttpRequest createHttpRequest (HttpMethod httpMethod, HttpEntity entity)
