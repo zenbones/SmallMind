@@ -94,7 +94,6 @@
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <java.tools.jar>${env.JAVA_HOME}/lib/tools.jar</java.tools.jar>
-    <javafx.runtime.lib.jar>${env.JAVAFX_RUNTIME}/lib/ext/jfxrt.jar</javafx.runtime.lib.jar>
     <aether.version>1.1.0</aether.version>
     <grizzly.version>2.3.27</grizzly.version>
     <hornetq.version>2.4.5.Final</hornetq.version>
@@ -302,6 +301,13 @@
         <groupId>javax.validation</groupId>
         <artifactId>validation-api</artifactId>
         <version>1.1.0.Final</version>
+      </dependency>
+      <dependency>
+        <groupId>com.oracle</groupId>
+        <artifactId>javafx-rt</artifactId>
+        <version>${java.version}</version>
+        <scope>system</scope>
+        <systemPath>${env.JAVAFX_RUNTIME}</systemPath>
       </dependency>
       <dependency>
         <groupId>javax.servlet</groupId>

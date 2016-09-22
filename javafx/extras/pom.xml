@@ -15,8 +15,6 @@
       <groupId>com.oracle</groupId>
       <artifactId>javafx-rt</artifactId>
       <scope>system</scope>
-      <version>${java.version}</version>
-      <systemPath>${javafx.runtime.lib.jar}</systemPath>
     </dependency>
     <dependency>
       <groupId>org.smallmind</groupId>
