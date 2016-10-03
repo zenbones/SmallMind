@@ -32,6 +32,8 @@
  */
 package org.smallmind.web.jersey.proxy;
 
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
@@ -50,10 +52,13 @@ import org.apache.http.client.methods.HttpPost;
 import org.apache.http.client.methods.HttpPut;
 import org.apache.http.client.utils.URIBuilder;
 import org.apache.http.impl.client.CloseableHttpClient;
+import org.apache.http.util.EntityUtils;
 import org.smallmind.nutsnbolts.http.HttpMethod;
 import org.smallmind.nutsnbolts.lang.UnknownSwitchCaseException;
 import org.smallmind.nutsnbolts.util.Pair;
 import org.smallmind.nutsnbolts.util.Tuple;
+import org.smallmind.scribe.pen.Level;
+import org.smallmind.scribe.pen.LoggerManager;
 import org.smallmind.web.jersey.util.JsonCodec;
 
 public class JsonTarget {
@@ -62,6 +67,7 @@ public class JsonTarget {
   private final URI uri;
   private Tuple<String, String> headers;
   private Tuple<String, String> queryParameters;
+  private Level level = Level.OFF;
 
   public JsonTarget (CloseableHttpClient httpClient, URI uri) {
 
@@ -120,10 +126,21 @@ public class JsonTarget {
     return this;
   }
 
+  public JsonTarget debug (Level level) {
+
+    this.level = level;
+
+    return this;
+  }
+
   public <T> T get (Class<T> responseClass)
     throws IOException, URISyntaxException {
 
     HttpGet httpGet = ((HttpGet)createHttpRequest(HttpMethod.GET, null));
+
+    if ((level != null) && (!Level.OFF.equals(level))) {
+      debugRequest(httpGet, null);
+    }
 
     try (CloseableHttpResponse response = httpClient.execute(httpGet)) {
       return convertEntity(response, responseClass);
@@ -137,6 +154,10 @@ public class JsonTarget {
 
     httpPut.setEntity(entity);
 
+    if ((level != null) && (!Level.OFF.equals(level))) {
+      debugRequest(httpPut, entity);
+    }
+
     try (CloseableHttpResponse response = httpClient.execute(httpPut)) {
       return convertEntity(response, responseClass);
     }
@@ -148,6 +169,10 @@ public class JsonTarget {
     HttpPost httpPost = ((HttpPost)createHttpRequest(HttpMethod.POST, entity));
 
     httpPost.setEntity(entity);
+
+    if ((level != null) && (!Level.OFF.equals(level))) {
+      debugRequest(httpPost, entity);
+    }
 
     try (CloseableHttpResponse response = httpClient.execute(httpPost)) {
       return convertEntity(response, responseClass);
@@ -161,6 +186,10 @@ public class JsonTarget {
 
     httpPatch.setEntity(entity);
 
+    if ((level != null) && (!Level.OFF.equals(level))) {
+      debugRequest(httpPatch, entity);
+    }
+
     try (CloseableHttpResponse response = httpClient.execute(httpPatch)) {
       return convertEntity(response, responseClass);
     }
@@ -170,6 +199,10 @@ public class JsonTarget {
     throws IOException, URISyntaxException {
 
     HttpDelete httpDelete = ((HttpDelete)createHttpRequest(HttpMethod.DELETE, null));
+
+    if ((level != null) && (!Level.OFF.equals(level))) {
+      debugRequest(httpDelete, null);
+    }
 
     try (CloseableHttpResponse response = httpClient.execute(httpDelete)) {
       return convertEntity(response, responseClass);
@@ -194,7 +227,52 @@ public class JsonTarget {
       throw new WebApplicationException(statusLine.getReasonPhrase(), statusLine.getStatusCode());
     }
 
+    if ((level != null) && (!Level.OFF.equals(level))) {
+      entityInputStream = debugResponse(response, entityInputStream);
+    }
+
     return JsonCodec.read(String.class.equals(responseClass) ? new QuotedInputStream(entityInputStream) : entityInputStream, responseClass);
+  }
+
+  private void debugRequest (HttpRequest httpRequest, HttpEntity entity)
+    throws IOException {
+
+    StringBuilder debugBuilder = new StringBuilder();
+
+    debugBuilder.append("Sending client request\n");
+    debugBuilder.append("< ").append(httpRequest.getRequestLine()).append('\n');
+    for (Header header : httpRequest.getAllHeaders()) {
+      debugBuilder.append("< ").append(header.getName()).append(": ").append(header.getValue()).append('\n');
+    }
+
+    if (entity != null) {
+      debugBuilder.append(EntityUtils.toString(entity)).append('\n');
+    }
+
+    LoggerManager.getLogger(JsonTarget.class).log(level, debugBuilder.toString());
+  }
+
+  private InputStream debugResponse (HttpResponse response, InputStream entityInputStream)
+    throws IOException {
+
+    StringBuilder debugBuilder = new StringBuilder();
+    ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
+    int singleByte;
+
+    debugBuilder.append("Receiving client response\n");
+    debugBuilder.append("< ").append(response.getStatusLine().getStatusCode()).append('\n');
+    for (Header header : response.getAllHeaders()) {
+      debugBuilder.append("< ").append(header.getName()).append(": ").append(header.getValue()).append('\n');
+    }
+
+    while ((singleByte = entityInputStream.read()) >= 0) {
+      byteArrayOutputStream.write(singleByte);
+    }
+
+    debugBuilder.append(new String(byteArrayOutputStream.toByteArray())).append('\n');
+    LoggerManager.getLogger(JsonTarget.class).log(level, debugBuilder.toString());
+
+    return new ByteArrayInputStream(byteArrayOutputStream.toByteArray());
   }
 
   private HttpRequest createHttpRequest (HttpMethod httpMethod, HttpEntity entity)

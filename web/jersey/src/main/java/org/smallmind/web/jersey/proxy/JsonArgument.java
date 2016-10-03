@@ -32,22 +32,26 @@
  */
 package org.smallmind.web.jersey.proxy;
 
-import java.lang.reflect.Proxy;
-import org.smallmind.scribe.pen.Level;
+import javax.xml.bind.annotation.adapters.XmlAdapter;
 
-public class JsonEntityResourceProxyFactory {
+public class JsonArgument {
 
-  public static Proxy generateProxy (JsonTarget target, int serviceVersion, String serviceName, Class<?> resourceInterface) {
+  private String name;
+  private XmlAdapter xmlAdapter;
 
-    return generateProxy(target, serviceVersion, serviceName, resourceInterface, Level.OFF);
+  public JsonArgument (String name, XmlAdapter xmlAdapter) {
+
+    this.name = name;
+    this.xmlAdapter = xmlAdapter;
   }
 
-  public static Proxy generateProxy (JsonTarget target, int serviceVersion, String serviceName, Class<?> resourceInterface, Level level) {
+  public String getName () {
 
-    Proxy proxy = (Proxy)Proxy.newProxyInstance(resourceInterface.getClassLoader(), new Class[] {resourceInterface}, new JsonEntityInvocationHandler(target, serviceVersion, serviceName, level));
+    return name;
+  }
 
-    JsonEntityResourceProxyManager.register(resourceInterface, proxy);
+  public XmlAdapter getXmlAdapter () {
 
-    return proxy;
+    return xmlAdapter;
   }
 }

@@ -37,21 +37,27 @@ import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
 import java.util.concurrent.ConcurrentHashMap;
 import javax.ws.rs.Path;
+import javax.xml.bind.annotation.adapters.XmlAdapter;
+import javax.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
+import org.smallmind.scribe.pen.Level;
 import org.smallmind.web.jersey.aop.EntityParam;
 
 public class JsonEntityInvocationHandler implements InvocationHandler {
 
-  private final ConcurrentHashMap<Method, String[]> parameterNameMap = new ConcurrentHashMap<>();
+  private final ConcurrentHashMap<Class<?>, XmlAdapter> xmlAdapterMap = new ConcurrentHashMap<>();
+  private final ConcurrentHashMap<Method, JsonArgument[]> jsonArgumentMap = new ConcurrentHashMap<>();
+  private final Level level;
   private final JsonTarget target;
   private final String serviceName;
   private final String basePath;
   private final int serviceVersion;
 
-  public JsonEntityInvocationHandler (JsonTarget target, int serviceVersion, String serviceName) {
+  public JsonEntityInvocationHandler (JsonTarget target, int serviceVersion, String serviceName, Level level) {
 
     this.target = target;
     this.serviceVersion = serviceVersion;
     this.serviceName = serviceName;
+    this.level = level;
 
     basePath = "/v" + serviceVersion + '/' + serviceName;
   }
@@ -60,44 +66,58 @@ public class JsonEntityInvocationHandler implements InvocationHandler {
   public Object invoke (Object proxy, Method method, Object[] args) throws Throwable {
 
     Path pathAnnotation = method.getAnnotation(Path.class);
+    JsonArgument[] jsonArguments;
     Argument[] arguments;
-    String[] argumentNames;
 
-    if ((argumentNames = parameterNameMap.get(method)) == null) {
-      synchronized (parameterNameMap) {
-        if ((argumentNames = parameterNameMap.get(method)) == null) {
-          parameterNameMap.put(method, argumentNames = constructArgumentNames(method));
+    if ((jsonArguments = jsonArgumentMap.get(method)) == null) {
+      synchronized (jsonArgumentMap) {
+        if ((jsonArguments = jsonArgumentMap.get(method)) == null) {
+          jsonArgumentMap.put(method, jsonArguments = constructJsonArguments(method));
         }
       }
     }
 
     arguments = new Argument[args.length];
     for (int index = 0; index < args.length; index++) {
-      arguments[index] = new Argument(argumentNames[index], args[index]);
+      arguments[index] = new Argument(jsonArguments[index].getName(), (jsonArguments[index].getXmlAdapter() != null) ? jsonArguments[index].getXmlAdapter().marshal(args[index]) : args[index]);
     }
 
-    return target.path(basePath + ((pathAnnotation != null) ? pathAnnotation.value() : '/' + method.getName())).post(new JsonHttpEntity(new Envelope(arguments)), method.getReturnType());
+    return target.path(basePath + ((pathAnnotation != null) ? pathAnnotation.value() : '/' + method.getName())).debug(level).post(new JsonHttpEntity(new Envelope(arguments)), method.getReturnType());
   }
 
-  private String[] constructArgumentNames (Method method)
-    throws ResourceDefinitionException {
+  private JsonArgument[] constructJsonArguments (Method method)
+    throws ResourceDefinitionException, IllegalAccessException, InstantiationException {
 
-    String[] argumentNames = new String[method.getParameterTypes().length];
+    JsonArgument[] jsonArguments = new JsonArgument[method.getParameterTypes().length];
     int index = 0;
 
     for (Annotation[] parameterAnnotations : method.getParameterAnnotations()) {
+
+      String name = null;
+      XmlAdapter xmlAdapter = null;
+
       for (Annotation annotation : parameterAnnotations) {
         if (annotation.annotationType().equals(EntityParam.class)) {
-          argumentNames[index++] = ((EntityParam)annotation).value();
-          break;
+          name = ((EntityParam)annotation).value();
+        }
+        if (annotation.annotationType().equals(XmlJavaTypeAdapter.class)) {
+          if ((xmlAdapter = xmlAdapterMap.get(((XmlJavaTypeAdapter)annotation).value())) == null) {
+            synchronized (xmlAdapterMap) {
+              if ((xmlAdapter = xmlAdapterMap.get(((XmlJavaTypeAdapter)annotation).value())) == null) {
+                xmlAdapterMap.put(((XmlJavaTypeAdapter)annotation).value(), xmlAdapter = ((XmlJavaTypeAdapter)annotation).value().newInstance());
+              }
+            }
+          }
         }
       }
+
+      if (name == null) {
+        throw new ResourceDefinitionException("The method(%s) of resource interface(%s) version(%d) requires @EntityParameter annotations", method.getName(), serviceName, serviceVersion);
+      }
+
+      jsonArguments[index++] = new JsonArgument(name, xmlAdapter);
     }
 
-    if (index != argumentNames.length) {
-      throw new ResourceDefinitionException("The method(%s) of resource interface(%s) version(%d) requires @EntityParameter annotations", method.getName(), serviceName, serviceVersion);
-    }
-
-    return argumentNames;
+    return jsonArguments;
   }
 }
