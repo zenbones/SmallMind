@@ -42,7 +42,7 @@ public class CSVWriter implements AutoCloseable {
   private OutputStream outputStream;
   private int lineLength;
 
-  public CSVWriter (OutputStream outputStream, String[] headers)
+  public CSVWriter (OutputStream outputStream, String... headers)
     throws IOException, CSVParseException {
 
     this.outputStream = outputStream;
@@ -75,8 +75,7 @@ public class CSVWriter implements AutoCloseable {
         outputStream.write('"');
         outputStream.write(doubleAllQuotes(field).getBytes());
         outputStream.write('"');
-      }
-      else {
+      } else {
         outputStream.write(doubleAllQuotes(field).getBytes());
       }
 
