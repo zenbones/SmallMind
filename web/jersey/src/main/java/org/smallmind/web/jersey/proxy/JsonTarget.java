@@ -138,9 +138,7 @@ public class JsonTarget {
 
     HttpGet httpGet = ((HttpGet)createHttpRequest(HttpMethod.GET, null));
 
-    if ((level != null) && (!Level.OFF.equals(level))) {
-      debugRequest(httpGet, null);
-    }
+    LoggerManager.getLogger(JsonTarget.class).log(level, new RequestDebugCollector(httpGet, null));
 
     try (CloseableHttpResponse response = httpClient.execute(httpGet)) {
       return convertEntity(response, responseClass);
@@ -153,10 +151,7 @@ public class JsonTarget {
     HttpPut httpPut = ((HttpPut)createHttpRequest(HttpMethod.PUT, entity));
 
     httpPut.setEntity(entity);
-
-    if ((level != null) && (!Level.OFF.equals(level))) {
-      debugRequest(httpPut, entity);
-    }
+    LoggerManager.getLogger(JsonTarget.class).log(level, new RequestDebugCollector(httpPut, entity));
 
     try (CloseableHttpResponse response = httpClient.execute(httpPut)) {
       return convertEntity(response, responseClass);
@@ -169,10 +164,7 @@ public class JsonTarget {
     HttpPost httpPost = ((HttpPost)createHttpRequest(HttpMethod.POST, entity));
 
     httpPost.setEntity(entity);
-
-    if ((level != null) && (!Level.OFF.equals(level))) {
-      debugRequest(httpPost, entity);
-    }
+    LoggerManager.getLogger(JsonTarget.class).log(level, new RequestDebugCollector(httpPost, entity));
 
     try (CloseableHttpResponse response = httpClient.execute(httpPost)) {
       return convertEntity(response, responseClass);
@@ -185,10 +177,7 @@ public class JsonTarget {
     HttpPatch httpPatch = ((HttpPatch)createHttpRequest(HttpMethod.PATCH, entity));
 
     httpPatch.setEntity(entity);
-
-    if ((level != null) && (!Level.OFF.equals(level))) {
-      debugRequest(httpPatch, entity);
-    }
+    LoggerManager.getLogger(JsonTarget.class).log(level, new RequestDebugCollector(httpPatch, entity));
 
     try (CloseableHttpResponse response = httpClient.execute(httpPatch)) {
       return convertEntity(response, responseClass);
@@ -200,9 +189,7 @@ public class JsonTarget {
 
     HttpDelete httpDelete = ((HttpDelete)createHttpRequest(HttpMethod.DELETE, null));
 
-    if ((level != null) && (!Level.OFF.equals(level))) {
-      debugRequest(httpDelete, null);
-    }
+    LoggerManager.getLogger(JsonTarget.class).log(level, new RequestDebugCollector(httpDelete, null));
 
     try (CloseableHttpResponse response = httpClient.execute(httpDelete)) {
       return convertEntity(response, responseClass);
@@ -213,9 +200,9 @@ public class JsonTarget {
     throws IOException {
 
     HttpEntity entity;
-    InputStream entityInputStream;
+    InputStreamHolder entityInputStreamHolder;
 
-    if (((entity = response.getEntity()) == null) || (entity.getContentLength() == 0) || ((entityInputStream = entity.getContent()) == null)) {
+    if (((entity = response.getEntity()) == null) || (entity.getContentLength() == 0) || (entityInputStreamHolder = new InputStreamHolder(entity.getContent())).isEmpty()) {
 
       StatusLine statusLine;
 
@@ -227,52 +214,9 @@ public class JsonTarget {
       throw new WebApplicationException(statusLine.getReasonPhrase(), statusLine.getStatusCode());
     }
 
-    if ((level != null) && (!Level.OFF.equals(level))) {
-      entityInputStream = debugResponse(response, entityInputStream);
-    }
+    LoggerManager.getLogger(JsonTarget.class).log(level, new ResponseDebugCollector(response, entityInputStreamHolder));
 
-    return JsonCodec.read(String.class.equals(responseClass) ? new QuotedInputStream(entityInputStream) : entityInputStream, responseClass);
-  }
-
-  private void debugRequest (HttpRequest httpRequest, HttpEntity entity)
-    throws IOException {
-
-    StringBuilder debugBuilder = new StringBuilder();
-
-    debugBuilder.append("Sending client request\n");
-    debugBuilder.append("< ").append(httpRequest.getRequestLine()).append('\n');
-    for (Header header : httpRequest.getAllHeaders()) {
-      debugBuilder.append("< ").append(header.getName()).append(": ").append(header.getValue()).append('\n');
-    }
-
-    if (entity != null) {
-      debugBuilder.append(EntityUtils.toString(entity)).append('\n');
-    }
-
-    LoggerManager.getLogger(JsonTarget.class).log(level, debugBuilder.toString());
-  }
-
-  private InputStream debugResponse (HttpResponse response, InputStream entityInputStream)
-    throws IOException {
-
-    StringBuilder debugBuilder = new StringBuilder();
-    ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
-    int singleByte;
-
-    debugBuilder.append("Receiving client response\n");
-    debugBuilder.append("< ").append(response.getStatusLine().getStatusCode()).append('\n');
-    for (Header header : response.getAllHeaders()) {
-      debugBuilder.append("< ").append(header.getName()).append(": ").append(header.getValue()).append('\n');
-    }
-
-    while ((singleByte = entityInputStream.read()) >= 0) {
-      byteArrayOutputStream.write(singleByte);
-    }
-
-    debugBuilder.append(new String(byteArrayOutputStream.toByteArray())).append('\n');
-    LoggerManager.getLogger(JsonTarget.class).log(level, debugBuilder.toString());
-
-    return new ByteArrayInputStream(byteArrayOutputStream.toByteArray());
+    return JsonCodec.read(String.class.equals(responseClass) ? new QuotedInputStream(entityInputStreamHolder.getInputStream()) : entityInputStreamHolder.getInputStream(), responseClass);
   }
 
   private HttpRequest createHttpRequest (HttpMethod httpMethod, HttpEntity entity)
@@ -345,5 +289,106 @@ public class JsonTarget {
     }
 
     return httpRequest;
+  }
+
+  private class InputStreamHolder {
+
+    private InputStream inputStream;
+
+    private InputStreamHolder (InputStream inputStream) {
+
+      this.inputStream = inputStream;
+    }
+
+    private InputStream getInputStream () {
+
+      return inputStream;
+    }
+
+    private void setInputStream (InputStream inputStream) {
+
+      this.inputStream = inputStream;
+    }
+
+    public boolean isEmpty () {
+
+      return inputStream == null;
+    }
+  }
+
+  private class RequestDebugCollector {
+
+    private HttpRequest httpRequest;
+    private HttpEntity entity;
+
+    private RequestDebugCollector (HttpRequest httpRequest, HttpEntity entity) {
+
+      this.httpRequest = httpRequest;
+      this.entity = entity;
+    }
+
+    @Override
+    public String toString () {
+
+      StringBuilder debugBuilder = new StringBuilder();
+
+      debugBuilder.append("Sending client request\n");
+      debugBuilder.append("< ").append(httpRequest.getRequestLine()).append('\n');
+      for (Header header : httpRequest.getAllHeaders()) {
+        debugBuilder.append("< ").append(header.getName()).append(": ").append(header.getValue()).append('\n');
+      }
+
+      if (entity != null) {
+        try {
+          debugBuilder.append(EntityUtils.toString(entity)).append('\n');
+        } catch (IOException ioException) {
+          throw new RuntimeException(ioException);
+        }
+      }
+
+      return debugBuilder.toString();
+    }
+  }
+
+  private class ResponseDebugCollector {
+
+    private HttpResponse response;
+    private InputStreamHolder entityInputStreamHolder;
+
+    private ResponseDebugCollector (HttpResponse response, InputStreamHolder entityInputStreamHolder) {
+
+      this.response = response;
+      this.entityInputStreamHolder = entityInputStreamHolder;
+    }
+
+    @Override
+    public String toString () {
+
+      StringBuilder debugBuilder = new StringBuilder();
+      InputStream entityInputStream = entityInputStreamHolder.getInputStream();
+      ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
+      int singleByte;
+
+      debugBuilder.append("Receiving client response\n");
+      debugBuilder.append("< ").append(response.getStatusLine().getStatusCode()).append('\n');
+      for (Header header : response.getAllHeaders()) {
+        debugBuilder.append("< ").append(header.getName()).append(": ").append(header.getValue()).append('\n');
+      }
+
+      try {
+        while ((singleByte = entityInputStream.read()) >= 0) {
+          byteArrayOutputStream.write(singleByte);
+        }
+
+        byteArrayOutputStream.close();
+      } catch (IOException ioException) {
+        throw new RuntimeException(ioException);
+      }
+
+      entityInputStreamHolder.setInputStream(new ByteArrayInputStream(byteArrayOutputStream.toByteArray()));
+      debugBuilder.append(new String(byteArrayOutputStream.toByteArray())).append('\n');
+
+      return debugBuilder.toString();
+    }
   }
 }
