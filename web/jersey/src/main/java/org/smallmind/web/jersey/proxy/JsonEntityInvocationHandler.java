@@ -48,16 +48,18 @@ public class JsonEntityInvocationHandler implements InvocationHandler {
   private final ConcurrentHashMap<Method, JsonArgument[]> jsonArgumentMap = new ConcurrentHashMap<>();
   private final Level level;
   private final JsonTarget target;
+  private final JsonHeader[] headers;
   private final String serviceName;
   private final String basePath;
   private final int serviceVersion;
 
-  public JsonEntityInvocationHandler (JsonTarget target, int serviceVersion, String serviceName, Level level) {
+  public JsonEntityInvocationHandler (JsonTarget target, int serviceVersion, String serviceName, Level level, JsonHeader... headers) {
 
     this.target = target;
     this.serviceVersion = serviceVersion;
     this.serviceName = serviceName;
     this.level = level;
+    this.headers = headers;
 
     basePath = "/v" + serviceVersion + '/' + serviceName;
   }
@@ -82,7 +84,14 @@ public class JsonEntityInvocationHandler implements InvocationHandler {
       arguments[index] = new Argument(jsonArguments[index].getName(), (jsonArguments[index].getXmlAdapter() != null) ? jsonArguments[index].getXmlAdapter().marshal(args[index]) : args[index]);
     }
 
-    return target.path(basePath + ((pathAnnotation != null) ? pathAnnotation.value() : '/' + method.getName())).debug(level).post(new JsonHttpEntity(new Envelope(arguments)), method.getReturnType());
+    target.path(basePath + ((pathAnnotation != null) ? pathAnnotation.value() : '/' + method.getName()));
+    if (headers != null) {
+      for (JsonHeader header : headers) {
+        target.header(header.getKey(), header.getValue());
+      }
+    }
+
+    return target.debug(level).post(new JsonHttpEntity(new Envelope(arguments)), method.getReturnType());
   }
 
   private JsonArgument[] constructJsonArguments (Method method)
