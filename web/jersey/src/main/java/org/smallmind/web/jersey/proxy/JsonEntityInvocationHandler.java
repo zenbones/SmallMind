@@ -53,7 +53,7 @@ public class JsonEntityInvocationHandler implements InvocationHandler {
   private final String basePath;
   private final int serviceVersion;
 
-  public JsonEntityInvocationHandler (JsonTarget target, int serviceVersion, String serviceName, Level level, JsonHeader... headers) {
+  public JsonEntityInvocationHandler (JsonTarget target, String versionPrefix, int serviceVersion, String serviceName, Level level, JsonHeader... headers) {
 
     this.target = target;
     this.serviceVersion = serviceVersion;
@@ -61,12 +61,13 @@ public class JsonEntityInvocationHandler implements InvocationHandler {
     this.level = level;
     this.headers = headers;
 
-    basePath = "/v" + serviceVersion + '/' + serviceName;
+    basePath = "/" + versionPrefix + serviceVersion + '/' + serviceName;
   }
 
   @Override
   public Object invoke (Object proxy, Method method, Object[] args) throws Throwable {
 
+    JsonTarget rectifiedTarget;
     Path pathAnnotation = method.getAnnotation(Path.class);
     JsonArgument[] jsonArguments;
     Argument[] arguments;
@@ -84,14 +85,14 @@ public class JsonEntityInvocationHandler implements InvocationHandler {
       arguments[index] = new Argument(jsonArguments[index].getName(), (jsonArguments[index].getXmlAdapter() != null) ? jsonArguments[index].getXmlAdapter().marshal(args[index]) : args[index]);
     }
 
-    target.path(basePath + ((pathAnnotation != null) ? pathAnnotation.value() : '/' + method.getName()));
+    rectifiedTarget = target.path(basePath + ((pathAnnotation != null) ? pathAnnotation.value() : '/' + method.getName()));
     if (headers != null) {
       for (JsonHeader header : headers) {
-        target.header(header.getKey(), header.getValue());
+        rectifiedTarget.header(header.getKey(), header.getValue());
       }
     }
 
-    return target.debug(level).post(new JsonHttpEntity(new Envelope(arguments)), method.getReturnType());
+    return rectifiedTarget.debug(level).post(new JsonHttpEntity(new Envelope(arguments)), method.getReturnType());
   }
 
   private JsonArgument[] constructJsonArguments (Method method)

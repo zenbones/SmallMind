@@ -37,14 +37,14 @@ import org.smallmind.scribe.pen.Level;
 
 public class JsonEntityResourceProxyFactory {
 
-  public static Proxy generateProxy (JsonTarget target, int serviceVersion, String serviceName, Class<?> resourceInterface, JsonHeader... headers) {
+  public static Proxy generateProxy (JsonTarget target, String versionPrefix, int serviceVersion, String serviceName, Class<?> resourceInterface, JsonHeader... headers) {
 
-    return generateProxy(target, serviceVersion, serviceName, resourceInterface, Level.OFF, headers);
+    return generateProxy(target, versionPrefix, serviceVersion, serviceName, resourceInterface, Level.OFF, headers);
   }
 
-  public static Proxy generateProxy (JsonTarget target, int serviceVersion, String serviceName, Class<?> resourceInterface, Level level, JsonHeader... headers) {
+  public static Proxy generateProxy (JsonTarget target, String versionPrefix, int serviceVersion, String serviceName, Class<?> resourceInterface, Level level, JsonHeader... headers) {
 
-    Proxy proxy = (Proxy)Proxy.newProxyInstance(resourceInterface.getClassLoader(), new Class[] {resourceInterface}, new JsonEntityInvocationHandler(target, serviceVersion, serviceName, level, headers));
+    Proxy proxy = (Proxy)Proxy.newProxyInstance(resourceInterface.getClassLoader(), new Class[] {resourceInterface}, new JsonEntityInvocationHandler(target, versionPrefix, serviceVersion, serviceName, level, headers));
 
     JsonEntityResourceProxyManager.register(resourceInterface, proxy);
 

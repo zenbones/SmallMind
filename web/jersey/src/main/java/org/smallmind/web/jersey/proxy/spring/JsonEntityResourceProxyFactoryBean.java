@@ -47,6 +47,7 @@ public class JsonEntityResourceProxyFactoryBean implements FactoryBean<Proxy>, I
   private JsonHeader[] headers;
   private Level level = Level.OFF;
   private Class<?> resourceInterface;
+  private String versionPrefix = "v";
   private String serviceName;
   private int serviceVersion;
 
@@ -70,6 +71,11 @@ public class JsonEntityResourceProxyFactoryBean implements FactoryBean<Proxy>, I
     this.serviceName = serviceName;
   }
 
+  public void setVersionPrefix (String versionPrefix) {
+
+    this.versionPrefix = versionPrefix;
+  }
+
   public void setServiceVersion (int serviceVersion) {
 
     this.serviceVersion = serviceVersion;
@@ -83,7 +89,7 @@ public class JsonEntityResourceProxyFactoryBean implements FactoryBean<Proxy>, I
   @Override
   public void afterPropertiesSet () throws Exception {
 
-    proxy = JsonEntityResourceProxyFactory.generateProxy(target, serviceVersion, serviceName, resourceInterface, level, headers);
+    proxy = JsonEntityResourceProxyFactory.generateProxy(target, versionPrefix, serviceVersion, serviceName, resourceInterface, level, headers);
   }
 
   @Override
