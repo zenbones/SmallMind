@@ -34,11 +34,11 @@ package org.smallmind.nutsnbolts.layout;
 
 public interface ParaboxContainer<C> {
 
-  public abstract ParaboxPlatform getPlatform ();
+  ParaboxPlatform getPlatform ();
 
-  public abstract ParaboxElement<C> constructElement (C component, Constraint constraint);
+  ParaboxElement<C> constructElement (C component, Constraint constraint);
 
-  public abstract void nativelyAddComponent (C component);
+  void nativelyAddComponent (C component);
 
-  public abstract void nativelyRemoveComponent (C component);
+  void nativelyRemoveComponent (C component);
 }
