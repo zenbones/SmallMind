@@ -32,106 +32,154 @@
  */
 package org.smallmind.javafx.extras;
 
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.Map;
+import java.util.NavigableMap;
+import java.util.concurrent.ConcurrentSkipListMap;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
-import org.smallmind.scribe.pen.LoggerManager;
 
-public abstract class ConsolidatingChangeListener<T> implements ChangeListener<T> {
+public class ConsolidatingChangeListener<T> implements ChangeListener<T>, Comparable<ConsolidatingChangeListener<?>> {
 
-  private final ConsolidationWorker consolidationWorker;
+  private static final ConcurrentSkipListMap<ConsolidatingKey, LooseChange<?>> LOOSE_CHANGE_MAP = new ConcurrentSkipListMap<>();
+  private final ChangeListener<T> innerChangeListener;
+  private final long consolidationTimeMillis;
+  private int generation;
 
-  public ConsolidatingChangeListener (long consolidationTimeMillis) {
+  static {
 
-    Thread consolidationThread;
+    Thread thread = new Thread(new ConsolidationWorker());
 
-    consolidationThread = new Thread(consolidationWorker = new ConsolidationWorker(consolidationTimeMillis));
-    consolidationThread.setDaemon(true);
-    consolidationThread.start();
+    thread.setDaemon(true);
+    thread.start();
   }
 
-  public abstract void consolidatedChange (ObservableValue<? extends T> observableValue, T t1, T t2);
+  public ConsolidatingChangeListener (long consolidationTimeMillis, ChangeListener<T> innerChangeListener) {
+
+    this.consolidationTimeMillis = consolidationTimeMillis;
+    this.innerChangeListener = innerChangeListener;
+  }
+
+  private ChangeListener<T> getInnerChangeListener () {
+
+    return innerChangeListener;
+  }
+
+  private synchronized int getGeneration () {
+
+    return generation;
+  }
 
   @Override
-  public final void changed (ObservableValue<? extends T> observableValue, T t1, T t2) {
+  public synchronized final void changed (ObservableValue<? extends T> observableValue, T initialValue, T currentValue) {
 
-    consolidationWorker.update(observableValue, t1, t2);
+    LOOSE_CHANGE_MAP.put(new ConsolidatingKey<>(this, ++generation, consolidationTimeMillis), new LooseChange<>(observableValue, initialValue, currentValue));
   }
 
   @Override
-  protected void finalize ()
-    throws Throwable {
+  public int compareTo (ConsolidatingChangeListener<?> listener) {
 
-    super.finalize();
-    consolidationWorker.abort();
+    return hashCode() - listener.hashCode();
   }
 
-  private class ConsolidationWorker implements Runnable {
-
-    private final CountDownLatch exitLatch = new CountDownLatch(1);
-    private final AtomicBoolean aborted = new AtomicBoolean(false);
-    private final long consolidationTimeMillis;
-    private ObservableValue<? extends T> observableValue;
-    private T initialValue;
-    private T currentValue;
-    private boolean initial = true;
-    private long startTime;
-
-    private ConsolidationWorker (long consolidationTimeMillis) {
-
-      this.consolidationTimeMillis = consolidationTimeMillis;
-    }
-
-    public void abort ()
-      throws InterruptedException {
-
-      aborted.set(true);
-      exitLatch.await();
-    }
-
-    public synchronized void update (ObservableValue<? extends T> observableValue, T initialValue, T currentValue) {
-
-      if (initial) {
-        this.observableValue = observableValue;
-        this.initialValue = initialValue;
-
-        initial = false;
-        notify();
-      }
-
-      startTime = System.currentTimeMillis();
-      this.currentValue = currentValue;
-    }
+  private static class ConsolidationWorker implements Runnable {
 
     @Override
     public void run () {
 
-      try {
-        while (!aborted.get()) {
-          synchronized (this) {
-            if (initial) {
-              wait();
-            }
-            else {
-              long currentlyPassed;
+      while (true) {
 
-              while ((currentlyPassed = System.currentTimeMillis() - startTime) < consolidationTimeMillis) {
-                wait(consolidationTimeMillis - currentlyPassed);
+        NavigableMap<ConsolidatingKey, LooseChange<?>> expiredKeyMap;
+
+        if (!(expiredKeyMap = LOOSE_CHANGE_MAP.headMap(new ConsolidatingKey())).isEmpty()) {
+
+          Map.Entry<ConsolidatingKey, LooseChange<?>> entry;
+
+          while ((entry = expiredKeyMap.pollFirstEntry()) != null) {
+            synchronized (entry.getKey().getListener()) {
+              if (entry.getKey().getGeneration() == entry.getKey().getListener().getGeneration()) {
+                entry.getKey().getListener().getInnerChangeListener().changed(entry.getValue().getObservableValue(), entry.getValue().getInitialValue(), entry.getValue().getCurrentValue());
               }
-
-              consolidatedChange(observableValue, initialValue, currentValue);
-              initial = true;
             }
           }
         }
       }
-      catch (InterruptedException interruptedException) {
-        LoggerManager.getLogger(ConsolidatingChangeListener.class).error(interruptedException);
+    }
+  }
+
+  private static class ConsolidatingKey<U> implements Comparable<ConsolidatingKey<U>> {
+
+    private final ConsolidatingChangeListener<U> listener;
+    private final long expiration;
+    private final int generation;
+
+    private ConsolidatingKey () {
+
+      this(null, 0, 0);
+    }
+
+    private ConsolidatingKey (ConsolidatingChangeListener<U> listener, int generation, long consolidationTimeMillis) {
+
+      this.listener = listener;
+      this.generation = generation;
+
+      expiration = System.currentTimeMillis() + consolidationTimeMillis;
+    }
+
+    private ConsolidatingChangeListener<?> getListener () {
+
+      return listener;
+    }
+
+    private int getGeneration () {
+
+      return generation;
+    }
+
+    private long getExpiration () {
+
+      return expiration;
+    }
+
+    @Override
+    public int compareTo (ConsolidatingKey key) {
+
+      int comparison;
+
+      if ((comparison = Long.compare(expiration, key.getExpiration())) == 0) {
+
+        return (listener == null) ? ((key.getListener() == null) ? 0 : -1) : ((key.getListener() == null) ? 1 : listener.compareTo(key.getListener()));
       }
-      finally {
-        exitLatch.countDown();
-      }
+
+      return comparison;
+    }
+  }
+
+  private static class LooseChange<U> {
+
+    private final ObservableValue<? extends U> observableValue;
+    private final U initialValue;
+    private final U currentValue;
+
+    private LooseChange (ObservableValue<? extends U> observableValue, U initialValue, U currentValue) {
+
+      this.observableValue = observableValue;
+      this.initialValue = initialValue;
+      this.currentValue = currentValue;
+    }
+
+    private ObservableValue<? extends U> getObservableValue () {
+
+      return observableValue;
+    }
+
+    private U getInitialValue () {
+
+      return initialValue;
+    }
+
+    private U getCurrentValue () {
+
+      return currentValue;
     }
   }
 }
