@@ -35,11 +35,15 @@ package org.smallmind.javafx.extras;
 import java.util.Map;
 import java.util.NavigableMap;
 import java.util.concurrent.ConcurrentSkipListMap;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
+import org.smallmind.scribe.pen.LoggerManager;
 
 public class ConsolidatingChangeListener<T> implements ChangeListener<T>, Comparable<ConsolidatingChangeListener<?>> {
 
+  private static final CountDownLatch stopLatch = new CountDownLatch(1);
   private static final ConcurrentSkipListMap<ConsolidatingKey, LooseChange<?>> LOOSE_CHANGE_MAP = new ConcurrentSkipListMap<>();
   private final ChangeListener<T> innerChangeListener;
   private final long consolidationTimeMillis;
@@ -81,27 +85,37 @@ public class ConsolidatingChangeListener<T> implements ChangeListener<T>, Compar
     return hashCode() - listener.hashCode();
   }
 
+  @Override
+  protected void finalize () {
+
+    stopLatch.countDown();
+  }
+
   private static class ConsolidationWorker implements Runnable {
 
     @Override
     public void run () {
 
-      while (true) {
+      try {
+        while (!stopLatch.await(50, TimeUnit.MILLISECONDS)) {
 
-        NavigableMap<ConsolidatingKey, LooseChange<?>> expiredKeyMap;
+          NavigableMap<ConsolidatingKey, LooseChange<?>> expiredKeyMap;
 
-        if (!(expiredKeyMap = LOOSE_CHANGE_MAP.headMap(new ConsolidatingKey())).isEmpty()) {
+          if (!(expiredKeyMap = LOOSE_CHANGE_MAP.headMap(new ConsolidatingKey())).isEmpty()) {
 
-          Map.Entry<ConsolidatingKey, LooseChange<?>> entry;
+            Map.Entry<ConsolidatingKey, LooseChange<?>> entry;
 
-          while ((entry = expiredKeyMap.pollFirstEntry()) != null) {
-            synchronized (entry.getKey().getListener()) {
-              if (entry.getKey().getGeneration() == entry.getKey().getListener().getGeneration()) {
-                entry.getKey().getListener().getInnerChangeListener().changed(entry.getValue().getObservableValue(), entry.getValue().getInitialValue(), entry.getValue().getCurrentValue());
+            while ((entry = expiredKeyMap.pollFirstEntry()) != null) {
+              synchronized (entry.getKey().getListener()) {
+                if (entry.getKey().getGeneration() == entry.getKey().getListener().getGeneration()) {
+                  entry.getKey().getListener().getInnerChangeListener().changed(entry.getValue().getObservableValue(), entry.getValue().getInitialValue(), entry.getValue().getCurrentValue());
+                }
               }
             }
           }
         }
+      } catch (InterruptedException interruptedException) {
+        LoggerManager.getLogger(ConsolidatingChangeListener.class).error(interruptedException);
       }
     }
   }

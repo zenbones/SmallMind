@@ -35,11 +35,15 @@ package org.smallmind.javafx.extras;
 import java.util.Map;
 import java.util.NavigableMap;
 import java.util.concurrent.ConcurrentSkipListMap;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 import javafx.event.Event;
 import javafx.event.EventHandler;
+import org.smallmind.scribe.pen.LoggerManager;
 
 public class ConsolidatingEventHandler<T extends Event> implements EventHandler<T>, Comparable<ConsolidatingEventHandler<?>> {
 
+  private static final CountDownLatch stopLatch = new CountDownLatch(1);
   private static final ConcurrentSkipListMap<ConsolidatingKey, Event> LOOSE_EVENT_MAP = new ConcurrentSkipListMap<>();
   private final EventHandler<T> innerEventHandler;
   private final long consolidationTimeMillis;
@@ -84,24 +88,34 @@ public class ConsolidatingEventHandler<T extends Event> implements EventHandler<
   private static class ConsolidationWorker implements Runnable {
 
     @Override
+    protected void finalize () {
+
+      stopLatch.countDown();
+    }
+
+    @Override
     public void run () {
 
-      while (true) {
+      try {
+        while (!stopLatch.await(50, TimeUnit.MILLISECONDS)) {
 
-        NavigableMap<ConsolidatingKey, Event> expiredKeyMap;
+          NavigableMap<ConsolidatingKey, Event> expiredKeyMap;
 
-        if (!(expiredKeyMap = LOOSE_EVENT_MAP.headMap(new ConsolidatingKey())).isEmpty()) {
+          if (!(expiredKeyMap = LOOSE_EVENT_MAP.headMap(new ConsolidatingKey())).isEmpty()) {
 
-          Map.Entry<ConsolidatingKey, Event> entry;
+            Map.Entry<ConsolidatingKey, Event> entry;
 
-          while ((entry = expiredKeyMap.pollFirstEntry()) != null) {
-            synchronized (entry.getKey().getEventHandler()) {
-              if (entry.getKey().getGeneration() == entry.getKey().getEventHandler().getGeneration()) {
-                entry.getKey().getEventHandler().getInnerEventHandler().handle(entry.getValue());
+            while ((entry = expiredKeyMap.pollFirstEntry()) != null) {
+              synchronized (entry.getKey().getEventHandler()) {
+                if (entry.getKey().getGeneration() == entry.getKey().getEventHandler().getGeneration()) {
+                  entry.getKey().getEventHandler().getInnerEventHandler().handle(entry.getValue());
+                }
               }
             }
           }
         }
+      } catch (InterruptedException interruptedException) {
+        LoggerManager.getLogger(ConsolidatingChangeListener.class).error(interruptedException);
       }
     }
   }
