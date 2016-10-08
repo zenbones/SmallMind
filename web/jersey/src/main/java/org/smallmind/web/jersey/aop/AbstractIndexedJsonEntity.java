@@ -35,6 +35,7 @@ package org.smallmind.web.jersey.aop;
 import java.lang.reflect.Constructor;
 import javax.xml.bind.annotation.adapters.XmlAdapter;
 import javax.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
+import org.smallmind.nutsnbolts.reflection.type.GenericUtility;
 import org.smallmind.web.jersey.util.JsonCodec;
 
 public abstract class AbstractIndexedJsonEntity implements JsonEntity {
@@ -94,7 +95,7 @@ public abstract class AbstractIndexedJsonEntity implements JsonEntity {
 
           xmlAdapter = adapterConstructor.newInstance();
 
-          return JsonCodec.convert(xmlAdapter.unmarshal(arguments[index]), clazz);
+          return JsonCodec.convert(xmlAdapter.unmarshal(JsonCodec.convert(arguments[index], GenericUtility.getTypeArguments(XmlAdapter.class, xmlAdapter.getClass()).get(0))), clazz);
         } catch (Exception exception) {
           throw new ParameterProcessingException(exception);
         }

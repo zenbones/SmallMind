@@ -36,6 +36,7 @@ import java.lang.reflect.Constructor;
 import java.util.LinkedHashMap;
 import javax.xml.bind.annotation.adapters.XmlAdapter;
 import javax.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
+import org.smallmind.nutsnbolts.reflection.type.GenericUtility;
 import org.smallmind.web.jersey.util.JsonCodec;
 
 public abstract class AbstractNakedMappedJsonEntity extends LinkedHashMap<String, Object> implements JsonEntity {
@@ -63,7 +64,7 @@ public abstract class AbstractNakedMappedJsonEntity extends LinkedHashMap<String
 
           xmlAdapter = adapterConstructor.newInstance();
 
-          return JsonCodec.convert(xmlAdapter.unmarshal(obj), clazz);
+          return JsonCodec.convert(xmlAdapter.unmarshal(JsonCodec.convert(obj, GenericUtility.getTypeArguments(XmlAdapter.class, xmlAdapter.getClass()).get(0))), clazz);
         } catch (Exception exception) {
           throw new ParameterProcessingException(exception);
         }
