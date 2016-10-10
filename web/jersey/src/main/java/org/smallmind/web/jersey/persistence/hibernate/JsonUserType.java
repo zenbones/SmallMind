@@ -41,7 +41,7 @@ import java.sql.Types;
 import java.util.Properties;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import org.hibernate.HibernateException;
-import org.hibernate.engine.spi.SessionImplementor;
+import org.hibernate.engine.spi.SharedSessionContractImplementor;
 import org.hibernate.usertype.ParameterizedType;
 import org.hibernate.usertype.UserType;
 import org.smallmind.web.jersey.util.JsonCodec;
@@ -101,7 +101,7 @@ public class JsonUserType implements UserType, ParameterizedType {
   }
 
   @Override
-  public Object nullSafeGet (ResultSet rs, String[] names, SessionImplementor session, Object owner)
+  public Object nullSafeGet (ResultSet rs, String[] names, SharedSessionContractImplementor session, Object owner)
     throws HibernateException, SQLException {
 
     String string = rs.getString(names[0]);
@@ -114,7 +114,7 @@ public class JsonUserType implements UserType, ParameterizedType {
   }
 
   @Override
-  public void nullSafeSet (PreparedStatement st, Object value, int index, SessionImplementor session)
+  public void nullSafeSet (PreparedStatement st, Object value, int index, SharedSessionContractImplementor session)
     throws HibernateException, SQLException {
 
     if (value == null) {

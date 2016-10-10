@@ -41,7 +41,7 @@ import java.sql.SQLException;
 import java.util.Arrays;
 import org.apache.commons.lang.ArrayUtils;
 import org.hibernate.HibernateException;
-import org.hibernate.engine.spi.SessionImplementor;
+import org.hibernate.engine.spi.SharedSessionContractImplementor;
 import org.hibernate.usertype.UserType;
 
 public class LongArrayUserType implements UserType {
@@ -61,7 +61,7 @@ public class LongArrayUserType implements UserType {
   @Override
   public int[] sqlTypes () {
 
-    return new int[]{java.sql.Types.ARRAY};
+    return new int[] {java.sql.Types.ARRAY};
   }
 
   @Override
@@ -101,7 +101,7 @@ public class LongArrayUserType implements UserType {
   }
 
   @Override
-  public Object nullSafeGet (final ResultSet rs, final String[] names, final SessionImplementor sessionImplementor, final Object owner)
+  public Object nullSafeGet (ResultSet rs, String[] names, SharedSessionContractImplementor session, Object owner)
     throws HibernateException, SQLException {
 
     Array array = rs.getArray(names[0]);
@@ -111,15 +111,15 @@ public class LongArrayUserType implements UserType {
   }
 
   @Override
-  public void nullSafeSet (final PreparedStatement statement, final Object object, final int i, final SessionImplementor sessionImplementor)
+  public void nullSafeSet (PreparedStatement st, Object value, int index, SharedSessionContractImplementor session)
     throws HibernateException, SQLException {
 
-    Connection connection = statement.getConnection();
+    Connection connection = st.getConnection();
 
-    long[] castObject = (long[])object;
+    long[] castObject = (long[])value;
     Long[] longs = ArrayUtils.toObject(castObject);
     Array array = connection.createArrayOf("long", longs);
 
-    statement.setArray(i, array);
+    st.setArray(index, array);
   }
 }
