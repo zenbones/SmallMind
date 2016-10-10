@@ -16,8 +16,8 @@
         <extensions>true</extensions>
         <configuration>
           <operatingSystem>WINDOWS_X86_64</operatingSystem>
-          <javaVersion>1.7+</javaVersion>
-          <javafxRuntime>2.1+</javafxRuntime>
+          <javaVersion>8.0+</javaVersion>
+          <javafxRuntime>8.0+</javafxRuntime>
           <mainClass>com.mycompany..module.AdminApplication</mainClass>
           <signjar>
             <keystore>${project.basedir}/src/main/resources/jnlp/keystore.jks</keystore>
