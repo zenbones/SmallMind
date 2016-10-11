@@ -12,13 +12,6 @@
   <description>JavaFX Extensions</description>
   <dependencies>
     <dependency>
-      <groupId>com.oracle</groupId>
-      <artifactId>javafx-rt</artifactId>
-      <version>${java.version}</version>
-      <scope>system</scope>
-      <systemPath>${env.JAVAFX_RUNTIME}</systemPath>
-    </dependency>
-    <dependency>
       <groupId>org.smallmind</groupId>
       <artifactId>smallmind-nutsnbolts</artifactId>
       <version>${project.version}</version>

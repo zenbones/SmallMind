@@ -12,7 +12,6 @@
   <packaging>pom</packaging>
   <modules>
     <module>extras</module>
-    <module>mojo</module>
     <module>webstart</module>
   </modules>
 
