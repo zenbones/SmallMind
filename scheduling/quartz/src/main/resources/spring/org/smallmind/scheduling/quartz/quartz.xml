@@ -34,4 +34,8 @@
 
   <bean id="scheduler" factory-bean="schedulerFactory" factory-method="getScheduler" init-method="start" destroy-method="shutdown"/>
 
+  <bean id="schedulerMonitor" class="org.smallmind.scheduling.quartz.jmx.SchedulerMonitor">
+    <constructor-arg index="0" name="scheduler" ref="scheduler"/>
+  </bean>
+
 </beans>
