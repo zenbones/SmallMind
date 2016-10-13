@@ -32,8 +32,12 @@
  */
 package org.smallmind.javafx.extras.table;
 
+import javafx.geometry.Pos;
+import javafx.scene.control.TableCell;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.cell.PropertyValueFactory;
+import javafx.scene.control.cell.TextFieldTableCell;
+import javafx.util.Callback;
 
 public class PropertyTableColumn<S, T> extends TableColumn<S, T> {
 
@@ -41,7 +45,46 @@ public class PropertyTableColumn<S, T> extends TableColumn<S, T> {
 
   public PropertyTableColumn (String text, String propertyName) {
 
+    this(text, propertyName, null, Pos.CENTER_LEFT);
+  }
+
+  public PropertyTableColumn (String text, String propertyName, CellTextConverter<T> converter) {
+
+    this(text, propertyName, converter, Pos.CENTER_LEFT);
+  }
+
+  public PropertyTableColumn (String text, String propertyName, Pos position) {
+
+    this(text, propertyName, null, position);
+  }
+
+  public PropertyTableColumn (String text, String propertyName, final CellTextConverter<T> converter, final Pos position) {
+
     super(text);
+
+    setCellFactory(new Callback<TableColumn<S, T>, TableCell<S, T>>() {
+
+      @Override
+      public TableCell<S, T> call (TableColumn<S, T> param) {
+
+        TableCell<S, T> tableCell = new TextFieldTableCell<S, T>() {
+
+          @Override
+          public void updateItem (T item, boolean empty) {
+
+            super.updateItem(item, empty);
+
+            if ((converter != null) && (!(empty || isEditing()))) {
+              setText(converter.getText(item));
+            }
+          }
+        };
+
+        tableCell.setAlignment(position);
+
+        return tableCell;
+      }
+    });
 
     setCellValueFactory(new PropertyValueFactory<S, T>(this.propertyName = propertyName));
   }
