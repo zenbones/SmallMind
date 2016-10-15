@@ -192,7 +192,7 @@ public class GrizzlyInitializingBean implements DisposableBean, ApplicationConte
           }
       }
 
-      httpServer.getServerConfiguration().addHttpHandler(new CLStaticHttpHandler(GrizzlyInitializingBean.class.getClassLoader(), "/"), staticPath);
+      httpServer.getServerConfiguration().addHttpHandler(new CLStaticHttpHandler(GrizzlyInitializingBean.class.getClassLoader(), "/"), contextPath + staticPath);
 
       if ((documentRoots != null) && (documentRoots.length > 0)) {
 
