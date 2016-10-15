@@ -202,7 +202,7 @@ public class GrizzlyInitializingBean implements DisposableBean, ApplicationConte
           absolutePaths[index] = documentRoots[index].getAbsolutePath();
         }
 
-        httpServer.getServerConfiguration().addHttpHandler(new StaticHttpHandler(absolutePaths), documentPath);
+        httpServer.getServerConfiguration().addHttpHandler(new StaticHttpHandler(absolutePaths), contextPath + documentPath);
       }
 
       WebappContext webappContext = new WebappContext("Grizzly Application Context", contextPath);
