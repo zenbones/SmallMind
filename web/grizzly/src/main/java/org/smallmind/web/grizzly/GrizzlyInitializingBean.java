@@ -192,7 +192,7 @@ public class GrizzlyInitializingBean implements DisposableBean, ApplicationConte
           }
       }
 
-      httpServer.getServerConfiguration().addHttpHandler(new CLStaticHttpHandler(GrizzlyInitializingBean.class.getClassLoader(), "/"), contextPath + staticPath);
+      httpServer.getServerConfiguration().addHttpHandler(new CLStaticHttpHandler(GrizzlyInitializingBean.class.getClassLoader(), "/"), staticPath);
 
       if ((documentRoots != null) && (documentRoots.length > 0)) {
 
@@ -202,7 +202,7 @@ public class GrizzlyInitializingBean implements DisposableBean, ApplicationConte
           absolutePaths[index] = documentRoots[index].getAbsolutePath();
         }
 
-        httpServer.getServerConfiguration().addHttpHandler(new StaticHttpHandler(absolutePaths), contextPath + documentPath);
+        httpServer.getServerConfiguration().addHttpHandler(new StaticHttpHandler(absolutePaths), documentPath);
       }
 
       WebappContext webappContext = new WebappContext("Grizzly Application Context", contextPath);
