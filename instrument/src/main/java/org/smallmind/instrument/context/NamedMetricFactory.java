@@ -50,7 +50,7 @@ public class NamedMetricFactory {
       case TALLY:
         return new TallyNamedMetric((Tally)metric, domain, properties);
       case METER:
-        return new MeterNamedMetric((Gauge)metric, domain, properties);
+        return new GaugeNamedMetric((Gauge)metric, domain, properties);
       case HISTOGRAM:
         return new HistogramNamedMetric((Histogram)metric, domain, properties);
       case SPEEDOMETER:

@@ -129,15 +129,15 @@ public class InstrumentationManager implements PerApplicationDataManager {
     }
   }
 
-  public static void instrumentWithMeter (MetricConfigurationProvider provider, MetricProperty... properties) {
+  public static void instrumentWithGauge (MetricConfigurationProvider provider, MetricProperty... properties) {
 
-    instrumentWithMeter(provider, 1, properties);
+    instrumentWithGauge(provider, 1, properties);
   }
 
-  public static void instrumentWithMeter (MetricConfigurationProvider provider, long quantity, MetricProperty... properties) {
+  public static void instrumentWithGauge (MetricConfigurationProvider provider, long quantity, MetricProperty... properties) {
 
     if ((provider != null) && (provider.getMetricConfiguration() != null) && provider.getMetricConfiguration().isInstrumented()) {
-      getMetricRegistry().instrument(Metrics.buildMeter(provider.getMetricConfiguration().getTickInterval(), provider.getMetricConfiguration().getTickTimeUnit(), Clocks.EPOCH), provider.getMetricConfiguration().getMetricDomain().getDomain(), properties).mark(quantity);
+      getMetricRegistry().instrument(Metrics.buildGauge(provider.getMetricConfiguration().getTickInterval(), provider.getMetricConfiguration().getTickTimeUnit(), Clocks.EPOCH), provider.getMetricConfiguration().getMetricDomain().getDomain(), properties).mark(quantity);
     }
   }
 

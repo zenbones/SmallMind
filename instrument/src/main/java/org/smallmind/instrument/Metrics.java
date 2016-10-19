@@ -41,12 +41,12 @@ public class Metrics {
     return new TallyBuilder(initialCount);
   }
 
-  public static GaugeBuilder buildMeter (long tickInterval, TimeUnit tickTimeUnit) {
+  public static GaugeBuilder buildGauge (long tickInterval, TimeUnit tickTimeUnit) {
 
     return new GaugeBuilder(tickInterval, tickTimeUnit, Clocks.EPOCH);
   }
 
-  public static GaugeBuilder buildMeter (long tickInterval, TimeUnit tickTimeUnit, Clocks clocks) {
+  public static GaugeBuilder buildGauge (long tickInterval, TimeUnit tickTimeUnit, Clocks clocks) {
 
     return new GaugeBuilder(tickInterval, tickTimeUnit, clocks);
   }

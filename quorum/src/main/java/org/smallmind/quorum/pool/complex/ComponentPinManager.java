@@ -372,7 +372,7 @@ public class ComponentPinManager<C> {
 
   private void trackTimeout () {
 
-    InstrumentationManager.instrumentWithMeter(PoolManager.getPool(), new MetricProperty("pool", componentPool.getPoolName()), new MetricProperty("pool", componentPool.getPoolName()), new MetricProperty("event", MetricInteraction.TIMEOUT.getDisplay()));
+    InstrumentationManager.instrumentWithGauge(PoolManager.getPool(), new MetricProperty("pool", componentPool.getPoolName()), new MetricProperty("pool", componentPool.getPoolName()), new MetricProperty("event", MetricInteraction.TIMEOUT.getDisplay()));
   }
 
   public StackTrace[] getExistentialStackTraces () {

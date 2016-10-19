@@ -30,37 +30,35 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.instrument;
+package org.smallmind.instrument.context;
 
-import org.smallmind.instrument.config.MetricConfigurationProvider;
+import java.lang.reflect.Method;
+import org.smallmind.instrument.Gauge;
+import org.smallmind.instrument.MetricProperty;
+import org.smallmind.nutsnbolts.lang.StaticInitializationError;
 
-public abstract class GaugeInstrumentAndReturn<T> extends InstrumentAndReturn<Gauge, T> {
+public class GaugeNamedMetric extends NamedMetric<Gauge> {
 
-  public GaugeInstrumentAndReturn (MetricConfigurationProvider provider, MetricProperty... properties) {
+  private static final Method[] UPDATING_METHODS;
 
-    super(((provider == null) || (provider.getMetricConfiguration() == null) || (!provider.getMetricConfiguration().isInstrumented())) ? null : new InstrumentationArguments<>(Metrics.buildGauge(provider.getMetricConfiguration().getTickInterval(), provider.getMetricConfiguration().getTickTimeUnit()), provider.getMetricConfiguration().getMetricDomain().getDomain(), properties));
+  static {
+
+    try {
+      UPDATING_METHODS = new Method[] {Gauge.class.getMethod("mark"), Gauge.class.getMethod("mark", long.class)};
+    }
+    catch (NoSuchMethodException noSuchMethodException) {
+      throw new StaticInitializationError(noSuchMethodException);
+    }
   }
 
-  public GaugeInstrumentAndReturn (Metrics.MetricBuilder<Gauge> builder, String domain, MetricProperty... properties) {
+  public GaugeNamedMetric (Gauge gauge, String domain, MetricProperty... properties) {
 
-    super(new InstrumentationArguments<>(builder, domain, properties));
+    super(gauge, domain, properties);
   }
-
-  public abstract T withGauge ()
-    throws Exception;
 
   @Override
-  public final T with (Gauge gauge)
-    throws Exception {
+  public Method[] getUpdatingMethods () {
 
-    T result;
-
-    result = withGauge();
-
-    if (gauge != null) {
-      gauge.mark();
-    }
-
-    return result;
+    return UPDATING_METHODS;
   }
 }

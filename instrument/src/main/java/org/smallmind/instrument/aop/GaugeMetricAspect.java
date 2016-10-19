@@ -41,9 +41,9 @@ import org.smallmind.instrument.Metrics;
 public class GaugeMetricAspect extends MetricAspect {
 
   @Around(value = "(execution(@org.smallmind.instrument.aop.GaugeMetric * * (..)) || initialization(@org.smallmind.instrument.aop.GaugeMetric new(..))) && @annotation(gaugeMetric)", argNames = "thisJoinPoint, gaugeMetric")
-  public Object aroundMeterMetricMethod (ProceedingJoinPoint thisJoinPoint, GaugeMetric gaugeMetric)
+  public Object aroundGaugeMetricMethod (ProceedingJoinPoint thisJoinPoint, GaugeMetric gaugeMetric)
     throws Throwable {
 
-    return engage(thisJoinPoint, gaugeMetric.value(), gaugeMetric.alias(), Metrics.buildMeter(gaugeMetric.tickInterval(), gaugeMetric.tickTimeUnit(), gaugeMetric.clocks()));
+    return engage(thisJoinPoint, gaugeMetric.value(), gaugeMetric.alias(), Metrics.buildGauge(gaugeMetric.tickInterval(), gaugeMetric.tickTimeUnit(), gaugeMetric.clocks()));
   }
 }
