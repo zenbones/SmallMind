@@ -30,21 +30,10 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.persistence;
+package org.smallmind.instrument.jmx;
 
-public enum MetricSource {
+import org.smallmind.instrument.Gauged;
 
-  MYSQL("MySql"), MONGO("MongoDB"), TERRACOTTA("Terracotta"), MEMCACHED("Memcached"), EHCACHE("Ehcache"), CASSANDRA("Cassandra");
+public interface GaugeMonitorMXBean extends Gauged {
 
-  private String display;
-
-  private MetricSource (String display) {
-
-    this.display = display;
-  }
-
-  public String getDisplay () {
-
-    return display;
-  }
 }

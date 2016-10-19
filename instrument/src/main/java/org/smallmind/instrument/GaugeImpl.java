@@ -43,7 +43,7 @@ import org.smallmind.instrument.context.MetricItem;
 import org.smallmind.instrument.context.MetricSnapshot;
 import org.smallmind.nutsnbolts.time.TimeUtility;
 
-public class MeterImpl extends MetricImpl<Meter> implements Meter {
+public class GaugeImpl extends MetricImpl<Gauge> implements Gauge {
 
   private static final ScheduledExecutorService SCHEDULED_EXECUTOR = Executors.newScheduledThreadPool(2, new ThreadFactory() {
 
@@ -66,17 +66,17 @@ public class MeterImpl extends MetricImpl<Meter> implements Meter {
   private final Clock clock;
   private final TimeUnit tickTimeUnit;
 
-  public MeterImpl () {
+  public GaugeImpl () {
 
     this(5, TimeUnit.SECONDS, Clocks.EPOCH.getClock());
   }
 
-  public MeterImpl (long tickInterval, TimeUnit tickTimeUnit) {
+  public GaugeImpl (long tickInterval, TimeUnit tickTimeUnit) {
 
     this(tickInterval, tickTimeUnit, Clocks.EPOCH.getClock());
   }
 
-  public MeterImpl (long tickInterval, TimeUnit tickTimeUnit, Clock clock) {
+  public GaugeImpl (long tickInterval, TimeUnit tickTimeUnit, Clock clock) {
 
     this.tickTimeUnit = tickTimeUnit;
     this.clock = clock;
@@ -100,9 +100,9 @@ public class MeterImpl extends MetricImpl<Meter> implements Meter {
   }
 
   @Override
-  public Class<Meter> getMetricClass () {
+  public Class<Gauge> getMetricClass () {
 
-    return Meter.class;
+    return Gauge.class;
   }
 
   @Override
@@ -118,16 +118,16 @@ public class MeterImpl extends MetricImpl<Meter> implements Meter {
 
     if ((metricSnapshot = getMetricSnapshot()) != null) {
       if (metricSnapshot.willTrace(MetricFact.COUNT)) {
-        metricSnapshot.addItem(new MetricItem<Long>("count", 0L));
+        metricSnapshot.addItem(new MetricItem<>("count", 0L));
       }
       if (metricSnapshot.willTrace(MetricFact.M1_AVG)) {
-        metricSnapshot.addItem(new MetricItem<Double>("1 min avg", 0.0));
+        metricSnapshot.addItem(new MetricItem<>("1 min avg", 0.0));
       }
       if (metricSnapshot.willTrace(MetricFact.M5_AVG)) {
-        metricSnapshot.addItem(new MetricItem<Double>("5 min avg", 0.0));
+        metricSnapshot.addItem(new MetricItem<>("5 min avg", 0.0));
       }
       if (metricSnapshot.willTrace(MetricFact.M15_AVG)) {
-        metricSnapshot.addItem(new MetricItem<Double>("15 min avg", 0.0));
+        metricSnapshot.addItem(new MetricItem<>("15 min avg", 0.0));
       }
     }
   }
@@ -151,16 +151,16 @@ public class MeterImpl extends MetricImpl<Meter> implements Meter {
 
     if ((metricSnapshot = getMetricSnapshot()) != null) {
       if (metricSnapshot.willTrace(MetricFact.COUNT)) {
-        metricSnapshot.addItem(new MetricItem<Long>("count", current));
+        metricSnapshot.addItem(new MetricItem<>("count", current));
       }
       if (metricSnapshot.willTrace(MetricFact.M1_AVG)) {
-        metricSnapshot.addItem(new MetricItem<Double>("1 min avg", m1Average.getMovingAverage(tickTimeUnit)));
+        metricSnapshot.addItem(new MetricItem<>("1 min avg", m1Average.getMovingAverage(tickTimeUnit)));
       }
       if (metricSnapshot.willTrace(MetricFact.M5_AVG)) {
-        metricSnapshot.addItem(new MetricItem<Double>("5 min avg", m5Average.getMovingAverage(tickTimeUnit)));
+        metricSnapshot.addItem(new MetricItem<>("5 min avg", m5Average.getMovingAverage(tickTimeUnit)));
       }
       if (metricSnapshot.willTrace(MetricFact.M15_AVG)) {
-        metricSnapshot.addItem(new MetricItem<Double>("15 min avg", m15Average.getMovingAverage(tickTimeUnit)));
+        metricSnapshot.addItem(new MetricItem<>("15 min avg", m15Average.getMovingAverage(tickTimeUnit)));
       }
     }
   }
@@ -209,8 +209,7 @@ public class MeterImpl extends MetricImpl<Meter> implements Meter {
     if (currentCount == 0) {
 
       return 0.0;
-    }
-    else {
+    } else {
 
       return (((double)currentCount) / (clock.getTimeMilliseconds() - startTime.get())) * TimeUtility.convertToDouble(1, tickTimeUnit, TimeUnit.MILLISECONDS);
     }

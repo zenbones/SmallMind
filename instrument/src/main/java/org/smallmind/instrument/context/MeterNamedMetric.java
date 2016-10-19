@@ -33,27 +33,27 @@
 package org.smallmind.instrument.context;
 
 import java.lang.reflect.Method;
-import org.smallmind.instrument.Meter;
+import org.smallmind.instrument.Gauge;
 import org.smallmind.instrument.MetricProperty;
 import org.smallmind.nutsnbolts.lang.StaticInitializationError;
 
-public class MeterNamedMetric extends NamedMetric<Meter> {
+public class MeterNamedMetric extends NamedMetric<Gauge> {
 
   private static final Method[] UPDATING_METHODS;
 
   static {
 
     try {
-      UPDATING_METHODS = new Method[] {Meter.class.getMethod("mark"), Meter.class.getMethod("mark", long.class)};
+      UPDATING_METHODS = new Method[] {Gauge.class.getMethod("mark"), Gauge.class.getMethod("mark", long.class)};
     }
     catch (NoSuchMethodException noSuchMethodException) {
       throw new StaticInitializationError(noSuchMethodException);
     }
   }
 
-  public MeterNamedMetric (Meter meter, String domain, MetricProperty... properties) {
+  public MeterNamedMetric (Gauge gauge, String domain, MetricProperty... properties) {
 
-    super(meter, domain, properties);
+    super(gauge, domain, properties);
   }
 
   @Override

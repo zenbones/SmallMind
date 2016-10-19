@@ -34,6 +34,6 @@ package org.smallmind.instrument.jmx;
 
 import org.smallmind.instrument.Timed;
 
-public interface ChronometerMonitorMXBean extends MeterMonitorMXBean, HistogramMonitorMXBean, Timed {
+public interface ChronometerMonitorMXBean extends GaugeMonitorMXBean, HistogramMonitorMXBean, Timed {
 
 }

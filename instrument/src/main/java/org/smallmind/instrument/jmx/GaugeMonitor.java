@@ -30,33 +30,56 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.instrument;
+package org.smallmind.instrument.jmx;
 
-import org.smallmind.instrument.config.MetricConfigurationProvider;
+import java.util.concurrent.TimeUnit;
+import javax.management.StandardMBean;
+import org.smallmind.instrument.Gauge;
 
-public abstract class MeterInstrument extends Instrument<Meter> {
+public class GaugeMonitor extends StandardMBean implements GaugeMonitorMXBean {
 
-  public MeterInstrument (MetricConfigurationProvider provider, MetricProperty... properties) {
+  private Gauge gauge;
 
-    super(((provider == null) || (provider.getMetricConfiguration() == null) || (!provider.getMetricConfiguration().isInstrumented())) ? null : new InstrumentationArguments<>(Metrics.buildMeter(provider.getMetricConfiguration().getTickInterval(), provider.getMetricConfiguration().getTickTimeUnit()), provider.getMetricConfiguration().getMetricDomain().getDomain(), properties));
+  public GaugeMonitor (Gauge gauge) {
+
+    super(GaugeMonitorMXBean.class, true);
+
+    this.gauge = gauge;
   }
-
-  public MeterInstrument (Metrics.MetricBuilder<Meter> builder, String domain, MetricProperty... properties) {
-
-    super(new InstrumentationArguments<>(builder, domain, properties));
-  }
-
-  public abstract void withMeter ()
-    throws Exception;
 
   @Override
-  public final void with (Meter meter)
-    throws Exception {
+  public TimeUnit getRateTimeUnit () {
 
-    withMeter();
+    return gauge.getRateTimeUnit();
+  }
 
-    if (meter != null) {
-      meter.mark();
-    }
+  @Override
+  public long getCount () {
+
+    return gauge.getCount();
+  }
+
+  @Override
+  public double getOneMinuteAvgRate () {
+
+    return gauge.getOneMinuteAvgRate();
+  }
+
+  @Override
+  public double getFiveMinuteAvgRate () {
+
+    return gauge.getFiveMinuteAvgRate();
+  }
+
+  @Override
+  public double getFifteenMinuteAvgRate () {
+
+    return gauge.getFifteenMinuteAvgRate();
+  }
+
+  @Override
+  public double getAverageRate () {
+
+    return gauge.getAverageRate();
   }
 }

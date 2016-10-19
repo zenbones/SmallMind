@@ -65,7 +65,7 @@ public class TallyImpl extends MetricImpl<Tally> implements Tally {
     count.set(0);
 
     if ((metricSnapshot = getMetricSnapshot()) != null) {
-      metricSnapshot.addItem(new MetricItem<Long>("count", 0L));
+      metricSnapshot.addItem(new MetricItem<>("count", 0L));
     }
   }
 
@@ -78,7 +78,7 @@ public class TallyImpl extends MetricImpl<Tally> implements Tally {
     current = count.incrementAndGet();
 
     if ((metricSnapshot = getMetricSnapshot()) != null) {
-      metricSnapshot.addItem(new MetricItem<Long>("count", current));
+      metricSnapshot.addItem(new MetricItem<>("count", current));
     }
   }
 
@@ -91,7 +91,7 @@ public class TallyImpl extends MetricImpl<Tally> implements Tally {
     current = count.addAndGet(n);
 
     if ((metricSnapshot = getMetricSnapshot()) != null) {
-      metricSnapshot.addItem(new MetricItem<Long>("count", current));
+      metricSnapshot.addItem(new MetricItem<>("count", current));
     }
   }
 
@@ -105,7 +105,7 @@ public class TallyImpl extends MetricImpl<Tally> implements Tally {
 
     if ((metricSnapshot = getMetricSnapshot()) != null) {
       if (metricSnapshot.willTrace(MetricFact.COUNT)) {
-        metricSnapshot.addItem(new MetricItem<Long>("count", current));
+        metricSnapshot.addItem(new MetricItem<>("count", current));
       }
     }
   }
@@ -120,7 +120,7 @@ public class TallyImpl extends MetricImpl<Tally> implements Tally {
 
     if ((metricSnapshot = getMetricSnapshot()) != null) {
       if (metricSnapshot.willTrace(MetricFact.COUNT)) {
-        metricSnapshot.addItem(new MetricItem<Long>("count", current));
+        metricSnapshot.addItem(new MetricItem<>("count", current));
       }
     }
   }

@@ -40,15 +40,15 @@ import org.smallmind.instrument.context.MetricSnapshot;
 
 public class SpeedometerImpl extends MetricImpl<Speedometer> implements Speedometer {
 
-  private final Meter rateMeter;
-  private final Meter quantityMeter;
+  private final Gauge rateGauge;
+  private final Gauge quantityGauge;
   private final AtomicLong min = new AtomicLong(Long.MAX_VALUE);
   private final AtomicLong max = new AtomicLong(Long.MIN_VALUE);
 
   public SpeedometerImpl (long tickInterval, TimeUnit tickTimeUnit, Clock clock) {
 
-    rateMeter = new MeterImpl(tickInterval, tickTimeUnit, clock).setName("rate");
-    quantityMeter = new MeterImpl(tickInterval, tickTimeUnit, clock).setName("quantity");
+    rateGauge = new GaugeImpl(tickInterval, tickTimeUnit, clock).setName("rate");
+    quantityGauge = new GaugeImpl(tickInterval, tickTimeUnit, clock).setName("quantity");
   }
 
   @Override
@@ -62,17 +62,17 @@ public class SpeedometerImpl extends MetricImpl<Speedometer> implements Speedome
 
     MetricSnapshot metricSnapshot;
 
-    rateMeter.clear();
-    quantityMeter.clear();
+    rateGauge.clear();
+    quantityGauge.clear();
     max.set(Long.MIN_VALUE);
     min.set(Long.MAX_VALUE);
 
     if ((metricSnapshot = getMetricSnapshot()) != null) {
       if (metricSnapshot.willTrace(MetricFact.MIN)) {
-        metricSnapshot.addItem(new MetricItem<String>("min", "n/a"));
+        metricSnapshot.addItem(new MetricItem<>("min", "n/a"));
       }
       if (metricSnapshot.willTrace(MetricFact.MAX)) {
-        metricSnapshot.addItem(new MetricItem<String>("max", "n/a"));
+        metricSnapshot.addItem(new MetricItem<>("max", "n/a"));
       }
     }
   }
@@ -90,17 +90,17 @@ public class SpeedometerImpl extends MetricImpl<Speedometer> implements Speedome
     long currentMin;
     long currentMax;
 
-    rateMeter.mark();
-    quantityMeter.mark(quantity);
+    rateGauge.mark();
+    quantityGauge.mark(quantity);
     currentMin = setMin(quantity);
     currentMax = setMax(quantity);
 
     if ((metricSnapshot = getMetricSnapshot()) != null) {
       if (metricSnapshot.willTrace(MetricFact.MIN)) {
-        metricSnapshot.addItem(new MetricItem<Long>("min", currentMin));
+        metricSnapshot.addItem(new MetricItem<>("min", currentMin));
       }
       if (metricSnapshot.willTrace(MetricFact.MAX)) {
-        metricSnapshot.addItem(new MetricItem<Long>("max", currentMax));
+        metricSnapshot.addItem(new MetricItem<>("max", currentMax));
       }
     }
   }
@@ -108,67 +108,67 @@ public class SpeedometerImpl extends MetricImpl<Speedometer> implements Speedome
   @Override
   public Clock getClock () {
 
-    return rateMeter.getClock();
+    return rateGauge.getClock();
   }
 
   @Override
   public TimeUnit getRateTimeUnit () {
 
-    return rateMeter.getRateTimeUnit();
+    return rateGauge.getRateTimeUnit();
   }
 
   @Override
   public long getCount () {
 
-    return rateMeter.getCount();
+    return rateGauge.getCount();
   }
 
   @Override
   public double getOneMinuteAvgRate () {
 
-    return rateMeter.getOneMinuteAvgRate();
+    return rateGauge.getOneMinuteAvgRate();
   }
 
   @Override
   public double getOneMinuteAvgVelocity () {
 
-    return quantityMeter.getOneMinuteAvgRate() / rateMeter.getOneMinuteAvgRate();
+    return quantityGauge.getOneMinuteAvgRate() / rateGauge.getOneMinuteAvgRate();
   }
 
   @Override
   public double getFiveMinuteAvgRate () {
 
-    return rateMeter.getFiveMinuteAvgRate();
+    return rateGauge.getFiveMinuteAvgRate();
   }
 
   @Override
   public double getFiveMinuteAvgVelocity () {
 
-    return quantityMeter.getFiveMinuteAvgRate() / rateMeter.getFiveMinuteAvgRate();
+    return quantityGauge.getFiveMinuteAvgRate() / rateGauge.getFiveMinuteAvgRate();
   }
 
   @Override
   public double getFifteenMinuteAvgRate () {
 
-    return rateMeter.getFifteenMinuteAvgRate();
+    return rateGauge.getFifteenMinuteAvgRate();
   }
 
   @Override
   public double getFifteenMinuteAvgVelocity () {
 
-    return quantityMeter.getFifteenMinuteAvgRate() / rateMeter.getFifteenMinuteAvgRate();
+    return quantityGauge.getFifteenMinuteAvgRate() / rateGauge.getFifteenMinuteAvgRate();
   }
 
   @Override
   public double getAverageRate () {
 
-    return rateMeter.getAverageRate();
+    return rateGauge.getAverageRate();
   }
 
   @Override
   public double getAverageVelocity () {
 
-    return quantityMeter.getAverageRate() / rateMeter.getAverageRate();
+    return quantityGauge.getAverageRate() / rateGauge.getAverageRate();
   }
 
   @Override
@@ -210,7 +210,7 @@ public class SpeedometerImpl extends MetricImpl<Speedometer> implements Speedome
   @Override
   public void stop () {
 
-    rateMeter.stop();
-    quantityMeter.stop();
+    rateGauge.stop();
+    quantityGauge.stop();
   }
 }

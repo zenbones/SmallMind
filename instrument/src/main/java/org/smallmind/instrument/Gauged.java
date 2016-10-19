@@ -32,35 +32,17 @@
  */
 package org.smallmind.instrument;
 
-import org.smallmind.instrument.config.MetricConfigurationProvider;
+import java.util.concurrent.TimeUnit;
 
-public abstract class MeterInstrumentAndReturn<T> extends InstrumentAndReturn<Meter, T> {
+public interface Gauged extends Countable {
 
-  public MeterInstrumentAndReturn (MetricConfigurationProvider provider, MetricProperty... properties) {
+  public abstract TimeUnit getRateTimeUnit ();
 
-    super(((provider == null) || (provider.getMetricConfiguration() == null) || (!provider.getMetricConfiguration().isInstrumented())) ? null : new InstrumentationArguments<>(Metrics.buildMeter(provider.getMetricConfiguration().getTickInterval(), provider.getMetricConfiguration().getTickTimeUnit()), provider.getMetricConfiguration().getMetricDomain().getDomain(), properties));
-  }
+  public abstract double getOneMinuteAvgRate ();
 
-  public MeterInstrumentAndReturn (Metrics.MetricBuilder<Meter> builder, String domain, MetricProperty... properties) {
+  public abstract double getFiveMinuteAvgRate ();
 
-    super(new InstrumentationArguments<>(builder, domain, properties));
-  }
+  public abstract double getFifteenMinuteAvgRate ();
 
-  public abstract T withMeter ()
-    throws Exception;
-
-  @Override
-  public final T with (Meter meter)
-    throws Exception {
-
-    T result;
-
-    result = withMeter();
-
-    if (meter != null) {
-      meter.mark();
-    }
-
-    return result;
-  }
+  public abstract double getAverageRate ();
 }

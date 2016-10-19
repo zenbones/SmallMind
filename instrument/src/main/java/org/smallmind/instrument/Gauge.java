@@ -30,21 +30,12 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.persistence;
+package org.smallmind.instrument;
 
-public enum MetricSource {
+// Tracking metric plus exponentially weighted moving average (1 minute, 5 minutes, 15 minutes)
+public interface Gauge extends Metric<Gauge>, Gauged, Temporal, Stoppable {
 
-  MYSQL("MySql"), MONGO("MongoDB"), TERRACOTTA("Terracotta"), MEMCACHED("Memcached"), EHCACHE("Ehcache"), CASSANDRA("Cassandra");
+  public abstract void mark ();
 
-  private String display;
-
-  private MetricSource (String display) {
-
-    this.display = display;
-  }
-
-  public String getDisplay () {
-
-    return display;
-  }
+  public abstract void mark (long n);
 }

@@ -30,21 +30,20 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.persistence;
+package org.smallmind.instrument.aop;
 
-public enum MetricSource {
+import org.aspectj.lang.ProceedingJoinPoint;
+import org.aspectj.lang.annotation.Around;
+import org.aspectj.lang.annotation.Aspect;
+import org.smallmind.instrument.Metrics;
 
-  MYSQL("MySql"), MONGO("MongoDB"), TERRACOTTA("Terracotta"), MEMCACHED("Memcached"), EHCACHE("Ehcache"), CASSANDRA("Cassandra");
+@Aspect
+public class GaugeMetricAspect extends MetricAspect {
 
-  private String display;
+  @Around(value = "(execution(@org.smallmind.instrument.aop.GaugeMetric * * (..)) || initialization(@org.smallmind.instrument.aop.GaugeMetric new(..))) && @annotation(gaugeMetric)", argNames = "thisJoinPoint, gaugeMetric")
+  public Object aroundMeterMetricMethod (ProceedingJoinPoint thisJoinPoint, GaugeMetric gaugeMetric)
+    throws Throwable {
 
-  private MetricSource (String display) {
-
-    this.display = display;
-  }
-
-  public String getDisplay () {
-
-    return display;
+    return engage(thisJoinPoint, gaugeMetric.value(), gaugeMetric.alias(), Metrics.buildMeter(gaugeMetric.tickInterval(), gaugeMetric.tickTimeUnit(), gaugeMetric.clocks()));
   }
 }

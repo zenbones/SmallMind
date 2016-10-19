@@ -30,21 +30,26 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.persistence;
+package org.smallmind.instrument.aop;
 
-public enum MetricSource {
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
+import java.util.concurrent.TimeUnit;
+import org.smallmind.instrument.Clocks;
 
-  MYSQL("MySql"), MONGO("MongoDB"), TERRACOTTA("Terracotta"), MEMCACHED("Memcached"), EHCACHE("Ehcache"), CASSANDRA("Cassandra");
+@Target({ElementType.CONSTRUCTOR, ElementType.METHOD})
+@Retention(RetentionPolicy.RUNTIME)
+public @interface GaugeMetric {
 
-  private String display;
+  public abstract JMX value ();
 
-  private MetricSource (String display) {
+  public abstract String alias () default "";
 
-    this.display = display;
-  }
+  public abstract long tickInterval () default 10;
 
-  public String getDisplay () {
+  public abstract TimeUnit tickTimeUnit () default TimeUnit.SECONDS;
 
-    return display;
-  }
+  public abstract Clocks clocks () default Clocks.EPOCH;
 }

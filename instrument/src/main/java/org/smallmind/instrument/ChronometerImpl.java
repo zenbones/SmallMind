@@ -40,14 +40,14 @@ import org.smallmind.instrument.context.MetricSnapshot;
 public class ChronometerImpl extends MetricImpl<Chronometer> implements Chronometer {
 
   private final Histogram histogram;
-  private final Meter meter;
+  private final Gauge gauge;
   private final TimeUnit durationTimeUnit;
 
   public ChronometerImpl (Samples samples, TimeUnit durationTimeUnit, long tickInterval, TimeUnit tickTimeUnit, Clock clock) {
 
     this.durationTimeUnit = durationTimeUnit;
 
-    meter = new MeterImpl(tickInterval, tickTimeUnit, clock).setName("meter");
+    gauge = new GaugeImpl(tickInterval, tickTimeUnit, clock).setName("gauge");
     histogram = new HistogramImpl(samples).setName("histogram");
   }
 
@@ -62,12 +62,12 @@ public class ChronometerImpl extends MetricImpl<Chronometer> implements Chronome
 
     MetricSnapshot metricSnapshot;
 
-    meter.clear();
+    gauge.clear();
     histogram.clear();
 
     if ((metricSnapshot = getMetricSnapshot()) != null) {
       if (metricSnapshot.willTrace(MetricFact.DURATION)) {
-        metricSnapshot.addItem(new MetricItem<Long>("duration", 0L));
+        metricSnapshot.addItem(new MetricItem<>("duration", 0L));
       }
     }
   }
@@ -82,11 +82,11 @@ public class ChronometerImpl extends MetricImpl<Chronometer> implements Chronome
     MetricSnapshot metricSnapshot;
 
     histogram.update(duration);
-    meter.mark();
+    gauge.mark();
 
     if ((metricSnapshot = getMetricSnapshot()) != null) {
       if (metricSnapshot.willTrace(MetricFact.DURATION)) {
-        metricSnapshot.addItem(new MetricItem<Long>("duration", duration));
+        metricSnapshot.addItem(new MetricItem<>("duration", duration));
       }
     }
   }
@@ -100,7 +100,7 @@ public class ChronometerImpl extends MetricImpl<Chronometer> implements Chronome
   @Override
   public Clock getClock () {
 
-    return meter.getClock();
+    return gauge.getClock();
   }
 
   @Override
@@ -112,37 +112,37 @@ public class ChronometerImpl extends MetricImpl<Chronometer> implements Chronome
   @Override
   public TimeUnit getRateTimeUnit () {
 
-    return meter.getRateTimeUnit();
+    return gauge.getRateTimeUnit();
   }
 
   @Override
   public long getCount () {
 
-    return meter.getCount();
+    return gauge.getCount();
   }
 
   @Override
   public double getOneMinuteAvgRate () {
 
-    return meter.getOneMinuteAvgRate();
+    return gauge.getOneMinuteAvgRate();
   }
 
   @Override
   public double getFiveMinuteAvgRate () {
 
-    return meter.getFiveMinuteAvgRate();
+    return gauge.getFiveMinuteAvgRate();
   }
 
   @Override
   public double getFifteenMinuteAvgRate () {
 
-    return meter.getFifteenMinuteAvgRate();
+    return gauge.getFifteenMinuteAvgRate();
   }
 
   @Override
   public double getAverageRate () {
 
-    return meter.getAverageRate();
+    return gauge.getAverageRate();
   }
 
   @Override
@@ -184,6 +184,6 @@ public class ChronometerImpl extends MetricImpl<Chronometer> implements Chronome
   @Override
   public void stop () {
 
-    meter.stop();
+    gauge.stop();
   }
 }

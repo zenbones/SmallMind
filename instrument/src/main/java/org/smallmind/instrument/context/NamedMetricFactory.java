@@ -34,7 +34,7 @@ package org.smallmind.instrument.context;
 
 import org.smallmind.instrument.Chronometer;
 import org.smallmind.instrument.Histogram;
-import org.smallmind.instrument.Meter;
+import org.smallmind.instrument.Gauge;
 import org.smallmind.instrument.Metric;
 import org.smallmind.instrument.MetricProperty;
 import org.smallmind.instrument.MetricType;
@@ -50,7 +50,7 @@ public class NamedMetricFactory {
       case TALLY:
         return new TallyNamedMetric((Tally)metric, domain, properties);
       case METER:
-        return new MeterNamedMetric((Meter)metric, domain, properties);
+        return new MeterNamedMetric((Gauge)metric, domain, properties);
       case HISTOGRAM:
         return new HistogramNamedMetric((Histogram)metric, domain, properties);
       case SPEEDOMETER:

@@ -32,7 +32,8 @@
  */
 package org.smallmind.instrument;
 
-public interface Chronometer extends Metric<Chronometer>, Metered, Estimating, Timed, Statistician, Temporal, Stoppable {
+// Time tracking plus exponentially weighted moving average plus histogram
+public interface Chronometer extends Metric<Chronometer>, Gauged, Estimating, Timed, Statistician, Temporal, Stoppable {
 
   public abstract void update (long duration);
 }

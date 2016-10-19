@@ -30,21 +30,33 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.persistence;
+package org.smallmind.instrument;
 
-public enum MetricSource {
+import org.smallmind.instrument.config.MetricConfigurationProvider;
 
-  MYSQL("MySql"), MONGO("MongoDB"), TERRACOTTA("Terracotta"), MEMCACHED("Memcached"), EHCACHE("Ehcache"), CASSANDRA("Cassandra");
+public abstract class GaugeInstrument extends Instrument<Gauge> {
 
-  private String display;
+  public GaugeInstrument (MetricConfigurationProvider provider, MetricProperty... properties) {
 
-  private MetricSource (String display) {
-
-    this.display = display;
+    super(((provider == null) || (provider.getMetricConfiguration() == null) || (!provider.getMetricConfiguration().isInstrumented())) ? null : new InstrumentationArguments<>(Metrics.buildMeter(provider.getMetricConfiguration().getTickInterval(), provider.getMetricConfiguration().getTickTimeUnit()), provider.getMetricConfiguration().getMetricDomain().getDomain(), properties));
   }
 
-  public String getDisplay () {
+  public GaugeInstrument (Metrics.MetricBuilder<Gauge> builder, String domain, MetricProperty... properties) {
 
-    return display;
+    super(new InstrumentationArguments<>(builder, domain, properties));
+  }
+
+  public abstract void withGauge ()
+    throws Exception;
+
+  @Override
+  public final void with (Gauge gauge)
+    throws Exception {
+
+    withGauge();
+
+    if (gauge != null) {
+      gauge.mark();
+    }
   }
 }

@@ -41,14 +41,14 @@ public class Metrics {
     return new TallyBuilder(initialCount);
   }
 
-  public static MeterBuilder buildMeter (long tickInterval, TimeUnit tickTimeUnit) {
+  public static GaugeBuilder buildMeter (long tickInterval, TimeUnit tickTimeUnit) {
 
-    return new MeterBuilder(tickInterval, tickTimeUnit, Clocks.EPOCH);
+    return new GaugeBuilder(tickInterval, tickTimeUnit, Clocks.EPOCH);
   }
 
-  public static MeterBuilder buildMeter (long tickInterval, TimeUnit tickTimeUnit, Clocks clocks) {
+  public static GaugeBuilder buildMeter (long tickInterval, TimeUnit tickTimeUnit, Clocks clocks) {
 
-    return new MeterBuilder(tickInterval, tickTimeUnit, clocks);
+    return new GaugeBuilder(tickInterval, tickTimeUnit, clocks);
   }
 
   public static HistogramBuilder buildHistogram (Samples samples) {
@@ -123,13 +123,13 @@ public class Metrics {
     }
   }
 
-  public static class MeterBuilder implements MetricBuilder<Meter> {
+  public static class GaugeBuilder implements MetricBuilder<Gauge> {
 
     private Clocks clocks;
     private TimeUnit tickTimeUnit;
     private long tickInterval;
 
-    private MeterBuilder (long tickInterval, TimeUnit tickTimeUnit, Clocks clocks) {
+    private GaugeBuilder (long tickInterval, TimeUnit tickTimeUnit, Clocks clocks) {
 
       this.tickInterval = tickInterval;
       this.tickTimeUnit = tickTimeUnit;
@@ -137,9 +137,9 @@ public class Metrics {
     }
 
     @Override
-    public Class<Meter> getMetricClass () {
+    public Class<Gauge> getMetricClass () {
 
-      return Meter.class;
+      return Gauge.class;
     }
 
     @Override
@@ -149,9 +149,9 @@ public class Metrics {
     }
 
     @Override
-    public Meter construct () {
+    public Gauge construct () {
 
-      return new MeterImpl(tickInterval, tickTimeUnit, clocks.getClock());
+      return new GaugeImpl(tickInterval, tickTimeUnit, clocks.getClock());
     }
   }
 

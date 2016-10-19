@@ -32,7 +32,7 @@
  */
 package org.smallmind.instrument;
 
-public interface Tracked extends Metered {
+public interface Tracked extends Gauged {
 
   public abstract double getMin ();
 
