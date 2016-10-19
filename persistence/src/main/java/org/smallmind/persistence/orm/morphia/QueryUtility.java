@@ -181,6 +181,42 @@ public class QueryUtility {
               }
           }
         }
+      case UNLIKE:
+
+        Object unlikeValue;
+
+        if ((unlikeValue = whereField.getOperand().extract(transformer)) == null) {
+
+          return fieldEnd.exists();
+        } else if (!(unlikeValue instanceof String)) {
+
+          throw new ORMOperationException("The operation(%s) requires a String operand", WhereOperator.UNLIKE.name());
+        } else {
+          switch (((String)(unlikeValue)).length()) {
+            case 0:
+              return fieldEnd.notEqual("");
+            case 1:
+              return unlikeValue.equals("%") ? fieldEnd.doesNotExist() : fieldEnd.notEqual(unlikeValue);
+            case 2:
+              return unlikeValue.equals("%%") ? fieldEnd.doesNotExist() : (((String)unlikeValue).charAt(0) == '%') ? fieldEnd.not().startsWith(((String)unlikeValue).substring(1)) : (((String)unlikeValue).charAt(1) == '%') ? fieldEnd.not().endsWith(((String)unlikeValue).substring(0, 1)) : fieldEnd.notEqual(unlikeValue);
+            default:
+              if (((String)unlikeValue).substring(1, ((String)unlikeValue).length() - 1).indexOf('%') >= 0) {
+                throw new ORMOperationException("The operation(%s) allows wildcards('%') only at the  start or end of the operand", WhereOperator.UNLIKE.name());
+              } else if (((String)unlikeValue).startsWith("%") && ((String)unlikeValue).endsWith("%")) {
+
+                return fieldEnd.not().contains(((String)unlikeValue).substring(1, ((String)unlikeValue).length() - 1));
+              } else if (((String)unlikeValue).startsWith("%")) {
+
+                return fieldEnd.not().startsWith(((String)unlikeValue).substring(1));
+              } else if (((String)unlikeValue).endsWith("%")) {
+
+                return fieldEnd.not().endsWith(((String)unlikeValue).substring(0, ((String)unlikeValue).length() - 1));
+              } else {
+
+                return fieldEnd.notEqual(unlikeValue);
+              }
+          }
+        }
       case IN:
         return fieldEnd.in(Arrays.asList((Object[])whereField.getOperand().extract(transformer)));
       default:

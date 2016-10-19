@@ -34,5 +34,5 @@ package org.smallmind.persistence.query;
 
 public enum WhereOperator {
 
-  LT, LE, EQ, NE, GE, GT, LIKE, IN
+  LT, LE, EQ, NE, GE, GT, LIKE, UNLIKE, IN
 }

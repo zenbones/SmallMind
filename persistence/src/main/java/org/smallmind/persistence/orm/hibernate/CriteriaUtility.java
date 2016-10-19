@@ -146,6 +146,8 @@ public class CriteriaUtility {
         return Restrictions.gt(whereField.getName(), whereField.getOperand().extract(transformer));
       case LIKE:
         return Restrictions.like(whereField.getName(), whereField.getOperand().extract(transformer));
+      case UNLIKE:
+        return Restrictions.not(Restrictions.like(whereField.getName(), whereField.getOperand().extract(transformer)));
       case IN:
         return Restrictions.in(whereField.getName(), (Object[])whereField.getOperand().extract(transformer));
       default:
