@@ -46,11 +46,17 @@ import org.springframework.context.event.ContextClosedEvent;
 public class SpringSchedulerFactory extends StdSchedulerFactory implements ApplicationContextAware, ApplicationListener<ContextClosedEvent> {
 
   private SpringJobFactory jobFactory;
+  private boolean startInStandby = false;
 
   public SpringSchedulerFactory (Properties properties)
     throws SchedulerException {
 
     super(properties);
+  }
+
+  public void setStartInStandby (boolean startInStandby) {
+
+    this.startInStandby = startInStandby;
   }
 
   @Override
@@ -69,8 +75,7 @@ public class SpringSchedulerFactory extends StdSchedulerFactory implements Appli
       if ((scheduler = super.getScheduler()) != null) {
         scheduler.shutdown(true);
       }
-    }
-    catch (SchedulerException schedulerException) {
+    } catch (SchedulerException schedulerException) {
       LoggerManager.getLogger(SpringSchedulerFactory.class).error(schedulerException);
     }
   }
@@ -82,6 +87,12 @@ public class SpringSchedulerFactory extends StdSchedulerFactory implements Appli
 
     scheduler = super.getScheduler();
     scheduler.setJobFactory(jobFactory);
+
+    if (startInStandby) {
+      scheduler.standby();
+    } else {
+      scheduler.start();
+    }
 
     return scheduler;
   }
