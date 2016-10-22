@@ -49,29 +49,40 @@ public class PasswordUtility {
   private static final int DESIRED_KEY_LENGTH = 256;
 
   public static String encrypt (String password)
-    throws IOException, NoSuchAlgorithmException, InvalidKeySpecException {
+    throws IOException, NoSuchAlgorithmException, InvalidKeySpecException, InvalidPasswordException {
 
-    byte[] saltBytes = SecureRandom.getInstance("SHA1PRNG").generateSeed(SALT_LENGTH);
-    byte[] hashedPasswordBytes = hash(saltBytes, password);
-    byte[] compiledPasswordBytes = new byte[saltBytes.length + hashedPasswordBytes.length];
+    if ((password == null) || password.isEmpty()) {
+      throw new InvalidPasswordException("Passwords must not be empty");
+    } else {
 
-    System.arraycopy(saltBytes, 0, compiledPasswordBytes, 0, saltBytes.length);
-    System.arraycopy(hashedPasswordBytes, 0, compiledPasswordBytes, saltBytes.length, hashedPasswordBytes.length);
+      byte[] saltBytes = SecureRandom.getInstance("SHA1PRNG").generateSeed(SALT_LENGTH);
+      byte[] hashedPasswordBytes = hash(saltBytes, password);
+      byte[] compiledPasswordBytes = new byte[saltBytes.length + hashedPasswordBytes.length];
 
-    return Base64Codec.encode(compiledPasswordBytes);
+      System.arraycopy(saltBytes, 0, compiledPasswordBytes, 0, saltBytes.length);
+      System.arraycopy(hashedPasswordBytes, 0, compiledPasswordBytes, saltBytes.length, hashedPasswordBytes.length);
+
+      return Base64Codec.encode(compiledPasswordBytes);
+    }
   }
 
   public static boolean match (String password, String stored)
     throws IOException, NoSuchAlgorithmException, InvalidKeySpecException {
 
-    byte[] compiledPasswordBytes = Base64Codec.decode(stored);
-    byte[] salBytes = new byte[SALT_LENGTH];
-    byte[] hashedPasswordBytes = new byte[compiledPasswordBytes.length - SALT_LENGTH];
+    if ((password == null) || password.isEmpty() || (stored == null) || stored.isEmpty()) {
 
-    System.arraycopy(compiledPasswordBytes, 0, salBytes, 0, SALT_LENGTH);
-    System.arraycopy(compiledPasswordBytes, SALT_LENGTH, hashedPasswordBytes, 0, compiledPasswordBytes.length - SALT_LENGTH);
+      return false;
+    } else {
 
-    return Arrays.equals(hash(salBytes, password), hashedPasswordBytes);
+      byte[] compiledPasswordBytes = Base64Codec.decode(stored);
+      byte[] salBytes = new byte[SALT_LENGTH];
+      byte[] hashedPasswordBytes = new byte[compiledPasswordBytes.length - SALT_LENGTH];
+
+      System.arraycopy(compiledPasswordBytes, 0, salBytes, 0, SALT_LENGTH);
+      System.arraycopy(compiledPasswordBytes, SALT_LENGTH, hashedPasswordBytes, 0, compiledPasswordBytes.length - SALT_LENGTH);
+
+      return Arrays.equals(hash(salBytes, password), hashedPasswordBytes);
+    }
   }
 
   private static byte[] hash (byte[] salt, String password)
