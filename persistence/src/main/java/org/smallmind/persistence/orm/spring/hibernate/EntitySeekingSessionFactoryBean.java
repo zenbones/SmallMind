@@ -32,7 +32,7 @@
  */
 package org.smallmind.persistence.orm.spring.hibernate;
 
-import org.springframework.orm.hibernate4.LocalSessionFactoryBean;
+import org.springframework.orm.hibernate5.LocalSessionFactoryBean;
 
 public class EntitySeekingSessionFactoryBean extends LocalSessionFactoryBean {
 
