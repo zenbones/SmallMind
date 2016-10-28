@@ -35,6 +35,7 @@ package org.smallmind.persistence.orm.hibernate;
 import java.util.LinkedList;
 import org.hibernate.Criteria;
 import org.hibernate.criterion.Criterion;
+import org.hibernate.criterion.DetachedCriteria;
 import org.hibernate.criterion.Order;
 import org.hibernate.criterion.Restrictions;
 import org.smallmind.nutsnbolts.lang.UnknownSwitchCaseException;
@@ -61,6 +62,18 @@ public class CriteriaUtility {
     });
   }
 
+  public static DetachedCriteria apply (DetachedCriteria detachedCriteria, Where where) {
+
+    return apply(detachedCriteria, where, new WhereOperandTransformer() {
+
+      @Override
+      public Class<? extends Enum> getEnumType (String type) {
+
+        throw new ORMOperationException("Translation of enum(%s) requires an implementation of a WhereOperandTransformer", type);
+      }
+    });
+  }
+
   public static Criteria apply (Criteria criteria, Where where, WhereOperandTransformer transformer) {
 
     if (where != null) {
@@ -73,6 +86,20 @@ public class CriteriaUtility {
     }
 
     return criteria;
+  }
+
+  public static DetachedCriteria apply (DetachedCriteria detachedCriteria, Where where, WhereOperandTransformer transformer) {
+
+    if (where != null) {
+
+      Criterion walkedCriterion;
+
+      if ((walkedCriterion = walkConjunction(where.getRootConjunction(), transformer)) != null) {
+        return detachedCriteria.add(walkedCriterion);
+      }
+    }
+
+    return detachedCriteria;
   }
 
   private static Criterion walkConjunction (WhereConjunction whereConjunction, WhereOperandTransformer transformer) {
