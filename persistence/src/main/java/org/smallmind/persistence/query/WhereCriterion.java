@@ -36,5 +36,5 @@ import java.io.Serializable;
 
 public interface WhereCriterion extends Serializable {
 
-  public abstract CriterionType getCriterionType ();
+  CriterionType getCriterionType ();
 }

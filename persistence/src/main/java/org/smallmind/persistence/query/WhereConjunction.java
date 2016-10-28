@@ -33,6 +33,7 @@
 package org.smallmind.persistence.query;
 
 import java.util.Arrays;
+import java.util.Iterator;
 import java.util.List;
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
@@ -52,7 +53,15 @@ public abstract class WhereConjunction implements WhereCriterion {
 
   public WhereConjunction (WhereCriterion... criteria) {
 
+    Iterator<WhereCriterion> criterionIter;
+
     criterionList = Arrays.asList(criteria);
+    criterionIter = criterionList.iterator();
+    while (criterionIter.hasNext()) {
+      if (criterionIter.next() == null) {
+        criterionIter.remove();
+      }
+    }
   }
 
   public abstract ConjunctionType getConjunctionType ();
