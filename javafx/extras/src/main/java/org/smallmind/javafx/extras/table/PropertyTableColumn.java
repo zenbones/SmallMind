@@ -38,8 +38,9 @@ import javafx.scene.control.TableColumn;
 import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.control.cell.TextFieldTableCell;
 import javafx.util.Callback;
+import javafx.util.StringConverter;
 
-public class PropertyTableColumn<S, T> extends TableColumn<S, T> {
+public class PropertyTableColumn<S, T> extends SelectableTableColumn<S, T> {
 
   private String propertyName;
 
@@ -48,7 +49,7 @@ public class PropertyTableColumn<S, T> extends TableColumn<S, T> {
     this(text, propertyName, null, Pos.CENTER_LEFT);
   }
 
-  public PropertyTableColumn (String text, String propertyName, CellTextConverter<T> converter) {
+  public PropertyTableColumn (String text, String propertyName, StringConverter<T> converter) {
 
     this(text, propertyName, converter, Pos.CENTER_LEFT);
   }
@@ -58,7 +59,7 @@ public class PropertyTableColumn<S, T> extends TableColumn<S, T> {
     this(text, propertyName, null, position);
   }
 
-  public PropertyTableColumn (String text, String propertyName, final CellTextConverter<T> converter, final Pos position) {
+  public PropertyTableColumn (String text, String propertyName, final StringConverter<T> converter, final Pos position) {
 
     super(text);
 
@@ -75,7 +76,7 @@ public class PropertyTableColumn<S, T> extends TableColumn<S, T> {
             super.updateItem(item, empty);
 
             if ((converter != null) && (!(empty || isEditing()))) {
-              setText(converter.getText(item));
+              setText(converter.toString(item));
             }
           }
         };

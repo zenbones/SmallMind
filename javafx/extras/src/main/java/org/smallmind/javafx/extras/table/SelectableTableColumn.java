@@ -32,13 +32,46 @@
  */
 package org.smallmind.javafx.extras.table;
 
-import org.smallmind.nutsnbolts.util.StringUtility;
+import javafx.scene.control.TableColumn;
+import org.smallmind.javafx.extras.Selectable;
+import org.smallmind.javafx.extras.SelectionHint;
 
-public class EnumCellTextConverter<E extends Enum<E>> implements CellTextConverter<E> {
+public class SelectableTableColumn<S, T> extends TableColumn<S, T> implements Selectable {
+
+  private SelectionHint selectionHint;
+
+  public SelectableTableColumn () {
+
+    this(SelectionHint.ON);
+  }
+
+  public SelectableTableColumn (String text) {
+
+    this(text, SelectionHint.ON);
+  }
+
+  public SelectableTableColumn (SelectionHint selectionHint) {
+
+    this.selectionHint = selectionHint;
+  }
+
+  public SelectableTableColumn (String text, SelectionHint selectionHint) {
+
+    super(text);
+
+    this.selectionHint = selectionHint;
+  }
 
   @Override
-  public String getText (E item) {
+  public SelectionHint getSelectionHint () {
 
-    return StringUtility.toDisplayCase(item.name(), '_');
+    return selectionHint;
+  }
+
+  public TableColumn<S, T> setSelectionHint (SelectionHint selectionHint) {
+
+    this.selectionHint = selectionHint;
+
+    return this;
   }
 }

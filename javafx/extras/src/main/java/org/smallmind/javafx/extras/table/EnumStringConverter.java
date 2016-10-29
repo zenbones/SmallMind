@@ -32,32 +32,27 @@
  */
 package org.smallmind.javafx.extras.table;
 
-import java.math.RoundingMode;
-import java.text.NumberFormat;
-import java.util.Locale;
+import javafx.util.StringConverter;
+import org.smallmind.nutsnbolts.util.StringUtility;
 
-public class NumberFormatCellTextConverter<N extends Number> implements CellTextConverter<N> {
+public class EnumStringConverter<E extends Enum<E>> extends StringConverter<E> {
 
-  private RoundingMode roundingMode;
-  private int minimumFractionDigits;
-  private int maximumFractionDigits;
+  private Class<E> enumClass;
 
-  public NumberFormatCellTextConverter (int minimumFractionDigits, int maximumFractionDigits, RoundingMode roundingMode) {
+  public EnumStringConverter (Class<E> enumClass) {
 
-    this.minimumFractionDigits = minimumFractionDigits;
-    this.maximumFractionDigits = maximumFractionDigits;
-    this.roundingMode = roundingMode;
+    this.enumClass = enumClass;
   }
 
   @Override
-  public String getText (N item) {
+  public String toString (E item) {
 
-    NumberFormat formatter = NumberFormat.getInstance(Locale.getDefault());
+    return StringUtility.toDisplayCase(item.name(), '_');
+  }
 
-    formatter.setMinimumFractionDigits(minimumFractionDigits);
-    formatter.setMaximumFractionDigits(maximumFractionDigits);
-    formatter.setRoundingMode(roundingMode);
+  @Override
+  public E fromString (String string) {
 
-    return formatter.format(item);
+    return Enum.valueOf(enumClass, string);
   }
 }
