@@ -43,7 +43,7 @@ public class ZonedDateTimeXmlAdapter extends XmlAdapter<String, ZonedDateTime> {
   @Override
   public ZonedDateTime unmarshal (String value) {
 
-    return (value == null) ? null : (ZonedDateTime)ISO_FORMATTER.parse(value);
+    return (value == null) ? null : ZonedDateTime.from(ISO_FORMATTER.parse(value));
   }
 
   @Override
