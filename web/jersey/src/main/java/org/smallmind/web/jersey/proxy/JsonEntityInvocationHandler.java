@@ -48,18 +48,18 @@ public class JsonEntityInvocationHandler implements InvocationHandler {
   private final ConcurrentHashMap<Method, JsonArgument[]> jsonArgumentMap = new ConcurrentHashMap<>();
   private final Level level;
   private final JsonTarget target;
-  private final JsonHeader[] headers;
+  private final JsonHeaderInjector[] headerInjectors;
   private final String serviceName;
   private final String basePath;
   private final int serviceVersion;
 
-  public JsonEntityInvocationHandler (JsonTarget target, String versionPrefix, int serviceVersion, String serviceName, Level level, JsonHeader... headers) {
+  public JsonEntityInvocationHandler (JsonTarget target, String versionPrefix, int serviceVersion, String serviceName, Level level, JsonHeaderInjector... headerInjectors) {
 
     this.target = target;
     this.serviceVersion = serviceVersion;
     this.serviceName = serviceName;
     this.level = level;
-    this.headers = headers;
+    this.headerInjectors = headerInjectors;
 
     basePath = "/" + versionPrefix + serviceVersion + '/' + serviceName;
   }
@@ -86,9 +86,14 @@ public class JsonEntityInvocationHandler implements InvocationHandler {
     }
 
     rectifiedTarget = target.path(basePath + ((pathAnnotation != null) ? pathAnnotation.value() : '/' + method.getName()));
-    if (headers != null) {
-      for (JsonHeader header : headers) {
-        rectifiedTarget.header(header.getKey(), header.getValue());
+    if (headerInjectors != null) {
+      for (JsonHeaderInjector headerInjector : headerInjectors) {
+
+        JsonHeader header;
+
+        if ((header = headerInjector.injectOnInvoke(proxy, method, args)) != null) {
+          rectifiedTarget.header(header.getKey(), header.getValue());
+        }
       }
     }
 

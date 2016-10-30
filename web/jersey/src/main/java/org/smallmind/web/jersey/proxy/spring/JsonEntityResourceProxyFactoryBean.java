@@ -35,7 +35,7 @@ package org.smallmind.web.jersey.proxy.spring;
 import java.lang.reflect.Proxy;
 import org.smallmind.scribe.pen.Level;
 import org.smallmind.web.jersey.proxy.JsonEntityResourceProxyFactory;
-import org.smallmind.web.jersey.proxy.JsonHeader;
+import org.smallmind.web.jersey.proxy.JsonHeaderInjector;
 import org.smallmind.web.jersey.proxy.JsonTarget;
 import org.springframework.beans.factory.FactoryBean;
 import org.springframework.beans.factory.InitializingBean;
@@ -44,7 +44,7 @@ public class JsonEntityResourceProxyFactoryBean implements FactoryBean<Proxy>, I
 
   private Proxy proxy;
   private JsonTarget target;
-  private JsonHeader[] headers;
+  private JsonHeaderInjector[] headerInjectors;
   private Level level = Level.OFF;
   private Class<?> resourceInterface;
   private String versionPrefix = "v";
@@ -56,9 +56,9 @@ public class JsonEntityResourceProxyFactoryBean implements FactoryBean<Proxy>, I
     this.target = target;
   }
 
-  public void setHeaders (JsonHeader[] headers) {
+  public void setHeaderInjectors (JsonHeaderInjector[] headerInjectors) {
 
-    this.headers = headers;
+    this.headerInjectors = headerInjectors;
   }
 
   public void setResourceInterface (Class<?> resourceInterface) {
@@ -89,7 +89,7 @@ public class JsonEntityResourceProxyFactoryBean implements FactoryBean<Proxy>, I
   @Override
   public void afterPropertiesSet () throws Exception {
 
-    proxy = JsonEntityResourceProxyFactory.generateProxy(target, versionPrefix, serviceVersion, serviceName, resourceInterface, level, headers);
+    proxy = JsonEntityResourceProxyFactory.generateProxy(target, versionPrefix, serviceVersion, serviceName, resourceInterface, level, headerInjectors);
   }
 
   @Override

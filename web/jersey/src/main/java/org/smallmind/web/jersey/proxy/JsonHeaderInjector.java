@@ -32,22 +32,9 @@
  */
 package org.smallmind.web.jersey.proxy;
 
-import java.lang.reflect.Proxy;
-import org.smallmind.scribe.pen.Level;
+import java.lang.reflect.Method;
 
-public class JsonEntityResourceProxyFactory {
+public interface JsonHeaderInjector {
 
-  public static Proxy generateProxy (JsonTarget target, String versionPrefix, int serviceVersion, String serviceName, Class<?> resourceInterface, JsonHeaderInjector... headerInjectors) {
-
-    return generateProxy(target, versionPrefix, serviceVersion, serviceName, resourceInterface, Level.OFF, headerInjectors);
-  }
-
-  public static Proxy generateProxy (JsonTarget target, String versionPrefix, int serviceVersion, String serviceName, Class<?> resourceInterface, Level level, JsonHeaderInjector... headerInjectors) {
-
-    Proxy proxy = (Proxy)Proxy.newProxyInstance(resourceInterface.getClassLoader(), new Class[] {resourceInterface}, new JsonEntityInvocationHandler(target, versionPrefix, serviceVersion, serviceName, level, headerInjectors));
-
-    JsonEntityResourceProxyManager.register(resourceInterface, proxy);
-
-    return proxy;
-  }
+  JsonHeader injectOnInvoke (Object proxy, Method method, Object[] args);
 }
