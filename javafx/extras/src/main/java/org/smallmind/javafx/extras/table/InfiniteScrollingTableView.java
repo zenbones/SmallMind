@@ -32,7 +32,9 @@
  */
 package org.smallmind.javafx.extras.table;
 
-import java.util.concurrent.atomic.AtomicReference;
+import java.util.concurrent.atomic.AtomicBoolean;
+import javafx.beans.value.ChangeListener;
+import javafx.beans.value.ObservableValue;
 import javafx.collections.ObservableList;
 import javafx.event.EventHandler;
 import javafx.geometry.Orientation;
@@ -45,27 +47,32 @@ public class InfiniteScrollingTableView<S> extends TableView<S> {
 
   public InfiniteScrollingTableView () {
 
-    // TODO: Should be WeakEventHandler
-    setOnScroll(new EventHandler<ScrollEvent>() {
+    addEventFilter(ScrollEvent.ANY, new EventHandler<ScrollEvent>() {
 
-      private AtomicReference<ScrollBar> scrollBarRef = new AtomicReference<>();
+      private AtomicBoolean initialized = new AtomicBoolean(false);
 
       @Override
-      public void handle (ScrollEvent scrollEvent) {
+      public void handle (ScrollEvent event) {
 
-        if (scrollEvent.getSource() != null) {
-          if (scrollBarRef.get() == null) {
-            scrollBarRef.set(getScrollbar(InfiniteScrollingTableView.this));
-          }
-          if (scrollEvent.getSource().equals(scrollBarRef.get())) {
+        if (initialized.compareAndSet(false, true)) {
 
-            if (scrollBarRef.get().getValue() == scrollBarRef.get().getMax()) {
+          final ScrollBar scrollBar;
 
-              int currentSize = getItems().size();
+          if ((scrollBar = getScrollbar(InfiniteScrollingTableView.this)) != null) {
+            scrollBar.valueProperty().addListener(new ChangeListener<Number>() {
 
-              fireEvent(new InfiniteScrollEvent<>(InfiniteScrollEvent.ITEMS_REQUIRED, InfiniteScrollingTableView.this));
-              scrollBarRef.get().setValue(currentSize / getItems().size() * scrollBarRef.get().getMax());
-            }
+              @Override
+              public void changed (ObservableValue<? extends Number> observable, Number oldValue, Number newValue) {
+
+                if (newValue.doubleValue() == scrollBar.getMax()) {
+
+                  int currentSize = getItems().size();
+
+                  fireEvent(new InfiniteScrollEvent<>(InfiniteScrollEvent.ITEMS_REQUIRED, InfiniteScrollingTableView.this));
+                  scrollBar.setValue(currentSize / ((double)getItems().size()) * scrollBar.getMax());
+                }
+              }
+            });
           }
         }
       }
