@@ -313,6 +313,11 @@
         <version>1.1</version>
       </dependency>
       <dependency>
+        <groupId>org.jfxtras</groupId>
+        <artifactId>jfxtras-labs</artifactId>
+        <version>8.0-r5</version>
+      </dependency>
+      <dependency>
         <groupId>tanukisoft</groupId>
         <artifactId>wrapper</artifactId>
         <version>3.5.30</version>

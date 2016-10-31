@@ -34,10 +34,8 @@ package org.smallmind.javafx.extras.dialog;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
-import javafx.beans.property.ObjectProperty;
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
-import javafx.event.WeakEventHandler;
 import javafx.geometry.Insets;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
@@ -46,7 +44,6 @@ import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.text.Text;
 import javafx.stage.WindowEvent;
-import org.smallmind.javafx.extras.EventHandlerProperty;
 import org.smallmind.javafx.extras.layout.InsetsPane;
 import org.smallmind.javafx.extras.layout.ParaboxPane;
 import org.smallmind.nutsnbolts.layout.Alignment;
@@ -55,15 +52,6 @@ import org.smallmind.nutsnbolts.layout.Constraint;
 public class JavaErrorDialog extends AbstractDialog {
 
   private static final Image BUG_IMAGE = new Image(Thread.currentThread().getContextClassLoader().getResourceAsStream("org/smallmind/javafx/extras/dialog/dialog_bug.png"));
-
-  private final EventHandlerProperty<ErrorEvent> onErrorProperty = new EventHandlerProperty<ErrorEvent>() {
-
-    @Override
-    public void replaceEventHandler (EventHandler<ErrorEvent> eventHandler) {
-
-      setEventHandler(ErrorEvent.ERROR_OCCURRED, new WeakEventHandler<>(eventHandler));
-    }
-  };
 
   public JavaErrorDialog (final Object source, final Exception exception) {
 
@@ -99,6 +87,7 @@ public class JavaErrorDialog extends AbstractDialog {
 
     continueButton = new Button("Continue");
     continueButton.setDefaultButton(true);
+    // TODO: Should be WeakEventHandler
     continueButton.setOnAction(new EventHandler<ActionEvent>() {
 
       @Override
@@ -111,6 +100,7 @@ public class JavaErrorDialog extends AbstractDialog {
     root.setHorizontalBox(root.parallelBox(Alignment.TRAILING).add(root.serialBox().add(exceptionImageView).add(warningScroll, Constraint.stretch())).add(continueButton));
     root.setVerticalBox(root.serialBox().add(root.parallelBox().add(exceptionImageView).add(warningScroll, Constraint.stretch())).add(continueButton));
 
+    // TODO: Should be WeakEventHandler
     setOnHiding(new EventHandler<WindowEvent>() {
 
       @Override
@@ -130,20 +120,5 @@ public class JavaErrorDialog extends AbstractDialog {
     errorDialog.toFront();
 
     return errorDialog;
-  }
-
-  public EventHandler<ErrorEvent> getOnError () {
-
-    return onErrorProperty.get();
-  }
-
-  public void setOnError (EventHandler<ErrorEvent> eventHandler) {
-
-    onErrorProperty.set(eventHandler);
-  }
-
-  public ObjectProperty<EventHandler<ErrorEvent>> onErrorProperty () {
-
-    return onErrorProperty;
   }
 }

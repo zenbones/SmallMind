@@ -45,7 +45,7 @@ import org.smallmind.nutsnbolts.lang.UnknownSwitchCaseException;
 import org.smallmind.nutsnbolts.util.AlphaNumericComparator;
 import org.smallmind.nutsnbolts.util.AlphaNumericConverter;
 
-public class ColumnSelectionContextMenu extends ContextMenu {
+public class TableColumnSelectorContextMenu extends ContextMenu {
 
   private static final AlphaNumericComparator<MenuItem> MENU_ITEM_COMPARATOR = new AlphaNumericComparator<>(new AlphaNumericConverter<MenuItem>() {
 
@@ -56,7 +56,7 @@ public class ColumnSelectionContextMenu extends ContextMenu {
     }
   });
 
-  public ColumnSelectionContextMenu (TableColumn... columns) {
+  public TableColumnSelectorContextMenu (TableColumn... columns) {
 
     super(constructMenuItems(columns));
 

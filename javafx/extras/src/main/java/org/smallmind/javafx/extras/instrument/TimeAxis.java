@@ -32,6 +32,11 @@
  */
 package org.smallmind.javafx.extras.instrument;
 
+import java.time.Instant;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.time.ZoneOffset;
+import java.time.format.DateTimeFormatter;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.Executors;
@@ -43,13 +48,11 @@ import java.util.concurrent.atomic.AtomicLong;
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.SimpleBooleanProperty;
 import javafx.scene.chart.ValueAxis;
-import org.joda.time.DateTime;
-import org.joda.time.format.DateTimeFormat;
-import org.joda.time.format.DateTimeFormatter;
 
 public class TimeAxis extends ValueAxis<Long> {
 
-  private static final DateTimeFormatter DATE_TIME_FORMATTER = DateTimeFormat.forPattern("HH:mm:ss");
+  private static final ZoneOffset ZONE_OFFSET;
+  private static final DateTimeFormatter DATE_TIME_FORMATTER = DateTimeFormatter.ofPattern("HH:mm:ss");
   private static final ScheduledExecutorService SCHEDULED_EXECUTOR = Executors.newScheduledThreadPool(2, new ThreadFactory() {
 
     @Override
@@ -62,10 +65,17 @@ public class TimeAxis extends ValueAxis<Long> {
       return thread;
     }
   });
-
   private final ScheduledFuture<?> future;
   private final AtomicLong millisecondSpan;
   private final BooleanProperty pausedProperty = new SimpleBooleanProperty(false);
+
+  static {
+
+    Instant instant = Instant.now();
+    ZoneId systemZone = ZoneId.systemDefault();
+
+    ZONE_OFFSET = systemZone.getRules().getOffset(instant);
+  }
 
   public TimeAxis (long spanInMilliseconds) {
 
@@ -127,26 +137,25 @@ public class TimeAxis extends ValueAxis<Long> {
   @Override
   protected Object getRange () {
 
-    return new EndPoints<Long>((long)getLowerBound(), (long)getUpperBound());
+    return new EndPoints<>((long)getLowerBound(), (long)getUpperBound());
   }
 
   @Override
   protected List<Long> calculateTickValues (double length, Object range) {
 
     LinkedList<Long> ticks = new LinkedList<Long>();
-    DateTime origin = new DateTime(((EndPoints<Long>)range).getLow()).withMillisOfSecond(0);
-    DateTime bound = new DateTime(((EndPoints<Long>)range).getHigh());
+    LocalDateTime origin = LocalDateTime.ofInstant(Instant.ofEpochMilli(((EndPoints<Long>)range).getLow()), ZoneId.systemDefault());
+    LocalDateTime bound = LocalDateTime.ofInstant(Instant.ofEpochMilli(((EndPoints<Long>)range).getHigh()), ZoneId.systemDefault());
     int majorInterval;
 
-    if ((majorInterval = (origin.getSecondOfMinute() / 15) + 1) < 4) {
-      origin = origin.withSecondOfMinute(majorInterval * 15);
-    }
-    else {
-      origin = origin.plusMinutes(1).withSecondOfMinute(0);
+    if ((majorInterval = (origin.getSecond() / 15) + 1) < 4) {
+      origin = origin.withSecond(majorInterval * 15);
+    } else {
+      origin = origin.plusMinutes(1).withSecond(0);
     }
 
     while (origin.isBefore(bound)) {
-      ticks.add(origin.getMillis());
+      ticks.add(origin.atZone(ZoneId.systemDefault()).toInstant().toEpochMilli());
       origin = origin.plusSeconds(15);
     }
 
@@ -158,20 +167,19 @@ public class TimeAxis extends ValueAxis<Long> {
 
     LinkedList<Long> ticks = new LinkedList<Long>();
     Object range = getRange();
-    DateTime origin = new DateTime(((EndPoints<Long>)range).getLow()).withMillisOfSecond(0);
-    DateTime bound = new DateTime(((EndPoints<Long>)range).getHigh());
+    LocalDateTime origin = LocalDateTime.ofInstant(Instant.ofEpochMilli(((EndPoints<Long>)range).getLow()), ZoneId.systemDefault());
+    LocalDateTime bound = LocalDateTime.ofInstant(Instant.ofEpochMilli(((EndPoints<Long>)range).getHigh()), ZoneId.systemDefault());
     int minorInterval;
 
-    if ((minorInterval = (origin.getSecondOfMinute() / 5) + 1) < 12) {
-      origin = origin.withSecondOfMinute(minorInterval * 5);
-    }
-    else {
-      origin = origin.plusMinutes(1).withSecondOfMinute(0);
+    if ((minorInterval = (origin.getSecond() / 5) + 1) < 12) {
+      origin = origin.withSecond(minorInterval * 5);
+    } else {
+      origin = origin.plusMinutes(1).withSecond(0);
     }
 
     while (origin.isBefore(bound)) {
-      if ((origin.getSecondOfMinute() % 15) != 0) {
-        ticks.add(origin.getMillis());
+      if ((origin.getSecond() % 15) != 0) {
+        ticks.add(origin.atZone(ZoneId.systemDefault()).toInstant().toEpochMilli());
       }
 
       origin = origin.plusSeconds(5);
@@ -183,7 +191,7 @@ public class TimeAxis extends ValueAxis<Long> {
   @Override
   protected String getTickMarkLabel (Long milliseconds) {
 
-    return DATE_TIME_FORMATTER.print(new DateTime(milliseconds));
+    return DATE_TIME_FORMATTER.format(LocalDateTime.ofEpochSecond(milliseconds, 0, ZONE_OFFSET));
   }
 
   public void stop () {

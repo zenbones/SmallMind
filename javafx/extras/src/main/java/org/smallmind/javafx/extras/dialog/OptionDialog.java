@@ -32,9 +32,8 @@
  */
 package org.smallmind.javafx.extras.dialog;
 
-import javafx.beans.property.ObjectProperty;
+import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
-import javafx.event.WeakEventHandler;
 import javafx.geometry.Insets;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
@@ -43,7 +42,6 @@ import javafx.scene.control.Separator;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.stage.WindowEvent;
-import org.smallmind.javafx.extras.EventHandlerProperty;
 import org.smallmind.javafx.extras.ImageNotFoundException;
 import org.smallmind.javafx.extras.layout.ParaboxPane;
 import org.smallmind.nutsnbolts.layout.Constraint;
@@ -58,14 +56,6 @@ public class OptionDialog extends AbstractDialog {
 
   private final OptionPane optionPane;
   private final ParaboxPane buttonPane;
-  private final EventHandlerProperty<DialogEvent> onDialogCompletedProperty = new EventHandlerProperty<DialogEvent>() {
-
-    @Override
-    public void replaceEventHandler (EventHandler<DialogEvent> eventHandler) {
-
-      setEventHandler(DialogEvent.DIALOG_COMPLETED, new WeakEventHandler<>(eventHandler));
-    }
-  };
 
   private DialogState dialogState;
 
@@ -127,6 +117,7 @@ public class OptionDialog extends AbstractDialog {
       optionVerticalBox.add(optionPane);
     }
 
+    // TODO: Should be WeakEventHandler
     onHidingProperty().set(new EventHandler<WindowEvent>() {
 
       @Override
@@ -193,7 +184,8 @@ public class OptionDialog extends AbstractDialog {
 
     button = new Button(buttonName);
     button.setDefaultButton(defaultAction);
-    button.setOnAction(new EventHandler<javafx.event.ActionEvent>() {
+    // TODO: Should be WeakEventHandler
+    button.setOnAction(new EventHandler<ActionEvent>() {
 
       @Override
       public void handle (javafx.event.ActionEvent actionEvent) {
@@ -205,21 +197,6 @@ public class OptionDialog extends AbstractDialog {
 
     buttonPane.getHorizontalBox().add(button);
     buttonPane.getVerticalBox().add(button, Constraint.stretch());
-  }
-
-  public EventHandler<DialogEvent> getOnDialogCompleted () {
-
-    return onDialogCompletedProperty.get();
-  }
-
-  public void setOnDialogCompleted (EventHandler<DialogEvent> eventHandler) {
-
-    onDialogCompletedProperty.set(eventHandler);
-  }
-
-  public ObjectProperty<EventHandler<DialogEvent>> onDialogCompletedProperty () {
-
-    return onDialogCompletedProperty;
   }
 
   public synchronized DialogState getDialogState () {
