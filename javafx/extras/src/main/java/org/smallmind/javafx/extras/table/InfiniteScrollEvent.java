@@ -37,7 +37,7 @@ import javafx.event.EventType;
 
 public class InfiniteScrollEvent<S> extends Event {
 
-  public static final EventType<InfiniteScrollEvent> ANY = new EventType<>(Event.ANY);
+  public static final EventType<InfiniteScrollEvent> ANY = new EventType<>(Event.ANY, "INFINITE_SCROLL_ANY");
   public static final EventType<InfiniteScrollEvent> ITEMS_REQUIRED = new EventType<>(InfiniteScrollEvent.ANY, "ITEMS_REQUIRED");
 
   private final InfiniteScrollingTableView<S> source;
