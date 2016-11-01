@@ -33,50 +33,28 @@
 package org.smallmind.javafx.extras.table;
 
 import java.util.concurrent.atomic.AtomicBoolean;
+import javafx.application.Platform;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
 import javafx.collections.ObservableList;
+import javafx.event.Event;
 import javafx.event.EventHandler;
 import javafx.geometry.Orientation;
 import javafx.scene.Node;
 import javafx.scene.control.ScrollBar;
 import javafx.scene.control.TableView;
+import javafx.scene.input.MouseEvent;
 import javafx.scene.input.ScrollEvent;
+import org.smallmind.javafx.extras.ConsolidatingChangeListener;
 
 public class InfiniteScrollingTableView<S> extends TableView<S> {
 
   public InfiniteScrollingTableView () {
 
-    addEventFilter(ScrollEvent.ANY, new EventHandler<ScrollEvent>() {
+    ScrollEventHandler scrollEventHandler = new ScrollEventHandler();
 
-      private AtomicBoolean initialized = new AtomicBoolean(false);
-
-      @Override
-      public void handle (ScrollEvent event) {
-
-        if (initialized.compareAndSet(false, true)) {
-
-          final ScrollBar scrollBar;
-
-          if ((scrollBar = getScrollbar(InfiniteScrollingTableView.this)) != null) {
-            scrollBar.valueProperty().addListener(new ChangeListener<Number>() {
-
-              @Override
-              public void changed (ObservableValue<? extends Number> observable, Number oldValue, Number newValue) {
-
-                if (newValue.doubleValue() == scrollBar.getMax()) {
-
-                  int currentSize = getItems().size();
-
-                  fireEvent(new InfiniteScrollEvent<>(InfiniteScrollEvent.ITEMS_REQUIRED, InfiniteScrollingTableView.this));
-                  scrollBar.setValue(currentSize / ((double)getItems().size()) * scrollBar.getMax());
-                }
-              }
-            });
-          }
-        }
-      }
-    });
+    addEventFilter(MouseEvent.MOUSE_DRAGGED, scrollEventHandler);
+    addEventFilter(ScrollEvent.ANY, scrollEventHandler);
   }
 
   public InfiniteScrollingTableView (ObservableList<S> items) {
@@ -102,5 +80,43 @@ public class InfiniteScrollingTableView<S> extends TableView<S> {
     }
 
     return null;
+  }
+
+  private class ScrollEventHandler implements EventHandler<Event> {
+
+    private AtomicBoolean initialized = new AtomicBoolean(false);
+
+    @Override
+    public void handle (Event event) {
+
+      if (!initialized.get()) {
+        if (ScrollEvent.ANY.equals(event.getEventType()) || (MouseEvent.MOUSE_DRAGGED.equals(event.getEventType()) && event.getTarget().getClass().getName().startsWith("com.sun.javafx.scene.control.skin.ScrollBarSkin"))) {
+          if (initialized.compareAndSet(false, true)) {
+
+            final ScrollBar scrollBar;
+
+            if ((scrollBar = getScrollbar(InfiniteScrollingTableView.this)) != null) {
+              scrollBar.valueProperty().addListener(new ConsolidatingChangeListener<>(500, new ChangeListener<Number>() {
+
+                @Override
+                public void changed (ObservableValue<? extends Number> observable, Number oldValue, Number newValue) {
+
+                  if (newValue.doubleValue() == scrollBar.getMax()) {
+                    Platform.runLater(new Runnable() {
+
+                      @Override
+                      public void run () {
+
+                        fireEvent(new InfiniteScrollEvent<>(InfiniteScrollEvent.ITEMS_REQUIRED, InfiniteScrollingTableView.this));
+                      }
+                    });
+                  }
+                }
+              }));
+            }
+          }
+        }
+      }
+    }
   }
 }
