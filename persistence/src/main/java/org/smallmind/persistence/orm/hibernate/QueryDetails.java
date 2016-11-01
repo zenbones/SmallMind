@@ -32,7 +32,7 @@
  */
 package org.smallmind.persistence.orm.hibernate;
 
-import org.hibernate.Query;
+import org.hibernate.query.Query;
 
 public abstract class QueryDetails {
 

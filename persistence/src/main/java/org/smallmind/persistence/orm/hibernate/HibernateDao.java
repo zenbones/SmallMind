@@ -37,7 +37,7 @@ import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 import org.hibernate.Criteria;
-import org.hibernate.Query;
+import org.hibernate.query.Query;
 import org.hibernate.SQLQuery;
 import org.hibernate.ScrollMode;
 import org.hibernate.Session;
