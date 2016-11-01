@@ -1,8 +1,9 @@
-package org.smallmind.nutsnbolts.json;
+package org.smallmind.web.jersey.util;
 
-/**
- * Created by david on 11/1/2016.
- */
-public class PageMutation {
+public interface PageMutation<T, U> {
 
+  public abstract Class<U> getMutatedClass ();
+
+  public abstract U mutate (T inType)
+    throws Exception;
 }

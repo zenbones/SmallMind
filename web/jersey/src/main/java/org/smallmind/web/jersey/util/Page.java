@@ -1,4 +1,4 @@
-package org.smallmind.nutsnbolts.json;
+package org.smallmind.web.jersey.util;
 
 import java.lang.reflect.Array;
 import java.util.Arrays;
