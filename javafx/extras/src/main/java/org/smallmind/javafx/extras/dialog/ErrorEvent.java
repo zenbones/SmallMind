@@ -38,7 +38,7 @@ import javafx.event.EventType;
 public class ErrorEvent extends Event {
 
   public static final EventType<ErrorEvent> ANY = new EventType<>(Event.ANY, "ERROR_ANY");
-  public static final EventType<ErrorEvent> ERROR_OCCURRED = new EventType<>(ErrorEvent.ANY, "ERROR_OCCURRED");
+  public static final EventType<ErrorEvent> OCCURRED = new EventType<>(ErrorEvent.ANY, "OCCURRED");
 
   private final Object exceptionSource;
   private final Exception exception;

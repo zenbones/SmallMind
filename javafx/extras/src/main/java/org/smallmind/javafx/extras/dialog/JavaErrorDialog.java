@@ -106,7 +106,7 @@ public class JavaErrorDialog extends AbstractDialog {
       @Override
       public void handle (WindowEvent windowEvent) {
 
-        fireEvent(new ErrorEvent(ErrorEvent.ERROR_OCCURRED, source, exception));
+        fireEvent(new ErrorEvent(ErrorEvent.OCCURRED, source, exception));
       }
     });
   }

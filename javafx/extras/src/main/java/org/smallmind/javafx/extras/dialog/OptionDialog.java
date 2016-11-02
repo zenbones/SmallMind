@@ -128,7 +128,7 @@ public class OptionDialog extends AbstractDialog {
         if ((optionPane != null) && ((validationMessage = optionPane.validateOption(dialogState)) != null)) {
           WarningDialog.showWarningDialog(validationMessage);
         } else {
-          fireEvent(new DialogEvent(DialogEvent.DIALOG_COMPLETED, OptionDialog.this, dialogState));
+          fireEvent(new DialogEvent(DialogEvent.COMPLETED, OptionDialog.this, dialogState));
           hide();
         }
       }
