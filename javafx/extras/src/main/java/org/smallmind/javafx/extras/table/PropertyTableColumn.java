@@ -40,7 +40,7 @@ import javafx.scene.control.cell.TextFieldTableCell;
 import javafx.util.Callback;
 import javafx.util.StringConverter;
 
-public class PropertyTableColumn<S, T> extends SelectableTableColumn<S, T> {
+public class PropertyTableColumn<S, T> extends TableColumn<S, T> {
 
   private String propertyName;
 
