@@ -36,7 +36,7 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import javax.xml.bind.annotation.adapters.XmlAdapter;
 
-public abstract class MapXmlAdapter<M extends Map<K, V>, K, V> extends XmlAdapter<LinkedHashMap<?, ?>, M> {
+public abstract class SimpleMapXmlAdapter<M extends Map<K, V>, K, V> extends XmlAdapter<LinkedHashMap<?, ?>, M> {
 
   public abstract M getEmptyMap ();
 
