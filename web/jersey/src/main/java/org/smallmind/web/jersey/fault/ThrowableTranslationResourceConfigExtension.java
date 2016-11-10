@@ -38,16 +38,22 @@ import org.smallmind.web.jersey.spring.ResourceConfigExtension;
 public class ThrowableTranslationResourceConfigExtension extends ResourceConfigExtension {
 
   private ConcreteExceptionMapper[] mappers;
+  private boolean logUnclassifiedErrors = false;
 
   public void setMappers (ConcreteExceptionMapper[] mappers) {
 
     this.mappers = mappers;
   }
 
+  public void setLogUnclassifiedErrors (boolean logUnclassifiedErrors) {
+
+    this.logUnclassifiedErrors = logUnclassifiedErrors;
+  }
+
   @Override
   public void apply (ResourceConfig resourceConfig) {
 
     resourceConfig.property("jersey.config.server.response.setStatusOverSendError", "true");
-    resourceConfig.register(new ThrowableExceptionMapper(mappers));
+    resourceConfig.register(new ThrowableExceptionMapper(logUnclassifiedErrors, mappers));
   }
 }
