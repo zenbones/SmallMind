@@ -38,14 +38,22 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.ext.ExceptionMapper;
 import javax.ws.rs.ext.Provider;
 import org.smallmind.nutsnbolts.reflection.type.GenericUtility;
+import org.smallmind.scribe.pen.LoggerManager;
 
 @Provider
 public class ThrowableExceptionMapper implements ExceptionMapper<Throwable> {
 
   private ConcreteExceptionMapper[] mappers;
+  private boolean logUnclassifiedErrors;
 
   public ThrowableExceptionMapper (ConcreteExceptionMapper... mappers) {
 
+    this(false, mappers);
+  }
+
+  public ThrowableExceptionMapper (boolean logUnclassifiedErrors, ConcreteExceptionMapper... mappers) {
+
+    this.logUnclassifiedErrors = logUnclassifiedErrors;
     this.mappers = mappers;
   }
 
@@ -72,6 +80,10 @@ public class ThrowableExceptionMapper implements ExceptionMapper<Throwable> {
     if (throwable instanceof WebApplicationException) {
 
       return ((WebApplicationException)throwable).getResponse();
+    }
+
+    if (logUnclassifiedErrors) {
+      LoggerManager.getLogger(ThrowableExceptionMapper.class).error(throwable);
     }
 
     return Response.status(500).type(MediaType.APPLICATION_JSON).entity((throwable instanceof FaultWrappingException) ? ((FaultWrappingException)throwable).getFault() : new Fault(throwable)).build();
