@@ -129,7 +129,7 @@ public class Fault implements Serializable {
     return -1;
   }
 
-  @XmlElementRef(name = "context", required = false)
+  @XmlElement(name = "context")
   public FaultElement getContext () {
 
     return context;
@@ -162,7 +162,7 @@ public class Fault implements Serializable {
     this.message = message;
   }
 
-  @XmlElementRef(name = "cause", required = false)
+  @XmlElement(name = "cause")
   public Fault getCause () {
 
     return cause;
@@ -190,7 +190,7 @@ public class Fault implements Serializable {
     return (information == null) ? null : JsonCodec.convert(information, clazz);
   }
 
-  @XmlElementRef(name = "information")
+  @XmlElement(name = "information")
   @XmlAnyElement
   public Object getInformation () {
 
@@ -204,7 +204,7 @@ public class Fault implements Serializable {
     return this;
   }
 
-  @XmlElementRef(name = "native", required = false)
+  @XmlElement(name = "native")
   public NativeObject getNativeObject () {
 
     return nativeObject;

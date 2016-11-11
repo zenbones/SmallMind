@@ -39,6 +39,7 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
+import jfxtras.util.PlatformUtil;
 import org.smallmind.scribe.pen.LoggerManager;
 
 public class ConsolidatingChangeListener<T> implements ChangeListener<T>, Comparable<ConsolidatingChangeListener<?>> {
@@ -108,7 +109,18 @@ public class ConsolidatingChangeListener<T> implements ChangeListener<T>, Compar
             while ((entry = expiredKeyMap.pollFirstEntry()) != null) {
               synchronized (entry.getKey().getListener()) {
                 if (entry.getKey().getGeneration() == entry.getKey().getListener().getGeneration()) {
-                  entry.getKey().getListener().getInnerChangeListener().changed(entry.getValue().getObservableValue(), entry.getValue().getInitialValue(), entry.getValue().getCurrentValue());
+
+                  final ConsolidatingKey key = entry.getKey();
+                  final LooseChange<?> change = entry.getValue();
+
+                  PlatformUtil.runAndWait(new Runnable() {
+
+                    @Override
+                    public void run () {
+
+                      key.getListener().getInnerChangeListener().changed(change.getObservableValue(), change.getInitialValue(), change.getCurrentValue());
+                    }
+                  });
                 }
               }
             }

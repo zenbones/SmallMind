@@ -39,6 +39,7 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import javafx.event.Event;
 import javafx.event.EventHandler;
+import jfxtras.util.PlatformUtil;
 import org.smallmind.scribe.pen.LoggerManager;
 
 public class ConsolidatingEventHandler<T extends Event> implements EventHandler<T>, Comparable<ConsolidatingEventHandler<?>> {
@@ -108,7 +109,18 @@ public class ConsolidatingEventHandler<T extends Event> implements EventHandler<
             while ((entry = expiredKeyMap.pollFirstEntry()) != null) {
               synchronized (entry.getKey().getEventHandler()) {
                 if (entry.getKey().getGeneration() == entry.getKey().getEventHandler().getGeneration()) {
-                  entry.getKey().getEventHandler().getInnerEventHandler().handle(entry.getValue());
+
+                  final ConsolidatingKey key = entry.getKey();
+                  final Event event = entry.getValue();
+
+                  PlatformUtil.runAndWait(new Runnable() {
+
+                    @Override
+                    public void run () {
+
+                      key.getEventHandler().getInnerEventHandler().handle(event);
+                    }
+                  });
                 }
               }
             }
