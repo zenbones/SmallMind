@@ -53,7 +53,7 @@ public class JavaErrorDialog extends AbstractDialog {
 
   private static final Image BUG_IMAGE = new Image(Thread.currentThread().getContextClassLoader().getResourceAsStream("org/smallmind/javafx/extras/dialog/dialog_bug.png"));
 
-  public JavaErrorDialog (final Object source, final Exception exception) {
+  public JavaErrorDialog (final Object source, final Throwable throwable) {
 
     ParaboxPane root = new ParaboxPane();
     StringWriter errorBuffer;
@@ -72,7 +72,7 @@ public class JavaErrorDialog extends AbstractDialog {
 
     errorBuffer = new StringWriter();
     errorWriter = new PrintWriter(errorBuffer);
-    exception.printStackTrace(errorWriter);
+    throwable.printStackTrace(errorWriter);
     exceptionTrace = errorBuffer.getBuffer().toString();
     errorWriter.close();
 
@@ -106,14 +106,14 @@ public class JavaErrorDialog extends AbstractDialog {
       @Override
       public void handle (WindowEvent windowEvent) {
 
-        fireEvent(new ErrorEvent(ErrorEvent.OCCURRED, source, exception));
+        fireEvent(new ErrorEvent(ErrorEvent.OCCURRED, source, throwable));
       }
     });
   }
 
-  public static JavaErrorDialog showJavaErrorDialog (Object source, Exception exception) {
+  public static JavaErrorDialog showJavaErrorDialog (Object source, Throwable throwable) {
 
-    JavaErrorDialog errorDialog = new JavaErrorDialog(source, exception);
+    JavaErrorDialog errorDialog = new JavaErrorDialog(source, throwable);
 
     errorDialog.centerOnScreen();
     errorDialog.show();

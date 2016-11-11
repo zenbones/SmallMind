@@ -41,14 +41,14 @@ public class ErrorEvent extends Event {
   public static final EventType<ErrorEvent> OCCURRED = new EventType<>(ErrorEvent.ANY, "OCCURRED");
 
   private final Object exceptionSource;
-  private final Exception exception;
+  private final Throwable throwable;
 
-  protected ErrorEvent (EventType<ErrorEvent> eventType, Object exceptionSource, Exception exception) {
+  protected ErrorEvent (EventType<ErrorEvent> eventType, Object exceptionSource, Throwable throwable) {
 
     super(eventType);
 
     this.exceptionSource = exceptionSource;
-    this.exception = exception;
+    this.throwable = throwable;
   }
 
   public Object getExceptionSource () {
@@ -56,8 +56,8 @@ public class ErrorEvent extends Event {
     return exceptionSource;
   }
 
-  public Exception getException () {
+  public Throwable getThrowable () {
 
-    return exception;
+    return throwable;
   }
 }
