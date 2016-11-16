@@ -48,7 +48,7 @@ public class CronJobInitializingBean implements InitializingBean {
 
   public CronJobInitializingBean () {
 
-    jobMap = new HashMap<JobDetail, List<CronTrigger>>();
+    jobMap = new HashMap<>();
   }
 
   public void setScheduler (Scheduler scheduler) {
@@ -84,8 +84,6 @@ public class CronJobInitializingBean implements InitializingBean {
         }
       }
     }
-
-    scheduler.start();
   }
 
   private boolean isSame (JobDetail jobDetail, JobDetail installedJobDetail) {
