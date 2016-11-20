@@ -38,17 +38,17 @@ import javax.xml.bind.annotation.adapters.XmlAdapter;
 
 public class ZonedDateTimeXmlAdapter extends XmlAdapter<String, ZonedDateTime> {
 
-  private static DateTimeFormatter ISO_FORMATTER = DateTimeFormatter.ISO_ZONED_DATE_TIME;
+  private static DateTimeFormatter ISO_DATE_TIME_FORMATTER = DateTimeFormatter.ISO_ZONED_DATE_TIME;
 
   @Override
   public ZonedDateTime unmarshal (String value) {
 
-    return (value == null) ? null : ZonedDateTime.from(ISO_FORMATTER.parse(value));
+    return (value == null) ? null : ZonedDateTime.from(ISO_DATE_TIME_FORMATTER.parse(value));
   }
 
   @Override
   public String marshal (ZonedDateTime zonedDateTime) {
 
-    return (zonedDateTime == null) ? null : ISO_FORMATTER.format(zonedDateTime);
+    return (zonedDateTime == null) ? null : ISO_DATE_TIME_FORMATTER.format(zonedDateTime);
   }
 }

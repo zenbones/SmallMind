@@ -177,7 +177,7 @@ public class FileUtility {
             throws IOException {
 
             if ((fileFilter == null) || fileFilter.accept(file.toFile())) {
-              if ((timeArithmetic == null) || timeArithmetic.accept(Files.getLastModifiedTime(file).toMillis())) {
+              if ((timeArithmetic == null) || timeArithmetic.accept(Files.getLastModifiedTime(file).toInstant())) {
                 Files.delete(file);
               }
             }

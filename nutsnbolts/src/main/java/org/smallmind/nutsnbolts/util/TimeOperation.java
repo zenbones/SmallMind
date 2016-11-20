@@ -32,35 +32,40 @@
  */
 package org.smallmind.nutsnbolts.util;
 
-import org.joda.time.DateTime;
+import java.time.Instant;
+import java.time.ZonedDateTime;
 
 public enum TimeOperation {
 
   BEFORE {
     @Override
-    public boolean accept (DateTime date, long comparisonMillis) {
+    public boolean accept (ZonedDateTime date, Instant instant) {
 
-      return date.isAfter(comparisonMillis);
+      return date.toInstant().isAfter(instant);
     }
   }, BEFORE_OR_ON {
     @Override
-    public boolean accept (DateTime date, long comparisonMillis) {
+    public boolean accept (ZonedDateTime date, Instant instant) {
 
-      return date.isEqual(comparisonMillis) || date.isAfter(comparisonMillis);
+      Instant dateInstant;
+
+      return (dateInstant = date.toInstant()).equals(instant) || dateInstant.isAfter(instant);
     }
   }, ON_OR_AFTER {
     @Override
-    public boolean accept (DateTime date, long comparisonMillis) {
+    public boolean accept (ZonedDateTime date, Instant instant) {
 
-      return date.isBefore(comparisonMillis) || date.isEqual(comparisonMillis);
+      Instant dateInstant;
+
+      return (dateInstant = date.toInstant()).isBefore(instant) || dateInstant.equals(instant);
     }
   }, AFTER {
     @Override
-    public boolean accept (DateTime date, long comparisonMillis) {
+    public boolean accept (ZonedDateTime date, Instant instant) {
 
-      return date.isBefore(comparisonMillis);
+      return date.toInstant().isBefore(instant);
     }
   };
 
-  public abstract boolean accept (DateTime date, long comparisonMillis);
+  public abstract boolean accept (ZonedDateTime date, Instant instant);
 }

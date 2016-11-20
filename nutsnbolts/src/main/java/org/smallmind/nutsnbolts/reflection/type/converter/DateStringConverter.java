@@ -32,13 +32,13 @@
  */
 package org.smallmind.nutsnbolts.reflection.type.converter;
 
+import java.time.ZonedDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.Date;
-import org.joda.time.format.DateTimeFormatter;
-import org.joda.time.format.ISODateTimeFormat;
 
 public class DateStringConverter implements StringConverter<Date> {
 
-  private static final DateTimeFormatter ISO_DATE_TIME_FORMATTER = ISODateTimeFormat.dateTime();
+  private static DateTimeFormatter ISO_DATE_TIME_FORMATTER = DateTimeFormatter.ISO_ZONED_DATE_TIME;
 
   public Class<Date> getType () {
 
@@ -52,6 +52,6 @@ public class DateStringConverter implements StringConverter<Date> {
       return null;
     }
 
-    return ISO_DATE_TIME_FORMATTER.parseDateTime(value).toDate();
+    return Date.from(ZonedDateTime.from(ISO_DATE_TIME_FORMATTER.parse(value)).toInstant());
   }
 }

@@ -32,47 +32,49 @@
  */
 package org.smallmind.nutsnbolts.mysql;
 
+import java.time.Instant;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.Date;
-import org.joda.time.DateTime;
-import org.joda.time.DateTimeZone;
-import org.joda.time.format.DateTimeFormatter;
-import org.joda.time.format.ISODateTimeFormat;
 
 public class UTC {
 
-  private static final DateTimeFormatter ISO_DATE_TIME_FORMATTER = ISODateTimeFormat.dateTime();
+  private static final DateTimeFormatter ISO_DATE_TIME_FORMATTER = DateTimeFormatter.ISO_ZONED_DATE_TIME;
 
-  public static DateTime isoParse (String date) {
+  public static ZonedDateTime isoParse (String date) {
 
-    return ISO_DATE_TIME_FORMATTER.parseDateTime(date);
+    return ZonedDateTime.from(ISO_DATE_TIME_FORMATTER.parse(date));
   }
 
   public static String isoFormat (Date date) {
 
-    return ISO_DATE_TIME_FORMATTER.print(date.getTime());
+    return ISO_DATE_TIME_FORMATTER.format(date.toInstant());
   }
 
   public static Date now () {
 
-    DateTime now;
+    Instant instant;
 
-    return (now = new DateTime()).minusMillis(now.getZone().getOffset(now)).toDate();
+    return Date.from((instant = Instant.now()).minusSeconds(ZoneId.systemDefault().getRules().getOffset(instant).getTotalSeconds()));
   }
 
   public static Date then (Date date) {
 
-    DateTime then;
+    Instant instant;
 
-    return (then = new DateTime(date.getTime())).minusMillis(then.getZone().getOffset(then)).toDate();
+    return Date.from((instant = date.toInstant()).minusSeconds(ZoneId.systemDefault().getRules().getOffset(instant).getTotalSeconds()));
   }
 
   public static Date local (Date date) {
 
-    return local(date, DateTimeZone.getDefault().getOffset(System.currentTimeMillis()) / 1000 / 60);
+    Instant instant;
+
+    return Date.from((instant = date.toInstant()).plusSeconds(ZoneId.systemDefault().getRules().getOffset(instant).getTotalSeconds()));
   }
 
-  public static Date local (Date date, int offset) {
+  public static Date local (Date date, int offsetSeconds) {
 
-    return new DateTime(date.getTime()).withZoneRetainFields(DateTimeZone.forOffsetHours(offset)).plusHours(offset).toDate();
+    return Date.from(date.toInstant().plusSeconds(offsetSeconds));
   }
 }

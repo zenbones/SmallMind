@@ -32,40 +32,40 @@
  */
 package org.smallmind.persistence.query;
 
+import java.time.ZonedDateTime;
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlRootElement;
 import javax.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
-import org.joda.time.DateTime;
-import org.smallmind.nutsnbolts.json.DateTimeXmlAdapter;
+import org.smallmind.nutsnbolts.json.ZonedDateTimeXmlAdapter;
 
 @XmlRootElement(name = "date")
-public class DateWhereOperand extends WhereOperand<DateTime> {
+public class DateWhereOperand extends WhereOperand<ZonedDateTime> {
 
-  private DateTime value;
+  private ZonedDateTime value;
 
   public DateWhereOperand () {
 
   }
 
-  public DateWhereOperand (DateTime value) {
+  public DateWhereOperand (ZonedDateTime value) {
 
     this.value = value;
   }
 
   @Override
-  public DateTime extract (WhereOperandTransformer transformer) {
+  public ZonedDateTime extract (WhereOperandTransformer transformer) {
 
     return value;
   }
 
   @XmlElement(name = "value", required = true)
-  @XmlJavaTypeAdapter(DateTimeXmlAdapter.class)
-  public DateTime getValue () {
+  @XmlJavaTypeAdapter(ZonedDateTimeXmlAdapter.class)
+  public ZonedDateTime getValue () {
 
     return value;
   }
 
-  public void setValue (DateTime value) {
+  public void setValue (ZonedDateTime value) {
 
     this.value = value;
   }

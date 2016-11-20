@@ -32,16 +32,16 @@
  */
 package org.smallmind.persistence.query;
 
+import java.time.ZonedDateTime;
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlRootElement;
 import javax.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
-import org.joda.time.DateTime;
-import org.smallmind.nutsnbolts.json.DateTimeXmlAdapter;
+import org.smallmind.nutsnbolts.json.ZonedDateTimeXmlAdapter;
 
 @XmlRootElement(name = "array")
 public class ArrayWhereOperand extends WhereOperand<Object[]> {
 
-  private static final DateTimeXmlAdapter DATE_TIME_XML_ADAPTER = new DateTimeXmlAdapter();
+  private static final ZonedDateTimeXmlAdapter ZONED_DATE_TIME_XML_ADAPTER = new ZonedDateTimeXmlAdapter();
 
   private Object[] value;
   private String type;
@@ -97,10 +97,10 @@ public class ArrayWhereOperand extends WhereOperand<Object[]> {
         return characterArray;
       case "date":
 
-        DateTime[] dateTimes = new DateTime[value.length];
+        ZonedDateTime[] dateTimes = new ZonedDateTime[value.length];
 
         for (int index = 0; index < value.length; index++) {
-          dateTimes[index] = (value[index] == null) ? null : DATE_TIME_XML_ADAPTER.unmarshal(value[index].toString());
+          dateTimes[index] = (value[index] == null) ? null : ZONED_DATE_TIME_XML_ADAPTER.unmarshal(value[index].toString());
         }
 
         return dateTimes;

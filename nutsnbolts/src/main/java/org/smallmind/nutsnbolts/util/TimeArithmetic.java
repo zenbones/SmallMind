@@ -32,20 +32,21 @@
  */
 package org.smallmind.nutsnbolts.util;
 
-import org.joda.time.DateTime;
+import java.time.Instant;
+import java.time.ZonedDateTime;
 
 public class TimeArithmetic {
 
-  private DateTime date;
+  private ZonedDateTime date;
   private TimeOperation operation;
 
-  public TimeArithmetic (DateTime date, TimeOperation operation) {
+  public TimeArithmetic (ZonedDateTime date, TimeOperation operation) {
 
     this.date = date;
     this.operation = operation;
   }
 
-  public DateTime getDate () {
+  public ZonedDateTime getDate () {
 
     return date;
   }
@@ -55,8 +56,8 @@ public class TimeArithmetic {
     return operation;
   }
 
-  public boolean accept (long millis) {
+  public boolean accept (Instant instant) {
 
-    return operation.accept(date, millis);
+    return operation.accept(date, instant);
   }
 }

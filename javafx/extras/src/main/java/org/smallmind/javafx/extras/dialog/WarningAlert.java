@@ -30,28 +30,29 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.nutsnbolts.json;
+package org.smallmind.javafx.extras.dialog;
 
-import javax.xml.bind.annotation.adapters.XmlAdapter;
-import org.joda.time.DateTime;
-import org.joda.time.format.DateTimeFormat;
-import org.joda.time.format.DateTimeFormatter;
-import org.joda.time.format.ISODateTimeFormat;
+import java.util.Optional;
+import javafx.scene.control.Alert;
+import javafx.scene.control.ButtonType;
+import javafx.scene.image.Image;
+import javafx.scene.image.ImageView;
 
-public class DateTimeXmlAdapter extends XmlAdapter<String, DateTime> {
+public class WarningAlert extends Alert {
 
-  private static DateTimeFormatter ISO_DATE_FORMATTER = ISODateTimeFormat.dateTime();
-  private static DateTimeFormatter DATE_FORMATTER = DateTimeFormat.forPattern("yyyy-MM-dd");
+  private static final Image WARNING_IMAGE = new Image(Thread.currentThread().getContextClassLoader().getResourceAsStream("org/smallmind/javafx/extras/dialog/dialog_warning.png"));
 
-  @Override
-  public DateTime unmarshal (String value) {
+  public WarningAlert (String warningText) {
 
-    return (value == null) ? null : (value.contains("T")) ? ISO_DATE_FORMATTER.parseDateTime(value) : DATE_FORMATTER.parseDateTime(value);
+    super(AlertType.WARNING, warningText, ButtonType.CLOSE);
+
+    setGraphic(new ImageView(WARNING_IMAGE));
   }
 
-  @Override
-  public String marshal (DateTime dateTime) {
+  public static Optional<ButtonType> showWarningAlert (String warningText) {
 
-    return (dateTime == null) ? null : ISO_DATE_FORMATTER.print(dateTime);
+    WarningAlert warningAlert = new WarningAlert(warningText);
+
+    return warningAlert.showAndWait();
   }
 }

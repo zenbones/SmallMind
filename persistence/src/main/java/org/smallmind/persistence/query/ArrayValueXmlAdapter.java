@@ -32,13 +32,13 @@
  */
 package org.smallmind.persistence.query;
 
+import java.time.ZonedDateTime;
 import javax.xml.bind.annotation.adapters.XmlAdapter;
-import org.joda.time.DateTime;
-import org.smallmind.nutsnbolts.json.DateTimeXmlAdapter;
+import org.smallmind.nutsnbolts.json.ZonedDateTimeXmlAdapter;
 
 public class ArrayValueXmlAdapter extends XmlAdapter<Object[], Object[]> {
 
-  private static final DateTimeXmlAdapter DATE_TIME_XML_ADAPTER = new DateTimeXmlAdapter();
+  private static final ZonedDateTimeXmlAdapter ZONED_DATE_TIME_XML_ADAPTER = new ZonedDateTimeXmlAdapter();
 
   @Override
   public Object[] unmarshal (Object[] array) throws Exception {
@@ -54,12 +54,12 @@ public class ArrayValueXmlAdapter extends XmlAdapter<Object[], Object[]> {
       return null;
     }
 
-    if (DateTime.class.isAssignableFrom(array.getClass().getComponentType())) {
+    if (ZonedDateTime.class.isAssignableFrom(array.getClass().getComponentType())) {
 
       String[] convertedArray = new String[array.length];
 
       for (int index = 0; index < array.length; index++) {
-        convertedArray[index] = DATE_TIME_XML_ADAPTER.marshal((DateTime)array[index]);
+        convertedArray[index] = ZONED_DATE_TIME_XML_ADAPTER.marshal((ZonedDateTime)array[index]);
       }
 
       return convertedArray;
