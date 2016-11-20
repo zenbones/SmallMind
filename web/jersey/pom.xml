@@ -4,7 +4,7 @@
   <parent>
     <groupId>org.smallmind</groupId>
     <artifactId>smallmind-web</artifactId>
-    <version>2.4.11-SNAPSHOT</version>
+    <version>3.0.0-SNAPSHOT</version>
   </parent>
   <artifactId>web-jersey</artifactId>
   <packaging>jar</packaging>
@@ -158,9 +158,9 @@
         </executions>
         <configuration>
           <verbose>true</verbose>
-          <source>1.7</source>
-          <target>1.7</target>
-          <complianceLevel>1.7</complianceLevel>
+          <source>1.8</source>
+          <target>1.8</target>
+          <complianceLevel>1.8</complianceLevel>
           <showWeaveInfo>true</showWeaveInfo>
         </configuration>
       </plugin>
