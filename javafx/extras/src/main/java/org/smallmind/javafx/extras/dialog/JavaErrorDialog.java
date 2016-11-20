@@ -34,22 +34,21 @@ package org.smallmind.javafx.extras.dialog;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
-import javafx.event.ActionEvent;
-import javafx.event.EventHandler;
+import java.util.Optional;
 import javafx.geometry.Insets;
-import javafx.scene.Scene;
-import javafx.scene.control.Button;
+import javafx.scene.control.ButtonType;
+import javafx.scene.control.Dialog;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.text.Text;
-import javafx.stage.WindowEvent;
 import org.smallmind.javafx.extras.layout.InsetsPane;
 import org.smallmind.javafx.extras.layout.ParaboxPane;
 import org.smallmind.nutsnbolts.layout.Alignment;
 import org.smallmind.nutsnbolts.layout.Constraint;
+import org.smallmind.nutsnbolts.layout.Gap;
 
-public class JavaErrorDialog extends AbstractDialog {
+public class JavaErrorDialog extends Dialog<ButtonType> {
 
   private static final Image BUG_IMAGE = new Image(Thread.currentThread().getContextClassLoader().getResourceAsStream("org/smallmind/javafx/extras/dialog/dialog_bug.png"));
 
@@ -59,16 +58,11 @@ public class JavaErrorDialog extends AbstractDialog {
     StringWriter errorBuffer;
     PrintWriter errorWriter;
     ScrollPane warningScroll;
-    InsetsPane exceptionInsetsPane;
-    Text exceptionText;
-    Button continueButton;
-    ImageView exceptionImageView;
     String exceptionTrace;
 
     setTitle("Java Error Message...");
-    setScene(new Scene(root));
-    setWidth(600);
-    setHeight(300);
+    setGraphic(new ImageView(BUG_IMAGE));
+    setResizable(true);
 
     errorBuffer = new StringWriter();
     errorWriter = new PrintWriter(errorBuffer);
@@ -76,49 +70,25 @@ public class JavaErrorDialog extends AbstractDialog {
     exceptionTrace = errorBuffer.getBuffer().toString();
     errorWriter.close();
 
-    exceptionText = new Text(exceptionTrace);
-
-    exceptionInsetsPane = new InsetsPane(new Insets(3, 3, 3, 3), exceptionText);
-
     warningScroll = new ScrollPane();
-    warningScroll.setContent(exceptionInsetsPane);
+    warningScroll.setContent(new InsetsPane(new Insets(3, 3, 3, 3), new Text(exceptionTrace)));
 
-    exceptionImageView = new ImageView(BUG_IMAGE);
+    root.setHorizontalBox(root.parallelBox(Alignment.TRAILING).add(warningScroll, Constraint.stretch()));
+    root.setVerticalBox(root.serialBox(Gap.NONE).add(root.parallelBox().add(warningScroll, Constraint.stretch())));
 
-    continueButton = new Button("Continue");
-    continueButton.setDefaultButton(true);
-    // TODO: Should be WeakEventHandler
-    continueButton.setOnAction(new EventHandler<ActionEvent>() {
+    getDialogPane().setContent(root);
+    getDialogPane().getButtonTypes().add(ButtonType.CLOSE);
 
-      @Override
-      public void handle (ActionEvent actionEvent) {
+    setWidth(600);
+    setHeight(400);
 
-        JavaErrorDialog.this.close();
-      }
-    });
-
-    root.setHorizontalBox(root.parallelBox(Alignment.TRAILING).add(root.serialBox().add(exceptionImageView).add(warningScroll, Constraint.stretch())).add(continueButton));
-    root.setVerticalBox(root.serialBox().add(root.parallelBox().add(exceptionImageView).add(warningScroll, Constraint.stretch())).add(continueButton));
-
-    // TODO: Should be WeakEventHandler
-    setOnHiding(new EventHandler<WindowEvent>() {
-
-      @Override
-      public void handle (WindowEvent windowEvent) {
-
-        fireEvent(new ErrorEvent(ErrorEvent.OCCURRED, source, throwable));
-      }
-    });
+    onHidingProperty().set(event -> JavaErrorDialog.this.getDialogPane().fireEvent(new ErrorEvent(ErrorEvent.OCCURRED, source, throwable)));
   }
 
-  public static JavaErrorDialog showJavaErrorDialog (Object source, Throwable throwable) {
+  public static Optional<ButtonType> showJavaErrorDialog (Object source, Throwable throwable) {
 
     JavaErrorDialog errorDialog = new JavaErrorDialog(source, throwable);
 
-    errorDialog.centerOnScreen();
-    errorDialog.show();
-    errorDialog.toFront();
-
-    return errorDialog;
+    return errorDialog.showAndWait();
   }
 }
