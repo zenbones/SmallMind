@@ -78,6 +78,16 @@ public class ThrowableExceptionMapper implements ExceptionMapper<Throwable> {
     }
 
     if (throwable instanceof WebApplicationException) {
+      if (logUnclassifiedErrors) {
+
+        Response response;
+
+        if ((response = ((WebApplicationException)throwable).getResponse()) != null) {
+          if (response.getStatus() == 500) {
+            LoggerManager.getLogger(ThrowableExceptionMapper.class).error(throwable);
+          }
+        }
+      }
 
       return ((WebApplicationException)throwable).getResponse();
     }
