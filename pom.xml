@@ -838,7 +838,7 @@
           <artifactId>aspectj-maven-plugin</artifactId>
           <version>1.8</version>
           <configuration>
-            <complianceLevel>1.7</complianceLevel>
+            <complianceLevel>1.8</complianceLevel>
           </configuration>
           <dependencies>
             <dependency>
