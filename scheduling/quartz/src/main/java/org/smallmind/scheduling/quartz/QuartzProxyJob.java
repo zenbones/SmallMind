@@ -37,14 +37,14 @@ import java.util.LinkedList;
 import org.quartz.Job;
 import org.quartz.JobExecutionContext;
 import org.quartz.JobExecutionException;
-import org.smallmind.scheduling.base.JobStatus;
+import org.smallmind.nutsnbolts.util.SuccessOrFailure;
 import org.smallmind.scheduling.base.ProxyJob;
 import org.smallmind.scribe.pen.LoggerManager;
 
 public abstract class QuartzProxyJob implements ProxyJob, Job {
 
   private LinkedList<Throwable> throwableList;
-  private JobStatus status = JobStatus.SUCCESS;
+  private SuccessOrFailure status = SuccessOrFailure.SUCCESS;
   private Date startTime;
   private Date stopTime;
   private int count = 0;
@@ -55,7 +55,7 @@ public abstract class QuartzProxyJob implements ProxyJob, Job {
   }
 
   @Override
-  public JobStatus getJobStatus () {
+  public SuccessOrFailure getJobStatus () {
 
     return status;
   }
@@ -116,7 +116,7 @@ public abstract class QuartzProxyJob implements ProxyJob, Job {
     throwableList.add(throwable);
 
     if (isFailure) {
-      status = JobStatus.FAILURE;
+      status = SuccessOrFailure.FAILURE;
     }
 
     LoggerManager.getLogger(this.getClass()).error(throwable);
@@ -129,21 +129,18 @@ public abstract class QuartzProxyJob implements ProxyJob, Job {
     startTime = new Date();
     try {
       proceed();
-    }
-    catch (Exception exception) {
+    } catch (Exception exception) {
       setThrowable(exception);
-    }
-    finally {
+    } finally {
       stopTime = new Date();
 
-      if (status.equals(JobStatus.FAILURE) || (count > 0) || logOnZeroCount()) {
+      if (status.equals(SuccessOrFailure.FAILURE) || (count > 0) || logOnZeroCount()) {
         LoggerManager.getLogger(this.getClass()).info("Job(%s) start(%s) stop(%s) count(%d) state(%s)", this.getClass().getSimpleName(), startTime, stopTime, count, status.name());
       }
 
       try {
         cleanup();
-      }
-      catch (Exception exception) {
+      } catch (Exception exception) {
         LoggerManager.getLogger(this.getClass()).error(exception);
       }
     }

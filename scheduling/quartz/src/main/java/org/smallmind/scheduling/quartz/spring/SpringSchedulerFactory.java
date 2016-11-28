@@ -36,6 +36,8 @@ import java.util.Properties;
 import org.quartz.Scheduler;
 import org.quartz.SchedulerException;
 import org.quartz.impl.StdSchedulerFactory;
+import org.smallmind.nutsnbolts.lang.UnknownSwitchCaseException;
+import org.smallmind.nutsnbolts.util.OnOrOff;
 import org.smallmind.scribe.pen.LoggerManager;
 import org.springframework.beans.BeansException;
 import org.springframework.context.ApplicationContext;
@@ -46,7 +48,7 @@ import org.springframework.context.event.ContextClosedEvent;
 public class SpringSchedulerFactory extends StdSchedulerFactory implements ApplicationContextAware, ApplicationListener<ContextClosedEvent> {
 
   private SpringJobFactory jobFactory;
-  private boolean startInStandby = false;
+  private OnOrOff standbyMode = OnOrOff.OFF;
 
   public SpringSchedulerFactory (Properties properties)
     throws SchedulerException {
@@ -54,9 +56,9 @@ public class SpringSchedulerFactory extends StdSchedulerFactory implements Appli
     super(properties);
   }
 
-  public void setStartInStandby (boolean startInStandby) {
+  public void setStandbyMode (OnOrOff standbyMode) {
 
-    this.startInStandby = startInStandby;
+    this.standbyMode = standbyMode;
   }
 
   @Override
@@ -88,10 +90,15 @@ public class SpringSchedulerFactory extends StdSchedulerFactory implements Appli
     scheduler = super.getScheduler();
     scheduler.setJobFactory(jobFactory);
 
-    if (startInStandby) {
-      scheduler.standby();
-    } else {
-      scheduler.start();
+    switch (standbyMode) {
+      case ON:
+        scheduler.standby();
+        break;
+      case OFF:
+        scheduler.start();
+        break;
+      default:
+        throw new UnknownSwitchCaseException(standbyMode.name());
     }
 
     return scheduler;

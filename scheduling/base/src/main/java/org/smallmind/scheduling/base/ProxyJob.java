@@ -33,12 +33,13 @@
 package org.smallmind.scheduling.base;
 
 import java.util.Date;
+import org.smallmind.nutsnbolts.util.SuccessOrFailure;
 
 public interface ProxyJob {
 
   public abstract boolean logOnZeroCount ();
 
-  public abstract JobStatus getJobStatus ();
+  public abstract SuccessOrFailure getJobStatus ();
 
   public abstract int getCount ();
 
