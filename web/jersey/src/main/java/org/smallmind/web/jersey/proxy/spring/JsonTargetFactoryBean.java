@@ -34,6 +34,8 @@ package org.smallmind.web.jersey.proxy.spring;
 
 import java.net.MalformedURLException;
 import java.net.URISyntaxException;
+import java.security.KeyManagementException;
+import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
 import org.smallmind.web.jersey.proxy.HttpProtocol;
 import org.smallmind.web.jersey.proxy.JsonTarget;
@@ -89,7 +91,7 @@ public class JsonTargetFactoryBean implements FactoryBean<JsonTarget>, Initializ
 
   @Override
   public void afterPropertiesSet ()
-    throws NoSuchAlgorithmException, MalformedURLException, URISyntaxException {
+    throws NoSuchAlgorithmException, MalformedURLException, URISyntaxException, KeyStoreException, KeyManagementException {
 
     target = JsonTargetFactory.manufacture(protocol, host, port, context, concurrencyLevel);
   }
