@@ -42,6 +42,8 @@ import java.util.Collections;
 import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedList;
+import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.jar.Attributes;
 import java.util.jar.JarEntry;
@@ -51,11 +53,6 @@ import java.util.jar.Manifest;
 public class SingularityClassLoader extends ClassLoader {
 
   private static final String[] INOPERABLE_NAMESPACES = new String[] {"javax.xml.", "org.xml.", "org.w3c."};
-  static {
-
-    ClassLoader.registerAsParallelCapable();
-    URL.setURLStreamHandlerFactory(new SingularityJarURLStreamHandlerFactory());
-  }
   private final HashMap<String, URL> urlMap = new HashMap<>();
   private final HashSet<String> packageSet = new HashSet<>();
   private final URL sealBase;
@@ -65,6 +62,12 @@ public class SingularityClassLoader extends ClassLoader {
   private final String implementationTitle;
   private final String implementationVersion;
   private final String implementationVendor;
+
+  static {
+
+    ClassLoader.registerAsParallelCapable();
+    URL.setURLStreamHandlerFactory(new SingularityJarURLStreamHandlerFactory());
+  }
 
   public SingularityClassLoader (ClassLoader parent, Manifest manifest, URL jarURL, JarInputStream jarInputStream)
     throws IOException, ClassNotFoundException {
@@ -219,7 +222,7 @@ public class SingularityClassLoader extends ClassLoader {
   @Override
   public URL findResource (String name) {
 
-    if (name == null) {
+    if ((name == null) || name.isEmpty()) {
 
       return null;
     } else {
@@ -230,14 +233,41 @@ public class SingularityClassLoader extends ClassLoader {
   @Override
   protected Enumeration<URL> findResources (String name) {
 
-    URL resourceURL;
-
-    if ((resourceURL = findResource(name)) == null) {
+    if ((name == null) || name.isEmpty()) {
 
       return Collections.emptyEnumeration();
-    }
+    } else if (!name.endsWith("/")) {
 
-    return new SingleEnumeration<>(resourceURL);
+      URL url;
+
+      if ((url = findResource(name)) == null) {
+
+        return Collections.emptyEnumeration();
+      }
+
+      return new SingleEnumeration<>(url);
+    } else {
+
+      LinkedList<URL> urlList = new LinkedList<>();
+
+      for (Map.Entry<String, URL> resourceEntry : urlMap.entrySet()) {
+        if (resourceEntry.getKey().startsWith(name) && (!resourceEntry.getKey().endsWith("/"))) {
+          urlList.add(resourceEntry.getValue());
+        }
+      }
+
+      if (urlList.isEmpty()) {
+
+        return Collections.emptyEnumeration();
+      } else {
+
+        URL[] urls = new URL[urlList.size()];
+
+        urlList.toArray(urls);
+
+        return new ArrayEnumeration<>(urls);
+      }
+    }
   }
 
   private static class SingleEnumeration<T> implements Enumeration<T> {
@@ -245,7 +275,7 @@ public class SingularityClassLoader extends ClassLoader {
     private T value;
     private boolean used = false;
 
-    public SingleEnumeration (T value) {
+    private SingleEnumeration (T value) {
 
       this.value = value;
     }
@@ -266,6 +296,29 @@ public class SingularityClassLoader extends ClassLoader {
       used = true;
 
       return value;
+    }
+  }
+
+  private static class ArrayEnumeration<T> implements Enumeration<T> {
+
+    private T[] values;
+    private int index = 0;
+
+    private ArrayEnumeration (T[] values) {
+
+      this.values = values;
+    }
+
+    @Override
+    public synchronized boolean hasMoreElements () {
+
+      return index < values.length;
+    }
+
+    @Override
+    public synchronized T nextElement () {
+
+      return values[index++];
     }
   }
 }
