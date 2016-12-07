@@ -33,6 +33,7 @@
 package org.smallmind.persistence.orm.jdo;
 
 import javax.jdo.Transaction;
+import org.smallmind.nutsnbolts.lang.ThrowableUtility;
 import org.smallmind.persistence.orm.ProxyTransaction;
 import org.smallmind.persistence.orm.ProxyTransactionException;
 import org.smallmind.persistence.orm.TransactionEndState;
@@ -104,7 +105,7 @@ public class JDOProxyTransaction extends ProxyTransaction<JDOProxySession> {
         try {
           transaction.rollback();
         } catch (Throwable throwable) {
-          thrownDuringRollback = (thrownDuringRollback == null) ? throwable : (throwable.getCause() != null) ? throwable : throwable.initCause(thrownDuringRollback);
+          thrownDuringRollback = (thrownDuringRollback == null) ? throwable : ThrowableUtility.attach(throwable, thrownDuringRollback);
         } finally {
           getSession().close();
 

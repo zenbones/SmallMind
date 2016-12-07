@@ -30,21 +30,27 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.nutsnbolts.util;
+package org.smallmind.nutsnbolts.lang;
 
-public enum ComponentStatus {
+public class ThrowableUtility {
 
-  INITIALIZING(3), INITIALIZED(4), STARTING(7), STARTED(8), STOPPING(6), STOPPED(5), TERMINATING(2), TERMINATED(1), UNKNOWN(0);
+  public static Throwable attach (Throwable headThrowable, Throwable tailThrowable) {
 
-  private int priority;
+    if (headThrowable == null) {
 
-  ComponentStatus (int priority) {
+      return tailThrowable;
+    } else if (tailThrowable == null) {
 
-    this.priority = priority;
-  }
+      return headThrowable;
+    } else {
 
-  public int getPriority () {
+      Throwable currentThrowable = headThrowable;
 
-    return priority;
+      while (currentThrowable.getCause() != null) {
+        currentThrowable = currentThrowable.getCause();
+      }
+
+      return currentThrowable.initCause(tailThrowable);
+    }
   }
 }
