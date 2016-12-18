@@ -157,8 +157,7 @@ public class Page<T> implements Iterable<T> {
     this.totalResults = totalResults;
   }
 
-  @XmlElement(name = "values", required = true, nillable = false)
-  @XmlAnyElement
+  @XmlAnyElement()
   public T[] getValues () {
 
     return values;
