@@ -89,7 +89,6 @@ public class JsonTargetFactory {
     SSLContext sslContext;
     CloseableHttpClient httpClient;
 
-//    sslContext = SSLContextBuilder.create().loadTrustMaterial(null, (X509Certificate[] arg0, String arg1) -> true).build();
     sslContext = SSLContextBuilder.create().loadTrustMaterial(null, (X509Certificate[] arg0, String arg1) -> true).build();
     clientBuilder.setSSLContext(sslContext);
 
