@@ -30,41 +30,41 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.persistence.orm.spring.hibernate;
+package org.smallmind.persistence.orm.spring.hibernate.querydsl;
 
+import java.io.File;
 import java.io.IOException;
-import java.util.HashMap;
+import com.mysema.query.jpa.codegen.HibernateDomainExporter;
 import org.hibernate.SessionFactory;
-import org.hibernate.cfg.Configuration;
-import org.springframework.orm.hibernate5.LocalSessionFactoryBean;
+import org.smallmind.persistence.orm.spring.hibernate.EntitySeekingSessionFactoryBean;
+import org.springframework.beans.factory.InitializingBean;
 
-public class EntitySeekingSessionFactoryBean extends LocalSessionFactoryBean {
+public class HibernateDomainExporterInitializingBean implements InitializingBean {
 
-  private static final HashMap<SessionFactory, Configuration> CONFIGURATION_MAP = new HashMap<>();
-  private String sessionSourceKey;
+  private SessionFactory sessionFactory;
+  private File targetPath;
+  private String prefix;
 
-  public static Configuration getConfiguration (SessionFactory sessionFactory) {
+  public void setSessionFactory (SessionFactory sessionFactory) {
 
-    return CONFIGURATION_MAP.get(sessionFactory);
+    this.sessionFactory = sessionFactory;
   }
 
-  public void setSessionSourceKey (String sessionSourceKey) {
+  public void setTargetPath (File targetPath) {
 
-    this.sessionSourceKey = sessionSourceKey;
+    this.targetPath = targetPath;
   }
 
-  @Override
-  public void setAnnotatedClasses (Class<?>... annotatedClasses) {
+  public void setPrefix (String prefix) {
 
-    super.setAnnotatedClasses(AnnotationSeekingBeanFactoryPostProcessor.getAnnotatedClasses(sessionSourceKey));
+    this.prefix = prefix;
   }
 
   @Override
   public void afterPropertiesSet ()
     throws IOException {
 
-    super.afterPropertiesSet();
-
-    CONFIGURATION_MAP.put(getObject(), getConfiguration());
+    HibernateDomainExporter exporter = new HibernateDomainExporter(prefix, targetPath, EntitySeekingSessionFactoryBean.getConfiguration(sessionFactory));
+    exporter.execute();
   }
 }

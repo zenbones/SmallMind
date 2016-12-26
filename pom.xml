@@ -505,6 +505,11 @@
       </dependency>
       <dependency>
         <groupId>com.mysema.querydsl</groupId>
+        <artifactId>querydsl-jpa-codegen</artifactId>
+        <version>${querydsl.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>com.mysema.querydsl</groupId>
         <artifactId>querydsl-mongodb</artifactId>
         <version>${querydsl.version}</version>
       </dependency>

@@ -104,6 +104,12 @@
     </dependency>
     <dependency>
       <groupId>com.mysema.querydsl</groupId>
+      <artifactId>querydsl-jpa-codegen</artifactId>
+      <scope>compile</scope>
+      <optional>true</optional>
+    </dependency>
+    <dependency>
+      <groupId>com.mysema.querydsl</groupId>
       <artifactId>querydsl-mongodb</artifactId>
       <scope>compile</scope>
       <optional>true</optional>
