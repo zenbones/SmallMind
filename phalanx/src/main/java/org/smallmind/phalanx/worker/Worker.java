@@ -93,8 +93,8 @@ public abstract class Worker<T> implements Runnable, MetricConfigurationProvider
 
             engageWork(transfer);
           }
-        } catch (Exception exception) {
-          LoggerManager.getLogger(this.getClass()).error(exception);
+        } catch (Throwable throwable) {
+          LoggerManager.getLogger(this.getClass()).error(throwable);
         } finally {
           idleStart = Clocks.EPOCH.getClock().getTimeNanoseconds();
         }
