@@ -47,6 +47,18 @@ public final class Base64Codec {
     return encode(original.getBytes(), false, '-', '_');
   }
 
+  public static String urlSafeEncode (byte[] bytes)
+    throws IOException {
+
+    return encode(bytes, false, '-', '_');
+  }
+
+  public static String urlSafeEncode (ByteArrayInputStream byteInputStream)
+    throws IOException {
+
+    return encode(byteInputStream, false, '-', '_');
+  }
+
   public static String encode (String original)
     throws IOException {
 
@@ -140,6 +152,18 @@ public final class Base64Codec {
     throws IOException {
 
     return decode(encoded.getBytes(), false, '-', '_');
+  }
+
+  public static byte[] urlSfeDecode (byte[] bytes)
+    throws IOException {
+
+    return decode(bytes, false, '-', '_');
+  }
+
+  public static byte[] urlSfeDecode (ByteArrayInputStream byteInputStream)
+    throws IOException {
+
+    return decode(byteInputStream, false, '-', '_');
   }
 
   public static byte[] decode (String encoded)

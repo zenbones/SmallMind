@@ -41,15 +41,30 @@ public class JWTCodec {
   public static String encode (Object claims, JWTKeyMaster keyMaster)
     throws Exception {
 
+    return encode(claims, keyMaster, false);
+  }
+
+  public static String encode (Object claims, JWTKeyMaster keyMaster, boolean urlSafe)
+    throws Exception {
+
     String encodedHeader = Base64Codec.encode("{\"typ\":\"JWT\",\r\n \"alg\":\"" + keyMaster.getEncryptionAlgorithm().name() + "\"}");
     String encodedClaims = Base64Codec.encode(JsonCodec.writeAsBytes(claims));
     String prologue = encodedHeader + '.' + encodedClaims;
-    String epilogue = Base64Codec.encode(keyMaster.getEncryptionAlgorithm().encrypt(keyMaster.getKey(), prologue));
+    String epilogue;
+    byte[] encryptedBytes = keyMaster.getEncryptionAlgorithm().encrypt(keyMaster.getKey(), prologue);
+
+    epilogue = urlSafe ? Base64Codec.urlSafeEncode(encryptedBytes) : Base64Codec.encode(encryptedBytes);
 
     return prologue + '.' + epilogue;
   }
 
   public static <T> T decode (String jwtToken, JWTKeyMaster keyMaster, Class<T> claimsClass)
+    throws Exception {
+
+    return decode(jwtToken, keyMaster, claimsClass, false);
+  }
+
+  public static <T> T decode (String jwtToken, JWTKeyMaster keyMaster, Class<T> claimsClass, boolean urlSafe)
     throws Exception {
 
     String[] parts;
@@ -61,6 +76,6 @@ public class JWTCodec {
       throw new UnsupportedEncodingException("Not a JWT token");
     }
 
-    return JsonCodec.read(Base64Codec.decode(parts[1]), claimsClass);
+    return JsonCodec.read(urlSafe ? Base64Codec.urlSfeDecode(parts[1]) : Base64Codec.decode(parts[1]), claimsClass);
   }
 }
