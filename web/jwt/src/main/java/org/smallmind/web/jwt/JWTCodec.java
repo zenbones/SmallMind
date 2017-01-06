@@ -77,6 +77,6 @@ public class JWTCodec {
       throw new UnsupportedEncodingException("Not a JWT token");
     }
 
-    return JsonCodec.read(urlSafe ? Base64Codec.urlSfeDecode(parts[1]) : Base64Codec.decode(parts[1]), claimsClass);
+    return JsonCodec.read(urlSafe ? Base64Codec.urlSafeDecode(parts[1]) : Base64Codec.decode(parts[1]), claimsClass);
   }
 }

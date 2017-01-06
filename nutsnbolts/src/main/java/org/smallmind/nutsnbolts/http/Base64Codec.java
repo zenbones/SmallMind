@@ -136,12 +136,14 @@ public final class Base64Codec {
         }
       }
 
-      if (includePadding) {
-        if (bytesRead == 1) {
-          encodeBuilder.append(charAtBase64Bible((triplet[0] & 3) << 4, char62, char63));
+      if (bytesRead == 1) {
+        encodeBuilder.append(charAtBase64Bible((triplet[0] & 3) << 4, char62, char63));
+        if (includePadding) {
           encodeBuilder.append('=').append('=');
-        } else if (bytesRead == 2) {
-          encodeBuilder.append(charAtBase64Bible((triplet[1] & 15) << 2, char62, char63));
+        }
+      } else if (bytesRead == 2) {
+        encodeBuilder.append(charAtBase64Bible((triplet[1] & 15) << 2, char62, char63));
+        if (includePadding) {
           encodeBuilder.append('=');
         }
       }
@@ -150,19 +152,19 @@ public final class Base64Codec {
     return encodeBuilder.toString();
   }
 
-  public static byte[] urlSfeDecode (String encoded)
+  public static byte[] urlSafeDecode (String encoded)
     throws IOException {
 
     return decode(encoded.getBytes(), false, '-', '_');
   }
 
-  public static byte[] urlSfeDecode (byte[] bytes)
+  public static byte[] urlSafeDecode (byte[] bytes)
     throws IOException {
 
     return decode(bytes, false, '-', '_');
   }
 
-  public static byte[] urlSfeDecode (ByteArrayInputStream byteInputStream)
+  public static byte[] urlSafeDecode (ByteArrayInputStream byteInputStream)
     throws IOException {
 
     return decode(byteInputStream, false, '-', '_');
