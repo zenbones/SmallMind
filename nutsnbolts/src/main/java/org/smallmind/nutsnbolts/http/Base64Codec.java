@@ -136,12 +136,14 @@ public final class Base64Codec {
         }
       }
 
-      if (bytesRead == 1) {
-        encodeBuilder.append(charAtBase64Bible((triplet[0] & 3) << 4, char62, char63));
-        encodeBuilder.append('=').append('=');
-      } else if (bytesRead == 2) {
-        encodeBuilder.append(charAtBase64Bible((triplet[1] & 15) << 2, char62, char63));
-        encodeBuilder.append('=');
+      if (includePadding) {
+        if (bytesRead == 1) {
+          encodeBuilder.append(charAtBase64Bible((triplet[0] & 3) << 4, char62, char63));
+          encodeBuilder.append('=').append('=');
+        } else if (bytesRead == 2) {
+          encodeBuilder.append(charAtBase64Bible((triplet[1] & 15) << 2, char62, char63));
+          encodeBuilder.append('=');
+        }
       }
     }
 
