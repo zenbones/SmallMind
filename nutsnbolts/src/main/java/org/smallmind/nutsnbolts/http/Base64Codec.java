@@ -41,31 +41,67 @@ public final class Base64Codec {
 
   private static final String BASE64_BIBLE = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
 
+  public static String urlSafeEncode (String original)
+    throws IOException {
+
+    return encode(original.getBytes(), false, '-', '_');
+  }
+
   public static String encode (String original)
     throws IOException {
 
-    return encode(original.getBytes(), '+', '/');
+    return encode(original.getBytes(), true, '+', '/');
+  }
+
+  public static String encode (String original, boolean includePadding)
+    throws IOException {
+
+    return encode(original.getBytes(), includePadding, '+', '/');
   }
 
   public static String encode (String original, char char62, char char63)
     throws IOException {
 
-    return encode(original.getBytes(), char62, char63);
+    return encode(original.getBytes(), true, char62, char63);
+  }
+
+  public static String encode (String original, boolean includePadding, char char62, char char63)
+    throws IOException {
+
+    return encode(original.getBytes(), includePadding, char62, char63);
   }
 
   public static String encode (byte[] bytes)
     throws IOException {
 
-    return encode(new ByteArrayInputStream(bytes), '+', '/');
+    return encode(new ByteArrayInputStream(bytes), true, '+', '/');
+  }
+
+  public static String encode (byte[] bytes, boolean includePadding)
+    throws IOException {
+
+    return encode(new ByteArrayInputStream(bytes), includePadding, '+', '/');
   }
 
   public static String encode (byte[] bytes, char char62, char char63)
     throws IOException {
 
-    return encode(new ByteArrayInputStream(bytes), char62, char63);
+    return encode(new ByteArrayInputStream(bytes), true, char62, char63);
+  }
+
+  public static String encode (byte[] bytes, boolean includePadding, char char62, char char63)
+    throws IOException {
+
+    return encode(new ByteArrayInputStream(bytes), includePadding, char62, char63);
   }
 
   public static String encode (ByteArrayInputStream byteInputStream, char char62, char char63)
+    throws IOException {
+
+    return encode(byteInputStream, true, char62, char63);
+  }
+
+  public static String encode (ByteArrayInputStream byteInputStream, boolean includePadding, char char62, char char63)
     throws IOException {
 
     StringBuilder encodeBuilder = new StringBuilder();
@@ -98,6 +134,12 @@ public final class Base64Codec {
     }
 
     return encodeBuilder.toString();
+  }
+
+  public static byte[] urlSfeDecode (String encoded)
+    throws IOException {
+
+    return decode(encoded.getBytes(), false, '-', '_');
   }
 
   public static byte[] decode (String encoded)
@@ -184,7 +226,7 @@ public final class Base64Codec {
         }
 
         for (int index = 0; index < buffer.length; index++) {
-          if ((quartet[index] = (byte) indexOfBase64Bible(buffer[index], char62, char63)) < 0) {
+          if ((quartet[index] = (byte)indexOfBase64Bible(buffer[index], char62, char63)) < 0) {
             throw new UnsupportedEncodingException("Not a base64 encoded stream");
           }
         }
