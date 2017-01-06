@@ -47,8 +47,9 @@ public class JWTCodec {
   public static String encode (Object claims, JWTKeyMaster keyMaster, boolean urlSafe)
     throws Exception {
 
-    String encodedHeader = Base64Codec.encode("{\"typ\":\"JWT\",\r\n \"alg\":\"" + keyMaster.getEncryptionAlgorithm().name() + "\"}");
-    String encodedClaims = Base64Codec.encode(JsonCodec.writeAsBytes(claims));
+    String header = "{\"typ\":\"JWT\",\r\n \"alg\":\"" + keyMaster.getEncryptionAlgorithm().name() + "\"}";
+    String encodedHeader = urlSafe ? Base64Codec.urlSafeEncode(header) : Base64Codec.encode(header);
+    String encodedClaims = urlSafe ? Base64Codec.urlSafeEncode(JsonCodec.writeAsBytes(claims)) : Base64Codec.encode(JsonCodec.writeAsBytes(claims));
     String prologue = encodedHeader + '.' + encodedClaims;
     String epilogue;
     byte[] encryptedBytes = keyMaster.getEncryptionAlgorithm().encrypt(keyMaster.getKey(), prologue);
