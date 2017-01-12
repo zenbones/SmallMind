@@ -66,9 +66,9 @@ public enum RSASigningAlgorithm implements SecurityAlgorithm, SigningAlgorithm {
   }
 
   @Override
-  public boolean verify (Key key, String[] parts)
+  public boolean verify (Key key, String[] parts, boolean urlSafe)
     throws IOException, NoSuchProviderException, NoSuchAlgorithmException, InvalidKeyException, SignatureException {
 
-    return EncryptionUtility.verify(this, (PublicKey)key, (parts[0] + "." + parts[1]).getBytes(), Base64Codec.decode(parts[2]));
+    return EncryptionUtility.verify(this, (PublicKey)key, (parts[0] + "." + parts[1]).getBytes(), urlSafe ? Base64Codec.urlSafeDecode(parts[2]) : Base64Codec.decode(parts[2]));
   }
 }

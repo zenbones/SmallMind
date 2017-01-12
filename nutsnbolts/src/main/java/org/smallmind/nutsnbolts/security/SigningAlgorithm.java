@@ -39,6 +39,12 @@ public interface SigningAlgorithm {
   byte[] sign (Key key, byte[] data)
     throws Exception;
 
-  boolean verify (Key key, final String[] parts)
+  default boolean verify (Key key, final String[] parts)
+    throws Exception {
+
+    return verify(key, parts, false);
+  }
+
+  boolean verify (Key key, final String[] parts, boolean urlSafe)
     throws Exception;
 }

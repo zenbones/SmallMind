@@ -73,7 +73,7 @@ public class JWTCodec {
     if ((parts = jwtToken.split("\\.", -1)).length != 3) {
       throw new UnsupportedEncodingException("Not a JWT token");
     }
-    if (!keyMaster.getEncryptionAlgorithm().verify(keyMaster.getKey(), parts)) {
+    if (!keyMaster.getEncryptionAlgorithm().verify(keyMaster.getKey(), parts, urlSafe)) {
       throw new UnsupportedEncodingException("Not a JWT token");
     }
 
