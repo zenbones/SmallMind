@@ -1,28 +1,28 @@
 /*
  * Copyright (c) 2007, 2008, 2009, 2010, 2011, 2012, 2013, 2014, 2015, 2016 David Berkman
- * 
+ *
  * This file is part of the SmallMind Code Project.
- * 
+ *
  * The SmallMind Code Project is free software, you can redistribute
  * it and/or modify it under either, at your discretion...
- * 
+ *
  * 1) The terms of GNU Affero General Public License as published by the
  * Free Software Foundation, either version 3 of the License, or (at
  * your option) any later version.
- * 
+ *
  * ...or...
- * 
+ *
  * 2) The terms of the Apache License, Version 2.0.
- * 
+ *
  * The SmallMind Code Project is distributed in the hope that it will
  * be useful, but WITHOUT ANY WARRANTY; without even the implied warranty
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License or Apache License for more details.
- * 
+ *
  * You should have received a copy of the GNU Affero General Public License
  * and the Apache License along with the SmallMind Code Project. If not, see
  * <http://www.gnu.org/licenses/> or <http://www.apache.org/licenses/LICENSE-2.0>.
- * 
+ *
  * Additional permission under the GNU Affero GPL version 3 section 7
  * ------------------------------------------------------------------
  * If you modify this Program, or any covered work, by linking or
@@ -47,16 +47,13 @@ import org.smallmind.instrument.InstrumentationManager;
 import org.smallmind.instrument.MetricProperty;
 import org.smallmind.instrument.config.MetricConfiguration;
 import org.smallmind.instrument.config.MetricConfigurationProvider;
-import org.smallmind.nutsnbolts.time.Duration;
 import org.smallmind.nutsnbolts.util.SnowflakeId;
 import org.smallmind.phalanx.wire.AbstractRequestTransport;
 import org.smallmind.phalanx.wire.Address;
-import org.smallmind.phalanx.wire.AsynchronousTransmissionCallback;
 import org.smallmind.phalanx.wire.ConversationType;
 import org.smallmind.phalanx.wire.InvocationSignal;
 import org.smallmind.phalanx.wire.MetricType;
 import org.smallmind.phalanx.wire.SignalCodec;
-import org.smallmind.phalanx.wire.SynchronousTransmissionCallback;
 import org.smallmind.phalanx.wire.TransportException;
 import org.smallmind.phalanx.wire.VocalMode;
 import org.smallmind.phalanx.wire.Voice;
@@ -139,25 +136,12 @@ public class JmsRequestTransport extends AbstractRequestTransport implements Met
     try {
 
       Message requestMessage;
+      String messageId;
 
       messageHandler.send(requestMessage = constructMessage(messageHandler, inOnly, (String)voice.getServiceGroup(), voice.getMode().equals(VocalMode.WHISPER) ? (String)voice.getInstanceId() : null, address, arguments, contexts));
+      messageId = requestMessage.getJMSMessageID();
 
-      if (!inOnly) {
-
-        AsynchronousTransmissionCallback asynchronousCallback = new AsynchronousTransmissionCallback(address.getService(), address.getFunction().getName());
-        SynchronousTransmissionCallback previousCallback;
-        Object timeoutObject;
-        int timeoutSeconds = (timeoutObject = voice.getConversation().getTimeout()) == null ? 0 : (Integer)timeoutObject;
-
-        if ((previousCallback = (SynchronousTransmissionCallback)getCallbackMap().putIfAbsent(requestMessage.getJMSMessageID(), asynchronousCallback, (timeoutSeconds > 0) ? new Duration(timeoutSeconds, TimeUnit.SECONDS) : null)) != null) {
-
-          return previousCallback.getResult(signalCodec);
-        }
-
-        return asynchronousCallback.getResult(signalCodec);
-      }
-
-      return null;
+      return acquireResult(signalCodec, address, voice, messageId, inOnly);
     } finally {
       messageQueue.put(messageHandler);
     }

@@ -35,16 +35,12 @@ package org.smallmind.phalanx.wire.mock;
 import java.util.Date;
 import java.util.Map;
 import java.util.UUID;
-import java.util.concurrent.TimeUnit;
-import org.smallmind.nutsnbolts.time.Duration;
 import org.smallmind.phalanx.wire.AbstractRequestTransport;
 import org.smallmind.phalanx.wire.Address;
-import org.smallmind.phalanx.wire.AsynchronousTransmissionCallback;
 import org.smallmind.phalanx.wire.ConversationType;
 import org.smallmind.phalanx.wire.InvocationSignal;
 import org.smallmind.phalanx.wire.ResultSignal;
 import org.smallmind.phalanx.wire.SignalCodec;
-import org.smallmind.phalanx.wire.SynchronousTransmissionCallback;
 import org.smallmind.phalanx.wire.VocalMode;
 import org.smallmind.phalanx.wire.Voice;
 import org.smallmind.phalanx.wire.WireContext;
@@ -117,23 +113,7 @@ public class MockRequestTransport extends AbstractRequestTransport {
       messageRouter.getTalkRequestQueue().send(message);
     }
 
-    if (!inOnly) {
-
-      AsynchronousTransmissionCallback asynchronousCallback = new AsynchronousTransmissionCallback(address.getService(), address.getFunction().getName());
-      SynchronousTransmissionCallback previousCallback;
-      Object timeoutObject;
-      int timeoutSeconds = (timeoutObject = voice.getConversation().getTimeout()) == null ? 0 : (Integer)timeoutObject;
-
-      if ((previousCallback = (SynchronousTransmissionCallback)getCallbackMap().putIfAbsent(messageId, asynchronousCallback, (timeoutSeconds > 0) ? new Duration(timeoutSeconds, TimeUnit.SECONDS) : null)) != null) {
-
-        return previousCallback.getResult(signalCodec);
-      }
-
-      return asynchronousCallback.getResult(signalCodec);
-    } else {
-
-      return null;
-    }
+    return acquireResult(signalCodec, address, voice, messageId, inOnly);
   }
 
   @Override

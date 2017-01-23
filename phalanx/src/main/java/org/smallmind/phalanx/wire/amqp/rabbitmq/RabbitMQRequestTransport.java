@@ -43,15 +43,12 @@ import org.smallmind.instrument.InstrumentationManager;
 import org.smallmind.instrument.MetricProperty;
 import org.smallmind.instrument.config.MetricConfiguration;
 import org.smallmind.instrument.config.MetricConfigurationProvider;
-import org.smallmind.nutsnbolts.time.Duration;
 import org.smallmind.nutsnbolts.util.SnowflakeId;
 import org.smallmind.phalanx.wire.AbstractRequestTransport;
 import org.smallmind.phalanx.wire.Address;
-import org.smallmind.phalanx.wire.AsynchronousTransmissionCallback;
 import org.smallmind.phalanx.wire.ConversationType;
 import org.smallmind.phalanx.wire.MetricType;
 import org.smallmind.phalanx.wire.SignalCodec;
-import org.smallmind.phalanx.wire.SynchronousTransmissionCallback;
 import org.smallmind.phalanx.wire.TransportException;
 import org.smallmind.phalanx.wire.Voice;
 import org.smallmind.phalanx.wire.WireContext;
@@ -115,22 +112,7 @@ public class RabbitMQRequestTransport extends AbstractRequestTransport implement
 
       messageId = requestMessageRouter.publish(inOnly, (String)voice.getServiceGroup(), voice, address, arguments, contexts);
 
-      if (!inOnly) {
-
-        AsynchronousTransmissionCallback asynchronousCallback = new AsynchronousTransmissionCallback(address.getService(), address.getFunction().getName());
-        SynchronousTransmissionCallback previousCallback;
-        Object timeoutObject;
-        int timeoutSeconds = (timeoutObject = voice.getConversation().getTimeout()) == null ? 0 : (Integer)timeoutObject;
-
-        if ((previousCallback = (SynchronousTransmissionCallback)getCallbackMap().putIfAbsent(messageId, asynchronousCallback, (timeoutSeconds > 0) ? new Duration(timeoutSeconds, TimeUnit.SECONDS) : null)) != null) {
-
-          return previousCallback.getResult(signalCodec);
-        }
-
-        return asynchronousCallback.getResult(signalCodec);
-      }
-
-      return null;
+      return acquireResult(signalCodec, address, voice, messageId, inOnly);
     } finally {
       routerQueue.put(requestMessageRouter);
     }
