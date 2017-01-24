@@ -216,7 +216,7 @@ public class JsonTarget {
 
     LoggerManager.getLogger(JsonTarget.class).log(level, new ResponseDebugCollector(response, entityInputStreamHolder));
 
-    return JsonCodec.read(String.class.equals(responseClass) ? new QuotedInputStream(entityInputStreamHolder.getInputStream()) : entityInputStreamHolder.getInputStream(), responseClass);
+    return JsonCodec.read(entityInputStreamHolder.getInputStream(), responseClass);
   }
 
   private HttpRequest createHttpRequest (HttpMethod httpMethod, HttpEntity entity)
