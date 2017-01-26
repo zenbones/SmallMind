@@ -119,6 +119,8 @@ public class ResponseMessageRouter extends MessageRouter {
       public void execute (Channel channel)
         throws IOException {
 
+        bindQueues();
+
         installConsumerInternal(channel, getShoutQueueName() + "-" + serviceGroup + "[" + instanceId + "]");
         installConsumerInternal(channel, getTalkQueueName() + "-" + serviceGroup);
         installConsumerInternal(channel, getWhisperQueueName() + "-" + serviceGroup + "[" + instanceId + "]");
