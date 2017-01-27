@@ -47,7 +47,7 @@ import org.smallmind.nutsnbolts.util.TimeArithmetic;
 
 public class FileUtility {
 
-  private static boolean isDirectoryEmpty (Path directory) throws IOException {
+  public static boolean isDirectoryEmpty (Path directory) throws IOException {
 
     DirectoryStream<Path> directoryStream = Files.newDirectoryStream(directory);
 
