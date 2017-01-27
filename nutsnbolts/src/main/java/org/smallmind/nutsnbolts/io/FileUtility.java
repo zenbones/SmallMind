@@ -35,6 +35,7 @@ package org.smallmind.nutsnbolts.io;
 import java.io.FileFilter;
 import java.io.IOException;
 import java.nio.file.DirectoryNotEmptyException;
+import java.nio.file.DirectoryStream;
 import java.nio.file.FileVisitResult;
 import java.nio.file.Files;
 import java.nio.file.LinkOption;
@@ -45,6 +46,13 @@ import java.nio.file.attribute.BasicFileAttributes;
 import org.smallmind.nutsnbolts.util.TimeArithmetic;
 
 public class FileUtility {
+
+  private static boolean isDirectoryEmpty (Path directory) throws IOException {
+
+    DirectoryStream<Path> directoryStream = Files.newDirectoryStream(directory);
+
+    return !directoryStream.iterator().hasNext();
+  }
 
   public static void copyTree (Path source, Path destination, FileManipulation... fileManipulations)
     throws IOException {
