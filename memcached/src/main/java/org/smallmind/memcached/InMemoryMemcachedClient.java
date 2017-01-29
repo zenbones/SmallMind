@@ -178,6 +178,12 @@ public class InMemoryMemcachedClient implements ProxyMemcachedClient {
   }
 
   @Override
+  public void clear () {
+
+    internalMap.clear();
+  }
+
+  @Override
   public void shutdown () {
 
   }

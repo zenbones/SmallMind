@@ -30,47 +30,10 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.memcached;
+package org.smallmind.memcached.jmx;
 
-import java.util.Collection;
-import java.util.Map;
+public interface MemcachedMXBean {
 
-public interface ProxyMemcachedClient {
-
-  long getOpTimeout ();
-
-  <T> ProxyCASResponse<T> createCASResponse (long cas, T value);
-
-  <T> T get (String key)
-    throws Exception;
-
-  <T> Map<String, T> get (Collection<String> keys)
-    throws Exception;
-
-  <T> ProxyCASResponse<T> casGet (String key)
-    throws Exception;
-
-  <T> boolean set (String key, int expiration, T value)
-    throws Exception;
-
-  <T> boolean casSet (String key, int expiration, T value, long cas)
-    throws Exception;
-
-  boolean delete (String key)
-    throws Exception;
-
-  boolean casDelete (String key, long cas)
-    throws Exception;
-
-  boolean touch (String key, int expiration)
-    throws Exception;
-
-  <T> T getAndTouch (String key, int expiration)
-    throws Exception;
-
-  void clear ()
-    throws Exception;
-
-  void shutdown ()
+  void standby ()
     throws Exception;
 }

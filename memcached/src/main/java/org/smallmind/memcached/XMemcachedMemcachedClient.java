@@ -132,6 +132,13 @@ public class XMemcachedMemcachedClient implements ProxyMemcachedClient {
   }
 
   @Override
+  public void clear ()
+    throws TimeoutException, InterruptedException, MemcachedException {
+
+    memcachedClient.flushAll();
+  }
+
+  @Override
   public void shutdown ()
     throws IOException {
 

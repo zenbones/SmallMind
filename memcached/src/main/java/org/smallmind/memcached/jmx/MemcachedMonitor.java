@@ -30,47 +30,25 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.memcached;
+package org.smallmind.memcached.jmx;
 
-import java.util.Collection;
-import java.util.Map;
+import javax.management.StandardMBean;
+import org.smallmind.memcached.ProxyMemcachedClient;
 
-public interface ProxyMemcachedClient {
+public class MemcachedMonitor extends StandardMBean implements MemcachedMXBean {
 
-  long getOpTimeout ();
+  private ProxyMemcachedClient memcachedClient;
 
-  <T> ProxyCASResponse<T> createCASResponse (long cas, T value);
+  public MemcachedMonitor (ProxyMemcachedClient memcachedClient) {
 
-  <T> T get (String key)
-    throws Exception;
+    super(MemcachedMXBean.class, true);
 
-  <T> Map<String, T> get (Collection<String> keys)
-    throws Exception;
+    this.memcachedClient = memcachedClient;
+  }
 
-  <T> ProxyCASResponse<T> casGet (String key)
-    throws Exception;
+  @Override
+  public void standby () throws Exception {
 
-  <T> boolean set (String key, int expiration, T value)
-    throws Exception;
-
-  <T> boolean casSet (String key, int expiration, T value, long cas)
-    throws Exception;
-
-  boolean delete (String key)
-    throws Exception;
-
-  boolean casDelete (String key, long cas)
-    throws Exception;
-
-  boolean touch (String key, int expiration)
-    throws Exception;
-
-  <T> T getAndTouch (String key, int expiration)
-    throws Exception;
-
-  void clear ()
-    throws Exception;
-
-  void shutdown ()
-    throws Exception;
+    memcachedClient.clear();
+  }
 }
