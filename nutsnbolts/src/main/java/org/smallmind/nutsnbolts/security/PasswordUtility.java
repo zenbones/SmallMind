@@ -44,18 +44,36 @@ import org.smallmind.nutsnbolts.http.Base64Codec;
 
 public class PasswordUtility {
 
-  private static final int ITERATIONS = 20 * 1000;
-  private static final int SALT_LENGTH = 32;
-  private static final int DESIRED_KEY_LENGTH = 256;
+  // Changes to these values will alter the resulting encryption
+  private int iterations;
+  private int saltLength;
+  private int desiredKeyLength;
 
-  public static String encrypt (String password)
+  public PasswordUtility () {
+
+    this(50000, 32, 256);
+  }
+
+  public PasswordUtility (int iterations) {
+
+    this(iterations, 32, 256);
+  }
+
+  public PasswordUtility (int iterations, int saltLength, int desiredKeyLength) {
+
+    this.iterations = iterations;
+    this.saltLength = saltLength;
+    this.desiredKeyLength = desiredKeyLength;
+  }
+
+  public String encrypt (String password)
     throws IOException, NoSuchAlgorithmException, InvalidKeySpecException, InvalidPasswordException {
 
     if ((password == null) || password.isEmpty()) {
       throw new InvalidPasswordException("Passwords must not be empty");
     } else {
 
-      byte[] saltBytes = SecureRandom.getInstance("SHA1PRNG").generateSeed(SALT_LENGTH);
+      byte[] saltBytes = SecureRandom.getInstance("SHA1PRNG").generateSeed(saltLength);
       byte[] hashedPasswordBytes = hash(saltBytes, password);
       byte[] compiledPasswordBytes = new byte[saltBytes.length + hashedPasswordBytes.length];
 
@@ -66,7 +84,7 @@ public class PasswordUtility {
     }
   }
 
-  public static boolean match (String password, String stored)
+  public boolean match (String password, String stored)
     throws IOException, NoSuchAlgorithmException, InvalidKeySpecException {
 
     if ((password == null) || password.isEmpty() || (stored == null) || stored.isEmpty()) {
@@ -75,21 +93,21 @@ public class PasswordUtility {
     } else {
 
       byte[] compiledPasswordBytes = Base64Codec.decode(stored);
-      byte[] salBytes = new byte[SALT_LENGTH];
-      byte[] hashedPasswordBytes = new byte[compiledPasswordBytes.length - SALT_LENGTH];
+      byte[] salBytes = new byte[saltLength];
+      byte[] hashedPasswordBytes = new byte[compiledPasswordBytes.length - saltLength];
 
-      System.arraycopy(compiledPasswordBytes, 0, salBytes, 0, SALT_LENGTH);
-      System.arraycopy(compiledPasswordBytes, SALT_LENGTH, hashedPasswordBytes, 0, compiledPasswordBytes.length - SALT_LENGTH);
+      System.arraycopy(compiledPasswordBytes, 0, salBytes, 0, saltLength);
+      System.arraycopy(compiledPasswordBytes, saltLength, hashedPasswordBytes, 0, compiledPasswordBytes.length - saltLength);
 
       return Arrays.equals(hash(salBytes, password), hashedPasswordBytes);
     }
   }
 
-  private static byte[] hash (byte[] salt, String password)
+  private byte[] hash (byte[] salt, String password)
     throws NoSuchAlgorithmException, InvalidKeySpecException {
 
     SecretKeyFactory keyFactory = SecretKeyFactory.getInstance("PBKDF2WithHmacSHA1");
-    SecretKey key = keyFactory.generateSecret(new PBEKeySpec(password.toCharArray(), salt, ITERATIONS, DESIRED_KEY_LENGTH));
+    SecretKey key = keyFactory.generateSecret(new PBEKeySpec(password.toCharArray(), salt, iterations, desiredKeyLength));
 
     return key.getEncoded();
   }
