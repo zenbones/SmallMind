@@ -42,24 +42,24 @@ import javax.crypto.SecretKeyFactory;
 import javax.crypto.spec.PBEKeySpec;
 import org.smallmind.nutsnbolts.http.Base64Codec;
 
-public class PasswordUtility {
+public class PasswordEngine {
 
   // Changes to these values will alter the resulting encryption
   private int iterations;
   private int saltLength;
   private int desiredKeyLength;
 
-  public PasswordUtility () {
+  public PasswordEngine () {
 
     this(50000, 32, 256);
   }
 
-  public PasswordUtility (int iterations) {
+  public PasswordEngine (int iterations) {
 
     this(iterations, 32, 256);
   }
 
-  public PasswordUtility (int iterations, int saltLength, int desiredKeyLength) {
+  public PasswordEngine (int iterations, int saltLength, int desiredKeyLength) {
 
     this.iterations = iterations;
     this.saltLength = saltLength;
