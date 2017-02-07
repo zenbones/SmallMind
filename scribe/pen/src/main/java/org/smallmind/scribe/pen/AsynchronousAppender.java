@@ -38,12 +38,12 @@ import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-public class AsynchronousAppender implements Appender, Runnable {
+public class AsynchronousAppender implements Appender {
 
-  private CountDownLatch exitLatch;
-  private AtomicBoolean finished = new AtomicBoolean(false);
-  private Appender internalAppender;
-  private LinkedBlockingQueue<Record> publishQueue;
+  private final AtomicBoolean finished = new AtomicBoolean(false);
+  private final Appender internalAppender;
+  private final LinkedBlockingQueue<Record> publishQueue;
+  private final PublishWorker publishWorker;
 
   public AsynchronousAppender (Appender internalAppender) {
 
@@ -58,9 +58,7 @@ public class AsynchronousAppender implements Appender, Runnable {
 
     publishQueue = new LinkedBlockingQueue<>(bufferSize);
 
-    exitLatch = new CountDownLatch(1);
-
-    publishThread = new Thread(this);
+    publishThread = new Thread(publishWorker = new PublishWorker());
     publishThread.setDaemon(true);
     publishThread.start();
   }
@@ -142,7 +140,7 @@ public class AsynchronousAppender implements Appender, Runnable {
       if (internalAppender.getErrorHandler() == null) {
         exception.printStackTrace();
       } else {
-        internalAppender.getErrorHandler().process(record, exception, "Fatal error in appender(%s)", this.getClass().getCanonicalName());
+        internalAppender.getErrorHandler().process(record, exception, "Unable to publish message from appender(%s)", this.getClass().getCanonicalName());
       }
     }
   }
@@ -150,39 +148,43 @@ public class AsynchronousAppender implements Appender, Runnable {
   public void close ()
     throws InterruptedException, LoggerException {
 
-    finish();
-
+    publishWorker.finish();
     internalAppender.close();
   }
 
-  public void finish ()
-    throws InterruptedException {
-
-    finished.compareAndSet(false, true);
-    exitLatch.await();
-  }
-
   protected void finalize ()
-    throws InterruptedException {
+    throws InterruptedException, LoggerException {
 
-    finish();
+    close();
   }
 
-  public void run () {
+  private class PublishWorker implements Runnable {
 
-    Record record;
+    private final CountDownLatch exitLatch = new CountDownLatch(1);
 
-    try {
-      while (!finished.get()) {
-        if ((record = publishQueue.poll(1, TimeUnit.SECONDS)) != null) {
-          internalAppender.publish(record);
+    private void finish ()
+      throws InterruptedException {
+
+      finished.compareAndSet(false, true);
+      exitLatch.await();
+    }
+
+    public void run () {
+
+      Record record;
+
+      try {
+        while (!finished.get()) {
+          if ((record = publishQueue.poll(1, TimeUnit.SECONDS)) != null) {
+            internalAppender.publish(record);
+          }
         }
+      } catch (InterruptedException interruptedException) {
+        finished.set(true);
+        LoggerManager.getLogger(AsynchronousAppender.class).error(interruptedException);
+      } finally {
+        exitLatch.countDown();
       }
-    } catch (InterruptedException interruptedException) {
-      finished.set(true);
-      LoggerManager.getLogger(AsynchronousAppender.class).error(interruptedException);
-    } finally {
-      exitLatch.countDown();
     }
   }
 }
