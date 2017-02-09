@@ -117,7 +117,6 @@
           </appParameters>
           <jvmArgs>
             <jvmArg>-server</jvmArg>
-            <jvmArg>-XX:PermSize=128m</jvmArg>
             <jvmArg>-XX:+AggressiveOpts</jvmArg>
             <jvmArg>-XX:+UseCompressedOops</jvmArg>
             <jvmArg>-XX:+DoEscapeAnalysis</jvmArg>
