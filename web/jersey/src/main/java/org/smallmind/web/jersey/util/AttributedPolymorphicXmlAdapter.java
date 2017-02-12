@@ -117,7 +117,7 @@ public abstract class AttributedPolymorphicXmlAdapter<T> extends XmlAdapter<Obje
         Object proxyObject = ProxyGenerator.createProxy(value.getClass(), new OffloadingInvocationHandler(value), new AnnotationFilter(PassType.EXCLUDE, XmlJavaTypeAdapter.class));
 
         PolymorphicClassCache.addClassRelationship(value.getClass(), proxyObject.getClass());
-        objectNode = JsonCodec.writeAsObjectNode(proxyObject);
+        objectNode = (ObjectNode)JsonCodec.writeAsJsonNode(proxyObject);
         objectNode.put(getPolymorphicAttributeName(), xmlRootElementAnnotation.name());
 
         return objectNode;

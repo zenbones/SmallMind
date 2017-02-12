@@ -37,6 +37,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.MapperFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
@@ -76,7 +77,7 @@ public class JsonCodec {
     return OBJECT_MAPPER.readValue(parser, clazz);
   }
 
-  public static ObjectNode writeAsObjectNode (Object obj)
+  public static JsonNode writeAsJsonNode (Object obj)
     throws JsonProcessingException {
 
     return OBJECT_MAPPER.valueToTree(obj);
