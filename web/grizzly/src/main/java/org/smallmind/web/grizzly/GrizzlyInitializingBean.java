@@ -41,6 +41,7 @@ import java.util.Map;
 import javax.servlet.DispatcherType;
 import javax.servlet.FilterRegistration;
 import javax.servlet.ServletRegistration;
+import org.glassfish.grizzly.Transport;
 import org.glassfish.grizzly.http.server.AddOn;
 import org.glassfish.grizzly.http.server.CLStaticHttpHandler;
 import org.glassfish.grizzly.http.server.HttpHandler;
@@ -51,6 +52,8 @@ import org.glassfish.grizzly.jaxws.JaxwsHandler;
 import org.glassfish.grizzly.servlet.WebappContext;
 import org.glassfish.grizzly.ssl.SSLContextConfigurator;
 import org.glassfish.grizzly.ssl.SSLEngineConfigurator;
+import org.glassfish.grizzly.strategies.WorkerThreadIOStrategy;
+import org.glassfish.grizzly.threadpool.ThreadPoolConfig;
 import org.glassfish.grizzly.websockets.WebSocketEngine;
 import org.glassfish.jersey.servlet.ServletContainer;
 import org.smallmind.nutsnbolts.lang.web.PerApplicationContextFilter;
@@ -174,12 +177,12 @@ public class GrizzlyInitializingBean implements DisposableBean, ApplicationConte
       httpServer = new HttpServer();
 
       if (allowInsecure) {
-        httpServer.addListener(new NetworkListener("grizzly2", host, port));
+        httpServer.addListener(configureNetworkListener(new NetworkListener("grizzly2", host, port)));
       }
 
       if (sslInfo != null) {
         try {
-          httpServer.addListener(secureNetworkListener = generateSecureNetworkListener(sslInfo));
+          httpServer.addListener(secureNetworkListener = configureNetworkListener(generateSecureNetworkListener(sslInfo)));
         } catch (Exception exception) {
           throw new GrizzlyInitializationException(exception);
         }
@@ -323,7 +326,17 @@ public class GrizzlyInitializingBean implements DisposableBean, ApplicationConte
     }
   }
 
-  public NetworkListener generateSecureNetworkListener (SSLInfo sslInfo)
+  private NetworkListener configureNetworkListener (NetworkListener networkListener) {
+
+    Transport transport = networkListener.getTransport();
+
+    transport.setIOStrategy(WorkerThreadIOStrategy.getInstance());
+    transport.setWorkerThreadPoolConfig(ThreadPoolConfig.defaultConfig());
+
+    return networkListener;
+  }
+
+  private NetworkListener generateSecureNetworkListener (SSLInfo sslInfo)
     throws IOException, ResourceException {
 
     NetworkListener secureListener = new NetworkListener("grizzly2Secure", host, sslInfo.getPort());
