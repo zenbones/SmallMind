@@ -41,13 +41,28 @@ import javax.crypto.SecretKey;
 import javax.crypto.SecretKeyFactory;
 import javax.crypto.spec.PBEKeySpec;
 import org.smallmind.nutsnbolts.http.Base64Codec;
+import org.smallmind.nutsnbolts.lang.StaticInitializationError;
 
 public class PasswordEngine {
+
+  private static final SecureRandom SECURE_RANDOM;
 
   // Changes to these values will alter the resulting encryption
   private int iterations;
   private int saltLength;
   private int desiredKeyLength;
+
+  static {
+
+    try {
+      SECURE_RANDOM = SecureRandom.getInstance("SHA1PRNG");
+    } catch (NoSuchAlgorithmException noSuchAlgorithmException) {
+      throw new StaticInitializationError(noSuchAlgorithmException);
+    }
+
+    // force the instance to seed itself
+    SECURE_RANDOM.nextBytes(new byte[256]);
+  }
 
   public PasswordEngine () {
 
@@ -73,9 +88,13 @@ public class PasswordEngine {
       throw new InvalidPasswordException("Passwords must not be empty");
     } else {
 
-      byte[] saltBytes = SecureRandom.getInstance("SHA1PRNG").generateSeed(saltLength);
-      byte[] hashedPasswordBytes = hash(saltBytes, password);
-      byte[] compiledPasswordBytes = new byte[saltBytes.length + hashedPasswordBytes.length];
+      byte[] saltBytes = new byte[saltLength];
+      byte[] hashedPasswordBytes;
+      byte[] compiledPasswordBytes;
+
+      SECURE_RANDOM.nextBytes(saltBytes);
+      hashedPasswordBytes = hash(saltBytes, password);
+      compiledPasswordBytes = new byte[saltBytes.length + hashedPasswordBytes.length];
 
       System.arraycopy(saltBytes, 0, compiledPasswordBytes, 0, saltBytes.length);
       System.arraycopy(hashedPasswordBytes, 0, compiledPasswordBytes, saltBytes.length, hashedPasswordBytes.length);
