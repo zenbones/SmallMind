@@ -41,7 +41,7 @@ import java.util.Map;
 import javax.servlet.DispatcherType;
 import javax.servlet.FilterRegistration;
 import javax.servlet.ServletRegistration;
-import org.glassfish.grizzly.Transport;
+import org.glassfish.grizzly.IOStrategy;
 import org.glassfish.grizzly.http.server.AddOn;
 import org.glassfish.grizzly.http.server.CLStaticHttpHandler;
 import org.glassfish.grizzly.http.server.HttpHandler;
@@ -52,8 +52,6 @@ import org.glassfish.grizzly.jaxws.JaxwsHandler;
 import org.glassfish.grizzly.servlet.WebappContext;
 import org.glassfish.grizzly.ssl.SSLContextConfigurator;
 import org.glassfish.grizzly.ssl.SSLEngineConfigurator;
-import org.glassfish.grizzly.strategies.WorkerThreadIOStrategy;
-import org.glassfish.grizzly.threadpool.ThreadPoolConfig;
 import org.glassfish.grizzly.websockets.WebSocketEngine;
 import org.glassfish.jersey.servlet.ServletContainer;
 import org.smallmind.nutsnbolts.lang.web.PerApplicationContextFilter;
@@ -73,6 +71,7 @@ import org.springframework.context.event.ContextRefreshedEvent;
 public class GrizzlyInitializingBean implements DisposableBean, ApplicationContextAware, ApplicationListener, BeanPostProcessor {
 
   private HttpServer httpServer;
+  private IOStrategy ioStrategy;
   private LinkedList<WebService> serviceList = new LinkedList<>();
   private LinkedList<FilterInstaller> filterInstallerList = new LinkedList<>();
   private LinkedList<ListenerInstaller> listenerInstallerList = new LinkedList<>();
@@ -92,6 +91,11 @@ public class GrizzlyInitializingBean implements DisposableBean, ApplicationConte
   private int port = 80;
   private boolean allowInsecure = true;
   private boolean debug = false;
+
+  public void setIoStrategy (IOStrategy ioStrategy) {
+
+    this.ioStrategy = ioStrategy;
+  }
 
   public void setHost (String host) {
 
@@ -328,10 +332,9 @@ public class GrizzlyInitializingBean implements DisposableBean, ApplicationConte
 
   private NetworkListener configureNetworkListener (NetworkListener networkListener) {
 
-    Transport transport = networkListener.getTransport();
-
-    transport.setIOStrategy(WorkerThreadIOStrategy.getInstance());
-    transport.setWorkerThreadPoolConfig(ThreadPoolConfig.defaultConfig());
+    if (ioStrategy != null) {
+      networkListener.getTransport().setIOStrategy(ioStrategy);
+    }
 
     return networkListener;
   }
