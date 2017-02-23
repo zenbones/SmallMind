@@ -34,7 +34,7 @@ package org.smallmind.persistence.orm.spring.jpa.querydsl;
 
 import java.io.File;
 import javax.persistence.EntityManagerFactory;
-import com.mysema.query.jpa.codegen.JPADomainExporter;
+import com.querydsl.jpa.codegen.JPADomainExporter;
 import org.hibernate.SessionFactory;
 import org.springframework.beans.factory.InitializingBean;
 
