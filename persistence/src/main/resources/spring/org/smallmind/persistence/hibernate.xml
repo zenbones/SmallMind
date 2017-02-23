@@ -15,7 +15,6 @@
 
   <bean class="org.smallmind.persistence.orm.spring.hibernate.FileSeekingBeanFactoryPostProcessor"/>
 
-
   <bean id="persistence" class="org.smallmind.persistence.Persistence" init-method="register">
     <constructor-arg index="0">
       <bean class="org.smallmind.nutsnbolts.reflection.type.converter.DefaultStringConverterFactory"/>
