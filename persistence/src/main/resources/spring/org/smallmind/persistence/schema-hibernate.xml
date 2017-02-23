@@ -95,4 +95,10 @@
     <constructor-arg index="4" value="true"/>
   </bean>
 
+  <bean class="org.smallmind.persistence.orm.spring.hibernate.querydsl.HibernateDomainExporterInitializingBean">
+    <property name="sessionFactory" ref="schemaSessionFactory"/>
+    <property name="prefix" value="Q"/>
+    <property name="targetPath" value="target/gen3"/>
+  </bean>
+
 </beans>
