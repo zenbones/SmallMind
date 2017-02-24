@@ -103,11 +103,10 @@ public class JsonTargetFactory {
     connectionManager = new PoolingHttpClientConnectionManager(socketFactoryRegistry);
     connectionManager.setDefaultConnectionConfig(ConnectionConfig.custom().setCharset(StandardCharsets.UTF_8).build());
     connectionManager.setDefaultSocketConfig(SocketConfig.copy(SocketConfig.DEFAULT).setSoTimeout(20000).setTcpNoDelay(true).build());
+    connectionManager.setDefaultMaxPerRoute(concurrencyLevel);
+    connectionManager.setMaxTotal(concurrencyLevel);
 
-    httpClient = clientBuilder.setConnectionManager(connectionManager)
-                   .setMaxConnTotal(concurrencyLevel)
-                   .setMaxConnPerRoute(concurrencyLevel)
-                   .setRedirectStrategy(new ExtraLaxRedirectStrategy()).build();
+    httpClient = clientBuilder.setConnectionManager(connectionManager).setRedirectStrategy(new ExtraLaxRedirectStrategy()).build();
 
     return new JsonTarget(httpClient, URI.create(protocol.getScheme() + "://" + host + ((port > 0) ? ":" + port : "") + ((context != null) ? context : "")));
   }

@@ -22,15 +22,5 @@
       <optional>true</optional>
       <scope>compile</scope>
     </dependency>
-    <dependency>
-      <groupId>org.apache.httpcomponents</groupId>
-      <artifactId>httpcore</artifactId>
-      <scope>compile</scope>
-    </dependency>
-    <dependency>
-      <groupId>org.apache.httpcomponents</groupId>
-      <artifactId>httpcore-nio</artifactId>
-      <scope>compile</scope>
-    </dependency>
   </dependencies>
 </project>
