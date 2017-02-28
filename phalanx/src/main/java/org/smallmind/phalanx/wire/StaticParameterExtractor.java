@@ -35,17 +35,17 @@ package org.smallmind.phalanx.wire;
 import java.lang.reflect.Method;
 import java.util.HashMap;
 
-public class StaticParameterExtractor implements ParameterExtractor {
+public class StaticParameterExtractor<T> implements ParameterExtractor<T> {
 
-  private String parameter;
+  private T parameter;
 
-  public StaticParameterExtractor (String parameter) {
+  public StaticParameterExtractor (T parameter) {
 
     this.parameter = parameter;
   }
 
   @Override
-  public String getParameter (Method method, HashMap<String, Object> argumentMap, WireContext... wireContexts) throws MissingInstanceIdException {
+  public T getParameter (Method method, HashMap<String, Object> argumentMap, WireContext... wireContexts) throws MissingInstanceIdException {
 
     return parameter;
   }

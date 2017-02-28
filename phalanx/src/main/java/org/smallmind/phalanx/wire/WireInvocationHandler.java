@@ -47,16 +47,16 @@ public class WireInvocationHandler implements InvocationHandler {
   private static final String[] NO_NAMES = new String[0];
   private static final String[] SINGLE_OBJECT_NAME = new String[] {"obj"};
   private static OneWayConversation ONE_WAY_CONVERSATION = new OneWayConversation();
-  private static TwoWayConversation DEFAULT_TIMEOUT_TWO_WAY_CONVERSATION = new TwoWayConversation();
   private final RequestTransport transport;
   private final HashMap<Method, String[]> methodMap = new HashMap<>();
-  private final ParameterExtractor serviceGroupExtractor;
-  private final ParameterExtractor instanceIdExtractor;
+  private final ParameterExtractor<String> serviceGroupExtractor;
+  private final ParameterExtractor<String> instanceIdExtractor;
+  private final ParameterExtractor<Integer> timeoutExtractor;
   private final Class serviceInterface;
   private final String serviceName;
   private final int version;
 
-  public WireInvocationHandler (RequestTransport transport, int version, String serviceName, Class<?> serviceInterface, ParameterExtractor serviceGroupExtractor, ParameterExtractor instanceIdExtractor)
+  public WireInvocationHandler (RequestTransport transport, int version, String serviceName, Class<?> serviceInterface, ParameterExtractor<String> serviceGroupExtractor, ParameterExtractor<String> instanceIdExtractor, ParameterExtractor<Integer> timeoutExtractor)
     throws Exception {
 
     this.transport = transport;
@@ -64,10 +64,11 @@ public class WireInvocationHandler implements InvocationHandler {
     this.serviceName = serviceName;
     this.serviceInterface = serviceInterface;
     this.serviceGroupExtractor = serviceGroupExtractor;
+    this.timeoutExtractor = timeoutExtractor;
     this.instanceIdExtractor = instanceIdExtractor;
 
     if (serviceGroupExtractor == null) {
-      throw new ServiceDefinitionException("The service interface(%s) has no service group %s defined", serviceInterface.getName(), ParameterExtractor.class.getSimpleName());
+      throw new ServiceDefinitionException("The service interface(%s) has no service group extractor %s is defined", serviceInterface.getName(), ParameterExtractor.class.getSimpleName());
     }
 
     for (Method method : serviceInterface.getMethods()) {
@@ -155,10 +156,18 @@ public class WireInvocationHandler implements InvocationHandler {
 
       if ((whisper = method.getAnnotation(Whisper.class)) != null) {
         if (instanceIdExtractor == null) {
-          throw new ServiceDefinitionException("The method(%s) in service interface(%s) is marked as @Whisper but no instance id %s has been defined", method.getName(), serviceInterface.getName(), ParameterExtractor.class.getSimpleName());
+          throw new ServiceDefinitionException("The method(%s) in service interface(%s) is marked as @Whisper but no instance id extractor %s is defined", method.getName(), serviceInterface.getName(), ParameterExtractor.class.getSimpleName());
         }
 
-        voice = new Whispering(serviceGroupExtractor.getParameter(method, argumentMap, wireContexts), instanceIdExtractor.getParameter(method, argumentMap, wireContexts), whisper.timeoutSeconds());
+        Integer timeoutSeconds;
+
+        if (timeoutExtractor != null) {
+          timeoutSeconds = timeoutExtractor.getParameter(method, argumentMap, wireContexts);
+        } else {
+          timeoutSeconds = whisper.timeoutSeconds();
+        }
+
+        voice = new Whispering(serviceGroupExtractor.getParameter(method, argumentMap, wireContexts), instanceIdExtractor.getParameter(method, argumentMap, wireContexts), timeoutSeconds);
       } else if (method.getAnnotation(InOnly.class) != null) {
         if (!method.getReturnType().equals(void.class)) {
           throw new ServiceDefinitionException("The method(%s) in service interface(%s) is marked as @InOnly but does not return 'void'", method.getName(), serviceInterface.getName());
@@ -171,8 +180,16 @@ public class WireInvocationHandler implements InvocationHandler {
       } else {
 
         InOut inOut = method.getAnnotation(InOut.class);
+        Integer timeoutSeconds = null;
 
-        voice = new Talking((inOut == null) ? DEFAULT_TIMEOUT_TWO_WAY_CONVERSATION : new TwoWayConversation(inOut.timeoutSeconds()), serviceGroupExtractor.getParameter(method, argumentMap, wireContexts));
+        if (timeoutExtractor != null) {
+          timeoutSeconds = timeoutExtractor.getParameter(method, argumentMap, wireContexts);
+        }
+        if ((timeoutSeconds == null) && (inOut != null)) {
+          timeoutSeconds = inOut.timeoutSeconds();
+        }
+
+        voice = new Talking(new TwoWayConversation(timeoutSeconds), serviceGroupExtractor.getParameter(method, argumentMap, wireContexts));
       }
     }
 

@@ -80,7 +80,7 @@ public class MockWireTest {
     WireContextManager.register("test", TestWireContext.class);
 
     responseTransport.register(WireTestingService.class, new WireTestingServiceImpl());
-    wireTestingService = (WireTestingService)WireProxyFactory.generateProxy(requestTransport, 1, "WireTestService", WireTestingService.class, new StaticParameterExtractor("test"), null);
+    wireTestingService = (WireTestingService)WireProxyFactory.generateProxy(requestTransport, 1, "WireTestService", WireTestingService.class, new StaticParameterExtractor<>("test"), null, null);
   }
 
   @AfterClass

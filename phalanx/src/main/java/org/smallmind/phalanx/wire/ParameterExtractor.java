@@ -35,8 +35,8 @@ package org.smallmind.phalanx.wire;
 import java.lang.reflect.Method;
 import java.util.HashMap;
 
-public interface ParameterExtractor {
+public interface ParameterExtractor<T> {
 
-  String getParameter (Method method, HashMap<String, Object> argumentMap, WireContext... wireContexts)
+  T getParameter (Method method, HashMap<String, Object> argumentMap, WireContext... wireContexts)
     throws Exception;
 }

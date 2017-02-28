@@ -43,8 +43,9 @@ public class WireProxyFactoryBean implements InitializingBean, FactoryBean<Proxy
 
   private Proxy serviceProxy;
   private RequestTransport requestTransport;
-  private ParameterExtractor serviceGroupExtractor;
-  private ParameterExtractor instanceIdExtractor;
+  private ParameterExtractor<String> serviceGroupExtractor;
+  private ParameterExtractor<String> instanceIdExtractor;
+  private ParameterExtractor<Integer> timeoutExtractor;
   private Class<?> serviceInterface;
   private String serviceName;
   private int version;
@@ -69,21 +70,26 @@ public class WireProxyFactoryBean implements InitializingBean, FactoryBean<Proxy
     this.version = version;
   }
 
-  public void setServiceGroupExtractor (ParameterExtractor serviceGroupExtractor) {
+  public void setServiceGroupExtractor (ParameterExtractor<String> serviceGroupExtractor) {
 
     this.serviceGroupExtractor = serviceGroupExtractor;
   }
 
-  public void setInstanceIdExtractor (ParameterExtractor instanceIdExtractor) {
+  public void setInstanceIdExtractor (ParameterExtractor<String> instanceIdExtractor) {
 
     this.instanceIdExtractor = instanceIdExtractor;
+  }
+
+  public void setTimeoutExtractor (ParameterExtractor<Integer> timeoutExtractor) {
+
+    this.timeoutExtractor = timeoutExtractor;
   }
 
   @Override
   public void afterPropertiesSet ()
     throws Exception {
 
-    serviceProxy = WireProxyFactory.generateProxy(requestTransport, version, serviceName, serviceInterface, serviceGroupExtractor, instanceIdExtractor);
+    serviceProxy = WireProxyFactory.generateProxy(requestTransport, version, serviceName, serviceInterface, serviceGroupExtractor, instanceIdExtractor, timeoutExtractor);
   }
 
   @Override
