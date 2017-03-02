@@ -30,9 +30,11 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.web.jersey.persistence.hibernate;
+package org.smallmind.nutsnbolts.json;
 
-public interface Version<V extends Version<V>> {
+import org.smallmind.nutsnbolts.version.Version;
+import org.smallmind.nutsnbolts.version.Versioned;
 
-  Class<? extends VersionedJson<V>> getVersionedJsonClass ();
+public interface VersionedJson<V extends Version<V>> extends Versioned<V> {
+
 }

@@ -30,11 +30,9 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.web.jersey.persistence.hibernate;
+package org.smallmind.nutsnbolts.version;
 
-import java.io.Serializable;
+public interface VersionFactory<V extends Version<V>> {
 
-public interface VersionedJson<V extends Version<V>> extends Serializable {
-
-  V getVersion ();
+  V fromString (String aString);
 }

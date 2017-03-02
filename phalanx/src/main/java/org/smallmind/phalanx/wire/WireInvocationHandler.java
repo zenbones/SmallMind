@@ -113,7 +113,7 @@ public class WireInvocationHandler implements InvocationHandler {
     throws Throwable {
 
     HashMap<String, Object> argumentMap = null;
-    Context[] expectedContexts;
+    Context[] filteredContexts;
     WireContext[] wireContexts = null;
     Voice voice;
     String[] argumentNames;
@@ -136,12 +136,12 @@ public class WireInvocationHandler implements InvocationHandler {
       }
     }
 
-    if ((expectedContexts = ContextFactory.getContextsOn(method, WireContext.class)) != null) {
+    if ((filteredContexts = ContextFactory.getContextsOn(method, WireContext.class)) != null) {
 
       int index = 0;
 
-      wireContexts = new WireContext[expectedContexts.length];
-      for (Context expectedContext : expectedContexts) {
+      wireContexts = new WireContext[filteredContexts.length];
+      for (Context expectedContext : filteredContexts) {
         if (expectedContext instanceof WireContext) {
           wireContexts[index++] = (WireContext)expectedContext;
         }

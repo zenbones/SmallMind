@@ -45,6 +45,9 @@ import org.hibernate.engine.spi.SharedSessionContractImplementor;
 import org.hibernate.type.TextType;
 import org.hibernate.usertype.ParameterizedType;
 import org.hibernate.usertype.UserType;
+import org.smallmind.nutsnbolts.json.VersionedJson;
+import org.smallmind.nutsnbolts.version.Version;
+import org.smallmind.nutsnbolts.version.VersionFactory;
 import org.smallmind.web.jersey.util.JsonCodec;
 
 public class VersionedJsonUserType<V extends Version<V>> implements UserType, ParameterizedType {
@@ -134,7 +137,7 @@ public class VersionedJsonUserType<V extends Version<V>> implements UserType, Pa
       if ((jsonAsString = rs.getString(names[1])) != null) {
 
         try {
-          return JsonCodec.read(jsonAsString, version.getVersionedJsonClass());
+          return JsonCodec.read(jsonAsString, version.getVersionedClass());
         } catch (IOException ioException) {
           throw new HibernateException(ioException);
         }
