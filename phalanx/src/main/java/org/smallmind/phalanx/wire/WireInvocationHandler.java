@@ -159,11 +159,12 @@ public class WireInvocationHandler implements InvocationHandler {
           throw new ServiceDefinitionException("The method(%s) in service interface(%s) is marked as @Whisper but no instance id extractor %s is defined", method.getName(), serviceInterface.getName(), ParameterExtractor.class.getSimpleName());
         }
 
-        Integer timeoutSeconds;
+        Integer timeoutSeconds = null;
 
         if (timeoutExtractor != null) {
           timeoutSeconds = timeoutExtractor.getParameter(method, argumentMap, wireContexts);
-        } else {
+        }
+        if (timeoutSeconds == null) {
           timeoutSeconds = whisper.timeoutSeconds();
         }
 
