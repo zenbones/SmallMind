@@ -37,6 +37,7 @@ import java.lang.reflect.Modifier;
 import java.util.HashSet;
 import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
+import org.smallmind.nutsnbolts.lang.TypeMismatchException;
 import org.smallmind.nutsnbolts.reflection.type.GenericUtility;
 import org.smallmind.nutsnbolts.reflection.type.UnexpectedGenericDeclaration;
 
@@ -83,11 +84,19 @@ public abstract class Overlay<O extends Overlay<O>> implements Differentiable<O>
     }
   }
 
+  public Class<? extends Overlay> getOverlayClass () {
+
+    return overlayClass;
+  }
+
   public O overlay (O... overlays)
     throws IllegalAccessException {
 
     if ((overlays != null) && (overlays.length > 0)) {
       for (O overlay : overlays) {
+        if (!overlayClass.isAssignableFrom(overlay.getClass())) {
+          throw new TypeMismatchException("Overlays must be of matching type(%s)", overlayClass);
+        }
         for (Field field : CLASS_FIELD_MAP.get(overlayClass)) {
 
           Object value;
