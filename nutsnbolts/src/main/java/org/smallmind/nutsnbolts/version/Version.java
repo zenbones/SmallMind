@@ -34,5 +34,5 @@ package org.smallmind.nutsnbolts.version;
 
 public interface Version<V extends Version<V>> {
 
-  Class<V> getVersionedClass ();
+  Class<? extends Versioned<V>> getVersionedClass ();
 }
