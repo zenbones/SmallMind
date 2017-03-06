@@ -49,6 +49,11 @@ public class ShortWhereOperand extends WhereOperand<Short> {
     this.value = value;
   }
 
+  public static ShortWhereOperand instance (Short value) {
+
+    return new ShortWhereOperand(value);
+  }
+
   @Override
   public Short extract (WhereOperandTransformer transformer) {
 

@@ -56,6 +56,11 @@ public class Where implements Serializable {
     this.rootConjunction = rootConjunction;
   }
 
+  public static Where instance (WhereConjunction rootConjunction) {
+
+    return new Where(rootConjunction);
+  }
+
   public void validate (WherePermit... permits) {
 
     final HashSet<String> fieldNameSet = new HashSet<>();

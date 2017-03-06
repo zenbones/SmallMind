@@ -49,6 +49,11 @@ public class LongWhereOperand extends WhereOperand<Long> {
     this.value = value;
   }
 
+  public static LongWhereOperand instance (Long value) {
+
+    return new LongWhereOperand(value);
+  }
+
   @Override
   public Long extract (WhereOperandTransformer transformer) {
 

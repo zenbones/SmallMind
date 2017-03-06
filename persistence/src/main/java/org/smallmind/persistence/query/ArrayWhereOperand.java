@@ -56,6 +56,11 @@ public class ArrayWhereOperand extends WhereOperand<Object[]> {
     this.value = value;
   }
 
+  public static ArrayWhereOperand instance (String type, Object[] value) {
+
+    return new ArrayWhereOperand(type, value);
+  }
+
   @Override
   public Object[] extract (WhereOperandTransformer transformer) {
 

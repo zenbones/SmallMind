@@ -53,6 +53,11 @@ public class EnumWhereOperand<E extends Enum<E>> extends WhereOperand<E> {
     value = enumeration.name();
   }
 
+  public static <E extends Enum<E>> EnumWhereOperand instance (String type, E enumeration) {
+
+    return new EnumWhereOperand<>(type, enumeration);
+  }
+
   @Override
   @XmlTransient
   public E extract (WhereOperandTransformer transformer) {

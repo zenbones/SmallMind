@@ -50,6 +50,11 @@ public class BooleanWhereOperand extends WhereOperand<Boolean> {
     this.value = value;
   }
 
+  public static BooleanWhereOperand instance (Boolean value) {
+
+    return new BooleanWhereOperand(value);
+  }
+
   @Override
   @XmlTransient
   public Boolean extract (WhereOperandTransformer transformer) {

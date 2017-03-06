@@ -49,6 +49,11 @@ public class IntegerWhereOperand extends WhereOperand<Integer> {
     this.value = value;
   }
 
+  public static IntegerWhereOperand instance (Integer value) {
+
+    return new IntegerWhereOperand(value);
+  }
+
   @Override
   public Integer extract (WhereOperandTransformer transformer) {
 

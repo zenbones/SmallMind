@@ -49,6 +49,11 @@ public class StringWhereOperand extends WhereOperand<String> {
     this.value = value;
   }
 
+  public static StringWhereOperand instance (String value) {
+
+    return new StringWhereOperand(value);
+  }
+
   @Override
   public String extract (WhereOperandTransformer transformer) {
 

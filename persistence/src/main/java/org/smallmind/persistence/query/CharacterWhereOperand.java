@@ -49,6 +49,11 @@ public class CharacterWhereOperand extends WhereOperand<Character> {
     this.value = value;
   }
 
+  public static CharacterWhereOperand instance (Character value) {
+
+    return new CharacterWhereOperand(value);
+  }
+
   @Override
   public Character extract (WhereOperandTransformer transformer) {
 

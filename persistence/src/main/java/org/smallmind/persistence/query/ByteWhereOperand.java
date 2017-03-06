@@ -49,6 +49,11 @@ public class ByteWhereOperand extends WhereOperand<Byte> {
     this.value = value;
   }
 
+  public static ByteWhereOperand instance (Byte value) {
+
+    return new ByteWhereOperand(value);
+  }
+
   @Override
   public Byte extract (WhereOperandTransformer transformer) {
 

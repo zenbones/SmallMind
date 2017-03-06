@@ -49,6 +49,11 @@ public class FloatWhereOperand extends WhereOperand<Float> {
     this.value = value;
   }
 
+  public static FloatWhereOperand instance (Float value) {
+
+    return new FloatWhereOperand(value);
+  }
+
   @Override
   public Float extract (WhereOperandTransformer transformer) {
 

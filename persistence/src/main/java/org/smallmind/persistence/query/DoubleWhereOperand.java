@@ -49,6 +49,11 @@ public class DoubleWhereOperand extends WhereOperand<Double> {
     this.value = value;
   }
 
+  public static DoubleWhereOperand instance (Double value) {
+
+    return new DoubleWhereOperand(value);
+  }
+
   @Override
   public Double extract (WhereOperandTransformer transformer) {
 

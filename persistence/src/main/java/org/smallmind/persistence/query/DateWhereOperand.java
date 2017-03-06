@@ -52,6 +52,11 @@ public class DateWhereOperand extends WhereOperand<ZonedDateTime> {
     this.value = value;
   }
 
+  public static DateWhereOperand instance (DateTime value) {
+
+    return new DateWhereOperand(value);
+  }
+
   @Override
   public ZonedDateTime extract (WhereOperandTransformer transformer) {
 
