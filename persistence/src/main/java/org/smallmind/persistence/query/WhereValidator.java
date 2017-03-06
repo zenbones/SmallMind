@@ -61,7 +61,7 @@ public class WhereValidator implements ConstraintValidator<WhereValidate, Where>
       return true;
     } catch (WhereValidationException whereVaidationException) {
       context.disableDefaultConstraintViolation();
-      context.buildConstraintViolationWithTemplate(whereVaidationException.getMessage());
+      context.buildConstraintViolationWithTemplate(whereVaidationException.getMessage()).addConstraintViolation();
 
       return false;
     }
