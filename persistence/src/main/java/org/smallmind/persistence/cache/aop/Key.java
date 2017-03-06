@@ -40,11 +40,11 @@ import java.lang.annotation.Target;
 @Retention(RetentionPolicy.RUNTIME)
 public @interface Key {
 
-  public abstract String value () default "id";
+  String value () default "id";
 
-  public abstract String alias () default "";
+  String alias () default "";
 
-  public abstract boolean constant () default false;
+  boolean constant () default false;
 
-  public abstract boolean nullable () default false;
+  boolean nullable () default false;
 }
