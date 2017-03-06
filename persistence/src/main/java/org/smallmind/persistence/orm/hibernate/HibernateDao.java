@@ -37,7 +37,6 @@ import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 import org.hibernate.Criteria;
-import org.hibernate.query.Query;
 import org.hibernate.SQLQuery;
 import org.hibernate.ScrollMode;
 import org.hibernate.Session;
@@ -46,6 +45,8 @@ import org.hibernate.criterion.DetachedCriteria;
 import org.hibernate.criterion.Order;
 import org.hibernate.criterion.Projections;
 import org.hibernate.criterion.Restrictions;
+import org.hibernate.query.NativeQuery;
+import org.hibernate.query.Query;
 import org.hibernate.transform.Transformers;
 import org.smallmind.persistence.Durable;
 import org.smallmind.persistence.UpdateMode;
@@ -227,21 +228,21 @@ public abstract class HibernateDao<I extends Serializable & Comparable<I>, D ext
     throw new UnsupportedOperationException("Hibernate has no explicit detached state");
   }
 
-  public int executeWithSQLQuery (SQLQueryDetails sqlQueryDetails) {
+  public int executeWithSQLQuery (NativeQueryDetails nativeQueryDetails) {
 
-    return constructSQLQuery(sqlQueryDetails).executeUpdate();
+    return constructSQLQuery(nativeQueryDetails).executeUpdate();
   }
 
-  public D findBySQLQuery (SQLQueryDetails sqlQueryDetails) {
+  public D findBySQLQuery (NativeQueryDetails nativeQueryDetails) {
 
-    return getManagedClass().cast(constructSQLQuery(sqlQueryDetails).addEntity(getManagedClass()).uniqueResult());
+    return getManagedClass().cast(constructSQLQuery(nativeQueryDetails).addEntity(getManagedClass()).uniqueResult());
   }
 
-  public <T> T findBySQLQuery (Class<T> returnType, SQLQueryDetails sqlQueryDetails) {
+  public <T> T findBySQLQuery (Class<T> returnType, NativeQueryDetails nativeQueryDetails) {
 
-    SQLQuery sqlQuery;
+    NativeQuery sqlQuery;
 
-    sqlQuery = constructSQLQuery(sqlQueryDetails);
+    sqlQuery = constructSQLQuery(nativeQueryDetails);
 
     if (Durable.class.isAssignableFrom(returnType)) {
 
@@ -262,16 +263,16 @@ public abstract class HibernateDao<I extends Serializable & Comparable<I>, D ext
     }
   }
 
-  public List<D> listBySQLQuery (SQLQueryDetails sqlQueryDetails) {
+  public List<D> listBySQLQuery (NativeQueryDetails nativeQueryDetails) {
 
-    return Collections.checkedList(constructSQLQuery(sqlQueryDetails).addEntity(getManagedClass()).list(), getManagedClass());
+    return Collections.checkedList(constructSQLQuery(nativeQueryDetails).addEntity(getManagedClass()).list(), getManagedClass());
   }
 
-  public <T> List<T> listBySQLQuery (Class<T> returnType, SQLQueryDetails sqlQueryDetails) {
+  public <T> List<T> listBySQLQuery (Class<T> returnType, NativeQueryDetails nativeQueryDetails) {
 
     SQLQuery sqlQuery;
 
-    sqlQuery = constructSQLQuery(sqlQueryDetails);
+    sqlQuery = constructSQLQuery(nativeQueryDetails);
 
     if (Durable.class.isAssignableFrom(returnType)) {
 
@@ -291,9 +292,9 @@ public abstract class HibernateDao<I extends Serializable & Comparable<I>, D ext
     }
   }
 
-  public Iterable<D> scrollBySQLQuery (SQLQueryDetails sqlQueryDetails) {
+  public Iterable<D> scrollBySQLQuery (NativeQueryDetails nativeQueryDetails) {
 
-    return new ScrollIterable<D>(constructSQLQuery(sqlQueryDetails).addEntity(getManagedClass()).scroll(ScrollMode.FORWARD_ONLY), getManagedClass());
+    return new ScrollIterable<D>(constructSQLQuery(nativeQueryDetails).addEntity(getManagedClass()).scroll(ScrollMode.FORWARD_ONLY), getManagedClass());
   }
 
   public int executeWithQuery (QueryDetails queryDetails) {
@@ -361,9 +362,9 @@ public abstract class HibernateDao<I extends Serializable & Comparable<I>, D ext
     return new ScrollIterable<D>(constructCriteria(criteriaDetails).scroll(ScrollMode.FORWARD_ONLY), getManagedClass());
   }
 
-  public SQLQuery constructSQLQuery (SQLQueryDetails sqlQueryDetails) {
+  public NativeQuery constructSQLQuery (NativeQueryDetails nativeQueryDetails) {
 
-    return sqlQueryDetails.completeSQLQuery((SQLQuery)getSession().getNativeSession().createSQLQuery(sqlQueryDetails.getSQLQueryString()).setCacheable(true));
+    return nativeQueryDetails.completeNativeQuery(getSession().getNativeSession().createNativeQuery(nativeQueryDetails.getNativeQueryString()).setCacheable(true));
   }
 
   public Query constructQuery (QueryDetails queryDetails) {

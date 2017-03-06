@@ -37,5 +37,5 @@ import org.smallmind.persistence.Durable;
 
 public interface VectorAwareDao<I extends Serializable & Comparable<I>, D extends Durable<I>> {
 
-  public abstract VectoredDao<I, D> getVectoredDao ();
+  VectoredDao<I, D> getVectoredDao ();
 }
