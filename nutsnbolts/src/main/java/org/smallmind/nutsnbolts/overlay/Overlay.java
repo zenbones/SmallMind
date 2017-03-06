@@ -94,15 +94,17 @@ public abstract class Overlay<O extends Overlay<O>> implements Differentiable<O>
 
     if ((overlays != null) && (overlays.length > 0)) {
       for (O overlay : overlays) {
-        if (!overlayClass.isAssignableFrom(overlay.getClass())) {
-          throw new TypeMismatchException("Overlays must be of matching type(%s)", overlayClass);
-        }
-        for (Field field : CLASS_FIELD_MAP.get(overlayClass)) {
+        if (overlay != null) {
+          if (!overlayClass.isAssignableFrom(overlay.getClass())) {
+            throw new TypeMismatchException("Overlays must be of matching type(%s)", overlayClass);
+          }
+          for (Field field : CLASS_FIELD_MAP.get(overlayClass)) {
 
-          Object value;
+            Object value;
 
-          if ((value = field.get(overlay)) != null) {
-            field.set(this, value);
+            if ((value = field.get(overlay)) != null) {
+              field.set(this, value);
+            }
           }
         }
       }
