@@ -56,6 +56,11 @@ public class SortField implements Serializable {
     this.direction = direction;
   }
 
+  public static SortField instance (String name, SortDirection direction) {
+
+    return new SortField(name, direction);
+  }
+
   @XmlElement(name = "name", required = true)
   public String getName () {
 

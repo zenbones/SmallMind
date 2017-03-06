@@ -56,6 +56,11 @@ public class Sort implements Serializable {
     fieldSet = new HashSet<>(Arrays.asList(fields));
   }
 
+  public static Sort instance (SortField... fields) {
+
+    return new Sort(fields);
+  }
+
   @XmlTransient
   public synchronized boolean isEmpty () {
 
