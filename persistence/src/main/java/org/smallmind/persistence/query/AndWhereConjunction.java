@@ -47,6 +47,11 @@ public class AndWhereConjunction extends WhereConjunction {
     super(criteria);
   }
 
+  public static AndWhereConjunction instance (WhereCriterion... criteria) {
+
+    return new AndWhereConjunction(criteria);
+  }
+
   @Override
   @XmlTransient
   public ConjunctionType getConjunctionType () {

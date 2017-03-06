@@ -47,6 +47,11 @@ public class OrWhereConjunction extends WhereConjunction {
     super(criteria);
   }
 
+  public static OrWhereConjunction instance (WhereCriterion... criteria) {
+
+    return new OrWhereConjunction(criteria);
+  }
+
   @Override
   @XmlTransient
   public ConjunctionType getConjunctionType () {

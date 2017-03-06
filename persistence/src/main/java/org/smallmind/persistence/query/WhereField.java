@@ -60,6 +60,11 @@ public class WhereField implements WhereCriterion {
     this.operand = operand;
   }
 
+  public static WhereField instance (String name, WhereOperator operator, WhereOperand operand) {
+
+    return new WhereField(name, operator, operand);
+  }
+
   @Override
   @XmlTransient
   public CriterionType getCriterionType () {
