@@ -52,7 +52,7 @@ public class DateWhereOperand extends WhereOperand<ZonedDateTime> {
     this.value = value;
   }
 
-  public static DateWhereOperand instance (DateTime value) {
+  public static DateWhereOperand instance (ZonedDateTime value) {
 
     return new DateWhereOperand(value);
   }
