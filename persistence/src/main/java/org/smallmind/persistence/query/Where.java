@@ -33,6 +33,7 @@
 package org.smallmind.persistence.query;
 
 import java.io.Serializable;
+import java.util.Arrays;
 import java.util.HashSet;
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
@@ -40,6 +41,7 @@ import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlElementRef;
 import javax.xml.bind.annotation.XmlElementRefs;
 import javax.xml.bind.annotation.XmlRootElement;
+import org.smallmind.nutsnbolts.lang.UnknownSwitchCaseException;
 
 @XmlRootElement(name = "where")
 @XmlAccessorType(XmlAccessType.PROPERTY)
@@ -63,27 +65,54 @@ public class Where implements Serializable {
 
   public void validate (WherePermit... permits) {
 
-    final HashSet<String> fieldNameSet = new HashSet<>();
-
-    WhereUtility.walk(this, new WhereVisitor() {
-
-      @Override
-      public void visitConjunction (WhereConjunction conjunction) {
-
-      }
-
-      @Override
-      public void visitField (WhereField field) {
-
-        fieldNameSet.add(field.getName());
-      }
-    });
-
     if ((permits != null) && (permits.length > 0)) {
-      for (WherePermit permit : permits) {
-        if ((permit.getFields() != null) && (permit.getFields().length > 0)) {
-          permit.getType().validate(fieldNameSet, permit.getFields());
+
+      HashSet<String> fieldNameSet = new HashSet<>();
+      HashSet<String> allowedNameSet = new HashSet<>();
+      HashSet<String> requiredNameSet = new HashSet<>();
+      HashSet<String> excludedNameSet = new HashSet<>();
+
+      WhereUtility.walk(this, new WhereVisitor() {
+
+        @Override
+        public void visitConjunction (WhereConjunction conjunction) {
+
         }
+
+        @Override
+        public void visitField (WhereField field) {
+
+          fieldNameSet.add(field.getName());
+        }
+      });
+
+      for (WherePermit permit : permits) {
+        switch (permit.getType()) {
+          case ALLOWED:
+            allowedNameSet.addAll(Arrays.asList(permit.getFields()));
+            break;
+          case REQUIRED:
+            allowedNameSet.addAll(Arrays.asList(permit.getFields()));
+            requiredNameSet.addAll(Arrays.asList(permit.getFields()));
+            break;
+          case EXCLUDED:
+            excludedNameSet.addAll(Arrays.asList(permit.getFields()));
+            break;
+          default:
+            throw new UnknownSwitchCaseException(permit.getType().name());
+        }
+      }
+
+      for (String fieldName : fieldNameSet) {
+        if (excludedNameSet.contains(fieldName)) {
+          throw new WhereValidationException("The field(%s) is not permitted in where clauses for this query", fieldName);
+        }
+        if ((!allowedNameSet.isEmpty()) && (!allowedNameSet.contains(fieldName))) {
+          throw new WhereValidationException("The field(%s) is not permitted in where clauses for this query", fieldName);
+        }
+      }
+      if (!fieldNameSet.containsAll(requiredNameSet)) {
+        throw new WhereValidationException("The fields(%s) are required in where clauses for this query", Arrays.toString(requiredNameSet.toArray()));
       }
     }
   }

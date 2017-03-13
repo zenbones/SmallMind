@@ -32,51 +32,7 @@
  */
 package org.smallmind.persistence.query;
 
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.Set;
-
 public enum PermitType {
 
-  ALLOWED {
-    @Override
-    public void validate (Set<String> fieldNameSet, final String[] fieldNames) {
-
-      for (String fieldName : fieldNames) {
-        if (!fieldNameSet.contains(fieldName)) {
-          throw new WhereValidationException("The field(%s) is not permitted in where clauses for this query", fieldName);
-        }
-      }
-    }
-  },
-  REQUIRED {
-    @Override
-    public void validate (Set<String> fieldNameSet, final String[] fieldNames) {
-
-      HashSet<String> fieldNameSetCopy = new HashSet<>(fieldNameSet);
-
-      for (String fieldName : fieldNames) {
-        fieldNameSetCopy.remove(fieldName);
-      }
-
-      if (!fieldNameSetCopy.isEmpty()) {
-
-        String[] remainingFieldsNames = new String[fieldNameSetCopy.size()];
-
-        throw new WhereValidationException("The fields(%s) are required in where clauses for this query", Arrays.toString(remainingFieldsNames));
-      }
-    }
-  }, EXCLUDED {
-    @Override
-    public void validate (Set<String> fieldNameSet, final String[] fieldNames) {
-
-      for (String fieldName : fieldNames) {
-        if (fieldNameSet.contains(fieldName)) {
-          throw new WhereValidationException("The field(%s) is not permitted in where clauses for this query", fieldName);
-        }
-      }
-    }
-  };
-
-  public abstract void validate (Set<String> fieldNameSet, final String[] fieldNames);
+  ALLOWED, REQUIRED, EXCLUDED
 }
