@@ -32,37 +32,33 @@
  */
 package org.smallmind.web.jersey.util;
 
-import java.util.LinkedHashMap;
 import java.util.Map;
 import javax.xml.bind.annotation.adapters.XmlAdapter;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.JsonNodeFactory;
+import com.fasterxml.jackson.databind.node.ObjectNode;
+import org.smallmind.nutsnbolts.util.IterableIterator;
 
-public abstract class SimpleMapXmlAdapter<M extends Map<K, V>, K, V> extends XmlAdapter<LinkedHashMap<?, ?>, M> {
+public abstract class SimpleMapXmlAdapter<M extends Map<String, V>, V> extends XmlAdapter<JsonNode, M> {
 
   public abstract M getEmptyMap ();
 
-  public abstract Class<K> getKeyClass ();
-
   public abstract Class<V> getValueClass ();
 
-  private K unmarshalKey (Object obj) {
+  private V unmarshalValue (JsonNode node) {
 
-    return JsonCodec.convert(obj, getKeyClass());
-  }
-
-  private V unmarshalValue (Object obj) {
-
-    return JsonCodec.convert(obj, getValueClass());
+    return JsonCodec.convert(node, getValueClass());
   }
 
   @Override
-  public M unmarshal (LinkedHashMap<?, ?> linkedHashMap) throws Exception {
+  public M unmarshal (JsonNode node) {
 
-    if (linkedHashMap != null) {
+    if (node != null) {
 
       M map = getEmptyMap();
 
-      for (Map.Entry<?, ?> entry : linkedHashMap.entrySet()) {
-        map.put(unmarshalKey(entry.getKey()), unmarshalValue(entry.getValue()));
+      for (Map.Entry<String, JsonNode> entry : new IterableIterator<>(node.fields())) {
+        map.put(entry.getKey(), unmarshalValue(entry.getValue()));
       }
 
       return map;
@@ -72,17 +68,17 @@ public abstract class SimpleMapXmlAdapter<M extends Map<K, V>, K, V> extends Xml
   }
 
   @Override
-  public LinkedHashMap<?, ?> marshal (M map) throws Exception {
+  public JsonNode marshal (M map) throws Exception {
 
     if (map != null) {
 
-      LinkedHashMap<K, V> linkedHashMap = new LinkedHashMap<>();
+      ObjectNode rootNode = JsonNodeFactory.instance.objectNode();
 
-      for (Map.Entry<K, V> entry : map.entrySet()) {
-        linkedHashMap.put(entry.getKey(), entry.getValue());
+      for (Map.Entry<String, V> entry : map.entrySet()) {
+        rootNode.set(entry.getKey(), JsonCodec.writeAsJsonNode(entry.getValue()));
       }
 
-      return linkedHashMap;
+      return rootNode;
     }
 
     return null;

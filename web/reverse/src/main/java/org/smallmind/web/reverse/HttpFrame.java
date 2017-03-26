@@ -40,7 +40,7 @@ import java.util.List;
 
 public abstract class HttpFrame {
 
-  private final LinkedList<HttpHeader> headerList;
+  private final List<HttpHeader> headerList;
   private final String version;
 
   public HttpFrame (HttpProtocolInputStream httpProtocolInputStream, String version)
@@ -53,7 +53,7 @@ public abstract class HttpFrame {
 
   public abstract HttpDirection getDirection ();
 
-  private LinkedList<HttpHeader> parseHeaders (HttpProtocolInputStream httpProtocolInputStream)
+  private List<HttpHeader> parseHeaders (HttpProtocolInputStream httpProtocolInputStream)
     throws IOException, ProtocolException {
 
     LinkedHashMap<String, HttpHeader> headerMap = new LinkedHashMap<>();

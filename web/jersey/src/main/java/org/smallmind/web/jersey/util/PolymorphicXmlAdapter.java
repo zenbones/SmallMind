@@ -32,18 +32,21 @@
  */
 package org.smallmind.web.jersey.util;
 
-import java.util.LinkedHashMap;
 import javax.xml.bind.annotation.XmlRootElement;
 import javax.xml.bind.annotation.adapters.XmlAdapter;
 import javax.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.JsonNodeFactory;
+import com.fasterxml.jackson.databind.node.JsonNodeType;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.smallmind.nutsnbolts.reflection.AnnotationFilter;
 import org.smallmind.nutsnbolts.reflection.OffloadingInvocationHandler;
 import org.smallmind.nutsnbolts.reflection.PassType;
 import org.smallmind.nutsnbolts.reflection.ProxyGenerator;
 import org.smallmind.nutsnbolts.reflection.type.GenericUtility;
 
-public abstract class PolymorphicXmlAdapter<T> extends XmlAdapter<LinkedHashMap<String, Object>, T> {
+public abstract class PolymorphicXmlAdapter<T> extends XmlAdapter<JsonNode, T> {
 
   private Class<?> baseClass;
 
@@ -53,16 +56,16 @@ public abstract class PolymorphicXmlAdapter<T> extends XmlAdapter<LinkedHashMap<
   }
 
   @Override
-  public T unmarshal (LinkedHashMap<String, Object> map) {
+  public T unmarshal (JsonNode node) {
 
-    if (map.size() != 1) {
+    if (!(JsonNodeType.OBJECT.equals(node.getNodeType()) && (node.size() == 1))) {
       throw new JAXBProcessingException("The json for the sub-class of class(%s) is improperly formatted", baseClass.getName());
     } else {
 
       Class<?> polymorphicSubClass;
       String polymorphicKey;
 
-      if ((polymorphicSubClass = PolymorphicClassCache.getPolymorphicSubClass(baseClass, polymorphicKey = map.keySet().iterator().next())) == null) {
+      if ((polymorphicSubClass = PolymorphicClassCache.getPolymorphicSubClass(baseClass, polymorphicKey = node.fieldNames().next())) == null) {
         throw new JAXBProcessingException("Unable to map the root element name(%s) to any known sub-class of class(%s) listed in the %s annotation", polymorphicKey, baseClass.getName(), XmlPolymorphicSubClasses.class.getSimpleName());
       } else {
 
@@ -82,7 +85,7 @@ public abstract class PolymorphicXmlAdapter<T> extends XmlAdapter<LinkedHashMap<
           throw new JAXBProcessingException(exception);
         }
 
-        JsonCodec.convert(map.get(polymorphicKey), proxySubClass);
+        JsonCodec.convert(node.get(polymorphicKey), proxySubClass);
 
         return (T)polymorphicInstance;
       }
@@ -90,7 +93,7 @@ public abstract class PolymorphicXmlAdapter<T> extends XmlAdapter<LinkedHashMap<
   }
 
   @Override
-  public LinkedHashMap<String, Object> marshal (T value)
+  public JsonNode marshal (T value)
     throws JsonProcessingException {
 
     if (value.getClass().equals(baseClass)) {
@@ -103,13 +106,13 @@ public abstract class PolymorphicXmlAdapter<T> extends XmlAdapter<LinkedHashMap<
         throw new JAXBProcessingException("The class(%s) is missing a %s annotation", value.getClass().getName(), XmlRootElement.class.getSimpleName());
       } else {
 
-        LinkedHashMap<String, Object> linkedHashMap = new LinkedHashMap<>();
+        ObjectNode rootNode = JsonNodeFactory.instance.objectNode();
         Object proxyObject = ProxyGenerator.createProxy(value.getClass(), new OffloadingInvocationHandler(value), new AnnotationFilter(PassType.EXCLUDE, XmlJavaTypeAdapter.class));
 
         PolymorphicClassCache.addClassRelationship(value.getClass(), proxyObject.getClass());
-        linkedHashMap.put(xmlRootElementAnnotation.name(), proxyObject);
+        rootNode.set(xmlRootElementAnnotation.name(), JsonCodec.writeAsJsonNode(proxyObject));
 
-        return linkedHashMap;
+        return rootNode;
       }
     }
   }

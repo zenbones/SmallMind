@@ -40,11 +40,11 @@ import java.util.Map;
 
 public class YamlPropertyHandler implements PropertyHandler<YamlPropertyEntry> {
 
-  private LinkedList<NamedIteration> iteratorList = new LinkedList<>();
+  private LinkedList<NamedIteration> namedIterationList = new LinkedList<>();
 
   public YamlPropertyHandler (Map<String, Object> yamlMap) {
 
-    iteratorList.push(new NamedIteration(yamlMap.entrySet().iterator()));
+    namedIterationList.push(new NamedIteration(yamlMap.entrySet().iterator()));
   }
 
   @Override
@@ -56,9 +56,9 @@ public class YamlPropertyHandler implements PropertyHandler<YamlPropertyEntry> {
   @Override
   public boolean hasNext () {
 
-    while (!iteratorList.isEmpty()) {
-      if (!iteratorList.peekFirst().getIterator().hasNext()) {
-        iteratorList.pop();
+    while (!namedIterationList.isEmpty()) {
+      if (!namedIterationList.peekFirst().getIterator().hasNext()) {
+        namedIterationList.pop();
       } else {
 
         return true;
@@ -71,12 +71,12 @@ public class YamlPropertyHandler implements PropertyHandler<YamlPropertyEntry> {
   @Override
   public YamlPropertyEntry next () {
 
-    Map.Entry<String, Object> entry = iteratorList.peekFirst().getIterator().next();
+    Map.Entry<String, Object> entry = namedIterationList.peekFirst().getIterator().next();
 
-    iteratorList.peekFirst().setName(entry.getKey());
+    namedIterationList.peekFirst().setName(entry.getKey());
 
     if (entry.getValue() instanceof Map) {
-      iteratorList.push(new NamedIteration(((Map<String, Object>)entry.getValue()).entrySet().iterator()));
+      namedIterationList.push(new NamedIteration(((Map<String, Object>)entry.getValue()).entrySet().iterator()));
 
       return next();
     } else if (entry.getValue() instanceof List) {
@@ -88,7 +88,7 @@ public class YamlPropertyHandler implements PropertyHandler<YamlPropertyEntry> {
         interpolatedMap.put(String.valueOf(index++), item);
       }
 
-      iteratorList.push(new NamedIteration(interpolatedMap.entrySet().iterator()));
+      namedIterationList.push(new NamedIteration(interpolatedMap.entrySet().iterator()));
 
       return next();
     } else {
@@ -96,7 +96,7 @@ public class YamlPropertyHandler implements PropertyHandler<YamlPropertyEntry> {
       StringBuilder keyBuilder = new StringBuilder();
       boolean first = true;
 
-      for (NamedIteration namedIteration : iteratorList) {
+      for (NamedIteration namedIteration : namedIterationList) {
         if (!first) {
           keyBuilder.insert(0, '.');
         }

@@ -32,29 +32,31 @@
  */
 package org.smallmind.phalanx.wire;
 
-import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.Map;
 import javax.xml.bind.annotation.XmlRootElement;
 import javax.xml.bind.annotation.adapters.XmlAdapter;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.ArrayNode;
+import com.fasterxml.jackson.databind.node.JsonNodeFactory;
+import com.fasterxml.jackson.databind.node.ObjectNode;
+import org.smallmind.nutsnbolts.util.IterableIterator;
 import org.smallmind.web.jersey.util.JsonCodec;
 
-public class WireContextXmlAdapter extends XmlAdapter<Object[], WireContext[]> {
+public class WireContextXmlAdapter extends XmlAdapter<JsonNode, WireContext[]> {
 
   @Override
-  public WireContext[] unmarshal (Object[] objects) {
+  public WireContext[] unmarshal (JsonNode node) {
 
     WireContext[] contexts;
     LinkedList<WireContext> contextList = new LinkedList<>();
 
-    if (objects != null) {
-      for (Object obj : objects) {
+    if (node != null) {
+      for (JsonNode elementNode : new IterableIterator<>(node.elements())) {
+        if (elementNode.size() == 1) {
 
-        LinkedHashMap<String, Object> objectMap;
-
-        if ((objectMap = (LinkedHashMap<String, Object>)obj).size() == 1) {
-
-          Map.Entry<String, Object> topEntry = objectMap.entrySet().iterator().next();
+          Map.Entry<String, JsonNode> topEntry = elementNode.fields().next();
           Class<? extends WireContext> contextClass;
 
           if ((contextClass = WireContextManager.getContextClass(topEntry.getKey())) != null) {
@@ -73,33 +75,34 @@ public class WireContextXmlAdapter extends XmlAdapter<Object[], WireContext[]> {
   }
 
   @Override
-  public Object[] marshal (WireContext[] wireContexts) {
+  public JsonNode marshal (WireContext[] wireContexts)
+    throws JsonProcessingException {
 
     if (wireContexts == null) {
 
       return null;
     }
 
-    Object[] objects = new Object[wireContexts.length];
-    int index = 0;
+    ArrayNode arrayNode = JsonNodeFactory.instance.arrayNode(wireContexts.length);
 
     for (WireContext wireContext : wireContexts) {
       if (wireContext instanceof ProtoWireContext) {
 
-        LinkedHashMap<String, Object> objectMap = new LinkedHashMap<>();
+        ObjectNode objectNode = JsonNodeFactory.instance.objectNode();
 
-        objectMap.put(((ProtoWireContext)wireContext).getSkin(), ((ProtoWireContext)wireContext).getGuts());
-        objects[index++] = objectMap;
+        objectNode.set(((ProtoWireContext)wireContext).getSkin(), JsonCodec.writeAsJsonNode(((ProtoWireContext)wireContext).getGuts()));
+        arrayNode.add(objectNode);
       } else {
 
-        LinkedHashMap<String, Object> objectMap = new LinkedHashMap<>();
+        ObjectNode objectNode = JsonNodeFactory.instance.objectNode();
+
         XmlRootElement xmlRootElementAnnotation = wireContext.getClass().getAnnotation(XmlRootElement.class);
 
-        objectMap.put((xmlRootElementAnnotation == null) ? wireContext.getClass().getSimpleName() : xmlRootElementAnnotation.name(), wireContext);
-        objects[index++] = objectMap;
+        objectNode.set((xmlRootElementAnnotation == null) ? wireContext.getClass().getSimpleName() : xmlRootElementAnnotation.name(), JsonCodec.writeAsJsonNode(wireContext));
+        arrayNode.add(objectNode);
       }
     }
 
-    return objects;
+    return arrayNode;
   }
 }

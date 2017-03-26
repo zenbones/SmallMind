@@ -33,8 +33,8 @@
 package org.smallmind.artifact.maven;
 
 import java.io.File;
+import java.util.HashMap;
 import java.util.HashSet;
-import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -92,7 +92,7 @@ public class MavenRepository {
   private final ProxySelector proxySelector;
   private final MirrorSelector mirrorSelector;
   private final AuthenticationSelector authenticationSelector;
-  private final Map<Object, Object> configProps = new LinkedHashMap<>();
+  private final Map<Object, Object> configProps = new HashMap<>();
   private final List<Profile> profileList;
   private final List<RemoteRepository> remoteRepositoryList;
   private boolean offline;
@@ -300,7 +300,7 @@ public class MavenRepository {
 
     for (Mirror mirror : settings.getMirrors()) {
       selector.add(String.valueOf(mirror.getId()), mirror.getUrl(), mirror.getLayout(), false,
-                    mirror.getMirrorOf(), mirror.getMirrorOfLayouts());
+        mirror.getMirrorOf(), mirror.getMirrorOfLayouts());
     }
 
     return selector;
