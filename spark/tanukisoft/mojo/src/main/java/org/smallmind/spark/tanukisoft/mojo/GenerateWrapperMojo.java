@@ -368,7 +368,7 @@ public class GenerateWrapperMojo extends AbstractMojo {
             processFreemarkerTemplate(getWrapperFilePath("bin", "freemarker.sh.script.in"), binDirectory, applicationName + ".sh", freemarkerMap);
             break;
           case WINDOWS:
-            copyToDestination(getResourceAsStream(getWrapperFilePath("bin", "App.bat.in")), binDirectory.getAbsolutePath(), applicationName + ".bat");
+            copyToDestination(getResourceAsStream(getWrapperFilePath("bin", "AppCommand.bat.in")), binDirectory.getAbsolutePath(), applicationName + ".bat");
             copyToDestination(getResourceAsStream(getWrapperFilePath("bin", "InstallApp-NT.bat.in")), binDirectory.getAbsolutePath(), "Install" + applicationName + "-NT.bat");
             copyToDestination(getResourceAsStream(getWrapperFilePath("bin", "UninstallApp-NT.bat.in")), binDirectory.getAbsolutePath(), "Uninstall" + applicationName + "-NT.bat");
             break;
