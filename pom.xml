@@ -331,7 +331,7 @@
       <dependency>
         <groupId>org.testng</groupId>
         <artifactId>testng</artifactId>
-        <version>6.8.8</version>
+        <version>6.9.8</version>
       </dependency>
       <dependency>
         <groupId>org.freemarker</groupId>
@@ -831,7 +831,7 @@
         <plugin>
           <groupId>org.sonatype.plugins</groupId>
           <artifactId>nexus-staging-maven-plugin</artifactId>
-          <version>1.6.7</version>
+          <version>1.6.8</version>
         </plugin>
         <plugin>
           <groupId>org.apache.maven.plugins</groupId>
