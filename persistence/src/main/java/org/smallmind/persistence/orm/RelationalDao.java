@@ -38,17 +38,17 @@ import org.smallmind.persistence.DurableDao;
 
 public interface RelationalDao<I extends Serializable & Comparable<I>, D extends Durable<I>, F, N> extends DurableDao<I, D> {
 
-  public abstract String getSessionSourceKey ();
+  String getSessionSourceKey ();
 
-  public abstract ProxySession<F, N> getSession ();
+  ProxySession<F, N> getSession ();
 
-  public abstract D detach (D durable);
+  D detach (D durable);
 
-  public abstract Iterable<D> scroll ();
+  Iterable<D> scroll ();
 
-  public abstract Iterable<D> scroll (int fetchSize);
+  Iterable<D> scroll (int fetchSize);
 
-  public abstract Iterable<D> scrollById (I greaterThan, int fetchSize);
+  Iterable<D> scrollById (I greaterThan, int fetchSize);
 
-  public abstract long size ();
+  long size ();
 }

@@ -43,5 +43,5 @@ import java.lang.annotation.Target;
 @Inherited
 public @interface SessionSource {
 
-  public abstract String value ();
+  String value ();
 }

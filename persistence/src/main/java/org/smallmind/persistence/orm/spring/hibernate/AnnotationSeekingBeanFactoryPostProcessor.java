@@ -35,6 +35,7 @@ package org.smallmind.persistence.orm.spring.hibernate;
 import java.lang.annotation.Annotation;
 import java.util.HashMap;
 import java.util.HashSet;
+import org.smallmind.persistence.orm.MappedSubclass;
 import org.smallmind.persistence.orm.SessionSource;
 import org.smallmind.persistence.orm.hibernate.HibernateDao;
 import org.smallmind.persistence.spring.ManagedDaoSupport;
@@ -92,27 +93,46 @@ public class AnnotationSeekingBeanFactoryPostProcessor implements BeanFactoryPos
     throws BeansException {
 
     Class<?> beanClass;
-    Class persistentClass;
-    Annotation dataSourceAnnotation;
-    HashSet<Class> annotatedClassSet;
-    String sessionSourceKey = null;
 
     for (String beanName : configurableListableBeanFactory.getBeanDefinitionNames()) {
       if ((beanClass = configurableListableBeanFactory.getType(beanName)) != null) {
         if (HibernateDao.class.isAssignableFrom(beanClass)) {
-          if ((dataSourceAnnotation = beanClass.getAnnotation(SessionSource.class)) != null) {
-            sessionSourceKey = ((SessionSource)dataSourceAnnotation).value();
-          }
 
-          if ((annotatedClassSet = ANNOTATED_CLASS_DATA_SOURCE_MAP.get(sessionSourceKey)) == null) {
-            ANNOTATED_CLASS_DATA_SOURCE_MAP.put(sessionSourceKey, annotatedClassSet = new HashSet<>());
-          }
+          Class<?> persistentClass;
 
           if ((persistentClass = ManagedDaoSupport.findDurableClass(beanClass)) == null) {
             throw new FatalBeanException("No inference of the Durable class for type(" + beanClass.getName() + ") was possible");
-          }
-          else if (hasMarkedAnnotation(persistentClass)) {
-            annotatedClassSet.add(persistentClass);
+          } else {
+
+            Annotation dataSourceAnnotation;
+            HashSet<Class> annotatedClassSet;
+
+            String sessionSourceKey = null;
+
+            if ((dataSourceAnnotation = beanClass.getAnnotation(SessionSource.class)) != null) {
+              sessionSourceKey = ((SessionSource)dataSourceAnnotation).value();
+            }
+
+            if ((annotatedClassSet = ANNOTATED_CLASS_DATA_SOURCE_MAP.get(sessionSourceKey)) == null) {
+              ANNOTATED_CLASS_DATA_SOURCE_MAP.put(sessionSourceKey, annotatedClassSet = new HashSet<>());
+            }
+
+            if (hasMarkedAnnotation(persistentClass)) {
+
+              MappedSubclass mappedSubclass;
+
+              annotatedClassSet.add(persistentClass);
+
+              if ((mappedSubclass = persistentClass.getAnnotation(MappedSubclass.class)) != null) {
+                for (Class subclass : mappedSubclass.value()) {
+                  if (!persistentClass.isAssignableFrom(subclass)) {
+                    throw new FatalBeanException("Mapped subclass of type (" + subclass.getName() + ") must inherit from parent type (" + persistentClass.getName() + ")");
+                  }
+
+                  annotatedClassSet.add(subclass);
+                }
+              }
+            }
           }
         }
       }

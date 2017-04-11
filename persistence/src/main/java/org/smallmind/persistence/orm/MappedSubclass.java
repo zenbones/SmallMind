@@ -30,44 +30,18 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.persistence.orm.spring.hibernate;
+package org.smallmind.persistence.orm;
 
-import java.io.IOException;
-import java.util.HashMap;
-import org.hibernate.SessionFactory;
-import org.hibernate.cfg.Configuration;
-import org.springframework.orm.hibernate5.LocalSessionFactoryBean;
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Inherited;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
 
-public class EntitySeekingSessionFactoryBean extends LocalSessionFactoryBean {
+@Target({ElementType.TYPE})
+@Retention(RetentionPolicy.RUNTIME)
+@Inherited
+public @interface MappedSubclass {
 
-  private static final HashMap<SessionFactory, Configuration> CONFIGURATION_MAP = new HashMap<>();
-  private Class[] annotatedClasses;
-  private String sessionSourceKey;
-
-  public static Configuration getConfiguration (SessionFactory sessionFactory) {
-
-    return CONFIGURATION_MAP.get(sessionFactory);
-  }
-
-  public void setSessionSourceKey (String sessionSourceKey) {
-
-    this.sessionSourceKey = sessionSourceKey;
-  }
-
-  @Override
-  public void setAnnotatedClasses (Class<?>... annotatedClasses) {
-
-    this.annotatedClasses = annotatedClasses;
-  }
-
-  @Override
-  public void afterPropertiesSet ()
-    throws IOException {
-
-    super.setAnnotatedClasses((annotatedClasses != null) ? annotatedClasses : AnnotationSeekingBeanFactoryPostProcessor.getAnnotatedClasses(sessionSourceKey));
-
-    super.afterPropertiesSet();
-
-    CONFIGURATION_MAP.put(getObject(), getConfiguration());
-  }
+  Class[] value ();
 }

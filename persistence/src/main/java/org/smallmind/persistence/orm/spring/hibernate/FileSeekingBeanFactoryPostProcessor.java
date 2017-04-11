@@ -72,45 +72,52 @@ public class FileSeekingBeanFactoryPostProcessor implements BeanFactoryPostProce
   public void postProcessBeanFactory (ConfigurableListableBeanFactory configurableListableBeanFactory)
     throws BeansException {
 
-    Class<?> beanClass;
-    Class persistentClass;
-    SessionSource sessionSource;
-    HashMap<Class, UrlResource> hbmResourceMap;
-    URL hbmURL;
-    String sessionSourceKey = null;
-    String packageRemnant;
-    String hbmFileName;
-    int lastSlashIndex;
-
     for (String beanName : configurableListableBeanFactory.getBeanDefinitionNames()) {
+
+      Class<?> beanClass;
+
       if ((beanClass = configurableListableBeanFactory.getType(beanName)) != null) {
         if (HibernateDao.class.isAssignableFrom(beanClass)) {
 
-          if ((sessionSource = beanClass.getAnnotation(SessionSource.class)) != null) {
-            sessionSourceKey = sessionSource.value();
-          }
-
-          if ((hbmResourceMap = HBM_DATA_SOURCE_MAP.get(sessionSourceKey)) == null) {
-            HBM_DATA_SOURCE_MAP.put(sessionSourceKey, hbmResourceMap = new HashMap<>());
-          }
+          Class persistentClass;
 
           if ((persistentClass = ManagedDaoSupport.findDurableClass(beanClass)) == null) {
             throw new FatalBeanException("No inference of the Durable class for type(" + beanClass.getName() + ") was possible");
-          }
+          } else {
 
-          // Stop when we find a parent class which has already been mapped, signifying the rest of the tree has been previously processed
-          while ((persistentClass != null) && (!hbmResourceMap.containsKey(persistentClass))) {
-            packageRemnant = persistentClass.getPackage().getName().replace('.', '/');
-            hbmFileName = persistentClass.getSimpleName() + ".hbm.xml";
-            do {
-              if ((hbmURL = configurableListableBeanFactory.getBeanClassLoader().getResource((packageRemnant.length() > 0) ? packageRemnant + '/' + hbmFileName : hbmFileName)) != null) {
-                hbmResourceMap.put(persistentClass, new UrlResource(hbmURL));
-              }
+            HashMap<Class, UrlResource> hbmResourceMap;
+            SessionSource sessionSource;
+            String sessionSourceKey = null;
 
-              packageRemnant = packageRemnant.length() > 0 ? packageRemnant.substring(0, (lastSlashIndex = packageRemnant.lastIndexOf('/')) >= 0 ? lastSlashIndex : 0) : null;
-            } while (packageRemnant != null);
+            if ((sessionSource = beanClass.getAnnotation(SessionSource.class)) != null) {
+              sessionSourceKey = sessionSource.value();
+            }
+            if ((hbmResourceMap = HBM_DATA_SOURCE_MAP.get(sessionSourceKey)) == null) {
+              HBM_DATA_SOURCE_MAP.put(sessionSourceKey, hbmResourceMap = new HashMap<>());
+            }
 
-            persistentClass = persistentClass.getSuperclass();
+            // Stop when we find a parent class which has already been mapped, signifying the rest of the tree has been previously processed
+            while ((persistentClass != null) && (!hbmResourceMap.containsKey(persistentClass))) {
+
+              String packageRemnant;
+              String hbmFileName;
+
+              packageRemnant = persistentClass.getPackage().getName().replace('.', '/');
+              hbmFileName = persistentClass.getSimpleName() + ".hbm.xml";
+              do {
+
+                URL hbmURL;
+                int lastSlashIndex;
+
+                if ((hbmURL = configurableListableBeanFactory.getBeanClassLoader().getResource((packageRemnant.length() > 0) ? packageRemnant + '/' + hbmFileName : hbmFileName)) != null) {
+                  hbmResourceMap.put(persistentClass, new UrlResource(hbmURL));
+                }
+
+                packageRemnant = packageRemnant.length() > 0 ? packageRemnant.substring(0, (lastSlashIndex = packageRemnant.lastIndexOf('/')) >= 0 ? lastSlashIndex : 0) : null;
+              } while (packageRemnant != null);
+
+              persistentClass = persistentClass.getSuperclass();
+            }
           }
         }
       }
