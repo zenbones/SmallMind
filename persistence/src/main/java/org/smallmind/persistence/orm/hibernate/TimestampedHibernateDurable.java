@@ -34,12 +34,22 @@ package org.smallmind.persistence.orm.hibernate;
 
 import java.io.Serializable;
 import java.util.Date;
+import javax.persistence.Column;
+import javax.persistence.MappedSuperclass;
+import javax.persistence.Temporal;
+import javax.persistence.TemporalType;
+import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.UpdateTimestamp;
 
+@MappedSuperclass
 public class TimestampedHibernateDurable<I extends Serializable & Comparable<I>> extends HibernateDurable<I> {
 
   private Date created;
   private Date lastUpdated;
 
+  @CreationTimestamp
+  @Temporal(TemporalType.TIMESTAMP)
+  @Column(name = "created", updatable = false, nullable = false)
   public synchronized Date getCreated () {
 
     return created;
@@ -50,6 +60,9 @@ public class TimestampedHibernateDurable<I extends Serializable & Comparable<I>>
     this.created = created;
   }
 
+  @UpdateTimestamp
+  @Temporal(TemporalType.TIMESTAMP)
+  @Column(name = "last_updated", insertable = false)
   public synchronized Date getLastUpdated () {
 
     return lastUpdated;

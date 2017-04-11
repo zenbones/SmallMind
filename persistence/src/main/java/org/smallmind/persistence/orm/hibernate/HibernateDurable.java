@@ -33,13 +33,22 @@
 package org.smallmind.persistence.orm.hibernate;
 
 import java.io.Serializable;
+import javax.persistence.Column;
+import javax.persistence.GeneratedValue;
+import javax.persistence.GenerationType;
+import javax.persistence.Id;
+import javax.persistence.MappedSuperclass;
 import org.smallmind.persistence.AbstractDurable;
 
+@MappedSuperclass
 public abstract class HibernateDurable<I extends Serializable & Comparable<I>> extends AbstractDurable<I> {
 
   private I id;
 
   @Override
+  @Id
+  @GeneratedValue(strategy = GenerationType.IDENTITY)
+  @Column(name = "id", unique = true, updatable = false, nullable = false)
   public synchronized I getId () {
 
     return id;
