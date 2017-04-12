@@ -43,7 +43,7 @@ import org.smallmind.instrument.ChronometerInstrumentAndReturn;
 import org.smallmind.instrument.InstrumentationManager;
 import org.smallmind.instrument.MetricProperty;
 import org.smallmind.nutsnbolts.util.SnowflakeId;
-import org.smallmind.phalanx.wire.MetricType;
+import org.smallmind.phalanx.wire.MetricInteraction;
 import org.smallmind.phalanx.wire.ResultSignal;
 import org.smallmind.phalanx.wire.SignalCodec;
 import org.smallmind.phalanx.wire.VocalMode;
@@ -157,7 +157,7 @@ public class ResponseMessageRouter extends MessageRouter {
           long timeInQueue = System.currentTimeMillis() - getTimestamp(properties);
 
           LoggerManager.getLogger(QueueOperator.class).debug("request message received(%s) in %d ms...", properties.getMessageId(), timeInQueue);
-          InstrumentationManager.instrumentWithChronometer(responseTransport, (timeInQueue >= 0) ? timeInQueue : 0, TimeUnit.MILLISECONDS, new MetricProperty("queue", MetricType.REQUEST_DESTINATION_TRANSIT.getDisplay()));
+          InstrumentationManager.instrumentWithChronometer(responseTransport, (timeInQueue >= 0) ? timeInQueue : 0, TimeUnit.MILLISECONDS, new MetricProperty("queue", MetricInteraction.REQUEST_DESTINATION_TRANSIT.getDisplay()));
 
           responseTransport.execute(new RabbitMQMessage(properties, body));
         } catch (Exception exception) {
@@ -180,7 +180,7 @@ public class ResponseMessageRouter extends MessageRouter {
   private RabbitMQMessage constructMessage (final String correlationId, final boolean error, final String nativeType, final Object result)
     throws Throwable {
 
-    return InstrumentationManager.execute(new ChronometerInstrumentAndReturn<RabbitMQMessage>(responseTransport, new MetricProperty("event", MetricType.CONSTRUCT_MESSAGE.getDisplay())) {
+    return InstrumentationManager.execute(new ChronometerInstrumentAndReturn<RabbitMQMessage>(responseTransport, new MetricProperty("event", MetricInteraction.CONSTRUCT_MESSAGE.getDisplay())) {
 
       @Override
       public RabbitMQMessage withChronometer ()

@@ -47,7 +47,7 @@ import org.smallmind.nutsnbolts.util.SnowflakeId;
 import org.smallmind.phalanx.wire.AbstractRequestTransport;
 import org.smallmind.phalanx.wire.Address;
 import org.smallmind.phalanx.wire.ConversationType;
-import org.smallmind.phalanx.wire.MetricType;
+import org.smallmind.phalanx.wire.MetricInteraction;
 import org.smallmind.phalanx.wire.SignalCodec;
 import org.smallmind.phalanx.wire.TransportException;
 import org.smallmind.phalanx.wire.Voice;
@@ -121,7 +121,7 @@ public class RabbitMQRequestTransport extends AbstractRequestTransport implement
   private RequestMessageRouter acquireRequestMessageRouter ()
     throws Throwable {
 
-    return InstrumentationManager.execute(new ChronometerInstrumentAndReturn<RequestMessageRouter>(this, new MetricProperty("event", MetricType.ACQUIRE_REQUEST_DESTINATION.getDisplay())) {
+    return InstrumentationManager.execute(new ChronometerInstrumentAndReturn<RequestMessageRouter>(this, new MetricProperty("event", MetricInteraction.ACQUIRE_REQUEST_DESTINATION.getDisplay())) {
 
       @Override
       public RequestMessageRouter withChronometer ()

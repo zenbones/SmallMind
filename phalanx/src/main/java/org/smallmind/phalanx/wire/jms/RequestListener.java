@@ -40,7 +40,7 @@ import javax.jms.Message;
 import javax.jms.MessageListener;
 import org.smallmind.instrument.InstrumentationManager;
 import org.smallmind.instrument.MetricProperty;
-import org.smallmind.phalanx.wire.MetricType;
+import org.smallmind.phalanx.wire.MetricInteraction;
 import org.smallmind.phalanx.wire.WireProperty;
 import org.smallmind.scribe.pen.LoggerManager;
 
@@ -105,7 +105,7 @@ public class RequestListener implements SessionEmployer, MessageListener {
       long timeInQueue = System.currentTimeMillis() - message.getLongProperty(WireProperty.CLOCK.getKey());
 
       LoggerManager.getLogger(QueueOperator.class).debug("request message received(%s) in %d ms...", message.getJMSMessageID(), timeInQueue);
-      InstrumentationManager.instrumentWithChronometer(jmsResponseTransport, (timeInQueue >= 0) ? timeInQueue : 0, TimeUnit.MILLISECONDS, new MetricProperty("queue", MetricType.REQUEST_DESTINATION_TRANSIT.getDisplay()));
+      InstrumentationManager.instrumentWithChronometer(jmsResponseTransport, (timeInQueue >= 0) ? timeInQueue : 0, TimeUnit.MILLISECONDS, new MetricProperty("queue", MetricInteraction.REQUEST_DESTINATION_TRANSIT.getDisplay()));
 
       jmsResponseTransport.execute(message);
     } catch (Exception exception) {

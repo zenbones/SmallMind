@@ -43,7 +43,7 @@ import javax.jms.Topic;
 import org.smallmind.instrument.ChronometerInstrument;
 import org.smallmind.instrument.InstrumentationManager;
 import org.smallmind.instrument.MetricProperty;
-import org.smallmind.phalanx.wire.MetricType;
+import org.smallmind.phalanx.wire.MetricInteraction;
 import org.smallmind.phalanx.wire.ResultSignal;
 import org.smallmind.phalanx.wire.SignalCodec;
 import org.smallmind.phalanx.wire.TransportException;
@@ -103,9 +103,9 @@ public class ResponseListener implements SessionEmployer, MessageListener {
       long timeInTopic = System.currentTimeMillis() - message.getLongProperty(WireProperty.CLOCK.getKey());
 
       LoggerManager.getLogger(ResponseListener.class).debug("response message received(%s) in %d ms...", message.getJMSMessageID(), timeInTopic);
-      InstrumentationManager.instrumentWithChronometer(requestTransport, (timeInTopic >= 0) ? timeInTopic : 0, TimeUnit.MILLISECONDS, new MetricProperty("queue", MetricType.RESPONSE_TOPIC_TRANSIT.getDisplay()));
+      InstrumentationManager.instrumentWithChronometer(requestTransport, (timeInTopic >= 0) ? timeInTopic : 0, TimeUnit.MILLISECONDS, new MetricProperty("queue", MetricInteraction.RESPONSE_TOPIC_TRANSIT.getDisplay()));
 
-      InstrumentationManager.execute(new ChronometerInstrument(requestTransport, new MetricProperty("event", MetricType.COMPLETE_CALLBACK.getDisplay())) {
+      InstrumentationManager.execute(new ChronometerInstrument(requestTransport, new MetricProperty("event", MetricInteraction.COMPLETE_CALLBACK.getDisplay())) {
 
         @Override
         public void withChronometer ()

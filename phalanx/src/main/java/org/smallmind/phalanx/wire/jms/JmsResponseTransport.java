@@ -46,7 +46,7 @@ import org.smallmind.instrument.MetricProperty;
 import org.smallmind.instrument.config.MetricConfiguration;
 import org.smallmind.instrument.config.MetricConfigurationProvider;
 import org.smallmind.nutsnbolts.util.SnowflakeId;
-import org.smallmind.phalanx.wire.MetricType;
+import org.smallmind.phalanx.wire.MetricInteraction;
 import org.smallmind.phalanx.wire.ResponseTransport;
 import org.smallmind.phalanx.wire.ResultSignal;
 import org.smallmind.phalanx.wire.ServiceDefinitionException;
@@ -194,7 +194,7 @@ public class JmsResponseTransport extends WorkManager<InvocationWorker, Message>
   private Message constructMessage (final String callerId, final String correlationId, final TopicOperator topicOperator, final ResultSignal resultSignal)
     throws Throwable {
 
-    return InstrumentationManager.execute(new ChronometerInstrumentAndReturn<Message>(this, new MetricProperty("event", MetricType.CONSTRUCT_MESSAGE.getDisplay())) {
+    return InstrumentationManager.execute(new ChronometerInstrumentAndReturn<Message>(this, new MetricProperty("event", MetricInteraction.CONSTRUCT_MESSAGE.getDisplay())) {
 
       @Override
       public Message withChronometer ()

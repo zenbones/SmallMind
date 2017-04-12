@@ -101,7 +101,7 @@ public class WorkManager<W extends Worker<T>, T> implements MetricConfigurationP
       throw new WorkManagerException("%s is not in the 'started' state", WorkManager.class.getSimpleName());
     }
 
-    InstrumentationManager.execute(new ChronometerInstrument(this, new MetricProperty("event", MetricType.ACQUIRE_WORKER.getDisplay())) {
+    InstrumentationManager.execute(new ChronometerInstrument(this, new MetricProperty("event", MetricInteraction.ACQUIRE_WORKER.getDisplay())) {
 
       @Override
       public void withChronometer ()

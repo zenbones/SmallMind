@@ -32,13 +32,13 @@
  */
 package org.smallmind.phalanx.worker;
 
-public enum MetricType {
+public enum MetricInteraction {
 
   ACQUIRE_WORKER("Acquire Worker"), WORKER_IDLE("Worker Idle");
 
   private String display;
 
-  MetricType (String display) {
+  MetricInteraction (String display) {
 
     this.display = display;
   }
