@@ -55,7 +55,7 @@ public class TimestampedHibernateDurable<I extends Serializable & Comparable<I>>
     return created;
   }
 
-  private synchronized void setCreated (Date created) {
+  public synchronized void setCreated (Date created) {
 
     this.created = created;
   }
@@ -68,7 +68,7 @@ public class TimestampedHibernateDurable<I extends Serializable & Comparable<I>>
     return lastUpdated;
   }
 
-  private synchronized void setLastUpdated (Date lastUpdated) {
+  public synchronized void setLastUpdated (Date lastUpdated) {
 
     this.lastUpdated = lastUpdated;
   }
