@@ -62,7 +62,7 @@ public class TimestampedHibernateDurable<I extends Serializable & Comparable<I>>
 
   @UpdateTimestamp
   @Temporal(TemporalType.TIMESTAMP)
-  @Column(name = "last_updated", insertable = false)
+  @Column(name = "last_updated")
   public synchronized Date getLastUpdated () {
 
     return lastUpdated;
