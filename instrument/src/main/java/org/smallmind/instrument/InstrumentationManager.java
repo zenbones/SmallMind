@@ -109,7 +109,7 @@ public class InstrumentationManager implements PerApplicationDataManager {
   }
 
   public static <M extends Metric<M>, T> T execute (InstrumentAndReturn<M, T> instrumentAndReturn)
-    throws Exception {
+    throws Throwable {
 
     MetricRegistry metricRegistry;
     InstrumentationArguments<M> arguments;

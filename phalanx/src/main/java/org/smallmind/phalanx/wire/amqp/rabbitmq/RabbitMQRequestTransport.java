@@ -119,7 +119,7 @@ public class RabbitMQRequestTransport extends AbstractRequestTransport implement
   }
 
   private RequestMessageRouter acquireRequestMessageRouter ()
-    throws Exception {
+    throws Throwable {
 
     return InstrumentationManager.execute(new ChronometerInstrumentAndReturn<RequestMessageRouter>(this, new MetricProperty("event", MetricType.ACQUIRE_REQUEST_DESTINATION.getDisplay())) {
 

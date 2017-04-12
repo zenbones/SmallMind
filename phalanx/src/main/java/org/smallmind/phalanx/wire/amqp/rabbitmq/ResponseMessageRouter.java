@@ -168,7 +168,7 @@ public class ResponseMessageRouter extends MessageRouter {
   }
 
   public String publish (String callerId, String correlationId, boolean error, String nativeType, Object result)
-    throws Exception {
+    throws Throwable {
 
     RabbitMQMessage rabbitMQMessage = constructMessage(correlationId, error, nativeType, result);
 
@@ -178,7 +178,7 @@ public class ResponseMessageRouter extends MessageRouter {
   }
 
   private RabbitMQMessage constructMessage (final String correlationId, final boolean error, final String nativeType, final Object result)
-    throws Exception {
+    throws Throwable {
 
     return InstrumentationManager.execute(new ChronometerInstrumentAndReturn<RabbitMQMessage>(responseTransport, new MetricProperty("event", MetricType.CONSTRUCT_MESSAGE.getDisplay())) {
 

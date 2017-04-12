@@ -179,7 +179,7 @@ public class JmsResponseTransport extends WorkManager<InvocationWorker, Message>
 
   @Override
   public void transmit (String callerId, String correlationId, boolean error, String nativeType, Object result)
-    throws Exception {
+    throws Throwable {
 
     TopicOperator topicOperator;
 
@@ -192,7 +192,7 @@ public class JmsResponseTransport extends WorkManager<InvocationWorker, Message>
   }
 
   private Message constructMessage (final String callerId, final String correlationId, final TopicOperator topicOperator, final ResultSignal resultSignal)
-    throws Exception {
+    throws Throwable {
 
     return InstrumentationManager.execute(new ChronometerInstrumentAndReturn<Message>(this, new MetricProperty("event", MetricType.CONSTRUCT_MESSAGE.getDisplay())) {
 

@@ -188,8 +188,8 @@ public class ComponentPool<C> {
           return componentPinManager.serve().serve();
         }
       });
-    } catch (Exception exception) {
-      throw new ComponentPoolException(exception);
+    } catch (Throwable throwable) {
+      throw new ComponentPoolException(throwable);
     }
   }
 

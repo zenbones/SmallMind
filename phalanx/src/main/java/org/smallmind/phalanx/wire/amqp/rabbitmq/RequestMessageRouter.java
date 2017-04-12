@@ -137,7 +137,7 @@ public class RequestMessageRouter extends MessageRouter {
   }
 
   public String publish (final boolean inOnly, final String serviceGroup, final Voice voice, final Address address, final Map<String, Object> arguments, final WireContext... contexts)
-    throws Exception {
+    throws Throwable {
 
     RabbitMQMessage rabbitMQMessage = constructMessage(inOnly, address, arguments, contexts);
     StringBuilder routingKeyBuilder = new StringBuilder(voice.getMode().getName()).append("-").append(serviceGroup);
@@ -152,7 +152,7 @@ public class RequestMessageRouter extends MessageRouter {
   }
 
   private RabbitMQMessage constructMessage (final boolean inOnly, final Address address, final Map<String, Object> arguments, final WireContext... contexts)
-    throws Exception {
+    throws Throwable {
 
     return InstrumentationManager.execute(new ChronometerInstrumentAndReturn<RabbitMQMessage>(requestTransport, new MetricProperty("event", MetricType.CONSTRUCT_MESSAGE.getDisplay())) {
 

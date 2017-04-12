@@ -148,7 +148,7 @@ public class JmsRequestTransport extends AbstractRequestTransport implements Met
   }
 
   private MessageHandler acquireMessageHandler (final LinkedBlockingQueue<MessageHandler> messageHandlerQueue)
-    throws Exception {
+    throws Throwable {
 
     return InstrumentationManager.execute(new ChronometerInstrumentAndReturn<MessageHandler>(this, new MetricProperty("event", MetricType.ACQUIRE_REQUEST_DESTINATION.getDisplay())) {
 
@@ -172,7 +172,7 @@ public class JmsRequestTransport extends AbstractRequestTransport implements Met
   }
 
   private Message constructMessage (final MessageHandler messageHandler, final boolean inOnly, final String serviceGroup, final String instanceId, final Address address, final Map<String, Object> arguments, final WireContext... contexts)
-    throws Exception {
+    throws Throwable {
 
     return InstrumentationManager.execute(new ChronometerInstrumentAndReturn<Message>(this, new MetricProperty("event", MetricType.CONSTRUCT_MESSAGE.getDisplay())) {
 
