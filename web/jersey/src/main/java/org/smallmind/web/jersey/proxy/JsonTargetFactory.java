@@ -55,31 +55,31 @@ import org.apache.http.ssl.SSLContextBuilder;
 
 public class JsonTargetFactory {
 
-  public static JsonTarget manufacture (String host, int concurrencyLevel)
+  public static JsonTarget manufacture (String host, int concurrencyLevel, int timeout)
     throws NoSuchAlgorithmException, MalformedURLException, URISyntaxException, KeyStoreException, KeyManagementException {
 
-    return manufacture(HttpProtocol.HTTP, host, 0, null, concurrencyLevel);
+    return manufacture(HttpProtocol.HTTP, host, 0, null, concurrencyLevel, timeout);
   }
 
-  public static JsonTarget manufacture (HttpProtocol protocol, String host, int concurrencyLevel)
+  public static JsonTarget manufacture (HttpProtocol protocol, String host, int concurrencyLevel, int timeout)
     throws NoSuchAlgorithmException, MalformedURLException, URISyntaxException, KeyStoreException, KeyManagementException {
 
-    return manufacture(protocol, host, 0, null, concurrencyLevel);
+    return manufacture(protocol, host, 0, null, concurrencyLevel, timeout);
   }
 
-  public static JsonTarget manufacture (HttpProtocol protocol, String host, int port, int concurrencyLevel)
+  public static JsonTarget manufacture (HttpProtocol protocol, String host, int port, int concurrencyLevel, int timeout)
     throws NoSuchAlgorithmException, MalformedURLException, URISyntaxException, KeyStoreException, KeyManagementException {
 
-    return manufacture(protocol, host, port, null, concurrencyLevel);
+    return manufacture(protocol, host, port, null, concurrencyLevel, timeout);
   }
 
-  public static JsonTarget manufacture (HttpProtocol protocol, String host, String context, int concurrencyLevel)
+  public static JsonTarget manufacture (HttpProtocol protocol, String host, String context, int concurrencyLevel, int timeout)
     throws NoSuchAlgorithmException, MalformedURLException, URISyntaxException, KeyStoreException, KeyManagementException {
 
-    return manufacture(protocol, host, 0, context, concurrencyLevel);
+    return manufacture(protocol, host, 0, context, concurrencyLevel, timeout);
   }
 
-  public static JsonTarget manufacture (HttpProtocol protocol, String host, int port, String context, int concurrencyLevel)
+  public static JsonTarget manufacture (HttpProtocol protocol, String host, int port, String context, int concurrencyLevel, int timeout)
     throws NoSuchAlgorithmException, MalformedURLException, URISyntaxException, KeyStoreException, KeyManagementException {
 
     HttpClientBuilder clientBuilder = HttpClientBuilder.create();
@@ -102,7 +102,7 @@ public class JsonTargetFactory {
 
     connectionManager = new PoolingHttpClientConnectionManager(socketFactoryRegistry);
     connectionManager.setDefaultConnectionConfig(ConnectionConfig.custom().setCharset(StandardCharsets.UTF_8).build());
-    connectionManager.setDefaultSocketConfig(SocketConfig.copy(SocketConfig.DEFAULT).setSoTimeout(20000).setTcpNoDelay(true).build());
+    connectionManager.setDefaultSocketConfig(SocketConfig.copy(SocketConfig.DEFAULT).setSoTimeout(timeout).setTcpNoDelay(true).build());
     connectionManager.setDefaultMaxPerRoute(concurrencyLevel);
     connectionManager.setMaxTotal(concurrencyLevel);
 
