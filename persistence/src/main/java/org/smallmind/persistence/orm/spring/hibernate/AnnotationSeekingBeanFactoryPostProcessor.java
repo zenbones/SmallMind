@@ -117,23 +117,28 @@ public class AnnotationSeekingBeanFactoryPostProcessor implements BeanFactoryPos
               ANNOTATED_CLASS_DATA_SOURCE_MAP.put(sessionSourceKey, annotatedClassSet = new HashSet<>());
             }
 
-            if (hasMarkedAnnotation(persistentClass)) {
-
-              MappedSubclass mappedSubclass;
-
-              annotatedClassSet.add(persistentClass);
-
-              if ((mappedSubclass = persistentClass.getAnnotation(MappedSubclass.class)) != null) {
-                for (Class subclass : mappedSubclass.value()) {
-                  if (!persistentClass.isAssignableFrom(subclass)) {
-                    throw new FatalBeanException("Mapped subclass of type (" + subclass.getName() + ") must inherit from parent type (" + persistentClass.getName() + ")");
-                  }
-
-                  annotatedClassSet.add(subclass);
-                }
-              }
-            }
+            processClass(persistentClass, annotatedClassSet);
           }
+        }
+      }
+    }
+  }
+
+  private void processClass (Class<?> persistentClass, HashSet<Class> annotatedClassSet) {
+
+    if (hasMarkedAnnotation(persistentClass)) {
+
+      MappedSubclass mappedSubclass;
+
+      annotatedClassSet.add(persistentClass);
+
+      if ((mappedSubclass = persistentClass.getAnnotation(MappedSubclass.class)) != null) {
+        for (Class subclass : mappedSubclass.value()) {
+          if (!persistentClass.isAssignableFrom(subclass)) {
+            throw new FatalBeanException("Mapped subclass of type (" + subclass.getName() + ") must inherit from parent type (" + persistentClass.getName() + ")");
+          }
+
+          processClass(subclass, annotatedClassSet);
         }
       }
     }
