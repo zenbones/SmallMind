@@ -43,7 +43,7 @@ import org.smallmind.persistence.UpdateMode;
 import org.smallmind.persistence.cache.VectoredDao;
 import org.smallmind.persistence.orm.ORMDao;
 
-public class MorphiaDao<I extends Serializable & Comparable<I>, D extends MorphiaDurable<I>> extends ORMDao<I, D, DatastoreFactory, Datastore> {
+public class MorphiaDao<I extends Serializable & Comparable<I>, D extends MorphiaDurable<I, D>> extends ORMDao<I, D, DatastoreFactory, Datastore> {
 
   public MorphiaDao (MorphiaProxySession proxySession) {
 

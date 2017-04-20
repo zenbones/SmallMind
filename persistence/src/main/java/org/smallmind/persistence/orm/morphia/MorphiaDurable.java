@@ -36,7 +36,7 @@ import java.io.Serializable;
 import org.mongodb.morphia.annotations.Id;
 import org.smallmind.persistence.AbstractDurable;
 
-public class MorphiaDurable<I extends Serializable & Comparable<I>> extends AbstractDurable<I> {
+public class MorphiaDurable<I extends Serializable & Comparable<I>, D extends MorphiaDurable<I, D>> extends AbstractDurable<I, D> {
 
   @Id
   private I id;

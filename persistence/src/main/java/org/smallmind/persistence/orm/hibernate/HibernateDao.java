@@ -54,7 +54,7 @@ import org.smallmind.persistence.cache.VectoredDao;
 import org.smallmind.persistence.orm.ORMDao;
 import org.smallmind.persistence.sql.SqlType;
 
-public abstract class HibernateDao<I extends Serializable & Comparable<I>, D extends Durable<I>> extends ORMDao<I, D, SessionFactory, Session> {
+public abstract class HibernateDao<I extends Serializable & Comparable<I>, D extends HibernateDurable<I, D>> extends ORMDao<I, D, SessionFactory, Session> {
 
   public HibernateDao (HibernateProxySession proxySession) {
 

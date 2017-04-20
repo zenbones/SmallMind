@@ -35,7 +35,7 @@ package org.smallmind.persistence.nosql.hector;
 import java.io.Serializable;
 import org.smallmind.persistence.AbstractDurable;
 
-public abstract class HectorDurable<I extends Serializable & Comparable<I>> extends AbstractDurable<I> {
+public abstract class HectorDurable<I extends Serializable & Comparable<I>, D extends HectorDurable<I, D>> extends AbstractDurable<I, D> {
 
   private I id;
 

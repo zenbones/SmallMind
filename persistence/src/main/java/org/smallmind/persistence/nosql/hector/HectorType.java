@@ -51,7 +51,7 @@ public enum HectorType {
     return hectorTranslator;
   }
 
-  public static HectorTranslator getTranslator (Class fieldType, String fieldName) {
+  public static HectorTranslator getTranslator (Class<?> fieldType, String fieldName) {
 
     if (Date.class.isAssignableFrom(fieldType)) {
       return HectorType.DATE.getHectorTranslator();

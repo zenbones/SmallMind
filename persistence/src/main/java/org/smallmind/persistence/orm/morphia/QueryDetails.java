@@ -34,7 +34,7 @@ package org.smallmind.persistence.orm.morphia;
 
 import org.mongodb.morphia.query.Query;
 
-public abstract class QueryDetails<D extends MorphiaDurable> {
+public abstract class QueryDetails<D extends MorphiaDurable<?, D>> {
 
   public abstract Query<D> completeQuery (Query<D> query);
 }

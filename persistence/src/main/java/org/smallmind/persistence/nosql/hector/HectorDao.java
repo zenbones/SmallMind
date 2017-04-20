@@ -46,14 +46,14 @@ import me.prettyprint.cassandra.service.template.ColumnFamilyUpdater;
 import me.prettyprint.cassandra.service.template.ThriftColumnFamilyTemplate;
 import me.prettyprint.hector.api.Keyspace;
 import me.prettyprint.hector.api.beans.Composite;
-import org.smallmind.persistence.Durable;
 import org.smallmind.nutsnbolts.reflection.FieldUtility;
+import org.smallmind.persistence.Durable;
 import org.smallmind.persistence.NaturalKey;
 import org.smallmind.persistence.PersistenceException;
 import org.smallmind.persistence.cache.WideVectoredDao;
 import org.smallmind.persistence.nosql.NoSqlDao;
 
-public abstract class HectorDao<W extends Serializable & Comparable<W>, I extends Serializable & Comparable<I>, D extends Durable<I>> extends NoSqlDao<W, I, D> {
+public abstract class HectorDao<W extends Serializable & Comparable<W>, I extends Serializable & Comparable<I>, D extends HectorDurable<I, D>> extends NoSqlDao<W, I, D> {
 
   private ColumnFamilyTemplate<Composite, Composite> hectorTemplate;
 
@@ -124,8 +124,7 @@ public abstract class HectorDao<W extends Serializable & Comparable<W>, I extend
             for (Field naturalKeyField : naturalKeyFields) {
               naturalKeyField.set(durable, naturalKeyValues[naturalKeyIndex++]);
             }
-          }
-          catch (Exception exception) {
+          } catch (Exception exception) {
             throw new PersistenceException(exception);
           }
         }
@@ -133,15 +132,13 @@ public abstract class HectorDao<W extends Serializable & Comparable<W>, I extend
         try {
           if (nonKeyFieldName.equals("id")) {
             nonKeyField.set(durable, HectorType.getTranslator(getIdClass(), "id").toEntityValue(getIdClass(), columnName, hectorResult));
-          }
-          else {
+          } else {
 
             Class<?> nonKeyType = nonKeyField.getType();
 
             nonKeyField.set(durable, HectorType.getTranslator(nonKeyType, nonKeyFieldName).toEntityValue(nonKeyType, columnName, hectorResult));
           }
-        }
-        catch (IllegalAccessException illegalAccessException) {
+        } catch (IllegalAccessException illegalAccessException) {
           throw new PersistenceException(illegalAccessException);
         }
       }
@@ -190,15 +187,13 @@ public abstract class HectorDao<W extends Serializable & Comparable<W>, I extend
               HectorTranslator idTranslator = HectorType.getTranslator(getIdClass(), "id");
 
               updater.setValue(nonKeyComposite, idTranslator.toHectorValue(id), idTranslator.getSerializer());
-            }
-            else {
+            } else {
 
               Object nonKeyValue = nonKeyField.get(durable);
 
               if (nonKeyValue == null) {
                 updater.deleteColumn(nonKeyComposite);
-              }
-              else {
+              } else {
 
                 HectorTranslator nonKeyTranslator = HectorType.getTranslator(nonKeyField.getType(), nonKeyField.getName());
 
@@ -207,8 +202,7 @@ public abstract class HectorDao<W extends Serializable & Comparable<W>, I extend
             }
           }
         }
-      }
-      catch (IllegalAccessException illegalAccessException) {
+      } catch (IllegalAccessException illegalAccessException) {
         throw new PersistenceException(illegalAccessException);
       }
 
@@ -223,8 +217,7 @@ public abstract class HectorDao<W extends Serializable & Comparable<W>, I extend
 
             if ((cachedIndex = cachedInstance.indexOf(durable)) >= 0) {
               cachedInstance.set(cachedIndex, durable);
-            }
-            else {
+            } else {
               cachedInstance.add(durable);
             }
           }
@@ -262,8 +255,7 @@ public abstract class HectorDao<W extends Serializable & Comparable<W>, I extend
             updater.deleteColumn(nonKeyComposite);
           }
         }
-      }
-      catch (IllegalAccessException illegalAccessException) {
+      } catch (IllegalAccessException illegalAccessException) {
         throw new PersistenceException(illegalAccessException);
       }
 

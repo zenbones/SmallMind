@@ -30,46 +30,8 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.persistence.orm.hibernate;
+package org.smallmind.nutsnbolts.reflection;
 
-import java.io.Serializable;
-import java.util.Date;
-import javax.persistence.Column;
-import javax.persistence.MappedSuperclass;
-import javax.persistence.Temporal;
-import javax.persistence.TemporalType;
-import org.hibernate.annotations.CreationTimestamp;
-import org.hibernate.annotations.UpdateTimestamp;
+public interface Differentiable<D extends Differentiable<D>> {
 
-@MappedSuperclass
-public class TimestampedHibernateDurable<I extends Serializable & Comparable<I>, D extends TimestampedHibernateDurable<I, D>> extends HibernateDurable<I, D> {
-
-  private Date created;
-  private Date lastUpdated;
-
-  @CreationTimestamp
-  @Temporal(TemporalType.TIMESTAMP)
-  @Column(name = "created", nullable = false, updatable = false)
-  public synchronized Date getCreated () {
-
-    return created;
-  }
-
-  public synchronized void setCreated (Date created) {
-
-    this.created = created;
-  }
-
-  @UpdateTimestamp
-  @Temporal(TemporalType.TIMESTAMP)
-  @Column(name = "last_updated")
-  public synchronized Date getLastUpdated () {
-
-    return lastUpdated;
-  }
-
-  public synchronized void setLastUpdated (Date lastUpdated) {
-
-    this.lastUpdated = lastUpdated;
-  }
 }

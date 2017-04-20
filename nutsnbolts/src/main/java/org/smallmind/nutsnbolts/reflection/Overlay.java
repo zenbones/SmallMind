@@ -33,9 +33,30 @@
 package org.smallmind.nutsnbolts.reflection;
 
 import java.lang.reflect.Field;
+import java.util.List;
 import org.smallmind.nutsnbolts.lang.TypeMismatchException;
+import org.smallmind.nutsnbolts.reflection.type.GenericUtility;
+import org.smallmind.nutsnbolts.reflection.type.UnexpectedGenericDeclaration;
 
-public abstract class Overlay<O extends Overlay<O>> {
+public abstract class Overlay<O extends Overlay<O>> implements Differentiable<O> {
+
+  private final Class<O> overlayClass;
+
+  public Overlay () {
+
+    List<Class<?>> typeArguments = GenericUtility.getTypeArguments(Overlay.class, this.getClass());
+
+    if (typeArguments.size() != 1) {
+      throw new UnexpectedGenericDeclaration("Expecting a single generic type");
+    } else if (!Overlay.class.isAssignableFrom(overlayClass = (Class<O>)typeArguments.get(0))) {
+      throw new UnexpectedGenericDeclaration("Expecting a single generic type extending %s", Overlay.class.getSimpleName());
+    }
+  }
+
+  public Class<? extends Overlay> getOverlayClass () {
+
+    return overlayClass;
+  }
 
   public O overlay (Object... overlays)
     throws IllegalAccessException {
@@ -82,6 +103,6 @@ public abstract class Overlay<O extends Overlay<O>> {
       }
     }
 
-    return (O)this;
+    return overlayClass.cast(this);
   }
 }

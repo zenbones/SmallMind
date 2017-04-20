@@ -41,7 +41,7 @@ import javax.persistence.MappedSuperclass;
 import org.smallmind.persistence.AbstractDurable;
 
 @MappedSuperclass
-public abstract class HibernateDurable<I extends Serializable & Comparable<I>> extends AbstractDurable<I> {
+public abstract class HibernateDurable<I extends Serializable & Comparable<I>, D extends HibernateDurable<I, D>> extends AbstractDurable<I, D> {
 
   private I id;
 
