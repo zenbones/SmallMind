@@ -33,7 +33,7 @@
 package org.smallmind.web.jersey.aop;
 
 import org.glassfish.jersey.server.ContainerRequest;
-import org.smallmind.nutsnbolts.reflection.aop.MissingAnnotationException;
+import org.smallmind.nutsnbolts.reflection.MissingAnnotationException;
 
 public class EntityTranslator {
 

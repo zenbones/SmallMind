@@ -30,39 +30,39 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.persistence;
+package org.smallmind.nutsnbolts.reflection;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
-import java.util.Collections;
-import java.util.Comparator;
 import java.util.LinkedList;
 import java.util.concurrent.ConcurrentHashMap;
+import org.smallmind.nutsnbolts.util.AlphaNumericComparator;
 
-public class DurableFields {
+public class FieldUtility {
 
-  private static final ConcurrentHashMap<Class<? extends Durable>, Field[]> FIELD_MAP = new ConcurrentHashMap<>();
+  private static final AlphaNumericComparator<Field> ALPHA_NUMERIC_COMPARATOR = new AlphaNumericComparator<>(Field::getName);
+  private static final ConcurrentHashMap<Class<?>, Field[]> FIELD_MAP = new ConcurrentHashMap<>();
 
-  public static Field getField (Class<? extends Durable> durableClass, String name) {
+  public static Field getField (Class<?> clazz, String name) {
 
-    for (Field durableField : getFields(durableClass)) {
-      if (durableField.getName().equals(name)) {
+    for (Field field : getFields(clazz)) {
+      if (field.getName().equals(name)) {
 
-        return durableField;
+        return field;
       }
     }
 
     return null;
   }
 
-  public static Field[] getFields (final Class<? extends Durable> durableClass) {
+  public static Field[] getFields (final Class<?> clazz) {
 
     Field[] fields;
 
-    if ((fields = FIELD_MAP.get(durableClass)) == null) {
+    if ((fields = FIELD_MAP.get(clazz)) == null) {
       synchronized (FIELD_MAP) {
-        if ((fields = FIELD_MAP.get(durableClass)) == null) {
-          Class<?> currentClass = durableClass;
+        if ((fields = FIELD_MAP.get(clazz)) == null) {
+          Class<?> currentClass = clazz;
           LinkedList<Field> fieldList = new LinkedList<>();
 
           do {
@@ -72,21 +72,14 @@ public class DurableFields {
                 fieldList.add(field);
               }
             }
-
           } while ((currentClass = currentClass.getSuperclass()) != null);
 
-          Collections.sort(fieldList, new Comparator<Field>() {
-
-            public int compare (Field field1, Field field2) {
-
-              return field1.getName().compareToIgnoreCase(field2.getName());
-            }
-          });
+          fieldList.sort(ALPHA_NUMERIC_COMPARATOR);
 
           fields = new Field[fieldList.size()];
           fieldList.toArray(fields);
 
-          FIELD_MAP.put(durableClass, fields);
+          FIELD_MAP.put(clazz, fields);
         }
       }
     }

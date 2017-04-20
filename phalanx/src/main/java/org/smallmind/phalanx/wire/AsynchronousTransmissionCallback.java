@@ -75,7 +75,7 @@ public class AsynchronousTransmissionCallback extends TransmissionCallback {
 
     handleError(signalCodec, resultSignal);
 
-    return signalCodec.extractObject(resultSignal.getResult(), TypeUtility.nativeDecode(resultSignal.getNativeType()));
+    return signalCodec.extractObject(resultSignal.getResult(), SignatureUtility.nativeDecode(resultSignal.getNativeType()));
   }
 
   public void setResultSignal (ResultSignal resultSignal) {

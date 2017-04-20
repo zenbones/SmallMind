@@ -74,7 +74,7 @@ public class Function implements Serializable {
     Result result;
 
     name = ((callAs = method.getAnnotation(CallAs.class)) == null) ? method.getName() : callAs.value();
-    resultType = ((result = method.getAnnotation(Result.class)) == null) ? TypeUtility.neutralEncode(method.getReturnType()) : "!" + result.value();
+    resultType = ((result = method.getAnnotation(Result.class)) == null) ? SignatureUtility.neutralEncode(method.getReturnType()) : "!" + result.value();
 
     signature = new String[(parameterClasses = method.getParameterTypes()).length];
     parameterAnnotations = method.getParameterAnnotations();
@@ -97,11 +97,11 @@ public class Function implements Serializable {
       }
 
       if (!viaAnnotation) {
-        signature[index] = TypeUtility.neutralEncode(parameterClasses[index]);
+        signature[index] = SignatureUtility.neutralEncode(parameterClasses[index]);
       }
     }
 
-    nativeType = TypeUtility.nativeEncode(method.getReturnType());
+    nativeType = SignatureUtility.nativeEncode(method.getReturnType());
   }
 
   @XmlTransient

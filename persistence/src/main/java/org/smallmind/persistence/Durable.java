@@ -36,7 +36,7 @@ import java.io.Serializable;
 
 public interface Durable<I extends Serializable & Comparable<I>> extends Serializable, Comparable<Durable<I>> {
 
-  public abstract I getId ();
+  I getId ();
 
-  public abstract void setId (I id);
+  void setId (I id);
 }

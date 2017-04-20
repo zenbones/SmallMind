@@ -36,7 +36,7 @@ import java.util.Date;
 import java.util.concurrent.ConcurrentHashMap;
 import org.smallmind.web.jersey.fault.Fault;
 
-public class TypeUtility {
+public class SignatureUtility {
 
   private static final ConcurrentHashMap<String, Class> SIGNATURE_MAP = new ConcurrentHashMap<>();
 

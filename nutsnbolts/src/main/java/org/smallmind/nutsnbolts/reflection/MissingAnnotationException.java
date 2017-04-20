@@ -30,8 +30,14 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.nutsnbolts.overlay;
+package org.smallmind.nutsnbolts.reflection;
 
-public interface Differentiable<D extends Differentiable<D>> {
+import org.smallmind.nutsnbolts.lang.FormattedRuntimeException;
 
+public class MissingAnnotationException extends FormattedRuntimeException {
+
+  public MissingAnnotationException (String message, Object... args) {
+
+    super(message, args);
+  }
 }

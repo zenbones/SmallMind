@@ -37,8 +37,10 @@ import java.lang.reflect.Field;
 import java.util.HashSet;
 import java.util.Set;
 import org.smallmind.nutsnbolts.lang.TypeMismatchException;
+import org.smallmind.nutsnbolts.reflection.Overlay;
+import org.smallmind.nutsnbolts.reflection.FieldUtility;
 
-public abstract class AbstractDurable<I extends Serializable & Comparable<I>> implements Durable<I> {
+public abstract class AbstractDurable<I extends Serializable & Comparable<I>> extends Overlay<AbstractDurable<I>> implements Durable<I> {
 
   private static final ThreadLocal<Set<Durable>> IN_USE_SET_LOCAL = new ThreadLocal<Set<Durable>>() {
 
@@ -59,8 +61,7 @@ public abstract class AbstractDurable<I extends Serializable & Comparable<I>> im
       if (durable.getId() == null) {
 
         return 0;
-      }
-      else {
+      } else {
 
         return -1;
       }
@@ -94,8 +95,7 @@ public abstract class AbstractDurable<I extends Serializable & Comparable<I>> im
     if (obj instanceof Durable) {
       if ((((Durable)obj).getId() == null) || (getId() == null)) {
         return super.equals(obj);
-      }
-      else {
+      } else {
         return ((Durable)obj).getId().equals(getId());
       }
     }
@@ -115,7 +115,7 @@ public abstract class AbstractDurable<I extends Serializable & Comparable<I>> im
       boolean excluded;
 
       try {
-        for (Field field : DurableFields.getFields(this.getClass())) {
+        for (Field field : FieldUtility.getFields(this.getClass())) {
 
           excluded = false;
 
@@ -138,15 +138,13 @@ public abstract class AbstractDurable<I extends Serializable & Comparable<I>> im
 
                 return false;
               }
-            }
-            else if (!myValue.equals(theirValue)) {
+            } else if (!myValue.equals(theirValue)) {
 
               return false;
             }
           }
         }
-      }
-      catch (IllegalAccessException illegalAccessException) {
+      } catch (IllegalAccessException illegalAccessException) {
         throw new RuntimeException(illegalAccessException);
       }
 
@@ -162,8 +160,7 @@ public abstract class AbstractDurable<I extends Serializable & Comparable<I>> im
 
     if (IN_USE_SET_LOCAL.get().contains(this)) {
       displayBuilder.append(this.getClass().getSimpleName()).append("[id=").append(getId()).append(",...]");
-    }
-    else {
+    } else {
       try {
         IN_USE_SET_LOCAL.get().add(this);
 
@@ -172,7 +169,7 @@ public abstract class AbstractDurable<I extends Serializable & Comparable<I>> im
         displayBuilder.append(this.getClass().getSimpleName()).append('[');
 
         try {
-          for (Field field : DurableFields.getFields(this.getClass())) {
+          for (Field field : FieldUtility.getFields(this.getClass())) {
             if (first) {
               displayBuilder.append(',');
             }
@@ -180,14 +177,12 @@ public abstract class AbstractDurable<I extends Serializable & Comparable<I>> im
             displayBuilder.append(field.getName()).append('=').append(field.get(this));
             first = true;
           }
-        }
-        catch (IllegalAccessException illegalAccessException) {
+        } catch (IllegalAccessException illegalAccessException) {
           throw new RuntimeException(illegalAccessException);
         }
 
         displayBuilder.append(']');
-      }
-      finally {
+      } finally {
         IN_USE_SET_LOCAL.get().remove(this);
       }
     }

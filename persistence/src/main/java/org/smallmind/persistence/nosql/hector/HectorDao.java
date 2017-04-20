@@ -47,7 +47,7 @@ import me.prettyprint.cassandra.service.template.ThriftColumnFamilyTemplate;
 import me.prettyprint.hector.api.Keyspace;
 import me.prettyprint.hector.api.beans.Composite;
 import org.smallmind.persistence.Durable;
-import org.smallmind.persistence.DurableFields;
+import org.smallmind.nutsnbolts.reflection.FieldUtility;
 import org.smallmind.persistence.NaturalKey;
 import org.smallmind.persistence.PersistenceException;
 import org.smallmind.persistence.cache.WideVectoredDao;
@@ -107,7 +107,7 @@ public abstract class HectorDao<W extends Serializable & Comparable<W>, I extend
         String nonKeyFieldName;
         int naturalKeyIndex;
 
-        if ((nonKeyField = DurableFields.getField(durableClass, nonKeyFieldName = columnName.get(naturalKeyFields.length, StringSerializer.get()))) == null) {
+        if ((nonKeyField = FieldUtility.getField(durableClass, nonKeyFieldName = columnName.get(naturalKeyFields.length, StringSerializer.get()))) == null) {
           throw new PersistenceException("Unknown field(%s) in return values", nonKeyFieldName);
         }
 

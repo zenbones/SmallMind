@@ -35,6 +35,7 @@ package org.smallmind.persistence;
 import java.lang.reflect.Field;
 import java.util.Arrays;
 import java.util.concurrent.ConcurrentHashMap;
+import org.smallmind.nutsnbolts.reflection.FieldUtility;
 import org.smallmind.nutsnbolts.reflection.type.TypeUtility;
 
 public class NaturalKey<D extends Durable<? extends Comparable>> {
@@ -52,7 +53,7 @@ public class NaturalKey<D extends Durable<? extends Comparable>> {
     if ((nonKeyFields = NON_KEY_MAP.get(durableClass)) == null) {
 
       Field[] naturalKeyFields = getNaturalKeyFields(durableClass);
-      Field[] durableFields = DurableFields.getFields(durableClass);
+      Field[] durableFields = FieldUtility.getFields(durableClass);
 
       nonKeyFields = new Field[durableFields.length - naturalKeyFields.length];
 

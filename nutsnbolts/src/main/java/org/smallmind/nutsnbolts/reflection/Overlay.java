@@ -30,14 +30,34 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.nutsnbolts.reflection.aop;
+package org.smallmind.nutsnbolts.reflection;
 
-import org.smallmind.nutsnbolts.lang.FormattedRuntimeException;
+import java.lang.reflect.Field;
+import org.smallmind.nutsnbolts.lang.TypeMismatchException;
 
-public class MissingAnnotationException extends FormattedRuntimeException {
+public abstract class Overlay<O extends Overlay<O>> {
 
-  public MissingAnnotationException (String message, Object... args) {
+  public O overlay (Object... overlays)
+    throws IllegalAccessException {
 
-    super(message, args);
+    if ((overlays != null) && (overlays.length > 0)) {
+      for (Object overlay : overlays) {
+        if (overlay != null) {
+          if (!this.getClass().isAssignableFrom(overlay.getClass())) {
+            throw new TypeMismatchException("Overlays must be assignable from type(%s)", this.getClass());
+          }
+          for (Field field : FieldUtility.getFields(this.getClass())) {
+
+            Object value;
+
+            if ((value = field.get(overlay)) != null) {
+              field.set(this, value);
+            }
+          }
+        }
+      }
+    }
+
+    return (O)this;
   }
 }
