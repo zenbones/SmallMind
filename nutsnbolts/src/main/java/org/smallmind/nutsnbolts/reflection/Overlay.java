@@ -43,12 +43,6 @@ public abstract class Overlay<O extends Overlay<O>> {
     return overlay(overlays, null);
   }
 
-  public O overlay (Object overlay, String... exclusions)
-    throws IllegalAccessException {
-
-    return overlay(new Object[] {overlay}, exclusions);
-  }
-
   public O overlay (Object[] overlays, String[] exclusions)
     throws IllegalAccessException {
 
