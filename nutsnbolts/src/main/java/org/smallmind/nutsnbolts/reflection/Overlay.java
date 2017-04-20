@@ -40,18 +40,48 @@ public abstract class Overlay<O extends Overlay<O>> {
   public O overlay (Object... overlays)
     throws IllegalAccessException {
 
+    return overlay(overlays, null);
+  }
+
+  public O overlay (Object overlay, String... exclusions)
+    throws IllegalAccessException {
+
+    return overlay(new Object[] {overlay}, exclusions);
+  }
+
+  public O overlay (Object[] overlays, String[] exclusions)
+    throws IllegalAccessException {
+
     if ((overlays != null) && (overlays.length > 0)) {
       for (Object overlay : overlays) {
         if (overlay != null) {
           if (!this.getClass().isAssignableFrom(overlay.getClass())) {
             throw new TypeMismatchException("Overlays must be assignable from type(%s)", this.getClass());
-          }
-          for (Field field : FieldUtility.getFields(this.getClass())) {
+          } else {
 
-            Object value;
+            boolean excluded;
 
-            if ((value = field.get(overlay)) != null) {
-              field.set(this, value);
+            for (Field field : FieldUtility.getFields(this.getClass())) {
+
+              excluded = false;
+
+              if ((exclusions != null) && (exclusions.length > 0)) {
+                for (String exclusion : exclusions) {
+                  if (exclusion.equals(field.getName())) {
+                    excluded = true;
+                    break;
+                  }
+                }
+              }
+
+              if (!excluded) {
+
+                Object value;
+
+                if ((value = field.get(overlay)) != null) {
+                  field.set(this, value);
+                }
+              }
             }
           }
         }
