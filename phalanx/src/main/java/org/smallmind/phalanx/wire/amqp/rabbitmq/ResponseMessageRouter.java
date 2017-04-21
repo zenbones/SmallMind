@@ -157,7 +157,7 @@ public class ResponseMessageRouter extends MessageRouter {
           long timeInQueue = System.currentTimeMillis() - getTimestamp(properties);
 
           LoggerManager.getLogger(QueueOperator.class).debug("request message received(%s) in %d ms...", properties.getMessageId(), timeInQueue);
-          InstrumentationManager.instrumentWithChronometer(responseTransport, (timeInQueue >= 0) ? timeInQueue : 0, TimeUnit.MILLISECONDS, new MetricProperty("queue", MetricInteraction.REQUEST_DESTINATION_TRANSIT.getDisplay()));
+          InstrumentationManager.instrumentWithChronometer(responseTransport, (timeInQueue >= 0) ? timeInQueue : 0, TimeUnit.MILLISECONDS, new MetricProperty("queue", MetricInteraction.REQUEST_TRANSIT_TIME.getDisplay()));
 
           responseTransport.execute(new RabbitMQMessage(properties, body));
         } catch (Exception exception) {

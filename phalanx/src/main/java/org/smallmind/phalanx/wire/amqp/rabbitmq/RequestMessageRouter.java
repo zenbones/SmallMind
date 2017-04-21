@@ -116,7 +116,7 @@ public class RequestMessageRouter extends MessageRouter {
               long timeInTopic = System.currentTimeMillis() - getTimestamp(properties);
 
               LoggerManager.getLogger(ResponseMessageRouter.class).debug("response message received(%s) in %d ms...", properties.getMessageId(), timeInTopic);
-              InstrumentationManager.instrumentWithChronometer(requestTransport, (timeInTopic >= 0) ? timeInTopic : 0, TimeUnit.MILLISECONDS, new MetricProperty("queue", MetricInteraction.RESPONSE_TOPIC_TRANSIT.getDisplay()));
+              InstrumentationManager.instrumentWithChronometer(requestTransport, (timeInTopic >= 0) ? timeInTopic : 0, TimeUnit.MILLISECONDS, new MetricProperty("queue", MetricInteraction.RESPONSE_TRANSIT_TIME.getDisplay()));
 
               InstrumentationManager.execute(new ChronometerInstrument(requestTransport, new MetricProperty("event", MetricInteraction.COMPLETE_CALLBACK.getDisplay())) {
 

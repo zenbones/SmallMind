@@ -141,7 +141,15 @@ public class JmsRequestTransport extends AbstractRequestTransport implements Met
       messageHandler.send(requestMessage = constructMessage(messageHandler, inOnly, (String)voice.getServiceGroup(), voice.getMode().equals(VocalMode.WHISPER) ? (String)voice.getInstanceId() : null, address, arguments, contexts));
       messageId = requestMessage.getJMSMessageID();
 
-      return acquireResult(signalCodec, address, voice, messageId, inOnly);
+      return InstrumentationManager.execute(new ChronometerInstrumentAndReturn<Object>(this, new MetricProperty("event", MetricInteraction.ACQUIRE_RESULT.getDisplay())) {
+
+        @Override
+        public Object withChronometer ()
+          throws Throwable {
+
+          return acquireResult(signalCodec, address, voice, messageId, inOnly);
+        }
+      });
     } finally {
       messageQueue.put(messageHandler);
     }
@@ -150,7 +158,7 @@ public class JmsRequestTransport extends AbstractRequestTransport implements Met
   private MessageHandler acquireMessageHandler (final LinkedBlockingQueue<MessageHandler> messageHandlerQueue)
     throws Throwable {
 
-    return InstrumentationManager.execute(new ChronometerInstrumentAndReturn<MessageHandler>(this, new MetricProperty("event", MetricInteraction.ACQUIRE_REQUEST_DESTINATION.getDisplay())) {
+    return InstrumentationManager.execute(new ChronometerInstrumentAndReturn<MessageHandler>(this, new MetricProperty("event", MetricInteraction.ACQUIRE_REQUEST_TRANSPORT.getDisplay())) {
 
       @Override
       public MessageHandler withChronometer ()

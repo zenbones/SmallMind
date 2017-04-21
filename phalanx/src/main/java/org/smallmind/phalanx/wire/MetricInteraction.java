@@ -34,7 +34,7 @@ package org.smallmind.phalanx.wire;
 
 public enum MetricInteraction {
 
-  ACQUIRE_REQUEST_DESTINATION("Acquire Request Transport"), ACQUIRE_RESPONSE_DESTINATION("Acquire Response Transport"), CONSTRUCT_MESSAGE("Construct Message"), REQUEST_DESTINATION_TRANSIT("Request Transit"), RESPONSE_TOPIC_TRANSIT("Response Transit"), COMPLETE_CALLBACK("Complete Callback");
+  ACQUIRE_REQUEST_TRANSPORT("Acquire Request Transport"), CONSTRUCT_MESSAGE("Construct Message"), REQUEST_TRANSIT_TIME("Request Transit Time"), RESPONSE_TRANSIT_TIME("Response Transit Time"), COMPLETE_CALLBACK("Complete Callback"), ACQUIRE_RESULT("Acquire Result");
 
   private String display;
 

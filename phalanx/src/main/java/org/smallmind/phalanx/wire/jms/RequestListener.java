@@ -105,7 +105,7 @@ public class RequestListener implements SessionEmployer, MessageListener {
       long timeInQueue = System.currentTimeMillis() - message.getLongProperty(WireProperty.CLOCK.getKey());
 
       LoggerManager.getLogger(QueueOperator.class).debug("request message received(%s) in %d ms...", message.getJMSMessageID(), timeInQueue);
-      InstrumentationManager.instrumentWithChronometer(jmsResponseTransport, (timeInQueue >= 0) ? timeInQueue : 0, TimeUnit.MILLISECONDS, new MetricProperty("queue", MetricInteraction.REQUEST_DESTINATION_TRANSIT.getDisplay()));
+      InstrumentationManager.instrumentWithChronometer(jmsResponseTransport, (timeInQueue >= 0) ? timeInQueue : 0, TimeUnit.MILLISECONDS, new MetricProperty("queue", MetricInteraction.REQUEST_TRANSIT_TIME.getDisplay()));
 
       jmsResponseTransport.execute(message);
     } catch (Exception exception) {

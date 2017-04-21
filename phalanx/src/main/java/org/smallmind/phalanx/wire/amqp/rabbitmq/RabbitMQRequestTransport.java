@@ -112,7 +112,15 @@ public class RabbitMQRequestTransport extends AbstractRequestTransport implement
 
       messageId = requestMessageRouter.publish(inOnly, (String)voice.getServiceGroup(), voice, address, arguments, contexts);
 
-      return acquireResult(signalCodec, address, voice, messageId, inOnly);
+      return InstrumentationManager.execute(new ChronometerInstrumentAndReturn<Object>(this, new MetricProperty("event", MetricInteraction.ACQUIRE_RESULT.getDisplay())) {
+
+        @Override
+        public Object withChronometer ()
+          throws Throwable {
+
+          return acquireResult(signalCodec, address, voice, messageId, inOnly);
+        }
+      });
     } finally {
       routerQueue.put(requestMessageRouter);
     }
@@ -121,7 +129,7 @@ public class RabbitMQRequestTransport extends AbstractRequestTransport implement
   private RequestMessageRouter acquireRequestMessageRouter ()
     throws Throwable {
 
-    return InstrumentationManager.execute(new ChronometerInstrumentAndReturn<RequestMessageRouter>(this, new MetricProperty("event", MetricInteraction.ACQUIRE_REQUEST_DESTINATION.getDisplay())) {
+    return InstrumentationManager.execute(new ChronometerInstrumentAndReturn<RequestMessageRouter>(this, new MetricProperty("event", MetricInteraction.ACQUIRE_REQUEST_TRANSPORT.getDisplay())) {
 
       @Override
       public RequestMessageRouter withChronometer ()
