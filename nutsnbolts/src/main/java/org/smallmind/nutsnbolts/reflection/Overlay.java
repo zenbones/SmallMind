@@ -64,7 +64,7 @@ public abstract class Overlay<O extends Overlay<O>> implements Differentiable<O>
     return overlay(overlays, null);
   }
 
-  public O overlay (Object[] overlays, String[] exclusions)
+  public O overlay (Object[] overlays, Field[] exclusions)
     throws IllegalAccessException {
 
     if ((overlays != null) && (overlays.length > 0)) {
@@ -81,8 +81,10 @@ public abstract class Overlay<O extends Overlay<O>> implements Differentiable<O>
               excluded = false;
 
               if ((exclusions != null) && (exclusions.length > 0)) {
-                for (String exclusion : exclusions) {
-                  if (exclusion.equals(field.getName())) {
+                for (Field exclusion : exclusions) {
+                  if (!this.getClass().isAssignableFrom(exclusion.getDeclaringClass())) {
+                    throw new TypeMismatchException("The type(%s) does not contain the excluded field(%s)", this.getClass().getName(), exclusion.getName());
+                  } else if (exclusion.equals(field)) {
                     excluded = true;
                     break;
                   }

@@ -105,10 +105,10 @@ public abstract class AbstractDurable<I extends Serializable & Comparable<I>, D 
 
   public boolean mirrors (Durable durable) {
 
-    return mirrors(durable, "id");
+    return mirrors(durable, FieldUtility.getField(this.getClass(), "id"));
   }
 
-  private boolean mirrors (Durable durable, String... exclusions) {
+  private boolean mirrors (Durable durable, Field... exclusions) {
 
     if (this.getClass().isAssignableFrom(durable.getClass())) {
 
@@ -120,8 +120,10 @@ public abstract class AbstractDurable<I extends Serializable & Comparable<I>, D 
           excluded = false;
 
           if ((exclusions != null) && (exclusions.length > 0)) {
-            for (String exclusion : exclusions) {
-              if (exclusion.equals(field.getName())) {
+            for (Field exclusion : exclusions) {
+              if (!this.getClass().isAssignableFrom(exclusion.getDeclaringClass())) {
+                throw new PersistenceException("The type(%s) does not contain the excluded field(%s)", this.getClass().getName(), exclusion.getName());
+              } else if (exclusion.equals(field)) {
                 excluded = true;
                 break;
               }
