@@ -14,7 +14,6 @@
   <modules>
     <module>grizzly</module>
     <module>jersey</module>
-    <module>jaxws</module>
     <module>websocket</module>
     <module>reverse</module>
     <module>jwt</module>
