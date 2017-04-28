@@ -1,28 +1,28 @@
 /*
  * Copyright (c) 2007, 2008, 2009, 2010, 2011, 2012, 2013, 2014, 2015, 2016, 2017 David Berkman
- * 
+ *
  * This file is part of the SmallMind Code Project.
- * 
+ *
  * The SmallMind Code Project is free software, you can redistribute
  * it and/or modify it under either, at your discretion...
- * 
+ *
  * 1) The terms of GNU Affero General Public License as published by the
  * Free Software Foundation, either version 3 of the License, or (at
  * your option) any later version.
- * 
+ *
  * ...or...
- * 
+ *
  * 2) The terms of the Apache License, Version 2.0.
- * 
+ *
  * The SmallMind Code Project is distributed in the hope that it will
  * be useful, but WITHOUT ANY WARRANTY; without even the implied warranty
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License or Apache License for more details.
- * 
+ *
  * You should have received a copy of the GNU Affero General Public License
  * and the Apache License along with the SmallMind Code Project. If not, see
  * <http://www.gnu.org/licenses/> or <http://www.apache.org/licenses/LICENSE-2.0>.
- * 
+ *
  * Additional permission under the GNU Affero GPL version 3 section 7
  * ------------------------------------------------------------------
  * If you modify this Program, or any covered work, by linking or
@@ -63,16 +63,10 @@ import javax.management.JMException;
 import javax.management.MBeanServer;
 import javax.management.ObjectName;
 
-public class VirtualMachineInfo {
+public class MachineVitals {
 
-  private static final VirtualMachineInfo INSTANCE = new VirtualMachineInfo(ManagementFactory.getMemoryMXBean(), ManagementFactory.getMemoryPoolMXBeans(), ManagementFactory.getOperatingSystemMXBean(), ManagementFactory.getThreadMXBean(), ManagementFactory.getGarbageCollectorMXBeans(), ManagementFactory.getRuntimeMXBean(), ManagementFactory.getPlatformMBeanServer());
+  private static final MachineVitals INSTANCE = new MachineVitals(ManagementFactory.getMemoryMXBean(), ManagementFactory.getMemoryPoolMXBeans(), ManagementFactory.getOperatingSystemMXBean(), ManagementFactory.getThreadMXBean(), ManagementFactory.getGarbageCollectorMXBeans(), ManagementFactory.getRuntimeMXBean(), ManagementFactory.getPlatformMBeanServer());
   private static final int MAX_STACK_TRACE_DEPTH = 100;
-
-  public static VirtualMachineInfo getInstance () {
-
-    return INSTANCE;
-  }
-
   private final MBeanServer mBeanServer;
   private final MemoryMXBean memory;
   private final OperatingSystemMXBean os;
@@ -81,7 +75,7 @@ public class VirtualMachineInfo {
   private final List<GarbageCollectorMXBean> garbageCollectors;
   private final RuntimeMXBean runtime;
 
-  VirtualMachineInfo (MemoryMXBean memory, List<MemoryPoolMXBean> memoryPools, OperatingSystemMXBean os, ThreadMXBean threads, List<GarbageCollectorMXBean> garbageCollectors, RuntimeMXBean runtime, MBeanServer mBeanServer) {
+  MachineVitals (MemoryMXBean memory, List<MemoryPoolMXBean> memoryPools, OperatingSystemMXBean os, ThreadMXBean threads, List<GarbageCollectorMXBean> garbageCollectors, RuntimeMXBean runtime, MBeanServer mBeanServer) {
 
     this.memory = memory;
     this.memoryPools = memoryPools;
@@ -90,6 +84,11 @@ public class VirtualMachineInfo {
     this.garbageCollectors = garbageCollectors;
     this.runtime = runtime;
     this.mBeanServer = mBeanServer;
+  }
+
+  public static MachineVitals getInstance () {
+
+    return INSTANCE;
   }
 
   public String getVersion () {
@@ -119,26 +118,22 @@ public class VirtualMachineInfo {
 
   public double getTotalInit () {
 
-    return memory.getHeapMemoryUsage().getInit() +
-      memory.getNonHeapMemoryUsage().getInit();
+    return memory.getHeapMemoryUsage().getInit() + memory.getNonHeapMemoryUsage().getInit();
   }
 
   public double getTotalUsed () {
 
-    return memory.getHeapMemoryUsage().getUsed() +
-      memory.getNonHeapMemoryUsage().getUsed();
+    return memory.getHeapMemoryUsage().getUsed() + memory.getNonHeapMemoryUsage().getUsed();
   }
 
   public double getTotalMax () {
 
-    return memory.getHeapMemoryUsage().getMax() +
-      memory.getNonHeapMemoryUsage().getMax();
+    return memory.getHeapMemoryUsage().getMax() + memory.getNonHeapMemoryUsage().getMax();
   }
 
   public double getTotalCommitted () {
 
-    return memory.getHeapMemoryUsage().getCommitted() +
-      memory.getNonHeapMemoryUsage().getCommitted();
+    return memory.getHeapMemoryUsage().getCommitted() + memory.getNonHeapMemoryUsage().getCommitted();
   }
 
   public double getHeapInit () {
@@ -178,8 +173,8 @@ public class VirtualMachineInfo {
     final Map<String, Double> pools = new TreeMap<String, Double>();
     for (MemoryPoolMXBean pool : memoryPools) {
       final double max = pool.getUsage().getMax() == -1 ?
-        pool.getUsage().getCommitted() :
-        pool.getUsage().getMax();
+                           pool.getUsage().getCommitted() :
+                           pool.getUsage().getMax();
       pools.put(pool.getName(), pool.getUsage().getUsed() / max);
     }
     return Collections.unmodifiableMap(pools);
@@ -188,21 +183,17 @@ public class VirtualMachineInfo {
   public double getFileDescriptorUsage () {
 
     try {
+
       final Method getOpenFileDescriptorCount = os.getClass().getDeclaredMethod("getOpenFileDescriptorCount");
-      getOpenFileDescriptorCount.setAccessible(true);
       final Long openFds = (Long)getOpenFileDescriptorCount.invoke(os);
       final Method getMaxFileDescriptorCount = os.getClass().getDeclaredMethod("getMaxFileDescriptorCount");
-      getMaxFileDescriptorCount.setAccessible(true);
       final Long maxFds = (Long)getMaxFileDescriptorCount.invoke(os);
+
+      getOpenFileDescriptorCount.setAccessible(true);
+      getMaxFileDescriptorCount.setAccessible(true);
+
       return openFds.doubleValue() / maxFds.doubleValue();
-    }
-    catch (NoSuchMethodException e) {
-      return Double.NaN;
-    }
-    catch (IllegalAccessException e) {
-      return Double.NaN;
-    }
-    catch (InvocationTargetException e) {
+    } catch (NoSuchMethodException | IllegalAccessException | InvocationTargetException exception) {
       return Double.NaN;
     }
   }
@@ -213,7 +204,7 @@ public class VirtualMachineInfo {
     for (GarbageCollectorMXBean gc : garbageCollectors) {
       stats.put(gc.getName(),
         new GarbageCollectorStats(gc.getCollectionCount(),
-          gc.getCollectionTime()));
+                                   gc.getCollectionTime()));
     }
     return Collections.unmodifiableMap(stats);
   }
@@ -229,14 +220,7 @@ public class VirtualMachineInfo {
           stackTrace.append("\t at ").append(element.toString()).append('\n');
         }
 
-        threads.add(
-          String.format(
-            "%s locked on %s (owned by %s):\n%s",
-            info.getThreadName(), info.getLockName(),
-            info.getLockOwnerName(),
-            stackTrace.toString()
-          )
-        );
+        threads.add(String.format("%s locked on %s (owned by %s):\n%s", info.getThreadName(), info.getLockName(), info.getLockOwnerName(), stackTrace.toString()));
       }
       return Collections.unmodifiableSet(threads);
     }
@@ -286,8 +270,7 @@ public class VirtualMachineInfo {
         writer.printf("\n    - locked <0x%08x> (a %s)",
           lock.getIdentityHashCode(),
           lock.getClassName());
-      }
-      else if (lock != null && t.getThreadState() == Thread.State.BLOCKED) {
+      } else if (lock != null && t.getThreadState() == Thread.State.BLOCKED) {
         writer.printf("\n    - waiting to lock <0x%08x> (a %s)",
           lock.getIdentityHashCode(),
           lock.getClassName());
@@ -349,20 +332,19 @@ public class VirtualMachineInfo {
       final Map<String, BufferPoolStats> stats = new TreeMap<String, BufferPoolStats>();
 
       final BufferPoolStats directStats = new BufferPoolStats((Long)((Attribute)directAttributes.get(0)).getValue(),
-        (Long)((Attribute)directAttributes.get(1)).getValue(),
-        (Long)((Attribute)directAttributes.get(2)).getValue());
+                                                               (Long)((Attribute)directAttributes.get(1)).getValue(),
+                                                               (Long)((Attribute)directAttributes.get(2)).getValue());
 
       stats.put("direct", directStats);
 
       final BufferPoolStats mappedStats = new BufferPoolStats((Long)((Attribute)mappedAttributes.get(0)).getValue(),
-        (Long)((Attribute)mappedAttributes.get(1)).getValue(),
-        (Long)((Attribute)mappedAttributes.get(2)).getValue());
+                                                               (Long)((Attribute)mappedAttributes.get(1)).getValue(),
+                                                               (Long)((Attribute)mappedAttributes.get(2)).getValue());
 
       stats.put("mapped", mappedStats);
 
       return Collections.unmodifiableMap(stats);
-    }
-    catch (JMException e) {
+    } catch (JMException e) {
 
       return Collections.emptyMap();
     }
