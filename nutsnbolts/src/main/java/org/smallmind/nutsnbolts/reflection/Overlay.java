@@ -70,7 +70,7 @@ public abstract class Overlay<O extends Overlay<O>> implements Differentiable<O>
     if ((overlays != null) && (overlays.length > 0)) {
       for (Object overlay : overlays) {
         if (overlay != null) {
-          if (!this.getClass().isAssignableFrom(overlay.getClass())) {
+          if (!overlay.getClass().isAssignableFrom(this.getClass())) {
             throw new TypeMismatchException("Overlays must be assignable from type(%s)", this.getClass());
           } else {
 
@@ -82,7 +82,7 @@ public abstract class Overlay<O extends Overlay<O>> implements Differentiable<O>
 
               if ((exclusions != null) && (exclusions.length > 0)) {
                 for (Field exclusion : exclusions) {
-                  if (!this.getClass().isAssignableFrom(exclusion.getDeclaringClass())) {
+                  if (!exclusion.getDeclaringClass().isAssignableFrom(this.getClass())) {
                     throw new TypeMismatchException("The type(%s) does not contain the excluded field(%s)", this.getClass().getName(), exclusion.getName());
                   } else if (exclusion.equals(field)) {
                     excluded = true;
