@@ -38,6 +38,7 @@ import java.util.HashSet;
 import org.smallmind.persistence.orm.MappedSubclass;
 import org.smallmind.persistence.orm.SessionSource;
 import org.smallmind.persistence.orm.hibernate.HibernateDao;
+import org.smallmind.persistence.orm.querydsl.hibernate.QHibernateDao;
 import org.smallmind.persistence.spring.ManagedDaoSupport;
 import org.springframework.beans.BeansException;
 import org.springframework.beans.FatalBeanException;
@@ -96,7 +97,7 @@ public class AnnotationSeekingBeanFactoryPostProcessor implements BeanFactoryPos
 
     for (String beanName : configurableListableBeanFactory.getBeanDefinitionNames()) {
       if ((beanClass = configurableListableBeanFactory.getType(beanName)) != null) {
-        if (HibernateDao.class.isAssignableFrom(beanClass)) {
+        if (HibernateDao.class.isAssignableFrom(beanClass) || QHibernateDao.class.isAssignableFrom(beanClass)) {
 
           Class<?> persistentClass;
 

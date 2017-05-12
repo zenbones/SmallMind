@@ -30,39 +30,27 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.persistence.orm.spring.jpa.querydsl;
+package org.smallmind.persistence.orm.querydsl.hibernate;
 
-import java.io.File;
-import javax.persistence.EntityManagerFactory;
-import com.querydsl.jpa.codegen.JPADomainExporter;
-import org.hibernate.SessionFactory;
-import org.springframework.beans.factory.InitializingBean;
+import com.querydsl.jpa.hibernate.HibernateQuery;
+import org.smallmind.persistence.orm.ORMOperationException;
 
-public class JPADomainExporterInitializingBean implements InitializingBean {
+public abstract class HibernateQueryDetails {
 
-  private SessionFactory sessionFactory;
-  private EntityManagerFactory entityManagerFactory;
-  private File targetPath;
-  private String prefix;
+  private Class<?> queryClass;
 
-  public void setEntityManagerFactory (EntityManagerFactory entityManagerFactory) {
+  public Class<?> getQueryClass (Class<?> baseClass) {
 
-    this.entityManagerFactory = entityManagerFactory;
+    if (queryClass == null) {
+
+      return baseClass;
+    } else if (baseClass.isAssignableFrom(queryClass)) {
+
+      return queryClass;
+    } else {
+      throw new ORMOperationException("The specified query class(%s) must be assignable from the base class(%s)", queryClass.getSimpleName(), baseClass.getSimpleName());
+    }
   }
 
-  public void setTargetPath (File targetPath) {
-
-    this.targetPath = targetPath;
-  }
-
-  public void setPrefix (String prefix) {
-
-    this.prefix = prefix;
-  }
-
-  @Override
-  public void afterPropertiesSet () throws Exception {
-
-    JPADomainExporter jpaDomainExporter = new JPADomainExporter(prefix, targetPath, null);
-  }
+  public abstract HibernateQuery<?> completeQuery (HibernateQuery<?> query);
 }
