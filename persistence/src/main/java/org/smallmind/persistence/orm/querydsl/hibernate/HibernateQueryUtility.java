@@ -35,11 +35,11 @@ package org.smallmind.persistence.orm.querydsl.hibernate;
 import java.util.LinkedList;
 import com.querydsl.core.types.Expression;
 import com.querydsl.core.types.Ops;
+import com.querydsl.core.types.Order;
+import com.querydsl.core.types.OrderSpecifier;
 import com.querydsl.core.types.Predicate;
 import com.querydsl.core.types.dsl.Expressions;
 import com.querydsl.jpa.hibernate.HibernateQuery;
-import org.hibernate.Criteria;
-import org.hibernate.criterion.Order;
 import org.smallmind.nutsnbolts.lang.UnknownSwitchCaseException;
 import org.smallmind.persistence.orm.ORMOperationException;
 import org.smallmind.persistence.query.Sort;
@@ -163,23 +163,32 @@ public class HibernateQueryUtility {
     }
   }
 
-  public static Criteria apply (Criteria criteria, Sort sort) {
+  public static HibernateQuery<?> apply (HibernateQuery<?> query, Sort sort) {
 
     if ((sort != null) && (!sort.isEmpty())) {
+
+      OrderSpecifier[] orderSpecifiers;
+      LinkedList<OrderSpecifier<?>> orderSpecifierList = new LinkedList<>();
+
       for (SortField sortField : sort.getFields()) {
         switch (sortField.getDirection()) {
           case ASC:
-            criteria.addOrder(Order.asc(sortField.getName()));
+            orderSpecifierList.add(new OrderSpecifier<>(Order.ASC, Expressions.path(String.class, sortField.getName())));
             break;
           case DESC:
-            criteria.addOrder(Order.desc(sortField.getName()));
+            orderSpecifierList.add(new OrderSpecifier<>(Order.DESC, Expressions.path(String.class, sortField.getName())));
             break;
           default:
             throw new UnknownSwitchCaseException(sortField.getDirection().name());
         }
       }
+
+      orderSpecifiers = new OrderSpecifier[orderSpecifierList.size()];
+      orderSpecifierList.toArray(orderSpecifiers);
+
+      query.orderBy(orderSpecifiers);
     }
 
-    return criteria;
+    return query;
   }
 }
