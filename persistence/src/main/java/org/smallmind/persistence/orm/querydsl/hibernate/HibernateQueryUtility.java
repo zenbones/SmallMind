@@ -52,27 +52,17 @@ import org.smallmind.persistence.query.WhereOperandTransformer;
 
 public class HibernateQueryUtility {
 
-  public static HibernateQuery<?> apply (HibernateQuery<?> query, Where where) {
+  public static Predicate apply (HibernateQuery<?> query, Where where) {
 
-    return apply(query, where, (type) -> {
+    return apply(where, (type) -> {
 
       throw new ORMOperationException("Translation of enum(%s) requires an implementation of a WhereOperandTransformer", type);
     });
   }
 
-  public static HibernateQuery<?> apply (HibernateQuery<?> query, Where where, WhereOperandTransformer transformer) {
+  public static Predicate apply (Where where, WhereOperandTransformer transformer) {
 
-    if (where != null) {
-
-      Predicate walkedPredicate;
-
-      if ((walkedPredicate = walkConjunction(where.getRootConjunction(), transformer)) != null) {
-
-        return query.where(walkedPredicate);
-      }
-    }
-
-    return query;
+    return (where == null) ? null : walkConjunction(where.getRootConjunction(), transformer);
   }
 
   private static Predicate walkConjunction (WhereConjunction whereConjunction, WhereOperandTransformer transformer) {
@@ -163,7 +153,7 @@ public class HibernateQueryUtility {
     }
   }
 
-  public static HibernateQuery<?> apply (HibernateQuery<?> query, Sort sort) {
+  public static OrderSpecifier[] apply (Sort sort) {
 
     if ((sort != null) && (!sort.isEmpty())) {
 
@@ -186,9 +176,9 @@ public class HibernateQueryUtility {
       orderSpecifiers = new OrderSpecifier[orderSpecifierList.size()];
       orderSpecifierList.toArray(orderSpecifiers);
 
-      query.orderBy(orderSpecifiers);
+      return orderSpecifiers;
     }
 
-    return query;
+    return new OrderSpecifier[0];
   }
 }
