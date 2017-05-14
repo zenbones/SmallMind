@@ -46,6 +46,7 @@ import org.smallmind.persistence.query.Where;
 import org.smallmind.persistence.query.WhereConjunction;
 import org.smallmind.persistence.query.WhereCriterion;
 import org.smallmind.persistence.query.WhereField;
+import org.smallmind.persistence.query.WhereFieldTransformer;
 import org.smallmind.persistence.query.WhereOperandTransformer;
 import org.smallmind.persistence.query.WhereOperator;
 
@@ -53,7 +54,7 @@ public class QueryUtility {
 
   public static Query<?> apply (Query<?> query, Where where) {
 
-    return apply(query, where, new WhereOperandTransformer() {
+    return apply(query, where, null, new WhereOperandTransformer() {
 
       @Override
       public Class<? extends Enum> getEnumType (String type) {
@@ -63,16 +64,33 @@ public class QueryUtility {
     });
   }
 
-  public static Query<?> apply (Query<?> query, Where where, WhereOperandTransformer transformer) {
+  public static Query<?> apply (Query<?> query, Where where, WhereFieldTransformer fieldTransformer) {
+
+    return apply(query, where, fieldTransformer, new WhereOperandTransformer() {
+
+      @Override
+      public Class<? extends Enum> getEnumType (String type) {
+
+        throw new ORMOperationException("Translation of enum(%s) requires an implementation of a WhereOperandTransformer", type);
+      }
+    });
+  }
+
+  public static Query<?> apply (Query<?> query, Where where, WhereOperandTransformer operandTransformer) {
+
+    return apply(query, where, null, operandTransformer);
+  }
+
+  public static Query<?> apply (Query<?> query, Where where, WhereFieldTransformer fieldTransformer, WhereOperandTransformer operandTransformer) {
 
     if (where != null) {
-      walkConjunction(query, where.getRootConjunction(), transformer);
+      walkConjunction(query, where.getRootConjunction(), fieldTransformer, operandTransformer);
     }
 
     return query;
   }
 
-  private static Criteria walkConjunction (Query<?> query, WhereConjunction whereConjunction, WhereOperandTransformer transformer) {
+  private static Criteria walkConjunction (Query<?> query, WhereConjunction whereConjunction, WhereFieldTransformer fieldTransformer, WhereOperandTransformer operandTransformer) {
 
     if ((whereConjunction == null) || whereConjunction.isEmpty()) {
 
@@ -87,12 +105,12 @@ public class QueryUtility {
 
       switch (whereCriterion.getCriterionType()) {
         case CONJUNCTION:
-          if ((criteria = walkConjunction(query, (WhereConjunction)whereCriterion, transformer)) != null) {
+          if ((criteria = walkConjunction(query, (WhereConjunction)whereCriterion, fieldTransformer, operandTransformer)) != null) {
             criteriaList.add(criteria);
           }
           break;
         case FIELD:
-          if ((criteria = walkField(query, (WhereField)whereCriterion, transformer)) != null) {
+          if ((criteria = walkField(query, (WhereField)whereCriterion, fieldTransformer, operandTransformer)) != null) {
             criteriaList.add(criteria);
           }
           break;
@@ -122,34 +140,34 @@ public class QueryUtility {
     }
   }
 
-  private static Criteria walkField (Query<?> query, WhereField whereField, WhereOperandTransformer transformer) {
+  private static Criteria walkField (Query<?> query, WhereField whereField, WhereFieldTransformer fieldTransformer, WhereOperandTransformer operandTransformer) {
 
-    FieldEnd<? extends CriteriaContainerImpl> fieldEnd = query.criteria(whereField.getName());
+    FieldEnd<? extends CriteriaContainerImpl> fieldEnd = query.criteria(whereField.getName(fieldTransformer));
 
     switch (whereField.getOperator()) {
       case LT:
-        return fieldEnd.lessThan(whereField.getOperand().extract(transformer));
+        return fieldEnd.lessThan(whereField.getOperand().extract(operandTransformer));
       case LE:
-        return fieldEnd.lessThanOrEq(whereField.getOperand().extract(transformer));
+        return fieldEnd.lessThanOrEq(whereField.getOperand().extract(operandTransformer));
       case EQ:
 
         Object equalValue;
 
-        return ((equalValue = whereField.getOperand().extract(transformer)) == null) ? fieldEnd.doesNotExist() : fieldEnd.equal(equalValue);
+        return ((equalValue = whereField.getOperand().extract(operandTransformer)) == null) ? fieldEnd.doesNotExist() : fieldEnd.equal(equalValue);
       case NE:
 
         Object notEqualValue;
 
-        return ((notEqualValue = whereField.getOperand().extract(transformer)) == null) ? fieldEnd.exists() : fieldEnd.notEqual(notEqualValue);
+        return ((notEqualValue = whereField.getOperand().extract(operandTransformer)) == null) ? fieldEnd.exists() : fieldEnd.notEqual(notEqualValue);
       case GE:
-        return fieldEnd.greaterThanOrEq(whereField.getOperand().extract(transformer));
+        return fieldEnd.greaterThanOrEq(whereField.getOperand().extract(operandTransformer));
       case GT:
-        return fieldEnd.equal(whereField.getOperand().extract(transformer));
+        return fieldEnd.equal(whereField.getOperand().extract(operandTransformer));
       case LIKE:
 
         Object likeValue;
 
-        if ((likeValue = whereField.getOperand().extract(transformer)) == null) {
+        if ((likeValue = whereField.getOperand().extract(operandTransformer)) == null) {
 
           return fieldEnd.doesNotExist();
         } else if (!(likeValue instanceof String)) {
@@ -185,7 +203,7 @@ public class QueryUtility {
 
         Object unlikeValue;
 
-        if ((unlikeValue = whereField.getOperand().extract(transformer)) == null) {
+        if ((unlikeValue = whereField.getOperand().extract(operandTransformer)) == null) {
 
           return fieldEnd.exists();
         } else if (!(unlikeValue instanceof String)) {
@@ -218,13 +236,18 @@ public class QueryUtility {
           }
         }
       case IN:
-        return fieldEnd.in(Arrays.asList((Object[])whereField.getOperand().extract(transformer)));
+        return fieldEnd.in(Arrays.asList((Object[])whereField.getOperand().extract(operandTransformer)));
       default:
         throw new UnknownSwitchCaseException(whereField.getOperator().name());
     }
   }
 
   public static Query<?> apply (Query<?> query, Sort sort) {
+
+    return apply(query, sort, null);
+  }
+
+  public static Query<?> apply (Query<?> query, Sort sort, WhereFieldTransformer fieldTransformer) {
 
     if ((sort != null) && (!sort.isEmpty())) {
 
@@ -236,10 +259,10 @@ public class QueryUtility {
         }
         switch (sortField.getDirection()) {
           case ASC:
-            sortBuilder.append(sortField.getName());
+            sortBuilder.append(sortField.getName(fieldTransformer));
             break;
           case DESC:
-            sortBuilder.append('-').append(sortField.getName());
+            sortBuilder.append('-').append(sortField.getName(fieldTransformer));
             break;
           default:
             throw new UnknownSwitchCaseException(sortField.getDirection().name());

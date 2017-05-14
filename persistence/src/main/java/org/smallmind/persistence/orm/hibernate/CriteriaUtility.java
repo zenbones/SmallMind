@@ -46,13 +46,14 @@ import org.smallmind.persistence.query.Where;
 import org.smallmind.persistence.query.WhereConjunction;
 import org.smallmind.persistence.query.WhereCriterion;
 import org.smallmind.persistence.query.WhereField;
+import org.smallmind.persistence.query.WhereFieldTransformer;
 import org.smallmind.persistence.query.WhereOperandTransformer;
 
 public class CriteriaUtility {
 
   public static Criteria apply (Criteria criteria, Where where) {
 
-    return apply(criteria, where, new WhereOperandTransformer() {
+    return apply(criteria, where, null, new WhereOperandTransformer() {
 
       @Override
       public Class<? extends Enum> getEnumType (String type) {
@@ -64,7 +65,7 @@ public class CriteriaUtility {
 
   public static DetachedCriteria apply (DetachedCriteria detachedCriteria, Where where) {
 
-    return apply(detachedCriteria, where, new WhereOperandTransformer() {
+    return apply(detachedCriteria, where, null, new WhereOperandTransformer() {
 
       @Override
       public Class<? extends Enum> getEnumType (String type) {
@@ -74,13 +75,47 @@ public class CriteriaUtility {
     });
   }
 
-  public static Criteria apply (Criteria criteria, Where where, WhereOperandTransformer transformer) {
+  public static Criteria apply (Criteria criteria, Where where, WhereFieldTransformer fieldTransformer) {
+
+    return apply(criteria, where, fieldTransformer, new WhereOperandTransformer() {
+
+      @Override
+      public Class<? extends Enum> getEnumType (String type) {
+
+        throw new ORMOperationException("Translation of enum(%s) requires an implementation of a WhereOperandTransformer", type);
+      }
+    });
+  }
+
+  public static DetachedCriteria apply (DetachedCriteria detachedCriteria, Where where, WhereFieldTransformer fieldTransformer) {
+
+    return apply(detachedCriteria, where, fieldTransformer, new WhereOperandTransformer() {
+
+      @Override
+      public Class<? extends Enum> getEnumType (String type) {
+
+        throw new ORMOperationException("Translation of enum(%s) requires an implementation of a WhereOperandTransformer", type);
+      }
+    });
+  }
+
+  public static Criteria apply (Criteria criteria, Where where, WhereOperandTransformer operandTransformer) {
+
+    return apply(criteria, where, null, operandTransformer);
+  }
+
+  public static DetachedCriteria apply (DetachedCriteria detachedCriteria, Where where, WhereOperandTransformer operandTransformer) {
+
+    return apply(detachedCriteria, where, null, operandTransformer);
+  }
+
+  public static Criteria apply (Criteria criteria, Where where, WhereFieldTransformer fieldTransformer, WhereOperandTransformer operandTransformer) {
 
     if (where != null) {
 
       Criterion walkedCriterion;
 
-      if ((walkedCriterion = walkConjunction(where.getRootConjunction(), transformer)) != null) {
+      if ((walkedCriterion = walkConjunction(where.getRootConjunction(), fieldTransformer, operandTransformer)) != null) {
         return criteria.add(walkedCriterion);
       }
     }
@@ -88,13 +123,13 @@ public class CriteriaUtility {
     return criteria;
   }
 
-  public static DetachedCriteria apply (DetachedCriteria detachedCriteria, Where where, WhereOperandTransformer transformer) {
+  public static DetachedCriteria apply (DetachedCriteria detachedCriteria, Where where, WhereFieldTransformer fieldTransformer, WhereOperandTransformer operandTransformer) {
 
     if (where != null) {
 
       Criterion walkedCriterion;
 
-      if ((walkedCriterion = walkConjunction(where.getRootConjunction(), transformer)) != null) {
+      if ((walkedCriterion = walkConjunction(where.getRootConjunction(), fieldTransformer, operandTransformer)) != null) {
         return detachedCriteria.add(walkedCriterion);
       }
     }
@@ -102,7 +137,7 @@ public class CriteriaUtility {
     return detachedCriteria;
   }
 
-  private static Criterion walkConjunction (WhereConjunction whereConjunction, WhereOperandTransformer transformer) {
+  private static Criterion walkConjunction (WhereConjunction whereConjunction, WhereFieldTransformer fieldTransformer, WhereOperandTransformer operandTransformer) {
 
     if ((whereConjunction == null) || whereConjunction.isEmpty()) {
 
@@ -117,12 +152,12 @@ public class CriteriaUtility {
 
           Criterion walkedCriterion;
 
-          if ((walkedCriterion = walkConjunction((WhereConjunction)whereCriterion, transformer)) != null) {
+          if ((walkedCriterion = walkConjunction((WhereConjunction)whereCriterion, fieldTransformer, operandTransformer)) != null) {
             criterionList.add(walkedCriterion);
           }
           break;
         case FIELD:
-          criterionList.add(walkField((WhereField)whereCriterion, transformer));
+          criterionList.add(walkField((WhereField)whereCriterion, fieldTransformer, operandTransformer));
           break;
         default:
           throw new UnknownSwitchCaseException(whereCriterion.getCriterionType().name());
@@ -150,33 +185,33 @@ public class CriteriaUtility {
     }
   }
 
-  private static Criterion walkField (WhereField whereField, WhereOperandTransformer transformer) {
+  private static Criterion walkField (WhereField whereField, WhereFieldTransformer fieldTransformer, WhereOperandTransformer operandTransformer) {
 
     switch (whereField.getOperator()) {
       case LT:
-        return Restrictions.lt(whereField.getName(), whereField.getOperand().extract(transformer));
+        return Restrictions.lt(whereField.getName(fieldTransformer), whereField.getOperand().extract(operandTransformer));
       case LE:
-        return Restrictions.le(whereField.getName(), whereField.getOperand().extract(transformer));
+        return Restrictions.le(whereField.getName(fieldTransformer), whereField.getOperand().extract(operandTransformer));
       case EQ:
 
         Object equalValue;
 
-        return ((equalValue = whereField.getOperand().extract(transformer)) == null) ? Restrictions.isNull(whereField.getName()) : Restrictions.eq(whereField.getName(), equalValue);
+        return ((equalValue = whereField.getOperand().extract(operandTransformer)) == null) ? Restrictions.isNull(whereField.getName(fieldTransformer)) : Restrictions.eq(whereField.getName(fieldTransformer), equalValue);
       case NE:
 
         Object notEqualValue;
 
-        return ((notEqualValue = whereField.getOperand().extract(transformer)) == null) ? Restrictions.isNotNull(whereField.getName()) : Restrictions.ne(whereField.getName(), notEqualValue);
+        return ((notEqualValue = whereField.getOperand().extract(operandTransformer)) == null) ? Restrictions.isNotNull(whereField.getName(fieldTransformer)) : Restrictions.ne(whereField.getName(fieldTransformer), notEqualValue);
       case GE:
-        return Restrictions.ge(whereField.getName(), whereField.getOperand().extract(transformer));
+        return Restrictions.ge(whereField.getName(fieldTransformer), whereField.getOperand().extract(operandTransformer));
       case GT:
-        return Restrictions.gt(whereField.getName(), whereField.getOperand().extract(transformer));
+        return Restrictions.gt(whereField.getName(fieldTransformer), whereField.getOperand().extract(operandTransformer));
       case LIKE:
-        return Restrictions.like(whereField.getName(), whereField.getOperand().extract(transformer));
+        return Restrictions.like(whereField.getName(fieldTransformer), whereField.getOperand().extract(operandTransformer));
       case UNLIKE:
-        return Restrictions.not(Restrictions.like(whereField.getName(), whereField.getOperand().extract(transformer)));
+        return Restrictions.not(Restrictions.like(whereField.getName(fieldTransformer), whereField.getOperand().extract(operandTransformer)));
       case IN:
-        return Restrictions.in(whereField.getName(), (Object[])whereField.getOperand().extract(transformer));
+        return Restrictions.in(whereField.getName(fieldTransformer), (Object[])whereField.getOperand().extract(operandTransformer));
       default:
         throw new UnknownSwitchCaseException(whereField.getOperator().name());
     }
@@ -184,14 +219,19 @@ public class CriteriaUtility {
 
   public static Criteria apply (Criteria criteria, Sort sort) {
 
+    return apply(criteria, sort, null);
+  }
+
+  public static Criteria apply (Criteria criteria, Sort sort, WhereFieldTransformer fieldTransformer) {
+
     if ((sort != null) && (!sort.isEmpty())) {
       for (SortField sortField : sort.getFields()) {
         switch (sortField.getDirection()) {
           case ASC:
-            criteria.addOrder(Order.asc(sortField.getName()));
+            criteria.addOrder(Order.asc(sortField.getName(fieldTransformer)));
             break;
           case DESC:
-            criteria.addOrder(Order.desc(sortField.getName()));
+            criteria.addOrder(Order.desc(sortField.getName(fieldTransformer)));
             break;
           default:
             throw new UnknownSwitchCaseException(sortField.getDirection().name());

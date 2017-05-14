@@ -37,6 +37,7 @@ import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlRootElement;
+import javax.xml.bind.annotation.XmlTransient;
 import javax.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
 
 @XmlRootElement(name = "field")
@@ -67,11 +68,27 @@ public class SortField implements Serializable {
     return name;
   }
 
+  public void setName (String name) {
+
+    this.name = name;
+  }
+
+  @XmlTransient
+  public String getName (WhereFieldTransformer transformer) {
+
+    return (transformer == null) ? name : transformer.rectifyName(name);
+  }
+
   @XmlElement(name = "direction", required = true)
   @XmlJavaTypeAdapter(SortDirectionEnumXmlAdapter.class)
   public SortDirection getDirection () {
 
     return direction;
+  }
+
+  public void setDirection (SortDirection direction) {
+
+    this.direction = direction;
   }
 
   @Override
