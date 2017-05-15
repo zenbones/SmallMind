@@ -33,24 +33,8 @@
 package org.smallmind.persistence.orm.querydsl.hibernate;
 
 import com.querydsl.jpa.hibernate.HibernateQuery;
-import org.smallmind.persistence.orm.ORMOperationException;
 
-public abstract class HibernateQueryDetails {
+public abstract class HibernateQueryDetails<T> {
 
-  private Class<?> queryClass;
-
-  public Class<?> getQueryClass (Class<?> baseClass) {
-
-    if (queryClass == null) {
-
-      return baseClass;
-    } else if (baseClass.isAssignableFrom(queryClass)) {
-
-      return queryClass;
-    } else {
-      throw new ORMOperationException("The specified query class(%s) must be assignable from the base class(%s)", queryClass.getSimpleName(), baseClass.getSimpleName());
-    }
-  }
-
-  public abstract HibernateQuery<?> completeQuery (HibernateQuery<?> query);
+  public abstract HibernateQuery<T> completeQuery (HibernateQuery<T> query);
 }

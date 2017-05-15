@@ -33,10 +33,13 @@
 package org.smallmind.persistence.orm.querydsl.hibernate;
 
 import java.io.Serializable;
+import java.util.Collections;
 import java.util.List;
+import com.querydsl.core.types.dsl.EntityPathBase;
 import com.querydsl.jpa.hibernate.HibernateQuery;
 import org.hibernate.Session;
 import org.hibernate.SessionFactory;
+import org.smallmind.persistence.UpdateMode;
 import org.smallmind.persistence.cache.VectoredDao;
 import org.smallmind.persistence.orm.ORMDao;
 import org.smallmind.persistence.orm.ProxySession;
@@ -55,38 +58,93 @@ public class QHibernateDao<I extends Serializable & Comparable<I>, D extends Hib
   }
 
   @Override
-  public D acquire (Class<D> durableClass, I id) {
+  public D get (Class<D> durableClass, I id) {
+
+    VectoredDao<I, D> vectoredDao;
+    D durable;
+
+    if ((vectoredDao = getVectoredDao()) == null) {
+      if ((durable = acquire(durableClass, id)) != null) {
+
+        return durable;
+      }
+    } else {
+      if ((durable = vectoredDao.get(durableClass, id)) != null) {
+
+        return durable;
+      }
+
+      if ((durable = acquire(durableClass, id)) != null) {
+
+        return vectoredDao.persist(durableClass, durable, UpdateMode.SOFT);
+      }
+    }
 
     return null;
   }
 
   @Override
-  public D get (Class<D> persistentClass, I id) {
+  public D acquire (Class<D> durableClass, I id) {
 
-    return null;
+    return durableClass.cast(getSession().getNativeSession().get(durableClass, id));
   }
 
   @Override
   public D persist (Class<D> durableClass, D durable) {
 
-    return null;
+    D persistentDurable;
+    VectoredDao<I, D> vectoredDao = getVectoredDao();
+
+    if (getSession().getNativeSession().contains(durable)) {
+      persistentDurable = durable;
+    } else {
+      persistentDurable = getManagedClass().cast(getSession().getNativeSession().merge(durable));
+      getSession().flush();
+    }
+
+    if (vectoredDao != null) {
+
+      return vectoredDao.persist(durableClass, persistentDurable, UpdateMode.HARD);
+    }
+
+    return persistentDurable;
   }
 
   @Override
-  public void delete (Class<D> persistentClass, D persistent) {
+  public void delete (Class<D> durableClass, D durable) {
 
+    VectoredDao<I, D> vectoredDao = getVectoredDao();
+
+    if (!getSession().getNativeSession().contains(durable)) {
+      getSession().getNativeSession().delete(getSession().getNativeSession().load(durable.getClass(), durable.getId()));
+    } else {
+      getSession().getNativeSession().delete(durable);
+    }
+
+    getSession().flush();
+
+    if (vectoredDao != null) {
+      vectoredDao.delete(durableClass, durable);
+    }
   }
 
   @Override
-  public D detach (D durable) {
+  public D detach (D object) {
 
-    return null;
+    throw new UnsupportedOperationException("Hibernate has no explicit detached state");
   }
 
   @Override
   public long size () {
 
-    return 0;
+    return countByQuery(new HibernateQueryDetails<D>() {
+
+      @Override
+      public HibernateQuery<D> completeQuery (HibernateQuery<D> query) {
+
+        return query.from(new EntityPathBase<D>(getManagedClass(), getManagedClass().getSimpleName()));
+      }
+    });
   }
 
   @Override
@@ -125,19 +183,34 @@ public class QHibernateDao<I extends Serializable & Comparable<I>, D extends Hib
     return null;
   }
 
-  public D findByQuery (HibernateQueryDetails queryDetails) {
+  public long countByQuery (HibernateQueryDetails<D> queryDetails) {
+
+    return constructQuery(queryDetails).fetchCount();
+  }
+
+  public D findByQuery (HibernateQueryDetails<D> queryDetails) {
 
     return getManagedClass().cast(constructQuery(queryDetails).fetchOne());
   }
 
-  public <T> T findByQuery (Class<T> returnType, HibernateQueryDetails queryDetails) {
+  public <T> T findByQuery (Class<T> returnType, HibernateQueryDetails<T> queryDetails) {
 
     return returnType.cast(constructQuery(queryDetails).fetchOne());
   }
 
-  public HibernateQuery<?> constructQuery (HibernateQueryDetails queryDetails) {
+  public List<D> listByQuery (HibernateQueryDetails<D> queryDetails) {
 
-    HibernateQuery<?> query = new HibernateQuery<>(getSession().getNativeSession());
+    return Collections.checkedList(constructQuery(queryDetails).fetch(), getManagedClass());
+  }
+
+  public <T> List<T> listByQuery (Class<T> returnType, HibernateQueryDetails<T> queryDetails) {
+
+    return Collections.checkedList(constructQuery(queryDetails).fetch(), returnType);
+  }
+
+  private <T> HibernateQuery<T> constructQuery (HibernateQueryDetails<T> queryDetails) {
+
+    HibernateQuery<T> query = new HibernateQuery<T>(getSession().getNativeSession());
 
     return queryDetails.completeQuery(query);
   }
