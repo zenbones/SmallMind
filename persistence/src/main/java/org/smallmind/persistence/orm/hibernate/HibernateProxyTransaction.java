@@ -33,6 +33,7 @@
 package org.smallmind.persistence.orm.hibernate;
 
 import org.hibernate.Transaction;
+import org.hibernate.resource.transaction.spi.TransactionStatus;
 import org.smallmind.nutsnbolts.lang.ThrowableUtility;
 import org.smallmind.persistence.orm.ProxyTransaction;
 import org.smallmind.persistence.orm.ProxyTransactionException;
@@ -53,7 +54,7 @@ public class HibernateProxyTransaction extends ProxyTransaction<HibernateProxySe
 
   public boolean isCompleted () {
 
-    return !transaction.isActive();
+    return !TransactionStatus.ACTIVE.equals(transaction.getStatus());
   }
 
   public void flush () {

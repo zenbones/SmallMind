@@ -37,6 +37,7 @@ import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 import org.hibernate.Criteria;
+import org.hibernate.Query;
 import org.hibernate.SQLQuery;
 import org.hibernate.ScrollMode;
 import org.hibernate.Session;
@@ -45,8 +46,6 @@ import org.hibernate.criterion.DetachedCriteria;
 import org.hibernate.criterion.Order;
 import org.hibernate.criterion.Projections;
 import org.hibernate.criterion.Restrictions;
-import org.hibernate.query.NativeQuery;
-import org.hibernate.query.Query;
 import org.hibernate.transform.Transformers;
 import org.smallmind.persistence.Durable;
 import org.smallmind.persistence.UpdateMode;
@@ -240,7 +239,7 @@ public abstract class HibernateDao<I extends Serializable & Comparable<I>, D ext
 
   public <T> T findBySQLQuery (Class<T> returnType, NativeQueryDetails nativeQueryDetails) {
 
-    NativeQuery sqlQuery;
+    SQLQuery sqlQuery;
 
     sqlQuery = constructSQLQuery(nativeQueryDetails);
 
@@ -362,9 +361,9 @@ public abstract class HibernateDao<I extends Serializable & Comparable<I>, D ext
     return new ScrollIterable<D>(constructCriteria(criteriaDetails).scroll(ScrollMode.FORWARD_ONLY), getManagedClass());
   }
 
-  public NativeQuery constructSQLQuery (NativeQueryDetails nativeQueryDetails) {
+  public SQLQuery constructSQLQuery (NativeQueryDetails nativeQueryDetails) {
 
-    return nativeQueryDetails.completeNativeQuery(getSession().getNativeSession().createNativeQuery(nativeQueryDetails.getNativeQueryString()).setCacheable(true));
+    return nativeQueryDetails.completeNativeQuery((SQLQuery)getSession().getNativeSession().createSQLQuery(nativeQueryDetails.getNativeQueryString()).setCacheable(true));
   }
 
   public Query constructQuery (QueryDetails queryDetails) {

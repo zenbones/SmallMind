@@ -32,11 +32,11 @@
  */
 package org.smallmind.persistence.orm.hibernate;
 
-import org.hibernate.query.NativeQuery;
+import org.hibernate.SQLQuery;
 
 public abstract class NativeQueryDetails {
 
   public abstract String getNativeQueryString ();
 
-  public abstract NativeQuery completeNativeQuery (NativeQuery nativeQuery);
+  public abstract SQLQuery completeNativeQuery (SQLQuery nativeQuery);
 }
