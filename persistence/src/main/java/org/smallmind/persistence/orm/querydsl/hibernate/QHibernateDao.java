@@ -35,7 +35,10 @@ package org.smallmind.persistence.orm.querydsl.hibernate;
 import java.io.Serializable;
 import java.util.Collections;
 import java.util.List;
+import com.querydsl.core.types.Ops;
 import com.querydsl.core.types.dsl.EntityPathBase;
+import com.querydsl.core.types.dsl.Expressions;
+import com.querydsl.core.types.dsl.PathBuilder;
 import com.querydsl.jpa.hibernate.HibernateQuery;
 import org.hibernate.Session;
 import org.hibernate.SessionFactory;
@@ -142,7 +145,7 @@ public class QHibernateDao<I extends Serializable & Comparable<I>, D extends Hib
       @Override
       public HibernateQuery<D> completeQuery (HibernateQuery<D> query) {
 
-        return query.from(new EntityPathBase<D>(getManagedClass(), getManagedClass().getSimpleName()));
+        return query.from(new EntityPathBase<D>(getManagedClass(), "entity"));
       }
     });
   }
@@ -150,19 +153,42 @@ public class QHibernateDao<I extends Serializable & Comparable<I>, D extends Hib
   @Override
   public List<D> list () {
 
-    return null;
+    return listByQuery(new HibernateQueryDetails<D>() {
+
+      @Override
+      public HibernateQuery<D> completeQuery (HibernateQuery<D> query) {
+
+        return query.from(new EntityPathBase<D>(getManagedClass(), "entity"));
+      }
+    });
   }
 
   @Override
   public List<D> list (int fetchSize) {
 
-    return null;
+    return listByQuery(new HibernateQueryDetails<D>() {
+
+      @Override
+      public HibernateQuery<D> completeQuery (HibernateQuery<D> query) {
+
+        return query.from(new EntityPathBase<D>(getManagedClass(), "entity")).limit(fetchSize);
+      }
+    });
   }
 
   @Override
   public List<D> list (I greaterThan, int fetchSize) {
 
-    return null;
+    return listByQuery(new HibernateQueryDetails<D>() {
+
+      @Override
+      public HibernateQuery<D> completeQuery (HibernateQuery<D> query) {
+
+        PathBuilder<D> entityPath = new PathBuilder<>(getManagedClass(), "entity");
+
+        return query.from(entityPath).where(Expressions.predicate(Ops.GT, Expressions.path(String.class, "id"), Expressions.constant(greaterThan))).limit(fetchSize);
+      }
+    });
   }
 
   @Override
