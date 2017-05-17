@@ -37,6 +37,8 @@ import com.querydsl.core.types.EntityPath;
 
 public interface QApplied<T> {
 
+  boolean isEmpty ();
+
   T getResult ();
 
   Set<EntityPath<?>> getEntitySet ();

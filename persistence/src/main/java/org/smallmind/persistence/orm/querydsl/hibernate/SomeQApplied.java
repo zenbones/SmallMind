@@ -57,6 +57,12 @@ public class SomeQApplied<T> implements QApplied<T> {
     return this;
   }
 
+  @Override
+  public boolean isEmpty () {
+
+    return false;
+  }
+
   public T getResult () {
 
     return result;

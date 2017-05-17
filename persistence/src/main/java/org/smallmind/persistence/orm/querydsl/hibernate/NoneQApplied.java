@@ -50,6 +50,12 @@ public class NoneQApplied<T> implements QApplied<T> {
   }
 
   @Override
+  public boolean isEmpty () {
+
+    return true;
+  }
+
+  @Override
   public T getResult () {
 
     return null;
