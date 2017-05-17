@@ -33,9 +33,9 @@
 package org.smallmind.persistence.query;
 
 import java.lang.reflect.Array;
+import java.time.ZonedDateTime;
 import java.util.Date;
 import java.util.HashMap;
-import org.joda.time.DateTime;
 import org.smallmind.persistence.orm.ORMOperationException;
 
 public class DefaultWhereOperandTransformer implements WhereOperandTransformer {
@@ -44,7 +44,7 @@ public class DefaultWhereOperandTransformer implements WhereOperandTransformer {
 
   public DefaultWhereOperandTransformer () {
 
-    transformMap.put(new TransformKey<>(Date.class, DateTime.class), (String typeHint, DateTime dateTime) -> dateTime.toDate());
+    transformMap.put(new TransformKey<>(Date.class, ZonedDateTime.class), (String typeHint, ZonedDateTime zonedDateTime) -> Date.from(zonedDateTime.toInstant()));
     transformMap.put(new TransformKey<>(Enum.class, String.class), (String typeHint, String name) -> {
       throw new ORMOperationException("Missing apply for enum(%s) ", typeHint);
     });
