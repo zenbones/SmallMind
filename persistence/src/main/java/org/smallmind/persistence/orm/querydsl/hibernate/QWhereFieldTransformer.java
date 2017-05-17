@@ -43,9 +43,15 @@ import org.smallmind.persistence.query.WhereEntity;
 public class QWhereFieldTransformer extends AbstractWhereFieldTransformer<EntityPath<?>> {
 
   private HashMap<String, JoinedType<?>> typeMap = new HashMap<>();
+  private EntityPath<?> defaultEntityPath;
 
   public QWhereFieldTransformer () {
 
+  }
+
+  public QWhereFieldTransformer (EntityPath<?> defaultEntityPath) {
+
+    this.defaultEntityPath = defaultEntityPath;
   }
 
   public synchronized <D extends AbstractDurable<?, D>> QWhereFieldTransformer add (Class<? extends AbstractDurable<?, D>> durableClass, EntityPath<D> entityPath) {
@@ -60,9 +66,13 @@ public class QWhereFieldTransformer extends AbstractWhereFieldTransformer<Entity
 
     JoinedType<?> joinedType;
 
-    if ((joinedType = typeMap.get(entity)) != null) {
+    if ((entity != null) && (!entity.isEmpty())) {
+      if ((joinedType = typeMap.get(entity)) != null) {
 
-      return new QWhereEntity(joinedType.getEntityPath(), name);
+        return new QWhereEntity(joinedType.getEntityPath(), name);
+      } else {
+        return new QWhereEntity(null, entity + '.' + name);
+      }
     } else {
 
       EntityPath<?> entityPath;
@@ -70,9 +80,9 @@ public class QWhereFieldTransformer extends AbstractWhereFieldTransformer<Entity
       if ((entityPath = deduceEntityPath(name)) != null) {
 
         return new QWhereEntity(entityPath, name);
+      } else {
+        return new QWhereEntity(defaultEntityPath, name);
       }
-
-      return new QWhereEntity(null, ((entity != null) && (!entity.isEmpty())) ? entity + '.' + name : name);
     }
   }
 
