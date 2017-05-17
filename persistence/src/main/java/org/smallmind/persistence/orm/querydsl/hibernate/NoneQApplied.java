@@ -32,12 +32,32 @@
  */
 package org.smallmind.persistence.orm.querydsl.hibernate;
 
+import java.util.Collections;
 import java.util.Set;
 import com.querydsl.core.types.EntityPath;
 
-public interface QApplied<T> {
+public class NoneQApplied<T> implements QApplied<T> {
 
-  T getResult ();
+  private static NoneQApplied NONE = new NoneQApplied<>();
 
-  Set<EntityPath<?>> getEntitySet ();
+  private NoneQApplied () {
+
+  }
+
+  public static <T> NoneQApplied<T> none () {
+
+    return NONE;
+  }
+
+  @Override
+  public T getResult () {
+
+    return null;
+  }
+
+  @Override
+  public Set<EntityPath<?>> getEntitySet () {
+
+    return Collections.emptySet();
+  }
 }

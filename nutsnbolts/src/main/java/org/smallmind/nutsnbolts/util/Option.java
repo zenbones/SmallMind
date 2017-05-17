@@ -36,7 +36,7 @@ import java.io.Serializable;
 
 public interface Option<T> extends Serializable {
 
-  public abstract boolean isNone ();
+  boolean isNone ();
 
-  public abstract T get ();
+  T get ();
 }

@@ -32,12 +32,38 @@
  */
 package org.smallmind.persistence.orm.querydsl.hibernate;
 
+import java.util.HashSet;
 import java.util.Set;
 import com.querydsl.core.types.EntityPath;
 
-public interface QApplied<T> {
+public class SomeQApplied<T> implements QApplied<T> {
 
-  T getResult ();
+  private HashSet<EntityPath<?>> entitySet = new HashSet<>();
+  private T result;
 
-  Set<EntityPath<?>> getEntitySet ();
+  public SomeQApplied<T> add (EntityPath<?> entity) {
+
+    if (entity != null) {
+      entitySet.add(entity);
+    }
+
+    return this;
+  }
+
+  public SomeQApplied<T> set (T result) {
+
+    this.result = result;
+
+    return this;
+  }
+
+  public T getResult () {
+
+    return result;
+  }
+
+  public Set<EntityPath<?>> getEntitySet () {
+
+    return entitySet;
+  }
 }

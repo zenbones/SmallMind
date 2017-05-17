@@ -76,22 +76,22 @@ public class QHibernateUtility {
 
     if (where == null) {
 
-      return null;
+      return NoneQApplied.none();
     } else {
 
-      QApplied<Predicate> qApplied = new QApplied<>();
+      SomeQApplied<Predicate> qApplied = new SomeQApplied<>();
       Predicate predicate;
 
-      if ((predicate = walkConjunction(new QApplied<>(), where.getRootConjunction(), fieldTransformer, operandTransformer)) == null) {
+      if ((predicate = walkConjunction(new SomeQApplied<>(), where.getRootConjunction(), fieldTransformer, operandTransformer)) == null) {
 
-        return null;
+        return NoneQApplied.none();
       }
 
       return qApplied.set(predicate);
     }
   }
 
-  private static Predicate walkConjunction (QApplied<Predicate> qApplied, WhereConjunction whereConjunction, WhereFieldTransformer<EntityPath<?>> fieldTransformer, WhereOperandTransformer operandTransformer) {
+  private static Predicate walkConjunction (SomeQApplied<Predicate> qApplied, WhereConjunction whereConjunction, WhereFieldTransformer<EntityPath<?>> fieldTransformer, WhereOperandTransformer operandTransformer) {
 
     if ((whereConjunction == null) || whereConjunction.isEmpty()) {
 
@@ -142,7 +142,7 @@ public class QHibernateUtility {
     }
   }
 
-  private static Predicate walkField (QApplied<Predicate> qApplied, WhereField whereField, WhereFieldTransformer<EntityPath<?>> fieldTransformer, WhereOperandTransformer operandTransformer) {
+  private static Predicate walkField (SomeQApplied<Predicate> qApplied, WhereField whereField, WhereFieldTransformer<EntityPath<?>> fieldTransformer, WhereOperandTransformer operandTransformer) {
 
     Object fieldValue = operandTransformer.transform(whereField.getOperand());
     WhereEntity<EntityPath<?>> whereEntity = fieldTransformer.transform(whereField.getEntity(), whereField.getName());
@@ -189,7 +189,7 @@ public class QHibernateUtility {
 
     if ((sort != null) && (!sort.isEmpty())) {
 
-      QApplied<OrderSpecifier[]> qApplied = new QApplied<>();
+      SomeQApplied<OrderSpecifier[]> qApplied = new SomeQApplied<>();
       OrderSpecifier[] orderSpecifiers;
       LinkedList<OrderSpecifier<?>> orderSpecifierList = new LinkedList<>();
 
@@ -216,6 +216,6 @@ public class QHibernateUtility {
       return qApplied.set(orderSpecifiers);
     }
 
-    return null;
+    return NoneQApplied.none();
   }
 }
