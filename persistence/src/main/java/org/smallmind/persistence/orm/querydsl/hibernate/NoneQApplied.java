@@ -32,13 +32,12 @@
  */
 package org.smallmind.persistence.orm.querydsl.hibernate;
 
-import java.util.Collections;
-import java.util.Set;
 import com.querydsl.core.types.EntityPath;
 
 public class NoneQApplied<T> implements QApplied<T> {
 
   private static NoneQApplied NONE = new NoneQApplied<>();
+  private static EntityPath[] ZERO_ENTITIES = new EntityPath[0];
 
   private NoneQApplied () {
 
@@ -62,8 +61,8 @@ public class NoneQApplied<T> implements QApplied<T> {
   }
 
   @Override
-  public Set<EntityPath<?>> getEntitySet () {
+  public EntityPath[] getEntities () {
 
-    return Collections.emptySet();
+    return ZERO_ENTITIES;
   }
 }

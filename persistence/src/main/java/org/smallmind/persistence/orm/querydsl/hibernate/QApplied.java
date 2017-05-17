@@ -32,7 +32,6 @@
  */
 package org.smallmind.persistence.orm.querydsl.hibernate;
 
-import java.util.Set;
 import com.querydsl.core.types.EntityPath;
 
 public interface QApplied<T> {
@@ -41,5 +40,5 @@ public interface QApplied<T> {
 
   T getResult ();
 
-  Set<EntityPath<?>> getEntitySet ();
+  EntityPath[] getEntities ();
 }

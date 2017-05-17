@@ -33,7 +33,6 @@
 package org.smallmind.persistence.orm.querydsl.hibernate;
 
 import java.util.HashSet;
-import java.util.Set;
 import com.querydsl.core.types.EntityPath;
 
 public class SomeQApplied<T> implements QApplied<T> {
@@ -63,13 +62,19 @@ public class SomeQApplied<T> implements QApplied<T> {
     return false;
   }
 
+  @Override
   public T getResult () {
 
     return result;
   }
 
-  public Set<EntityPath<?>> getEntitySet () {
+  @Override
+  public EntityPath[] getEntities () {
 
-    return entitySet;
+    EntityPath[] entities = new EntityPath[entitySet.size()];
+
+    entitySet.toArray(entities);
+
+    return entities;
   }
 }
