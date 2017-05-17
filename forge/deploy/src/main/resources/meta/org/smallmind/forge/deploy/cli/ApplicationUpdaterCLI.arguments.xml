@@ -37,7 +37,7 @@
   </option>
   <option name="repository" flag="r">
     <arguments>
-      <single>repository type</single>
+      <single>repository typeHint</single>
     </arguments>
   </option>
   <option name="group-id" flag="g" required="true">

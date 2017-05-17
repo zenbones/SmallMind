@@ -34,9 +34,10 @@ package org.smallmind.persistence.query;
 
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlRootElement;
+import javax.xml.bind.annotation.XmlTransient;
 
 @XmlRootElement(name = "float")
-public class FloatWhereOperand extends WhereOperand<Float> {
+public class FloatWhereOperand implements WhereOperand<Float, Float> {
 
   private Float value;
 
@@ -55,9 +56,17 @@ public class FloatWhereOperand extends WhereOperand<Float> {
   }
 
   @Override
-  public Float extract (WhereOperandTransformer transformer) {
+  @XmlTransient
+  public Class<Float> getTargetClass () {
 
-    return value;
+    return Float.class;
+  }
+
+  @Override
+  @XmlTransient
+  public String getTypeHint () {
+
+    return null;
   }
 
   @XmlElement(name = "value", required = true)

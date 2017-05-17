@@ -83,12 +83,6 @@ public class WhereField implements WhereCriterion {
     this.name = name;
   }
 
-  @XmlTransient
-  public String getName (WhereFieldTransformer transformer) {
-
-    return (transformer == null) ? name : transformer.rectifyName(name);
-  }
-
   @XmlElementRefs({@XmlElementRef(type = ArrayWhereOperand.class), @XmlElementRef(type = BooleanWhereOperand.class), @XmlElementRef(type = ByteWhereOperand.class), @XmlElementRef(type = CharacterWhereOperand.class),
                     @XmlElementRef(type = DateWhereOperand.class), @XmlElementRef(type = DoubleWhereOperand.class), @XmlElementRef(type = EnumWhereOperand.class), @XmlElementRef(type = FloatWhereOperand.class),
                     @XmlElementRef(type = IntegerWhereOperand.class), @XmlElementRef(type = LongWhereOperand.class), @XmlElementRef(type = ShortWhereOperand.class), @XmlElementRef(type = StringWhereOperand.class)})

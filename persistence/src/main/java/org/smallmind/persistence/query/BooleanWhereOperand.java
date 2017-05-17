@@ -37,7 +37,7 @@ import javax.xml.bind.annotation.XmlRootElement;
 import javax.xml.bind.annotation.XmlTransient;
 
 @XmlRootElement(name = "boolean")
-public class BooleanWhereOperand extends WhereOperand<Boolean> {
+public class BooleanWhereOperand implements WhereOperand<Boolean, Boolean> {
 
   private Boolean value;
 
@@ -57,9 +57,16 @@ public class BooleanWhereOperand extends WhereOperand<Boolean> {
 
   @Override
   @XmlTransient
-  public Boolean extract (WhereOperandTransformer transformer) {
+  public Class<Boolean> getTargetClass () {
 
-    return value;
+    return Boolean.class;
+  }
+
+  @Override
+  @XmlTransient
+  public String getTypeHint () {
+
+    return null;
   }
 
   @XmlElement(name = "value", required = true)

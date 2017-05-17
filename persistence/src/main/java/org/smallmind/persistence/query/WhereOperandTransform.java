@@ -32,7 +32,7 @@
  */
 package org.smallmind.persistence.query;
 
-public interface WhereOperandTransformer {
+public interface WhereOperandTransform<U, T> {
 
-  <U, T> U transform (Class<U> clazz, String type, T input);
+  U apply (String typeHint, T input);
 }

@@ -30,9 +30,30 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.persistence.query;
+package org.smallmind.persistence.orm.morphia;
 
-public interface WhereOperandTransformer {
+import org.smallmind.persistence.query.WhereEntity;
 
-  <U, T> U transform (Class<U> clazz, String type, T input);
+public class MorphiaWhereEntity implements WhereEntity<Class<MorphiaDurable<?, ?>>> {
+
+  private Class<MorphiaDurable<?, ?>> entity;
+  private String field;
+
+  public MorphiaWhereEntity (Class<MorphiaDurable<?, ?>> entity, String field) {
+
+    this.entity = entity;
+    this.field = field;
+  }
+
+  @Override
+  public Class<MorphiaDurable<?, ?>> getEntity () {
+
+    return entity;
+  }
+
+  @Override
+  public String getField () {
+
+    return field;
+  }
 }

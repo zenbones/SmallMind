@@ -34,9 +34,10 @@ package org.smallmind.persistence.query;
 
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlRootElement;
+import javax.xml.bind.annotation.XmlTransient;
 
 @XmlRootElement(name = "double")
-public class DoubleWhereOperand extends WhereOperand<Double> {
+public class DoubleWhereOperand implements WhereOperand<Double, Double> {
 
   private Double value;
 
@@ -55,9 +56,17 @@ public class DoubleWhereOperand extends WhereOperand<Double> {
   }
 
   @Override
-  public Double extract (WhereOperandTransformer transformer) {
+  @XmlTransient
+  public Class<Double> getTargetClass () {
 
-    return value;
+    return Double.class;
+  }
+
+  @Override
+  @XmlTransient
+  public String getTypeHint () {
+
+    return null;
   }
 
   @XmlElement(name = "value", required = true)

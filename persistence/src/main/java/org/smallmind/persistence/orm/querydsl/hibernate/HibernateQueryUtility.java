@@ -33,146 +33,144 @@
 package org.smallmind.persistence.orm.querydsl.hibernate;
 
 import java.util.LinkedList;
+import com.querydsl.core.BooleanBuilder;
 import com.querydsl.core.types.EntityPath;
-import com.querydsl.core.types.Expression;
 import com.querydsl.core.types.Ops;
 import com.querydsl.core.types.Order;
 import com.querydsl.core.types.OrderSpecifier;
 import com.querydsl.core.types.Predicate;
 import com.querydsl.core.types.dsl.Expressions;
 import org.smallmind.nutsnbolts.lang.UnknownSwitchCaseException;
-import org.smallmind.persistence.orm.ORMOperationException;
+import org.smallmind.persistence.query.DefaultWhereOperandTransformer;
 import org.smallmind.persistence.query.Sort;
 import org.smallmind.persistence.query.SortField;
 import org.smallmind.persistence.query.Where;
 import org.smallmind.persistence.query.WhereConjunction;
 import org.smallmind.persistence.query.WhereCriterion;
+import org.smallmind.persistence.query.WhereEntity;
 import org.smallmind.persistence.query.WhereField;
 import org.smallmind.persistence.query.WhereFieldTransformer;
 import org.smallmind.persistence.query.WhereOperandTransformer;
 
 public class HibernateQueryUtility {
 
-  public static Predicate apply (EntityPath<?> entityPath, Where where) {
+  private static final WhereFieldTransformer<EntityPath<?>> WHERE_FIELD_TRANSFORMER = new QWhereFieldTransformer();
+  private static final WhereOperandTransformer WHERE_OPERAND_TRANSFORMER = new DefaultWhereOperandTransformer();
 
-    return apply(entityPath, where, null, (type) -> {
+  public static Predicate apply (Where where) {
 
-      throw new ORMOperationException("Translation of enum(%s) requires an implementation of a WhereOperandTransformer", type);
-    });
+    return apply(where, WHERE_FIELD_TRANSFORMER, WHERE_OPERAND_TRANSFORMER);
   }
 
-  public static Predicate apply (EntityPath<?> entityPath, Where where, WhereFieldTransformer fieldTransformer) {
+  public static Predicate apply (Where where, WhereFieldTransformer<EntityPath<?>> fieldTransformer) {
 
-    return apply(entityPath, where, fieldTransformer, (type) -> {
-
-      throw new ORMOperationException("Translation of enum(%s) requires an implementation of a WhereOperandTransformer", type);
-    });
+    return apply(where, fieldTransformer, WHERE_OPERAND_TRANSFORMER);
   }
 
-  public static Predicate apply (EntityPath<?> entityPath, Where where, WhereOperandTransformer operandTransformer) {
+  public static Predicate apply (Where where, WhereOperandTransformer operandTransformer) {
 
-    return apply(entityPath, where, null, operandTransformer);
+    return apply(where, WHERE_FIELD_TRANSFORMER, operandTransformer);
   }
 
-  public static Predicate apply (EntityPath<?> entityPath, Where where, WhereFieldTransformer fieldTransformer, WhereOperandTransformer operandTransformer) {
+  public static Predicate apply (Where where, WhereFieldTransformer<EntityPath<?>> fieldTransformer, WhereOperandTransformer operandTransformer) {
 
-    return (where == null) ? null : walkConjunction(entityPath, where.getRootConjunction(), fieldTransformer, operandTransformer);
+    return (where == null) ? null : walkConjunction(where.getRootConjunction(), fieldTransformer, operandTransformer);
   }
 
-  private static Predicate walkConjunction (EntityPath<?> entityPath, WhereConjunction whereConjunction, WhereFieldTransformer fieldTransformer, WhereOperandTransformer operandTransformer) {
+  private static Predicate walkConjunction (WhereConjunction whereConjunction, WhereFieldTransformer<EntityPath<?>> fieldTransformer, WhereOperandTransformer operandTransformer) {
 
     if ((whereConjunction == null) || whereConjunction.isEmpty()) {
 
       return null;
     }
 
-    LinkedList<Expression<Boolean>> expressionList = new LinkedList<>();
+    LinkedList<Predicate> predicateList = new LinkedList<>();
 
     for (WhereCriterion whereCriterion : whereConjunction.getCriteria()) {
       switch (whereCriterion.getCriterionType()) {
         case CONJUNCTION:
 
-          Expression<Boolean> walkedExpression;
+          Predicate walkedPredicate;
 
-          if ((walkedExpression = walkConjunction(entityPath, (WhereConjunction)whereCriterion, fieldTransformer, operandTransformer)) != null) {
-            expressionList.add(walkedExpression);
+          if ((walkedPredicate = walkConjunction((WhereConjunction)whereCriterion, fieldTransformer, operandTransformer)) != null) {
+            predicateList.add(walkedPredicate);
           }
           break;
         case FIELD:
-          expressionList.add(walkField(entityPath, (WhereField)whereCriterion, fieldTransformer, operandTransformer));
+          predicateList.add(walkField((WhereField)whereCriterion, fieldTransformer, operandTransformer));
           break;
         default:
           throw new UnknownSwitchCaseException(whereCriterion.getCriterionType().name());
       }
     }
 
-    if (expressionList.isEmpty()) {
+    if (predicateList.isEmpty()) {
 
       return null;
     } else {
 
-      Expression[] expressions;
-
-      expressions = new Expression[expressionList.size()];
-      expressionList.toArray(expressions);
+      BooleanBuilder booleanBuilder = new BooleanBuilder();
 
       switch (whereConjunction.getConjunctionType()) {
         case AND:
-          return Expressions.predicate(Ops.AND, expressions);
+          for (Predicate predicate : predicateList) {
+            booleanBuilder.and(predicate);
+          }
+          return booleanBuilder;
         case OR:
-          return Expressions.predicate(Ops.OR, expressions);
+          for (Predicate predicate : predicateList) {
+            booleanBuilder.or(predicate);
+          }
+          return booleanBuilder;
         default:
           throw new UnknownSwitchCaseException(whereConjunction.getConjunctionType().name());
       }
     }
   }
 
-  private static Expression<Boolean> walkField (EntityPath<?> entityPath, WhereField whereField, WhereFieldTransformer fieldTransformer, WhereOperandTransformer operandTransformer) {
+  private static Predicate walkField (WhereField whereField, WhereFieldTransformer<EntityPath<?>> fieldTransformer, WhereOperandTransformer operandTransformer) {
+
+    Object fieldValue = operandTransformer.transform(whereField.getOperand().getTargetClass(), whereField.getOperand().getTypeHint(), whereField.getOperand().getValue());
+    WhereEntity<EntityPath<?>> whereEntity = fieldTransformer.transform(whereField.getName());
 
     switch (whereField.getOperator()) {
       case LT:
-        return Expressions.predicate(Ops.LT, Expressions.path(String.class, entityPath, whereField.getName(fieldTransformer)), Expressions.constant(whereField.getOperand().extract(operandTransformer)));
+        return Expressions.predicate(Ops.LT, Expressions.path(String.class, whereEntity.getEntity(), whereEntity.getField()), Expressions.constant(fieldValue));
       case LE:
-        return Expressions.predicate(Ops.LOE, Expressions.path(String.class, entityPath, whereField.getName(fieldTransformer)), Expressions.constant(whereField.getOperand().extract(operandTransformer)));
+        return Expressions.predicate(Ops.LOE, Expressions.path(String.class, whereEntity.getEntity(), whereEntity.getField()), Expressions.constant(fieldValue));
       case EQ:
-
-        Object equalValue;
-
-        if ((equalValue = whereField.getOperand().extract(operandTransformer)) == null) {
-          return Expressions.predicate(Ops.IS_NULL, Expressions.path(String.class, entityPath, whereField.getName(fieldTransformer)));
+        if (fieldValue == null) {
+          return Expressions.predicate(Ops.IS_NULL, Expressions.path(String.class, whereEntity.getEntity(), whereEntity.getField()));
         } else {
-          return Expressions.predicate(Ops.EQ, Expressions.path(String.class, entityPath, whereField.getName(fieldTransformer)), Expressions.constant(equalValue));
+          return Expressions.predicate(Ops.EQ, Expressions.path(String.class, whereEntity.getEntity(), whereEntity.getField()), Expressions.constant(fieldValue));
         }
       case NE:
-
-        Object notEqualValue;
-
-        if ((notEqualValue = whereField.getOperand().extract(operandTransformer)) == null) {
-          return Expressions.predicate(Ops.IS_NOT_NULL, Expressions.path(String.class, entityPath, whereField.getName(fieldTransformer)));
+        if (fieldValue == null) {
+          return Expressions.predicate(Ops.IS_NOT_NULL, Expressions.path(String.class, whereEntity.getEntity(), whereEntity.getField()));
         } else {
-          return Expressions.predicate(Ops.NE, Expressions.path(String.class, entityPath, whereField.getName(fieldTransformer)), Expressions.constant(notEqualValue));
+          return Expressions.predicate(Ops.NE, Expressions.path(String.class, whereEntity.getEntity(), whereEntity.getField()), Expressions.constant(fieldValue));
         }
       case GE:
-        return Expressions.predicate(Ops.GOE, Expressions.path(String.class, entityPath, whereField.getName(fieldTransformer)), Expressions.constant(whereField.getOperand().extract(operandTransformer)));
+        return Expressions.predicate(Ops.GOE, Expressions.path(String.class, whereEntity.getEntity(), whereEntity.getField()), Expressions.constant(fieldValue));
       case GT:
-        return Expressions.predicate(Ops.GT, Expressions.path(String.class, entityPath, whereField.getName(fieldTransformer)), Expressions.constant(whereField.getOperand().extract(operandTransformer)));
+        return Expressions.predicate(Ops.GT, Expressions.path(String.class, whereEntity.getEntity(), whereEntity.getField()), Expressions.constant(fieldValue));
       case LIKE:
-        return Expressions.predicate(Ops.LIKE, Expressions.path(String.class, entityPath, whereField.getName(fieldTransformer)), Expressions.constant(whereField.getOperand().extract(operandTransformer)));
+        return Expressions.predicate(Ops.LIKE, Expressions.path(String.class, whereEntity.getEntity(), whereEntity.getField()), Expressions.constant(fieldValue));
       case UNLIKE:
-        return Expressions.predicate(Ops.NOT, Expressions.predicate(Ops.LIKE, Expressions.path(String.class, entityPath, whereField.getName(fieldTransformer)), Expressions.constant(whereField.getOperand().extract(operandTransformer))));
+        return Expressions.predicate(Ops.NOT, Expressions.predicate(Ops.LIKE, Expressions.path(String.class, whereEntity.getEntity(), whereEntity.getField()), Expressions.constant(fieldValue)));
       case IN:
-        return Expressions.predicate(Ops.IN, Expressions.path(String.class, entityPath, whereField.getName(fieldTransformer)), Expressions.constant(whereField.getOperand().extract(operandTransformer)));
+        return Expressions.predicate(Ops.IN, Expressions.path(String.class, whereEntity.getEntity(), whereEntity.getField()), Expressions.constant(fieldValue));
       default:
         throw new UnknownSwitchCaseException(whereField.getOperator().name());
     }
   }
 
-  public static OrderSpecifier[] apply (EntityPath<?> entityPath, Sort sort) {
+  public static OrderSpecifier[] apply (Sort sort) {
 
-    return apply(entityPath, sort, null);
+    return apply(sort, WHERE_FIELD_TRANSFORMER);
   }
 
-  public static OrderSpecifier[] apply (EntityPath<?> entityPath, Sort sort, WhereFieldTransformer fieldTransformer) {
+  public static OrderSpecifier[] apply (Sort sort, WhereFieldTransformer<EntityPath<?>> fieldTransformer) {
 
     if ((sort != null) && (!sort.isEmpty())) {
 
@@ -180,12 +178,15 @@ public class HibernateQueryUtility {
       LinkedList<OrderSpecifier<?>> orderSpecifierList = new LinkedList<>();
 
       for (SortField sortField : sort.getFields()) {
+
+        WhereEntity<EntityPath<?>> whereEntity = fieldTransformer.transform(sortField.getName());
+
         switch (sortField.getDirection()) {
           case ASC:
-            orderSpecifierList.add(new OrderSpecifier<>(Order.ASC, Expressions.path(String.class, entityPath, sortField.getName(fieldTransformer))));
+            orderSpecifierList.add(new OrderSpecifier<>(Order.ASC, Expressions.path(String.class, whereEntity.getEntity(), whereEntity.getField())));
             break;
           case DESC:
-            orderSpecifierList.add(new OrderSpecifier<>(Order.DESC, Expressions.path(String.class, entityPath, sortField.getName(fieldTransformer))));
+            orderSpecifierList.add(new OrderSpecifier<>(Order.DESC, Expressions.path(String.class, whereEntity.getEntity(), whereEntity.getField())));
             break;
           default:
             throw new UnknownSwitchCaseException(sortField.getDirection().name());

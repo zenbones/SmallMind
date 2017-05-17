@@ -34,9 +34,10 @@ package org.smallmind.persistence.query;
 
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlRootElement;
+import javax.xml.bind.annotation.XmlTransient;
 
 @XmlRootElement(name = "short")
-public class ShortWhereOperand extends WhereOperand<Short> {
+public class ShortWhereOperand implements WhereOperand<Short, Short> {
 
   private Short value;
 
@@ -55,9 +56,17 @@ public class ShortWhereOperand extends WhereOperand<Short> {
   }
 
   @Override
-  public Short extract (WhereOperandTransformer transformer) {
+  @XmlTransient
+  public Class<Short> getTargetClass () {
 
-    return value;
+    return Short.class;
+  }
+
+  @Override
+  @XmlTransient
+  public String getTypeHint () {
+
+    return null;
   }
 
   @XmlElement(name = "value", required = true)

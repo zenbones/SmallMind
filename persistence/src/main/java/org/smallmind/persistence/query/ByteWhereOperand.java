@@ -34,9 +34,10 @@ package org.smallmind.persistence.query;
 
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlRootElement;
+import javax.xml.bind.annotation.XmlTransient;
 
 @XmlRootElement(name = "byte")
-public class ByteWhereOperand extends WhereOperand<Byte> {
+public class ByteWhereOperand implements WhereOperand<Byte, Byte> {
 
   private Byte value;
 
@@ -55,9 +56,17 @@ public class ByteWhereOperand extends WhereOperand<Byte> {
   }
 
   @Override
-  public Byte extract (WhereOperandTransformer transformer) {
+  @XmlTransient
+  public Class<Byte> getTargetClass () {
 
-    return value;
+    return Byte.class;
+  }
+
+  @Override
+  @XmlTransient
+  public String getTypeHint () {
+
+    return null;
   }
 
   @XmlElement(name = "value", required = true)

@@ -30,9 +30,30 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.persistence.query;
+package org.smallmind.persistence.orm.hibernate;
 
-public interface WhereOperandTransformer {
+import org.smallmind.persistence.query.WhereEntity;
 
-  <U, T> U transform (Class<U> clazz, String type, T input);
+public class CriteriaWhereEntity implements WhereEntity<Class<HibernateDurable<?, ?>>> {
+
+  private Class<HibernateDurable<?, ?>> entity;
+  private String field;
+
+  public CriteriaWhereEntity (Class<HibernateDurable<?, ?>> entity, String field) {
+
+    this.entity = entity;
+    this.field = field;
+  }
+
+  @Override
+  public Class<HibernateDurable<?, ?>> getEntity () {
+
+    return entity;
+  }
+
+  @Override
+  public String getField () {
+
+    return field;
+  }
 }

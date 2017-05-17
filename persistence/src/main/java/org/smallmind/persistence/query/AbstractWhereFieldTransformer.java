@@ -32,7 +32,29 @@
  */
 package org.smallmind.persistence.query;
 
-public interface WhereOperandTransformer {
+import java.util.HashMap;
 
-  <U, T> U transform (Class<U> clazz, String type, T input);
+public abstract class AbstractWhereFieldTransformer<T> implements WhereFieldTransformer<T> {
+
+  private HashMap<String, WhereFieldTransform<T>> transformMap = new HashMap<>();
+
+  public synchronized void add (String name, WhereFieldTransform<T> transform) {
+
+    transformMap.put(name, transform);
+  }
+
+  public abstract WhereEntity<T> getDefault (String name);
+
+  @Override
+  public synchronized WhereEntity<T> transform (String name) {
+
+    WhereFieldTransform<T> transform;
+
+    if ((transform = transformMap.get(name)) == null) {
+
+      return getDefault(name);
+    }
+
+    return transform.apply(name);
+  }
 }

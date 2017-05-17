@@ -37,7 +37,11 @@ import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
 
 @XmlAccessorType(XmlAccessType.PROPERTY)
-public abstract class WhereOperand<T> implements Serializable {
+public interface WhereOperand<T, U> extends Serializable {
 
-  public abstract T extract (WhereOperandTransformer transformer);
+  Class<? extends T> getTargetClass ();
+
+  String getTypeHint ();
+
+  U getValue ();
 }

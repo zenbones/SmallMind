@@ -2,226 +2,226 @@
 <databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-2.0.xsd">
   <changeSet author="auto.generated" id="1">
     <createTable tableName="QRTZ_BLOB_TRIGGERS">
-      <column name="SCHED_NAME" type="VARCHAR(120)">
+      <column name="SCHED_NAME" typeHint="VARCHAR(120)">
         <constraints nullable="false"/>
       </column>
-      <column name="TRIGGER_NAME" type="VARCHAR(200)">
+      <column name="TRIGGER_NAME" typeHint="VARCHAR(200)">
         <constraints nullable="false"/>
       </column>
-      <column name="TRIGGER_GROUP" type="VARCHAR(200)">
+      <column name="TRIGGER_GROUP" typeHint="VARCHAR(200)">
         <constraints nullable="false"/>
       </column>
-      <column name="BLOB_DATA" type="BLOB"/>
+      <column name="BLOB_DATA" typeHint="BLOB"/>
     </createTable>
   </changeSet>
   <changeSet author="auto.generated" id="2">
     <createTable tableName="QRTZ_CALENDARS">
-      <column name="SCHED_NAME" type="VARCHAR(120)">
+      <column name="SCHED_NAME" typeHint="VARCHAR(120)">
         <constraints nullable="false"/>
       </column>
-      <column name="CALENDAR_NAME" type="VARCHAR(200)">
+      <column name="CALENDAR_NAME" typeHint="VARCHAR(200)">
         <constraints nullable="false"/>
       </column>
-      <column name="CALENDAR" type="BLOB">
+      <column name="CALENDAR" typeHint="BLOB">
         <constraints nullable="false"/>
       </column>
     </createTable>
   </changeSet>
   <changeSet author="auto.generated" id="3">
     <createTable tableName="QRTZ_CRON_TRIGGERS">
-      <column name="SCHED_NAME" type="VARCHAR(120)">
+      <column name="SCHED_NAME" typeHint="VARCHAR(120)">
         <constraints nullable="false"/>
       </column>
-      <column name="TRIGGER_NAME" type="VARCHAR(200)">
+      <column name="TRIGGER_NAME" typeHint="VARCHAR(200)">
         <constraints nullable="false"/>
       </column>
-      <column name="TRIGGER_GROUP" type="VARCHAR(200)">
+      <column name="TRIGGER_GROUP" typeHint="VARCHAR(200)">
         <constraints nullable="false"/>
       </column>
-      <column name="CRON_EXPRESSION" type="VARCHAR(120)">
+      <column name="CRON_EXPRESSION" typeHint="VARCHAR(120)">
         <constraints nullable="false"/>
       </column>
-      <column name="TIME_ZONE_ID" type="VARCHAR(80)"/>
+      <column name="TIME_ZONE_ID" typeHint="VARCHAR(80)"/>
     </createTable>
   </changeSet>
   <changeSet author="auto.generated" id="4">
     <createTable tableName="QRTZ_FIRED_TRIGGERS">
-      <column name="SCHED_NAME" type="VARCHAR(120)">
+      <column name="SCHED_NAME" typeHint="VARCHAR(120)">
         <constraints nullable="false"/>
       </column>
-      <column name="ENTRY_ID" type="VARCHAR(95)">
+      <column name="ENTRY_ID" typeHint="VARCHAR(95)">
         <constraints nullable="false"/>
       </column>
-      <column name="TRIGGER_NAME" type="VARCHAR(200)">
+      <column name="TRIGGER_NAME" typeHint="VARCHAR(200)">
         <constraints nullable="false"/>
       </column>
-      <column name="TRIGGER_GROUP" type="VARCHAR(200)">
+      <column name="TRIGGER_GROUP" typeHint="VARCHAR(200)">
         <constraints nullable="false"/>
       </column>
-      <column name="INSTANCE_NAME" type="VARCHAR(200)">
+      <column name="INSTANCE_NAME" typeHint="VARCHAR(200)">
         <constraints nullable="false"/>
       </column>
-      <column name="FIRED_TIME" type="BIGINT">
+      <column name="FIRED_TIME" typeHint="BIGINT">
         <constraints nullable="false"/>
       </column>
-      <column name="PRIORITY" type="INT">
+      <column name="PRIORITY" typeHint="INT">
         <constraints nullable="false"/>
       </column>
-      <column name="STATE" type="VARCHAR(16)">
+      <column name="STATE" typeHint="VARCHAR(16)">
         <constraints nullable="false"/>
       </column>
-      <column name="JOB_NAME" type="VARCHAR(200)"/>
-      <column name="JOB_GROUP" type="VARCHAR(200)"/>
-      <column name="IS_NONCONCURRENT" type="VARCHAR(1)"/>
-      <column name="REQUESTS_RECOVERY" type="VARCHAR(1)"/>
+      <column name="JOB_NAME" typeHint="VARCHAR(200)"/>
+      <column name="JOB_GROUP" typeHint="VARCHAR(200)"/>
+      <column name="IS_NONCONCURRENT" typeHint="VARCHAR(1)"/>
+      <column name="REQUESTS_RECOVERY" typeHint="VARCHAR(1)"/>
     </createTable>
   </changeSet>
   <changeSet author="auto.generated" id="5">
     <createTable tableName="QRTZ_JOB_DETAILS">
-      <column name="SCHED_NAME" type="VARCHAR(120)">
+      <column name="SCHED_NAME" typeHint="VARCHAR(120)">
         <constraints nullable="false"/>
       </column>
-      <column name="JOB_NAME" type="VARCHAR(200)">
+      <column name="JOB_NAME" typeHint="VARCHAR(200)">
         <constraints nullable="false"/>
       </column>
-      <column name="JOB_GROUP" type="VARCHAR(200)">
+      <column name="JOB_GROUP" typeHint="VARCHAR(200)">
         <constraints nullable="false"/>
       </column>
-      <column name="DESCRIPTION" type="VARCHAR(250)"/>
-      <column name="JOB_CLASS_NAME" type="VARCHAR(250)">
+      <column name="DESCRIPTION" typeHint="VARCHAR(250)"/>
+      <column name="JOB_CLASS_NAME" typeHint="VARCHAR(250)">
         <constraints nullable="false"/>
       </column>
-      <column name="IS_DURABLE" type="VARCHAR(1)">
+      <column name="IS_DURABLE" typeHint="VARCHAR(1)">
         <constraints nullable="false"/>
       </column>
-      <column name="IS_NONCONCURRENT" type="VARCHAR(1)">
+      <column name="IS_NONCONCURRENT" typeHint="VARCHAR(1)">
         <constraints nullable="false"/>
       </column>
-      <column name="IS_UPDATE_DATA" type="VARCHAR(1)">
+      <column name="IS_UPDATE_DATA" typeHint="VARCHAR(1)">
         <constraints nullable="false"/>
       </column>
-      <column name="REQUESTS_RECOVERY" type="VARCHAR(1)">
+      <column name="REQUESTS_RECOVERY" typeHint="VARCHAR(1)">
         <constraints nullable="false"/>
       </column>
-      <column name="JOB_DATA" type="BLOB"/>
+      <column name="JOB_DATA" typeHint="BLOB"/>
     </createTable>
   </changeSet>
   <changeSet author="auto.generated" id="6">
     <createTable tableName="QRTZ_LOCKS">
-      <column name="SCHED_NAME" type="VARCHAR(120)">
+      <column name="SCHED_NAME" typeHint="VARCHAR(120)">
         <constraints nullable="false"/>
       </column>
-      <column name="LOCK_NAME" type="VARCHAR(40)">
+      <column name="LOCK_NAME" typeHint="VARCHAR(40)">
         <constraints nullable="false"/>
       </column>
     </createTable>
   </changeSet>
   <changeSet author="auto.generated" id="7">
     <createTable tableName="QRTZ_PAUSED_TRIGGER_GRPS">
-      <column name="SCHED_NAME" type="VARCHAR(120)">
+      <column name="SCHED_NAME" typeHint="VARCHAR(120)">
         <constraints nullable="false"/>
       </column>
-      <column name="TRIGGER_GROUP" type="VARCHAR(200)">
+      <column name="TRIGGER_GROUP" typeHint="VARCHAR(200)">
         <constraints nullable="false"/>
       </column>
     </createTable>
   </changeSet>
   <changeSet author="auto.generated" id="8">
     <createTable tableName="QRTZ_SCHEDULER_STATE">
-      <column name="SCHED_NAME" type="VARCHAR(120)">
+      <column name="SCHED_NAME" typeHint="VARCHAR(120)">
         <constraints nullable="false"/>
       </column>
-      <column name="INSTANCE_NAME" type="VARCHAR(200)">
+      <column name="INSTANCE_NAME" typeHint="VARCHAR(200)">
         <constraints nullable="false"/>
       </column>
-      <column name="LAST_CHECKIN_TIME" type="BIGINT">
+      <column name="LAST_CHECKIN_TIME" typeHint="BIGINT">
         <constraints nullable="false"/>
       </column>
-      <column name="CHECKIN_INTERVAL" type="BIGINT">
+      <column name="CHECKIN_INTERVAL" typeHint="BIGINT">
         <constraints nullable="false"/>
       </column>
     </createTable>
   </changeSet>
   <changeSet author="auto.generated" id="9">
     <createTable tableName="QRTZ_SIMPLE_TRIGGERS">
-      <column name="SCHED_NAME" type="VARCHAR(120)">
+      <column name="SCHED_NAME" typeHint="VARCHAR(120)">
         <constraints nullable="false"/>
       </column>
-      <column name="TRIGGER_NAME" type="VARCHAR(200)">
+      <column name="TRIGGER_NAME" typeHint="VARCHAR(200)">
         <constraints nullable="false"/>
       </column>
-      <column name="TRIGGER_GROUP" type="VARCHAR(200)">
+      <column name="TRIGGER_GROUP" typeHint="VARCHAR(200)">
         <constraints nullable="false"/>
       </column>
-      <column name="REPEAT_COUNT" type="BIGINT">
+      <column name="REPEAT_COUNT" typeHint="BIGINT">
         <constraints nullable="false"/>
       </column>
-      <column name="REPEAT_INTERVAL" type="BIGINT">
+      <column name="REPEAT_INTERVAL" typeHint="BIGINT">
         <constraints nullable="false"/>
       </column>
-      <column name="TIMES_TRIGGERED" type="BIGINT">
+      <column name="TIMES_TRIGGERED" typeHint="BIGINT">
         <constraints nullable="false"/>
       </column>
     </createTable>
   </changeSet>
   <changeSet author="auto.generated" id="10">
     <createTable tableName="QRTZ_SIMPROP_TRIGGERS">
-      <column name="SCHED_NAME" type="VARCHAR(120)">
+      <column name="SCHED_NAME" typeHint="VARCHAR(120)">
         <constraints nullable="false"/>
       </column>
-      <column name="TRIGGER_NAME" type="VARCHAR(200)">
+      <column name="TRIGGER_NAME" typeHint="VARCHAR(200)">
         <constraints nullable="false"/>
       </column>
-      <column name="TRIGGER_GROUP" type="VARCHAR(200)">
+      <column name="TRIGGER_GROUP" typeHint="VARCHAR(200)">
         <constraints nullable="false"/>
       </column>
-      <column name="STR_PROP_1" type="VARCHAR(512)"/>
-      <column name="STR_PROP_2" type="VARCHAR(512)"/>
-      <column name="STR_PROP_3" type="VARCHAR(512)"/>
-      <column name="INT_PROP_1" type="INT"/>
-      <column name="INT_PROP_2" type="INT"/>
-      <column name="LONG_PROP_1" type="BIGINT"/>
-      <column name="LONG_PROP_2" type="BIGINT"/>
-      <column name="DEC_PROP_1" type="DECIMAL(13,4)"/>
-      <column name="DEC_PROP_2" type="DECIMAL(13,4)"/>
-      <column name="BOOL_PROP_1" type="VARCHAR(1)"/>
-      <column name="BOOL_PROP_2" type="VARCHAR(1)"/>
+      <column name="STR_PROP_1" typeHint="VARCHAR(512)"/>
+      <column name="STR_PROP_2" typeHint="VARCHAR(512)"/>
+      <column name="STR_PROP_3" typeHint="VARCHAR(512)"/>
+      <column name="INT_PROP_1" typeHint="INT"/>
+      <column name="INT_PROP_2" typeHint="INT"/>
+      <column name="LONG_PROP_1" typeHint="BIGINT"/>
+      <column name="LONG_PROP_2" typeHint="BIGINT"/>
+      <column name="DEC_PROP_1" typeHint="DECIMAL(13,4)"/>
+      <column name="DEC_PROP_2" typeHint="DECIMAL(13,4)"/>
+      <column name="BOOL_PROP_1" typeHint="VARCHAR(1)"/>
+      <column name="BOOL_PROP_2" typeHint="VARCHAR(1)"/>
     </createTable>
   </changeSet>
   <changeSet author="auto.generated" id="11">
     <createTable tableName="QRTZ_TRIGGERS">
-      <column name="SCHED_NAME" type="VARCHAR(120)">
+      <column name="SCHED_NAME" typeHint="VARCHAR(120)">
         <constraints nullable="false"/>
       </column>
-      <column name="TRIGGER_NAME" type="VARCHAR(200)">
+      <column name="TRIGGER_NAME" typeHint="VARCHAR(200)">
         <constraints nullable="false"/>
       </column>
-      <column name="TRIGGER_GROUP" type="VARCHAR(200)">
+      <column name="TRIGGER_GROUP" typeHint="VARCHAR(200)">
         <constraints nullable="false"/>
       </column>
-      <column name="JOB_NAME" type="VARCHAR(200)">
+      <column name="JOB_NAME" typeHint="VARCHAR(200)">
         <constraints nullable="false"/>
       </column>
-      <column name="JOB_GROUP" type="VARCHAR(200)">
+      <column name="JOB_GROUP" typeHint="VARCHAR(200)">
         <constraints nullable="false"/>
       </column>
-      <column name="DESCRIPTION" type="VARCHAR(250)"/>
-      <column name="NEXT_FIRE_TIME" type="BIGINT"/>
-      <column name="PREV_FIRE_TIME" type="BIGINT"/>
-      <column name="PRIORITY" type="INT"/>
-      <column name="TRIGGER_STATE" type="VARCHAR(16)">
+      <column name="DESCRIPTION" typeHint="VARCHAR(250)"/>
+      <column name="NEXT_FIRE_TIME" typeHint="BIGINT"/>
+      <column name="PREV_FIRE_TIME" typeHint="BIGINT"/>
+      <column name="PRIORITY" typeHint="INT"/>
+      <column name="TRIGGER_STATE" typeHint="VARCHAR(16)">
         <constraints nullable="false"/>
       </column>
-      <column name="TRIGGER_TYPE" type="VARCHAR(8)">
+      <column name="TRIGGER_TYPE" typeHint="VARCHAR(8)">
         <constraints nullable="false"/>
       </column>
-      <column name="START_TIME" type="BIGINT">
+      <column name="START_TIME" typeHint="BIGINT">
         <constraints nullable="false"/>
       </column>
-      <column name="END_TIME" type="BIGINT"/>
-      <column name="CALENDAR_NAME" type="VARCHAR(200)"/>
-      <column name="MISFIRE_INSTR" type="SMALLINT"/>
-      <column name="JOB_DATA" type="BLOB"/>
+      <column name="END_TIME" typeHint="BIGINT"/>
+      <column name="CALENDAR_NAME" typeHint="VARCHAR(200)"/>
+      <column name="MISFIRE_INSTR" typeHint="SMALLINT"/>
+      <column name="JOB_DATA" typeHint="BLOB"/>
     </createTable>
   </changeSet>
   <changeSet author="auto.generated" id="12">

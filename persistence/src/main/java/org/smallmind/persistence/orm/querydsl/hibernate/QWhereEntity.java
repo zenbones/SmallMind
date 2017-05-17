@@ -30,9 +30,31 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.persistence.query;
+package org.smallmind.persistence.orm.querydsl.hibernate;
 
-public interface WhereOperandTransformer {
+import com.querydsl.core.types.EntityPath;
+import org.smallmind.persistence.query.WhereEntity;
 
-  <U, T> U transform (Class<U> clazz, String type, T input);
+public class QWhereEntity implements WhereEntity<EntityPath<?>> {
+
+  private EntityPath<?> entity;
+  private String field;
+
+  public QWhereEntity (EntityPath<?> entity, String field) {
+
+    this.entity = entity;
+    this.field = field;
+  }
+
+  @Override
+  public EntityPath<?> getEntity () {
+
+    return entity;
+  }
+
+  @Override
+  public String getField () {
+
+    return field;
+  }
 }

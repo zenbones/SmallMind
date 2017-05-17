@@ -17,7 +17,7 @@
 
   <bean id="persistence" class="org.smallmind.persistence.Persistence" init-method="register">
     <constructor-arg index="0">
-      <bean class="org.smallmind.nutsnbolts.reflection.type.converter.DefaultStringConverterFactory"/>
+      <bean class="org.smallmind.nutsnbolts.reflection.typeHint.converter.DefaultStringConverterFactory"/>
     </constructor-arg>
     <constructor-arg index="1">
       <bean class="org.smallmind.instrument.config.MetricConfiguration">

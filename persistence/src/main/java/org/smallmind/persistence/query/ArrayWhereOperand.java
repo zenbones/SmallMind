@@ -1,28 +1,28 @@
 /*
  * Copyright (c) 2007, 2008, 2009, 2010, 2011, 2012, 2013, 2014, 2015, 2016, 2017 David Berkman
- * 
+ *
  * This file is part of the SmallMind Code Project.
- * 
+ *
  * The SmallMind Code Project is free software, you can redistribute
  * it and/or modify it under either, at your discretion...
- * 
+ *
  * 1) The terms of GNU Affero General Public License as published by the
  * Free Software Foundation, either version 3 of the License, or (at
  * your option) any later version.
- * 
+ *
  * ...or...
- * 
+ *
  * 2) The terms of the Apache License, Version 2.0.
- * 
+ *
  * The SmallMind Code Project is distributed in the hope that it will
  * be useful, but WITHOUT ANY WARRANTY; without even the implied warranty
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License or Apache License for more details.
- * 
+ *
  * You should have received a copy of the GNU Affero General Public License
  * and the Apache License along with the SmallMind Code Project. If not, see
  * <http://www.gnu.org/licenses/> or <http://www.apache.org/licenses/LICENSE-2.0>.
- * 
+ *
  * Additional permission under the GNU Affero GPL version 3 section 7
  * ------------------------------------------------------------------
  * If you modify this Program, or any covered work, by linking or
@@ -33,43 +33,88 @@
 package org.smallmind.persistence.query;
 
 import java.time.ZonedDateTime;
+import java.util.Date;
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlRootElement;
+import javax.xml.bind.annotation.XmlTransient;
 import javax.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
 import org.smallmind.nutsnbolts.json.ZonedDateTimeXmlAdapter;
 
 @XmlRootElement(name = "array")
-public class ArrayWhereOperand extends WhereOperand<Object[]> {
+public class ArrayWhereOperand implements WhereOperand<Object[], Object[]> {
 
   private static final ZonedDateTimeXmlAdapter ZONED_DATE_TIME_XML_ADAPTER = new ZonedDateTimeXmlAdapter();
 
   private Object[] value;
-  private String type;
+  private String typeHint;
 
   public ArrayWhereOperand () {
 
   }
 
-  public ArrayWhereOperand (String type, Object[] value) {
+  public ArrayWhereOperand (String typeHint, Object[] value) {
 
-    this.type = type;
+    this.typeHint = typeHint;
     this.value = value;
   }
 
-  public static ArrayWhereOperand instance (String type, Object[] value) {
+  public static ArrayWhereOperand instance (String typeHint, Object[] value) {
 
-    return new ArrayWhereOperand(type, value);
+    return new ArrayWhereOperand(typeHint, value);
   }
 
   @Override
-  public Object[] extract (WhereOperandTransformer transformer) {
+  @XmlTransient
+  public Class<? extends Object[]> getTargetClass () {
+
+    switch (typeHint) {
+      case "boolean":
+        return Boolean[].class;
+      case "byte":
+        return Byte[].class;
+      case "character":
+        return Character[].class;
+      case "date":
+        return Date[].class;
+      case "double":
+        return Double[].class;
+      case "float":
+        return Float[].class;
+      case "integer":
+        return Integer[].class;
+      case "long":
+        return Long[].class;
+      case "short":
+        return Short[].class;
+      case "string":
+        return String[].class;
+      default:
+        return Enum[].class;
+    }
+  }
+
+  @Override
+  @XmlElement(name = "type", required = true)
+  public String getTypeHint () {
+
+    return typeHint;
+  }
+
+  public void setTypeHint (String typeHint) {
+
+    this.typeHint = typeHint;
+  }
+
+  @XmlElement(name = "value", required = true)
+  @XmlJavaTypeAdapter(ArrayValueXmlAdapter.class)
+  public Object[] getValue () {
 
     if (value == null) {
 
       return null;
     }
 
-    switch (type) {
+    switch (typeHint) {
       case "boolean":
 
         Boolean[] booleanArray = new Boolean[value.length];
@@ -165,41 +210,8 @@ public class ArrayWhereOperand extends WhereOperand<Object[]> {
         return stringArray;
       default:
 
-        Class<? extends Enum> enumClass;
-
-        if (transformer == null) {
-          throw new WhereValidationException("Translation of enum type(%s) requires an implementation of a WhereOperandTransformer", type);
-        } else if ((enumClass = transformer.getEnumType(type)) == null) {
-          throw new WhereValidationException("Missing a %s capable of transforming enum type(%s)", WhereOperandTransformer.class.getSimpleName(), type);
-        } else {
-
-          Enum[] enums = new Enum[value.length];
-
-          for (int index = 0; index < value.length; index++) {
-            enums[index] = (value[index] == null) ? null : Enum.valueOf(enumClass, value[index].toString());
-          }
-
-          return enums;
-        }
+        return value;
     }
-  }
-
-  @XmlElement(name = "type", required = true)
-  public String getType () {
-
-    return type;
-  }
-
-  public void setType (String type) {
-
-    this.type = type;
-  }
-
-  @XmlElement(name = "value", required = true)
-  @XmlJavaTypeAdapter(ArrayValueXmlAdapter.class)
-  public Object[] getValue () {
-
-    return value;
   }
 
   public void setValue (Object[] value) {

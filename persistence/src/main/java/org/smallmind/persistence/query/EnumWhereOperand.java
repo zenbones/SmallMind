@@ -37,52 +37,43 @@ import javax.xml.bind.annotation.XmlRootElement;
 import javax.xml.bind.annotation.XmlTransient;
 
 @XmlRootElement(name = "enum")
-public class EnumWhereOperand<E extends Enum<E>> extends WhereOperand<E> {
+public class EnumWhereOperand<E extends Enum<E>> implements WhereOperand<Enum, String> {
 
   private String value;
-  private String type;
+  private String typeHint;
 
   public EnumWhereOperand () {
 
   }
 
-  public EnumWhereOperand (String type, E enumeration) {
+  public EnumWhereOperand (String typeHint, E enumeration) {
 
-    this.type = type;
+    this.typeHint = typeHint;
 
     value = enumeration.name();
   }
 
-  public static <E extends Enum<E>> EnumWhereOperand instance (String type, E enumeration) {
+  public static <E extends Enum<E>> EnumWhereOperand instance (String typeHint, E enumeration) {
 
-    return new EnumWhereOperand<>(type, enumeration);
+    return new EnumWhereOperand<>(typeHint, enumeration);
   }
 
   @Override
   @XmlTransient
-  public E extract (WhereOperandTransformer transformer) {
+  public Class<Enum> getTargetClass () {
 
-    Class<? extends Enum> enumClass;
-
-    if (transformer == null) {
-      throw new WhereValidationException("Translation of enum type(%s) requires an implementation of a WhereOperandTransformer", type);
-    }
-    if ((enumClass = transformer.getEnumType(type)) == null) {
-      throw new WhereValidationException("Missing a %s capable of transforming enum type(%s)", WhereOperandTransformer.class.getSimpleName(), type);
-    }
-
-    return (E)Enum.valueOf(enumClass, value);
+    return Enum.class;
   }
 
   @XmlElement(name = "type", required = true)
-  public String getType () {
+  public String getTypeHint () {
 
-    return type;
+    return typeHint;
   }
 
-  public void setType (String type) {
+  public void setTypeHint (String typeHint) {
 
-    this.type = type;
+    this.typeHint = typeHint;
   }
 
   @XmlElement(name = "value", required = true)

@@ -15,9 +15,9 @@
         <xs:element ref="arguments"/>
         <xs:element ref="options" minOccurs="0"/>
       </xs:sequence>
-      <xs:attribute name="name" type="optionName"/>
-      <xs:attribute name="flag" type="optionFlag"/>
-      <xs:attribute name="required" type="xs:boolean" default="false"/>
+      <xs:attribute name="name" typeHint="optionName"/>
+      <xs:attribute name="flag" typeHint="optionFlag"/>
+      <xs:attribute name="required" typeHint="xs:boolean" default="false"/>
     </xs:complexType>
   </xs:element>
 
@@ -25,8 +25,8 @@
     <xs:complexType>
       <xs:choice>
         <xs:element ref="none"/>
-        <xs:element name="single" type="xs:string"/>
-        <xs:element name="list" type="xs:string"/>
+        <xs:element name="single" typeHint="xs:string"/>
+        <xs:element name="list" typeHint="xs:string"/>
         <xs:element ref="enumerated"/>
       </xs:choice>
     </xs:complexType>
@@ -40,7 +40,7 @@
   <xs:element name="enumerated">
     <xs:complexType>
       <xs:sequence minOccurs="1" maxOccurs="unbounded">
-        <xs:element name="value" type="xs:string"/>
+        <xs:element name="value" typeHint="xs:string"/>
       </xs:sequence>
     </xs:complexType>
   </xs:element>
