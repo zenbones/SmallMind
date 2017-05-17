@@ -38,7 +38,7 @@ import org.smallmind.persistence.query.WhereEntity;
 public class CriteriaWhereFieldTransformer extends AbstractWhereFieldTransformer<Class<HibernateDurable<?, ?>>> {
 
   @Override
-  public WhereEntity<Class<HibernateDurable<?, ?>>> getDefault (String name) {
+  public WhereEntity<Class<HibernateDurable<?, ?>>> getDefault (String entity, String name) {
 
     return new CriteriaWhereEntity(null, name);
   }

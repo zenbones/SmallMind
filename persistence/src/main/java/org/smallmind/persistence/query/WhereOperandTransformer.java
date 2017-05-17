@@ -34,5 +34,5 @@ package org.smallmind.persistence.query;
 
 public interface WhereOperandTransformer {
 
-  <U, T> U transform (Class<U> clazz, String type, T input);
+  <U, T> U transform (WhereOperand<U, T> whereOperand);
 }

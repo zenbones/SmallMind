@@ -47,6 +47,7 @@ public class WhereField implements WhereCriterion {
 
   private WhereOperand operand;
   private WhereOperator operator;
+  private String entity;
   private String name;
 
   public WhereField () {
@@ -60,9 +61,20 @@ public class WhereField implements WhereCriterion {
     this.operand = operand;
   }
 
+  public WhereField (String entity, String name, WhereOperator operator, WhereOperand operand) {
+
+    this(name, operator, operand);
+    this.entity = entity;
+  }
+
   public static WhereField instance (String name, WhereOperator operator, WhereOperand operand) {
 
     return new WhereField(name, operator, operand);
+  }
+
+  public static WhereField instance (String entity, String name, WhereOperator operator, WhereOperand operand) {
+
+    return new WhereField(entity, name, operator, operand);
   }
 
   @Override
@@ -70,6 +82,17 @@ public class WhereField implements WhereCriterion {
   public CriterionType getCriterionType () {
 
     return CriterionType.FIELD;
+  }
+
+  @XmlElement(name = "entity")
+  public String getEntity () {
+
+    return entity;
+  }
+
+  public void setEntity (String entity) {
+
+    this.entity = entity;
   }
 
   @XmlElement(name = "name", required = true)

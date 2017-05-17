@@ -32,26 +32,83 @@
  */
 package org.smallmind.persistence.orm.querydsl.hibernate;
 
+import java.lang.reflect.Field;
+import java.util.HashMap;
 import com.querydsl.core.types.EntityPath;
+import org.smallmind.nutsnbolts.reflection.FieldUtility;
+import org.smallmind.persistence.AbstractDurable;
 import org.smallmind.persistence.query.AbstractWhereFieldTransformer;
 import org.smallmind.persistence.query.WhereEntity;
 
 public class QWhereFieldTransformer extends AbstractWhereFieldTransformer<EntityPath<?>> {
 
-  private EntityPath<?> defaultEntity;
+  private HashMap<String, JoinedType<?>> typeMap = new HashMap<>();
 
   public QWhereFieldTransformer () {
 
   }
 
-  public QWhereFieldTransformer (EntityPath<?> defaultEntity) {
+  public synchronized <D extends AbstractDurable<?, D>> QWhereFieldTransformer add (Class<? extends AbstractDurable<?, D>> durableClass, EntityPath<D> entityPath) {
 
-    this.defaultEntity = defaultEntity;
+    typeMap.put(durableClass.getSimpleName(), new JoinedType<>(durableClass, entityPath));
+
+    return this;
   }
 
   @Override
-  public WhereEntity<EntityPath<?>> getDefault (String name) {
+  public synchronized WhereEntity<EntityPath<?>> getDefault (String entity, String name) {
 
-    return new QWhereEntity(defaultEntity, name);
+    JoinedType<?> joinedType;
+
+    if ((joinedType = typeMap.get(entity)) != null) {
+
+      return new QWhereEntity(joinedType.getEntityPath(), name);
+    } else {
+
+      EntityPath<?> entityPath;
+
+      if ((entityPath = deduceEntityPath(name)) != null) {
+
+        return new QWhereEntity(entityPath, name);
+      }
+
+      return new QWhereEntity(null, ((entity != null) && (!entity.isEmpty())) ? entity + '.' + name : name);
+    }
+  }
+
+  private EntityPath<?> deduceEntityPath (String name) {
+
+    for (JoinedType<?> joinedType : typeMap.values()) {
+      for (Field field : FieldUtility.getFields(joinedType.getDurableClass())) {
+        if (field.getName().equals(name)) {
+
+          return joinedType.getEntityPath();
+        }
+      }
+    }
+
+    return null;
+  }
+
+  private class JoinedType<D extends AbstractDurable<?, D>> {
+
+    private Class<? extends AbstractDurable<?, D>> durableClass;
+    private EntityPath<D> entityPath;
+
+    public JoinedType (Class<? extends AbstractDurable<?, D>> durableClass, EntityPath<D> entityPath) {
+
+      this.durableClass = durableClass;
+      this.entityPath = entityPath;
+    }
+
+    public Class<? extends AbstractDurable<?, D>> getDurableClass () {
+
+      return durableClass;
+    }
+
+    public EntityPath<D> getEntityPath () {
+
+      return entityPath;
+    }
   }
 }

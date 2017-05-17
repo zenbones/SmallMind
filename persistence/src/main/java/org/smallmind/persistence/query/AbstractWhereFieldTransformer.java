@@ -43,18 +43,18 @@ public abstract class AbstractWhereFieldTransformer<T> implements WhereFieldTran
     transformMap.put(name, transform);
   }
 
-  public abstract WhereEntity<T> getDefault (String name);
+  public abstract WhereEntity<T> getDefault (String entity, String name);
 
   @Override
-  public synchronized WhereEntity<T> transform (String name) {
+  public synchronized WhereEntity<T> transform (String entity, String name) {
 
     WhereFieldTransform<T> transform;
 
     if ((transform = transformMap.get(name)) == null) {
 
-      return getDefault(name);
+      return getDefault(entity, name);
     }
 
-    return transform.apply(name);
+    return transform.apply(entity, name);
   }
 }

@@ -44,6 +44,7 @@ import javax.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
 public class SortField implements Serializable {
 
   private SortDirection direction;
+  private String entity;
   private String name;
 
   public SortField () {
@@ -56,9 +57,32 @@ public class SortField implements Serializable {
     this.direction = direction;
   }
 
+  public SortField (String entity, String name, SortDirection direction) {
+
+    this(name, direction);
+
+    this.entity = entity;
+  }
+
   public static SortField instance (String name, SortDirection direction) {
 
     return new SortField(name, direction);
+  }
+
+  public static SortField instance (String entity, String name, SortDirection direction) {
+
+    return new SortField(entity, name, direction);
+  }
+
+  @XmlElement(name = "entity")
+  public String getEntity () {
+
+    return entity;
+  }
+
+  public void setEntity (String entity) {
+
+    this.entity = entity;
   }
 
   @XmlElement(name = "name", required = true)

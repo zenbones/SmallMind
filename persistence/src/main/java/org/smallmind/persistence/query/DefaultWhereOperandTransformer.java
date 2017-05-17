@@ -58,45 +58,54 @@ public class DefaultWhereOperandTransformer implements WhereOperandTransformer {
   }
 
   @Override
-  public synchronized <U, T> U transform (Class<U> clazz, String typeHint, T input) {
+  public synchronized <U, T> U transform (WhereOperand<U, T> whereOperand) {
 
-    if (input == null) {
+    T input;
+
+    if ((input = whereOperand.getValue()) == null) {
       return null;
-    } else if (clazz.isAssignableFrom(input.getClass())) {
+    } else {
 
-      return clazz.cast(input);
-    } else if (clazz.isArray()) {
-      if (!input.getClass().isArray()) {
-        throw new ORMOperationException("Attempt to apply non-array type(%s) into array type(%s)", input.getClass().getName(), clazz.getName());
+      Class<? extends U> clazz = whereOperand.getTargetClass();
+
+      if (clazz.isAssignableFrom(input.getClass())) {
+
+        return clazz.cast(input);
+      } else if (clazz.isArray()) {
+        if (!input.getClass().isArray()) {
+          throw new ORMOperationException("Attempt to apply non-array type(%s) into array type(%s)", input.getClass().getName(), clazz.getName());
+        } else {
+
+          WhereOperandTransform<?, Object> transform;
+          String typeHint = whereOperand.getTypeHint();
+
+          if ((transform = (WhereOperandTransform<?, Object>)transformMap.get(new TransformKey<>(clazz.getComponentType(), input.getClass().getComponentType()))) == null) {
+            throw new ORMOperationException("Missing apply from input type(%s) to output(%s) ", typeHint);
+          } else {
+
+            Object[] output;
+            int arrayLength = Array.getLength(input);
+
+            output = (Object[])Array.newInstance(clazz.getComponentType(), arrayLength);
+
+            for (int index = 0; index < arrayLength; index++) {
+              output[index] = transform.apply(typeHint, Array.get(input, index));
+            }
+
+            return clazz.cast(output);
+          }
+        }
       } else {
 
-        WhereOperandTransform<?, Object> transform;
+        WhereOperandTransform<U, T> transform;
+        String typeHint = whereOperand.getTypeHint();
 
-        if ((transform = (WhereOperandTransform<?, Object>)transformMap.get(new TransformKey<>(clazz.getComponentType(), input.getClass().getComponentType()))) == null) {
+        if ((transform = (WhereOperandTransform<U, T>)transformMap.get(new TransformKey<>(clazz, input.getClass()))) == null) {
           throw new ORMOperationException("Missing apply from input type(%s) to output(%s) ", typeHint);
         } else {
 
-          Object[] output;
-          int arrayLength = Array.getLength(input);
-
-          output = (Object[])Array.newInstance(clazz.getComponentType(), arrayLength);
-
-          for (int index = 0; index < arrayLength; index++) {
-            output[index] = transform.apply(typeHint, Array.get(input, index));
-          }
-
-          return clazz.cast(output);
+          return transform.apply(typeHint, input);
         }
-      }
-    } else {
-
-      WhereOperandTransform<U, T> transform;
-
-      if ((transform = (WhereOperandTransform<U, T>)transformMap.get(new TransformKey<>(clazz, input.getClass()))) == null) {
-        throw new ORMOperationException("Missing apply from input type(%s) to output(%s) ", typeHint);
-      } else {
-
-        return transform.apply(typeHint, input);
       }
     }
   }

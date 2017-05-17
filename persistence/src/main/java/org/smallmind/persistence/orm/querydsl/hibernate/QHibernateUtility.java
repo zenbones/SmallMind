@@ -144,8 +144,8 @@ public class QHibernateUtility {
 
   private static Predicate walkField (QApplied<Predicate> qApplied, WhereField whereField, WhereFieldTransformer<EntityPath<?>> fieldTransformer, WhereOperandTransformer operandTransformer) {
 
-    Object fieldValue = operandTransformer.transform(whereField.getOperand().getTargetClass(), whereField.getOperand().getTypeHint(), whereField.getOperand().getValue());
-    WhereEntity<EntityPath<?>> whereEntity = fieldTransformer.transform(whereField.getName());
+    Object fieldValue = operandTransformer.transform(whereField.getOperand());
+    WhereEntity<EntityPath<?>> whereEntity = fieldTransformer.transform(whereField.getEntity(), whereField.getName());
 
     qApplied.add(whereEntity.getEntity());
     switch (whereField.getOperator()) {
@@ -195,7 +195,7 @@ public class QHibernateUtility {
 
       for (SortField sortField : sort.getFields()) {
 
-        WhereEntity<EntityPath<?>> whereEntity = fieldTransformer.transform(sortField.getName());
+        WhereEntity<EntityPath<?>> whereEntity = fieldTransformer.transform(sortField.getEntity(), sortField.getName());
 
         qApplied.add(whereEntity.getEntity());
         switch (sortField.getDirection()) {

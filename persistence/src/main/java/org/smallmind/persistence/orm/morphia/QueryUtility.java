@@ -61,7 +61,7 @@ public class QueryUtility {
     return apply(query, where, WHERE_FIELD_TRANSFORMER, WHERE_OPERAND_TRANSFORMER);
   }
 
-  public static Query<?> apply (Query<?> query, Where where, WhereFieldTransformer<Class<MorphiaDurable<?, ?>>>  fieldTransformer) {
+  public static Query<?> apply (Query<?> query, Where where, WhereFieldTransformer<Class<MorphiaDurable<?, ?>>> fieldTransformer) {
 
     return apply(query, where, fieldTransformer, WHERE_OPERAND_TRANSFORMER);
   }
@@ -132,8 +132,8 @@ public class QueryUtility {
 
   private static Criteria walkField (Query<?> query, WhereField whereField, WhereFieldTransformer<Class<MorphiaDurable<?, ?>>> fieldTransformer, WhereOperandTransformer operandTransformer) {
 
-    FieldEnd<? extends CriteriaContainerImpl> fieldEnd = query.criteria(fieldTransformer.transform(whereField.getName()).getField());
-    Object fieldValue = operandTransformer.transform(whereField.getOperand().getTargetClass(), whereField.getOperand().getTypeHint(), whereField.getOperand().getValue());
+    FieldEnd<? extends CriteriaContainerImpl> fieldEnd = query.criteria(fieldTransformer.transform(whereField.getEntity(), whereField.getName()).getField());
+    Object fieldValue = operandTransformer.transform(whereField.getOperand());
 
     switch (whereField.getOperator()) {
       case LT:
@@ -246,7 +246,7 @@ public class QueryUtility {
 
       for (SortField sortField : sort.getFields()) {
 
-        String fieldName = fieldTransformer.transform(sortField.getName()).getField();
+        String fieldName = fieldTransformer.transform(sortField.getEntity(), sortField.getName()).getField();
 
         if (sortBuilder.length() > 0) {
           sortBuilder.append(", ");

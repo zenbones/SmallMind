@@ -38,7 +38,7 @@ import org.smallmind.persistence.query.WhereEntity;
 public class MorphiaWhereFieldTransformer extends AbstractWhereFieldTransformer<Class<MorphiaDurable<?, ?>>> {
 
   @Override
-  public WhereEntity<Class<MorphiaDurable<?, ?>>> getDefault (String name) {
+  public WhereEntity<Class<MorphiaDurable<?, ?>>> getDefault (String entity, String name) {
 
     return new MorphiaWhereEntity(null, name);
   }
