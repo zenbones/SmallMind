@@ -52,32 +52,46 @@ import org.smallmind.persistence.query.WhereField;
 import org.smallmind.persistence.query.WhereFieldTransformer;
 import org.smallmind.persistence.query.WhereOperandTransformer;
 
-public class HibernateQueryUtility {
+public class QHibernateUtility {
 
   private static final WhereFieldTransformer<EntityPath<?>> WHERE_FIELD_TRANSFORMER = new QWhereFieldTransformer();
   private static final WhereOperandTransformer WHERE_OPERAND_TRANSFORMER = new DefaultWhereOperandTransformer();
 
-  public static Predicate apply (Where where) {
+  public static QApplied<Predicate> apply (Where where) {
 
     return apply(where, WHERE_FIELD_TRANSFORMER, WHERE_OPERAND_TRANSFORMER);
   }
 
-  public static Predicate apply (Where where, WhereFieldTransformer<EntityPath<?>> fieldTransformer) {
+  public static QApplied<Predicate> apply (Where where, WhereFieldTransformer<EntityPath<?>> fieldTransformer) {
 
     return apply(where, fieldTransformer, WHERE_OPERAND_TRANSFORMER);
   }
 
-  public static Predicate apply (Where where, WhereOperandTransformer operandTransformer) {
+  public static QApplied<Predicate> apply (Where where, WhereOperandTransformer operandTransformer) {
 
     return apply(where, WHERE_FIELD_TRANSFORMER, operandTransformer);
   }
 
-  public static Predicate apply (Where where, WhereFieldTransformer<EntityPath<?>> fieldTransformer, WhereOperandTransformer operandTransformer) {
+  public static QApplied<Predicate> apply (Where where, WhereFieldTransformer<EntityPath<?>> fieldTransformer, WhereOperandTransformer operandTransformer) {
 
-    return (where == null) ? null : walkConjunction(where.getRootConjunction(), fieldTransformer, operandTransformer);
+    if (where == null) {
+
+      return null;
+    } else {
+
+      QApplied<Predicate> qApplied = new QApplied<>();
+      Predicate predicate;
+
+      if ((predicate = walkConjunction(new QApplied<>(), where.getRootConjunction(), fieldTransformer, operandTransformer)) == null) {
+
+        return null;
+      }
+
+      return qApplied.set(predicate);
+    }
   }
 
-  private static Predicate walkConjunction (WhereConjunction whereConjunction, WhereFieldTransformer<EntityPath<?>> fieldTransformer, WhereOperandTransformer operandTransformer) {
+  private static Predicate walkConjunction (QApplied<Predicate> qApplied, WhereConjunction whereConjunction, WhereFieldTransformer<EntityPath<?>> fieldTransformer, WhereOperandTransformer operandTransformer) {
 
     if ((whereConjunction == null) || whereConjunction.isEmpty()) {
 
@@ -92,12 +106,12 @@ public class HibernateQueryUtility {
 
           Predicate walkedPredicate;
 
-          if ((walkedPredicate = walkConjunction((WhereConjunction)whereCriterion, fieldTransformer, operandTransformer)) != null) {
+          if ((walkedPredicate = walkConjunction(qApplied, (WhereConjunction)whereCriterion, fieldTransformer, operandTransformer)) != null) {
             predicateList.add(walkedPredicate);
           }
           break;
         case FIELD:
-          predicateList.add(walkField((WhereField)whereCriterion, fieldTransformer, operandTransformer));
+          predicateList.add(walkField(qApplied, (WhereField)whereCriterion, fieldTransformer, operandTransformer));
           break;
         default:
           throw new UnknownSwitchCaseException(whereCriterion.getCriterionType().name());
@@ -128,11 +142,12 @@ public class HibernateQueryUtility {
     }
   }
 
-  private static Predicate walkField (WhereField whereField, WhereFieldTransformer<EntityPath<?>> fieldTransformer, WhereOperandTransformer operandTransformer) {
+  private static Predicate walkField (QApplied<Predicate> qApplied, WhereField whereField, WhereFieldTransformer<EntityPath<?>> fieldTransformer, WhereOperandTransformer operandTransformer) {
 
     Object fieldValue = operandTransformer.transform(whereField.getOperand().getTargetClass(), whereField.getOperand().getTypeHint(), whereField.getOperand().getValue());
     WhereEntity<EntityPath<?>> whereEntity = fieldTransformer.transform(whereField.getName());
 
+    qApplied.add(whereEntity.getEntity());
     switch (whereField.getOperator()) {
       case LT:
         return Expressions.predicate(Ops.LT, Expressions.path(String.class, whereEntity.getEntity(), whereEntity.getField()), Expressions.constant(fieldValue));
@@ -165,15 +180,16 @@ public class HibernateQueryUtility {
     }
   }
 
-  public static OrderSpecifier[] apply (Sort sort) {
+  public static QApplied<OrderSpecifier[]> apply (Sort sort) {
 
     return apply(sort, WHERE_FIELD_TRANSFORMER);
   }
 
-  public static OrderSpecifier[] apply (Sort sort, WhereFieldTransformer<EntityPath<?>> fieldTransformer) {
+  public static QApplied<OrderSpecifier[]> apply (Sort sort, WhereFieldTransformer<EntityPath<?>> fieldTransformer) {
 
     if ((sort != null) && (!sort.isEmpty())) {
 
+      QApplied<OrderSpecifier[]> qApplied = new QApplied<>();
       OrderSpecifier[] orderSpecifiers;
       LinkedList<OrderSpecifier<?>> orderSpecifierList = new LinkedList<>();
 
@@ -181,6 +197,7 @@ public class HibernateQueryUtility {
 
         WhereEntity<EntityPath<?>> whereEntity = fieldTransformer.transform(sortField.getName());
 
+        qApplied.add(whereEntity.getEntity());
         switch (sortField.getDirection()) {
           case ASC:
             orderSpecifierList.add(new OrderSpecifier<>(Order.ASC, Expressions.path(String.class, whereEntity.getEntity(), whereEntity.getField())));
@@ -196,9 +213,9 @@ public class HibernateQueryUtility {
       orderSpecifiers = new OrderSpecifier[orderSpecifierList.size()];
       orderSpecifierList.toArray(orderSpecifiers);
 
-      return orderSpecifiers;
+      return qApplied.set(orderSpecifiers);
     }
 
-    return new OrderSpecifier[0];
+    return null;
   }
 }
