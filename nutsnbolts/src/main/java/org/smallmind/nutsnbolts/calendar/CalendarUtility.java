@@ -78,5 +78,4 @@ public class CalendarUtility {
 
     return weekday;
   }
-
 }
