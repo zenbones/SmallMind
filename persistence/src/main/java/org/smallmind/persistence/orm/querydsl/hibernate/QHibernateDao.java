@@ -39,7 +39,9 @@ import com.querydsl.core.types.Ops;
 import com.querydsl.core.types.dsl.EntityPathBase;
 import com.querydsl.core.types.dsl.Expressions;
 import com.querydsl.core.types.dsl.PathBuilder;
+import com.querydsl.jpa.hibernate.HibernateDeleteClause;
 import com.querydsl.jpa.hibernate.HibernateQuery;
+import com.querydsl.jpa.hibernate.HibernateUpdateClause;
 import org.hibernate.Session;
 import org.hibernate.SessionFactory;
 import org.smallmind.persistence.UpdateMode;
@@ -239,10 +241,34 @@ public class QHibernateDao<I extends Serializable & Comparable<I>, D extends Hib
     return Collections.checkedList(constructQuery(queryDetails).fetch(), returnType);
   }
 
+  public Long updateWithQuery (HibernateUpdateDetails<D> updateDetails) {
+
+    return constructUpdate(updateDetails).execute();
+  }
+
+  public Long deleteWithQuery (HibernateDeleteDetails<D> deleteDetails) {
+
+    return constructDelete(deleteDetails).execute();
+  }
+
   private <T> HibernateQuery<T> constructQuery (HibernateQueryDetails<T> queryDetails) {
 
     HibernateQuery<T> query = new HibernateQuery<T>(getSession().getNativeSession());
 
     return queryDetails.completeQuery(query);
+  }
+
+  private <T> HibernateUpdateClause constructUpdate (HibernateUpdateDetails<T> updateDetails) {
+
+    HibernateUpdateClause updateClause = new HibernateUpdateClause(getSession().getNativeSession(), updateDetails.getEntityPath());
+
+    return updateDetails.completeUpdate(updateClause);
+  }
+
+  private <T> HibernateDeleteClause constructDelete (HibernateDeleteDetails<T> deleteDetails) {
+
+    HibernateDeleteClause deleteClause = new HibernateDeleteClause(getSession().getNativeSession(), deleteDetails.getEntityPath());
+
+    return deleteDetails.completeDelete(deleteClause);
   }
 }
