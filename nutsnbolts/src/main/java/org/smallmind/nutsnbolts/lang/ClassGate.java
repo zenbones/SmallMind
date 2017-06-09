@@ -37,16 +37,16 @@ import java.net.URL;
 
 public interface ClassGate {
 
-  public static final long STATIC_CLASS = 0;
+  long STATIC_CLASS = 0;
 
-  public abstract ClassStreamTicket getClassAsTicket (String name)
+  ClassStreamTicket getClassAsTicket (String name)
     throws Exception;
 
-  public abstract URL getResource (String path)
+  URL getResource (String path)
     throws Exception;
 
-  public abstract InputStream getResourceAsStream (String path)
+  InputStream getResourceAsStream (String path)
     throws Exception;
 
-  public abstract long getLastModDate (String path);
+  long getLastModDate (String path);
 }
