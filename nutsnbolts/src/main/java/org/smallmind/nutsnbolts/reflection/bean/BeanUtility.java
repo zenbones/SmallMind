@@ -37,13 +37,18 @@ import java.lang.reflect.Method;
 import java.util.concurrent.ConcurrentHashMap;
 import org.smallmind.nutsnbolts.reflection.type.converter.DefaultStringConverterFactory;
 import org.smallmind.nutsnbolts.reflection.type.converter.StringConversionException;
-import org.smallmind.nutsnbolts.reflection.type.converter.StringConverter;
 import org.smallmind.nutsnbolts.reflection.type.converter.StringConverterFactory;
 
 public class BeanUtility {
 
   private static final ConcurrentHashMap<MethodKey, Method> GETTER_MAP = new ConcurrentHashMap<MethodKey, Method>();
-  private static final ConcurrentHashMap<MethodKey, MethodTool> SETTER_MAP = new ConcurrentHashMap<MethodKey, MethodTool>();
+  private static final ConcurrentHashMap<MethodKey, Method> SETTER_MAP = new ConcurrentHashMap<MethodKey, Method>();
+
+  public static Object convertFromString (Class conversionClass, String value, boolean nullable)
+    throws StringConversionException, BeanInvocationException {
+
+    return convertFromString(DefaultStringConverterFactory.getInstance(), conversionClass, value, nullable);
+  }
 
   public static Object convertFromString (StringConverterFactory stringConverterFactory, Class conversionClass, String value, boolean nullable)
     throws StringConversionException, BeanInvocationException {
@@ -84,26 +89,16 @@ public class BeanUtility {
 
       // As this executes a 'get' the last segment is taken as a getter
       return acquireGetterMethod(currentTarget, methodComponents[methodComponents.length - 1]).invoke(currentTarget);
-    }
-    catch (BeanAccessException beanAccessException) {
+    } catch (BeanAccessException beanAccessException) {
       throw beanAccessException;
-    }
-    catch (Exception exception) {
+    } catch (Exception exception) {
       throw new BeanInvocationException(exception);
     }
   }
 
-  public static Class<?> executeSet (Object target, String methodName, String value)
+  public static void executeSet (Object target, String methodName, Object value)
     throws BeanAccessException, BeanInvocationException {
 
-    return executeSet(DefaultStringConverterFactory.getInstance(), target, methodName, value);
-  }
-
-  public static Class<?> executeSet (StringConverterFactory stringConverterFactory, Object target, String methodName, String value)
-    throws BeanAccessException, BeanInvocationException {
-
-    MethodTool setterTool;
-    Method getterMethod;
     Object currentTarget;
     String[] methodComponents;
 
@@ -114,21 +109,21 @@ public class BeanUtility {
     try {
       // Every segment but the last is taken as a getter method
       for (int count = 0; count < methodComponents.length - 1; count++) {
-        if ((currentTarget = (getterMethod = acquireGetterMethod(currentTarget, methodComponents[count])).invoke(currentTarget)) == null) {
+
+        Method getterMethod;
+
+        if ((getterMethod = acquireGetterMethod(currentTarget, methodComponents[count])) == null) {
+          throw new BeanAccessException("Missing 'getter' for method(%s) in chain(%s)", methodComponents[count], methodName);
+        } else if ((currentTarget = getterMethod.invoke(currentTarget)) == null) {
           throw new BeanAccessException("The 'getter' method(%s) in chain(%s) returned a 'null' component", getterMethod.getName(), methodName);
         }
       }
 
-      // As this executes a 'set' the last segment is taken as a setter, and setters are stored with a String converter that returns the setter's proper parameter type
-      setterTool = acquireSetterTool(stringConverterFactory, currentTarget, methodComponents[methodComponents.length - 1]);
-      setterTool.getMethod().invoke(currentTarget, ((value == null) || (value.length() == 0)) ? null : setterTool.getConverter().convert(value));
-
-      return setterTool.getConverter().getType();
-    }
-    catch (BeanAccessException beanAccessException) {
+      // As this executes a 'set' the last segment is taken as a setter
+      acquireSetterMethod(currentTarget, methodComponents[methodComponents.length - 1]).invoke(currentTarget, value);
+    } catch (BeanAccessException beanAccessException) {
       throw beanAccessException;
-    }
-    catch (Exception exception) {
+    } catch (Exception exception) {
       throw new BeanInvocationException(exception);
     }
   }
@@ -145,16 +140,14 @@ public class BeanUtility {
       try {
         // Is there a method with a proper getter name 'getXXX'
         getterMethod = target.getClass().getMethod(asGetterName(name));
-      }
-      catch (NoSuchMethodException noGetterException) {
+      } catch (NoSuchMethodException noGetterException) {
         try {
           // If not, is there a boolean version 'isXXX'
           getterMethod = target.getClass().getMethod(asIsName(name));
           if (!(Boolean.class.equals(getterMethod.getReturnType()) || boolean.class.equals(getterMethod.getReturnType()))) {
             throw new BeanAccessException("Found an 'is' method(%s) on class(%s), but it doesn't return a 'boolean' type", getterMethod.getName(), target.getClass().getName());
           }
-        }
-        catch (NoSuchMethodException noIsException) {
+        } catch (NoSuchMethodException noIsException) {
           throw new BeanAccessException("No 'getter' method(%s or %s) found on class(%s)", asGetterName(name), asIsName(name), target.getClass().getName());
         }
       }
@@ -165,31 +158,24 @@ public class BeanUtility {
     return getterMethod;
   }
 
-  private static MethodTool acquireSetterTool (StringConverterFactory stringConverterFactory, Object target, String name)
-    throws StringConversionException, BeanAccessException {
+  private static Method acquireSetterMethod (Object target, String name)
+    throws BeanAccessException {
 
-    MethodTool setterTool;
+    Method setterMethod;
     MethodKey methodKey;
-    String setterName = asSetterName(name);
 
     methodKey = new MethodKey(target.getClass(), name);
     // Check if we've already got it
-    if ((setterTool = SETTER_MAP.get(methodKey)) == null) {
-      // Look for a properly named method
-      for (Method possibleMethod : target.getClass().getMethods()) {
-        // Make sure the setter takes a single parameter, and get the String converter for it
-        if (possibleMethod.getName().equals(setterName) && (possibleMethod.getParameterTypes().length == 1)) {
-          SETTER_MAP.put(methodKey, setterTool = new MethodTool(possibleMethod, stringConverterFactory.getStringConverter(getParameterClass(possibleMethod))));
-          break;
-        }
+    if ((setterMethod = SETTER_MAP.get(methodKey)) == null) {
+      try {
+        // Is there a method with a proper setter name 'setXXX'
+        SETTER_MAP.put(methodKey, setterMethod = target.getClass().getMethod(asSetterName(name)));
+      } catch (NoSuchMethodException noSetterException) {
+        throw new BeanAccessException("No 'setter' method(%s) found on class(%s)", asSetterName(name), target.getClass().getName());
       }
     }
 
-    if (setterTool == null) {
-      throw new BeanAccessException("No 'setter' method(%s) found on class(%s)", setterName, target.getClass().getName());
-    }
-
-    return setterTool;
+    return setterMethod;
   }
 
   private static Class getParameterClass (Method setterMethod) {
@@ -236,28 +222,6 @@ public class BeanUtility {
     setterBuilder.insert(0, "set");
 
     return setterBuilder.toString();
-  }
-
-  private static class MethodTool {
-
-    private Method method;
-    private StringConverter converter;
-
-    private MethodTool (Method method, StringConverter converter) {
-
-      this.method = method;
-      this.converter = converter;
-    }
-
-    public Method getMethod () {
-
-      return method;
-    }
-
-    public StringConverter getConverter () {
-
-      return converter;
-    }
   }
 
   private static class MethodKey {
