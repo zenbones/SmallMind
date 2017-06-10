@@ -217,7 +217,7 @@ public class BeanUtility {
     methodKey = new MethodKey(target.getClass(), name);
     // Check if we've already got it
     if ((setterMethod = SETTER_MAP.get(methodKey)) == null) {
-      if ((setterMethod = findMethod(target, name, value.getClass())) == null) {
+      if ((setterMethod = findMethod(target, asSetterName(name), value.getClass())) == null) {
         throw new BeanAccessException("No 'setter' method(%s) found in class(%s)", asSetterName(name), target.getClass().getName());
       }
       SETTER_MAP.put(methodKey, setterMethod);
@@ -256,7 +256,7 @@ public class BeanUtility {
     throws BeanAccessException {
 
     for (Method method : target.getClass().getMethods()) {
-      if (method.getName().endsWith(name) && hasParameterTypes(method, parameterTypes)) {
+      if (method.getName().equals(name) && hasParameterTypes(method, parameterTypes)) {
 
         return method;
       }
