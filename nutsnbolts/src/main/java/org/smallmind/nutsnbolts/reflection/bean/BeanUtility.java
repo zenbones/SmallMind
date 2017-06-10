@@ -36,6 +36,7 @@ import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;
 import java.util.Arrays;
 import java.util.concurrent.ConcurrentHashMap;
+import org.smallmind.nutsnbolts.reflection.type.TypeUtility;
 import org.smallmind.nutsnbolts.reflection.type.converter.DefaultStringConverterFactory;
 import org.smallmind.nutsnbolts.reflection.type.converter.StringConversionException;
 import org.smallmind.nutsnbolts.reflection.type.converter.StringConverterFactory;
@@ -194,10 +195,10 @@ public class BeanUtility {
           // If not, is there a boolean version 'isXXX'
           getterMethod = target.getClass().getMethod(asIsName(name));
           if (!(Boolean.class.equals(getterMethod.getReturnType()) || boolean.class.equals(getterMethod.getReturnType()))) {
-            throw new BeanAccessException("Found an 'is' method(%s) on class(%s), but it doesn't return a 'boolean' type", getterMethod.getName(), target.getClass().getName());
+            throw new BeanAccessException("Found an 'is' method(%s) in class(%s), but it doesn't return a 'boolean' type", getterMethod.getName(), target.getClass().getName());
           }
         } catch (NoSuchMethodException noIsException) {
-          throw new BeanAccessException("No 'getter' method(%s or %s) found on class(%s)", asGetterName(name), asIsName(name), target.getClass().getName());
+          throw new BeanAccessException("No 'getter' method(%s or %s) found in class(%s)", asGetterName(name), asIsName(name), target.getClass().getName());
         }
       }
 
@@ -216,12 +217,10 @@ public class BeanUtility {
     methodKey = new MethodKey(target.getClass(), name);
     // Check if we've already got it
     if ((setterMethod = SETTER_MAP.get(methodKey)) == null) {
-      try {
-        // Is there a method with a proper setter name 'setXXX'
-        SETTER_MAP.put(methodKey, setterMethod = target.getClass().getMethod(asSetterName(name), value.getClass()));
-      } catch (NoSuchMethodException noSetterException) {
-        throw new BeanAccessException("No 'setter' method(%s) found on class(%s)", asSetterName(name), target.getClass().getName());
+      if ((setterMethod = findMethod(target, name, value.getClass())) == null) {
+        throw new BeanAccessException("No 'setter' method(%s) found in class(%s)", asSetterName(name), target.getClass().getName());
       }
+      SETTER_MAP.put(methodKey, setterMethod);
     }
 
     return setterMethod;
@@ -244,15 +243,47 @@ public class BeanUtility {
           parameterTypes[parameterIndex] = values[parameterIndex].getClass();
         }
       }
-
-      try {
-        METHOD_MAP.put(methodKey, method = target.getClass().getMethod(name, parameterTypes));
-      } catch (NoSuchMethodException noMethodException) {
-        throw new BeanAccessException("No method(%s) for parameter types(%s) found on class(%s)", name, Arrays.toString(parameterTypes), target.getClass().getName());
+      if ((method = findMethod(target, name, parameterTypes)) == null) {
+        throw new BeanAccessException("No method(%s) for parameter types(%s) found in class(%s)", name, Arrays.toString(parameterTypes), target.getClass().getName());
       }
+      METHOD_MAP.put(methodKey, method);
     }
 
     return method;
+  }
+
+  private static Method findMethod (Object target, String name, Class... parameterTypes)
+    throws BeanAccessException {
+
+    for (Method method : target.getClass().getMethods()) {
+      if (method.getName().endsWith(name) && hasParameterTypes(method, parameterTypes)) {
+
+        return method;
+      }
+    }
+
+    return null;
+  }
+
+  private static boolean hasParameterTypes (Method method, Class... parameterTypes) {
+
+    if (method.getParameterCount() != ((parameterTypes == null) ? 0 : parameterTypes.length)) {
+
+      return false;
+    }
+    if (method.getParameterCount() > 0) {
+
+      int index = 0;
+
+      for (Class<?> parameterType : method.getParameterTypes()) {
+        if (!TypeUtility.isEssentiallyTheSameAs(parameterType, parameterTypes[index++])) {
+
+          return false;
+        }
+      }
+    }
+
+    return true;
   }
 
   private static String asGetterName (String name) {
