@@ -34,6 +34,7 @@ package org.smallmind.nutsnbolts.reflection.bean;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;
+import java.util.Arrays;
 import java.util.concurrent.ConcurrentHashMap;
 import org.smallmind.nutsnbolts.reflection.type.converter.DefaultStringConverterFactory;
 import org.smallmind.nutsnbolts.reflection.type.converter.StringConversionException;
@@ -41,8 +42,9 @@ import org.smallmind.nutsnbolts.reflection.type.converter.StringConverterFactory
 
 public class BeanUtility {
 
-  private static final ConcurrentHashMap<MethodKey, Method> GETTER_MAP = new ConcurrentHashMap<MethodKey, Method>();
-  private static final ConcurrentHashMap<MethodKey, Method> SETTER_MAP = new ConcurrentHashMap<MethodKey, Method>();
+  private static final ConcurrentHashMap<MethodKey, Method> GETTER_MAP = new ConcurrentHashMap<>();
+  private static final ConcurrentHashMap<MethodKey, Method> SETTER_MAP = new ConcurrentHashMap<>();
+  private static final ConcurrentHashMap<MethodKey, Method> METHOD_MAP = new ConcurrentHashMap<>();
 
   public static Object convertFromString (Class conversionClass, String value, boolean nullable)
     throws StringConversionException, BeanInvocationException {
@@ -62,6 +64,22 @@ public class BeanUtility {
     }
 
     return stringConverterFactory.getStringConverter(conversionClass).convert(value);
+  }
+
+  private static Class getParameterClass (Method setterMethod) {
+
+    Annotation[][] parameterAnnotations;
+
+    if ((parameterAnnotations = setterMethod.getParameterAnnotations()).length > 0) {
+      for (Annotation annotation : parameterAnnotations[0]) {
+        if (annotation instanceof TypeHint) {
+
+          return ((TypeHint)annotation).value();
+        }
+      }
+    }
+
+    return setterMethod.getParameterTypes()[0];
   }
 
   public static Object executeGet (Object target, String methodName, boolean nullable)
@@ -104,28 +122,59 @@ public class BeanUtility {
 
     // Split the method into dot-notated segments
     methodComponents = methodName.split("\\.", -1);
-    currentTarget = target;
+    currentTarget = traverseComponents(target, methodName, methodComponents);
 
     try {
-      // Every segment but the last is taken as a getter method
-      for (int count = 0; count < methodComponents.length - 1; count++) {
-
-        Method getterMethod;
-
-        if ((getterMethod = acquireGetterMethod(currentTarget, methodComponents[count])) == null) {
-          throw new BeanAccessException("Missing 'getter' for method(%s) in chain(%s)", methodComponents[count], methodName);
-        } else if ((currentTarget = getterMethod.invoke(currentTarget)) == null) {
-          throw new BeanAccessException("The 'getter' method(%s) in chain(%s) returned a 'null' component", getterMethod.getName(), methodName);
-        }
-      }
-
       // As this executes a 'set' the last segment is taken as a setter
-      acquireSetterMethod(currentTarget, methodComponents[methodComponents.length - 1]).invoke(currentTarget, value);
-    } catch (BeanAccessException beanAccessException) {
-      throw beanAccessException;
+      acquireSetterMethod(currentTarget, methodComponents[methodComponents.length - 1], value).invoke(currentTarget, value);
     } catch (Exception exception) {
       throw new BeanInvocationException(exception);
     }
+  }
+
+  public static void execute (Object target, String methodName, Object... values)
+    throws BeanAccessException, BeanInvocationException {
+
+    Object currentTarget;
+    String[] methodComponents;
+
+    // Split the method into dot-notated segments
+    methodComponents = methodName.split("\\.", -1);
+    currentTarget = traverseComponents(target, methodName, methodComponents);
+
+    try {
+      // As this executes a 'set' the last segment is taken as a setter
+      acquireMethod(currentTarget, methodComponents[methodComponents.length - 1], values).invoke(currentTarget, values);
+    } catch (Exception exception) {
+      throw new BeanInvocationException(exception);
+    }
+  }
+
+  private static Object traverseComponents (Object target, String methodName, String... methodComponents)
+    throws BeanAccessException, BeanInvocationException {
+
+    Object currentTarget = target;
+
+    if ((methodComponents != null) && (methodComponents.length > 0)) {
+      try {
+        for (int count = 0; count < methodComponents.length - 1; count++) {
+
+          Method getterMethod;
+
+          if ((getterMethod = acquireGetterMethod(currentTarget, methodComponents[count])) == null) {
+            throw new BeanAccessException("Missing 'getter' for method(%s) in chain(%s)", methodComponents[count], methodName);
+          } else if ((currentTarget = getterMethod.invoke(currentTarget)) == null) {
+            throw new BeanAccessException("The 'getter' method(%s) in chain(%s) returned a 'null' component", getterMethod.getName(), methodName);
+          }
+        }
+      } catch (BeanAccessException beanAccessException) {
+        throw beanAccessException;
+      } catch (Exception exception) {
+        throw new BeanInvocationException(exception);
+      }
+    }
+
+    return currentTarget;
   }
 
   private static Method acquireGetterMethod (Object target, String name)
@@ -158,7 +207,7 @@ public class BeanUtility {
     return getterMethod;
   }
 
-  private static Method acquireSetterMethod (Object target, String name)
+  private static Method acquireSetterMethod (Object target, String name, Object value)
     throws BeanAccessException {
 
     Method setterMethod;
@@ -169,7 +218,7 @@ public class BeanUtility {
     if ((setterMethod = SETTER_MAP.get(methodKey)) == null) {
       try {
         // Is there a method with a proper setter name 'setXXX'
-        SETTER_MAP.put(methodKey, setterMethod = target.getClass().getMethod(asSetterName(name)));
+        SETTER_MAP.put(methodKey, setterMethod = target.getClass().getMethod(asSetterName(name), value.getClass()));
       } catch (NoSuchMethodException noSetterException) {
         throw new BeanAccessException("No 'setter' method(%s) found on class(%s)", asSetterName(name), target.getClass().getName());
       }
@@ -178,20 +227,32 @@ public class BeanUtility {
     return setterMethod;
   }
 
-  private static Class getParameterClass (Method setterMethod) {
+  private static Method acquireMethod (Object target, String name, Object... values)
+    throws BeanAccessException {
 
-    Annotation[][] parameterAnnotations;
+    Method method;
+    MethodKey methodKey;
 
-    if ((parameterAnnotations = setterMethod.getParameterAnnotations()).length > 0) {
-      for (Annotation annotation : parameterAnnotations[0]) {
-        if (annotation instanceof TypeHint) {
+    methodKey = new MethodKey(target.getClass(), name);
+    // Check if we've already got it
+    if ((method = METHOD_MAP.get(methodKey)) == null) {
 
-          return ((TypeHint)annotation).value();
+      Class[] parameterTypes = new Class[(values == null) ? 0 : values.length];
+
+      if ((values != null) && (values.length > 0)) {
+        for (int parameterIndex = 0; parameterIndex < values.length; parameterIndex++) {
+          parameterTypes[parameterIndex] = values[parameterIndex].getClass();
         }
+      }
+
+      try {
+        METHOD_MAP.put(methodKey, method = target.getClass().getMethod(name, parameterTypes));
+      } catch (NoSuchMethodException noMethodException) {
+        throw new BeanAccessException("No method(%s) for parameter types(%s) found on class(%s)", name, Arrays.toString(parameterTypes), target.getClass().getName());
       }
     }
 
-    return setterMethod.getParameterTypes()[0];
+    return method;
   }
 
   private static String asGetterName (String name) {
