@@ -52,7 +52,7 @@ public class TypeUtility {
     return true;
   }
 
-  public static boolean isEssentiallyTheSameAs (Class expectedClass, Class actualClass) {
+  public static boolean isEssentiallyTheSameAs (Class<?> expectedClass, Class<?> actualClass) {
 
     if (actualClass.isPrimitive() || expectedClass.isPrimitive()) {
       if (long.class.equals(actualClass) || (Long.class.equals(actualClass))) {
