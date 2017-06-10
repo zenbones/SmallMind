@@ -114,7 +114,7 @@ public class BeanUtility {
     }
   }
 
-  public static void executeSet (Object target, String methodName, Object value)
+  public static Object executeSet (Object target, String methodName, Object value)
     throws BeanAccessException, BeanInvocationException {
 
     Object currentTarget;
@@ -126,13 +126,13 @@ public class BeanUtility {
 
     try {
       // As this executes a 'set' the last segment is taken as a setter
-      acquireSetterMethod(currentTarget, methodComponents[methodComponents.length - 1], value).invoke(currentTarget, value);
+      return acquireSetterMethod(currentTarget, methodComponents[methodComponents.length - 1], value).invoke(currentTarget, value);
     } catch (Exception exception) {
       throw new BeanInvocationException(exception);
     }
   }
 
-  public static void execute (Object target, String methodName, Object... values)
+  public static Object execute (Object target, String methodName, Object... values)
     throws BeanAccessException, BeanInvocationException {
 
     Object currentTarget;
@@ -144,7 +144,7 @@ public class BeanUtility {
 
     try {
       // As this executes a 'set' the last segment is taken as a setter
-      acquireMethod(currentTarget, methodComponents[methodComponents.length - 1], values).invoke(currentTarget, values);
+      return acquireMethod(currentTarget, methodComponents[methodComponents.length - 1], values).invoke(currentTarget, values);
     } catch (Exception exception) {
       throw new BeanInvocationException(exception);
     }
