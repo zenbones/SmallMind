@@ -67,7 +67,7 @@ public class BeanUtility {
     return stringConverterFactory.getStringConverter(conversionClass).convert(value);
   }
 
-  private static Class getParameterClass (Method setterMethod) {
+  public static Class getParameterClass (Method setterMethod) {
 
     Annotation[][] parameterAnnotations;
 
@@ -81,6 +81,36 @@ public class BeanUtility {
     }
 
     return setterMethod.getParameterTypes()[0];
+  }
+
+  public static String asGetterName (String name) {
+
+    StringBuilder getterBuilder = new StringBuilder(name);
+
+    getterBuilder.setCharAt(0, Character.toUpperCase(getterBuilder.charAt(0)));
+    getterBuilder.insert(0, "get");
+
+    return getterBuilder.toString();
+  }
+
+  public static String asIsName (String name) {
+
+    StringBuilder isBuilder = new StringBuilder(name);
+
+    isBuilder.setCharAt(0, Character.toUpperCase(isBuilder.charAt(0)));
+    isBuilder.insert(0, "is");
+
+    return isBuilder.toString();
+  }
+
+  public static String asSetterName (String name) {
+
+    StringBuilder setterBuilder = new StringBuilder(name);
+
+    setterBuilder.setCharAt(0, Character.toUpperCase(setterBuilder.charAt(0)));
+    setterBuilder.insert(0, "set");
+
+    return setterBuilder.toString();
   }
 
   public static Object executeGet (Object target, String methodName, boolean nullable)
@@ -284,36 +314,6 @@ public class BeanUtility {
     }
 
     return true;
-  }
-
-  private static String asGetterName (String name) {
-
-    StringBuilder getterBuilder = new StringBuilder(name);
-
-    getterBuilder.setCharAt(0, Character.toUpperCase(getterBuilder.charAt(0)));
-    getterBuilder.insert(0, "get");
-
-    return getterBuilder.toString();
-  }
-
-  private static String asIsName (String name) {
-
-    StringBuilder isBuilder = new StringBuilder(name);
-
-    isBuilder.setCharAt(0, Character.toUpperCase(isBuilder.charAt(0)));
-    isBuilder.insert(0, "is");
-
-    return isBuilder.toString();
-  }
-
-  private static String asSetterName (String name) {
-
-    StringBuilder setterBuilder = new StringBuilder(name);
-
-    setterBuilder.setCharAt(0, Character.toUpperCase(setterBuilder.charAt(0)));
-    setterBuilder.insert(0, "set");
-
-    return setterBuilder.toString();
   }
 
   private static class MethodKey {
