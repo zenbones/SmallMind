@@ -1,28 +1,28 @@
 /*
  * Copyright (c) 2007, 2008, 2009, 2010, 2011, 2012, 2013, 2014, 2015, 2016, 2017 David Berkman
- * 
+ *
  * This file is part of the SmallMind Code Project.
- * 
+ *
  * The SmallMind Code Project is free software, you can redistribute
  * it and/or modify it under either, at your discretion...
- * 
+ *
  * 1) The terms of GNU Affero General Public License as published by the
  * Free Software Foundation, either version 3 of the License, or (at
  * your option) any later version.
- * 
+ *
  * ...or...
- * 
+ *
  * 2) The terms of the Apache License, Version 2.0.
- * 
+ *
  * The SmallMind Code Project is distributed in the hope that it will
  * be useful, but WITHOUT ANY WARRANTY; without even the implied warranty
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License or Apache License for more details.
- * 
+ *
  * You should have received a copy of the GNU Affero General Public License
  * and the Apache License along with the SmallMind Code Project. If not, see
  * <http://www.gnu.org/licenses/> or <http://www.apache.org/licenses/LICENSE-2.0>.
- * 
+ *
  * Additional permission under the GNU Affero GPL version 3 section 7
  * ------------------------------------------------------------------
  * If you modify this Program, or any covered work, by linking or
@@ -33,6 +33,7 @@
 package org.smallmind.nutsnbolts.lang;
 
 import java.io.BufferedInputStream;
+import java.io.Closeable;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -97,8 +98,7 @@ public class ClasspathClassGate implements ClassGate {
         if ((classStream = findJarStream(pathComponent, classFileName)) != null) {
           return new ClassStreamTicket(classStream, ClassGate.STATIC_CLASS);
         }
-      }
-      else {
+      } else {
 
         File classFile;
         long timeStamp;
@@ -127,8 +127,7 @@ public class ClasspathClassGate implements ClassGate {
 
           return new URL("jar:file://" + rectifyPath(pathComponent) + "!/" + jarLocator.getJarEntry().getName());
         }
-      }
-      else {
+      } else {
 
         File resourceFile;
 
@@ -159,8 +158,7 @@ public class ClasspathClassGate implements ClassGate {
         if ((resourceStream = findJarStream(pathComponent, path)) != null) {
           return resourceStream;
         }
-      }
-      else {
+      } else {
 
         File resourceFile;
 
@@ -176,13 +174,14 @@ public class ClasspathClassGate implements ClassGate {
   private InputStream findJarStream (String jarComponentPath, String path)
     throws IOException {
 
-    JarLocator jarLocator;
+    try (JarLocator jarLocator = findJarLocator(jarComponentPath, path)) {
 
-    if ((jarLocator = findJarLocator(jarComponentPath, path)) != null) {
-      return new BufferedInputStream(jarLocator.getInputStream());
+      if (jarLocator != null) {
+        return new BufferedInputStream(jarLocator.getInputStream());
+      }
+
+      return null;
     }
-
-    return null;
   }
 
   private JarLocator findJarLocator (String jarComponentPath, String path)
@@ -216,7 +215,7 @@ public class ClasspathClassGate implements ClassGate {
     return null;
   }
 
-  private class JarLocator {
+  private class JarLocator implements Closeable {
 
     private JarFile jarFile;
     private JarEntry jarEntry;
@@ -236,6 +235,13 @@ public class ClasspathClassGate implements ClassGate {
       throws IOException {
 
       return jarFile.getInputStream(jarFile.getEntry(jarEntry.getName()));
+    }
+
+    @Override
+    public void close ()
+      throws IOException {
+
+      jarFile.close();
     }
   }
 }
