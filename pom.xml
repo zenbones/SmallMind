@@ -105,24 +105,25 @@
   </properties>
 
   <modules>
-    <module>license</module>
-    <module>nutsnbolts</module>
-    <module>spark</module>
+    <module>artifact</module>
     <module>forge</module>
     <module>foundation</module>
-    <module>scribe</module>
-    <module>artifact</module>
-    <module>liquibase</module>
     <module>instrument</module>
+    <module>javafx</module>
+    <module>license</module>
+    <module>liquibase</module>
     <module>memcached</module>
-    <module>quorum</module>
+    <module>nutsnbolts</module>
     <module>persistence</module>
     <module>phalanx</module>
-    <module>scheduling</module>
+    <module>quorum</module>
     <module>seda</module>
-    <module>web</module>
+    <module>scheduling</module>
+    <module>scribe</module>
+    <module>sleuth</module>
+    <module>spark</module>
     <module>swing</module>
-    <module>javafx</module>
+    <module>web</module> 
     <module>wicket</module>
   </modules>
 
