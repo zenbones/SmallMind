@@ -1,28 +1,28 @@
 /*
  * Copyright (c) 2007, 2008, 2009, 2010, 2011, 2012, 2013, 2014, 2015, 2016, 2017 David Berkman
- * 
+ *
  * This file is part of the SmallMind Code Project.
- * 
+ *
  * The SmallMind Code Project is free software, you can redistribute
  * it and/or modify it under either, at your discretion...
- * 
+ *
  * 1) The terms of GNU Affero General Public License as published by the
  * Free Software Foundation, either version 3 of the License, or (at
  * your option) any later version.
- * 
+ *
  * ...or...
- * 
+ *
  * 2) The terms of the Apache License, Version 2.0.
- * 
+ *
  * The SmallMind Code Project is distributed in the hope that it will
  * be useful, but WITHOUT ANY WARRANTY; without even the implied warranty
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License or Apache License for more details.
- * 
+ *
  * You should have received a copy of the GNU Affero General Public License
  * and the Apache License along with the SmallMind Code Project. If not, see
  * <http://www.gnu.org/licenses/> or <http://www.apache.org/licenses/LICENSE-2.0>.
- * 
+ *
  * Additional permission under the GNU Affero GPL version 3 section 7
  * ------------------------------------------------------------------
  * If you modify this Program, or any covered work, by linking or
@@ -88,93 +88,87 @@ public abstract class AnnotationLiteral<A extends Annotation> implements Annotat
   }
 
   @Override
-  public boolean equals (Object other) {
+  public boolean equals (Object obj) {
 
-    Method[] methods = (Method[])AccessController.doPrivileged(new PrivilegedAction() {
+    Method[] methods = AccessController.doPrivileged((PrivilegedAction<Method[]>)() -> annotationType.getDeclaredMethods());
 
-      public Object run () {
-
-        return annotationType.getDeclaredMethods();
-      }
-    });
-
-    if (other == this) {
+    if (obj == this) {
       return true;
     }
-
-    if (other == null) {
+    if (obj == null) {
       return false;
     }
 
-    if (other instanceof Annotation) {
-      Annotation annotOther = (Annotation)other;
-      if (this.annotationType().equals(annotOther.annotationType())) {
+    if (obj instanceof Annotation) {
+
+      Annotation other = (Annotation)obj;
+
+      if (this.annotationType().equals(other.annotationType())) {
         for (Method method : methods) {
-          Object value = callMethod(this, method);
-          Object annotValue = callMethod(annotOther, method);
 
-          if ((value == null && annotValue != null) || (value != null && annotValue == null)) {
-            return false;
-          }
+          Object thisValue = callMethod(this, method);
+          Object otherValue = callMethod(other, method);
 
-          if (value == null && annotValue == null) {
-            continue;
-          }
+          if ((thisValue != null) || (otherValue != null)) {
+            if (thisValue == null || otherValue == null) {
 
-          Class<?> valueClass = value.getClass();
-          Class<?> annotValueClass = annotValue.getClass();
-
-          if (valueClass.isPrimitive() && annotValueClass.isPrimitive()) {
-            if ((valueClass != Float.TYPE && annotValue != Float.TYPE)
-                  || (valueClass != Double.TYPE && annotValue != Double.TYPE)) {
-              if (value != annotValue) {
-                return false;
-              }
-            }
-          } else if (valueClass.isArray() && annotValueClass.isArray()) {
-            Class<?> type = valueClass.getComponentType();
-            if (type.isPrimitive()) {
-              if (Long.TYPE == type) {
-                if (!Arrays.equals(((Long[])value), (Long[])annotValue)) {
-                  return false;
-                }
-              } else if (Integer.TYPE == type) {
-                if (!Arrays.equals(((Integer[])value), (Integer[])annotValue)) {
-                  return false;
-                }
-              } else if (Short.TYPE == type) {
-                if (!Arrays.equals(((Short[])value), (Short[])annotValue)) {
-                  return false;
-                }
-              } else if (Double.TYPE == type) {
-                if (!Arrays.equals(((Double[])value), (Double[])annotValue)) {
-                  return false;
-                }
-              } else if (Float.TYPE == type) {
-                if (!Arrays.equals(((Float[])value), (Float[])annotValue)) {
-                  return false;
-                }
-              } else if (Boolean.TYPE == type) {
-                if (!Arrays.equals(((Boolean[])value), (Boolean[])annotValue)) {
-                  return false;
-                }
-              } else if (Byte.TYPE == type) {
-                if (!Arrays.equals(((Byte[])value), (Byte[])annotValue)) {
-                  return false;
-                }
-              } else if (Character.TYPE == type) {
-                if (!Arrays.equals(((Character[])value), (Character[])annotValue)) {
-                  return false;
-                }
-              }
-            } else {
-              if (!Arrays.equals(((Object[])value), (Object[])annotValue)) {
-                return false;
-              }
-            }
-          } else if (value != null && annotValue != null) {
-            if (!value.equals(annotValue)) {
               return false;
+            }
+
+            Class<?> thisValueClass = thisValue.getClass();
+            Class<?> otherValueClass = otherValue.getClass();
+
+            if (thisValueClass.isPrimitive() && otherValueClass.isPrimitive()) {
+              if ((thisValueClass != Float.TYPE && otherValue != Float.TYPE) || (thisValueClass != Double.TYPE && otherValue != Double.TYPE)) {
+                if (thisValue != otherValue) {
+                  return false;
+                }
+              }
+            } else if (thisValueClass.isArray() && otherValueClass.isArray()) {
+              Class<?> type = thisValueClass.getComponentType();
+              if (type.isPrimitive()) {
+                if (Long.TYPE == type) {
+                  if (!Arrays.equals(((Long[])thisValue), (Long[])otherValue)) {
+                    return false;
+                  }
+                } else if (Integer.TYPE == type) {
+                  if (!Arrays.equals(((Integer[])thisValue), (Integer[])otherValue)) {
+                    return false;
+                  }
+                } else if (Short.TYPE == type) {
+                  if (!Arrays.equals(((Short[])thisValue), (Short[])otherValue)) {
+                    return false;
+                  }
+                } else if (Double.TYPE == type) {
+                  if (!Arrays.equals(((Double[])thisValue), (Double[])otherValue)) {
+                    return false;
+                  }
+                } else if (Float.TYPE == type) {
+                  if (!Arrays.equals(((Float[])thisValue), (Float[])otherValue)) {
+                    return false;
+                  }
+                } else if (Boolean.TYPE == type) {
+                  if (!Arrays.equals(((Boolean[])thisValue), (Boolean[])otherValue)) {
+                    return false;
+                  }
+                } else if (Byte.TYPE == type) {
+                  if (!Arrays.equals(((Byte[])thisValue), (Byte[])otherValue)) {
+                    return false;
+                  }
+                } else if (Character.TYPE == type) {
+                  if (!Arrays.equals(((Character[])thisValue), (Character[])otherValue)) {
+                    return false;
+                  }
+                }
+              } else {
+                if (!Arrays.equals(((Object[])thisValue), (Object[])otherValue)) {
+                  return false;
+                }
+              }
+            } else  {
+              if (!thisValue.equals(otherValue)) {
+                return false;
+              }
             }
           }
         }
@@ -206,13 +200,7 @@ public abstract class AnnotationLiteral<A extends Annotation> implements Annotat
   @Override
   public int hashCode () {
 
-    Method[] methods = (Method[])AccessController.doPrivileged(new PrivilegedAction() {
-
-      public Object run () {
-
-        return annotationType.getDeclaredMethods();
-      }
-    });
+    Method[] methods = AccessController.doPrivileged((PrivilegedAction<Method[]>)() -> annotationType.getDeclaredMethods());
 
     int hashCode = 0;
     for (Method method : methods) {
@@ -257,28 +245,19 @@ public abstract class AnnotationLiteral<A extends Annotation> implements Annotat
   @Override
   public String toString () {
 
-    Method[] methods = (Method[])AccessController.doPrivileged(new PrivilegedAction() {
-
-      public Object run () {
-
-        return annotationType.getDeclaredMethods();
-      }
-    });
+    Method[] methods = AccessController.doPrivileged((PrivilegedAction<Method[]>)() -> annotationType.getDeclaredMethods());
     StringBuilder sb = new StringBuilder("@" + annotationType().getName() + "(");
-    int lenght = methods.length;
+    int length = methods.length;
 
-    for (int i = 0; i < lenght; i++) {
+    for (int i = 0; i < length; i++) {
       // Member name
       sb.append(methods[i].getName()).append("=");
-
       // Member value
       sb.append(callMethod(this, methods[i]));
-
-      if (i < lenght - 1) {
+      if (i < length - 1) {
         sb.append(",");
       }
     }
-
     sb.append(")");
 
     return sb.toString();
@@ -289,7 +268,7 @@ public abstract class AnnotationLiteral<A extends Annotation> implements Annotat
     AccessibleObject object;
     boolean flag;
 
-    protected PrivilegedActionForAccessibleObject (AccessibleObject object, boolean flag) {
+    private PrivilegedActionForAccessibleObject (AccessibleObject object, boolean flag) {
 
       this.object = object;
       this.flag = flag;

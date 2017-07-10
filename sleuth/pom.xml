@@ -11,6 +11,11 @@
   <name>Sleuth</name>
   <description>Code Testing Framework</description>
   <dependencies>
+    <dependency>
+      <groupId>org.smallmind</groupId>
+      <artifactId>smallmind-nutsnbolts</artifactId>
+      <scope>compile</scope>
+    </dependency>
   </dependencies>
   <build>
     <plugins>
