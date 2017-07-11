@@ -51,7 +51,6 @@ public class SuiteRunner implements Runnable {
   public void run () {
 
     try {
-
     } catch (Exception exception) {
 
     }

@@ -43,6 +43,12 @@ public class SuiteLiteral extends AnnotationLiteral<Suite> implements Suite {
   }
 
   @Override
+  public int priority () {
+
+    return 0;
+  }
+
+  @Override
   public String[] dependsOn () {
 
     return new String[0];

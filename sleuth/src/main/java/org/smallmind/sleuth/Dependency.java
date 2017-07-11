@@ -38,11 +38,13 @@ public class Dependency<T> {
 
   private HashSet<Dependency<T>> children = new HashSet<>();
   private T value;
+  private String[] priorityOn;
   private String[] dependsOn;
   private String name;
   private boolean temporary;
   private boolean permanent;
   private boolean completed;
+  private int priority;
 
   public Dependency (String name) {
 
@@ -51,10 +53,11 @@ public class Dependency<T> {
     completed = false;
   }
 
-  public Dependency (String name, T value, String[] dependsOn) {
+  public Dependency (String name, T value, int priority, String[] dependsOn) {
 
     this.name = name;
     this.value = value;
+    this.priority = priority;
     this.dependsOn = dependsOn;
 
     completed = true;
@@ -63,6 +66,7 @@ public class Dependency<T> {
   public void align (Dependency<T> dependency) {
 
     this.value = dependency.getValue();
+    this.priority = dependency.getPriority();
     this.dependsOn = dependency.getDependsOn();
 
     completed = true;
@@ -76,6 +80,21 @@ public class Dependency<T> {
   public T getValue () {
 
     return value;
+  }
+
+  public int getPriority () {
+
+    return priority;
+  }
+
+  public String[] getPriorityOn () {
+
+    return priorityOn;
+  }
+
+  public void setPriorityOn (String[] priorityOn) {
+
+    this.priorityOn = priorityOn;
   }
 
   public String[] getDependsOn () {

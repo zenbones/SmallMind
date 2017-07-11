@@ -43,5 +43,7 @@ public @interface Suite {
 
   String name ();
 
+  int priority () default 0;
+
   String[] dependsOn () default {};
 }

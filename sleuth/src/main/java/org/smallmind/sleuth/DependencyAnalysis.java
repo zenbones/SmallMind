@@ -35,10 +35,13 @@ package org.smallmind.sleuth;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
+import java.util.Map;
+import java.util.TreeMap;
 
 public class DependencyAnalysis<T> {
 
   private HashMap<String, Dependency<T>> dependencyMap = new HashMap<>();
+  private TreeMap<Integer, HashSet<Dependency<T>>> priorityMap = new TreeMap<>();
   private Class<T> clazz;
 
   public DependencyAnalysis (Class<T> clazz) {
@@ -49,12 +52,18 @@ public class DependencyAnalysis<T> {
   public void add (Dependency<T> dependency) {
 
     Dependency<T> mappedDependency;
+    HashSet<Dependency<T>> dependencySet;
 
     if ((mappedDependency = dependencyMap.putIfAbsent(dependency.getName(), dependency)) == null) {
       mappedDependency = dependency;
     } else {
       mappedDependency.align(dependency);
     }
+
+    if ((dependencySet = priorityMap.get(dependency.getPriority())) == null) {
+      priorityMap.put(dependency.getPriority(), dependencySet = new HashSet<>());
+    }
+    dependencySet.add(dependency);
 
     if ((mappedDependency.getDependsOn() != null) && (mappedDependency.getDependsOn().length > 0)) {
       for (String parentName : mappedDependency.getDependsOn()) {
@@ -71,21 +80,48 @@ public class DependencyAnalysis<T> {
 
   public LinkedList<Dependency<T>> calculate () {
 
-    LinkedList<Dependency<T>> dependencyList = new LinkedList<>();
+    LinkedList<Dependency<T>> calculatedDependencyList = new LinkedList<>();
+
+    if (priorityMap.size() > 1) {
+
+      HashSet<Dependency<T>> priorDependencySet = null;
+
+      for (Map.Entry<Integer, HashSet<Dependency<T>>> priorityEntry : priorityMap.entrySet()) {
+        if (priorDependencySet != null) {
+
+          String[] priorNames;
+          int nameIndex = 0;
+
+          priorNames = new String[priorDependencySet.size()];
+          for (Dependency<T> priorDependency : priorDependencySet) {
+            priorNames[nameIndex++] = priorDependency.getName();
+          }
+
+          for (Dependency<T> subsequentDependency : priorityEntry.getValue()) {
+            subsequentDependency.setPriorityOn(priorNames);
+            for (Dependency<T> priorDependency : priorDependencySet) {
+              priorDependency.addChild(subsequentDependency);
+            }
+          }
+        }
+
+        priorDependencySet = priorityEntry.getValue();
+      }
+    }
 
     while (!dependencyMap.isEmpty()) {
 
       HashSet<String> completedSet = new HashSet<>();
 
       for (Dependency<T> dependency : dependencyMap.values()) {
-        visit(dependency, dependencyList, completedSet);
+        visit(dependency, calculatedDependencyList, completedSet);
       }
       for (String name : completedSet) {
         dependencyMap.remove(name);
       }
     }
 
-    return dependencyList;
+    return calculatedDependencyList;
   }
 
   private void visit (Dependency<T> dependency, LinkedList<Dependency<T>> dependencyList, HashSet<String> completedSet) {
