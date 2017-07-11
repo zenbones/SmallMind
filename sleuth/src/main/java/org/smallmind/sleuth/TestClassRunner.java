@@ -32,46 +32,24 @@
  */
 package org.smallmind.sleuth;
 
-import java.util.HashMap;
-import java.util.Map;
-
-public class SuiteRunner implements Runnable {
+public class TestClassRunner implements Runnable {
 
   private TestThreadPool threadPool;
-  private HashMap<Class<?>, TestClass> classMap;
-  private DependencyQueue<Suite> suiteDependencyQueue;
-  private Dependency<Suite> suiteDependency;
+  private DependencyQueue<TestClass> testClassDependencyQueue;
+  private Dependency<TestClass> testClassDependency;
+  private Class<?> clazz;
 
-  public SuiteRunner (HashMap<Class<?>, TestClass> classMap, Dependency<Suite> suiteDependency, DependencyQueue<Suite> suiteDependencyQueue, TestThreadPool threadPool) {
+  public TestClassRunner (Class<?> clazz, Dependency<TestClass> testClassDependency, DependencyQueue<TestClass> testClassDependencyQueue, TestThreadPool threadPool) {
 
-    this.classMap = classMap;
-    this.suiteDependency = suiteDependency;
-    this.suiteDependencyQueue = suiteDependencyQueue;
+    this.clazz = clazz;
+    this.testClassDependency = testClassDependency;
+    this.testClassDependencyQueue = testClassDependencyQueue;
     this.threadPool = threadPool;
   }
 
   @Override
   public void run () {
 
-    DependencyAnalysis<TestClass> testClassAnalysis = new DependencyAnalysis<>(TestClass.class);
-    HashMap<String, Class<?>> classNameMap = new HashMap<>();
-    DependencyQueue<TestClass> testClassDependencyQueue;
-    Dependency<TestClass> testClassDependency;
-
-    for (Map.Entry<Class<?>, TestClass> classEntry : classMap.entrySet()) {
-      classNameMap.put(classEntry.getKey().getName(), classEntry.getKey());
-      testClassAnalysis.add(new Dependency<>(classEntry.getKey().getName(), classEntry.getValue(), classEntry.getValue().priority(), classEntry.getValue().dependsOn()));
-    }
-
-    testClassDependencyQueue = new DependencyQueue<>(testClassAnalysis.calculate());
-    while ((testClassDependency = testClassDependencyQueue.poll()) != null) {
-      try {
-        threadPool.execute(new TestClassRunner(classNameMap.get(testClassDependency.getName()), testClassDependency, testClassDependencyQueue, threadPool));
-      } catch (Exception exception) {
-
-      }
-    }
-
-    suiteDependencyQueue.complete(suiteDependency);
+    testClassDependencyQueue.complete(testClassDependency);
   }
 }

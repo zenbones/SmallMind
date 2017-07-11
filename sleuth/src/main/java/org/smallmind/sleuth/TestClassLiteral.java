@@ -34,7 +34,7 @@ package org.smallmind.sleuth;
 
 import org.smallmind.nutsnbolts.lang.AnnotationLiteral;
 
-public class TestsLiteral extends AnnotationLiteral<Tests> implements Tests {
+public class TestClassLiteral extends AnnotationLiteral<TestClass> implements TestClass {
 
   @Override
   public String group () {
@@ -43,9 +43,9 @@ public class TestsLiteral extends AnnotationLiteral<Tests> implements Tests {
   }
 
   @Override
-  public String name () {
+  public int priority () {
 
-    return null;
+    return 0;
   }
 
   @Override

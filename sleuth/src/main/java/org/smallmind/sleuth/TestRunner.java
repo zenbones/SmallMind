@@ -1,28 +1,28 @@
 /*
  * Copyright (c) 2007, 2008, 2009, 2010, 2011, 2012, 2013, 2014, 2015, 2016, 2017 David Berkman
- *
+ * 
  * This file is part of the SmallMind Code Project.
- *
+ * 
  * The SmallMind Code Project is free software, you can redistribute
  * it and/or modify it under either, at your discretion...
- *
+ * 
  * 1) The terms of GNU Affero General Public License as published by the
  * Free Software Foundation, either version 3 of the License, or (at
  * your option) any later version.
- *
+ * 
  * ...or...
- *
+ * 
  * 2) The terms of the Apache License, Version 2.0.
- *
+ * 
  * The SmallMind Code Project is distributed in the hope that it will
  * be useful, but WITHOUT ANY WARRANTY; without even the implied warranty
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License or Apache License for more details.
- *
+ * 
  * You should have received a copy of the GNU Affero General Public License
  * and the Apache License along with the SmallMind Code Project. If not, see
  * <http://www.gnu.org/licenses/> or <http://www.apache.org/licenses/LICENSE-2.0>.
- *
+ * 
  * Additional permission under the GNU Affero GPL version 3 section 7
  * ------------------------------------------------------------------
  * If you modify this Program, or any covered work, by linking or
@@ -33,48 +33,48 @@
 package org.smallmind.sleuth;
 
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.LinkedList;
 
 public class TestRunner {
 
-  public static void execute (int maxThreads, String[] groups, Class... testClasses)
-    throws InterruptedException {
+  public static void execute (int maxThreads, String[] groups, Class... classes) {
 
     TestThreadPool threadPool = new TestThreadPool((maxThreads <= 0) ? Integer.MAX_VALUE : maxThreads);
-    Suite defaultSuite = new SuiteLiteral();
-    Tests defaultTests = new TestsLiteral();
     DependencyAnalysis<Suite> suiteAnalysis = new DependencyAnalysis<>(Suite.class);
-    HashMap<Suite, HashSet<Class<?>>> suiteMap = new HashMap<>();
+    HashMap<Suite, HashMap<Class<?>, TestClass>> suiteMap = new HashMap<>();
     LinkedList<Dependency<Suite>> suiteDependencyList;
+    DependencyQueue<Suite> suiteDependencyQueue;
+    Dependency<Suite> suiteDependency;
+    Suite defaultSuite = new SuiteLiteral();
+    TestClass defaultTestClass = new TestClassLiteral();
 
-    for (Class<?> testClass : testClasses) {
+    for (Class<?> clazz : classes) {
 
-      Tests tests;
+      TestClass testClass;
 
-      if ((tests = testClass.getAnnotation(Tests.class)) == null) {
-        tests = defaultTests;
+      if ((testClass = clazz.getAnnotation(TestClass.class)) == null) {
+        testClass = defaultTestClass;
       }
-      if (tests.active() && ((groups == null) || inGroups(tests.group(), groups))) {
+      if (testClass.active() && ((groups == null) || inGroups(testClass.group(), groups))) {
 
         Suite suite;
-        HashSet<Class<?>> classSet;
+        HashMap<Class<?>, TestClass> classMap;
 
-        if ((suite = testClass.getAnnotation(Suite.class)) != null) {
+        if ((suite = clazz.getAnnotation(Suite.class)) != null) {
           if (suite.name().trim().isEmpty()) {
-            throw new TestDefinitionException("Suite defined on class(%s) must have a non-empty name", testClass.getName());
+            throw new TestDefinitionException("Suite defined on class(%s) must have a non-empty name", clazz.getName());
           } else if (defaultSuite.name().equals(suite.name())) {
-            throw new TestDefinitionException("Suite defined on class(%s) uses the reserved name '%s'", testClass.getName(), defaultSuite.name());
+            throw new TestDefinitionException("Suite defined on class(%s) uses the reserved name '%s'", clazz.getName(), defaultSuite.name());
           }
           suiteAnalysis.add(new Dependency<>(suite.name(), suite, suite.priority(), suite.dependsOn()));
         } else {
           suite = defaultSuite;
         }
 
-        if ((classSet = suiteMap.get(suite)) == null) {
-          suiteMap.put(suite, classSet = new HashSet<>());
+        if ((classMap = suiteMap.get(suite)) == null) {
+          suiteMap.put(suite, classMap = new HashMap<>());
         }
-        classSet.add(testClass);
+        classMap.put(clazz, testClass);
       }
     }
 
@@ -83,13 +83,12 @@ public class TestRunner {
       suiteDependencyList.addFirst(new Dependency<>(defaultSuite.name(), defaultSuite, defaultSuite.priority(), defaultSuite.dependsOn()));
     }
 
-    while (!suiteDependencyList.isEmpty()) {
+    suiteDependencyQueue = new DependencyQueue<>(suiteDependencyList);
+    while ((suiteDependency = suiteDependencyQueue.poll()) != null) {
+      try {
+        threadPool.execute(new SuiteRunner(suiteMap.get(suiteDependency.getValue()), suiteDependency, suiteDependencyQueue, threadPool));
+      } catch (Exception exception) {
 
-      DependencyQueue<Suite> suiteDependencyQueue = new DependencyQueue<>(suiteDependencyList);
-      Dependency<Suite> suiteDependency;
-
-      while ((suiteDependency = suiteDependencyQueue.poll()) != null) {
-        threadPool.execute(new SuiteRunner(suiteMap.get(suiteDependency.getValue()), suiteDependency, suiteDependencyQueue));
       }
     }
   }

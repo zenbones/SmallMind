@@ -39,11 +39,11 @@ import java.lang.annotation.Target;
 
 @Target(ElementType.TYPE)
 @Retention(RetentionPolicy.RUNTIME)
-public @interface Tests {
+public @interface TestClass {
 
   String group ();
 
-  String name ();
+  int priority () default 0;
 
   String[] dependsOn () default {};
 
