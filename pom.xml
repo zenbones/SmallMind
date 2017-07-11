@@ -123,7 +123,7 @@
     <module>sleuth</module>
     <module>spark</module>
     <module>swing</module>
-    <module>web</module> 
+    <module>web</module>
     <module>wicket</module>
   </modules>
 
@@ -333,6 +333,11 @@
         <groupId>org.testng</groupId>
         <artifactId>testng</artifactId>
         <version>6.9.8</version>
+      </dependency>
+      <dependency>
+        <groupId>org.apache.maven.surefire</groupId>
+        <artifactId>surefire-api</artifactId>
+        <version>2.20</version>
       </dependency>
       <dependency>
         <groupId>org.freemarker</groupId>

@@ -33,7 +33,7 @@
     <plugins>
       <plugin>
         <groupId>org.smallmind</groupId>
-        <artifactId>spark-singularity-mojo</artifactId>
+        <artifactId>spark-singularity-plugin</artifactId>
         <extensions>true</extensions>
         <configuration>
           <mainClass>org.smallmind.forge.deploy.cli.ApplicationUpdaterCLI</mainClass>

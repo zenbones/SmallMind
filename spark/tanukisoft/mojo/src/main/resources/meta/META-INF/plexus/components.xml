@@ -29,13 +29,13 @@
               </test>
               <package>
                 org.apache.maven.plugins:maven-jar-plugin:jar,
-                org.smallmind:spark-tanukisoft-mojo:generate-wrapper
+                org.smallmind:spark-tanukisoft-maven-plugin:generate-wrapper
               </package>
               <install>
-                org.smallmind:spark-tanukisoft-mojo:install-wrapper
+                org.smallmind:spark-tanukisoft-maven-plugin:install-wrapper
               </install>
               <deploy>
-                org.smallmind:spark-tanukisoft-mojo:deploy-wrapper
+                org.smallmind:spark-tanukisoft-maven-plugin:deploy-wrapper
               </deploy>
             </phases>
           </lifecycle>

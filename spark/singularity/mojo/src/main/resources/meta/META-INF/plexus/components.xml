@@ -28,13 +28,13 @@
                 org.apache.maven.plugins:maven-surefire-plugin:test
               </test>
               <package>
-                org.smallmind:spark-singularity-mojo:${project.version}:generate-singularity
+                org.smallmind:spark-singularity-maven-plugin:${project.version}:generate-singularity
               </package>
               <install>
-                org.smallmind:spark-singularity-mojo:${project.version}:install-singularity
+                org.smallmind:spark-singularity-maven-plugin:${project.version}:install-singularity
               </install>
               <deploy>
-                org.smallmind:spark-singularity-mojo:${project.version}:deploy-singularity
+                org.smallmind:spark-singularity-maven-plugin:${project.version}:deploy-singularity
               </deploy>
             </phases>
           </lifecycle>

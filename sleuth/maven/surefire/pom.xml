@@ -3,13 +3,13 @@
 
   <parent>
     <groupId>org.smallmind</groupId>
-    <artifactId>spark-singularity</artifactId>
+    <artifactId>sleuth-maven</artifactId>
     <version>3.0.0-SNAPSHOT</version>
   </parent>
-  <artifactId>spark-singularity-maven-plugin</artifactId>
-  <name>Spark-Singularity-Maven-Plugin</name>
-  <description>Singularity Maven Plugin</description>
-  <packaging>maven-plugin</packaging>
+  <artifactId>surefire-sleuth-provider</artifactId>
+  <name>Surefire-Sleuth-Provider</name>
+  <description>Sleuth Maven Surefire Provider</description>
+  <packaging>jar</packaging>
   <dependencies>
     <dependency>
       <groupId>org.smallmind</groupId>
@@ -17,8 +17,8 @@
       <scope>compile</scope>
     </dependency>
     <dependency>
-      <groupId>org.smallmind</groupId>
-      <artifactId>spark-singularity-boot</artifactId>
+      <groupId>org.apache.maven.surefire</groupId>
+      <artifactId>surefire-api</artifactId>
       <scope>compile</scope>
     </dependency>
     <dependency>
