@@ -86,9 +86,9 @@ public class TestRunner {
     suiteDependencyQueue = new DependencyQueue<>(suiteDependencyList);
     while ((suiteDependency = suiteDependencyQueue.poll()) != null) {
       try {
-        threadPool.execute(new SuiteRunner(suiteMap.get(suiteDependency.getValue()), suiteDependency, suiteDependencyQueue, threadPool));
+        threadPool.execute(TestTier.SUITE, new SuiteRunner(suiteMap.get(suiteDependency.getValue()), suiteDependency, suiteDependencyQueue, threadPool));
       } catch (Exception exception) {
-
+//TODO: Test Failure
       }
     }
   }

@@ -32,18 +32,54 @@
  */
 package org.smallmind.sleuth;
 
-import java.lang.annotation.ElementType;
-import java.lang.annotation.Retention;
-import java.lang.annotation.RetentionPolicy;
-import java.lang.annotation.Target;
+import java.lang.reflect.Method;
 
-@Target(ElementType.METHOD)
-@Retention(RetentionPolicy.RUNTIME)
-public @interface Test {
+public class TestMethodRunner implements Runnable {
 
-  int priority () default 0;
+  private DependencyQueue<Test> testMethodDependencyQueue;
+  private Dependency<Test> testMethodDependency;
+  private Class<?> clazz;
+  private Method method;
+  private Object instance;
 
-  String[] dependsOn () default {};
+  public TestMethodRunner (Class<?> clazz, Object instance, Method method, Dependency<Test> testMethodDependency, DependencyQueue<Test> testMethodDependencyQueue) {
 
-  boolean active () default true;
+    this.clazz = clazz;
+    this.instance = instance;
+    this.method = method;
+    this.testMethodDependency = testMethodDependency;
+    this.testMethodDependencyQueue = testMethodDependencyQueue;
+  }
+
+  @Override
+  public void run () {
+
+    for (Method method : clazz.getMethods()) {
+      if (method.getAnnotation(BeforeTest.class) != null) {
+        try {
+          method.invoke(instance);
+        } catch (Exception exception) {
+          throw new TestProcessingException(exception);
+        }
+      }
+    }
+
+    try {
+      method.invoke(instance);
+    } catch (Exception exception) {
+//TODO: Test Failure
+    }
+
+    for (Method method : clazz.getMethods()) {
+      if (method.getAnnotation(AfterTest.class) != null) {
+        try {
+          method.invoke(instance);
+        } catch (Exception exception) {
+          throw new TestProcessingException(exception);
+        }
+      }
+    }
+
+    testMethodDependencyQueue.complete(testMethodDependency);
+  }
 }

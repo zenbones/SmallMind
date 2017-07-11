@@ -32,6 +32,7 @@
  */
 package org.smallmind.sleuth;
 
+import java.lang.reflect.Method;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -54,24 +55,80 @@ public class SuiteRunner implements Runnable {
   public void run () {
 
     DependencyAnalysis<TestClass> testClassAnalysis = new DependencyAnalysis<>(TestClass.class);
-    HashMap<String, Class<?>> classNameMap = new HashMap<>();
+    HashMap<String, TestInABox> instanceMap = new HashMap<>();
     DependencyQueue<TestClass> testClassDependencyQueue;
     Dependency<TestClass> testClassDependency;
 
     for (Map.Entry<Class<?>, TestClass> classEntry : classMap.entrySet()) {
-      classNameMap.put(classEntry.getKey().getName(), classEntry.getKey());
+
+      Object instance;
+
+      try {
+        instanceMap.put(classEntry.getKey().getName(), new TestInABox(classEntry.getKey(), instance = classEntry.getKey().getConstructor().newInstance()));
+      } catch (NoSuchMethodException noSuchMethodException) {
+        throw new TestProcessingException("Test class(%s) must expose a no arg constructor", classEntry.getKey().getName());
+      } catch (Exception exception) {
+        throw new TestProcessingException(exception);
+      }
       testClassAnalysis.add(new Dependency<>(classEntry.getKey().getName(), classEntry.getValue(), classEntry.getValue().priority(), classEntry.getValue().dependsOn()));
+
+      for (Method method : classEntry.getKey().getMethods()) {
+        if (method.getAnnotation(BeforeSuite.class) != null) {
+          try {
+            method.invoke(instance);
+          } catch (Exception exception) {
+            throw new TestProcessingException(exception);
+          }
+        }
+      }
     }
 
     testClassDependencyQueue = new DependencyQueue<>(testClassAnalysis.calculate());
     while ((testClassDependency = testClassDependencyQueue.poll()) != null) {
-      try {
-        threadPool.execute(new TestClassRunner(classNameMap.get(testClassDependency.getName()), testClassDependency, testClassDependencyQueue, threadPool));
-      } catch (Exception exception) {
 
+      TestInABox testInABox = instanceMap.get(testClassDependency.getName());
+
+      try {
+        threadPool.execute(TestTier.CLASS, new TestClassRunner(testInABox.getClazz(), testInABox.getInstance(), testClassDependency, testClassDependencyQueue, threadPool));
+      } catch (Exception exception) {
+//TODO: Test Failure
+      }
+    }
+
+    for (Class<?> clazz : classMap.keySet()) {
+      for (Method method : clazz.getMethods()) {
+        if (method.getAnnotation(AfterSuite.class) != null) {
+          try {
+            method.invoke(instanceMap.get(clazz.getName()));
+          } catch (Exception exception) {
+            throw new TestProcessingException(exception);
+          }
+        }
       }
     }
 
     suiteDependencyQueue.complete(suiteDependency);
+  }
+
+  private class TestInABox {
+
+    private Class<?> clazz;
+    private Object instance;
+
+    private TestInABox (Class<?> clazz, Object instance) {
+
+      this.clazz = clazz;
+      this.instance = instance;
+    }
+
+    private Class<?> getClazz () {
+
+      return clazz;
+    }
+
+    private Object getInstance () {
+
+      return instance;
+    }
   }
 }

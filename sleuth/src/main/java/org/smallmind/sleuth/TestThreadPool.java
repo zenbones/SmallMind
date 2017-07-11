@@ -32,35 +32,36 @@
  */
 package org.smallmind.sleuth;
 
+import java.util.concurrent.Semaphore;
+
 public class TestThreadPool {
 
-  private final int maxThreads;
-  private int threadCount = 0;
+  private final Semaphore[] semaphores;
 
   public TestThreadPool (int maxThreads) {
 
-    this.maxThreads = maxThreads;
+    semaphores = new Semaphore[TestTier.values().length];
+
+    for (TestTier testTier : TestTier.values()) {
+      semaphores[testTier.ordinal()] = new Semaphore(maxThreads, true);
+    }
   }
 
-  public synchronized void execute (Runnable runnable)
+  public void execute (TestTier testTier, Runnable runnable)
     throws InterruptedException {
 
-    while (threadCount == maxThreads) {
-      wait();
-    }
+    semaphores[testTier.ordinal()].acquire();
 
     Thread thread = new Thread(() -> {
       runnable.run();
-      complete();
+      complete(testTier);
     });
 
     thread.start();
-    threadCount++;
   }
 
-  private synchronized void complete () {
+  private void complete (TestTier testTier) {
 
-    threadCount--;
-    notifyAll();
+    semaphores[testTier.ordinal()].release();
   }
 }

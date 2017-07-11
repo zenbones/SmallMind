@@ -32,18 +32,19 @@
  */
 package org.smallmind.sleuth;
 
-import java.lang.annotation.ElementType;
-import java.lang.annotation.Retention;
-import java.lang.annotation.RetentionPolicy;
-import java.lang.annotation.Target;
+import org.smallmind.nutsnbolts.lang.FormattedRuntimeException;
 
-@Target(ElementType.METHOD)
-@Retention(RetentionPolicy.RUNTIME)
-public @interface Test {
+public class TestProcessingException extends FormattedRuntimeException {
 
-  int priority () default 0;
+  public TestProcessingException (String message, Object... args) {
 
-  String[] dependsOn () default {};
+    super(message, args);
+  }
 
-  boolean active () default true;
+  public TestProcessingException (Throwable throwable) {
+
+    super(throwable);
+  }
 }
+
+

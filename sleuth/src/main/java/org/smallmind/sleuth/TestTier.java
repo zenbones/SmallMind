@@ -32,18 +32,7 @@
  */
 package org.smallmind.sleuth;
 
-import java.lang.annotation.ElementType;
-import java.lang.annotation.Retention;
-import java.lang.annotation.RetentionPolicy;
-import java.lang.annotation.Target;
+public enum TestTier {
 
-@Target(ElementType.METHOD)
-@Retention(RetentionPolicy.RUNTIME)
-public @interface Test {
-
-  int priority () default 0;
-
-  String[] dependsOn () default {};
-
-  boolean active () default true;
+  SUITE, CLASS, METHOD
 }

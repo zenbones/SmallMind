@@ -32,16 +32,21 @@
  */
 package org.smallmind.sleuth;
 
+import java.lang.reflect.Method;
+import java.util.HashMap;
+
 public class TestClassRunner implements Runnable {
 
   private TestThreadPool threadPool;
   private DependencyQueue<TestClass> testClassDependencyQueue;
   private Dependency<TestClass> testClassDependency;
   private Class<?> clazz;
+  private Object instance;
 
-  public TestClassRunner (Class<?> clazz, Dependency<TestClass> testClassDependency, DependencyQueue<TestClass> testClassDependencyQueue, TestThreadPool threadPool) {
+  public TestClassRunner (Class<?> clazz, Object instance, Dependency<TestClass> testClassDependency, DependencyQueue<TestClass> testClassDependencyQueue, TestThreadPool threadPool) {
 
     this.clazz = clazz;
+    this.instance = instance;
     this.testClassDependency = testClassDependency;
     this.testClassDependencyQueue = testClassDependencyQueue;
     this.threadPool = threadPool;
@@ -49,6 +54,48 @@ public class TestClassRunner implements Runnable {
 
   @Override
   public void run () {
+
+    DependencyAnalysis<Test> testMethodAnalysis = new DependencyAnalysis<>(Test.class);
+    HashMap<String, Method> methodMap = new HashMap<>();
+    DependencyQueue<Test> testMethodDependencyQueue;
+    Dependency<Test> testMethodDependency;
+
+    for (Method method : clazz.getMethods()) {
+
+      Test test;
+
+      if ((test = method.getAnnotation(Test.class)) != null) {
+        methodMap.put(method.getName(), method);
+        testMethodAnalysis.add(new Dependency<>(method.getName(), test, test.priority(), test.dependsOn()));
+      }
+
+      if (method.getAnnotation(BeforeClass.class) != null) {
+        try {
+          method.invoke(instance);
+        } catch (Exception exception) {
+          throw new TestProcessingException(exception);
+        }
+      }
+    }
+
+    testMethodDependencyQueue = new DependencyQueue<>(testMethodAnalysis.calculate());
+    while ((testMethodDependency = testMethodDependencyQueue.poll()) != null) {
+      try {
+        threadPool.execute(TestTier.METHOD, new TestMethodRunner(clazz, instance, methodMap.get(testMethodDependency.getName()), testMethodDependency, testMethodDependencyQueue));
+      } catch (Exception exception) {
+//TODO: Test Failure
+      }
+    }
+
+    for (Method method : clazz.getMethods()) {
+      if (method.getAnnotation(AfterClass.class) != null) {
+        try {
+          method.invoke(instance);
+        } catch (Exception exception) {
+          throw new TestProcessingException(exception);
+        }
+      }
+    }
 
     testClassDependencyQueue.complete(testClassDependency);
   }
