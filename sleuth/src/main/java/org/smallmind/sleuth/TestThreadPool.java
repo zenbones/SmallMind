@@ -32,19 +32,35 @@
  */
 package org.smallmind.sleuth;
 
-import org.smallmind.nutsnbolts.lang.AnnotationLiteral;
+public class TestThreadPool {
 
-public class SuiteLiteral extends AnnotationLiteral<Suite> implements Suite {
+  private final int maxThreads;
+  private int threadCount = 0;
 
-  @Override
-  public String name () {
+  public TestThreadPool (int maxThreads) {
 
-    return "default";
+    this.maxThreads = maxThreads;
   }
 
-  @Override
-  public String[] dependsOn () {
+  public synchronized void execute (Runnable runnable)
+    throws InterruptedException {
 
-    return new String[0];
+    while (threadCount == maxThreads) {
+      wait();
+    }
+
+    Thread thread = new Thread(() -> {
+      runnable.run();
+      complete();
+    });
+
+    thread.start();
+    threadCount++;
+  }
+
+  private synchronized void complete () {
+
+    threadCount--;
+    notifyAll();
   }
 }

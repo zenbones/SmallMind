@@ -32,19 +32,64 @@
  */
 package org.smallmind.sleuth;
 
-import org.smallmind.nutsnbolts.lang.AnnotationLiteral;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.LinkedList;
 
-public class SuiteLiteral extends AnnotationLiteral<Suite> implements Suite {
+public class DependencyQueue<T> {
 
-  @Override
-  public String name () {
+  private LinkedList<Dependency<T>> dependencyList;
+  private HashSet<String> completedSet = new HashSet<>();
 
-    return "default";
+  public DependencyQueue (LinkedList<Dependency<T>> dependencyList) {
+
+    this.dependencyList = dependencyList;
   }
 
-  @Override
-  public String[] dependsOn () {
+  public synchronized Dependency<T> poll () {
 
-    return new String[0];
+    while (!dependencyList.isEmpty()) {
+
+      Iterator<Dependency<T>> dependencyIter = dependencyList.iterator();
+
+      while (dependencyIter.hasNext()) {
+
+        Dependency<T> dependency;
+
+        if (isComplete(dependency = dependencyIter.next())) {
+          dependencyIter.remove();
+
+          return dependency;
+        }
+      }
+
+      try {
+        wait();
+      } catch (InterruptedException interruptedException) {
+        throw new RuntimeException(interruptedException);
+      }
+    }
+
+    return null;
+  }
+
+  public synchronized void complete (Dependency<T> dependency) {
+
+    completedSet.add(dependency.getName());
+    notifyAll();
+  }
+
+  private boolean isComplete (Dependency<T> dependency) {
+
+    if ((dependency.getDependsOn() != null) && (dependency.getDependsOn().length > 0)) {
+      for (String requirement : dependency.getDependsOn()) {
+        if (!completedSet.contains(requirement)) {
+
+          return false;
+        }
+      }
+    }
+
+    return true;
   }
 }

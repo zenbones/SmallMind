@@ -32,19 +32,28 @@
  */
 package org.smallmind.sleuth;
 
-import org.smallmind.nutsnbolts.lang.AnnotationLiteral;
+import java.util.HashSet;
 
-public class SuiteLiteral extends AnnotationLiteral<Suite> implements Suite {
+public class SuiteRunner implements Runnable {
 
-  @Override
-  public String name () {
+  private DependencyQueue<Suite> queue;
+  private Dependency<Suite> dependency;
 
-    return "default";
+  public SuiteRunner (HashSet<Class<?>> classSet, Dependency<Suite> dependency, DependencyQueue<Suite> queue) {
+
+    this.dependency = dependency;
+    this.queue = queue;
   }
 
   @Override
-  public String[] dependsOn () {
+  public void run () {
 
-    return new String[0];
+   try {
+      Thread.sleep(5000);
+    }
+    catch (Exception exception) {
+
+    }
+    queue.complete(dependency);
   }
 }

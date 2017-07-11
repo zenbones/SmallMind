@@ -32,19 +32,20 @@
  */
 package org.smallmind.sleuth;
 
-import org.smallmind.nutsnbolts.lang.AnnotationLiteral;
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
 
-public class SuiteLiteral extends AnnotationLiteral<Suite> implements Suite {
+@Target(ElementType.TYPE)
+@Retention(RetentionPolicy.RUNTIME)
+public @interface Tests {
 
-  @Override
-  public String name () {
+  String group ();
 
-    return "default";
-  }
+  String name ();
 
-  @Override
-  public String[] dependsOn () {
+  String[] dependsOn () default {};
 
-    return new String[0];
-  }
+  boolean active () default true;
 }

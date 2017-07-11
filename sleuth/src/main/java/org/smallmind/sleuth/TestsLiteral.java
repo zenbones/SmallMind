@@ -34,17 +34,29 @@ package org.smallmind.sleuth;
 
 import org.smallmind.nutsnbolts.lang.AnnotationLiteral;
 
-public class SuiteLiteral extends AnnotationLiteral<Suite> implements Suite {
+public class TestsLiteral extends AnnotationLiteral<Tests> implements Tests {
+
+  @Override
+  public String group () {
+
+    return null;
+  }
 
   @Override
   public String name () {
 
-    return "default";
+    return null;
   }
 
   @Override
   public String[] dependsOn () {
 
     return new String[0];
+  }
+
+  @Override
+  public boolean active () {
+
+    return true;
   }
 }
