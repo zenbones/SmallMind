@@ -30,25 +30,56 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package com.forio.epicenter.sleuth.maven;
+package org.smallmind.sleuth.maven.surefire;
 
 import java.lang.reflect.InvocationTargetException;
 import org.apache.maven.surefire.providerapi.AbstractProvider;
+import org.apache.maven.surefire.providerapi.ProviderParameters;
 import org.apache.maven.surefire.report.ReporterException;
+import org.apache.maven.surefire.report.ReporterFactory;
 import org.apache.maven.surefire.suite.RunResult;
 import org.apache.maven.surefire.testset.TestSetFailedException;
+import org.apache.maven.surefire.util.TestsToRun;
+import org.smallmind.sleuth.runner.TestRunner;
+
+import static org.apache.maven.surefire.util.TestsToRun.fromClass;
 
 public class SleuthProvider extends AbstractProvider {
+
+  private final ProviderParameters providerParameters;
+  private TestsToRun testsToRun;
+
+  public SleuthProvider (ProviderParameters providerParameters) {
+
+    this.providerParameters = providerParameters;
+  }
 
   @Override
   public Iterable<Class<?>> getSuites () {
 
-    return null;
+    testsToRun = providerParameters.getScanResult().applyFilter(null, providerParameters.getTestClassLoader());
+
+    return testsToRun;
   }
 
   @Override
-  public RunResult invoke (Object forkTestSet) throws TestSetFailedException, ReporterException, InvocationTargetException {
+  public RunResult invoke (Object forkTestSet)
+    throws TestSetFailedException, ReporterException, InvocationTargetException {
 
-    return null;
+    ReporterFactory reporterFactory = providerParameters.getReporterFactory();
+
+    if (testsToRun == null) {
+      if (forkTestSet instanceof TestsToRun) {
+        testsToRun = (TestsToRun)forkTestSet;
+      } else if (forkTestSet instanceof Class) {
+        testsToRun = fromClass((Class<?>)forkTestSet);
+      } else {
+        testsToRun = providerParameters.getScanResult().applyFilter(null, providerParameters.getTestClassLoader());
+      }
+    }
+
+    TestRunner.execute(0, null, testsToRun);
+
+    return reporterFactory.close();
   }
 }

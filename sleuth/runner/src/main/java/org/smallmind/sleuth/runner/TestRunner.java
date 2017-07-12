@@ -32,65 +32,99 @@
  */
 package org.smallmind.sleuth.runner;
 
+import java.lang.annotation.Annotation;
+import java.lang.reflect.Method;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.LinkedList;
 
 public class TestRunner {
 
-  public static void execute (int maxThreads, String[] groups, Class... classes) {
+  public static void execute (int maxThreads, String[] groups, Class<?>... classes) {
 
-    TestThreadPool threadPool = new TestThreadPool((maxThreads <= 0) ? Integer.MAX_VALUE : maxThreads);
-    DependencyAnalysis<Suite> suiteAnalysis = new DependencyAnalysis<>(Suite.class);
-    HashMap<Suite, HashMap<Class<?>, TestClass>> suiteMap = new HashMap<>();
-    LinkedList<Dependency<Suite>> suiteDependencyList;
-    DependencyQueue<Suite> suiteDependencyQueue;
-    Dependency<Suite> suiteDependency;
-    Suite defaultSuite = new SuiteLiteral();
-    TestClass defaultTestClass = new TestClassLiteral();
+    execute(maxThreads, groups, Arrays.asList(classes));
+  }
 
-    for (Class<?> clazz : classes) {
+  public static void execute (int maxThreads, String[] groups, Iterable<Class<?>> classIterable) {
 
-      TestClass testClass;
+    if (classIterable != null) {
 
-      if ((testClass = clazz.getAnnotation(TestClass.class)) == null) {
-        testClass = defaultTestClass;
-      }
-      if (testClass.active() && ((groups == null) || inGroups(testClass.group(), groups))) {
+      TestThreadPool threadPool = new TestThreadPool((maxThreads <= 0) ? Integer.MAX_VALUE : maxThreads);
+      DependencyAnalysis<Suite> suiteAnalysis = new DependencyAnalysis<>(Suite.class);
+      HashMap<Suite, HashMap<Class<?>, TestClass>> suiteMap = new HashMap<>();
+      LinkedList<Dependency<Suite>> suiteDependencyList;
+      DependencyQueue<Suite> suiteDependencyQueue;
+      Dependency<Suite> suiteDependency;
+      Suite defaultSuite = new SuiteLiteral();
+      TestClass defaultTestClass = new TestClassLiteral();
 
-        Suite suite;
-        HashMap<Class<?>, TestClass> classMap;
+      for (Class<?> clazz : classIterable) {
 
-        if ((suite = clazz.getAnnotation(Suite.class)) != null) {
-          if (suite.name().trim().isEmpty()) {
-            throw new TestDefinitionException("Suite defined on class(%s) must have a non-empty name", clazz.getName());
-          } else if (defaultSuite.name().equals(suite.name())) {
-            throw new TestDefinitionException("Suite defined on class(%s) uses the reserved name '%s'", clazz.getName(), defaultSuite.name());
+        if (isSleuthTest(clazz)) {
+
+          TestClass testClass;
+
+          if ((testClass = clazz.getAnnotation(TestClass.class)) == null) {
+            testClass = defaultTestClass;
           }
-          suiteAnalysis.add(new Dependency<>(suite.name(), suite, suite.priority(), suite.dependsOn()));
-        } else {
-          suite = defaultSuite;
-        }
+          if (testClass.active() && ((groups == null) || inGroups(testClass.group(), groups))) {
 
-        if ((classMap = suiteMap.get(suite)) == null) {
-          suiteMap.put(suite, classMap = new HashMap<>());
+            Suite suite;
+            HashMap<Class<?>, TestClass> classMap;
+
+            if ((suite = clazz.getAnnotation(Suite.class)) != null) {
+              if (suite.name().trim().isEmpty()) {
+                throw new TestDefinitionException("Suite defined on class(%s) must have a non-empty name", clazz.getName());
+              } else if (defaultSuite.name().equals(suite.name())) {
+                throw new TestDefinitionException("Suite defined on class(%s) uses the reserved name '%s'", clazz.getName(), defaultSuite.name());
+              }
+              suiteAnalysis.add(new Dependency<>(suite.name(), suite, suite.priority(), suite.dependsOn()));
+            } else {
+              suite = defaultSuite;
+            }
+
+            if ((classMap = suiteMap.get(suite)) == null) {
+              suiteMap.put(suite, classMap = new HashMap<>());
+            }
+            classMap.put(clazz, testClass);
+          }
         }
-        classMap.put(clazz, testClass);
       }
-    }
 
-    suiteDependencyList = suiteAnalysis.calculate();
-    if (suiteMap.containsKey(defaultSuite)) {
-      suiteDependencyList.addFirst(new Dependency<>(defaultSuite.name(), defaultSuite, defaultSuite.priority(), defaultSuite.dependsOn()));
-    }
+      suiteDependencyList = suiteAnalysis.calculate();
+      if (suiteMap.containsKey(defaultSuite)) {
+        suiteDependencyList.addFirst(new Dependency<>(defaultSuite.name(), defaultSuite, defaultSuite.priority(), defaultSuite.dependsOn()));
+      }
 
-    suiteDependencyQueue = new DependencyQueue<>(suiteDependencyList);
-    while ((suiteDependency = suiteDependencyQueue.poll()) != null) {
-      try {
-        threadPool.execute(TestTier.SUITE, new SuiteRunner(suiteMap.get(suiteDependency.getValue()), suiteDependency, suiteDependencyQueue, threadPool));
-      } catch (Exception exception) {
+      suiteDependencyQueue = new DependencyQueue<>(suiteDependencyList);
+      while ((suiteDependency = suiteDependencyQueue.poll()) != null) {
+        try {
+          threadPool.execute(TestTier.SUITE, new SuiteRunner(suiteMap.get(suiteDependency.getValue()), suiteDependency, suiteDependencyQueue, threadPool));
+        } catch (Exception exception) {
 //TODO: Test Failure
+        }
       }
     }
+  }
+
+  private static boolean isSleuthTest (Class<?> clazz) {
+
+    for (Annotation annotation : clazz.getAnnotations()) {
+      if ((annotation instanceof TestClass) || (annotation instanceof Suite)) {
+
+        return true;
+      }
+    }
+    for (Method method : clazz.getMethods()) {
+      for (Annotation annotation : method.getAnnotations()) {
+        if ((annotation instanceof Test) || (annotation instanceof BeforeTest) || (annotation instanceof AfterTest) || (annotation instanceof BeforeClass) || (annotation instanceof AfterClass) || (annotation instanceof BeforeSuite) || (annotation instanceof AfterSuite)) {
+
+          return true;
+        }
+      }
+    }
+
+    return false;
   }
 
   private static boolean inGroups (String name, String[] names) {
