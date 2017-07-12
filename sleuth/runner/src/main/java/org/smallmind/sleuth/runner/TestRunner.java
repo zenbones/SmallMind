@@ -40,12 +40,14 @@ import java.util.LinkedList;
 
 public class TestRunner {
 
-  public static void execute (int maxThreads, String[] groups, Class<?>... classes) {
+  public static void execute (int maxThreads, String[] groups, Class<?>... classes)
+    throws InterruptedException {
 
     execute(maxThreads, groups, Arrays.asList(classes));
   }
 
-  public static void execute (int maxThreads, String[] groups, Iterable<Class<?>> classIterable) {
+  public static void execute (int maxThreads, String[] groups, Iterable<Class<?>> classIterable)
+    throws InterruptedException {
 
     if (classIterable != null) {
 
@@ -104,6 +106,8 @@ public class TestRunner {
 //TODO: Test Failure
         }
       }
+
+      threadPool.await();
     }
   }
 

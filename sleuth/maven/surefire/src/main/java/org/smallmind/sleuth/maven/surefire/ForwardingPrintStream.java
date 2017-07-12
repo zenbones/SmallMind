@@ -30,58 +30,66 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.sleuth.runner;
+package org.smallmind.sleuth.maven.surefire;
 
-import java.util.concurrent.Semaphore;
-import java.util.concurrent.atomic.AtomicInteger;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.PrintStream;
+import org.apache.maven.surefire.report.ConsoleOutputReceiver;
 
-public class TestThreadPool {
+import static org.apache.maven.surefire.util.internal.StringUtils.NL;
 
-  private final AtomicInteger suiteCount = new AtomicInteger(0);
-  private final Semaphore[] semaphores;
+public class ForwardingPrintStream extends PrintStream {
 
-  public TestThreadPool (int maxThreads) {
+  private final ConsoleOutputReceiver consoleOutputReceiver;
+  private final boolean isStdOut;
 
-    semaphores = new Semaphore[TestTier.values().length];
+  ForwardingPrintStream (ConsoleOutputReceiver consoleOutputReceiver, boolean isStdOut) {
 
-    for (TestTier testTier : TestTier.values()) {
-      semaphores[testTier.ordinal()] = new Semaphore(maxThreads, true);
+    super(new ByteArrayOutputStream());
+
+    this.consoleOutputReceiver = consoleOutputReceiver;
+    this.isStdOut = isStdOut;
+  }
+
+  @Override
+  public void write (byte[] buf, int off, int len) {
+
+    consoleOutputReceiver.writeTestOutput(buf, off, len, isStdOut);
+  }
+
+  @Override
+  public void write (byte[] b)
+    throws IOException {
+
+    consoleOutputReceiver.writeTestOutput(b, 0, b.length, isStdOut);
+  }
+
+  @Override
+  public void write (int b) {
+
+    try {
+      write(new byte[] {(byte)b});
+    } catch (IOException ioException) {
+      setError();
     }
   }
 
-  public synchronized void await ()
-    throws InterruptedException {
+  @Override
+  public void println (String s) {
 
-    while (suiteCount.get() > 0) {
-      wait();
-    }
+    byte[] bytes = (((s == null) ? "null" : s) + NL).getBytes();
+
+    consoleOutputReceiver.writeTestOutput(bytes, 0, bytes.length, isStdOut);
   }
 
-  public void execute (TestTier testTier, Runnable runnable)
-    throws InterruptedException {
+  @Override
+  public void close () {
 
-    if (TestTier.SUITE.equals(testTier)) {
-      suiteCount.incrementAndGet();
-    }
-
-    semaphores[testTier.ordinal()].acquire();
-
-    Thread thread = new Thread(() -> {
-      runnable.run();
-      complete(testTier);
-    });
-
-    thread.start();
   }
 
-  private synchronized void complete (TestTier testTier) {
+  @Override
+  public void flush () {
 
-    semaphores[testTier.ordinal()].release();
-
-    if (TestTier.SUITE.equals(testTier)) {
-      suiteCount.decrementAndGet();
-    }
-
-    notify();
   }
 }
