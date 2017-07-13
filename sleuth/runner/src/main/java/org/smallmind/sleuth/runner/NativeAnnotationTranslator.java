@@ -30,63 +30,43 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.nutsnbolts.shiro.realm;
+package org.smallmind.sleuth.runner;
 
-public class LdapConnectionDetails {
+import java.lang.annotation.Annotation;
+import java.lang.reflect.Method;
 
-  private String host;
-  private String rootNamespace;
-  private String userName;
-  private String password;
-  private int port;
+public class NativeAnnotationTranslator implements AnnotationTranslator {
 
-  public String getUserName () {
+  @Override
+  public AnnotationDictionary process (Class<?> clazz) {
 
-    return userName;
-  }
+    AnnotationDictionary annotationDictionary = new AnnotationDictionary();
 
-  public void setUserName (String userName) {
+    Suite suite;
 
-    this.userName = userName;
-  }
+    if ((suite = clazz.getAnnotation(Suite.class)) != null) {
+      annotationDictionary.setSuite(suite);
+    }
+    for (Method method : clazz.getMethods()) {
+      for (Annotation annotation : method.getAnnotations()) {
+        if (annotation instanceof BeforeSuite) {
+          annotationDictionary.addBeforeSuiteMethod(method, (BeforeSuite)annotation);
+        }
+        if (annotation instanceof AfterSuite) {
+          annotationDictionary.addAfterSuiteMethod(method, (AfterSuite)annotation);
+        }
+        if (annotation instanceof BeforeTest) {
+          annotationDictionary.addBeforeTestMethod(method, (BeforeTest)annotation);
+        }
+        if (annotation instanceof AfterTest) {
+          annotationDictionary.addAfterTestMethod(method, (AfterTest)annotation);
+        }
+        if (annotation instanceof Test) {
+          annotationDictionary.addTestMethod(method, (Test)annotation);
+        }
+      }
+    }
 
-  public String getPassword () {
-
-    return password;
-  }
-
-  public void setPassword (String password) {
-
-    this.password = password;
-  }
-
-  public String getHost () {
-
-    return host;
-  }
-
-  public void setHost (String host) {
-
-    this.host = host;
-  }
-
-  public int getPort () {
-
-    return port;
-  }
-
-  public void setPort (int port) {
-
-    this.port = port;
-  }
-
-  public String getRootNamespace () {
-
-    return rootNamespace;
-  }
-
-  public void setRootNamespace (String rootNamespace) {
-
-    this.rootNamespace = rootNamespace;
+    return annotationDictionary;
   }
 }

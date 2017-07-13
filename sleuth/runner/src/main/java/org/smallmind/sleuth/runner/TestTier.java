@@ -34,5 +34,5 @@ package org.smallmind.sleuth.runner;
 
 public enum TestTier {
 
-  SUITE, CLASS, METHOD
+  SUITE, TEST
 }

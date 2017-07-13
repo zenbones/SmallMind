@@ -32,27 +32,28 @@
  */
 package org.smallmind.sleuth.runner;
 
+import java.lang.annotation.Annotation;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.Map;
 import java.util.TreeMap;
 
-public class DependencyAnalysis<T> {
+public class DependencyAnalysis<A extends Annotation, T> {
 
-  private HashMap<String, Dependency<T>> dependencyMap = new HashMap<>();
-  private TreeMap<Integer, HashSet<Dependency<T>>> priorityMap = new TreeMap<>();
-  private Class<T> clazz;
+  private HashMap<String, Dependency<A, T>> dependencyMap = new HashMap<>();
+  private TreeMap<Integer, HashSet<Dependency<A, T>>> priorityMap = new TreeMap<>();
+  private Class<A> annotationClass;
 
-  public DependencyAnalysis (Class<T> clazz) {
+  public DependencyAnalysis (Class<A> annotationClass) {
 
-    this.clazz = clazz;
+    this.annotationClass = annotationClass;
   }
 
-  public void add (Dependency<T> dependency) {
+  public void add (Dependency<A, T> dependency) {
 
-    Dependency<T> mappedDependency;
-    HashSet<Dependency<T>> dependencySet;
+    Dependency<A, T> mappedDependency;
+    HashSet<Dependency<A, T>> dependencySet;
 
     if ((mappedDependency = dependencyMap.putIfAbsent(dependency.getName(), dependency)) == null) {
       mappedDependency = dependency;
@@ -68,7 +69,7 @@ public class DependencyAnalysis<T> {
     if ((mappedDependency.getDependsOn() != null) && (mappedDependency.getDependsOn().length > 0)) {
       for (String parentName : mappedDependency.getDependsOn()) {
 
-        Dependency<T> parentDependency;
+        Dependency<A, T> parentDependency;
 
         if ((parentDependency = dependencyMap.get(parentName)) == null) {
           dependencyMap.put(parentName, parentDependency = new Dependency<>(parentName));
@@ -78,28 +79,28 @@ public class DependencyAnalysis<T> {
     }
   }
 
-  public LinkedList<Dependency<T>> calculate () {
+  public DependencyQueue<A, T> calculate () {
 
-    LinkedList<Dependency<T>> calculatedDependencyList = new LinkedList<>();
+    LinkedList<Dependency<A, T>> calculatedDependencyList = new LinkedList<>();
 
     if (priorityMap.size() > 1) {
 
-      HashSet<Dependency<T>> priorDependencySet = null;
+      HashSet<Dependency<A, T>> priorDependencySet = null;
 
-      for (Map.Entry<Integer, HashSet<Dependency<T>>> priorityEntry : priorityMap.entrySet()) {
+      for (Map.Entry<Integer, HashSet<Dependency<A, T>>> priorityEntry : priorityMap.entrySet()) {
         if (priorDependencySet != null) {
 
           String[] priorNames;
           int nameIndex = 0;
 
           priorNames = new String[priorDependencySet.size()];
-          for (Dependency<T> priorDependency : priorDependencySet) {
+          for (Dependency<A, T> priorDependency : priorDependencySet) {
             priorNames[nameIndex++] = priorDependency.getName();
           }
 
-          for (Dependency<T> subsequentDependency : priorityEntry.getValue()) {
+          for (Dependency<A, T> subsequentDependency : priorityEntry.getValue()) {
             subsequentDependency.setPriorityOn(priorNames);
-            for (Dependency<T> priorDependency : priorDependencySet) {
+            for (Dependency<A, T> priorDependency : priorDependencySet) {
               priorDependency.addChild(subsequentDependency);
             }
           }
@@ -113,7 +114,7 @@ public class DependencyAnalysis<T> {
 
       HashSet<String> completedSet = new HashSet<>();
 
-      for (Dependency<T> dependency : dependencyMap.values()) {
+      for (Dependency<A, T> dependency : dependencyMap.values()) {
         visit(dependency, calculatedDependencyList, completedSet);
       }
       for (String name : completedSet) {
@@ -121,21 +122,21 @@ public class DependencyAnalysis<T> {
       }
     }
 
-    return calculatedDependencyList;
+    return new DependencyQueue<>(calculatedDependencyList);
   }
 
-  private void visit (Dependency<T> dependency, LinkedList<Dependency<T>> dependencyList, HashSet<String> completedSet) {
+  private void visit (Dependency<A, T> dependency, LinkedList<Dependency<A, T>> dependencyList, HashSet<String> completedSet) {
 
     if (dependency.isTemporary()) {
-      throw new TestDependencyException("Cyclic dependency(%s) detected involving node(%s)", clazz.getSimpleName(), dependency.getName());
+      throw new TestDependencyException("Cyclic dependency(%s) detected involving node(%s)", annotationClass.getSimpleName(), dependency.getName());
     }
     if (!(dependency.isTemporary() || dependency.isPermanent())) {
       dependency.setTemporary();
-      for (Dependency<T> childDependency : dependency.getChildren()) {
+      for (Dependency<A, T> childDependency : dependency.getChildren()) {
         visit(childDependency, dependencyList, completedSet);
       }
       if (!dependency.isCompleted()) {
-        throw new TestDependencyException("Missing dependency(%s) on node(%s)", clazz.getSimpleName(), dependency.getName());
+        throw new TestDependencyException("Missing dependency(%s) on node(%s)", annotationClass.getSimpleName(), dependency.getName());
       }
       dependency.setPermanent();
       dependency.unsetTemporary();

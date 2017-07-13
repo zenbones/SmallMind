@@ -32,29 +32,30 @@
  */
 package org.smallmind.sleuth.runner;
 
+import java.lang.annotation.Annotation;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedList;
 
-public class DependencyQueue<T> {
+public class DependencyQueue<A extends Annotation, T> {
 
-  private LinkedList<Dependency<T>> dependencyList;
+  private LinkedList<Dependency<A, T>> dependencyList;
   private HashSet<String> completedSet = new HashSet<>();
 
-  public DependencyQueue (LinkedList<Dependency<T>> dependencyList) {
+  public DependencyQueue (LinkedList<Dependency<A, T>> dependencyList) {
 
     this.dependencyList = dependencyList;
   }
 
-  public synchronized Dependency<T> poll () {
+  public synchronized Dependency<A, T> poll () {
 
     while (!dependencyList.isEmpty()) {
 
-      Iterator<Dependency<T>> dependencyIter = dependencyList.iterator();
+      Iterator<Dependency<A, T>> dependencyIter = dependencyList.iterator();
 
       while (dependencyIter.hasNext()) {
 
-        Dependency<T> dependency;
+        Dependency<A, T> dependency;
 
         if (isComplete(dependency = dependencyIter.next())) {
           dependencyIter.remove();
@@ -73,13 +74,13 @@ public class DependencyQueue<T> {
     return null;
   }
 
-  public synchronized void complete (Dependency<T> dependency) {
+  public synchronized void complete (Dependency<A, T> dependency) {
 
     completedSet.add(dependency.getName());
     notifyAll();
   }
 
-  private boolean isComplete (Dependency<T> dependency) {
+  private boolean isComplete (Dependency<A, T> dependency) {
 
     if ((dependency.getDependsOn() != null) && (dependency.getDependsOn().length > 0)) {
       for (String requirement : dependency.getDependsOn()) {

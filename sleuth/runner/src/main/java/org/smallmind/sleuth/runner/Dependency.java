@@ -32,11 +32,13 @@
  */
 package org.smallmind.sleuth.runner;
 
+import java.lang.annotation.Annotation;
 import java.util.HashSet;
 
-public class Dependency<T> {
+public class Dependency<A extends Annotation, T> {
 
-  private HashSet<Dependency<T>> children = new HashSet<>();
+  private HashSet<Dependency<A, T>> children = new HashSet<>();
+  private A annotation;
   private T value;
   private String[] priorityOn;
   private String[] dependsOn;
@@ -53,9 +55,10 @@ public class Dependency<T> {
     completed = false;
   }
 
-  public Dependency (String name, T value, int priority, String[] dependsOn) {
+  public Dependency (String name, A annotation, T value, int priority, String[] dependsOn) {
 
     this.name = name;
+    this.annotation = annotation;
     this.value = value;
     this.priority = priority;
     this.dependsOn = dependsOn;
@@ -63,8 +66,9 @@ public class Dependency<T> {
     completed = true;
   }
 
-  public void align (Dependency<T> dependency) {
+  public void align (Dependency<A, T> dependency) {
 
+    this.annotation = annotation;
     this.value = dependency.getValue();
     this.priority = dependency.getPriority();
     this.dependsOn = dependency.getDependsOn();
@@ -75,6 +79,11 @@ public class Dependency<T> {
   public String getName () {
 
     return name;
+  }
+
+  public A getAnnotation () {
+
+    return annotation;
   }
 
   public T getValue () {
@@ -102,12 +111,12 @@ public class Dependency<T> {
     return dependsOn;
   }
 
-  public void addChild (Dependency<T> dependency) {
+  public void addChild (Dependency<A, T> dependency) {
 
     children.add(dependency);
   }
 
-  public HashSet<Dependency<T>> getChildren () {
+  public HashSet<Dependency<A, T>> getChildren () {
 
     return children;
   }
@@ -151,6 +160,6 @@ public class Dependency<T> {
   @Override
   public boolean equals (Object obj) {
 
-    return (obj != null) && (obj instanceof Dependency) && ((name == null) ? (((Dependency<?>)obj).getName() == null) : name.equals(((Dependency<?>)obj).getName()));
+    return (obj != null) && (obj instanceof Dependency) && ((name == null) ? (((Dependency<?, ?>)obj).getName() == null) : name.equals(((Dependency<?, ?>)obj).getName()));
   }
 }

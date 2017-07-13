@@ -37,9 +37,9 @@ import org.smallmind.nutsnbolts.lang.AnnotationLiteral;
 public class SuiteLiteral extends AnnotationLiteral<Suite> implements Suite {
 
   @Override
-  public String name () {
+  public String group () {
 
-    return "default";
+    return null;
   }
 
   @Override
@@ -52,5 +52,11 @@ public class SuiteLiteral extends AnnotationLiteral<Suite> implements Suite {
   public String[] dependsOn () {
 
     return new String[0];
+  }
+
+  @Override
+  public boolean active () {
+
+    return true;
   }
 }

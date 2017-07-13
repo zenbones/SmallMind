@@ -32,13 +32,34 @@
  */
 package org.smallmind.sleuth.runner;
 
-import java.lang.annotation.ElementType;
-import java.lang.annotation.Retention;
-import java.lang.annotation.RetentionPolicy;
-import java.lang.annotation.Target;
+import java.util.HashMap;
 
-@Target(ElementType.METHOD)
-@Retention(RetentionPolicy.RUNTIME)
-public @interface AfterClass {
+public class AnnotationProcessor {
 
+  private final AnnotationTranslator[] annotationTranslators;
+  private final HashMap<Class<?>, AnnotationDictionary> dictionaryMap = new HashMap<>();
+
+  public AnnotationProcessor (AnnotationTranslator... annotationTranslators) {
+
+    this.annotationTranslators = annotationTranslators;
+  }
+
+  public synchronized AnnotationDictionary process (Class<?> clazz) {
+
+    AnnotationDictionary annotationDictionary;
+
+    if ((annotationDictionary = dictionaryMap.get(clazz)) != null) {
+
+      return annotationDictionary;
+    }
+    for (AnnotationTranslator annotationTranslator : annotationTranslators) {
+      if ((annotationDictionary = annotationTranslator.process(clazz)).isImplemented()) {
+        dictionaryMap.put(clazz, annotationDictionary);
+
+        return annotationDictionary;
+      }
+    }
+
+    return null;
+  }
 }

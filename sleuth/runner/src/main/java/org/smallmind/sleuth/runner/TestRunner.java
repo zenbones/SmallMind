@@ -32,116 +32,46 @@
  */
 package org.smallmind.sleuth.runner;
 
-import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.LinkedList;
 
-public class TestRunner {
+public class TestRunner implements Runnable {
 
-  public static void execute (int maxThreads, String[] groups, Class<?>... classes)
-    throws InterruptedException {
+  private AnnotationProcessor annotationProcessor;
+  private DependencyQueue<Test, Method> testMethodDependencyQueue;
+  private Dependency<Test, Method> testMethodDependency;
+  private Class<?> clazz;
+  private Object instance;
 
-    execute(maxThreads, groups, Arrays.asList(classes));
+  public TestRunner (Class<?> clazz, Object instance, Dependency<Test, Method> testMethodDependency, DependencyQueue<Test, Method> testMethodDependencyQueue, AnnotationProcessor annotationProcessor) {
+
+    this.clazz = clazz;
+    this.instance = instance;
+    this.testMethodDependency = testMethodDependency;
+    this.testMethodDependencyQueue = testMethodDependencyQueue;
+    this.annotationProcessor = annotationProcessor;
   }
 
-  public static void execute (int maxThreads, String[] groups, Iterable<Class<?>> classIterable)
-    throws InterruptedException {
+  @Override
+  public void run () {
 
-    if (classIterable != null) {
+    AnnotationDictionary annotationDictionary = annotationProcessor.process(clazz);
+    AnnotationMethodology<BeforeSuite> beforeTestMethodology;
+    AnnotationMethodology<AfterSuite> afterTestMethodology;
 
-      TestThreadPool threadPool = new TestThreadPool((maxThreads <= 0) ? Integer.MAX_VALUE : maxThreads);
-      DependencyAnalysis<Suite> suiteAnalysis = new DependencyAnalysis<>(Suite.class);
-      HashMap<Suite, HashMap<Class<?>, TestClass>> suiteMap = new HashMap<>();
-      LinkedList<Dependency<Suite>> suiteDependencyList;
-      DependencyQueue<Suite> suiteDependencyQueue;
-      Dependency<Suite> suiteDependency;
-      Suite defaultSuite = new SuiteLiteral();
-      TestClass defaultTestClass = new TestClassLiteral();
+    if ((beforeTestMethodology = annotationDictionary.getBeforeSuiteMethodology()) != null) {
+      beforeTestMethodology.invoke(instance);
+    }
 
-      for (Class<?> clazz : classIterable) {
-
-        if (isSleuthTest(clazz)) {
-
-          TestClass testClass;
-
-          if ((testClass = clazz.getAnnotation(TestClass.class)) == null) {
-            testClass = defaultTestClass;
-          }
-          if (testClass.active() && ((groups == null) || inGroups(testClass.group(), groups))) {
-
-            Suite suite;
-            HashMap<Class<?>, TestClass> classMap;
-
-            if ((suite = clazz.getAnnotation(Suite.class)) != null) {
-              if (suite.name().trim().isEmpty()) {
-                throw new TestDefinitionException("Suite defined on class(%s) must have a non-empty name", clazz.getName());
-              } else if (defaultSuite.name().equals(suite.name())) {
-                throw new TestDefinitionException("Suite defined on class(%s) uses the reserved name '%s'", clazz.getName(), defaultSuite.name());
-              }
-              suiteAnalysis.add(new Dependency<>(suite.name(), suite, suite.priority(), suite.dependsOn()));
-            } else {
-              suite = defaultSuite;
-            }
-
-            if ((classMap = suiteMap.get(suite)) == null) {
-              suiteMap.put(suite, classMap = new HashMap<>());
-            }
-            classMap.put(clazz, testClass);
-          }
-        }
-      }
-
-      suiteDependencyList = suiteAnalysis.calculate();
-      if (suiteMap.containsKey(defaultSuite)) {
-        suiteDependencyList.addFirst(new Dependency<>(defaultSuite.name(), defaultSuite, defaultSuite.priority(), defaultSuite.dependsOn()));
-      }
-
-      suiteDependencyQueue = new DependencyQueue<>(suiteDependencyList);
-      while ((suiteDependency = suiteDependencyQueue.poll()) != null) {
-        try {
-          threadPool.execute(TestTier.SUITE, new SuiteRunner(suiteMap.get(suiteDependency.getValue()), suiteDependency, suiteDependencyQueue, threadPool));
-        } catch (Exception exception) {
+    try {
+      testMethodDependency.getValue().invoke(instance);
+    } catch (Exception exception) {
 //TODO: Test Failure
-        }
-      }
-
-      threadPool.await();
-    }
-  }
-
-  private static boolean isSleuthTest (Class<?> clazz) {
-
-    for (Annotation annotation : clazz.getAnnotations()) {
-      if ((annotation instanceof TestClass) || (annotation instanceof Suite)) {
-
-        return true;
-      }
-    }
-    for (Method method : clazz.getMethods()) {
-      for (Annotation annotation : method.getAnnotations()) {
-        if ((annotation instanceof Test) || (annotation instanceof BeforeTest) || (annotation instanceof AfterTest) || (annotation instanceof BeforeClass) || (annotation instanceof AfterClass) || (annotation instanceof BeforeSuite) || (annotation instanceof AfterSuite)) {
-
-          return true;
-        }
-      }
     }
 
-    return false;
-  }
-
-  private static boolean inGroups (String name, String[] names) {
-
-    if ((name != null) && (names != null)) {
-      for (String possibility : names) {
-        if (name.equals(possibility)) {
-
-          return true;
-        }
-      }
+    if ((afterTestMethodology = annotationDictionary.getAfterSuiteMethodology()) != null) {
+      afterTestMethodology.invoke(instance);
     }
 
-    return false;
+    testMethodDependencyQueue.complete(testMethodDependency);
   }
 }

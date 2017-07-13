@@ -32,54 +32,36 @@
  */
 package org.smallmind.sleuth.runner;
 
+import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;
+import java.util.Iterator;
+import java.util.LinkedList;
+import org.smallmind.nutsnbolts.util.Pair;
 
-public class TestMethodRunner implements Runnable {
+public class AnnotationMethodology<A extends Annotation> implements Iterable<Pair<Method, A>> {
 
-  private DependencyQueue<Test> testMethodDependencyQueue;
-  private Dependency<Test> testMethodDependency;
-  private Class<?> clazz;
-  private Method method;
-  private Object instance;
+  private LinkedList<Pair<Method, A>> pairList = new LinkedList<>();
 
-  public TestMethodRunner (Class<?> clazz, Object instance, Method method, Dependency<Test> testMethodDependency, DependencyQueue<Test> testMethodDependencyQueue) {
+  public void add (Method method, A annotation) {
 
-    this.clazz = clazz;
-    this.instance = instance;
-    this.method = method;
-    this.testMethodDependency = testMethodDependency;
-    this.testMethodDependencyQueue = testMethodDependencyQueue;
+    pairList.add(new Pair<>(method, annotation));
+  }
+
+  public void invoke (Object instance) {
+
+    pairList.forEach(pair -> {
+      try {
+        pair.getFirst().invoke(instance);
+      } catch (Exception exception) {
+        throw new TestProcessingException(exception);
+      }
+    });
   }
 
   @Override
-  public void run () {
+  public Iterator<Pair<Method, A>> iterator () {
 
-    for (Method method : clazz.getMethods()) {
-      if (method.getAnnotation(BeforeTest.class) != null) {
-        try {
-          method.invoke(instance);
-        } catch (Exception exception) {
-          throw new TestProcessingException(exception);
-        }
-      }
-    }
-
-    try {
-      method.invoke(instance);
-    } catch (Exception exception) {
-//TODO: Test Failure
-    }
-
-    for (Method method : clazz.getMethods()) {
-      if (method.getAnnotation(AfterTest.class) != null) {
-        try {
-          method.invoke(instance);
-        } catch (Exception exception) {
-          throw new TestProcessingException(exception);
-        }
-      }
-    }
-
-    testMethodDependencyQueue.complete(testMethodDependency);
+    return pairList.iterator();
   }
 }
+

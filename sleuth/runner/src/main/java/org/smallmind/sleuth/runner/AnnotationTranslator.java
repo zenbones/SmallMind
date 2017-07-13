@@ -32,12 +32,7 @@
  */
 package org.smallmind.sleuth.runner;
 
-import org.smallmind.nutsnbolts.lang.FormattedRuntimeException;
+public interface AnnotationTranslator {
 
-public class TestDefinitionException extends FormattedRuntimeException {
-
-  public TestDefinitionException (String message, Object... args) {
-
-    super(message, args);
-  }
+  AnnotationDictionary process (Class<?> clazz);
 }

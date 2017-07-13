@@ -42,7 +42,7 @@ import org.apache.maven.surefire.report.RunListener;
 import org.apache.maven.surefire.suite.RunResult;
 import org.apache.maven.surefire.testset.TestSetFailedException;
 import org.apache.maven.surefire.util.TestsToRun;
-import org.smallmind.sleuth.runner.TestRunner;
+import org.smallmind.sleuth.runner.SleuthRunner;
 
 import static org.apache.maven.surefire.util.TestsToRun.fromClass;
 
@@ -85,7 +85,7 @@ public class SleuthProvider extends AbstractProvider {
     }
 
     try {
-      TestRunner.execute(0, null, testsToRun);
+      SleuthRunner.execute(0, null, testsToRun);
     }
     catch (InterruptedException interruptedException) {
       // TODO:

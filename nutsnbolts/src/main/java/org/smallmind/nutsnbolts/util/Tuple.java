@@ -1,28 +1,28 @@
 /*
  * Copyright (c) 2007, 2008, 2009, 2010, 2011, 2012, 2013, 2014, 2015, 2016, 2017 David Berkman
- * 
+ *
  * This file is part of the SmallMind Code Project.
- * 
+ *
  * The SmallMind Code Project is free software, you can redistribute
  * it and/or modify it under either, at your discretion...
- * 
+ *
  * 1) The terms of GNU Affero General Public License as published by the
  * Free Software Foundation, either version 3 of the License, or (at
  * your option) any later version.
- * 
+ *
  * ...or...
- * 
+ *
  * 2) The terms of the Apache License, Version 2.0.
- * 
+ *
  * The SmallMind Code Project is distributed in the hope that it will
  * be useful, but WITHOUT ANY WARRANTY; without even the implied warranty
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License or Apache License for more details.
- * 
+ *
  * You should have received a copy of the GNU Affero General Public License
  * and the Apache License along with the SmallMind Code Project. If not, see
  * <http://www.gnu.org/licenses/> or <http://www.apache.org/licenses/LICENSE-2.0>.
- * 
+ *
  * Additional permission under the GNU Affero GPL version 3 section 7
  * ------------------------------------------------------------------
  * If you modify this Program, or any covered work, by linking or
@@ -41,6 +41,7 @@ import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.NoSuchElementException;
 import java.util.Set;
 
 public class Tuple<K, V> implements Serializable, Cloneable, Iterable<Pair<K, V>> {
@@ -55,14 +56,14 @@ public class Tuple<K, V> implements Serializable, Cloneable, Iterable<Pair<K, V>
     values = new ArrayList<>();
   }
 
-  public synchronized void clear () {
+  public void clear () {
 
     version++;
     keys.clear();
     values.clear();
   }
 
-  public synchronized void add (Tuple<K, V> tuple) {
+  public void add (Tuple<K, V> tuple) {
 
     version++;
     for (int count = 0; count < tuple.size(); count++) {
@@ -70,21 +71,21 @@ public class Tuple<K, V> implements Serializable, Cloneable, Iterable<Pair<K, V>
     }
   }
 
-  public synchronized void addPair (K key, V value) {
+  public void addPair (K key, V value) {
 
     version++;
     keys.add(key);
     values.add(value);
   }
 
-  public synchronized void addPair (int index, K key, V value) {
+  public void addPair (int index, K key, V value) {
 
     version++;
     keys.add(index, key);
     values.add(index, value);
   }
 
-  public synchronized void setPair (K key, V value) {
+  public void setPair (K key, V value) {
 
     int keyIndex;
 
@@ -96,7 +97,7 @@ public class Tuple<K, V> implements Serializable, Cloneable, Iterable<Pair<K, V>
     }
   }
 
-  public synchronized void setPair (int index, K key, V value) {
+  public void setPair (int index, K key, V value) {
 
     int keyIndex;
 
@@ -108,69 +109,67 @@ public class Tuple<K, V> implements Serializable, Cloneable, Iterable<Pair<K, V>
     }
   }
 
-  public synchronized void removeKey (K key) {
+  public void removeKey (K key) {
 
     boolean modified = false;
 
     for (int index = keys.size() - 1; index >= 0; index--) {
       if (keys.get(index).equals(key)) {
-        modified = true;
+        if (!modified) {
+          version++;
+          modified = true;
+        }
         removePair(index);
       }
     }
-
-    if (modified) {
-      version++;
-    }
   }
 
-  public synchronized V removePair (K key) {
+  public V removePair (K key) {
 
     int index;
 
     if ((index = keys.indexOf(key)) >= 0) {
-      version++;
       return removePair(index);
     }
 
     return null;
   }
 
-  public synchronized V removePair (int index) {
+  public V removePair (int index) {
 
     version++;
     keys.remove(index);
     return values.remove(index);
   }
 
-  public synchronized void setValue (int index, V value) {
+  public void setValue (int index, V value) {
 
     version++;
     values.set(index, value);
   }
 
-  public synchronized void setValue (K key, V value) {
+  public void setValue (K key, V value) {
 
     version++;
     values.set(keys.indexOf(key), value);
   }
 
-  public synchronized int size () {
+  public int size () {
 
     return keys.size();
   }
 
-  public synchronized K getKey (int index) {
+  public K getKey (int index) {
 
     return keys.get(index);
   }
 
-  public synchronized List<K> getKeys () {
+  public List<K> getKeys () {
 
     return keys;
   }
 
-  public synchronized Set<K> getUniqueKeys () {
+  public Set<K> getUniqueKeys () {
 
     HashSet<K> uniqueSet;
 
@@ -182,17 +181,17 @@ public class Tuple<K, V> implements Serializable, Cloneable, Iterable<Pair<K, V>
     return uniqueSet;
   }
 
-  public synchronized int indexOfKey (K key) {
+  public int indexOfKey (K key) {
 
     return keys.indexOf(key);
   }
 
-  public synchronized V getValue (int index) {
+  public V getValue (int index) {
 
     return values.get(index);
   }
 
-  public synchronized V getValue (K key) {
+  public V getValue (K key) {
 
     int index;
 
@@ -203,7 +202,7 @@ public class Tuple<K, V> implements Serializable, Cloneable, Iterable<Pair<K, V>
     return null;
   }
 
-  public synchronized List<V> getValues (K key) {
+  public List<V> getValues (K key) {
 
     ArrayList<V> allValues;
 
@@ -221,12 +220,12 @@ public class Tuple<K, V> implements Serializable, Cloneable, Iterable<Pair<K, V>
     return allValues;
   }
 
-  public synchronized boolean containsKey (K key) {
+  public boolean containsKey (K key) {
 
     return keys.contains(key);
   }
 
-  public synchronized boolean containsKeyValuePair (K key, V value) {
+  public boolean containsKeyValuePair (K key, V value) {
 
     for (int count = 0; count < size(); count++) {
       if ((keys.get(count)).equals(key)) {
@@ -239,7 +238,7 @@ public class Tuple<K, V> implements Serializable, Cloneable, Iterable<Pair<K, V>
     return false;
   }
 
-  public synchronized Map<K, List<V>> asMap () {
+  public Map<K, List<V>> asMap () {
 
     Map<K, List<V>> map = new HashMap<>();
 
@@ -263,7 +262,7 @@ public class Tuple<K, V> implements Serializable, Cloneable, Iterable<Pair<K, V>
     return new PairIterator();
   }
 
-  public synchronized Object clone () {
+  public Object clone () {
 
     Tuple<K, V> tuple = new Tuple<>();
 
@@ -274,7 +273,7 @@ public class Tuple<K, V> implements Serializable, Cloneable, Iterable<Pair<K, V>
     return tuple;
   }
 
-  public synchronized String toString () {
+  public String toString () {
 
     StringBuilder dataBuilder;
 
@@ -294,17 +293,14 @@ public class Tuple<K, V> implements Serializable, Cloneable, Iterable<Pair<K, V>
 
   private class PairIterator implements Iterator<Pair<K, V>> {
 
-    int index = 0;
+    int currIndex = 0;
+    int lastIndex = -1;
     int version = Tuple.this.version;
 
     @Override
     public boolean hasNext () {
 
-      if (version != Tuple.this.version) {
-        throw new ConcurrentModificationException();
-      }
-
-      return index < keys.size();
+      return currIndex != keys.size();
     }
 
     @Override
@@ -312,21 +308,34 @@ public class Tuple<K, V> implements Serializable, Cloneable, Iterable<Pair<K, V>
 
       if (version != Tuple.this.version) {
         throw new ConcurrentModificationException();
+      } else if (currIndex > keys.size()) {
+        throw new NoSuchElementException();
       }
+      try {
 
-      return new Pair<>(keys.get(index), values.get(index++));
+        return new Pair<>(keys.get(lastIndex = currIndex), values.get(currIndex++));
+      } catch (IndexOutOfBoundsException indexOutOfBoundsException) {
+        throw new ConcurrentModificationException();
+      }
     }
 
     @Override
     public void remove () {
 
+      if (lastIndex < 0) {
+        throw new IllegalStateException();
+      }
       if (version != Tuple.this.version) {
         throw new ConcurrentModificationException();
       }
 
-      if (index > 0) {
-        removePair(index - 1);
-        index--;
+      try {
+        removePair(lastIndex);
+        currIndex = lastIndex;
+        lastIndex = -1;
+        version = Tuple.this.version;
+      } catch (IndexOutOfBoundsException indexOutOfBoundsException) {
+        throw new ConcurrentModificationException();
       }
     }
   }
