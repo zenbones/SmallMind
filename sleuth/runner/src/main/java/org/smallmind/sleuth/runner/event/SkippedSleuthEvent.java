@@ -30,10 +30,18 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.sleuth.runner;
+package org.smallmind.sleuth.runner.event;
 
-import org.smallmind.nutsnbolts.lang.AnnotationLiteral;
+public class SkippedSleuthEvent extends MessageSleuthEvent {
 
-public class BeforeTestLiteral extends AnnotationLiteral<BeforeTest> implements BeforeTest {
+  public SkippedSleuthEvent (String className, String methodName, long elapsed, String message) {
 
+    super(className, methodName, elapsed, message);
+  }
+
+  @Override
+  public SleuthEventType getType () {
+
+    return SleuthEventType.SKIPPED;
+  }
 }

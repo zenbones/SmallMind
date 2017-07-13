@@ -30,36 +30,10 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.sleuth.runner;
+package org.smallmind.sleuth.runner.annotation;
 
-import java.util.HashMap;
+import org.smallmind.nutsnbolts.lang.AnnotationLiteral;
 
-public class AnnotationProcessor {
+public class BeforeSuiteLiteral extends AnnotationLiteral<BeforeSuite> implements BeforeSuite {
 
-  private final AnnotationTranslator[] annotationTranslators;
-  private final HashMap<Class<?>, AnnotationDictionary> dictionaryMap = new HashMap<>();
-
-  public AnnotationProcessor (AnnotationTranslator... annotationTranslators) {
-
-    this.annotationTranslators = annotationTranslators;
-  }
-
-  public synchronized AnnotationDictionary process (Class<?> clazz) {
-
-    AnnotationDictionary annotationDictionary;
-
-    if ((annotationDictionary = dictionaryMap.get(clazz)) != null) {
-
-      return annotationDictionary;
-    }
-    for (AnnotationTranslator annotationTranslator : annotationTranslators) {
-      if ((annotationDictionary = annotationTranslator.process(clazz)).isImplemented()) {
-        dictionaryMap.put(clazz, annotationDictionary);
-
-        return annotationDictionary;
-      }
-    }
-
-    return null;
-  }
 }

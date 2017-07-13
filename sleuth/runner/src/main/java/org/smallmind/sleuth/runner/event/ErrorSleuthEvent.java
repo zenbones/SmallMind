@@ -30,9 +30,18 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.sleuth.runner;
+package org.smallmind.sleuth.runner.event;
 
-public interface AnnotationTranslator {
+public class ErrorSleuthEvent extends ThrowableSleuthEvent {
 
-  AnnotationDictionary process (Class<?> clazz);
+  public ErrorSleuthEvent (String className, String methodName, long elapsed, Throwable throwable) {
+
+    super(className, methodName, elapsed, throwable);
+  }
+
+  @Override
+  public SleuthEventType getType () {
+
+    return SleuthEventType.ERROR;
+  }
 }

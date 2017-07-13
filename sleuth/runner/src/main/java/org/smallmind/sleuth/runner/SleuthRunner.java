@@ -33,51 +33,80 @@
 package org.smallmind.sleuth.runner;
 
 import java.util.Arrays;
+import java.util.LinkedList;
+import org.smallmind.sleuth.runner.annotation.AnnotationDictionary;
+import org.smallmind.sleuth.runner.annotation.AnnotationProcessor;
+import org.smallmind.sleuth.runner.annotation.NativeAnnotationTranslator;
+import org.smallmind.sleuth.runner.annotation.Suite;
+import org.smallmind.sleuth.runner.annotation.TestNGAnnotationTranslator;
+import org.smallmind.sleuth.runner.event.FatalSleuthEvent;
+import org.smallmind.sleuth.runner.event.SleuthEvent;
+import org.smallmind.sleuth.runner.event.SleuthEventListener;
 
 public class SleuthRunner {
 
-  public static void execute (int maxThreads, String[] groups, Class<?>... classes)
-    throws InterruptedException {
+  private final LinkedList<SleuthEventListener> eventListenerList = new LinkedList<>();
+
+  public void addListener (SleuthEventListener listener) {
+
+    eventListenerList.add(listener);
+  }
+
+  public void removeListener (SleuthEventListener listener) {
+
+    eventListenerList.remove(listener);
+  }
+
+  public void fire (SleuthEvent sleuthEvent) {
+
+    for (SleuthEventListener listener : eventListenerList) {
+      listener.handle(sleuthEvent);
+    }
+  }
+
+  public void execute (int maxThreads, String[] groups, Class<?>... classes) {
 
     execute(maxThreads, groups, Arrays.asList(classes));
   }
 
-  public static void execute (int maxThreads, String[] groups, Iterable<Class<?>> classIterable)
-    throws InterruptedException {
+  public void execute (int maxThreads, String[] groups, Iterable<Class<?>> classIterable) {
 
     if (classIterable != null) {
 
-      AnnotationProcessor annotationProcessor = new AnnotationProcessor(new NativeAnnotationTranslator(), new TestNGAnnotationTranslator());
-      TestThreadPool threadPool = new TestThreadPool((maxThreads <= 0) ? Integer.MAX_VALUE : maxThreads);
-      DependencyAnalysis<Suite, Class<?>> suiteAnalysis = new DependencyAnalysis<>(Suite.class);
-      DependencyQueue<Suite, Class<?>> suiteDependencyQueue;
-      Dependency<Suite, Class<?>> suiteDependency;
+      long startMilliseconds = System.currentTimeMillis();
 
-      for (Class<?> clazz : classIterable) {
+      try {
 
-        AnnotationDictionary annotationDictionary;
+        AnnotationProcessor annotationProcessor = new AnnotationProcessor(new NativeAnnotationTranslator(), new TestNGAnnotationTranslator());
+        TestThreadPool threadPool = new TestThreadPool((maxThreads <= 0) ? Integer.MAX_VALUE : maxThreads);
+        DependencyAnalysis<Suite, Class<?>> suiteAnalysis = new DependencyAnalysis<>(Suite.class);
+        DependencyQueue<Suite, Class<?>> suiteDependencyQueue;
+        Dependency<Suite, Class<?>> suiteDependency;
 
-        if ((annotationDictionary = annotationProcessor.process(clazz)) != null) {
-          if (annotationDictionary.getSuite().enabled() && ((groups == null) || inGroups(annotationDictionary.getSuite().group(), groups))) {
-            suiteAnalysis.add(new Dependency<>(clazz.getName(), annotationDictionary.getSuite(), clazz, annotationDictionary.getSuite().priority(), annotationDictionary.getSuite().dependsOn()));
+        for (Class<?> clazz : classIterable) {
+
+          AnnotationDictionary annotationDictionary;
+
+          if ((annotationDictionary = annotationProcessor.process(clazz)) != null) {
+            if (annotationDictionary.getSuite().enabled() && ((groups == null) || inGroups(annotationDictionary.getSuite().group(), groups))) {
+              suiteAnalysis.add(new Dependency<>(clazz.getName(), annotationDictionary.getSuite(), clazz, annotationDictionary.getSuite().priority(), annotationDictionary.getSuite().dependsOn()));
+            }
           }
         }
-      }
 
-      suiteDependencyQueue = suiteAnalysis.calculate();
-      while ((suiteDependency = suiteDependencyQueue.poll()) != null) {
-        try {
-          threadPool.execute(TestTier.SUITE, new SuiteRunner(suiteDependency, suiteDependencyQueue, annotationProcessor, threadPool));
-        } catch (Exception exception) {
-//TODO: Test Failure
+        suiteDependencyQueue = suiteAnalysis.calculate();
+        while ((suiteDependency = suiteDependencyQueue.poll()) != null) {
+          threadPool.execute(TestTier.SUITE, new SuiteRunner(this, suiteDependency, suiteDependencyQueue, annotationProcessor, threadPool));
         }
-      }
 
-      threadPool.await(suiteDependencyQueue.getSize());
+        threadPool.await(suiteDependencyQueue.getSize());
+      } catch (Exception exception) {
+        fire(new FatalSleuthEvent(SleuthRunner.class.getName(), "execute", System.currentTimeMillis() - startMilliseconds, exception));
+      }
     }
   }
 
-  private static boolean inGroups (String name, String[] names) {
+  private boolean inGroups (String name, String[] names) {
 
     if ((name != null) && (names != null)) {
       for (String possibility : names) {

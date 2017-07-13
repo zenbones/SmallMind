@@ -33,18 +33,27 @@
 package org.smallmind.sleuth.runner;
 
 import java.lang.reflect.Method;
-import java.util.Arrays;
 import org.smallmind.nutsnbolts.util.Pair;
+import org.smallmind.sleuth.runner.annotation.AfterSuite;
+import org.smallmind.sleuth.runner.annotation.AnnotationDictionary;
+import org.smallmind.sleuth.runner.annotation.AnnotationMethodology;
+import org.smallmind.sleuth.runner.annotation.AnnotationProcessor;
+import org.smallmind.sleuth.runner.annotation.BeforeSuite;
+import org.smallmind.sleuth.runner.annotation.Suite;
+import org.smallmind.sleuth.runner.annotation.Test;
+import org.smallmind.sleuth.runner.event.FatalSleuthEvent;
 
 public class SuiteRunner implements Runnable {
 
+  private SleuthRunner sleuthRunner;
   private AnnotationProcessor annotationProcessor;
   private TestThreadPool threadPool;
   private DependencyQueue<Suite, Class<?>> suiteDependencyQueue;
   private Dependency<Suite, Class<?>> suiteDependency;
 
-  public SuiteRunner (Dependency<Suite, Class<?>> suiteDependency, DependencyQueue<Suite, Class<?>> suiteDependencyQueue, AnnotationProcessor annotationProcessor, TestThreadPool threadPool) {
+  public SuiteRunner (SleuthRunner sleuthRunner, Dependency<Suite, Class<?>> suiteDependency, DependencyQueue<Suite, Class<?>> suiteDependencyQueue, AnnotationProcessor annotationProcessor, TestThreadPool threadPool) {
 
+    this.sleuthRunner = sleuthRunner;
     this.suiteDependency = suiteDependency;
     this.suiteDependencyQueue = suiteDependencyQueue;
     this.annotationProcessor = annotationProcessor;
@@ -54,48 +63,56 @@ public class SuiteRunner implements Runnable {
   @Override
   public void run () {
 
-    AnnotationDictionary annotationDictionary = annotationProcessor.process(suiteDependency.getValue());
-    DependencyAnalysis<Test, Method> testMethodAnalysis = new DependencyAnalysis<>(Test.class);
-    DependencyQueue<Test, Method> testMethodDependencyQueue;
-    Dependency<Test, Method> testMethodDependency;
-    AnnotationMethodology<BeforeSuite> beforeSuiteMethodology;
-    AnnotationMethodology<AfterSuite> afterSuiteMethodology;
-    AnnotationMethodology<Test> testMethodology;
-    Object instance;
+    long startMilliseconds = System.currentTimeMillis();
 
     try {
-      instance = suiteDependency.getValue().getConstructor().newInstance();
-    } catch (NoSuchMethodException noSuchMethodException) {
-      throw new TestProcessingException("Test class(%s) must expose a no arg constructor", suiteDependency.getValue().getName());
-    } catch (Exception exception) {
-      throw new TestProcessingException(exception);
-    }
 
-    if ((beforeSuiteMethodology = annotationDictionary.getBeforeSuiteMethodology()) != null) {
-      beforeSuiteMethodology.invoke(instance);
-    }
+      AnnotationDictionary annotationDictionary = annotationProcessor.process(suiteDependency.getValue());
+      DependencyAnalysis<Test, Method> testMethodAnalysis = new DependencyAnalysis<>(Test.class);
+      DependencyQueue<Test, Method> testMethodDependencyQueue;
+      Dependency<Test, Method> testMethodDependency;
+      AnnotationMethodology<BeforeSuite> beforeSuiteMethodology;
+      AnnotationMethodology<AfterSuite> afterSuiteMethodology;
+      AnnotationMethodology<Test> testMethodology;
+      Culprit culprit = null;
+      Object instance;
 
-    if ((testMethodology = annotationDictionary.getTestMethodology()) != null) {
-      for (Pair<Method, Test> testPair : testMethodology) {
-        if (testPair.getSecond().enabled()) {
-          testMethodAnalysis.add(new Dependency<>(testPair.getFirst().getName(), testPair.getSecond(), testPair.getFirst(), testPair.getSecond().priority(), testPair.getSecond().dependsOn()));
+      try {
+        instance = suiteDependency.getValue().getConstructor().newInstance();
+      } catch (NoSuchMethodException noSuchMethodException) {
+        throw new TestProcessingException("Test class(%s) must expose a no arg constructor", suiteDependency.getValue().getName());
+      } catch (Exception exception) {
+        throw new TestProcessingException(exception);
+      }
+
+      if ((beforeSuiteMethodology = annotationDictionary.getBeforeSuiteMethodology()) != null) {
+        culprit = beforeSuiteMethodology.invoke(sleuthRunner, culprit, suiteDependency.getValue(), instance);
+      }
+
+      if ((testMethodology = annotationDictionary.getTestMethodology()) != null) {
+        for (Pair<Method, Test> testPair : testMethodology) {
+          if (testPair.getSecond().enabled()) {
+            testMethodAnalysis.add(new Dependency<>(testPair.getFirst().getName(), testPair.getSecond(), testPair.getFirst(), testPair.getSecond().priority(), testPair.getSecond().dependsOn()));
+          }
         }
       }
-    }
 
-    testMethodDependencyQueue = testMethodAnalysis.calculate();
-    while ((testMethodDependency = testMethodDependencyQueue.poll()) != null) {
-      try {
-        threadPool.execute(TestTier.TEST, new TestRunner(suiteDependency.getValue(), instance, testMethodDependency, testMethodDependencyQueue, annotationProcessor));
-      } catch (Exception exception) {
-//TODO: Test Failure
+      testMethodDependencyQueue = testMethodAnalysis.calculate();
+      while ((testMethodDependency = testMethodDependencyQueue.poll()) != null) {
+        try {
+          threadPool.execute(TestTier.TEST, new TestRunner(sleuthRunner, culprit, suiteDependency.getValue(), instance, testMethodDependency, testMethodDependencyQueue, annotationProcessor));
+        } catch (InterruptedException interruptedException) {
+          culprit = new Culprit(SuiteRunner.class.getName(), "run", interruptedException);
+        }
       }
-    }
 
-    if ((afterSuiteMethodology = annotationDictionary.getAfterSuiteMethodology()) != null) {
-      afterSuiteMethodology.invoke(instance);
+      if ((afterSuiteMethodology = annotationDictionary.getAfterSuiteMethodology()) != null) {
+        afterSuiteMethodology.invoke(sleuthRunner, culprit, suiteDependency.getValue(), instance);
+      }
+    } catch (Exception exception) {
+      sleuthRunner.fire(new FatalSleuthEvent(SuiteRunner.class.getName(), "run", System.currentTimeMillis() - startMilliseconds, exception));
+    } finally {
+      suiteDependencyQueue.complete(suiteDependency);
     }
-
-    suiteDependencyQueue.complete(suiteDependency);
   }
 }

@@ -30,43 +30,54 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.sleuth.runner;
+package org.smallmind.sleuth.maven.surefire;
 
-import java.lang.annotation.Annotation;
-import java.lang.reflect.Method;
+import org.apache.maven.surefire.report.SafeThrowable;
+import org.apache.maven.surefire.report.StackTraceWriter;
+import org.smallmind.nutsnbolts.lang.StackTraceUtility;
+import org.smallmind.sleuth.runner.Culprit;
 
-public class NativeAnnotationTranslator implements AnnotationTranslator {
+public class SleuthStackTraceWriter
+  implements StackTraceWriter {
+
+  private final Throwable throwable;
+  private final String testClass;
+  private final String testMethod;
+
+  public SleuthStackTraceWriter (String testClass, String testMethod, Throwable throwable) {
+
+    this.testClass = testClass;
+    this.testMethod = testMethod;
+    this.throwable = throwable;
+  }
 
   @Override
-  public AnnotationDictionary process (Class<?> clazz) {
+  public SafeThrowable getThrowable () {
 
-    AnnotationDictionary annotationDictionary = new AnnotationDictionary();
+    return (throwable == null) ? null : new SafeThrowable(throwable);
+  }
 
-    Suite suite;
+  @Override
+  public String writeTraceToString () {
 
-    if ((suite = clazz.getAnnotation(Suite.class)) != null) {
-      annotationDictionary.setSuite(suite);
+    return (throwable == null) ? "" : StackTraceUtility.obtainStackTraceAsString(throwable);
+  }
+
+  @Override
+  public String writeTrimmedTraceToString () {
+
+    return writeTraceToString();
+  }
+
+  @Override
+  public String smartTrimmedStackTrace () {
+
+    if (throwable == null) {
+
+      return "";
+    } else {
+
+      return new Culprit(testClass, testMethod, throwable).toString();
     }
-    for (Method method : clazz.getMethods()) {
-      for (Annotation annotation : method.getAnnotations()) {
-        if (annotation instanceof BeforeSuite) {
-          annotationDictionary.addBeforeSuiteMethod(method, (BeforeSuite)annotation);
-        }
-        if (annotation instanceof AfterSuite) {
-          annotationDictionary.addAfterSuiteMethod(method, (AfterSuite)annotation);
-        }
-        if (annotation instanceof BeforeTest) {
-          annotationDictionary.addBeforeTestMethod(method, (BeforeTest)annotation);
-        }
-        if (annotation instanceof AfterTest) {
-          annotationDictionary.addAfterTestMethod(method, (AfterTest)annotation);
-        }
-        if (annotation instanceof Test) {
-          annotationDictionary.addTestMethod(method, (Test)annotation);
-        }
-      }
-    }
-
-    return annotationDictionary;
   }
 }

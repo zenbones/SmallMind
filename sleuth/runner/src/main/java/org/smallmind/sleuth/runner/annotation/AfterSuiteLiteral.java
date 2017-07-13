@@ -30,7 +30,7 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.sleuth.runner;
+package org.smallmind.sleuth.runner.annotation;
 
 import org.smallmind.nutsnbolts.lang.AnnotationLiteral;
 

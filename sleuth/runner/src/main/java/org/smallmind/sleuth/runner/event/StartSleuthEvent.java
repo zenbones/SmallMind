@@ -30,20 +30,18 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.sleuth.runner;
+package org.smallmind.sleuth.runner.event;
 
-import java.lang.annotation.ElementType;
-import java.lang.annotation.Retention;
-import java.lang.annotation.RetentionPolicy;
-import java.lang.annotation.Target;
+public class StartSleuthEvent extends SleuthEvent {
 
-@Target(ElementType.METHOD)
-@Retention(RetentionPolicy.RUNTIME)
-public @interface Test {
+  public StartSleuthEvent (String className, String methodName) {
 
-  int priority () default 0;
+    super(className, methodName);
+  }
 
-  String[] dependsOn () default {};
+  @Override
+  public SleuthEventType getType () {
 
-  boolean enabled () default true;
+    return SleuthEventType.START;
+  }
 }

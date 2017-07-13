@@ -39,12 +39,11 @@ import org.apache.maven.surefire.report.ConsoleOutputReceiver;
 import org.apache.maven.surefire.report.ReporterException;
 import org.apache.maven.surefire.report.ReporterFactory;
 import org.apache.maven.surefire.report.RunListener;
+import org.apache.maven.surefire.report.SimpleReportEntry;
 import org.apache.maven.surefire.suite.RunResult;
 import org.apache.maven.surefire.testset.TestSetFailedException;
 import org.apache.maven.surefire.util.TestsToRun;
 import org.smallmind.sleuth.runner.SleuthRunner;
-
-import static org.apache.maven.surefire.util.TestsToRun.fromClass;
 
 public class SleuthProvider extends AbstractProvider {
 
@@ -68,8 +67,12 @@ public class SleuthProvider extends AbstractProvider {
   public RunResult invoke (Object forkTestSet)
     throws TestSetFailedException, ReporterException, InvocationTargetException {
 
+    RunResult runResult;
     ReporterFactory reporterFactory = providerParameters.getReporterFactory();
     RunListener runListener = reporterFactory.createReporter();
+    SleuthRunner sleuthRunner;
+    SurefireSleuthEventListener sleuthEventListener;
+    long startMilliseconds;
 
     System.setOut(new ForwardingPrintStream((ConsoleOutputReceiver)runListener, true));
     System.setErr(new ForwardingPrintStream((ConsoleOutputReceiver)runListener, false));
@@ -78,19 +81,26 @@ public class SleuthProvider extends AbstractProvider {
       if (forkTestSet instanceof TestsToRun) {
         testsToRun = (TestsToRun)forkTestSet;
       } else if (forkTestSet instanceof Class) {
-        testsToRun = fromClass((Class<?>)forkTestSet);
+        testsToRun = TestsToRun.fromClass((Class<?>)forkTestSet);
       } else {
         testsToRun = providerParameters.getScanResult().applyFilter(null, providerParameters.getTestClassLoader());
       }
     }
 
-    try {
-      SleuthRunner.execute(0, null, testsToRun);
-    }
-    catch (InterruptedException interruptedException) {
-      // TODO:
+    sleuthRunner = new SleuthRunner();
+    sleuthRunner.addListener(sleuthEventListener = new SurefireSleuthEventListener(runListener));
+    startMilliseconds = System.currentTimeMillis();
+
+    runListener.testSetStarting(new SimpleReportEntry("Sleuth Tests", "Module E", "test set starting"));
+    sleuthRunner.execute(0, null, testsToRun);
+    runListener.testSetCompleted(new SimpleReportEntry("Sleuth Tests", "Module E", (int)(System.currentTimeMillis() - startMilliseconds)));
+
+    runResult = reporterFactory.close();
+
+    if (sleuthEventListener.getThrowable() != null) {
+      throw new TestSetFailedException(sleuthEventListener.getThrowable());
     }
 
-    return reporterFactory.close();
+    return runResult;
   }
 }

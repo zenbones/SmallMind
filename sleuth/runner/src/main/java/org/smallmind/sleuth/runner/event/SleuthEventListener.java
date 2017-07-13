@@ -30,10 +30,11 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.sleuth.runner;
+package org.smallmind.sleuth.runner.event;
 
-import org.smallmind.nutsnbolts.lang.AnnotationLiteral;
+import java.util.EventListener;
 
-public class AfterTestLiteral extends AnnotationLiteral<AfterTest> implements AfterTest {
+public interface SleuthEventListener extends EventListener {
 
+  void handle (SleuthEvent event);
 }

@@ -30,15 +30,21 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.sleuth.runner;
+package org.smallmind.sleuth.runner.event;
 
-import java.lang.annotation.ElementType;
-import java.lang.annotation.Retention;
-import java.lang.annotation.RetentionPolicy;
-import java.lang.annotation.Target;
+public abstract class ThrowableSleuthEvent extends TimedSleuthEvent {
 
-@Target(ElementType.METHOD)
-@Retention(RetentionPolicy.RUNTIME)
-public @interface BeforeTest {
+  private Throwable throwable;
 
+  public ThrowableSleuthEvent (String className, String methodName, long elapsed, Throwable throwable) {
+
+    super(className, methodName, elapsed);
+
+    this.throwable = throwable;
+  }
+
+  public Throwable getThrowable () {
+
+    return throwable;
+  }
 }

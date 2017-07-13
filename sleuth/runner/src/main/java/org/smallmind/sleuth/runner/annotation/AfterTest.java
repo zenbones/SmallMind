@@ -30,38 +30,15 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.sleuth.runner;
+package org.smallmind.sleuth.runner.annotation;
 
-import java.lang.annotation.Annotation;
-import java.lang.reflect.Method;
-import java.util.Iterator;
-import java.util.LinkedList;
-import org.smallmind.nutsnbolts.util.Pair;
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
 
-public class AnnotationMethodology<A extends Annotation> implements Iterable<Pair<Method, A>> {
+@Target(ElementType.METHOD)
+@Retention(RetentionPolicy.RUNTIME)
+public @interface AfterTest {
 
-  private LinkedList<Pair<Method, A>> pairList = new LinkedList<>();
-
-  public void add (Method method, A annotation) {
-
-    pairList.add(new Pair<>(method, annotation));
-  }
-
-  public void invoke (Object instance) {
-
-    pairList.forEach(pair -> {
-      try {
-        pair.getFirst().invoke(instance);
-      } catch (Exception exception) {
-        throw new TestProcessingException(exception);
-      }
-    });
-  }
-
-  @Override
-  public Iterator<Pair<Method, A>> iterator () {
-
-    return pairList.iterator();
-  }
 }
-

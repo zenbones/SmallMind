@@ -30,10 +30,53 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.sleuth.runner;
+package org.smallmind.sleuth.runner.annotation;
 
 import org.smallmind.nutsnbolts.lang.AnnotationLiteral;
 
-public class BeforeSuiteLiteral extends AnnotationLiteral<BeforeSuite> implements BeforeSuite {
+public class SuiteLiteral extends AnnotationLiteral<Suite> implements Suite {
 
+  private String[] dependsOn;
+  private String group;
+  private boolean enabled;
+  private int priority;
+
+  public SuiteLiteral () {
+
+    priority = 0;
+    dependsOn = new String[0];
+    enabled = true;
+  }
+
+  public SuiteLiteral (String group, int priority, String[] dependsOn, boolean enabled) {
+
+    this.group = group;
+    this.priority = priority;
+    this.dependsOn = dependsOn;
+    this.enabled = enabled;
+  }
+
+  @Override
+  public String group () {
+
+    return group;
+  }
+
+  @Override
+  public int priority () {
+
+    return priority;
+  }
+
+  @Override
+  public String[] dependsOn () {
+
+    return dependsOn;
+  }
+
+  @Override
+  public boolean enabled () {
+
+    return enabled;
+  }
 }

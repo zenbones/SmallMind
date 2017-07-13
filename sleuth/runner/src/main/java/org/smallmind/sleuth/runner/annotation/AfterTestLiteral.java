@@ -30,38 +30,10 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.sleuth.runner;
+package org.smallmind.sleuth.runner.annotation;
 
 import org.smallmind.nutsnbolts.lang.AnnotationLiteral;
 
-public class TestLiteral extends AnnotationLiteral<Test> implements Test {
+public class AfterTestLiteral extends AnnotationLiteral<AfterTest> implements AfterTest {
 
-  private String[] dependsOn;
-  private boolean enabled;
-  private int priority;
-
-  public TestLiteral (int priority, String[] dependsOn, boolean enabled) {
-
-    this.priority = priority;
-    this.dependsOn = dependsOn;
-    this.enabled = enabled;
-  }
-
-  @Override
-  public int priority () {
-
-    return priority;
-  }
-
-  @Override
-  public String[] dependsOn () {
-
-    return dependsOn;
-  }
-
-  @Override
-  public boolean enabled () {
-
-    return enabled;
-  }
 }

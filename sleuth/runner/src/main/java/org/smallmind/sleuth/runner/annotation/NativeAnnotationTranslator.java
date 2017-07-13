@@ -30,53 +30,43 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.sleuth.runner;
+package org.smallmind.sleuth.runner.annotation;
 
-import org.smallmind.nutsnbolts.lang.AnnotationLiteral;
+import java.lang.annotation.Annotation;
+import java.lang.reflect.Method;
 
-public class SuiteLiteral extends AnnotationLiteral<Suite> implements Suite {
-
-  private String[] dependsOn;
-  private String group;
-  private boolean enabled;
-  private int priority;
-
-  public SuiteLiteral () {
-
-    priority = 0;
-    dependsOn = new String[0];
-    enabled = true;
-  }
-
-  public SuiteLiteral (String group, int priority, String[] dependsOn, boolean enabled) {
-
-    this.group = group;
-    this.priority = priority;
-    this.dependsOn = dependsOn;
-    this.enabled = enabled;
-  }
+public class NativeAnnotationTranslator implements AnnotationTranslator {
 
   @Override
-  public String group () {
+  public AnnotationDictionary process (Class<?> clazz) {
 
-    return group;
-  }
+    AnnotationDictionary annotationDictionary = new AnnotationDictionary();
 
-  @Override
-  public int priority () {
+    Suite suite;
 
-    return priority;
-  }
+    if ((suite = clazz.getAnnotation(Suite.class)) != null) {
+      annotationDictionary.setSuite(suite);
+    }
+    for (Method method : clazz.getMethods()) {
+      for (Annotation annotation : method.getAnnotations()) {
+        if (annotation instanceof BeforeSuite) {
+          annotationDictionary.addBeforeSuiteMethod(method, (BeforeSuite)annotation);
+        }
+        if (annotation instanceof AfterSuite) {
+          annotationDictionary.addAfterSuiteMethod(method, (AfterSuite)annotation);
+        }
+        if (annotation instanceof BeforeTest) {
+          annotationDictionary.addBeforeTestMethod(method, (BeforeTest)annotation);
+        }
+        if (annotation instanceof AfterTest) {
+          annotationDictionary.addAfterTestMethod(method, (AfterTest)annotation);
+        }
+        if (annotation instanceof Test) {
+          annotationDictionary.addTestMethod(method, (Test)annotation);
+        }
+      }
+    }
 
-  @Override
-  public String[] dependsOn () {
-
-    return dependsOn;
-  }
-
-  @Override
-  public boolean enabled () {
-
-    return enabled;
+    return annotationDictionary;
   }
 }
