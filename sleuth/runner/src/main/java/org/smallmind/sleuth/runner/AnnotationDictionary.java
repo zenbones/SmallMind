@@ -37,10 +37,10 @@ import java.lang.reflect.Method;
 public class AnnotationDictionary {
 
   private static final Suite DEFAULT_SUITE = new SuiteLiteral();
-  private AnnotationMethodology<BeforeSuite> beforeSuiteMethodology = null;
-  private AnnotationMethodology<AfterSuite> afterSuiteMethodology = null;
-  private AnnotationMethodology<BeforeTest> beforeTestMethodology = null;
-  private AnnotationMethodology<AfterTest> afterTestMethodology = null;
+  private AnnotationMethodology<BeforeSuite> beforeSuiteMethodology;
+  private AnnotationMethodology<AfterSuite> afterSuiteMethodology;
+  private AnnotationMethodology<BeforeTest> beforeTestMethodology;
+  private AnnotationMethodology<AfterTest> afterTestMethodology;
   private AnnotationMethodology<Test> testMethodology;
   private Suite suite;
 
@@ -121,6 +121,6 @@ public class AnnotationDictionary {
 
   public boolean isImplemented () {
 
-    return (getSuite() != null) || (getTestMethodology() != null) || (getBeforeSuiteMethodology() != null) || (getAfterSuiteMethodology() != null) || (getBeforeTestMethodology() != null) || (getAfterTestMethodology() != null);
+    return (suite != null) || (testMethodology != null) || (beforeSuiteMethodology != null) || (afterSuiteMethodology != null) || (beforeTestMethodology != null) || (afterTestMethodology != null);
   }
 }

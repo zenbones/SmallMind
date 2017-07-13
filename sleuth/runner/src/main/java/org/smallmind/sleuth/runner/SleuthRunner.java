@@ -47,7 +47,7 @@ public class SleuthRunner {
 
     if (classIterable != null) {
 
-      AnnotationProcessor annotationProcessor = new AnnotationProcessor(new NativeAnnotationTranslator());
+      AnnotationProcessor annotationProcessor = new AnnotationProcessor(new NativeAnnotationTranslator(), new TestNGAnnotationTranslator());
       TestThreadPool threadPool = new TestThreadPool((maxThreads <= 0) ? Integer.MAX_VALUE : maxThreads);
       DependencyAnalysis<Suite, Class<?>> suiteAnalysis = new DependencyAnalysis<>(Suite.class);
       DependencyQueue<Suite, Class<?>> suiteDependencyQueue;
@@ -58,8 +58,7 @@ public class SleuthRunner {
         AnnotationDictionary annotationDictionary;
 
         if ((annotationDictionary = annotationProcessor.process(clazz)) != null) {
-          if (annotationDictionary.getSuite().active() && ((groups == null) || inGroups(annotationDictionary.getSuite().group(), groups))) {
-
+          if (annotationDictionary.getSuite().enabled() && ((groups == null) || inGroups(annotationDictionary.getSuite().group(), groups))) {
             suiteAnalysis.add(new Dependency<>(clazz.getName(), annotationDictionary.getSuite(), clazz, annotationDictionary.getSuite().priority(), annotationDictionary.getSuite().dependsOn()));
           }
         }
@@ -74,7 +73,7 @@ public class SleuthRunner {
         }
       }
 
-      threadPool.await();
+      threadPool.await(suiteDependencyQueue.getSize());
     }
   }
 

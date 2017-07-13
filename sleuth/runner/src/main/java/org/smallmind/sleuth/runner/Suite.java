@@ -47,5 +47,5 @@ public @interface Suite {
 
   String[] dependsOn () default {};
 
-  boolean active () default true;
+  boolean enabled () default true;
 }

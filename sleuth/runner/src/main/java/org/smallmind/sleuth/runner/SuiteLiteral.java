@@ -36,27 +36,47 @@ import org.smallmind.nutsnbolts.lang.AnnotationLiteral;
 
 public class SuiteLiteral extends AnnotationLiteral<Suite> implements Suite {
 
+  private String[] dependsOn;
+  private String group;
+  private boolean enabled;
+  private int priority;
+
+  public SuiteLiteral () {
+
+    priority = 0;
+    dependsOn = new String[0];
+    enabled = true;
+  }
+
+  public SuiteLiteral (String group, int priority, String[] dependsOn, boolean enabled) {
+
+    this.group = group;
+    this.priority = priority;
+    this.dependsOn = dependsOn;
+    this.enabled = enabled;
+  }
+
   @Override
   public String group () {
 
-    return null;
+    return group;
   }
 
   @Override
   public int priority () {
 
-    return 0;
+    return priority;
   }
 
   @Override
   public String[] dependsOn () {
 
-    return new String[0];
+    return dependsOn;
   }
 
   @Override
-  public boolean active () {
+  public boolean enabled () {
 
-    return true;
+    return enabled;
   }
 }

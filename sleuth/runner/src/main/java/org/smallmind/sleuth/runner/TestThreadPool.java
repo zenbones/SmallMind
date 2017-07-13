@@ -33,12 +33,11 @@
 package org.smallmind.sleuth.runner;
 
 import java.util.concurrent.Semaphore;
-import java.util.concurrent.atomic.AtomicInteger;
 
 public class TestThreadPool {
 
-  private final AtomicInteger suiteCount = new AtomicInteger(0);
   private final Semaphore[] semaphores;
+  private int ordinal0Count = 0;
 
   public TestThreadPool (int maxThreads) {
 
@@ -49,20 +48,16 @@ public class TestThreadPool {
     }
   }
 
-  public synchronized void await ()
+  public synchronized void await (int total)
     throws InterruptedException {
 
-    while (suiteCount.get() > 0) {
+    while (ordinal0Count < total) {
       wait();
     }
   }
 
   public void execute (TestTier testTier, Runnable runnable)
     throws InterruptedException {
-
-    if (TestTier.SUITE.equals(testTier)) {
-      suiteCount.incrementAndGet();
-    }
 
     semaphores[testTier.ordinal()].acquire();
 
@@ -78,10 +73,9 @@ public class TestThreadPool {
 
     semaphores[testTier.ordinal()].release();
 
-    if (TestTier.SUITE.equals(testTier)) {
-      suiteCount.decrementAndGet();
+    if (testTier.ordinal() == 0) {
+      ordinal0Count++;
+      notify();
     }
-
-    notify();
   }
 }

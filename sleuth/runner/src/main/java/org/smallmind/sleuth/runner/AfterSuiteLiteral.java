@@ -32,18 +32,8 @@
  */
 package org.smallmind.sleuth.runner;
 
-import java.lang.annotation.ElementType;
-import java.lang.annotation.Retention;
-import java.lang.annotation.RetentionPolicy;
-import java.lang.annotation.Target;
+import org.smallmind.nutsnbolts.lang.AnnotationLiteral;
 
-@Target(ElementType.METHOD)
-@Retention(RetentionPolicy.RUNTIME)
-public @interface Test {
+public class AfterSuiteLiteral extends AnnotationLiteral<AfterSuite> implements AfterSuite {
 
-  int priority () default 0;
-
-  String[] dependsOn () default {};
-
-  boolean enabled () default true;
 }

@@ -32,18 +32,36 @@
  */
 package org.smallmind.sleuth.runner;
 
-import java.lang.annotation.ElementType;
-import java.lang.annotation.Retention;
-import java.lang.annotation.RetentionPolicy;
-import java.lang.annotation.Target;
+import org.smallmind.nutsnbolts.lang.AnnotationLiteral;
 
-@Target(ElementType.METHOD)
-@Retention(RetentionPolicy.RUNTIME)
-public @interface Test {
+public class TestLiteral extends AnnotationLiteral<Test> implements Test {
 
-  int priority () default 0;
+  private String[] dependsOn;
+  private boolean enabled;
+  private int priority;
 
-  String[] dependsOn () default {};
+  public TestLiteral (int priority, String[] dependsOn, boolean enabled) {
 
-  boolean enabled () default true;
+    this.priority = priority;
+    this.dependsOn = dependsOn;
+    this.enabled = enabled;
+  }
+
+  @Override
+  public int priority () {
+
+    return priority;
+  }
+
+  @Override
+  public String[] dependsOn () {
+
+    return dependsOn;
+  }
+
+  @Override
+  public boolean enabled () {
+
+    return enabled;
+  }
 }

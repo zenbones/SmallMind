@@ -41,10 +41,18 @@ public class DependencyQueue<A extends Annotation, T> {
 
   private LinkedList<Dependency<A, T>> dependencyList;
   private HashSet<String> completedSet = new HashSet<>();
+  private int size;
 
   public DependencyQueue (LinkedList<Dependency<A, T>> dependencyList) {
 
     this.dependencyList = dependencyList;
+
+    size = dependencyList.size();
+  }
+
+  public int getSize () {
+
+    return size;
   }
 
   public synchronized Dependency<A, T> poll () {

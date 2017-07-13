@@ -33,6 +33,7 @@
 package org.smallmind.sleuth.runner;
 
 import java.lang.reflect.Method;
+import java.util.Arrays;
 import org.smallmind.nutsnbolts.util.Pair;
 
 public class SuiteRunner implements Runnable {
@@ -76,7 +77,7 @@ public class SuiteRunner implements Runnable {
 
     if ((testMethodology = annotationDictionary.getTestMethodology()) != null) {
       for (Pair<Method, Test> testPair : testMethodology) {
-        if (testPair.getSecond().active()) {
+        if (testPair.getSecond().enabled()) {
           testMethodAnalysis.add(new Dependency<>(testPair.getFirst().getName(), testPair.getSecond(), testPair.getFirst(), testPair.getSecond().priority(), testPair.getSecond().dependsOn()));
         }
       }
