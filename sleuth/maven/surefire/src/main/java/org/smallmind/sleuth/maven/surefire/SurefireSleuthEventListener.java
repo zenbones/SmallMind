@@ -67,7 +67,7 @@ public class SurefireSleuthEventListener implements SleuthEventListener {
         runListener.testStarting(new SimpleReportEntry(event.getClassName(), event.getMethodName()));
         break;
       case SUCCESS:
-        runListener.testStarting(new SimpleReportEntry(event.getClassName(), event.getMethodName(), (int)((SuccessSleuthEvent)event).getElapsed()));
+        runListener.testSucceeded(new SimpleReportEntry(event.getClassName(), event.getMethodName(), (int)((SuccessSleuthEvent)event).getElapsed()));
         break;
       case FAILURE:
         runListener.testFailed(new SimpleReportEntry(event.getClassName(), event.getMethodName(), new SleuthStackTraceWriter(event.getClassName(), event.getMethodName(), ((FailureSleuthEvent)event).getThrowable()), (int)((FailureSleuthEvent)event).getElapsed()));

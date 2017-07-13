@@ -32,12 +32,15 @@
  */
 package org.smallmind.sleuth.runner;
 
+import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import org.smallmind.sleuth.runner.annotation.AfterSuite;
+import org.smallmind.sleuth.runner.annotation.AfterTest;
 import org.smallmind.sleuth.runner.annotation.AnnotationDictionary;
 import org.smallmind.sleuth.runner.annotation.AnnotationMethodology;
 import org.smallmind.sleuth.runner.annotation.AnnotationProcessor;
 import org.smallmind.sleuth.runner.annotation.BeforeSuite;
+import org.smallmind.sleuth.runner.annotation.BeforeTest;
 import org.smallmind.sleuth.runner.annotation.Test;
 import org.smallmind.sleuth.runner.event.FailureSleuthEvent;
 import org.smallmind.sleuth.runner.event.SkippedSleuthEvent;
@@ -71,10 +74,10 @@ public class TestRunner implements Runnable {
     try {
 
       AnnotationDictionary annotationDictionary = annotationProcessor.process(clazz);
-      AnnotationMethodology<BeforeSuite> beforeTestMethodology;
-      AnnotationMethodology<AfterSuite> afterTestMethodology;
+      AnnotationMethodology<BeforeTest> beforeTestMethodology;
+      AnnotationMethodology<AfterTest> afterTestMethodology;
 
-      if ((beforeTestMethodology = annotationDictionary.getBeforeSuiteMethodology()) != null) {
+      if ((beforeTestMethodology = annotationDictionary.getBeforeTestMethodology()) != null) {
         beforeTestMethodology.invoke(sleuthRunner, culprit, clazz, instance);
       }
 
@@ -88,13 +91,16 @@ public class TestRunner implements Runnable {
         try {
           testMethodDependency.getValue().invoke(instance);
           sleuthRunner.fire(new SuccessSleuthEvent(clazz.getName(), testMethodDependency.getValue().getName(), System.currentTimeMillis() - startMilliseconds));
+        } catch (InvocationTargetException invocationTargetException) {
+          culprit = new Culprit(clazz.getName(), testMethodDependency.getValue().getName(), invocationTargetException.getCause());
+          sleuthRunner.fire(new FailureSleuthEvent(clazz.getName(), testMethodDependency.getValue().getName(), System.currentTimeMillis() - startMilliseconds, invocationTargetException.getCause()));
         } catch (Exception exception) {
           culprit = new Culprit(clazz.getName(), testMethodDependency.getValue().getName(), exception);
           sleuthRunner.fire(new FailureSleuthEvent(clazz.getName(), testMethodDependency.getValue().getName(), System.currentTimeMillis() - startMilliseconds, exception));
         }
       }
 
-      if ((afterTestMethodology = annotationDictionary.getAfterSuiteMethodology()) != null) {
+      if ((afterTestMethodology = annotationDictionary.getAfterTestMethodology()) != null) {
         afterTestMethodology.invoke(sleuthRunner, culprit, clazz, instance);
       }
     } finally {
