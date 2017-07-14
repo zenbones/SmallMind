@@ -72,10 +72,23 @@ public class SleuthProvider extends AbstractProvider {
     RunListener runListener = reporterFactory.createReporter();
     SleuthRunner sleuthRunner;
     SurefireSleuthEventListener sleuthEventListener;
+    String[] groups = null;
+    String groupsParameter;
     long startMilliseconds;
 
     System.setOut(new ForwardingPrintStream((ConsoleOutputReceiver)runListener, true));
     System.setErr(new ForwardingPrintStream((ConsoleOutputReceiver)runListener, false));
+
+    if (((groupsParameter = providerParameters.getProviderProperties().get("groups")) != null) && (!groupsParameter.isEmpty())) {
+
+      String[] parameterElements = groupsParameter.split(",", -1);
+      int index = 0;
+
+      groups = new String[parameterElements.length];
+      for (String parameterElement : parameterElements) {
+        groups[index++] = parameterElement;
+      }
+    }
 
     if (testsToRun == null) {
       if (forkTestSet instanceof TestsToRun) {
@@ -92,7 +105,7 @@ public class SleuthProvider extends AbstractProvider {
     startMilliseconds = System.currentTimeMillis();
 
     runListener.testSetStarting(new SimpleReportEntry("Sleuth Tests", "Test Assay", "test set starting"));
-    sleuthRunner.execute(0, null, testsToRun);
+    sleuthRunner.execute(0, groups, testsToRun);
     runListener.testSetCompleted(new SimpleReportEntry("Sleuth Tests", "Test Assay", (int)(System.currentTimeMillis() - startMilliseconds)));
 
     runResult = reporterFactory.close();

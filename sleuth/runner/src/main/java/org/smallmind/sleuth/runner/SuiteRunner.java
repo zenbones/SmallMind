@@ -47,11 +47,11 @@ public class SuiteRunner implements Runnable {
 
   private SleuthRunner sleuthRunner;
   private AnnotationProcessor annotationProcessor;
-  private TestThreadPool threadPool;
+  private SleuthThreadPool threadPool;
   private DependencyQueue<Suite, Class<?>> suiteDependencyQueue;
   private Dependency<Suite, Class<?>> suiteDependency;
 
-  public SuiteRunner (SleuthRunner sleuthRunner, Dependency<Suite, Class<?>> suiteDependency, DependencyQueue<Suite, Class<?>> suiteDependencyQueue, AnnotationProcessor annotationProcessor, TestThreadPool threadPool) {
+  public SuiteRunner (SleuthRunner sleuthRunner, Dependency<Suite, Class<?>> suiteDependency, DependencyQueue<Suite, Class<?>> suiteDependencyQueue, AnnotationProcessor annotationProcessor, SleuthThreadPool threadPool) {
 
     this.sleuthRunner = sleuthRunner;
     this.suiteDependency = suiteDependency;

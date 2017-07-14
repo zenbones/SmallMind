@@ -34,14 +34,17 @@ package org.smallmind.sleuth.runner;
 
 import java.util.concurrent.Semaphore;
 
-public class TestThreadPool {
+public class SleuthThreadPool {
 
   private final Semaphore[] semaphores;
-  private int ordinal0Count = 0;
+  private int[] executedTierCount;
+  private int[] completedTierCount;
 
-  public TestThreadPool (int maxThreads) {
+  public SleuthThreadPool (int maxThreads) {
 
     semaphores = new Semaphore[TestTier.values().length];
+    executedTierCount = new int[TestTier.values().length];
+    completedTierCount = new int[TestTier.values().length];
 
     for (TestTier testTier : TestTier.values()) {
       semaphores[testTier.ordinal()] = new Semaphore(maxThreads, true);
@@ -51,15 +54,28 @@ public class TestThreadPool {
   public synchronized void await (int total)
     throws InterruptedException {
 
-    while (ordinal0Count < total) {
+    while ((completedTierCount[0] < total) || (!tiersCompleted())) {
       wait();
     }
   }
 
-  public void execute (TestTier testTier, Runnable runnable)
+  private boolean tiersCompleted () {
+
+    for (TestTier testTier : TestTier.values()) {
+      if (completedTierCount[testTier.ordinal()] < executedTierCount[testTier.ordinal()]) {
+
+        return false;
+      }
+    }
+
+    return true;
+  }
+
+  public synchronized void execute (TestTier testTier, Runnable runnable)
     throws InterruptedException {
 
     semaphores[testTier.ordinal()].acquire();
+    executedTierCount[testTier.ordinal()] += 1;
 
     Thread thread = new Thread(() -> {
       runnable.run();
@@ -72,10 +88,8 @@ public class TestThreadPool {
   private synchronized void complete (TestTier testTier) {
 
     semaphores[testTier.ordinal()].release();
+    completedTierCount[testTier.ordinal()] += 1;
 
-    if (testTier.ordinal() == 0) {
-      ordinal0Count++;
-      notify();
-    }
+    notify();
   }
 }

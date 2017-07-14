@@ -78,7 +78,7 @@ public class SleuthRunner {
       try {
 
         AnnotationProcessor annotationProcessor = new AnnotationProcessor(new NativeAnnotationTranslator(), new TestNGAnnotationTranslator());
-        TestThreadPool threadPool = new TestThreadPool((maxThreads <= 0) ? Integer.MAX_VALUE : maxThreads);
+        SleuthThreadPool threadPool = new SleuthThreadPool((maxThreads <= 0) ? Integer.MAX_VALUE : maxThreads);
         DependencyAnalysis<Suite, Class<?>> suiteAnalysis = new DependencyAnalysis<>(Suite.class);
         DependencyQueue<Suite, Class<?>> suiteDependencyQueue;
         Dependency<Suite, Class<?>> suiteDependency;
