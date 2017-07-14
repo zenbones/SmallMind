@@ -37,59 +37,25 @@ import java.util.concurrent.Semaphore;
 public class SleuthThreadPool {
 
   private final Semaphore[] semaphores;
-  private int[] executedTierCount;
-  private int[] completedTierCount;
 
   public SleuthThreadPool (int maxThreads) {
 
     semaphores = new Semaphore[TestTier.values().length];
-    executedTierCount = new int[TestTier.values().length];
-    completedTierCount = new int[TestTier.values().length];
 
     for (TestTier testTier : TestTier.values()) {
       semaphores[testTier.ordinal()] = new Semaphore(maxThreads, true);
     }
   }
 
-  public synchronized void await (int total)
-    throws InterruptedException {
-
-    while ((completedTierCount[0] < total) || (!tiersCompleted())) {
-      wait();
-    }
-  }
-
-  private boolean tiersCompleted () {
-
-    for (TestTier testTier : TestTier.values()) {
-      if (completedTierCount[testTier.ordinal()] < executedTierCount[testTier.ordinal()]) {
-
-        return false;
-      }
-    }
-
-    return true;
-  }
-
   public synchronized void execute (TestTier testTier, Runnable runnable)
     throws InterruptedException {
 
     semaphores[testTier.ordinal()].acquire();
-    executedTierCount[testTier.ordinal()] += 1;
 
     Thread thread = new Thread(() -> {
       runnable.run();
-      complete(testTier);
     });
 
     thread.start();
-  }
-
-  private synchronized void complete (TestTier testTier) {
-
-    semaphores[testTier.ordinal()].release();
-    completedTierCount[testTier.ordinal()] += 1;
-
-    notify();
   }
 }

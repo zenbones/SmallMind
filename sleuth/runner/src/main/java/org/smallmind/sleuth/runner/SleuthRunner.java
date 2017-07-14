@@ -34,6 +34,7 @@ package org.smallmind.sleuth.runner;
 
 import java.util.Arrays;
 import java.util.LinkedList;
+import java.util.concurrent.CountDownLatch;
 import org.smallmind.sleuth.runner.annotation.AnnotationDictionary;
 import org.smallmind.sleuth.runner.annotation.AnnotationProcessor;
 import org.smallmind.sleuth.runner.annotation.NativeAnnotationTranslator;
@@ -82,6 +83,7 @@ public class SleuthRunner {
         DependencyAnalysis<Suite, Class<?>> suiteAnalysis = new DependencyAnalysis<>(Suite.class);
         DependencyQueue<Suite, Class<?>> suiteDependencyQueue;
         Dependency<Suite, Class<?>> suiteDependency;
+        CountDownLatch suiteCompletedLatch;
 
         for (Class<?> clazz : classIterable) {
 
@@ -95,11 +97,12 @@ public class SleuthRunner {
         }
 
         suiteDependencyQueue = suiteAnalysis.calculate();
+        suiteCompletedLatch = new CountDownLatch(suiteDependencyQueue.size());
         while ((suiteDependency = suiteDependencyQueue.poll()) != null) {
-          threadPool.execute(TestTier.SUITE, new SuiteRunner(this, suiteDependency, suiteDependencyQueue, annotationProcessor, threadPool));
+          threadPool.execute(TestTier.SUITE, new SuiteRunner(this, suiteCompletedLatch, suiteDependency, suiteDependencyQueue, annotationProcessor, threadPool));
         }
 
-        threadPool.await(suiteDependencyQueue.getSize());
+        suiteCompletedLatch.await();
       } catch (Exception exception) {
         fire(new FatalSleuthEvent(SleuthRunner.class.getName(), "execute", System.currentTimeMillis() - startMilliseconds, exception));
       }

@@ -50,7 +50,7 @@ public class DependencyQueue<A extends Annotation, T> {
     size = dependencyList.size();
   }
 
-  public int getSize () {
+  public int size () {
 
     return size;
   }

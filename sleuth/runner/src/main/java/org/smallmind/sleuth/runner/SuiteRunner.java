@@ -33,6 +33,7 @@
 package org.smallmind.sleuth.runner;
 
 import java.lang.reflect.Method;
+import java.util.concurrent.CountDownLatch;
 import org.smallmind.nutsnbolts.util.Pair;
 import org.smallmind.sleuth.runner.annotation.AfterSuite;
 import org.smallmind.sleuth.runner.annotation.AnnotationDictionary;
@@ -50,10 +51,12 @@ public class SuiteRunner implements Runnable {
   private SleuthThreadPool threadPool;
   private DependencyQueue<Suite, Class<?>> suiteDependencyQueue;
   private Dependency<Suite, Class<?>> suiteDependency;
+  private CountDownLatch suiteCompletedLatch;
 
-  public SuiteRunner (SleuthRunner sleuthRunner, Dependency<Suite, Class<?>> suiteDependency, DependencyQueue<Suite, Class<?>> suiteDependencyQueue, AnnotationProcessor annotationProcessor, SleuthThreadPool threadPool) {
+  public SuiteRunner (SleuthRunner sleuthRunner, CountDownLatch suiteCompletedLatch, Dependency<Suite, Class<?>> suiteDependency, DependencyQueue<Suite, Class<?>> suiteDependencyQueue, AnnotationProcessor annotationProcessor, SleuthThreadPool threadPool) {
 
     this.sleuthRunner = sleuthRunner;
+    this.suiteCompletedLatch = suiteCompletedLatch;
     this.suiteDependency = suiteDependency;
     this.suiteDependencyQueue = suiteDependencyQueue;
     this.annotationProcessor = annotationProcessor;
@@ -74,6 +77,7 @@ public class SuiteRunner implements Runnable {
       AnnotationMethodology<BeforeSuite> beforeSuiteMethodology;
       AnnotationMethodology<AfterSuite> afterSuiteMethodology;
       AnnotationMethodology<Test> testMethodology;
+      CountDownLatch testCompletedLatch;
       Culprit culprit = null;
       Object instance;
 
@@ -98,13 +102,16 @@ public class SuiteRunner implements Runnable {
       }
 
       testMethodDependencyQueue = testMethodAnalysis.calculate();
+      testCompletedLatch = new CountDownLatch(testMethodDependencyQueue.size());
       while ((testMethodDependency = testMethodDependencyQueue.poll()) != null) {
         try {
-          threadPool.execute(TestTier.TEST, new TestRunner(sleuthRunner, culprit, suiteDependency.getValue(), instance, testMethodDependency, testMethodDependencyQueue, annotationProcessor));
+          threadPool.execute(TestTier.TEST, new TestRunner(sleuthRunner, testCompletedLatch, culprit, suiteDependency.getValue(), instance, testMethodDependency, testMethodDependencyQueue, annotationProcessor));
         } catch (InterruptedException interruptedException) {
           culprit = new Culprit(SuiteRunner.class.getName(), "run", interruptedException);
         }
       }
+
+      testCompletedLatch.await();
 
       if ((afterSuiteMethodology = annotationDictionary.getAfterSuiteMethodology()) != null) {
         afterSuiteMethodology.invoke(sleuthRunner, culprit, suiteDependency.getValue(), instance);
@@ -113,6 +120,7 @@ public class SuiteRunner implements Runnable {
       sleuthRunner.fire(new FatalSleuthEvent(SuiteRunner.class.getName(), "run", System.currentTimeMillis() - startMilliseconds, exception));
     } finally {
       suiteDependencyQueue.complete(suiteDependency);
+      suiteCompletedLatch.countDown();
     }
   }
 }

@@ -34,12 +34,11 @@ package org.smallmind.sleuth.runner;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
-import org.smallmind.sleuth.runner.annotation.AfterSuite;
+import java.util.concurrent.CountDownLatch;
 import org.smallmind.sleuth.runner.annotation.AfterTest;
 import org.smallmind.sleuth.runner.annotation.AnnotationDictionary;
 import org.smallmind.sleuth.runner.annotation.AnnotationMethodology;
 import org.smallmind.sleuth.runner.annotation.AnnotationProcessor;
-import org.smallmind.sleuth.runner.annotation.BeforeSuite;
 import org.smallmind.sleuth.runner.annotation.BeforeTest;
 import org.smallmind.sleuth.runner.annotation.Test;
 import org.smallmind.sleuth.runner.event.FailureSleuthEvent;
@@ -53,13 +52,15 @@ public class TestRunner implements Runnable {
   private AnnotationProcessor annotationProcessor;
   private DependencyQueue<Test, Method> testMethodDependencyQueue;
   private Dependency<Test, Method> testMethodDependency;
+  private CountDownLatch testCompletedLatch;
   private Culprit culprit;
   private Class<?> clazz;
   private Object instance;
 
-  public TestRunner (SleuthRunner sleuthRunner, Culprit culprit, Class<?> clazz, Object instance, Dependency<Test, Method> testMethodDependency, DependencyQueue<Test, Method> testMethodDependencyQueue, AnnotationProcessor annotationProcessor) {
+  public TestRunner (SleuthRunner sleuthRunner, CountDownLatch testCompletedLatch, Culprit culprit, Class<?> clazz, Object instance, Dependency<Test, Method> testMethodDependency, DependencyQueue<Test, Method> testMethodDependencyQueue, AnnotationProcessor annotationProcessor) {
 
     this.sleuthRunner = sleuthRunner;
+    this.testCompletedLatch = testCompletedLatch;
     this.culprit = culprit;
     this.clazz = clazz;
     this.instance = instance;
@@ -105,6 +106,7 @@ public class TestRunner implements Runnable {
       }
     } finally {
       testMethodDependencyQueue.complete(testMethodDependency);
+      testCompletedLatch.countDown();
     }
   }
 }
