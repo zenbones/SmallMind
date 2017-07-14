@@ -41,6 +41,7 @@ import org.smallmind.sleuth.runner.annotation.AnnotationMethodology;
 import org.smallmind.sleuth.runner.annotation.AnnotationProcessor;
 import org.smallmind.sleuth.runner.annotation.BeforeTest;
 import org.smallmind.sleuth.runner.annotation.Test;
+import org.smallmind.sleuth.runner.event.ErrorSleuthEvent;
 import org.smallmind.sleuth.runner.event.FailureSleuthEvent;
 import org.smallmind.sleuth.runner.event.SkippedSleuthEvent;
 import org.smallmind.sleuth.runner.event.StartSleuthEvent;
@@ -94,10 +95,15 @@ public class TestRunner implements Runnable {
           sleuthRunner.fire(new SuccessSleuthEvent(clazz.getName(), testMethodDependency.getValue().getName(), System.currentTimeMillis() - startMilliseconds));
         } catch (InvocationTargetException invocationTargetException) {
           culprit = new Culprit(clazz.getName(), testMethodDependency.getValue().getName(), invocationTargetException.getCause());
-          sleuthRunner.fire(new FailureSleuthEvent(clazz.getName(), testMethodDependency.getValue().getName(), System.currentTimeMillis() - startMilliseconds, invocationTargetException.getCause()));
+          if (invocationTargetException.getCause() instanceof AssertionError) {
+            sleuthRunner.fire(new FailureSleuthEvent(clazz.getName(), testMethodDependency.getValue().getName(), System.currentTimeMillis() - startMilliseconds, invocationTargetException.getCause()));
+          }
+          else {
+            sleuthRunner.fire(new ErrorSleuthEvent(clazz.getName(), testMethodDependency.getValue().getName(), System.currentTimeMillis() - startMilliseconds, invocationTargetException.getCause()));
+          }
         } catch (Exception exception) {
           culprit = new Culprit(clazz.getName(), testMethodDependency.getValue().getName(), exception);
-          sleuthRunner.fire(new FailureSleuthEvent(clazz.getName(), testMethodDependency.getValue().getName(), System.currentTimeMillis() - startMilliseconds, exception));
+          sleuthRunner.fire(new ErrorSleuthEvent(clazz.getName(), testMethodDependency.getValue().getName(), System.currentTimeMillis() - startMilliseconds, exception));
         }
       }
 
