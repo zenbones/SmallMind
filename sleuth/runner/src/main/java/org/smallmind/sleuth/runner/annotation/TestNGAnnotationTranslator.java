@@ -50,7 +50,7 @@ public class TestNGAnnotationTranslator implements AnnotationTranslator {
     Test test;
 
     if ((test = clazz.getAnnotation(Test.class)) != null) {
-      annotationDictionary.setSuite(new SuiteLiteral((test.groups().length == 0) ? null : test.groups()[0], test.priority(), test.dependsOnMethods(), test.enabled()));
+      annotationDictionary.setSuite(new SuiteLiteral((test.groups().length == 0) ? null : test.groups()[0], test.priority(), new String[0], test.dependsOnMethods(), test.enabled()));
     }
     for (Method method : clazz.getMethods()) {
       for (Annotation annotation : method.getAnnotations()) {
@@ -67,7 +67,7 @@ public class TestNGAnnotationTranslator implements AnnotationTranslator {
           annotationDictionary.addAfterTestMethod(method, new AfterTestLiteral());
         }
         if (annotation instanceof Test) {
-          annotationDictionary.addTestMethod(method, new TestLiteral(((Test)annotation).priority(), ((Test)annotation).dependsOnMethods(), ((Test)annotation).enabled()));
+          annotationDictionary.addTestMethod(method, new TestLiteral(((Test)annotation).priority(), new String[0], ((Test)annotation).dependsOnMethods(), ((Test)annotation).enabled()));
         }
       }
     }

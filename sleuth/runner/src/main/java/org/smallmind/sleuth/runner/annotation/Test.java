@@ -43,6 +43,8 @@ public @interface Test {
 
   int priority () default 0;
 
+  String[] executeAfter () default {};
+
   String[] dependsOn () default {};
 
   boolean enabled () default true;

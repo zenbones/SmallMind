@@ -36,6 +36,7 @@ import org.smallmind.nutsnbolts.lang.AnnotationLiteral;
 
 public class SuiteLiteral extends AnnotationLiteral<Suite> implements Suite {
 
+  private String[] executeAfter;
   private String[] dependsOn;
   private String group;
   private boolean enabled;
@@ -48,10 +49,11 @@ public class SuiteLiteral extends AnnotationLiteral<Suite> implements Suite {
     enabled = true;
   }
 
-  public SuiteLiteral (String group, int priority, String[] dependsOn, boolean enabled) {
+  public SuiteLiteral (String group, int priority, String[] executeAfter, String[] dependsOn, boolean enabled) {
 
     this.group = group;
     this.priority = priority;
+    this.executeAfter = executeAfter;
     this.dependsOn = dependsOn;
     this.enabled = enabled;
   }
@@ -66,6 +68,12 @@ public class SuiteLiteral extends AnnotationLiteral<Suite> implements Suite {
   public int priority () {
 
     return priority;
+  }
+
+  @Override
+  public String[] executeAfter () {
+
+    return executeAfter;
   }
 
   @Override
