@@ -100,7 +100,7 @@ public class XMemcachedMemcachedClient implements ProxyMemcachedClient {
   public <T> boolean casSet (String key, int expiration, T value, long cas)
     throws TimeoutException, InterruptedException, MemcachedException {
 
-    return memcachedClient.cas(key, expiration, value, cas);
+    return (cas == 0) ? memcachedClient.add(key, expiration, value) : memcachedClient.cas(key, expiration, value, cas);
   }
 
   @Override
@@ -114,7 +114,7 @@ public class XMemcachedMemcachedClient implements ProxyMemcachedClient {
   public boolean casDelete (String key, long cas)
     throws TimeoutException, InterruptedException, MemcachedException {
 
-    return memcachedClient.delete(key, cas);
+    return memcachedClient.delete(key, cas, getOpTimeout());
   }
 
   @Override
