@@ -32,6 +32,7 @@
  */
 package org.smallmind.nutsnbolts.lang;
 
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
@@ -167,18 +168,19 @@ public class GatingClassLoader extends ClassLoader {
   private byte[] getClassData (InputStream classInputStream)
     throws IOException {
 
-    byte[] classData;
-    int dataLength;
-    int totalBytesRead = 0;
-    int bytesRead;
+    try (ByteArrayOutputStream dataInputStream = new ByteArrayOutputStream()) {
 
-    dataLength = classInputStream.available();
-    classData = new byte[dataLength];
-    while (totalBytesRead < dataLength) {
-      bytesRead = classInputStream.read(classData, totalBytesRead, dataLength - totalBytesRead);
-      totalBytesRead += bytesRead;
+      int totalBytesRead = 0;
+      int bytesRead;
+      byte[] buffer = new byte[8128];
+
+      while ((bytesRead = classInputStream.read(buffer, 0, buffer.length)) >= 0) {
+        dataInputStream.write(buffer, totalBytesRead, bytesRead);
+        totalBytesRead += bytesRead;
+      }
+
+      return dataInputStream.toByteArray();
     }
-    return classData;
   }
 
   @Override
