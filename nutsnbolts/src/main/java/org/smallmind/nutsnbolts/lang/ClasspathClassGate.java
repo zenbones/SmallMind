@@ -33,7 +33,6 @@
 package org.smallmind.nutsnbolts.lang;
 
 import java.io.BufferedInputStream;
-import java.io.Closeable;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -174,14 +173,13 @@ public class ClasspathClassGate implements ClassGate {
   private InputStream findJarStream (String jarComponentPath, String path)
     throws IOException {
 
-    try (JarLocator jarLocator = findJarLocator(jarComponentPath, path)) {
+    JarLocator jarLocator;
 
-      if (jarLocator != null) {
-        return new BufferedInputStream(jarLocator.getInputStream());
-      }
-
-      return null;
+    if ((jarLocator = findJarLocator(jarComponentPath, path)) != null) {
+      return new BufferedInputStream(jarLocator.getInputStream());
     }
+
+    return null;
   }
 
   private JarLocator findJarLocator (String jarComponentPath, String path)
@@ -215,7 +213,7 @@ public class ClasspathClassGate implements ClassGate {
     return null;
   }
 
-  private class JarLocator implements Closeable {
+  private class JarLocator {
 
     private JarFile jarFile;
     private JarEntry jarEntry;
@@ -226,7 +224,7 @@ public class ClasspathClassGate implements ClassGate {
       this.jarEntry = jarEntry;
     }
 
-    public JarEntry getJarEntry () {
+    private JarEntry getJarEntry () {
 
       return jarEntry;
     }
@@ -235,13 +233,6 @@ public class ClasspathClassGate implements ClassGate {
       throws IOException {
 
       return jarFile.getInputStream(jarFile.getEntry(jarEntry.getName()));
-    }
-
-    @Override
-    public void close ()
-      throws IOException {
-
-      jarFile.close();
     }
   }
 }

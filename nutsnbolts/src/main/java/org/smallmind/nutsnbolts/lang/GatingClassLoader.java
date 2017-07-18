@@ -169,18 +169,16 @@ public class GatingClassLoader extends ClassLoader {
   private byte[] getClassData (InputStream classInputStream)
     throws IOException {
 
-    try (ByteArrayOutputStream dataInputStream = new ByteArrayOutputStream()) {
+    try (ByteArrayOutputStream dataOutputStream = new ByteArrayOutputStream()) {
 
-      int totalBytesRead = 0;
       int bytesRead;
       byte[] buffer = new byte[8128];
 
-      while ((bytesRead = classInputStream.read(buffer, 0, buffer.length)) >= 0) {
-        dataInputStream.write(buffer, totalBytesRead, bytesRead);
-        totalBytesRead += bytesRead;
+      while ((bytesRead = classInputStream.read(buffer)) >= 0) {
+        dataOutputStream.write(buffer, 0, bytesRead);
       }
 
-      return dataInputStream.toByteArray();
+      return dataOutputStream.toByteArray();
     }
   }
 
