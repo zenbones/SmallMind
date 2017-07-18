@@ -32,9 +32,11 @@
  */
 package org.smallmind.nutsnbolts.lang;
 
+import java.io.Closeable;
+import java.io.IOException;
 import java.io.InputStream;
 
-public class ClassStreamTicket {
+public class ClassStreamTicket implements Closeable {
 
   private InputStream inputStream;
   private long timeStamp;
@@ -53,6 +55,12 @@ public class ClassStreamTicket {
   public long getTimeStamp () {
 
     return timeStamp;
+  }
+
+  @Override
+  public void close () throws IOException {
+
+    inputStream.close();
   }
 }
 

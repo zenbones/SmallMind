@@ -122,20 +122,21 @@ public class GatingClassLoader extends ClassLoader {
   public synchronized Class findClass (String name)
     throws ClassNotFoundException {
 
-    Class definedClass;
-    ClassStreamTicket classStreamTicket;
-    InputStream classInputStream;
-    byte[] classData;
-
     for (ClassGate classGate : classGates) {
       try {
+
+        ClassStreamTicket classStreamTicket;
+
         if ((classStreamTicket = classGate.getClassAsTicket(name)) != null) {
-          classInputStream = classStreamTicket.getInputStream();
-          classData = getClassData(classInputStream);
-          classInputStream.close();
+
+          Class definedClass;
+          byte[] classData;
+
+          try (InputStream classInputStream = classStreamTicket.getInputStream()) {
+            classData = getClassData(classInputStream);
+          }
 
           definePackage(name);
-
           definedClass = defineClass(name, classData, 0, classData.length);
 
           if (gracePeriodSeconds >= 0) {
