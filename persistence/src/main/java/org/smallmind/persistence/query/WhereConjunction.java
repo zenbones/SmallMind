@@ -94,4 +94,13 @@ public abstract class WhereConjunction implements WhereCriterion {
 
     this.criterionList = Arrays.asList(criteria);
   }
+
+  public synchronized void addCriterion (WhereCriterion criterion) {
+
+    if (criterionList == null) {
+      criterionList = new LinkedList<>();
+    }
+
+    criterionList.add(criterion);
+  }
 }
