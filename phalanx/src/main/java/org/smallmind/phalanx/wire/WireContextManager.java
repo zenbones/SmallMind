@@ -38,14 +38,14 @@ import org.smallmind.nutsnbolts.lang.PerApplicationDataManager;
 
 public class WireContextManager implements PerApplicationDataManager {
 
-  static {
-
-    PerApplicationContext.setPerApplicationData(WireContextManager.class, new ConcurrentHashMap<String, Class<? extends WireContext>>());
-  }
-
   public static void register (String handle, Class<? extends WireContext> contextClass) {
 
-    PerApplicationContext.getPerApplicationData(WireContextManager.class, ConcurrentHashMap.class).put(handle, contextClass);
+    ConcurrentHashMap<String, Class<? extends WireContext>> wireContextMap;
+
+    if ((wireContextMap = PerApplicationContext.getPerApplicationData(WireContextManager.class, ConcurrentHashMap.class)) == null) {
+      PerApplicationContext.setPerApplicationData(WireContextManager.class, wireContextMap = new ConcurrentHashMap<>());
+    }
+    wireContextMap.put(handle, contextClass);
   }
 
   public static Class<? extends WireContext> getContextClass (String handle) {

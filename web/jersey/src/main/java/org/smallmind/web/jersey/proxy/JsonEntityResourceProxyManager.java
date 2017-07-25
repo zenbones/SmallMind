@@ -39,13 +39,14 @@ import org.smallmind.nutsnbolts.lang.PerApplicationDataManager;
 
 public class JsonEntityResourceProxyManager implements PerApplicationDataManager {
 
-  static {
-
-    PerApplicationContext.setPerApplicationData(JsonEntityResourceProxyManager.class, new ConcurrentHashMap<Class<?>, Proxy>());
-  }
   public static void register (Class<?> resourceInterface, Proxy proxy) {
 
-    PerApplicationContext.getPerApplicationData(JsonEntityResourceProxyManager.class, ConcurrentHashMap.class).put(resourceInterface, proxy);
+    ConcurrentHashMap<Class<?>, Proxy> proxyMap;
+
+    if ((proxyMap = PerApplicationContext.getPerApplicationData(JsonEntityResourceProxyManager.class, ConcurrentHashMap.class)) == null) {
+      PerApplicationContext.setPerApplicationData(JsonEntityResourceProxyManager.class, proxyMap = new ConcurrentHashMap<>());
+    }
+    proxyMap.put(resourceInterface, proxy);
   }
 
   public static <T> T getProxy (Class<T> resourceInterface) {

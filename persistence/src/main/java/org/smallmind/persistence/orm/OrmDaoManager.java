@@ -40,14 +40,14 @@ import org.smallmind.persistence.Durable;
 
 public class OrmDaoManager implements PerApplicationDataManager {
 
-  static {
-
-    PerApplicationContext.setPerApplicationData(OrmDaoManager.class, new ConcurrentHashMap<Class<? extends Durable>, ORMDao>());
-  }
-
   public static void register (Class<? extends Durable> durableClass, ORMDao ormDao) {
 
-    PerApplicationContext.getPerApplicationData(OrmDaoManager.class, ConcurrentHashMap.class).put(durableClass, ormDao);
+    ConcurrentHashMap<Class<? extends Durable>, ORMDao> ormDaoMap;
+
+    if ((ormDaoMap = PerApplicationContext.getPerApplicationData(OrmDaoManager.class, ConcurrentHashMap.class)) == null) {
+      PerApplicationContext.setPerApplicationData(OrmDaoManager.class, ormDaoMap = new ConcurrentHashMap<>());
+    }
+    ormDaoMap.put(durableClass, ormDao);
   }
 
   public static Class<? extends Durable> findDurableClass (String name) {

@@ -41,14 +41,14 @@ import org.smallmind.persistence.orm.ORMInitializationException;
 
 public class DataSourceManager implements PerApplicationDataManager {
 
-  static {
-
-    PerApplicationContext.setPerApplicationData(DataSourceManager.class, new ConcurrentHashMap<String, CommonDataSource>());
-  }
-
   public static void register (String key, CommonDataSource dataSource) {
 
-    PerApplicationContext.getPerApplicationData(DataSourceManager.class, ConcurrentHashMap.class).put(key, dataSource);
+    ConcurrentHashMap<String, CommonDataSource> dataSourceMap;
+
+    if ((dataSourceMap = PerApplicationContext.getPerApplicationData(DataSourceManager.class, ConcurrentHashMap.class)) == null) {
+      PerApplicationContext.setPerApplicationData(DataSourceManager.class, dataSourceMap = new ConcurrentHashMap<>());
+    }
+    dataSourceMap.put(key, dataSource);
   }
 
   public static CommonDataSource getDataSource (String key) {

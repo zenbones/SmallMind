@@ -35,17 +35,20 @@ package org.smallmind.persistence.orm;
 import java.util.concurrent.ConcurrentHashMap;
 import org.smallmind.nutsnbolts.lang.PerApplicationContext;
 import org.smallmind.nutsnbolts.lang.PerApplicationDataManager;
+import org.springframework.beans.BeansException;
+import org.springframework.context.ApplicationContext;
+import org.springframework.context.ApplicationContextAware;
 
-public class SessionManager implements PerApplicationDataManager {
-
-  static {
-
-    PerApplicationContext.setPerApplicationData(SessionManager.class, new ConcurrentHashMap<String, ProxySession>());
-  }
+public class SessionManager implements PerApplicationDataManager, ApplicationContextAware {
 
   public static void register (String sessionSourceKey, ProxySession proxySession) {
 
-    PerApplicationContext.getPerApplicationData(SessionManager.class, ConcurrentHashMap.class).put(sessionSourceKey, proxySession);
+    ConcurrentHashMap<String, ProxySession> sessionMap;
+
+    if ((sessionMap = PerApplicationContext.getPerApplicationData(SessionManager.class, ConcurrentHashMap.class)) == null) {
+      PerApplicationContext.setPerApplicationData(SessionManager.class, sessionMap = new ConcurrentHashMap<>());
+    }
+    sessionMap.put(sessionSourceKey, proxySession);
   }
 
   public static ProxySession getSession () {
@@ -72,5 +75,12 @@ public class SessionManager implements PerApplicationDataManager {
   public static void closeSession (String sessionSourceKey) {
 
     getSession(sessionSourceKey).close();
+  }
+
+  @Override
+  public void setApplicationContext (ApplicationContext applicationContext)
+    throws BeansException {
+
+    PerApplicationContext.setPerApplicationData(SessionManager.class, new ConcurrentHashMap<String, ProxySession>());
   }
 }
