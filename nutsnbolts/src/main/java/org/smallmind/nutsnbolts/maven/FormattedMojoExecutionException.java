@@ -38,11 +38,11 @@ public class FormattedMojoExecutionException extends MojoExecutionException {
 
   public FormattedMojoExecutionException (String message, Object... args) {
 
-    super(String.format(message, args));
+    super(message == null ? null : String.format(message, args));
   }
 
   public FormattedMojoExecutionException (Throwable throwable, String message, Object... args) {
 
-    super(String.format(message, args), throwable);
+    super(message == null ? null : String.format(message, args), throwable);
   }
 }

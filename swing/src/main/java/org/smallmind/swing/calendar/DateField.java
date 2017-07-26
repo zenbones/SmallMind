@@ -45,7 +45,7 @@ import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
-import org.smallmind.nutsnbolts.calendar.Month;
+import org.smallmind.nutsnbolts.time.Month;
 import org.smallmind.nutsnbolts.util.WeakEventListenerList;
 import org.smallmind.swing.ComponentUtility;
 import org.smallmind.swing.spinner.DefaultSpinnerRenderer;

@@ -30,19 +30,16 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.nutsnbolts.maven;
+package org.smallmind.nutsnbolts.time;
 
-import org.apache.maven.plugin.MojoFailureException;
+import org.smallmind.nutsnbolts.util.StringUtility;
 
-public class FormattedMojoFailureException extends MojoFailureException {
+public enum Month {
 
-  public FormattedMojoFailureException (String message, Object... args) {
+  JANUARY, FEBRUARY, MARCH, APRIL, MAY, JUNE, JULY, AUGUST, SEPTEMBER, OCTOBER, NOVEMBER, DECEMBER;
 
-    super(message == null ? null : String.format(message, args));
-  }
+  public String getDisplayName () {
 
-  public FormattedMojoFailureException (Throwable throwable, String message, Object... args) {
-
-    super(message == null ? null : String.format(message, args), throwable);
+    return StringUtility.toDisplayCase(this.name());
   }
 }

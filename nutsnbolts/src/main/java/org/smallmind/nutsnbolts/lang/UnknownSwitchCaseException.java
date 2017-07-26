@@ -41,12 +41,12 @@ public class UnknownSwitchCaseException extends FormattedRuntimeException {
 
   public UnknownSwitchCaseException (String message, Object... args) {
 
-    super(String.format(message, args));
+    super(message, args);
   }
 
   public UnknownSwitchCaseException (Throwable throwable, String message, Object... args) {
 
-    super(String.format(message, args), throwable);
+    super(throwable, message, args);
   }
 
   public UnknownSwitchCaseException (Throwable throwable) {

@@ -41,12 +41,12 @@ public class TypeMismatchException extends FormattedRuntimeException {
 
   public TypeMismatchException (String message, Object... args) {
 
-    super(String.format(message, args));
+    super(message, args);
   }
 
   public TypeMismatchException (Throwable throwable, String message, Object... args) {
 
-    super(String.format(message, args), throwable);
+    super(message, args, throwable);
   }
 
   public TypeMismatchException (Throwable throwable) {

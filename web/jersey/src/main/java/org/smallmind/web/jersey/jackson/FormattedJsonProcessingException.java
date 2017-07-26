@@ -38,6 +38,6 @@ public class FormattedJsonProcessingException extends JsonProcessingException {
 
   public FormattedJsonProcessingException (String message, Object... args) {
 
-    super(String.format(message, args));
+    super(message == null ? null : String.format(message, args));
   }
 }

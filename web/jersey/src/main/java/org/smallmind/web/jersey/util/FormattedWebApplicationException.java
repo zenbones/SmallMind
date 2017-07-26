@@ -41,7 +41,7 @@ public class FormattedWebApplicationException extends WebApplicationException {
 
   public FormattedWebApplicationException (Response.Status status, String message, Object... args) {
 
-    this(status, new Fault(String.format(message, args)));
+    this(status, new Fault(message == null ? null : String.format(message, args)));
   }
 
   public FormattedWebApplicationException (Response.Status status, Throwable throwable) {

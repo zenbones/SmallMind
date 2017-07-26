@@ -44,7 +44,7 @@ import javax.swing.JLabel;
 import javax.swing.JList;
 import javax.swing.JPanel;
 import javax.swing.ListCellRenderer;
-import org.smallmind.nutsnbolts.calendar.CalendarUtility;
+import org.smallmind.nutsnbolts.time.CalendarUtility;
 import org.smallmind.swing.ComponentUtility;
 
 public class DayInMonthListCellRenderer implements ListCellRenderer {

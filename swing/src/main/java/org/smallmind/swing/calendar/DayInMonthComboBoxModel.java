@@ -35,7 +35,7 @@ package org.smallmind.swing.calendar;
 import javax.swing.ComboBoxModel;
 import javax.swing.event.ListDataEvent;
 import javax.swing.event.ListDataListener;
-import org.smallmind.nutsnbolts.calendar.CalendarUtility;
+import org.smallmind.nutsnbolts.time.CalendarUtility;
 import org.smallmind.nutsnbolts.util.WeakEventListenerList;
 
 public class DayInMonthComboBoxModel implements ComboBoxModel {
