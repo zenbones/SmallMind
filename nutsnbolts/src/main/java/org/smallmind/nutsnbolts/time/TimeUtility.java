@@ -40,37 +40,37 @@ import java.util.Date;
 
 public class TimeUtility {
 
-  public ZonedDateTime fromMilliseconds (long milliseconds) {
+  public static ZonedDateTime fromMilliseconds (long milliseconds) {
 
     return ZonedDateTime.ofInstant(Instant.ofEpochMilli(milliseconds), ZoneId.systemDefault());
   }
 
-  public ZonedDateTime fromMilliseconds (Long milliseconds) {
+  public static ZonedDateTime fromMilliseconds (Long milliseconds) {
 
     return fromMilliseconds(milliseconds, false);
   }
 
-  public ZonedDateTime fromMilliseconds (Long milliseconds, boolean allowNull) {
+  public static ZonedDateTime fromMilliseconds (Long milliseconds, boolean allowNull) {
 
     return (milliseconds == null) ? allowNull ? null : ZonedDateTime.now() : ZonedDateTime.ofInstant(Instant.ofEpochMilli(milliseconds), ZoneId.systemDefault());
   }
 
-  public ZonedDateTime fromDate (Date date) {
+  public static ZonedDateTime fromDate (Date date) {
 
     return fromDate(date, false);
   }
 
-  public ZonedDateTime fromDate (Date date, boolean allowNull) {
+  public static ZonedDateTime fromDate (Date date, boolean allowNull) {
 
     return (date == null) ? allowNull ? null : ZonedDateTime.now() : ZonedDateTime.ofInstant(date.toInstant(), ZoneId.systemDefault());
   }
 
-  public ZonedDateTime fromCalendar (Calendar calendar) {
+  public static ZonedDateTime fromCalendar (Calendar calendar) {
 
     return fromCalendar(calendar, false);
   }
 
-  public ZonedDateTime fromCalendar (Calendar calendar, boolean allowNull) {
+  public static ZonedDateTime fromCalendar (Calendar calendar, boolean allowNull) {
 
     return (calendar == null) ? allowNull ? null : ZonedDateTime.now() : ZonedDateTime.ofInstant(calendar.toInstant(), ZoneId.systemDefault());
   }
