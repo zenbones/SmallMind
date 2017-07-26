@@ -83,7 +83,7 @@ public class WireContextXmlAdapter extends XmlAdapter<JsonNode, WireContext[]> {
       return null;
     }
 
-    ArrayNode arrayNode = JsonNodeFactory.instance.arrayNode(wireContexts.length);
+    ArrayNode arrayNode = JsonNodeFactory.instance.arrayNode();
 
     for (WireContext wireContext : wireContexts) {
       if (wireContext instanceof ProtoWireContext) {
