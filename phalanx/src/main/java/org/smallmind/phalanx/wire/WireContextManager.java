@@ -35,6 +35,7 @@ package org.smallmind.phalanx.wire;
 import java.util.concurrent.ConcurrentHashMap;
 import org.smallmind.nutsnbolts.lang.PerApplicationContext;
 import org.smallmind.nutsnbolts.lang.PerApplicationDataManager;
+import org.smallmind.scribe.pen.LoggerManager;
 
 public class WireContextManager implements PerApplicationDataManager {
 
@@ -45,6 +46,7 @@ public class WireContextManager implements PerApplicationDataManager {
     if ((wireContextMap = PerApplicationContext.getPerApplicationData(WireContextManager.class, ConcurrentHashMap.class)) == null) {
       PerApplicationContext.setPerApplicationData(WireContextManager.class, wireContextMap = new ConcurrentHashMap<>());
     }
+
     wireContextMap.put(handle, contextClass);
   }
 
