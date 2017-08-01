@@ -189,6 +189,7 @@ public class FileUtility {
                 Files.delete(file);
               }
             }
+
             return FileVisitResult.CONTINUE;
           }
 
