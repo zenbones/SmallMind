@@ -36,13 +36,16 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
+import java.security.CodeSource;
+import java.security.PermissionCollection;
+import java.security.SecureClassLoader;
 import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
 import org.smallmind.nutsnbolts.util.IteratorEnumeration;
 
-public class GatingClassLoader extends ClassLoader {
+public class GatingClassLoader extends SecureClassLoader {
 
   private final HashMap<String, ClassGateTicket> ticketMap;
   private final HashSet<String> packageSet = new HashSet<>();
@@ -63,6 +66,12 @@ public class GatingClassLoader extends ClassLoader {
 
     super(parent);
 
+    SecurityManager security = System.getSecurityManager();
+
+    if (security != null) {
+      security.checkCreateClassLoader();
+    }
+
     this.classGates = classGates;
     this.gracePeriodSeconds = gracePeriodSeconds;
 
@@ -72,6 +81,12 @@ public class GatingClassLoader extends ClassLoader {
   public ClassGate[] getClassGates () {
 
     return classGates;
+  }
+
+  @Override
+  protected PermissionCollection getPermissions (CodeSource codesource) {
+
+    return super.getPermissions(codesource);
   }
 
   @Override
@@ -127,8 +142,9 @@ public class GatingClassLoader extends ClassLoader {
 
         ClassStreamTicket classStreamTicket;
 
-        if ((classStreamTicket = classGate.getClassAsTicket(name)) != null) {
+        if ((classStreamTicket = classGate.getTicket(name)) != null) {
 
+          CodeSource codeSource;
           Class definedClass;
           byte[] classData;
 
@@ -137,7 +153,7 @@ public class GatingClassLoader extends ClassLoader {
           }
 
           definePackage(name);
-          definedClass = defineClass(name, classData, 0, classData.length);
+          definedClass = ((codeSource = classGate.getCodeSource()) != null) ? defineClass(name, classData, 0, classData.length, codeSource) : defineClass(name, classData, 0, classData.length);
 
           if (gracePeriodSeconds >= 0) {
             synchronized (ticketMap) {

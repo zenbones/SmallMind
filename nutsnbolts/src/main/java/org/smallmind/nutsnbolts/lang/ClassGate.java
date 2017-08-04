@@ -34,12 +34,16 @@ package org.smallmind.nutsnbolts.lang;
 
 import java.io.InputStream;
 import java.net.URL;
+import java.security.CodeSource;
 
 public interface ClassGate {
 
   long STATIC_CLASS = 0;
 
-  ClassStreamTicket getClassAsTicket (String name)
+  CodeSource getCodeSource ()
+    throws Exception;
+
+  ClassStreamTicket getTicket (String name)
     throws Exception;
 
   URL getResource (String path)

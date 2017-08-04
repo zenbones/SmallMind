@@ -53,8 +53,7 @@ public class ExtensionLoader<E extends ExtensionInstance> {
 
       try {
         extensionInstance = applicationContext.getBean(extensionInstanceClass);
-      }
-      catch (Throwable throwable) {
+      } catch (Throwable throwable) {
         throw new ExtensionLoaderException(throwable, "Unable to execute extension configuration(%s)", extensionFile.getAbsolutePath());
       }
 

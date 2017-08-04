@@ -38,6 +38,7 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
+import java.security.CodeSource;
 import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.jar.JarEntry;
@@ -82,7 +83,13 @@ public class ClasspathClassGate implements ClassGate {
     return ClassGate.STATIC_CLASS;
   }
 
-  public ClassStreamTicket getClassAsTicket (String name)
+  @Override
+  public CodeSource getCodeSource () {
+
+    return null;
+  }
+
+  public ClassStreamTicket getTicket (String name)
     throws Exception {
 
     String classFileName;
