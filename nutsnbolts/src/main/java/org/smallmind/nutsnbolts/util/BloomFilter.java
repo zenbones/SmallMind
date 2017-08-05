@@ -72,10 +72,7 @@ public class BloomFilter<E extends BloomFilterElement> implements Serializable {
   public BloomFilter (double falsePositiveProbability, int maxElements)
     throws NoSuchAlgorithmException {
 
-    // hashCount = ceil(-log_2(false prob.)
-    // bitsPerElement = hashCount / ln(2)
-
-    this(Math.ceil(-(Math.log(falsePositiveProbability) / Math.log(2))) / Math.log(2), maxElements, (int)Math.ceil(-(Math.log(falsePositiveProbability) / Math.log(2))));
+    this(-1 * maxElements * Math.log(falsePositiveProbability) / Math.pow(Math.log(2), 2), maxElements, (int)Math.ceil((-1 * maxElements * Math.log(falsePositiveProbability) / Math.pow(Math.log(2), 2)) / maxElements * Math.log(2)));
   }
 
   public double getBitsPerElement () {

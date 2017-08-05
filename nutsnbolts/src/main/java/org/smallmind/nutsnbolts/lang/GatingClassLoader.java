@@ -45,6 +45,26 @@ import java.util.HashSet;
 import java.util.LinkedList;
 import org.smallmind.nutsnbolts.util.IteratorEnumeration;
 
+/*
+    If you want security...
+
+    new GatingClassLoader(<parent>, <grace period seconds>, new SecureClasspathClassGate(<path copmponents>)) {
+
+        @Override
+        protected PermissionCollection getPermissions (CodeSource codesource) {
+
+          Permissions permissions = new Permissions();
+
+          permissions.add(new SandboxPermission());
+          ...
+          add all other permissions
+          ...
+
+          return permissions;
+        }
+      }
+*/
+
 public class GatingClassLoader extends SecureClassLoader {
 
   private final HashMap<String, ClassGateTicket> ticketMap;
