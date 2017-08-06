@@ -32,36 +32,30 @@
  */
 package org.smallmind.nutsnbolts.lang;
 
-import java.security.Permission;
+import java.security.AllPermission;
+import java.security.CodeSource;
+import java.security.PermissionCollection;
+import java.security.SecureClassLoader;
+import sun.security.util.SecurityConstants;
 
-public class SandboxPermission extends Permission {
+public class AllPermissionsClassLoader extends SecureClassLoader {
 
-  public SandboxPermission () {
+  private static final PermissionCollection ALL_PERMISSIONS_COLLECTION;
 
-    super("<sandbox permission>");
+  static {
+
+    ALL_PERMISSIONS_COLLECTION = new AllPermission().newPermissionCollection();
+    ALL_PERMISSIONS_COLLECTION.add(SecurityConstants.ALL_PERMISSION);
+  }
+
+  public AllPermissionsClassLoader (ClassLoader classLoader) {
+
+    super(classLoader);
   }
 
   @Override
-  public boolean implies (Permission permission) {
+  protected PermissionCollection getPermissions (CodeSource codesource) {
 
-    return false;
-  }
-
-  @Override
-  public String getActions () {
-
-    return "<on>";
-  }
-
-  @Override
-  public int hashCode () {
-
-    return getName().hashCode();
-  }
-
-  @Override
-  public boolean equals (Object obj) {
-
-    return (obj instanceof SandboxPermission);
+    return ALL_PERMISSIONS_COLLECTION;
   }
 }
