@@ -39,11 +39,11 @@ import java.security.Permissions;
 import java.util.Enumeration;
 import java.util.PropertyPermission;
 
-public class MinimalPermissionCollection extends PermissionCollection {
+public class MinimalPermissions extends PermissionCollection {
 
   private Permissions permissions = new Permissions();
 
-  public MinimalPermissionCollection () {
+  public MinimalPermissions () {
 
     permissions.add(new SocketPermission("localhost:0", "listen"));
 
