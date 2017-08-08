@@ -42,7 +42,6 @@ import org.smallmind.scribe.pen.Level;
 import org.smallmind.scribe.pen.LogicalContext;
 import org.smallmind.scribe.pen.Record;
 import org.smallmind.scribe.pen.adapter.LoggerAdapter;
-import org.smallmind.scribe.pen.probe.ProbeReport;
 
 public class IndigenousLoggerAdapter implements LoggerAdapter {
 
@@ -122,19 +121,7 @@ public class IndigenousLoggerAdapter implements LoggerAdapter {
     IndigenousRecord indigenousRecord;
 
     if ((!level.equals(Level.OFF)) && getLevel().noGreater(level)) {
-      indigenousRecord = new IndigenousRecord(name, discriminator, level, null, throwable, message, args);
-      if (willLog(indigenousRecord)) {
-        completeLogOperation(indigenousRecord);
-      }
-    }
-  }
-
-  public void logProbe (Discriminator discriminator, Level level, Throwable throwable, ProbeReport probeReport) {
-
-    IndigenousRecord indigenousRecord;
-
-    if ((!level.equals(Level.OFF)) && getLevel().noGreater(level)) {
-      indigenousRecord = new IndigenousRecord(name, discriminator, level, probeReport, throwable, (probeReport.getTitle() == null) ? "Probe Report" : probeReport.getTitle());
+      indigenousRecord = new IndigenousRecord(name, discriminator, level, throwable, message, args);
       if (willLog(indigenousRecord)) {
         completeLogOperation(indigenousRecord);
       }
@@ -146,7 +133,7 @@ public class IndigenousLoggerAdapter implements LoggerAdapter {
     IndigenousRecord indigenousRecord;
 
     if ((!level.equals(Level.OFF)) && getLevel().noGreater(level)) {
-      indigenousRecord = new IndigenousRecord(name, discriminator, level, null, throwable, (object == null) ? null : object.toString());
+      indigenousRecord = new IndigenousRecord(name, discriminator, level, throwable, (object == null) ? null : object.toString());
       if (willLog(indigenousRecord)) {
         completeLogOperation(indigenousRecord);
       }

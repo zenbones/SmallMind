@@ -66,6 +66,6 @@ public class JDKLoggingBlueprints extends LoggingBlueprints {
     logicalContext = new DefaultLogicalContext();
     logicalContext.fillIn();
 
-    return new JDKRecordSubverter(record.getLoggerName(), null, Level.FATAL, null, logicalContext, throwable, message, args).getRecord();
+    return new JDKRecordSubverter(record.getLoggerName(), null, Level.FATAL, logicalContext, throwable, message, args).getRecord();
   }
 }

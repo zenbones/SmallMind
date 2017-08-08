@@ -43,19 +43,17 @@ import org.smallmind.scribe.pen.MessageTranslator;
 import org.smallmind.scribe.pen.Parameter;
 import org.smallmind.scribe.pen.Record;
 import org.smallmind.scribe.pen.adapter.RecordWrapper;
-import org.smallmind.scribe.pen.probe.ProbeReport;
 
 public class JDKRecordSubverter extends LogRecord implements RecordWrapper {
 
   private static final Parameter[] NO_PARAMETERS = new Parameter[0];
 
   private JDKRecord jdkRecord;
-  private ProbeReport probeReport;
   private LogicalContext logicalContext;
   private Discriminator discriminator;
   private Level level;
 
-  public JDKRecordSubverter (String loggerName, Discriminator discriminator, Level level, ProbeReport probeReport, LogicalContext logicalContext, Throwable throwable, String message, Object... args) {
+  public JDKRecordSubverter (String loggerName, Discriminator discriminator, Level level, LogicalContext logicalContext, Throwable throwable, String message, Object... args) {
 
     super(JDKLevelTranslator.getLog4JLevel(level), message);
 
@@ -65,7 +63,6 @@ public class JDKRecordSubverter extends LogRecord implements RecordWrapper {
 
     this.discriminator = discriminator;
     this.level = level;
-    this.probeReport = probeReport;
     this.logicalContext = logicalContext;
 
     jdkRecord = new JDKRecord(this);
@@ -112,11 +109,6 @@ public class JDKRecordSubverter extends LogRecord implements RecordWrapper {
     public Object getNativeLogEntry () {
 
       return logRecord;
-    }
-
-    public ProbeReport getProbeReport () {
-
-      return probeReport;
     }
 
     public String getLoggerName () {

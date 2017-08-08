@@ -559,7 +559,7 @@ public class SHA3 {
       int i = 0;
       while ((i < ni) && (j < nn)) {
         long v = S[(i % 5) * 5 + i / 5];
-        for (int _ = 0; _ < ww; _++) {
+        for (int x = 0; x < ww; x++) {
           if (j < nn) {
             rc[ptr] = (byte)v;
             ptr += 1;

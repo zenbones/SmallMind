@@ -47,26 +47,23 @@ import org.smallmind.scribe.pen.Parameter;
 import org.smallmind.scribe.pen.Record;
 import org.smallmind.scribe.pen.SequenceGenerator;
 import org.smallmind.scribe.pen.adapter.RecordWrapper;
-import org.smallmind.scribe.pen.probe.ProbeReport;
 
 public class Log4JRecordSubverter extends LoggingEvent implements RecordWrapper {
 
   private static final Parameter[] NO_PARAMETERS = new Parameter[0];
 
   private Log4JRecord log4jRecord;
-  private ProbeReport probeReport;
   private LogicalContext logicalContext;
   private AtomicReference<LocationInfo> locationInfoReference;
   private Discriminator discriminator;
   private Level level;
 
-  public Log4JRecordSubverter (Logger logger, Discriminator discriminator, Level level, ProbeReport probeReport, LogicalContext logicalContext, Throwable throwable, String message, Object... args) {
+  public Log4JRecordSubverter (Logger logger, Discriminator discriminator, Level level, LogicalContext logicalContext, Throwable throwable, String message, Object... args) {
 
     super(logger.getClass().getCanonicalName(), logger, System.currentTimeMillis(), Log4JLevelTranslator.getLog4JLevel(level), MessageTranslator.translateMessage(message, args), throwable);
 
     this.discriminator = discriminator;
     this.level = level;
-    this.probeReport = probeReport;
     this.logicalContext = logicalContext;
 
     log4jRecord = new Log4JRecord(this);
@@ -112,11 +109,6 @@ public class Log4JRecordSubverter extends LoggingEvent implements RecordWrapper 
     public Object getNativeLogEntry () {
 
       return loggingEvent;
-    }
-
-    public ProbeReport getProbeReport () {
-
-      return probeReport;
     }
 
     public String getLoggerName () {

@@ -33,35 +33,32 @@
 package org.smallmind.scribe.pen;
 
 import java.io.Serializable;
-import org.smallmind.scribe.pen.probe.ProbeReport;
 
 public interface Record extends Serializable {
 
-  public abstract Object getNativeLogEntry ();
+  Object getNativeLogEntry ();
 
-  public abstract ProbeReport getProbeReport ();
+  String getLoggerName ();
 
-  public abstract String getLoggerName ();
+  Discriminator getDiscriminator ();
 
-  public abstract Discriminator getDiscriminator ();
+  Level getLevel ();
 
-  public abstract Level getLevel ();
+  Throwable getThrown ();
 
-  public abstract Throwable getThrown ();
+  String getMessage ();
 
-  public abstract String getMessage ();
+  void addParameter (String key, Serializable value);
 
-  public abstract void addParameter (String key, Serializable value);
+  Parameter[] getParameters ();
 
-  public abstract Parameter[] getParameters ();
+  LogicalContext getLogicalContext ();
 
-  public abstract LogicalContext getLogicalContext ();
+  long getThreadID ();
 
-  public abstract long getThreadID ();
+  String getThreadName ();
 
-  public abstract String getThreadName ();
+  long getSequenceNumber ();
 
-  public abstract long getSequenceNumber ();
-
-  public abstract long getMillis ();
+  long getMillis ();
 }

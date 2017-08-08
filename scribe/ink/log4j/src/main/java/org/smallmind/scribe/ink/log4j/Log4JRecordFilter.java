@@ -42,7 +42,6 @@ import org.smallmind.scribe.pen.LogicalContext;
 import org.smallmind.scribe.pen.Parameter;
 import org.smallmind.scribe.pen.Record;
 import org.smallmind.scribe.pen.adapter.RecordWrapper;
-import org.smallmind.scribe.pen.probe.ProbeReport;
 
 public class Log4JRecordFilter extends LoggingEvent implements RecordWrapper {
 
@@ -100,11 +99,6 @@ public class Log4JRecordFilter extends LoggingEvent implements RecordWrapper {
     public Object getNativeLogEntry () {
 
       return loggingEvent;
-    }
-
-    public ProbeReport getProbeReport () {
-
-      return record.getProbeReport();
     }
 
     public String getLoggerName () {

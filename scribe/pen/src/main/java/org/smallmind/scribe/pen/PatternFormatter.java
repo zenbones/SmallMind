@@ -41,7 +41,7 @@ public class PatternFormatter implements Formatter {
 
   /*
   Operation of this parser is similar to that of String formatting Flags. Each Flag has the general form
-  of ({[^%]+)?%((+|-)?(\d+))?(.\d*)?(!(+|-)[^!]*!)?([dtnlmTCMNLFspruabexy])([^}]+})? or
+  of ({[^%]+)?%((+|-)?(\d+))?(.\d*)?(!(+|-)[^!]*!)?([dtnlmTCMNLFsp])([^}]+})? or
   [{header]%[<+|->width][.precision][!(+|-)prefix!]conversion[footer}].
 
   [{<header text>] is used to insert starting text (only if the field value exists and will be output).
@@ -77,20 +77,10 @@ public class PatternFormatter implements Formatter {
   N - Whether the method which issued the log event was native code or not [true or false] (if available)
   L - The line number in the class file from which the log event was issued (if available)
   F - The file name of the class file from which the log event was issued (if available)
-  w - The stack trace associated with the log event (if present)
-  z - The parameters associated with the log event (if present)
-  p - The probe point title (if a probe point)
-  r - The probe correlator (if a probe point);
-  s - The probe status (if a probe point)
-  u - The update count of the probe (if a probe point and available)
-  i - The update time of the probe (if a probe point and available)
-  a - The start time of the probe (if a probe point and available)
-  b - The stop time of the probe (if a probe point and available)
-  e - The elapsed time of the probe (if a probe point and available)
-  x - The series of statements associated with the probe (if a probe point and available)
-  y - The metrics associated with the probe (if a probe point and available)
+  s - The stack trace associated with the log event (if present)
+  p - The parameters associated with the log event (if present)
 
-  w, r, x, y, and z (stack trace, correlator, statements, metrics, and parameters) are multi-line fields, and are
+  s and p (stack trace and parameters) are multi-line fields, and are
   unaffected by the width or padding specifiers.
 
   The sequence %% outputs a single '%'.

@@ -43,7 +43,6 @@ import org.smallmind.scribe.pen.Level;
 import org.smallmind.scribe.pen.LogicalContext;
 import org.smallmind.scribe.pen.Record;
 import org.smallmind.scribe.pen.adapter.LoggerAdapter;
-import org.smallmind.scribe.pen.probe.ProbeReport;
 
 public class Log4JLoggerAdapter implements LoggerAdapter {
 
@@ -58,8 +57,8 @@ public class Log4JLoggerAdapter implements LoggerAdapter {
 
     logger.setAdditivity(false);
 
-    filterList = new ConcurrentLinkedQueue<Filter>();
-    enhancerList = new ConcurrentLinkedQueue<Enhancer>();
+    filterList = new ConcurrentLinkedQueue<>();
+    enhancerList = new ConcurrentLinkedQueue<>();
   }
 
   public String getName () {
@@ -146,21 +145,7 @@ public class Log4JLoggerAdapter implements LoggerAdapter {
 
     if ((!level.equals(Level.OFF)) && getLevel().noGreater(level)) {
       if ((logicalContext = willLog(discriminator, level)) != null) {
-        recordSubverter = new Log4JRecordSubverter(logger, discriminator, level, null, logicalContext, throwable, message, args);
-        enhanceRecord(recordSubverter.getRecord());
-        logger.callAppenders(recordSubverter);
-      }
-    }
-  }
-
-  public void logProbe (Discriminator discriminator, Level level, Throwable throwable, ProbeReport probeReport) {
-
-    Log4JRecordSubverter recordSubverter;
-    LogicalContext logicalContext;
-
-    if ((!level.equals(Level.OFF)) && getLevel().noGreater(level)) {
-      if ((logicalContext = willLog(discriminator, level)) != null) {
-        recordSubverter = new Log4JRecordSubverter(logger, discriminator, level, probeReport, logicalContext, throwable, (probeReport.getTitle() == null) ? "Probe Report" : probeReport.getTitle());
+        recordSubverter = new Log4JRecordSubverter(logger, discriminator, level, logicalContext, throwable, message, args);
         enhanceRecord(recordSubverter.getRecord());
         logger.callAppenders(recordSubverter);
       }
@@ -174,7 +159,7 @@ public class Log4JLoggerAdapter implements LoggerAdapter {
 
     if ((!level.equals(Level.OFF)) && getLevel().noGreater(level)) {
       if ((logicalContext = willLog(discriminator, level)) != null) {
-        recordSubverter = new Log4JRecordSubverter(logger, discriminator, level, null, logicalContext, throwable, (object == null) ? null : object.toString());
+        recordSubverter = new Log4JRecordSubverter(logger, discriminator, level, logicalContext, throwable, (object == null) ? null : object.toString());
         enhanceRecord(recordSubverter.getRecord());
         logger.callAppenders(recordSubverter);
       }
@@ -192,7 +177,7 @@ public class Log4JLoggerAdapter implements LoggerAdapter {
     }
 
     if (!filterList.isEmpty()) {
-      filterRecord = new Log4JRecordSubverter(logger, discriminator, level, null, logicalContext, null, null).getRecord();
+      filterRecord = new Log4JRecordSubverter(logger, discriminator, level, logicalContext, null, null).getRecord();
       for (Filter filter : filterList) {
         if (!filter.willLog(filterRecord)) {
           return null;

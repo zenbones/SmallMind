@@ -67,6 +67,6 @@ public class Log4JLoggingBlueprints extends LoggingBlueprints {
     logicalContext = new DefaultLogicalContext();
     logicalContext.fillIn();
 
-    return new Log4JRecordSubverter((Logger)((LoggingEvent)record.getNativeLogEntry()).getLogger(), null, Level.FATAL, null, logicalContext, throwable, message, args).getRecord();
+    return new Log4JRecordSubverter((Logger)((LoggingEvent)record.getNativeLogEntry()).getLogger(), null, Level.FATAL, logicalContext, throwable, message, args).getRecord();
   }
 }

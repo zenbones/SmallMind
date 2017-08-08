@@ -57,7 +57,7 @@ public class IndigenousLoggingBlueprints extends LoggingBlueprints {
     IndigenousRecord indigenousRecord;
     LogicalContext logicalContext;
 
-    indigenousRecord = new IndigenousRecord(record.getLoggerName(), null, Level.FATAL, null, throwable, message, args);
+    indigenousRecord = new IndigenousRecord(record.getLoggerName(), null, Level.FATAL, throwable, message, args);
     logicalContext = new DefaultLogicalContext();
     logicalContext.fillIn();
     indigenousRecord.setLogicalContext(logicalContext);

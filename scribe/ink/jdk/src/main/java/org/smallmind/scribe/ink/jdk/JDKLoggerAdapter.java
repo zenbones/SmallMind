@@ -45,7 +45,6 @@ import org.smallmind.scribe.pen.Level;
 import org.smallmind.scribe.pen.LogicalContext;
 import org.smallmind.scribe.pen.Record;
 import org.smallmind.scribe.pen.adapter.LoggerAdapter;
-import org.smallmind.scribe.pen.probe.ProbeReport;
 
 public class JDKLoggerAdapter implements LoggerAdapter {
 
@@ -131,21 +130,7 @@ public class JDKLoggerAdapter implements LoggerAdapter {
 
     if ((!level.equals(Level.OFF)) && getLevel().noGreater(level)) {
       if ((logicalContext = willLog(discriminator, level)) != null) {
-        recordSubverter = new JDKRecordSubverter(logger.getName(), discriminator, level, null, logicalContext, throwable, message, args);
-        enhanceRecord(recordSubverter.getRecord());
-        logger.log(recordSubverter);
-      }
-    }
-  }
-
-  public void logProbe (Discriminator discriminator, Level level, Throwable throwable, ProbeReport probeReport) {
-
-    JDKRecordSubverter recordSubverter;
-    LogicalContext logicalContext;
-
-    if ((!level.equals(Level.OFF)) && getLevel().noGreater(level)) {
-      if ((logicalContext = willLog(discriminator, level)) != null) {
-        recordSubverter = new JDKRecordSubverter(logger.getName(), discriminator, level, probeReport, logicalContext, throwable, (probeReport.getTitle() == null) ? "Probe Report" : probeReport.getTitle());
+        recordSubverter = new JDKRecordSubverter(logger.getName(), discriminator, level, logicalContext, throwable, message, args);
         enhanceRecord(recordSubverter.getRecord());
         logger.log(recordSubverter);
       }
@@ -159,7 +144,7 @@ public class JDKLoggerAdapter implements LoggerAdapter {
 
     if ((!level.equals(Level.OFF)) && getLevel().noGreater(level)) {
       if ((logicalContext = willLog(discriminator, level)) != null) {
-        recordSubverter = new JDKRecordSubverter(logger.getName(), discriminator, level, null, logicalContext, throwable, (object == null) ? null : object.toString());
+        recordSubverter = new JDKRecordSubverter(logger.getName(), discriminator, level, logicalContext, throwable, (object == null) ? null : object.toString());
         enhanceRecord(recordSubverter.getRecord());
         logger.log(recordSubverter);
       }
@@ -177,7 +162,7 @@ public class JDKLoggerAdapter implements LoggerAdapter {
     }
 
     if (!((logger.getFilter() == null) && filterList.isEmpty())) {
-      filterRecord = new JDKRecordSubverter(logger.getName(), discriminator, level, null, logicalContext, null, null).getRecord();
+      filterRecord = new JDKRecordSubverter(logger.getName(), discriminator, level, logicalContext, null, null).getRecord();
 
       if (logger.getFilter() != null) {
         if (!logger.getFilter().isLoggable((LogRecord)filterRecord.getNativeLogEntry())) {

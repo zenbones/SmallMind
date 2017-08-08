@@ -43,13 +43,11 @@ import org.smallmind.scribe.pen.Parameter;
 import org.smallmind.scribe.pen.Record;
 import org.smallmind.scribe.pen.SequenceGenerator;
 import org.smallmind.scribe.pen.adapter.RecordWrapper;
-import org.smallmind.scribe.pen.probe.ProbeReport;
 
 public class IndigenousRecord implements Record, RecordWrapper {
 
   private static final Parameter[] NO_PARAMETERS = new Parameter[0];
 
-  private ProbeReport probeReport;
   private LogicalContext logicalContext;
   private Discriminator discriminator;
   private Level level;
@@ -63,12 +61,11 @@ public class IndigenousRecord implements Record, RecordWrapper {
   private long threadId;
   private long sequenceNumber;
 
-  public IndigenousRecord (String loggerName, Discriminator discriminator, Level level, ProbeReport probeReport, Throwable throwable, String message, Object... args) {
+  public IndigenousRecord (String loggerName, Discriminator discriminator, Level level, Throwable throwable, String message, Object... args) {
 
     this.loggerName = loggerName;
     this.discriminator = discriminator;
     this.level = level;
-    this.probeReport = probeReport;
     this.throwable = throwable;
     this.message = message;
     this.args = args;
@@ -95,11 +92,6 @@ public class IndigenousRecord implements Record, RecordWrapper {
   public Object getNativeLogEntry () {
 
     return this;
-  }
-
-  public ProbeReport getProbeReport () {
-
-    return probeReport;
   }
 
   public String getLoggerName () {

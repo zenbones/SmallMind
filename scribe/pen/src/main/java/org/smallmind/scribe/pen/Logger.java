@@ -34,12 +34,6 @@ package org.smallmind.scribe.pen;
 
 import org.smallmind.scribe.pen.adapter.LoggerAdapter;
 import org.smallmind.scribe.pen.adapter.LoggingBlueprintsFactory;
-import org.smallmind.scribe.pen.probe.Instrument;
-import org.smallmind.scribe.pen.probe.InstrumentAndReturn;
-import org.smallmind.scribe.pen.probe.Probe;
-import org.smallmind.scribe.pen.probe.ProbeException;
-import org.smallmind.scribe.pen.probe.ProbeFactory;
-import org.smallmind.scribe.pen.probe.ProbeReport;
 
 public class Logger {
 
@@ -58,107 +52,6 @@ public class Logger {
   public String getName () {
 
     return loggerAdapter.getName();
-  }
-
-  public Probe createProbe (Discriminator discriminator, Level level, String title) {
-
-    return ProbeFactory.createProbe(this, discriminator, (level == null) ? getLevel() : level, title);
-  }
-
-  public void executeInstrumentation (Instrument instrument)
-    throws ProbeException {
-
-    executeInstrumentation(null, null, null, instrument);
-  }
-
-  public void executeInstrumentation (Discriminator discriminator, Instrument instrument)
-    throws ProbeException {
-
-    executeInstrumentation(discriminator, null, null, instrument);
-  }
-
-  public void executeInstrumentation (Level level, Instrument instrument)
-    throws ProbeException {
-
-    executeInstrumentation(null, level, null, instrument);
-  }
-
-  public void executeInstrumentation (String title, Instrument instrument)
-    throws ProbeException {
-
-    executeInstrumentation(null, null, title, instrument);
-  }
-
-  public void executeInstrumentation (Discriminator discriminator, String title, Instrument instrument)
-    throws ProbeException {
-
-    executeInstrumentation(discriminator, null, title, instrument);
-  }
-
-  public void executeInstrumentation (Level level, String title, Instrument instrument)
-    throws ProbeException {
-
-    executeInstrumentation(null, level, title, instrument);
-  }
-
-  public void executeInstrumentation (Discriminator discriminator, Level level, Instrument instrument)
-    throws ProbeException {
-
-    executeInstrumentation(discriminator, level, null, instrument);
-  }
-
-  public void executeInstrumentation (Discriminator discriminator, Level level, String title, Instrument instrument)
-    throws ProbeException {
-
-    ProbeFactory.executeInstrumentation(this, discriminator, (level == null) ? getLevel() : level, title, instrument);
-  }
-
-  public <T> T executeInstrumentationAndReturn (InstrumentAndReturn<T> instrumentAndReturn)
-    throws ProbeException {
-
-    return executeInstrumentationAndReturn(null, null, null, instrumentAndReturn);
-  }
-
-  public <T> T executeInstrumentationAndReturn (Discriminator discriminator, InstrumentAndReturn<T> instrumentAndReturn)
-    throws ProbeException {
-
-    return executeInstrumentationAndReturn(discriminator, null, null, instrumentAndReturn);
-  }
-
-  public <T> T executeInstrumentationAndReturn (Level level, InstrumentAndReturn<T> instrumentAndReturn)
-    throws ProbeException {
-
-    return executeInstrumentationAndReturn(null, level, null, instrumentAndReturn);
-  }
-
-  public <T> T executeInstrumentationAndReturn (String title, InstrumentAndReturn<T> instrumentAndReturn)
-    throws ProbeException {
-
-    return executeInstrumentationAndReturn(null, null, title, instrumentAndReturn);
-  }
-
-  public <T> T executeInstrumentationAndReturn (Discriminator discriminator, String title, InstrumentAndReturn<T> instrumentAndReturn)
-    throws ProbeException {
-
-    return executeInstrumentationAndReturn(discriminator, null, title, instrumentAndReturn);
-  }
-
-  public <T> T executeInstrumentationAndReturn (Level level, String title, InstrumentAndReturn<T> instrumentAndReturn)
-    throws ProbeException {
-
-    return executeInstrumentationAndReturn(null, level, title, instrumentAndReturn);
-  }
-
-  public <T> T executeInstrumentationAndReturn (Discriminator discriminator, Level level, InstrumentAndReturn<T> instrumentAndReturn)
-    throws ProbeException {
-
-    return executeInstrumentationAndReturn(discriminator, level, null, instrumentAndReturn);
-  }
-
-  public <T> T executeInstrumentationAndReturn (Discriminator discriminator, Level level, String title, InstrumentAndReturn<T> instrumentAndReturn)
-    throws ProbeException {
-
-    return ProbeFactory.executeInstrumentationAndReturn(this, discriminator, (level == null) ? getLevel() : level, title, instrumentAndReturn);
   }
 
   public Template getTemplate () {
@@ -562,26 +455,6 @@ public class Logger {
   public void log (Discriminator discriminator, Level level, Throwable throwable, String message, Object... args) {
 
     loggerAdapter.logMessage(discriminator, (level == null) ? getLevel() : level, throwable, message, args);
-  }
-
-  public void log (Level level, ProbeReport probeReport) {
-
-    loggerAdapter.logProbe(null, (level == null) ? getLevel() : level, null, probeReport);
-  }
-
-  public void log (Discriminator discriminator, Level level, ProbeReport probeReport) {
-
-    loggerAdapter.logProbe(discriminator, (level == null) ? getLevel() : level, null, probeReport);
-  }
-
-  public void log (Level level, Throwable throwable, ProbeReport probeReport) {
-
-    loggerAdapter.logProbe(null, (level == null) ? getLevel() : level, throwable, probeReport);
-  }
-
-  public void log (Discriminator discriminator, Level level, Throwable throwable, ProbeReport probeReport) {
-
-    loggerAdapter.logProbe(discriminator, (level == null) ? getLevel() : level, throwable, probeReport);
   }
 
   public void log (Level level, Object object) {

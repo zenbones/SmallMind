@@ -32,17 +32,8 @@
  */
 package org.smallmind.scribe.pen;
 
-import java.util.Arrays;
 import java.util.Date;
 import org.smallmind.nutsnbolts.lang.UnknownSwitchCaseException;
-import org.smallmind.scribe.pen.adapter.LoggingBlueprintsFactory;
-import org.smallmind.scribe.pen.probe.CompleteOrAbortProbeEntry;
-import org.smallmind.scribe.pen.probe.Correlator;
-import org.smallmind.scribe.pen.probe.MetricMilieu;
-import org.smallmind.scribe.pen.probe.ProbeEntry;
-import org.smallmind.scribe.pen.probe.ProbeReport;
-import org.smallmind.scribe.pen.probe.Statement;
-import org.smallmind.scribe.pen.probe.UpdateProbeEntry;
 
 public class XMLFormatter implements Formatter {
 
@@ -145,9 +136,6 @@ public class XMLFormatter implements Formatter {
         case STACK_TRACE:
           appendStackTrace(formatBuilder, record.getThrown(), 1);
           break;
-        case PROBE_REPORT:
-          appendProbeReport(formatBuilder, record, record.getProbeReport(), filters, 1);
-          break;
         default:
           throw new UnknownSwitchCaseException(xmlElement.name());
       }
@@ -241,80 +229,6 @@ public class XMLFormatter implements Formatter {
       } while ((throwable = throwable.getCause()) != null);
 
       appendLine(formatBuilder, (cdata) ? "]]></stack-trace>" : "</stack-trace>", level);
-    }
-  }
-
-  private void appendProbeReport (StringBuilder formatBuilder, Record record, ProbeReport probeReport, Filter[] filters, int level) {
-
-    if (probeReport != null) {
-      appendLine(formatBuilder, "<probe-report>", level);
-      appendElement(formatBuilder, "first", String.valueOf(probeReport.isFirst()), false, level + 1);
-      appendCorrelator(formatBuilder, probeReport.getCorrelator(), level + 1);
-      appendProbeEntry(formatBuilder, record, probeReport.getProbeEntry(), filters, level + 1);
-      appendLine(formatBuilder, "</probe-report>", level);
-    }
-  }
-
-  private void appendCorrelator (StringBuilder formatBuilder, Correlator correlator, int level) {
-
-    appendLine(formatBuilder, "<correlator>", level);
-    appendElement(formatBuilder, "thread-identifier", Arrays.toString(correlator.getThreadIdentifier()), false, level + 1);
-    appendElement(formatBuilder, "parent-identifier", Arrays.toString(correlator.getParentIdentifier()), false, level + 1);
-    appendElement(formatBuilder, "identifier", Arrays.toString(correlator.getIdentifier()), false, level + 1);
-    appendElement(formatBuilder, "frame", String.valueOf(correlator.getFrame()), false, level + 1);
-    appendElement(formatBuilder, "instance", String.valueOf(correlator.getInstance()), false, level + 1);
-    appendLine(formatBuilder, "</correlator>", level);
-  }
-
-  private void appendProbeEntry (StringBuilder formatBuilder, Record record, ProbeEntry probeEntry, Filter[] filters, int level) {
-
-    Record filterRecord;
-
-    if (probeEntry != null) {
-      appendLine(formatBuilder, "<probe-entry>", level);
-      appendElement(formatBuilder, "status", probeEntry.getProbeStatus().name(), false, level + 1);
-
-      if (probeEntry instanceof UpdateProbeEntry) {
-        appendElement(formatBuilder, "updated", String.valueOf(((UpdateProbeEntry)probeEntry).getUpdateTime()), false, level + 1);
-        appendElement(formatBuilder, "count", String.valueOf(((UpdateProbeEntry)probeEntry).getUpdateCount()), false, level + 1);
-      } else if (probeEntry instanceof CompleteOrAbortProbeEntry) {
-        appendElement(formatBuilder, "started", String.valueOf(((CompleteOrAbortProbeEntry)probeEntry).getStartTime()), false, level + 1);
-        appendElement(formatBuilder, "stopped", String.valueOf(((CompleteOrAbortProbeEntry)probeEntry).getStopTime()), false, level + 1);
-        appendElement(formatBuilder, "elapsed", String.valueOf(((CompleteOrAbortProbeEntry)probeEntry).getStopTime() - ((CompleteOrAbortProbeEntry)probeEntry).getStartTime()), false, level + 1);
-      } else {
-        throw new IllegalArgumentException("Unknown instance type of ProbeEntry(" + probeEntry.getClass().getCanonicalName() + ")");
-      }
-
-      for (Statement statement : probeEntry.getStatements()) {
-        if (!FilterUtility.willBeFiltered(record, statement.getDiscriminator(), statement.getLevel(), filters)) {
-          appendElement(formatBuilder, "statement", statement.getMessage(), cdata, level + 1);
-        }
-      }
-
-      for (MetricMilieu metricMilieu : probeEntry.getMetricMilieus()) {
-
-        boolean skipMetric = false;
-
-        if ((filters != null) && (filters.length > 0)) {
-          filterRecord = LoggingBlueprintsFactory.getLoggingBlueprints().filterRecord(record, metricMilieu.getDiscriminator(), metricMilieu.getLevel());
-          for (Filter filter : filters) {
-            if (!filter.willLog(filterRecord)) {
-              skipMetric = true;
-              break;
-            }
-          }
-        }
-
-        if (!skipMetric) {
-          appendLine(formatBuilder, "<" + metricMilieu.getMetric().getTitle() + ">", level + 1);
-          for (String key : metricMilieu.getMetric().getKeys()) {
-            appendElement(formatBuilder, key, metricMilieu.getMetric().getData(key).toString(), cdata, level + 2);
-          }
-          appendLine(formatBuilder, "</" + metricMilieu.getMetric().getTitle() + ">", level + 1);
-        }
-      }
-
-      appendLine(formatBuilder, "</probe-entry>", level);
     }
   }
 

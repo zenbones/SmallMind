@@ -62,7 +62,7 @@
 
   <bean id="patternFormatter" class="org.smallmind.scribe.pen.PatternFormatter">
     <property name="timestamp" ref="fullTimestamp"/>
-    <property name="format" value="%d %n %+5l (%F.%M:%L) [%T] - %m%!+\n\t!z%!+\n\t!w"/>
+    <property name="format" value="%d %n %+5l (%F.%M:%L) [%T] - %m%!+\n\t!p%!+\n\t!s"/>
   </bean>
 
   <bean id="rollover" class="org.smallmind.scribe.pen.Rollover">

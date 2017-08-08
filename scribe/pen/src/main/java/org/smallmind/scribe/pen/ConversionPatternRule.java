@@ -32,14 +32,8 @@
  */
 package org.smallmind.scribe.pen;
 
-import java.util.Arrays;
 import java.util.Date;
 import org.smallmind.nutsnbolts.lang.UnknownSwitchCaseException;
-import org.smallmind.scribe.pen.probe.CompleteOrAbortProbeEntry;
-import org.smallmind.scribe.pen.probe.MetricMilieu;
-import org.smallmind.scribe.pen.probe.ProbeReport;
-import org.smallmind.scribe.pen.probe.Statement;
-import org.smallmind.scribe.pen.probe.UpdateProbeEntry;
 
 public class ConversionPatternRule implements PatternRule {
 
@@ -141,7 +135,6 @@ public class ConversionPatternRule implements PatternRule {
     LogicalContext logicalContext;
     Throwable throwable = record.getThrown();
     Parameter[] parameters;
-    ProbeReport probeReport;
 
     switch (conversion) {
       case 'd':
@@ -200,7 +193,7 @@ public class ConversionPatternRule implements PatternRule {
         }
 
         return null;
-      case 'w':
+      case 's':
         if (throwable != null) {
 
           StringBuilder stackBuilder = new StringBuilder();
@@ -250,7 +243,7 @@ public class ConversionPatternRule implements PatternRule {
         }
 
         return null;
-      case 'z':
+      case 'p':
         if ((parameters = record.getParameters()).length > 0) {
 
           StringBuilder parameterBuilder = new StringBuilder();
@@ -273,156 +266,6 @@ public class ConversionPatternRule implements PatternRule {
 
           if (parameterBuilder.length() > 0) {
             return parameterBuilder.toString();
-          }
-        }
-
-        return null;
-      case 'p':
-        if ((probeReport = record.getProbeReport()) != null) {
-          return trimToWidthAndPad(probeReport.getTitle());
-        }
-
-        return null;
-      case 'r':
-
-        if ((probeReport = record.getProbeReport()) != null) {
-
-          StringBuilder correlatorBuilder = new StringBuilder();
-
-          if (prefixFirstLine && (multiLinePrefix != null)) {
-            correlatorBuilder.append(multiLinePrefix);
-          }
-
-          correlatorBuilder.append("Thread Identifier: ");
-          correlatorBuilder.append(Arrays.toString(probeReport.getCorrelator().getThreadIdentifier()));
-
-          if (multiLinePrefix != null) {
-            correlatorBuilder.append(multiLinePrefix);
-          }
-          correlatorBuilder.append("Parent Identifier: ");
-          correlatorBuilder.append(Arrays.toString(probeReport.getCorrelator().getParentIdentifier()));
-
-          if (multiLinePrefix != null) {
-            correlatorBuilder.append(multiLinePrefix);
-          }
-          correlatorBuilder.append("Identifier: ");
-          correlatorBuilder.append(Arrays.toString(probeReport.getCorrelator().getIdentifier()));
-
-          if (multiLinePrefix != null) {
-            correlatorBuilder.append(multiLinePrefix);
-          }
-          correlatorBuilder.append("Frame: ");
-          correlatorBuilder.append(probeReport.getCorrelator().getFrame());
-
-          if (multiLinePrefix != null) {
-            correlatorBuilder.append(multiLinePrefix);
-          }
-          correlatorBuilder.append("Instance: ");
-          correlatorBuilder.append(probeReport.getCorrelator().getInstance());
-
-          return correlatorBuilder.toString();
-        }
-
-        return null;
-      case 's':
-        if ((probeReport = record.getProbeReport()) != null) {
-          return trimToWidthAndPad(probeReport.getProbeEntry().getProbeStatus().name());
-        }
-
-        return null;
-      case 'u':
-        if (((probeReport = record.getProbeReport()) != null) && (probeReport.getProbeEntry() instanceof UpdateProbeEntry)) {
-          return trimToWidthAndPad(String.valueOf(((UpdateProbeEntry)probeReport.getProbeEntry()).getUpdateCount()));
-        }
-
-        return null;
-      case 'i':
-        if (((probeReport = record.getProbeReport()) != null) && (probeReport.getProbeEntry() instanceof UpdateProbeEntry)) {
-          return trimToWidthAndPad(String.valueOf(((UpdateProbeEntry)probeReport.getProbeEntry()).getUpdateTime()));
-        }
-
-        return null;
-      case 'a':
-        if (((probeReport = record.getProbeReport()) != null) && (probeReport.getProbeEntry() instanceof CompleteOrAbortProbeEntry)) {
-          return trimToWidthAndPad(String.valueOf(((CompleteOrAbortProbeEntry)probeReport.getProbeEntry()).getStartTime()));
-        }
-
-        return null;
-      case 'b':
-        if (((probeReport = record.getProbeReport()) != null) && (probeReport.getProbeEntry() instanceof CompleteOrAbortProbeEntry)) {
-          return trimToWidthAndPad(String.valueOf(((CompleteOrAbortProbeEntry)probeReport.getProbeEntry()).getStopTime()));
-        }
-
-        return null;
-      case 'e':
-        if (((probeReport = record.getProbeReport()) != null) && (probeReport.getProbeEntry() instanceof CompleteOrAbortProbeEntry)) {
-          return trimToWidthAndPad(String.valueOf(((CompleteOrAbortProbeEntry)probeReport.getProbeEntry()).getStopTime() - ((CompleteOrAbortProbeEntry)probeReport.getProbeEntry()).getStartTime()));
-        }
-
-        return null;
-      case 'x':
-        if ((probeReport = record.getProbeReport()) != null) {
-
-          StringBuilder statementBuilder = new StringBuilder();
-          int statementCount = 0;
-
-          for (Statement statement : probeReport.getProbeEntry().getStatements()) {
-            if ((precision > 0) && (++statementCount > precision)) {
-              break;
-            }
-
-            if (!FilterUtility.willBeFiltered(record, statement.getDiscriminator(), statement.getLevel(), filters)) {
-              if ((prefixFirstLine || (statementBuilder.length() > 0)) && (multiLinePrefix != null)) {
-                statementBuilder.append(multiLinePrefix);
-              }
-
-              statementBuilder.append(statement.getMessage());
-            }
-          }
-
-          if (statementBuilder.length() > 0) {
-            return statementBuilder.toString();
-          }
-        }
-
-        return null;
-      case 'y':
-        if ((probeReport = record.getProbeReport()) != null) {
-
-          StringBuilder metricBuilder = new StringBuilder();
-          int metricCount = 0;
-
-          for (MetricMilieu metricMilieu : probeReport.getProbeEntry().getMetricMilieus()) {
-            if ((precision > 0) && (++metricCount > precision)) {
-              break;
-            }
-
-            if (!FilterUtility.willBeFiltered(record, metricMilieu.getDiscriminator(), metricMilieu.getLevel(), filters)) {
-
-              boolean listInitiated = false;
-
-              if ((prefixFirstLine || (metricBuilder.length() > 0)) && (multiLinePrefix != null)) {
-                metricBuilder.append(multiLinePrefix);
-              }
-
-              metricBuilder.append(metricMilieu.getMetric().getTitle());
-              metricBuilder.append(" [");
-              for (String key : metricMilieu.getMetric().getKeys()) {
-                if (listInitiated) {
-                  metricBuilder.append(", ");
-                }
-                listInitiated = true;
-
-                metricBuilder.append(key);
-                metricBuilder.append('=');
-                metricBuilder.append(metricMilieu.getMetric().getData(key).toString());
-              }
-              metricBuilder.append("]");
-            }
-          }
-
-          if (metricBuilder.length() > 0) {
-            return metricBuilder.toString();
           }
         }
 
@@ -504,7 +347,7 @@ public class ConversionPatternRule implements PatternRule {
     return field;
   }
 
-  private static enum Padding {
+  private enum Padding {
 
     LEFT, RIGHT, NONE
   }

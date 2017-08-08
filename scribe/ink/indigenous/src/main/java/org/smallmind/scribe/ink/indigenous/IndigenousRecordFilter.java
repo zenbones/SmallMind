@@ -39,7 +39,6 @@ import org.smallmind.scribe.pen.LogicalContext;
 import org.smallmind.scribe.pen.Parameter;
 import org.smallmind.scribe.pen.Record;
 import org.smallmind.scribe.pen.adapter.RecordWrapper;
-import org.smallmind.scribe.pen.probe.ProbeReport;
 
 public class IndigenousRecordFilter implements Record, RecordWrapper {
 
@@ -64,12 +63,6 @@ public class IndigenousRecordFilter implements Record, RecordWrapper {
   public Object getNativeLogEntry () {
 
     return this;
-  }
-
-  @Override
-  public ProbeReport getProbeReport () {
-
-    return record.getProbeReport();
   }
 
   @Override
