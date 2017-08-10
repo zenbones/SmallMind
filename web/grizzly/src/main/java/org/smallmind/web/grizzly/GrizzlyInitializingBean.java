@@ -298,13 +298,13 @@ public class GrizzlyInitializingBean implements DisposableBean, ApplicationConte
   }
 
   @Override
-  public Object postProcessBeforeInitialization (Object bean, String beanName) throws BeansException {
+  public Object postProcessBeforeInitialization (Object bean, String beanName)  {
 
     return bean;
   }
 
   @Override
-  public Object postProcessAfterInitialization (Object bean, String beanName) throws BeansException {
+  public Object postProcessAfterInitialization (Object bean, String beanName) {
 
     ServicePath servicePath;
 

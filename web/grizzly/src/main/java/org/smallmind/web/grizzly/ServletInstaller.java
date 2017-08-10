@@ -42,6 +42,7 @@ public class ServletInstaller {
   private Map<String, String> initParameters;
   private String displayName;
   private String urlPattern;
+  private int priority = 0;
 
   public String getDisplayName () {
 
@@ -87,5 +88,15 @@ public class ServletInstaller {
   public void setUrlPattern (String urlPattern) {
 
     this.urlPattern = urlPattern;
+  }
+
+  public int getPriority () {
+
+    return priority;
+  }
+
+  public void setPriority (int priority) {
+
+    this.priority = priority;
   }
 }
