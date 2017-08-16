@@ -236,9 +236,14 @@ public class GrizzlyInitializingBean implements DisposableBean, ApplicationConte
       }
       for (ListenerInstaller listenerInstaller : listenerInstallerList) {
         try {
+
+          Map<String, String> contextParameters;
+
           webappContext.addListener(listenerInstaller.getListener());
-          for (Map.Entry<String, String> parameterEntry : listenerInstaller.getContextParameters().entrySet()) {
-            webappContext.addContextInitParameter(parameterEntry.getKey(), parameterEntry.getValue());
+          if ((contextParameters = listenerInstaller.getContextParameters()) != null) {
+            for (Map.Entry<String, String> parameterEntry : contextParameters.entrySet()) {
+              webappContext.addContextInitParameter(parameterEntry.getKey(), parameterEntry.getValue());
+            }
           }
         } catch (Exception exception) {
           throw new GrizzlyInitializationException(exception);
