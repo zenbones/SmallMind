@@ -108,6 +108,7 @@ public class SuiteRunner implements Runnable {
           threadPool.execute(TestTier.TEST, new TestRunner(sleuthRunner, testCompletedLatch, culprit, suiteDependency.getValue(), instance, testMethodDependency, testMethodDependencyQueue, annotationProcessor));
         } catch (InterruptedException interruptedException) {
           culprit = new Culprit(SuiteRunner.class.getName(), "run", interruptedException);
+          Thread.currentThread().interrupt();
         }
       }
 

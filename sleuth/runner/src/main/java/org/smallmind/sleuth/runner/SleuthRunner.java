@@ -35,6 +35,7 @@ package org.smallmind.sleuth.runner;
 import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.atomic.AtomicBoolean;
 import org.smallmind.sleuth.runner.annotation.AnnotationDictionary;
 import org.smallmind.sleuth.runner.annotation.AnnotationProcessor;
 import org.smallmind.sleuth.runner.annotation.NativeAnnotationTranslator;
@@ -47,6 +48,7 @@ import org.smallmind.sleuth.runner.event.SleuthEventListener;
 public class SleuthRunner {
 
   private final LinkedList<SleuthEventListener> eventListenerList = new LinkedList<>();
+  private final AtomicBoolean cancelled = new AtomicBoolean(false);
 
   public void addListener (SleuthEventListener listener) {
 
@@ -63,6 +65,11 @@ public class SleuthRunner {
     for (SleuthEventListener listener : eventListenerList) {
       listener.handle(sleuthEvent);
     }
+  }
+
+  public void cancel () {
+
+    cancelled.set(true);
   }
 
   public void execute (int maxThreads, String[] groups, Class<?>... classes) {
@@ -98,8 +105,12 @@ public class SleuthRunner {
 
         suiteDependencyQueue = suiteAnalysis.calculate();
         suiteCompletedLatch = new CountDownLatch(suiteDependencyQueue.size());
-        while ((suiteDependency = suiteDependencyQueue.poll()) != null) {
+        while ((!cancelled.get()) && ((suiteDependency = suiteDependencyQueue.poll()) != null)) {
           threadPool.execute(TestTier.SUITE, new SuiteRunner(this, suiteCompletedLatch, suiteDependency, suiteDependencyQueue, annotationProcessor, threadPool));
+        }
+
+        if (cancelled.get()) {
+          throw new InterruptedException();
         }
 
         suiteCompletedLatch.await();

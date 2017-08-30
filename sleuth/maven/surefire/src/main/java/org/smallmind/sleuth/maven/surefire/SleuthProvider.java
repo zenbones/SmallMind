@@ -48,6 +48,7 @@ import org.smallmind.sleuth.runner.SleuthRunner;
 public class SleuthProvider extends AbstractProvider {
 
   private final ProviderParameters providerParameters;
+  private final SleuthRunner sleuthRunner = new SleuthRunner();
   private TestsToRun testsToRun;
 
   public SleuthProvider (ProviderParameters providerParameters) {
@@ -64,13 +65,18 @@ public class SleuthProvider extends AbstractProvider {
   }
 
   @Override
+  public void cancel () {
+
+    sleuthRunner.cancel();
+  }
+
+  @Override
   public RunResult invoke (Object forkTestSet)
     throws TestSetFailedException, ReporterException, InvocationTargetException {
 
     ReporterFactory reporterFactory = providerParameters.getReporterFactory();
     RunResult runResult;
     RunListener runListener = reporterFactory.createReporter();
-    SleuthRunner sleuthRunner;
     SurefireSleuthEventListener sleuthEventListener;
     String[] groups = null;
     String groupsParameter;
@@ -100,7 +106,6 @@ public class SleuthProvider extends AbstractProvider {
       }
     }
 
-    sleuthRunner = new SleuthRunner();
     sleuthRunner.addListener(sleuthEventListener = new SurefireSleuthEventListener(runListener));
     startMilliseconds = System.currentTimeMillis();
 
@@ -113,6 +118,8 @@ public class SleuthProvider extends AbstractProvider {
     if (sleuthEventListener.getThrowable() != null) {
       throw new TestSetFailedException(sleuthEventListener.getThrowable());
     }
+
+
 
     return runResult;
   }

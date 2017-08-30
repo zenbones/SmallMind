@@ -57,5 +57,8 @@ public class SleuthThreadPool {
     });
 
     thread.start();
+    if (thread.isInterrupted()) {
+      throw new InterruptedException();
+    }
   }
 }
