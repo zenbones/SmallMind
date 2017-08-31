@@ -1,28 +1,28 @@
 /*
  * Copyright (c) 2007, 2008, 2009, 2010, 2011, 2012, 2013, 2014, 2015, 2016, 2017 David Berkman
- * 
+ *
  * This file is part of the SmallMind Code Project.
- * 
+ *
  * The SmallMind Code Project is free software, you can redistribute
  * it and/or modify it under either, at your discretion...
- * 
+ *
  * 1) The terms of GNU Affero General Public License as published by the
  * Free Software Foundation, either version 3 of the License, or (at
  * your option) any later version.
- * 
+ *
  * ...or...
- * 
+ *
  * 2) The terms of the Apache License, Version 2.0.
- * 
+ *
  * The SmallMind Code Project is distributed in the hope that it will
  * be useful, but WITHOUT ANY WARRANTY; without even the implied warranty
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License or Apache License for more details.
- * 
+ *
  * You should have received a copy of the GNU Affero General Public License
  * and the Apache License along with the SmallMind Code Project. If not, see
  * <http://www.gnu.org/licenses/> or <http://www.apache.org/licenses/LICENSE-2.0>.
- * 
+ *
  * Additional permission under the GNU Affero GPL version 3 section 7
  * ------------------------------------------------------------------
  * If you modify this Program, or any covered work, by linking or
@@ -36,7 +36,10 @@ import java.io.Serializable;
 import java.util.List;
 import com.mongodb.WriteConcern;
 import org.mongodb.morphia.Datastore;
+import org.mongodb.morphia.DeleteOptions;
+import org.mongodb.morphia.InsertOptions;
 import org.mongodb.morphia.mapping.Mapper;
+import org.mongodb.morphia.query.FindOptions;
 import org.mongodb.morphia.query.Query;
 import org.mongodb.morphia.query.UpdateOperations;
 import org.smallmind.persistence.UpdateMode;
@@ -96,13 +99,13 @@ public class MorphiaDao<I extends Serializable & Comparable<I>, D extends Morphi
   @Override
   public List<D> list (int maxResults) {
 
-    return getSession().getNativeSession().createQuery(getManagedClass()).limit(maxResults).asList();
+    return getSession().getNativeSession().createQuery(getManagedClass()).asList(new FindOptions().limit(maxResults));
   }
 
   @Override
   public List<D> list (I greaterThan, int maxResults) {
 
-    return getSession().getNativeSession().createQuery(getManagedClass()).field(Mapper.ID_KEY).greaterThan(greaterThan).order(Mapper.ID_KEY).limit(maxResults).asList();
+    return getSession().getNativeSession().createQuery(getManagedClass()).field(Mapper.ID_KEY).greaterThan(greaterThan).order(Mapper.ID_KEY).asList(new FindOptions().limit(maxResults));
   }
 
   @Override
@@ -114,19 +117,19 @@ public class MorphiaDao<I extends Serializable & Comparable<I>, D extends Morphi
   @Override
   public Iterable<D> scroll (int fetchSize) {
 
-    return new AutoCloseMorphiaIterator<>(getSession().getNativeSession().createQuery(getManagedClass()).batchSize(fetchSize).fetch());
+    return new AutoCloseMorphiaIterator<>(getSession().getNativeSession().createQuery(getManagedClass()).fetch(new FindOptions().batchSize(fetchSize)));
   }
 
   @Override
   public Iterable<D> scrollById (final I greaterThan, final int fetchSize) {
 
-    return new AutoCloseMorphiaIterator<>(getSession().getNativeSession().createQuery(getManagedClass()).field(Mapper.ID_KEY).greaterThan(greaterThan).order(Mapper.ID_KEY).batchSize(fetchSize).fetch());
+    return new AutoCloseMorphiaIterator<>(getSession().getNativeSession().createQuery(getManagedClass()).field(Mapper.ID_KEY).greaterThan(greaterThan).order(Mapper.ID_KEY).fetch(new FindOptions().batchSize(fetchSize)));
   }
 
   @Override
   public long size () {
 
-    return getSession().getNativeSession().createQuery(getManagedClass()).countAll();
+    return getSession().getNativeSession().createQuery(getManagedClass()).count();
   }
 
   @Override
@@ -139,7 +142,7 @@ public class MorphiaDao<I extends Serializable & Comparable<I>, D extends Morphi
 
     VectoredDao<I, D> vectoredDao = getVectoredDao();
 
-    getSession().getNativeSession().save(durable, writeConcern);
+    getSession().getNativeSession().save(durable, new InsertOptions().writeConcern(writeConcern));
 
     if (vectoredDao != null) {
 
@@ -169,7 +172,7 @@ public class MorphiaDao<I extends Serializable & Comparable<I>, D extends Morphi
 
   public long countByQuery (QueryDetails<D> queryDetails) {
 
-    return constructQuery(queryDetails).countAll();
+    return constructQuery(queryDetails).count();
   }
 
   public D findByQuery (QueryDetails<D> queryDetails) {
@@ -194,7 +197,7 @@ public class MorphiaDao<I extends Serializable & Comparable<I>, D extends Morphi
 
   public int deleteByQuery (QueryDetails<D> queryDetails, WriteConcern writeConcern) {
 
-    return getSession().getNativeSession().delete(constructQuery(queryDetails), writeConcern).getN();
+    return getSession().getNativeSession().delete(constructQuery(queryDetails), new DeleteOptions().writeConcern(writeConcern)).getN();
   }
 
   public int updateByQuery (UpdateQueryDetails<D> updateQueryDetails) {
