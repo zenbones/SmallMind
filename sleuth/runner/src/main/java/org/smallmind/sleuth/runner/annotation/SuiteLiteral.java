@@ -38,7 +38,7 @@ public class SuiteLiteral extends AnnotationLiteral<Suite> implements Suite {
 
   private String[] executeAfter;
   private String[] dependsOn;
-  private String group;
+  private String[] groups;
   private boolean enabled;
   private int priority;
 
@@ -49,9 +49,9 @@ public class SuiteLiteral extends AnnotationLiteral<Suite> implements Suite {
     enabled = true;
   }
 
-  public SuiteLiteral (String group, int priority, String[] executeAfter, String[] dependsOn, boolean enabled) {
+  public SuiteLiteral (String[] groups, int priority, String[] executeAfter, String[] dependsOn, boolean enabled) {
 
-    this.group = group;
+    this.groups = groups;
     this.priority = priority;
     this.executeAfter = executeAfter;
     this.dependsOn = dependsOn;
@@ -59,9 +59,9 @@ public class SuiteLiteral extends AnnotationLiteral<Suite> implements Suite {
   }
 
   @Override
-  public String group () {
+  public String[] groups() {
 
-    return group;
+    return groups;
   }
 
   @Override

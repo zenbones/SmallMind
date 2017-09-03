@@ -41,7 +41,7 @@ import java.lang.annotation.Target;
 @Retention(RetentionPolicy.RUNTIME)
 public @interface Suite {
 
-  String group ();
+  String[] groups();
 
   int priority () default 0;
 

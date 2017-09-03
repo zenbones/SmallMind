@@ -97,7 +97,7 @@ public class SleuthRunner {
           AnnotationDictionary annotationDictionary;
 
           if ((annotationDictionary = annotationProcessor.process(clazz)) != null) {
-            if (annotationDictionary.getSuite().enabled() && ((groups == null) || inGroups(annotationDictionary.getSuite().group(), groups))) {
+            if (annotationDictionary.getSuite().enabled() && ((groups == null) || inGroups(annotationDictionary.getSuite().groups(), groups))) {
               suiteAnalysis.add(new Dependency<>(clazz.getName(), annotationDictionary.getSuite(), clazz, annotationDictionary.getSuite().priority(), annotationDictionary.getSuite().executeAfter(), annotationDictionary.getSuite().dependsOn()));
             }
           }
@@ -120,13 +120,15 @@ public class SleuthRunner {
     }
   }
 
-  private boolean inGroups (String name, String[] names) {
+  private boolean inGroups (String[] ours, String[] theirs) {
 
-    if ((name != null) && (names != null)) {
-      for (String possibility : names) {
-        if (name.equals(possibility)) {
+    if ((ours != null) && (theirs != null)) {
+      for (String oneOfTheirs : theirs) {
+        for (String oneOfOurs : ours) {
+          if ((oneOfOurs != null) && oneOfOurs.equals(oneOfTheirs)) {
 
-          return true;
+            return true;
+          }
         }
       }
     }
