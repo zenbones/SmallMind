@@ -34,12 +34,15 @@ package org.smallmind.persistence.orm.morphia;
 
 import java.io.Serializable;
 import java.util.List;
+import com.mongodb.DBObject;
 import com.mongodb.WriteConcern;
+import com.mongodb.util.JSON;
 import org.mongodb.morphia.Datastore;
 import org.mongodb.morphia.InsertOptions;
 import org.mongodb.morphia.mapping.Mapper;
 import org.mongodb.morphia.query.FindOptions;
 import org.mongodb.morphia.query.Query;
+import org.mongodb.morphia.query.QueryImpl;
 import org.mongodb.morphia.query.UpdateOperations;
 import org.smallmind.persistence.UpdateMode;
 import org.smallmind.persistence.cache.VectoredDao;
@@ -222,5 +225,14 @@ public class MorphiaDao<I extends Serializable & Comparable<I>, D extends Morphi
     Query<D> query = getSession().getNativeSession().createQuery(getManagedClass());
 
     return queryDetails.completeQuery(query);
+  }
+
+  public Query<D> constructRawQuery (String rawJson) {
+
+    Query<D> query = getSession().getNativeSession().createQuery(getManagedClass());
+
+    ((QueryImpl)query).setQueryObject((DBObject)JSON.parse(rawJson));
+
+    return query;
   }
 }
