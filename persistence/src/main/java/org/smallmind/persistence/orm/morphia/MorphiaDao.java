@@ -36,7 +36,6 @@ import java.io.Serializable;
 import java.util.List;
 import com.mongodb.WriteConcern;
 import org.mongodb.morphia.Datastore;
-import org.mongodb.morphia.DeleteOptions;
 import org.mongodb.morphia.InsertOptions;
 import org.mongodb.morphia.mapping.Mapper;
 import org.mongodb.morphia.query.FindOptions;
@@ -170,39 +169,34 @@ public class MorphiaDao<I extends Serializable & Comparable<I>, D extends Morphi
     throw new UnsupportedOperationException("Morphia has no explicit detached state");
   }
 
-  public long countByQuery (QueryDetails<D> queryDetails) {
+  public long countByQuery (CountQueryDetails<D> queryDetails) {
 
-    return constructQuery(queryDetails).count();
+    return constructQuery(queryDetails).count(queryDetails.getCountOptions());
   }
 
-  public D findByQuery (QueryDetails<D> queryDetails) {
+  public D findByQuery (FindQueryDetails<D> queryDetails) {
 
-    return constructQuery(queryDetails).get();
+    return constructQuery(queryDetails).get(queryDetails.getFindOptions());
   }
 
-  public List<D> listByQuery (QueryDetails<D> queryDetails) {
+  public List<D> listByQuery (FindQueryDetails<D> queryDetails) {
 
-    return constructQuery(queryDetails).asList();
+    return constructQuery(queryDetails).asList(queryDetails.getFindOptions());
   }
 
-  public Iterable<D> scrollByQuery (QueryDetails<D> queryDetails) {
+  public Iterable<D> scrollByQuery (FindQueryDetails<D> queryDetails) {
 
-    return new AutoCloseMorphiaIterator<>(constructQuery(queryDetails).fetch());
+    return new AutoCloseMorphiaIterator<>(constructQuery(queryDetails).fetch(queryDetails.getFindOptions()));
   }
 
-  public int deleteByQuery (QueryDetails<D> queryDetails) {
+  public int deleteByQuery (DeleteQueryDetails<D> queryDetails) {
 
-    return deleteByQuery(queryDetails, WriteConcern.JOURNALED);
-  }
-
-  public int deleteByQuery (QueryDetails<D> queryDetails, WriteConcern writeConcern) {
-
-    return getSession().getNativeSession().delete(constructQuery(queryDetails), new DeleteOptions().writeConcern(writeConcern)).getN();
+    return getSession().getNativeSession().delete(constructQuery(queryDetails), queryDetails.getDeleteOptions()).getN();
   }
 
   public int updateByQuery (UpdateQueryDetails<D> updateQueryDetails) {
 
-    return updateByQuery(updateQueryDetails, false, WriteConcern.JOURNALED);
+    return updateByQuery(updateQueryDetails, false);
   }
 
   public int updateByQuery (UpdateQueryDetails<D> updateQueryDetails, boolean createIfMissing) {

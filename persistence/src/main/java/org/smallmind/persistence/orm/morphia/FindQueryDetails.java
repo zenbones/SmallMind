@@ -32,26 +32,23 @@
  */
 package org.smallmind.persistence.orm.morphia;
 
-import org.mongodb.morphia.UpdateOptions;
-import org.mongodb.morphia.query.UpdateOperations;
+import org.mongodb.morphia.query.FindOptions;
 
-public abstract class UpdateQueryDetails<D extends MorphiaDurable<?, D>> extends QueryDetails<D> {
+public abstract class FindQueryDetails<D extends MorphiaDurable<?, D>> extends QueryDetails<D> {
 
-  private UpdateOptions updateOptions;
+  private FindOptions findOptions;
 
-  public UpdateQueryDetails () {
+  public FindQueryDetails () {
 
   }
 
-  public UpdateQueryDetails (UpdateOptions updateOptions) {
+  public FindQueryDetails (FindOptions findOptions) {
 
-    this.updateOptions = updateOptions;
+    this.findOptions = findOptions;
   }
 
-  public UpdateOptions getUpdateOptions () {
+  public FindOptions getFindOptions () {
 
-    return (updateOptions == null) ? new UpdateOptions() : updateOptions;
+    return (findOptions == null) ? new FindOptions() : findOptions;
   }
-
-  public abstract UpdateOperations<D> completeUpdates (UpdateOperations<D> update);
 }
