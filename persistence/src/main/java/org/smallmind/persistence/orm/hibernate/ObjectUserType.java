@@ -83,7 +83,7 @@ public class ObjectUserType implements UserType, ParameterizedType {
   @Override
   public int[] sqlTypes () {
 
-    return new int[] {Types.VARBINARY};
+    return new int[] {Types.BLOB};
   }
 
   @Override
