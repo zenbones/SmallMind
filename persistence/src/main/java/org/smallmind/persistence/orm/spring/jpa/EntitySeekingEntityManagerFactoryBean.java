@@ -58,6 +58,7 @@ public class EntitySeekingEntityManagerFactoryBean extends AbstractEntityManager
   private MutablePersistenceUnitInfo persistenceUnitInfo;
   private String sessionSourceKey;
   private boolean excludeUnlistedClasses = false;
+  private boolean containerManaged = true;
 
   public void setAnnotationSeekingBeanFactoryPostProcessor (AnnotationSeekingBeanFactoryPostProcessor annotationSeekingBeanFactoryPostProcessor) {
 
@@ -94,6 +95,11 @@ public class EntitySeekingEntityManagerFactoryBean extends AbstractEntityManager
     this.persistenceUnitInfo = persistenceUnitInfo;
   }
 
+  public void setContainerManaged (boolean containerManaged) {
+
+    this.containerManaged = containerManaged;
+  }
+
   public void setExcludeUnlistedClasses (boolean excludeUnlistedClasses) {
 
     this.excludeUnlistedClasses = excludeUnlistedClasses;
@@ -110,67 +116,79 @@ public class EntitySeekingEntityManagerFactoryBean extends AbstractEntityManager
 
     PersistenceProvider provider;
 
-    if (persistenceUnitInfo == null) {
-      persistenceUnitInfo = new MutablePersistenceUnitInfo();
-    }
-
-    try {
-      persistenceUnitInfo.setPersistenceUnitRootUrl(new URL("classpath:"));
-    } catch (MalformedURLException malformedUrlException) {
-      throw new PersistenceException(malformedUrlException);
-    }
-
-    persistenceUnitInfo.setExcludeUnlistedClasses(excludeUnlistedClasses);
-    if (annotationSeekingBeanFactoryPostProcessor != null) {
-      for (Class<?> entityClass : annotationSeekingBeanFactoryPostProcessor.getAnnotatedClasses(sessionSourceKey)) {
-        persistenceUnitInfo.addManagedClassName(entityClass.getName());
+    if (!containerManaged) {
+      if (persistenceUnitInfo != null) {
+        throw new IllegalArgumentException("Non-container managed Entity Manager Factory should not have a defined Persistence Unit Info");
       }
-    }
 
-    if (getPersistenceUnitName() != null) {
-      persistenceUnitInfo.setPersistenceUnitName(getPersistenceUnitName());
-    }
-    if (dataSource != null) {
-      persistenceUnitInfo.setNonJtaDataSource(dataSource);
-      persistenceUnitInfo.setTransactionType(PersistenceUnitTransactionType.RESOURCE_LOCAL);
-    }
-    if (jtaDataSource != null) {
-      persistenceUnitInfo.setJtaDataSource(dataSource);
-      persistenceUnitInfo.setTransactionType(PersistenceUnitTransactionType.JTA);
-    }
-    if (sharedCacheMode != null) {
-      persistenceUnitInfo.setSharedCacheMode(sharedCacheMode);
-    }
-    if (validationMode != null) {
-      persistenceUnitInfo.setValidationMode(validationMode);
-    }
-
-    if (getJpaVendorAdapter() != null) {
-      persistenceUnitInfo.setPersistenceProviderPackageName(getJpaVendorAdapter().getPersistenceProviderRootPackage());
-      persistenceUnitInfo.setPersistenceProviderClassName(getJpaVendorAdapter().getPersistenceProvider().getClass().getName());
-    }
-
-    if (persistenceUnitPostProcessors != null) {
-      for (PersistenceUnitPostProcessor persistenceUnitPostProcessor : persistenceUnitPostProcessors) {
-        persistenceUnitPostProcessor.postProcessPersistenceUnitInfo(persistenceUnitInfo);
-      }
-    }
-
-    if ((provider = getPersistenceProvider()) == null) {
-
-      String providerClassName;
-
-      if ((providerClassName = persistenceUnitInfo.getPersistenceProviderClassName()) == null) {
+      if ((provider = getPersistenceProvider()) == null) {
         throw new IllegalArgumentException("No PersistenceProvider specified in EntityManagerFactory configuration, and chosen PersistenceUnitInfo does not specify a provider class name either");
-      } else {
-        provider = (PersistenceProvider)BeanUtils.instantiateClass(ClassUtils.resolveClassName(providerClassName, getBeanClassLoader()));
       }
-    }
 
-    if (logger.isInfoEnabled()) {
-      logger.info("Building JPA container EntityManagerFactory for persistence unit '" + persistenceUnitInfo.getPersistenceUnitName() + "'");
-    }
+      return provider.createEntityManagerFactory(getPersistenceUnitName(), getJpaPropertyMap());
+    } else {
 
-    return provider.createContainerEntityManagerFactory(persistenceUnitInfo, getJpaPropertyMap());
+      if (persistenceUnitInfo == null) {
+        persistenceUnitInfo = new MutablePersistenceUnitInfo();
+      }
+
+      try {
+        persistenceUnitInfo.setPersistenceUnitRootUrl(new URL("file:///META-INF"));
+      } catch (MalformedURLException malformedUrlException) {
+        throw new PersistenceException(malformedUrlException);
+      }
+
+      persistenceUnitInfo.setExcludeUnlistedClasses(excludeUnlistedClasses);
+      if (annotationSeekingBeanFactoryPostProcessor != null) {
+        for (Class<?> entityClass : annotationSeekingBeanFactoryPostProcessor.getAnnotatedClasses(sessionSourceKey)) {
+          persistenceUnitInfo.addManagedClassName(entityClass.getName());
+        }
+      }
+
+      if (getPersistenceUnitName() != null) {
+        persistenceUnitInfo.setPersistenceUnitName(getPersistenceUnitName());
+      }
+      if (dataSource != null) {
+        persistenceUnitInfo.setNonJtaDataSource(dataSource);
+        persistenceUnitInfo.setTransactionType(PersistenceUnitTransactionType.RESOURCE_LOCAL);
+      }
+      if (jtaDataSource != null) {
+        persistenceUnitInfo.setJtaDataSource(dataSource);
+        persistenceUnitInfo.setTransactionType(PersistenceUnitTransactionType.JTA);
+      }
+      if (sharedCacheMode != null) {
+        persistenceUnitInfo.setSharedCacheMode(sharedCacheMode);
+      }
+      if (validationMode != null) {
+        persistenceUnitInfo.setValidationMode(validationMode);
+      }
+
+      if (getJpaVendorAdapter() != null) {
+        persistenceUnitInfo.setPersistenceProviderPackageName(getJpaVendorAdapter().getPersistenceProviderRootPackage());
+      }
+
+      if (persistenceUnitPostProcessors != null) {
+        for (PersistenceUnitPostProcessor persistenceUnitPostProcessor : persistenceUnitPostProcessors) {
+          persistenceUnitPostProcessor.postProcessPersistenceUnitInfo(persistenceUnitInfo);
+        }
+      }
+
+      if ((provider = getPersistenceProvider()) == null) {
+
+        String providerClassName;
+
+        if ((providerClassName = persistenceUnitInfo.getPersistenceProviderClassName()) == null) {
+          throw new IllegalArgumentException("No PersistenceProvider specified in EntityManagerFactory configuration, and chosen PersistenceUnitInfo does not specify a provider class name either");
+        } else {
+          provider = (PersistenceProvider)BeanUtils.instantiateClass(ClassUtils.resolveClassName(providerClassName, getBeanClassLoader()));
+        }
+      }
+
+      if (logger.isInfoEnabled()) {
+        logger.info("Building JPA container EntityManagerFactory for persistence unit '" + persistenceUnitInfo.getPersistenceUnitName() + "'");
+      }
+
+      return provider.createContainerEntityManagerFactory(persistenceUnitInfo, getJpaPropertyMap());
+    }
   }
 }
