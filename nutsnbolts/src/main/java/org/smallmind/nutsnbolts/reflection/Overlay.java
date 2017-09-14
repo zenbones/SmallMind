@@ -34,12 +34,14 @@ package org.smallmind.nutsnbolts.reflection;
 
 import java.lang.reflect.Field;
 import java.util.List;
+import javax.persistence.Transient;
 import org.smallmind.nutsnbolts.lang.TypeMismatchException;
 import org.smallmind.nutsnbolts.reflection.type.GenericUtility;
 import org.smallmind.nutsnbolts.reflection.type.UnexpectedGenericDeclaration;
 
 public abstract class Overlay<O extends Overlay<O>> implements Differentiable<O> {
 
+  @Transient
   private final transient Class<O> overlayClass;
 
   public Overlay () {

@@ -46,20 +46,20 @@ import org.springframework.core.io.UrlResource;
 
 public class FileSeekingBeanFactoryPostProcessor implements BeanFactoryPostProcessor {
 
-  private static final HashMap<String, HashMap<Class, UrlResource>> HBM_DATA_SOURCE_MAP = new HashMap<>();
   private static final UrlResource[] NO_RESOURCES = new UrlResource[0];
+  private final HashMap<String, HashMap<Class, UrlResource>> hbmResourceMap = new HashMap<>();
 
-  public static Resource[] getHibernateResources () {
+  public Resource[] getHibernateResources () {
 
     return getResources(null);
   }
 
-  public static Resource[] getResources (String sessionSourceKey) {
+  public Resource[] getResources (String sessionSourceKey) {
 
     UrlResource[] hbmResources;
     HashMap<Class, UrlResource> hbmResourceMap;
 
-    if ((hbmResourceMap = HBM_DATA_SOURCE_MAP.get(sessionSourceKey)) == null) {
+    if ((hbmResourceMap = this.hbmResourceMap.get(sessionSourceKey)) == null) {
       return NO_RESOURCES;
     }
 
@@ -92,8 +92,8 @@ public class FileSeekingBeanFactoryPostProcessor implements BeanFactoryPostProce
             if ((sessionSource = beanClass.getAnnotation(SessionSource.class)) != null) {
               sessionSourceKey = sessionSource.value();
             }
-            if ((hbmResourceMap = HBM_DATA_SOURCE_MAP.get(sessionSourceKey)) == null) {
-              HBM_DATA_SOURCE_MAP.put(sessionSourceKey, hbmResourceMap = new HashMap<>());
+            if ((hbmResourceMap = this.hbmResourceMap.get(sessionSourceKey)) == null) {
+              this.hbmResourceMap.put(sessionSourceKey, hbmResourceMap = new HashMap<>());
             }
 
             // Stop when we find a parent class which has already been mapped, signifying the rest of the tree has been previously processed

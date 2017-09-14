@@ -37,8 +37,14 @@ import org.springframework.core.io.Resource;
 
 public class FileSeekingFactoryBean implements FactoryBean<Resource[]> {
 
-  private String sessionSourceKey;
+  private FileSeekingBeanFactoryPostProcessor fileSeekingBeanFactoryPostProcessor;
   private Resource[] additionalResources;
+  private String sessionSourceKey;
+
+  public void setFileSeekingBeanFactoryPostProcessor (FileSeekingBeanFactoryPostProcessor fileSeekingBeanFactoryPostProcessor) {
+
+    this.fileSeekingBeanFactoryPostProcessor = fileSeekingBeanFactoryPostProcessor;
+  }
 
   public void setSessionSourceKey (String sessionSourceKey) {
 
@@ -54,7 +60,7 @@ public class FileSeekingFactoryBean implements FactoryBean<Resource[]> {
 
     Resource[] dataSourceResources;
 
-    dataSourceResources = FileSeekingBeanFactoryPostProcessor.getResources(sessionSourceKey);
+    dataSourceResources = fileSeekingBeanFactoryPostProcessor.getResources(sessionSourceKey);
 
     if ((additionalResources == null) || additionalResources.length == 0) {
 
