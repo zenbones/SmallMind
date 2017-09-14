@@ -49,6 +49,9 @@
     <constructor-arg index="1" ref="schemaDBPool"/>
   </bean>
 
+  <bean id="annotationSeekingBeanFactoryPostProcessor" class="org.smallmind.persistence.orm.spring.hibernate.AnnotationSeekingBeanFactoryPostProcessor"/>
+  <bean id="hibernateFileSeekingBeanFactoryPostProcessor" class="org.smallmind.persistence.orm.spring.hibernate.FileSeekingBeanFactoryPostProcessor"/>
+
   <!-- Session and Transaction -->
   <bean id="schemaSessionFactory" class="org.smallmind.persistence.orm.spring.hibernate.EntitySeekingSessionFactoryBean">
     <property name="annotationSeekingBeanFactoryPostProcessor">
@@ -58,6 +61,7 @@
     <property name="dataSource" ref="schemaPooledDataSource"/>
     <property name="mappingLocations">
       <bean class="org.smallmind.persistence.orm.spring.hibernate.FileSeekingFactoryBean">
+        <property name="fileSeekingBeanFactoryPostProcessor" ref="hibernateFileSeekingBeanFactoryPostProcessor"/>
         <property name="sessionSourceKey" value="schema"/>
       </bean>
     </property>
@@ -96,12 +100,6 @@
     <constructor-arg index="2" ref="schemaSessionFactory"/>
     <constructor-arg index="3" value="true"/>
     <constructor-arg index="4" value="true"/>
-  </bean>
-
-  <bean class="org.smallmind.persistence.orm.spring.hibernate.querydsl.HibernateDomainExporterInitializingBean">
-    <property name="sessionFactory" ref="schemaSessionFactory"/>
-    <property name="prefix" value="Q"/>
-    <property name="targetPath" value="target/gen3"/>
   </bean>
 
 </beans>

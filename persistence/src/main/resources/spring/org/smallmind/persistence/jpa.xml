@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-4.0.xsd">
+
+  <bean id="annotationSeekingBeanFactoryPostProcessor" class="org.smallmind.persistence.orm.spring.jpa.AnnotationSeekingBeanFactoryPostProcessor"/>
+
+  <bean id="entityManagerFactory" class="org.smallmind.persistence.orm.spring.jpa.EntitySeekingEntityManagerFactoryBean">
+    <property name="annotationSeekingBeanFactoryPostProcessor" ref="annotationSeekingBeanFactoryPostProcessor"/>
+    <property name="sessionSourceKey" value="mysession"/>
+    <property name="persistenceProviderClass" value="org.datanucleus.api.jpa.PersistenceProviderImpl"/>
+    <property name="jpaProperties">
+      <props>
+        <prop key="javax.persistence.property">apropertyvalue</prop>
+      </props>
+    </property>
+  </bean>
+
+  <bean id="proxySession" class="org.smallmind.persistence.orm.jpa.JPAProxySession">
+    <constructor-arg index="0" value="jpa"/>
+    <constructor-arg index="1" value="mysession"/>
+    <constructor-arg index="2" ref="entityManagerFactory"/>
+    <constructor-arg index="3" value="true"/>
+    <constructor-arg index="4" value="true"/>
+  </bean>
+
+  <!-- AspectJ Transaction Management -->
+  <bean id="transactionManagerAspect" class="org.smallmind.persistence.orm.aop.TransactionalAspect" factory-method="aspectOf"/>
+
+</beans>

@@ -25,10 +25,10 @@
     </property>
   </bean>
 
+  <bean name="annotationSeekingBeanFactoryPostProcessor" class="org.smallmind.persistence.orm.spring.morphia.AnnotationSeekingBeanFactoryPostProcessor"/>
+
   <bean id="dataStoreFactory" class="org.smallmind.persistence.orm.spring.morphia.EntitySeekingDataStoreFactoryBean">
-    <property name="annotationSeekingBeanFactoryPostProcessor">
-      <bean class="org.smallmind.persistence.orm.spring.morphia.AnnotationSeekingBeanFactoryPostProcessor"/>
-    </property>
+    <property name="annotationSeekingBeanFactoryPostProcessor" ref="annotationSeekingBeanFactoryPostProcessor"/>
     <property name="mongoClient" ref="mongoClient"/>
     <property name="databaseName" value="mydatabase"/>
     <property name="sessionSourceKey" value="mysession"/>

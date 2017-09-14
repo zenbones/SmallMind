@@ -56,9 +56,4 @@
 
   <!-- AspectJ Transaction Management -->
   <bean id="transactionManagerAspect" class="org.smallmind.persistence.orm.aop.TransactionalAspect" factory-method="aspectOf"/>
-
-  <bean id="schemaPoolMonitor" class="org.smallmind.quorum.pool.complex.jmx.ComponentPoolMonitor">
-    <constructor-arg index="0" ref="schemaDBPool"/>
-  </bean>
-
 </beans>
