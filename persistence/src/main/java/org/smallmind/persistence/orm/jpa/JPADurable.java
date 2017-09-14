@@ -43,7 +43,7 @@ import org.smallmind.persistence.AbstractDurable;
 
 @MappedSuperclass
 @Access(AccessType.PROPERTY)
-public class JPADurable<I extends Serializable & Comparable<I>, D extends JPADurable<I, D>> extends AbstractDurable<I, D> {
+public abstract class JPADurable<I extends Serializable & Comparable<I>, D extends JPADurable<I, D>> extends AbstractDurable<I, D> {
 
   private I id;
 

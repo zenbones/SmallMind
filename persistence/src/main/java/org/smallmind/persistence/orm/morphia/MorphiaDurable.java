@@ -39,7 +39,7 @@ import org.mongodb.morphia.annotations.PrePersist;
 import org.mongodb.morphia.annotations.PreSave;
 import org.smallmind.persistence.AbstractDurable;
 
-public class MorphiaDurable<I extends Serializable & Comparable<I>, D extends MorphiaDurable<I, D>> extends AbstractDurable<I, D> {
+public abstract class MorphiaDurable<I extends Serializable & Comparable<I>, D extends MorphiaDurable<I, D>> extends AbstractDurable<I, D> {
 
   @Id
   private I id;
