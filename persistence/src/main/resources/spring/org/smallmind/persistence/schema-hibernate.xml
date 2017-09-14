@@ -51,6 +51,9 @@
 
   <!-- Session and Transaction -->
   <bean id="schemaSessionFactory" class="org.smallmind.persistence.orm.spring.hibernate.EntitySeekingSessionFactoryBean">
+    <property name="annotationSeekingBeanFactoryPostProcessor">
+      <bean class="org.smallmind.persistence.orm.spring.hibernate.AnnotationSeekingBeanFactoryPostProcessor"/>
+    </property>
     <property name="sessionSourceKey" value="schema"/>
     <property name="dataSource" ref="schemaPooledDataSource"/>
     <property name="mappingLocations">

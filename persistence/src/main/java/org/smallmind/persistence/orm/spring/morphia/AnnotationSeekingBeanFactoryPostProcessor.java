@@ -30,27 +30,28 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.persistence;
+package org.smallmind.persistence.orm.spring.morphia;
 
-import org.smallmind.instrument.config.MetricConfiguration;
-import org.smallmind.instrument.config.MetricConfigurationProvider;
+import java.lang.annotation.Annotation;
+import org.mongodb.morphia.annotations.Entity;
+import org.smallmind.persistence.ManagedDao;
+import org.smallmind.persistence.orm.morphia.MorphiaDao;
+import org.smallmind.persistence.orm.spring.AbstractAnnotationSeekingBeanFactoryPostProcessor;
 
-public class Persistence implements MetricConfigurationProvider {
+public class AnnotationSeekingBeanFactoryPostProcessor extends AbstractAnnotationSeekingBeanFactoryPostProcessor {
 
-  private MetricConfiguration metricConfiguration;
+  private static final Class<? extends ManagedDao>[] DAO_IMPLEMENTATIONS = new Class[] {MorphiaDao.class};
+  private static final Class<? extends Annotation>[] TARGET_ANNOTATIONS = new Class[] {Entity.class};
 
-  public Persistence (MetricConfiguration metricConfiguration) {
+  @Override
+  public Class<? extends ManagedDao>[] getDaoImplementations () {
 
-    this.metricConfiguration = metricConfiguration;
+    return DAO_IMPLEMENTATIONS;
   }
 
-  public void register () {
+  @Override
+  public Class<? extends Annotation>[] getTargetAnnotations () {
 
-    PersistenceManager.register(this);
-  }
-
-  public MetricConfiguration getMetricConfiguration () {
-
-    return metricConfiguration;
+    return TARGET_ANNOTATIONS;
   }
 }

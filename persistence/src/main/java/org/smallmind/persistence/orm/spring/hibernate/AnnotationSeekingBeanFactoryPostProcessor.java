@@ -33,115 +33,28 @@
 package org.smallmind.persistence.orm.spring.hibernate;
 
 import java.lang.annotation.Annotation;
-import java.util.HashMap;
-import java.util.HashSet;
-import org.smallmind.persistence.orm.MappedSubclass;
-import org.smallmind.persistence.orm.SessionSource;
+import javax.persistence.Embeddable;
+import javax.persistence.Entity;
+import javax.persistence.MappedSuperclass;
+import org.smallmind.persistence.ManagedDao;
 import org.smallmind.persistence.orm.hibernate.HibernateDao;
 import org.smallmind.persistence.orm.querydsl.hibernate.QHibernateDao;
-import org.smallmind.persistence.spring.ManagedDaoSupport;
-import org.springframework.beans.BeansException;
-import org.springframework.beans.FatalBeanException;
-import org.springframework.beans.factory.config.BeanFactoryPostProcessor;
-import org.springframework.beans.factory.config.ConfigurableListableBeanFactory;
+import org.smallmind.persistence.orm.spring.AbstractAnnotationSeekingBeanFactoryPostProcessor;
 
-public class AnnotationSeekingBeanFactoryPostProcessor implements BeanFactoryPostProcessor {
+public class AnnotationSeekingBeanFactoryPostProcessor extends AbstractAnnotationSeekingBeanFactoryPostProcessor {
 
-  private static final HashMap<String, HashSet<Class>> ANNOTATED_CLASS_DATA_SOURCE_MAP = new HashMap<String, HashSet<Class>>();
+  private static final Class<? extends ManagedDao>[] DAO_IMPLEMENTATIONS = new Class[] {HibernateDao.class, QHibernateDao.class};
+  private static final Class<? extends Annotation>[] TARGET_ANNOTATIONS = new Class[] {Entity.class, Embeddable.class, MappedSuperclass.class};
 
-  private static final Class[] NO_CLASSES = new Class[0];
+  @Override
+  public Class<? extends ManagedDao>[] getDaoImplementations () {
 
-  private Class<? extends Annotation>[] markedAnnotations;
-
-  public static Class[] getAnnotatedClasses () {
-
-    return getAnnotatedClasses(null);
+    return DAO_IMPLEMENTATIONS;
   }
 
-  public static Class[] getAnnotatedClasses (String sessionSourceKey) {
+  @Override
+  public Class<? extends Annotation>[] getTargetAnnotations () {
 
-    Class[] annotatedClasses;
-    HashSet<Class> annotatedClassSet;
-
-    if ((annotatedClassSet = ANNOTATED_CLASS_DATA_SOURCE_MAP.get(sessionSourceKey)) == null) {
-      return NO_CLASSES;
-    }
-
-    annotatedClasses = new Class[annotatedClassSet.size()];
-    annotatedClassSet.toArray(annotatedClasses);
-
-    return annotatedClasses;
-  }
-
-  public void setMarkedAnnotations (Class<? extends Annotation>[] markedAnnotations) {
-
-    this.markedAnnotations = markedAnnotations;
-  }
-
-  private boolean hasMarkedAnnotation (Class persistentClass) {
-
-    for (Class<? extends Annotation> markedAnnotation : markedAnnotations) {
-      if (persistentClass.isAnnotationPresent(markedAnnotation)) {
-
-        return true;
-      }
-    }
-
-    return false;
-  }
-
-  public void postProcessBeanFactory (ConfigurableListableBeanFactory configurableListableBeanFactory)
-    throws BeansException {
-
-    Class<?> beanClass;
-
-    for (String beanName : configurableListableBeanFactory.getBeanDefinitionNames()) {
-      if ((beanClass = configurableListableBeanFactory.getType(beanName)) != null) {
-        if (HibernateDao.class.isAssignableFrom(beanClass) || QHibernateDao.class.isAssignableFrom(beanClass)) {
-
-          Class<?> persistentClass;
-
-          if ((persistentClass = ManagedDaoSupport.findDurableClass(beanClass)) == null) {
-            throw new FatalBeanException("No inference of the Durable class for type(" + beanClass.getName() + ") was possible");
-          } else {
-
-            Annotation dataSourceAnnotation;
-            HashSet<Class> annotatedClassSet;
-
-            String sessionSourceKey = null;
-
-            if ((dataSourceAnnotation = beanClass.getAnnotation(SessionSource.class)) != null) {
-              sessionSourceKey = ((SessionSource)dataSourceAnnotation).value();
-            }
-
-            if ((annotatedClassSet = ANNOTATED_CLASS_DATA_SOURCE_MAP.get(sessionSourceKey)) == null) {
-              ANNOTATED_CLASS_DATA_SOURCE_MAP.put(sessionSourceKey, annotatedClassSet = new HashSet<>());
-            }
-
-            processClass(persistentClass, annotatedClassSet);
-          }
-        }
-      }
-    }
-  }
-
-  private void processClass (Class<?> persistentClass, HashSet<Class> annotatedClassSet) {
-
-    if (hasMarkedAnnotation(persistentClass)) {
-
-      MappedSubclass mappedSubclass;
-
-      annotatedClassSet.add(persistentClass);
-
-      if ((mappedSubclass = persistentClass.getAnnotation(MappedSubclass.class)) != null) {
-        for (Class subclass : mappedSubclass.value()) {
-          if (!persistentClass.isAssignableFrom(subclass)) {
-            throw new FatalBeanException("Mapped subclass of type (" + subclass.getName() + ") must inherit from parent type (" + persistentClass.getName() + ")");
-          }
-
-          processClass(subclass, annotatedClassSet);
-        }
-      }
-    }
+    return TARGET_ANNOTATIONS;
   }
 }

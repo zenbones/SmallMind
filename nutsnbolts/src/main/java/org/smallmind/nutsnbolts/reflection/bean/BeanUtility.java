@@ -37,35 +37,12 @@ import java.lang.reflect.Method;
 import java.util.Arrays;
 import java.util.concurrent.ConcurrentHashMap;
 import org.smallmind.nutsnbolts.reflection.type.TypeUtility;
-import org.smallmind.nutsnbolts.reflection.type.converter.DefaultStringConverterFactory;
-import org.smallmind.nutsnbolts.reflection.type.converter.StringConversionException;
-import org.smallmind.nutsnbolts.reflection.type.converter.StringConverterFactory;
 
 public class BeanUtility {
 
   private static final ConcurrentHashMap<MethodKey, Method> GETTER_MAP = new ConcurrentHashMap<>();
   private static final ConcurrentHashMap<MethodKey, Method> SETTER_MAP = new ConcurrentHashMap<>();
   private static final ConcurrentHashMap<MethodKey, Method> METHOD_MAP = new ConcurrentHashMap<>();
-
-  public static Object convertFromString (Class conversionClass, String value, boolean nullable)
-    throws StringConversionException, BeanInvocationException {
-
-    return convertFromString(DefaultStringConverterFactory.getInstance(), conversionClass, value, nullable);
-  }
-
-  public static Object convertFromString (StringConverterFactory stringConverterFactory, Class conversionClass, String value, boolean nullable)
-    throws StringConversionException, BeanInvocationException {
-
-    if (value == null) {
-      if (!nullable) {
-        throw new NullPointerException("Null value in a non-nullable conversion");
-      }
-
-      return null;
-    }
-
-    return stringConverterFactory.getStringConverter(conversionClass).convert(value);
-  }
 
   public static Class getParameterClass (Method setterMethod) {
 

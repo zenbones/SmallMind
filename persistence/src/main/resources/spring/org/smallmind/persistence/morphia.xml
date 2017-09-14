@@ -1,9 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <beans xmlns="http://www.springframework.org/schema/beans" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-4.0.xsd">
 
-  <!-- Collect Spring Initialized Morphia Resources -->
-  <bean class="org.smallmind.persistence.orm.spring.morphia.FileSeekingBeanFactoryPostProcessor"/>
-
   <bean id="mongoClient" class="org.smallmind.persistence.database.mongodb.MongoClientFactoryBean">
     <property name="servers">
       <bean class="org.smallmind.persistence.database.mongodb.MongoServerFactoryBean">
@@ -28,7 +25,10 @@
     </property>
   </bean>
 
-  <bean id="dataStoreFactory" class="org.smallmind.persistence.orm.spring.morphia.FileSeekingDatastoreFactoryBean">
+  <bean id="dataStoreFactory" class="org.smallmind.persistence.orm.spring.morphia.EntitySeekingDataStoreFactoryBean">
+    <property name="annotationSeekingBeanFactoryPostProcessor">
+      <bean class="org.smallmind.persistence.orm.spring.morphia.AnnotationSeekingBeanFactoryPostProcessor"/>
+    </property>
     <property name="mongoClient" ref="mongoClient"/>
     <property name="databaseName" value="mydatabase"/>
     <property name="sessionSourceKey" value="mysession"/>

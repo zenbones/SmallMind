@@ -41,12 +41,18 @@ import org.springframework.orm.hibernate5.LocalSessionFactoryBean;
 public class EntitySeekingSessionFactoryBean extends LocalSessionFactoryBean {
 
   private static final HashMap<SessionFactory, Configuration> CONFIGURATION_MAP = new HashMap<>();
+  private AnnotationSeekingBeanFactoryPostProcessor annotationSeekingBeanFactoryPostProcessor;
   private Class[] annotatedClasses;
   private String sessionSourceKey;
 
   public static Configuration getConfiguration (SessionFactory sessionFactory) {
 
     return CONFIGURATION_MAP.get(sessionFactory);
+  }
+
+  public void setAnnotationSeekingBeanFactoryPostProcessor (AnnotationSeekingBeanFactoryPostProcessor annotationSeekingBeanFactoryPostProcessor) {
+
+    this.annotationSeekingBeanFactoryPostProcessor = annotationSeekingBeanFactoryPostProcessor;
   }
 
   public void setSessionSourceKey (String sessionSourceKey) {
@@ -64,7 +70,7 @@ public class EntitySeekingSessionFactoryBean extends LocalSessionFactoryBean {
   public void afterPropertiesSet ()
     throws IOException {
 
-    super.setAnnotatedClasses((annotatedClasses != null) ? annotatedClasses : AnnotationSeekingBeanFactoryPostProcessor.getAnnotatedClasses(sessionSourceKey));
+    super.setAnnotatedClasses((annotatedClasses != null) ? annotatedClasses : annotationSeekingBeanFactoryPostProcessor.getAnnotatedClasses(sessionSourceKey));
 
     super.afterPropertiesSet();
 

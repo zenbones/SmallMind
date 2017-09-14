@@ -32,53 +32,59 @@
  */
 package org.smallmind.persistence.orm.spring.jdo;
 
-import java.util.Properties;
-import javax.jdo.JDOHelper;
-import javax.jdo.PersistenceManagerFactory;
+import java.io.IOException;
+import java.util.HashMap;
+import javax.jdo.metadata.JDOMetadata;
+import javax.jdo.metadata.PackageMetadata;
 import javax.sql.DataSource;
-import org.springframework.beans.factory.DisposableBean;
-import org.springframework.beans.factory.FactoryBean;
-import org.springframework.beans.factory.InitializingBean;
+import org.springframework.orm.jdo.LocalPersistenceManagerFactoryBean;
 
-public class EntitySeekingPersistenceManagerFactoryBean implements DisposableBean, FactoryBean<PersistenceManagerFactory>, InitializingBean {
+public class EntitySeekingPersistenceManagerFactoryBean extends LocalPersistenceManagerFactoryBean {
 
-  private PersistenceManagerFactory persistenceManagerFactory;
+  private AnnotationSeekingBeanFactoryPostProcessor annotationSeekingBeanFactoryPostProcessor;
   private DataSource dataSource;
-  private Properties properties;
+  private String sessionSourceKey;
+
+  public void setAnnotationSeekingBeanFactoryPostProcessor (AnnotationSeekingBeanFactoryPostProcessor annotationSeekingBeanFactoryPostProcessor) {
+
+    this.annotationSeekingBeanFactoryPostProcessor = annotationSeekingBeanFactoryPostProcessor;
+  }
 
   public void setDataSource (DataSource dataSource) {
 
     this.dataSource = dataSource;
   }
 
-  public void setProperties (Properties properties) {
+  public void setSessionSourceKey (String sessionSourceKey) {
 
-    this.properties = properties;
+    this.sessionSourceKey = sessionSourceKey;
   }
 
-  public PersistenceManagerFactory getObject () {
+  @Override
+  public void afterPropertiesSet ()
+    throws IOException {
 
-    return persistenceManagerFactory;
-  }
+    super.afterPropertiesSet();
 
-  public Class getObjectType () {
+    JDOMetadata jdoMetadata = getObject().newMetadata();
+    HashMap<Package, PackageMetadata> packageMap = new HashMap<>();
 
-    return PersistenceManagerFactory.class;
-  }
+    for (Class entityClass : annotationSeekingBeanFactoryPostProcessor.getAnnotatedClasses(sessionSourceKey)) {
 
-  public boolean isSingleton () {
+      PackageMetadata packageMetadata;
+      Package entityPackage;
 
-    return true;
-  }
+      if ((packageMetadata = packageMap.get(entityPackage = entityClass.getPackage())) == null) {
+        packageMap.put(entityPackage, packageMetadata = jdoMetadata.newPackageMetadata(entityPackage));
+      }
 
-  public void destroy () {
+      packageMetadata.newClassMetadata(entityClass);
+    }
 
-    persistenceManagerFactory.close();
-  }
+    getObject().registerMetadata(jdoMetadata);
 
-  public void afterPropertiesSet () {
-
-    persistenceManagerFactory = JDOHelper.getPersistenceManagerFactory(properties);
-    persistenceManagerFactory.setConnectionFactory(dataSource);
+    if (dataSource != null) {
+      getObject().setConnectionFactory(dataSource);
+    }
   }
 }

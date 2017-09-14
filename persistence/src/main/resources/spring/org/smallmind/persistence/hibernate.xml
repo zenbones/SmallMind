@@ -4,22 +4,10 @@
 
   <import resource="classpath:org/smallmind/instrument/metric.xml"/>
 
-  <!-- Collect Spring Initialized Hibernate Resources -->
-  <bean class="org.smallmind.persistence.orm.spring.hibernate.AnnotationSeekingBeanFactoryPostProcessor">
-    <property name="markedAnnotations">
-      <list>
-        <value>javax.persistence.Entity</value>
-      </list>
-    </property>
-  </bean>
-
   <bean class="org.smallmind.persistence.orm.spring.hibernate.FileSeekingBeanFactoryPostProcessor"/>
 
   <bean id="persistence" class="org.smallmind.persistence.Persistence" init-method="register">
     <constructor-arg index="0">
-      <bean class="org.smallmind.nutsnbolts.reflection.typeHint.converter.DefaultStringConverterFactory"/>
-    </constructor-arg>
-    <constructor-arg index="1">
       <bean class="org.smallmind.instrument.config.MetricConfiguration">
         <property name="instrumented" value="${orm.statistics}"/>
         <property name="metricDomain">

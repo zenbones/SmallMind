@@ -32,6 +32,8 @@
  */
 package org.smallmind.persistence.orm.spring.morphia;
 
+import java.util.Arrays;
+import java.util.HashSet;
 import java.util.Set;
 import com.mongodb.BasicDBObject;
 import com.mongodb.MongoClient;
@@ -39,18 +41,23 @@ import org.mongodb.morphia.Datastore;
 import org.mongodb.morphia.Morphia;
 import org.mongodb.morphia.annotations.Entity;
 import org.smallmind.persistence.orm.ORMInitializationException;
-import org.smallmind.persistence.orm.morphia.DatastoreFactory;
+import org.smallmind.persistence.orm.morphia.DataStoreFactory;
 import org.springframework.beans.factory.FactoryBean;
 import org.springframework.beans.factory.InitializingBean;
 
-public class FileSeekingDatastoreFactoryBean implements FactoryBean<DatastoreFactory>, InitializingBean {
+public class EntitySeekingDataStoreFactoryBean implements FactoryBean<DataStoreFactory>, InitializingBean {
 
-  private DatastoreFactory datastoreFactory;
+  private DataStoreFactory dataStoreFactory;
+  private AnnotationSeekingBeanFactoryPostProcessor annotationSeekingBeanFactoryPostProcessor;
   private MongoClient mongoClient;
   private String sessionSourceKey;
   private String databaseName;
-  private boolean useBulkWriteOperations = false;
   private boolean enableShards = false;
+
+  public void setAnnotationSeekingBeanFactoryPostProcessor (AnnotationSeekingBeanFactoryPostProcessor annotationSeekingBeanFactoryPostProcessor) {
+
+    this.annotationSeekingBeanFactoryPostProcessor = annotationSeekingBeanFactoryPostProcessor;
+  }
 
   public void setMongoClient (MongoClient mongoClient) {
 
@@ -67,11 +74,6 @@ public class FileSeekingDatastoreFactoryBean implements FactoryBean<DatastoreFac
     this.sessionSourceKey = sessionSourceKey;
   }
 
-  public void setUseBulkWriteOperations (boolean useBulkWriteOperations) {
-
-    this.useBulkWriteOperations = useBulkWriteOperations;
-  }
-
   public void setEnableShards (boolean enableShards) {
 
     this.enableShards = enableShards;
@@ -79,7 +81,7 @@ public class FileSeekingDatastoreFactoryBean implements FactoryBean<DatastoreFac
 
   public Class getObjectType () {
 
-    return DatastoreFactory.class;
+    return DataStoreFactory.class;
   }
 
   public boolean isSingleton () {
@@ -87,9 +89,9 @@ public class FileSeekingDatastoreFactoryBean implements FactoryBean<DatastoreFac
     return true;
   }
 
-  public DatastoreFactory getObject () {
+  public DataStoreFactory getObject () {
 
-    return datastoreFactory;
+    return dataStoreFactory;
   }
 
   public void afterPropertiesSet () {
@@ -98,8 +100,7 @@ public class FileSeekingDatastoreFactoryBean implements FactoryBean<DatastoreFac
     Datastore datastore;
     Set<Class> entitySet;
 
-    morphia = new Morphia(entitySet = FileSeekingBeanFactoryPostProcessor.getEntitySet(sessionSourceKey));
-    morphia.setUseBulkWriteOperations(useBulkWriteOperations);
+    morphia = new Morphia(entitySet = new HashSet<>(Arrays.asList(annotationSeekingBeanFactoryPostProcessor.getAnnotatedClasses(sessionSourceKey))));
     datastore = morphia.createDatastore(mongoClient, databaseName);
 
     if (enableShards) {
@@ -119,6 +120,6 @@ public class FileSeekingDatastoreFactoryBean implements FactoryBean<DatastoreFac
 
     datastore.ensureIndexes();
 
-    datastoreFactory = new DatastoreFactory(datastore);
+    dataStoreFactory = new DataStoreFactory(datastore);
   }
 }

@@ -69,7 +69,7 @@
     </dependency>
     <dependency>
       <groupId>javax.jdo</groupId>
-      <artifactId>jdo2-api</artifactId>
+      <artifactId>jdo-api</artifactId>
       <scope>compile</scope>
       <optional>true</optional>
     </dependency>

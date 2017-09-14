@@ -32,8 +32,145 @@
  */
 package org.smallmind.persistence.orm.spring.jpa;
 
-import org.springframework.orm.jpa.LocalContainerEntityManagerFactoryBean;
+import java.net.MalformedURLException;
+import java.net.URL;
+import javax.persistence.EntityManagerFactory;
+import javax.persistence.PersistenceException;
+import javax.persistence.SharedCacheMode;
+import javax.persistence.ValidationMode;
+import javax.persistence.spi.PersistenceProvider;
+import javax.persistence.spi.PersistenceUnitTransactionType;
+import javax.sql.DataSource;
+import org.springframework.beans.BeanUtils;
+import org.springframework.orm.jpa.AbstractEntityManagerFactoryBean;
+import org.springframework.orm.jpa.persistenceunit.MutablePersistenceUnitInfo;
+import org.springframework.orm.jpa.persistenceunit.PersistenceUnitPostProcessor;
+import org.springframework.util.ClassUtils;
 
-public class EntitySeekingEntityManagerFactoryBean extends LocalContainerEntityManagerFactoryBean {
+public class EntitySeekingEntityManagerFactoryBean extends AbstractEntityManagerFactoryBean {
 
+  private AnnotationSeekingBeanFactoryPostProcessor annotationSeekingBeanFactoryPostProcessor;
+  private DataSource dataSource;
+  private DataSource jtaDataSource;
+  private SharedCacheMode sharedCacheMode;
+  private ValidationMode validationMode;
+  private PersistenceUnitPostProcessor[] persistenceUnitPostProcessors;
+  private MutablePersistenceUnitInfo persistenceUnitInfo;
+  private String sessionSourceKey;
+  private boolean excludeUnlistedClasses = false;
+
+  public void setAnnotationSeekingBeanFactoryPostProcessor (AnnotationSeekingBeanFactoryPostProcessor annotationSeekingBeanFactoryPostProcessor) {
+
+    this.annotationSeekingBeanFactoryPostProcessor = annotationSeekingBeanFactoryPostProcessor;
+  }
+
+  public void setSessionSourceKey (String sessionSourceKey) {
+
+    this.sessionSourceKey = sessionSourceKey;
+  }
+
+  public void setDataSource (DataSource dataSource) {
+
+    this.dataSource = dataSource;
+  }
+
+  public void setJtaDataSource (DataSource jtaDataSource) {
+
+    this.jtaDataSource = jtaDataSource;
+  }
+
+  public void setSharedCacheMode (SharedCacheMode sharedCacheMode) {
+
+    this.sharedCacheMode = sharedCacheMode;
+  }
+
+  public void setValidationMode (ValidationMode validationMode) {
+
+    this.validationMode = validationMode;
+  }
+
+  public void setPersistenceUnitInfo (MutablePersistenceUnitInfo persistenceUnitInfo) {
+
+    this.persistenceUnitInfo = persistenceUnitInfo;
+  }
+
+  public void setExcludeUnlistedClasses (boolean excludeUnlistedClasses) {
+
+    this.excludeUnlistedClasses = excludeUnlistedClasses;
+  }
+
+  public void setPersistenceUnitPostProcessors (PersistenceUnitPostProcessor... persistenceUnitPostProcessors) {
+
+    this.persistenceUnitPostProcessors = persistenceUnitPostProcessors;
+  }
+
+  @Override
+  protected EntityManagerFactory createNativeEntityManagerFactory ()
+    throws PersistenceException {
+
+    PersistenceProvider provider;
+
+    if (persistenceUnitInfo == null) {
+      persistenceUnitInfo = new MutablePersistenceUnitInfo();
+    }
+
+    try {
+      persistenceUnitInfo.setPersistenceUnitRootUrl(new URL("classpath:"));
+    } catch (MalformedURLException malformedUrlException) {
+      throw new PersistenceException(malformedUrlException);
+    }
+
+    persistenceUnitInfo.setExcludeUnlistedClasses(excludeUnlistedClasses);
+    if (annotationSeekingBeanFactoryPostProcessor != null) {
+      for (Class<?> entityClass : annotationSeekingBeanFactoryPostProcessor.getAnnotatedClasses(sessionSourceKey)) {
+        persistenceUnitInfo.addManagedClassName(entityClass.getName());
+      }
+    }
+
+    if (getPersistenceUnitName() != null) {
+      persistenceUnitInfo.setPersistenceUnitName(getPersistenceUnitName());
+    }
+    if (dataSource != null) {
+      persistenceUnitInfo.setNonJtaDataSource(dataSource);
+      persistenceUnitInfo.setTransactionType(PersistenceUnitTransactionType.RESOURCE_LOCAL);
+    }
+    if (jtaDataSource != null) {
+      persistenceUnitInfo.setJtaDataSource(dataSource);
+      persistenceUnitInfo.setTransactionType(PersistenceUnitTransactionType.JTA);
+    }
+    if (sharedCacheMode != null) {
+      persistenceUnitInfo.setSharedCacheMode(sharedCacheMode);
+    }
+    if (validationMode != null) {
+      persistenceUnitInfo.setValidationMode(validationMode);
+    }
+
+    if (getJpaVendorAdapter() != null) {
+      persistenceUnitInfo.setPersistenceProviderPackageName(getJpaVendorAdapter().getPersistenceProviderRootPackage());
+      persistenceUnitInfo.setPersistenceProviderClassName(getJpaVendorAdapter().getPersistenceProvider().getClass().getName());
+    }
+
+    if (persistenceUnitPostProcessors != null) {
+      for (PersistenceUnitPostProcessor persistenceUnitPostProcessor : persistenceUnitPostProcessors) {
+        persistenceUnitPostProcessor.postProcessPersistenceUnitInfo(persistenceUnitInfo);
+      }
+    }
+
+    if ((provider = getPersistenceProvider()) == null) {
+
+      String providerClassName;
+
+      if ((providerClassName = persistenceUnitInfo.getPersistenceProviderClassName()) == null) {
+        throw new IllegalArgumentException("No PersistenceProvider specified in EntityManagerFactory configuration, and chosen PersistenceUnitInfo does not specify a provider class name either");
+      } else {
+        provider = (PersistenceProvider)BeanUtils.instantiateClass(ClassUtils.resolveClassName(providerClassName, getBeanClassLoader()));
+      }
+    }
+
+    if (logger.isInfoEnabled()) {
+      logger.info("Building JPA container EntityManagerFactory for persistence unit '" + persistenceUnitInfo.getPersistenceUnitName() + "'");
+    }
+
+    return provider.createContainerEntityManagerFactory(persistenceUnitInfo, getJpaPropertyMap());
+  }
 }

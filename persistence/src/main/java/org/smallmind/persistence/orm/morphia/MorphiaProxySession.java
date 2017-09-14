@@ -36,16 +36,16 @@ import org.mongodb.morphia.Datastore;
 import org.smallmind.persistence.orm.ProxySession;
 import org.smallmind.persistence.orm.ProxyTransaction;
 
-public class MorphiaProxySession extends ProxySession<DatastoreFactory, Datastore> {
+public class MorphiaProxySession extends ProxySession<DataStoreFactory, Datastore> {
 
-  private final DatastoreFactory datastoreFactory;
+  private final DataStoreFactory dataStoreFactory;
   private final MorphiaProxyTransaction proxyTransaction;
 
-  public MorphiaProxySession (String dataSourceType, String sessionSourceKey, DatastoreFactory datastoreFactory, boolean boundaryEnforced, boolean cacheEnabled) {
+  public MorphiaProxySession (String dataSourceType, String sessionSourceKey, DataStoreFactory dataStoreFactory, boolean boundaryEnforced, boolean cacheEnabled) {
 
     super(dataSourceType, sessionSourceKey, boundaryEnforced, cacheEnabled);
 
-    this.datastoreFactory = datastoreFactory;
+    this.dataStoreFactory = dataStoreFactory;
 
     proxyTransaction = new MorphiaProxyTransaction(this);
   }
@@ -87,14 +87,14 @@ public class MorphiaProxySession extends ProxySession<DatastoreFactory, Datastor
   }
 
   @Override
-  public DatastoreFactory getNativeSessionFactory () {
+  public DataStoreFactory getNativeSessionFactory () {
 
-    return datastoreFactory;
+    return dataStoreFactory;
   }
 
   @Override
   public Datastore getNativeSession () {
 
-    return datastoreFactory.get();
+    return dataStoreFactory.get();
   }
 }

@@ -32,35 +32,28 @@
  */
 package org.smallmind.persistence.orm.spring.jpa;
 
-import javax.persistence.spi.PersistenceUnitTransactionType;
-import javax.sql.DataSource;
-import org.springframework.orm.jpa.persistenceunit.MutablePersistenceUnitInfo;
-import org.springframework.orm.jpa.persistenceunit.PersistenceUnitPostProcessor;
+import java.lang.annotation.Annotation;
+import javax.persistence.Embeddable;
+import javax.persistence.Entity;
+import javax.persistence.MappedSuperclass;
+import org.smallmind.persistence.ManagedDao;
+import org.smallmind.persistence.orm.jpa.JPADao;
+import org.smallmind.persistence.orm.spring.AbstractAnnotationSeekingBeanFactoryPostProcessor;
 
-public class JTAPersistenceUnitPostProcessor implements PersistenceUnitPostProcessor {
+public class AnnotationSeekingBeanFactoryPostProcessor extends AbstractAnnotationSeekingBeanFactoryPostProcessor {
 
-  private DataSource dataSource;
-  private boolean jtaEnabled = false;
+  private static final Class<? extends ManagedDao>[] DAO_IMPLEMENTATIONS = new Class[] {JPADao.class};
+  private static final Class<? extends Annotation>[] TARGET_ANNOTATIONS = new Class[] {Entity.class, Embeddable.class, MappedSuperclass.class};
 
-  public void setDataSource (DataSource dataSource) {
+  @Override
+  public Class<? extends ManagedDao>[] getDaoImplementations () {
 
-    this.dataSource = dataSource;
+    return DAO_IMPLEMENTATIONS;
   }
 
-  public void setJtaEnabled (boolean jtaEnabled) {
+  @Override
+  public Class<? extends Annotation>[] getTargetAnnotations () {
 
-    this.jtaEnabled = jtaEnabled;
-  }
-
-  public void postProcessPersistenceUnitInfo (MutablePersistenceUnitInfo mutablePersistenceUnitInfo) {
-
-    if (jtaEnabled) {
-      mutablePersistenceUnitInfo.setJtaDataSource(dataSource);
-      mutablePersistenceUnitInfo.setTransactionType(PersistenceUnitTransactionType.JTA);
-    }
-    else {
-      mutablePersistenceUnitInfo.setNonJtaDataSource(dataSource);
-      mutablePersistenceUnitInfo.setTransactionType(PersistenceUnitTransactionType.RESOURCE_LOCAL);
-    }
+    return TARGET_ANNOTATIONS;
   }
 }
