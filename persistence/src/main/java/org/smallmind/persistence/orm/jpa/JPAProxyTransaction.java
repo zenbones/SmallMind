@@ -48,7 +48,9 @@ public class JPAProxyTransaction extends ProxyTransaction<JPAProxySession> {
 
     super(proxySession);
 
-    this.transaction = transaction;
+    if (!(this.transaction = transaction).isActive()) {
+      this.transaction.begin();
+    }
   }
 
   public boolean isCompleted () {
