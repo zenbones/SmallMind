@@ -33,6 +33,8 @@
 package org.smallmind.persistence.orm.hibernate;
 
 import java.io.Serializable;
+import javax.persistence.Access;
+import javax.persistence.AccessType;
 import javax.persistence.Column;
 import javax.persistence.Id;
 import javax.persistence.MappedSuperclass;
@@ -40,6 +42,7 @@ import javax.persistence.Transient;
 import org.smallmind.persistence.AbstractDurable;
 
 @MappedSuperclass
+@Access(AccessType.PROPERTY)
 public abstract class HibernateDurable<I extends Serializable & Comparable<I>, D extends HibernateDurable<I, D>> extends AbstractDurable<I, D> {
 
   private I id;

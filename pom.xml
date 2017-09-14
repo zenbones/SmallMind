@@ -460,14 +460,19 @@
         <version>1.2.3</version>
       </dependency>
       <dependency>
+        <groupId>org.hsqldb</groupId>
+        <artifactId>hsqldb</artifactId>
+        <version>2.3.2</version>
+      </dependency>
+      <dependency>
+        <groupId>com.h2database</groupId>
+        <artifactId>h2</artifactId>
+        <version>1.4.181</version>
+      </dependency>
+      <dependency>
         <groupId>org.liquibase</groupId>
         <artifactId>liquibase-core</artifactId>
         <version>3.3.2</version>
-      </dependency>
-      <dependency>
-        <groupId>javax.jdo</groupId>
-        <artifactId>jdo-api</artifactId>
-        <version>3.1</version>
       </dependency>
       <dependency>
         <groupId>org.hibernate</groupId>
@@ -490,19 +495,19 @@
         <version>1.0.0.Final</version>
       </dependency>
       <dependency>
-        <groupId>org.hsqldb</groupId>
-        <artifactId>hsqldb</artifactId>
-        <version>2.3.2</version>
+        <groupId>javax.jdo</groupId>
+        <artifactId>jdo-api</artifactId>
+        <version>3.1</version>
       </dependency>
       <dependency>
-        <groupId>com.h2database</groupId>
-        <artifactId>h2</artifactId>
-        <version>1.4.181</version>
+        <groupId>org.datanucleus</groupId>
+        <artifactId>datanucleus-core</artifactId>
+        <version>5.1.0-release</version>
       </dependency>
       <dependency>
-        <groupId>org.hectorclient</groupId>
-        <artifactId>hector-core</artifactId>
-        <version>1.1-4</version>
+        <groupId>org.datanucleus</groupId>
+        <artifactId>datanucleus-api-jpa</artifactId>
+        <version>5.1.0-release</version>
       </dependency>
       <dependency>
         <groupId>org.mongodb.morphia</groupId>
@@ -528,6 +533,11 @@
         <groupId>com.querydsl</groupId>
         <artifactId>querydsl-mongodb</artifactId>
         <version>${querydsl.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.hectorclient</groupId>
+        <artifactId>hector-core</artifactId>
+        <version>1.1-4</version>
       </dependency>
       <dependency>
         <groupId>org.hornetq</groupId>
@@ -923,6 +933,24 @@
               </configuration>
             </execution>
           </executions>
+        </plugin>
+        <plugin>
+          <groupId>org.datanucleus</groupId>
+          <artifactId>datanucleus-maven-plugin</artifactId>
+          <version>5.0.0-release</version>
+          <executions>
+            <execution>
+              <phase>process-classes</phase>
+              <goals>
+                <goal>enhance</goal>
+              </goals>
+            </execution>
+          </executions>
+          <configuration>
+            <api>JPA</api>
+            <verbose>true</verbose>
+            <fork>false</fork>
+          </configuration>
         </plugin>
         <plugin>
           <groupId>org.smallmind</groupId>

@@ -86,14 +86,20 @@
       <optional>true</optional>
     </dependency>
     <dependency>
-      <groupId>org.hectorclient</groupId>
-      <artifactId>hector-core</artifactId>
+      <groupId>org.mongodb.morphia</groupId>
+      <artifactId>morphia</artifactId>
       <scope>compile</scope>
       <optional>true</optional>
     </dependency>
     <dependency>
-      <groupId>org.mongodb.morphia</groupId>
-      <artifactId>morphia</artifactId>
+      <groupId>org.datanucleus</groupId>
+      <artifactId>datanucleus-core</artifactId>
+      <scope>compile</scope>
+      <optional>true</optional>
+    </dependency>
+    <dependency>
+      <groupId>org.datanucleus</groupId>
+      <artifactId>datanucleus-api-jpa</artifactId>
       <scope>compile</scope>
       <optional>true</optional>
     </dependency>
@@ -122,6 +128,12 @@
       <optional>true</optional>
     </dependency>
     <dependency>
+      <groupId>org.hectorclient</groupId>
+      <artifactId>hector-core</artifactId>
+      <scope>compile</scope>
+      <optional>true</optional>
+    </dependency>
+    <dependency>
       <groupId>net.sf.ehcache</groupId>
       <artifactId>ehcache-core</artifactId>
       <scope>compile</scope>
@@ -141,28 +153,10 @@
       <plugin>
         <groupId>com.mysema.maven</groupId>
         <artifactId>apt-maven-plugin</artifactId>
-        <executions>
-          <execution>
-            <id>hibernate</id>
-            <goals>
-              <goal>process</goal>
-            </goals>
-            <configuration>
-              <outputDirectory>target/generated-sources/java</outputDirectory>
-              <processor>com.querydsl.apt.hibernate.HibernateAnnotationProcessor</processor>
-            </configuration>
-          </execution>
-          <execution>
-            <id>morphia</id>
-            <goals>
-              <goal>process</goal>
-            </goals>
-            <configuration>
-              <outputDirectory>target/generated-sources/java</outputDirectory>
-              <processor>com.querydsl.apt.morphia.MorphiaAnnotationProcessor</processor>
-            </configuration>
-          </execution>
-        </executions>
+      </plugin>
+      <plugin>
+        <groupId>org.datanucleus</groupId>
+        <artifactId>datanucleus-maven-plugin</artifactId>
       </plugin>
     </plugins>
   </build>
