@@ -173,13 +173,13 @@ public class BeanReflector {
             }
 
             return null;
-          }
-        } else {
-          try {
+          } else {
+            try {
 
-            return method.invoke(target, (value == null) ? null : JsonCodec.convert(value, method.getParameterTypes()[0]));
-          } catch (IllegalAccessException | InvocationTargetException exception) {
-            throw new BeanAccessException(exception);
+              return method.invoke(target, (value == null) ? null : JsonCodec.convert(value, method.getParameterTypes()[0]));
+            } catch (IllegalAccessException | InvocationTargetException exception) {
+              throw new BeanAccessException(exception);
+            }
           }
         }
       }
