@@ -46,7 +46,7 @@ public class DefaultWhereOperandTransformer implements WhereOperandTransformer {
 
     transformMap.put(new TransformKey<>(Date.class, ZonedDateTime.class), (String typeHint, ZonedDateTime zonedDateTime) -> Date.from(zonedDateTime.toInstant()));
     transformMap.put(new TransformKey<>(Enum.class, String.class), (String typeHint, String name) -> {
-      throw new ORMOperationException("Missing transform for enum(%s) ", typeHint);
+      throw new ORMOperationException("Missing transform for enum(%s)", typeHint);
     });
   }
 
@@ -80,7 +80,7 @@ public class DefaultWhereOperandTransformer implements WhereOperandTransformer {
           String typeHint = whereOperand.getTypeHint();
 
           if ((transform = (WhereOperandTransform<?, Object>)transformMap.get(new TransformKey<>(clazz.getComponentType(), input.getClass().getComponentType()))) == null) {
-            throw new ORMOperationException("Missing transform from input type(%s) to output(%s) ", typeHint);
+            throw new ORMOperationException("Missing transform from input type(%s) to output(%s)", typeHint);
           } else {
 
             Object[] output;
@@ -101,7 +101,7 @@ public class DefaultWhereOperandTransformer implements WhereOperandTransformer {
         String typeHint = whereOperand.getTypeHint();
 
         if ((transform = (WhereOperandTransform<U, T>)transformMap.get(new TransformKey<>(clazz, input.getClass()))) == null) {
-          throw new ORMOperationException("Missing transform from input type(%s) to output(%s) ", typeHint);
+          throw new ORMOperationException("Missing transform from input type(%s) to output(%s)", typeHint);
         } else {
 
           return transform.apply(typeHint, input);
