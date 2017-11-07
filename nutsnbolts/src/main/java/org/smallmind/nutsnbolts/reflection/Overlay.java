@@ -58,14 +58,12 @@ public abstract class Overlay<O extends Overlay<O>> implements Differentiable<O>
     return overlayClass;
   }
 
-  public O overlay (Object... overlays)
-    throws IllegalAccessException {
+  public O overlay (Object... overlays) {
 
     return overlay(overlays, null);
   }
 
-  public O overlay (Object[] overlays, Field[] exclusions)
-    throws IllegalAccessException {
+  public O overlay (Object[] overlays, Field[] exclusions) {
 
     if ((overlays != null) && (overlays.length > 0)) {
       for (Object overlay : overlays) {
@@ -95,8 +93,12 @@ public abstract class Overlay<O extends Overlay<O>> implements Differentiable<O>
 
                 Object value;
 
-                if ((value = field.get(overlay)) != null) {
-                  field.set(this, value);
+                try {
+                  if ((value = field.get(overlay)) != null) {
+                    field.set(this, value);
+                  }
+                } catch (IllegalAccessException illegalAccessException) {
+                  throw new OverlayException(illegalAccessException);
                 }
               }
             }
