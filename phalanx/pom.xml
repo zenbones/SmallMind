@@ -30,7 +30,7 @@
     <dependency>
       <groupId>org.smallmind</groupId>
       <artifactId>smallmind-foundation</artifactId>
-      <scope>compile</scope>
+      <scope>test</scope>
     </dependency>
     <dependency>
       <groupId>org.smallmind</groupId>
