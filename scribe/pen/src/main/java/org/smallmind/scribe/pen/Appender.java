@@ -36,13 +36,11 @@ import java.util.List;
 
 public interface Appender {
 
-  public abstract void setName (String name);
-
   public abstract String getName ();
 
-  public abstract void setFilter (Filter filter);
+  public abstract void setName (String name);
 
-  public abstract void setFilters (List<Filter> filterList);
+  public abstract void setFilter (Filter filter);
 
   public abstract void clearFilters ();
 
@@ -50,13 +48,15 @@ public interface Appender {
 
   public abstract Filter[] getFilters ();
 
-  public abstract void setErrorHandler (ErrorHandler errorHandler);
+  public abstract void setFilters (List<Filter> filterList);
 
   public abstract ErrorHandler getErrorHandler ();
 
-  public abstract void setFormatter (Formatter formatter);
+  public abstract void setErrorHandler (ErrorHandler errorHandler);
 
   public abstract Formatter getFormatter ();
+
+  public abstract void setFormatter (Formatter formatter);
 
   public abstract boolean isActive ();
 

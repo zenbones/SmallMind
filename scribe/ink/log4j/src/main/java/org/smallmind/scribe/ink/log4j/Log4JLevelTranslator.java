@@ -41,29 +41,21 @@ public class Log4JLevelTranslator {
 
     if (level == null) {
       return null;
-    }
-    else if (level.equals(org.apache.log4j.Level.TRACE)) {
+    } else if (level.equals(org.apache.log4j.Level.TRACE)) {
       return Level.TRACE;
-    }
-    else if (level.equals(org.apache.log4j.Level.DEBUG)) {
+    } else if (level.equals(org.apache.log4j.Level.DEBUG)) {
       return Level.DEBUG;
-    }
-    else if (level.equals(org.apache.log4j.Level.INFO)) {
+    } else if (level.equals(org.apache.log4j.Level.INFO)) {
       return Level.INFO;
-    }
-    else if (level.equals(org.apache.log4j.Level.WARN)) {
+    } else if (level.equals(org.apache.log4j.Level.WARN)) {
       return Level.WARN;
-    }
-    else if (level.equals(org.apache.log4j.Level.ERROR)) {
+    } else if (level.equals(org.apache.log4j.Level.ERROR)) {
       return Level.ERROR;
-    }
-    else if (level.equals(org.apache.log4j.Level.FATAL)) {
+    } else if (level.equals(org.apache.log4j.Level.FATAL)) {
       return Level.FATAL;
-    }
-    else if (level.equals(org.apache.log4j.Level.OFF)) {
+    } else if (level.equals(org.apache.log4j.Level.OFF)) {
       return Level.OFF;
-    }
-    else {
+    } else {
       throw new UnknownSwitchCaseException(String.valueOf(level.toInt()));
     }
   }

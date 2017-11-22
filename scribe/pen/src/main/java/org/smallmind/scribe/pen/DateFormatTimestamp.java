@@ -42,11 +42,6 @@ public class DateFormatTimestamp implements Timestamp {
 
   private DateFormat dateFormat;
 
-  public static DateFormatTimestamp getDefaultInstance () {
-
-    return STANDARD_TIMESTAMP;
-  }
-
   public DateFormatTimestamp () {
 
     this(new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSZ"));
@@ -55,6 +50,11 @@ public class DateFormatTimestamp implements Timestamp {
   public DateFormatTimestamp (DateFormat dateFormat) {
 
     this.dateFormat = dateFormat;
+  }
+
+  public static DateFormatTimestamp getDefaultInstance () {
+
+    return STANDARD_TIMESTAMP;
   }
 
   public DateFormat getDateFormat () {

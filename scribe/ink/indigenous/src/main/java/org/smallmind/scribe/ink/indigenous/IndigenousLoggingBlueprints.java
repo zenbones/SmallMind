@@ -33,7 +33,6 @@
 package org.smallmind.scribe.ink.indigenous;
 
 import org.smallmind.scribe.pen.DefaultLogicalContext;
-import org.smallmind.scribe.pen.Discriminator;
 import org.smallmind.scribe.pen.Level;
 import org.smallmind.scribe.pen.LogicalContext;
 import org.smallmind.scribe.pen.Record;
@@ -47,9 +46,9 @@ public class IndigenousLoggingBlueprints extends LoggingBlueprints {
     return new IndigenousLoggerAdapter(name);
   }
 
-  public Record filterRecord (Record record, Discriminator discriminator, Level level) {
+  public Record filterRecord (Record record, Level level) {
 
-    return new IndigenousRecordFilter(record, discriminator, level).getRecord();
+    return new IndigenousRecordFilter(record, level).getRecord();
   }
 
   public Record errorRecord (Record record, Throwable throwable, String message, Object... args) {
@@ -57,7 +56,7 @@ public class IndigenousLoggingBlueprints extends LoggingBlueprints {
     IndigenousRecord indigenousRecord;
     LogicalContext logicalContext;
 
-    indigenousRecord = new IndigenousRecord(record.getLoggerName(), null, Level.FATAL, throwable, message, args);
+    indigenousRecord = new IndigenousRecord(record.getLoggerName(), Level.FATAL, throwable, message, args);
     logicalContext = new DefaultLogicalContext();
     logicalContext.fillIn();
     indigenousRecord.setLogicalContext(logicalContext);

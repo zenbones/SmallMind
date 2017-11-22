@@ -30,25 +30,29 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.scribe.pen;
+package org.slf4j.impl;
 
-import org.smallmind.scribe.pen.adapter.LoggingBlueprintsFactory;
+import org.slf4j.spi.MDCAdapter;
+import org.smallmind.scribe.slf4j.ScribeMDCAdapter;
 
-public class FilterUtility {
+public class StaticMDCBinder {
 
-  public static boolean willBeFiltered (Record record, Level level, Filter... filters) {
+  public static final StaticMDCBinder SINGLETON = new StaticMDCBinder();
 
-    if ((filters != null) && (filters.length > 0)) {
+  private final MDCAdapter mdcAdapter;
 
-      Record filterRecord = LoggingBlueprintsFactory.getLoggingBlueprints().filterRecord(record, level);
+  public StaticMDCBinder () {
 
-      for (Filter filter : filters) {
-        if (!filter.willLog(filterRecord)) {
-          return true;
-        }
-      }
-    }
+    mdcAdapter = new ScribeMDCAdapter();
+  }
 
-    return false;
+  public static StaticMDCBinder getSingleton () {
+
+    return SINGLETON;
+  }
+
+  public MDCAdapter getMDCA () {
+
+    return mdcAdapter;
   }
 }

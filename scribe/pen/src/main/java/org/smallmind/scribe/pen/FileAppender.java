@@ -141,12 +141,6 @@ public class FileAppender extends AbstractFormattedAppender {
     return logFile;
   }
 
-  public void setLogFilePath (String logFilePath)
-    throws IOException {
-
-    setLogFile(new File(logFilePath));
-  }
-
   public void setLogFile (File logFile)
     throws IOException {
 
@@ -161,8 +155,7 @@ public class FileAppender extends AbstractFormattedAppender {
       }
 
       logFile.createNewFile();
-    }
-    catch (IOException ioException) {
+    } catch (IOException ioException) {
       throw new IOException("Error trying to instantiate the requested file(" + logFile.getCanonicalPath() + ")");
     }
 
@@ -171,6 +164,12 @@ public class FileAppender extends AbstractFormattedAppender {
     }
 
     fileOutputStream = new BufferedOutputStream(new FileOutputStream(logFile, true));
+  }
+
+  public void setLogFilePath (String logFilePath)
+    throws IOException {
+
+    setLogFile(new File(logFilePath));
   }
 
   public synchronized void handleOutput (String formattedOutput)
@@ -205,8 +204,7 @@ public class FileAppender extends AbstractFormattedAppender {
 
           if ((dotPos = logFileName.lastIndexOf('.')) >= 0) {
             rolloverPathBuilder.append(logFileName.substring(0, dotPos));
-          }
-          else {
+          } else {
             rolloverPathBuilder.append(logFileName);
           }
 
@@ -239,8 +237,7 @@ public class FileAppender extends AbstractFormattedAppender {
 
         fileOutputStream.write(formattedBytes);
         fileOutputStream.flush();
-      }
-      catch (IOException ioException) {
+      } catch (IOException ioException) {
         throw new LoggerException(ioException, "Error attempting to output to file(%s)", logFile.getAbsolutePath());
       }
     }
@@ -254,8 +251,7 @@ public class FileAppender extends AbstractFormattedAppender {
 
       try {
         fileOutputStream.close();
-      }
-      catch (IOException ioException) {
+      } catch (IOException ioException) {
         throw new LoggerException(ioException);
       }
     }

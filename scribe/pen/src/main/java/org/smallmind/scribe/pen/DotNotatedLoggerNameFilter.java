@@ -96,8 +96,7 @@ public class DotNotatedLoggerNameFilter implements Filter {
     for (String protoPattern : patterns) {
       try {
         patternMap.put(protoPattern, new DotNotation(protoPattern));
-      }
-      catch (DotNotationException dotNotationException) {
+      } catch (DotNotationException dotNotationException) {
         throw new LoggerException(dotNotationException);
       }
     }
@@ -127,8 +126,7 @@ public class DotNotatedLoggerNameFilter implements Filter {
       }
 
       return false;
-    }
-    finally {
+    } finally {
       patternReadLock.unlock();
     }
   }
@@ -142,21 +140,18 @@ public class DotNotatedLoggerNameFilter implements Filter {
         if (!patternMap.containsKey(protoPattern)) {
           try {
             patternMap.put(protoPattern, new DotNotation(protoPattern));
-          }
-          catch (DotNotationException dotNotationException) {
+          } catch (DotNotationException dotNotationException) {
             throw new LoggerException(dotNotationException);
           }
         }
-      }
-      else if (patternMap.remove(protoPattern) != null) {
+      } else if (patternMap.remove(protoPattern) != null) {
         for (String className : classList) {
           if (!noCachedMatch(className, false)) {
             classList.remove(className);
           }
         }
       }
-    }
-    finally {
+    } finally {
       patternWriteLock.unlock();
     }
   }

@@ -41,35 +41,25 @@ public class JDKLevelTranslator {
 
     if (level == null) {
       return null;
-    }
-    else if (level.equals(java.util.logging.Level.ALL)) {
+    } else if (level.equals(java.util.logging.Level.ALL)) {
       return Level.TRACE;
-    }
-    else if (level.equals(java.util.logging.Level.FINEST)) {
+    } else if (level.equals(java.util.logging.Level.FINEST)) {
       return Level.TRACE;
-    }
-    else if (level.equals(java.util.logging.Level.FINER)) {
+    } else if (level.equals(java.util.logging.Level.FINER)) {
       return Level.TRACE;
-    }
-    else if (level.equals(java.util.logging.Level.FINE)) {
+    } else if (level.equals(java.util.logging.Level.FINE)) {
       return Level.DEBUG;
-    }
-    else if (level.equals(java.util.logging.Level.CONFIG)) {
+    } else if (level.equals(java.util.logging.Level.CONFIG)) {
       return Level.INFO;
-    }
-    else if (level.equals(java.util.logging.Level.INFO)) {
+    } else if (level.equals(java.util.logging.Level.INFO)) {
       return Level.INFO;
-    }
-    else if (level.equals(java.util.logging.Level.WARNING)) {
+    } else if (level.equals(java.util.logging.Level.WARNING)) {
       return Level.WARN;
-    }
-    else if (level.equals(java.util.logging.Level.SEVERE)) {
+    } else if (level.equals(java.util.logging.Level.SEVERE)) {
       return Level.ERROR;
-    }
-    else if (level.equals(java.util.logging.Level.OFF)) {
+    } else if (level.equals(java.util.logging.Level.OFF)) {
       return Level.OFF;
-    }
-    else {
+    } else {
       throw new UnknownSwitchCaseException(level.getLocalizedName());
     }
   }

@@ -32,9 +32,7 @@
  */
 package org.smallmind.scribe.ink.jdk;
 
-import java.io.Serializable;
 import java.util.logging.LogRecord;
-import org.smallmind.scribe.pen.Discriminator;
 import org.smallmind.scribe.pen.Level;
 import org.smallmind.scribe.pen.LogicalContext;
 import org.smallmind.scribe.pen.Parameter;
@@ -44,14 +42,12 @@ import org.smallmind.scribe.pen.adapter.RecordWrapper;
 public class JDKRecordFilter extends LogRecord implements RecordWrapper {
 
   private FilterRecord filterRecord;
-  private Discriminator discriminator;
   private Level level;
 
-  public JDKRecordFilter (Record record, Discriminator discriminator, Level level) {
+  public JDKRecordFilter (Record record, Level level) {
 
     super(JDKLevelTranslator.getLog4JLevel(level), record.getMessage());
 
-    this.discriminator = discriminator;
     this.level = level;
 
     filterRecord = new FilterRecord(record, this);
@@ -91,66 +87,67 @@ public class JDKRecordFilter extends LogRecord implements RecordWrapper {
       this.logRecord = logRecord;
     }
 
+    @Override
     public Object getNativeLogEntry () {
 
       return logRecord;
     }
 
+    @Override
     public String getLoggerName () {
 
       return record.getLoggerName();
     }
 
-    public Discriminator getDiscriminator () {
-
-      return discriminator;
-    }
-
+    @Override
     public Level getLevel () {
 
       return level;
     }
 
+    @Override
     public Throwable getThrown () {
 
       return record.getThrown();
     }
 
+    @Override
     public String getMessage () {
 
       return record.getMessage();
     }
 
-    public void addParameter (String key, Serializable value) {
-
-      throw new UnsupportedOperationException();
-    }
-
+    @Override
     public Parameter[] getParameters () {
 
       return record.getParameters();
     }
 
+    @Override
     public LogicalContext getLogicalContext () {
 
       return record.getLogicalContext();
     }
 
+    @Override
     public long getThreadID () {
 
       return record.getThreadID();
     }
 
+    @Override
     public String getThreadName () {
 
       return record.getThreadName();
     }
 
+    @Override
     public long getSequenceNumber () {
 
       return record.getSequenceNumber();
     }
 
+    @Override
     public long getMillis () {
 
       return record.getMillis();

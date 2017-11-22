@@ -32,6 +32,7 @@
  */
 package org.smallmind.scribe.pen;
 
+import java.io.Serializable;
 import org.smallmind.scribe.pen.adapter.LoggerAdapter;
 import org.smallmind.scribe.pen.adapter.LoggingBlueprintsFactory;
 
@@ -57,6 +58,26 @@ public class Logger {
   public Template getTemplate () {
 
     return LoggerManager.getTemplate(this);
+  }
+
+  public void putParameter (String key, Serializable value) {
+
+    loggerAdapter.getParameterAdapter().put(key, value);
+  }
+
+  public void removeParameter (String key) {
+
+    loggerAdapter.getParameterAdapter().remove(key);
+  }
+
+  public void clearParameters () {
+
+    loggerAdapter.getParameterAdapter().clear();
+  }
+
+  public Parameter[] getParameters () {
+
+    return loggerAdapter.getParameterAdapter().getParameters();
   }
 
   public boolean getAutoFillLogicalContext () {
@@ -132,19 +153,9 @@ public class Logger {
     log(Level.TRACE, throwable);
   }
 
-  public void trace (Discriminator discriminator, Throwable throwable) {
-
-    log(discriminator, Level.TRACE, throwable);
-  }
-
   public void trace (String message, Object... args) {
 
     log(Level.TRACE, message, args);
-  }
-
-  public void trace (Discriminator discriminator, String message, Object... args) {
-
-    log(discriminator, Level.TRACE, message, args);
   }
 
   public void trace (Throwable throwable, String message, Object... args) {
@@ -152,19 +163,9 @@ public class Logger {
     log(Level.TRACE, throwable, message, args);
   }
 
-  public void trace (Discriminator discriminator, Throwable throwable, String message, Object... args) {
-
-    log(discriminator, Level.TRACE, throwable, message, args);
-  }
-
   public void trace (Object object) {
 
     log(Level.TRACE, object);
-  }
-
-  public void trace (Discriminator discriminator, Object object) {
-
-    log(discriminator, Level.TRACE, object);
   }
 
   public void trace (Throwable throwable, Object object) {
@@ -172,19 +173,9 @@ public class Logger {
     log(Level.TRACE, throwable, object);
   }
 
-  public void trace (Discriminator discriminator, Throwable throwable, Object object) {
-
-    log(discriminator, Level.TRACE, throwable, object);
-  }
-
   public void debug (Throwable throwable) {
 
     log(Level.DEBUG, throwable);
-  }
-
-  public void debug (Discriminator discriminator, Throwable throwable) {
-
-    log(discriminator, Level.DEBUG, throwable);
   }
 
   public void debug (String message, Object... args) {
@@ -192,19 +183,9 @@ public class Logger {
     log(Level.DEBUG, message, args);
   }
 
-  public void debug (Discriminator discriminator, String message, Object... args) {
-
-    log(discriminator, Level.DEBUG, message, args);
-  }
-
   public void debug (Throwable throwable, String message, Object... args) {
 
     log(Level.DEBUG, throwable, message, args);
-  }
-
-  public void debug (Discriminator discriminator, Throwable throwable, String message, Object... args) {
-
-    log(discriminator, Level.DEBUG, throwable, message, args);
   }
 
   public void debug (Object object) {
@@ -212,19 +193,9 @@ public class Logger {
     log(Level.DEBUG, object);
   }
 
-  public void debug (Discriminator discriminator, Object object) {
-
-    log(discriminator, Level.DEBUG, object);
-  }
-
   public void debug (Throwable throwable, Object object) {
 
     log(Level.DEBUG, throwable, object);
-  }
-
-  public void debug (Discriminator discriminator, Throwable throwable, Object object) {
-
-    log(discriminator, Level.DEBUG, throwable, object);
   }
 
   public void info (Throwable throwable) {
@@ -232,19 +203,9 @@ public class Logger {
     log(Level.INFO, throwable);
   }
 
-  public void info (Discriminator discriminator, Throwable throwable) {
-
-    log(discriminator, Level.INFO, throwable);
-  }
-
   public void info (String message, Object... args) {
 
     log(Level.INFO, message, args);
-  }
-
-  public void info (Discriminator discriminator, String message, Object... args) {
-
-    log(discriminator, Level.INFO, message, args);
   }
 
   public void info (Throwable throwable, String message, Object... args) {
@@ -252,19 +213,9 @@ public class Logger {
     log(Level.INFO, throwable, message, args);
   }
 
-  public void info (Discriminator discriminator, Throwable throwable, String message, Object... args) {
-
-    log(discriminator, Level.INFO, throwable, message, args);
-  }
-
   public void info (Object object) {
 
     log(Level.INFO, object);
-  }
-
-  public void info (Discriminator discriminator, Object object) {
-
-    log(discriminator, Level.INFO, object);
   }
 
   public void info (Throwable throwable, Object object) {
@@ -272,19 +223,9 @@ public class Logger {
     log(Level.INFO, throwable, object);
   }
 
-  public void info (Discriminator discriminator, Throwable throwable, Object object) {
-
-    log(discriminator, Level.INFO, throwable, object);
-  }
-
   public void warn (Throwable throwable) {
 
     log(Level.WARN, throwable);
-  }
-
-  public void warn (Discriminator discriminator, Throwable throwable) {
-
-    log(discriminator, Level.WARN, throwable);
   }
 
   public void warn (String message, Object... args) {
@@ -292,19 +233,9 @@ public class Logger {
     log(Level.WARN, message, args);
   }
 
-  public void warn (Discriminator discriminator, String message, Object... args) {
-
-    log(discriminator, Level.WARN, message, args);
-  }
-
   public void warn (Throwable throwable, String message, Object... args) {
 
     log(Level.WARN, throwable, message, args);
-  }
-
-  public void warn (Discriminator discriminator, Throwable throwable, String message, Object... args) {
-
-    log(discriminator, Level.WARN, throwable, message, args);
   }
 
   public void warn (Object object) {
@@ -312,19 +243,9 @@ public class Logger {
     log(Level.WARN, object);
   }
 
-  public void warn (Discriminator discriminator, Object object) {
-
-    log(discriminator, Level.WARN, object);
-  }
-
   public void warn (Throwable throwable, Object object) {
 
     log(Level.WARN, throwable, object);
-  }
-
-  public void warn (Discriminator discriminator, Throwable throwable, Object object) {
-
-    log(discriminator, Level.WARN, throwable, object);
   }
 
   public void error (Throwable throwable) {
@@ -332,19 +253,9 @@ public class Logger {
     log(Level.ERROR, throwable);
   }
 
-  public void error (Discriminator discriminator, Throwable throwable) {
-
-    log(discriminator, Level.ERROR, throwable);
-  }
-
   public void error (String message, Object... args) {
 
     log(Level.ERROR, message, args);
-  }
-
-  public void error (Discriminator discriminator, String message, Object... args) {
-
-    log(discriminator, Level.ERROR, message, args);
   }
 
   public void error (Throwable throwable, String message, Object... args) {
@@ -352,19 +263,9 @@ public class Logger {
     log(Level.ERROR, throwable, message, args);
   }
 
-  public void error (Discriminator discriminator, Throwable throwable, String message, Object... args) {
-
-    log(discriminator, Level.ERROR, throwable, message, args);
-  }
-
   public void error (Object object) {
 
     log(Level.ERROR, object);
-  }
-
-  public void error (Discriminator discriminator, Object object) {
-
-    log(discriminator, Level.ERROR, object);
   }
 
   public void error (Throwable throwable, Object object) {
@@ -372,19 +273,9 @@ public class Logger {
     log(Level.ERROR, throwable, object);
   }
 
-  public void error (Discriminator discriminator, Throwable throwable, Object object) {
-
-    log(discriminator, Level.ERROR, throwable, object);
-  }
-
   public void fatal (Throwable throwable) {
 
     log(Level.FATAL, throwable);
-  }
-
-  public void fatal (Discriminator discriminator, Throwable throwable) {
-
-    log(discriminator, Level.FATAL, throwable);
   }
 
   public void fatal (String message, Object... args) {
@@ -392,19 +283,9 @@ public class Logger {
     log(Level.FATAL, message, args);
   }
 
-  public void fatal (Discriminator discriminator, String message, Object... args) {
-
-    log(discriminator, Level.FATAL, message, args);
-  }
-
   public void fatal (Throwable throwable, String message, Object... args) {
 
     log(Level.FATAL, throwable, message, args);
-  }
-
-  public void fatal (Discriminator discriminator, Throwable throwable, String message, Object... args) {
-
-    log(discriminator, Level.FATAL, throwable, message, args);
   }
 
   public void fatal (Object object) {
@@ -412,68 +293,33 @@ public class Logger {
     log(Level.FATAL, object);
   }
 
-  public void fatal (Discriminator discriminator, Object object) {
-
-    log(discriminator, Level.FATAL, object);
-  }
-
   public void fatal (Throwable throwable, Object object) {
 
     log(Level.FATAL, throwable, object);
   }
 
-  public void fatal (Discriminator discriminator, Throwable throwable, Object object) {
-
-    log(discriminator, Level.FATAL, throwable, object);
-  }
-
   public void log (Level level, Throwable throwable) {
 
-    loggerAdapter.logMessage(null, (level == null) ? getLevel() : level, throwable, null);
-  }
-
-  public void log (Discriminator discriminator, Level level, Throwable throwable) {
-
-    loggerAdapter.logMessage(discriminator, (level == null) ? getLevel() : level, throwable, null);
+    loggerAdapter.logMessage((level == null) ? getLevel() : level, throwable, null);
   }
 
   public void log (Level level, String message, Object... args) {
 
-    loggerAdapter.logMessage(null, (level == null) ? getLevel() : level, null, message, args);
-  }
-
-  public void log (Discriminator discriminator, Level level, String message, Object... args) {
-
-    loggerAdapter.logMessage(discriminator, (level == null) ? getLevel() : level, null, message, args);
+    loggerAdapter.logMessage((level == null) ? getLevel() : level, null, message, args);
   }
 
   public void log (Level level, Throwable throwable, String message, Object... args) {
 
-    loggerAdapter.logMessage(null, (level == null) ? getLevel() : level, throwable, message, args);
-  }
-
-  public void log (Discriminator discriminator, Level level, Throwable throwable, String message, Object... args) {
-
-    loggerAdapter.logMessage(discriminator, (level == null) ? getLevel() : level, throwable, message, args);
+    loggerAdapter.logMessage((level == null) ? getLevel() : level, throwable, message, args);
   }
 
   public void log (Level level, Object object) {
 
-    loggerAdapter.logMessage(null, (level == null) ? getLevel() : level, null, object);
-  }
-
-  public void log (Discriminator discriminator, Level level, Object object) {
-
-    loggerAdapter.logMessage(discriminator, (level == null) ? getLevel() : level, null, object);
+    loggerAdapter.logMessage((level == null) ? getLevel() : level, null, object);
   }
 
   public void log (Level level, Throwable throwable, Object object) {
 
-    loggerAdapter.logMessage(null, (level == null) ? getLevel() : level, throwable, object);
-  }
-
-  public void log (Discriminator discriminator, Level level, Throwable throwable, Object object) {
-
-    loggerAdapter.logMessage(discriminator, (level == null) ? getLevel() : level, throwable, object);
+    loggerAdapter.logMessage((level == null) ? getLevel() : level, throwable, object);
   }
 }

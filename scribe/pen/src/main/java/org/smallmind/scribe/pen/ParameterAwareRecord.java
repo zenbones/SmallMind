@@ -32,23 +32,20 @@
  */
 package org.smallmind.scribe.pen;
 
-import org.smallmind.scribe.pen.adapter.LoggingBlueprintsFactory;
+public abstract class ParameterAwareRecord implements Record {
 
-public class FilterUtility {
+  private static final Parameter[] NO_PARAMETERS = new Parameter[0];
 
-  public static boolean willBeFiltered (Record record, Level level, Filter... filters) {
+  private Parameter[] parameters;
 
-    if ((filters != null) && (filters.length > 0)) {
+  @Override
+  public Parameter[] getParameters () {
 
-      Record filterRecord = LoggingBlueprintsFactory.getLoggingBlueprints().filterRecord(record, level);
+    return (parameters == null) ? NO_PARAMETERS : parameters;
+  }
 
-      for (Filter filter : filters) {
-        if (!filter.willLog(filterRecord)) {
-          return true;
-        }
-      }
-    }
+  public void setParameters (Parameter... parameters) {
 
-    return false;
+    this.parameters = parameters;
   }
 }

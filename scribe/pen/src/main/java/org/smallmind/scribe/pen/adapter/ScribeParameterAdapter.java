@@ -30,25 +30,56 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.scribe.pen;
+package org.smallmind.scribe.pen.adapter;
 
-import org.smallmind.scribe.pen.adapter.LoggingBlueprintsFactory;
+import java.io.Serializable;
+import org.smallmind.scribe.pen.Parameter;
 
-public class FilterUtility {
+public class ScribeParameterAdapter implements ParameterAdapter {
 
-  public static boolean willBeFiltered (Record record, Level level, Filter... filters) {
+  private static final ScribeParameterAdapter INSTANCE = new ScribeParameterAdapter();
 
-    if ((filters != null) && (filters.length > 0)) {
+  private static final InheritableThreadLocal<RecordParameters> RECORD_PARAMETERS_LOCAL = new InheritableThreadLocal<RecordParameters>() {
 
-      Record filterRecord = LoggingBlueprintsFactory.getLoggingBlueprints().filterRecord(record, level);
+    @Override
+    protected RecordParameters initialValue () {
 
-      for (Filter filter : filters) {
-        if (!filter.willLog(filterRecord)) {
-          return true;
-        }
-      }
+      return new RecordParameters();
     }
+  };
 
-    return false;
+  public static ScribeParameterAdapter getInstance () {
+
+    return INSTANCE;
+  }
+
+  @Override
+  public void put (String key, Serializable value) {
+
+    RECORD_PARAMETERS_LOCAL.get().put(key, value);
+  }
+
+  @Override
+  public void remove (String key) {
+
+    RECORD_PARAMETERS_LOCAL.get().remove(key);
+  }
+
+  @Override
+  public void clear () {
+
+    RECORD_PARAMETERS_LOCAL.get().clear();
+  }
+
+  @Override
+  public Serializable get (String key) {
+
+    return RECORD_PARAMETERS_LOCAL.get().get(key);
+  }
+
+  @Override
+  public Parameter[] getParameters () {
+
+    return RECORD_PARAMETERS_LOCAL.get().asParameters();
   }
 }

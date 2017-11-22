@@ -72,11 +72,9 @@ public class ScribeLoggerAdapter extends MarkerIgnoringBase implements LocationA
         case CHAR:
           if (currentChar == '\\') {
             state = TranslatorState.ESCAPE;
-          }
-          else if (currentChar == '{') {
+          } else if (currentChar == '{') {
             state = TranslatorState.VAR;
-          }
-          else {
+          } else {
             formatBuilder.append(currentChar);
           }
           break;
@@ -87,12 +85,10 @@ public class ScribeLoggerAdapter extends MarkerIgnoringBase implements LocationA
         case VAR:
           if (currentChar == '{') {
             formatBuilder.append('{');
-          }
-          else {
+          } else {
             if (currentChar == '}') {
               formatBuilder.append("%s");
-            }
-            else {
+            } else {
               formatBuilder.append('{').append(currentChar);
             }
             state = TranslatorState.CHAR;

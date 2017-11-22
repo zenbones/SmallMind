@@ -32,15 +32,12 @@
  */
 package org.smallmind.scribe.ink.jdk;
 
-import java.io.Serializable;
-import java.util.HashMap;
-import java.util.Map;
 import java.util.logging.LogRecord;
-import org.smallmind.scribe.pen.Discriminator;
 import org.smallmind.scribe.pen.Level;
 import org.smallmind.scribe.pen.LogicalContext;
 import org.smallmind.scribe.pen.MessageTranslator;
 import org.smallmind.scribe.pen.Parameter;
+import org.smallmind.scribe.pen.ParameterAwareRecord;
 import org.smallmind.scribe.pen.Record;
 import org.smallmind.scribe.pen.adapter.RecordWrapper;
 
@@ -50,10 +47,9 @@ public class JDKRecordSubverter extends LogRecord implements RecordWrapper {
 
   private JDKRecord jdkRecord;
   private LogicalContext logicalContext;
-  private Discriminator discriminator;
   private Level level;
 
-  public JDKRecordSubverter (String loggerName, Discriminator discriminator, Level level, LogicalContext logicalContext, Throwable throwable, String message, Object... args) {
+  public JDKRecordSubverter (String loggerName, Level level, LogicalContext logicalContext, Throwable throwable, String message, Object... args) {
 
     super(JDKLevelTranslator.getLog4JLevel(level), message);
 
@@ -61,7 +57,6 @@ public class JDKRecordSubverter extends LogRecord implements RecordWrapper {
     setThrown(throwable);
     setParameters(args);
 
-    this.discriminator = discriminator;
     this.level = level;
     this.logicalContext = logicalContext;
 
@@ -91,97 +86,73 @@ public class JDKRecordSubverter extends LogRecord implements RecordWrapper {
     return jdkRecord;
   }
 
-  private class JDKRecord implements Record {
+  private class JDKRecord extends ParameterAwareRecord {
 
     private LogRecord logRecord;
-    private HashMap<String, Serializable> parameterMap;
     private String threadName;
 
     public JDKRecord (LogRecord logRecord) {
 
       this.logRecord = logRecord;
 
-      parameterMap = new HashMap<String, Serializable>();
-
       threadName = Thread.currentThread().getName();
     }
 
+    @Override
     public Object getNativeLogEntry () {
 
       return logRecord;
     }
 
+    @Override
     public String getLoggerName () {
 
       return logRecord.getLoggerName();
     }
 
-    public Discriminator getDiscriminator () {
-
-      return discriminator;
-    }
-
+    @Override
     public Level getLevel () {
 
       return level;
     }
 
+    @Override
     public Throwable getThrown () {
 
       return logRecord.getThrown();
     }
 
+    @Override
     public String getMessage () {
 
       return MessageTranslator.translateMessage(logRecord.getMessage(), logRecord.getParameters());
     }
 
-    public void addParameter (String key, Serializable value) {
-
-      parameterMap.put(key, value);
-    }
-
-    public Parameter[] getParameters () {
-
-      if (parameterMap.isEmpty()) {
-
-        return NO_PARAMETERS;
-      }
-      else {
-
-        Parameter[] parameters;
-        int index = 0;
-
-        parameters = new Parameter[parameterMap.size()];
-        for (Map.Entry<String, Serializable> entry : parameterMap.entrySet()) {
-          parameters[index++] = new Parameter(entry.getKey(), entry.getValue());
-        }
-
-        return parameters;
-      }
-    }
-
+    @Override
     public LogicalContext getLogicalContext () {
 
       return logicalContext;
     }
 
+    @Override
     public long getThreadID () {
 
       return logRecord.getThreadID();
     }
 
+    @Override
     public String getThreadName () {
 
       return threadName;
     }
 
+    @Override
     public long getSequenceNumber () {
 
       return logRecord.getSequenceNumber();
-
     }
 
+    @Override
     public long getMillis () {
 
       return logRecord.getMillis();

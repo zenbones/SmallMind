@@ -32,11 +32,9 @@
  */
 package org.smallmind.scribe.ink.log4j;
 
-import java.io.Serializable;
 import java.util.concurrent.atomic.AtomicReference;
 import org.apache.log4j.spi.LocationInfo;
 import org.apache.log4j.spi.LoggingEvent;
-import org.smallmind.scribe.pen.Discriminator;
 import org.smallmind.scribe.pen.Level;
 import org.smallmind.scribe.pen.LogicalContext;
 import org.smallmind.scribe.pen.Parameter;
@@ -47,23 +45,20 @@ public class Log4JRecordFilter extends LoggingEvent implements RecordWrapper {
 
   private FilterRecord filterRecord;
   private AtomicReference<LocationInfo> locationInfoReference;
-  private Discriminator discriminator;
   private Level level;
 
-  public Log4JRecordFilter (Record record, Discriminator discriminator, Level level) {
+  public Log4JRecordFilter (Record record, Level level) {
 
-    this(record, (LoggingEvent)record.getNativeLogEntry(), discriminator, level);
+    this(record, (LoggingEvent)record.getNativeLogEntry(), level);
   }
 
-  private Log4JRecordFilter (Record record, LoggingEvent loggingEvent, Discriminator discriminator, Level level) {
+  private Log4JRecordFilter (Record record, LoggingEvent loggingEvent, Level level) {
 
     super(loggingEvent.getFQNOfLoggerClass(), loggingEvent.getLogger(), loggingEvent.getTimeStamp(), Log4JLevelTranslator.getLog4JLevel(level), loggingEvent.getRenderedMessage(), loggingEvent.getThrowableInformation().getThrowable());
 
-    this.discriminator = discriminator;
     this.level = level;
 
     filterRecord = new FilterRecord(record, this);
-
     locationInfoReference = new AtomicReference<LocationInfo>();
   }
 
@@ -96,66 +91,67 @@ public class Log4JRecordFilter extends LoggingEvent implements RecordWrapper {
       this.loggingEvent = loggingEvent;
     }
 
+    @Override
     public Object getNativeLogEntry () {
 
       return loggingEvent;
     }
 
+    @Override
     public String getLoggerName () {
 
       return record.getLoggerName();
     }
 
-    public Discriminator getDiscriminator () {
-
-      return discriminator;
-    }
-
+    @Override
     public Level getLevel () {
 
       return level;
     }
 
+    @Override
     public Throwable getThrown () {
 
       return record.getThrown();
     }
 
+    @Override
     public String getMessage () {
 
       return record.getMessage();
     }
 
-    public void addParameter (String key, Serializable value) {
-
-      throw new UnsupportedOperationException();
-    }
-
+    @Override
     public Parameter[] getParameters () {
 
       return record.getParameters();
     }
 
+    @Override
     public LogicalContext getLogicalContext () {
 
       return record.getLogicalContext();
     }
 
+    @Override
     public long getThreadID () {
 
       return record.getThreadID();
     }
 
+    @Override
     public String getThreadName () {
 
       return record.getThreadName();
     }
 
+    @Override
     public long getSequenceNumber () {
 
       return record.getSequenceNumber();
     }
 
+    @Override
     public long getMillis () {
 
       return record.getMillis();

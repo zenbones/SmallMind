@@ -57,13 +57,13 @@ public class JDKAppenderWrapper extends Handler {
     return appender;
   }
 
-  public void setEncoding (String encoding)
-    throws SecurityException, UnsupportedEncodingException {
+  public String getEncoding () {
 
     throw new UnsupportedOperationException("Unsupported native JDK Logging method");
   }
 
-  public String getEncoding () {
+  public void setEncoding (String encoding)
+    throws SecurityException, UnsupportedEncodingException {
 
     throw new UnsupportedOperationException("Unsupported native JDK Logging method");
   }
@@ -77,11 +77,6 @@ public class JDKAppenderWrapper extends Handler {
     throws SecurityException {
 
     throw new UnsupportedOperationException("Unsupported native JDK Logging method");
-  }
-
-  public void setFormatter (Formatter formatter) {
-
-    appender.setFormatter(new JDKFormatterAdapter(formatter));
   }
 
   public Formatter getFormatter () {
@@ -99,10 +94,9 @@ public class JDKAppenderWrapper extends Handler {
     return null;
   }
 
-  public void setFilter (Filter filter) {
+  public void setFormatter (Formatter formatter) {
 
-    appender.clearFilters();
-    appender.addFilter(new JDKFilterAdapter(filter));
+    appender.setFormatter(new JDKFormatterAdapter(formatter));
   }
 
   public Filter getFilter () {
@@ -120,23 +114,23 @@ public class JDKAppenderWrapper extends Handler {
     return null;
   }
 
+  public void setFilter (Filter filter) {
+
+    appender.clearFilters();
+    appender.addFilter(new JDKFilterAdapter(filter));
+  }
+
   public boolean isLoggable (LogRecord record) {
 
     for (org.smallmind.scribe.pen.Filter filter : appender.getFilters()) {
       if (!(filter instanceof JDKFilterAdapter)) {
         throw new UnsupportedOperationException("Encountered a non-JDK Logging native Filter(" + filter.getClass().getCanonicalName() + ")");
-      }
-      else if (!((JDKFilterAdapter)filter).getNativeFilter().isLoggable(record)) {
+      } else if (!((JDKFilterAdapter)filter).getNativeFilter().isLoggable(record)) {
         return false;
       }
     }
 
     return false;
-  }
-
-  public void setErrorManager (ErrorManager errorManager) {
-
-    appender.setErrorHandler(new JDKErrorHandlerAdapter(errorManager));
   }
 
   public ErrorManager getErrorManager () {
@@ -152,6 +146,11 @@ public class JDKAppenderWrapper extends Handler {
     }
 
     return null;
+  }
+
+  public void setErrorManager (ErrorManager errorManager) {
+
+    appender.setErrorHandler(new JDKErrorHandlerAdapter(errorManager));
   }
 
   public void publish (LogRecord record) {
@@ -170,8 +169,7 @@ public class JDKAppenderWrapper extends Handler {
 
     try {
       appender.close();
-    }
-    catch (LoggerException | InterruptedException exception) {
+    } catch (LoggerException | InterruptedException exception) {
       throw new SecurityException(exception);
     }
   }

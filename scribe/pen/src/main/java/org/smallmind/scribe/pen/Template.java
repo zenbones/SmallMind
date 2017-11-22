@@ -38,13 +38,12 @@ import org.smallmind.nutsnbolts.lang.UnknownSwitchCaseException;
 
 public abstract class Template {
 
-  public final static int NO_MATCH = -1;
-
   public static enum Change {
 
     LEVEL, CONTEXT, FILTER, APPENDER, ENHANCER
   }
 
+  public final static int NO_MATCH = -1;
   private LinkedList<Filter> filterList;
   private LinkedList<Appender> appenderList;
   private LinkedList<Enhancer> enhancerList;
@@ -124,16 +123,6 @@ public abstract class Template {
     setFilters(new Filter[] {filter});
   }
 
-  public synchronized void setFilters (Filter[] filters) {
-
-    filterList.clear();
-    filterList.addAll(Arrays.asList(filters));
-
-    if (registered) {
-      LoggerManager.commitTemplateChanges(Change.FILTER, this);
-    }
-  }
-
   public synchronized Filter[] getFilters () {
 
     Filter[] filters;
@@ -142,6 +131,16 @@ public abstract class Template {
     filterList.toArray(filters);
 
     return filters;
+  }
+
+  public synchronized void setFilters (Filter[] filters) {
+
+    filterList.clear();
+    filterList.addAll(Arrays.asList(filters));
+
+    if (registered) {
+      LoggerManager.commitTemplateChanges(Change.FILTER, this);
+    }
   }
 
   public synchronized void addFilter (Filter filter) {
@@ -165,16 +164,6 @@ public abstract class Template {
     setAppenders(new Appender[] {appender});
   }
 
-  public synchronized void setAppenders (Appender[] appenders) {
-
-    appenderList.clear();
-    appenderList.addAll(Arrays.asList(appenders));
-
-    if (registered) {
-      LoggerManager.commitTemplateChanges(Change.APPENDER, this);
-    }
-  }
-
   public synchronized Appender[] getAppenders () {
 
     Appender[] appenders;
@@ -183,6 +172,16 @@ public abstract class Template {
     appenderList.toArray(appenders);
 
     return appenders;
+  }
+
+  public synchronized void setAppenders (Appender[] appenders) {
+
+    appenderList.clear();
+    appenderList.addAll(Arrays.asList(appenders));
+
+    if (registered) {
+      LoggerManager.commitTemplateChanges(Change.APPENDER, this);
+    }
   }
 
   public synchronized void addAppender (Appender appender) {
@@ -206,16 +205,6 @@ public abstract class Template {
     setEnhancers(new Enhancer[] {enhancer});
   }
 
-  public synchronized void setEnhancers (Enhancer[] enhancers) {
-
-    enhancerList.clear();
-    enhancerList.addAll(Arrays.asList(enhancers));
-
-    if (registered) {
-      LoggerManager.commitTemplateChanges(Change.ENHANCER, this);
-    }
-  }
-
   public synchronized Enhancer[] getEnhancers () {
 
     Enhancer[] enhancers;
@@ -224,6 +213,16 @@ public abstract class Template {
     enhancerList.toArray(enhancers);
 
     return enhancers;
+  }
+
+  public synchronized void setEnhancers (Enhancer[] enhancers) {
+
+    enhancerList.clear();
+    enhancerList.addAll(Arrays.asList(enhancers));
+
+    if (registered) {
+      LoggerManager.commitTemplateChanges(Change.ENHANCER, this);
+    }
   }
 
   public synchronized void addEnhancer (Enhancer enhancer) {

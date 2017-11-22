@@ -146,8 +146,7 @@ public class LoggerManager {
 
     if (matchingTemplate == null) {
       TEMPLATE_MAP.remove(logger);
-    }
-    else if (!matchingTemplate.equals(getTemplate(logger))) {
+    } else if (!matchingTemplate.equals(getTemplate(logger))) {
       matchingTemplate.apply(logger);
       TEMPLATE_MAP.put(logger, matchingTemplate);
     }

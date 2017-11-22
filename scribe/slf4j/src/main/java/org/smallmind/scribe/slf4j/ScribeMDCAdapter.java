@@ -30,25 +30,58 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.scribe.pen;
+package org.smallmind.scribe.slf4j;
 
-import org.smallmind.scribe.pen.adapter.LoggingBlueprintsFactory;
+import java.util.HashMap;
+import java.util.Map;
+import org.slf4j.spi.MDCAdapter;
+import org.smallmind.scribe.pen.Parameter;
+import org.smallmind.scribe.pen.adapter.ScribeParameterAdapter;
 
-public class FilterUtility {
+public class ScribeMDCAdapter implements MDCAdapter {
 
-  public static boolean willBeFiltered (Record record, Level level, Filter... filters) {
+  @Override
+  public void put (String key, String val) {
 
-    if ((filters != null) && (filters.length > 0)) {
+    ScribeParameterAdapter.getInstance().put(key, val);
+  }
 
-      Record filterRecord = LoggingBlueprintsFactory.getLoggingBlueprints().filterRecord(record, level);
+  @Override
+  public String get (String key) {
 
-      for (Filter filter : filters) {
-        if (!filter.willLog(filterRecord)) {
-          return true;
-        }
-      }
+    return ScribeParameterAdapter.getInstance().get(key).toString();
+  }
+
+  @Override
+  public void remove (String key) {
+
+    ScribeParameterAdapter.getInstance().remove(key);
+  }
+
+  @Override
+  public void clear () {
+
+    ScribeParameterAdapter.getInstance().clear();
+  }
+
+  @Override
+  public Map<String, String> getCopyOfContextMap () {
+
+    HashMap<String, String> map = new HashMap<>();
+
+    for (Parameter parameter : ScribeParameterAdapter.getInstance().getParameters()) {
+      map.put(parameter.getKey(), parameter.getValue().toString());
     }
 
-    return false;
+    return map;
+  }
+
+  @Override
+  public void setContextMap (Map<String, String> contextMap) {
+
+    ScribeParameterAdapter.getInstance().clear();
+    for (Map.Entry<String, String> entry : contextMap.entrySet()) {
+      ScribeParameterAdapter.getInstance().put(entry.getKey(), entry.getValue());
+    }
   }
 }

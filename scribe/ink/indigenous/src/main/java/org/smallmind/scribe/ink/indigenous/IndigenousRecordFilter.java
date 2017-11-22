@@ -32,8 +32,6 @@
  */
 package org.smallmind.scribe.ink.indigenous;
 
-import java.io.Serializable;
-import org.smallmind.scribe.pen.Discriminator;
 import org.smallmind.scribe.pen.Level;
 import org.smallmind.scribe.pen.LogicalContext;
 import org.smallmind.scribe.pen.Parameter;
@@ -43,13 +41,11 @@ import org.smallmind.scribe.pen.adapter.RecordWrapper;
 public class IndigenousRecordFilter implements Record, RecordWrapper {
 
   private Record record;
-  private Discriminator discriminator;
   private Level level;
 
-  public IndigenousRecordFilter (Record record, Discriminator discriminator, Level level) {
+  public IndigenousRecordFilter (Record record, Level level) {
 
     this.record = record;
-    this.discriminator = discriminator;
     this.level = level;
   }
 
@@ -72,12 +68,6 @@ public class IndigenousRecordFilter implements Record, RecordWrapper {
   }
 
   @Override
-  public Discriminator getDiscriminator () {
-
-    return discriminator;
-  }
-
-  @Override
   public Level getLevel () {
 
     return level;
@@ -87,12 +77,6 @@ public class IndigenousRecordFilter implements Record, RecordWrapper {
   public Throwable getThrown () {
 
     return record.getThrown();
-  }
-
-  @Override
-  public void addParameter (String key, Serializable value) {
-
-    throw new UnsupportedOperationException();
   }
 
   @Override

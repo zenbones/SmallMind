@@ -54,8 +54,7 @@ public class ClassNameTemplate extends Template {
 
     try {
       notationRef.set(new DotNotation(pattern));
-    }
-    catch (DotNotationException dotNotationException) {
+    } catch (DotNotationException dotNotationException) {
       throw new LoggerException(dotNotationException);
     }
   }
@@ -67,8 +66,7 @@ public class ClassNameTemplate extends Template {
 
     try {
       notationRef.set(new DotNotation(pattern));
-    }
-    catch (DotNotationException dotNotationException) {
+    } catch (DotNotationException dotNotationException) {
       throw new LoggerException(dotNotationException);
     }
   }
@@ -80,46 +78,9 @@ public class ClassNameTemplate extends Template {
 
     try {
       notationRef.set(new DotNotation(pattern));
-    }
-    catch (DotNotationException dotNotationException) {
+    } catch (DotNotationException dotNotationException) {
       throw new LoggerException(dotNotationException);
     }
-  }
-
-  public void setPattern (String pattern)
-    throws LoggerException {
-
-    try {
-      if (!notationRef.compareAndSet(null, new DotNotation(pattern))) {
-        throw new LoggerRuntimeException("ClassNameTemplate has been previously initialized with a pattern");
-      }
-    }
-    catch (DotNotationException dotNotationException) {
-      throw new LoggerException(dotNotationException);
-    }
-  }
-
-  public int matchLogger (String loggerName) {
-
-    Matcher matcher;
-    Integer[] dotPositions;
-    int matchValue = NO_MATCH;
-
-    if (notationRef.get() == null) {
-      throw new LoggerRuntimeException("ClassNameTemplate was never initialized with a pattern");
-    }
-
-    dotPositions = getDotPositions(loggerName);
-    matcher = notationRef.get().getPattern().matcher(loggerName);
-
-    if (matcher.matches()) {
-      matchValue += 2;
-      for (int count = 1; count <= matcher.groupCount(); count++) {
-        matchValue += assignValueToMatch(dotPositions, matcher.start(count));
-      }
-    }
-
-    return matchValue;
   }
 
   private static int assignValueToMatch (Integer[] dotPositions, int matchStart) {
@@ -152,5 +113,40 @@ public class ClassNameTemplate extends Template {
     dotPositionList.toArray(dotPosiitions);
 
     return dotPosiitions;
+  }
+
+  public void setPattern (String pattern)
+    throws LoggerException {
+
+    try {
+      if (!notationRef.compareAndSet(null, new DotNotation(pattern))) {
+        throw new LoggerRuntimeException("ClassNameTemplate has been previously initialized with a pattern");
+      }
+    } catch (DotNotationException dotNotationException) {
+      throw new LoggerException(dotNotationException);
+    }
+  }
+
+  public int matchLogger (String loggerName) {
+
+    Matcher matcher;
+    Integer[] dotPositions;
+    int matchValue = NO_MATCH;
+
+    if (notationRef.get() == null) {
+      throw new LoggerRuntimeException("ClassNameTemplate was never initialized with a pattern");
+    }
+
+    dotPositions = getDotPositions(loggerName);
+    matcher = notationRef.get().getPattern().matcher(loggerName);
+
+    if (matcher.matches()) {
+      matchValue += 2;
+      for (int count = 1; count <= matcher.groupCount(); count++) {
+        matchValue += assignValueToMatch(dotPositions, matcher.start(count));
+      }
+    }
+
+    return matchValue;
   }
 }

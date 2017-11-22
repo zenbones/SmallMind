@@ -51,16 +51,13 @@ public class MessageTranslator {
       }
 
       return null;
-    }
-    else if ((args == null) || (args.length == 0)) {
+    } else if ((args == null) || (args.length == 0)) {
       return message;
-    }
-    else {
+    } else {
       try {
 
         return String.format(message, args);
-      }
-      catch (IllegalFormatException illegalFormatException) {
+      } catch (IllegalFormatException illegalFormatException) {
 
         StringBuilder errorBuilder = new StringBuilder();
 

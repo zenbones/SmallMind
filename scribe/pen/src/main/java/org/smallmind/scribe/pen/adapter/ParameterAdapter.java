@@ -30,25 +30,20 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.scribe.pen;
+package org.smallmind.scribe.pen.adapter;
 
-import org.smallmind.scribe.pen.adapter.LoggingBlueprintsFactory;
+import java.io.Serializable;
+import org.smallmind.scribe.pen.Parameter;
 
-public class FilterUtility {
+public interface ParameterAdapter {
 
-  public static boolean willBeFiltered (Record record, Level level, Filter... filters) {
+  void put (String key, Serializable value);
 
-    if ((filters != null) && (filters.length > 0)) {
+  void remove (String key);
 
-      Record filterRecord = LoggingBlueprintsFactory.getLoggingBlueprints().filterRecord(record, level);
+  void clear ();
 
-      for (Filter filter : filters) {
-        if (!filter.willLog(filterRecord)) {
-          return true;
-        }
-      }
-    }
+  Serializable get (String key);
 
-    return false;
-  }
+  Parameter[] getParameters ();
 }

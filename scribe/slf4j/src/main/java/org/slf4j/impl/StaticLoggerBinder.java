@@ -48,14 +48,14 @@ public class StaticLoggerBinder implements LoggerFactoryBinder {
     LoggerManager.addLoggingPackagePrefix("org.slf4j.");
   }
 
-  public static StaticLoggerBinder getSingleton () {
-
-    return SINGLETON;
-  }
-
   public StaticLoggerBinder () {
 
     loggerFactory = new ScribeLoggerFactory();
+  }
+
+  public static StaticLoggerBinder getSingleton () {
+
+    return SINGLETON;
   }
 
   public ILoggerFactory getLoggerFactory () {

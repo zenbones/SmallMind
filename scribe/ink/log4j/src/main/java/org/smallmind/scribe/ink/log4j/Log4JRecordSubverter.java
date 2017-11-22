@@ -32,18 +32,15 @@
  */
 package org.smallmind.scribe.ink.log4j;
 
-import java.io.Serializable;
-import java.util.HashMap;
-import java.util.Map;
 import java.util.concurrent.atomic.AtomicReference;
 import org.apache.log4j.Logger;
 import org.apache.log4j.spi.LocationInfo;
 import org.apache.log4j.spi.LoggingEvent;
-import org.smallmind.scribe.pen.Discriminator;
 import org.smallmind.scribe.pen.Level;
 import org.smallmind.scribe.pen.LogicalContext;
 import org.smallmind.scribe.pen.MessageTranslator;
 import org.smallmind.scribe.pen.Parameter;
+import org.smallmind.scribe.pen.ParameterAwareRecord;
 import org.smallmind.scribe.pen.Record;
 import org.smallmind.scribe.pen.SequenceGenerator;
 import org.smallmind.scribe.pen.adapter.RecordWrapper;
@@ -55,20 +52,18 @@ public class Log4JRecordSubverter extends LoggingEvent implements RecordWrapper 
   private Log4JRecord log4jRecord;
   private LogicalContext logicalContext;
   private AtomicReference<LocationInfo> locationInfoReference;
-  private Discriminator discriminator;
   private Level level;
 
-  public Log4JRecordSubverter (Logger logger, Discriminator discriminator, Level level, LogicalContext logicalContext, Throwable throwable, String message, Object... args) {
+  public Log4JRecordSubverter (Logger logger, Level level, LogicalContext logicalContext, Throwable throwable, String message, Object... args) {
 
     super(logger.getClass().getCanonicalName(), logger, System.currentTimeMillis(), Log4JLevelTranslator.getLog4JLevel(level), MessageTranslator.translateMessage(message, args), throwable);
 
-    this.discriminator = discriminator;
     this.level = level;
     this.logicalContext = logicalContext;
 
     log4jRecord = new Log4JRecord(this);
 
-    locationInfoReference = new AtomicReference<LocationInfo>();
+    locationInfoReference = new AtomicReference<>();
   }
 
   public Record getRecord () {
@@ -89,10 +84,9 @@ public class Log4JRecordSubverter extends LoggingEvent implements RecordWrapper 
     return locationInfoReference.get();
   }
 
-  private class Log4JRecord implements Record {
+  private class Log4JRecord extends ParameterAwareRecord {
 
     private LoggingEvent loggingEvent;
-    private HashMap<String, Serializable> parameterMap;
     private long threadId;
     private long sequenceNumber;
 
@@ -100,87 +94,65 @@ public class Log4JRecordSubverter extends LoggingEvent implements RecordWrapper 
 
       this.loggingEvent = loggingEvent;
 
-      parameterMap = new HashMap<String, Serializable>();
-
       threadId = Thread.currentThread().getId();
       sequenceNumber = SequenceGenerator.next();
     }
 
+    @Override
     public Object getNativeLogEntry () {
 
       return loggingEvent;
     }
 
+    @Override
     public String getLoggerName () {
 
       return loggingEvent.getLoggerName();
     }
 
-    public Discriminator getDiscriminator () {
-
-      return discriminator;
-    }
-
+    @Override
     public Level getLevel () {
 
       return level;
     }
 
+    @Override
     public Throwable getThrown () {
 
       return (loggingEvent.getThrowableInformation() != null) ? loggingEvent.getThrowableInformation().getThrowable() : null;
     }
 
+    @Override
     public String getMessage () {
 
       return loggingEvent.getRenderedMessage();
     }
 
-    public void addParameter (String key, Serializable value) {
-
-      parameterMap.put(key, value);
-    }
-
-    public Parameter[] getParameters () {
-
-      if (parameterMap.isEmpty()) {
-
-        return NO_PARAMETERS;
-      }
-      else {
-
-        Parameter[] parameters;
-        int index = 0;
-
-        parameters = new Parameter[parameterMap.size()];
-        for (Map.Entry<String, Serializable> entry : parameterMap.entrySet()) {
-          parameters[index++] = new Parameter(entry.getKey(), entry.getValue());
-        }
-
-        return parameters;
-      }
-    }
-
+    @Override
     public LogicalContext getLogicalContext () {
 
       return logicalContext;
     }
 
+    @Override
     public long getThreadID () {
 
       return threadId;
     }
 
+    @Override
     public String getThreadName () {
 
       return loggingEvent.getThreadName();
     }
 
+    @Override
     public long getSequenceNumber () {
 
       return sequenceNumber;
     }
 
+    @Override
     public long getMillis () {
 
       return loggingEvent.getTimeStamp();

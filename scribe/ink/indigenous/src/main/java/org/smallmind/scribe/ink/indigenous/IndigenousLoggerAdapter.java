@@ -35,13 +35,13 @@ package org.smallmind.scribe.ink.indigenous;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import org.smallmind.scribe.pen.Appender;
 import org.smallmind.scribe.pen.DefaultLogicalContext;
-import org.smallmind.scribe.pen.Discriminator;
 import org.smallmind.scribe.pen.Enhancer;
 import org.smallmind.scribe.pen.Filter;
 import org.smallmind.scribe.pen.Level;
 import org.smallmind.scribe.pen.LogicalContext;
-import org.smallmind.scribe.pen.Record;
 import org.smallmind.scribe.pen.adapter.LoggerAdapter;
+import org.smallmind.scribe.pen.adapter.ParameterAdapter;
+import org.smallmind.scribe.pen.adapter.ScribeParameterAdapter;
 
 public class IndigenousLoggerAdapter implements LoggerAdapter {
 
@@ -56,14 +56,20 @@ public class IndigenousLoggerAdapter implements LoggerAdapter {
 
     this.name = name;
 
-    filterList = new ConcurrentLinkedQueue<Filter>();
-    appenderList = new ConcurrentLinkedQueue<Appender>();
-    enhancerList = new ConcurrentLinkedQueue<Enhancer>();
+    filterList = new ConcurrentLinkedQueue<>();
+    appenderList = new ConcurrentLinkedQueue<>();
+    enhancerList = new ConcurrentLinkedQueue<>();
   }
 
   public String getName () {
 
     return name;
+  }
+
+  @Override
+  public ParameterAdapter getParameterAdapter () {
+
+    return ScribeParameterAdapter.getInstance();
   }
 
   public boolean getAutoFillLogicalContext () {
@@ -116,31 +122,31 @@ public class IndigenousLoggerAdapter implements LoggerAdapter {
     this.level = level;
   }
 
-  public void logMessage (Discriminator discriminator, Level level, Throwable throwable, String message, Object... args) {
+  public void logMessage (Level level, Throwable throwable, String message, Object... args) {
 
-    IndigenousRecord indigenousRecord;
+    IndigenousRecord record;
 
     if ((!level.equals(Level.OFF)) && getLevel().noGreater(level)) {
-      indigenousRecord = new IndigenousRecord(name, discriminator, level, throwable, message, args);
-      if (willLog(indigenousRecord)) {
-        completeLogOperation(indigenousRecord);
+      record = new IndigenousRecord(name, level, throwable, message, args);
+      if (willLog(record)) {
+        completeLogOperation(record);
       }
     }
   }
 
-  public void logMessage (Discriminator discriminator, Level level, Throwable throwable, Object object) {
+  public void logMessage (Level level, Throwable throwable, Object object) {
 
-    IndigenousRecord indigenousRecord;
+    IndigenousRecord record;
 
     if ((!level.equals(Level.OFF)) && getLevel().noGreater(level)) {
-      indigenousRecord = new IndigenousRecord(name, discriminator, level, throwable, (object == null) ? null : object.toString());
-      if (willLog(indigenousRecord)) {
-        completeLogOperation(indigenousRecord);
+      record = new IndigenousRecord(name, level, throwable, (object == null) ? null : object.toString());
+      if (willLog(record)) {
+        completeLogOperation(record);
       }
     }
   }
 
-  private boolean willLog (IndigenousRecord indigenousRecord) {
+  private boolean willLog (IndigenousRecord record) {
 
     LogicalContext logicalContext;
 
@@ -149,11 +155,11 @@ public class IndigenousLoggerAdapter implements LoggerAdapter {
       logicalContext.fillIn();
     }
 
-    indigenousRecord.setLogicalContext(logicalContext);
+    record.setLogicalContext(logicalContext);
 
     if (!filterList.isEmpty()) {
       for (Filter filter : filterList) {
-        if (!filter.willLog(indigenousRecord)) {
+        if (!filter.willLog(record)) {
           return false;
         }
       }
@@ -162,7 +168,7 @@ public class IndigenousLoggerAdapter implements LoggerAdapter {
     return true;
   }
 
-  private void completeLogOperation (Record record) {
+  private void completeLogOperation (IndigenousRecord record) {
 
     for (Enhancer enhancer : enhancerList) {
       enhancer.enhance(record);
@@ -173,5 +179,7 @@ public class IndigenousLoggerAdapter implements LoggerAdapter {
         appender.publish(record);
       }
     }
+
+    record.setParameters(getParameterAdapter().getParameters());
   }
 }

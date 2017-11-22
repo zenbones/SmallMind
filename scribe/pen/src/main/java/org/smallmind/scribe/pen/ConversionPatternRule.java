@@ -37,6 +37,11 @@ import org.smallmind.nutsnbolts.lang.UnknownSwitchCaseException;
 
 public class ConversionPatternRule implements PatternRule {
 
+  private enum Padding {
+
+    LEFT, RIGHT, NONE
+  }
+
   private String header;
   private String footer;
   private String multiLinePrefix;
@@ -345,10 +350,5 @@ public class ConversionPatternRule implements PatternRule {
     }
 
     return field;
-  }
-
-  private enum Padding {
-
-    LEFT, RIGHT, NONE
   }
 }

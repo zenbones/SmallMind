@@ -38,13 +38,15 @@ import java.util.logging.LogRecord;
 import java.util.logging.Logger;
 import org.smallmind.scribe.pen.Appender;
 import org.smallmind.scribe.pen.DefaultLogicalContext;
-import org.smallmind.scribe.pen.Discriminator;
 import org.smallmind.scribe.pen.Enhancer;
 import org.smallmind.scribe.pen.Filter;
 import org.smallmind.scribe.pen.Level;
 import org.smallmind.scribe.pen.LogicalContext;
+import org.smallmind.scribe.pen.ParameterAwareRecord;
 import org.smallmind.scribe.pen.Record;
 import org.smallmind.scribe.pen.adapter.LoggerAdapter;
+import org.smallmind.scribe.pen.adapter.ParameterAdapter;
+import org.smallmind.scribe.pen.adapter.ScribeParameterAdapter;
 
 public class JDKLoggerAdapter implements LoggerAdapter {
 
@@ -58,13 +60,19 @@ public class JDKLoggerAdapter implements LoggerAdapter {
 
     this.logger = logger;
 
-    filterList = new ConcurrentLinkedQueue<Filter>();
-    enhancerList = new ConcurrentLinkedQueue<Enhancer>();
+    filterList = new ConcurrentLinkedQueue<>();
+    enhancerList = new ConcurrentLinkedQueue<>();
   }
 
   public String getName () {
 
     return logger.getName();
+  }
+
+  @Override
+  public ParameterAdapter getParameterAdapter () {
+
+    return ScribeParameterAdapter.getInstance();
   }
 
   public boolean getAutoFillLogicalContext () {
@@ -123,35 +131,37 @@ public class JDKLoggerAdapter implements LoggerAdapter {
     logger.setLevel(JDKLevelTranslator.getLog4JLevel(level));
   }
 
-  public void logMessage (Discriminator discriminator, Level level, Throwable throwable, String message, Object... args) {
+  public void logMessage (Level level, Throwable throwable, String message, Object... args) {
 
     JDKRecordSubverter recordSubverter;
     LogicalContext logicalContext;
 
     if ((!level.equals(Level.OFF)) && getLevel().noGreater(level)) {
-      if ((logicalContext = willLog(discriminator, level)) != null) {
-        recordSubverter = new JDKRecordSubverter(logger.getName(), discriminator, level, logicalContext, throwable, message, args);
+      if ((logicalContext = willLog(level)) != null) {
+        recordSubverter = new JDKRecordSubverter(logger.getName(), level, logicalContext, throwable, message, args);
         enhanceRecord(recordSubverter.getRecord());
+        ((ParameterAwareRecord)recordSubverter.getRecord()).setParameters(getParameterAdapter().getParameters());
         logger.log(recordSubverter);
       }
     }
   }
 
-  public void logMessage (Discriminator discriminator, Level level, Throwable throwable, Object object) {
+  public void logMessage (Level level, Throwable throwable, Object object) {
 
     JDKRecordSubverter recordSubverter;
     LogicalContext logicalContext;
 
     if ((!level.equals(Level.OFF)) && getLevel().noGreater(level)) {
-      if ((logicalContext = willLog(discriminator, level)) != null) {
-        recordSubverter = new JDKRecordSubverter(logger.getName(), discriminator, level, logicalContext, throwable, (object == null) ? null : object.toString());
+      if ((logicalContext = willLog(level)) != null) {
+        recordSubverter = new JDKRecordSubverter(logger.getName(), level, logicalContext, throwable, (object == null) ? null : object.toString());
         enhanceRecord(recordSubverter.getRecord());
+        ((ParameterAwareRecord)recordSubverter.getRecord()).setParameters(getParameterAdapter().getParameters());
         logger.log(recordSubverter);
       }
     }
   }
 
-  private LogicalContext willLog (Discriminator discriminator, Level level) {
+  private LogicalContext willLog (Level level) {
 
     LogicalContext logicalContext;
     Record filterRecord;
@@ -162,7 +172,7 @@ public class JDKLoggerAdapter implements LoggerAdapter {
     }
 
     if (!((logger.getFilter() == null) && filterList.isEmpty())) {
-      filterRecord = new JDKRecordSubverter(logger.getName(), discriminator, level, logicalContext, null, null).getRecord();
+      filterRecord = new JDKRecordSubverter(logger.getName(), level, logicalContext, null, null).getRecord();
 
       if (logger.getFilter() != null) {
         if (!logger.getFilter().isLoggable((LogRecord)filterRecord.getNativeLogEntry())) {

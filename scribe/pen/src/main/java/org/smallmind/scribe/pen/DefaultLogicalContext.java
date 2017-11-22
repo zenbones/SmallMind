@@ -39,6 +39,11 @@ public class DefaultLogicalContext implements LogicalContext {
   private StackTraceElement contextElement;
   private AtomicBoolean filled = new AtomicBoolean(false);
 
+  private static boolean willPrime (String className) {
+
+    return LoggerManager.isLoggingClass(className);
+  }
+
   public boolean isFilled () {
 
     return filled.get();
@@ -98,8 +103,7 @@ public class DefaultLogicalContext implements LogicalContext {
                 contextElement = currentElement;
                 break;
               }
-            }
-            else {
+            } else {
               primed = willPrime(currentElement.getClassName());
             }
           }
@@ -112,10 +116,5 @@ public class DefaultLogicalContext implements LogicalContext {
         }
       }
     }
-  }
-
-  private static boolean willPrime (String className) {
-
-    return LoggerManager.isLoggingClass(className);
   }
 }

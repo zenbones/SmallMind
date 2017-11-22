@@ -40,15 +40,11 @@ public interface Record extends Serializable {
 
   String getLoggerName ();
 
-  Discriminator getDiscriminator ();
-
   Level getLevel ();
 
   Throwable getThrown ();
 
   String getMessage ();
-
-  void addParameter (String key, Serializable value);
 
   Parameter[] getParameters ();
 

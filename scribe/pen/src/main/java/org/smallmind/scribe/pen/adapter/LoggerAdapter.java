@@ -33,7 +33,6 @@
 package org.smallmind.scribe.pen.adapter;
 
 import org.smallmind.scribe.pen.Appender;
-import org.smallmind.scribe.pen.Discriminator;
 import org.smallmind.scribe.pen.Enhancer;
 import org.smallmind.scribe.pen.Filter;
 import org.smallmind.scribe.pen.Level;
@@ -41,6 +40,8 @@ import org.smallmind.scribe.pen.Level;
 public interface LoggerAdapter {
 
   String getName ();
+
+  ParameterAdapter getParameterAdapter ();
 
   boolean getAutoFillLogicalContext ();
 
@@ -62,7 +63,7 @@ public interface LoggerAdapter {
 
   void setLevel (Level level);
 
-  void logMessage (Discriminator discriminator, Level level, Throwable throwable, String message, Object... args);
+  void logMessage (Level level, Throwable throwable, String message, Object... args);
 
-  void logMessage (Discriminator discriminator, Level level, Throwable throwable, Object object);
+  void logMessage (Level level, Throwable throwable, Object object);
 }
