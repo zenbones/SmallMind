@@ -52,12 +52,16 @@ public class HashBag<T> implements Bag<T> {
 
   public HashBag (Collection<? extends T> c) {
 
+    this();
+
     addAll(c);
   }
 
   public HashBag (Bag<? extends T> b) {
 
+    internalMap = new HashMap<>();
     size = b.size();
+
     for (Map.Entry<? extends T, Integer> entry : b.entrySet()) {
       internalMap.put(entry.getKey(), entry.getValue());
     }
