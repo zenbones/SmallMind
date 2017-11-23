@@ -53,7 +53,7 @@ public abstract class SimpleMapXmlAdapter<M extends Map<String, V>, V> extends X
       M map = getEmptyMap();
 
       for (Map.Entry<String, JsonNode> entry : new IterableIterator<>(node.fields())) {
-        map.put(entry.getKey(), JsonCodec.convert(entry.getValue(), getValueClass()));
+        map.put("null".equals(entry.getKey()) ? null : entry.getKey(), JsonCodec.convert(entry.getValue(), getValueClass()));
       }
 
       return map;
@@ -70,7 +70,7 @@ public abstract class SimpleMapXmlAdapter<M extends Map<String, V>, V> extends X
       ObjectNode rootNode = JsonNodeFactory.instance.objectNode();
 
       for (Map.Entry<String, V> entry : map.entrySet()) {
-        rootNode.set(entry.getKey(), JsonCodec.writeAsJsonNode(entry.getValue()));
+        rootNode.set((entry.getKey() == null) ? "null" : entry.getKey(), JsonCodec.writeAsJsonNode(entry.getValue()));
       }
 
       return rootNode;
