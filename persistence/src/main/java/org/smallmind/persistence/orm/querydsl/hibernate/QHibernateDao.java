@@ -36,6 +36,9 @@ import java.io.Serializable;
 import java.util.Collections;
 import java.util.List;
 import com.querydsl.core.types.Ops;
+import com.querydsl.core.types.Order;
+import com.querydsl.core.types.OrderSpecifier;
+import com.querydsl.core.types.Path;
 import com.querydsl.core.types.dsl.EntityPathBase;
 import com.querydsl.core.types.dsl.Expressions;
 import com.querydsl.core.types.dsl.PathBuilder;
@@ -147,7 +150,7 @@ public class QHibernateDao<I extends Serializable & Comparable<I>, D extends Hib
       @Override
       public HibernateQuery<D> completeQuery (HibernateQuery<D> query) {
 
-        return query.from(new EntityPathBase<D>(getManagedClass(), "entity"));
+        return query.from(new EntityPathBase<>(getManagedClass(), "entity"));
       }
     });
   }
@@ -160,7 +163,7 @@ public class QHibernateDao<I extends Serializable & Comparable<I>, D extends Hib
       @Override
       public HibernateQuery<D> completeQuery (HibernateQuery<D> query) {
 
-        return query.from(new EntityPathBase<D>(getManagedClass(), "entity"));
+        return query.from(new EntityPathBase<>(getManagedClass(), "entity"));
       }
     });
   }
@@ -173,7 +176,7 @@ public class QHibernateDao<I extends Serializable & Comparable<I>, D extends Hib
       @Override
       public HibernateQuery<D> completeQuery (HibernateQuery<D> query) {
 
-        return query.from(new EntityPathBase<D>(getManagedClass(), "entity")).limit(fetchSize);
+        return query.from(new EntityPathBase<>(getManagedClass(), "entity")).limit(fetchSize);
       }
     });
   }
@@ -187,8 +190,9 @@ public class QHibernateDao<I extends Serializable & Comparable<I>, D extends Hib
       public HibernateQuery<D> completeQuery (HibernateQuery<D> query) {
 
         PathBuilder<D> entityPath = new PathBuilder<>(getManagedClass(), "entity");
+        Path<D> idPath = Expressions.path(getManagedClass(), entityPath, "id");
 
-        return query.from(entityPath).where(Expressions.predicate(Ops.GT, Expressions.path(String.class, "id"), Expressions.constant(greaterThan))).limit(fetchSize);
+        return query.from(entityPath).where(Expressions.predicate(Ops.GT, idPath, Expressions.constant(greaterThan))).orderBy(new OrderSpecifier<D>(Order.ASC, idPath)).limit(fetchSize);
       }
     });
   }

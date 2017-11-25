@@ -45,7 +45,7 @@ import javax.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
 @XmlAccessorType(XmlAccessType.PROPERTY)
 public class WhereField implements WhereCriterion {
 
-  private WhereOperand operand;
+  private WhereOperand<?, ?> operand;
   private WhereOperator operator;
   private String entity;
   private String name;
@@ -109,12 +109,12 @@ public class WhereField implements WhereCriterion {
   @XmlElementRefs({@XmlElementRef(type = ArrayWhereOperand.class), @XmlElementRef(type = BooleanWhereOperand.class), @XmlElementRef(type = ByteWhereOperand.class), @XmlElementRef(type = CharacterWhereOperand.class),
                     @XmlElementRef(type = DateWhereOperand.class), @XmlElementRef(type = DoubleWhereOperand.class), @XmlElementRef(type = EnumWhereOperand.class), @XmlElementRef(type = FloatWhereOperand.class),
                     @XmlElementRef(type = IntegerWhereOperand.class), @XmlElementRef(type = LongWhereOperand.class), @XmlElementRef(type = ShortWhereOperand.class), @XmlElementRef(type = StringWhereOperand.class)})
-  public WhereOperand getOperand () {
+  public WhereOperand<?, ?> getOperand () {
 
     return operand;
   }
 
-  public void setOperand (WhereOperand operand) {
+  public void setOperand (WhereOperand<?, ?> operand) {
 
     this.operand = operand;
   }
