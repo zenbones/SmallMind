@@ -56,31 +56,37 @@ import org.springframework.beans.factory.InitializingBean;
 public class DynamicPooledDataSourceInitializingBean implements InitializingBean, DisposableBean, DataSourceLocator {
 
   /*
-  jdbc.url.<pool name>.<context>.<#> (required, for at least connection '0')
-  jdbc.user.<pool name>.<context>.<#> (required, for at least connection '0')
-  jdbc.password.<pool name>.<context>.<#> (required, for at least connection '0')
-  jdbc.max_statements.<pool name> (optional - defaults to '0')
-  jdbc.validation_query.<pool name> (optional - defaults to 'select 1')
-  jdbc.pool.test_on_create.<pool name> (optional - defaults to 'false')
-  jdbc.pool.test_on_acquire.<pool name> (optional - defaults to 'false')
-  jdbc.pool.initial_size.<pool name> (optional - defaults to '0')
-  jdbc.pool.min_size.<pool name> (optional - defaults to '0')
-  jdbc.pool.max_size.<pool name> (optional - defaults to '10')
-  jdbc.pool.acquire_wait_time_millis.<pool name> (optional - defaults to '0')
-  jdbc.pool.connection_timeout_millis.<pool name> (optional - defaults to '0')
-  jdbc.pool.max_idle_seconds.<pool name> (optional - defaults to '0')
-  jdbc.pool.max_lease_time_seconds.<pool name> (optional - defaults to '0')
-  jdbc.mapping.<data source name> (required for each data source binding)
+  <prefix>.jdbc.url.<pool name>.<context>.<#> (required, for at least connection '0')
+  <prefix>.jdbc.user.<pool name>.<context>.<#> (required, for at least connection '0')
+  <prefix>.jdbc.password.<pool name>.<context>.<#> (required, for at least connection '0')
+  <prefix>.jdbc.max_statements.<pool name> (optional - defaults to '0')
+  <prefix>.jdbc.validation_query.<pool name> (optional - defaults to 'select 1')
+  <prefix>.jdbc.pool.test_on_create.<pool name> (optional - defaults to 'false')
+  <prefix>.jdbc.pool.test_on_acquire.<pool name> (optional - defaults to 'false')
+  <prefix>.jdbc.pool.initial_size.<pool name> (optional - defaults to '0')
+  <prefix>.jdbc.pool.min_size.<pool name> (optional - defaults to '0')
+  <prefix>.jdbc.pool.max_size.<pool name> (optional - defaults to '10')
+  <prefix>.jdbc.pool.acquire_wait_time_millis.<pool name> (optional - defaults to '0')
+  <prefix>.jdbc.pool.connection_timeout_millis.<pool name> (optional - defaults to '0')
+  <prefix>.jdbc.pool.max_idle_seconds.<pool name> (optional - defaults to '0')
+  <prefix>.jdbc.pool.max_lease_time_seconds.<pool name> (optional - defaults to '0')
+  <prefix>.jdbc.mapping.<data source name> (required for each data source binding)
   */
 
   private final HashMap<String, AbstractPooledDataSource> dataSourceMap = new HashMap<String, AbstractPooledDataSource>();
   private final HashMap<String, String> poolNameMap = new HashMap<String, String>();
 
   private Map<String, DataSourceFactory<?, ?>> factoryMap;
+  private String prefix;
 
   public void setFactoryMap (Map<String, DataSourceFactory<?, ?>> factoryMap) {
 
     this.factoryMap = factoryMap;
+  }
+
+  public void setPrefix (String prefix) {
+
+    this.prefix = (prefix == null) ? null : prefix.trim();
   }
 
   public CommonDataSource getDataSource (String dataSourceKey) {
@@ -104,6 +110,8 @@ public class DynamicPooledDataSourceInitializingBean implements InitializingBean
 
     SpringPropertyAccessor springPropertyAccessor = SpringPropertyAccessorManager.getSpringPropertyAccessor();
 
+    prefix = ((prefix == null) || prefix.isEmpty()) ? "" : prefix + ".";
+
     for (String poolName : factoryMap.keySet()) {
 
       dataSourceMap.put(poolName, parsePoolDefinition(springPropertyAccessor, poolName));
@@ -113,9 +121,10 @@ public class DynamicPooledDataSourceInitializingBean implements InitializingBean
 
       String dataSourceKey;
       String poolName;
+      String mappingKey = prefix + "jdbc.mapping.";
 
-      if (key.startsWith("jdbc.mapping.") && (!(dataSourceKey = key.substring("jdbc.mapping.".length())).contains("."))) {
-        poolNameMap.put(dataSourceKey, poolName = springPropertyAccessor.asString("jdbc.mapping." + dataSourceKey));
+      if (key.startsWith(mappingKey) && (!(dataSourceKey = key.substring(mappingKey.length())).contains("."))) {
+        poolNameMap.put(dataSourceKey, poolName = springPropertyAccessor.asString(mappingKey + dataSourceKey));
         if (!dataSourceMap.containsKey(poolName)) {
           throw new RuntimeBeansException("No connection pool(%s) definition exists for data source key(%s)", poolName, dataSourceKey);
         }
@@ -153,9 +162,9 @@ public class DynamicPooledDataSourceInitializingBean implements InitializingBean
     Option<Integer> maxIdleSecondsOption;
     Option<Integer> maxLeaseTimeSecondsOption;
     String validationQuery;
-    String urlPrefix = "jdbc.url." + poolName + ".";
-    String userPrefix = "jdbc.user." + poolName + ".";
-    String passwordPrefix = "jdbc.password." + poolName + ".";
+    String urlPrefix = prefix + "jdbc.url." + poolName + ".";
+    String userPrefix = prefix + "jdbc.user." + poolName + ".";
+    String passwordPrefix = prefix + "jdbc.password." + poolName + ".";
 
     for (String key : springPropertyAccessor.getKeySet()) {
       if (key.startsWith(urlPrefix)) {
@@ -190,16 +199,14 @@ public class DynamicPooledDataSourceInitializingBean implements InitializingBean
         if ((connection = connectionMap.remove(index++)) == null) {
           if (contextEntry.getKey() == null) {
             throw new RuntimeBeansException("Database connection pool(%s) is missing a connection definition at index(%d)", poolName, index - 1);
-          }
-          else {
+          } else {
             throw new RuntimeBeansException("Database connection pool(%s) at context(%s) is missing a connection definition at index(%d)", poolName, contextEntry.getKey(), index - 1);
           }
         }
         if (!connection.isComplete()) {
           if (contextEntry.getKey() == null) {
             throw new RuntimeBeansException("Database connection pool(%s) has an incomplete connection definition at index(%d)", poolName, index - 1);
-          }
-          else {
+          } else {
             throw new RuntimeBeansException("Database connection pool(%s) at context(%s) has an incomplete connection definition at index(%d)", poolName, contextEntry.getKey(), index - 1);
           }
         }
@@ -212,42 +219,41 @@ public class DynamicPooledDataSourceInitializingBean implements InitializingBean
       postContextMap.put(contextEntry.getKey(), connections);
     }
 
-    maxStatementsOption = springPropertyAccessor.asInt("jdbc.max_statements." + poolName);
-    validationQuery = springPropertyAccessor.asString("jdbc.validation_query." + poolName);
+    maxStatementsOption = springPropertyAccessor.asInt(prefix + "jdbc.max_statements." + poolName);
+    validationQuery = springPropertyAccessor.asString(prefix + "jdbc.validation_query." + poolName);
 
-    if (!(testOnCreateOption = springPropertyAccessor.asBoolean("jdbc.pool.test_on_create." + poolName)).isNone()) {
+    if (!(testOnCreateOption = springPropertyAccessor.asBoolean(prefix + "jdbc.pool.test_on_create." + poolName)).isNone()) {
       complexPoolConfig.setTestOnCreate(testOnCreateOption.get());
     }
-    if (!(testOnAcquireOption = springPropertyAccessor.asBoolean("jdbc.pool.test_on_acquire." + poolName)).isNone()) {
+    if (!(testOnAcquireOption = springPropertyAccessor.asBoolean(prefix + "jdbc.pool.test_on_acquire." + poolName)).isNone()) {
       complexPoolConfig.setTestOnAcquire(testOnAcquireOption.get());
     }
-    if (!(initialSizeOption = springPropertyAccessor.asInt("jdbc.pool.initial_size." + poolName)).isNone()) {
+    if (!(initialSizeOption = springPropertyAccessor.asInt(prefix + "jdbc.pool.initial_size." + poolName)).isNone()) {
       complexPoolConfig.setInitialPoolSize(initialSizeOption.get());
     }
-    if (!(minSizeOption = springPropertyAccessor.asInt("jdbc.pool.min_size." + poolName)).isNone()) {
+    if (!(minSizeOption = springPropertyAccessor.asInt(prefix + "jdbc.pool.min_size." + poolName)).isNone()) {
       complexPoolConfig.setMinPoolSize(minSizeOption.get());
     }
-    if (!(maxSizeOption = springPropertyAccessor.asInt("jdbc.pool.max_size." + poolName)).isNone()) {
+    if (!(maxSizeOption = springPropertyAccessor.asInt(prefix + "jdbc.pool.max_size." + poolName)).isNone()) {
       complexPoolConfig.setMaxPoolSize(maxSizeOption.get());
     }
-    if (!(acquireWaitTimeMillisOption = springPropertyAccessor.asLong("jdbc.pool.acquire_wait_time_millis." + poolName)).isNone()) {
+    if (!(acquireWaitTimeMillisOption = springPropertyAccessor.asLong(prefix + "jdbc.pool.acquire_wait_time_millis." + poolName)).isNone()) {
       complexPoolConfig.setAcquireWaitTimeMillis(acquireWaitTimeMillisOption.get());
     }
-    if (!(connectionTimeoutMillisOption = springPropertyAccessor.asLong("jdbc.pool.connection_timeout_millis." + poolName)).isNone()) {
+    if (!(connectionTimeoutMillisOption = springPropertyAccessor.asLong(prefix + "jdbc.pool.connection_timeout_millis." + poolName)).isNone()) {
       complexPoolConfig.setCreationTimeoutMillis(connectionTimeoutMillisOption.get());
     }
-    if (!(maxIdleSecondsOption = springPropertyAccessor.asInt("jdbc.pool.max_idle_seconds." + poolName)).isNone()) {
+    if (!(maxIdleSecondsOption = springPropertyAccessor.asInt(prefix + "jdbc.pool.max_idle_seconds." + poolName)).isNone()) {
       complexPoolConfig.setMaxIdleTimeSeconds(maxIdleSecondsOption.get());
     }
-    if (!(maxLeaseTimeSecondsOption = springPropertyAccessor.asInt("jdbc.pool.max_lease_time_seconds." + poolName)).isNone()) {
+    if (!(maxLeaseTimeSecondsOption = springPropertyAccessor.asInt(prefix + "jdbc.pool.max_lease_time_seconds." + poolName)).isNone()) {
       complexPoolConfig.setMaxLeaseTimeSeconds(maxLeaseTimeSecondsOption.get());
     }
 
     if (postContextMap.size() == 1) {
 
       return PooledDataSourceFactory.createPooledDataSource(poolName, factoryMap.get(poolName), validationQuery, maxStatementsOption.isNone() ? 0 : maxStatementsOption.get(), complexPoolConfig, postContextMap.get(null));
-    }
-    else {
+    } else {
 
       ComponentPool<? extends PooledConnection>[] componentPools = new ComponentPool[postContextMap.size()];
       DefaultContextualPoolNameTranslator poolNameTranslator = new DefaultContextualPoolNameTranslator(poolName, ':');
