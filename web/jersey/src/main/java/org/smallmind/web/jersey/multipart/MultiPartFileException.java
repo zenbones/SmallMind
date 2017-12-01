@@ -30,17 +30,14 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.web.jersey.util;
+package org.smallmind.web.jersey.multipart;
 
-import org.glassfish.jersey.media.multipart.MultiPartFeature;
-import org.glassfish.jersey.server.ResourceConfig;
-import org.smallmind.web.jersey.spring.ResourceConfigExtension;
+import org.smallmind.nutsnbolts.lang.FormattedRuntimeException;
 
-public class MultipartFeatureResourceConfigExtension extends ResourceConfigExtension {
+public class MultiPartFileException extends FormattedRuntimeException {
 
-  @Override
-  public void apply (ResourceConfig resourceConfig) {
+  public MultiPartFileException (Throwable throwable) {
 
-    resourceConfig.packages("org.glassfish.jersey.examples.multipart").register(MultiPartFeature.class);
+    super(throwable);
   }
 }
