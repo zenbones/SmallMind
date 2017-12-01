@@ -30,11 +30,12 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.nutsnbolts.util;
+package org.smallmind.nutsnbolts.property;
 
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Map;
+import org.smallmind.nutsnbolts.util.SystemPropertyMode;
 
 public class PropertyExpander {
 

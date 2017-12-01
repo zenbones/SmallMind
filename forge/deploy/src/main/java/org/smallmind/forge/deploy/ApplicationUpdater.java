@@ -32,7 +32,6 @@
  */
 package org.smallmind.forge.deploy;
 
-import java.io.File;
 import java.io.IOException;
 import java.nio.file.DirectoryStream;
 import java.nio.file.FileSystems;
@@ -44,21 +43,21 @@ import java.nio.file.SimpleFileVisitor;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.nio.file.attribute.UserPrincipal;
 import org.smallmind.nutsnbolts.io.FileUtility;
+import org.smallmind.nutsnbolts.zip.ZipExploder;
 
 public class ApplicationUpdater {
 
-  public static void update (OperatingSystem operatingSystem, String appUser, File installDir, boolean progressBar, String nexusHost, String nexusUser, String nexusPassword, Repository repository, String groupId, String artifactId, String version, String classifier, String extension, String[] envVars, Decorator... decorators)
+  public static void update (OperatingSystem operatingSystem, String appUser, Path installPath, boolean progressBar, String nexusHost, String nexusUser, String nexusPassword, Repository repository, String groupId, String artifactId, String version, String classifier, String extension, String[] envVars, Decorator... decorators)
     throws Exception {
 
     final UserPrincipal owner = FileSystems.getDefault().getUserPrincipalLookupService().lookupPrincipalByName(appUser);
-    Path installPath = installDir.toPath();
     Path applicationRootPath;
     Path applicationBinPath;
     Path applicationCntrlPath;
-    File zipFile;
+    Path zipPath;
 
     System.out.println("Downloading artifact(" + artifactId + ") from nexus...");
-    NexusDownloader.download(zipFile = installPath.resolve(artifactId + ".zip").toFile(), nexusHost, nexusUser, nexusPassword, repository, groupId, artifactId, version, classifier, extension, progressBar);
+    NexusDownloader.download(zipPath = installPath.resolve(artifactId + ".zip"), nexusHost, nexusUser, nexusPassword, repository, groupId, artifactId, version, classifier, extension, progressBar);
 
     applicationRootPath = installPath.resolve(artifactId);
     applicationBinPath = applicationRootPath.resolve("bin");
@@ -77,14 +76,14 @@ public class ApplicationUpdater {
     }
 
     System.out.println("Exploding new service installation...");
-    ZipExploder.explode(zipFile, installDir, true);
-    Files.deleteIfExists(zipFile.toPath());
+    ZipExploder.explode(zipPath, installPath, (name) -> System.out.println("Expanding " + name + "..."));
+    Files.deleteIfExists(zipPath);
 
     Files.createDirectories(applicationRootPath.resolve("log"));
 
     for (Decorator decorator : decorators) {
       System.out.println("Applying decorator(" + decorator.getClass().getSimpleName() + ")...");
-      decorator.decorate(operatingSystem, appUser, installDir, nexusHost, nexusUser, nexusPassword, repository, groupId, artifactId, version, classifier, extension, envVars);
+      decorator.decorate(operatingSystem, appUser, installPath, nexusHost, nexusUser, nexusPassword, repository, groupId, artifactId, version, classifier, extension, envVars);
     }
 
     System.out.println("Setting user and permissions...");

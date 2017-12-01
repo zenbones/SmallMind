@@ -35,7 +35,7 @@ package org.smallmind.spark.tanukisoft.integration;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import org.smallmind.nutsnbolts.lang.PerApplicationContext;
-import org.smallmind.nutsnbolts.util.PropertyExpander;
+import org.smallmind.nutsnbolts.property.PropertyExpander;
 import org.smallmind.nutsnbolts.util.SystemPropertyMode;
 import org.tanukisoftware.wrapper.WrapperListener;
 import org.tanukisoftware.wrapper.WrapperManager;

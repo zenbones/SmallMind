@@ -32,11 +32,12 @@
  */
 package org.smallmind.forge.deploy;
 
-import java.io.File;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
 import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.StandardOpenOption;
 import org.apache.http.HttpHost;
 import org.apache.http.auth.AuthScope;
 import org.apache.http.auth.UsernamePasswordCredentials;
@@ -56,7 +57,7 @@ import org.apache.http.ssl.SSLContexts;
 
 public class NexusDownloader {
 
-  public static void download (File file, String nexusHost, String nexusUser, String nexusPassword, Repository repository, String groupId, String artifactId, String version, String classifier, String extension, boolean progressBar)
+  public static void download (Path filePath, String nexusHost, String nexusUser, String nexusPassword, Repository repository, String groupId, String artifactId, String version, String classifier, String extension, boolean progressBar)
     throws IOException {
 
     SSLConnectionSocketFactory sslConnectionSocketFactory = new SSLConnectionSocketFactory(SSLContexts.createSystemDefault());
@@ -81,12 +82,12 @@ public class NexusDownloader {
         throw new IOException("Could not locate requested artifact");
       }
 
-      Files.createDirectories(file.toPath().getParent());
+      Files.createDirectories(filePath.getParent());
 
       long bytesAvailable = response.getEntity().getContentLength();
       byte[] buffer = new byte[2048];
 
-      try (InputStream inputStream = response.getEntity().getContent(); FileOutputStream fileOutputStream = new FileOutputStream(file)) {
+      try (InputStream inputStream = response.getEntity().getContent(); OutputStream fileOutputStream = Files.newOutputStream(filePath, StandardOpenOption.WRITE, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING)) {
 
         TextProgressBar downloadProgressBar;
         long bytesWritten = 0;

@@ -32,10 +32,10 @@
  */
 package org.smallmind.forge.deploy;
 
-import java.io.File;
+import java.nio.file.Path;
 
 public interface Decorator {
 
-  public abstract void decorate (OperatingSystem operatingSystem, String appUser, File installDir, String nexusHost, String nexusUser, String nexusPassword, Repository repository, String groupId, String artifactId, String version, String classifier, String extension, String... envVars)
+  public abstract void decorate (OperatingSystem operatingSystem, String appUser, Path installPath, String nexusHost, String nexusUser, String nexusPassword, Repository repository, String groupId, String artifactId, String version, String classifier, String extension, String... envVars)
     throws Exception;
 }

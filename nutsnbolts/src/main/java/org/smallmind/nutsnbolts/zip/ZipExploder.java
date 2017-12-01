@@ -30,44 +30,41 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.forge.deploy;
+package org.smallmind.nutsnbolts.zip;
 
-import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
+import java.util.function.Consumer;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
 public class ZipExploder {
 
-  public static void explode (File zipFile, File outputDir)
+  public static void explode (Path zipFile, Path outputDir)
     throws IOException {
 
-    explode(zipFile, outputDir, false);
+    explode(zipFile, outputDir, null);
   }
 
-  public static void explode (File zipFile, File outputDir, boolean verbose)
+  public static void explode (Path zipFile, Path outputDir, Consumer<String> loggingConsumer)
     throws IOException {
 
-    Path outputPath;
+    Files.createDirectories(outputDir);
 
-    Files.createDirectories(outputPath = outputDir.toPath());
-
-    try (ZipInputStream zipInputStream = new ZipInputStream(new FileInputStream(zipFile))) {
+    try (ZipInputStream zipInputStream = new ZipInputStream(Files.newInputStream(zipFile, StandardOpenOption.READ))) {
 
       ZipEntry zipEntry;
       byte[] buffer = new byte[2048];
 
       while ((zipEntry = zipInputStream.getNextEntry()) != null) {
-        if (verbose) {
-          System.out.println("Expanding " + zipEntry.getName() + "...");
+        if (loggingConsumer != null) {
+          loggingConsumer.accept(zipEntry.getName());
         }
 
-        Path entryPath = outputPath.resolve(zipEntry.getName());
+        Path entryPath = outputDir.resolve(zipEntry.getName());
 
         Files.createDirectories(entryPath.getParent());
         try (OutputStream fileOutputStream = Files.newOutputStream(entryPath, StandardOpenOption.WRITE, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING)) {

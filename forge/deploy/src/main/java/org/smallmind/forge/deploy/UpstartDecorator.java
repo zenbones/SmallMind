@@ -32,11 +32,11 @@
  */
 package org.smallmind.forge.deploy;
 
-import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
 import java.util.HashMap;
 import freemarker.template.Configuration;
@@ -48,23 +48,6 @@ public class UpstartDecorator implements Decorator {
 
   private static final Template UPSTART_TEMPLATE;
 
-  public void decorate (OperatingSystem operatingSystem, String appUser, File installDir, String nexusHost, String nexusUser, String nexusPassword, Repository repository, String groupId, String artifactId, String version, String classifier, String extension, String... envVars)
-    throws IOException, TemplateException {
-
-    if (operatingSystem.equals(OperatingSystem.LINUX)) {
-
-      HashMap<String, Object> interpolationMap = new HashMap<>();
-
-      interpolationMap.put("artifactId", artifactId);
-      interpolationMap.put("applicationName", artifactId.toUpperCase());
-      interpolationMap.put("installDir", installDir.getAbsolutePath());
-      interpolationMap.put("batchExtension", operatingSystem.getBatchExtension());
-      interpolationMap.put("envVars", envVars);
-
-      UPSTART_TEMPLATE.process(interpolationMap, Files.newBufferedWriter(installDir.toPath().resolve(artifactId).resolve("bin").resolve(artifactId + ".install"), Charset.forName("UTF-8"), StandardOpenOption.WRITE, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING));
-    }
-  }
-
   static {
 
     Configuration freemarkerConf = new Configuration();
@@ -75,6 +58,23 @@ public class UpstartDecorator implements Decorator {
       UPSTART_TEMPLATE = new Template("upstart template", new InputStreamReader(UpstartDecorator.class.getClassLoader().getResourceAsStream("org/smallmind/forge/deploy/upstart-install.freemarker.in")), freemarkerConf);
     } catch (IOException ioException) {
       throw new StaticInitializationError(ioException);
+    }
+  }
+
+  public void decorate (OperatingSystem operatingSystem, String appUser, Path installPath, String nexusHost, String nexusUser, String nexusPassword, Repository repository, String groupId, String artifactId, String version, String classifier, String extension, String... envVars)
+    throws IOException, TemplateException {
+
+    if (operatingSystem.equals(OperatingSystem.LINUX)) {
+
+      HashMap<String, Object> interpolationMap = new HashMap<>();
+
+      interpolationMap.put("artifactId", artifactId);
+      interpolationMap.put("applicationName", artifactId.toUpperCase());
+      interpolationMap.put("installDir", installPath.toAbsolutePath());
+      interpolationMap.put("batchExtension", operatingSystem.getBatchExtension());
+      interpolationMap.put("envVars", envVars);
+
+      UPSTART_TEMPLATE.process(interpolationMap, Files.newBufferedWriter(installPath.resolve(artifactId).resolve("bin").resolve(artifactId + ".install"), Charset.forName("UTF-8"), StandardOpenOption.WRITE, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING));
     }
   }
 }

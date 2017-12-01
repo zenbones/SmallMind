@@ -30,34 +30,29 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.nutsnbolts.util;
+package org.smallmind.nutsnbolts.property;
 
-import java.time.Instant;
-import java.time.ZonedDateTime;
+import org.smallmind.nutsnbolts.lang.FormattedException;
 
-public class TimeArithmetic {
+public class PropertyExpanderException extends FormattedException {
 
-  private ZonedDateTime date;
-  private TimeOperation operation;
+  public PropertyExpanderException () {
 
-  public TimeArithmetic (ZonedDateTime date, TimeOperation operation) {
-
-    this.date = date;
-    this.operation = operation;
+    super();
   }
 
-  public ZonedDateTime getDate () {
+  public PropertyExpanderException (String message, Object... args) {
 
-    return date;
+    super(message, args);
   }
 
-  public TimeOperation getOperation () {
+  public PropertyExpanderException (Throwable throwable, String message, Object... args) {
 
-    return operation;
+    super(throwable, message, args);
   }
 
-  public boolean accept (Instant instant) {
+  public PropertyExpanderException (Throwable throwable) {
 
-    return operation.accept(date, instant);
+    super(throwable);
   }
 }

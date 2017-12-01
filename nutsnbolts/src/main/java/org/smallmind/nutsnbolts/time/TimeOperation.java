@@ -30,7 +30,7 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.nutsnbolts.util;
+package org.smallmind.nutsnbolts.time;
 
 import java.time.Instant;
 import java.time.ZonedDateTime;

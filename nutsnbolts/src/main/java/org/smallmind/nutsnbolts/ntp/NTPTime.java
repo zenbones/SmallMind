@@ -34,13 +34,11 @@ package org.smallmind.nutsnbolts.ntp;
 
 import java.io.IOException;
 import java.net.InetAddress;
-import java.security.SecureRandom;
+import java.util.concurrent.ThreadLocalRandom;
 import org.apache.commons.net.ntp.NTPUDPClient;
 import org.apache.commons.net.ntp.TimeInfo;
 
 public final class NTPTime {
-
-  private static final SecureRandom RANDOM = new SecureRandom();
 
   private final String[] hostNames;
 
@@ -65,12 +63,11 @@ public final class NTPTime {
 
       TimeInfo timeInfo;
 
-      timeInfo = client.getTime(InetAddress.getByName(hostNames[RANDOM.nextInt(hostNames.length)]));
+      timeInfo = client.getTime(InetAddress.getByName(hostNames[ThreadLocalRandom.current().nextInt(hostNames.length)]));
       timeInfo.computeDetails();
 
       return timeInfo.getOffset();
-    }
-    finally {
+    } finally {
       client.close();
     }
   }

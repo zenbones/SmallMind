@@ -30,35 +30,34 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.nutsnbolts.naming;
+package org.smallmind.nutsnbolts.time;
 
-import javax.naming.NameNotFoundException;
-import javax.naming.NamingException;
-import javax.naming.directory.DirContext;
+import java.time.Instant;
+import java.time.ZonedDateTime;
 
-public class ContextUtility {
+public class TimeArithmetic {
 
-  public static void ensureContext (DirContext dirContext, String namingPath)
-    throws NamingException {
+  private ZonedDateTime date;
+  private TimeOperation operation;
 
-    StringBuilder pathSoFar;
-    String[] pathArray;
-    int count;
+  public TimeArithmetic (ZonedDateTime date, TimeOperation operation) {
 
-    pathArray = namingPath.split("/", -1);
-    pathSoFar = new StringBuilder();
-    for (count = 0; count < pathArray.length; count++) {
-      if (pathSoFar.length() > 0) {
-        pathSoFar.append('/');
-      }
-      pathSoFar.append(pathArray[count]);
-      try {
-        dirContext.lookup(pathSoFar.toString());
-      }
-      catch (NameNotFoundException n) {
-        dirContext.createSubcontext(pathSoFar.toString());
-      }
-    }
+    this.date = date;
+    this.operation = operation;
   }
 
+  public ZonedDateTime getDate () {
+
+    return date;
+  }
+
+  public TimeOperation getOperation () {
+
+    return operation;
+  }
+
+  public boolean accept (Instant instant) {
+
+    return operation.accept(date, instant);
+  }
 }

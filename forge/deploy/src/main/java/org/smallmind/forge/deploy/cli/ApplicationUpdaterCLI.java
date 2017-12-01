@@ -32,7 +32,8 @@
  */
 package org.smallmind.forge.deploy.cli;
 
-import java.io.File;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import org.smallmind.forge.deploy.ApplicationUpdater;
 import org.smallmind.forge.deploy.Decorator;
 import org.smallmind.forge.deploy.OperatingSystem;
@@ -56,7 +57,7 @@ public class ApplicationUpdaterCLI {
       optionSet = CommandLineParser.parseCommands(template, args);
 
       Decorator[] decorators = null;
-      File installDir = new File(optionSet.getArgument("install-dir", 'i'));
+      Path installPath = Paths.get(optionSet.getArgument("install-dir", 'i'));
       OperatingSystem operatingSystem = optionSet.containsOption("os", 'o') ? OperatingSystem.fromCode(optionSet.getArgument("os", 'o')) : OperatingSystem.LINUX;
       Repository repository = optionSet.containsOption("repository", 'r') ? Repository.fromCode(optionSet.getArgument("repository", 'r')) : Repository.RELEASES;
       String[] decoratorClassNames = optionSet.getArguments("decorators", 'd');
@@ -82,7 +83,7 @@ public class ApplicationUpdaterCLI {
         }
       }
 
-      ApplicationUpdater.update(operatingSystem, appUser, installDir, progressBar, nexusHost, nexusUser, nexusPassword, repository, groupId, artifactId, version, classifier, extension, envVars, decorators);
+      ApplicationUpdater.update(operatingSystem, appUser, installPath, progressBar, nexusHost, nexusUser, nexusPassword, repository, groupId, artifactId, version, classifier, extension, envVars, decorators);
     } catch (CommandLineException commandLineException) {
       System.out.println(commandLineException.getMessage());
       System.out.println(template);
