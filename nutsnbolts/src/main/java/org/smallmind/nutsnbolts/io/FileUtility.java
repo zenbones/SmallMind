@@ -1,28 +1,28 @@
 /*
  * Copyright (c) 2007, 2008, 2009, 2010, 2011, 2012, 2013, 2014, 2015, 2016, 2017 David Berkman
- * 
+ *
  * This file is part of the SmallMind Code Project.
- * 
+ *
  * The SmallMind Code Project is free software, you can redistribute
  * it and/or modify it under either, at your discretion...
- * 
+ *
  * 1) The terms of GNU Affero General Public License as published by the
  * Free Software Foundation, either version 3 of the License, or (at
  * your option) any later version.
- * 
+ *
  * ...or...
- * 
+ *
  * 2) The terms of the Apache License, Version 2.0.
- * 
+ *
  * The SmallMind Code Project is distributed in the hope that it will
  * be useful, but WITHOUT ANY WARRANTY; without even the implied warranty
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License or Apache License for more details.
- * 
+ *
  * You should have received a copy of the GNU Affero General Public License
  * and the Apache License along with the SmallMind Code Project. If not, see
  * <http://www.gnu.org/licenses/> or <http://www.apache.org/licenses/LICENSE-2.0>.
- * 
+ *
  * Additional permission under the GNU Affero GPL version 3 section 7
  * ------------------------------------------------------------------
  * If you modify this Program, or any covered work, by linking or
@@ -61,20 +61,19 @@ public class FileUtility {
     copyTree(source, destination, null, fileManipulations);
   }
 
-  public static void copyTree (final Path source, final Path destination, final FileFilter fileFilter, final FileManipulation... fileManipulations)
+  public static void copyTree (Path source, Path destination, FileFilter fileFilter, FileManipulation... fileManipulations)
     throws IOException {
 
     if (Files.exists(source, LinkOption.NOFOLLOW_LINKS)) {
       if (!Files.isDirectory(source, LinkOption.NOFOLLOW_LINKS)) {
-        if (!Files.exists(destination)) {
+        if ((!Files.exists(destination)) || (!Files.isDirectory(destination))) {
           if (destination.getParent() != null) {
             Files.createDirectories(destination.getParent());
           }
-          Files.copy(source, destination, StandardCopyOption.COPY_ATTRIBUTES);
+          copyFile(source, destination, source, fileFilter, fileManipulations);
         } else if (Files.isDirectory(destination)) {
-          Files.copy(source, destination.resolve(source.getFileName()), StandardCopyOption.REPLACE_EXISTING, StandardCopyOption.COPY_ATTRIBUTES);
-        } else {
-          Files.copy(source, destination, StandardCopyOption.REPLACE_EXISTING, StandardCopyOption.COPY_ATTRIBUTES);
+          Files.createDirectories(destination);
+          copyFile(source, destination, source, fileFilter, fileManipulations);
         }
       } else {
         Files.createDirectories(destination);
@@ -84,17 +83,7 @@ public class FileUtility {
           public FileVisitResult visitFile (Path file, BasicFileAttributes attrs)
             throws IOException {
 
-            Path destinationPath;
-
-            if ((fileFilter == null) || fileFilter.accept(file.toFile())) {
-              Files.copy(file, (destinationPath = destination.resolve(source.relativize(file))), StandardCopyOption.REPLACE_EXISTING, StandardCopyOption.COPY_ATTRIBUTES);
-
-              if (fileManipulations != null) {
-                for (FileManipulation fileManipulation : fileManipulations) {
-                  fileManipulation.manipulateFile(destinationPath);
-                }
-              }
-            }
+            copyFile(source, destination, file, fileFilter, fileManipulations);
 
             return FileVisitResult.CONTINUE;
           }
@@ -102,13 +91,13 @@ public class FileUtility {
           @Override
           public FileVisitResult preVisitDirectory (Path dir, BasicFileAttributes attrs) throws IOException {
 
-            Path destinationPath;
+            Path target;
 
-            Files.createDirectories(destinationPath = destination.resolve(source.relativize(dir)));
+            Files.createDirectories(target = destination.resolve(source.relativize(dir)));
 
             if (fileManipulations != null) {
               for (FileManipulation fileManipulation : fileManipulations) {
-                fileManipulation.manipulateDirectory(destinationPath);
+                fileManipulation.manipulateDirectory(target);
               }
             }
 
@@ -130,54 +119,71 @@ public class FileUtility {
     }
   }
 
+  private static void copyFile (Path source, Path destination, Path file, FileFilter fileFilter, FileManipulation... fileManipulations)
+    throws IOException {
+
+    if ((fileFilter == null) || fileFilter.accept(file.toFile())) {
+
+      Path target;
+
+      Files.copy(source, (target = destination.resolve(source.relativize(file))), StandardCopyOption.REPLACE_EXISTING, StandardCopyOption.COPY_ATTRIBUTES);
+
+      if (fileManipulations != null) {
+        for (FileManipulation fileManipulation : fileManipulations) {
+          fileManipulation.manipulateFile(target);
+        }
+      }
+    }
+  }
+
   public static void deleteTree (Path target)
     throws IOException {
 
     deleteTree(target, null, null, true);
   }
 
-  public static void deleteTree (Path target, final FileFilter fileFilter)
+  public static void deleteTree (Path target, FileFilter fileFilter)
     throws IOException {
 
     deleteTree(target, fileFilter, null, true);
   }
 
-  public static void deleteTree (Path target, final TimeArithmetic timeArithmetic)
+  public static void deleteTree (Path target, TimeArithmetic timeArithmetic)
     throws IOException {
 
     deleteTree(target, null, timeArithmetic, true);
   }
 
-  public static void deleteTree (Path target, final boolean throwErrorOnDirectoryNotEmpty)
+  public static void deleteTree (Path target, boolean throwErrorOnDirectoryNotEmpty)
     throws IOException {
 
     deleteTree(target, null, null, throwErrorOnDirectoryNotEmpty);
   }
 
-  public static void deleteTree (Path target, final FileFilter fileFilter, final TimeArithmetic timeArithmetic)
+  public static void deleteTree (Path target, FileFilter fileFilter, TimeArithmetic timeArithmetic)
     throws IOException {
 
     deleteTree(target, fileFilter, timeArithmetic, true);
   }
 
-  public static void deleteTree (Path target, final FileFilter fileFilter, final boolean throwErrorOnDirectoryNotEmpty)
+  public static void deleteTree (Path target, FileFilter fileFilter, boolean throwErrorOnDirectoryNotEmpty)
     throws IOException {
 
     deleteTree(target, fileFilter, null, throwErrorOnDirectoryNotEmpty);
   }
 
-  public static void deleteTree (Path target, final TimeArithmetic timeArithmetic, final boolean throwErrorOnDirectoryNotEmpty)
+  public static void deleteTree (Path target, TimeArithmetic timeArithmetic, boolean throwErrorOnDirectoryNotEmpty)
     throws IOException {
 
     deleteTree(target, null, timeArithmetic, throwErrorOnDirectoryNotEmpty);
   }
 
-  public static void deleteTree (Path target, final FileFilter fileFilter, final TimeArithmetic timeArithmetic, final boolean throwErrorOnDirectoryNotEmpty)
+  public static void deleteTree (Path target, FileFilter fileFilter, TimeArithmetic timeArithmetic, boolean throwErrorOnDirectoryNotEmpty)
     throws IOException {
 
     if (Files.exists(target, LinkOption.NOFOLLOW_LINKS)) {
       if (!Files.isDirectory(target, LinkOption.NOFOLLOW_LINKS)) {
-        Files.delete(target);
+        deleteFile(target, fileFilter, timeArithmetic);
       } else {
         Files.walkFileTree(target, new SimpleFileVisitor<Path>() {
 
@@ -185,11 +191,7 @@ public class FileUtility {
           public FileVisitResult visitFile (Path file, BasicFileAttributes attrs)
             throws IOException {
 
-            if ((fileFilter == null) || fileFilter.accept(file.toFile())) {
-              if ((timeArithmetic == null) || timeArithmetic.accept(Files.getLastModifiedTime(file).toInstant())) {
-                Files.delete(file);
-              }
-            }
+            deleteFile(target, fileFilter, timeArithmetic);
 
             return FileVisitResult.CONTINUE;
           }
@@ -213,6 +215,16 @@ public class FileUtility {
             return FileVisitResult.CONTINUE;
           }
         });
+      }
+    }
+  }
+
+  private static void deleteFile (Path target, FileFilter fileFilter, TimeArithmetic timeArithmetic)
+    throws IOException {
+
+    if ((fileFilter == null) || fileFilter.accept(target.toFile())) {
+      if ((timeArithmetic == null) || timeArithmetic.accept(Files.getLastModifiedTime(target).toInstant())) {
+        Files.delete(target);
       }
     }
   }
