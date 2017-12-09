@@ -38,7 +38,6 @@ import java.nio.file.DirectoryNotEmptyException;
 import java.nio.file.DirectoryStream;
 import java.nio.file.FileVisitResult;
 import java.nio.file.Files;
-import java.nio.file.LinkOption;
 import java.nio.file.Path;
 import java.nio.file.SimpleFileVisitor;
 import java.nio.file.StandardCopyOption;
@@ -64,75 +63,58 @@ public class FileUtility {
   public static void copyTree (Path source, Path destination, FileFilter fileFilter, FileManipulation... fileManipulations)
     throws IOException {
 
-    if (Files.exists(source, LinkOption.NOFOLLOW_LINKS)) {
-      if (!Files.isDirectory(source, LinkOption.NOFOLLOW_LINKS)) {
-        if ((!Files.exists(destination)) || (!Files.isDirectory(destination))) {
-          if (destination.getParent() != null) {
-            Files.createDirectories(destination.getParent());
-          }
-          copyFile(source, destination, source, fileFilter, fileManipulations);
-        } else if (Files.isDirectory(destination)) {
-          Files.createDirectories(destination);
-          copyFile(source, destination, source, fileFilter, fileManipulations);
-        }
-      } else {
-        Files.createDirectories(destination);
-        Files.walkFileTree(source, new SimpleFileVisitor<Path>() {
+    if (Files.exists(source)) {
 
-          @Override
-          public FileVisitResult visitFile (Path file, BasicFileAttributes attrs)
-            throws IOException {
+      Files.createDirectories(destination);
+      Files.walkFileTree(source, new SimpleFileVisitor<Path>() {
 
-            copyFile(source, destination, file, fileFilter, fileManipulations);
+        @Override
+        public FileVisitResult visitFile (Path file, BasicFileAttributes attrs)
+          throws IOException {
 
-            return FileVisitResult.CONTINUE;
-          }
-
-          @Override
-          public FileVisitResult preVisitDirectory (Path dir, BasicFileAttributes attrs) throws IOException {
+          if ((fileFilter == null) || fileFilter.accept(file.toFile())) {
 
             Path target;
 
-            Files.createDirectories(target = destination.resolve(source.relativize(dir)));
+            Files.copy(source, (target = destination.resolve(source.relativize(file))), StandardCopyOption.REPLACE_EXISTING, StandardCopyOption.COPY_ATTRIBUTES);
 
             if (fileManipulations != null) {
               for (FileManipulation fileManipulation : fileManipulations) {
-                fileManipulation.manipulateDirectory(target);
+                fileManipulation.manipulateFile(target);
               }
             }
-
-            return FileVisitResult.CONTINUE;
           }
 
-          @Override
-          public FileVisitResult postVisitDirectory (Path dir, IOException exc)
-            throws IOException {
-
-            if (exc != null) {
-              throw exc;
-            }
-
-            return FileVisitResult.CONTINUE;
-          }
-        });
-      }
-    }
-  }
-
-  private static void copyFile (Path source, Path destination, Path file, FileFilter fileFilter, FileManipulation... fileManipulations)
-    throws IOException {
-
-    if ((fileFilter == null) || fileFilter.accept(file.toFile())) {
-
-      Path target;
-
-      Files.copy(source, (target = destination.resolve(source.relativize(file))), StandardCopyOption.REPLACE_EXISTING, StandardCopyOption.COPY_ATTRIBUTES);
-
-      if (fileManipulations != null) {
-        for (FileManipulation fileManipulation : fileManipulations) {
-          fileManipulation.manipulateFile(target);
+          return FileVisitResult.CONTINUE;
         }
-      }
+
+        @Override
+        public FileVisitResult preVisitDirectory (Path dir, BasicFileAttributes attrs) throws IOException {
+
+          Path target;
+
+          Files.createDirectories(target = destination.resolve(source.relativize(dir)));
+
+          if (fileManipulations != null) {
+            for (FileManipulation fileManipulation : fileManipulations) {
+              fileManipulation.manipulateDirectory(target);
+            }
+          }
+
+          return FileVisitResult.CONTINUE;
+        }
+
+        @Override
+        public FileVisitResult postVisitDirectory (Path dir, IOException exc)
+          throws IOException {
+
+          if (exc != null) {
+            throw exc;
+          }
+
+          return FileVisitResult.CONTINUE;
+        }
+      });
     }
   }
 
@@ -181,51 +163,40 @@ public class FileUtility {
   public static void deleteTree (Path target, FileFilter fileFilter, TimeArithmetic timeArithmetic, boolean throwErrorOnDirectoryNotEmpty)
     throws IOException {
 
-    if (Files.exists(target, LinkOption.NOFOLLOW_LINKS)) {
-      if (!Files.isDirectory(target, LinkOption.NOFOLLOW_LINKS)) {
-        deleteFile(target, fileFilter, timeArithmetic);
-      } else {
-        Files.walkFileTree(target, new SimpleFileVisitor<Path>() {
+    if (Files.exists(target)) {
+      Files.walkFileTree(target, new SimpleFileVisitor<Path>() {
 
-          @Override
-          public FileVisitResult visitFile (Path file, BasicFileAttributes attrs)
-            throws IOException {
+        @Override
+        public FileVisitResult visitFile (Path file, BasicFileAttributes attrs)
+          throws IOException {
 
-            deleteFile(target, fileFilter, timeArithmetic);
+          if ((fileFilter == null) || fileFilter.accept(target.toFile())) {
+            if ((timeArithmetic == null) || timeArithmetic.accept(Files.getLastModifiedTime(target).toInstant())) {
+              Files.delete(target);
+            }
+          }
+          return FileVisitResult.CONTINUE;
+        }
 
-            return FileVisitResult.CONTINUE;
+        @Override
+        public FileVisitResult postVisitDirectory (Path dir, IOException ioException)
+          throws IOException {
+
+          if (ioException != null) {
+            throw ioException;
           }
 
-          @Override
-          public FileVisitResult postVisitDirectory (Path dir, IOException exc)
-            throws IOException {
-
-            if (exc != null) {
-              throw exc;
+          try {
+            Files.delete(dir);
+          } catch (DirectoryNotEmptyException directoryNotEmptyException) {
+            if (throwErrorOnDirectoryNotEmpty) {
+              throw directoryNotEmptyException;
             }
-
-            try {
-              Files.delete(dir);
-            } catch (DirectoryNotEmptyException directoryNotEmptyException) {
-              if (throwErrorOnDirectoryNotEmpty) {
-                throw directoryNotEmptyException;
-              }
-            }
-
-            return FileVisitResult.CONTINUE;
           }
-        });
-      }
-    }
-  }
 
-  private static void deleteFile (Path target, FileFilter fileFilter, TimeArithmetic timeArithmetic)
-    throws IOException {
-
-    if ((fileFilter == null) || fileFilter.accept(target.toFile())) {
-      if ((timeArithmetic == null) || timeArithmetic.accept(Files.getLastModifiedTime(target).toInstant())) {
-        Files.delete(target);
-      }
+          return FileVisitResult.CONTINUE;
+        }
+      });
     }
   }
 }
