@@ -72,7 +72,7 @@ public class FileUtility {
         }
 
         if (filter(source, pathFilters)) {
-          Files.copy(source, destination.resolve(source), StandardCopyOption.REPLACE_EXISTING, StandardCopyOption.COPY_ATTRIBUTES);
+          Files.copy(source, destination.resolve(source.getFileName()), StandardCopyOption.REPLACE_EXISTING, StandardCopyOption.COPY_ATTRIBUTES);
         }
       } else {
 
