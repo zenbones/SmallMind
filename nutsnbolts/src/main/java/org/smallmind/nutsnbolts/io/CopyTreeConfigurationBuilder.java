@@ -40,7 +40,7 @@ public class CopyTreeConfigurationBuilder {
   private Path source;
   private Path destination;
   private PathFilter[] pathFilters;
-  private boolean includeSourceDirectory = true;
+  private boolean includeSourceDirectory = false;
 
   public CopyTreeConfigurationBuilder (Path source, Path destination) {
 
