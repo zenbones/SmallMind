@@ -54,6 +54,11 @@ public class CircularBufferIOStream implements Closeable {
     this(DEFAULT_SIZE, null);
   }
 
+  public CircularBufferIOStream (int size) {
+
+    this(size, null);
+  }
+
   public CircularBufferIOStream (Supplier<Integer> availableSupplier) {
 
     this(DEFAULT_SIZE, availableSupplier);
