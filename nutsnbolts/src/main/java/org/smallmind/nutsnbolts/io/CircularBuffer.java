@@ -32,23 +32,27 @@
  */
 package org.smallmind.nutsnbolts.io;
 
-public class CircularBuffer {
+import java.io.Closeable;
+import java.io.IOException;
+import java.nio.channels.AsynchronousCloseException;
+import org.smallmind.nutsnbolts.lang.UnknownSwitchCaseException;
 
-  private static enum State {
+public class CircularBuffer implements Closeable {
+
+  private enum Operation {
 
     READ, WRITE
   }
 
-  private RangeSegment[] segments;
+  private Operation lastOperation = Operation.READ;
   private boolean closed = false;
-  private int position = 0;
-  private int filled = 0;
+  private int readPos = 0;
+  private int writePos = 0;
   private byte[] buffer;
 
   public CircularBuffer (int size) {
 
     buffer = new byte[size];
-    segments = new RangeSegment[2];
   }
 
   public synchronized boolean isClosed () {
@@ -58,165 +62,200 @@ public class CircularBuffer {
 
   public synchronized void close () {
 
-    closed = true;
-    notifyAll();
-  }
+    if (!closed) {
+      closed = true;
+      buffer = null;
 
-  public synchronized int available () {
-
-    return (buffer.length - filled);
-  }
-
-  public int read (byte[] data) {
-
-    return read(data, 0);
-  }
-
-  public synchronized int read (byte[] data, long millis) {
-
-    int bytesRead;
-
-    if (data.length == 0) {
-      return 0;
+      notifyAll();
     }
-
-    while ((bytesRead = get(data)) == 0) {
-      if (closed) {
-        return -1;
-      }
-
-      try {
-        wait(millis);
-      } catch (InterruptedException interruptedException) {
-        throw new RuntimeException(interruptedException);
-      }
-    }
-
-    notifyAll();
-    return bytesRead;
   }
 
-  public void write (byte[] data) {
-
-    write(data, 0, data.length);
-  }
-
-  public synchronized void write (byte[] data, int off, int length) {
-
-    int totalBytes = off;
-    int bytesWritten;
+  public synchronized int readAvailable ()
+    throws IOException {
 
     if (closed) {
-      throw new IllegalStateException("The close() method has previously been called");
-    }
+      throw new SynchronousCloseException();
+    } else if (readPos < writePos) {
 
-    do {
-      if ((bytesWritten = put(data, totalBytes, length - totalBytes)) > 0) {
-        totalBytes += bytesWritten;
-        notifyAll();
-      }
+      return writePos - readPos;
+    } else if (readPos > writePos) {
 
-      if (totalBytes < length) {
-        try {
-          wait();
-        } catch (InterruptedException interruptedException) {
-          throw new RuntimeException(interruptedException);
-        }
-      }
-    } while (totalBytes < length);
-  }
-
-  private int put (byte[] data, int off, int length) {
-
-    int totalBytes = 0;
-    int writeBytes;
-
-    setSegments(State.WRITE);
-    for (int count = 0; count < segments.length; count++) {
-      if (segments[count] != null) {
-        writeBytes = Math.min(segments[count].getStop() - segments[count].getStart(), length - totalBytes);
-        if (writeBytes > 0) {
-          System.arraycopy(data, off + totalBytes, buffer, segments[count].getStart(), writeBytes);
-          totalBytes += writeBytes;
-        }
-      }
-    }
-
-    filled += totalBytes;
-    return totalBytes;
-  }
-
-  private int get (byte[] data) {
-
-    int totalBytes = 0;
-    int readBytes;
-
-    setSegments(State.READ);
-    for (int count = 0; count < segments.length; count++) {
-      if (segments[count] != null) {
-        readBytes = Math.min(segments[count].getStop() - segments[count].getStart(), data.length - totalBytes);
-        if (readBytes > 0) {
-          System.arraycopy(buffer, segments[count].getStart(), data, totalBytes, readBytes);
-          totalBytes += readBytes;
-        }
-      }
-    }
-
-    filled -= totalBytes;
-    position += totalBytes;
-    if (position > buffer.length) {
-      position -= buffer.length;
-    }
-
-    return totalBytes;
-  }
-
-  private void setSegments (State state) {
-
-    if (position + filled <= buffer.length) {
-      switch (state) {
-        case READ:
-          segments[0] = new RangeSegment(position, position + filled);
-          segments[1] = null;
-          break;
-        case WRITE:
-          segments = new RangeSegment[2];
-          segments[0] = new RangeSegment(position + filled, buffer.length);
-          segments[1] = new RangeSegment(0, position);
-      }
+      return (buffer.length - readPos) + writePos;
     } else {
-      switch (state) {
-        case READ:
-          segments = new RangeSegment[2];
-          segments[0] = new RangeSegment(position, buffer.length);
-          segments[1] = new RangeSegment(0, position + filled - buffer.length);
-          break;
-        case WRITE:
-          segments[0] = new RangeSegment(position + filled - buffer.length, position);
-          segments[1] = null;
-      }
+
+      return Operation.WRITE.equals(lastOperation) ? buffer.length : 0;
     }
   }
 
-  public class RangeSegment {
+  public synchronized int writeAvailable ()
+    throws IOException {
 
-    private int start;
-    private int stop;
+    if (closed) {
+      throw new SynchronousCloseException();
+    } else if (writePos < readPos) {
 
-    public RangeSegment (int start, int stop) {
+      return readPos - writePos;
+    } else if (writePos > readPos) {
 
-      this.start = start;
-      this.stop = stop;
+      return (buffer.length - writePos) + readPos;
+    } else {
+
+      return Operation.READ.equals(lastOperation) ? buffer.length : 0;
     }
+  }
 
-    public int getStart () {
+  public int read (byte[] data)
+    throws IOException, InterruptedException {
 
-      return start;
+    return read(data, 0, data.length, 0);
+  }
+
+  public int read (byte[] data, long timeout)
+    throws IOException, InterruptedException {
+
+    return read(data, 0, data.length, timeout);
+  }
+
+  public int read (byte[] data, int off, int len)
+    throws IOException, InterruptedException {
+
+    return read(data, off, len, 0);
+  }
+
+  public int read (byte[] data, int off, int len, long timeout)
+    throws IOException, InterruptedException {
+
+    return transfer(data, off, len, timeout, Operation.READ);
+  }
+
+  public int write (byte[] data)
+    throws IOException, InterruptedException {
+
+    return write(data, 0, data.length, 0);
+  }
+
+  public int write (byte[] data, long timeout)
+    throws IOException, InterruptedException {
+
+    return write(data, 0, data.length, timeout);
+  }
+
+  public int write (byte[] data, int off, int len)
+    throws IOException, InterruptedException {
+
+    return write(data, off, len, 0);
+  }
+
+  public int write (byte[] data, int off, int len, long timeout)
+    throws IOException, InterruptedException {
+
+    return transfer(data, off, len, timeout, Operation.WRITE);
+  }
+
+  public long skip (long len)
+    throws IOException, InterruptedException {
+
+    return skip(len, 0);
+  }
+
+  public synchronized long skip (long len, long timeout)
+    throws IOException, InterruptedException {
+
+    if (closed) {
+      throw new SynchronousCloseException();
+    } else {
+
+      long millisWaited = 0;
+      long totalBytesSkipped = 0;
+
+      do {
+        if ((readPos != writePos) || (!Operation.READ.equals(lastOperation))) {
+
+          long bytesSkipped = Math.min((readPos < writePos ? writePos : buffer.length) - readPos, len - totalBytesSkipped);
+
+          if ((readPos += bytesSkipped) == buffer.length) {
+            readPos = 0;
+          }
+          lastOperation = Operation.READ;
+          totalBytesSkipped += bytesSkipped;
+
+          notifyAll();
+        } else {
+
+          long start = System.currentTimeMillis();
+
+          wait(timeout);
+
+          if (closed) {
+            throw new AsynchronousCloseException();
+          }
+
+          millisWaited += System.currentTimeMillis() - start;
+        }
+      } while ((totalBytesSkipped < len) && ((timeout == 0) || (millisWaited < timeout)));
+
+      return totalBytesSkipped;
     }
+  }
 
-    public int getStop () {
+  private synchronized int transfer (byte[] data, int off, int len, long timeout, Operation operation)
+    throws IOException, InterruptedException {
 
-      return stop;
+    if (closed) {
+      throw new SynchronousCloseException();
+    } else if (data == null) {
+      throw new NullPointerException();
+    } else if ((off < 0) || (len < 0) || (off > data.length) || (len > data.length - off)) {
+      throw new IndexOutOfBoundsException();
+    } else if (len == 0) {
+
+      return 0;
+    } else {
+
+      long millisWaited = 0;
+      int totalBytesTransferred = 0;
+
+      do {
+        if ((readPos != writePos) || (!operation.equals(lastOperation))) {
+
+          int bytesTransferred;
+
+          switch (operation) {
+            case READ:
+              System.arraycopy(buffer, readPos, data, off + totalBytesTransferred, bytesTransferred = Math.min((readPos < writePos ? writePos : buffer.length) - readPos, len - totalBytesTransferred));
+              if ((readPos += bytesTransferred) == buffer.length) {
+                readPos = 0;
+              }
+              break;
+            case WRITE:
+              System.arraycopy(data, off + totalBytesTransferred, buffer, writePos, bytesTransferred = Math.min((writePos < readPos ? readPos : buffer.length) - writePos, len - totalBytesTransferred));
+              if ((writePos += bytesTransferred) == buffer.length) {
+                writePos = 0;
+              }
+              break;
+            default:
+              throw new UnknownSwitchCaseException(operation.name());
+          }
+
+          lastOperation = operation;
+          totalBytesTransferred += bytesTransferred;
+
+          notifyAll();
+        } else {
+
+          long start = System.currentTimeMillis();
+
+          wait(timeout);
+
+          if (closed) {
+            throw new AsynchronousCloseException();
+          }
+
+          millisWaited += System.currentTimeMillis() - start;
+        }
+      } while ((totalBytesTransferred < len) && ((timeout == 0) || (millisWaited < timeout)));
+
+      return totalBytesTransferred;
     }
   }
 }
