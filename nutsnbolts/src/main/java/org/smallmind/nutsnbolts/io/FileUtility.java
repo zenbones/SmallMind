@@ -66,42 +66,54 @@ public class FileUtility {
     throws IOException {
 
     if (Files.exists(source)) {
-
-      Files.createDirectories(destination);
-      Files.walkFileTree(source, new SimpleFileVisitor<Path>() {
-
-        @Override
-        public FileVisitResult visitFile (Path file, BasicFileAttributes attrs)
-          throws IOException {
-
-          if (filter(file, pathFilters)) {
-            Files.copy(source, (destination.resolve(source.relativize(file))), StandardCopyOption.REPLACE_EXISTING, StandardCopyOption.COPY_ATTRIBUTES);
-          }
-
-          return FileVisitResult.CONTINUE;
+      if (Files.isRegularFile(destination)) {
+        if (!Files.isRegularFile(source)) {
+          throw new IOException("Can not move directory(" + source + ") to file(" + destination + ")");
         }
 
-        @Override
-        public FileVisitResult preVisitDirectory (Path dir, BasicFileAttributes attrs) throws IOException {
+        if (filter(source, pathFilters)) {
+          Files.copy(source, destination.resolve(source), StandardCopyOption.REPLACE_EXISTING, StandardCopyOption.COPY_ATTRIBUTES);
+        }
+      } else {
 
-          if ((!source.equals(dir)) || includeSourceDirectory) {
-            Files.createDirectories(destination.resolve(source.relativize(dir)));
+        boolean singleFile = Files.isRegularFile(source);
+
+        Files.createDirectories(destination);
+        Files.walkFileTree(source, new SimpleFileVisitor<Path>() {
+
+          @Override
+          public FileVisitResult visitFile (Path file, BasicFileAttributes attrs)
+            throws IOException {
+
+            if (filter(file, pathFilters)) {
+              Files.copy(file, (destination.resolve((singleFile || includeSourceDirectory) ? source.getParent().relativize(file) : source.relativize(file))), StandardCopyOption.REPLACE_EXISTING, StandardCopyOption.COPY_ATTRIBUTES);
+            }
+
+            return FileVisitResult.CONTINUE;
           }
 
-          return FileVisitResult.CONTINUE;
-        }
+          @Override
+          public FileVisitResult preVisitDirectory (Path dir, BasicFileAttributes attrs) throws IOException {
 
-        @Override
-        public FileVisitResult postVisitDirectory (Path dir, IOException ioException)
-          throws IOException {
+            if ((!source.equals(dir)) || includeSourceDirectory) {
+              Files.createDirectories(destination.resolve(includeSourceDirectory ? source.getParent().relativize(dir) : source.relativize(dir)));
+            }
 
-          if (ioException != null) {
-            throw ioException;
+            return FileVisitResult.CONTINUE;
           }
 
-          return FileVisitResult.CONTINUE;
-        }
-      });
+          @Override
+          public FileVisitResult postVisitDirectory (Path dir, IOException ioException)
+            throws IOException {
+
+            if (ioException != null) {
+              throw ioException;
+            }
+
+            return FileVisitResult.CONTINUE;
+          }
+        });
+      }
     }
   }
 
@@ -116,7 +128,7 @@ public class FileUtility {
           throws IOException {
 
           if (filter(file, pathFilters)) {
-            Files.delete(target);
+            Files.delete(file);
           }
 
           return FileVisitResult.CONTINUE;
