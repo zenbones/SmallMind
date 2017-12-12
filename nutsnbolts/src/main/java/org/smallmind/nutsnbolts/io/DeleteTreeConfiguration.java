@@ -30,35 +30,47 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.nutsnbolts.time;
+package org.smallmind.nutsnbolts.io;
 
-import java.time.Instant;
-import java.time.ZonedDateTime;
-import org.smallmind.nutsnbolts.time.TimeOperation;
+import java.io.IOException;
+import java.nio.file.Path;
 
-public class TimeArithmetic {
+public class DeleteTreeConfiguration {
 
-  private ZonedDateTime date;
-  private TimeOperation operation;
+  private Path target;
+  private PathFilter[] pathFilters;
+  private boolean includeTargetDirectory = true;
+  private boolean throwErrorOnDirectoryNotEmpty = true;
 
-  public TimeArithmetic (ZonedDateTime date, TimeOperation operation) {
+  public DeleteTreeConfiguration (Path target) {
 
-    this.date = date;
-    this.operation = operation;
+    this.target = target;
   }
 
-  public ZonedDateTime getDate () {
+  public DeleteTreeConfiguration filter (PathFilter... pathFilters) {
 
-    return date;
+    this.pathFilters = pathFilters;
+
+    return this;
   }
 
-  public TimeOperation getOperation () {
+  public DeleteTreeConfiguration includeTargetDirectory (boolean includeTargetDirectory) {
 
-    return operation;
+    this.includeTargetDirectory = includeTargetDirectory;
+
+    return this;
   }
 
-  public boolean accept (Instant instant) {
+  public DeleteTreeConfiguration throwErrorOnDirectoryNotEmpty (boolean throwErrorOnDirectoryNotEmpty) {
 
-    return operation.accept(date, instant);
+    this.throwErrorOnDirectoryNotEmpty = throwErrorOnDirectoryNotEmpty;
+
+    return this;
+  }
+
+  public void build ()
+    throws IOException {
+
+    FileUtility.deleteTree(target, includeTargetDirectory, throwErrorOnDirectoryNotEmpty, pathFilters);
   }
 }

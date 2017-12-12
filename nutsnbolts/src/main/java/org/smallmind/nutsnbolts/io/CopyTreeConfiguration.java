@@ -30,35 +30,41 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.nutsnbolts.time;
+package org.smallmind.nutsnbolts.io;
 
-import java.time.Instant;
-import java.time.ZonedDateTime;
-import org.smallmind.nutsnbolts.time.TimeOperation;
+import java.io.IOException;
+import java.nio.file.Path;
 
-public class TimeArithmetic {
+public class CopyTreeConfiguration {
 
-  private ZonedDateTime date;
-  private TimeOperation operation;
+  private Path source;
+  private Path destination;
+  private PathFilter[] pathFilters;
+  private boolean includeSourceDirectory = true;
 
-  public TimeArithmetic (ZonedDateTime date, TimeOperation operation) {
+  public CopyTreeConfiguration (Path source, Path destination) {
 
-    this.date = date;
-    this.operation = operation;
+    this.source = source;
+    this.destination = destination;
   }
 
-  public ZonedDateTime getDate () {
+  public CopyTreeConfiguration filter (PathFilter... pathFilters) {
 
-    return date;
+    this.pathFilters = pathFilters;
+
+    return this;
   }
 
-  public TimeOperation getOperation () {
+  public CopyTreeConfiguration includeSourceDirectory (boolean includeSourceDirectory) {
 
-    return operation;
+    this.includeSourceDirectory = includeSourceDirectory;
+
+    return this;
   }
 
-  public boolean accept (Instant instant) {
+  public void build ()
+    throws IOException {
 
-    return operation.accept(date, instant);
+    FileUtility.copyTree(source, destination, includeSourceDirectory, pathFilters);
   }
 }

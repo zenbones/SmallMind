@@ -30,35 +30,26 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.nutsnbolts.time;
+package org.smallmind.nutsnbolts.io;
 
-import java.time.Instant;
-import java.time.ZonedDateTime;
-import org.smallmind.nutsnbolts.time.TimeOperation;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import org.smallmind.nutsnbolts.time.TimeArithmetic;
 
-public class TimeArithmetic {
+public class TimeFilter implements PathFilter {
 
-  private ZonedDateTime date;
-  private TimeOperation operation;
+  private TimeArithmetic timeArithmetic;
 
-  public TimeArithmetic (ZonedDateTime date, TimeOperation operation) {
+  public TimeFilter (TimeArithmetic timeArithmetic) {
 
-    this.date = date;
-    this.operation = operation;
+    this.timeArithmetic = timeArithmetic;
   }
 
-  public ZonedDateTime getDate () {
+  @Override
+  public boolean accept (Path path)
+    throws IOException {
 
-    return date;
-  }
-
-  public TimeOperation getOperation () {
-
-    return operation;
-  }
-
-  public boolean accept (Instant instant) {
-
-    return operation.accept(date, instant);
+    return timeArithmetic.accept(Files.getLastModifiedTime(path).toInstant());
   }
 }
