@@ -44,14 +44,14 @@ import java.nio.file.attribute.BasicFileAttributes;
 
 public class FileUtility {
 
-  public static CopyTreeConfiguration copyConfiguration (Path source, Path destination) {
+  public static CopyTreeConfigurationBuilder copyBuilder (Path source, Path destination) {
 
-    return new CopyTreeConfiguration(source, destination);
+    return new CopyTreeConfigurationBuilder(source, destination);
   }
 
-  public static DeleteTreeConfiguration deleteConfiguration (Path target) {
+  public static DeleteTreeConfigurationBuilder deleteBuilder (Path target) {
 
-    return new DeleteTreeConfiguration(target);
+    return new DeleteTreeConfigurationBuilder(target);
   }
 
   public static boolean isDirectoryEmpty (Path directory) throws IOException {

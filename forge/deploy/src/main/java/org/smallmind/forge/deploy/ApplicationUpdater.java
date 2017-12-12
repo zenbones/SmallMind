@@ -70,7 +70,7 @@ public class ApplicationUpdater {
 
     if (Files.isDirectory(applicationRootPath, LinkOption.NOFOLLOW_LINKS)) {
       System.out.println("Removing current service installation...");
-      FileUtility.deleteConfiguration(applicationRootPath).build();
+      FileUtility.deleteBuilder(applicationRootPath).build();
     } else {
       Files.createDirectories(installPath);
     }

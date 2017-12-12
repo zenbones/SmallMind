@@ -35,29 +35,35 @@ package org.smallmind.nutsnbolts.io;
 import java.io.IOException;
 import java.nio.file.Path;
 
-public class CopyTreeConfiguration {
+public class DeleteTreeConfigurationBuilder {
 
-  private Path source;
-  private Path destination;
+  private Path target;
   private PathFilter[] pathFilters;
-  private boolean includeSourceDirectory = true;
+  private boolean includeTargetDirectory = true;
+  private boolean throwErrorOnDirectoryNotEmpty = true;
 
-  public CopyTreeConfiguration (Path source, Path destination) {
+  public DeleteTreeConfigurationBuilder (Path target) {
 
-    this.source = source;
-    this.destination = destination;
+    this.target = target;
   }
 
-  public CopyTreeConfiguration filter (PathFilter... pathFilters) {
+  public DeleteTreeConfigurationBuilder filter (PathFilter... pathFilters) {
 
     this.pathFilters = pathFilters;
 
     return this;
   }
 
-  public CopyTreeConfiguration includeSourceDirectory (boolean includeSourceDirectory) {
+  public DeleteTreeConfigurationBuilder includeTargetDirectory (boolean includeTargetDirectory) {
 
-    this.includeSourceDirectory = includeSourceDirectory;
+    this.includeTargetDirectory = includeTargetDirectory;
+
+    return this;
+  }
+
+  public DeleteTreeConfigurationBuilder throwErrorOnDirectoryNotEmpty (boolean throwErrorOnDirectoryNotEmpty) {
+
+    this.throwErrorOnDirectoryNotEmpty = throwErrorOnDirectoryNotEmpty;
 
     return this;
   }
@@ -65,6 +71,6 @@ public class CopyTreeConfiguration {
   public void build ()
     throws IOException {
 
-    FileUtility.copyTree(source, destination, includeSourceDirectory, pathFilters);
+    FileUtility.deleteTree(target, includeTargetDirectory, throwErrorOnDirectoryNotEmpty, pathFilters);
   }
 }
