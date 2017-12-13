@@ -41,7 +41,20 @@ import java.util.function.Consumer;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
-public class ZipExploder {
+public class ZipUtility {
+
+  public static void walk (Path zipFile, Consumer<ZipEntry> entryConsumer)
+    throws IOException {
+
+    try (ZipInputStream zipInputStream = new ZipInputStream(Files.newInputStream(zipFile, StandardOpenOption.READ))) {
+
+      ZipEntry zipEntry;
+
+      while ((zipEntry = zipInputStream.getNextEntry()) != null) {
+        entryConsumer.accept(zipEntry);
+      }
+    }
+  }
 
   public static void explode (Path zipFile, Path outputDir)
     throws IOException {
