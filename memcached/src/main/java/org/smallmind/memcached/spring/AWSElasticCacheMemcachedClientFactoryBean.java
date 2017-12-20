@@ -37,7 +37,7 @@ import java.net.InetSocketAddress;
 import java.util.LinkedList;
 import net.rubyeye.xmemcached.MemcachedClient;
 import net.rubyeye.xmemcached.MemcachedClientBuilder;
-import net.rubyeye.xmemcached.XMemcachedClientBuilder;
+import net.rubyeye.xmemcached.aws.AWSElasticCacheClientBuilder;
 import net.rubyeye.xmemcached.command.BinaryCommandFactory;
 import net.rubyeye.xmemcached.impl.KetamaMemcachedSessionLocator;
 import org.smallmind.memcached.MemcachedServer;
@@ -46,10 +46,11 @@ import org.smallmind.scribe.pen.LoggerManager;
 import org.springframework.beans.factory.FactoryBean;
 import org.springframework.beans.factory.InitializingBean;
 
-public class XMemcachedMemcachedClientFactoryBean implements FactoryBean<XMemcachedMemcachedClient>, InitializingBean {
+public class AWSElasticCacheMemcachedClientFactoryBean implements FactoryBean<XMemcachedMemcachedClient>, InitializingBean {
 
   private XMemcachedMemcachedClient memcachedClient;
   private MemcachedServer[] servers;
+  private long pollIntervalMilliseconds = 30000;
   private boolean enabled = true;
   private int poolSize;
 
@@ -68,6 +69,11 @@ public class XMemcachedMemcachedClientFactoryBean implements FactoryBean<XMemcac
     this.poolSize = poolSize;
   }
 
+  public void setPollIntervalMilliseconds (long pollIntervalMilliseconds) {
+
+    this.pollIntervalMilliseconds = pollIntervalMilliseconds;
+  }
+
   @Override
   public void afterPropertiesSet ()
     throws IOException {
@@ -82,8 +88,7 @@ public class XMemcachedMemcachedClientFactoryBean implements FactoryBean<XMemcac
         addressList.add(new InetSocketAddress(server.getHost(), server.getPort()));
       }
 
-      builder = new XMemcachedClientBuilder(addressList);
-      builder.setFailureMode(true);
+      builder = new AWSElasticCacheClientBuilder(addressList);
       builder.setConnectionPoolSize(poolSize);
       builder.setCommandFactory(new BinaryCommandFactory());
       builder.setSessionLocator(new KetamaMemcachedSessionLocator());
@@ -115,7 +120,7 @@ public class XMemcachedMemcachedClientFactoryBean implements FactoryBean<XMemcac
       try {
         memcachedClient.shutdown();
       } catch (IOException ioException) {
-        LoggerManager.getLogger(XMemcachedMemcachedClientFactoryBean.class).error(ioException);
+        LoggerManager.getLogger(AWSElasticCacheMemcachedClientFactoryBean.class).error(ioException);
       }
     }
   }
