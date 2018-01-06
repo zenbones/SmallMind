@@ -44,7 +44,7 @@ public abstract class MapXmlAdapter<M extends Map<K, V>, K, V> extends XmlAdapte
   public abstract Class<V> getValueClass ();
 
   @Override
-  public M unmarshal (MapKeyValue<K, V>[] array) throws Exception {
+  public M unmarshal (MapKeyValue<K, V>[] array) {
 
     if (array != null) {
 
@@ -61,7 +61,7 @@ public abstract class MapXmlAdapter<M extends Map<K, V>, K, V> extends XmlAdapte
   }
 
   @Override
-  public MapKeyValue<K, V>[] marshal (M map) throws Exception {
+  public MapKeyValue<K, V>[] marshal (M map) {
 
     if (map != null) {
 
