@@ -32,7 +32,6 @@
  */
 package org.smallmind.sleuth.maven.surefire;
 
-import java.lang.reflect.InvocationTargetException;
 import org.apache.maven.surefire.providerapi.AbstractProvider;
 import org.apache.maven.surefire.providerapi.ProviderParameters;
 import org.apache.maven.surefire.report.ConsoleOutputReceiver;
@@ -72,7 +71,7 @@ public class SleuthProvider extends AbstractProvider {
 
   @Override
   public RunResult invoke (Object forkTestSet)
-    throws TestSetFailedException, ReporterException, InvocationTargetException {
+    throws TestSetFailedException, ReporterException {
 
     ReporterFactory reporterFactory = providerParameters.getReporterFactory();
     RunResult runResult;
@@ -118,8 +117,6 @@ public class SleuthProvider extends AbstractProvider {
     if (sleuthEventListener.getThrowable() != null) {
       throw new TestSetFailedException(sleuthEventListener.getThrowable());
     }
-
-
 
     return runResult;
   }
