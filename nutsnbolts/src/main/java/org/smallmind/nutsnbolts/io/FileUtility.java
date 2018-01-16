@@ -66,17 +66,22 @@ public class FileUtility {
     throws IOException {
 
     if (Files.exists(source)) {
-      if (Files.isRegularFile(destination)) {
-        if (!Files.isRegularFile(source)) {
-          throw new IOException("Can not move directory(" + source + ") to file(" + destination + ")");
-        }
-
+      if (Files.isRegularFile(source)) {
         if (filter(source, pathFilters)) {
-          Files.copy(source, destination.resolve(source.getFileName()), StandardCopyOption.REPLACE_EXISTING, StandardCopyOption.COPY_ATTRIBUTES);
+          if (Files.exists(destination)) {
+            if (Files.isDirectory(destination)) {
+              Files.copy(source, destination.resolve(source.getFileName()), StandardCopyOption.REPLACE_EXISTING, StandardCopyOption.COPY_ATTRIBUTES);
+            } else {
+              Files.copy(source, destination, StandardCopyOption.REPLACE_EXISTING, StandardCopyOption.COPY_ATTRIBUTES);
+            }
+          } else {
+            Files.createDirectories(destination.getParent());
+            Files.copy(source, destination, StandardCopyOption.COPY_ATTRIBUTES);
+          }
         }
+      } else if (Files.exists(destination) && (!Files.isDirectory(destination))) {
+        throw new IOException("Can not move directory(" + source + ") to file(" + destination + ")");
       } else {
-
-        boolean singleFile = Files.isRegularFile(source);
 
         Files.createDirectories(destination);
         Files.walkFileTree(source, new SimpleFileVisitor<Path>() {
@@ -86,7 +91,7 @@ public class FileUtility {
             throws IOException {
 
             if (filter(file, pathFilters)) {
-              Files.copy(file, (destination.resolve((singleFile || includeSourceDirectory) ? source.getParent().relativize(file) : source.relativize(file))), StandardCopyOption.REPLACE_EXISTING, StandardCopyOption.COPY_ATTRIBUTES);
+              Files.copy(file, (destination.resolve(includeSourceDirectory ? source.getParent().relativize(file) : source.relativize(file))), StandardCopyOption.REPLACE_EXISTING, StandardCopyOption.COPY_ATTRIBUTES);
             }
 
             return FileVisitResult.CONTINUE;
