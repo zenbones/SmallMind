@@ -59,7 +59,6 @@ import org.smallmind.nutsnbolts.resource.ResourceException;
 import org.smallmind.web.jersey.jackson.JsonResourceConfig;
 import org.smallmind.web.jersey.spring.ExposedApplicationContext;
 import org.smallmind.web.jersey.spring.ResourceConfigExtension;
-import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.DisposableBean;
 import org.springframework.beans.factory.config.BeanPostProcessor;
 import org.springframework.context.ApplicationContext;
@@ -88,6 +87,8 @@ public class GrizzlyInitializingBean implements DisposableBean, ApplicationConte
   private String restPath = "/rest";
   private String soapPath = "/soap";
   private String webSocketPath = "/websocket";
+  private Integer initialWorkerPoolSize;
+  private Integer maximumWorkerPoolSize;
   private int port = 80;
   private boolean allowInsecure = true;
   private boolean debug = false;
@@ -105,6 +106,16 @@ public class GrizzlyInitializingBean implements DisposableBean, ApplicationConte
   public void setPort (int port) {
 
     this.port = port;
+  }
+
+  public void setInitialWorkerPoolSize (Integer initialWorkerPoolSize) {
+
+    this.initialWorkerPoolSize = initialWorkerPoolSize;
+  }
+
+  public void setMaximumWorkerPoolSize (Integer maximumWorkerPoolSize) {
+
+    this.maximumWorkerPoolSize = maximumWorkerPoolSize;
   }
 
   public void setSslInfo (SSLInfo sslInfo) {
@@ -303,7 +314,7 @@ public class GrizzlyInitializingBean implements DisposableBean, ApplicationConte
   }
 
   @Override
-  public Object postProcessBeforeInitialization (Object bean, String beanName)  {
+  public Object postProcessBeforeInitialization (Object bean, String beanName) {
 
     return bean;
   }
@@ -341,6 +352,12 @@ public class GrizzlyInitializingBean implements DisposableBean, ApplicationConte
     if (ioStrategy != null) {
       networkListener.getTransport().setIOStrategy(ioStrategy);
     }
+    if (initialWorkerPoolSize != null) {
+      networkListener.getTransport().getWorkerThreadPoolConfig().setCorePoolSize(initialWorkerPoolSize);
+    }
+    if (maximumWorkerPoolSize != null) {
+      networkListener.getTransport().getWorkerThreadPoolConfig().setMaxPoolSize(maximumWorkerPoolSize);
+    }
 
     return networkListener;
   }
@@ -368,8 +385,8 @@ public class GrizzlyInitializingBean implements DisposableBean, ApplicationConte
     }
 
     /* Note: clientMode (2nd param) means server does not
-    *  authenticate to client - which we never want
-    */
+     *  authenticate to client - which we never want
+     */
     SSLEngineConfigurator sslEngineConfig = new SSLEngineConfigurator(sslContextConfigurator.createSSLContext(), false, sslInfo.isRequireClientAuth(), true);
     secureListener.setSSLEngineConfig(sslEngineConfig);
 
