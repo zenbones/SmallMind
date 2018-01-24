@@ -232,6 +232,12 @@ public class HashBag<T> implements Bag<T> {
     size = 0;
   }
 
+  @Override
+  public Set<T> keySet () {
+
+    return internalMap.keySet();
+  }
+
   public Set<Map.Entry<T, Integer>> entrySet () {
 
     return internalMap.entrySet();

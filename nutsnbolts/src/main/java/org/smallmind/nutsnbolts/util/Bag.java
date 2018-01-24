@@ -44,6 +44,8 @@ public interface Bag<E> extends Collection<E> {
 
   boolean remove (E e, int multiple);
 
+  Set<E> keySet ();
+
   Set<Map.Entry<E, Integer>> entrySet ();
 
   @Override
