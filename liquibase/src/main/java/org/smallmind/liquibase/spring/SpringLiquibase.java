@@ -38,6 +38,7 @@ import java.io.PrintStream;
 import java.io.PrintWriter;
 import java.io.Writer;
 import java.sql.SQLException;
+import java.util.Collections;
 import java.util.HashSet;
 import javax.sql.DataSource;
 import javax.xml.parsers.ParserConfigurationException;
@@ -170,15 +171,13 @@ public class SpringLiquibase implements InitializingBean {
                 DiffResult diffResult;
                 DiffToChangeLog changeLogWriter;
 
-                String snapshotTypes = null;
-
-                snapshotControl = new SnapshotControl(database, snapshotTypes);
-                compareControl = new CompareControl(new CompareControl.SchemaComparison[] {new CompareControl.SchemaComparison(new CatalogAndSchema(database.getDefaultCatalogName(), database.getDefaultSchemaName()), new CatalogAndSchema(database.getDefaultCatalogName(), database.getDefaultSchemaName()))}, snapshotTypes);
+                snapshotControl = new SnapshotControl(database);
+                compareControl = new CompareControl(new CompareControl.SchemaComparison[] {new CompareControl.SchemaComparison(new CatalogAndSchema(database.getDefaultCatalogName(), database.getDefaultSchemaName()), new CatalogAndSchema(database.getDefaultCatalogName(), database.getDefaultSchemaName()))}, Collections.emptySet());
 
                 originalDatabaseSnapshot = SnapshotGeneratorFactory.getInstance().createSnapshot(compareControl.getSchemas(CompareControl.DatabaseRole.REFERENCE), database, snapshotControl);
                 diffResult = DiffGeneratorFactory.getInstance().compare(originalDatabaseSnapshot, SnapshotGeneratorFactory.getInstance().createSnapshot(compareControl.getSchemas(CompareControl.DatabaseRole.REFERENCE), null, snapshotControl), compareControl);
 
-                DiffOutputControl diffOutputControl = new DiffOutputControl(false, false, false);
+                DiffOutputControl diffOutputControl = new DiffOutputControl();
                 diffOutputControl.setDataDir(null);
 
                 changeLogWriter = new DiffToChangeLog(diffResult, diffOutputControl);
