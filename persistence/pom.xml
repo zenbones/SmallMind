@@ -154,10 +154,6 @@
         <groupId>com.mysema.maven</groupId>
         <artifactId>apt-maven-plugin</artifactId>
       </plugin>
-      <plugin>
-        <groupId>org.datanucleus</groupId>
-        <artifactId>datanucleus-maven-plugin</artifactId>
-      </plugin>
     </plugins>
   </build>
 </project>
