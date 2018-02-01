@@ -58,7 +58,7 @@ public abstract class Overlay<O extends Overlay<O>> implements Differentiable<O>
     return overlayClass;
   }
 
-  public O overlay (Object... overlays) {
+  public O overlay (Object[] overlays) {
 
     return overlay(overlays, null);
   }
