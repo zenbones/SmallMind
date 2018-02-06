@@ -30,12 +30,12 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.web.jersey.proxy;
+package org.smallmind.nutsnbolts.ssl;
 
 import javax.net.ssl.HostnameVerifier;
 import javax.net.ssl.SSLSession;
 
-public class TrustAllHostNameVerifier implements HostnameVerifier {
+public class NaiveHostNameVerifier implements HostnameVerifier {
 
   public boolean verify (String hostname, SSLSession session) {
 

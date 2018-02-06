@@ -52,6 +52,7 @@ import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.http.impl.conn.PoolingHttpClientConnectionManager;
 import org.apache.http.ssl.SSLContextBuilder;
+import org.smallmind.nutsnbolts.ssl.NaiveHostNameVerifier;
 
 public class JsonTargetFactory {
 
@@ -93,7 +94,7 @@ public class JsonTargetFactory {
     clientBuilder.setSSLContext(sslContext);
 
     // use SSLConnectionSocketFactory.getDefaultHostnameVerifier(), if you don't want to weaken
-    sslSocketFactory = new SSLConnectionSocketFactory(sslContext, new TrustAllHostNameVerifier());
+    sslSocketFactory = new SSLConnectionSocketFactory(sslContext, new NaiveHostNameVerifier());
 
     socketFactoryRegistry = RegistryBuilder.<ConnectionSocketFactory>create()
                               .register("http", PlainConnectionSocketFactory.getSocketFactory())
