@@ -42,12 +42,23 @@ import javax.net.ssl.KeyManager;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLSocketFactory;
 import javax.net.ssl.TrustManager;
+import org.smallmind.nutsnbolts.lang.StaticInitializationError;
 
 public class NaiveSSLSocketFactory extends SSLSocketFactory {
 
+  private static final NaiveSSLSocketFactory INSTANCE;
+
   private SSLSocketFactory internalSSLSocketFactory;
 
-  public NaiveSSLSocketFactory ()
+  static {
+    try {
+      INSTANCE = new NaiveSSLSocketFactory();
+    } catch (Exception exception) {
+      throw new StaticInitializationError(exception);
+    }
+  }
+
+  private NaiveSSLSocketFactory ()
     throws KeyManagementException, NoSuchAlgorithmException {
 
     TrustManager[] trustManagers = new TrustManager[] {new NaiveTrustManager()};
@@ -55,6 +66,11 @@ public class NaiveSSLSocketFactory extends SSLSocketFactory {
     context.init(new KeyManager[0], trustManagers, new SecureRandom());
 
     internalSSLSocketFactory = context.getSocketFactory();
+  }
+
+  public static NaiveSSLSocketFactory getDefault () {
+
+    return INSTANCE;
   }
 
   @Override
