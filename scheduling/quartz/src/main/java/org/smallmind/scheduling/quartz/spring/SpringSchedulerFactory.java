@@ -48,7 +48,7 @@ import org.springframework.context.event.ContextClosedEvent;
 public class SpringSchedulerFactory extends StdSchedulerFactory implements ApplicationContextAware, ApplicationListener<ContextClosedEvent> {
 
   private SpringJobFactory jobFactory;
-  private OnOrOff standbyMode = OnOrOff.OFF;
+  private OnOrOff activeMode = OnOrOff.ON;
 
   public SpringSchedulerFactory (Properties properties)
     throws SchedulerException {
@@ -56,9 +56,9 @@ public class SpringSchedulerFactory extends StdSchedulerFactory implements Appli
     super(properties);
   }
 
-  public void setStandbyMode (OnOrOff standbyMode) {
+  public void setActiveMode (OnOrOff activeMode) {
 
-    this.standbyMode = standbyMode;
+    this.activeMode = activeMode;
   }
 
   @Override
@@ -90,15 +90,15 @@ public class SpringSchedulerFactory extends StdSchedulerFactory implements Appli
     scheduler = super.getScheduler();
     scheduler.setJobFactory(jobFactory);
 
-    switch (standbyMode) {
+    switch (activeMode) {
       case ON:
-        scheduler.standby();
-        break;
-      case OFF:
         scheduler.start();
         break;
+      case OFF:
+        scheduler.standby();
+        break;
       default:
-        throw new UnknownSwitchCaseException(standbyMode.name());
+        throw new UnknownSwitchCaseException(activeMode.name());
     }
 
     return scheduler;

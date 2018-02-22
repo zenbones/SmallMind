@@ -34,6 +34,6 @@ package org.smallmind.memcached.jmx;
 
 public interface MemcachedMXBean {
 
-  void standby ()
+  void clear ()
     throws Exception;
 }

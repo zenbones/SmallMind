@@ -47,7 +47,8 @@ public class MemcachedMonitor extends StandardMBean implements MemcachedMXBean {
   }
 
   @Override
-  public void standby () throws Exception {
+  public void clear ()
+    throws Exception {
 
     memcachedClient.clear();
   }
