@@ -79,13 +79,16 @@ public class ZipUtility {
 
         Path entryPath = outputDir.resolve(zipEntry.getName());
 
-        Files.createDirectories(entryPath.getParent());
-        try (OutputStream fileOutputStream = Files.newOutputStream(entryPath, StandardOpenOption.WRITE, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING)) {
+        if (zipEntry.isDirectory()) {
+          Files.createDirectories(entryPath);
+        } else {
+          try (OutputStream fileOutputStream = Files.newOutputStream(entryPath, StandardOpenOption.WRITE, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING)) {
 
-          int bytesRead;
+            int bytesRead;
 
-          while ((bytesRead = zipInputStream.read(buffer)) >= 0) {
-            fileOutputStream.write(buffer, 0, bytesRead);
+            while ((bytesRead = zipInputStream.read(buffer)) >= 0) {
+              fileOutputStream.write(buffer, 0, bytesRead);
+            }
           }
         }
       }
