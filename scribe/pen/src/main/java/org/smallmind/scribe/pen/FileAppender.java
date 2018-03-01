@@ -209,7 +209,9 @@ public class FileAppender extends AbstractFormattedAppender {
 
     this.logPath = logPath;
 
-    try {
+    if (Files.isDirectory(logPath)) {
+      throw new IOException("File must specify a non-directory path(" + logPath.toAbsolutePath() + ")");
+    } else {
 
       Path parentPath;
 
@@ -217,16 +219,8 @@ public class FileAppender extends AbstractFormattedAppender {
         Files.createDirectories(parentPath);
       }
 
-      Files.createFile(logPath);
-    } catch (IOException ioException) {
-      throw new IOException("Error trying to instantiate the requested file(" + logPath.toAbsolutePath() + ")");
+      fileOutputStream = Files.newOutputStream(logPath, StandardOpenOption.CREATE, StandardOpenOption.APPEND);
     }
-
-    if (Files.isDirectory(logPath)) {
-      throw new IOException("File must specify a non-directory path(" + logPath.toAbsolutePath() + ")");
-    }
-
-    fileOutputStream = Files.newOutputStream(logPath, StandardOpenOption.CREATE, StandardOpenOption.APPEND);
   }
 
   public void setLogFile (String logFile)
