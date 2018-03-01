@@ -183,6 +183,16 @@ public class FileAppender extends AbstractFormattedAppender {
     this.rollover = rollover;
   }
 
+  public Cleanup getCleanup () {
+
+    return cleanup;
+  }
+
+  public void setCleanup (Cleanup cleanup) {
+
+    this.cleanup = cleanup;
+  }
+
   public Path getLogPath () {
 
     return logPath;

@@ -41,10 +41,24 @@ import java.util.LinkedList;
 
 public class FileCountCleanupRule implements CleanupRule<FileCountCleanupRule> {
 
-  private final int maximum;
+  private int maximum;
   private LinkedList<Path> pathList = new LinkedList<>();
 
+  public FileCountCleanupRule () {
+
+  }
+
   public FileCountCleanupRule (int maximum) {
+
+    this.maximum = maximum;
+  }
+
+  public int getMaximum () {
+
+    return maximum;
+  }
+
+  public void setMaximum (int maximum) {
 
     this.maximum = maximum;
   }

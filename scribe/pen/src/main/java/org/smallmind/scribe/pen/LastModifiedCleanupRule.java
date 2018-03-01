@@ -35,7 +35,7 @@ package org.smallmind.scribe.pen;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.time.Duration;
+import org.smallmind.nutsnbolts.time.Duration;
 
 public class LastModifiedCleanupRule implements CleanupRule<LastModifiedCleanupRule> {
 
@@ -43,11 +43,25 @@ public class LastModifiedCleanupRule implements CleanupRule<LastModifiedCleanupR
   private long durationAsMilliseconds;
   private long now = System.currentTimeMillis();
 
+  public LastModifiedCleanupRule () {
+
+  }
+
   public LastModifiedCleanupRule (Duration duration) {
+
+    setDuration(duration);
+  }
+
+  public Duration getDuration () {
+
+    return duration;
+  }
+
+  public void setDuration (Duration duration) {
 
     this.duration = duration;
 
-    durationAsMilliseconds = duration.toMillis();
+    durationAsMilliseconds = duration.toMilliseconds();
   }
 
   @Override
