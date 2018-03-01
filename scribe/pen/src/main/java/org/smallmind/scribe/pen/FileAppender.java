@@ -163,6 +163,12 @@ public class FileAppender extends AbstractFormattedAppender {
     this(logPath, null, cleanup, formatter, errorHandler);
   }
 
+  public FileAppender (String logFile, Rollover rollover, Cleanup cleanup, Formatter formatter, ErrorHandler errorHandler)
+    throws IOException {
+
+    this(Paths.get(logFile), rollover, cleanup, formatter, errorHandler);
+  }
+
   public FileAppender (Path logPath, Rollover rollover, Cleanup cleanup, Formatter formatter, ErrorHandler errorHandler)
     throws IOException {
 
