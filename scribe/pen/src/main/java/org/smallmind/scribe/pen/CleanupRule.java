@@ -32,34 +32,16 @@
  */
 package org.smallmind.scribe.pen;
 
-import java.util.Date;
+import java.io.IOException;
+import java.nio.file.Path;
 
-public class FormatStringTimestamp implements Timestamp {
+public interface CleanupRule<C extends CleanupRule<C>> {
 
-  private String format;
+  C copy ();
 
-  public FormatStringTimestamp () {
+  boolean willCleanup (Path possiblePath)
+    throws IOException, LoggerException;
 
-    this("%tY-%tm-%td");
-  }
-
-  public FormatStringTimestamp (String format) {
-
-    this.format = format;
-  }
-
-  public String getFormat () {
-
-    return format;
-  }
-
-  public void setFormat (String format) {
-
-    this.format = format;
-  }
-
-  public String getTimestamp (Date date) {
-
-    return String.format(format, date);
-  }
+  void finish ()
+    throws IOException, LoggerException;
 }

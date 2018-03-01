@@ -32,8 +32,6 @@
  */
 package org.smallmind.scribe.pen;
 
-import java.io.File;
-
 public class FileSizeRolloverRule implements RolloverRule {
 
   private FileSizeQuantifier fileSizeQuantifier;
@@ -72,8 +70,8 @@ public class FileSizeRolloverRule implements RolloverRule {
     this.fileSizeQuantifier = fileSizeQuantifier;
   }
 
-  public boolean willRollover (File logFile, long bytesToBeWritten) {
+  public boolean willRollover (long fileSize, long lastModified, long bytesToBeWritten) {
 
-    return (logFile.length() + bytesToBeWritten) > (maxSize * fileSizeQuantifier.getMultiplier());
+    return (fileSize + bytesToBeWritten) > (maxSize * fileSizeQuantifier.getMultiplier());
   }
 }

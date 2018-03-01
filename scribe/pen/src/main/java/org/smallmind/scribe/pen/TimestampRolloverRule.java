@@ -32,8 +32,12 @@
  */
 package org.smallmind.scribe.pen;
 
-import java.io.File;
-import java.util.Calendar;
+import java.time.Instant;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
+import java.time.temporal.ChronoField;
+import java.time.temporal.IsoFields;
+import java.time.temporal.TemporalField;
 import org.smallmind.nutsnbolts.lang.UnknownSwitchCaseException;
 
 public class TimestampRolloverRule implements RolloverRule {
@@ -62,25 +66,26 @@ public class TimestampRolloverRule implements RolloverRule {
     this.timestampQuantifier = timestampQuantifier;
   }
 
-  public boolean willRollover (File logFile, long bytesToBeWritten) {
+  public boolean willRollover (long fileSize, long lastModifiedTimeified, long bytesToBeWritten) {
 
-    Calendar now = Calendar.getInstance();
-    Calendar lastMod = Calendar.getInstance();
+    ZonedDateTime lastModifiedTime = ZonedDateTime.ofInstant(Instant.ofEpochMilli(lastModifiedTimeified), ZoneId.systemDefault());
+    ZonedDateTime now = ZonedDateTime.now();
 
-    lastMod.setTimeInMillis(logFile.lastModified());
+    TemporalField tl;
+
     switch (timestampQuantifier) {
       case TOP_OF_MINUTE:
-        return (now.get(Calendar.YEAR) != lastMod.get(Calendar.YEAR)) || (now.get(Calendar.MONTH) != lastMod.get(Calendar.MONTH)) || (now.get(Calendar.DAY_OF_MONTH) != lastMod.get(Calendar.DAY_OF_MONTH)) || (now.get(Calendar.HOUR_OF_DAY) != lastMod.get(Calendar.HOUR_OF_DAY)) || (now.get(Calendar.MINUTE) != lastMod.get(Calendar.MINUTE));
+        return (now.getYear() != lastModifiedTime.getYear()) || (now.getMonthValue() != lastModifiedTime.getMonthValue()) || (now.getDayOfMonth() != lastModifiedTime.getDayOfMonth()) || (now.getHour() != lastModifiedTime.getHour()) || (now.getMinute() != lastModifiedTime.getMinute());
       case TOP_OF_HOUR:
-        return (now.get(Calendar.YEAR) != lastMod.get(Calendar.YEAR)) || (now.get(Calendar.MONTH) != lastMod.get(Calendar.MONTH)) || (now.get(Calendar.DAY_OF_MONTH) != lastMod.get(Calendar.DAY_OF_MONTH)) || (now.get(Calendar.HOUR_OF_DAY) != lastMod.get(Calendar.HOUR_OF_DAY));
+        return (now.getYear() != lastModifiedTime.getYear()) || (now.getMonthValue() != lastModifiedTime.getMonthValue()) || (now.getDayOfMonth() != lastModifiedTime.getDayOfMonth()) || (now.getHour() != lastModifiedTime.getHour());
       case HALF_DAY:
-        return (now.get(Calendar.YEAR) != lastMod.get(Calendar.YEAR)) || (now.get(Calendar.MONTH) != lastMod.get(Calendar.MONTH)) || (now.get(Calendar.DAY_OF_MONTH) != lastMod.get(Calendar.DAY_OF_MONTH)) || (now.get(Calendar.AM_PM) != lastMod.get(Calendar.AM_PM));
+        return (now.getYear() != lastModifiedTime.getYear()) || (now.getMonthValue() != lastModifiedTime.getMonthValue()) || (now.getDayOfMonth() != lastModifiedTime.getDayOfMonth()) || (now.get(ChronoField.AMPM_OF_DAY) != lastModifiedTime.get(ChronoField.AMPM_OF_DAY));
       case TOP_OF_DAY:
-        return (now.get(Calendar.YEAR) != lastMod.get(Calendar.YEAR)) || (now.get(Calendar.MONTH) != lastMod.get(Calendar.MONTH)) || (now.get(Calendar.DAY_OF_MONTH) != lastMod.get(Calendar.DAY_OF_MONTH));
+        return (now.getYear() != lastModifiedTime.getYear()) || (now.getMonthValue() != lastModifiedTime.getMonthValue()) || (now.getDayOfMonth() != lastModifiedTime.getDayOfMonth());
       case TOP_OF_WEEK:
-        return (now.get(Calendar.YEAR) != lastMod.get(Calendar.YEAR)) || (now.get(Calendar.MONTH) != lastMod.get(Calendar.MONTH)) || (now.get(Calendar.WEEK_OF_MONTH) != lastMod.get(Calendar.WEEK_OF_MONTH));
+        return (now.getYear() != lastModifiedTime.getYear()) || (now.getMonthValue() != lastModifiedTime.getMonthValue()) || (now.get(IsoFields.WEEK_OF_WEEK_BASED_YEAR) != lastModifiedTime.get(IsoFields.WEEK_OF_WEEK_BASED_YEAR));
       case TOP_OF_MONTH:
-        return (now.get(Calendar.YEAR) != lastMod.get(Calendar.YEAR)) || (now.get(Calendar.MONTH) != lastMod.get(Calendar.MONTH));
+        return (now.getYear() != lastModifiedTime.getYear()) || (now.getMonthValue() != lastModifiedTime.getMonthValue());
       default:
         throw new UnknownSwitchCaseException(timestampQuantifier.name());
     }

@@ -32,7 +32,6 @@
  */
 package org.smallmind.scribe.pen;
 
-import java.io.File;
 import java.util.Date;
 
 public class Rollover {
@@ -92,10 +91,10 @@ public class Rollover {
     this.rules = rules;
   }
 
-  public boolean willRollover (File logFile, long bytesToBeWritten) {
+  public boolean willRollover (long fileSize, long lastModified, long bytesToBeWritten) {
 
     for (RolloverRule rule : rules) {
-      if (rule.willRollover(logFile, bytesToBeWritten)) {
+      if (rule.willRollover(fileSize, lastModified, bytesToBeWritten)) {
 
         return true;
       }

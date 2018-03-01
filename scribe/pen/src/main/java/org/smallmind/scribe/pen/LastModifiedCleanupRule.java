@@ -32,34 +32,39 @@
  */
 package org.smallmind.scribe.pen;
 
-import java.util.Date;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.time.Duration;
 
-public class FormatStringTimestamp implements Timestamp {
+public class LastModifiedCleanupRule implements CleanupRule<LastModifiedCleanupRule> {
 
-  private String format;
+  private Duration duration;
+  private long durationAsMilliseconds;
+  private long now = System.currentTimeMillis();
 
-  public FormatStringTimestamp () {
+  public LastModifiedCleanupRule (Duration duration) {
 
-    this("%tY-%tm-%td");
+    this.duration = duration;
+
+    durationAsMilliseconds = duration.toMillis();
   }
 
-  public FormatStringTimestamp (String format) {
+  @Override
+  public LastModifiedCleanupRule copy () {
 
-    this.format = format;
+    return new LastModifiedCleanupRule(duration);
   }
 
-  public String getFormat () {
+  @Override
+  public boolean willCleanup (Path possiblePath)
+    throws IOException {
 
-    return format;
+    return now - Files.getLastModifiedTime(possiblePath).toMillis() > durationAsMilliseconds;
   }
 
-  public void setFormat (String format) {
+  @Override
+  public void finish () {
 
-    this.format = format;
-  }
-
-  public String getTimestamp (Date date) {
-
-    return String.format(format, date);
   }
 }

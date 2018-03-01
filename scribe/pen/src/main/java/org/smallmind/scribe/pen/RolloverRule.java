@@ -32,9 +32,7 @@
  */
 package org.smallmind.scribe.pen;
 
-import java.io.File;
-
 public interface RolloverRule {
 
-  public abstract boolean willRollover (File logFile, long bytesToBeWritten);
+  boolean willRollover (long fileSize, long lastModified, long bytesToBeWritten);
 }
