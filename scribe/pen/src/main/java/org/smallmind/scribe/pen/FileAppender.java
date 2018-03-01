@@ -219,7 +219,7 @@ public class FileAppender extends AbstractFormattedAppender {
         Files.createDirectories(parentPath);
       }
 
-      fileOutputStream = Files.newOutputStream(logPath, StandardOpenOption.CREATE, StandardOpenOption.APPEND);
+      openStream();
     }
   }
 
@@ -227,6 +227,14 @@ public class FileAppender extends AbstractFormattedAppender {
     throws IOException {
 
     setLogPath(Paths.get(logFile));
+  }
+
+  private void openStream ()
+    throws IOException {
+
+    fileOutputStream = Files.newOutputStream(logPath, StandardOpenOption.CREATE, StandardOpenOption.APPEND);
+    lastModified = Files.getLastModifiedTime(logPath).toMillis();
+    fileSize = 0;
   }
 
   public synchronized void handleOutput (String formattedOutput)
@@ -282,7 +290,7 @@ public class FileAppender extends AbstractFormattedAppender {
           throw new LoggerException(ioException, "Could not rollover the log file to the archive name(%s)", rolloverPath.toAbsolutePath());
         }
         try {
-          fileOutputStream = Files.newOutputStream(logPath, StandardOpenOption.CREATE, StandardOpenOption.APPEND);
+          openStream();
         } catch (IOException ioException) {
           throw new LoggerException(ioException, "Unable to create the new log file(%s)", logPath.toAbsolutePath());
         }

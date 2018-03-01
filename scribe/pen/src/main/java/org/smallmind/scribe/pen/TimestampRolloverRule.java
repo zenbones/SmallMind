@@ -37,7 +37,6 @@ import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoField;
 import java.time.temporal.IsoFields;
-import java.time.temporal.TemporalField;
 import org.smallmind.nutsnbolts.lang.UnknownSwitchCaseException;
 
 public class TimestampRolloverRule implements RolloverRule {
@@ -70,8 +69,6 @@ public class TimestampRolloverRule implements RolloverRule {
 
     ZonedDateTime lastModifiedTime = ZonedDateTime.ofInstant(Instant.ofEpochMilli(lastModifiedTimeified), ZoneId.systemDefault());
     ZonedDateTime now = ZonedDateTime.now();
-
-    TemporalField tl;
 
     switch (timestampQuantifier) {
       case TOP_OF_MINUTE:
