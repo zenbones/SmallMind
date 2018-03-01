@@ -229,10 +229,10 @@ public class FileAppender extends AbstractFormattedAppender {
     fileOutputStream = Files.newOutputStream(logPath, StandardOpenOption.CREATE, StandardOpenOption.APPEND);
   }
 
-  public void setLogFilePath (String logFilePath)
+  public void setLogFile (String logFile)
     throws IOException {
 
-    setLogPath(Paths.get(logFilePath));
+    setLogPath(Paths.get(logFile));
   }
 
   public synchronized void handleOutput (String formattedOutput)

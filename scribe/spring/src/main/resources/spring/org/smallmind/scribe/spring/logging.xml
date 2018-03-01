@@ -96,7 +96,7 @@
   <bean id="fileAppender" class="org.smallmind.scribe.pen.AsynchronousAppender">
     <constructor-arg index="0" name="internalAppender">
       <bean class="org.smallmind.scribe.pen.FileAppender">
-        <property name="logFilePath" value="${log.dir}/${log.file}.txt"/>
+        <property name="logFile" value="${log.dir}/${log.file}.txt"/>
         <property name="rollover" ref="rollover"/>
         <property name="formatter" ref="patternFormatter"/>
         <property name="errorHandler" ref="consoleErrorHandler"/>
@@ -106,7 +106,7 @@
   </bean>
 
   <bean id="errorFileAppender" class="org.smallmind.scribe.pen.FileAppender">
-    <property name="logFilePath" value="${log.dir}/${log.file}-error.txt"/>
+    <property name="logFile" value="${log.dir}/${log.file}-error.txt"/>
     <property name="rollover" ref="rollover"/>
     <property name="filter" ref="warnLevelFilter"/>
     <property name="formatter" ref="patternFormatter"/>
