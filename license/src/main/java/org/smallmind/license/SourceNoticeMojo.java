@@ -196,14 +196,14 @@ public class SourceNoticeMojo extends AbstractMojo {
 
                 Files.move(tempPath, licensedPath, StandardCopyOption.REPLACE_EXISTING);
               } catch (IOException ioException) {
-                throw new WrappingException(new MojoFailureException(ioException.getMessage(), ioException));
+                throw new WrappedException(new MojoFailureException(ioException.getMessage(), ioException));
               } catch (MojoFailureException mojoFailureException) {
-                throw new WrappingException(mojoFailureException);
+                throw new WrappedException(mojoFailureException);
               }
             }
           });
-        } catch (WrappingException wrappingException) {
-          throw (MojoFailureException)wrappingException.getCause();
+        } catch (WrappedException wrappingException) {
+          throw wrappingException.convert(MojoFailureException.class);
         }
       } catch (IOException ioException) {
         throw new MojoFailureException(ioException.getMessage(), ioException);
@@ -327,14 +327,6 @@ public class SourceNoticeMojo extends AbstractMojo {
 
     for (int count = 0; count < stencil.getBlankLinesAfter(); count++) {
       fileWriter.write(System.getProperty("line.separator"));
-    }
-  }
-
-  private class WrappingException extends RuntimeException {
-
-    private WrappingException (MojoFailureException mojoFailureException) {
-
-      super(mojoFailureException);
     }
   }
 }

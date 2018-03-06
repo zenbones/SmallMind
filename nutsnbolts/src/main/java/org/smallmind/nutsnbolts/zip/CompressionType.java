@@ -48,6 +48,7 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 import java.util.zip.ZipOutputStream;
 import org.smallmind.nutsnbolts.io.PathUtility;
+import org.smallmind.nutsnbolts.lang.WrappedException;
 
 public enum CompressionType {
 
@@ -151,12 +152,12 @@ public enum CompressionType {
                 Files.copy(compressionPath, zipOutputStream);
                 zipOutputStream.closeEntry();
               } catch (IOException ioException) {
-                throw new WrappingException(ioException);
+                throw new WrappedException(ioException);
               }
             }
           });
-        } catch (WrappingException wrappingException) {
-          throw (IOException)wrappingException.getCause();
+        } catch (WrappedException wrappedException) {
+          throw wrappedException.convert(IOException.class);
         }
       }
     }
@@ -205,14 +206,6 @@ public enum CompressionType {
           }
         }
       }
-    }
-  }
-
-  private static class WrappingException extends RuntimeException {
-
-    private WrappingException (IOException ioException) {
-
-      super(ioException);
     }
   }
 }
