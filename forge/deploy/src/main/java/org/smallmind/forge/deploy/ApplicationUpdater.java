@@ -43,7 +43,7 @@ import java.nio.file.SimpleFileVisitor;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.nio.file.attribute.UserPrincipal;
 import org.smallmind.nutsnbolts.io.FileUtility;
-import org.smallmind.nutsnbolts.zip.ZipUtility;
+import org.smallmind.nutsnbolts.zip.CompressionType;
 
 public class ApplicationUpdater {
 
@@ -76,7 +76,7 @@ public class ApplicationUpdater {
     }
 
     System.out.println("Exploding new service installation...");
-    ZipUtility.explode(zipPath, installPath, (name) -> System.out.println("Expanding " + name + "..."));
+    CompressionType.ZIP.explode(zipPath, installPath, (name) -> System.out.println("Expanding " + name + "..."));
     Files.deleteIfExists(zipPath);
 
     Files.createDirectories(applicationRootPath.resolve("log"));

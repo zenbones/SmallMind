@@ -39,6 +39,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
 import java.util.Date;
+import org.smallmind.nutsnbolts.io.PathUtility;
 
 public class FileAppender extends AbstractFormattedAppender {
 
@@ -258,7 +259,7 @@ public class FileAppender extends AbstractFormattedAppender {
         int uniqueCount = 0;
 
         rolloverNameBuilder = new StringBuilder();
-        logFileName = logPath.getFileName().toString();
+        logFileName = PathUtility.fileNameAsString(logPath);
 
         if ((dotPos = logFileName.lastIndexOf('.')) >= 0) {
           rolloverNameBuilder.append(logFileName.substring(0, dotPos));

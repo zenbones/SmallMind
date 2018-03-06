@@ -32,7 +32,7 @@
  */
 package org.smallmind.spark.tanukisoft.maven;
 
-import java.io.File;
+import java.nio.file.Paths;
 import java.util.Arrays;
 import org.apache.maven.artifact.Artifact;
 import org.apache.maven.artifact.deployer.ArtifactDeployer;
@@ -41,22 +41,17 @@ import org.apache.maven.artifact.factory.ArtifactFactory;
 import org.apache.maven.artifact.repository.ArtifactRepository;
 import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugin.MojoExecutionException;
-import org.apache.maven.plugin.MojoFailureException;
 import org.apache.maven.plugins.annotations.Component;
 import org.apache.maven.plugins.annotations.LifecyclePhase;
 import org.apache.maven.plugins.annotations.Mojo;
 import org.apache.maven.plugins.annotations.Parameter;
 import org.apache.maven.project.MavenProject;
-import org.smallmind.nutsnbolts.maven.CompressionType;
+import org.smallmind.nutsnbolts.zip.CompressionType;
 
 // Deploys Tanukisoft based os service wrappers
 @Mojo(name = "deploy-wrapper", defaultPhase = LifecyclePhase.DEPLOY, threadSafe = true)
 public class DeployWrapperMojo extends AbstractMojo {
 
-  @Component
-  ArtifactFactory artifactFactory;
-  @Component
-  ArtifactDeployer artifactDeployer;
   @Parameter(readonly = true, property = "project")
   private MavenProject project;
   @Parameter(readonly = true, property = "localRepository")
@@ -69,37 +64,39 @@ public class DeployWrapperMojo extends AbstractMojo {
   private String compression;
   @Parameter(defaultValue = "false")
   private boolean skip;
+  @Component
+  private ArtifactFactory artifactFactory;
+  @Component
+  private ArtifactDeployer artifactDeployer;
 
   public void execute ()
-    throws MojoExecutionException, MojoFailureException {
+    throws MojoExecutionException {
 
     if (!skip) {
 
       Artifact applicationArtifact;
       CompressionType compressionType;
-      StringBuilder pathBuilder;
+      StringBuilder nameBuilder;
 
       try {
         compressionType = CompressionType.valueOf(compression.replace('-', '_').toUpperCase());
-      }
-      catch (Exception exception) {
+      } catch (Exception exception) {
         throw new MojoExecutionException(String.format("Unknown compression type(%s) - valid choices are %s", compression, Arrays.toString(CompressionType.values())), exception);
       }
 
       applicationArtifact = artifactFactory.createArtifactWithClassifier(project.getGroupId(), project.getArtifactId(), project.getVersion(), compressionType.getExtension(), (project.getArtifact().getClassifier() == null) ? "app" : project.getArtifact().getClassifier() + "-app");
-      pathBuilder = new StringBuilder(project.getBuild().getDirectory()).append(System.getProperty("file.separator")).append(applicationName).append('-').append(project.getVersion());
+      nameBuilder = new StringBuilder(applicationName).append('-').append(project.getVersion());
 
       if (project.getArtifact().getClassifier() != null) {
-        pathBuilder.append('-');
-        pathBuilder.append(project.getArtifact().getClassifier());
+        nameBuilder.append('-');
+        nameBuilder.append(project.getArtifact().getClassifier());
       }
 
-      pathBuilder.append("-app").append('.').append(compressionType.getExtension());
+      nameBuilder.append("-app").append('.').append(compressionType.getExtension());
 
       try {
-        artifactDeployer.deploy(new File(pathBuilder.toString()), applicationArtifact, deploymentRepository, localRepository);
-      }
-      catch (ArtifactDeploymentException artifactDeploymentException) {
+        artifactDeployer.deploy(Paths.get(project.getBuild().getDirectory(), nameBuilder.toString()).toFile(), applicationArtifact, deploymentRepository, localRepository);
+      } catch (ArtifactDeploymentException artifactDeploymentException) {
         throw new MojoExecutionException("Unable to deploy the application(" + applicationName + ")", artifactDeploymentException);
       }
     }

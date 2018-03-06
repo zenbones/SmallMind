@@ -61,7 +61,7 @@ import org.apache.maven.plugins.annotations.Mojo;
 import org.apache.maven.plugins.annotations.Parameter;
 import org.apache.maven.plugins.annotations.ResolutionScope;
 import org.apache.maven.project.MavenProject;
-import org.smallmind.nutsnbolts.maven.CompressionType;
+import org.smallmind.nutsnbolts.zip.CompressionType;
 import org.smallmind.spark.singularity.boot.SingularityEntryPoint;
 import org.smallmind.spark.singularity.boot.SingularityIndex;
 
@@ -69,10 +69,6 @@ import org.smallmind.spark.singularity.boot.SingularityIndex;
 @Mojo(name = "generate-singularity", defaultPhase = LifecyclePhase.PACKAGE, requiresDependencyResolution = ResolutionScope.RUNTIME, threadSafe = true)
 public class GenerateSingularityMojo extends AbstractMojo {
 
-  @Parameter(readonly = true, property = "plugin.artifacts")
-  protected List<Artifact> pluginArtifacts;
-  @Component
-  ArtifactFactory artifactFactory;
   @Parameter(readonly = true, property = "project")
   private MavenProject project;
   @Parameter
@@ -85,6 +81,10 @@ public class GenerateSingularityMojo extends AbstractMojo {
   private boolean verbose;
   @Parameter(defaultValue = "false")
   private boolean skip;
+  @Component
+  ArtifactFactory artifactFactory;
+  @Parameter(readonly = true, property = "plugin.artifacts")
+  protected List<Artifact> pluginArtifacts;
 
   public void execute ()
     throws MojoExecutionException, MojoFailureException {
@@ -97,7 +97,7 @@ public class GenerateSingularityMojo extends AbstractMojo {
       Path libraryPath;
       Path indexPath;
       Path classesPath;
-      File compressedFile;
+      Path compressedFile;
       boolean bootClassesFound = false;
 
       try {
@@ -205,13 +205,13 @@ public class GenerateSingularityMojo extends AbstractMojo {
           getLog().info("Compressing output jar...");
         }
 
-        CompressionType.JAR.compress(compressedFile = Paths.get(project.getBuild().getDirectory(), constructArtifactName()).toFile(), buildPath.toFile(), manifest);
+        CompressionType.JAR.compress(buildPath, compressedFile = Paths.get(project.getBuild().getDirectory(), constructArtifactName()), manifest);
       } catch (IOException ioException) {
         throw new MojoExecutionException("Problem constructing the executable jar", ioException);
       }
 
       applicationArtifact = artifactFactory.createArtifact(project.getGroupId(), project.getArtifactId(), project.getVersion(), "compile", "jar");
-      applicationArtifact.setFile(compressedFile);
+      applicationArtifact.setFile(compressedFile.toFile());
 
       project.addAttachedArtifact(applicationArtifact);
     }

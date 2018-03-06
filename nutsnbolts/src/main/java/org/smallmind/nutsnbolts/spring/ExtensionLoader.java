@@ -32,7 +32,10 @@
  */
 package org.smallmind.nutsnbolts.spring;
 
-import java.io.File;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import org.smallmind.nutsnbolts.io.PathUtility;
 import org.smallmind.nutsnbolts.lang.ClasspathClassGate;
 import org.smallmind.nutsnbolts.lang.GatingClassLoader;
 import org.springframework.context.support.FileSystemXmlApplicationContext;
@@ -45,27 +48,27 @@ public class ExtensionLoader<E extends ExtensionInstance> {
   public ExtensionLoader (Class<E> extensionInstanceClass, String springFileName)
     throws ExtensionLoaderException {
 
-    File extensionFile = new File(System.getProperty("user.dir") + "/" + springFileName);
+    Path extensionFile = Paths.get(System.getProperty("user.dir"), springFileName);
 
-    if (extensionFile.exists()) {
+    if (Files.isRegularFile(extensionFile)) {
 
-      FileSystemXmlApplicationContext applicationContext = new FileSystemXmlApplicationContext(extensionFile.getAbsolutePath());
+      FileSystemXmlApplicationContext applicationContext = new FileSystemXmlApplicationContext(PathUtility.asNormalizedString(extensionFile));
 
       try {
         extensionInstance = applicationContext.getBean(extensionInstanceClass);
       } catch (Throwable throwable) {
-        throw new ExtensionLoaderException(throwable, "Unable to execute extension configuration(%s)", extensionFile.getAbsolutePath());
+        throw new ExtensionLoaderException(throwable, "Unable to execute extension configuration(%s)", extensionFile);
       }
 
       if ((extensionInstance.getClasspathComponents() != null) && (extensionInstance.getClasspathComponents().length > 0)) {
 
-        File classpathComponentFile;
+        Path classpathComponentFile;
         String[] normalizedPathComponents = new String[extensionInstance.getClasspathComponents().length];
         int componentIndex = 0;
 
         for (String classpathComponent : extensionInstance.getClasspathComponents()) {
-          classpathComponentFile = new File(classpathComponent);
-          normalizedPathComponents[componentIndex++] = classpathComponentFile.isAbsolute() ? classpathComponent : System.getProperty("user.dir") + '/' + classpathComponent;
+          classpathComponentFile = Paths.get(classpathComponent);
+          normalizedPathComponents[componentIndex++] = PathUtility.asNormalizedString(classpathComponentFile.isAbsolute() ? classpathComponentFile : Paths.get(System.getProperty("user.dir")).resolve(classpathComponent));
         }
 
         Thread.currentThread().setContextClassLoader(classLoader = new GatingClassLoader(Thread.currentThread().getContextClassLoader(), -1, new ClasspathClassGate(normalizedPathComponents)));

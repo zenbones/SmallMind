@@ -1,13 +1,16 @@
 package org.smallmind.license;
 
 import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileFilter;
-import java.io.FileReader;
-import java.io.FileWriter;
+import java.io.BufferedWriter;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
+import java.nio.file.StandardOpenOption;
 import java.util.LinkedList;
 import java.util.regex.Pattern;
+import java.util.stream.Stream;
 import org.apache.maven.model.Resource;
 import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugin.MojoExecutionException;
@@ -27,6 +30,7 @@ public class SourceNoticeMojo extends AbstractMojo {
 
     FIRST, LAST, COMPLETED, TERMINATED
   }
+
   private static final Stencil[] DEFAULT_STENCILS = new Stencil[] {new JavaDocStencil()};
   @Parameter(readonly = true, property = "project")
   private MavenProject project;
@@ -67,7 +71,7 @@ public class SourceNoticeMojo extends AbstractMojo {
 
     for (Rule rule : rules) {
 
-      FileFilter[] fileFilters;
+      PathFilter[] pathFilters;
       String[] noticeArray;
       boolean noticed;
       boolean stenciled;
@@ -85,10 +89,10 @@ public class SourceNoticeMojo extends AbstractMojo {
         noticeArray = null;
       } else {
 
-        File noticeFile;
+        Path noticeFile;
 
-        noticeFile = new File(rule.getNotice());
-        if ((noticeArray = getFileAsLineArray(noticeFile.isAbsolute() ? noticeFile.getAbsolutePath() : rootProject.getBasedir() + System.getProperty("file.separator") + noticeFile.getPath())) == null) {
+        noticeFile = Paths.get(rule.getNotice());
+        if ((noticeArray = getFileAsLineArray(noticeFile.isAbsolute() ? noticeFile : rootProject.getBasedir().toPath().resolve(noticeFile))) == null) {
           noticed = false;
         }
       }
@@ -100,9 +104,9 @@ public class SourceNoticeMojo extends AbstractMojo {
           throw new MojoExecutionException("No file types were specified for rule(" + rule.getId() + ")");
         }
 
-        fileFilters = new FileFilter[rule.getFileTypes().length];
-        for (int count = 0; count < fileFilters.length; count++) {
-          fileFilters[count] = new FileTypeFilenameFilter(rule.getFileTypes()[count]);
+        pathFilters = new PathFilter[rule.getFileTypes().length];
+        for (int count = 0; count < pathFilters.length; count++) {
+          pathFilters[count] = new PathTypeFilenameFilter(rule.getFileTypes()[count]);
         }
 
         stenciled = false;
@@ -110,21 +114,21 @@ public class SourceNoticeMojo extends AbstractMojo {
           if (stencil.getId().equals(rule.getStencilId())) {
             stenciled = true;
 
-            updateNotice(stencil, noticeArray, buffer, project.getBuild().getSourceDirectory(), fileFilters);
-            updateNotice(stencil, noticeArray, buffer, project.getBuild().getScriptSourceDirectory(), fileFilters);
+            updateNotice(stencil, noticeArray, buffer, project.getBuild().getSourceDirectory(), pathFilters);
+            updateNotice(stencil, noticeArray, buffer, project.getBuild().getScriptSourceDirectory(), pathFilters);
 
             if (includeResources) {
               for (Resource resource : project.getBuild().getResources()) {
-                updateNotice(stencil, noticeArray, buffer, resource.getDirectory(), fileFilters);
+                updateNotice(stencil, noticeArray, buffer, resource.getDirectory(), pathFilters);
               }
             }
 
             if (includeTests) {
-              updateNotice(stencil, noticeArray, buffer, project.getBuild().getTestSourceDirectory(), fileFilters);
+              updateNotice(stencil, noticeArray, buffer, project.getBuild().getTestSourceDirectory(), pathFilters);
 
               if (includeResources) {
                 for (Resource testResource : project.getBuild().getTestResources()) {
-                  updateNotice(stencil, noticeArray, buffer, testResource.getDirectory(), fileFilters);
+                  updateNotice(stencil, noticeArray, buffer, testResource.getDirectory(), pathFilters);
                 }
               }
             }
@@ -140,79 +144,99 @@ public class SourceNoticeMojo extends AbstractMojo {
     }
   }
 
-  private void updateNotice (Stencil stencil, String[] noticeArray, char[] buffer, String directoryPath, FileFilter... fileFilters)
-    throws MojoExecutionException {
+  private void updateNotice (Stencil stencil, String[] noticeArray, char[] buffer, String directory, PathFilter... pathFilters)
+    throws MojoFailureException {
 
-    File tempFile;
-    BufferedReader fileReader;
-    FileWriter fileWriter;
-    Pattern skipPattern = null;
-    String unprocessedLine;
-    int charsRead;
+    Path directoryPath = Paths.get(directory);
 
-    if (stencil.getSkipLines() != null) {
-      skipPattern = Pattern.compile(stencil.getSkipLines());
-    }
+    if (Files.isDirectory(directoryPath)) {
 
-    for (File licensedFile : new LicensedFileIterable(new File(directoryPath), fileFilters)) {
-      if (verbose) {
-        getLog().info(String.format(((noticeArray == null) ? "Removing" : "Updating") + " license notice for file(%s)...", licensedFile.getAbsolutePath()));
+      final Pattern skipPattern;
+
+      if (stencil.getSkipLines() != null) {
+        skipPattern = Pattern.compile(stencil.getSkipLines());
+      } else {
+        skipPattern = null;
       }
 
-      try {
-        fileWriter = new FileWriter(tempFile = new File(licensedFile.getParent() + System.getProperty("file.separator") + "license.temp"));
-
+      try (Stream<Path> pathStream = Files.walk(directoryPath)) {
         try {
-          fileReader = new BufferedReader(new FileReader(licensedFile));
+          pathStream.forEach((licensedPath) -> {
+            if (Files.isRegularFile(licensedPath) && accept(licensedPath, pathFilters)) {
 
-          unprocessedLine = seekNotice(stencil, skipPattern, fileReader, fileWriter);
+              Path tempPath;
 
-          if (noticeArray != null) {
-            applyNotice(stencil, noticeArray, fileWriter);
-          }
+              if (verbose) {
+                getLog().info(String.format(((noticeArray == null) ? "Removing" : "Updating") + " license notice for file(%s)...", licensedPath));
+              }
 
-          if (unprocessedLine != null) {
-            fileWriter.write(unprocessedLine);
-            fileWriter.write(System.getProperty("line.separator"));
-          }
+              try {
+                try (BufferedWriter fileWriter = Files.newBufferedWriter(tempPath = licensedPath.getParent().resolve("license.temp"), StandardOpenOption.WRITE, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING)) {
+                  try (BufferedReader fileReader = Files.newBufferedReader(licensedPath)) {
 
-          while ((charsRead = fileReader.read(buffer)) >= 0) {
-            fileWriter.write(buffer, 0, charsRead);
-          }
+                    String unprocessedLine;
+                    int charsRead;
 
-          fileWriter.close();
-          fileReader.close();
+                    unprocessedLine = seekNotice(stencil, skipPattern, fileReader, fileWriter);
 
-          if (!licensedFile.delete()) {
-            throw new MojoFailureException("Unable to delete file(" + licensedFile.getAbsolutePath() + ")");
-          }
-        } catch (Exception exception) {
-          tempFile.delete();
-          throw new MojoExecutionException("Exception during notice processing", exception);
+                    if (noticeArray != null) {
+                      applyNotice(stencil, noticeArray, fileWriter);
+                    }
+
+                    if (unprocessedLine != null) {
+                      fileWriter.write(unprocessedLine);
+                      fileWriter.write(System.getProperty("line.separator"));
+                    }
+
+                    while ((charsRead = fileReader.read(buffer)) >= 0) {
+                      fileWriter.write(buffer, 0, charsRead);
+                    }
+                  }
+                }
+
+                Files.move(tempPath, licensedPath, StandardCopyOption.REPLACE_EXISTING);
+              } catch (IOException ioException) {
+                throw new WrappingException(new MojoFailureException(ioException.getMessage(), ioException));
+              } catch (MojoFailureException mojoFailureException) {
+                throw new WrappingException(mojoFailureException);
+              }
+            }
+          });
+        } catch (WrappingException wrappingException) {
+          throw (MojoFailureException)wrappingException.getCause();
         }
-
-        if (!tempFile.renameTo(licensedFile)) {
-          throw new MojoFailureException("Unable to rename temp file(" + tempFile.getAbsolutePath() + ") to processed file(" + licensedFile.getAbsolutePath() + ")");
-        }
-      } catch (MojoExecutionException mojoExecutionException) {
-        throw mojoExecutionException;
-      } catch (Exception exception) {
-        throw new MojoExecutionException("Exception during notice processing", exception);
+      } catch (IOException ioException) {
+        throw new MojoFailureException(ioException.getMessage(), ioException);
       }
     }
   }
 
-  private String[] getFileAsLineArray (String noticePath)
-    throws MojoExecutionException {
+  private boolean accept (Path path, PathFilter... pathFilters) {
 
-    BufferedReader noticeReader;
+    if ((pathFilters != null) && (pathFilters.length > 0)) {
+      for (PathFilter pathFilter : pathFilters) {
+        if (pathFilter.accept(path)) {
+
+          return true;
+        }
+      }
+
+      return false;
+    }
+
+    return true;
+  }
+
+  private String[] getFileAsLineArray (Path noticePath) {
+
     LinkedList<String> lineList;
     String[] lineArray;
-    String singleLine;
 
-    try {
-      noticeReader = new BufferedReader(new FileReader(noticePath));
-      lineList = new LinkedList<String>();
+    try (BufferedReader noticeReader = Files.newBufferedReader(noticePath)) {
+
+      String singleLine;
+
+      lineList = new LinkedList<>();
       while ((singleLine = noticeReader.readLine()) != null) {
         lineList.add(singleLine);
       }
@@ -227,7 +251,7 @@ public class SourceNoticeMojo extends AbstractMojo {
     return lineArray;
   }
 
-  private String seekNotice (Stencil stencil, Pattern skipPattern, BufferedReader fileReader, FileWriter fileWriter)
+  private String seekNotice (Stencil stencil, Pattern skipPattern, BufferedReader fileReader, BufferedWriter fileWriter)
     throws IOException, MojoFailureException {
 
     NoticeState noticeState;
@@ -276,7 +300,7 @@ public class SourceNoticeMojo extends AbstractMojo {
     return singleLine;
   }
 
-  private void applyNotice (Stencil stencil, String[] noticeArray, FileWriter fileWriter)
+  private void applyNotice (Stencil stencil, String[] noticeArray, BufferedWriter fileWriter)
     throws IOException {
 
     for (int count = 0; count < stencil.getBlankLinesBefore(); count++) {
@@ -303,6 +327,14 @@ public class SourceNoticeMojo extends AbstractMojo {
 
     for (int count = 0; count < stencil.getBlankLinesAfter(); count++) {
       fileWriter.write(System.getProperty("line.separator"));
+    }
+  }
+
+  private class WrappingException extends RuntimeException {
+
+    private WrappingException (MojoFailureException mojoFailureException) {
+
+      super(mojoFailureException);
     }
   }
 }

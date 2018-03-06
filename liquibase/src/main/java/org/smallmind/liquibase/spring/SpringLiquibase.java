@@ -32,11 +32,12 @@
  */
 package org.smallmind.liquibase.spring;
 
-import java.io.File;
 import java.io.IOException;
 import java.io.PrintStream;
 import java.io.PrintWriter;
 import java.io.Writer;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.sql.SQLException;
 import java.util.Collections;
 import java.util.HashSet;
@@ -185,7 +186,7 @@ public class SpringLiquibase implements InitializingBean {
                 changeLogWriter.setChangeSetAuthor("auto.generated");
                 changeLogWriter.setChangeSetContext(contexts);
 
-                changeLogWriter.print(new PrintStream(new File((((outputDir == null) || outputDir.isEmpty()) ? System.getProperty("java.io.tmpdir") : outputDir) + System.getProperty("file.separator") + catalog + ".changelog")));
+                changeLogWriter.print(new PrintStream(Files.newOutputStream(Paths.get(((outputDir == null) || outputDir.isEmpty()) ? System.getProperty("java.io.tmpdir") : outputDir, catalog + ".changelog"))));
               }
               break;
             default:

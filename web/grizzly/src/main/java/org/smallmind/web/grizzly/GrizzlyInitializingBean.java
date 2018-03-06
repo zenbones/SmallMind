@@ -32,9 +32,9 @@
  */
 package org.smallmind.web.grizzly;
 
-import java.io.File;
 import java.io.IOException;
 import java.net.BindException;
+import java.nio.file.Path;
 import java.util.EnumSet;
 import java.util.LinkedList;
 import java.util.Map;
@@ -54,6 +54,7 @@ import org.glassfish.grizzly.ssl.SSLContextConfigurator;
 import org.glassfish.grizzly.ssl.SSLEngineConfigurator;
 import org.glassfish.grizzly.websockets.WebSocketEngine;
 import org.glassfish.jersey.servlet.ServletContainer;
+import org.smallmind.nutsnbolts.io.PathUtility;
 import org.smallmind.nutsnbolts.lang.web.PerApplicationContextFilter;
 import org.smallmind.nutsnbolts.resource.ResourceException;
 import org.smallmind.web.jersey.jackson.JsonResourceConfig;
@@ -78,7 +79,7 @@ public class GrizzlyInitializingBean implements DisposableBean, ApplicationConte
   private LinkedList<WebSocketApplicationInstaller> webSocketApplicationInstallerList = new LinkedList<>();
   private ResourceConfigExtension[] resourceConfigExtensions;
   private AddOn[] addOns;
-  private File[] documentRoots;
+  private Path[] documentRoots;
   private SSLInfo sslInfo;
   private String host;
   private String contextPath = "/context";
@@ -153,7 +154,7 @@ public class GrizzlyInitializingBean implements DisposableBean, ApplicationConte
     this.webSocketPath = webSocketPath;
   }
 
-  public void setDocumentRoots (File[] documentRoots) {
+  public void setDocumentRoots (Path[] documentRoots) {
 
     this.documentRoots = documentRoots;
   }
@@ -218,7 +219,7 @@ public class GrizzlyInitializingBean implements DisposableBean, ApplicationConte
         String[] absolutePaths = new String[documentRoots.length];
 
         for (int index = 0; index < documentRoots.length; index++) {
-          absolutePaths[index] = documentRoots[index].getAbsolutePath();
+          absolutePaths[index] = PathUtility.asResourceString(documentRoots[index]);
         }
 
         httpServer.getServerConfiguration().addHttpHandler(new StaticHttpHandler(absolutePaths), documentPath);

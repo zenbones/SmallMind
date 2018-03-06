@@ -34,11 +34,15 @@ package org.smallmind.spark.tanukisoft.maven;
 
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
+import java.io.Writer;
 import java.nio.channels.FileChannel;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.StandardOpenOption;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -49,14 +53,14 @@ import freemarker.template.Template;
 import org.apache.maven.artifact.Artifact;
 import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugin.MojoExecutionException;
-import org.apache.maven.plugin.MojoFailureException;
 import org.apache.maven.plugins.annotations.LifecyclePhase;
 import org.apache.maven.plugins.annotations.Mojo;
 import org.apache.maven.plugins.annotations.Parameter;
 import org.apache.maven.plugins.annotations.ResolutionScope;
 import org.apache.maven.project.MavenProject;
 import org.smallmind.nutsnbolts.freemarker.ClassPathTemplateLoader;
-import org.smallmind.nutsnbolts.maven.CompressionType;
+import org.smallmind.nutsnbolts.io.PathUtility;
+import org.smallmind.nutsnbolts.zip.CompressionType;
 
 // Generates Tanukisoft based os service wrappers
 @Mojo(name = "generate-wrapper", defaultPhase = LifecyclePhase.PACKAGE, requiresDependencyResolution = ResolutionScope.RUNTIME, threadSafe = true)
@@ -69,7 +73,7 @@ public class GenerateWrapperMojo extends AbstractMojo {
   @Parameter(readonly = true, property = "project")
   private MavenProject project;
   @Parameter
-  private File licenseFile;
+  private String licenseFile;
   @Parameter
   private Dependency[] dependencies;
   @Parameter(required = true)
@@ -128,13 +132,13 @@ public class GenerateWrapperMojo extends AbstractMojo {
   private boolean skip;
 
   public void execute ()
-    throws MojoExecutionException, MojoFailureException {
+    throws MojoExecutionException {
 
     if (!skip) {
 
-      File binDirectory;
-      File libDirectory;
-      File confDirectory;
+      Path binDirectory;
+      Path libDirectory;
+      Path confDirectory;
       OSType osType;
       CompressionType compressionType;
       HashMap<String, Object> freemarkerMap;
@@ -161,17 +165,20 @@ public class GenerateWrapperMojo extends AbstractMojo {
         throw new MojoExecutionException(String.format("Unknown compression type(%s) - valid choices are %s", compression, Arrays.toString(CompressionType.values())), exception);
       }
 
-      createDirectory("bin", binDirectory = new File(project.getBuild().getDirectory() + System.getProperty("file.separator") + applicationDir + System.getProperty("file.separator") + constructArtifactName(includeVersion, false) + System.getProperty("file.separator") + "bin"));
-      createDirectory("lib", libDirectory = new File(project.getBuild().getDirectory() + System.getProperty("file.separator") + applicationDir + System.getProperty("file.separator") + constructArtifactName(includeVersion, false) + System.getProperty("file.separator") + "lib"));
-      createDirectory("conf", confDirectory = new File(project.getBuild().getDirectory() + System.getProperty("file.separator") + applicationDir + System.getProperty("file.separator") + constructArtifactName(includeVersion, false) + System.getProperty("file.separator") + "conf"));
+      createDirectory("bin", binDirectory = Paths.get(project.getBuild().getDirectory(), applicationDir, constructArtifactName(includeVersion, false), "bin"));
+      createDirectory("lib", libDirectory = Paths.get(project.getBuild().getDirectory(), applicationDir, constructArtifactName(includeVersion, false), "lib"));
+      createDirectory("conf", confDirectory = Paths.get(project.getBuild().getDirectory(), applicationDir, constructArtifactName(includeVersion, false), "conf"));
 
       if (licenseFile != null) {
         try {
+
+          Path licensePath;
+
           if (verbose) {
-            getLog().info(String.format("Copying license file(%s)...", licenseFile.getAbsolutePath()));
+            getLog().info(String.format("Copying license file(%s)...", licenseFile));
           }
 
-          copyToDestination(new FileInputStream(licenseFile), confDirectory.getAbsolutePath(), licenseFile.getName());
+          copyToDestination(licensePath = Paths.get(licenseFile), confDirectory, PathUtility.fileNameAsString(licensePath.getFileName()));
         } catch (IOException ioException) {
           throw new MojoExecutionException("Problem in copying your license file into the application conf directory", ioException);
         }
@@ -180,16 +187,16 @@ public class GenerateWrapperMojo extends AbstractMojo {
       if (configurations != null) {
         for (String configuration : configurations) {
 
-          File configurationFile = new File(configuration);
+          Path configurationPath;
 
           try {
             if (verbose) {
-              getLog().info(String.format("Copying configuration(%s)...", configurationFile.getName()));
+              getLog().info(String.format("Copying configuration(%s)...", configuration));
             }
 
-            copyToDestination(configurationFile, confDirectory.getAbsolutePath(), configurationFile.getName());
+            copyToDestination(configurationPath = Paths.get(configuration), confDirectory, PathUtility.fileNameAsString(configurationPath));
           } catch (IOException ioException) {
-            throw new MojoExecutionException(String.format("Problem in copying the configuration(%s) into the application conf directory", configurationFile.getAbsolutePath()), ioException);
+            throw new MojoExecutionException(String.format("Problem in copying the configuration(%s) into the application conf directory", configuration), ioException);
           }
         }
       }
@@ -248,7 +255,7 @@ public class GenerateWrapperMojo extends AbstractMojo {
 
       freemarkerMap.put("serviceDependencies", (serviceDependencies != null) ? serviceDependencies : NO_SIMPLE_ARGS);
 
-      classpathElementList = new LinkedList<String>();
+      classpathElementList = new LinkedList<>();
       freemarkerMap.put("classpathElements", classpathElementList);
       if (compactClasspath) {
         classpathElementList.add("*");
@@ -257,34 +264,36 @@ public class GenerateWrapperMojo extends AbstractMojo {
       freemarkerMap.put("filesToSource", aggregateFilesToSource.toString());
 
       additionalDependencies = (dependencies != null) ? Arrays.asList(dependencies) : null;
-      for (Artifact artifact : project.getRuntimeArtifacts()) {
-        try {
-          if (verbose) {
-            getLog().info(String.format("Copying dependency(%s)...", artifact.getFile().getName()));
-          }
+      for (Artifact artifact : project.getArtifacts()) {
+        if (artifact.getArtifactHandler().isAddedToClasspath() && (Artifact.SCOPE_COMPILE.equals(artifact.getScope()) || Artifact.SCOPE_RUNTIME.equals(artifact.getScope()))) {
+          try {
+            if (verbose) {
+              getLog().info(String.format("Copying dependency(%s)...", artifact.getFile().getName()));
+            }
 
-          if (additionalDependencies != null) {
-            additionalDependencyIter = additionalDependencies.iterator();
-            while (additionalDependencyIter.hasNext()) {
-              if (additionalDependencyIter.next().matchesArtifact(artifact)) {
-                additionalDependencyIter.remove();
+            if (additionalDependencies != null) {
+              additionalDependencyIter = additionalDependencies.iterator();
+              while (additionalDependencyIter.hasNext()) {
+                if (additionalDependencyIter.next().matchesArtifact(artifact)) {
+                  additionalDependencyIter.remove();
+                }
               }
             }
-          }
 
-          if (!compactClasspath) {
-            classpathElementList.add(artifact.getFile().getName());
+            if (!compactClasspath) {
+              classpathElementList.add(artifact.getFile().getName());
+            }
+            copyToDestination(artifact.getFile(), libDirectory, artifact.getFile().getName());
+          } catch (IOException ioException) {
+            throw new MojoExecutionException(String.format("Problem in copying a dependency(%s) into the application library", artifact), ioException);
           }
-          copyToDestination(artifact.getFile(), libDirectory.getAbsolutePath(), artifact.getFile().getName());
-        } catch (IOException ioException) {
-          throw new MojoExecutionException(String.format("Problem in copying a dependency(%s) into the application library", artifact), ioException);
         }
       }
 
       if (additionalDependencies != null) {
         for (Dependency dependency : additionalDependencies) {
-          for (Artifact artifact : project.getDependencyArtifacts()) {
-            if (dependency.matchesArtifact(artifact)) {
+          for (Artifact artifact : project.getArtifacts()) {
+            if ((Artifact.SCOPE_COMPILE.equals(artifact.getScope()) || Artifact.SCOPE_PROVIDED.equals(artifact.getScope()) || Artifact.SCOPE_SYSTEM.equals(artifact.getScope())) && dependency.matchesArtifact(artifact)) {
               try {
                 if (verbose) {
                   getLog().info(String.format("Copying additional dependency(%s)...", artifact.getFile().getName()));
@@ -293,7 +302,7 @@ public class GenerateWrapperMojo extends AbstractMojo {
                 if (!compactClasspath) {
                   classpathElementList.add(artifact.getFile().getName());
                 }
-                copyToDestination(artifact.getFile(), libDirectory.getAbsolutePath(), artifact.getFile().getName());
+                copyToDestination(artifact.getFile(), libDirectory, artifact.getFile().getName());
               } catch (IOException ioException) {
                 throw new MojoExecutionException(String.format("Problem in copying an additional dependency(%s) into the application library", artifact), ioException);
               }
@@ -304,23 +313,22 @@ public class GenerateWrapperMojo extends AbstractMojo {
 
       if (!project.getArtifact().getType().equals("jar")) {
 
-        File jarFile;
-
-        jarFile = new File(constructCompressedArtifactPath(project.getBuild().getDirectory(), CompressionType.JAR, false));
+        Path jarPath = constructCompressedArtifactPath(project.getBuild().getDirectory(), CompressionType.JAR, false);
+        String jarFileName = PathUtility.fileNameAsString(jarPath);
 
         try {
           if (verbose) {
-            getLog().info(String.format("Creating and copying output jar(%s)...", jarFile.getName()));
+            getLog().info(String.format("Creating and copying output jar(%s)...", jarFileName));
           }
 
-          CompressionType.JAR.compress(jarFile, new File(project.getBuild().getOutputDirectory()));
+          CompressionType.JAR.compress(Paths.get(project.getBuild().getOutputDirectory()), jarPath);
 
           if (!compactClasspath) {
-            classpathElementList.add(jarFile.getName());
+            classpathElementList.add(jarFileName);
           }
-          copyToDestination(jarFile, libDirectory.getAbsolutePath(), jarFile.getName());
+          copyToDestination(jarPath, libDirectory, jarFileName);
         } catch (IOException ioException) {
-          throw new MojoExecutionException(String.format("Problem in creating or copying the output jar(%s) into the application library", jarFile.getName()), ioException);
+          throw new MojoExecutionException(String.format("Problem in creating or copying the output jar(%s) into the application library", jarFileName), ioException);
         }
       } else {
         try {
@@ -331,7 +339,7 @@ public class GenerateWrapperMojo extends AbstractMojo {
           if (!compactClasspath) {
             classpathElementList.add(project.getArtifact().getFile().getName());
           }
-          copyToDestination(project.getArtifact().getFile(), libDirectory.getAbsolutePath(), project.getArtifact().getFile().getName());
+          copyToDestination(project.getArtifact().getFile(), libDirectory, project.getArtifact().getFile().getName());
         } catch (IOException ioException) {
           throw new MojoExecutionException(String.format("Problem in copying the build artifact(%s) into the application library", project.getArtifact()), ioException);
         }
@@ -342,8 +350,8 @@ public class GenerateWrapperMojo extends AbstractMojo {
           getLog().info(String.format("Copying wrapper library(%s)...", osType.getLibrary()));
         }
 
-        copyToDestination(getResourceAsStream(getWrapperFilePath("lib", osType.getLibrary())), libDirectory.getAbsolutePath(), osType.getLibrary());
-        copyToDestination(getResourceAsStream(getWrapperFilePath("lib", osType.getLibrary())), libDirectory.getAbsolutePath(), osType.getOsStyle().getLibrary());
+        copyToDestination(getResourceAsStream(getWrapperPath("lib", osType.getLibrary())), libDirectory, osType.getLibrary());
+        copyToDestination(getResourceAsStream(getWrapperPath("lib", osType.getLibrary())), libDirectory, osType.getOsStyle().getLibrary());
       } catch (IOException ioException) {
         throw new MojoExecutionException(String.format("Problem in copying the wrapper library(%s) into the application library", osType.getLibrary()), ioException);
       }
@@ -353,7 +361,7 @@ public class GenerateWrapperMojo extends AbstractMojo {
           getLog().info(String.format("Copying wrapper executable(%s)...", osType.getExecutable()));
         }
 
-        copyToDestination(getResourceAsStream(getWrapperFilePath("bin", osType.getExecutable())), binDirectory.getAbsolutePath(), osType.getExecutable());
+        copyToDestination(getResourceAsStream(getWrapperPath("bin", osType.getExecutable())), binDirectory, osType.getExecutable());
       } catch (IOException ioException) {
         throw new MojoExecutionException(String.format("Problem in copying the wrapper executable(%s) into the application binaries", osType.getExecutable()), ioException);
       }
@@ -365,12 +373,12 @@ public class GenerateWrapperMojo extends AbstractMojo {
 
         switch (osType.getOsStyle()) {
           case UNIX:
-            processFreemarkerTemplate(getWrapperFilePath("bin", "freemarker.sh.script.in"), binDirectory, applicationName + ".sh", freemarkerMap);
+            processFreemarkerTemplate(getWrapperPath("bin", "freemarker.sh.script.in"), binDirectory, applicationName + ".sh", freemarkerMap);
             break;
           case WINDOWS:
-            copyToDestination(getResourceAsStream(getWrapperFilePath("bin", "AppCommand.bat.in")), binDirectory.getAbsolutePath(), applicationName + ".bat");
-            copyToDestination(getResourceAsStream(getWrapperFilePath("bin", "InstallApp-NT.bat.in")), binDirectory.getAbsolutePath(), "Install" + applicationName + "-NT.bat");
-            copyToDestination(getResourceAsStream(getWrapperFilePath("bin", "UninstallApp-NT.bat.in")), binDirectory.getAbsolutePath(), "Uninstall" + applicationName + "-NT.bat");
+            copyToDestination(getResourceAsStream(getWrapperPath("bin", "AppCommand.bat.in")), binDirectory, applicationName + ".bat");
+            copyToDestination(getResourceAsStream(getWrapperPath("bin", "InstallApp-NT.bat.in")), binDirectory, "Install" + applicationName + "-NT.bat");
+            copyToDestination(getResourceAsStream(getWrapperPath("bin", "UninstallApp-NT.bat.in")), binDirectory, "Uninstall" + applicationName + "-NT.bat");
             break;
           default:
             throw new MojoExecutionException(String.format("Unknown os style(%s)", osType.getOsStyle().name()));
@@ -383,22 +391,22 @@ public class GenerateWrapperMojo extends AbstractMojo {
         getLog().info("Processing the configuration template...");
       }
 
-      processFreemarkerTemplate(getWrapperFilePath("conf", "freemarker.wrapper.conf.in"), confDirectory, "wrapper.conf", freemarkerMap);
+      processFreemarkerTemplate(getWrapperPath("conf", "freemarker.wrapper.conf.in"), confDirectory, "wrapper.conf", freemarkerMap);
 
       if (createArtifact) {
 
-        File compressedFile;
+        Path compressedFile;
 
-        compressedFile = new File(constructCompressedArtifactPath(project.getBuild().getDirectory(), compressionType, true));
+        compressedFile = constructCompressedArtifactPath(project.getBuild().getDirectory(), compressionType, true);
 
         try {
           if (verbose) {
-            getLog().info(String.format("Creating aggregated %s(%s)...", compressionType.getExtension(), compressedFile.getName()));
+            getLog().info(String.format("Creating aggregated %s(%s)...", compressionType.getExtension(), compressedFile.getFileName()));
           }
 
-          compressionType.compress(compressedFile, new File(project.getBuild().getDirectory() + System.getProperty("file.separator") + applicationDir));
+          compressionType.compress(Paths.get(project.getBuild().getDirectory(), applicationDir), compressedFile);
         } catch (IOException ioException) {
-          throw new MojoExecutionException(String.format("Problem in creating the aggregated %s(%s)", compressionType.getExtension(), compressedFile.getName()), ioException);
+          throw new MojoExecutionException(String.format("Problem in creating the aggregated %s(%s)", compressionType.getExtension(), compressedFile.getFileName()), ioException);
         }
       }
     }
@@ -425,109 +433,107 @@ public class GenerateWrapperMojo extends AbstractMojo {
     return nameBuilder.toString();
   }
 
-  private String constructCompressedArtifactPath (String outputPath, CompressionType artifactCompressionType, boolean aggregateArtifact) {
+  private Path constructCompressedArtifactPath (String outputDir, CompressionType artifactCompressionType, boolean aggregateArtifact) {
 
-    return new StringBuilder(outputPath).append(System.getProperty("file.separator")).append(constructArtifactName(true, aggregateArtifact)).append('.').append(artifactCompressionType.getExtension()).toString();
+    return Paths.get(outputDir, constructArtifactName(true, aggregateArtifact) + '.' + artifactCompressionType.getExtension());
   }
 
-  private void processFreemarkerTemplate (String templatePath, File outputDir, String destinationName, HashMap<String, Object> interpolationMap)
+  private void processFreemarkerTemplate (Path templatePath, Path outputPath, String destinationFileName, HashMap<String, Object> interpolationMap)
     throws MojoExecutionException {
 
     Configuration freemarkerConf;
     Template freemarkerTemplate;
-    FileWriter fileWriter;
+    Writer freemarkerWriter;
 
     freemarkerConf = new Configuration();
     freemarkerConf.setTagSyntax(freemarker.template.Configuration.SQUARE_BRACKET_TAG_SYNTAX);
     freemarkerConf.setTemplateLoader(new ClassPathTemplateLoader(GenerateWrapperMojo.class));
 
     try {
-      freemarkerTemplate = freemarkerConf.getTemplate(templatePath);
+      freemarkerTemplate = freemarkerConf.getTemplate(PathUtility.asResourceString(templatePath));
     } catch (IOException ioException) {
-      throw new MojoExecutionException(String.format("Unable to load template(%s) for translation", destinationName), ioException);
+      throw new MojoExecutionException(String.format("Unable to load template(%s) for translation", destinationFileName), ioException);
     }
 
     try {
-      fileWriter = new FileWriter(outputDir.getAbsolutePath() + System.getProperty("file.separator") + destinationName);
+      freemarkerWriter = Files.newBufferedWriter(outputPath.resolve(destinationFileName));
     } catch (IOException ioException) {
-      throw new MojoExecutionException(String.format("Problem in creating a writer for the template(%s) file", destinationName), ioException);
+      throw new MojoExecutionException(String.format("Problem in creating a writer for the template(%s) file", destinationFileName), ioException);
     }
 
     try {
-      freemarkerTemplate.process(interpolationMap, fileWriter);
+      freemarkerTemplate.process(interpolationMap, freemarkerWriter);
     } catch (Exception exception) {
-      throw new MojoExecutionException(String.format("Problem in processing the template(%s)", destinationName), exception);
+      throw new MojoExecutionException(String.format("Problem in processing the template(%s)", destinationFileName), exception);
     }
 
     try {
-      fileWriter.close();
+      freemarkerWriter.close();
     } catch (IOException ioException) {
-      throw new MojoExecutionException(String.format("Problem in closing the template(%s) writer", destinationName), ioException);
+      throw new MojoExecutionException(String.format("Problem in closing the template(%s) writer", destinationFileName), ioException);
     }
   }
 
-  private void createDirectory (String dirType, File dirFile)
+  private void createDirectory (String dirType, Path dirPath)
     throws MojoExecutionException {
 
-    if (!dirFile.isDirectory()) {
-      if (!dirFile.mkdirs()) {
-        throw new MojoExecutionException(String.format("Unable to create the '%s' application directory(%s)", dirType, dirFile.getAbsolutePath()));
-      }
+    try {
+      Files.createDirectories(dirPath);
+    } catch (IOException ioException) {
+      throw new MojoExecutionException(String.format("Unable to create the '%s' application directory(%s)", dirType, dirPath.toAbsolutePath()));
     }
   }
 
-  private String getWrapperFilePath (String dirType, String fileName) {
+  private Path getWrapperPath (String dirType, String fileName) {
 
-    StringBuilder pathBuilder;
-
-    pathBuilder = new StringBuilder(RESOURCE_BASE_PATH);
-    pathBuilder.append('/');
-    pathBuilder.append(dirType);
-    pathBuilder.append('/');
-    pathBuilder.append(fileName);
-
-    return pathBuilder.toString();
+    return Paths.get(RESOURCE_BASE_PATH, dirType, fileName);
   }
 
-  private InputStream getResourceAsStream (String filePath)
+  private InputStream getResourceAsStream (Path path)
     throws MojoExecutionException {
 
     InputStream inputStream;
 
-    if ((inputStream = GenerateWrapperMojo.class.getClassLoader().getResourceAsStream(filePath)) == null) {
-      throw new MojoExecutionException(String.format("Unable to find resource at the specified path(%s)", filePath));
+    if ((inputStream = GenerateWrapperMojo.class.getClassLoader().getResourceAsStream(PathUtility.asResourceString(path))) == null) {
+      throw new MojoExecutionException(String.format("Unable to find resource at the specified path(%s)", path));
     }
 
     return inputStream;
   }
 
-  private void copyToDestination (File file, String destinationPath, String destinationName)
+  private void copyToDestination (Path sourcePath, Path destinationPath, String destinationFileName)
     throws IOException {
 
-    FileInputStream inputStream;
-    FileOutputStream outputStream;
     FileChannel readChannel;
     FileChannel writeChannel;
     long bytesTransferred;
     long currentPosition = 0;
 
-    readChannel = (inputStream = new FileInputStream(file)).getChannel();
-    writeChannel = (outputStream = new FileOutputStream(destinationPath + System.getProperty("file.separator") + destinationName)).getChannel();
+    readChannel = FileChannel.open(sourcePath, StandardOpenOption.READ);
+    writeChannel = FileChannel.open(destinationPath.resolve(destinationFileName), StandardOpenOption.WRITE, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING);
     while ((currentPosition < readChannel.size()) && (bytesTransferred = readChannel.transferTo(currentPosition, 8192, writeChannel)) >= 0) {
       currentPosition += bytesTransferred;
     }
-    outputStream.close();
-    inputStream.close();
+    writeChannel.close();
+    readChannel.close();
   }
 
-  private void copyToDestination (InputStream inputStream, String destinationPath, String destinationName)
+  private void copyToDestination (File file, Path destinationPath, String destinationFileName)
     throws IOException {
 
-    FileOutputStream outputStream;
+    try (FileInputStream inputStream = new FileInputStream(file)) {
+      copyToDestination(inputStream, destinationPath, destinationFileName);
+    }
+  }
+
+  private void copyToDestination (InputStream inputStream, Path destinationPath, String destinationFileName)
+    throws IOException {
+
+    OutputStream outputStream;
     byte[] buffer = new byte[8192];
     int bytesRead;
 
-    outputStream = new FileOutputStream(destinationPath + System.getProperty("file.separator") + destinationName);
+    outputStream = Files.newOutputStream(destinationPath.resolve(destinationFileName), StandardOpenOption.WRITE, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING);
     while ((bytesRead = inputStream.read(buffer)) >= 0) {
       outputStream.write(buffer, 0, bytesRead);
     }

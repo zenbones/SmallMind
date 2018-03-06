@@ -37,6 +37,7 @@ import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import org.smallmind.nutsnbolts.io.PathUtility;
 
 public class Cleanup {
 
@@ -88,7 +89,7 @@ public class Cleanup {
       copyRules[index] = rules[index].copy();
     }
 
-    logFileName = logPath.getFileName().toString();
+    logFileName = PathUtility.fileNameAsString(logPath);
 
     if ((dotPos = logFileName.lastIndexOf('.')) >= 0) {
       prologue = logFileName.substring(0, dotPos) + separator;
@@ -101,7 +102,7 @@ public class Cleanup {
       for (Path possiblePath : directoryStream) {
         if (Files.isRegularFile(possiblePath) && (!possiblePath.equals(logPath))) {
 
-          String possibleFileName = possiblePath.getFileName().toString();
+          String possibleFileName = PathUtility.fileNameAsString(possiblePath);
 
           if (possibleFileName.startsWith(prologue) && ((epilogue == null) || possibleFileName.endsWith(epilogue))) {
             for (CleanupRule rule : copyRules) {

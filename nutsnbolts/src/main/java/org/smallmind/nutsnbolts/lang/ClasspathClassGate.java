@@ -33,20 +33,23 @@
 package org.smallmind.nutsnbolts.lang;
 
 import java.io.BufferedInputStream;
-import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.StandardOpenOption;
 import java.security.CodeSource;
 import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
+import org.smallmind.nutsnbolts.io.PathUtility;
 
 public class ClasspathClassGate implements ClassGate {
 
-  private final HashMap<String, String> filePathMap;
+  private final HashMap<String, Path> filePathMap;
 
   private String[] pathComponents;
 
@@ -67,16 +70,14 @@ public class ClasspathClassGate implements ClassGate {
     filePathMap = new HashMap<>();
   }
 
-  public long getLastModDate (String name) {
+  public long getLastModDate (String name)
+    throws IOException {
 
-    File classFile;
-    String filePath;
+    Path filePath;
 
     synchronized (filePathMap) {
       if ((filePath = filePathMap.get(name)) != null) {
-        classFile = new File(filePath);
-
-        return classFile.lastModified();
+        Files.getLastModifiedTime(filePath).toMillis();
       }
     }
 
@@ -106,14 +107,14 @@ public class ClasspathClassGate implements ClassGate {
         }
       } else {
 
-        File classFile;
+        Path classFile;
         long timeStamp;
 
-        if ((classFile = findFile(pathComponent, classFileName)) != null) {
+        if ((classFile = findPath(pathComponent, classFileName)) != null) {
           synchronized (filePathMap) {
-            filePathMap.put(name, classFile.getAbsolutePath());
-            timeStamp = classFile.lastModified();
-            return new ClassStreamTicket(new BufferedInputStream(new FileInputStream(classFile)), timeStamp);
+            filePathMap.put(name, classFile.toAbsolutePath().normalize());
+            timeStamp = Files.getLastModifiedTime(classFile).toMillis();
+            return new ClassStreamTicket(Files.newInputStream(classFile), timeStamp);
           }
         }
       }
@@ -135,10 +136,10 @@ public class ClasspathClassGate implements ClassGate {
         }
       } else {
 
-        File resourceFile;
+        Path resourcePath;
 
-        if ((resourceFile = findFile(pathComponent, path)) != null) {
-          return new URL("file://" + rectifyPath(resourceFile.getAbsolutePath()));
+        if ((resourcePath = findPath(pathComponent, path)) != null) {
+          return new URL("file://" + rectifyPath(PathUtility.asNormalizedString(resourcePath)));
         }
       }
     }
@@ -166,10 +167,10 @@ public class ClasspathClassGate implements ClassGate {
         }
       } else {
 
-        File resourceFile;
+        Path resourceFile;
 
-        if ((resourceFile = findFile(pathComponent, path)) != null) {
-          return new BufferedInputStream(new FileInputStream(resourceFile));
+        if ((resourceFile = findPath(pathComponent, path)) != null) {
+          return Files.newInputStream(resourceFile, StandardOpenOption.READ);
         }
       }
     }
@@ -207,14 +208,14 @@ public class ClasspathClassGate implements ClassGate {
     return null;
   }
 
-  private File findFile (String fileComponentPath, String path) {
+  private Path findPath (String fileComponentPath, String path) {
 
-    File pathFile;
+    Path completePath;
 
-    pathFile = new File((path.charAt(0) == '/') ? fileComponentPath + path : fileComponentPath + '/' + path);
-    if (pathFile.isFile()) {
+    completePath = Paths.get(fileComponentPath, (path.charAt(0) == '/') ? path.substring(1) : path);
+    if (Files.isRegularFile(completePath)) {
 
-      return pathFile;
+      return completePath;
     }
 
     return null;

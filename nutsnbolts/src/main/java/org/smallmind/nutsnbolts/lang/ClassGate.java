@@ -52,5 +52,6 @@ public interface ClassGate {
   InputStream getResourceAsStream (String path)
     throws Exception;
 
-  long getLastModDate (String path);
+  long getLastModDate (String path)
+    throws Exception;
 }

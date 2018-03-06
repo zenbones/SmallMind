@@ -31,5 +31,4 @@ public class FileTypeRegExpTranslator {
 
     return patternBuilder.toString();
   }
-
 }

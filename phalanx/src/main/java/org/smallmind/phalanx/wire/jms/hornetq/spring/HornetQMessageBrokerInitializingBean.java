@@ -32,7 +32,7 @@
  */
 package org.smallmind.phalanx.wire.jms.hornetq.spring;
 
-import java.io.File;
+import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -53,6 +53,7 @@ import org.hornetq.jms.server.config.impl.JMSConfigurationImpl;
 import org.hornetq.jms.server.config.impl.JMSQueueConfigurationImpl;
 import org.hornetq.jms.server.config.impl.TopicConfigurationImpl;
 import org.hornetq.jms.server.embedded.EmbeddedJMS;
+import org.smallmind.nutsnbolts.io.PathUtility;
 import org.smallmind.nutsnbolts.lang.UnknownSwitchCaseException;
 import org.smallmind.phalanx.wire.jms.MessageBroker;
 import org.smallmind.phalanx.wire.jms.spring.ConnectionFactoryReference;
@@ -64,8 +65,8 @@ public class HornetQMessageBrokerInitializingBean implements MessageBroker, Init
   private final AtomicBoolean initialized = new AtomicBoolean(false);
 
   private EmbeddedJMS jmsServer;
-  private File journalDirectory;
-  private File pagingDirectory;
+  private Path journalDirectory;
+  private Path pagingDirectory;
   private ConnectionFactoryReference connectionFactory;
   private DestinationReference[] destinations;
   private Map<String, HornetQAddressConfiguration> addressConfigurations;
@@ -74,7 +75,7 @@ public class HornetQMessageBrokerInitializingBean implements MessageBroker, Init
 
   }
 
-  public HornetQMessageBrokerInitializingBean (File journalDirectory, File pagingDirectory, ConnectionFactoryReference connectionFactory, DestinationReference[] destinations) {
+  public HornetQMessageBrokerInitializingBean (Path journalDirectory, Path pagingDirectory, ConnectionFactoryReference connectionFactory, DestinationReference[] destinations) {
 
     this.journalDirectory = journalDirectory;
     this.pagingDirectory = pagingDirectory;
@@ -84,12 +85,12 @@ public class HornetQMessageBrokerInitializingBean implements MessageBroker, Init
     afterPropertiesSet();
   }
 
-  public void setJournalDirectory (File journalDirectory) {
+  public void setJournalDirectory (Path journalDirectory) {
 
     this.journalDirectory = journalDirectory;
   }
 
-  public void setPagingDirectory (File pagingDirectory) {
+  public void setPagingDirectory (Path pagingDirectory) {
 
     this.pagingDirectory = pagingDirectory;
   }
@@ -130,8 +131,8 @@ public class HornetQMessageBrokerInitializingBean implements MessageBroker, Init
         configuration.getAddressesSettings().put(addressConfigurationEntry.getKey(), addressSettings);
       }
 
-      configuration.setJournalDirectory(journalDirectory.getAbsolutePath());
-      configuration.setPagingDirectory(pagingDirectory.getAbsolutePath());
+      configuration.setJournalDirectory(PathUtility.asNormalizedString(journalDirectory));
+      configuration.setPagingDirectory(PathUtility.asNormalizedString(pagingDirectory));
       configuration.setPersistenceEnabled(false);
       configuration.setSecurityEnabled(false);
       configuration.getAcceptorConfigurations().add(new TransportConfiguration(NettyAcceptorFactory.class.getName()));
@@ -161,22 +162,19 @@ public class HornetQMessageBrokerInitializingBean implements MessageBroker, Init
   }
 
   @Override
-  public ConnectionFactory lookupConnectionFactory (String path)
-    throws Exception {
+  public ConnectionFactory lookupConnectionFactory (String path) {
 
     return (ConnectionFactory)jmsServer.lookup(path);
   }
 
   @Override
-  public Queue lookupQueue (String path)
-    throws Exception {
+  public Queue lookupQueue (String path) {
 
     return (Queue)jmsServer.lookup(path);
   }
 
   @Override
-  public Topic lookupTopic (String path)
-    throws Exception {
+  public Topic lookupTopic (String path) {
 
     return (Topic)jmsServer.lookup(path);
   }

@@ -32,7 +32,9 @@
  */
 package org.smallmind.web.schema;
 
-import java.io.File;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.List;
 import javax.xml.XMLConstants;
 import javax.xml.transform.stream.StreamSource;
@@ -70,16 +72,16 @@ public class XMLValidationMojo extends AbstractMojo {
 
     Validator w3cSchemaValidator;
     Validator schemaValidator;
-    File w3cSchemaFile;
-    File schemaFile;
-    File xmlFile;
+    Path w3cSchemaFile;
+    Path schemaFile;
+    Path xmlFile;
 
     try {
       if ((w3cSchemaFile = getResourceFile(w3c)) == null) {
         throw new MojoExecutionException("Could not find the w3c schema for schemas at path(" + w3c + ") in this projects resources");
       }
 
-      w3cSchemaValidator = SCHEMA_FACTORY.newSchema(new StreamSource(w3cSchemaFile)).newValidator();
+      w3cSchemaValidator = SCHEMA_FACTORY.newSchema(new StreamSource(Files.newInputStream(w3cSchemaFile))).newValidator();
       w3cSchemaValidator.setErrorHandler(ERROR_HANDLER);
 
       if (schemas != null) {
@@ -89,10 +91,10 @@ public class XMLValidationMojo extends AbstractMojo {
           if ((schemaFile = getResourceFile(xsd.getPath())) == null) {
             throw new MojoExecutionException("Could not find xsd at path(" + xsd.getPath() + ") in this projects resources");
           }
-          w3cSchemaValidator.validate(new StreamSource(schemaFile));
+          w3cSchemaValidator.validate(new StreamSource(Files.newInputStream(schemaFile)));
 
           if ((xsd.getImpls() != null) && (!xsd.getImpls().isEmpty())) {
-            schemaValidator = SCHEMA_FACTORY.newSchema(new StreamSource(schemaFile)).newValidator();
+            schemaValidator = SCHEMA_FACTORY.newSchema(new StreamSource(Files.newInputStream(schemaFile))).newValidator();
 
             for (String xmlPath : xsd.getImpls()) {
               System.out.println("validating [xml] (" + xmlPath + ")...");
@@ -100,7 +102,7 @@ public class XMLValidationMojo extends AbstractMojo {
               if ((xmlFile = getResourceFile(xmlPath)) == null) {
                 throw new MojoExecutionException("Could not find xml at path(" + xmlPath + ") in this projects resources");
               }
-              schemaValidator.validate(new StreamSource(xmlFile));
+              schemaValidator.validate(new StreamSource(Files.newInputStream(xmlFile)));
             }
           }
         }
@@ -108,17 +110,17 @@ public class XMLValidationMojo extends AbstractMojo {
     } catch (MojoExecutionException mojoExecutionException) {
       throw mojoExecutionException;
     } catch (Exception exception) {
-      throw (MojoExecutionException)new MojoExecutionException(exception.getMessage()).initCause(exception);
+      throw new MojoExecutionException(exception.getMessage(), exception);
     }
   }
 
-  private File getResourceFile (String resourcePath) {
+  private Path getResourceFile (String resourceName) {
 
-    File schemaFile;
+    Path schemaFile;
 
     for (Resource projectResource : projectResources) {
-      schemaFile = new File(projectResource.getDirectory() + "/" + resourcePath);
-      if (schemaFile.isFile()) {
+      schemaFile = Paths.get(projectResource.getDirectory(), resourceName);
+      if (Files.isRegularFile(schemaFile)) {
         return schemaFile;
       }
     }

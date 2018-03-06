@@ -32,7 +32,8 @@
  */
 package org.smallmind.artifact.maven;
 
-import java.io.File;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
@@ -121,7 +122,7 @@ public class MavenRepository {
 
     this.offline = offline;
 
-    request.setGlobalSettingsFile(new File((((settingsDirectory == null) || settingsDirectory.isEmpty()) ? System.getProperty("user.home") + "/.m2" : settingsDirectory) + "/settings.xml"));
+    request.setGlobalSettingsFile(Paths.get((((settingsDirectory == null) || settingsDirectory.isEmpty()) ? System.getProperty("user.home") + "/.m2" : settingsDirectory) + "/settings.xml").toFile());
     settings = new DefaultSettingsBuilderFactory().newInstance().build(request).getEffectiveSettings();
 
     profileList = settings.getProfiles();
@@ -322,17 +323,17 @@ public class MavenRepository {
 
   private LocalRepositoryManager getLocalRepoMan (Settings settings, RepositorySystem repositorySystem, RepositorySystemSession repositorySystemSession) {
 
-    LocalRepository repo = new LocalRepository(getDefaultLocalRepoDir(settings));
+    LocalRepository repo = new LocalRepository(getDefaultLocalRepoDir(settings).toFile());
 
     return repositorySystem.newLocalRepositoryManager(repositorySystemSession, repo);
   }
 
-  private File getDefaultLocalRepoDir (Settings settings) {
+  private Path getDefaultLocalRepoDir (Settings settings) {
 
     if (settings.getLocalRepository() != null) {
-      return new File(settings.getLocalRepository());
+      return Paths.get(settings.getLocalRepository());
     }
 
-    return new File(System.getProperty("user.home") + "/.m2/repository");
+    return Paths.get(System.getProperty("user.home") + "/.m2/repository");
   }
 }

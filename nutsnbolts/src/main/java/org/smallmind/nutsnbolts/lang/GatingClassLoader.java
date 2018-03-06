@@ -124,7 +124,16 @@ public class GatingClassLoader extends SecureClassLoader {
 
         if (classGateTicket.getTimeStamp() != ClassGate.STATIC_CLASS) {
           if (System.currentTimeMillis() >= (classGateTicket.getTimeStamp() + (gracePeriodSeconds * 1000))) {
-            if (classGateTicket.getClassGate().getLastModDate(name) > classGateTicket.getTimeStamp()) {
+
+            long lastModTime;
+
+            try {
+              lastModTime = classGateTicket.getClassGate().getLastModDate(name);
+            } catch (Exception exception) {
+              throw new RuntimeException(exception);
+            }
+
+            if (lastModTime > classGateTicket.getTimeStamp()) {
               throw new StaleClassLoaderException(name);
             }
           }

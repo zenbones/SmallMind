@@ -1,12 +1,12 @@
 package org.smallmind.license;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
 import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugin.MojoExecutionException;
-import org.apache.maven.plugin.MojoFailureException;
 import org.apache.maven.plugins.annotations.LifecyclePhase;
 import org.apache.maven.plugins.annotations.Mojo;
 import org.apache.maven.plugins.annotations.Parameter;
@@ -29,12 +29,11 @@ public class TargetLicenseMojo extends AbstractMojo {
 
   @Override
   public void execute ()
-    throws MojoExecutionException, MojoFailureException {
+    throws MojoExecutionException {
 
-    if ((new File(project.getBuild().getOutputDirectory())).exists()) {
+    if (Files.isDirectory(Paths.get(project.getBuild().getOutputDirectory()))) {
 
       MavenProject rootProject = project;
-      byte[] buffer = new byte[8192];
 
       while ((root == null) ? !(rootProject.getParent() == null) : !(root.getGroupId().equals(rootProject.getGroupId()) && root.getArtifactId().equals(rootProject.getArtifactId()))) {
         rootProject = rootProject.getParent();
@@ -42,52 +41,31 @@ public class TargetLicenseMojo extends AbstractMojo {
 
       for (String license : licenses) {
 
-        File licenseFile;
-        File copyFile;
-        FileInputStream inputStream;
-        FileOutputStream outputStream;
-        int bytesRead;
+        Path licenseFile;
+        Path copyFile;
 
-        if (!(licenseFile = new File(license)).isAbsolute()) {
-          licenseFile = new File(rootProject.getBasedir() + System.getProperty("file.separator") + licenseFile.getPath());
+        if (!(licenseFile = Paths.get(license)).isAbsolute()) {
+          licenseFile = rootProject.getBasedir().toPath().resolve(license);
         }
 
-        if (!licenseFile.exists()) {
-          getLog().warn(String.format("Unable to acquire the license file(%s), skipping license copying...", licenseFile.getAbsolutePath()));
-        }
-        else {
+        if (!Files.isRegularFile(licenseFile)) {
+          getLog().warn(String.format("Unable to acquire the license file(%s), skipping license copying...", licenseFile));
+        } else {
           if (verbose) {
-            getLog().info(String.format("Copying license(%s)...", licenseFile.getName()));
+            getLog().info(String.format("Copying license(%s)...", licenseFile.getFileName()));
           }
 
-          copyFile = new File(project.getBuild().getOutputDirectory() + System.getProperty("file.separator") + licenseFile.getName());
+          copyFile = Paths.get(project.getBuild().getOutputDirectory()).resolve(licenseFile.getFileName());
 
           try {
-            outputStream = new FileOutputStream(copyFile);
-          }
-          catch (IOException ioException) {
-            throw new MojoExecutionException("Unable to create output license file (" + copyFile.getAbsolutePath() + ")", ioException);
-          }
-
-          try {
-            inputStream = new FileInputStream(licenseFile);
-
-            while ((bytesRead = inputStream.read(buffer)) >= 0) {
-              outputStream.write(buffer, 0, bytesRead);
+            Files.copy(licenseFile, copyFile, StandardCopyOption.REPLACE_EXISTING);
+          } catch (IOException ioException) {
+            try {
+              Files.deleteIfExists(copyFile);
+              throw new MojoExecutionException("Problem in copying output license file (" + copyFile + ")", ioException);
+            } catch (IOException innerIoException) {
+              throw new MojoExecutionException("Problem in copying output license file (" + copyFile + ")", innerIoException.initCause(ioException));
             }
-
-            inputStream.close();
-          }
-          catch (IOException ioException) {
-            copyFile.delete();
-            throw new MojoExecutionException("Problem in copying output license file (" + copyFile.getAbsolutePath() + ")", ioException);
-          }
-
-          try {
-            outputStream.close();
-          }
-          catch (IOException ioException) {
-            throw new MojoExecutionException("Problem in closing license file (" + licenseFile.getAbsolutePath() + ")", ioException);
           }
         }
       }
