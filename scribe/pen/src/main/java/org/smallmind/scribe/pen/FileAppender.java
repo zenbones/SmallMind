@@ -296,10 +296,12 @@ public class FileAppender extends AbstractFormattedAppender {
           throw new LoggerException(ioException, "Unable to create the new log file(%s)", logPath.toAbsolutePath());
         }
 
-        try {
-          cleanup.vacuum(logPath);
-        } catch (IOException ioException) {
-          throw new LoggerException(ioException);
+        if (cleanup != null) {
+          try {
+            cleanup.vacuum(logPath);
+          } catch (IOException ioException) {
+            throw new LoggerException(ioException);
+          }
         }
       }
 
