@@ -36,6 +36,7 @@ import java.io.Serializable;
 import java.util.List;
 import com.mongodb.DBObject;
 import com.mongodb.WriteConcern;
+import com.mongodb.WriteResult;
 import com.mongodb.util.JSON;
 import org.mongodb.morphia.Datastore;
 import org.mongodb.morphia.InsertOptions;
@@ -44,6 +45,7 @@ import org.mongodb.morphia.query.FindOptions;
 import org.mongodb.morphia.query.Query;
 import org.mongodb.morphia.query.QueryImpl;
 import org.mongodb.morphia.query.UpdateOperations;
+import org.mongodb.morphia.query.UpdateResults;
 import org.smallmind.persistence.UpdateMode;
 import org.smallmind.persistence.cache.VectoredDao;
 import org.smallmind.persistence.orm.ORMDao;
@@ -192,17 +194,17 @@ public class MorphiaDao<I extends Serializable & Comparable<I>, D extends Morphi
     return new AutoCloseMorphiaIterator<>(constructQuery(queryDetails).fetch(queryDetails.getFindOptions()));
   }
 
-  public int deleteByQuery (DeleteQueryDetails<D> queryDetails) {
+  public WriteResult deleteByQuery (DeleteQueryDetails<D> queryDetails) {
 
-    return getSession().getNativeSession().delete(constructQuery(queryDetails), queryDetails.getDeleteOptions()).getN();
+    return getSession().getNativeSession().delete(constructQuery(queryDetails), queryDetails.getDeleteOptions());
   }
 
-  public int updateByQuery (UpdateQueryDetails<D> updateQueryDetails) {
+  public UpdateResults updateByQuery (UpdateQueryDetails<D> updateQueryDetails) {
 
     Query<D> query = getSession().getNativeSession().createQuery(getManagedClass());
     UpdateOperations<D> update = getSession().getNativeSession().createUpdateOperations(getManagedClass());
 
-    return getSession().getNativeSession().update(updateQueryDetails.completeQuery(query), updateQueryDetails.completeUpdates(update), updateQueryDetails.getUpdateOptions()).getUpdatedCount();
+    return getSession().getNativeSession().update(updateQueryDetails.completeQuery(query), updateQueryDetails.completeUpdates(update), updateQueryDetails.getUpdateOptions());
   }
 
   public Query<D> constructQuery (QueryDetails<D> queryDetails) {
