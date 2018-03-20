@@ -65,8 +65,7 @@ public abstract class JPADao<I extends Serializable & Comparable<I>, D extends D
 
         return durable;
       }
-    }
-    else {
+    } else {
       if ((durable = vectoredDao.get(durableClass, id)) != null) {
 
         return durable;
@@ -94,8 +93,7 @@ public abstract class JPADao<I extends Serializable & Comparable<I>, D extends D
 
     if (getSession().getNativeSession().contains(durable)) {
       persistentDurable = durable;
-    }
-    else {
+    } else {
       persistentDurable = getManagedClass().cast(getSession().getNativeSession().merge(durable));
       getSession().flush();
     }
@@ -114,8 +112,7 @@ public abstract class JPADao<I extends Serializable & Comparable<I>, D extends D
 
     if (!getSession().getNativeSession().contains(durable)) {
       getSession().getNativeSession().remove(getSession().getNativeSession().find(durable.getClass(), durable.getId()));
-    }
-    else {
+    } else {
       getSession().getNativeSession().remove(durable);
     }
 
@@ -205,9 +202,29 @@ public abstract class JPADao<I extends Serializable & Comparable<I>, D extends D
     throw new UnsupportedOperationException("JPA has no explicit detached state");
   }
 
+  public int deleteWithCriteria (CriteriaDeleteDetails<D> criteriaDeleteDetails) {
+
+    return constructCriteriaDelete(getManagedClass(), criteriaDeleteDetails).executeUpdate();
+  }
+
+  public <T> int deleteWithCriteria (Class<T> criteriaType, CriteriaDeleteDetails<T> criteriaDeleteDetails) {
+
+    return constructCriteriaDelete(criteriaType, criteriaDeleteDetails).executeUpdate();
+  }
+
   public int executeWithQuery (QueryDetails queryDetails) {
 
     return constructQuery(queryDetails).executeUpdate();
+  }
+
+  public int executeWithCriteria (CriteriaUpdateDetails<D> criteriaUpdateDetails) {
+
+    return constructCriteriaUpdate(getManagedClass(), criteriaUpdateDetails).executeUpdate();
+  }
+
+  public <T> int executeWithCriteria (Class<T> criteriaType, CriteriaUpdateDetails<T> criteriaUpdateDetails) {
+
+    return constructCriteriaUpdate(criteriaType, criteriaUpdateDetails).executeUpdate();
   }
 
   public <T> T findByQuery (Class<T> returnType, QueryDetails queryDetails) {
@@ -220,6 +237,16 @@ public abstract class JPADao<I extends Serializable & Comparable<I>, D extends D
     return getManagedClass().cast(constructQuery(queryDetails).getSingleResult());
   }
 
+  public <T> T findByCriteria (Class<T> returnType, CriteriaQueryDetails<T> criteriaQueryDetails) {
+
+    return returnType.cast(constructCriteriaQuery(returnType, criteriaQueryDetails).getSingleResult());
+  }
+
+  public D findByCriteria (CriteriaQueryDetails<D> criteriaQueryDetails) {
+
+    return getManagedClass().cast(constructCriteriaQuery(getManagedClass(), criteriaQueryDetails).getSingleResult());
+  }
+
   public <T> List<T> listByQuery (Class<T> returnType, QueryDetails queryDetails) {
 
     return Collections.checkedList(constructQuery(queryDetails).getResultList(), returnType);
@@ -230,8 +257,33 @@ public abstract class JPADao<I extends Serializable & Comparable<I>, D extends D
     return Collections.checkedList(constructQuery(queryDetails).getResultList(), getManagedClass());
   }
 
+  public <T> List<T> listByCriteria (Class<T> returnType, CriteriaQueryDetails<T> criteriaQueryDetails) {
+
+    return Collections.checkedList(constructCriteriaQuery(returnType, criteriaQueryDetails).getResultList(), returnType);
+  }
+
+  public List<D> listByCriteria (CriteriaQueryDetails<D> criteriaQueryDetails) {
+
+    return Collections.checkedList(constructCriteriaQuery(getManagedClass(), criteriaQueryDetails).getResultList(), getManagedClass());
+  }
+
   public Query constructQuery (QueryDetails queryDetails) {
 
     return queryDetails.completeQuery(getSession().getNativeSession().createQuery(queryDetails.getQueryString()));
+  }
+
+  public <T> Query constructCriteriaQuery (Class<T> criteriaClass, CriteriaQueryDetails<T> criteriaQueryDetails) {
+
+    return getSession().getNativeSession().createQuery(criteriaQueryDetails.completeCriteria(criteriaClass, getSession().getNativeSession().getCriteriaBuilder()));
+  }
+
+  public <T> Query constructCriteriaUpdate (Class<T> criteriaClass, CriteriaUpdateDetails<T> criteriaUpdateDetails) {
+
+    return getSession().getNativeSession().createQuery(criteriaUpdateDetails.completeCriteria(criteriaClass, getSession().getNativeSession().getCriteriaBuilder()));
+  }
+
+  public <T> Query constructCriteriaDelete (Class<T> criteriaClass, CriteriaDeleteDetails<T> criteriaDeleteDetails) {
+
+    return getSession().getNativeSession().createQuery(criteriaDeleteDetails.completeCriteria(criteriaClass, getSession().getNativeSession().getCriteriaBuilder()));
   }
 }

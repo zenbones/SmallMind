@@ -220,11 +220,6 @@ public class QHibernateDao<I extends Serializable & Comparable<I>, D extends Hib
     return constructQuery(queryDetails).fetchCount();
   }
 
-  public <T> long countByQuery (Class<T> returnType, HibernateQueryDetails<T> queryDetails) {
-
-    return constructQuery(queryDetails).fetchCount();
-  }
-
   public D findByQuery (HibernateQueryDetails<D> queryDetails) {
 
     return getManagedClass().cast(constructQuery(queryDetails).fetchOne());
