@@ -33,13 +33,13 @@
 package org.smallmind.persistence.orm.morphia;
 
 import org.smallmind.persistence.query.AbstractWhereFieldTransformer;
-import org.smallmind.persistence.query.WhereEntity;
+import org.smallmind.persistence.query.WherePath;
 
 public class MorphiaWhereFieldTransformer extends AbstractWhereFieldTransformer<Class<MorphiaDurable<?, ?>>> {
 
   @Override
-  public WhereEntity<Class<MorphiaDurable<?, ?>>> getDefault (String entity, String name) {
+  public WherePath<Class<MorphiaDurable<?, ?>>> getDefault (String entity, String name) {
 
-    return new MorphiaWhereEntity(null, name);
+    return new MorphiaWherePath(null, name);
   }
 }

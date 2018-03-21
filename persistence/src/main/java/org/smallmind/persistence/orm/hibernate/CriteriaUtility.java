@@ -162,7 +162,7 @@ public class CriteriaUtility {
 
   private static Criterion walkField (WhereField whereField, WhereFieldTransformer<Class<HibernateDurable<?, ?>>> fieldTransformer, WhereOperandTransformer operandTransformer) {
 
-    String fieldName = fieldTransformer.transform(whereField.getEntity(), whereField.getName()).getField();
+    String fieldName = fieldTransformer.transform(whereField.getEntity(), whereField.getName()).asString();
     Object fieldValue = operandTransformer.transform(whereField.getOperand());
 
     switch (whereField.getOperator()) {
@@ -205,7 +205,7 @@ public class CriteriaUtility {
     if ((sort != null) && (!sort.isEmpty())) {
       for (SortField sortField : sort.getFields()) {
 
-        String fieldName = fieldTransformer.transform(sortField.getEntity(), sortField.getName()).getField();
+        String fieldName = fieldTransformer.transform(sortField.getEntity(), sortField.getName()).asString();
 
         switch (sortField.getDirection()) {
           case ASC:

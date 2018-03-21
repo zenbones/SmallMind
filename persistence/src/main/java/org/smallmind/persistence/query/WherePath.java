@@ -32,7 +32,9 @@
  */
 package org.smallmind.persistence.query;
 
-public interface WhereFieldTransform<T> {
+public interface WherePath<T> {
 
-  WherePath<T> apply (String entity, String name);
+  public T asNative ();
+
+  public String asString ();
 }

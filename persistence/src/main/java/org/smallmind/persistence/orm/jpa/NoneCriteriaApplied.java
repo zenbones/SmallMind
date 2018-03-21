@@ -30,9 +30,39 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.persistence.query;
+package org.smallmind.persistence.orm.jpa;
 
-public interface WhereFieldTransform<T> {
+import javax.persistence.criteria.Root;
 
-  WherePath<T> apply (String entity, String name);
+public class NoneCriteriaApplied<T> implements CriteriaApplied<T> {
+
+  private static NoneCriteriaApplied NONE = new NoneCriteriaApplied<>();
+  private static Root[] ZERO_ROOTS = new Root[0];
+
+  private NoneCriteriaApplied () {
+
+  }
+
+  public static <T> NoneCriteriaApplied<T> none () {
+
+    return NONE;
+  }
+
+  @Override
+  public boolean isEmpty () {
+
+    return true;
+  }
+
+  @Override
+  public T getResult () {
+
+    return null;
+  }
+
+  @Override
+  public Root[] getRoots () {
+
+    return ZERO_ROOTS;
+  }
 }

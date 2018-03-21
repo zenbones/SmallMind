@@ -132,7 +132,7 @@ public class QueryUtility {
 
   private static Criteria walkField (Query<?> query, WhereField whereField, WhereFieldTransformer<Class<MorphiaDurable<?, ?>>> fieldTransformer, WhereOperandTransformer operandTransformer) {
 
-    FieldEnd<? extends CriteriaContainerImpl> fieldEnd = query.criteria(fieldTransformer.transform(whereField.getEntity(), whereField.getName()).getField());
+    FieldEnd<? extends CriteriaContainerImpl> fieldEnd = query.criteria(fieldTransformer.transform(whereField.getEntity(), whereField.getName()).asString());
     Object fieldValue = operandTransformer.transform(whereField.getOperand());
 
     switch (whereField.getOperator()) {
@@ -246,7 +246,7 @@ public class QueryUtility {
 
       for (SortField sortField : sort.getFields()) {
 
-        String fieldName = fieldTransformer.transform(sortField.getEntity(), sortField.getName()).getField();
+        String fieldName = fieldTransformer.transform(sortField.getEntity(), sortField.getName()).asString();
 
         if (sortBuilder.length() > 0) {
           sortBuilder.append(", ");

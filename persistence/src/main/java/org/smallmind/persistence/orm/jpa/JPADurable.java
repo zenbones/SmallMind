@@ -51,7 +51,7 @@ public abstract class JPADurable<I extends Serializable & Comparable<I>, D exten
 
   @Override
   @Id
-  @GeneratedValue(strategy = GenerationType.AUTO)
+  @GeneratedValue(strategy = GenerationType.IDENTITY)
   @Column(name = "id", unique = true, nullable = false, updatable = false)
   public synchronized I getId () {
 

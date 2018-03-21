@@ -30,11 +30,40 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.persistence.query;
+package org.smallmind.persistence.orm.jpa;
 
-public interface WhereEntity<T> {
+import javax.persistence.criteria.Path;
+import javax.persistence.criteria.Root;
+import org.smallmind.persistence.query.WherePath;
 
-  public T getEntity ();
+public class CriteriaWherePath implements WherePath<Path<?>> {
 
-  public String getField ();
+  private Path<?> path;
+
+  public CriteriaWherePath (Path<?> path) {
+
+    this.path = path;
+  }
+
+  @Override
+  public Path<?> asNative () {
+
+    return path;
+  }
+
+  @Override
+  public String asString () {
+
+    throw new UnsupportedOperationException();
+  }
+
+  Root<?> findRoot () {
+
+    Path<?> currentPath = path;
+    while (currentPath.getParentPath() != null) {
+      currentPath = currentPath.getParentPath();
+    }
+
+    return (Root<?>)currentPath;
+  }
 }

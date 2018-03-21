@@ -47,7 +47,7 @@ import org.smallmind.persistence.query.SortField;
 import org.smallmind.persistence.query.Where;
 import org.smallmind.persistence.query.WhereConjunction;
 import org.smallmind.persistence.query.WhereCriterion;
-import org.smallmind.persistence.query.WhereEntity;
+import org.smallmind.persistence.query.WherePath;
 import org.smallmind.persistence.query.WhereField;
 import org.smallmind.persistence.query.WhereFieldTransformer;
 import org.smallmind.persistence.query.WhereOperandTransformer;
@@ -145,36 +145,36 @@ public class QHibernateUtility {
   private static Predicate walkField (SomeQApplied<Predicate> qApplied, WhereField whereField, WhereFieldTransformer<EntityPath<?>> fieldTransformer, WhereOperandTransformer operandTransformer) {
 
     Object fieldValue = operandTransformer.transform(whereField.getOperand());
-    WhereEntity<EntityPath<?>> whereEntity = fieldTransformer.transform(whereField.getEntity(), whereField.getName());
+    WherePath<EntityPath<?>> wherePath = fieldTransformer.transform(whereField.getEntity(), whereField.getName());
 
-    qApplied.add(whereEntity.getEntity());
+    qApplied.add(wherePath.asNative());
     switch (whereField.getOperator()) {
       case LT:
-        return Expressions.predicate(Ops.LT, Expressions.path(String.class, whereEntity.getEntity(), whereEntity.getField()), Expressions.constant(fieldValue));
+        return Expressions.predicate(Ops.LT, Expressions.path(String.class, wherePath.asNative(), wherePath.asString()), Expressions.constant(fieldValue));
       case LE:
-        return Expressions.predicate(Ops.LOE, Expressions.path(String.class, whereEntity.getEntity(), whereEntity.getField()), Expressions.constant(fieldValue));
+        return Expressions.predicate(Ops.LOE, Expressions.path(String.class, wherePath.asNative(), wherePath.asString()), Expressions.constant(fieldValue));
       case EQ:
         if (fieldValue == null) {
-          return Expressions.predicate(Ops.IS_NULL, Expressions.path(String.class, whereEntity.getEntity(), whereEntity.getField()));
+          return Expressions.predicate(Ops.IS_NULL, Expressions.path(String.class, wherePath.asNative(), wherePath.asString()));
         } else {
-          return Expressions.predicate(Ops.EQ, Expressions.path(String.class, whereEntity.getEntity(), whereEntity.getField()), Expressions.constant(fieldValue));
+          return Expressions.predicate(Ops.EQ, Expressions.path(String.class, wherePath.asNative(), wherePath.asString()), Expressions.constant(fieldValue));
         }
       case NE:
         if (fieldValue == null) {
-          return Expressions.predicate(Ops.IS_NOT_NULL, Expressions.path(String.class, whereEntity.getEntity(), whereEntity.getField()));
+          return Expressions.predicate(Ops.IS_NOT_NULL, Expressions.path(String.class, wherePath.asNative(), wherePath.asString()));
         } else {
-          return Expressions.predicate(Ops.NE, Expressions.path(String.class, whereEntity.getEntity(), whereEntity.getField()), Expressions.constant(fieldValue));
+          return Expressions.predicate(Ops.NE, Expressions.path(String.class, wherePath.asNative(), wherePath.asString()), Expressions.constant(fieldValue));
         }
       case GE:
-        return Expressions.predicate(Ops.GOE, Expressions.path(String.class, whereEntity.getEntity(), whereEntity.getField()), Expressions.constant(fieldValue));
+        return Expressions.predicate(Ops.GOE, Expressions.path(String.class, wherePath.asNative(), wherePath.asString()), Expressions.constant(fieldValue));
       case GT:
-        return Expressions.predicate(Ops.GT, Expressions.path(String.class, whereEntity.getEntity(), whereEntity.getField()), Expressions.constant(fieldValue));
+        return Expressions.predicate(Ops.GT, Expressions.path(String.class, wherePath.asNative(), wherePath.asString()), Expressions.constant(fieldValue));
       case LIKE:
-        return Expressions.predicate(Ops.LIKE, Expressions.path(String.class, whereEntity.getEntity(), whereEntity.getField()), Expressions.constant(fieldValue));
+        return Expressions.predicate(Ops.LIKE, Expressions.path(String.class, wherePath.asNative(), wherePath.asString()), Expressions.constant(fieldValue));
       case UNLIKE:
-        return Expressions.predicate(Ops.NOT, Expressions.predicate(Ops.LIKE, Expressions.path(String.class, whereEntity.getEntity(), whereEntity.getField()), Expressions.constant(fieldValue)));
+        return Expressions.predicate(Ops.NOT, Expressions.predicate(Ops.LIKE, Expressions.path(String.class, wherePath.asNative(), wherePath.asString()), Expressions.constant(fieldValue)));
       case IN:
-        return Expressions.predicate(Ops.IN, Expressions.path(String.class, whereEntity.getEntity(), whereEntity.getField()), Expressions.constant(fieldValue));
+        return Expressions.predicate(Ops.IN, Expressions.path(String.class, wherePath.asNative(), wherePath.asString()), Expressions.constant(fieldValue));
       default:
         throw new UnknownSwitchCaseException(whereField.getOperator().name());
     }
@@ -195,15 +195,15 @@ public class QHibernateUtility {
 
       for (SortField sortField : sort.getFields()) {
 
-        WhereEntity<EntityPath<?>> whereEntity = fieldTransformer.transform(sortField.getEntity(), sortField.getName());
+        WherePath<EntityPath<?>> wherePath = fieldTransformer.transform(sortField.getEntity(), sortField.getName());
 
-        qApplied.add(whereEntity.getEntity());
+        qApplied.add(wherePath.asNative());
         switch (sortField.getDirection()) {
           case ASC:
-            orderSpecifierList.add(new OrderSpecifier<>(Order.ASC, Expressions.path(String.class, whereEntity.getEntity(), whereEntity.getField())));
+            orderSpecifierList.add(new OrderSpecifier<>(Order.ASC, Expressions.path(String.class, wherePath.asNative(), wherePath.asString())));
             break;
           case DESC:
-            orderSpecifierList.add(new OrderSpecifier<>(Order.DESC, Expressions.path(String.class, whereEntity.getEntity(), whereEntity.getField())));
+            orderSpecifierList.add(new OrderSpecifier<>(Order.DESC, Expressions.path(String.class, wherePath.asNative(), wherePath.asString())));
             break;
           default:
             throw new UnknownSwitchCaseException(sortField.getDirection().name());

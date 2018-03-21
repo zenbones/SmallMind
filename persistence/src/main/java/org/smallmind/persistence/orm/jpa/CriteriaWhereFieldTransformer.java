@@ -30,69 +30,68 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.persistence.orm.querydsl.hibernate;
+package org.smallmind.persistence.orm.jpa;
 
 import java.lang.reflect.Field;
 import java.util.HashMap;
-import com.querydsl.core.types.EntityPath;
+import javax.persistence.criteria.Path;
+import javax.persistence.criteria.Root;
 import org.smallmind.nutsnbolts.reflection.FieldUtility;
 import org.smallmind.persistence.AbstractDurable;
+import org.smallmind.persistence.orm.ORMOperationException;
 import org.smallmind.persistence.query.AbstractWhereFieldTransformer;
 import org.smallmind.persistence.query.WherePath;
 
-public class QWhereFieldTransformer extends AbstractWhereFieldTransformer<EntityPath<?>> {
+public class CriteriaWhereFieldTransformer extends AbstractWhereFieldTransformer<Path<?>> {
 
   private HashMap<String, JoinedType<?>> typeMap = new HashMap<>();
-  private EntityPath<?> defaultEntityPath;
+  private Root<?> defaultRoot;
 
-  public QWhereFieldTransformer () {
+  public CriteriaWhereFieldTransformer () {
 
   }
 
-  public QWhereFieldTransformer (EntityPath<?> defaultEntityPath) {
+  public CriteriaWhereFieldTransformer (Root<?> defaultRoot) {
 
-    this.defaultEntityPath = defaultEntityPath;
+    this.defaultRoot = defaultRoot;
   }
 
-  public synchronized <D extends AbstractDurable<?, D>> QWhereFieldTransformer add (Class<? extends AbstractDurable<?, D>> durableClass, EntityPath<D> entityPath) {
+  public synchronized <D extends AbstractDurable<?, D>> CriteriaWhereFieldTransformer add (Class<? extends AbstractDurable<?, D>> durableClass, Root<D> root) {
 
-    typeMap.put(durableClass.getSimpleName(), new JoinedType<>(durableClass, entityPath));
+    typeMap.put(durableClass.getSimpleName(), new JoinedType<>(durableClass, root));
 
     return this;
   }
 
   @Override
-  public synchronized WherePath<EntityPath<?>> getDefault (String entity, String name) {
+  public synchronized WherePath<Path<?>> getDefault (String entity, String name) {
 
     JoinedType<?> joinedType;
 
     if ((entity != null) && (!entity.isEmpty())) {
       if ((joinedType = typeMap.get(entity)) != null) {
 
-        return new QWherePath(joinedType.getEntityPath(), name);
+        return new CriteriaWherePath(joinedType.getRoot().get(name));
       } else {
-        return new QWherePath(null, entity + '.' + name);
+        throw new ORMOperationException("Unknown entity(%s)", entity);
       }
+    } else if ((joinedType = deduceJoinedType(name)) != null) {
+
+      return new CriteriaWherePath(joinedType.getRoot().get(name));
+    } else if (defaultRoot != null) {
+      return new CriteriaWherePath(defaultRoot.get(name));
     } else {
-
-      EntityPath<?> entityPath;
-
-      if ((entityPath = deduceEntityPath(name)) != null) {
-
-        return new QWherePath(entityPath, name);
-      } else {
-        return new QWherePath(defaultEntityPath, name);
-      }
+      throw new ORMOperationException("Could not deduce the entity for the field(%s)", name);
     }
   }
 
-  private EntityPath<?> deduceEntityPath (String name) {
+  private JoinedType<?> deduceJoinedType (String name) {
 
     for (JoinedType<?> joinedType : typeMap.values()) {
       for (Field field : FieldUtility.getFields(joinedType.getDurableClass())) {
         if (field.getName().equals(name)) {
 
-          return joinedType.getEntityPath();
+          return joinedType;
         }
       }
     }
@@ -103,12 +102,12 @@ public class QWhereFieldTransformer extends AbstractWhereFieldTransformer<Entity
   private class JoinedType<D extends AbstractDurable<?, D>> {
 
     private Class<? extends AbstractDurable<?, D>> durableClass;
-    private EntityPath<D> entityPath;
+    private Root<D> root;
 
-    public JoinedType (Class<? extends AbstractDurable<?, D>> durableClass, EntityPath<D> entityPath) {
+    public JoinedType (Class<? extends AbstractDurable<?, D>> durableClass, Root<D> root) {
 
       this.durableClass = durableClass;
-      this.entityPath = entityPath;
+      this.root = root;
     }
 
     public Class<? extends AbstractDurable<?, D>> getDurableClass () {
@@ -116,9 +115,9 @@ public class QWhereFieldTransformer extends AbstractWhereFieldTransformer<Entity
       return durableClass;
     }
 
-    public EntityPath<D> getEntityPath () {
+    public Root<D> getRoot () {
 
-      return entityPath;
+      return root;
     }
   }
 }

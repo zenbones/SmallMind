@@ -33,27 +33,27 @@
 package org.smallmind.persistence.orm.querydsl.hibernate;
 
 import com.querydsl.core.types.EntityPath;
-import org.smallmind.persistence.query.WhereEntity;
+import org.smallmind.persistence.query.WherePath;
 
-public class QWhereEntity implements WhereEntity<EntityPath<?>> {
+public class QWherePath implements WherePath<EntityPath<?>> {
 
   private EntityPath<?> entity;
   private String field;
 
-  public QWhereEntity (EntityPath<?> entity, String field) {
+  public QWherePath (EntityPath<?> entity, String field) {
 
     this.entity = entity;
     this.field = field;
   }
 
   @Override
-  public EntityPath<?> getEntity () {
+  public EntityPath<?> asNative () {
 
     return entity;
   }
 
   @Override
-  public String getField () {
+  public String asString () {
 
     return field;
   }

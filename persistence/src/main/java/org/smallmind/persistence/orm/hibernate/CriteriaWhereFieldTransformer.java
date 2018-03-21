@@ -33,13 +33,13 @@
 package org.smallmind.persistence.orm.hibernate;
 
 import org.smallmind.persistence.query.AbstractWhereFieldTransformer;
-import org.smallmind.persistence.query.WhereEntity;
+import org.smallmind.persistence.query.WherePath;
 
 public class CriteriaWhereFieldTransformer extends AbstractWhereFieldTransformer<Class<HibernateDurable<?, ?>>> {
 
   @Override
-  public WhereEntity<Class<HibernateDurable<?, ?>>> getDefault (String entity, String name) {
+  public WherePath<Class<HibernateDurable<?, ?>>> getDefault (String entity, String name) {
 
-    return new CriteriaWhereEntity(null, name);
+    return new CriteriaWherePath(null, name);
   }
 }

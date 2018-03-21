@@ -30,30 +30,51 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.persistence.orm.hibernate;
+package org.smallmind.persistence.orm.jpa;
 
-import org.smallmind.persistence.query.WhereEntity;
+import java.util.HashSet;
+import javax.persistence.criteria.Root;
 
-public class CriteriaWhereEntity implements WhereEntity<Class<HibernateDurable<?, ?>>> {
+public class SomeCriteriaApplied<T> implements CriteriaApplied<T> {
 
-  private Class<HibernateDurable<?, ?>> entity;
-  private String field;
+  private HashSet<Root<?>> rootSet = new HashSet<>();
+  private T result;
 
-  public CriteriaWhereEntity (Class<HibernateDurable<?, ?>> entity, String field) {
+  public SomeCriteriaApplied<T> add (Root<?> root) {
 
-    this.entity = entity;
-    this.field = field;
+    if (root != null) {
+      rootSet.add(root);
+    }
+
+    return this;
+  }
+
+  public SomeCriteriaApplied<T> set (T result) {
+
+    this.result = result;
+
+    return this;
   }
 
   @Override
-  public Class<HibernateDurable<?, ?>> getEntity () {
+  public boolean isEmpty () {
 
-    return entity;
+    return false;
   }
 
   @Override
-  public String getField () {
+  public T getResult () {
 
-    return field;
+    return result;
+  }
+
+  @Override
+  public Root[] getRoots () {
+
+    Root[] roots = new Root[rootSet.size()];
+
+    rootSet.toArray(roots);
+
+    return roots;
   }
 }

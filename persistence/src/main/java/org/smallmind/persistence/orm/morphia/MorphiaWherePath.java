@@ -32,27 +32,27 @@
  */
 package org.smallmind.persistence.orm.morphia;
 
-import org.smallmind.persistence.query.WhereEntity;
+import org.smallmind.persistence.query.WherePath;
 
-public class MorphiaWhereEntity implements WhereEntity<Class<MorphiaDurable<?, ?>>> {
+public class MorphiaWherePath implements WherePath<Class<MorphiaDurable<?, ?>>> {
 
   private Class<MorphiaDurable<?, ?>> entity;
   private String field;
 
-  public MorphiaWhereEntity (Class<MorphiaDurable<?, ?>> entity, String field) {
+  public MorphiaWherePath (Class<MorphiaDurable<?, ?>> entity, String field) {
 
     this.entity = entity;
     this.field = field;
   }
 
   @Override
-  public Class<MorphiaDurable<?, ?>> getEntity () {
+  public Class<MorphiaDurable<?, ?>> asNative () {
 
     return entity;
   }
 
   @Override
-  public String getField () {
+  public String asString () {
 
     return field;
   }

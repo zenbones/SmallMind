@@ -30,9 +30,30 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.persistence.query;
+package org.smallmind.persistence.orm.hibernate;
 
-public interface WhereFieldTransform<T> {
+import org.smallmind.persistence.query.WherePath;
 
-  WherePath<T> apply (String entity, String name);
+public class CriteriaWherePath implements WherePath<Class<HibernateDurable<?, ?>>> {
+
+  private Class<HibernateDurable<?, ?>> entity;
+  private String field;
+
+  public CriteriaWherePath (Class<HibernateDurable<?, ?>> entity, String field) {
+
+    this.entity = entity;
+    this.field = field;
+  }
+
+  @Override
+  public Class<HibernateDurable<?, ?>> asNative () {
+
+    return entity;
+  }
+
+  @Override
+  public String asString () {
+
+    return field;
+  }
 }

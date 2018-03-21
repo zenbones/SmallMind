@@ -34,5 +34,5 @@ package org.smallmind.persistence.query;
 
 public interface WhereFieldTransformer<T> {
 
-  WhereEntity<T> transform (String table, String name);
+  WherePath<T> transform (String table, String name);
 }
