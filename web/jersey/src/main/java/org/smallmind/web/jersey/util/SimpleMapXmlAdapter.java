@@ -49,14 +49,18 @@ public abstract class SimpleMapXmlAdapter<M extends Map<String, V>, V> extends X
   public M unmarshal (JsonNode node) {
 
     if (node != null) {
+      if (!node.isObject()) {
+        throw new RuntimeException("Expecting an object");
+      } else {
 
-      M map = getEmptyMap();
+        M map = getEmptyMap();
 
-      for (Map.Entry<String, JsonNode> entry : new IterableIterator<>(node.fields())) {
-        map.put("null".equals(entry.getKey()) ? null : entry.getKey(), JsonCodec.convert(entry.getValue(), getValueClass()));
+        for (Map.Entry<String, JsonNode> entry : new IterableIterator<>(node.fields())) {
+          map.put("null".equals(entry.getKey()) ? null : entry.getKey(), JsonCodec.convert(entry.getValue(), getValueClass()));
+        }
+
+        return map;
       }
-
-      return map;
     }
 
     return null;
