@@ -40,6 +40,8 @@ import javax.persistence.Temporal;
 import javax.persistence.TemporalType;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
+import org.smallmind.nutsnbolts.reflection.FieldUtility;
+import org.smallmind.persistence.Durable;
 
 @MappedSuperclass
 public abstract class TimestampedHibernateDurable<I extends Serializable & Comparable<I>, D extends TimestampedHibernateDurable<I, D>> extends HibernateDurable<I, D> {
@@ -71,5 +73,11 @@ public abstract class TimestampedHibernateDurable<I extends Serializable & Compa
   public synchronized void setLastUpdated (Date lastUpdated) {
 
     this.lastUpdated = lastUpdated;
+  }
+
+  @Override
+  public boolean mirrors (Durable durable) {
+
+    return mirrors(durable, FieldUtility.getField(this.getClass(), "id"), FieldUtility.getField(this.getClass(), "created"), FieldUtility.getField(this.getClass(), "lastUpdated"));
   }
 }
