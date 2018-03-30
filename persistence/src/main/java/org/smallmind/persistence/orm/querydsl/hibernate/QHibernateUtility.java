@@ -32,6 +32,7 @@
  */
 package org.smallmind.persistence.orm.querydsl.hibernate;
 
+import java.util.Arrays;
 import java.util.LinkedList;
 import com.querydsl.core.BooleanBuilder;
 import com.querydsl.core.types.EntityPath;
@@ -47,10 +48,10 @@ import org.smallmind.persistence.query.SortField;
 import org.smallmind.persistence.query.Where;
 import org.smallmind.persistence.query.WhereConjunction;
 import org.smallmind.persistence.query.WhereCriterion;
-import org.smallmind.persistence.query.WherePath;
 import org.smallmind.persistence.query.WhereField;
 import org.smallmind.persistence.query.WhereFieldTransformer;
 import org.smallmind.persistence.query.WhereOperandTransformer;
+import org.smallmind.persistence.query.WherePath;
 
 public class QHibernateUtility {
 
@@ -174,7 +175,7 @@ public class QHibernateUtility {
       case UNLIKE:
         return Expressions.predicate(Ops.NOT, Expressions.predicate(Ops.LIKE, Expressions.path(String.class, wherePath.asNative(), wherePath.asString()), Expressions.constant(fieldValue)));
       case IN:
-        return Expressions.predicate(Ops.IN, Expressions.path(String.class, wherePath.asNative(), wherePath.asString()), Expressions.constant(fieldValue));
+        return Expressions.predicate(Ops.IN, Expressions.path(String.class, wherePath.asNative(), wherePath.asString()), Expressions.constant(fieldValue.getClass().isArray() ? Arrays.asList(fieldValue) : fieldValue));
       default:
         throw new UnknownSwitchCaseException(whereField.getOperator().name());
     }

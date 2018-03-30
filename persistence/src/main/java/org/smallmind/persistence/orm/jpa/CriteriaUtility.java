@@ -166,7 +166,7 @@ public class CriteriaUtility {
       case UNLIKE:
         return criteriaBuilder.notLike((Path<String>)wherePath.asNative(), (String)fieldValue);
       case IN:
-        return criteriaBuilder.in((Path<String>)wherePath.asNative()).in(fieldValue);
+        return criteriaBuilder.in((Path<?>)wherePath.asNative()).in(fieldValue);
       default:
         throw new UnknownSwitchCaseException(whereField.getOperator().name());
     }
