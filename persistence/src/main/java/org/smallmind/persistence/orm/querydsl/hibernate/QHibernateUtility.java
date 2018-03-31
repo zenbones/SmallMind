@@ -32,10 +32,11 @@
  */
 package org.smallmind.persistence.orm.querydsl.hibernate;
 
-import java.util.Arrays;
+import java.lang.reflect.Array;
 import java.util.LinkedList;
 import com.querydsl.core.BooleanBuilder;
 import com.querydsl.core.types.EntityPath;
+import com.querydsl.core.types.Expression;
 import com.querydsl.core.types.Ops;
 import com.querydsl.core.types.Order;
 import com.querydsl.core.types.OrderSpecifier;
@@ -175,7 +176,15 @@ public class QHibernateUtility {
       case UNLIKE:
         return Expressions.predicate(Ops.NOT, Expressions.predicate(Ops.LIKE, Expressions.path(String.class, wherePath.asNative(), wherePath.asString()), Expressions.constant(fieldValue)));
       case IN:
-        return Expressions.predicate(Ops.IN, Expressions.path(String.class, wherePath.asNative(), wherePath.asString()), Expressions.constant(fieldValue.getClass().isArray() ? Arrays.asList(fieldValue) : fieldValue));
+
+        int arrayLength = Array.getLength(fieldValue);
+        Expression[] arrayElements = new Expression[arrayLength];
+
+        for (int index = 0; index < arrayLength; index++) {
+          arrayElements[index] = Expressions.constant(Array.get(fieldValue, index));
+        }
+
+        return Expressions.predicate(Ops.IN, Expressions.path(String.class, wherePath.asNative(), wherePath.asString()), Expressions.collectionOperation(fieldValue.getClass().getComponentType(), Ops.LIST, arrayElements));
       default:
         throw new UnknownSwitchCaseException(whereField.getOperator().name());
     }
