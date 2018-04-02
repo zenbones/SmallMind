@@ -103,17 +103,19 @@ public class QHibernateUtility {
     LinkedList<Predicate> predicateList = new LinkedList<>();
 
     for (WhereCriterion whereCriterion : whereConjunction.getCriteria()) {
+
+      Predicate walkedPredicate;
+
       switch (whereCriterion.getCriterionType()) {
         case CONJUNCTION:
-
-          Predicate walkedPredicate;
-
           if ((walkedPredicate = walkConjunction(qApplied, (WhereConjunction)whereCriterion, fieldTransformer, operandTransformer)) != null) {
             predicateList.add(walkedPredicate);
           }
           break;
         case FIELD:
-          predicateList.add(walkField(qApplied, (WhereField)whereCriterion, fieldTransformer, operandTransformer));
+          if ((walkedPredicate = walkField(qApplied, (WhereField)whereCriterion, fieldTransformer, operandTransformer)) != null) {
+            predicateList.add(walkedPredicate);
+          }
           break;
         default:
           throw new UnknownSwitchCaseException(whereCriterion.getCriterionType().name());
@@ -177,14 +179,23 @@ public class QHibernateUtility {
         return Expressions.predicate(Ops.NOT, Expressions.predicate(Ops.LIKE, Expressions.path(String.class, wherePath.asNative(), wherePath.asString()), Expressions.constant(fieldValue)));
       case IN:
 
-        int arrayLength = Array.getLength(fieldValue);
-        Expression[] arrayElements = new Expression[arrayLength];
+        int arrayLength;
 
-        for (int index = 0; index < arrayLength; index++) {
-          arrayElements[index] = Expressions.constant(Array.get(fieldValue, index));
+        if ((arrayLength = Array.getLength(fieldValue)) == 0) {
+
+          return null;
+        } else {
+
+          Expression<?> collectionExpression = Expressions.collectionOperation(fieldValue.getClass().getComponentType(), Ops.SINGLETON, Expressions.constant(Array.get(fieldValue, 0)));
+
+          if (arrayLength > 1) {
+            for (int index = 1; index < arrayLength; index++) {
+              collectionExpression = Expressions.collectionOperation(fieldValue.getClass().getComponentType(), Ops.LIST, collectionExpression, Expressions.constant(Array.get(fieldValue, index)));
+            }
+          }
+
+          return Expressions.predicate(Ops.IN, Expressions.path(String.class, wherePath.asNative(), wherePath.asString()), collectionExpression);
         }
-
-        return Expressions.predicate(Ops.IN, Expressions.path(String.class, wherePath.asNative(), wherePath.asString()), Expressions.collectionOperation(fieldValue.getClass().getComponentType(), Ops.LIST, arrayElements));
       default:
         throw new UnknownSwitchCaseException(whereField.getOperator().name());
     }
