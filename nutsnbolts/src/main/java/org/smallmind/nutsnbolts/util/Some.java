@@ -36,7 +36,7 @@ public class Some<T> implements Option<T> {
 
   private T value;
 
-  public Some (T value) {
+  protected Some (T value) {
 
     this.value = value;
   }

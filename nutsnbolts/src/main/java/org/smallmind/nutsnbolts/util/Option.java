@@ -36,6 +36,17 @@ import java.io.Serializable;
 
 public interface Option<T> extends Serializable {
 
+  @SuppressWarnings("unchecked")
+  static <T> None<T> none () {
+
+    return (None<T>)None.NONE;
+  }
+
+  static <T> Some<T> of (T value) {
+
+    return new Some<>(value);
+  }
+
   boolean isNone ();
 
   T get ();

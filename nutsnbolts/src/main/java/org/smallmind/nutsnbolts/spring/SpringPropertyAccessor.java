@@ -33,14 +33,12 @@
 package org.smallmind.nutsnbolts.spring;
 
 import java.util.Set;
-import org.smallmind.nutsnbolts.util.None;
 import org.smallmind.nutsnbolts.util.Option;
-import org.smallmind.nutsnbolts.util.Some;
 
 public class SpringPropertyAccessor {
 
-  PropertyPlaceholderStringValueResolver stringValueResolver;
   private final Set<String> keySet;
+  private PropertyPlaceholderStringValueResolver stringValueResolver;
 
   public SpringPropertyAccessor (PropertyPlaceholderStringValueResolver stringValueResolver) {
 
@@ -70,10 +68,10 @@ public class SpringPropertyAccessor {
 
     if ((stringValue = asString(key)) == null) {
 
-      return None.none();
+      return Option.none();
     }
 
-    return new Some<>(Boolean.parseBoolean(stringValue));
+    return Option.of(Boolean.parseBoolean(stringValue));
   }
 
   public Option<Long> asLong (String key) {
@@ -82,13 +80,12 @@ public class SpringPropertyAccessor {
 
     if ((stringValue = asString(key)) == null) {
 
-      return None.none();
+      return Option.none();
     }
 
     try {
-      return new Some<>(Long.parseLong(stringValue));
-    }
-    catch (NumberFormatException numberFormatException) {
+      return Option.of(Long.parseLong(stringValue));
+    } catch (NumberFormatException numberFormatException) {
       throw new RuntimeBeansException("The value of key(%s) must interpolate as an long(%s)", key, stringValue);
     }
   }
@@ -99,13 +96,12 @@ public class SpringPropertyAccessor {
 
     if ((stringValue = asString(key)) == null) {
 
-      return None.none();
+      return Option.none();
     }
 
     try {
-      return new Some<>(Integer.parseInt(stringValue));
-    }
-    catch (NumberFormatException numberFormatException) {
+      return Option.of(Integer.parseInt(stringValue));
+    } catch (NumberFormatException numberFormatException) {
       throw new RuntimeBeansException("The value of key(%s) must interpolate as an int(%s)", key, stringValue);
     }
   }

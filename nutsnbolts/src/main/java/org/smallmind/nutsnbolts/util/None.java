@@ -34,12 +34,7 @@ package org.smallmind.nutsnbolts.util;
 
 public class None<T> implements Option<T> {
 
-  private static None NONE = new None();
-
-  public static <T> None<T> none () {
-
-    return NONE;
-  }
+  protected static None<?> NONE = new None();
 
   private None () {
 
