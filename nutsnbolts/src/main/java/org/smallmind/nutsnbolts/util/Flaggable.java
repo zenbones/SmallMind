@@ -32,25 +32,25 @@
  */
 package org.smallmind.nutsnbolts.util;
 
-public class Markable<T> {
+public class Flaggable<T> {
 
-  private boolean marked;
+  private boolean flagged;
   private T value;
 
-  public Markable (boolean flag, T value) {
+  public Flaggable (boolean flag, T value) {
 
-    this.marked = flag;
+    this.flagged = flag;
     this.value = value;
   }
 
-  public Markable (T value) {
+  public Flaggable (T value) {
 
     this(false, value);
   }
 
-  public boolean isMarked () {
+  public boolean isFlagged () {
 
-    return marked;
+    return flagged;
   }
 
   public T getValue () {
