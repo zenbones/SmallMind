@@ -43,11 +43,25 @@ import org.smallmind.web.jersey.util.JsonCodec;
 
 public class FaultTranslatingClientResponseFilter implements ClientResponseFilter {
 
+  private int lowerBound;
+  private int upperBound;
+
+  public FaultTranslatingClientResponseFilter() {
+
+    this(400, 600);
+  }
+
+  public FaultTranslatingClientResponseFilter(int lowerBound, int upperBound) {
+
+    this.lowerBound = lowerBound;
+    this.upperBound = upperBound;
+  }
+
   @Override
   public void filter (ClientRequestContext requestContext, ClientResponseContext responseContext)
     throws IOException {
 
-    if ((responseContext.getStatus() == 500) && MediaType.APPLICATION_JSON_TYPE.equals(responseContext.getMediaType()) && responseContext.hasEntity()) {
+    if ((responseContext.getStatus() >= lowerBound) && (responseContext.getStatus() < upperBound) && MediaType.APPLICATION_JSON_TYPE.equals(responseContext.getMediaType()) && responseContext.hasEntity()) {
 
       Fault fault;
       NativeObject nativeObject;
