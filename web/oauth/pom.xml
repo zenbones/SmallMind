@@ -18,6 +18,11 @@
       <scope>compile</scope>
     </dependency>
     <dependency>
+      <groupId>javax.activation</groupId>
+      <artifactId>activation</artifactId>
+      <scope>compile</scope>
+    </dependency>
+    <dependency>
       <groupId>org.smallmind</groupId>
       <artifactId>smallmind-foundation</artifactId>
       <scope>test</scope>

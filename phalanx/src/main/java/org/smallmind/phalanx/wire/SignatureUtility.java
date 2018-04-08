@@ -144,7 +144,7 @@ public class SignatureUtility {
 
     switch (type.charAt(0)) {
       case 'V':
-        return void.class;
+        return Void.class;
       case 'Z':
         return boolean.class;
       case 'B':
