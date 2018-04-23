@@ -32,6 +32,8 @@
  */
 package org.smallmind.scheduling.quartz.spring;
 
+import java.io.Closeable;
+import java.io.IOException;
 import java.util.Map;
 import org.quartz.Job;
 import org.quartz.Scheduler;
@@ -49,16 +51,23 @@ public class SpringJobFactory implements JobFactory {
     this.applicationContext = applicationContext;
   }
 
+  public synchronized void close ()
+    throws IOException {
+
+    if ((applicationContext != null) && (Closeable.class.isAssignableFrom(applicationContext.getClass()))) {
+      ((Closeable)applicationContext).close();
+    }
+  }
+
   @Override
-  public Job newJob (TriggerFiredBundle bundle, Scheduler scheduler)
+  public synchronized Job newJob (TriggerFiredBundle bundle, Scheduler scheduler)
     throws SchedulerException {
 
     Map<String, ? extends Job> jobMap = applicationContext.getBeansOfType(bundle.getJobDetail().getJobClass());
 
     if (jobMap.size() == 0) {
       throw new FormattedSchedulerException("No job(%s) of type(%s) is present in the application context", bundle.getJobDetail().getKey(), bundle.getJobDetail().getJobClass().getName());
-    }
-    else if (jobMap.size() == 1) {
+    } else if (jobMap.size() == 1) {
 
       Map.Entry<String, ? extends Job> jobEntry = jobMap.entrySet().iterator().next();
 
@@ -67,8 +76,7 @@ public class SpringJobFactory implements JobFactory {
       }
 
       return jobEntry.getValue();
-    }
-    else {
+    } else {
       for (Map.Entry<String, ? extends Job> jobEntry : jobMap.entrySet()) {
         if (jobEntry.getKey().equals(bundle.getJobDetail().getKey().toString())) {
           if (!applicationContext.isPrototype(jobEntry.getKey())) {

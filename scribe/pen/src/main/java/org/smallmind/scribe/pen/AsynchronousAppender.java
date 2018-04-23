@@ -171,17 +171,22 @@ public class AsynchronousAppender implements Appender {
 
     public void run () {
 
-      Record record;
-
       try {
         while (!finished.get()) {
-          if ((record = publishQueue.poll(1, TimeUnit.SECONDS)) != null) {
-            internalAppender.publish(record);
+          try {
+
+            Record record;
+
+            if ((record = publishQueue.poll(1, TimeUnit.SECONDS)) != null) {
+              internalAppender.publish(record);
+            }
+          } catch (InterruptedException interruptedException) {
+            finished.set(true);
+            LoggerManager.getLogger(AsynchronousAppender.class).error(interruptedException);
+          } catch (Exception exception) {
+            LoggerManager.getLogger(AsynchronousAppender.class).error(exception);
           }
         }
-      } catch (InterruptedException interruptedException) {
-        finished.set(true);
-        LoggerManager.getLogger(AsynchronousAppender.class).error(interruptedException);
       } finally {
         exitLatch.countDown();
       }

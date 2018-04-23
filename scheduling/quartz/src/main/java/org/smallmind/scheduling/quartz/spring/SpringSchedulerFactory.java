@@ -32,6 +32,7 @@
  */
 package org.smallmind.scheduling.quartz.spring;
 
+import java.io.IOException;
 import java.util.Properties;
 import org.quartz.Scheduler;
 import org.quartz.SchedulerException;
@@ -69,7 +70,7 @@ public class SpringSchedulerFactory extends StdSchedulerFactory implements Appli
   }
 
   @Override
-  public void onApplicationEvent (ContextClosedEvent event) {
+  public synchronized void onApplicationEvent (ContextClosedEvent event) {
 
     try {
       Scheduler scheduler;
@@ -80,10 +81,19 @@ public class SpringSchedulerFactory extends StdSchedulerFactory implements Appli
     } catch (SchedulerException schedulerException) {
       LoggerManager.getLogger(SpringSchedulerFactory.class).error(schedulerException);
     }
+
+    if (jobFactory != null) {
+      try {
+        jobFactory.close();
+      } catch (IOException ioException) {
+        LoggerManager.getLogger(SpringSchedulerFactory.class).error(ioException);
+      }
+    }
   }
 
   @Override
-  public Scheduler getScheduler () throws SchedulerException {
+  public synchronized Scheduler getScheduler ()
+    throws SchedulerException {
 
     Scheduler scheduler;
 
