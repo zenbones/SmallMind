@@ -1,28 +1,28 @@
 /*
  * Copyright (c) 2007, 2008, 2009, 2010, 2011, 2012, 2013, 2014, 2015, 2016, 2017 David Berkman
- * 
+ *
  * This file is part of the SmallMind Code Project.
- * 
+ *
  * The SmallMind Code Project is free software, you can redistribute
  * it and/or modify it under either, at your discretion...
- * 
+ *
  * 1) The terms of GNU Affero General Public License as published by the
  * Free Software Foundation, either version 3 of the License, or (at
  * your option) any later version.
- * 
+ *
  * ...or...
- * 
+ *
  * 2) The terms of the Apache License, Version 2.0.
- * 
+ *
  * The SmallMind Code Project is distributed in the hope that it will
  * be useful, but WITHOUT ANY WARRANTY; without even the implied warranty
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License or Apache License for more details.
- * 
+ *
  * You should have received a copy of the GNU Affero General Public License
  * and the Apache License along with the SmallMind Code Project. If not, see
  * <http://www.gnu.org/licenses/> or <http://www.apache.org/licenses/LICENSE-2.0>.
- * 
+ *
  * Additional permission under the GNU Affero GPL version 3 section 7
  * ------------------------------------------------------------------
  * If you modify this Program, or any covered work, by linking or
@@ -46,17 +46,16 @@ import org.smallmind.persistence.cache.CacheOperationException;
 import org.smallmind.persistence.cache.DurableKey;
 import org.smallmind.persistence.cache.VectoredDao;
 import org.smallmind.persistence.cache.praxis.intrinsic.IntrinsicRoster;
-import org.smallmind.persistence.orm.OrmDaoManager;
 import org.smallmind.persistence.orm.ORMDao;
+import org.smallmind.persistence.orm.OrmDaoManager;
 import org.terracotta.annotations.InstrumentedClass;
 
 @InstrumentedClass
 public class ByKeyRoster<I extends Serializable & Comparable<I>, D extends Durable<I>> implements Roster<D> {
 
-  private transient volatile ORMDao<I, D, ?, ?> ormDao;
-
   private final Roster<DurableKey<I, D>> keyRoster;
   private final Class<D> durableClass;
+  private transient volatile ORMDao<I, D, ?, ?> ormDao;
 
   public ByKeyRoster (Class<D> durableClass, Roster<DurableKey<I, D>> keyRoster) {
 
@@ -91,8 +90,7 @@ public class ByKeyRoster<I extends Serializable & Comparable<I>, D extends Durab
 
         if ((durable = prefetchMap.get(durableKey)) != null) {
           prefetchList.add(durable);
-        }
-        else if ((durable = ormDao.acquire(durableClass, ormDao.getIdFromString(durableKey.getIdAsString()))) != null) {
+        } else if ((durable = ormDao.acquire(durableClass, ormDao.getIdFromString(durableKey.getIdAsString()))) != null) {
           prefetchList.add(durable);
         }
       }
@@ -100,7 +98,7 @@ public class ByKeyRoster<I extends Serializable & Comparable<I>, D extends Durab
       return prefetchList;
     }
 
-    return new LinkedList<D>(this);
+    return new LinkedList<>(this);
   }
 
   private D getDurable (DurableKey<I, D> durableKey) {
@@ -173,27 +171,27 @@ public class ByKeyRoster<I extends Serializable & Comparable<I>, D extends Durab
 
   public D set (int index, D durable) {
 
-    return getDurable(keyRoster.set(index, new DurableKey<I, D>(durableClass, durable.getId())));
+    return getDurable(keyRoster.set(index, new DurableKey<>(durableClass, durable.getId())));
   }
 
   public void addFirst (D durable) {
 
-    keyRoster.addFirst(new DurableKey<I, D>(durableClass, durable.getId()));
+    keyRoster.addFirst(new DurableKey<>(durableClass, durable.getId()));
   }
 
   public boolean add (D durable) {
 
-    return keyRoster.add(new DurableKey<I, D>(durableClass, durable.getId()));
+    return keyRoster.add(new DurableKey<>(durableClass, durable.getId()));
   }
 
   public void add (int index, D durable) {
 
-    keyRoster.add(index, new DurableKey<I, D>(durableClass, durable.getId()));
+    keyRoster.add(index, new DurableKey<>(durableClass, durable.getId()));
   }
 
   public boolean remove (Object obj) {
 
-    return durableClass.isAssignableFrom(obj.getClass()) && keyRoster.remove(new DurableKey<I, D>(durableClass, durableClass.cast(obj).getId()));
+    return durableClass.isAssignableFrom(obj.getClass()) && keyRoster.remove(new DurableKey<>(durableClass, durableClass.cast(obj).getId()));
   }
 
   public D removeLast () {
@@ -208,7 +206,7 @@ public class ByKeyRoster<I extends Serializable & Comparable<I>, D extends Durab
 
   public boolean containsAll (Collection<?> c) {
 
-    HashSet<DurableKey<I, D>> keySet = new HashSet<DurableKey<I, D>>();
+    HashSet<DurableKey<I, D>> keySet = new HashSet<>();
 
     for (Object obj : c) {
       if (!durableClass.isAssignableFrom(obj.getClass())) {
@@ -216,7 +214,7 @@ public class ByKeyRoster<I extends Serializable & Comparable<I>, D extends Durab
         return false;
       }
 
-      keySet.add(new DurableKey<I, D>(durableClass, durableClass.cast(obj).getId()));
+      keySet.add(new DurableKey<>(durableClass, durableClass.cast(obj).getId()));
     }
 
     return keySet.containsAll(keySet);
@@ -224,11 +222,11 @@ public class ByKeyRoster<I extends Serializable & Comparable<I>, D extends Durab
 
   public boolean addAll (Collection<? extends D> c) {
 
-    HashSet<DurableKey<I, D>> keySet = new HashSet<DurableKey<I, D>>();
+    HashSet<DurableKey<I, D>> keySet = new HashSet<>();
 
     for (Object obj : c) {
       if (durableClass.isAssignableFrom(obj.getClass())) {
-        keySet.add(new DurableKey<I, D>(durableClass, durableClass.cast(obj).getId()));
+        keySet.add(new DurableKey<>(durableClass, durableClass.cast(obj).getId()));
       }
     }
 
@@ -237,11 +235,11 @@ public class ByKeyRoster<I extends Serializable & Comparable<I>, D extends Durab
 
   public boolean addAll (int index, Collection<? extends D> c) {
 
-    HashSet<DurableKey<I, D>> keySet = new HashSet<DurableKey<I, D>>();
+    HashSet<DurableKey<I, D>> keySet = new HashSet<>();
 
     for (Object obj : c) {
       if (durableClass.isAssignableFrom(obj.getClass())) {
-        keySet.add(new DurableKey<I, D>(durableClass, durableClass.cast(obj).getId()));
+        keySet.add(new DurableKey<>(durableClass, durableClass.cast(obj).getId()));
       }
     }
 
@@ -250,11 +248,11 @@ public class ByKeyRoster<I extends Serializable & Comparable<I>, D extends Durab
 
   public boolean removeAll (Collection<?> c) {
 
-    HashSet<DurableKey<I, D>> keySet = new HashSet<DurableKey<I, D>>();
+    HashSet<DurableKey<I, D>> keySet = new HashSet<>();
 
     for (Object obj : c) {
       if (durableClass.isAssignableFrom(obj.getClass())) {
-        keySet.add(new DurableKey<I, D>(durableClass, durableClass.cast(obj).getId()));
+        keySet.add(new DurableKey<>(durableClass, durableClass.cast(obj).getId()));
       }
     }
 
@@ -263,11 +261,11 @@ public class ByKeyRoster<I extends Serializable & Comparable<I>, D extends Durab
 
   public boolean retainAll (Collection<?> c) {
 
-    HashSet<DurableKey<I, D>> keySet = new HashSet<DurableKey<I, D>>();
+    HashSet<DurableKey<I, D>> keySet = new HashSet<>();
 
     for (Object obj : c) {
       if (durableClass.isAssignableFrom(obj.getClass())) {
-        keySet.add(new DurableKey<I, D>(durableClass, durableClass.cast(obj).getId()));
+        keySet.add(new DurableKey<>(durableClass, durableClass.cast(obj).getId()));
       }
     }
 
@@ -281,31 +279,31 @@ public class ByKeyRoster<I extends Serializable & Comparable<I>, D extends Durab
 
   public int indexOf (Object obj) {
 
-    return durableClass.isAssignableFrom(obj.getClass()) ? keyRoster.indexOf(new DurableKey<I, D>(durableClass, durableClass.cast(obj).getId())) : -1;
+    return durableClass.isAssignableFrom(obj.getClass()) ? keyRoster.indexOf(new DurableKey<>(durableClass, durableClass.cast(obj).getId())) : -1;
   }
 
   public int lastIndexOf (Object obj) {
 
-    return durableClass.isAssignableFrom(obj.getClass()) ? keyRoster.lastIndexOf(new DurableKey<I, D>(durableClass, durableClass.cast(obj).getId())) : -1;
+    return durableClass.isAssignableFrom(obj.getClass()) ? keyRoster.lastIndexOf(new DurableKey<>(durableClass, durableClass.cast(obj).getId())) : -1;
   }
 
   public Iterator<D> iterator () {
 
-    return new ByKeyRosterIterator<I, D>(getORMDao(), keyRoster.listIterator());
+    return new ByKeyRosterIterator<>(getORMDao(), keyRoster.listIterator());
   }
 
   public ListIterator<D> listIterator () {
 
-    return new ByKeyRosterIterator<I, D>(getORMDao(), keyRoster.listIterator());
+    return new ByKeyRosterIterator<>(getORMDao(), keyRoster.listIterator());
   }
 
   public ListIterator<D> listIterator (int index) {
 
-    return new ByKeyRosterIterator<I, D>(getORMDao(), keyRoster.listIterator(index));
+    return new ByKeyRosterIterator<>(getORMDao(), keyRoster.listIterator(index));
   }
 
   public List<D> subList (int fromIndex, int toIndex) {
 
-    return new ByKeyRoster<I, D>(durableClass, (IntrinsicRoster<DurableKey<I, D>>)keyRoster.subList(fromIndex, toIndex));
+    return new ByKeyRoster<>(durableClass, (IntrinsicRoster<DurableKey<I, D>>)keyRoster.subList(fromIndex, toIndex));
   }
 }
