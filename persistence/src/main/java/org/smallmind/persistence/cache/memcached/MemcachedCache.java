@@ -88,9 +88,15 @@ public class MemcachedCache<V> implements PersistenceCache<String, V> {
   public Map<String, V> get (String[] keys)
     throws CacheOperationException {
 
+    String[] discriminatedKeys = new String[keys.length];
+
+    for (int index = 0; index < keys.length; index++) {
+      discriminatedKeys[index] = getDiscriminatedKey(keys[index]);
+    }
+
     try {
 
-      return memcachedClient.get(Arrays.asList(keys));
+      return memcachedClient.get(Arrays.asList(discriminatedKeys));
     } catch (Exception exception) {
       throw new CacheOperationException(exception);
     }

@@ -94,11 +94,9 @@ public class ORMBasedCacheAsAspect {
       if (ormDao.getManagedClass().isAssignableFrom(methodSignature.getReturnType())) {
         if (cacheAs.ordered()) {
           throw new CacheAutomationError("A method annotated with @CacheAs which does not return an Iterable type can't be ordered", cacheAs.comparator().getClass().getName());
-        }
-        else if (cacheAs.max() > 0) {
+        } else if (cacheAs.max() > 0) {
           throw new CacheAutomationError("A method annotated with @CacheAs which does not return an Iterable type may not define a maximum size", cacheAs.comparator().getClass().getName());
-        }
-        else if (!cacheAs.comparator().equals(Comparator.class)) {
+        } else if (!cacheAs.comparator().equals(Comparator.class)) {
           throw new CacheAutomationError("A method annotated with @CacheAs which does not return an Iterable type can not register a comparator(%s)", cacheAs.comparator().getClass().getName());
         }
 
@@ -108,8 +106,7 @@ public class ORMBasedCacheAsAspect {
           metricSource = ormDao.getMetricSource();
 
           return thisJoinPoint.proceed();
-        }
-        else {
+        } else {
 
           VectorKey vectorKey;
           DurableVector vector;
@@ -119,8 +116,7 @@ public class ORMBasedCacheAsAspect {
           if ((vector = vectoredDao.getVector(vectorKey)) != null) {
             if (!vector.isAlive()) {
               vectoredDao.deleteVector(vectorKey);
-            }
-            else {
+            } else {
               metricSource = vectoredDao.getMetricSource();
 
               return vector.head();
@@ -138,8 +134,7 @@ public class ORMBasedCacheAsAspect {
 
           return null;
         }
-      }
-      else if (Iterable.class.isAssignableFrom(methodSignature.getReturnType())) {
+      } else if (Iterable.class.isAssignableFrom(methodSignature.getReturnType())) {
         if ((!cacheAs.comparator().equals(Comparator.class)) && (!cacheAs.ordered())) {
           throw new CacheAutomationError("A method annotated with @CacheAs has registered a comparator(%s) but is not ordered", cacheAs.comparator().getClass().getName());
         }
@@ -154,8 +149,7 @@ public class ORMBasedCacheAsAspect {
           metricSource = ormDao.getMetricSource();
 
           return thisJoinPoint.proceed();
-        }
-        else {
+        } else {
 
           VectorKey vectorKey;
           DurableVector vector;
@@ -165,8 +159,7 @@ public class ORMBasedCacheAsAspect {
           if ((vector = vectoredDao.getVector(vectorKey)) != null) {
             if (!vector.isAlive()) {
               vectoredDao.deleteVector(vectorKey);
-            }
-            else {
+            } else {
               metricSource = vectoredDao.getMetricSource();
 
               return List.class.isAssignableFrom(methodSignature.getReturnType()) ? vector.asBestEffortPreFetchedList() : vector.asBestEffortLazyList();
@@ -185,17 +178,14 @@ public class ORMBasedCacheAsAspect {
 
           return null;
         }
-      }
-      else {
+      } else {
         throw new CacheAutomationError("Methods annotated with @CacheAs must either return their managed type(%s), or an Iterable parameterized to their managed type <? extends Iterable<? extends %s>>", ormDao.getManagedClass().getSimpleName(), ormDao.getManagedClass().getSimpleName());
       }
-    }
-    catch (Throwable throwable) {
+    } catch (Throwable throwable) {
       timingEnabled = false;
 
       throw throwable;
-    }
-    finally {
+    } finally {
       if (timingEnabled) {
         stop = System.currentTimeMillis();
 

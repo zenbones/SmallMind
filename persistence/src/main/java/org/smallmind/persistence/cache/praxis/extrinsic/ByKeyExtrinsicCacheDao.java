@@ -105,8 +105,7 @@ public class ByKeyExtrinsicCacheDao<I extends Serializable & Comparable<I>, D ex
       do {
         if ((casValue = getVectorCache(vectorKey.getElementClass()).getViaCas(vectorKey.getKey())).getValue() == null) {
           break;
-        }
-        else if (casValue.getValue().isSingular()) {
+        } else if (casValue.getValue().isSingular()) {
           deleteVector(vectorKey);
           break;
         }
@@ -124,15 +123,14 @@ public class ByKeyExtrinsicCacheDao<I extends Serializable & Comparable<I>, D ex
     if (vector.isSingular()) {
       if (!(vector instanceof ByKeySingularVector)) {
 
-        return new ByKeySingularVector<I, D>(new DurableKey<I, D>(managedClass, vector.head().getId()), vector.getTimeToLiveSeconds());
+        return new ByKeySingularVector<>(new DurableKey<>(managedClass, vector.head().getId()), vector.getTimeToLiveSeconds());
       }
 
       return vector;
-    }
-    else {
+    } else {
       if (!(vector instanceof ByKeyExtrinsicVector)) {
 
-        return new ByKeyExtrinsicVector<I, D>(managedClass, vector.asBestEffortPreFetchedList(), vector.getComparator(), vector.getMaxSize(), vector.getTimeToLiveSeconds(), vector.isOrdered());
+        return new ByKeyExtrinsicVector<>(managedClass, vector.asBestEffortPreFetchedList(), vector.getComparator(), vector.getMaxSize(), vector.getTimeToLiveSeconds(), vector.isOrdered());
       }
 
       return vector;
@@ -141,11 +139,11 @@ public class ByKeyExtrinsicCacheDao<I extends Serializable & Comparable<I>, D ex
 
   public DurableVector<I, D> createSingularVector (VectorKey<D> vectorKey, D durable, int timeToLiveSeconds) {
 
-    return new ByKeySingularVector<I, D>(new DurableKey<I, D>(vectorKey.getElementClass(), durable.getId()), timeToLiveSeconds);
+    return new ByKeySingularVector<>(new DurableKey<>(vectorKey.getElementClass(), durable.getId()), timeToLiveSeconds);
   }
 
   public DurableVector<I, D> createVector (VectorKey<D> vectorKey, Iterable<D> elementIter, Comparator<D> comparator, int maxSize, int timeToLiveSeconds, boolean ordered) {
 
-    return new ByKeyExtrinsicVector<I, D>(vectorKey.getElementClass(), elementIter, comparator, maxSize, timeToLiveSeconds, ordered);
+    return new ByKeyExtrinsicVector<>(vectorKey.getElementClass(), elementIter, comparator, maxSize, timeToLiveSeconds, ordered);
   }
 }

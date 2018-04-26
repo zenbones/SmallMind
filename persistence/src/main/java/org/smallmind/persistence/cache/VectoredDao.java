@@ -42,25 +42,25 @@ import org.smallmind.persistence.UpdateMode;
 
 public interface VectoredDao<I extends Serializable & Comparable<I>, D extends Durable<I>> extends Dao<I, D> {
 
-  public abstract String getMetricSource ();
+  String getMetricSource ();
 
-  public abstract Map<DurableKey<I, D>, D> get (Class<D> durableClass, List<DurableKey<I, D>> durableKeys);
+  Map<DurableKey<I, D>, D> get (Class<D> durableClass, List<DurableKey<I, D>> durableKeys);
 
-  public abstract D persist (Class<D> durableClass, D durable, UpdateMode mode);
+  D persist (Class<D> durableClass, D durable, UpdateMode mode);
 
-  public abstract void updateInVector (VectorKey<D> vectorKey, D durable);
+  void updateInVector (VectorKey<D> vectorKey, D durable);
 
-  public abstract void removeFromVector (VectorKey<D> vectorKey, D durable);
+  void removeFromVector (VectorKey<D> vectorKey, D durable);
 
-  public abstract DurableVector<I, D> getVector (VectorKey<D> vectorKey);
+  DurableVector<I, D> getVector (VectorKey<D> vectorKey);
 
-  public abstract DurableVector<I, D> persistVector (VectorKey<D> vectorKey, DurableVector<I, D> vector);
+  DurableVector<I, D> persistVector (VectorKey<D> vectorKey, DurableVector<I, D> vector);
 
-  public abstract DurableVector<I, D> migrateVector (Class<D> managedClass, DurableVector<I, D> vector);
+  DurableVector<I, D> migrateVector (Class<D> managedClass, DurableVector<I, D> vector);
 
-  public abstract DurableVector<I, D> createSingularVector (VectorKey<D> vectorKey, D durable, int timeToLiveSeconds);
+  DurableVector<I, D> createSingularVector (VectorKey<D> vectorKey, D durable, int timeToLiveSeconds);
 
-  public abstract DurableVector<I, D> createVector (VectorKey<D> vectorKey, Iterable<D> elementIter, Comparator<D> comparator, int maxSize, int timeToLiveSeconds, boolean ordered);
+  DurableVector<I, D> createVector (VectorKey<D> vectorKey, Iterable<D> elementIter, Comparator<D> comparator, int maxSize, int timeToLiveSeconds, boolean ordered);
 
-  public abstract void deleteVector (VectorKey<D> vectorKey);
+  void deleteVector (VectorKey<D> vectorKey);
 }
