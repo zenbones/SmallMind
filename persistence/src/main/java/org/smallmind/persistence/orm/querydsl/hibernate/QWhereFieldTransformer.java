@@ -40,21 +40,21 @@ import org.smallmind.persistence.AbstractDurable;
 import org.smallmind.persistence.query.AbstractWhereFieldTransformer;
 import org.smallmind.persistence.query.WherePath;
 
-public class QWhereFieldTransformer<D extends AbstractDurable<?, D>> extends AbstractWhereFieldTransformer<EntityPath<D>> {
+public class QWhereFieldTransformer<D extends AbstractDurable<?, D>> extends AbstractWhereFieldTransformer<EntityPath<? extends D>> {
 
   private HashMap<String, JoinedType> typeMap = new HashMap<>();
-  private EntityPath<D> defaultEntityPath;
+  private EntityPath<? extends D> defaultEntityPath;
 
   public QWhereFieldTransformer () {
 
   }
 
-  public QWhereFieldTransformer (EntityPath<D> defaultEntityPath) {
+  public QWhereFieldTransformer (EntityPath<? extends D> defaultEntityPath) {
 
     this.defaultEntityPath = defaultEntityPath;
   }
 
-  public synchronized QWhereFieldTransformer add (Class<? extends AbstractDurable<?, D>> durableClass, EntityPath<D> entityPath) {
+  public synchronized QWhereFieldTransformer add (Class<? extends AbstractDurable<?, D>> durableClass, EntityPath<? extends D> entityPath) {
 
     typeMap.put(durableClass.getSimpleName(), new JoinedType(durableClass, entityPath));
 
@@ -62,7 +62,7 @@ public class QWhereFieldTransformer<D extends AbstractDurable<?, D>> extends Abs
   }
 
   @Override
-  public synchronized WherePath<EntityPath<D>> getDefault (String entity, String name) {
+  public synchronized WherePath<EntityPath<? extends D>> getDefault (String entity, String name) {
 
     JoinedType joinedType;
 
@@ -75,7 +75,7 @@ public class QWhereFieldTransformer<D extends AbstractDurable<?, D>> extends Abs
       }
     } else {
 
-      EntityPath<D> entityPath;
+      EntityPath<? extends D> entityPath;
 
       if ((entityPath = deduceEntityPath(name)) != null) {
 
@@ -86,7 +86,7 @@ public class QWhereFieldTransformer<D extends AbstractDurable<?, D>> extends Abs
     }
   }
 
-  private EntityPath<D> deduceEntityPath (String name) {
+  private EntityPath<? extends D> deduceEntityPath (String name) {
 
     for (JoinedType joinedType : typeMap.values()) {
       for (Field field : FieldUtility.getFields(joinedType.getDurableClass())) {
@@ -102,21 +102,21 @@ public class QWhereFieldTransformer<D extends AbstractDurable<?, D>> extends Abs
 
   private class JoinedType {
 
-    private Class<? extends AbstractDurable<?, D>> durableClass;
-    private EntityPath<D> entityPath;
+    private Class<? extends AbstractDurable<?, ? extends D>> durableClass;
+    private EntityPath<? extends D> entityPath;
 
-    private JoinedType (Class<? extends AbstractDurable<?, D>> durableClass, EntityPath<D> entityPath) {
+    private JoinedType (Class<? extends AbstractDurable<?, ? extends D>> durableClass, EntityPath<? extends D> entityPath) {
 
       this.durableClass = durableClass;
       this.entityPath = entityPath;
     }
 
-    public Class<? extends AbstractDurable<?, D>> getDurableClass () {
+    public Class<? extends AbstractDurable<?, ? extends D>> getDurableClass () {
 
       return durableClass;
     }
 
-    private EntityPath<D> getEntityPath () {
+    private EntityPath<? extends D> getEntityPath () {
 
       return entityPath;
     }
