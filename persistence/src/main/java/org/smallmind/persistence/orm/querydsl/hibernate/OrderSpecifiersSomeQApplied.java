@@ -32,11 +32,49 @@
  */
 package org.smallmind.persistence.orm.querydsl.hibernate;
 
+import java.util.HashSet;
 import com.querydsl.core.types.EntityPath;
+import com.querydsl.core.types.OrderSpecifier;
 
-public interface QApplied {
+public class OrderSpecifiersSomeQApplied implements OrderSpecifiersQApplied {
 
-  boolean isEmpty ();
+  private HashSet<EntityPath<?>> entitySet = new HashSet<>();
+  private OrderSpecifier[] result;
 
-  EntityPath[] getEntities ();
+  public OrderSpecifiersSomeQApplied add (EntityPath<?> entity) {
+
+    if (entity != null) {
+      entitySet.add(entity);
+    }
+
+    return this;
+  }
+
+  public OrderSpecifiersSomeQApplied set (OrderSpecifier[] result) {
+
+    this.result = result;
+
+    return this;
+  }
+
+  @Override
+  public boolean isEmpty () {
+
+    return false;
+  }
+
+  public OrderSpecifier[] getResult () {
+
+    return result;
+  }
+
+  @Override
+  public EntityPath[] getEntities () {
+
+    EntityPath[] entities = new EntityPath[entitySet.size()];
+
+    entitySet.toArray(entities);
+
+    return entities;
+  }
 }

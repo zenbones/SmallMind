@@ -32,37 +32,49 @@
  */
 package org.smallmind.persistence.orm.querydsl.hibernate;
 
+import java.util.HashSet;
 import com.querydsl.core.types.EntityPath;
+import com.querydsl.core.types.Predicate;
 
-public class NoneQApplied<T> implements QApplied<T> {
+public class PredicateSomeQApplied implements PredicateQApplied {
 
-  private static NoneQApplied NONE = new NoneQApplied<>();
-  private static EntityPath[] ZERO_ENTITIES = new EntityPath[0];
+  private HashSet<EntityPath<?>> entitySet = new HashSet<>();
+  private Predicate result;
 
-  private NoneQApplied () {
+  public PredicateSomeQApplied add (EntityPath<?> entity) {
 
+    if (entity != null) {
+      entitySet.add(entity);
+    }
+
+    return this;
   }
 
-  public static <T> NoneQApplied<T> none () {
+  public PredicateSomeQApplied set (Predicate result) {
 
-    return NONE;
+    this.result = result;
+
+    return this;
   }
 
   @Override
   public boolean isEmpty () {
 
-    return true;
+    return false;
   }
 
-  @Override
-  public T getResult () {
+  public Predicate getResult () {
 
-    return null;
+    return result;
   }
 
   @Override
   public EntityPath[] getEntities () {
 
-    return ZERO_ENTITIES;
+    EntityPath[] entities = new EntityPath[entitySet.size()];
+
+    entitySet.toArray(entities);
+
+    return entities;
   }
 }

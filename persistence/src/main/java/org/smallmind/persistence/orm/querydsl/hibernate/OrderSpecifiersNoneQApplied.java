@@ -33,10 +33,37 @@
 package org.smallmind.persistence.orm.querydsl.hibernate;
 
 import com.querydsl.core.types.EntityPath;
+import com.querydsl.core.types.OrderSpecifier;
 
-public interface QApplied {
+public class OrderSpecifiersNoneQApplied implements OrderSpecifiersQApplied {
 
-  boolean isEmpty ();
+  private static OrderSpecifiersNoneQApplied NONE = new OrderSpecifiersNoneQApplied();
+  private static EntityPath[] ZERO_ENTITIES = new EntityPath[0];
 
-  EntityPath[] getEntities ();
+  private OrderSpecifiersNoneQApplied () {
+
+  }
+
+  public static <T> OrderSpecifiersNoneQApplied none () {
+
+    return NONE;
+  }
+
+  @Override
+  public boolean isEmpty () {
+
+    return true;
+  }
+
+  @Override
+  public OrderSpecifier[] getResult () {
+
+    return null;
+  }
+
+  @Override
+  public EntityPath[] getEntities () {
+
+    return ZERO_ENTITIES;
+  }
 }

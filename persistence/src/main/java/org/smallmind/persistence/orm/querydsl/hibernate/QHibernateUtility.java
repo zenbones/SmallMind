@@ -59,41 +59,41 @@ public class QHibernateUtility {
   private static final WhereFieldTransformer<EntityPath<?>> WHERE_FIELD_TRANSFORMER = new QWhereFieldTransformer();
   private static final WhereOperandTransformer WHERE_OPERAND_TRANSFORMER = new DefaultWhereOperandTransformer();
 
-  public static QApplied<Predicate> apply (Where where) {
+  public static PredicateQApplied apply (Where where) {
 
     return apply(where, WHERE_FIELD_TRANSFORMER, WHERE_OPERAND_TRANSFORMER);
   }
 
-  public static QApplied<Predicate> apply (Where where, WhereFieldTransformer<EntityPath<?>> fieldTransformer) {
+  public static PredicateQApplied apply (Where where, WhereFieldTransformer<EntityPath<?>> fieldTransformer) {
 
     return apply(where, fieldTransformer, WHERE_OPERAND_TRANSFORMER);
   }
 
-  public static QApplied<Predicate> apply (Where where, WhereOperandTransformer operandTransformer) {
+  public static PredicateQApplied apply (Where where, WhereOperandTransformer operandTransformer) {
 
     return apply(where, WHERE_FIELD_TRANSFORMER, operandTransformer);
   }
 
-  public static QApplied<Predicate> apply (Where where, WhereFieldTransformer<EntityPath<?>> fieldTransformer, WhereOperandTransformer operandTransformer) {
+  public static PredicateQApplied apply (Where where, WhereFieldTransformer<EntityPath<?>> fieldTransformer, WhereOperandTransformer operandTransformer) {
 
     if (where == null) {
 
-      return NoneQApplied.none();
+      return PredicateNoneQApplied.none();
     } else {
 
-      SomeQApplied<Predicate> qApplied = new SomeQApplied<>();
+      PredicateQApplied qApplied = new PredicateSomeQApplied();
       Predicate predicate;
 
-      if ((predicate = walkConjunction(new SomeQApplied<>(), where.getRootConjunction(), fieldTransformer, operandTransformer)) == null) {
+      if ((predicate = walkConjunction(new PredicateSomeQApplied(), where.getRootConjunction(), fieldTransformer, operandTransformer)) == null) {
 
-        return NoneQApplied.none();
+        return PredicateNoneQApplied.none();
       }
 
-      return qApplied.set(predicate);
+      return ((PredicateSomeQApplied)qApplied).set(predicate);
     }
   }
 
-  private static Predicate walkConjunction (SomeQApplied<Predicate> qApplied, WhereConjunction whereConjunction, WhereFieldTransformer<EntityPath<?>> fieldTransformer, WhereOperandTransformer operandTransformer) {
+  private static Predicate walkConjunction (PredicateSomeQApplied qApplied, WhereConjunction whereConjunction, WhereFieldTransformer<EntityPath<?>> fieldTransformer, WhereOperandTransformer operandTransformer) {
 
     if ((whereConjunction == null) || whereConjunction.isEmpty()) {
 
@@ -146,7 +146,7 @@ public class QHibernateUtility {
     }
   }
 
-  private static Predicate walkField (SomeQApplied<Predicate> qApplied, WhereField whereField, WhereFieldTransformer<EntityPath<?>> fieldTransformer, WhereOperandTransformer operandTransformer) {
+  private static Predicate walkField (PredicateSomeQApplied qApplied, WhereField whereField, WhereFieldTransformer<EntityPath<?>> fieldTransformer, WhereOperandTransformer operandTransformer) {
 
     Object fieldValue = operandTransformer.transform(whereField.getOperand());
     WherePath<EntityPath<?>> wherePath = fieldTransformer.transform(whereField.getEntity(), whereField.getName());
@@ -201,16 +201,16 @@ public class QHibernateUtility {
     }
   }
 
-  public static QApplied<OrderSpecifier[]> apply (Sort sort) {
+  public static OrderSpecifiersQApplied apply (Sort sort) {
 
     return apply(sort, WHERE_FIELD_TRANSFORMER);
   }
 
-  public static QApplied<OrderSpecifier[]> apply (Sort sort, WhereFieldTransformer<EntityPath<?>> fieldTransformer) {
+  public static OrderSpecifiersQApplied apply (Sort sort, WhereFieldTransformer<EntityPath<?>> fieldTransformer) {
 
     if ((sort != null) && (!sort.isEmpty())) {
 
-      SomeQApplied<OrderSpecifier[]> qApplied = new SomeQApplied<>();
+      OrderSpecifiersQApplied qApplied = new OrderSpecifiersSomeQApplied();
       OrderSpecifier[] orderSpecifiers;
       LinkedList<OrderSpecifier<?>> orderSpecifierList = new LinkedList<>();
 
@@ -218,7 +218,7 @@ public class QHibernateUtility {
 
         WherePath<EntityPath<?>> wherePath = fieldTransformer.transform(sortField.getEntity(), sortField.getName());
 
-        qApplied.add(wherePath.asNative());
+        ((OrderSpecifiersSomeQApplied)qApplied).add(wherePath.asNative());
         switch (sortField.getDirection()) {
           case ASC:
             orderSpecifierList.add(new OrderSpecifier<>(Order.ASC, Expressions.path(String.class, wherePath.asNative(), wherePath.asString())));
@@ -234,9 +234,9 @@ public class QHibernateUtility {
       orderSpecifiers = new OrderSpecifier[orderSpecifierList.size()];
       orderSpecifierList.toArray(orderSpecifiers);
 
-      return qApplied.set(orderSpecifiers);
+      return ((OrderSpecifiersSomeQApplied)qApplied).set(orderSpecifiers);
     }
 
-    return NoneQApplied.none();
+    return OrderSpecifiersNoneQApplied.none();
   }
 }

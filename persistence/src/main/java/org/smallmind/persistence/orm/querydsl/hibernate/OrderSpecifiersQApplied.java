@@ -32,11 +32,9 @@
  */
 package org.smallmind.persistence.orm.querydsl.hibernate;
 
-import com.querydsl.core.types.EntityPath;
+import com.querydsl.core.types.OrderSpecifier;
 
-public interface QApplied {
+public interface OrderSpecifiersQApplied extends QApplied {
 
-  boolean isEmpty ();
-
-  EntityPath[] getEntities ();
+  OrderSpecifier[] getResult ();
 }

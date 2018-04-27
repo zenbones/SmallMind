@@ -32,11 +32,9 @@
  */
 package org.smallmind.persistence.orm.querydsl.hibernate;
 
-import com.querydsl.core.types.EntityPath;
+import com.querydsl.core.types.Predicate;
 
-public interface QApplied {
+public interface PredicateQApplied extends QApplied {
 
-  boolean isEmpty ();
-
-  EntityPath[] getEntities ();
+  Predicate getResult ();
 }
