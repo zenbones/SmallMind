@@ -30,11 +30,40 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.persistence.orm.querydsl.hibernate;
+package org.smallmind.persistence.orm.querydsl;
 
-import com.querydsl.core.types.Predicate;
+import com.querydsl.core.types.EntityPath;
+import com.querydsl.core.types.OrderSpecifier;
 
-public interface PredicateQApplied extends QApplied {
+public class OrderSpecifiersNoneQApplied implements OrderSpecifiersQApplied {
 
-  Predicate getResult ();
+  private static OrderSpecifiersNoneQApplied NONE = new OrderSpecifiersNoneQApplied();
+  private static EntityPath[] ZERO_ENTITIES = new EntityPath[0];
+
+  private OrderSpecifiersNoneQApplied () {
+
+  }
+
+  public static <T> OrderSpecifiersNoneQApplied none () {
+
+    return NONE;
+  }
+
+  @Override
+  public boolean isEmpty () {
+
+    return true;
+  }
+
+  @Override
+  public OrderSpecifier[] getResult () {
+
+    return null;
+  }
+
+  @Override
+  public EntityPath[] getEntities () {
+
+    return ZERO_ENTITIES;
+  }
 }

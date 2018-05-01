@@ -30,18 +30,18 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.persistence.orm.querydsl.hibernate;
+package org.smallmind.persistence.orm.querydsl;
 
 import java.util.HashSet;
 import com.querydsl.core.types.EntityPath;
-import com.querydsl.core.types.Predicate;
+import com.querydsl.core.types.OrderSpecifier;
 
-public class PredicateSomeQApplied implements PredicateQApplied {
+public class OrderSpecifiersSomeQApplied implements OrderSpecifiersQApplied {
 
   private HashSet<EntityPath<?>> entitySet = new HashSet<>();
-  private Predicate result;
+  private OrderSpecifier[] result;
 
-  public PredicateSomeQApplied add (EntityPath<?> entity) {
+  public OrderSpecifiersSomeQApplied add (EntityPath<?> entity) {
 
     if (entity != null) {
       entitySet.add(entity);
@@ -50,7 +50,7 @@ public class PredicateSomeQApplied implements PredicateQApplied {
     return this;
   }
 
-  public PredicateSomeQApplied set (Predicate result) {
+  public OrderSpecifiersSomeQApplied set (OrderSpecifier[] result) {
 
     this.result = result;
 
@@ -63,7 +63,7 @@ public class PredicateSomeQApplied implements PredicateQApplied {
     return false;
   }
 
-  public Predicate getResult () {
+  public OrderSpecifier[] getResult () {
 
     return result;
   }

@@ -30,31 +30,11 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.persistence.orm.querydsl.hibernate;
+package org.smallmind.persistence.orm.querydsl.jpa;
 
-import com.querydsl.core.types.EntityPath;
-import org.smallmind.persistence.query.WherePath;
+import com.querydsl.jpa.impl.JPAQuery;
 
-public class QWherePath<T> implements WherePath<EntityPath<? extends T>> {
+public abstract class JPAQueryDetails<T> {
 
-  private EntityPath<? extends T> entity;
-  private String field;
-
-  public QWherePath (EntityPath<? extends T> entity, String field) {
-
-    this.entity = entity;
-    this.field = field;
-  }
-
-  @Override
-  public EntityPath<? extends T> asNative () {
-
-    return entity;
-  }
-
-  @Override
-  public String asString () {
-
-    return field;
-  }
+  public abstract JPAQuery<T> completeQuery (JPAQuery<T> query);
 }

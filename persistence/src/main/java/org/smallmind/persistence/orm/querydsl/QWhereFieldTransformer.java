@@ -30,7 +30,7 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.persistence.orm.querydsl.hibernate;
+package org.smallmind.persistence.orm.querydsl;
 
 import java.lang.reflect.Field;
 import java.util.HashMap;

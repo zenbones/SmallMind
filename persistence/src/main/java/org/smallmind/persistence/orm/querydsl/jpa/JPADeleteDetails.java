@@ -30,40 +30,24 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.persistence.orm.querydsl.hibernate;
+package org.smallmind.persistence.orm.querydsl.jpa;
 
 import com.querydsl.core.types.EntityPath;
-import com.querydsl.core.types.Predicate;
+import com.querydsl.jpa.impl.JPADeleteClause;
 
-public class PredicateNoneQApplied implements PredicateQApplied {
+public abstract class JPADeleteDetails<T> {
 
-  private static PredicateNoneQApplied NONE = new PredicateNoneQApplied();
-  private static EntityPath[] ZERO_ENTITIES = new EntityPath[0];
+  private EntityPath<T> entityPath;
 
-  private PredicateNoneQApplied () {
+  public JPADeleteDetails (EntityPath<T> entityPath) {
 
+    this.entityPath = entityPath;
   }
 
-  public static PredicateNoneQApplied none () {
+  public EntityPath<T> getEntityPath () {
 
-    return NONE;
+    return entityPath;
   }
 
-  @Override
-  public boolean isEmpty () {
-
-    return true;
-  }
-
-  @Override
-  public Predicate getResult () {
-
-    return null;
-  }
-
-  @Override
-  public EntityPath[] getEntities () {
-
-    return ZERO_ENTITIES;
-  }
+  public abstract JPADeleteClause completeDelete (JPADeleteClause delete);
 }

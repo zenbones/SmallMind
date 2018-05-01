@@ -30,13 +30,24 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.persistence.orm.querydsl.hibernate;
+package org.smallmind.persistence.orm.querydsl.jpa;
 
 import com.querydsl.core.types.EntityPath;
+import com.querydsl.jpa.impl.JPAUpdateClause;
 
-public interface QApplied {
+public abstract class JPAUpdateDetails<T> {
 
-  boolean isEmpty ();
+  private EntityPath<T> entityPath;
 
-  EntityPath[] getEntities ();
+  public JPAUpdateDetails (EntityPath<T> entityPath) {
+
+    this.entityPath = entityPath;
+  }
+
+  public EntityPath<T> getEntityPath () {
+
+    return entityPath;
+  }
+
+  public abstract JPAUpdateClause completeUpdate (JPAUpdateClause update);
 }

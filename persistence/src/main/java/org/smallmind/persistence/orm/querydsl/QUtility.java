@@ -30,7 +30,7 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.persistence.orm.querydsl.hibernate;
+package org.smallmind.persistence.orm.querydsl;
 
 import java.lang.reflect.Array;
 import java.util.LinkedList;
@@ -54,7 +54,7 @@ import org.smallmind.persistence.query.WhereFieldTransformer;
 import org.smallmind.persistence.query.WhereOperandTransformer;
 import org.smallmind.persistence.query.WherePath;
 
-public class QHibernateUtility {
+public class QUtility {
 
   private static final WhereFieldTransformer<EntityPath<?>> WHERE_FIELD_TRANSFORMER = new QWhereFieldTransformer();
   private static final WhereOperandTransformer WHERE_OPERAND_TRANSFORMER = new DefaultWhereOperandTransformer();

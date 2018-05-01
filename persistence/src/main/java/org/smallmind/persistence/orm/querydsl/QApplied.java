@@ -30,11 +30,13 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.persistence.orm.querydsl.hibernate;
+package org.smallmind.persistence.orm.querydsl;
 
-import com.querydsl.core.types.OrderSpecifier;
+import com.querydsl.core.types.EntityPath;
 
-public interface OrderSpecifiersQApplied extends QApplied {
+public interface QApplied {
 
-  OrderSpecifier[] getResult ();
+  boolean isEmpty ();
+
+  EntityPath[] getEntities ();
 }

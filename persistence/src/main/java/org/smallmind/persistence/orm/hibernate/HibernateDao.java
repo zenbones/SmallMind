@@ -141,7 +141,7 @@ public abstract class HibernateDao<I extends Serializable & Comparable<I>, D ext
   @Override
   public Iterable<D> scroll (int fetchSize) {
 
-    return new ScrollIterable<D>(getSession().getNativeSession().createCriteria(getManagedClass()).setFetchSize(fetchSize).scroll(ScrollMode.FORWARD_ONLY), getManagedClass());
+    return new ScrollIterable<>(getSession().getNativeSession().createCriteria(getManagedClass()).setFetchSize(fetchSize).scroll(ScrollMode.FORWARD_ONLY), getManagedClass());
   }
 
   @Override
@@ -293,7 +293,7 @@ public abstract class HibernateDao<I extends Serializable & Comparable<I>, D ext
 
   public Iterable<D> scrollBySQLQuery (NativeQueryDetails nativeQueryDetails) {
 
-    return new ScrollIterable<D>(constructSQLQuery(nativeQueryDetails).addEntity(getManagedClass()).scroll(ScrollMode.FORWARD_ONLY), getManagedClass());
+    return new ScrollIterable<>(constructSQLQuery(nativeQueryDetails).addEntity(getManagedClass()).scroll(ScrollMode.FORWARD_ONLY), getManagedClass());
   }
 
   public int executeWithQuery (QueryDetails queryDetails) {
@@ -323,12 +323,12 @@ public abstract class HibernateDao<I extends Serializable & Comparable<I>, D ext
 
   public <T> Iterable<T> scrollByQuery (Class<T> returnType, QueryDetails queryDetails) {
 
-    return new ScrollIterable<T>(constructQuery(queryDetails).scroll(ScrollMode.FORWARD_ONLY), returnType);
+    return new ScrollIterable<>(constructQuery(queryDetails).scroll(ScrollMode.FORWARD_ONLY), returnType);
   }
 
   public Iterable<D> scrollByQuery (QueryDetails queryDetails) {
 
-    return new ScrollIterable<D>(constructQuery(queryDetails).scroll(ScrollMode.FORWARD_ONLY), getManagedClass());
+    return new ScrollIterable<>(constructQuery(queryDetails).scroll(ScrollMode.FORWARD_ONLY), getManagedClass());
   }
 
   public <T> T findByCriteria (Class<T> returnType, CriteriaDetails criteriaDetails) {
@@ -353,12 +353,12 @@ public abstract class HibernateDao<I extends Serializable & Comparable<I>, D ext
 
   public <T> Iterable<T> scrollByCriteria (Class<T> returnType, CriteriaDetails criteriaDetails) {
 
-    return new ScrollIterable<T>(constructCriteria(criteriaDetails).scroll(ScrollMode.FORWARD_ONLY), returnType);
+    return new ScrollIterable<>(constructCriteria(criteriaDetails).scroll(ScrollMode.FORWARD_ONLY), returnType);
   }
 
   public Iterable<D> scrollByCriteria (CriteriaDetails criteriaDetails) {
 
-    return new ScrollIterable<D>(constructCriteria(criteriaDetails).scroll(ScrollMode.FORWARD_ONLY), getManagedClass());
+    return new ScrollIterable<>(constructCriteria(criteriaDetails).scroll(ScrollMode.FORWARD_ONLY), getManagedClass());
   }
 
   public SQLQuery constructSQLQuery (NativeQueryDetails nativeQueryDetails) {

@@ -30,40 +30,31 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.persistence.orm.querydsl.hibernate;
+package org.smallmind.persistence.orm.querydsl;
 
 import com.querydsl.core.types.EntityPath;
-import com.querydsl.core.types.OrderSpecifier;
+import org.smallmind.persistence.query.WherePath;
 
-public class OrderSpecifiersNoneQApplied implements OrderSpecifiersQApplied {
+public class QWherePath<T> implements WherePath<EntityPath<? extends T>> {
 
-  private static OrderSpecifiersNoneQApplied NONE = new OrderSpecifiersNoneQApplied();
-  private static EntityPath[] ZERO_ENTITIES = new EntityPath[0];
+  private EntityPath<? extends T> entity;
+  private String field;
 
-  private OrderSpecifiersNoneQApplied () {
+  public QWherePath (EntityPath<? extends T> entity, String field) {
 
-  }
-
-  public static <T> OrderSpecifiersNoneQApplied none () {
-
-    return NONE;
+    this.entity = entity;
+    this.field = field;
   }
 
   @Override
-  public boolean isEmpty () {
+  public EntityPath<? extends T> asNative () {
 
-    return true;
+    return entity;
   }
 
   @Override
-  public OrderSpecifier[] getResult () {
+  public String asString () {
 
-    return null;
-  }
-
-  @Override
-  public EntityPath[] getEntities () {
-
-    return ZERO_ENTITIES;
+    return field;
   }
 }

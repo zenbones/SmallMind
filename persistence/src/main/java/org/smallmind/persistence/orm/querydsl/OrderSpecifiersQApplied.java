@@ -30,51 +30,11 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.persistence.orm.querydsl.hibernate;
+package org.smallmind.persistence.orm.querydsl;
 
-import java.util.HashSet;
-import com.querydsl.core.types.EntityPath;
 import com.querydsl.core.types.OrderSpecifier;
 
-public class OrderSpecifiersSomeQApplied implements OrderSpecifiersQApplied {
+public interface OrderSpecifiersQApplied extends QApplied {
 
-  private HashSet<EntityPath<?>> entitySet = new HashSet<>();
-  private OrderSpecifier[] result;
-
-  public OrderSpecifiersSomeQApplied add (EntityPath<?> entity) {
-
-    if (entity != null) {
-      entitySet.add(entity);
-    }
-
-    return this;
-  }
-
-  public OrderSpecifiersSomeQApplied set (OrderSpecifier[] result) {
-
-    this.result = result;
-
-    return this;
-  }
-
-  @Override
-  public boolean isEmpty () {
-
-    return false;
-  }
-
-  public OrderSpecifier[] getResult () {
-
-    return result;
-  }
-
-  @Override
-  public EntityPath[] getEntities () {
-
-    EntityPath[] entities = new EntityPath[entitySet.size()];
-
-    entitySet.toArray(entities);
-
-    return entities;
-  }
+  OrderSpecifier[] getResult ();
 }
