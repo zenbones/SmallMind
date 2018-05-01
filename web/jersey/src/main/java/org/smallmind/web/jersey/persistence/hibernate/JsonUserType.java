@@ -41,7 +41,7 @@ import java.sql.Types;
 import java.util.Properties;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import org.hibernate.HibernateException;
-import org.hibernate.engine.spi.SessionImplementor;
+import org.hibernate.engine.spi.SharedSessionContractImplementor;
 import org.hibernate.usertype.ParameterizedType;
 import org.hibernate.usertype.UserType;
 import org.smallmind.web.jersey.util.JsonCodec;
@@ -101,27 +101,27 @@ public class JsonUserType implements UserType, ParameterizedType {
   }
 
   @Override
-  public Object nullSafeGet (ResultSet rs, String[] names, SessionImplementor session, Object owner)
+  public Object nullSafeGet (ResultSet resultSet, String[] names, SharedSessionContractImplementor sharedSessionContractImplementor, Object o)
     throws HibernateException, SQLException {
 
-    String string = rs.getString(names[0]);
+    String string = resultSet.getString(names[0]);
 
     try {
-      return rs.wasNull() ? null : JsonCodec.read(string, embeddedClass);
+      return resultSet.wasNull() ? null : JsonCodec.read(string, embeddedClass);
     } catch (IOException ioException) {
       throw new HibernateException(ioException);
     }
   }
 
   @Override
-  public void nullSafeSet (PreparedStatement st, Object value, int index, SessionImplementor session)
+  public void nullSafeSet (PreparedStatement preparedStatement, Object value, int index, SharedSessionContractImplementor sharedSessionContractImplementor)
     throws HibernateException, SQLException {
 
     if (value == null) {
-      st.setNull(index, Types.LONGNVARCHAR);
+      preparedStatement.setNull(index, Types.LONGNVARCHAR);
     } else {
       try {
-        st.setString(index, JsonCodec.writeAsString(value));
+        preparedStatement.setString(index, JsonCodec.writeAsString(value));
       } catch (JsonProcessingException jsonProcessingException) {
         throw new HibernateException(jsonProcessingException);
       }

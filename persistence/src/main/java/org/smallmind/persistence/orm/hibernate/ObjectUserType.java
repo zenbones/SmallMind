@@ -44,7 +44,7 @@ import java.sql.SQLException;
 import java.sql.Types;
 import java.util.Properties;
 import org.hibernate.HibernateException;
-import org.hibernate.engine.spi.SessionImplementor;
+import org.hibernate.engine.spi.SharedSessionContractImplementor;
 import org.hibernate.usertype.ParameterizedType;
 import org.hibernate.usertype.UserType;
 
@@ -123,24 +123,24 @@ public class ObjectUserType implements UserType, ParameterizedType {
   }
 
   @Override
-  public Object nullSafeGet (ResultSet rs, String[] names, SessionImplementor session, Object owner)
+  public Object nullSafeGet (ResultSet resultSet, String[] names, SharedSessionContractImplementor sharedSessionContractImplementor, Object o)
     throws HibernateException, SQLException {
 
-    byte[] bytes = rs.getBytes(names[0]);
+    byte[] bytes = resultSet.getBytes(names[0]);
 
     try {
-      return rs.wasNull() ? null : new ObjectInputStream(new ByteArrayInputStream(bytes)).readObject();
+      return resultSet.wasNull() ? null : new ObjectInputStream(new ByteArrayInputStream(bytes)).readObject();
     } catch (Exception exception) {
       throw new HibernateException(exception);
     }
   }
 
   @Override
-  public void nullSafeSet (PreparedStatement st, Object value, int index, SessionImplementor session)
+  public void nullSafeSet (PreparedStatement preparedStatement, Object value, int index, SharedSessionContractImplementor sharedSessionContractImplementor)
     throws HibernateException, SQLException {
 
     if (value == null) {
-      st.setNull(index, Types.VARBINARY);
+      preparedStatement.setNull(index, Types.VARBINARY);
     } else {
 
       ByteArrayOutputStream byteStream;
@@ -151,7 +151,7 @@ public class ObjectUserType implements UserType, ParameterizedType {
         throw new HibernateException(ioException);
       }
 
-      st.setBytes(index, byteStream.toByteArray());
+      preparedStatement.setBytes(index, byteStream.toByteArray());
     }
   }
 }

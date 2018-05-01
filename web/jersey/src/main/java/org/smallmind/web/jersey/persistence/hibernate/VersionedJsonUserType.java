@@ -41,7 +41,7 @@ import java.sql.Types;
 import java.util.Properties;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import org.hibernate.HibernateException;
-import org.hibernate.engine.spi.SessionImplementor;
+import org.hibernate.engine.spi.SharedSessionContractImplementor;
 import org.hibernate.type.TextType;
 import org.hibernate.usertype.ParameterizedType;
 import org.hibernate.usertype.UserType;
@@ -124,17 +124,17 @@ public class VersionedJsonUserType<V extends Version<V>> implements UserType, Pa
   }
 
   @Override
-  public Object nullSafeGet (ResultSet rs, String[] names, SessionImplementor session, Object owner)
+  public Object nullSafeGet (ResultSet resultSet, String[] names, SharedSessionContractImplementor sharedSessionContractImplementor, Object o)
     throws HibernateException, SQLException {
 
     String versionAsString;
 
-    if ((versionAsString = rs.getString(names[0])) != null) {
+    if ((versionAsString = resultSet.getString(names[0])) != null) {
 
       V version = versionFactory.fromString(versionAsString);
       String jsonAsString;
 
-      if ((jsonAsString = rs.getString(names[1])) != null) {
+      if ((jsonAsString = resultSet.getString(names[1])) != null) {
 
         try {
           return JsonCodec.read(jsonAsString, version.getVersionedClass());
@@ -148,17 +148,17 @@ public class VersionedJsonUserType<V extends Version<V>> implements UserType, Pa
   }
 
   @Override
-  public void nullSafeSet (PreparedStatement st, Object value, int index, SessionImplementor session)
+  public void nullSafeSet (PreparedStatement preparedStatement, Object value, int index, SharedSessionContractImplementor sharedSessionContractImplementor)
     throws HibernateException, SQLException {
 
     if (value == null) {
-      st.setNull(index, Types.VARCHAR);
-      st.setNull(index + 1, TextType.INSTANCE.sqlType());
+      preparedStatement.setNull(index, Types.VARCHAR);
+      preparedStatement.setNull(index + 1, TextType.INSTANCE.sqlType());
     } else {
 
-      st.setString(index, ((VersionedJson<?>)value).getVersion().toString());
+      preparedStatement.setString(index, ((VersionedJson<?>)value).getVersion().toString());
       try {
-        st.setString(index + 1, JsonCodec.writeAsString(value));
+        preparedStatement.setString(index + 1, JsonCodec.writeAsString(value));
       } catch (JsonProcessingException jsonProcessingException) {
         throw new HibernateException(jsonProcessingException);
       }
