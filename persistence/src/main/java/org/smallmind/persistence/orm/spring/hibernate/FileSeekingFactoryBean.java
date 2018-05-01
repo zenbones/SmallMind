@@ -58,19 +58,19 @@ public class FileSeekingFactoryBean implements FactoryBean<Resource[]> {
 
   public Resource[] getObject () {
 
-    Resource[] dataSourceResources;
+    Resource[] processedResources;
 
-    dataSourceResources = fileSeekingBeanFactoryPostProcessor.getResources(sessionSourceKey);
+    processedResources = (fileSeekingBeanFactoryPostProcessor == null) ? new Resource[0] : fileSeekingBeanFactoryPostProcessor.getResources(sessionSourceKey);
 
     if ((additionalResources == null) || additionalResources.length == 0) {
 
-      return dataSourceResources;
+      return processedResources;
     }
 
-    Resource[] combinedResources = new Resource[dataSourceResources.length + additionalResources.length];
+    Resource[] combinedResources = new Resource[processedResources.length + additionalResources.length];
 
-    System.arraycopy(dataSourceResources, 0, combinedResources, 0, dataSourceResources.length);
-    System.arraycopy(additionalResources, 0, combinedResources, dataSourceResources.length, additionalResources.length);
+    System.arraycopy(processedResources, 0, combinedResources, 0, processedResources.length);
+    System.arraycopy(additionalResources, 0, combinedResources, processedResources.length, additionalResources.length);
 
     return combinedResources;
   }

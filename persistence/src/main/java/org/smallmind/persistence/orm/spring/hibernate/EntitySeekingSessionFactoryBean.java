@@ -70,7 +70,23 @@ public class EntitySeekingSessionFactoryBean extends LocalSessionFactoryBean {
   public void afterPropertiesSet ()
     throws IOException {
 
-    super.setAnnotatedClasses((annotatedClasses != null) ? annotatedClasses : annotationSeekingBeanFactoryPostProcessor.getAnnotatedClasses(sessionSourceKey));
+    Class[] combinedClasses;
+    Class[] processedClasses = (annotationSeekingBeanFactoryPostProcessor == null) ? null : annotationSeekingBeanFactoryPostProcessor.getAnnotatedClasses(sessionSourceKey);
+
+    if ((processedClasses == null) || (processedClasses.length == 0)) {
+      combinedClasses = annotatedClasses;
+    } else if ((annotatedClasses == null) || (annotatedClasses.length == 0)) {
+      combinedClasses = processedClasses;
+    } else {
+      combinedClasses = new Class[processedClasses.length + annotatedClasses.length];
+
+      System.arraycopy(processedClasses, 0, combinedClasses, 0, processedClasses.length);
+      System.arraycopy(annotatedClasses, 0, combinedClasses, processedClasses.length, annotatedClasses.length);
+    }
+
+    if ((combinedClasses != null) && (combinedClasses.length > 0)) {
+      super.setAnnotatedClasses(combinedClasses);
+    }
 
     super.afterPropertiesSet();
 
