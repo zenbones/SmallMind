@@ -38,11 +38,12 @@ import javax.persistence.Entity;
 import javax.persistence.MappedSuperclass;
 import org.smallmind.persistence.ManagedDao;
 import org.smallmind.persistence.orm.jpa.JPADao;
+import org.smallmind.persistence.orm.querydsl.jpa.QJPADao;
 import org.smallmind.persistence.orm.spring.AbstractAnnotationSeekingBeanFactoryPostProcessor;
 
 public class AnnotationSeekingBeanFactoryPostProcessor extends AbstractAnnotationSeekingBeanFactoryPostProcessor {
 
-  private static final Class<? extends ManagedDao>[] DAO_IMPLEMENTATIONS = new Class[] {JPADao.class};
+  private static final Class<? extends ManagedDao>[] DAO_IMPLEMENTATIONS = new Class[] {JPADao.class, QJPADao.class};
   private static final Class<? extends Annotation>[] TARGET_ANNOTATIONS = new Class[] {Entity.class, Embeddable.class, MappedSuperclass.class};
 
   @Override
