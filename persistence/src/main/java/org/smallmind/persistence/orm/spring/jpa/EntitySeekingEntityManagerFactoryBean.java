@@ -32,8 +32,6 @@
  */
 package org.smallmind.persistence.orm.spring.jpa;
 
-import java.net.MalformedURLException;
-import java.net.URL;
 import javax.persistence.EntityManagerFactory;
 import javax.persistence.PersistenceException;
 import javax.persistence.SharedCacheMode;
@@ -114,12 +112,6 @@ public class EntitySeekingEntityManagerFactoryBean extends AbstractEntityManager
       persistenceUnitInfo = new MutablePersistenceUnitInfo();
     }
 
-    try {
-      persistenceUnitInfo.setPersistenceUnitRootUrl(new URL("file:///META-INF"));
-    } catch (MalformedURLException malformedUrlException) {
-      throw new PersistenceException(malformedUrlException);
-    }
-
     persistenceUnitInfo.setExcludeUnlistedClasses(excludeUnlistedClasses);
     if (annotationSeekingBeanFactoryPostProcessor != null) {
       for (Class<?> entityClass : annotationSeekingBeanFactoryPostProcessor.getAnnotatedClasses(sessionSourceKey)) {
@@ -127,9 +119,6 @@ public class EntitySeekingEntityManagerFactoryBean extends AbstractEntityManager
       }
     }
 
-    if (getPersistenceUnitName() != null) {
-      persistenceUnitInfo.setPersistenceUnitName(getPersistenceUnitName());
-    }
     if (dataSource != null) {
       persistenceUnitInfo.setNonJtaDataSource(dataSource);
       persistenceUnitInfo.setTransactionType(PersistenceUnitTransactionType.RESOURCE_LOCAL);
