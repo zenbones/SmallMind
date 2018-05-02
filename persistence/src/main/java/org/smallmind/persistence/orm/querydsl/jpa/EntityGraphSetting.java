@@ -32,22 +32,26 @@
  */
 package org.smallmind.persistence.orm.querydsl.jpa;
 
-import com.querydsl.jpa.impl.JPAQuery;
 import org.smallmind.persistence.orm.querydsl.hibernate.EntityGraphHint;
 
-public abstract class JPAQueryDetails<T> {
+public class EntityGraphSetting {
 
-  private EntityGraphSetting entityGraphSetting;
+  private EntityGraphHint hint;
+  private String name;
 
-  public abstract JPAQuery<T> completeQuery (JPAQuery<T> query);
+  public EntityGraphSetting (EntityGraphHint hint, String name) {
 
-  public void setEntityGraph (EntityGraphHint hint, String name) {
-
-    entityGraphSetting = new EntityGraphSetting(hint, name);
+    this.hint = hint;
+    this.name = name;
   }
 
-  public EntityGraphSetting getEntityGraphSetting () {
+  public EntityGraphHint getHint () {
 
-    return entityGraphSetting;
+    return hint;
+  }
+
+  public String getName () {
+
+    return name;
   }
 }

@@ -30,24 +30,21 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.persistence.orm.querydsl.jpa;
+package org.smallmind.persistence.orm.querydsl.hibernate;
 
-import com.querydsl.jpa.impl.JPAQuery;
-import org.smallmind.persistence.orm.querydsl.hibernate.EntityGraphHint;
+public enum EntityGraphHint {
 
-public abstract class JPAQueryDetails<T> {
+  FETCH_GRAPH("javax.persistence.fetchgraph"), LOAD_GRAPH("javax.persistence.loadgraph");
 
-  private EntityGraphSetting entityGraphSetting;
+  private String key;
 
-  public abstract JPAQuery<T> completeQuery (JPAQuery<T> query);
+  EntityGraphHint (String key) {
 
-  public void setEntityGraph (EntityGraphHint hint, String name) {
-
-    entityGraphSetting = new EntityGraphSetting(hint, name);
+    this.key = key;
   }
 
-  public EntityGraphSetting getEntityGraphSetting () {
+  public String getKey () {
 
-    return entityGraphSetting;
+    return key;
   }
 }
