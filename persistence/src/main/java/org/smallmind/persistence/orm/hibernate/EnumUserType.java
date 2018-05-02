@@ -39,7 +39,7 @@ import java.sql.SQLException;
 import java.sql.Types;
 import java.util.Properties;
 import org.hibernate.HibernateException;
-import org.hibernate.engine.spi.SharedSessionContractImplementor;
+import org.hibernate.engine.spi.SessionImplementor;
 import org.hibernate.usertype.ParameterizedType;
 import org.hibernate.usertype.UserType;
 
@@ -114,8 +114,11 @@ public class EnumUserType implements UserType, ParameterizedType {
   }
 
   @Override
-  public Object nullSafeGet (ResultSet resultSet, String[] names, SharedSessionContractImplementor sharedSessionContractImplementor, Object o)
+  public Object nullSafeGet (ResultSet resultSet, String[] names, SessionImplementor sessionImplementor, Object o)
     throws HibernateException, SQLException {
+//  @Override
+//  public Object nullSafeGet (ResultSet resultSet, String[] names, SharedSessionContractImplementor sharedSessionContractImplementor, Object o)
+//    throws HibernateException, SQLException {
 
     String name = resultSet.getString(names[0]);
 
@@ -123,8 +126,11 @@ public class EnumUserType implements UserType, ParameterizedType {
   }
 
   @Override
-  public void nullSafeSet (PreparedStatement preparedStatement, Object value, int index, SharedSessionContractImplementor sharedSessionContractImplementor)
+  public void nullSafeSet (PreparedStatement preparedStatement, Object value, int index, SessionImplementor sessionImplementor)
     throws HibernateException, SQLException {
+//  @Override
+//  public void nullSafeSet (PreparedStatement preparedStatement, Object value, int index, SharedSessionContractImplementor sharedSessionContractImplementor)
+//    throws HibernateException, SQLException {
 
     if (value == null) {
       preparedStatement.setNull(index, Types.VARCHAR);
