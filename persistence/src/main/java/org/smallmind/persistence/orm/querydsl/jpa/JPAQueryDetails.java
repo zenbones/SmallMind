@@ -42,7 +42,7 @@ public abstract class JPAQueryDetails<T> {
 
   }
 
-  public void setEntityGraph (EntityGraphSetting entityGraphSetting) {
+  public JPAQueryDetails (EntityGraphSetting entityGraphSetting) {
 
     this.entityGraphSetting = entityGraphSetting;
   }
