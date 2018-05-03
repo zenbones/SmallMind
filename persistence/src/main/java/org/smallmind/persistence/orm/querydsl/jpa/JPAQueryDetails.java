@@ -33,6 +33,7 @@
 package org.smallmind.persistence.orm.querydsl.jpa;
 
 import com.querydsl.jpa.impl.JPAQuery;
+import org.smallmind.persistence.orm.querydsl.hibernate.EntityGraphHint;
 
 public abstract class JPAQueryDetails<T> {
 
@@ -42,9 +43,9 @@ public abstract class JPAQueryDetails<T> {
 
   }
 
-  public JPAQueryDetails (EntityGraphSetting entityGraphSetting) {
+  public JPAQueryDetails (EntityGraphHint hint, String name) {
 
-    this.entityGraphSetting = entityGraphSetting;
+    entityGraphSetting = new EntityGraphSetting(hint, name);
   }
 
   public EntityGraphSetting getEntityGraphSetting () {
