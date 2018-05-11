@@ -45,7 +45,6 @@ import sun.security.util.SecurityConstants;
     Policy.setPolicy(new SandboxSecurityPolicy(<White Listed ClassLoader(s)>));
     System.setSecurityManager(new SecurityManager());
 */
-
 public class SandboxSecurityPolicy extends Policy {
 
   private static final PermissionCollection NO_PERMISSION_COLLECTION = new Permissions();
