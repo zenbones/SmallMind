@@ -34,5 +34,5 @@ package org.smallmind.nutsnbolts.lang;
 
 public interface Existential {
 
-  public abstract StackTraceElement[] getExistentialStackTrace ();
+  StackTraceElement[] getExistentialStackTrace ();
 }
