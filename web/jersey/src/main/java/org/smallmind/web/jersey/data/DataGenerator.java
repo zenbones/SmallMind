@@ -177,6 +177,8 @@ public class DataGenerator {
           }
         }
 
+        Files.createDirectories(generatedPath);
+
         if (!inMap.isEmpty()) {
           write(clazz, generatedPath, namingFunction, Direction.IN);
 
