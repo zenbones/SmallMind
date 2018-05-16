@@ -44,6 +44,7 @@ public class Getter implements Serializable {
   private Method method;
   private String attributeName;
   private boolean is;
+  private Boolean bob;
 
   public Getter (Method method)
     throws ReflectionContractException {

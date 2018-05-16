@@ -39,11 +39,11 @@ import java.lang.annotation.Target;
 import javax.ws.rs.NameBinding;
 
 @Retention(RetentionPolicy.RUNTIME)
-@Target({ElementType.TYPE, ElementType.METHOD})
+@Target(ElementType.METHOD)
 @NameBinding
 public @interface ResourceMethod {
 
-  public abstract Class<? extends JsonEntity> value () default JsonEntity.class;
+  Class<? extends JsonEntity> value () default JsonEntity.class;
 
-  public abstract boolean validate () default false;
+  boolean validate () default false;
 }

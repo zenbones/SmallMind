@@ -41,6 +41,8 @@ import javax.xml.bind.annotation.adapters.XmlAdapter;
 import javax.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
 import org.smallmind.scribe.pen.Level;
 import org.smallmind.web.jersey.aop.EntityParam;
+import org.smallmind.web.jersey.util.Argument;
+import org.smallmind.web.jersey.util.Envelope;
 
 public class JsonEntityInvocationHandler implements InvocationHandler {
 

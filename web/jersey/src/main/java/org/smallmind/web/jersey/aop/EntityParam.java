@@ -41,5 +41,5 @@ import java.lang.annotation.Target;
 @Target(ElementType.PARAMETER)
 public @interface EntityParam {
 
-  public abstract String value ();
+  String value ();
 }
