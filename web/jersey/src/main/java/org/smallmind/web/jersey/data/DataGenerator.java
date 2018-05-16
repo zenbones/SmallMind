@@ -41,6 +41,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
 import java.util.HashMap;
+import java.util.Map;
 import java.util.Objects;
 import java.util.function.BiFunction;
 import org.smallmind.nutsnbolts.lang.UnknownSwitchCaseException;
@@ -94,15 +95,18 @@ public class DataGenerator {
             switch (property.value()) {
               case IN:
                 hasSetter(clazz, field);
+                foob(field.getType(), rootPath, namingFunction);
                 inMap.put(field.getName(), field.getType());
                 break;
               case OUT:
                 hasGetter(clazz, field);
+                foob(field.getType(), rootPath, namingFunction);
                 outMap.put(field.getName(), field.getType());
                 break;
               case BOTH:
                 hasSetter(clazz, field);
                 hasGetter(clazz, field);
+                foob(field.getType(), rootPath, namingFunction);
                 inMap.put(field.getName(), field.getType());
                 outMap.put(field.getName(), field.getType());
                 break;
@@ -133,6 +137,7 @@ public class DataGenerator {
                     }
                   }
 
+                  foob(method.getReturnType(), rootPath, namingFunction);
                   outMap.put(fieldName, method.getReturnType());
                 }
               } else if ((method.getName().length() > 2) && method.getName().startsWith("is") && (method.getParameterCount() == 0) && Character.isUpperCase(method.getName().charAt(2)) && boolean.class.equals(method.getReturnType())) {
@@ -150,12 +155,14 @@ public class DataGenerator {
                     }
                   }
 
+                  foob(method.getReturnType(), rootPath, namingFunction);
                   outMap.put(fieldName, method.getReturnType());
                 }
               } else if ((method.getName().length() > 3) && method.getName().startsWith("set") && (method.getParameterCount() == 1) && Character.isUpperCase(method.getName().charAt(3))) {
                 if (!Visibility.IN.equals(property.value())) {
                   throw new DataDefinitionException("The 'setter' method(%s) found in class(%s) must be annotated as 'IN' only", method.getName(), clazz.getName());
                 } else {
+                  foob(method.getReturnType(), rootPath, namingFunction);
                   inMap.put(Character.toUpperCase(method.getName().charAt(3)) + method.getName().substring(4), method.getParameterTypes()[0]);
                 }
               }
@@ -180,12 +187,12 @@ public class DataGenerator {
         Files.createDirectories(generatedPath);
 
         if (!inMap.isEmpty()) {
-          write(clazz, generatedPath, namingFunction, Direction.IN);
+          write(clazz, generatedPath, namingFunction, Direction.IN, inMap);
 
           generatedMap.put(clazz, Visibility.IN);
         }
         if (!outMap.isEmpty()) {
-          write(clazz, generatedPath, namingFunction, Direction.OUT);
+          write(clazz, generatedPath, namingFunction, Direction.OUT, outMap);
 
           if (Visibility.IN.equals(generatedMap.get(clazz))) {
             generatedMap.put(clazz, Visibility.BOTH);
@@ -197,7 +204,7 @@ public class DataGenerator {
     }
   }
 
-  private void write (Class<?> clazz, Path generatedPath, BiFunction<Direction, String, String> namingFunction, Direction direction)
+  private void write (Class<?> clazz, Path generatedPath, BiFunction<Direction, String, String> namingFunction, Direction direction, HashMap<String, Class<?>> fieldMap)
     throws IOException {
 
     String name;
@@ -239,10 +246,36 @@ public class DataGenerator {
       }
       writer.write(" {");
       writer.newLine();
+      writer.newLine();
+
+      for (Map.Entry<String, Class<?>> fieldEntry : fieldMap.entrySet()) {
+        writer.write("  private ");
+        writer.write(getCompatibleClassName(fieldEntry.getValue(), namingFunction, direction));
+        writer.write(" ");
+        writer.write(fieldEntry.getKey());
+        writer.write(";");
+        writer.newLine();
+      }
+      writer.newLine();
+
+      for (Map.Entry<String, Class<?>> fieldEntry : fieldMap.entrySet()) {
+
+      }
 
       writer.write("}");
       writer.newLine();
     }
+  }
+
+  private String getCompatibleClassName (Class<?> clazz, BiFunction<Direction, String, String> namingFunction, Direction direction) {
+
+    Visibility visibility;
+
+    if (((visibility = generatedMap.get(clazz)) != null) && visibility.matches(direction)) {
+      return clazz.getPackage().getName() + '.' + namingFunction.apply(direction, clazz.getSimpleName());
+    }
+
+    return clazz.getName();
   }
 
   private Class<?> getNearestAncestor (Class<?> clazz, Direction direction) {
