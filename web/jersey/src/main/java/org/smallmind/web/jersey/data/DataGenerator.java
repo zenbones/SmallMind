@@ -1,28 +1,28 @@
 /*
  * Copyright (c) 2007, 2008, 2009, 2010, 2011, 2012, 2013, 2014, 2015, 2016, 2017 David Berkman
- *
+ * 
  * This file is part of the SmallMind Code Project.
- *
+ * 
  * The SmallMind Code Project is free software, you can redistribute
  * it and/or modify it under either, at your discretion...
- *
+ * 
  * 1) The terms of GNU Affero General Public License as published by the
  * Free Software Foundation, either version 3 of the License, or (at
  * your option) any later version.
- *
+ * 
  * ...or...
- *
+ * 
  * 2) The terms of the Apache License, Version 2.0.
- *
+ * 
  * The SmallMind Code Project is distributed in the hope that it will
  * be useful, but WITHOUT ANY WARRANTY; without even the implied warranty
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License or Apache License for more details.
- *
+ * 
  * You should have received a copy of the GNU Affero General Public License
  * and the Apache License along with the SmallMind Code Project. If not, see
  * <http://www.gnu.org/licenses/> or <http://www.apache.org/licenses/LICENSE-2.0>.
- *
+ * 
  * Additional permission under the GNU Affero GPL version 3 section 7
  * ------------------------------------------------------------------
  * If you modify this Program, or any covered work, by linking or
@@ -92,7 +92,7 @@ public class DataGenerator {
           Property property;
 
           if ((property = field.getAnnotation(Property.class)) != null) {
-            switch (property.value()) {
+            switch (property.visibility()) {
               case IN:
                 hasSetter(clazz, field);
                 walk(field.getType(), rootPath, namingFunction);
@@ -111,7 +111,7 @@ public class DataGenerator {
                 outMap.put(field.getName(), field.getType());
                 break;
               default:
-                throw new UnknownSwitchCaseException(property.value().name());
+                throw new UnknownSwitchCaseException(property.visibility().name());
             }
           }
         }
@@ -123,13 +123,13 @@ public class DataGenerator {
 
             if ((property = method.getAnnotation(Property.class)) != null) {
               if ((method.getName().length() > 3) && method.getName().startsWith("get") && (method.getParameterCount() == 0) && Character.isUpperCase(method.getName().charAt(3))) {
-                if (Visibility.IN.equals(property.value())) {
+                if (Visibility.IN.equals(property.visibility())) {
                   throw new DataDefinitionException("The 'getter' method(%s) found in class(%s) can't be annotated as 'IN' only", method.getName(), clazz.getName());
                 } else {
 
                   String fieldName = Character.toUpperCase(method.getName().charAt(3)) + method.getName().substring(4);
 
-                  if (Visibility.BOTH.equals(property.value())) {
+                  if (Visibility.BOTH.equals(property.visibility())) {
                     if (!hasSetter(clazz, fieldName, method.getReturnType())) {
                       throw new DataDefinitionException("Missing 'setter' method(%s) in class(%s)", BeanUtility.asSetterName(fieldName), clazz.getName());
                     } else {
@@ -141,13 +141,13 @@ public class DataGenerator {
                   outMap.put(fieldName, method.getReturnType());
                 }
               } else if ((method.getName().length() > 2) && method.getName().startsWith("is") && (method.getParameterCount() == 0) && Character.isUpperCase(method.getName().charAt(2)) && boolean.class.equals(method.getReturnType())) {
-                if (Visibility.IN.equals(property.value())) {
+                if (Visibility.IN.equals(property.visibility())) {
                   throw new DataDefinitionException("The 'getter' method(%s) found in class(%s) can't be annotated as 'IN' only", method.getName(), clazz.getName());
                 } else {
 
                   String fieldName = Character.toUpperCase(method.getName().charAt(2)) + method.getName().substring(3);
 
-                  if (Visibility.BOTH.equals(property.value())) {
+                  if (Visibility.BOTH.equals(property.visibility())) {
                     if (!hasSetter(clazz, fieldName, method.getReturnType())) {
                       throw new DataDefinitionException("Missing 'setter' method(%s) in class(%s)", BeanUtility.asSetterName(fieldName), clazz.getName());
                     } else {
@@ -159,7 +159,7 @@ public class DataGenerator {
                   outMap.put(fieldName, method.getReturnType());
                 }
               } else if ((method.getName().length() > 3) && method.getName().startsWith("set") && (method.getParameterCount() == 1) && Character.isUpperCase(method.getName().charAt(3))) {
-                if (!Visibility.IN.equals(property.value())) {
+                if (!Visibility.IN.equals(property.visibility())) {
                   throw new DataDefinitionException("The 'setter' method(%s) found in class(%s) must be annotated as 'IN' only", method.getName(), clazz.getName());
                 } else {
                   walk(method.getReturnType(), rootPath, namingFunction);
@@ -187,12 +187,12 @@ public class DataGenerator {
         Files.createDirectories(generatedPath);
 
         if (!inMap.isEmpty()) {
-          write(clazz, generatedPath, namingFunction, Direction.IN, inMap);
+          write(clazz, generatedPath, namingFunction, data, Direction.IN, inMap);
 
           generatedMap.put(clazz, Visibility.IN);
         }
         if (!outMap.isEmpty()) {
-          write(clazz, generatedPath, namingFunction, Direction.OUT, outMap);
+          write(clazz, generatedPath, namingFunction, data, Direction.OUT, outMap);
 
           if (Visibility.IN.equals(generatedMap.get(clazz))) {
             generatedMap.put(clazz, Visibility.BOTH);
@@ -204,7 +204,7 @@ public class DataGenerator {
     }
   }
 
-  private void write (Class<?> clazz, Path generatedPath, BiFunction<Direction, String, String> namingFunction, Direction direction, HashMap<String, Class<?>> fieldMap)
+  private void write (Class<?> clazz, Path generatedPath, BiFunction<Direction, String, String> namingFunction, Data data, Direction direction, HashMap<String, Class<?>> fieldMap)
     throws IOException {
 
     String name;
@@ -239,7 +239,7 @@ public class DataGenerator {
 
       // @XmlRootElement
       writer.write("@XmlRootElement(name = \"");
-      writer.write(clazz.getSimpleName());
+      writer.write(data.name().isEmpty() ? Character.toLowerCase(clazz.getSimpleName().charAt(0)) + clazz.getSimpleName().substring(1) : data.name());
       writer.write("\")");
       writer.newLine();
 

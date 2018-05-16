@@ -41,7 +41,7 @@ import java.lang.annotation.Target;
 @Target({ElementType.FIELD, ElementType.METHOD})
 public @interface Property {
 
-  Visibility value () default Visibility.BOTH;
+  Visibility visibility () default Visibility.BOTH;
 
   boolean required () default false;
 }
