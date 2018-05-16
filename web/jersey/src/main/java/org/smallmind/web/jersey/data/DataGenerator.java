@@ -273,6 +273,11 @@ public class DataGenerator {
       }
       writer.newLine();
 
+      // constructors
+
+      // entity factory
+
+      // getters and setters
       for (Map.Entry<String, Class<?>> fieldEntry : fieldMap.entrySet()) {
 
       }
