@@ -54,7 +54,7 @@ public class DataGenerator {
   public void generate (Class<?> clazz, Path rootPath, String prefix)
     throws IOException, BeanAccessException, DataDefinitionException {
 
-    generate(clazz, rootPath, (direction, name) -> new StringBuilder(prefix).append(clazz.getSimpleName()).append(direction.getCode()).append("Dto").toString());
+    generate(clazz, rootPath, (direction, name) -> new StringBuilder(prefix).append(name).append(direction.getCode()).append("Dto").toString());
   }
 
   public void generate (Class<?> clazz, Path rootPath, BiFunction<Direction, String, String> namingFunction)
@@ -215,7 +215,7 @@ public class DataGenerator {
       if (nearestAncestor != null) {
         if (Objects.equals(clazz.getPackage(), nearestAncestor.getPackage())) {
           writer.write("import ");
-          writer.write(nearestAncestor.getName());
+          writer.write(namingFunction.apply(direction, nearestAncestor.getSimpleName()));
           writer.write(";");
           writer.newLine();
           writer.newLine();
@@ -235,7 +235,7 @@ public class DataGenerator {
       writer.write(name);
       if (nearestAncestor != null) {
         writer.write(" extends ");
-        writer.write(nearestAncestor.getSimpleName());
+        writer.write(namingFunction.apply(direction, nearestAncestor.getSimpleName()));
       }
       writer.write(" {");
       writer.newLine();
