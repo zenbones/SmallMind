@@ -45,7 +45,6 @@ import javax.xml.bind.annotation.adapters.XmlAdapter;
 import javax.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
 
 @Provider
-@ResourceMethod
 public class ResourceMethodContainerFilter implements ContainerRequestFilter, ContainerResponseFilter {
 
   private static final ConcurrentHashMap<Class<? extends XmlAdapter>, XmlAdapter> ADAPTER_MAP = new ConcurrentHashMap<>();

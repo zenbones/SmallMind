@@ -1,13 +1,47 @@
+/*
+ * Copyright (c) 2007, 2008, 2009, 2010, 2011, 2012, 2013, 2014, 2015, 2016, 2017 David Berkman
+ * 
+ * This file is part of the SmallMind Code Project.
+ * 
+ * The SmallMind Code Project is free software, you can redistribute
+ * it and/or modify it under either, at your discretion...
+ * 
+ * 1) The terms of GNU Affero General Public License as published by the
+ * Free Software Foundation, either version 3 of the License, or (at
+ * your option) any later version.
+ * 
+ * ...or...
+ * 
+ * 2) The terms of the Apache License, Version 2.0.
+ * 
+ * The SmallMind Code Project is distributed in the hope that it will
+ * be useful, but WITHOUT ANY WARRANTY; without even the implied warranty
+ * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+ * General Public License or Apache License for more details.
+ * 
+ * You should have received a copy of the GNU Affero General Public License
+ * and the Apache License along with the SmallMind Code Project. If not, see
+ * <http://www.gnu.org/licenses/> or <http://www.apache.org/licenses/LICENSE-2.0>.
+ * 
+ * Additional permission under the GNU Affero GPL version 3 section 7
+ * ------------------------------------------------------------------
+ * If you modify this Program, or any covered work, by linking or
+ * combining it with other code, such other code is not for that reason
+ * alone subject to any of the requirements of the GNU Affero GPL
+ * version 3.
+ */
 package org.smallmind.web.jersey.data;
 
+import java.io.BufferedWriter;
 import java.io.IOException;
-import java.io.OutputStream;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.StandardOpenOption;
 import java.util.HashMap;
+import java.util.Objects;
 import java.util.function.BiFunction;
 import org.smallmind.nutsnbolts.lang.UnknownSwitchCaseException;
 import org.smallmind.nutsnbolts.reflection.bean.BeanAccessException;
@@ -129,7 +163,7 @@ public class DataGenerator {
           }
         }
 
-        Path generationPath = rootPath;
+        Path generatedPath = rootPath;
         Package clazzPackage;
 
         if ((clazzPackage = clazz.getPackage()) != null) {
@@ -138,22 +172,18 @@ public class DataGenerator {
 
           if (((packageName = clazzPackage.getName()) != null) && (!packageName.isEmpty())) {
             for (String packagePart : packageName.split("\\.", -1)) {
-              generationPath.resolve(packagePart);
+              generatedPath = generatedPath.resolve(packagePart);
             }
           }
         }
 
         if (!inMap.isEmpty()) {
-
-          Class<?> nearestAncestor = getNearestAncestor(parentClass, Direction.IN);
-          OutputStream outputStream = Files.newOutputStream(generationPath.resolve(namingFunction.apply(Direction.IN, clazz.getSimpleName())));
+          write(clazz, generatedPath, namingFunction, Direction.IN);
 
           generatedMap.put(clazz, Visibility.IN);
         }
         if (!outMap.isEmpty()) {
-
-          Class<?> nearestAncestor = getNearestAncestor(parentClass, Direction.OUT);
-          OutputStream outputStream = Files.newOutputStream(generationPath.resolve(namingFunction.apply(Direction.OUT, clazz.getSimpleName())));
+          write(clazz, generatedPath, namingFunction, Direction.OUT);
 
           if (Visibility.IN.equals(generatedMap.get(clazz))) {
             generatedMap.put(clazz, Visibility.BOTH);
@@ -165,20 +195,66 @@ public class DataGenerator {
     }
   }
 
-  private Class<?> getNearestAncestor (Class<?> parentClass, Direction direction) {
+  private void write (Class<?> clazz, Path generatedPath, BiFunction<Direction, String, String> namingFunction, Direction direction)
+    throws IOException {
 
-    Class<?> currentClass = parentClass;
+    String name;
 
-    while (currentClass != null) {
+    try (BufferedWriter writer = Files.newBufferedWriter(generatedPath.resolve((name = namingFunction.apply(direction, clazz.getSimpleName())) + ".java"), StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING, StandardOpenOption.WRITE)) {
+
+      Class<?> nearestAncestor = getNearestAncestor(clazz, direction);
+
+      writer.write("package ");
+      writer.write(clazz.getPackage().getName());
+      writer.write(";");
+      writer.newLine();
+      writer.newLine();
+
+      if (nearestAncestor != null) {
+        if (Objects.equals(clazz.getPackage(), nearestAncestor.getPackage())) {
+          writer.write("import ");
+          writer.write(nearestAncestor.getName());
+          writer.write(";");
+          writer.newLine();
+          writer.newLine();
+        }
+      }
+
+      writer.write("@Generated(\"");
+      writer.write(DataGenerator.class.getName());
+      writer.write("\")");
+      writer.newLine();
+
+      writer.write("public ");
+      if (Modifier.isAbstract(clazz.getModifiers())) {
+        writer.write("abstract ");
+      }
+      writer.write("class ");
+      writer.write(name);
+      if (nearestAncestor != null) {
+        writer.write(" extends ");
+        writer.write(nearestAncestor.getSimpleName());
+      }
+      writer.write(" {");
+      writer.newLine();
+
+      writer.write("}");
+      writer.newLine();
+    }
+  }
+
+  private Class<?> getNearestAncestor (Class<?> clazz, Direction direction) {
+
+    Class<?> currentClass = clazz;
+
+    while ((currentClass = currentClass.getSuperclass()) != null) {
 
       Visibility visibility;
 
-      if (((visibility = generatedMap.get(parentClass)) != null) && visibility.matches(direction)) {
+      if (((visibility = generatedMap.get(currentClass)) != null) && visibility.matches(direction)) {
 
         return currentClass;
       }
-
-      currentClass = parentClass.getSuperclass();
     }
 
     return null;
