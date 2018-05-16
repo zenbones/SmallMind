@@ -65,12 +65,12 @@ public class DataGenerator {
       if (clazz.isInterface() || clazz.isAnnotation() || clazz.isAnonymousClass() || clazz.isEnum() || clazz.isLocalClass() || clazz.isMemberClass()) {
         throw new DataDefinitionException("The class(%s) must be a root implementations of type 'class'", clazz.getName());
       } else {
-        foob(clazz, rootPath, namingFunction);
+        walk(clazz, rootPath, namingFunction);
       }
     }
   }
 
-  private void foob (Class<?> clazz, Path rootPath, BiFunction<Direction, String, String> namingFunction)
+  private void walk (Class<?> clazz, Path rootPath, BiFunction<Direction, String, String> namingFunction)
     throws IOException, BeanAccessException, DataDefinitionException {
 
     if (!generatedMap.containsKey(clazz)) {
@@ -79,7 +79,7 @@ public class DataGenerator {
       Class<?> parentClass;
 
       if ((parentClass = clazz.getSuperclass()) != null) {
-        foob(parentClass, rootPath, namingFunction);
+        walk(parentClass, rootPath, namingFunction);
       }
 
       if ((data = clazz.getAnnotation(Data.class)) != null) {
@@ -95,18 +95,18 @@ public class DataGenerator {
             switch (property.value()) {
               case IN:
                 hasSetter(clazz, field);
-                foob(field.getType(), rootPath, namingFunction);
+                walk(field.getType(), rootPath, namingFunction);
                 inMap.put(field.getName(), field.getType());
                 break;
               case OUT:
                 hasGetter(clazz, field);
-                foob(field.getType(), rootPath, namingFunction);
+                walk(field.getType(), rootPath, namingFunction);
                 outMap.put(field.getName(), field.getType());
                 break;
               case BOTH:
                 hasSetter(clazz, field);
                 hasGetter(clazz, field);
-                foob(field.getType(), rootPath, namingFunction);
+                walk(field.getType(), rootPath, namingFunction);
                 inMap.put(field.getName(), field.getType());
                 outMap.put(field.getName(), field.getType());
                 break;
@@ -137,7 +137,7 @@ public class DataGenerator {
                     }
                   }
 
-                  foob(method.getReturnType(), rootPath, namingFunction);
+                  walk(method.getReturnType(), rootPath, namingFunction);
                   outMap.put(fieldName, method.getReturnType());
                 }
               } else if ((method.getName().length() > 2) && method.getName().startsWith("is") && (method.getParameterCount() == 0) && Character.isUpperCase(method.getName().charAt(2)) && boolean.class.equals(method.getReturnType())) {
@@ -155,14 +155,14 @@ public class DataGenerator {
                     }
                   }
 
-                  foob(method.getReturnType(), rootPath, namingFunction);
+                  walk(method.getReturnType(), rootPath, namingFunction);
                   outMap.put(fieldName, method.getReturnType());
                 }
               } else if ((method.getName().length() > 3) && method.getName().startsWith("set") && (method.getParameterCount() == 1) && Character.isUpperCase(method.getName().charAt(3))) {
                 if (!Visibility.IN.equals(property.value())) {
                   throw new DataDefinitionException("The 'setter' method(%s) found in class(%s) must be annotated as 'IN' only", method.getName(), clazz.getName());
                 } else {
-                  foob(method.getReturnType(), rootPath, namingFunction);
+                  walk(method.getReturnType(), rootPath, namingFunction);
                   inMap.put(Character.toUpperCase(method.getName().charAt(3)) + method.getName().substring(4), method.getParameterTypes()[0]);
                 }
               }
