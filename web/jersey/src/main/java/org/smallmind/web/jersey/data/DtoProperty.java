@@ -39,9 +39,11 @@ import java.lang.annotation.Target;
 
 @Retention(RetentionPolicy.RUNTIME)
 @Target({ElementType.FIELD, ElementType.METHOD})
-public @interface Property {
+public @interface DtoProperty {
 
   Visibility visibility () default Visibility.BOTH;
+
+  String name () default "";
 
   boolean required () default false;
 }

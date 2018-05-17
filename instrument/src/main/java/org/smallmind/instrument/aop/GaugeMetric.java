@@ -43,13 +43,13 @@ import org.smallmind.instrument.Clocks;
 @Retention(RetentionPolicy.RUNTIME)
 public @interface GaugeMetric {
 
-  public abstract JMX value ();
+  JMX value ();
 
-  public abstract String alias () default "";
+  String alias () default "";
 
-  public abstract long tickInterval () default 10;
+  long tickInterval () default 10;
 
-  public abstract TimeUnit tickTimeUnit () default TimeUnit.SECONDS;
+  TimeUnit tickTimeUnit () default TimeUnit.SECONDS;
 
-  public abstract Clocks clocks () default Clocks.EPOCH;
+  Clocks clocks () default Clocks.EPOCH;
 }

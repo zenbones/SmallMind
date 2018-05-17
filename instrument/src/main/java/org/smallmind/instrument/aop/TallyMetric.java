@@ -41,9 +41,9 @@ import java.lang.annotation.Target;
 @Retention(RetentionPolicy.RUNTIME)
 public @interface TallyMetric {
 
-  public abstract JMX value ();
+  JMX value ();
 
-  public abstract String alias () default "";
+  String alias () default "";
 
-  public abstract int initialCount () default 0;
+  int initialCount () default 0;
 }

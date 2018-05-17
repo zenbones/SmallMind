@@ -40,9 +40,9 @@ import java.lang.annotation.Target;
 @Retention(RetentionPolicy.RUNTIME)
 public @interface Property {
 
-  public abstract String key ();
+  String key ();
 
-  public abstract String value ();
+  String value ();
 
-  public abstract boolean constant () default false;
+  boolean constant () default false;
 }

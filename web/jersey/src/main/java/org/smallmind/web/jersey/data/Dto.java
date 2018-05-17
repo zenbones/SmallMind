@@ -39,7 +39,7 @@ import java.lang.annotation.Target;
 
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.TYPE)
-public @interface Data {
+public @interface Dto {
 
   String name() default "";
 }

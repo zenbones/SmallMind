@@ -42,9 +42,9 @@ import org.smallmind.instrument.Samples;
 @Retention(RetentionPolicy.RUNTIME)
 public @interface HistogramMetric {
 
-  public abstract JMX value ();
+  JMX value ();
 
-  public abstract String alias () default "";
+  String alias () default "";
 
-  public abstract Samples samples () default Samples.BIASED;
+  Samples samples () default Samples.BIASED;
 }

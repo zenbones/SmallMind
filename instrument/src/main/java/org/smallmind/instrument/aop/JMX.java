@@ -40,7 +40,7 @@ import java.lang.annotation.Target;
 @Retention(RetentionPolicy.RUNTIME)
 public @interface JMX {
 
-  public abstract String domain ();
+  String domain ();
 
-  public abstract Property[] properties ();
+  Property[] properties ();
 }
