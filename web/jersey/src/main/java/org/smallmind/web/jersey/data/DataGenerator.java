@@ -86,6 +86,9 @@ public class DataGenerator {
 
         HashMap<String, Class<?>> inMap = new HashMap<>();
         HashMap<String, Class<?>> outMap = new HashMap<>();
+        Path generatedPath = rootPath;
+        Package clazzPackage;
+        boolean written = false;
 
         for (Field field : clazz.getDeclaredFields()) {
 
@@ -170,9 +173,6 @@ public class DataGenerator {
           }
         }
 
-        Path generatedPath = rootPath;
-        Package clazzPackage;
-
         if ((clazzPackage = clazz.getPackage()) != null) {
 
           String packageName;
@@ -190,6 +190,7 @@ public class DataGenerator {
           write(clazz, generatedPath, namingFunction, data, Direction.IN, inMap);
 
           generatedMap.put(clazz, Visibility.IN);
+          written = true;
         }
         if (!outMap.isEmpty()) {
           write(clazz, generatedPath, namingFunction, data, Direction.OUT, outMap);
@@ -199,6 +200,11 @@ public class DataGenerator {
           } else {
             generatedMap.put(clazz, Visibility.OUT);
           }
+          written = true;
+        }
+
+        if (!written) {
+          throw new DataDefinitionException("The class(%s) was annotated as '%s' but contained no properties", clazz.getName(), Data.class.getSimpleName());
         }
       }
     }
@@ -212,6 +218,7 @@ public class DataGenerator {
     try (BufferedWriter writer = Files.newBufferedWriter(generatedPath.resolve((name = namingFunction.apply(direction, clazz.getSimpleName())) + ".java"), StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING, StandardOpenOption.WRITE)) {
 
       Class<?> nearestAncestor = getNearestAncestor(clazz, direction);
+      boolean firstPair = true;
 
       // package
       writer.write("package ");
@@ -280,6 +287,44 @@ public class DataGenerator {
       // getters and setters
       for (Map.Entry<String, Class<?>> fieldEntry : fieldMap.entrySet()) {
 
+        if (!firstPair) {
+          writer.newLine();
+        }
+
+        writer.write("  public ");
+        writer.write(getCompatibleClassName(fieldEntry.getValue(), namingFunction, direction));
+        writer.write(" ");
+        writer.write(boolean.class.equals(fieldEntry.getValue()) ? BeanUtility.asIsName(fieldEntry.getKey()) : BeanUtility.asGetterName(fieldEntry.getKey()));
+        writer.write("() {");
+        writer.newLine();
+        writer.newLine();
+        writer.write("    return ");
+        writer.write(fieldEntry.getKey());
+        writer.write(";");
+        writer.newLine();
+        writer.write("  }");
+        writer.newLine();
+        writer.newLine();
+
+        writer.write("  public void ");
+        writer.write(BeanUtility.asSetterName(fieldEntry.getKey()));
+        writer.write("(");
+        writer.write(getCompatibleClassName(fieldEntry.getValue(), namingFunction, direction));
+        writer.write(" ");
+        writer.write(fieldEntry.getKey());
+        writer.write(") {");
+        writer.newLine();
+        writer.newLine();
+        writer.write("    this.");
+        writer.write(fieldEntry.getKey());
+        writer.write(" = ");
+        writer.write(fieldEntry.getKey());
+        writer.write(";");
+        writer.newLine();
+        writer.write("  }");
+        writer.newLine();
+
+        firstPair = false;
       }
 
       writer.write("}");
