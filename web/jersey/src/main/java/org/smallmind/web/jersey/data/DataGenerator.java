@@ -281,8 +281,64 @@ public class DataGenerator {
       writer.newLine();
 
       // constructors
+      writer.write("  public ");
+      writer.write(name);
+      writer.write(" () {");
+      writer.newLine();
+      writer.write("  }");
+      writer.newLine();
+      writer.newLine();
+
+      writer.write("  public ");
+      writer.write(name);
+      writer.write(" (");
+      writer.write(clazz.getName());
+      writer.write(" ");
+      writer.write(Character.toLowerCase(clazz.getSimpleName().charAt(0)) + clazz.getSimpleName().substring(1));
+      writer.write(") {");
+      writer.newLine();
+      writer.newLine();
+      for (Map.Entry<String, Class<?>> fieldEntry : fieldMap.entrySet()) {
+        writer.write("    this.");
+        writer.write(fieldEntry.getKey());
+        writer.write(" = ");
+        writer.write(Character.toLowerCase(clazz.getSimpleName().charAt(0)) + clazz.getSimpleName().substring(1));
+        writer.write(".");
+        writer.write(boolean.class.equals(fieldEntry.getValue()) ? BeanUtility.asIsName(fieldEntry.getKey()) : BeanUtility.asGetterName(fieldEntry.getKey()));
+        writer.write("();");
+        writer.newLine();
+      }
+      writer.write("  }");
+      writer.newLine();
+      writer.newLine();
 
       // entity factory
+      writer.write("  public ");
+      writer.write(" ");
+      writer.write(clazz.getName());
+      writer.write(" construct() {");
+      writer.newLine();
+      writer.newLine();
+      writer.write("    ");
+      writer.write(Character.toLowerCase(clazz.getSimpleName().charAt(0)) + clazz.getSimpleName().substring(1));
+      writer.write(" = new ");
+      writer.write(clazz.getSimpleName());
+      writer.write("();");
+      writer.newLine();
+      writer.newLine();
+      for (Map.Entry<String, Class<?>> fieldEntry : fieldMap.entrySet()) {
+        writer.write("    ");
+        writer.write(Character.toLowerCase(clazz.getSimpleName().charAt(0)) + clazz.getSimpleName().substring(1));
+        writer.write(".");
+        writer.write(BeanUtility.asSetterName(fieldEntry.getKey()));
+        writer.write("(");
+        writer.write(fieldEntry.getKey());
+        writer.write(");");
+        writer.newLine();
+      }
+      writer.write("  }");
+      writer.newLine();
+      writer.newLine();
 
       // getters and setters
       for (Map.Entry<String, Class<?>> fieldEntry : fieldMap.entrySet()) {
