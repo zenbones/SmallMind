@@ -42,7 +42,7 @@ import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.smallmind.nutsnbolts.util.IterableIterator;
-import org.smallmind.web.jersey.util.JsonCodec;
+import org.smallmind.web.json.scaffold.util.JsonCodec;
 
 public class WireContextXmlAdapter extends XmlAdapter<JsonNode, WireContext[]> {
 

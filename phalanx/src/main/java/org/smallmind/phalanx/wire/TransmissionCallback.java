@@ -35,10 +35,10 @@ package org.smallmind.phalanx.wire;
 import java.io.ByteArrayInputStream;
 import java.io.ObjectInputStream;
 import org.smallmind.nutsnbolts.util.SelfDestructive;
-import org.smallmind.web.jersey.fault.Fault;
-import org.smallmind.web.jersey.fault.FaultWrappingException;
-import org.smallmind.web.jersey.fault.NativeLanguage;
-import org.smallmind.web.jersey.fault.NativeObject;
+import org.smallmind.web.json.scaffold.fault.Fault;
+import org.smallmind.web.json.scaffold.fault.FaultWrappingException;
+import org.smallmind.web.json.scaffold.fault.NativeLanguage;
+import org.smallmind.web.json.scaffold.fault.NativeObject;
 
 public abstract class TransmissionCallback implements SelfDestructive {
 

@@ -37,7 +37,7 @@ import java.util.LinkedHashMap;
 import javax.xml.bind.annotation.adapters.XmlAdapter;
 import javax.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
 import org.smallmind.nutsnbolts.reflection.type.GenericUtility;
-import org.smallmind.web.jersey.util.JsonCodec;
+import org.smallmind.web.json.scaffold.util.JsonCodec;
 
 public abstract class AbstractNakedMappedJsonEntity extends LinkedHashMap<String, Object> implements JsonEntity {
 

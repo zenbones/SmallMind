@@ -57,7 +57,7 @@ import org.glassfish.jersey.servlet.ServletContainer;
 import org.smallmind.nutsnbolts.io.PathUtility;
 import org.smallmind.nutsnbolts.lang.web.PerApplicationContextFilter;
 import org.smallmind.nutsnbolts.resource.ResourceException;
-import org.smallmind.web.jersey.jackson.JsonResourceConfig;
+import org.smallmind.web.jersey.json.JsonResourceConfig;
 import org.smallmind.web.jersey.spring.ExposedApplicationContext;
 import org.smallmind.web.jersey.spring.ResourceConfigExtension;
 import org.springframework.beans.factory.DisposableBean;

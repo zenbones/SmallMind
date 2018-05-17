@@ -14,11 +14,12 @@
   <modules>
     <module>grizzly</module>
     <module>jersey</module>
-    <module>websocket</module>
-    <module>reverse</module>
+    <module>json</module>
     <module>jwt</module>
     <module>oauth</module>
+    <module>reverse</module>
     <module>schema</module>
+    <module>websocket</module>
   </modules>
   <build>
     <plugins>

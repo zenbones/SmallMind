@@ -41,7 +41,7 @@ import org.glassfish.jersey.test.external.ExternalTestContainerFactory;
 import org.glassfish.jersey.test.spi.TestContainerException;
 import org.glassfish.jersey.test.spi.TestContainerFactory;
 import org.smallmind.nutsnbolts.lang.PerApplicationContext;
-import org.smallmind.web.jersey.util.JsonCodec;
+import org.smallmind.web.json.scaffold.util.JsonCodec;
 import org.springframework.context.support.ClassPathXmlApplicationContext;
 import org.testng.Assert;
 import org.testng.annotations.AfterClass;

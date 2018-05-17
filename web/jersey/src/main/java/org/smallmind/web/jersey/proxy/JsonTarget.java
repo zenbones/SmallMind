@@ -59,7 +59,7 @@ import org.smallmind.nutsnbolts.util.Pair;
 import org.smallmind.nutsnbolts.util.Tuple;
 import org.smallmind.scribe.pen.Level;
 import org.smallmind.scribe.pen.LoggerManager;
-import org.smallmind.web.jersey.util.JsonCodec;
+import org.smallmind.web.json.scaffold.util.JsonCodec;
 
 public class JsonTarget {
 

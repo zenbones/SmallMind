@@ -40,7 +40,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import org.apache.http.Header;
 import org.apache.http.entity.AbstractHttpEntity;
 import org.apache.http.message.BasicHeader;
-import org.smallmind.web.jersey.util.JsonCodec;
+import org.smallmind.web.json.scaffold.util.JsonCodec;
 
 public class JsonHttpEntity extends AbstractHttpEntity {
 

@@ -46,7 +46,7 @@ import org.smallmind.nutsnbolts.http.Base64Codec;
 import org.smallmind.nutsnbolts.json.Encryption;
 import org.smallmind.nutsnbolts.lang.StaticInitializationError;
 import org.smallmind.nutsnbolts.security.EncryptionUtility;
-import org.smallmind.web.jersey.util.JsonCodec;
+import org.smallmind.web.json.scaffold.util.JsonCodec;
 
 /*
 Public Key

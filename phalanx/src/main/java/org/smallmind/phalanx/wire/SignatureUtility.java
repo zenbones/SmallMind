@@ -34,7 +34,7 @@ package org.smallmind.phalanx.wire;
 
 import java.util.Date;
 import java.util.concurrent.ConcurrentHashMap;
-import org.smallmind.web.jersey.fault.Fault;
+import org.smallmind.web.json.scaffold.fault.Fault;
 
 public class SignatureUtility {
 

@@ -34,7 +34,7 @@ package org.smallmind.web.jwt;
 
 import java.io.UnsupportedEncodingException;
 import org.smallmind.nutsnbolts.http.Base64Codec;
-import org.smallmind.web.jersey.util.JsonCodec;
+import org.smallmind.web.json.scaffold.util.JsonCodec;
 
 public class JWTCodec {
 

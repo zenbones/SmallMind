@@ -36,9 +36,9 @@ import java.io.Serializable;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import org.smallmind.scribe.pen.LoggerManager;
-import org.smallmind.web.jersey.fault.Fault;
-import org.smallmind.web.jersey.fault.FaultElement;
-import org.smallmind.web.jersey.fault.FaultWrappingException;
+import org.smallmind.web.json.scaffold.fault.Fault;
+import org.smallmind.web.json.scaffold.fault.FaultElement;
+import org.smallmind.web.json.scaffold.fault.FaultWrappingException;
 
 public class WireInvocationCircuit {
 
