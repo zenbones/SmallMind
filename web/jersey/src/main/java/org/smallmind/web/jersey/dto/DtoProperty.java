@@ -30,25 +30,20 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.web.jersey.data;
+package org.smallmind.web.jersey.dto;
 
-import org.smallmind.nutsnbolts.lang.UnknownSwitchCaseException;
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
 
-public enum Visibility {
+@Retention(RetentionPolicy.RUNTIME)
+@Target({ElementType.FIELD, ElementType.METHOD})
+public @interface DtoProperty {
 
-  IN, OUT, BOTH;
+  Visibility visibility () default Visibility.BOTH;
 
-  public boolean matches (Direction direction) {
+  String name () default "";
 
-    switch (this) {
-      case IN:
-        return Direction.IN.equals(direction);
-      case OUT:
-        return Direction.OUT.equals(direction);
-      case BOTH:
-        return true;
-      default:
-        throw new UnknownSwitchCaseException(this.name());
-    }
-  }
+  boolean required () default false;
 }

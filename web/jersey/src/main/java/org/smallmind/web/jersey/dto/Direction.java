@@ -30,14 +30,21 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.web.jersey.data;
+package org.smallmind.web.jersey.dto;
 
-import org.smallmind.nutsnbolts.lang.FormattedException;
+public enum Direction {
 
-public class DataDefinitionException extends FormattedException {
+  IN("In"), OUT("Out");
 
-  public DataDefinitionException (String message, Object... args) {
+  private String code;
 
-    super(message, args);
+  Direction (String code) {
+
+    this.code = code;
+  }
+
+  public String getCode () {
+
+    return code;
   }
 }

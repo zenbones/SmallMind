@@ -30,21 +30,25 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.web.jersey.data;
+package org.smallmind.web.jersey.dto;
 
-public enum Direction {
+import org.smallmind.nutsnbolts.lang.UnknownSwitchCaseException;
 
-  IN("In"), OUT("Out");
+public enum Visibility {
 
-  private String code;
+  IN, OUT, BOTH;
 
-  Direction (String code) {
+  public boolean matches (Direction direction) {
 
-    this.code = code;
-  }
-
-  public String getCode () {
-
-    return code;
+    switch (this) {
+      case IN:
+        return Direction.IN.equals(direction);
+      case OUT:
+        return Direction.OUT.equals(direction);
+      case BOTH:
+        return true;
+      default:
+        throw new UnknownSwitchCaseException(this.name());
+    }
   }
 }

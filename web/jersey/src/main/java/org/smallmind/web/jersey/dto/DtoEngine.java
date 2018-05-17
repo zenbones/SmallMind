@@ -30,7 +30,7 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.web.jersey.data;
+package org.smallmind.web.jersey.dto;
 
 import java.io.BufferedWriter;
 import java.io.IOException;
@@ -48,20 +48,20 @@ import org.smallmind.nutsnbolts.lang.UnknownSwitchCaseException;
 import org.smallmind.nutsnbolts.reflection.bean.BeanAccessException;
 import org.smallmind.nutsnbolts.reflection.bean.BeanUtility;
 
-public class DataGenerator {
+public class DtoEngine {
 
   private HashMap<Class<?>, Visibility> generatedMap = new HashMap<>();
 
   public void generate (Class<?> clazz, Path rootPath, String prefix)
     throws IOException, BeanAccessException, DataDefinitionException {
 
-    generate(clazz, rootPath, (direction, name) -> new StringBuilder(prefix).append(name).append(direction.getCode()).append("Dto").toString());
+    generate(clazz, rootPath, (direction, name) -> new StringBuilder(prefix).append(name).append(direction.getCode()).append("DtoGenerator").toString());
   }
 
   public void generate (Class<?> clazz, Path rootPath, BiFunction<Direction, String, String> namingFunction)
     throws IOException, BeanAccessException, DataDefinitionException {
 
-    if (clazz.getAnnotation(Dto.class) != null) {
+    if (clazz.getAnnotation(DtoGenerator.class) != null) {
       if (clazz.isInterface() || clazz.isAnnotation() || clazz.isAnonymousClass() || clazz.isEnum() || clazz.isLocalClass() || clazz.isMemberClass()) {
         throw new DataDefinitionException("The class(%s) must be a root implementations of type 'class'", clazz.getName());
       } else {
@@ -75,14 +75,14 @@ public class DataGenerator {
 
     if (!generatedMap.containsKey(clazz)) {
 
-      Dto dto;
+      DtoGenerator dtoGenerator;
       Class<?> parentClass;
 
       if ((parentClass = clazz.getSuperclass()) != null) {
         walk(parentClass, rootPath, namingFunction);
       }
 
-      if ((dto = clazz.getAnnotation(Dto.class)) != null) {
+      if ((dtoGenerator = clazz.getAnnotation(DtoGenerator.class)) != null) {
 
         HashMap<String, DataField> inMap = new HashMap<>();
         HashMap<String, DataField> outMap = new HashMap<>();
@@ -187,13 +187,13 @@ public class DataGenerator {
         Files.createDirectories(generatedPath);
 
         if (!inMap.isEmpty()) {
-          write(clazz, generatedPath, namingFunction, dto, Direction.IN, inMap);
+          write(clazz, generatedPath, namingFunction, dtoGenerator, Direction.IN, inMap);
 
           generatedMap.put(clazz, Visibility.IN);
           written = true;
         }
         if (!outMap.isEmpty()) {
-          write(clazz, generatedPath, namingFunction, dto, Direction.OUT, outMap);
+          write(clazz, generatedPath, namingFunction, dtoGenerator, Direction.OUT, outMap);
 
           if (Visibility.IN.equals(generatedMap.get(clazz))) {
             generatedMap.put(clazz, Visibility.BOTH);
@@ -204,13 +204,13 @@ public class DataGenerator {
         }
 
         if (!written) {
-          throw new DataDefinitionException("The class(%s) was annotated as '%s' but contained no properties", clazz.getName(), Dto.class.getSimpleName());
+          throw new DataDefinitionException("The class(%s) was annotated as '%s' but contained no properties", clazz.getName(), DtoGenerator.class.getSimpleName());
         }
       }
     }
   }
 
-  private void write (Class<?> clazz, Path generatedPath, BiFunction<Direction, String, String> namingFunction, Dto dto, Direction direction, HashMap<String, DataField> fieldMap)
+  private void write (Class<?> clazz, Path generatedPath, BiFunction<Direction, String, String> namingFunction, DtoGenerator dtoGenerator, Direction direction, HashMap<String, DataField> fieldMap)
     throws IOException {
 
     String name;
@@ -253,13 +253,13 @@ public class DataGenerator {
 
       // @Generated
       writer.write("@Generated(\"");
-      writer.write(DataGenerator.class.getName());
+      writer.write(DtoEngine.class.getName());
       writer.write("\")");
       writer.newLine();
 
       // @XmlRootElement
       writer.write("@XmlRootElement(name = \"");
-      writer.write(dto.name().isEmpty() ? Character.toLowerCase(clazz.getSimpleName().charAt(0)) + clazz.getSimpleName().substring(1) : dto.name());
+      writer.write(dtoGenerator.name().isEmpty() ? Character.toLowerCase(clazz.getSimpleName().charAt(0)) + clazz.getSimpleName().substring(1) : dtoGenerator.name());
       writer.write("\")");
       writer.newLine();
 
@@ -361,7 +361,7 @@ public class DataGenerator {
         }
 
         writer.write("  @XmlElement(name = \"");
-        writer.write(fieldEntry.getValue().getDtoProperty().name().isEmpty() ? fieldEntry.getKey() : dto.name());
+        writer.write(fieldEntry.getValue().getDtoProperty().name().isEmpty() ? fieldEntry.getKey() : dtoGenerator.name());
         writer.write(fieldEntry.getValue().getDtoProperty().required() ? "\", required = true)" : "\")");
         writer.newLine();
         writer.write("  public ");
