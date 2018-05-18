@@ -257,6 +257,8 @@ public class DtoEngine {
       if (nearestAncestor != null) {
         if (Objects.equals(clazz.getPackage(), nearestAncestor.getPackage())) {
           writer.write("import ");
+          writer.write(nearestAncestor.getPackage().getName());
+          writer.write(".");
           writer.write(namingFunction.apply(direction, nearestAncestor.getSimpleName()));
           writer.write(";");
           writer.newLine();
@@ -328,10 +330,19 @@ public class DtoEngine {
         writer.write("    this.");
         writer.write(fieldEntry.getKey());
         writer.write(" = ");
+        if (isDtoClass(fieldEntry.getValue().getType(), direction)) {
+          writer.write("new ");
+          writer.write(getCompatibleClassName(fieldEntry.getValue().getType(), namingFunction, direction));
+          writer.write("(");
+        }
         writer.write(Character.toLowerCase(clazz.getSimpleName().charAt(0)) + clazz.getSimpleName().substring(1));
         writer.write(".");
         writer.write(boolean.class.equals(fieldEntry.getValue()) ? BeanUtility.asIsName(fieldEntry.getKey()) : BeanUtility.asGetterName(fieldEntry.getKey()));
-        writer.write("();");
+        writer.write("()");
+        if (isDtoClass(fieldEntry.getValue().getType(), direction)) {
+          writer.write(")");
+        }
+        writer.write(";");
         writer.newLine();
       }
       writer.write("  }");
@@ -425,11 +436,16 @@ public class DtoEngine {
     }
   }
 
-  private String getCompatibleClassName (Class<?> clazz, BiFunction<Direction, String, String> namingFunction, Direction direction) {
+  private boolean isDtoClass (Class<?> clazz, Direction direction) {
 
     Visibility visibility;
 
-    if (((visibility = generatedMap.get(clazz)) != null) && visibility.matches(direction)) {
+    return ((visibility = generatedMap.get(clazz)) != null) && visibility.matches(direction);
+  }
+
+  private String getCompatibleClassName (Class<?> clazz, BiFunction<Direction, String, String> namingFunction, Direction direction) {
+
+    if (isDtoClass(clazz, direction)) {
       return clazz.getPackage().getName() + '.' + namingFunction.apply(direction, clazz.getSimpleName());
     }
 

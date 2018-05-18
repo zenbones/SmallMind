@@ -1,14 +1,12 @@
 package org.smallmind.web.json.dto.maven;
 
 import java.io.IOException;
-import java.lang.annotation.Annotation;
 import java.nio.file.FileVisitResult;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.SimpleFileVisitor;
 import java.nio.file.attribute.BasicFileAttributes;
-import java.util.Arrays;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.Locale;
@@ -35,6 +33,7 @@ import org.smallmind.web.json.dto.engine.DtoGenerator;
 public class DtoAptMojo extends AbstractMojo {
 
   private static final HashSet<String> outputDirectorySet = new HashSet<>();
+  private static String DTO_GENERATOR_ANNOTATION = "@" + DtoGenerator.class.getSimpleName();
 
   @Parameter(readonly = true, property = "project")
   private MavenProject project;
