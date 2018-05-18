@@ -1,8 +1,6 @@
 package org.smallmind.web.json.dto.maven;
 
 import java.io.IOException;
-import java.net.MalformedURLException;
-import java.net.URL;
 import java.nio.file.FileVisitResult;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -51,10 +49,10 @@ public class DtoAptMojo extends AbstractMojo {
       } else {
 
         LinkedList<JavaFileObject> compilationUnitList = new LinkedList<>();
-        LinkedList<URL> dependencyURLList = new LinkedList<>();
+        LinkedList<String> dependencyList = new LinkedList<>();
         LinkedList<String> compilerOptions = new LinkedList<>();
         Path sourcePath;
-        URL[] dependencyURLs;
+        String[] dependencies;
 
         compilerOptions.add("-implicit:none");
         compilerOptions.add("-proc:none");
@@ -65,19 +63,14 @@ public class DtoAptMojo extends AbstractMojo {
           if (artifact.getArtifactHandler().isAddedToClasspath()) {
             sb.append(";");
             sb.append(artifact.getFile().getAbsolutePath());
-
-            try {
-              dependencyURLList.add(artifact.getFile().toURL());
-            } catch (MalformedURLException malformedURLException) {
-              throw new MojoFailureException("Unable to process dependency", malformedURLException);
-            }
+            dependencyList.add(artifact.getFile().getAbsolutePath());
           }
         }
         compilerOptions.add(sb.toString());
 
-        dependencyURLs = new URL[dependencyURLList.size()];
-        dependencyURLList.toArray(dependencyURLs);
-        classLoader = new VirtualClassLoader(dependencyURLs);
+        dependencies = new String[dependencyList.size()];
+        dependencyList.toArray(dependencies);
+        classLoader = new VirtualClassLoader(dependencies);
 
         try {
           Files.walkFileTree(sourcePath = Paths.get(project.getBuild().getSourceDirectory()), new SimpleFileVisitor<Path>() {

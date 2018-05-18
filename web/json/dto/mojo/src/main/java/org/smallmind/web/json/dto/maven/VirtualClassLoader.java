@@ -1,18 +1,25 @@
 package org.smallmind.web.json.dto.maven;
 
 import java.io.ByteArrayOutputStream;
-import java.net.URL;
-import java.net.URLClassLoader;
 import java.util.HashMap;
 import java.util.Iterator;
+import org.smallmind.nutsnbolts.lang.ClasspathClassGate;
+import org.smallmind.nutsnbolts.lang.GatingClassLoader;
 
-public class VirtualClassLoader extends URLClassLoader implements Iterable<Class<?>> {
+public class VirtualClassLoader extends GatingClassLoader implements Iterable<Class<?>> {
 
-  private final HashMap<String, ByteArrayOutputStream> streamMap = new HashMap<>();
+  private final HashMap<String, ByteArrayOutputStream> streamMap;
 
-  public VirtualClassLoader (URL[] urls) {
+  public VirtualClassLoader (String... dependencies) {
 
-    super(urls);
+    this(new HashMap<>(), dependencies);
+  }
+
+  private VirtualClassLoader (HashMap<String, ByteArrayOutputStream> streamMap, String... dependencies) {
+
+    super(-1, new ClasspathClassGate(dependencies), new VirtualClassGate(streamMap));
+
+    this.streamMap = streamMap;
   }
 
   public ByteArrayOutputStream getOutputStream (String className) {
@@ -22,22 +29,6 @@ public class VirtualClassLoader extends URLClassLoader implements Iterable<Class
     streamMap.put(className, byteArrayOutputStream = new ByteArrayOutputStream());
 
     return byteArrayOutputStream;
-  }
-
-  @Override
-  protected Class<?> findClass (String className)
-    throws ClassNotFoundException {
-
-    ByteArrayOutputStream byteArrayOutputStream;
-
-    if ((byteArrayOutputStream = streamMap.get(className)) != null) {
-
-      byte[] buffer = byteArrayOutputStream.toByteArray();
-
-      return defineClass(className, buffer, 0, buffer.length);
-    } else {
-      throw new ClassNotFoundException(className);
-    }
   }
 
   @Override
@@ -60,7 +51,7 @@ public class VirtualClassLoader extends URLClassLoader implements Iterable<Class
     public Class<?> next () {
 
       try {
-        return findClass(classNameIterator.next());
+        return loadClass(classNameIterator.next(), true);
       } catch (ClassNotFoundException classNotFoundException) {
         throw new RuntimeException(classNotFoundException);
       }
