@@ -15,6 +15,7 @@ import javax.tools.JavaCompiler;
 import javax.tools.JavaFileManager;
 import javax.tools.JavaFileObject;
 import javax.tools.ToolProvider;
+import org.apache.maven.artifact.Artifact;
 import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.MojoFailureException;
@@ -41,23 +42,31 @@ public class DtoAptMojo extends AbstractMojo {
       throw new MojoFailureException("Unable to acquire the java compiler toolchain");
     } else {
 
+      LinkedList<JavaFileObject> compilationUnitList = new LinkedList<>();
+      LinkedList<String> compilerOptions = new LinkedList<>();
       Path sourcePath;
+
+      compilerOptions.add("-classpath");
+
+      StringBuilder sb = new StringBuilder();
+      for (Artifact artifact : project.getArtifacts()) {
+        if (artifact.getArtifactHandler().isAddedToClasspath()) {
+          if (sb.length() > 0) {
+            sb.append(";");
+          }
+          sb.append(artifact.getFile().getAbsolutePath());
+        }
+      }
+      compilerOptions.add(sb.toString());
 
       try {
         Files.walkFileTree(sourcePath = Paths.get(project.getBuild().getSourceDirectory()), new SimpleFileVisitor<Path>() {
 
           @Override
-          public FileVisitResult visitFile (Path file, BasicFileAttributes attrs)
-            throws IOException {
+          public FileVisitResult visitFile (Path file, BasicFileAttributes attrs) {
 
             if (file.getFileName().toString().endsWith(".java")) {
-
-              VirtualJavaFileManager fileManager = new VirtualJavaFileManager(javaCompiler.getStandardFileManager(null, null, null));
-              LinkedList<String> compilerOptions = new LinkedList<>();
-              LinkedList<JavaFileObject> compilationUnitList = new LinkedList<>();
-
               compilationUnitList.add(new VirtualJavaFileObject(file));
-              compile(javaCompiler, fileManager, new DiagnosticCollector<>(), compilerOptions, compilationUnitList, sourcePath, file);
             }
 
             return FileVisitResult.CONTINUE;
@@ -66,22 +75,21 @@ public class DtoAptMojo extends AbstractMojo {
       } catch (IOException ioException) {
         throw new MojoExecutionException("Encountered a problem walking the source tree", ioException);
       }
+
+      compile(javaCompiler, new VirtualJavaFileManager(javaCompiler.getStandardFileManager(null, null, null)), new DiagnosticCollector<>(), compilerOptions, compilationUnitList, sourcePath);
     }
   }
 
-  private void compile (JavaCompiler javaCompiler, JavaFileManager fileManager, DiagnosticCollector<JavaFileObject> collector, LinkedList<String> compilerOptions, LinkedList<JavaFileObject> compilationUnitList, Path sourcePath, Path file)
-    throws IOException {
+  private void compile (JavaCompiler javaCompiler, JavaFileManager fileManager, DiagnosticCollector<JavaFileObject> collector, LinkedList<String> compilerOptions, LinkedList<JavaFileObject> compilationUnitList, Path sourcePath)
+    throws MojoExecutionException {
 
     JavaCompiler.CompilationTask task = javaCompiler.getTask(null, fileManager, collector, compilerOptions, null, compilationUnitList);
 
     if ((!task.call()) || collector.getDiagnostics().size() > 0) {
 
       StringBuilder exceptionMsg = new StringBuilder();
-      String sourceName = sourcePath.relativize(file).toString();
       boolean hasWarnings = false;
       boolean hasErrors = false;
-
-      exceptionMsg.append("Unable to compile the source(").append(sourceName.substring(0, sourceName.length() - 5).replace(System.getProperty("file.separator"), ".")).append(")");
 
       for (Diagnostic<? extends JavaFileObject> d : collector.getDiagnostics()) {
         switch (d.getKind()) {
@@ -96,13 +104,15 @@ public class DtoAptMojo extends AbstractMojo {
             hasErrors = true;
             break;
         }
+
         exceptionMsg.append("\n").append("[kind=").append(d.getKind());
+        exceptionMsg.append(", ").append("name=").append(d.getSource().getName().substring(sourcePath.toString().length() + 2, d.getSource().getName().length() - 5).replace("/", "."));
         exceptionMsg.append(", ").append("line=").append(d.getLineNumber());
         exceptionMsg.append(", ").append("message=").append(d.getMessage(Locale.US)).append("]");
       }
 
       if (hasWarnings || hasErrors) {
-        throw new IOException(exceptionMsg.toString());
+        throw new MojoExecutionException(exceptionMsg.toString());
       }
     }
   }
