@@ -5,11 +5,11 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import javax.tools.SimpleJavaFileObject;
 
-public class VirtualJavaFileObject extends SimpleJavaFileObject {
+public class SourceJavaFileObject extends SimpleJavaFileObject {
 
   private Path sourcePath;
 
-  public VirtualJavaFileObject (Path sourcePath) {
+  public SourceJavaFileObject (Path sourcePath) {
 
     super(sourcePath.toUri(), Kind.SOURCE);
 
