@@ -10,14 +10,14 @@ public class VirtualClassLoader extends GatingClassLoader implements Iterable<Cl
 
   private final HashMap<String, ByteArrayOutputStream> streamMap;
 
-  public VirtualClassLoader (String... dependencies) {
+  public VirtualClassLoader (ClassLoader parent, String... dependencies) {
 
-    this(new HashMap<>(), dependencies);
+    this(parent, new HashMap<>(), dependencies);
   }
 
-  private VirtualClassLoader (HashMap<String, ByteArrayOutputStream> streamMap, String... dependencies) {
+  private VirtualClassLoader (ClassLoader parent, HashMap<String, ByteArrayOutputStream> streamMap, String... dependencies) {
 
-    super(-1, new ClasspathClassGate(dependencies), new VirtualClassGate(streamMap));
+    super(parent, -1, new ClasspathClassGate(dependencies), new VirtualClassGate(streamMap));
 
     this.streamMap = streamMap;
   }

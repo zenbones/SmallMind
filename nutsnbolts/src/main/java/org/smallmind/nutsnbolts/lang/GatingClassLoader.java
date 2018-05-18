@@ -110,7 +110,7 @@ public class GatingClassLoader extends SecureClassLoader {
   }
 
   @Override
-  public synchronized Class loadClass (String name, boolean resolve)
+  public synchronized Class<?> loadClass (String name, boolean resolve)
     throws ClassNotFoundException {
 
     Class gatedClass;
