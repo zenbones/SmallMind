@@ -52,13 +52,12 @@ public class DtoAptMojo extends AbstractMojo {
 
             if (file.getFileName().toString().endsWith(".java")) {
 
-              DiagnosticCollector<JavaFileObject> collector = new DiagnosticCollector<>();
               VirtualJavaFileManager fileManager = new VirtualJavaFileManager(javaCompiler.getStandardFileManager(null, null, null));
               LinkedList<String> compilerOptions = new LinkedList<>();
               LinkedList<JavaFileObject> compilationUnitList = new LinkedList<>();
 
               compilationUnitList.add(new VirtualJavaFileObject(file));
-              compile(javaCompiler, fileManager, collector, compilerOptions, compilationUnitList, sourcePath, file);
+              compile(javaCompiler, fileManager, new DiagnosticCollector<>(), compilerOptions, compilationUnitList, sourcePath, file);
             }
 
             return FileVisitResult.CONTINUE;
