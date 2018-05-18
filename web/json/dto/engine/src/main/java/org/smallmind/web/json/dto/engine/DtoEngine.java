@@ -350,7 +350,7 @@ public class DtoEngine {
       writer.write("  ");
       writer.write(Character.toLowerCase(clazz.getSimpleName().charAt(0)) + clazz.getSimpleName().substring(1));
       writer.write(" = new ");
-      writer.write(clazz.getSimpleName());
+      writer.write(clazz.getName());
       writer.write("();");
       writer.newLine();
       writer.newLine();
