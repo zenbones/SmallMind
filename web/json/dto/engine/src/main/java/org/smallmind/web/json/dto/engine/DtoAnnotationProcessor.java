@@ -150,7 +150,7 @@ public class DtoAnnotationProcessor extends AbstractProcessor {
     }
   }
 
-  private String toMemberName (Name name) {
+  private String asMemberName (Name name) {
 
     return Character.toLowerCase(name.charAt(0)) + name.subSequence(1, name.length()).toString();
   }
@@ -160,15 +160,23 @@ public class DtoAnnotationProcessor extends AbstractProcessor {
     return new StringBuilder((processingEnv.getOptions().get("prefix") == null) ? "" : processingEnv.getOptions().get("prefix")).append(simpleName).append(direction.getCode()).append("Dto");
   }
 
-  private String toCompatibleClassName (TypeMirror typeMirror, Direction direction) {
+  private String asCompatibleName (TypeMirror typeMirror, Direction direction) {
 
-    Visibility visibility;
+    if (TypeKind.DECLARED.equals(typeMirror.getKind())) {
 
-    if (((visibility = generatedMap.get(clazz)) != null) && visibility.matches(direction)) {
-      return clazz.getPackage().getName() + '.' + namingFunction.apply(direction, clazz.getSimpleName());
+      Element element;
+
+      if (ElementKind.CLASS.equals((element = processingEnv.getTypeUtils().asElement(typeMirror)).getKind())) {
+
+        Visibility visibility;
+
+        if (((visibility = generatedMap.get((TypeElement)element)) != null) && visibility.matches(direction)) {
+          return processingEnv.getElementUtils().getPackageOf(element).getQualifiedName().toString() + '.' + asDtoName(element.getSimpleName(), direction).toString();
+        }
+      }
     }
 
-    return clazz.getName();
+    return processingEnv.getTypeUtils().asElement(typeMirror).getSimpleName().toString();
   }
 
   private TypeElement getNearestDtoSuperclass (TypeElement classElement) {
@@ -214,12 +222,11 @@ public class DtoAnnotationProcessor extends AbstractProcessor {
 
       if ((nearestDtoSuperclass != null) && (!Objects.equals(processingEnv.getElementUtils().getPackageOf(classElement), processingEnv.getElementUtils().getPackageOf(nearestDtoSuperclass)))) {
         writer.write("import ");
-        writer.write(processingEnv.getElementUtils().getPackageOf(nearestDtoSuperclass).getQualifiedName().toString()) {
-          writer.write(".");
-          writer.write(asDtoName(nearestDtoSuperclass.getSimpleName(), direction).toString());
-          writer.write(";");
-          writer.write("\n");
-        }
+        writer.write(processingEnv.getElementUtils().getPackageOf(nearestDtoSuperclass).getQualifiedName().toString());
+        writer.write(".");
+        writer.write(asDtoName(nearestDtoSuperclass.getSimpleName(), direction).toString());
+        writer.write(";");
+        writer.write("\n");
       }
       writer.write("\n");
 
@@ -231,7 +238,7 @@ public class DtoAnnotationProcessor extends AbstractProcessor {
 
       // @XmlRootElement
       writer.write("@XmlRootElement(name = \"");
-      writer.write(dtoGenerator.name().isEmpty() ? toMemberName(classElement.getSimpleName()) : dtoGenerator.name());
+      writer.write(dtoGenerator.name().isEmpty() ? asMemberName(classElement.getSimpleName()) : dtoGenerator.name());
       writer.write("\")");
       writer.write("\n");
 
@@ -257,7 +264,7 @@ public class DtoAnnotationProcessor extends AbstractProcessor {
       // field declarations
       for (Map.Entry<String, PropertyInfo> propertyInfoEntry : propertyMap.entrySet()) {
         writer.write("  private ");
-        writer.write(getCompatibleClassName(propertyInfoEntry.getValue().getType(), namingFunction, direction));
+        writer.write(asCompatibleName(propertyInfoEntry.getValue().getTypeMirror(), direction));
         writer.write(" ");
         writer.write(propertyInfoEntry.getKey());
         writer.write(";");
@@ -279,7 +286,7 @@ public class DtoAnnotationProcessor extends AbstractProcessor {
       writer.write(" (");
       writer.write(classElement.getQualifiedName().toString());
       writer.write(" ");
-      writer.write(toMemberName(classElement.getSimpleName()));
+      writer.write(asMemberName(classElement.getSimpleName()));
       writer.write(") {");
       writer.write("\n");
       writer.write("\n");
@@ -287,7 +294,7 @@ public class DtoAnnotationProcessor extends AbstractProcessor {
         writer.write("    this.");
         writer.write(propertyInfoEntry.getKey());
         writer.write(" = ");
-        writer.write(toMemberName(classElement.getSimpleName()));
+        writer.write(asMemberName(classElement.getSimpleName()));
         writer.write(".");
         writer.write(TypeKind.BOOLEAN.equals(propertyInfoEntry.getValue().getTypeMirror().getKind()) ? BeanUtility.asIsName(propertyInfoEntry.getKey()) : BeanUtility.asGetterName(propertyInfoEntry.getKey()));
         writer.write("();");
@@ -305,7 +312,7 @@ public class DtoAnnotationProcessor extends AbstractProcessor {
       writer.write("\n");
       writer.write("\n");
       writer.write("    ");
-      writer.write(toMemberName(classElement.getSimpleName()));
+      writer.write(asMemberName(classElement.getSimpleName()));
       writer.write(" = new ");
       writer.write(classElement.getSimpleName().toString());
       writer.write("();");
@@ -313,7 +320,7 @@ public class DtoAnnotationProcessor extends AbstractProcessor {
       writer.write("\n");
       for (Map.Entry<String, PropertyInfo> propertyInfoEntry : propertyMap.entrySet()) {
         writer.write("    ");
-        writer.write(toMemberName(classElement.getSimpleName()));
+        writer.write(asMemberName(classElement.getSimpleName()));
         writer.write(".");
         writer.write(BeanUtility.asSetterName(propertyInfoEntry.getKey()));
         writer.write("(");
@@ -336,7 +343,7 @@ public class DtoAnnotationProcessor extends AbstractProcessor {
         writer.write(propertyInfoEntry.getValue().getDtoProperty().required() ? "\", required = true)" : "\")");
         writer.write("\n");
         writer.write("  public ");
-        writer.write(getCompatibleClassName(propertyInfoEntry.getValue().getType(), namingFunction, direction));
+        writer.write(asCompatibleName(propertyInfoEntry.getValue().getTypeMirror(), direction));
         writer.write(" ");
         writer.write(boolean.class.equals(propertyInfoEntry.getValue()) ? BeanUtility.asIsName(propertyInfoEntry.getKey()) : BeanUtility.asGetterName(propertyInfoEntry.getKey()));
         writer.write("() {");
@@ -353,7 +360,7 @@ public class DtoAnnotationProcessor extends AbstractProcessor {
         writer.write("  public void ");
         writer.write(BeanUtility.asSetterName(propertyInfoEntry.getKey()));
         writer.write("(");
-        writer.write(getCompatibleClassName(propertyInfoEntry.getValue().getType(), namingFunction, direction));
+        writer.write(asCompatibleName(propertyInfoEntry.getValue().getTypeMirror(), direction));
         writer.write(" ");
         writer.write(propertyInfoEntry.getKey());
         writer.write(") {");
