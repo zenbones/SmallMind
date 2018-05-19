@@ -36,6 +36,8 @@ import java.io.IOException;
 import java.io.Writer;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import javax.annotation.processing.AbstractProcessor;
 import javax.annotation.processing.ProcessingEnvironment;
@@ -52,9 +54,11 @@ import javax.lang.model.element.Name;
 import javax.lang.model.element.NestingKind;
 import javax.lang.model.element.TypeElement;
 import javax.lang.model.element.VariableElement;
+import javax.lang.model.type.TypeKind;
 import javax.lang.model.type.TypeMirror;
 import com.google.auto.service.AutoService;
 import org.smallmind.nutsnbolts.lang.UnknownSwitchCaseException;
+import org.smallmind.nutsnbolts.reflection.bean.BeanUtility;
 
 @SupportedAnnotationTypes({"org.smallmind.web.json.dto.engine.DtoGenerator"})
 @SupportedSourceVersion(SourceVersion.RELEASE_8)
@@ -90,7 +94,7 @@ public class DtoAnnotationProcessor extends AbstractProcessor {
 
         DtoClass dtoClass = new DtoClass(processingEnv, classElement);
         TypeElement nearestDtoSuperclass;
-        Direction direction;
+        boolean written = false;
 
         if ((nearestDtoSuperclass = getNearestDtoSuperclass(classElement)) != null) {
           generate(nearestDtoSuperclass);
@@ -122,18 +126,49 @@ public class DtoAnnotationProcessor extends AbstractProcessor {
           }
         }
 
-        try (Writer dtoWriter = processingEnv.getFiler().createSourceFile(new StringBuilder(processingEnv.getElementUtils().getPackageOf(classElement).getQualifiedName()).append('.').append(asDtoName(classElement.getSimpleName(), direction))).openWriter()) {
+        if (!dtoClass.getInMap().isEmpty()) {
+          write(dtoGenerator, classElement, nearestDtoSuperclass, Direction.IN, dtoClass.getInMap());
 
+          generatedMap.put(classElement, Visibility.IN);
+          written = true;
+        }
+        if (!dtoClass.getOutMap().isEmpty()) {
+          write(dtoGenerator, classElement, nearestDtoSuperclass, Direction.OUT, dtoClass.getOutMap());
+
+          if (Visibility.IN.equals(generatedMap.get(classElement))) {
+            generatedMap.put(classElement, Visibility.BOTH);
+          } else {
+            generatedMap.put(classElement, Visibility.OUT);
+          }
+          written = true;
         }
 
-        generatedMap.put(classElement, );
+        if (!written) {
+          throw new DataDefinitionException("The class(%s) was annotated as '%s' but contained no properties", classElement.getQualifiedName(), DtoGenerator.class.getSimpleName());
+        }
       }
     }
+  }
+
+  private String toMemberName (Name name) {
+
+    return Character.toLowerCase(name.charAt(0)) + name.subSequence(1, name.length()).toString();
   }
 
   private StringBuilder asDtoName (Name simpleName, Direction direction) {
 
     return new StringBuilder((processingEnv.getOptions().get("prefix") == null) ? "" : processingEnv.getOptions().get("prefix")).append(simpleName).append(direction.getCode()).append("Dto");
+  }
+
+  private String toCompatibleClassName (TypeMirror typeMirror, Direction direction) {
+
+    Visibility visibility;
+
+    if (((visibility = generatedMap.get(clazz)) != null) && visibility.matches(direction)) {
+      return clazz.getPackage().getName() + '.' + namingFunction.apply(direction, clazz.getSimpleName());
+    }
+
+    return clazz.getName();
   }
 
   private TypeElement getNearestDtoSuperclass (TypeElement classElement) {
@@ -148,6 +183,197 @@ public class DtoAnnotationProcessor extends AbstractProcessor {
     }
 
     return null;
+  }
+
+  private void write (DtoGenerator dtoGenerator, TypeElement classElement, TypeElement nearestDtoSuperclass, Direction direction, HashMap<String, PropertyInfo> propertyMap)
+    throws IOException {
+
+    try (Writer writer = processingEnv.getFiler().createSourceFile(new StringBuilder(processingEnv.getElementUtils().getPackageOf(classElement).getQualifiedName()).append('.').append(asDtoName(classElement.getSimpleName(), direction))).openWriter()) {
+      boolean firstPair = true;
+
+      // package
+      writer.write("package ");
+      writer.write(processingEnv.getElementUtils().getPackageOf(classElement).getQualifiedName().toString());
+      writer.write(";");
+      writer.write("\n");
+      writer.write("\n");
+
+      // imports
+      writer.write("import javax.annotation.Generated;");
+      writer.write("\n");
+      writer.write("import javax.xml.bind.annotation.XmlAccessType;");
+      writer.write("\n");
+      writer.write("import javax.xml.bind.annotation.XmlAccessorType;");
+      writer.write("\n");
+      writer.write("import javax.xml.bind.annotation.XmlElement;");
+      writer.write("\n");
+      writer.write("import javax.xml.bind.annotation.XmlRootElement;");
+      writer.write("\n");
+      writer.write("import javax.xml.bind.annotation.adapters.XmlJavaTypeAdapter;");
+      writer.write("\n");
+
+      if ((nearestDtoSuperclass != null) && (!Objects.equals(processingEnv.getElementUtils().getPackageOf(classElement), processingEnv.getElementUtils().getPackageOf(nearestDtoSuperclass)))) {
+        writer.write("import ");
+        writer.write(processingEnv.getElementUtils().getPackageOf(nearestDtoSuperclass).getQualifiedName().toString()) {
+          writer.write(".");
+          writer.write(asDtoName(nearestDtoSuperclass.getSimpleName(), direction).toString());
+          writer.write(";");
+          writer.write("\n");
+        }
+      }
+      writer.write("\n");
+
+      // @Generated
+      writer.write("@Generated(\"");
+      writer.write(DtoEngine.class.getName());
+      writer.write("\")");
+      writer.write("\n");
+
+      // @XmlRootElement
+      writer.write("@XmlRootElement(name = \"");
+      writer.write(dtoGenerator.name().isEmpty() ? toMemberName(classElement.getSimpleName()) : dtoGenerator.name());
+      writer.write("\")");
+      writer.write("\n");
+
+      // XmlAccessorType
+      writer.write("@XmlAccessorType(XmlAccessType.PROPERTY)");
+      writer.write("\n");
+
+      // class declaration
+      writer.write("public ");
+      if (classElement.getModifiers().contains(javax.lang.model.element.Modifier.ABSTRACT)) {
+        writer.write("abstract ");
+      }
+      writer.write("class ");
+      writer.write(asDtoName(classElement.getSimpleName(), direction).toString());
+      if (nearestDtoSuperclass != null) {
+        writer.write(" extends ");
+        writer.write(asDtoName(nearestDtoSuperclass.getSimpleName(), direction).toString());
+      }
+      writer.write(" {");
+      writer.write("\n");
+      writer.write("\n");
+
+      // field declarations
+      for (Map.Entry<String, PropertyInfo> propertyInfoEntry : propertyMap.entrySet()) {
+        writer.write("  private ");
+        writer.write(getCompatibleClassName(propertyInfoEntry.getValue().getType(), namingFunction, direction));
+        writer.write(" ");
+        writer.write(propertyInfoEntry.getKey());
+        writer.write(";");
+        writer.write("\n");
+      }
+      writer.write("\n");
+
+      // constructors
+      writer.write("  public ");
+      writer.write(asDtoName(classElement.getSimpleName(), direction).toString());
+      writer.write(" () {");
+      writer.write("\n");
+      writer.write("  }");
+      writer.write("\n");
+      writer.write("\n");
+
+      writer.write("  public ");
+      writer.write(asDtoName(classElement.getSimpleName(), direction).toString());
+      writer.write(" (");
+      writer.write(classElement.getQualifiedName().toString());
+      writer.write(" ");
+      writer.write(toMemberName(classElement.getSimpleName()));
+      writer.write(") {");
+      writer.write("\n");
+      writer.write("\n");
+      for (Map.Entry<String, PropertyInfo> propertyInfoEntry : propertyMap.entrySet()) {
+        writer.write("    this.");
+        writer.write(propertyInfoEntry.getKey());
+        writer.write(" = ");
+        writer.write(toMemberName(classElement.getSimpleName()));
+        writer.write(".");
+        writer.write(TypeKind.BOOLEAN.equals(propertyInfoEntry.getValue().getTypeMirror().getKind()) ? BeanUtility.asIsName(propertyInfoEntry.getKey()) : BeanUtility.asGetterName(propertyInfoEntry.getKey()));
+        writer.write("();");
+        writer.write("\n");
+      }
+      writer.write("  }");
+      writer.write("\n");
+      writer.write("\n");
+
+      // entity factory
+      writer.write("  public ");
+      writer.write(" ");
+      writer.write(classElement.getQualifiedName().toString());
+      writer.write(" construct() {");
+      writer.write("\n");
+      writer.write("\n");
+      writer.write("    ");
+      writer.write(toMemberName(classElement.getSimpleName()));
+      writer.write(" = new ");
+      writer.write(classElement.getSimpleName().toString());
+      writer.write("();");
+      writer.write("\n");
+      writer.write("\n");
+      for (Map.Entry<String, PropertyInfo> propertyInfoEntry : propertyMap.entrySet()) {
+        writer.write("    ");
+        writer.write(toMemberName(classElement.getSimpleName()));
+        writer.write(".");
+        writer.write(BeanUtility.asSetterName(propertyInfoEntry.getKey()));
+        writer.write("(");
+        writer.write(propertyInfoEntry.getKey());
+        writer.write(");");
+        writer.write("\n");
+      }
+      writer.write("  }");
+      writer.write("\n");
+      writer.write("\n");
+
+      // getters and setters
+      for (Map.Entry<String, PropertyInfo> propertyInfoEntry : propertyMap.entrySet()) {
+        if (!firstPair) {
+          writer.write("\n");
+        }
+
+        writer.write("  @XmlElement(name = \"");
+        writer.write(propertyInfoEntry.getValue().getDtoProperty().name().isEmpty() ? propertyInfoEntry.getKey() : dtoGenerator.name());
+        writer.write(propertyInfoEntry.getValue().getDtoProperty().required() ? "\", required = true)" : "\")");
+        writer.write("\n");
+        writer.write("  public ");
+        writer.write(getCompatibleClassName(propertyInfoEntry.getValue().getType(), namingFunction, direction));
+        writer.write(" ");
+        writer.write(boolean.class.equals(propertyInfoEntry.getValue()) ? BeanUtility.asIsName(propertyInfoEntry.getKey()) : BeanUtility.asGetterName(propertyInfoEntry.getKey()));
+        writer.write("() {");
+        writer.write("\n");
+        writer.write("\n");
+        writer.write("    return ");
+        writer.write(propertyInfoEntry.getKey());
+        writer.write(";");
+        writer.write("\n");
+        writer.write("  }");
+        writer.write("\n");
+        writer.write("\n");
+
+        writer.write("  public void ");
+        writer.write(BeanUtility.asSetterName(propertyInfoEntry.getKey()));
+        writer.write("(");
+        writer.write(getCompatibleClassName(propertyInfoEntry.getValue().getType(), namingFunction, direction));
+        writer.write(" ");
+        writer.write(propertyInfoEntry.getKey());
+        writer.write(") {");
+        writer.write("\n");
+        writer.write("\n");
+        writer.write("    this.");
+        writer.write(propertyInfoEntry.getKey());
+        writer.write(" = ");
+        writer.write(propertyInfoEntry.getKey());
+        writer.write(";");
+        writer.write("\n");
+        writer.write("  }");
+        writer.write("\n");
+
+        firstPair = false;
+      }
+
+      writer.write("}");
+      writer.write("\n");
+    }
   }
 
   private class PropertyInfo {
@@ -187,8 +413,6 @@ public class DtoAnnotationProcessor extends AbstractProcessor {
 
       this.classElement = classElement;
 
-      TypeMirror booleanMirror = processingEnv.getElementUtils().getTypeElement(boolean.class.getCanonicalName()).asType();
-
       for (Element enclosedElement : classElement.getEnclosedElements()) {
         if (!enclosedElement.getModifiers().contains(javax.lang.model.element.Modifier.STATIC)) {
           if (ElementKind.FIELD.equals(enclosedElement.getKind())) {
@@ -197,7 +421,7 @@ public class DtoAnnotationProcessor extends AbstractProcessor {
 
             String methodName = enclosedElement.getSimpleName().toString();
 
-            if (methodName.startsWith("is") && (methodName.length() > 2) && ((ExecutableElement)enclosedElement).getParameters().isEmpty() && processingEnv.getTypeUtils().isSameType(booleanMirror, ((ExecutableElement)enclosedElement).getReturnType())) {
+            if (methodName.startsWith("is") && (methodName.length() > 2) && ((ExecutableElement)enclosedElement).getParameters().isEmpty() && TypeKind.BOOLEAN.equals(((ExecutableElement)enclosedElement).getReturnType().getKind())) {
 
               DtoProperty dtoProperty;
               String fieldName = Character.toLowerCase(methodName.charAt(2)) + methodName.substring(3);
@@ -236,8 +460,8 @@ public class DtoAnnotationProcessor extends AbstractProcessor {
                   throw new DataDefinitionException("The 'set' method(%s) found in class(%s) must be annotated as 'IN' only", enclosedElement.getSimpleName(), classElement.getQualifiedName());
                 }
 
-                processTypeMirror(((ExecutableElement)enclosedElement).getTypeParameters().get(0).asType());
-                inMap.put(fieldName, new PropertyInfo(((ExecutableElement)enclosedElement).getTypeParameters().get(0).asType(), dtoProperty));
+                processTypeMirror(((ExecutableElement)enclosedElement).getParameters().get(0).asType());
+                inMap.put(fieldName, new PropertyInfo(((ExecutableElement)enclosedElement).getParameters().get(0).asType(), dtoProperty));
               }
 
               setMethodNameSet.add(enclosedElement.getSimpleName());
@@ -260,12 +484,22 @@ public class DtoAnnotationProcessor extends AbstractProcessor {
       }
     }
 
-    private boolean hasSetter (ExecutableElement methodElement) {
+    public HashMap<String, PropertyInfo> getInMap () {
+
+      return inMap;
+    }
+
+    public HashMap<String, PropertyInfo> getOutMap () {
+
+      return outMap;
+    }
+
+    public boolean hasSetter (ExecutableElement methodElement) {
 
       return setMethodNameSet.contains(methodElement.getSimpleName());
     }
 
-    private void inField (VariableElement fieldElement, DtoProperty dtoProperty)
+    public void inField (VariableElement fieldElement, DtoProperty dtoProperty)
       throws DataDefinitionException {
 
       if (setFieldNameSet.contains(fieldElement.getSimpleName().toString())) {
@@ -275,7 +509,7 @@ public class DtoAnnotationProcessor extends AbstractProcessor {
       }
     }
 
-    private void outField (VariableElement fieldElement, DtoProperty dtoProperty)
+    public void outField (VariableElement fieldElement, DtoProperty dtoProperty)
       throws DataDefinitionException {
 
       if (getFieldNameSet.contains(fieldElement.getSimpleName().toString()) || isFieldNameSet.contains(fieldElement.getSimpleName().toString())) {
