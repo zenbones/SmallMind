@@ -179,6 +179,18 @@ public class DtoAnnotationProcessor extends AbstractProcessor {
     return processingEnv.getTypeUtils().asElement(typeMirror).getSimpleName().toString();
   }
 
+  private boolean isDtoType (TypeMirror typeMirror, Direction direction) {
+
+    if (TypeKind.DECLARED.equals(typeMirror.getKind())) {
+
+      Element element;
+
+      return ElementKind.CLASS.equals((element = processingEnv.getTypeUtils().asElement(typeMirror)).getKind()) && generatedMap.containsKey((TypeElement)element);
+    }
+
+    return false;
+  }
+
   private TypeElement getNearestDtoSuperclass (TypeElement classElement) {
 
     TypeElement currentClassElement = classElement;
@@ -284,7 +296,7 @@ public class DtoAnnotationProcessor extends AbstractProcessor {
       writer.write("  public ");
       writer.write(asDtoName(classElement.getSimpleName(), direction).toString());
       writer.write(" (");
-      writer.write(classElement.getQualifiedName().toString());
+      writer.write(classElement.getSimpleName().toString());
       writer.write(" ");
       writer.write(asMemberName(classElement.getSimpleName()));
       writer.write(") {");
@@ -294,10 +306,19 @@ public class DtoAnnotationProcessor extends AbstractProcessor {
         writer.write("    this.");
         writer.write(propertyInfoEntry.getKey());
         writer.write(" = ");
+        if (isDtoType(propertyInfoEntry.getValue().getTypeMirror(), direction)) {
+          writer.write("new ");
+          writer.write(asCompatibleName(propertyInfoEntry.getValue().getTypeMirror(), direction));
+          writer.write("(");
+        }
         writer.write(asMemberName(classElement.getSimpleName()));
         writer.write(".");
         writer.write(TypeKind.BOOLEAN.equals(propertyInfoEntry.getValue().getTypeMirror().getKind()) ? BeanUtility.asIsName(propertyInfoEntry.getKey()) : BeanUtility.asGetterName(propertyInfoEntry.getKey()));
-        writer.write("();");
+        writer.write("()");
+        if (isDtoType(propertyInfoEntry.getValue().getTypeMirror(), direction)) {
+          writer.write(")");
+        }
+        writer.write(";");
         writer.write("\n");
       }
       writer.write("  }");
@@ -306,12 +327,13 @@ public class DtoAnnotationProcessor extends AbstractProcessor {
 
       // entity factory
       writer.write("  public ");
-      writer.write(" ");
-      writer.write(classElement.getQualifiedName().toString());
-      writer.write(" construct() {");
+      writer.write(classElement.getSimpleName().toString());
+      writer.write(" factory () {");
       writer.write("\n");
       writer.write("\n");
       writer.write("    ");
+      writer.write(classElement.getSimpleName().toString());
+      writer.write(" ");
       writer.write(asMemberName(classElement.getSimpleName()));
       writer.write(" = new ");
       writer.write(classElement.getSimpleName().toString());
