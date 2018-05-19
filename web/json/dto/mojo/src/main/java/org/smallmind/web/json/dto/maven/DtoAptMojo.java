@@ -25,7 +25,6 @@ import org.apache.maven.plugins.annotations.Mojo;
 import org.apache.maven.plugins.annotations.Parameter;
 import org.apache.maven.plugins.annotations.ResolutionScope;
 import org.apache.maven.project.MavenProject;
-import org.smallmind.web.json.dto.engine.DtoEngine;
 import org.smallmind.web.json.dto.engine.DtoGenerator;
 
 // Annotation processor for generating dto source
@@ -47,7 +46,7 @@ public class DtoAptMojo extends AbstractMojo {
       JavaCompiler javaCompiler;
       VirtualClassLoader classLoader;
 //      DtoEngine dtoEngine = new DtoEngine(Paths.get(project.getBuild().getOutputDirectory()).resolveSibling("generated-sources").resolve("java"));
-      DtoEngine dtoEngine = null;
+
 
       if ((javaCompiler = ToolProvider.getSystemJavaCompiler()) == null) {
         throw new MojoFailureException("Unable to acquire the java compiler toolchain");
@@ -93,19 +92,9 @@ public class DtoAptMojo extends AbstractMojo {
 
         dependencies = new String[dependencyList.size()];
         dependencyList.toArray(dependencies);
-        classLoader = new VirtualClassLoader(dtoEngine.getClass().getClassLoader(), dependencies);
-
-        compile(javaCompiler, new VirtualJavaFileManager(javaCompiler.getStandardFileManager(null, null, null), classLoader), new DiagnosticCollector<>(), compilerOptions, classList, compilationUnitList, sourcePath);
 
         getLog().info("Scanning for DTO annotated classes...");
-        for (Class<?> clazz : classLoader) {
-          try {
-            getLog().info("Scanning " + clazz.getName() + "...");
-//            dtoEngine.generate(clazz);
-          } catch (Exception exception) {
-            throw new MojoExecutionException("Encountered problem operating on class(" + clazz.getName() + ")", exception);
-          }
-        }
+
       }
     }
   }

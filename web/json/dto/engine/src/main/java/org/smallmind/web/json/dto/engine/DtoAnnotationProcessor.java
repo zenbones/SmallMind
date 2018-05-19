@@ -244,7 +244,7 @@ public class DtoAnnotationProcessor extends AbstractProcessor {
 
       // @Generated
       writer.write("@Generated(\"");
-      writer.write(DtoEngine.class.getName());
+      writer.write(DtoAnnotationProcessor.class.getName());
       writer.write("\")");
       writer.write("\n");
 
