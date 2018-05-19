@@ -32,194 +32,211 @@
  */
 package org.smallmind.web.json.dto.engine;
 
-import java.io.BufferedWriter;
 import java.io.IOException;
 import java.lang.reflect.Field;
-import java.lang.reflect.Method;
-import java.lang.reflect.Modifier;
-import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.StandardOpenOption;
+import java.nio.file.Paths;
 import java.util.HashMap;
-import java.util.Map;
-import java.util.Objects;
+import java.util.Set;
 import java.util.function.BiFunction;
-import org.smallmind.nutsnbolts.lang.UnknownSwitchCaseException;
+import javax.annotation.processing.AbstractProcessor;
+import javax.annotation.processing.ProcessingEnvironment;
+import javax.annotation.processing.Processor;
+import javax.annotation.processing.RoundEnvironment;
+import javax.annotation.processing.SupportedAnnotationTypes;
+import javax.annotation.processing.SupportedOptions;
+import javax.annotation.processing.SupportedSourceVersion;
+import javax.lang.model.SourceVersion;
+import javax.lang.model.element.Element;
+import javax.lang.model.element.ElementKind;
+import javax.lang.model.element.Name;
+import javax.lang.model.element.NestingKind;
+import javax.lang.model.element.TypeElement;
+import javax.lang.model.type.TypeMirror;
+import com.google.auto.service.AutoService;
 import org.smallmind.nutsnbolts.reflection.bean.BeanAccessException;
-import org.smallmind.nutsnbolts.reflection.bean.BeanUtility;
 
 public class DtoEngine {
 
-  private final HashMap<Class<?>, Visibility> generatedMap = new HashMap<>();
-  private final Path rootPath;
-  private final String prefix;
+  public DtoEngine () {
 
-  public DtoEngine (Path rootPath) {
-
-    this(rootPath, "");
   }
 
-  public DtoEngine (Path rootPath, String prefix) {
+  /*
+  @Override
+  public synchronized void init (ProcessingEnvironment processingEnv) {
 
-    this.rootPath = rootPath;
-    this.prefix = prefix;
+    super.init(processingEnv);
   }
 
-  public void generate (Class<?> clazz)
-    throws IOException, BeanAccessException, DataDefinitionException {
+  @Override
+  public boolean process (Set<? extends TypeElement> annotations, RoundEnvironment roundEnv) {
 
-    generate(clazz, (direction, name) -> new StringBuilder(prefix).append(name).append(direction.getCode()).append("Dto").toString());
+    for (Element annotatedElement : roundEnv.getElementsAnnotatedWith(DtoGenerator.class)) {
+      try {
+        generate((TypeElement)annotatedElement);
+      } catch (Exception e) {
+        e.printStackTrace();
+      }
+    }
+
+    return true;
   }
 
-  public void generate (Class<?> clazz, BiFunction<Direction, String, String> namingFunction)
-    throws IOException, BeanAccessException, DataDefinitionException {
+  public void generate (TypeElement classElement)
+    throws DataDefinitionException {
 
-    if (clazz.getAnnotation(DtoGenerator.class) != null) {
-      if (clazz.isInterface() || clazz.isAnnotation() || clazz.isAnonymousClass() || clazz.isEnum() || clazz.isLocalClass() || clazz.isMemberClass()) {
-        throw new DataDefinitionException("The class(%s) must be a root implementations of type 'class'", clazz.getName());
+    if (classElement.getAnnotation(DtoGenerator.class) != null) {
+
+      if ((!ElementKind.CLASS.equals(classElement.getKind())) || (!NestingKind.TOP_LEVEL.equals(classElement.getNestingKind()))) {
+        throw new DataDefinitionException("The class(%s) must be a root implementation of type 'class'", classElement.getQualifiedName());
       } else {
-        walk(clazz, rootPath, namingFunction);
+
+        HashMap<String, DataField> inMap = new HashMap<>();
+        HashMap<String, DataField> outMap = new HashMap<>();
+
+        for (Element element : classElement.getEnclosedElements()) {
+
+        }
+
+        processingEnv.getFiler().createSourceFile(asDtoName(classElement.getQualifiedName(), classElement.getSimpleName(), ));
+
+        walk(classElement, Paths.get(processingEnv.getOptions().get("rootPath")), namingFunction);
       }
     }
   }
 
-  private void walk (Class<?> clazz, Path rootPath, BiFunction<Direction, String, String> namingFunction)
+  private void walk (TypeElement classElement, Path rootPath, BiFunction<Direction, String, String> namingFunction)
     throws IOException, BeanAccessException, DataDefinitionException {
 
-    if (!generatedMap.containsKey(clazz)) {
+    DtoGenerator dtoGenerator;
+    TypeMirror parentMirror;
 
-      DtoGenerator dtoGenerator;
-      Class<?> parentClass;
+    if ((parentClass = classElement.getSuperclass()) != null) {
+      if (parentClass)
+    }
 
-      if ((parentClass = clazz.getSuperclass()) != null) {
-        walk(parentClass, rootPath, namingFunction);
-      }
+    HashMap<String, DataField> inMap = new HashMap<>();
+    HashMap<String, DataField> outMap = new HashMap<>();
+    Path generatedPath = rootPath;
+    Package clazzPackage;
+    boolean written = false;
 
-      if ((dtoGenerator = clazz.getAnnotation(DtoGenerator.class)) != null) {
+    for (Field field : clazz.getDeclaredFields()) {
 
-        HashMap<String, DataField> inMap = new HashMap<>();
-        HashMap<String, DataField> outMap = new HashMap<>();
-        Path generatedPath = rootPath;
-        Package clazzPackage;
-        boolean written = false;
+      DtoProperty dtoProperty;
 
-        for (Field field : clazz.getDeclaredFields()) {
-
-          DtoProperty dtoProperty;
-
-          if ((dtoProperty = field.getAnnotation(DtoProperty.class)) != null) {
-            switch (dtoProperty.visibility()) {
-              case IN:
-                hasSetter(clazz, field);
-                walk(field.getType(), rootPath, namingFunction);
-                inMap.put(field.getName(), new DataField(field.getType(), dtoProperty));
-                break;
-              case OUT:
-                hasGetter(clazz, field);
-                walk(field.getType(), rootPath, namingFunction);
-                outMap.put(field.getName(), new DataField(field.getType(), dtoProperty));
-                break;
-              case BOTH:
-                hasSetter(clazz, field);
-                hasGetter(clazz, field);
-                walk(field.getType(), rootPath, namingFunction);
-                inMap.put(field.getName(), new DataField(field.getType(), dtoProperty));
-                outMap.put(field.getName(), new DataField(field.getType(), dtoProperty));
-                break;
-              default:
-                throw new UnknownSwitchCaseException(dtoProperty.visibility().name());
-            }
-          }
+      if ((dtoProperty = field.getAnnotation(DtoProperty.class)) != null) {
+        switch (dtoProperty.visibility()) {
+          case IN:
+            hasSetter(clazz, field);
+            walk(field.getType(), rootPath, namingFunction);
+            inMap.put(field.getName(), new DataField(field.getType(), dtoProperty));
+            break;
+          case OUT:
+            hasGetter(clazz, field);
+            walk(field.getType(), rootPath, namingFunction);
+            outMap.put(field.getName(), new DataField(field.getType(), dtoProperty));
+            break;
+          case BOTH:
+            hasSetter(clazz, field);
+            hasGetter(clazz, field);
+            walk(field.getType(), rootPath, namingFunction);
+            inMap.put(field.getName(), new DataField(field.getType(), dtoProperty));
+            outMap.put(field.getName(), new DataField(field.getType(), dtoProperty));
+            break;
+          default:
+            throw new UnknownSwitchCaseException(dtoProperty.visibility().name());
         }
+      }
+    }
 
-        for (Method method : clazz.getDeclaredMethods()) {
-          if (Modifier.isPublic(method.getModifiers())) {
+    for (Method method : clazz.getDeclaredMethods()) {
+      if (Modifier.isPublic(method.getModifiers())) {
 
-            DtoProperty dtoProperty;
+        DtoProperty dtoProperty;
 
-            if ((dtoProperty = method.getAnnotation(DtoProperty.class)) != null) {
-              if ((method.getName().length() > 3) && method.getName().startsWith("get") && (method.getParameterCount() == 0) && Character.isUpperCase(method.getName().charAt(3))) {
-                if (Visibility.IN.equals(dtoProperty.visibility())) {
-                  throw new DataDefinitionException("The 'getter' method(%s) found in class(%s) can't be annotated as 'IN' only", method.getName(), clazz.getName());
+        if ((dtoProperty = method.getAnnotation(DtoProperty.class)) != null) {
+          if ((method.getName().length() > 3) && method.getName().startsWith("get") && (method.getParameterCount() == 0) && Character.isUpperCase(method.getName().charAt(3))) {
+            if (Visibility.IN.equals(dtoProperty.visibility())) {
+              throw new DataDefinitionException("The 'getter' method(%s) found in class(%s) can't be annotated as 'IN' only", method.getName(), clazz.getName());
+            } else {
+
+              String fieldName = Character.toUpperCase(method.getName().charAt(3)) + method.getName().substring(4);
+
+              if (Visibility.BOTH.equals(dtoProperty.visibility())) {
+                if (!hasSetter(clazz, fieldName, method.getReturnType())) {
+                  throw new DataDefinitionException("Missing 'setter' method(%s) in class(%s)", BeanUtility.asSetterName(fieldName), clazz.getName());
                 } else {
-
-                  String fieldName = Character.toUpperCase(method.getName().charAt(3)) + method.getName().substring(4);
-
-                  if (Visibility.BOTH.equals(dtoProperty.visibility())) {
-                    if (!hasSetter(clazz, fieldName, method.getReturnType())) {
-                      throw new DataDefinitionException("Missing 'setter' method(%s) in class(%s)", BeanUtility.asSetterName(fieldName), clazz.getName());
-                    } else {
-                      inMap.put(fieldName, new DataField(method.getReturnType(), dtoProperty));
-                    }
-                  }
-
-                  walk(method.getReturnType(), rootPath, namingFunction);
-                  outMap.put(fieldName, new DataField(method.getReturnType(), dtoProperty));
-                }
-              } else if ((method.getName().length() > 2) && method.getName().startsWith("is") && (method.getParameterCount() == 0) && Character.isUpperCase(method.getName().charAt(2)) && boolean.class.equals(method.getReturnType())) {
-                if (Visibility.IN.equals(dtoProperty.visibility())) {
-                  throw new DataDefinitionException("The 'getter' method(%s) found in class(%s) can't be annotated as 'IN' only", method.getName(), clazz.getName());
-                } else {
-
-                  String fieldName = Character.toUpperCase(method.getName().charAt(2)) + method.getName().substring(3);
-
-                  if (Visibility.BOTH.equals(dtoProperty.visibility())) {
-                    if (!hasSetter(clazz, fieldName, method.getReturnType())) {
-                      throw new DataDefinitionException("Missing 'setter' method(%s) in class(%s)", BeanUtility.asSetterName(fieldName), clazz.getName());
-                    } else {
-                      inMap.put(fieldName, new DataField(method.getReturnType(), dtoProperty));
-                    }
-                  }
-
-                  walk(method.getReturnType(), rootPath, namingFunction);
-                  outMap.put(fieldName, new DataField(method.getReturnType(), dtoProperty));
-                }
-              } else if ((method.getName().length() > 3) && method.getName().startsWith("set") && (method.getParameterCount() == 1) && Character.isUpperCase(method.getName().charAt(3))) {
-                if (!Visibility.IN.equals(dtoProperty.visibility())) {
-                  throw new DataDefinitionException("The 'setter' method(%s) found in class(%s) must be annotated as 'IN' only", method.getName(), clazz.getName());
-                } else {
-                  walk(method.getReturnType(), rootPath, namingFunction);
-                  inMap.put(Character.toUpperCase(method.getName().charAt(3)) + method.getName().substring(4), new DataField(method.getParameterTypes()[0], dtoProperty));
+                  inMap.put(fieldName, new DataField(method.getReturnType(), dtoProperty));
                 }
               }
+
+              walk(method.getReturnType(), rootPath, namingFunction);
+              outMap.put(fieldName, new DataField(method.getReturnType(), dtoProperty));
+            }
+          } else if ((method.getName().length() > 2) && method.getName().startsWith("is") && (method.getParameterCount() == 0) && Character.isUpperCase(method.getName().charAt(2)) && boolean.class.equals(method.getReturnType())) {
+            if (Visibility.IN.equals(dtoProperty.visibility())) {
+              throw new DataDefinitionException("The 'getter' method(%s) found in class(%s) can't be annotated as 'IN' only", method.getName(), clazz.getName());
+            } else {
+
+              String fieldName = Character.toUpperCase(method.getName().charAt(2)) + method.getName().substring(3);
+
+              if (Visibility.BOTH.equals(dtoProperty.visibility())) {
+                if (!hasSetter(clazz, fieldName, method.getReturnType())) {
+                  throw new DataDefinitionException("Missing 'setter' method(%s) in class(%s)", BeanUtility.asSetterName(fieldName), clazz.getName());
+                } else {
+                  inMap.put(fieldName, new DataField(method.getReturnType(), dtoProperty));
+                }
+              }
+
+              walk(method.getReturnType(), rootPath, namingFunction);
+              outMap.put(fieldName, new DataField(method.getReturnType(), dtoProperty));
+            }
+          } else if ((method.getName().length() > 3) && method.getName().startsWith("set") && (method.getParameterCount() == 1) && Character.isUpperCase(method.getName().charAt(3))) {
+            if (!Visibility.IN.equals(dtoProperty.visibility())) {
+              throw new DataDefinitionException("The 'setter' method(%s) found in class(%s) must be annotated as 'IN' only", method.getName(), clazz.getName());
+            } else {
+              walk(method.getReturnType(), rootPath, namingFunction);
+              inMap.put(Character.toUpperCase(method.getName().charAt(3)) + method.getName().substring(4), new DataField(method.getParameterTypes()[0], dtoProperty));
             }
           }
-        }
-
-        if ((clazzPackage = clazz.getPackage()) != null) {
-
-          String packageName;
-
-          if (((packageName = clazzPackage.getName()) != null) && (!packageName.isEmpty())) {
-            for (String packagePart : packageName.split("\\.", -1)) {
-              generatedPath = generatedPath.resolve(packagePart);
-            }
-          }
-        }
-
-        Files.createDirectories(generatedPath);
-
-        if (!inMap.isEmpty()) {
-          write(clazz, generatedPath, namingFunction, dtoGenerator, Direction.IN, inMap);
-
-          generatedMap.put(clazz, Visibility.IN);
-          written = true;
-        }
-        if (!outMap.isEmpty()) {
-          write(clazz, generatedPath, namingFunction, dtoGenerator, Direction.OUT, outMap);
-
-          if (Visibility.IN.equals(generatedMap.get(clazz))) {
-            generatedMap.put(clazz, Visibility.BOTH);
-          } else {
-            generatedMap.put(clazz, Visibility.OUT);
-          }
-          written = true;
-        }
-
-        if (!written) {
-          throw new DataDefinitionException("The class(%s) was annotated as '%s' but contained no properties", clazz.getName(), DtoGenerator.class.getSimpleName());
         }
       }
+    }
+
+    if ((clazzPackage = clazz.getPackage()) != null) {
+
+      String packageName;
+
+      if (((packageName = clazzPackage.getName()) != null) && (!packageName.isEmpty())) {
+        for (String packagePart : packageName.split("\\.", -1)) {
+          generatedPath = generatedPath.resolve(packagePart);
+        }
+      }
+    }
+
+    Files.createDirectories(generatedPath);
+
+    if (!inMap.isEmpty()) {
+      write(clazz, generatedPath, namingFunction, dtoGenerator, Direction.IN, inMap);
+
+      generatedMap.put(clazz, Visibility.IN);
+      written = true;
+    }
+    if (!outMap.isEmpty()) {
+      write(clazz, generatedPath, namingFunction, dtoGenerator, Direction.OUT, outMap);
+
+      if (Visibility.IN.equals(generatedMap.get(clazz))) {
+        generatedMap.put(clazz, Visibility.BOTH);
+      } else {
+        generatedMap.put(clazz, Visibility.OUT);
+      }
+      written = true;
+    }
+
+    if (!written) {
+      throw new DataDefinitionException("The class(%s) was annotated as '%s' but contained no properties", clazz.getName(), DtoGenerator.class.getSimpleName());
     }
   }
 
@@ -436,6 +453,16 @@ public class DtoEngine {
     }
   }
 
+  private StringBuilder asDtoName (Name qualifiedName, Name simpleName, Direction direction) {
+
+    return new StringBuilder(qualifiedName.subSequence(0, qualifiedName.length() - simpleName.length())).append((processingEnv.getOptions().get("prefix") == null) ? "" : processingEnv.getOptions().get("prefix")).append(simpleName).append(direction.getCode()).append("Dto");
+  }
+
+  private StringBuilder asDtoName (Name simpleName, Direction direction) {
+
+    return new StringBuilder((processingEnv.getOptions().get("prefix") == null) ? "" : processingEnv.getOptions().get("prefix")).append(simpleName).append(direction.getCode()).append("Dto");
+  }
+
   private boolean isDtoClass (Class<?> clazz, Direction direction) {
 
     Visibility visibility;
@@ -569,4 +596,5 @@ public class DtoEngine {
       return dtoProperty;
     }
   }
+  */
 }

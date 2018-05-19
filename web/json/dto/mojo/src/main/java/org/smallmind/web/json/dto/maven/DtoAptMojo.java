@@ -29,7 +29,7 @@ import org.smallmind.web.json.dto.engine.DtoEngine;
 import org.smallmind.web.json.dto.engine.DtoGenerator;
 
 // Annotation processor for generating dto source
-@Mojo(name = "generate-dtos", defaultPhase = LifecyclePhase.PROCESS_CLASSES, requiresDependencyResolution = ResolutionScope.RUNTIME, threadSafe = true)
+@Mojo(name = "generate-dtos", defaultPhase = LifecyclePhase.GENERATE_SOURCES, requiresDependencyResolution = ResolutionScope.RUNTIME, threadSafe = true)
 public class DtoAptMojo extends AbstractMojo {
 
   private static final HashSet<String> outputDirectorySet = new HashSet<>();
@@ -46,7 +46,8 @@ public class DtoAptMojo extends AbstractMojo {
 
       JavaCompiler javaCompiler;
       VirtualClassLoader classLoader;
-      DtoEngine dtoEngine = new DtoEngine(Paths.get(project.getBuild().getOutputDirectory()).resolveSibling("generated-sources").resolve("java"));
+//      DtoEngine dtoEngine = new DtoEngine(Paths.get(project.getBuild().getOutputDirectory()).resolveSibling("generated-sources").resolve("java"));
+      DtoEngine dtoEngine = new DtoEngine();
 
       if ((javaCompiler = ToolProvider.getSystemJavaCompiler()) == null) {
         throw new MojoFailureException("Unable to acquire the java compiler toolchain");
@@ -100,7 +101,7 @@ public class DtoAptMojo extends AbstractMojo {
         for (Class<?> clazz : classLoader) {
           try {
             getLog().info("Scanning " + clazz.getName() + "...");
-            dtoEngine.generate(clazz);
+//            dtoEngine.generate(clazz);
           } catch (Exception exception) {
             throw new MojoExecutionException("Encountered problem operating on class(" + clazz.getName() + ")", exception);
           }
@@ -147,7 +148,7 @@ public class DtoAptMojo extends AbstractMojo {
       }
 
       if (hasWarnings || hasErrors) {
-        throw new MojoExecutionException(exceptionMsg.toString());
+        // throw new MojoExecutionException(exceptionMsg.toString());
       }
     }
   }
