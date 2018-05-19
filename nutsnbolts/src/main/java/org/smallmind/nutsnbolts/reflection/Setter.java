@@ -56,7 +56,6 @@ public class Setter implements Serializable {
     if (!(method.getReturnType().equals(Void.class) || method.getReturnType().equals(void.class))) {
       throw new ReflectionContractException("Setter for attribute (%s) must return void", attributeName);
     }
-
     if (method.getParameterTypes().length != 1) {
       throw new ReflectionContractException("Setter for attribute (%s) must declare a single parameter", attributeName);
     }

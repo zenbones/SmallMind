@@ -1,28 +1,28 @@
 /*
  * Copyright (c) 2007, 2008, 2009, 2010, 2011, 2012, 2013, 2014, 2015, 2016, 2017 David Berkman
- * 
+ *
  * This file is part of the SmallMind Code Project.
- * 
+ *
  * The SmallMind Code Project is free software, you can redistribute
  * it and/or modify it under either, at your discretion...
- * 
+ *
  * 1) The terms of GNU Affero General Public License as published by the
  * Free Software Foundation, either version 3 of the License, or (at
  * your option) any later version.
- * 
+ *
  * ...or...
- * 
+ *
  * 2) The terms of the Apache License, Version 2.0.
- * 
+ *
  * The SmallMind Code Project is distributed in the hope that it will
  * be useful, but WITHOUT ANY WARRANTY; without even the implied warranty
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License or Apache License for more details.
- * 
+ *
  * You should have received a copy of the GNU Affero General Public License
  * and the Apache License along with the SmallMind Code Project. If not, see
  * <http://www.gnu.org/licenses/> or <http://www.apache.org/licenses/LICENSE-2.0>.
- * 
+ *
  * Additional permission under the GNU Affero GPL version 3 section 7
  * ------------------------------------------------------------------
  * If you modify this Program, or any covered work, by linking or
@@ -34,6 +34,7 @@ package org.smallmind.nutsnbolts.reflection.bean;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;
+import java.lang.reflect.Modifier;
 import java.util.Arrays;
 import java.util.concurrent.ConcurrentHashMap;
 import org.smallmind.nutsnbolts.reflection.type.TypeUtility;
@@ -196,11 +197,11 @@ public class BeanUtility {
     if ((getterMethod = GETTER_MAP.get(methodKey)) == null) {
       try {
         // Is there a method with a proper getter name 'getXXX'
-        getterMethod = target.getClass().getMethod(asGetterName(name));
+        getterMethod = getMethod(target, asGetterName(name));
       } catch (NoSuchMethodException noGetterException) {
         try {
           // If not, is there a boolean version 'isXXX'
-          getterMethod = target.getClass().getMethod(asIsName(name));
+          getterMethod = getMethod(target, asIsName(name));
           if (!(Boolean.class.equals(getterMethod.getReturnType()) || boolean.class.equals(getterMethod.getReturnType()))) {
             throw new BeanAccessException("Found an 'is' method(%s) in class(%s), but it doesn't return a 'boolean' type", getterMethod.getName(), target.getClass().getName());
           }
@@ -262,13 +263,26 @@ public class BeanUtility {
   private static Method findMethod (Object target, String name, Class... parameterTypes) {
 
     for (Method method : target.getClass().getMethods()) {
-      if (method.getName().equals(name) && hasParameterTypes(method, parameterTypes)) {
+      if (method.getName().equals(name) && (!Modifier.isStatic(method.getModifiers())) && hasParameterTypes(method, parameterTypes)) {
 
         return method;
       }
     }
 
     return null;
+  }
+
+  private static Method getMethod (Object target, String name, Class... parameterTypes)
+    throws NoSuchMethodException {
+
+    Method method;
+
+    if (!Modifier.isStatic((method = target.getClass().getMethod(name, parameterTypes)).getModifiers())) {
+
+      return method;
+    }
+
+    throw new NoSuchMethodException();
   }
 
   private static boolean hasParameterTypes (Method method, Class... parameterTypes) {

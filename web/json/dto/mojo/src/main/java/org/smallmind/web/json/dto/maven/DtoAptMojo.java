@@ -47,7 +47,7 @@ public class DtoAptMojo extends AbstractMojo {
       JavaCompiler javaCompiler;
       VirtualClassLoader classLoader;
 //      DtoEngine dtoEngine = new DtoEngine(Paths.get(project.getBuild().getOutputDirectory()).resolveSibling("generated-sources").resolve("java"));
-      DtoEngine dtoEngine = new DtoEngine();
+      DtoEngine dtoEngine = null;
 
       if ((javaCompiler = ToolProvider.getSystemJavaCompiler()) == null) {
         throw new MojoFailureException("Unable to acquire the java compiler toolchain");

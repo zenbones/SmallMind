@@ -66,11 +66,9 @@ public class Getter implements Serializable {
     if (method.getParameterTypes().length > 0) {
       throw new ReflectionContractException("Getter for attribute (%s) must declare no parameters", attributeName);
     }
-
     if ((attributeClass = method.getReturnType()) == Void.class) {
       throw new ReflectionContractException("Getter for attribute (%s) must not return void", attributeName);
     }
-
     if (is && (attributeClass != Boolean.class)) {
       throw new ReflectionContractException("Getter for attribute (%s) must return 'boolean'", attributeName);
     }
