@@ -16,10 +16,5 @@
       <artifactId>smallmind-nutsnbolts</artifactId>
       <scope>compile</scope>
     </dependency>
-    <dependency>
-      <groupId>com.google.auto.service</groupId>
-      <artifactId>auto-service</artifactId>
-      <scope>compile</scope>
-    </dependency>
   </dependencies>
 </project>

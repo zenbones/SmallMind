@@ -41,7 +41,6 @@ import java.util.Objects;
 import java.util.Set;
 import javax.annotation.processing.AbstractProcessor;
 import javax.annotation.processing.ProcessingEnvironment;
-import javax.annotation.processing.Processor;
 import javax.annotation.processing.RoundEnvironment;
 import javax.annotation.processing.SupportedAnnotationTypes;
 import javax.annotation.processing.SupportedOptions;
@@ -56,14 +55,12 @@ import javax.lang.model.element.TypeElement;
 import javax.lang.model.element.VariableElement;
 import javax.lang.model.type.TypeKind;
 import javax.lang.model.type.TypeMirror;
-import com.google.auto.service.AutoService;
 import org.smallmind.nutsnbolts.lang.UnknownSwitchCaseException;
 import org.smallmind.nutsnbolts.reflection.bean.BeanUtility;
 
 @SupportedAnnotationTypes({"org.smallmind.web.json.dto.engine.DtoGenerator"})
 @SupportedSourceVersion(SourceVersion.RELEASE_8)
 @SupportedOptions({"prefix"})
-@AutoService(Processor.class)
 public class DtoAnnotationProcessor extends AbstractProcessor {
 
   private final HashMap<TypeElement, Visibility> generatedMap = new HashMap<>();
@@ -213,7 +210,6 @@ public class DtoAnnotationProcessor extends AbstractProcessor {
   private void write (DtoGenerator dtoGenerator, TypeElement classElement, TypeElement nearestDtoSuperclass, Direction direction, HashMap<String, PropertyInfo> propertyMap)
     throws IOException {
 
-    System.out.println("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!WRITING:" + classElement.getQualifiedName());
     try (Writer writer = processingEnv.getFiler().createSourceFile(new StringBuilder(processingEnv.getElementUtils().getPackageOf(classElement).getQualifiedName()).append('.').append(asDtoName(classElement.getSimpleName(), direction))).openWriter()) {
       boolean firstPair = true;
 
