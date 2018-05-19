@@ -477,10 +477,13 @@ public class DtoAnnotationProcessor extends AbstractProcessor {
     private void processTypeMirror (TypeMirror typeMirror)
       throws IOException, DataDefinitionException {
 
-      Element fieldTypeElement;
+      if (TypeKind.DECLARED.equals(typeMirror.getKind())) {
 
-      if (ElementKind.CLASS.equals((fieldTypeElement = processingEnv.getTypeUtils().asElement(typeMirror)).getKind())) {
-        generate((TypeElement)fieldTypeElement);
+        Element element;
+
+        if (ElementKind.CLASS.equals((element = processingEnv.getTypeUtils().asElement(typeMirror)).getKind())) {
+          generate((TypeElement)element);
+        }
       }
     }
 
