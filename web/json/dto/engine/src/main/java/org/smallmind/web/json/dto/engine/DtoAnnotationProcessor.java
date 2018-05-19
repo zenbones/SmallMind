@@ -304,6 +304,13 @@ public class DtoAnnotationProcessor extends AbstractProcessor {
       writer.write(") {");
       writer.write("\n");
       writer.write("\n");
+      if (nearestDtoSuperclass != null) {
+        writer.write("    super(");
+        writer.write(asMemberName(classElement.getSimpleName()));
+        writer.write(");");
+        writer.write("\n");
+        writer.write("\n");
+      }
       for (Map.Entry<String, PropertyInfo> propertyInfoEntry : propertyMap.entrySet()) {
         writer.write("    this.");
         writer.write(propertyInfoEntry.getKey());
@@ -336,6 +343,13 @@ public class DtoAnnotationProcessor extends AbstractProcessor {
       writer.write(asMemberName(classElement.getSimpleName()));
       writer.write(") {");
       writer.write("\n");
+      if (nearestDtoSuperclass != null) {
+        writer.write("\n");
+        writer.write("    super.factory(");
+        writer.write(asMemberName(classElement.getSimpleName()));
+        writer.write(");");
+        writer.write("\n");
+      }
       for (Map.Entry<String, PropertyInfo> propertyInfoEntry : propertyMap.entrySet()) {
         writer.write("\n");
         writer.write("    ");
