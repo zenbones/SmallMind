@@ -30,7 +30,7 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.web.json.dto.engine;
+package org.smallmind.web.json.dto;
 
 import java.io.BufferedWriter;
 import java.io.IOException;
@@ -62,7 +62,7 @@ import com.google.auto.service.AutoService;
 import org.smallmind.nutsnbolts.lang.UnknownSwitchCaseException;
 import org.smallmind.nutsnbolts.reflection.bean.BeanUtility;
 
-@SupportedAnnotationTypes({"org.smallmind.web.json.dto.engine.DtoGenerator"})
+@SupportedAnnotationTypes({"org.smallmind.web.json.dto.DtoGenerator"})
 @SupportedSourceVersion(SourceVersion.RELEASE_8)
 @SupportedOptions({"prefix"})
 @AutoService(Processor.class)

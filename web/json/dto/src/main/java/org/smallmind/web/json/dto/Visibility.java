@@ -30,20 +30,25 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.web.json.dto.engine;
+package org.smallmind.web.json.dto;
 
-import java.lang.annotation.ElementType;
-import java.lang.annotation.Retention;
-import java.lang.annotation.RetentionPolicy;
-import java.lang.annotation.Target;
+import org.smallmind.nutsnbolts.lang.UnknownSwitchCaseException;
 
-@Retention(RetentionPolicy.SOURCE)
-@Target({ElementType.FIELD, ElementType.METHOD})
-public @interface DtoProperty {
+public enum Visibility {
 
-  Visibility visibility () default Visibility.BOTH;
+  IN, OUT, BOTH;
 
-  String name () default "";
+  public boolean matches (Direction direction) {
 
-  boolean required () default false;
+    switch (this) {
+      case IN:
+        return Direction.IN.equals(direction);
+      case OUT:
+        return Direction.OUT.equals(direction);
+      case BOTH:
+        return true;
+      default:
+        throw new UnknownSwitchCaseException(this.name());
+    }
+  }
 }

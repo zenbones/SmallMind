@@ -30,25 +30,21 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.web.json.dto.engine;
+package org.smallmind.web.json.dto;
 
-import org.smallmind.nutsnbolts.lang.UnknownSwitchCaseException;
+public enum Direction {
 
-public enum Visibility {
+  IN("In"), OUT("Out");
 
-  IN, OUT, BOTH;
+  private String code;
 
-  public boolean matches (Direction direction) {
+  Direction (String code) {
 
-    switch (this) {
-      case IN:
-        return Direction.IN.equals(direction);
-      case OUT:
-        return Direction.OUT.equals(direction);
-      case BOTH:
-        return true;
-      default:
-        throw new UnknownSwitchCaseException(this.name());
-    }
+    this.code = code;
+  }
+
+  public String getCode () {
+
+    return code;
   }
 }

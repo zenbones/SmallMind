@@ -30,21 +30,20 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.web.json.dto.engine;
+package org.smallmind.web.json.dto;
 
-public enum Direction {
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
 
-  IN("In"), OUT("Out");
+@Retention(RetentionPolicy.SOURCE)
+@Target({ElementType.FIELD, ElementType.METHOD})
+public @interface DtoProperty {
 
-  private String code;
+  Visibility visibility () default Visibility.BOTH;
 
-  Direction (String code) {
+  String name () default "";
 
-    this.code = code;
-  }
-
-  public String getCode () {
-
-    return code;
-  }
+  boolean required () default false;
 }
