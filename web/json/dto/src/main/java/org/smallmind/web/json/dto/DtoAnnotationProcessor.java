@@ -343,6 +343,21 @@ public class DtoAnnotationProcessor extends AbstractProcessor {
         writer.newLine();
 
         // entity factory
+        if (!classElement.getModifiers().contains(javax.lang.model.element.Modifier.ABSTRACT)) {
+          writer.write("  public ");
+          writer.write(classElement.getSimpleName().toString());
+          writer.write(" factory () {");
+          writer.newLine();
+          writer.newLine();
+          writer.write("    return factory(new ");
+          writer.write(classElement.getQualifiedName().toString());
+          writer.write("());");
+          writer.newLine();
+          writer.write("  }");
+          writer.newLine();
+          writer.newLine();
+        }
+
         writer.write("  public ");
         writer.write(classElement.getSimpleName().toString());
         writer.write(" factory (");
