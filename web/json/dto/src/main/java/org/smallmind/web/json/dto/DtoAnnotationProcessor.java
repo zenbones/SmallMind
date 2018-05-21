@@ -85,13 +85,13 @@ public class DtoAnnotationProcessor extends AbstractProcessor {
   }
 
   public void generate (TypeElement classElement)
-    throws IOException, DataDefinitionException {
+    throws IOException, DtoDefinitionException {
 
     DtoGenerator dtoGenerator;
 
     if (((dtoGenerator = classElement.getAnnotation(DtoGenerator.class)) != null) && !generatedMap.containsKey(classElement)) {
       if ((!ElementKind.CLASS.equals(classElement.getKind())) || (!NestingKind.TOP_LEVEL.equals(classElement.getNestingKind()))) {
-        throw new DataDefinitionException("The class(%s) must be a root implementation of type 'class'", classElement.getQualifiedName());
+        throw new DtoDefinitionException("The class(%s) must be a root implementation of type 'class'", classElement.getQualifiedName());
       } else {
 
         DtoClass dtoClass = new DtoClass(processingEnv, classElement);
@@ -123,7 +123,7 @@ public class DtoAnnotationProcessor extends AbstractProcessor {
                   throw new UnknownSwitchCaseException(dtoProperty.visibility().name());
               }
             } else if (ElementKind.METHOD.equals(enclosedElement.getKind()) && Visibility.BOTH.equals(dtoProperty.visibility()) && (!dtoClass.hasSetter((ExecutableElement)enclosedElement))) {
-              throw new DataDefinitionException("Missing 'setter' method(%s) in class(%s)", enclosedElement.getSimpleName(), classElement.getQualifiedName());
+              throw new DtoDefinitionException("Missing 'setter' method(%s) in class(%s)", enclosedElement.getSimpleName(), classElement.getQualifiedName());
             }
           }
         }
@@ -146,7 +146,7 @@ public class DtoAnnotationProcessor extends AbstractProcessor {
         }
 
         if (!written) {
-          throw new DataDefinitionException("The class(%s) was annotated as '%s' but contained no properties", classElement.getQualifiedName(), DtoGenerator.class.getSimpleName());
+          throw new DtoDefinitionException("The class(%s) was annotated as '%s' but contained no properties", classElement.getQualifiedName(), DtoGenerator.class.getSimpleName());
         }
       }
     }
@@ -405,6 +405,12 @@ public class DtoAnnotationProcessor extends AbstractProcessor {
             writer.newLine();
           }
 
+          if (!DefaultXmlAdapter.class.equals(propertyInfoEntry.getValue().getDtoProperty().adapter())) {
+            writer.write("  @XmlJavaTypeAdapter(");
+            writer.write(propertyInfoEntry.getValue().getDtoProperty().adapter().getTypeName());
+            writer.write(".class)");
+            writer.newLine();
+          }
           writer.write("  @XmlElement(name = \"");
           writer.write(propertyInfoEntry.getValue().getDtoProperty().name().isEmpty() ? propertyInfoEntry.getKey() : dtoGenerator.name());
           writer.write(propertyInfoEntry.getValue().getDtoProperty().required() ? "\", required = true)" : "\")");
@@ -484,7 +490,7 @@ public class DtoAnnotationProcessor extends AbstractProcessor {
     private TypeElement classElement;
 
     private DtoClass (ProcessingEnvironment processingEnv, TypeElement classElement)
-      throws IOException, DataDefinitionException {
+      throws IOException, DtoDefinitionException {
 
       this.classElement = classElement;
 
@@ -503,7 +509,7 @@ public class DtoAnnotationProcessor extends AbstractProcessor {
 
               if ((dtoProperty = enclosedElement.getAnnotation(DtoProperty.class)) != null) {
                 if (Visibility.IN.equals(dtoProperty.visibility())) {
-                  throw new DataDefinitionException("The 'is' method(%s) found in class(%s) can't be annotated as 'IN' only", enclosedElement.getSimpleName(), classElement.getQualifiedName());
+                  throw new DtoDefinitionException("The 'is' method(%s) found in class(%s) can't be annotated as 'IN' only", enclosedElement.getSimpleName(), classElement.getQualifiedName());
                 }
 
                 outMap.put(fieldName, new PropertyInfo(((ExecutableElement)enclosedElement).getReturnType(), dtoProperty));
@@ -517,7 +523,7 @@ public class DtoAnnotationProcessor extends AbstractProcessor {
 
               if ((dtoProperty = enclosedElement.getAnnotation(DtoProperty.class)) != null) {
                 if (Visibility.IN.equals(dtoProperty.visibility())) {
-                  throw new DataDefinitionException("The 'get' method(%s) found in class(%s) can't be annotated as 'IN' only", enclosedElement.getSimpleName(), classElement.getQualifiedName());
+                  throw new DtoDefinitionException("The 'get' method(%s) found in class(%s) can't be annotated as 'IN' only", enclosedElement.getSimpleName(), classElement.getQualifiedName());
                 }
 
                 processTypeMirror(((ExecutableElement)enclosedElement).getReturnType());
@@ -532,7 +538,7 @@ public class DtoAnnotationProcessor extends AbstractProcessor {
 
               if ((dtoProperty = enclosedElement.getAnnotation(DtoProperty.class)) != null) {
                 if (!Visibility.IN.equals(dtoProperty.visibility())) {
-                  throw new DataDefinitionException("The 'set' method(%s) found in class(%s) must be annotated as 'IN' only", enclosedElement.getSimpleName(), classElement.getQualifiedName());
+                  throw new DtoDefinitionException("The 'set' method(%s) found in class(%s) must be annotated as 'IN' only", enclosedElement.getSimpleName(), classElement.getQualifiedName());
                 }
 
                 processTypeMirror(((ExecutableElement)enclosedElement).getParameters().get(0).asType());
@@ -542,7 +548,7 @@ public class DtoAnnotationProcessor extends AbstractProcessor {
               setMethodNameSet.add(enclosedElement.getSimpleName());
               setFieldNameSet.add(fieldName);
             } else if (enclosedElement.getAnnotation(DtoProperty.class) != null) {
-              throw new DataDefinitionException("The method(%s) found in class(%s) must be a 'getter' or 'setter'", enclosedElement.getSimpleName(), classElement.getQualifiedName());
+              throw new DtoDefinitionException("The method(%s) found in class(%s) must be a 'getter' or 'setter'", enclosedElement.getSimpleName(), classElement.getQualifiedName());
             }
           }
         }
@@ -550,7 +556,7 @@ public class DtoAnnotationProcessor extends AbstractProcessor {
     }
 
     private void processTypeMirror (TypeMirror typeMirror)
-      throws IOException, DataDefinitionException {
+      throws IOException, DtoDefinitionException {
 
       if (TypeKind.DECLARED.equals(typeMirror.getKind())) {
 
@@ -578,22 +584,22 @@ public class DtoAnnotationProcessor extends AbstractProcessor {
     }
 
     public void inField (VariableElement fieldElement, DtoProperty dtoProperty)
-      throws DataDefinitionException {
+      throws DtoDefinitionException {
 
       if (setFieldNameSet.contains(fieldElement.getSimpleName().toString())) {
         inMap.put(fieldElement.getSimpleName().toString(), new PropertyInfo(fieldElement.asType(), dtoProperty));
       } else {
-        throw new DataDefinitionException("The property field(%s) has no 'setter' method in class(%s)", fieldElement.getSimpleName(), classElement.getQualifiedName());
+        throw new DtoDefinitionException("The property field(%s) has no 'setter' method in class(%s)", fieldElement.getSimpleName(), classElement.getQualifiedName());
       }
     }
 
     public void outField (VariableElement fieldElement, DtoProperty dtoProperty)
-      throws DataDefinitionException {
+      throws DtoDefinitionException {
 
       if (getFieldNameSet.contains(fieldElement.getSimpleName().toString()) || isFieldNameSet.contains(fieldElement.getSimpleName().toString())) {
         outMap.put(fieldElement.getSimpleName().toString(), new PropertyInfo(fieldElement.asType(), dtoProperty));
       } else {
-        throw new DataDefinitionException("The property field(%s) has no 'getter' method in class(%s)", fieldElement.getSimpleName(), classElement.getQualifiedName());
+        throw new DtoDefinitionException("The property field(%s) has no 'getter' method in class(%s)", fieldElement.getSimpleName(), classElement.getQualifiedName());
       }
     }
   }

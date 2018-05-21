@@ -34,9 +34,9 @@ package org.smallmind.web.json.dto;
 
 import org.smallmind.nutsnbolts.lang.FormattedException;
 
-public class DataDefinitionException extends FormattedException {
+public class DtoDefinitionException extends FormattedException {
 
-  public DataDefinitionException (String message, Object... args) {
+  public DtoDefinitionException (String message, Object... args) {
 
     super(message, args);
   }
