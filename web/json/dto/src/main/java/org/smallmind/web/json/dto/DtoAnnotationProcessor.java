@@ -545,7 +545,15 @@ public class DtoAnnotationProcessor extends AbstractProcessor {
 
   private class DirectionalMap extends HashMap<String, HashMap<String, PropertyInformation>> {
 
-    private void put (String purpose, String fieldName, PropertyInformation propertyInformation) {
+    private Direction direction;
+
+    public DirectionalMap (Direction direction) {
+
+      this.direction = direction;
+    }
+
+    private void put (String purpose, String fieldName, PropertyInformation propertyInformation)
+      throws DtoDefinitionException {
 
       HashMap<String, PropertyInformation> propertyMap;
 
@@ -553,7 +561,11 @@ public class DtoAnnotationProcessor extends AbstractProcessor {
         put(purpose, propertyMap = new HashMap<>());
       }
 
-      propertyMap.put(fieldName, propertyInformation);
+      if (propertyMap.containsKey(fieldName)) {
+        throw new DtoDefinitionException("The field(name=%s, purpose=%s, direction=%s) has already been processed", fieldName, (purpose.isEmpty()) ? "n/a" : purpose, direction.name());
+      } else {
+        propertyMap.put(fieldName, propertyInformation);
+      }
     }
 
     private PropertyInformation get (String purpose, String fieldName) {
@@ -571,8 +583,8 @@ public class DtoAnnotationProcessor extends AbstractProcessor {
 
   private class DtoClass {
 
-    private DirectionalMap inMap = new DirectionalMap();
-    private DirectionalMap outMap = new DirectionalMap();
+    private DirectionalMap inMap = new DirectionalMap(Direction.IN);
+    private DirectionalMap outMap = new DirectionalMap(Direction.OUT);
     private HashMap<String, ExecutableElement> setMethodMap = new HashMap<>();
     private HashSet<Name> getMethodNameSet = new HashSet<>();
     private HashSet<String> isFieldNameSet = new HashSet<>();
