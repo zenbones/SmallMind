@@ -401,7 +401,7 @@ public class DtoAnnotationProcessor extends AbstractProcessor {
             writer.newLine();
           }
           writer.write("  @XmlElement(name = \"");
-          writer.write(propertyInfoEntry.getValue().getDtoProperty().name().isEmpty() ? propertyInfoEntry.getKey() : dtoGenerator.name());
+          writer.write(propertyInfoEntry.getValue().getDtoProperty().name().isEmpty() ? propertyInfoEntry.getKey() : propertyInfoEntry.getValue().getDtoProperty().name());
           writer.write(propertyInfoEntry.getValue().getDtoProperty().required() ? "\", required = true)" : "\")");
           writer.newLine();
           writer.write("  public ");
