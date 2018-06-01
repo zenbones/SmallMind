@@ -92,14 +92,15 @@ public class DtoAnnotationProcessor extends AbstractProcessor {
   private void generate (TypeElement classElement)
     throws IOException, DtoDefinitionException {
 
-    DtoGenerator dtoGenerator;
+    AnnotationMirror dtoGeneratorMirror;
 
-    if (((dtoGenerator = classElement.getAnnotation(DtoGenerator.class)) != null) && !generatedMap.containsKey(classElement)) {
+    if (!generatedMap.containsKey(classElement) && ((dtoGeneratorMirror = extractAnnotationMirror(classElement, processingEnv.getElementUtils().getTypeElement(DtoGenerator.class.getName()).asType())) != null)) {
       if ((!ElementKind.CLASS.equals(classElement.getKind())) || (!NestingKind.TOP_LEVEL.equals(classElement.getNestingKind()))) {
         throw new DtoDefinitionException("The class(%s) must be a root implementation of type 'class'", classElement.getQualifiedName());
       } else {
 
         UsefulTypeMirrors usefulTypeMirrors = new UsefulTypeMirrors();
+        GeneratorInformation generatorInformation = new GeneratorInformation(dtoGeneratorMirror, usefulTypeMirrors);
         DtoClass dtoClass = new DtoClass(classElement, usefulTypeMirrors);
         TypeElement nearestDtoSuperclass;
         boolean written = false;
@@ -109,13 +110,13 @@ public class DtoAnnotationProcessor extends AbstractProcessor {
         }
 
         for (Map.Entry<String, HashMap<String, PropertyInformation>> purposeEntry : dtoClass.getInMap().entrySet()) {
-          write(dtoGenerator, usefulTypeMirrors, classElement, nearestDtoSuperclass, purposeEntry.getKey(), Direction.IN, purposeEntry.getValue());
+          write(generatorInformation, usefulTypeMirrors, classElement, nearestDtoSuperclass, purposeEntry.getKey(), Direction.IN, purposeEntry.getValue());
 
           generatedMap.put(classElement, Visibility.IN);
           written = true;
         }
         for (Map.Entry<String, HashMap<String, PropertyInformation>> purposeEntry : dtoClass.getOutMap().entrySet()) {
-          write(dtoGenerator, usefulTypeMirrors, classElement, nearestDtoSuperclass, purposeEntry.getKey(), Direction.OUT, purposeEntry.getValue());
+          write(generatorInformation, usefulTypeMirrors, classElement, nearestDtoSuperclass, purposeEntry.getKey(), Direction.OUT, purposeEntry.getValue());
 
           if (Visibility.IN.equals(generatedMap.get(classElement))) {
             generatedMap.put(classElement, Visibility.BOTH);
@@ -130,6 +131,18 @@ public class DtoAnnotationProcessor extends AbstractProcessor {
         }
       }
     }
+  }
+
+  private AnnotationMirror extractAnnotationMirror (Element element, TypeMirror annotationTypeMirror) {
+
+    for (AnnotationMirror annotationMirror : element.getAnnotationMirrors()) {
+      if (processingEnv.getTypeUtils().isSameType(annotationTypeMirror, annotationMirror.getAnnotationType())) {
+
+        return annotationMirror;
+      }
+    }
+
+    return null;
   }
 
   private AnnotationMirror[] extractAnnotationMirrors (Element element, TypeMirror annotationCollectionTypeMirror, TypeMirror annotationTypeMirror) {
@@ -231,7 +244,7 @@ public class DtoAnnotationProcessor extends AbstractProcessor {
     return null;
   }
 
-  private void write (DtoGenerator dtoGenerator, UsefulTypeMirrors usefulTypeMirrors, TypeElement classElement, TypeElement nearestDtoSuperclass, String purpose, Direction direction, HashMap<String, PropertyInformation> propertyMap)
+  private void write (GeneratorInformation generatorInformation, UsefulTypeMirrors usefulTypeMirrors, TypeElement classElement, TypeElement nearestDtoSuperclass, String purpose, Direction direction, HashMap<String, PropertyInformation> propertyMap)
     throws IOException {
 
     JavaFileObject sourceFile = processingEnv.getFiler().createSourceFile(new StringBuilder(processingEnv.getElementUtils().getPackageOf(classElement).getQualifiedName()).append('.').append(asDtoName(classElement.getSimpleName(), purpose, direction)), classElement);
@@ -280,7 +293,7 @@ public class DtoAnnotationProcessor extends AbstractProcessor {
 
         // @XmlRootElement
         writer.write("@XmlRootElement(name = \"");
-        writer.write(dtoGenerator.name().isEmpty() ? asMemberName(classElement.getSimpleName()) : dtoGenerator.name());
+        writer.write(generatorInformation.getName().isEmpty() ? asMemberName(classElement.getSimpleName()) : generatorInformation.getName());
         writer.write("\")");
         writer.newLine();
 
@@ -499,6 +512,50 @@ public class DtoAnnotationProcessor extends AbstractProcessor {
     }
   }
 
+  private class GeneratorInformation {
+
+    private DirectionalMap inMap = new DirectionalMap(Direction.IN);
+    private DirectionalMap outMap = new DirectionalMap(Direction.OUT);
+    private String name;
+
+    private GeneratorInformation (AnnotationMirror generatorAnnotationMirror, UsefulTypeMirrors usefulTypeMirrors)
+      throws DtoDefinitionException {
+
+      List<AnnotationValue> propertyAnnotationValueList;
+
+      name = extractAnnotationValue(generatorAnnotationMirror, "name", String.class, "");
+
+      if ((propertyAnnotationValueList = extractAnnotationValue(generatorAnnotationMirror, "properties", List.class, null)) != null) {
+        for (AnnotationValue propertyAnnotationValue : propertyAnnotationValueList) {
+
+          PropertyInformation propertyInformation = new PropertyInformation(extractAnnotationValue((AnnotationMirror)propertyAnnotationValue.getValue(), "type", TypeMirror.class, null), (AnnotationMirror)propertyAnnotationValue.getValue(), usefulTypeMirrors);
+          String purpose = extractAnnotationValue((AnnotationMirror)propertyAnnotationValue.getValue(), "purpose", String.class, "");
+          String fieldName = extractAnnotationValue((AnnotationMirror)propertyAnnotationValue.getValue(), "field", String.class, null);
+
+          switch (propertyInformation.getVisibility()) {
+            case IN:
+              inMap.put(purpose, fieldName, propertyInformation);
+              break;
+            case OUT:
+              outMap.put(purpose, fieldName, propertyInformation);
+              break;
+            case BOTH:
+              inMap.put(purpose, fieldName, propertyInformation);
+              outMap.put(purpose, fieldName, propertyInformation);
+              break;
+            default:
+              throw new UnknownSwitchCaseException(propertyInformation.getVisibility().name());
+          }
+        }
+      }
+    }
+
+    public String getName () {
+
+      return name;
+    }
+  }
+
   private class PropertyInformation {
 
     private TypeMirror adapter;
@@ -566,18 +623,6 @@ public class DtoAnnotationProcessor extends AbstractProcessor {
       } else {
         propertyMap.put(fieldName, propertyInformation);
       }
-    }
-
-    private PropertyInformation get (String purpose, String fieldName) {
-
-      HashMap<String, PropertyInformation> propertyMap;
-
-      if ((propertyMap = get(purpose)) != null) {
-
-        return propertyMap.get(fieldName);
-      }
-
-      return null;
     }
   }
 
