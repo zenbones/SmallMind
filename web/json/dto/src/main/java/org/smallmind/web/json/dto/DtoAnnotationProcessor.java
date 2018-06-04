@@ -1,28 +1,28 @@
 /*
  * Copyright (c) 2007, 2008, 2009, 2010, 2011, 2012, 2013, 2014, 2015, 2016, 2017 David Berkman
- *
+ * 
  * This file is part of the SmallMind Code Project.
- *
+ * 
  * The SmallMind Code Project is free software, you can redistribute
  * it and/or modify it under either, at your discretion...
- *
+ * 
  * 1) The terms of GNU Affero General Public License as published by the
  * Free Software Foundation, either version 3 of the License, or (at
  * your option) any later version.
- *
+ * 
  * ...or...
- *
+ * 
  * 2) The terms of the Apache License, Version 2.0.
- *
+ * 
  * The SmallMind Code Project is distributed in the hope that it will
  * be useful, but WITHOUT ANY WARRANTY; without even the implied warranty
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License or Apache License for more details.
- *
+ * 
  * You should have received a copy of the GNU Affero General Public License
  * and the Apache License along with the SmallMind Code Project. If not, see
  * <http://www.gnu.org/licenses/> or <http://www.apache.org/licenses/LICENSE-2.0>.
- *
+ * 
  * Additional permission under the GNU Affero GPL version 3 section 7
  * ------------------------------------------------------------------
  * If you modify this Program, or any covered work, by linking or
@@ -65,6 +65,7 @@ import javax.tools.JavaFileObject;
 import com.google.auto.service.AutoService;
 import org.smallmind.nutsnbolts.lang.UnknownSwitchCaseException;
 import org.smallmind.nutsnbolts.reflection.bean.BeanUtility;
+import org.smallmind.persistence.orm.MappedSubClasses;
 
 @SupportedAnnotationTypes({"org.smallmind.web.json.dto.DtoGenerator"})
 @SupportedSourceVersion(SourceVersion.RELEASE_8)
@@ -94,7 +95,7 @@ public class DtoAnnotationProcessor extends AbstractProcessor {
 
     AnnotationMirror dtoGeneratorMirror;
 
-    if (!generatedMap.containsKey(classElement) && ((dtoGeneratorMirror = extractAnnotationMirror(classElement, processingEnv.getElementUtils().getTypeElement(DtoGenerator.class.getName()).asType())) != null)) {
+    if ((!generatedMap.containsKey(classElement)) && ((dtoGeneratorMirror = extractAnnotationMirror(classElement, processingEnv.getElementUtils().getTypeElement(DtoGenerator.class.getName()).asType())) != null)) {
       if ((!ElementKind.CLASS.equals(classElement.getKind())) || (!NestingKind.TOP_LEVEL.equals(classElement.getNestingKind()))) {
         throw new DtoDefinitionException("The class(%s) must be a root implementation of type 'class'", classElement.getQualifiedName());
       } else {
@@ -102,21 +103,45 @@ public class DtoAnnotationProcessor extends AbstractProcessor {
         UsefulTypeMirrors usefulTypeMirrors = new UsefulTypeMirrors();
         GeneratorInformation generatorInformation = new GeneratorInformation(dtoGeneratorMirror, usefulTypeMirrors);
         DtoClass dtoClass = new DtoClass(classElement, generatorInformation, usefulTypeMirrors);
+        LinkedList<TypeElement> polymorphicSubClassList = new LinkedList<>();
         TypeElement nearestDtoSuperclass;
         boolean written = false;
+
+        // avoid recursion now, add context later
+        generatedMap.put(classElement, null);
 
         if ((nearestDtoSuperclass = getNearestDtoSuperclass(classElement)) != null) {
           generate(nearestDtoSuperclass);
         }
 
+        if (generatorInformation.isPolymorphic()) {
+
+          AnnotationMirror mappedSubClassesMirror;
+
+          if ((mappedSubClassesMirror = extractAnnotationMirror(classElement, usefulTypeMirrors.getMappedSubClassesTypeMirror())) != null) {
+
+            List<AnnotationValue> mappedSubClassAnnotationValueList;
+
+            if ((mappedSubClassAnnotationValueList = extractAnnotationValue(mappedSubClassesMirror, "value", List.class, null)) != null) {
+              for (AnnotationValue mappedSubClassAnnotationValue : mappedSubClassAnnotationValueList) {
+
+                TypeElement polymorphicSubClass;
+
+                generate(polymorphicSubClass = (TypeElement)processingEnv.getTypeUtils().asElement((TypeMirror)mappedSubClassAnnotationValue.getValue()));
+                polymorphicSubClassList.add(polymorphicSubClass);
+              }
+            }
+          }
+        }
+
         for (Map.Entry<String, HashMap<String, PropertyInformation>> purposeEntry : dtoClass.getInMap().entrySet()) {
-          writeDto(generatorInformation, usefulTypeMirrors, classElement, nearestDtoSuperclass, purposeEntry.getKey(), Direction.IN, purposeEntry.getValue());
+          writeDto(generatorInformation, usefulTypeMirrors, classElement, nearestDtoSuperclass, purposeEntry.getKey(), Direction.IN, purposeEntry.getValue(), polymorphicSubClassList);
 
           generatedMap.put(classElement, Visibility.IN);
           written = true;
         }
         for (Map.Entry<String, HashMap<String, PropertyInformation>> purposeEntry : dtoClass.getOutMap().entrySet()) {
-          writeDto(generatorInformation, usefulTypeMirrors, classElement, nearestDtoSuperclass, purposeEntry.getKey(), Direction.OUT, purposeEntry.getValue());
+          writeDto(generatorInformation, usefulTypeMirrors, classElement, nearestDtoSuperclass, purposeEntry.getKey(), Direction.OUT, purposeEntry.getValue(), polymorphicSubClassList);
 
           if (Visibility.IN.equals(generatedMap.get(classElement))) {
             generatedMap.put(classElement, Visibility.BOTH);
@@ -244,7 +269,7 @@ public class DtoAnnotationProcessor extends AbstractProcessor {
     return null;
   }
 
-  private void writeDto (GeneratorInformation generatorInformation, UsefulTypeMirrors usefulTypeMirrors, TypeElement classElement, TypeElement nearestDtoSuperclass, String purpose, Direction direction, HashMap<String, PropertyInformation> propertyMap)
+  private void writeDto (GeneratorInformation generatorInformation, UsefulTypeMirrors usefulTypeMirrors, TypeElement classElement, TypeElement nearestDtoSuperclass, String purpose, Direction direction, HashMap<String, PropertyInformation> propertyMap, LinkedList<TypeElement> polymorphicSubClassList)
     throws IOException {
 
     JavaFileObject sourceFile;
@@ -258,8 +283,9 @@ public class DtoAnnotationProcessor extends AbstractProcessor {
     if (sourceFile.getNestingKind() == null) {
       try (BufferedWriter writer = new BufferedWriter(sourceFile.openWriter())) {
 
-        boolean firstVirtualFields = true;
-        boolean firstVirtualGettersAndSetters = true;
+        LinkedList<TypeElement> matchingSubClassList = new LinkedList<>();
+        boolean firstVirtualField = true;
+        boolean firstVirtualGetterAndSetter = true;
 
         // package
         writer.write("package ");
@@ -267,6 +293,17 @@ public class DtoAnnotationProcessor extends AbstractProcessor {
         writer.write(";");
         writer.newLine();
         writer.newLine();
+
+        if (generatorInformation.isPolymorphic() && (!polymorphicSubClassList.isEmpty())) {
+          for (TypeElement polymorphicSubClass : polymorphicSubClassList) {
+
+            Visibility visibility;
+
+            if (((visibility = generatedMap.get(polymorphicSubClass)) != null) && visibility.matches(direction)) {
+              matchingSubClassList.add(polymorphicSubClass);
+            }
+          }
+        }
 
         // imports
         writer.write("import javax.annotation.Generated;");
@@ -281,6 +318,10 @@ public class DtoAnnotationProcessor extends AbstractProcessor {
         writer.newLine();
         writer.write("import javax.xml.bind.annotation.adapters.XmlJavaTypeAdapter;");
         writer.newLine();
+        if (!matchingSubClassList.isEmpty()) {
+          writer.write("import org.smallmind.web.json.scaffold.util.XmlPolymorphicSubClasses;");
+          writer.newLine();
+        }
 
         if ((nearestDtoSuperclass != null) && (!Objects.equals(processingEnv.getElementUtils().getPackageOf(classElement), processingEnv.getElementUtils().getPackageOf(nearestDtoSuperclass)))) {
           writer.write("import ");
@@ -305,19 +346,46 @@ public class DtoAnnotationProcessor extends AbstractProcessor {
         writer.newLine();
 
         // XmlAccessorType
-        if (nearestDtoSuperclass != null) {
+        if ((nearestDtoSuperclass != null)) {
           writer.write("@XmlAccessorType(XmlAccessType.PROPERTY)");
           writer.newLine();
         }
 
-        // XmlJavaTypeAdapter
-        writer.write("@XmlJavaTypeAdapter(");
-        writer.write(asDtoName(classElement.getSimpleName(), purpose, direction).toString());
-        writer.write("PolymorphicXmlAdapter.class)");
-        writer.newLine();
+        if (generatorInformation.isPolymorphic()) {
+          // XmlJavaTypeAdapter
+          writer.write("@XmlJavaTypeAdapter(");
+          writer.write(asDtoName(classElement.getSimpleName(), purpose, direction).toString());
+          writer.write("PolymorphicXmlAdapter.class)");
+          writer.newLine();
 
-        // XmlPolymorphicSubClasses
-//        @XmlPolymorphicSubClasses({InTeamAccountDto.class, InPersonalAccountDto.class})
+          // XmlPolymorphicSubClasses
+          if (!matchingSubClassList.isEmpty()) {
+
+            boolean firstPolymorphicSubClass = true;
+            writer.write("@XmlPolymorphicSubClasses(");
+            if (matchingSubClassList.size() > 1) {
+              writer.write("{");
+            }
+
+            for (TypeElement polymorphicSubClass : matchingSubClassList) {
+              if (!firstPolymorphicSubClass) {
+                writer.write(", ");
+              }
+              writer.write(processingEnv.getElementUtils().getPackageOf(classElement).getQualifiedName().toString());
+              writer.write(".");
+              writer.write(asDtoName(polymorphicSubClass.getSimpleName(), purpose, direction).toString());
+              writer.write(".class");
+
+              firstPolymorphicSubClass = false;
+            }
+
+            if (matchingSubClassList.size() > 1) {
+              writer.write("}");
+            }
+            writer.write(")");
+            writer.newLine();
+          }
+        }
 
         // class declaration
         writer.write("public ");
@@ -335,14 +403,14 @@ public class DtoAnnotationProcessor extends AbstractProcessor {
 
         // virtual field declarations
         for (Map.Entry<String, PropertyInformation> propertyInformationEntry : generatorInformation.entrySet(purpose, direction)) {
-          if (firstVirtualFields) {
+          if (firstVirtualField) {
             writer.newLine();
             writer.write("  // virtual fields");
             writer.newLine();
           }
 
           writeField(writer, purpose, direction, propertyInformationEntry);
-          firstVirtualFields = false;
+          firstVirtualField = false;
         }
 
         // native field declarations
@@ -460,14 +528,14 @@ public class DtoAnnotationProcessor extends AbstractProcessor {
 
         // virtual getters and setters
         for (Map.Entry<String, PropertyInformation> propertyInformationEntry : generatorInformation.entrySet(purpose, direction)) {
-          if (firstVirtualGettersAndSetters) {
+          if (firstVirtualGetterAndSetter) {
             writer.newLine();
             writer.write("  // virtual getters and setters");
             writer.newLine();
           }
 
           writeGettersAndSetters(writer, usefulTypeMirrors, purpose, direction, propertyInformationEntry);
-          firstVirtualGettersAndSetters = false;
+          firstVirtualGetterAndSetter = false;
         }
 
         // native getters and setters
@@ -589,32 +657,47 @@ public class DtoAnnotationProcessor extends AbstractProcessor {
 
   private class UsefulTypeMirrors {
 
-    TypeMirror dtoPropertyTypeMirror = processingEnv.getElementUtils().getTypeElement(DtoProperty.class.getName()).asType();
-    TypeMirror dtoPropertiesTypeMirror = processingEnv.getElementUtils().getTypeElement(DtoProperties.class.getName()).asType();
-    TypeMirror defaultXmlAdapterTypeMirror = processingEnv.getElementUtils().getTypeElement(DefaultXmlAdapter.class.getName()).asType();
+    private final TypeMirror dtoPropertyTypeMirror = processingEnv.getElementUtils().getTypeElement(DtoProperty.class.getName()).asType();
+    private final TypeMirror dtoPropertiesTypeMirror = processingEnv.getElementUtils().getTypeElement(DtoProperties.class.getName()).asType();
+    private final TypeMirror defaultXmlAdapterTypeMirror = processingEnv.getElementUtils().getTypeElement(DefaultXmlAdapter.class.getName()).asType();
+    private TypeMirror mappedSubClassesTypeMirror;
 
-    public TypeMirror getDtoPropertyTypeMirror () {
+    private UsefulTypeMirrors () {
+
+      try {
+        mappedSubClassesTypeMirror = processingEnv.getElementUtils().getTypeElement(MappedSubClasses.class.getName()).asType();
+      } catch (Exception exception) {
+        mappedSubClassesTypeMirror = null;
+      }
+    }
+
+    private TypeMirror getDtoPropertyTypeMirror () {
 
       return dtoPropertyTypeMirror;
     }
 
-    public TypeMirror getDtoPropertiesTypeMirror () {
+    private TypeMirror getDtoPropertiesTypeMirror () {
 
       return dtoPropertiesTypeMirror;
     }
 
-    public TypeMirror getDefaultXmlAdapterTypeMirror () {
+    private TypeMirror getDefaultXmlAdapterTypeMirror () {
 
       return defaultXmlAdapterTypeMirror;
+    }
+
+    public TypeMirror getMappedSubClassesTypeMirror () {
+
+      return mappedSubClassesTypeMirror;
     }
   }
 
   private class GeneratorInformation {
 
-    private DirectionalMap inMap = new DirectionalMap(Direction.IN);
-    private DirectionalMap outMap = new DirectionalMap(Direction.OUT);
-    private String name;
-    private Boolean polymorphic;
+    private final DirectionalMap inMap = new DirectionalMap(Direction.IN);
+    private final DirectionalMap outMap = new DirectionalMap(Direction.OUT);
+    private final String name;
+    private final Boolean polymorphic;
 
     private GeneratorInformation (AnnotationMirror generatorAnnotationMirror, UsefulTypeMirrors usefulTypeMirrors)
       throws DtoDefinitionException {
@@ -686,11 +769,11 @@ public class DtoAnnotationProcessor extends AbstractProcessor {
 
   private class PropertyInformation {
 
-    private TypeMirror adapter;
-    private TypeMirror type;
-    private Visibility visibility;
-    private String name;
-    private Boolean required;
+    private final TypeMirror adapter;
+    private final TypeMirror type;
+    private final Visibility visibility;
+    private final String name;
+    private final Boolean required;
 
     private PropertyInformation (TypeMirror type, AnnotationMirror propertyAnnotationMirror, UsefulTypeMirrors usefulTypeMirrors) {
 
@@ -730,18 +813,17 @@ public class DtoAnnotationProcessor extends AbstractProcessor {
 
   private class DirectionalMap extends HashMap<String, HashMap<String, PropertyInformation>> {
 
-    private DirectionalMap sideMap;
-    private Direction direction;
+    private final Direction direction;
+    private final DirectionalMap sideMap;
 
-    public DirectionalMap (Direction direction) {
+    private DirectionalMap (Direction direction) {
 
-      this.direction = direction;
+      this(direction, null);
     }
 
-    public DirectionalMap (Direction direction, DirectionalMap sideMap) {
+    private DirectionalMap (Direction direction, DirectionalMap sideMap) {
 
-      this(direction);
-
+      this.direction = direction;
       this.sideMap = sideMap;
     }
 
@@ -781,13 +863,13 @@ public class DtoAnnotationProcessor extends AbstractProcessor {
 
   private class DtoClass {
 
-    private DirectionalMap inMap;
-    private DirectionalMap outMap;
-    private HashMap<String, ExecutableElement> setMethodMap = new HashMap<>();
-    private HashSet<Name> getMethodNameSet = new HashSet<>();
-    private HashSet<String> isFieldNameSet = new HashSet<>();
-    private HashSet<String> getFieldNameSet = new HashSet<>();
-    private TypeElement classElement;
+    private final DirectionalMap inMap;
+    private final DirectionalMap outMap;
+    private final HashMap<String, ExecutableElement> setMethodMap = new HashMap<>();
+    private final HashSet<Name> getMethodNameSet = new HashSet<>();
+    private final HashSet<String> isFieldNameSet = new HashSet<>();
+    private final HashSet<String> getFieldNameSet = new HashSet<>();
+    private final TypeElement classElement;
 
     private DtoClass (TypeElement classElement, GeneratorInformation generatorInformation, UsefulTypeMirrors usefulTypeMirrors)
       throws IOException, DtoDefinitionException {

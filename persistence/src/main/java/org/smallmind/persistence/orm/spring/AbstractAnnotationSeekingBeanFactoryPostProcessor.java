@@ -36,7 +36,7 @@ import java.lang.annotation.Annotation;
 import java.util.HashMap;
 import java.util.HashSet;
 import org.smallmind.persistence.ManagedDao;
-import org.smallmind.persistence.orm.MappedSubclass;
+import org.smallmind.persistence.orm.MappedSubClasses;
 import org.smallmind.persistence.orm.SessionSource;
 import org.smallmind.persistence.spring.ManagedDaoSupport;
 import org.springframework.beans.BeansException;
@@ -112,12 +112,12 @@ public abstract class AbstractAnnotationSeekingBeanFactoryPostProcessor implemen
 
     if (hasTargetAnnotation(persistentClass)) {
 
-      MappedSubclass mappedSubclass;
+      MappedSubClasses mappedSubClasses;
 
       annotatedClassSet.add(persistentClass);
 
-      if ((mappedSubclass = persistentClass.getAnnotation(MappedSubclass.class)) != null) {
-        for (Class subclass : mappedSubclass.value()) {
+      if ((mappedSubClasses = persistentClass.getAnnotation(MappedSubClasses.class)) != null) {
+        for (Class subclass : mappedSubClasses.value()) {
           if (!persistentClass.isAssignableFrom(subclass)) {
             throw new FatalBeanException("Mapped subclass of type (" + subclass.getName() + ") must inherit from parent type (" + persistentClass.getName() + ")");
           }
