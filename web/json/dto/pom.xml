@@ -4,7 +4,7 @@
   <parent>
     <groupId>org.smallmind</groupId>
     <artifactId>web-json</artifactId>
-    <version>3.3.1</version>
+    <version>3.3.2-SNAPSHOT</version>
   </parent>
   <artifactId>web-json-dto</artifactId>
   <packaging>jar</packaging>
