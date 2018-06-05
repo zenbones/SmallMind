@@ -96,24 +96,19 @@ public abstract class PolymorphicXmlAdapter<T> extends XmlAdapter<JsonNode, T> {
   public JsonNode marshal (T value)
     throws JsonProcessingException {
 
-    if (value.getClass().equals(baseClass)) {
-      throw new JAXBProcessingException("Attempting to serialize the polymorphic root class(%s) would be infinitely recursive", baseClass.getName());
+    XmlRootElement xmlRootElementAnnotation;
+
+    if ((xmlRootElementAnnotation = value.getClass().getAnnotation(XmlRootElement.class)) == null) {
+      throw new JAXBProcessingException("The class(%s) is missing a %s annotation", value.getClass().getName(), XmlRootElement.class.getSimpleName());
     } else {
 
-      XmlRootElement xmlRootElementAnnotation;
+      ObjectNode rootNode = JsonNodeFactory.instance.objectNode();
+      Object proxyObject = ProxyGenerator.createProxy(value.getClass(), new OffloadingInvocationHandler(value), new AnnotationFilter(PassType.EXCLUDE, XmlJavaTypeAdapter.class));
 
-      if ((xmlRootElementAnnotation = value.getClass().getAnnotation(XmlRootElement.class)) == null) {
-        throw new JAXBProcessingException("The class(%s) is missing a %s annotation", value.getClass().getName(), XmlRootElement.class.getSimpleName());
-      } else {
+      PolymorphicClassCache.addClassRelationship(value.getClass(), proxyObject.getClass());
+      rootNode.set(xmlRootElementAnnotation.name(), JsonCodec.writeAsJsonNode(proxyObject));
 
-        ObjectNode rootNode = JsonNodeFactory.instance.objectNode();
-        Object proxyObject = ProxyGenerator.createProxy(value.getClass(), new OffloadingInvocationHandler(value), new AnnotationFilter(PassType.EXCLUDE, XmlJavaTypeAdapter.class));
-
-        PolymorphicClassCache.addClassRelationship(value.getClass(), proxyObject.getClass());
-        rootNode.set(xmlRootElementAnnotation.name(), JsonCodec.writeAsJsonNode(proxyObject));
-
-        return rootNode;
-      }
+      return rootNode;
     }
   }
 }

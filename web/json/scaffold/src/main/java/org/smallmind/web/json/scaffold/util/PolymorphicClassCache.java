@@ -56,15 +56,22 @@ public class PolymorphicClassCache {
             throw new JAXBProcessingException("The class(%s) is missing a %s annotation", baseClass.getName(), XmlPolymorphicSubClasses.class.getSimpleName());
           } else {
             SUB_CLASS_MAP.put(baseClass, polymorphicKeyMap = new HashMap<>());
+
+            XmlRootElement baseClassXmlRootElementAnnotation;
+
+            if ((baseClassXmlRootElementAnnotation = baseClass.getAnnotation(XmlRootElement.class)) != null) {
+              polymorphicKeyMap.put(baseClassXmlRootElementAnnotation.name(), baseClass);
+            }
+            
             for (Class<?> polymorphicSubClass : xmlPolymorphicSubClassesAnnotation.value()) {
 
-              XmlRootElement xmlRootElementAnnotation;
+              XmlRootElement subClassXmlRootElementAnnotation;
 
-              if ((xmlRootElementAnnotation = polymorphicSubClass.getAnnotation(XmlRootElement.class)) == null) {
+              if ((subClassXmlRootElementAnnotation = polymorphicSubClass.getAnnotation(XmlRootElement.class)) == null) {
                 throw new JAXBProcessingException("The sub-class(%s) is missing a %s annotation", polymorphicSubClass.getName(), XmlRootElement.class.getSimpleName());
               }
 
-              polymorphicKeyMap.put(xmlRootElementAnnotation.name(), polymorphicSubClass);
+              polymorphicKeyMap.put(subClassXmlRootElementAnnotation.name(), polymorphicSubClass);
             }
           }
         }
