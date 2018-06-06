@@ -45,40 +45,46 @@ public class AlphaSpread {
   public static char[] calculate (String letters)
     throws SpreadParserException {
 
-    Matcher zoneMatcher;
-    HashSet<Character> charHash;
-    String[] zones = letters.split(",", 0);
-    char[] spreadArray;
-    int index = 0;
+    if ((letters == null) || letters.isEmpty()) {
 
-    charHash = new HashSet<>();
-    for (String zone : zones) {
-      if (zone.trim().length() == 0) {
-        throw new SpreadParserException("Empty elements are not allowed");
-      }
+      return new char[0];
+    } else {
 
-      if ((zoneMatcher = NUMBER_PATTERN.matcher(zone.trim())).matches()) {
-        charHash.add(zoneMatcher.group().charAt(0));
-      } else if ((zoneMatcher = SPREAD_PATTERN.matcher(zone.trim())).matches()) {
+      Matcher zoneMatcher;
+      HashSet<Character> charHash;
+      String[] zones = letters.split(",", 0);
+      char[] spreadArray;
+      int index = 0;
 
-        char start = zoneMatcher.group(1).charAt(0);
-        char end = zoneMatcher.group(2).charAt(0);
-
-        for (char letter = start; letter <= end; letter++) {
-          charHash.add(letter);
+      charHash = new HashSet<>();
+      for (String zone : zones) {
+        if (zone.trim().length() == 0) {
+          throw new SpreadParserException("Empty elements are not allowed");
         }
-      } else {
-        throw new SpreadParserException("Could not parse elements");
+
+        if ((zoneMatcher = NUMBER_PATTERN.matcher(zone.trim())).matches()) {
+          charHash.add(zoneMatcher.group().charAt(0));
+        } else if ((zoneMatcher = SPREAD_PATTERN.matcher(zone.trim())).matches()) {
+
+          char start = zoneMatcher.group(1).charAt(0);
+          char end = zoneMatcher.group(2).charAt(0);
+
+          for (char letter = start; letter <= end; letter++) {
+            charHash.add(letter);
+          }
+        } else {
+          throw new SpreadParserException("Could not parse elements");
+        }
       }
+
+      spreadArray = new char[charHash.size()];
+      for (Character letter : charHash) {
+        spreadArray[index++] = letter;
+      }
+
+      Arrays.sort(spreadArray);
+
+      return spreadArray;
     }
-
-    spreadArray = new char[charHash.size()];
-    for (Character letter : charHash) {
-      spreadArray[index++] = letter;
-    }
-
-    Arrays.sort(spreadArray);
-
-    return spreadArray;
   }
 }

@@ -45,41 +45,46 @@ public class NumericSpread {
   public static int[] calculate (String numbers)
     throws SpreadParserException {
 
-    Matcher zoneMatcher;
-    HashSet<Integer> intHash;
-    String[] zones = numbers.split(",", 0);
-    int[] spreadArray;
-    int index = 0;
+    if ((numbers == null) || numbers.isEmpty()) {
 
-    intHash = new HashSet<>();
-    for (String zone : zones) {
-      if (zone.trim().length() == 0) {
-        throw new SpreadParserException("Empty elements are not allowed");
-      }
+      return new int[0];
+    } else {
 
-      if ((zoneMatcher = NUMBER_PATTERN.matcher(zone.trim())).matches()) {
-        intHash.add(Integer.parseInt(zoneMatcher.group()));
-      }
-      else if ((zoneMatcher = SPREAD_PATTERN.matcher(zone.trim())).matches()) {
+      Matcher zoneMatcher;
+      HashSet<Integer> intHash;
+      String[] zones = numbers.split(",", 0);
+      int[] spreadArray;
+      int index = 0;
 
-        int start = Integer.parseInt(zoneMatcher.group(1));
-        int end = Integer.parseInt(zoneMatcher.group(2));
-
-        for (int number = start; number <= end; number++) {
-          intHash.add(number);
+      intHash = new HashSet<>();
+      for (String zone : zones) {
+        if (zone.trim().length() == 0) {
+          throw new SpreadParserException("Empty elements are not allowed");
         }
-      } else {
-        throw new SpreadParserException("Could not parse elements");
+
+        if ((zoneMatcher = NUMBER_PATTERN.matcher(zone.trim())).matches()) {
+          intHash.add(Integer.parseInt(zoneMatcher.group()));
+        } else if ((zoneMatcher = SPREAD_PATTERN.matcher(zone.trim())).matches()) {
+
+          int start = Integer.parseInt(zoneMatcher.group(1));
+          int end = Integer.parseInt(zoneMatcher.group(2));
+
+          for (int number = start; number <= end; number++) {
+            intHash.add(number);
+          }
+        } else {
+          throw new SpreadParserException("Could not parse elements");
+        }
       }
+
+      spreadArray = new int[intHash.size()];
+      for (Integer number : intHash) {
+        spreadArray[index++] = number;
+      }
+
+      Arrays.sort(spreadArray);
+
+      return spreadArray;
     }
-
-    spreadArray = new int[intHash.size()];
-    for (Integer number : intHash) {
-      spreadArray[index++] = number;
-    }
-
-    Arrays.sort(spreadArray);
-
-    return spreadArray;
   }
 }

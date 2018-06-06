@@ -38,7 +38,8 @@ public class Spread {
     throws SpreadParserException {
 
     if ((spreadable == null) || spreadable.isEmpty()) {
-      throw new SpreadParserException("Empty elements are not allowed");
+
+      return new String[0];
     } else {
 
       String[] values;
