@@ -381,14 +381,10 @@ public class GrizzlyInitializingBean implements DisposableBean, ApplicationConte
       sslContextConfigurator.setTrustStorePass(sslInfo.getTrustSSLStore().getPassword());
     }
 
-    if (!sslContextConfigurator.validateConfiguration(true)) {
-      throw new GrizzlyInitializationException("Invalid ssl configuration");
-    }
-
     /* Note: clientMode (2nd param) means server does not
      *  authenticate to client - which we never want
      */
-    SSLEngineConfigurator sslEngineConfig = new SSLEngineConfigurator(sslContextConfigurator.createSSLContext(), false, sslInfo.isRequireClientAuth(), true);
+    SSLEngineConfigurator sslEngineConfig = new SSLEngineConfigurator(sslContextConfigurator.createSSLContext(true), false, sslInfo.isRequireClientAuth(), true);
     secureListener.setSSLEngineConfig(sslEngineConfig);
 
     return secureListener;
