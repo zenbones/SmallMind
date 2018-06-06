@@ -41,5 +41,5 @@ import java.lang.annotation.Target;
 @Retention(RetentionPolicy.RUNTIME)
 public @interface Instrumented {
 
-  public abstract boolean value () default true;
+  boolean value () default true;
 }
