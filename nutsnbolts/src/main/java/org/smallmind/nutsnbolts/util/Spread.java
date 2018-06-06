@@ -32,52 +32,37 @@
  */
 package org.smallmind.nutsnbolts.util;
 
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
-
 public class Spread {
 
-  private static Pattern NUMBER_PATTERN = Pattern.compile("\\d+");
-  private static Pattern SPREAD_PATTERN = Pattern.compile("(\\d+)\\.\\.(\\d+)");
-
-  public static int[] calculate (String numbers)
+  public static String[] calculate (String spreadable)
     throws SpreadParserException {
 
-    Matcher zoneMatcher;
-    HashSet<Integer> intHash;
-    String[] zones = numbers.split(",", 0);
-    int[] spreadArray;
-    int index = 0;
+    if ((spreadable == null) || spreadable.isEmpty()) {
+      throw new SpreadParserException("Empty elements are not allowed");
+    } else {
 
-    intHash = new HashSet<>();
-    for (String zone : zones) {
-      if (zone.trim().length() == 0) {
-        throw new SpreadParserException("Empty elements are not allowed");
-      }
+      String[] values;
+      int index = 0;
 
-      if ((zoneMatcher = NUMBER_PATTERN.matcher(zone.trim())).matches()) {
-        intHash.add(Integer.parseInt(zoneMatcher.group()));
-      }
-      else if ((zoneMatcher = SPREAD_PATTERN.matcher(zone.trim())).matches()) {
+      if (Character.isDigit(spreadable.charAt(0))) {
 
-        int start = Integer.parseInt(zoneMatcher.group(1));
-        int end = Integer.parseInt(zoneMatcher.group(2));
+        int[] numbers = NumericSpread.calculate(spreadable);
+        values = new String[numbers.length];
 
-        for (int number = start; number <= end; number++) {
-          intHash.add(number);
+        for (int number : numbers) {
+          values[index++] = String.valueOf(number);
+        }
+      } else {
+
+        char[] letters = AlphaSpread.calculate(spreadable);
+        values = new String[letters.length];
+
+        for (char letter : letters) {
+          values[index++] = String.valueOf(letter);
         }
       }
+
+      return values;
     }
-
-    spreadArray = new int[intHash.size()];
-    for (Integer number : intHash) {
-      spreadArray[index++] = number;
-    }
-
-    Arrays.sort(spreadArray);
-
-    return spreadArray;
   }
 }

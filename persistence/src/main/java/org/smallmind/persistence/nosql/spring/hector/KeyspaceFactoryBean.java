@@ -50,7 +50,6 @@ import org.springframework.beans.factory.InitializingBean;
 
 public class KeyspaceFactoryBean implements FactoryBean<Keyspace>, InitializingBean {
 
-  private static final Class[] SCHEMA_VERIFIER_SIGNATURE = new Class[] {Cluster.class, Keyspace.class, String.class, int.class};
   private static final HashMap<String, ThriftCluster> CLUSTER_MAP = new HashMap<String, ThriftCluster>();
   private static final HashMap<ConsistencyPair, ConfigurableConsistencyLevel> CONSISTENCY_LEVEL_MAP = new HashMap<ConsistencyPair, ConfigurableConsistencyLevel>();
   private Keyspace keyspace;
@@ -146,11 +145,11 @@ public class KeyspaceFactoryBean implements FactoryBean<Keyspace>, InitializingB
 
         boolean first = true;
 
-        for (int serverNumber : Spread.calculate(serverSpread)) {
+        for (String serverDesignator : Spread.calculate(serverSpread)) {
           if (!first) {
             serverBuilder.append(',');
           }
-          serverBuilder.append(serverPattern.substring(0, poundPos)).append(serverNumber).append(serverPattern.substring(poundPos + 1));
+          serverBuilder.append(serverPattern.substring(0, poundPos)).append(serverDesignator).append(serverPattern.substring(poundPos + 1));
           first = false;
         }
       }

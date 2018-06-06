@@ -74,12 +74,12 @@ public class MemcachedServerFactoryBean implements FactoryBean<MemcachedServer[]
         }
       }
       else {
-        for (int serverNumber : Spread.calculate(serverSpread)) {
+        for (String serverDesignator : Spread.calculate(serverSpread)) {
           if (colonPos >= 0) {
-            serverList.add(new MemcachedServer(serverPattern.substring(0, poundPos) + serverNumber + serverPattern.substring(poundPos + 1, colonPos), Integer.parseInt(serverPattern.substring(colonPos + 1))));
+            serverList.add(new MemcachedServer(serverPattern.substring(0, poundPos) + serverDesignator + serverPattern.substring(poundPos + 1, colonPos), Integer.parseInt(serverPattern.substring(colonPos + 1))));
           }
           else {
-            serverList.add(new MemcachedServer(serverPattern.substring(0, poundPos) + serverNumber + serverPattern.substring(poundPos + 1), 11211));
+            serverList.add(new MemcachedServer(serverPattern.substring(0, poundPos) + serverDesignator + serverPattern.substring(poundPos + 1), 11211));
           }
         }
       }

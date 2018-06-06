@@ -32,26 +32,24 @@
  */
 package org.smallmind.phalanx.wire.amqp.rabbitmq.spring;
 
-import java.util.ArrayList;
 import com.rabbitmq.client.Address;
 import com.rabbitmq.client.ConnectionFactory;
-import org.smallmind.nutsnbolts.spring.SpringPropertyAccessor;
-import org.smallmind.nutsnbolts.spring.SpringPropertyAccessorManager;
 import org.smallmind.phalanx.wire.amqp.rabbitmq.RabbitMQConnector;
 import org.springframework.beans.factory.FactoryBean;
 import org.springframework.beans.factory.InitializingBean;
 
-public class RabbitMQConnectorFactory implements FactoryBean<RabbitMQConnector>, InitializingBean {
-
-  /*
-  rabbitmq.host.<#> (required)
-  rabbitmq.port.<#> (defaults to 5672)
-  */
+public class RabbitMQConnectorFactoryBean implements FactoryBean<RabbitMQConnector>, InitializingBean {
 
   private RabbitMQConnector rabbitMQConnector;
+  private RabbitMQServer[] servers;
   private String username;
   private String password;
   private int heartbeatSeconds;
+
+  public void setServers (RabbitMQServer[] servers) {
+
+    this.servers = servers;
+  }
 
   public void setUsername (String username) {
 
@@ -89,36 +87,12 @@ public class RabbitMQConnectorFactory implements FactoryBean<RabbitMQConnector>,
   @Override
   public void afterPropertiesSet () {
 
-    SpringPropertyAccessor springPropertyAccessor = SpringPropertyAccessorManager.getSpringPropertyAccessor();
     ConnectionFactory connectionFactory;
     Address[] addresses;
-    ArrayList<RabbitMQServer> serverList = new ArrayList<>();
     int addressIndex = 0;
 
-    for (String key : springPropertyAccessor.getKeySet()) {
-      if (key.startsWith("rabbitmq.host.")) {
-
-        int index = Integer.valueOf(key.substring("rabbitmq.host.".length()));
-
-        while (serverList.size() < index + 1) {
-          serverList.add(new RabbitMQServer());
-        }
-
-        serverList.get(index).setHost(springPropertyAccessor.asString(key));
-      } else if (key.startsWith("rabbitmq.port.")) {
-
-        int index = Integer.valueOf(key.substring("rabbitmq.host.".length()));
-
-        while (serverList.size() < index + 1) {
-          serverList.add(new RabbitMQServer());
-        }
-
-        serverList.get(index).setPort(springPropertyAccessor.asInt(key).get());
-      }
-    }
-
-    addresses = new Address[serverList.size()];
-    for (RabbitMQServer server : serverList) {
+    addresses = new Address[servers.length];
+    for (RabbitMQServer server : servers) {
       addresses[addressIndex++] = new Address(server.getHost(), server.getPort());
     }
 

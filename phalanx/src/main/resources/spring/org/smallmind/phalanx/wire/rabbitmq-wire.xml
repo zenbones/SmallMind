@@ -11,7 +11,7 @@
     </property>
   </bean>
 
-  <bean id="rabbitMQConnectorFactory" class="org.smallmind.phalanx.wire.amqp.rabbitmq.spring.RabbitMQConnectorFactory">
+  <bean id="rabbitMQConnectorFactory" class="org.smallmind.phalanx.wire.amqp.rabbitmq.spring.RabbitMQConnectorFactoryBean">
     <property name="username" value="${rabbitmq.username}"/>
     <property name="password" value="${rabbitmq.password}"/>
     <property name="heartbeatSeconds" value="5"/>

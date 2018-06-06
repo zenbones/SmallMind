@@ -30,7 +30,7 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.persistence.database.mongodb;
+package org.smallmind.phalanx.wire.amqp.rabbitmq.spring;
 
 import java.util.LinkedList;
 import org.smallmind.nutsnbolts.util.Spread;
@@ -38,9 +38,9 @@ import org.smallmind.nutsnbolts.util.SpreadParserException;
 import org.springframework.beans.factory.FactoryBean;
 import org.springframework.beans.factory.InitializingBean;
 
-public class MongoServerFactoryBean implements FactoryBean<MongoServer[]>, InitializingBean {
+public class RabbitMQServerFactoryBean implements FactoryBean<RabbitMQServer[]>, InitializingBean {
 
-  private MongoServer[] serverArray;
+  private RabbitMQServer[] serverArray;
   private String serverPattern;
   private String serverSpread;
 
@@ -60,33 +60,33 @@ public class MongoServerFactoryBean implements FactoryBean<MongoServer[]>, Initi
 
     if ((serverPattern != null) && (serverPattern.length() > 0)) {
 
-      LinkedList<MongoServer> serverList = new LinkedList<>();
+      LinkedList<RabbitMQServer> serverList = new LinkedList<>();
       int colonPos = serverPattern.indexOf(':');
       int poundPos;
 
       if ((poundPos = serverPattern.indexOf('#')) < 0) {
         if (colonPos >= 0) {
-          serverList.add(new MongoServer(serverPattern.substring(0, colonPos), Integer.parseInt(serverPattern.substring(colonPos + 1))));
+          serverList.add(new RabbitMQServer(serverPattern.substring(0, colonPos), Integer.parseInt(serverPattern.substring(colonPos + 1))));
         } else {
-          serverList.add(new MongoServer(serverPattern, 27017));
+          serverList.add(new RabbitMQServer(serverPattern, 5672));
         }
       } else {
         for (String serverDesignator : Spread.calculate(serverSpread)) {
           if (colonPos >= 0) {
-            serverList.add(new MongoServer(serverPattern.substring(0, poundPos) + serverDesignator + serverPattern.substring(poundPos + 1, colonPos), Integer.parseInt(serverPattern.substring(colonPos + 1))));
+            serverList.add(new RabbitMQServer(serverPattern.substring(0, poundPos) + serverDesignator + serverPattern.substring(poundPos + 1, colonPos), Integer.parseInt(serverPattern.substring(colonPos + 1))));
           } else {
-            serverList.add(new MongoServer(serverPattern.substring(0, poundPos) + serverDesignator + serverPattern.substring(poundPos + 1), 27017));
+            serverList.add(new RabbitMQServer(serverPattern.substring(0, poundPos) + serverDesignator + serverPattern.substring(poundPos + 1), 5672));
           }
         }
       }
 
-      serverArray = new MongoServer[serverList.size()];
+      serverArray = new RabbitMQServer[serverList.size()];
       serverList.toArray(serverArray);
     }
   }
 
   @Override
-  public MongoServer[] getObject () {
+  public RabbitMQServer[] getObject () {
 
     return serverArray;
   }
@@ -94,7 +94,7 @@ public class MongoServerFactoryBean implements FactoryBean<MongoServer[]>, Initi
   @Override
   public Class<?> getObjectType () {
 
-    return MongoServer[].class;
+    return RabbitMQServer[].class;
   }
 
   @Override

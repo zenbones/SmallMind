@@ -37,6 +37,18 @@ public class RabbitMQServer {
   private String host;
   private int port = 5672;
 
+  public RabbitMQServer (String host) {
+
+    this.host = host;
+  }
+
+  public RabbitMQServer (String host, int port) {
+
+    this(host);
+
+    this.port = port;
+  }
+
   public String getHost () {
 
     return host;
