@@ -39,6 +39,7 @@ import org.glassfish.hk2.utilities.binding.AbstractBinder;
 import org.glassfish.jersey.internal.inject.Bindings;
 import org.glassfish.jersey.server.ContainerRequest;
 import org.glassfish.jersey.server.internal.inject.ParamInjectionResolver;
+import org.glassfish.jersey.server.internal.process.RequestProcessingContextReference;
 import org.glassfish.jersey.server.model.Parameter;
 import org.glassfish.jersey.server.spi.internal.ValueParamProvider;
 
@@ -71,10 +72,15 @@ final class EntityParamValueParamProvider implements ValueParamProvider {
     protected void configure () {
 
       Provider<ContainerRequest> requestProvider = createManagedInstanceProvider(ContainerRequest.class);
+      EntityParamValueParamProvider valueParamProvider = new EntityParamValueParamProvider();
 
-      EntityParamValueParamProvider valueSupplier = new EntityParamValueParamProvider();
-      bind(Bindings.service(valueSupplier).to(ValueParamProvider.class));
-      bind(Bindings.injectionResolver(new ParamInjectionResolver<>(valueSupplier, EntityParam.class, requestProvider)));
+      Provider<ContainerRequest> request = () -> {
+        RequestProcessingContextReference reference = injectionManager.getInstance(RequestProcessingContextReference.class);
+        return reference.get().request();
+      };
+
+      bind(Bindings.service(valueParamProvider).to(ValueParamProvider.class));
+      bind(Bindings.injectionResolver(new ParamInjectionResolver<>(valueParamProvider, EntityParam.class, requestProvider)));
     }
   }
 }

@@ -1,40 +1,9 @@
-/*
- * Copyright (c) 2007, 2008, 2009, 2010, 2011, 2012, 2013, 2014, 2015, 2016, 2017 David Berkman
- * 
- * This file is part of the SmallMind Code Project.
- * 
- * The SmallMind Code Project is free software, you can redistribute
- * it and/or modify it under either, at your discretion...
- * 
- * 1) The terms of GNU Affero General Public License as published by the
- * Free Software Foundation, either version 3 of the License, or (at
- * your option) any later version.
- * 
- * ...or...
- * 
- * 2) The terms of the Apache License, Version 2.0.
- * 
- * The SmallMind Code Project is distributed in the hope that it will
- * be useful, but WITHOUT ANY WARRANTY; without even the implied warranty
- * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
- * General Public License or Apache License for more details.
- * 
- * You should have received a copy of the GNU Affero General Public License
- * and the Apache License along with the SmallMind Code Project. If not, see
- * <http://www.gnu.org/licenses/> or <http://www.apache.org/licenses/LICENSE-2.0>.
- * 
- * Additional permission under the GNU Affero GPL version 3 section 7
- * ------------------------------------------------------------------
- * If you modify this Program, or any covered work, by linking or
- * combining it with other code, such other code is not for that reason
- * alone subject to any of the requirements of the GNU Affero GPL
- * version 3.
- */
 package org.smallmind.web.jersey.ssl;
 
 import java.net.URI;
 import java.security.AccessController;
 import java.util.HashMap;
+import java.util.IdentityHashMap;
 import java.util.Map;
 import java.util.Properties;
 import java.util.concurrent.atomic.AtomicReference;
@@ -53,192 +22,387 @@ import org.glassfish.jersey.internal.util.ReflectionHelper;
 import org.glassfish.jersey.logging.LoggingFeature;
 import org.glassfish.jersey.test.DeploymentContext;
 import org.glassfish.jersey.test.JerseyTest;
+import org.glassfish.jersey.test.TestProperties;
 import org.glassfish.jersey.test.spi.TestContainer;
 import org.glassfish.jersey.test.spi.TestContainerException;
 import org.glassfish.jersey.test.spi.TestContainerFactory;
+import org.junit.After;
+import org.junit.Before;
 
-public class SSLJerseyTest {
+/*
+  @Override
+  protected Client getClient ()
+    throws NoSuchAlgorithmException, KeyManagementException {
+
+    SSLContext ctx = SSLContext.getInstance("TLS");
+
+    ctx.init(null, new TrustManager[] {new NaiveTrustManager()}, new SecureRandom());
+
+    HttpsURLConnection.setDefaultSSLSocketFactory(ctx.getSocketFactory());
+
+    ClientBuilder clientBuilder = ClientBuilder.newBuilder();
+
+      clientBuilder.sslContext(ctx);
+      clientBuilder.hostnameVerifier(new NaiveHostNameVerifier());
+
+
+    JERSEY_HTTPS_CLIENT = clientBuilder
+                            .withConfig(new ClientConfig())
+                            .register(JacksonFeature.class).build();
+  }
+ */
+
+public abstract class SSLJerseyTest {
 
   private static final Logger LOGGER = Logger.getLogger(JerseyTest.class.getName());
+
+  /**
+   * Holds the test container factory class to be used for running the tests by default
+   * (if testContainerFactory has not been set).
+   * This static field is initialized in {@link #getDefaultTestContainerFactory()} method
+   * and is reused by any instances of {@code JerseyTest} that are subsequently run.
+   * This is done to optimize the number of TestContainerFactory service provider look-ups
+   * and class loading.
+   */
   private static Class<? extends TestContainerFactory> defaultTestContainerFactoryClass;
+
+  /**
+   * Configured deployment context for the tested application.
+   */
   private final DeploymentContext context;
-  private final AtomicReference<Client> client = new AtomicReference((Object)null);
-  private final Map<String, String> propertyMap = new HashMap();
-  private final Map<String, String> forcedPropertyMap = new HashMap();
+  private final AtomicReference<Client> client = new AtomicReference<>(null);
+  /**
+   * JerseyTest property bag that can be used to configure the test behavior.
+   * These properties can be overridden with a system property.
+   */
+  private final Map<String, String> propertyMap = new HashMap<>();
+  /**
+   * JerseyTest forced property bag that can be used to configure the test behavior.
+   * These property cannot be overridden with a system property.
+   */
+  private final Map<String, String> forcedPropertyMap = new HashMap<>();
+  private final Map<Logger, Level> logLevelMap = new IdentityHashMap<>();
+  /**
+   * The test container factory which creates an instance of the test container
+   * on which the tests would be run.
+   */
   private TestContainerFactory testContainerFactory;
+  /**
+   * The test container on which the tests would be run.
+   */
   private TestContainer testContainer;
 
+  /**
+   * Initialize JerseyTest instance.
+   * <p>
+   * This constructor can be used from an extending subclass.
+   * <p>
+   * When this constructor is used, the extending concrete subclass must implement one of the
+   * {@link #configure()} or {@link #configureDeployment()} methods to provide the tested application
+   * configuration and deployment context.
+   * </p>
+   */
   public SSLJerseyTest () {
-
-    this.context = this.configureDeployment();
-    this.testContainerFactory = this.getTestContainerFactory();
+    // Note: this must be the first call in the constructor to allow setting config
+    // properties (especially around logging) in the configure() or configureDeployment()
+    // method overridden in subclass, otherwise the properties set in the subclass would
+    // not be set soon enough
+    this.context = configureDeployment();
+    this.testContainerFactory = getTestContainerFactory();
   }
 
-  public SSLJerseyTest (TestContainerFactory testContainerFactory) {
-
-    this.context = this.configureDeployment();
+  /**
+   * Initialize JerseyTest instance and specify the test container factory to be used by this test.
+   * <p>
+   * This constructor can be used from an extending subclass.
+   * <p>
+   * When this constructor is used, the extending concrete subclass must implement one of the
+   * {@link #configure()} or {@link #configureDeployment()} methods to provide the tested application
+   * configuration and deployment context.
+   * </p>
+   *
+   * @param testContainerFactory the test container factory to use for testing.
+   */
+  public SSLJerseyTest (final TestContainerFactory testContainerFactory) {
+    // Note: this must be the first call in the constructor to allow setting config
+    // properties (especially around logging) in the configure() or configureDeployment()
+    // method overridden in subclass, otherwise the properties set in the subclass would
+    // not be set soon enough
+    this.context = configureDeployment();
     this.testContainerFactory = testContainerFactory;
   }
 
-  public SSLJerseyTest (Application jaxrsApplication) {
+  /**
+   * Initialize JerseyTest instance.
+   * <p>
+   * This constructor can be used from an extending subclass.
+   * <p>
+   * When this constructor is used, the extending concrete subclass must implement one of the
+   * {@link #configure()} or {@link #configureDeployment()} methods are ignored.
+   * </p>
+   * <p>
+   * Please note that when this constructor is used, recording of startup logs as well as configuring
+   * other {@code JerseyTest} properties and features may not work properly. While using this constructor
+   * should generally be avoided, in certain scenarios it may be necessary to use this constructor.
+   * (E.g. when running parameterized tests in which application is created based on test parameters
+   * passed in by JUnit framework via test constructor - in such case it is not possible to propagate
+   * the necessary information to one of the overridden {@code JerseyTest.configure...} methods).
+   * </p>
+   *
+   * @param jaxrsApplication tested application.
+   */
+  public SSLJerseyTest (final Application jaxrsApplication) {
 
     this.context = DeploymentContext.newInstance(jaxrsApplication);
-    this.testContainerFactory = this.getTestContainerFactory();
+    this.testContainerFactory = getTestContainerFactory();
   }
 
-  private static String getSystemProperty (String propertyName) {
+  private static String getSystemProperty (final String propertyName) {
 
-    Properties systemProperties = (Properties)AccessController.doPrivileged(PropertiesHelper.getSystemProperties());
+    final Properties systemProperties = AccessController.doPrivileged(PropertiesHelper.getSystemProperties());
     return systemProperties.getProperty(propertyName);
   }
 
   private static synchronized TestContainerFactory getDefaultTestContainerFactory () {
 
     if (defaultTestContainerFactoryClass == null) {
-      String factoryClassName = getSystemProperty("jersey.config.test.container.factory");
+      final String factoryClassName = getSystemProperty(TestProperties.CONTAINER_FACTORY);
       if (factoryClassName != null) {
-        LOGGER.log(Level.CONFIG, "Loading test container factory '{0}' specified in the '{1}' system property.", new Object[] {factoryClassName, "jersey.config.test.container.factory"});
+        LOGGER.log(Level.CONFIG,
+          "Loading test container factory '{0}' specified in the '{1}' system property.",
+          new Object[] {factoryClassName, TestProperties.CONTAINER_FACTORY});
+
         defaultTestContainerFactoryClass = loadFactoryClass(factoryClassName);
       } else {
-        TestContainerFactory[] factories = (TestContainerFactory[])ServiceFinder.find(TestContainerFactory.class).toArray();
+        final TestContainerFactory[] factories = ServiceFinder.find(TestContainerFactory.class).toArray();
         if (factories.length > 0) {
+          // if there is only one factory instance, just return it
           if (factories.length == 1) {
+            // cache the class for future reuse
             defaultTestContainerFactoryClass = factories[0].getClass();
-            LOGGER.log(Level.CONFIG, "Using the single found TestContainerFactory service provider '{0}'", defaultTestContainerFactoryClass.getName());
+            LOGGER.log(
+              Level.CONFIG,
+              "Using the single found TestContainerFactory service provider '{0}'",
+              defaultTestContainerFactoryClass.getName());
             return factories[0];
           }
 
-          TestContainerFactory[] var2 = factories;
-          int var3 = factories.length;
-
-          for (int var4 = 0; var4 < var3; ++var4) {
-            TestContainerFactory tcf = var2[var4];
-            if ("org.glassfish.jersey.test.grizzly.GrizzlyTestContainerFactory".equals(tcf.getClass().getName())) {
+          // if default factory is present, use it.
+          for (final TestContainerFactory tcf : factories) {
+            if (TestProperties.DEFAULT_CONTAINER_FACTORY.equals(tcf.getClass().getName())) {
+              // cache the class for future reuse
               defaultTestContainerFactoryClass = tcf.getClass();
-              LOGGER.log(Level.CONFIG, "Found multiple TestContainerFactory service providers, using the default found '{0}'", "org.glassfish.jersey.test.grizzly.GrizzlyTestContainerFactory");
+              LOGGER.log(
+                Level.CONFIG,
+                "Found multiple TestContainerFactory service providers, using the default found '{0}'",
+                TestProperties.DEFAULT_CONTAINER_FACTORY);
               return tcf;
             }
           }
 
+          // default factory is not in the list - log warning and return the first found factory instance
+          // cache the class for future reuse
           defaultTestContainerFactoryClass = factories[0].getClass();
-          LOGGER.log(Level.WARNING, "Found multiple TestContainerFactory service providers, using the first found '{0}'", defaultTestContainerFactoryClass.getName());
+          LOGGER.log(
+            Level.WARNING,
+            "Found multiple TestContainerFactory service providers, using the first found '{0}'",
+            defaultTestContainerFactoryClass.getName());
           return factories[0];
         }
 
-        LOGGER.log(Level.CONFIG, "No TestContainerFactory configured, trying to load and instantiate the default implementation '{0}'", "org.glassfish.jersey.test.grizzly.GrizzlyTestContainerFactory");
-        defaultTestContainerFactoryClass = loadFactoryClass("org.glassfish.jersey.test.grizzly.GrizzlyTestContainerFactory");
+        LOGGER.log(
+          Level.CONFIG,
+          "No TestContainerFactory configured, trying to load and instantiate the default implementation '{0}'",
+          TestProperties.DEFAULT_CONTAINER_FACTORY);
+        defaultTestContainerFactoryClass = loadFactoryClass(TestProperties.DEFAULT_CONTAINER_FACTORY);
       }
     }
 
     try {
-      return (TestContainerFactory)defaultTestContainerFactoryClass.newInstance();
-    } catch (Exception var6) {
-      throw new TestContainerException(String.format("Could not instantiate test container factory '%s'", defaultTestContainerFactoryClass.getName()), var6);
+      return defaultTestContainerFactoryClass.newInstance();
+    } catch (final Exception ex) {
+      throw new TestContainerException(String.format(
+        "Could not instantiate test container factory '%s'", defaultTestContainerFactoryClass.getName()), ex);
     }
   }
 
-  private static Class<? extends TestContainerFactory> loadFactoryClass (String factoryClassName) {
+  private static Class<? extends TestContainerFactory> loadFactoryClass (final String factoryClassName) {
 
-    Class<Object> loadedClass = (Class)AccessController.doPrivileged(ReflectionHelper.classForNamePA(factoryClassName, (ClassLoader)null));
+    Class<? extends TestContainerFactory> factoryClass;
+    final Class<Object> loadedClass = AccessController.doPrivileged(ReflectionHelper.classForNamePA(factoryClassName, null));
     if (loadedClass == null) {
-      throw new TestContainerException(String.format("Test container factory class '%s' cannot be loaded", factoryClassName));
-    } else {
+      throw new TestContainerException(String.format(
+        "Test container factory class '%s' cannot be loaded", factoryClassName));
+    }
+    try {
+      return loadedClass.asSubclass(TestContainerFactory.class);
+    } catch (final ClassCastException ex) {
+      throw new TestContainerException(String.format(
+        "Class '%s' does not implement TestContainerFactory SPI.", factoryClassName), ex);
+    }
+  }
+
+  /**
+   * Utility method that safely closes a client instance without throwing an exception.
+   *
+   * @param clients client instances to close. Each instance may be {@code null}.
+   * @since 2.5
+   */
+  public static void closeIfNotNull (final Client... clients) {
+
+    if (clients == null || clients.length == 0) {
+      return;
+    }
+
+    for (final Client c : clients) {
+      if (c == null) {
+        continue;
+      }
       try {
-        return loadedClass.asSubclass(TestContainerFactory.class);
-      } catch (ClassCastException var4) {
-        throw new TestContainerException(String.format("Class '%s' does not implement TestContainerFactory SPI.", factoryClassName), var4);
+        c.close();
+      } catch (final Throwable t) {
+        LOGGER.log(Level.WARNING, "Error closing a client instance.", t);
       }
     }
   }
 
-  public static void closeIfNotNull (Client... clients) {
+  /**
+   * Return currently used test container to run the tests in. This method can be overridden.
+   *
+   * @return a test container instance or {@code null} if the container is not set.
+   */
+  /* package */ TestContainer getTestContainer () {
 
-    if (clients != null && clients.length != 0) {
-      Client[] var1 = clients;
-      int var2 = clients.length;
-
-      for (int var3 = 0; var3 < var2; ++var3) {
-        Client c = var1[var3];
-        if (c != null) {
-          try {
-            c.close();
-          } catch (Throwable var6) {
-            LOGGER.log(Level.WARNING, "Error closing a client instance.", var6);
-          }
-        }
-      }
-    }
+    return testContainer;
   }
 
-  TestContainer getTestContainer () {
+  /**
+   * Returns old test container used to run the tests in and set a new one. This method can be overridden.
+   *
+   * @param testContainer a test container instance or {@code null} it the current test container should be released.
+   * @return old test container instance.
+   */
+  /* package */ TestContainer setTestContainer (final TestContainer testContainer) {
 
-    return this.testContainer;
-  }
-
-  TestContainer setTestContainer (TestContainer testContainer) {
-
-    TestContainer old = this.testContainer;
+    final TestContainer old = this.testContainer;
     this.testContainer = testContainer;
     return old;
   }
 
-  private TestContainer createTestContainer (DeploymentContext context) {
+  private TestContainer createTestContainer (final DeploymentContext context) {
 
-    return this.getTestContainerFactory().create(this.getBaseUri(), context);
+    return getTestContainerFactory().create(getBaseUri(), context);
   }
 
-  protected final void enable (String featureName) {
-
-    this.propertyMap.put(featureName, Boolean.TRUE.toString());
+  /**
+   * Programmatically enable a feature with a given name.
+   * Enabling of the feature may be overridden via a system property.
+   *
+   * @param featureName name of the enabled feature.
+   */
+  protected final void enable (final String featureName) {
+    // TODO: perhaps we could reuse the resource config for the test properties?
+    propertyMap.put(featureName, Boolean.TRUE.toString());
   }
 
-  protected final void disable (String featureName) {
+  /**
+   * Programmatically disable a feature with a given name.
+   * Disabling of the feature may be overridden via a system property.
+   *
+   * @param featureName name of the disabled feature.
+   */
+  protected final void disable (final String featureName) {
 
-    this.propertyMap.put(featureName, Boolean.FALSE.toString());
+    propertyMap.put(featureName, Boolean.FALSE.toString());
   }
 
-  protected final void forceEnable (String featureName) {
+  /**
+   * Programmatically force-enable a feature with a given name.
+   * Force-enabling of the feature cannot be overridden via a system property.
+   * Use with care!
+   *
+   * @param featureName name of the force-enabled feature.
+   */
+  protected final void forceEnable (final String featureName) {
 
-    this.forcedPropertyMap.put(featureName, Boolean.TRUE.toString());
+    forcedPropertyMap.put(featureName, Boolean.TRUE.toString());
   }
 
-  protected final void forceDisable (String featureName) {
+  /**
+   * Programmatically force-disable a feature with a given name.
+   * Force-disabling of the feature cannot be overridden via a system property.
+   * Use with care!
+   *
+   * @param featureName name of the force-disabled feature.
+   */
+  protected final void forceDisable (final String featureName) {
 
-    this.forcedPropertyMap.put(featureName, Boolean.FALSE.toString());
+    forcedPropertyMap.put(featureName, Boolean.FALSE.toString());
   }
 
-  protected final void set (String propertyName, Object value) {
+  /**
+   * Programmatically set a value of a property with a given name.
+   * The property value may be overridden via a system property.
+   *
+   * @param propertyName name of the property.
+   * @param value        property value.
+   */
+  protected final void set (final String propertyName, final Object value) {
 
-    this.set(propertyName, value.toString());
+    set(propertyName, value.toString());
   }
 
-  protected final void set (String propertyName, String value) {
+  /**
+   * Programmatically set a value of a property with a given name.
+   * The property value may be overridden via a system property.
+   *
+   * @param propertyName name of the property.
+   * @param value        property value.
+   */
+  protected final void set (final String propertyName, final String value) {
 
-    this.propertyMap.put(propertyName, value);
+    propertyMap.put(propertyName, value);
   }
 
-  protected final void forceSet (String propertyName, String value) {
+  /**
+   * Programmatically force-set a value of a property with a given name.
+   * The force-set property value cannot be overridden via a system property.
+   *
+   * @param propertyName name of the property.
+   * @param value        property value.
+   */
+  protected final void forceSet (final String propertyName, final String value) {
 
-    this.forcedPropertyMap.put(propertyName, value);
+    forcedPropertyMap.put(propertyName, value);
   }
 
-  protected final boolean isEnabled (String propertyName) {
+  /**
+   * Check if the Jersey test boolean property (flag) has been set to {@code true}.
+   *
+   * @param propertyName name of the Jersey test boolean property.
+   * @return {@code true} if the test property has been enabled, {@code false} otherwise.
+   */
+  protected final boolean isEnabled (final String propertyName) {
 
-    return Boolean.valueOf(this.getProperty(propertyName));
+    return Boolean.valueOf(getProperty(propertyName));
   }
 
-  private String getProperty (String propertyName) {
+  private String getProperty (final String propertyName) {
 
-    if (this.forcedPropertyMap.containsKey(propertyName)) {
-      return this.forcedPropertyMap.get(propertyName);
-    } else {
-      Properties systemProperties = AccessController.doPrivileged(PropertiesHelper.getSystemProperties());
-      if (systemProperties.containsKey(propertyName)) {
-        return systemProperties.getProperty(propertyName);
-      } else {
-        return this.propertyMap.containsKey(propertyName) ? this.propertyMap.get(propertyName) : null;
-      }
+    if (forcedPropertyMap.containsKey(propertyName)) {
+      return forcedPropertyMap.get(propertyName);
     }
+
+    final Properties systemProperties = AccessController.doPrivileged(PropertiesHelper.getSystemProperties());
+    if (systemProperties.containsKey(propertyName)) {
+      return systemProperties.getProperty(propertyName);
+    }
+
+    if (propertyMap.containsKey(propertyName)) {
+      return propertyMap.get(propertyName);
+    }
+
+    return null;
   }
 
   protected Application configure () {
@@ -248,62 +412,123 @@ public class SSLJerseyTest {
 
   protected DeploymentContext configureDeployment () {
 
-    return DeploymentContext.builder(this.configure()).build();
+    return DeploymentContext.builder(configure()).build();
   }
 
   protected TestContainerFactory getTestContainerFactory () throws TestContainerException {
 
-    if (this.testContainerFactory == null) {
-      this.testContainerFactory = getDefaultTestContainerFactory();
+    if (testContainerFactory == null) {
+      testContainerFactory = getDefaultTestContainerFactory();
     }
-
-    return this.testContainerFactory;
+    return testContainerFactory;
   }
 
+  /**
+   * Create a JAX-RS web target whose URI refers to the {@link #getBaseUri() base URI} the tested
+   * JAX-RS / Jersey application is deployed at, plus the path specified in the {@code path} argument.
+   * <p>
+   * This method is an equivalent of calling <tt>client().target(getBaseUri())</tt>.
+   * </p>
+   *
+   * @return the created JAX-RS web target.
+   */
   public final WebTarget target () {
 
-    return this.client().target(this.getTestContainer().getBaseUri());
+    return client().target(getTestContainer().getBaseUri());
   }
 
-  public final WebTarget target (String path) {
+  /**
+   * Create a JAX-RS web target whose URI refers to the {@link #getBaseUri() base URI} the tested
+   * JAX-RS / Jersey application is deployed at, plus the path specified in the {@code path} argument.
+   * <p>
+   * This method is an equivalent of calling {@code target().path(path)}.
+   * </p>
+   *
+   * @param path relative path (from tested application base URI) this web target should point to.
+   * @return the created JAX-RS web target.
+   */
+  public final WebTarget target (final String path) {
 
-    return this.target().path(path);
+    return target().path(path);
   }
 
+  /**
+   * Get the JAX-RS test client that is {@link #configureClient(org.glassfish.jersey.client.ClientConfig) pre-configured}
+   * for this test.
+   *
+   * @return the configured test client.
+   */
   public final Client client () {
 
-    return this.getClient();
+    return getClient();
   }
 
+  /**
+   * Set up the test by creating a test container instance, {@link TestContainer#start() starting} it and by creating a new
+   * {@link #configureClient(org.glassfish.jersey.client.ClientConfig) pre-configured} test client.
+   * The test container is obtained from the {@link #getTestContainerFactory() test container factory}.
+   *
+   * @throws TestContainerException if the default test container factory cannot be obtained,
+   *                                or the test application deployment context is not supported
+   *                                by the test container factory.
+   * @throws Exception              if an exception is thrown during setting up the test environment.
+   */
+  @Before
   public void setUp () throws Exception {
 
-    TestContainer testContainer = this.createTestContainer(this.context);
-    this.setTestContainer(testContainer);
+    final TestContainer testContainer = createTestContainer(context);
+
+    // Set current instance of test container and start it.
+    setTestContainer(testContainer);
     testContainer.start();
-    this.setClient(this.getClient(testContainer.getClientConfig()));
+
+    // Create an set new client.
+    setClient(getClient(testContainer.getClientConfig()));
   }
 
+  /**
+   * Tear down the test by {@link TestContainer#stop() stopping} the test container obtained from the
+   * {@link #getTestContainerFactory() test container factory} and by {@link javax.ws.rs.client.Client#close() closing}
+   * and discarding the {@link #configureClient(org.glassfish.jersey.client.ClientConfig) pre-configured} test client
+   * that was {@link #setUp() set up} for the test.
+   *
+   * @throws Exception if an exception is thrown during tearing down the test environment.
+   */
+  @After
   public void tearDown () throws Exception {
 
     try {
-      TestContainer oldContainer = this.setTestContainer((TestContainer)null);
+      TestContainer oldContainer = setTestContainer(null);
       if (oldContainer != null) {
         oldContainer.stop();
       }
     } finally {
-      closeIfNotNull(this.setClient((Client)null));
+      closeIfNotNull(setClient(null));
     }
   }
 
+  /**
+   * Get the JAX-RS test client that is {@link #configureClient(org.glassfish.jersey.client.ClientConfig) pre-configured}
+   * for this test. This method can be overridden.
+   *
+   * @return the configured test client.
+   */
   protected Client getClient () {
 
-    return (Client)this.client.get();
+    return client.get();
   }
 
-  protected Client setClient (Client client) {
+  /**
+   * Get the old JAX-RS test client and set a new one. This method can be overridden.
+   *
+   * @param client the configured test client.
+   * @return old configured test client.
+   */
+  protected Client setClient (final Client client) {
 
-    return (Client)this.client.getAndSet(client);
+    return this.client.getAndSet(client);
   }
+
 
   private Client getClient (ClientConfig clientConfig) {
 
@@ -311,63 +536,97 @@ public class SSLJerseyTest {
       clientConfig = new ClientConfig();
     }
 
-    if (this.isEnabled("jersey.config.test.logging.enable")) {
-      clientConfig.register(new LoggingFeature(LOGGER, this.isEnabled("jersey.config.test.logging.dumpEntity") ? LoggingFeature.Verbosity.PAYLOAD_ANY : LoggingFeature.Verbosity.HEADERS_ONLY));
+    //check if logging is required
+    if (isEnabled(TestProperties.LOG_TRAFFIC)) {
+      clientConfig.register(new LoggingFeature(LOGGER, isEnabled(TestProperties.DUMP_ENTITY)
+                                                         ? LoggingFeature.Verbosity.PAYLOAD_ANY
+                                                         : LoggingFeature.Verbosity.HEADERS_ONLY));
     }
 
-    this.configureClient(clientConfig);
+    configureClient(clientConfig);
+
     return ClientBuilder.newClient(clientConfig);
   }
 
-  protected void configureClient (ClientConfig config) {
-
+  protected void configureClient (final ClientConfig config) {
+    // do nothing
   }
 
+  /**
+   * Returns the base URI of the tested application.
+   *
+   * @return the base URI of the tested application.
+   */
+  // TODO make final
   protected URI getBaseUri () {
 
-    TestContainer container = this.getTestContainer();
-    return container != null ? container.getBaseUri() : UriBuilder.fromUri("http://localhost/").port(this.getPort()).build(new Object[0]);
+    final TestContainer container = getTestContainer();
+
+    if (container != null) {
+      // called from outside of JerseyTest constructor
+      return container.getBaseUri();
+    }
+
+    // called from within JerseyTest constructor
+    return UriBuilder.fromUri("http://localhost/").port(getPort()).build();
   }
 
+  /**
+   * Get the port to be used for test application deployments.
+   *
+   * @return The HTTP port of the URI
+   */
   protected final int getPort () {
 
-    TestContainer container = this.getTestContainer();
+    final TestContainer container = getTestContainer();
+
     if (container != null) {
+      // called from outside of JerseyTest constructor
       return container.getBaseUri().getPort();
-    } else {
-      String value = this.getProperty("jersey.config.test.container.port");
-      if (value != null) {
-        try {
-          int i = Integer.parseInt(value);
-          if (i < 0) {
-            throw new NumberFormatException("Value not positive.");
-          }
-
-          return i;
-        } catch (NumberFormatException var4) {
-          LOGGER.log(Level.CONFIG, "Value of jersey.config.test.container.port property is not a valid positive integer [" + value + "]. Reverting to default [" + 9998 + "].", var4);
-        }
-      }
-
-      return 9998;
     }
+
+    // called from within JerseyTest constructor
+    final String value = getProperty(TestProperties.CONTAINER_PORT);
+    if (value != null) {
+
+      try {
+        final int i = Integer.parseInt(value);
+        if (i < 0) {
+          throw new NumberFormatException("Value not positive.");
+        }
+        return i;
+      } catch (final NumberFormatException e) {
+        LOGGER.log(Level.CONFIG,
+          "Value of " + TestProperties.CONTAINER_PORT
+            + " property is not a valid positive integer [" + value + "]."
+            + " Reverting to default [" + TestProperties.DEFAULT_CONTAINER_PORT + "].",
+          e
+        );
+      }
+    }
+    return TestProperties.DEFAULT_CONTAINER_PORT;
   }
 
-  public final void close (Response... responses) {
+  /**
+   * Utility method that safely closes a response without throwing an exception.
+   *
+   * @param responses responses to close. Each response may be {@code null}.
+   * @since 2.5
+   */
+  public final void close (final Response... responses) {
 
-    if (responses != null && responses.length != 0) {
-      Response[] var2 = responses;
-      int var3 = responses.length;
+    if (responses == null || responses.length == 0) {
+      return;
+    }
 
-      for (int var4 = 0; var4 < var3; ++var4) {
-        Response response = var2[var4];
-        if (response != null) {
-          try {
-            response.close();
-          } catch (Throwable var7) {
-            LOGGER.log(Level.WARNING, "Error closing a response.", var7);
-          }
-        }
+    for (final Response response : responses) {
+      if (response == null) {
+        continue;
+      }
+      try {
+        response.close();
+      } catch (final Throwable t) {
+        LOGGER.log(Level.WARNING, "Error closing a response.", t);
       }
     }
   }
