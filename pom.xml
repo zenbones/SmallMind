@@ -95,12 +95,13 @@
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <maven.version>3.5.3</maven.version>
     <aether.version>1.1.0</aether.version>
-    <grizzly.version>2.4.0</grizzly.version>
+    <grizzly.version>2.4.3</grizzly.version>
     <hornetq.version>2.4.5.Final</hornetq.version>
-    <hk2.version>2.5.0-b43</hk2.version>
+    <hk2.version>2.5.0-b61</hk2.version>
     <jackson.version>2.9.5</jackson.version>
     <jersey.version>2.27</jersey.version>
-    <spring.version>4.3.8.RELEASE</spring.version>
+    <spring.version>5.0.6.RELEASE</spring.version>
+    <!-- <spring.version>4.3.8.RELEASE</spring.version> -->
     <querydsl.version>4.2.1</querydsl.version>
   </properties>
 
@@ -749,7 +750,7 @@
       <dependency>
         <groupId>javax.ws.rs</groupId>
         <artifactId>javax.ws.rs-api</artifactId>
-        <version>2.0.1</version>
+        <version>2.1</version>
       </dependency>
       <dependency>
         <groupId>org.glassfish.hk2</groupId>

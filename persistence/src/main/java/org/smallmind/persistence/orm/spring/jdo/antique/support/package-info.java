@@ -30,18 +30,8 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.web.jersey.aop;
+/**
+ * Classes supporting the {@code org.smallmind.persistence.orm.spring.jdo.antique} package.
+ */
+package org.smallmind.persistence.orm.spring.jdo.antique.support;
 
-import org.glassfish.jersey.server.ResourceConfig;
-import org.smallmind.web.jersey.spring.ResourceConfigExtension;
-
-public class EntityParamResourceConfigExtension extends ResourceConfigExtension {
-
-  @Override
-  public void apply (ResourceConfig resourceConfig) {
-
-    resourceConfig.register(ResourceMethodContainerFilter.class);
-    resourceConfig.register(EntityAwareValidationConfigurationContextResolver.class);
-    resourceConfig.register(new EntityParamResolver2.EntityParamInjectionResolverBinder());
-  }
-}

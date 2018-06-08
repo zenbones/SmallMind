@@ -30,18 +30,30 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.web.jersey.aop;
+package org.smallmind.persistence.orm.spring.jdo.antique;
 
-import org.glassfish.jersey.server.ResourceConfig;
-import org.smallmind.web.jersey.spring.ResourceConfigExtension;
+import javax.jdo.JDODataStoreException;
+import javax.jdo.JDOFatalDataStoreException;
 
-public class EntityParamResourceConfigExtension extends ResourceConfigExtension {
+import org.springframework.dao.DataAccessResourceFailureException;
 
-  @Override
-  public void apply (ResourceConfig resourceConfig) {
+/**
+ * JDO-specific subclass of DataAccessResourceFailureException.
+ * Converts JDO's JDODataStoreException and JDOFatalDataStoreException.
+ *
+ * @author Juergen Hoeller
+ * @since 1.1
+ * @see PersistenceManagerFactoryUtils#convertJdoAccessException
+ */
+@SuppressWarnings("serial")
+public class JdoResourceFailureException extends DataAccessResourceFailureException {
 
-    resourceConfig.register(ResourceMethodContainerFilter.class);
-    resourceConfig.register(EntityAwareValidationConfigurationContextResolver.class);
-    resourceConfig.register(new EntityParamResolver2.EntityParamInjectionResolverBinder());
-  }
+	public JdoResourceFailureException(JDODataStoreException ex) {
+		super(ex.getMessage(), ex);
+	}
+
+	public JdoResourceFailureException(JDOFatalDataStoreException ex) {
+		super(ex.getMessage(), ex);
+	}
+
 }

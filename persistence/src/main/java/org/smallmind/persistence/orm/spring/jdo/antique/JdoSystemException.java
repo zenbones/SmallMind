@@ -30,18 +30,26 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.web.jersey.aop;
+package org.smallmind.persistence.orm.spring.jdo.antique;
 
-import org.glassfish.jersey.server.ResourceConfig;
-import org.smallmind.web.jersey.spring.ResourceConfigExtension;
+import javax.jdo.JDOException;
 
-public class EntityParamResourceConfigExtension extends ResourceConfigExtension {
+import org.springframework.dao.UncategorizedDataAccessException;
 
-  @Override
-  public void apply (ResourceConfig resourceConfig) {
+/**
+ * JDO-specific subclass of UncategorizedDataAccessException,
+ * for JDO system errors that do not match any concrete
+ * {@code org.springframework.dao} exceptions.
+ *
+ * @author Juergen Hoeller
+ * @since 03.06.2003
+ * @see PersistenceManagerFactoryUtils#convertJdoAccessException
+ */
+@SuppressWarnings("serial")
+public class JdoSystemException extends UncategorizedDataAccessException {
 
-    resourceConfig.register(ResourceMethodContainerFilter.class);
-    resourceConfig.register(EntityAwareValidationConfigurationContextResolver.class);
-    resourceConfig.register(new EntityParamResolver2.EntityParamInjectionResolverBinder());
-  }
+	public JdoSystemException(JDOException ex) {
+		super(ex.getMessage(), ex);
+	}
+
 }

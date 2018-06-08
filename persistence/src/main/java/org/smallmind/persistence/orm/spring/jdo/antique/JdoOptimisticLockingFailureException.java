@@ -30,18 +30,29 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.web.jersey.aop;
+package org.smallmind.persistence.orm.spring.jdo.antique;
 
-import org.glassfish.jersey.server.ResourceConfig;
-import org.smallmind.web.jersey.spring.ResourceConfigExtension;
+import javax.jdo.JDOHelper;
+import javax.jdo.JDOOptimisticVerificationException;
 
-public class EntityParamResourceConfigExtension extends ResourceConfigExtension {
+import org.springframework.orm.ObjectOptimisticLockingFailureException;
 
-  @Override
-  public void apply (ResourceConfig resourceConfig) {
+/**
+ * JDO-specific subclass of ObjectOptimisticLockingFailureException.
+ * Converts JDO's JDOOptimisticVerificationException.
+ *
+ * @author Juergen Hoeller
+ * @since 1.1
+ * @see PersistenceManagerFactoryUtils#convertJdoAccessException
+ */
+@SuppressWarnings("serial")
+public class JdoOptimisticLockingFailureException extends ObjectOptimisticLockingFailureException {
 
-    resourceConfig.register(ResourceMethodContainerFilter.class);
-    resourceConfig.register(EntityAwareValidationConfigurationContextResolver.class);
-    resourceConfig.register(new EntityParamResolver2.EntityParamInjectionResolverBinder());
-  }
+	public JdoOptimisticLockingFailureException(JDOOptimisticVerificationException ex) {
+		// Extract information about the failed object from the JDOException, if available.
+		super((ex.getFailedObject() != null ? ex.getFailedObject().getClass() : null),
+				(ex.getFailedObject() != null ? JDOHelper.getObjectId(ex.getFailedObject()) : null),
+				ex.getMessage(), ex);
+	}
+
 }

@@ -30,18 +30,54 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.web.jersey.aop;
+package org.smallmind.persistence.orm.spring.jdo.antique;
 
-import org.glassfish.jersey.server.ResourceConfig;
-import org.smallmind.web.jersey.spring.ResourceConfigExtension;
+import javax.jdo.PersistenceManager;
 
-public class EntityParamResourceConfigExtension extends ResourceConfigExtension {
+import org.springframework.transaction.support.ResourceHolderSupport;
+import org.springframework.util.Assert;
 
-  @Override
-  public void apply (ResourceConfig resourceConfig) {
+/**
+ * Holder wrapping a JDO PersistenceManager.
+ * JdoTransactionManager binds instances of this class
+ * to the thread, for a given PersistenceManagerFactory.
+ *
+ * <p>Note: This is an SPI class, not intended to be used by applications.
+ *
+ * @author Juergen Hoeller
+ * @since 03.06.2003
+ * @see JdoTransactionManager
+ * @see PersistenceManagerFactoryUtils
+ */
+public class PersistenceManagerHolder extends ResourceHolderSupport {
 
-    resourceConfig.register(ResourceMethodContainerFilter.class);
-    resourceConfig.register(EntityAwareValidationConfigurationContextResolver.class);
-    resourceConfig.register(new EntityParamResolver2.EntityParamInjectionResolverBinder());
-  }
+	private final PersistenceManager persistenceManager;
+
+	private boolean transactionActive;
+
+
+	public PersistenceManagerHolder(PersistenceManager persistenceManager) {
+		Assert.notNull(persistenceManager, "PersistenceManager must not be null");
+		this.persistenceManager = persistenceManager;
+	}
+
+
+	public PersistenceManager getPersistenceManager() {
+		return this.persistenceManager;
+	}
+
+	protected void setTransactionActive(boolean transactionActive) {
+		this.transactionActive = transactionActive;
+	}
+
+	protected boolean isTransactionActive() {
+		return this.transactionActive;
+	}
+
+	@Override
+	public void clear() {
+		super.clear();
+		this.transactionActive = false;
+	}
+
 }

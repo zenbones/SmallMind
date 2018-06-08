@@ -30,18 +30,30 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.web.jersey.aop;
+package org.smallmind.persistence.orm.spring.jdo.antique;
 
-import org.glassfish.jersey.server.ResourceConfig;
-import org.smallmind.web.jersey.spring.ResourceConfigExtension;
+import javax.jdo.JDOFatalUserException;
+import javax.jdo.JDOUserException;
 
-public class EntityParamResourceConfigExtension extends ResourceConfigExtension {
+import org.springframework.dao.InvalidDataAccessApiUsageException;
 
-  @Override
-  public void apply (ResourceConfig resourceConfig) {
+/**
+ * JDO-specific subclass of InvalidDataAccessApiUsageException.
+ * Converts JDO's JDOUserException and JDOFatalUserException.
+ *
+ * @author Juergen Hoeller
+ * @since 03.06.2003
+ * @see PersistenceManagerFactoryUtils#convertJdoAccessException
+ */
+@SuppressWarnings("serial")
+public class JdoUsageException extends InvalidDataAccessApiUsageException {
 
-    resourceConfig.register(ResourceMethodContainerFilter.class);
-    resourceConfig.register(EntityAwareValidationConfigurationContextResolver.class);
-    resourceConfig.register(new EntityParamResolver2.EntityParamInjectionResolverBinder());
-  }
+	public JdoUsageException(JDOUserException ex) {
+		super(ex.getMessage(), ex);
+	}
+
+	public JdoUsageException(JDOFatalUserException ex) {
+		super(ex.getMessage(), ex);
+	}
+
 }
