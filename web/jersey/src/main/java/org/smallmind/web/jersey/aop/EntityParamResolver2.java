@@ -33,54 +33,60 @@
 package org.smallmind.web.jersey.aop;
 
 import java.util.function.Function;
+import javax.inject.Inject;
 import javax.inject.Provider;
 import javax.inject.Singleton;
+import org.glassfish.hk2.api.InjectionResolver;
+import org.glassfish.hk2.api.TypeLiteral;
 import org.glassfish.hk2.utilities.binding.AbstractBinder;
-import org.glassfish.jersey.internal.inject.Bindings;
 import org.glassfish.jersey.server.ContainerRequest;
 import org.glassfish.jersey.server.internal.inject.ParamInjectionResolver;
-import org.glassfish.jersey.server.internal.process.RequestProcessingContextReference;
 import org.glassfish.jersey.server.model.Parameter;
 import org.glassfish.jersey.server.spi.internal.ValueParamProvider;
 
-@Singleton
-final class EntityParamValueParamProvider implements ValueParamProvider {
+public class EntityParamResolver2 {
 
-  @Override
-  public PriorityType getPriority () {
+  private static class EntityParamValueParamProvider implements ValueParamProvider {
 
-    return Priority.NORMAL;
-  }
+    @Override
+    public PriorityType getPriority () {
 
-  @Override
-  public Function<ContainerRequest, ?> getValueProvider (Parameter parameter) {
-
-    Class<?> paramClass;
-    EntityParam entityParam;
-
-    if (((paramClass = parameter.getRawType()) == null) || ((entityParam = parameter.getAnnotation(EntityParam.class)) == null)) {
-
-      return null;
+      return Priority.NORMAL;
     }
 
-    return (containerRequest) -> EntityTranslator.getParameter(containerRequest, entityParam.value(), paramClass, new ParameterAnnotations(parameter.getAnnotations()));
+    @Override
+    public Function<ContainerRequest, ?> getValueProvider (Parameter parameter) {
+
+      Class<?> paramClass;
+      EntityParam entityParam;
+
+      if (((paramClass = parameter.getRawType()) == null) || ((entityParam = parameter.getAnnotation(EntityParam.class)) == null)) {
+
+        return null;
+      }
+
+      return (containerRequest) -> EntityTranslator.getParameter(containerRequest, entityParam.value(), paramClass, new ParameterAnnotations(parameter.getAnnotations()));
+    }
   }
 
-  public static class Binder extends AbstractBinder {
+  @Singleton
+  public static class EntityParamInjectionResolver extends ParamInjectionResolver<EntityParam> {
+
+    @Inject
+    public EntityParamInjectionResolver (Provider<ContainerRequest> request) {
+
+      super(new EntityParamValueParamProvider(), EntityParam.class, request);
+    }
+  }
+
+  private static class EntityParamInjectionResolverBinder extends AbstractBinder {
 
     @Override
     protected void configure () {
 
-      Provider<ContainerRequest> requestProvider = createManagedInstanceProvider(ContainerRequest.class);
-      EntityParamValueParamProvider valueParamProvider = new EntityParamValueParamProvider();
+      bind(EntityParamInjectionResolver.class).to(new TypeLiteral<InjectionResolver<EntityParam>>() {
 
-      Provider<ContainerRequest> request = () -> {
-        RequestProcessingContextReference reference = injectionManager.getInstance(RequestProcessingContextReference.class);
-        return reference.get().request();
-      };
-
-      bind(Bindings.service(valueParamProvider).to(ValueParamProvider.class));
-      bind(Bindings.injectionResolver(new ParamInjectionResolver<>(valueParamProvider, EntityParam.class, requestProvider)));
+      }).in(Singleton.class);
     }
   }
 }
