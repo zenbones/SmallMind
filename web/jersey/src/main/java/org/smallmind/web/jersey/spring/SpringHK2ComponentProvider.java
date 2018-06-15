@@ -48,7 +48,7 @@ import org.springframework.context.ApplicationContext;
 import org.springframework.core.annotation.AnnotationUtils;
 import org.springframework.stereotype.Component;
 
-public class SpringComponentProvider implements ComponentProvider {
+public class SpringHK2ComponentProvider implements ComponentProvider {
 
   private volatile InjectionManager injectionManager;
   private volatile ApplicationContext applicationContext;
@@ -60,7 +60,7 @@ public class SpringComponentProvider implements ComponentProvider {
 
     ServletContext sc = injectionManager.getInstance(ServletContext.class);
 
-    LoggerManager.getLogger(SpringComponentProvider.class).info("Searching for Spring application context on Thread(%s)", Thread.currentThread().getName());
+    LoggerManager.getLogger(SpringHK2ComponentProvider.class).info("Searching for Spring application context on Thread(%s)", Thread.currentThread().getName());
     if ((applicationContext = ExposedApplicationContext.getApplicationContext()) == null) {
       throw new SpringHK2IntegrationException("Spring application context has not been created prior to HK2 application initialization");
     }

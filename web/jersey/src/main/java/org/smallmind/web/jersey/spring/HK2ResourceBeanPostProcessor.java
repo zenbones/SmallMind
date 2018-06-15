@@ -40,11 +40,11 @@ import org.springframework.beans.factory.config.BeanPostProcessor;
 
 public class HK2ResourceBeanPostProcessor implements BeanPostProcessor {
 
-  private LinkedList<Object> unregisteredBeanList = new LinkedList<>();
+  private LinkedList<Object> resourceList = new LinkedList<>();
 
-  public synchronized void registerResourceConfig (ResourceConfig resourceConfig) {
+  public synchronized void registerResources (ResourceConfig resourceConfig) {
 
-    for (Object bean : unregisteredBeanList) {
+    for (Object bean : resourceList) {
       resourceConfig.register(bean);
     }
   }
@@ -61,7 +61,7 @@ public class HK2ResourceBeanPostProcessor implements BeanPostProcessor {
     throws BeansException {
 
     if (bean.getClass().getAnnotation(Path.class) != null) {
-      unregisteredBeanList.add(bean);
+      resourceList.add(bean);
     }
 
     return bean;
