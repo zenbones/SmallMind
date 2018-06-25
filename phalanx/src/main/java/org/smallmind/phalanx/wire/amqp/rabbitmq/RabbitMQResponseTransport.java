@@ -35,7 +35,6 @@ package org.smallmind.phalanx.wire.amqp.rabbitmq;
 import java.io.IOException;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.TimeoutException;
-import java.util.concurrent.TransferQueue;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 import org.smallmind.instrument.config.MetricConfiguration;
@@ -48,6 +47,7 @@ import org.smallmind.phalanx.wire.TransportState;
 import org.smallmind.phalanx.wire.WireInvocationCircuit;
 import org.smallmind.phalanx.wire.WiredService;
 import org.smallmind.phalanx.worker.WorkManager;
+import org.smallmind.phalanx.worker.WorkQueue;
 import org.smallmind.phalanx.worker.WorkerFactory;
 
 public class RabbitMQResponseTransport extends WorkManager<InvocationWorker, RabbitMQMessage> implements MetricConfigurationProvider, WorkerFactory<InvocationWorker, RabbitMQMessage>, ResponseTransport {
@@ -101,7 +101,7 @@ public class RabbitMQResponseTransport extends WorkManager<InvocationWorker, Rab
   }
 
   @Override
-  public InvocationWorker createWorker (MetricConfiguration metricConfiguration, TransferQueue<RabbitMQMessage> transferQueue) {
+  public InvocationWorker createWorker (MetricConfiguration metricConfiguration, WorkQueue<RabbitMQMessage> transferQueue) {
 
     return new InvocationWorker(metricConfiguration, transferQueue, this, invocationCircuit, signalCodec);
   }

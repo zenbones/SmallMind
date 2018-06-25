@@ -33,9 +33,7 @@
 package org.smallmind.phalanx.worker;
 
 import java.lang.reflect.Array;
-import java.util.concurrent.LinkedTransferQueue;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TransferQueue;
 import java.util.concurrent.atomic.AtomicReference;
 import org.smallmind.instrument.ChronometerInstrument;
 import org.smallmind.instrument.InstrumentationManager;
@@ -46,19 +44,26 @@ import org.smallmind.scribe.pen.LoggerManager;
 
 public class WorkManager<W extends Worker<T>, T> implements MetricConfigurationProvider {
 
+  private static enum State {STOPPED, STARTING, STARTED, STOPPING}
+
   private final AtomicReference<State> stateRef = new AtomicReference<>(State.STOPPED);
   private final MetricConfiguration metricConfiguration;
-  private final TransferQueue<T> transferQueue;
+  private final WorkQueue<T> workQueue;
   private final Class<W> workerClass;
   private final int concurrencyLimit;
   private W[] workers;
+
   public WorkManager (MetricConfiguration metricConfiguration, Class<W> workerClass, int concurrencyLimit) {
+
+    this(metricConfiguration, workerClass, concurrencyLimit, new LinkedWorkQueue<>());
+  }
+
+  public WorkManager (MetricConfiguration metricConfiguration, Class<W> workerClass, int concurrencyLimit, WorkQueue<T> workQueue) {
 
     this.metricConfiguration = metricConfiguration;
     this.workerClass = workerClass;
     this.concurrencyLimit = concurrencyLimit;
-
-    transferQueue = new LinkedTransferQueue<>();
+    this.workQueue = workQueue;
   }
 
   public int getConcurrencyLimit () {
@@ -80,7 +85,7 @@ public class WorkManager<W extends Worker<T>, T> implements MetricConfigurationP
       workers = (W[])Array.newInstance(workerClass, concurrencyLimit);
       for (int index = 0; index < workers.length; index++) {
 
-        Thread workerThread = new Thread(workers[index] = workerFactory.createWorker(metricConfiguration, transferQueue));
+        Thread workerThread = new Thread(workers[index] = workerFactory.createWorker(metricConfiguration, workQueue));
 
         workerThread.setDaemon(true);
         workerThread.start();
@@ -110,7 +115,7 @@ public class WorkManager<W extends Worker<T>, T> implements MetricConfigurationP
         boolean success;
 
         do {
-          success = transferQueue.tryTransfer(work, 1, TimeUnit.SECONDS);
+          success = workQueue.transfer(work, 1, TimeUnit.SECONDS);
         } while (!success);
       }
     });
@@ -134,7 +139,5 @@ public class WorkManager<W extends Worker<T>, T> implements MetricConfigurationP
       }
     }
   }
-
-  private static enum State {STOPPED, STARTING, STARTED, STOPPING}
 }
 

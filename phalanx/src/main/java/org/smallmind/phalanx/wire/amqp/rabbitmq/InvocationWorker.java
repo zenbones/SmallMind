@@ -33,7 +33,6 @@
 package org.smallmind.phalanx.wire.amqp.rabbitmq;
 
 import java.util.Map;
-import java.util.concurrent.TransferQueue;
 import javax.jms.JMSException;
 import org.smallmind.instrument.ChronometerInstrument;
 import org.smallmind.instrument.InstrumentationManager;
@@ -44,6 +43,7 @@ import org.smallmind.phalanx.wire.ResponseTransport;
 import org.smallmind.phalanx.wire.SignalCodec;
 import org.smallmind.phalanx.wire.WireInvocationCircuit;
 import org.smallmind.phalanx.wire.WireProperty;
+import org.smallmind.phalanx.worker.WorkQueue;
 import org.smallmind.phalanx.worker.Worker;
 
 public class InvocationWorker extends Worker<RabbitMQMessage> {
@@ -54,9 +54,9 @@ public class InvocationWorker extends Worker<RabbitMQMessage> {
   private final WireInvocationCircuit invocationCircuit;
   private final SignalCodec signalCodec;
 
-  public InvocationWorker (MetricConfiguration metricConfiguration, TransferQueue<RabbitMQMessage> workTransferQueue, ResponseTransport responseTransport, WireInvocationCircuit invocationCircuit, SignalCodec signalCodec) {
+  public InvocationWorker (MetricConfiguration metricConfiguration, WorkQueue<RabbitMQMessage> workQueue, ResponseTransport responseTransport, WireInvocationCircuit invocationCircuit, SignalCodec signalCodec) {
 
-    super(metricConfiguration, workTransferQueue);
+    super(metricConfiguration, workQueue);
 
     this.responseTransport = responseTransport;
     this.invocationCircuit = invocationCircuit;
@@ -73,8 +73,7 @@ public class InvocationWorker extends Worker<RabbitMQMessage> {
     InstrumentationManager.execute(new ChronometerInstrument(this, new MetricProperty("operation", "invoke"), new MetricProperty("service", invocationSignal.getAddress().getService()), new MetricProperty("method", invocationSignal.getAddress().getFunction().getName())) {
 
       @Override
-      public void withChronometer ()
-        throws JMSException {
+      public void withChronometer () {
 
         invocationCircuit.handle(responseTransport, signalCodec, getCallerId(message.getProperties().getHeaders()), message.getProperties().getMessageId(), invocationSignal);
       }

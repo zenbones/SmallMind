@@ -32,7 +32,6 @@
  */
 package org.smallmind.phalanx.wire.jms;
 
-import java.util.concurrent.TransferQueue;
 import javax.jms.BytesMessage;
 import javax.jms.JMSException;
 import javax.jms.Message;
@@ -46,6 +45,7 @@ import org.smallmind.phalanx.wire.SignalCodec;
 import org.smallmind.phalanx.wire.TransportException;
 import org.smallmind.phalanx.wire.WireInvocationCircuit;
 import org.smallmind.phalanx.wire.WireProperty;
+import org.smallmind.phalanx.worker.WorkQueue;
 import org.smallmind.phalanx.worker.Worker;
 
 public class InvocationWorker extends Worker<Message> {
@@ -56,9 +56,9 @@ public class InvocationWorker extends Worker<Message> {
 
   private final byte[] buffer;
 
-  public InvocationWorker (MetricConfiguration metricConfiguration, TransferQueue<Message> workTransferQueue, ResponseTransport responseTransport, WireInvocationCircuit invocationCircuit, SignalCodec signalCodec, int maximumMessageLength) {
+  public InvocationWorker (MetricConfiguration metricConfiguration, WorkQueue<Message> workQueue, ResponseTransport responseTransport, WireInvocationCircuit invocationCircuit, SignalCodec signalCodec, int maximumMessageLength) {
 
-    super(metricConfiguration, workTransferQueue);
+    super(metricConfiguration, workQueue);
 
     this.responseTransport = responseTransport;
     this.invocationCircuit = invocationCircuit;
