@@ -30,11 +30,34 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.phalanx.worker;
+package org.smallmind.web.jersey.ssl;
 
-import org.smallmind.instrument.config.MetricConfiguration;
+import java.security.KeyManagementException;
+import java.security.NoSuchAlgorithmException;
+import java.security.SecureRandom;
+import javax.net.ssl.HttpsURLConnection;
+import javax.net.ssl.SSLContext;
+import javax.net.ssl.TrustManager;
+import javax.ws.rs.client.ClientBuilder;
+import org.smallmind.nutsnbolts.ssl.NaiveHostNameVerifier;
+import org.smallmind.nutsnbolts.ssl.NaiveTrustManager;
 
-public interface WorkerFactory<W extends Worker<T>, T> {
+public class ClientUtility {
 
-  public W createWorker (MetricConfiguration metricConfiguration, WorkQueue<T> workQueue);
+  public static ClientBuilder clientBuilder ()
+    throws NoSuchAlgorithmException, KeyManagementException {
+
+    SSLContext ctx = SSLContext.getInstance("TLS");
+
+    ctx.init(null, new TrustManager[] {new NaiveTrustManager()}, new SecureRandom());
+
+    HttpsURLConnection.setDefaultSSLSocketFactory(ctx.getSocketFactory());
+
+    ClientBuilder clientBuilder = ClientBuilder.newBuilder();
+
+    clientBuilder.sslContext(ctx);
+    clientBuilder.hostnameVerifier(new NaiveHostNameVerifier());
+
+    return clientBuilder;
+  }
 }

@@ -34,7 +34,6 @@ package org.smallmind.phalanx.worker;
 
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TransferQueue;
 import java.util.concurrent.atomic.AtomicBoolean;
 import org.smallmind.instrument.Clocks;
 import org.smallmind.instrument.InstrumentationManager;
@@ -48,12 +47,12 @@ public abstract class Worker<T> implements Runnable, MetricConfigurationProvider
   private final AtomicBoolean stopped = new AtomicBoolean(false);
   private final CountDownLatch exitLatch = new CountDownLatch(1);
   private final MetricConfiguration metricConfiguration;
-  private final TransferQueue<T> workTransferQueue;
+  private final WorkQueue<T> workQueue;
 
-  public Worker (MetricConfiguration metricConfiguration, TransferQueue<T> workTransferQueue) {
+  public Worker (MetricConfiguration metricConfiguration, WorkQueue<T> workQueue) {
 
     this.metricConfiguration = metricConfiguration;
-    this.workTransferQueue = workTransferQueue;
+    this.workQueue = workQueue;
   }
 
   public abstract void engageWork (T transfer)
@@ -88,7 +87,7 @@ public abstract class Worker<T> implements Runnable, MetricConfigurationProvider
 
           final T transfer;
 
-          if ((transfer = workTransferQueue.poll(1, TimeUnit.SECONDS)) != null) {
+          if ((transfer = workQueue.poll(1, TimeUnit.SECONDS)) != null) {
             InstrumentationManager.instrumentWithChronometer(this, Clocks.EPOCH.getClock().getTimeNanoseconds() - idleStart, TimeUnit.NANOSECONDS, new MetricProperty("event", MetricInteraction.WORKER_IDLE.getDisplay()));
 
             engageWork(transfer);

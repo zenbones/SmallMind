@@ -39,8 +39,8 @@ import java.util.regex.Pattern;
 
 public class AlphaSpread {
 
-  private static Pattern NUMBER_PATTERN = Pattern.compile("\\[a-z]");
-  private static Pattern SPREAD_PATTERN = Pattern.compile("(\\[a-z])\\.\\.(\\[a-z])");
+  private static Pattern LETTER_PATTERN = Pattern.compile("[a-z]");
+  private static Pattern SPREAD_PATTERN = Pattern.compile("([a-z])\\.\\.([a-z])");
 
   public static char[] calculate (String letters)
     throws SpreadParserException {
@@ -62,7 +62,7 @@ public class AlphaSpread {
           throw new SpreadParserException("Empty elements are not allowed");
         }
 
-        if ((zoneMatcher = NUMBER_PATTERN.matcher(zone.trim())).matches()) {
+        if ((zoneMatcher = LETTER_PATTERN.matcher(zone.trim())).matches()) {
           charHash.add(zoneMatcher.group().charAt(0));
         } else if ((zoneMatcher = SPREAD_PATTERN.matcher(zone.trim())).matches()) {
 

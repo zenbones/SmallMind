@@ -103,8 +103,7 @@ public class JsonTargetFactoryBean implements FactoryBean<JsonTarget>, Initializ
   }
 
   @Override
-  public JsonTarget getObject ()
-    throws NoSuchAlgorithmException, MalformedURLException, URISyntaxException {
+  public JsonTarget getObject () {
 
     return target;
   }

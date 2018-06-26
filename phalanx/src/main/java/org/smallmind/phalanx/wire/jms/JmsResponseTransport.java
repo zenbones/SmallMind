@@ -33,7 +33,6 @@
 package org.smallmind.phalanx.wire.jms;
 
 import java.util.concurrent.ConcurrentLinkedQueue;
-import java.util.concurrent.TransferQueue;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 import javax.jms.BytesMessage;
@@ -57,6 +56,7 @@ import org.smallmind.phalanx.wire.WireInvocationCircuit;
 import org.smallmind.phalanx.wire.WireProperty;
 import org.smallmind.phalanx.wire.WiredService;
 import org.smallmind.phalanx.worker.WorkManager;
+import org.smallmind.phalanx.worker.WorkQueue;
 import org.smallmind.phalanx.worker.WorkerFactory;
 
 public class JmsResponseTransport extends WorkManager<InvocationWorker, Message> implements MetricConfigurationProvider, WorkerFactory<InvocationWorker, Message>, ResponseTransport {
@@ -128,9 +128,9 @@ public class JmsResponseTransport extends WorkManager<InvocationWorker, Message>
   }
 
   @Override
-  public InvocationWorker createWorker (MetricConfiguration metricConfiguration, TransferQueue<Message> transferQueue) {
+  public InvocationWorker createWorker (MetricConfiguration metricConfiguration, WorkQueue<Message> workQueue) {
 
-    return new InvocationWorker(metricConfiguration, transferQueue, this, invocationCircuit, signalCodec, maximumMessageLength);
+    return new InvocationWorker(metricConfiguration, workQueue, this, invocationCircuit, signalCodec, maximumMessageLength);
   }
 
   @Override
