@@ -30,40 +30,26 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.web.jersey.spring;
+package org.smallmind.persistence.orm.spring.jdo.antique;
 
-import java.util.LinkedList;
-import javax.ws.rs.Path;
-import org.glassfish.jersey.server.ResourceConfig;
-import org.springframework.beans.BeansException;
-import org.springframework.beans.factory.config.BeanPostProcessor;
+import javax.jdo.JDOException;
 
-public class HK2ResourceBeanPostProcessor implements BeanPostProcessor {
+import org.springframework.dao.UncategorizedDataAccessException;
 
-  private LinkedList<Object> resourceList = new LinkedList<>();
+/**
+ * JDO-specific subclass of UncategorizedDataAccessException,
+ * for JDO system errors that do not match any concrete
+ * {@code org.springframework.dao} exceptions.
+ *
+ * @author Juergen Hoeller
+ * @since 03.06.2003
+ * @see PersistenceManagerFactoryUtils#convertJdoAccessException
+ */
+@SuppressWarnings("serial")
+public class JdoSystemException extends UncategorizedDataAccessException {
 
-  public synchronized void registerResources (ResourceConfig resourceConfig) {
+	public JdoSystemException(JDOException ex) {
+		super(ex.getMessage(), ex);
+	}
 
-    for (Object bean : resourceList) {
-      resourceConfig.register(bean);
-    }
-  }
-
-  @Override
-  public Object postProcessBeforeInitialization (Object bean, String beanName)
-    throws BeansException {
-
-    return bean;
-  }
-
-  @Override
-  public synchronized Object postProcessAfterInitialization (Object bean, String beanName)
-    throws BeansException {
-
-    if (bean.getClass().getAnnotation(Path.class) != null) {
-      resourceList.add(bean);
-    }
-
-    return bean;
-  }
 }

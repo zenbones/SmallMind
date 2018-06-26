@@ -37,7 +37,7 @@ import java.util.HashMap;
 import javax.jdo.metadata.JDOMetadata;
 import javax.jdo.metadata.PackageMetadata;
 import javax.sql.DataSource;
-import org.springframework.orm.jdo.LocalPersistenceManagerFactoryBean;
+import org.smallmind.persistence.orm.spring.jdo.antique.LocalPersistenceManagerFactoryBean;
 
 public class EntitySeekingPersistenceManagerFactoryBean extends LocalPersistenceManagerFactoryBean {
 

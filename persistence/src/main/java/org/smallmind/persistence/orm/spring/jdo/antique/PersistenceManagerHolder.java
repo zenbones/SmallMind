@@ -30,40 +30,54 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.web.jersey.spring;
+package org.smallmind.persistence.orm.spring.jdo.antique;
 
-import java.util.LinkedList;
-import javax.ws.rs.Path;
-import org.glassfish.jersey.server.ResourceConfig;
-import org.springframework.beans.BeansException;
-import org.springframework.beans.factory.config.BeanPostProcessor;
+import javax.jdo.PersistenceManager;
 
-public class HK2ResourceBeanPostProcessor implements BeanPostProcessor {
+import org.springframework.transaction.support.ResourceHolderSupport;
+import org.springframework.util.Assert;
 
-  private LinkedList<Object> resourceList = new LinkedList<>();
+/**
+ * Holder wrapping a JDO PersistenceManager.
+ * JdoTransactionManager binds instances of this class
+ * to the thread, for a given PersistenceManagerFactory.
+ *
+ * <p>Note: This is an SPI class, not intended to be used by applications.
+ *
+ * @author Juergen Hoeller
+ * @since 03.06.2003
+ * @see JdoTransactionManager
+ * @see PersistenceManagerFactoryUtils
+ */
+public class PersistenceManagerHolder extends ResourceHolderSupport {
 
-  public synchronized void registerResources (ResourceConfig resourceConfig) {
+	private final PersistenceManager persistenceManager;
 
-    for (Object bean : resourceList) {
-      resourceConfig.register(bean);
-    }
-  }
+	private boolean transactionActive;
 
-  @Override
-  public Object postProcessBeforeInitialization (Object bean, String beanName)
-    throws BeansException {
 
-    return bean;
-  }
+	public PersistenceManagerHolder(PersistenceManager persistenceManager) {
+		Assert.notNull(persistenceManager, "PersistenceManager must not be null");
+		this.persistenceManager = persistenceManager;
+	}
 
-  @Override
-  public synchronized Object postProcessAfterInitialization (Object bean, String beanName)
-    throws BeansException {
 
-    if (bean.getClass().getAnnotation(Path.class) != null) {
-      resourceList.add(bean);
-    }
+	public PersistenceManager getPersistenceManager() {
+		return this.persistenceManager;
+	}
 
-    return bean;
-  }
+	protected void setTransactionActive(boolean transactionActive) {
+		this.transactionActive = transactionActive;
+	}
+
+	protected boolean isTransactionActive() {
+		return this.transactionActive;
+	}
+
+	@Override
+	public void clear() {
+		super.clear();
+		this.transactionActive = false;
+	}
+
 }

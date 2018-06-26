@@ -32,66 +32,33 @@
  */
 package org.smallmind.web.jersey.spring;
 
-import java.lang.reflect.ParameterizedType;
-import java.lang.reflect.Type;
-import java.util.Map;
-import javax.inject.Singleton;
-import org.glassfish.hk2.api.Injectee;
-import org.glassfish.hk2.api.InjectionResolver;
-import org.glassfish.hk2.api.ServiceHandle;
-import org.springframework.beans.factory.annotation.Autowired;
+import org.glassfish.jersey.server.ResourceConfig;
+import org.smallmind.web.jersey.json.JsonProvider;
 import org.springframework.context.ApplicationContext;
 
-@Singleton
-public class AutowiredInjectionResolver implements InjectionResolver<Autowired> {
+public class JerseyResourceConfig extends ResourceConfig {
 
-  private ApplicationContext applicationContext;
+  public JerseyResourceConfig (ApplicationContext applicationContext, ResourceConfigExtension[] extensions) {
 
-  public AutowiredInjectionResolver (ApplicationContext applicationContext) {
+    if (applicationContext == null) {
+      throw new SpringHK2IntegrationException("Spring application context must not be 'null'");
+    } else {
 
-    this.applicationContext = applicationContext;
-  }
+      HK2ResourceBeanPostProcessor hk2ResourceBeanPostProcessor;
 
-  @Override
-  public Object resolve (Injectee injectee, ServiceHandle<?> root) {
+      if ((hk2ResourceBeanPostProcessor = applicationContext.getBean(HK2ResourceBeanPostProcessor.class)) == null) {
+        throw new SpringHK2IntegrationException("Spring application context must include the %s", HK2ResourceBeanPostProcessor.class.getSimpleName());
+      }
 
-    return getBeanFromSpringContext(injectee.getRequiredType());
-  }
+      hk2ResourceBeanPostProcessor.registerResources(this);
 
-  @Override
-  public boolean isConstructorParameterIndicator () {
+      register(JsonProvider.class);
 
-    return false;
-  }
-
-  @Override
-  public boolean isMethodParameterIndicator () {
-
-    return false;
-  }
-
-  private Object getBeanFromSpringContext (Type beanType) {
-
-    Map<String, ?> beans = applicationContext.getBeansOfType(getClassFromType(beanType));
-
-    if (!beans.values().isEmpty()) {
-      return beans.values().iterator().next();
+      if (extensions != null) {
+        for (ResourceConfigExtension extension : extensions) {
+          extension.apply(this);
+        }
+      }
     }
-
-    return null;
-  }
-
-  private Class<?> getClassFromType (Type type) {
-
-    if (type instanceof Class) {
-
-      return (Class<?>)type;
-    }
-    if (type instanceof ParameterizedType) {
-
-      return (Class<?>)((ParameterizedType)type).getRawType();
-    }
-
-    return null;
   }
 }

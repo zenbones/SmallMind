@@ -30,24 +30,30 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.web.jersey.json;
+package org.smallmind.persistence.orm.spring.jdo.antique;
 
-import org.smallmind.web.jersey.spring.ResourceConfigExtension;
-import org.smallmind.web.jersey.spring.SpringBasedResourceConfig;
-import org.springframework.context.ApplicationContext;
+import javax.jdo.JDOFatalUserException;
+import javax.jdo.JDOUserException;
 
-public class JsonResourceConfig extends SpringBasedResourceConfig {
+import org.springframework.dao.InvalidDataAccessApiUsageException;
 
-  public JsonResourceConfig (ApplicationContext applicationContext, ResourceConfigExtension[] extensions) {
+/**
+ * JDO-specific subclass of InvalidDataAccessApiUsageException.
+ * Converts JDO's JDOUserException and JDOFatalUserException.
+ *
+ * @author Juergen Hoeller
+ * @since 03.06.2003
+ * @see PersistenceManagerFactoryUtils#convertJdoAccessException
+ */
+@SuppressWarnings("serial")
+public class JdoUsageException extends InvalidDataAccessApiUsageException {
 
-    super(applicationContext);
+	public JdoUsageException(JDOUserException ex) {
+		super(ex.getMessage(), ex);
+	}
 
-    register(JsonProvider.class);
+	public JdoUsageException(JDOFatalUserException ex) {
+		super(ex.getMessage(), ex);
+	}
 
-    if (extensions != null) {
-      for (ResourceConfigExtension extension : extensions) {
-        extension.apply(this);
-      }
-    }
-  }
 }

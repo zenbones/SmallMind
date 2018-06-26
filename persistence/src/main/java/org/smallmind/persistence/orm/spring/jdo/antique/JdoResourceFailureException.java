@@ -30,40 +30,30 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.web.jersey.spring;
+package org.smallmind.persistence.orm.spring.jdo.antique;
 
-import java.util.LinkedList;
-import javax.ws.rs.Path;
-import org.glassfish.jersey.server.ResourceConfig;
-import org.springframework.beans.BeansException;
-import org.springframework.beans.factory.config.BeanPostProcessor;
+import javax.jdo.JDODataStoreException;
+import javax.jdo.JDOFatalDataStoreException;
 
-public class HK2ResourceBeanPostProcessor implements BeanPostProcessor {
+import org.springframework.dao.DataAccessResourceFailureException;
 
-  private LinkedList<Object> resourceList = new LinkedList<>();
+/**
+ * JDO-specific subclass of DataAccessResourceFailureException.
+ * Converts JDO's JDODataStoreException and JDOFatalDataStoreException.
+ *
+ * @author Juergen Hoeller
+ * @since 1.1
+ * @see PersistenceManagerFactoryUtils#convertJdoAccessException
+ */
+@SuppressWarnings("serial")
+public class JdoResourceFailureException extends DataAccessResourceFailureException {
 
-  public synchronized void registerResources (ResourceConfig resourceConfig) {
+	public JdoResourceFailureException(JDODataStoreException ex) {
+		super(ex.getMessage(), ex);
+	}
 
-    for (Object bean : resourceList) {
-      resourceConfig.register(bean);
-    }
-  }
+	public JdoResourceFailureException(JDOFatalDataStoreException ex) {
+		super(ex.getMessage(), ex);
+	}
 
-  @Override
-  public Object postProcessBeforeInitialization (Object bean, String beanName)
-    throws BeansException {
-
-    return bean;
-  }
-
-  @Override
-  public synchronized Object postProcessAfterInitialization (Object bean, String beanName)
-    throws BeansException {
-
-    if (bean.getClass().getAnnotation(Path.class) != null) {
-      resourceList.add(bean);
-    }
-
-    return bean;
-  }
 }

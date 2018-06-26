@@ -42,6 +42,6 @@ public class EntityParamResourceConfigExtension extends ResourceConfigExtension 
 
     resourceConfig.register(ResourceMethodContainerFilter.class);
     resourceConfig.register(EntityAwareValidationConfigurationContextResolver.class);
-    resourceConfig.register(new EntityParamResolver.Binder());
+    resourceConfig.register(new EntityParamResolver.EntityParamFeature());
   }
 }

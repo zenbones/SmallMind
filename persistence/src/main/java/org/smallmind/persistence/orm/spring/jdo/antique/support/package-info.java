@@ -30,25 +30,8 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.web.jersey.spring;
+/**
+ * Classes supporting the {@code org.smallmind.persistence.orm.spring.jdo.antique} package.
+ */
+package org.smallmind.persistence.orm.spring.jdo.antique.support;
 
-import org.glassfish.jersey.server.ResourceConfig;
-import org.springframework.context.ApplicationContext;
-
-public class SpringBasedResourceConfig extends ResourceConfig {
-
-  public SpringBasedResourceConfig (ApplicationContext applicationContext) {
-
-    if (applicationContext == null) {
-      throw new SpringHK2IntegrationException("Spring application context must not be 'null'");
-    }
-
-    HK2ResourceBeanPostProcessor hk2ResourceBeanPostProcessor;
-
-    if ((hk2ResourceBeanPostProcessor = applicationContext.getBean(HK2ResourceBeanPostProcessor.class)) == null) {
-      throw new SpringHK2IntegrationException("Spring application context must include the %s", HK2ResourceBeanPostProcessor.class.getSimpleName());
-    }
-
-    hk2ResourceBeanPostProcessor.registerResourceConfig(this);
-  }
-}

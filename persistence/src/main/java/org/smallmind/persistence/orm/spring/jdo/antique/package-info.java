@@ -30,40 +30,9 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.web.jersey.spring;
-
-import java.util.LinkedList;
-import javax.ws.rs.Path;
-import org.glassfish.jersey.server.ResourceConfig;
-import org.springframework.beans.BeansException;
-import org.springframework.beans.factory.config.BeanPostProcessor;
-
-public class HK2ResourceBeanPostProcessor implements BeanPostProcessor {
-
-  private LinkedList<Object> resourceList = new LinkedList<>();
-
-  public synchronized void registerResources (ResourceConfig resourceConfig) {
-
-    for (Object bean : resourceList) {
-      resourceConfig.register(bean);
-    }
-  }
-
-  @Override
-  public Object postProcessBeforeInitialization (Object bean, String beanName)
-    throws BeansException {
-
-    return bean;
-  }
-
-  @Override
-  public synchronized Object postProcessAfterInitialization (Object bean, String beanName)
-    throws BeansException {
-
-    if (bean.getClass().getAnnotation(Path.class) != null) {
-      resourceList.add(bean);
-    }
-
-    return bean;
-  }
-}
+/**
+ * Package providing integration of JDO (Java Date Objects) with Spring concepts.
+ * Contains PersistenceManagerFactory helper classes, a template plus callback for JDO
+ * access, and an implementation of Spring's transaction SPI for local JDO transactions.
+ */
+package org.smallmind.persistence.orm.spring.jdo.antique;

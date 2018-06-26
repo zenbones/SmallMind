@@ -30,27 +30,29 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.web.jersey.spring;
+package org.smallmind.persistence.orm.spring.jdo.antique;
 
-import org.glassfish.jersey.server.ResourceConfig;
+import javax.jdo.JDOHelper;
+import javax.jdo.JDOObjectNotFoundException;
 
-public class ResourceConfigClass extends ResourceConfigExtension {
+import org.springframework.orm.ObjectRetrievalFailureException;
 
-  Class<?> value;
+/**
+ * JDO-specific subclass of ObjectRetrievalFailureException.
+ * Converts JDO's JDOObjectNotFoundException.
+ *
+ * @author Juergen Hoeller
+ * @since 1.1
+ * @see PersistenceManagerFactoryUtils#convertJdoAccessException
+ */
+@SuppressWarnings("serial")
+public class JdoObjectRetrievalFailureException extends ObjectRetrievalFailureException {
 
-  public Class<?> getValue () {
+	public JdoObjectRetrievalFailureException(JDOObjectNotFoundException ex) {
+		// Extract information about the failed object from the JDOException, if available.
+		super((ex.getFailedObject() != null ? ex.getFailedObject().getClass() : null),
+				(ex.getFailedObject() != null ? JDOHelper.getObjectId(ex.getFailedObject()) : null),
+				ex.getMessage(), ex);
+	}
 
-    return value;
-  }
-
-  public void setValue (Class<?> value) {
-
-    this.value = value;
-  }
-
-  @Override
-  public void apply (ResourceConfig resourceConfig) {
-
-    resourceConfig.register(value);
-  }
 }
