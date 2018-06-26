@@ -33,18 +33,15 @@
 package org.smallmind.web.jersey.aop;
 
 import java.util.function.Function;
-import javax.inject.Inject;
-import javax.inject.Provider;
 import javax.inject.Singleton;
-import org.glassfish.hk2.api.TypeLiteral;
-import org.glassfish.hk2.utilities.binding.AbstractBinder;
-import org.glassfish.jersey.internal.inject.InjectionResolver;
+import javax.ws.rs.core.Feature;
+import javax.ws.rs.core.FeatureContext;
+import org.glassfish.jersey.internal.inject.AbstractBinder;
 import org.glassfish.jersey.server.ContainerRequest;
-import org.glassfish.jersey.server.internal.inject.ParamInjectionResolver;
 import org.glassfish.jersey.server.model.Parameter;
 import org.glassfish.jersey.server.spi.internal.ValueParamProvider;
 
-public class EntityParamResolver2 {
+public class EntityParamResolver {
 
   private static final class EntityParamValueParamProvider implements ValueParamProvider {
 
@@ -69,24 +66,21 @@ public class EntityParamResolver2 {
     }
   }
 
-  @Singleton
-  public static final class EntityParamInjectionResolver extends ParamInjectionResolver<EntityParam> {
-
-    @Inject
-    public EntityParamInjectionResolver (Provider<ContainerRequest> request) {
-
-      super(new EntityParamValueParamProvider(), EntityParam.class, request);
-    }
-  }
-
-  public static final class EntityParamInjectionResolverBinder extends AbstractBinder {
+  public static final class EntityParamFeature implements Feature {
 
     @Override
-    protected void configure () {
+    public boolean configure (FeatureContext context) {
 
-      bind(EntityParamInjectionResolver.class).to(new TypeLiteral<InjectionResolver<EntityParam>>() {
+      context.register(new AbstractBinder() {
 
-      }).in(Singleton.class);
+        @Override
+        protected void configure () {
+
+          bind(EntityParamValueParamProvider.class).to(ValueParamProvider.class).in(Singleton.class);
+        }
+      });
+
+      return true;
     }
   }
 }

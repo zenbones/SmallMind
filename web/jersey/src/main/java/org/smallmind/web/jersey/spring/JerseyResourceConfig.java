@@ -1,28 +1,28 @@
 /*
  * Copyright (c) 2007, 2008, 2009, 2010, 2011, 2012, 2013, 2014, 2015, 2016, 2017 David Berkman
- *
+ * 
  * This file is part of the SmallMind Code Project.
- *
+ * 
  * The SmallMind Code Project is free software, you can redistribute
  * it and/or modify it under either, at your discretion...
- *
+ * 
  * 1) The terms of GNU Affero General Public License as published by the
  * Free Software Foundation, either version 3 of the License, or (at
  * your option) any later version.
- *
+ * 
  * ...or...
- *
+ * 
  * 2) The terms of the Apache License, Version 2.0.
- *
+ * 
  * The SmallMind Code Project is distributed in the hope that it will
  * be useful, but WITHOUT ANY WARRANTY; without even the implied warranty
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License or Apache License for more details.
- *
+ * 
  * You should have received a copy of the GNU Affero General Public License
  * and the Apache License along with the SmallMind Code Project. If not, see
  * <http://www.gnu.org/licenses/> or <http://www.apache.org/licenses/LICENSE-2.0>.
- *
+ * 
  * Additional permission under the GNU Affero GPL version 3 section 7
  * ------------------------------------------------------------------
  * If you modify this Program, or any covered work, by linking or
@@ -32,37 +32,16 @@
  */
 package org.smallmind.web.jersey.spring;
 
-import javax.ws.rs.core.Feature;
-import javax.ws.rs.core.FeatureContext;
-import org.glassfish.jersey.InjectionManagerProvider;
-import org.glassfish.jersey.internal.inject.InjectionManager;
 import org.glassfish.jersey.server.ResourceConfig;
 import org.smallmind.web.jersey.json.JsonProvider;
 import org.springframework.context.ApplicationContext;
 
-public class JerseyFeature extends ResourceConfig implements Feature {
+public class JerseyResourceConfig extends ResourceConfig {
 
-  private ApplicationContext applicationContext;
-  private ResourceConfigExtension[] extensions;
-
-  public JerseyFeature (ApplicationContext applicationContext, ResourceConfigExtension[] extensions) {
+  public JerseyResourceConfig (ApplicationContext applicationContext, ResourceConfigExtension[] extensions) {
 
     if (applicationContext == null) {
       throw new SpringHK2IntegrationException("Spring application context must not be 'null'");
-    }
-
-    this.applicationContext = applicationContext;
-
-    this.extensions = extensions;
-  }
-
-  @Override
-  public boolean configure (FeatureContext featureContext) {
-
-    InjectionManager injectionManager;
-
-    if ((injectionManager = InjectionManagerProvider.getInjectionManager(featureContext)) == null) {
-      throw new SpringHK2IntegrationException("Unable to locate an InjectionManager");
     } else {
 
       HK2ResourceBeanPostProcessor hk2ResourceBeanPostProcessor;
@@ -80,8 +59,6 @@ public class JerseyFeature extends ResourceConfig implements Feature {
           extension.apply(this);
         }
       }
-
-      return true;
     }
   }
 }
