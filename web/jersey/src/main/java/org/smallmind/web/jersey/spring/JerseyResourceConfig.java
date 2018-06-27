@@ -50,8 +50,6 @@ public class JerseyResourceConfig extends ResourceConfig {
         throw new SpringHK2IntegrationException("Spring application context must include the %s", HK2ResourceBeanPostProcessor.class.getSimpleName());
       }
 
-      hk2ResourceBeanPostProcessor.registerResources(this);
-
       register(JsonProvider.class);
 
       if (extensions != null) {
@@ -59,6 +57,8 @@ public class JerseyResourceConfig extends ResourceConfig {
           extension.apply(this);
         }
       }
+
+      hk2ResourceBeanPostProcessor.registerResources(this);
     }
   }
 }
