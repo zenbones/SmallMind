@@ -209,12 +209,17 @@ public abstract class HibernateDao<I extends Serializable & Comparable<I>, D ext
     VectoredDao<I, D> vectoredDao = getVectoredDao();
 
     if (!getSession().getNativeSession().contains(durable)) {
-      getSession().getNativeSession().delete(getSession().getNativeSession().load(durable.getClass(), durable.getId()));
+
+      D persitentDurable;
+
+      if ((persitentDurable = getSession().getNativeSession().get(durableClass, durable.getId())) != null) {
+        getSession().getNativeSession().delete(persitentDurable);
+        getSession().flush();
+      }
     } else {
       getSession().getNativeSession().delete(durable);
+      getSession().flush();
     }
-
-    getSession().flush();
 
     if (vectoredDao != null) {
       vectoredDao.delete(durableClass, durable);
