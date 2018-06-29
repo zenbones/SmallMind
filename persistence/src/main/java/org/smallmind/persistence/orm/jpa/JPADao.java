@@ -111,12 +111,17 @@ public abstract class JPADao<I extends Serializable & Comparable<I>, D extends D
     VectoredDao<I, D> vectoredDao = getVectoredDao();
 
     if (!getSession().getNativeSession().contains(durable)) {
-      getSession().getNativeSession().remove(getSession().getNativeSession().find(durable.getClass(), durable.getId()));
+
+      D persitentDurable;
+
+      if ((persitentDurable = getSession().getNativeSession().find(durableClass, durable.getId())) != null) {
+        getSession().getNativeSession().remove(persitentDurable);
+        getSession().flush();
+      }
     } else {
       getSession().getNativeSession().remove(durable);
+      getSession().flush();
     }
-
-    getSession().flush();
 
     if (vectoredDao != null) {
       vectoredDao.delete(durableClass, durable);
