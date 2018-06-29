@@ -30,18 +30,24 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.web.jersey.aop;
+package org.smallmind.web.jersey.json;
 
-import org.glassfish.jersey.server.ResourceConfig;
 import org.smallmind.web.jersey.spring.ResourceConfigExtension;
+import org.smallmind.web.jersey.spring.SpringBasedResourceConfig;
+import org.springframework.context.ApplicationContext;
 
-public class EntityParamResourceConfigExtension extends ResourceConfigExtension {
+public class JsonResourceConfig extends SpringBasedResourceConfig {
 
-  @Override
-  public void apply (ResourceConfig resourceConfig) {
+  public JsonResourceConfig (ApplicationContext applicationContext, ResourceConfigExtension[] extensions) {
 
-    resourceConfig.register(ResourceMethodContainerFilter.class);
-    resourceConfig.register(EntityAwareValidationConfigurationContextResolver.class);
-    resourceConfig.register(new EntityParamResolver.Binder());
+    super(applicationContext);
+
+    register(JsonProvider.class);
+
+    if (extensions != null) {
+      for (ResourceConfigExtension extension : extensions) {
+        extension.apply(this);
+      }
+    }
   }
 }

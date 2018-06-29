@@ -30,18 +30,25 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.web.jersey.aop;
+package org.smallmind.web.jersey.spring;
 
 import org.glassfish.jersey.server.ResourceConfig;
-import org.smallmind.web.jersey.spring.ResourceConfigExtension;
+import org.springframework.context.ApplicationContext;
 
-public class EntityParamResourceConfigExtension extends ResourceConfigExtension {
+public class SpringBasedResourceConfig extends ResourceConfig {
 
-  @Override
-  public void apply (ResourceConfig resourceConfig) {
+  public SpringBasedResourceConfig (ApplicationContext applicationContext) {
 
-    resourceConfig.register(ResourceMethodContainerFilter.class);
-    resourceConfig.register(EntityAwareValidationConfigurationContextResolver.class);
-    resourceConfig.register(new EntityParamResolver.Binder());
+    if (applicationContext == null) {
+      throw new SpringHK2IntegrationException("Spring application context must not be 'null'");
+    }
+
+    HK2ResourceBeanPostProcessor hk2ResourceBeanPostProcessor;
+
+    if ((hk2ResourceBeanPostProcessor = applicationContext.getBean(HK2ResourceBeanPostProcessor.class)) == null) {
+      throw new SpringHK2IntegrationException("Spring application context must include the %s", HK2ResourceBeanPostProcessor.class.getSimpleName());
+    }
+
+    hk2ResourceBeanPostProcessor.registerResourceConfig(this);
   }
 }

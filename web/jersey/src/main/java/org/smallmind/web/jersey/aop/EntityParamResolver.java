@@ -32,27 +32,43 @@
  */
 package org.smallmind.web.jersey.aop;
 
-import java.util.function.Function;
+import javax.inject.Inject;
 import javax.inject.Singleton;
-import javax.ws.rs.core.Feature;
-import javax.ws.rs.core.FeatureContext;
-import org.glassfish.jersey.internal.inject.AbstractBinder;
-import org.glassfish.jersey.server.ContainerRequest;
+import org.glassfish.hk2.api.Factory;
+import org.glassfish.hk2.api.InjectionResolver;
+import org.glassfish.hk2.api.ServiceLocator;
+import org.glassfish.hk2.api.TypeLiteral;
+import org.glassfish.hk2.utilities.binding.AbstractBinder;
+import org.glassfish.jersey.server.internal.inject.AbstractContainerRequestValueFactory;
+import org.glassfish.jersey.server.internal.inject.AbstractValueFactoryProvider;
+import org.glassfish.jersey.server.internal.inject.MultivaluedParameterExtractorProvider;
+import org.glassfish.jersey.server.internal.inject.ParamInjectionResolver;
 import org.glassfish.jersey.server.model.Parameter;
-import org.glassfish.jersey.server.spi.internal.ValueParamProvider;
+import org.glassfish.jersey.server.spi.internal.ValueFactoryProvider;
 
+@Singleton
 public class EntityParamResolver {
 
-  private static final class EntityParamValueParamProvider implements ValueParamProvider {
+  @Singleton
+  public static final class EntityParamInjectionResolver extends ParamInjectionResolver<EntityParam> {
 
-    @Override
-    public PriorityType getPriority () {
+    public EntityParamInjectionResolver () {
 
-      return Priority.NORMAL;
+      super(EntityParamValueFactoryProvider.class);
+    }
+  }
+
+  @Singleton
+  public static class EntityParamValueFactoryProvider extends AbstractValueFactoryProvider {
+
+    @Inject
+    public EntityParamValueFactoryProvider (final MultivaluedParameterExtractorProvider extractorProvider, final ServiceLocator injector) {
+
+      super(extractorProvider, injector, Parameter.Source.UNKNOWN);
     }
 
     @Override
-    public Function<ContainerRequest, ?> getValueProvider (Parameter parameter) {
+    protected Factory<?> createValueFactory (final Parameter parameter) {
 
       Class<?> paramClass;
       EntityParam entityParam;
@@ -62,25 +78,45 @@ public class EntityParamResolver {
         return null;
       }
 
-      return (containerRequest) -> EntityTranslator.getParameter(containerRequest, entityParam.value(), paramClass, new ParameterAnnotations(parameter.getAnnotations()));
+      return new EntityParamRequestValueFactory(entityParam.value(), paramClass, new ParameterAnnotations(parameter.getAnnotations()));
     }
   }
 
-  public static final class EntityParamFeature implements Feature {
+  private static class EntityParamRequestValueFactory extends AbstractContainerRequestValueFactory<Object> {
+
+    private ParameterAnnotations parameterAnnotations;
+    private Class<?> paramClass;
+    private String paramKey;
+
+    public EntityParamRequestValueFactory (String paramKey, Class<?> paramClass, ParameterAnnotations parameterAnnotations) {
+
+      this.paramKey = paramKey;
+      this.paramClass = paramClass;
+      this.parameterAnnotations = parameterAnnotations;
+    }
 
     @Override
-    public boolean configure (FeatureContext context) {
+    public Object provide () {
 
-      context.register(new AbstractBinder() {
+      Object obj = EntityTranslator.getParameter(getContainerRequest(), paramKey, paramClass, parameterAnnotations);
 
-        @Override
-        protected void configure () {
+      if ((obj == null) && paramClass.isPrimitive()) {
+        throw new ParameterProcessingException("Attempt to assign a 'null' value to primitive argument(%s) of type(%s)", paramKey, paramClass.getSimpleName());
+      }
 
-          bind(EntityParamValueParamProvider.class).to(ValueParamProvider.class).in(Singleton.class);
-        }
-      });
+      return obj;
+    }
+  }
 
-      return true;
+  public static class Binder extends AbstractBinder {
+
+    @Override
+    protected void configure () {
+
+      bind(EntityParamValueFactoryProvider.class).to(ValueFactoryProvider.class).in(Singleton.class);
+      bind(EntityParamInjectionResolver.class).to(new TypeLiteral<InjectionResolver<EntityParam>>() {
+
+      }).in(Singleton.class);
     }
   }
 }

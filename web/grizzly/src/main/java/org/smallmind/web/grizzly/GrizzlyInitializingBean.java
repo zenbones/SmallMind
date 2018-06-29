@@ -57,7 +57,7 @@ import org.glassfish.jersey.servlet.ServletContainer;
 import org.smallmind.nutsnbolts.io.PathUtility;
 import org.smallmind.nutsnbolts.lang.web.PerApplicationContextFilter;
 import org.smallmind.nutsnbolts.resource.ResourceException;
-import org.smallmind.web.jersey.spring.JerseyResourceConfig;
+import org.smallmind.web.jersey.json.JsonResourceConfig;
 import org.smallmind.web.jersey.spring.ExposedApplicationContext;
 import org.smallmind.web.jersey.spring.ResourceConfigExtension;
 import org.springframework.beans.factory.DisposableBean;
@@ -226,7 +226,7 @@ public class GrizzlyInitializingBean implements DisposableBean, ApplicationConte
       }
 
       WebappContext webappContext = new WebappContext("Grizzly Application Context", contextPath);
-      webappContext.addServlet("JAX-RS Application", new ServletContainer(new JerseyResourceConfig(ExposedApplicationContext.getApplicationContext(), resourceConfigExtensions))).addMapping(restPath + "/*");
+      webappContext.addServlet("JAX-RS Application", new ServletContainer(new JsonResourceConfig(ExposedApplicationContext.getApplicationContext(), resourceConfigExtensions))).addMapping(restPath + "/*");
       webappContext.addFilter("per-application-data", new PerApplicationContextFilter()).addMappingForUrlPatterns(EnumSet.of(DispatcherType.REQUEST), restPath + "/*");
       webappContext.addListener("org.springframework.web.context.request.RequestContextListener");
 

@@ -30,18 +30,27 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.web.jersey.aop;
+package org.smallmind.web.jersey.spring;
 
 import org.glassfish.jersey.server.ResourceConfig;
-import org.smallmind.web.jersey.spring.ResourceConfigExtension;
 
-public class EntityParamResourceConfigExtension extends ResourceConfigExtension {
+public class ResourceConfigClass extends ResourceConfigExtension {
+
+  Class<?> value;
+
+  public Class<?> getValue () {
+
+    return value;
+  }
+
+  public void setValue (Class<?> value) {
+
+    this.value = value;
+  }
 
   @Override
   public void apply (ResourceConfig resourceConfig) {
 
-    resourceConfig.register(ResourceMethodContainerFilter.class);
-    resourceConfig.register(EntityAwareValidationConfigurationContextResolver.class);
-    resourceConfig.register(new EntityParamResolver.Binder());
+    resourceConfig.register(value);
   }
 }

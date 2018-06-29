@@ -33,77 +33,71 @@
 package org.smallmind.web.jersey.spring;
 
 import java.util.Set;
-import java.util.function.Supplier;
-import javax.servlet.ServletContext;
-import org.glassfish.jersey.inject.hk2.ImmediateHk2InjectionManager;
-import org.glassfish.jersey.internal.inject.Binding;
-import org.glassfish.jersey.internal.inject.Bindings;
-import org.glassfish.jersey.internal.inject.InjectionManager;
+import javax.ws.rs.Path;
+import org.glassfish.hk2.api.DynamicConfiguration;
+import org.glassfish.hk2.api.Factory;
+import org.glassfish.hk2.api.ServiceLocator;
+import org.glassfish.hk2.utilities.ServiceLocatorUtilities;
+import org.glassfish.hk2.utilities.binding.ServiceBindingBuilder;
+import org.glassfish.jersey.internal.inject.Injections;
 import org.glassfish.jersey.server.spi.ComponentProvider;
 import org.jvnet.hk2.spring.bridge.api.SpringBridge;
 import org.jvnet.hk2.spring.bridge.api.SpringIntoHK2Bridge;
 import org.smallmind.scribe.pen.LoggerManager;
-import org.springframework.aop.framework.Advised;
 import org.springframework.context.ApplicationContext;
-import org.springframework.core.annotation.AnnotationUtils;
-import org.springframework.stereotype.Component;
 
 public class SpringHK2ComponentProvider implements ComponentProvider {
 
-  private volatile InjectionManager injectionManager;
-  private volatile ApplicationContext applicationContext;
+  private ServiceLocator serviceLocator;
+  private ApplicationContext applicationContext;
 
   @Override
-  public void initialize (InjectionManager injectionManager) {
-
-    this.injectionManager = injectionManager;
-
-    ServletContext sc = injectionManager.getInstance(ServletContext.class);
+  public void initialize (ServiceLocator serviceLocator) {
 
     LoggerManager.getLogger(SpringHK2ComponentProvider.class).info("Searching for Spring application context on Thread(%s)", Thread.currentThread().getName());
     if ((applicationContext = ExposedApplicationContext.getApplicationContext()) == null) {
       throw new SpringHK2IntegrationException("Spring application context has not been created prior to HK2 application initialization");
     }
 
+    this.serviceLocator = serviceLocator;
+
     // initialize HK2 spring-bridge
-    ImmediateHk2InjectionManager hk2InjectionManager = (ImmediateHk2InjectionManager)injectionManager;
-    SpringBridge.getSpringBridge().initializeSpringBridge(hk2InjectionManager.getServiceLocator());
-    SpringIntoHK2Bridge springBridge = injectionManager.getInstance(SpringIntoHK2Bridge.class);
+    SpringBridge.getSpringBridge().initializeSpringBridge(serviceLocator);
+    SpringIntoHK2Bridge springBridge = serviceLocator.getService(SpringIntoHK2Bridge.class);
     springBridge.bridgeSpringBeanFactory(applicationContext);
 
-    injectionManager.register(Bindings.injectionResolver(new AutowiredInjectResolver(applicationContext)));
-    injectionManager.register(Bindings.service(applicationContext).to(ApplicationContext.class).named("SpringContext"));
+    // register Spring @Autowired annotation handler with HK2 ServiceLocator
+    ServiceLocatorUtilities.addOneConstant(serviceLocator, new AutowiredInjectionResolver(applicationContext));
+    ServiceLocatorUtilities.addOneConstant(serviceLocator, applicationContext, "SpringContext", ApplicationContext.class);
   }
 
-  // detect JAX-RS classes that are also Spring @Components.
-  // register these with HK2 ServiceLocator to manage their lifecycle using Spring.
   @Override
   public boolean bind (Class<?> component, Set<Class<?>> providerContracts) {
 
-    if (applicationContext == null) {
-      return false;
-    }
-
-    if (AnnotationUtils.findAnnotation(component, Component.class) == null) {
-
-      return false;
-    } else {
+    if (component.isAnnotationPresent(Path.class)) {
 
       String[] beanNames = applicationContext.getBeanNamesForType(component);
 
-      if (beanNames == null || beanNames.length != 1) {
-
-        return false;
+      if ((beanNames == null) || (beanNames.length == 0)) {
+        LoggerManager.getLogger(SpringHK2ComponentProvider.class).warn("The Spring context failed to contain a bean of type(%s) - unable to bind into HK2 ", component.getName());
+      } else if (beanNames.length > 1) {
+        LoggerManager.getLogger(SpringHK2ComponentProvider.class).warn("The Spring context contained multiple beans of type(%s) - unable to bind into HK2", component.getName());
       } else {
 
-        String beanName = beanNames[0];
+        DynamicConfiguration dynamicConfiguration = Injections.getConfiguration(serviceLocator);
+        ServiceBindingBuilder serviceBindingBuilder = Injections.newFactoryBinder(new SpringManagedBeanFactory(serviceLocator, applicationContext, beanNames[0]));
 
-        Binding binding = Bindings.supplier(new SpringManagedBeanFactory(applicationContext, injectionManager, beanName)).to(component).to(providerContracts);
-        injectionManager.register(binding);
+        serviceBindingBuilder.to(component);
+        Injections.addBinding(serviceBindingBuilder, dynamicConfiguration);
+        dynamicConfiguration.commit();
+
+        LoggerManager.getLogger(SpringHK2ComponentProvider.class).info("Bound the Spring bean(%s) into the HK2 context", beanNames[0]);
 
         return true;
       }
     }
+
+    return false;
   }
 
   @Override
@@ -111,36 +105,39 @@ public class SpringHK2ComponentProvider implements ComponentProvider {
 
   }
 
-  private static class SpringManagedBeanFactory implements Supplier {
+  private static class SpringManagedBeanFactory implements Factory {
 
-    private final ApplicationContext ctx;
-    private final InjectionManager injectionManager;
-    private final String beanName;
+    private ApplicationContext applicationContext;
+    private ServiceLocator serviceLocator;
+    private String beanName;
+    private boolean singleton;
 
-    private SpringManagedBeanFactory (ApplicationContext ctx, InjectionManager injectionManager, String beanName) {
+    private SpringManagedBeanFactory (ServiceLocator serviceLocator, ApplicationContext applicationContext, String beanName) {
 
-      this.ctx = ctx;
-      this.injectionManager = injectionManager;
+      this.serviceLocator = serviceLocator;
+      this.applicationContext = applicationContext;
       this.beanName = beanName;
+
+      if ((singleton = applicationContext.isSingleton(beanName))) {
+        serviceLocator.inject(applicationContext.getBean(beanName));
+      }
     }
 
     @Override
-    public Object get () {
+    public Object provide () {
 
-      Object bean = ctx.getBean(beanName);
-      if (bean instanceof Advised) {
-        try {
-          // Unwrap the bean and inject the values inside of it
-          Object localBean = ((Advised)bean).getTargetSource().getTarget();
-          injectionManager.inject(localBean);
-        } catch (Exception e) {
-          // Ignore and let the injection happen as it normally would.
-          injectionManager.inject(bean);
-        }
-      } else {
-        injectionManager.inject(bean);
+      Object bean = applicationContext.getBean(beanName);
+
+      if (!singleton) {
+        serviceLocator.inject(bean);
       }
+
       return bean;
+    }
+
+    @Override
+    public void dispose (Object instance) {
+
     }
   }
 }
