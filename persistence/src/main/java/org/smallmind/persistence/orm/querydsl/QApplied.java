@@ -32,11 +32,11 @@
  */
 package org.smallmind.persistence.orm.querydsl;
 
-import com.querydsl.core.types.EntityPath;
+import com.querydsl.core.types.Path;
 
 public interface QApplied {
 
   boolean isEmpty ();
 
-  EntityPath[] getEntities ();
+  Path[] getPaths ();
 }

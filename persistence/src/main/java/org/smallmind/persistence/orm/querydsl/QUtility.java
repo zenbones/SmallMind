@@ -35,11 +35,11 @@ package org.smallmind.persistence.orm.querydsl;
 import java.lang.reflect.Array;
 import java.util.LinkedList;
 import com.querydsl.core.BooleanBuilder;
-import com.querydsl.core.types.EntityPath;
 import com.querydsl.core.types.Expression;
 import com.querydsl.core.types.Ops;
 import com.querydsl.core.types.Order;
 import com.querydsl.core.types.OrderSpecifier;
+import com.querydsl.core.types.Path;
 import com.querydsl.core.types.Predicate;
 import com.querydsl.core.types.dsl.Expressions;
 import org.smallmind.nutsnbolts.lang.UnknownSwitchCaseException;
@@ -56,7 +56,7 @@ import org.smallmind.persistence.query.WherePath;
 
 public class QUtility {
 
-  private static final WhereFieldTransformer<EntityPath<?>> WHERE_FIELD_TRANSFORMER = new QWhereFieldTransformer();
+  private static final WhereFieldTransformer<Path<?>> WHERE_FIELD_TRANSFORMER = new QWhereFieldTransformer();
   private static final WhereOperandTransformer WHERE_OPERAND_TRANSFORMER = new DefaultWhereOperandTransformer();
 
   public static PredicateQApplied apply (Where where) {
@@ -64,7 +64,7 @@ public class QUtility {
     return apply(where, WHERE_FIELD_TRANSFORMER, WHERE_OPERAND_TRANSFORMER);
   }
 
-  public static PredicateQApplied apply (Where where, WhereFieldTransformer<EntityPath<?>> fieldTransformer) {
+  public static PredicateQApplied apply (Where where, WhereFieldTransformer<Path<?>> fieldTransformer) {
 
     return apply(where, fieldTransformer, WHERE_OPERAND_TRANSFORMER);
   }
@@ -74,7 +74,7 @@ public class QUtility {
     return apply(where, WHERE_FIELD_TRANSFORMER, operandTransformer);
   }
 
-  public static PredicateQApplied apply (Where where, WhereFieldTransformer<EntityPath<?>> fieldTransformer, WhereOperandTransformer operandTransformer) {
+  public static PredicateQApplied apply (Where where, WhereFieldTransformer<Path<?>> fieldTransformer, WhereOperandTransformer operandTransformer) {
 
     if (where == null) {
 
@@ -93,7 +93,7 @@ public class QUtility {
     }
   }
 
-  private static Predicate walkConjunction (PredicateSomeQApplied qApplied, WhereConjunction whereConjunction, WhereFieldTransformer<EntityPath<?>> fieldTransformer, WhereOperandTransformer operandTransformer) {
+  private static Predicate walkConjunction (PredicateSomeQApplied qApplied, WhereConjunction whereConjunction, WhereFieldTransformer<Path<?>> fieldTransformer, WhereOperandTransformer operandTransformer) {
 
     if ((whereConjunction == null) || whereConjunction.isEmpty()) {
 
@@ -146,10 +146,10 @@ public class QUtility {
     }
   }
 
-  private static Predicate walkField (PredicateSomeQApplied qApplied, WhereField whereField, WhereFieldTransformer<EntityPath<?>> fieldTransformer, WhereOperandTransformer operandTransformer) {
+  private static Predicate walkField (PredicateSomeQApplied qApplied, WhereField whereField, WhereFieldTransformer<Path<?>> fieldTransformer, WhereOperandTransformer operandTransformer) {
 
     Object fieldValue = operandTransformer.transform(whereField.getOperand());
-    WherePath<EntityPath<?>> wherePath = fieldTransformer.transform(whereField.getEntity(), whereField.getName());
+    WherePath<Path<?>> wherePath = fieldTransformer.transform(whereField.getEntity(), whereField.getName());
 
     qApplied.add(wherePath.asNative());
     switch (whereField.getOperator()) {
@@ -206,7 +206,7 @@ public class QUtility {
     return apply(sort, WHERE_FIELD_TRANSFORMER);
   }
 
-  public static OrderSpecifiersQApplied apply (Sort sort, WhereFieldTransformer<EntityPath<?>> fieldTransformer) {
+  public static OrderSpecifiersQApplied apply (Sort sort, WhereFieldTransformer<Path<?>> fieldTransformer) {
 
     if ((sort != null) && (!sort.isEmpty())) {
 
@@ -216,7 +216,7 @@ public class QUtility {
 
       for (SortField sortField : sort.getFields()) {
 
-        WherePath<EntityPath<?>> wherePath = fieldTransformer.transform(sortField.getEntity(), sortField.getName());
+        WherePath<Path<?>> wherePath = fieldTransformer.transform(sortField.getEntity(), sortField.getName());
 
         ((OrderSpecifiersSomeQApplied)qApplied).add(wherePath.asNative());
         switch (sortField.getDirection()) {

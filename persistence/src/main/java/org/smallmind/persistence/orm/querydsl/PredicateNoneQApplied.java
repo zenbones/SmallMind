@@ -62,7 +62,7 @@ public class PredicateNoneQApplied implements PredicateQApplied {
   }
 
   @Override
-  public EntityPath[] getEntities () {
+  public EntityPath[] getPaths () {
 
     return ZERO_ENTITIES;
   }

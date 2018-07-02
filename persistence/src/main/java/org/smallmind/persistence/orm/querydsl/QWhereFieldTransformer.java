@@ -32,93 +32,26 @@
  */
 package org.smallmind.persistence.orm.querydsl;
 
-import java.lang.reflect.Field;
-import java.util.HashMap;
-import com.querydsl.core.types.EntityPath;
-import org.smallmind.nutsnbolts.reflection.FieldUtility;
-import org.smallmind.persistence.AbstractDurable;
+import com.querydsl.core.types.Path;
 import org.smallmind.persistence.query.AbstractWhereFieldTransformer;
 import org.smallmind.persistence.query.WherePath;
 
-public class QWhereFieldTransformer<D extends AbstractDurable<?, D>> extends AbstractWhereFieldTransformer<EntityPath<? extends D>> {
+public class QWhereFieldTransformer extends AbstractWhereFieldTransformer<Path<?>> {
 
-  private HashMap<String, JoinedType> typeMap = new HashMap<>();
-  private EntityPath<? extends D> defaultEntityPath;
+  private Path<?> defaultPath;
 
   public QWhereFieldTransformer () {
 
   }
 
-  public QWhereFieldTransformer (EntityPath<? extends D> defaultEntityPath) {
+  public QWhereFieldTransformer (Path<?> defaultPath) {
 
-    this.defaultEntityPath = defaultEntityPath;
-  }
-
-  public synchronized QWhereFieldTransformer add (Class<? extends AbstractDurable<?, D>> durableClass, EntityPath<? extends D> entityPath) {
-
-    typeMap.put(durableClass.getSimpleName(), new JoinedType(durableClass, entityPath));
-
-    return this;
+    this.defaultPath = defaultPath;
   }
 
   @Override
-  public synchronized WherePath<EntityPath<? extends D>> getDefault (String entity, String name) {
+  public synchronized WherePath<Path<?>> getDefault (String entity, String name) {
 
-    JoinedType joinedType;
-
-    if ((entity != null) && (!entity.isEmpty())) {
-      if ((joinedType = typeMap.get(entity)) != null) {
-
-        return new QWherePath<>(joinedType.getEntityPath(), name);
-      } else {
-        return new QWherePath<>(null, entity + '.' + name);
-      }
-    } else {
-
-      EntityPath<? extends D> entityPath;
-
-      if ((entityPath = deduceEntityPath(name)) != null) {
-
-        return new QWherePath<>(entityPath, name);
-      } else {
-        return new QWherePath<>(defaultEntityPath, name);
-      }
-    }
-  }
-
-  private EntityPath<? extends D> deduceEntityPath (String name) {
-
-    for (JoinedType joinedType : typeMap.values()) {
-      for (Field field : FieldUtility.getFields(joinedType.getDurableClass())) {
-        if (field.getName().equals(name)) {
-
-          return joinedType.getEntityPath();
-        }
-      }
-    }
-
-    return null;
-  }
-
-  private class JoinedType {
-
-    private Class<? extends AbstractDurable<?, ? extends D>> durableClass;
-    private EntityPath<? extends D> entityPath;
-
-    private JoinedType (Class<? extends AbstractDurable<?, ? extends D>> durableClass, EntityPath<? extends D> entityPath) {
-
-      this.durableClass = durableClass;
-      this.entityPath = entityPath;
-    }
-
-    public Class<? extends AbstractDurable<?, ? extends D>> getDurableClass () {
-
-      return durableClass;
-    }
-
-    private EntityPath<? extends D> getEntityPath () {
-
-      return entityPath;
-    }
+    return new QWherePath(defaultPath, ((entity != null) && (!entity.isEmpty())) ? entity + "." + name : name);
   }
 }

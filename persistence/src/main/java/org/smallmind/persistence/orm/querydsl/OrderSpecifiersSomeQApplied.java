@@ -33,18 +33,18 @@
 package org.smallmind.persistence.orm.querydsl;
 
 import java.util.HashSet;
-import com.querydsl.core.types.EntityPath;
 import com.querydsl.core.types.OrderSpecifier;
+import com.querydsl.core.types.Path;
 
 public class OrderSpecifiersSomeQApplied implements OrderSpecifiersQApplied {
 
-  private HashSet<EntityPath<?>> entitySet = new HashSet<>();
+  private HashSet<Path<?>> pathSet = new HashSet<>();
   private OrderSpecifier[] result;
 
-  public OrderSpecifiersSomeQApplied add (EntityPath<?> entity) {
+  public OrderSpecifiersSomeQApplied add (Path<?> entity) {
 
     if (entity != null) {
-      entitySet.add(entity);
+      pathSet.add(entity);
     }
 
     return this;
@@ -69,12 +69,12 @@ public class OrderSpecifiersSomeQApplied implements OrderSpecifiersQApplied {
   }
 
   @Override
-  public EntityPath[] getEntities () {
+  public Path[] getPaths () {
 
-    EntityPath[] entities = new EntityPath[entitySet.size()];
+    Path[] paths = new Path[pathSet.size()];
 
-    entitySet.toArray(entities);
+    pathSet.toArray(paths);
 
-    return entities;
+    return paths;
   }
 }
