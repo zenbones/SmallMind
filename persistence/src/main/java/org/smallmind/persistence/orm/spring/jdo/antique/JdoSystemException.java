@@ -32,24 +32,20 @@
  */
 package org.smallmind.persistence.orm.spring.jdo.antique;
 
-import javax.jdo.JDOException;
-
 import org.springframework.dao.UncategorizedDataAccessException;
+
+import javax.jdo.JDOException;
 
 /**
  * JDO-specific subclass of UncategorizedDataAccessException,
  * for JDO system errors that do not match any concrete
  * {@code org.springframework.dao} exceptions.
- *
- * @author Juergen Hoeller
- * @since 03.06.2003
- * @see PersistenceManagerFactoryUtils#convertJdoAccessException
  */
 @SuppressWarnings("serial")
 public class JdoSystemException extends UncategorizedDataAccessException {
 
-	public JdoSystemException(JDOException ex) {
-		super(ex.getMessage(), ex);
-	}
+  public JdoSystemException(JDOException ex) {
+    super(ex.getMessage(), ex);
+  }
 
 }

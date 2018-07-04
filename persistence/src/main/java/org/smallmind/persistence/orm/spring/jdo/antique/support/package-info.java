@@ -30,8 +30,5 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-/**
- * Classes supporting the {@code org.smallmind.persistence.orm.spring.jdo.antique} package.
- */
 package org.smallmind.persistence.orm.spring.jdo.antique.support;
 
