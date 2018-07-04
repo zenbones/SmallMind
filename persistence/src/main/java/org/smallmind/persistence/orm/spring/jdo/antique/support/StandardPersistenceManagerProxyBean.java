@@ -32,58 +32,41 @@
  */
 package org.smallmind.persistence.orm.spring.jdo.antique.support;
 
-import javax.jdo.PersistenceManager;
-import javax.jdo.PersistenceManagerFactory;
-
 import org.springframework.beans.factory.FactoryBean;
 import org.springframework.util.Assert;
 
-/**
- * Proxy that implements the {@link javax.jdo.PersistenceManager} interface,
- * delegating to a thread-bound PersistenceManager on each invocation -
- * as defined by the JDO 3.0 specification. This class makes such a standard
- * JDO PersistenceManager proxy available for bean references.
- *
- * <p>The main advantage of this proxy is that it allows DAOs to work with a
- * plain JDO PersistenceManager reference in JDO 3.0 style
- * (see {@link javax.jdo.PersistenceManagerFactory#getPersistenceManagerProxy()}),
- * exposing the exact behavior that the target JDO provider implements.
- *
- * @author Juergen Hoeller
- * @since 3.0
- * @see SpringPersistenceManagerProxyBean
- * @see javax.jdo.PersistenceManagerFactory#getPersistenceManagerProxy()
- */
+import javax.jdo.PersistenceManager;
+import javax.jdo.PersistenceManagerFactory;
+
 public class StandardPersistenceManagerProxyBean implements FactoryBean<PersistenceManager> {
 
-	private PersistenceManager proxy;
+  private PersistenceManager proxy;
 
 
-	/**
-	 * Set the target JDO PersistenceManagerFactory that this proxy should
-	 * delegate to. This should be the raw PersistenceManagerFactory, as
-	 * accessed by JdoTransactionManager.
-	 * @see org.smallmind.persistence.orm.spring.jdo.antique.JdoTransactionManager
-	 */
-	public void setPersistenceManagerFactory(PersistenceManagerFactory pmf) {
-		Assert.notNull(pmf, "PersistenceManagerFactory must not be null");
-		this.proxy = pmf.getPersistenceManagerProxy();
-	}
+  /**
+   * Set the target JDO PersistenceManagerFactory that this proxy should
+   * delegate to. This should be the raw PersistenceManagerFactory, as
+   * accessed by JdoTransactionManager.
+   */
+  public void setPersistenceManagerFactory(PersistenceManagerFactory pmf) {
+    Assert.notNull(pmf, "PersistenceManagerFactory must not be null");
+    this.proxy = pmf.getPersistenceManagerProxy();
+  }
 
 
-	@Override
-	public PersistenceManager getObject() {
-		return this.proxy;
-	}
+  @Override
+  public PersistenceManager getObject() {
+    return this.proxy;
+  }
 
-	@Override
-	public Class<? extends PersistenceManager> getObjectType() {
-		return (this.proxy != null ? this.proxy.getClass() : PersistenceManager.class);
-	}
+  @Override
+  public Class<? extends PersistenceManager> getObjectType() {
+    return (this.proxy != null ? this.proxy.getClass() : PersistenceManager.class);
+  }
 
-	@Override
-	public boolean isSingleton() {
-		return true;
-	}
+  @Override
+  public boolean isSingleton() {
+    return true;
+  }
 
 }

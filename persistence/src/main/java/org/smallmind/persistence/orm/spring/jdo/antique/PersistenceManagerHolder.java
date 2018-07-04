@@ -32,10 +32,10 @@
  */
 package org.smallmind.persistence.orm.spring.jdo.antique;
 
-import javax.jdo.PersistenceManager;
-
 import org.springframework.transaction.support.ResourceHolderSupport;
 import org.springframework.util.Assert;
+
+import javax.jdo.PersistenceManager;
 
 /**
  * Holder wrapping a JDO PersistenceManager.
@@ -43,41 +43,36 @@ import org.springframework.util.Assert;
  * to the thread, for a given PersistenceManagerFactory.
  *
  * <p>Note: This is an SPI class, not intended to be used by applications.
- *
- * @author Juergen Hoeller
- * @since 03.06.2003
- * @see JdoTransactionManager
- * @see PersistenceManagerFactoryUtils
  */
 public class PersistenceManagerHolder extends ResourceHolderSupport {
 
-	private final PersistenceManager persistenceManager;
+  private final PersistenceManager persistenceManager;
 
-	private boolean transactionActive;
-
-
-	public PersistenceManagerHolder(PersistenceManager persistenceManager) {
-		Assert.notNull(persistenceManager, "PersistenceManager must not be null");
-		this.persistenceManager = persistenceManager;
-	}
+  private boolean transactionActive;
 
 
-	public PersistenceManager getPersistenceManager() {
-		return this.persistenceManager;
-	}
+  public PersistenceManagerHolder(PersistenceManager persistenceManager) {
+    Assert.notNull(persistenceManager, "PersistenceManager must not be null");
+    this.persistenceManager = persistenceManager;
+  }
 
-	protected void setTransactionActive(boolean transactionActive) {
-		this.transactionActive = transactionActive;
-	}
 
-	protected boolean isTransactionActive() {
-		return this.transactionActive;
-	}
+  public PersistenceManager getPersistenceManager() {
+    return this.persistenceManager;
+  }
 
-	@Override
-	public void clear() {
-		super.clear();
-		this.transactionActive = false;
-	}
+  protected boolean isTransactionActive() {
+    return this.transactionActive;
+  }
+
+  protected void setTransactionActive(boolean transactionActive) {
+    this.transactionActive = transactionActive;
+  }
+
+  @Override
+  public void clear() {
+    super.clear();
+    this.transactionActive = false;
+  }
 
 }

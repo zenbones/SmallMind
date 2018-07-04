@@ -32,28 +32,19 @@
  */
 package org.smallmind.persistence.orm.spring.jdo.antique;
 
+import org.springframework.dao.InvalidDataAccessApiUsageException;
+
 import javax.jdo.JDOFatalUserException;
 import javax.jdo.JDOUserException;
 
-import org.springframework.dao.InvalidDataAccessApiUsageException;
-
-/**
- * JDO-specific subclass of InvalidDataAccessApiUsageException.
- * Converts JDO's JDOUserException and JDOFatalUserException.
- *
- * @author Juergen Hoeller
- * @since 03.06.2003
- * @see PersistenceManagerFactoryUtils#convertJdoAccessException
- */
-@SuppressWarnings("serial")
 public class JdoUsageException extends InvalidDataAccessApiUsageException {
 
-	public JdoUsageException(JDOUserException ex) {
-		super(ex.getMessage(), ex);
-	}
+  public JdoUsageException(JDOUserException ex) {
+    super(ex.getMessage(), ex);
+  }
 
-	public JdoUsageException(JDOFatalUserException ex) {
-		super(ex.getMessage(), ex);
-	}
+  public JdoUsageException(JDOFatalUserException ex) {
+    super(ex.getMessage(), ex);
+  }
 
 }
