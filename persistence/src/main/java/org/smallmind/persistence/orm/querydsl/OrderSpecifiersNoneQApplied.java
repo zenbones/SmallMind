@@ -62,7 +62,7 @@ public class OrderSpecifiersNoneQApplied implements OrderSpecifiersQApplied {
   }
 
   @Override
-  public EntityPath[] getEntities () {
+  public EntityPath[] getPaths () {
 
     return ZERO_ENTITIES;
   }

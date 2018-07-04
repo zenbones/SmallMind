@@ -44,15 +44,15 @@ public class DefaultWhereOperandTransformer implements WhereOperandTransformer {
 
   public DefaultWhereOperandTransformer () {
 
-    transformMap.put(new TransformKey<>(Date.class, ZonedDateTime.class), (String typeHint, ZonedDateTime zonedDateTime) -> Date.from(zonedDateTime.toInstant()));
-    transformMap.put(new TransformKey<>(Enum.class, String.class), (String typeHint, String name) -> {
+    transformMap.put(new TransformKey<>(ZonedDateTime.class, Date.class), (String typeHint, ZonedDateTime zonedDateTime) -> Date.from(zonedDateTime.toInstant()));
+    transformMap.put(new TransformKey<>(String.class, Enum.class), (String typeHint, String name) -> {
       throw new ORMOperationException("Missing transform for enum(%s)", typeHint);
     });
   }
 
-  public synchronized <U, T> DefaultWhereOperandTransformer add (Class<U> outputClass, Class<T> inputClass, WhereOperandTransform<U, T> transform) {
+  public synchronized <U, T> DefaultWhereOperandTransformer add (Class<T> inputClass, Class<U> outputClass, WhereOperandTransform<U, T> transform) {
 
-    transformMap.put(new TransformKey<>(outputClass, inputClass), transform);
+    transformMap.put(new TransformKey<>(inputClass, outputClass), transform);
 
     return this;
   }
@@ -77,10 +77,9 @@ public class DefaultWhereOperandTransformer implements WhereOperandTransformer {
         } else {
 
           WhereOperandTransform<?, Object> transform;
-          String typeHint = whereOperand.getTypeHint();
 
-          if ((transform = (WhereOperandTransform<?, Object>)transformMap.get(new TransformKey<>(clazz.getComponentType(), input.getClass().getComponentType()))) == null) {
-            throw new ORMOperationException("Missing transform from input type(%s) to output(%s)", typeHint);
+          if ((transform = (WhereOperandTransform<?, Object>)transformMap.get(new TransformKey<>(input.getClass().getComponentType(), clazz.getComponentType()))) == null) {
+            throw new ORMOperationException("Missing transform from input type(%s) to output(%s)", input.getClass().getComponentType(), clazz.getComponentType());
           } else {
 
             Object[] output;
@@ -89,7 +88,7 @@ public class DefaultWhereOperandTransformer implements WhereOperandTransformer {
             output = (Object[])Array.newInstance(clazz.getComponentType(), arrayLength);
 
             for (int index = 0; index < arrayLength; index++) {
-              output[index] = transform.apply(typeHint, Array.get(input, index));
+              output[index] = transform.apply(whereOperand.getTypeHint(), Array.get(input, index));
             }
 
             return clazz.cast(output);
@@ -98,32 +97,26 @@ public class DefaultWhereOperandTransformer implements WhereOperandTransformer {
       } else {
 
         WhereOperandTransform<U, T> transform;
-        String typeHint = whereOperand.getTypeHint();
 
-        if ((transform = (WhereOperandTransform<U, T>)transformMap.get(new TransformKey<>(clazz, input.getClass()))) == null) {
-          throw new ORMOperationException("Missing transform from input type(%s) to output(%s)", typeHint);
+        if ((transform = (WhereOperandTransform<U, T>)transformMap.get(new TransformKey<>(input.getClass(), clazz))) == null) {
+          throw new ORMOperationException("Missing transform from input type(%s) to output(%s)", input.getClass(), clazz);
         } else {
 
-          return transform.apply(typeHint, input);
+          return transform.apply(whereOperand.getTypeHint(), input);
         }
       }
     }
   }
 
-  private class TransformKey<U, T> {
+  private class TransformKey<T, U> {
 
-    private Class<U> outputClass;
     private Class<T> inputClass;
+    private Class<U> outputClass;
 
-    private TransformKey (Class<U> outputClass, Class<T> inputClass) {
+    private TransformKey (Class<T> inputClass, Class<U> outputClass) {
 
-      this.outputClass = outputClass;
       this.inputClass = inputClass;
-    }
-
-    private Class<U> getOutputClass () {
-
-      return outputClass;
+      this.outputClass = outputClass;
     }
 
     private Class<T> getInputClass () {
@@ -131,16 +124,21 @@ public class DefaultWhereOperandTransformer implements WhereOperandTransformer {
       return inputClass;
     }
 
+    private Class<U> getOutputClass () {
+
+      return outputClass;
+    }
+
     @Override
     public int hashCode () {
 
-      return outputClass.hashCode() ^ inputClass.hashCode();
+      return inputClass.hashCode() ^ outputClass.hashCode();
     }
 
     @Override
     public boolean equals (Object obj) {
 
-      return (obj instanceof TransformKey) && outputClass.equals(((TransformKey)obj).getOutputClass()) && inputClass.equals(((TransformKey)obj).getInputClass());
+      return (obj instanceof TransformKey) && inputClass.equals(((TransformKey)obj).getInputClass()) && outputClass.equals(((TransformKey)obj).getOutputClass());
     }
   }
 }

@@ -4,7 +4,7 @@
   <parent>
     <groupId>org.smallmind</groupId>
     <artifactId>scribe-ink</artifactId>
-    <version>3.3.4</version>
+    <version>3.3.5-SNAPSHOT</version>
   </parent>
   <artifactId>scribe-ink-jdk</artifactId>
   <name>Scribe-Ink-JDK</name>
