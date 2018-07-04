@@ -32,27 +32,23 @@
  */
 package org.smallmind.persistence.orm.spring.jdo.antique;
 
+import org.springframework.orm.ObjectRetrievalFailureException;
+
 import javax.jdo.JDOHelper;
 import javax.jdo.JDOObjectNotFoundException;
-
-import org.springframework.orm.ObjectRetrievalFailureException;
 
 /**
  * JDO-specific subclass of ObjectRetrievalFailureException.
  * Converts JDO's JDOObjectNotFoundException.
- *
- * @author Juergen Hoeller
- * @since 1.1
- * @see PersistenceManagerFactoryUtils#convertJdoAccessException
  */
 @SuppressWarnings("serial")
 public class JdoObjectRetrievalFailureException extends ObjectRetrievalFailureException {
 
-	public JdoObjectRetrievalFailureException(JDOObjectNotFoundException ex) {
-		// Extract information about the failed object from the JDOException, if available.
-		super((ex.getFailedObject() != null ? ex.getFailedObject().getClass() : null),
-				(ex.getFailedObject() != null ? JDOHelper.getObjectId(ex.getFailedObject()) : null),
-				ex.getMessage(), ex);
-	}
+  public JdoObjectRetrievalFailureException(JDOObjectNotFoundException ex) {
+    // Extract information about the failed object from the JDOException, if available.
+    super((ex.getFailedObject() != null ? ex.getFailedObject().getClass() : null),
+      (ex.getFailedObject() != null ? JDOHelper.getObjectId(ex.getFailedObject()) : null),
+      ex.getMessage(), ex);
+  }
 
 }

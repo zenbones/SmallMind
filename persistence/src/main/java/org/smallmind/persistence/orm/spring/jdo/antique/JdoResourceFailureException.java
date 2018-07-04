@@ -32,28 +32,24 @@
  */
 package org.smallmind.persistence.orm.spring.jdo.antique;
 
+import org.springframework.dao.DataAccessResourceFailureException;
+
 import javax.jdo.JDODataStoreException;
 import javax.jdo.JDOFatalDataStoreException;
-
-import org.springframework.dao.DataAccessResourceFailureException;
 
 /**
  * JDO-specific subclass of DataAccessResourceFailureException.
  * Converts JDO's JDODataStoreException and JDOFatalDataStoreException.
- *
- * @author Juergen Hoeller
- * @since 1.1
- * @see PersistenceManagerFactoryUtils#convertJdoAccessException
  */
 @SuppressWarnings("serial")
 public class JdoResourceFailureException extends DataAccessResourceFailureException {
 
-	public JdoResourceFailureException(JDODataStoreException ex) {
-		super(ex.getMessage(), ex);
-	}
+  public JdoResourceFailureException(JDODataStoreException ex) {
+    super(ex.getMessage(), ex);
+  }
 
-	public JdoResourceFailureException(JDOFatalDataStoreException ex) {
-		super(ex.getMessage(), ex);
-	}
+  public JdoResourceFailureException(JDOFatalDataStoreException ex) {
+    super(ex.getMessage(), ex);
+  }
 
 }
