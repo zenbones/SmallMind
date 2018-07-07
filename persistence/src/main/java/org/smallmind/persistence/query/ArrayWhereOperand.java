@@ -39,6 +39,7 @@ import javax.xml.bind.annotation.XmlRootElement;
 import javax.xml.bind.annotation.XmlTransient;
 import javax.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
 import org.smallmind.nutsnbolts.json.ZonedDateTimeXmlAdapter;
+import org.smallmind.nutsnbolts.lang.UnknownSwitchCaseException;
 
 @XmlRootElement(name = "array")
 public class ArrayWhereOperand implements WhereOperand<Object[], Object[]> {
@@ -88,8 +89,10 @@ public class ArrayWhereOperand implements WhereOperand<Object[], Object[]> {
         return Short[].class;
       case "string":
         return String[].class;
-      default:
+      case "enum":
         return Enum[].class;
+      default:
+        throw new UnknownSwitchCaseException(typeHint);
     }
   }
 
@@ -208,9 +211,11 @@ public class ArrayWhereOperand implements WhereOperand<Object[], Object[]> {
         }
 
         return stringArray;
-      default:
+      case "enum":
 
         return value;
+      default:
+        throw new UnknownSwitchCaseException(typeHint);
     }
   }
 

@@ -33,15 +33,15 @@
 package org.smallmind.persistence.orm.querydsl;
 
 import java.util.HashSet;
-import com.querydsl.core.types.EntityPath;
+import com.querydsl.core.types.Path;
 import com.querydsl.core.types.Predicate;
 
 public class PredicateSomeQApplied implements PredicateQApplied {
 
-  private HashSet<EntityPath<?>> entitySet = new HashSet<>();
+  private HashSet<Path<?>> entitySet = new HashSet<>();
   private Predicate result;
 
-  public PredicateSomeQApplied add (EntityPath<?> entity) {
+  public PredicateSomeQApplied add (Path<?> entity) {
 
     if (entity != null) {
       entitySet.add(entity);
@@ -69,12 +69,12 @@ public class PredicateSomeQApplied implements PredicateQApplied {
   }
 
   @Override
-  public EntityPath[] getEntities () {
+  public Path[] getPaths () {
 
-    EntityPath[] entities = new EntityPath[entitySet.size()];
+    Path[] paths = new Path[entitySet.size()];
 
-    entitySet.toArray(entities);
+    entitySet.toArray(paths);
 
-    return entities;
+    return paths;
   }
 }
