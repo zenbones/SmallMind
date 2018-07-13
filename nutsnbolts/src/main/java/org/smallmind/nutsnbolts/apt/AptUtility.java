@@ -88,7 +88,13 @@ public class AptUtility {
     for (Map.Entry<? extends ExecutableElement, ? extends AnnotationValue> valueEntry : annotationMirror.getElementValues().entrySet()) {
       if (valueEntry.getKey().getSimpleName().contentEquals(valueName)) {
 
-        return clazz.cast(valueEntry.getValue().getValue());
+        if (clazz.isEnum()) {
+
+          return (T)Enum.valueOf((Class<Enum>)clazz, valueEntry.getValue().getValue().toString());
+        } else {
+
+          return clazz.cast(valueEntry.getValue().getValue());
+        }
       }
     }
 
