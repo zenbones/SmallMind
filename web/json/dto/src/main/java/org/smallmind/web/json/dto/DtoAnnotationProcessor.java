@@ -752,6 +752,10 @@ public class DtoAnnotationProcessor extends AbstractProcessor {
     private void put (List<String> purposes, String fieldName, PropertyInformation propertyInformation)
       throws DtoDefinitionException {
 
+      if ((purposes == null) || purposes.isEmpty()) {
+        purposes = Collections.singletonList("");
+      }
+
       for (String purpose : purposes) {
         if ((sideMap != null) && (sideMap.containsKey(purpose, fieldName))) {
           throw new DtoDefinitionException("The field(name=%s, purpose=%s, direction=%s) has already been processed", fieldName, (purpose.isEmpty()) ? "n/a" : purpose, direction.name());
