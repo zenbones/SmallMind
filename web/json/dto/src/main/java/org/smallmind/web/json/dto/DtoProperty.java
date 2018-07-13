@@ -50,7 +50,7 @@ public @interface DtoProperty {
 
   String name () default "";
 
-  String purpose () default "";
+  String[] purposes () default {};
 
   boolean required () default false;
 }
