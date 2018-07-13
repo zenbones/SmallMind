@@ -203,6 +203,19 @@ public class DtoAnnotationProcessor extends AbstractProcessor {
     return null;
   }
 
+  private void processTypeMirror (TypeMirror typeMirror)
+    throws IOException, DtoDefinitionException {
+
+    if (TypeKind.DECLARED.equals(typeMirror.getKind())) {
+
+      Element element;
+
+      if (ElementKind.CLASS.equals((element = processingEnv.getTypeUtils().asElement(typeMirror)).getKind())) {
+        generate((TypeElement)element);
+      }
+    }
+  }
+
   private void writeDto (GeneratorInformation generatorInformation, UsefulTypeMirrors usefulTypeMirrors, TypeElement classElement, TypeElement nearestDtoSuperclass, String purpose, Direction direction, PropertyMap propertyMap)
     throws IOException {
 
@@ -625,7 +638,7 @@ public class DtoAnnotationProcessor extends AbstractProcessor {
     private final Boolean polymorphic;
 
     private GeneratorInformation (AnnotationMirror generatorAnnotationMirror, UsefulTypeMirrors usefulTypeMirrors)
-      throws DtoDefinitionException {
+      throws IOException, DtoDefinitionException {
 
       name = AptUtility.extractAnnotationValue(generatorAnnotationMirror, "name", String.class, "");
       polymorphicSubclassList = AptUtility.toConcreteList(processingEnv, AptUtility.extractAnnotationValueAsList(generatorAnnotationMirror, "polymorphicSubClasses", TypeMirror.class));
@@ -636,6 +649,8 @@ public class DtoAnnotationProcessor extends AbstractProcessor {
         PropertyInformation propertyInformation = new PropertyInformation(AptUtility.extractAnnotationValue(propertyAnnotationMirror, "type", TypeMirror.class, null), propertyAnnotationMirror, usefulTypeMirrors, true);
         List<String> purposes = AptUtility.extractAnnotationValueAsList(propertyAnnotationMirror, "purposes", String.class);
         String fieldName = AptUtility.extractAnnotationValue(propertyAnnotationMirror, "field", String.class, null);
+
+        processTypeMirror(propertyInformation.getType());
 
         switch (propertyInformation.getVisibility()) {
           case IN:
@@ -945,19 +960,6 @@ public class DtoAnnotationProcessor extends AbstractProcessor {
               inMap.put(AptUtility.extractAnnotationValueAsList(dtoPropertyAnnotationMirror, "purposes", String.class), fieldName, new PropertyInformation(setMethodMap.get(fieldName).getParameters().get(0).asType(), dtoPropertyAnnotationMirror, usefulTypeMirrors, false));
             }
           }
-        }
-      }
-    }
-
-    private void processTypeMirror (TypeMirror typeMirror)
-      throws IOException, DtoDefinitionException {
-
-      if (TypeKind.DECLARED.equals(typeMirror.getKind())) {
-
-        Element element;
-
-        if (ElementKind.CLASS.equals((element = processingEnv.getTypeUtils().asElement(typeMirror)).getKind())) {
-          generate((TypeElement)element);
         }
       }
     }
