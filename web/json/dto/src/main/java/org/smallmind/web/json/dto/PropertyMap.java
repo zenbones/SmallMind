@@ -32,22 +32,46 @@
  */
 package org.smallmind.web.json.dto;
 
-import java.lang.annotation.ElementType;
-import java.lang.annotation.Retention;
-import java.lang.annotation.RetentionPolicy;
-import java.lang.annotation.Target;
+import java.util.HashMap;
 
-@Retention(RetentionPolicy.SOURCE)
-@Target(ElementType.TYPE)
-public @interface DtoGenerator {
+public class PropertyMap {
 
-  Class[] polymorphicSubClasses () default {};
+  private final HashMap<String, PropertyInformation> realMap = new HashMap<>();
+  private final HashMap<String, PropertyInformation> virtualMap = new HashMap<>();
 
-  Property[] properties () default {};
+  public void put (String key, PropertyInformation propertyInformation) {
 
-  String[] purposes () default {};
+    if (propertyInformation.isVirtual()) {
 
-  String name () default "";
+      virtualMap.put(key, propertyInformation);
+    } else {
 
-  boolean polymorphic () default false;
+      realMap.put(key, propertyInformation);
+    }
+  }
+
+  public boolean isReal () {
+
+    return !realMap.isEmpty();
+  }
+
+  public boolean isVirtual () {
+
+    return !virtualMap.isEmpty();
+  }
+
+  public boolean containsKey (String key) {
+
+    return realMap.containsKey(key) || virtualMap.containsKey(key);
+  }
+
+  public HashMap<String, PropertyInformation> getRealMap () {
+
+    return realMap;
+  }
+
+  public HashMap<String, PropertyInformation> getVirtualMap () {
+
+    return virtualMap;
+  }
 }

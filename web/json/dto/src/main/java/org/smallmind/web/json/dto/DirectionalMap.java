@@ -32,19 +32,59 @@
  */
 package org.smallmind.web.json.dto;
 
-public enum Direction {
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
-  IN("In"), OUT("Out");
+public class DirectionalMap {
 
-  private String code;
+  private final HashMap<String, PropertyMap> internalMap = new HashMap<>();
+  private final Direction direction;
 
-  Direction (String code) {
+  public DirectionalMap (Direction direction) {
 
-    this.code = code;
+    this.direction = direction;
   }
 
-  public String getCode () {
+  public DirectionalMap (Direction direction, DirectionalMap directionalMap) {
 
-    return code;
+    this(direction);
+
+    internalMap.putAll(directionalMap.getInternalMap());
+  }
+
+  private HashMap<String, PropertyMap> getInternalMap () {
+
+    return internalMap;
+  }
+
+  public void put (List<String> purposes, String fieldName, PropertyInformation propertyInformation)
+    throws DtoDefinitionException {
+
+    if ((purposes == null) || purposes.isEmpty()) {
+      purposes = Collections.singletonList("");
+    }
+
+    for (String purpose : purposes) {
+
+      PropertyMap propertyMap;
+
+      if ((propertyMap = internalMap.get(purpose)) == null) {
+        internalMap.put(purpose, propertyMap = new PropertyMap());
+      }
+
+      if (propertyMap.containsKey(fieldName)) {
+        throw new DtoDefinitionException("The field(name=%s, purpose=%s, direction=%s) has already been processed", fieldName, (purpose.isEmpty()) ? "n/a" : purpose, direction.name());
+      } else {
+        propertyMap.put(fieldName, propertyInformation);
+      }
+    }
+  }
+
+  public Set<Map.Entry<String, PropertyMap>> entrySet () {
+
+    return internalMap.entrySet();
   }
 }

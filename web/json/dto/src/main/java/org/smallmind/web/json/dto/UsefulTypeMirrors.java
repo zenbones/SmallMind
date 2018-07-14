@@ -32,22 +32,34 @@
  */
 package org.smallmind.web.json.dto;
 
-import java.lang.annotation.ElementType;
-import java.lang.annotation.Retention;
-import java.lang.annotation.RetentionPolicy;
-import java.lang.annotation.Target;
+import javax.annotation.processing.ProcessingEnvironment;
+import javax.lang.model.type.TypeMirror;
 
-@Retention(RetentionPolicy.SOURCE)
-@Target(ElementType.TYPE)
-public @interface DtoGenerator {
+public class UsefulTypeMirrors {
 
-  Class[] polymorphicSubClasses () default {};
+  private final TypeMirror dtoPropertyTypeMirror;
+  private final TypeMirror dtoPropertiesTypeMirror;
+  private final TypeMirror defaultXmlAdapterTypeMirror;
 
-  Property[] properties () default {};
+  public UsefulTypeMirrors (ProcessingEnvironment processingEnvironment) {
 
-  String[] purposes () default {};
+    dtoPropertyTypeMirror = processingEnvironment.getElementUtils().getTypeElement(DtoProperty.class.getName()).asType();
+    dtoPropertiesTypeMirror = processingEnvironment.getElementUtils().getTypeElement(DtoProperties.class.getName()).asType();
+    defaultXmlAdapterTypeMirror = processingEnvironment.getElementUtils().getTypeElement(DefaultXmlAdapter.class.getName()).asType();
+  }
 
-  String name () default "";
+  public TypeMirror getDtoPropertyTypeMirror () {
 
-  boolean polymorphic () default false;
+    return dtoPropertyTypeMirror;
+  }
+
+  public TypeMirror getDtoPropertiesTypeMirror () {
+
+    return dtoPropertiesTypeMirror;
+  }
+
+  public TypeMirror getDefaultXmlAdapterTypeMirror () {
+
+    return defaultXmlAdapterTypeMirror;
+  }
 }

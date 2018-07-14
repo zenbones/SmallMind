@@ -32,22 +32,59 @@
  */
 package org.smallmind.web.json.dto;
 
-import java.lang.annotation.ElementType;
-import java.lang.annotation.Retention;
-import java.lang.annotation.RetentionPolicy;
-import java.lang.annotation.Target;
+import javax.lang.model.element.AnnotationMirror;
+import javax.lang.model.type.TypeMirror;
+import org.smallmind.nutsnbolts.apt.AptUtility;
 
-@Retention(RetentionPolicy.SOURCE)
-@Target(ElementType.TYPE)
-public @interface DtoGenerator {
+public class PropertyInformation {
 
-  Class[] polymorphicSubClasses () default {};
+  private final TypeMirror adapter;
+  private final TypeMirror type;
+  private final Visibility visibility;
+  private final String name;
+  private final Boolean required;
+  private final boolean virtual;
 
-  Property[] properties () default {};
+  public PropertyInformation (TypeMirror type, AnnotationMirror propertyAnnotationMirror, UsefulTypeMirrors usefulTypeMirrors, boolean virtual) {
 
-  String[] purposes () default {};
+    this.virtual = virtual;
 
-  String name () default "";
+    this.type = type;
 
-  boolean polymorphic () default false;
+    adapter = AptUtility.extractAnnotationValue(propertyAnnotationMirror, "adapter", TypeMirror.class, usefulTypeMirrors.getDefaultXmlAdapterTypeMirror());
+    visibility = AptUtility.extractAnnotationValue(propertyAnnotationMirror, "visibility", Visibility.class, Visibility.BOTH);
+    name = AptUtility.extractAnnotationValue(propertyAnnotationMirror, "name", String.class, "");
+    required = AptUtility.extractAnnotationValue(propertyAnnotationMirror, "required", Boolean.class, Boolean.FALSE);
+  }
+
+  public boolean isVirtual () {
+
+    return virtual;
+  }
+
+  public TypeMirror getAdapter () {
+
+    return adapter;
+  }
+
+  public TypeMirror getType () {
+
+    return type;
+  }
+
+  public Visibility getVisibility () {
+
+    return visibility;
+  }
+
+  public String getName () {
+
+    return name;
+  }
+
+  public boolean isRequired () {
+
+    return (required != null) && required;
+  }
 }
+
