@@ -65,6 +65,7 @@ import com.google.auto.service.AutoService;
 import org.smallmind.nutsnbolts.apt.AptUtility;
 import org.smallmind.nutsnbolts.lang.UnknownSwitchCaseException;
 import org.smallmind.nutsnbolts.reflection.bean.BeanUtility;
+import org.smallmind.nutsnbolts.util.IterableIterator;
 
 @SupportedAnnotationTypes({"org.smallmind.web.json.dto.DtoGenerator"})
 @SupportedSourceVersion(SourceVersion.RELEASE_8)
@@ -119,25 +120,51 @@ public class DtoAnnotationProcessor extends AbstractProcessor {
         }
 
         for (Map.Entry<String, PropertyMap> purposeEntry : dtoClass.getInMap().entrySet()) {
-          writeDto(generatorInformation, usefulTypeMirrors, classElement, nearestDtoSuperclass, purposeEntry.getKey(), Direction.IN, purposeEntry.getValue());
+          processIn(generatorInformation, usefulTypeMirrors, classElement, nearestDtoSuperclass, purposeEntry.getKey(), purposeEntry.getValue());
+          written = true;
+        }
+        for (String unfulfilledPurpose : generatorInformation.unfulfilledPurposes(Direction.IN)) {
+          processIn(generatorInformation, usefulTypeMirrors, classElement, nearestDtoSuperclass, unfulfilledPurpose, new PropertyMap());
 
-          generatedMap.put(classElement, Visibility.IN);
           written = true;
         }
         for (Map.Entry<String, PropertyMap> purposeEntry : dtoClass.getOutMap().entrySet()) {
-          writeDto(generatorInformation, usefulTypeMirrors, classElement, nearestDtoSuperclass, purposeEntry.getKey(), Direction.OUT, purposeEntry.getValue());
+          processOut(generatorInformation, usefulTypeMirrors, classElement, nearestDtoSuperclass, purposeEntry.getKey(), purposeEntry.getValue());
 
-          if (Visibility.IN.equals(generatedMap.get(classElement))) {
-            generatedMap.put(classElement, Visibility.BOTH);
-          } else {
-            generatedMap.put(classElement, Visibility.OUT);
-          }
+          written = true;
+        }
+        for (String unfulfilledPurpose : generatorInformation.unfulfilledPurposes(Direction.IN)) {
+          processOut(generatorInformation, usefulTypeMirrors, classElement, nearestDtoSuperclass, unfulfilledPurpose, new PropertyMap());
           written = true;
         }
 
         if (!written) {
           throw new DtoDefinitionException("The class(%s) was annotated as @%s but contained no properties", classElement.getQualifiedName(), DtoGenerator.class.getSimpleName());
         }
+      }
+    }
+  }
+
+  private void processIn (GeneratorInformation generatorInformation, UsefulTypeMirrors usefulTypeMirrors, TypeElement classElement, TypeElement nearestDtoSuperclass, String purpose, PropertyMap propertyMap)
+    throws IOException {
+
+    writeDto(generatorInformation, usefulTypeMirrors, classElement, nearestDtoSuperclass, purpose, Direction.IN, propertyMap);
+
+    generatorInformation.denotePurpose(Direction.IN, purpose);
+    generatedMap.put(classElement, Visibility.IN);
+  }
+
+  private void processOut (GeneratorInformation generatorInformation, UsefulTypeMirrors usefulTypeMirrors, TypeElement classElement, TypeElement nearestDtoSuperclass, String purpose, PropertyMap propertyMap)
+    throws IOException {
+
+    writeDto(generatorInformation, usefulTypeMirrors, classElement, nearestDtoSuperclass, purpose, Direction.OUT, propertyMap);
+
+    generatorInformation.denotePurpose(Direction.OUT, purpose);
+    if (!Visibility.BOTH.equals(generatedMap.get(classElement))) {
+      if (Visibility.IN.equals(generatedMap.get(classElement))) {
+        generatedMap.put(classElement, Visibility.BOTH);
+      } else {
+        generatedMap.put(classElement, Visibility.OUT);
       }
     }
   }
@@ -149,7 +176,13 @@ public class DtoAnnotationProcessor extends AbstractProcessor {
 
   private StringBuilder asDtoName (Name simpleName, String purpose, Direction direction) {
 
-    return new StringBuilder((processingEnv.getOptions().get("prefix") == null) ? "" : processingEnv.getOptions().get("prefix")).append(simpleName).append(purpose).append(direction.getCode()).append("Dto");
+    StringBuilder dtoNameBuilder = new StringBuilder((processingEnv.getOptions().get("prefix") == null) ? "" : processingEnv.getOptions().get("prefix")).append(simpleName);
+
+    if ((purpose != null) && (!purpose.isEmpty())) {
+      dtoNameBuilder.append(Character.toUpperCase(purpose.charAt(0))).append(purpose.substring(1));
+    }
+
+    return dtoNameBuilder.append(direction.getCode()).append("Dto");
   }
 
   private String asCompatibleName (TypeMirror typeMirror, String purpose, Direction direction) {
@@ -633,6 +666,8 @@ public class DtoAnnotationProcessor extends AbstractProcessor {
 
     private final DirectionalMap inMap = new DirectionalMap(Direction.IN);
     private final DirectionalMap outMap = new DirectionalMap(Direction.OUT);
+    private final HashSet<String> inPurposeSet = new HashSet<>();
+    private final HashSet<String> outPurposeSet = new HashSet<>();
     private final List<TypeElement> polymorphicSubclassList;
     private final String name;
     private final Boolean polymorphic;
@@ -643,6 +678,9 @@ public class DtoAnnotationProcessor extends AbstractProcessor {
       name = AptUtility.extractAnnotationValue(generatorAnnotationMirror, "name", String.class, "");
       polymorphicSubclassList = AptUtility.toConcreteList(processingEnv, AptUtility.extractAnnotationValueAsList(generatorAnnotationMirror, "polymorphicSubClasses", TypeMirror.class));
       polymorphic = AptUtility.extractAnnotationValue(generatorAnnotationMirror, "polymorphic", Boolean.class, Boolean.FALSE);
+
+      inPurposeSet.addAll(AptUtility.extractAnnotationValueAsList(generatorAnnotationMirror, "purposes", String.class));
+      outPurposeSet.addAll(inPurposeSet);
 
       for (AnnotationMirror propertyAnnotationMirror : AptUtility.extractAnnotationValueAsList(generatorAnnotationMirror, "properties", AnnotationMirror.class)) {
 
@@ -692,6 +730,34 @@ public class DtoAnnotationProcessor extends AbstractProcessor {
     private DirectionalMap getOutMap () {
 
       return outMap;
+    }
+
+    private void denotePurpose (Direction direction, String purpose) {
+
+      switch (direction) {
+        case IN:
+          inPurposeSet.remove(purpose);
+          break;
+        case OUT:
+          outPurposeSet.remove(purpose);
+          break;
+        default:
+          throw new UnknownSwitchCaseException(direction.name());
+      }
+    }
+
+    private Iterable<String> unfulfilledPurposes (Direction direction) {
+
+      switch (direction) {
+        case IN:
+
+          return new IterableIterator<>(inPurposeSet.iterator());
+        case OUT:
+
+          return new IterableIterator<>(outPurposeSet.iterator());
+        default:
+          throw new UnknownSwitchCaseException(direction.name());
+      }
     }
   }
 
