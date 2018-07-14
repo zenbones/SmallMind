@@ -32,12 +32,15 @@
  */
 package org.smallmind.web.json.dto;
 
+import java.util.LinkedList;
+import java.util.List;
 import javax.lang.model.element.AnnotationMirror;
 import javax.lang.model.type.TypeMirror;
 import org.smallmind.nutsnbolts.apt.AptUtility;
 
 public class PropertyInformation {
 
+  private final List<ConstraintInformation> constraintInformationtList = new LinkedList<>();
   private final TypeMirror adapter;
   private final TypeMirror type;
   private final Visibility visibility;
@@ -47,14 +50,17 @@ public class PropertyInformation {
 
   public PropertyInformation (TypeMirror type, AnnotationMirror propertyAnnotationMirror, UsefulTypeMirrors usefulTypeMirrors, boolean virtual) {
 
-    this.virtual = virtual;
-
     this.type = type;
+    this.virtual = virtual;
 
     adapter = AptUtility.extractAnnotationValue(propertyAnnotationMirror, "adapter", TypeMirror.class, usefulTypeMirrors.getDefaultXmlAdapterTypeMirror());
     visibility = AptUtility.extractAnnotationValue(propertyAnnotationMirror, "visibility", Visibility.class, Visibility.BOTH);
     name = AptUtility.extractAnnotationValue(propertyAnnotationMirror, "name", String.class, "");
     required = AptUtility.extractAnnotationValue(propertyAnnotationMirror, "required", Boolean.class, Boolean.FALSE);
+
+    for (AnnotationMirror constraintAnnotationMirror : AptUtility.extractAnnotationValueAsList(propertyAnnotationMirror, "constraints", AnnotationMirror.class)) {
+      constraintInformationtList.add(new ConstraintInformation(constraintAnnotationMirror));
+    }
   }
 
   public boolean isVirtual () {
@@ -80,6 +86,11 @@ public class PropertyInformation {
   public String getName () {
 
     return name;
+  }
+
+  public Iterable<ConstraintInformation> getConstraints () {
+
+    return constraintInformationtList;
   }
 
   public boolean isRequired () {

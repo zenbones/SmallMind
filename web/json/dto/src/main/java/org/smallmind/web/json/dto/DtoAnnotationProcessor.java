@@ -533,6 +533,16 @@ public class DtoAnnotationProcessor extends AbstractProcessor {
   private void writeField (BufferedWriter writer, String purpose, Direction direction, Map.Entry<String, PropertyInformation> propertyInformationEntry)
     throws IOException {
 
+    for (ConstraintInformation constraintInformation : propertyInformationEntry.getValue().getConstraints()) {
+      writer.write("  @");
+      writer.write(constraintInformation.getType().toString());
+      if (!constraintInformation.getArguments().isEmpty()) {
+        writer.write("(");
+        writer.write(constraintInformation.getArguments());
+        writer.write(")");
+      }
+      writer.newLine();
+    }
     writer.write("  private ");
     writer.write(asCompatibleName(propertyInformationEntry.getValue().getType(), purpose, direction));
     writer.write(" ");

@@ -41,7 +41,6 @@ import javax.lang.model.element.TypeElement;
 import javax.lang.model.type.TypeMirror;
 import org.smallmind.nutsnbolts.apt.AptUtility;
 import org.smallmind.nutsnbolts.lang.UnknownSwitchCaseException;
-import org.smallmind.nutsnbolts.util.IterableIterator;
 
 public class GeneratorInformation {
 
@@ -132,10 +131,10 @@ public class GeneratorInformation {
     switch (direction) {
       case IN:
 
-        return new IterableIterator<>(inPurposeSet.iterator());
+        return inPurposeSet;
       case OUT:
 
-        return new IterableIterator<>(outPurposeSet.iterator());
+        return outPurposeSet;
       default:
         throw new UnknownSwitchCaseException(direction.name());
     }

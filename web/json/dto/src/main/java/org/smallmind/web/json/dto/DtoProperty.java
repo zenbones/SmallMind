@@ -46,6 +46,8 @@ public @interface DtoProperty {
 
   Class<? extends XmlAdapter> adapter () default DefaultXmlAdapter.class;
 
+  Constraint[] constraints () default {};
+
   Visibility visibility () default Visibility.BOTH;
 
   String name () default "";

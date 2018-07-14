@@ -35,25 +35,12 @@ package org.smallmind.web.json.dto;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
-import javax.xml.bind.annotation.adapters.XmlAdapter;
 
 @Retention(RetentionPolicy.SOURCE)
 @Target({})
-public @interface Property {
+public @interface Constraint {
 
-  Class<? extends XmlAdapter> adapter () default DefaultXmlAdapter.class;
+  Class<?> value ();
 
-  Class<?> type ();
-
-  Constraint[] constraints () default {};
-
-  Visibility visibility () default Visibility.BOTH;
-
-  String[] purposes () default {};
-
-  String field ();
-
-  String name () default "";
-
-  boolean required () default false;
+  String arguments () default "";
 }
