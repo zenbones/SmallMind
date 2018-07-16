@@ -44,8 +44,8 @@ import org.smallmind.nutsnbolts.lang.UnknownSwitchCaseException;
 
 public class GeneratorInformation {
 
-  private final DirectionalMap inMap = new DirectionalMap(Direction.IN);
-  private final DirectionalMap outMap = new DirectionalMap(Direction.OUT);
+  private final DirectionalGuide inMap = new DirectionalGuide(Direction.IN);
+  private final DirectionalGuide outMap = new DirectionalGuide(Direction.OUT);
   private final HashSet<String> inPurposeSet = new HashSet<>();
   private final HashSet<String> outPurposeSet = new HashSet<>();
   private final List<TypeElement> polymorphicSubclassList;
@@ -64,25 +64,26 @@ public class GeneratorInformation {
 
     for (AnnotationMirror propertyAnnotationMirror : AptUtility.extractAnnotationValueAsList(generatorAnnotationMirror, "properties", AnnotationMirror.class)) {
 
-      PropertyInformation propertyInformation = new PropertyInformation(AptUtility.extractAnnotationValue(propertyAnnotationMirror, "type", TypeMirror.class, null), propertyAnnotationMirror, usefulTypeMirrors, true);
-      List<String> purposes = AptUtility.extractAnnotationValueAsList(propertyAnnotationMirror, "purposes", String.class);
       String fieldName = AptUtility.extractAnnotationValue(propertyAnnotationMirror, "field", String.class, null);
 
-      dtoAnnotationProcessor.processTypeMirror(propertyInformation.getType());
+      for (PropertyBox propertyBox : new PropertyParser(propertyAnnotationMirror, AptUtility.extractAnnotationValue(propertyAnnotationMirror, "type", TypeMirror.class, null), true)) {
 
-      switch (propertyInformation.getVisibility()) {
-        case IN:
-          inMap.put(purposes, fieldName, propertyInformation);
-          break;
-        case OUT:
-          outMap.put(purposes, fieldName, propertyInformation);
-          break;
-        case BOTH:
-          inMap.put(purposes, fieldName, propertyInformation);
-          outMap.put(purposes, fieldName, propertyInformation);
-          break;
-        default:
-          throw new UnknownSwitchCaseException(propertyInformation.getVisibility().name());
+        dtoAnnotationProcessor.processTypeMirror(propertyBox.getPropertyInformation().getType());
+
+        switch (propertyBox.getVisibility()) {
+          case IN:
+            inMap.put(propertyBox.getPurpose(), fieldName, propertyBox.getPropertyInformation());
+            break;
+          case OUT:
+            outMap.put(propertyBox.getPurpose(), fieldName, propertyBox.getPropertyInformation());
+            break;
+          case BOTH:
+            inMap.put(propertyBox.getPurpose(), fieldName, propertyBox.getPropertyInformation());
+            outMap.put(propertyBox.getPurpose(), fieldName, propertyBox.getPropertyInformation());
+            break;
+          default:
+            throw new UnknownSwitchCaseException(propertyBox.getVisibility().name());
+        }
       }
     }
   }
@@ -102,12 +103,12 @@ public class GeneratorInformation {
     return polymorphicSubclassList;
   }
 
-  public DirectionalMap getInMap () {
+  public DirectionalGuide getInMap () {
 
     return inMap;
   }
 
-  public DirectionalMap getOutMap () {
+  public DirectionalGuide getOutMap () {
 
     return outMap;
   }

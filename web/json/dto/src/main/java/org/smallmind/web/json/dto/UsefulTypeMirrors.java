@@ -38,28 +38,14 @@ import javax.lang.model.type.TypeMirror;
 public class UsefulTypeMirrors {
 
   private final TypeMirror dtoPropertyTypeMirror;
-  private final TypeMirror dtoPropertiesTypeMirror;
-  private final TypeMirror defaultXmlAdapterTypeMirror;
 
   public UsefulTypeMirrors (ProcessingEnvironment processingEnvironment) {
 
     dtoPropertyTypeMirror = processingEnvironment.getElementUtils().getTypeElement(DtoProperty.class.getName()).asType();
-    dtoPropertiesTypeMirror = processingEnvironment.getElementUtils().getTypeElement(DtoProperties.class.getName()).asType();
-    defaultXmlAdapterTypeMirror = processingEnvironment.getElementUtils().getTypeElement(DefaultXmlAdapter.class.getName()).asType();
   }
 
   public TypeMirror getDtoPropertyTypeMirror () {
 
     return dtoPropertyTypeMirror;
-  }
-
-  public TypeMirror getDtoPropertiesTypeMirror () {
-
-    return dtoPropertiesTypeMirror;
-  }
-
-  public TypeMirror getDefaultXmlAdapterTypeMirror () {
-
-    return defaultXmlAdapterTypeMirror;
   }
 }

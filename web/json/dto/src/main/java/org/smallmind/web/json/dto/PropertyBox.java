@@ -32,46 +32,31 @@
  */
 package org.smallmind.web.json.dto;
 
-import java.util.HashMap;
+public class PropertyBox {
 
-public class PropertyMap {
+  private final PropertyInformation propertyInformation;
+  private final Visibility visibility;
+  private final String purpose;
 
-  private final HashMap<String, PropertyInformation> realMap = new HashMap<>();
-  private final HashMap<String, PropertyInformation> virtualMap = new HashMap<>();
+  public PropertyBox (Visibility visibility, String purpose, PropertyInformation propertyInformation) {
 
-  public void put (String key, PropertyInformation propertyInformation) {
-
-    if (propertyInformation.isVirtual()) {
-
-      virtualMap.put(key, propertyInformation);
-    } else {
-
-      realMap.put(key, propertyInformation);
-    }
+    this.visibility = visibility;
+    this.purpose = purpose;
+    this.propertyInformation = propertyInformation;
   }
 
-  public boolean isReal () {
+  public Visibility getVisibility () {
 
-    return !realMap.isEmpty();
+    return visibility;
   }
 
-  public boolean isVirtual () {
+  public String getPurpose () {
 
-    return !virtualMap.isEmpty();
+    return purpose;
   }
 
-  public boolean containsKey (String key) {
+  public PropertyInformation getPropertyInformation () {
 
-    return realMap.containsKey(key) || virtualMap.containsKey(key);
-  }
-
-  public HashMap<String, PropertyInformation> getRealMap () {
-
-    return realMap;
-  }
-
-  public HashMap<String, PropertyInformation> getVirtualMap () {
-
-    return virtualMap;
+    return propertyInformation;
   }
 }

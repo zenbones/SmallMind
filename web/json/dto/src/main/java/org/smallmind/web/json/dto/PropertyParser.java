@@ -32,59 +32,42 @@
  */
 package org.smallmind.web.json.dto;
 
-import java.util.List;
+import java.util.Collections;
+import java.util.Iterator;
+import java.util.LinkedList;
 import javax.lang.model.element.AnnotationMirror;
 import javax.lang.model.type.TypeMirror;
 import org.smallmind.nutsnbolts.apt.AptUtility;
 
-public class PropertyInformation {
+public class PropertyParser implements Iterable<PropertyBox> {
 
-  private final List<ConstraintInformation> constraintList;
-  private final TypeMirror adapter;
-  private final TypeMirror type;
-  private final String name;
-  private final Boolean required;
-  private final boolean virtual;
+  private final LinkedList<PropertyBox> entryList = new LinkedList<>();
 
-  public PropertyInformation (AnnotationMirror propertyAnnotationMirror, List<ConstraintInformation> constraintList, TypeMirror type, boolean virtual) {
+  public PropertyParser (AnnotationMirror propertyAnnotationMirror, TypeMirror type, boolean virtual) {
 
-    this.type = type;
-    this.virtual = virtual;
-    this.constraintList = constraintList;
+    boolean hasIdioms = false;
 
-    adapter = AptUtility.extractAnnotationValue(propertyAnnotationMirror, "adapter", TypeMirror.class, null);
-    name = AptUtility.extractAnnotationValue(propertyAnnotationMirror, "name", String.class, "");
-    required = AptUtility.extractAnnotationValue(propertyAnnotationMirror, "required", Boolean.class, Boolean.FALSE);
+    for (AnnotationMirror idiomAnnotationMirror : AptUtility.extractAnnotationValueAsList(propertyAnnotationMirror, "idioms", AnnotationMirror.class)) {
+
+      IdiomInformation idiomInformation = new IdiomInformation(idiomAnnotationMirror);
+
+      hasIdioms = true;
+      if (idiomInformation.getPurposeList().isEmpty()) {
+        entryList.add(new PropertyBox(idiomInformation.getVisibility(), "", new PropertyInformation(propertyAnnotationMirror, idiomInformation.getConstraintList(), type, virtual)));
+      } else {
+        for (String purpose : idiomInformation.getPurposeList()) {
+          entryList.add(new PropertyBox(idiomInformation.getVisibility(), purpose, new PropertyInformation(propertyAnnotationMirror, idiomInformation.getConstraintList(), type, virtual)));
+        }
+      }
+    }
+    if (!hasIdioms) {
+      entryList.add(new PropertyBox(Visibility.BOTH, "", new PropertyInformation(propertyAnnotationMirror, Collections.emptyList(), type, virtual)));
+    }
   }
 
-  public boolean isVirtual () {
+  @Override
+  public Iterator<PropertyBox> iterator () {
 
-    return virtual;
-  }
-
-  public TypeMirror getAdapter () {
-
-    return adapter;
-  }
-
-  public TypeMirror getType () {
-
-    return type;
-  }
-
-  public String getName () {
-
-    return name;
-  }
-
-  public Iterable<ConstraintInformation> constraints () {
-
-    return constraintList;
-  }
-
-  public boolean isRequired () {
-
-    return (required != null) && required;
+    return entryList.iterator();
   }
 }
-

@@ -32,59 +32,39 @@
  */
 package org.smallmind.web.json.dto;
 
-import java.util.Collections;
-import java.util.HashMap;
+import java.util.LinkedList;
 import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import javax.lang.model.element.AnnotationMirror;
+import org.smallmind.nutsnbolts.apt.AptUtility;
 
-public class DirectionalMap {
+public class IdiomInformation {
 
-  private final HashMap<String, PropertyMap> internalMap = new HashMap<>();
-  private final Direction direction;
+  private final List<ConstraintInformation> constraintList = new LinkedList<>();
+  private final List<String> purposeList;
+  private final Visibility visibility;
 
-  public DirectionalMap (Direction direction) {
+  public IdiomInformation (AnnotationMirror idiomAnnotationMirror) {
 
-    this.direction = direction;
-  }
+    visibility = AptUtility.extractAnnotationValue(idiomAnnotationMirror, "visibility", Visibility.class, Visibility.BOTH);
+    purposeList = AptUtility.extractAnnotationValueAsList(idiomAnnotationMirror, "purposes", String.class);
 
-  public DirectionalMap (Direction direction, DirectionalMap directionalMap) {
-
-    this(direction);
-
-    internalMap.putAll(directionalMap.getInternalMap());
-  }
-
-  private HashMap<String, PropertyMap> getInternalMap () {
-
-    return internalMap;
-  }
-
-  public void put (List<String> purposes, String fieldName, PropertyInformation propertyInformation)
-    throws DtoDefinitionException {
-
-    if ((purposes == null) || purposes.isEmpty()) {
-      purposes = Collections.singletonList("");
-    }
-
-    for (String purpose : purposes) {
-
-      PropertyMap propertyMap;
-
-      if ((propertyMap = internalMap.get(purpose)) == null) {
-        internalMap.put(purpose, propertyMap = new PropertyMap());
-      }
-
-      if (propertyMap.containsKey(fieldName)) {
-        throw new DtoDefinitionException("The field(name=%s, purpose=%s, direction=%s) has already been processed", fieldName, (purpose.isEmpty()) ? "n/a" : purpose, direction.name());
-      } else {
-        propertyMap.put(fieldName, propertyInformation);
-      }
+    for (AnnotationMirror constraintAnnotationMirror : AptUtility.extractAnnotationValueAsList(idiomAnnotationMirror, "constraints", AnnotationMirror.class)) {
+      constraintList.add(new ConstraintInformation(constraintAnnotationMirror));
     }
   }
 
-  public Set<Map.Entry<String, PropertyMap>> entrySet () {
+  public Visibility getVisibility () {
 
-    return internalMap.entrySet();
+    return visibility;
+  }
+
+  public List<String> getPurposeList () {
+
+    return purposeList;
+  }
+
+  public List<ConstraintInformation> getConstraintList () {
+
+    return constraintList;
   }
 }

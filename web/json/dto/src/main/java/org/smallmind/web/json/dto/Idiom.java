@@ -32,22 +32,17 @@
  */
 package org.smallmind.web.json.dto;
 
-import java.lang.annotation.ElementType;
-import java.lang.annotation.Repeatable;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
-import javax.xml.bind.annotation.adapters.XmlAdapter;
 
 @Retention(RetentionPolicy.SOURCE)
-@Target({ElementType.FIELD, ElementType.METHOD})
-public @interface DtoProperty {
+@Target({})
+public @interface Idiom {
 
-  Idiom[] idioms () default {};
+  Constraint[] constraints () default {};
 
-  Class<? extends XmlAdapter> adapter () default DefaultXmlAdapter.class;
+  Visibility visibility () default Visibility.BOTH;
 
-  String name () default "";
-
-  boolean required () default false;
+  String[] purposes () default {};
 }
