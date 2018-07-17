@@ -59,8 +59,25 @@ public class GeneratorInformation {
     polymorphicSubclassList = AptUtility.toConcreteList(processingEnvironment, AptUtility.extractAnnotationValueAsList(generatorAnnotationMirror, "polymorphicSubClasses", TypeMirror.class));
     polymorphic = AptUtility.extractAnnotationValue(generatorAnnotationMirror, "polymorphic", Boolean.class, Boolean.FALSE);
 
-    inPurposeSet.addAll(AptUtility.extractAnnotationValueAsList(generatorAnnotationMirror, "purposes", String.class));
-    outPurposeSet.addAll(inPurposeSet);
+    for (AnnotationMirror pledgeAnnotationMirror : AptUtility.extractAnnotationValueAsList(generatorAnnotationMirror, "pledges", AnnotationMirror.class)) {
+
+      PledgeInformation pledgeInformation = new PledgeInformation(pledgeAnnotationMirror);
+
+      switch (pledgeInformation.getVisibility()) {
+        case BOTH:
+          inPurposeSet.addAll(pledgeInformation.getPurposeList());
+          outPurposeSet.addAll(pledgeInformation.getPurposeList());
+          break;
+        case IN:
+          inPurposeSet.addAll(pledgeInformation.getPurposeList());
+          break;
+        case OUT:
+          outPurposeSet.addAll(pledgeInformation.getPurposeList());
+          break;
+        default:
+          throw new UnknownSwitchCaseException(pledgeInformation.getVisibility().name());
+      }
+    }
 
     for (AnnotationMirror propertyAnnotationMirror : AptUtility.extractAnnotationValueAsList(generatorAnnotationMirror, "properties", AnnotationMirror.class)) {
 
@@ -131,11 +148,11 @@ public class GeneratorInformation {
 
     switch (direction) {
       case IN:
-
-        return inPurposeSet;
+        // Avoids concurrent modification
+        return new HashSet<>(inPurposeSet);
       case OUT:
-
-        return outPurposeSet;
+        // Avoids concurrent modification
+        return new HashSet<>(outPurposeSet);
       default:
         throw new UnknownSwitchCaseException(direction.name());
     }

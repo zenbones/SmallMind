@@ -38,8 +38,8 @@ import org.smallmind.nutsnbolts.apt.AptUtility;
 
 public class ConstraintInformation {
 
-  private TypeMirror type;
-  private String arguments;
+  private final TypeMirror type;
+  private final String arguments;
 
   public ConstraintInformation (AnnotationMirror constraintAnnotationMirror) {
 

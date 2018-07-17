@@ -139,7 +139,7 @@ public class DtoAnnotationProcessor extends AbstractProcessor {
 
           written = true;
         }
-        for (String unfulfilledPurpose : generatorInformation.unfulfilledPurposes(Direction.IN)) {
+        for (String unfulfilledPurpose : generatorInformation.unfulfilledPurposes(Direction.OUT)) {
           processOut(generatorInformation, usefulTypeMirrors, classElement, nearestDtoSuperclass, unfulfilledPurpose, new PropertyLexicon());
           written = true;
         }
