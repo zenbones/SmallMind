@@ -55,6 +55,8 @@ public class EntityTranslator {
 
       if ((entityClass = JSON_ENTITY_CLASS_LOCAL.get()) == null) {
         throw new MissingAnnotationException("Missing annotation(%s)", ResourceMethod.class.getName());
+      } else if (JsonEntity.class.equals(entityClass)) {
+        throw new ParameterProcessingException("The @%s annotation must define an implementation of %s", ResourceMethod.class.getSimpleName(), JsonEntity.class.getSimpleName());
       }
 
       JSON_ENTITY_LOCAL.set(jsonEntity = containerRequest.readEntity(entityClass));
