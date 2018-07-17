@@ -508,8 +508,8 @@ public class DtoAnnotationProcessor extends AbstractProcessor {
         if (propertyLexicon.isVirtual()) {
           writer.newLine();
           writer.write("  // virtual getters and setters");
-          writer.newLine();
           for (Map.Entry<String, PropertyInformation> propertyInformationEntry : propertyLexicon.getVirtualMap().entrySet()) {
+            writer.newLine();
             writeGettersAndSetters(writer, usefulTypeMirrors, classElement, purpose, direction, propertyInformationEntry);
           }
         }
@@ -518,8 +518,8 @@ public class DtoAnnotationProcessor extends AbstractProcessor {
         if (propertyLexicon.isReal()) {
           writer.newLine();
           writer.write("  // native getters and setters");
-          writer.newLine();
           for (Map.Entry<String, PropertyInformation> propertyInformationEntry : propertyLexicon.getRealMap().entrySet()) {
+            writer.newLine();
             writeGettersAndSetters(writer, usefulTypeMirrors, classElement, purpose, direction, propertyInformationEntry);
           }
         }
