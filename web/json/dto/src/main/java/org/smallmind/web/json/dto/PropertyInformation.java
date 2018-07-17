@@ -32,21 +32,59 @@
  */
 package org.smallmind.web.json.dto;
 
-import java.lang.annotation.ElementType;
-import java.lang.annotation.Retention;
-import java.lang.annotation.RetentionPolicy;
-import java.lang.annotation.Target;
-import javax.xml.bind.annotation.adapters.XmlAdapter;
+import java.util.List;
+import javax.lang.model.element.AnnotationMirror;
+import javax.lang.model.type.TypeMirror;
+import org.smallmind.nutsnbolts.apt.AptUtility;
 
-@Retention(RetentionPolicy.SOURCE)
-@Target({ElementType.FIELD, ElementType.METHOD})
-public @interface DtoProperty {
+public class PropertyInformation {
 
-  Idiom[] idioms () default {};
+  private final List<ConstraintInformation> constraintList;
+  private final TypeMirror adapter;
+  private final TypeMirror type;
+  private final String name;
+  private final Boolean required;
+  private final boolean virtual;
 
-  Class<? extends XmlAdapter> adapter () default DefaultXmlAdapter.class;
+  public PropertyInformation (AnnotationMirror propertyAnnotationMirror, List<ConstraintInformation> constraintList, TypeMirror type, boolean virtual) {
 
-  String name () default "";
+    this.type = type;
+    this.virtual = virtual;
+    this.constraintList = constraintList;
 
-  boolean required () default false;
+    adapter = AptUtility.extractAnnotationValue(propertyAnnotationMirror, "adapter", TypeMirror.class, null);
+    name = AptUtility.extractAnnotationValue(propertyAnnotationMirror, "name", String.class, "");
+    required = AptUtility.extractAnnotationValue(propertyAnnotationMirror, "required", Boolean.class, Boolean.FALSE);
+  }
+
+  public boolean isVirtual () {
+
+    return virtual;
+  }
+
+  public TypeMirror getAdapter () {
+
+    return adapter;
+  }
+
+  public TypeMirror getType () {
+
+    return type;
+  }
+
+  public String getName () {
+
+    return name;
+  }
+
+  public Iterable<ConstraintInformation> constraints () {
+
+    return constraintList;
+  }
+
+  public boolean isRequired () {
+
+    return (required != null) && required;
+  }
 }
+

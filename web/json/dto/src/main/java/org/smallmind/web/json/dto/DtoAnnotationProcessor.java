@@ -34,11 +34,8 @@ package org.smallmind.web.json.dto;
 
 import java.io.BufferedWriter;
 import java.io.IOException;
-import java.util.Collections;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.LinkedList;
-import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
@@ -52,8 +49,6 @@ import javax.lang.model.SourceVersion;
 import javax.lang.model.element.AnnotationMirror;
 import javax.lang.model.element.Element;
 import javax.lang.model.element.ElementKind;
-import javax.lang.model.element.ExecutableElement;
-import javax.lang.model.element.Modifier;
 import javax.lang.model.element.Name;
 import javax.lang.model.element.NestingKind;
 import javax.lang.model.element.TypeElement;
@@ -63,7 +58,6 @@ import javax.tools.Diagnostic;
 import javax.tools.JavaFileObject;
 import com.google.auto.service.AutoService;
 import org.smallmind.nutsnbolts.apt.AptUtility;
-import org.smallmind.nutsnbolts.lang.UnknownSwitchCaseException;
 import org.smallmind.nutsnbolts.reflection.bean.BeanUtility;
 
 @SupportedAnnotationTypes({"org.smallmind.web.json.dto.DtoGenerator"})
@@ -89,19 +83,32 @@ public class DtoAnnotationProcessor extends AbstractProcessor {
     return true;
   }
 
+  public void processTypeMirror (TypeMirror typeMirror)
+    throws IOException, DtoDefinitionException {
+
+    if (TypeKind.DECLARED.equals(typeMirror.getKind())) {
+
+      Element element;
+
+      if (ElementKind.CLASS.equals((element = processingEnv.getTypeUtils().asElement(typeMirror)).getKind())) {
+        generate((TypeElement)element);
+      }
+    }
+  }
+
   private void generate (TypeElement classElement)
     throws IOException, DtoDefinitionException {
 
-    AnnotationMirror dtoGeneratorMirror;
+    AnnotationMirror dtoGeneratorAnnotationMirror;
 
-    if ((!generatedMap.containsKey(classElement)) && ((dtoGeneratorMirror = AptUtility.extractAnnotationMirror(processingEnv, classElement, processingEnv.getElementUtils().getTypeElement(DtoGenerator.class.getName()).asType())) != null)) {
+    if ((!generatedMap.containsKey(classElement)) && ((dtoGeneratorAnnotationMirror = AptUtility.extractAnnotationMirror(processingEnv, classElement, processingEnv.getElementUtils().getTypeElement(DtoGenerator.class.getName()).asType())) != null)) {
       if ((!ElementKind.CLASS.equals(classElement.getKind())) || (!NestingKind.TOP_LEVEL.equals(classElement.getNestingKind()))) {
         throw new DtoDefinitionException("The class(%s) must be a root implementation of type 'class'", classElement.getQualifiedName());
       } else {
 
-        UsefulTypeMirrors usefulTypeMirrors = new UsefulTypeMirrors();
-        GeneratorInformation generatorInformation = new GeneratorInformation(dtoGeneratorMirror, usefulTypeMirrors);
-        DtoClass dtoClass = new DtoClass(classElement, generatorInformation, usefulTypeMirrors);
+        UsefulTypeMirrors usefulTypeMirrors = new UsefulTypeMirrors(processingEnv);
+        GeneratorInformation generatorInformation = new GeneratorInformation(processingEnv, this, dtoGeneratorAnnotationMirror, usefulTypeMirrors);
+        DtoClass dtoClass = new DtoClass(processingEnv, this, classElement, generatorInformation, usefulTypeMirrors);
         TypeElement nearestDtoSuperclass;
         boolean written = false;
 
@@ -118,26 +125,52 @@ public class DtoAnnotationProcessor extends AbstractProcessor {
           }
         }
 
-        for (Map.Entry<String, HashMap<String, PropertyInformation>> purposeEntry : dtoClass.getInMap().entrySet()) {
-          writeDto(generatorInformation, usefulTypeMirrors, classElement, nearestDtoSuperclass, purposeEntry.getKey(), Direction.IN, purposeEntry.getValue());
-
-          generatedMap.put(classElement, Visibility.IN);
+        for (Map.Entry<String, PropertyLexicon> purposeEntry : dtoClass.getInMap().entrySet()) {
+          processIn(generatorInformation, usefulTypeMirrors, classElement, nearestDtoSuperclass, purposeEntry.getKey(), purposeEntry.getValue());
           written = true;
         }
-        for (Map.Entry<String, HashMap<String, PropertyInformation>> purposeEntry : dtoClass.getOutMap().entrySet()) {
-          writeDto(generatorInformation, usefulTypeMirrors, classElement, nearestDtoSuperclass, purposeEntry.getKey(), Direction.OUT, purposeEntry.getValue());
+        for (String unfulfilledPurpose : generatorInformation.unfulfilledPurposes(Direction.IN)) {
+          processIn(generatorInformation, usefulTypeMirrors, classElement, nearestDtoSuperclass, unfulfilledPurpose, new PropertyLexicon());
 
-          if (Visibility.IN.equals(generatedMap.get(classElement))) {
-            generatedMap.put(classElement, Visibility.BOTH);
-          } else {
-            generatedMap.put(classElement, Visibility.OUT);
-          }
+          written = true;
+        }
+        for (Map.Entry<String, PropertyLexicon> purposeEntry : dtoClass.getOutMap().entrySet()) {
+          processOut(generatorInformation, usefulTypeMirrors, classElement, nearestDtoSuperclass, purposeEntry.getKey(), purposeEntry.getValue());
+
+          written = true;
+        }
+        for (String unfulfilledPurpose : generatorInformation.unfulfilledPurposes(Direction.OUT)) {
+          processOut(generatorInformation, usefulTypeMirrors, classElement, nearestDtoSuperclass, unfulfilledPurpose, new PropertyLexicon());
           written = true;
         }
 
         if (!written) {
           throw new DtoDefinitionException("The class(%s) was annotated as @%s but contained no properties", classElement.getQualifiedName(), DtoGenerator.class.getSimpleName());
         }
+      }
+    }
+  }
+
+  private void processIn (GeneratorInformation generatorInformation, UsefulTypeMirrors usefulTypeMirrors, TypeElement classElement, TypeElement nearestDtoSuperclass, String purpose, PropertyLexicon propertyLexicon)
+    throws IOException {
+
+    writeDto(generatorInformation, usefulTypeMirrors, classElement, nearestDtoSuperclass, purpose, Direction.IN, propertyLexicon);
+
+    generatorInformation.denotePurpose(Direction.IN, purpose);
+    generatedMap.put(classElement, Visibility.IN);
+  }
+
+  private void processOut (GeneratorInformation generatorInformation, UsefulTypeMirrors usefulTypeMirrors, TypeElement classElement, TypeElement nearestDtoSuperclass, String purpose, PropertyLexicon propertyLexicon)
+    throws IOException {
+
+    writeDto(generatorInformation, usefulTypeMirrors, classElement, nearestDtoSuperclass, purpose, Direction.OUT, propertyLexicon);
+
+    generatorInformation.denotePurpose(Direction.OUT, purpose);
+    if (!Visibility.BOTH.equals(generatedMap.get(classElement))) {
+      if (Visibility.IN.equals(generatedMap.get(classElement))) {
+        generatedMap.put(classElement, Visibility.BOTH);
+      } else {
+        generatedMap.put(classElement, Visibility.OUT);
       }
     }
   }
@@ -149,7 +182,13 @@ public class DtoAnnotationProcessor extends AbstractProcessor {
 
   private StringBuilder asDtoName (Name simpleName, String purpose, Direction direction) {
 
-    return new StringBuilder((processingEnv.getOptions().get("prefix") == null) ? "" : processingEnv.getOptions().get("prefix")).append(simpleName).append(purpose).append(direction.getCode()).append("Dto");
+    StringBuilder dtoNameBuilder = new StringBuilder((processingEnv.getOptions().get("prefix") == null) ? "" : processingEnv.getOptions().get("prefix")).append(simpleName);
+
+    if ((purpose != null) && (!purpose.isEmpty())) {
+      dtoNameBuilder.append(Character.toUpperCase(purpose.charAt(0))).append(purpose.substring(1));
+    }
+
+    return dtoNameBuilder.append(direction.getCode()).append("Dto");
   }
 
   private String asCompatibleName (TypeMirror typeMirror, String purpose, Direction direction) {
@@ -203,7 +242,7 @@ public class DtoAnnotationProcessor extends AbstractProcessor {
     return null;
   }
 
-  private void writeDto (GeneratorInformation generatorInformation, UsefulTypeMirrors usefulTypeMirrors, TypeElement classElement, TypeElement nearestDtoSuperclass, String purpose, Direction direction, HashMap<String, PropertyInformation> propertyMap)
+  private void writeDto (GeneratorInformation generatorInformation, UsefulTypeMirrors usefulTypeMirrors, TypeElement classElement, TypeElement nearestDtoSuperclass, String purpose, Direction direction, PropertyLexicon propertyLexicon)
     throws IOException {
 
     JavaFileObject sourceFile;
@@ -218,8 +257,6 @@ public class DtoAnnotationProcessor extends AbstractProcessor {
       try (BufferedWriter writer = new BufferedWriter(sourceFile.openWriter())) {
 
         LinkedList<TypeElement> matchingSubClassList = new LinkedList<>();
-        boolean firstVirtualField = true;
-        boolean firstVirtualGetterAndSetter = true;
 
         // package
         writer.write("package ");
@@ -336,27 +373,27 @@ public class DtoAnnotationProcessor extends AbstractProcessor {
         writer.newLine();
 
         // virtual field declarations
-        for (Map.Entry<String, PropertyInformation> propertyInformationEntry : generatorInformation.entrySet(purpose, direction)) {
-          if (firstVirtualField) {
-            writer.newLine();
-            writer.write("  // virtual fields");
-            writer.newLine();
+        if (propertyLexicon.isVirtual()) {
+          writer.newLine();
+          writer.write("  // virtual fields");
+          writer.newLine();
+          for (Map.Entry<String, PropertyInformation> propertyInformationEntry : propertyLexicon.getVirtualMap().entrySet()) {
+            writeField(writer, purpose, direction, propertyInformationEntry);
           }
-
-          writeField(writer, purpose, direction, propertyInformationEntry);
-          firstVirtualField = false;
         }
 
         // native field declarations
-        writer.newLine();
-        writer.write("  // native fields");
-        writer.newLine();
-        for (Map.Entry<String, PropertyInformation> propertyInformationEntry : propertyMap.entrySet()) {
-          writeField(writer, purpose, direction, propertyInformationEntry);
+        if (propertyLexicon.isReal()) {
+          writer.newLine();
+          writer.write("  // native fields");
+          writer.newLine();
+          for (Map.Entry<String, PropertyInformation> propertyInformationEntry : propertyLexicon.getRealMap().entrySet()) {
+            writeField(writer, purpose, direction, propertyInformationEntry);
+          }
         }
-        writer.newLine();
 
         // constructors
+        writer.newLine();
         writer.write("  public ");
         writer.write(asDtoName(classElement.getSimpleName(), purpose, direction).toString());
         writer.write(" () {");
@@ -379,26 +416,29 @@ public class DtoAnnotationProcessor extends AbstractProcessor {
           writer.write(asMemberName(classElement.getSimpleName()));
           writer.write(");");
           writer.newLine();
-          writer.newLine();
         }
-        for (Map.Entry<String, PropertyInformation> propertyInformationEntry : propertyMap.entrySet()) {
-          writer.write("    this.");
-          writer.write(propertyInformationEntry.getKey());
-          writer.write(" = ");
-          if (isDtoType(propertyInformationEntry.getValue().getType(), direction)) {
-            writer.write("new ");
-            writer.write(asCompatibleName(propertyInformationEntry.getValue().getType(), purpose, direction));
-            writer.write("(");
-          }
-          writer.write(asMemberName(classElement.getSimpleName()));
-          writer.write(".");
-          writer.write(TypeKind.BOOLEAN.equals(propertyInformationEntry.getValue().getType().getKind()) ? BeanUtility.asIsName(propertyInformationEntry.getKey()) : BeanUtility.asGetterName(propertyInformationEntry.getKey()));
-          writer.write("()");
-          if (isDtoType(propertyInformationEntry.getValue().getType(), direction)) {
-            writer.write(")");
-          }
-          writer.write(";");
+
+        if (propertyLexicon.isReal()) {
           writer.newLine();
+          for (Map.Entry<String, PropertyInformation> propertyInformationEntry : propertyLexicon.getRealMap().entrySet()) {
+            writer.write("    this.");
+            writer.write(propertyInformationEntry.getKey());
+            writer.write(" = ");
+            if (isDtoType(propertyInformationEntry.getValue().getType(), direction)) {
+              writer.write("new ");
+              writer.write(asCompatibleName(propertyInformationEntry.getValue().getType(), purpose, direction));
+              writer.write("(");
+            }
+            writer.write(asMemberName(classElement.getSimpleName()));
+            writer.write(".");
+            writer.write(TypeKind.BOOLEAN.equals(propertyInformationEntry.getValue().getType().getKind()) ? BeanUtility.asIsName(propertyInformationEntry.getKey()) : BeanUtility.asGetterName(propertyInformationEntry.getKey()));
+            writer.write("()");
+            if (isDtoType(propertyInformationEntry.getValue().getType(), direction)) {
+              writer.write(")");
+            }
+            writer.write(";");
+            writer.newLine();
+          }
         }
         writer.write("  }");
         writer.newLine();
@@ -435,23 +475,27 @@ public class DtoAnnotationProcessor extends AbstractProcessor {
           writer.write(");");
           writer.newLine();
         }
-        for (Map.Entry<String, PropertyInformation> propertyInformationEntry : propertyMap.entrySet()) {
+
+        if (propertyLexicon.isReal()) {
           writer.newLine();
-          writer.write("    ");
-          writer.write(asMemberName(classElement.getSimpleName()));
-          writer.write(".");
-          writer.write(BeanUtility.asSetterName(propertyInformationEntry.getKey()));
-          writer.write("(");
-          writer.write(propertyInformationEntry.getKey());
-          if (isDtoType(propertyInformationEntry.getValue().getType(), direction)) {
-            writer.write(".factory(");
-            writer.write("new ");
-            writer.write(processingEnv.getTypeUtils().asElement(propertyInformationEntry.getValue().getType()).getSimpleName().toString());
-            writer.write("())");
+          for (Map.Entry<String, PropertyInformation> propertyInformationEntry : propertyLexicon.getRealMap().entrySet()) {
+            writer.write("    ");
+            writer.write(asMemberName(classElement.getSimpleName()));
+            writer.write(".");
+            writer.write(BeanUtility.asSetterName(propertyInformationEntry.getKey()));
+            writer.write("(");
+            writer.write(propertyInformationEntry.getKey());
+            if (isDtoType(propertyInformationEntry.getValue().getType(), direction)) {
+              writer.write(".factory(");
+              writer.write("new ");
+              writer.write(processingEnv.getTypeUtils().asElement(propertyInformationEntry.getValue().getType()).getSimpleName().toString());
+              writer.write("())");
+            }
+            writer.write(");");
+            writer.newLine();
           }
-          writer.write(");");
         }
-        writer.newLine();
+
         writer.newLine();
         writer.write("    return ");
         writer.write(asMemberName(classElement.getSimpleName()));
@@ -461,23 +505,23 @@ public class DtoAnnotationProcessor extends AbstractProcessor {
         writer.newLine();
 
         // virtual getters and setters
-        for (Map.Entry<String, PropertyInformation> propertyInformationEntry : generatorInformation.entrySet(purpose, direction)) {
-          if (firstVirtualGetterAndSetter) {
+        if (propertyLexicon.isVirtual()) {
+          writer.newLine();
+          writer.write("  // virtual getters and setters");
+          for (Map.Entry<String, PropertyInformation> propertyInformationEntry : propertyLexicon.getVirtualMap().entrySet()) {
             writer.newLine();
-            writer.write("  // virtual getters and setters");
-            writer.newLine();
+            writeGettersAndSetters(writer, usefulTypeMirrors, classElement, purpose, direction, propertyInformationEntry);
           }
-
-          writeGettersAndSetters(writer, usefulTypeMirrors, purpose, direction, propertyInformationEntry);
-          firstVirtualGetterAndSetter = false;
         }
 
         // native getters and setters
-        writer.newLine();
-        writer.write("  // native getters and setters");
-        writer.newLine();
-        for (Map.Entry<String, PropertyInformation> propertyInformationEntry : propertyMap.entrySet()) {
-          writeGettersAndSetters(writer, usefulTypeMirrors, purpose, direction, propertyInformationEntry);
+        if (propertyLexicon.isReal()) {
+          writer.newLine();
+          writer.write("  // native getters and setters");
+          for (Map.Entry<String, PropertyInformation> propertyInformationEntry : propertyLexicon.getRealMap().entrySet()) {
+            writer.newLine();
+            writeGettersAndSetters(writer, usefulTypeMirrors, classElement, purpose, direction, propertyInformationEntry);
+          }
         }
 
         writer.write("}");
@@ -489,6 +533,16 @@ public class DtoAnnotationProcessor extends AbstractProcessor {
   private void writeField (BufferedWriter writer, String purpose, Direction direction, Map.Entry<String, PropertyInformation> propertyInformationEntry)
     throws IOException {
 
+    for (ConstraintInformation constraintInformation : propertyInformationEntry.getValue().constraints()) {
+      writer.write("  @");
+      writer.write(constraintInformation.getType().toString());
+      if (!constraintInformation.getArguments().isEmpty()) {
+        writer.write("(");
+        writer.write(constraintInformation.getArguments());
+        writer.write(")");
+      }
+      writer.newLine();
+    }
     writer.write("  private ");
     writer.write(asCompatibleName(propertyInformationEntry.getValue().getType(), purpose, direction));
     writer.write(" ");
@@ -497,10 +551,10 @@ public class DtoAnnotationProcessor extends AbstractProcessor {
     writer.newLine();
   }
 
-  private void writeGettersAndSetters (BufferedWriter writer, UsefulTypeMirrors usefulTypeMirrors, String purpose, Direction direction, Map.Entry<String, PropertyInformation> propertyInformationEntry)
+  private void writeGettersAndSetters (BufferedWriter writer, UsefulTypeMirrors usefulTypeMirrors, TypeElement classElement, String purpose, Direction direction, Map.Entry<String, PropertyInformation> propertyInformationEntry)
     throws IOException {
 
-    if (!processingEnv.getTypeUtils().isSameType(usefulTypeMirrors.getDefaultXmlAdapterTypeMirror(), propertyInformationEntry.getValue().getAdapter())) {
+    if (propertyInformationEntry.getValue().getAdapter() != null) {
       writer.write("  @XmlJavaTypeAdapter(");
       writer.write(propertyInformationEntry.getValue().getAdapter().toString());
       writer.write(".class)");
@@ -525,7 +579,9 @@ public class DtoAnnotationProcessor extends AbstractProcessor {
     writer.newLine();
     writer.newLine();
 
-    writer.write("  public void ");
+    writer.write("  public ");
+    writer.write(asDtoName(classElement.getSimpleName(), purpose, direction).toString());
+    writer.write(" ");
     writer.write(BeanUtility.asSetterName(propertyInformationEntry.getKey()));
     writer.write(" (");
     writer.write(asCompatibleName(propertyInformationEntry.getValue().getType(), purpose, direction));
@@ -539,6 +595,9 @@ public class DtoAnnotationProcessor extends AbstractProcessor {
     writer.write(" = ");
     writer.write(propertyInformationEntry.getKey());
     writer.write(";");
+    writer.newLine();
+    writer.newLine();
+    writer.write("    return this;");
     writer.newLine();
     writer.write("  }");
     writer.newLine();
@@ -585,368 +644,6 @@ public class DtoAnnotationProcessor extends AbstractProcessor {
         writer.newLine();
         writer.write("}");
         writer.newLine();
-      }
-    }
-  }
-
-  private class UsefulTypeMirrors {
-
-    private final TypeMirror dtoPropertyTypeMirror = processingEnv.getElementUtils().getTypeElement(DtoProperty.class.getName()).asType();
-    private final TypeMirror dtoPropertiesTypeMirror = processingEnv.getElementUtils().getTypeElement(DtoProperties.class.getName()).asType();
-    private final TypeMirror defaultXmlAdapterTypeMirror = processingEnv.getElementUtils().getTypeElement(DefaultXmlAdapter.class.getName()).asType();
-
-    private TypeMirror getDtoPropertyTypeMirror () {
-
-      return dtoPropertyTypeMirror;
-    }
-
-    private TypeMirror getDtoPropertiesTypeMirror () {
-
-      return dtoPropertiesTypeMirror;
-    }
-
-    private TypeMirror getDefaultXmlAdapterTypeMirror () {
-
-      return defaultXmlAdapterTypeMirror;
-    }
-  }
-
-  private class GeneratorInformation {
-
-    private final DirectionalMap inMap = new DirectionalMap(Direction.IN);
-    private final DirectionalMap outMap = new DirectionalMap(Direction.OUT);
-    private final List<TypeElement> polymorphicSubclassList;
-    private final String name;
-    private final Boolean polymorphic;
-
-    private GeneratorInformation (AnnotationMirror generatorAnnotationMirror, UsefulTypeMirrors usefulTypeMirrors)
-      throws DtoDefinitionException {
-
-      name = AptUtility.extractAnnotationValue(generatorAnnotationMirror, "name", String.class, "");
-      polymorphicSubclassList = AptUtility.toConcreteList(processingEnv, AptUtility.extractAnnotationValueAsList(generatorAnnotationMirror, "polymorphicSubClasses", TypeMirror.class));
-      polymorphic = AptUtility.extractAnnotationValue(generatorAnnotationMirror, "polymorphic", Boolean.class, Boolean.FALSE);
-
-      for (AnnotationMirror propertyMirror : AptUtility.extractAnnotationValueAsList(generatorAnnotationMirror, "properties", AnnotationMirror.class)) {
-
-        PropertyInformation propertyInformation = new PropertyInformation(AptUtility.extractAnnotationValue(propertyMirror, "type", TypeMirror.class, null), propertyMirror, usefulTypeMirrors);
-        String purpose = AptUtility.extractAnnotationValue(propertyMirror, "purpose", String.class, "");
-        String fieldName = AptUtility.extractAnnotationValue(propertyMirror, "field", String.class, null);
-
-        switch (propertyInformation.getVisibility()) {
-          case IN:
-            inMap.put(purpose, fieldName, propertyInformation);
-            break;
-          case OUT:
-            outMap.put(purpose, fieldName, propertyInformation);
-            break;
-          case BOTH:
-            inMap.put(purpose, fieldName, propertyInformation);
-            outMap.put(purpose, fieldName, propertyInformation);
-            break;
-          default:
-            throw new UnknownSwitchCaseException(propertyInformation.getVisibility().name());
-        }
-      }
-    }
-
-    private String getName () {
-
-      return name;
-    }
-
-    private boolean isPolymorphic () {
-
-      return ((polymorphic != null) && polymorphic) || (!polymorphicSubclassList.isEmpty());
-    }
-
-    private List<TypeElement> getPolymorphicSubclassList () {
-
-      return polymorphicSubclassList;
-    }
-
-    private DirectionalMap getInMap () {
-
-      return inMap;
-    }
-
-    private DirectionalMap getOutMap () {
-
-      return outMap;
-    }
-
-    private Set<Map.Entry<String, PropertyInformation>> entrySet (String purpose, Direction direction) {
-
-      HashMap<String, PropertyInformation> propertyMap;
-
-      switch (direction) {
-        case IN:
-          return ((propertyMap = inMap.get(purpose)) != null) ? propertyMap.entrySet() : Collections.emptySet();
-        case OUT:
-          return ((propertyMap = outMap.get(purpose)) != null) ? propertyMap.entrySet() : Collections.emptySet();
-        default:
-          throw new UnknownSwitchCaseException(direction.name());
-      }
-    }
-  }
-
-  private class PropertyInformation {
-
-    private final TypeMirror adapter;
-    private final TypeMirror type;
-    private final Visibility visibility;
-    private final String name;
-    private final Boolean required;
-
-    private PropertyInformation (TypeMirror type, AnnotationMirror propertyAnnotationMirror, UsefulTypeMirrors usefulTypeMirrors) {
-
-      this.type = type;
-
-      adapter = AptUtility.extractAnnotationValue(propertyAnnotationMirror, "adapter", TypeMirror.class, usefulTypeMirrors.getDefaultXmlAdapterTypeMirror());
-      visibility = AptUtility.extractAnnotationValue(propertyAnnotationMirror, "visibility", Visibility.class, Visibility.BOTH);
-      name = AptUtility.extractAnnotationValue(propertyAnnotationMirror, "name", String.class, "");
-      required = AptUtility.extractAnnotationValue(propertyAnnotationMirror, "required", Boolean.class, Boolean.FALSE);
-    }
-
-    private TypeMirror getAdapter () {
-
-      return adapter;
-    }
-
-    private TypeMirror getType () {
-
-      return type;
-    }
-
-    private Visibility getVisibility () {
-
-      return visibility;
-    }
-
-    private String getName () {
-
-      return name;
-    }
-
-    private boolean isRequired () {
-
-      return (required != null) && required;
-    }
-  }
-
-  private class DirectionalMap extends HashMap<String, HashMap<String, PropertyInformation>> {
-
-    private final Direction direction;
-    private final DirectionalMap sideMap;
-
-    private DirectionalMap (Direction direction) {
-
-      this(direction, null);
-    }
-
-    private DirectionalMap (Direction direction, DirectionalMap sideMap) {
-
-      this.direction = direction;
-      this.sideMap = sideMap;
-    }
-
-    private void put (String purpose, String fieldName, PropertyInformation propertyInformation)
-      throws DtoDefinitionException {
-
-      if ((sideMap != null) && (sideMap.containsKey(purpose, fieldName))) {
-        throw new DtoDefinitionException("The field(name=%s, purpose=%s, direction=%s) has already been processed", fieldName, (purpose.isEmpty()) ? "n/a" : purpose, direction.name());
-      } else {
-
-        HashMap<String, PropertyInformation> propertyMap;
-
-        if ((propertyMap = get(purpose)) == null) {
-          put(purpose, propertyMap = new HashMap<>());
-        }
-
-        if (propertyMap.containsKey(fieldName)) {
-          throw new DtoDefinitionException("The field(name=%s, purpose=%s, direction=%s) has already been processed", fieldName, (purpose.isEmpty()) ? "n/a" : purpose, direction.name());
-        } else {
-          propertyMap.put(fieldName, propertyInformation);
-        }
-      }
-    }
-
-    private boolean containsKey (String purpose, String fieldName) {
-
-      HashMap<String, PropertyInformation> propertyMap;
-
-      if ((propertyMap = get(purpose)) != null) {
-
-        return propertyMap.containsKey(fieldName);
-      }
-
-      return false;
-    }
-  }
-
-  private class DtoClass {
-
-    private final DirectionalMap inMap;
-    private final DirectionalMap outMap;
-    private final HashMap<String, ExecutableElement> setMethodMap = new HashMap<>();
-    private final HashSet<Name> getMethodNameSet = new HashSet<>();
-    private final HashSet<String> isFieldNameSet = new HashSet<>();
-    private final HashSet<String> getFieldNameSet = new HashSet<>();
-    private final TypeElement classElement;
-
-    private DtoClass (TypeElement classElement, GeneratorInformation generatorInformation, UsefulTypeMirrors usefulTypeMirrors)
-      throws IOException, DtoDefinitionException {
-
-      this.classElement = classElement;
-
-      inMap = new DirectionalMap(Direction.IN, generatorInformation.getInMap());
-      outMap = new DirectionalMap(Direction.OUT, generatorInformation.getOutMap());
-
-      for (Element enclosedElement : classElement.getEnclosedElements()) {
-        if (enclosedElement.getModifiers().contains(javax.lang.model.element.Modifier.STATIC) && (enclosedElement.getAnnotation(DtoProperty.class) != null)) {
-          throw new DtoDefinitionException("The element(%s) annotated as @%s may not be 'static'", enclosedElement.getSimpleName(), DtoProperty.class.getSimpleName());
-        } else if (enclosedElement.getModifiers().contains(Modifier.ABSTRACT) && (enclosedElement.getAnnotation(DtoProperty.class) != null)) {
-          throw new DtoDefinitionException("The element(%s) annotated as @%s may not be 'abstract'", enclosedElement.getSimpleName(), DtoProperty.class.getSimpleName());
-        } else if (ElementKind.FIELD.equals(enclosedElement.getKind())) {
-          processTypeMirror(enclosedElement.asType());
-        } else if (ElementKind.METHOD.equals(enclosedElement.getKind()) && enclosedElement.getModifiers().contains(javax.lang.model.element.Modifier.PUBLIC)) {
-
-          String methodName = enclosedElement.getSimpleName().toString();
-
-          if (methodName.startsWith("is") && (methodName.length() > 2) && Character.isUpperCase(methodName.charAt(2)) && ((ExecutableElement)enclosedElement).getParameters().isEmpty() && TypeKind.BOOLEAN.equals(((ExecutableElement)enclosedElement).getReturnType().getKind())) {
-
-            String fieldName = Character.toLowerCase(methodName.charAt(2)) + methodName.substring(3);
-
-            for (AnnotationMirror dtoPropertyMirror : AptUtility.extractAnnotationMirrors(processingEnv, enclosedElement, usefulTypeMirrors.getDtoPropertiesTypeMirror(), usefulTypeMirrors.getDtoPropertyTypeMirror())) {
-
-              PropertyInformation propertyInformation = new PropertyInformation(((ExecutableElement)enclosedElement).getReturnType(), dtoPropertyMirror, usefulTypeMirrors);
-
-              if (Visibility.IN.equals(propertyInformation.getVisibility())) {
-                throw new DtoDefinitionException("The 'is' method(%s) found in class(%s) can't be annotated as 'IN' only", enclosedElement.getSimpleName(), classElement.getQualifiedName());
-              }
-
-              outMap.put(AptUtility.extractAnnotationValue(dtoPropertyMirror, "purpose", String.class, ""), fieldName, propertyInformation);
-            }
-
-            getMethodNameSet.add(enclosedElement.getSimpleName());
-            isFieldNameSet.add(fieldName);
-          } else if (methodName.startsWith("get") && (methodName.length() > 3) && Character.isUpperCase(methodName.charAt(3)) && ((ExecutableElement)enclosedElement).getParameters().isEmpty() && (!TypeKind.VOID.equals(((ExecutableElement)enclosedElement).getReturnType().getKind()))) {
-
-            String fieldName = Character.toLowerCase(methodName.charAt(3)) + methodName.substring(4);
-
-            for (AnnotationMirror dtoPropertyMirror : AptUtility.extractAnnotationMirrors(processingEnv, enclosedElement, usefulTypeMirrors.getDtoPropertiesTypeMirror(), usefulTypeMirrors.getDtoPropertyTypeMirror())) {
-
-              PropertyInformation propertyInformation = new PropertyInformation(((ExecutableElement)enclosedElement).getReturnType(), dtoPropertyMirror, usefulTypeMirrors);
-
-              if (Visibility.IN.equals(propertyInformation.getVisibility())) {
-                throw new DtoDefinitionException("The 'get' method(%s) found in class(%s) can't be annotated as 'IN' only", enclosedElement.getSimpleName(), classElement.getQualifiedName());
-              }
-
-              processTypeMirror(((ExecutableElement)enclosedElement).getReturnType());
-              outMap.put(AptUtility.extractAnnotationValue(dtoPropertyMirror, "purpose", String.class, ""), fieldName, propertyInformation);
-            }
-
-            getMethodNameSet.add(enclosedElement.getSimpleName());
-            getFieldNameSet.add(fieldName);
-          } else if (methodName.startsWith("set") && (methodName.length() > 3) && Character.isUpperCase(methodName.charAt(3)) && (((ExecutableElement)enclosedElement).getParameters().size() == 1)) {
-
-            String fieldName = Character.toLowerCase(methodName.charAt(3)) + methodName.substring(4);
-
-            for (AnnotationMirror dtoPropertyMirror : AptUtility.extractAnnotationMirrors(processingEnv, enclosedElement, usefulTypeMirrors.getDtoPropertiesTypeMirror(), usefulTypeMirrors.getDtoPropertyTypeMirror())) {
-
-              PropertyInformation propertyInformation = new PropertyInformation(((ExecutableElement)enclosedElement).getParameters().get(0).asType(), dtoPropertyMirror, usefulTypeMirrors);
-
-              if (!Visibility.IN.equals(propertyInformation.getVisibility())) {
-                throw new DtoDefinitionException("The 'set' method(%s) found in class(%s) must be annotated as 'IN' only", enclosedElement.getSimpleName(), classElement.getQualifiedName());
-              }
-
-              processTypeMirror(((ExecutableElement)enclosedElement).getParameters().get(0).asType());
-              inMap.put(AptUtility.extractAnnotationValue(dtoPropertyMirror, "purpose", String.class, ""), fieldName, propertyInformation);
-            }
-
-            setMethodMap.put(fieldName, (ExecutableElement)enclosedElement);
-          } else if (enclosedElement.getAnnotation(DtoProperty.class) != null) {
-            throw new DtoDefinitionException("The method(%s) found in class(%s) must be a 'getter' or 'setter'", enclosedElement.getSimpleName(), classElement.getQualifiedName());
-          }
-        }
-      }
-
-      for (Element enclosedElement : classElement.getEnclosedElements()) {
-
-        for (AnnotationMirror dtoPropertyMirror : AptUtility.extractAnnotationMirrors(processingEnv, enclosedElement, usefulTypeMirrors.getDtoPropertiesTypeMirror(), usefulTypeMirrors.getDtoPropertyTypeMirror())) {
-          if (ElementKind.FIELD.equals(enclosedElement.getKind())) {
-
-            PropertyInformation propertyInformation = new PropertyInformation(enclosedElement.asType(), dtoPropertyMirror, usefulTypeMirrors);
-
-            switch (propertyInformation.getVisibility()) {
-              case IN:
-                inField(enclosedElement.getSimpleName().toString(), AptUtility.extractAnnotationValue(dtoPropertyMirror, "purpose", String.class, ""), propertyInformation);
-                break;
-              case OUT:
-                outField(enclosedElement.getSimpleName().toString(), AptUtility.extractAnnotationValue(dtoPropertyMirror, "purpose", String.class, ""), propertyInformation);
-                break;
-              case BOTH:
-                inField(enclosedElement.getSimpleName().toString(), AptUtility.extractAnnotationValue(dtoPropertyMirror, "purpose", String.class, ""), propertyInformation);
-                outField(enclosedElement.getSimpleName().toString(), AptUtility.extractAnnotationValue(dtoPropertyMirror, "purpose", String.class, ""), propertyInformation);
-                break;
-              default:
-                throw new UnknownSwitchCaseException(propertyInformation.getVisibility().name());
-            }
-          } else if (ElementKind.METHOD.equals(enclosedElement.getKind()) && getMethodNameSet.contains(enclosedElement.getSimpleName()) && Visibility.BOTH.equals(AptUtility.extractAnnotationValue(dtoPropertyMirror, "visibility", Visibility.class, Visibility.BOTH))) {
-
-            String methodName = enclosedElement.getSimpleName().toString();
-            String fieldName = methodName.startsWith("is") ? Character.toLowerCase(methodName.charAt(2)) + methodName.substring(3) : Character.toLowerCase(methodName.charAt(3)) + methodName.substring(4);
-
-            if (!setMethodMap.containsKey(fieldName)) {
-              throw new DtoDefinitionException("The 'getter' method(%s) found in class(%s) must have a corresponding 'setter'", enclosedElement.getSimpleName(), classElement.getQualifiedName());
-            } else if (!inMap.containsKey(fieldName)) {
-              processTypeMirror(setMethodMap.get(fieldName).getParameters().get(0).asType());
-              inMap.put(AptUtility.extractAnnotationValue(dtoPropertyMirror, "purpose", String.class, ""), fieldName, new PropertyInformation(setMethodMap.get(fieldName).getParameters().get(0).asType(), dtoPropertyMirror, usefulTypeMirrors));
-            }
-          }
-        }
-      }
-    }
-
-    private void processTypeMirror (TypeMirror typeMirror)
-      throws IOException, DtoDefinitionException {
-
-      if (TypeKind.DECLARED.equals(typeMirror.getKind())) {
-
-        Element element;
-
-        if (ElementKind.CLASS.equals((element = processingEnv.getTypeUtils().asElement(typeMirror)).getKind())) {
-          generate((TypeElement)element);
-        }
-      }
-    }
-
-    private DirectionalMap getInMap () {
-
-      return inMap;
-    }
-
-    private DirectionalMap getOutMap () {
-
-      return outMap;
-    }
-
-    private void inField (String fieldName, String purpose, PropertyInformation propertyInformation)
-      throws DtoDefinitionException {
-
-      if (setMethodMap.containsKey(fieldName)) {
-        inMap.put(purpose, fieldName, propertyInformation);
-      } else {
-        throw new DtoDefinitionException("The property field(%s) has no 'setter' method in class(%s)", fieldName, classElement.getQualifiedName());
-      }
-    }
-
-    private void outField (String fieldName, String purpose, PropertyInformation propertyInformation)
-      throws DtoDefinitionException {
-
-      if (getFieldNameSet.contains(fieldName) || isFieldNameSet.contains(fieldName)) {
-        outMap.put(purpose, fieldName, propertyInformation);
-      } else {
-        throw new DtoDefinitionException("The property field(%s) has no 'getter' method in class(%s)", fieldName, classElement.getQualifiedName());
       }
     }
   }

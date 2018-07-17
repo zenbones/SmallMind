@@ -45,6 +45,8 @@ public @interface DtoGenerator {
 
   Property[] properties () default {};
 
+  Pledge[] pledges () default {};
+
   String name () default "";
 
   boolean polymorphic () default false;

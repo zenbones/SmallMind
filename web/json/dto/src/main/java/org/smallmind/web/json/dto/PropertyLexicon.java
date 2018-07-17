@@ -32,21 +32,46 @@
  */
 package org.smallmind.web.json.dto;
 
-import java.lang.annotation.ElementType;
-import java.lang.annotation.Retention;
-import java.lang.annotation.RetentionPolicy;
-import java.lang.annotation.Target;
-import javax.xml.bind.annotation.adapters.XmlAdapter;
+import java.util.HashMap;
 
-@Retention(RetentionPolicy.SOURCE)
-@Target({ElementType.FIELD, ElementType.METHOD})
-public @interface DtoProperty {
+public class PropertyLexicon {
 
-  Idiom[] idioms () default {};
+  private final HashMap<String, PropertyInformation> realMap = new HashMap<>();
+  private final HashMap<String, PropertyInformation> virtualMap = new HashMap<>();
 
-  Class<? extends XmlAdapter> adapter () default DefaultXmlAdapter.class;
+  public void put (String key, PropertyInformation propertyInformation) {
 
-  String name () default "";
+    if (propertyInformation.isVirtual()) {
 
-  boolean required () default false;
+      virtualMap.put(key, propertyInformation);
+    } else {
+
+      realMap.put(key, propertyInformation);
+    }
+  }
+
+  public boolean isReal () {
+
+    return !realMap.isEmpty();
+  }
+
+  public boolean isVirtual () {
+
+    return !virtualMap.isEmpty();
+  }
+
+  public boolean containsKey (String key) {
+
+    return realMap.containsKey(key) || virtualMap.containsKey(key);
+  }
+
+  public HashMap<String, PropertyInformation> getRealMap () {
+
+    return realMap;
+  }
+
+  public HashMap<String, PropertyInformation> getVirtualMap () {
+
+    return virtualMap;
+  }
 }

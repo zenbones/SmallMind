@@ -32,21 +32,31 @@
  */
 package org.smallmind.web.json.dto;
 
-import java.lang.annotation.ElementType;
-import java.lang.annotation.Retention;
-import java.lang.annotation.RetentionPolicy;
-import java.lang.annotation.Target;
-import javax.xml.bind.annotation.adapters.XmlAdapter;
+public class PropertyBox {
 
-@Retention(RetentionPolicy.SOURCE)
-@Target({ElementType.FIELD, ElementType.METHOD})
-public @interface DtoProperty {
+  private final PropertyInformation propertyInformation;
+  private final Visibility visibility;
+  private final String purpose;
 
-  Idiom[] idioms () default {};
+  public PropertyBox (Visibility visibility, String purpose, PropertyInformation propertyInformation) {
 
-  Class<? extends XmlAdapter> adapter () default DefaultXmlAdapter.class;
+    this.visibility = visibility;
+    this.purpose = purpose;
+    this.propertyInformation = propertyInformation;
+  }
 
-  String name () default "";
+  public Visibility getVisibility () {
 
-  boolean required () default false;
+    return visibility;
+  }
+
+  public String getPurpose () {
+
+    return purpose;
+  }
+
+  public PropertyInformation getPropertyInformation () {
+
+    return propertyInformation;
+  }
 }

@@ -12,6 +12,11 @@
   <description>Json Dto Annotation Processor</description>
   <dependencies>
     <dependency>
+      <groupId>javax.validation</groupId>
+      <artifactId>validation-api</artifactId>
+      <scope>compile</scope>
+    </dependency>
+    <dependency>
       <groupId>org.smallmind</groupId>
       <artifactId>smallmind-nutsnbolts</artifactId>
       <scope>compile</scope>

@@ -32,21 +32,28 @@
  */
 package org.smallmind.web.json.dto;
 
-import java.lang.annotation.ElementType;
-import java.lang.annotation.Retention;
-import java.lang.annotation.RetentionPolicy;
-import java.lang.annotation.Target;
-import javax.xml.bind.annotation.adapters.XmlAdapter;
+import java.util.List;
+import javax.lang.model.element.AnnotationMirror;
+import org.smallmind.nutsnbolts.apt.AptUtility;
 
-@Retention(RetentionPolicy.SOURCE)
-@Target({ElementType.FIELD, ElementType.METHOD})
-public @interface DtoProperty {
+public class PledgeInformation {
 
-  Idiom[] idioms () default {};
+  private final List<String> purposeList;
+  private final Visibility visibility;
 
-  Class<? extends XmlAdapter> adapter () default DefaultXmlAdapter.class;
+  public PledgeInformation (AnnotationMirror pledgeAnnotationMirror) {
 
-  String name () default "";
+    visibility = AptUtility.extractAnnotationValue(pledgeAnnotationMirror, "visibility", Visibility.class, Visibility.BOTH);
+    purposeList = AptUtility.extractAnnotationValueAsList(pledgeAnnotationMirror, "purposes", String.class);
+  }
 
-  boolean required () default false;
+  public Visibility getVisibility () {
+
+    return visibility;
+  }
+
+  public List<String> getPurposeList () {
+
+    return purposeList;
+  }
 }

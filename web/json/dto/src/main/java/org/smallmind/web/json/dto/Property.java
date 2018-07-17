@@ -41,17 +41,15 @@ import javax.xml.bind.annotation.adapters.XmlAdapter;
 @Target({})
 public @interface Property {
 
+  Idiom[] idioms () default {};
+
   Class<? extends XmlAdapter> adapter () default DefaultXmlAdapter.class;
 
   Class<?> type ();
 
-  Visibility visibility () default Visibility.BOTH;
-
   String field ();
 
   String name () default "";
-
-  String purpose () default "";
 
   boolean required () default false;
 }

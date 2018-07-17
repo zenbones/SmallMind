@@ -32,21 +32,28 @@
  */
 package org.smallmind.web.json.dto;
 
-import java.lang.annotation.ElementType;
-import java.lang.annotation.Retention;
-import java.lang.annotation.RetentionPolicy;
-import java.lang.annotation.Target;
-import javax.xml.bind.annotation.adapters.XmlAdapter;
+import javax.lang.model.element.AnnotationMirror;
+import javax.lang.model.type.TypeMirror;
+import org.smallmind.nutsnbolts.apt.AptUtility;
 
-@Retention(RetentionPolicy.SOURCE)
-@Target({ElementType.FIELD, ElementType.METHOD})
-public @interface DtoProperty {
+public class ConstraintInformation {
 
-  Idiom[] idioms () default {};
+  private final TypeMirror type;
+  private final String arguments;
 
-  Class<? extends XmlAdapter> adapter () default DefaultXmlAdapter.class;
+  public ConstraintInformation (AnnotationMirror constraintAnnotationMirror) {
 
-  String name () default "";
+    type = AptUtility.extractAnnotationValue(constraintAnnotationMirror, "value", TypeMirror.class, null);
+    arguments = AptUtility.extractAnnotationValue(constraintAnnotationMirror, "arguments", String.class, "");
+  }
 
-  boolean required () default false;
+  public TypeMirror getType () {
+
+    return type;
+  }
+
+  public String getArguments () {
+
+    return arguments;
+  }
 }

@@ -32,14 +32,39 @@
  */
 package org.smallmind.web.json.dto;
 
-import java.lang.annotation.ElementType;
-import java.lang.annotation.Retention;
-import java.lang.annotation.RetentionPolicy;
-import java.lang.annotation.Target;
+import java.util.LinkedList;
+import java.util.List;
+import javax.lang.model.element.AnnotationMirror;
+import org.smallmind.nutsnbolts.apt.AptUtility;
 
-@Retention(RetentionPolicy.SOURCE)
-@Target({ElementType.FIELD, ElementType.METHOD})
-public @interface DtoProperties {
+public class IdiomInformation {
 
-  DtoProperty[] value ();
+  private final List<ConstraintInformation> constraintList = new LinkedList<>();
+  private final List<String> purposeList;
+  private final Visibility visibility;
+
+  public IdiomInformation (AnnotationMirror idiomAnnotationMirror) {
+
+    visibility = AptUtility.extractAnnotationValue(idiomAnnotationMirror, "visibility", Visibility.class, Visibility.BOTH);
+    purposeList = AptUtility.extractAnnotationValueAsList(idiomAnnotationMirror, "purposes", String.class);
+
+    for (AnnotationMirror constraintAnnotationMirror : AptUtility.extractAnnotationValueAsList(idiomAnnotationMirror, "constraints", AnnotationMirror.class)) {
+      constraintList.add(new ConstraintInformation(constraintAnnotationMirror));
+    }
+  }
+
+  public Visibility getVisibility () {
+
+    return visibility;
+  }
+
+  public List<String> getPurposeList () {
+
+    return purposeList;
+  }
+
+  public List<ConstraintInformation> getConstraintList () {
+
+    return constraintList;
+  }
 }

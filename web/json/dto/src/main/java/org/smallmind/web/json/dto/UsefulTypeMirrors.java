@@ -32,21 +32,20 @@
  */
 package org.smallmind.web.json.dto;
 
-import java.lang.annotation.ElementType;
-import java.lang.annotation.Retention;
-import java.lang.annotation.RetentionPolicy;
-import java.lang.annotation.Target;
-import javax.xml.bind.annotation.adapters.XmlAdapter;
+import javax.annotation.processing.ProcessingEnvironment;
+import javax.lang.model.type.TypeMirror;
 
-@Retention(RetentionPolicy.SOURCE)
-@Target({ElementType.FIELD, ElementType.METHOD})
-public @interface DtoProperty {
+public class UsefulTypeMirrors {
 
-  Idiom[] idioms () default {};
+  private final TypeMirror dtoPropertyTypeMirror;
 
-  Class<? extends XmlAdapter> adapter () default DefaultXmlAdapter.class;
+  public UsefulTypeMirrors (ProcessingEnvironment processingEnvironment) {
 
-  String name () default "";
+    dtoPropertyTypeMirror = processingEnvironment.getElementUtils().getTypeElement(DtoProperty.class.getName()).asType();
+  }
 
-  boolean required () default false;
+  public TypeMirror getDtoPropertyTypeMirror () {
+
+    return dtoPropertyTypeMirror;
+  }
 }
