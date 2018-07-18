@@ -34,7 +34,6 @@ package org.smallmind.web.json.dto;
 
 import java.io.BufferedWriter;
 import java.io.IOException;
-import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.Map;
 import java.util.Objects;
@@ -66,7 +65,7 @@ import org.smallmind.nutsnbolts.reflection.bean.BeanUtility;
 @AutoService(Processor.class)
 public class DtoAnnotationProcessor extends AbstractProcessor {
 
-  private final HashMap<TypeElement, Visibility> generatedMap = new HashMap<>();
+  private final TrackingMap trackingMap = new TrackingMap();
 
   @Override
   public boolean process (Set<? extends TypeElement> annotations, RoundEnvironment roundEnv) {
@@ -101,7 +100,7 @@ public class DtoAnnotationProcessor extends AbstractProcessor {
 
     AnnotationMirror dtoGeneratorAnnotationMirror;
 
-    if ((!generatedMap.containsKey(classElement)) && ((dtoGeneratorAnnotationMirror = AptUtility.extractAnnotationMirror(processingEnv, classElement, processingEnv.getElementUtils().getTypeElement(DtoGenerator.class.getName()).asType())) != null)) {
+    if ((!trackingMap.containsKey(classElement)) && ((dtoGeneratorAnnotationMirror = AptUtility.extractAnnotationMirror(processingEnv, classElement, processingEnv.getElementUtils().getTypeElement(DtoGenerator.class.getName()).asType())) != null)) {
       if ((!ElementKind.CLASS.equals(classElement.getKind())) || (!NestingKind.TOP_LEVEL.equals(classElement.getNestingKind()))) {
         throw new DtoDefinitionException("The class(%s) must be a root implementation of type 'class'", classElement.getQualifiedName());
       } else {
@@ -110,10 +109,8 @@ public class DtoAnnotationProcessor extends AbstractProcessor {
         GeneratorInformation generatorInformation = new GeneratorInformation(processingEnv, this, dtoGeneratorAnnotationMirror);
         DtoClass dtoClass = new DtoClass(processingEnv, this, classElement, generatorInformation, usefulTypeMirrors);
         TypeElement nearestDtoSuperclass;
-        boolean written = false;
 
-        // avoid recursion now, add context later
-        generatedMap.put(classElement, null);
+        trackingMap.track(classElement, generatorInformation, dtoClass);
 
         if ((nearestDtoSuperclass = getNearestDtoSuperclass(classElement)) != null) {
           generate(nearestDtoSuperclass);
@@ -124,24 +121,18 @@ public class DtoAnnotationProcessor extends AbstractProcessor {
 
         for (Map.Entry<String, PropertyLexicon> purposeEntry : dtoClass.getInMap().entrySet()) {
           processIn(generatorInformation, usefulTypeMirrors, classElement, nearestDtoSuperclass, purposeEntry.getKey(), purposeEntry.getValue());
-          written = true;
         }
         for (String unfulfilledPurpose : generatorInformation.unfulfilledPurposes(Direction.IN)) {
           processIn(generatorInformation, usefulTypeMirrors, classElement, nearestDtoSuperclass, unfulfilledPurpose, new PropertyLexicon());
-
-          written = true;
         }
         for (Map.Entry<String, PropertyLexicon> purposeEntry : dtoClass.getOutMap().entrySet()) {
           processOut(generatorInformation, usefulTypeMirrors, classElement, nearestDtoSuperclass, purposeEntry.getKey(), purposeEntry.getValue());
-
-          written = true;
         }
         for (String unfulfilledPurpose : generatorInformation.unfulfilledPurposes(Direction.OUT)) {
           processOut(generatorInformation, usefulTypeMirrors, classElement, nearestDtoSuperclass, unfulfilledPurpose, new PropertyLexicon());
-          written = true;
         }
 
-        if (!written) {
+        if (trackingMap.hasNoPurpose(classElement)) {
           throw new DtoDefinitionException("The class(%s) was annotated as @%s but contained no properties", classElement.getQualifiedName(), DtoGenerator.class.getSimpleName());
         }
       }
@@ -154,7 +145,6 @@ public class DtoAnnotationProcessor extends AbstractProcessor {
     writeDto(generatorInformation, usefulTypeMirrors, classElement, nearestDtoSuperclass, purpose, Direction.IN, propertyLexicon);
 
     generatorInformation.denotePurpose(Direction.IN, purpose);
-    generatedMap.put(classElement, Visibility.IN);
   }
 
   private void processOut (GeneratorInformation generatorInformation, UsefulTypeMirrors usefulTypeMirrors, TypeElement classElement, TypeElement nearestDtoSuperclass, String purpose, PropertyLexicon propertyLexicon)
@@ -163,13 +153,6 @@ public class DtoAnnotationProcessor extends AbstractProcessor {
     writeDto(generatorInformation, usefulTypeMirrors, classElement, nearestDtoSuperclass, purpose, Direction.OUT, propertyLexicon);
 
     generatorInformation.denotePurpose(Direction.OUT, purpose);
-    if (!Visibility.BOTH.equals(generatedMap.get(classElement))) {
-      if (Visibility.IN.equals(generatedMap.get(classElement))) {
-        generatedMap.put(classElement, Visibility.BOTH);
-      } else {
-        generatedMap.put(classElement, Visibility.OUT);
-      }
-    }
   }
 
   private String asMemberName (Name name) {
@@ -198,7 +181,7 @@ public class DtoAnnotationProcessor extends AbstractProcessor {
 
         Visibility visibility;
 
-        if (((visibility = generatedMap.get((TypeElement)element)) != null) && visibility.matches(direction)) {
+        if (((visibility = trackingMap.getVisibility((TypeElement)element, purpose)) != null) && visibility.matches(direction)) {
 
           return processingEnv.getElementUtils().getPackageOf(element).getQualifiedName().toString() + '.' + asDtoName(element.getSimpleName(), purpose, direction).toString();
         }
@@ -208,7 +191,7 @@ public class DtoAnnotationProcessor extends AbstractProcessor {
     return typeMirror.toString();
   }
 
-  private boolean isDtoType (TypeMirror typeMirror, Direction direction) {
+  private boolean isDtoType (TypeMirror typeMirror, String purpose, Direction direction) {
 
     if (TypeKind.DECLARED.equals(typeMirror.getKind())) {
 
@@ -218,7 +201,7 @@ public class DtoAnnotationProcessor extends AbstractProcessor {
 
         Visibility visibility;
 
-        return ((visibility = generatedMap.get((TypeElement)element)) != null) && visibility.matches(direction);
+        return ((visibility = trackingMap.getVisibility((TypeElement)element, purpose)) != null) && visibility.matches(direction);
       }
     }
 
@@ -266,7 +249,7 @@ public class DtoAnnotationProcessor extends AbstractProcessor {
 
           Visibility visibility;
 
-          if (((visibility = generatedMap.get(polymorphicSubClass)) != null) && visibility.matches(direction)) {
+          if (((visibility = trackingMap.getVisibility(polymorphicSubClass, purpose)) != null) && visibility.matches(direction)) {
             matchingSubClassList.add(polymorphicSubClass);
           }
         }
@@ -419,7 +402,7 @@ public class DtoAnnotationProcessor extends AbstractProcessor {
             writer.write("    this.");
             writer.write(propertyInformationEntry.getKey());
             writer.write(" = ");
-            if (isDtoType(propertyInformationEntry.getValue().getType(), direction)) {
+            if (isDtoType(propertyInformationEntry.getValue().getType(), purpose, direction)) {
               writer.write("new ");
               writer.write(asCompatibleName(propertyInformationEntry.getValue().getType(), purpose, direction));
               writer.write("(");
@@ -428,7 +411,7 @@ public class DtoAnnotationProcessor extends AbstractProcessor {
             writer.write(".");
             writer.write(TypeKind.BOOLEAN.equals(propertyInformationEntry.getValue().getType().getKind()) ? BeanUtility.asIsName(propertyInformationEntry.getKey()) : BeanUtility.asGetterName(propertyInformationEntry.getKey()));
             writer.write("()");
-            if (isDtoType(propertyInformationEntry.getValue().getType(), direction)) {
+            if (isDtoType(propertyInformationEntry.getValue().getType(), purpose, direction)) {
               writer.write(")");
             }
             writer.write(";");
@@ -480,7 +463,7 @@ public class DtoAnnotationProcessor extends AbstractProcessor {
             writer.write(BeanUtility.asSetterName(propertyInformationEntry.getKey()));
             writer.write("(");
             writer.write(propertyInformationEntry.getKey());
-            if (isDtoType(propertyInformationEntry.getValue().getType(), direction)) {
+            if (isDtoType(propertyInformationEntry.getValue().getType(), purpose, direction)) {
               writer.write(".factory(");
               writer.write("new ");
               writer.write(processingEnv.getTypeUtils().asElement(propertyInformationEntry.getValue().getType()).getSimpleName().toString());

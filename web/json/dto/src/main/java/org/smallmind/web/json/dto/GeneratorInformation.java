@@ -144,6 +144,18 @@ public class GeneratorInformation {
     }
   }
 
+  public Iterable<String> originalPurposes (Direction direction) {
+
+    switch (direction) {
+      case IN:
+        return inPurposeSet;
+      case OUT:
+        return outPurposeSet;
+      default:
+        throw new UnknownSwitchCaseException(direction.name());
+    }
+  }
+
   public Iterable<String> unfulfilledPurposes (Direction direction) {
 
     switch (direction) {
