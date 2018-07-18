@@ -32,18 +32,24 @@
  */
 package org.smallmind.web.jersey.aop;
 
-import java.lang.annotation.ElementType;
-import java.lang.annotation.Retention;
-import java.lang.annotation.RetentionPolicy;
-import java.lang.annotation.Target;
-import javax.ws.rs.NameBinding;
+import org.aspectj.lang.ProceedingJoinPoint;
+import org.aspectj.lang.annotation.Around;
+import org.aspectj.lang.annotation.Aspect;
+import org.aspectj.lang.reflect.MethodSignature;
 
-@Retention(RetentionPolicy.RUNTIME)
-@Target(ElementType.METHOD)
-@NameBinding
-public @interface ResourceMethod {
+@Aspect
+public class ValidatedAspect {
 
-  Class<? extends JsonEntity> value () default JsonEntity.class;
+  @Around(value = "execution(@org.smallmind.web.jersey.aop.Validated * * (..)) && @annotation(validated)", argNames = "thisJoinPoint, validated")
+  public Object aroundEntityTypeMethod (ProceedingJoinPoint thisJoinPoint, Validated validated)
+    throws Throwable {
 
-  boolean validate () default false;
+    Object returnValue;
+
+    EntityValidator.validateParameters(thisJoinPoint.getTarget(), ((MethodSignature)thisJoinPoint.getSignature()).getMethod(), thisJoinPoint.getArgs());
+    returnValue = thisJoinPoint.proceed();
+    EntityValidator.validateReturnValue(thisJoinPoint.getTarget(), ((MethodSignature)thisJoinPoint.getSignature()).getMethod(), returnValue);
+
+    return returnValue;
+  }
 }
