@@ -32,22 +32,6 @@
  */
 package org.smallmind.web.json.dto;
 
-import java.lang.annotation.ElementType;
-import java.lang.annotation.Retention;
-import java.lang.annotation.RetentionPolicy;
-import java.lang.annotation.Target;
+public class NotPolymorphic {
 
-@Retention(RetentionPolicy.SOURCE)
-@Target(ElementType.TYPE)
-public @interface DtoGenerator {
-
-  Class[] polymorphicSubClasses () default {};
-
-  Class<?> polymorphicBaseClass () default NotPolymorphic.class;
-
-  Property[] properties () default {};
-
-  Pledge[] pledges () default {};
-
-  String name () default "";
 }

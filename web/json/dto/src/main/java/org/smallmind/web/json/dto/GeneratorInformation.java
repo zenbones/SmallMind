@@ -48,16 +48,16 @@ public class GeneratorInformation {
   private final DirectionalGuide outMap = new DirectionalGuide(Direction.OUT);
   private final HashSet<String> inPurposeSet = new HashSet<>();
   private final HashSet<String> outPurposeSet = new HashSet<>();
-  private final List<TypeElement> polymorphicSubclassList;
+  private final List<TypeElement> polymorphicSubClassList;
+  private final TypeMirror polymorphicBaseClass;
   private final String name;
-  private final Boolean polymorphic;
 
-  public GeneratorInformation (ProcessingEnvironment processingEnvironment, DtoAnnotationProcessor dtoAnnotationProcessor, AnnotationMirror generatorAnnotationMirror, UsefulTypeMirrors usefulTypeMirrors)
+  public GeneratorInformation (ProcessingEnvironment processingEnvironment, DtoAnnotationProcessor dtoAnnotationProcessor, AnnotationMirror generatorAnnotationMirror)
     throws IOException, DtoDefinitionException {
 
     name = AptUtility.extractAnnotationValue(generatorAnnotationMirror, "name", String.class, "");
-    polymorphicSubclassList = AptUtility.toConcreteList(processingEnvironment, AptUtility.extractAnnotationValueAsList(generatorAnnotationMirror, "polymorphicSubClasses", TypeMirror.class));
-    polymorphic = AptUtility.extractAnnotationValue(generatorAnnotationMirror, "polymorphic", Boolean.class, Boolean.FALSE);
+    polymorphicBaseClass = AptUtility.extractAnnotationValue(generatorAnnotationMirror, "polymorphicBaseClass", TypeMirror.class, null);
+    polymorphicSubClassList = AptUtility.toConcreteList(processingEnvironment, AptUtility.extractAnnotationValueAsList(generatorAnnotationMirror, "polymorphicSubClasses", TypeMirror.class));
 
     for (AnnotationMirror pledgeAnnotationMirror : AptUtility.extractAnnotationValueAsList(generatorAnnotationMirror, "pledges", AnnotationMirror.class)) {
 
@@ -110,14 +110,14 @@ public class GeneratorInformation {
     return name;
   }
 
-  public boolean isPolymorphic () {
+  public TypeMirror getPolymorphicBaseClass () {
 
-    return ((polymorphic != null) && polymorphic) || (!polymorphicSubclassList.isEmpty());
+    return polymorphicBaseClass;
   }
 
-  public List<TypeElement> getPolymorphicSubclassList () {
+  public List<TypeElement> getPolymorphicSubClassList () {
 
-    return polymorphicSubclassList;
+    return polymorphicSubClassList;
   }
 
   public DirectionalGuide getInMap () {

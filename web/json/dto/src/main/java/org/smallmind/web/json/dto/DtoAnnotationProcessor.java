@@ -107,7 +107,7 @@ public class DtoAnnotationProcessor extends AbstractProcessor {
       } else {
 
         UsefulTypeMirrors usefulTypeMirrors = new UsefulTypeMirrors(processingEnv);
-        GeneratorInformation generatorInformation = new GeneratorInformation(processingEnv, this, dtoGeneratorAnnotationMirror, usefulTypeMirrors);
+        GeneratorInformation generatorInformation = new GeneratorInformation(processingEnv, this, dtoGeneratorAnnotationMirror);
         DtoClass dtoClass = new DtoClass(processingEnv, this, classElement, generatorInformation, usefulTypeMirrors);
         TypeElement nearestDtoSuperclass;
         boolean written = false;
@@ -118,11 +118,8 @@ public class DtoAnnotationProcessor extends AbstractProcessor {
         if ((nearestDtoSuperclass = getNearestDtoSuperclass(classElement)) != null) {
           generate(nearestDtoSuperclass);
         }
-
-        if (generatorInformation.isPolymorphic()) {
-          for (TypeElement polymorphicSubClass : generatorInformation.getPolymorphicSubclassList()) {
-            generate(polymorphicSubClass);
-          }
+        for (TypeElement polymorphicSubClass : generatorInformation.getPolymorphicSubClassList()) {
+          generate(polymorphicSubClass);
         }
 
         for (Map.Entry<String, PropertyLexicon> purposeEntry : dtoClass.getInMap().entrySet()) {
@@ -247,7 +244,7 @@ public class DtoAnnotationProcessor extends AbstractProcessor {
 
     JavaFileObject sourceFile;
 
-    if (generatorInformation.isPolymorphic()) {
+    if (!generatorInformation.getPolymorphicSubClassList().isEmpty()) {
       writePolymorphicAdapter(classElement, purpose, direction);
     }
 
@@ -265,14 +262,12 @@ public class DtoAnnotationProcessor extends AbstractProcessor {
         writer.newLine();
         writer.newLine();
 
-        if (generatorInformation.isPolymorphic()) {
-          for (TypeElement polymorphicSubClass : generatorInformation.getPolymorphicSubclassList()) {
+        for (TypeElement polymorphicSubClass : generatorInformation.getPolymorphicSubClassList()) {
 
-            Visibility visibility;
+          Visibility visibility;
 
-            if (((visibility = generatedMap.get(polymorphicSubClass)) != null) && visibility.matches(direction)) {
-              matchingSubClassList.add(polymorphicSubClass);
-            }
+          if (((visibility = generatedMap.get(polymorphicSubClass)) != null) && visibility.matches(direction)) {
+            matchingSubClassList.add(polymorphicSubClass);
           }
         }
 
@@ -322,10 +317,10 @@ public class DtoAnnotationProcessor extends AbstractProcessor {
           writer.newLine();
         }
 
-        if (generatorInformation.isPolymorphic()) {
+        if ((!generatorInformation.getPolymorphicSubClassList().isEmpty()) || (generatorInformation.getPolymorphicBaseClass() != null)) {
           // XmlJavaTypeAdapter
           writer.write("@XmlJavaTypeAdapter(");
-          writer.write(asDtoName(classElement.getSimpleName(), purpose, direction).toString());
+          writer.write(asDtoName((!generatorInformation.getPolymorphicSubClassList().isEmpty()) ? classElement.getSimpleName() : processingEnv.getTypeUtils().asElement(generatorInformation.getPolymorphicBaseClass()).getSimpleName(), purpose, direction).toString());
           writer.write("PolymorphicXmlAdapter.class)");
           writer.newLine();
 
