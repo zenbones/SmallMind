@@ -78,7 +78,7 @@ public class WireContextXmlAdapter extends XmlAdapter<JsonNode, WireContext[]> {
   public JsonNode marshal (WireContext[] wireContexts)
     throws JsonProcessingException {
 
-    if (wireContexts == null) {
+    if ((wireContexts == null) || (wireContexts.length == 0)) {
 
       return null;
     }
