@@ -43,13 +43,13 @@ public class MorphiaWhereFieldTransformer extends WhereFieldTransformer<Void, Vo
 
   }
 
-  public MorphiaWhereFieldTransformer (WhereFieldTransform<Void> defaultTransform) {
+  public MorphiaWhereFieldTransformer (WhereFieldTransform<Void, Void> defaultTransform) {
 
     super(defaultTransform);
   }
 
   @Override
-  public <D extends Durable<?>> WherePath<Void> createWherePath (Class<D> durableClass, Void root, String name) {
+  public <D extends Durable<?>> WherePath<Void, Void> createWherePath (Class<D> durableClass, Void root, String name) {
 
     return new MorphiaWherePath(durableClass, name);
   }

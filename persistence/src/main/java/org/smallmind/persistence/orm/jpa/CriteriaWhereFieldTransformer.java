@@ -41,14 +41,14 @@ import org.smallmind.persistence.query.WherePath;
 
 public class CriteriaWhereFieldTransformer extends WhereFieldTransformer<Root<?>, Path<?>> {
 
-  public CriteriaWhereFieldTransformer (WhereFieldTransform<Path<?>> defaultTransform) {
+  public CriteriaWhereFieldTransformer (WhereFieldTransform<Root<?>, Path<?>> defaultTransform) {
 
     super(defaultTransform);
   }
 
   @Override
-  public <D extends Durable<?>> WherePath<Path<?>> createWherePath (Class<D> durableClass, Root<?> root, String name) {
+  public <D extends Durable<?>> WherePath<Root<?>, Path<?>> createWherePath (Class<D> durableClass, Root<?> root, String name) {
 
-    return new CriteriaWherePath(durableClass, root.get(name), durableClass.getSimpleName() + "." + name);
+    return new CriteriaWherePath(durableClass, root, name);
   }
 }

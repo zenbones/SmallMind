@@ -40,21 +40,35 @@ import org.smallmind.persistence.query.WhereFieldTransform;
 import org.smallmind.persistence.query.WhereFieldTransformer;
 import org.smallmind.persistence.query.WherePath;
 
-public class QWhereFieldTransformer extends WhereFieldTransformer<Void, Path<?>> {
+public class QWhereFieldTransformer extends WhereFieldTransformer<EntityPath<?>, Path<?>> {
 
   public QWhereFieldTransformer (EntityPath<? extends Durable<?>> entityPath) {
 
-    super((String entity, String name) -> new QWherePath(entityPath.getType(), entityPath, name));
+    this(new PathBuilder<>(entityPath.getType(), createAlias(entityPath.getType())));
   }
 
-  public QWhereFieldTransformer (WhereFieldTransform<Path<?>> defaultTransform) {
+  public QWhereFieldTransformer (PathBuilder<? extends Durable<?>> pathBuilder) {
+
+    super((String entity, String name) -> new QWherePath(pathBuilder.getType(), pathBuilder, pathBuilder.get(name), name));
+  }
+
+  public QWhereFieldTransformer (WhereFieldTransform<EntityPath<?>, Path<?>> defaultTransform) {
 
     super(defaultTransform);
   }
 
-  @Override
-  public <D extends Durable<?>> WherePath<Path<?>> createWherePath (Class<D> durableClass, Void root, String name) {
+  private static <D extends Durable<?>> String createAlias (Class<D> durableClass) {
 
-    return new QWherePath(durableClass, new PathBuilder<>(durableClass, durableClass.getSimpleName()).get(name), durableClass.getSimpleName() + "." + name);
+    String simpleName = durableClass.getSimpleName();
+
+    return Character.toLowerCase(simpleName.charAt(0)) + simpleName.substring(1);
+  }
+
+  @Override
+  public <D extends Durable<?>> WherePath<EntityPath<?>, Path<?>> createWherePath (Class<D> durableClass, EntityPath<?> root, String name) {
+
+    PathBuilder<?> pathBuilder = new PathBuilder<>(durableClass, createAlias(durableClass));
+
+    return new QWherePath(durableClass, pathBuilder, pathBuilder.get(name), name);
   }
 }

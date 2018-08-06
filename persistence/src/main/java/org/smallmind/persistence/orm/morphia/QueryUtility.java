@@ -131,7 +131,7 @@ public class QueryUtility {
 
   private static Criteria walkField (Query<?> query, WhereField whereField, WhereFieldTransformer<Void, Void> fieldTransformer, WhereOperandTransformer operandTransformer) {
 
-    FieldEnd<? extends CriteriaContainerImpl> fieldEnd = query.criteria(fieldTransformer.transform(whereField.getEntity(), whereField.getName()).asString());
+    FieldEnd<? extends CriteriaContainerImpl> fieldEnd = query.criteria(fieldTransformer.transform(whereField.getEntity(), whereField.getName()).getField());
     Object fieldValue = operandTransformer.transform(whereField.getOperand());
 
     switch (whereField.getOperator()) {
@@ -245,7 +245,7 @@ public class QueryUtility {
 
       for (SortField sortField : sort.getFields()) {
 
-        String fieldName = fieldTransformer.transform(sortField.getEntity(), sortField.getName()).asString();
+        String fieldName = fieldTransformer.transform(sortField.getEntity(), sortField.getName()).getField();
 
         if (sortBuilder.length() > 0) {
           sortBuilder.append(", ");

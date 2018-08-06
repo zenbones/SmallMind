@@ -37,6 +37,7 @@ import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.Set;
 import com.querydsl.core.BooleanBuilder;
+import com.querydsl.core.types.EntityPath;
 import com.querydsl.core.types.Expression;
 import com.querydsl.core.types.Ops;
 import com.querydsl.core.types.Order;
@@ -63,12 +64,12 @@ public class QUtility {
 
   private static final WhereOperandTransformer WHERE_OPERAND_TRANSFORMER = new WhereOperandTransformer();
 
-  public static Product<Predicate> apply (Where where, WhereFieldTransformer<Void, Path<?>> fieldTransformer) {
+  public static Product<Predicate> apply (Where where, WhereFieldTransformer<EntityPath<?>, Path<?>> fieldTransformer) {
 
     return apply(where, fieldTransformer, WHERE_OPERAND_TRANSFORMER);
   }
 
-  public static Product<Predicate> apply (Where where, WhereFieldTransformer<Void, Path<?>> fieldTransformer, WhereOperandTransformer operandTransformer) {
+  public static Product<Predicate> apply (Where where, WhereFieldTransformer<EntityPath<?>, Path<?>> fieldTransformer, WhereOperandTransformer operandTransformer) {
 
     if (where == null) {
 
@@ -87,7 +88,7 @@ public class QUtility {
     }
   }
 
-  private static Predicate walkConjunction (Set<Class<? extends Durable<?>>> durableClassSet, WhereConjunction whereConjunction, WhereFieldTransformer<Void, Path<?>> fieldTransformer, WhereOperandTransformer operandTransformer) {
+  private static Predicate walkConjunction (Set<Class<? extends Durable<?>>> durableClassSet, WhereConjunction whereConjunction, WhereFieldTransformer<EntityPath<?>, Path<?>> fieldTransformer, WhereOperandTransformer operandTransformer) {
 
     if ((whereConjunction == null) || whereConjunction.isEmpty()) {
 
@@ -140,37 +141,37 @@ public class QUtility {
     }
   }
 
-  private static Predicate walkField (Set<Class<? extends Durable<?>>> durableClassSet, WhereField whereField, WhereFieldTransformer<Void, Path<?>> fieldTransformer, WhereOperandTransformer operandTransformer) {
+  private static Predicate walkField (Set<Class<? extends Durable<?>>> durableClassSet, WhereField whereField, WhereFieldTransformer<EntityPath<?>, Path<?>> fieldTransformer, WhereOperandTransformer operandTransformer) {
 
     Object fieldValue = operandTransformer.transform(whereField.getOperand());
-    WherePath<Path<?>> wherePath = fieldTransformer.transform(whereField.getEntity(), whereField.getName());
+    WherePath<EntityPath<?>, Path<?>> wherePath = fieldTransformer.transform(whereField.getEntity(), whereField.getName());
 
     durableClassSet.add(wherePath.getDurableClass());
     switch (whereField.getOperator()) {
       case LT:
-        return Expressions.predicate(Ops.LT, Expressions.path(String.class, wherePath.asNative(), wherePath.asString()), Expressions.constant(fieldValue));
+        return Expressions.predicate(Ops.LT, wherePath.getPath(), Expressions.constant(fieldValue));
       case LE:
-        return Expressions.predicate(Ops.LOE, Expressions.path(String.class, wherePath.asNative(), wherePath.asString()), Expressions.constant(fieldValue));
+        return Expressions.predicate(Ops.LOE, wherePath.getPath(), Expressions.constant(fieldValue));
       case EQ:
         if (fieldValue == null) {
-          return Expressions.predicate(Ops.IS_NULL, Expressions.path(String.class, wherePath.asNative(), wherePath.asString()));
+          return Expressions.predicate(Ops.IS_NULL, wherePath.getPath());
         } else {
-          return Expressions.predicate(Ops.EQ, Expressions.path(String.class, wherePath.asNative(), wherePath.asString()), Expressions.constant(fieldValue));
+          return Expressions.predicate(Ops.EQ, wherePath.getPath(), Expressions.constant(fieldValue));
         }
       case NE:
         if (fieldValue == null) {
-          return Expressions.predicate(Ops.IS_NOT_NULL, Expressions.path(String.class, wherePath.asNative(), wherePath.asString()));
+          return Expressions.predicate(Ops.IS_NOT_NULL, wherePath.getPath());
         } else {
-          return Expressions.predicate(Ops.NE, Expressions.path(String.class, wherePath.asNative(), wherePath.asString()), Expressions.constant(fieldValue));
+          return Expressions.predicate(Ops.NE, wherePath.getPath(), Expressions.constant(fieldValue));
         }
       case GE:
-        return Expressions.predicate(Ops.GOE, Expressions.path(String.class, wherePath.asNative(), wherePath.asString()), Expressions.constant(fieldValue));
+        return Expressions.predicate(Ops.GOE, wherePath.getPath(), Expressions.constant(fieldValue));
       case GT:
-        return Expressions.predicate(Ops.GT, Expressions.path(String.class, wherePath.asNative(), wherePath.asString()), Expressions.constant(fieldValue));
+        return Expressions.predicate(Ops.GT, wherePath.getPath(), Expressions.constant(fieldValue));
       case LIKE:
-        return Expressions.predicate(Ops.LIKE, Expressions.path(String.class, wherePath.asNative(), wherePath.asString()), Expressions.constant(fieldValue));
+        return Expressions.predicate(Ops.LIKE, wherePath.getPath(), Expressions.constant(fieldValue));
       case UNLIKE:
-        return Expressions.predicate(Ops.NOT, Expressions.predicate(Ops.LIKE, Expressions.path(String.class, wherePath.asNative(), wherePath.asString()), Expressions.constant(fieldValue)));
+        return Expressions.predicate(Ops.NOT, Expressions.predicate(Ops.LIKE, wherePath.getPath(), Expressions.constant(fieldValue)));
       case IN:
 
         int arrayLength;
@@ -188,14 +189,14 @@ public class QUtility {
             }
           }
 
-          return Expressions.predicate(Ops.IN, Expressions.path(String.class, wherePath.asNative(), wherePath.asString()), collectionExpression);
+          return Expressions.predicate(Ops.IN, wherePath.getPath(), collectionExpression);
         }
       default:
         throw new UnknownSwitchCaseException(whereField.getOperator().name());
     }
   }
 
-  public static Product<OrderSpecifier[]> apply (Sort sort, WhereFieldTransformer<Void, Path<?>> fieldTransformer) {
+  public static Product<OrderSpecifier[]> apply (Sort sort, WhereFieldTransformer<EntityPath<?>, Path<?>> fieldTransformer) {
 
     if ((sort != null) && (!sort.isEmpty())) {
 
@@ -205,15 +206,15 @@ public class QUtility {
 
       for (SortField sortField : sort.getFields()) {
 
-        WherePath<Path<?>> wherePath = fieldTransformer.transform(sortField.getEntity(), sortField.getName());
+        WherePath<EntityPath<?>, Path<?>> wherePath = fieldTransformer.transform(sortField.getEntity(), sortField.getName());
 
         durableClassSet.add(wherePath.getDurableClass());
         switch (sortField.getDirection()) {
           case ASC:
-            orderSpecifierList.add(new OrderSpecifier<>(Order.ASC, Expressions.path(String.class, wherePath.asNative(), wherePath.asString())));
+            orderSpecifierList.add(new OrderSpecifier<>(Order.ASC, Expressions.path(String.class, wherePath.getRoot(), wherePath.getField())));
             break;
           case DESC:
-            orderSpecifierList.add(new OrderSpecifier<>(Order.DESC, Expressions.path(String.class, wherePath.asNative(), wherePath.asString())));
+            orderSpecifierList.add(new OrderSpecifier<>(Order.DESC, Expressions.path(String.class, wherePath.getRoot(), wherePath.getField())));
             break;
           default:
             throw new UnknownSwitchCaseException(sortField.getDirection().name());

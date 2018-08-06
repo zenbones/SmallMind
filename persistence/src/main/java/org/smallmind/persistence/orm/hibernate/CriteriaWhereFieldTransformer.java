@@ -43,14 +43,14 @@ public class CriteriaWhereFieldTransformer extends WhereFieldTransformer<Void, V
 
   }
 
-  public CriteriaWhereFieldTransformer (WhereFieldTransform<Void> defaultTransform) {
+  public CriteriaWhereFieldTransformer (WhereFieldTransform<Void, Void> defaultTransform) {
 
     super(defaultTransform);
   }
 
   @Override
-  public <D extends Durable<?>> WherePath<Void> createWherePath (Class<D> durableClass, Void root, String name) {
+  public <D extends Durable<?>> WherePath<Void, Void> createWherePath (Class<D> durableClass, Void root, String name) {
 
-    return new CriteriaWherePath(durableClass, durableClass.getSimpleName() + "." + name);
+    return new CriteriaWherePath(durableClass, name);
   }
 }

@@ -34,7 +34,7 @@ package org.smallmind.persistence.query;
 
 import org.smallmind.persistence.Durable;
 
-public abstract class WherePath<T> {
+public abstract class WherePath<R, T> {
 
   private Class<? extends Durable<?>> durableClass;
 
@@ -48,7 +48,9 @@ public abstract class WherePath<T> {
     return durableClass;
   }
 
-  public abstract T asNative ();
+  public abstract R getRoot ();
 
-  public abstract String asString ();
+  public abstract T getPath ();
+
+  public abstract String getField ();
 }

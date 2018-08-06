@@ -33,31 +33,40 @@
 package org.smallmind.persistence.orm.jpa;
 
 import javax.persistence.criteria.Path;
+import javax.persistence.criteria.Root;
 import org.smallmind.persistence.Durable;
 import org.smallmind.persistence.query.WherePath;
 
-public class CriteriaWherePath extends WherePath<Path<?>> {
+public class CriteriaWherePath extends WherePath<Root<?>, Path<?>> {
 
+  private Root<?> root;
   private Path<?> path;
-  private String dotNotated;
+  private String field;
 
-  public CriteriaWherePath (Class<? extends Durable<?>> durableClass, Path<?> path, String dotNotated) {
+  public CriteriaWherePath (Class<? extends Durable<?>> durableClass, Root<?> root, String field) {
 
     super(durableClass);
 
-    this.path = path;
-    this.dotNotated = dotNotated;
+    this.root = root;
+
+    path = root.get(field);
   }
 
   @Override
-  public Path<?> asNative () {
+  public Root<?> getRoot () {
+
+    return root;
+  }
+
+  @Override
+  public Path<?> getPath () {
 
     return path;
   }
 
   @Override
-  public String asString () {
+  public String getField () {
 
-    return dotNotated;
+    return field;
   }
 }

@@ -161,7 +161,7 @@ public class CriteriaUtility {
 
   private static Criterion walkField (WhereField whereField, WhereFieldTransformer<Void, Void> fieldTransformer, WhereOperandTransformer operandTransformer) {
 
-    String fieldName = fieldTransformer.transform(whereField.getEntity(), whereField.getName()).asString();
+    String fieldName = fieldTransformer.transform(whereField.getEntity(), whereField.getName()).getField();
     Object fieldValue = operandTransformer.transform(whereField.getOperand());
 
     switch (whereField.getOperator()) {
@@ -204,7 +204,7 @@ public class CriteriaUtility {
     if ((sort != null) && (!sort.isEmpty())) {
       for (SortField sortField : sort.getFields()) {
 
-        String fieldName = fieldTransformer.transform(sortField.getEntity(), sortField.getName()).asString();
+        String fieldName = fieldTransformer.transform(sortField.getEntity(), sortField.getName()).getField();
 
         switch (sortField.getDirection()) {
           case ASC:

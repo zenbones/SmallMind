@@ -41,19 +41,19 @@ import org.smallmind.persistence.orm.ORMOperationException;
 public abstract class WhereFieldTransformer<R, T> {
 
   private HashMap<String, JoinedType<?>> typeMap = new HashMap<>();
-  private HashMap<String, WhereFieldTransform<T>> transformMap = new HashMap<>();
-  private WhereFieldTransform<T> defaultTransform;
+  private HashMap<String, WhereFieldTransform<R, T>> transformMap = new HashMap<>();
+  private WhereFieldTransform<R, T> defaultTransform;
 
   public WhereFieldTransformer () {
 
   }
 
-  public WhereFieldTransformer (WhereFieldTransform<T> defaultTransform) {
+  public WhereFieldTransformer (WhereFieldTransform<R, T> defaultTransform) {
 
     this.defaultTransform = defaultTransform;
   }
 
-  public abstract <D extends Durable<?>> WherePath<T> createWherePath (Class<D> durableClass, R root, String name);
+  public abstract <D extends Durable<?>> WherePath<R, T> createWherePath (Class<D> durableClass, R root, String name);
 
   public synchronized <D extends Durable<?>> WhereFieldTransformer<R, T> addRoot (Class<D> durableClass, R root) {
 
@@ -62,7 +62,7 @@ public abstract class WhereFieldTransformer<R, T> {
     return this;
   }
 
-  public synchronized WhereFieldTransformer<R, T> add (WhereFieldTransform<T> transform, String... names) {
+  public synchronized WhereFieldTransformer<R, T> add (WhereFieldTransform<R, T> transform, String... names) {
 
     if ((names != null) && (names.length > 0)) {
       for (String name : names) {
@@ -73,7 +73,7 @@ public abstract class WhereFieldTransformer<R, T> {
     return this;
   }
 
-  public synchronized WherePath<T> transform (String entity, String name) {
+  public synchronized WherePath<R, T> transform (String entity, String name) {
 
     JoinedType<?> joinedType;
 
@@ -86,7 +86,7 @@ public abstract class WhereFieldTransformer<R, T> {
       }
     } else {
 
-      WhereFieldTransform<T> transform;
+      WhereFieldTransform<R, T> transform;
 
       if ((transform = transformMap.get(name)) != null) {
 

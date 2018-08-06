@@ -132,36 +132,36 @@ public class CriteriaUtility {
   private static Predicate walkField (CriteriaBuilder criteriaBuilder, Set<Class<? extends Durable<?>>> durableClassSet, WhereField whereField, WhereFieldTransformer<Root<?>, Path<?>> fieldTransformer, WhereOperandTransformer operandTransformer) {
 
     Object fieldValue = operandTransformer.transform(whereField.getOperand());
-    WherePath<Path<?>> wherePath = fieldTransformer.transform(whereField.getEntity(), whereField.getName());
+    WherePath<Root<?>, Path<?>> wherePath = fieldTransformer.transform(whereField.getEntity(), whereField.getName());
 
     durableClassSet.add(((CriteriaWherePath)wherePath).getDurableClass());
     switch (whereField.getOperator()) {
       case LT:
-        return criteriaBuilder.lt((Path<Number>)wherePath.asNative(), (Number)fieldValue);
+        return criteriaBuilder.lt((Path<Number>)wherePath.getPath(), (Number)fieldValue);
       case LE:
-        return criteriaBuilder.le((Path<Number>)wherePath.asNative(), (Number)fieldValue);
+        return criteriaBuilder.le((Path<Number>)wherePath.getPath(), (Number)fieldValue);
       case EQ:
         if (fieldValue == null) {
-          return criteriaBuilder.isNull(wherePath.asNative());
+          return criteriaBuilder.isNull(wherePath.getPath());
         } else {
-          return criteriaBuilder.equal(wherePath.asNative(), fieldValue);
+          return criteriaBuilder.equal(wherePath.getPath(), fieldValue);
         }
       case NE:
         if (fieldValue == null) {
-          return criteriaBuilder.isNotNull(wherePath.asNative());
+          return criteriaBuilder.isNotNull(wherePath.getPath());
         } else {
-          return criteriaBuilder.notEqual(wherePath.asNative(), fieldValue);
+          return criteriaBuilder.notEqual(wherePath.getPath(), fieldValue);
         }
       case GE:
-        return criteriaBuilder.ge((Path<Number>)wherePath.asNative(), (Number)fieldValue);
+        return criteriaBuilder.ge((Path<Number>)wherePath.getPath(), (Number)fieldValue);
       case GT:
-        return criteriaBuilder.gt((Path<Number>)wherePath.asNative(), (Number)fieldValue);
+        return criteriaBuilder.gt((Path<Number>)wherePath.getPath(), (Number)fieldValue);
       case LIKE:
-        return criteriaBuilder.like((Path<String>)wherePath.asNative(), (String)fieldValue);
+        return criteriaBuilder.like((Path<String>)wherePath.getPath(), (String)fieldValue);
       case UNLIKE:
-        return criteriaBuilder.notLike((Path<String>)wherePath.asNative(), (String)fieldValue);
+        return criteriaBuilder.notLike((Path<String>)wherePath.getPath(), (String)fieldValue);
       case IN:
-        return criteriaBuilder.in((Path<?>)wherePath.asNative()).in(fieldValue);
+        return criteriaBuilder.in((Path<?>)wherePath.getPath()).in(fieldValue);
       default:
         throw new UnknownSwitchCaseException(whereField.getOperator().name());
     }
@@ -177,15 +177,15 @@ public class CriteriaUtility {
 
       for (SortField sortField : sort.getFields()) {
 
-        WherePath<Path<?>> wherePath = fieldTransformer.transform(sortField.getEntity(), sortField.getName());
+        WherePath<Root<?>, Path<?>> wherePath = fieldTransformer.transform(sortField.getEntity(), sortField.getName());
 
         durableClassSet.add(((CriteriaWherePath)wherePath).getDurableClass());
         switch (sortField.getDirection()) {
           case ASC:
-            orderList.add(criteriaBuilder.asc(wherePath.asNative()));
+            orderList.add(criteriaBuilder.asc(wherePath.getPath()));
             break;
           case DESC:
-            orderList.add(criteriaBuilder.desc(wherePath.asNative()));
+            orderList.add(criteriaBuilder.desc(wherePath.getPath()));
             break;
           default:
             throw new UnknownSwitchCaseException(sortField.getDirection().name());
