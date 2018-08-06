@@ -46,12 +46,13 @@ import org.smallmind.persistence.query.Where;
 import org.smallmind.persistence.query.WhereConjunction;
 import org.smallmind.persistence.query.WhereCriterion;
 import org.smallmind.persistence.query.WhereField;
+import org.smallmind.persistence.query.WhereFieldTransformer;
 import org.smallmind.persistence.query.WhereOperandTransformer;
 import org.smallmind.persistence.query.WhereOperator;
 
 public class QueryUtility {
 
-  private static final MorphiaWhereFieldTransformer WHERE_FIELD_TRANSFORMER = new MorphiaWhereFieldTransformer();
+  private static final WhereFieldTransformer<Void, Void> WHERE_FIELD_TRANSFORMER = new MorphiaWhereFieldTransformer();
   private static final WhereOperandTransformer WHERE_OPERAND_TRANSFORMER = new WhereOperandTransformer();
 
   public static Query<?> apply (Query<?> query, Where where) {
@@ -59,7 +60,7 @@ public class QueryUtility {
     return apply(query, where, WHERE_FIELD_TRANSFORMER, WHERE_OPERAND_TRANSFORMER);
   }
 
-  public static Query<?> apply (Query<?> query, Where where, MorphiaWhereFieldTransformer fieldTransformer) {
+  public static Query<?> apply (Query<?> query, Where where, WhereFieldTransformer<Void, Void> fieldTransformer) {
 
     return apply(query, where, fieldTransformer, WHERE_OPERAND_TRANSFORMER);
   }
@@ -69,7 +70,7 @@ public class QueryUtility {
     return apply(query, where, WHERE_FIELD_TRANSFORMER, operandTransformer);
   }
 
-  public static Query<?> apply (Query<?> query, Where where, MorphiaWhereFieldTransformer fieldTransformer, WhereOperandTransformer operandTransformer) {
+  public static Query<?> apply (Query<?> query, Where where, WhereFieldTransformer<Void, Void> fieldTransformer, WhereOperandTransformer operandTransformer) {
 
     if (where != null) {
       walkConjunction(query, where.getRootConjunction(), fieldTransformer, operandTransformer);
@@ -78,7 +79,7 @@ public class QueryUtility {
     return query;
   }
 
-  private static Criteria walkConjunction (Query<?> query, WhereConjunction whereConjunction, MorphiaWhereFieldTransformer fieldTransformer, WhereOperandTransformer operandTransformer) {
+  private static Criteria walkConjunction (Query<?> query, WhereConjunction whereConjunction, WhereFieldTransformer<Void, Void> fieldTransformer, WhereOperandTransformer operandTransformer) {
 
     if ((whereConjunction == null) || whereConjunction.isEmpty()) {
 
@@ -128,7 +129,7 @@ public class QueryUtility {
     }
   }
 
-  private static Criteria walkField (Query<?> query, WhereField whereField, MorphiaWhereFieldTransformer fieldTransformer, WhereOperandTransformer operandTransformer) {
+  private static Criteria walkField (Query<?> query, WhereField whereField, WhereFieldTransformer<Void, Void> fieldTransformer, WhereOperandTransformer operandTransformer) {
 
     FieldEnd<? extends CriteriaContainerImpl> fieldEnd = query.criteria(fieldTransformer.transform(whereField.getEntity(), whereField.getName()).asString());
     Object fieldValue = operandTransformer.transform(whereField.getOperand());
@@ -236,7 +237,7 @@ public class QueryUtility {
     return apply(query, sort, WHERE_FIELD_TRANSFORMER);
   }
 
-  public static Query<?> apply (Query<?> query, Sort sort, MorphiaWhereFieldTransformer fieldTransformer) {
+  public static Query<?> apply (Query<?> query, Sort sort, WhereFieldTransformer<Void, Void> fieldTransformer) {
 
     if ((sort != null) && (!sort.isEmpty())) {
 

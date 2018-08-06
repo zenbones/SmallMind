@@ -45,11 +45,12 @@ import org.smallmind.persistence.query.Where;
 import org.smallmind.persistence.query.WhereConjunction;
 import org.smallmind.persistence.query.WhereCriterion;
 import org.smallmind.persistence.query.WhereField;
+import org.smallmind.persistence.query.WhereFieldTransformer;
 import org.smallmind.persistence.query.WhereOperandTransformer;
 
 public class CriteriaUtility {
 
-  private static final CriteriaWhereFieldTransformer WHERE_FIELD_TRANSFORMER = new CriteriaWhereFieldTransformer();
+  private static final WhereFieldTransformer<Void, Void> WHERE_FIELD_TRANSFORMER = new CriteriaWhereFieldTransformer();
   private static final WhereOperandTransformer WHERE_OPERAND_TRANSFORMER = new WhereOperandTransformer();
 
   public static Criteria apply (Criteria criteria, Where where) {
@@ -62,12 +63,12 @@ public class CriteriaUtility {
     return apply(detachedCriteria, where, WHERE_FIELD_TRANSFORMER, WHERE_OPERAND_TRANSFORMER);
   }
 
-  public static Criteria apply (Criteria criteria, Where where, CriteriaWhereFieldTransformer fieldTransformer) {
+  public static Criteria apply (Criteria criteria, Where where, WhereFieldTransformer<Void, Void> fieldTransformer) {
 
     return apply(criteria, where, fieldTransformer, WHERE_OPERAND_TRANSFORMER);
   }
 
-  public static DetachedCriteria apply (DetachedCriteria detachedCriteria, Where where, CriteriaWhereFieldTransformer fieldTransformer) {
+  public static DetachedCriteria apply (DetachedCriteria detachedCriteria, Where where, WhereFieldTransformer<Void, Void> fieldTransformer) {
 
     return apply(detachedCriteria, where, fieldTransformer, WHERE_OPERAND_TRANSFORMER);
   }
@@ -82,7 +83,7 @@ public class CriteriaUtility {
     return apply(detachedCriteria, where, WHERE_FIELD_TRANSFORMER, operandTransformer);
   }
 
-  public static Criteria apply (Criteria criteria, Where where, CriteriaWhereFieldTransformer fieldTransformer, WhereOperandTransformer operandTransformer) {
+  public static Criteria apply (Criteria criteria, Where where, WhereFieldTransformer<Void, Void> fieldTransformer, WhereOperandTransformer operandTransformer) {
 
     if (where != null) {
 
@@ -96,7 +97,7 @@ public class CriteriaUtility {
     return criteria;
   }
 
-  public static DetachedCriteria apply (DetachedCriteria detachedCriteria, Where where, CriteriaWhereFieldTransformer fieldTransformer, WhereOperandTransformer operandTransformer) {
+  public static DetachedCriteria apply (DetachedCriteria detachedCriteria, Where where, WhereFieldTransformer<Void, Void> fieldTransformer, WhereOperandTransformer operandTransformer) {
 
     if (where != null) {
 
@@ -110,7 +111,7 @@ public class CriteriaUtility {
     return detachedCriteria;
   }
 
-  private static Criterion walkConjunction (WhereConjunction whereConjunction, CriteriaWhereFieldTransformer fieldTransformer, WhereOperandTransformer operandTransformer) {
+  private static Criterion walkConjunction (WhereConjunction whereConjunction, WhereFieldTransformer<Void, Void> fieldTransformer, WhereOperandTransformer operandTransformer) {
 
     if ((whereConjunction == null) || whereConjunction.isEmpty()) {
 
@@ -158,7 +159,7 @@ public class CriteriaUtility {
     }
   }
 
-  private static Criterion walkField (WhereField whereField, CriteriaWhereFieldTransformer fieldTransformer, WhereOperandTransformer operandTransformer) {
+  private static Criterion walkField (WhereField whereField, WhereFieldTransformer<Void, Void> fieldTransformer, WhereOperandTransformer operandTransformer) {
 
     String fieldName = fieldTransformer.transform(whereField.getEntity(), whereField.getName()).asString();
     Object fieldValue = operandTransformer.transform(whereField.getOperand());
@@ -198,7 +199,7 @@ public class CriteriaUtility {
     return apply(criteria, sort, WHERE_FIELD_TRANSFORMER);
   }
 
-  public static Criteria apply (Criteria criteria, Sort sort, CriteriaWhereFieldTransformer fieldTransformer) {
+  public static Criteria apply (Criteria criteria, Sort sort, WhereFieldTransformer<Void, Void> fieldTransformer) {
 
     if ((sort != null) && (!sort.isEmpty())) {
       for (SortField sortField : sort.getFields()) {

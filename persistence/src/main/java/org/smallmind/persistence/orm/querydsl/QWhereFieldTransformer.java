@@ -32,6 +32,7 @@
  */
 package org.smallmind.persistence.orm.querydsl;
 
+import com.querydsl.core.types.EntityPath;
 import com.querydsl.core.types.Path;
 import com.querydsl.core.types.dsl.PathBuilder;
 import org.smallmind.persistence.Durable;
@@ -40,6 +41,11 @@ import org.smallmind.persistence.query.WhereFieldTransformer;
 import org.smallmind.persistence.query.WherePath;
 
 public class QWhereFieldTransformer extends WhereFieldTransformer<Void, Path<?>> {
+
+  public QWhereFieldTransformer (EntityPath<? extends Durable<?>> entityPath) {
+
+    super((String entity, String name) -> new QWherePath(entityPath.getType(), entityPath, name));
+  }
 
   public QWhereFieldTransformer (WhereFieldTransform<Path<?>> defaultTransform) {
 

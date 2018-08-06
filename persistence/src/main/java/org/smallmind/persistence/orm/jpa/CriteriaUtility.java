@@ -39,6 +39,7 @@ import javax.persistence.criteria.CriteriaBuilder;
 import javax.persistence.criteria.Order;
 import javax.persistence.criteria.Path;
 import javax.persistence.criteria.Predicate;
+import javax.persistence.criteria.Root;
 import org.smallmind.nutsnbolts.lang.UnknownSwitchCaseException;
 import org.smallmind.persistence.Durable;
 import org.smallmind.persistence.query.NoneProduct;
@@ -50,6 +51,7 @@ import org.smallmind.persistence.query.Where;
 import org.smallmind.persistence.query.WhereConjunction;
 import org.smallmind.persistence.query.WhereCriterion;
 import org.smallmind.persistence.query.WhereField;
+import org.smallmind.persistence.query.WhereFieldTransformer;
 import org.smallmind.persistence.query.WhereOperandTransformer;
 import org.smallmind.persistence.query.WherePath;
 
@@ -57,12 +59,12 @@ public class CriteriaUtility {
 
   private static final WhereOperandTransformer WHERE_OPERAND_TRANSFORMER = new WhereOperandTransformer();
 
-  public static Product<Predicate> apply (CriteriaBuilder criteriaBuilder, Where where, CriteriaWhereFieldTransformer fieldTransformer) {
+  public static Product<Predicate> apply (CriteriaBuilder criteriaBuilder, Where where, WhereFieldTransformer<Root<?>, Path<?>> fieldTransformer) {
 
     return apply(criteriaBuilder, where, fieldTransformer, WHERE_OPERAND_TRANSFORMER);
   }
 
-  public static Product<Predicate> apply (CriteriaBuilder criteriaBuilder, Where where, CriteriaWhereFieldTransformer fieldTransformer, WhereOperandTransformer operandTransformer) {
+  public static Product<Predicate> apply (CriteriaBuilder criteriaBuilder, Where where, WhereFieldTransformer<Root<?>, Path<?>> fieldTransformer, WhereOperandTransformer operandTransformer) {
 
     if (where == null) {
 
@@ -81,7 +83,7 @@ public class CriteriaUtility {
     }
   }
 
-  private static Predicate walkConjunction (CriteriaBuilder criteriaBuilder, Set<Class<? extends Durable<?>>> durableClassSet, WhereConjunction whereConjunction, CriteriaWhereFieldTransformer fieldTransformer, WhereOperandTransformer operandTransformer) {
+  private static Predicate walkConjunction (CriteriaBuilder criteriaBuilder, Set<Class<? extends Durable<?>>> durableClassSet, WhereConjunction whereConjunction, WhereFieldTransformer<Root<?>, Path<?>> fieldTransformer, WhereOperandTransformer operandTransformer) {
 
     if ((whereConjunction == null) || whereConjunction.isEmpty()) {
 
@@ -127,7 +129,7 @@ public class CriteriaUtility {
     }
   }
 
-  private static Predicate walkField (CriteriaBuilder criteriaBuilder, Set<Class<? extends Durable<?>>> durableClassSet, WhereField whereField, CriteriaWhereFieldTransformer fieldTransformer, WhereOperandTransformer operandTransformer) {
+  private static Predicate walkField (CriteriaBuilder criteriaBuilder, Set<Class<? extends Durable<?>>> durableClassSet, WhereField whereField, WhereFieldTransformer<Root<?>, Path<?>> fieldTransformer, WhereOperandTransformer operandTransformer) {
 
     Object fieldValue = operandTransformer.transform(whereField.getOperand());
     WherePath<Path<?>> wherePath = fieldTransformer.transform(whereField.getEntity(), whereField.getName());
@@ -165,7 +167,7 @@ public class CriteriaUtility {
     }
   }
 
-  public static Product<Order[]> apply (CriteriaBuilder criteriaBuilder, Sort sort, CriteriaWhereFieldTransformer fieldTransformer) {
+  public static Product<Order[]> apply (CriteriaBuilder criteriaBuilder, Sort sort, WhereFieldTransformer<Root<?>, Path<?>> fieldTransformer) {
 
     if ((sort != null) && (!sort.isEmpty())) {
 
