@@ -64,12 +64,12 @@ public class QUtility {
 
   private static final WhereOperandTransformer WHERE_OPERAND_TRANSFORMER = new WhereOperandTransformer();
 
-  public static Product<Predicate> apply (Where where, WhereFieldTransformer<EntityPath<?>, Path<?>> fieldTransformer) {
+  public static Product<Predicate> apply (Where where, WhereFieldTransformer<Path<?>, Path<?>> fieldTransformer) {
 
     return apply(where, fieldTransformer, WHERE_OPERAND_TRANSFORMER);
   }
 
-  public static Product<Predicate> apply (Where where, WhereFieldTransformer<EntityPath<?>, Path<?>> fieldTransformer, WhereOperandTransformer operandTransformer) {
+  public static Product<Predicate> apply (Where where, WhereFieldTransformer<Path<?>, Path<?>> fieldTransformer, WhereOperandTransformer operandTransformer) {
 
     if (where == null) {
 
@@ -88,7 +88,7 @@ public class QUtility {
     }
   }
 
-  private static Predicate walkConjunction (Set<Class<? extends Durable<?>>> durableClassSet, WhereConjunction whereConjunction, WhereFieldTransformer<EntityPath<?>, Path<?>> fieldTransformer, WhereOperandTransformer operandTransformer) {
+  private static Predicate walkConjunction (Set<Class<? extends Durable<?>>> durableClassSet, WhereConjunction whereConjunction, WhereFieldTransformer<Path<?>, Path<?>> fieldTransformer, WhereOperandTransformer operandTransformer) {
 
     if ((whereConjunction == null) || whereConjunction.isEmpty()) {
 
@@ -141,10 +141,10 @@ public class QUtility {
     }
   }
 
-  private static Predicate walkField (Set<Class<? extends Durable<?>>> durableClassSet, WhereField whereField, WhereFieldTransformer<EntityPath<?>, Path<?>> fieldTransformer, WhereOperandTransformer operandTransformer) {
+  private static Predicate walkField (Set<Class<? extends Durable<?>>> durableClassSet, WhereField whereField, WhereFieldTransformer<Path<?>, Path<?>> fieldTransformer, WhereOperandTransformer operandTransformer) {
 
     Object fieldValue = operandTransformer.transform(whereField.getOperand());
-    WherePath<EntityPath<?>, Path<?>> wherePath = fieldTransformer.transform(whereField.getEntity(), whereField.getName());
+    WherePath<Path<?>, Path<?>> wherePath = fieldTransformer.transform(whereField.getEntity(), whereField.getName());
 
     durableClassSet.add(wherePath.getDurableClass());
     switch (whereField.getOperator()) {
@@ -196,7 +196,7 @@ public class QUtility {
     }
   }
 
-  public static Product<OrderSpecifier[]> apply (Sort sort, WhereFieldTransformer<EntityPath<?>, Path<?>> fieldTransformer) {
+  public static Product<OrderSpecifier[]> apply (Sort sort, WhereFieldTransformer<Path<?>, Path<?>> fieldTransformer) {
 
     if ((sort != null) && (!sort.isEmpty())) {
 
@@ -206,7 +206,7 @@ public class QUtility {
 
       for (SortField sortField : sort.getFields()) {
 
-        WherePath<EntityPath<?>, Path<?>> wherePath = fieldTransformer.transform(sortField.getEntity(), sortField.getName());
+        WherePath<Path<?>, Path<?>> wherePath = fieldTransformer.transform(sortField.getEntity(), sortField.getName());
 
         durableClassSet.add(wherePath.getDurableClass());
         switch (sortField.getDirection()) {

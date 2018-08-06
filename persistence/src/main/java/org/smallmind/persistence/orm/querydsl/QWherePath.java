@@ -32,18 +32,33 @@
  */
 package org.smallmind.persistence.orm.querydsl;
 
-import com.querydsl.core.types.EntityPath;
 import com.querydsl.core.types.Path;
+import com.querydsl.core.types.dsl.PathBuilder;
 import org.smallmind.persistence.Durable;
 import org.smallmind.persistence.query.WherePath;
 
-public class QWherePath extends WherePath<EntityPath<?>, Path<?>> {
+public class QWherePath extends WherePath<Path<?>, Path<?>> {
 
-  private EntityPath<?> root;
+  private Path<?> root;
   private Path<?> path;
   private String field;
 
-  public QWherePath (Class<? extends Durable<?>> durableClass, EntityPath<?> root, Path<?> path, String field) {
+  public QWherePath (Path<?> path) {
+
+    this((Class<? extends Durable<?>>)path.getRoot().getType(), path.getRoot(), path, path.getMetadata().toString().substring(path.getRoot().toString().length() + 1));
+  }
+
+  public QWherePath (Class<? extends Durable<?>> durableClass, String field) {
+
+    super(durableClass);
+
+    this.field = field;
+
+    root = new PathBuilder<>(durableClass, createAlias(durableClass));
+    path = ((PathBuilder<?>)root).get(field);
+  }
+
+  public QWherePath (Class<? extends Durable<?>> durableClass, Path<?> root, Path<?> path, String field) {
 
     super(durableClass);
 
@@ -52,8 +67,15 @@ public class QWherePath extends WherePath<EntityPath<?>, Path<?>> {
     this.field = field;
   }
 
+  public static <D extends Durable<?>> String createAlias (Class<D> durableClass) {
+
+    String simpleName = durableClass.getSimpleName();
+
+    return Character.toLowerCase(simpleName.charAt(0)) + simpleName.substring(1);
+  }
+
   @Override
-  public EntityPath<?> getRoot () {
+  public Path<?> getRoot () {
 
     return root;
   }

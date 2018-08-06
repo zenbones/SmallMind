@@ -32,7 +32,6 @@
  */
 package org.smallmind.persistence.orm.querydsl;
 
-import com.querydsl.core.types.EntityPath;
 import com.querydsl.core.types.Path;
 import com.querydsl.core.types.dsl.PathBuilder;
 import org.smallmind.persistence.Durable;
@@ -40,34 +39,24 @@ import org.smallmind.persistence.query.WhereFieldTransform;
 import org.smallmind.persistence.query.WhereFieldTransformer;
 import org.smallmind.persistence.query.WherePath;
 
-public class QWhereFieldTransformer extends WhereFieldTransformer<EntityPath<?>, Path<?>> {
-
-  public QWhereFieldTransformer (EntityPath<? extends Durable<?>> entityPath) {
-
-    this(new PathBuilder<>(entityPath.getType(), createAlias(entityPath.getType())));
-  }
+public class QWhereFieldTransformer extends WhereFieldTransformer<Path<?>, Path<?>> {
 
   public QWhereFieldTransformer (PathBuilder<? extends Durable<?>> pathBuilder) {
 
     super((String entity, String name) -> new QWherePath(pathBuilder.getType(), pathBuilder, pathBuilder.get(name), name));
   }
 
-  public QWhereFieldTransformer (WhereFieldTransform<EntityPath<?>, Path<?>> defaultTransform) {
+  public QWhereFieldTransformer (WhereFieldTransform<Path<?>, Path<?>> defaultTransform) {
 
     super(defaultTransform);
   }
 
-  private static <D extends Durable<?>> String createAlias (Class<D> durableClass) {
 
-    String simpleName = durableClass.getSimpleName();
-
-    return Character.toLowerCase(simpleName.charAt(0)) + simpleName.substring(1);
-  }
 
   @Override
-  public <D extends Durable<?>> WherePath<EntityPath<?>, Path<?>> createWherePath (Class<D> durableClass, EntityPath<?> root, String name) {
+  public <D extends Durable<?>> WherePath<Path<?>, Path<?>> createWherePath (Class<D> durableClass, Path<?> root, String name) {
 
-    PathBuilder<?> pathBuilder = new PathBuilder<>(durableClass, createAlias(durableClass));
+    PathBuilder<?> pathBuilder = new PathBuilder<>(durableClass, QWherePath.createAlias(durableClass));
 
     return new QWherePath(durableClass, pathBuilder, pathBuilder.get(name), name);
   }
