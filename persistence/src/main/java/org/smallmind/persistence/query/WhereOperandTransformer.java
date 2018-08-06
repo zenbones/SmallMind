@@ -50,7 +50,7 @@ public class WhereOperandTransformer {
     });
   }
 
-  public synchronized <U, T> WhereOperandTransformer add (Class<T> inputClass, Class<U> outputClass, WhereOperandTransform<U, T> transform) {
+  public synchronized <I, O> WhereOperandTransformer add (Class<I> inputClass, Class<O> outputClass, WhereOperandTransform<I, O> transform) {
 
     transformMap.put(new TransformKey<>(inputClass, outputClass), transform);
 
