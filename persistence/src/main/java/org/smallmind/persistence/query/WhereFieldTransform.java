@@ -32,6 +32,7 @@
  */
 package org.smallmind.persistence.query;
 
+@FunctionalInterface
 public interface WhereFieldTransform<T> {
 
   WherePath<T> apply (String entity, String name);

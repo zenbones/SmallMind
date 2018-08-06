@@ -37,7 +37,7 @@ import javax.xml.bind.annotation.XmlRootElement;
 import javax.xml.bind.annotation.XmlTransient;
 
 @XmlRootElement(name = "enum")
-public class EnumWhereOperand<E extends Enum<E>> implements WhereOperand<Enum, String> {
+public class EnumWhereOperand<E extends Enum<E>> implements WhereOperand<String, Enum> {
 
   private String value;
   private String typeHint;

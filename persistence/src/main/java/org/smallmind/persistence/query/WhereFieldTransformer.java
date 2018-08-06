@@ -32,7 +32,110 @@
  */
 package org.smallmind.persistence.query;
 
-public interface WhereFieldTransformer<T> {
+import java.lang.reflect.Field;
+import java.util.HashMap;
+import org.smallmind.nutsnbolts.reflection.FieldUtility;
+import org.smallmind.persistence.Durable;
+import org.smallmind.persistence.orm.ORMOperationException;
 
-  WherePath<T> transform (String table, String name);
+public abstract class WhereFieldTransformer<R, T> {
+
+  private HashMap<String, JoinedType<?>> typeMap = new HashMap<>();
+  private HashMap<String, WhereFieldTransform<T>> transformMap = new HashMap<>();
+  private WhereFieldTransform<T> defaultTransform;
+
+  public WhereFieldTransformer () {
+
+  }
+
+  public WhereFieldTransformer (WhereFieldTransform<T> defaultTransform) {
+
+    this.defaultTransform = defaultTransform;
+  }
+
+  public abstract <D extends Durable<?>> WherePath<T> createWherePath (Class<D> durableClass, R root, String name);
+
+  public synchronized <D extends Durable<?>> WhereFieldTransformer<R, T> addRoot (Class<D> durableClass, R root) {
+
+    typeMap.put(durableClass.getSimpleName(), new JoinedType<>(durableClass, root));
+
+    return this;
+  }
+
+  public synchronized WhereFieldTransformer<R, T> add (WhereFieldTransform<T> transform, String... names) {
+
+    if ((names != null) && (names.length > 0)) {
+      for (String name : names) {
+        transformMap.put(name, transform);
+      }
+    }
+
+    return this;
+  }
+
+  public synchronized WherePath<T> transform (String entity, String name) {
+
+    JoinedType<?> joinedType;
+
+    if ((entity != null) && (!entity.isEmpty())) {
+      if ((joinedType = typeMap.get(entity)) != null) {
+
+        return createWherePath(joinedType.getDurableClass(), joinedType.getRoot(), name);
+      } else {
+        throw new ORMOperationException("Unknown entity(%s)", entity);
+      }
+    } else {
+
+      WhereFieldTransform<T> transform;
+
+      if ((transform = transformMap.get(name)) != null) {
+
+        return transform.apply(entity, name);
+      } else if ((joinedType = deduceJoinedType(name)) != null) {
+
+        return createWherePath(joinedType.getDurableClass(), joinedType.getRoot(), name);
+      } else if (defaultTransform != null) {
+
+        return defaultTransform.apply(entity, name);
+      } else {
+        throw new ORMOperationException("Could not deduce the entity for the field(%s)", name);
+      }
+    }
+  }
+
+  private JoinedType<?> deduceJoinedType (String name) {
+
+    for (JoinedType<?> joinedType : typeMap.values()) {
+      for (Field field : FieldUtility.getFields(joinedType.getDurableClass())) {
+        if (field.getName().equals(name)) {
+
+          return joinedType;
+        }
+      }
+    }
+
+    return null;
+  }
+
+  private class JoinedType<D extends Durable<?>> {
+
+    private Class<D> durableClass;
+    private R root;
+
+    private JoinedType (Class<D> durableClass, R root) {
+
+      this.durableClass = durableClass;
+      this.root = root;
+    }
+
+    public Class<D> getDurableClass () {
+
+      return durableClass;
+    }
+
+    public R getRoot () {
+
+      return root;
+    }
+  }
 }

@@ -32,29 +32,27 @@
  */
 package org.smallmind.persistence.query;
 
-import java.util.HashMap;
+import java.util.Set;
+import org.smallmind.persistence.Durable;
 
-public abstract class AbstractWhereFieldTransformer<T> implements WhereFieldTransformer<T> {
+public class Product<T> {
 
-  private HashMap<String, WhereFieldTransform<T>> transformMap = new HashMap<>();
+  private Set<Class<? extends Durable<?>>> durableClassSet;
+  private T value;
 
-  public synchronized void add (String name, WhereFieldTransform<T> transform) {
+  public Product (Set<Class<? extends Durable<?>>> durableClassSet, T value) {
 
-    transformMap.put(name, transform);
+    this.durableClassSet = durableClassSet;
+    this.value = value;
   }
 
-  public abstract WherePath<T> getDefault (String entity, String name);
+  public Set<Class<? extends Durable<?>>> getDurableClassSet () {
 
-  @Override
-  public synchronized WherePath<T> transform (String entity, String name) {
+    return durableClassSet;
+  }
 
-    WhereFieldTransform<T> transform;
+  public T getValue () {
 
-    if ((transform = transformMap.get(name)) == null) {
-
-      return getDefault(entity, name);
-    }
-
-    return transform.apply(entity, name);
+    return value;
   }
 }

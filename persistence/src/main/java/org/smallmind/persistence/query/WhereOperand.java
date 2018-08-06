@@ -37,11 +37,11 @@ import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
 
 @XmlAccessorType(XmlAccessType.PROPERTY)
-public interface WhereOperand<U, T> extends Serializable {
+public interface WhereOperand<I, O> extends Serializable {
 
-  Class<? extends U> getTargetClass ();
+  Class<? extends O> getTargetClass ();
 
   String getTypeHint ();
 
-  T getValue ();
+  I getValue ();
 }

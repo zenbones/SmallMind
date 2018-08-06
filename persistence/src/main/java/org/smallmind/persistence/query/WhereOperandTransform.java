@@ -32,7 +32,8 @@
  */
 package org.smallmind.persistence.query;
 
-public interface WhereOperandTransform<U, T> {
+@FunctionalInterface
+public interface WhereOperandTransform<I, O> {
 
-  U apply (String typeHint, T input);
+  O apply (String typeHint, I value);
 }

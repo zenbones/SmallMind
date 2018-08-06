@@ -32,28 +32,29 @@
  */
 package org.smallmind.persistence.orm.morphia;
 
+import org.smallmind.persistence.Durable;
 import org.smallmind.persistence.query.WherePath;
 
-public class MorphiaWherePath implements WherePath<Class<MorphiaDurable<?, ?>>> {
+public class MorphiaWherePath extends WherePath<Void> {
 
-  private Class<MorphiaDurable<?, ?>> entity;
-  private String field;
+  private String dotNotated;
 
-  public MorphiaWherePath (Class<MorphiaDurable<?, ?>> entity, String field) {
+  public MorphiaWherePath (Class<? extends Durable<?>> durableClass, String dotNotated) {
 
-    this.entity = entity;
-    this.field = field;
+    super(durableClass);
+
+    this.dotNotated = dotNotated;
   }
 
   @Override
-  public Class<MorphiaDurable<?, ?>> asNative () {
+  public Void asNative () {
 
-    return entity;
+    throw new UnsupportedOperationException();
   }
 
   @Override
   public String asString () {
 
-    return field;
+    return dotNotated;
   }
 }

@@ -41,7 +41,7 @@ import javax.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
 import org.smallmind.nutsnbolts.json.ZonedDateTimeXmlAdapter;
 
 @XmlRootElement(name = "date")
-public class DateWhereOperand implements WhereOperand<Date, ZonedDateTime> {
+public class DateWhereOperand implements WhereOperand<ZonedDateTime, Date> {
 
   private ZonedDateTime value;
 

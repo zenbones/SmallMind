@@ -32,63 +32,54 @@
  */
 package org.smallmind.persistence.orm.jpa;
 
+import java.util.HashSet;
 import java.util.LinkedList;
+import java.util.Set;
 import javax.persistence.criteria.CriteriaBuilder;
 import javax.persistence.criteria.Order;
 import javax.persistence.criteria.Path;
 import javax.persistence.criteria.Predicate;
 import org.smallmind.nutsnbolts.lang.UnknownSwitchCaseException;
-import org.smallmind.persistence.query.DefaultWhereOperandTransformer;
+import org.smallmind.persistence.Durable;
+import org.smallmind.persistence.query.Product;
 import org.smallmind.persistence.query.Sort;
 import org.smallmind.persistence.query.SortField;
 import org.smallmind.persistence.query.Where;
 import org.smallmind.persistence.query.WhereConjunction;
 import org.smallmind.persistence.query.WhereCriterion;
 import org.smallmind.persistence.query.WhereField;
-import org.smallmind.persistence.query.WhereFieldTransformer;
 import org.smallmind.persistence.query.WhereOperandTransformer;
 import org.smallmind.persistence.query.WherePath;
 
 public class CriteriaUtility {
 
-  private static final WhereFieldTransformer<Path<?>> WHERE_FIELD_TRANSFORMER = new CriteriaWhereFieldTransformer();
-  private static final WhereOperandTransformer WHERE_OPERAND_TRANSFORMER = new DefaultWhereOperandTransformer();
+  private static final WhereOperandTransformer WHERE_OPERAND_TRANSFORMER = new WhereOperandTransformer();
 
-  public static CriteriaApplied<Predicate> apply (CriteriaBuilder criteriaBuilder, Where where) {
-
-    return apply(criteriaBuilder, where, WHERE_FIELD_TRANSFORMER, WHERE_OPERAND_TRANSFORMER);
-  }
-
-  public static CriteriaApplied<Predicate> apply (CriteriaBuilder criteriaBuilder, Where where, WhereFieldTransformer<Path<?>> fieldTransformer) {
+  public static Product<Predicate> apply (CriteriaBuilder criteriaBuilder, Where where, CriteriaWhereFieldTransformer fieldTransformer) {
 
     return apply(criteriaBuilder, where, fieldTransformer, WHERE_OPERAND_TRANSFORMER);
   }
 
-  public static CriteriaApplied<Predicate> apply (CriteriaBuilder criteriaBuilder, Where where, WhereOperandTransformer operandTransformer) {
-
-    return apply(criteriaBuilder, where, WHERE_FIELD_TRANSFORMER, operandTransformer);
-  }
-
-  public static CriteriaApplied<Predicate> apply (CriteriaBuilder criteriaBuilder, Where where, WhereFieldTransformer<Path<?>> fieldTransformer, WhereOperandTransformer operandTransformer) {
+  public static Product<Predicate> apply (CriteriaBuilder criteriaBuilder, Where where, CriteriaWhereFieldTransformer fieldTransformer, WhereOperandTransformer operandTransformer) {
 
     if (where == null) {
 
-      return NoneCriteriaApplied.none();
+      return null;
     } else {
 
-      SomeCriteriaApplied<Predicate> applied = new SomeCriteriaApplied<>();
+      Set<Class<? extends Durable<?>>> durableClassSet = new HashSet<>();
       Predicate predicate;
 
-      if ((predicate = walkConjunction(criteriaBuilder, new SomeCriteriaApplied<>(), where.getRootConjunction(), fieldTransformer, operandTransformer)) == null) {
+      if ((predicate = walkConjunction(criteriaBuilder, durableClassSet, where.getRootConjunction(), fieldTransformer, operandTransformer)) == null) {
 
-        return NoneCriteriaApplied.none();
+        return null;
       }
 
-      return applied.set(predicate);
+      return new Product<>(durableClassSet, predicate);
     }
   }
 
-  private static Predicate walkConjunction (CriteriaBuilder criteriaBuilder, SomeCriteriaApplied<Predicate> applied, WhereConjunction whereConjunction, WhereFieldTransformer<Path<?>> fieldTransformer, WhereOperandTransformer operandTransformer) {
+  private static Predicate walkConjunction (CriteriaBuilder criteriaBuilder, Set<Class<? extends Durable<?>>> durableClassSet, WhereConjunction whereConjunction, CriteriaWhereFieldTransformer fieldTransformer, WhereOperandTransformer operandTransformer) {
 
     if ((whereConjunction == null) || whereConjunction.isEmpty()) {
 
@@ -103,12 +94,12 @@ public class CriteriaUtility {
 
           Predicate walkedPredicate;
 
-          if ((walkedPredicate = walkConjunction(criteriaBuilder, applied, (WhereConjunction)whereCriterion, fieldTransformer, operandTransformer)) != null) {
+          if ((walkedPredicate = walkConjunction(criteriaBuilder, durableClassSet, (WhereConjunction)whereCriterion, fieldTransformer, operandTransformer)) != null) {
             predicateList.add(walkedPredicate);
           }
           break;
         case FIELD:
-          predicateList.add(walkField(criteriaBuilder, applied, (WhereField)whereCriterion, fieldTransformer, operandTransformer));
+          predicateList.add(walkField(criteriaBuilder, durableClassSet, (WhereField)whereCriterion, fieldTransformer, operandTransformer));
           break;
         default:
           throw new UnknownSwitchCaseException(whereCriterion.getCriterionType().name());
@@ -134,12 +125,12 @@ public class CriteriaUtility {
     }
   }
 
-  private static Predicate walkField (CriteriaBuilder criteriaBuilder, SomeCriteriaApplied<Predicate> applied, WhereField whereField, WhereFieldTransformer<Path<?>> fieldTransformer, WhereOperandTransformer operandTransformer) {
+  private static Predicate walkField (CriteriaBuilder criteriaBuilder, Set<Class<? extends Durable<?>>> durableClassSet, WhereField whereField, CriteriaWhereFieldTransformer fieldTransformer, WhereOperandTransformer operandTransformer) {
 
     Object fieldValue = operandTransformer.transform(whereField.getOperand());
     WherePath<Path<?>> wherePath = fieldTransformer.transform(whereField.getEntity(), whereField.getName());
 
-    applied.add(((CriteriaWherePath)wherePath).findRoot());
+    durableClassSet.add(((CriteriaWherePath)wherePath).getDurableClass());
     switch (whereField.getOperator()) {
       case LT:
         return criteriaBuilder.lt((Path<Number>)wherePath.asNative(), (Number)fieldValue);
@@ -172,16 +163,11 @@ public class CriteriaUtility {
     }
   }
 
-  public static CriteriaApplied<Order[]> apply (CriteriaBuilder criteriaBuilder, Sort sort) {
-
-    return apply(criteriaBuilder, sort, WHERE_FIELD_TRANSFORMER);
-  }
-
-  public static CriteriaApplied<Order[]> apply (CriteriaBuilder criteriaBuilder, Sort sort, WhereFieldTransformer<Path<?>> fieldTransformer) {
+  public static Product<Order[]> apply (CriteriaBuilder criteriaBuilder, Sort sort, CriteriaWhereFieldTransformer fieldTransformer) {
 
     if ((sort != null) && (!sort.isEmpty())) {
 
-      SomeCriteriaApplied<Order[]> applied = new SomeCriteriaApplied<>();
+      Set<Class<? extends Durable<?>>> durableClassSet = new HashSet<>();
       Order[] orders;
       LinkedList<Order> orderList = new LinkedList<>();
 
@@ -189,7 +175,7 @@ public class CriteriaUtility {
 
         WherePath<Path<?>> wherePath = fieldTransformer.transform(sortField.getEntity(), sortField.getName());
 
-        applied.add(((CriteriaWherePath)wherePath).findRoot());
+        durableClassSet.add(((CriteriaWherePath)wherePath).getDurableClass());
         switch (sortField.getDirection()) {
           case ASC:
             orderList.add(criteriaBuilder.asc(wherePath.asNative()));
@@ -205,9 +191,9 @@ public class CriteriaUtility {
       orders = new Order[orderList.size()];
       orderList.toArray(orders);
 
-      return applied.set(orders);
+      return new Product<>(durableClassSet, orders);
     }
 
-    return NoneCriteriaApplied.none();
+    return null;
   }
 }

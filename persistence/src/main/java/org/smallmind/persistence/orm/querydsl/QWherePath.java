@@ -33,17 +33,20 @@
 package org.smallmind.persistence.orm.querydsl;
 
 import com.querydsl.core.types.Path;
+import org.smallmind.persistence.Durable;
 import org.smallmind.persistence.query.WherePath;
 
-public class QWherePath implements WherePath<Path<?>> {
+public class QWherePath extends WherePath<Path<?>> {
 
   private Path<?> path;
-  private String field;
+  private String dotNotated;
 
-  public QWherePath (Path<?> path, String field) {
+  public QWherePath (Class<? extends Durable<?>> durableClass, Path<?> path, String dotNotated) {
+
+    super(durableClass);
 
     this.path = path;
-    this.field = field;
+    this.dotNotated = dotNotated;
   }
 
   @Override
@@ -55,6 +58,6 @@ public class QWherePath implements WherePath<Path<?>> {
   @Override
   public String asString () {
 
-    return field;
+    return dotNotated;
   }
 }

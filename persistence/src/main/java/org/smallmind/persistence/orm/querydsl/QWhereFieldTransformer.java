@@ -33,25 +33,22 @@
 package org.smallmind.persistence.orm.querydsl;
 
 import com.querydsl.core.types.Path;
-import org.smallmind.persistence.query.AbstractWhereFieldTransformer;
+import com.querydsl.core.types.dsl.PathBuilder;
+import org.smallmind.persistence.Durable;
+import org.smallmind.persistence.query.WhereFieldTransform;
+import org.smallmind.persistence.query.WhereFieldTransformer;
 import org.smallmind.persistence.query.WherePath;
 
-public class QWhereFieldTransformer extends AbstractWhereFieldTransformer<Path<?>> {
+public class QWhereFieldTransformer extends WhereFieldTransformer<Void, Path<?>> {
 
-  private Path<?> defaultPath;
+  public QWhereFieldTransformer (WhereFieldTransform<Path<?>> defaultTransform) {
 
-  public QWhereFieldTransformer () {
-
-  }
-
-  public QWhereFieldTransformer (Path<?> defaultPath) {
-
-    this.defaultPath = defaultPath;
+    super(defaultTransform);
   }
 
   @Override
-  public synchronized WherePath<Path<?>> getDefault (String entity, String name) {
+  public <D extends Durable<?>> WherePath<Path<?>> createWherePath (Class<D> durableClass, Void root, String name) {
 
-    return new QWherePath(defaultPath, ((entity != null) && (!entity.isEmpty())) ? entity + "." + name : name);
+    return new QWherePath(durableClass, new PathBuilder<>(durableClass, durableClass.getSimpleName()).get(name), durableClass.getSimpleName() + "." + name);
   }
 }

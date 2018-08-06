@@ -32,92 +32,23 @@
  */
 package org.smallmind.persistence.orm.jpa;
 
-import java.lang.reflect.Field;
-import java.util.HashMap;
 import javax.persistence.criteria.Path;
 import javax.persistence.criteria.Root;
-import org.smallmind.nutsnbolts.reflection.FieldUtility;
-import org.smallmind.persistence.AbstractDurable;
-import org.smallmind.persistence.orm.ORMOperationException;
-import org.smallmind.persistence.query.AbstractWhereFieldTransformer;
+import org.smallmind.persistence.Durable;
+import org.smallmind.persistence.query.WhereFieldTransform;
+import org.smallmind.persistence.query.WhereFieldTransformer;
 import org.smallmind.persistence.query.WherePath;
 
-public class CriteriaWhereFieldTransformer extends AbstractWhereFieldTransformer<Path<?>> {
+public class CriteriaWhereFieldTransformer extends WhereFieldTransformer<Root<?>, Path<?>> {
 
-  private HashMap<String, JoinedType<?>> typeMap = new HashMap<>();
-  private Root<?> defaultRoot;
+  public CriteriaWhereFieldTransformer (WhereFieldTransform<Path<?>> defaultTransform) {
 
-  public CriteriaWhereFieldTransformer () {
-
-  }
-
-  public CriteriaWhereFieldTransformer (Root<?> defaultRoot) {
-
-    this.defaultRoot = defaultRoot;
-  }
-
-  public synchronized <D extends AbstractDurable<?, D>> CriteriaWhereFieldTransformer add (Class<? extends AbstractDurable<?, D>> durableClass, Root<D> root) {
-
-    typeMap.put(durableClass.getSimpleName(), new JoinedType<>(durableClass, root));
-
-    return this;
+    super(defaultTransform);
   }
 
   @Override
-  public synchronized WherePath<Path<?>> getDefault (String entity, String name) {
+  public <D extends Durable<?>> WherePath<Path<?>> createWherePath (Class<D> durableClass, Root<?> root, String name) {
 
-    JoinedType<?> joinedType;
-
-    if ((entity != null) && (!entity.isEmpty())) {
-      if ((joinedType = typeMap.get(entity)) != null) {
-
-        return new CriteriaWherePath(joinedType.getRoot().get(name));
-      } else {
-        throw new ORMOperationException("Unknown entity(%s)", entity);
-      }
-    } else if ((joinedType = deduceJoinedType(name)) != null) {
-
-      return new CriteriaWherePath(joinedType.getRoot().get(name));
-    } else if (defaultRoot != null) {
-      return new CriteriaWherePath(defaultRoot.get(name));
-    } else {
-      throw new ORMOperationException("Could not deduce the entity for the field(%s)", name);
-    }
-  }
-
-  private JoinedType<?> deduceJoinedType (String name) {
-
-    for (JoinedType<?> joinedType : typeMap.values()) {
-      for (Field field : FieldUtility.getFields(joinedType.getDurableClass())) {
-        if (field.getName().equals(name)) {
-
-          return joinedType;
-        }
-      }
-    }
-
-    return null;
-  }
-
-  private class JoinedType<D extends AbstractDurable<?, D>> {
-
-    private Class<? extends AbstractDurable<?, D>> durableClass;
-    private Root<D> root;
-
-    public JoinedType (Class<? extends AbstractDurable<?, D>> durableClass, Root<D> root) {
-
-      this.durableClass = durableClass;
-      this.root = root;
-    }
-
-    public Class<? extends AbstractDurable<?, D>> getDurableClass () {
-
-      return durableClass;
-    }
-
-    public Root<D> getRoot () {
-
-      return root;
-    }
+    return new CriteriaWherePath(durableClass, root.get(name), durableClass.getSimpleName() + "." + name);
   }
 }

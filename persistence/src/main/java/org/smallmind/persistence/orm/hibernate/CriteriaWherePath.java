@@ -32,28 +32,29 @@
  */
 package org.smallmind.persistence.orm.hibernate;
 
+import org.smallmind.persistence.Durable;
 import org.smallmind.persistence.query.WherePath;
 
-public class CriteriaWherePath implements WherePath<Class<HibernateDurable<?, ?>>> {
+public class CriteriaWherePath extends WherePath<Void> {
 
-  private Class<HibernateDurable<?, ?>> entity;
-  private String field;
+  private String dotNotated;
 
-  public CriteriaWherePath (Class<HibernateDurable<?, ?>> entity, String field) {
+  public CriteriaWherePath (Class<? extends Durable<?>> durableClass, String dotNotated) {
 
-    this.entity = entity;
-    this.field = field;
+    super(durableClass);
+
+    this.dotNotated = dotNotated;
   }
 
   @Override
-  public Class<HibernateDurable<?, ?>> asNative () {
+  public Void asNative () {
 
-    return entity;
+    throw new UnsupportedOperationException();
   }
 
   @Override
   public String asString () {
 
-    return field;
+    return dotNotated;
   }
 }

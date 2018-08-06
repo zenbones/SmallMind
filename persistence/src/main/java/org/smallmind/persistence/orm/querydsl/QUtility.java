@@ -33,7 +33,9 @@
 package org.smallmind.persistence.orm.querydsl;
 
 import java.lang.reflect.Array;
+import java.util.HashSet;
 import java.util.LinkedList;
+import java.util.Set;
 import com.querydsl.core.BooleanBuilder;
 import com.querydsl.core.types.Expression;
 import com.querydsl.core.types.Ops;
@@ -43,57 +45,46 @@ import com.querydsl.core.types.Path;
 import com.querydsl.core.types.Predicate;
 import com.querydsl.core.types.dsl.Expressions;
 import org.smallmind.nutsnbolts.lang.UnknownSwitchCaseException;
-import org.smallmind.persistence.query.DefaultWhereOperandTransformer;
+import org.smallmind.persistence.Durable;
+import org.smallmind.persistence.query.Product;
 import org.smallmind.persistence.query.Sort;
 import org.smallmind.persistence.query.SortField;
 import org.smallmind.persistence.query.Where;
 import org.smallmind.persistence.query.WhereConjunction;
 import org.smallmind.persistence.query.WhereCriterion;
 import org.smallmind.persistence.query.WhereField;
-import org.smallmind.persistence.query.WhereFieldTransformer;
 import org.smallmind.persistence.query.WhereOperandTransformer;
 import org.smallmind.persistence.query.WherePath;
 
 public class QUtility {
 
-  private static final WhereFieldTransformer<Path<?>> WHERE_FIELD_TRANSFORMER = new QWhereFieldTransformer();
-  private static final WhereOperandTransformer WHERE_OPERAND_TRANSFORMER = new DefaultWhereOperandTransformer();
+  private static final WhereOperandTransformer WHERE_OPERAND_TRANSFORMER = new WhereOperandTransformer();
 
-  public static PredicateQApplied apply (Where where) {
-
-    return apply(where, WHERE_FIELD_TRANSFORMER, WHERE_OPERAND_TRANSFORMER);
-  }
-
-  public static PredicateQApplied apply (Where where, WhereFieldTransformer<Path<?>> fieldTransformer) {
+  public static Product<Predicate> apply (Where where, QWhereFieldTransformer fieldTransformer) {
 
     return apply(where, fieldTransformer, WHERE_OPERAND_TRANSFORMER);
   }
 
-  public static PredicateQApplied apply (Where where, WhereOperandTransformer operandTransformer) {
-
-    return apply(where, WHERE_FIELD_TRANSFORMER, operandTransformer);
-  }
-
-  public static PredicateQApplied apply (Where where, WhereFieldTransformer<Path<?>> fieldTransformer, WhereOperandTransformer operandTransformer) {
+  public static Product<Predicate> apply (Where where, QWhereFieldTransformer fieldTransformer, WhereOperandTransformer operandTransformer) {
 
     if (where == null) {
 
-      return PredicateNoneQApplied.none();
+      return null;
     } else {
 
-      PredicateQApplied qApplied = new PredicateSomeQApplied();
+      Set<Class<? extends Durable<?>>> durableClassSet = new HashSet<>();
       Predicate predicate;
 
-      if ((predicate = walkConjunction(new PredicateSomeQApplied(), where.getRootConjunction(), fieldTransformer, operandTransformer)) == null) {
+      if ((predicate = walkConjunction(durableClassSet, where.getRootConjunction(), fieldTransformer, operandTransformer)) == null) {
 
-        return PredicateNoneQApplied.none();
+        return null;
       }
 
-      return ((PredicateSomeQApplied)qApplied).set(predicate);
+      return new Product<>(durableClassSet, predicate);
     }
   }
 
-  private static Predicate walkConjunction (PredicateSomeQApplied qApplied, WhereConjunction whereConjunction, WhereFieldTransformer<Path<?>> fieldTransformer, WhereOperandTransformer operandTransformer) {
+  private static Predicate walkConjunction (Set<Class<? extends Durable<?>>> durableClassSet, WhereConjunction whereConjunction, QWhereFieldTransformer fieldTransformer, WhereOperandTransformer operandTransformer) {
 
     if ((whereConjunction == null) || whereConjunction.isEmpty()) {
 
@@ -108,12 +99,12 @@ public class QUtility {
 
       switch (whereCriterion.getCriterionType()) {
         case CONJUNCTION:
-          if ((walkedPredicate = walkConjunction(qApplied, (WhereConjunction)whereCriterion, fieldTransformer, operandTransformer)) != null) {
+          if ((walkedPredicate = walkConjunction(durableClassSet, (WhereConjunction)whereCriterion, fieldTransformer, operandTransformer)) != null) {
             predicateList.add(walkedPredicate);
           }
           break;
         case FIELD:
-          if ((walkedPredicate = walkField(qApplied, (WhereField)whereCriterion, fieldTransformer, operandTransformer)) != null) {
+          if ((walkedPredicate = walkField(durableClassSet, (WhereField)whereCriterion, fieldTransformer, operandTransformer)) != null) {
             predicateList.add(walkedPredicate);
           }
           break;
@@ -146,12 +137,12 @@ public class QUtility {
     }
   }
 
-  private static Predicate walkField (PredicateSomeQApplied qApplied, WhereField whereField, WhereFieldTransformer<Path<?>> fieldTransformer, WhereOperandTransformer operandTransformer) {
+  private static Predicate walkField (Set<Class<? extends Durable<?>>> durableClassSet, WhereField whereField, QWhereFieldTransformer fieldTransformer, WhereOperandTransformer operandTransformer) {
 
     Object fieldValue = operandTransformer.transform(whereField.getOperand());
     WherePath<Path<?>> wherePath = fieldTransformer.transform(whereField.getEntity(), whereField.getName());
 
-    qApplied.add(wherePath.asNative());
+    durableClassSet.add(wherePath.getDurableClass());
     switch (whereField.getOperator()) {
       case LT:
         return Expressions.predicate(Ops.LT, Expressions.path(String.class, wherePath.asNative(), wherePath.asString()), Expressions.constant(fieldValue));
@@ -201,16 +192,11 @@ public class QUtility {
     }
   }
 
-  public static OrderSpecifiersQApplied apply (Sort sort) {
-
-    return apply(sort, WHERE_FIELD_TRANSFORMER);
-  }
-
-  public static OrderSpecifiersQApplied apply (Sort sort, WhereFieldTransformer<Path<?>> fieldTransformer) {
+  public static Product<OrderSpecifier[]> apply (Sort sort, QWhereFieldTransformer fieldTransformer) {
 
     if ((sort != null) && (!sort.isEmpty())) {
 
-      OrderSpecifiersQApplied qApplied = new OrderSpecifiersSomeQApplied();
+      Set<Class<? extends Durable<?>>> durableClassSet = new HashSet<>();
       OrderSpecifier[] orderSpecifiers;
       LinkedList<OrderSpecifier<?>> orderSpecifierList = new LinkedList<>();
 
@@ -218,7 +204,7 @@ public class QUtility {
 
         WherePath<Path<?>> wherePath = fieldTransformer.transform(sortField.getEntity(), sortField.getName());
 
-        ((OrderSpecifiersSomeQApplied)qApplied).add(wherePath.asNative());
+        durableClassSet.add(wherePath.getDurableClass());
         switch (sortField.getDirection()) {
           case ASC:
             orderSpecifierList.add(new OrderSpecifier<>(Order.ASC, Expressions.path(String.class, wherePath.asNative(), wherePath.asString())));
@@ -234,9 +220,9 @@ public class QUtility {
       orderSpecifiers = new OrderSpecifier[orderSpecifierList.size()];
       orderSpecifierList.toArray(orderSpecifiers);
 
-      return ((OrderSpecifiersSomeQApplied)qApplied).set(orderSpecifiers);
+      return new Product<>(durableClassSet, orderSpecifiers);
     }
 
-    return OrderSpecifiersNoneQApplied.none();
+    return null;
   }
 }

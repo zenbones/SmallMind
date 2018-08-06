@@ -32,9 +32,23 @@
  */
 package org.smallmind.persistence.query;
 
-public interface WherePath<T> {
+import org.smallmind.persistence.Durable;
 
-  public T asNative ();
+public abstract class WherePath<T> {
 
-  public String asString ();
+  private Class<? extends Durable<?>> durableClass;
+
+  public WherePath (Class<? extends Durable<?>> durableClass) {
+
+    this.durableClass = durableClass;
+  }
+
+  public Class<? extends Durable<?>> getDurableClass () {
+
+    return durableClass;
+  }
+
+  public abstract T asNative ();
+
+  public abstract String asString ();
 }
