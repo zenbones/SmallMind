@@ -35,11 +35,30 @@ package org.smallmind.persistence.query;
 import java.util.Set;
 import org.smallmind.persistence.Durable;
 
-public interface Product<T> {
+public class SomeProduct<T> implements Product<T> {
 
-  boolean isEmpty ();
+  private Set<Class<? extends Durable<?>>> durableClassSet;
+  private T value;
 
-  Set<Class<? extends Durable<?>>> getDurableClassSet ();
+  public SomeProduct (Set<Class<? extends Durable<?>>> durableClassSet, T value) {
 
-  T getValue ();
+    this.durableClassSet = durableClassSet;
+    this.value = value;
+  }
+
+  @Override
+  public boolean isEmpty () {
+
+    return false;
+  }
+
+  public Set<Class<? extends Durable<?>>> getDurableClassSet () {
+
+    return durableClassSet;
+  }
+
+  public T getValue () {
+
+    return value;
+  }
 }

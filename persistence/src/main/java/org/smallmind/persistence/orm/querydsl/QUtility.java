@@ -46,7 +46,9 @@ import com.querydsl.core.types.Predicate;
 import com.querydsl.core.types.dsl.Expressions;
 import org.smallmind.nutsnbolts.lang.UnknownSwitchCaseException;
 import org.smallmind.persistence.Durable;
+import org.smallmind.persistence.query.NoneProduct;
 import org.smallmind.persistence.query.Product;
+import org.smallmind.persistence.query.SomeProduct;
 import org.smallmind.persistence.query.Sort;
 import org.smallmind.persistence.query.SortField;
 import org.smallmind.persistence.query.Where;
@@ -69,7 +71,7 @@ public class QUtility {
 
     if (where == null) {
 
-      return null;
+      return NoneProduct.none();
     } else {
 
       Set<Class<? extends Durable<?>>> durableClassSet = new HashSet<>();
@@ -77,10 +79,10 @@ public class QUtility {
 
       if ((predicate = walkConjunction(durableClassSet, where.getRootConjunction(), fieldTransformer, operandTransformer)) == null) {
 
-        return null;
+        return NoneProduct.none();
       }
 
-      return new Product<>(durableClassSet, predicate);
+      return new SomeProduct<>(durableClassSet, predicate);
     }
   }
 
@@ -220,9 +222,9 @@ public class QUtility {
       orderSpecifiers = new OrderSpecifier[orderSpecifierList.size()];
       orderSpecifierList.toArray(orderSpecifiers);
 
-      return new Product<>(durableClassSet, orderSpecifiers);
+      return new SomeProduct<>(durableClassSet, orderSpecifiers);
     }
 
-    return null;
+    return NoneProduct.none();
   }
 }

@@ -32,14 +32,36 @@
  */
 package org.smallmind.persistence.query;
 
+import java.util.Collections;
 import java.util.Set;
 import org.smallmind.persistence.Durable;
 
-public interface Product<T> {
+public class NoneProduct<T> implements Product<T> {
 
-  boolean isEmpty ();
+  private static final NoneProduct<?> INSTANCE = new NoneProduct();
 
-  Set<Class<? extends Durable<?>>> getDurableClassSet ();
+  private NoneProduct () {
 
-  T getValue ();
+  }
+
+  public static <T> NoneProduct<T> none () {
+
+    return (NoneProduct<T>)INSTANCE;
+  }
+
+  @Override
+  public boolean isEmpty () {
+
+    return true;
+  }
+
+  public Set<Class<? extends Durable<?>>> getDurableClassSet () {
+
+    return Collections.emptySet();
+  }
+
+  public T getValue () {
+
+    return null;
+  }
 }

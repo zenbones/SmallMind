@@ -41,7 +41,9 @@ import javax.persistence.criteria.Path;
 import javax.persistence.criteria.Predicate;
 import org.smallmind.nutsnbolts.lang.UnknownSwitchCaseException;
 import org.smallmind.persistence.Durable;
+import org.smallmind.persistence.query.NoneProduct;
 import org.smallmind.persistence.query.Product;
+import org.smallmind.persistence.query.SomeProduct;
 import org.smallmind.persistence.query.Sort;
 import org.smallmind.persistence.query.SortField;
 import org.smallmind.persistence.query.Where;
@@ -64,7 +66,7 @@ public class CriteriaUtility {
 
     if (where == null) {
 
-      return null;
+      return NoneProduct.none();
     } else {
 
       Set<Class<? extends Durable<?>>> durableClassSet = new HashSet<>();
@@ -72,10 +74,10 @@ public class CriteriaUtility {
 
       if ((predicate = walkConjunction(criteriaBuilder, durableClassSet, where.getRootConjunction(), fieldTransformer, operandTransformer)) == null) {
 
-        return null;
+        return NoneProduct.none();
       }
 
-      return new Product<>(durableClassSet, predicate);
+      return new SomeProduct<>(durableClassSet, predicate);
     }
   }
 
@@ -191,9 +193,9 @@ public class CriteriaUtility {
       orders = new Order[orderList.size()];
       orderList.toArray(orders);
 
-      return new Product<>(durableClassSet, orders);
+      return new SomeProduct<>(durableClassSet, orders);
     }
 
-    return null;
+    return NoneProduct.none();
   }
 }
