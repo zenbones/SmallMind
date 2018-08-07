@@ -44,7 +44,7 @@ public class QWhereFieldTransformer extends WhereFieldTransformer<Path<?>, Path<
 
   public QWhereFieldTransformer (EntityPath<? extends Durable<?>> entityPath) {
 
-    this(new PathBuilder<>(entityPath.getType(), QWherePath.createAlias(entityPath.getType())));
+    this(new PathBuilder<>(entityPath.getType(), entityPath.toString()));
   }
 
   public QWhereFieldTransformer (PathBuilder<? extends Durable<?>> pathBuilder) {
@@ -60,7 +60,7 @@ public class QWhereFieldTransformer extends WhereFieldTransformer<Path<?>, Path<
   @Override
   public <D extends Durable<?>> WherePath<Path<?>, Path<?>> createWherePath (Class<D> durableClass, Path<?> root, String name) {
 
-    PathBuilder<?> pathBuilder = new PathBuilder<>(durableClass, QWherePath.createAlias(durableClass));
+    PathBuilder<?> pathBuilder = new PathBuilder<>(durableClass, root.toString());
 
     return new QWherePath(durableClass, pathBuilder, pathBuilder.get(name), name);
   }
