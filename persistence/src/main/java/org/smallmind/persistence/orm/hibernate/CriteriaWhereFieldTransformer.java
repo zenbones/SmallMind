@@ -39,8 +39,9 @@ import org.smallmind.persistence.query.WherePath;
 
 public class CriteriaWhereFieldTransformer extends WhereFieldTransformer<Void, Void> {
 
-  public CriteriaWhereFieldTransformer () {
+  public CriteriaWhereFieldTransformer (Class<? extends Durable<?>> durableClass) {
 
+    super((String entity, String name) -> new CriteriaWherePath(durableClass, name));
   }
 
   public CriteriaWhereFieldTransformer (WhereFieldTransform<Void, Void> defaultTransform) {

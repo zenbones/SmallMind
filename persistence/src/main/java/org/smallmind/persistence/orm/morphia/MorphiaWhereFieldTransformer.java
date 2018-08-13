@@ -39,8 +39,9 @@ import org.smallmind.persistence.query.WherePath;
 
 public class MorphiaWhereFieldTransformer extends WhereFieldTransformer<Void, Void> {
 
-  public MorphiaWhereFieldTransformer () {
+  public MorphiaWhereFieldTransformer (Class<? extends Durable<?>> durableClass) {
 
+    super((String entity, String name) -> new MorphiaWherePath(durableClass, name));
   }
 
   public MorphiaWhereFieldTransformer (WhereFieldTransform<Void, Void> defaultTransform) {

@@ -50,18 +50,7 @@ import org.smallmind.persistence.query.WhereOperandTransformer;
 
 public class CriteriaUtility {
 
-  private static final WhereFieldTransformer<Void, Void> WHERE_FIELD_TRANSFORMER = new CriteriaWhereFieldTransformer();
   private static final WhereOperandTransformer WHERE_OPERAND_TRANSFORMER = new WhereOperandTransformer();
-
-  public static Criteria apply (Criteria criteria, Where where) {
-
-    return apply(criteria, where, WHERE_FIELD_TRANSFORMER, WHERE_OPERAND_TRANSFORMER);
-  }
-
-  public static DetachedCriteria apply (DetachedCriteria detachedCriteria, Where where) {
-
-    return apply(detachedCriteria, where, WHERE_FIELD_TRANSFORMER, WHERE_OPERAND_TRANSFORMER);
-  }
 
   public static Criteria apply (Criteria criteria, Where where, WhereFieldTransformer<Void, Void> fieldTransformer) {
 
@@ -71,16 +60,6 @@ public class CriteriaUtility {
   public static DetachedCriteria apply (DetachedCriteria detachedCriteria, Where where, WhereFieldTransformer<Void, Void> fieldTransformer) {
 
     return apply(detachedCriteria, where, fieldTransformer, WHERE_OPERAND_TRANSFORMER);
-  }
-
-  public static Criteria apply (Criteria criteria, Where where, WhereOperandTransformer operandTransformer) {
-
-    return apply(criteria, where, WHERE_FIELD_TRANSFORMER, operandTransformer);
-  }
-
-  public static DetachedCriteria apply (DetachedCriteria detachedCriteria, Where where, WhereOperandTransformer operandTransformer) {
-
-    return apply(detachedCriteria, where, WHERE_FIELD_TRANSFORMER, operandTransformer);
   }
 
   public static Criteria apply (Criteria criteria, Where where, WhereFieldTransformer<Void, Void> fieldTransformer, WhereOperandTransformer operandTransformer) {
@@ -192,11 +171,6 @@ public class CriteriaUtility {
       default:
         throw new UnknownSwitchCaseException(whereField.getOperator().name());
     }
-  }
-
-  public static Criteria apply (Criteria criteria, Sort sort) {
-
-    return apply(criteria, sort, WHERE_FIELD_TRANSFORMER);
   }
 
   public static Criteria apply (Criteria criteria, Sort sort, WhereFieldTransformer<Void, Void> fieldTransformer) {

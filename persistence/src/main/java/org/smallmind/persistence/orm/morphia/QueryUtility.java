@@ -52,22 +52,11 @@ import org.smallmind.persistence.query.WhereOperator;
 
 public class QueryUtility {
 
-  private static final WhereFieldTransformer<Void, Void> WHERE_FIELD_TRANSFORMER = new MorphiaWhereFieldTransformer();
   private static final WhereOperandTransformer WHERE_OPERAND_TRANSFORMER = new WhereOperandTransformer();
-
-  public static Query<?> apply (Query<?> query, Where where) {
-
-    return apply(query, where, WHERE_FIELD_TRANSFORMER, WHERE_OPERAND_TRANSFORMER);
-  }
 
   public static Query<?> apply (Query<?> query, Where where, WhereFieldTransformer<Void, Void> fieldTransformer) {
 
     return apply(query, where, fieldTransformer, WHERE_OPERAND_TRANSFORMER);
-  }
-
-  public static Query<?> apply (Query<?> query, Where where, WhereOperandTransformer operandTransformer) {
-
-    return apply(query, where, WHERE_FIELD_TRANSFORMER, operandTransformer);
   }
 
   public static Query<?> apply (Query<?> query, Where where, WhereFieldTransformer<Void, Void> fieldTransformer, WhereOperandTransformer operandTransformer) {
@@ -230,11 +219,6 @@ public class QueryUtility {
       default:
         throw new UnknownSwitchCaseException(whereField.getOperator().name());
     }
-  }
-
-  public static Query<?> apply (Query<?> query, Sort sort) {
-
-    return apply(query, sort, WHERE_FIELD_TRANSFORMER);
   }
 
   public static Query<?> apply (Query<?> query, Sort sort, WhereFieldTransformer<Void, Void> fieldTransformer) {
