@@ -4,7 +4,7 @@
   <parent>
     <groupId>org.smallmind</groupId>
     <artifactId>smallmind-javafx</artifactId>
-    <version>3.3.6-SNAPSHOT</version>
+    <version>3.3.6</version>
   </parent>
   <artifactId>smallmind-javafx-webstart</artifactId>
   <packaging>jar</packaging>
