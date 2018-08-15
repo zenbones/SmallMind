@@ -62,7 +62,7 @@ public class DirectionalGuide {
     throws DtoDefinitionException {
 
     if (!isJavaNameFragment(purpose)) {
-      throw new DtoDefinitionException("The purpose(%s) must be legal identifier fragment", purpose);
+      throw new DtoDefinitionException("The purpose(%s) must be a legal identifier fragment", purpose);
     }
 
     PropertyLexicon propertyLexicon;
