@@ -95,7 +95,18 @@ public abstract class Overlay<O extends Overlay<O>> implements Differentiable<O>
 
                 try {
                   if ((value = field.get(overlay)) != null) {
-                    field.set(this, value);
+                    if (Overlay.class.isAssignableFrom(field.getType())) {
+
+                      Object original;
+
+                      if ((original = field.get(this)) != null) {
+                        field.set(this, ((Overlay)original).overlay(new Object[] {value}));
+                      } else {
+                        field.set(this, value);
+                      }
+                    } else {
+                      field.set(this, value);
+                    }
                   }
                 } catch (IllegalAccessException illegalAccessException) {
                   throw new OverlayException(illegalAccessException);
