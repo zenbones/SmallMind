@@ -8,7 +8,7 @@
   </parent>
   <artifactId>web-json-scaffold</artifactId>
   <packaging>jar</packaging>
-  <name>Web-Json-SCaffold</name>
+  <name>Web-Json-Scaffold</name>
   <description>Json Frameworks</description>
 
   <dependencies>
