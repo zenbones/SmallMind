@@ -4,7 +4,7 @@
   <parent>
     <groupId>org.smallmind</groupId>
     <artifactId>smallmind-sleuth</artifactId>
-    <version>3.3.7-SNAPSHOT</version>
+    <version>3.3.7</version>
   </parent>
   <artifactId>sleuth-runner</artifactId>
   <packaging>jar</packaging>
