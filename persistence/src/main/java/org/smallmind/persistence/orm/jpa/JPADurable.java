@@ -40,7 +40,6 @@ import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.MappedSuperclass;
-import javax.persistence.Transient;
 import org.smallmind.persistence.AbstractDurable;
 
 @MappedSuperclass
@@ -62,12 +61,5 @@ public abstract class JPADurable<I extends Serializable & Comparable<I>, D exten
   public synchronized void setId (I id) {
 
     this.id = id;
-  }
-
-  @Override
-  @Transient
-  public Class<D> getOverlayClass () {
-
-    return super.getOverlayClass();
   }
 }

@@ -40,16 +40,9 @@ import org.smallmind.nutsnbolts.lang.TypeMismatchException;
 import org.smallmind.nutsnbolts.reflection.FieldUtility;
 import org.smallmind.nutsnbolts.reflection.Overlay;
 
-public abstract class AbstractDurable<I extends Serializable & Comparable<I>, D extends AbstractDurable<I, D>> extends Overlay<D> implements Durable<I> {
+public abstract class AbstractDurable<I extends Serializable & Comparable<I>, D extends AbstractDurable<I, D>> implements Overlay<D>, Durable<I> {
 
-  private static final ThreadLocal<Set<Durable>> IN_USE_SET_LOCAL = new ThreadLocal<Set<Durable>>() {
-
-    @Override
-    protected Set<Durable> initialValue () {
-
-      return new HashSet<>();
-    }
-  };
+  private static final ThreadLocal<Set<Durable>> IN_USE_SET_LOCAL = ThreadLocal.withInitial(HashSet::new);
 
   public int compareTo (Durable<I> durable) {
 
