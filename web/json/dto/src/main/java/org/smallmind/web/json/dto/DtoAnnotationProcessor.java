@@ -120,16 +120,16 @@ public class DtoAnnotationProcessor extends AbstractProcessor {
         }
 
         for (Map.Entry<String, PropertyLexicon> purposeEntry : dtoClass.getInMap().entrySet()) {
-          processIn(generatorInformation, usefulTypeMirrors, classElement, nearestDtoSuperclass, purposeEntry.getKey(), purposeEntry.getValue());
+          processIn(generatorInformation, classElement, nearestDtoSuperclass, purposeEntry.getKey(), purposeEntry.getValue());
         }
         for (String unfulfilledPurpose : generatorInformation.unfulfilledPurposes(Direction.IN)) {
-          processIn(generatorInformation, usefulTypeMirrors, classElement, nearestDtoSuperclass, unfulfilledPurpose, new PropertyLexicon());
+          processIn(generatorInformation, classElement, nearestDtoSuperclass, unfulfilledPurpose, new PropertyLexicon());
         }
         for (Map.Entry<String, PropertyLexicon> purposeEntry : dtoClass.getOutMap().entrySet()) {
-          processOut(generatorInformation, usefulTypeMirrors, classElement, nearestDtoSuperclass, purposeEntry.getKey(), purposeEntry.getValue());
+          processOut(generatorInformation, classElement, nearestDtoSuperclass, purposeEntry.getKey(), purposeEntry.getValue());
         }
         for (String unfulfilledPurpose : generatorInformation.unfulfilledPurposes(Direction.OUT)) {
-          processOut(generatorInformation, usefulTypeMirrors, classElement, nearestDtoSuperclass, unfulfilledPurpose, new PropertyLexicon());
+          processOut(generatorInformation, classElement, nearestDtoSuperclass, unfulfilledPurpose, new PropertyLexicon());
         }
 
         if (trackingMap.hasNoPurpose(classElement)) {
@@ -139,18 +139,18 @@ public class DtoAnnotationProcessor extends AbstractProcessor {
     }
   }
 
-  private void processIn (GeneratorInformation generatorInformation, UsefulTypeMirrors usefulTypeMirrors, TypeElement classElement, TypeElement nearestDtoSuperclass, String purpose, PropertyLexicon propertyLexicon)
+  private void processIn (GeneratorInformation generatorInformation, TypeElement classElement, TypeElement nearestDtoSuperclass, String purpose, PropertyLexicon propertyLexicon)
     throws IOException {
 
-    writeDto(generatorInformation, usefulTypeMirrors, classElement, nearestDtoSuperclass, purpose, Direction.IN, propertyLexicon);
+    writeDto(generatorInformation, classElement, nearestDtoSuperclass, purpose, Direction.IN, propertyLexicon);
 
     generatorInformation.denotePurpose(Direction.IN, purpose);
   }
 
-  private void processOut (GeneratorInformation generatorInformation, UsefulTypeMirrors usefulTypeMirrors, TypeElement classElement, TypeElement nearestDtoSuperclass, String purpose, PropertyLexicon propertyLexicon)
+  private void processOut (GeneratorInformation generatorInformation, TypeElement classElement, TypeElement nearestDtoSuperclass, String purpose, PropertyLexicon propertyLexicon)
     throws IOException {
 
-    writeDto(generatorInformation, usefulTypeMirrors, classElement, nearestDtoSuperclass, purpose, Direction.OUT, propertyLexicon);
+    writeDto(generatorInformation, classElement, nearestDtoSuperclass, purpose, Direction.OUT, propertyLexicon);
 
     generatorInformation.denotePurpose(Direction.OUT, purpose);
   }
@@ -222,7 +222,7 @@ public class DtoAnnotationProcessor extends AbstractProcessor {
     return null;
   }
 
-  private void writeDto (GeneratorInformation generatorInformation, UsefulTypeMirrors usefulTypeMirrors, TypeElement classElement, TypeElement nearestDtoSuperclass, String purpose, Direction direction, PropertyLexicon propertyLexicon)
+  private void writeDto (GeneratorInformation generatorInformation, TypeElement classElement, TypeElement nearestDtoSuperclass, String purpose, Direction direction, PropertyLexicon propertyLexicon)
     throws IOException {
 
     JavaFileObject sourceFile;
@@ -257,14 +257,18 @@ public class DtoAnnotationProcessor extends AbstractProcessor {
         // imports
         writer.write("import javax.annotation.Generated;");
         writer.newLine();
-        writer.write("import javax.xml.bind.annotation.XmlAccessType;");
-        writer.newLine();
-        writer.write("import javax.xml.bind.annotation.XmlAccessorType;");
-        writer.newLine();
+        if ((nearestDtoSuperclass == null)) {
+          writer.write("import javax.xml.bind.annotation.XmlAccessType;");
+          writer.newLine();
+          writer.write("import javax.xml.bind.annotation.XmlAccessorType;");
+          writer.newLine();
+        }
         writer.write("import javax.xml.bind.annotation.XmlElement;");
         writer.newLine();
-        writer.write("import javax.xml.bind.annotation.XmlRootElement;");
-        writer.newLine();
+        if (!classElement.getModifiers().contains(javax.lang.model.element.Modifier.ABSTRACT)) {
+          writer.write("import javax.xml.bind.annotation.XmlRootElement;");
+          writer.newLine();
+        }
         writer.write("import javax.xml.bind.annotation.adapters.XmlJavaTypeAdapter;");
         writer.newLine();
         if (!matchingSubClassList.isEmpty()) {
@@ -289,13 +293,15 @@ public class DtoAnnotationProcessor extends AbstractProcessor {
         writer.newLine();
 
         // @XmlRootElement
-        writer.write("@XmlRootElement(name = \"");
-        writer.write(generatorInformation.getName().isEmpty() ? asMemberName(classElement.getSimpleName()) : generatorInformation.getName());
-        writer.write("\")");
-        writer.newLine();
+        if (!classElement.getModifiers().contains(javax.lang.model.element.Modifier.ABSTRACT)) {
+          writer.write("@XmlRootElement(name = \"");
+          writer.write(generatorInformation.getName().isEmpty() ? asMemberName(classElement.getSimpleName()) : generatorInformation.getName());
+          writer.write("\")");
+          writer.newLine();
+        }
 
         // XmlAccessorType
-        if ((nearestDtoSuperclass != null)) {
+        if ((nearestDtoSuperclass == null)) {
           writer.write("@XmlAccessorType(XmlAccessType.PROPERTY)");
           writer.newLine();
         }
@@ -488,7 +494,7 @@ public class DtoAnnotationProcessor extends AbstractProcessor {
           writer.write("  // virtual getters and setters");
           for (Map.Entry<String, PropertyInformation> propertyInformationEntry : propertyLexicon.getVirtualMap().entrySet()) {
             writer.newLine();
-            writeGettersAndSetters(writer, usefulTypeMirrors, classElement, purpose, direction, propertyInformationEntry);
+            writeGettersAndSetters(writer, classElement, purpose, direction, propertyInformationEntry);
           }
         }
 
@@ -498,7 +504,7 @@ public class DtoAnnotationProcessor extends AbstractProcessor {
           writer.write("  // native getters and setters");
           for (Map.Entry<String, PropertyInformation> propertyInformationEntry : propertyLexicon.getRealMap().entrySet()) {
             writer.newLine();
-            writeGettersAndSetters(writer, usefulTypeMirrors, classElement, purpose, direction, propertyInformationEntry);
+            writeGettersAndSetters(writer, classElement, purpose, direction, propertyInformationEntry);
           }
         }
 
@@ -529,7 +535,7 @@ public class DtoAnnotationProcessor extends AbstractProcessor {
     writer.newLine();
   }
 
-  private void writeGettersAndSetters (BufferedWriter writer, UsefulTypeMirrors usefulTypeMirrors, TypeElement classElement, String purpose, Direction direction, Map.Entry<String, PropertyInformation> propertyInformationEntry)
+  private void writeGettersAndSetters (BufferedWriter writer, TypeElement classElement, String purpose, Direction direction, Map.Entry<String, PropertyInformation> propertyInformationEntry)
     throws IOException {
 
     if (propertyInformationEntry.getValue().getAdapter() != null) {
@@ -598,8 +604,6 @@ public class DtoAnnotationProcessor extends AbstractProcessor {
 
         // imports
         writer.write("import javax.annotation.Generated;");
-        writer.newLine();
-        writer.write("import javax.xml.bind.annotation.XmlAccessType;");
         writer.newLine();
         writer.write("import org.smallmind.web.json.scaffold.util.PolymorphicXmlAdapter;");
         writer.newLine();
