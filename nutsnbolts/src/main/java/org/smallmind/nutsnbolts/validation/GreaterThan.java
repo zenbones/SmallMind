@@ -50,20 +50,22 @@ import static java.lang.annotation.RetentionPolicy.RUNTIME;
 @Documented
 @Retention(RetentionPolicy.RUNTIME)
 @Target({FIELD, PARAMETER, ANNOTATION_TYPE, CONSTRUCTOR, METHOD, TYPE_USE})
-@Constraint(validatedBy = NotZeroValidator.class)
-public @interface NotZero {
+@Constraint(validatedBy = GreaterThanValidator.class)
+public @interface GreaterThan {
 
   @Target({FIELD, PARAMETER, ANNOTATION_TYPE, CONSTRUCTOR, METHOD, TYPE_USE})
   @Retention(RUNTIME)
   @Documented
   @interface List {
 
-    NotZero[] value ();
+    GreaterThan[] value ();
   }
 
-  String message () default "Numeric value must be not be zero";
+  String message () default "Numeric value must be greater than {value}";
 
   Class<?>[] groups () default {};
 
   Class<? extends Payload>[] payload () default {};
+
+  long value ();
 }

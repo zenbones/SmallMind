@@ -32,38 +32,32 @@
  */
 package org.smallmind.nutsnbolts.validation;
 
-import java.lang.annotation.Documented;
-import java.lang.annotation.Retention;
-import java.lang.annotation.RetentionPolicy;
-import java.lang.annotation.Target;
-import javax.validation.Constraint;
-import javax.validation.Payload;
+import java.math.BigDecimal;
+import java.math.BigInteger;
+import javax.validation.ConstraintValidator;
+import javax.validation.ConstraintValidatorContext;
 
-import static java.lang.annotation.ElementType.ANNOTATION_TYPE;
-import static java.lang.annotation.ElementType.CONSTRUCTOR;
-import static java.lang.annotation.ElementType.FIELD;
-import static java.lang.annotation.ElementType.METHOD;
-import static java.lang.annotation.ElementType.PARAMETER;
-import static java.lang.annotation.ElementType.TYPE_USE;
-import static java.lang.annotation.RetentionPolicy.RUNTIME;
+public class GreaterThanValidator implements ConstraintValidator<GreaterThan, Number> {
 
-@Documented
-@Retention(RetentionPolicy.RUNTIME)
-@Target({FIELD, PARAMETER, ANNOTATION_TYPE, CONSTRUCTOR, METHOD, TYPE_USE})
-@Constraint(validatedBy = NotZeroValidator.class)
-public @interface NotZero {
+  private GreaterThan constraintAnnotation;
 
-  @Target({FIELD, PARAMETER, ANNOTATION_TYPE, CONSTRUCTOR, METHOD, TYPE_USE})
-  @Retention(RUNTIME)
-  @Documented
-  @interface List {
+  @Override
+  public void initialize (GreaterThan constraintAnnotation) {
 
-    NotZero[] value ();
+    this.constraintAnnotation = constraintAnnotation;
   }
 
-  String message () default "Numeric value must be not be zero";
+  @Override
+  public boolean isValid (Number value, ConstraintValidatorContext context) {
 
-  Class<?>[] groups () default {};
-
-  Class<? extends Payload>[] payload () default {};
+    if (value == null) {
+      return true;
+    } else if (value instanceof BigDecimal) {
+      return ((BigDecimal)value).compareTo(BigDecimal.valueOf(constraintAnnotation.value())) > 0;
+    } else if (value instanceof BigInteger) {
+      return ((BigInteger)value).compareTo(BigInteger.valueOf(constraintAnnotation.value())) > 0;
+    } else {
+      return value.doubleValue() > constraintAnnotation.value();
+    }
+  }
 }

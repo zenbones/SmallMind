@@ -34,7 +34,6 @@ package org.smallmind.nutsnbolts.validation;
 
 import java.lang.annotation.Documented;
 import java.lang.annotation.Retention;
-import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 import javax.validation.Constraint;
 import javax.validation.Payload;
@@ -48,22 +47,24 @@ import static java.lang.annotation.ElementType.TYPE_USE;
 import static java.lang.annotation.RetentionPolicy.RUNTIME;
 
 @Documented
-@Retention(RetentionPolicy.RUNTIME)
+@Retention(RUNTIME)
 @Target({FIELD, PARAMETER, ANNOTATION_TYPE, CONSTRUCTOR, METHOD, TYPE_USE})
-@Constraint(validatedBy = NotZeroValidator.class)
-public @interface NotZero {
+@Constraint(validatedBy = EmailValidator.class)
+public @interface Email {
 
   @Target({FIELD, PARAMETER, ANNOTATION_TYPE, CONSTRUCTOR, METHOD, TYPE_USE})
   @Retention(RUNTIME)
   @Documented
   @interface List {
 
-    NotZero[] value ();
+    Email[] value ();
   }
 
-  String message () default "Numeric value must be not be zero";
+  String message () default "All entries must be valid email addresses";
 
   Class<?>[] groups () default {};
 
   Class<? extends Payload>[] payload () default {};
+
+  char separator () default '\0';
 }

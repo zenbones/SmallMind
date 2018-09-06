@@ -32,38 +32,54 @@
  */
 package org.smallmind.nutsnbolts.validation;
 
-import java.lang.annotation.Documented;
-import java.lang.annotation.Retention;
-import java.lang.annotation.RetentionPolicy;
-import java.lang.annotation.Target;
-import javax.validation.Constraint;
-import javax.validation.Payload;
+import java.util.regex.Pattern;
+import javax.validation.ConstraintValidator;
+import javax.validation.ConstraintValidatorContext;
 
-import static java.lang.annotation.ElementType.ANNOTATION_TYPE;
-import static java.lang.annotation.ElementType.CONSTRUCTOR;
-import static java.lang.annotation.ElementType.FIELD;
-import static java.lang.annotation.ElementType.METHOD;
-import static java.lang.annotation.ElementType.PARAMETER;
-import static java.lang.annotation.ElementType.TYPE_USE;
-import static java.lang.annotation.RetentionPolicy.RUNTIME;
+public class EmailValidator implements ConstraintValidator<Email, String> {
 
-@Documented
-@Retention(RetentionPolicy.RUNTIME)
-@Target({FIELD, PARAMETER, ANNOTATION_TYPE, CONSTRUCTOR, METHOD, TYPE_USE})
-@Constraint(validatedBy = NotZeroValidator.class)
-public @interface NotZero {
+  private static final Pattern EMAIL_PATTERN = Pattern.compile("([a-zA-Z0-9_\\-\\.]+)@((\\[[0-9]{1,3}\\.[0-9]{1,3}\\.[0-9]{1,3}\\.)|(([a-zA-Z0-9\\-]+\\.)+))([a-zA-Z]{2,4}|[0-9]{1,3})(\\]?)");
 
-  @Target({FIELD, PARAMETER, ANNOTATION_TYPE, CONSTRUCTOR, METHOD, TYPE_USE})
-  @Retention(RUNTIME)
-  @Documented
-  @interface List {
+  private Email constraintAnnotation;
 
-    NotZero[] value ();
+  @Override
+  public void initialize (Email constraintAnnotation) {
+
+    this.constraintAnnotation = constraintAnnotation;
   }
 
-  String message () default "Numeric value must be not be zero";
+  @Override
+  public boolean isValid (String value, ConstraintValidatorContext context) {
 
-  Class<?>[] groups () default {};
+    if (value == null) {
+      return true;
+    }
 
-  Class<? extends Payload>[] payload () default {};
+    if (constraintAnnotation.separator() == '\0') {
+
+      return isAnEmail(value);
+    }
+    else {
+
+      int lastIndex = 0;
+
+      for (int index = 0; index < value.length(); index++) {
+        if (value.charAt(index) == constraintAnnotation.separator()) {
+          if (!isAnEmail(value.substring(lastIndex, index).trim())) {
+
+            return false;
+          }
+
+          lastIndex = index + 1;
+        }
+      }
+
+      return isAnEmail(value.substring(lastIndex, value.length()).trim());
+    }
+  }
+
+  private boolean isAnEmail (String possibility) {
+
+    return EMAIL_PATTERN.matcher(possibility).matches();
+  }
 }
