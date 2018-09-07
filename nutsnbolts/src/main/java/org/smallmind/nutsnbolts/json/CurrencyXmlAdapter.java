@@ -40,7 +40,7 @@ public class CurrencyXmlAdapter extends XmlAdapter<String, Currency> {
   @Override
   public Currency unmarshal (String code) {
 
-    return (code == null) ? null : Currency.getInstance(code);
+    return (code == null) ? null : Currency.getInstance(code.toUpperCase());
   }
 
   @Override
