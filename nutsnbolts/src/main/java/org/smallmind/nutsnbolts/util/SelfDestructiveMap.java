@@ -102,11 +102,17 @@ public class SelfDestructiveMap<K extends Comparable<K>, S extends SelfDestructi
 
     private final CountDownLatch terminationLatch = new CountDownLatch(1);
     private final CountDownLatch exitLatch = new CountDownLatch(1);
+    private Thread runnableThread;
 
     public void shutdown ()
       throws InterruptedException {
 
       terminationLatch.countDown();
+
+      if (runnableThread != null) {
+        runnableThread.interrupt();
+      }
+
       exitLatch.await();
     }
 
@@ -114,6 +120,9 @@ public class SelfDestructiveMap<K extends Comparable<K>, S extends SelfDestructi
     public void run () {
 
       try {
+
+        runnableThread = Thread.currentThread();
+
         while (!terminationLatch.await(pulseTimeDuration.getTime(), pulseTimeDuration.getTimeUnit())) {
 
           NavigableSet<SelfDestructiveKey<K>> ignitedKeySet;

@@ -48,6 +48,7 @@ public abstract class Worker<T> implements Runnable, MetricConfigurationProvider
   private final CountDownLatch exitLatch = new CountDownLatch(1);
   private final MetricConfiguration metricConfiguration;
   private final WorkQueue<T> workQueue;
+  private Thread runnableThread;
 
   public Worker (MetricConfiguration metricConfiguration, WorkQueue<T> workQueue) {
 
@@ -72,6 +73,10 @@ public abstract class Worker<T> implements Runnable, MetricConfigurationProvider
 
     if (stopped.compareAndSet(false, true)) {
       close();
+
+      if (runnableThread != null) {
+        runnableThread.interrupt();
+      }
     }
     exitLatch.await();
   }
@@ -82,6 +87,9 @@ public abstract class Worker<T> implements Runnable, MetricConfigurationProvider
     long idleStart = Clocks.EPOCH.getClock().getTimeNanoseconds();
 
     try {
+
+      runnableThread = Thread.currentThread();
+
       while (!stopped.get()) {
         try {
 
@@ -91,6 +99,10 @@ public abstract class Worker<T> implements Runnable, MetricConfigurationProvider
             InstrumentationManager.instrumentWithChronometer(this, Clocks.EPOCH.getClock().getTimeNanoseconds() - idleStart, TimeUnit.NANOSECONDS, new MetricProperty("event", MetricInteraction.WORKER_IDLE.getDisplay()));
 
             engageWork(transfer);
+          }
+        } catch (InterruptedException interruptedException) {
+          if (!stopped.get()) {
+            LoggerManager.getLogger(this.getClass()).error(interruptedException);
           }
         } catch (Throwable throwable) {
           LoggerManager.getLogger(this.getClass()).error(throwable);
