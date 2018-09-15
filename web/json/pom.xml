@@ -4,7 +4,7 @@
   <parent>
     <groupId>org.smallmind</groupId>
     <artifactId>smallmind-web</artifactId>
-    <version>3.3.9-SNAPSHOT</version>
+    <version>3.3.9</version>
   </parent>
   <artifactId>web-json</artifactId>
   <packaging>pom</packaging>
