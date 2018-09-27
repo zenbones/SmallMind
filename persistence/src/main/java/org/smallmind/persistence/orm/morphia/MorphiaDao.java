@@ -118,19 +118,19 @@ public class MorphiaDao<I extends Serializable & Comparable<I>, D extends Morphi
   @Override
   public Iterable<D> scroll () {
 
-    return new AutoCloseMorphiaIterator<>(getSession().getNativeSession().createQuery(getManagedClass()).fetch());
+    return new AutoCloseMorphiaIterable<>(getSession().getNativeSession().createQuery(getManagedClass()).fetch());
   }
 
   @Override
   public Iterable<D> scroll (int fetchSize) {
 
-    return new AutoCloseMorphiaIterator<>(getSession().getNativeSession().createQuery(getManagedClass()).fetch(new FindOptions().batchSize(fetchSize)));
+    return new AutoCloseMorphiaIterable<>(getSession().getNativeSession().createQuery(getManagedClass()).fetch(new FindOptions().batchSize(fetchSize)));
   }
 
   @Override
   public Iterable<D> scrollById (final I greaterThan, final int fetchSize) {
 
-    return new AutoCloseMorphiaIterator<>(getSession().getNativeSession().createQuery(getManagedClass()).field(Mapper.ID_KEY).greaterThan(greaterThan).order(Mapper.ID_KEY).fetch(new FindOptions().batchSize(fetchSize)));
+    return new AutoCloseMorphiaIterable<>(getSession().getNativeSession().createQuery(getManagedClass()).field(Mapper.ID_KEY).greaterThan(greaterThan).order(Mapper.ID_KEY).fetch(new FindOptions().batchSize(fetchSize)));
   }
 
   @Override
@@ -202,7 +202,7 @@ public class MorphiaDao<I extends Serializable & Comparable<I>, D extends Morphi
 
   public Iterable<D> scrollByQuery (FindQueryDetails<D> queryDetails) {
 
-    return new AutoCloseMorphiaIterator<>(constructQuery(queryDetails).fetch(queryDetails.getFindOptions()));
+    return new AutoCloseMorphiaIterable<>(constructQuery(queryDetails).fetch(queryDetails.getFindOptions()));
   }
 
   public WriteResult deleteByQuery (DeleteQueryDetails<D> queryDetails) {

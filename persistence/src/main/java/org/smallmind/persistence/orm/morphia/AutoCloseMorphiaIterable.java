@@ -36,12 +36,12 @@ import java.util.Iterator;
 import java.util.concurrent.atomic.AtomicBoolean;
 import org.mongodb.morphia.query.MorphiaIterator;
 
-public class AutoCloseMorphiaIterator<T> implements Iterator<T>, Iterable<T>, AutoCloseable {
+public class AutoCloseMorphiaIterable<T> implements Iterable<T>, AutoCloseable {
 
   private AtomicBoolean closed = new AtomicBoolean(false);
   private MorphiaIterator<T, T> morphiaIterator;
 
-  public AutoCloseMorphiaIterator (MorphiaIterator<T, T> morphiaIterator) {
+  public AutoCloseMorphiaIterable (MorphiaIterator<T, T> morphiaIterator) {
 
     this.morphiaIterator = morphiaIterator;
   }
@@ -57,31 +57,7 @@ public class AutoCloseMorphiaIterator<T> implements Iterator<T>, Iterable<T>, Au
   @Override
   public Iterator<T> iterator () {
 
-    return morphiaIterator.iterator();
-  }
-
-  @Override
-  public boolean hasNext () {
-
-    boolean hasNext;
-
-    if (!(hasNext = morphiaIterator.hasNext())) {
-      close();
-    }
-
-    return hasNext;
-  }
-
-  @Override
-  public T next () {
-
-    return morphiaIterator.next();
-  }
-
-  @Override
-  public void remove () {
-
-    morphiaIterator.remove();
+    return new AutoCloseMorphiaIterator();
   }
 
   @Override
@@ -90,5 +66,32 @@ public class AutoCloseMorphiaIterator<T> implements Iterator<T>, Iterable<T>, Au
 
     close();
     super.finalize();
+  }
+
+  private class AutoCloseMorphiaIterator implements Iterator<T> {
+
+    @Override
+    public boolean hasNext () {
+
+      boolean hasNext;
+
+      if (!(hasNext = morphiaIterator.hasNext())) {
+        close();
+      }
+
+      return hasNext;
+    }
+
+    @Override
+    public T next () {
+
+      return morphiaIterator.next();
+    }
+
+    @Override
+    public void remove () {
+
+      morphiaIterator.remove();
+    }
   }
 }
