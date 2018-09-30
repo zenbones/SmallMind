@@ -4,7 +4,7 @@
   <parent>
     <groupId>org.smallmind</groupId>
     <artifactId>smallmind</artifactId>
-    <version>3.3.10-SNAPSHOT</version>
+    <version>3.3.10</version>
   </parent>
   <artifactId>smallmind-swing</artifactId>
   <packaging>jar</packaging>
