@@ -32,6 +32,17 @@
  */
 package org.smallmind.persistence.orm.spring.jdo.antique;
 
+import javax.jdo.JDODataStoreException;
+import javax.jdo.JDOException;
+import javax.jdo.JDOFatalDataStoreException;
+import javax.jdo.JDOFatalUserException;
+import javax.jdo.JDOObjectNotFoundException;
+import javax.jdo.JDOOptimisticVerificationException;
+import javax.jdo.JDOUserException;
+import javax.jdo.PersistenceManager;
+import javax.jdo.PersistenceManagerFactory;
+import javax.jdo.Query;
+import javax.sql.DataSource;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.springframework.core.Ordered;
@@ -45,11 +56,9 @@ import org.springframework.transaction.support.ResourceHolderSynchronization;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
 import org.springframework.util.Assert;
 
-import javax.jdo.*;
-import javax.sql.DataSource;
-
 public abstract class PersistenceManagerFactoryUtils {
 
+  private static final Log logger = LogFactory.getLog(PersistenceManagerFactoryUtils.class);
   /**
    * Order value for TransactionSynchronization objects that clean up JDO
    * PersistenceManagers. Return DataSourceUtils.CONNECTION_SYNCHRONIZATION_ORDER - 100
@@ -58,19 +67,16 @@ public abstract class PersistenceManagerFactoryUtils {
   public static final int PERSISTENCE_MANAGER_SYNCHRONIZATION_ORDER =
     DataSourceUtils.CONNECTION_SYNCHRONIZATION_ORDER - 100;
 
-  private static final Log logger = LogFactory.getLog(PersistenceManagerFactoryUtils.class);
-
-
   /**
    * Create an appropriate SQLExceptionTranslator for the given PersistenceManagerFactory.
    * <p>If a DataSource is found, creates a SQLErrorCodeSQLExceptionTranslator for the
    * DataSource; else, falls back to a SQLStateSQLExceptionTranslator.
    * (may be {@code null})
    */
-  static SQLExceptionTranslator newJdbcExceptionTranslator(Object connectionFactory) {
+  static SQLExceptionTranslator newJdbcExceptionTranslator (Object connectionFactory) {
     // Check for PersistenceManagerFactory's DataSource.
     if (connectionFactory instanceof DataSource) {
-      return new SQLErrorCodeSQLExceptionTranslator((DataSource) connectionFactory);
+      return new SQLErrorCodeSQLExceptionTranslator((DataSource)connectionFactory);
     } else {
       return new SQLStateSQLExceptionTranslator();
     }
@@ -84,7 +90,7 @@ public abstract class PersistenceManagerFactoryUtils {
    * when no transactional PersistenceManager can be found for the current thread
    * "allowCreate" is {@code false}
    */
-  public static PersistenceManager getPersistenceManager(PersistenceManagerFactory pmf, boolean allowCreate)
+  public static PersistenceManager getPersistenceManager (PersistenceManagerFactory pmf, boolean allowCreate)
     throws DataAccessResourceFailureException, IllegalStateException {
 
     try {
@@ -103,16 +109,16 @@ public abstract class PersistenceManagerFactoryUtils {
    * when no transactional PersistenceManager can be found for the current thread
    * "allowCreate" is {@code false}
    */
-  public static PersistenceManager doGetPersistenceManager(PersistenceManagerFactory pmf, boolean allowCreate)
+  public static PersistenceManager doGetPersistenceManager (PersistenceManagerFactory pmf, boolean allowCreate)
     throws JDOException, IllegalStateException {
 
     Assert.notNull(pmf, "No PersistenceManagerFactory specified");
 
     PersistenceManagerHolder pmHolder =
-      (PersistenceManagerHolder) TransactionSynchronizationManager.getResource(pmf);
+      (PersistenceManagerHolder)TransactionSynchronizationManager.getResource(pmf);
     if (pmHolder != null) {
       if (!pmHolder.isSynchronizedWithTransaction() &&
-        TransactionSynchronizationManager.isSynchronizationActive()) {
+            TransactionSynchronizationManager.isSynchronizationActive()) {
         pmHolder.setSynchronizedWithTransaction(true);
         TransactionSynchronizationManager.registerSynchronization(
           new PersistenceManagerSynchronization(pmHolder, pmf, false));
@@ -122,7 +128,7 @@ public abstract class PersistenceManagerFactoryUtils {
 
     if (!allowCreate && !TransactionSynchronizationManager.isSynchronizationActive()) {
       throw new IllegalStateException("No JDO PersistenceManager bound to thread, " +
-        "and configuration does not allow creation of non-transactional one here");
+                                        "and configuration does not allow creation of non-transactional one here");
     }
 
     logger.debug("Opening JDO PersistenceManager");
@@ -147,27 +153,28 @@ public abstract class PersistenceManagerFactoryUtils {
    * bound to the current thread by Spring's transaction facilities.
    * was created with (can be {@code null})
    */
-  public static boolean isPersistenceManagerTransactional(
+  public static boolean isPersistenceManagerTransactional (
     PersistenceManager pm, PersistenceManagerFactory pmf) {
 
     if (pmf == null) {
       return false;
     }
     PersistenceManagerHolder pmHolder =
-      (PersistenceManagerHolder) TransactionSynchronizationManager.getResource(pmf);
+      (PersistenceManagerHolder)TransactionSynchronizationManager.getResource(pmf);
     return (pmHolder != null && pm == pmHolder.getPersistenceManager());
   }
 
   /**
    * Apply the current transaction timeout, if any, to the given JDO Query object.
    */
-  public static void applyTransactionTimeout(Query query, PersistenceManagerFactory pmf) throws JDOException {
+  public static void applyTransactionTimeout (Query query, PersistenceManagerFactory pmf) throws JDOException {
+
     Assert.notNull(query, "No Query object specified");
     PersistenceManagerHolder pmHolder =
-      (PersistenceManagerHolder) TransactionSynchronizationManager.getResource(pmf);
+      (PersistenceManagerHolder)TransactionSynchronizationManager.getResource(pmf);
     if (pmHolder != null && pmHolder.hasTimeout() &&
-      pmf.supportedOptions().contains("javax.jdo.option.DatastoreTimeout")) {
-      int timeout = (int) pmHolder.getTimeToLiveInMillis();
+          pmf.supportedOptions().contains("javax.jdo.option.DatastoreTimeout")) {
+      int timeout = (int)pmHolder.getTimeToLiveInMillis();
       query.setDatastoreReadTimeoutMillis(timeout);
       query.setDatastoreWriteTimeoutMillis(timeout);
     }
@@ -180,24 +187,25 @@ public abstract class PersistenceManagerFactoryUtils {
    * are covered here. For more fine-granular conversion, JdoTransactionManager
    * supports sophisticated translation of exceptions via a JdoDialect.
    */
-  public static DataAccessException convertJdoAccessException(JDOException ex) {
+  public static DataAccessException convertJdoAccessException (JDOException ex) {
+
     if (ex instanceof JDOObjectNotFoundException) {
-      throw new JdoObjectRetrievalFailureException((JDOObjectNotFoundException) ex);
+      throw new JdoObjectRetrievalFailureException((JDOObjectNotFoundException)ex);
     }
     if (ex instanceof JDOOptimisticVerificationException) {
-      throw new JdoOptimisticLockingFailureException((JDOOptimisticVerificationException) ex);
+      throw new JdoOptimisticLockingFailureException((JDOOptimisticVerificationException)ex);
     }
     if (ex instanceof JDODataStoreException) {
-      return new JdoResourceFailureException((JDODataStoreException) ex);
+      return new JdoResourceFailureException((JDODataStoreException)ex);
     }
     if (ex instanceof JDOFatalDataStoreException) {
-      return new JdoResourceFailureException((JDOFatalDataStoreException) ex);
+      return new JdoResourceFailureException((JDOFatalDataStoreException)ex);
     }
     if (ex instanceof JDOUserException) {
-      return new JdoUsageException((JDOUserException) ex);
+      return new JdoUsageException((JDOUserException)ex);
     }
     if (ex instanceof JDOFatalUserException) {
-      return new JdoUsageException((JDOFatalUserException) ex);
+      return new JdoUsageException((JDOFatalUserException)ex);
     }
     // fallback
     return new JdoSystemException(ex);
@@ -208,7 +216,8 @@ public abstract class PersistenceManagerFactoryUtils {
    * if it is not managed externally (i.e. not bound to the thread).
    * (can be {@code null})
    */
-  public static void releasePersistenceManager(PersistenceManager pm, PersistenceManagerFactory pmf) {
+  public static void releasePersistenceManager (PersistenceManager pm, PersistenceManagerFactory pmf) {
+
     try {
       doReleasePersistenceManager(pm, pmf);
     } catch (JDOException ex) {
@@ -223,7 +232,7 @@ public abstract class PersistenceManagerFactoryUtils {
    * Same as {@code releasePersistenceManager}, but throwing the original JDOException.
    * (can be {@code null})
    */
-  public static void doReleasePersistenceManager(PersistenceManager pm, PersistenceManagerFactory pmf)
+  public static void doReleasePersistenceManager (PersistenceManager pm, PersistenceManagerFactory pmf)
     throws JDOException {
 
     if (pm == null) {
@@ -236,7 +245,6 @@ public abstract class PersistenceManagerFactoryUtils {
     }
   }
 
-
   /**
    * Callback for resource cleanup at the end of a non-JDO transaction
    * (e.g. when participating in a JtaTransactionManager transaction).
@@ -247,19 +255,22 @@ public abstract class PersistenceManagerFactoryUtils {
 
     private final boolean newPersistenceManager;
 
-    public PersistenceManagerSynchronization(
+    public PersistenceManagerSynchronization (
       PersistenceManagerHolder pmHolder, PersistenceManagerFactory pmf, boolean newPersistenceManager) {
+
       super(pmHolder, pmf);
       this.newPersistenceManager = newPersistenceManager;
     }
 
     @Override
-    public int getOrder() {
+    public int getOrder () {
+
       return PERSISTENCE_MANAGER_SYNCHRONIZATION_ORDER;
     }
 
     @Override
-    public void flushResource(PersistenceManagerHolder resourceHolder) {
+    public void flushResource (PersistenceManagerHolder resourceHolder) {
+
       try {
         resourceHolder.getPersistenceManager().flush();
       } catch (JDOException ex) {
@@ -268,19 +279,21 @@ public abstract class PersistenceManagerFactoryUtils {
     }
 
     @Override
-    protected boolean shouldUnbindAtCompletion() {
+    protected boolean shouldUnbindAtCompletion () {
+
       return this.newPersistenceManager;
     }
 
     @Override
-    protected boolean shouldReleaseAfterCompletion(PersistenceManagerHolder resourceHolder) {
+    protected boolean shouldReleaseAfterCompletion (PersistenceManagerHolder resourceHolder) {
+
       return !resourceHolder.getPersistenceManager().isClosed();
     }
 
     @Override
-    protected void releaseResource(PersistenceManagerHolder resourceHolder, PersistenceManagerFactory resourceKey) {
+    protected void releaseResource (PersistenceManagerHolder resourceHolder, PersistenceManagerFactory resourceKey) {
+
       releasePersistenceManager(resourceHolder.getPersistenceManager(), resourceKey);
     }
   }
-
 }

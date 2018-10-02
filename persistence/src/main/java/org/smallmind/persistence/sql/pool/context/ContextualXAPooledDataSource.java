@@ -72,8 +72,7 @@ public class ContextualXAPooledDataSource extends AbstractPooledDataSource<XADat
       }
 
       return componentPool.getComponent();
-    }
-    catch (ComponentPoolException componentPoolException) {
+    } catch (ComponentPoolException componentPoolException) {
       throw new SQLException(componentPoolException);
     }
   }

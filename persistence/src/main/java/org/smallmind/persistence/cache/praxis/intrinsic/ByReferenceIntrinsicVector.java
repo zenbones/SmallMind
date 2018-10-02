@@ -69,7 +69,7 @@ public class ByReferenceIntrinsicVector<I extends Serializable & Comparable<I>, 
   @AutolockRead
   public DurableVector<I, D> copy () {
 
-    return new ByReferenceIntrinsicVector<I, D>(new IntrinsicRoster<D>(roster), getComparator(), getMaxSize(), getTimeToLiveSeconds(), isOrdered());
+    return new ByReferenceIntrinsicVector<>(new IntrinsicRoster<D>(roster), getComparator(), getMaxSize(), getTimeToLiveSeconds(), isOrdered());
   }
 
   @AutolockRead

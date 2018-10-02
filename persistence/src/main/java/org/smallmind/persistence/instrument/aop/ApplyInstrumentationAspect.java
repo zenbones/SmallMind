@@ -62,8 +62,7 @@ public class ApplyInstrumentationAspect {
     try {
 
       return thisJoinPoint.proceed();
-    }
-    finally {
+    } finally {
       if (timingEnabled) {
         stop = System.currentTimeMillis();
         executedMethod = ((MethodSignature)thisJoinPoint.getSignature()).getMethod();

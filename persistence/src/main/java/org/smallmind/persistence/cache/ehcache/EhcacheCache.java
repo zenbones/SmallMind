@@ -36,13 +36,10 @@ import java.util.HashMap;
 import java.util.Map;
 import net.sf.ehcache.Cache;
 import net.sf.ehcache.Element;
-import org.smallmind.persistence.cache.CASValue;
 import org.smallmind.persistence.cache.CacheOperationException;
 import org.smallmind.persistence.cache.PersistenceCache;
 
 public class EhcacheCache<V> implements PersistenceCache<String, V> {
-
-  private static final CASValue EMPTY_CAS_VALUE = new CASValue<Object>(null, 0);
 
   private Cache ehCache;
   private Class<V> valueClass;
@@ -59,12 +56,6 @@ public class EhcacheCache<V> implements PersistenceCache<String, V> {
   }
 
   @Override
-  public boolean requiresCopyOnDistributedCASOperation () {
-
-    return true;
-  }
-
-  @Override
   public int getDefaultTimeToLiveSeconds () {
 
     return (int)ehCache.getCacheConfiguration().getTimeToLiveSeconds();
@@ -73,20 +64,20 @@ public class EhcacheCache<V> implements PersistenceCache<String, V> {
   @Override
   public V get (String key) {
 
-    return valueClass.cast(ehCache.get(key).getValue());
+    return valueClass.cast(ehCache.get(key).getObjectValue());
   }
 
   @Override
   public Map<String, V> get (String[] keys)
     throws CacheOperationException {
 
-    HashMap<String, V> resultMap = new HashMap<String, V>();
+    HashMap<String, V> resultMap = new HashMap<>();
 
     for (String key : keys) {
 
       V value;
 
-      if ((value = valueClass.cast(ehCache.get(key).getValue())) != null) {
+      if ((value = valueClass.cast(ehCache.get(key).getObjectValue())) != null) {
         resultMap.put(key, value);
       }
     }
@@ -103,32 +94,7 @@ public class EhcacheCache<V> implements PersistenceCache<String, V> {
   @Override
   public V putIfAbsent (String key, V value, int timeToLiveSeconds) {
 
-    return valueClass.cast(ehCache.putIfAbsent(createElement(key, value, timeToLiveSeconds)).getValue());
-  }
-
-  @Override
-  public CASValue<V> getViaCas (String key) {
-
-    Element element;
-
-    if ((element = ehCache.get(key)) != null) {
-      return new CASValue<V>(valueClass.cast(element.getValue()), element.getVersion());
-    }
-
-    return EMPTY_CAS_VALUE;
-  }
-
-  @Override
-  public boolean putViaCas (String key, V oldValue, V value, long version, int timeToLiveSeconds) {
-
-    if (oldValue == null) {
-
-      return ehCache.putIfAbsent(createElement(key, value, timeToLiveSeconds)) == null;
-    }
-    else {
-
-      return ehCache.replace(createElement(key, oldValue, timeToLiveSeconds), createElement(key, value, timeToLiveSeconds));
-    }
+    return valueClass.cast(ehCache.putIfAbsent(createElement(key, value, timeToLiveSeconds)).getObjectValue());
   }
 
   @Override

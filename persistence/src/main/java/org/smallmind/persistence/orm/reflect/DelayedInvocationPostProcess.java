@@ -58,12 +58,10 @@ public class DelayedInvocationPostProcess extends TransactionPostProcess {
 
     try {
       delayedMethod.invoke(delayedTarget, delayedArguments);
-    }
-    catch (InvocationTargetException invocationTargetException) {
+    } catch (InvocationTargetException invocationTargetException) {
       if ((invocationTargetException.getCause() != null) && (invocationTargetException.getCause() instanceof Exception)) {
         throw (Exception)invocationTargetException.getCause();
-      }
-      else {
+      } else {
         throw invocationTargetException;
       }
     }

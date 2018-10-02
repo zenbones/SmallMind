@@ -100,12 +100,10 @@ public abstract class ProxyTransaction<S extends ProxySession> {
       if (postProcess.getEndState().equals(TransactionEndState.ANY) || postProcess.getEndState().equals(endState)) {
         try {
           postProcess.process();
-        }
-        catch (Exception exception) {
+        } catch (Exception exception) {
           if (postProcessException == null) {
             postProcessException = new TransactionPostProcessException(exception);
-          }
-          else {
+          } else {
             postProcessException.addSubsequentCause(exception);
           }
         }

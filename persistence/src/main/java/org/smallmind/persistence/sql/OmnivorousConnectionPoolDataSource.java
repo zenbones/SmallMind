@@ -88,15 +88,15 @@ public class OmnivorousConnectionPoolDataSource<D extends CommonDataSource, P ex
     dataSource.setLogWriter(out);
   }
 
-  public void setLoginTimeout (int seconds)
-    throws SQLException {
-
-    dataSource.setLoginTimeout(seconds);
-  }
-
   public int getLoginTimeout ()
     throws SQLException {
 
     return dataSource.getLoginTimeout();
+  }
+
+  public void setLoginTimeout (int seconds)
+    throws SQLException {
+
+    dataSource.setLoginTimeout(seconds);
   }
 }

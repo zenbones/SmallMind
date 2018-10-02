@@ -79,8 +79,7 @@ public class VectorCalculator {
 
     try {
       return AOPUtility.getParameterValue(joinPoint, parameterName, nullable);
-    }
-    catch (Exception exception) {
+    } catch (Exception exception) {
       throw new CacheAutomationError(exception);
     }
   }
@@ -90,8 +89,7 @@ public class VectorCalculator {
     try {
 
       return BeanUtility.executeGet(durable, fieldName, nullable);
-    }
-    catch (Exception exception) {
+    } catch (Exception exception) {
       throw new CacheAutomationError(exception);
     }
   }

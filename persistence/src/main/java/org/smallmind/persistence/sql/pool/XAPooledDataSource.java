@@ -73,8 +73,7 @@ public class XAPooledDataSource extends AbstractPooledDataSource<XADataSource, X
 
     try {
       return componentPool.getComponent();
-    }
-    catch (ComponentPoolException componentPoolException) {
+    } catch (ComponentPoolException componentPoolException) {
       throw new SQLException(componentPoolException);
     }
   }

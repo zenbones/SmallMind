@@ -51,7 +51,7 @@ public class MongoClientOptionsFactoryBean implements FactoryBean<MongoClientOpt
   private int maxWaitTime;
   private int socketTimeout;
 
-  public MongoClientOptionsFactoryBean() {
+  public MongoClientOptionsFactoryBean () {
 
     CodecRegistry codecRegistry;
 
@@ -59,50 +59,50 @@ public class MongoClientOptionsFactoryBean implements FactoryBean<MongoClientOpt
     optionsBuilder = MongoClientOptions.builder().codecRegistry(codecRegistry);
   }
 
-  public void setConnectionsPerHost(int connectionsPerHost) {
+  public void setConnectionsPerHost (int connectionsPerHost) {
 
     optionsBuilder.connectionsPerHost(connectionsPerHost);
   }
 
-  public void setConnectTimeout(int connectTimeout) {
+  public void setConnectTimeout (int connectTimeout) {
 
     optionsBuilder.connectTimeout(connectTimeout);
   }
 
-  public void setMaxWaitTime(int maxWaitTime) {
+  public void setMaxWaitTime (int maxWaitTime) {
 
     optionsBuilder.maxWaitTime(maxWaitTime);
   }
 
-  public void setSocketKeepAlive(boolean socketKeepAlive) {
+  public void setSocketKeepAlive (boolean socketKeepAlive) {
 
     optionsBuilder.socketKeepAlive(socketKeepAlive);
   }
 
-  public void setSocketTimeout(int socketTimeout) {
+  public void setSocketTimeout (int socketTimeout) {
 
     optionsBuilder.socketTimeout(socketTimeout);
   }
 
-  public void setThreadsAllowedToBlockForConnectionMultiplier(int threadsAllowedToBlockForConnectionMultiplier) {
+  public void setThreadsAllowedToBlockForConnectionMultiplier (int threadsAllowedToBlockForConnectionMultiplier) {
 
     optionsBuilder.threadsAllowedToBlockForConnectionMultiplier(threadsAllowedToBlockForConnectionMultiplier);
   }
 
   @Override
-  public boolean isSingleton() {
+  public boolean isSingleton () {
 
     return true;
   }
 
   @Override
-  public Class<?> getObjectType() {
+  public Class<?> getObjectType () {
 
     return MongoClientOptions.class;
   }
 
   @Override
-  public MongoClientOptions getObject() throws Exception {
+  public MongoClientOptions getObject () throws Exception {
 
     return optionsBuilder.build();
   }

@@ -32,9 +32,8 @@
  */
 package org.smallmind.persistence.orm.spring.jdo.antique;
 
-import org.springframework.dao.UncategorizedDataAccessException;
-
 import javax.jdo.JDOException;
+import org.springframework.dao.UncategorizedDataAccessException;
 
 /**
  * JDO-specific subclass of UncategorizedDataAccessException,
@@ -44,8 +43,8 @@ import javax.jdo.JDOException;
 @SuppressWarnings("serial")
 public class JdoSystemException extends UncategorizedDataAccessException {
 
-  public JdoSystemException(JDOException ex) {
+  public JdoSystemException (JDOException ex) {
+
     super(ex.getMessage(), ex);
   }
-
 }

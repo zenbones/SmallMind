@@ -45,12 +45,6 @@ public abstract class AbstractPooledDataSource<D extends CommonDataSource, P ext
   private final Class<P> pooledConnectionClass;
   private final PrintWriter logWriter;
 
-  public abstract void startup ()
-    throws ComponentPoolException;
-
-  public abstract void shutdown ()
-    throws ComponentPoolException;
-
   public AbstractPooledDataSource (Class<D> dataSourceClass, Class<P> pooledConnectionClass) {
 
     this.dataSourceClass = dataSourceClass;
@@ -58,6 +52,12 @@ public abstract class AbstractPooledDataSource<D extends CommonDataSource, P ext
 
     logWriter = new PrintWriter(new PooledLogWriter());
   }
+
+  public abstract void startup ()
+    throws ComponentPoolException;
+
+  public abstract void shutdown ()
+    throws ComponentPoolException;
 
   public Class<D> getDataSourceClass () {
 
@@ -84,12 +84,12 @@ public abstract class AbstractPooledDataSource<D extends CommonDataSource, P ext
     throw new UnsupportedOperationException("Please properly configure the underlying pool which is represented by this DataSource");
   }
 
-  public void setLoginTimeout (int seconds) {
+  public int getLoginTimeout () {
 
     throw new UnsupportedOperationException("Please properly configure the underlying resource managed by the pool which is represented by this DataSource");
   }
 
-  public int getLoginTimeout () {
+  public void setLoginTimeout (int seconds) {
 
     throw new UnsupportedOperationException("Please properly configure the underlying resource managed by the pool which is represented by this DataSource");
   }

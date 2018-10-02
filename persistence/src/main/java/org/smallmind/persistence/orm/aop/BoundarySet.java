@@ -62,11 +62,9 @@ public class BoundarySet<T> extends HashSet<T> {
 
     if (sessionSourceKeys.length == 0) {
       return isImplicit() || (sessionSourceKey == null);
-    }
-    else if (isImplicit()) {
+    } else if (isImplicit()) {
       throw new IllegalArgumentException("Boundary annotation (@NonTransaction or @Transactional) is marked as implicit, but explicitly lists data sources");
-    }
-    else if (sessionSourceKey != null) {
+    } else if (sessionSourceKey != null) {
       for (String boundarySource : sessionSourceKeys) {
         if (sessionSourceKey.equals(boundarySource)) {
           return true;

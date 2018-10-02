@@ -32,20 +32,19 @@
  */
 package org.smallmind.persistence.orm.spring.jdo.antique.support;
 
+import java.lang.reflect.InvocationHandler;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
+import java.lang.reflect.Proxy;
+import javax.jdo.PersistenceManager;
+import javax.jdo.PersistenceManagerFactory;
+import javax.jdo.Query;
 import org.smallmind.persistence.orm.spring.jdo.antique.DefaultJdoDialect;
 import org.smallmind.persistence.orm.spring.jdo.antique.JdoDialect;
 import org.smallmind.persistence.orm.spring.jdo.antique.PersistenceManagerFactoryUtils;
 import org.springframework.beans.factory.FactoryBean;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.util.Assert;
-
-import javax.jdo.PersistenceManager;
-import javax.jdo.PersistenceManagerFactory;
-import javax.jdo.Query;
-import java.lang.reflect.InvocationHandler;
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
-import java.lang.reflect.Proxy;
 
 public class SpringPersistenceManagerProxyBean implements FactoryBean<PersistenceManager>, InitializingBean {
 
@@ -62,21 +61,24 @@ public class SpringPersistenceManagerProxyBean implements FactoryBean<Persistenc
   /**
    * Return the target PersistenceManagerFactory for this proxy.
    */
-  protected PersistenceManagerFactory getPersistenceManagerFactory() {
+  protected PersistenceManagerFactory getPersistenceManagerFactory () {
+
     return this.persistenceManagerFactory;
   }
 
   /**
    * Set the target PersistenceManagerFactory for this proxy.
    */
-  public void setPersistenceManagerFactory(PersistenceManagerFactory persistenceManagerFactory) {
+  public void setPersistenceManagerFactory (PersistenceManagerFactory persistenceManagerFactory) {
+
     this.persistenceManagerFactory = persistenceManagerFactory;
   }
 
   /**
    * Return the JDO dialect to use for this proxy.
    */
-  protected JdoDialect getJdoDialect() {
+  protected JdoDialect getJdoDialect () {
+
     return this.jdoDialect;
   }
 
@@ -85,14 +87,16 @@ public class SpringPersistenceManagerProxyBean implements FactoryBean<Persistenc
    * <p>Default is a DefaultJdoDialect based on the PersistenceManagerFactory's
    * underlying DataSource, if any.
    */
-  public void setJdoDialect(JdoDialect jdoDialect) {
+  public void setJdoDialect (JdoDialect jdoDialect) {
+
     this.jdoDialect = jdoDialect;
   }
 
   /**
    * Return the PersistenceManager interface to expose.
    */
-  protected Class<? extends PersistenceManager> getPersistenceManagerInterface() {
+  protected Class<? extends PersistenceManager> getPersistenceManagerInterface () {
+
     return this.persistenceManagerInterface;
   }
 
@@ -101,7 +105,8 @@ public class SpringPersistenceManagerProxyBean implements FactoryBean<Persistenc
    * possibly including vendor extensions.
    * <p>Default is the standard {@code javax.jdo.PersistenceManager} interface.
    */
-  public void setPersistenceManagerInterface(Class<? extends PersistenceManager> persistenceManagerInterface) {
+  public void setPersistenceManagerInterface (Class<? extends PersistenceManager> persistenceManagerInterface) {
+
     this.persistenceManagerInterface = persistenceManagerInterface;
     Assert.notNull(persistenceManagerInterface, "persistenceManagerInterface must not be null");
     Assert.isAssignable(PersistenceManager.class, persistenceManagerInterface);
@@ -112,7 +117,8 @@ public class SpringPersistenceManagerProxyBean implements FactoryBean<Persistenc
    * a non-transactional PersistenceManager when no transactional
    * PersistenceManager can be found for the current thread.
    */
-  protected boolean isAllowCreate() {
+  protected boolean isAllowCreate () {
+
     return this.allowCreate;
   }
 
@@ -126,12 +132,14 @@ public class SpringPersistenceManagerProxyBean implements FactoryBean<Persistenc
    * (i.e. a {@code PersistenceManagerFactory.getPersistenceManager()}
    * call without corresponding {@code PersistenceManager.close()} call).
    */
-  public void setAllowCreate(boolean allowCreate) {
+  public void setAllowCreate (boolean allowCreate) {
+
     this.allowCreate = allowCreate;
   }
 
   @Override
-  public void afterPropertiesSet() {
+  public void afterPropertiesSet () {
+
     if (getPersistenceManagerFactory() == null) {
       throw new IllegalArgumentException("Property 'persistenceManagerFactory' is required");
     }
@@ -139,27 +147,28 @@ public class SpringPersistenceManagerProxyBean implements FactoryBean<Persistenc
     if (this.jdoDialect == null) {
       this.jdoDialect = new DefaultJdoDialect(getPersistenceManagerFactory().getConnectionFactory());
     }
-    this.proxy = (PersistenceManager) Proxy.newProxyInstance(
+    this.proxy = (PersistenceManager)Proxy.newProxyInstance(
       getPersistenceManagerFactory().getClass().getClassLoader(),
-      new Class<?>[]{getPersistenceManagerInterface()}, new PersistenceManagerInvocationHandler());
+      new Class<?>[] {getPersistenceManagerInterface()}, new PersistenceManagerInvocationHandler());
   }
 
-
   @Override
-  public PersistenceManager getObject() {
+  public PersistenceManager getObject () {
+
     return this.proxy;
   }
 
   @Override
-  public Class<? extends PersistenceManager> getObjectType() {
+  public Class<? extends PersistenceManager> getObjectType () {
+
     return getPersistenceManagerInterface();
   }
 
   @Override
-  public boolean isSingleton() {
+  public boolean isSingleton () {
+
     return true;
   }
-
 
   /**
    * Invocation handler that delegates close calls on PersistenceManagers to
@@ -168,7 +177,7 @@ public class SpringPersistenceManagerProxyBean implements FactoryBean<Persistenc
   private class PersistenceManagerInvocationHandler implements InvocationHandler {
 
     @Override
-    public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
+    public Object invoke (Object proxy, Method method, Object[] args) throws Throwable {
       // Invocation on PersistenceManager interface coming in...
 
       if (method.getName().equals("equals")) {
@@ -198,7 +207,7 @@ public class SpringPersistenceManagerProxyBean implements FactoryBean<Persistenc
         Object retVal = method.invoke(pm, args);
         if (retVal instanceof Query) {
           PersistenceManagerFactoryUtils.applyTransactionTimeout(
-            (Query) retVal, getPersistenceManagerFactory());
+            (Query)retVal, getPersistenceManagerFactory());
         }
         return retVal;
       } catch (InvocationTargetException ex) {
@@ -208,5 +217,4 @@ public class SpringPersistenceManagerProxyBean implements FactoryBean<Persistenc
       }
     }
   }
-
 }

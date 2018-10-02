@@ -61,8 +61,7 @@ public class PooledConnectionComponentPoolFactory {
     if (databaseConnections == null) {
 
       return new ConnectionEndpoint[0];
-    }
-    else {
+    } else {
 
       ConnectionEndpoint[] connectionEndpoints = new ConnectionEndpoint[databaseConnections.length];
 

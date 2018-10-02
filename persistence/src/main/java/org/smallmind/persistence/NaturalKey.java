@@ -46,6 +46,37 @@ public class NaturalKey<D extends Durable<? extends Comparable>> {
   private Class<? extends Durable> durableClass;
   private Object[] naturalKeyFieldValues;
 
+  public NaturalKey (D durable) {
+
+    Field[] naturalKeyFields;
+    int index = 0;
+
+    durableClass = durable.getClass();
+    naturalKeyFieldValues = new Object[(naturalKeyFields = getNaturalKeyFields(durableClass)).length];
+
+    try {
+      for (Field naturalKeyField : naturalKeyFields) {
+        naturalKeyFieldValues[index++] = naturalKeyField.get(durable);
+      }
+    } catch (IllegalAccessException illegalAccessException) {
+      throw new RuntimeException(illegalAccessException);
+    }
+  }
+
+  public NaturalKey (Class<D> durableClass, Object... naturalKeyFieldValues) {
+
+    this.durableClass = durableClass;
+    this.naturalKeyFieldValues = naturalKeyFieldValues;
+
+    int index = 0;
+
+    for (Field naturalKeyField : getNaturalKeyFields(durableClass)) {
+      if (!TypeUtility.isEssentiallyTheSameAs(naturalKeyField.getType(), naturalKeyFieldValues[index++].getClass())) {
+        throw new PersistenceException("Field values must match both order and type of the durables' natural keys(%s)", Arrays.toString(getNaturalKeyFields(durableClass)));
+      }
+    }
+  }
+
   public static Field[] getNonKeyFields (Class<? extends Durable> durableClass) {
 
     Field[] nonKeyFields;
@@ -109,16 +140,14 @@ public class NaturalKey<D extends Durable<? extends Comparable>> {
               currentField = currentClass.getDeclaredField(fieldName);
               currentField.setAccessible(true);
               naturalKeyFields[index++] = currentField;
-            }
-            catch (NoSuchFieldException n) {
+            } catch (NoSuchFieldException n) {
             }
           } while ((currentField != null) && ((currentClass = currentClass.getSuperclass()) != null));
 
           if (currentField == null) {
             throw new NoSuchFieldException(fieldName);
           }
-        }
-        catch (NoSuchFieldException noSuchFieldException) {
+        } catch (NoSuchFieldException noSuchFieldException) {
           throw new PersistenceException(noSuchFieldException);
         }
 
@@ -127,38 +156,6 @@ public class NaturalKey<D extends Durable<? extends Comparable>> {
     }
 
     return naturalKeyFields;
-  }
-
-  public NaturalKey (D durable) {
-
-    Field[] naturalKeyFields;
-    int index = 0;
-
-    durableClass = durable.getClass();
-    naturalKeyFieldValues = new Object[(naturalKeyFields = getNaturalKeyFields(durableClass)).length];
-
-    try {
-      for (Field naturalKeyField : naturalKeyFields) {
-        naturalKeyFieldValues[index++] = naturalKeyField.get(durable);
-      }
-    }
-    catch (IllegalAccessException illegalAccessException) {
-      throw new RuntimeException(illegalAccessException);
-    }
-  }
-
-  public NaturalKey (Class<D> durableClass, Object... naturalKeyFieldValues) {
-
-    this.durableClass = durableClass;
-    this.naturalKeyFieldValues = naturalKeyFieldValues;
-
-    int index = 0;
-
-    for (Field naturalKeyField : getNaturalKeyFields(durableClass)) {
-      if (!TypeUtility.isEssentiallyTheSameAs(naturalKeyField.getType(), naturalKeyFieldValues[index++].getClass())) {
-        throw new PersistenceException("Field values must match both order and type of the durables' natural keys(%s)", Arrays.toString(getNaturalKeyFields(durableClass)));
-      }
-    }
   }
 
   public Class<? extends Durable> getDurableClass () {

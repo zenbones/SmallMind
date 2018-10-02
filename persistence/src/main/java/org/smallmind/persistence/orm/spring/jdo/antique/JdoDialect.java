@@ -32,16 +32,14 @@
  */
 package org.smallmind.persistence.orm.spring.jdo.antique;
 
+import java.sql.SQLException;
+import javax.jdo.JDOException;
+import javax.jdo.PersistenceManager;
+import javax.jdo.Transaction;
 import org.springframework.dao.DataAccessException;
 import org.springframework.jdbc.datasource.ConnectionHandle;
 import org.springframework.transaction.TransactionDefinition;
 import org.springframework.transaction.TransactionException;
-
-import javax.jdo.JDOException;
-import javax.jdo.PersistenceManager;
-import javax.jdo.Transaction;
-import java.sql.SQLException;
-
 
 public interface JdoDialect {
 
@@ -65,7 +63,7 @@ public interface JdoDialect {
    * (effectively using the current transaction name as use case identifier).
    * (to be passed into cleanupTransaction)
    */
-  Object beginTransaction(Transaction transaction, TransactionDefinition definition)
+  Object beginTransaction (Transaction transaction, TransactionDefinition definition)
     throws JDOException, SQLException, TransactionException;
 
   /**
@@ -76,7 +74,7 @@ public interface JdoDialect {
    * an exposed data access use case can be reset here.
    * (as returned by beginTransaction)
    */
-  void cleanupTransaction(Object transactionData);
+  void cleanupTransaction (Object transactionData);
 
   /**
    * Retrieve the JDBC Connection that the given JDO PersistenceManager uses underneath,
@@ -97,7 +95,7 @@ public interface JdoDialect {
    * {@code releaseJdbcConnection}, or {@code null}
    * if no JDBC Connection can be retrieved
    */
-  ConnectionHandle getJdbcConnection(PersistenceManager pm, boolean readOnly)
+  ConnectionHandle getJdbcConnection (PersistenceManager pm, boolean readOnly)
     throws JDOException, SQLException;
 
   /**
@@ -108,9 +106,8 @@ public interface JdoDialect {
    * by {@code getJdbcConnection} will be implicitly closed when the JDO
    * transaction completes or when the PersistenceManager is closed.
    */
-  void releaseJdbcConnection(ConnectionHandle conHandle, PersistenceManager pm)
+  void releaseJdbcConnection (ConnectionHandle conHandle, PersistenceManager pm)
     throws JDOException, SQLException;
-
 
   //-----------------------------------------------------------------------------------
   // Hook for exception translation (used by JdoTransactionManager)
@@ -127,6 +124,5 @@ public interface JdoDialect {
    * <p>Can use a SQLExceptionTranslator for translating underlying SQLExceptions
    * in a database-specific fashion.
    */
-  DataAccessException translateException(JDOException ex);
-
+  DataAccessException translateException (JDOException ex);
 }

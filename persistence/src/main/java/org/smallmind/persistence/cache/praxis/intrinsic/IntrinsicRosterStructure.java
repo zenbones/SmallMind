@@ -102,18 +102,16 @@ public class IntrinsicRosterStructure<T> {
     if (size == 0) {
       head = prev;
       tail = next;
-    }
-    else if (head == current) {
+    } else if (head == current) {
       head = next;
-    }
-    else if (tail == current) {
+    } else if (tail == current) {
       tail = prev;
     }
   }
 
   public void ouroboros (T element) {
 
-    IntrinsicRosterNode<T> added = new IntrinsicRosterNode<T>(element, head, tail);
+    IntrinsicRosterNode<T> added = new IntrinsicRosterNode<>(element, head, tail);
 
     if (head != null) {
       head.setNext(added);

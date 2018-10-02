@@ -39,7 +39,6 @@ import me.prettyprint.cassandra.connection.RoundRobinBalancingPolicy;
 import me.prettyprint.cassandra.model.ConfigurableConsistencyLevel;
 import me.prettyprint.cassandra.service.CassandraHostConfigurator;
 import me.prettyprint.cassandra.service.ThriftCluster;
-import me.prettyprint.hector.api.Cluster;
 import me.prettyprint.hector.api.HConsistencyLevel;
 import me.prettyprint.hector.api.Keyspace;
 import me.prettyprint.hector.api.factory.HFactory;
@@ -140,8 +139,7 @@ public class KeyspaceFactoryBean implements FactoryBean<Keyspace>, InitializingB
 
       if ((poundPos = serverPattern.indexOf('#')) < 0) {
         serverBuilder.append(serverPattern);
-      }
-      else {
+      } else {
 
         boolean first = true;
 

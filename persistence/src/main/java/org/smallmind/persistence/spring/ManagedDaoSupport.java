@@ -50,8 +50,7 @@ public class ManagedDaoSupport {
 
         return (Class)returnType;
       }
-    }
-    catch (NoSuchMethodException noSuchMethodException) {
+    } catch (NoSuchMethodException noSuchMethodException) {
       throw new FatalBeanException("HibernateDao classes are expected to contain the method getManagedClass()", noSuchMethodException);
     }
 

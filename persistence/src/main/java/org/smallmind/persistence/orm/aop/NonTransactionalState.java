@@ -68,8 +68,7 @@ public class NonTransactionalState {
 
               return proxySession;
             }
-          }
-          else if (sessionSourceKey.equals(proxySession.getSessionSourceKey())) {
+          } else if (sessionSourceKey.equals(proxySession.getSessionSourceKey())) {
 
             return proxySession;
           }
@@ -138,8 +137,7 @@ public class NonTransactionalState {
         for (ProxySession proxySession : sessionSetStack.removeLast()) {
           try {
             proxySession.close();
-          }
-          catch (Throwable unexpectedThrowable) {
+          } catch (Throwable unexpectedThrowable) {
             if (unexpectedSessionError == null) {
               unexpectedSessionError = new UnexpectedSessionError(sessionSetStack.size(), unexpectedThrowable);
             }
@@ -149,14 +147,12 @@ public class NonTransactionalState {
         if (unexpectedSessionError != null) {
           throw unexpectedSessionError;
         }
-      }
-      finally {
+      } finally {
         if (sessionSetStack.isEmpty()) {
           SESSION_SET_STACK_LOCAL.remove();
         }
       }
-    }
-    else {
+    } else {
       SESSION_SET_STACK_LOCAL.remove();
     }
   }

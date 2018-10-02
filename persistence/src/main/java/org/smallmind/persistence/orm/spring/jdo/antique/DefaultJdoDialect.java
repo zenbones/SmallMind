@@ -32,6 +32,12 @@
  */
 package org.smallmind.persistence.orm.spring.jdo.antique;
 
+import java.sql.Connection;
+import java.sql.SQLException;
+import javax.jdo.Constants;
+import javax.jdo.JDOException;
+import javax.jdo.PersistenceManager;
+import javax.jdo.Transaction;
 import org.springframework.dao.DataAccessException;
 import org.springframework.dao.support.PersistenceExceptionTranslator;
 import org.springframework.jdbc.datasource.ConnectionHandle;
@@ -40,36 +46,31 @@ import org.springframework.jdbc.support.SQLExceptionTranslator;
 import org.springframework.transaction.TransactionDefinition;
 import org.springframework.transaction.TransactionException;
 
-import javax.jdo.Constants;
-import javax.jdo.JDOException;
-import javax.jdo.PersistenceManager;
-import javax.jdo.Transaction;
-import java.sql.Connection;
-import java.sql.SQLException;
-
 public class DefaultJdoDialect implements JdoDialect, PersistenceExceptionTranslator {
 
   private SQLExceptionTranslator jdbcExceptionTranslator;
 
-
   /**
    * Create a new DefaultJdoDialect.
    */
-  public DefaultJdoDialect() {
+  public DefaultJdoDialect () {
+
   }
 
   /**
    * Create a new DefaultJdoDialect.
    * which is used to initialize the default JDBC exception translator
    */
-  public DefaultJdoDialect(Object connectionFactory) {
+  public DefaultJdoDialect (Object connectionFactory) {
+
     this.jdbcExceptionTranslator = PersistenceManagerFactoryUtils.newJdbcExceptionTranslator(connectionFactory);
   }
 
   /**
    * Return the JDBC exception translator for this dialect, if any.
    */
-  public SQLExceptionTranslator getJdbcExceptionTranslator() {
+  public SQLExceptionTranslator getJdbcExceptionTranslator () {
+
     return this.jdbcExceptionTranslator;
   }
 
@@ -78,17 +79,17 @@ public class DefaultJdoDialect implements JdoDialect, PersistenceExceptionTransl
    * <p>Applied to any SQLException root cause of a JDOException, if specified.
    * The default is to rely on the JDO provider's native exception translation.
    */
-  public void setJdbcExceptionTranslator(SQLExceptionTranslator jdbcExceptionTranslator) {
+  public void setJdbcExceptionTranslator (SQLExceptionTranslator jdbcExceptionTranslator) {
+
     this.jdbcExceptionTranslator = jdbcExceptionTranslator;
   }
-
 
   //-------------------------------------------------------------------------
   // Hooks for transaction management (used by JdoTransactionManager)
   //-------------------------------------------------------------------------
 
   @Override
-  public Object beginTransaction(Transaction transaction, TransactionDefinition definition)
+  public Object beginTransaction (Transaction transaction, TransactionDefinition definition)
     throws JDOException, SQLException, TransactionException {
 
     String jdoIsolationLevel = getJdoIsolationLevel(definition);
@@ -104,7 +105,8 @@ public class DefaultJdoDialect implements JdoDialect, PersistenceExceptionTransl
    * Spring transaction definition.
    * to indicate that no isolation level should be set explicitly
    */
-  protected String getJdoIsolationLevel(TransactionDefinition definition) {
+  protected String getJdoIsolationLevel (TransactionDefinition definition) {
+
     switch (definition.getIsolationLevel()) {
       case TransactionDefinition.ISOLATION_SERIALIZABLE:
         return Constants.TX_SERIALIZABLE;
@@ -124,7 +126,8 @@ public class DefaultJdoDialect implements JdoDialect, PersistenceExceptionTransl
    * does not require any cleanup.
    */
   @Override
-  public void cleanupTransaction(Object transactionData) {
+  public void cleanupTransaction (Object transactionData) {
+
   }
 
   /**
@@ -142,7 +145,7 @@ public class DefaultJdoDialect implements JdoDialect, PersistenceExceptionTransl
    * {@code DataSourceUtils.releaseConnection}).
    */
   @Override
-  public ConnectionHandle getJdbcConnection(PersistenceManager pm, boolean readOnly)
+  public ConnectionHandle getJdbcConnection (PersistenceManager pm, boolean readOnly)
     throws JDOException, SQLException {
 
     return new DataStoreConnectionHandle(pm);
@@ -156,10 +159,10 @@ public class DefaultJdoDialect implements JdoDialect, PersistenceExceptionTransl
    * {@code Connection.close} here.
    */
   @Override
-  public void releaseJdbcConnection(ConnectionHandle conHandle, PersistenceManager pm)
+  public void releaseJdbcConnection (ConnectionHandle conHandle, PersistenceManager pm)
     throws JDOException, SQLException {
-  }
 
+  }
 
   //-----------------------------------------------------------------------------------
   // Hook for exception translation (used by JdoTransactionManager)
@@ -172,9 +175,10 @@ public class DefaultJdoDialect implements JdoDialect, PersistenceExceptionTransl
    * Else returns {@code null} to indicate an unknown exception.
    */
   @Override
-  public DataAccessException translateExceptionIfPossible(RuntimeException ex) {
+  public DataAccessException translateExceptionIfPossible (RuntimeException ex) {
+
     if (ex instanceof JDOException) {
-      return translateException((JDOException) ex);
+      return translateException((JDOException)ex);
     }
     return null;
   }
@@ -183,10 +187,11 @@ public class DefaultJdoDialect implements JdoDialect, PersistenceExceptionTransl
    * This implementation delegates to PersistenceManagerFactoryUtils.
    */
   @Override
-  public DataAccessException translateException(JDOException ex) {
+  public DataAccessException translateException (JDOException ex) {
+
     if (getJdbcExceptionTranslator() != null && ex.getCause() instanceof SQLException) {
       return getJdbcExceptionTranslator().translate("JDO operation: " + ex.getMessage(),
-        extractSqlStringFromException(ex), (SQLException) ex.getCause());
+        extractSqlStringFromException(ex), (SQLException)ex.getCause());
     }
     return PersistenceManagerFactoryUtils.convertJdoAccessException(ex);
   }
@@ -196,10 +201,10 @@ public class DefaultJdoDialect implements JdoDialect, PersistenceExceptionTransl
    * <p>Default implementation always returns {@code null}. Can be overridden in
    * subclasses to extract SQL Strings for vendor-specific exception classes.
    */
-  protected String extractSqlStringFromException(JDOException ex) {
+  protected String extractSqlStringFromException (JDOException ex) {
+
     return null;
   }
-
 
   /**
    * ConnectionHandle implementation that fetches a new JDO DataStoreConnection
@@ -211,19 +216,21 @@ public class DefaultJdoDialect implements JdoDialect, PersistenceExceptionTransl
 
     private final PersistenceManager persistenceManager;
 
-    public DataStoreConnectionHandle(PersistenceManager persistenceManager) {
+    public DataStoreConnectionHandle (PersistenceManager persistenceManager) {
+
       this.persistenceManager = persistenceManager;
     }
 
     @Override
-    public Connection getConnection() {
-      return (Connection) this.persistenceManager.getDataStoreConnection();
+    public Connection getConnection () {
+
+      return (Connection)this.persistenceManager.getDataStoreConnection();
     }
 
     @Override
-    public void releaseConnection(Connection con) {
+    public void releaseConnection (Connection con) {
+
       JdbcUtils.closeConnection(con);
     }
   }
-
 }

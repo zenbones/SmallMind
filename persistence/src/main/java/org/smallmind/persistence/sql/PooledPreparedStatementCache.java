@@ -130,8 +130,7 @@ public class PooledPreparedStatementCache implements StatementEventListener {
 
       try {
         statementWrapper.getPooledStatement().close();
-      }
-      catch (SQLException sqlException) {
+      } catch (SQLException sqlException) {
         logException(statementWrapper, sqlException);
       }
     }
@@ -142,8 +141,7 @@ public class PooledPreparedStatementCache implements StatementEventListener {
     for (StatementWrapper statementWrapper : statementMap.values()) {
       try {
         statementWrapper.getPooledStatement().close();
-      }
-      catch (SQLException sqlException) {
+      } catch (SQLException sqlException) {
         logException(statementWrapper, sqlException);
       }
     }
@@ -157,8 +155,7 @@ public class PooledPreparedStatementCache implements StatementEventListener {
       if ((logWriter = statementWrapper.getPooledStatement().getLogWriter()) != null) {
         sqlException.printStackTrace(logWriter);
       }
-    }
-    catch (SQLException buriedException) {
+    } catch (SQLException buriedException) {
     }
   }
 

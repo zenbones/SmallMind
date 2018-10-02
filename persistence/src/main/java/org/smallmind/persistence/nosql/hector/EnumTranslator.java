@@ -80,6 +80,5 @@ public class EnumTranslator implements HectorTranslator<Enum<?>, String> {
     }
 
     throw new PersistenceException("Unable to locate matching enum constant(%s) for field of type(%s)", enumName, fieldType.getName());
-
   }
 }

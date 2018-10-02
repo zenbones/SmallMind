@@ -72,12 +72,10 @@ public class PooledPreparedStatement implements InvocationHandler {
       }
 
       return null;
-    }
-    else {
+    } else {
       try {
         return method.invoke(actualStatement, args);
-      }
-      catch (Throwable throwable) {
+      } catch (Throwable throwable) {
         if (throwable instanceof SQLException) {
 
           StatementEvent event = new PooledPreparedStatementEvent(pooledConnection, actualStatement, (SQLException)throwable, statementId);
@@ -121,8 +119,7 @@ public class PooledPreparedStatement implements InvocationHandler {
 
     try {
       close();
-    }
-    catch (SQLException sqlExecption) {
+    } catch (SQLException sqlExecption) {
 
       PrintWriter logWriter;
 

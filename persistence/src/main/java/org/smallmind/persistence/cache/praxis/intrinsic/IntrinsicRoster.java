@@ -66,8 +66,7 @@ public class IntrinsicRoster<T> implements Roster<T> {
       for (T element : c) {
         if (added == null) {
           structure.setHead(added = new IntrinsicRosterNode<T>(element, null, null));
-        }
-        else {
+        } else {
           added = new IntrinsicRosterNode<T>(element, added, null);
           added.getPrev().setNext(added);
         }
@@ -95,8 +94,7 @@ public class IntrinsicRoster<T> implements Roster<T> {
     try {
 
       return structure.isTail(current) ? null : current.getNext();
-    }
-    finally {
+    } finally {
       lock.readLock().unlock();
     }
   }
@@ -107,8 +105,7 @@ public class IntrinsicRoster<T> implements Roster<T> {
     try {
 
       return structure.isHead(current) ? null : current.getPrev();
-    }
-    finally {
+    } finally {
       lock.readLock().unlock();
     }
   }
@@ -119,8 +116,7 @@ public class IntrinsicRoster<T> implements Roster<T> {
     try {
 
       return structure.getSize();
-    }
-    finally {
+    } finally {
       lock.readLock().unlock();
     }
   }
@@ -131,8 +127,7 @@ public class IntrinsicRoster<T> implements Roster<T> {
     try {
 
       return structure.getSize() == 0;
-    }
-    finally {
+    } finally {
       lock.readLock().unlock();
     }
   }
@@ -151,8 +146,7 @@ public class IntrinsicRoster<T> implements Roster<T> {
       }
 
       return false;
-    }
-    finally {
+    } finally {
       lock.readLock().unlock();
     }
   }
@@ -183,8 +177,7 @@ public class IntrinsicRoster<T> implements Roster<T> {
       }
 
       return (U[])elements;
-    }
-    finally {
+    } finally {
       lock.readLock().unlock();
     }
   }
@@ -204,8 +197,7 @@ public class IntrinsicRoster<T> implements Roster<T> {
       }
 
       return current;
-    }
-    else {
+    } else {
       current = structure.getTail();
       for (int count = (structure.getSize() - 1); count > index; count--) {
         current = current.getPrev();
@@ -224,8 +216,7 @@ public class IntrinsicRoster<T> implements Roster<T> {
       }
 
       return structure.getHead().getObj();
-    }
-    finally {
+    } finally {
       lock.readLock().unlock();
     }
   }
@@ -239,8 +230,7 @@ public class IntrinsicRoster<T> implements Roster<T> {
       }
 
       return structure.getTail().getObj();
-    }
-    finally {
+    } finally {
       lock.readLock().unlock();
     }
   }
@@ -251,8 +241,7 @@ public class IntrinsicRoster<T> implements Roster<T> {
     try {
 
       return getNode(index).getObj();
-    }
-    finally {
+    } finally {
       lock.readLock().unlock();
     }
   }
@@ -269,8 +258,7 @@ public class IntrinsicRoster<T> implements Roster<T> {
       current.setObj(element);
 
       return value;
-    }
-    finally {
+    } finally {
       lock.readLock().unlock();
     }
   }
@@ -280,7 +268,7 @@ public class IntrinsicRoster<T> implements Roster<T> {
     IntrinsicRosterNode<T> prev = next.getPrev();
     IntrinsicRosterNode<T> added;
 
-    next.setPrev(added = new IntrinsicRosterNode<T>(element, prev, next));
+    next.setPrev(added = new IntrinsicRosterNode<>(element, prev, next));
     if (prev != null) {
       prev.setNext(added);
     }
@@ -297,12 +285,10 @@ public class IntrinsicRoster<T> implements Roster<T> {
     try {
       if (structure.getSize() == 0) {
         structure.ouroboros(element);
-      }
-      else {
+      } else {
         add(structure.getHead(), element);
       }
-    }
-    finally {
+    } finally {
       lock.writeLock().unlock();
     }
   }
@@ -313,11 +299,10 @@ public class IntrinsicRoster<T> implements Roster<T> {
     try {
       if (structure.getSize() == 0) {
         structure.ouroboros(element);
-      }
-      else {
+      } else {
 
         IntrinsicRosterNode<T> end;
-        IntrinsicRosterNode<T> added = new IntrinsicRosterNode<T>(element, structure.getTail(), end = structure.getTail().getNext());
+        IntrinsicRosterNode<T> added = new IntrinsicRosterNode<>(element, structure.getTail(), end = structure.getTail().getNext());
 
         if (end != null) {
           end.setPrev(added);
@@ -327,8 +312,7 @@ public class IntrinsicRoster<T> implements Roster<T> {
 
         structure.incSize();
       }
-    }
-    finally {
+    } finally {
       lock.writeLock().unlock();
     }
   }
@@ -346,12 +330,10 @@ public class IntrinsicRoster<T> implements Roster<T> {
     try {
       if (index == structure.getSize()) {
         addLast(element);
-      }
-      else {
+      } else {
         add(getNode(index), element);
       }
-    }
-    finally {
+    } finally {
       lock.writeLock().unlock();
     }
   }
@@ -378,8 +360,7 @@ public class IntrinsicRoster<T> implements Roster<T> {
     try {
       if (structure.getSize() == 0) {
         throw new NoSuchElementException();
-      }
-      else {
+      } else {
 
         T element = structure.getHead().getObj();
 
@@ -387,8 +368,7 @@ public class IntrinsicRoster<T> implements Roster<T> {
 
         return element;
       }
-    }
-    finally {
+    } finally {
       lock.writeLock().unlock();
     }
   }
@@ -399,8 +379,7 @@ public class IntrinsicRoster<T> implements Roster<T> {
     try {
       if (structure.getSize() == 0) {
         throw new NoSuchElementException();
-      }
-      else {
+      } else {
 
         T element = structure.getTail().getObj();
 
@@ -408,8 +387,7 @@ public class IntrinsicRoster<T> implements Roster<T> {
 
         return element;
       }
-    }
-    finally {
+    } finally {
       lock.writeLock().unlock();
     }
   }
@@ -427,8 +405,7 @@ public class IntrinsicRoster<T> implements Roster<T> {
       }
 
       return false;
-    }
-    finally {
+    } finally {
       lock.writeLock().unlock();
     }
   }
@@ -443,8 +420,7 @@ public class IntrinsicRoster<T> implements Roster<T> {
       removeNode(current = getNode(index));
 
       return current.getObj();
-    }
-    finally {
+    } finally {
       lock.writeLock().unlock();
     }
   }
@@ -468,8 +444,7 @@ public class IntrinsicRoster<T> implements Roster<T> {
       }
 
       return false;
-    }
-    finally {
+    } finally {
       lock.readLock().unlock();
     }
   }
@@ -484,8 +459,7 @@ public class IntrinsicRoster<T> implements Roster<T> {
         }
 
         return true;
-      }
-      finally {
+      } finally {
         lock.writeLock().unlock();
       }
     }
@@ -506,8 +480,7 @@ public class IntrinsicRoster<T> implements Roster<T> {
         }
 
         return true;
-      }
-      finally {
+      } finally {
         lock.writeLock().unlock();
       }
     }
@@ -535,8 +508,7 @@ public class IntrinsicRoster<T> implements Roster<T> {
       }
 
       return changed;
-    }
-    finally {
+    } finally {
       lock.writeLock().unlock();
     }
   }
@@ -561,8 +533,7 @@ public class IntrinsicRoster<T> implements Roster<T> {
       }
 
       return changed;
-    }
-    finally {
+    } finally {
       lock.writeLock().unlock();
     }
   }
@@ -572,8 +543,7 @@ public class IntrinsicRoster<T> implements Roster<T> {
     lock.writeLock().lock();
     try {
       structure.clear();
-    }
-    finally {
+    } finally {
       lock.writeLock().unlock();
     }
   }
@@ -595,8 +565,7 @@ public class IntrinsicRoster<T> implements Roster<T> {
       }
 
       return -1;
-    }
-    finally {
+    } finally {
       lock.readLock().unlock();
     }
   }
@@ -618,8 +587,7 @@ public class IntrinsicRoster<T> implements Roster<T> {
       }
 
       return -1;
-    }
-    finally {
+    } finally {
       lock.readLock().unlock();
     }
   }
@@ -634,9 +602,8 @@ public class IntrinsicRoster<T> implements Roster<T> {
     lock.readLock().lock();
     try {
 
-      return new IntrinsicRosterIterator<T>(this, null, (structure.getSize() == 0) ? null : structure.getHead(), 0);
-    }
-    finally {
+      return new IntrinsicRosterIterator<>(this, null, (structure.getSize() == 0) ? null : structure.getHead(), 0);
+    } finally {
       lock.readLock().unlock();
     }
   }
@@ -647,18 +614,15 @@ public class IntrinsicRoster<T> implements Roster<T> {
     try {
       if (index > structure.getSize()) {
         throw new IndexOutOfBoundsException(String.valueOf(index));
-      }
-      else if (index == structure.getSize()) {
-        return new IntrinsicRosterIterator<T>(this, (structure.getSize() == 0) ? null : structure.getTail(), null, index);
-      }
-      else {
+      } else if (index == structure.getSize()) {
+        return new IntrinsicRosterIterator<>(this, (structure.getSize() == 0) ? null : structure.getTail(), null, index);
+      } else {
 
         IntrinsicRosterNode<T> current = getNode(index);
 
-        return new IntrinsicRosterIterator<T>(this, getPrevInView(current), current, index);
+        return new IntrinsicRosterIterator<>(this, getPrevInView(current), current, index);
       }
-    }
-    finally {
+    } finally {
       lock.readLock().unlock();
     }
   }
@@ -672,9 +636,8 @@ public class IntrinsicRoster<T> implements Roster<T> {
     lock.readLock().lock();
     try {
 
-      return new IntrinsicRoster<T>(lock, new IntrinsicRosterStructure<T>(structure, getNode(fromIndex), (fromIndex == toIndex) ? getNode(fromIndex).getNext() : getNode(toIndex - 1), toIndex - fromIndex));
-    }
-    finally {
+      return new IntrinsicRoster<>(lock, new IntrinsicRosterStructure<T>(structure, getNode(fromIndex), (fromIndex == toIndex) ? getNode(fromIndex).getNext() : getNode(toIndex - 1), toIndex - fromIndex));
+    } finally {
       lock.readLock().unlock();
     }
   }

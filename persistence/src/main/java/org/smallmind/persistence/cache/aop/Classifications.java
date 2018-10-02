@@ -43,16 +43,14 @@ public class Classifications {
     if (!vector.asParameter()) {
 
       return vector.classifier();
-    }
-    else {
+    } else {
       if (!annotationType.equals(CacheAs.class)) {
         throw new CacheAutomationError("Parameter based classifiers can only be used to annotate method executions (@CacheAs)");
       }
 
       try {
         return AOPUtility.getParameterValue(joinPoint, vector.classifier(), false).toString();
-      }
-      catch (Exception exception) {
+      } catch (Exception exception) {
         throw new CacheAutomationError(exception);
       }
     }

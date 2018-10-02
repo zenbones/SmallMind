@@ -32,6 +32,13 @@
  */
 package org.smallmind.persistence.orm.spring.jdo.antique;
 
+import java.io.IOException;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Properties;
+import javax.jdo.JDOException;
+import javax.jdo.JDOHelper;
+import javax.jdo.PersistenceManagerFactory;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.springframework.beans.factory.BeanClassLoaderAware;
@@ -44,19 +51,11 @@ import org.springframework.dao.DataAccessException;
 import org.springframework.dao.support.PersistenceExceptionTranslator;
 import org.springframework.util.CollectionUtils;
 
-import javax.jdo.JDOException;
-import javax.jdo.JDOHelper;
-import javax.jdo.PersistenceManagerFactory;
-import java.io.IOException;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Properties;
-
 public class LocalPersistenceManagerFactoryBean implements FactoryBean<PersistenceManagerFactory>,
-  BeanClassLoaderAware, InitializingBean, DisposableBean, PersistenceExceptionTranslator {
+                                                             BeanClassLoaderAware, InitializingBean, DisposableBean, PersistenceExceptionTranslator {
 
-  protected final Log logger = LogFactory.getLog(getClass());
   private final Map<String, Object> jdoPropertyMap = new HashMap<String, Object>();
+  protected final Log logger = LogFactory.getLog(getClass());
   private String persistenceManagerFactoryName;
   private Resource configLocation;
   private ClassLoader beanClassLoader;
@@ -64,7 +63,6 @@ public class LocalPersistenceManagerFactoryBean implements FactoryBean<Persisten
   private PersistenceManagerFactory persistenceManagerFactory;
 
   private JdoDialect jdoDialect;
-
 
   /**
    * Specify the name of the desired PersistenceManagerFactory.
@@ -75,7 +73,8 @@ public class LocalPersistenceManagerFactoryBean implements FactoryBean<Persisten
    * <p>Default is none: Either 'persistenceManagerFactoryName' or 'configLocation'
    * or 'jdoProperties' needs to be specified.
    */
-  public void setPersistenceManagerFactoryName(String persistenceManagerFactoryName) {
+  public void setPersistenceManagerFactoryName (String persistenceManagerFactoryName) {
+
     this.persistenceManagerFactoryName = persistenceManagerFactoryName;
   }
 
@@ -85,7 +84,8 @@ public class LocalPersistenceManagerFactoryBean implements FactoryBean<Persisten
    * <p>Note: Can be omitted when all necessary properties are
    * specified locally via this bean.
    */
-  public void setConfigLocation(Resource configLocation) {
+  public void setConfigLocation (Resource configLocation) {
+
     this.configLocation = configLocation;
   }
 
@@ -96,7 +96,8 @@ public class LocalPersistenceManagerFactoryBean implements FactoryBean<Persisten
    * <p>Can be populated with a String "value" (parsed via PropertiesEditor)
    * or a "props" element in XML bean definitions.
    */
-  public void setJdoProperties(Properties jdoProperties) {
+  public void setJdoProperties (Properties jdoProperties) {
+
     CollectionUtils.mergePropertiesIntoMap(jdoProperties, this.jdoPropertyMap);
   }
 
@@ -106,7 +107,8 @@ public class LocalPersistenceManagerFactoryBean implements FactoryBean<Persisten
    * <p>Useful for specifying entries directly, for example via
    * "jdoPropertyMap[myKey]".
    */
-  public Map<String, Object> getJdoPropertyMap() {
+  public Map<String, Object> getJdoPropertyMap () {
+
     return this.jdoPropertyMap;
   }
 
@@ -115,7 +117,8 @@ public class LocalPersistenceManagerFactoryBean implements FactoryBean<Persisten
    * {@code JDOHelper.getPersistenceManagerFactory} (if any).
    * <p>Can be populated with a "map" or "props" element in XML bean definitions.
    */
-  public void setJdoPropertyMap(Map<String, Object> jdoProperties) {
+  public void setJdoPropertyMap (Map<String, Object> jdoProperties) {
+
     if (jdoProperties != null) {
       this.jdoPropertyMap.putAll(jdoProperties);
     }
@@ -127,29 +130,31 @@ public class LocalPersistenceManagerFactoryBean implements FactoryBean<Persisten
    * <p>Default is a DefaultJdoDialect based on the PersistenceManagerFactory's
    * underlying DataSource, if any.
    */
-  public void setJdoDialect(JdoDialect jdoDialect) {
+  public void setJdoDialect (JdoDialect jdoDialect) {
+
     this.jdoDialect = jdoDialect;
   }
 
   @Override
-  public void setBeanClassLoader(ClassLoader beanClassLoader) {
+  public void setBeanClassLoader (ClassLoader beanClassLoader) {
+
     this.beanClassLoader = beanClassLoader;
   }
-
 
   /**
    * Initialize the PersistenceManagerFactory for the given location.
    */
   @Override
-  public void afterPropertiesSet() throws IllegalArgumentException, IOException, JDOException {
+  public void afterPropertiesSet () throws IllegalArgumentException, IOException, JDOException {
+
     if (this.persistenceManagerFactoryName != null) {
       if (this.configLocation != null || !this.jdoPropertyMap.isEmpty()) {
         throw new IllegalStateException("'configLocation'/'jdoProperties' not supported in " +
-          "combination with 'persistenceManagerFactoryName' - specify one or the other, not both");
+                                          "combination with 'persistenceManagerFactoryName' - specify one or the other, not both");
       }
       if (logger.isInfoEnabled()) {
         logger.info("Building new JDO PersistenceManagerFactory for name '" +
-          this.persistenceManagerFactoryName + "'");
+                      this.persistenceManagerFactoryName + "'");
       }
       this.persistenceManagerFactory = newPersistenceManagerFactory(this.persistenceManagerFactoryName);
     } else {
@@ -180,7 +185,8 @@ public class LocalPersistenceManagerFactoryBean implements FactoryBean<Persisten
    * A custom implementation could prepare the instance in a specific way,
    * or use a custom PersistenceManagerFactory implementation.
    */
-  protected PersistenceManagerFactory newPersistenceManagerFactory(String name) {
+  protected PersistenceManagerFactory newPersistenceManagerFactory (String name) {
+
     return JDOHelper.getPersistenceManagerFactory(name, this.beanClassLoader);
   }
 
@@ -193,30 +199,32 @@ public class LocalPersistenceManagerFactoryBean implements FactoryBean<Persisten
    * A custom implementation could prepare the instance in a specific way,
    * or use a custom PersistenceManagerFactory implementation.
    */
-  protected PersistenceManagerFactory newPersistenceManagerFactory(Map<?, ?> props) {
+  protected PersistenceManagerFactory newPersistenceManagerFactory (Map<?, ?> props) {
+
     return JDOHelper.getPersistenceManagerFactory(props, this.beanClassLoader);
   }
-
 
   /**
    * Return the singleton PersistenceManagerFactory.
    */
   @Override
-  public PersistenceManagerFactory getObject() {
+  public PersistenceManagerFactory getObject () {
+
     return this.persistenceManagerFactory;
   }
 
   @Override
-  public Class<? extends PersistenceManagerFactory> getObjectType() {
+  public Class<? extends PersistenceManagerFactory> getObjectType () {
+
     return (this.persistenceManagerFactory != null ?
-      this.persistenceManagerFactory.getClass() : PersistenceManagerFactory.class);
+              this.persistenceManagerFactory.getClass() : PersistenceManagerFactory.class);
   }
 
   @Override
-  public boolean isSingleton() {
+  public boolean isSingleton () {
+
     return true;
   }
-
 
   /**
    * Implementation of the PersistenceExceptionTranslator interface,
@@ -225,25 +233,25 @@ public class LocalPersistenceManagerFactoryBean implements FactoryBean<Persisten
    * JdoDialect. Else returns {@code null} to indicate an unknown exception.
    */
   @Override
-  public DataAccessException translateExceptionIfPossible(RuntimeException ex) {
+  public DataAccessException translateExceptionIfPossible (RuntimeException ex) {
+
     if (ex instanceof JDOException) {
       if (this.jdoDialect != null) {
-        return this.jdoDialect.translateException((JDOException) ex);
+        return this.jdoDialect.translateException((JDOException)ex);
       } else {
-        return PersistenceManagerFactoryUtils.convertJdoAccessException((JDOException) ex);
+        return PersistenceManagerFactoryUtils.convertJdoAccessException((JDOException)ex);
       }
     }
     return null;
   }
 
-
   /**
    * Close the PersistenceManagerFactory on bean factory shutdown.
    */
   @Override
-  public void destroy() {
+  public void destroy () {
+
     logger.info("Closing JDO PersistenceManagerFactory");
     this.persistenceManagerFactory.close();
   }
-
 }

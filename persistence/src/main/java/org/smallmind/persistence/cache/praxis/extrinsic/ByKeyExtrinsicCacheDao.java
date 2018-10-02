@@ -38,6 +38,7 @@ import org.smallmind.nutsnbolts.lang.UnknownSwitchCaseException;
 import org.smallmind.persistence.Durable;
 import org.smallmind.persistence.UpdateMode;
 import org.smallmind.persistence.cache.AbstractCacheDao;
+import org.smallmind.persistence.cache.CASSupportingPersistenceCache;
 import org.smallmind.persistence.cache.CASValue;
 import org.smallmind.persistence.cache.CacheDomain;
 import org.smallmind.persistence.cache.DurableKey;
@@ -59,7 +60,7 @@ public class ByKeyExtrinsicCacheDao<I extends Serializable & Comparable<I>, D ex
     if (durable != null) {
 
       D cachedDurable;
-      DurableKey<I, D> durableKey = new DurableKey<I, D>(durableClass, durable.getId());
+      DurableKey<I, D> durableKey = new DurableKey<>(durableClass, durable.getId());
 
       switch (mode) {
         case SOFT:
@@ -81,19 +82,20 @@ public class ByKeyExtrinsicCacheDao<I extends Serializable & Comparable<I>, D ex
 
     if (durable != null) {
 
-      CASValue<DurableVector> casValue;
+      CASSupportingPersistenceCache<String, DurableVector<I, D>> persistenceCache = (CASSupportingPersistenceCache<String, DurableVector<I, D>>)getVectorCache(vectorKey.getElementClass());
+      CASValue<DurableVector<I, D>> casValue;
       DurableVector<I, D> vectorCopy;
 
       do {
-        if ((casValue = getVectorCache(vectorKey.getElementClass()).getViaCas(vectorKey.getKey())).getValue() == null) {
+        if ((casValue = persistenceCache.getViaCas(vectorKey.getKey())).getValue() == null) {
           break;
         }
 
-        vectorCopy = (!getVectorCache(vectorKey.getElementClass()).requiresCopyOnDistributedCASOperation()) ? null : casValue.getValue().copy();
+        vectorCopy = (!persistenceCache.requiresCopyOnDistributedCASOperation()) ? null : casValue.getValue().copy();
         if (!casValue.getValue().add(durable)) {
           break;
         }
-      } while (!getVectorCache(vectorKey.getElementClass()).putViaCas(vectorKey.getKey(), vectorCopy, casValue.getValue(), casValue.getVersion(), casValue.getValue().getTimeToLiveSeconds()));
+      } while (!persistenceCache.putViaCas(vectorKey.getKey(), vectorCopy, casValue.getValue(), casValue.getVersion(), casValue.getValue().getTimeToLiveSeconds()));
     }
   }
 
@@ -101,22 +103,23 @@ public class ByKeyExtrinsicCacheDao<I extends Serializable & Comparable<I>, D ex
 
     if (durable != null) {
 
-      CASValue<DurableVector> casValue;
+      CASSupportingPersistenceCache<String, DurableVector<I, D>> persistenceCache = (CASSupportingPersistenceCache<String, DurableVector<I, D>>)getVectorCache(vectorKey.getElementClass());
+      CASValue<DurableVector<I, D>> casValue;
       DurableVector<I, D> vectorCopy;
 
       do {
-        if ((casValue = getVectorCache(vectorKey.getElementClass()).getViaCas(vectorKey.getKey())).getValue() == null) {
+        if ((casValue = persistenceCache.getViaCas(vectorKey.getKey())).getValue() == null) {
           break;
         } else if (casValue.getValue().isSingular()) {
           deleteVector(vectorKey);
           break;
         }
 
-        vectorCopy = (!getVectorCache(vectorKey.getElementClass()).requiresCopyOnDistributedCASOperation()) ? null : casValue.getValue().copy();
+        vectorCopy = (!persistenceCache.requiresCopyOnDistributedCASOperation()) ? null : casValue.getValue().copy();
         if (!casValue.getValue().remove(durable)) {
           break;
         }
-      } while (!getVectorCache(vectorKey.getElementClass()).putViaCas(vectorKey.getKey(), vectorCopy, casValue.getValue(), casValue.getVersion(), casValue.getValue().getTimeToLiveSeconds()));
+      } while (!persistenceCache.putViaCas(vectorKey.getKey(), vectorCopy, casValue.getValue(), casValue.getVersion(), casValue.getValue().getTimeToLiveSeconds()));
     }
   }
 

@@ -32,26 +32,25 @@
  */
 package org.smallmind.persistence.orm.spring.jdo;
 
+import java.lang.annotation.Annotation;
+import javax.jdo.annotations.PersistenceCapable;
 import org.smallmind.persistence.ManagedDao;
 import org.smallmind.persistence.orm.jdo.JDODao;
 import org.smallmind.persistence.orm.spring.AbstractAnnotationSeekingBeanFactoryPostProcessor;
 
-import javax.jdo.annotations.PersistenceCapable;
-import java.lang.annotation.Annotation;
-
 public class AnnotationSeekingBeanFactoryPostProcessor extends AbstractAnnotationSeekingBeanFactoryPostProcessor {
 
-  private static final Class<? extends ManagedDao>[] DAO_IMPLEMENTATIONS = new Class[]{JDODao.class};
-  private static final Class<? extends Annotation>[] TARGET_ANNOTATIONS = new Class[]{PersistenceCapable.class};
+  private static final Class<? extends ManagedDao>[] DAO_IMPLEMENTATIONS = new Class[] {JDODao.class};
+  private static final Class<? extends Annotation>[] TARGET_ANNOTATIONS = new Class[] {PersistenceCapable.class};
 
   @Override
-  public Class<? extends ManagedDao>[] getDaoImplementations() {
+  public Class<? extends ManagedDao>[] getDaoImplementations () {
 
     return DAO_IMPLEMENTATIONS;
   }
 
   @Override
-  public Class<? extends Annotation>[] getTargetAnnotations() {
+  public Class<? extends Annotation>[] getTargetAnnotations () {
 
     return TARGET_ANNOTATIONS;
   }

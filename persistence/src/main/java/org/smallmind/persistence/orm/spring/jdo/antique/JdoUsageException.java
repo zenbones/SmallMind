@@ -32,19 +32,19 @@
  */
 package org.smallmind.persistence.orm.spring.jdo.antique;
 
-import org.springframework.dao.InvalidDataAccessApiUsageException;
-
 import javax.jdo.JDOFatalUserException;
 import javax.jdo.JDOUserException;
+import org.springframework.dao.InvalidDataAccessApiUsageException;
 
 public class JdoUsageException extends InvalidDataAccessApiUsageException {
 
-  public JdoUsageException(JDOUserException ex) {
+  public JdoUsageException (JDOUserException ex) {
+
     super(ex.getMessage(), ex);
   }
 
-  public JdoUsageException(JDOFatalUserException ex) {
+  public JdoUsageException (JDOFatalUserException ex) {
+
     super(ex.getMessage(), ex);
   }
-
 }

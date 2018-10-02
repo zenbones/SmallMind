@@ -36,11 +36,11 @@ import java.util.Arrays;
 import java.util.Map;
 import org.smallmind.memcached.ProxyCASResponse;
 import org.smallmind.memcached.ProxyMemcachedClient;
+import org.smallmind.persistence.cache.CASSupportingPersistenceCache;
 import org.smallmind.persistence.cache.CASValue;
 import org.smallmind.persistence.cache.CacheOperationException;
-import org.smallmind.persistence.cache.PersistenceCache;
 
-public class MemcachedCache<V> implements PersistenceCache<String, V> {
+public class MemcachedCache<V> implements CASSupportingPersistenceCache<String, V> {
 
   private ProxyMemcachedClient memcachedClient;
   private Class<V> valueClass;

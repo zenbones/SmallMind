@@ -37,7 +37,6 @@ import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.Set;
 import com.querydsl.core.BooleanBuilder;
-import com.querydsl.core.types.EntityPath;
 import com.querydsl.core.types.Expression;
 import com.querydsl.core.types.Ops;
 import com.querydsl.core.types.Order;

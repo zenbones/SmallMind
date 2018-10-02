@@ -56,8 +56,7 @@ public class PooledConnectionJugglingPin<P extends PooledConnection> extends Abs
     try {
 
       return pooledConnectionClass.cast(dataSource.getPooledConnection());
-    }
-    catch (SQLException sqlException) {
+    } catch (SQLException sqlException) {
       throw new JugglerResourceException(sqlException);
     }
   }
@@ -69,8 +68,7 @@ public class PooledConnectionJugglingPin<P extends PooledConnection> extends Abs
       dataSource.getPooledConnection().close();
 
       return true;
-    }
-    catch (SQLException sqlException) {
+    } catch (SQLException sqlException) {
 
       return false;
     }

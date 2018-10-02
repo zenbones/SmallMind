@@ -39,15 +39,15 @@ public class CASValue<V> {
   private V value;
   private long version;
 
-  public static <V> CASValue<V> nullInstance () {
-
-    return (CASValue<V>)NULL_CAS_VALUE;
-  }
-
   public CASValue (V value, long version) {
 
     this.value = value;
     this.version = version;
+  }
+
+  public static <V> CASValue<V> nullInstance () {
+
+    return (CASValue<V>)NULL_CAS_VALUE;
   }
 
   public long getVersion () {

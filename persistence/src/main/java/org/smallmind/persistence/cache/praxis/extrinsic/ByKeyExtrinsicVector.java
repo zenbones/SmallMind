@@ -53,17 +53,17 @@ public class ByKeyExtrinsicVector<I extends Serializable & Comparable<I>, D exte
 
     super(comparator, maxSize, timeToLiveSeconds, ordered);
 
-    ExtrinsicRoster<DurableKey<I, D>> keyRoster = new ExtrinsicRoster<DurableKey<I, D>>();
+    ExtrinsicRoster<DurableKey<I, D>> keyRoster = new ExtrinsicRoster<>();
     int index = 0;
 
     for (D durable : durables) {
-      keyRoster.add(new DurableKey<I, D>(durableClass, durable.getId()));
+      keyRoster.add(new DurableKey<>(durableClass, durable.getId()));
       if ((maxSize > 0) && (++index == maxSize)) {
         break;
       }
     }
 
-    roster = new ByKeyRoster<I, D>(durableClass, keyRoster);
+    roster = new ByKeyRoster<>(durableClass, keyRoster);
   }
 
   private ByKeyExtrinsicVector (ByKeyRoster<I, D> roster, Comparator<D> comparator, int maxSize, int timeToLiveSeconds, boolean ordered) {
@@ -80,12 +80,12 @@ public class ByKeyExtrinsicVector<I extends Serializable & Comparable<I>, D exte
 
   public DurableVector<I, D> copy () {
 
-    return new ByKeyExtrinsicVector<I, D>(new ByKeyRoster<I, D>(roster.getDurableClass(), new ExtrinsicRoster<DurableKey<I, D>>(roster.getInternalRoster())), getComparator(), getMaxSize(), getTimeToLiveSeconds(), isOrdered());
+    return new ByKeyExtrinsicVector<>(new ByKeyRoster<>(roster.getDurableClass(), new ExtrinsicRoster<>(roster.getInternalRoster())), getComparator(), getMaxSize(), getTimeToLiveSeconds(), isOrdered());
   }
 
   public synchronized List<D> asBestEffortLazyList () {
 
-    return Collections.unmodifiableList(new LinkedList<D>(getRoster()));
+    return Collections.unmodifiableList(new LinkedList<>(getRoster()));
   }
 
   public synchronized List<D> asBestEffortPreFetchedList () {
@@ -95,6 +95,6 @@ public class ByKeyExtrinsicVector<I extends Serializable & Comparable<I>, D exte
 
   public synchronized Iterator<D> iterator () {
 
-    return Collections.unmodifiableList(new LinkedList<D>(getRoster())).iterator();
+    return Collections.unmodifiableList(new LinkedList<>(getRoster())).iterator();
   }
 }

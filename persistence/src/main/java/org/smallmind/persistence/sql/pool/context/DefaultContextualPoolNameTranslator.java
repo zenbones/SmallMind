@@ -68,8 +68,7 @@ public class DefaultContextualPoolNameTranslator implements ContextualPoolNameTr
     if (poolName.length() == baseName.length()) {
 
       return null;
-    }
-    else if (!(poolName.charAt(baseName.length()) == separator)) {
+    } else if (!(poolName.charAt(baseName.length()) == separator)) {
       throw new ComponentPoolException("Unable to parse pool name(%s)", poolName);
     }
 

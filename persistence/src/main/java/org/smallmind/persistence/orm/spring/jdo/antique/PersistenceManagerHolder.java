@@ -32,10 +32,9 @@
  */
 package org.smallmind.persistence.orm.spring.jdo.antique;
 
+import javax.jdo.PersistenceManager;
 import org.springframework.transaction.support.ResourceHolderSupport;
 import org.springframework.util.Assert;
-
-import javax.jdo.PersistenceManager;
 
 /**
  * Holder wrapping a JDO PersistenceManager.
@@ -50,29 +49,31 @@ public class PersistenceManagerHolder extends ResourceHolderSupport {
 
   private boolean transactionActive;
 
+  public PersistenceManagerHolder (PersistenceManager persistenceManager) {
 
-  public PersistenceManagerHolder(PersistenceManager persistenceManager) {
     Assert.notNull(persistenceManager, "PersistenceManager must not be null");
     this.persistenceManager = persistenceManager;
   }
 
+  public PersistenceManager getPersistenceManager () {
 
-  public PersistenceManager getPersistenceManager() {
     return this.persistenceManager;
   }
 
-  protected boolean isTransactionActive() {
+  protected boolean isTransactionActive () {
+
     return this.transactionActive;
   }
 
-  protected void setTransactionActive(boolean transactionActive) {
+  protected void setTransactionActive (boolean transactionActive) {
+
     this.transactionActive = transactionActive;
   }
 
   @Override
-  public void clear() {
+  public void clear () {
+
     super.clear();
     this.transactionActive = false;
   }
-
 }

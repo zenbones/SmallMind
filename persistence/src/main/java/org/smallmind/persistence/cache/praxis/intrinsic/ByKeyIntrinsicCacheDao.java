@@ -86,8 +86,7 @@ public class ByKeyIntrinsicCacheDao<I extends Serializable & Comparable<I>, D ex
       if ((vector = getVectorCache(vectorKey.getElementClass()).get(vectorKey.getKey())) != null) {
         if (vector.isSingular()) {
           deleteVector(vectorKey);
-        }
-        else {
+        } else {
           vector.remove(durable);
         }
       }
@@ -103,8 +102,7 @@ public class ByKeyIntrinsicCacheDao<I extends Serializable & Comparable<I>, D ex
       }
 
       return vector;
-    }
-    else {
+    } else {
       if (!(vector instanceof ByKeyIntrinsicVector)) {
 
         return new ByKeyIntrinsicVector<>(managedClass, vector.asBestEffortPreFetchedList(), vector.getComparator(), vector.getMaxSize(), vector.getTimeToLiveSeconds(), vector.isOrdered());

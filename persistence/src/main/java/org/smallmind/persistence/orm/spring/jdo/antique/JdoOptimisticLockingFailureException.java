@@ -32,10 +32,9 @@
  */
 package org.smallmind.persistence.orm.spring.jdo.antique;
 
-import org.springframework.orm.ObjectOptimisticLockingFailureException;
-
 import javax.jdo.JDOHelper;
 import javax.jdo.JDOOptimisticVerificationException;
+import org.springframework.orm.ObjectOptimisticLockingFailureException;
 
 /**
  * JDO-specific subclass of ObjectOptimisticLockingFailureException.
@@ -44,11 +43,10 @@ import javax.jdo.JDOOptimisticVerificationException;
 @SuppressWarnings("serial")
 public class JdoOptimisticLockingFailureException extends ObjectOptimisticLockingFailureException {
 
-  public JdoOptimisticLockingFailureException(JDOOptimisticVerificationException ex) {
+  public JdoOptimisticLockingFailureException (JDOOptimisticVerificationException ex) {
     // Extract information about the failed object from the JDOException, if available.
     super((ex.getFailedObject() != null ? ex.getFailedObject().getClass() : null),
       (ex.getFailedObject() != null ? JDOHelper.getObjectId(ex.getFailedObject()) : null),
       ex.getMessage(), ex);
   }
-
 }

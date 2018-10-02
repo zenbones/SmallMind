@@ -73,8 +73,7 @@ public class PooledDataSource extends AbstractPooledDataSource<DataSource, Poole
 
     try {
       return componentPool.getComponent().getConnection();
-    }
-    catch (ComponentPoolException componentPoolException) {
+    } catch (ComponentPoolException componentPoolException) {
       throw new SQLException(componentPoolException);
     }
   }

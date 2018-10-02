@@ -155,20 +155,19 @@ public class EhcacheFactoryBean implements FactoryBean<Cache>, InitializingBean 
     net.sf.ehcache.config.MemoryUnit l;
 
     configuration = new CacheConfiguration(name, maxElementsInMemory)
-      .timeToIdleSeconds(timeToIdleSeconds)
-      .timeToLiveSeconds(timeToLiveSeconds)
-      .memoryStoreEvictionPolicy(memoryStoreEvictionPolicy)
-      .maxElementsOnDisk(maxElementsOnDisk).overflowToOffHeap(overflowToOffHeap).diskPersistent(diskPersistent)
-      .maxBytesLocalOffHeap(maxMemoryOffHeap.getSize(), maxMemoryOffHeap.getUnit())
-      .statistics(statistics)
-      .logging(logging)
-      .copyOnRead(copyOnRead)
-      .copyOnWrite(copyOnWrite);
+                      .timeToIdleSeconds(timeToIdleSeconds)
+                      .timeToLiveSeconds(timeToLiveSeconds)
+                      .memoryStoreEvictionPolicy(memoryStoreEvictionPolicy)
+                      .maxElementsOnDisk(maxElementsOnDisk).overflowToOffHeap(overflowToOffHeap).diskPersistent(diskPersistent)
+                      .maxBytesLocalOffHeap(maxMemoryOffHeap.getSize(), maxMemoryOffHeap.getUnit())
+                      .statistics(statistics)
+                      .logging(logging)
+                      .copyOnRead(copyOnRead)
+                      .copyOnWrite(copyOnWrite);
 
     if (transactionalMode.equals(TransactionalMode.LOCAL)) {
       configuration.transactionalMode(transactionalMode.asString());
-    }
-    else {
+    } else {
       configuration.transactionalMode(transactionalMode.asConfiguration());
     }
 

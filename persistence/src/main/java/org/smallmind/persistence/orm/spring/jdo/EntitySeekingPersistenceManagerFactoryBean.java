@@ -32,13 +32,12 @@
  */
 package org.smallmind.persistence.orm.spring.jdo;
 
-import org.smallmind.persistence.orm.spring.jdo.antique.LocalPersistenceManagerFactoryBean;
-
+import java.io.IOException;
+import java.util.HashMap;
 import javax.jdo.metadata.JDOMetadata;
 import javax.jdo.metadata.PackageMetadata;
 import javax.sql.DataSource;
-import java.io.IOException;
-import java.util.HashMap;
+import org.smallmind.persistence.orm.spring.jdo.antique.LocalPersistenceManagerFactoryBean;
 
 public class EntitySeekingPersistenceManagerFactoryBean extends LocalPersistenceManagerFactoryBean {
 
@@ -46,23 +45,23 @@ public class EntitySeekingPersistenceManagerFactoryBean extends LocalPersistence
   private DataSource dataSource;
   private String sessionSourceKey;
 
-  public void setAnnotationSeekingBeanFactoryPostProcessor(AnnotationSeekingBeanFactoryPostProcessor annotationSeekingBeanFactoryPostProcessor) {
+  public void setAnnotationSeekingBeanFactoryPostProcessor (AnnotationSeekingBeanFactoryPostProcessor annotationSeekingBeanFactoryPostProcessor) {
 
     this.annotationSeekingBeanFactoryPostProcessor = annotationSeekingBeanFactoryPostProcessor;
   }
 
-  public void setDataSource(DataSource dataSource) {
+  public void setDataSource (DataSource dataSource) {
 
     this.dataSource = dataSource;
   }
 
-  public void setSessionSourceKey(String sessionSourceKey) {
+  public void setSessionSourceKey (String sessionSourceKey) {
 
     this.sessionSourceKey = sessionSourceKey;
   }
 
   @Override
-  public void afterPropertiesSet()
+  public void afterPropertiesSet ()
     throws IOException {
 
     super.afterPropertiesSet();

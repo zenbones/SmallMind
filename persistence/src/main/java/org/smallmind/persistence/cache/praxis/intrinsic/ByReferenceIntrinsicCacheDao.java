@@ -86,8 +86,7 @@ public class ByReferenceIntrinsicCacheDao<I extends Serializable & Comparable<I>
       if ((vector = getVectorCache(vectorKey.getElementClass()).get(vectorKey.getKey())) != null) {
         if (vector.isSingular()) {
           deleteVector(vectorKey);
-        }
-        else {
+        } else {
           vector.remove(durable);
         }
       }
@@ -103,8 +102,7 @@ public class ByReferenceIntrinsicCacheDao<I extends Serializable & Comparable<I>
       }
 
       return vector;
-    }
-    else {
+    } else {
       if (!(vector instanceof ByReferenceIntrinsicVector)) {
 
         return new ByReferenceIntrinsicVector<>(new IntrinsicRoster<>(vector.asBestEffortPreFetchedList()), vector.getComparator(), vector.getMaxSize(), vector.getTimeToLiveSeconds(), vector.isOrdered());
@@ -141,8 +139,7 @@ public class ByReferenceIntrinsicCacheDao<I extends Serializable & Comparable<I>
         durableKey = new DurableKey<>(vectorKey.getElementClass(), element.getId());
         if ((inCacheDurable = getInstanceCache(vectorKey.getElementClass()).putIfAbsent(durableKey.getKey(), element, timeToLiveSeconds)) != null) {
           cacheConsistentElements.add(inCacheDurable);
-        }
-        else {
+        } else {
           cacheConsistentElements.add(element);
         }
       }

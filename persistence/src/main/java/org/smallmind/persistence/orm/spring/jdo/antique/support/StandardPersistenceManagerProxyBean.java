@@ -32,41 +32,41 @@
  */
 package org.smallmind.persistence.orm.spring.jdo.antique.support;
 
-import org.springframework.beans.factory.FactoryBean;
-import org.springframework.util.Assert;
-
 import javax.jdo.PersistenceManager;
 import javax.jdo.PersistenceManagerFactory;
+import org.springframework.beans.factory.FactoryBean;
+import org.springframework.util.Assert;
 
 public class StandardPersistenceManagerProxyBean implements FactoryBean<PersistenceManager> {
 
   private PersistenceManager proxy;
-
 
   /**
    * Set the target JDO PersistenceManagerFactory that this proxy should
    * delegate to. This should be the raw PersistenceManagerFactory, as
    * accessed by JdoTransactionManager.
    */
-  public void setPersistenceManagerFactory(PersistenceManagerFactory pmf) {
+  public void setPersistenceManagerFactory (PersistenceManagerFactory pmf) {
+
     Assert.notNull(pmf, "PersistenceManagerFactory must not be null");
     this.proxy = pmf.getPersistenceManagerProxy();
   }
 
-
   @Override
-  public PersistenceManager getObject() {
+  public PersistenceManager getObject () {
+
     return this.proxy;
   }
 
   @Override
-  public Class<? extends PersistenceManager> getObjectType() {
+  public Class<? extends PersistenceManager> getObjectType () {
+
     return (this.proxy != null ? this.proxy.getClass() : PersistenceManager.class);
   }
 
   @Override
-  public boolean isSingleton() {
+  public boolean isSingleton () {
+
     return true;
   }
-
 }

@@ -84,7 +84,7 @@ public abstract class AbstractPooledConnection<D extends CommonDataSource> imple
     }
 
     creationMilliseconds = System.currentTimeMillis();
-    proxyConnection = (Connection)Proxy.newProxyInstance(dataSource.getClass().getClassLoader(), new Class[]{Connection.class, Existential.class}, this);
+    proxyConnection = (Connection)Proxy.newProxyInstance(dataSource.getClass().getClassLoader(), new Class[] {Connection.class, Existential.class}, this);
 
     connectionEventListenerQueue = new ConcurrentLinkedQueue<>();
     statementEventListenerQueue = new ConcurrentLinkedQueue<>();

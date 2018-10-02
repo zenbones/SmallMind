@@ -30,26 +30,14 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.persistence.orm.spring.jdo.antique;
+package org.smallmind.persistence.cache;
 
-import javax.jdo.JDODataStoreException;
-import javax.jdo.JDOFatalDataStoreException;
-import org.springframework.dao.DataAccessResourceFailureException;
+public interface CASSupportingPersistenceCache<K, V> extends PersistenceCache<K, V> {
 
-/**
- * JDO-specific subclass of DataAccessResourceFailureException.
- * Converts JDO's JDODataStoreException and JDOFatalDataStoreException.
- */
-@SuppressWarnings("serial")
-public class JdoResourceFailureException extends DataAccessResourceFailureException {
+  boolean requiresCopyOnDistributedCASOperation ();
 
-  public JdoResourceFailureException (JDODataStoreException ex) {
+  CASValue<V> getViaCas (K key);
 
-    super(ex.getMessage(), ex);
-  }
-
-  public JdoResourceFailureException (JDOFatalDataStoreException ex) {
-
-    super(ex.getMessage(), ex);
-  }
+  boolean putViaCas (K key, V oldValue, V value, long version, int timeToLiveSeconds)
+    throws CacheOperationException;
 }

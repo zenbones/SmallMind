@@ -46,48 +46,37 @@ public enum HectorType {
     this.hectorTranslator = hectorTranslator;
   }
 
-  public HectorTranslator getHectorTranslator () {
-
-    return hectorTranslator;
-  }
-
   public static HectorTranslator getTranslator (Class<?> fieldType, String fieldName) {
 
     if (Date.class.isAssignableFrom(fieldType)) {
       return HectorType.DATE.getHectorTranslator();
-    }
-    else if (fieldType.isEnum()) {
+    } else if (fieldType.isEnum()) {
       return HectorType.ENUM.getHectorTranslator();
-    }
-    else if (CharSequence.class.isAssignableFrom(fieldType)) {
+    } else if (CharSequence.class.isAssignableFrom(fieldType)) {
       return HectorType.STRING.getHectorTranslator();
-    }
-    else if (long.class.equals(fieldType) || (Long.class.equals(fieldType))) {
+    } else if (long.class.equals(fieldType) || (Long.class.equals(fieldType))) {
       return HectorType.LONG.getHectorTranslator();
-    }
-    else if (boolean.class.equals(fieldType) || (Boolean.class.equals(fieldType))) {
+    } else if (boolean.class.equals(fieldType) || (Boolean.class.equals(fieldType))) {
       return HectorType.BOOLEAN.getHectorTranslator();
-    }
-    else if (int.class.equals(fieldType) || (Integer.class.equals(fieldType))) {
+    } else if (int.class.equals(fieldType) || (Integer.class.equals(fieldType))) {
       return HectorType.INTEGER.getHectorTranslator();
-    }
-    else if (double.class.equals(fieldType) || (Double.class.equals(fieldType))) {
+    } else if (double.class.equals(fieldType) || (Double.class.equals(fieldType))) {
       return HectorType.DOUBLE.getHectorTranslator();
-    }
-    else if (float.class.equals(fieldType) || (Float.class.equals(fieldType))) {
+    } else if (float.class.equals(fieldType) || (Float.class.equals(fieldType))) {
       return HectorType.FLOAT.getHectorTranslator();
-    }
-    else if (char.class.equals(fieldType) || (Character.class.equals(fieldType))) {
+    } else if (char.class.equals(fieldType) || (Character.class.equals(fieldType))) {
       return HectorType.CHARACTER.getHectorTranslator();
-    }
-    else if (short.class.equals(fieldType) || (Short.class.equals(fieldType))) {
+    } else if (short.class.equals(fieldType) || (Short.class.equals(fieldType))) {
       return HectorType.SHORT.getHectorTranslator();
-    }
-    else if (byte.class.equals(fieldType) || (Byte.class.equals(fieldType))) {
+    } else if (byte.class.equals(fieldType) || (Byte.class.equals(fieldType))) {
       return HectorType.BYTE.getHectorTranslator();
-    }
-    else {
+    } else {
       throw new PersistenceException("Unknown field(%s) type(%s)", fieldName, fieldType.getName());
     }
+  }
+
+  public HectorTranslator getHectorTranslator () {
+
+    return hectorTranslator;
   }
 }
