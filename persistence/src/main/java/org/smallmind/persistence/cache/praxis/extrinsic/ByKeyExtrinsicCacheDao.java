@@ -45,6 +45,8 @@ import org.smallmind.persistence.cache.DurableVector;
 import org.smallmind.persistence.cache.VectorKey;
 import org.smallmind.persistence.cache.praxis.ByKeySingularVector;
 
+// The cache is external to the JVM, or lacks thread-safe operations, and requires CAS operations
+// The vector cache references the instance cache by a unique key
 public class ByKeyExtrinsicCacheDao<I extends Serializable & Comparable<I>, D extends Durable<I>> extends AbstractCacheDao<I, D> {
 
   public ByKeyExtrinsicCacheDao (CacheDomain<I, D> cacheDomain) {
