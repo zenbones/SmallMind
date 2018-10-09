@@ -128,7 +128,7 @@ public class MethodInvoker {
       if ((contexts != null) && (contexts.length > 0)) {
         for (WireContext context : contexts) {
           if (context != null) {
-            ContextFactory.popContext(context);
+            ContextFactory.popContext(context.getClass());
           }
         }
       }

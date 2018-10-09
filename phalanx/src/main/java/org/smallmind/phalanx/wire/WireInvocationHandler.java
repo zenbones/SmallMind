@@ -136,15 +136,13 @@ public class WireInvocationHandler implements InvocationHandler {
       }
     }
 
-    if ((filteredContexts = ContextFactory.getContextsOn(method, WireContext.class)) != null) {
+    if ((filteredContexts = ContextFactory.filterContextsOn(method, WireContext.class)) != null) {
 
       int index = 0;
 
       wireContexts = new WireContext[filteredContexts.length];
-      for (Context expectedContext : filteredContexts) {
-        if (expectedContext instanceof WireContext) {
-          wireContexts[index++] = (WireContext)expectedContext;
-        }
+      for (Context filteredContext : filteredContexts) {
+        wireContexts[index++] = (WireContext)filteredContext;
       }
     }
 
