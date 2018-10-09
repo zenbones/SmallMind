@@ -82,8 +82,8 @@ public class ContextFactory {
 
     exportedList = new LinkedList<>();
     if ((contextStack = (LinkedList<C>)CONTEXT_MAP_LOCAL.get().get(contextClass)) != null) {
-      while ((context = contextStack.pop()) != null) {
-        exportedList.addFirst(context);
+      while (!contextStack.isEmpty()) {
+        exportedList.addFirst(contextStack.pop());
       }
     }
 
@@ -95,13 +95,10 @@ public class ContextFactory {
 
   public static <C extends Context> void clearContextTrace (Class<C> contextClass) {
 
-    C context;
     LinkedList<C> contextStack;
 
     if ((contextStack = (LinkedList<C>)CONTEXT_MAP_LOCAL.get().get(contextClass)) != null) {
-      do {
-        context = contextStack.pop();
-      } while (context != null);
+      contextStack.clear();
     }
   }
 
@@ -184,7 +181,9 @@ public class ContextFactory {
     LinkedList<C> contextStack;
 
     if ((contextStack = (LinkedList<C>)CONTEXT_MAP_LOCAL.get().get(contextClass)) != null) {
-      return contextStack.pop();
+      if (!contextStack.isEmpty()) {
+        return contextStack.pop();
+      }
     }
 
     return null;
