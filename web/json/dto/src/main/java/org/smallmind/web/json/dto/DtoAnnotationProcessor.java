@@ -447,7 +447,7 @@ public class DtoAnnotationProcessor extends AbstractProcessor {
         // entity factory
         writer.write("  public ");
         if (classElement.getModifiers().contains(Modifier.ABSTRACT)) {
-          writer.write("  abstract ");
+          writer.write("abstract ");
         }
         writer.write(classElement.getSimpleName().toString());
         if (classElement.getModifiers().contains(Modifier.ABSTRACT)) {
