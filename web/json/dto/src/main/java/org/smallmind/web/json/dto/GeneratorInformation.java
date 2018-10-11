@@ -44,10 +44,12 @@ import org.smallmind.nutsnbolts.lang.UnknownSwitchCaseException;
 
 public class GeneratorInformation {
 
-  private final DirectionalGuide inMap = new DirectionalGuide(Direction.IN);
-  private final DirectionalGuide outMap = new DirectionalGuide(Direction.OUT);
-  private final HashSet<String> inPurposeSet = new HashSet<>();
-  private final HashSet<String> outPurposeSet = new HashSet<>();
+  private final DirectionalGuide inDirectionalGuide = new DirectionalGuide(Direction.IN);
+  private final DirectionalGuide outDirectionalGuide = new DirectionalGuide(Direction.OUT);
+  private final HashSet<String> inPledgedSet = new HashSet<>();
+  private final HashSet<String> outPledgedSet = new HashSet<>();
+  private final HashSet<String> inOverwroughtSet;
+  private final HashSet<String> outOverwroughtSet;
   private final List<TypeElement> polymorphicSubClassList;
   private final TypeMirror polymorphicBaseClass;
   private final String name;
@@ -65,19 +67,22 @@ public class GeneratorInformation {
 
       switch (pledgeInformation.getVisibility()) {
         case BOTH:
-          inPurposeSet.addAll(pledgeInformation.getPurposeList());
-          outPurposeSet.addAll(pledgeInformation.getPurposeList());
+          inPledgedSet.addAll(pledgeInformation.getPurposeList());
+          outPledgedSet.addAll(pledgeInformation.getPurposeList());
           break;
         case IN:
-          inPurposeSet.addAll(pledgeInformation.getPurposeList());
+          inPledgedSet.addAll(pledgeInformation.getPurposeList());
           break;
         case OUT:
-          outPurposeSet.addAll(pledgeInformation.getPurposeList());
+          outPledgedSet.addAll(pledgeInformation.getPurposeList());
           break;
         default:
           throw new UnknownSwitchCaseException(pledgeInformation.getVisibility().name());
       }
     }
+
+    inOverwroughtSet = new HashSet<>(inPledgedSet);
+    outOverwroughtSet = new HashSet<>(outPledgedSet);
 
     for (AnnotationMirror propertyAnnotationMirror : AptUtility.extractAnnotationValueAsList(generatorAnnotationMirror, "properties", AnnotationMirror.class)) {
 
@@ -89,14 +94,14 @@ public class GeneratorInformation {
 
         switch (propertyBox.getVisibility()) {
           case IN:
-            inMap.put(propertyBox.getPurpose(), fieldName, propertyBox.getPropertyInformation());
+            inDirectionalGuide.put(propertyBox.getPurpose(), fieldName, propertyBox.getPropertyInformation());
             break;
           case OUT:
-            outMap.put(propertyBox.getPurpose(), fieldName, propertyBox.getPropertyInformation());
+            outDirectionalGuide.put(propertyBox.getPurpose(), fieldName, propertyBox.getPropertyInformation());
             break;
           case BOTH:
-            inMap.put(propertyBox.getPurpose(), fieldName, propertyBox.getPropertyInformation());
-            outMap.put(propertyBox.getPurpose(), fieldName, propertyBox.getPropertyInformation());
+            inDirectionalGuide.put(propertyBox.getPurpose(), fieldName, propertyBox.getPropertyInformation());
+            outDirectionalGuide.put(propertyBox.getPurpose(), fieldName, propertyBox.getPropertyInformation());
             break;
           default:
             throw new UnknownSwitchCaseException(propertyBox.getVisibility().name());
@@ -120,37 +125,37 @@ public class GeneratorInformation {
     return polymorphicSubClassList;
   }
 
-  public DirectionalGuide getInMap () {
+  public DirectionalGuide getInDirectionalGuide () {
 
-    return inMap;
+    return inDirectionalGuide;
   }
 
-  public DirectionalGuide getOutMap () {
+  public DirectionalGuide getOutDirectionalGuide () {
 
-    return outMap;
+    return outDirectionalGuide;
   }
 
   public void denotePurpose (Direction direction, String purpose) {
 
     switch (direction) {
       case IN:
-        inPurposeSet.remove(purpose);
+        inPledgedSet.remove(purpose);
         break;
       case OUT:
-        outPurposeSet.remove(purpose);
+        outPledgedSet.remove(purpose);
         break;
       default:
         throw new UnknownSwitchCaseException(direction.name());
     }
   }
 
-  public Iterable<String> originalPurposes (Direction direction) {
+  public Iterable<String> pledgedPurposes (Direction direction) {
 
     switch (direction) {
       case IN:
-        return inPurposeSet;
+        return inPledgedSet;
       case OUT:
-        return outPurposeSet;
+        return outPledgedSet;
       default:
         throw new UnknownSwitchCaseException(direction.name());
     }
@@ -161,10 +166,32 @@ public class GeneratorInformation {
     switch (direction) {
       case IN:
         // Avoids concurrent modification
-        return new HashSet<>(inPurposeSet);
+        return new HashSet<>(inPledgedSet);
       case OUT:
         // Avoids concurrent modification
-        return new HashSet<>(outPurposeSet);
+        return new HashSet<>(outPledgedSet);
+      default:
+        throw new UnknownSwitchCaseException(direction.name());
+    }
+  }
+
+  public String[] overwroughtPurposes (Direction direction) {
+
+    String[] purposes;
+
+    switch (direction) {
+      case IN:
+        inOverwroughtSet.retainAll(inDirectionalGuide.keySet());
+        purposes = new String[inOverwroughtSet.size()];
+        inOverwroughtSet.toArray(purposes);
+
+        return purposes;
+      case OUT:
+        outOverwroughtSet.retainAll(outDirectionalGuide.keySet());
+        purposes = new String[outOverwroughtSet.size()];
+        outOverwroughtSet.toArray(purposes);
+
+        return purposes;
       default:
         throw new UnknownSwitchCaseException(direction.name());
     }

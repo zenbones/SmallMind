@@ -44,25 +44,25 @@ public class TrackingMap extends HashMap<TypeElement, HashMap<String, Visibility
 
     put(classElement, purposeMap = new HashMap<>());
 
-    for (String originalPurpose : generatorInformation.originalPurposes(Direction.IN)) {
-      purposeMap.put(originalPurpose, Visibility.IN);
+    for (String pledgedPurpose : generatorInformation.pledgedPurposes(Direction.IN)) {
+      purposeMap.put(pledgedPurpose, Visibility.IN);
     }
-    for (Map.Entry<String, PropertyLexicon> purposeEntry : dtoClass.getInMap().entrySet()) {
+    for (Map.Entry<String, PropertyLexicon> purposeEntry : generatorInformation.getInDirectionalGuide().entrySet()) {
       if (purposeEntry.getValue().isReal() || purposeEntry.getValue().isVirtual()) {
         purposeMap.put(purposeEntry.getKey(), Visibility.IN);
       }
     }
-    for (String originalPurpose : generatorInformation.originalPurposes(Direction.OUT)) {
+    for (String pledgedPurpose : generatorInformation.pledgedPurposes(Direction.OUT)) {
 
       Visibility visibility;
 
-      if ((visibility = purposeMap.get(originalPurpose)) == null) {
-        purposeMap.put(originalPurpose, Visibility.OUT);
+      if ((visibility = purposeMap.get(pledgedPurpose)) == null) {
+        purposeMap.put(pledgedPurpose, Visibility.OUT);
       } else if (Visibility.IN.equals(visibility)) {
-        purposeMap.put(originalPurpose, Visibility.BOTH);
+        purposeMap.put(pledgedPurpose, Visibility.BOTH);
       }
     }
-    for (Map.Entry<String, PropertyLexicon> purposeEntry : dtoClass.getOutMap().entrySet()) {
+    for (Map.Entry<String, PropertyLexicon> purposeEntry : generatorInformation.getOutDirectionalGuide().entrySet()) {
       if (purposeEntry.getValue().isReal() || purposeEntry.getValue().isVirtual()) {
 
         Visibility visibility;

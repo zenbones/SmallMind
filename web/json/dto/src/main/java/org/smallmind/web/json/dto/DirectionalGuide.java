@@ -46,13 +46,6 @@ public class DirectionalGuide {
     this.direction = direction;
   }
 
-  public DirectionalGuide (Direction direction, DirectionalGuide directionalGuide) {
-
-    this(direction);
-
-    lexiconMap.putAll(directionalGuide.getLexiconMap());
-  }
-
   private HashMap<String, PropertyLexicon> getLexiconMap () {
 
     return lexiconMap;
@@ -76,6 +69,11 @@ public class DirectionalGuide {
     } else {
       propertyLexicon.put(fieldName, propertyInformation);
     }
+  }
+
+  public Set<String> keySet () {
+
+    return lexiconMap.keySet();
   }
 
   public Set<Map.Entry<String, PropertyLexicon>> entrySet () {

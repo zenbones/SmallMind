@@ -34,6 +34,7 @@ package org.smallmind.web.json.dto;
 
 import java.io.BufferedWriter;
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.Map;
 import java.util.Objects;
@@ -120,13 +121,13 @@ public class DtoAnnotationProcessor extends AbstractProcessor {
           generate(polymorphicSubClass);
         }
 
-        for (Map.Entry<String, PropertyLexicon> purposeEntry : dtoClass.getInMap().entrySet()) {
+        for (Map.Entry<String, PropertyLexicon> purposeEntry : generatorInformation.getInDirectionalGuide().entrySet()) {
           processIn(generatorInformation, classElement, nearestDtoSuperclass, purposeEntry.getKey(), purposeEntry.getValue());
         }
         for (String unfulfilledPurpose : generatorInformation.unfulfilledPurposes(Direction.IN)) {
           processIn(generatorInformation, classElement, nearestDtoSuperclass, unfulfilledPurpose, new PropertyLexicon());
         }
-        for (Map.Entry<String, PropertyLexicon> purposeEntry : dtoClass.getOutMap().entrySet()) {
+        for (Map.Entry<String, PropertyLexicon> purposeEntry : generatorInformation.getOutDirectionalGuide().entrySet()) {
           processOut(generatorInformation, classElement, nearestDtoSuperclass, purposeEntry.getKey(), purposeEntry.getValue());
         }
         for (String unfulfilledPurpose : generatorInformation.unfulfilledPurposes(Direction.OUT)) {
@@ -135,6 +136,29 @@ public class DtoAnnotationProcessor extends AbstractProcessor {
 
         if (trackingMap.hasNoPurpose(classElement)) {
           throw new DtoDefinitionException("The class(%s) was annotated as @%s but contained no properties", classElement.getQualifiedName(), DtoGenerator.class.getSimpleName());
+        } else {
+
+          String[] inOverwroughtPurposes = generatorInformation.overwroughtPurposes(Direction.IN);
+          String[] outOverwroughtPurposes = generatorInformation.overwroughtPurposes(Direction.OUT);
+
+          if ((inOverwroughtPurposes.length > 0) || (outOverwroughtPurposes.length > 0)) {
+
+            StringBuilder warningBuilder = new StringBuilder("The class(").append(classElement.getQualifiedName()).append(") was annotated with the unnecessary @Pledge(");
+
+            if (inOverwroughtPurposes.length > 0) {
+              warningBuilder.append("IN").append(Arrays.toString(inOverwroughtPurposes));
+            }
+            if (outOverwroughtPurposes.length > 0) {
+              if (inOverwroughtPurposes.length > 0) {
+                warningBuilder.append(" , ");
+              }
+              warningBuilder.append("OUT").append(Arrays.toString(outOverwroughtPurposes));
+            }
+
+            warningBuilder.append(')');
+
+            processingEnv.getMessager().printMessage(Diagnostic.Kind.WARNING, warningBuilder, classElement);
+          }
         }
       }
     }

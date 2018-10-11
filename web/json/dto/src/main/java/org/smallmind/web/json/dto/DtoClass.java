@@ -49,11 +49,10 @@ import org.smallmind.nutsnbolts.lang.UnknownSwitchCaseException;
 
 public class DtoClass {
 
-  private final DirectionalGuide inMap;
-  private final DirectionalGuide outMap;
   private final HashMap<String, ExecutableElement> setMethodMap = new HashMap<>();
   private final HashSet<String> isFieldNameSet = new HashSet<>();
   private final HashSet<String> getFieldNameSet = new HashSet<>();
+  private final GeneratorInformation generatorInformation;
   private final TypeElement classElement;
 
   public DtoClass (ProcessingEnvironment processingEnvironment, DtoAnnotationProcessor dtoAnnotationProcessor, TypeElement classElement, GeneratorInformation generatorInformation, UsefulTypeMirrors usefulTypeMirrors)
@@ -62,9 +61,7 @@ public class DtoClass {
     HashSet<Name> getMethodNameSet = new HashSet<>();
 
     this.classElement = classElement;
-
-    inMap = new DirectionalGuide(Direction.IN, generatorInformation.getInMap());
-    outMap = new DirectionalGuide(Direction.OUT, generatorInformation.getOutMap());
+    this.generatorInformation = generatorInformation;
 
     for (Element enclosedElement : classElement.getEnclosedElements()) {
       if (enclosedElement.getModifiers().contains(javax.lang.model.element.Modifier.STATIC) && (enclosedElement.getAnnotation(DtoProperty.class) != null)) {
@@ -88,7 +85,7 @@ public class DtoClass {
                 throw new DtoDefinitionException("The 'is' method(%s) found in class(%s) can't be annotated as 'IN' only", enclosedElement.getSimpleName(), classElement.getQualifiedName());
               }
 
-              outMap.put(propertyBox.getPurpose(), fieldName, propertyBox.getPropertyInformation());
+              generatorInformation.getOutDirectionalGuide().put(propertyBox.getPurpose(), fieldName, propertyBox.getPropertyInformation());
             }
           }
 
@@ -106,7 +103,7 @@ public class DtoClass {
               }
 
               dtoAnnotationProcessor.processTypeMirror(((ExecutableElement)enclosedElement).getReturnType());
-              outMap.put(propertyBox.getPurpose(), fieldName, propertyBox.getPropertyInformation());
+              generatorInformation.getOutDirectionalGuide().put(propertyBox.getPurpose(), fieldName, propertyBox.getPropertyInformation());
             }
           }
 
@@ -124,7 +121,7 @@ public class DtoClass {
               }
 
               dtoAnnotationProcessor.processTypeMirror(((ExecutableElement)enclosedElement).getParameters().get(0).asType());
-              inMap.put(propertyBox.getPurpose(), fieldName, propertyBox.getPropertyInformation());
+              generatorInformation.getInDirectionalGuide().put(propertyBox.getPurpose(), fieldName, propertyBox.getPropertyInformation());
             }
           }
 
@@ -144,14 +141,14 @@ public class DtoClass {
           for (PropertyBox propertyBox : new PropertyParser(dtoPropertyAnnotationMirror, enclosedElement.asType(), false)) {
             switch (propertyBox.getVisibility()) {
               case IN:
-                inField(enclosedElement.getSimpleName().toString(), propertyBox);
+                addInField(enclosedElement.getSimpleName().toString(), propertyBox);
                 break;
               case OUT:
-                outField(enclosedElement.getSimpleName().toString(), propertyBox);
+                addOutField(enclosedElement.getSimpleName().toString(), propertyBox);
                 break;
               case BOTH:
-                inField(enclosedElement.getSimpleName().toString(), propertyBox);
-                outField(enclosedElement.getSimpleName().toString(), propertyBox);
+                addInField(enclosedElement.getSimpleName().toString(), propertyBox);
+                addOutField(enclosedElement.getSimpleName().toString(), propertyBox);
                 break;
               default:
                 throw new UnknownSwitchCaseException(propertyBox.getVisibility().name());
@@ -168,7 +165,7 @@ public class DtoClass {
                 throw new DtoDefinitionException("The 'getter' method(%s) found in class(%s) must have a corresponding 'setter'", enclosedElement.getSimpleName(), classElement.getQualifiedName());
               } else {
                 dtoAnnotationProcessor.processTypeMirror(setMethodMap.get(fieldName).getParameters().get(0).asType());
-                inMap.put(propertyBox.getPurpose(), fieldName, propertyBox.getPropertyInformation());
+                generatorInformation.getInDirectionalGuide().put(propertyBox.getPurpose(), fieldName, propertyBox.getPropertyInformation());
               }
             }
           }
@@ -177,31 +174,21 @@ public class DtoClass {
     }
   }
 
-  public DirectionalGuide getInMap () {
-
-    return inMap;
-  }
-
-  public DirectionalGuide getOutMap () {
-
-    return outMap;
-  }
-
-  private void inField (String fieldName, PropertyBox propertyBox)
+  private void addInField (String fieldName, PropertyBox propertyBox)
     throws DtoDefinitionException {
 
     if (setMethodMap.containsKey(fieldName)) {
-      inMap.put(propertyBox.getPurpose(), fieldName, propertyBox.getPropertyInformation());
+      generatorInformation.getInDirectionalGuide().put(propertyBox.getPurpose(), fieldName, propertyBox.getPropertyInformation());
     } else {
       throw new DtoDefinitionException("The property field(%s) has no 'setter' method in class(%s)", fieldName, classElement.getQualifiedName());
     }
   }
 
-  private void outField (String fieldName, PropertyBox propertyBox)
+  private void addOutField (String fieldName, PropertyBox propertyBox)
     throws DtoDefinitionException {
 
     if (getFieldNameSet.contains(fieldName) || isFieldNameSet.contains(fieldName)) {
-      outMap.put(propertyBox.getPurpose(), fieldName, propertyBox.getPropertyInformation());
+      generatorInformation.getOutDirectionalGuide().put(propertyBox.getPurpose(), fieldName, propertyBox.getPropertyInformation());
     } else {
       throw new DtoDefinitionException("The property field(%s) has no 'getter' method in class(%s)", fieldName, classElement.getQualifiedName());
     }
