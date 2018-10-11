@@ -42,11 +42,15 @@ import javax.xml.bind.annotation.adapters.XmlAdapter;
 @Target({ElementType.FIELD, ElementType.METHOD})
 public @interface DtoProperty {
 
+  // the list of alternate idioms in which this property should be included (overrides the default idiom)
   Idiom[] idioms () default {};
 
+  // the xml adapter to be used for this property
   Class<? extends XmlAdapter> adapter () default DefaultXmlAdapter.class;
 
+  // the xml element name
   String name () default "";
 
+  // if the xml element is required
   boolean required () default false;
 }

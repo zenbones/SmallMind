@@ -40,9 +40,12 @@ import java.lang.annotation.Target;
 @Target({})
 public @interface Idiom {
 
+  // the constraint annotations to be applied to the property within this idiom
   Constraint[] constraints () default {};
 
+  // the visibility of the property within this idiom (IN, OUT or BOTH)
   Visibility visibility () default Visibility.BOTH;
 
+  // the name of this idiom (a short descriptive string such as 'create' or 'internal')
   String[] purposes () default {};
 }

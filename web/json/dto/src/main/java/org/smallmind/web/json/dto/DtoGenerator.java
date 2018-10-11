@@ -41,13 +41,18 @@ import java.lang.annotation.Target;
 @Target(ElementType.TYPE)
 public @interface DtoGenerator {
 
+  // the list of sub-classes assuming the current class is a parent class
   Class[] polymorphicSubClasses () default {};
 
+  // the parent class assuming the current class is a sub-class
   Class<?> polymorphicBaseClass () default NotPolymorphic.class;
 
+  // the list of virtual properties to be added to the dto
   Property[] properties () default {};
 
+  // the list of conditions under which to guarantee a dto is generated (should be used only when the dto would otherwise not be generated)
   Pledge[] pledges () default {};
 
+  // the xml root element name
   String name () default "";
 }
