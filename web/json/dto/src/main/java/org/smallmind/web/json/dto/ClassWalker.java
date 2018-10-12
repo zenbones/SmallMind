@@ -47,21 +47,15 @@ import javax.lang.model.type.TypeKind;
 import org.smallmind.nutsnbolts.apt.AptUtility;
 import org.smallmind.nutsnbolts.lang.UnknownSwitchCaseException;
 
-public class DtoClass {
+public class ClassWalker {
 
-  private final HashMap<String, ExecutableElement> setMethodMap = new HashMap<>();
-  private final HashSet<String> isFieldNameSet = new HashSet<>();
-  private final HashSet<String> getFieldNameSet = new HashSet<>();
-  private final GeneratorInformation generatorInformation;
-  private final TypeElement classElement;
-
-  public DtoClass (ProcessingEnvironment processingEnvironment, DtoAnnotationProcessor dtoAnnotationProcessor, TypeElement classElement, GeneratorInformation generatorInformation, UsefulTypeMirrors usefulTypeMirrors)
+  public static void walk (ProcessingEnvironment processingEnvironment, DtoAnnotationProcessor dtoAnnotationProcessor, TypeElement classElement, GeneratorInformation generatorInformation, UsefulTypeMirrors usefulTypeMirrors)
     throws IOException, DtoDefinitionException {
 
+    HashMap<String, ExecutableElement> setMethodMap = new HashMap<>();
     HashSet<Name> getMethodNameSet = new HashSet<>();
-
-    this.classElement = classElement;
-    this.generatorInformation = generatorInformation;
+    HashSet<String> getFieldNameSet = new HashSet<>();
+    HashSet<String> isFieldNameSet = new HashSet<>();
 
     for (Element enclosedElement : classElement.getEnclosedElements()) {
       if (enclosedElement.getModifiers().contains(javax.lang.model.element.Modifier.STATIC) && (enclosedElement.getAnnotation(DtoProperty.class) != null)) {
@@ -141,14 +135,14 @@ public class DtoClass {
           for (PropertyBox propertyBox : new PropertyParser(dtoPropertyAnnotationMirror, enclosedElement.asType(), false)) {
             switch (propertyBox.getVisibility()) {
               case IN:
-                addInField(enclosedElement.getSimpleName().toString(), propertyBox);
+                addInField(classElement, generatorInformation, setMethodMap, enclosedElement.getSimpleName().toString(), propertyBox);
                 break;
               case OUT:
-                addOutField(enclosedElement.getSimpleName().toString(), propertyBox);
+                addOutField(classElement, generatorInformation, getFieldNameSet, isFieldNameSet, enclosedElement.getSimpleName().toString(), propertyBox);
                 break;
               case BOTH:
-                addInField(enclosedElement.getSimpleName().toString(), propertyBox);
-                addOutField(enclosedElement.getSimpleName().toString(), propertyBox);
+                addInField(classElement, generatorInformation, setMethodMap, enclosedElement.getSimpleName().toString(), propertyBox);
+                addOutField(classElement, generatorInformation, getFieldNameSet, isFieldNameSet, enclosedElement.getSimpleName().toString(), propertyBox);
                 break;
               default:
                 throw new UnknownSwitchCaseException(propertyBox.getVisibility().name());
@@ -174,7 +168,7 @@ public class DtoClass {
     }
   }
 
-  private void addInField (String fieldName, PropertyBox propertyBox)
+  private static void addInField (TypeElement classElement, GeneratorInformation generatorInformation, HashMap<String, ExecutableElement> setMethodMap, String fieldName, PropertyBox propertyBox)
     throws DtoDefinitionException {
 
     if (setMethodMap.containsKey(fieldName)) {
@@ -184,7 +178,7 @@ public class DtoClass {
     }
   }
 
-  private void addOutField (String fieldName, PropertyBox propertyBox)
+  private static void addOutField (TypeElement classElement, GeneratorInformation generatorInformation, HashSet<String> getFieldNameSet, HashSet<String> isFieldNameSet, String fieldName, PropertyBox propertyBox)
     throws DtoDefinitionException {
 
     if (getFieldNameSet.contains(fieldName) || isFieldNameSet.contains(fieldName)) {

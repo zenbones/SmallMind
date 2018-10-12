@@ -67,7 +67,7 @@ import org.smallmind.nutsnbolts.reflection.bean.BeanUtility;
 @AutoService(Processor.class)
 public class DtoAnnotationProcessor extends AbstractProcessor {
 
-  private final TrackingMap trackingMap = new TrackingMap();
+  private final ClassTracker classTracker = new ClassTracker();
 
   @Override
   public boolean process (Set<? extends TypeElement> annotations, RoundEnvironment roundEnv) {
@@ -102,21 +102,24 @@ public class DtoAnnotationProcessor extends AbstractProcessor {
 
     AnnotationMirror dtoGeneratorAnnotationMirror;
 
-    if ((!trackingMap.containsKey(classElement)) && ((dtoGeneratorAnnotationMirror = AptUtility.extractAnnotationMirror(processingEnv, classElement, processingEnv.getElementUtils().getTypeElement(DtoGenerator.class.getName()).asType())) != null)) {
+    if ((!classTracker.contains(classElement)) && ((dtoGeneratorAnnotationMirror = AptUtility.extractAnnotationMirror(processingEnv, classElement, processingEnv.getElementUtils().getTypeElement(DtoGenerator.class.getName()).asType())) != null)) {
       if ((!ElementKind.CLASS.equals(classElement.getKind())) || (!NestingKind.TOP_LEVEL.equals(classElement.getNestingKind()))) {
         throw new DtoDefinitionException("The class(%s) must be a root implementation of type 'class'", classElement.getQualifiedName());
       } else {
 
         UsefulTypeMirrors usefulTypeMirrors = new UsefulTypeMirrors(processingEnv);
-        GeneratorInformation generatorInformation = new GeneratorInformation(processingEnv, this, dtoGeneratorAnnotationMirror);
-        DtoClass dtoClass = new DtoClass(processingEnv, this, classElement, generatorInformation, usefulTypeMirrors);
+        GeneratorInformation generatorInformation;
         TypeElement nearestDtoSuperclass;
 
-        trackingMap.track(classElement, generatorInformation, dtoClass);
-
+        classTracker.add(classElement);
         if ((nearestDtoSuperclass = getNearestDtoSuperclass(classElement)) != null) {
           generate(nearestDtoSuperclass);
         }
+
+        generatorInformation = new GeneratorInformation(processingEnv, this, nearestDtoSuperclass, classTracker, dtoGeneratorAnnotationMirror);
+        ClassWalker.walk(processingEnv, this, classElement, generatorInformation, usefulTypeMirrors);
+        classTracker.update(classElement, generatorInformation);
+
         for (TypeElement polymorphicSubClass : generatorInformation.getPolymorphicSubClassList()) {
           generate(polymorphicSubClass);
         }
@@ -134,7 +137,7 @@ public class DtoAnnotationProcessor extends AbstractProcessor {
           processOut(generatorInformation, classElement, nearestDtoSuperclass, unfulfilledPurpose, new PropertyLexicon());
         }
 
-        if (trackingMap.hasNoPurpose(classElement)) {
+        if (classTracker.hasNoPurpose(classElement)) {
           throw new DtoDefinitionException("The class(%s) was annotated as @%s but contained no properties", classElement.getQualifiedName(), DtoGenerator.class.getSimpleName());
         } else {
 
@@ -206,7 +209,7 @@ public class DtoAnnotationProcessor extends AbstractProcessor {
 
         Visibility visibility;
 
-        if (((visibility = trackingMap.getVisibility((TypeElement)element, purpose)) != null) && visibility.matches(direction)) {
+        if (((visibility = classTracker.getVisibility((TypeElement)element, purpose)) != null) && visibility.matches(direction)) {
 
           return processingEnv.getElementUtils().getPackageOf(element).getQualifiedName().toString() + '.' + asDtoName(element.getSimpleName(), purpose, direction).toString();
         }
@@ -226,7 +229,7 @@ public class DtoAnnotationProcessor extends AbstractProcessor {
 
         Visibility visibility;
 
-        return ((visibility = trackingMap.getVisibility((TypeElement)element, purpose)) != null) && visibility.matches(direction);
+        return ((visibility = classTracker.getVisibility((TypeElement)element, purpose)) != null) && visibility.matches(direction);
       }
     }
 
@@ -274,7 +277,7 @@ public class DtoAnnotationProcessor extends AbstractProcessor {
 
           Visibility visibility;
 
-          if (((visibility = trackingMap.getVisibility(polymorphicSubClass, purpose)) != null) && visibility.matches(direction)) {
+          if (((visibility = classTracker.getVisibility(polymorphicSubClass, purpose)) != null) && visibility.matches(direction)) {
             matchingSubClassList.add(polymorphicSubClass);
           }
         }

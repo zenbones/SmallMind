@@ -35,6 +35,7 @@ package org.smallmind.web.json.dto;
 import java.io.IOException;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import javax.annotation.processing.ProcessingEnvironment;
 import javax.lang.model.element.AnnotationMirror;
 import javax.lang.model.element.TypeElement;
@@ -48,13 +49,15 @@ public class GeneratorInformation {
   private final DirectionalGuide outDirectionalGuide = new DirectionalGuide(Direction.OUT);
   private final HashSet<String> inPledgedSet = new HashSet<>();
   private final HashSet<String> outPledgedSet = new HashSet<>();
+  private final HashSet<String> inEnforcedSet = new HashSet<>();
+  private final HashSet<String> outEnforcedSet = new HashSet<>();
   private final HashSet<String> inOverwroughtSet;
   private final HashSet<String> outOverwroughtSet;
   private final List<TypeElement> polymorphicSubClassList;
   private final TypeMirror polymorphicBaseClass;
   private final String name;
 
-  public GeneratorInformation (ProcessingEnvironment processingEnvironment, DtoAnnotationProcessor dtoAnnotationProcessor, AnnotationMirror generatorAnnotationMirror)
+  public GeneratorInformation (ProcessingEnvironment processingEnvironment, DtoAnnotationProcessor dtoAnnotationProcessor, TypeElement nearestDtoSuperclass, ClassTracker classTracker, AnnotationMirror generatorAnnotationMirror)
     throws IOException, DtoDefinitionException {
 
     name = AptUtility.extractAnnotationValue(generatorAnnotationMirror, "name", String.class, "");
@@ -83,6 +86,29 @@ public class GeneratorInformation {
 
     inOverwroughtSet = new HashSet<>(inPledgedSet);
     outOverwroughtSet = new HashSet<>(outPledgedSet);
+
+    if (nearestDtoSuperclass != null) {
+      for (Map.Entry<String, Visibility> purposeEntry : classTracker.getPurposesMap(nearestDtoSuperclass).entrySet()) {
+        switch (purposeEntry.getValue()) {
+          case BOTH:
+            inPledgedSet.add(purposeEntry.getKey());
+            inEnforcedSet.add(purposeEntry.getKey());
+            outPledgedSet.add(purposeEntry.getKey());
+            outEnforcedSet.add(purposeEntry.getKey());
+            break;
+          case IN:
+            inPledgedSet.add(purposeEntry.getKey());
+            inEnforcedSet.add(purposeEntry.getKey());
+            break;
+          case OUT:
+            outPledgedSet.add(purposeEntry.getKey());
+            outEnforcedSet.add(purposeEntry.getKey());
+            break;
+          default:
+            throw new UnknownSwitchCaseException(purposeEntry.getValue().name());
+        }
+      }
+    }
 
     for (AnnotationMirror propertyAnnotationMirror : AptUtility.extractAnnotationValueAsList(generatorAnnotationMirror, "properties", AnnotationMirror.class)) {
 
@@ -181,13 +207,15 @@ public class GeneratorInformation {
 
     switch (direction) {
       case IN:
-        inOverwroughtSet.retainAll(inDirectionalGuide.keySet());
+        inEnforcedSet.addAll(inDirectionalGuide.keySet());
+        inOverwroughtSet.retainAll(inEnforcedSet);
         purposes = new String[inOverwroughtSet.size()];
         inOverwroughtSet.toArray(purposes);
 
         return purposes;
       case OUT:
-        outOverwroughtSet.retainAll(outDirectionalGuide.keySet());
+        outEnforcedSet.addAll(outDirectionalGuide.keySet());
+        outOverwroughtSet.retainAll(outEnforcedSet);
         purposes = new String[outOverwroughtSet.size()];
         outOverwroughtSet.toArray(purposes);
 

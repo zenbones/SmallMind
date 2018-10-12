@@ -33,16 +33,30 @@
 package org.smallmind.web.json.dto;
 
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
 import javax.lang.model.element.TypeElement;
 
-public class TrackingMap extends HashMap<TypeElement, HashMap<String, Visibility>> {
+public class ClassTracker {
 
-  public void track (TypeElement classElement, GeneratorInformation generatorInformation, DtoClass dtoClass) {
+  private final HashMap<TypeElement, HashMap<String, Visibility>> trackingMap = new HashMap<>();
+  private final HashSet<TypeElement> processedSet = new HashSet<>();
+
+  public void add (TypeElement classElement) {
+
+    processedSet.add(classElement);
+  }
+
+  public boolean contains (TypeElement classElement) {
+
+    return processedSet.contains(classElement);
+  }
+
+  public void update (TypeElement classElement, GeneratorInformation generatorInformation) {
 
     HashMap<String, Visibility> purposeMap;
 
-    put(classElement, purposeMap = new HashMap<>());
+    trackingMap.put(classElement, purposeMap = new HashMap<>());
 
     for (String pledgedPurpose : generatorInformation.pledgedPurposes(Direction.IN)) {
       purposeMap.put(pledgedPurpose, Visibility.IN);
@@ -76,17 +90,22 @@ public class TrackingMap extends HashMap<TypeElement, HashMap<String, Visibility
     }
   }
 
+  public HashMap<String, Visibility> getPurposesMap (TypeElement classElement) {
+
+    return trackingMap.get(classElement);
+  }
+
   public boolean hasNoPurpose (TypeElement classElement) {
 
     HashMap<String, Visibility> purposeMap;
 
-    return ((purposeMap = get(classElement)) == null) || purposeMap.isEmpty();
+    return ((purposeMap = trackingMap.get(classElement)) == null) || purposeMap.isEmpty();
   }
 
   public Visibility getVisibility (TypeElement classElement, String purpose) {
 
     HashMap<String, Visibility> purposeMap;
 
-    return ((purposeMap = get(classElement)) == null) ? null : purposeMap.get(purpose);
+    return ((purposeMap = trackingMap.get(classElement)) == null) ? null : purposeMap.get(purpose);
   }
 }
