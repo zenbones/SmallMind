@@ -152,7 +152,6 @@ public class BeanUtility {
     currentTarget = traverseComponents(target, methodName, methodComponents);
 
     try {
-      // As this executes a 'set' the last segment is taken as a setter
       return acquireMethod(currentTarget, methodComponents[methodComponents.length - 1], values).invoke(currentTarget, values);
     } catch (Exception exception) {
       throw new BeanInvocationException(exception);

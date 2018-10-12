@@ -35,6 +35,8 @@ package org.smallmind.sleuth.runner.annotation;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.util.Arrays;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedList;
 import org.smallmind.nutsnbolts.util.Pair;
@@ -47,11 +49,14 @@ import org.smallmind.sleuth.runner.event.SuccessSleuthEvent;
 
 public class AnnotationMethodology<A extends Annotation> implements Iterable<Pair<Method, A>> {
 
+  private HashSet<MethodKey> methodSet = new HashSet<>();
   private LinkedList<Pair<Method, A>> pairList = new LinkedList<>();
 
   public void add (Method method, A annotation) {
 
-    pairList.add(new Pair<>(method, annotation));
+    if (methodSet.add(new MethodKey(method.getName(), method.getParameterTypes()))) {
+      pairList.add(new Pair<>(method, annotation));
+    }
   }
 
   public Culprit invoke (SleuthRunner sleuthRunner, Culprit culprit, Class<?> clazz, Object instance) {
@@ -85,6 +90,40 @@ public class AnnotationMethodology<A extends Annotation> implements Iterable<Pai
   public Iterator<Pair<Method, A>> iterator () {
 
     return pairList.iterator();
+  }
+
+  private static class MethodKey {
+
+    private String name;
+    private Class[] parameters;
+
+    public MethodKey (String name, Class[] parameters) {
+
+      this.name = name;
+      this.parameters = parameters;
+    }
+
+    public String getName () {
+
+      return name;
+    }
+
+    public Class[] getParameters () {
+
+      return parameters;
+    }
+
+    @Override
+    public int hashCode () {
+
+      return (31 * name.hashCode()) + Arrays.hashCode(parameters);
+    }
+
+    @Override
+    public boolean equals (Object obj) {
+
+      return (obj instanceof MethodKey) && name.equals(((MethodKey)obj).getName()) && Arrays.equals(parameters, ((MethodKey)obj).getParameters());
+    }
   }
 }
 
