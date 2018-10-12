@@ -52,7 +52,7 @@ public class TestNGAnnotationTranslator implements AnnotationTranslator {
     if ((test = clazz.getAnnotation(Test.class)) != null) {
       annotationDictionary.setSuite(new SuiteLiteral((test.groups().length == 0) ? null : test.groups(), test.priority(), new String[0], test.dependsOnMethods(), test.enabled()));
     }
-    for (Method method : clazz.getMethods()) {
+    for (Method method : new MethodCensus(clazz)) {
       for (Annotation annotation : method.getAnnotations()) {
         if (annotation instanceof BeforeClass) {
           annotationDictionary.addBeforeSuiteMethod(method, new BeforeSuiteLiteral());

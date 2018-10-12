@@ -32,41 +32,59 @@
  */
 package org.smallmind.sleuth.runner.annotation;
 
-import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;
+import java.util.Iterator;
+import java.util.LinkedList;
+import java.util.NoSuchElementException;
 
-public class NativeAnnotationTranslator implements AnnotationTranslator {
+public class MethodCensus implements Iterable<Method>, Iterator<Method> {
+
+  private LinkedList<Class<?>> classList = new LinkedList<>();
+  private Method[] methods = new Method[0];
+  private int methodIndex = 0;
+
+  public MethodCensus (Class<?> clazz) {
+
+    do {
+      classList.addFirst(clazz);
+    } while ((clazz = clazz.getSuperclass()) != null);
+  }
 
   @Override
-  public AnnotationDictionary process (Class<?> clazz) {
+  public Iterator<Method> iterator () {
 
-    AnnotationDictionary annotationDictionary = new AnnotationDictionary();
+    return this;
+  }
 
-    Suite suite;
+  @Override
+  public boolean hasNext () {
 
-    if ((suite = clazz.getAnnotation(Suite.class)) != null) {
-      annotationDictionary.setSuite(suite);
-    }
-    for (Method method : new MethodCensus(clazz)) {
-      for (Annotation annotation : method.getAnnotations()) {
-        if (annotation instanceof BeforeSuite) {
-          annotationDictionary.addBeforeSuiteMethod(method, (BeforeSuite)annotation);
-        }
-        if (annotation instanceof AfterSuite) {
-          annotationDictionary.addAfterSuiteMethod(method, (AfterSuite)annotation);
-        }
-        if (annotation instanceof BeforeTest) {
-          annotationDictionary.addBeforeTestMethod(method, (BeforeTest)annotation);
-        }
-        if (annotation instanceof AfterTest) {
-          annotationDictionary.addAfterTestMethod(method, (AfterTest)annotation);
-        }
-        if (annotation instanceof Test) {
-          annotationDictionary.addTestMethod(method, (Test)annotation);
-        }
+    while (methodIndex == methods.length) {
+      if (classList.isEmpty()) {
+
+        return false;
+      } else {
+        methods = classList.removeFirst().getDeclaredMethods();
+        methodIndex = 0;
       }
     }
 
-    return annotationDictionary;
+    return true;
+  }
+
+  @Override
+  public Method next () {
+
+    if (!hasNext()) {
+      throw new NoSuchElementException();
+    }
+
+    return methods[methodIndex++];
+  }
+
+  @Override
+  public void remove () {
+
+    throw new UnsupportedOperationException();
   }
 }
