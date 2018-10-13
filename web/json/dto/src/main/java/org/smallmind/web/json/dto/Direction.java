@@ -34,11 +34,12 @@ package org.smallmind.web.json.dto;
 
 public enum Direction {
 
-  IN("In"), OUT("Out");
+  IN("In", Visibility.IN), OUT("Out", Visibility.OUT);
 
+  private Visibility visibility;
   private String code;
 
-  Direction (String code) {
+  Direction (String code, Visibility visibility) {
 
     this.code = code;
   }
@@ -46,5 +47,10 @@ public enum Direction {
   public String getCode () {
 
     return code;
+  }
+
+  public Visibility getVisibility () {
+
+    return visibility;
   }
 }

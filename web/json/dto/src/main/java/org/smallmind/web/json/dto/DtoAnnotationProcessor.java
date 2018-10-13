@@ -1,28 +1,28 @@
 /*
  * Copyright (c) 2007, 2008, 2009, 2010, 2011, 2012, 2013, 2014, 2015, 2016, 2017, 2018 David Berkman
- * 
+ *
  * This file is part of the SmallMind Code Project.
- * 
+ *
  * The SmallMind Code Project is free software, you can redistribute
  * it and/or modify it under either, at your discretion...
- * 
+ *
  * 1) The terms of GNU Affero General Public License as published by the
  * Free Software Foundation, either version 3 of the License, or (at
  * your option) any later version.
- * 
+ *
  * ...or...
- * 
+ *
  * 2) The terms of the Apache License, Version 2.0.
- * 
+ *
  * The SmallMind Code Project is distributed in the hope that it will
  * be useful, but WITHOUT ANY WARRANTY; without even the implied warranty
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License or Apache License for more details.
- * 
+ *
  * You should have received a copy of the GNU Affero General Public License
  * and the Apache License along with the SmallMind Code Project. If not, see
  * <http://www.gnu.org/licenses/> or <http://www.apache.org/licenses/LICENSE-2.0>.
- * 
+ *
  * Additional permission under the GNU Affero GPL version 3 section 7
  * ------------------------------------------------------------------
  * If you modify this Program, or any covered work, by linking or
@@ -35,6 +35,7 @@ package org.smallmind.web.json.dto;
 import java.io.BufferedWriter;
 import java.io.IOException;
 import java.util.Arrays;
+import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.Map;
 import java.util.Objects;
@@ -67,7 +68,8 @@ import org.smallmind.nutsnbolts.reflection.bean.BeanUtility;
 @AutoService(Processor.class)
 public class DtoAnnotationProcessor extends AbstractProcessor {
 
-  private final ClassTracker classTracker = new ClassTracker();
+  private final VisibilityTracker visibilityTracker = new VisibilityTracker();
+  private final HashSet<TypeElement> processedSet = new HashSet<>();
 
   @Override
   public boolean process (Set<? extends TypeElement> annotations, RoundEnvironment roundEnv) {
@@ -102,7 +104,7 @@ public class DtoAnnotationProcessor extends AbstractProcessor {
 
     AnnotationMirror dtoGeneratorAnnotationMirror;
 
-    if ((!classTracker.contains(classElement)) && ((dtoGeneratorAnnotationMirror = AptUtility.extractAnnotationMirror(processingEnv, classElement, processingEnv.getElementUtils().getTypeElement(DtoGenerator.class.getName()).asType())) != null)) {
+    if ((!processedSet.contains(classElement)) && ((dtoGeneratorAnnotationMirror = AptUtility.extractAnnotationMirror(processingEnv, classElement, processingEnv.getElementUtils().getTypeElement(DtoGenerator.class.getName()).asType())) != null)) {
       if ((!ElementKind.CLASS.equals(classElement.getKind())) || (!NestingKind.TOP_LEVEL.equals(classElement.getNestingKind()))) {
         throw new DtoDefinitionException("The class(%s) must be a root implementation of type 'class'", classElement.getQualifiedName());
       } else {
@@ -111,16 +113,17 @@ public class DtoAnnotationProcessor extends AbstractProcessor {
         GeneratorInformation generatorInformation;
         TypeElement nearestDtoSuperclass;
 
-        classTracker.add(classElement);
+        processedSet.add(classElement);
         if ((nearestDtoSuperclass = getNearestDtoSuperclass(classElement)) != null) {
           generate(nearestDtoSuperclass);
         }
 
-        generatorInformation = new GeneratorInformation(processingEnv, this, nearestDtoSuperclass, classTracker, dtoGeneratorAnnotationMirror);
+        generatorInformation = new GeneratorInformation(processingEnv, this, nearestDtoSuperclass, visibilityTracker, dtoGeneratorAnnotationMirror);
         ClassWalker.walk(processingEnv, this, classElement, generatorInformation, usefulTypeMirrors);
-        classTracker.update(classElement, generatorInformation);
+        generatorInformation.update(classElement, visibilityTracker);
 
         for (TypeElement polymorphicSubClass : generatorInformation.getPolymorphicSubClassList()) {
+          visibilityTracker.add(polymorphicSubClass, classElement);
           generate(polymorphicSubClass);
         }
 
@@ -137,12 +140,12 @@ public class DtoAnnotationProcessor extends AbstractProcessor {
           processOut(generatorInformation, classElement, nearestDtoSuperclass, unfulfilledPurpose, new PropertyLexicon());
         }
 
-        if (classTracker.hasNoPurpose(classElement)) {
+        if (visibilityTracker.hasNoPurpose(classElement)) {
           throw new DtoDefinitionException("The class(%s) was annotated as @%s but contained no properties", classElement.getQualifiedName(), DtoGenerator.class.getSimpleName());
         } else {
 
-          String[] inOverwroughtPurposes = generatorInformation.overwroughtPurposes(Direction.IN);
-          String[] outOverwroughtPurposes = generatorInformation.overwroughtPurposes(Direction.OUT);
+          String[] inOverwroughtPurposes = generatorInformation.overwroughtPurposes(classElement, visibilityTracker, Direction.IN);
+          String[] outOverwroughtPurposes = generatorInformation.overwroughtPurposes(classElement, visibilityTracker, Direction.OUT);
 
           if ((inOverwroughtPurposes.length > 0) || (outOverwroughtPurposes.length > 0)) {
 
@@ -209,7 +212,7 @@ public class DtoAnnotationProcessor extends AbstractProcessor {
 
         Visibility visibility;
 
-        if (((visibility = classTracker.getVisibility((TypeElement)element, purpose)) != null) && visibility.matches(direction)) {
+        if (((visibility = visibilityTracker.getVisibility((TypeElement)element, purpose)) != null) && visibility.matches(direction)) {
 
           return processingEnv.getElementUtils().getPackageOf(element).getQualifiedName().toString() + '.' + asDtoName(element.getSimpleName(), purpose, direction).toString();
         }
@@ -229,7 +232,7 @@ public class DtoAnnotationProcessor extends AbstractProcessor {
 
         Visibility visibility;
 
-        return ((visibility = classTracker.getVisibility((TypeElement)element, purpose)) != null) && visibility.matches(direction);
+        return ((visibility = visibilityTracker.getVisibility((TypeElement)element, purpose)) != null) && visibility.matches(direction);
       }
     }
 
@@ -277,7 +280,7 @@ public class DtoAnnotationProcessor extends AbstractProcessor {
 
           Visibility visibility;
 
-          if (((visibility = classTracker.getVisibility(polymorphicSubClass, purpose)) != null) && visibility.matches(direction)) {
+          if (((visibility = visibilityTracker.getVisibility(polymorphicSubClass, purpose)) != null) && visibility.matches(direction)) {
             matchingSubClassList.add(polymorphicSubClass);
           }
         }
