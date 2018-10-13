@@ -33,6 +33,7 @@
 package org.smallmind.web.json.dto;
 
 import java.io.IOException;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -50,18 +51,21 @@ public class GeneratorInformation {
   private final DirectionalGuide outDirectionalGuide = new DirectionalGuide(Direction.OUT);
   private final HashMap<String, Visibility> pledgedMap = new HashMap<>();
   private final HashMap<String, Visibility> fulfilledMap = new HashMap<>();
-  private final List<TypeElement> polymorphicSubClassList;
-  private final TypeMirror polymorphicBaseClass;
+  private final PolymorphicInformation polymorphicInformation;
   private final String name;
-  private final boolean attributedPolymorphism;
 
   public GeneratorInformation (ProcessingEnvironment processingEnvironment, DtoAnnotationProcessor dtoAnnotationProcessor, TypeElement classElement, VisibilityTracker visibilityTracker, AnnotationMirror generatorAnnotationMirror)
     throws IOException, DtoDefinitionException {
 
+    AnnotationMirror polymorphicAnnotationMirror;
+
     name = AptUtility.extractAnnotationValue(generatorAnnotationMirror, "name", String.class, "");
-    polymorphicBaseClass = AptUtility.extractAnnotationValue(generatorAnnotationMirror, "polymorphicBaseClass", TypeMirror.class, null);
-    polymorphicSubClassList = AptUtility.toConcreteList(processingEnvironment, AptUtility.extractAnnotationValueAsList(generatorAnnotationMirror, "polymorphicSubClasses", TypeMirror.class));
-    attributedPolymorphism = AptUtility.extractAnnotationValue(generatorAnnotationMirror, "attributedPolymorphism", Boolean.class, false);
+
+    if ((polymorphicAnnotationMirror = AptUtility.extractAnnotationValue(generatorAnnotationMirror, "polymorphic", AnnotationMirror.class, null)) != null) {
+      polymorphicInformation = new PolymorphicInformation(processingEnvironment, polymorphicAnnotationMirror);
+    } else {
+      polymorphicInformation = null;
+    }
 
     for (AnnotationMirror pledgeAnnotationMirror : AptUtility.extractAnnotationValueAsList(generatorAnnotationMirror, "pledges", AnnotationMirror.class)) {
 
@@ -114,19 +118,14 @@ public class GeneratorInformation {
     return name;
   }
 
-  public TypeMirror getPolymorphicBaseClass () {
+  public boolean usePolymorphicAttribute () {
 
-    return polymorphicBaseClass;
+    return (polymorphicInformation != null) && polymorphicInformation.isUseAttribute();
   }
 
-  public List<TypeElement> getPolymorphicSubClassList () {
+  public List<TypeElement> getPolymorphicSubclasses () {
 
-    return polymorphicSubClassList;
-  }
-
-  public boolean isAttributedPolymorphism () {
-
-    return attributedPolymorphism;
+    return (polymorphicInformation == null) ? Collections.emptyList() : polymorphicInformation.getSubClassList();
   }
 
   public DirectionalGuide getInDirectionalGuide () {

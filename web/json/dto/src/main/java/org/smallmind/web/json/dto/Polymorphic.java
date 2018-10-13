@@ -39,17 +39,11 @@ import java.lang.annotation.Target;
 
 @Retention(RetentionPolicy.SOURCE)
 @Target(ElementType.TYPE)
-public @interface DtoGenerator {
+public @interface Polymorphic {
 
-  // the list of virtual properties to be added to the dto
-  Property[] properties () default {};
+  // the list of sub-classes which will be generated with polymorphic annotations
+  Class[] subClasses () default {};
 
-  // the list of conditions under which to guarantee a dto is generated (should be used only when the dto would otherwise not be generated)
-  Pledge[] pledges () default {};
-
-  // the requirements for polymorphic annotations
-  Polymorphic polymorphic () default @Polymorphic();
-
-  // the xml root element name
-  String name () default "";
+  // if true, will generate json with an object type attribute
+  boolean useAttribute () default false;
 }

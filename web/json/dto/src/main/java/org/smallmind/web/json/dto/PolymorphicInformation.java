@@ -32,24 +32,31 @@
  */
 package org.smallmind.web.json.dto;
 
-import java.lang.annotation.ElementType;
-import java.lang.annotation.Retention;
-import java.lang.annotation.RetentionPolicy;
-import java.lang.annotation.Target;
+import java.util.List;
+import javax.annotation.processing.ProcessingEnvironment;
+import javax.lang.model.element.AnnotationMirror;
+import javax.lang.model.element.TypeElement;
+import javax.lang.model.type.TypeMirror;
+import org.smallmind.nutsnbolts.apt.AptUtility;
 
-@Retention(RetentionPolicy.SOURCE)
-@Target(ElementType.TYPE)
-public @interface DtoGenerator {
+public class PolymorphicInformation {
 
-  // the list of virtual properties to be added to the dto
-  Property[] properties () default {};
+  private final List<TypeElement> subClassList;
+  private boolean useAttribute;
 
-  // the list of conditions under which to guarantee a dto is generated (should be used only when the dto would otherwise not be generated)
-  Pledge[] pledges () default {};
+  public PolymorphicInformation (ProcessingEnvironment processingEnvironment, AnnotationMirror polymorphicAnnotationMirror) {
 
-  // the requirements for polymorphic annotations
-  Polymorphic polymorphic () default @Polymorphic();
+    subClassList = AptUtility.toConcreteList(processingEnvironment, AptUtility.extractAnnotationValueAsList(polymorphicAnnotationMirror, "subClasses", TypeMirror.class));
+    useAttribute = AptUtility.extractAnnotationValue(polymorphicAnnotationMirror, "useAttribute", Boolean.class, false);
+  }
 
-  // the xml root element name
-  String name () default "";
+  public List<TypeElement> getSubClassList () {
+
+    return subClassList;
+  }
+
+  public boolean isUseAttribute () {
+
+    return useAttribute;
+  }
 }

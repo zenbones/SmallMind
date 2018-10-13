@@ -35,6 +35,7 @@ package org.smallmind.web.json.dto;
 import java.io.BufferedWriter;
 import java.io.IOException;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.Map;
@@ -69,6 +70,7 @@ import org.smallmind.nutsnbolts.reflection.bean.BeanUtility;
 public class DtoAnnotationProcessor extends AbstractProcessor {
 
   private final VisibilityTracker visibilityTracker = new VisibilityTracker();
+  private final HashMap<TypeElement, PolymorphicBaseClass> polymorphicMap = new HashMap<>();
   private final HashSet<TypeElement> processedSet = new HashSet<>();
 
   @Override
@@ -122,8 +124,9 @@ public class DtoAnnotationProcessor extends AbstractProcessor {
         ClassWalker.walk(processingEnv, this, classElement, generatorInformation, usefulTypeMirrors);
         generatorInformation.update(classElement, visibilityTracker);
 
-        for (TypeElement polymorphicSubClass : generatorInformation.getPolymorphicSubClassList()) {
+        for (TypeElement polymorphicSubClass : generatorInformation.getPolymorphicSubclasses()) {
           visibilityTracker.add(polymorphicSubClass, classElement);
+          polymorphicMap.put(polymorphicSubClass, new PolymorphicBaseClass(classElement, generatorInformation.usePolymorphicAttribute()));
           generate(polymorphicSubClass);
         }
 
@@ -258,7 +261,7 @@ public class DtoAnnotationProcessor extends AbstractProcessor {
 
     JavaFileObject sourceFile;
 
-    if (!generatorInformation.getPolymorphicSubClassList().isEmpty()) {
+    if (!generatorInformation.getPolymorphicSubclasses().isEmpty()) {
       writePolymorphicAdapter(classElement, generatorInformation, purpose, direction);
     }
 
@@ -276,7 +279,7 @@ public class DtoAnnotationProcessor extends AbstractProcessor {
         writer.newLine();
         writer.newLine();
 
-        for (TypeElement polymorphicSubClass : generatorInformation.getPolymorphicSubClassList()) {
+        for (TypeElement polymorphicSubClass : generatorInformation.getPolymorphicSubclasses()) {
 
           Visibility visibility;
 
@@ -337,11 +340,11 @@ public class DtoAnnotationProcessor extends AbstractProcessor {
           writer.newLine();
         }
 
-        if ((!generatorInformation.getPolymorphicSubClassList().isEmpty()) || (generatorInformation.getPolymorphicBaseClass() != null)) {
+        if ((!generatorInformation.getPolymorphicSubclasses().isEmpty()) || polymorphicMap.containsKey(classElement)) {
           // XmlJavaTypeAdapter
           writer.write("@XmlJavaTypeAdapter(");
-          writer.write(asDtoName((!generatorInformation.getPolymorphicSubClassList().isEmpty()) ? classElement.getSimpleName() : processingEnv.getTypeUtils().asElement(generatorInformation.getPolymorphicBaseClass()).getSimpleName(), purpose, direction).toString());
-          if (generatorInformation.isAttributedPolymorphism()) {
+          writer.write(asDtoName((!generatorInformation.getPolymorphicSubclasses().isEmpty()) ? classElement.getSimpleName() : polymorphicMap.get(classElement).getBaseClassElement().getSimpleName(), purpose, direction).toString());
+          if ((!generatorInformation.getPolymorphicSubclasses().isEmpty()) ? generatorInformation.usePolymorphicAttribute() : polymorphicMap.get(classElement).isUseAttribute()) {
             writer.write("Attributed");
           }
           writer.write("PolymorphicXmlAdapter.class)");
@@ -383,7 +386,7 @@ public class DtoAnnotationProcessor extends AbstractProcessor {
         }
         writer.write("class ");
         writer.write(asDtoName(classElement.getSimpleName(), purpose, direction).toString());
-        if (!generatorInformation.getPolymorphicSubClassList().isEmpty()) {
+        if (!generatorInformation.getPolymorphicSubclasses().isEmpty()) {
           writer.write("<D extends ");
           writer.write(asDtoName(classElement.getSimpleName(), purpose, direction).toString());
           writer.write(">");
@@ -391,7 +394,7 @@ public class DtoAnnotationProcessor extends AbstractProcessor {
         if (nearestDtoSuperclass != null) {
           writer.write(" extends ");
           writer.write(asDtoName(nearestDtoSuperclass.getSimpleName(), purpose, direction).toString());
-          if (generatorInformation.getPolymorphicBaseClass() != null) {
+          if (polymorphicMap.containsKey(classElement)) {
             writer.write("<");
             writer.write(asDtoName(classElement.getSimpleName(), purpose, direction).toString());
             writer.write(">");
@@ -623,7 +626,7 @@ public class DtoAnnotationProcessor extends AbstractProcessor {
     writer.newLine();
 
     writer.write("  public ");
-    if (!generatorInformation.getPolymorphicSubClassList().isEmpty()) {
+    if (!generatorInformation.getPolymorphicSubclasses().isEmpty()) {
       writer.write("D");
     } else {
       writer.write(asDtoName(classElement.getSimpleName(), purpose, direction).toString());
@@ -645,7 +648,7 @@ public class DtoAnnotationProcessor extends AbstractProcessor {
     writer.newLine();
     writer.newLine();
     writer.write("    return ");
-    if (!generatorInformation.getPolymorphicSubClassList().isEmpty()) {
+    if (!generatorInformation.getPolymorphicSubclasses().isEmpty()) {
       writer.write("(D)");
     }
     writer.write("this;");
@@ -660,7 +663,7 @@ public class DtoAnnotationProcessor extends AbstractProcessor {
     JavaFileObject sourceFile;
     StringBuilder sourceFileBuilder = new StringBuilder(processingEnv.getElementUtils().getPackageOf(classElement).getQualifiedName()).append('.').append(asDtoName(classElement.getSimpleName(), purpose, direction));
 
-    if (generatorInformation.isAttributedPolymorphism()) {
+    if (generatorInformation.usePolymorphicAttribute()) {
       sourceFileBuilder.append("Attributed");
     }
     sourceFileBuilder.append("PolymorphicXmlAdapter");
@@ -681,7 +684,7 @@ public class DtoAnnotationProcessor extends AbstractProcessor {
         writer.write("import javax.annotation.Generated;");
         writer.newLine();
         writer.write("import org.smallmind.web.json.scaffold.util.");
-        if (generatorInformation.isAttributedPolymorphism()) {
+        if (generatorInformation.usePolymorphicAttribute()) {
           writer.write("Attributed");
         }
         writer.write("PolymorphicXmlAdapter;");
@@ -697,12 +700,12 @@ public class DtoAnnotationProcessor extends AbstractProcessor {
         // class declaration
         writer.write("public class ");
         writer.write(asDtoName(classElement.getSimpleName(), purpose, direction).toString());
-        if (generatorInformation.isAttributedPolymorphism()) {
+        if (generatorInformation.usePolymorphicAttribute()) {
           writer.write("Attributed");
         }
         writer.write("PolymorphicXmlAdapter");
         writer.write(" extends ");
-        if (generatorInformation.isAttributedPolymorphism()) {
+        if (generatorInformation.usePolymorphicAttribute()) {
           writer.write("Attributed");
         }
         writer.write("PolymorphicXmlAdapter<");
@@ -713,6 +716,28 @@ public class DtoAnnotationProcessor extends AbstractProcessor {
         writer.write("}");
         writer.newLine();
       }
+    }
+  }
+
+  private class PolymorphicBaseClass {
+
+    private TypeElement baseClassElement;
+    private boolean useAttribute;
+
+    public PolymorphicBaseClass (TypeElement baseClassElement, boolean useAttribute) {
+
+      this.baseClassElement = baseClassElement;
+      this.useAttribute = useAttribute;
+    }
+
+    public TypeElement getBaseClassElement () {
+
+      return baseClassElement;
+    }
+
+    public boolean isUseAttribute () {
+
+      return useAttribute;
     }
   }
 }
