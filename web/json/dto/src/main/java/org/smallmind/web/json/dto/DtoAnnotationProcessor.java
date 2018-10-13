@@ -1,28 +1,28 @@
 /*
  * Copyright (c) 2007, 2008, 2009, 2010, 2011, 2012, 2013, 2014, 2015, 2016, 2017, 2018 David Berkman
- *
+ * 
  * This file is part of the SmallMind Code Project.
- *
+ * 
  * The SmallMind Code Project is free software, you can redistribute
  * it and/or modify it under either, at your discretion...
- *
+ * 
  * 1) The terms of GNU Affero General Public License as published by the
  * Free Software Foundation, either version 3 of the License, or (at
  * your option) any later version.
- *
+ * 
  * ...or...
- *
+ * 
  * 2) The terms of the Apache License, Version 2.0.
- *
+ * 
  * The SmallMind Code Project is distributed in the hope that it will
  * be useful, but WITHOUT ANY WARRANTY; without even the implied warranty
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License or Apache License for more details.
- *
+ * 
  * You should have received a copy of the GNU Affero General Public License
  * and the Apache License along with the SmallMind Code Project. If not, see
  * <http://www.gnu.org/licenses/> or <http://www.apache.org/licenses/LICENSE-2.0>.
- *
+ * 
  * Additional permission under the GNU Affero GPL version 3 section 7
  * ------------------------------------------------------------------
  * If you modify this Program, or any covered work, by linking or
@@ -118,7 +118,7 @@ public class DtoAnnotationProcessor extends AbstractProcessor {
           generate(nearestDtoSuperclass);
         }
 
-        generatorInformation = new GeneratorInformation(processingEnv, this, nearestDtoSuperclass, visibilityTracker, dtoGeneratorAnnotationMirror);
+        generatorInformation = new GeneratorInformation(processingEnv, this, classElement, visibilityTracker, dtoGeneratorAnnotationMirror);
         ClassWalker.walk(processingEnv, this, classElement, generatorInformation, usefulTypeMirrors);
         generatorInformation.update(classElement, visibilityTracker);
 
@@ -130,13 +130,13 @@ public class DtoAnnotationProcessor extends AbstractProcessor {
         for (Map.Entry<String, PropertyLexicon> purposeEntry : generatorInformation.getInDirectionalGuide().entrySet()) {
           processIn(generatorInformation, classElement, nearestDtoSuperclass, purposeEntry.getKey(), purposeEntry.getValue());
         }
-        for (String unfulfilledPurpose : generatorInformation.unfulfilledPurposes(Direction.IN)) {
+        for (String unfulfilledPurpose : generatorInformation.unfulfilledPurposes(classElement, visibilityTracker, Direction.IN)) {
           processIn(generatorInformation, classElement, nearestDtoSuperclass, unfulfilledPurpose, new PropertyLexicon());
         }
         for (Map.Entry<String, PropertyLexicon> purposeEntry : generatorInformation.getOutDirectionalGuide().entrySet()) {
           processOut(generatorInformation, classElement, nearestDtoSuperclass, purposeEntry.getKey(), purposeEntry.getValue());
         }
-        for (String unfulfilledPurpose : generatorInformation.unfulfilledPurposes(Direction.OUT)) {
+        for (String unfulfilledPurpose : generatorInformation.unfulfilledPurposes(classElement, visibilityTracker, Direction.OUT)) {
           processOut(generatorInformation, classElement, nearestDtoSuperclass, unfulfilledPurpose, new PropertyLexicon());
         }
 
@@ -175,7 +175,7 @@ public class DtoAnnotationProcessor extends AbstractProcessor {
 
     writeDto(generatorInformation, classElement, nearestDtoSuperclass, purpose, Direction.IN, propertyLexicon);
 
-    generatorInformation.denotePurpose(Direction.IN, purpose);
+    generatorInformation.denotePurpose(purpose, Direction.IN);
   }
 
   private void processOut (GeneratorInformation generatorInformation, TypeElement classElement, TypeElement nearestDtoSuperclass, String purpose, PropertyLexicon propertyLexicon)
@@ -183,7 +183,7 @@ public class DtoAnnotationProcessor extends AbstractProcessor {
 
     writeDto(generatorInformation, classElement, nearestDtoSuperclass, purpose, Direction.OUT, propertyLexicon);
 
-    generatorInformation.denotePurpose(Direction.OUT, purpose);
+    generatorInformation.denotePurpose(purpose, Direction.OUT);
   }
 
   private String asMemberName (Name name) {
@@ -259,7 +259,7 @@ public class DtoAnnotationProcessor extends AbstractProcessor {
     JavaFileObject sourceFile;
 
     if (!generatorInformation.getPolymorphicSubClassList().isEmpty()) {
-      writePolymorphicAdapter(classElement, purpose, direction);
+      writePolymorphicAdapter(classElement, generatorInformation, purpose, direction);
     }
 
     sourceFile = processingEnv.getFiler().createSourceFile(new StringBuilder(processingEnv.getElementUtils().getPackageOf(classElement).getQualifiedName()).append('.').append(asDtoName(classElement.getSimpleName(), purpose, direction)), classElement);
@@ -341,6 +341,9 @@ public class DtoAnnotationProcessor extends AbstractProcessor {
           // XmlJavaTypeAdapter
           writer.write("@XmlJavaTypeAdapter(");
           writer.write(asDtoName((!generatorInformation.getPolymorphicSubClassList().isEmpty()) ? classElement.getSimpleName() : processingEnv.getTypeUtils().asElement(generatorInformation.getPolymorphicBaseClass()).getSimpleName(), purpose, direction).toString());
+          if (generatorInformation.isAttributedPolymorphism()) {
+            writer.write("Attributed");
+          }
           writer.write("PolymorphicXmlAdapter.class)");
           writer.newLine();
 
@@ -651,10 +654,18 @@ public class DtoAnnotationProcessor extends AbstractProcessor {
     writer.newLine();
   }
 
-  private void writePolymorphicAdapter (TypeElement classElement, String purpose, Direction direction)
+  private void writePolymorphicAdapter (TypeElement classElement, GeneratorInformation generatorInformation, String purpose, Direction direction)
     throws IOException {
 
-    JavaFileObject sourceFile = processingEnv.getFiler().createSourceFile(new StringBuilder(processingEnv.getElementUtils().getPackageOf(classElement).getQualifiedName()).append('.').append(asDtoName(classElement.getSimpleName(), purpose, direction)).append("PolymorphicXmlAdapter"), classElement);
+    JavaFileObject sourceFile;
+    StringBuilder sourceFileBuilder = new StringBuilder(processingEnv.getElementUtils().getPackageOf(classElement).getQualifiedName()).append('.').append(asDtoName(classElement.getSimpleName(), purpose, direction));
+
+    if (generatorInformation.isAttributedPolymorphism()) {
+      sourceFileBuilder.append("Attributed");
+    }
+    sourceFileBuilder.append("PolymorphicXmlAdapter");
+
+    sourceFile = processingEnv.getFiler().createSourceFile(sourceFileBuilder, classElement);
 
     if (sourceFile.getNestingKind() == null) {
       try (BufferedWriter writer = new BufferedWriter(sourceFile.openWriter())) {
@@ -669,7 +680,11 @@ public class DtoAnnotationProcessor extends AbstractProcessor {
         // imports
         writer.write("import javax.annotation.Generated;");
         writer.newLine();
-        writer.write("import org.smallmind.web.json.scaffold.util.PolymorphicXmlAdapter;");
+        writer.write("import org.smallmind.web.json.scaffold.util.");
+        if (generatorInformation.isAttributedPolymorphism()) {
+          writer.write("Attributed");
+        }
+        writer.write("PolymorphicXmlAdapter;");
         writer.newLine();
         writer.newLine();
 
@@ -682,8 +697,15 @@ public class DtoAnnotationProcessor extends AbstractProcessor {
         // class declaration
         writer.write("public class ");
         writer.write(asDtoName(classElement.getSimpleName(), purpose, direction).toString());
+        if (generatorInformation.isAttributedPolymorphism()) {
+          writer.write("Attributed");
+        }
         writer.write("PolymorphicXmlAdapter");
-        writer.write(" extends PolymorphicXmlAdapter<");
+        writer.write(" extends ");
+        if (generatorInformation.isAttributedPolymorphism()) {
+          writer.write("Attributed");
+        }
+        writer.write("PolymorphicXmlAdapter<");
         writer.write(asDtoName(classElement.getSimpleName(), purpose, direction).toString());
         writer.write("> {");
         writer.newLine();

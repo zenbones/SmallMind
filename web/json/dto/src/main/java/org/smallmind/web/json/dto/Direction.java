@@ -42,6 +42,7 @@ public enum Direction {
   Direction (String code, Visibility visibility) {
 
     this.code = code;
+    this.visibility = visibility;
   }
 
   public String getCode () {
