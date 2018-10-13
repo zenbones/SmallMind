@@ -55,4 +55,6 @@ public @interface DtoGenerator {
 
   // the xml root element name
   String name () default "";
+
+  boolean attributedPolymorphism () default false;
 }

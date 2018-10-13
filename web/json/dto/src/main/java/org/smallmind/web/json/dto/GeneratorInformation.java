@@ -56,6 +56,7 @@ public class GeneratorInformation {
   private final List<TypeElement> polymorphicSubClassList;
   private final TypeMirror polymorphicBaseClass;
   private final String name;
+  private final boolean attributedPolymorphism;
 
   public GeneratorInformation (ProcessingEnvironment processingEnvironment, DtoAnnotationProcessor dtoAnnotationProcessor, TypeElement nearestDtoSuperclass, ClassTracker classTracker, AnnotationMirror generatorAnnotationMirror)
     throws IOException, DtoDefinitionException {
@@ -63,6 +64,7 @@ public class GeneratorInformation {
     name = AptUtility.extractAnnotationValue(generatorAnnotationMirror, "name", String.class, "");
     polymorphicBaseClass = AptUtility.extractAnnotationValue(generatorAnnotationMirror, "polymorphicBaseClass", TypeMirror.class, null);
     polymorphicSubClassList = AptUtility.toConcreteList(processingEnvironment, AptUtility.extractAnnotationValueAsList(generatorAnnotationMirror, "polymorphicSubClasses", TypeMirror.class));
+    attributedPolymorphism = AptUtility.extractAnnotationValue(generatorAnnotationMirror, "attributedPolymorphism", Boolean.class, false);
 
     for (AnnotationMirror pledgeAnnotationMirror : AptUtility.extractAnnotationValueAsList(generatorAnnotationMirror, "pledges", AnnotationMirror.class)) {
 
@@ -149,6 +151,11 @@ public class GeneratorInformation {
   public List<TypeElement> getPolymorphicSubClassList () {
 
     return polymorphicSubClassList;
+  }
+
+  public boolean isAttributedPolymorphism () {
+
+    return attributedPolymorphism;
   }
 
   public DirectionalGuide getInDirectionalGuide () {

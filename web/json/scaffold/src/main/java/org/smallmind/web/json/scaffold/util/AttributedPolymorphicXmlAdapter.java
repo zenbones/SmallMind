@@ -55,7 +55,7 @@ public abstract class AttributedPolymorphicXmlAdapter<T> extends XmlAdapter<Obje
 
   public String getPolymorphicAttributeName () {
 
-    return "type";
+    return "java/object";
   }
 
   @Override
