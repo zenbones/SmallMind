@@ -36,13 +36,13 @@ import java.io.Serializable;
 
 public interface ManagedDao<I extends Serializable & Comparable<I>, D extends Durable<I>> {
 
-  public abstract String getMetricSource ();
+  String getMetricSource ();
 
-  public abstract Class<D> getManagedClass ();
+  Class<D> getManagedClass ();
 
-  public abstract Class<I> getIdClass ();
+  Class<I> getIdClass ();
 
-  public abstract I getIdFromString (String value);
+  I getIdFromString (String value);
 
-  public abstract I getId (D durable);
+  I getId (D durable);
 }

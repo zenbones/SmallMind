@@ -33,10 +33,13 @@
 package org.smallmind.persistence.orm.querydsl.jpa;
 
 import java.io.Serializable;
+import java.util.Collection;
 import java.util.Collections;
+import java.util.Iterator;
 import java.util.List;
 import javax.persistence.EntityManager;
 import javax.persistence.EntityManagerFactory;
+import com.querydsl.core.types.Expression;
 import com.querydsl.core.types.Ops;
 import com.querydsl.core.types.Order;
 import com.querydsl.core.types.OrderSpecifier;
@@ -207,6 +210,34 @@ public class QJPADao<I extends Serializable & Comparable<I>, D extends JPADurabl
         return query.from(entityPath).where(Expressions.predicate(Ops.GT, idPath, Expressions.constant(greaterThan))).orderBy(new OrderSpecifier<D>(Order.ASC, idPath)).limit(fetchSize);
       }
     });
+  }
+
+  @Override
+  public List<D> list (Collection<I> idCollection) {
+
+    if ((idCollection == null) || idCollection.isEmpty()) {
+
+      return Collections.emptyList();
+    } else {
+
+      return listByQuery(new JPAQueryDetails<D>() {
+
+        @Override
+        public JPAQuery<D> completeQuery (JPAQuery<D> query) {
+
+          PathBuilder<D> entityPath = new PathBuilder<>(getManagedClass(), "entity");
+          Path<D> idPath = Expressions.path(getManagedClass(), entityPath, "id");
+          Iterator<I> idIterator = idCollection.iterator();
+          Expression<?> collectionExpression = Expressions.collectionOperation(getIdClass(), Ops.SINGLETON, Expressions.constant(idIterator.next()));
+
+          while (idIterator.hasNext()) {
+            collectionExpression = Expressions.collectionOperation(getIdClass(), Ops.LIST, collectionExpression, Expressions.constant(idIterator.next()));
+          }
+
+          return query.from(entityPath).where(Expressions.predicate(Ops.IN, idPath, collectionExpression));
+        }
+      });
+    }
   }
 
   @Override

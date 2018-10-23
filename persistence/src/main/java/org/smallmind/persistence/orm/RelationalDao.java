@@ -33,6 +33,8 @@
 package org.smallmind.persistence.orm;
 
 import java.io.Serializable;
+import java.util.Collection;
+import java.util.List;
 import org.smallmind.persistence.Durable;
 import org.smallmind.persistence.DurableDao;
 
@@ -43,6 +45,8 @@ public interface RelationalDao<I extends Serializable & Comparable<I>, D extends
   ProxySession<F, N> getSession ();
 
   D detach (D durable);
+
+  List<D> list (Collection<I> idCollection);
 
   Iterable<D> scroll ();
 

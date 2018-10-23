@@ -73,12 +73,6 @@
       <optional>true</optional>
     </dependency>
     <dependency>
-      <groupId>javax.jdo</groupId>
-      <artifactId>jdo-api</artifactId>
-      <scope>compile</scope>
-      <optional>true</optional>
-    </dependency>
-    <dependency>
       <groupId>org.hibernate</groupId>
       <artifactId>hibernate-core</artifactId>
       <scope>compile</scope>

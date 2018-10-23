@@ -33,6 +33,7 @@
 package org.smallmind.persistence.orm.morphia;
 
 import java.io.Serializable;
+import java.util.Collection;
 import java.util.List;
 import com.mongodb.DBObject;
 import com.mongodb.WriteConcern;
@@ -113,6 +114,12 @@ public class MorphiaDao<I extends Serializable & Comparable<I>, D extends Morphi
   public List<D> list (I greaterThan, int maxResults) {
 
     return getSession().getNativeSession().createQuery(getManagedClass()).field(Mapper.ID_KEY).greaterThan(greaterThan).order(Mapper.ID_KEY).asList(new FindOptions().limit(maxResults));
+  }
+
+  @Override
+  public List<D> list (Collection<I> idCollection) {
+
+    return getSession().getNativeSession().createQuery(getManagedClass()).field(Mapper.ID_KEY).in(idCollection).asList();
   }
 
   @Override

@@ -33,6 +33,7 @@
 package org.smallmind.persistence.orm.hibernate;
 
 import java.io.Serializable;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
@@ -133,6 +134,25 @@ public abstract class HibernateDao<I extends Serializable & Comparable<I>, D ext
         return criteria.add(Restrictions.gt("id", greaterThan)).addOrder(Order.asc("id")).setMaxResults(maxResults).setFetchSize(fetchSize);
       }
     });
+  }
+
+  @Override
+  public List<D> list (Collection<I> idCollection) {
+
+    if ((idCollection == null) || idCollection.isEmpty()) {
+
+      return Collections.emptyList();
+    } else {
+
+      return listByCriteria(new CriteriaDetails() {
+
+        @Override
+        public Criteria completeCriteria (Criteria criteria) {
+
+          return criteria.add(Restrictions.in("id", idCollection));
+        }
+      });
+    }
   }
 
   @Override

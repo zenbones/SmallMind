@@ -4,7 +4,8 @@
 
   <import resource="classpath:org/smallmind/instrument/metric.xml"/>
 
-  <bean class="org.smallmind.persistence.orm.spring.hibernate.FileSeekingBeanFactoryPostProcessor"/>
+  <bean id="jpaAnnotationSeekingBeanFactoryPostProcessor" class="org.smallmind.persistence.orm.spring.jpa.AnnotationSeekingBeanFactoryPostProcessor"/>
+  <bean id="hibernateFileSeekingBeanFactoryPostProcessor" class="org.smallmind.persistence.orm.spring.hibernate.FileSeekingBeanFactoryPostProcessor"/>
 
   <bean id="persistence" class="org.smallmind.persistence.Persistence" init-method="register">
     <constructor-arg index="0">
@@ -17,6 +18,37 @@
         </property>
       </bean>
     </constructor-arg>
+  </bean>
+
+  <bean id="sessionFactory" class="org.smallmind.persistence.orm.spring.hibernate.EntitySeekingSessionFactoryBean">
+    <property name="sessionSourceKey" value="sourceKey"/>
+    <property name="dataSource" ref="dataSource"/>
+    <property name="mappingLocations">
+      <bean class="org.smallmind.persistence.orm.spring.hibernate.FileSeekingFactoryBean">
+        <property name="fileSeekingBeanFactoryPostProcessor" ref="hibernateFileSeekingBeanFactoryPostProcessor"/>
+        <property name="sessionSourceKey" value="sourceKey"/>
+      </bean>
+    </property>
+    <property name="hibernateProperties">
+      <value>
+      </value>
+    </property>
+  </bean>
+
+  <bean id="entityManagerFactory" class="org.smallmind.persistence.orm.spring.jpa.EntitySeekingEntityManagerFactoryBean">
+    <property name="sessionSourceKey" value="sourceKey"/>
+    <property name="annotationSeekingBeanFactoryPostProcessor" ref="jpaAnnotationSeekingBeanFactoryPostProcessor"/>
+    <property name="dataSource" ref="dataSource"/>
+    <property name="persistenceUnitInfo">
+      <bean class="org.springframework.orm.jpa.persistenceunit.SpringPersistenceUnitInfo">
+        <property name="persistenceUnitName" value="persistenceUnitName"/>
+        <property name="persistenceProviderClassName" value="org.hibernate.jpa.HibernatePersistenceProvider"/>
+        <property name="properties">
+          <value>
+          </value>
+        </property>
+      </bean>
+    </property>
   </bean>
 
   <!-- AspectJ Transaction Management -->

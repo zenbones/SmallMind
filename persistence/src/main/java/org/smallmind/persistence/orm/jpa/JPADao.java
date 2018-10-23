@@ -33,11 +33,15 @@
 package org.smallmind.persistence.orm.jpa;
 
 import java.io.Serializable;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import javax.persistence.EntityManager;
 import javax.persistence.EntityManagerFactory;
 import javax.persistence.Query;
+import javax.persistence.criteria.CriteriaBuilder;
+import javax.persistence.criteria.CriteriaQuery;
+import javax.persistence.criteria.Root;
 import org.smallmind.persistence.Durable;
 import org.smallmind.persistence.UpdateMode;
 import org.smallmind.persistence.cache.VectoredDao;
@@ -191,6 +195,28 @@ public abstract class JPADao<I extends Serializable & Comparable<I>, D extends D
         return query.setParameter("id", greaterThan).setMaxResults(fetchSize);
       }
     });
+  }
+
+  @Override
+  public List<D> list (Collection<I> idCollection) {
+
+    if ((idCollection == null) || idCollection.isEmpty()) {
+
+      return Collections.emptyList();
+    } else {
+
+      return constructCriteriaQuery(getManagedClass(), new CriteriaQueryDetails<D>() {
+
+        @Override
+        public CriteriaQuery<D> completeCriteria (Class<D> criteriaClass, CriteriaBuilder criteriaBuilder) {
+
+          CriteriaQuery<D> query = criteriaBuilder.createQuery(getManagedClass());
+          Root<D> root = query.from(getManagedClass());
+
+          return query.select(root).where(root.get("id").in(idCollection));
+        }
+      }).getResultList();
+    }
   }
 
   public Iterable<D> scroll () {
