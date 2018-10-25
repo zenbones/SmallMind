@@ -44,7 +44,7 @@ import javax.xml.bind.annotation.XmlTransient;
 
 @XmlRootElement(name = "sort")
 @XmlAccessorType(XmlAccessType.PROPERTY)
-public class Sort implements Serializable, WherePermissible {
+public class Sort implements Serializable, WherePermissible<Sort> {
 
   private HashSet<SortField> fieldSet;
 

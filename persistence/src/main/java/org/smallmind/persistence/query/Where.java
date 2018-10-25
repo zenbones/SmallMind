@@ -45,7 +45,7 @@ import javax.xml.bind.annotation.XmlTransient;
 
 @XmlRootElement(name = "where")
 @XmlAccessorType(XmlAccessType.PROPERTY)
-public class Where implements Serializable, WherePermissible {
+public class Where implements Serializable, WherePermissible<Where> {
 
   private WhereConjunction rootConjunction;
 

@@ -37,11 +37,11 @@ import java.util.HashSet;
 import java.util.Set;
 import org.smallmind.nutsnbolts.lang.UnknownSwitchCaseException;
 
-public interface WherePermissible {
+public interface WherePermissible<W extends WherePermissible<W>> {
 
   Set<String> fieldNames ();
 
-  default void validate (WherePermit... permits) {
+  default W validate (WherePermit... permits) {
 
     if ((permits != null) && (permits.length > 0)) {
 
@@ -79,5 +79,7 @@ public interface WherePermissible {
         throw new WhereValidationException("The fields(%s) are required in where clauses for this query", Arrays.toString(requiredNameSet.toArray()));
       }
     }
+
+    return (W)this;
   }
 }
