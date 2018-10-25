@@ -30,14 +30,28 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.persistence.query;
+package org.smallmind.nutsnbolts.validation;
 
-import org.smallmind.nutsnbolts.validation.FormattedValidationException;
+import javax.validation.ValidationException;
 
-public class WhereValidationException extends FormattedValidationException {
+public class FormattedValidationException extends ValidationException {
 
-  public WhereValidationException (String message, Object... args) {
+  public FormattedValidationException () {
 
-    super(message, args);
+  }
+
+  public FormattedValidationException (String message, Object... args) {
+
+    super(message == null ? null : String.format(message, args));
+  }
+
+  public FormattedValidationException (Throwable cause, String message, Object... args) {
+
+    super(message == null ? null : String.format(message, args), cause);
+  }
+
+  public FormattedValidationException (Throwable cause) {
+
+    super(cause);
   }
 }

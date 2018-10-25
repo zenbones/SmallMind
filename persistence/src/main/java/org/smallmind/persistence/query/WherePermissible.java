@@ -69,14 +69,14 @@ public interface WherePermissible<W extends WherePermissible<W>> {
 
       for (String fieldName : fieldNameSet) {
         if (excludedNameSet.contains(fieldName)) {
-          throw new WhereValidationException("The field(%s) is not permitted in where clauses for this query", fieldName);
+          throw new WhereValidationException("The field(%s) is not permitted in %s clauses for this query", fieldName, this.getClass().getSimpleName());
         }
         if ((!allowedNameSet.isEmpty()) && (!allowedNameSet.contains(fieldName))) {
-          throw new WhereValidationException("The field(%s) is not permitted in where clauses for this query", fieldName);
+          throw new WhereValidationException("The field(%s) is not permitted in %s clauses for this query", fieldName, this.getClass().getSimpleName());
         }
       }
       if (!fieldNameSet.containsAll(requiredNameSet)) {
-        throw new WhereValidationException("The fields(%s) are required in where clauses for this query", Arrays.toString(requiredNameSet.toArray()));
+        throw new WhereValidationException("The fields(%s) are required in %s clauses for this query", Arrays.toString(requiredNameSet.toArray()), this.getClass().getSimpleName());
       }
     }
 
