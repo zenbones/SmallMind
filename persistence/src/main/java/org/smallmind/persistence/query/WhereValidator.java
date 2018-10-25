@@ -32,11 +32,8 @@
  */
 package org.smallmind.persistence.query;
 
-import java.util.Arrays;
-import java.util.HashSet;
 import javax.validation.ConstraintValidator;
 import javax.validation.ConstraintValidatorContext;
-import org.smallmind.nutsnbolts.lang.UnknownSwitchCaseException;
 
 public class WhereValidator implements ConstraintValidator<WhereValidate, WherePermissible> {
 
@@ -59,7 +56,7 @@ public class WhereValidator implements ConstraintValidator<WhereValidate, WhereP
     }
 
     try {
-      validate(permissible, wherePermits);
+      permissible.validate(wherePermits);
 
       return true;
     } catch (WhereValidationException whereValidationException) {
@@ -67,45 +64,6 @@ public class WhereValidator implements ConstraintValidator<WhereValidate, WhereP
       context.buildConstraintViolationWithTemplate(whereValidationException.getMessage()).addConstraintViolation();
 
       return false;
-    }
-  }
-
-  private void validate (WherePermissible permissible, WherePermit... permits) {
-
-    if ((permits != null) && (permits.length > 0)) {
-
-      HashSet<String> allowedNameSet = new HashSet<>();
-      HashSet<String> requiredNameSet = new HashSet<>();
-      HashSet<String> excludedNameSet = new HashSet<>();
-
-      for (WherePermit permit : permits) {
-        switch (permit.getType()) {
-          case ALLOWED:
-            allowedNameSet.addAll(Arrays.asList(permit.getFields()));
-            break;
-          case REQUIRED:
-            allowedNameSet.addAll(Arrays.asList(permit.getFields()));
-            requiredNameSet.addAll(Arrays.asList(permit.getFields()));
-            break;
-          case EXCLUDED:
-            excludedNameSet.addAll(Arrays.asList(permit.getFields()));
-            break;
-          default:
-            throw new UnknownSwitchCaseException(permit.getType().name());
-        }
-      }
-
-      for (String fieldName : permissible.fieldNames()) {
-        if (excludedNameSet.contains(fieldName)) {
-          throw new WhereValidationException("The field(%s) is not permitted in where clauses for this query", fieldName);
-        }
-        if ((!allowedNameSet.isEmpty()) && (!allowedNameSet.contains(fieldName))) {
-          throw new WhereValidationException("The field(%s) is not permitted in where clauses for this query", fieldName);
-        }
-      }
-      if (!permissible.fieldNames().containsAll(requiredNameSet)) {
-        throw new WhereValidationException("The fields(%s) are required in where clauses for this query", Arrays.toString(requiredNameSet.toArray()));
-      }
     }
   }
 }

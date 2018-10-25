@@ -32,10 +32,52 @@
  */
 package org.smallmind.persistence.query;
 
-import java.util.Iterator;
+import java.util.Arrays;
+import java.util.HashSet;
 import java.util.Set;
+import org.smallmind.nutsnbolts.lang.UnknownSwitchCaseException;
 
 public interface WherePermissible {
 
   Set<String> fieldNames ();
+
+  default void validate (WherePermit... permits) {
+
+    if ((permits != null) && (permits.length > 0)) {
+
+      Set<String> fieldNameSet = fieldNames();
+      HashSet<String> allowedNameSet = new HashSet<>();
+      HashSet<String> requiredNameSet = new HashSet<>();
+      HashSet<String> excludedNameSet = new HashSet<>();
+
+      for (WherePermit permit : permits) {
+        switch (permit.getType()) {
+          case ALLOWED:
+            allowedNameSet.addAll(Arrays.asList(permit.getFields()));
+            break;
+          case REQUIRED:
+            allowedNameSet.addAll(Arrays.asList(permit.getFields()));
+            requiredNameSet.addAll(Arrays.asList(permit.getFields()));
+            break;
+          case EXCLUDED:
+            excludedNameSet.addAll(Arrays.asList(permit.getFields()));
+            break;
+          default:
+            throw new UnknownSwitchCaseException(permit.getType().name());
+        }
+      }
+
+      for (String fieldName : fieldNameSet) {
+        if (excludedNameSet.contains(fieldName)) {
+          throw new WhereValidationException("The field(%s) is not permitted in where clauses for this query", fieldName);
+        }
+        if ((!allowedNameSet.isEmpty()) && (!allowedNameSet.contains(fieldName))) {
+          throw new WhereValidationException("The field(%s) is not permitted in where clauses for this query", fieldName);
+        }
+      }
+      if (!fieldNameSet.containsAll(requiredNameSet)) {
+        throw new WhereValidationException("The fields(%s) are required in where clauses for this query", Arrays.toString(requiredNameSet.toArray()));
+      }
+    }
+  }
 }
