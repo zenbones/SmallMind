@@ -32,69 +32,10 @@
  */
 package org.smallmind.persistence.query;
 
-import java.io.Serializable;
-import java.util.Arrays;
-import java.util.HashSet;
+import java.util.Iterator;
 import java.util.Set;
-import javax.xml.bind.annotation.XmlAccessType;
-import javax.xml.bind.annotation.XmlAccessorType;
-import javax.xml.bind.annotation.XmlElement;
-import javax.xml.bind.annotation.XmlRootElement;
-import javax.xml.bind.annotation.XmlTransient;
 
-@XmlRootElement(name = "sort")
-@XmlAccessorType(XmlAccessType.PROPERTY)
-public class Sort implements Serializable, WherePermissible {
+public interface WherePermissible {
 
-  private HashSet<SortField> fieldSet;
-
-  public Sort () {
-
-  }
-
-  public Sort (SortField... fields) {
-
-    fieldSet = new HashSet<>(Arrays.asList(fields));
-  }
-
-  public static Sort instance (SortField... fields) {
-
-    return new Sort(fields);
-  }
-
-  @Override
-  @XmlTransient
-  public Set<String> fieldNames () {
-
-    HashSet<String> fieldNameSet = new HashSet<>();
-
-    for (SortField sortField : fieldSet) {
-      fieldNameSet.add(sortField.getName());
-    }
-
-    return fieldNameSet;
-  }
-
-  @XmlTransient
-  public synchronized boolean isEmpty () {
-
-    return (fieldSet == null) || fieldSet.isEmpty();
-  }
-
-  @XmlElement(name = "fields")
-  public synchronized SortField[] getFields () {
-
-    SortField[] fields = new SortField[fieldSet == null ? 0 : fieldSet.size()];
-
-    if (fieldSet != null) {
-      fieldSet.toArray(fields);
-    }
-
-    return fields;
-  }
-
-  public synchronized void setFields (SortField... fields) {
-
-    this.fieldSet = new HashSet<>(Arrays.asList(fields));
-  }
+  Set<String> fieldNames ();
 }
