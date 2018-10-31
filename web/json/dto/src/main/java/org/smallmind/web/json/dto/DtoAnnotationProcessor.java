@@ -389,7 +389,7 @@ public class DtoAnnotationProcessor extends AbstractProcessor {
         if (!generatorInformation.getPolymorphicSubclasses().isEmpty()) {
           writer.write("<D extends ");
           writer.write(asDtoName(classElement.getSimpleName(), purpose, direction).toString());
-          writer.write(">");
+          writer.write("<D>>");
         }
         if (nearestDtoSuperclass != null) {
           writer.write(" extends ");
