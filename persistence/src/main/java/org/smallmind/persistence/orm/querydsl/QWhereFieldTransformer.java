@@ -32,6 +32,7 @@
  */
 package org.smallmind.persistence.orm.querydsl;
 
+import java.util.function.Function;
 import java.util.function.UnaryOperator;
 import com.querydsl.core.types.EntityPath;
 import com.querydsl.core.types.Path;
@@ -55,6 +56,17 @@ public class QWhereFieldTransformer extends WhereFieldTransformer<Path<?>, Path<
       String transformedName = nameOperator.apply(name);
 
       return new QWherePath(entityPath.getType(), entityPath, new PathBuilder<>(entityPath.getType(), entityPath.toString()).get(transformedName), transformedName);
+    });
+  }
+
+  public QWhereFieldTransformer (Function<String, EntityPath<? extends Durable<?>>> pathFunction, UnaryOperator<String> nameFunction) {
+
+    super((String entity, String name) -> {
+
+      EntityPath<? extends Durable<?>> transformedPath = pathFunction.apply(name);
+      String transformedName = nameFunction.apply(name);
+
+      return new QWherePath(transformedPath.getType(), transformedPath, new PathBuilder<>(transformedPath.getType(), transformedPath.toString()).get(transformedName), transformedName);
     });
   }
 
