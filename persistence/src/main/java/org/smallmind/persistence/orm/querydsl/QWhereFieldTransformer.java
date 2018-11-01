@@ -42,12 +42,6 @@ import org.smallmind.persistence.query.WhereFieldTransformer;
 
 public class QWhereFieldTransformer extends WhereFieldTransformer<EntityPath<?>, Path<?>> {
 
-
-  public QWhereFieldTransformer (Function<>) {
-
-    super((String entity, String name) -> new QWherePath(entityPath, new PathBuilder<>(entityPath.getType(), entityPath.toString()).get(name), name));
-  }
-
   public QWhereFieldTransformer (EntityPath<? extends Durable<?>> entityPath) {
 
     super((String entity, String name) -> new QWherePath(entityPath, new PathBuilder<>(entityPath.getType(), entityPath.toString()).get(name), name));
@@ -67,10 +61,20 @@ public class QWhereFieldTransformer extends WhereFieldTransformer<EntityPath<?>,
 
     super((String entity, String name) -> {
 
-      EntityPath<? extends Durable<?>> transformedPath = pathFunction.apply(name);
+      EntityPath<? extends Durable<?>> transformedEntityPath = pathFunction.apply(name);
       String transformedName = nameFunction.apply(name);
 
-      return new QWherePath(transformedPath, new PathBuilder<>(transformedPath.getType(), transformedPath.toString()).get(transformedName), transformedName);
+      return new QWherePath(transformedEntityPath, new PathBuilder<>(transformedEntityPath.getType(), transformedEntityPath.toString()).get(transformedName), transformedName);
+    });
+  }
+
+  public QWhereFieldTransformer (Function<String, Path<? extends Durable<?>>> pathFunction) {
+
+    super((String entity, String name) -> {
+
+      Path<? extends Durable<?>> transformedPath = pathFunction.apply(name);
+
+      return new QWherePath((EntityPath<?>)transformedPath.getRoot(), transformedPath, transformedPath.toString().substring(transformedPath.getRoot().toString().length() + 1));
     });
   }
 }
