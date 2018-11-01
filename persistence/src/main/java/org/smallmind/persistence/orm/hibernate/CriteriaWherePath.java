@@ -32,16 +32,13 @@
  */
 package org.smallmind.persistence.orm.hibernate;
 
-import org.smallmind.persistence.Durable;
 import org.smallmind.persistence.query.WherePath;
 
 public class CriteriaWherePath extends WherePath<Void, Void> {
 
   private String field;
 
-  public CriteriaWherePath (Class<? extends Durable<?>> durableClass, String field) {
-
-    super(durableClass);
+  public CriteriaWherePath (String field) {
 
     this.field = field;
   }

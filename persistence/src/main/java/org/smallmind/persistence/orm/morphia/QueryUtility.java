@@ -54,6 +54,16 @@ public class QueryUtility {
 
   private static final WhereOperandTransformer WHERE_OPERAND_TRANSFORMER = new WhereOperandTransformer();
 
+  public static Query<?> apply (Query<?> query, Where where) {
+
+    return apply(query, where, null, WHERE_OPERAND_TRANSFORMER);
+  }
+
+  public static Query<?> apply (Query<?> query, Where where, WhereOperandTransformer operandTransformer) {
+
+    return apply(query, where, null, operandTransformer);
+  }
+
   public static Query<?> apply (Query<?> query, Where where, WhereFieldTransformer<Void, Void> fieldTransformer) {
 
     return apply(query, where, fieldTransformer, WHERE_OPERAND_TRANSFORMER);
@@ -120,7 +130,7 @@ public class QueryUtility {
 
   private static Criteria walkField (Query<?> query, WhereField whereField, WhereFieldTransformer<Void, Void> fieldTransformer, WhereOperandTransformer operandTransformer) {
 
-    FieldEnd<? extends CriteriaContainerImpl> fieldEnd = query.criteria(fieldTransformer.transform(whereField.getEntity(), whereField.getName()).getField());
+    FieldEnd<? extends CriteriaContainerImpl> fieldEnd = query.criteria((fieldTransformer == null) ? whereField.getName() : fieldTransformer.transform(whereField.getEntity(), whereField.getName()).getField());
     Object fieldValue = operandTransformer.transform(whereField.getOperand());
 
     switch (whereField.getOperator()) {
@@ -221,6 +231,11 @@ public class QueryUtility {
     }
   }
 
+  public static Query<?> apply (Query<?> query, Sort sort) {
+
+    return apply(query, sort, null);
+  }
+
   public static Query<?> apply (Query<?> query, Sort sort, WhereFieldTransformer<Void, Void> fieldTransformer) {
 
     if ((sort != null) && (!sort.isEmpty())) {
@@ -229,7 +244,7 @@ public class QueryUtility {
 
       for (SortField sortField : sort.getFields()) {
 
-        String fieldName = fieldTransformer.transform(sortField.getEntity(), sortField.getName()).getField();
+        String fieldName = (fieldTransformer == null) ? sortField.getName() : fieldTransformer.transform(sortField.getEntity(), sortField.getName()).getField();
 
         if (sortBuilder.length() > 0) {
           sortBuilder.append(", ");

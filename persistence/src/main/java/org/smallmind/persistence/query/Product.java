@@ -33,13 +33,12 @@
 package org.smallmind.persistence.query;
 
 import java.util.Set;
-import org.smallmind.persistence.Durable;
 
-public interface Product<T> {
+public interface Product<R, T> {
 
   boolean isEmpty ();
 
-  Set<Class<? extends Durable<?>>> getDurableClassSet ();
+  Set<R> getRootSet ();
 
   T getValue ();
 }

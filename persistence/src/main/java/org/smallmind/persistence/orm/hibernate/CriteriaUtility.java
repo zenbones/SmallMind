@@ -52,9 +52,9 @@ public class CriteriaUtility {
 
   private static final WhereOperandTransformer WHERE_OPERAND_TRANSFORMER = new WhereOperandTransformer();
 
-  public static Criteria apply (Criteria criteria, Where where, WhereFieldTransformer<Void, Void> fieldTransformer) {
+  public static DetachedCriteria apply (DetachedCriteria detachedCriteria, Where where) {
 
-    return apply(criteria, where, fieldTransformer, WHERE_OPERAND_TRANSFORMER);
+    return apply(detachedCriteria, where, null, WHERE_OPERAND_TRANSFORMER);
   }
 
   public static DetachedCriteria apply (DetachedCriteria detachedCriteria, Where where, WhereFieldTransformer<Void, Void> fieldTransformer) {
@@ -62,18 +62,9 @@ public class CriteriaUtility {
     return apply(detachedCriteria, where, fieldTransformer, WHERE_OPERAND_TRANSFORMER);
   }
 
-  public static Criteria apply (Criteria criteria, Where where, WhereFieldTransformer<Void, Void> fieldTransformer, WhereOperandTransformer operandTransformer) {
+  public static DetachedCriteria apply (DetachedCriteria detachedCriteria, Where where, WhereOperandTransformer operandTransformer) {
 
-    if (where != null) {
-
-      Criterion walkedCriterion;
-
-      if ((walkedCriterion = walkConjunction(where.getRootConjunction(), fieldTransformer, operandTransformer)) != null) {
-        return criteria.add(walkedCriterion);
-      }
-    }
-
-    return criteria;
+    return apply(detachedCriteria, where, null, operandTransformer);
   }
 
   public static DetachedCriteria apply (DetachedCriteria detachedCriteria, Where where, WhereFieldTransformer<Void, Void> fieldTransformer, WhereOperandTransformer operandTransformer) {
@@ -88,6 +79,35 @@ public class CriteriaUtility {
     }
 
     return detachedCriteria;
+  }
+
+  public static Criteria apply (Criteria criteria, Where where) {
+
+    return apply(criteria, where, null, WHERE_OPERAND_TRANSFORMER);
+  }
+
+  public static Criteria apply (Criteria criteria, Where where, WhereFieldTransformer<Void, Void> fieldTransformer) {
+
+    return apply(criteria, where, fieldTransformer, WHERE_OPERAND_TRANSFORMER);
+  }
+
+  public static Criteria apply (Criteria criteria, Where where, WhereOperandTransformer operandTransformer) {
+
+    return apply(criteria, where, null, operandTransformer);
+  }
+
+  public static Criteria apply (Criteria criteria, Where where, WhereFieldTransformer<Void, Void> fieldTransformer, WhereOperandTransformer operandTransformer) {
+
+    if (where != null) {
+
+      Criterion walkedCriterion;
+
+      if ((walkedCriterion = walkConjunction(where.getRootConjunction(), fieldTransformer, operandTransformer)) != null) {
+        return criteria.add(walkedCriterion);
+      }
+    }
+
+    return criteria;
   }
 
   private static Criterion walkConjunction (WhereConjunction whereConjunction, WhereFieldTransformer<Void, Void> fieldTransformer, WhereOperandTransformer operandTransformer) {
@@ -140,7 +160,7 @@ public class CriteriaUtility {
 
   private static Criterion walkField (WhereField whereField, WhereFieldTransformer<Void, Void> fieldTransformer, WhereOperandTransformer operandTransformer) {
 
-    String fieldName = fieldTransformer.transform(whereField.getEntity(), whereField.getName()).getField();
+    String fieldName = (fieldTransformer == null) ? whereField.getName() : fieldTransformer.transform(whereField.getEntity(), whereField.getName()).getField();
     Object fieldValue = operandTransformer.transform(whereField.getOperand());
 
     switch (whereField.getOperator()) {
@@ -173,12 +193,17 @@ public class CriteriaUtility {
     }
   }
 
+  public static Criteria apply (Criteria criteria, Sort sort) {
+
+    return apply(criteria, sort, null);
+  }
+
   public static Criteria apply (Criteria criteria, Sort sort, WhereFieldTransformer<Void, Void> fieldTransformer) {
 
     if ((sort != null) && (!sort.isEmpty())) {
       for (SortField sortField : sort.getFields()) {
 
-        String fieldName = fieldTransformer.transform(sortField.getEntity(), sortField.getName()).getField();
+        String fieldName = (fieldTransformer == null) ? sortField.getName() : fieldTransformer.transform(sortField.getEntity(), sortField.getName()).getField();
 
         switch (sortField.getDirection()) {
           case ASC:

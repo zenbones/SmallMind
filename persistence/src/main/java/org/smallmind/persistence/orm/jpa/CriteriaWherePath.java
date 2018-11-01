@@ -34,7 +34,6 @@ package org.smallmind.persistence.orm.jpa;
 
 import javax.persistence.criteria.Path;
 import javax.persistence.criteria.Root;
-import org.smallmind.persistence.Durable;
 import org.smallmind.persistence.query.WherePath;
 
 public class CriteriaWherePath extends WherePath<Root<?>, Path<?>> {
@@ -43,11 +42,10 @@ public class CriteriaWherePath extends WherePath<Root<?>, Path<?>> {
   private Path<?> path;
   private String field;
 
-  public CriteriaWherePath (Class<? extends Durable<?>> durableClass, Root<?> root, String field) {
-
-    super(durableClass);
+  public CriteriaWherePath (Root<?> root, String field) {
 
     this.root = root;
+    this.field = field;
 
     path = root.get(field);
   }

@@ -32,6 +32,7 @@
  */
 package org.smallmind.persistence.orm.jpa;
 
+import java.util.Date;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.Set;
@@ -41,7 +42,6 @@ import javax.persistence.criteria.Path;
 import javax.persistence.criteria.Predicate;
 import javax.persistence.criteria.Root;
 import org.smallmind.nutsnbolts.lang.UnknownSwitchCaseException;
-import org.smallmind.persistence.Durable;
 import org.smallmind.persistence.query.NoneProduct;
 import org.smallmind.persistence.query.Product;
 import org.smallmind.persistence.query.SomeProduct;
@@ -59,31 +59,31 @@ public class CriteriaUtility {
 
   private static final WhereOperandTransformer WHERE_OPERAND_TRANSFORMER = new WhereOperandTransformer();
 
-  public static Product<Predicate> apply (CriteriaBuilder criteriaBuilder, Where where, WhereFieldTransformer<Root<?>, Path<?>> fieldTransformer) {
+  public static Product<Root<?>, Predicate> apply (CriteriaBuilder criteriaBuilder, Where where, WhereFieldTransformer<Root<?>, Path<?>> fieldTransformer) {
 
     return apply(criteriaBuilder, where, fieldTransformer, WHERE_OPERAND_TRANSFORMER);
   }
 
-  public static Product<Predicate> apply (CriteriaBuilder criteriaBuilder, Where where, WhereFieldTransformer<Root<?>, Path<?>> fieldTransformer, WhereOperandTransformer operandTransformer) {
+  public static Product<Root<?>, Predicate> apply (CriteriaBuilder criteriaBuilder, Where where, WhereFieldTransformer<Root<?>, Path<?>> fieldTransformer, WhereOperandTransformer operandTransformer) {
 
     if (where == null) {
 
       return NoneProduct.none();
     } else {
 
-      Set<Class<? extends Durable<?>>> durableClassSet = new HashSet<>();
+      Set<Root<?>> rootSet = new HashSet<>();
       Predicate predicate;
 
-      if ((predicate = walkConjunction(criteriaBuilder, durableClassSet, where.getRootConjunction(), fieldTransformer, operandTransformer)) == null) {
+      if ((predicate = walkConjunction(criteriaBuilder, rootSet, where.getRootConjunction(), fieldTransformer, operandTransformer)) == null) {
 
         return NoneProduct.none();
       }
 
-      return new SomeProduct<>(durableClassSet, predicate);
+      return new SomeProduct<>(rootSet, predicate);
     }
   }
 
-  private static Predicate walkConjunction (CriteriaBuilder criteriaBuilder, Set<Class<? extends Durable<?>>> durableClassSet, WhereConjunction whereConjunction, WhereFieldTransformer<Root<?>, Path<?>> fieldTransformer, WhereOperandTransformer operandTransformer) {
+  private static Predicate walkConjunction (CriteriaBuilder criteriaBuilder, Set<Root<?>> rootSet, WhereConjunction whereConjunction, WhereFieldTransformer<Root<?>, Path<?>> fieldTransformer, WhereOperandTransformer operandTransformer) {
 
     if ((whereConjunction == null) || whereConjunction.isEmpty()) {
 
@@ -98,12 +98,12 @@ public class CriteriaUtility {
 
           Predicate walkedPredicate;
 
-          if ((walkedPredicate = walkConjunction(criteriaBuilder, durableClassSet, (WhereConjunction)whereCriterion, fieldTransformer, operandTransformer)) != null) {
+          if ((walkedPredicate = walkConjunction(criteriaBuilder, rootSet, (WhereConjunction)whereCriterion, fieldTransformer, operandTransformer)) != null) {
             predicateList.add(walkedPredicate);
           }
           break;
         case FIELD:
-          predicateList.add(walkField(criteriaBuilder, durableClassSet, (WhereField)whereCriterion, fieldTransformer, operandTransformer));
+          predicateList.add(walkField(criteriaBuilder, rootSet, (WhereField)whereCriterion, fieldTransformer, operandTransformer));
           break;
         default:
           throw new UnknownSwitchCaseException(whereCriterion.getCriterionType().name());
@@ -129,17 +129,17 @@ public class CriteriaUtility {
     }
   }
 
-  private static Predicate walkField (CriteriaBuilder criteriaBuilder, Set<Class<? extends Durable<?>>> durableClassSet, WhereField whereField, WhereFieldTransformer<Root<?>, Path<?>> fieldTransformer, WhereOperandTransformer operandTransformer) {
+  private static Predicate walkField (CriteriaBuilder criteriaBuilder, Set<Root<?>> rootSet, WhereField whereField, WhereFieldTransformer<Root<?>, Path<?>> fieldTransformer, WhereOperandTransformer operandTransformer) {
 
     Object fieldValue = operandTransformer.transform(whereField.getOperand());
     WherePath<Root<?>, Path<?>> wherePath = fieldTransformer.transform(whereField.getEntity(), whereField.getName());
 
-    durableClassSet.add(((CriteriaWherePath)wherePath).getDurableClass());
+    rootSet.add(((CriteriaWherePath)wherePath).getRoot());
     switch (whereField.getOperator()) {
       case LT:
-        return criteriaBuilder.lt((Path<Number>)wherePath.getPath(), (Number)fieldValue);
+        return Date.class.equals(whereField.getOperand().getTargetClass()) ? criteriaBuilder.lessThan((Path<Date>)wherePath.getPath(), (Date)fieldValue) : criteriaBuilder.lt((Path<Number>)wherePath.getPath(), (Number)fieldValue);
       case LE:
-        return criteriaBuilder.le((Path<Number>)wherePath.getPath(), (Number)fieldValue);
+        return Date.class.equals(whereField.getOperand().getTargetClass()) ? criteriaBuilder.lessThanOrEqualTo((Path<Date>)wherePath.getPath(), (Date)fieldValue) : criteriaBuilder.le((Path<Number>)wherePath.getPath(), (Number)fieldValue);
       case EQ:
         if (fieldValue == null) {
           return criteriaBuilder.isNull(wherePath.getPath());
@@ -153,9 +153,9 @@ public class CriteriaUtility {
           return criteriaBuilder.notEqual(wherePath.getPath(), fieldValue);
         }
       case GE:
-        return criteriaBuilder.ge((Path<Number>)wherePath.getPath(), (Number)fieldValue);
+        return Date.class.equals(whereField.getOperand().getTargetClass()) ? criteriaBuilder.greaterThanOrEqualTo((Path<Date>)wherePath.getPath(), (Date)fieldValue) : criteriaBuilder.ge((Path<Number>)wherePath.getPath(), (Number)fieldValue);
       case GT:
-        return criteriaBuilder.gt((Path<Number>)wherePath.getPath(), (Number)fieldValue);
+        return Date.class.equals(whereField.getOperand().getTargetClass()) ? criteriaBuilder.greaterThan((Path<Date>)wherePath.getPath(), (Date)fieldValue) : criteriaBuilder.gt((Path<Number>)wherePath.getPath(), (Number)fieldValue);
       case LIKE:
         return criteriaBuilder.like((Path<String>)wherePath.getPath(), (String)fieldValue);
       case UNLIKE:
@@ -167,11 +167,11 @@ public class CriteriaUtility {
     }
   }
 
-  public static Product<Order[]> apply (CriteriaBuilder criteriaBuilder, Sort sort, WhereFieldTransformer<Root<?>, Path<?>> fieldTransformer) {
+  public static Product<Root<?>, Order[]> apply (CriteriaBuilder criteriaBuilder, Sort sort, WhereFieldTransformer<Root<?>, Path<?>> fieldTransformer) {
 
     if ((sort != null) && (!sort.isEmpty())) {
 
-      Set<Class<? extends Durable<?>>> durableClassSet = new HashSet<>();
+      Set<Root<?>> rootSet = new HashSet<>();
       Order[] orders;
       LinkedList<Order> orderList = new LinkedList<>();
 
@@ -179,7 +179,7 @@ public class CriteriaUtility {
 
         WherePath<Root<?>, Path<?>> wherePath = fieldTransformer.transform(sortField.getEntity(), sortField.getName());
 
-        durableClassSet.add(((CriteriaWherePath)wherePath).getDurableClass());
+        rootSet.add(((CriteriaWherePath)wherePath).getRoot());
         switch (sortField.getDirection()) {
           case ASC:
             orderList.add(criteriaBuilder.asc(wherePath.getPath()));
@@ -195,7 +195,7 @@ public class CriteriaUtility {
       orders = new Order[orderList.size()];
       orderList.toArray(orders);
 
-      return new SomeProduct<>(durableClassSet, orders);
+      return new SomeProduct<>(rootSet, orders);
     }
 
     return NoneProduct.none();

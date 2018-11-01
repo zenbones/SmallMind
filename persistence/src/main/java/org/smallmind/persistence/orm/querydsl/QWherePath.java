@@ -38,25 +38,23 @@ import com.querydsl.core.types.dsl.PathBuilder;
 import org.smallmind.persistence.Durable;
 import org.smallmind.persistence.query.WherePath;
 
-public class QWherePath extends WherePath<Path<?>, Path<?>> {
+public class QWherePath extends WherePath<EntityPath<?>, Path<?>> {
 
-  private Path<?> root;
+  private EntityPath<?> root;
   private Path<?> path;
   private String field;
 
   public QWherePath (Path<?> path) {
 
-    this((Class<? extends Durable<?>>)path.getRoot().getType(), path.getRoot(), path, path.getMetadata().toString().substring(path.getRoot().toString().length() + 1));
+    this((EntityPath<?>)path.getRoot(), path, path.toString().substring(path.getRoot().toString().length() + 1));
   }
 
   public QWherePath (EntityPath<? extends Durable<?>> entityPath, String field) {
 
-    this(entityPath.getType(), entityPath, new PathBuilder<>(entityPath.getType(), entityPath.toString()).get(field), field);
+    this(entityPath, new PathBuilder<>(entityPath.getType(), entityPath.toString()).get(field), field);
   }
 
-  public QWherePath (Class<? extends Durable<?>> durableClass, Path<?> root, Path<?> path, String field) {
-
-    super(durableClass);
+  public QWherePath (EntityPath<?> root, Path<?> path, String field) {
 
     this.root = root;
     this.path = path;
@@ -64,7 +62,7 @@ public class QWherePath extends WherePath<Path<?>, Path<?>> {
   }
 
   @Override
-  public Path<?> getRoot () {
+  public EntityPath<?> getRoot () {
 
     return root;
   }

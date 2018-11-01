@@ -34,21 +34,13 @@ package org.smallmind.persistence.orm.jpa;
 
 import javax.persistence.criteria.Path;
 import javax.persistence.criteria.Root;
-import org.smallmind.persistence.Durable;
 import org.smallmind.persistence.query.WhereFieldTransform;
 import org.smallmind.persistence.query.WhereFieldTransformer;
-import org.smallmind.persistence.query.WherePath;
 
 public class CriteriaWhereFieldTransformer extends WhereFieldTransformer<Root<?>, Path<?>> {
 
-  public CriteriaWhereFieldTransformer (WhereFieldTransform<Root<?>, Path<?>> defaultTransform) {
+  public CriteriaWhereFieldTransformer (WhereFieldTransform<Root<?>, Path<?>> transform) {
 
-    super(defaultTransform);
-  }
-
-  @Override
-  public <D extends Durable<?>> WherePath<Root<?>, Path<?>> createWherePath (Class<D> durableClass, Root<?> root, String name) {
-
-    return new CriteriaWherePath(durableClass, root, name);
+    super(transform);
   }
 }

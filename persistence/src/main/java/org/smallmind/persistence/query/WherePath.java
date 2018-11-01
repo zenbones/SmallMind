@@ -32,21 +32,7 @@
  */
 package org.smallmind.persistence.query;
 
-import org.smallmind.persistence.Durable;
-
 public abstract class WherePath<R, T> {
-
-  private Class<? extends Durable<?>> durableClass;
-
-  public WherePath (Class<? extends Durable<?>> durableClass) {
-
-    this.durableClass = durableClass;
-  }
-
-  public Class<? extends Durable<?>> getDurableClass () {
-
-    return durableClass;
-  }
 
   public abstract R getRoot ();
 

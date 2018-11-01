@@ -32,26 +32,13 @@
  */
 package org.smallmind.persistence.orm.morphia;
 
-import org.smallmind.persistence.Durable;
 import org.smallmind.persistence.query.WhereFieldTransform;
 import org.smallmind.persistence.query.WhereFieldTransformer;
-import org.smallmind.persistence.query.WherePath;
 
 public class MorphiaWhereFieldTransformer extends WhereFieldTransformer<Void, Void> {
 
-  public MorphiaWhereFieldTransformer (Class<? extends Durable<?>> durableClass) {
+  public MorphiaWhereFieldTransformer (WhereFieldTransform<Void, Void> transform) {
 
-    super((String entity, String name) -> new MorphiaWherePath(durableClass, name));
-  }
-
-  public MorphiaWhereFieldTransformer (WhereFieldTransform<Void, Void> defaultTransform) {
-
-    super(defaultTransform);
-  }
-
-  @Override
-  public <D extends Durable<?>> WherePath<Void, Void> createWherePath (Class<D> durableClass, Void root, String name) {
-
-    return new MorphiaWherePath(durableClass, name);
+    super(transform);
   }
 }

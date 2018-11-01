@@ -30,34 +30,28 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.persistence.query;
+package org.smallmind.nutsnbolts.util;
 
-import java.util.Set;
+import java.lang.reflect.Array;
 
-public class SomeProduct<R, T> implements Product<R, T> {
+public class ArrayUtility {
 
-  private Set<R> rootSet;
-  private T value;
+  public static <T> T[] concatenate (Class<T> clazz, T[] first, T[] second) {
 
-  public SomeProduct (Set<R> rootSet, T value) {
+    if ((first == null) || (first.length == 0)) {
 
-    this.rootSet = rootSet;
-    this.value = value;
-  }
+      return (second == null) ? (T[])Array.newInstance(clazz, 0) : second;
+    } else if ((second == null) || (second.length == 0)) {
 
-  @Override
-  public boolean isEmpty () {
+      return (first == null) ? (T[])Array.newInstance(clazz, 0) : first;
+    } else {
 
-    return false;
-  }
+      T[] joined = (T[])Array.newInstance(clazz, first.length + second.length);
 
-  public Set<R> getRootSet () {
+      System.arraycopy(first, 0, joined, 0, first.length);
+      System.arraycopy(second, 0, joined, first.length, second.length);
 
-    return rootSet;
-  }
-
-  public T getValue () {
-
-    return value;
+      return joined;
+    }
   }
 }

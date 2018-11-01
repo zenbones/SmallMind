@@ -38,15 +38,19 @@ import com.querydsl.core.types.EntityPath;
 import com.querydsl.core.types.Path;
 import com.querydsl.core.types.dsl.PathBuilder;
 import org.smallmind.persistence.Durable;
-import org.smallmind.persistence.query.WhereFieldTransform;
 import org.smallmind.persistence.query.WhereFieldTransformer;
-import org.smallmind.persistence.query.WherePath;
 
-public class QWhereFieldTransformer extends WhereFieldTransformer<Path<?>, Path<?>> {
+public class QWhereFieldTransformer extends WhereFieldTransformer<EntityPath<?>, Path<?>> {
+
+
+  public QWhereFieldTransformer (Function<>) {
+
+    super((String entity, String name) -> new QWherePath(entityPath, new PathBuilder<>(entityPath.getType(), entityPath.toString()).get(name), name));
+  }
 
   public QWhereFieldTransformer (EntityPath<? extends Durable<?>> entityPath) {
 
-    super((String entity, String name) -> new QWherePath(entityPath.getType(), entityPath, new PathBuilder<>(entityPath.getType(), entityPath.toString()).get(name), name));
+    super((String entity, String name) -> new QWherePath(entityPath, new PathBuilder<>(entityPath.getType(), entityPath.toString()).get(name), name));
   }
 
   public QWhereFieldTransformer (EntityPath<? extends Durable<?>> entityPath, UnaryOperator<String> nameOperator) {
@@ -55,7 +59,7 @@ public class QWhereFieldTransformer extends WhereFieldTransformer<Path<?>, Path<
 
       String transformedName = nameOperator.apply(name);
 
-      return new QWherePath(entityPath.getType(), entityPath, new PathBuilder<>(entityPath.getType(), entityPath.toString()).get(transformedName), transformedName);
+      return new QWherePath(entityPath, new PathBuilder<>(entityPath.getType(), entityPath.toString()).get(transformedName), transformedName);
     });
   }
 
@@ -66,25 +70,7 @@ public class QWhereFieldTransformer extends WhereFieldTransformer<Path<?>, Path<
       EntityPath<? extends Durable<?>> transformedPath = pathFunction.apply(name);
       String transformedName = nameFunction.apply(name);
 
-      return new QWherePath(transformedPath.getType(), transformedPath, new PathBuilder<>(transformedPath.getType(), transformedPath.toString()).get(transformedName), transformedName);
+      return new QWherePath(transformedPath, new PathBuilder<>(transformedPath.getType(), transformedPath.toString()).get(transformedName), transformedName);
     });
-  }
-
-  public QWhereFieldTransformer (PathBuilder<? extends Durable<?>> pathBuilder) {
-
-    super((String entity, String name) -> new QWherePath(pathBuilder.getType(), pathBuilder, pathBuilder.get(name), name));
-  }
-
-  public QWhereFieldTransformer (WhereFieldTransform<Path<?>, Path<?>> defaultTransform) {
-
-    super(defaultTransform);
-  }
-
-  @Override
-  public <D extends Durable<?>> WherePath<Path<?>, Path<?>> createWherePath (Class<D> durableClass, Path<?> root, String name) {
-
-    PathBuilder<?> pathBuilder = new PathBuilder<>(durableClass, root.toString());
-
-    return new QWherePath(durableClass, pathBuilder, pathBuilder.get(name), name);
   }
 }

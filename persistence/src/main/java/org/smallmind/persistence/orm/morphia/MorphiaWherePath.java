@@ -32,16 +32,13 @@
  */
 package org.smallmind.persistence.orm.morphia;
 
-import org.smallmind.persistence.Durable;
 import org.smallmind.persistence.query.WherePath;
 
 public class MorphiaWherePath extends WherePath<Void, Void> {
 
   private String field;
 
-  public MorphiaWherePath (Class<? extends Durable<?>> durableClass, String field) {
-
-    super(durableClass);
+  public MorphiaWherePath (String field) {
 
     this.field = field;
   }

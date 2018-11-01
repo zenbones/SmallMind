@@ -1,28 +1,28 @@
 /*
  * Copyright (c) 2007, 2008, 2009, 2010, 2011, 2012, 2013, 2014, 2015, 2016, 2017, 2018 David Berkman
- * 
+ *
  * This file is part of the SmallMind Code Project.
- * 
+ *
  * The SmallMind Code Project is free software, you can redistribute
  * it and/or modify it under either, at your discretion...
- * 
+ *
  * 1) The terms of GNU Affero General Public License as published by the
  * Free Software Foundation, either version 3 of the License, or (at
  * your option) any later version.
- * 
+ *
  * ...or...
- * 
+ *
  * 2) The terms of the Apache License, Version 2.0.
- * 
+ *
  * The SmallMind Code Project is distributed in the hope that it will
  * be useful, but WITHOUT ANY WARRANTY; without even the implied warranty
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License or Apache License for more details.
- * 
+ *
  * You should have received a copy of the GNU Affero General Public License
  * and the Apache License along with the SmallMind Code Project. If not, see
  * <http://www.gnu.org/licenses/> or <http://www.apache.org/licenses/LICENSE-2.0>.
- * 
+ *
  * Additional permission under the GNU Affero GPL version 3 section 7
  * ------------------------------------------------------------------
  * If you modify this Program, or any covered work, by linking or
@@ -37,6 +37,7 @@ import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.Set;
 import com.querydsl.core.BooleanBuilder;
+import com.querydsl.core.types.EntityPath;
 import com.querydsl.core.types.Expression;
 import com.querydsl.core.types.Ops;
 import com.querydsl.core.types.Order;
@@ -44,8 +45,8 @@ import com.querydsl.core.types.OrderSpecifier;
 import com.querydsl.core.types.Path;
 import com.querydsl.core.types.Predicate;
 import com.querydsl.core.types.dsl.Expressions;
+import com.querydsl.jpa.impl.JPAQuery;
 import org.smallmind.nutsnbolts.lang.UnknownSwitchCaseException;
-import org.smallmind.persistence.Durable;
 import org.smallmind.persistence.query.NoneProduct;
 import org.smallmind.persistence.query.Product;
 import org.smallmind.persistence.query.SomeProduct;
@@ -63,31 +64,31 @@ public class QUtility {
 
   private static final WhereOperandTransformer WHERE_OPERAND_TRANSFORMER = new WhereOperandTransformer();
 
-  public static Product<Predicate> apply (Where where, WhereFieldTransformer<Path<?>, Path<?>> fieldTransformer) {
+  public static Product<EntityPath<?>, Predicate> apply (Where where, WhereFieldTransformer<EntityPath<?>, Path<?>> fieldTransformer) {
 
     return apply(where, fieldTransformer, WHERE_OPERAND_TRANSFORMER);
   }
 
-  public static Product<Predicate> apply (Where where, WhereFieldTransformer<Path<?>, Path<?>> fieldTransformer, WhereOperandTransformer operandTransformer) {
+  public static Product<EntityPath<?>, Predicate> apply (Where where, WhereFieldTransformer<EntityPath<?>, Path<?>> fieldTransformer, WhereOperandTransformer operandTransformer) {
 
     if (where == null) {
 
       return NoneProduct.none();
     } else {
 
-      Set<Class<? extends Durable<?>>> durableClassSet = new HashSet<>();
+      Set<EntityPath<?>> rootSet = new HashSet<>();
       Predicate predicate;
 
-      if ((predicate = walkConjunction(durableClassSet, where.getRootConjunction(), fieldTransformer, operandTransformer)) == null) {
+      if ((predicate = walkConjunction(rootSet, where.getRootConjunction(), fieldTransformer, operandTransformer)) == null) {
 
         return NoneProduct.none();
       }
 
-      return new SomeProduct<>(durableClassSet, predicate);
+      return new SomeProduct<>(rootSet, predicate);
     }
   }
 
-  private static Predicate walkConjunction (Set<Class<? extends Durable<?>>> durableClassSet, WhereConjunction whereConjunction, WhereFieldTransformer<Path<?>, Path<?>> fieldTransformer, WhereOperandTransformer operandTransformer) {
+  private static Predicate walkConjunction (Set<EntityPath<?>> rootSet, WhereConjunction whereConjunction, WhereFieldTransformer<EntityPath<?>, Path<?>> fieldTransformer, WhereOperandTransformer operandTransformer) {
 
     if ((whereConjunction == null) || whereConjunction.isEmpty()) {
 
@@ -102,12 +103,12 @@ public class QUtility {
 
       switch (whereCriterion.getCriterionType()) {
         case CONJUNCTION:
-          if ((walkedPredicate = walkConjunction(durableClassSet, (WhereConjunction)whereCriterion, fieldTransformer, operandTransformer)) != null) {
+          if ((walkedPredicate = walkConjunction(rootSet, (WhereConjunction)whereCriterion, fieldTransformer, operandTransformer)) != null) {
             predicateList.add(walkedPredicate);
           }
           break;
         case FIELD:
-          if ((walkedPredicate = walkField(durableClassSet, (WhereField)whereCriterion, fieldTransformer, operandTransformer)) != null) {
+          if ((walkedPredicate = walkField(rootSet, (WhereField)whereCriterion, fieldTransformer, operandTransformer)) != null) {
             predicateList.add(walkedPredicate);
           }
           break;
@@ -140,12 +141,12 @@ public class QUtility {
     }
   }
 
-  private static Predicate walkField (Set<Class<? extends Durable<?>>> durableClassSet, WhereField whereField, WhereFieldTransformer<Path<?>, Path<?>> fieldTransformer, WhereOperandTransformer operandTransformer) {
+  private static Predicate walkField (Set<EntityPath<?>> rootSet, WhereField whereField, WhereFieldTransformer<EntityPath<?>, Path<?>> fieldTransformer, WhereOperandTransformer operandTransformer) {
 
     Object fieldValue = operandTransformer.transform(whereField.getOperand());
-    WherePath<Path<?>, Path<?>> wherePath = fieldTransformer.transform(whereField.getEntity(), whereField.getName());
+    WherePath<EntityPath<?>, Path<?>> wherePath = fieldTransformer.transform(whereField.getEntity(), whereField.getName());
 
-    durableClassSet.add(wherePath.getDurableClass());
+    rootSet.add(wherePath.getRoot());
     switch (whereField.getOperator()) {
       case LT:
         return Expressions.predicate(Ops.LT, wherePath.getPath(), Expressions.constant(fieldValue));
@@ -195,25 +196,25 @@ public class QUtility {
     }
   }
 
-  public static Product<OrderSpecifier[]> apply (Sort sort, WhereFieldTransformer<Path<?>, Path<?>> fieldTransformer) {
+  public static Product<EntityPath<?>, OrderSpecifier[]> apply (Sort sort, WhereFieldTransformer<EntityPath<?>, Path<?>> fieldTransformer) {
 
     if ((sort != null) && (!sort.isEmpty())) {
 
-      Set<Class<? extends Durable<?>>> durableClassSet = new HashSet<>();
+      Set<EntityPath<?>> rootSet = new HashSet<>();
       OrderSpecifier[] orderSpecifiers;
       LinkedList<OrderSpecifier<?>> orderSpecifierList = new LinkedList<>();
 
       for (SortField sortField : sort.getFields()) {
 
-        WherePath<Path<?>, Path<?>> wherePath = fieldTransformer.transform(sortField.getEntity(), sortField.getName());
+        WherePath<EntityPath<?>, Path<?>> wherePath = fieldTransformer.transform(sortField.getEntity(), sortField.getName());
 
-        durableClassSet.add(wherePath.getDurableClass());
+        rootSet.add(wherePath.getRoot());
         switch (sortField.getDirection()) {
           case ASC:
-            orderSpecifierList.add(new OrderSpecifier<>(Order.ASC, Expressions.path(String.class, wherePath.getRoot(), wherePath.getField())));
+            orderSpecifierList.add(new OrderSpecifier<>(Order.ASC, Expressions.constant(wherePath.getPath().toString())));
             break;
           case DESC:
-            orderSpecifierList.add(new OrderSpecifier<>(Order.DESC, Expressions.path(String.class, wherePath.getRoot(), wherePath.getField())));
+            orderSpecifierList.add(new OrderSpecifier<>(Order.DESC, Expressions.constant(wherePath.getPath().toString())));
             break;
           default:
             throw new UnknownSwitchCaseException(sortField.getDirection().name());
@@ -223,9 +224,73 @@ public class QUtility {
       orderSpecifiers = new OrderSpecifier[orderSpecifierList.size()];
       orderSpecifierList.toArray(orderSpecifiers);
 
-      return new SomeProduct<>(durableClassSet, orderSpecifiers);
+      return new SomeProduct<>(rootSet, orderSpecifiers);
     }
 
     return NoneProduct.none();
+  }
+
+  public static <T> JPAQuery<T> update (JPAQuery<T> query, Where... wheres) {
+
+    return update(query, null, null, null, wheres);
+  }
+
+  public static <T> JPAQuery<T> update (JPAQuery<T> query, Sort sort, Where... wheres) {
+
+    return update(query, null, null, sort, wheres);
+  }
+
+  public static <T> JPAQuery<T> update (JPAQuery<T> query, WhereFieldTransformer<EntityPath<?>, Path<?>> fieldTransformer, Where... wheres) {
+
+    return update(query, fieldTransformer, null, null, wheres);
+  }
+
+  public static <T> JPAQuery<T> update (JPAQuery<T> query, WhereFieldTransformer<EntityPath<?>, Path<?>> fieldTransformer, Sort sort, Where... wheres) {
+
+    return update(query, fieldTransformer, null, sort, wheres);
+  }
+
+  public static <T> JPAQuery<T> update (JPAQuery<T> query, WhereOperandTransformer operandTransformer, Where... wheres) {
+
+    return update(query, null, operandTransformer, null, wheres);
+  }
+
+  public static <T> JPAQuery<T> update (JPAQuery<T> query, WhereOperandTransformer operandTransformer, Sort sort, Where... wheres) {
+
+    return update(query, null, operandTransformer, sort, wheres);
+  }
+
+  public static <T> JPAQuery<T> update (JPAQuery<T> query, WhereFieldTransformer<EntityPath<?>, Path<?>> fieldTransformer, WhereOperandTransformer operandTransformer, Where... wheres) {
+
+    return update(query, fieldTransformer, operandTransformer, null, wheres);
+  }
+
+  public static <T> JPAQuery<T> update (JPAQuery<T> query, WhereFieldTransformer<EntityPath<?>, Path<?>> fieldTransformer, WhereOperandTransformer operandTransformer, Sort sort, Where... wheres) {
+
+    Product<EntityPath<?>, OrderSpecifier[]> orderProduct;
+    Set<EntityPath<?>> rootSet = new HashSet<>();
+    EntityPath[] roots;
+
+    if (wheres != null) {
+      for (Where where : wheres) {
+
+        Product<EntityPath<?>, Predicate> predicateProduct;
+
+        if (!(predicateProduct = QUtility.apply(where, fieldTransformer, operandTransformer)).isEmpty()) {
+          rootSet.addAll(predicateProduct.getRootSet());
+          query.where(predicateProduct.getValue());
+        }
+      }
+    }
+
+    if (!(orderProduct = QUtility.apply(sort, fieldTransformer)).isEmpty()) {
+      rootSet.addAll(orderProduct.getRootSet());
+      query.orderBy(orderProduct.getValue());
+    }
+
+    roots = new EntityPath[rootSet.size()];
+    rootSet.toArray(roots);
+
+    return query.from(roots);
   }
 }

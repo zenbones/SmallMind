@@ -32,26 +32,13 @@
  */
 package org.smallmind.persistence.orm.hibernate;
 
-import org.smallmind.persistence.Durable;
 import org.smallmind.persistence.query.WhereFieldTransform;
 import org.smallmind.persistence.query.WhereFieldTransformer;
-import org.smallmind.persistence.query.WherePath;
 
 public class CriteriaWhereFieldTransformer extends WhereFieldTransformer<Void, Void> {
 
-  public CriteriaWhereFieldTransformer (Class<? extends Durable<?>> durableClass) {
+  public CriteriaWhereFieldTransformer (WhereFieldTransform<Void, Void> transform) {
 
-    super((String entity, String name) -> new CriteriaWherePath(durableClass, name));
-  }
-
-  public CriteriaWhereFieldTransformer (WhereFieldTransform<Void, Void> defaultTransform) {
-
-    super(defaultTransform);
-  }
-
-  @Override
-  public <D extends Durable<?>> WherePath<Void, Void> createWherePath (Class<D> durableClass, Void root, String name) {
-
-    return new CriteriaWherePath(durableClass, name);
+    super(transform);
   }
 }
