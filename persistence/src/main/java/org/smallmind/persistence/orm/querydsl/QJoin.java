@@ -36,7 +36,7 @@ import com.querydsl.core.types.EntityPath;
 import com.querydsl.core.types.Predicate;
 import org.smallmind.persistence.query.JoinType;
 
-public class QJoin<T> {
+public class QJoin {
 
   private EntityPath<?> root;
   private Predicate predicate;
@@ -51,17 +51,7 @@ public class QJoin<T> {
 
   public static QJoin inner (EntityPath<?> root, Predicate predicate) {
 
-    return new QJoin<>(JoinType.INNER, root, predicate);
-  }
-
-  public static QJoin left (EntityPath<?> root, Predicate predicate) {
-
-    return new QJoin<>(JoinType.LEFT, root, predicate);
-  }
-
-  public static QJoin right (EntityPath<?> root, Predicate predicate) {
-
-    return new QJoin<>(JoinType.RIGHT, root, predicate);
+    return new QJoin(JoinType.INNER, root, predicate);
   }
 
   public JoinType getType () {

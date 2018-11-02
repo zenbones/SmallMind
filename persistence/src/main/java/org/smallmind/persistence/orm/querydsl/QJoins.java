@@ -33,63 +33,104 @@
 package org.smallmind.persistence.orm.querydsl;
 
 import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedList;
 import com.querydsl.core.types.EntityPath;
+import com.querydsl.core.types.Predicate;
 import com.querydsl.core.types.dsl.BooleanExpression;
 import com.querydsl.jpa.impl.JPAQuery;
 import org.smallmind.nutsnbolts.lang.UnknownSwitchCaseException;
+import org.smallmind.persistence.query.JoinType;
 
 public class QJoins extends HashMap<EntityPath<?>, BooleanExpression> {
 
-  private static final QJoins EMPTY_JOINS = new QJoins();
+  private HashMap<EntityPath<?>, Instruction> instructionMap = new HashMap<>();
+  private HashSet<EntityPath<?>> encounteredSet = new HashSet<>();
+  private LinkedList<EntityPath<?>> hierarchy = new LinkedList<>();
 
-  private QJoin[] series;
-  private int lowestIndex;
+  public QJoins independent (QJoin... series) {
 
-  public QJoins (QJoin... series) {
+    for (QJoin join : series) {
+      instructionMap.putIfAbsent(join.getRoot(), new Instruction(join.getType(), join.getPredicate()));
+    }
 
-    this.series = series;
-
-    lowestIndex = (series == null) ? 0 : series.length;
+    return this;
   }
 
-  public static QJoins empty () {
+  public QJoins hierarchical (QJoin... series) {
 
-    return EMPTY_JOINS;
+    for (QJoin join : series) {
+      if (instructionMap.putIfAbsent(join.getRoot(), new Instruction(join.getType(), join.getPredicate())) == null) {
+        hierarchy.add(join.getRoot());
+      }
+    }
+
+    return this;
   }
 
   public void use (EntityPath<?> root) {
 
-    if (lowestIndex > 0) {
-      for (int index = 0; index < series.length; index++) {
-        if (series[index].getRoot().equals(root)) {
-          if (index < lowestIndex) {
-            lowestIndex = index;
-          }
-          break;
-        }
-      }
-    }
+    encounteredSet.add(root);
   }
 
   public void update (JPAQuery<?> query) {
 
-    if (series != null) {
-      for (int index = lowestIndex; index < series.length; index++) {
-        switch (series[index].getType()) {
-          case INNER:
-            query.from(series[index].getRoot()).where(series[index].getPredicate());
-            // query.leftJoin(series[index].getRoot()).on(series[index].getPredicate());
-            break;
-          case LEFT:
-            query.leftJoin(series[index].getRoot()).on(series[index].getPredicate());
-            break;
-          case RIGHT:
-            query.rightJoin(series[index].getRoot()).on(series[index].getPredicate());
-            break;
-          default:
-            throw new UnknownSwitchCaseException(series[index].getType().name());
+    if (!hierarchy.isEmpty()) {
+
+      boolean active = false;
+
+      for (EntityPath<?> element : hierarchy) {
+        if (encounteredSet.remove(element)) {
+          active = true;
+        }
+        if (active) {
+          execute(query, element, instructionMap.get(element));
         }
       }
+    }
+
+    for (EntityPath<?> root : encounteredSet) {
+      execute(query, root, instructionMap.get(root));
+    }
+  }
+
+  private void execute (JPAQuery<?> query, EntityPath<?> root, Instruction instruction) {
+
+    switch (instruction.getType()) {
+      case INNER:
+        query.from(root).where(instruction.getPredicate());
+        // query.leftJoin(instruction.getRoot()).on(instruction.getPredicate());
+        break;
+      case LEFT:
+        query.leftJoin(root).on(instruction.getPredicate());
+        break;
+      case RIGHT:
+        query.rightJoin(root).on(instruction.getPredicate());
+        break;
+      default:
+        throw new UnknownSwitchCaseException(instruction.getType().name());
+    }
+  }
+
+  private class Instruction {
+
+    private JoinType type;
+    private Predicate predicate;
+
+    private Instruction (JoinType type, Predicate predicate) {
+
+      this.type = type;
+      this.predicate = predicate;
+    }
+
+    private JoinType getType () {
+
+      return type;
+    }
+
+    private Predicate getPredicate () {
+
+      return predicate;
     }
   }
 }

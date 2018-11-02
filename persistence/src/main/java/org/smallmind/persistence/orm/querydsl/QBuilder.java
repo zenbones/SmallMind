@@ -78,9 +78,24 @@ public class QBuilder<T> {
     return this;
   }
 
-  public QBuilder<T> joins (QJoin... series) {
+  public QBuilder<T> independentJoins (QJoin... series) {
 
-    joins = new QJoins(series);
+    if (joins == null) {
+      joins = new QJoins();
+    }
+
+    joins.independent(series);
+
+    return this;
+  }
+
+  public QBuilder<T> hierarchicalJoins (QJoin... series) {
+
+    if (joins == null) {
+      joins = new QJoins();
+    }
+
+    joins.hierarchical(series);
 
     return this;
   }
@@ -107,13 +122,11 @@ public class QBuilder<T> {
       query.orderBy(orderProduct.getValue());
     }
 
-    for (EntityPath<?> root : rootSet) {
-      if (joins != null) {
+    if (joins != null) {
+      for (EntityPath<?> root : rootSet) {
         joins.use(root);
       }
-    }
 
-    if (joins != null) {
       joins.update(query);
     }
 
