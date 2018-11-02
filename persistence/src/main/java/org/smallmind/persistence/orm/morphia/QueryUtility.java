@@ -52,11 +52,9 @@ import org.smallmind.persistence.query.WhereOperator;
 
 public class QueryUtility {
 
-  private static final WhereOperandTransformer WHERE_OPERAND_TRANSFORMER = new WhereOperandTransformer();
-
   public static Query<?> apply (Query<?> query, Where where) {
 
-    return apply(query, where, null, WHERE_OPERAND_TRANSFORMER);
+    return apply(query, where, null, WhereOperandTransformer.instance());
   }
 
   public static Query<?> apply (Query<?> query, Where where, WhereOperandTransformer operandTransformer) {
@@ -66,7 +64,7 @@ public class QueryUtility {
 
   public static Query<?> apply (Query<?> query, Where where, WhereFieldTransformer<Void, Void> fieldTransformer) {
 
-    return apply(query, where, fieldTransformer, WHERE_OPERAND_TRANSFORMER);
+    return apply(query, where, fieldTransformer, WhereOperandTransformer.instance());
   }
 
   public static Query<?> apply (Query<?> query, Where where, WhereFieldTransformer<Void, Void> fieldTransformer, WhereOperandTransformer operandTransformer) {

@@ -44,5 +44,5 @@ public interface CacheDomain<I extends Serializable & Comparable<I>, D extends D
 
   PersistenceCache<String, List> getWideInstanceCache (Class<D> managedClass);
 
-  PersistenceCache<String, DurableVector<I,D>> getVectorCache (Class<D> managedClass);
+  PersistenceCache<String, DurableVector<I, D>> getVectorCache (Class<D> managedClass);
 }

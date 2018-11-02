@@ -50,16 +50,14 @@ import org.smallmind.persistence.query.WhereOperandTransformer;
 
 public class CriteriaUtility {
 
-  private static final WhereOperandTransformer WHERE_OPERAND_TRANSFORMER = new WhereOperandTransformer();
-
   public static DetachedCriteria apply (DetachedCriteria detachedCriteria, Where where) {
 
-    return apply(detachedCriteria, where, null, WHERE_OPERAND_TRANSFORMER);
+    return apply(detachedCriteria, where, null, WhereOperandTransformer.instance());
   }
 
   public static DetachedCriteria apply (DetachedCriteria detachedCriteria, Where where, WhereFieldTransformer<Void, Void> fieldTransformer) {
 
-    return apply(detachedCriteria, where, fieldTransformer, WHERE_OPERAND_TRANSFORMER);
+    return apply(detachedCriteria, where, fieldTransformer, WhereOperandTransformer.instance());
   }
 
   public static DetachedCriteria apply (DetachedCriteria detachedCriteria, Where where, WhereOperandTransformer operandTransformer) {
@@ -83,12 +81,12 @@ public class CriteriaUtility {
 
   public static Criteria apply (Criteria criteria, Where where) {
 
-    return apply(criteria, where, null, WHERE_OPERAND_TRANSFORMER);
+    return apply(criteria, where, null, WhereOperandTransformer.instance());
   }
 
   public static Criteria apply (Criteria criteria, Where where, WhereFieldTransformer<Void, Void> fieldTransformer) {
 
-    return apply(criteria, where, fieldTransformer, WHERE_OPERAND_TRANSFORMER);
+    return apply(criteria, where, fieldTransformer, WhereOperandTransformer.instance());
   }
 
   public static Criteria apply (Criteria criteria, Where where, WhereOperandTransformer operandTransformer) {

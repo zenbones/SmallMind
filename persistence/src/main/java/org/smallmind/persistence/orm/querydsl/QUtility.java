@@ -45,7 +45,6 @@ import com.querydsl.core.types.OrderSpecifier;
 import com.querydsl.core.types.Path;
 import com.querydsl.core.types.Predicate;
 import com.querydsl.core.types.dsl.Expressions;
-import com.querydsl.jpa.impl.JPAQuery;
 import org.smallmind.nutsnbolts.lang.UnknownSwitchCaseException;
 import org.smallmind.persistence.query.NoneProduct;
 import org.smallmind.persistence.query.Product;
@@ -62,11 +61,9 @@ import org.smallmind.persistence.query.WherePath;
 
 public class QUtility {
 
-  private static final WhereOperandTransformer WHERE_OPERAND_TRANSFORMER = new WhereOperandTransformer();
-
   public static Product<EntityPath<?>, Predicate> apply (Where where, WhereFieldTransformer<EntityPath<?>, Path<?>> fieldTransformer) {
 
-    return apply(where, fieldTransformer, WHERE_OPERAND_TRANSFORMER);
+    return apply(where, fieldTransformer, WhereOperandTransformer.instance());
   }
 
   public static Product<EntityPath<?>, Predicate> apply (Where where, WhereFieldTransformer<EntityPath<?>, Path<?>> fieldTransformer, WhereOperandTransformer operandTransformer) {
@@ -228,69 +225,5 @@ public class QUtility {
     }
 
     return NoneProduct.none();
-  }
-
-  public static <T> JPAQuery<T> update (JPAQuery<T> query, Where... wheres) {
-
-    return update(query, null, null, null, wheres);
-  }
-
-  public static <T> JPAQuery<T> update (JPAQuery<T> query, Sort sort, Where... wheres) {
-
-    return update(query, null, null, sort, wheres);
-  }
-
-  public static <T> JPAQuery<T> update (JPAQuery<T> query, WhereFieldTransformer<EntityPath<?>, Path<?>> fieldTransformer, Where... wheres) {
-
-    return update(query, fieldTransformer, null, null, wheres);
-  }
-
-  public static <T> JPAQuery<T> update (JPAQuery<T> query, WhereFieldTransformer<EntityPath<?>, Path<?>> fieldTransformer, Sort sort, Where... wheres) {
-
-    return update(query, fieldTransformer, null, sort, wheres);
-  }
-
-  public static <T> JPAQuery<T> update (JPAQuery<T> query, WhereOperandTransformer operandTransformer, Where... wheres) {
-
-    return update(query, null, operandTransformer, null, wheres);
-  }
-
-  public static <T> JPAQuery<T> update (JPAQuery<T> query, WhereOperandTransformer operandTransformer, Sort sort, Where... wheres) {
-
-    return update(query, null, operandTransformer, sort, wheres);
-  }
-
-  public static <T> JPAQuery<T> update (JPAQuery<T> query, WhereFieldTransformer<EntityPath<?>, Path<?>> fieldTransformer, WhereOperandTransformer operandTransformer, Where... wheres) {
-
-    return update(query, fieldTransformer, operandTransformer, null, wheres);
-  }
-
-  public static <T> JPAQuery<T> update (JPAQuery<T> query, WhereFieldTransformer<EntityPath<?>, Path<?>> fieldTransformer, WhereOperandTransformer operandTransformer, Sort sort, Where... wheres) {
-
-    Product<EntityPath<?>, OrderSpecifier[]> orderProduct;
-    Set<EntityPath<?>> rootSet = new HashSet<>();
-    EntityPath[] roots;
-
-    if (wheres != null) {
-      for (Where where : wheres) {
-
-        Product<EntityPath<?>, Predicate> predicateProduct;
-
-        if (!(predicateProduct = QUtility.apply(where, fieldTransformer, operandTransformer)).isEmpty()) {
-          rootSet.addAll(predicateProduct.getRootSet());
-          query.where(predicateProduct.getValue());
-        }
-      }
-    }
-
-    if (!(orderProduct = QUtility.apply(sort, fieldTransformer)).isEmpty()) {
-      rootSet.addAll(orderProduct.getRootSet());
-      query.orderBy(orderProduct.getValue());
-    }
-
-    roots = new EntityPath[rootSet.size()];
-    rootSet.toArray(roots);
-
-    return query.from(roots);
   }
 }

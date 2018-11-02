@@ -40,6 +40,7 @@ import org.smallmind.persistence.orm.ORMOperationException;
 
 public class WhereOperandTransformer {
 
+  private static final WhereOperandTransformer DEFAULT_TRANSFORMER = new WhereOperandTransformer();
   private HashMap<TransformKey<?, ?>, WhereOperandTransform<?, ?>> transformMap = new HashMap<>();
 
   public WhereOperandTransformer () {
@@ -48,6 +49,11 @@ public class WhereOperandTransformer {
     transformMap.put(new TransformKey<>(String.class, Enum.class), (String typeHint, String name) -> {
       throw new ORMOperationException("Missing transform for enum(%s)", typeHint);
     });
+  }
+
+  public static WhereOperandTransformer instance () {
+
+    return DEFAULT_TRANSFORMER;
   }
 
   public synchronized <I, O> WhereOperandTransformer add (Class<I> inputClass, Class<O> outputClass, WhereOperandTransform<I, O> transform) {

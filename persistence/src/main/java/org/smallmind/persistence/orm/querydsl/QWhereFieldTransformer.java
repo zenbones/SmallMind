@@ -32,7 +32,7 @@
  */
 package org.smallmind.persistence.orm.querydsl;
 
-import java.util.function.Function;
+import java.util.function.BiFunction;
 import java.util.function.UnaryOperator;
 import com.querydsl.core.types.EntityPath;
 import com.querydsl.core.types.Path;
@@ -57,22 +57,22 @@ public class QWhereFieldTransformer extends WhereFieldTransformer<EntityPath<?>,
     });
   }
 
-  public QWhereFieldTransformer (Function<String, EntityPath<? extends Durable<?>>> pathFunction, UnaryOperator<String> nameFunction) {
+  public QWhereFieldTransformer (BiFunction<String, String, EntityPath<? extends Durable<?>>> pathFunction, BiFunction<String, String, String> nameFunction) {
 
     super((String entity, String name) -> {
 
-      EntityPath<? extends Durable<?>> transformedEntityPath = pathFunction.apply(name);
-      String transformedName = nameFunction.apply(name);
+      EntityPath<? extends Durable<?>> transformedEntityPath = pathFunction.apply(entity, name);
+      String transformedName = nameFunction.apply(entity, name);
 
       return new QWherePath(transformedEntityPath, new PathBuilder<>(transformedEntityPath.getType(), transformedEntityPath.toString()).get(transformedName), transformedName);
     });
   }
 
-  public QWhereFieldTransformer (Function<String, Path<? extends Durable<?>>> pathFunction) {
+  public QWhereFieldTransformer (BiFunction<String, String, Path<?>> pathFunction) {
 
     super((String entity, String name) -> {
 
-      Path<? extends Durable<?>> transformedPath = pathFunction.apply(name);
+      Path<?> transformedPath = pathFunction.apply(entity, name);
 
       return new QWherePath((EntityPath<?>)transformedPath.getRoot(), transformedPath, transformedPath.toString().substring(transformedPath.getRoot().toString().length() + 1));
     });

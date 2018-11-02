@@ -57,11 +57,9 @@ import org.smallmind.persistence.query.WherePath;
 
 public class CriteriaUtility {
 
-  private static final WhereOperandTransformer WHERE_OPERAND_TRANSFORMER = new WhereOperandTransformer();
-
   public static Product<Root<?>, Predicate> apply (CriteriaBuilder criteriaBuilder, Where where, WhereFieldTransformer<Root<?>, Path<?>> fieldTransformer) {
 
-    return apply(criteriaBuilder, where, fieldTransformer, WHERE_OPERAND_TRANSFORMER);
+    return apply(criteriaBuilder, where, fieldTransformer, WhereOperandTransformer.instance());
   }
 
   public static Product<Root<?>, Predicate> apply (CriteriaBuilder criteriaBuilder, Where where, WhereFieldTransformer<Root<?>, Path<?>> fieldTransformer, WhereOperandTransformer operandTransformer) {
