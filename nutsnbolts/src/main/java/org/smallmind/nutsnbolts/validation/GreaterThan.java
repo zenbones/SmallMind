@@ -61,7 +61,7 @@ public @interface GreaterThan {
     GreaterThan[] value ();
   }
 
-  String message () default "Numeric value must be greater than {value}";
+  String message () default "must be greater than {value}";
 
   Class<?>[] groups () default {};
 

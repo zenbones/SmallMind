@@ -39,44 +39,44 @@ import org.smallmind.nutsnbolts.lang.UnknownSwitchCaseException;
 
 public interface WherePermissible<W extends WherePermissible<W>> {
 
-  Set<String> fieldNames ();
+  Set<WhereTarget> getTargetSet ();
 
   default W validate (WherePermit... permits) {
 
     if ((permits != null) && (permits.length > 0)) {
 
-      Set<String> fieldNameSet = fieldNames();
-      HashSet<String> allowedNameSet = new HashSet<>();
-      HashSet<String> requiredNameSet = new HashSet<>();
-      HashSet<String> excludedNameSet = new HashSet<>();
+      Set<WhereTarget> requestedSet = getTargetSet();
+      HashSet<WhereTarget> allowedSet = new HashSet<>();
+      HashSet<WhereTarget> requiredSet = new HashSet<>();
+      HashSet<WhereTarget> excludedSet = new HashSet<>();
 
       for (WherePermit permit : permits) {
         switch (permit.getType()) {
           case ALLOWED:
-            allowedNameSet.addAll(Arrays.asList(permit.getFields()));
+            allowedSet.addAll(Arrays.asList(permit.getTargets()));
             break;
           case REQUIRED:
-            allowedNameSet.addAll(Arrays.asList(permit.getFields()));
-            requiredNameSet.addAll(Arrays.asList(permit.getFields()));
+            allowedSet.addAll(Arrays.asList(permit.getTargets()));
+            requiredSet.addAll(Arrays.asList(permit.getTargets()));
             break;
           case EXCLUDED:
-            excludedNameSet.addAll(Arrays.asList(permit.getFields()));
+            excludedSet.addAll(Arrays.asList(permit.getTargets()));
             break;
           default:
             throw new UnknownSwitchCaseException(permit.getType().name());
         }
       }
 
-      for (String fieldName : fieldNameSet) {
-        if (excludedNameSet.contains(fieldName)) {
-          throw new WhereValidationException("The field(%s) is not permitted in %s clauses for this query", fieldName, this.getClass().getSimpleName());
+      for (WhereTarget target : requestedSet) {
+        if (excludedSet.contains(target)) {
+          throw new WhereValidationException("The field(%s) is not permitted in %s clauses for this query", target, this.getClass().getSimpleName());
         }
-        if ((!allowedNameSet.isEmpty()) && (!allowedNameSet.contains(fieldName))) {
-          throw new WhereValidationException("The field(%s) is not permitted in %s clauses for this query", fieldName, this.getClass().getSimpleName());
+        if ((!allowedSet.isEmpty()) && (!allowedSet.contains(target))) {
+          throw new WhereValidationException("The field(%s) is not permitted in %s clauses for this query", target, this.getClass().getSimpleName());
         }
       }
-      if (!fieldNameSet.containsAll(requiredNameSet)) {
-        throw new WhereValidationException("The fields(%s) are required in %s clauses for this query", Arrays.toString(requiredNameSet.toArray()), this.getClass().getSimpleName());
+      if (!requestedSet.containsAll(requiredSet)) {
+        throw new WhereValidationException("The fields(%s) are required in %s clauses for this query", Arrays.toString(requiredSet.toArray()), this.getClass().getSimpleName());
       }
     }
 

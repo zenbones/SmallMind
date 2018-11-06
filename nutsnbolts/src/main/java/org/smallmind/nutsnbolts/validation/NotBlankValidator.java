@@ -32,39 +32,26 @@
  */
 package org.smallmind.nutsnbolts.validation;
 
-import java.lang.annotation.Documented;
-import java.lang.annotation.Retention;
-import java.lang.annotation.Target;
-import javax.validation.Constraint;
-import javax.validation.Payload;
+import javax.validation.ConstraintValidator;
+import javax.validation.ConstraintValidatorContext;
 
-import static java.lang.annotation.ElementType.ANNOTATION_TYPE;
-import static java.lang.annotation.ElementType.CONSTRUCTOR;
-import static java.lang.annotation.ElementType.FIELD;
-import static java.lang.annotation.ElementType.METHOD;
-import static java.lang.annotation.ElementType.PARAMETER;
-import static java.lang.annotation.ElementType.TYPE_USE;
-import static java.lang.annotation.RetentionPolicy.RUNTIME;
+public class NotBlankValidator implements ConstraintValidator<NotBlank, String> {
 
-@Documented
-@Retention(RUNTIME)
-@Target({FIELD, PARAMETER, ANNOTATION_TYPE, CONSTRUCTOR, METHOD, TYPE_USE})
-@Constraint(validatedBy = EmailValidator.class)
-public @interface Email {
+  private NotBlank constraintAnnotation;
 
-  @Target({FIELD, PARAMETER, ANNOTATION_TYPE, CONSTRUCTOR, METHOD, TYPE_USE})
-  @Retention(RUNTIME)
-  @Documented
-  @interface List {
+  @Override
+  public void initialize (NotBlank constraintAnnotation) {
 
-    Email[] value ();
+    this.constraintAnnotation = constraintAnnotation;
   }
 
-  String message () default "must be an email address";
+  @Override
+  public boolean isValid (String value, ConstraintValidatorContext context) {
 
-  Class<?>[] groups () default {};
-
-  Class<? extends Payload>[] payload () default {};
-
-  char separator () default '\0';
+    if (value == null) {
+      return true;
+    } else {
+      return value.trim().length() > 0;
+    }
+  }
 }

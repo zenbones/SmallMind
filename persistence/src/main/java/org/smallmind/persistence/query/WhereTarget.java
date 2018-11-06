@@ -30,41 +30,52 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.nutsnbolts.validation;
+package org.smallmind.persistence.query;
 
-import java.lang.annotation.Documented;
-import java.lang.annotation.Retention;
-import java.lang.annotation.Target;
-import javax.validation.Constraint;
-import javax.validation.Payload;
+import java.util.Objects;
 
-import static java.lang.annotation.ElementType.ANNOTATION_TYPE;
-import static java.lang.annotation.ElementType.CONSTRUCTOR;
-import static java.lang.annotation.ElementType.FIELD;
-import static java.lang.annotation.ElementType.METHOD;
-import static java.lang.annotation.ElementType.PARAMETER;
-import static java.lang.annotation.ElementType.TYPE_USE;
-import static java.lang.annotation.RetentionPolicy.RUNTIME;
+public class WhereTarget {
 
-@Documented
-@Retention(RUNTIME)
-@Target({FIELD, PARAMETER, ANNOTATION_TYPE, CONSTRUCTOR, METHOD, TYPE_USE})
-@Constraint(validatedBy = EmailValidator.class)
-public @interface Email {
+  private String entity;
+  private String name;
 
-  @Target({FIELD, PARAMETER, ANNOTATION_TYPE, CONSTRUCTOR, METHOD, TYPE_USE})
-  @Retention(RUNTIME)
-  @Documented
-  @interface List {
+  public WhereTarget (String entity, String name) {
 
-    Email[] value ();
+    this(name);
+
+    this.entity = entity;
   }
 
-  String message () default "must be an email address";
+  public WhereTarget (String name) {
 
-  Class<?>[] groups () default {};
+    this.name = name;
+  }
 
-  Class<? extends Payload>[] payload () default {};
+  public String getEntity () {
 
-  char separator () default '\0';
+    return entity;
+  }
+
+  public String getName () {
+
+    return name;
+  }
+
+  @Override
+  public String toString () {
+
+    return (entity == null) ? name : entity + '.' + name;
+  }
+
+  @Override
+  public int hashCode () {
+
+    return (entity == null) ? name.hashCode() : (31 * entity.hashCode()) + name.hashCode();
+  }
+
+  @Override
+  public boolean equals (Object obj) {
+
+    return (obj instanceof WhereTarget) && name.equals(((WhereTarget)obj).getName()) && Objects.equals(entity, ((WhereTarget)obj).getEntity());
+  }
 }

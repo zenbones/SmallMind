@@ -49,10 +49,18 @@ public class WhereValidator implements ConstraintValidator<WhereValidate, WhereP
   public boolean isValid (WherePermissible permissible, ConstraintValidatorContext context) {
 
     WherePermit[] wherePermits = new WherePermit[constraintAnnotation.permits().length];
-    int index = 0;
+    int permitIndex = 0;
 
     for (Permit permit : constraintAnnotation.permits()) {
-      wherePermits[index++] = new WherePermit(permit.type(), permit.fields());
+
+      WhereTarget[] whereTargets = new WhereTarget[permit.targets().length];
+      int targetIndex = 0;
+
+      for (Target target : permit.targets()) {
+        whereTargets[targetIndex++] = new WhereTarget(target.entity(), target.field());
+      }
+
+      wherePermits[permitIndex++] = new WherePermit(permit.type(), whereTargets);
     }
 
     try {

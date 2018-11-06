@@ -34,13 +34,12 @@ package org.smallmind.persistence.query;
 
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
-import java.lang.annotation.Target;
 
-@Target({})
+@java.lang.annotation.Target({})
 @Retention(RetentionPolicy.RUNTIME)
 public @interface Permit {
 
   PermitType type ();
 
-  String[] fields ();
+  Target[] targets ();
 }

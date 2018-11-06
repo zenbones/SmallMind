@@ -35,12 +35,12 @@ package org.smallmind.persistence.query;
 public class WherePermit {
 
   private PermitType type;
-  private String[] fields;
+  private WhereTarget[] targets;
 
-  public WherePermit (PermitType type, String... fields) {
+  public WherePermit (PermitType type, WhereTarget... targets) {
 
     this.type = type;
-    this.fields = fields;
+    this.targets = targets;
   }
 
   public PermitType getType () {
@@ -48,8 +48,8 @@ public class WherePermit {
     return type;
   }
 
-  public String[] getFields () {
+  public WhereTarget[] getTargets () {
 
-    return fields;
+    return targets;
   }
 }

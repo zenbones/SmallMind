@@ -61,7 +61,7 @@ public @interface NotZero {
     NotZero[] value ();
   }
 
-  String message () default "Numeric value must be not be zero";
+  String message () default "must be not be zero";
 
   Class<?>[] groups () default {};
 
