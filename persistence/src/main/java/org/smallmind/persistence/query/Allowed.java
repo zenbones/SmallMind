@@ -32,7 +32,7 @@
  */
 package org.smallmind.persistence.query;
 
-public @interface Target {
+public @interface Allowed {
 
   String entity () default "";
 

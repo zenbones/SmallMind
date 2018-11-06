@@ -32,50 +32,44 @@
  */
 package org.smallmind.persistence.query;
 
-import java.util.Objects;
+import java.lang.annotation.Documented;
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Retention;
+import java.lang.annotation.Target;
+import javax.validation.Constraint;
+import javax.validation.Payload;
 
-public class WhereTarget {
+import static java.lang.annotation.ElementType.ANNOTATION_TYPE;
+import static java.lang.annotation.ElementType.FIELD;
+import static java.lang.annotation.ElementType.METHOD;
+import static java.lang.annotation.ElementType.PARAMETER;
+import static java.lang.annotation.RetentionPolicy.RUNTIME;
 
-  private String entity;
-  private String name;
+@Documented
+@Retention(RUNTIME)
+@Target({FIELD, PARAMETER, ANNOTATION_TYPE, ElementType.CONSTRUCTOR, METHOD})
+@Constraint(validatedBy = WhereValidator.class)
+public @interface WhereConstraint {
 
-  public WhereTarget (String entity, String name) {
+  @Target({FIELD, METHOD, PARAMETER, ANNOTATION_TYPE})
+  @Retention(RUNTIME)
+  @Documented
+  @interface List {
 
-    this(name);
-
-    this.entity = entity;
+    WhereConstraint[] value ();
   }
 
-  public WhereTarget (String name) {
+  String message () default "Validation failed";
 
-    this.name = name;
-  }
+  Class<?>[] groups () default {};
 
-  public String getEntity () {
+  Class<? extends Payload>[] payload () default {};
 
-    return entity;
-  }
+  Allowed[] allow () default {};
 
-  public String getName () {
+  Required[] require () default {};
 
-    return name;
-  }
+  Excluded[] exclude () default {};
 
-  @Override
-  public String toString () {
-
-    return (entity == null) ? name : entity + '.' + name;
-  }
-
-  @Override
-  public int hashCode () {
-
-    return (entity == null) ? name.hashCode() : (31 * entity.hashCode()) + name.hashCode();
-  }
-
-  @Override
-  public boolean equals (Object obj) {
-
-    return (obj instanceof WhereTarget) && name.equals(((WhereTarget)obj).getName()) && Objects.equals(entity, ((WhereTarget)obj).getEntity());
-  }
+  Dependent[] dependencies () default {};
 }

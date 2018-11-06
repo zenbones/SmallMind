@@ -64,12 +64,12 @@ public class Sort implements Serializable, WherePermissible<Sort> {
 
   @Override
   @XmlTransient
-  public Set<WhereTarget> getTargetSet () {
+  public Set<WherePermit> getTargetSet () {
 
-    HashSet<WhereTarget> targetSet = new HashSet<>();
+    HashSet<WherePermit> targetSet = new HashSet<>();
 
     for (SortField field : fieldSet) {
-      targetSet.add(new WhereTarget(field.getEntity(), field.getName()));
+      targetSet.add(new TargetWherePermit(field.getEntity(), field.getName()));
     }
 
     return targetSet;

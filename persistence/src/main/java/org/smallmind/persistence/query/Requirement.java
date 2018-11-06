@@ -32,14 +32,9 @@
  */
 package org.smallmind.persistence.query;
 
-import java.lang.annotation.Retention;
-import java.lang.annotation.RetentionPolicy;
+public @interface Requirement {
 
-@java.lang.annotation.Target({})
-@Retention(RetentionPolicy.RUNTIME)
-public @interface Permit {
+  String entity () default "";
 
-  PermitType type ();
-
-  Target[] targets ();
+  String field ();
 }

@@ -32,72 +32,9 @@
  */
 package org.smallmind.persistence.query;
 
-import java.util.Objects;
+public @interface Required {
 
-public abstract class WherePermit {
+  String entity () default "";
 
-  private String entity;
-  private String name;
-
-  public WherePermit (String entity, String name) {
-
-    this(name);
-
-    this.entity = entity;
-  }
-
-  public WherePermit (String name) {
-
-    this.name = name;
-  }
-
-  public static AllowedWherePermit allowed (String entity, String name) {
-
-    return new AllowedWherePermit(entity, name);
-  }
-
-  public static RequiredWherePermit required (String entity, String name) {
-
-    return new RequiredWherePermit(entity, name);
-  }
-
-  public static ExcludedWherePermit excluded (String entity, String name) {
-
-    return new ExcludedWherePermit(entity, name);
-  }
-
-  public static DependentWherePermit dependent (String entity, String name, TargetWherePermit requirement) {
-
-    return new DependentWherePermit(entity, name, requirement);
-  }
-
-  public abstract PermitType getType ();
-
-  public String getEntity () {
-
-    return entity;
-  }
-
-  public String getName () {
-
-    return name;
-  }
-
-  @Override
-  public String toString () {
-
-    return (entity == null) ? name : entity + '.' + name;
-  }
-
-  @Override
-  public int hashCode () {
-
-    return (entity == null) ? name.hashCode() : (31 * entity.hashCode()) + name.hashCode();
-  }
-
-  @Override
-  public boolean equals (Object obj) {
-
-    return (obj instanceof WherePermit) && name.equals(((WherePermit)obj).getName()) && Objects.equals(entity, ((WherePermit)obj).getEntity());
-  }
+  String field ();
 }

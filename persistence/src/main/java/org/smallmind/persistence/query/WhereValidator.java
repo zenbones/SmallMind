@@ -32,15 +32,16 @@
  */
 package org.smallmind.persistence.query;
 
+import java.util.LinkedList;
 import javax.validation.ConstraintValidator;
 import javax.validation.ConstraintValidatorContext;
 
-public class WhereValidator implements ConstraintValidator<WhereValidate, WherePermissible> {
+public class WhereValidator implements ConstraintValidator<WhereConstraint, WherePermissible> {
 
-  private WhereValidate constraintAnnotation;
+  private WhereConstraint constraintAnnotation;
 
   @Override
-  public void initialize (WhereValidate constraintAnnotation) {
+  public void initialize (WhereConstraint constraintAnnotation) {
 
     this.constraintAnnotation = constraintAnnotation;
   }
@@ -48,20 +49,24 @@ public class WhereValidator implements ConstraintValidator<WhereValidate, WhereP
   @Override
   public boolean isValid (WherePermissible permissible, ConstraintValidatorContext context) {
 
-    WherePermit[] wherePermits = new WherePermit[constraintAnnotation.permits().length];
-    int permitIndex = 0;
+    LinkedList<WherePermit> permitList = new LinkedList<>();
+    WherePermit[] wherePermits;
 
-    for (Permit permit : constraintAnnotation.permits()) {
-
-      WhereTarget[] whereTargets = new WhereTarget[permit.targets().length];
-      int targetIndex = 0;
-
-      for (Target target : permit.targets()) {
-        whereTargets[targetIndex++] = new WhereTarget(target.entity(), target.field());
-      }
-
-      wherePermits[permitIndex++] = new WherePermit(permit.type(), whereTargets);
+    for (Allowed allowed : constraintAnnotation.allow()) {
+      permitList.add(new AllowedWherePermit(allowed.entity(), allowed.field()));
     }
+    for (Required required : constraintAnnotation.require()) {
+      permitList.add(new RequiredWherePermit(required.entity(), required.field()));
+    }
+    for (Excluded excluded : constraintAnnotation.exclude()) {
+      permitList.add(new AllowedWherePermit(excluded.entity(), excluded.field()));
+    }
+    for (Dependent dependent : constraintAnnotation.dependencies()) {
+      permitList.add(new DependentWherePermit(dependent.entity(), dependent.field(), new TargetWherePermit(dependent.requirement().entity(), dependent.requirement().field())));
+    }
+
+    wherePermits = new WherePermit[permitList.size()];
+    permitList.toArray(wherePermits);
 
     try {
       permissible.validate(wherePermits);

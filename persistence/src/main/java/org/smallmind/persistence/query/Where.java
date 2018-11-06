@@ -65,9 +65,9 @@ public class Where implements Serializable, WherePermissible<Where> {
 
   @Override
   @XmlTransient
-  public Set<WhereTarget> getTargetSet () {
+  public Set<WherePermit> getTargetSet () {
 
-    HashSet<WhereTarget> targetSet = new HashSet<>();
+    HashSet<WherePermit> targetSet = new HashSet<>();
 
     WhereUtility.walk(this, new WhereVisitor() {
 
@@ -79,7 +79,7 @@ public class Where implements Serializable, WherePermissible<Where> {
       @Override
       public void visitField (WhereField field) {
 
-        targetSet.add(new WhereTarget(field.getEntity(), field.getName()));
+        targetSet.add(new TargetWherePermit(field.getEntity(), field.getName()));
       }
     });
 

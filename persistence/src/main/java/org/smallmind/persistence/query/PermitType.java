@@ -34,5 +34,5 @@ package org.smallmind.persistence.query;
 
 public enum PermitType {
 
-  ALLOWED, REQUIRED, EXCLUDED
+  ALLOWED, REQUIRED, EXCLUDED, DEPENDENT
 }
