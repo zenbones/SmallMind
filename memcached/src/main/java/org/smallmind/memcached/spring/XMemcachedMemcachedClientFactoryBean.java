@@ -34,7 +34,7 @@ package org.smallmind.memcached.spring;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
-import java.util.LinkedList;
+import java.util.HashMap;
 import net.rubyeye.xmemcached.MemcachedClient;
 import net.rubyeye.xmemcached.MemcachedClientBuilder;
 import net.rubyeye.xmemcached.XMemcachedClientBuilder;
@@ -43,6 +43,7 @@ import net.rubyeye.xmemcached.impl.KetamaMemcachedSessionLocator;
 import org.smallmind.memcached.MemcachedServer;
 import org.smallmind.memcached.XMemcachedMemcachedClient;
 import org.smallmind.scribe.pen.LoggerManager;
+import org.springframework.beans.factory.BeanCreationException;
 import org.springframework.beans.factory.FactoryBean;
 import org.springframework.beans.factory.InitializingBean;
 
@@ -50,6 +51,7 @@ public class XMemcachedMemcachedClientFactoryBean implements FactoryBean<XMemcac
 
   private XMemcachedMemcachedClient memcachedClient;
   private MemcachedServer[] servers;
+  private MemcachedServer[] backups;
   private boolean enabled = true;
   private int poolSize;
 
@@ -63,6 +65,11 @@ public class XMemcachedMemcachedClientFactoryBean implements FactoryBean<XMemcac
     this.servers = servers;
   }
 
+  public void setBackups (MemcachedServer[] backups) {
+
+    this.backups = backups;
+  }
+
   public void setPoolSize (int poolSize) {
 
     this.poolSize = poolSize;
@@ -73,21 +80,35 @@ public class XMemcachedMemcachedClientFactoryBean implements FactoryBean<XMemcac
     throws IOException {
 
     if (enabled && (servers != null) && (servers.length > 0)) {
+      if ((backups != null) && (servers.length != backups.length)) {
+        throw new BeanCreationException("Must use an equal number of primary and backup servers");
+      } else {
 
-      MemcachedClientBuilder builder;
-      LinkedList<InetSocketAddress> addressList;
+        MemcachedClientBuilder builder;
+        HashMap<InetSocketAddress, InetSocketAddress> addressMap = new HashMap<>();
+        int index = 0;
 
-      addressList = new LinkedList<>();
-      for (MemcachedServer server : servers) {
-        addressList.add(new InetSocketAddress(server.getHost(), server.getPort()));
+        for (MemcachedServer server : servers) {
+
+          MemcachedServer backup = null;
+
+          if (backups != null) {
+            backup = backups[index];
+          } else if (servers.length > 1) {
+            backup = servers[index == (servers.length - 1) ? 0 : index + 1];
+          }
+
+          addressMap.put(new InetSocketAddress(server.getHost(), server.getPort()), (backup == null) ? null : new InetSocketAddress(backup.getHost(), backup.getPort()));
+          index++;
+        }
+
+        builder = new XMemcachedClientBuilder(addressMap);
+        builder.setFailureMode(true);
+        builder.setConnectionPoolSize(poolSize);
+        builder.setCommandFactory(new BinaryCommandFactory());
+        builder.setSessionLocator(new KetamaMemcachedSessionLocator());
+        memcachedClient = new XMemcachedMemcachedClient(builder.build());
       }
-
-      builder = new XMemcachedClientBuilder(addressList);
-      builder.setFailureMode(true);
-      builder.setConnectionPoolSize(poolSize);
-      builder.setCommandFactory(new BinaryCommandFactory());
-      builder.setSessionLocator(new KetamaMemcachedSessionLocator());
-      memcachedClient = new XMemcachedMemcachedClient(builder.build());
     }
   }
 
