@@ -76,9 +76,14 @@ public class ComponentCreationWorker<C> implements Runnable {
   public void run () {
 
     try {
+
+      long startMilliseconds = System.currentTimeMillis();
+      long totalMilliseconds;
+
       componentInstance = componentPool.getComponentInstanceFactory().createInstance(componentPool);
       if ((!stateRef.compareAndSet(null, State.COMPLETED)) && (componentInstance != null)) {
-        LoggerManager.getLogger(ComponentCreationWorker.class).error("Completed connection is being closed due to a request in the %s state - you may want to increase the connection wait time", stateRef.get().name());
+        totalMilliseconds = System.currentTimeMillis() - startMilliseconds;
+        LoggerManager.getLogger(ComponentCreationWorker.class).error("Completed connection(%d ms) is being closed due to a request in the %s state - you may want to increase the connection wait time", totalMilliseconds, stateRef.get().name());
         componentInstance.close();
       }
     } catch (Exception exception) {
