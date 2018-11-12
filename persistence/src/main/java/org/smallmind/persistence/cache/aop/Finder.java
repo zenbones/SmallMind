@@ -41,7 +41,9 @@ import org.smallmind.persistence.Durable;
 @Retention(RetentionPolicy.RUNTIME)
 public @interface Finder {
 
+  // the return type of the method
   Class<? extends Durable> with () default Durable.class;
 
+  // the name of the method
   String method () default "";
 }

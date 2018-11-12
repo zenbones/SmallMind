@@ -41,9 +41,12 @@ import java.util.concurrent.TimeUnit;
 @Retention(RetentionPolicy.RUNTIME)
 public @interface Time {
 
-  public abstract long value ();
+  // the number of time units to use as the ttl for the entry
+  long value ();
 
-  public abstract int stochastic () default 0;
+  // a value to treat as a random limit around the ttl (plus or minus)
+  int stochastic () default 0;
 
-  public abstract TimeUnit unit () default TimeUnit.SECONDS;
+  // the time unit for the ttl
+  TimeUnit unit () default TimeUnit.SECONDS;
 }

@@ -40,11 +40,12 @@ import java.lang.annotation.Target;
 @Retention(RetentionPolicy.RUNTIME)
 public @interface Vector {
 
-  public abstract String namespace () default "";
+  // defaults to the annotated method name on CacheAs, must be declared on CachedWith
+  String namespace () default "";
 
-  public abstract Key[] value ();
+  // an ordered set of the method parameters on CacheAs, or fields on CachedWith, which will act as cache keys
+  Key[] value ();
 
-  public abstract String classifier () default "";
-
-  public abstract boolean asParameter () default false;
+  // provides a classification value appended to the cache key, for polymorphic entities, if needed
+  Classifier classifier () default @Classifier(value = "");
 }

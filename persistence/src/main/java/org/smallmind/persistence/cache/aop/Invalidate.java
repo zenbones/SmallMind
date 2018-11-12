@@ -40,11 +40,15 @@ import java.lang.annotation.Target;
 @Retention(RetentionPolicy.RUNTIME)
 public @interface Invalidate {
 
-  public abstract Vector value ();
+  // the vector upon which this annotation acts
+  Vector value ();
 
-  public abstract String filter () default "";
+  // a method which takes a single parameter of durable type and returns boolean, if the filter is false then the annotation action is skipped
+  String filter () default "";
 
-  public abstract Finder finder () default @Finder();
+  // a method which locates the entity or entities upon which to act, takes a single parameter of durable type and return a durable type or Iterator of durable type
+  Finder finder () default @Finder();
 
-  public abstract Proxy proxy () default @Proxy();
+  // a method which takes a single parameter of durable type and returns a durable type, for proxying the action on one entity type to a (supposedly) related but different type
+  Proxy proxy () default @Proxy();
 }

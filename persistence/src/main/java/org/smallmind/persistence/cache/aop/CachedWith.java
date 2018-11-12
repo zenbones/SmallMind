@@ -41,7 +41,9 @@ import java.lang.annotation.Target;
 @Retention(RetentionPolicy.RUNTIME)
 public @interface CachedWith {
 
-  public abstract Update[] updates () default {};
+  // The updates to apply based on durable entity changes
+  Update[] updates () default {};
 
-  public abstract Invalidate[] invalidates () default {};
+  // The vectors to invalidate based on durable entity changes
+  Invalidate[] invalidates () default {};
 }
