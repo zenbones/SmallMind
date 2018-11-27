@@ -40,6 +40,7 @@ import javax.lang.model.element.ElementKind;
 import javax.lang.model.element.TypeElement;
 import javax.lang.model.element.TypeParameterElement;
 import javax.lang.model.type.ArrayType;
+import javax.lang.model.type.DeclaredType;
 import javax.lang.model.type.TypeKind;
 import javax.lang.model.type.TypeMirror;
 
@@ -60,8 +61,12 @@ public class TypeElementIterable implements Iterable<TypeElement> {
 
       Element element = processingEnvironment.getTypeUtils().asElement(typeMirror);
 
-      if (ElementKind.CLASS.equals(element.getKind()) || ElementKind.INTERFACE.equals(element.getKind())) {
-        pushTypeElement(processingEnvironment, (TypeElement)element);
+      if (ElementKind.CLASS.equals(element.getKind())) {
+        typeElementList.add((TypeElement)element);
+      }
+
+      for (TypeMirror typeArgumentTyoeMirror : ((DeclaredType)typeMirror).getTypeArguments()) {
+        pushTypeMirror(processingEnvironment, typeArgumentTyoeMirror);
       }
     }
   }

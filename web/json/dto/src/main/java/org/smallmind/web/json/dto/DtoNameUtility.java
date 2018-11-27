@@ -32,8 +32,14 @@
  */
 package org.smallmind.web.json.dto;
 
+import java.util.List;
 import javax.annotation.processing.ProcessingEnvironment;
+import javax.lang.model.element.Element;
+import javax.lang.model.element.ElementKind;
 import javax.lang.model.element.TypeElement;
+import javax.lang.model.type.ArrayType;
+import javax.lang.model.type.DeclaredType;
+import javax.lang.model.type.TypeMirror;
 
 public class DtoNameUtility {
 
@@ -51,5 +57,68 @@ public class DtoNameUtility {
     }
 
     return dtoNameBuilder.append(direction.getCode()).append("Dto").toString();
+  }
+
+  public static String processTypeMirror (ProcessingEnvironment processingEnvironment, VisibilityTracker visibilityTracker, String purpose, Direction direction, TypeMirror typeMirror) {
+
+    StringBuilder nameBuilder = new StringBuilder();
+
+    walkTypeMirror(nameBuilder, processingEnvironment, visibilityTracker, purpose, direction, typeMirror);
+
+    return nameBuilder.toString();
+  }
+
+  private static void walkTypeMirror (StringBuilder nameBuilder, ProcessingEnvironment processingEnvironment, VisibilityTracker visibilityTracker, String purpose, Direction direction, TypeMirror typeMirror) {
+
+    switch (typeMirror.getKind()) {
+      case TYPEVAR:
+        nameBuilder.append('?');
+        break;
+      case ARRAY:
+        walkTypeMirror(nameBuilder, processingEnvironment, visibilityTracker, purpose, direction, ((ArrayType)typeMirror).getComponentType());
+        nameBuilder.append("[]");
+        break;
+      case DECLARED:
+
+        Element element = processingEnvironment.getTypeUtils().asElement(typeMirror);
+        List<? extends TypeMirror> typeArgumentList;
+
+        if (ElementKind.CLASS.equals(element.getKind())) {
+          if (isVisible(visibilityTracker, purpose, direction, (TypeElement)element)) {
+            nameBuilder.append(DtoNameUtility.getPackageName(processingEnvironment, (TypeElement)element)).append('.').append(DtoNameUtility.getSimpleName(processingEnvironment, purpose, direction, (TypeElement)element));
+          } else {
+            nameBuilder.append(((TypeElement)element).getQualifiedName());
+          }
+        } else {
+          nameBuilder.append(((TypeElement)element).getQualifiedName());
+        }
+
+        if (!(typeArgumentList = ((DeclaredType)typeMirror).getTypeArguments()).isEmpty()) {
+
+          boolean first = true;
+
+          nameBuilder.append('<');
+          for (TypeMirror typeArgumentTypeMirror : typeArgumentList) {
+            if (!first) {
+              nameBuilder.append(", ");
+            }
+            first = false;
+
+            walkTypeMirror(nameBuilder, processingEnvironment, visibilityTracker, purpose, direction, typeArgumentTypeMirror);
+          }
+          nameBuilder.append('>');
+        }
+
+        break;
+      default:
+        nameBuilder.append(typeMirror);
+    }
+  }
+
+  private static boolean isVisible (VisibilityTracker visibilityTracker, String purpose, Direction direction, TypeElement typeElement) {
+
+    Visibility visibility;
+
+    return ((visibility = visibilityTracker.getVisibility(typeElement, purpose)) != null) && visibility.matches(direction);
   }
 }
