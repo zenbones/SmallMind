@@ -35,18 +35,43 @@ package org.smallmind.nutsnbolts.util;
 import java.lang.reflect.Array;
 import java.util.List;
 
-public class ListMutator {
+public class MutationUtility {
 
-  public static <T, U> U[] mutate (List<T> list, Mutation<? super T, U> mutation)
+  public static <T, U> U[] toArray (T[] array, Mutation<? super T, U> mutation)
     throws Exception {
 
-    U[] outArray = (U[])Array.newInstance(mutation.getMutatedClass(), list.size());
-    int index = 0;
+    if (array == null) {
 
-    for (T inType : list) {
-      outArray[index++] = mutation.mutate(inType);
+      return null;
+    } else {
+
+      U[] outArray = (U[])Array.newInstance(mutation.getMutatedClass(), array.length);
+      int index = 0;
+
+      for (T inType : array) {
+        outArray[index++] = mutation.mutate(inType);
+      }
+
+      return outArray;
     }
+  }
 
-    return outArray;
+  public static <T, U> U[] toArray (List<T> list, Mutation<? super T, U> mutation)
+    throws Exception {
+
+    if (list == null) {
+
+      return null;
+    } else {
+
+      U[] outArray = (U[])Array.newInstance(mutation.getMutatedClass(), list.size());
+      int index = 0;
+
+      for (T inType : list) {
+        outArray[index++] = mutation.mutate(inType);
+      }
+
+      return outArray;
+    }
   }
 }
