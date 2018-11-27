@@ -32,28 +32,24 @@
  */
 package org.smallmind.web.json.dto;
 
-import java.util.Collection;
 import javax.annotation.processing.ProcessingEnvironment;
-import javax.lang.model.type.TypeMirror;
+import javax.lang.model.element.TypeElement;
 
-public class UsefulTypeMirrors {
+public class DtoNameUtility {
 
-  private final TypeMirror dtoPropertyTypeMirror;
-  private final TypeMirror collectionTypeMirror;
+  public static String getPackageName (ProcessingEnvironment processingEnvironment, TypeElement typeElement) {
 
-  public UsefulTypeMirrors (ProcessingEnvironment processingEnvironment) {
-
-    dtoPropertyTypeMirror = processingEnvironment.getElementUtils().getTypeElement(DtoProperty.class.getName()).asType();
-    collectionTypeMirror = processingEnvironment.getElementUtils().getTypeElement(Collection.class.getName()).asType();
+    return processingEnvironment.getElementUtils().getPackageOf(typeElement).getQualifiedName().toString();
   }
 
-  public TypeMirror getDtoPropertyTypeMirror () {
+  public static String getSimpleName (ProcessingEnvironment processingEnvironment, String purpose, Direction direction, TypeElement typeElement) {
 
-    return dtoPropertyTypeMirror;
-  }
+    StringBuilder dtoNameBuilder = new StringBuilder((processingEnvironment.getOptions().get("prefix") == null) ? "" : processingEnvironment.getOptions().get("prefix")).append(typeElement.getSimpleName());
 
-  public TypeMirror getCollectionTypeMirror () {
+    if ((purpose != null) && (!purpose.isEmpty())) {
+      dtoNameBuilder.append(Character.toUpperCase(purpose.charAt(0))).append(purpose.substring(1));
+    }
 
-    return collectionTypeMirror;
+    return dtoNameBuilder.append(direction.getCode()).append("Dto").toString();
   }
 }

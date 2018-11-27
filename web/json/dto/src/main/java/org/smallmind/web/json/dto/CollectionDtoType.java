@@ -32,28 +32,34 @@
  */
 package org.smallmind.web.json.dto;
 
-import java.util.Collection;
 import javax.annotation.processing.ProcessingEnvironment;
-import javax.lang.model.type.TypeMirror;
+import javax.lang.model.element.TypeElement;
 
-public class UsefulTypeMirrors {
+public class CollectionDtoType implements DtoType {
 
-  private final TypeMirror dtoPropertyTypeMirror;
-  private final TypeMirror collectionTypeMirror;
+  private TypeElement collectionTypeElement;
+  private TypeElement dtoTypeElement;
+  private Direction direction;
+  private String purpose;
 
-  public UsefulTypeMirrors (ProcessingEnvironment processingEnvironment) {
+  public CollectionDtoType (String purpose, Direction direction, TypeElement collectionTypeElement, TypeElement dtoTypeElement) {
 
-    dtoPropertyTypeMirror = processingEnvironment.getElementUtils().getTypeElement(DtoProperty.class.getName()).asType();
-    collectionTypeMirror = processingEnvironment.getElementUtils().getTypeElement(Collection.class.getName()).asType();
+    this.purpose = purpose;
+    this.direction = direction;
+    this.collectionTypeElement = collectionTypeElement;
+    this.dtoTypeElement = dtoTypeElement;
   }
 
-  public TypeMirror getDtoPropertyTypeMirror () {
+  @Override
+  public String getName (ProcessingEnvironment processingEnvironment) {
 
-    return dtoPropertyTypeMirror;
+    return DtoNameUtility.getPackageName(processingEnvironment, collectionTypeElement) + '.' + DtoNameUtility.getSimpleName(processingEnvironment, purpose, direction, collectionTypeElement)
+             + "<" + DtoNameUtility.getPackageName(processingEnvironment, dtoTypeElement) + '.' + DtoNameUtility.getSimpleName(processingEnvironment, purpose, direction, dtoTypeElement) + ">";
   }
 
-  public TypeMirror getCollectionTypeMirror () {
+  @Override
+  public String getTranslatingCode (ProcessingEnvironment processingEnvironment, String fieldName) {
 
-    return collectionTypeMirror;
+    return null;
   }
 }

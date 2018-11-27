@@ -91,13 +91,8 @@ public class DtoAnnotationProcessor extends AbstractProcessor {
   public void processTypeMirror (TypeMirror typeMirror)
     throws IOException, DtoDefinitionException {
 
-    if (TypeKind.DECLARED.equals(typeMirror.getKind())) {
-
-      Element element;
-
-      if (ElementKind.CLASS.equals((element = processingEnv.getTypeUtils().asElement(typeMirror)).getKind())) {
-        generate((TypeElement)element);
-      }
+    for (TypeElement typeElement : new TypeElementIterable(processingEnv, typeMirror)) {
+      generate(typeElement);
     }
   }
 
@@ -131,16 +126,16 @@ public class DtoAnnotationProcessor extends AbstractProcessor {
         }
 
         for (Map.Entry<String, PropertyLexicon> purposeEntry : generatorInformation.getInDirectionalGuide().entrySet()) {
-          processIn(generatorInformation, classElement, nearestDtoSuperclass, purposeEntry.getKey(), purposeEntry.getValue());
+          processIn(generatorInformation, usefulTypeMirrors, classElement, nearestDtoSuperclass, purposeEntry.getKey(), purposeEntry.getValue());
         }
         for (String unfulfilledPurpose : generatorInformation.unfulfilledPurposes(classElement, visibilityTracker, Direction.IN)) {
-          processIn(generatorInformation, classElement, nearestDtoSuperclass, unfulfilledPurpose, new PropertyLexicon());
+          processIn(generatorInformation, usefulTypeMirrors, classElement, nearestDtoSuperclass, unfulfilledPurpose, new PropertyLexicon());
         }
         for (Map.Entry<String, PropertyLexicon> purposeEntry : generatorInformation.getOutDirectionalGuide().entrySet()) {
-          processOut(generatorInformation, classElement, nearestDtoSuperclass, purposeEntry.getKey(), purposeEntry.getValue());
+          processOut(generatorInformation, usefulTypeMirrors, classElement, nearestDtoSuperclass, purposeEntry.getKey(), purposeEntry.getValue());
         }
         for (String unfulfilledPurpose : generatorInformation.unfulfilledPurposes(classElement, visibilityTracker, Direction.OUT)) {
-          processOut(generatorInformation, classElement, nearestDtoSuperclass, unfulfilledPurpose, new PropertyLexicon());
+          processOut(generatorInformation, usefulTypeMirrors, classElement, nearestDtoSuperclass, unfulfilledPurpose, new PropertyLexicon());
         }
 
         if (visibilityTracker.hasNoPurpose(classElement)) {
@@ -173,18 +168,18 @@ public class DtoAnnotationProcessor extends AbstractProcessor {
     }
   }
 
-  private void processIn (GeneratorInformation generatorInformation, TypeElement classElement, TypeElement nearestDtoSuperclass, String purpose, PropertyLexicon propertyLexicon)
+  private void processIn (GeneratorInformation generatorInformation, UsefulTypeMirrors usefulTypeMirrors, TypeElement classElement, TypeElement nearestDtoSuperclass, String purpose, PropertyLexicon propertyLexicon)
     throws IOException {
 
-    writeDto(generatorInformation, classElement, nearestDtoSuperclass, purpose, Direction.IN, propertyLexicon);
+    writeDto(generatorInformation, usefulTypeMirrors, classElement, nearestDtoSuperclass, purpose, Direction.IN, propertyLexicon);
 
     generatorInformation.denotePurpose(purpose, Direction.IN);
   }
 
-  private void processOut (GeneratorInformation generatorInformation, TypeElement classElement, TypeElement nearestDtoSuperclass, String purpose, PropertyLexicon propertyLexicon)
+  private void processOut (GeneratorInformation generatorInformation, UsefulTypeMirrors usefulTypeMirrors, TypeElement classElement, TypeElement nearestDtoSuperclass, String purpose, PropertyLexicon propertyLexicon)
     throws IOException {
 
-    writeDto(generatorInformation, classElement, nearestDtoSuperclass, purpose, Direction.OUT, propertyLexicon);
+    writeDto(generatorInformation, usefulTypeMirrors, classElement, nearestDtoSuperclass, purpose, Direction.OUT, propertyLexicon);
 
     generatorInformation.denotePurpose(purpose, Direction.OUT);
   }
@@ -192,37 +187,6 @@ public class DtoAnnotationProcessor extends AbstractProcessor {
   private String asMemberName (Name name) {
 
     return Character.toLowerCase(name.charAt(0)) + name.subSequence(1, name.length()).toString();
-  }
-
-  private StringBuilder asDtoName (Name simpleName, String purpose, Direction direction) {
-
-    StringBuilder dtoNameBuilder = new StringBuilder((processingEnv.getOptions().get("prefix") == null) ? "" : processingEnv.getOptions().get("prefix")).append(simpleName);
-
-    if ((purpose != null) && (!purpose.isEmpty())) {
-      dtoNameBuilder.append(Character.toUpperCase(purpose.charAt(0))).append(purpose.substring(1));
-    }
-
-    return dtoNameBuilder.append(direction.getCode()).append("Dto");
-  }
-
-  private String asCompatibleName (TypeMirror typeMirror, String purpose, Direction direction) {
-
-    if (TypeKind.DECLARED.equals(typeMirror.getKind())) {
-
-      Element element;
-
-      if (ElementKind.CLASS.equals((element = processingEnv.getTypeUtils().asElement(typeMirror)).getKind())) {
-
-        Visibility visibility;
-
-        if (((visibility = visibilityTracker.getVisibility((TypeElement)element, purpose)) != null) && visibility.matches(direction)) {
-
-          return processingEnv.getElementUtils().getPackageOf(element).getQualifiedName().toString() + '.' + asDtoName(element.getSimpleName(), purpose, direction).toString();
-        }
-      }
-    }
-
-    return typeMirror.toString();
   }
 
   private boolean isDtoType (TypeMirror typeMirror, String purpose, Direction direction) {
@@ -256,7 +220,7 @@ public class DtoAnnotationProcessor extends AbstractProcessor {
     return null;
   }
 
-  private void writeDto (GeneratorInformation generatorInformation, TypeElement classElement, TypeElement nearestDtoSuperclass, String purpose, Direction direction, PropertyLexicon propertyLexicon)
+  private void writeDto (GeneratorInformation generatorInformation, UsefulTypeMirrors usefulTypeMirrors, TypeElement classElement, TypeElement nearestDtoSuperclass, String purpose, Direction direction, PropertyLexicon propertyLexicon)
     throws IOException {
 
     JavaFileObject sourceFile;
@@ -265,7 +229,7 @@ public class DtoAnnotationProcessor extends AbstractProcessor {
       writePolymorphicAdapter(classElement, generatorInformation, purpose, direction);
     }
 
-    sourceFile = processingEnv.getFiler().createSourceFile(new StringBuilder(processingEnv.getElementUtils().getPackageOf(classElement).getQualifiedName()).append('.').append(asDtoName(classElement.getSimpleName(), purpose, direction)), classElement);
+    sourceFile = processingEnv.getFiler().createSourceFile(new StringBuilder(processingEnv.getElementUtils().getPackageOf(classElement).getQualifiedName()).append('.').append(DtoNameUtility.getSimpleName(processingEnv, purpose, direction, classElement)), classElement);
 
     if (sourceFile.getNestingKind() == null) {
       try (BufferedWriter writer = new BufferedWriter(sourceFile.openWriter())) {
@@ -314,7 +278,7 @@ public class DtoAnnotationProcessor extends AbstractProcessor {
           writer.write("import ");
           writer.write(processingEnv.getElementUtils().getPackageOf(nearestDtoSuperclass).getQualifiedName().toString());
           writer.write(".");
-          writer.write(asDtoName(nearestDtoSuperclass.getSimpleName(), purpose, direction).toString());
+          writer.write(DtoNameUtility.getSimpleName(processingEnv, purpose, direction, nearestDtoSuperclass));
           writer.write(";");
           writer.newLine();
         }
@@ -343,7 +307,7 @@ public class DtoAnnotationProcessor extends AbstractProcessor {
         if ((!generatorInformation.getPolymorphicSubclasses().isEmpty()) || polymorphicMap.containsKey(classElement)) {
           // XmlJavaTypeAdapter
           writer.write("@XmlJavaTypeAdapter(");
-          writer.write(asDtoName((!generatorInformation.getPolymorphicSubclasses().isEmpty()) ? classElement.getSimpleName() : polymorphicMap.get(classElement).getBaseClassElement().getSimpleName(), purpose, direction).toString());
+          writer.write(DtoNameUtility.getSimpleName(processingEnv, purpose, direction, (!generatorInformation.getPolymorphicSubclasses().isEmpty()) ? classElement : polymorphicMap.get(classElement).getBaseClassElement()));
           if ((!generatorInformation.getPolymorphicSubclasses().isEmpty()) ? generatorInformation.usePolymorphicAttribute() : polymorphicMap.get(classElement).isUseAttribute()) {
             writer.write("Attributed");
           }
@@ -365,7 +329,7 @@ public class DtoAnnotationProcessor extends AbstractProcessor {
               }
               writer.write(processingEnv.getElementUtils().getPackageOf(classElement).getQualifiedName().toString());
               writer.write(".");
-              writer.write(asDtoName(polymorphicSubClass.getSimpleName(), purpose, direction).toString());
+              writer.write(DtoNameUtility.getSimpleName(processingEnv, purpose, direction, polymorphicSubClass));
               writer.write(".class");
 
               firstPolymorphicSubClass = false;
@@ -385,18 +349,18 @@ public class DtoAnnotationProcessor extends AbstractProcessor {
           writer.write("abstract ");
         }
         writer.write("class ");
-        writer.write(asDtoName(classElement.getSimpleName(), purpose, direction).toString());
+        writer.write(DtoNameUtility.getSimpleName(processingEnv, purpose, direction, classElement));
         if (!generatorInformation.getPolymorphicSubclasses().isEmpty()) {
           writer.write("<D extends ");
-          writer.write(asDtoName(classElement.getSimpleName(), purpose, direction).toString());
+          writer.write(DtoNameUtility.getSimpleName(processingEnv, purpose, direction, classElement));
           writer.write("<D>>");
         }
         if (nearestDtoSuperclass != null) {
           writer.write(" extends ");
-          writer.write(asDtoName(nearestDtoSuperclass.getSimpleName(), purpose, direction).toString());
+          writer.write(DtoNameUtility.getSimpleName(processingEnv, purpose, direction, nearestDtoSuperclass));
           if (polymorphicMap.containsKey(classElement)) {
             writer.write("<");
-            writer.write(asDtoName(classElement.getSimpleName(), purpose, direction).toString());
+            writer.write(DtoNameUtility.getSimpleName(processingEnv, purpose, direction, classElement));
             writer.write(">");
           }
         }
@@ -409,7 +373,7 @@ public class DtoAnnotationProcessor extends AbstractProcessor {
           writer.write("  // virtual fields");
           writer.newLine();
           for (Map.Entry<String, PropertyInformation> propertyInformationEntry : propertyLexicon.getVirtualMap().entrySet()) {
-            writeField(writer, purpose, direction, propertyInformationEntry);
+            writeField(usefulTypeMirrors, writer, purpose, direction, propertyInformationEntry);
           }
         }
 
@@ -419,14 +383,14 @@ public class DtoAnnotationProcessor extends AbstractProcessor {
           writer.write("  // native fields");
           writer.newLine();
           for (Map.Entry<String, PropertyInformation> propertyInformationEntry : propertyLexicon.getRealMap().entrySet()) {
-            writeField(writer, purpose, direction, propertyInformationEntry);
+            writeField(usefulTypeMirrors, writer, purpose, direction, propertyInformationEntry);
           }
         }
 
         // constructors
         writer.newLine();
         writer.write("  public ");
-        writer.write(asDtoName(classElement.getSimpleName(), purpose, direction).toString());
+        writer.write(DtoNameUtility.getSimpleName(processingEnv, purpose, direction, classElement));
         writer.write(" () {");
         writer.newLine();
         writer.write("  }");
@@ -434,7 +398,7 @@ public class DtoAnnotationProcessor extends AbstractProcessor {
         writer.newLine();
 
         writer.write("  public ");
-        writer.write(asDtoName(classElement.getSimpleName(), purpose, direction).toString());
+        writer.write(DtoNameUtility.getSimpleName(processingEnv, purpose, direction, classElement));
         writer.write(" (");
         writer.write(classElement.getSimpleName().toString());
         writer.write(" ");
@@ -462,7 +426,7 @@ public class DtoAnnotationProcessor extends AbstractProcessor {
               writer.write(TypeKind.BOOLEAN.equals(propertyInformationEntry.getValue().getType().getKind()) ? BeanUtility.asIsName(propertyInformationEntry.getKey()) : BeanUtility.asGetterName(propertyInformationEntry.getKey()));
               writer.write("() == null) ? null : ");
               writer.write("new ");
-              writer.write(asCompatibleName(propertyInformationEntry.getValue().getType(), purpose, direction));
+              writer.write(DtoTypeExtractor.extract(processingEnv, usefulTypeMirrors, visibilityTracker, purpose, direction, propertyInformationEntry.getValue().getType()).getName(processingEnv));
               writer.write("(");
             }
             writer.write(asMemberName(classElement.getSimpleName()));
@@ -556,7 +520,7 @@ public class DtoAnnotationProcessor extends AbstractProcessor {
           writer.write("  // virtual getters and setters");
           for (Map.Entry<String, PropertyInformation> propertyInformationEntry : propertyLexicon.getVirtualMap().entrySet()) {
             writer.newLine();
-            writeGettersAndSetters(writer, generatorInformation, classElement, purpose, direction, propertyInformationEntry);
+            writeGettersAndSetters(usefulTypeMirrors, writer, generatorInformation, classElement, purpose, direction, propertyInformationEntry);
           }
         }
 
@@ -566,7 +530,7 @@ public class DtoAnnotationProcessor extends AbstractProcessor {
           writer.write("  // native getters and setters");
           for (Map.Entry<String, PropertyInformation> propertyInformationEntry : propertyLexicon.getRealMap().entrySet()) {
             writer.newLine();
-            writeGettersAndSetters(writer, generatorInformation, classElement, purpose, direction, propertyInformationEntry);
+            writeGettersAndSetters(usefulTypeMirrors, writer, generatorInformation, classElement, purpose, direction, propertyInformationEntry);
           }
         }
 
@@ -576,7 +540,7 @@ public class DtoAnnotationProcessor extends AbstractProcessor {
     }
   }
 
-  private void writeField (BufferedWriter writer, String purpose, Direction direction, Map.Entry<String, PropertyInformation> propertyInformationEntry)
+  private void writeField (UsefulTypeMirrors usefulTypeMirrors, BufferedWriter writer, String purpose, Direction direction, Map.Entry<String, PropertyInformation> propertyInformationEntry)
     throws IOException {
 
     for (ConstraintInformation constraintInformation : propertyInformationEntry.getValue().constraints()) {
@@ -590,14 +554,14 @@ public class DtoAnnotationProcessor extends AbstractProcessor {
       writer.newLine();
     }
     writer.write("  private ");
-    writer.write(asCompatibleName(propertyInformationEntry.getValue().getType(), purpose, direction));
+    writer.write(DtoTypeExtractor.extract(processingEnv, usefulTypeMirrors, visibilityTracker, purpose, direction, propertyInformationEntry.getValue().getType()).getName(processingEnv));
     writer.write(" ");
     writer.write(propertyInformationEntry.getKey());
     writer.write(";");
     writer.newLine();
   }
 
-  private void writeGettersAndSetters (BufferedWriter writer, GeneratorInformation generatorInformation, TypeElement classElement, String purpose, Direction direction, Map.Entry<String, PropertyInformation> propertyInformationEntry)
+  private void writeGettersAndSetters (UsefulTypeMirrors usefulTypeMirrors, BufferedWriter writer, GeneratorInformation generatorInformation, TypeElement classElement, String purpose, Direction direction, Map.Entry<String, PropertyInformation> propertyInformationEntry)
     throws IOException {
 
     if (propertyInformationEntry.getValue().getAdapter() != null) {
@@ -611,7 +575,7 @@ public class DtoAnnotationProcessor extends AbstractProcessor {
     writer.write(propertyInformationEntry.getValue().isRequired() ? "\", required = true)" : "\")");
     writer.newLine();
     writer.write("  public ");
-    writer.write(asCompatibleName(propertyInformationEntry.getValue().getType(), purpose, direction));
+    writer.write(DtoTypeExtractor.extract(processingEnv, usefulTypeMirrors, visibilityTracker, purpose, direction, propertyInformationEntry.getValue().getType()).getName(processingEnv));
     writer.write(" ");
     writer.write(TypeKind.BOOLEAN.equals(propertyInformationEntry.getValue().getType().getKind()) ? BeanUtility.asIsName(propertyInformationEntry.getKey()) : BeanUtility.asGetterName(propertyInformationEntry.getKey()));
     writer.write(" () {");
@@ -629,12 +593,12 @@ public class DtoAnnotationProcessor extends AbstractProcessor {
     if (!generatorInformation.getPolymorphicSubclasses().isEmpty()) {
       writer.write("D");
     } else {
-      writer.write(asDtoName(classElement.getSimpleName(), purpose, direction).toString());
+      writer.write(DtoNameUtility.getSimpleName(processingEnv, purpose, direction, classElement));
     }
     writer.write(" ");
     writer.write(BeanUtility.asSetterName(propertyInformationEntry.getKey()));
     writer.write(" (");
-    writer.write(asCompatibleName(propertyInformationEntry.getValue().getType(), purpose, direction));
+    writer.write(DtoTypeExtractor.extract(processingEnv, usefulTypeMirrors, visibilityTracker, purpose, direction, propertyInformationEntry.getValue().getType()).getName(processingEnv));
     writer.write(" ");
     writer.write(propertyInformationEntry.getKey());
     writer.write(") {");
@@ -661,7 +625,7 @@ public class DtoAnnotationProcessor extends AbstractProcessor {
     throws IOException {
 
     JavaFileObject sourceFile;
-    StringBuilder sourceFileBuilder = new StringBuilder(processingEnv.getElementUtils().getPackageOf(classElement).getQualifiedName()).append('.').append(asDtoName(classElement.getSimpleName(), purpose, direction));
+    StringBuilder sourceFileBuilder = new StringBuilder(processingEnv.getElementUtils().getPackageOf(classElement).getQualifiedName()).append('.').append(DtoNameUtility.getSimpleName(processingEnv, purpose, direction, classElement));
 
     if (generatorInformation.usePolymorphicAttribute()) {
       sourceFileBuilder.append("Attributed");
@@ -699,7 +663,7 @@ public class DtoAnnotationProcessor extends AbstractProcessor {
 
         // class declaration
         writer.write("public class ");
-        writer.write(asDtoName(classElement.getSimpleName(), purpose, direction).toString());
+        writer.write(DtoNameUtility.getSimpleName(processingEnv, purpose, direction, classElement));
         if (generatorInformation.usePolymorphicAttribute()) {
           writer.write("Attributed");
         }
@@ -709,7 +673,7 @@ public class DtoAnnotationProcessor extends AbstractProcessor {
           writer.write("Attributed");
         }
         writer.write("PolymorphicXmlAdapter<");
-        writer.write(asDtoName(classElement.getSimpleName(), purpose, direction).toString());
+        writer.write(DtoNameUtility.getSimpleName(processingEnv, purpose, direction, classElement));
         writer.write("> {");
         writer.newLine();
         writer.newLine();

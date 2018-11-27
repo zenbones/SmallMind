@@ -32,28 +32,27 @@
  */
 package org.smallmind.web.json.dto;
 
-import java.util.Collection;
 import javax.annotation.processing.ProcessingEnvironment;
 import javax.lang.model.type.TypeMirror;
 
-public class UsefulTypeMirrors {
+public class NonDtoType implements DtoType {
 
-  private final TypeMirror dtoPropertyTypeMirror;
-  private final TypeMirror collectionTypeMirror;
+  private TypeMirror typeMirror;
 
-  public UsefulTypeMirrors (ProcessingEnvironment processingEnvironment) {
+  public NonDtoType (TypeMirror typeMirror) {
 
-    dtoPropertyTypeMirror = processingEnvironment.getElementUtils().getTypeElement(DtoProperty.class.getName()).asType();
-    collectionTypeMirror = processingEnvironment.getElementUtils().getTypeElement(Collection.class.getName()).asType();
+    this.typeMirror = typeMirror;
   }
 
-  public TypeMirror getDtoPropertyTypeMirror () {
+  @Override
+  public String getName (ProcessingEnvironment processingEnvironment) {
 
-    return dtoPropertyTypeMirror;
+    return typeMirror.toString();
   }
 
-  public TypeMirror getCollectionTypeMirror () {
+  @Override
+  public String getTranslatingCode (ProcessingEnvironment processingEnvironment, String fieldName) {
 
-    return collectionTypeMirror;
+    return null;
   }
 }
