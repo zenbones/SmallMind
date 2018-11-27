@@ -419,26 +419,7 @@ public class DtoAnnotationProcessor extends AbstractProcessor {
             writer.write("    this.");
             writer.write(propertyInformationEntry.getKey());
             writer.write(" = ");
-            // TODO: SET FIELD EQUAL TO DTO TYPE FROM ENTITY GETTER
-            if (isDtoType(propertyInformationEntry.getValue().getType(), purpose, direction)) {
-              writer.write("(");
-              writer.write(asMemberName(classElement.getSimpleName()));
-              writer.write(".");
-              writer.write(TypeKind.BOOLEAN.equals(propertyInformationEntry.getValue().getType().getKind()) ? BeanUtility.asIsName(propertyInformationEntry.getKey()) : BeanUtility.asGetterName(propertyInformationEntry.getKey()));
-              writer.write("() == null) ? null : ");
-              writer.write("new ");
-              writer.write(DtoNameUtility.processTypeMirror(processingEnv, visibilityTracker, purpose, direction, propertyInformationEntry.getValue().getType()));
-              writer.write("(");
-            }
-            writer.write(asMemberName(classElement.getSimpleName()));
-            writer.write(".");
-            writer.write(TypeKind.BOOLEAN.equals(propertyInformationEntry.getValue().getType().getKind()) ? BeanUtility.asIsName(propertyInformationEntry.getKey()) : BeanUtility.asGetterName(propertyInformationEntry.getKey()));
-            writer.write("()");
-            if (isDtoType(propertyInformationEntry.getValue().getType(), purpose, direction)) {
-              writer.write(")");
-            }
-            writer.write(";");
-            // END
+            DtoTranslatorFactory.create(processingEnv, visibilityTracker, purpose, direction, propertyInformationEntry.getValue().getType()).writeRightSideOfEquals(writer, asMemberName(classElement.getSimpleName()), propertyInformationEntry.getKey(), propertyInformationEntry.getValue().getType(), DtoNameUtility.processTypeMirror(processingEnv, visibilityTracker, purpose, direction, propertyInformationEntry.getValue().getType()));
             writer.newLine();
           }
         }
@@ -491,21 +472,7 @@ public class DtoAnnotationProcessor extends AbstractProcessor {
             writer.write(".");
             writer.write(BeanUtility.asSetterName(propertyInformationEntry.getKey()));
             writer.write("(");
-            // TODO: SET FIELD ON ENTITY FROM DTO FIELD
-            if (isDtoType(propertyInformationEntry.getValue().getType(), purpose, direction)) {
-              writer.write("(");
-              writer.write(propertyInformationEntry.getKey());
-              writer.write(" == null) ? null : ");
-            }
-            writer.write(propertyInformationEntry.getKey());
-            if (isDtoType(propertyInformationEntry.getValue().getType(), purpose, direction)) {
-              writer.write(".factory(");
-              writer.write("new ");
-              writer.write(processingEnv.getTypeUtils().asElement(propertyInformationEntry.getValue().getType()).getSimpleName().toString());
-              writer.write("())");
-            }
-            // TODO: END
-
+            DtoTranslatorFactory.create(processingEnv, visibilityTracker, purpose, direction, propertyInformationEntry.getValue().getType()).writeInsideOfSet(writer, processingEnv, propertyInformationEntry.getValue().getType(), propertyInformationEntry.getKey());
             writer.write(");");
             writer.newLine();
           }

@@ -128,4 +128,11 @@ public class VisibilityTracker {
 
     return ((purposeMap = trackingMap.get(classElement)) == null) ? null : purposeMap.get(purpose);
   }
+
+  public boolean isVisible (String purpose, Direction direction, TypeElement typeElement) {
+
+    Visibility visibility;
+
+    return ((visibility = getVisibility(typeElement, purpose)) != null) && visibility.matches(direction);
+  }
 }

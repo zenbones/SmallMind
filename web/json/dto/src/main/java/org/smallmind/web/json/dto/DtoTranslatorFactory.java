@@ -33,12 +33,40 @@
 package org.smallmind.web.json.dto;
 
 import javax.annotation.processing.ProcessingEnvironment;
+import javax.lang.model.element.TypeElement;
+import javax.lang.model.type.ArrayType;
+import javax.lang.model.type.DeclaredType;
+import javax.lang.model.type.TypeKind;
 import javax.lang.model.type.TypeMirror;
 
 public class DtoTranslatorFactory {
 
-  public static DtoTranslator create (ProcessingEnvironment processingEnvironment, UsefulTypeMirrors usefulTypeMirrors, VisibilityTracker visibilityTracker, String purpose, Direction direction, TypeMirror typeMirror) {
+  public static DtoTranslator create (ProcessingEnvironment processingEnvironment, VisibilityTracker visibilityTracker, String purpose, Direction direction, TypeMirror typeMirror) {
 
-    return null;
+    boolean visible = false;
+
+    for (TypeElement typeElement : new TypeElementIterable(processingEnvironment, typeMirror)) {
+      if (visibilityTracker.isVisible(purpose, direction, typeElement)) {
+        visible = true;
+        break;
+      }
+    }
+
+    if (visible) {
+      if (TypeKind.ARRAY.equals(typeMirror.getKind())) {
+
+        TypeMirror componentTypeMirror = ((ArrayType)typeMirror).getComponentType();
+
+        if (TypeKind.DECLARED.equals(componentTypeMirror.getKind()) && (((DeclaredType)componentTypeMirror).getTypeArguments().isEmpty())) {
+
+          return new ArrayDtoTranslator();
+        }
+      } else if (TypeKind.DECLARED.equals(typeMirror.getKind()) && (((DeclaredType)typeMirror).getTypeArguments().isEmpty())) {
+
+        return new ClassDtoTranslator();
+      }
+    }
+
+    return new NonDtoTranslator();
   }
 }

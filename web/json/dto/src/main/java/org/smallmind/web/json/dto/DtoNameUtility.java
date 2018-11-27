@@ -84,7 +84,7 @@ public class DtoNameUtility {
         List<? extends TypeMirror> typeArgumentList;
 
         if (ElementKind.CLASS.equals(element.getKind())) {
-          if (isVisible(visibilityTracker, purpose, direction, (TypeElement)element)) {
+          if (visibilityTracker.isVisible(purpose, direction, (TypeElement)element)) {
             nameBuilder.append(DtoNameUtility.getPackageName(processingEnvironment, (TypeElement)element)).append('.').append(DtoNameUtility.getSimpleName(processingEnvironment, purpose, direction, (TypeElement)element));
           } else {
             nameBuilder.append(((TypeElement)element).getQualifiedName());
@@ -113,12 +113,5 @@ public class DtoNameUtility {
       default:
         nameBuilder.append(typeMirror);
     }
-  }
-
-  private static boolean isVisible (VisibilityTracker visibilityTracker, String purpose, Direction direction, TypeElement typeElement) {
-
-    Visibility visibility;
-
-    return ((visibility = visibilityTracker.getVisibility(typeElement, purpose)) != null) && visibility.matches(direction);
   }
 }
