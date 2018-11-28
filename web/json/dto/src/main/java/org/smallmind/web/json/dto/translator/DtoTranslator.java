@@ -30,32 +30,18 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.web.json.dto;
+package org.smallmind.web.json.dto.translator;
 
-import java.lang.annotation.Retention;
-import java.lang.annotation.RetentionPolicy;
-import java.lang.annotation.Target;
-import javax.xml.bind.annotation.adapters.XmlAdapter;
+import java.io.BufferedWriter;
+import java.io.IOException;
+import javax.annotation.processing.ProcessingEnvironment;
+import javax.lang.model.type.TypeMirror;
 
-@Retention(RetentionPolicy.SOURCE)
-@Target({})
-public @interface Property {
+public interface DtoTranslator {
 
-  // the list of alternate idioms in which this property should be included (overrides the default idiom)
-  Idiom[] idioms () default {};
+  void writeRightSideOfEquals (BufferedWriter writer, ProcessingEnvironment processingEnvironment, String entityInstanceName, String entityFieldName, TypeMirror entityFieldTypeMirror, String dtoFieldQualifiedTypeName)
+    throws IOException;
 
-  // the xml adapter to be used for this property
-  Class<? extends XmlAdapter> adapter () default DefaultXmlAdapter.class;
-
-  // the type information for the generated property
-  Type type ();
-
-  // the field name of the generated property
-  String field ();
-
-  // the xml element name
-  String name () default "";
-
-  // if the xml element is required
-  boolean required () default false;
+  void writeInsideOfSet (BufferedWriter writer, ProcessingEnvironment processingEnvironment, TypeMirror entityFieldTypeMirror, String dtoFieldQualifiedTypeName, String dtoFieldName)
+    throws IOException;
 }

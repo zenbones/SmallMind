@@ -30,7 +30,7 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.web.json.dto;
+package org.smallmind.web.json.dto.translator;
 
 import java.util.List;
 import javax.annotation.processing.ProcessingEnvironment;
@@ -39,6 +39,15 @@ import javax.lang.model.type.ArrayType;
 import javax.lang.model.type.DeclaredType;
 import javax.lang.model.type.TypeKind;
 import javax.lang.model.type.TypeMirror;
+import org.smallmind.web.json.dto.Direction;
+import org.smallmind.web.json.dto.TypeElementIterable;
+import org.smallmind.web.json.dto.UsefulTypeMirrors;
+import org.smallmind.web.json.dto.VisibilityTracker;
+import org.smallmind.web.json.dto.translator.ArrayDtoTranslator;
+import org.smallmind.web.json.dto.translator.ClassDtoTranslator;
+import org.smallmind.web.json.dto.translator.DtoTranslator;
+import org.smallmind.web.json.dto.translator.ListDtoTranslator;
+import org.smallmind.web.json.dto.translator.NonDtoTranslator;
 
 public class DtoTranslatorFactory {
 

@@ -62,6 +62,7 @@ import javax.tools.JavaFileObject;
 import com.google.auto.service.AutoService;
 import org.smallmind.nutsnbolts.apt.AptUtility;
 import org.smallmind.nutsnbolts.reflection.bean.BeanUtility;
+import org.smallmind.web.json.dto.translator.DtoTranslatorFactory;
 
 @SupportedAnnotationTypes({"org.smallmind.web.json.dto.DtoGenerator"})
 @SupportedSourceVersion(SourceVersion.RELEASE_8)

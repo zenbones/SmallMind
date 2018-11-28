@@ -81,7 +81,7 @@ public class GeneratorInformation {
 
       String fieldName = AptUtility.extractAnnotationValue(propertyAnnotationMirror, "field", String.class, null);
 
-      for (PropertyBox propertyBox : new PropertyParser(propertyAnnotationMirror, AptUtility.extractAnnotationValue(propertyAnnotationMirror, "type", TypeMirror.class, null), true)) {
+      for (PropertyBox propertyBox : new PropertyParser(propertyAnnotationMirror, extractType(processingEnvironment, propertyAnnotationMirror), true)) {
 
         dtoAnnotationProcessor.processTypeMirror(propertyBox.getPropertyInformation().getType());
 
@@ -101,6 +101,18 @@ public class GeneratorInformation {
         }
       }
     }
+  }
+
+  private TypeMirror extractType (ProcessingEnvironment processingEnvironment, AnnotationMirror propertyAnnotationMirror) {
+
+    AnnotationMirror typeAnnotationMirror = AptUtility.extractAnnotationValue(propertyAnnotationMirror, "type", AnnotationMirror.class, null);
+    TypeMirror baseTypeMirror = AptUtility.extractAnnotationValue(typeAnnotationMirror, "value", TypeMirror.class, null);
+    List<TypeMirror> argumentTypeMirrorList = AptUtility.extractAnnotationValueAsList(typeAnnotationMirror, "parameters", TypeMirror.class);
+    TypeMirror[] argumentTypeMirrors = new TypeMirror[argumentTypeMirrorList.size()];
+
+    argumentTypeMirrorList.toArray(argumentTypeMirrors);
+
+    return processingEnvironment.getTypeUtils().getDeclaredType((TypeElement)processingEnvironment.getTypeUtils().asElement(baseTypeMirror), argumentTypeMirrors);
   }
 
   public void update (TypeElement classElement, VisibilityTracker visibilityTracker) {

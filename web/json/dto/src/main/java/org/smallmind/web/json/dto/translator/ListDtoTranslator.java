@@ -30,7 +30,7 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.web.json.dto;
+package org.smallmind.web.json.dto.translator;
 
 import java.io.BufferedWriter;
 import java.io.IOException;

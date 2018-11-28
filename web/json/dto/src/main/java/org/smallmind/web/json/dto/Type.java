@@ -32,16 +32,17 @@
  */
 package org.smallmind.web.json.dto;
 
-import java.io.BufferedWriter;
-import java.io.IOException;
-import javax.annotation.processing.ProcessingEnvironment;
-import javax.lang.model.type.TypeMirror;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
 
-public interface DtoTranslator {
+@Retention(RetentionPolicy.SOURCE)
+@Target({})
+public @interface Type {
 
-  void writeRightSideOfEquals (BufferedWriter writer, ProcessingEnvironment processingEnvironment, String entityInstanceName, String entityFieldName, TypeMirror entityFieldTypeMirror, String dtoFieldQualifiedTypeName)
-    throws IOException;
+  // the class of the generated property
+  Class<?> value ();
 
-  void writeInsideOfSet (BufferedWriter writer, ProcessingEnvironment processingEnvironment, TypeMirror entityFieldTypeMirror, String dtoFieldQualifiedTypeName, String dtoFieldName)
-    throws IOException;
+  // the classes of the generic parameterization for the generated property
+  Class[] parameters () default {};
 }
