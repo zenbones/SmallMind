@@ -43,7 +43,7 @@ import org.smallmind.nutsnbolts.reflection.bean.BeanUtility;
 public class ClassDtoTranslator implements DtoTranslator {
 
   @Override
-  public void writeRightSideOfEquals (BufferedWriter writer, String entityInstanceName, String entityFieldName, TypeMirror entityFieldTypeMirror, String dtoFullyQualifiedTypeName)
+  public void writeRightSideOfEquals (BufferedWriter writer, ProcessingEnvironment processingEnvironment, String entityInstanceName, String entityFieldName, TypeMirror entityFieldTypeMirror, String dtoFieldQualifiedTypeName)
     throws IOException {
 
     writer.write("(");
@@ -51,7 +51,7 @@ public class ClassDtoTranslator implements DtoTranslator {
     writer.write(".");
     writer.write(TypeKind.BOOLEAN.equals(entityFieldTypeMirror.getKind()) ? BeanUtility.asIsName(entityFieldName) : BeanUtility.asGetterName(entityFieldName));
     writer.write("() == null) ? null : new ");
-    writer.write(dtoFullyQualifiedTypeName);
+    writer.write(dtoFieldQualifiedTypeName);
     writer.write("(");
     writer.write(entityInstanceName);
     writer.write(".");
@@ -60,7 +60,7 @@ public class ClassDtoTranslator implements DtoTranslator {
   }
 
   @Override
-  public void writeInsideOfSet (BufferedWriter writer, ProcessingEnvironment processingEnvironment, TypeMirror entityFieldTypeMirror, String dtoFieldName)
+  public void writeInsideOfSet (BufferedWriter writer, ProcessingEnvironment processingEnvironment, TypeMirror entityFieldTypeMirror, String dtoFieldQualifiedTypeName, String dtoFieldName)
     throws IOException {
 
     writer.write("(");

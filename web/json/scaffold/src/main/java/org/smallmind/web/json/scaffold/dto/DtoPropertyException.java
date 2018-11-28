@@ -30,18 +30,12 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.web.json.dto;
+package org.smallmind.web.json.scaffold.dto;
 
-import java.io.BufferedWriter;
-import java.io.IOException;
-import javax.annotation.processing.ProcessingEnvironment;
-import javax.lang.model.type.TypeMirror;
+public class DtoPropertyException extends RuntimeException {
 
-public interface DtoTranslator {
+  public DtoPropertyException (Throwable cause) {
 
-  void writeRightSideOfEquals (BufferedWriter writer, ProcessingEnvironment processingEnvironment, String entityInstanceName, String entityFieldName, TypeMirror entityFieldTypeMirror, String dtoFieldQualifiedTypeName)
-    throws IOException;
-
-  void writeInsideOfSet (BufferedWriter writer, ProcessingEnvironment processingEnvironment, TypeMirror entityFieldTypeMirror, String dtoFieldQualifiedTypeName, String dtoFieldName)
-    throws IOException;
+    super(cause);
+  }
 }

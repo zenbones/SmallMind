@@ -42,7 +42,7 @@ import org.smallmind.nutsnbolts.reflection.bean.BeanUtility;
 public class NonDtoTranslator implements DtoTranslator {
 
   @Override
-  public void writeRightSideOfEquals (BufferedWriter writer, String entityInstanceName, String entityFieldName, TypeMirror entityFieldTypeMirror, String dtoFullyQualifiedTypeName)
+  public void writeRightSideOfEquals (BufferedWriter writer, ProcessingEnvironment processingEnvironment, String entityInstanceName, String entityFieldName, TypeMirror entityFieldTypeMirror, String dtoFieldQualifiedTypeName)
     throws IOException {
 
     writer.write(entityInstanceName);
@@ -52,7 +52,7 @@ public class NonDtoTranslator implements DtoTranslator {
   }
 
   @Override
-  public void writeInsideOfSet (BufferedWriter writer, ProcessingEnvironment processingEnvironment, TypeMirror entityFieldTypeMirror, String dtoFieldName)
+  public void writeInsideOfSet (BufferedWriter writer, ProcessingEnvironment processingEnvironment, TypeMirror entityFieldTypeMirror, String dtoFieldQualifiedTypeName, String dtoFieldName)
     throws IOException {
 
     writer.write(dtoFieldName);

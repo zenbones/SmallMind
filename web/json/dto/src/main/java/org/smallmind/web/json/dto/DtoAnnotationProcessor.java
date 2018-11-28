@@ -414,12 +414,11 @@ public class DtoAnnotationProcessor extends AbstractProcessor {
         }
 
         if (propertyLexicon.isReal()) {
-          writer.newLine();
           for (Map.Entry<String, PropertyInformation> propertyInformationEntry : propertyLexicon.getRealMap().entrySet()) {
             writer.write("    this.");
             writer.write(propertyInformationEntry.getKey());
             writer.write(" = ");
-            DtoTranslatorFactory.create(processingEnv, visibilityTracker, purpose, direction, propertyInformationEntry.getValue().getType()).writeRightSideOfEquals(writer, asMemberName(classElement.getSimpleName()), propertyInformationEntry.getKey(), propertyInformationEntry.getValue().getType(), DtoNameUtility.processTypeMirror(processingEnv, visibilityTracker, purpose, direction, propertyInformationEntry.getValue().getType()));
+            DtoTranslatorFactory.create(processingEnv, visibilityTracker, purpose, direction, propertyInformationEntry.getValue().getType()).writeRightSideOfEquals(writer, processingEnv, asMemberName(classElement.getSimpleName()), propertyInformationEntry.getKey(), propertyInformationEntry.getValue().getType(), DtoNameUtility.processTypeMirror(processingEnv, visibilityTracker, purpose, direction, propertyInformationEntry.getValue().getType()));
             writer.newLine();
           }
         }
@@ -472,7 +471,7 @@ public class DtoAnnotationProcessor extends AbstractProcessor {
             writer.write(".");
             writer.write(BeanUtility.asSetterName(propertyInformationEntry.getKey()));
             writer.write("(");
-            DtoTranslatorFactory.create(processingEnv, visibilityTracker, purpose, direction, propertyInformationEntry.getValue().getType()).writeInsideOfSet(writer, processingEnv, propertyInformationEntry.getValue().getType(), propertyInformationEntry.getKey());
+            DtoTranslatorFactory.create(processingEnv, visibilityTracker, purpose, direction, propertyInformationEntry.getValue().getType()).writeInsideOfSet(writer, processingEnv, propertyInformationEntry.getValue().getType(), DtoNameUtility.processTypeMirror(processingEnv, visibilityTracker, purpose, direction, propertyInformationEntry.getValue().getType()), propertyInformationEntry.getKey());
             writer.write(");");
             writer.newLine();
           }

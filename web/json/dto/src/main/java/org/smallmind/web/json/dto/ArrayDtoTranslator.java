@@ -36,23 +36,26 @@ import java.io.BufferedWriter;
 import java.io.IOException;
 import javax.annotation.processing.ProcessingEnvironment;
 import javax.lang.model.element.TypeElement;
+import javax.lang.model.type.ArrayType;
 import javax.lang.model.type.TypeKind;
 import javax.lang.model.type.TypeMirror;
 import org.smallmind.nutsnbolts.reflection.bean.BeanUtility;
+import org.smallmind.web.json.scaffold.dto.ArrayMutator;
 
 public class ArrayDtoTranslator implements DtoTranslator {
 
+  private static final String ARRAY_MUTATOR_NAME = ArrayMutator.class.getCanonicalName();
+
   @Override
-  public void writeRightSideOfEquals (BufferedWriter writer, String entityInstanceName, String entityFieldName, TypeMirror entityFieldTypeMirror, String dtoFullyQualifiedTypeName)
+  public void writeRightSideOfEquals (BufferedWriter writer, ProcessingEnvironment processingEnvironment, String entityInstanceName, String entityFieldName, TypeMirror entityFieldTypeMirror, String dtoFieldQualifiedTypeName)
     throws IOException {
 
-    writer.write("(");
-    writer.write(entityInstanceName);
-    writer.write(".");
-    writer.write(TypeKind.BOOLEAN.equals(entityFieldTypeMirror.getKind()) ? BeanUtility.asIsName(entityFieldName) : BeanUtility.asGetterName(entityFieldName));
-    writer.write("() == null) ? null : new ");
-    writer.write(dtoFullyQualifiedTypeName);
-    writer.write("(");
+    writer.write(ARRAY_MUTATOR_NAME);
+    writer.write(".toDtoType(");
+    writer.write(((TypeElement)processingEnvironment.getTypeUtils().asElement(((ArrayType)entityFieldTypeMirror).getComponentType())).getQualifiedName().toString());
+    writer.write(".class, ");
+    writer.write(dtoFieldQualifiedTypeName.substring(0, dtoFieldQualifiedTypeName.length() -2 ));
+    writer.write(".class, ");
     writer.write(entityInstanceName);
     writer.write(".");
     writer.write(TypeKind.BOOLEAN.equals(entityFieldTypeMirror.getKind()) ? BeanUtility.asIsName(entityFieldName) : BeanUtility.asGetterName(entityFieldName));
@@ -60,15 +63,16 @@ public class ArrayDtoTranslator implements DtoTranslator {
   }
 
   @Override
-  public void writeInsideOfSet (BufferedWriter writer, ProcessingEnvironment processingEnvironment, TypeMirror entityFieldTypeMirror, String dtoFieldName)
+  public void writeInsideOfSet (BufferedWriter writer, ProcessingEnvironment processingEnvironment, TypeMirror entityFieldTypeMirror, String dtoFieldQualifiedTypeName, String dtoFieldName)
     throws IOException {
 
-    writer.write("(");
+    writer.write(ARRAY_MUTATOR_NAME);
+    writer.write(".toEntityType(");
+    writer.write(dtoFieldQualifiedTypeName.substring(0, dtoFieldQualifiedTypeName.length() -2 ));
+    writer.write(".class, ");
+    writer.write(((TypeElement)processingEnvironment.getTypeUtils().asElement(((ArrayType)entityFieldTypeMirror).getComponentType())).getQualifiedName().toString());
+    writer.write(".class, ");
     writer.write(dtoFieldName);
-    writer.write(" == null) ? null : ");
-    writer.write(dtoFieldName);
-    writer.write(".factory(new ");
-    writer.write(((TypeElement)processingEnvironment.getTypeUtils().asElement(entityFieldTypeMirror)).getQualifiedName().toString());
-    writer.write("())");
+    writer.write(")");
   }
 }
