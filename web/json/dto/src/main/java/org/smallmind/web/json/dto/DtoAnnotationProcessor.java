@@ -126,16 +126,16 @@ public class DtoAnnotationProcessor extends AbstractProcessor {
         }
 
         for (Map.Entry<String, PropertyLexicon> purposeEntry : generatorInformation.getInDirectionalGuide().entrySet()) {
-          processIn(generatorInformation, classElement, nearestDtoSuperclass, purposeEntry.getKey(), purposeEntry.getValue());
+          processIn(generatorInformation, usefulTypeMirrors, classElement, nearestDtoSuperclass, purposeEntry.getKey(), purposeEntry.getValue());
         }
         for (String unfulfilledPurpose : generatorInformation.unfulfilledPurposes(classElement, visibilityTracker, Direction.IN)) {
-          processIn(generatorInformation, classElement, nearestDtoSuperclass, unfulfilledPurpose, new PropertyLexicon());
+          processIn(generatorInformation, usefulTypeMirrors, classElement, nearestDtoSuperclass, unfulfilledPurpose, new PropertyLexicon());
         }
         for (Map.Entry<String, PropertyLexicon> purposeEntry : generatorInformation.getOutDirectionalGuide().entrySet()) {
-          processOut(generatorInformation, classElement, nearestDtoSuperclass, purposeEntry.getKey(), purposeEntry.getValue());
+          processOut(generatorInformation, usefulTypeMirrors, classElement, nearestDtoSuperclass, purposeEntry.getKey(), purposeEntry.getValue());
         }
         for (String unfulfilledPurpose : generatorInformation.unfulfilledPurposes(classElement, visibilityTracker, Direction.OUT)) {
-          processOut(generatorInformation, classElement, nearestDtoSuperclass, unfulfilledPurpose, new PropertyLexicon());
+          processOut(generatorInformation, usefulTypeMirrors, classElement, nearestDtoSuperclass, unfulfilledPurpose, new PropertyLexicon());
         }
 
         if (visibilityTracker.hasNoPurpose(classElement)) {
@@ -168,18 +168,18 @@ public class DtoAnnotationProcessor extends AbstractProcessor {
     }
   }
 
-  private void processIn (GeneratorInformation generatorInformation, TypeElement classElement, TypeElement nearestDtoSuperclass, String purpose, PropertyLexicon propertyLexicon)
+  private void processIn (GeneratorInformation generatorInformation, UsefulTypeMirrors usefulTypeMirrors, TypeElement classElement, TypeElement nearestDtoSuperclass, String purpose, PropertyLexicon propertyLexicon)
     throws IOException {
 
-    writeDto(generatorInformation, classElement, nearestDtoSuperclass, purpose, Direction.IN, propertyLexicon);
+    writeDto(generatorInformation, usefulTypeMirrors, classElement, nearestDtoSuperclass, purpose, Direction.IN, propertyLexicon);
 
     generatorInformation.denotePurpose(purpose, Direction.IN);
   }
 
-  private void processOut (GeneratorInformation generatorInformation, TypeElement classElement, TypeElement nearestDtoSuperclass, String purpose, PropertyLexicon propertyLexicon)
+  private void processOut (GeneratorInformation generatorInformation, UsefulTypeMirrors usefulTypeMirrors, TypeElement classElement, TypeElement nearestDtoSuperclass, String purpose, PropertyLexicon propertyLexicon)
     throws IOException {
 
-    writeDto(generatorInformation, classElement, nearestDtoSuperclass, purpose, Direction.OUT, propertyLexicon);
+    writeDto(generatorInformation, usefulTypeMirrors, classElement, nearestDtoSuperclass, purpose, Direction.OUT, propertyLexicon);
 
     generatorInformation.denotePurpose(purpose, Direction.OUT);
   }
@@ -220,7 +220,7 @@ public class DtoAnnotationProcessor extends AbstractProcessor {
     return null;
   }
 
-  private void writeDto (GeneratorInformation generatorInformation, TypeElement classElement, TypeElement nearestDtoSuperclass, String purpose, Direction direction, PropertyLexicon propertyLexicon)
+  private void writeDto (GeneratorInformation generatorInformation, UsefulTypeMirrors usefulTypeMirrors, TypeElement classElement, TypeElement nearestDtoSuperclass, String purpose, Direction direction, PropertyLexicon propertyLexicon)
     throws IOException {
 
     JavaFileObject sourceFile;
@@ -418,7 +418,7 @@ public class DtoAnnotationProcessor extends AbstractProcessor {
             writer.write("    this.");
             writer.write(propertyInformationEntry.getKey());
             writer.write(" = ");
-            DtoTranslatorFactory.create(processingEnv, visibilityTracker, purpose, direction, propertyInformationEntry.getValue().getType()).writeRightSideOfEquals(writer, processingEnv, asMemberName(classElement.getSimpleName()), propertyInformationEntry.getKey(), propertyInformationEntry.getValue().getType(), DtoNameUtility.processTypeMirror(processingEnv, visibilityTracker, purpose, direction, propertyInformationEntry.getValue().getType()));
+            DtoTranslatorFactory.create(processingEnv, usefulTypeMirrors, visibilityTracker, purpose, direction, propertyInformationEntry.getValue().getType()).writeRightSideOfEquals(writer, processingEnv, asMemberName(classElement.getSimpleName()), propertyInformationEntry.getKey(), propertyInformationEntry.getValue().getType(), DtoNameUtility.processTypeMirror(processingEnv, visibilityTracker, purpose, direction, propertyInformationEntry.getValue().getType()));
             writer.newLine();
           }
         }
@@ -471,7 +471,7 @@ public class DtoAnnotationProcessor extends AbstractProcessor {
             writer.write(".");
             writer.write(BeanUtility.asSetterName(propertyInformationEntry.getKey()));
             writer.write("(");
-            DtoTranslatorFactory.create(processingEnv, visibilityTracker, purpose, direction, propertyInformationEntry.getValue().getType()).writeInsideOfSet(writer, processingEnv, propertyInformationEntry.getValue().getType(), DtoNameUtility.processTypeMirror(processingEnv, visibilityTracker, purpose, direction, propertyInformationEntry.getValue().getType()), propertyInformationEntry.getKey());
+            DtoTranslatorFactory.create(processingEnv, usefulTypeMirrors, visibilityTracker, purpose, direction, propertyInformationEntry.getValue().getType()).writeInsideOfSet(writer, processingEnv, propertyInformationEntry.getValue().getType(), DtoNameUtility.processTypeMirror(processingEnv, visibilityTracker, purpose, direction, propertyInformationEntry.getValue().getType()), propertyInformationEntry.getKey());
             writer.write(");");
             writer.newLine();
           }

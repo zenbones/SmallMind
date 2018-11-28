@@ -33,6 +33,7 @@
 package org.smallmind.nutsnbolts.util;
 
 import java.lang.reflect.Array;
+import java.util.LinkedList;
 import java.util.List;
 
 public class MutationUtility {
@@ -72,6 +73,42 @@ public class MutationUtility {
       }
 
       return outArray;
+    }
+  }
+
+  public static <T, U> List<U> toList (T[] array, Mutation<? super T, U> mutation)
+    throws Exception {
+
+    if (array == null) {
+
+      return null;
+    } else {
+
+      LinkedList<U> outList = new LinkedList<>();
+
+      for (T inType : array) {
+        outList.add(mutation.mutate(inType));
+      }
+
+      return outList;
+    }
+  }
+
+  public static <T, U> List<U> toList (List<T> list, Mutation<? super T, U> mutation)
+    throws Exception {
+
+    if (list == null) {
+
+      return null;
+    } else {
+
+      LinkedList<U> outList = new LinkedList<>();
+
+      for (T inType : list) {
+        outList.add(mutation.mutate(inType));
+      }
+
+      return outList;
     }
   }
 }

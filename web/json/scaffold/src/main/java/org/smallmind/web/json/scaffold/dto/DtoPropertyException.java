@@ -32,7 +32,14 @@
  */
 package org.smallmind.web.json.scaffold.dto;
 
-public class DtoPropertyException extends RuntimeException {
+import org.smallmind.nutsnbolts.lang.FormattedRuntimeException;
+
+public class DtoPropertyException extends FormattedRuntimeException {
+
+  public DtoPropertyException (String message, Object... args) {
+
+    super(message, args);
+  }
 
   public DtoPropertyException (Throwable cause) {
 

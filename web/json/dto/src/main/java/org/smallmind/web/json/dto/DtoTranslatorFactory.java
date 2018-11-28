@@ -32,6 +32,7 @@
  */
 package org.smallmind.web.json.dto;
 
+import java.util.List;
 import javax.annotation.processing.ProcessingEnvironment;
 import javax.lang.model.element.TypeElement;
 import javax.lang.model.type.ArrayType;
@@ -41,7 +42,12 @@ import javax.lang.model.type.TypeMirror;
 
 public class DtoTranslatorFactory {
 
-  public static DtoTranslator create (ProcessingEnvironment processingEnvironment, VisibilityTracker visibilityTracker, String purpose, Direction direction, TypeMirror typeMirror) {
+  private static final ArrayDtoTranslator ARRAY_DTO_TRANSLATOR = new ArrayDtoTranslator();
+  private static final ClassDtoTranslator CLASS_DTO_TRANSLATOR = new ClassDtoTranslator();
+  private static final ListDtoTranslator LIST_DTO_TRANSLATOR = new ListDtoTranslator();
+  private static final NonDtoTranslator NON_DTO_TRANSLATOR = new NonDtoTranslator();
+
+  public static DtoTranslator create (ProcessingEnvironment processingEnvironment, UsefulTypeMirrors usefulTypeMirrors, VisibilityTracker visibilityTracker, String purpose, Direction direction, TypeMirror typeMirror) {
 
     boolean visible = false;
 
@@ -59,14 +65,22 @@ public class DtoTranslatorFactory {
 
         if (TypeKind.DECLARED.equals(componentTypeMirror.getKind()) && (((DeclaredType)componentTypeMirror).getTypeArguments().isEmpty())) {
 
-          return new ArrayDtoTranslator();
+          return ARRAY_DTO_TRANSLATOR;
         }
-      } else if (TypeKind.DECLARED.equals(typeMirror.getKind()) && (((DeclaredType)typeMirror).getTypeArguments().isEmpty())) {
+      } else if (TypeKind.DECLARED.equals(typeMirror.getKind())) {
 
-        return new ClassDtoTranslator();
+        List<? extends TypeMirror> typeArguments = ((DeclaredType)typeMirror).getTypeArguments();
+
+        if (processingEnvironment.getTypeUtils().isAssignable(processingEnvironment.getTypeUtils().erasure(typeMirror), usefulTypeMirrors.getListTypeMirror()) && (typeArguments.size() == 1)) {
+
+          return LIST_DTO_TRANSLATOR;
+        } else if (typeArguments.size() == 0) {
+
+          return CLASS_DTO_TRANSLATOR;
+        }
       }
     }
 
-    return new NonDtoTranslator();
+    return NON_DTO_TRANSLATOR;
   }
 }
