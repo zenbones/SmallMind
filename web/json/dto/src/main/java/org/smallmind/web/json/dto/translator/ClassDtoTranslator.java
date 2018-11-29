@@ -71,10 +71,4 @@ public class ClassDtoTranslator implements DtoTranslator {
     writer.write(((TypeElement)processingEnvironment.getTypeUtils().asElement(entityFieldTypeMirror)).getQualifiedName().toString());
     writer.write("())");
   }
-
-  @Override
-  public boolean writeTranslatorMethods (BufferedWriter writer, ProcessingEnvironment processingEnvironment, TypeMirror entityFieldTypeMirror, String dtoFieldQualifiedTypeName, String dtoFieldName) {
-
-    return false;
-  }
 }

@@ -419,7 +419,7 @@ public class DtoAnnotationProcessor extends AbstractProcessor {
             writer.write("    this.");
             writer.write(propertyInformationEntry.getKey());
             writer.write(" = ");
-            DtoTranslatorFactory.create(processingEnv, usefulTypeMirrors, visibilityTracker, purpose, direction, propertyInformationEntry.getValue().getType(), true).writeRightSideOfEquals(writer, processingEnv, asMemberName(classElement.getSimpleName()), propertyInformationEntry.getKey(), propertyInformationEntry.getValue().getType(), DtoNameUtility.processTypeMirror(processingEnv, visibilityTracker, purpose, direction, propertyInformationEntry.getValue().getType()));
+            DtoTranslatorFactory.create(processingEnv, usefulTypeMirrors, visibilityTracker, purpose, direction, propertyInformationEntry.getValue().getType()).writeRightSideOfEquals(writer, processingEnv, asMemberName(classElement.getSimpleName()), propertyInformationEntry.getKey(), propertyInformationEntry.getValue().getType(), DtoNameUtility.processTypeMirror(processingEnv, visibilityTracker, purpose, direction, propertyInformationEntry.getValue().getType()));
             writer.newLine();
           }
         }
@@ -472,7 +472,7 @@ public class DtoAnnotationProcessor extends AbstractProcessor {
             writer.write(".");
             writer.write(BeanUtility.asSetterName(propertyInformationEntry.getKey()));
             writer.write("(");
-            DtoTranslatorFactory.create(processingEnv, usefulTypeMirrors, visibilityTracker, purpose, direction, propertyInformationEntry.getValue().getType(), true).writeInsideOfSet(writer, processingEnv, propertyInformationEntry.getValue().getType(), DtoNameUtility.processTypeMirror(processingEnv, visibilityTracker, purpose, direction, propertyInformationEntry.getValue().getType()), propertyInformationEntry.getKey());
+            DtoTranslatorFactory.create(processingEnv, usefulTypeMirrors, visibilityTracker, purpose, direction, propertyInformationEntry.getValue().getType()).writeInsideOfSet(writer, processingEnv, propertyInformationEntry.getValue().getType(), DtoNameUtility.processTypeMirror(processingEnv, visibilityTracker, purpose, direction, propertyInformationEntry.getValue().getType()), propertyInformationEntry.getKey());
             writer.write(");");
             writer.newLine();
           }
@@ -494,13 +494,6 @@ public class DtoAnnotationProcessor extends AbstractProcessor {
             writer.newLine();
             writeGettersAndSetters(writer, generatorInformation, classElement, purpose, direction, propertyInformationEntry);
           }
-
-          // virtual translator methods
-          for (Map.Entry<String, PropertyInformation> propertyInformationEntry : propertyLexicon.getVirtualMap().entrySet()) {
-            if (DtoTranslatorFactory.create(processingEnv, usefulTypeMirrors, visibilityTracker, purpose, direction, propertyInformationEntry.getValue().getType(), false).writeTranslatorMethods(writer, processingEnv, propertyInformationEntry.getValue().getType(), DtoNameUtility.processTypeMirror(processingEnv, visibilityTracker, purpose, direction, propertyInformationEntry.getValue().getType()), propertyInformationEntry.getKey())) {
-              writer.newLine();
-            }
-          }
         }
 
         // native getters and setters
@@ -510,13 +503,6 @@ public class DtoAnnotationProcessor extends AbstractProcessor {
           for (Map.Entry<String, PropertyInformation> propertyInformationEntry : propertyLexicon.getRealMap().entrySet()) {
             writer.newLine();
             writeGettersAndSetters(writer, generatorInformation, classElement, purpose, direction, propertyInformationEntry);
-          }
-
-          // real translator methods
-          for (Map.Entry<String, PropertyInformation> propertyInformationEntry : propertyLexicon.getRealMap().entrySet()) {
-            if (DtoTranslatorFactory.create(processingEnv, usefulTypeMirrors, visibilityTracker, purpose, direction, propertyInformationEntry.getValue().getType(), false).writeTranslatorMethods(writer, processingEnv, propertyInformationEntry.getValue().getType(), DtoNameUtility.processTypeMirror(processingEnv, visibilityTracker, purpose, direction, propertyInformationEntry.getValue().getType()), propertyInformationEntry.getKey())) {
-              writer.newLine();
-            }
           }
         }
 

@@ -57,10 +57,4 @@ public class NonDtoTranslator implements DtoTranslator {
 
     writer.write(dtoFieldName);
   }
-
-  @Override
-  public boolean writeTranslatorMethods (BufferedWriter writer, ProcessingEnvironment processingEnvironment, TypeMirror entityFieldTypeMirror, String dtoFieldQualifiedTypeName, String dtoFieldName) {
-
-    return false;
-  }
 }

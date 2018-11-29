@@ -51,7 +51,7 @@ public class DtoTranslatorFactory {
   private static final ListDtoTranslator LIST_DTO_TRANSLATOR = new ListDtoTranslator();
   private static final NonDtoTranslator NON_DTO_TRANSLATOR = new NonDtoTranslator();
 
-  public static DtoTranslator create (ProcessingEnvironment processingEnvironment, UsefulTypeMirrors usefulTypeMirrors, VisibilityTracker visibilityTracker, String purpose, Direction direction, TypeMirror typeMirror, boolean requiresVisibility) {
+  public static DtoTranslator create (ProcessingEnvironment processingEnvironment, UsefulTypeMirrors usefulTypeMirrors, VisibilityTracker visibilityTracker, String purpose, Direction direction, TypeMirror typeMirror) {
 
     boolean visible = false;
 
@@ -62,7 +62,7 @@ public class DtoTranslatorFactory {
       }
     }
 
-    if ((!requiresVisibility) || visible) {
+    if (visible) {
       if (TypeKind.ARRAY.equals(typeMirror.getKind())) {
 
         TypeMirror componentTypeMirror = ((ArrayType)typeMirror).getComponentType();

@@ -77,39 +77,6 @@ public class ListDtoTranslator implements DtoTranslator {
     writer.write(")");
   }
 
-  @Override
-  public boolean writeTranslatorMethods (BufferedWriter writer, ProcessingEnvironment processingEnvironment, TypeMirror entityFieldTypeMirror, String dtoFieldQualifiedTypeName, String dtoFieldName)
-    throws IOException {
-
-    writer.newLine();
-    writer.write("  public void addTo");
-    writer.write(Character.toUpperCase(dtoFieldName.charAt(0)));
-    writer.write(dtoFieldName.substring(1));
-    writer.write(" (");
-    writer.write(extractDtoTypeName(dtoFieldQualifiedTypeName));
-    writer.write(" item) {");
-    writer.newLine();
-    writer.newLine();
-    writer.write("    if (");
-    writer.write(dtoFieldName);
-    writer.write(" == null) {");
-    writer.newLine();
-    writer.write("      ");
-    writer.write(dtoFieldName);
-    writer.write(" = new java.util.LinkedList<>();");
-    writer.newLine();
-    writer.write("    }");
-    writer.newLine();
-    writer.newLine();
-    writer.write("    ");
-    writer.write(dtoFieldName);
-    writer.write(".add(item);");
-    writer.newLine();
-    writer.write("  }");
-
-    return true;
-  }
-
   private String extractDtoTypeName (String qualifiedListTypeName) {
 
     int leftAnglePos;
