@@ -81,7 +81,8 @@ public class ListDtoTranslator implements DtoTranslator {
   public boolean writeTranslatorMethods (BufferedWriter writer, ProcessingEnvironment processingEnvironment, TypeMirror entityFieldTypeMirror, String dtoFieldQualifiedTypeName, String dtoFieldName)
     throws IOException {
 
-    writer.write("public void addTo");
+    writer.newLine();
+    writer.write("  public void addTo");
     writer.write(Character.toUpperCase(dtoFieldName.charAt(0)));
     writer.write(dtoFieldName.substring(1));
     writer.write(" (");
@@ -89,22 +90,22 @@ public class ListDtoTranslator implements DtoTranslator {
     writer.write(" item) {");
     writer.newLine();
     writer.newLine();
-    writer.write("  if (");
+    writer.write("    if (");
     writer.write(dtoFieldName);
     writer.write(" == null) {");
     writer.newLine();
-    writer.write("    ");
+    writer.write("      ");
     writer.write(dtoFieldName);
-    writer.write(" = new LinkedList<>();");
+    writer.write(" = new java.util.LinkedList<>();");
     writer.newLine();
-    writer.write("  }");
+    writer.write("    }");
     writer.newLine();
     writer.newLine();
-    writer.write("  ");
+    writer.write("    ");
     writer.write(dtoFieldName);
     writer.write(".add(item);");
     writer.newLine();
-    writer.write("}");
+    writer.write("  }");
 
     return true;
   }
