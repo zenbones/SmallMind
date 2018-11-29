@@ -43,11 +43,6 @@ import org.smallmind.web.json.dto.Direction;
 import org.smallmind.web.json.dto.TypeElementIterable;
 import org.smallmind.web.json.dto.UsefulTypeMirrors;
 import org.smallmind.web.json.dto.VisibilityTracker;
-import org.smallmind.web.json.dto.translator.ArrayDtoTranslator;
-import org.smallmind.web.json.dto.translator.ClassDtoTranslator;
-import org.smallmind.web.json.dto.translator.DtoTranslator;
-import org.smallmind.web.json.dto.translator.ListDtoTranslator;
-import org.smallmind.web.json.dto.translator.NonDtoTranslator;
 
 public class DtoTranslatorFactory {
 
@@ -56,7 +51,7 @@ public class DtoTranslatorFactory {
   private static final ListDtoTranslator LIST_DTO_TRANSLATOR = new ListDtoTranslator();
   private static final NonDtoTranslator NON_DTO_TRANSLATOR = new NonDtoTranslator();
 
-  public static DtoTranslator create (ProcessingEnvironment processingEnvironment, UsefulTypeMirrors usefulTypeMirrors, VisibilityTracker visibilityTracker, String purpose, Direction direction, TypeMirror typeMirror) {
+  public static DtoTranslator create (ProcessingEnvironment processingEnvironment, UsefulTypeMirrors usefulTypeMirrors, VisibilityTracker visibilityTracker, String purpose, Direction direction, TypeMirror typeMirror, boolean requiresVisibility) {
 
     boolean visible = false;
 
@@ -67,7 +62,7 @@ public class DtoTranslatorFactory {
       }
     }
 
-    if (visible) {
+    if ((!requiresVisibility) || visible) {
       if (TypeKind.ARRAY.equals(typeMirror.getKind())) {
 
         TypeMirror componentTypeMirror = ((ArrayType)typeMirror).getComponentType();
