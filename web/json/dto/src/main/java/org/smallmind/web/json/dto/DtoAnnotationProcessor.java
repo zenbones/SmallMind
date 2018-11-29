@@ -486,6 +486,18 @@ public class DtoAnnotationProcessor extends AbstractProcessor {
         writer.write("  }");
         writer.newLine();
 
+        // translator methods
+        for (Map.Entry<String, PropertyInformation> propertyInformationEntry : propertyLexicon.getVirtualMap().entrySet()) {
+          if (DtoTranslatorFactory.create(processingEnv, usefulTypeMirrors, visibilityTracker, purpose, direction, propertyInformationEntry.getValue().getType()).writeTranslatorMethods(writer, processingEnv, propertyInformationEntry.getValue().getType(), DtoNameUtility.processTypeMirror(processingEnv, visibilityTracker, purpose, direction, propertyInformationEntry.getValue().getType()), propertyInformationEntry.getKey())) {
+            writer.newLine();
+          }
+        }
+        for (Map.Entry<String, PropertyInformation> propertyInformationEntry : propertyLexicon.getRealMap().entrySet()) {
+          if (DtoTranslatorFactory.create(processingEnv, usefulTypeMirrors, visibilityTracker, purpose, direction, propertyInformationEntry.getValue().getType()).writeTranslatorMethods(writer, processingEnv, propertyInformationEntry.getValue().getType(), DtoNameUtility.processTypeMirror(processingEnv, visibilityTracker, purpose, direction, propertyInformationEntry.getValue().getType()), propertyInformationEntry.getKey())) {
+            writer.newLine();
+          }
+        }
+
         // virtual getters and setters
         if (propertyLexicon.isVirtual()) {
           writer.newLine();

@@ -44,4 +44,7 @@ public interface DtoTranslator {
 
   void writeInsideOfSet (BufferedWriter writer, ProcessingEnvironment processingEnvironment, TypeMirror entityFieldTypeMirror, String dtoFieldQualifiedTypeName, String dtoFieldName)
     throws IOException;
+
+  boolean writeTranslatorMethods (BufferedWriter writer, ProcessingEnvironment processingEnvironment, TypeMirror entityFieldTypeMirror, String dtoFieldQualifiedTypeName, String dtoFieldName)
+    throws IOException;
 }
