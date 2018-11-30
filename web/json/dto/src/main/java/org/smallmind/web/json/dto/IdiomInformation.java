@@ -34,6 +34,7 @@ package org.smallmind.web.json.dto;
 
 import java.util.LinkedList;
 import java.util.List;
+import javax.annotation.processing.ProcessingEnvironment;
 import javax.lang.model.element.AnnotationMirror;
 import org.smallmind.nutsnbolts.apt.AptUtility;
 
@@ -42,14 +43,24 @@ public class IdiomInformation {
   private final List<ConstraintInformation> constraintList = new LinkedList<>();
   private final List<String> purposeList;
   private final Visibility visibility;
+  private Boolean required;
 
-  public IdiomInformation (AnnotationMirror idiomAnnotationMirror) {
+  public IdiomInformation (ProcessingEnvironment processingEnvironment, UsefulTypeMirrors usefulTypeMirrors, AnnotationMirror idiomAnnotationMirror) {
 
     visibility = AptUtility.extractAnnotationValue(idiomAnnotationMirror, "visibility", Visibility.class, Visibility.BOTH);
     purposeList = AptUtility.extractAnnotationValueAsList(idiomAnnotationMirror, "purposes", String.class);
 
     for (AnnotationMirror constraintAnnotationMirror : AptUtility.extractAnnotationValueAsList(idiomAnnotationMirror, "constraints", AnnotationMirror.class)) {
       constraintList.add(new ConstraintInformation(constraintAnnotationMirror));
+    }
+
+    if (!(required = AptUtility.extractAnnotationValue(idiomAnnotationMirror, "required", Boolean.class, Boolean.FALSE))) {
+      for (ConstraintInformation constraintInformation : constraintList) {
+        if (processingEnvironment.getTypeUtils().isSameType(usefulTypeMirrors.getNotNullTypeMirror(), constraintInformation.getType())) {
+          required = true;
+          break;
+        }
+      }
     }
   }
 
@@ -66,5 +77,10 @@ public class IdiomInformation {
   public List<ConstraintInformation> getConstraintList () {
 
     return constraintList;
+  }
+
+  public boolean isRequired () {
+
+    return (required != null) && required;
   }
 }

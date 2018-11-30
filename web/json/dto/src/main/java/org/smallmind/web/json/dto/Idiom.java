@@ -48,4 +48,7 @@ public @interface Idiom {
 
   // the name of this idiom (a short descriptive string such as 'create' or 'internal')
   String[] purposes () default {};
+
+  // if the xml element is required in this idiom, if false may overridden by use of a NotNull constraint
+  boolean required () default false;
 }

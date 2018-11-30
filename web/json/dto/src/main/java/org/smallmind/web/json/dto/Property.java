@@ -56,6 +56,6 @@ public @interface Property {
   // the xml element name
   String name () default "";
 
-  // if the xml element is required
+  // if the xml element is required, may be overridden by an idiom if false
   boolean required () default false;
 }

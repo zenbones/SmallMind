@@ -54,7 +54,7 @@ public class GeneratorInformation {
   private final PolymorphicInformation polymorphicInformation;
   private final String name;
 
-  public GeneratorInformation (ProcessingEnvironment processingEnvironment, DtoAnnotationProcessor dtoAnnotationProcessor, TypeElement classElement, VisibilityTracker visibilityTracker, AnnotationMirror generatorAnnotationMirror)
+  public GeneratorInformation (ProcessingEnvironment processingEnvironment, UsefulTypeMirrors usefulTypeMirrors, DtoAnnotationProcessor dtoAnnotationProcessor, TypeElement classElement, VisibilityTracker visibilityTracker, AnnotationMirror generatorAnnotationMirror)
     throws IOException, DtoDefinitionException {
 
     AnnotationMirror polymorphicAnnotationMirror;
@@ -81,7 +81,7 @@ public class GeneratorInformation {
 
       String fieldName = AptUtility.extractAnnotationValue(propertyAnnotationMirror, "field", String.class, null);
 
-      for (PropertyBox propertyBox : new PropertyParser(propertyAnnotationMirror, extractType(processingEnvironment, propertyAnnotationMirror), true)) {
+      for (PropertyBox propertyBox : new PropertyParser(processingEnvironment, usefulTypeMirrors, propertyAnnotationMirror, extractType(processingEnvironment, propertyAnnotationMirror), true)) {
 
         dtoAnnotationProcessor.processTypeMirror(propertyBox.getPropertyInformation().getType());
 

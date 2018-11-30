@@ -116,7 +116,7 @@ public class DtoAnnotationProcessor extends AbstractProcessor {
           generate(nearestDtoSuperclass);
         }
 
-        generatorInformation = new GeneratorInformation(processingEnv, this, classElement, visibilityTracker, dtoGeneratorAnnotationMirror);
+        generatorInformation = new GeneratorInformation(processingEnv, usefulTypeMirrors, this, classElement, visibilityTracker, dtoGeneratorAnnotationMirror);
         ClassWalker.walk(processingEnv, this, classElement, generatorInformation, usefulTypeMirrors);
         generatorInformation.update(classElement, visibilityTracker);
 

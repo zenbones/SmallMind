@@ -35,16 +35,19 @@ package org.smallmind.web.json.dto;
 import java.util.List;
 import javax.annotation.processing.ProcessingEnvironment;
 import javax.lang.model.type.TypeMirror;
+import javax.validation.constraints.NotNull;
 
 public class UsefulTypeMirrors {
 
   private final TypeMirror dtoPropertyTypeMirror;
   private final TypeMirror listTypeMirror;
+  private final TypeMirror notNullTypeMirror;
 
   public UsefulTypeMirrors (ProcessingEnvironment processingEnvironment) {
 
     dtoPropertyTypeMirror = processingEnvironment.getElementUtils().getTypeElement(DtoProperty.class.getName()).asType();
     listTypeMirror = processingEnvironment.getElementUtils().getTypeElement(List.class.getName()).asType();
+    notNullTypeMirror = processingEnvironment.getElementUtils().getTypeElement(NotNull.class.getName()).asType();
   }
 
   public TypeMirror getDtoPropertyTypeMirror () {
@@ -55,5 +58,10 @@ public class UsefulTypeMirrors {
   public TypeMirror getListTypeMirror () {
 
     return listTypeMirror;
+  }
+
+  public TypeMirror getNotNullTypeMirror () {
+
+    return notNullTypeMirror;
   }
 }
