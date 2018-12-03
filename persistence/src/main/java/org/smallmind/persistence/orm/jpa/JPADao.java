@@ -1,28 +1,28 @@
 /*
  * Copyright (c) 2007, 2008, 2009, 2010, 2011, 2012, 2013, 2014, 2015, 2016, 2017, 2018 David Berkman
- * 
+ *
  * This file is part of the SmallMind Code Project.
- * 
+ *
  * The SmallMind Code Project is free software, you can redistribute
  * it and/or modify it under either, at your discretion...
- * 
+ *
  * 1) The terms of GNU Affero General Public License as published by the
  * Free Software Foundation, either version 3 of the License, or (at
  * your option) any later version.
- * 
+ *
  * ...or...
- * 
+ *
  * 2) The terms of the Apache License, Version 2.0.
- * 
+ *
  * The SmallMind Code Project is distributed in the hope that it will
  * be useful, but WITHOUT ANY WARRANTY; without even the implied warranty
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License or Apache License for more details.
- * 
+ *
  * You should have received a copy of the GNU Affero General Public License
  * and the Apache License along with the SmallMind Code Project. If not, see
  * <http://www.gnu.org/licenses/> or <http://www.apache.org/licenses/LICENSE-2.0>.
- * 
+ *
  * Additional permission under the GNU Affero GPL version 3 section 7
  * ------------------------------------------------------------------
  * If you modify this Program, or any covered work, by linking or
@@ -39,6 +39,7 @@ import java.util.List;
 import javax.persistence.EntityManager;
 import javax.persistence.EntityManagerFactory;
 import javax.persistence.Query;
+import javax.persistence.TypedQuery;
 import javax.persistence.criteria.CriteriaBuilder;
 import javax.persistence.criteria.CriteriaQuery;
 import javax.persistence.criteria.Root;
@@ -145,56 +146,47 @@ public abstract class JPADao<I extends Serializable & Comparable<I>, D extends D
 
   public List<D> list () {
 
-    return listByQuery(new QueryDetails() {
+    return constructCriteriaQuery(getManagedClass(), new CriteriaQueryDetails<D>() {
 
       @Override
-      public String getQueryString () {
+      public CriteriaQuery<D> completeCriteria (Class<D> criteriaClass, CriteriaBuilder criteriaBuilder) {
 
-        return "select entity from " + getManagedClass().getSimpleName() + " entity";
+        CriteriaQuery<D> query = criteriaBuilder.createQuery(getManagedClass());
+        Root<D> root = query.from(getManagedClass());
+
+        return query.select(root);
       }
-
-      @Override
-      public Query completeQuery (Query query) {
-
-        return query;
-      }
-    });
+    }).getResultList();
   }
 
   public List<D> list (final int fetchSize) {
 
-    return listByQuery(new QueryDetails() {
+    return constructCriteriaQuery(getManagedClass(), new CriteriaQueryDetails<D>() {
 
       @Override
-      public String getQueryString () {
+      public CriteriaQuery<D> completeCriteria (Class<D> criteriaClass, CriteriaBuilder criteriaBuilder) {
 
-        return "select entity from " + getManagedClass().getSimpleName() + " entity";
+        CriteriaQuery<D> query = criteriaBuilder.createQuery(getManagedClass());
+        Root<D> root = query.from(getManagedClass());
+
+        return query.select(root);
       }
-
-      @Override
-      public Query completeQuery (Query query) {
-
-        return query.setMaxResults(fetchSize);
-      }
-    });
+    }).setMaxResults(fetchSize).getResultList();
   }
 
   public List<D> list (final I greaterThan, final int fetchSize) {
 
-    return listByQuery(new QueryDetails() {
+    return constructCriteriaQuery(getManagedClass(), new CriteriaQueryDetails<D>() {
 
       @Override
-      public String getQueryString () {
+      public CriteriaQuery<D> completeCriteria (Class<D> criteriaClass, CriteriaBuilder criteriaBuilder) {
 
-        return "select entity from " + getManagedClass().getSimpleName() + " entity where entity.id > ?";
+        CriteriaQuery<D> query = criteriaBuilder.createQuery(getManagedClass());
+        Root<D> root = query.from(getManagedClass());
+
+        return query.select(root).where(criteriaBuilder.gt(root.get("id"), (Number)greaterThan));
       }
-
-      @Override
-      public Query completeQuery (Query query) {
-
-        return query.setParameter("id", greaterThan).setMaxResults(fetchSize);
-      }
-    });
+    }).setMaxResults(fetchSize).getResultList();
   }
 
   @Override
@@ -314,7 +306,7 @@ public abstract class JPADao<I extends Serializable & Comparable<I>, D extends D
     return queryDetails.completeQuery(getSession().getNativeSession().createQuery(queryDetails.getQueryString()));
   }
 
-  public <T> Query constructCriteriaQuery (Class<T> criteriaClass, CriteriaQueryDetails<T> criteriaQueryDetails) {
+  public <T> TypedQuery<T> constructCriteriaQuery (Class<T> criteriaClass, CriteriaQueryDetails<T> criteriaQueryDetails) {
 
     return getSession().getNativeSession().createQuery(criteriaQueryDetails.completeCriteria(criteriaClass, getSession().getNativeSession().getCriteriaBuilder()));
   }
