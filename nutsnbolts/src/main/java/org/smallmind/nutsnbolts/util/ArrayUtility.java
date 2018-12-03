@@ -33,6 +33,7 @@
 package org.smallmind.nutsnbolts.util;
 
 import java.lang.reflect.Array;
+import java.util.Objects;
 
 public class ArrayUtility {
 
@@ -53,5 +54,19 @@ public class ArrayUtility {
 
       return joined;
     }
+  }
+
+  public <T> int linearSearch (T[] array, T key) {
+
+    int index;
+
+    for (index = 0; index < array.length; index++) {
+      if (Objects.equals(array[index], key)) {
+
+        return index;
+      }
+    }
+
+    return -1;
   }
 }
