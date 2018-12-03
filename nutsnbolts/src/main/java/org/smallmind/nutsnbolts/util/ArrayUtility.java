@@ -56,7 +56,7 @@ public class ArrayUtility {
     }
   }
 
-  public <T> int linearSearch (T[] array, T key) {
+  public static <T> int linearSearch (T[] array, T key) {
 
     int index;
 
