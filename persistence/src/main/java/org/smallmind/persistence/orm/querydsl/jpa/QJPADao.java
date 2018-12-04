@@ -327,6 +327,16 @@ public class QJPADao<I extends Serializable & Comparable<I>, D extends JPADurabl
     return constructDelete(deleteDetails).execute();
   }
 
+  public JPAQuery constructImpossibleQuery () {
+
+    return constructImpossibleQuery(getManagedClass());
+  }
+
+  public JPAQuery constructImpossibleQuery (Class<?> clazz) {
+
+    return new JPAQuery<>(getSession().getNativeSession()).from(new EntityPathBase<>(clazz, "entity")).where(Expressions.predicate(Ops.EQ, Expressions.constant(1), Expressions.constant(0)));
+  }
+
   private <T> JPAQuery<T> constructQuery (JPAQueryDetails<T> queryDetails) {
 
     JPAQuery<T> query = new JPAQuery<>(getSession().getNativeSession());
