@@ -327,18 +327,6 @@ public class QJPADao<I extends Serializable & Comparable<I>, D extends JPADurabl
     return constructDelete(deleteDetails).execute();
   }
 
-  public <T> JPAQuery<T> constructImpossibleQuery () {
-
-    return constructQuery(new JPAQueryDetails<T>() {
-
-      @Override
-      public JPAQuery<T> completeQuery (JPAQuery<T> query) {
-
-        return query.where(Expressions.predicate(Ops.EQ, Expressions.constant(1), Expressions.constant(0)));
-      }
-    });
-  }
-
   private <T> JPAQuery<T> constructQuery (JPAQueryDetails<T> queryDetails) {
 
     JPAQuery<T> query = new JPAQuery<>(getSession().getNativeSession());
