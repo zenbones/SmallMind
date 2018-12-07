@@ -208,10 +208,10 @@ public class QUtility {
         rootSet.add(wherePath.getRoot());
         switch (sortField.getDirection()) {
           case ASC:
-            orderSpecifierList.add(new OrderSpecifier<>(Order.ASC, Expressions.constant(wherePath.getPath().toString())));
+            orderSpecifierList.add(new OrderSpecifier(Order.ASC, wherePath.getPath()));
             break;
           case DESC:
-            orderSpecifierList.add(new OrderSpecifier<>(Order.DESC, Expressions.constant(wherePath.getPath().toString())));
+            orderSpecifierList.add(new OrderSpecifier(Order.DESC, wherePath.getPath()));
             break;
           default:
             throw new UnknownSwitchCaseException(sortField.getDirection().name());
