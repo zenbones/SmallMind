@@ -37,7 +37,7 @@ import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.Set;
 import com.querydsl.core.BooleanBuilder;
-import com.querydsl.core.types.EntityPath;
+import com.querydsl.core.types.Path;
 import com.querydsl.core.types.Expression;
 import com.querydsl.core.types.Ops;
 import com.querydsl.core.types.Order;
@@ -61,19 +61,19 @@ import org.smallmind.persistence.query.WherePath;
 
 public class QUtility {
 
-  public static Product<EntityPath<?>, Predicate> apply (Where where, WhereFieldTransformer<EntityPath<?>, Path<?>> fieldTransformer) {
+  public static Product<Path<?>, Predicate> apply (Where where, WhereFieldTransformer<Path<?>, Path<?>> fieldTransformer) {
 
     return apply(where, fieldTransformer, WhereOperandTransformer.instance());
   }
 
-  public static Product<EntityPath<?>, Predicate> apply (Where where, WhereFieldTransformer<EntityPath<?>, Path<?>> fieldTransformer, WhereOperandTransformer operandTransformer) {
+  public static Product<Path<?>, Predicate> apply (Where where, WhereFieldTransformer<Path<?>, Path<?>> fieldTransformer, WhereOperandTransformer operandTransformer) {
 
     if (where == null) {
 
       return NoneProduct.none();
     } else {
 
-      Set<EntityPath<?>> rootSet = new HashSet<>();
+      Set<Path<?>> rootSet = new HashSet<>();
       Predicate predicate;
 
       if ((predicate = walkConjunction(rootSet, where.getRootConjunction(), fieldTransformer, operandTransformer)) == null) {
@@ -85,7 +85,7 @@ public class QUtility {
     }
   }
 
-  private static Predicate walkConjunction (Set<EntityPath<?>> rootSet, WhereConjunction whereConjunction, WhereFieldTransformer<EntityPath<?>, Path<?>> fieldTransformer, WhereOperandTransformer operandTransformer) {
+  private static Predicate walkConjunction (Set<Path<?>> rootSet, WhereConjunction whereConjunction, WhereFieldTransformer<Path<?>, Path<?>> fieldTransformer, WhereOperandTransformer operandTransformer) {
 
     if ((whereConjunction == null) || whereConjunction.isEmpty()) {
 
@@ -138,10 +138,10 @@ public class QUtility {
     }
   }
 
-  private static Predicate walkField (Set<EntityPath<?>> rootSet, WhereField whereField, WhereFieldTransformer<EntityPath<?>, Path<?>> fieldTransformer, WhereOperandTransformer operandTransformer) {
+  private static Predicate walkField (Set<Path<?>> rootSet, WhereField whereField, WhereFieldTransformer<Path<?>, Path<?>> fieldTransformer, WhereOperandTransformer operandTransformer) {
 
     Object fieldValue = operandTransformer.transform(whereField.getOperand());
-    WherePath<EntityPath<?>, Path<?>> wherePath = fieldTransformer.transform(whereField.getEntity(), whereField.getName());
+    WherePath<Path<?>, Path<?>> wherePath = fieldTransformer.transform(whereField.getEntity(), whereField.getName());
 
     rootSet.add(wherePath.getRoot());
     switch (whereField.getOperator()) {
@@ -193,17 +193,17 @@ public class QUtility {
     }
   }
 
-  public static Product<EntityPath<?>, OrderSpecifier[]> apply (Sort sort, WhereFieldTransformer<EntityPath<?>, Path<?>> fieldTransformer) {
+  public static Product<Path<?>, OrderSpecifier[]> apply (Sort sort, WhereFieldTransformer<Path<?>, Path<?>> fieldTransformer) {
 
     if ((sort != null) && (!sort.isEmpty())) {
 
-      Set<EntityPath<?>> rootSet = new HashSet<>();
+      Set<Path<?>> rootSet = new HashSet<>();
       OrderSpecifier[] orderSpecifiers;
       LinkedList<OrderSpecifier<?>> orderSpecifierList = new LinkedList<>();
 
       for (SortField sortField : sort.getFields()) {
 
-        WherePath<EntityPath<?>, Path<?>> wherePath = fieldTransformer.transform(sortField.getEntity(), sortField.getName());
+        WherePath<Path<?>, Path<?>> wherePath = fieldTransformer.transform(sortField.getEntity(), sortField.getName());
 
         rootSet.add(wherePath.getRoot());
         switch (sortField.getDirection()) {

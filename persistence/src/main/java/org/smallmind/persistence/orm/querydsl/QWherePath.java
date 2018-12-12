@@ -32,29 +32,28 @@
  */
 package org.smallmind.persistence.orm.querydsl;
 
-import com.querydsl.core.types.EntityPath;
 import com.querydsl.core.types.Path;
 import com.querydsl.core.types.dsl.PathBuilder;
 import org.smallmind.persistence.Durable;
 import org.smallmind.persistence.query.WherePath;
 
-public class QWherePath extends WherePath<EntityPath<?>, Path<?>> {
+public class QWherePath extends WherePath<Path<?>, Path<?>> {
 
-  private EntityPath<?> root;
+  private Path<?> root;
   private Path<?> path;
   private String field;
 
   public QWherePath (Path<?> path) {
 
-    this((EntityPath<?>)path.getRoot(), path, path.toString().substring(path.getRoot().toString().length() + 1));
+    this(path.getRoot(), path, path.toString().substring(path.getRoot().toString().length() + 1));
   }
 
-  public QWherePath (EntityPath<? extends Durable<?>> entityPath, String field) {
+  public QWherePath (Path<? extends Durable<?>> path, String field) {
 
-    this(entityPath, new PathBuilder<>(entityPath.getType(), entityPath.toString()).get(field), field);
+    this(path, new PathBuilder<>(path.getType(), path.toString()).get(field), field);
   }
 
-  public QWherePath (EntityPath<?> root, Path<?> path, String field) {
+  public QWherePath (Path<?> root, Path<?> path, String field) {
 
     this.root = root;
     this.path = path;
@@ -62,7 +61,7 @@ public class QWherePath extends WherePath<EntityPath<?>, Path<?>> {
   }
 
   @Override
-  public EntityPath<?> getRoot () {
+  public Path<?> getRoot () {
 
     return root;
   }
