@@ -66,13 +66,6 @@ public class MockWireTest {
     responseTransport = context.getBean("rabbitmqResponseTransport", RabbitMQResponseTransport.class);
     */
 
-        //  This block loads the HornetQ backed Transport layer
-    /*
-    context = new ClassPathXmlApplicationContext("org/smallmind/foundation/foundation.xml", "org/smallmind/scribe/spring/test-logging.xml", "org/smallmind/phalanx/wire/hornetq-wire.xml");
-    requestTransport = context.getBean("jmsRequestTransport", JmsRequestTransport.class);
-    responseTransport = context.getBean("jmsResponseTransport", JmsResponseTransport.class);
-    */
-
         //  This block loads the Mock backed Transport layer
         context = new ClassPathXmlApplicationContext("org/smallmind/foundation/foundation.xml", "org/smallmind/scribe/spring/test-logging.xml", "org/smallmind/phalanx/wire/mock-wire.xml");
         requestTransport = context.getBean("mockRequestTransport", MockRequestTransport.class);

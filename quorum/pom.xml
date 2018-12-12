@@ -12,12 +12,6 @@
   <packaging>jar</packaging>
   <dependencies>
     <dependency>
-      <groupId>org.jboss.javaee</groupId>
-      <artifactId>jboss-jms-api</artifactId>
-      <scope>compile</scope>
-      <optional>true</optional>
-    </dependency>
-    <dependency>
       <groupId>org.smallmind</groupId>
       <artifactId>smallmind-nutsnbolts</artifactId>
       <scope>compile</scope>
