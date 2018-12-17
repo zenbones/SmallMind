@@ -81,7 +81,7 @@ public class GeneratorInformation {
 
       String fieldName = AptUtility.extractAnnotationValue(propertyAnnotationMirror, "field", String.class, null);
 
-      for (PropertyBox propertyBox : new PropertyParser(processingEnvironment, usefulTypeMirrors, propertyAnnotationMirror, extractType(processingEnvironment, propertyAnnotationMirror), true)) {
+      for (PropertyBox propertyBox : new PropertyParser(processingEnvironment, usefulTypeMirrors, propertyAnnotationMirror, extractType(classElement, fieldName, processingEnvironment, propertyAnnotationMirror), true)) {
 
         dtoAnnotationProcessor.processTypeMirror(propertyBox.getPropertyInformation().getType());
 
@@ -103,7 +103,8 @@ public class GeneratorInformation {
     }
   }
 
-  private TypeMirror extractType (ProcessingEnvironment processingEnvironment, AnnotationMirror propertyAnnotationMirror) {
+  private TypeMirror extractType (TypeElement classElement, String fieldName, ProcessingEnvironment processingEnvironment, AnnotationMirror propertyAnnotationMirror)
+    throws DtoDefinitionException {
 
     AnnotationMirror typeAnnotationMirror = AptUtility.extractAnnotationValue(propertyAnnotationMirror, "type", AnnotationMirror.class, null);
     TypeMirror baseTypeMirror = AptUtility.extractAnnotationValue(typeAnnotationMirror, "value", TypeMirror.class, null);
@@ -112,7 +113,11 @@ public class GeneratorInformation {
 
     argumentTypeMirrorList.toArray(argumentTypeMirrors);
 
-    return processingEnvironment.getTypeUtils().getDeclaredType((TypeElement)processingEnvironment.getTypeUtils().asElement(baseTypeMirror), argumentTypeMirrors);
+    try {
+      return processingEnvironment.getTypeUtils().getDeclaredType((TypeElement)processingEnvironment.getTypeUtils().asElement(baseTypeMirror), argumentTypeMirrors);
+    } catch (Exception exception) {
+      throw new DtoDefinitionException(exception, "Illegal type definition in field(%s) of class(%s)", fieldName, classElement);
+    }
   }
 
   public void update (TypeElement classElement, VisibilityTracker visibilityTracker) {

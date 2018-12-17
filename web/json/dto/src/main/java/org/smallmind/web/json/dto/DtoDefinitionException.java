@@ -40,4 +40,9 @@ public class DtoDefinitionException extends FormattedException {
 
     super(message, args);
   }
+
+  public DtoDefinitionException (Throwable throwable, String message, Object... args) {
+
+    super(throwable, message, args);
+  }
 }
