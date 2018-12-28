@@ -37,12 +37,12 @@ import org.smallmind.nutsnbolts.lang.TypeMismatchException;
 
 public interface Overlay<O extends Overlay<O>> {
 
-  default O overlay (Object[] overlays) {
+  default O overlay (O[] overlays) {
 
     return overlay(overlays, null);
   }
 
-  default O overlay (Object[] overlays, Field[] exclusions) {
+  default O overlay (O[] overlays, Field[] exclusions) {
 
     if ((overlays != null) && (overlays.length > 0)) {
       for (Object overlay : overlays) {
@@ -79,7 +79,7 @@ public interface Overlay<O extends Overlay<O>> {
                       Object original;
 
                       if ((original = field.get(this)) != null) {
-                        field.set(this, ((Overlay)original).overlay(new Object[] {value}));
+                        field.set(this, ((Overlay)original).overlay(new Overlay[] {(Overlay)value}));
                       } else {
                         field.set(this, value);
                       }

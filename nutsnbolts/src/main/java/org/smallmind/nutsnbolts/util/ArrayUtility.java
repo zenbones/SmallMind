@@ -37,14 +37,29 @@ import java.util.Objects;
 
 public class ArrayUtility {
 
-  public static <T> T[] concatenate (Class<T> clazz, T[] first, T[] second) {
+  public static <T> T[] clone (Class<T> clazz, T[] original) {
+
+    if (original == null) {
+
+      return null;
+    } else {
+
+      T[] copy = (T[])Array.newInstance(clazz, original.length);
+
+      System.arraycopy(original, 0, copy, 0, original.length);
+
+      return copy;
+    }
+  }
+
+  public static <T> T[] concatenate (Class<T> clazz, T[] first, T... second) {
 
     if ((first == null) || (first.length == 0)) {
 
       return (second == null) ? (T[])Array.newInstance(clazz, 0) : second;
     } else if ((second == null) || (second.length == 0)) {
 
-      return (first == null) ? (T[])Array.newInstance(clazz, 0) : first;
+      return first;
     } else {
 
       T[] joined = (T[])Array.newInstance(clazz, first.length + second.length);
@@ -58,12 +73,15 @@ public class ArrayUtility {
 
   public static <T> int linearSearch (T[] array, T key) {
 
-    int index;
+    if ((array != null) && (array.length > 0)) {
 
-    for (index = 0; index < array.length; index++) {
-      if (Objects.equals(array[index], key)) {
+      int index;
 
-        return index;
+      for (index = 0; index < array.length; index++) {
+        if (Objects.equals(array[index], key)) {
+
+          return index;
+        }
       }
     }
 
