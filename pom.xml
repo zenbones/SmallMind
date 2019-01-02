@@ -95,10 +95,11 @@
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <maven.version>3.5.3</maven.version>
     <aether.version>1.1.0</aether.version>
+    <asm.version>7.0</asm.version>
     <grizzly.version>2.4.3</grizzly.version>
     <hk2.version>2.5.0-b62</hk2.version>
     <jaxb.version>2.3.1</jaxb.version>
-    <jackson.version>2.9.7</jackson.version>
+    <jackson.version>2.9.8</jackson.version>
     <!-- <jersey.version>2.27</jersey.version> -->
     <jersey.version>2.25.1</jersey.version>
     <!-- <spring.version>5.1.1.RELEASE</spring.version> -->
@@ -404,22 +405,22 @@
       <dependency>
         <groupId>org.ow2.asm</groupId>
         <artifactId>asm-commons</artifactId>
-        <version>6.1.1</version>
+        <version>${asm.version}</version>
       </dependency>
       <dependency>
         <groupId>org.ow2.asm</groupId>
         <artifactId>asm-analysis</artifactId>
-        <version>6.1.1</version>
+        <version>${asm.version}</version>
       </dependency>
       <dependency>
         <groupId>org.ow2.asm</groupId>
         <artifactId>asm-util</artifactId>
-        <version>6.1.1</version>
+        <version>${asm.version}</version>
       </dependency>
       <dependency>
         <groupId>org.aspectj</groupId>
         <artifactId>aspectjrt</artifactId>
-        <version>1.9.0</version>
+        <version>1.9.2</version>
       </dependency>
       <dependency>
         <groupId>org.bouncycastle</groupId>
@@ -534,7 +535,7 @@
       <dependency>
         <groupId>org.liquibase</groupId>
         <artifactId>liquibase-core</artifactId>
-        <version>3.5.3</version>
+        <version>3.6.2</version>
       </dependency>
       <dependency>
         <groupId>org.hibernate</groupId>
@@ -596,32 +597,32 @@
       <dependency>
         <groupId>io.netty</groupId>
         <artifactId>netty-all</artifactId>
-        <version>4.0.26.Final</version>
+        <version>4.1.32.Final</version>
       </dependency>
       <dependency>
         <groupId>com.rabbitmq</groupId>
         <artifactId>amqp-client</artifactId>
-        <version>3.6.5</version>
+        <version>5.5.1</version>
       </dependency>
       <dependency>
         <groupId>org.springframework.amqp</groupId>
         <artifactId>spring-rabbit</artifactId>
-        <version>1.6.1.RELEASE</version>
+        <version>2.1.2.RELEASE</version>
       </dependency>
       <dependency>
         <groupId>org.quartz-scheduler</groupId>
         <artifactId>quartz</artifactId>
-        <version>2.2.1</version>
+        <version>2.3.0</version>
       </dependency>
       <dependency>
-        <groupId>net.sf.ehcache</groupId>
-        <artifactId>ehcache-core</artifactId>
-        <version>2.6.9</version>
+        <groupId>org.ehcache</groupId>
+        <artifactId>ehcache</artifactId>
+        <version>3.6.3</version>
       </dependency>
       <dependency>
         <groupId>com.googlecode.xmemcached</groupId>
         <artifactId>xmemcached</artifactId>
-        <version>2.4.4</version>
+        <version>2.4.5</version>
       </dependency>
       <dependency>
         <groupId>commons-net</groupId>
@@ -631,22 +632,22 @@
       <dependency>
         <groupId>org.apache.httpcomponents</groupId>
         <artifactId>httpcore</artifactId>
-        <version>4.4.4</version>
+        <version>4.4.10</version>
       </dependency>
       <dependency>
         <groupId>org.apache.httpcomponents</groupId>
         <artifactId>httpcore-nio</artifactId>
-        <version>4.3.3</version>
+        <version>4.4.10</version>
       </dependency>
       <dependency>
         <groupId>org.apache.httpcomponents</groupId>
         <artifactId>httpclient</artifactId>
-        <version>4.5.1</version>
+        <version>4.5.6</version>
       </dependency>
       <dependency>
         <groupId>org.apache.sshd</groupId>
         <artifactId>sshd-core</artifactId>
-        <version>0.12.0</version>
+        <version>2.1.0</version>
       </dependency>
       <dependency>
         <groupId>org.terracotta.toolkit</groupId>
@@ -978,7 +979,7 @@
             <dependency>
               <groupId>org.aspectj</groupId>
               <artifactId>aspectjtools</artifactId>
-              <version>1.9.0</version>
+              <version>1.9.2</version>
             </dependency>
             <dependency>
               <groupId>com.sun</groupId>
