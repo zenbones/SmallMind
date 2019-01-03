@@ -11,7 +11,7 @@
         <prop key="org.quartz.scheduler.instanceId">AUTO</prop>
         <prop key="org.quartz.scheduler.threadsInheritContextClassLoaderOfInitializer">true</prop>
         <prop key="org.quartz.threadPool.class">org.quartz.simpl.SimpleThreadPool</prop>
-        <prop key="org.quartz.threadPool.threadCount">10</prop>
+        <prop key="org.quartz.threadPool.threadCount">4</prop>
         <prop key="org.quartz.scheduler.rmi.export">true</prop>
         <prop key="org.quartz.scheduler.rmi.createRegistry">as_needed</prop>
         <prop key="org.quartz.jobStore.misfireThreshold">60000</prop>
@@ -27,7 +27,7 @@
         <prop key="org.quartz.dataSource.dsOne.user">${jdbc.username.quartz}</prop>
         <prop key="org.quartz.dataSource.dsOne.password">${jdbc.password.quartz}</prop>
         <prop key="org.quartz.dataSource.dsOne.validationQuery">select 1</prop>
-        <prop key="org.quartz.dataSource.dsOne.maxConnections">10</prop>
+        <prop key="org.quartz.dataSource.dsOne.maxConnections">7</prop>
       </props>
     </constructor-arg>
   </bean>

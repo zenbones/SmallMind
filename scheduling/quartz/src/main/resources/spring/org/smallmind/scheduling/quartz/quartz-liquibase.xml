@@ -10,7 +10,7 @@
     <property name="changeLogs">
       <list>
         <bean class="org.smallmind.liquibase.spring.ChangeLog">
-          <property name="input" value="com/glu/job/quartz-changelog.xml"/>
+          <property name="input" value="org/smallmind/scheduling/quartz/Quartz.changelog.xml"/>
           <property name="output" value="quartz-changelog.xml"/>
         </bean>
       </list>
