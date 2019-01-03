@@ -48,10 +48,6 @@
         <directory>src/main/resources/liquibase</directory>
         <filtering>false</filtering>
       </resource>
-      <resource>
-        <directory>src/main/resources/sql</directory>
-        <filtering>false</filtering>
-      </resource>
     </resources>
   </build>
 </project>

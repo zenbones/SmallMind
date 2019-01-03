@@ -109,6 +109,7 @@
 
   <modules>
     <module>artifact</module>
+    <module>batching</module>
     <module>forge</module>
     <module>foundation</module>
     <module>instrument</module>
@@ -195,6 +196,11 @@
       <dependency>
         <groupId>org.smallmind</groupId>
         <artifactId>scheduling-base</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.smallmind</groupId>
+        <artifactId>batching-base</artifactId>
         <version>${project.version}</version>
       </dependency>
       <dependency>
@@ -479,6 +485,11 @@
         <groupId>org.springframework</groupId>
         <artifactId>spring-test</artifactId>
         <version>${spring.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.springframework.batch</groupId>
+        <artifactId>spring-batch-core</artifactId>
+        <version>4.1.0.RELEASE</version>
       </dependency>
       <dependency>
         <groupId>org.slf4j</groupId>
