@@ -27,7 +27,7 @@
       <column name="JOB_EXECUTION_ID" type="BIGINT">
         <constraints primaryKey="true"/>
       </column>
-      <column name="SHORT_CONTEXT" type="VARCHAR(191)">
+      <column name="SHORT_CONTEXT" type="VARCHAR(2500)">
         <constraints nullable="false"/>
       </column>
       <column name="SERIALIZED_CONTEXT" type="TEXT"/>
@@ -124,7 +124,7 @@
       <column name="STEP_EXECUTION_ID" type="BIGINT">
         <constraints primaryKey="true"/>
       </column>
-      <column name="SHORT_CONTEXT" type="VARCHAR(191)">
+      <column name="SHORT_CONTEXT" type="VARCHAR(2500)">
         <constraints nullable="false"/>
       </column>
       <column name="SERIALIZED_CONTEXT" type="TEXT"/>
@@ -200,14 +200,8 @@
     <createIndex catalogName="batch" indexName="IDX_BATCH_JOB_EXECUTION_CONTEXT_JOB_EXECUTION_ID" schemaName="batch" tableName="BATCH_JOB_EXECUTION_CONTEXT">
       <column name="JOB_EXECUTION_ID"/>
     </createIndex>
-    <createIndex catalogName="batch" indexName="IDX_BATCH_JOB_EXECUTION_CONTEXT_SHORT_CONTEXT" schemaName="batch" tableName="BATCH_JOB_EXECUTION_CONTEXT">
-      <column name="SHORT_CONTEXT"/>
-    </createIndex>
     <createIndex catalogName="batch" indexName="IDX_BATCH_STEP_EXECUTION_CONTEXT_STEP_EXECUTION_ID" schemaName="batch" tableName="BATCH_STEP_EXECUTION_CONTEXT">
       <column name="STEP_EXECUTION_ID"/>
-    </createIndex>
-    <createIndex catalogName="batch" indexName="IDX_BATCH_STEP_EXECUTION_CONTEXT_SHORT_CONTEXT" schemaName="batch" tableName="BATCH_STEP_EXECUTION_CONTEXT">
-      <column name="SHORT_CONTEXT"/>
     </createIndex>
   </changeSet>
 </databaseChangeLog>
