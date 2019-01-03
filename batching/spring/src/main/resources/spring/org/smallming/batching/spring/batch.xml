@@ -8,4 +8,11 @@
     <constructor-arg name="dataSource" index="0" ref="batchDataSource"/>
   </bean>
 
+  <bean id="batchJobRepository" class="org.springframework.batch.core.repository.support.JobRepositoryFactoryBean">
+    <property name="databaseType" value="mysql"/>
+    <property name="dataSource" ref="batchDataSource"/>
+    <property name="transactionManager" ref="batchPlatformTransactionManager"/>
+    <property name="maxVarCharLength" value="2500"/>
+  </bean>
+
 </beans>
