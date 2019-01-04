@@ -94,12 +94,12 @@ public abstract class AbstractPooledDataSource<D extends CommonDataSource, P ext
     throw new UnsupportedOperationException("Please properly configure the underlying resource managed by the pool which is represented by this DataSource");
   }
 
-  public boolean isWrapperFor (Class<?> iface) {
+  public boolean isWrapperFor (Class<?> clazz) {
 
     return false;
   }
 
-  public <T> T unwrap (Class<T> iface) {
+  public <T> T unwrap (Class<T> clazz) {
 
     throw new UnsupportedOperationException("This DataSource represents a connection pool");
   }

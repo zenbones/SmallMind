@@ -36,5 +36,5 @@ import javax.sql.CommonDataSource;
 
 public interface DataSourceLocator {
 
-  public abstract CommonDataSource getDataSource (String dataSourceKey);
+  CommonDataSource getDataSource (String dataSourceKey);
 }
