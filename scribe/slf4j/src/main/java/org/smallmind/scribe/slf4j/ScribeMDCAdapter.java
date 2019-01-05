@@ -32,6 +32,7 @@
  */
 package org.smallmind.scribe.slf4j;
 
+import java.io.Serializable;
 import java.util.HashMap;
 import java.util.Map;
 import org.slf4j.spi.MDCAdapter;
@@ -49,7 +50,9 @@ public class ScribeMDCAdapter implements MDCAdapter {
   @Override
   public String get (String key) {
 
-    return ScribeParameterAdapter.getInstance().get(key).toString();
+    Serializable value;
+
+    return ((value = ScribeParameterAdapter.getInstance().get(key)) == null) ? null : value.toString();
   }
 
   @Override
