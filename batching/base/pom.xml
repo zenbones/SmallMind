@@ -4,7 +4,7 @@
   <parent>
     <groupId>org.smallmind</groupId>
     <artifactId>smallmind-batching</artifactId>
-    <version>3.3.14</version>
+    <version>3.3.15-SNAPSHOT</version>
   </parent>
   <artifactId>batching-base</artifactId>
   <name>Batching-Base</name>
