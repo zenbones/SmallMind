@@ -38,7 +38,7 @@ import org.smallmind.scribe.pen.LoggerManager;
 
 public class ComponentCreationWorker<C> implements Runnable {
 
-  private static enum State {COMPLETED, ABORTED, TERMINATED}
+  private enum State {COMPLETED, ABORTED, TERMINATED}
 
   private final CountDownLatch terminationLatch = new CountDownLatch(1);
   private final ComponentPool<C> componentPool;
