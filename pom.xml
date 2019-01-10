@@ -97,6 +97,7 @@
     <aether.version>1.1.0</aether.version>
     <asm.version>7.0</asm.version>
     <grizzly.version>2.4.3.1</grizzly.version>
+    <tyrus.version>1.14</tyrus.version>
     <hk2.version>2.5.0-b62</hk2.version>
     <jaxb.version>2.3.1</jaxb.version>
     <jackson.version>2.9.8</jackson.version>
@@ -361,7 +362,7 @@
       <dependency>
         <groupId>javax.servlet</groupId>
         <artifactId>javax.servlet-api</artifactId>
-        <version>3.1.0</version>
+        <version>4.0.1</version>
       </dependency>
       <dependency>
         <groupId>javax.websocket</groupId>
@@ -836,9 +837,9 @@
         <version>${grizzly.version}</version>
       </dependency>
       <dependency>
-        <groupId>org.glassfish.grizzly</groupId>
-        <artifactId>grizzly-websockets-server</artifactId>
-        <version>${grizzly.version}</version>
+        <groupId>org.glassfish.tyrus</groupId>
+        <artifactId>tyrus-server</artifactId>
+        <version>${tyrus.version}</version>
       </dependency>
       <dependency>
         <groupId>org.eclipse.jgit</groupId>
