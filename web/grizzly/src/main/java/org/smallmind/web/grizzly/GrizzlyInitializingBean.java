@@ -245,6 +245,9 @@ public class GrizzlyInitializingBean implements DisposableBean, ApplicationConte
 
           filterRegistration = webappContext.addFilter(filterInstaller.getDisplayName(), filterInstaller.getFilter());
           filterRegistration.addMappingForUrlPatterns(EnumSet.of(DispatcherType.REQUEST), filterInstaller.isMatchAfter(), (urlPattern = filterInstaller.getUrlPattern()) == null ? "/" : urlPattern);
+          if (filterInstaller.getAsyncSupported() != null) {
+            ((org.glassfish.grizzly.servlet.FilterRegistration)filterRegistration).setAsyncSupported(filterInstaller.getAsyncSupported());
+          }
           if ((initParameters = filterInstaller.getInitParameters()) != null) {
             filterRegistration.setInitParameters(initParameters);
           }
@@ -276,6 +279,12 @@ public class GrizzlyInitializingBean implements DisposableBean, ApplicationConte
 
           servletRegistration = webappContext.addServlet(servletInstaller.getDisplayName(), servletInstaller.getServlet());
           servletRegistration.addMapping((urlPattern = servletInstaller.getUrlPattern()) == null ? "/" : urlPattern);
+          if (servletInstaller.getLoadOnStartup() != null) {
+            ((org.glassfish.grizzly.servlet.ServletRegistration)servletRegistration).setLoadOnStartup(servletInstaller.getLoadOnStartup());
+          }
+          if (servletInstaller.getAsyncSupported() != null) {
+            ((org.glassfish.grizzly.servlet.ServletRegistration)servletRegistration).setAsyncSupported(servletInstaller.getAsyncSupported());
+          }
           if ((initParameters = servletInstaller.getInitParameters()) != null) {
             servletRegistration.setInitParameters(initParameters);
           }

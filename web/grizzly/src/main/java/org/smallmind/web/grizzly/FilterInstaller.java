@@ -42,6 +42,7 @@ public class FilterInstaller {
   private Map<String, String> initParameters;
   private String displayName;
   private String urlPattern;
+  private Boolean asyncSupported;
   private boolean matchAfter = false;
 
   public String getDisplayName () {
@@ -98,5 +99,15 @@ public class FilterInstaller {
   public void setUrlPattern (String urlPattern) {
 
     this.urlPattern = urlPattern;
+  }
+
+  public Boolean getAsyncSupported () {
+
+    return asyncSupported;
+  }
+
+  public void setAsyncSupported (Boolean asyncSupported) {
+
+    this.asyncSupported = asyncSupported;
   }
 }

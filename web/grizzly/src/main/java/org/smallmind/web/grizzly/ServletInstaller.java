@@ -42,7 +42,8 @@ public class ServletInstaller {
   private Map<String, String> initParameters;
   private String displayName;
   private String urlPattern;
-  private int priority = 0;
+  private Integer loadOnStartup;
+  private Boolean asyncSupported;
 
   public String getDisplayName () {
 
@@ -90,13 +91,23 @@ public class ServletInstaller {
     this.urlPattern = urlPattern;
   }
 
-  public int getPriority () {
+  public Integer getLoadOnStartup () {
 
-    return priority;
+    return loadOnStartup;
   }
 
-  public void setPriority (int priority) {
+  public void setLoadOnStartup (Integer loadOnStartup) {
 
-    this.priority = priority;
+    this.loadOnStartup = loadOnStartup;
+  }
+
+  public Boolean getAsyncSupported () {
+
+    return asyncSupported;
+  }
+
+  public void setAsyncSupported (Boolean asyncSupported) {
+
+    this.asyncSupported = asyncSupported;
   }
 }
