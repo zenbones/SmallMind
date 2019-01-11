@@ -32,6 +32,8 @@
  */
 package org.smallmind.web.grizzly.tyrus;
 
+import java.io.IOException;
+import javax.websocket.DeploymentException;
 import javax.xml.bind.JAXBContext;
 import javax.xml.bind.JAXBException;
 import org.glassfish.grizzly.filterchain.FilterChainBuilder;
@@ -55,7 +57,8 @@ public class TyrusWebSocketAddOn implements AddOn {
   private final WebappContext webappContext;
   private final HttpHandler staticHttpHandler;
   private final String contextPath;
-  private boolean includeWsadlSupport;
+  private final boolean includeWsadlSupport;
+  private GrizzlyTyrusServerContainer serverContainer;
 
   public TyrusWebSocketAddOn (ServerConfiguration serverConfiguration, WebappContext webappContext, String contextPath, boolean includeWsadlSupport, HttpHandler staticHttpHandler) {
 
@@ -66,11 +69,28 @@ public class TyrusWebSocketAddOn implements AddOn {
     this.staticHttpHandler = staticHttpHandler;
   }
 
+  public void start (int port)
+    throws IOException, DeploymentException {
+
+    serverContainer.start(contextPath, port);
+  }
+
+  public void doneDeployment () {
+
+    serverContainer.doneDeployment();
+  }
+
+  public void stop () {
+
+    serverContainer.stop();
+  }
+
   @Override
   public void setup (NetworkListener networkListener, FilterChainBuilder builder) {
 
-    GrizzlyTyrusServerContainer serverContainer = new GrizzlyTyrusServerContainer(networkListener, contextPath);
     int httpServerFilterIndex;
+
+    serverContainer = new GrizzlyTyrusServerContainer(networkListener, contextPath);
 
     if ((httpServerFilterIndex = builder.indexOfType(HttpServerFilter.class)) < 0) {
       throw new GrizzlyInitializationException("Missing http servlet filter in the available filter chain");
