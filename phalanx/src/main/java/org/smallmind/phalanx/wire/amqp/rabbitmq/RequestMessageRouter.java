@@ -63,10 +63,11 @@ public class RequestMessageRouter extends MessageRouter {
   private final RabbitMQRequestTransport requestTransport;
   private final SignalCodec signalCodec;
   private final String callerId;
+  private final boolean autoAcknowledge;
   private final int index;
   private final int ttlSeconds;
 
-  public RequestMessageRouter (RabbitMQConnector connector, NameConfiguration nameConfiguration, RabbitMQRequestTransport requestTransport, SignalCodec signalCodec, String callerId, int index, int ttlSeconds) {
+  public RequestMessageRouter (RabbitMQConnector connector, NameConfiguration nameConfiguration, RabbitMQRequestTransport requestTransport, SignalCodec signalCodec, String callerId, int index, int ttlSeconds, boolean autoAcknowledge) {
 
     super(connector, nameConfiguration);
 
@@ -75,6 +76,7 @@ public class RequestMessageRouter extends MessageRouter {
     this.callerId = callerId;
     this.index = index;
     this.ttlSeconds = ttlSeconds;
+    this.autoAcknowledge = autoAcknowledge;
   }
 
   @Override
@@ -96,7 +98,7 @@ public class RequestMessageRouter extends MessageRouter {
 
     operate((channel) -> {
 
-      channel.basicConsume(getResponseQueueName() + "-" + callerId, true, getResponseQueueName() + "-" + callerId + "[" + index + "]", false, false, null, new DefaultConsumer(channel) {
+      channel.basicConsume(getResponseQueueName() + "-" + callerId, autoAcknowledge, getResponseQueueName() + "-" + callerId + "[" + index + "]", false, false, null, new DefaultConsumer(channel) {
 
         @Override
         public synchronized void handleDelivery (String consumerTag, Envelope envelope, final AMQP.BasicProperties properties, final byte[] body) {
@@ -119,6 +121,14 @@ public class RequestMessageRouter extends MessageRouter {
             });
           } catch (Exception exception) {
             LoggerManager.getLogger(ResponseMessageRouter.class).error(exception);
+          } finally {
+            if (!autoAcknowledge) {
+              try {
+                channel.basicAck(envelope.getDeliveryTag(), true);
+              } catch (IOException ioException) {
+                LoggerManager.getLogger(ResponseMessageRouter.class).error(ioException);
+              }
+            }
           }
         }
       });

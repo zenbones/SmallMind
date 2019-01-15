@@ -60,7 +60,7 @@ public class RabbitMQResponseTransport extends WorkManager<InvocationWorker, Rab
   private final ResponseMessageRouter[] responseMessageRouters;
   private final String instanceId = SnowflakeId.newInstance().generateDottedString();
 
-  public RabbitMQResponseTransport (MetricConfiguration metricConfiguration, RabbitMQConnector rabbitMQConnector, NameConfiguration nameConfiguration, Class<InvocationWorker> workerClass, SignalCodec signalCodec, String serviceGroup, int clusterSize, int concurrencyLimit, int messageTTLSeconds)
+  public RabbitMQResponseTransport (MetricConfiguration metricConfiguration, RabbitMQConnector rabbitMQConnector, NameConfiguration nameConfiguration, Class<InvocationWorker> workerClass, SignalCodec signalCodec, String serviceGroup, int clusterSize, int concurrencyLimit, int messageTTLSeconds, boolean autoAcknowledge)
     throws IOException, InterruptedException, TimeoutException {
 
     super(metricConfiguration, workerClass, concurrencyLimit);
@@ -71,7 +71,7 @@ public class RabbitMQResponseTransport extends WorkManager<InvocationWorker, Rab
 
     responseMessageRouters = new ResponseMessageRouter[clusterSize];
     for (int index = 0; index < responseMessageRouters.length; index++) {
-      responseMessageRouters[index] = new ResponseMessageRouter(rabbitMQConnector, nameConfiguration, this, signalCodec, serviceGroup, instanceId, index, messageTTLSeconds);
+      responseMessageRouters[index] = new ResponseMessageRouter(rabbitMQConnector, nameConfiguration, this, signalCodec, serviceGroup, instanceId, index, messageTTLSeconds, autoAcknowledge);
       responseMessageRouters[index].initialize();
     }
 

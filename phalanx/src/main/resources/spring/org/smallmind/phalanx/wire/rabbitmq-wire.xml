@@ -33,6 +33,7 @@
     <constructor-arg index="5" name="concurrencyLimit" value="${wire.concurrency_limit}"/>
     <constructor-arg index="6" name="defaultTimeoutSeconds" value="${wire.default_timeout_seconds}"/>
     <constructor-arg index="7" name="messageTTLSeconds" value="${wire.message_ttl_seconds}"/>
+    <constructor-arg index="8" name="autoAcknowledge" value="false"/>
   </bean>
 
   <bean id="rabbitmqResponseTransport" class="org.smallmind.phalanx.wire.amqp.rabbitmq.RabbitMQResponseTransport" destroy-method="close">
@@ -45,6 +46,7 @@
     <constructor-arg index="6" name="clusterSize" value="${wire.cluster_size}"/>
     <constructor-arg index="7" name="concurrencyLimit" value="${wire.concurrency_limit}"/>
     <constructor-arg index="8" name="messageTTLSeconds" value="${wire.message_ttl_seconds}"/>
+    <constructor-arg index="9" name="autoAcknowledge" value="false"/>
   </bean>
 
 </beans>
