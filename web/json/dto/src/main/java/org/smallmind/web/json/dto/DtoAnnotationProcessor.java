@@ -214,7 +214,7 @@ public class DtoAnnotationProcessor extends AbstractProcessor {
     JavaFileObject sourceFile;
 
     if (classTracker.hasPolymorphicSubClasses(classElement)) {
-      writePolymorphicAdapter(classElement, generatorInformation, purpose, direction);
+      writePolymorphicAdapter(classElement, purpose, direction);
     }
 
     sourceFile = processingEnv.getFiler().createSourceFile(new StringBuilder(processingEnv.getElementUtils().getPackageOf(classElement).getQualifiedName()).append('.').append(DtoNameUtility.getSimpleName(processingEnv, purpose, direction, classElement)), classElement);
@@ -375,7 +375,7 @@ public class DtoAnnotationProcessor extends AbstractProcessor {
           }
         }
 
-        // instantiator
+        // static instance creator
         writer.newLine();
         writer.write("  public static ");
         writer.write(DtoNameUtility.getSimpleName(processingEnv, purpose, direction, classElement));
@@ -387,15 +387,45 @@ public class DtoAnnotationProcessor extends AbstractProcessor {
         writer.newLine();
         writer.newLine();
         if (classTracker.hasPolymorphicSubClasses(classElement)) {
-          writer.write("    return null;");
+
+          boolean firstPolymorphicSubClass = true;
+
+          for (TypeElement polymorphicSubClass : classTracker.getPolymorphicSubclasses(classElement)) {
+            if (firstPolymorphicSubClass) {
+              firstPolymorphicSubClass = false;
+              writer.write("    ");
+            } else {
+              writer.write(" else ");
+            }
+            writer.write("if (");
+            writer.write(asMemberName(classElement.getSimpleName()));
+            writer.write(" instanceof ");
+            writer.write(polymorphicSubClass.getQualifiedName().toString());
+            writer.write(") {");
+            writer.newLine();
+            writer.write("      return ");
+            writer.write(DtoNameUtility.getPackageName(processingEnv, polymorphicSubClass));
+            writer.write(".");
+            writer.write(DtoNameUtility.getSimpleName(processingEnv, purpose, direction, polymorphicSubClass));
+            writer.write(".instance(");
+            writer.write(asMemberName(classElement.getSimpleName()));
+            writer.write(");");
+            writer.newLine();
+            writer.write("    }");
+          }
+          writer.write(" else {");
+          writer.newLine();
+          if (classElement.getModifiers().contains(Modifier.ABSTRACT)) {
+            writer.write("      throw new RuntimeException();");
+          } else {
+            writer.write("      ");
+            writeSelfConstruction(writer, classElement, purpose, direction);
+          }
+          writer.write("    }");
           writer.newLine();
         } else {
-          writer.write("    return new ");
-          writer.write(DtoNameUtility.getSimpleName(processingEnv, purpose, direction, classElement));
-          writer.write("(");
-          writer.write(asMemberName(classElement.getSimpleName()));
-          writer.write(");");
-          writer.newLine();
+          writer.write("    ");
+          writeSelfConstruction(writer, classElement, purpose, direction);
         }
         writer.write("  }");
         writer.newLine();
@@ -425,10 +455,12 @@ public class DtoAnnotationProcessor extends AbstractProcessor {
           writer.write(asMemberName(classElement.getSimpleName()));
           writer.write(");");
           writer.newLine();
+          if (propertyLexicon.isReal()) {
+            writer.newLine();
+          }
         }
 
         if (propertyLexicon.isReal()) {
-          writer.newLine();
           for (Map.Entry<String, PropertyInformation> propertyInformationEntry : propertyLexicon.getRealMap().entrySet()) {
             writer.write("    this.");
             writer.write(propertyInformationEntry.getKey());
@@ -506,7 +538,7 @@ public class DtoAnnotationProcessor extends AbstractProcessor {
           writer.write("  // virtual getters and setters");
           for (Map.Entry<String, PropertyInformation> propertyInformationEntry : propertyLexicon.getVirtualMap().entrySet()) {
             writer.newLine();
-            writeGettersAndSetters(writer, generatorInformation, classElement, purpose, direction, propertyInformationEntry);
+            writeGettersAndSetters(writer, classElement, purpose, direction, propertyInformationEntry);
           }
         }
 
@@ -516,7 +548,7 @@ public class DtoAnnotationProcessor extends AbstractProcessor {
           writer.write("  // native getters and setters");
           for (Map.Entry<String, PropertyInformation> propertyInformationEntry : propertyLexicon.getRealMap().entrySet()) {
             writer.newLine();
-            writeGettersAndSetters(writer, generatorInformation, classElement, purpose, direction, propertyInformationEntry);
+            writeGettersAndSetters(writer, classElement, purpose, direction, propertyInformationEntry);
           }
         }
 
@@ -524,6 +556,17 @@ public class DtoAnnotationProcessor extends AbstractProcessor {
         writer.newLine();
       }
     }
+  }
+
+  private void writeSelfConstruction (BufferedWriter writer, TypeElement classElement, String purpose, Direction direction)
+    throws IOException {
+
+    writer.write("return new ");
+    writer.write(DtoNameUtility.getSimpleName(processingEnv, purpose, direction, classElement));
+    writer.write("(");
+    writer.write(asMemberName(classElement.getSimpleName()));
+    writer.write(");");
+    writer.newLine();
   }
 
   private void writeField (BufferedWriter writer, String purpose, Direction direction, Map.Entry<String, PropertyInformation> propertyInformationEntry)
@@ -547,7 +590,7 @@ public class DtoAnnotationProcessor extends AbstractProcessor {
     writer.newLine();
   }
 
-  private void writeGettersAndSetters (BufferedWriter writer, GeneratorInformation generatorInformation, TypeElement classElement, String purpose, Direction direction, Map.Entry<String, PropertyInformation> propertyInformationEntry)
+  private void writeGettersAndSetters (BufferedWriter writer, TypeElement classElement, String purpose, Direction direction, Map.Entry<String, PropertyInformation> propertyInformationEntry)
     throws IOException {
 
     if (propertyInformationEntry.getValue().getAdapter() != null) {
@@ -607,7 +650,7 @@ public class DtoAnnotationProcessor extends AbstractProcessor {
     writer.newLine();
   }
 
-  private void writePolymorphicAdapter (TypeElement classElement, GeneratorInformation generatorInformation, String purpose, Direction direction)
+  private void writePolymorphicAdapter (TypeElement classElement, String purpose, Direction direction)
     throws IOException {
 
     JavaFileObject sourceFile;
