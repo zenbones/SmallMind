@@ -68,10 +68,8 @@ public class ArrayDtoTranslator implements DtoTranslator {
 
     writer.write(ARRAY_MUTATOR_NAME);
     writer.write(".toEntityType(");
-    writer.write(dtoFieldQualifiedTypeName.substring(0, dtoFieldQualifiedTypeName.length() - 2));
-    writer.write(".class, ");
     writer.write(((TypeElement)processingEnvironment.getTypeUtils().asElement(((ArrayType)entityFieldTypeMirror).getComponentType())).getQualifiedName().toString());
-    writer.write(".class, ");
+    writer.write(".class, this.");
     writer.write(dtoFieldName);
     writer.write(")");
   }

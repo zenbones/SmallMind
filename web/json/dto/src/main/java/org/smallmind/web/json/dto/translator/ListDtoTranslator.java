@@ -69,10 +69,8 @@ public class ListDtoTranslator implements DtoTranslator {
 
     writer.write(LIST_MUTATOR_NAME);
     writer.write(".toEntityType(");
-    writer.write(extractDtoTypeName(dtoFieldQualifiedTypeName));
-    writer.write(".class, ");
     writer.write(((TypeElement)processingEnvironment.getTypeUtils().asElement(((DeclaredType)entityFieldTypeMirror).getTypeArguments().get(0))).getQualifiedName().toString());
-    writer.write(".class, ");
+    writer.write(".class, this.");
     writer.write(dtoFieldName);
     writer.write(")");
   }
@@ -91,6 +89,6 @@ public class ListDtoTranslator implements DtoTranslator {
       }
     }
 
-    throw new DtoPropertyException("Could not extracy dto type from '%s'", qualifiedListTypeName);
+    throw new DtoPropertyException("Could not extract dto type from '%s'", qualifiedListTypeName);
   }
 }
