@@ -63,9 +63,9 @@ public class ClassDtoTranslator implements DtoTranslator {
   public void writeInsideOfSet (BufferedWriter writer, ProcessingEnvironment processingEnvironment, TypeMirror entityFieldTypeMirror, String dtoFieldQualifiedTypeName, String dtoFieldName)
     throws IOException {
 
-    writer.write("(");
+    writer.write("(this.");
     writer.write(dtoFieldName);
-    writer.write(" == null) ? null : ");
+    writer.write(" == null) ? null : this.");
     writer.write(dtoFieldName);
     writer.write(".factory(new ");
     writer.write(((TypeElement)processingEnvironment.getTypeUtils().asElement(entityFieldTypeMirror)).getQualifiedName().toString());
