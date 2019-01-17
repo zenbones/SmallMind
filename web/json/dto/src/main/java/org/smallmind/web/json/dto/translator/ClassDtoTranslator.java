@@ -67,6 +67,6 @@ public class ClassDtoTranslator implements DtoTranslator {
     writer.write(dtoFieldName);
     writer.write(" == null) ? null : this.");
     writer.write(dtoFieldName);
-    writer.write(".factory())");
+    writer.write(".factory()");
   }
 }
