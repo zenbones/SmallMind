@@ -40,6 +40,7 @@ import javax.lang.model.type.DeclaredType;
 import javax.lang.model.type.TypeKind;
 import javax.lang.model.type.TypeMirror;
 import org.smallmind.web.json.dto.Direction;
+import org.smallmind.web.json.dto.ClassTracker;
 import org.smallmind.web.json.dto.TypeElementIterable;
 import org.smallmind.web.json.dto.UsefulTypeMirrors;
 import org.smallmind.web.json.dto.VisibilityTracker;
@@ -51,12 +52,12 @@ public class DtoTranslatorFactory {
   private static final ListDtoTranslator LIST_DTO_TRANSLATOR = new ListDtoTranslator();
   private static final NonDtoTranslator NON_DTO_TRANSLATOR = new NonDtoTranslator();
 
-  public static DtoTranslator create (ProcessingEnvironment processingEnvironment, UsefulTypeMirrors usefulTypeMirrors, VisibilityTracker visibilityTracker, String purpose, Direction direction, TypeMirror typeMirror) {
+  public static DtoTranslator create (ProcessingEnvironment processingEnvironment, UsefulTypeMirrors usefulTypeMirrors, VisibilityTracker visibilityTracker, ClassTracker classTracker, String purpose, Direction direction, TypeMirror typeMirror) {
 
     boolean visible = false;
 
     for (TypeElement typeElement : new TypeElementIterable(processingEnvironment, typeMirror)) {
-      if (visibilityTracker.isVisible(purpose, direction, typeElement)) {
+      if (visibilityTracker.isVisible(processingEnvironment, classTracker, purpose, direction, typeElement)) {
         visible = true;
         break;
       }

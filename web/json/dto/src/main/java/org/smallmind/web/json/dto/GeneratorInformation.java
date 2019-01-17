@@ -33,7 +33,6 @@
 package org.smallmind.web.json.dto;
 
 import java.io.IOException;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -51,10 +50,9 @@ public class GeneratorInformation {
   private final DirectionalGuide outDirectionalGuide = new DirectionalGuide(Direction.OUT);
   private final HashMap<String, Visibility> pledgedMap = new HashMap<>();
   private final HashMap<String, Visibility> fulfilledMap = new HashMap<>();
-  private final PolymorphicInformation polymorphicInformation;
   private final String name;
 
-  public GeneratorInformation (ProcessingEnvironment processingEnvironment, UsefulTypeMirrors usefulTypeMirrors, DtoAnnotationProcessor dtoAnnotationProcessor, TypeElement classElement, VisibilityTracker visibilityTracker, AnnotationMirror generatorAnnotationMirror)
+  public GeneratorInformation (ProcessingEnvironment processingEnvironment, UsefulTypeMirrors usefulTypeMirrors, DtoAnnotationProcessor dtoAnnotationProcessor, TypeElement classElement, VisibilityTracker visibilityTracker, ClassTracker classTracker, AnnotationMirror generatorAnnotationMirror)
     throws IOException, DtoDefinitionException {
 
     AnnotationMirror polymorphicAnnotationMirror;
@@ -62,9 +60,7 @@ public class GeneratorInformation {
     name = AptUtility.extractAnnotationValue(generatorAnnotationMirror, "name", String.class, "");
 
     if ((polymorphicAnnotationMirror = AptUtility.extractAnnotationValue(generatorAnnotationMirror, "polymorphic", AnnotationMirror.class, null)) != null) {
-      polymorphicInformation = new PolymorphicInformation(processingEnvironment, polymorphicAnnotationMirror);
-    } else {
-      polymorphicInformation = null;
+      classTracker.addPolymorphic(classElement, new PolymorphicInformation(processingEnvironment, polymorphicAnnotationMirror));
     }
 
     for (AnnotationMirror pledgeAnnotationMirror : AptUtility.extractAnnotationValueAsList(generatorAnnotationMirror, "pledges", AnnotationMirror.class)) {
@@ -133,16 +129,6 @@ public class GeneratorInformation {
   public String getName () {
 
     return name;
-  }
-
-  public boolean usePolymorphicAttribute () {
-
-    return (polymorphicInformation != null) && polymorphicInformation.isUseAttribute();
-  }
-
-  public List<TypeElement> getPolymorphicSubclasses () {
-
-    return (polymorphicInformation == null) ? Collections.emptyList() : polymorphicInformation.getSubClassList();
   }
 
   public DirectionalGuide getInDirectionalGuide () {

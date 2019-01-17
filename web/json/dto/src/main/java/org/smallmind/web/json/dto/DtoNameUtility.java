@@ -59,23 +59,23 @@ public class DtoNameUtility {
     return dtoNameBuilder.append(direction.getCode()).append("Dto").toString();
   }
 
-  public static String processTypeMirror (ProcessingEnvironment processingEnvironment, VisibilityTracker visibilityTracker, String purpose, Direction direction, TypeMirror typeMirror) {
+  public static String processTypeMirror (ProcessingEnvironment processingEnvironment, VisibilityTracker visibilityTracker, ClassTracker classTracker, String purpose, Direction direction, TypeMirror typeMirror) {
 
     StringBuilder nameBuilder = new StringBuilder();
 
-    walkTypeMirror(nameBuilder, processingEnvironment, visibilityTracker, purpose, direction, typeMirror);
+    walkTypeMirror(nameBuilder, processingEnvironment, visibilityTracker, classTracker, purpose, direction, typeMirror);
 
     return nameBuilder.toString();
   }
 
-  private static void walkTypeMirror (StringBuilder nameBuilder, ProcessingEnvironment processingEnvironment, VisibilityTracker visibilityTracker, String purpose, Direction direction, TypeMirror typeMirror) {
+  private static void walkTypeMirror (StringBuilder nameBuilder, ProcessingEnvironment processingEnvironment, VisibilityTracker visibilityTracker, ClassTracker classTracker, String purpose, Direction direction, TypeMirror typeMirror) {
 
     switch (typeMirror.getKind()) {
       case TYPEVAR:
         nameBuilder.append('?');
         break;
       case ARRAY:
-        walkTypeMirror(nameBuilder, processingEnvironment, visibilityTracker, purpose, direction, ((ArrayType)typeMirror).getComponentType());
+        walkTypeMirror(nameBuilder, processingEnvironment, visibilityTracker, classTracker, purpose, direction, ((ArrayType)typeMirror).getComponentType());
         nameBuilder.append("[]");
         break;
       case DECLARED:
@@ -84,7 +84,7 @@ public class DtoNameUtility {
         List<? extends TypeMirror> typeArgumentList;
 
         if (ElementKind.CLASS.equals(element.getKind())) {
-          if (visibilityTracker.isVisible(purpose, direction, (TypeElement)element)) {
+          if (visibilityTracker.isVisible(processingEnvironment, classTracker, purpose, direction, (TypeElement)element)) {
             nameBuilder.append(DtoNameUtility.getPackageName(processingEnvironment, (TypeElement)element)).append('.').append(DtoNameUtility.getSimpleName(processingEnvironment, purpose, direction, (TypeElement)element));
           } else {
             nameBuilder.append(((TypeElement)element).getQualifiedName());
@@ -104,7 +104,7 @@ public class DtoNameUtility {
             }
             first = false;
 
-            walkTypeMirror(nameBuilder, processingEnvironment, visibilityTracker, purpose, direction, typeArgumentTypeMirror);
+            walkTypeMirror(nameBuilder, processingEnvironment, visibilityTracker, classTracker, purpose, direction, typeArgumentTypeMirror);
           }
           nameBuilder.append('>');
         }

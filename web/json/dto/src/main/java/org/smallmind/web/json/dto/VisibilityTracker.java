@@ -35,6 +35,7 @@ package org.smallmind.web.json.dto;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
+import javax.annotation.processing.ProcessingEnvironment;
 import javax.lang.model.element.TypeElement;
 
 public class VisibilityTracker {
@@ -129,10 +130,10 @@ public class VisibilityTracker {
     return ((purposeMap = trackingMap.get(classElement)) == null) ? null : purposeMap.get(purpose);
   }
 
-  public boolean isVisible (String purpose, Direction direction, TypeElement typeElement) {
+  public boolean isVisible (ProcessingEnvironment processingEnvironment, ClassTracker classTracker, String purpose, Direction direction, TypeElement typeElement) {
 
     Visibility visibility;
 
-    return ((visibility = getVisibility(typeElement, purpose)) != null) && visibility.matches(direction);
+    return (((visibility = getVisibility(typeElement, purpose)) != null) && visibility.matches(direction)) || classTracker.isPreCompiled(processingEnvironment, purpose, direction, typeElement);
   }
 }

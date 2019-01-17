@@ -54,7 +54,7 @@ public class ArrayDtoTranslator implements DtoTranslator {
     writer.write(".toDtoType(");
     writer.write(((TypeElement)processingEnvironment.getTypeUtils().asElement(((ArrayType)entityFieldTypeMirror).getComponentType())).getQualifiedName().toString());
     writer.write(".class, ");
-    writer.write(dtoFieldQualifiedTypeName.substring(0, dtoFieldQualifiedTypeName.length() -2 ));
+    writer.write(dtoFieldQualifiedTypeName.substring(0, dtoFieldQualifiedTypeName.length() - 2));
     writer.write(".class, ");
     writer.write(entityInstanceName);
     writer.write(".");
@@ -68,7 +68,7 @@ public class ArrayDtoTranslator implements DtoTranslator {
 
     writer.write(ARRAY_MUTATOR_NAME);
     writer.write(".toEntityType(");
-    writer.write(dtoFieldQualifiedTypeName.substring(0, dtoFieldQualifiedTypeName.length() -2 ));
+    writer.write(dtoFieldQualifiedTypeName.substring(0, dtoFieldQualifiedTypeName.length() - 2));
     writer.write(".class, ");
     writer.write(((TypeElement)processingEnvironment.getTypeUtils().asElement(((ArrayType)entityFieldTypeMirror).getComponentType())).getQualifiedName().toString());
     writer.write(".class, ");

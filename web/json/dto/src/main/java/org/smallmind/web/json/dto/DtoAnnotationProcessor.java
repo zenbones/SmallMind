@@ -35,7 +35,6 @@ package org.smallmind.web.json.dto;
 import java.io.BufferedWriter;
 import java.io.IOException;
 import java.util.Arrays;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.Map;
@@ -71,7 +70,7 @@ import org.smallmind.web.json.dto.translator.DtoTranslatorFactory;
 public class DtoAnnotationProcessor extends AbstractProcessor {
 
   private final VisibilityTracker visibilityTracker = new VisibilityTracker();
-  private final HashMap<TypeElement, PolymorphicBaseClass> polymorphicMap = new HashMap<>();
+  private final ClassTracker classTracker = new ClassTracker();
   private final HashSet<TypeElement> processedSet = new HashSet<>();
 
   @Override
@@ -100,69 +99,74 @@ public class DtoAnnotationProcessor extends AbstractProcessor {
   private void generate (TypeElement classElement)
     throws IOException, DtoDefinitionException {
 
-    AnnotationMirror dtoGeneratorAnnotationMirror;
+    if (!processedSet.contains(classElement)) {
 
-    if ((!processedSet.contains(classElement)) && ((dtoGeneratorAnnotationMirror = AptUtility.extractAnnotationMirror(processingEnv, classElement, processingEnv.getElementUtils().getTypeElement(DtoGenerator.class.getName()).asType())) != null)) {
-      if ((!ElementKind.CLASS.equals(classElement.getKind())) || (!NestingKind.TOP_LEVEL.equals(classElement.getNestingKind()))) {
-        throw new DtoDefinitionException("The class(%s) must be a root implementation of type 'class'", classElement.getQualifiedName());
-      } else {
+      AnnotationMirror dtoGeneratorAnnotationMirror;
 
-        UsefulTypeMirrors usefulTypeMirrors = new UsefulTypeMirrors(processingEnv);
-        GeneratorInformation generatorInformation;
-        TypeElement nearestDtoSuperclass;
-
-        processedSet.add(classElement);
-        if ((nearestDtoSuperclass = getNearestDtoSuperclass(classElement)) != null) {
-          generate(nearestDtoSuperclass);
-        }
-
-        generatorInformation = new GeneratorInformation(processingEnv, usefulTypeMirrors, this, classElement, visibilityTracker, dtoGeneratorAnnotationMirror);
-        ClassWalker.walk(processingEnv, this, classElement, generatorInformation, usefulTypeMirrors);
-        generatorInformation.update(classElement, visibilityTracker);
-
-        for (TypeElement polymorphicSubClass : generatorInformation.getPolymorphicSubclasses()) {
-          visibilityTracker.add(polymorphicSubClass, classElement);
-          polymorphicMap.put(polymorphicSubClass, new PolymorphicBaseClass(classElement, generatorInformation.usePolymorphicAttribute()));
-          generate(polymorphicSubClass);
-        }
-
-        for (Map.Entry<String, PropertyLexicon> purposeEntry : generatorInformation.getInDirectionalGuide().entrySet()) {
-          processIn(generatorInformation, usefulTypeMirrors, classElement, nearestDtoSuperclass, purposeEntry.getKey(), purposeEntry.getValue());
-        }
-        for (String unfulfilledPurpose : generatorInformation.unfulfilledPurposes(classElement, visibilityTracker, Direction.IN)) {
-          processIn(generatorInformation, usefulTypeMirrors, classElement, nearestDtoSuperclass, unfulfilledPurpose, new PropertyLexicon());
-        }
-        for (Map.Entry<String, PropertyLexicon> purposeEntry : generatorInformation.getOutDirectionalGuide().entrySet()) {
-          processOut(generatorInformation, usefulTypeMirrors, classElement, nearestDtoSuperclass, purposeEntry.getKey(), purposeEntry.getValue());
-        }
-        for (String unfulfilledPurpose : generatorInformation.unfulfilledPurposes(classElement, visibilityTracker, Direction.OUT)) {
-          processOut(generatorInformation, usefulTypeMirrors, classElement, nearestDtoSuperclass, unfulfilledPurpose, new PropertyLexicon());
-        }
-
-        if (visibilityTracker.hasNoPurpose(classElement)) {
-          throw new DtoDefinitionException("The class(%s) was annotated as @%s but contained no properties", classElement.getQualifiedName(), DtoGenerator.class.getSimpleName());
+      if ((dtoGeneratorAnnotationMirror = AptUtility.extractAnnotationMirror(processingEnv, classElement, processingEnv.getElementUtils().getTypeElement(DtoGenerator.class.getName()).asType())) != null) {
+        if (classTracker.isPreCompiled(classElement)) {
         } else {
+          if ((!ElementKind.CLASS.equals(classElement.getKind())) || (!NestingKind.TOP_LEVEL.equals(classElement.getNestingKind()))) {
+            throw new DtoDefinitionException("The class(%s) must be a root implementation of type 'class'", classElement.getQualifiedName());
+          } else {
 
-          String[] inOverwroughtPurposes = generatorInformation.overwroughtPurposes(classElement, visibilityTracker, Direction.IN);
-          String[] outOverwroughtPurposes = generatorInformation.overwroughtPurposes(classElement, visibilityTracker, Direction.OUT);
+            UsefulTypeMirrors usefulTypeMirrors = new UsefulTypeMirrors(processingEnv);
+            GeneratorInformation generatorInformation;
+            TypeElement nearestDtoSuperclass;
 
-          if ((inOverwroughtPurposes.length > 0) || (outOverwroughtPurposes.length > 0)) {
-
-            StringBuilder warningBuilder = new StringBuilder("The class(").append(classElement.getQualifiedName()).append(") was annotated with the unnecessary @Pledge(");
-
-            if (inOverwroughtPurposes.length > 0) {
-              warningBuilder.append("IN").append(Arrays.toString(inOverwroughtPurposes));
+            processedSet.add(classElement);
+            if ((nearestDtoSuperclass = getNearestDtoSuperclass(classElement)) != null) {
+              generate(nearestDtoSuperclass);
             }
-            if (outOverwroughtPurposes.length > 0) {
-              if (inOverwroughtPurposes.length > 0) {
-                warningBuilder.append(" , ");
+
+            generatorInformation = new GeneratorInformation(processingEnv, usefulTypeMirrors, this, classElement, visibilityTracker, classTracker, dtoGeneratorAnnotationMirror);
+            ClassWalker.walk(processingEnv, this, classElement, generatorInformation, usefulTypeMirrors);
+            generatorInformation.update(classElement, visibilityTracker);
+
+            for (TypeElement polymorphicSubClass : classTracker.getPolymorphicSubclasses(classElement)) {
+              visibilityTracker.add(polymorphicSubClass, classElement);
+              generate(polymorphicSubClass);
+            }
+
+            for (Map.Entry<String, PropertyLexicon> purposeEntry : generatorInformation.getInDirectionalGuide().entrySet()) {
+              processIn(generatorInformation, usefulTypeMirrors, classElement, nearestDtoSuperclass, purposeEntry.getKey(), purposeEntry.getValue());
+            }
+            for (String unfulfilledPurpose : generatorInformation.unfulfilledPurposes(classElement, visibilityTracker, Direction.IN)) {
+              processIn(generatorInformation, usefulTypeMirrors, classElement, nearestDtoSuperclass, unfulfilledPurpose, new PropertyLexicon());
+            }
+            for (Map.Entry<String, PropertyLexicon> purposeEntry : generatorInformation.getOutDirectionalGuide().entrySet()) {
+              processOut(generatorInformation, usefulTypeMirrors, classElement, nearestDtoSuperclass, purposeEntry.getKey(), purposeEntry.getValue());
+            }
+            for (String unfulfilledPurpose : generatorInformation.unfulfilledPurposes(classElement, visibilityTracker, Direction.OUT)) {
+              processOut(generatorInformation, usefulTypeMirrors, classElement, nearestDtoSuperclass, unfulfilledPurpose, new PropertyLexicon());
+            }
+
+            if (visibilityTracker.hasNoPurpose(classElement)) {
+              throw new DtoDefinitionException("The class(%s) was annotated as @%s but contained no properties", classElement.getQualifiedName(), DtoGenerator.class.getSimpleName());
+            } else {
+
+              String[] inOverwroughtPurposes = generatorInformation.overwroughtPurposes(classElement, visibilityTracker, Direction.IN);
+              String[] outOverwroughtPurposes = generatorInformation.overwroughtPurposes(classElement, visibilityTracker, Direction.OUT);
+
+              if ((inOverwroughtPurposes.length > 0) || (outOverwroughtPurposes.length > 0)) {
+
+                StringBuilder warningBuilder = new StringBuilder("The class(").append(classElement.getQualifiedName()).append(") was annotated with the unnecessary @Pledge(");
+
+                if (inOverwroughtPurposes.length > 0) {
+                  warningBuilder.append("IN").append(Arrays.toString(inOverwroughtPurposes));
+                }
+                if (outOverwroughtPurposes.length > 0) {
+                  if (inOverwroughtPurposes.length > 0) {
+                    warningBuilder.append(" , ");
+                  }
+                  warningBuilder.append("OUT").append(Arrays.toString(outOverwroughtPurposes));
+                }
+
+                warningBuilder.append(')');
+
+                processingEnv.getMessager().printMessage(Diagnostic.Kind.WARNING, warningBuilder, classElement);
               }
-              warningBuilder.append("OUT").append(Arrays.toString(outOverwroughtPurposes));
             }
-
-            warningBuilder.append(')');
-
-            processingEnv.getMessager().printMessage(Diagnostic.Kind.WARNING, warningBuilder, classElement);
           }
         }
       }
@@ -190,23 +194,6 @@ public class DtoAnnotationProcessor extends AbstractProcessor {
     return Character.toLowerCase(name.charAt(0)) + name.subSequence(1, name.length()).toString();
   }
 
-  private boolean isDtoType (TypeMirror typeMirror, String purpose, Direction direction) {
-
-    if (TypeKind.DECLARED.equals(typeMirror.getKind())) {
-
-      Element element;
-
-      if (ElementKind.CLASS.equals((element = processingEnv.getTypeUtils().asElement(typeMirror)).getKind())) {
-
-        Visibility visibility;
-
-        return ((visibility = visibilityTracker.getVisibility((TypeElement)element, purpose)) != null) && visibility.matches(direction);
-      }
-    }
-
-    return false;
-  }
-
   private TypeElement getNearestDtoSuperclass (TypeElement classElement) {
 
     TypeElement currentClassElement = classElement;
@@ -226,7 +213,7 @@ public class DtoAnnotationProcessor extends AbstractProcessor {
 
     JavaFileObject sourceFile;
 
-    if (!generatorInformation.getPolymorphicSubclasses().isEmpty()) {
+    if (classTracker.hasPolymorphicSubClasses(classElement)) {
       writePolymorphicAdapter(classElement, generatorInformation, purpose, direction);
     }
 
@@ -244,7 +231,7 @@ public class DtoAnnotationProcessor extends AbstractProcessor {
         writer.newLine();
         writer.newLine();
 
-        for (TypeElement polymorphicSubClass : generatorInformation.getPolymorphicSubclasses()) {
+        for (TypeElement polymorphicSubClass : classTracker.getPolymorphicSubclasses(classElement)) {
 
           Visibility visibility;
 
@@ -305,11 +292,11 @@ public class DtoAnnotationProcessor extends AbstractProcessor {
           writer.newLine();
         }
 
-        if ((!generatorInformation.getPolymorphicSubclasses().isEmpty()) || polymorphicMap.containsKey(classElement)) {
+        if (classTracker.isPolymorphic(classElement)) {
           // XmlJavaTypeAdapter
           writer.write("@XmlJavaTypeAdapter(");
-          writer.write(DtoNameUtility.getSimpleName(processingEnv, purpose, direction, (!generatorInformation.getPolymorphicSubclasses().isEmpty()) ? classElement : polymorphicMap.get(classElement).getBaseClassElement()));
-          if ((!generatorInformation.getPolymorphicSubclasses().isEmpty()) ? generatorInformation.usePolymorphicAttribute() : polymorphicMap.get(classElement).isUseAttribute()) {
+          writer.write(DtoNameUtility.getSimpleName(processingEnv, purpose, direction, (classTracker.hasPolymorphicSubClasses(classElement) ? classElement : classTracker.getPolymorphicBaseClass(classElement))));
+          if (classTracker.hasPolymorphicSubClasses(classElement) ? classTracker.usePolymorphicAttribute(classElement) : classTracker.usePolymorphicAttribute(classTracker.getPolymorphicBaseClass(classElement))) {
             writer.write("Attributed");
           }
           writer.write("PolymorphicXmlAdapter.class)");
@@ -351,7 +338,7 @@ public class DtoAnnotationProcessor extends AbstractProcessor {
         }
         writer.write("class ");
         writer.write(DtoNameUtility.getSimpleName(processingEnv, purpose, direction, classElement));
-        if (!generatorInformation.getPolymorphicSubclasses().isEmpty()) {
+        if (classTracker.hasPolymorphicSubClasses(classElement)) {
           writer.write("<D extends ");
           writer.write(DtoNameUtility.getSimpleName(processingEnv, purpose, direction, classElement));
           writer.write("<D>>");
@@ -359,7 +346,7 @@ public class DtoAnnotationProcessor extends AbstractProcessor {
         if (nearestDtoSuperclass != null) {
           writer.write(" extends ");
           writer.write(DtoNameUtility.getSimpleName(processingEnv, purpose, direction, nearestDtoSuperclass));
-          if (polymorphicMap.containsKey(classElement)) {
+          if (classTracker.hasPolymorphicBaseClass(classElement)) {
             writer.write("<");
             writer.write(DtoNameUtility.getSimpleName(processingEnv, purpose, direction, classElement));
             writer.write(">");
@@ -419,7 +406,7 @@ public class DtoAnnotationProcessor extends AbstractProcessor {
             writer.write("    this.");
             writer.write(propertyInformationEntry.getKey());
             writer.write(" = ");
-            DtoTranslatorFactory.create(processingEnv, usefulTypeMirrors, visibilityTracker, purpose, direction, propertyInformationEntry.getValue().getType()).writeRightSideOfEquals(writer, processingEnv, asMemberName(classElement.getSimpleName()), propertyInformationEntry.getKey(), propertyInformationEntry.getValue().getType(), DtoNameUtility.processTypeMirror(processingEnv, visibilityTracker, purpose, direction, propertyInformationEntry.getValue().getType()));
+            DtoTranslatorFactory.create(processingEnv, usefulTypeMirrors, visibilityTracker, classTracker, purpose, direction, propertyInformationEntry.getValue().getType()).writeRightSideOfEquals(writer, processingEnv, asMemberName(classElement.getSimpleName()), propertyInformationEntry.getKey(), propertyInformationEntry.getValue().getType(), DtoNameUtility.processTypeMirror(processingEnv, visibilityTracker, classTracker, purpose, direction, propertyInformationEntry.getValue().getType()));
             writer.newLine();
           }
         }
@@ -472,7 +459,7 @@ public class DtoAnnotationProcessor extends AbstractProcessor {
             writer.write(".");
             writer.write(BeanUtility.asSetterName(propertyInformationEntry.getKey()));
             writer.write("(");
-            DtoTranslatorFactory.create(processingEnv, usefulTypeMirrors, visibilityTracker, purpose, direction, propertyInformationEntry.getValue().getType()).writeInsideOfSet(writer, processingEnv, propertyInformationEntry.getValue().getType(), DtoNameUtility.processTypeMirror(processingEnv, visibilityTracker, purpose, direction, propertyInformationEntry.getValue().getType()), propertyInformationEntry.getKey());
+            DtoTranslatorFactory.create(processingEnv, usefulTypeMirrors, visibilityTracker, classTracker, purpose, direction, propertyInformationEntry.getValue().getType()).writeInsideOfSet(writer, processingEnv, propertyInformationEntry.getValue().getType(), DtoNameUtility.processTypeMirror(processingEnv, visibilityTracker, classTracker, purpose, direction, propertyInformationEntry.getValue().getType()), propertyInformationEntry.getKey());
             writer.write(");");
             writer.newLine();
           }
@@ -526,7 +513,7 @@ public class DtoAnnotationProcessor extends AbstractProcessor {
       writer.newLine();
     }
     writer.write("  private ");
-    writer.write(DtoNameUtility.processTypeMirror(processingEnv, visibilityTracker, purpose, direction, propertyInformationEntry.getValue().getType()));
+    writer.write(DtoNameUtility.processTypeMirror(processingEnv, visibilityTracker, classTracker, purpose, direction, propertyInformationEntry.getValue().getType()));
     writer.write(" ");
     writer.write(propertyInformationEntry.getKey());
     writer.write(";");
@@ -547,7 +534,7 @@ public class DtoAnnotationProcessor extends AbstractProcessor {
     writer.write(propertyInformationEntry.getValue().isRequired() ? "\", required = true)" : "\")");
     writer.newLine();
     writer.write("  public ");
-    writer.write(DtoNameUtility.processTypeMirror(processingEnv, visibilityTracker, purpose, direction, propertyInformationEntry.getValue().getType()));
+    writer.write(DtoNameUtility.processTypeMirror(processingEnv, visibilityTracker, classTracker, purpose, direction, propertyInformationEntry.getValue().getType()));
     writer.write(" ");
     writer.write(TypeKind.BOOLEAN.equals(propertyInformationEntry.getValue().getType().getKind()) ? BeanUtility.asIsName(propertyInformationEntry.getKey()) : BeanUtility.asGetterName(propertyInformationEntry.getKey()));
     writer.write(" () {");
@@ -562,7 +549,7 @@ public class DtoAnnotationProcessor extends AbstractProcessor {
     writer.newLine();
 
     writer.write("  public ");
-    if (!generatorInformation.getPolymorphicSubclasses().isEmpty()) {
+    if (classTracker.hasPolymorphicSubClasses(classElement)) {
       writer.write("D");
     } else {
       writer.write(DtoNameUtility.getSimpleName(processingEnv, purpose, direction, classElement));
@@ -570,7 +557,7 @@ public class DtoAnnotationProcessor extends AbstractProcessor {
     writer.write(" ");
     writer.write(BeanUtility.asSetterName(propertyInformationEntry.getKey()));
     writer.write(" (");
-    writer.write(DtoNameUtility.processTypeMirror(processingEnv, visibilityTracker, purpose, direction, propertyInformationEntry.getValue().getType()));
+    writer.write(DtoNameUtility.processTypeMirror(processingEnv, visibilityTracker, classTracker, purpose, direction, propertyInformationEntry.getValue().getType()));
     writer.write(" ");
     writer.write(propertyInformationEntry.getKey());
     writer.write(") {");
@@ -584,7 +571,7 @@ public class DtoAnnotationProcessor extends AbstractProcessor {
     writer.newLine();
     writer.newLine();
     writer.write("    return ");
-    if (!generatorInformation.getPolymorphicSubclasses().isEmpty()) {
+    if (classTracker.hasPolymorphicSubClasses(classElement)) {
       writer.write("(D)");
     }
     writer.write("this;");
@@ -599,7 +586,7 @@ public class DtoAnnotationProcessor extends AbstractProcessor {
     JavaFileObject sourceFile;
     StringBuilder sourceFileBuilder = new StringBuilder(processingEnv.getElementUtils().getPackageOf(classElement).getQualifiedName()).append('.').append(DtoNameUtility.getSimpleName(processingEnv, purpose, direction, classElement));
 
-    if (generatorInformation.usePolymorphicAttribute()) {
+    if (classTracker.usePolymorphicAttribute(classElement)) {
       sourceFileBuilder.append("Attributed");
     }
     sourceFileBuilder.append("PolymorphicXmlAdapter");
@@ -620,7 +607,7 @@ public class DtoAnnotationProcessor extends AbstractProcessor {
         writer.write("import javax.annotation.Generated;");
         writer.newLine();
         writer.write("import org.smallmind.web.json.scaffold.util.");
-        if (generatorInformation.usePolymorphicAttribute()) {
+        if (classTracker.usePolymorphicAttribute(classElement)) {
           writer.write("Attributed");
         }
         writer.write("PolymorphicXmlAdapter;");
@@ -636,12 +623,12 @@ public class DtoAnnotationProcessor extends AbstractProcessor {
         // class declaration
         writer.write("public class ");
         writer.write(DtoNameUtility.getSimpleName(processingEnv, purpose, direction, classElement));
-        if (generatorInformation.usePolymorphicAttribute()) {
+        if (classTracker.usePolymorphicAttribute(classElement)) {
           writer.write("Attributed");
         }
         writer.write("PolymorphicXmlAdapter");
         writer.write(" extends ");
-        if (generatorInformation.usePolymorphicAttribute()) {
+        if (classTracker.usePolymorphicAttribute(classElement)) {
           writer.write("Attributed");
         }
         writer.write("PolymorphicXmlAdapter<");
@@ -652,28 +639,6 @@ public class DtoAnnotationProcessor extends AbstractProcessor {
         writer.write("}");
         writer.newLine();
       }
-    }
-  }
-
-  private class PolymorphicBaseClass {
-
-    private TypeElement baseClassElement;
-    private boolean useAttribute;
-
-    public PolymorphicBaseClass (TypeElement baseClassElement, boolean useAttribute) {
-
-      this.baseClassElement = baseClassElement;
-      this.useAttribute = useAttribute;
-    }
-
-    public TypeElement getBaseClassElement () {
-
-      return baseClassElement;
-    }
-
-    public boolean isUseAttribute () {
-
-      return useAttribute;
     }
   }
 }
