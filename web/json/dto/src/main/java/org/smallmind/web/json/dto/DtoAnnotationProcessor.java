@@ -375,11 +375,37 @@ public class DtoAnnotationProcessor extends AbstractProcessor {
           }
         }
 
+        // instantiator
+        writer.newLine();
+        writer.write("  public static ");
+        writer.write(DtoNameUtility.getSimpleName(processingEnv, purpose, direction, classElement));
+        writer.write(" instance (");
+        writer.write(classElement.getSimpleName().toString());
+        writer.write(" ");
+        writer.write(asMemberName(classElement.getSimpleName()));
+        writer.write(") {");
+        writer.newLine();
+        writer.newLine();
+        if (classTracker.hasPolymorphicSubClasses(classElement)) {
+          writer.write("    return null;");
+          writer.newLine();
+        } else {
+          writer.write("    return new ");
+          writer.write(DtoNameUtility.getSimpleName(processingEnv, purpose, direction, classElement));
+          writer.write("(");
+          writer.write(asMemberName(classElement.getSimpleName()));
+          writer.write(");");
+          writer.newLine();
+        }
+        writer.write("  }");
+        writer.newLine();
+
         // constructors
         writer.newLine();
         writer.write("  public ");
         writer.write(DtoNameUtility.getSimpleName(processingEnv, purpose, direction, classElement));
         writer.write(" () {");
+        writer.newLine();
         writer.newLine();
         writer.write("  }");
         writer.newLine();
@@ -402,6 +428,7 @@ public class DtoAnnotationProcessor extends AbstractProcessor {
         }
 
         if (propertyLexicon.isReal()) {
+          writer.newLine();
           for (Map.Entry<String, PropertyInformation> propertyInformationEntry : propertyLexicon.getRealMap().entrySet()) {
             writer.write("    this.");
             writer.write(propertyInformationEntry.getKey());

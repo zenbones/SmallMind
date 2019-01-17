@@ -50,9 +50,9 @@ public class ClassDtoTranslator implements DtoTranslator {
     writer.write(entityInstanceName);
     writer.write(".");
     writer.write(TypeKind.BOOLEAN.equals(entityFieldTypeMirror.getKind()) ? BeanUtility.asIsName(entityFieldName) : BeanUtility.asGetterName(entityFieldName));
-    writer.write("() == null) ? null : new ");
+    writer.write("() == null) ? null : ");
     writer.write(dtoFieldQualifiedTypeName);
-    writer.write("(");
+    writer.write(".instance(");
     writer.write(entityInstanceName);
     writer.write(".");
     writer.write(TypeKind.BOOLEAN.equals(entityFieldTypeMirror.getKind()) ? BeanUtility.asIsName(entityFieldName) : BeanUtility.asGetterName(entityFieldName));
