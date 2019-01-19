@@ -33,25 +33,24 @@
 package org.smallmind.persistence.query;
 
 import java.lang.annotation.Documented;
-import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.Target;
 import javax.validation.Constraint;
 import javax.validation.Payload;
 
-import static java.lang.annotation.ElementType.ANNOTATION_TYPE;
 import static java.lang.annotation.ElementType.FIELD;
+import static java.lang.annotation.ElementType.LOCAL_VARIABLE;
 import static java.lang.annotation.ElementType.METHOD;
 import static java.lang.annotation.ElementType.PARAMETER;
 import static java.lang.annotation.RetentionPolicy.RUNTIME;
 
 @Documented
 @Retention(RUNTIME)
-@Target({FIELD, PARAMETER, ANNOTATION_TYPE, ElementType.CONSTRUCTOR, METHOD})
+@Target({FIELD, PARAMETER, METHOD, LOCAL_VARIABLE})
 @Constraint(validatedBy = WhereValidator.class)
 public @interface WhereConstraint {
 
-  @Target({FIELD, METHOD, PARAMETER, ANNOTATION_TYPE})
+  @Target({FIELD, PARAMETER, METHOD, LOCAL_VARIABLE})
   @Retention(RUNTIME)
   @Documented
   @interface List {

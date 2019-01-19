@@ -35,6 +35,7 @@ package org.smallmind.web.json.dto;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import javax.annotation.processing.ProcessingEnvironment;
@@ -48,6 +49,7 @@ public class GeneratorInformation {
 
   private final DirectionalGuide inDirectionalGuide = new DirectionalGuide(Direction.IN);
   private final DirectionalGuide outDirectionalGuide = new DirectionalGuide(Direction.OUT);
+  private final List<ConstraintInformation> constraintList = new LinkedList<>();
   private final HashMap<String, Visibility> pledgedMap = new HashMap<>();
   private final HashMap<String, Visibility> fulfilledMap = new HashMap<>();
   private final String name;
@@ -58,6 +60,10 @@ public class GeneratorInformation {
     AnnotationMirror polymorphicAnnotationMirror;
 
     name = AptUtility.extractAnnotationValue(generatorAnnotationMirror, "name", String.class, "");
+
+    for (AnnotationMirror constraintAnnotationMirror : AptUtility.extractAnnotationValueAsList(generatorAnnotationMirror, "constraints", AnnotationMirror.class)) {
+      constraintList.add(new ConstraintInformation(constraintAnnotationMirror));
+    }
 
     if ((polymorphicAnnotationMirror = AptUtility.extractAnnotationValue(generatorAnnotationMirror, "polymorphic", AnnotationMirror.class, null)) != null) {
       classTracker.addPolymorphic(classElement, new PolymorphicInformation(processingEnvironment, polymorphicAnnotationMirror));
@@ -129,6 +135,11 @@ public class GeneratorInformation {
   public String getName () {
 
     return name;
+  }
+
+  public Iterable<ConstraintInformation> constraints () {
+
+    return constraintList;
   }
 
   public DirectionalGuide getInDirectionalGuide () {

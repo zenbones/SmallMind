@@ -32,37 +32,41 @@
  */
 package org.smallmind.nutsnbolts.validation;
 
-import java.lang.annotation.Documented;
-import java.lang.annotation.Retention;
-import java.lang.annotation.Target;
-import javax.validation.Constraint;
-import javax.validation.Payload;
+import javax.validation.ConstraintValidator;
+import javax.validation.ConstraintValidatorContext;
+import org.smallmind.nutsnbolts.reflection.bean.BeanAccessException;
+import org.smallmind.nutsnbolts.reflection.bean.BeanInvocationException;
+import org.smallmind.nutsnbolts.reflection.bean.BeanUtility;
+import org.smallmind.nutsnbolts.util.NumberComparator;
 
-import static java.lang.annotation.ElementType.FIELD;
-import static java.lang.annotation.ElementType.LOCAL_VARIABLE;
-import static java.lang.annotation.ElementType.METHOD;
-import static java.lang.annotation.ElementType.PARAMETER;
-import static java.lang.annotation.RetentionPolicy.RUNTIME;
+public class ThisGreaterThanThatValidator implements ConstraintValidator<ThisGreaterThanThat, Object> {
 
-@Documented
-@Retention(RUNTIME)
-@Target({FIELD, PARAMETER, METHOD, LOCAL_VARIABLE})
-@Constraint(validatedBy = EmailValidator.class)
-public @interface Email {
+  private static final NumberComparator NUMBER_COMPARATOR = new NumberComparator();
 
-  @Target({FIELD, PARAMETER, METHOD, LOCAL_VARIABLE})
-  @Retention(RUNTIME)
-  @Documented
-  @interface List {
+  private ThisGreaterThanThat constraintAnnotation;
 
-    Email[] value ();
+  @Override
+  public void initialize (ThisGreaterThanThat constraintAnnotation) {
+
+    this.constraintAnnotation = constraintAnnotation;
   }
 
-  String message () default "must be an email address";
+  @Override
+  public boolean isValid (Object value, ConstraintValidatorContext context) {
 
-  Class<?>[] groups () default {};
+    if (value == null) {
+      return true;
+    } else {
 
-  Class<? extends Payload>[] payload () default {};
+      try {
 
-  char separator () default '\0';
+        Number number1 = (Number)BeanUtility.executeGet(value, constraintAnnotation.first(), false);
+        Number number2 = (Number)BeanUtility.executeGet(value, constraintAnnotation.second(), false);
+
+        return ((number1 == null) || (number2 == null)) ? !constraintAnnotation.notNull() : NUMBER_COMPARATOR.compare(number1, number2) > 0;
+      } catch (BeanAccessException | BeanInvocationException exception) {
+        throw new RuntimeException(exception);
+      }
+    }
+  }
 }

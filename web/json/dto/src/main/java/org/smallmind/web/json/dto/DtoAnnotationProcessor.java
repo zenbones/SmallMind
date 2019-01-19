@@ -331,6 +331,9 @@ public class DtoAnnotationProcessor extends AbstractProcessor {
           }
         }
 
+        // class level constraints
+        writeConstraints(writer, generatorInformation.constraints(), 0);
+
         // class declaration
         writer.write("public ");
         if (classElement.getModifiers().contains(Modifier.ABSTRACT)) {
@@ -576,8 +579,23 @@ public class DtoAnnotationProcessor extends AbstractProcessor {
   private void writeField (BufferedWriter writer, String purpose, Direction direction, Map.Entry<String, PropertyInformation> propertyInformationEntry)
     throws IOException {
 
-    for (ConstraintInformation constraintInformation : propertyInformationEntry.getValue().constraints()) {
-      writer.write("  @");
+    writeConstraints(writer, propertyInformationEntry.getValue().constraints(), 2);
+    writer.write("  private ");
+    writer.write(DtoNameUtility.processTypeMirror(processingEnv, visibilityTracker, classTracker, purpose, direction, propertyInformationEntry.getValue().getType()));
+    writer.write(" ");
+    writer.write(propertyInformationEntry.getKey());
+    writer.write(";");
+    writer.newLine();
+  }
+
+  private void writeConstraints (BufferedWriter writer, Iterable<ConstraintInformation> constraints, int indent)
+    throws IOException {
+
+    for (ConstraintInformation constraintInformation : constraints) {
+      for (int count = 0; count < indent; count++) {
+        writer.write(" ");
+      }
+      writer.write("@");
       writer.write(constraintInformation.getType().toString());
       if (!constraintInformation.getArguments().isEmpty()) {
         writer.write("(");
@@ -586,12 +604,6 @@ public class DtoAnnotationProcessor extends AbstractProcessor {
       }
       writer.newLine();
     }
-    writer.write("  private ");
-    writer.write(DtoNameUtility.processTypeMirror(processingEnv, visibilityTracker, classTracker, purpose, direction, propertyInformationEntry.getValue().getType()));
-    writer.write(" ");
-    writer.write(propertyInformationEntry.getKey());
-    writer.write(";");
-    writer.newLine();
   }
 
   private void writeGettersAndSetters (BufferedWriter writer, TypeElement classElement, String purpose, Direction direction, Map.Entry<String, PropertyInformation> propertyInformationEntry)

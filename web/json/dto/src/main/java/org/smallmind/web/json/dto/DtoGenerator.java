@@ -50,6 +50,9 @@ public @interface DtoGenerator {
   // the requirements for polymorphic annotations
   Polymorphic polymorphic () default @Polymorphic();
 
+  // the constraint annotations to be applied to the dto
+  Constraint[] constraints () default {};
+
   // the xml root element name
   String name () default "";
 }
