@@ -410,7 +410,9 @@ public class DtoAnnotationProcessor extends AbstractProcessor {
             writer.write(DtoNameUtility.getPackageName(processingEnv, polymorphicSubClass));
             writer.write(".");
             writer.write(DtoNameUtility.getSimpleName(processingEnv, purpose, direction, polymorphicSubClass));
-            writer.write(".instance(");
+            writer.write(".instance((");
+            writer.write(polymorphicSubClass.getQualifiedName().toString());
+            writer.write(")");
             writer.write(asMemberName(classElement.getSimpleName()));
             writer.write(");");
             writer.newLine();
