@@ -32,10 +32,29 @@
  */
 package org.smallmind.nutsnbolts.util;
 
-public interface Mutation<T, U> {
+import java.util.Objects;
+import java.util.function.Function;
 
-  Class<U> getMutatedClass ();
+@FunctionalInterface
+public interface Mutation<T, R> {
 
-  U mutate (T inType)
+  static <T> Function<T, T> identity () {
+
+    return t -> t;
+  }
+
+  R apply (T t)
     throws Exception;
+
+  default <V> Mutation<V, R> compose (Mutation<? super V, ? extends T> before) {
+
+    Objects.requireNonNull(before);
+    return (V v) -> apply(before.apply(v));
+  }
+
+  default <V> Mutation<T, V> andThen (Mutation<? super R, ? extends V> after) {
+
+    Objects.requireNonNull(after);
+    return (T t) -> after.apply(apply(t));
+  }
 }

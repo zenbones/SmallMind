@@ -88,14 +88,14 @@ public class Page<T> implements Iterable<T> {
     return values;
   }
 
-  public <U> Page<U> mutate (Mutation<? super T, U> mutation)
+  public <U> Page<U> mutate (Class<U> outType, Mutation<? super T, U> mutation)
     throws Exception {
 
-    U[] outArray = (U[])Array.newInstance(mutation.getMutatedClass(), values.length);
+    U[] outArray = (U[])Array.newInstance(outType, values.length);
     int index = 0;
 
     for (T inType : this) {
-      outArray[index++] = mutation.mutate(inType);
+      outArray[index++] = mutation.apply(inType);
     }
 
     return new Page<>(outArray, firstResult, maxResults, totalResults);

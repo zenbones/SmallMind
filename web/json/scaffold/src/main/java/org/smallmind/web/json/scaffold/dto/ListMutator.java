@@ -35,42 +35,30 @@ package org.smallmind.web.json.scaffold.dto;
 import java.lang.reflect.Method;
 import java.util.HashMap;
 import java.util.List;
-import org.smallmind.nutsnbolts.util.Mutation;
 import org.smallmind.nutsnbolts.util.MutationUtility;
 
 public class ListMutator {
 
-  public static <T, U> List<U> toEntityType (Class<U> entityClass, List<? extends T> dtoList)
+  public static <T, U> List<U> toEntityType (List<? extends T> dtoList)
     throws DtoPropertyException {
 
     if (dtoList == null) {
 
       return null;
     } else {
+
+      HashMap<Class<?>, Method> factoryMethodMap = new HashMap<>();
+
       try {
+        return MutationUtility.toList(dtoList, (dto) -> {
 
-        HashMap<Class<?>, Method> factoryMethodMap = new HashMap<>();
+          Method factoryMethod;
 
-        return MutationUtility.toList(dtoList, new Mutation<T, U>() {
-
-          @Override
-          public Class<U> getMutatedClass () {
-
-            return entityClass;
+          if ((factoryMethod = factoryMethodMap.get(dto.getClass())) == null) {
+            factoryMethodMap.put(dto.getClass(), factoryMethod = dto.getClass().getMethod("factory"));
           }
 
-          @Override
-          public U mutate (T dto)
-            throws Exception {
-
-            Method factoryMethod;
-
-            if ((factoryMethod = factoryMethodMap.get(dto.getClass())) == null) {
-              factoryMethodMap.put(dto.getClass(), factoryMethod = dto.getClass().getMethod("factory"));
-            }
-
-            return (U)factoryMethod.invoke(dto);
-          }
+          return (U)factoryMethod.invoke(dto);
         });
       } catch (Exception exception) {
         throw new DtoPropertyException(exception);
@@ -89,21 +77,7 @@ public class ListMutator {
 
         Method instanceMethod = dtoClass.getMethod("instance", entityClass);
 
-        return MutationUtility.toList(entityList, new Mutation<T, U>() {
-
-          @Override
-          public Class<U> getMutatedClass () {
-
-            return dtoClass;
-          }
-
-          @Override
-          public U mutate (T entity)
-            throws Exception {
-
-            return (U)instanceMethod.invoke(null, entity);
-          }
-        });
+        return MutationUtility.toList(entityList, (entity) -> (U)instanceMethod.invoke(null, entity));
       } catch (Exception exception) {
         throw new DtoPropertyException(exception);
       }

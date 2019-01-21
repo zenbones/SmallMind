@@ -68,9 +68,7 @@ public class ListDtoTranslator implements DtoTranslator {
     throws IOException {
 
     writer.write(LIST_MUTATOR_NAME);
-    writer.write(".toEntityType(");
-    writer.write(((TypeElement)processingEnvironment.getTypeUtils().asElement(((DeclaredType)entityFieldTypeMirror).getTypeArguments().get(0))).getQualifiedName().toString());
-    writer.write(".class, this.");
+    writer.write(".toEntityType(this.");
     writer.write(dtoFieldName);
     writer.write(")");
   }

@@ -33,31 +33,19 @@
 package org.smallmind.nutsnbolts.util;
 
 import java.lang.reflect.Array;
+import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
 
 public class MutationUtility {
 
-  public static <T, U> U[] toArray (T[] array, Mutation<? super T, U> mutation)
+  public static <T, U> U[] toArray (T[] array, Class<U> outType, Mutation<? super T, U> mutation)
     throws Exception {
 
-    if (array == null) {
-
-      return null;
-    } else {
-
-      U[] outArray = (U[])Array.newInstance(mutation.getMutatedClass(), array.length);
-      int index = 0;
-
-      for (T inType : array) {
-        outArray[index++] = mutation.mutate(inType);
-      }
-
-      return outArray;
-    }
+    return toArray(Arrays.asList(array), outType, mutation);
   }
 
-  public static <T, U> U[] toArray (List<T> list, Mutation<? super T, U> mutation)
+  public static <T, U> U[] toArray (List<T> list, Class<U> outType, Mutation<? super T, U> mutation)
     throws Exception {
 
     if (list == null) {
@@ -65,11 +53,11 @@ public class MutationUtility {
       return null;
     } else {
 
-      U[] outArray = (U[])Array.newInstance(mutation.getMutatedClass(), list.size());
+      U[] outArray = (U[])Array.newInstance(outType, list.size());
       int index = 0;
 
       for (T inType : list) {
-        outArray[index++] = mutation.mutate(inType);
+        outArray[index++] = mutation.apply(inType);
       }
 
       return outArray;
@@ -79,19 +67,7 @@ public class MutationUtility {
   public static <T, U> List<U> toList (T[] array, Mutation<? super T, U> mutation)
     throws Exception {
 
-    if (array == null) {
-
-      return null;
-    } else {
-
-      LinkedList<U> outList = new LinkedList<>();
-
-      for (T inType : array) {
-        outList.add(mutation.mutate(inType));
-      }
-
-      return outList;
-    }
+    return toList(Arrays.asList(array), mutation);
   }
 
   public static <T, U> List<U> toList (List<T> list, Mutation<? super T, U> mutation)
@@ -105,7 +81,7 @@ public class MutationUtility {
       LinkedList<U> outList = new LinkedList<>();
 
       for (T inType : list) {
-        outList.add(mutation.mutate(inType));
+        outList.add(mutation.apply(inType));
       }
 
       return outList;
