@@ -53,9 +53,9 @@ public class PooledPreparedStatementCache implements StatementEventListener {
 
     this.maxStatements = maxStatements;
 
-    timeMap = new TreeMap<TimeKey, String>();
-    argumentMap = new HashMap<ArgumentKey, LinkedList<String>>();
-    statementMap = new HashMap<String, StatementWrapper>();
+    timeMap = new TreeMap<>();
+    argumentMap = new HashMap<>();
+    statementMap = new HashMap<>();
   }
 
   public synchronized PreparedStatement cachePreparedStatement (Object[] args, PooledPreparedStatement pooledStatement) {
