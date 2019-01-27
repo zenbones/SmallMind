@@ -57,9 +57,11 @@ public abstract class TimestampedJPADurable<I extends Serializable & Comparable<
     return created;
   }
 
-  public synchronized void setCreated (Date created) {
+  public synchronized D setCreated (Date created) {
 
     this.created = created;
+
+    return (D)this;
   }
 
   @UpdateTimestamp
@@ -70,9 +72,11 @@ public abstract class TimestampedJPADurable<I extends Serializable & Comparable<
     return lastUpdated;
   }
 
-  public synchronized void setLastUpdated (Date lastUpdated) {
+  public synchronized D setLastUpdated (Date lastUpdated) {
 
     this.lastUpdated = lastUpdated;
+
+    return (D)this;
   }
 
   @Override
