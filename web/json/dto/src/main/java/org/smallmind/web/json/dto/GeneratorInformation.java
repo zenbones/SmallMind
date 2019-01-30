@@ -41,6 +41,8 @@ import java.util.Map;
 import javax.annotation.processing.ProcessingEnvironment;
 import javax.lang.model.element.AnnotationMirror;
 import javax.lang.model.element.TypeElement;
+import javax.lang.model.type.ArrayType;
+import javax.lang.model.type.TypeKind;
 import javax.lang.model.type.TypeMirror;
 import org.smallmind.nutsnbolts.apt.AptUtility;
 import org.smallmind.nutsnbolts.lang.UnknownSwitchCaseException;
@@ -116,7 +118,16 @@ public class GeneratorInformation {
     argumentTypeMirrorList.toArray(argumentTypeMirrors);
 
     try {
-      return processingEnvironment.getTypeUtils().getDeclaredType((TypeElement)processingEnvironment.getTypeUtils().asElement(baseTypeMirror), argumentTypeMirrors);
+      if (TypeKind.ARRAY.equals(baseTypeMirror.getKind())) {
+        if (argumentTypeMirrors.length > 0) {
+          throw new DtoDefinitionException("Illegal type definition in field(%s) of class(%s), array types can't have type arguments", fieldName, classElement);
+        }
+
+        return processingEnvironment.getTypeUtils().getArrayType(((ArrayType)baseTypeMirror).getComponentType());
+      } else {
+
+        return processingEnvironment.getTypeUtils().getDeclaredType((TypeElement)processingEnvironment.getTypeUtils().asElement(baseTypeMirror), argumentTypeMirrors);
+      }
     } catch (Exception exception) {
       throw new DtoDefinitionException(exception, "Illegal type definition in field(%s) of class(%s)", fieldName, classElement);
     }
