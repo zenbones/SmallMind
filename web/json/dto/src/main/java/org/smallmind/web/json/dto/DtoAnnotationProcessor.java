@@ -141,7 +141,7 @@ public class DtoAnnotationProcessor extends AbstractProcessor {
               processOut(generatorInformation, usefulTypeMirrors, classElement, nearestDtoSuperclass, unfulfilledPurpose, new PropertyLexicon());
             }
 
-            if (visibilityTracker.hasNoPurpose(classElement)) {
+            if (visibilityTracker.hasNoPurpose(classElement) && (!classElement.getModifiers().contains(Modifier.ABSTRACT))) {
               throw new DtoDefinitionException("The class(%s) was annotated as @%s but contained no properties", classElement.getQualifiedName(), DtoGenerator.class.getSimpleName());
             } else {
 
