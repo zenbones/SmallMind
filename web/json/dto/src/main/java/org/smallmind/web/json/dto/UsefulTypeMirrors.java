@@ -36,18 +36,23 @@ import java.util.List;
 import javax.annotation.processing.ProcessingEnvironment;
 import javax.lang.model.type.TypeMirror;
 import javax.validation.constraints.NotNull;
+import com.fasterxml.jackson.databind.JsonNode;
 
 public class UsefulTypeMirrors {
 
   private final TypeMirror dtoPropertyTypeMirror;
-  private final TypeMirror listTypeMirror;
   private final TypeMirror notNullTypeMirror;
+  private final TypeMirror listTypeMirror;
+  private final TypeMirror jsonNodeTypeMirror;
+  private final TypeMirror objectTypeMirror;
 
   public UsefulTypeMirrors (ProcessingEnvironment processingEnvironment) {
 
     dtoPropertyTypeMirror = processingEnvironment.getElementUtils().getTypeElement(DtoProperty.class.getName()).asType();
-    listTypeMirror = processingEnvironment.getElementUtils().getTypeElement(List.class.getName()).asType();
     notNullTypeMirror = processingEnvironment.getElementUtils().getTypeElement(NotNull.class.getName()).asType();
+    listTypeMirror = processingEnvironment.getElementUtils().getTypeElement(List.class.getName()).asType();
+    jsonNodeTypeMirror = processingEnvironment.getElementUtils().getTypeElement(JsonNode.class.getName()).asType();
+    objectTypeMirror = processingEnvironment.getElementUtils().getTypeElement(Object.class.getName()).asType();
   }
 
   public TypeMirror getDtoPropertyTypeMirror () {
@@ -55,13 +60,23 @@ public class UsefulTypeMirrors {
     return dtoPropertyTypeMirror;
   }
 
+  public TypeMirror getNotNullTypeMirror () {
+
+    return notNullTypeMirror;
+  }
+
   public TypeMirror getListTypeMirror () {
 
     return listTypeMirror;
   }
 
-  public TypeMirror getNotNullTypeMirror () {
+  public TypeMirror getJsonNodeTypeMirror () {
 
-    return notNullTypeMirror;
+    return jsonNodeTypeMirror;
+  }
+
+  public TypeMirror getObjectTypeMirror () {
+
+    return objectTypeMirror;
   }
 }

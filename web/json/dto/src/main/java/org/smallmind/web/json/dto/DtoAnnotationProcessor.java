@@ -255,6 +255,8 @@ public class DtoAnnotationProcessor extends AbstractProcessor {
           writer.write("import javax.xml.bind.annotation.XmlRootElement;");
           writer.newLine();
         }
+        writer.write("import javax.xml.bind.annotation.XmlAnyElement;");
+        writer.newLine();
         writer.write("import javax.xml.bind.annotation.adapters.XmlJavaTypeAdapter;");
         writer.newLine();
         if (!matchingSubClassList.isEmpty()) {
@@ -547,7 +549,7 @@ public class DtoAnnotationProcessor extends AbstractProcessor {
           writer.write("  // virtual getters and setters");
           for (Map.Entry<String, PropertyInformation> propertyInformationEntry : propertyLexicon.getVirtualMap().entrySet()) {
             writer.newLine();
-            writeGettersAndSetters(writer, classElement, purpose, direction, propertyInformationEntry);
+            writeGettersAndSetters(writer, usefulTypeMirrors, classElement, purpose, direction, propertyInformationEntry);
           }
         }
 
@@ -557,7 +559,7 @@ public class DtoAnnotationProcessor extends AbstractProcessor {
           writer.write("  // native getters and setters");
           for (Map.Entry<String, PropertyInformation> propertyInformationEntry : propertyLexicon.getRealMap().entrySet()) {
             writer.newLine();
-            writeGettersAndSetters(writer, classElement, purpose, direction, propertyInformationEntry);
+            writeGettersAndSetters(writer, usefulTypeMirrors, classElement, purpose, direction, propertyInformationEntry);
           }
         }
 
@@ -608,13 +610,16 @@ public class DtoAnnotationProcessor extends AbstractProcessor {
     }
   }
 
-  private void writeGettersAndSetters (BufferedWriter writer, TypeElement classElement, String purpose, Direction direction, Map.Entry<String, PropertyInformation> propertyInformationEntry)
+  private void writeGettersAndSetters (BufferedWriter writer, UsefulTypeMirrors usefulTypeMirrors, TypeElement classElement, String purpose, Direction direction, Map.Entry<String, PropertyInformation> propertyInformationEntry)
     throws IOException {
 
     if (propertyInformationEntry.getValue().getAdapter() != null) {
       writer.write("  @XmlJavaTypeAdapter(");
       writer.write(propertyInformationEntry.getValue().getAdapter().toString());
       writer.write(".class)");
+      writer.newLine();
+    } else if (usefulTypeMirrors.getJsonNodeTypeMirror().equals(propertyInformationEntry.getValue().getType()) || usefulTypeMirrors.getObjectTypeMirror().equals(propertyInformationEntry.getValue().getType())) {
+      writer.write("  @XmlAnyElement");
       writer.newLine();
     }
     writer.write("  @XmlElement(name = \"");
