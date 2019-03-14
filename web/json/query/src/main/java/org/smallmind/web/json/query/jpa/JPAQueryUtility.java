@@ -43,6 +43,7 @@ import javax.persistence.criteria.Predicate;
 import javax.persistence.criteria.Root;
 import org.smallmind.nutsnbolts.lang.UnknownSwitchCaseException;
 import org.smallmind.web.json.query.NoneProduct;
+import org.smallmind.web.json.query.OperandType;
 import org.smallmind.web.json.query.Product;
 import org.smallmind.web.json.query.SomeProduct;
 import org.smallmind.web.json.query.Sort;
@@ -52,17 +53,11 @@ import org.smallmind.web.json.query.WhereConjunction;
 import org.smallmind.web.json.query.WhereCriterion;
 import org.smallmind.web.json.query.WhereField;
 import org.smallmind.web.json.query.WhereFieldTransformer;
-import org.smallmind.web.json.query.WhereOperandTransformer;
 import org.smallmind.web.json.query.WherePath;
 
 public class JPAQueryUtility {
 
   public static Product<Root<?>, Predicate> apply (CriteriaBuilder criteriaBuilder, Where where, WhereFieldTransformer<Root<?>, Path<?>> fieldTransformer) {
-
-    return apply(criteriaBuilder, where, fieldTransformer, WhereOperandTransformer.instance());
-  }
-
-  public static Product<Root<?>, Predicate> apply (CriteriaBuilder criteriaBuilder, Where where, WhereFieldTransformer<Root<?>, Path<?>> fieldTransformer, WhereOperandTransformer operandTransformer) {
 
     if (where == null) {
 
@@ -72,7 +67,7 @@ public class JPAQueryUtility {
       Set<Root<?>> rootSet = new HashSet<>();
       Predicate predicate;
 
-      if ((predicate = walkConjunction(criteriaBuilder, rootSet, where.getRootConjunction(), fieldTransformer, operandTransformer)) == null) {
+      if ((predicate = walkConjunction(criteriaBuilder, rootSet, where.getRootConjunction(), fieldTransformer)) == null) {
 
         return NoneProduct.none();
       }
@@ -81,7 +76,7 @@ public class JPAQueryUtility {
     }
   }
 
-  private static Predicate walkConjunction (CriteriaBuilder criteriaBuilder, Set<Root<?>> rootSet, WhereConjunction whereConjunction, WhereFieldTransformer<Root<?>, Path<?>> fieldTransformer, WhereOperandTransformer operandTransformer) {
+  private static Predicate walkConjunction (CriteriaBuilder criteriaBuilder, Set<Root<?>> rootSet, WhereConjunction whereConjunction, WhereFieldTransformer<Root<?>, Path<?>> fieldTransformer) {
 
     if ((whereConjunction == null) || whereConjunction.isEmpty()) {
 
@@ -96,12 +91,12 @@ public class JPAQueryUtility {
 
           Predicate walkedPredicate;
 
-          if ((walkedPredicate = walkConjunction(criteriaBuilder, rootSet, (WhereConjunction)whereCriterion, fieldTransformer, operandTransformer)) != null) {
+          if ((walkedPredicate = walkConjunction(criteriaBuilder, rootSet, (WhereConjunction)whereCriterion, fieldTransformer)) != null) {
             predicateList.add(walkedPredicate);
           }
           break;
         case FIELD:
-          predicateList.add(walkField(criteriaBuilder, rootSet, (WhereField)whereCriterion, fieldTransformer, operandTransformer));
+          predicateList.add(walkField(criteriaBuilder, rootSet, (WhereField)whereCriterion, fieldTransformer));
           break;
         default:
           throw new UnknownSwitchCaseException(whereCriterion.getCriterionType().name());
@@ -127,17 +122,17 @@ public class JPAQueryUtility {
     }
   }
 
-  private static Predicate walkField (CriteriaBuilder criteriaBuilder, Set<Root<?>> rootSet, WhereField whereField, WhereFieldTransformer<Root<?>, Path<?>> fieldTransformer, WhereOperandTransformer operandTransformer) {
+  private static Predicate walkField (CriteriaBuilder criteriaBuilder, Set<Root<?>> rootSet, WhereField whereField, WhereFieldTransformer<Root<?>, Path<?>> fieldTransformer) {
 
-    Object fieldValue = operandTransformer.transform(whereField.getOperand());
+    Object fieldValue = whereField.getOperand().getValue();
     WherePath<Root<?>, Path<?>> wherePath = fieldTransformer.transform(whereField.getEntity(), whereField.getName());
 
     rootSet.add(((JPAWherePath)wherePath).getRoot());
     switch (whereField.getOperator()) {
       case LT:
-        return Date.class.equals(whereField.getOperand().getTargetClass()) ? criteriaBuilder.lessThan((Path<Date>)wherePath.getPath(), (Date)fieldValue) : criteriaBuilder.lt((Path<Number>)wherePath.getPath(), (Number)fieldValue);
+        return OperandType.DATE.equals(whereField.getOperand().getOperandType()) ? criteriaBuilder.lessThan((Path<Date>)wherePath.getPath(), (Date)fieldValue) : criteriaBuilder.lt((Path<Number>)wherePath.getPath(), (Number)fieldValue);
       case LE:
-        return Date.class.equals(whereField.getOperand().getTargetClass()) ? criteriaBuilder.lessThanOrEqualTo((Path<Date>)wherePath.getPath(), (Date)fieldValue) : criteriaBuilder.le((Path<Number>)wherePath.getPath(), (Number)fieldValue);
+        return OperandType.DATE.equals(whereField.getOperand().getOperandType()) ? criteriaBuilder.lessThanOrEqualTo((Path<Date>)wherePath.getPath(), (Date)fieldValue) : criteriaBuilder.le((Path<Number>)wherePath.getPath(), (Number)fieldValue);
       case EQ:
         if (fieldValue == null) {
           return criteriaBuilder.isNull(wherePath.getPath());
@@ -151,9 +146,9 @@ public class JPAQueryUtility {
           return criteriaBuilder.notEqual(wherePath.getPath(), fieldValue);
         }
       case GE:
-        return Date.class.equals(whereField.getOperand().getTargetClass()) ? criteriaBuilder.greaterThanOrEqualTo((Path<Date>)wherePath.getPath(), (Date)fieldValue) : criteriaBuilder.ge((Path<Number>)wherePath.getPath(), (Number)fieldValue);
+        return OperandType.DATE.equals(whereField.getOperand().getOperandType()) ? criteriaBuilder.greaterThanOrEqualTo((Path<Date>)wherePath.getPath(), (Date)fieldValue) : criteriaBuilder.ge((Path<Number>)wherePath.getPath(), (Number)fieldValue);
       case GT:
-        return Date.class.equals(whereField.getOperand().getTargetClass()) ? criteriaBuilder.greaterThan((Path<Date>)wherePath.getPath(), (Date)fieldValue) : criteriaBuilder.gt((Path<Number>)wherePath.getPath(), (Number)fieldValue);
+        return OperandType.DATE.equals(whereField.getOperand().getOperandType()) ? criteriaBuilder.greaterThan((Path<Date>)wherePath.getPath(), (Date)fieldValue) : criteriaBuilder.gt((Path<Number>)wherePath.getPath(), (Number)fieldValue);
       case LIKE:
         return criteriaBuilder.like((Path<String>)wherePath.getPath(), (String)fieldValue);
       case UNLIKE:

@@ -46,32 +46,21 @@ import org.smallmind.web.json.query.WhereConjunction;
 import org.smallmind.web.json.query.WhereCriterion;
 import org.smallmind.web.json.query.WhereField;
 import org.smallmind.web.json.query.WhereFieldTransformer;
-import org.smallmind.web.json.query.WhereOperandTransformer;
 
 public class HibernateQueryUtility {
 
   public static DetachedCriteria apply (DetachedCriteria detachedCriteria, Where where) {
 
-    return apply(detachedCriteria, where, null, WhereOperandTransformer.instance());
+    return apply(detachedCriteria, where, null);
   }
 
   public static DetachedCriteria apply (DetachedCriteria detachedCriteria, Where where, WhereFieldTransformer<Void, Void> fieldTransformer) {
-
-    return apply(detachedCriteria, where, fieldTransformer, WhereOperandTransformer.instance());
-  }
-
-  public static DetachedCriteria apply (DetachedCriteria detachedCriteria, Where where, WhereOperandTransformer operandTransformer) {
-
-    return apply(detachedCriteria, where, null, operandTransformer);
-  }
-
-  public static DetachedCriteria apply (DetachedCriteria detachedCriteria, Where where, WhereFieldTransformer<Void, Void> fieldTransformer, WhereOperandTransformer operandTransformer) {
 
     if (where != null) {
 
       Criterion walkedCriterion;
 
-      if ((walkedCriterion = walkConjunction(where.getRootConjunction(), fieldTransformer, operandTransformer)) != null) {
+      if ((walkedCriterion = walkConjunction(where.getRootConjunction(), fieldTransformer)) != null) {
         return detachedCriteria.add(walkedCriterion);
       }
     }
@@ -81,26 +70,16 @@ public class HibernateQueryUtility {
 
   public static Criteria apply (Criteria criteria, Where where) {
 
-    return apply(criteria, where, null, WhereOperandTransformer.instance());
+    return apply(criteria, where, null);
   }
 
   public static Criteria apply (Criteria criteria, Where where, WhereFieldTransformer<Void, Void> fieldTransformer) {
-
-    return apply(criteria, where, fieldTransformer, WhereOperandTransformer.instance());
-  }
-
-  public static Criteria apply (Criteria criteria, Where where, WhereOperandTransformer operandTransformer) {
-
-    return apply(criteria, where, null, operandTransformer);
-  }
-
-  public static Criteria apply (Criteria criteria, Where where, WhereFieldTransformer<Void, Void> fieldTransformer, WhereOperandTransformer operandTransformer) {
 
     if (where != null) {
 
       Criterion walkedCriterion;
 
-      if ((walkedCriterion = walkConjunction(where.getRootConjunction(), fieldTransformer, operandTransformer)) != null) {
+      if ((walkedCriterion = walkConjunction(where.getRootConjunction(), fieldTransformer)) != null) {
         return criteria.add(walkedCriterion);
       }
     }
@@ -108,7 +87,7 @@ public class HibernateQueryUtility {
     return criteria;
   }
 
-  private static Criterion walkConjunction (WhereConjunction whereConjunction, WhereFieldTransformer<Void, Void> fieldTransformer, WhereOperandTransformer operandTransformer) {
+  private static Criterion walkConjunction (WhereConjunction whereConjunction, WhereFieldTransformer<Void, Void> fieldTransformer) {
 
     if ((whereConjunction == null) || whereConjunction.isEmpty()) {
 
@@ -123,12 +102,12 @@ public class HibernateQueryUtility {
 
           Criterion walkedCriterion;
 
-          if ((walkedCriterion = walkConjunction((WhereConjunction)whereCriterion, fieldTransformer, operandTransformer)) != null) {
+          if ((walkedCriterion = walkConjunction((WhereConjunction)whereCriterion, fieldTransformer)) != null) {
             criterionList.add(walkedCriterion);
           }
           break;
         case FIELD:
-          criterionList.add(walkField((WhereField)whereCriterion, fieldTransformer, operandTransformer));
+          criterionList.add(walkField((WhereField)whereCriterion, fieldTransformer));
           break;
         default:
           throw new UnknownSwitchCaseException(whereCriterion.getCriterionType().name());
@@ -156,10 +135,10 @@ public class HibernateQueryUtility {
     }
   }
 
-  private static Criterion walkField (WhereField whereField, WhereFieldTransformer<Void, Void> fieldTransformer, WhereOperandTransformer operandTransformer) {
+  private static Criterion walkField (WhereField whereField, WhereFieldTransformer<Void, Void> fieldTransformer) {
 
     String fieldName = (fieldTransformer == null) ? whereField.getName() : fieldTransformer.transform(whereField.getEntity(), whereField.getName()).getField();
-    Object fieldValue = operandTransformer.transform(whereField.getOperand());
+    Object fieldValue = whereField.getOperand().getValue();
 
     switch (whereField.getOperator()) {
       case LT:

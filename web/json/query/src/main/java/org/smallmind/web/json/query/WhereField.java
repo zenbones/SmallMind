@@ -32,20 +32,15 @@
  */
 package org.smallmind.web.json.query;
 
-import javax.xml.bind.annotation.XmlAccessType;
-import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlElement;
-import javax.xml.bind.annotation.XmlElementRef;
-import javax.xml.bind.annotation.XmlElementRefs;
 import javax.xml.bind.annotation.XmlRootElement;
 import javax.xml.bind.annotation.XmlTransient;
 import javax.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
 
 @XmlRootElement(name = "field")
-@XmlAccessorType(XmlAccessType.PROPERTY)
-public class WhereField implements WhereCriterion {
+public class WhereField extends WhereCriterion {
 
-  private WhereOperand<?, ?> operand;
+  private WhereOperand<?> operand;
   private WhereOperator operator;
   private String entity;
   private String name;
@@ -106,15 +101,13 @@ public class WhereField implements WhereCriterion {
     this.name = name;
   }
 
-  @XmlElementRefs({@XmlElementRef(type = ArrayWhereOperand.class), @XmlElementRef(type = BooleanWhereOperand.class), @XmlElementRef(type = ByteWhereOperand.class), @XmlElementRef(type = CharacterWhereOperand.class),
-    @XmlElementRef(type = DateWhereOperand.class), @XmlElementRef(type = DoubleWhereOperand.class), @XmlElementRef(type = EnumWhereOperand.class), @XmlElementRef(type = FloatWhereOperand.class),
-    @XmlElementRef(type = IntegerWhereOperand.class), @XmlElementRef(type = LongWhereOperand.class), @XmlElementRef(type = ShortWhereOperand.class), @XmlElementRef(type = StringWhereOperand.class)})
-  public WhereOperand<?, ?> getOperand () {
+  @XmlElement(name = "operand")
+  public WhereOperand<?> getOperand () {
 
     return operand;
   }
 
-  public void setOperand (WhereOperand<?, ?> operand) {
+  public void setOperand (WhereOperand<?> operand) {
 
     this.operand = operand;
   }

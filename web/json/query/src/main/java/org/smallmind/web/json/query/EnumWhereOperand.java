@@ -1,28 +1,28 @@
 /*
  * Copyright (c) 2007, 2008, 2009, 2010, 2011, 2012, 2013, 2014, 2015, 2016, 2017, 2018, 2019 David Berkman
- * 
+ *
  * This file is part of the SmallMind Code Project.
- * 
+ *
  * The SmallMind Code Project is free software, you can redistribute
  * it and/or modify it under either, at your discretion...
- * 
+ *
  * 1) The terms of GNU Affero General Public License as published by the
  * Free Software Foundation, either version 3 of the License, or (at
  * your option) any later version.
- * 
+ *
  * ...or...
- * 
+ *
  * 2) The terms of the Apache License, Version 2.0.
- * 
+ *
  * The SmallMind Code Project is distributed in the hope that it will
  * be useful, but WITHOUT ANY WARRANTY; without even the implied warranty
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License or Apache License for more details.
- * 
+ *
  * You should have received a copy of the GNU Affero General Public License
  * and the Apache License along with the SmallMind Code Project. If not, see
  * <http://www.gnu.org/licenses/> or <http://www.apache.org/licenses/LICENSE-2.0>.
- * 
+ *
  * Additional permission under the GNU Affero GPL version 3 section 7
  * ------------------------------------------------------------------
  * If you modify this Program, or any covered work, by linking or
@@ -37,20 +37,19 @@ import javax.xml.bind.annotation.XmlRootElement;
 import javax.xml.bind.annotation.XmlTransient;
 
 @XmlRootElement(name = "enum")
-public class EnumWhereOperand<E extends Enum<E>> implements WhereOperand<String, Enum> {
+public class EnumWhereOperand<E extends Enum<E>> implements WhereOperand<E> {
 
-  private String value;
-  private String typeHint;
+  private E value;
+  private String hint;
 
   public EnumWhereOperand () {
 
   }
 
-  public EnumWhereOperand (String typeHint, E enumeration) {
+  public EnumWhereOperand (String hint, E value) {
 
-    this.typeHint = typeHint;
-
-    value = enumeration.name();
+    this.hint = hint;
+    this.value = value;
   }
 
   public static <E extends Enum<E>> EnumWhereOperand instance (String typeHint, E enumeration) {
@@ -60,29 +59,29 @@ public class EnumWhereOperand<E extends Enum<E>> implements WhereOperand<String,
 
   @Override
   @XmlTransient
-  public Class<Enum> getTargetClass () {
+  public OperandType getOperandType () {
 
-    return Enum.class;
+    return OperandType.ENUM;
   }
 
-  @XmlElement(name = "type", required = true)
-  public String getTypeHint () {
+  @XmlElement(name = "hint", required = true)
+  public String getHint () {
 
-    return typeHint;
+    return hint;
   }
 
-  public void setTypeHint (String typeHint) {
+  public void setHint (String hint) {
 
-    this.typeHint = typeHint;
+    this.hint = hint;
   }
 
   @XmlElement(name = "value", required = true)
-  public String getValue () {
+  public E getValue () {
 
     return value;
   }
 
-  public void setValue (String value) {
+  public void setValue (E value) {
 
     this.value = value;
   }

@@ -37,7 +37,7 @@ import javax.xml.bind.annotation.XmlRootElement;
 import javax.xml.bind.annotation.XmlTransient;
 
 @XmlRootElement(name = "character")
-public class CharacterWhereOperand implements WhereOperand<Character, Character> {
+public class CharacterWhereOperand implements WhereOperand<Character> {
 
   private Character value;
 
@@ -57,16 +57,9 @@ public class CharacterWhereOperand implements WhereOperand<Character, Character>
 
   @Override
   @XmlTransient
-  public Class<Character> getTargetClass () {
+  public OperandType getOperandType () {
 
-    return Character.class;
-  }
-
-  @Override
-  @XmlTransient
-  public String getTypeHint () {
-
-    return null;
+    return OperandType.CHARACTER;
   }
 
   @XmlElement(name = "value", required = true)

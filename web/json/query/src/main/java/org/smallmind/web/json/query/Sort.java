@@ -32,7 +32,6 @@
  */
 package org.smallmind.web.json.query;
 
-import java.io.Serializable;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
@@ -44,7 +43,7 @@ import javax.xml.bind.annotation.XmlTransient;
 
 @XmlRootElement(name = "sort")
 @XmlAccessorType(XmlAccessType.PROPERTY)
-public class Sort implements Serializable, WherePermissible<Sort> {
+public class Sort implements WherePermissible<Sort> {
 
   private HashSet<SortField> fieldSet;
 

@@ -32,9 +32,15 @@
  */
 package org.smallmind.web.json.query;
 
-import java.io.Serializable;
+import javax.xml.bind.annotation.XmlAccessType;
+import javax.xml.bind.annotation.XmlAccessorType;
+import javax.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
+import org.smallmind.web.json.scaffold.util.XmlPolymorphicSubClasses;
 
-public interface WhereCriterion extends Serializable {
+@XmlAccessorType(XmlAccessType.PROPERTY)
+@XmlJavaTypeAdapter(WhereConjunctionPolymorphicXmlAdapter.class)
+@XmlPolymorphicSubClasses({AndWhereConjunction.class, OrWhereConjunction.class, WhereField.class})
+public abstract class WhereCriterion {
 
-  CriterionType getCriterionType ();
+  public abstract CriterionType getCriterionType ();
 }

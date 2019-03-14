@@ -41,7 +41,7 @@ import javax.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
 
 @XmlRootElement(name = "field")
 @XmlAccessorType(XmlAccessType.PROPERTY)
-public class SortField implements Serializable {
+public class SortField {
 
   private SortDirection direction;
   private String entity;

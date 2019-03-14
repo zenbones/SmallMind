@@ -46,36 +46,25 @@ import org.smallmind.web.json.query.WhereConjunction;
 import org.smallmind.web.json.query.WhereCriterion;
 import org.smallmind.web.json.query.WhereField;
 import org.smallmind.web.json.query.WhereFieldTransformer;
-import org.smallmind.web.json.query.WhereOperandTransformer;
 import org.smallmind.web.json.query.WhereOperator;
 
 public class MorphiaQueryUtility {
 
   public static <T> Query<T> apply (Query<T> query, Where where) {
 
-    return apply(query, where, null, WhereOperandTransformer.instance());
-  }
-
-  public static <T> Query<T> apply (Query<T> query, Where where, WhereOperandTransformer operandTransformer) {
-
-    return apply(query, where, null, operandTransformer);
+    return apply(query, where, null);
   }
 
   public static <T> Query<T> apply (Query<T> query, Where where, WhereFieldTransformer<Void, Void> fieldTransformer) {
 
-    return apply(query, where, fieldTransformer, WhereOperandTransformer.instance());
-  }
-
-  public static <T> Query<T> apply (Query<T> query, Where where, WhereFieldTransformer<Void, Void> fieldTransformer, WhereOperandTransformer operandTransformer) {
-
     if (where != null) {
-      walkConjunction(query, where.getRootConjunction(), fieldTransformer, operandTransformer);
+      walkConjunction(query, where.getRootConjunction(), fieldTransformer);
     }
 
     return query;
   }
 
-  private static <T> Criteria walkConjunction (Query<T> query, WhereConjunction whereConjunction, WhereFieldTransformer<Void, Void> fieldTransformer, WhereOperandTransformer operandTransformer) {
+  private static <T> Criteria walkConjunction (Query<T> query, WhereConjunction whereConjunction, WhereFieldTransformer<Void, Void> fieldTransformer) {
 
     if ((whereConjunction == null) || whereConjunction.isEmpty()) {
 
@@ -90,12 +79,12 @@ public class MorphiaQueryUtility {
 
       switch (whereCriterion.getCriterionType()) {
         case CONJUNCTION:
-          if ((criteria = walkConjunction(query, (WhereConjunction)whereCriterion, fieldTransformer, operandTransformer)) != null) {
+          if ((criteria = walkConjunction(query, (WhereConjunction)whereCriterion, fieldTransformer)) != null) {
             criteriaList.add(criteria);
           }
           break;
         case FIELD:
-          if ((criteria = walkField(query, (WhereField)whereCriterion, fieldTransformer, operandTransformer)) != null) {
+          if ((criteria = walkField(query, (WhereField)whereCriterion, fieldTransformer)) != null) {
             criteriaList.add(criteria);
           }
           break;
@@ -125,10 +114,10 @@ public class MorphiaQueryUtility {
     }
   }
 
-  private static <T> Criteria walkField (Query<T> query, WhereField whereField, WhereFieldTransformer<Void, Void> fieldTransformer, WhereOperandTransformer operandTransformer) {
+  private static <T> Criteria walkField (Query<T> query, WhereField whereField, WhereFieldTransformer<Void, Void> fieldTransformer) {
 
     FieldEnd<? extends Criteria> fieldEnd = query.criteria((fieldTransformer == null) ? whereField.getName() : fieldTransformer.transform(whereField.getEntity(), whereField.getName()).getField());
-    Object fieldValue = operandTransformer.transform(whereField.getOperand());
+    Object fieldValue = whereField.getOperand().getValue();
 
     switch (whereField.getOperator()) {
       case LT:

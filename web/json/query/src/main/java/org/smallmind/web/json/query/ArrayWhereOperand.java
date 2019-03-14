@@ -33,7 +33,6 @@
 package org.smallmind.web.json.query;
 
 import java.time.ZonedDateTime;
-import java.util.Date;
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlRootElement;
 import javax.xml.bind.annotation.XmlTransient;
@@ -42,20 +41,20 @@ import org.smallmind.nutsnbolts.json.ZonedDateTimeXmlAdapter;
 import org.smallmind.nutsnbolts.lang.UnknownSwitchCaseException;
 
 @XmlRootElement(name = "array")
-public class ArrayWhereOperand implements WhereOperand<Object[], Object[]> {
+public class ArrayWhereOperand implements WhereOperand<Object[]> {
 
   private static final ZonedDateTimeXmlAdapter ZONED_DATE_TIME_XML_ADAPTER = new ZonedDateTimeXmlAdapter();
 
   private Object[] value;
-  private String typeHint;
+  private String hint;
 
   public ArrayWhereOperand () {
 
   }
 
-  public ArrayWhereOperand (String typeHint, Object[] value) {
+  public ArrayWhereOperand (String hint, Object[] value) {
 
-    this.typeHint = typeHint;
+    this.hint = hint;
     this.value = value;
   }
 
@@ -66,46 +65,20 @@ public class ArrayWhereOperand implements WhereOperand<Object[], Object[]> {
 
   @Override
   @XmlTransient
-  public Class<? extends Object[]> getTargetClass () {
+  public OperandType getOperandType () {
 
-    switch (typeHint) {
-      case "boolean":
-        return Boolean[].class;
-      case "byte":
-        return Byte[].class;
-      case "character":
-        return Character[].class;
-      case "date":
-        return Date[].class;
-      case "double":
-        return Double[].class;
-      case "float":
-        return Float[].class;
-      case "integer":
-        return Integer[].class;
-      case "long":
-        return Long[].class;
-      case "short":
-        return Short[].class;
-      case "string":
-        return String[].class;
-      case "enum":
-        return Enum[].class;
-      default:
-        throw new UnknownSwitchCaseException(typeHint);
-    }
+    return OperandType.ARRAY;
   }
 
-  @Override
-  @XmlElement(name = "type", required = true)
-  public String getTypeHint () {
+  @XmlElement(name = "hint")
+  public String getHint () {
 
-    return typeHint;
+    return hint;
   }
 
-  public void setTypeHint (String typeHint) {
+  public void setHint (String hint) {
 
-    this.typeHint = typeHint;
+    this.hint = hint;
   }
 
   @XmlElement(name = "value", required = true)
@@ -117,7 +90,7 @@ public class ArrayWhereOperand implements WhereOperand<Object[], Object[]> {
       return null;
     }
 
-    switch (typeHint) {
+    switch (hint) {
       case "boolean":
 
         Boolean[] booleanArray = new Boolean[value.length];
@@ -215,7 +188,7 @@ public class ArrayWhereOperand implements WhereOperand<Object[], Object[]> {
 
         return value;
       default:
-        throw new UnknownSwitchCaseException(typeHint);
+        throw new UnknownSwitchCaseException(hint);
     }
   }
 

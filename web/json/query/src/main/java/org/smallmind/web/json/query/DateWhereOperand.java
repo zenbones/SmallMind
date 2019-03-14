@@ -33,7 +33,6 @@
 package org.smallmind.web.json.query;
 
 import java.time.ZonedDateTime;
-import java.util.Date;
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlRootElement;
 import javax.xml.bind.annotation.XmlTransient;
@@ -41,7 +40,7 @@ import javax.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
 import org.smallmind.nutsnbolts.json.ZonedDateTimeXmlAdapter;
 
 @XmlRootElement(name = "date")
-public class DateWhereOperand implements WhereOperand<ZonedDateTime, Date> {
+public class DateWhereOperand implements WhereOperand<ZonedDateTime> {
 
   private ZonedDateTime value;
 
@@ -61,16 +60,9 @@ public class DateWhereOperand implements WhereOperand<ZonedDateTime, Date> {
 
   @Override
   @XmlTransient
-  public Class<Date> getTargetClass () {
+  public OperandType getOperandType () {
 
-    return Date.class;
-  }
-
-  @Override
-  @XmlTransient
-  public String getTypeHint () {
-
-    return null;
+    return OperandType.DATE;
   }
 
   @XmlElement(name = "value", required = true)

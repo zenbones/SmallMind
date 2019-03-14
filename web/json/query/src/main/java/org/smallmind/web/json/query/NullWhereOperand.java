@@ -32,7 +32,11 @@
  */
 package org.smallmind.web.json.query;
 
-public class NullWhereOperand implements WhereOperand<Void, Void> {
+import javax.xml.bind.annotation.XmlRootElement;
+import javax.xml.bind.annotation.XmlTransient;
+
+@XmlRootElement(name = "null")
+public class NullWhereOperand implements WhereOperand<Void> {
 
   private static final NullWhereOperand INSTANCE = new NullWhereOperand();
 
@@ -42,15 +46,10 @@ public class NullWhereOperand implements WhereOperand<Void, Void> {
   }
 
   @Override
-  public Class<? extends Void> getTargetClass () {
+  @XmlTransient
+  public OperandType getOperandType () {
 
-    return Void.class;
-  }
-
-  @Override
-  public String getTypeHint () {
-
-    return null;
+    return OperandType.NULL;
   }
 
   @Override

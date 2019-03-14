@@ -37,7 +37,7 @@ import javax.xml.bind.annotation.XmlRootElement;
 import javax.xml.bind.annotation.XmlTransient;
 
 @XmlRootElement(name = "long")
-public class LongWhereOperand implements WhereOperand<Long, Long> {
+public class LongWhereOperand implements WhereOperand<Long> {
 
   private Long value;
 
@@ -57,16 +57,9 @@ public class LongWhereOperand implements WhereOperand<Long, Long> {
 
   @Override
   @XmlTransient
-  public Class<Long> getTargetClass () {
+  public OperandType getOperandType () {
 
-    return Long.class;
-  }
-
-  @Override
-  @XmlTransient
-  public String getTypeHint () {
-
-    return null;
+    return OperandType.LONG;
   }
 
   @XmlElement(name = "value", required = true)

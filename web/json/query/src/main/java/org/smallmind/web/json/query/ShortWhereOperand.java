@@ -37,7 +37,7 @@ import javax.xml.bind.annotation.XmlRootElement;
 import javax.xml.bind.annotation.XmlTransient;
 
 @XmlRootElement(name = "short")
-public class ShortWhereOperand implements WhereOperand<Short, Short> {
+public class ShortWhereOperand implements WhereOperand<Short> {
 
   private Short value;
 
@@ -57,16 +57,9 @@ public class ShortWhereOperand implements WhereOperand<Short, Short> {
 
   @Override
   @XmlTransient
-  public Class<Short> getTargetClass () {
+  public OperandType getOperandType () {
 
-    return Short.class;
-  }
-
-  @Override
-  @XmlTransient
-  public String getTypeHint () {
-
-    return null;
+    return OperandType.SHORT;
   }
 
   @XmlElement(name = "value", required = true)

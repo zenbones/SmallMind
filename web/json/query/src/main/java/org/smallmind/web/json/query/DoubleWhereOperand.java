@@ -37,7 +37,7 @@ import javax.xml.bind.annotation.XmlRootElement;
 import javax.xml.bind.annotation.XmlTransient;
 
 @XmlRootElement(name = "double")
-public class DoubleWhereOperand implements WhereOperand<Double, Double> {
+public class DoubleWhereOperand implements WhereOperand<Double> {
 
   private Double value;
 
@@ -57,16 +57,9 @@ public class DoubleWhereOperand implements WhereOperand<Double, Double> {
 
   @Override
   @XmlTransient
-  public Class<Double> getTargetClass () {
+  public OperandType getOperandType () {
 
-    return Double.class;
-  }
-
-  @Override
-  @XmlTransient
-  public String getTypeHint () {
-
-    return null;
+    return OperandType.DOUBLE;
   }
 
   @XmlElement(name = "value", required = true)

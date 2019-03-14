@@ -32,20 +32,17 @@
  */
 package org.smallmind.web.json.query;
 
-import java.io.Serializable;
 import java.util.HashSet;
 import java.util.Set;
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlElement;
-import javax.xml.bind.annotation.XmlElementRef;
-import javax.xml.bind.annotation.XmlElementRefs;
 import javax.xml.bind.annotation.XmlRootElement;
 import javax.xml.bind.annotation.XmlTransient;
 
 @XmlRootElement(name = "where")
 @XmlAccessorType(XmlAccessType.PROPERTY)
-public class Where implements Serializable, WherePermissible<Where> {
+public class Where implements WherePermissible<Where> {
 
   private WhereConjunction rootConjunction;
 
@@ -87,7 +84,6 @@ public class Where implements Serializable, WherePermissible<Where> {
   }
 
   @XmlElement(name = "root")
-  @XmlElementRefs({@XmlElementRef(type = AndWhereConjunction.class), @XmlElementRef(type = OrWhereConjunction.class)})
   public WhereConjunction getRootConjunction () {
 
     return rootConjunction;

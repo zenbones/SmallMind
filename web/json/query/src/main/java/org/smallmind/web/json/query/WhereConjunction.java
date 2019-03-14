@@ -35,15 +35,10 @@ package org.smallmind.web.json.query;
 import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
-import javax.xml.bind.annotation.XmlAccessType;
-import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlElement;
-import javax.xml.bind.annotation.XmlElementRef;
-import javax.xml.bind.annotation.XmlElementRefs;
 import javax.xml.bind.annotation.XmlTransient;
 
-@XmlAccessorType(XmlAccessType.PROPERTY)
-public abstract class WhereConjunction implements WhereCriterion {
+public abstract class WhereConjunction extends WhereCriterion {
 
   private List<WhereCriterion> criterionList;
 
@@ -78,7 +73,6 @@ public abstract class WhereConjunction implements WhereCriterion {
   }
 
   @XmlElement(name = "criteria")
-  @XmlElementRefs({@XmlElementRef(type = WhereField.class), @XmlElementRef(type = AndWhereConjunction.class), @XmlElementRef(type = OrWhereConjunction.class)})
   public synchronized WhereCriterion[] getCriteria () {
 
     WhereCriterion[] criteria = new WhereCriterion[criterionList == null ? 0 : criterionList.size()];

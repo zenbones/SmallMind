@@ -55,17 +55,11 @@ import org.smallmind.web.json.query.WhereConjunction;
 import org.smallmind.web.json.query.WhereCriterion;
 import org.smallmind.web.json.query.WhereField;
 import org.smallmind.web.json.query.WhereFieldTransformer;
-import org.smallmind.web.json.query.WhereOperandTransformer;
 import org.smallmind.web.json.query.WherePath;
 
 public class QueryUtility {
 
   public static Product<Path<?>, Predicate> apply (Where where, WhereFieldTransformer<Path<?>, Path<?>> fieldTransformer) {
-
-    return apply(where, fieldTransformer, WhereOperandTransformer.instance());
-  }
-
-  public static Product<Path<?>, Predicate> apply (Where where, WhereFieldTransformer<Path<?>, Path<?>> fieldTransformer, WhereOperandTransformer operandTransformer) {
 
     if (where == null) {
 
@@ -75,7 +69,7 @@ public class QueryUtility {
       Set<Path<?>> rootSet = new HashSet<>();
       Predicate predicate;
 
-      if ((predicate = walkConjunction(rootSet, where.getRootConjunction(), fieldTransformer, operandTransformer)) == null) {
+      if ((predicate = walkConjunction(rootSet, where.getRootConjunction(), fieldTransformer)) == null) {
 
         return NoneProduct.none();
       }
@@ -84,7 +78,7 @@ public class QueryUtility {
     }
   }
 
-  private static Predicate walkConjunction (Set<Path<?>> rootSet, WhereConjunction whereConjunction, WhereFieldTransformer<Path<?>, Path<?>> fieldTransformer, WhereOperandTransformer operandTransformer) {
+  private static Predicate walkConjunction (Set<Path<?>> rootSet, WhereConjunction whereConjunction, WhereFieldTransformer<Path<?>, Path<?>> fieldTransformer) {
 
     if ((whereConjunction == null) || whereConjunction.isEmpty()) {
 
@@ -99,12 +93,12 @@ public class QueryUtility {
 
       switch (whereCriterion.getCriterionType()) {
         case CONJUNCTION:
-          if ((walkedPredicate = walkConjunction(rootSet, (WhereConjunction)whereCriterion, fieldTransformer, operandTransformer)) != null) {
+          if ((walkedPredicate = walkConjunction(rootSet, (WhereConjunction)whereCriterion, fieldTransformer)) != null) {
             predicateList.add(walkedPredicate);
           }
           break;
         case FIELD:
-          if ((walkedPredicate = walkField(rootSet, (WhereField)whereCriterion, fieldTransformer, operandTransformer)) != null) {
+          if ((walkedPredicate = walkField(rootSet, (WhereField)whereCriterion, fieldTransformer)) != null) {
             predicateList.add(walkedPredicate);
           }
           break;
@@ -137,9 +131,9 @@ public class QueryUtility {
     }
   }
 
-  private static Predicate walkField (Set<Path<?>> rootSet, WhereField whereField, WhereFieldTransformer<Path<?>, Path<?>> fieldTransformer, WhereOperandTransformer operandTransformer) {
+  private static Predicate walkField (Set<Path<?>> rootSet, WhereField whereField, WhereFieldTransformer<Path<?>, Path<?>> fieldTransformer) {
 
-    Object fieldValue = operandTransformer.transform(whereField.getOperand());
+    Object fieldValue = whereField.getOperand().getValue();
     WherePath<Path<?>, Path<?>> wherePath = fieldTransformer.transform(whereField.getEntity(), whereField.getName());
 
     rootSet.add(wherePath.getRoot());

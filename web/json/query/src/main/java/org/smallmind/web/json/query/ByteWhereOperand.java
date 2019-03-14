@@ -37,7 +37,7 @@ import javax.xml.bind.annotation.XmlRootElement;
 import javax.xml.bind.annotation.XmlTransient;
 
 @XmlRootElement(name = "byte")
-public class ByteWhereOperand implements WhereOperand<Byte, Byte> {
+public class ByteWhereOperand implements WhereOperand<Byte> {
 
   private Byte value;
 
@@ -57,16 +57,9 @@ public class ByteWhereOperand implements WhereOperand<Byte, Byte> {
 
   @Override
   @XmlTransient
-  public Class<Byte> getTargetClass () {
+  public OperandType getOperandType () {
 
-    return Byte.class;
-  }
-
-  @Override
-  @XmlTransient
-  public String getTypeHint () {
-
-    return null;
+    return OperandType.BYTE;
   }
 
   @XmlElement(name = "value", required = true)

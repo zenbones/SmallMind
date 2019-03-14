@@ -32,44 +32,7 @@
  */
 package org.smallmind.web.json.query;
 
-import javax.xml.bind.annotation.XmlElement;
-import javax.xml.bind.annotation.XmlRootElement;
-import javax.xml.bind.annotation.XmlTransient;
+public enum OperandType {
 
-@XmlRootElement(name = "string")
-public class StringWhereOperand implements WhereOperand<String> {
-
-  private String value;
-
-  public StringWhereOperand () {
-
-  }
-
-  public StringWhereOperand (String value) {
-
-    this.value = value;
-  }
-
-  public static StringWhereOperand instance (String value) {
-
-    return new StringWhereOperand(value);
-  }
-
-  @Override
-  @XmlTransient
-  public OperandType getOperandType () {
-
-    return OperandType.STRING;
-  }
-
-  @XmlElement(name = "value", required = true)
-  public String getValue () {
-
-    return value;
-  }
-
-  public void setValue (String value) {
-
-    this.value = value;
-  }
+  ARRAY, BOOLEAN, BYTE, CHARACTER, DATE, DOUBLE, ENUM, FLOAT, INTEGER, LONG, NULL, SHORT, STRING
 }

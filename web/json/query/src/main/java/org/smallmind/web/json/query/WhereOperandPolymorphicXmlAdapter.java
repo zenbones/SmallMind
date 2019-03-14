@@ -32,8 +32,8 @@
  */
 package org.smallmind.web.json.query;
 
-@FunctionalInterface
-public interface WhereOperandTransform<I, O> {
+import org.smallmind.web.json.scaffold.util.PolymorphicXmlAdapter;
 
-  O apply (String typeHint, I value);
+public class WhereOperandPolymorphicXmlAdapter extends PolymorphicXmlAdapter<WhereOperand> {
+
 }
