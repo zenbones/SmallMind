@@ -38,7 +38,7 @@ import java.util.HashSet;
 import org.smallmind.persistence.ManagedDao;
 import org.smallmind.persistence.orm.MappedSubClasses;
 import org.smallmind.persistence.orm.SessionSource;
-import org.smallmind.persistence.spring.ManagedDaoSupport;
+import org.smallmind.persistence.ManagedDaoSupport;
 import org.springframework.beans.BeansException;
 import org.springframework.beans.FatalBeanException;
 import org.springframework.beans.factory.config.BeanFactoryPostProcessor;

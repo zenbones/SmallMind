@@ -36,7 +36,7 @@ import java.net.URL;
 import java.util.HashMap;
 import org.smallmind.persistence.orm.SessionSource;
 import org.smallmind.persistence.orm.hibernate.HibernateDao;
-import org.smallmind.persistence.spring.ManagedDaoSupport;
+import org.smallmind.persistence.ManagedDaoSupport;
 import org.springframework.beans.BeansException;
 import org.springframework.beans.FatalBeanException;
 import org.springframework.beans.factory.config.BeanFactoryPostProcessor;
