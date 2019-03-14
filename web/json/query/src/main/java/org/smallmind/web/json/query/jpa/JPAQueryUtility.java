@@ -32,6 +32,15 @@
  */
 package org.smallmind.web.json.query.jpa;
 
+import java.util.Date;
+import java.util.HashSet;
+import java.util.LinkedList;
+import java.util.Set;
+import javax.persistence.criteria.CriteriaBuilder;
+import javax.persistence.criteria.Order;
+import javax.persistence.criteria.Path;
+import javax.persistence.criteria.Predicate;
+import javax.persistence.criteria.Root;
 import org.smallmind.nutsnbolts.lang.UnknownSwitchCaseException;
 import org.smallmind.web.json.query.NoneProduct;
 import org.smallmind.web.json.query.Product;
@@ -46,25 +55,14 @@ import org.smallmind.web.json.query.WhereFieldTransformer;
 import org.smallmind.web.json.query.WhereOperandTransformer;
 import org.smallmind.web.json.query.WherePath;
 
-import javax.persistence.criteria.CriteriaBuilder;
-import javax.persistence.criteria.Order;
-import javax.persistence.criteria.Path;
-import javax.persistence.criteria.Predicate;
-import javax.persistence.criteria.Root;
-import java.util.Date;
-import java.util.HashSet;
-import java.util.LinkedList;
-import java.util.Set;
-
-
 public class JPAQueryUtility {
 
-  public static Product<Root<?>, Predicate> apply(CriteriaBuilder criteriaBuilder, Where where, WhereFieldTransformer<Root<?>, Path<?>> fieldTransformer) {
+  public static Product<Root<?>, Predicate> apply (CriteriaBuilder criteriaBuilder, Where where, WhereFieldTransformer<Root<?>, Path<?>> fieldTransformer) {
 
     return apply(criteriaBuilder, where, fieldTransformer, WhereOperandTransformer.instance());
   }
 
-  public static Product<Root<?>, Predicate> apply(CriteriaBuilder criteriaBuilder, Where where, WhereFieldTransformer<Root<?>, Path<?>> fieldTransformer, WhereOperandTransformer operandTransformer) {
+  public static Product<Root<?>, Predicate> apply (CriteriaBuilder criteriaBuilder, Where where, WhereFieldTransformer<Root<?>, Path<?>> fieldTransformer, WhereOperandTransformer operandTransformer) {
 
     if (where == null) {
 
@@ -83,7 +81,7 @@ public class JPAQueryUtility {
     }
   }
 
-  private static Predicate walkConjunction(CriteriaBuilder criteriaBuilder, Set<Root<?>> rootSet, WhereConjunction whereConjunction, WhereFieldTransformer<Root<?>, Path<?>> fieldTransformer, WhereOperandTransformer operandTransformer) {
+  private static Predicate walkConjunction (CriteriaBuilder criteriaBuilder, Set<Root<?>> rootSet, WhereConjunction whereConjunction, WhereFieldTransformer<Root<?>, Path<?>> fieldTransformer, WhereOperandTransformer operandTransformer) {
 
     if ((whereConjunction == null) || whereConjunction.isEmpty()) {
 
@@ -98,12 +96,12 @@ public class JPAQueryUtility {
 
           Predicate walkedPredicate;
 
-          if ((walkedPredicate = walkConjunction(criteriaBuilder, rootSet, (WhereConjunction) whereCriterion, fieldTransformer, operandTransformer)) != null) {
+          if ((walkedPredicate = walkConjunction(criteriaBuilder, rootSet, (WhereConjunction)whereCriterion, fieldTransformer, operandTransformer)) != null) {
             predicateList.add(walkedPredicate);
           }
           break;
         case FIELD:
-          predicateList.add(walkField(criteriaBuilder, rootSet, (WhereField) whereCriterion, fieldTransformer, operandTransformer));
+          predicateList.add(walkField(criteriaBuilder, rootSet, (WhereField)whereCriterion, fieldTransformer, operandTransformer));
           break;
         default:
           throw new UnknownSwitchCaseException(whereCriterion.getCriterionType().name());
@@ -129,17 +127,17 @@ public class JPAQueryUtility {
     }
   }
 
-  private static Predicate walkField(CriteriaBuilder criteriaBuilder, Set<Root<?>> rootSet, WhereField whereField, WhereFieldTransformer<Root<?>, Path<?>> fieldTransformer, WhereOperandTransformer operandTransformer) {
+  private static Predicate walkField (CriteriaBuilder criteriaBuilder, Set<Root<?>> rootSet, WhereField whereField, WhereFieldTransformer<Root<?>, Path<?>> fieldTransformer, WhereOperandTransformer operandTransformer) {
 
     Object fieldValue = operandTransformer.transform(whereField.getOperand());
     WherePath<Root<?>, Path<?>> wherePath = fieldTransformer.transform(whereField.getEntity(), whereField.getName());
 
-    rootSet.add(((JPAWherePath) wherePath).getRoot());
+    rootSet.add(((JPAWherePath)wherePath).getRoot());
     switch (whereField.getOperator()) {
       case LT:
-        return Date.class.equals(whereField.getOperand().getTargetClass()) ? criteriaBuilder.lessThan((Path<Date>) wherePath.getPath(), (Date) fieldValue) : criteriaBuilder.lt((Path<Number>) wherePath.getPath(), (Number) fieldValue);
+        return Date.class.equals(whereField.getOperand().getTargetClass()) ? criteriaBuilder.lessThan((Path<Date>)wherePath.getPath(), (Date)fieldValue) : criteriaBuilder.lt((Path<Number>)wherePath.getPath(), (Number)fieldValue);
       case LE:
-        return Date.class.equals(whereField.getOperand().getTargetClass()) ? criteriaBuilder.lessThanOrEqualTo((Path<Date>) wherePath.getPath(), (Date) fieldValue) : criteriaBuilder.le((Path<Number>) wherePath.getPath(), (Number) fieldValue);
+        return Date.class.equals(whereField.getOperand().getTargetClass()) ? criteriaBuilder.lessThanOrEqualTo((Path<Date>)wherePath.getPath(), (Date)fieldValue) : criteriaBuilder.le((Path<Number>)wherePath.getPath(), (Number)fieldValue);
       case EQ:
         if (fieldValue == null) {
           return criteriaBuilder.isNull(wherePath.getPath());
@@ -153,21 +151,21 @@ public class JPAQueryUtility {
           return criteriaBuilder.notEqual(wherePath.getPath(), fieldValue);
         }
       case GE:
-        return Date.class.equals(whereField.getOperand().getTargetClass()) ? criteriaBuilder.greaterThanOrEqualTo((Path<Date>) wherePath.getPath(), (Date) fieldValue) : criteriaBuilder.ge((Path<Number>) wherePath.getPath(), (Number) fieldValue);
+        return Date.class.equals(whereField.getOperand().getTargetClass()) ? criteriaBuilder.greaterThanOrEqualTo((Path<Date>)wherePath.getPath(), (Date)fieldValue) : criteriaBuilder.ge((Path<Number>)wherePath.getPath(), (Number)fieldValue);
       case GT:
-        return Date.class.equals(whereField.getOperand().getTargetClass()) ? criteriaBuilder.greaterThan((Path<Date>) wherePath.getPath(), (Date) fieldValue) : criteriaBuilder.gt((Path<Number>) wherePath.getPath(), (Number) fieldValue);
+        return Date.class.equals(whereField.getOperand().getTargetClass()) ? criteriaBuilder.greaterThan((Path<Date>)wherePath.getPath(), (Date)fieldValue) : criteriaBuilder.gt((Path<Number>)wherePath.getPath(), (Number)fieldValue);
       case LIKE:
-        return criteriaBuilder.like((Path<String>) wherePath.getPath(), (String) fieldValue);
+        return criteriaBuilder.like((Path<String>)wherePath.getPath(), (String)fieldValue);
       case UNLIKE:
-        return criteriaBuilder.notLike((Path<String>) wherePath.getPath(), (String) fieldValue);
+        return criteriaBuilder.notLike((Path<String>)wherePath.getPath(), (String)fieldValue);
       case IN:
-        return criteriaBuilder.in((Path<?>) wherePath.getPath()).in(fieldValue);
+        return criteriaBuilder.in((Path<?>)wherePath.getPath()).in(fieldValue);
       default:
         throw new UnknownSwitchCaseException(whereField.getOperator().name());
     }
   }
 
-  public static Product<Root<?>, Order[]> apply(CriteriaBuilder criteriaBuilder, Sort sort, WhereFieldTransformer<Root<?>, Path<?>> fieldTransformer) {
+  public static Product<Root<?>, Order[]> apply (CriteriaBuilder criteriaBuilder, Sort sort, WhereFieldTransformer<Root<?>, Path<?>> fieldTransformer) {
 
     if ((sort != null) && (!sort.isEmpty())) {
 
@@ -179,7 +177,7 @@ public class JPAQueryUtility {
 
         WherePath<Root<?>, Path<?>> wherePath = fieldTransformer.transform(sortField.getEntity(), sortField.getName());
 
-        rootSet.add(((JPAWherePath) wherePath).getRoot());
+        rootSet.add(((JPAWherePath)wherePath).getRoot());
         switch (sortField.getDirection()) {
           case ASC:
             orderList.add(criteriaBuilder.asc(wherePath.getPath()));

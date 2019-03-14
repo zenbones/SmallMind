@@ -32,16 +32,14 @@
  */
 package org.smallmind.web.json.query.jpa;
 
+import javax.persistence.criteria.Path;
+import javax.persistence.criteria.Root;
 import org.smallmind.web.json.query.WhereFieldTransform;
 import org.smallmind.web.json.query.WhereFieldTransformer;
 
-import javax.persistence.criteria.Path;
-import javax.persistence.criteria.Root;
-
-
 public class JPAWhereFieldTransformer extends WhereFieldTransformer<Root<?>, Path<?>> {
 
-  public JPAWhereFieldTransformer(WhereFieldTransform<Root<?>, Path<?>> transform) {
+  public JPAWhereFieldTransformer (WhereFieldTransform<Root<?>, Path<?>> transform) {
 
     super(transform);
   }

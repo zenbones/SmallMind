@@ -32,23 +32,21 @@
  */
 package org.smallmind.web.json.query.querydsl;
 
+import java.util.function.BiFunction;
+import java.util.function.UnaryOperator;
 import com.querydsl.core.types.Path;
 import com.querydsl.core.types.dsl.PathBuilder;
 import org.smallmind.persistence.Durable;
 import org.smallmind.web.json.query.WhereFieldTransformer;
 
-import java.util.function.BiFunction;
-import java.util.function.UnaryOperator;
-
-
 public class QWhereFieldTransformer extends WhereFieldTransformer<Path<?>, Path<?>> {
 
-  public QWhereFieldTransformer(Path<? extends Durable<?>> path) {
+  public QWhereFieldTransformer (Path<? extends Durable<?>> path) {
 
     super((String entity, String name) -> new QWherePath(path, new PathBuilder<>(path.getType(), path.toString()).get(name), name));
   }
 
-  public QWhereFieldTransformer(Path<? extends Durable<?>> path, UnaryOperator<String> nameOperator) {
+  public QWhereFieldTransformer (Path<? extends Durable<?>> path, UnaryOperator<String> nameOperator) {
 
     super((String entity, String name) -> {
 
@@ -58,7 +56,7 @@ public class QWhereFieldTransformer extends WhereFieldTransformer<Path<?>, Path<
     });
   }
 
-  public QWhereFieldTransformer(BiFunction<String, String, Path<? extends Durable<?>>> pathFunction, BiFunction<String, String, String> nameFunction) {
+  public QWhereFieldTransformer (BiFunction<String, String, Path<? extends Durable<?>>> pathFunction, BiFunction<String, String, String> nameFunction) {
 
     super((String entity, String name) -> {
 
@@ -69,7 +67,7 @@ public class QWhereFieldTransformer extends WhereFieldTransformer<Path<?>, Path<
     });
   }
 
-  public QWhereFieldTransformer(BiFunction<String, String, Path<?>> pathFunction) {
+  public QWhereFieldTransformer (BiFunction<String, String, Path<?>> pathFunction) {
 
     super((String entity, String name) -> {
 

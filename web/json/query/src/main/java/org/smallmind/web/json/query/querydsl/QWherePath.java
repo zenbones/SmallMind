@@ -43,17 +43,17 @@ public class QWherePath extends WherePath<Path<?>, Path<?>> {
   private Path<?> path;
   private String field;
 
-  public QWherePath(Path<?> path) {
+  public QWherePath (Path<?> path) {
 
     this(path.getRoot(), path, path.toString().substring(path.getRoot().toString().length() + 1));
   }
 
-  public QWherePath(Path<? extends Durable<?>> path, String field) {
+  public QWherePath (Path<? extends Durable<?>> path, String field) {
 
     this(path, new PathBuilder<>(path.getType(), path.toString()).get(field), field);
   }
 
-  public QWherePath(Path<?> root, Path<?> path, String field) {
+  public QWherePath (Path<?> root, Path<?> path, String field) {
 
     this.root = root;
     this.path = path;
@@ -61,19 +61,19 @@ public class QWherePath extends WherePath<Path<?>, Path<?>> {
   }
 
   @Override
-  public Path<?> getRoot() {
+  public Path<?> getRoot () {
 
     return root;
   }
 
   @Override
-  public Path<?> getPath() {
+  public Path<?> getPath () {
 
     return path;
   }
 
   @Override
-  public String getField() {
+  public String getField () {
 
     return field;
   }

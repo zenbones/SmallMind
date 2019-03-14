@@ -38,25 +38,25 @@ public class MorphiaWherePath extends WherePath<Void, Void> {
 
   private String field;
 
-  public MorphiaWherePath(String field) {
+  public MorphiaWherePath (String field) {
 
     this.field = field;
   }
 
   @Override
-  public Void getRoot() {
+  public Void getRoot () {
 
     throw new UnsupportedOperationException();
   }
 
   @Override
-  public Void getPath() {
+  public Void getPath () {
 
     throw new UnsupportedOperationException();
   }
 
   @Override
-  public String getField() {
+  public String getField () {
 
     return field;
   }

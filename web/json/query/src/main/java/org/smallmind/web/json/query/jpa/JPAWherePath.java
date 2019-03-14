@@ -32,10 +32,9 @@
  */
 package org.smallmind.web.json.query.jpa;
 
-import org.smallmind.web.json.query.WherePath;
-
 import javax.persistence.criteria.Path;
 import javax.persistence.criteria.Root;
+import org.smallmind.web.json.query.WherePath;
 
 public class JPAWherePath extends WherePath<Root<?>, Path<?>> {
 
@@ -43,7 +42,7 @@ public class JPAWherePath extends WherePath<Root<?>, Path<?>> {
   private Path<?> path;
   private String field;
 
-  public JPAWherePath(Root<?> root, String field) {
+  public JPAWherePath (Root<?> root, String field) {
 
     this.root = root;
     this.field = field;
@@ -52,19 +51,19 @@ public class JPAWherePath extends WherePath<Root<?>, Path<?>> {
   }
 
   @Override
-  public Root<?> getRoot() {
+  public Root<?> getRoot () {
 
     return root;
   }
 
   @Override
-  public Path<?> getPath() {
+  public Path<?> getPath () {
 
     return path;
   }
 
   @Override
-  public String getField() {
+  public String getField () {
 
     return field;
   }

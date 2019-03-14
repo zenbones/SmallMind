@@ -32,13 +32,12 @@
  */
 package org.smallmind.web.json.query.morphia;
 
-
 import org.smallmind.web.json.query.WhereFieldTransform;
 import org.smallmind.web.json.query.WhereFieldTransformer;
 
 public class MorphiaWhereFieldTransformer extends WhereFieldTransformer<Void, Void> {
 
-  public MorphiaWhereFieldTransformer(WhereFieldTransform<Void, Void> transform) {
+  public MorphiaWhereFieldTransformer (WhereFieldTransform<Void, Void> transform) {
 
     super(transform);
   }
