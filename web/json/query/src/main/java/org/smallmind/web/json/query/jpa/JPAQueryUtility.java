@@ -124,7 +124,7 @@ public class JPAQueryUtility {
 
   private static Predicate walkField (CriteriaBuilder criteriaBuilder, Set<Root<?>> rootSet, WhereField whereField, WhereFieldTransformer<Root<?>, Path<?>> fieldTransformer) {
 
-    Object fieldValue = whereField.getOperand().getValue();
+    Object fieldValue = whereField.getOperand().get();
     WherePath<Root<?>, Path<?>> wherePath = fieldTransformer.transform(whereField.getEntity(), whereField.getName());
 
     rootSet.add(((JPAWherePath)wherePath).getRoot());

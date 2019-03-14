@@ -38,7 +38,7 @@ import javax.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
 
 @XmlRootElement(name = "null")
 @XmlJavaTypeAdapter(WhereOperandPolymorphicXmlAdapter.class)
-public class NullWhereOperand implements WhereOperand<Void> {
+public class NullWhereOperand extends WhereOperand<Void> {
 
   private static final NullWhereOperand INSTANCE = new NullWhereOperand();
 
@@ -55,7 +55,8 @@ public class NullWhereOperand implements WhereOperand<Void> {
   }
 
   @Override
-  public Void getValue () {
+  @XmlTransient
+  public Void get () {
 
     return null;
   }

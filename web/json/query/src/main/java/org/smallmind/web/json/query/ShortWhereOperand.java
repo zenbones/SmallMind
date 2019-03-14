@@ -39,7 +39,7 @@ import javax.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
 
 @XmlRootElement(name = "short")
 @XmlJavaTypeAdapter(WhereOperandPolymorphicXmlAdapter.class)
-public class ShortWhereOperand implements WhereOperand<Short> {
+public class ShortWhereOperand extends WhereOperand<Short> {
 
   private Short value;
 
@@ -62,6 +62,13 @@ public class ShortWhereOperand implements WhereOperand<Short> {
   public OperandType getOperandType () {
 
     return OperandType.SHORT;
+  }
+
+  @Override
+  @XmlTransient
+  public Short get () {
+
+    return null;
   }
 
   @XmlElement(name = "value", required = true)

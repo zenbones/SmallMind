@@ -32,36 +32,65 @@
  */
 package org.smallmind.web.json.query;
 
-import java.time.ZonedDateTime;
+import java.util.Date;
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlRootElement;
 import javax.xml.bind.annotation.XmlTransient;
 import javax.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
+import com.fasterxml.jackson.databind.node.ArrayNode;
 import org.smallmind.nutsnbolts.json.ZonedDateTimeXmlAdapter;
 import org.smallmind.nutsnbolts.lang.UnknownSwitchCaseException;
+import org.smallmind.web.json.scaffold.util.JsonCodec;
 
 @XmlRootElement(name = "array")
 @XmlJavaTypeAdapter(WhereOperandPolymorphicXmlAdapter.class)
-public class ArrayWhereOperand implements WhereOperand<Object[]> {
+public class ArrayWhereOperand extends WhereOperand<Object[]> {
 
   private static final ZonedDateTimeXmlAdapter ZONED_DATE_TIME_XML_ADAPTER = new ZonedDateTimeXmlAdapter();
 
-  private Object[] value;
-  private String hint;
+  private ArrayNode value;
+  private Hint hint;
 
   public ArrayWhereOperand () {
 
   }
 
-  public ArrayWhereOperand (String hint, Object[] value) {
+  public ArrayWhereOperand (Object[] array) {
 
-    this.hint = hint;
-    this.value = value;
+    Class<?> componentClass = array.getClass().getComponentType();
+
+    if (Boolean.class.equals(componentClass)) {
+      hint = new ComponentHint(ComponentType.BOOLEAN);
+    } else if (Byte.class.equals(componentClass)) {
+      hint = new ComponentHint(ComponentType.BYTE);
+    } else if (Character.class.equals(componentClass)) {
+      hint = new ComponentHint(ComponentType.CHARACTER);
+    } else if (Date.class.equals(componentClass)) {
+      hint = new ComponentHint(ComponentType.DATE);
+    } else if (Double.class.equals(componentClass)) {
+      hint = new ComponentHint(ComponentType.DOUBLE);
+    } else if (Float.class.equals(componentClass)) {
+      hint = new ComponentHint(ComponentType.FLOAT);
+    } else if (Integer.class.equals(componentClass)) {
+      hint = new ComponentHint(ComponentType.INTEGER);
+    } else if (Long.class.equals(componentClass)) {
+      hint = new ComponentHint(ComponentType.LONG);
+    } else if (Short.class.equals(componentClass)) {
+      hint = new ComponentHint(ComponentType.SHORT);
+    } else if (String.class.equals(componentClass)) {
+      hint = new ComponentHint(ComponentType.STRING);
+    } else if (Enum.class.equals(componentClass)) {
+      hint = new EnumHint((Class<? extends Enum>)componentClass);
+    } else {
+      throw new QueryProcessingException("Unknown array type(%s)", componentClass.getName());
+    }
+
+    value = (ArrayNode)JsonCodec.writeAsJsonNode(array);
   }
 
-  public static ArrayWhereOperand instance (String typeHint, Object[] value) {
+  public static ArrayWhereOperand instance (Object[] value) {
 
-    return new ArrayWhereOperand(typeHint, value);
+    return new ArrayWhereOperand(value);
   }
 
   @Override
@@ -71,129 +100,138 @@ public class ArrayWhereOperand implements WhereOperand<Object[]> {
     return OperandType.ARRAY;
   }
 
-  @XmlElement(name = "hint")
-  public String getHint () {
-
-    return hint;
-  }
-
-  public void setHint (String hint) {
-
-    this.hint = hint;
-  }
-
-  @XmlElement(name = "value", required = true)
-  @XmlJavaTypeAdapter(ArrayValueXmlAdapter.class)
-  public Object[] getValue () {
+  @XmlTransient
+  public Object[] get () {
 
     if (value == null) {
 
       return null;
     }
 
-    switch (hint) {
-      case "boolean":
+    switch (hint.getHintType()) {
+      case COMPONENT:
+        switch (((ComponentHint)hint).getType()) {
+          case BOOLEAN:
 
-        Boolean[] booleanArray = new Boolean[value.length];
+            Boolean[] booleanArray = new Boolean[value.size()];
 
-        for (int index = 0; index < value.length; index++) {
-          booleanArray[index] = (Boolean)value[index];
+            for (int index = 0; index < value.size(); index++) {
+              booleanArray[index] = JsonCodec.convert(value.get(index), Boolean.class);
+            }
+
+            return booleanArray;
+          case BYTE:
+
+            Byte[] byteArray = new Byte[value.size()];
+
+            for (int index = 0; index < value.size(); index++) {
+              byteArray[index] = (value.get(index) == null) ? null : JsonCodec.convert(value.get(index), Byte.class);
+            }
+
+            return byteArray;
+          case CHARACTER:
+
+            Character[] characterArray = new Character[value.size()];
+
+            for (int index = 0; index < value.size(); index++) {
+
+              String string;
+
+              characterArray[index] = (value.get(index) == null) ? null : ((string = JsonCodec.convert(value.get(index), String.class)).length() == 0) ? null : string.charAt(0);
+            }
+
+            return characterArray;
+          case DATE:
+
+            Date[] dates = new Date[value.size()];
+
+            for (int index = 0; index < value.size(); index++) {
+              dates[index] = (value.get(index) == null) ? null : Date.from(ZONED_DATE_TIME_XML_ADAPTER.unmarshal(JsonCodec.convert(value.get(index), String.class)).toInstant());
+            }
+
+            return dates;
+          case DOUBLE:
+
+            Double[] doubleArray = new Double[value.size()];
+
+            for (int index = 0; index < value.size(); index++) {
+              doubleArray[index] = JsonCodec.convert(value.get(index), Double.class);
+            }
+
+            return doubleArray;
+          case FLOAT:
+
+            Float[] floatArray = new Float[value.size()];
+
+            for (int index = 0; index < value.size(); index++) {
+              floatArray[index] = (value.get(index) == null) ? null : JsonCodec.convert(value.get(index), Float.class);
+            }
+
+            return floatArray;
+          case INTEGER:
+
+            Integer[] integerArray = new Integer[value.size()];
+
+            for (int index = 0; index < value.size(); index++) {
+              integerArray[index] = JsonCodec.convert(value.get(index), Integer.class);
+            }
+
+            return integerArray;
+          case LONG:
+
+            Long[] longArray = new Long[value.size()];
+
+            for (int index = 0; index < value.size(); index++) {
+              longArray[index] = (value.get(index) == null) ? null : JsonCodec.convert(value.get(index), Long.class);
+            }
+
+            return longArray;
+          case SHORT:
+
+            Short[] shortArray = new Short[value.size()];
+
+            for (int index = 0; index < value.size(); index++) {
+              shortArray[index] = (value.get(index) == null) ? null : JsonCodec.convert(value.get(index), Short.class);
+            }
+
+            return shortArray;
+          case STRING:
+
+            String[] stringArray = new String[value.size()];
+
+            for (int index = 0; index < value.size(); index++) {
+              stringArray[index] = (value.get(index) == null) ? null : JsonCodec.convert(value.get(index), String.class);
+            }
+
+            return stringArray;
+          default:
+            throw new UnknownSwitchCaseException(((ComponentHint)hint).getType().name());
         }
+      case ENUM:
 
-        return booleanArray;
-      case "byte":
-
-        Byte[] byteArray = new Byte[value.length];
-
-        for (int index = 0; index < value.length; index++) {
-          byteArray[index] = (value[index] == null) ? null : ((Integer)value[index]).byteValue();
-        }
-
-        return byteArray;
-      case "character":
-
-        Character[] characterArray = new Character[value.length];
-
-        for (int index = 0; index < value.length; index++) {
-
-          String string;
-
-          characterArray[index] = (value[index] == null) ? null : ((string = value[index].toString()).length() == 0) ? null : string.charAt(0);
-        }
-
-        return characterArray;
-      case "date":
-
-        ZonedDateTime[] dateTimes = new ZonedDateTime[value.length];
-
-        for (int index = 0; index < value.length; index++) {
-          dateTimes[index] = (value[index] == null) ? null : ZONED_DATE_TIME_XML_ADAPTER.unmarshal(value[index].toString());
-        }
-
-        return dateTimes;
-      case "double":
-
-        Double[] doubleArray = new Double[value.length];
-
-        for (int index = 0; index < value.length; index++) {
-          doubleArray[index] = (Double)value[index];
-        }
-
-        return doubleArray;
-      case "float":
-
-        Float[] floatArray = new Float[value.length];
-
-        for (int index = 0; index < value.length; index++) {
-          floatArray[index] = (value[index] == null) ? null : ((Double)value[index]).floatValue();
-        }
-
-        return floatArray;
-      case "integer":
-
-        Integer[] integerArray = new Integer[value.length];
-
-        for (int index = 0; index < value.length; index++) {
-          integerArray[index] = (Integer)value[index];
-        }
-
-        return integerArray;
-      case "long":
-
-        Long[] longArray = new Long[value.length];
-
-        for (int index = 0; index < value.length; index++) {
-          longArray[index] = (value[index] == null) ? null : (value[index] instanceof Integer) ? ((Integer)value[index]).longValue() : (Long)value[index];
-        }
-
-        return longArray;
-      case "short":
-
-        Short[] shortArray = new Short[value.length];
-
-        for (int index = 0; index < value.length; index++) {
-          shortArray[index] = (value[index] == null) ? null : ((Integer)value[index]).shortValue();
-        }
-
-        return shortArray;
-      case "string":
-
-        String[] stringArray = new String[value.length];
-
-        for (int index = 0; index < value.length; index++) {
-          stringArray[index] = (value[index] == null) ? null : value[index].toString();
-        }
-
-        return stringArray;
-      case "enum":
-
-        return value;
       default:
-        throw new UnknownSwitchCaseException(hint);
+        throw new UnknownSwitchCaseException(hint.getHintType().name());
     }
   }
 
-  public void setValue (Object[] value) {
+  @XmlElement(name = "hint")
+  public Hint getHint () {
+
+    return hint;
+  }
+
+  public void setHint (Hint hint) {
+
+    this.hint = hint;
+  }
+
+  @XmlElement(name = "value", required = true)
+  public ArrayNode getValue () {
+
+    return value;
+  }
+
+  public void setValue (ArrayNode value) {
 
     this.value = value;
   }

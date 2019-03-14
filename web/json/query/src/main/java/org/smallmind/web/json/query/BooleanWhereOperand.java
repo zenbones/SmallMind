@@ -39,7 +39,7 @@ import javax.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
 
 @XmlRootElement(name = "boolean")
 @XmlJavaTypeAdapter(WhereOperandPolymorphicXmlAdapter.class)
-public class BooleanWhereOperand implements WhereOperand<Boolean> {
+public class BooleanWhereOperand extends WhereOperand<Boolean> {
 
   private Boolean value;
 
@@ -62,6 +62,13 @@ public class BooleanWhereOperand implements WhereOperand<Boolean> {
   public OperandType getOperandType () {
 
     return OperandType.BOOLEAN;
+  }
+
+  @Override
+  @XmlTransient
+  public Boolean get () {
+
+    return value;
   }
 
   @XmlElement(name = "value", required = true)

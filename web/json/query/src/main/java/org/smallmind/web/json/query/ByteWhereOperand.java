@@ -39,7 +39,7 @@ import javax.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
 
 @XmlRootElement(name = "byte")
 @XmlJavaTypeAdapter(WhereOperandPolymorphicXmlAdapter.class)
-public class ByteWhereOperand implements WhereOperand<Byte> {
+public class ByteWhereOperand extends WhereOperand<Byte> {
 
   private Byte value;
 
@@ -62,6 +62,13 @@ public class ByteWhereOperand implements WhereOperand<Byte> {
   public OperandType getOperandType () {
 
     return OperandType.BYTE;
+  }
+
+  @Override
+  @XmlTransient
+  public Byte get () {
+
+    return value;
   }
 
   @XmlElement(name = "value", required = true)

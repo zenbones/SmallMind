@@ -32,7 +32,6 @@
  */
 package org.smallmind.web.json.query;
 
-import java.io.Serializable;
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
@@ -41,9 +40,9 @@ import org.smallmind.web.json.scaffold.util.XmlPolymorphicSubClasses;
 @XmlAccessorType(XmlAccessType.PROPERTY)
 @XmlJavaTypeAdapter(WhereOperandPolymorphicXmlAdapter.class)
 @XmlPolymorphicSubClasses({ArrayWhereOperand.class, BooleanWhereOperand.class, ByteWhereOperand.class, CharacterWhereOperand.class, DateWhereOperand.class, DoubleWhereOperand.class, EnumWhereOperand.class, FloatWhereOperand.class, IntegerWhereOperand.class, LongWhereOperand.class, NullWhereOperand.class, ShortWhereOperand.class, StringWhereOperand.class})
-public interface WhereOperand<I> extends Serializable {
+public abstract class WhereOperand<I> {
 
-  OperandType getOperandType ();
+  public abstract OperandType getOperandType ();
 
-  I getValue ();
+  public abstract I get ();
 }

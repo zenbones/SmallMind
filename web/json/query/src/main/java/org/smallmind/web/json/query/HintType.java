@@ -32,39 +32,7 @@
  */
 package org.smallmind.web.json.query;
 
-import java.time.ZonedDateTime;
-import javax.xml.bind.annotation.adapters.XmlAdapter;
-import org.smallmind.nutsnbolts.json.ZonedDateTimeXmlAdapter;
+public enum HintType {
 
-public class ArrayValueXmlAdapter extends XmlAdapter<Object[], Object[]> {
-
-  private static final ZonedDateTimeXmlAdapter ZONED_DATE_TIME_XML_ADAPTER = new ZonedDateTimeXmlAdapter();
-
-  @Override
-  public Object[] unmarshal (Object[] array) {
-
-    return array;
-  }
-
-  @Override
-  public Object[] marshal (Object[] array) {
-
-    if (array == null) {
-
-      return null;
-    }
-
-    if (ZonedDateTime.class.isAssignableFrom(array.getClass().getComponentType())) {
-
-      String[] convertedArray = new String[array.length];
-
-      for (int index = 0; index < array.length; index++) {
-        convertedArray[index] = ZONED_DATE_TIME_XML_ADAPTER.marshal((ZonedDateTime)array[index]);
-      }
-
-      return convertedArray;
-    }
-
-    return array;
-  }
+  COMPONENT, ENUM
 }

@@ -32,53 +32,13 @@
  */
 package org.smallmind.web.json.query;
 
-import javax.xml.bind.annotation.XmlElement;
-import javax.xml.bind.annotation.XmlRootElement;
-import javax.xml.bind.annotation.XmlTransient;
-import javax.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
+import org.smallmind.nutsnbolts.json.EnumXmlAdapter;
 
-@XmlRootElement(name = "character")
-@XmlJavaTypeAdapter(WhereOperandPolymorphicXmlAdapter.class)
-public class CharacterWhereOperand extends WhereOperand<Character> {
-
-  private Character value;
-
-  public CharacterWhereOperand () {
-
-  }
-
-  public CharacterWhereOperand (Character value) {
-
-    this.value = value;
-  }
-
-  public static CharacterWhereOperand instance (Character value) {
-
-    return new CharacterWhereOperand(value);
-  }
+public class ComponentTypeEnumXmlAdapter extends EnumXmlAdapter<ComponentType> {
 
   @Override
-  @XmlTransient
-  public OperandType getOperandType () {
+  public String marshal (ComponentType enumeration) {
 
-    return OperandType.CHARACTER;
-  }
-
-  @Override
-  @XmlTransient
-  public Character get () {
-
-    return value;
-  }
-
-  @XmlElement(name = "value", required = true)
-  public Character getValue () {
-
-    return value;
-  }
-
-  public void setValue (Character value) {
-
-    this.value = value;
+    return super.marshal(enumeration).toLowerCase();
   }
 }

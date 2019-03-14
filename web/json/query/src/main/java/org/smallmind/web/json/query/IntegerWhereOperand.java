@@ -39,7 +39,7 @@ import javax.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
 
 @XmlRootElement(name = "integer")
 @XmlJavaTypeAdapter(WhereOperandPolymorphicXmlAdapter.class)
-public class IntegerWhereOperand implements WhereOperand<Integer> {
+public class IntegerWhereOperand extends WhereOperand<Integer> {
 
   private Integer value;
 
@@ -62,6 +62,13 @@ public class IntegerWhereOperand implements WhereOperand<Integer> {
   public OperandType getOperandType () {
 
     return OperandType.INTEGER;
+  }
+
+  @Override
+  @XmlTransient
+  public Integer get () {
+
+    return value;
   }
 
   @XmlElement(name = "value", required = true)

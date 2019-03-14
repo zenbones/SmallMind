@@ -37,48 +37,36 @@ import javax.xml.bind.annotation.XmlRootElement;
 import javax.xml.bind.annotation.XmlTransient;
 import javax.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
 
-@XmlRootElement(name = "character")
-@XmlJavaTypeAdapter(WhereOperandPolymorphicXmlAdapter.class)
-public class CharacterWhereOperand extends WhereOperand<Character> {
+@XmlRootElement(name = "enum")
+@XmlJavaTypeAdapter(HintPolymorphicXmlAdapter.class)
+public class EnumHint extends Hint {
 
-  private Character value;
+  private String type;
 
-  public CharacterWhereOperand () {
+  public EnumHint () {
 
   }
 
-  public CharacterWhereOperand (Character value) {
+  public EnumHint (Class<? extends Enum> enumClass) {
 
-    this.value = value;
-  }
-
-  public static CharacterWhereOperand instance (Character value) {
-
-    return new CharacterWhereOperand(value);
+    type = enumClass.getName();
   }
 
   @Override
   @XmlTransient
-  public OperandType getOperandType () {
+  public HintType getHintType () {
 
-    return OperandType.CHARACTER;
+    return HintType.ENUM;
   }
 
-  @Override
-  @XmlTransient
-  public Character get () {
+  @XmlElement(name = "type")
+  public String getType () {
 
-    return value;
+    return type;
   }
 
-  @XmlElement(name = "value", required = true)
-  public Character getValue () {
+  public void setType (String type) {
 
-    return value;
-  }
-
-  public void setValue (Character value) {
-
-    this.value = value;
+    this.type = type;
   }
 }

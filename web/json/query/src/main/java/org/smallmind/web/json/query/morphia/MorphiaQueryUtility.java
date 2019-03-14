@@ -117,7 +117,7 @@ public class MorphiaQueryUtility {
   private static <T> Criteria walkField (Query<T> query, WhereField whereField, WhereFieldTransformer<Void, Void> fieldTransformer) {
 
     FieldEnd<? extends Criteria> fieldEnd = query.criteria((fieldTransformer == null) ? whereField.getName() : fieldTransformer.transform(whereField.getEntity(), whereField.getName()).getField());
-    Object fieldValue = whereField.getOperand().getValue();
+    Object fieldValue = whereField.getOperand().get();
 
     switch (whereField.getOperator()) {
       case LT:

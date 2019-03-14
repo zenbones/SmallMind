@@ -39,24 +39,24 @@ import javax.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
 
 @XmlRootElement(name = "enum")
 @XmlJavaTypeAdapter(WhereOperandPolymorphicXmlAdapter.class)
-public class EnumWhereOperand<E extends Enum<E>> implements WhereOperand<E> {
+public class EnumWhereOperand<E extends Enum<E>> extends WhereOperand<E> {
 
-  private E value;
-  private String hint;
+  private EnumHint hint;
+  private String value;
 
   public EnumWhereOperand () {
 
   }
 
-  public EnumWhereOperand (String hint, E value) {
+  public EnumWhereOperand (E enumeration) {
 
-    this.hint = hint;
-    this.value = value;
+    hint = new EnumHint(enumeration.getClass());
+    this.value = enumeration.name();
   }
 
-  public static <E extends Enum<E>> EnumWhereOperand instance (String typeHint, E enumeration) {
+  public static <E extends Enum<E>> EnumWhereOperand instance (E enumeration) {
 
-    return new EnumWhereOperand<>(typeHint, enumeration);
+    return new EnumWhereOperand<E>(enumeration);
   }
 
   @Override
@@ -66,24 +66,36 @@ public class EnumWhereOperand<E extends Enum<E>> implements WhereOperand<E> {
     return OperandType.ENUM;
   }
 
+  @Override
+  @XmlTransient
+  public E get () {
+
+    try {
+
+      return Enum.valueOf((Class<E>)Class.forName(hint.getType()), value);
+    } catch (ClassNotFoundException classNotFoundException) {
+      throw new QueryProcessingException(classNotFoundException);
+    }
+  }
+
   @XmlElement(name = "hint", required = true)
-  public String getHint () {
+  public EnumHint getHint () {
 
     return hint;
   }
 
-  public void setHint (String hint) {
+  public void setHint (EnumHint hint) {
 
     this.hint = hint;
   }
 
   @XmlElement(name = "value", required = true)
-  public E getValue () {
+  public String getValue () {
 
     return value;
   }
 
-  public void setValue (E value) {
+  public void setValue (String value) {
 
     this.value = value;
   }

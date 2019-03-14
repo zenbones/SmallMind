@@ -39,7 +39,7 @@ import javax.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
 
 @XmlRootElement(name = "long")
 @XmlJavaTypeAdapter(WhereOperandPolymorphicXmlAdapter.class)
-public class LongWhereOperand implements WhereOperand<Long> {
+public class LongWhereOperand extends WhereOperand<Long> {
 
   private Long value;
 
@@ -62,6 +62,13 @@ public class LongWhereOperand implements WhereOperand<Long> {
   public OperandType getOperandType () {
 
     return OperandType.LONG;
+  }
+
+  @Override
+  @XmlTransient
+  public Long get () {
+
+    return value;
   }
 
   @XmlElement(name = "value", required = true)

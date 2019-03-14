@@ -138,7 +138,7 @@ public class HibernateQueryUtility {
   private static Criterion walkField (WhereField whereField, WhereFieldTransformer<Void, Void> fieldTransformer) {
 
     String fieldName = (fieldTransformer == null) ? whereField.getName() : fieldTransformer.transform(whereField.getEntity(), whereField.getName()).getField();
-    Object fieldValue = whereField.getOperand().getValue();
+    Object fieldValue = whereField.getOperand().get();
 
     switch (whereField.getOperator()) {
       case LT:

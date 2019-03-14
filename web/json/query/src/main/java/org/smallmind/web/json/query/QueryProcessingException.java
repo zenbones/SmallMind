@@ -32,53 +32,17 @@
  */
 package org.smallmind.web.json.query;
 
-import javax.xml.bind.annotation.XmlElement;
-import javax.xml.bind.annotation.XmlRootElement;
-import javax.xml.bind.annotation.XmlTransient;
-import javax.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
+import org.smallmind.nutsnbolts.lang.FormattedRuntimeException;
 
-@XmlRootElement(name = "character")
-@XmlJavaTypeAdapter(WhereOperandPolymorphicXmlAdapter.class)
-public class CharacterWhereOperand extends WhereOperand<Character> {
+public class QueryProcessingException extends FormattedRuntimeException {
 
-  private Character value;
+  public QueryProcessingException (String message, Object... args) {
 
-  public CharacterWhereOperand () {
-
+    super(message, args);
   }
 
-  public CharacterWhereOperand (Character value) {
+  public QueryProcessingException (Throwable throwable) {
 
-    this.value = value;
-  }
-
-  public static CharacterWhereOperand instance (Character value) {
-
-    return new CharacterWhereOperand(value);
-  }
-
-  @Override
-  @XmlTransient
-  public OperandType getOperandType () {
-
-    return OperandType.CHARACTER;
-  }
-
-  @Override
-  @XmlTransient
-  public Character get () {
-
-    return value;
-  }
-
-  @XmlElement(name = "value", required = true)
-  public Character getValue () {
-
-    return value;
-  }
-
-  public void setValue (Character value) {
-
-    this.value = value;
+    super(throwable);
   }
 }

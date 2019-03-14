@@ -133,7 +133,7 @@ public class QueryUtility {
 
   private static Predicate walkField (Set<Path<?>> rootSet, WhereField whereField, WhereFieldTransformer<Path<?>, Path<?>> fieldTransformer) {
 
-    Object fieldValue = whereField.getOperand().getValue();
+    Object fieldValue = whereField.getOperand().get();
     WherePath<Path<?>, Path<?>> wherePath = fieldTransformer.transform(whereField.getEntity(), whereField.getName());
 
     rootSet.add(wherePath.getRoot());

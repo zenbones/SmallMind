@@ -32,53 +32,7 @@
  */
 package org.smallmind.web.json.query;
 
-import javax.xml.bind.annotation.XmlElement;
-import javax.xml.bind.annotation.XmlRootElement;
-import javax.xml.bind.annotation.XmlTransient;
-import javax.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
+public enum ComponentType {
 
-@XmlRootElement(name = "character")
-@XmlJavaTypeAdapter(WhereOperandPolymorphicXmlAdapter.class)
-public class CharacterWhereOperand extends WhereOperand<Character> {
-
-  private Character value;
-
-  public CharacterWhereOperand () {
-
-  }
-
-  public CharacterWhereOperand (Character value) {
-
-    this.value = value;
-  }
-
-  public static CharacterWhereOperand instance (Character value) {
-
-    return new CharacterWhereOperand(value);
-  }
-
-  @Override
-  @XmlTransient
-  public OperandType getOperandType () {
-
-    return OperandType.CHARACTER;
-  }
-
-  @Override
-  @XmlTransient
-  public Character get () {
-
-    return value;
-  }
-
-  @XmlElement(name = "value", required = true)
-  public Character getValue () {
-
-    return value;
-  }
-
-  public void setValue (Character value) {
-
-    this.value = value;
-  }
+  BOOLEAN, BYTE, CHARACTER, DATE, DOUBLE, FLOAT, INTEGER, LONG, SHORT, STRING
 }

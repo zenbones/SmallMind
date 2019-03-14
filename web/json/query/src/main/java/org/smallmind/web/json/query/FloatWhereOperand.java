@@ -39,7 +39,7 @@ import javax.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
 
 @XmlRootElement(name = "float")
 @XmlJavaTypeAdapter(WhereOperandPolymorphicXmlAdapter.class)
-public class FloatWhereOperand implements WhereOperand<Float> {
+public class FloatWhereOperand extends WhereOperand<Float> {
 
   private Float value;
 
@@ -62,6 +62,13 @@ public class FloatWhereOperand implements WhereOperand<Float> {
   public OperandType getOperandType () {
 
     return OperandType.FLOAT;
+  }
+
+  @Override
+  @XmlTransient
+  public Float get () {
+
+    return value;
   }
 
   @XmlElement(name = "value", required = true)
