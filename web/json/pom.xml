@@ -13,6 +13,7 @@
 
   <modules>
     <module>dto</module>
+    <module>query</module>
     <module>scaffold</module>
   </modules>
 </project>
