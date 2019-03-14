@@ -34,6 +34,6 @@ package org.smallmind.web.json.query;
 
 import org.smallmind.web.json.scaffold.util.PolymorphicXmlAdapter;
 
-public class HintPolymorphicXmlAdapter extends PolymorphicXmlAdapter<WhereCriterion> {
+public class HintPolymorphicXmlAdapter extends PolymorphicXmlAdapter<Hint> {
 
 }

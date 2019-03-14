@@ -38,8 +38,10 @@ import javax.xml.bind.annotation.XmlRootElement;
 import javax.xml.bind.annotation.XmlTransient;
 import javax.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
 import com.fasterxml.jackson.databind.node.ArrayNode;
+import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import org.smallmind.nutsnbolts.json.ZonedDateTimeXmlAdapter;
 import org.smallmind.nutsnbolts.lang.UnknownSwitchCaseException;
+import org.smallmind.nutsnbolts.time.TimeUtility;
 import org.smallmind.web.json.scaffold.util.JsonCodec;
 
 @XmlRootElement(name = "array")
@@ -61,31 +63,46 @@ public class ArrayWhereOperand extends WhereOperand<Object[]> {
 
     if (Boolean.class.equals(componentClass)) {
       hint = new ComponentHint(ComponentType.BOOLEAN);
+      value = (ArrayNode)JsonCodec.writeAsJsonNode(array);
     } else if (Byte.class.equals(componentClass)) {
       hint = new ComponentHint(ComponentType.BYTE);
+      value = (ArrayNode)JsonCodec.writeAsJsonNode(array);
     } else if (Character.class.equals(componentClass)) {
       hint = new ComponentHint(ComponentType.CHARACTER);
+      value = (ArrayNode)JsonCodec.writeAsJsonNode(array);
     } else if (Date.class.equals(componentClass)) {
       hint = new ComponentHint(ComponentType.DATE);
+      value = JsonNodeFactory.instance.arrayNode();
+      for (Object obj : array) {
+        value.add(ZONED_DATE_TIME_XML_ADAPTER.marshal(TimeUtility.fromDate((Date)obj)));
+      }
     } else if (Double.class.equals(componentClass)) {
       hint = new ComponentHint(ComponentType.DOUBLE);
+      value = (ArrayNode)JsonCodec.writeAsJsonNode(array);
     } else if (Float.class.equals(componentClass)) {
       hint = new ComponentHint(ComponentType.FLOAT);
+      value = (ArrayNode)JsonCodec.writeAsJsonNode(array);
     } else if (Integer.class.equals(componentClass)) {
       hint = new ComponentHint(ComponentType.INTEGER);
+      value = (ArrayNode)JsonCodec.writeAsJsonNode(array);
     } else if (Long.class.equals(componentClass)) {
       hint = new ComponentHint(ComponentType.LONG);
+      value = (ArrayNode)JsonCodec.writeAsJsonNode(array);
     } else if (Short.class.equals(componentClass)) {
       hint = new ComponentHint(ComponentType.SHORT);
+      value = (ArrayNode)JsonCodec.writeAsJsonNode(array);
     } else if (String.class.equals(componentClass)) {
       hint = new ComponentHint(ComponentType.STRING);
-    } else if (Enum.class.equals(componentClass)) {
+      value = (ArrayNode)JsonCodec.writeAsJsonNode(array);
+    } else if (Enum.class.isAssignableFrom(componentClass)) {
       hint = new EnumHint((Class<? extends Enum>)componentClass);
+      value = JsonNodeFactory.instance.arrayNode();
+      for (Object obj : array) {
+        value.add(((Enum)obj).name());
+      }
     } else {
       throw new QueryProcessingException("Unknown array type(%s)", componentClass.getName());
     }
-
-    value = (ArrayNode)JsonCodec.writeAsJsonNode(array);
   }
 
   public static ArrayWhereOperand instance (Object[] value) {
@@ -209,6 +226,19 @@ public class ArrayWhereOperand extends WhereOperand<Object[]> {
         }
       case ENUM:
 
+        try {
+
+          Class<? extends Enum> enumClass = (Class<? extends Enum>)Class.forName(((EnumHint)hint).getType());
+          Object[] enumArray = new Object[value.size()];
+
+          for (int index = 0; index < value.size(); index++) {
+            enumArray[index] = (value.get(index) == null) ? null : Enum.valueOf(enumClass, JsonCodec.convert(value.get(index), String.class));
+          }
+
+          return enumArray;
+        } catch (ClassNotFoundException classNotFoundException) {
+          throw new QueryProcessingException(classNotFoundException);
+        }
       default:
         throw new UnknownSwitchCaseException(hint.getHintType().name());
     }
