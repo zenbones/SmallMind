@@ -40,7 +40,7 @@ import org.smallmind.web.json.scaffold.util.XmlPolymorphicSubClasses;
 
 @XmlAccessorType(XmlAccessType.PROPERTY)
 @XmlJavaTypeAdapter(WhereOperandPolymorphicXmlAdapter.class)
-@XmlPolymorphicSubClasses({ArrayWhereOperand.class, BooleanWhereOperand.class, ByteWhereOperand.class, CharacterWhereOperand.class, DateWhereOperand.class, DoubleWhereOperand.class, EnumWhereOperand.class, FloatWhereOperand.class, IntegerWhereOperand.class, LongWhereOperand.class, ShortWhereOperand.class, StringWhereOperand.class})
+@XmlPolymorphicSubClasses({ArrayWhereOperand.class, BooleanWhereOperand.class, ByteWhereOperand.class, CharacterWhereOperand.class, DateWhereOperand.class, DoubleWhereOperand.class, EnumWhereOperand.class, FloatWhereOperand.class, IntegerWhereOperand.class, LongWhereOperand.class, NullWhereOperand.class, ShortWhereOperand.class, StringWhereOperand.class})
 public interface WhereOperand<I> extends Serializable {
 
   OperandType getOperandType ();

@@ -35,8 +35,10 @@ package org.smallmind.web.json.query;
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlRootElement;
 import javax.xml.bind.annotation.XmlTransient;
+import javax.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
 
 @XmlRootElement(name = "boolean")
+@XmlJavaTypeAdapter(WhereOperandPolymorphicXmlAdapter.class)
 public class BooleanWhereOperand implements WhereOperand<Boolean> {
 
   private Boolean value;

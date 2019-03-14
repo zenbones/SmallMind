@@ -35,8 +35,10 @@ package org.smallmind.web.json.query;
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlRootElement;
 import javax.xml.bind.annotation.XmlTransient;
+import javax.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
 
 @XmlRootElement(name = "string")
+@XmlJavaTypeAdapter(WhereOperandPolymorphicXmlAdapter.class)
 public class StringWhereOperand implements WhereOperand<String> {
 
   private String value;

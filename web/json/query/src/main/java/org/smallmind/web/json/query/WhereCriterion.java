@@ -38,7 +38,7 @@ import javax.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
 import org.smallmind.web.json.scaffold.util.XmlPolymorphicSubClasses;
 
 @XmlAccessorType(XmlAccessType.PROPERTY)
-@XmlJavaTypeAdapter(WhereConjunctionPolymorphicXmlAdapter.class)
+@XmlJavaTypeAdapter(WhereCriterionPolymorphicXmlAdapter.class)
 @XmlPolymorphicSubClasses({AndWhereConjunction.class, OrWhereConjunction.class, WhereField.class})
 public abstract class WhereCriterion {
 

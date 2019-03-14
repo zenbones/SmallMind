@@ -34,8 +34,10 @@ package org.smallmind.web.json.query;
 
 import javax.xml.bind.annotation.XmlRootElement;
 import javax.xml.bind.annotation.XmlTransient;
+import javax.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
 
 @XmlRootElement(name = "null")
+@XmlJavaTypeAdapter(WhereOperandPolymorphicXmlAdapter.class)
 public class NullWhereOperand implements WhereOperand<Void> {
 
   private static final NullWhereOperand INSTANCE = new NullWhereOperand();

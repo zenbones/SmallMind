@@ -38,6 +38,7 @@ import javax.xml.bind.annotation.XmlTransient;
 import javax.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
 
 @XmlRootElement(name = "field")
+@XmlJavaTypeAdapter(WhereCriterionPolymorphicXmlAdapter.class)
 public class WhereField extends WhereCriterion {
 
   private WhereOperand<?> operand;

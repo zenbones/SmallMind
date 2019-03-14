@@ -34,8 +34,10 @@ package org.smallmind.web.json.query;
 
 import javax.xml.bind.annotation.XmlRootElement;
 import javax.xml.bind.annotation.XmlTransient;
+import javax.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
 
 @XmlRootElement(name = "and")
+@XmlJavaTypeAdapter(WhereCriterionPolymorphicXmlAdapter.class)
 public class AndWhereConjunction extends WhereConjunction {
 
   public AndWhereConjunction () {

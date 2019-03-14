@@ -41,6 +41,7 @@ import org.smallmind.nutsnbolts.json.ZonedDateTimeXmlAdapter;
 import org.smallmind.nutsnbolts.lang.UnknownSwitchCaseException;
 
 @XmlRootElement(name = "array")
+@XmlJavaTypeAdapter(WhereOperandPolymorphicXmlAdapter.class)
 public class ArrayWhereOperand implements WhereOperand<Object[]> {
 
   private static final ZonedDateTimeXmlAdapter ZONED_DATE_TIME_XML_ADAPTER = new ZonedDateTimeXmlAdapter();

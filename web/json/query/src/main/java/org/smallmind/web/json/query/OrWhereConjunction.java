@@ -34,8 +34,10 @@ package org.smallmind.web.json.query;
 
 import javax.xml.bind.annotation.XmlRootElement;
 import javax.xml.bind.annotation.XmlTransient;
+import javax.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
 
 @XmlRootElement(name = "or")
+@XmlJavaTypeAdapter(WhereCriterionPolymorphicXmlAdapter.class)
 public class OrWhereConjunction extends WhereConjunction {
 
   public OrWhereConjunction () {
