@@ -59,9 +59,9 @@ public class FloatWhereOperand extends WhereOperand<Float> {
 
   @Override
   @XmlTransient
-  public JsonType getJsonType () {
+  public ElementType getElementType () {
 
-    return JsonType.NUMBER;
+    return ElementType.NUMBER;
   }
 
   @Override

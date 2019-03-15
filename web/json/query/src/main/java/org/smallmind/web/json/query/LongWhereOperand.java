@@ -59,9 +59,9 @@ public class LongWhereOperand extends WhereOperand<Long> {
 
   @Override
   @XmlTransient
-  public JsonType getJsonType () {
+  public ElementType getElementType () {
 
-    return JsonType.NUMBER;
+    return ElementType.NUMBER;
   }
 
   @Override

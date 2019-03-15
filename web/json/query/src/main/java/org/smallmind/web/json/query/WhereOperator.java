@@ -43,9 +43,9 @@ public enum WhereOperator {
     public boolean isTrue (WhereOperand<?> op1, WhereOperand<?> op2) {
 
       if (!(OperandType.ARRAY.equals(op1.getOperandType()) || OperandType.ARRAY.equals(op2.getOperandType()))) {
-        if ((JsonType.NUMBER.equals(op1.getJsonType()) && JsonType.NUMBER.equals(op2.getJsonType()))) {
+        if ((ElementType.NUMBER.equals(op1.getElementType()) && ElementType.NUMBER.equals(op2.getElementType()))) {
           return NUMBER_COMPARATOR.compare((Number)op1.get(), (Number)op2.get()) < 0;
-        } else if ((JsonType.DATE.equals(op1.getJsonType()) && JsonType.DATE.equals(op2.getJsonType()))) {
+        } else if ((ElementType.DATE.equals(op1.getElementType()) && ElementType.DATE.equals(op2.getElementType()))) {
           return ((Date)op1.get()).before((Date)op2.get());
         }
       }
@@ -58,9 +58,9 @@ public enum WhereOperator {
     public boolean isTrue (WhereOperand<?> op1, WhereOperand<?> op2) {
 
       if (!(OperandType.ARRAY.equals(op1.getOperandType()) || OperandType.ARRAY.equals(op2.getOperandType()))) {
-        if ((JsonType.NUMBER.equals(op1.getJsonType()) && JsonType.NUMBER.equals(op2.getJsonType()))) {
+        if ((ElementType.NUMBER.equals(op1.getElementType()) && ElementType.NUMBER.equals(op2.getElementType()))) {
           return NUMBER_COMPARATOR.compare((Number)op1.get(), (Number)op2.get()) <= 0;
-        } else if ((JsonType.DATE.equals(op1.getJsonType()) && JsonType.DATE.equals(op2.getJsonType()))) {
+        } else if ((ElementType.DATE.equals(op1.getElementType()) && ElementType.DATE.equals(op2.getElementType()))) {
           return op1.get().equals(op2.get()) || ((Date)op1.get()).before((Date)op2.get());
         }
       }
@@ -73,12 +73,12 @@ public enum WhereOperator {
     public boolean isTrue (WhereOperand<?> op1, WhereOperand<?> op2) {
 
       if (!(OperandType.ARRAY.equals(op1.getOperandType()) || OperandType.ARRAY.equals(op2.getOperandType()))) {
-        if (JsonType.NULL.equals(op1.getJsonType())) {
-          return JsonType.NULL.equals(op2.getJsonType());
-        } else if (JsonType.NULL.equals(op2.getJsonType())) {
+        if (ElementType.NULL.equals(op1.getElementType())) {
+          return ElementType.NULL.equals(op2.getElementType());
+        } else if (ElementType.NULL.equals(op2.getElementType())) {
           return false;
-        } else if (op1.getJsonType().equals(op2.getJsonType())) {
-          switch (op1.getJsonType()) {
+        } else if (op1.getElementType().equals(op2.getElementType())) {
+          switch (op1.getElementType()) {
             case BOOLEAN:
               return op1.get().equals(op2.get());
             case NUMBER:
@@ -88,7 +88,7 @@ public enum WhereOperator {
             case DATE:
               return op1.get().equals(op2.get());
             default:
-              throw new QueryProcessingException(new UnknownObjectException(op1.getJsonType().name()));
+              throw new QueryProcessingException(new UnknownObjectException(op1.getElementType().name()));
           }
         }
       }
@@ -101,12 +101,12 @@ public enum WhereOperator {
     public boolean isTrue (WhereOperand<?> op1, WhereOperand<?> op2) {
 
       if (!(OperandType.ARRAY.equals(op1.getOperandType()) || OperandType.ARRAY.equals(op2.getOperandType()))) {
-        if (JsonType.NULL.equals(op1.getJsonType())) {
-          return !JsonType.NULL.equals(op2.getJsonType());
-        } else if (JsonType.NULL.equals(op2.getJsonType())) {
+        if (ElementType.NULL.equals(op1.getElementType())) {
+          return !ElementType.NULL.equals(op2.getElementType());
+        } else if (ElementType.NULL.equals(op2.getElementType())) {
           return true;
-        } else if (op1.getJsonType().equals(op2.getJsonType())) {
-          switch (op1.getJsonType()) {
+        } else if (op1.getElementType().equals(op2.getElementType())) {
+          switch (op1.getElementType()) {
             case BOOLEAN:
               return !op1.get().equals(op2.get());
             case NUMBER:
@@ -116,7 +116,7 @@ public enum WhereOperator {
             case DATE:
               return !op1.get().equals(op2.get());
             default:
-              throw new QueryProcessingException(new UnknownObjectException(op1.getJsonType().name()));
+              throw new QueryProcessingException(new UnknownObjectException(op1.getElementType().name()));
           }
         }
       }
@@ -129,9 +129,9 @@ public enum WhereOperator {
     public boolean isTrue (WhereOperand<?> op1, WhereOperand<?> op2) {
 
       if (!(OperandType.ARRAY.equals(op1.getOperandType()) || OperandType.ARRAY.equals(op2.getOperandType()))) {
-        if ((JsonType.NUMBER.equals(op1.getJsonType()) && JsonType.NUMBER.equals(op2.getJsonType()))) {
+        if ((ElementType.NUMBER.equals(op1.getElementType()) && ElementType.NUMBER.equals(op2.getElementType()))) {
           return NUMBER_COMPARATOR.compare((Number)op1.get(), (Number)op2.get()) >= 0;
-        } else if ((JsonType.DATE.equals(op1.getJsonType()) && JsonType.DATE.equals(op2.getJsonType()))) {
+        } else if ((ElementType.DATE.equals(op1.getElementType()) && ElementType.DATE.equals(op2.getElementType()))) {
           return op1.get().equals(op2.get()) || ((Date)op1.get()).after((Date)op2.get());
         }
       }
@@ -144,9 +144,9 @@ public enum WhereOperator {
     public boolean isTrue (WhereOperand<?> op1, WhereOperand<?> op2) {
 
       if (!(OperandType.ARRAY.equals(op1.getOperandType()) || OperandType.ARRAY.equals(op2.getOperandType()))) {
-        if ((JsonType.NUMBER.equals(op1.getJsonType()) && JsonType.NUMBER.equals(op2.getJsonType()))) {
+        if ((ElementType.NUMBER.equals(op1.getElementType()) && ElementType.NUMBER.equals(op2.getElementType()))) {
           return NUMBER_COMPARATOR.compare((Number)op1.get(), (Number)op2.get()) > 0;
-        } else if ((JsonType.DATE.equals(op1.getJsonType()) && JsonType.DATE.equals(op2.getJsonType()))) {
+        } else if ((ElementType.DATE.equals(op1.getElementType()) && ElementType.DATE.equals(op2.getElementType()))) {
           return ((Date)op1.get()).after((Date)op2.get());
         }
       }
@@ -158,10 +158,10 @@ public enum WhereOperator {
     public boolean isTrue (WhereOperand<?> op1, WhereOperand<?> op2) {
 
       if (!(OperandType.ARRAY.equals(op1.getOperandType()) || OperandType.ARRAY.equals(op2.getOperandType()))) {
-        if (JsonType.STRING.equals(op1.getJsonType())) {
-          if (JsonType.NULL.equals(op2.getJsonType())) {
+        if (ElementType.STRING.equals(op1.getElementType())) {
+          if (ElementType.NULL.equals(op2.getElementType())) {
             return false;
-          } else if (JsonType.STRING.equals(op2.getJsonType())) {
+          } else if (ElementType.STRING.equals(op2.getElementType())) {
             switch (((String)op1.get()).length()) {
               case 0:
                 return op2.get().equals("");
@@ -205,12 +205,12 @@ public enum WhereOperator {
     public boolean isTrue (WhereOperand<?> op1, WhereOperand<?> op2) {
 
       if (OperandType.ARRAY.equals(op1.getOperandType()) && (!OperandType.ARRAY.equals(op2.getOperandType()))) {
-        if (op1.getJsonType().equals(op2.getJsonType())) {
-          if (JsonType.NULL.equals(op2.getJsonType())) {
+        if (op1.getElementType().equals(op2.getElementType())) {
+          if (ElementType.NULL.equals(op2.getElementType())) {
             return true;
           } else {
             for (Object element : (Object[])op1.get()) {
-              switch (op2.getJsonType()) {
+              switch (op2.getElementType()) {
                 case BOOLEAN:
                   if (op2.get().equals(element)) {
                     return true;
@@ -232,7 +232,7 @@ public enum WhereOperator {
                   }
                   break;
                 default:
-                  throw new QueryProcessingException(new UnknownObjectException(op1.getJsonType().name()));
+                  throw new QueryProcessingException(new UnknownObjectException(op1.getElementType().name()));
               }
             }
 

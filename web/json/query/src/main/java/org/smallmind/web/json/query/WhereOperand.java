@@ -97,7 +97,7 @@ public abstract class WhereOperand<I> {
     }
   }
 
-  public abstract JsonType getJsonType ();
+  public abstract ElementType getElementType ();
 
   public abstract OperandType getOperandType ();
 

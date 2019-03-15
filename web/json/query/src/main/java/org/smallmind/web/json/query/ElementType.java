@@ -32,7 +32,7 @@
  */
 package org.smallmind.web.json.query;
 
-public enum JsonType {
+public enum ElementType {
 
   BOOLEAN, DATE, NULL, NUMBER, STRING;
 }

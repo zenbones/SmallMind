@@ -49,9 +49,9 @@ public class NullWhereOperand extends WhereOperand<Void> {
 
   @Override
   @XmlTransient
-  public JsonType getJsonType () {
+  public ElementType getElementType () {
 
-    return JsonType.NULL;
+    return ElementType.NULL;
   }
 
   @Override

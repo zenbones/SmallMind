@@ -118,36 +118,36 @@ public class ArrayWhereOperand extends WhereOperand<Object[]> {
 
   @Override
   @XmlTransient
-  public JsonType getJsonType () {
+  public ElementType getElementType () {
 
     switch (hint.getHintType()) {
       case COMPONENT:
         switch (((ComponentHint)hint).getType()) {
           case BOOLEAN:
-            return JsonType.BOOLEAN;
+            return ElementType.BOOLEAN;
           case BYTE:
-            return JsonType.NUMBER;
+            return ElementType.NUMBER;
           case CHARACTER:
-            return JsonType.STRING;
+            return ElementType.STRING;
           case DATE:
-            return JsonType.DATE;
+            return ElementType.DATE;
           case DOUBLE:
-            return JsonType.NUMBER;
+            return ElementType.NUMBER;
           case FLOAT:
-            return JsonType.NUMBER;
+            return ElementType.NUMBER;
           case INTEGER:
-            return JsonType.NUMBER;
+            return ElementType.NUMBER;
           case LONG:
-            return JsonType.NUMBER;
+            return ElementType.NUMBER;
           case SHORT:
-            return JsonType.NUMBER;
+            return ElementType.NUMBER;
           case STRING:
-            return JsonType.STRING;
+            return ElementType.STRING;
           default:
             throw new UnknownSwitchCaseException(((ComponentHint)hint).getType().name());
         }
       case ENUM:
-        return JsonType.STRING;
+        return ElementType.STRING;
       default:
         throw new UnknownSwitchCaseException(hint.getHintType().name());
     }

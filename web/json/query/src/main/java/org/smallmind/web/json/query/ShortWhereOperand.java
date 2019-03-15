@@ -59,9 +59,9 @@ public class ShortWhereOperand extends WhereOperand<Short> {
 
   @Override
   @XmlTransient
-  public JsonType getJsonType () {
+  public ElementType getElementType () {
 
-    return JsonType.NUMBER;
+    return ElementType.NUMBER;
   }
 
   @Override

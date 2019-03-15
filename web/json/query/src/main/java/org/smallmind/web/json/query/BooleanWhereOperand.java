@@ -59,9 +59,9 @@ public class BooleanWhereOperand extends WhereOperand<Boolean> {
 
   @Override
   @XmlTransient
-  public JsonType getJsonType () {
+  public ElementType getElementType () {
 
-    return JsonType.BOOLEAN;
+    return ElementType.BOOLEAN;
   }
 
   @Override

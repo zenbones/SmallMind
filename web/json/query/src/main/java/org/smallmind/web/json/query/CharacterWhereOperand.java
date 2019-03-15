@@ -59,9 +59,9 @@ public class CharacterWhereOperand extends WhereOperand<Character> {
 
   @Override
   @XmlTransient
-  public JsonType getJsonType () {
+  public ElementType getElementType () {
 
-    return JsonType.STRING;
+    return ElementType.STRING;
   }
 
   @Override

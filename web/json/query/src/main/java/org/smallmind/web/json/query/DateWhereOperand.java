@@ -61,9 +61,9 @@ public class DateWhereOperand extends WhereOperand<Date> {
 
   @Override
   @XmlTransient
-  public JsonType getJsonType () {
+  public ElementType getElementType () {
 
-    return JsonType.DATE;
+    return ElementType.DATE;
   }
 
   @Override
