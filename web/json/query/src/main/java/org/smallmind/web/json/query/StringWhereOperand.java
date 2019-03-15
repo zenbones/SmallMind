@@ -59,6 +59,13 @@ public class StringWhereOperand extends WhereOperand<String> {
 
   @Override
   @XmlTransient
+  public JsonType getJsonType () {
+
+    return JsonType.STRING;
+  }
+
+  @Override
+  @XmlTransient
   public OperandType getOperandType () {
 
     return OperandType.STRING;

@@ -32,39 +32,7 @@
  */
 package org.smallmind.web.json.query;
 
-import javax.xml.bind.annotation.XmlRootElement;
-import javax.xml.bind.annotation.XmlTransient;
-import javax.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
+public enum JsonType {
 
-@XmlRootElement(name = "null")
-@XmlJavaTypeAdapter(WhereOperandPolymorphicXmlAdapter.class)
-public class NullWhereOperand extends WhereOperand<Void> {
-
-  private static final NullWhereOperand INSTANCE = new NullWhereOperand();
-
-  public static NullWhereOperand instance () {
-
-    return INSTANCE;
-  }
-
-  @Override
-  @XmlTransient
-  public JsonType getJsonType () {
-
-    return JsonType.NULL;
-  }
-
-  @Override
-  @XmlTransient
-  public OperandType getOperandType () {
-
-    return OperandType.NULL;
-  }
-
-  @Override
-  @XmlTransient
-  public Void get () {
-
-    return null;
-  }
+  BOOLEAN, DATE, NULL, NUMBER, STRING;
 }

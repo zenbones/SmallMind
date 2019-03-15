@@ -59,6 +59,13 @@ public class ByteWhereOperand extends WhereOperand<Byte> {
 
   @Override
   @XmlTransient
+  public JsonType getJsonType () {
+
+    return JsonType.NUMBER;
+  }
+
+  @Override
+  @XmlTransient
   public OperandType getOperandType () {
 
     return OperandType.BYTE;

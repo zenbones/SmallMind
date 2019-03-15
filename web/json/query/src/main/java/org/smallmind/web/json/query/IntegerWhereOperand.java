@@ -59,6 +59,13 @@ public class IntegerWhereOperand extends WhereOperand<Integer> {
 
   @Override
   @XmlTransient
+  public JsonType getJsonType () {
+
+    return JsonType.NUMBER;
+  }
+
+  @Override
+  @XmlTransient
   public OperandType getOperandType () {
 
     return OperandType.INTEGER;

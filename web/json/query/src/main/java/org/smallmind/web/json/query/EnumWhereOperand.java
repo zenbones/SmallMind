@@ -61,6 +61,13 @@ public class EnumWhereOperand<E extends Enum<E>> extends WhereOperand<E> {
 
   @Override
   @XmlTransient
+  public JsonType getJsonType () {
+
+    return JsonType.STRING;
+  }
+
+  @Override
+  @XmlTransient
   public OperandType getOperandType () {
 
     return OperandType.ENUM;

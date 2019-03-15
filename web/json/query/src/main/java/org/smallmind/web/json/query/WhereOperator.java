@@ -32,7 +32,220 @@
  */
 package org.smallmind.web.json.query;
 
+import java.rmi.activation.UnknownObjectException;
+import java.util.Date;
+import org.smallmind.nutsnbolts.util.NumberComparator;
+
 public enum WhereOperator {
 
-  LT, LE, EQ, NE, GE, GT, LIKE, UNLIKE, IN
+  LT {
+    @Override
+    public boolean isTrue (WhereOperand<?> op1, WhereOperand<?> op2) {
+
+      if (!(OperandType.ARRAY.equals(op1.getOperandType()) || OperandType.ARRAY.equals(op2.getOperandType()))) {
+        if ((JsonType.NUMBER.equals(op1.getJsonType()) && JsonType.NUMBER.equals(op2.getJsonType()))) {
+          return NUMBER_COMPARATOR.compare((Number)op1.get(), (Number)op2.get()) < 0;
+        } else if ((JsonType.DATE.equals(op1.getJsonType()) && JsonType.DATE.equals(op2.getJsonType()))) {
+          return ((Date)op1.get()).before((Date)op2.get());
+        }
+      }
+
+      throw new QueryProcessingException("The operator(%s) requires numeric or date inputs", name());
+    }
+  },
+  LE {
+    @Override
+    public boolean isTrue (WhereOperand<?> op1, WhereOperand<?> op2) {
+
+      if (!(OperandType.ARRAY.equals(op1.getOperandType()) || OperandType.ARRAY.equals(op2.getOperandType()))) {
+        if ((JsonType.NUMBER.equals(op1.getJsonType()) && JsonType.NUMBER.equals(op2.getJsonType()))) {
+          return NUMBER_COMPARATOR.compare((Number)op1.get(), (Number)op2.get()) <= 0;
+        } else if ((JsonType.DATE.equals(op1.getJsonType()) && JsonType.DATE.equals(op2.getJsonType()))) {
+          return op1.get().equals(op2.get()) || ((Date)op1.get()).before((Date)op2.get());
+        }
+      }
+
+      throw new QueryProcessingException("The operator(%s) requires numeric or date inputs", name());
+    }
+  },
+  EQ {
+    @Override
+    public boolean isTrue (WhereOperand<?> op1, WhereOperand<?> op2) {
+
+      if (!(OperandType.ARRAY.equals(op1.getOperandType()) || OperandType.ARRAY.equals(op2.getOperandType()))) {
+        if (JsonType.NULL.equals(op1.getJsonType())) {
+          return JsonType.NULL.equals(op2.getJsonType());
+        } else if (JsonType.NULL.equals(op2.getJsonType())) {
+          return false;
+        } else if (op1.getJsonType().equals(op2.getJsonType())) {
+          switch (op1.getJsonType()) {
+            case BOOLEAN:
+              return op1.get().equals(op2.get());
+            case NUMBER:
+              return NUMBER_COMPARATOR.compare((Number)op1.get(), (Number)op2.get()) == 0;
+            case STRING:
+              return op1.get().equals(op2.get());
+            case DATE:
+              return op1.get().equals(op2.get());
+            default:
+              throw new QueryProcessingException(new UnknownObjectException(op1.getJsonType().name()));
+          }
+        }
+      }
+
+      throw new QueryProcessingException("The operator(%s) is undefined for the operand types(%s and %s)", name(), op1.getOperandType().name(), op2.getOperandType().name());
+    }
+  },
+  NE {
+    @Override
+    public boolean isTrue (WhereOperand<?> op1, WhereOperand<?> op2) {
+
+      if (!(OperandType.ARRAY.equals(op1.getOperandType()) || OperandType.ARRAY.equals(op2.getOperandType()))) {
+        if (JsonType.NULL.equals(op1.getJsonType())) {
+          return !JsonType.NULL.equals(op2.getJsonType());
+        } else if (JsonType.NULL.equals(op2.getJsonType())) {
+          return true;
+        } else if (op1.getJsonType().equals(op2.getJsonType())) {
+          switch (op1.getJsonType()) {
+            case BOOLEAN:
+              return !op1.get().equals(op2.get());
+            case NUMBER:
+              return NUMBER_COMPARATOR.compare((Number)op1.get(), (Number)op2.get()) != 0;
+            case STRING:
+              return !op1.get().equals(op2.get());
+            case DATE:
+              return !op1.get().equals(op2.get());
+            default:
+              throw new QueryProcessingException(new UnknownObjectException(op1.getJsonType().name()));
+          }
+        }
+      }
+
+      throw new QueryProcessingException("The operator(%s) is undefined for the operand types(%s and %s)", name(), op1.getOperandType().name(), op2.getOperandType().name());
+    }
+  },
+  GE {
+    @Override
+    public boolean isTrue (WhereOperand<?> op1, WhereOperand<?> op2) {
+
+      if (!(OperandType.ARRAY.equals(op1.getOperandType()) || OperandType.ARRAY.equals(op2.getOperandType()))) {
+        if ((JsonType.NUMBER.equals(op1.getJsonType()) && JsonType.NUMBER.equals(op2.getJsonType()))) {
+          return NUMBER_COMPARATOR.compare((Number)op1.get(), (Number)op2.get()) >= 0;
+        } else if ((JsonType.DATE.equals(op1.getJsonType()) && JsonType.DATE.equals(op2.getJsonType()))) {
+          return op1.get().equals(op2.get()) || ((Date)op1.get()).after((Date)op2.get());
+        }
+      }
+
+      throw new QueryProcessingException("The operator(%s) requires numeric or date inputs", name());
+    }
+  },
+  GT {
+    @Override
+    public boolean isTrue (WhereOperand<?> op1, WhereOperand<?> op2) {
+
+      if (!(OperandType.ARRAY.equals(op1.getOperandType()) || OperandType.ARRAY.equals(op2.getOperandType()))) {
+        if ((JsonType.NUMBER.equals(op1.getJsonType()) && JsonType.NUMBER.equals(op2.getJsonType()))) {
+          return NUMBER_COMPARATOR.compare((Number)op1.get(), (Number)op2.get()) > 0;
+        } else if ((JsonType.DATE.equals(op1.getJsonType()) && JsonType.DATE.equals(op2.getJsonType()))) {
+          return ((Date)op1.get()).after((Date)op2.get());
+        }
+      }
+      throw new QueryProcessingException("The operator(%s) requires numeric or date inputs", name());
+    }
+  },
+  LIKE {
+    @Override
+    public boolean isTrue (WhereOperand<?> op1, WhereOperand<?> op2) {
+
+      if (!(OperandType.ARRAY.equals(op1.getOperandType()) || OperandType.ARRAY.equals(op2.getOperandType()))) {
+        if (JsonType.STRING.equals(op1.getJsonType())) {
+          if (JsonType.NULL.equals(op2.getJsonType())) {
+            return false;
+          } else if (JsonType.STRING.equals(op2.getJsonType())) {
+            switch (((String)op1.get()).length()) {
+              case 0:
+                return op2.get().equals("");
+              case 1:
+                return op1.get().equals("%") || op2.get().equals(op1.get());
+              case 2:
+                return op1.get().equals("%%") || (((String)op1.get()).charAt(0) == '%') ? ((String)op2.get()).endsWith(((String)op1.get()).substring(1)) : (((String)op1.get()).charAt(1) == '%') ? ((String)op2.get()).startsWith(((String)op1.get()).substring(0, 1)) : op2.get().equals(op1.get());
+              default:
+                if (((String)op1.get()).substring(1, ((String)op1.get()).length() - 1).indexOf('%') >= 0) {
+                  throw new QueryProcessingException("The operation(%s) allows wildcards('%') only at the  start or end of the operand", name());
+                } else if (((String)op1.get()).startsWith("%") && ((String)op1.get()).endsWith("%")) {
+
+                  return ((String)op2.get()).contains(((String)op1.get()).substring(1, ((String)op1.get()).length() - 1));
+                } else if (((String)op1.get()).startsWith("%")) {
+
+                  return ((String)op2.get()).endsWith(((String)op1.get()).substring(1));
+                } else if (((String)op1.get()).endsWith("%")) {
+
+                  return ((String)op2.get()).startsWith(((String)op1.get()).substring(0, ((String)op1.get()).length() - 1));
+                } else {
+
+                  return op2.get().equals(op1.get());
+                }
+            }
+          }
+        }
+      }
+
+      throw new QueryProcessingException("The operator(%s) requires a string operand and a string or null input", name());
+    }
+  },
+  UNLIKE {
+    @Override
+    public boolean isTrue (WhereOperand<?> op1, WhereOperand<?> op2) {
+
+      return !LIKE.isTrue(op1, op2);
+    }
+  },
+  IN {
+    @Override
+    public boolean isTrue (WhereOperand<?> op1, WhereOperand<?> op2) {
+
+      if (OperandType.ARRAY.equals(op1.getOperandType()) && (!OperandType.ARRAY.equals(op2.getOperandType()))) {
+        if (op1.getJsonType().equals(op2.getJsonType())) {
+          if (JsonType.NULL.equals(op2.getJsonType())) {
+            return true;
+          } else {
+            for (Object element : (Object[])op1.get()) {
+              switch (op2.getJsonType()) {
+                case BOOLEAN:
+                  if (op2.get().equals(element)) {
+                    return true;
+                  }
+                  break;
+                case NUMBER:
+                  if (NUMBER_COMPARATOR.compare((Number)element, (Number)op2.get()) == 0) {
+                    return true;
+                  }
+                  break;
+                case STRING:
+                  if (op2.get().equals(element)) {
+                    return true;
+                  }
+                  break;
+                case DATE:
+                  if (op2.get().equals(element)) {
+                    return true;
+                  }
+                  break;
+                default:
+                  throw new QueryProcessingException(new UnknownObjectException(op1.getJsonType().name()));
+              }
+            }
+
+            return false;
+          }
+        }
+      }
+
+      throw new QueryProcessingException("The operator(%s) requires an array operand and a singular non-null input matching the component type", name());
+    }
+  };
+
+  private static final NumberComparator NUMBER_COMPARATOR = new NumberComparator();
+
+  public abstract boolean isTrue (WhereOperand<?> op1, WhereOperand<?> op2);
 }

@@ -59,6 +59,13 @@ public class CharacterWhereOperand extends WhereOperand<Character> {
 
   @Override
   @XmlTransient
+  public JsonType getJsonType () {
+
+    return JsonType.STRING;
+  }
+
+  @Override
+  @XmlTransient
   public OperandType getOperandType () {
 
     return OperandType.CHARACTER;

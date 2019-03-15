@@ -57,6 +57,12 @@ public class ArrayWhereOperand extends WhereOperand<Object[]> {
 
   }
 
+  public ArrayWhereOperand (Hint hint, ArrayNode value) {
+
+    this.hint = hint;
+    this.value = value;
+  }
+
   public ArrayWhereOperand (Object[] array) {
 
     Class<?> componentClass = array.getClass().getComponentType();
@@ -108,6 +114,43 @@ public class ArrayWhereOperand extends WhereOperand<Object[]> {
   public static ArrayWhereOperand instance (Object[] value) {
 
     return new ArrayWhereOperand(value);
+  }
+
+  @Override
+  @XmlTransient
+  public JsonType getJsonType () {
+
+    switch (hint.getHintType()) {
+      case COMPONENT:
+        switch (((ComponentHint)hint).getType()) {
+          case BOOLEAN:
+            return JsonType.BOOLEAN;
+          case BYTE:
+            return JsonType.NUMBER;
+          case CHARACTER:
+            return JsonType.STRING;
+          case DATE:
+            return JsonType.DATE;
+          case DOUBLE:
+            return JsonType.NUMBER;
+          case FLOAT:
+            return JsonType.NUMBER;
+          case INTEGER:
+            return JsonType.NUMBER;
+          case LONG:
+            return JsonType.NUMBER;
+          case SHORT:
+            return JsonType.NUMBER;
+          case STRING:
+            return JsonType.STRING;
+          default:
+            throw new UnknownSwitchCaseException(((ComponentHint)hint).getType().name());
+        }
+      case ENUM:
+        return JsonType.STRING;
+      default:
+        throw new UnknownSwitchCaseException(hint.getHintType().name());
+    }
   }
 
   @Override

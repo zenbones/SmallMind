@@ -59,6 +59,13 @@ public class DoubleWhereOperand extends WhereOperand<Double> {
 
   @Override
   @XmlTransient
+  public JsonType getJsonType () {
+
+    return JsonType.NUMBER;
+  }
+
+  @Override
+  @XmlTransient
   public OperandType getOperandType () {
 
     return OperandType.DOUBLE;

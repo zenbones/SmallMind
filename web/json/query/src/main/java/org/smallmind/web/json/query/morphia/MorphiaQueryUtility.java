@@ -38,7 +38,7 @@ import org.mongodb.morphia.query.Criteria;
 import org.mongodb.morphia.query.FieldEnd;
 import org.mongodb.morphia.query.Query;
 import org.smallmind.nutsnbolts.lang.UnknownSwitchCaseException;
-import org.smallmind.persistence.orm.ORMOperationException;
+import org.smallmind.web.json.query.QueryProcessingException;
 import org.smallmind.web.json.query.Sort;
 import org.smallmind.web.json.query.SortField;
 import org.smallmind.web.json.query.Where;
@@ -147,27 +147,27 @@ public class MorphiaQueryUtility {
           return fieldEnd.doesNotExist();
         } else if (!(likeValue instanceof String)) {
 
-          throw new ORMOperationException("The operation(%s) requires a String operand", WhereOperator.LIKE.name());
+          throw new QueryProcessingException("The operation(%s) requires a String operand", WhereOperator.LIKE.name());
         } else {
-          switch (((String)(likeValue)).length()) {
+          switch (((String)likeValue).length()) {
             case 0:
               return fieldEnd.equal("");
             case 1:
               return likeValue.equals("%") ? fieldEnd.exists() : fieldEnd.equal(likeValue);
             case 2:
-              return likeValue.equals("%%") ? fieldEnd.exists() : (((String)likeValue).charAt(0) == '%') ? fieldEnd.startsWith(((String)likeValue).substring(1)) : (((String)likeValue).charAt(1) == '%') ? fieldEnd.endsWith(((String)likeValue).substring(0, 1)) : fieldEnd.equal(likeValue);
+              return likeValue.equals("%%") ? fieldEnd.exists() : (((String)likeValue).charAt(0) == '%') ? fieldEnd.endsWith(((String)likeValue).substring(1)) : (((String)likeValue).charAt(1) == '%') ? fieldEnd.startsWith(((String)likeValue).substring(0, 1)) : fieldEnd.equal(likeValue);
             default:
               if (((String)likeValue).substring(1, ((String)likeValue).length() - 1).indexOf('%') >= 0) {
-                throw new ORMOperationException("The operation(%s) allows wildcards('%') only at the  start or end of the operand", WhereOperator.LIKE.name());
+                throw new QueryProcessingException("The operation(%s) allows wildcards('%') only at the  start or end of the operand", WhereOperator.LIKE.name());
               } else if (((String)likeValue).startsWith("%") && ((String)likeValue).endsWith("%")) {
 
                 return fieldEnd.contains(((String)likeValue).substring(1, ((String)likeValue).length() - 1));
               } else if (((String)likeValue).startsWith("%")) {
 
-                return fieldEnd.startsWith(((String)likeValue).substring(1));
+                return fieldEnd.endsWith(((String)likeValue).substring(1));
               } else if (((String)likeValue).endsWith("%")) {
 
-                return fieldEnd.endsWith(((String)likeValue).substring(0, ((String)likeValue).length() - 1));
+                return fieldEnd.startsWith(((String)likeValue).substring(0, ((String)likeValue).length() - 1));
               } else {
 
                 return fieldEnd.equal(likeValue);
@@ -183,27 +183,27 @@ public class MorphiaQueryUtility {
           return fieldEnd.exists();
         } else if (!(unlikeValue instanceof String)) {
 
-          throw new ORMOperationException("The operation(%s) requires a String operand", WhereOperator.UNLIKE.name());
+          throw new QueryProcessingException("The operation(%s) requires a String operand", WhereOperator.UNLIKE.name());
         } else {
-          switch (((String)(unlikeValue)).length()) {
+          switch (((String)unlikeValue).length()) {
             case 0:
               return fieldEnd.notEqual("");
             case 1:
               return unlikeValue.equals("%") ? fieldEnd.doesNotExist() : fieldEnd.notEqual(unlikeValue);
             case 2:
-              return unlikeValue.equals("%%") ? fieldEnd.doesNotExist() : (((String)unlikeValue).charAt(0) == '%') ? fieldEnd.not().startsWith(((String)unlikeValue).substring(1)) : (((String)unlikeValue).charAt(1) == '%') ? fieldEnd.not().endsWith(((String)unlikeValue).substring(0, 1)) : fieldEnd.notEqual(unlikeValue);
+              return unlikeValue.equals("%%") ? fieldEnd.doesNotExist() : (((String)unlikeValue).charAt(0) == '%') ? fieldEnd.not().endsWith(((String)unlikeValue).substring(1)) : (((String)unlikeValue).charAt(1) == '%') ? fieldEnd.not().startsWith(((String)unlikeValue).substring(0, 1)) : fieldEnd.notEqual(unlikeValue);
             default:
               if (((String)unlikeValue).substring(1, ((String)unlikeValue).length() - 1).indexOf('%') >= 0) {
-                throw new ORMOperationException("The operation(%s) allows wildcards('%') only at the  start or end of the operand", WhereOperator.UNLIKE.name());
+                throw new QueryProcessingException("The operation(%s) allows wildcards('%') only at the  start or end of the operand", WhereOperator.UNLIKE.name());
               } else if (((String)unlikeValue).startsWith("%") && ((String)unlikeValue).endsWith("%")) {
 
                 return fieldEnd.not().contains(((String)unlikeValue).substring(1, ((String)unlikeValue).length() - 1));
               } else if (((String)unlikeValue).startsWith("%")) {
 
-                return fieldEnd.not().startsWith(((String)unlikeValue).substring(1));
+                return fieldEnd.not().endsWith(((String)unlikeValue).substring(1));
               } else if (((String)unlikeValue).endsWith("%")) {
 
-                return fieldEnd.not().endsWith(((String)unlikeValue).substring(0, ((String)unlikeValue).length() - 1));
+                return fieldEnd.not().startsWith(((String)unlikeValue).substring(0, ((String)unlikeValue).length() - 1));
               } else {
 
                 return fieldEnd.notEqual(unlikeValue);
