@@ -6,10 +6,10 @@
     <artifactId>web-json</artifactId>
     <version>3.3.17-SNAPSHOT</version>
   </parent>
-  <artifactId>web-json-dto</artifactId>
+  <artifactId>web-json-query</artifactId>
   <packaging>jar</packaging>
-  <name>Web-Json-Dto</name>
-  <description>Json Dto Annotation Processor</description>
+  <name>Web-Json-Query</name>
+  <description>Json Query Framework</description>
   <dependencies>
     <dependency>
       <groupId>javax.validation</groupId>
@@ -25,18 +25,29 @@
       <groupId>org.smallmind</groupId>
       <artifactId>smallmind-persistence</artifactId>
       <scope>compile</scope>
-      <optional>true</optional>
     </dependency>
     <dependency>
       <groupId>org.smallmind</groupId>
       <artifactId>web-json-scaffold</artifactId>
       <scope>compile</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.hibernate</groupId>
+      <artifactId>hibernate-entitymanager</artifactId>
+      <scope>compile</scope>
       <optional>true</optional>
     </dependency>
     <dependency>
-      <groupId>com.google.auto.service</groupId>
-      <artifactId>auto-service</artifactId>
+      <groupId>com.querydsl</groupId>
+      <artifactId>querydsl-jpa</artifactId>
       <scope>compile</scope>
+      <optional>true</optional>
+    </dependency>
+    <dependency>
+      <groupId>org.mongodb.morphia</groupId>
+      <artifactId>morphia</artifactId>
+      <scope>compile</scope>
+      <optional>true</optional>
     </dependency>
   </dependencies>
 </project>

@@ -3,7 +3,7 @@
 
   <groupId>org.smallmind</groupId>
   <artifactId>smallmind</artifactId>
-  <version>3.3.16</version>
+  <version>3.3.17-SNAPSHOT</version>
   <packaging>pom</packaging>
   <name>Parent</name>
   <description>Parent POM</description>
@@ -916,9 +916,7 @@
           <artifactId>maven-javadoc-plugin</artifactId>
           <version>3.0.1</version>
           <configuration>
-            <configuration>
-              <failOnError>false</failOnError>
-            </configuration>
+            <failOnError>false</failOnError>
           </configuration>
         </plugin>
         <plugin>
