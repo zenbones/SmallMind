@@ -120,7 +120,6 @@ public class SelfDestructiveMap<K extends Comparable<K>, S extends SelfDestructi
     public void run () {
 
       try {
-
         runnableThread = Thread.currentThread();
 
         while (!terminationLatch.await(pulseTimeDuration.getTime(), pulseTimeDuration.getTimeUnit())) {

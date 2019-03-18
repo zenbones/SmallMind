@@ -177,7 +177,6 @@ public class AsynchronousAppender implements Appender {
     public void run () {
 
       try {
-
         runnableThread = Thread.currentThread();
 
         while (!finished.get()) {

@@ -87,7 +87,6 @@ public abstract class Worker<T> implements Runnable, MetricConfigurationProvider
     long idleStart = Clocks.EPOCH.getClock().getTimeNanoseconds();
 
     try {
-
       runnableThread = Thread.currentThread();
 
       while (!stopped.get()) {

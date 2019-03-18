@@ -192,7 +192,6 @@ public class ReverseProxyService {
     public void run () {
 
       try {
-
         runnableThread = Thread.currentThread();
 
         while (!stopped) {
