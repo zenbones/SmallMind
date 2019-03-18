@@ -34,16 +34,19 @@ package org.smallmind.scheduling.quartz;
 
 import java.util.Date;
 import java.util.LinkedList;
-import org.quartz.Job;
+import java.util.concurrent.atomic.AtomicReference;
+import org.quartz.InterruptableJob;
 import org.quartz.JobExecutionContext;
 import org.smallmind.nutsnbolts.util.SuccessOrFailure;
 import org.smallmind.scheduling.base.ProxyJob;
 import org.smallmind.scribe.pen.LoggerManager;
 
-public abstract class QuartzProxyJob implements ProxyJob, Job {
+public abstract class QuartzProxyJob implements ProxyJob, InterruptableJob {
 
+  private AtomicReference<Thread> threadRef = new AtomicReference<>();
+  private AtomicReference<SuccessOrFailure> statusRef = new AtomicReference<>(SuccessOrFailure.SUCCESS);
   private LinkedList<Throwable> throwableList;
-  private SuccessOrFailure status = SuccessOrFailure.SUCCESS;
+
   private Date startTime;
   private Date stopTime;
   private int count = 0;
@@ -62,7 +65,7 @@ public abstract class QuartzProxyJob implements ProxyJob, Job {
   @Override
   public SuccessOrFailure getJobStatus () {
 
-    return status;
+    return statusRef.get();
   }
 
   @Override
@@ -121,10 +124,20 @@ public abstract class QuartzProxyJob implements ProxyJob, Job {
     throwableList.add(throwable);
 
     if (isFailure) {
-      status = SuccessOrFailure.FAILURE;
+      statusRef.set(SuccessOrFailure.FAILURE);
     }
 
     LoggerManager.getLogger(this.getClass()).error(throwable);
+  }
+
+  @Override
+  public void interrupt () {
+
+    Thread thread;
+
+    if ((thread = threadRef.get()) != null) {
+      thread.interrupt();
+    }
   }
 
   @Override
@@ -134,13 +147,23 @@ public abstract class QuartzProxyJob implements ProxyJob, Job {
       startTime = new Date();
 
       try {
+        threadRef.set(Thread.currentThread());
         proceed();
+      } catch (InterruptedException interruptedException) {
+        statusRef.set(SuccessOrFailure.INTERRUPTED);
       } catch (Exception exception) {
         setThrowable(exception);
       } finally {
-        stopTime = new Date();
 
-        if (status.equals(SuccessOrFailure.FAILURE) || (count > 0) || logOnZeroCount()) {
+        SuccessOrFailure status;
+
+        threadRef.set(null);
+        stopTime = new Date();
+        status = statusRef.get();
+
+        if (SuccessOrFailure.INTERRUPTED.equals(status)) {
+          LoggerManager.getLogger(this.getClass()).info("Job(%s) start(%s) has been interrupted", this.getClass().getSimpleName(), startTime, stopTime, count, status.name());
+        } else if (SuccessOrFailure.FAILURE.equals(status) || (count > 0) || logOnZeroCount()) {
           LoggerManager.getLogger(this.getClass()).info("Job(%s) start(%s) stop(%s) count(%d) state(%s)", this.getClass().getSimpleName(), startTime, stopTime, count, status.name());
         }
 

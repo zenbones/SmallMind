@@ -34,5 +34,5 @@ package org.smallmind.nutsnbolts.util;
 
 public enum SuccessOrFailure {
 
-  SUCCESS, FAILURE
+  SUCCESS, FAILURE, INTERRUPTED
 }

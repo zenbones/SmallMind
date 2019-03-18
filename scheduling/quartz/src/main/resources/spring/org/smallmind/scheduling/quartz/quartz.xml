@@ -10,6 +10,8 @@
         <prop key="org.quartz.scheduler.instanceName">Scheduler</prop>
         <prop key="org.quartz.scheduler.instanceId">AUTO</prop>
         <prop key="org.quartz.scheduler.threadsInheritContextClassLoaderOfInitializer">true</prop>
+        <prop key="org.quartz.scheduler.interruptJobsOnShutdown">true</prop>
+        <prop key="org.quartz.scheduler.interruptJobsOnShutdownWithWait">true</prop>
         <prop key="org.quartz.threadPool.class">org.quartz.simpl.SimpleThreadPool</prop>
         <prop key="org.quartz.threadPool.threadCount">4</prop>
         <prop key="org.quartz.scheduler.rmi.export">true</prop>
