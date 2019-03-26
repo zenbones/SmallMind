@@ -1,28 +1,28 @@
 /*
  * Copyright (c) 2007, 2008, 2009, 2010, 2011, 2012, 2013, 2014, 2015, 2016, 2017, 2018, 2019 David Berkman
- *
+ * 
  * This file is part of the SmallMind Code Project.
- *
+ * 
  * The SmallMind Code Project is free software, you can redistribute
  * it and/or modify it under either, at your discretion...
- *
+ * 
  * 1) The terms of GNU Affero General Public License as published by the
  * Free Software Foundation, either version 3 of the License, or (at
  * your option) any later version.
- *
+ * 
  * ...or...
- *
+ * 
  * 2) The terms of the Apache License, Version 2.0.
- *
+ * 
  * The SmallMind Code Project is distributed in the hope that it will
  * be useful, but WITHOUT ANY WARRANTY; without even the implied warranty
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License or Apache License for more details.
- *
+ * 
  * You should have received a copy of the GNU Affero General Public License
  * and the Apache License along with the SmallMind Code Project. If not, see
  * <http://www.gnu.org/licenses/> or <http://www.apache.org/licenses/LICENSE-2.0>.
- *
+ * 
  * Additional permission under the GNU Affero GPL version 3 section 7
  * ------------------------------------------------------------------
  * If you modify this Program, or any covered work, by linking or
@@ -41,6 +41,12 @@ public class HexCodec {
   public static String hexDecode (String value)
     throws NumberFormatException {
 
+    return hexEncode(value, true);
+  }
+
+  public static String hexDecode (String value, boolean usePlusesForSpaces)
+    throws NumberFormatException {
+
     StringCharacterIterator valueIter;
     StringBuilder modBuilder = new StringBuilder();
     String hexNum;
@@ -48,7 +54,7 @@ public class HexCodec {
 
     valueIter = new StringCharacterIterator(value);
     while (valueIter.current() != StringCharacterIterator.DONE) {
-      if (valueIter.current() == '+') {
+      if (usePlusesForSpaces && (valueIter.current() == '+')) {
         modBuilder.append(' ');
       } else if (valueIter.current() != '%') {
         modBuilder.append(valueIter.current());
@@ -79,12 +85,17 @@ public class HexCodec {
 
   public static String hexEncode (String value) {
 
+    return hexDecode(value, true);
+  }
+
+  public static String hexEncode (String value, boolean usePlusesForSpaces) {
+
     StringCharacterIterator valueIter;
     StringBuilder modBuilder = new StringBuilder();
 
     valueIter = new StringCharacterIterator(value);
     while (valueIter.current() != StringCharacterIterator.DONE) {
-      if (Character.isSpaceChar(valueIter.current())) {
+      if (usePlusesForSpaces && Character.isSpaceChar(valueIter.current())) {
         modBuilder.append('+');
       } else if (Character.isLetterOrDigit(valueIter.current()) || (valueIter.current() == '-') || (valueIter.current() == '_') || (valueIter.current() == '.') || (valueIter.current() == '~')) {
         modBuilder.append(valueIter.current());
