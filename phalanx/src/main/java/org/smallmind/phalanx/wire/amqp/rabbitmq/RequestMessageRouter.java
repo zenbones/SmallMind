@@ -108,9 +108,9 @@ public class RequestMessageRouter extends MessageRouter {
             long timeInTopic = System.currentTimeMillis() - getTimestamp(properties);
 
             LoggerManager.getLogger(ResponseMessageRouter.class).debug("response message received(%s) in %d ms...", properties.getMessageId(), timeInTopic);
-            InstrumentationManager.instrumentWithChronometer(requestTransport, (timeInTopic >= 0) ? timeInTopic : 0, TimeUnit.MILLISECONDS, new MetricProperty("queue", MetricInteraction.RESPONSE_TRANSIT_TIME.getDisplay()));
+            InstrumentationManager.instrumentWithChronometer(requestTransport.getMetricConfiguration(), (timeInTopic >= 0) ? timeInTopic : 0, TimeUnit.MILLISECONDS, new MetricProperty("queue", MetricInteraction.RESPONSE_TRANSIT_TIME.getDisplay()));
 
-            InstrumentationManager.execute(new ChronometerInstrument(requestTransport, new MetricProperty("event", MetricInteraction.COMPLETE_CALLBACK.getDisplay())) {
+            InstrumentationManager.execute(new ChronometerInstrument(requestTransport.getMetricConfiguration(), new MetricProperty("event", MetricInteraction.COMPLETE_CALLBACK.getDisplay())) {
 
               @Override
               public void withChronometer ()
@@ -153,7 +153,7 @@ public class RequestMessageRouter extends MessageRouter {
   private RabbitMQMessage constructMessage (final boolean inOnly, final Address address, final Map<String, Object> arguments, final WireContext... contexts)
     throws Throwable {
 
-    return InstrumentationManager.execute(new ChronometerInstrumentAndReturn<RabbitMQMessage>(requestTransport, new MetricProperty("event", MetricInteraction.CONSTRUCT_MESSAGE.getDisplay())) {
+    return InstrumentationManager.execute(new ChronometerInstrumentAndReturn<RabbitMQMessage>(requestTransport.getMetricConfiguration(), new MetricProperty("event", MetricInteraction.CONSTRUCT_MESSAGE.getDisplay())) {
 
       @Override
       public RabbitMQMessage withChronometer ()

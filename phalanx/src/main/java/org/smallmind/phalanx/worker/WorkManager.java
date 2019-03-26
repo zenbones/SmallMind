@@ -39,10 +39,9 @@ import org.smallmind.instrument.ChronometerInstrument;
 import org.smallmind.instrument.InstrumentationManager;
 import org.smallmind.instrument.MetricProperty;
 import org.smallmind.instrument.config.MetricConfiguration;
-import org.smallmind.instrument.config.MetricConfigurationProvider;
 import org.smallmind.scribe.pen.LoggerManager;
 
-public class WorkManager<W extends Worker<T>, T> implements MetricConfigurationProvider {
+public class WorkManager<W extends Worker<T>, T> {
 
   private static enum State {STOPPED, STARTING, STARTED, STOPPING}
 
@@ -66,15 +65,14 @@ public class WorkManager<W extends Worker<T>, T> implements MetricConfigurationP
     this.workQueue = workQueue;
   }
 
-  public int getConcurrencyLimit () {
-
-    return concurrencyLimit;
-  }
-
-  @Override
   public MetricConfiguration getMetricConfiguration () {
 
     return metricConfiguration;
+  }
+
+  public int getConcurrencyLimit () {
+
+    return concurrencyLimit;
   }
 
   public void startUp (WorkerFactory<W, T> workerFactory)
@@ -106,7 +104,7 @@ public class WorkManager<W extends Worker<T>, T> implements MetricConfigurationP
       throw new WorkManagerException("%s is not in the 'started' state", WorkManager.class.getSimpleName());
     }
 
-    InstrumentationManager.execute(new ChronometerInstrument(this, new MetricProperty("event", MetricInteraction.ACQUIRE_WORKER.getDisplay())) {
+    InstrumentationManager.execute(new ChronometerInstrument(metricConfiguration, new MetricProperty("event", MetricInteraction.ACQUIRE_WORKER.getDisplay())) {
 
       @Override
       public void withChronometer ()

@@ -32,7 +32,6 @@
  */
 package org.smallmind.phalanx.wire.jms;
 
-import java.io.IOException;
 import java.util.Map;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
@@ -46,7 +45,6 @@ import org.smallmind.instrument.ChronometerInstrumentAndReturn;
 import org.smallmind.instrument.InstrumentationManager;
 import org.smallmind.instrument.MetricProperty;
 import org.smallmind.instrument.config.MetricConfiguration;
-import org.smallmind.instrument.config.MetricConfigurationProvider;
 import org.smallmind.nutsnbolts.util.SnowflakeId;
 import org.smallmind.phalanx.wire.AbstractRequestTransport;
 import org.smallmind.phalanx.wire.Address;
@@ -60,7 +58,7 @@ import org.smallmind.phalanx.wire.Voice;
 import org.smallmind.phalanx.wire.WireContext;
 import org.smallmind.phalanx.wire.WireProperty;
 
-public class JmsRequestTransport extends AbstractRequestTransport implements MetricConfigurationProvider {
+public class JmsRequestTransport extends AbstractRequestTransport {
 
   private final AtomicBoolean closed = new AtomicBoolean(false);
   private final MetricConfiguration metricConfiguration;
@@ -73,7 +71,7 @@ public class JmsRequestTransport extends AbstractRequestTransport implements Met
   private final String callerId = SnowflakeId.newInstance().generateDottedString();
 
   public JmsRequestTransport (MetricConfiguration metricConfiguration, RoutingFactories routingFactories, MessagePolicy messagePolicy, ReconnectionPolicy reconnectionPolicy, SignalCodec signalCodec, int clusterSize, int concurrencyLimit, int maximumMessageLength, int defaultTimeoutSeconds)
-    throws IOException, JMSException, TransportException {
+    throws JMSException, TransportException {
 
     super(defaultTimeoutSeconds);
 
@@ -119,7 +117,6 @@ public class JmsRequestTransport extends AbstractRequestTransport implements Met
     return callerId;
   }
 
-  @Override
   public MetricConfiguration getMetricConfiguration () {
 
     return metricConfiguration;
@@ -141,7 +138,7 @@ public class JmsRequestTransport extends AbstractRequestTransport implements Met
       messageHandler.send(requestMessage = constructMessage(messageHandler, inOnly, (String)voice.getServiceGroup(), voice.getMode().equals(VocalMode.WHISPER) ? (String)voice.getInstanceId() : null, address, arguments, contexts));
       messageId = requestMessage.getJMSMessageID();
 
-      return InstrumentationManager.execute(new ChronometerInstrumentAndReturn<Object>(this, new MetricProperty("event", MetricInteraction.ACQUIRE_RESULT.getDisplay())) {
+      return InstrumentationManager.execute(new ChronometerInstrumentAndReturn<Object>(metricConfiguration, new MetricProperty("event", MetricInteraction.ACQUIRE_RESULT.getDisplay())) {
 
         @Override
         public Object withChronometer ()
@@ -158,7 +155,7 @@ public class JmsRequestTransport extends AbstractRequestTransport implements Met
   private MessageHandler acquireMessageHandler (final LinkedBlockingQueue<MessageHandler> messageHandlerQueue)
     throws Throwable {
 
-    return InstrumentationManager.execute(new ChronometerInstrumentAndReturn<MessageHandler>(this, new MetricProperty("event", MetricInteraction.ACQUIRE_REQUEST_TRANSPORT.getDisplay())) {
+    return InstrumentationManager.execute(new ChronometerInstrumentAndReturn<MessageHandler>(metricConfiguration, new MetricProperty("event", MetricInteraction.ACQUIRE_REQUEST_TRANSPORT.getDisplay())) {
 
       @Override
       public MessageHandler withChronometer ()
@@ -182,7 +179,7 @@ public class JmsRequestTransport extends AbstractRequestTransport implements Met
   private Message constructMessage (final MessageHandler messageHandler, final boolean inOnly, final String serviceGroup, final String instanceId, final Address address, final Map<String, Object> arguments, final WireContext... contexts)
     throws Throwable {
 
-    return InstrumentationManager.execute(new ChronometerInstrumentAndReturn<Message>(this, new MetricProperty("event", MetricInteraction.CONSTRUCT_MESSAGE.getDisplay())) {
+    return InstrumentationManager.execute(new ChronometerInstrumentAndReturn<Message>(metricConfiguration, new MetricProperty("event", MetricInteraction.CONSTRUCT_MESSAGE.getDisplay())) {
 
       @Override
       public Message withChronometer ()

@@ -33,9 +33,8 @@
 package org.smallmind.persistence;
 
 import org.smallmind.instrument.config.MetricConfiguration;
-import org.smallmind.instrument.config.MetricConfigurationProvider;
 
-public class Persistence implements MetricConfigurationProvider {
+public class Persistence {
 
   private MetricConfiguration metricConfiguration;
 

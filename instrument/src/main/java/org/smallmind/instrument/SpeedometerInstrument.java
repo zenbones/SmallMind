@@ -33,13 +33,13 @@
 package org.smallmind.instrument;
 
 import java.util.concurrent.atomic.AtomicLong;
-import org.smallmind.instrument.config.MetricConfigurationProvider;
+import org.smallmind.instrument.config.MetricConfiguration;
 
 public abstract class SpeedometerInstrument extends Instrument<Speedometer> {
 
-  public SpeedometerInstrument (MetricConfigurationProvider provider, MetricProperty... properties) {
+  public SpeedometerInstrument (MetricConfiguration configuration, MetricProperty... properties) {
 
-    super(((provider == null) || (provider.getMetricConfiguration() == null) || (!provider.getMetricConfiguration().isInstrumented())) ? null : new InstrumentationArguments<>(Metrics.buildSpeedometer(provider.getMetricConfiguration().getTickInterval(), provider.getMetricConfiguration().getTickTimeUnit()), provider.getMetricConfiguration().getMetricDomain().getDomain(), properties));
+    super(((configuration == null) || (!configuration.isInstrumented())) ? null : new InstrumentationArguments<>(Metrics.buildSpeedometer(configuration.getTickInterval(), configuration.getTickTimeUnit()), configuration.getMetricDomain().getDomain(), properties));
   }
 
   public SpeedometerInstrument (Metrics.MetricBuilder<Speedometer> builder, String domain, MetricProperty... properties) {

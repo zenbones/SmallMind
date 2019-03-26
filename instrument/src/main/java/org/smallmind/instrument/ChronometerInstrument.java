@@ -33,13 +33,13 @@
 package org.smallmind.instrument;
 
 import java.util.concurrent.TimeUnit;
-import org.smallmind.instrument.config.MetricConfigurationProvider;
+import org.smallmind.instrument.config.MetricConfiguration;
 
 public abstract class ChronometerInstrument extends Instrument<Chronometer> {
 
-  public ChronometerInstrument (MetricConfigurationProvider provider, MetricProperty... properties) {
+  public ChronometerInstrument (MetricConfiguration configuration, MetricProperty... properties) {
 
-    super(((provider == null) || (provider.getMetricConfiguration() == null) || (!provider.getMetricConfiguration().isInstrumented())) ? null : new InstrumentationArguments<>(Metrics.buildChronometer(provider.getMetricConfiguration().getSamples(), TimeUnit.MILLISECONDS, provider.getMetricConfiguration().getTickInterval(), provider.getMetricConfiguration().getTickTimeUnit()), provider.getMetricConfiguration().getMetricDomain().getDomain(), properties));
+    super(((configuration == null) || (!configuration.isInstrumented())) ? null : new InstrumentationArguments<>(Metrics.buildChronometer(configuration.getSamples(), TimeUnit.MILLISECONDS, configuration.getTickInterval(), configuration.getTickTimeUnit()), configuration.getMetricDomain().getDomain(), properties));
   }
 
   public ChronometerInstrument (Metrics.MetricBuilder<Chronometer> builder, String domain, MetricProperty... properties) {

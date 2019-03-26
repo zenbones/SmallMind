@@ -33,9 +33,8 @@
 package org.smallmind.quorum.pool;
 
 import org.smallmind.instrument.config.MetricConfiguration;
-import org.smallmind.instrument.config.MetricConfigurationProvider;
 
-public class Pool implements MetricConfigurationProvider {
+public class Pool {
 
   private MetricConfiguration metricConfiguration;
 

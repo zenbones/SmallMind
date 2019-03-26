@@ -103,9 +103,9 @@ public class ResponseListener implements SessionEmployer, MessageListener {
       long timeInTopic = System.currentTimeMillis() - message.getLongProperty(WireProperty.CLOCK.getKey());
 
       LoggerManager.getLogger(ResponseListener.class).debug("response message received(%s) in %d ms...", message.getJMSMessageID(), timeInTopic);
-      InstrumentationManager.instrumentWithChronometer(requestTransport, (timeInTopic >= 0) ? timeInTopic : 0, TimeUnit.MILLISECONDS, new MetricProperty("queue", MetricInteraction.RESPONSE_TRANSIT_TIME.getDisplay()));
+      InstrumentationManager.instrumentWithChronometer(requestTransport.getMetricConfiguration(), (timeInTopic >= 0) ? timeInTopic : 0, TimeUnit.MILLISECONDS, new MetricProperty("queue", MetricInteraction.RESPONSE_TRANSIT_TIME.getDisplay()));
 
-      InstrumentationManager.execute(new ChronometerInstrument(requestTransport, new MetricProperty("event", MetricInteraction.COMPLETE_CALLBACK.getDisplay())) {
+      InstrumentationManager.execute(new ChronometerInstrument(requestTransport.getMetricConfiguration(), new MetricProperty("event", MetricInteraction.COMPLETE_CALLBACK.getDisplay())) {
 
         @Override
         public void withChronometer ()

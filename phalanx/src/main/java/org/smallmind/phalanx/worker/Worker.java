@@ -39,10 +39,9 @@ import org.smallmind.instrument.Clocks;
 import org.smallmind.instrument.InstrumentationManager;
 import org.smallmind.instrument.MetricProperty;
 import org.smallmind.instrument.config.MetricConfiguration;
-import org.smallmind.instrument.config.MetricConfigurationProvider;
 import org.smallmind.scribe.pen.LoggerManager;
 
-public abstract class Worker<T> implements Runnable, MetricConfigurationProvider {
+public abstract class Worker<T> implements Runnable {
 
   private final AtomicBoolean stopped = new AtomicBoolean(false);
   private final CountDownLatch exitLatch = new CountDownLatch(1);
@@ -62,7 +61,6 @@ public abstract class Worker<T> implements Runnable, MetricConfigurationProvider
   public abstract void close ()
     throws Exception;
 
-  @Override
   public MetricConfiguration getMetricConfiguration () {
 
     return metricConfiguration;
@@ -95,7 +93,7 @@ public abstract class Worker<T> implements Runnable, MetricConfigurationProvider
           final T transfer;
 
           if ((transfer = workQueue.poll(1, TimeUnit.SECONDS)) != null) {
-            InstrumentationManager.instrumentWithChronometer(this, Clocks.EPOCH.getClock().getTimeNanoseconds() - idleStart, TimeUnit.NANOSECONDS, new MetricProperty("event", MetricInteraction.WORKER_IDLE.getDisplay()));
+            InstrumentationManager.instrumentWithChronometer(metricConfiguration, Clocks.EPOCH.getClock().getTimeNanoseconds() - idleStart, TimeUnit.NANOSECONDS, new MetricProperty("event", MetricInteraction.WORKER_IDLE.getDisplay()));
 
             engageWork(transfer);
           }

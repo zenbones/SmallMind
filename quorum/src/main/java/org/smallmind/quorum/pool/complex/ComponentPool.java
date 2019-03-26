@@ -180,7 +180,7 @@ public class ComponentPool<C> {
 
     try {
 
-      return InstrumentationManager.execute(new ChronometerInstrumentAndReturn<C>(PoolManager.getPool(), new MetricProperty("pool", getPoolName()), new MetricProperty("event", MetricInteraction.WAITING.getDisplay())) {
+      return InstrumentationManager.execute(new ChronometerInstrumentAndReturn<C>(PoolManager.getPool().getMetricConfiguration(), new MetricProperty("pool", getPoolName()), new MetricProperty("event", MetricInteraction.WAITING.getDisplay())) {
 
         @Override
         public C withChronometer () throws Exception {

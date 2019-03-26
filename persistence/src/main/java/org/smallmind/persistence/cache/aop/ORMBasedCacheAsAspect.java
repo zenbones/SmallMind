@@ -193,7 +193,7 @@ public class ORMBasedCacheAsAspect {
           executedMethod = methodSignature.getMethod();
         }
 
-        InstrumentationManager.instrumentWithChronometer(PersistenceManager.getPersistence(), stop - start, TimeUnit.MILLISECONDS, new MetricProperty("durable", ormDao.getManagedClass().getSimpleName()), new MetricProperty("method", executedMethod.getName()), new MetricProperty("source", metricSource));
+        InstrumentationManager.instrumentWithChronometer(PersistenceManager.getPersistence().getMetricConfiguration(), stop - start, TimeUnit.MILLISECONDS, new MetricProperty("durable", ormDao.getManagedClass().getSimpleName()), new MetricProperty("method", executedMethod.getName()), new MetricProperty("source", metricSource));
       }
     }
   }

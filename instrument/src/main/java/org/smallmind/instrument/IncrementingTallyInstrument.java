@@ -32,13 +32,13 @@
  */
 package org.smallmind.instrument;
 
-import org.smallmind.instrument.config.MetricConfigurationProvider;
+import org.smallmind.instrument.config.MetricConfiguration;
 
 public abstract class IncrementingTallyInstrument extends Instrument<Tally> {
 
-  public IncrementingTallyInstrument (MetricConfigurationProvider provider, MetricProperty... properties) {
+  public IncrementingTallyInstrument (MetricConfiguration configuration, MetricProperty... properties) {
 
-    super(((provider == null) || (provider.getMetricConfiguration() == null) || (!provider.getMetricConfiguration().isInstrumented())) ? null : new InstrumentationArguments<>(Metrics.buildTally(0), provider.getMetricConfiguration().getMetricDomain().getDomain(), properties));
+    super(((configuration == null) || (!configuration.isInstrumented())) ? null : new InstrumentationArguments<>(Metrics.buildTally(0), configuration.getMetricDomain().getDomain(), properties));
   }
 
   public IncrementingTallyInstrument (Metrics.MetricBuilder<Tally> builder, String domain, MetricProperty... properties) {

@@ -67,7 +67,7 @@ public class ApplyInstrumentationAspect {
         stop = System.currentTimeMillis();
         executedMethod = ((MethodSignature)thisJoinPoint.getSignature()).getMethod();
 
-        InstrumentationManager.instrumentWithChronometer(PersistenceManager.getPersistence(), stop - start, TimeUnit.MILLISECONDS, new MetricProperty("durable", durableDao.getManagedClass().getSimpleName()), new MetricProperty("method", executedMethod.getName()), new MetricProperty("source", durableDao.getMetricSource()));
+        InstrumentationManager.instrumentWithChronometer(PersistenceManager.getPersistence().getMetricConfiguration(), stop - start, TimeUnit.MILLISECONDS, new MetricProperty("durable", durableDao.getManagedClass().getSimpleName()), new MetricProperty("method", executedMethod.getName()), new MetricProperty("source", durableDao.getMetricSource()));
       }
     }
   }
