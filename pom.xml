@@ -106,6 +106,7 @@
     <!-- <spring.version>5.1.1.RELEASE</spring.version> -->
     <spring.version>5.0.6.RELEASE</spring.version>
     <querydsl.version>4.2.1</querydsl.version>
+    <slf4j.version>1.7.26</slf4j.version>
   </properties>
 
   <modules>
@@ -495,12 +496,12 @@
       <dependency>
         <groupId>org.slf4j</groupId>
         <artifactId>slf4j-api</artifactId>
-        <version>1.7.25</version>
+        <version>${slf4j.version}</version>
       </dependency>
       <dependency>
         <groupId>org.slf4j</groupId>
         <artifactId>slf4j-simple</artifactId>
-        <version>1.7.25</version>
+        <version>${slf4j.version}</version>
       </dependency>
       <dependency>
         <groupId>commons-logging</groupId>
