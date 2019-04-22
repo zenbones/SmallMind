@@ -39,17 +39,17 @@ import org.smallmind.persistence.sql.DataSourceManager;
 import org.smallmind.quorum.pool.ComponentPoolException;
 import org.smallmind.quorum.pool.complex.ComponentPool;
 
-public class XAPooledDataSource extends AbstractPooledDataSource<XADataSource, XAConnection> implements XADataSource {
+public class PooledXADataSource extends AbstractPooledDataSource<XADataSource, XAConnection> implements XADataSource {
 
   private ComponentPool<XAConnection> componentPool;
   private String key;
 
-  public XAPooledDataSource (ComponentPool<XAConnection> componentPool) {
+  public PooledXADataSource (ComponentPool<XAConnection> componentPool) {
 
     this(componentPool.getPoolName(), componentPool);
   }
 
-  public XAPooledDataSource (String key, ComponentPool<XAConnection> componentPool) {
+  public PooledXADataSource (String key, ComponentPool<XAConnection> componentPool) {
 
     super(XADataSource.class, XAConnection.class);
 

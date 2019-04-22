@@ -32,10 +32,10 @@
  */
 package org.smallmind.persistence.sql.pool.spring;
 
-import javax.sql.CommonDataSource;
+import javax.sql.DataSource;
 import org.springframework.beans.factory.FactoryBean;
 
-public class DynamicPooledDataSourceFactoryBean implements FactoryBean<CommonDataSource> {
+public class DynamicPooledDataSourceFactoryBean implements FactoryBean<DataSource> {
 
   private DataSourceLocator dataSourceLocator;
   private String dataSourceKey;
@@ -59,12 +59,12 @@ public class DynamicPooledDataSourceFactoryBean implements FactoryBean<CommonDat
   @Override
   public Class<?> getObjectType () {
 
-    return CommonDataSource.class;
+    return DataSource.class;
   }
 
   @Override
-  public CommonDataSource getObject () {
+  public DataSource getObject () {
 
-    return dataSourceLocator.getDataSource(dataSourceKey);
+    return (DataSource)dataSourceLocator.getDataSource(dataSourceKey);
   }
 }

@@ -41,12 +41,12 @@ import org.smallmind.persistence.sql.pool.AbstractPooledDataSource;
 import org.smallmind.quorum.pool.ComponentPoolException;
 import org.smallmind.quorum.pool.complex.ComponentPool;
 
-public class ContextualXAPooledDataSource extends AbstractPooledDataSource<XADataSource, XAConnection> implements XADataSource {
+public class ContextualPooledXADataSource extends AbstractPooledDataSource<XADataSource, XAConnection> implements XADataSource {
 
   private final HashMap<String, ComponentPool<XAConnection>> componentPoolMap = new HashMap<>();
   private final String baseName;
 
-  public ContextualXAPooledDataSource (ContextualPoolNameTranslator poolNameTranslator, ComponentPool<XAConnection>... componentPools)
+  public ContextualPooledXADataSource (ContextualPoolNameTranslator poolNameTranslator, ComponentPool<XAConnection>... componentPools)
     throws ComponentPoolException {
 
     super(XADataSource.class, XAConnection.class);

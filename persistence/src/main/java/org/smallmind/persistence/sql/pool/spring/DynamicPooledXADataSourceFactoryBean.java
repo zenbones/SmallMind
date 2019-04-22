@@ -30,28 +30,41 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.persistence.sql.pool;
+package org.smallmind.persistence.sql.pool.spring;
 
-import java.sql.SQLException;
-import javax.sql.CommonDataSource;
-import javax.sql.PooledConnection;
-import javax.sql.XAConnection;
 import javax.sql.XADataSource;
-import org.smallmind.persistence.sql.pool.spring.DatabaseConnection;
-import org.smallmind.persistence.sql.pool.spring.PooledConnectionComponentPoolFactory;
-import org.smallmind.quorum.pool.ComponentPoolException;
-import org.smallmind.quorum.pool.complex.ComplexPoolConfig;
-import org.smallmind.quorum.pool.complex.ComponentPool;
+import org.springframework.beans.factory.FactoryBean;
 
-public class PooledDataSourceFactory {
+public class DynamicPooledXADataSourceFactoryBean implements FactoryBean<XADataSource> {
 
-  public static <D extends CommonDataSource> AbstractPooledDataSource createPooledDataSource (String poolName, DataSourceFactory<D, ? extends PooledConnection> dataSourceFactory, String validationQuery, int maxStatements, ComplexPoolConfig poolConfig, DatabaseConnection[] connections)
-    throws SQLException, ComponentPoolException {
+  private DataSourceLocator dataSourceLocator;
+  private String dataSourceKey;
 
-    if (XADataSource.class.isAssignableFrom(dataSourceFactory.getDataSourceClass())) {
-      return new PooledXADataSource((ComponentPool<XAConnection>)PooledConnectionComponentPoolFactory.<D>constructComponentPool(poolName, dataSourceFactory, validationQuery, maxStatements, poolConfig, connections));
-    }
+  public void setDataSourceKey (String dataSourceKey) {
 
-    return new PooledDataSource((ComponentPool<PooledConnection>)PooledConnectionComponentPoolFactory.<D>constructComponentPool(poolName, dataSourceFactory, validationQuery, maxStatements, poolConfig, connections));
+    this.dataSourceKey = dataSourceKey;
+  }
+
+  public void setDataSourceLocator (DataSourceLocator dataSourceLocator) {
+
+    this.dataSourceLocator = dataSourceLocator;
+  }
+
+  @Override
+  public boolean isSingleton () {
+
+    return true;
+  }
+
+  @Override
+  public Class<?> getObjectType () {
+
+    return XADataSource.class;
+  }
+
+  @Override
+  public XADataSource getObject () {
+
+    return (XADataSource)dataSourceLocator.getDataSource(dataSourceKey);
   }
 }
