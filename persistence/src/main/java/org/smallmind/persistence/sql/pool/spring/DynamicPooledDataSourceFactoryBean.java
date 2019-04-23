@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2008, 2009, 2010, 2011, 2012, 2013, 2014, 2015, 2016, 2017 David Berkman
+ * Copyright (c) 2007, 2008, 2009, 2010, 2011, 2012, 2013, 2014, 2015, 2016, 2017, 2018, 2019 David Berkman
  * 
  * This file is part of the SmallMind Code Project.
  * 
@@ -32,10 +32,10 @@
  */
 package org.smallmind.persistence.sql.pool.spring;
 
-import javax.sql.CommonDataSource;
+import javax.sql.DataSource;
 import org.springframework.beans.factory.FactoryBean;
 
-public class DynamicPooledDataSourceFactoryBean implements FactoryBean<CommonDataSource> {
+public class DynamicPooledDataSourceFactoryBean implements FactoryBean<DataSource> {
 
   private DataSourceLocator dataSourceLocator;
   private String dataSourceKey;
@@ -59,12 +59,12 @@ public class DynamicPooledDataSourceFactoryBean implements FactoryBean<CommonDat
   @Override
   public Class<?> getObjectType () {
 
-    return CommonDataSource.class;
+    return DataSource.class;
   }
 
   @Override
-  public CommonDataSource getObject () {
+  public DataSource getObject () {
 
-    return dataSourceLocator.getDataSource(dataSourceKey);
+    return (DataSource)dataSourceLocator.getDataSource(dataSourceKey);
   }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2008, 2009, 2010, 2011, 2012, 2013, 2014, 2015, 2016, 2017 David Berkman
+ * Copyright (c) 2007, 2008, 2009, 2010, 2011, 2012, 2013, 2014, 2015, 2016, 2017, 2018, 2019 David Berkman
  * 
  * This file is part of the SmallMind Code Project.
  * 
@@ -41,7 +41,9 @@ import org.smallmind.persistence.Durable;
 @Retention(RetentionPolicy.RUNTIME)
 public @interface Finder {
 
+  // the return type of the method
   Class<? extends Durable> with () default Durable.class;
 
+  // the name of the method
   String method () default "";
 }

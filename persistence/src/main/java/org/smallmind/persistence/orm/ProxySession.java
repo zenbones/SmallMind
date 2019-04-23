@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2008, 2009, 2010, 2011, 2012, 2013, 2014, 2015, 2016, 2017 David Berkman
+ * Copyright (c) 2007, 2008, 2009, 2010, 2011, 2012, 2013, 2014, 2015, 2016, 2017, 2018, 2019 David Berkman
  * 
  * This file is part of the SmallMind Code Project.
  * 
@@ -34,6 +34,9 @@ package org.smallmind.persistence.orm;
 
 public abstract class ProxySession<F, N> {
 
+  private String dataSourceType;
+  private String sessionSourceKey;
+  private boolean boundaryEnforced;
   private final ThreadLocal<Boolean> boundaryEnforcedThreadLocal = new ThreadLocal<Boolean>() {
 
     protected Boolean initialValue () {
@@ -41,6 +44,7 @@ public abstract class ProxySession<F, N> {
       return boundaryEnforced;
     }
   };
+  private boolean cacheEnabled;
   private final ThreadLocal<Boolean> cacheEnabledThreadLocal = new ThreadLocal<Boolean>() {
 
     protected Boolean initialValue () {
@@ -48,11 +52,6 @@ public abstract class ProxySession<F, N> {
       return cacheEnabled;
     }
   };
-
-  private String dataSourceType;
-  private String sessionSourceKey;
-  private boolean boundaryEnforced;
-  private boolean cacheEnabled;
 
   public ProxySession (String dataSourceType, String sessionSourceKey, boolean boundaryEnforced, boolean cacheEnabled) {
 

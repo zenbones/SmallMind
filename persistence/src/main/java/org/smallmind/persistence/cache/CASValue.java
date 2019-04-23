@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2008, 2009, 2010, 2011, 2012, 2013, 2014, 2015, 2016, 2017 David Berkman
+ * Copyright (c) 2007, 2008, 2009, 2010, 2011, 2012, 2013, 2014, 2015, 2016, 2017, 2018, 2019 David Berkman
  * 
  * This file is part of the SmallMind Code Project.
  * 
@@ -39,15 +39,15 @@ public class CASValue<V> {
   private V value;
   private long version;
 
-  public static <V> CASValue<V> nullInstance () {
-
-    return (CASValue<V>)NULL_CAS_VALUE;
-  }
-
   public CASValue (V value, long version) {
 
     this.value = value;
     this.version = version;
+  }
+
+  public static <V> CASValue<V> nullInstance () {
+
+    return (CASValue<V>)NULL_CAS_VALUE;
   }
 
   public long getVersion () {

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2008, 2009, 2010, 2011, 2012, 2013, 2014, 2015, 2016, 2017 David Berkman
+ * Copyright (c) 2007, 2008, 2009, 2010, 2011, 2012, 2013, 2014, 2015, 2016, 2017, 2018, 2019 David Berkman
  * 
  * This file is part of the SmallMind Code Project.
  * 
@@ -64,13 +64,6 @@ public class MockWireTest {
     context = new ClassPathXmlApplicationContext("org/smallmind/foundation/foundation.xml", "org/smallmind/scribe/spring/test-logging.xml", "org/smallmind/phalanx/wire/rabbitmq-wire.xml");
     requestTransport = context.getBean("rabbitmqRequestTransport", RabbitMQRequestTransport.class);
     responseTransport = context.getBean("rabbitmqResponseTransport", RabbitMQResponseTransport.class);
-    */
-
-        //  This block loads the HornetQ backed Transport layer
-    /*
-    context = new ClassPathXmlApplicationContext("org/smallmind/foundation/foundation.xml", "org/smallmind/scribe/spring/test-logging.xml", "org/smallmind/phalanx/wire/hornetq-wire.xml");
-    requestTransport = context.getBean("jmsRequestTransport", JmsRequestTransport.class);
-    responseTransport = context.getBean("jmsResponseTransport", JmsResponseTransport.class);
     */
 
         //  This block loads the Mock backed Transport layer

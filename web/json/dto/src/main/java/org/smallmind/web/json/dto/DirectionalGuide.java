@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2008, 2009, 2010, 2011, 2012, 2013, 2014, 2015, 2016, 2017 David Berkman
+ * Copyright (c) 2007, 2008, 2009, 2010, 2011, 2012, 2013, 2014, 2015, 2016, 2017, 2018, 2019 David Berkman
  * 
  * This file is part of the SmallMind Code Project.
  * 
@@ -46,23 +46,11 @@ public class DirectionalGuide {
     this.direction = direction;
   }
 
-  public DirectionalGuide (Direction direction, DirectionalGuide directionalGuide) {
-
-    this(direction);
-
-    lexiconMap.putAll(directionalGuide.getLexiconMap());
-  }
-
-  private HashMap<String, PropertyLexicon> getLexiconMap () {
-
-    return lexiconMap;
-  }
-
   public void put (String purpose, String fieldName, PropertyInformation propertyInformation)
     throws DtoDefinitionException {
 
     if (!isJavaNameFragment(purpose)) {
-      throw new DtoDefinitionException("The purpose(%s) must be legal identifier fragment", purpose);
+      throw new DtoDefinitionException("The purpose(%s) must be a legal identifier fragment", purpose);
     }
 
     PropertyLexicon propertyLexicon;
@@ -76,6 +64,11 @@ public class DirectionalGuide {
     } else {
       propertyLexicon.put(fieldName, propertyInformation);
     }
+  }
+
+  public Set<String> keySet () {
+
+    return lexiconMap.keySet();
   }
 
   public Set<Map.Entry<String, PropertyLexicon>> entrySet () {

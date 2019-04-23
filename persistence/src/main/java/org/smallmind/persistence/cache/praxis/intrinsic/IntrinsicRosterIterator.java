@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2008, 2009, 2010, 2011, 2012, 2013, 2014, 2015, 2016, 2017 David Berkman
+ * Copyright (c) 2007, 2008, 2009, 2010, 2011, 2012, 2013, 2014, 2015, 2016, 2017, 2018, 2019 David Berkman
  * 
  * This file is part of the SmallMind Code Project.
  * 
@@ -65,8 +65,7 @@ public class IntrinsicRosterIterator<T> implements ListIterator<T> {
     try {
 
       return next.getObj();
-    }
-    finally {
+    } finally {
       current = next;
       prev = next;
       next = concurrentList.getNextInView(next);
@@ -88,8 +87,7 @@ public class IntrinsicRosterIterator<T> implements ListIterator<T> {
     try {
 
       return prev.getObj();
-    }
-    finally {
+    } finally {
       current = prev;
       next = prev;
       prev = concurrentList.getPrevInView(prev);
@@ -125,8 +123,7 @@ public class IntrinsicRosterIterator<T> implements ListIterator<T> {
     concurrentList.getLock().writeLock().lock();
     try {
       concurrentList.removeNode(current);
-    }
-    finally {
+    } finally {
       concurrentList.getLock().writeLock().unlock();
     }
 
@@ -142,8 +139,7 @@ public class IntrinsicRosterIterator<T> implements ListIterator<T> {
     concurrentList.getLock().writeLock().lock();
     try {
       concurrentList.add(current, t);
-    }
-    finally {
+    } finally {
       concurrentList.getLock().writeLock().unlock();
     }
 

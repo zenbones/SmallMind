@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2008, 2009, 2010, 2011, 2012, 2013, 2014, 2015, 2016, 2017 David Berkman
+ * Copyright (c) 2007, 2008, 2009, 2010, 2011, 2012, 2013, 2014, 2015, 2016, 2017, 2018, 2019 David Berkman
  * 
  * This file is part of the SmallMind Code Project.
  * 
@@ -43,6 +43,8 @@ import org.smallmind.persistence.cache.DurableVector;
 import org.smallmind.persistence.cache.VectorKey;
 import org.smallmind.persistence.cache.praxis.ByReferenceSingularVector;
 
+// The cache supports thread-safe operations
+// The vector cache references the instance by a JVM object handle
 public class ByReferenceIntrinsicCacheDao<I extends Serializable & Comparable<I>, D extends Durable<I>> extends AbstractCacheDao<I, D> {
 
   public ByReferenceIntrinsicCacheDao (CacheDomain<I, D> cacheDomain) {
@@ -55,7 +57,7 @@ public class ByReferenceIntrinsicCacheDao<I extends Serializable & Comparable<I>
     if (durable != null) {
 
       D cachedDurable;
-      DurableKey<I, D> durableKey = new DurableKey<I, D>(durableClass, durable.getId());
+      DurableKey<I, D> durableKey = new DurableKey<>(durableClass, durable.getId());
 
       return ((cachedDurable = getInstanceCache(durableClass).putIfAbsent(durableKey.getKey(), durable, 0)) != null) ? cachedDurable : durable;
     }
@@ -84,8 +86,7 @@ public class ByReferenceIntrinsicCacheDao<I extends Serializable & Comparable<I>
       if ((vector = getVectorCache(vectorKey.getElementClass()).get(vectorKey.getKey())) != null) {
         if (vector.isSingular()) {
           deleteVector(vectorKey);
-        }
-        else {
+        } else {
           vector.remove(durable);
         }
       }
@@ -97,15 +98,14 @@ public class ByReferenceIntrinsicCacheDao<I extends Serializable & Comparable<I>
     if (vector.isSingular()) {
       if (!(vector instanceof ByReferenceSingularVector)) {
 
-        return new ByReferenceSingularVector<I, D>(vector.head(), vector.getTimeToLiveSeconds());
+        return new ByReferenceSingularVector<>(vector.head(), vector.getTimeToLiveSeconds());
       }
 
       return vector;
-    }
-    else {
+    } else {
       if (!(vector instanceof ByReferenceIntrinsicVector)) {
 
-        return new ByReferenceIntrinsicVector<I, D>(new IntrinsicRoster<D>(vector.asBestEffortPreFetchedList()), vector.getComparator(), vector.getMaxSize(), vector.getTimeToLiveSeconds(), vector.isOrdered());
+        return new ByReferenceIntrinsicVector<>(new IntrinsicRoster<>(vector.asBestEffortPreFetchedList()), vector.getComparator(), vector.getMaxSize(), vector.getTimeToLiveSeconds(), vector.isOrdered());
       }
 
       return vector;
@@ -117,13 +117,13 @@ public class ByReferenceIntrinsicCacheDao<I extends Serializable & Comparable<I>
     DurableKey<I, D> durableKey;
     D inCacheDurable;
 
-    durableKey = new DurableKey<I, D>(vectorKey.getElementClass(), durable.getId());
+    durableKey = new DurableKey<>(vectorKey.getElementClass(), durable.getId());
     if ((inCacheDurable = getInstanceCache(vectorKey.getElementClass()).putIfAbsent(durableKey.getKey(), durable, 0)) != null) {
 
-      return new ByReferenceSingularVector<I, D>(inCacheDurable, timeToLiveSeconds);
+      return new ByReferenceSingularVector<>(inCacheDurable, timeToLiveSeconds);
     }
 
-    return new ByReferenceSingularVector<I, D>(durable, timeToLiveSeconds);
+    return new ByReferenceSingularVector<>(durable, timeToLiveSeconds);
   }
 
   public DurableVector<I, D> createVector (VectorKey<D> vectorKey, Iterable<D> elementIter, Comparator<D> comparator, int maxSize, int timeToLiveSeconds, boolean ordered) {
@@ -132,20 +132,19 @@ public class ByReferenceIntrinsicCacheDao<I extends Serializable & Comparable<I>
     DurableKey<I, D> durableKey;
     D inCacheDurable;
 
-    cacheConsistentElements = new IntrinsicRoster<D>();
+    cacheConsistentElements = new IntrinsicRoster<>();
     for (D element : elementIter) {
       if (element != null) {
 
-        durableKey = new DurableKey<I, D>(vectorKey.getElementClass(), element.getId());
+        durableKey = new DurableKey<>(vectorKey.getElementClass(), element.getId());
         if ((inCacheDurable = getInstanceCache(vectorKey.getElementClass()).putIfAbsent(durableKey.getKey(), element, timeToLiveSeconds)) != null) {
           cacheConsistentElements.add(inCacheDurable);
-        }
-        else {
+        } else {
           cacheConsistentElements.add(element);
         }
       }
     }
 
-    return new ByReferenceIntrinsicVector<I, D>(cacheConsistentElements, comparator, maxSize, timeToLiveSeconds, ordered);
+    return new ByReferenceIntrinsicVector<>(cacheConsistentElements, comparator, maxSize, timeToLiveSeconds, ordered);
   }
 }

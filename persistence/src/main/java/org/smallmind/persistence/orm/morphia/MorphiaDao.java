@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2008, 2009, 2010, 2011, 2012, 2013, 2014, 2015, 2016, 2017 David Berkman
+ * Copyright (c) 2007, 2008, 2009, 2010, 2011, 2012, 2013, 2014, 2015, 2016, 2017, 2018, 2019 David Berkman
  * 
  * This file is part of the SmallMind Code Project.
  * 
@@ -33,6 +33,7 @@
 package org.smallmind.persistence.orm.morphia;
 
 import java.io.Serializable;
+import java.util.Collection;
 import java.util.List;
 import com.mongodb.DBObject;
 import com.mongodb.WriteConcern;
@@ -65,23 +66,26 @@ public class MorphiaDao<I extends Serializable & Comparable<I>, D extends Morphi
   @Override
   public D get (Class<D> durableClass, I id) {
 
-    VectoredDao<I, D> vectoredDao;
-    D durable;
+    if (id != null) {
 
-    if ((vectoredDao = getVectoredDao()) == null) {
-      if ((durable = acquire(durableClass, id)) != null) {
+      VectoredDao<I, D> vectoredDao;
+      D durable;
 
-        return durable;
-      }
-    } else {
-      if ((durable = vectoredDao.get(durableClass, id)) != null) {
+      if ((vectoredDao = getVectoredDao()) == null) {
+        if ((durable = acquire(durableClass, id)) != null) {
 
-        return durable;
-      }
+          return durable;
+        }
+      } else {
+        if ((durable = vectoredDao.get(durableClass, id)) != null) {
 
-      if ((durable = acquire(durableClass, id)) != null) {
+          return durable;
+        }
 
-        return vectoredDao.persist(durableClass, durable, UpdateMode.SOFT);
+        if ((durable = acquire(durableClass, id)) != null) {
+
+          return vectoredDao.persist(durableClass, durable, UpdateMode.SOFT);
+        }
       }
     }
 
@@ -91,7 +95,7 @@ public class MorphiaDao<I extends Serializable & Comparable<I>, D extends Morphi
   @Override
   public D acquire (Class<D> durableClass, I id) {
 
-    return durableClass.cast(getSession().getNativeSession().get(durableClass, id));
+    return (id == null) ? null : durableClass.cast(getSession().getNativeSession().get(durableClass, id));
   }
 
   @Override
@@ -113,21 +117,27 @@ public class MorphiaDao<I extends Serializable & Comparable<I>, D extends Morphi
   }
 
   @Override
+  public List<D> list (Collection<I> idCollection) {
+
+    return getSession().getNativeSession().createQuery(getManagedClass()).field(Mapper.ID_KEY).in(idCollection).asList();
+  }
+
+  @Override
   public Iterable<D> scroll () {
 
-    return new AutoCloseMorphiaIterator<>(getSession().getNativeSession().createQuery(getManagedClass()).fetch());
+    return new AutoCloseMorphiaIterable<>(getSession().getNativeSession().createQuery(getManagedClass()).fetch());
   }
 
   @Override
   public Iterable<D> scroll (int fetchSize) {
 
-    return new AutoCloseMorphiaIterator<>(getSession().getNativeSession().createQuery(getManagedClass()).fetch(new FindOptions().batchSize(fetchSize)));
+    return new AutoCloseMorphiaIterable<>(getSession().getNativeSession().createQuery(getManagedClass()).fetch(new FindOptions().batchSize(fetchSize)));
   }
 
   @Override
   public Iterable<D> scrollById (final I greaterThan, final int fetchSize) {
 
-    return new AutoCloseMorphiaIterator<>(getSession().getNativeSession().createQuery(getManagedClass()).field(Mapper.ID_KEY).greaterThan(greaterThan).order(Mapper.ID_KEY).fetch(new FindOptions().batchSize(fetchSize)));
+    return new AutoCloseMorphiaIterable<>(getSession().getNativeSession().createQuery(getManagedClass()).field(Mapper.ID_KEY).greaterThan(greaterThan).order(Mapper.ID_KEY).fetch(new FindOptions().batchSize(fetchSize)));
   }
 
   @Override
@@ -144,27 +154,35 @@ public class MorphiaDao<I extends Serializable & Comparable<I>, D extends Morphi
 
   public D persist (Class<D> durableClass, D durable, InsertOptions insertOptions) {
 
-    VectoredDao<I, D> vectoredDao = getVectoredDao();
+    if (durable != null) {
 
-    getSession().getNativeSession().save(durable, insertOptions);
+      VectoredDao<I, D> vectoredDao = getVectoredDao();
 
-    if (vectoredDao != null) {
+      getSession().getNativeSession().save(durable, insertOptions);
 
-      return vectoredDao.persist(durableClass, durable, UpdateMode.HARD);
+      if (vectoredDao != null) {
+
+        return vectoredDao.persist(durableClass, durable, UpdateMode.HARD);
+      }
+
+      return durable;
     }
 
-    return durable;
+    return null;
   }
 
   @Override
   public void delete (Class<D> durableClass, D durable) {
 
-    VectoredDao<I, D> vectoredDao = getVectoredDao();
+    if (durable != null) {
 
-    getSession().getNativeSession().delete(durableClass, durable.getId());
+      VectoredDao<I, D> vectoredDao = getVectoredDao();
 
-    if (vectoredDao != null) {
-      vectoredDao.delete(durableClass, durable);
+      getSession().getNativeSession().delete(durableClass, durable.getId());
+
+      if (vectoredDao != null) {
+        vectoredDao.delete(durableClass, durable);
+      }
     }
   }
 
@@ -191,7 +209,7 @@ public class MorphiaDao<I extends Serializable & Comparable<I>, D extends Morphi
 
   public Iterable<D> scrollByQuery (FindQueryDetails<D> queryDetails) {
 
-    return new AutoCloseMorphiaIterator<>(constructQuery(queryDetails).fetch(queryDetails.getFindOptions()));
+    return new AutoCloseMorphiaIterable<>(constructQuery(queryDetails).fetch(queryDetails.getFindOptions()));
   }
 
   public WriteResult deleteByQuery (DeleteQueryDetails<D> queryDetails) {

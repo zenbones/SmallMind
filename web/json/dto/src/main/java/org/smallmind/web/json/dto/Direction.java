@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2008, 2009, 2010, 2011, 2012, 2013, 2014, 2015, 2016, 2017 David Berkman
+ * Copyright (c) 2007, 2008, 2009, 2010, 2011, 2012, 2013, 2014, 2015, 2016, 2017, 2018, 2019 David Berkman
  * 
  * This file is part of the SmallMind Code Project.
  * 
@@ -34,17 +34,24 @@ package org.smallmind.web.json.dto;
 
 public enum Direction {
 
-  IN("In"), OUT("Out");
+  IN("In", Visibility.IN), OUT("Out", Visibility.OUT);
 
+  private Visibility visibility;
   private String code;
 
-  Direction (String code) {
+  Direction (String code, Visibility visibility) {
 
     this.code = code;
+    this.visibility = visibility;
   }
 
   public String getCode () {
 
     return code;
+  }
+
+  public Visibility getVisibility () {
+
+    return visibility;
   }
 }

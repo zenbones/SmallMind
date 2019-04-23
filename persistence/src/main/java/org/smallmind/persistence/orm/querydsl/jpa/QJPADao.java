@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2008, 2009, 2010, 2011, 2012, 2013, 2014, 2015, 2016, 2017 David Berkman
+ * Copyright (c) 2007, 2008, 2009, 2010, 2011, 2012, 2013, 2014, 2015, 2016, 2017, 2018, 2019 David Berkman
  * 
  * This file is part of the SmallMind Code Project.
  * 
@@ -33,10 +33,13 @@
 package org.smallmind.persistence.orm.querydsl.jpa;
 
 import java.io.Serializable;
+import java.util.Collection;
 import java.util.Collections;
+import java.util.Iterator;
 import java.util.List;
 import javax.persistence.EntityManager;
 import javax.persistence.EntityManagerFactory;
+import com.querydsl.core.types.Expression;
 import com.querydsl.core.types.Ops;
 import com.querydsl.core.types.Order;
 import com.querydsl.core.types.OrderSpecifier;
@@ -69,23 +72,26 @@ public class QJPADao<I extends Serializable & Comparable<I>, D extends JPADurabl
   @Override
   public D get (Class<D> durableClass, I id) {
 
-    VectoredDao<I, D> vectoredDao;
-    D durable;
+    if (id != null) {
 
-    if ((vectoredDao = getVectoredDao()) == null) {
-      if ((durable = acquire(durableClass, id)) != null) {
+      VectoredDao<I, D> vectoredDao;
+      D durable;
 
-        return durable;
-      }
-    } else {
-      if ((durable = vectoredDao.get(durableClass, id)) != null) {
+      if ((vectoredDao = getVectoredDao()) == null) {
+        if ((durable = acquire(durableClass, id)) != null) {
 
-        return durable;
-      }
+          return durable;
+        }
+      } else {
+        if ((durable = vectoredDao.get(durableClass, id)) != null) {
 
-      if ((durable = acquire(durableClass, id)) != null) {
+          return durable;
+        }
 
-        return vectoredDao.persist(durableClass, durable, UpdateMode.SOFT);
+        if ((durable = acquire(durableClass, id)) != null) {
+
+          return vectoredDao.persist(durableClass, durable, UpdateMode.SOFT);
+        }
       }
     }
 
@@ -95,45 +101,58 @@ public class QJPADao<I extends Serializable & Comparable<I>, D extends JPADurabl
   @Override
   public D acquire (Class<D> durableClass, I id) {
 
-    return durableClass.cast(getSession().getNativeSession().find(durableClass, id));
+    return (id == null) ? null : durableClass.cast(getSession().getNativeSession().find(durableClass, id));
   }
 
   @Override
   public D persist (Class<D> durableClass, D durable) {
 
-    D persistentDurable;
-    VectoredDao<I, D> vectoredDao = getVectoredDao();
+    if (durable != null) {
 
-    if (getSession().getNativeSession().contains(durable)) {
-      persistentDurable = durable;
-    } else {
-      persistentDurable = getManagedClass().cast(getSession().getNativeSession().merge(durable));
-      getSession().flush();
+      D persistentDurable;
+      VectoredDao<I, D> vectoredDao = getVectoredDao();
+
+      if (getSession().getNativeSession().contains(durable)) {
+        persistentDurable = durable;
+      } else {
+        persistentDurable = getManagedClass().cast(getSession().getNativeSession().merge(durable));
+        getSession().flush();
+      }
+
+      if (vectoredDao != null) {
+
+        return vectoredDao.persist(durableClass, persistentDurable, UpdateMode.HARD);
+      }
+
+      return persistentDurable;
     }
 
-    if (vectoredDao != null) {
-
-      return vectoredDao.persist(durableClass, persistentDurable, UpdateMode.HARD);
-    }
-
-    return persistentDurable;
+    return null;
   }
 
   @Override
   public void delete (Class<D> durableClass, D durable) {
 
-    VectoredDao<I, D> vectoredDao = getVectoredDao();
+    if (durable != null) {
 
-    if (!getSession().getNativeSession().contains(durable)) {
-      getSession().getNativeSession().remove(getSession().getNativeSession().find(durable.getClass(), durable.getId()));
-    } else {
-      getSession().getNativeSession().remove(durable);
-    }
+      VectoredDao<I, D> vectoredDao = getVectoredDao();
 
-    getSession().flush();
+      if (!getSession().getNativeSession().contains(durable)) {
 
-    if (vectoredDao != null) {
-      vectoredDao.delete(durableClass, durable);
+        Object persistedState;
+
+        if ((persistedState = getSession().getNativeSession().find(durable.getClass(), durable.getId())) != null) {
+          getSession().getNativeSession().remove(persistedState);
+          getSession().flush();
+        }
+      } else {
+        getSession().getNativeSession().remove(durable);
+        getSession().flush();
+      }
+
+      if (vectoredDao != null) {
+        vectoredDao.delete(durableClass, durable);
+      }
     }
   }
 
@@ -196,6 +215,34 @@ public class QJPADao<I extends Serializable & Comparable<I>, D extends JPADurabl
         return query.from(entityPath).where(Expressions.predicate(Ops.GT, idPath, Expressions.constant(greaterThan))).orderBy(new OrderSpecifier<D>(Order.ASC, idPath)).limit(fetchSize);
       }
     });
+  }
+
+  @Override
+  public List<D> list (Collection<I> idCollection) {
+
+    if ((idCollection == null) || idCollection.isEmpty()) {
+
+      return Collections.emptyList();
+    } else {
+
+      return listByQuery(new JPAQueryDetails<D>() {
+
+        @Override
+        public JPAQuery<D> completeQuery (JPAQuery<D> query) {
+
+          PathBuilder<D> entityPath = new PathBuilder<>(getManagedClass(), "entity");
+          Path<D> idPath = Expressions.path(getManagedClass(), entityPath, "id");
+          Iterator<I> idIterator = idCollection.iterator();
+          Expression<?> collectionExpression = Expressions.collectionOperation(getIdClass(), Ops.SINGLETON, Expressions.constant(idIterator.next()));
+
+          while (idIterator.hasNext()) {
+            collectionExpression = Expressions.collectionOperation(getIdClass(), Ops.LIST, collectionExpression, Expressions.constant(idIterator.next()));
+          }
+
+          return query.from(entityPath).where(Expressions.predicate(Ops.IN, idPath, collectionExpression));
+        }
+      });
+    }
   }
 
   @Override

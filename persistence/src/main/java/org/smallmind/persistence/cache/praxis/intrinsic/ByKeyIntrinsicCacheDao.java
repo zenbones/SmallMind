@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2008, 2009, 2010, 2011, 2012, 2013, 2014, 2015, 2016, 2017 David Berkman
+ * Copyright (c) 2007, 2008, 2009, 2010, 2011, 2012, 2013, 2014, 2015, 2016, 2017, 2018, 2019 David Berkman
  * 
  * This file is part of the SmallMind Code Project.
  * 
@@ -43,6 +43,8 @@ import org.smallmind.persistence.cache.DurableVector;
 import org.smallmind.persistence.cache.VectorKey;
 import org.smallmind.persistence.cache.praxis.ByKeySingularVector;
 
+// The cache supports thread-safe operations
+// The vector cache references the instance cache by a unique key
 public class ByKeyIntrinsicCacheDao<I extends Serializable & Comparable<I>, D extends Durable<I>> extends AbstractCacheDao<I, D> {
 
   public ByKeyIntrinsicCacheDao (CacheDomain<I, D> cacheDomain) {
@@ -55,7 +57,7 @@ public class ByKeyIntrinsicCacheDao<I extends Serializable & Comparable<I>, D ex
     if (durable != null) {
 
       D cachedDurable;
-      DurableKey<I, D> durableKey = new DurableKey<I, D>(durableClass, durable.getId());
+      DurableKey<I, D> durableKey = new DurableKey<>(durableClass, durable.getId());
 
       return ((cachedDurable = getInstanceCache(durableClass).putIfAbsent(durableKey.getKey(), durable, 0)) != null) ? cachedDurable : durable;
     }
@@ -84,8 +86,7 @@ public class ByKeyIntrinsicCacheDao<I extends Serializable & Comparable<I>, D ex
       if ((vector = getVectorCache(vectorKey.getElementClass()).get(vectorKey.getKey())) != null) {
         if (vector.isSingular()) {
           deleteVector(vectorKey);
-        }
-        else {
+        } else {
           vector.remove(durable);
         }
       }
@@ -97,15 +98,14 @@ public class ByKeyIntrinsicCacheDao<I extends Serializable & Comparable<I>, D ex
     if (vector.isSingular()) {
       if (!(vector instanceof ByKeySingularVector)) {
 
-        return new ByKeySingularVector<I, D>(new DurableKey<I, D>(managedClass, vector.head().getId()), vector.getTimeToLiveSeconds());
+        return new ByKeySingularVector<>(new DurableKey<>(managedClass, vector.head().getId()), vector.getTimeToLiveSeconds());
       }
 
       return vector;
-    }
-    else {
+    } else {
       if (!(vector instanceof ByKeyIntrinsicVector)) {
 
-        return new ByKeyIntrinsicVector<I, D>(managedClass, vector.asBestEffortPreFetchedList(), vector.getComparator(), vector.getMaxSize(), vector.getTimeToLiveSeconds(), vector.isOrdered());
+        return new ByKeyIntrinsicVector<>(managedClass, vector.asBestEffortPreFetchedList(), vector.getComparator(), vector.getMaxSize(), vector.getTimeToLiveSeconds(), vector.isOrdered());
       }
 
       return vector;
@@ -114,11 +114,11 @@ public class ByKeyIntrinsicCacheDao<I extends Serializable & Comparable<I>, D ex
 
   public DurableVector<I, D> createSingularVector (VectorKey<D> vectorKey, D durable, int timeToLiveSeconds) {
 
-    return new ByKeySingularVector<I, D>(new DurableKey<I, D>(vectorKey.getElementClass(), durable.getId()), timeToLiveSeconds);
+    return new ByKeySingularVector<>(new DurableKey<>(vectorKey.getElementClass(), durable.getId()), timeToLiveSeconds);
   }
 
   public DurableVector<I, D> createVector (VectorKey<D> vectorKey, Iterable<D> elementIter, Comparator<D> comparator, int maxSize, int timeToLiveSeconds, boolean ordered) {
 
-    return new ByKeyIntrinsicVector<I, D>(vectorKey.getElementClass(), elementIter, comparator, maxSize, timeToLiveSeconds, ordered);
+    return new ByKeyIntrinsicVector<>(vectorKey.getElementClass(), elementIter, comparator, maxSize, timeToLiveSeconds, ordered);
   }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2008, 2009, 2010, 2011, 2012, 2013, 2014, 2015, 2016, 2017 David Berkman
+ * Copyright (c) 2007, 2008, 2009, 2010, 2011, 2012, 2013, 2014, 2015, 2016, 2017, 2018, 2019 David Berkman
  * 
  * This file is part of the SmallMind Code Project.
  * 
@@ -33,9 +33,8 @@
 package org.smallmind.persistence;
 
 import org.smallmind.instrument.config.MetricConfiguration;
-import org.smallmind.instrument.config.MetricConfigurationProvider;
 
-public class Persistence implements MetricConfigurationProvider {
+public class Persistence {
 
   private MetricConfiguration metricConfiguration;
 

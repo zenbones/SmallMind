@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2008, 2009, 2010, 2011, 2012, 2013, 2014, 2015, 2016, 2017 David Berkman
+ * Copyright (c) 2007, 2008, 2009, 2010, 2011, 2012, 2013, 2014, 2015, 2016, 2017, 2018, 2019 David Berkman
  * 
  * This file is part of the SmallMind Code Project.
  * 
@@ -33,11 +33,7 @@
 package org.smallmind.web.json.scaffold.util;
 
 import com.fasterxml.jackson.core.Version;
-import com.fasterxml.jackson.databind.BeanDescription;
-import com.fasterxml.jackson.databind.DeserializationConfig;
 import com.fasterxml.jackson.databind.Module;
-import com.fasterxml.jackson.databind.deser.ValueInstantiator;
-import com.fasterxml.jackson.databind.deser.ValueInstantiators;
 import com.fasterxml.jackson.databind.deser.std.StdValueInstantiator;
 import com.fasterxml.jackson.module.jaxb.PackageVersion;
 
@@ -58,20 +54,16 @@ public class PolymorphicModule extends Module {
   @Override
   public void setupModule (final SetupContext context) {
 
-    context.addValueInstantiators(new ValueInstantiators() {
+    context.addValueInstantiators((deserializationConfig, beanDescription, valueInstantiator) -> {
 
-      @Override
-      public ValueInstantiator findValueInstantiator (DeserializationConfig config, BeanDescription beanDesc, ValueInstantiator defaultInstantiator) {
+      Class<?> polymorphicSubClass;
 
-        Class<?> polymorphicSubClass;
+      if ((polymorphicSubClass = PolymorphicClassCache.getPolymorphicClassForProxyClass(beanDescription.getBeanClass())) != null) {
 
-        if ((polymorphicSubClass = PolymorphicClassCache.getPolymorphicClassForProxyClass(beanDesc.getBeanClass())) != null) {
-
-          return new PolymorphicValueInstantiator((StdValueInstantiator)defaultInstantiator, polymorphicSubClass);
-        }
-
-        return defaultInstantiator;
+        return new PolymorphicValueInstantiator((StdValueInstantiator)valueInstantiator, polymorphicSubClass);
       }
+
+      return valueInstantiator;
     });
   }
 }

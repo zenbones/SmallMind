@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2008, 2009, 2010, 2011, 2012, 2013, 2014, 2015, 2016, 2017 David Berkman
+ * Copyright (c) 2007, 2008, 2009, 2010, 2011, 2012, 2013, 2014, 2015, 2016, 2017, 2018, 2019 David Berkman
  * 
  * This file is part of the SmallMind Code Project.
  * 
@@ -40,6 +40,7 @@ import net.rubyeye.xmemcached.MemcachedClientBuilder;
 import net.rubyeye.xmemcached.aws.AWSElasticCacheClientBuilder;
 import net.rubyeye.xmemcached.command.BinaryCommandFactory;
 import net.rubyeye.xmemcached.impl.KetamaMemcachedSessionLocator;
+import net.rubyeye.xmemcached.transcoders.Transcoder;
 import org.smallmind.memcached.MemcachedServer;
 import org.smallmind.memcached.XMemcachedMemcachedClient;
 import org.smallmind.scribe.pen.LoggerManager;
@@ -49,6 +50,7 @@ import org.springframework.beans.factory.InitializingBean;
 public class AWSElasticCacheMemcachedClientFactoryBean implements FactoryBean<XMemcachedMemcachedClient>, InitializingBean {
 
   private XMemcachedMemcachedClient memcachedClient;
+  private Transcoder<?> transcoder;
   private MemcachedServer[] servers;
   private long pollIntervalMilliseconds = 30000;
   private boolean enabled = true;
@@ -57,6 +59,11 @@ public class AWSElasticCacheMemcachedClientFactoryBean implements FactoryBean<XM
   public void setEnabled (boolean enabled) {
 
     this.enabled = enabled;
+  }
+
+  public void setMemcachedClient (XMemcachedMemcachedClient memcachedClient) {
+
+    this.memcachedClient = memcachedClient;
   }
 
   public void setServers (MemcachedServer[] servers) {
@@ -89,9 +96,15 @@ public class AWSElasticCacheMemcachedClientFactoryBean implements FactoryBean<XM
       }
 
       builder = new AWSElasticCacheClientBuilder(addressList);
+
+      if (transcoder != null) {
+        builder.setTranscoder(transcoder);
+      }
+
       builder.setConnectionPoolSize(poolSize);
       builder.setCommandFactory(new BinaryCommandFactory());
       builder.setSessionLocator(new KetamaMemcachedSessionLocator());
+
       memcachedClient = new XMemcachedMemcachedClient(builder.build());
     }
   }

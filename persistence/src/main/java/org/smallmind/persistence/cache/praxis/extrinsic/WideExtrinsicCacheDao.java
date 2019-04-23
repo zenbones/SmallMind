@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2008, 2009, 2010, 2011, 2012, 2013, 2014, 2015, 2016, 2017 David Berkman
+ * Copyright (c) 2007, 2008, 2009, 2010, 2011, 2012, 2013, 2014, 2015, 2016, 2017, 2018, 2019 David Berkman
  * 
  * This file is part of the SmallMind Code Project.
  * 
@@ -49,7 +49,7 @@ public class WideExtrinsicCacheDao<W extends Serializable & Comparable<W>, I ext
   @Override
   public List<D> persist (String context, Class<? extends Durable<W>> parentClass, W parentId, Class<D> durableClass, List<D> durables) {
 
-    WideDurableKey<W, D> wideDurableKey = new WideDurableKey<W, D>(context, parentClass, parentId, durableClass);
+    WideDurableKey<W, D> wideDurableKey = new WideDurableKey<>(context, parentClass, parentId, durableClass);
 
     getWideInstanceCache(durableClass).set(wideDurableKey.getKey(), durables, 0);
 

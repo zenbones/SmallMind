@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2008, 2009, 2010, 2011, 2012, 2013, 2014, 2015, 2016, 2017 David Berkman
+ * Copyright (c) 2007, 2008, 2009, 2010, 2011, 2012, 2013, 2014, 2015, 2016, 2017, 2018, 2019 David Berkman
  * 
  * This file is part of the SmallMind Code Project.
  * 
@@ -42,13 +42,18 @@ import java.util.Comparator;
 @Retention(RetentionPolicy.RUNTIME)
 public @interface CacheAs {
 
-  public abstract Vector value ();
+  // the vector upon which this annotation acts
+  Vector value ();
 
-  public abstract Class<? extends Comparator> comparator () default Comparator.class;
+  // the comparator to be used on an ordered cache entry
+  Class<? extends Comparator> comparator () default Comparator.class;
 
-  public abstract int max () default 0;
+  // the maximum number of entries to cache (where 0 or or less indicates no limit)
+  int max () default 0;
 
-  public abstract Time time () default @Time(0);
+  // the number of seconds for the cache entry's ttl (where 0 or less will indicates the cache domain's default)
+  Time time () default @Time(0);
 
-  public abstract boolean ordered () default false;
+  // allows ordering to be applied to the resulting cache entry
+  boolean ordered () default false;
 }

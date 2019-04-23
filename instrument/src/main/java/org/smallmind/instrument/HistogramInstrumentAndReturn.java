@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2008, 2009, 2010, 2011, 2012, 2013, 2014, 2015, 2016, 2017 David Berkman
+ * Copyright (c) 2007, 2008, 2009, 2010, 2011, 2012, 2013, 2014, 2015, 2016, 2017, 2018, 2019 David Berkman
  * 
  * This file is part of the SmallMind Code Project.
  * 
@@ -33,13 +33,13 @@
 package org.smallmind.instrument;
 
 import java.util.concurrent.atomic.AtomicLong;
-import org.smallmind.instrument.config.MetricConfigurationProvider;
+import org.smallmind.instrument.config.MetricConfiguration;
 
 public abstract class HistogramInstrumentAndReturn<T> extends InstrumentAndReturn<Histogram, T> {
 
-  public HistogramInstrumentAndReturn (MetricConfigurationProvider provider, MetricProperty... properties) {
+  public HistogramInstrumentAndReturn (MetricConfiguration configuration, MetricProperty... properties) {
 
-    super(((provider == null) || (provider.getMetricConfiguration() == null) || (!provider.getMetricConfiguration().isInstrumented())) ? null : new InstrumentationArguments<>(Metrics.buildHistogram(provider.getMetricConfiguration().getSamples()), provider.getMetricConfiguration().getMetricDomain().getDomain(), properties));
+    super(((configuration == null) || (!configuration.isInstrumented())) ? null : new InstrumentationArguments<>(Metrics.buildHistogram(configuration.getSamples()), configuration.getMetricDomain().getDomain(), properties));
   }
 
   public HistogramInstrumentAndReturn (Metrics.MetricBuilder<Histogram> builder, String domain, MetricProperty... properties) {

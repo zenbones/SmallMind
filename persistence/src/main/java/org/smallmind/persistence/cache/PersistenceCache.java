@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2008, 2009, 2010, 2011, 2012, 2013, 2014, 2015, 2016, 2017 David Berkman
+ * Copyright (c) 2007, 2008, 2009, 2010, 2011, 2012, 2013, 2014, 2015, 2016, 2017, 2018, 2019 David Berkman
  * 
  * This file is part of the SmallMind Code Project.
  * 
@@ -36,27 +36,20 @@ import java.util.Map;
 
 public interface PersistenceCache<K, V> {
 
-  public abstract boolean requiresCopyOnDistributedCASOperation ();
+  int getDefaultTimeToLiveSeconds ();
 
-  public abstract int getDefaultTimeToLiveSeconds ();
-
-  public abstract V get (K key)
+  V get (K key)
     throws CacheOperationException;
 
-  public abstract Map<K, V> get (K[] keys)
+  Map<K, V> get (K[] keys)
     throws CacheOperationException;
 
-  public abstract void set (K key, V value, int timeToLiveSeconds)
+  void set (K key, V value, int timeToLiveSeconds)
     throws CacheOperationException;
 
-  public abstract V putIfAbsent (K key, V value, int timeToLiveSeconds)
+  V putIfAbsent (K key, V value, int timeToLiveSeconds)
     throws CacheOperationException;
 
-  public abstract CASValue<V> getViaCas (K key);
-
-  public abstract boolean putViaCas (K key, V oldValue, V value, long version, int timeToLiveSeconds)
-    throws CacheOperationException;
-
-  public abstract void remove (K key)
+  void remove (K key)
     throws CacheOperationException;
 }

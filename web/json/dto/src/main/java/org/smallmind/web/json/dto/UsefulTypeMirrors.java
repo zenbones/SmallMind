@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2008, 2009, 2010, 2011, 2012, 2013, 2014, 2015, 2016, 2017 David Berkman
+ * Copyright (c) 2007, 2008, 2009, 2010, 2011, 2012, 2013, 2014, 2015, 2016, 2017, 2018, 2019 David Berkman
  * 
  * This file is part of the SmallMind Code Project.
  * 
@@ -32,20 +32,51 @@
  */
 package org.smallmind.web.json.dto;
 
+import java.util.List;
 import javax.annotation.processing.ProcessingEnvironment;
 import javax.lang.model.type.TypeMirror;
+import javax.validation.constraints.NotNull;
+import com.fasterxml.jackson.databind.JsonNode;
 
 public class UsefulTypeMirrors {
 
   private final TypeMirror dtoPropertyTypeMirror;
+  private final TypeMirror notNullTypeMirror;
+  private final TypeMirror listTypeMirror;
+  private final TypeMirror jsonNodeTypeMirror;
+  private final TypeMirror objectTypeMirror;
 
   public UsefulTypeMirrors (ProcessingEnvironment processingEnvironment) {
 
     dtoPropertyTypeMirror = processingEnvironment.getElementUtils().getTypeElement(DtoProperty.class.getName()).asType();
+    notNullTypeMirror = processingEnvironment.getElementUtils().getTypeElement(NotNull.class.getName()).asType();
+    listTypeMirror = processingEnvironment.getElementUtils().getTypeElement(List.class.getName()).asType();
+    jsonNodeTypeMirror = processingEnvironment.getElementUtils().getTypeElement(JsonNode.class.getName()).asType();
+    objectTypeMirror = processingEnvironment.getElementUtils().getTypeElement(Object.class.getName()).asType();
   }
 
   public TypeMirror getDtoPropertyTypeMirror () {
 
     return dtoPropertyTypeMirror;
+  }
+
+  public TypeMirror getNotNullTypeMirror () {
+
+    return notNullTypeMirror;
+  }
+
+  public TypeMirror getListTypeMirror () {
+
+    return listTypeMirror;
+  }
+
+  public TypeMirror getJsonNodeTypeMirror () {
+
+    return jsonNodeTypeMirror;
+  }
+
+  public TypeMirror getObjectTypeMirror () {
+
+    return objectTypeMirror;
   }
 }

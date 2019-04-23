@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2008, 2009, 2010, 2011, 2012, 2013, 2014, 2015, 2016, 2017 David Berkman
+ * Copyright (c) 2007, 2008, 2009, 2010, 2011, 2012, 2013, 2014, 2015, 2016, 2017, 2018, 2019 David Berkman
  * 
  * This file is part of the SmallMind Code Project.
  * 
@@ -32,6 +32,7 @@
  */
 package org.smallmind.scribe.slf4j;
 
+import java.io.Serializable;
 import java.util.HashMap;
 import java.util.Map;
 import org.slf4j.spi.MDCAdapter;
@@ -49,7 +50,9 @@ public class ScribeMDCAdapter implements MDCAdapter {
   @Override
   public String get (String key) {
 
-    return ScribeParameterAdapter.getInstance().get(key).toString();
+    Serializable value;
+
+    return ((value = ScribeParameterAdapter.getInstance().get(key)) == null) ? null : value.toString();
   }
 
   @Override

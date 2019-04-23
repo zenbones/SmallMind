@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2008, 2009, 2010, 2011, 2012, 2013, 2014, 2015, 2016, 2017 David Berkman
+ * Copyright (c) 2007, 2008, 2009, 2010, 2011, 2012, 2013, 2014, 2015, 2016, 2017, 2018, 2019 David Berkman
  * 
  * This file is part of the SmallMind Code Project.
  * 
@@ -78,7 +78,7 @@ public class WireContextXmlAdapter extends XmlAdapter<JsonNode, WireContext[]> {
   public JsonNode marshal (WireContext[] wireContexts)
     throws JsonProcessingException {
 
-    if (wireContexts == null) {
+    if ((wireContexts == null) || (wireContexts.length == 0)) {
 
       return null;
     }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2008, 2009, 2010, 2011, 2012, 2013, 2014, 2015, 2016, 2017 David Berkman
+ * Copyright (c) 2007, 2008, 2009, 2010, 2011, 2012, 2013, 2014, 2015, 2016, 2017, 2018, 2019 David Berkman
  * 
  * This file is part of the SmallMind Code Project.
  * 
@@ -38,7 +38,6 @@ import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 import org.smallmind.instrument.config.MetricConfiguration;
-import org.smallmind.instrument.config.MetricConfigurationProvider;
 import org.smallmind.nutsnbolts.util.SnowflakeId;
 import org.smallmind.phalanx.wire.ResponseTransport;
 import org.smallmind.phalanx.wire.SignalCodec;
@@ -50,7 +49,7 @@ import org.smallmind.phalanx.worker.WorkManager;
 import org.smallmind.phalanx.worker.WorkQueue;
 import org.smallmind.phalanx.worker.WorkerFactory;
 
-public class RabbitMQResponseTransport extends WorkManager<InvocationWorker, RabbitMQMessage> implements MetricConfigurationProvider, WorkerFactory<InvocationWorker, RabbitMQMessage>, ResponseTransport {
+public class RabbitMQResponseTransport extends WorkManager<InvocationWorker, RabbitMQMessage> implements WorkerFactory<InvocationWorker, RabbitMQMessage>, ResponseTransport {
 
   private final AtomicBoolean closed = new AtomicBoolean(false);
   private final AtomicReference<TransportState> transportStateRef = new AtomicReference<>(TransportState.PLAYING);
@@ -60,7 +59,7 @@ public class RabbitMQResponseTransport extends WorkManager<InvocationWorker, Rab
   private final ResponseMessageRouter[] responseMessageRouters;
   private final String instanceId = SnowflakeId.newInstance().generateDottedString();
 
-  public RabbitMQResponseTransport (MetricConfiguration metricConfiguration, RabbitMQConnector rabbitMQConnector, NameConfiguration nameConfiguration, Class<InvocationWorker> workerClass, SignalCodec signalCodec, String serviceGroup, int clusterSize, int concurrencyLimit, int messageTTLSeconds)
+  public RabbitMQResponseTransport (MetricConfiguration metricConfiguration, RabbitMQConnector rabbitMQConnector, NameConfiguration nameConfiguration, Class<InvocationWorker> workerClass, SignalCodec signalCodec, String serviceGroup, int clusterSize, int concurrencyLimit, int messageTTLSeconds, boolean autoAcknowledge)
     throws IOException, InterruptedException, TimeoutException {
 
     super(metricConfiguration, workerClass, concurrencyLimit);
@@ -71,7 +70,7 @@ public class RabbitMQResponseTransport extends WorkManager<InvocationWorker, Rab
 
     responseMessageRouters = new ResponseMessageRouter[clusterSize];
     for (int index = 0; index < responseMessageRouters.length; index++) {
-      responseMessageRouters[index] = new ResponseMessageRouter(rabbitMQConnector, nameConfiguration, this, signalCodec, serviceGroup, instanceId, index, messageTTLSeconds);
+      responseMessageRouters[index] = new ResponseMessageRouter(rabbitMQConnector, nameConfiguration, this, signalCodec, serviceGroup, instanceId, index, messageTTLSeconds, autoAcknowledge);
       responseMessageRouters[index].initialize();
     }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2008, 2009, 2010, 2011, 2012, 2013, 2014, 2015, 2016, 2017 David Berkman
+ * Copyright (c) 2007, 2008, 2009, 2010, 2011, 2012, 2013, 2014, 2015, 2016, 2017, 2018, 2019 David Berkman
  * 
  * This file is part of the SmallMind Code Project.
  * 
@@ -56,8 +56,7 @@ public class PooledConnectionJugglingPin<P extends PooledConnection> extends Abs
     try {
 
       return pooledConnectionClass.cast(dataSource.getPooledConnection());
-    }
-    catch (SQLException sqlException) {
+    } catch (SQLException sqlException) {
       throw new JugglerResourceException(sqlException);
     }
   }
@@ -69,8 +68,7 @@ public class PooledConnectionJugglingPin<P extends PooledConnection> extends Abs
       dataSource.getPooledConnection().close();
 
       return true;
-    }
-    catch (SQLException sqlException) {
+    } catch (SQLException sqlException) {
 
       return false;
     }

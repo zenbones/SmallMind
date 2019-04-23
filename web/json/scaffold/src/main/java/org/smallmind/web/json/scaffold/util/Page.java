@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2008, 2009, 2010, 2011, 2012, 2013, 2014, 2015, 2016, 2017 David Berkman
+ * Copyright (c) 2007, 2008, 2009, 2010, 2011, 2012, 2013, 2014, 2015, 2016, 2017, 2018, 2019 David Berkman
  * 
  * This file is part of the SmallMind Code Project.
  * 
@@ -41,6 +41,7 @@ import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlAnyElement;
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlRootElement;
+import org.smallmind.nutsnbolts.util.Mutation;
 
 @XmlRootElement(name = "page")
 @XmlAccessorType(XmlAccessType.PROPERTY)
@@ -87,14 +88,14 @@ public class Page<T> implements Iterable<T> {
     return values;
   }
 
-  public <U> Page<U> mutate (PageMutation<? super T, U> mutation)
+  public <U> Page<U> mutate (Class<U> outType, Mutation<? super T, U> mutation)
     throws Exception {
 
-    U[] outArray = (U[])Array.newInstance(mutation.getMutatedClass(), values.length);
+    U[] outArray = (U[])Array.newInstance(outType, values.length);
     int index = 0;
 
     for (T inType : this) {
-      outArray[index++] = mutation.mutate(inType);
+      outArray[index++] = mutation.apply(inType);
     }
 
     return new Page<>(outArray, firstResult, maxResults, totalResults);

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2008, 2009, 2010, 2011, 2012, 2013, 2014, 2015, 2016, 2017 David Berkman
+ * Copyright (c) 2007, 2008, 2009, 2010, 2011, 2012, 2013, 2014, 2015, 2016, 2017, 2018, 2019 David Berkman
  * 
  * This file is part of the SmallMind Code Project.
  * 
@@ -42,6 +42,7 @@ public class FilterInstaller {
   private Map<String, String> initParameters;
   private String displayName;
   private String urlPattern;
+  private Boolean asyncSupported;
   private boolean matchAfter = false;
 
   public String getDisplayName () {
@@ -98,5 +99,15 @@ public class FilterInstaller {
   public void setUrlPattern (String urlPattern) {
 
     this.urlPattern = urlPattern;
+  }
+
+  public Boolean getAsyncSupported () {
+
+    return asyncSupported;
+  }
+
+  public void setAsyncSupported (Boolean asyncSupported) {
+
+    this.asyncSupported = asyncSupported;
   }
 }

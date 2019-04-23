@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2008, 2009, 2010, 2011, 2012, 2013, 2014, 2015, 2016, 2017 David Berkman
+ * Copyright (c) 2007, 2008, 2009, 2010, 2011, 2012, 2013, 2014, 2015, 2016, 2017, 2018, 2019 David Berkman
  * 
  * This file is part of the SmallMind Code Project.
  * 
@@ -40,9 +40,15 @@ import java.lang.annotation.Target;
 @Target({})
 public @interface Idiom {
 
+  // the constraint annotations to be applied to the property within this idiom
   Constraint[] constraints () default {};
 
+  // the visibility of the property within this idiom (IN, OUT or BOTH)
   Visibility visibility () default Visibility.BOTH;
 
+  // the name of this idiom (a short descriptive string such as 'create' or 'internal')
   String[] purposes () default {};
+
+  // if the xml element is required in this idiom, if false may overridden by use of a NotNull constraint
+  boolean required () default false;
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2008, 2009, 2010, 2011, 2012, 2013, 2014, 2015, 2016, 2017 David Berkman
+ * Copyright (c) 2007, 2008, 2009, 2010, 2011, 2012, 2013, 2014, 2015, 2016, 2017, 2018, 2019 David Berkman
  * 
  * This file is part of the SmallMind Code Project.
  * 
@@ -53,9 +53,9 @@ public class PooledPreparedStatementCache implements StatementEventListener {
 
     this.maxStatements = maxStatements;
 
-    timeMap = new TreeMap<TimeKey, String>();
-    argumentMap = new HashMap<ArgumentKey, LinkedList<String>>();
-    statementMap = new HashMap<String, StatementWrapper>();
+    timeMap = new TreeMap<>();
+    argumentMap = new HashMap<>();
+    statementMap = new HashMap<>();
   }
 
   public synchronized PreparedStatement cachePreparedStatement (Object[] args, PooledPreparedStatement pooledStatement) {
@@ -130,8 +130,7 @@ public class PooledPreparedStatementCache implements StatementEventListener {
 
       try {
         statementWrapper.getPooledStatement().close();
-      }
-      catch (SQLException sqlException) {
+      } catch (SQLException sqlException) {
         logException(statementWrapper, sqlException);
       }
     }
@@ -142,8 +141,7 @@ public class PooledPreparedStatementCache implements StatementEventListener {
     for (StatementWrapper statementWrapper : statementMap.values()) {
       try {
         statementWrapper.getPooledStatement().close();
-      }
-      catch (SQLException sqlException) {
+      } catch (SQLException sqlException) {
         logException(statementWrapper, sqlException);
       }
     }
@@ -157,8 +155,7 @@ public class PooledPreparedStatementCache implements StatementEventListener {
       if ((logWriter = statementWrapper.getPooledStatement().getLogWriter()) != null) {
         sqlException.printStackTrace(logWriter);
       }
-    }
-    catch (SQLException buriedException) {
+    } catch (SQLException buriedException) {
     }
   }
 

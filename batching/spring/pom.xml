@@ -1,0 +1,53 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+
+  <parent>
+    <groupId>org.smallmind</groupId>
+    <artifactId>smallmind-batching</artifactId>
+    <version>3.3.17-SNAPSHOT</version>
+  </parent>
+  <artifactId>batching-spring</artifactId>
+  <name>Batching-Spring</name>
+  <description>Spring Batch Extensions</description>
+  <packaging>jar</packaging>
+  <dependencies>
+    <dependency>
+      <groupId>org.smallmind</groupId>
+      <artifactId>batching-base</artifactId>
+      <scope>compile</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.smallmind</groupId>
+      <artifactId>smallmind-liquibase</artifactId>
+      <scope>compile</scope>
+      <optional>true</optional>
+    </dependency>
+    <dependency>
+      <groupId>org.springframework</groupId>
+      <artifactId>spring-context</artifactId>
+      <scope>compile</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.springframework</groupId>
+      <artifactId>spring-jdbc</artifactId>
+      <scope>compile</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.springframework.batch</groupId>
+      <artifactId>spring-batch-core</artifactId>
+      <scope>compile</scope>
+    </dependency>
+  </dependencies>
+  <build>
+    <resources>
+      <resource>
+        <directory>src/main/resources/spring</directory>
+        <filtering>false</filtering>
+      </resource>
+      <resource>
+        <directory>src/main/resources/liquibase</directory>
+        <filtering>false</filtering>
+      </resource>
+    </resources>
+  </build>
+</project>

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2008, 2009, 2010, 2011, 2012, 2013, 2014, 2015, 2016, 2017 David Berkman
+ * Copyright (c) 2007, 2008, 2009, 2010, 2011, 2012, 2013, 2014, 2015, 2016, 2017, 2018, 2019 David Berkman
  * 
  * This file is part of the SmallMind Code Project.
  * 
@@ -37,7 +37,7 @@ import org.smallmind.persistence.Durable;
 
 public interface CacheDao<I extends Serializable & Comparable<I>, D extends Durable<I>> extends VectoredDao<I, D> {
 
-  public PersistenceCache<String, D> getInstanceCache (Class<D> durableClass);
+  PersistenceCache<String, D> getInstanceCache (Class<D> durableClass);
 
-  public PersistenceCache<String, ? extends DurableVector> getVectorCache (Class<D> durableClass);
+  PersistenceCache<String, ? extends DurableVector> getVectorCache (Class<D> durableClass);
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2008, 2009, 2010, 2011, 2012, 2013, 2014, 2015, 2016, 2017 David Berkman
+ * Copyright (c) 2007, 2008, 2009, 2010, 2011, 2012, 2013, 2014, 2015, 2016, 2017, 2018, 2019 David Berkman
  * 
  * This file is part of the SmallMind Code Project.
  * 
@@ -41,9 +41,12 @@ import java.util.concurrent.TimeUnit;
 @Retention(RetentionPolicy.RUNTIME)
 public @interface Time {
 
-  public abstract long value ();
+  // the number of time units to use as the ttl for the entry
+  long value ();
 
-  public abstract int stochastic () default 0;
+  // a value to treat as a random limit around the ttl (plus or minus)
+  int stochastic () default 0;
 
-  public abstract TimeUnit unit () default TimeUnit.SECONDS;
+  // the time unit for the ttl
+  TimeUnit unit () default TimeUnit.SECONDS;
 }

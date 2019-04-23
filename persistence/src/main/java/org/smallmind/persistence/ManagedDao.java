@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2008, 2009, 2010, 2011, 2012, 2013, 2014, 2015, 2016, 2017 David Berkman
+ * Copyright (c) 2007, 2008, 2009, 2010, 2011, 2012, 2013, 2014, 2015, 2016, 2017, 2018, 2019 David Berkman
  * 
  * This file is part of the SmallMind Code Project.
  * 
@@ -36,13 +36,13 @@ import java.io.Serializable;
 
 public interface ManagedDao<I extends Serializable & Comparable<I>, D extends Durable<I>> {
 
-  public abstract String getMetricSource ();
+  String getMetricSource ();
 
-  public abstract Class<D> getManagedClass ();
+  Class<D> getManagedClass ();
 
-  public abstract Class<I> getIdClass ();
+  Class<I> getIdClass ();
 
-  public abstract I getIdFromString (String value);
+  I getIdFromString (String value);
 
-  public abstract I getId (D durable);
+  I getId (D durable);
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2008, 2009, 2010, 2011, 2012, 2013, 2014, 2015, 2016, 2017 David Berkman
+ * Copyright (c) 2007, 2008, 2009, 2010, 2011, 2012, 2013, 2014, 2015, 2016, 2017, 2018, 2019 David Berkman
  * 
  * This file is part of the SmallMind Code Project.
  * 
@@ -36,19 +36,19 @@ import java.lang.reflect.Method;
 
 public interface JugglingPin<R> {
 
-  public abstract void start (Method method, Object... args)
+  void start (Method method, Object... args)
     throws JugglerResourceException;
 
-  public abstract void stop (Method method, Object... args)
+  void stop (Method method, Object... args)
     throws JugglerResourceException;
 
-  public abstract void close (Method method, Object... args)
+  void close (Method method, Object... args)
     throws JugglerResourceException;
 
-  public abstract R obtain ()
+  R obtain ()
     throws JugglerResourceException;
 
-  public abstract boolean recover ();
+  boolean recover ();
 
-  public abstract String describe ();
+  String describe ();
 }

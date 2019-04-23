@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2008, 2009, 2010, 2011, 2012, 2013, 2014, 2015, 2016, 2017 David Berkman
+ * Copyright (c) 2007, 2008, 2009, 2010, 2011, 2012, 2013, 2014, 2015, 2016, 2017, 2018, 2019 David Berkman
  * 
  * This file is part of the SmallMind Code Project.
  * 
@@ -56,10 +56,11 @@ public class ResponseMessageRouter extends MessageRouter {
   private final SignalCodec signalCodec;
   private final String serviceGroup;
   private final String instanceId;
+  private final boolean autoAcknowledge;
   private final int index;
   private final int ttlSeconds;
 
-  public ResponseMessageRouter (RabbitMQConnector connector, NameConfiguration nameConfiguration, RabbitMQResponseTransport responseTransport, SignalCodec signalCodec, String serviceGroup, String instanceId, int index, int ttlSeconds) {
+  public ResponseMessageRouter (RabbitMQConnector connector, NameConfiguration nameConfiguration, RabbitMQResponseTransport responseTransport, SignalCodec signalCodec, String serviceGroup, String instanceId, int index, int ttlSeconds, boolean autoAcknowledge) {
 
     super(connector, nameConfiguration);
 
@@ -69,31 +70,27 @@ public class ResponseMessageRouter extends MessageRouter {
     this.instanceId = instanceId;
     this.index = index;
     this.ttlSeconds = ttlSeconds;
+    this.autoAcknowledge = autoAcknowledge;
   }
 
   @Override
   public void bindQueues ()
     throws IOException {
 
-    operate(new ChannelOperation() {
+    operate((channel) -> {
 
-      @Override
-      public void execute (Channel channel)
-        throws IOException {
+      String shoutQueueName;
+      String talkQueueName;
+      String whisperQueueName;
 
-        String shoutQueueName;
-        String talkQueueName;
-        String whisperQueueName;
+      channel.queueDeclare(shoutQueueName = getShoutQueueName() + "-" + serviceGroup + "[" + instanceId + "]", false, false, true, null);
+      channel.queueBind(shoutQueueName, getRequestExchangeName(), VocalMode.SHOUT.getName() + "-" + serviceGroup);
 
-        channel.queueDeclare(shoutQueueName = getShoutQueueName() + "-" + serviceGroup + "[" + instanceId + "]", false, false, true, null);
-        channel.queueBind(shoutQueueName, getRequestExchangeName(), VocalMode.SHOUT.getName() + "-" + serviceGroup);
+      channel.queueDeclare(talkQueueName = getTalkQueueName() + "-" + serviceGroup, false, false, false, null);
+      channel.queueBind(talkQueueName, getRequestExchangeName(), VocalMode.TALK.getName() + "-" + serviceGroup);
 
-        channel.queueDeclare(talkQueueName = getTalkQueueName() + "-" + serviceGroup, false, false, false, null);
-        channel.queueBind(talkQueueName, getRequestExchangeName(), VocalMode.TALK.getName() + "-" + serviceGroup);
-
-        channel.queueDeclare(whisperQueueName = getWhisperQueueName() + "-" + serviceGroup + "[" + instanceId + "]", false, false, true, null);
-        channel.queueBind(whisperQueueName, getRequestExchangeName(), VocalMode.WHISPER.getName() + "-" + serviceGroup + "[" + instanceId + "]");
-      }
+      channel.queueDeclare(whisperQueueName = getWhisperQueueName() + "-" + serviceGroup + "[" + instanceId + "]", false, false, true, null);
+      channel.queueBind(whisperQueueName, getRequestExchangeName(), VocalMode.WHISPER.getName() + "-" + serviceGroup + "[" + instanceId + "]");
     });
   }
 
@@ -113,41 +110,31 @@ public class ResponseMessageRouter extends MessageRouter {
   public void installConsumer ()
     throws IOException {
 
-    operate(new ChannelOperation() {
+    operate((channel) -> {
 
-      @Override
-      public void execute (Channel channel)
-        throws IOException {
+      bindQueues();
 
-        bindQueues();
-
-        installConsumerInternal(channel, getShoutQueueName() + "-" + serviceGroup + "[" + instanceId + "]");
-        installConsumerInternal(channel, getTalkQueueName() + "-" + serviceGroup);
-        installConsumerInternal(channel, getWhisperQueueName() + "-" + serviceGroup + "[" + instanceId + "]");
-      }
+      installConsumerInternal(channel, getShoutQueueName() + "-" + serviceGroup + "[" + instanceId + "]");
+      installConsumerInternal(channel, getTalkQueueName() + "-" + serviceGroup);
+      installConsumerInternal(channel, getWhisperQueueName() + "-" + serviceGroup + "[" + instanceId + "]");
     });
   }
 
   public void unInstallConsumer ()
     throws IOException {
 
-    operate(new ChannelOperation() {
+    operate((channel) -> {
 
-      @Override
-      public void execute (Channel channel)
-        throws IOException {
-
-        channel.basicCancel(getShoutQueueName() + "-" + serviceGroup + "[" + instanceId + "]" + "[" + index + "]");
-        channel.basicCancel(getTalkQueueName() + "-" + serviceGroup + "[" + index + "]");
-        channel.basicCancel(getWhisperQueueName() + "-" + serviceGroup + "[" + instanceId + "]" + "[" + index + "]");
-      }
+      channel.basicCancel(getShoutQueueName() + "-" + serviceGroup + "[" + instanceId + "]" + "[" + index + "]");
+      channel.basicCancel(getTalkQueueName() + "-" + serviceGroup + "[" + index + "]");
+      channel.basicCancel(getWhisperQueueName() + "-" + serviceGroup + "[" + instanceId + "]" + "[" + index + "]");
     });
   }
 
   private void installConsumerInternal (Channel channel, String queueName)
     throws IOException {
 
-    channel.basicConsume(queueName, true, queueName + "[" + index + "]", false, false, null, new DefaultConsumer(channel) {
+    channel.basicConsume(queueName, autoAcknowledge, queueName + "[" + index + "]", false, false, null, new DefaultConsumer(channel) {
 
       @Override
       public synchronized void handleDelivery (String consumerTag, Envelope envelope, final AMQP.BasicProperties properties, final byte[] body) {
@@ -157,11 +144,19 @@ public class ResponseMessageRouter extends MessageRouter {
           long timeInQueue = System.currentTimeMillis() - getTimestamp(properties);
 
           LoggerManager.getLogger(QueueOperator.class).debug("request message received(%s) in %d ms...", properties.getMessageId(), timeInQueue);
-          InstrumentationManager.instrumentWithChronometer(responseTransport, (timeInQueue >= 0) ? timeInQueue : 0, TimeUnit.MILLISECONDS, new MetricProperty("queue", MetricInteraction.REQUEST_TRANSIT_TIME.getDisplay()));
+          InstrumentationManager.instrumentWithChronometer(responseTransport.getMetricConfiguration(), (timeInQueue >= 0) ? timeInQueue : 0, TimeUnit.MILLISECONDS, new MetricProperty("queue", MetricInteraction.REQUEST_TRANSIT_TIME.getDisplay()));
 
           responseTransport.execute(new RabbitMQMessage(properties, body));
         } catch (Exception exception) {
           LoggerManager.getLogger(ResponseMessageRouter.class).error(exception);
+        } finally {
+          if (!autoAcknowledge) {
+            try {
+              channel.basicAck(envelope.getDeliveryTag(), true);
+            } catch (IOException ioException) {
+              LoggerManager.getLogger(ResponseMessageRouter.class).error(ioException);
+            }
+          }
         }
       }
     });
@@ -180,7 +175,7 @@ public class ResponseMessageRouter extends MessageRouter {
   private RabbitMQMessage constructMessage (final String correlationId, final boolean error, final String nativeType, final Object result)
     throws Throwable {
 
-    return InstrumentationManager.execute(new ChronometerInstrumentAndReturn<RabbitMQMessage>(responseTransport, new MetricProperty("event", MetricInteraction.CONSTRUCT_MESSAGE.getDisplay())) {
+    return InstrumentationManager.execute(new ChronometerInstrumentAndReturn<RabbitMQMessage>(responseTransport.getMetricConfiguration(), new MetricProperty("event", MetricInteraction.CONSTRUCT_MESSAGE.getDisplay())) {
 
       @Override
       public RabbitMQMessage withChronometer ()

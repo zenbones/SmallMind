@@ -1,0 +1,207 @@
+<?xml version="1.1" encoding="UTF-8" standalone="no"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.6.xsd">
+  <changeSet author="auto.generated" id="1546478984608-1">
+    <createTable catalogName="batch" schemaName="batch" tableName="BATCH_JOB_EXECUTION">
+      <column name="JOB_EXECUTION_ID" type="BIGINT">
+        <constraints primaryKey="true"/>
+      </column>
+      <column name="VERSION" type="BIGINT"/>
+      <column name="JOB_INSTANCE_ID" type="BIGINT">
+        <constraints nullable="false"/>
+      </column>
+      <column name="CREATE_TIME" type="datetime">
+        <constraints nullable="false"/>
+      </column>
+      <column name="START_TIME" type="datetime"/>
+      <column name="END_TIME" type="datetime"/>
+      <column name="STATUS" type="VARCHAR(10)"/>
+      <column name="EXIT_CODE" type="VARCHAR(2500)"/>
+      <column name="EXIT_MESSAGE" type="VARCHAR(2500)"/>
+      <column name="LAST_UPDATED" type="datetime"/>
+      <column name="JOB_CONFIGURATION_LOCATION" type="VARCHAR(2500)"/>
+    </createTable>
+  </changeSet>
+  <changeSet author="auto.generated" id="1546478984608-2">
+    <createTable catalogName="batch" schemaName="batch" tableName="BATCH_JOB_EXECUTION_CONTEXT">
+      <column name="JOB_EXECUTION_ID" type="BIGINT">
+        <constraints primaryKey="true"/>
+      </column>
+      <column name="SHORT_CONTEXT" type="VARCHAR(2500)">
+        <constraints nullable="false"/>
+      </column>
+      <column name="SERIALIZED_CONTEXT" type="TEXT"/>
+    </createTable>
+  </changeSet>
+  <changeSet author="auto.generated" id="1546478984608-3">
+    <createTable catalogName="batch" schemaName="batch" tableName="BATCH_JOB_EXECUTION_PARAMS">
+      <column name="JOB_EXECUTION_ID" type="BIGINT">
+        <constraints nullable="false"/>
+      </column>
+      <column name="TYPE_CD" type="VARCHAR(6)">
+        <constraints nullable="false"/>
+      </column>
+      <column name="KEY_NAME" type="VARCHAR(100)">
+        <constraints nullable="false"/>
+      </column>
+      <column name="STRING_VAL" type="VARCHAR(250)"/>
+      <column name="DATE_VAL" type="datetime"/>
+      <column name="LONG_VAL" type="BIGINT"/>
+      <column name="DOUBLE_VAL" type="DOUBLE"/>
+      <column name="IDENTIFYING" type="CHAR(1)">
+        <constraints nullable="false"/>
+      </column>
+    </createTable>
+  </changeSet>
+  <changeSet author="auto.generated" id="1546478984608-4">
+    <createTable catalogName="batch" schemaName="batch" tableName="BATCH_JOB_EXECUTION_SEQ">
+      <column name="ID" type="BIGINT">
+        <constraints nullable="false"/>
+      </column>
+      <column name="UNIQUE_KEY" type="CHAR(1)">
+        <constraints nullable="false" unique="true"/>
+      </column>
+    </createTable>
+  </changeSet>
+  <changeSet author="auto.generated" id="1546478984608-5">
+    <createTable catalogName="batch" schemaName="batch" tableName="BATCH_JOB_INSTANCE">
+      <column name="JOB_INSTANCE_ID" type="BIGINT">
+        <constraints primaryKey="true"/>
+      </column>
+      <column name="VERSION" type="BIGINT"/>
+      <column name="JOB_NAME" type="VARCHAR(100)">
+        <constraints nullable="false"/>
+      </column>
+      <column name="JOB_KEY" type="VARCHAR(32)">
+        <constraints nullable="false"/>
+      </column>
+    </createTable>
+  </changeSet>
+  <changeSet author="auto.generated" id="1546478984608-6">
+    <createTable catalogName="batch" schemaName="batch" tableName="BATCH_JOB_SEQ">
+      <column name="ID" type="BIGINT">
+        <constraints nullable="false"/>
+      </column>
+      <column name="UNIQUE_KEY" type="CHAR(1)">
+        <constraints nullable="false" unique="true"/>
+      </column>
+    </createTable>
+  </changeSet>
+  <changeSet author="auto.generated" id="1546478984608-7">
+    <createTable catalogName="batch" schemaName="batch" tableName="BATCH_STEP_EXECUTION">
+      <column name="STEP_EXECUTION_ID" type="BIGINT">
+        <constraints primaryKey="true"/>
+      </column>
+      <column name="VERSION" type="BIGINT">
+        <constraints nullable="false"/>
+      </column>
+      <column name="STEP_NAME" type="VARCHAR(100)">
+        <constraints nullable="false"/>
+      </column>
+      <column name="JOB_EXECUTION_ID" type="BIGINT">
+        <constraints nullable="false"/>
+      </column>
+      <column name="START_TIME" type="datetime">
+        <constraints nullable="false"/>
+      </column>
+      <column name="END_TIME" type="datetime"/>
+      <column name="STATUS" type="VARCHAR(10)"/>
+      <column name="COMMIT_COUNT" type="BIGINT"/>
+      <column name="READ_COUNT" type="BIGINT"/>
+      <column name="FILTER_COUNT" type="BIGINT"/>
+      <column name="WRITE_COUNT" type="BIGINT"/>
+      <column name="READ_SKIP_COUNT" type="BIGINT"/>
+      <column name="WRITE_SKIP_COUNT" type="BIGINT"/>
+      <column name="PROCESS_SKIP_COUNT" type="BIGINT"/>
+      <column name="ROLLBACK_COUNT" type="BIGINT"/>
+      <column name="EXIT_CODE" type="VARCHAR(2500)"/>
+      <column name="EXIT_MESSAGE" type="VARCHAR(2500)"/>
+      <column name="LAST_UPDATED" type="datetime"/>
+    </createTable>
+  </changeSet>
+  <changeSet author="auto.generated" id="1546478984608-8">
+    <createTable catalogName="batch" schemaName="batch" tableName="BATCH_STEP_EXECUTION_CONTEXT">
+      <column name="STEP_EXECUTION_ID" type="BIGINT">
+        <constraints primaryKey="true"/>
+      </column>
+      <column name="SHORT_CONTEXT" type="VARCHAR(2500)">
+        <constraints nullable="false"/>
+      </column>
+      <column name="SERIALIZED_CONTEXT" type="TEXT"/>
+    </createTable>
+  </changeSet>
+  <changeSet author="auto.generated" id="1546478984608-9">
+    <createTable catalogName="batch" schemaName="batch" tableName="BATCH_STEP_EXECUTION_SEQ">
+      <column name="ID" type="BIGINT">
+        <constraints nullable="false"/>
+      </column>
+      <column name="UNIQUE_KEY" type="CHAR(1)">
+        <constraints nullable="false" unique="true"/>
+      </column>
+    </createTable>
+  </changeSet>
+  <changeSet author="auto.generated" id="1546478984608-10">
+    <addUniqueConstraint catalogName="batch" columnNames="JOB_NAME, JOB_KEY" constraintName="JOB_INST_UN" schemaName="batch" tableName="BATCH_JOB_INSTANCE"/>
+  </changeSet>
+  <changeSet author="auto.generated" id="1546478984608-11">
+    <createIndex catalogName="batch" indexName="JOB_EXEC_PARAMS_FK" schemaName="batch" tableName="BATCH_JOB_EXECUTION_PARAMS">
+      <column name="JOB_EXECUTION_ID"/>
+    </createIndex>
+  </changeSet>
+  <changeSet author="auto.generated" id="1546478984608-12">
+    <createIndex catalogName="batch" indexName="JOB_EXEC_STEP_FK" schemaName="batch" tableName="BATCH_STEP_EXECUTION">
+      <column name="JOB_EXECUTION_ID"/>
+    </createIndex>
+  </changeSet>
+  <changeSet author="auto.generated" id="1546478984608-13">
+    <createIndex catalogName="batch" indexName="JOB_INST_EXEC_FK" schemaName="batch" tableName="BATCH_JOB_EXECUTION">
+      <column name="JOB_INSTANCE_ID"/>
+    </createIndex>
+  </changeSet>
+  <changeSet author="auto.generated" id="1546478984608-14">
+    <addForeignKeyConstraint baseColumnNames="JOB_EXECUTION_ID" baseTableCatalogName="batch" baseTableName="BATCH_JOB_EXECUTION_CONTEXT" baseTableSchemaName="batch" constraintName="JOB_EXEC_CTX_FK" deferrable="false" initiallyDeferred="false"
+                             onDelete="NO ACTION" onUpdate="NO ACTION" referencedColumnNames="JOB_EXECUTION_ID" referencedTableCatalogName="batch" referencedTableName="BATCH_JOB_EXECUTION" validate="true"/>
+  </changeSet>
+  <changeSet author="auto.generated" id="1546478984608-15">
+    <addForeignKeyConstraint baseColumnNames="JOB_EXECUTION_ID" baseTableCatalogName="batch" baseTableName="BATCH_JOB_EXECUTION_PARAMS" baseTableSchemaName="batch" constraintName="JOB_EXEC_PARAMS_FK" deferrable="false" initiallyDeferred="false"
+                             onDelete="NO ACTION" onUpdate="NO ACTION" referencedColumnNames="JOB_EXECUTION_ID" referencedTableCatalogName="batch" referencedTableName="BATCH_JOB_EXECUTION" validate="true"/>
+  </changeSet>
+  <changeSet author="auto.generated" id="1546478984608-16">
+    <addForeignKeyConstraint baseColumnNames="JOB_EXECUTION_ID" baseTableCatalogName="batch" baseTableName="BATCH_STEP_EXECUTION" baseTableSchemaName="batch" constraintName="JOB_EXEC_STEP_FK" deferrable="false" initiallyDeferred="false"
+                             onDelete="NO ACTION" onUpdate="NO ACTION" referencedColumnNames="JOB_EXECUTION_ID" referencedTableCatalogName="batch" referencedTableName="BATCH_JOB_EXECUTION" validate="true"/>
+  </changeSet>
+  <changeSet author="auto.generated" id="1546478984608-17">
+    <addForeignKeyConstraint baseColumnNames="JOB_INSTANCE_ID" baseTableCatalogName="batch" baseTableName="BATCH_JOB_EXECUTION" baseTableSchemaName="batch" constraintName="JOB_INST_EXEC_FK" deferrable="false" initiallyDeferred="false"
+                             onDelete="NO ACTION" onUpdate="NO ACTION" referencedColumnNames="JOB_INSTANCE_ID" referencedTableCatalogName="batch" referencedTableName="BATCH_JOB_INSTANCE" validate="true"/>
+  </changeSet>
+  <changeSet author="auto.generated" id="1546478984608-18">
+    <addForeignKeyConstraint baseColumnNames="STEP_EXECUTION_ID" baseTableCatalogName="batch" baseTableName="BATCH_STEP_EXECUTION_CONTEXT" baseTableSchemaName="batch" constraintName="STEP_EXEC_CTX_FK" deferrable="false" initiallyDeferred="false"
+                             onDelete="NO ACTION" onUpdate="NO ACTION" referencedColumnNames="STEP_EXECUTION_ID" referencedTableCatalogName="batch" referencedTableName="BATCH_STEP_EXECUTION" validate="true"/>
+  </changeSet>
+  <changeSet id="1" author="anonymous">
+    <createIndex catalogName="batch" indexName="IDX_BATCH_JOB_INSTANCE_JOB_NAME" schemaName="batch" tableName="BATCH_JOB_INSTANCE">
+      <column name="JOB_NAME"/>
+    </createIndex>
+    <createIndex catalogName="batch" indexName="IDX_BATCH_JOB_INSTANCE_JOB_KEY" schemaName="batch" tableName="BATCH_JOB_INSTANCE">
+      <column name="JOB_KEY"/>
+    </createIndex>
+    <createIndex catalogName="batch" indexName="IDX_BATCH_JOB_EXECUTION_JOB_INSTANCE_ID" schemaName="batch" tableName="BATCH_JOB_EXECUTION">
+      <column name="JOB_INSTANCE_ID"/>
+    </createIndex>
+    <createIndex catalogName="batch" indexName="IDX_BATCH_STEP_EXECUTION_VERSION" schemaName="batch" tableName="BATCH_STEP_EXECUTION">
+      <column name="VERSION"/>
+    </createIndex>
+    <createIndex catalogName="batch" indexName="IDX_BATCH_STEP_EXECUTION_STEP_NAME" schemaName="batch" tableName="BATCH_STEP_EXECUTION">
+      <column name="STEP_NAME"/>
+    </createIndex>
+    <createIndex catalogName="batch" indexName="IDX_BATCH_STEP_EXECUTION_JOB_EXECUTION_ID" schemaName="batch" tableName="BATCH_STEP_EXECUTION">
+      <column name="JOB_EXECUTION_ID"/>
+    </createIndex>
+    <createIndex catalogName="batch" indexName="IDX_BATCH_JOB_EXECUTION_CONTEXT_JOB_EXECUTION_ID" schemaName="batch" tableName="BATCH_JOB_EXECUTION_CONTEXT">
+      <column name="JOB_EXECUTION_ID"/>
+    </createIndex>
+    <createIndex catalogName="batch" indexName="IDX_BATCH_STEP_EXECUTION_CONTEXT_STEP_EXECUTION_ID" schemaName="batch" tableName="BATCH_STEP_EXECUTION_CONTEXT">
+      <column name="STEP_EXECUTION_ID"/>
+    </createIndex>
+  </changeSet>
+</databaseChangeLog>

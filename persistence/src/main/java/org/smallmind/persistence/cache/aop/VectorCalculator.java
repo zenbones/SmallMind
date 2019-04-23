@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2008, 2009, 2010, 2011, 2012, 2013, 2014, 2015, 2016, 2017 David Berkman
+ * Copyright (c) 2007, 2008, 2009, 2010, 2011, 2012, 2013, 2014, 2015, 2016, 2017, 2018, 2019 David Berkman
  * 
  * This file is part of the SmallMind Code Project.
  * 
@@ -79,8 +79,7 @@ public class VectorCalculator {
 
     try {
       return AOPUtility.getParameterValue(joinPoint, parameterName, nullable);
-    }
-    catch (Exception exception) {
+    } catch (Exception exception) {
       throw new CacheAutomationError(exception);
     }
   }
@@ -90,8 +89,7 @@ public class VectorCalculator {
     try {
 
       return BeanUtility.executeGet(durable, fieldName, nullable);
-    }
-    catch (Exception exception) {
+    } catch (Exception exception) {
       throw new CacheAutomationError(exception);
     }
   }

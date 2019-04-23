@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2008, 2009, 2010, 2011, 2012, 2013, 2014, 2015, 2016, 2017 David Berkman
+ * Copyright (c) 2007, 2008, 2009, 2010, 2011, 2012, 2013, 2014, 2015, 2016, 2017, 2018, 2019 David Berkman
  * 
  * This file is part of the SmallMind Code Project.
  * 
@@ -56,8 +56,7 @@ public class DriverManagerDataSource implements DataSource {
 
     try {
       Class.forName(driverClassName);
-    }
-    catch (ClassNotFoundException classNotFoundException) {
+    } catch (ClassNotFoundException classNotFoundException) {
       throw new SQLException(classNotFoundException);
     }
   }
@@ -89,14 +88,14 @@ public class DriverManagerDataSource implements DataSource {
     this.logWriter = logWriter;
   }
 
-  public void setLoginTimeout (int timeoutSeconds) {
-
-    throw new UnsupportedOperationException();
-  }
-
   public int getLoginTimeout () {
 
     return 0;
+  }
+
+  public void setLoginTimeout (int timeoutSeconds) {
+
+    throw new UnsupportedOperationException();
   }
 
   public boolean isWrapperFor (Class<?> iface) {

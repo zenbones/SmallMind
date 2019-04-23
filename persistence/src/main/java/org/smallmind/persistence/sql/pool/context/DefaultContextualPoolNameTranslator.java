@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2008, 2009, 2010, 2011, 2012, 2013, 2014, 2015, 2016, 2017 David Berkman
+ * Copyright (c) 2007, 2008, 2009, 2010, 2011, 2012, 2013, 2014, 2015, 2016, 2017, 2018, 2019 David Berkman
  * 
  * This file is part of the SmallMind Code Project.
  * 
@@ -68,8 +68,7 @@ public class DefaultContextualPoolNameTranslator implements ContextualPoolNameTr
     if (poolName.length() == baseName.length()) {
 
       return null;
-    }
-    else if (!(poolName.charAt(baseName.length()) == separator)) {
+    } else if (!(poolName.charAt(baseName.length()) == separator)) {
       throw new ComponentPoolException("Unable to parse pool name(%s)", poolName);
     }
 

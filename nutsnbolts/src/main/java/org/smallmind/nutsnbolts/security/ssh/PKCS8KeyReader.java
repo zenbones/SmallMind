@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2008, 2009, 2010, 2011, 2012, 2013, 2014, 2015, 2016, 2017 David Berkman
+ * Copyright (c) 2007, 2008, 2009, 2010, 2011, 2012, 2013, 2014, 2015, 2016, 2017, 2018, 2019 David Berkman
  * 
  * This file is part of the SmallMind Code Project.
  * 
@@ -36,15 +36,13 @@ import java.io.ByteArrayInputStream;
 import java.io.DataInputStream;
 import java.io.IOException;
 import java.math.BigInteger;
-import java.security.NoSuchAlgorithmException;
-import java.security.spec.InvalidKeySpecException;
 import org.smallmind.nutsnbolts.http.Base64Codec;
 
 public class PKCS8KeyReader implements SSHKeyReader {
 
   @Override
   public SSHKeyFactors extractFactors (String raw)
-    throws IOException, NoSuchAlgorithmException, InvalidKeySpecException, SSHParseException {
+    throws IOException, SSHParseException {
 
     try (DataInputStream dataInputStream = new DataInputStream(new ByteArrayInputStream(Base64Codec.decode(raw)))) {
 

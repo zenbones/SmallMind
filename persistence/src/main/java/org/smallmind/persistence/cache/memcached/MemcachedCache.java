@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2008, 2009, 2010, 2011, 2012, 2013, 2014, 2015, 2016, 2017 David Berkman
+ * Copyright (c) 2007, 2008, 2009, 2010, 2011, 2012, 2013, 2014, 2015, 2016, 2017, 2018, 2019 David Berkman
  * 
  * This file is part of the SmallMind Code Project.
  * 
@@ -36,11 +36,11 @@ import java.util.Arrays;
 import java.util.Map;
 import org.smallmind.memcached.ProxyCASResponse;
 import org.smallmind.memcached.ProxyMemcachedClient;
+import org.smallmind.persistence.cache.CASSupportingPersistenceCache;
 import org.smallmind.persistence.cache.CASValue;
 import org.smallmind.persistence.cache.CacheOperationException;
-import org.smallmind.persistence.cache.PersistenceCache;
 
-public class MemcachedCache<V> implements PersistenceCache<String, V> {
+public class MemcachedCache<V> implements CASSupportingPersistenceCache<String, V> {
 
   private ProxyMemcachedClient memcachedClient;
   private Class<V> valueClass;

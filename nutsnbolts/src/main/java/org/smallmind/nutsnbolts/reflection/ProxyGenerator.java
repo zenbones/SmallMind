@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2008, 2009, 2010, 2011, 2012, 2013, 2014, 2015, 2016, 2017 David Berkman
+ * Copyright (c) 2007, 2008, 2009, 2010, 2011, 2012, 2013, 2014, 2015, 2016, 2017, 2018, 2019 David Berkman
  * 
  * This file is part of the SmallMind Code Project.
  * 
@@ -62,29 +62,29 @@ public class ProxyGenerator {
     OBJECT_METHOD_MAP.put("toString", "()Ljava/lang/String;");
   }
 
-  public static <T> T createProxy (Class<T> parseClass, InvocationHandler handler) {
+  public static <T> T createProxy (Class<T> toBeProxiedClass, InvocationHandler handler) {
 
-    return createProxy(parseClass, handler, null);
+    return createProxy(toBeProxiedClass, handler, null);
   }
 
-  public static <T> T createProxy (Class<T> parseClass, InvocationHandler handler, AnnotationFilter annotationFilter) {
+  public static <T> T createProxy (Class<T> toBeProxiedClass, InvocationHandler handler, AnnotationFilter annotationFilter) {
 
     Class<?> extractedClass;
 
-    if ((extractedClass = INTERFACE_MAP.get(parseClass)) == null) {
+    if ((extractedClass = INTERFACE_MAP.get(toBeProxiedClass)) == null) {
       synchronized (INTERFACE_MAP) {
-        if ((extractedClass = INTERFACE_MAP.get(parseClass)) == null) {
+        if ((extractedClass = INTERFACE_MAP.get(toBeProxiedClass)) == null) {
 
-          int parseClassModifiers = parseClass.getModifiers();
+          int toBeProxiedClassModifiers = toBeProxiedClass.getModifiers();
 
-          if (!Modifier.isPublic(parseClassModifiers)) {
-            throw new ByteCodeManipulationException("The proxy class(%s) must be 'public'", parseClass.getName());
+          if (!Modifier.isPublic(toBeProxiedClassModifiers)) {
+            throw new ByteCodeManipulationException("The proxy class(%s) must be 'public'", toBeProxiedClass.getName());
           }
-          if (Modifier.isStatic(parseClassModifiers)) {
-            throw new ByteCodeManipulationException("The proxy class(%s) must not be 'static'", parseClass.getName());
+          if (Modifier.isStatic(toBeProxiedClassModifiers)) {
+            throw new ByteCodeManipulationException("The proxy class(%s) must not be 'static'", toBeProxiedClass.getName());
           }
-          if ((!parseClass.isInterface()) && Modifier.isAbstract(parseClassModifiers)) {
-            throw new ByteCodeManipulationException("A concrete proxy class(%s) must not be 'abstract'", parseClass.getName());
+          if ((!toBeProxiedClass.isInterface()) && Modifier.isAbstract(toBeProxiedClassModifiers)) {
+            throw new ByteCodeManipulationException("A concrete proxy class(%s) must not be 'abstract'", toBeProxiedClass.getName());
           } else {
 
             Class currentClass;
@@ -92,7 +92,7 @@ public class ProxyGenerator {
             ClassWriter classWriter;
             CheckClassAdapter checkClassAdapter;
             ProxyClassVisitor proxyClassVisitor;
-            ClassLoader parseClassLoader;
+            ClassLoader toBeProxiedClassLoader;
             ProxyClassLoader proxyClassLoader;
             HashSet<MethodTracker> methodTrackerSet;
             boolean initialized = false;
@@ -100,7 +100,7 @@ public class ProxyGenerator {
             classWriter = new ClassWriter(ClassWriter.COMPUTE_FRAMES);
             checkClassAdapter = new CheckClassAdapter(classWriter, true);
 
-            currentClass = parseClass;
+            currentClass = toBeProxiedClass;
             methodTrackerSet = new HashSet<>();
             do {
               if (currentClass.equals(Object.class)) {
@@ -113,7 +113,7 @@ public class ProxyGenerator {
                 throw new ByteCodeManipulationException(ioException);
               }
 
-              proxyClassVisitor = new ProxyClassVisitor(checkClassAdapter, parseClass, currentClass, annotationFilter, methodTrackerSet, initialized);
+              proxyClassVisitor = new ProxyClassVisitor(checkClassAdapter, toBeProxiedClass, currentClass, annotationFilter, methodTrackerSet, initialized);
               classReader.accept(proxyClassVisitor, 0);
               initialized = true;
             } while ((currentClass = currentClass.equals(ObjectImpersonator.class) ? null : currentClass.getSuperclass()) != null);
@@ -121,19 +121,19 @@ public class ProxyGenerator {
             checkClassAdapter.visitEnd();
 
             synchronized (LOADER_MAP) {
-              if ((proxyClassLoader = LOADER_MAP.get(parseClassLoader = parseClass.getClassLoader())) == null) {
-                LOADER_MAP.put(parseClassLoader, proxyClassLoader = new ProxyClassLoader(parseClassLoader));
+              if ((proxyClassLoader = LOADER_MAP.get(toBeProxiedClassLoader = toBeProxiedClass.getClassLoader())) == null) {
+                LOADER_MAP.put(toBeProxiedClassLoader, proxyClassLoader = new ProxyClassLoader(toBeProxiedClassLoader));
               }
             }
 
-            INTERFACE_MAP.put(parseClass, extractedClass = proxyClassLoader.extractInterface(parseClass.getName() + "$Proxy$_ExtractedSubclass", classWriter.toByteArray()));
+            INTERFACE_MAP.put(toBeProxiedClass, extractedClass = proxyClassLoader.extractInterface(toBeProxiedClass.getName() + "$Proxy$_ExtractedSubclass", classWriter.toByteArray()));
           }
         }
       }
     }
 
     try {
-      return parseClass.cast(extractedClass.getConstructor(InvocationHandler.class).newInstance(handler));
+      return toBeProxiedClass.cast(extractedClass.getConstructor(InvocationHandler.class).newInstance(handler));
     } catch (Exception exception) {
       throw new ByteCodeManipulationException(exception);
     }
@@ -189,19 +189,19 @@ public class ProxyGenerator {
   private static class ProxyClassVisitor extends ClassVisitor {
 
     private ClassVisitor nextClassVisitor;
-    private Class parseClass;
+    private Class toBeProxiedClass;
     private Class currentClass;
     private AnnotationFilter annotationFilter;
     private HashSet<MethodTracker> methodTrackerSet;
     private boolean constructed = false;
     private boolean initialized;
 
-    public ProxyClassVisitor (ClassVisitor nextClassVisitor, Class parseClass, Class currentClass, AnnotationFilter annotationFilter, HashSet<MethodTracker> methodTrackerSet, boolean initialized) {
+    public ProxyClassVisitor (ClassVisitor nextClassVisitor, Class toBeProxiedClass, Class currentClass, AnnotationFilter annotationFilter, HashSet<MethodTracker> methodTrackerSet, boolean initialized) {
 
       super(Opcodes.ASM5);
 
       this.nextClassVisitor = nextClassVisitor;
-      this.parseClass = parseClass;
+      this.toBeProxiedClass = toBeProxiedClass;
       this.currentClass = currentClass;
       this.annotationFilter = annotationFilter;
       this.methodTrackerSet = methodTrackerSet;
@@ -212,8 +212,8 @@ public class ProxyGenerator {
     public void visit (int version, int access, String name, String signature, String superName, String[] interfaces) {
 
       if (!initialized) {
-        if (parseClass.isInterface()) {
-          nextClassVisitor.visit(version, Opcodes.ACC_PUBLIC, name + "$Proxy$_ExtractedSubclass", null, "java/lang/Object", new String[] {parseClass.getName().replace('.', '/')});
+        if (toBeProxiedClass.isInterface()) {
+          nextClassVisitor.visit(version, Opcodes.ACC_PUBLIC, name + "$Proxy$_ExtractedSubclass", null, "java/lang/Object", new String[] {toBeProxiedClass.getName().replace('.', '/')});
         } else {
           nextClassVisitor.visit(version, Opcodes.ACC_PUBLIC | Opcodes.ACC_SUPER, name + "$Proxy$_ExtractedSubclass", null, name, null);
         }
@@ -235,18 +235,18 @@ public class ProxyGenerator {
         Label l0 = new Label();
         initVisitor.visitLabel(l0);
         initVisitor.visitVarInsn(Opcodes.ALOAD, 0);
-        initVisitor.visitMethodInsn(Opcodes.INVOKESPECIAL, (parseClass.isInterface()) ? "java/lang/Object" : parseClass.getName().replace('.', '/'), "<init>", "()V", false);
+        initVisitor.visitMethodInsn(Opcodes.INVOKESPECIAL, (toBeProxiedClass.isInterface()) ? "java/lang/Object" : toBeProxiedClass.getName().replace('.', '/'), "<init>", "()V", false);
         Label l1 = new Label();
         initVisitor.visitLabel(l1);
         initVisitor.visitVarInsn(Opcodes.ALOAD, 0);
         initVisitor.visitVarInsn(Opcodes.ALOAD, 1);
-        initVisitor.visitFieldInsn(Opcodes.PUTFIELD, parseClass.getName().replace('.', '/') + "$Proxy$_ExtractedSubclass", "$proxy$_handler", INVOCATION_HANDLER);
+        initVisitor.visitFieldInsn(Opcodes.PUTFIELD, toBeProxiedClass.getName().replace('.', '/') + "$Proxy$_ExtractedSubclass", "$proxy$_handler", INVOCATION_HANDLER);
         Label l2 = new Label();
         initVisitor.visitLabel(l2);
         initVisitor.visitInsn(Opcodes.RETURN);
         Label l3 = new Label();
         initVisitor.visitLabel(l3);
-        initVisitor.visitLocalVariable("this", "L" + parseClass.getName().replace('.', '/') + "$Proxy$_ExtractedSubclass;", null, l0, l3, 0);
+        initVisitor.visitLocalVariable("this", "L" + toBeProxiedClass.getName().replace('.', '/') + "$Proxy$_ExtractedSubclass;", null, l0, l3, 0);
         initVisitor.visitLocalVariable("$proxy$_handler", INVOCATION_HANDLER, null, l0, l3, 1);
         initVisitor.visitMaxs(2, 2);
         initVisitor.visitEnd();
@@ -261,7 +261,7 @@ public class ProxyGenerator {
       MethodTracker methodTracker;
 
       if (!methodTrackerSet.contains(methodTracker = new MethodTracker(name, desc))) {
-        if (parseClass.isInterface() || ((access & Opcodes.ACC_ABSTRACT) == 0)) {
+        if (toBeProxiedClass.isInterface() || ((access & Opcodes.ACC_ABSTRACT) == 0)) {
           if ("<init>".equals(name)) {
             if ("()V".equals(desc)) {
               methodTrackerSet.add(methodTracker);
@@ -298,9 +298,9 @@ public class ProxyGenerator {
                 proxyVisitor.visitLabel(l0);
                 proxyVisitor.visitVarInsn(Opcodes.ALOAD, 0);
                 proxyVisitor.visitVarInsn(Opcodes.ALOAD, 0);
-                proxyVisitor.visitFieldInsn(Opcodes.GETFIELD, parseClass.getName().replace('.', '/') + "$Proxy$_ExtractedSubclass", "$proxy$_handler", INVOCATION_HANDLER);
+                proxyVisitor.visitFieldInsn(Opcodes.GETFIELD, toBeProxiedClass.getName().replace('.', '/') + "$Proxy$_ExtractedSubclass", "$proxy$_handler", INVOCATION_HANDLER);
 
-                proxyVisitor.visitInsn(parseClass.isInterface() ? Opcodes.ICONST_0 : Opcodes.ICONST_1);
+                proxyVisitor.visitInsn(toBeProxiedClass.isInterface() ? Opcodes.ICONST_0 : Opcodes.ICONST_1);
                 proxyVisitor.visitLdcInsn(UUID.randomUUID().toString());
                 proxyVisitor.visitLdcInsn(name);
                 proxyVisitor.visitLdcInsn(desc.substring(desc.indexOf(')') + 1));
@@ -500,7 +500,7 @@ public class ProxyGenerator {
                 Label lLocal;
 
                 proxyVisitor.visitLabel(lLocal = new Label());
-                proxyVisitor.visitLocalVariable("this", "L" + parseClass.getName().replace('.', '/') + "$Proxy$_ExtractedSubclass;", null, l0, lLocal, 0);
+                proxyVisitor.visitLocalVariable("this", "L" + toBeProxiedClass.getName().replace('.', '/') + "$Proxy$_ExtractedSubclass;", null, l0, lLocal, 0);
                 for (int index = 0; index < parameters.length; index++) {
                   proxyVisitor.visitLocalVariable("$proxy$_var" + index, parameters[index], null, l0, lLocal, parameterRegisters[index]);
                 }

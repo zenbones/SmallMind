@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2008, 2009, 2010, 2011, 2012, 2013, 2014, 2015, 2016, 2017 David Berkman
+ * Copyright (c) 2007, 2008, 2009, 2010, 2011, 2012, 2013, 2014, 2015, 2016, 2017, 2018, 2019 David Berkman
  * 
  * This file is part of the SmallMind Code Project.
  * 
@@ -38,11 +38,11 @@ import org.smallmind.persistence.Durable;
 
 public interface WideVectoredDao<W extends Serializable & Comparable<W>, I extends Serializable & Comparable<I>, D extends Durable<I>> {
 
-  public abstract String getMetricSource ();
+  String getMetricSource ();
 
-  public abstract List<D> get (String context, Class<? extends Durable<W>> parentClass, W parentId, Class<D> durableClass);
+  List<D> get (String context, Class<? extends Durable<W>> parentClass, W parentId, Class<D> durableClass);
 
-  public abstract List<D> persist (String context, Class<? extends Durable<W>> parentClass, W parentId, Class<D> durableClass, List<D> durables);
+  List<D> persist (String context, Class<? extends Durable<W>> parentClass, W parentId, Class<D> durableClass, List<D> durables);
 
-  public abstract void delete (String context, Class<? extends Durable<W>> parentClass, W parentId, Class<D> durableClass);
+  void delete (String context, Class<? extends Durable<W>> parentClass, W parentId, Class<D> durableClass);
 }

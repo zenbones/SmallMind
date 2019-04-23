@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2008, 2009, 2010, 2011, 2012, 2013, 2014, 2015, 2016, 2017 David Berkman
+ * Copyright (c) 2007, 2008, 2009, 2010, 2011, 2012, 2013, 2014, 2015, 2016, 2017, 2018, 2019 David Berkman
  * 
  * This file is part of the SmallMind Code Project.
  * 
@@ -41,7 +41,9 @@ import java.lang.annotation.Target;
 @Retention(RetentionPolicy.RUNTIME)
 public @interface CachedWith {
 
-  public abstract Update[] updates () default {};
+  // The updates to apply based on durable entity changes
+  Update[] updates () default {};
 
-  public abstract Invalidate[] invalidates () default {};
+  // The vectors to invalidate based on durable entity changes
+  Invalidate[] invalidates () default {};
 }

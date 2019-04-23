@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2008, 2009, 2010, 2011, 2012, 2013, 2014, 2015, 2016, 2017 David Berkman
+ * Copyright (c) 2007, 2008, 2009, 2010, 2011, 2012, 2013, 2014, 2015, 2016, 2017, 2018, 2019 David Berkman
  * 
  * This file is part of the SmallMind Code Project.
  * 
@@ -32,13 +32,13 @@
  */
 package org.smallmind.instrument;
 
-import org.smallmind.instrument.config.MetricConfigurationProvider;
+import org.smallmind.instrument.config.MetricConfiguration;
 
 public abstract class GaugeInstrument extends Instrument<Gauge> {
 
-  public GaugeInstrument (MetricConfigurationProvider provider, MetricProperty... properties) {
+  public GaugeInstrument (MetricConfiguration configuration, MetricProperty... properties) {
 
-    super(((provider == null) || (provider.getMetricConfiguration() == null) || (!provider.getMetricConfiguration().isInstrumented())) ? null : new InstrumentationArguments<>(Metrics.buildGauge(provider.getMetricConfiguration().getTickInterval(), provider.getMetricConfiguration().getTickTimeUnit()), provider.getMetricConfiguration().getMetricDomain().getDomain(), properties));
+    super(((configuration == null) || (!configuration.isInstrumented())) ? null : new InstrumentationArguments<>(Metrics.buildGauge(configuration.getTickInterval(), configuration.getTickTimeUnit()), configuration.getMetricDomain().getDomain(), properties));
   }
 
   public GaugeInstrument (Metrics.MetricBuilder<Gauge> builder, String domain, MetricProperty... properties) {

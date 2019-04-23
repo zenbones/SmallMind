@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2008, 2009, 2010, 2011, 2012, 2013, 2014, 2015, 2016, 2017 David Berkman
+ * Copyright (c) 2007, 2008, 2009, 2010, 2011, 2012, 2013, 2014, 2015, 2016, 2017, 2018, 2019 David Berkman
  * 
  * This file is part of the SmallMind Code Project.
  * 
@@ -38,11 +38,11 @@ import org.smallmind.persistence.Durable;
 
 public interface CacheDomain<I extends Serializable & Comparable<I>, D extends Durable<I>> {
 
-  public abstract String getMetricSource ();
+  String getMetricSource ();
 
-  public abstract PersistenceCache<String, D> getInstanceCache (Class<D> managedClass);
+  PersistenceCache<String, D> getInstanceCache (Class<D> managedClass);
 
-  public abstract PersistenceCache<String, List> getWideInstanceCache (Class<D> managedClass);
+  PersistenceCache<String, List> getWideInstanceCache (Class<D> managedClass);
 
-  public abstract PersistenceCache<String, DurableVector> getVectorCache (Class<D> managedClass);
+  PersistenceCache<String, DurableVector<I, D>> getVectorCache (Class<D> managedClass);
 }

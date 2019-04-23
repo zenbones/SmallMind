@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2008, 2009, 2010, 2011, 2012, 2013, 2014, 2015, 2016, 2017 David Berkman
+ * Copyright (c) 2007, 2008, 2009, 2010, 2011, 2012, 2013, 2014, 2015, 2016, 2017, 2018, 2019 David Berkman
  * 
  * This file is part of the SmallMind Code Project.
  * 
@@ -180,7 +180,7 @@ public class ComponentPool<C> {
 
     try {
 
-      return InstrumentationManager.execute(new ChronometerInstrumentAndReturn<C>(PoolManager.getPool(), new MetricProperty("pool", getPoolName()), new MetricProperty("event", MetricInteraction.WAITING.getDisplay())) {
+      return InstrumentationManager.execute(new ChronometerInstrumentAndReturn<C>(PoolManager.getPool().getMetricConfiguration(), new MetricProperty("pool", getPoolName()), new MetricProperty("event", MetricInteraction.WAITING.getDisplay())) {
 
         @Override
         public C withChronometer () throws Exception {

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2008, 2009, 2010, 2011, 2012, 2013, 2014, 2015, 2016, 2017 David Berkman
+ * Copyright (c) 2007, 2008, 2009, 2010, 2011, 2012, 2013, 2014, 2015, 2016, 2017, 2018, 2019 David Berkman
  * 
  * This file is part of the SmallMind Code Project.
  * 
@@ -49,7 +49,7 @@ public class PooledDataSourceFactory {
     throws SQLException, ComponentPoolException {
 
     if (XADataSource.class.isAssignableFrom(dataSourceFactory.getDataSourceClass())) {
-      return new XAPooledDataSource((ComponentPool<XAConnection>)PooledConnectionComponentPoolFactory.<D>constructComponentPool(poolName, dataSourceFactory, validationQuery, maxStatements, poolConfig, connections));
+      return new PooledXADataSource((ComponentPool<XAConnection>)PooledConnectionComponentPoolFactory.<D>constructComponentPool(poolName, dataSourceFactory, validationQuery, maxStatements, poolConfig, connections));
     }
 
     return new PooledDataSource((ComponentPool<PooledConnection>)PooledConnectionComponentPoolFactory.<D>constructComponentPool(poolName, dataSourceFactory, validationQuery, maxStatements, poolConfig, connections));

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2008, 2009, 2010, 2011, 2012, 2013, 2014, 2015, 2016, 2017 David Berkman
+ * Copyright (c) 2007, 2008, 2009, 2010, 2011, 2012, 2013, 2014, 2015, 2016, 2017, 2018, 2019 David Berkman
  * 
  * This file is part of the SmallMind Code Project.
  * 
@@ -40,11 +40,15 @@ import java.lang.annotation.Target;
 @Retention(RetentionPolicy.RUNTIME)
 public @interface Key {
 
+  // the parameter or field name to act one
   String value () default "id";
 
+  // an alias to use within the cache key
   String alias () default "";
 
+  // if true then treats the value as a constant instead of a parameter or field name
   boolean constant () default false;
 
+  // whether the parameter or field is allowed to be null
   boolean nullable () default false;
 }

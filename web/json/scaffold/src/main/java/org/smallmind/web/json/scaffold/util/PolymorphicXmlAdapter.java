@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2008, 2009, 2010, 2011, 2012, 2013, 2014, 2015, 2016, 2017 David Berkman
+ * Copyright (c) 2007, 2008, 2009, 2010, 2011, 2012, 2013, 2014, 2015, 2016, 2017, 2018, 2019 David Berkman
  * 
  * This file is part of the SmallMind Code Project.
  * 
@@ -35,7 +35,6 @@ package org.smallmind.web.json.scaffold.util;
 import javax.xml.bind.annotation.XmlRootElement;
 import javax.xml.bind.annotation.adapters.XmlAdapter;
 import javax.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import com.fasterxml.jackson.databind.node.JsonNodeType;
@@ -93,8 +92,7 @@ public abstract class PolymorphicXmlAdapter<T> extends XmlAdapter<JsonNode, T> {
   }
 
   @Override
-  public JsonNode marshal (T value)
-    throws JsonProcessingException {
+  public JsonNode marshal (T value) {
 
     XmlRootElement xmlRootElementAnnotation;
 

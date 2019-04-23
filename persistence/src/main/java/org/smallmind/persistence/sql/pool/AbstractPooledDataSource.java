@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2008, 2009, 2010, 2011, 2012, 2013, 2014, 2015, 2016, 2017 David Berkman
+ * Copyright (c) 2007, 2008, 2009, 2010, 2011, 2012, 2013, 2014, 2015, 2016, 2017, 2018, 2019 David Berkman
  * 
  * This file is part of the SmallMind Code Project.
  * 
@@ -45,12 +45,6 @@ public abstract class AbstractPooledDataSource<D extends CommonDataSource, P ext
   private final Class<P> pooledConnectionClass;
   private final PrintWriter logWriter;
 
-  public abstract void startup ()
-    throws ComponentPoolException;
-
-  public abstract void shutdown ()
-    throws ComponentPoolException;
-
   public AbstractPooledDataSource (Class<D> dataSourceClass, Class<P> pooledConnectionClass) {
 
     this.dataSourceClass = dataSourceClass;
@@ -58,6 +52,12 @@ public abstract class AbstractPooledDataSource<D extends CommonDataSource, P ext
 
     logWriter = new PrintWriter(new PooledLogWriter());
   }
+
+  public abstract void startup ()
+    throws ComponentPoolException;
+
+  public abstract void shutdown ()
+    throws ComponentPoolException;
 
   public Class<D> getDataSourceClass () {
 
@@ -84,22 +84,22 @@ public abstract class AbstractPooledDataSource<D extends CommonDataSource, P ext
     throw new UnsupportedOperationException("Please properly configure the underlying pool which is represented by this DataSource");
   }
 
-  public void setLoginTimeout (int seconds) {
-
-    throw new UnsupportedOperationException("Please properly configure the underlying resource managed by the pool which is represented by this DataSource");
-  }
-
   public int getLoginTimeout () {
 
     throw new UnsupportedOperationException("Please properly configure the underlying resource managed by the pool which is represented by this DataSource");
   }
 
-  public boolean isWrapperFor (Class<?> iface) {
+  public void setLoginTimeout (int seconds) {
+
+    throw new UnsupportedOperationException("Please properly configure the underlying resource managed by the pool which is represented by this DataSource");
+  }
+
+  public boolean isWrapperFor (Class<?> clazz) {
 
     return false;
   }
 
-  public <T> T unwrap (Class<T> iface) {
+  public <T> T unwrap (Class<T> clazz) {
 
     throw new UnsupportedOperationException("This DataSource represents a connection pool");
   }

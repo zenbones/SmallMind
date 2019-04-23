@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2008, 2009, 2010, 2011, 2012, 2013, 2014, 2015, 2016, 2017 David Berkman
+ * Copyright (c) 2007, 2008, 2009, 2010, 2011, 2012, 2013, 2014, 2015, 2016, 2017, 2018, 2019 David Berkman
  * 
  * This file is part of the SmallMind Code Project.
  * 
@@ -33,21 +33,24 @@
 package org.smallmind.persistence;
 
 import java.io.Serializable;
+import java.util.Collection;
 import java.util.List;
 
 public interface DurableDao<I extends Serializable & Comparable<I>, D extends Durable<I>> extends Dao<I, D> {
 
-  public abstract D get (I id);
+  D get (I id);
 
-  public abstract D persist (D durable);
+  D persist (D durable);
 
-  public abstract D persist (Class<D> durableClass, D durable);
+  D persist (Class<D> durableClass, D durable);
 
-  public abstract void delete (D durable);
+  void delete (D durable);
 
-  public abstract List<D> list ();
+  List<D> list ();
 
-  public abstract List<D> list (int fetchSize);
+  List<D> list (int fetchSize);
 
-  public abstract List<D> list (I greaterThan, int fetchSize);
+  List<D> list (I greaterThan, int fetchSize);
+
+  List<D> list (Collection<I> idCollection);
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2008, 2009, 2010, 2011, 2012, 2013, 2014, 2015, 2016, 2017 David Berkman
+ * Copyright (c) 2007, 2008, 2009, 2010, 2011, 2012, 2013, 2014, 2015, 2016, 2017, 2018, 2019 David Berkman
  * 
  * This file is part of the SmallMind Code Project.
  * 
@@ -102,11 +102,17 @@ public class SelfDestructiveMap<K extends Comparable<K>, S extends SelfDestructi
 
     private final CountDownLatch terminationLatch = new CountDownLatch(1);
     private final CountDownLatch exitLatch = new CountDownLatch(1);
+    private Thread runnableThread;
 
     public void shutdown ()
       throws InterruptedException {
 
       terminationLatch.countDown();
+
+      if (runnableThread != null) {
+        runnableThread.interrupt();
+      }
+
       exitLatch.await();
     }
 
@@ -114,6 +120,8 @@ public class SelfDestructiveMap<K extends Comparable<K>, S extends SelfDestructi
     public void run () {
 
       try {
+        runnableThread = Thread.currentThread();
+
         while (!terminationLatch.await(pulseTimeDuration.getTime(), pulseTimeDuration.getTimeUnit())) {
 
           NavigableSet<SelfDestructiveKey<K>> ignitedKeySet;

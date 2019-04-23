@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2008, 2009, 2010, 2011, 2012, 2013, 2014, 2015, 2016, 2017 David Berkman
+ * Copyright (c) 2007, 2008, 2009, 2010, 2011, 2012, 2013, 2014, 2015, 2016, 2017, 2018, 2019 David Berkman
  * 
  * This file is part of the SmallMind Code Project.
  * 
@@ -41,15 +41,21 @@ import javax.xml.bind.annotation.adapters.XmlAdapter;
 @Target({})
 public @interface Property {
 
+  // the list of alternate idioms in which this property should be included (overrides the default idiom)
   Idiom[] idioms () default {};
 
+  // the xml adapter to be used for this property
   Class<? extends XmlAdapter> adapter () default DefaultXmlAdapter.class;
 
-  Class<?> type ();
+  // the type information for the generated property
+  Type type ();
 
+  // the field name of the generated property
   String field ();
 
+  // the xml element name
   String name () default "";
 
+  // if the xml element is required, may be overridden by an idiom if false
   boolean required () default false;
 }

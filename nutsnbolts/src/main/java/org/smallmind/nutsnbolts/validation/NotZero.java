@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2008, 2009, 2010, 2011, 2012, 2013, 2014, 2015, 2016, 2017 David Berkman
+ * Copyright (c) 2007, 2008, 2009, 2010, 2011, 2012, 2013, 2014, 2015, 2016, 2017, 2018, 2019 David Berkman
  * 
  * This file is part of the SmallMind Code Project.
  * 
@@ -33,36 +33,35 @@
 package org.smallmind.nutsnbolts.validation;
 
 import java.lang.annotation.Documented;
-import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 import javax.validation.Constraint;
 import javax.validation.Payload;
 
-import static java.lang.annotation.ElementType.ANNOTATION_TYPE;
 import static java.lang.annotation.ElementType.FIELD;
+import static java.lang.annotation.ElementType.LOCAL_VARIABLE;
 import static java.lang.annotation.ElementType.METHOD;
 import static java.lang.annotation.ElementType.PARAMETER;
 import static java.lang.annotation.RetentionPolicy.RUNTIME;
 
 @Documented
 @Retention(RetentionPolicy.RUNTIME)
-@Target({ElementType.FIELD, ElementType.PARAMETER, ElementType.ANNOTATION_TYPE, ElementType.CONSTRUCTOR, ElementType.METHOD})
+@Target({FIELD, PARAMETER, METHOD, LOCAL_VARIABLE})
 @Constraint(validatedBy = NotZeroValidator.class)
 public @interface NotZero {
 
-  String message () default "Numeric value must be not be zero";
-
-  Class<?>[] groups () default {};
-
-  Class<? extends Payload>[] payload () default {};
-
-  @Target({FIELD, METHOD, PARAMETER, ANNOTATION_TYPE})
+  @Target({FIELD, PARAMETER, METHOD, LOCAL_VARIABLE})
   @Retention(RUNTIME)
   @Documented
   @interface List {
 
     NotZero[] value ();
   }
+
+  String message () default "must be not be zero";
+
+  Class<?>[] groups () default {};
+
+  Class<? extends Payload>[] payload () default {};
 }

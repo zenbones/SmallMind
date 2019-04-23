@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2008, 2009, 2010, 2011, 2012, 2013, 2014, 2015, 2016, 2017 David Berkman
+ * Copyright (c) 2007, 2008, 2009, 2010, 2011, 2012, 2013, 2014, 2015, 2016, 2017, 2018, 2019 David Berkman
  * 
  * This file is part of the SmallMind Code Project.
  * 
@@ -100,12 +100,10 @@ public abstract class ProxyTransaction<S extends ProxySession> {
       if (postProcess.getEndState().equals(TransactionEndState.ANY) || postProcess.getEndState().equals(endState)) {
         try {
           postProcess.process();
-        }
-        catch (Exception exception) {
+        } catch (Exception exception) {
           if (postProcessException == null) {
             postProcessException = new TransactionPostProcessException(exception);
-          }
-          else {
+          } else {
             postProcessException.addSubsequentCause(exception);
           }
         }

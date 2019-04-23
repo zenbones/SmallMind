@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2008, 2009, 2010, 2011, 2012, 2013, 2014, 2015, 2016, 2017 David Berkman
+ * Copyright (c) 2007, 2008, 2009, 2010, 2011, 2012, 2013, 2014, 2015, 2016, 2017, 2018, 2019 David Berkman
  * 
  * This file is part of the SmallMind Code Project.
  * 
@@ -79,8 +79,7 @@ public class ReverseProxyService {
     startEventLoop();
   }
 
-  private void startEventLoop ()
-    throws IOException {
+  private void startEventLoop () {
 
     Thread eventThread;
 
@@ -136,54 +135,56 @@ public class ReverseProxyService {
 
   public void connectDestination (final SocketChannel sourceSocketChannel, final HttpRequestFrameReader httpRequestFrameReader, final ProxyTarget target) {
 
-    execute(sourceSocketChannel, new Runnable() {
+    execute(sourceSocketChannel, () -> {
 
-      @Override
-      public void run () {
+      SocketChannel destinationChannel = null;
 
-        SocketChannel destinationChannel = null;
+      try {
+        destinationChannel = SocketChannel.open();
+        destinationChannel.socket().connect(new InetSocketAddress(target.getHost(), target.getPort()), connectTimeoutMillis);
+        destinationChannel.setOption(StandardSocketOptions.SO_KEEPALIVE, true).setOption(StandardSocketOptions.TCP_NODELAY, true).configureBlocking(false);
 
+        loopLock.lock();
         try {
-          destinationChannel = SocketChannel.open();
-          destinationChannel.socket().connect(new InetSocketAddress(target.getHost(), target.getPort()), connectTimeoutMillis);
-          destinationChannel.setOption(StandardSocketOptions.SO_KEEPALIVE, true).setOption(StandardSocketOptions.TCP_NODELAY, true).configureBlocking(false);
-
-          loopLock.lock();
+          selectLock.lock();
           try {
-            selectLock.lock();
-            try {
-              destinationChannel.register(selector, SelectionKey.OP_READ, new HttpResponseFrameReader(ReverseProxyService.this, sourceSocketChannel, destinationChannel));
-            } finally {
-              selectLock.unlock();
-            }
+            destinationChannel.register(selector, SelectionKey.OP_READ, new HttpResponseFrameReader(ReverseProxyService.this, sourceSocketChannel, destinationChannel));
           } finally {
-            loopLock.unlock();
+            selectLock.unlock();
           }
-
-          httpRequestFrameReader.registerDestination(target, destinationChannel);
-        } catch (IOException ioException) {
-          try {
-            if (destinationChannel != null) {
-              destinationChannel.close();
-            }
-          } catch (IOException closeException) {
-            LoggerManager.getLogger(ReverseProxyService.class).error(closeException);
-          }
-
-          httpRequestFrameReader.fail(CannedResponse.NOT_FOUND, null);
+        } finally {
+          loopLock.unlock();
         }
+
+        httpRequestFrameReader.registerDestination(target, destinationChannel);
+      } catch (IOException ioException) {
+        try {
+          if (destinationChannel != null) {
+            destinationChannel.close();
+          }
+        } catch (IOException closeException) {
+          LoggerManager.getLogger(ReverseProxyService.class).error(closeException);
+        }
+
+        httpRequestFrameReader.fail(CannedResponse.NOT_FOUND, null);
       }
     });
   }
 
   private class EventLoop implements Runnable {
 
+    private Thread runnableThread;
     private boolean stopped = false;
 
-    public void stop ()
+    private void stop ()
       throws InterruptedException {
 
       stopped = true;
+
+      if (runnableThread != null) {
+        runnableThread.interrupt();
+      }
+
       terminationLatch.await();
     }
 
@@ -191,6 +192,8 @@ public class ReverseProxyService {
     public void run () {
 
       try {
+        runnableThread = Thread.currentThread();
+
         while (!stopped) {
           try {
 
@@ -205,7 +208,7 @@ public class ReverseProxyService {
               selectLock.unlock();
             }
 
-            if (selectedKeyCount > 0) {
+            if ((!stopped) && (selectedKeyCount > 0)) {
 
               Iterator<SelectionKey> selectionKeyIter = selector.selectedKeys().iterator();
 

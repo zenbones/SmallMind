@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2008, 2009, 2010, 2011, 2012, 2013, 2014, 2015, 2016, 2017 David Berkman
+ * Copyright (c) 2007, 2008, 2009, 2010, 2011, 2012, 2013, 2014, 2015, 2016, 2017, 2018, 2019 David Berkman
  * 
  * This file is part of the SmallMind Code Project.
  * 
@@ -69,7 +69,7 @@ public class ByReferenceIntrinsicVector<I extends Serializable & Comparable<I>, 
   @AutolockRead
   public DurableVector<I, D> copy () {
 
-    return new ByReferenceIntrinsicVector<I, D>(new IntrinsicRoster<D>(roster), getComparator(), getMaxSize(), getTimeToLiveSeconds(), isOrdered());
+    return new ByReferenceIntrinsicVector<>(new IntrinsicRoster<D>(roster), getComparator(), getMaxSize(), getTimeToLiveSeconds(), isOrdered());
   }
 
   @AutolockRead

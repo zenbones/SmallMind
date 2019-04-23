@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2008, 2009, 2010, 2011, 2012, 2013, 2014, 2015, 2016, 2017 David Berkman
+ * Copyright (c) 2007, 2008, 2009, 2010, 2011, 2012, 2013, 2014, 2015, 2016, 2017, 2018, 2019 David Berkman
  * 
  * This file is part of the SmallMind Code Project.
  * 
@@ -81,18 +81,15 @@ public abstract class AbstractDurableVector<I extends Serializable & Comparable<
             if (((getComparator() == null) ? element.compareTo(durable) : getComparator().compare(element, durable)) == 0) {
               zoned = true;
               inserted = true;
-            }
-            else {
+            } else {
               changed = true;
               rosterIter.remove();
             }
 
             matched = true;
-          }
-          else if ((!zoned) && ((getComparator() == null) ? element.compareTo(durable) : getComparator().compare(element, durable)) >= 0) {
+          } else if ((!zoned) && ((getComparator() == null) ? element.compareTo(durable) : getComparator().compare(element, durable)) >= 0) {
             zoned = true;
-          }
-          else if (!zoned) {
+          } else if (!zoned) {
             index++;
           }
         }
@@ -101,8 +98,7 @@ public abstract class AbstractDurableVector<I extends Serializable & Comparable<
           changed = true;
           getRoster().add(index, durable);
         }
-      }
-      else {
+      } else {
 
         boolean matched = false;
 

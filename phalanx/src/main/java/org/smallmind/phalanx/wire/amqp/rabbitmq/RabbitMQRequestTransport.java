@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2008, 2009, 2010, 2011, 2012, 2013, 2014, 2015, 2016, 2017 David Berkman
+ * Copyright (c) 2007, 2008, 2009, 2010, 2011, 2012, 2013, 2014, 2015, 2016, 2017, 2018, 2019 David Berkman
  * 
  * This file is part of the SmallMind Code Project.
  * 
@@ -42,7 +42,6 @@ import org.smallmind.instrument.ChronometerInstrumentAndReturn;
 import org.smallmind.instrument.InstrumentationManager;
 import org.smallmind.instrument.MetricProperty;
 import org.smallmind.instrument.config.MetricConfiguration;
-import org.smallmind.instrument.config.MetricConfigurationProvider;
 import org.smallmind.nutsnbolts.util.SnowflakeId;
 import org.smallmind.phalanx.wire.AbstractRequestTransport;
 import org.smallmind.phalanx.wire.Address;
@@ -53,7 +52,7 @@ import org.smallmind.phalanx.wire.TransportException;
 import org.smallmind.phalanx.wire.Voice;
 import org.smallmind.phalanx.wire.WireContext;
 
-public class RabbitMQRequestTransport extends AbstractRequestTransport implements MetricConfigurationProvider {
+public class RabbitMQRequestTransport extends AbstractRequestTransport {
 
   private final AtomicBoolean closed = new AtomicBoolean(false);
   private final MetricConfiguration metricConfiguration;
@@ -62,7 +61,7 @@ public class RabbitMQRequestTransport extends AbstractRequestTransport implement
   private final RequestMessageRouter[] requestMessageRouters;
   private final String callerId = SnowflakeId.newInstance().generateDottedString();
 
-  public RabbitMQRequestTransport (MetricConfiguration metricConfiguration, RabbitMQConnector rabbitMQConnector, NameConfiguration nameConfiguration, SignalCodec signalCodec, int clusterSize, int concurrencyLimit, int defaultTimeoutSeconds, int messageTTLSeconds)
+  public RabbitMQRequestTransport (MetricConfiguration metricConfiguration, RabbitMQConnector rabbitMQConnector, NameConfiguration nameConfiguration, SignalCodec signalCodec, int clusterSize, int concurrencyLimit, int defaultTimeoutSeconds, int messageTTLSeconds, boolean autoAcknowledge)
     throws IOException, TimeoutException {
 
     super(defaultTimeoutSeconds);
@@ -74,7 +73,7 @@ public class RabbitMQRequestTransport extends AbstractRequestTransport implement
 
     requestMessageRouters = new RequestMessageRouter[clusterSize];
     for (int index = 0; index < requestMessageRouters.length; index++) {
-      requestMessageRouters[index] = new RequestMessageRouter(rabbitMQConnector, nameConfiguration, this, signalCodec, callerId, index, messageTTLSeconds);
+      requestMessageRouters[index] = new RequestMessageRouter(rabbitMQConnector, nameConfiguration, this, signalCodec, callerId, index, messageTTLSeconds, autoAcknowledge);
       requestMessageRouters[index].initialize();
     }
 
@@ -88,15 +87,14 @@ public class RabbitMQRequestTransport extends AbstractRequestTransport implement
   }
 
   @Override
-  public MetricConfiguration getMetricConfiguration () {
-
-    return metricConfiguration;
-  }
-
-  @Override
   public String getCallerId () {
 
     return callerId;
+  }
+
+  public MetricConfiguration getMetricConfiguration () {
+
+    return metricConfiguration;
   }
 
   @Override
@@ -112,7 +110,7 @@ public class RabbitMQRequestTransport extends AbstractRequestTransport implement
 
       messageId = requestMessageRouter.publish(inOnly, (String)voice.getServiceGroup(), voice, address, arguments, contexts);
 
-      return InstrumentationManager.execute(new ChronometerInstrumentAndReturn<Object>(this, new MetricProperty("event", MetricInteraction.ACQUIRE_RESULT.getDisplay())) {
+      return InstrumentationManager.execute(new ChronometerInstrumentAndReturn<Object>(metricConfiguration, new MetricProperty("event", MetricInteraction.ACQUIRE_RESULT.getDisplay())) {
 
         @Override
         public Object withChronometer ()
@@ -129,7 +127,7 @@ public class RabbitMQRequestTransport extends AbstractRequestTransport implement
   private RequestMessageRouter acquireRequestMessageRouter ()
     throws Throwable {
 
-    return InstrumentationManager.execute(new ChronometerInstrumentAndReturn<RequestMessageRouter>(this, new MetricProperty("event", MetricInteraction.ACQUIRE_REQUEST_TRANSPORT.getDisplay())) {
+    return InstrumentationManager.execute(new ChronometerInstrumentAndReturn<RequestMessageRouter>(metricConfiguration, new MetricProperty("event", MetricInteraction.ACQUIRE_REQUEST_TRANSPORT.getDisplay())) {
 
       @Override
       public RequestMessageRouter withChronometer ()

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2008, 2009, 2010, 2011, 2012, 2013, 2014, 2015, 2016, 2017 David Berkman
+ * Copyright (c) 2007, 2008, 2009, 2010, 2011, 2012, 2013, 2014, 2015, 2016, 2017, 2018, 2019 David Berkman
  * 
  * This file is part of the SmallMind Code Project.
  * 
@@ -32,13 +32,13 @@
  */
 package org.smallmind.instrument;
 
-import org.smallmind.instrument.config.MetricConfigurationProvider;
+import org.smallmind.instrument.config.MetricConfiguration;
 
 public abstract class DecrementingTallyInstrumentAndReturn<T> extends InstrumentAndReturn<Tally, T> {
 
-  public DecrementingTallyInstrumentAndReturn (MetricConfigurationProvider provider, MetricProperty... properties) {
+  public DecrementingTallyInstrumentAndReturn (MetricConfiguration configuration, MetricProperty... properties) {
 
-    super(((provider == null) || (provider.getMetricConfiguration() == null) || (!provider.getMetricConfiguration().isInstrumented())) ? null : new InstrumentationArguments<>(Metrics.buildTally(0), provider.getMetricConfiguration().getMetricDomain().getDomain(), properties));
+    super(((configuration == null) || (!configuration.isInstrumented())) ? null : new InstrumentationArguments<>(Metrics.buildTally(0), configuration.getMetricDomain().getDomain(), properties));
   }
 
   public DecrementingTallyInstrumentAndReturn (Metrics.MetricBuilder<Tally> builder, String domain, MetricProperty... properties) {

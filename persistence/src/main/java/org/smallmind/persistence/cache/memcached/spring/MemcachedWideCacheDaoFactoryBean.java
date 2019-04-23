@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2008, 2009, 2010, 2011, 2012, 2013, 2014, 2015, 2016, 2017 David Berkman
+ * Copyright (c) 2007, 2008, 2009, 2010, 2011, 2012, 2013, 2014, 2015, 2016, 2017, 2018, 2019 David Berkman
  * 
  * This file is part of the SmallMind Code Project.
  * 
@@ -32,7 +32,6 @@
  */
 package org.smallmind.persistence.cache.memcached.spring;
 
-import java.io.IOException;
 import org.smallmind.persistence.cache.memcached.MemcachedCacheDomain;
 import org.smallmind.persistence.cache.praxis.extrinsic.WideExtrinsicCacheDao;
 import org.springframework.beans.factory.FactoryBean;
@@ -49,8 +48,7 @@ public class MemcachedWideCacheDaoFactoryBean implements FactoryBean<WideExtrins
   }
 
   @Override
-  public void afterPropertiesSet ()
-    throws IOException {
+  public void afterPropertiesSet () {
 
     if (memcachedCacheDomain != null) {
       memcachedWideCacheDao = new WideExtrinsicCacheDao(memcachedCacheDomain);

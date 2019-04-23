@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2008, 2009, 2010, 2011, 2012, 2013, 2014, 2015, 2016, 2017 David Berkman
+ * Copyright (c) 2007, 2008, 2009, 2010, 2011, 2012, 2013, 2014, 2015, 2016, 2017, 2018, 2019 David Berkman
  * 
  * This file is part of the SmallMind Code Project.
  * 
@@ -37,27 +37,27 @@ import java.util.List;
 
 public interface WideDurableDao<W extends Serializable & Comparable<W>, I extends Serializable & Comparable<I>, D extends Durable<I>> {
 
-  public abstract void remove (String context, Class<? extends Durable<W>> parentClass, W parentId);
+  void remove (String context, Class<? extends Durable<W>> parentClass, W parentId);
 
-  public abstract void remove (String context, Class<? extends Durable<W>> parentClass, W parentId, Class<D> durableClass);
+  void remove (String context, Class<? extends Durable<W>> parentClass, W parentId, Class<D> durableClass);
 
-  public abstract List<D> get (String context, Class<? extends Durable<W>> parentClass, W parentId);
+  List<D> get (String context, Class<? extends Durable<W>> parentClass, W parentId);
 
-  public abstract List<D> get (String context, Class<? extends Durable<W>> parentClass, W parentId, Class<D> durableClass);
+  List<D> get (String context, Class<? extends Durable<W>> parentClass, W parentId, Class<D> durableClass);
 
-  public abstract List<D> persist (String context, Class<? extends Durable<W>> parentClass, W parentId, D... durables);
+  List<D> persist (String context, Class<? extends Durable<W>> parentClass, W parentId, D... durables);
 
-  public abstract List<D> persist (String context, Class<? extends Durable<W>> parentClass, W parentId, List<D> durables);
+  List<D> persist (String context, Class<? extends Durable<W>> parentClass, W parentId, List<D> durables);
 
-  public abstract List<D> persist (String context, Class<? extends Durable<W>> parentClass, W parentId, Class<D> durableClass, D... durables);
+  List<D> persist (String context, Class<? extends Durable<W>> parentClass, W parentId, Class<D> durableClass, D... durables);
 
-  public abstract List<D> persist (String context, Class<? extends Durable<W>> parentClass, W parentId, Class<D> durableClass, List<D> durables);
+  List<D> persist (String context, Class<? extends Durable<W>> parentClass, W parentId, Class<D> durableClass, List<D> durables);
 
-  public abstract void delete (String context, Class<? extends Durable<W>> parentClass, W parentId, D... durables);
+  void delete (String context, Class<? extends Durable<W>> parentClass, W parentId, D... durables);
 
-  public abstract void delete (String context, Class<? extends Durable<W>> parentClass, W parentId, List<D> durables);
+  void delete (String context, Class<? extends Durable<W>> parentClass, W parentId, List<D> durables);
 
-  public abstract void delete (String context, Class<? extends Durable<W>> parentClass, W parentId, Class<D> durableClass, D... durables);
+  void delete (String context, Class<? extends Durable<W>> parentClass, W parentId, Class<D> durableClass, D... durables);
 
-  public abstract void delete (String context, Class<? extends Durable<W>> parentClass, W parentId, Class<D> durableClass, List<D> durables);
+  void delete (String context, Class<? extends Durable<W>> parentClass, W parentId, Class<D> durableClass, List<D> durables);
 }

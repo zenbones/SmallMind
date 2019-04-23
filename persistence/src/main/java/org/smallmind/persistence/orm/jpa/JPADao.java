@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2008, 2009, 2010, 2011, 2012, 2013, 2014, 2015, 2016, 2017 David Berkman
+ * Copyright (c) 2007, 2008, 2009, 2010, 2011, 2012, 2013, 2014, 2015, 2016, 2017, 2018, 2019 David Berkman
  * 
  * This file is part of the SmallMind Code Project.
  * 
@@ -33,11 +33,16 @@
 package org.smallmind.persistence.orm.jpa;
 
 import java.io.Serializable;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import javax.persistence.EntityManager;
 import javax.persistence.EntityManagerFactory;
 import javax.persistence.Query;
+import javax.persistence.TypedQuery;
+import javax.persistence.criteria.CriteriaBuilder;
+import javax.persistence.criteria.CriteriaQuery;
+import javax.persistence.criteria.Root;
 import org.smallmind.persistence.Durable;
 import org.smallmind.persistence.UpdateMode;
 import org.smallmind.persistence.cache.VectoredDao;
@@ -57,23 +62,26 @@ public abstract class JPADao<I extends Serializable & Comparable<I>, D extends D
 
   public D get (Class<D> durableClass, I id) {
 
-    VectoredDao<I, D> vectoredDao;
-    D durable;
+    if (id != null) {
 
-    if ((vectoredDao = getVectoredDao()) == null) {
-      if ((durable = acquire(durableClass, id)) != null) {
+      VectoredDao<I, D> vectoredDao;
+      D durable;
 
-        return durable;
-      }
-    } else {
-      if ((durable = vectoredDao.get(durableClass, id)) != null) {
+      if ((vectoredDao = getVectoredDao()) == null) {
+        if ((durable = acquire(durableClass, id)) != null) {
 
-        return durable;
-      }
+          return durable;
+        }
+      } else {
+        if ((durable = vectoredDao.get(durableClass, id)) != null) {
 
-      if ((durable = acquire(durableClass, id)) != null) {
+          return durable;
+        }
 
-        return vectoredDao.persist(durableClass, durable, UpdateMode.SOFT);
+        if ((durable = acquire(durableClass, id)) != null) {
+
+          return vectoredDao.persist(durableClass, durable, UpdateMode.SOFT);
+        }
       }
     }
 
@@ -83,103 +91,124 @@ public abstract class JPADao<I extends Serializable & Comparable<I>, D extends D
   @Override
   public D acquire (Class<D> durableClass, I id) {
 
-    return durableClass.cast(getSession().getNativeSession().find(durableClass, id));
+    return (id == null) ? null : durableClass.cast(getSession().getNativeSession().find(durableClass, id));
   }
 
   public D persist (Class<D> durableClass, D durable) {
 
-    D persistentDurable;
-    VectoredDao<I, D> vectoredDao = getVectoredDao();
+    if (durable != null) {
 
-    if (getSession().getNativeSession().contains(durable)) {
-      persistentDurable = durable;
-    } else {
-      persistentDurable = getManagedClass().cast(getSession().getNativeSession().merge(durable));
-      getSession().flush();
+      D persistentDurable;
+      VectoredDao<I, D> vectoredDao = getVectoredDao();
+
+      if (getSession().getNativeSession().contains(durable)) {
+        persistentDurable = durable;
+      } else {
+        persistentDurable = getManagedClass().cast(getSession().getNativeSession().merge(durable));
+        getSession().flush();
+      }
+
+      if (vectoredDao != null) {
+
+        return vectoredDao.persist(durableClass, persistentDurable, UpdateMode.HARD);
+      }
+
+      return persistentDurable;
     }
 
-    if (vectoredDao != null) {
-
-      return vectoredDao.persist(durableClass, persistentDurable, UpdateMode.HARD);
-    }
-
-    return persistentDurable;
+    return null;
   }
 
   public void delete (Class<D> durableClass, D durable) {
 
-    VectoredDao<I, D> vectoredDao = getVectoredDao();
+    if (durable != null) {
 
-    if (!getSession().getNativeSession().contains(durable)) {
+      VectoredDao<I, D> vectoredDao = getVectoredDao();
 
-      D persitentDurable;
+      if (!getSession().getNativeSession().contains(durable)) {
 
-      if ((persitentDurable = getSession().getNativeSession().find(durableClass, durable.getId())) != null) {
-        getSession().getNativeSession().remove(persitentDurable);
+        D persitentDurable;
+
+        if ((persitentDurable = getSession().getNativeSession().find(durableClass, durable.getId())) != null) {
+          getSession().getNativeSession().remove(persitentDurable);
+          getSession().flush();
+        }
+      } else {
+        getSession().getNativeSession().remove(durable);
         getSession().flush();
       }
-    } else {
-      getSession().getNativeSession().remove(durable);
-      getSession().flush();
-    }
 
-    if (vectoredDao != null) {
-      vectoredDao.delete(durableClass, durable);
+      if (vectoredDao != null) {
+        vectoredDao.delete(durableClass, durable);
+      }
     }
   }
 
   public List<D> list () {
 
-    return listByQuery(new QueryDetails() {
+    return constructCriteriaQuery(getManagedClass(), new CriteriaQueryDetails<D>() {
 
       @Override
-      public String getQueryString () {
+      public CriteriaQuery<D> completeCriteria (Class<D> criteriaClass, CriteriaBuilder criteriaBuilder) {
 
-        return "select entity from " + getManagedClass().getSimpleName() + " entity";
+        CriteriaQuery<D> query = criteriaBuilder.createQuery(getManagedClass());
+        Root<D> root = query.from(getManagedClass());
+
+        return query.select(root);
       }
-
-      @Override
-      public Query completeQuery (Query query) {
-
-        return query;
-      }
-    });
+    }).getResultList();
   }
 
   public List<D> list (final int fetchSize) {
 
-    return listByQuery(new QueryDetails() {
+    return constructCriteriaQuery(getManagedClass(), new CriteriaQueryDetails<D>() {
 
       @Override
-      public String getQueryString () {
+      public CriteriaQuery<D> completeCriteria (Class<D> criteriaClass, CriteriaBuilder criteriaBuilder) {
 
-        return "select entity from " + getManagedClass().getSimpleName() + " entity";
+        CriteriaQuery<D> query = criteriaBuilder.createQuery(getManagedClass());
+        Root<D> root = query.from(getManagedClass());
+
+        return query.select(root);
       }
-
-      @Override
-      public Query completeQuery (Query query) {
-
-        return query.setMaxResults(fetchSize);
-      }
-    });
+    }).setMaxResults(fetchSize).getResultList();
   }
 
   public List<D> list (final I greaterThan, final int fetchSize) {
 
-    return listByQuery(new QueryDetails() {
+    return constructCriteriaQuery(getManagedClass(), new CriteriaQueryDetails<D>() {
 
       @Override
-      public String getQueryString () {
+      public CriteriaQuery<D> completeCriteria (Class<D> criteriaClass, CriteriaBuilder criteriaBuilder) {
 
-        return "select entity from " + getManagedClass().getSimpleName() + " entity where entity.id > ?";
+        CriteriaQuery<D> query = criteriaBuilder.createQuery(getManagedClass());
+        Root<D> root = query.from(getManagedClass());
+
+        return query.select(root).where(criteriaBuilder.gt(root.get("id"), (Number)greaterThan));
       }
+    }).setMaxResults(fetchSize).getResultList();
+  }
 
-      @Override
-      public Query completeQuery (Query query) {
+  @Override
+  public List<D> list (Collection<I> idCollection) {
 
-        return query.setParameter("id", greaterThan).setMaxResults(fetchSize);
-      }
-    });
+    if ((idCollection == null) || idCollection.isEmpty()) {
+
+      return Collections.emptyList();
+    } else {
+
+      return constructCriteriaQuery(getManagedClass(), new CriteriaQueryDetails<D>() {
+
+        @Override
+        public CriteriaQuery<D> completeCriteria (Class<D> criteriaClass, CriteriaBuilder criteriaBuilder) {
+
+          CriteriaQuery<D> query = criteriaBuilder.createQuery(getManagedClass());
+          Root<D> root = query.from(getManagedClass());
+
+          return query.select(root).where(root.get("id").in(idCollection));
+        }
+      }).getResultList();
+    }
   }
 
   public Iterable<D> scroll () {
@@ -277,7 +306,7 @@ public abstract class JPADao<I extends Serializable & Comparable<I>, D extends D
     return queryDetails.completeQuery(getSession().getNativeSession().createQuery(queryDetails.getQueryString()));
   }
 
-  public <T> Query constructCriteriaQuery (Class<T> criteriaClass, CriteriaQueryDetails<T> criteriaQueryDetails) {
+  public <T> TypedQuery<T> constructCriteriaQuery (Class<T> criteriaClass, CriteriaQueryDetails<T> criteriaQueryDetails) {
 
     return getSession().getNativeSession().createQuery(criteriaQueryDetails.completeCriteria(criteriaClass, getSession().getNativeSession().getCriteriaBuilder()));
   }

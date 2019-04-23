@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2008, 2009, 2010, 2011, 2012, 2013, 2014, 2015, 2016, 2017 David Berkman
+ * Copyright (c) 2007, 2008, 2009, 2010, 2011, 2012, 2013, 2014, 2015, 2016, 2017, 2018, 2019 David Berkman
  * 
  * This file is part of the SmallMind Code Project.
  * 
@@ -41,8 +41,6 @@ import java.util.concurrent.atomic.AtomicStampedReference;
 import com.rabbitmq.client.AMQP;
 import com.rabbitmq.client.AlreadyClosedException;
 import com.rabbitmq.client.Channel;
-import com.rabbitmq.client.ShutdownListener;
-import com.rabbitmq.client.ShutdownSignalException;
 import org.smallmind.scribe.pen.LoggerManager;
 
 public abstract class MessageRouter {
@@ -116,18 +114,14 @@ public abstract class MessageRouter {
         channel.exchangeDeclare(getResponseExchangeName(), "direct", false, false, null);
 
         channelRef.set(channel, nextStamp = version.incrementAndGet());
-        channel.addShutdownListener(new ShutdownListener() {
+        channel.addShutdownListener((cause) -> {
 
-          @Override
-          public void shutdownCompleted (ShutdownSignalException cause) {
-
-            try {
-              if (!closed.get()) {
-                ensureChannel(nextStamp);
-              }
-            } catch (IOException | TimeoutException exception) {
-              LoggerManager.getLogger(RabbitMQConnector.class).error(exception);
+          try {
+            if (!closed.get()) {
+              ensureChannel(nextStamp);
             }
+          } catch (IOException | TimeoutException exception) {
+            LoggerManager.getLogger(RabbitMQConnector.class).error(exception);
           }
         });
 

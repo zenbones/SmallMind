@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2008, 2009, 2010, 2011, 2012, 2013, 2014, 2015, 2016, 2017 David Berkman
+ * Copyright (c) 2007, 2008, 2009, 2010, 2011, 2012, 2013, 2014, 2015, 2016, 2017, 2018, 2019 David Berkman
  * 
  * This file is part of the SmallMind Code Project.
  * 
@@ -87,7 +87,7 @@ public class ComponentPin<C> {
       componentPool.reportLeaseTimeNanos(leaseTime);
     }
 
-    InstrumentationManager.instrumentWithChronometer(PoolManager.getPool(), leaseTime, TimeUnit.NANOSECONDS, new MetricProperty("pool", componentPool.getPoolName()), new MetricProperty("event", MetricInteraction.PROCESSING.getDisplay()));
+    InstrumentationManager.instrumentWithChronometer(PoolManager.getPool().getMetricConfiguration(), leaseTime, TimeUnit.NANOSECONDS, new MetricProperty("pool", componentPool.getPoolName()), new MetricProperty("event", MetricInteraction.PROCESSING.getDisplay()));
 
     if (deconstructionCoordinator != null) {
       deconstructionCoordinator.free();

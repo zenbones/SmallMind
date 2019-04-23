@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2008, 2009, 2010, 2011, 2012, 2013, 2014, 2015, 2016, 2017 David Berkman
+ * Copyright (c) 2007, 2008, 2009, 2010, 2011, 2012, 2013, 2014, 2015, 2016, 2017, 2018, 2019 David Berkman
  * 
  * This file is part of the SmallMind Code Project.
  * 
@@ -37,17 +37,22 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
-@Retention(RetentionPolicy.SOURCE)
+@Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.TYPE)
 public @interface DtoGenerator {
 
-  Class[] polymorphicSubClasses () default {};
-
+  // the list of virtual properties to be added to the dto
   Property[] properties () default {};
 
+  // the list of conditions under which to guarantee a dto is generated (should be used only when the dto would otherwise not be generated)
   Pledge[] pledges () default {};
 
-  String name () default "";
+  // the requirements for polymorphic annotations
+  Polymorphic polymorphic () default @Polymorphic();
 
-  boolean polymorphic () default false;
+  // the constraint annotations to be applied to the dto
+  Constraint[] constraints () default {};
+
+  // the xml root element name
+  String name () default "";
 }

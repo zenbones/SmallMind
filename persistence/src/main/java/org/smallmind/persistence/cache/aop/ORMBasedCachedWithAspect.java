@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2008, 2009, 2010, 2011, 2012, 2013, 2014, 2015, 2016, 2017 David Berkman
+ * Copyright (c) 2007, 2008, 2009, 2010, 2011, 2012, 2013, 2014, 2015, 2016, 2017, 2018, 2019 David Berkman
  * 
  * This file is part of the SmallMind Code Project.
  * 
@@ -49,7 +49,7 @@ import org.smallmind.persistence.orm.ORMDao;
 @Aspect
 public class ORMBasedCachedWithAspect {
 
-  private static final ConcurrentHashMap<MethodKey, Method> METHOD_MAP = new ConcurrentHashMap<MethodKey, Method>();
+  private static final ConcurrentHashMap<MethodKey, Method> METHOD_MAP = new ConcurrentHashMap<>();
 
   @Around(value = "(execution(* persist (org.smallmind.persistence.Durable+)) || execution(@Persist * * (org.smallmind.persistence.Durable+))) && @within(CachedWith) && this(ormDao)", argNames = "thisJoinPoint, ormDao")
   public Object aroundPersistMethod (ProceedingJoinPoint thisJoinPoint, ORMDao ormDao)

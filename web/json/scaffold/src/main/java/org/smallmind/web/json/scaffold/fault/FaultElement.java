@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2008, 2009, 2010, 2011, 2012, 2013, 2014, 2015, 2016, 2017 David Berkman
+ * Copyright (c) 2007, 2008, 2009, 2010, 2011, 2012, 2013, 2014, 2015, 2016, 2017, 2018, 2019 David Berkman
  * 
  * This file is part of the SmallMind Code Project.
  * 
@@ -138,16 +138,11 @@ public class FaultElement implements Serializable {
 
   public int hashCode () {
 
-    int result = 31 * declaringType.hashCode() + functionName.hashCode();
-
-    result = 31 * result + Objects.hashCode(fileName);
-    result = 31 * result + lineNumber;
-
-    return result;
+    return Objects.hash(declaringType, functionName, fileName, lineNumber);
   }
 
   public boolean equals (Object obj) {
 
-    return (obj == this) || ((obj instanceof FaultElement) && ((FaultElement)obj).getDeclaringType().equals(declaringType) && ((FaultElement)obj).getFunctionName().equals(functionName) && ((FaultElement)obj).getFileName().equals(fileName) && (((FaultElement)obj).getLineNumber() == lineNumber));
+    return (obj == this) || ((obj instanceof FaultElement) && Objects.equals(((FaultElement)obj).getDeclaringType(), declaringType) && Objects.equals(((FaultElement)obj).getFunctionName(), functionName) && Objects.equals(((FaultElement)obj).getFileName(), fileName) && (((FaultElement)obj).getLineNumber() == lineNumber));
   }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2008, 2009, 2010, 2011, 2012, 2013, 2014, 2015, 2016, 2017 David Berkman
+ * Copyright (c) 2007, 2008, 2009, 2010, 2011, 2012, 2013, 2014, 2015, 2016, 2017, 2018, 2019 David Berkman
  * 
  * This file is part of the SmallMind Code Project.
  * 
@@ -40,7 +40,6 @@ import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.MappedSuperclass;
-import javax.persistence.Transient;
 import org.smallmind.persistence.AbstractDurable;
 
 @MappedSuperclass
@@ -62,12 +61,5 @@ public abstract class JPADurable<I extends Serializable & Comparable<I>, D exten
   public synchronized void setId (I id) {
 
     this.id = id;
-  }
-
-  @Override
-  @Transient
-  public Class<D> getOverlayClass () {
-
-    return super.getOverlayClass();
   }
 }

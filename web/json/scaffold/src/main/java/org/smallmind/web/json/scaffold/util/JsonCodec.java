@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2008, 2009, 2010, 2011, 2012, 2013, 2014, 2015, 2016, 2017 David Berkman
+ * Copyright (c) 2007, 2008, 2009, 2010, 2011, 2012, 2013, 2014, 2015, 2016, 2017, 2018, 2019 David Berkman
  * 
  * This file is part of the SmallMind Code Project.
  * 
@@ -38,13 +38,17 @@ import java.io.OutputStream;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.MapperFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.module.jsonSchema.JsonSchema;
+import com.fasterxml.jackson.module.jsonSchema.JsonSchemaGenerator;
 
 public class JsonCodec {
 
   private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper().registerModules(new JaxbAnnotationModule().setNonNillableInclusion(JsonInclude.Include.NON_NULL), new PolymorphicModule()).configure(MapperFeature.USE_WRAPPER_NAME_AS_PROPERTY_NAME, true);
+  private static final JsonSchemaGenerator SCHEMA_GENERATOR = new JsonSchemaGenerator(OBJECT_MAPPER);
 
   public static <T> T read (byte[] bytes, Class<T> clazz)
     throws IOException {
@@ -76,8 +80,7 @@ public class JsonCodec {
     return OBJECT_MAPPER.readValue(parser, clazz);
   }
 
-  public static JsonNode writeAsJsonNode (Object obj)
-    throws JsonProcessingException {
+  public static JsonNode writeAsJsonNode (Object obj) {
 
     return OBJECT_MAPPER.valueToTree(obj);
   }
@@ -103,5 +106,11 @@ public class JsonCodec {
   public static <T> T convert (Object obj, Class<T> clazz) {
 
     return OBJECT_MAPPER.convertValue(obj, clazz);
+  }
+
+  public static JsonSchema generateSchema (Class<?> clazz)
+    throws JsonMappingException {
+
+    return SCHEMA_GENERATOR.generateSchema(clazz);
   }
 }

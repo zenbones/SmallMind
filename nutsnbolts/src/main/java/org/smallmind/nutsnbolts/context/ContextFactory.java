@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2008, 2009, 2010, 2011, 2012, 2013, 2014, 2015, 2016, 2017 David Berkman
+ * Copyright (c) 2007, 2008, 2009, 2010, 2011, 2012, 2013, 2014, 2015, 2016, 2017, 2018, 2019 David Berkman
  * 
  * This file is part of the SmallMind Code Project.
  * 
@@ -42,32 +42,32 @@ import java.util.Map;
 
 public class ContextFactory {
 
-  private static final InheritableThreadLocal<Map<Class<? extends Context>, ContextStack>> CONTEXT_MAP_LOCAL = new InheritableThreadLocal<Map<Class<? extends Context>, ContextStack>>() {
+  private static final InheritableThreadLocal<Map<Class<? extends Context>, LinkedList<? extends Context>>> CONTEXT_MAP_LOCAL = new InheritableThreadLocal<Map<Class<? extends Context>, LinkedList<? extends Context>>>() {
 
     @Override
-    protected Map<Class<? extends Context>, ContextStack> initialValue () {
+    protected Map<Class<? extends Context>, LinkedList<? extends Context>> initialValue () {
 
       return new HashMap<>();
     }
 
     @Override
-    protected Map<Class<? extends Context>, ContextStack> childValue (Map<Class<? extends Context>, ContextStack> parentValue) {
+    protected Map<Class<? extends Context>, LinkedList<? extends Context>> childValue (Map<Class<? extends Context>, LinkedList<? extends Context>> parentValue) {
 
       return new HashMap<>(parentValue);
     }
   };
 
-  public static <C extends Context> void importContextTrace (Class<C> contextClass, Context... contexts) {
+  public static <C extends Context> void importContextTrace (Class<C> contextClass, C... contexts) {
 
-    ContextStack<C> contextStack;
+    LinkedList<C> contextStack;
 
     if ((contexts != null) && (contexts.length > 0)) {
 
-      if ((contextStack = CONTEXT_MAP_LOCAL.get().get(contextClass)) == null) {
-        CONTEXT_MAP_LOCAL.get().put(contextClass, contextStack = new ContextStack<C>());
+      if ((contextStack = (LinkedList<C>)CONTEXT_MAP_LOCAL.get().get(contextClass)) == null) {
+        CONTEXT_MAP_LOCAL.get().put(contextClass, contextStack = new LinkedList<C>());
       }
 
-      for (Context context : contexts) {
+      for (C context : contexts) {
         contextStack.push(contextClass.cast(context));
       }
     }
@@ -77,48 +77,45 @@ public class ContextFactory {
 
     C[] contexts;
     C context;
-    LinkedList<C> contextList;
-    ContextStack<C> contextStack;
+    LinkedList<C> exportedList;
+    LinkedList<C> contextStack;
 
-    contextList = new LinkedList<>();
-    if ((contextStack = CONTEXT_MAP_LOCAL.get().get(contextClass)) != null) {
-      while ((context = contextStack.pop()) != null) {
-        contextList.addFirst(context);
+    exportedList = new LinkedList<>();
+    if ((contextStack = (LinkedList<C>)CONTEXT_MAP_LOCAL.get().get(contextClass)) != null) {
+      while (!contextStack.isEmpty()) {
+        exportedList.addFirst(contextStack.pop());
       }
     }
 
-    contexts = (C[])Array.newInstance(contextClass, contextList.size());
-    contextList.toArray(contexts);
+    contexts = (C[])Array.newInstance(contextClass, exportedList.size());
+    exportedList.toArray(contexts);
 
     return contexts;
   }
 
   public static <C extends Context> void clearContextTrace (Class<C> contextClass) {
 
-    C context;
-    ContextStack<C> contextStack;
+    LinkedList<C> contextStack;
 
-    if ((contextStack = CONTEXT_MAP_LOCAL.get().get(contextClass)) != null) {
-      do {
-        context = contextStack.pop();
-      } while (context != null);
+    if ((contextStack = (LinkedList<C>)CONTEXT_MAP_LOCAL.get().get(contextClass)) != null) {
+      contextStack.clear();
     }
   }
 
   public static <C extends Context> boolean exists (Class<C> contextClass) {
 
-    ContextStack<C> contextStack;
+    LinkedList<C> contextStack;
 
-    return ((contextStack = CONTEXT_MAP_LOCAL.get().get(contextClass)) != null) && (!contextStack.isEmpty());
+    return ((contextStack = (LinkedList<C>)CONTEXT_MAP_LOCAL.get().get(contextClass)) != null) && (!contextStack.isEmpty());
   }
 
   public static <C extends Context> C getContext (Class<C> contextClass)
     throws ContextException {
 
-    ContextStack<C> contextStack;
+    LinkedList<C> contextStack;
     C context;
 
-    if (((contextStack = CONTEXT_MAP_LOCAL.get().get(contextClass)) == null) || ((context = contextStack.peek()) == null)) {
+    if (((contextStack = (LinkedList<C>)CONTEXT_MAP_LOCAL.get().get(contextClass)) == null) || ((context = contextStack.peek()) == null)) {
 
       return null;
     }
@@ -126,31 +123,31 @@ public class ContextFactory {
     return context;
   }
 
-  public static Context[] getContextsOn (Method method) {
+  public static Context[] filterContextsOn (Method method) {
 
-    return getContextsOn(method, Context.class);
+    return filterContextsOn(method, Context.class);
   }
 
-  public static Context[] getContextsOn (Method method, Class<? extends Context>... baseContextClasses)
+  public static Context[] filterContextsOn (Method method, Class<? extends Context>... filterClasses)
     throws ContextException {
 
     Context[] contexts;
     ExpectedContexts expectedContexts;
-    HashSet<Class<? extends Context>> requiredClasses = new HashSet<>();
+    HashSet<Class<? extends Context>> expectedClasses = new HashSet<>();
     LinkedList<Context> contextList = new LinkedList<>();
 
     if ((expectedContexts = method.getAnnotation(ExpectedContexts.class)) != null) {
-      requiredClasses.addAll(Arrays.asList(expectedContexts.value()));
+      expectedClasses.addAll(Arrays.asList(expectedContexts.value()));
     }
 
-    for (Map.Entry<Class<? extends Context>, ContextStack> contextEntry : CONTEXT_MAP_LOCAL.get().entrySet()) {
+    for (Map.Entry<Class<? extends Context>, LinkedList<? extends Context>> contextEntry : CONTEXT_MAP_LOCAL.get().entrySet()) {
 
       Context context;
 
-      for (Class<? extends Context> baseContextClass : baseContextClasses) {
-        if (baseContextClass.isAssignableFrom(contextEntry.getKey())) {
+      for (Class<? extends Context> filterClass : filterClasses) {
+        if (filterClass.isAssignableFrom(contextEntry.getKey())) {
           if ((context = contextEntry.getValue().peek()) != null) {
-            requiredClasses.remove(contextEntry.getKey());
+            expectedClasses.remove(contextEntry.getKey());
             contextList.add(context);
           }
           break;
@@ -158,8 +155,8 @@ public class ContextFactory {
       }
     }
 
-    if (!requiredClasses.isEmpty()) {
-      throw new ContextException("Context(%s) has not been instantiated", requiredClasses.iterator().next());
+    if (!expectedClasses.isEmpty()) {
+      throw new ContextException("The context expectations(%s) have not been satisfied", Arrays.toString(expectedClasses.toArray()));
     }
 
     contexts = new Context[contextList.size()];
@@ -170,28 +167,50 @@ public class ContextFactory {
 
   public static <C extends Context> void pushContext (C context) {
 
-    ContextStack<C> contextStack;
+    LinkedList<C> contextStack;
 
-    if ((contextStack = CONTEXT_MAP_LOCAL.get().get(context.getClass())) == null) {
-      CONTEXT_MAP_LOCAL.get().put(context.getClass(), contextStack = new ContextStack<>());
+    if ((contextStack = (LinkedList<C>)CONTEXT_MAP_LOCAL.get().get(context.getClass())) == null) {
+      CONTEXT_MAP_LOCAL.get().put(context.getClass(), contextStack = new LinkedList<>());
     }
 
     contextStack.push(context);
   }
 
-  public static Context popContext (Context context) {
-
-    return popContext(context.getClass());
-  }
-
   public static <C extends Context> C popContext (Class<C> contextClass) {
 
-    ContextStack<C> contextStack;
+    LinkedList<C> contextStack;
 
-    if ((contextStack = CONTEXT_MAP_LOCAL.get().get(contextClass)) != null) {
-      return contextStack.pop();
+    if ((contextStack = (LinkedList<C>)CONTEXT_MAP_LOCAL.get().get(contextClass)) != null) {
+      if (!contextStack.isEmpty()) {
+        return contextStack.pop();
+      }
     }
 
     return null;
+  }
+
+  public static Context removeContext (Context context) {
+
+    LinkedList<? extends Context> contextStack;
+
+    if ((contextStack = CONTEXT_MAP_LOCAL.get().get(context.getClass())) != null) {
+      if (contextStack.remove(context)) {
+
+        return context;
+      }
+    }
+
+    return null;
+  }
+
+  public static <C extends Context> int sizeFor (Class<C> contextClass) {
+
+    LinkedList<C> contextStack;
+
+    if ((contextStack = (LinkedList<C>)CONTEXT_MAP_LOCAL.get().get(contextClass)) != null) {
+      return contextStack.size();
+    }
+
+    return 0;
   }
 }

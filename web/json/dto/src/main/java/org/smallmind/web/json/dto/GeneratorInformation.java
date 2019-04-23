@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2008, 2009, 2010, 2011, 2012, 2013, 2014, 2015, 2016, 2017 David Berkman
+ * Copyright (c) 2007, 2008, 2009, 2010, 2011, 2012, 2013, 2014, 2015, 2016, 2017, 2018, 2019 David Berkman
  * 
  * This file is part of the SmallMind Code Project.
  * 
@@ -33,49 +33,51 @@
 package org.smallmind.web.json.dto;
 
 import java.io.IOException;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 import javax.annotation.processing.ProcessingEnvironment;
 import javax.lang.model.element.AnnotationMirror;
 import javax.lang.model.element.TypeElement;
+import javax.lang.model.type.ArrayType;
+import javax.lang.model.type.TypeKind;
 import javax.lang.model.type.TypeMirror;
 import org.smallmind.nutsnbolts.apt.AptUtility;
 import org.smallmind.nutsnbolts.lang.UnknownSwitchCaseException;
 
 public class GeneratorInformation {
 
-  private final DirectionalGuide inMap = new DirectionalGuide(Direction.IN);
-  private final DirectionalGuide outMap = new DirectionalGuide(Direction.OUT);
-  private final HashSet<String> inPurposeSet = new HashSet<>();
-  private final HashSet<String> outPurposeSet = new HashSet<>();
-  private final List<TypeElement> polymorphicSubclassList;
+  private final DirectionalGuide inDirectionalGuide = new DirectionalGuide(Direction.IN);
+  private final DirectionalGuide outDirectionalGuide = new DirectionalGuide(Direction.OUT);
+  private final List<ConstraintInformation> constraintList = new LinkedList<>();
+  private final HashMap<String, Visibility> pledgedMap = new HashMap<>();
+  private final HashMap<String, Visibility> fulfilledMap = new HashMap<>();
   private final String name;
-  private final Boolean polymorphic;
 
-  public GeneratorInformation (ProcessingEnvironment processingEnvironment, DtoAnnotationProcessor dtoAnnotationProcessor, AnnotationMirror generatorAnnotationMirror, UsefulTypeMirrors usefulTypeMirrors)
+  public GeneratorInformation (ProcessingEnvironment processingEnvironment, UsefulTypeMirrors usefulTypeMirrors, DtoAnnotationProcessor dtoAnnotationProcessor, TypeElement classElement, VisibilityTracker visibilityTracker, ClassTracker classTracker, AnnotationMirror generatorAnnotationMirror)
     throws IOException, DtoDefinitionException {
 
+    AnnotationMirror polymorphicAnnotationMirror;
+
     name = AptUtility.extractAnnotationValue(generatorAnnotationMirror, "name", String.class, "");
-    polymorphicSubclassList = AptUtility.toConcreteList(processingEnvironment, AptUtility.extractAnnotationValueAsList(generatorAnnotationMirror, "polymorphicSubClasses", TypeMirror.class));
-    polymorphic = AptUtility.extractAnnotationValue(generatorAnnotationMirror, "polymorphic", Boolean.class, Boolean.FALSE);
+
+    for (AnnotationMirror constraintAnnotationMirror : AptUtility.extractAnnotationValueAsList(generatorAnnotationMirror, "constraints", AnnotationMirror.class)) {
+      constraintList.add(new ConstraintInformation(constraintAnnotationMirror));
+    }
+
+    if ((polymorphicAnnotationMirror = AptUtility.extractAnnotationValue(generatorAnnotationMirror, "polymorphic", AnnotationMirror.class, null)) != null) {
+      classTracker.addPolymorphic(classElement, new PolymorphicInformation(processingEnvironment, polymorphicAnnotationMirror));
+    }
 
     for (AnnotationMirror pledgeAnnotationMirror : AptUtility.extractAnnotationValueAsList(generatorAnnotationMirror, "pledges", AnnotationMirror.class)) {
 
       PledgeInformation pledgeInformation = new PledgeInformation(pledgeAnnotationMirror);
 
-      switch (pledgeInformation.getVisibility()) {
-        case BOTH:
-          inPurposeSet.addAll(pledgeInformation.getPurposeList());
-          outPurposeSet.addAll(pledgeInformation.getPurposeList());
-          break;
-        case IN:
-          inPurposeSet.addAll(pledgeInformation.getPurposeList());
-          break;
-        case OUT:
-          outPurposeSet.addAll(pledgeInformation.getPurposeList());
-          break;
-        default:
-          throw new UnknownSwitchCaseException(pledgeInformation.getVisibility().name());
+      for (String purpose : pledgeInformation.getPurposeList()) {
+        visibilityTracker.add(classElement, purpose, pledgeInformation.getVisibility(), true);
+        pledgedMap.put(purpose, pledgeInformation.getVisibility().compose(pledgedMap.get(purpose)));
       }
     }
 
@@ -83,20 +85,20 @@ public class GeneratorInformation {
 
       String fieldName = AptUtility.extractAnnotationValue(propertyAnnotationMirror, "field", String.class, null);
 
-      for (PropertyBox propertyBox : new PropertyParser(propertyAnnotationMirror, AptUtility.extractAnnotationValue(propertyAnnotationMirror, "type", TypeMirror.class, null), true)) {
+      for (PropertyBox propertyBox : new PropertyParser(processingEnvironment, usefulTypeMirrors, propertyAnnotationMirror, extractType(classElement, fieldName, processingEnvironment, propertyAnnotationMirror), true)) {
 
         dtoAnnotationProcessor.processTypeMirror(propertyBox.getPropertyInformation().getType());
 
         switch (propertyBox.getVisibility()) {
           case IN:
-            inMap.put(propertyBox.getPurpose(), fieldName, propertyBox.getPropertyInformation());
+            inDirectionalGuide.put(propertyBox.getPurpose(), fieldName, propertyBox.getPropertyInformation());
             break;
           case OUT:
-            outMap.put(propertyBox.getPurpose(), fieldName, propertyBox.getPropertyInformation());
+            outDirectionalGuide.put(propertyBox.getPurpose(), fieldName, propertyBox.getPropertyInformation());
             break;
           case BOTH:
-            inMap.put(propertyBox.getPurpose(), fieldName, propertyBox.getPropertyInformation());
-            outMap.put(propertyBox.getPurpose(), fieldName, propertyBox.getPropertyInformation());
+            inDirectionalGuide.put(propertyBox.getPurpose(), fieldName, propertyBox.getPropertyInformation());
+            outDirectionalGuide.put(propertyBox.getPurpose(), fieldName, propertyBox.getPropertyInformation());
             break;
           default:
             throw new UnknownSwitchCaseException(propertyBox.getVisibility().name());
@@ -105,56 +107,88 @@ public class GeneratorInformation {
     }
   }
 
+  private TypeMirror extractType (TypeElement classElement, String fieldName, ProcessingEnvironment processingEnvironment, AnnotationMirror propertyAnnotationMirror)
+    throws DtoDefinitionException {
+
+    AnnotationMirror typeAnnotationMirror = AptUtility.extractAnnotationValue(propertyAnnotationMirror, "type", AnnotationMirror.class, null);
+    TypeMirror baseTypeMirror = AptUtility.extractAnnotationValue(typeAnnotationMirror, "value", TypeMirror.class, null);
+    List<TypeMirror> argumentTypeMirrorList = AptUtility.extractAnnotationValueAsList(typeAnnotationMirror, "parameters", TypeMirror.class);
+    TypeMirror[] argumentTypeMirrors = new TypeMirror[argumentTypeMirrorList.size()];
+
+    argumentTypeMirrorList.toArray(argumentTypeMirrors);
+
+    try {
+      if (TypeKind.ARRAY.equals(baseTypeMirror.getKind())) {
+        if (argumentTypeMirrors.length > 0) {
+          throw new DtoDefinitionException("Illegal type definition in field(%s) of class(%s), array types can't have type arguments", fieldName, classElement);
+        }
+
+        return processingEnvironment.getTypeUtils().getArrayType(((ArrayType)baseTypeMirror).getComponentType());
+      } else {
+
+        return processingEnvironment.getTypeUtils().getDeclaredType((TypeElement)processingEnvironment.getTypeUtils().asElement(baseTypeMirror), argumentTypeMirrors);
+      }
+    } catch (Exception exception) {
+      throw new DtoDefinitionException(exception, "Illegal type definition in field(%s) of class(%s)", fieldName, classElement);
+    }
+  }
+
+  public void update (TypeElement classElement, VisibilityTracker visibilityTracker) {
+
+    for (Map.Entry<String, PropertyLexicon> purposeEntry : inDirectionalGuide.entrySet()) {
+      visibilityTracker.add(classElement, purposeEntry.getKey(), Visibility.IN, purposeEntry.getValue());
+    }
+    for (Map.Entry<String, PropertyLexicon> purposeEntry : outDirectionalGuide.entrySet()) {
+      visibilityTracker.add(classElement, purposeEntry.getKey(), Visibility.OUT, purposeEntry.getValue());
+    }
+  }
+
   public String getName () {
 
     return name;
   }
 
-  public boolean isPolymorphic () {
+  public Iterable<ConstraintInformation> constraints () {
 
-    return ((polymorphic != null) && polymorphic) || (!polymorphicSubclassList.isEmpty());
+    return constraintList;
   }
 
-  public List<TypeElement> getPolymorphicSubclassList () {
+  public DirectionalGuide getInDirectionalGuide () {
 
-    return polymorphicSubclassList;
+    return inDirectionalGuide;
   }
 
-  public DirectionalGuide getInMap () {
+  public DirectionalGuide getOutDirectionalGuide () {
 
-    return inMap;
+    return outDirectionalGuide;
   }
 
-  public DirectionalGuide getOutMap () {
+  public void denotePurpose (String purpose, Direction direction) {
 
-    return outMap;
+    fulfilledMap.put(purpose, direction.getVisibility().compose(fulfilledMap.get(purpose)));
   }
 
-  public void denotePurpose (Direction direction, String purpose) {
+  public Iterable<String> unfulfilledPurposes (TypeElement classElement, VisibilityTracker visibilityTracker, Direction direction) {
 
-    switch (direction) {
-      case IN:
-        inPurposeSet.remove(purpose);
-        break;
-      case OUT:
-        outPurposeSet.remove(purpose);
-        break;
-      default:
-        throw new UnknownSwitchCaseException(direction.name());
+    return visibilityTracker.unfulfilledPurposes(classElement, direction, fulfilledMap);
+  }
+
+  public String[] overwroughtPurposes (TypeElement classElement, VisibilityTracker visibilityTracker, Direction direction) {
+
+    HashSet<String> overwroughtSet = new HashSet<>();
+    String[] purposes;
+
+    for (Map.Entry<String, Visibility> pledgedEntry : pledgedMap.entrySet()) {
+      if (pledgedEntry.getValue().matches(direction)) {
+        if (visibilityTracker.isForsworn(classElement, pledgedEntry.getKey(), direction)) {
+          overwroughtSet.add(pledgedEntry.getKey());
+        }
+      }
     }
-  }
 
-  public Iterable<String> unfulfilledPurposes (Direction direction) {
+    purposes = new String[overwroughtSet.size()];
+    overwroughtSet.toArray(purposes);
 
-    switch (direction) {
-      case IN:
-        // Avoids concurrent modification
-        return new HashSet<>(inPurposeSet);
-      case OUT:
-        // Avoids concurrent modification
-        return new HashSet<>(outPurposeSet);
-      default:
-        throw new UnknownSwitchCaseException(direction.name());
-    }
+    return purposes;
   }
 }

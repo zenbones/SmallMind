@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2008, 2009, 2010, 2011, 2012, 2013, 2014, 2015, 2016, 2017 David Berkman
+ * Copyright (c) 2007, 2008, 2009, 2010, 2011, 2012, 2013, 2014, 2015, 2016, 2017, 2018, 2019 David Berkman
  * 
  * This file is part of the SmallMind Code Project.
  * 
@@ -366,13 +366,13 @@ public class ComponentPinManager<C> {
 
     int freeSize;
 
-    InstrumentationManager.instrumentWithSpeedometer(PoolManager.getPool(), freeSize = freeQueue.size(), new MetricProperty("pool", componentPool.getPoolName()), new MetricProperty("size", MetricSize.FREE.getDisplay()));
-    InstrumentationManager.instrumentWithSpeedometer(PoolManager.getPool(), getPoolSize() - freeSize, new MetricProperty("pool", componentPool.getPoolName()), new MetricProperty("size", MetricSize.PROCESSING.getDisplay()));
+    InstrumentationManager.instrumentWithSpeedometer(PoolManager.getPool().getMetricConfiguration(), freeSize = freeQueue.size(), new MetricProperty("pool", componentPool.getPoolName()), new MetricProperty("size", MetricSize.FREE.getDisplay()));
+    InstrumentationManager.instrumentWithSpeedometer(PoolManager.getPool().getMetricConfiguration(), getPoolSize() - freeSize, new MetricProperty("pool", componentPool.getPoolName()), new MetricProperty("size", MetricSize.PROCESSING.getDisplay()));
   }
 
   private void trackTimeout () {
 
-    InstrumentationManager.instrumentWithGauge(PoolManager.getPool(), new MetricProperty("pool", componentPool.getPoolName()), new MetricProperty("pool", componentPool.getPoolName()), new MetricProperty("event", MetricInteraction.TIMEOUT.getDisplay()));
+    InstrumentationManager.instrumentWithGauge(PoolManager.getPool().getMetricConfiguration(), new MetricProperty("pool", componentPool.getPoolName()), new MetricProperty("pool", componentPool.getPoolName()), new MetricProperty("event", MetricInteraction.TIMEOUT.getDisplay()));
   }
 
   public StackTrace[] getExistentialStackTraces () {

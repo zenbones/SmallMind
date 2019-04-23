@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2008, 2009, 2010, 2011, 2012, 2013, 2014, 2015, 2016, 2017 David Berkman
+ * Copyright (c) 2007, 2008, 2009, 2010, 2011, 2012, 2013, 2014, 2015, 2016, 2017, 2018, 2019 David Berkman
  * 
  * This file is part of the SmallMind Code Project.
  * 
@@ -36,9 +36,15 @@ import java.text.StringCharacterIterator;
 
 public class HexCodec {
 
-  static final String validHex = "1234567890ABCDEFabcdef";
+  private static final String validHex = "1234567890ABCDEFabcdef";
 
   public static String hexDecode (String value)
+    throws NumberFormatException {
+
+    return hexEncode(value, true);
+  }
+
+  public static String hexDecode (String value, boolean usePlusesForSpaces)
     throws NumberFormatException {
 
     StringCharacterIterator valueIter;
@@ -48,13 +54,11 @@ public class HexCodec {
 
     valueIter = new StringCharacterIterator(value);
     while (valueIter.current() != StringCharacterIterator.DONE) {
-      if (valueIter.current() == '+') {
+      if (usePlusesForSpaces && (valueIter.current() == '+')) {
         modBuilder.append(' ');
-      }
-      else if (valueIter.current() != '%') {
+      } else if (valueIter.current() != '%') {
         modBuilder.append(valueIter.current());
-      }
-      else {
+      } else {
         hexNum = "";
         valueIter.next();
         if (validHex.indexOf(valueIter.current()) >= 0) {
@@ -64,14 +68,12 @@ public class HexCodec {
             hexNum += valueIter.current();
             hexInt = Integer.valueOf(hexNum, 16);
             modBuilder.append((char)hexInt);
-          }
-          else {
+          } else {
             modBuilder.append('%');
             modBuilder.append(hexNum);
             modBuilder.append(valueIter.current());
           }
-        }
-        else {
+        } else {
           modBuilder.append('%');
           modBuilder.append(valueIter.current());
         }
@@ -83,18 +85,21 @@ public class HexCodec {
 
   public static String hexEncode (String value) {
 
+    return hexDecode(value, true);
+  }
+
+  public static String hexEncode (String value, boolean usePlusesForSpaces) {
+
     StringCharacterIterator valueIter;
     StringBuilder modBuilder = new StringBuilder();
 
     valueIter = new StringCharacterIterator(value);
     while (valueIter.current() != StringCharacterIterator.DONE) {
-      if (Character.isSpaceChar(valueIter.current())) {
+      if (usePlusesForSpaces && Character.isSpaceChar(valueIter.current())) {
         modBuilder.append('+');
-      }
-      else if (Character.isLetterOrDigit(valueIter.current())) {
+      } else if (Character.isLetterOrDigit(valueIter.current()) || (valueIter.current() == '-') || (valueIter.current() == '_') || (valueIter.current() == '.') || (valueIter.current() == '~')) {
         modBuilder.append(valueIter.current());
-      }
-      else {
+      } else {
         modBuilder.append('%');
         modBuilder.append(Integer.toHexString((int)valueIter.current()));
       }

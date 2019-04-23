@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2008, 2009, 2010, 2011, 2012, 2013, 2014, 2015, 2016, 2017 David Berkman
+ * Copyright (c) 2007, 2008, 2009, 2010, 2011, 2012, 2013, 2014, 2015, 2016, 2017, 2018, 2019 David Berkman
  * 
  * This file is part of the SmallMind Code Project.
  * 
@@ -91,23 +91,23 @@ public class BeanUtility {
     return setterBuilder.toString();
   }
 
-  public static Object executeGet (Object target, String methodName, boolean nullable)
+  public static Object executeGet (Object target, String fieldPath, boolean nullable)
     throws BeanAccessException, BeanInvocationException {
 
     Method getterMethod;
     Object currentTarget;
-    String[] methodComponents;
+    String[] pathComponents;
 
     // Split the method into dot-notated segments
-    methodComponents = methodName.split("\\.", -1);
+    pathComponents = fieldPath.split("\\.", -1);
     currentTarget = target;
 
     try {
       // Every segment but the last is taken as a getter method
-      for (int count = 0; count < methodComponents.length - 1; count++) {
-        if ((currentTarget = (getterMethod = acquireGetterMethod(currentTarget, methodComponents[count])).invoke(currentTarget)) == null) {
+      for (int count = 0; count < pathComponents.length - 1; count++) {
+        if ((currentTarget = (getterMethod = acquireGetterMethod(currentTarget, pathComponents[count])).invoke(currentTarget)) == null) {
           if (!nullable) {
-            throw new BeanAccessException("The 'getter' method(%s) in chain(%s) returned a 'null' component", getterMethod.getName(), methodName);
+            throw new BeanAccessException("The 'getter' method(%s) in chain(%s) returned a 'null' component", getterMethod.getName(), fieldPath);
           }
 
           return null;
@@ -115,7 +115,7 @@ public class BeanUtility {
       }
 
       // As this executes a 'get' the last segment is taken as a getter
-      return acquireGetterMethod(currentTarget, methodComponents[methodComponents.length - 1]).invoke(currentTarget);
+      return acquireGetterMethod(currentTarget, pathComponents[pathComponents.length - 1]).invoke(currentTarget);
     } catch (BeanAccessException beanAccessException) {
       throw beanAccessException;
     } catch (Exception exception) {
@@ -123,55 +123,54 @@ public class BeanUtility {
     }
   }
 
-  public static Object executeSet (Object target, String methodName, Object value)
+  public static Object executeSet (Object target, String fieldPath, Object value)
     throws BeanAccessException, BeanInvocationException {
 
     Object currentTarget;
-    String[] methodComponents;
+    String[] pathComponents;
 
     // Split the method into dot-notated segments
-    methodComponents = methodName.split("\\.", -1);
-    currentTarget = traverseComponents(target, methodName, methodComponents);
+    pathComponents = fieldPath.split("\\.", -1);
+    currentTarget = traverseComponents(target, fieldPath, pathComponents);
 
     try {
       // As this executes a 'set' the last segment is taken as a setter
-      return acquireSetterMethod(currentTarget, methodComponents[methodComponents.length - 1], value).invoke(currentTarget, value);
+      return acquireSetterMethod(currentTarget, pathComponents[pathComponents.length - 1], value).invoke(currentTarget, value);
     } catch (Exception exception) {
       throw new BeanInvocationException(exception);
     }
   }
 
-  public static Object execute (Object target, String methodName, Object... values)
+  public static Object execute (Object target, String methodPath, Object... values)
     throws BeanAccessException, BeanInvocationException {
 
     Object currentTarget;
-    String[] methodComponents;
+    String[] pathComponents;
 
     // Split the method into dot-notated segments
-    methodComponents = methodName.split("\\.", -1);
-    currentTarget = traverseComponents(target, methodName, methodComponents);
+    pathComponents = methodPath.split("\\.", -1);
+    currentTarget = traverseComponents(target, methodPath, pathComponents);
 
     try {
-      // As this executes a 'set' the last segment is taken as a setter
-      return acquireMethod(currentTarget, methodComponents[methodComponents.length - 1], values).invoke(currentTarget, values);
+      return acquireMethod(currentTarget, pathComponents[pathComponents.length - 1], values).invoke(currentTarget, values);
     } catch (Exception exception) {
       throw new BeanInvocationException(exception);
     }
   }
 
-  private static Object traverseComponents (Object target, String methodName, String... methodComponents)
+  private static Object traverseComponents (Object target, String methodName, String... pathComponents)
     throws BeanAccessException, BeanInvocationException {
 
     Object currentTarget = target;
 
-    if ((methodComponents != null) && (methodComponents.length > 0)) {
+    if ((pathComponents != null) && (pathComponents.length > 0)) {
       try {
-        for (int count = 0; count < methodComponents.length - 1; count++) {
+        for (int count = 0; count < pathComponents.length - 1; count++) {
 
           Method getterMethod;
 
-          if ((getterMethod = acquireGetterMethod(currentTarget, methodComponents[count])) == null) {
-            throw new BeanAccessException("Missing 'getter' for method(%s) in chain(%s)", methodComponents[count], methodName);
+          if ((getterMethod = acquireGetterMethod(currentTarget, pathComponents[count])) == null) {
+            throw new BeanAccessException("Missing 'getter' for method(%s) in chain(%s)", pathComponents[count], methodName);
           } else if ((currentTarget = getterMethod.invoke(currentTarget)) == null) {
             throw new BeanAccessException("The 'getter' method(%s) in chain(%s) returned a 'null' component", getterMethod.getName(), methodName);
           }

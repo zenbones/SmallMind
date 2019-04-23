@@ -4,7 +4,7 @@
   <parent>
     <groupId>org.smallmind</groupId>
     <artifactId>smallmind-web</artifactId>
-    <version>3.3.5-SNAPSHOT</version>
+    <version>3.3.17-SNAPSHOT</version>
   </parent>
   <artifactId>web-grizzly</artifactId>
   <packaging>jar</packaging>
@@ -69,6 +69,11 @@
     </dependency>
     <dependency>
       <groupId>org.glassfish.grizzly</groupId>
+      <artifactId>grizzly-http-server</artifactId>
+      <scope>compile</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.glassfish.grizzly</groupId>
       <artifactId>grizzly-http-servlet</artifactId>
       <scope>compile</scope>
     </dependency>
@@ -78,10 +83,9 @@
       <scope>compile</scope>
     </dependency>
     <dependency>
-      <groupId>org.glassfish.grizzly</groupId>
-      <artifactId>grizzly-websockets-server</artifactId>
+      <groupId>org.glassfish.tyrus</groupId>
+      <artifactId>tyrus-server</artifactId>
       <scope>compile</scope>
-      <optional>true</optional>
     </dependency>
     <dependency>
       <groupId>org.glassfish.hk2</groupId>

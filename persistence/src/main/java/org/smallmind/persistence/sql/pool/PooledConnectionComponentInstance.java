@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2008, 2009, 2010, 2011, 2012, 2013, 2014, 2015, 2016, 2017 David Berkman
+ * Copyright (c) 2007, 2008, 2009, 2010, 2011, 2012, 2013, 2014, 2015, 2016, 2017, 2018, 2019 David Berkman
  * 
  * This file is part of the SmallMind Code Project.
  * 
@@ -68,8 +68,7 @@ public class PooledConnectionComponentInstance<P extends PooledConnection> imple
 
     if ((validationQuery != null) && (validationQuery.length() > 0)) {
       validationStatement = pooledConnection.getConnection().prepareStatement(validationQuery);
-    }
-    else {
+    } else {
       validationStatement = null;
     }
   }
@@ -84,8 +83,7 @@ public class PooledConnectionComponentInstance<P extends PooledConnection> imple
     if (validationStatement != null) {
       try {
         validationStatement.execute();
-      }
-      catch (SQLException sqlException) {
+      } catch (SQLException sqlException) {
         return false;
       }
     }
@@ -97,8 +95,7 @@ public class PooledConnectionComponentInstance<P extends PooledConnection> imple
 
     try {
       componentPool.returnInstance(this);
-    }
-    catch (Exception exception) {
+    } catch (Exception exception) {
       LoggerManager.getLogger(PooledConnectionComponentInstance.class).error(exception);
     }
   }
@@ -111,15 +108,12 @@ public class PooledConnectionComponentInstance<P extends PooledConnection> imple
       if (reportedException != null) {
         componentPool.reportErrorOccurred(reportedException);
       }
-    }
-    catch (Exception exception) {
+    } catch (Exception exception) {
       LoggerManager.getLogger(PooledConnectionComponentInstance.class).error(exception);
-    }
-    finally {
+    } finally {
       try {
         componentPool.terminateInstance(this);
-      }
-      catch (Exception exception) {
+      } catch (Exception exception) {
         if ((reportedException != null) && (exception.getCause() == exception)) {
           exception.initCause(reportedException);
         }
@@ -152,8 +146,7 @@ public class PooledConnectionComponentInstance<P extends PooledConnection> imple
       if (validationStatement != null) {
         try {
           validationStatement.close();
-        }
-        catch (SQLException sqlException) {
+        } catch (SQLException sqlException) {
           validationCloseException = sqlException;
         }
       }
@@ -161,15 +154,13 @@ public class PooledConnectionComponentInstance<P extends PooledConnection> imple
       if (pooledConnection != null) {
         try {
           pooledConnection.close();
-        }
-        catch (SQLException sqlException) {
+        } catch (SQLException sqlException) {
           if ((validationCloseException != null) && (sqlException.getCause() != sqlException)) {
             sqlException.initCause(validationCloseException);
           }
 
           throw sqlException;
-        }
-        finally {
+        } finally {
           pooledConnection.removeConnectionEventListener(this);
         }
       }

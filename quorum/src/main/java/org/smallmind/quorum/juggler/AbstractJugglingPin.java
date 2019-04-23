@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2008, 2009, 2010, 2011, 2012, 2013, 2014, 2015, 2016, 2017 David Berkman
+ * Copyright (c) 2007, 2008, 2009, 2010, 2011, 2012, 2013, 2014, 2015, 2016, 2017, 2018, 2019 David Berkman
  * 
  * This file is part of the SmallMind Code Project.
  * 
@@ -36,39 +36,33 @@ import java.lang.reflect.Method;
 
 public abstract class AbstractJugglingPin<R> implements JugglingPin<R> {
 
-  public final void start ()
-    throws JugglerResourceException {
+  public final void start () {
 
     start(null);
   }
 
   @Override
-  public void start (Method method, Object... args)
-    throws JugglerResourceException {
+  public void start (Method method, Object... args) {
 
   }
 
-  public final void stop ()
-    throws JugglerResourceException {
+  public final void stop () {
 
     stop(null);
   }
 
   @Override
-  public void stop (Method method, Object... args)
-    throws JugglerResourceException {
+  public void stop (Method method, Object... args) {
 
   }
 
-  public final void close ()
-    throws JugglerResourceException {
+  public final void close () {
 
     close(null);
   }
 
   @Override
-  public void close (Method method, Object... args)
-    throws JugglerResourceException {
+  public void close (Method method, Object... args) {
 
   }
 }

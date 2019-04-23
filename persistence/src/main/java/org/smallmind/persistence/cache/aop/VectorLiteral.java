@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2008, 2009, 2010, 2011, 2012, 2013, 2014, 2015, 2016, 2017 David Berkman
+ * Copyright (c) 2007, 2008, 2009, 2010, 2011, 2012, 2013, 2014, 2015, 2016, 2017, 2018, 2019 David Berkman
  * 
  * This file is part of the SmallMind Code Project.
  * 
@@ -38,30 +38,18 @@ public class VectorLiteral extends AnnotationLiteral<Vector> implements Vector {
 
   private String namespace;
   private Key[] keys;
-  private String classifier;
-  private boolean asParameter;
+  private Classifier classifier;
 
   public VectorLiteral (String namespace, Key[] keys) {
 
-    this(namespace, keys, "", false);
+    this(namespace, keys, new ClassifierLiteral(""));
   }
 
-  public VectorLiteral (String namespace, Key[] keys, String classifier) {
+  public VectorLiteral (String namespace, Key[] keys, Classifier classifier) {
 
-    this(namespace, keys, classifier, false);
-  }
-
-  public VectorLiteral (String namespace, Key[] keys, boolean asParameter) {
-
-    this(namespace, keys, "", asParameter);
-  }
-
-  public VectorLiteral (String namespace, Key[] keys, String classifier, boolean asParameter) {
-
-    this.namespace = namespace();
+    this.namespace = namespace;
     this.keys = keys;
     this.classifier = classifier;
-    this.asParameter = asParameter;
   }
 
   @Override
@@ -77,14 +65,8 @@ public class VectorLiteral extends AnnotationLiteral<Vector> implements Vector {
   }
 
   @Override
-  public String classifier () {
+  public Classifier classifier () {
 
     return classifier;
-  }
-
-  @Override
-  public boolean asParameter () {
-
-    return asParameter;
   }
 }

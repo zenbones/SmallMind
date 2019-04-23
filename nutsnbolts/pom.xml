@@ -4,7 +4,7 @@
   <parent>
     <groupId>org.smallmind</groupId>
     <artifactId>smallmind</artifactId>
-    <version>3.3.5-SNAPSHOT</version>
+    <version>3.3.17-SNAPSHOT</version>
   </parent>
   <artifactId>smallmind-nutsnbolts</artifactId>
   <packaging>jar</packaging>
@@ -13,7 +13,7 @@
   <dependencies>
     <dependency>
       <groupId>javax.mail</groupId>
-      <artifactId>mail</artifactId>
+      <artifactId>javax.mail-api</artifactId>
       <scope>compile</scope>
       <optional>true</optional>
     </dependency>

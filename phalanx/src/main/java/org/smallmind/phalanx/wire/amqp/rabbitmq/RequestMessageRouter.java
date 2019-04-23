@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2008, 2009, 2010, 2011, 2012, 2013, 2014, 2015, 2016, 2017 David Berkman
+ * Copyright (c) 2007, 2008, 2009, 2010, 2011, 2012, 2013, 2014, 2015, 2016, 2017, 2018, 2019 David Berkman
  * 
  * This file is part of the SmallMind Code Project.
  * 
@@ -38,7 +38,6 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import com.rabbitmq.client.AMQP;
-import com.rabbitmq.client.Channel;
 import com.rabbitmq.client.DefaultConsumer;
 import com.rabbitmq.client.Envelope;
 import org.smallmind.instrument.ChronometerInstrument;
@@ -64,10 +63,11 @@ public class RequestMessageRouter extends MessageRouter {
   private final RabbitMQRequestTransport requestTransport;
   private final SignalCodec signalCodec;
   private final String callerId;
+  private final boolean autoAcknowledge;
   private final int index;
   private final int ttlSeconds;
 
-  public RequestMessageRouter (RabbitMQConnector connector, NameConfiguration nameConfiguration, RabbitMQRequestTransport requestTransport, SignalCodec signalCodec, String callerId, int index, int ttlSeconds) {
+  public RequestMessageRouter (RabbitMQConnector connector, NameConfiguration nameConfiguration, RabbitMQRequestTransport requestTransport, SignalCodec signalCodec, String callerId, int index, int ttlSeconds, boolean autoAcknowledge) {
 
     super(connector, nameConfiguration);
 
@@ -76,23 +76,19 @@ public class RequestMessageRouter extends MessageRouter {
     this.callerId = callerId;
     this.index = index;
     this.ttlSeconds = ttlSeconds;
+    this.autoAcknowledge = autoAcknowledge;
   }
 
   @Override
   public final void bindQueues ()
     throws IOException {
 
-    operate(new ChannelOperation() {
+    operate((channel) -> {
 
-      @Override
-      public void execute (Channel channel)
-        throws IOException {
+      String queueName;
 
-        String queueName;
-
-        channel.queueDeclare(queueName = getResponseQueueName() + "-" + callerId, false, false, true, null);
-        channel.queueBind(queueName, getResponseExchangeName(), "response-" + callerId);
-      }
+      channel.queueDeclare(queueName = getResponseQueueName() + "-" + callerId, false, false, true, null);
+      channel.queueBind(queueName, getResponseExchangeName(), "response-" + callerId);
     });
   }
 
@@ -100,39 +96,42 @@ public class RequestMessageRouter extends MessageRouter {
   public void installConsumer ()
     throws IOException {
 
-    operate(new ChannelOperation() {
+    operate((channel) -> {
 
-      @Override
-      public void execute (Channel channel)
-        throws IOException {
+      channel.basicConsume(getResponseQueueName() + "-" + callerId, autoAcknowledge, getResponseQueueName() + "-" + callerId + "[" + index + "]", false, false, null, new DefaultConsumer(channel) {
 
-        channel.basicConsume(getResponseQueueName() + "-" + callerId, true, getResponseQueueName() + "-" + callerId + "[" + index + "]", false, false, null, new DefaultConsumer(channel) {
+        @Override
+        public synchronized void handleDelivery (String consumerTag, Envelope envelope, final AMQP.BasicProperties properties, final byte[] body) {
 
-          @Override
-          public synchronized void handleDelivery (String consumerTag, Envelope envelope, final AMQP.BasicProperties properties, final byte[] body) {
+          try {
 
-            try {
+            long timeInTopic = System.currentTimeMillis() - getTimestamp(properties);
 
-              long timeInTopic = System.currentTimeMillis() - getTimestamp(properties);
+            LoggerManager.getLogger(ResponseMessageRouter.class).debug("response message received(%s) in %d ms...", properties.getMessageId(), timeInTopic);
+            InstrumentationManager.instrumentWithChronometer(requestTransport.getMetricConfiguration(), (timeInTopic >= 0) ? timeInTopic : 0, TimeUnit.MILLISECONDS, new MetricProperty("queue", MetricInteraction.RESPONSE_TRANSIT_TIME.getDisplay()));
 
-              LoggerManager.getLogger(ResponseMessageRouter.class).debug("response message received(%s) in %d ms...", properties.getMessageId(), timeInTopic);
-              InstrumentationManager.instrumentWithChronometer(requestTransport, (timeInTopic >= 0) ? timeInTopic : 0, TimeUnit.MILLISECONDS, new MetricProperty("queue", MetricInteraction.RESPONSE_TRANSIT_TIME.getDisplay()));
+            InstrumentationManager.execute(new ChronometerInstrument(requestTransport.getMetricConfiguration(), new MetricProperty("event", MetricInteraction.COMPLETE_CALLBACK.getDisplay())) {
 
-              InstrumentationManager.execute(new ChronometerInstrument(requestTransport, new MetricProperty("event", MetricInteraction.COMPLETE_CALLBACK.getDisplay())) {
+              @Override
+              public void withChronometer ()
+                throws Exception {
 
-                @Override
-                public void withChronometer ()
-                  throws Exception {
-
-                  requestTransport.completeCallback(properties.getCorrelationId(), signalCodec.decode(body, 0, body.length, ResultSignal.class));
-                }
-              });
-            } catch (Exception exception) {
-              LoggerManager.getLogger(ResponseMessageRouter.class).error(exception);
+                requestTransport.completeCallback(properties.getCorrelationId(), signalCodec.decode(body, 0, body.length, ResultSignal.class));
+              }
+            });
+          } catch (Exception exception) {
+            LoggerManager.getLogger(ResponseMessageRouter.class).error(exception);
+          } finally {
+            if (!autoAcknowledge) {
+              try {
+                channel.basicAck(envelope.getDeliveryTag(), true);
+              } catch (IOException ioException) {
+                LoggerManager.getLogger(ResponseMessageRouter.class).error(ioException);
+              }
             }
           }
-        });
-      }
+        }
+      });
     });
   }
 
@@ -154,7 +153,7 @@ public class RequestMessageRouter extends MessageRouter {
   private RabbitMQMessage constructMessage (final boolean inOnly, final Address address, final Map<String, Object> arguments, final WireContext... contexts)
     throws Throwable {
 
-    return InstrumentationManager.execute(new ChronometerInstrumentAndReturn<RabbitMQMessage>(requestTransport, new MetricProperty("event", MetricInteraction.CONSTRUCT_MESSAGE.getDisplay())) {
+    return InstrumentationManager.execute(new ChronometerInstrumentAndReturn<RabbitMQMessage>(requestTransport.getMetricConfiguration(), new MetricProperty("event", MetricInteraction.CONSTRUCT_MESSAGE.getDisplay())) {
 
       @Override
       public RabbitMQMessage withChronometer ()

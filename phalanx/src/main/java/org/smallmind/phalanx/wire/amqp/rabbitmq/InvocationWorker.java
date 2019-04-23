@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2008, 2009, 2010, 2011, 2012, 2013, 2014, 2015, 2016, 2017 David Berkman
+ * Copyright (c) 2007, 2008, 2009, 2010, 2011, 2012, 2013, 2014, 2015, 2016, 2017, 2018, 2019 David Berkman
  * 
  * This file is part of the SmallMind Code Project.
  * 
@@ -33,7 +33,6 @@
 package org.smallmind.phalanx.wire.amqp.rabbitmq;
 
 import java.util.Map;
-import javax.jms.JMSException;
 import org.smallmind.instrument.ChronometerInstrument;
 import org.smallmind.instrument.InstrumentationManager;
 import org.smallmind.instrument.MetricProperty;
@@ -70,7 +69,7 @@ public class InvocationWorker extends Worker<RabbitMQMessage> {
     final InvocationSignal invocationSignal;
 
     invocationSignal = signalCodec.decode(message.getBody(), 0, message.getBody().length, InvocationSignal.class);
-    InstrumentationManager.execute(new ChronometerInstrument(this, new MetricProperty("operation", "invoke"), new MetricProperty("service", invocationSignal.getAddress().getService()), new MetricProperty("method", invocationSignal.getAddress().getFunction().getName())) {
+    InstrumentationManager.execute(new ChronometerInstrument(getMetricConfiguration(), new MetricProperty("operation", "invoke"), new MetricProperty("service", invocationSignal.getAddress().getService()), new MetricProperty("method", invocationSignal.getAddress().getFunction().getName())) {
 
       @Override
       public void withChronometer () {

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2008, 2009, 2010, 2011, 2012, 2013, 2014, 2015, 2016, 2017 David Berkman
+ * Copyright (c) 2007, 2008, 2009, 2010, 2011, 2012, 2013, 2014, 2015, 2016, 2017, 2018, 2019 David Berkman
  * 
  * This file is part of the SmallMind Code Project.
  * 
@@ -39,7 +39,6 @@ import me.prettyprint.cassandra.connection.RoundRobinBalancingPolicy;
 import me.prettyprint.cassandra.model.ConfigurableConsistencyLevel;
 import me.prettyprint.cassandra.service.CassandraHostConfigurator;
 import me.prettyprint.cassandra.service.ThriftCluster;
-import me.prettyprint.hector.api.Cluster;
 import me.prettyprint.hector.api.HConsistencyLevel;
 import me.prettyprint.hector.api.Keyspace;
 import me.prettyprint.hector.api.factory.HFactory;
@@ -140,8 +139,7 @@ public class KeyspaceFactoryBean implements FactoryBean<Keyspace>, InitializingB
 
       if ((poundPos = serverPattern.indexOf('#')) < 0) {
         serverBuilder.append(serverPattern);
-      }
-      else {
+      } else {
 
         boolean first = true;
 

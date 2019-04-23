@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2008, 2009, 2010, 2011, 2012, 2013, 2014, 2015, 2016, 2017 David Berkman
+ * Copyright (c) 2007, 2008, 2009, 2010, 2011, 2012, 2013, 2014, 2015, 2016, 2017, 2018, 2019 David Berkman
  * 
  * This file is part of the SmallMind Code Project.
  * 
@@ -102,18 +102,16 @@ public class IntrinsicRosterStructure<T> {
     if (size == 0) {
       head = prev;
       tail = next;
-    }
-    else if (head == current) {
+    } else if (head == current) {
       head = next;
-    }
-    else if (tail == current) {
+    } else if (tail == current) {
       tail = prev;
     }
   }
 
   public void ouroboros (T element) {
 
-    IntrinsicRosterNode<T> added = new IntrinsicRosterNode<T>(element, head, tail);
+    IntrinsicRosterNode<T> added = new IntrinsicRosterNode<>(element, head, tail);
 
     if (head != null) {
       head.setNext(added);

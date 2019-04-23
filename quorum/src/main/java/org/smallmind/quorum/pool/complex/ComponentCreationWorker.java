@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2008, 2009, 2010, 2011, 2012, 2013, 2014, 2015, 2016, 2017 David Berkman
+ * Copyright (c) 2007, 2008, 2009, 2010, 2011, 2012, 2013, 2014, 2015, 2016, 2017, 2018, 2019 David Berkman
  * 
  * This file is part of the SmallMind Code Project.
  * 
@@ -38,7 +38,7 @@ import org.smallmind.scribe.pen.LoggerManager;
 
 public class ComponentCreationWorker<C> implements Runnable {
 
-  private static enum State {COMPLETED, ABORTED, TERMINATED}
+  private enum State {COMPLETED, ABORTED, TERMINATED}
 
   private final CountDownLatch terminationLatch = new CountDownLatch(1);
   private final ComponentPool<C> componentPool;
@@ -76,9 +76,14 @@ public class ComponentCreationWorker<C> implements Runnable {
   public void run () {
 
     try {
+
+      long startMilliseconds = System.currentTimeMillis();
+      long totalMilliseconds;
+
       componentInstance = componentPool.getComponentInstanceFactory().createInstance(componentPool);
       if ((!stateRef.compareAndSet(null, State.COMPLETED)) && (componentInstance != null)) {
-        LoggerManager.getLogger(ComponentCreationWorker.class).error("Completed connection is being closed due to a request in the %s state - you may want to increase the connection wait time", stateRef.get().name());
+        totalMilliseconds = System.currentTimeMillis() - startMilliseconds;
+        LoggerManager.getLogger(ComponentCreationWorker.class).error("Completed connection(%d ms) is being closed due to a request in the %s state - you may want to increase the connection wait time", totalMilliseconds, stateRef.get().name());
         componentInstance.close();
       }
     } catch (Exception exception) {
