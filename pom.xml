@@ -124,7 +124,7 @@
     <module>phalanx</module>
     <module>quorum</module>
     <module>seda</module>
-    <module>scheduling</module>
+    <module>schedule</module>
     <module>scribe</module>
     <module>sleuth</module>
     <module>spark</module>
@@ -197,7 +197,7 @@
       </dependency>
       <dependency>
         <groupId>org.smallmind</groupId>
-        <artifactId>scheduling-base</artifactId>
+        <artifactId>schedule-base</artifactId>
         <version>${project.version}</version>
       </dependency>
       <dependency>

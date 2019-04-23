@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.springframework.org/schema/beans
+           http://www.springframework.org/schema/beans/spring-beans-3.0.xsd">
+
+  <bean id="group.nameDetail" class="org.quartz.impl.JobDetailImpl">
+    <property name="description" value="Description of detail"/>
+    <property name="group" value="group"/>
+    <property name="name" value="nameJob"/>
+    <property name="jobClass" value="jobClass"/>
+    <property name="durability" value="true"/>
+    <property name="requestsRecovery" value="false"/>
+  </bean>
+
+  <bean id="group.nameTrigger" class="org.quartz.impl.triggers.CronTriggerImpl">
+    <property name="description" value="Run every 10 minutes"/>
+    <property name="group" value="group"/>
+    <property name="name" value="nameTrigger"/>
+    <property name="jobGroup" value="group"/>
+    <property name="jobName" value="nameJob"/>
+    <property name="cronExpression" value="0 0/10 * * * ?"/>
+  </bean>
+
+  <bean id="group.nameJob" class="jobClass" scope="prototype"/>
+
+  <bean class="org.smallmind.schedule.quartz.spring.CronJobInitializingBean">
+    <property name="scheduler" ref="scheduler"/>
+    <property name="jobMap">
+      <map>
+        <entry key-ref="group.nameDetail">
+          <list>
+            <ref bean="group.nameTrigger"/>
+          </list>
+        </entry>
+      </map>
+    </property>
+  </bean>
+
+</beans>
