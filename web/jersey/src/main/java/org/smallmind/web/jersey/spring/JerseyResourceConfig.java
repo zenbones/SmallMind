@@ -33,22 +33,32 @@
 package org.smallmind.web.jersey.spring;
 
 import org.glassfish.jersey.server.ResourceConfig;
+import org.smallmind.web.jersey.json.JsonProvider;
 import org.springframework.context.ApplicationContext;
 
-public class SpringBasedResourceConfig extends ResourceConfig {
+public class JerseyResourceConfig extends ResourceConfig {
 
-  public SpringBasedResourceConfig (ApplicationContext applicationContext) {
+  public JerseyResourceConfig (ApplicationContext applicationContext, ResourceConfigExtension[] extensions) {
 
     if (applicationContext == null) {
       throw new SpringHK2IntegrationException("Spring application context must not be 'null'");
+    } else {
+
+      HK2ResourceBeanPostProcessor hk2ResourceBeanPostProcessor;
+
+      if ((hk2ResourceBeanPostProcessor = applicationContext.getBean(HK2ResourceBeanPostProcessor.class)) == null) {
+        throw new SpringHK2IntegrationException("Spring application context must include the %s", HK2ResourceBeanPostProcessor.class.getSimpleName());
+      }
+
+      register(JsonProvider.class);
+
+      if (extensions != null) {
+        for (ResourceConfigExtension extension : extensions) {
+          extension.apply(this);
+        }
+      }
+
+      hk2ResourceBeanPostProcessor.registerResources(this);
     }
-
-    HK2ResourceBeanPostProcessor hk2ResourceBeanPostProcessor;
-
-    if ((hk2ResourceBeanPostProcessor = applicationContext.getBean(HK2ResourceBeanPostProcessor.class)) == null) {
-      throw new SpringHK2IntegrationException("Spring application context must include the %s", HK2ResourceBeanPostProcessor.class.getSimpleName());
-    }
-
-    hk2ResourceBeanPostProcessor.registerResourceConfig(this);
   }
 }

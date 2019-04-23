@@ -58,8 +58,8 @@ import org.smallmind.nutsnbolts.lang.web.PerApplicationContextFilter;
 import org.smallmind.nutsnbolts.resource.ResourceException;
 import org.smallmind.scribe.pen.LoggerManager;
 import org.smallmind.web.grizzly.tyrus.TyrusWebSocketAddOn;
-import org.smallmind.web.jersey.json.JsonResourceConfig;
 import org.smallmind.web.jersey.spring.ExposedApplicationContext;
+import org.smallmind.web.jersey.spring.JerseyResourceConfig;
 import org.smallmind.web.jersey.spring.ResourceConfigExtension;
 import org.springframework.beans.factory.DisposableBean;
 import org.springframework.beans.factory.config.BeanPostProcessor;
@@ -279,7 +279,7 @@ public class GrizzlyInitializingBean implements DisposableBean, ApplicationConte
       }
 
       if (includeJaxRsSupport) {
-        webappContext.addServlet("JAX-RS Application", new ServletContainer(new JsonResourceConfig(ExposedApplicationContext.getApplicationContext(), resourceConfigExtensions))).addMapping(restPath + "/*");
+        webappContext.addServlet("JAX-RS Application", new ServletContainer(new JerseyResourceConfig(ExposedApplicationContext.getApplicationContext(), resourceConfigExtensions))).addMapping(restPath + "/*");
         webappContext.addFilter("per-application-data", new PerApplicationContextFilter()).addMappingForUrlPatterns(EnumSet.of(DispatcherType.REQUEST), restPath + "/*");
       }
 
