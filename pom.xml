@@ -109,7 +109,7 @@
 
   <modules>
     <module>artifact</module>
-    <module>batching</module>
+    <module>batch</module>
     <module>forge</module>
     <module>foundation</module>
     <module>instrument</module>
@@ -200,7 +200,7 @@
       </dependency>
       <dependency>
         <groupId>org.smallmind</groupId>
-        <artifactId>batching-base</artifactId>
+        <artifactId>batch-base</artifactId>
         <version>${project.version}</version>
       </dependency>
       <dependency>
