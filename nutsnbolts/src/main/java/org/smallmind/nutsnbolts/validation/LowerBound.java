@@ -32,41 +32,42 @@
  */
 package org.smallmind.nutsnbolts.validation;
 
-import javax.validation.ConstraintValidator;
-import javax.validation.ConstraintValidatorContext;
-import org.smallmind.nutsnbolts.reflection.bean.BeanAccessException;
-import org.smallmind.nutsnbolts.reflection.bean.BeanInvocationException;
-import org.smallmind.nutsnbolts.reflection.bean.BeanUtility;
-import org.smallmind.nutsnbolts.util.NumberComparator;
+import java.lang.annotation.Documented;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
+import javax.validation.Constraint;
+import javax.validation.Payload;
 
-public class ThisGreaterThanThatValidator implements ConstraintValidator<ThisGreaterThanThat, Object> {
+import static java.lang.annotation.ElementType.ANNOTATION_TYPE;
+import static java.lang.annotation.ElementType.TYPE;
+import static java.lang.annotation.RetentionPolicy.RUNTIME;
 
-  private static final NumberComparator NUMBER_COMPARATOR = new NumberComparator();
+@Documented
+@Retention(RetentionPolicy.RUNTIME)
+@Target({TYPE, ANNOTATION_TYPE})
+@Constraint(validatedBy = LowerBoundValidator.class)
+public @interface LowerBound {
 
-  private ThisGreaterThanThat constraintAnnotation;
+  @Target({TYPE, ANNOTATION_TYPE})
+  @Retention(RUNTIME)
+  @Documented
+  @interface List {
 
-  @Override
-  public void initialize (ThisGreaterThanThat constraintAnnotation) {
-
-    this.constraintAnnotation = constraintAnnotation;
+    LowerBound[] value ();
   }
 
-  @Override
-  public boolean isValid (Object value, ConstraintValidatorContext context) {
+  String message () default "'The {first}' field must be >= '{second}' field offset by {value}";
 
-    if (value == null) {
-      return true;
-    } else {
+  Class<?>[] groups () default {};
 
-      try {
+  Class<? extends Payload>[] payload () default {};
 
-        Number number1 = (Number)BeanUtility.executeGet(value, constraintAnnotation.first(), false);
-        Number number2 = (Number)BeanUtility.executeGet(value, constraintAnnotation.second(), false);
+  String first ();
 
-        return ((number1 == null) || (number2 == null)) ? !constraintAnnotation.notNull() : NUMBER_COMPARATOR.compare(number1, number2) > 0;
-      } catch (BeanAccessException | BeanInvocationException exception) {
-        throw new RuntimeException(exception);
-      }
-    }
-  }
+  String second ();
+
+  boolean notNull () default false;
+
+  int value () default 0;
 }

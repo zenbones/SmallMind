@@ -32,40 +32,41 @@
  */
 package org.smallmind.nutsnbolts.validation;
 
-import java.lang.annotation.Documented;
-import java.lang.annotation.Retention;
-import java.lang.annotation.RetentionPolicy;
-import java.lang.annotation.Target;
-import javax.validation.Constraint;
-import javax.validation.Payload;
+import javax.validation.ConstraintValidator;
+import javax.validation.ConstraintValidatorContext;
+import org.smallmind.nutsnbolts.reflection.bean.BeanAccessException;
+import org.smallmind.nutsnbolts.reflection.bean.BeanInvocationException;
+import org.smallmind.nutsnbolts.reflection.bean.BeanUtility;
+import org.smallmind.nutsnbolts.util.NumberComparator;
 
-import static java.lang.annotation.ElementType.ANNOTATION_TYPE;
-import static java.lang.annotation.ElementType.TYPE;
-import static java.lang.annotation.RetentionPolicy.RUNTIME;
+public class LowerBoundValidator implements ConstraintValidator<LowerBound, Object> {
 
-@Documented
-@Retention(RetentionPolicy.RUNTIME)
-@Target({TYPE, ANNOTATION_TYPE})
-@Constraint(validatedBy = ThisGreaterThanThatValidator.class)
-public @interface ThisGreaterThanThat {
+  private static final NumberComparator NUMBER_COMPARATOR = new NumberComparator();
 
-  @Target({TYPE, ANNOTATION_TYPE})
-  @Retention(RUNTIME)
-  @Documented
-  @interface List {
+  private LowerBound constraintAnnotation;
 
-    ThisGreaterThanThat[] value ();
+  @Override
+  public void initialize (LowerBound constraintAnnotation) {
+
+    this.constraintAnnotation = constraintAnnotation;
   }
 
-  String message () default "the '{first}' field must be greater than the '{second}' field";
+  @Override
+  public boolean isValid (Object value, ConstraintValidatorContext context) {
 
-  Class<?>[] groups () default {};
+    if (value == null) {
+      return true;
+    } else {
 
-  Class<? extends Payload>[] payload () default {};
+      try {
 
-  String first ();
+        Number number1 = (Number)BeanUtility.executeGet(value, constraintAnnotation.first(), false);
+        Number number2 = (Number)BeanUtility.executeGet(value, constraintAnnotation.second(), false);
 
-  String second ();
-
-  boolean notNull () default false;
+        return ((number1 == null) || (number2 == null)) ? !constraintAnnotation.notNull() : NUMBER_COMPARATOR.compare(number1, number2) >= constraintAnnotation.value();
+      } catch (BeanAccessException | BeanInvocationException exception) {
+        throw new RuntimeException(exception);
+      }
+    }
+  }
 }
