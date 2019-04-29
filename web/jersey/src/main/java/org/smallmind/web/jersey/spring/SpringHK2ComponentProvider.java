@@ -34,7 +34,6 @@ package org.smallmind.web.jersey.spring;
 
 import java.util.Set;
 import java.util.function.Supplier;
-import javax.servlet.ServletContext;
 import org.glassfish.jersey.inject.hk2.ImmediateHk2InjectionManager;
 import org.glassfish.jersey.internal.inject.Binding;
 import org.glassfish.jersey.internal.inject.Bindings;
@@ -57,8 +56,6 @@ public class SpringHK2ComponentProvider implements ComponentProvider {
   public void initialize (InjectionManager injectionManager) {
 
     this.injectionManager = injectionManager;
-
-    ServletContext sc = injectionManager.getInstance(ServletContext.class);
 
     LoggerManager.getLogger(SpringHK2ComponentProvider.class).info("Searching for Spring application context on Thread(%s)", Thread.currentThread().getName());
     if ((applicationContext = ExposedApplicationContext.getApplicationContext()) == null) {
