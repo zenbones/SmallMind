@@ -65,16 +65,16 @@ public class BatchJobFactory implements JobFactory {
       for (Map.Entry<String, ProxyParameter<?>> parameterEntry : parameterMap.entrySet()) {
         switch (parameterEntry.getValue().getType()) {
           case DATE:
-            jobParametersBuilder.addDate(parameterEntry.getKey(), ((DateProxyParameter)parameterEntry).getValue());
+            jobParametersBuilder.addDate(parameterEntry.getKey(), ((DateProxyParameter)parameterEntry.getValue()).getValue());
             break;
           case DOUBLE:
-            jobParametersBuilder.addDouble(parameterEntry.getKey(), ((DoubleProxyParameter)parameterEntry).getValue());
+            jobParametersBuilder.addDouble(parameterEntry.getKey(), ((DoubleProxyParameter)parameterEntry.getValue()).getValue());
             break;
           case LONG:
-            jobParametersBuilder.addLong(parameterEntry.getKey(), ((LongProxyParameter)parameterEntry).getValue());
+            jobParametersBuilder.addLong(parameterEntry.getKey(), ((LongProxyParameter)parameterEntry.getValue()).getValue());
             break;
           case STRING:
-            jobParametersBuilder.addString(parameterEntry.getKey(), ((StringProxyParameter)parameterEntry).getValue());
+            jobParametersBuilder.addString(parameterEntry.getKey(), ((StringProxyParameter)parameterEntry.getValue()).getValue());
             break;
           default:
             throw new UnknownSwitchCaseException(parameterEntry.getValue().getType().name());
