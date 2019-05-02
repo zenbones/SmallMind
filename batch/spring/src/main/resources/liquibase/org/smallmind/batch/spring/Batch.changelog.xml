@@ -204,4 +204,20 @@
       <column name="STEP_EXECUTION_ID"/>
     </createIndex>
   </changeSet>
+
+  <changeSet id="2" author="anonymous">
+    <insert tableName="BATCH_JOB_SEQ">
+      <column name="ID" valueNumeric="0"/>
+      <column name="UNIQUE_KEY" valueNumeric="0"/>
+    </insert>
+    <insert tableName="BATCH_JOB_EXECUTION_SEQ">
+      <column name="ID" valueNumeric="0"/>
+      <column name="UNIQUE_KEY" valueNumeric="0"/>
+    </insert>
+    <insert tableName="BATCH_STEP_EXECUTION_SEQ">
+      <column name="ID" valueNumeric="0"/>
+      <column name="UNIQUE_KEY" valueNumeric="0"/>
+    </insert>
+  </changeSet>
+
 </databaseChangeLog>
