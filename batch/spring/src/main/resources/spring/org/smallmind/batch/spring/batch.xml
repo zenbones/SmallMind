@@ -15,8 +15,15 @@
     <property name="maxVarCharLength" value="2500"/>
   </bean>
 
+  <bean id="jobLocator" class="org.smallmind.batch.spring.BatchJobLocator"/>
+
+  <bean id="jobLauncher" class="org.springframework.batch.core.launch.support.SimpleJobLauncher">
+    <property name="jobRepository" value="jobRepository"/>
+  </bean>
+
   <bean id="jobFactory" class="org.smallmind.batch.spring.BatchJobFactory">
-    <property name="jobRepository" ref="jobRepository"/>
+    <property name="jobLocator" ref="jobLocator"/>
+    <property name="jobLauncher" ref="jobLauncher"/>
   </bean>
 
 </beans>

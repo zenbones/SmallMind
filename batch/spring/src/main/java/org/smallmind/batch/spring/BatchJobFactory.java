@@ -41,23 +41,32 @@ import org.smallmind.batch.base.ProxyParameter;
 import org.smallmind.batch.base.StringProxyParameter;
 import org.smallmind.nutsnbolts.lang.UnknownSwitchCaseException;
 import org.springframework.batch.core.JobParametersBuilder;
+import org.springframework.batch.core.JobParametersInvalidException;
+import org.springframework.batch.core.configuration.JobLocator;
+import org.springframework.batch.core.launch.JobLauncher;
+import org.springframework.batch.core.launch.NoSuchJobException;
 import org.springframework.batch.core.repository.JobExecutionAlreadyRunningException;
 import org.springframework.batch.core.repository.JobInstanceAlreadyCompleteException;
-import org.springframework.batch.core.repository.JobRepository;
 import org.springframework.batch.core.repository.JobRestartException;
 
 public class BatchJobFactory implements JobFactory {
 
-  private JobRepository jobRepository;
+  private JobLocator jobLocator;
+  private JobLauncher jobLauncher;
 
-  public void setJobRepository (JobRepository jobRepository) {
+  public void setJobLocator (JobLocator jobLocator) {
 
-    this.jobRepository = jobRepository;
+    this.jobLocator = jobLocator;
+  }
+
+  public void setJobLauncher (JobLauncher jobLauncher) {
+
+    this.jobLauncher = jobLauncher;
   }
 
   @Override
   public void create (String logicalName, Map<String, ProxyParameter<?>> parameterMap)
-    throws JobExecutionAlreadyRunningException, JobRestartException, JobInstanceAlreadyCompleteException {
+    throws NoSuchJobException, JobParametersInvalidException, JobExecutionAlreadyRunningException, JobRestartException, JobInstanceAlreadyCompleteException {
 
     JobParametersBuilder jobParametersBuilder = new JobParametersBuilder();
 
@@ -82,6 +91,6 @@ public class BatchJobFactory implements JobFactory {
       }
     }
 
-    jobRepository.createJobExecution(logicalName, jobParametersBuilder.toJobParameters());
+    jobLauncher.run(jobLocator.getJob(logicalName), jobParametersBuilder.toJobParameters());
   }
 }
