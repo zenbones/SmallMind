@@ -7,7 +7,7 @@
     <version>3.3.17-SNAPSHOT</version>
   </parent>
   <artifactId>batch-spring</artifactId>
-  <name>Batching-Spring</name>
+  <name>Batch-Spring</name>
   <description>Spring Batch Extensions</description>
   <packaging>jar</packaging>
   <dependencies>

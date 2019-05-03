@@ -6,9 +6,9 @@
     <artifactId>smallmind-batch</artifactId>
     <version>3.3.17-SNAPSHOT</version>
   </parent>
-  <artifactId>batch-base</artifactId>
-  <name>Batch-Base</name>
-  <description>Common Batching Framework</description>
+  <artifactId>batch-indigenous</artifactId>
+  <name>Batch-Indigenous</name>
+  <description>Indigenous Batching Implementation</description>
   <packaging>jar</packaging>
   <dependencies>
     <dependency>

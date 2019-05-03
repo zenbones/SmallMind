@@ -17,9 +17,7 @@
 
   <bean id="jobLocator" class="org.smallmind.batch.spring.BatchJobLocator"/>
 
-  <bean id="jobLauncher" class="org.springframework.batch.core.launch.support.SimpleJobLauncher">
-    <property name="jobRepository" value="jobRepository"/>
-  </bean>
+  <bean id="jobLauncher" class="org.smallmind.batch.spring.BatchJobLauncher" depends-on="jobRepository"/>
 
   <bean id="jobFactory" class="org.smallmind.batch.spring.BatchJobFactory">
     <property name="jobLocator" ref="jobLocator"/>
