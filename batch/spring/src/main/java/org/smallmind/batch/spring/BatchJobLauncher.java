@@ -32,6 +32,8 @@
  */
 package org.smallmind.batch.spring;
 
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import org.smallmind.scribe.pen.LoggerManager;
 import org.springframework.batch.core.BatchStatus;
 import org.springframework.batch.core.ExitStatus;
@@ -47,14 +49,13 @@ import org.springframework.batch.core.repository.JobRepository;
 import org.springframework.batch.core.repository.JobRestartException;
 import org.springframework.context.ApplicationListener;
 import org.springframework.context.event.ContextRefreshedEvent;
-import org.springframework.core.task.SyncTaskExecutor;
 import org.springframework.core.task.TaskExecutor;
 import org.springframework.core.task.TaskRejectedException;
 
 public class BatchJobLauncher implements JobLauncher, ApplicationListener<ContextRefreshedEvent> {
 
   private JobRepository jobRepository;
-  private TaskExecutor taskExecutor = new SyncTaskExecutor();
+  private ExecutorService taskExecutor = Executors.newSingleThreadExecutor();
 
   @Override
   public void onApplicationEvent (ContextRefreshedEvent event) {
