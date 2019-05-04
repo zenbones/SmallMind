@@ -51,7 +51,4 @@
     </property>
   </bean>
 
-  <!-- AspectJ Transaction Management -->
-  <bean id="transactionManagerAspect" class="org.smallmind.persistence.orm.aop.TransactionalAspect" factory-method="aspectOf"/>
-
 </beans>
