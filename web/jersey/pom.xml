@@ -48,8 +48,8 @@
       <scope>runtime</scope>
     </dependency>
     <dependency>
-      <groupId>org.glassfish.web</groupId>
-      <artifactId>el-impl</artifactId>
+      <groupId>org.glassfish</groupId>
+      <artifactId>javax.el</artifactId>
       <scope>runtime</scope>
     </dependency>
     <dependency>
