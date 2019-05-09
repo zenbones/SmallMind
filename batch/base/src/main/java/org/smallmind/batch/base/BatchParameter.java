@@ -32,19 +32,19 @@
  */
 package org.smallmind.batch.base;
 
-import java.util.Date;
+public abstract class BatchParameter<T> {
 
-public class DateProxyParameter extends ProxyParameter<Date> {
+  private T value;
 
-  public DateProxyParameter (Date value) {
+  public BatchParameter (T value) {
 
-    super(value);
+    this.value = value;
   }
 
-  @Override
-  public ParameterType getType () {
+  public abstract ParameterType getType ();
 
-    return ParameterType.DATE;
+  public T getValue () {
+
+    return value;
   }
 }
-

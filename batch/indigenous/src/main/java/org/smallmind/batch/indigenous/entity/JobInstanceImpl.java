@@ -30,8 +30,8 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.batch.base;
+package org.smallmind.batch.indigenous.entity;
 
-public interface ProxyStep {
+public class JobInstanceImpl {
 
 }

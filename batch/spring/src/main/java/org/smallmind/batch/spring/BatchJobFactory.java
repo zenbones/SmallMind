@@ -33,12 +33,12 @@
 package org.smallmind.batch.spring;
 
 import java.util.Map;
-import org.smallmind.batch.base.DateProxyParameter;
-import org.smallmind.batch.base.DoubleProxyParameter;
+import org.smallmind.batch.base.DateBatchParameter;
+import org.smallmind.batch.base.DoubleBatchParameter;
 import org.smallmind.batch.base.JobFactory;
-import org.smallmind.batch.base.LongProxyParameter;
-import org.smallmind.batch.base.ProxyParameter;
-import org.smallmind.batch.base.StringProxyParameter;
+import org.smallmind.batch.base.LongBatchParameter;
+import org.smallmind.batch.base.BatchParameter;
+import org.smallmind.batch.base.StringBatchParameter;
 import org.smallmind.nutsnbolts.lang.UnknownSwitchCaseException;
 import org.springframework.batch.core.JobParametersBuilder;
 import org.springframework.batch.core.JobParametersInvalidException;
@@ -65,25 +65,25 @@ public class BatchJobFactory implements JobFactory {
   }
 
   @Override
-  public void create (String logicalName, Map<String, ProxyParameter<?>> parameterMap)
+  public void create (String logicalName, Map<String, BatchParameter<?>> parameterMap)
     throws NoSuchJobException, JobParametersInvalidException, JobExecutionAlreadyRunningException, JobRestartException, JobInstanceAlreadyCompleteException {
 
     JobParametersBuilder jobParametersBuilder = new JobParametersBuilder();
 
     if (parameterMap != null) {
-      for (Map.Entry<String, ProxyParameter<?>> parameterEntry : parameterMap.entrySet()) {
+      for (Map.Entry<String, BatchParameter<?>> parameterEntry : parameterMap.entrySet()) {
         switch (parameterEntry.getValue().getType()) {
           case DATE:
-            jobParametersBuilder.addDate(parameterEntry.getKey(), ((DateProxyParameter)parameterEntry.getValue()).getValue());
+            jobParametersBuilder.addDate(parameterEntry.getKey(), ((DateBatchParameter)parameterEntry.getValue()).getValue());
             break;
           case DOUBLE:
-            jobParametersBuilder.addDouble(parameterEntry.getKey(), ((DoubleProxyParameter)parameterEntry.getValue()).getValue());
+            jobParametersBuilder.addDouble(parameterEntry.getKey(), ((DoubleBatchParameter)parameterEntry.getValue()).getValue());
             break;
           case LONG:
-            jobParametersBuilder.addLong(parameterEntry.getKey(), ((LongProxyParameter)parameterEntry.getValue()).getValue());
+            jobParametersBuilder.addLong(parameterEntry.getKey(), ((LongBatchParameter)parameterEntry.getValue()).getValue());
             break;
           case STRING:
-            jobParametersBuilder.addString(parameterEntry.getKey(), ((StringProxyParameter)parameterEntry.getValue()).getValue());
+            jobParametersBuilder.addString(parameterEntry.getKey(), ((StringBatchParameter)parameterEntry.getValue()).getValue());
             break;
           default:
             throw new UnknownSwitchCaseException(parameterEntry.getValue().getType().name());

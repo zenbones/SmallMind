@@ -32,9 +32,9 @@
  */
 package org.smallmind.batch.base;
 
-public class DoubleProxyParameter extends ProxyParameter<Double> {
+public class DoubleBatchParameter extends BatchParameter<Double> {
 
-  public DoubleProxyParameter (Double value) {
+  public DoubleBatchParameter (Double value) {
 
     super(value);
   }

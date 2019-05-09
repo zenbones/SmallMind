@@ -36,6 +36,6 @@ import java.util.Map;
 
 public interface JobFactory {
 
-  void create(String logicalName, Map<String, ProxyParameter<?>> parameterMap)
+  void create(String logicalName, Map<String, BatchParameter<?>> parameterMap)
     throws Exception;
 }

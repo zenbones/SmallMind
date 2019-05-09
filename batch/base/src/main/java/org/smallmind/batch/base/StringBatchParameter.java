@@ -32,9 +32,9 @@
  */
 package org.smallmind.batch.base;
 
-public class LongProxyParameter extends ProxyParameter<Long> {
+public class StringBatchParameter extends BatchParameter<String> {
 
-  public LongProxyParameter (Long value) {
+  public StringBatchParameter (String value) {
 
     super(value);
   }
@@ -42,7 +42,6 @@ public class LongProxyParameter extends ProxyParameter<Long> {
   @Override
   public ParameterType getType () {
 
-    return ParameterType.LONG;
+    return ParameterType.STRING;
   }
 }
-

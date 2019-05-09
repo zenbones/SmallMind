@@ -30,8 +30,19 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.batch.indigenous.entity;
+package org.smallmind.batch.base;
 
-public class BatchJobInstance {
+public class LongBatchParameter extends BatchParameter<Long> {
 
+  public LongBatchParameter (Long value) {
+
+    super(value);
+  }
+
+  @Override
+  public ParameterType getType () {
+
+    return ParameterType.LONG;
+  }
 }
+

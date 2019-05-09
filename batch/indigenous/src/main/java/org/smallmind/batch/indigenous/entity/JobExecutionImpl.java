@@ -30,18 +30,8 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.batch.base;
+package org.smallmind.batch.indigenous.entity;
 
-public class StringProxyParameter extends ProxyParameter<String> {
+public class JobExecutionImpl {
 
-  public StringProxyParameter (String value) {
-
-    super(value);
-  }
-
-  @Override
-  public ParameterType getType () {
-
-    return ParameterType.STRING;
-  }
 }

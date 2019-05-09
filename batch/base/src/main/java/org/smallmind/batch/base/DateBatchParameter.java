@@ -33,27 +33,18 @@
 package org.smallmind.batch.base;
 
 import java.util.Date;
-import java.util.HashMap;
 
-public class ProxyParameters extends HashMap<String, ProxyParameter<?>> {
+public class DateBatchParameter extends BatchParameter<Date> {
 
-  public void putDate (String key, Date aDate) {
+  public DateBatchParameter (Date value) {
 
-    put(key, new DateProxyParameter(aDate));
+    super(value);
   }
 
-  public void putDouble (String key, Double aDouble) {
+  @Override
+  public ParameterType getType () {
 
-    put(key, new DoubleProxyParameter(aDouble));
-  }
-
-  public void putLong (String key, Long aLong) {
-
-    put(key, new LongProxyParameter(aLong));
-  }
-
-  public void putString (String key, String aString) {
-
-    put(key, new StringProxyParameter(aString));
+    return ParameterType.DATE;
   }
 }
+
