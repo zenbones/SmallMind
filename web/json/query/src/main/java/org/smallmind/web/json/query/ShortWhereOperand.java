@@ -75,7 +75,7 @@ public class ShortWhereOperand extends WhereOperand<Short> {
   @XmlTransient
   public Short get () {
 
-    return null;
+    return value;
   }
 
   @XmlElement(name = "value", required = true)

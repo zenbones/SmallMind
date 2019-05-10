@@ -75,7 +75,7 @@ public class StringWhereOperand extends WhereOperand<String> {
   @XmlTransient
   public String get () {
 
-    return null;
+    return value;
   }
 
   @XmlElement(name = "value", required = true)

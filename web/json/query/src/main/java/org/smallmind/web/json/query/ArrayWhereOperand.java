@@ -166,124 +166,124 @@ public class ArrayWhereOperand extends WhereOperand<Object[]> {
     if (value == null) {
 
       return null;
-    }
+    } else {
+      switch (hint.getHintType()) {
+        case COMPONENT:
+          switch (((ComponentHint)hint).getType()) {
+            case BOOLEAN:
 
-    switch (hint.getHintType()) {
-      case COMPONENT:
-        switch (((ComponentHint)hint).getType()) {
-          case BOOLEAN:
+              Boolean[] booleanArray = new Boolean[value.size()];
 
-            Boolean[] booleanArray = new Boolean[value.size()];
+              for (int index = 0; index < value.size(); index++) {
+                booleanArray[index] = JsonCodec.convert(value.get(index), Boolean.class);
+              }
 
-            for (int index = 0; index < value.size(); index++) {
-              booleanArray[index] = JsonCodec.convert(value.get(index), Boolean.class);
-            }
+              return booleanArray;
+            case BYTE:
 
-            return booleanArray;
-          case BYTE:
+              Byte[] byteArray = new Byte[value.size()];
 
-            Byte[] byteArray = new Byte[value.size()];
+              for (int index = 0; index < value.size(); index++) {
+                byteArray[index] = (value.get(index) == null) ? null : JsonCodec.convert(value.get(index), Byte.class);
+              }
 
-            for (int index = 0; index < value.size(); index++) {
-              byteArray[index] = (value.get(index) == null) ? null : JsonCodec.convert(value.get(index), Byte.class);
-            }
+              return byteArray;
+            case CHARACTER:
 
-            return byteArray;
-          case CHARACTER:
+              Character[] characterArray = new Character[value.size()];
 
-            Character[] characterArray = new Character[value.size()];
+              for (int index = 0; index < value.size(); index++) {
 
-            for (int index = 0; index < value.size(); index++) {
+                String string;
 
-              String string;
+                characterArray[index] = (value.get(index) == null) ? null : ((string = JsonCodec.convert(value.get(index), String.class)).length() == 0) ? null : string.charAt(0);
+              }
 
-              characterArray[index] = (value.get(index) == null) ? null : ((string = JsonCodec.convert(value.get(index), String.class)).length() == 0) ? null : string.charAt(0);
-            }
+              return characterArray;
+            case DATE:
 
-            return characterArray;
-          case DATE:
+              Date[] dates = new Date[value.size()];
 
-            Date[] dates = new Date[value.size()];
+              for (int index = 0; index < value.size(); index++) {
+                dates[index] = (value.get(index) == null) ? null : Date.from(ZONED_DATE_TIME_XML_ADAPTER.unmarshal(JsonCodec.convert(value.get(index), String.class)).toInstant());
+              }
 
-            for (int index = 0; index < value.size(); index++) {
-              dates[index] = (value.get(index) == null) ? null : Date.from(ZONED_DATE_TIME_XML_ADAPTER.unmarshal(JsonCodec.convert(value.get(index), String.class)).toInstant());
-            }
+              return dates;
+            case DOUBLE:
 
-            return dates;
-          case DOUBLE:
+              Double[] doubleArray = new Double[value.size()];
 
-            Double[] doubleArray = new Double[value.size()];
+              for (int index = 0; index < value.size(); index++) {
+                doubleArray[index] = JsonCodec.convert(value.get(index), Double.class);
+              }
 
-            for (int index = 0; index < value.size(); index++) {
-              doubleArray[index] = JsonCodec.convert(value.get(index), Double.class);
-            }
+              return doubleArray;
+            case FLOAT:
 
-            return doubleArray;
-          case FLOAT:
+              Float[] floatArray = new Float[value.size()];
 
-            Float[] floatArray = new Float[value.size()];
+              for (int index = 0; index < value.size(); index++) {
+                floatArray[index] = (value.get(index) == null) ? null : JsonCodec.convert(value.get(index), Float.class);
+              }
 
-            for (int index = 0; index < value.size(); index++) {
-              floatArray[index] = (value.get(index) == null) ? null : JsonCodec.convert(value.get(index), Float.class);
-            }
+              return floatArray;
+            case INTEGER:
 
-            return floatArray;
-          case INTEGER:
+              Integer[] integerArray = new Integer[value.size()];
 
-            Integer[] integerArray = new Integer[value.size()];
+              for (int index = 0; index < value.size(); index++) {
+                integerArray[index] = JsonCodec.convert(value.get(index), Integer.class);
+              }
 
-            for (int index = 0; index < value.size(); index++) {
-              integerArray[index] = JsonCodec.convert(value.get(index), Integer.class);
-            }
+              return integerArray;
+            case LONG:
 
-            return integerArray;
-          case LONG:
+              Long[] longArray = new Long[value.size()];
 
-            Long[] longArray = new Long[value.size()];
+              for (int index = 0; index < value.size(); index++) {
+                longArray[index] = (value.get(index) == null) ? null : JsonCodec.convert(value.get(index), Long.class);
+              }
 
-            for (int index = 0; index < value.size(); index++) {
-              longArray[index] = (value.get(index) == null) ? null : JsonCodec.convert(value.get(index), Long.class);
-            }
+              return longArray;
+            case SHORT:
 
-            return longArray;
-          case SHORT:
+              Short[] shortArray = new Short[value.size()];
 
-            Short[] shortArray = new Short[value.size()];
+              for (int index = 0; index < value.size(); index++) {
+                shortArray[index] = (value.get(index) == null) ? null : JsonCodec.convert(value.get(index), Short.class);
+              }
 
-            for (int index = 0; index < value.size(); index++) {
-              shortArray[index] = (value.get(index) == null) ? null : JsonCodec.convert(value.get(index), Short.class);
-            }
+              return shortArray;
+            case STRING:
 
-            return shortArray;
-          case STRING:
+              String[] stringArray = new String[value.size()];
 
-            String[] stringArray = new String[value.size()];
+              for (int index = 0; index < value.size(); index++) {
+                stringArray[index] = (value.get(index) == null) ? null : JsonCodec.convert(value.get(index), String.class);
+              }
 
-            for (int index = 0; index < value.size(); index++) {
-              stringArray[index] = (value.get(index) == null) ? null : JsonCodec.convert(value.get(index), String.class);
-            }
-
-            return stringArray;
-          default:
-            throw new UnknownSwitchCaseException(((ComponentHint)hint).getType().name());
-        }
-      case ENUM:
-
-        try {
-
-          Class<? extends Enum> enumClass = (Class<? extends Enum>)Class.forName(((EnumHint)hint).getType());
-          Object[] enumArray = new Object[value.size()];
-
-          for (int index = 0; index < value.size(); index++) {
-            enumArray[index] = (value.get(index) == null) ? null : Enum.valueOf(enumClass, JsonCodec.convert(value.get(index), String.class));
+              return stringArray;
+            default:
+              throw new UnknownSwitchCaseException(((ComponentHint)hint).getType().name());
           }
+        case ENUM:
 
-          return enumArray;
-        } catch (ClassNotFoundException classNotFoundException) {
-          throw new QueryProcessingException(classNotFoundException);
-        }
-      default:
-        throw new UnknownSwitchCaseException(hint.getHintType().name());
+          try {
+
+            Class<? extends Enum> enumClass = (Class<? extends Enum>)Class.forName(((EnumHint)hint).getType());
+            Object[] enumArray = new Object[value.size()];
+
+            for (int index = 0; index < value.size(); index++) {
+              enumArray[index] = (value.get(index) == null) ? null : Enum.valueOf(enumClass, JsonCodec.convert(value.get(index), String.class));
+            }
+
+            return enumArray;
+          } catch (ClassNotFoundException classNotFoundException) {
+            throw new QueryProcessingException(classNotFoundException);
+          }
+        default:
+          throw new UnknownSwitchCaseException(hint.getHintType().name());
+      }
     }
   }
 
