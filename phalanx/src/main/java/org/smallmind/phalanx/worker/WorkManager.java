@@ -54,7 +54,7 @@ public class WorkManager<W extends Worker<T>, T> {
 
   public WorkManager (MetricConfiguration metricConfiguration, Class<W> workerClass, int concurrencyLimit) {
 
-    this(metricConfiguration, workerClass, concurrencyLimit, new LinkedWorkQueue<>());
+    this(metricConfiguration, workerClass, concurrencyLimit, new TransferringWorkQueue<>());
   }
 
   public WorkManager (MetricConfiguration metricConfiguration, Class<W> workerClass, int concurrencyLimit, WorkQueue<T> workQueue) {
@@ -113,7 +113,7 @@ public class WorkManager<W extends Worker<T>, T> {
         boolean success;
 
         do {
-          success = workQueue.transfer(work, 1, TimeUnit.SECONDS);
+          success = workQueue.offer(work, 1, TimeUnit.SECONDS);
         } while (!success);
       }
     });

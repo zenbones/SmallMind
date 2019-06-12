@@ -32,24 +32,24 @@
  */
 package org.smallmind.phalanx.worker;
 
-import java.util.concurrent.LinkedTransferQueue;
+import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 
-public class LinkedWorkQueue<E> implements WorkQueue<E> {
+public class BlockingWorkQueue<E> implements WorkQueue<E> {
 
-  private final LinkedTransferQueue<E> linkedTransferQueue = new LinkedTransferQueue<>();
+  private final LinkedBlockingQueue<E> linkedBlockingQueue = new LinkedBlockingQueue<>();
 
   @Override
-  public boolean transfer (E e, long timeout, TimeUnit unit)
+  public boolean offer (E e, long timeout, TimeUnit unit)
     throws InterruptedException {
 
-    return linkedTransferQueue.tryTransfer(e, timeout, unit);
+    return linkedBlockingQueue.offer(e, timeout, unit);
   }
 
   @Override
   public E poll (long timeout, TimeUnit unit)
     throws InterruptedException {
 
-    return linkedTransferQueue.poll(timeout, unit);
+    return linkedBlockingQueue.poll(timeout, unit);
   }
 }

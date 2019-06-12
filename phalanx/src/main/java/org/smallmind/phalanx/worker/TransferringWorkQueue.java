@@ -32,13 +32,24 @@
  */
 package org.smallmind.phalanx.worker;
 
+import java.util.concurrent.LinkedTransferQueue;
 import java.util.concurrent.TimeUnit;
 
-public interface WorkQueue<E> {
+public class TransferringWorkQueue<E> implements WorkQueue<E> {
 
-  boolean offer (E e, long timeout, TimeUnit unit)
-    throws InterruptedException;
+  private final LinkedTransferQueue<E> linkedTransferQueue = new LinkedTransferQueue<>();
 
-  E poll (long timeout, TimeUnit unit)
-    throws InterruptedException;
+  @Override
+  public boolean offer (E e, long timeout, TimeUnit unit)
+    throws InterruptedException {
+
+    return linkedTransferQueue.tryTransfer(e, timeout, unit);
+  }
+
+  @Override
+  public E poll (long timeout, TimeUnit unit)
+    throws InterruptedException {
+
+    return linkedTransferQueue.poll(timeout, unit);
+  }
 }
