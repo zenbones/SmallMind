@@ -37,7 +37,17 @@ import java.util.concurrent.TimeUnit;
 
 public class BlockingWorkQueue<E> implements WorkQueue<E> {
 
-  private final LinkedBlockingQueue<E> linkedBlockingQueue = new LinkedBlockingQueue<>();
+  private final LinkedBlockingQueue<E> linkedBlockingQueue;
+
+  public BlockingWorkQueue () {
+
+    linkedBlockingQueue = new LinkedBlockingQueue<>();
+  }
+
+  public BlockingWorkQueue (int capacity) {
+
+    linkedBlockingQueue = new LinkedBlockingQueue<>(capacity);
+  }
 
   @Override
   public boolean offer (E e, long timeout, TimeUnit unit)
