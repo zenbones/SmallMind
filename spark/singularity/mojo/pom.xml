@@ -4,7 +4,7 @@
   <parent>
     <groupId>org.smallmind</groupId>
     <artifactId>spark-singularity</artifactId>
-    <version>3.3.17-SNAPSHOT</version>
+    <version>3.3.17</version>
   </parent>
   <artifactId>spark-singularity-maven-plugin</artifactId>
   <name>Spark-Singularity-Maven-Plugin</name>
