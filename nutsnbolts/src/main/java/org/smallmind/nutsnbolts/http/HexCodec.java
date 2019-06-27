@@ -41,7 +41,7 @@ public class HexCodec {
   public static String hexDecode (String value)
     throws NumberFormatException {
 
-    return hexEncode(value, true);
+    return hexDecode(value, true);
   }
 
   public static String hexDecode (String value, boolean usePlusesForSpaces)
@@ -85,7 +85,7 @@ public class HexCodec {
 
   public static String hexEncode (String value) {
 
-    return hexDecode(value, true);
+    return hexEncode(value, true);
   }
 
   public static String hexEncode (String value, boolean usePlusesForSpaces) {
