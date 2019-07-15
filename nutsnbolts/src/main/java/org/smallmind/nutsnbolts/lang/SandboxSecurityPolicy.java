@@ -33,12 +33,15 @@
 package org.smallmind.nutsnbolts.lang;
 
 import java.security.AllPermission;
+import java.security.Permission;
 import java.security.PermissionCollection;
 import java.security.Permissions;
 import java.security.Policy;
 import java.security.ProtectionDomain;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashSet;
+import java.util.Set;
 import sun.security.util.SecurityConstants;
 
 /*
@@ -47,9 +50,9 @@ import sun.security.util.SecurityConstants;
 */
 public class SandboxSecurityPolicy extends Policy {
 
-  private static final PermissionCollection NO_PERMISSION_COLLECTION = new Permissions();
   private static final PermissionCollection ALL_PERMISSION_COLLECTION;
-  private HashSet<? extends ClassLoader> whiteListedClassLoaderSet;
+  private Set<? extends ClassLoader> whiteListedClassLoaderSet;
+  private PermissionCollection basePermissionCollection = new Permissions();
 
   static {
 
@@ -59,12 +62,23 @@ public class SandboxSecurityPolicy extends Policy {
 
   public SandboxSecurityPolicy (ClassLoader... whiteListedClassLoaders) {
 
-    whiteListedClassLoaderSet = new HashSet<>(Arrays.asList(whiteListedClassLoaders));
+    whiteListedClassLoaderSet = ((whiteListedClassLoaders == null) || (whiteListedClassLoaders.length == 0)) ? Collections.emptySet() : new HashSet<>(Arrays.asList(whiteListedClassLoaders));
+  }
+
+  public SandboxSecurityPolicy addPermissions (Permission... permissions) {
+
+    if ((permissions != null) && (permissions.length > 0)) {
+      for (Permission permission : permissions) {
+        basePermissionCollection.add(permission);
+      }
+    }
+
+    return this;
   }
 
   @Override
   public PermissionCollection getPermissions (ProtectionDomain domain) {
 
-    return whiteListedClassLoaderSet.contains(domain.getClassLoader()) ? ALL_PERMISSION_COLLECTION : NO_PERMISSION_COLLECTION;
+    return whiteListedClassLoaderSet.contains(domain.getClassLoader()) ? ALL_PERMISSION_COLLECTION : basePermissionCollection;
   }
 }
