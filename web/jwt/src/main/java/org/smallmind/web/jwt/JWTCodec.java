@@ -79,4 +79,22 @@ public class JWTCodec {
 
     return JsonCodec.read(urlSafe ? Base64Codec.urlSafeDecode(parts[1]) : Base64Codec.decode(parts[1]), claimsClass);
   }
+
+  public static <T> T decipher (String jwtToken, Class<T> claimsClass)
+    throws Exception {
+
+    return decipher(jwtToken, claimsClass, false);
+  }
+
+  public static <T> T decipher (String jwtToken, Class<T> claimsClass, boolean urlSafe)
+    throws Exception {
+
+    String[] parts;
+
+    if ((parts = jwtToken.split("\\.", -1)).length != 3) {
+      throw new UnsupportedEncodingException("Not a JWT token");
+    }
+
+    return JsonCodec.read(urlSafe ? Base64Codec.urlSafeDecode(parts[1]) : Base64Codec.decode(parts[1]), claimsClass);
+  }
 }
