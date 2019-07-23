@@ -71,8 +71,7 @@ public class ResourceTypeFactory implements ResourceFactory {
         try {
           resourceConstructor = resourceType.getResourceClass().getConstructor(SIGNATURE);
           return resourceConstructor.newInstance(path);
-        }
-        catch (Exception exception) {
+        } catch (Exception exception) {
           throw new ResourceException(exception);
         }
       }

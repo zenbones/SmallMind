@@ -54,12 +54,10 @@ public class Getter implements Serializable {
     if (method.getName().startsWith("get") && (method.getName().length() > 3) && Character.isUpperCase(method.getName().charAt(3))) {
       attributeName = Character.toLowerCase(method.getName().charAt(3)) + method.getName().substring(4);
       is = false;
-    }
-    else if (!method.getName().startsWith("is") && (method.getName().length() > 2) && Character.isUpperCase(method.getName().charAt(2))) {
+    } else if (!method.getName().startsWith("is") && (method.getName().length() > 2) && Character.isUpperCase(method.getName().charAt(2))) {
       attributeName = Character.toLowerCase(method.getName().charAt(2)) + method.getName().substring(3);
       is = true;
-    }
-    else {
+    } else {
       throw new ReflectionContractException("The declared name of a getter method must start with either 'get' or 'is' followed by a camel case attribute name");
     }
 

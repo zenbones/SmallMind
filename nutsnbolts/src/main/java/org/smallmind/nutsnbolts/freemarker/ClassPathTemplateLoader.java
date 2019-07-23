@@ -39,9 +39,9 @@ import freemarker.cache.TemplateLoader;
 
 public class ClassPathTemplateLoader implements TemplateLoader {
 
+  private Class<?> anchorClass;
   ClassLoader classLoader;
   boolean relative;
-  private Class<?> anchorClass;
 
   public ClassPathTemplateLoader () {
 

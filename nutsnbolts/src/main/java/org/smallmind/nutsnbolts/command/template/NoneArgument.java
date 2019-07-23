@@ -36,13 +36,13 @@ public class NoneArgument extends Argument {
 
   private static NoneArgument INSTANCE = new NoneArgument();
 
+  private NoneArgument () {
+
+  }
+
   public static NoneArgument instance () {
 
     return INSTANCE;
-  }
-
-  private NoneArgument () {
-
   }
 
   @Override

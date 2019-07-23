@@ -45,6 +45,8 @@ import java.util.concurrent.atomic.AtomicBoolean;
 public class WeakEventListenerList<E extends EventListener> implements Iterable<E> {
 
   private static final Scrubber SCRUBBER;
+  private final LinkedList<WeakReference<E>> referenceList;
+
   static {
     Thread scrubberThread;
 
@@ -53,7 +55,6 @@ public class WeakEventListenerList<E extends EventListener> implements Iterable<
     scrubberThread.setDaemon(true);
     scrubberThread.start();
   }
-  private final LinkedList<WeakReference<E>> referenceList;
 
   public WeakEventListenerList () {
 

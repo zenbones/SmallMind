@@ -39,15 +39,15 @@ public class Orientation {
   private Bias bias;
   private Flow flow;
 
-  public static Orientation getDefaultOrientation () {
-
-    return DEFAULT;
-  }
-
   public Orientation (Bias bias, Flow flow) {
 
     this.bias = bias;
     this.flow = flow;
+  }
+
+  public static Orientation getDefaultOrientation () {
+
+    return DEFAULT;
   }
 
   public Bias getBias () {

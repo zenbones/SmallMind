@@ -93,11 +93,6 @@ public final class ExtensionFileFilter extends FileFilter implements java.io.Fil
     return false;
   }
 
-  public void setDescription (String description) {
-
-    this.description = description;
-  }
-
   public String getDescription () {
 
     StringBuilder fullDescription = new StringBuilder();
@@ -120,5 +115,10 @@ public final class ExtensionFileFilter extends FileFilter implements java.io.Fil
     fullDescription.append(")");
 
     return fullDescription.toString();
+  }
+
+  public void setDescription (String description) {
+
+    this.description = description;
   }
 }

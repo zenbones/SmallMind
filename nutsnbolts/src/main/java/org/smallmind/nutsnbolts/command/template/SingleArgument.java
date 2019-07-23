@@ -34,7 +34,7 @@ package org.smallmind.nutsnbolts.command.template;
 
 public class SingleArgument extends Argument {
 
-private String description;
+  private String description;
 
   public SingleArgument (String description) {
 

@@ -45,8 +45,8 @@ public class TreeNode implements Cloneable, Serializable, MutableTreeNode {
 
   private TreeNode parent;
   private Object userObject;
-  protected LinkedList<javax.swing.tree.TreeNode> childList;
   private boolean allowsChildren;
+  protected LinkedList<javax.swing.tree.TreeNode> childList;
 
   public TreeNode () {
 
@@ -65,10 +65,14 @@ public class TreeNode implements Cloneable, Serializable, MutableTreeNode {
     this.allowsChildren = allowsChildren;
     if (allowsChildren) {
       childList = new LinkedList<javax.swing.tree.TreeNode>();
-    }
-    else {
+    } else {
       childList = null;
     }
+  }
+
+  public synchronized boolean getAllowsChildren () {
+
+    return allowsChildren;
   }
 
   public synchronized void setAllowsChildren (boolean newAllowsChildren) {
@@ -77,16 +81,10 @@ public class TreeNode implements Cloneable, Serializable, MutableTreeNode {
       allowsChildren = newAllowsChildren;
       if (allowsChildren) {
         childList = new LinkedList<javax.swing.tree.TreeNode>();
-      }
-      else {
+      } else {
         childList = null;
       }
     }
-  }
-
-  public synchronized boolean getAllowsChildren () {
-
-    return allowsChildren;
   }
 
   public synchronized Enumeration children () {
@@ -257,8 +255,7 @@ public class TreeNode implements Cloneable, Serializable, MutableTreeNode {
 
     if (userObject != null) {
       return userObject.toString();
-    }
-    else {
+    } else {
       return "null";
     }
   }

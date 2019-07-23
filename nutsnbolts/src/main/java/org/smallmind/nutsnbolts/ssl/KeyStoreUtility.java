@@ -74,7 +74,7 @@ public class KeyStoreUtility {
    * 4) openssl pkcs8 -topk8 -nocrypt -in <private key file name>.key -out <private key file name>.key.der -outform der
    * 5) openssl x509 -in <cert file name>.cert -out <cert file name>.cert.der -outform der - for each cert
    * 6) Run this utility which will generate a JKS format keystore file
-  */
+   */
 
   public static KeyStoreInfo construct (String keystoreName, String keystoreAlias, String keystorePassword, Resource keyResource, Resource... certResources)
     throws IOException, ResourceException, KeyStoreException, NoSuchProviderException, NoSuchAlgorithmException, CertificateException, InvalidKeySpecException {

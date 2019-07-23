@@ -30,37 +30,14 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.nutsnbolts.command.template;
+package org.smallmind.nutsnbolts.security.key;
 
-public class EnumeratedArgument extends Argument {
+import org.smallmind.nutsnbolts.lang.FormattedException;
 
-  private String[] values;
+public class KeyParseException extends FormattedException {
 
-  public EnumeratedArgument (String[] values) {
+  public KeyParseException (String message, Object... args) {
 
-    this.values = values;
-  }
-
-  @Override
-  public ArgumentType getType () {
-
-    return ArgumentType.ENUMERATED;
-  }
-
-  public String[] getValues () {
-
-    return values;
-  }
-
-  public boolean matches (String argument) {
-
-    for (String value : values) {
-      if (value.equals(argument)) {
-
-        return true;
-      }
-    }
-
-    return false;
+    super(message, args);
   }
 }

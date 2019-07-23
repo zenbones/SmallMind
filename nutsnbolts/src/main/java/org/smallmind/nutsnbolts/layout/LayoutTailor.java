@@ -84,11 +84,9 @@ public class LayoutTailor {
 
         if ((partialSolution = solutionMap.remove(element.getPart())) == null) {
           solutionMap.put(element.getPart(), new PartialSolution(bias, position, measurement));
-        }
-        else if (partialSolution.getBias().equals(bias)) {
+        } else if (partialSolution.getBias().equals(bias)) {
           throw new LayoutException("The layout component (%s) must be added to a single horizontal and a single vertical box, and no more", element.getPart());
-        }
-        else {
+        } else {
           switch (bias) {
             case HORIZONTAL:
               ((PlanarPart)element).applyLayout(new Pair(position, partialSolution.getPosition()), new Pair(measurement, partialSolution.getMeasurement()));
@@ -120,8 +118,7 @@ public class LayoutTailor {
 
         if (solutionEntry.getValue() == null) {
           throw new LayoutException("The layout component (%s) must be added to a single horizontal and a single vertical box", solutionEntry.getKey());
-        }
-        else {
+        } else {
           throw new LayoutException("The layout component (%s) was only added to a %s box, and must be constrained in both directions", solutionEntry.getKey(), solutionEntry.getValue().getBias());
         }
       }

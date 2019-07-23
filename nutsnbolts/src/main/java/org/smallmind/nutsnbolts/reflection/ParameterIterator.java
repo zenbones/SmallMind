@@ -36,18 +36,18 @@ import java.util.Iterator;
 import java.util.NoSuchElementException;
 
 /*
-* boolean Z
-* byte B
-* char C
-* short S
-* int I
-* long J
-* float F
-* double D
-* array [
-* object L;
-* type T;
-*/
+ * boolean Z
+ * byte B
+ * char C
+ * short S
+ * int I
+ * long J
+ * float F
+ * double D
+ * array [
+ * object L;
+ * type T;
+ */
 public class ParameterIterator implements Iterator<String>, Iterable<String> {
 
   private String encrypted;

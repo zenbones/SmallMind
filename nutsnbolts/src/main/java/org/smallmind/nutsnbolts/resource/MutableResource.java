@@ -38,5 +38,4 @@ public interface MutableResource extends Resource {
 
   public abstract OutputStream getOutputStream ()
     throws ResourceException;
-
 }

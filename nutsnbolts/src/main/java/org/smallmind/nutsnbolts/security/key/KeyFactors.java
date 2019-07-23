@@ -30,10 +30,28 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.nutsnbolts.security.ssh;
+package org.smallmind.nutsnbolts.security.key;
 
-public interface SSHKeyReader {
+import java.math.BigInteger;
 
-  SSHKeyFactors extractFactors (String raw)
-    throws Exception;
+public class KeyFactors {
+
+  private BigInteger modulus;
+  private BigInteger exponent;
+
+  public KeyFactors (BigInteger modulus, BigInteger exponent) {
+
+    this.modulus = modulus;
+    this.exponent = exponent;
+  }
+
+  public BigInteger getModulus () {
+
+    return modulus;
+  }
+
+  public BigInteger getExponent () {
+
+    return exponent;
+  }
 }

@@ -57,16 +57,6 @@ public class DotNotation {
     pattern = Pattern.compile(validateAsRegEx(notation));
   }
 
-  public String getNotation () {
-
-    return notation;
-  }
-
-  public Pattern getPattern () {
-
-    return pattern;
-  }
-
   public static String validateAsRegEx (String notation)
     throws DotNotationException {
 
@@ -87,8 +77,7 @@ public class DotNotation {
         case '.':
           if (translationState.equals(TranslationState.POST_DOT)) {
             throw new DotNotationException("Empty component in the pattern");
-          }
-          else if (translationState.equals(TranslationState.START)) {
+          } else if (translationState.equals(TranslationState.START)) {
             throw new DotNotationException("The pattern can not begin with '.'");
           }
 
@@ -103,11 +92,9 @@ public class DotNotation {
         case '*':
           if (translationState.equals(TranslationState.WILD)) {
             throw new DotNotationException("Wildcards must either be followed by '.' or terminate the pattern");
-          }
-          else if (translationState.equals(TranslationState.NORMAL)) {
+          } else if (translationState.equals(TranslationState.NORMAL)) {
             throw new DotNotationException("Wildcards must either start the pattern or be preceded by '.'");
-          }
-          else if (!wildState.equals(WildState.TAME)) {
+          } else if (!wildState.equals(WildState.TAME)) {
             throw new DotNotationException("Any wildcard followed by '*' is redundant");
           }
 
@@ -119,11 +106,9 @@ public class DotNotation {
         case '?':
           if (translationState.equals(TranslationState.WILD)) {
             throw new DotNotationException("Wildcards must either be followed by '.' or terminate the pattern");
-          }
-          else if (translationState.equals(TranslationState.NORMAL)) {
+          } else if (translationState.equals(TranslationState.NORMAL)) {
             throw new DotNotationException("Wildcards must either start the pattern or be preceded by '.'");
-          }
-          else if (wildState.equals(WildState.STAR)) {
+          } else if (wildState.equals(WildState.STAR)) {
             throw new DotNotationException("Following '*' with '?' is redundant");
           }
 
@@ -135,8 +120,7 @@ public class DotNotation {
         default:
           if (!Character.isJavaIdentifierPart(curChar)) {
             throw new DotNotationException("Components must be composed of valid Java identifiers");
-          }
-          else if (translationState.equals(TranslationState.WILD)) {
+          } else if (translationState.equals(TranslationState.WILD)) {
             throw new DotNotationException("Wildcards must either be followed by '.' or terminate the pattern");
           }
 
@@ -152,13 +136,22 @@ public class DotNotation {
 
     if (translationState.equals(TranslationState.POST_DOT)) {
       throw new DotNotationException("The pattern can not end with '.'");
-    }
-    else if (translationState.equals(TranslationState.NORMAL)) {
+    } else if (translationState.equals(TranslationState.NORMAL)) {
       patternBuilder.append(')');
     }
 
     patternBuilder.append('$');
 
     return patternBuilder.toString();
+  }
+
+  public String getNotation () {
+
+    return notation;
+  }
+
+  public Pattern getPattern () {
+
+    return pattern;
   }
 }

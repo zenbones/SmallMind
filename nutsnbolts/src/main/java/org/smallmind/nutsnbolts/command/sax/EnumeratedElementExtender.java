@@ -55,7 +55,7 @@ public class EnumeratedElementExtender extends AbstractElementExtender implement
   }
 
   @Override
-  public void endElement (String namespaceURI, String localName, String qName, StringBuilder contentBuilder){
+  public void endElement (String namespaceURI, String localName, String qName, StringBuilder contentBuilder) {
 
     String[] values = new String[valueList.size()];
 

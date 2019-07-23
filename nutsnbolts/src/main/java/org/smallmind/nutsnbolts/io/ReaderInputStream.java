@@ -96,8 +96,7 @@ public class ReaderInputStream extends InputStream {
         len -= c;
         read += c;
         encoderOut.compact();
-      }
-      else {
+      } else {
         if (!endOfInput && (lastCoderResult == null || lastCoderResult.isUnderflow())) {
           encoderIn.compact();
           int position = encoderIn.position();
@@ -107,8 +106,7 @@ public class ReaderInputStream extends InputStream {
           int c = reader.read(encoderIn.array(), position, encoderIn.remaining());
           if (c == -1) {
             endOfInput = true;
-          }
-          else {
+          } else {
             encoderIn.position(position + c);
           }
           encoderIn.flip();

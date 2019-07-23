@@ -42,6 +42,16 @@ public class Constraint {
   private double grow;
   private double shrink;
 
+  public Constraint () {
+
+  }
+
+  public Constraint (double grow, double shrink) {
+
+    this.grow = grow;
+    this.shrink = shrink;
+  }
+
   public static Constraint immutable () {
 
     return IMMUTABLE_RIGID_INSTANCE;
@@ -65,16 +75,6 @@ public class Constraint {
   public static MutableConstraint create () {
 
     return new MutableConstraint();
-  }
-
-  public Constraint () {
-
-  }
-
-  public Constraint (double grow, double shrink) {
-
-    this.grow = grow;
-    this.shrink = shrink;
   }
 
   public double getGrow () {

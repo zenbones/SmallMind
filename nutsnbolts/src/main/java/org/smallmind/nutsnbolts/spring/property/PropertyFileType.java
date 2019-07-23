@@ -40,7 +40,7 @@ import org.yaml.snakeyaml.Yaml;
 
 public enum PropertyFileType {
 
-  PROPERTIES(new String[]{"properties"}) {
+  PROPERTIES(new String[] {"properties"}) {
     @Override
     public PropertyHandler<?> getPropertyHandler (InputStream inputStream)
       throws IOException {
@@ -52,7 +52,7 @@ public enum PropertyFileType {
       return new PropertiesPropertyHandler(properties);
     }
   },
-  YAML(new String[]{"yaml", "yml"}) {
+  YAML(new String[] {"yaml", "yml"}) {
     @Override
     public PropertyHandler<?> getPropertyHandler (InputStream inputStream) {
 

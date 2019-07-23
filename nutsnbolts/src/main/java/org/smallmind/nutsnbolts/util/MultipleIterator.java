@@ -82,8 +82,7 @@ public class MultipleIterator<T> implements Iterator<T>, Iterable<T> {
 
     try {
       return iterators[index].next();
-    }
-    finally {
+    } finally {
       moveIndex();
     }
   }

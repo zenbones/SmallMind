@@ -46,7 +46,7 @@ public class ArgumentsElementExtender extends AbstractElementExtender {
   }
 
   @Override
-  public void completedChildElement (ElementExtender elementExtender)  {
+  public void completedChildElement (ElementExtender elementExtender) {
 
     if (elementExtender instanceof ArgumentCompiler) {
 

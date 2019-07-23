@@ -47,8 +47,7 @@ public class ResourceConverter implements Converter<String, Resource> {
     try {
 
       return RESOURCE_PARSER.parseResource(s);
-    }
-    catch (ResourceException resourceException) {
+    } catch (ResourceException resourceException) {
       throw new RuntimeBeansException(resourceException);
     }
   }

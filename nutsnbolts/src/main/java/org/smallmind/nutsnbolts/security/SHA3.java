@@ -182,14 +182,14 @@ public class SHA3 {
    * @param rc Round constant
    */
   private void keccakFRound (long[] A, long rc) {
-/* ? step (step 1 of 3) */
+    /* ? step (step 1 of 3) */
     for (int i = 0, j = 0; i < 5; i++, j += 5)
       C[i] = (A[j] ^ A[j + 1]) ^ (A[j + 2] ^ A[j + 3]) ^ A[j + 4];
 
     long da, db, dc, dd, de;
 
     if (w == 64) {
-            /* ? and ? steps, with last two part of ? */
+      /* ? and ? steps, with last two part of ? */
       B[0] = A[0] ^ (da = C[4] ^ rotate64(C[1], 1));
       B[1] = rotate64(A[15] ^ (dd = C[2] ^ rotate64(C[4], 1)), 28);
       B[2] = rotate64(A[5] ^ (db = C[0] ^ rotate64(C[2], 1)), 1);
@@ -219,9 +219,8 @@ public class SHA3 {
       B[22] = rotate64(A[4] ^ da, 18);
       B[23] = rotate64(A[19] ^ dd, 56);
       B[24] = rotate64(A[9] ^ db, 2);
-    }
-    else {
-/* ? and ? steps, with last two part of ? */
+    } else {
+      /* ? and ? steps, with last two part of ? */
       B[0] = A[0] ^ (da = C[4] ^ rotate(C[1], 1));
       B[1] = rotate(A[15] ^ (dd = C[2] ^ rotate(C[4], 1)), 28);
       B[2] = rotate(A[5] ^ (db = C[0] ^ rotate(C[2], 1)), 1);
@@ -253,7 +252,7 @@ public class SHA3 {
       B[24] = rotate(A[9] ^ db, 2);
     }
 
-        /* ? step */
+    /* ? step */
     for (int i = 0; i < 15; i++)
       A[i] = B[i] ^ ((~(B[i + 5])) & B[i + 10]);
     for (int i = 0; i < 5; i++) {
@@ -261,7 +260,7 @@ public class SHA3 {
       A[i + 20] = B[i + 20] ^ ((~(B[i])) & B[i + 5]);
     }
 
-        /* ? step */
+    /* ? step */
     A[0] ^= rc;
   }
 
@@ -310,13 +309,13 @@ public class SHA3 {
 
     int n = Math.min(message.length, rr);
     return ((off + 7 < n) ? ((long)(message[off + 7] & 255) << 56) : 0L) |
-      ((off + 6 < n) ? ((long)(message[off + 6] & 255) << 48) : 0L) |
-      ((off + 5 < n) ? ((long)(message[off + 5] & 255) << 40) : 0L) |
-      ((off + 4 < n) ? ((long)(message[off + 4] & 255) << 32) : 0L) |
-      ((off + 3 < n) ? ((long)(message[off + 3] & 255) << 24) : 0L) |
-      ((off + 2 < n) ? ((long)(message[off + 2] & 255) << 16) : 0L) |
-      ((off + 1 < n) ? ((long)(message[off + 1] & 255) << 8) : 0L) |
-      ((off < n) ? ((long)(message[off] & 255)) : 0L);
+             ((off + 6 < n) ? ((long)(message[off + 6] & 255) << 48) : 0L) |
+             ((off + 5 < n) ? ((long)(message[off + 5] & 255) << 40) : 0L) |
+             ((off + 4 < n) ? ((long)(message[off + 4] & 255) << 32) : 0L) |
+             ((off + 3 < n) ? ((long)(message[off + 3] & 255) << 24) : 0L) |
+             ((off + 2 < n) ? ((long)(message[off + 2] & 255) << 16) : 0L) |
+             ((off + 1 < n) ? ((long)(message[off + 1] & 255) << 8) : 0L) |
+             ((off < n) ? ((long)(message[off] & 255)) : 0L);
   }
 
   /**
@@ -339,8 +338,7 @@ public class SHA3 {
     if ((r - 8 <= ll) && (ll <= r - 2)) {
       message = new byte[nrf + 1];
       message[nrf] = (byte)(b ^ 128);
-    }
-    else {
+    } else {
       len = (nrf + 1) << 3;
       len = ((len - (len % r) + (r - 8)) >> 3) + 1;
       message = new byte[len];
@@ -382,7 +380,7 @@ public class SHA3 {
     System.arraycopy(M, 0, message = new byte[len], 0, len);
     System.arraycopy(M, len, M, 0, mptr -= len);
 
-        /* Absorbing phase */
+    /* Absorbing phase */
     if (ww == 8)
       for (int i = 0; i < len; i += rr) {
         S[0] ^= toLane64(message, rr, i);
@@ -473,8 +471,7 @@ public class SHA3 {
 
     if ((msg == null) || (msglen == 0)) {
       message = pad10star1(M, mptr, r);
-    }
-    else {
+    } else {
       if (mptr + msglen > M.length) {
         System.arraycopy(M, 0, M = new byte[M.length + msglen], 0, mptr);
       }
@@ -491,7 +488,7 @@ public class SHA3 {
     int nn = n >> 3;
     int ww = w >> 3;
 
-        /* Absorbing phase */
+    /* Absorbing phase */
     if (ww == 8)
       for (int i = 0; i < len; i += rr) {
         S[0] ^= toLane64(message, rr, i);
@@ -551,7 +548,7 @@ public class SHA3 {
         keccakF(S);
       }
 
-        /* Squeezing phase */
+    /* Squeezing phase */
     int olen = n;
     int j = 0;
     int ni = Math.min(25, rr);

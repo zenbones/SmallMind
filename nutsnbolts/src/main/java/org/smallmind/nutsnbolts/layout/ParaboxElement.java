@@ -70,8 +70,7 @@ public abstract class ParaboxElement<P> {
     if (tailor == null) {
 
       return (constraint.getShrink() > 0) ? getPartMinimumMeasurement(bias, tailor) : getPartPreferredMeasurement(bias, tailor);
-    }
-    else {
+    } else {
 
       Double measurement;
 
@@ -88,8 +87,7 @@ public abstract class ParaboxElement<P> {
     if (tailor == null) {
 
       return getPartPreferredMeasurement(bias, tailor);
-    }
-    else {
+    } else {
 
       Double measurement;
 
@@ -106,8 +104,7 @@ public abstract class ParaboxElement<P> {
     if (tailor == null) {
 
       return (constraint.getGrow() > 0) ? getPartMaximumMeasurement(bias, tailor) : getPartPreferredMeasurement(bias, tailor);
-    }
-    else {
+    } else {
 
       Double measurement;
 

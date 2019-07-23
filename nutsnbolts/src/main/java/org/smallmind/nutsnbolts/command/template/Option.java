@@ -75,14 +75,14 @@ public class Option {
     this.parent = parent;
   }
 
-  public void setOptionList (LinkedList<Option> optionList) {
-
-    this.optionList = optionList;
-  }
-
   public LinkedList<Option> getOptionList () {
 
     return optionList;
+  }
+
+  public void setOptionList (LinkedList<Option> optionList) {
+
+    this.optionList = optionList;
   }
 
   public Argument getArgument () {
@@ -94,6 +94,4 @@ public class Option {
 
     this.argument = argument;
   }
-
-
 }

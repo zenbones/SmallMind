@@ -30,40 +30,36 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.nutsnbolts.security.ssh;
+package org.smallmind.nutsnbolts.security.key;
 
-import java.io.ByteArrayInputStream;
-import java.io.DataInputStream;
-import java.io.IOException;
-import java.math.BigInteger;
-import org.smallmind.nutsnbolts.http.Base64Codec;
+import java.security.Key;
+import java.security.KeyFactory;
+import java.security.spec.RSAPrivateKeySpec;
+import java.security.spec.RSAPublicKeySpec;
 
-public class PKCS8KeyReader implements SSHKeyReader {
+public enum AsymmetricKeyType {
 
-  @Override
-  public SSHKeyFactors extractFactors (String raw)
-    throws IOException, SSHParseException {
+  PUBLIC {
+    @Override
+    public Key generateKey (KeyReader keyReader, String raw)
+      throws Exception {
 
-    try (DataInputStream dataInputStream = new DataInputStream(new ByteArrayInputStream(Base64Codec.decode(raw)))) {
+      KeyFactors keyFactors = keyReader.extractFactors(raw);
 
-      if (!"ssh-rsa".equals(new String(readBytes(dataInputStream)))) {
-        throw new SSHParseException("Missing RFC-416 'ssh-rsa' prologue");
-      }
-
-      byte[] exponentBytes = readBytes(dataInputStream);
-      byte[] modulusBytes = readBytes(dataInputStream);
-
-      return new SSHKeyFactors(new BigInteger(modulusBytes), new BigInteger(exponentBytes));
+      return KeyFactory.getInstance("RSA").generatePublic(new RSAPublicKeySpec(keyFactors.getModulus(), keyFactors.getExponent()));
     }
-  }
+  },
+  PRIVATE {
+    @Override
+    public Key generateKey (KeyReader keyReader, String raw)
+      throws Exception {
 
-  private byte[] readBytes (DataInputStream dataInputStream)
-    throws IOException {
+      KeyFactors keyFactors = keyReader.extractFactors(raw);
 
-    byte[] bytes = new byte[dataInputStream.readInt()];
+      return KeyFactory.getInstance("RSA").generatePrivate(new RSAPrivateKeySpec(keyFactors.getModulus(), keyFactors.getExponent()));
+    }
+  };
 
-    dataInputStream.readFully(bytes);
-
-    return bytes;
-  }
+  public abstract Key generateKey (KeyReader keyReader, String raw)
+    throws Exception;
 }

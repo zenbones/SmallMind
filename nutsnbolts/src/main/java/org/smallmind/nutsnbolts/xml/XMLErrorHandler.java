@@ -72,5 +72,4 @@ public class XMLErrorHandler implements ErrorHandler {
     saxException = new SAXException(locatedMessage, saxParseException.getException());
     return saxException;
   }
-
 }

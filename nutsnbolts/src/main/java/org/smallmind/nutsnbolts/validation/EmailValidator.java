@@ -58,8 +58,7 @@ public class EmailValidator implements ConstraintValidator<Email, String> {
     if (constraintAnnotation.separator() == '\0') {
 
       return isAnEmail(value);
-    }
-    else {
+    } else {
 
       int lastIndex = 0;
 

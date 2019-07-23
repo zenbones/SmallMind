@@ -30,36 +30,33 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.nutsnbolts.security.ssh;
+package org.smallmind.web.jwt;
 
-import java.security.Key;
-import java.security.KeyFactory;
-import java.security.spec.RSAPrivateKeySpec;
-import java.security.spec.RSAPublicKeySpec;
+import java.io.IOException;
+import java.math.BigInteger;
+import com.fasterxml.jackson.databind.JsonNode;
+import org.smallmind.nutsnbolts.http.Base64Codec;
+import org.smallmind.nutsnbolts.security.key.KeyFactors;
+import org.smallmind.nutsnbolts.security.key.KeyParseException;
+import org.smallmind.nutsnbolts.security.key.KeyReader;
+import org.smallmind.web.json.scaffold.util.JsonCodec;
 
-public enum AsymmetricKeyType {
+public class JWKKeyReader implements KeyReader {
 
-  PUBLIC {
-    @Override
-    public Key generateKey (SSHKeyReader keyReader, String raw)
-      throws Exception {
+  @Override
+  public KeyFactors extractFactors (String raw)
+    throws IOException, KeyParseException {
 
-      SSHKeyFactors keyFactors = keyReader.extractFactors(raw);
+    JsonNode rawNode = JsonCodec.readAsJsonNode(raw);
 
-      return KeyFactory.getInstance("RSA").generatePublic(new RSAPublicKeySpec(keyFactors.getModulus(), keyFactors.getExponent()));
+    if (!(rawNode.has("n") && rawNode.has("e"))) {
+      throw new KeyParseException("JWK is missing attribute 'n' or 'e'");
+    } else {
+
+      String n = rawNode.get("n").asText();
+      String e = rawNode.get("e").asText();
+
+      return new KeyFactors(new BigInteger(1, Base64Codec.urlSafeDecode(n)), new BigInteger(1, Base64Codec.urlSafeDecode(e)));
     }
-  },
-  PRIVATE {
-    @Override
-    public Key generateKey (SSHKeyReader keyReader, String raw)
-      throws Exception {
-
-      SSHKeyFactors keyFactors = keyReader.extractFactors(raw);
-
-      return KeyFactory.getInstance("RSA").generatePrivate(new RSAPrivateKeySpec(keyFactors.getModulus(), keyFactors.getExponent()));
-    }
-  };
-
-  public abstract Key generateKey (SSHKeyReader keyReader, String raw)
-    throws Exception;
+  }
 }

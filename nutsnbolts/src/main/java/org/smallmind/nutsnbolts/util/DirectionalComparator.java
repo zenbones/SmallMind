@@ -52,5 +52,4 @@ public abstract class DirectionalComparator<T> implements Comparator<T> {
 
     return direction;
   }
-
 }

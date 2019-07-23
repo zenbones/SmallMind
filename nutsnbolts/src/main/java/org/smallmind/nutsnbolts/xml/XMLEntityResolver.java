@@ -45,6 +45,11 @@ public class XMLEntityResolver implements EntityResolver {
 
   private ProtocolResolver protocolResolver;
 
+  public XMLEntityResolver (ProtocolResolver protocolResolver) {
+
+    this.protocolResolver = protocolResolver;
+  }
+
   public synchronized static XMLEntityResolver getInstance () {
 
     if (ENTITY_RESOLVER == null) {
@@ -52,11 +57,6 @@ public class XMLEntityResolver implements EntityResolver {
     }
 
     return ENTITY_RESOLVER;
-  }
-
-  public XMLEntityResolver (ProtocolResolver protocolResolver) {
-
-    this.protocolResolver = protocolResolver;
   }
 
   public InputSource resolveEntity (String publicId, String systemId)
@@ -71,8 +71,7 @@ public class XMLEntityResolver implements EntityResolver {
           return new InputSource(entityStream);
         }
       }
-    }
-    catch (Exception exception) {
+    } catch (Exception exception) {
       throw new SAXException(exception);
     }
 

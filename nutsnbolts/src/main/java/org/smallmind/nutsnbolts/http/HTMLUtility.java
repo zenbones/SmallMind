@@ -44,8 +44,7 @@ public final class HTMLUtility {
     for (int count = 0; count < javaString.length(); count++) {
       if (javaString.charAt(count) == '\n') {
         htmlBuilder.append("<br>");
-      }
-      else if (javaString.charAt(count) != '\r') {
+      } else if (javaString.charAt(count) != '\r') {
         htmlBuilder.append(javaString.charAt(count));
       }
     }

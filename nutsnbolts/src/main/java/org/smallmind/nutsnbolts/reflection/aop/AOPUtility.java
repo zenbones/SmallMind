@@ -44,7 +44,7 @@ public class AOPUtility {
     throws BeanAccessException, BeanInvocationException {
 
     Object argumentValue;
-    MethodSignature methodSignature = ((MethodSignature) joinPoint.getSignature());
+    MethodSignature methodSignature = ((MethodSignature)joinPoint.getSignature());
     String[] parameterNames;
     String baseParameter;
     String parameterGetter = null;

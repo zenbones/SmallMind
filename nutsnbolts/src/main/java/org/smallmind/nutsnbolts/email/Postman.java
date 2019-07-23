@@ -103,7 +103,7 @@ public class Postman {
       message.setFrom(new InternetAddress(mail.getFrom().trim()));
 
       if (mail.getReplyTo() != null) {
-        message.setReplyTo(new Address[]{new InternetAddress(mail.getReplyTo())});
+        message.setReplyTo(new Address[] {new InternetAddress(mail.getReplyTo())});
       }
       if (mail.getTo() != null) {
         addRecipients(message, Message.RecipientType.TO, mail.getTo());

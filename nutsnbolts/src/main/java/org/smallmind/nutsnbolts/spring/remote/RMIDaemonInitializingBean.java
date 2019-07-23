@@ -66,8 +66,7 @@ public class RMIDaemonInitializingBean implements InitializingBean {
     do {
       try {
         activationSystem = ActivationGroup.getSystem();
-      }
-      catch (ActivationException a) {
+      } catch (ActivationException a) {
         if (retryCount++ == maxAttempts) {
           throw new IOException("Unable to bind the rmi daemon");
         }

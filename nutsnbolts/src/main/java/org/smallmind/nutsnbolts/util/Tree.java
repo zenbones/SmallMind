@@ -50,5 +50,4 @@ public class Tree {
 
     this.root = root;
   }
-
 }

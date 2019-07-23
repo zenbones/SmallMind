@@ -69,8 +69,7 @@ public class KeyDebugger {
         if (debugMatcher.isExclusion()) {
 
           return false;
-        }
-        else {
+        } else {
           match = true;
         }
       }
@@ -90,8 +89,7 @@ public class KeyDebugger {
       if (pattern.charAt(0) == '-') {
         exclusion = true;
         dotNotation = new DotNotation(pattern.substring(1));
-      }
-      else {
+      } else {
         dotNotation = new DotNotation(pattern);
       }
     }

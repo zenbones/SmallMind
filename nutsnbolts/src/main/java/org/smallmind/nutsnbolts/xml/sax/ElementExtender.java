@@ -46,5 +46,4 @@ public interface ElementExtender extends SAXExtender {
 
   public abstract void endElement (String namespaceURI, String localName, String qName, StringBuilder content)
     throws SAXException;
-
 }

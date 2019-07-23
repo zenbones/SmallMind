@@ -42,8 +42,7 @@ public class TypeInference {
 
     if (possibilities == null) {
       possibilities = new Class[] {clazz};
-    }
-    else {
+    } else {
 
       Class[] expandedPossibilities = new Class[possibilities.length + 1];
 
@@ -58,8 +57,7 @@ public class TypeInference {
 
     if (possibilities == null) {
       throw new TypeInferenceException("No class inference could be made, please override the appropriate method to statically declare an appropriate type");
-    }
-    else if (possibilities.length > 1) {
+    } else if (possibilities.length > 1) {
       throw new TypeInferenceException("Multiple inferences were possible (%s), please override the appropriate method to statically declare the appropriate type", Arrays.toString(possibilities));
     }
 

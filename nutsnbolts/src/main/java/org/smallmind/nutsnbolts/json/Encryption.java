@@ -53,7 +53,6 @@ public enum Encryption {
       throws NoSuchAlgorithmException, InvalidAlgorithmParameterException, NoSuchPaddingException, InvalidKeyException, IllegalBlockSizeException, BadPaddingException {
 
       return EncryptionUtility.encrypt(key, "AES/CBC/PKCS5Padding", toBeEncrypted, new IvParameterSpec(iv));
-
     }
 
     @Override

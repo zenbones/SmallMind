@@ -50,12 +50,10 @@ public class StringUtility {
       if (anyCase.charAt(count) == wordMarker) {
         newWord = true;
         displayBuilder.append(" ");
-      }
-      else if (newWord) {
+      } else if (newWord) {
         displayBuilder.append(Character.toUpperCase(anyCase.charAt(count)));
         newWord = false;
-      }
-      else {
+      } else {
         displayBuilder.append(Character.toLowerCase(anyCase.charAt(count)));
       }
     }
@@ -78,12 +76,10 @@ public class StringUtility {
     for (int count = 0; count < anyCase.length(); count++) {
       if (anyCase.charAt(count) == wordMarker) {
         upper = true;
-      }
-      else if (upper) {
+      } else if (upper) {
         camelBuilder.append(Character.toUpperCase(anyCase.charAt(count)));
         upper = false;
-      }
-      else {
+      } else {
         camelBuilder.append(Character.toLowerCase(anyCase.charAt(count)));
       }
     }
@@ -100,8 +96,7 @@ public class StringUtility {
     for (int count = 0; count < anyCase.length(); count++) {
       if (anyCase.charAt(count) == wordMarker) {
         fieldBuilder.append('_');
-      }
-      else {
+      } else {
         fieldBuilder.append(Character.toUpperCase(anyCase.charAt(count)));
       }
     }
@@ -116,13 +111,11 @@ public class StringUtility {
         if (!Character.isJavaIdentifierStart(anyName.charAt(count))) {
           return false;
         }
-      }
-      else if (!Character.isJavaIdentifierPart(anyName.charAt(count))) {
+      } else if (!Character.isJavaIdentifierPart(anyName.charAt(count))) {
         return false;
       }
     }
 
     return true;
   }
-
 }

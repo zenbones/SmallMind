@@ -52,8 +52,7 @@ public class GenericUtility {
     while (!getClass(type).equals(baseClass)) {
       if (type instanceof Class) {
         type = ((Class)type).getGenericSuperclass();
-      }
-      else {
+      } else {
 
         ParameterizedType parameterizedType = (ParameterizedType)type;
         Class<?> rawType = (Class)parameterizedType.getRawType();
@@ -74,8 +73,7 @@ public class GenericUtility {
 
     if (type instanceof Class) {
       actualTypeArguments = ((Class)type).getTypeParameters();
-    }
-    else {
+    } else {
       actualTypeArguments = ((ParameterizedType)type).getActualTypeArguments();
     }
 
@@ -96,24 +94,20 @@ public class GenericUtility {
     if (type instanceof Class) {
 
       return (Class)type;
-    }
-    else if (type instanceof ParameterizedType) {
+    } else if (type instanceof ParameterizedType) {
 
       return getClass(((ParameterizedType)type).getRawType());
-    }
-    else if (type instanceof GenericArrayType) {
+    } else if (type instanceof GenericArrayType) {
 
       Type componentType = ((GenericArrayType)type).getGenericComponentType();
       Class<?> componentClass = getClass(componentType);
 
       if (componentClass != null) {
         return Array.newInstance(componentClass, 0).getClass();
-      }
-      else {
+      } else {
         return null;
       }
-    }
-    else {
+    } else {
       return null;
     }
   }

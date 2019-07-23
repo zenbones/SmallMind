@@ -55,8 +55,7 @@ public class RegExpTranslator {
           if (isStar) {
             patternBuilder.append(".*");
             isStar = false;
-          }
-          else {
+          } else {
             isStar = true;
           }
           break;

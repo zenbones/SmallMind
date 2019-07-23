@@ -53,6 +53,16 @@ public class ExtensibleSAXParser implements ContentHandler {
   private DocumentExtender documentExtender;
   private boolean documentTerminated;
 
+  private ExtensibleSAXParser (DocumentExtender documentExtender) {
+
+    this.documentExtender = documentExtender;
+
+    extenderStack = new LinkedList<>();
+    contentStack = new LinkedList<>();
+
+    documentTerminated = false;
+  }
+
   public static void parse (DocumentExtender documentExtender, InputSource inputSource, EntityResolver entityResolver)
     throws IOException, SAXException, ParserConfigurationException {
 
@@ -90,16 +100,6 @@ public class ExtensibleSAXParser implements ContentHandler {
     }
   }
 
-  private ExtensibleSAXParser (DocumentExtender documentExtender) {
-
-    this.documentExtender = documentExtender;
-
-    extenderStack = new LinkedList<>();
-    contentStack = new LinkedList<>();
-
-    documentTerminated = false;
-  }
-
   public boolean isDocumentTerminated () {
 
     return documentTerminated;
@@ -133,19 +133,16 @@ public class ExtensibleSAXParser implements ContentHandler {
     try {
       if ((elementExtender = documentExtender.getElementExtender(extenderStack.getLast(), namespaceURI, localName, qName, atts)) == null) {
         throw new ExtensibleSAXParserException("No ElementExtender available to handle tag (%s)", qName);
-      }
-      else {
+      } else {
         elementExtender.setDocumentExtender(documentExtender);
         elementExtender.setParent(extenderStack.getLast());
         elementExtender.startElement(namespaceURI, localName, qName, atts);
         extenderStack.add(elementExtender);
         contentStack.add(new StringBuilder());
       }
-    }
-    catch (SAXException saxException) {
+    } catch (SAXException saxException) {
       throw saxException;
-    }
-    catch (Exception exception) {
+    } catch (Exception exception) {
       throw new SAXException(exception);
     }
   }

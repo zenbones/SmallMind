@@ -55,16 +55,6 @@ public class SelfAwareRegistry implements Registry {
     this.internalRegistry = internalRegistry;
   }
 
-  public void setHost (String host) {
-
-    this.host = host;
-  }
-
-  public void setPort (int port) {
-
-    this.port = port;
-  }
-
   public void setInternalRegistry (Registry internalRegistry) {
 
     this.internalRegistry = internalRegistry;
@@ -75,9 +65,19 @@ public class SelfAwareRegistry implements Registry {
     return host;
   }
 
+  public void setHost (String host) {
+
+    this.host = host;
+  }
+
   public int getPort () {
 
     return port;
+  }
+
+  public void setPort (int port) {
+
+    this.port = port;
   }
 
   @Override

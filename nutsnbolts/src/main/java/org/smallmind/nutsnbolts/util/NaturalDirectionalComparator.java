@@ -52,5 +52,4 @@ public class NaturalDirectionalComparator<T extends Comparable<T>> extends Direc
         throw new UnknownSwitchCaseException(getDirection().name());
     }
   }
-
 }

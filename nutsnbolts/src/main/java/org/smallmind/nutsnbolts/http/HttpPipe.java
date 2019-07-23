@@ -51,7 +51,6 @@ public class HttpPipe {
     throws IOException {
 
     this.urlConnection = urlConnection;
-
   }
 
   public synchronized HttpPipe setRequestHeader (String key, String value) {
@@ -117,8 +116,7 @@ public class HttpPipe {
 
     if (state.equals(State.READ)) {
       httpInput = urlConnection.getInputStream();
-    }
-    else {
+    } else {
       urlConnection.disconnect();
     }
   }
@@ -134,8 +132,7 @@ public class HttpPipe {
 
     try {
       return (bytesRead = httpInput.read(buffer));
-    }
-    finally {
+    } finally {
       if (bytesRead < 0) {
         doneReading();
       }
@@ -153,8 +150,7 @@ public class HttpPipe {
 
     try {
       httpInput.close();
-    }
-    finally {
+    } finally {
       urlConnection.disconnect();
     }
   }

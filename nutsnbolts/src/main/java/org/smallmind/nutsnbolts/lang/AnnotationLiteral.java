@@ -165,7 +165,7 @@ public abstract class AnnotationLiteral<A extends Annotation> implements Annotat
                   return false;
                 }
               }
-            } else  {
+            } else {
               if (!thisValue.equals(otherValue)) {
                 return false;
               }

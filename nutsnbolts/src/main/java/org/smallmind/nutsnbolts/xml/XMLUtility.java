@@ -105,8 +105,7 @@ public class XMLUtility {
           if (indent) {
             nodeBuilder.append("\n");
           }
-        }
-        else {
+        } else {
           nodeBuilder.append("/>");
           if (indent) {
             nodeBuilder.append("\n");
@@ -163,5 +162,4 @@ public class XMLUtility {
 
     return encodeBuilder.toString();
   }
-
 }

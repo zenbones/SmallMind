@@ -90,6 +90,6 @@ public class FileSystemTemplateSource {
   @Override
   public boolean equals (Object obj) {
 
-    return (obj instanceof FileSystemTemplateSource) && ((FileSystemTemplateSource) obj).getTemplatePath().equals(templatePath);
+    return (obj instanceof FileSystemTemplateSource) && ((FileSystemTemplateSource)obj).getTemplatePath().equals(templatePath);
   }
 }

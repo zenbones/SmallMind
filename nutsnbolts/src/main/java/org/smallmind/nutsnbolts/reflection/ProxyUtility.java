@@ -148,8 +148,7 @@ public class ProxyUtility {
         if ((objectType = SIGNATURE_MAP.get(type)) == null) {
           try {
             SIGNATURE_MAP.put(type, objectType = Class.forName(type));
-          }
-          catch (ClassNotFoundException classNotFoundException) {
+          } catch (ClassNotFoundException classNotFoundException) {
             throw new ByteCodeManipulationException(classNotFoundException);
           }
         }

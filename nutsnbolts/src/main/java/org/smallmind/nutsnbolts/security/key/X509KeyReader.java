@@ -30,7 +30,7 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.nutsnbolts.security.ssh;
+package org.smallmind.nutsnbolts.security.key;
 
 import java.io.IOException;
 import java.math.BigInteger;
@@ -40,27 +40,27 @@ import org.bouncycastle.asn1.ASN1ObjectIdentifier;
 import org.bouncycastle.asn1.ASN1Sequence;
 import org.smallmind.nutsnbolts.http.Base64Codec;
 
-public class X509KeyReader implements SSHKeyReader {
+public class X509KeyReader implements KeyReader {
 
   @Override
-  public SSHKeyFactors extractFactors (String raw)
-    throws IOException, SSHParseException {
+  public KeyFactors extractFactors (String raw)
+    throws IOException, KeyParseException {
 
-    StringBuilder stripedRawBuilder = new StringBuilder();
+    StringBuilder strippedRawBuilder = new StringBuilder();
 
     for (int index = 0; index < raw.length(); index++) {
 
       char currentChar = raw.charAt(index);
 
       if ((currentChar != ' ') && (currentChar != '\n')) {
-        stripedRawBuilder.append(currentChar);
+        strippedRawBuilder.append(currentChar);
       }
     }
 
-    ASN1Sequence outerSequence = (ASN1Sequence)ASN1Sequence.fromByteArray(Base64Codec.decode(stripedRawBuilder.toString()));
+    ASN1Sequence outerSequence = (ASN1Sequence)ASN1Sequence.fromByteArray(Base64Codec.decode(strippedRawBuilder.toString()));
 
     if (outerSequence.size() < 1) {
-      throw new SSHParseException("ASN.1 outer sequence is missing elements");
+      throw new KeyParseException("ASN.1 outer sequence is missing elements");
     } else {
 
       Object firstObject = outerSequence.getObjectAt(0);
@@ -68,13 +68,13 @@ public class X509KeyReader implements SSHKeyReader {
       if (firstObject instanceof ASN1Sequence) {
 
         if (outerSequence.size() < 2) {
-          throw new SSHParseException("ASN.1 outer sequence is missing elements");
+          throw new KeyParseException("ASN.1 outer sequence is missing elements");
         } else {
 
           ASN1Sequence identifierSequence = ((ASN1Sequence)firstObject);
 
           if ((identifierSequence.size() < 1)) {
-            throw new SSHParseException("ASN.1 identifier sequence is empty");
+            throw new KeyParseException("ASN.1 identifier sequence is empty");
           } else {
 
             ASN1ObjectIdentifier oid = (ASN1ObjectIdentifier)identifierSequence.getObjectAt(0);
@@ -86,20 +86,20 @@ public class X509KeyReader implements SSHKeyReader {
               ASN1Sequence dataSequence = (ASN1Sequence)ASN1Sequence.fromByteArray(((ASN1BitString)outerSequence.getObjectAt(1)).getBytes());
 
               if (dataSequence.size() < 2) {
-                throw new SSHParseException("ASN.1 data sequence is missing elements");
+                throw new KeyParseException("ASN.1 data sequence is missing elements");
               }
 
               BigInteger modulus = ((ASN1Integer)dataSequence.getObjectAt(0)).getValue();
               BigInteger exponent = ((ASN1Integer)dataSequence.getObjectAt(1)).getValue();
 
-              return new SSHKeyFactors(modulus, exponent);
+              return new KeyFactors(modulus, exponent);
             }
           }
         }
       } else {
 
         if (outerSequence.size() < 4) {
-          throw new SSHParseException("ASN.1 outer sequence is missing elements");
+          throw new KeyParseException("ASN.1 outer sequence is missing elements");
         } else {
 
           int version = ((ASN1Integer)firstObject).getValue().intValue();
@@ -111,7 +111,7 @@ public class X509KeyReader implements SSHKeyReader {
           BigInteger modulus = ((ASN1Integer)outerSequence.getObjectAt(1)).getValue();
           BigInteger exponent = ((ASN1Integer)outerSequence.getObjectAt(3)).getValue();
 
-          return new SSHKeyFactors(modulus, exponent);
+          return new KeyFactors(modulus, exponent);
         }
       }
     }

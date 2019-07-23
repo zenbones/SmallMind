@@ -50,6 +50,24 @@ public class JsonCodec {
   private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper().registerModules(new JaxbAnnotationModule().setNonNillableInclusion(JsonInclude.Include.NON_NULL), new PolymorphicModule()).configure(MapperFeature.USE_WRAPPER_NAME_AS_PROPERTY_NAME, true);
   private static final JsonSchemaGenerator SCHEMA_GENERATOR = new JsonSchemaGenerator(OBJECT_MAPPER);
 
+  public static JsonNode readAsJsonNode (byte[] bytes)
+    throws IOException {
+
+    return OBJECT_MAPPER.readTree(bytes);
+  }
+
+  public static JsonNode readAsJsonNode (String aString)
+    throws IOException {
+
+    return OBJECT_MAPPER.readTree(aString);
+  }
+
+  public static JsonNode readAsJsonNode (InputStream inputStream)
+    throws IOException {
+
+    return OBJECT_MAPPER.readTree(inputStream);
+  }
+
   public static <T> T read (byte[] bytes, Class<T> clazz)
     throws IOException {
 

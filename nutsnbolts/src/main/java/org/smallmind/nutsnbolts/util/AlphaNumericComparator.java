@@ -63,11 +63,9 @@ public class AlphaNumericComparator<T> implements Comparator<T> {
 
     if ((obj1 == null) && (obj2 == null)) {
       return 0;
-    }
-    else if (obj1 == null) {
+    } else if (obj1 == null) {
       return -1;
-    }
-    else if (obj2 == null) {
+    } else if (obj2 == null) {
       return 1;
     }
 
@@ -76,11 +74,9 @@ public class AlphaNumericComparator<T> implements Comparator<T> {
 
     if ((first.length() == 0) && (second.length() == 0)) {
       return 0;
-    }
-    else if (first.length() == 0) {
+    } else if (first.length() == 0) {
       return -1;
-    }
-    else if (second.length() == 0) {
+    } else if (second.length() == 0) {
       return 1;
     }
 
@@ -91,35 +87,29 @@ public class AlphaNumericComparator<T> implements Comparator<T> {
       secondChar = second.charAt(count);
       if ((Character.isDigit(firstChar)) && (!Character.isDigit(secondChar))) {
         return -1;
-      }
-      else if ((!Character.isDigit(firstChar)) && (Character.isDigit(secondChar))) {
+      } else if ((!Character.isDigit(firstChar)) && (Character.isDigit(secondChar))) {
         return 1;
-      }
-      else if ((Character.isDigit(firstChar)) && (Character.isDigit(secondChar))) {
+      } else if ((Character.isDigit(firstChar)) && (Character.isDigit(secondChar))) {
         firstDigit = Integer.parseInt(first.substring(count, count + 1));
         secondDigit = Integer.parseInt(second.substring(count, count + 1));
         if (firstDigit < secondDigit) {
           return -1;
-        }
-        else if (firstDigit > secondDigit) {
+        } else if (firstDigit > secondDigit) {
           return 1;
         }
-      }
-      else {
+      } else {
         firstValue = (int)Character.toLowerCase(firstChar);
         secondValue = (int)Character.toLowerCase(secondChar);
         if (firstValue < secondValue) {
           return -1;
-        }
-        else if (firstValue > secondValue) {
+        } else if (firstValue > secondValue) {
           return 1;
         }
       }
     }
     if (first.length() < second.length()) {
       return -1;
-    }
-    else if (first.length() > second.length()) {
+    } else if (first.length() > second.length()) {
       return 1;
     }
     return 0;

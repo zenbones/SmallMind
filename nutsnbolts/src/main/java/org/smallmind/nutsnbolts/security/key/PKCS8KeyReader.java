@@ -30,28 +30,40 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.nutsnbolts.security.ssh;
+package org.smallmind.nutsnbolts.security.key;
 
+import java.io.ByteArrayInputStream;
+import java.io.DataInputStream;
+import java.io.IOException;
 import java.math.BigInteger;
+import org.smallmind.nutsnbolts.http.Base64Codec;
 
-public class SSHKeyFactors {
+public class PKCS8KeyReader implements KeyReader {
 
-  private BigInteger modulus;
-  private BigInteger exponent;
+  @Override
+  public KeyFactors extractFactors (String raw)
+    throws IOException, KeyParseException {
 
-  public SSHKeyFactors (BigInteger modulus, BigInteger exponent) {
+    try (DataInputStream dataInputStream = new DataInputStream(new ByteArrayInputStream(Base64Codec.decode(raw)))) {
 
-    this.modulus = modulus;
-    this.exponent = exponent;
+      if (!"ssh-rsa".equals(new String(readBytes(dataInputStream)))) {
+        throw new KeyParseException("Missing RFC-416 'ssh-rsa' prologue");
+      }
+
+      byte[] exponentBytes = readBytes(dataInputStream);
+      byte[] modulusBytes = readBytes(dataInputStream);
+
+      return new KeyFactors(new BigInteger(modulusBytes), new BigInteger(exponentBytes));
+    }
   }
 
-  public BigInteger getModulus () {
+  private byte[] readBytes (DataInputStream dataInputStream)
+    throws IOException {
 
-    return modulus;
-  }
+    byte[] bytes = new byte[dataInputStream.readInt()];
 
-  public BigInteger getExponent () {
+    dataInputStream.readFully(bytes);
 
-    return exponent;
+    return bytes;
   }
 }

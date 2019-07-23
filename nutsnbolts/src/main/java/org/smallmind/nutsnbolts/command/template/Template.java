@@ -54,6 +54,11 @@ public class Template {
   private HashSet<Option> optionSet = new HashSet<>();
   private String shortName;
 
+  public Template (Class entryClass) {
+
+    shortName = entryClass.getSimpleName();
+  }
+
   public static Template createTemplate (Class entryClass)
     throws CommandLineException {
 
@@ -74,11 +79,6 @@ public class Template {
     }
 
     return template;
-  }
-
-  public Template (Class entryClass) {
-
-    shortName = entryClass.getSimpleName();
   }
 
   public String getShortName () {

@@ -47,11 +47,6 @@ public class PerApplicationContext {
     }
   }
 
-  public void prepareThread () {
-
-    PER_APPLICATION_MAP_LOCAL.set(perApplicationMap);
-  }
-
   public static void setPerApplicationData (Class<? extends PerApplicationDataManager> clazz, Object data) {
 
     PER_APPLICATION_MAP_LOCAL.get().put(clazz, data);
@@ -60,5 +55,10 @@ public class PerApplicationContext {
   public static <K> K getPerApplicationData (Class<? extends PerApplicationDataManager> clazz, Class<K> type) {
 
     return type.cast(PER_APPLICATION_MAP_LOCAL.get().get(clazz));
+  }
+
+  public void prepareThread () {
+
+    PER_APPLICATION_MAP_LOCAL.set(perApplicationMap);
   }
 }

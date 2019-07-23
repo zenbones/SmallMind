@@ -202,8 +202,7 @@ public class SerialBox extends Box<SerialBox> {
           tailor.applyLayout(bias, containerPosition + top, currentMeasure = element.getMinimumMeasurement(bias, tailor), element);
           top += currentMeasure + gap;
         }
-      }
-      else if (containerMeasurement <= (preferredContainerMeasure = calculateMeasurement(bias, TapeMeasure.PREFERRED, tailor))) {
+      } else if (containerMeasurement <= (preferredContainerMeasure = calculateMeasurement(bias, TapeMeasure.PREFERRED, tailor))) {
 
         double[] preferredBiasedMeasurements = new double[getElements().size()];
         double[] fat = new double[getElements().size()];
@@ -227,8 +226,7 @@ public class SerialBox extends Box<SerialBox> {
           tailor.applyLayout(bias, containerPosition + top, currentMeasure = preferredBiasedMeasurements[index++] - (totalRatio * (preferredContainerMeasure - containerMeasurement)), element);
           top += currentMeasure + gap;
         }
-      }
-      else {
+      } else {
 
         LinkedList<ReorderedElement> reorderedElements = new LinkedList<ReorderedElement>();
         double[] tentativeMeasurements = new double[getElements().size()];
@@ -266,8 +264,7 @@ public class SerialBox extends Box<SerialBox> {
               if ((tentativeMeasurements[reorderedElement.getOriginalIndex()] + (currentUnused = ((currentGrow = reorderedElement.getReorderedElement().getConstraint().getGrow()) / totalGrow * unused))) < maximumMeasurements[reorderedElement.getOriginalIndex()]) {
                 used += currentUnused;
                 tentativeMeasurements[reorderedElement.getOriginalIndex()] += currentUnused;
-              }
-              else {
+              } else {
                 used += maximumMeasurements[reorderedElement.getOriginalIndex()] - tentativeMeasurements[reorderedElement.getOriginalIndex()];
                 tentativeMeasurements[reorderedElement.getOriginalIndex()] = maximumMeasurements[reorderedElement.getOriginalIndex()];
                 spentGrowth += currentGrow;
@@ -277,7 +274,6 @@ public class SerialBox extends Box<SerialBox> {
 
             unused -= used;
             totalGrow -= spentGrowth;
-
           } while ((!reorderedElements.isEmpty()) && (unused >= 1.0));
         }
 
@@ -291,8 +287,7 @@ public class SerialBox extends Box<SerialBox> {
           case LEADING:
             if (!bias.equals(getLayout().getContainer().getPlatform().getOrientation().getBias())) {
               applyLayouts(bias, containerPosition, true, tentativeMeasurements, tailor);
-            }
-            else {
+            } else {
               switch (getLayout().getContainer().getPlatform().getOrientation().getFlow()) {
                 case FIRST_TO_LAST:
                   applyLayouts(bias, containerPosition, true, tentativeMeasurements, tailor);
@@ -308,8 +303,7 @@ public class SerialBox extends Box<SerialBox> {
           case TRAILING:
             if (!bias.equals(getLayout().getContainer().getPlatform().getOrientation().getBias())) {
               applyLayouts(bias, containerPosition + containerMeasurement, false, tentativeMeasurements, tailor);
-            }
-            else {
+            } else {
               switch (getLayout().getContainer().getPlatform().getOrientation().getFlow()) {
                 case FIRST_TO_LAST:
                   applyLayouts(bias, containerPosition + containerMeasurement, false, tentativeMeasurements, tailor);
@@ -340,8 +334,7 @@ public class SerialBox extends Box<SerialBox> {
       if (forward) {
         tailor.applyLayout(bias, top, tentativeMeasurements[index], element);
         top += tentativeMeasurements[index++] + gap;
-      }
-      else {
+      } else {
         tailor.applyLayout(bias, top -= tentativeMeasurements[index], tentativeMeasurements[index++], element);
         top -= gap;
       }

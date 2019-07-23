@@ -102,22 +102,18 @@ public class RMIRegistryFactoryBean implements FactoryBean<Registry>, Initializi
       try {
         registry = new SelfAwareRegistry(host, port, LocateRegistry.getRegistry(host, port, clientSocketFactory));
         registry.list();
-      }
-      catch (RemoteException remoteException) {
+      } catch (RemoteException remoteException) {
         if ((hostInetAddress == null) || InetAddress.getLocalHost().equals(hostInetAddress)) {
           if ((clientSocketFactory != null) && (serverSocketFactory != null)) {
             registry = new SelfAwareRegistry(InetAddress.getLocalHost().getHostAddress(), port, LocateRegistry.createRegistry(port, clientSocketFactory, serverSocketFactory));
             registry.list();
-          }
-          else if ((clientSocketFactory == null) && (serverSocketFactory == null)) {
+          } else if ((clientSocketFactory == null) && (serverSocketFactory == null)) {
             registry = new SelfAwareRegistry(InetAddress.getLocalHost().getHostAddress(), port, LocateRegistry.createRegistry(port));
             registry.list();
-          }
-          else {
+          } else {
             throw new IllegalStateException("Either both client and server socket factories must be left null, or both must be set, in order to create a registry");
           }
-        }
-        else {
+        } else {
           throw remoteException;
         }
       }

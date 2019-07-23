@@ -94,8 +94,7 @@ public class MonitorHandler implements SOAPHandler<SOAPMessageContext> {
         default:
           throw new UnknownSwitchCaseException(messageDirection.name());
       }
-    }
-    catch (Exception exception) {
+    } catch (Exception exception) {
       throw new RuntimeException(exception);
     }
 
@@ -107,8 +106,7 @@ public class MonitorHandler implements SOAPHandler<SOAPMessageContext> {
     try {
       context.getMessage().writeTo(printStream);
       printStream.println();
-    }
-    catch (Exception exception) {
+    } catch (Exception exception) {
       throw new RuntimeException(exception);
     }
 

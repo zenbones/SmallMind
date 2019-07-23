@@ -155,11 +155,9 @@ public class ParallelBox extends Box<ParallelBox> {
       for (ParaboxElement<?> element : getElements()) {
         if (containerMeasurement <= (elementMeasurement = (minimumOverrideMeasurement != null) ? minimumOverrideMeasurement : element.getMinimumMeasurement(bias, tailor))) {
           tailor.applyLayout(bias, containerPosition, elementMeasurement, element);
-        }
-        else if (containerMeasurement <= (elementMeasurement = (maximumOverrideMeasurement != null) ? maximumOverrideMeasurement : element.getMaximumMeasurement(bias, tailor))) {
+        } else if (containerMeasurement <= (elementMeasurement = (maximumOverrideMeasurement != null) ? maximumOverrideMeasurement : element.getMaximumMeasurement(bias, tailor))) {
           tailor.applyLayout(bias, containerPosition, containerMeasurement, element);
-        }
-        else {
+        } else {
           switch (alignment) {
             case FIRST:
               tailor.applyLayout(bias, containerPosition, elementMeasurement, element);
@@ -170,8 +168,7 @@ public class ParallelBox extends Box<ParallelBox> {
             case LEADING:
               if (!bias.equals(getLayout().getContainer().getPlatform().getOrientation().getBias())) {
                 tailor.applyLayout(bias, containerPosition, elementMeasurement, element);
-              }
-              else {
+              } else {
                 switch (getLayout().getContainer().getPlatform().getOrientation().getFlow()) {
                   case FIRST_TO_LAST:
                     tailor.applyLayout(bias, containerPosition, elementMeasurement, element);
@@ -187,8 +184,7 @@ public class ParallelBox extends Box<ParallelBox> {
             case TRAILING:
               if (!bias.equals(getLayout().getContainer().getPlatform().getOrientation().getBias())) {
                 tailor.applyLayout(bias, containerPosition + containerMeasurement - elementMeasurement, elementMeasurement, element);
-              }
-              else {
+              } else {
                 switch (getLayout().getContainer().getPlatform().getOrientation().getFlow()) {
                   case FIRST_TO_LAST:
                     tailor.applyLayout(bias, containerPosition + containerMeasurement - elementMeasurement, elementMeasurement, element);
@@ -214,8 +210,7 @@ public class ParallelBox extends Box<ParallelBox> {
 
               if ((top = baselineCalculations.getIdealizedBaseline() - baselineCalculations.getElementAscentsDescents()[index].getFirst()) < 0) {
                 top = 0;
-              }
-              else if (top + elementMeasurement > containerMeasurement) {
+              } else if (top + elementMeasurement > containerMeasurement) {
                 top = containerMeasurement - elementMeasurement;
               }
 

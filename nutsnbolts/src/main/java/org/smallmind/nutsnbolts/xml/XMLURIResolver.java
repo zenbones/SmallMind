@@ -45,6 +45,11 @@ public class XMLURIResolver implements URIResolver {
 
   private ProtocolResolver protocolResolver;
 
+  public XMLURIResolver (ProtocolResolver protocolResolver) {
+
+    this.protocolResolver = protocolResolver;
+  }
+
   public synchronized static XMLURIResolver getInstance () {
 
     if (URI_RESOLVER == null) {
@@ -52,11 +57,6 @@ public class XMLURIResolver implements URIResolver {
     }
 
     return URI_RESOLVER;
-  }
-
-  public XMLURIResolver (ProtocolResolver protocolResolver) {
-
-    this.protocolResolver = protocolResolver;
   }
 
   public Source resolve (String href, String baseHref)
@@ -71,12 +71,10 @@ public class XMLURIResolver implements URIResolver {
           return new StreamSource(uriStream);
         }
       }
-    }
-    catch (Exception exception) {
+    } catch (Exception exception) {
       throw new TransformerException(exception);
     }
 
     return null;
   }
-
 }

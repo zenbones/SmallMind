@@ -55,6 +55,6 @@ public class ClasspathResource extends AbstractResource {
       return null;
     }
 
-    return Thread.currentThread().getContextClassLoader().getResourceAsStream((path.charAt(0) == '/' ) ? path.substring(1) : path);
+    return Thread.currentThread().getContextClassLoader().getResourceAsStream((path.charAt(0) == '/') ? path.substring(1) : path);
   }
 }

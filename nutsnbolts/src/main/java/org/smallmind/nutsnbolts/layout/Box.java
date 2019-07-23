@@ -104,8 +104,7 @@ public abstract class Box<B extends Box<B>> {
 
       if (element.isNativeComponent()) {
         layout.getContainer().nativelyRemoveComponent(element.getPart());
-      }
-      else {
+      } else {
         ((Box)element.getPart()).removeAll();
       }
 
@@ -129,16 +128,14 @@ public abstract class Box<B extends Box<B>> {
 
           return true;
         }
-      }
-      else {
+      } else {
         if (element.getPart().equals(component)) {
           ((Box)element.getPart()).removeAll();
 
           elementIter.remove();
 
           return true;
-        }
-        else if (((Box)element.getPart()).remove(component)) {
+        } else if (((Box)element.getPart()).remove(component)) {
 
           return true;
         }

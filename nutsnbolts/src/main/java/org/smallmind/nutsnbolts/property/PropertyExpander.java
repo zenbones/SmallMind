@@ -122,8 +122,7 @@ public class PropertyExpander {
         if (((nextPrefixPos = expansionBuilder.indexOf(prefix, parsePos)) >= 0) && (nextPrefixPos < suffixPos)) {
           arabesqueCount++;
           parsePos = nextPrefixPos + prefix.length();
-        }
-        else {
+        } else {
           arabesqueCount--;
           parsePos = suffixPos + suffix.length();
         }
@@ -148,19 +147,15 @@ public class PropertyExpander {
                   if (originalExpansion.equals(subExpansion = expansionBuilder.substring(prefixPos, suffixPos + suffix.length()))) {
                     if (originalExpansion.equals(prefix + expansionKey + suffix)) {
                       throw new PropertyExpanderException("Could find no mapping for property(%s)", originalExpansion);
-                    }
-                    else {
+                    } else {
                       throw new PropertyExpanderException("Could find no mapping for property(%s%s%s) within the expansion (%s)", prefix, expansionKey, suffix, originalExpansion);
                     }
-                  }
-                  else if (subExpansion.equals(prefix + expansionKey + suffix)) {
+                  } else if (subExpansion.equals(prefix + expansionKey + suffix)) {
                     throw new PropertyExpanderException("Could find no mapping for property(%s) within the expansion (%s)", subExpansion, originalExpansion);
-                  }
-                  else {
+                  } else {
                     throw new PropertyExpanderException("Could find no mapping for property(%s%s%s) within the expansion sub-template(%s) of (%s)", prefix, expansionKey, suffix, subExpansion, originalExpansion);
                   }
-                }
-                else {
+                } else {
                   expansionBuilder.replace(prefixPos + prefix.length(), suffixPos, expansionKey);
                   parsePos += expansionKey.length() - (suffixPos - (prefixPos + prefix.length()));
                 }

@@ -51,8 +51,7 @@ public class PropertyPlaceholderStringValueResolver implements StringValueResolv
 
     try {
       propertyExpander = new PropertyExpander(ignoreUnresolvableProperties, systemPropertyMode, searchSystemEnvironment);
-    }
-    catch (PropertyExpanderException propertyExpanderException) {
+    } catch (PropertyExpanderException propertyExpanderException) {
       throw new RuntimeBeansException(propertyExpanderException);
     }
 
@@ -70,8 +69,7 @@ public class PropertyPlaceholderStringValueResolver implements StringValueResolv
     try {
 
       return propertyExpander.expand(property, propertyMap);
-    }
-    catch (PropertyExpanderException propertyExpanderException) {
+    } catch (PropertyExpanderException propertyExpanderException) {
       throw new RuntimeBeansException(propertyExpanderException);
     }
   }
