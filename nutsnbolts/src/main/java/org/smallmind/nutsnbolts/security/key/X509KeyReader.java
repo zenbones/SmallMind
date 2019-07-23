@@ -42,8 +42,9 @@ import org.smallmind.nutsnbolts.http.Base64Codec;
 
 public class X509KeyReader implements KeyReader {
 
-  @Override
-  public KeyFactors extractFactors (String raw)
+  private KeyFactors keyFactors;
+
+  public X509KeyReader (String raw)
     throws IOException, KeyParseException {
 
     StringBuilder strippedRawBuilder = new StringBuilder();
@@ -92,7 +93,7 @@ public class X509KeyReader implements KeyReader {
               BigInteger modulus = ((ASN1Integer)dataSequence.getObjectAt(0)).getValue();
               BigInteger exponent = ((ASN1Integer)dataSequence.getObjectAt(1)).getValue();
 
-              return new KeyFactors(modulus, exponent);
+              keyFactors = new KeyFactors(modulus, exponent);
             }
           }
         }
@@ -111,9 +112,15 @@ public class X509KeyReader implements KeyReader {
           BigInteger modulus = ((ASN1Integer)outerSequence.getObjectAt(1)).getValue();
           BigInteger exponent = ((ASN1Integer)outerSequence.getObjectAt(3)).getValue();
 
-          return new KeyFactors(modulus, exponent);
+          keyFactors = new KeyFactors(modulus, exponent);
         }
       }
     }
+  }
+
+  @Override
+  public KeyFactors extractFactors () {
+
+    return keyFactors;
   }
 }

@@ -43,11 +43,16 @@ import org.smallmind.web.json.scaffold.util.JsonCodec;
 
 public class JWKKeyReader implements KeyReader {
 
-  @Override
-  public KeyFactors extractFactors (String raw)
+  private KeyFactors keyFactors;
+
+  public JWKKeyReader (String raw)
     throws IOException, KeyParseException {
 
-    JsonNode rawNode = JsonCodec.readAsJsonNode(raw);
+    this(JsonCodec.readAsJsonNode(raw));
+  }
+
+  public JWKKeyReader (JsonNode rawNode)
+    throws IOException, KeyParseException {
 
     if (!(rawNode.has("n") && rawNode.has("e"))) {
       throw new KeyParseException("JWK is missing attribute 'n' or 'e'");
@@ -56,7 +61,13 @@ public class JWKKeyReader implements KeyReader {
       String n = rawNode.get("n").asText();
       String e = rawNode.get("e").asText();
 
-      return new KeyFactors(new BigInteger(1, Base64Codec.urlSafeDecode(n)), new BigInteger(1, Base64Codec.urlSafeDecode(e)));
+      keyFactors = new KeyFactors(new BigInteger(1, Base64Codec.urlSafeDecode(n)), new BigInteger(1, Base64Codec.urlSafeDecode(e)));
     }
+  }
+
+  @Override
+  public KeyFactors extractFactors () {
+
+    return keyFactors;
   }
 }

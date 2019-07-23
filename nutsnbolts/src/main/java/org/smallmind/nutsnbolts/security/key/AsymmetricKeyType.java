@@ -34,6 +34,8 @@ package org.smallmind.nutsnbolts.security.key;
 
 import java.security.Key;
 import java.security.KeyFactory;
+import java.security.NoSuchAlgorithmException;
+import java.security.spec.InvalidKeySpecException;
 import java.security.spec.RSAPrivateKeySpec;
 import java.security.spec.RSAPublicKeySpec;
 
@@ -41,25 +43,25 @@ public enum AsymmetricKeyType {
 
   PUBLIC {
     @Override
-    public Key generateKey (KeyReader keyReader, String raw)
-      throws Exception {
+    public Key generateKey (KeyReader keyReader)
+      throws NoSuchAlgorithmException, InvalidKeySpecException {
 
-      KeyFactors keyFactors = keyReader.extractFactors(raw);
+      KeyFactors keyFactors = keyReader.extractFactors();
 
       return KeyFactory.getInstance("RSA").generatePublic(new RSAPublicKeySpec(keyFactors.getModulus(), keyFactors.getExponent()));
     }
   },
   PRIVATE {
     @Override
-    public Key generateKey (KeyReader keyReader, String raw)
-      throws Exception {
+    public Key generateKey (KeyReader keyReader)
+      throws NoSuchAlgorithmException, InvalidKeySpecException {
 
-      KeyFactors keyFactors = keyReader.extractFactors(raw);
+      KeyFactors keyFactors = keyReader.extractFactors();
 
       return KeyFactory.getInstance("RSA").generatePrivate(new RSAPrivateKeySpec(keyFactors.getModulus(), keyFactors.getExponent()));
     }
   };
 
-  public abstract Key generateKey (KeyReader keyReader, String raw)
-    throws Exception;
+  public abstract Key generateKey (KeyReader keyReader)
+    throws NoSuchAlgorithmException, InvalidKeySpecException;
 }

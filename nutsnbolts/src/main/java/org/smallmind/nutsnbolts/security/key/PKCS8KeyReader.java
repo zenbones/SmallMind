@@ -40,8 +40,9 @@ import org.smallmind.nutsnbolts.http.Base64Codec;
 
 public class PKCS8KeyReader implements KeyReader {
 
-  @Override
-  public KeyFactors extractFactors (String raw)
+  private KeyFactors keyFactors;
+
+  public PKCS8KeyReader (String raw)
     throws IOException, KeyParseException {
 
     try (DataInputStream dataInputStream = new DataInputStream(new ByteArrayInputStream(Base64Codec.decode(raw)))) {
@@ -53,8 +54,14 @@ public class PKCS8KeyReader implements KeyReader {
       byte[] exponentBytes = readBytes(dataInputStream);
       byte[] modulusBytes = readBytes(dataInputStream);
 
-      return new KeyFactors(new BigInteger(modulusBytes), new BigInteger(exponentBytes));
+      keyFactors = new KeyFactors(new BigInteger(modulusBytes), new BigInteger(exponentBytes));
     }
+  }
+
+  @Override
+  public KeyFactors extractFactors () {
+
+    return keyFactors;
   }
 
   private byte[] readBytes (DataInputStream dataInputStream)

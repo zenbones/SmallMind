@@ -34,6 +34,5 @@ package org.smallmind.nutsnbolts.security.key;
 
 public interface KeyReader {
 
-  KeyFactors extractFactors (String raw)
-    throws Exception;
+  KeyFactors extractFactors ();
 }

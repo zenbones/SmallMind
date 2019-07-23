@@ -43,7 +43,6 @@ public class AsymmetricKeyFactoryBean implements FactoryBean<Key>, InitializingB
   private Key key;
   private AsymmetricKeyType keyType;
   private KeyReader keyReader;
-  private String raw;
 
   public void setKeyType (AsymmetricKeyType keyType) {
 
@@ -53,11 +52,6 @@ public class AsymmetricKeyFactoryBean implements FactoryBean<Key>, InitializingB
   public void setKeyReader (KeyReader keyReader) {
 
     this.keyReader = keyReader;
-  }
-
-  public void setRaw (String raw) {
-
-    this.raw = raw;
   }
 
   @Override
@@ -76,7 +70,7 @@ public class AsymmetricKeyFactoryBean implements FactoryBean<Key>, InitializingB
   public void afterPropertiesSet ()
     throws Exception {
 
-    key = keyType.generateKey(keyReader, raw);
+    key = keyType.generateKey(keyReader);
   }
 
   @Override
