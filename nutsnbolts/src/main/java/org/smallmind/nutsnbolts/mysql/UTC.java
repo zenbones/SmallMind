@@ -35,21 +35,22 @@ package org.smallmind.nutsnbolts.mysql;
 import java.time.Instant;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
-import java.time.format.DateTimeFormatter;
 import java.util.Date;
+import org.smallmind.nutsnbolts.json.ZonedDateTimeXmlAdapter;
 
 public class UTC {
 
-  private static final DateTimeFormatter ISO_DATE_TIME_FORMATTER = DateTimeFormatter.ISO_ZONED_DATE_TIME;
+  private static ZonedDateTimeXmlAdapter ZONED_DATE_DATE_XML_ADAPTER = new ZonedDateTimeXmlAdapter();
+  private static ZoneId UTC_ZONE_ID = ZoneId.of("UTC").normalized();
 
   public static ZonedDateTime isoParse (String date) {
 
-    return ZonedDateTime.from(ISO_DATE_TIME_FORMATTER.parse(date));
+    return ZONED_DATE_DATE_XML_ADAPTER.unmarshal(date).withZoneSameInstant(UTC_ZONE_ID);
   }
 
   public static String isoFormat (Date date) {
 
-    return ISO_DATE_TIME_FORMATTER.format(date.toInstant());
+    return ZONED_DATE_DATE_XML_ADAPTER.marshal(ZonedDateTime.ofInstant(date.toInstant(), UTC_ZONE_ID));
   }
 
   public static Date now () {
