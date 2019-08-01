@@ -240,7 +240,7 @@ public class GrizzlyInitializingBean implements DisposableBean, ApplicationConte
     webappContext = new WebappContext("Grizzly Application Context", contextPath);
 
     if (includeWebSocketSupport) {
-      configuredNetworkListener.registerAddOn(tyrusWebSocketAddOn = new TyrusWebSocketAddOn(httpServer.getServerConfiguration(), webappContext, contextPath + webSocketPath, true, null));
+      configuredNetworkListener.registerAddOn(tyrusWebSocketAddOn = new TyrusWebSocketAddOn(httpServer.getServerConfiguration(), webappContext, contextPath, true, null));
     }
 
     httpServer.getServerConfiguration().addHttpHandler(new CLStaticHttpHandler(GrizzlyInitializingBean.class.getClassLoader(), "/"), contextPath + staticPath);

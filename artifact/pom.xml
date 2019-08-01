@@ -4,7 +4,7 @@
   <parent>
     <groupId>org.smallmind</groupId>
     <artifactId>smallmind</artifactId>
-    <version>3.3.21-SNASHOT</version>
+    <version>3.3.21-SNAPSHOT</version>
   </parent>
   <artifactId>smallmind-artifact</artifactId>
   <packaging>pom</packaging>
