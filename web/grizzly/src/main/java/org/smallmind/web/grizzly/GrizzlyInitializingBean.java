@@ -240,10 +240,10 @@ public class GrizzlyInitializingBean implements DisposableBean, ApplicationConte
     webappContext = new WebappContext("Grizzly Application Context", contextPath);
 
     if (includeWebSocketSupport) {
-      configuredNetworkListener.registerAddOn(tyrusWebSocketAddOn = new TyrusWebSocketAddOn(httpServer.getServerConfiguration(), webappContext, contextPath, true, null));
+      configuredNetworkListener.registerAddOn(tyrusWebSocketAddOn = new TyrusWebSocketAddOn(httpServer.getServerConfiguration(), webappContext, combinePaths(contextPath, webSocketPath), true, null));
     }
 
-    httpServer.getServerConfiguration().addHttpHandler(new CLStaticHttpHandler(GrizzlyInitializingBean.class.getClassLoader(), "/"), contextPath + staticPath);
+    httpServer.getServerConfiguration().addHttpHandler(new CLStaticHttpHandler(GrizzlyInitializingBean.class.getClassLoader(), "/"), combinePaths(contextPath, staticPath));
 
     if ((documentRoots != null) && (documentRoots.length > 0)) {
 
@@ -253,14 +253,14 @@ public class GrizzlyInitializingBean implements DisposableBean, ApplicationConte
         absolutePaths[index] = PathUtility.asResourceString(Paths.get(documentRoots[index]));
       }
 
-      httpServer.getServerConfiguration().addHttpHandler(new StaticHttpHandler(absolutePaths), contextPath + documentPath);
+      httpServer.getServerConfiguration().addHttpHandler(new StaticHttpHandler(absolutePaths), combinePaths(contextPath, documentPath));
     }
 
     for (WebService webService : serviceList) {
 
       HttpHandler httpHandler = new JaxwsHandler(webService.getService(), false);
 
-      httpServer.getServerConfiguration().addHttpHandler(httpHandler, contextPath + soapPath + webService.getPath());
+      httpServer.getServerConfiguration().addHttpHandler(httpHandler, combinePaths(contextPath, soapPath) + webService.getPath());
     }
 
     try {
@@ -371,6 +371,11 @@ public class GrizzlyInitializingBean implements DisposableBean, ApplicationConte
     }
 
     return null;
+  }
+
+  private String combinePaths (String contextPath, String extensionPath) {
+
+    return ((extensionPath == null) || (extensionPath.isEmpty()) || "/".equals(extensionPath)) ? contextPath : contextPath + extensionPath;
   }
 
   @Override
