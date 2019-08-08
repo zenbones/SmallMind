@@ -36,25 +36,24 @@ import org.smallmind.nutsnbolts.lang.UnknownSwitchCaseException;
 
 public class WhereUtility {
 
-  public static void walk (Where where, WhereVisitor visitor) {
+  public static void walk (WhereVisitor visitor, Where where) {
 
-    walkConjunction(where.getRootConjunction(), visitor);
+    walkCriteria(visitor, where.getRootConjunction());
   }
 
-  private static void walkConjunction (WhereConjunction whereConjunction, WhereVisitor visitor) {
+  public static void walkCriteria (WhereVisitor visitor, WhereCriterion... whereCriteria) {
 
-    visitor.visitConjunction(whereConjunction);
-
-    for (WhereCriterion criterion : whereConjunction.getCriteria()) {
-      switch (criterion.getCriterionType()) {
+    for (WhereCriterion whereCriterion : whereCriteria) {
+      switch (whereCriterion.getCriterionType()) {
         case CONJUNCTION:
-          walkConjunction((WhereConjunction)criterion, visitor);
+          visitor.visitConjunction((WhereConjunction)whereCriterion);
+          walkCriteria(visitor, ((WhereConjunction)whereCriterion).getCriteria());
           break;
         case FIELD:
-          visitor.visitField((WhereField)criterion);
+          visitor.visitField((WhereField)whereCriterion);
           break;
         default:
-          throw new UnknownSwitchCaseException(criterion.getCriterionType().name());
+          throw new UnknownSwitchCaseException(whereCriterion.getCriterionType().name());
       }
     }
   }

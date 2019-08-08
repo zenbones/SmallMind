@@ -66,7 +66,7 @@ public class Where implements WherePermissible<Where> {
 
     HashSet<WherePermit> targetSet = new HashSet<>();
 
-    WhereUtility.walk(this, new WhereVisitor() {
+    WhereUtility.walk(new WhereVisitor() {
 
       @Override
       public void visitConjunction (WhereConjunction conjunction) {
@@ -78,7 +78,7 @@ public class Where implements WherePermissible<Where> {
 
         targetSet.add(new TargetWherePermit(field.getEntity(), field.getName()));
       }
-    });
+    }, this);
 
     return targetSet;
   }
