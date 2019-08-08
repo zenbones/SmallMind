@@ -38,16 +38,16 @@ public class WhereUtility {
 
   public static void walk (WhereVisitor visitor, Where where) {
 
-    walkCriteria(visitor, where.getRootConjunction());
+    walk(visitor, where.getRootConjunction());
   }
 
-  public static void walkCriteria (WhereVisitor visitor, WhereCriterion... whereCriteria) {
+  public static void walk (WhereVisitor visitor, WhereCriterion... whereCriteria) {
 
     for (WhereCriterion whereCriterion : whereCriteria) {
       switch (whereCriterion.getCriterionType()) {
         case CONJUNCTION:
           visitor.visitConjunction((WhereConjunction)whereCriterion);
-          walkCriteria(visitor, ((WhereConjunction)whereCriterion).getCriteria());
+          walk(visitor, ((WhereConjunction)whereCriterion).getCriteria());
           break;
         case FIELD:
           visitor.visitField((WhereField)whereCriterion);
