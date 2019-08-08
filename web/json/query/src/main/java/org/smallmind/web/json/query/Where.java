@@ -62,7 +62,8 @@ public class Where implements WherePermissible<Where> {
 
   @Override
   @XmlTransient
-  public Set<WherePermit> getTargetSet () {
+  public Set<WherePermit> getTargetSet ()
+    throws Exception {
 
     HashSet<WherePermit> targetSet = new HashSet<>();
 

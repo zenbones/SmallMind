@@ -39,9 +39,11 @@ import org.smallmind.nutsnbolts.lang.UnknownSwitchCaseException;
 
 public interface WherePermissible<W extends WherePermissible<W>> {
 
-  Set<WherePermit> getTargetSet ();
+  Set<WherePermit> getTargetSet ()
+    throws Exception;
 
-  default W validate (WherePermit... permits) {
+  default W validate (WherePermit... permits)
+    throws Exception {
 
     if ((permits != null) && (permits.length > 0)) {
 

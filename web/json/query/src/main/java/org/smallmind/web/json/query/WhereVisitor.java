@@ -34,7 +34,9 @@ package org.smallmind.web.json.query;
 
 public interface WhereVisitor {
 
-  void visitConjunction (WhereConjunction conjunction);
+  void visitConjunction (WhereConjunction conjunction)
+    throws Exception;
 
-  void visitField (WhereField field);
+  void visitField (WhereField field)
+    throws Exception;
 }
