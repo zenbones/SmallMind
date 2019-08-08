@@ -67,6 +67,7 @@ public interface WherePermissible<W extends WherePermissible<W>> {
             if (requestedSet.contains(permit) && (!requestedSet.contains(((DependentWherePermit)permit).getRequirement()))) {
               failedDependencySet.add(permit);
             }
+            break;
           default:
             throw new UnknownSwitchCaseException(permit.getType().name());
         }
