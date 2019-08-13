@@ -42,6 +42,10 @@ public interface Overlay<O extends Overlay<O>> {
     return overlay(overlays, null);
   }
 
+  default void overliad () {
+
+  }
+
   default O overlay (O[] overlays, Field[] exclusions) {
 
     if ((overlays != null) && (overlays.length > 0)) {
@@ -96,6 +100,8 @@ public interface Overlay<O extends Overlay<O>> {
         }
       }
     }
+
+    this.overliad();
 
     return (O)this;
   }
