@@ -52,4 +52,3 @@ public class CorsResponseFilter implements ContainerResponseFilter {
     responseContext.getHeaders().add("Access-Control-Allow-Credentials", "false");
   }
 }
-
