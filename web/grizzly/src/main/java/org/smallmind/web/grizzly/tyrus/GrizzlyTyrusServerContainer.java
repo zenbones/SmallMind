@@ -117,7 +117,15 @@ public class GrizzlyTyrusServerContainer extends TyrusServerContainer {
           }
 
           if (!addedExtensionList.isEmpty()) {
-            serverEndpointConfig.getExtensions().addAll(addedExtensionList);
+
+            addedExtensionList.addAll(serverEndpointConfig.getExtensions());
+
+            return ServerEndpointConfig.Builder.create(serverEndpointConfig.getEndpointClass(), serverEndpointConfig.getPath())
+                     .configurator(serverEndpointConfig.getConfigurator())
+                     .decoders(serverEndpointConfig.getDecoders())
+                     .encoders(serverEndpointConfig.getEncoders())
+                     .extensions(addedExtensionList)
+                     .subprotocols(serverEndpointConfig.getSubprotocols()).build();
           }
         }
       }
