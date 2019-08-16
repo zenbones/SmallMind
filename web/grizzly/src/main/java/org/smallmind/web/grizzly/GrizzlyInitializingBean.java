@@ -73,7 +73,8 @@ public class GrizzlyInitializingBean implements DisposableBean, ApplicationConte
   private HttpServer httpServer;
   private TyrusWebSocketAddOn tyrusWebSocketAddOn;
   private IOStrategy ioStrategy;
-  private LinkedList<WebService> serviceList = new LinkedList<>();
+  private LinkedList<WebSocketExtensionInstaller> webSocketExtensionInstallerList = new LinkedList<>();
+  private LinkedList<WebService> webServiceList = new LinkedList<>();
   private LinkedList<FilterInstaller> filterInstallerList = new LinkedList<>();
   private LinkedList<ListenerInstaller> listenerInstallerList = new LinkedList<>();
   private LinkedList<ServletInstaller> servletInstallerList = new LinkedList<>();
@@ -240,7 +241,7 @@ public class GrizzlyInitializingBean implements DisposableBean, ApplicationConte
     webappContext = new WebappContext("Grizzly Application Context", contextPath);
 
     if (includeWebSocketSupport) {
-      configuredNetworkListener.registerAddOn(tyrusWebSocketAddOn = new TyrusWebSocketAddOn(httpServer.getServerConfiguration(), webappContext, combinePaths(contextPath, webSocketPath), true, null));
+      configuredNetworkListener.registerAddOn(tyrusWebSocketAddOn = new TyrusWebSocketAddOn(httpServer.getServerConfiguration(), webappContext, combinePaths(contextPath, webSocketPath), true, null, webSocketExtensionInstallerList.toArray(new WebSocketExtensionInstaller[0])));
     }
 
     httpServer.getServerConfiguration().addHttpHandler(new CLStaticHttpHandler(GrizzlyInitializingBean.class.getClassLoader(), "/"), combinePaths(contextPath, staticPath));
@@ -256,7 +257,7 @@ public class GrizzlyInitializingBean implements DisposableBean, ApplicationConte
       httpServer.getServerConfiguration().addHttpHandler(new StaticHttpHandler(absolutePaths), combinePaths(contextPath, documentPath));
     }
 
-    for (WebService webService : serviceList) {
+    for (WebService webService : webServiceList) {
 
       HttpHandler httpHandler = new JaxwsHandler(webService.getService(), false);
 
@@ -389,14 +390,16 @@ public class GrizzlyInitializingBean implements DisposableBean, ApplicationConte
 
     ServicePath servicePath;
 
-    if (bean instanceof FilterInstaller) {
+    if (bean instanceof WebSocketExtensionInstaller) {
+      webSocketExtensionInstallerList.add((WebSocketExtensionInstaller)bean);
+    } else if (bean instanceof FilterInstaller) {
       filterInstallerList.add((FilterInstaller)bean);
     } else if (bean instanceof ListenerInstaller) {
       listenerInstallerList.add((ListenerInstaller)bean);
     } else if (bean instanceof ServletInstaller) {
       servletInstallerList.add((ServletInstaller)bean);
     } else if ((servicePath = bean.getClass().getAnnotation(ServicePath.class)) != null) {
-      serviceList.add(new WebService(servicePath.value(), bean));
+      webServiceList.add(new WebService(servicePath.value(), bean));
     }
 
     return bean;
