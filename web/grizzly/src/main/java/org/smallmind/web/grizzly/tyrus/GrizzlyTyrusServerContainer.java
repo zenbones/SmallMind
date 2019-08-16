@@ -32,9 +32,12 @@
  */
 package org.smallmind.web.grizzly.tyrus;
 
+import java.util.Arrays;
 import java.util.HashMap;
+import java.util.LinkedList;
 import java.util.Set;
 import javax.websocket.DeploymentException;
+import javax.websocket.Extension;
 import javax.websocket.server.ServerEndpointConfig;
 import org.glassfish.grizzly.http.server.NetworkListener;
 import org.glassfish.tyrus.core.DebugContext;
@@ -44,19 +47,22 @@ import org.glassfish.tyrus.core.cluster.ClusterContext;
 import org.glassfish.tyrus.core.monitoring.ApplicationEventListener;
 import org.glassfish.tyrus.server.TyrusServerContainer;
 import org.glassfish.tyrus.spi.WebSocketEngine;
+import org.smallmind.web.grizzly.WebSocketExtensionInstaller;
 
 public class GrizzlyTyrusServerContainer extends TyrusServerContainer {
 
+  private final WebSocketExtensionInstaller[] webSocketExtensionInstallers;
   private final WebSocketEngine webSocketEngine;
   private final NetworkListener networkListener;
   private final String contextPath;
 
-  public GrizzlyTyrusServerContainer (NetworkListener networkListener, String contextPath) {
+  public GrizzlyTyrusServerContainer (NetworkListener networkListener, String contextPath, WebSocketExtensionInstaller... webSocketExtensionInstallers) {
 
     super((Set<Class<?>>)null);
 
     this.networkListener = networkListener;
     this.contextPath = contextPath;
+    this.webSocketExtensionInstallers = webSocketExtensionInstallers;
 
     HashMap<String, Object> localProperties = new HashMap<>();
 
@@ -92,7 +98,32 @@ public class GrizzlyTyrusServerContainer extends TyrusServerContainer {
   public void register (ServerEndpointConfig serverEndpointConfig)
     throws DeploymentException {
 
-    webSocketEngine.register(serverEndpointConfig, contextPath);
+    webSocketEngine.register(mergeExtensions(serverEndpointConfig), contextPath);
+  }
+
+  private ServerEndpointConfig mergeExtensions (ServerEndpointConfig serverEndpointConfig) {
+
+    if ((webSocketExtensionInstallers != null) && (webSocketExtensionInstallers.length > 0)) {
+      for (WebSocketExtensionInstaller webSocketExtensionInstaller : webSocketExtensionInstallers) {
+        if (webSocketExtensionInstaller.getEndpointClass().equals(serverEndpointConfig.getEndpointClass()) && webSocketExtensionInstaller.getPath().equals(serverEndpointConfig.getPath())) {
+
+          LinkedList<Extension> addedExtensionList = new LinkedList<>(Arrays.asList(webSocketExtensionInstaller.getExtensions()));
+
+          for (Extension extension : serverEndpointConfig.getExtensions()) {
+            addedExtensionList.removeIf((addedExtension) -> addedExtension.getClass().equals(extension.getClass()) || ((addedExtension.getName() != null) && addedExtension.getName().equals(extension.getName())));
+            if (addedExtensionList.isEmpty()) {
+              break;
+            }
+          }
+
+          if (!addedExtensionList.isEmpty()) {
+            serverEndpointConfig.getExtensions().addAll(addedExtensionList);
+          }
+        }
+      }
+    }
+
+    return serverEndpointConfig;
   }
 
   @Override

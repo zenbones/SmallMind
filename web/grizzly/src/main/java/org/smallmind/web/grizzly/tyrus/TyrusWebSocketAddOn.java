@@ -33,9 +33,7 @@
 package org.smallmind.web.grizzly.tyrus;
 
 import java.io.IOException;
-import java.util.Arrays;
 import javax.websocket.DeploymentException;
-import javax.websocket.server.ServerEndpointConfig;
 import javax.xml.bind.JAXBContext;
 import javax.xml.bind.JAXBException;
 import org.glassfish.grizzly.filterchain.FilterChainBuilder;
@@ -95,18 +93,7 @@ public class TyrusWebSocketAddOn implements AddOn {
 
     int httpServerFilterIndex;
 
-    serverContainer = new GrizzlyTyrusServerContainer(networkListener, contextPath);
-
-    if ((webSocketExtensionInstallers != null) && (webSocketExtensionInstallers.length > 0)) {
-      for (WebSocketExtensionInstaller webSocketExtensionInstaller : webSocketExtensionInstallers)
-        if ((webSocketExtensionInstaller.getExtensions() != null) && (webSocketExtensionInstaller.getExtensions().length > 0)) {
-          try {
-            serverContainer.register(ServerEndpointConfig.Builder.create(webSocketExtensionInstaller.getEndpointClass(), webSocketExtensionInstaller.getPath()).extensions(Arrays.asList(webSocketExtensionInstaller.getExtensions())).build());
-          } catch (DeploymentException deploymentException) {
-            throw new RuntimeException(deploymentException);
-          }
-        }
-    }
+    serverContainer = new GrizzlyTyrusServerContainer(networkListener, contextPath, webSocketExtensionInstallers);
 
     if ((httpServerFilterIndex = builder.indexOfType(HttpServerFilter.class)) < 0) {
       throw new GrizzlyInitializationException("Missing http servlet filter in the available filter chain");
