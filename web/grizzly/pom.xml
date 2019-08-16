@@ -88,6 +88,11 @@
       <scope>compile</scope>
     </dependency>
     <dependency>
+      <groupId>org.glassfish.tyrus.ext</groupId>
+      <artifactId>tyrus-extension-deflate</artifactId>
+      <scope>compile</scope>
+    </dependency>
+    <dependency>
       <groupId>org.glassfish.hk2</groupId>
       <artifactId>hk2-utils</artifactId>
       <scope>compile</scope>
