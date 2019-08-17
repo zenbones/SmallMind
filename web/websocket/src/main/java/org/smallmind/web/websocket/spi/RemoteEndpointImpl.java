@@ -183,6 +183,173 @@ public class RemoteEndpointImpl implements RemoteEndpoint {
     throw new IOException("pongs are automatically sent in response to pings");
   }
 
+  private class SendStream extends OutputStream {
+
+    private RemoteEndpointImpl.Basic basicEndpoint;
+    private AtomicReference<ByteArrayOutputStream> partialStreamRef;
+
+    public SendStream (Basic basicEndpoint, AtomicReference<ByteArrayOutputStream> partialStreamRef) {
+
+      this.basicEndpoint = basicEndpoint;
+      this.partialStreamRef = partialStreamRef;
+    }
+
+    @Override
+    public void write (int b) {
+
+      partialStreamRef.get().write(b);
+    }
+
+    @Override
+    public void write (byte[] b, int off, int len) {
+
+      partialStreamRef.get().write(b, off, len);
+    }
+
+    @Override
+    public void write (byte[] b)
+      throws IOException {
+
+      partialStreamRef.get().write(b);
+    }
+
+    @Override
+    public void close ()
+      throws IOException {
+
+      byte[] completeBuffer = partialStreamRef.get().toByteArray();
+
+      partialStreamRef.set(null);
+      basicEndpoint.sendBinary(ByteBuffer.wrap(completeBuffer));
+
+      super.close();
+    }
+  }
+
+  private class SendWriter extends Writer {
+
+    private RemoteEndpointImpl.Basic basicEndpoint;
+    private AtomicReference<StringBuilder> partialBuilderRef;
+
+    public SendWriter (Basic basicEndpoint, AtomicReference<StringBuilder> partialBuilderRef) {
+
+      this.basicEndpoint = basicEndpoint;
+      this.partialBuilderRef = partialBuilderRef;
+    }
+
+    @Override
+    public void write (char[] cbuf, int off, int len) {
+
+      partialBuilderRef.get().append(cbuf, off, len);
+    }
+
+    @Override
+    public void flush () {
+
+    }
+
+    @Override
+    public void close ()
+      throws IOException {
+
+      String completeText = partialBuilderRef.get().toString();
+
+      partialBuilderRef.set(null);
+      basicEndpoint.sendText(completeText);
+    }
+  }
+
+  private class SendFuture implements Future<Void> {
+
+    private SendRunnable sendRunnable;
+    private Thread sendThread;
+
+    public SendFuture (SendRunnable sendRunnable) {
+
+      this.sendRunnable = sendRunnable;
+
+      (sendThread = new Thread(sendRunnable)).start();
+    }
+
+    @Override
+    public boolean cancel (boolean mayInterruptIfRunning) {
+
+      return false;
+    }
+
+    @Override
+    public boolean isCancelled () {
+
+      return false;
+    }
+
+    @Override
+    public boolean isDone () {
+
+      return !sendThread.isAlive();
+    }
+
+    @Override
+    public Void get ()
+      throws InterruptedException, ExecutionException {
+
+      sendThread.join();
+      if (sendRunnable.getThrowable() != null) {
+        throw new ExecutionException(sendRunnable.getThrowable());
+      }
+
+      return null;
+    }
+
+    @Override
+    public Void get (long timeout, TimeUnit unit)
+      throws InterruptedException, ExecutionException, TimeoutException {
+
+      sendThread.join(unit.toMillis(timeout));
+
+      if (sendThread.isAlive()) {
+        throw new TimeoutException();
+      }
+      if (sendRunnable.getThrowable() != null) {
+        throw new ExecutionException(sendRunnable.getThrowable());
+      }
+
+      return null;
+    }
+  }
+
+  private class SendRunnable implements Runnable {
+
+    private SendExecutable executable;
+    private Throwable throwable;
+
+    public SendRunnable (SendExecutable executable) {
+
+      this.executable = executable;
+    }
+
+    public Throwable getThrowable () {
+
+      return throwable;
+    }
+
+    @Override
+    public void run () {
+
+      try {
+        executable.execute();
+      } catch (Throwable throwable) {
+        this.throwable = throwable;
+      }
+    }
+  }
+
+  private abstract class SendExecutable {
+
+    public abstract void execute ()
+      throws Throwable;
+  }
+
   public static class Basic extends RemoteEndpointImpl implements RemoteEndpoint.Basic {
 
     private AtomicReference<StringBuilder> partialBuilderRef = new AtomicReference<>();
@@ -438,172 +605,5 @@ public class RemoteEndpointImpl implements RemoteEndpoint {
         handler.onResult(new SendResult(exception));
       }
     }
-  }
-
-  private class SendStream extends OutputStream {
-
-    private RemoteEndpointImpl.Basic basicEndpoint;
-    private AtomicReference<ByteArrayOutputStream> partialStreamRef;
-
-    public SendStream (Basic basicEndpoint, AtomicReference<ByteArrayOutputStream> partialStreamRef) {
-
-      this.basicEndpoint = basicEndpoint;
-      this.partialStreamRef = partialStreamRef;
-    }
-
-    @Override
-    public void write (int b) {
-
-      partialStreamRef.get().write(b);
-    }
-
-    @Override
-    public void write (byte[] b, int off, int len) {
-
-      partialStreamRef.get().write(b, off, len);
-    }
-
-    @Override
-    public void write (byte[] b)
-      throws IOException {
-
-      partialStreamRef.get().write(b);
-    }
-
-    @Override
-    public void close ()
-      throws IOException {
-
-      byte[] completeBuffer = partialStreamRef.get().toByteArray();
-
-      partialStreamRef.set(null);
-      basicEndpoint.sendBinary(ByteBuffer.wrap(completeBuffer));
-
-      super.close();
-    }
-  }
-
-  private class SendWriter extends Writer {
-
-    private RemoteEndpointImpl.Basic basicEndpoint;
-    private AtomicReference<StringBuilder> partialBuilderRef;
-
-    public SendWriter (Basic basicEndpoint, AtomicReference<StringBuilder> partialBuilderRef) {
-
-      this.basicEndpoint = basicEndpoint;
-      this.partialBuilderRef = partialBuilderRef;
-    }
-
-    @Override
-    public void write (char[] cbuf, int off, int len) {
-
-      partialBuilderRef.get().append(cbuf, off, len);
-    }
-
-    @Override
-    public void flush () {
-
-    }
-
-    @Override
-    public void close ()
-      throws IOException {
-
-      String completeText = partialBuilderRef.get().toString();
-
-      partialBuilderRef.set(null);
-      basicEndpoint.sendText(completeText);
-    }
-  }
-
-  private class SendFuture implements Future<Void> {
-
-    private SendRunnable sendRunnable;
-    private Thread sendThread;
-
-    public SendFuture (SendRunnable sendRunnable) {
-
-      this.sendRunnable = sendRunnable;
-
-      (sendThread = new Thread(sendRunnable)).start();
-    }
-
-    @Override
-    public boolean cancel (boolean mayInterruptIfRunning) {
-
-      return false;
-    }
-
-    @Override
-    public boolean isCancelled () {
-
-      return false;
-    }
-
-    @Override
-    public boolean isDone () {
-
-      return !sendThread.isAlive();
-    }
-
-    @Override
-    public Void get ()
-      throws InterruptedException, ExecutionException {
-
-      sendThread.join();
-      if (sendRunnable.getThrowable() != null) {
-        throw new ExecutionException(sendRunnable.getThrowable());
-      }
-
-      return null;
-    }
-
-    @Override
-    public Void get (long timeout, TimeUnit unit)
-      throws InterruptedException, ExecutionException, TimeoutException {
-
-      sendThread.join(unit.toMillis(timeout));
-
-      if (sendThread.isAlive()) {
-        throw new TimeoutException();
-      }
-      if (sendRunnable.getThrowable() != null) {
-        throw new ExecutionException(sendRunnable.getThrowable());
-      }
-
-      return null;
-    }
-  }
-
-  private class SendRunnable implements Runnable {
-
-    private SendExecutable executable;
-    private Throwable throwable;
-
-    public SendRunnable (SendExecutable executable) {
-
-      this.executable = executable;
-    }
-
-    public Throwable getThrowable () {
-
-      return throwable;
-    }
-
-    @Override
-    public void run () {
-
-      try {
-        executable.execute();
-      } catch (Throwable throwable) {
-        this.throwable = throwable;
-      }
-    }
-  }
-
-  private abstract class SendExecutable {
-
-    public abstract void execute ()
-      throws Throwable;
   }
 }

@@ -49,6 +49,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
 import javax.net.ssl.SSLSocketFactory;
+import javax.websocket.Extension;
 import org.smallmind.nutsnbolts.http.Base64Codec;
 import org.smallmind.nutsnbolts.io.ByteArrayIOStream;
 import org.smallmind.nutsnbolts.lang.UnknownSwitchCaseException;
@@ -82,7 +83,7 @@ public abstract class WebSocket implements AutoCloseable {
     this(uri, null, null, protocols);
   }
 
-  public WebSocket (URI uri, WebSocketExtension[] extensions, String... protocols)
+  public WebSocket (URI uri, Extension[] extensions, String... protocols)
     throws IOException, NoSuchAlgorithmException, WebSocketException {
 
     this(uri, null, extensions, protocols);
@@ -94,7 +95,7 @@ public abstract class WebSocket implements AutoCloseable {
     this(uri, handshakeListener, null, protocols);
   }
 
-  public WebSocket (URI uri, HandshakeListener handshakeListener, WebSocketExtension[] extensions, String... protocols)
+  public WebSocket (URI uri, HandshakeListener handshakeListener, Extension[] extensions, String... protocols)
     throws IOException, NoSuchAlgorithmException, WebSocketException {
 
     Thread workerThread;
@@ -265,7 +266,6 @@ public abstract class WebSocket implements AutoCloseable {
 
         return availableArray;
       }
-
     } while (true);
   }
 

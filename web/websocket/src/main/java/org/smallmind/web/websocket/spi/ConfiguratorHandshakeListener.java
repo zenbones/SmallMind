@@ -35,7 +35,6 @@ package org.smallmind.web.websocket.spi;
 import java.util.List;
 import java.util.Map;
 import javax.websocket.ClientEndpointConfig;
-import javax.websocket.HandshakeResponse;
 import org.smallmind.nutsnbolts.util.Tuple;
 import org.smallmind.web.websocket.HandshakeListener;
 
@@ -71,13 +70,6 @@ public class ConfiguratorHandshakeListener implements HandshakeListener {
   @Override
   public void afterResponse (final Tuple<String, String> headerTuple) {
 
-    configurator.afterResponse(new HandshakeResponse() {
-
-      @Override
-      public Map<String, List<String>> getHeaders () {
-
-        return headerTuple.asMap();
-      }
-    });
+    configurator.afterResponse(headerTuple::asMap);
   }
 }

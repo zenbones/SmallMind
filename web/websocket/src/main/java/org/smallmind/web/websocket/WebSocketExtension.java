@@ -39,46 +39,46 @@ import javax.websocket.Extension;
 
 public class WebSocketExtension implements Extension {
 
-    private String name;
-    private ExtensionParameter[] parameters;
+  private String name;
+  private ExtensionParameter[] parameters;
 
-    public WebSocketExtension (String name, ExtensionParameter... parameters) {
+  public WebSocketExtension (String name, ExtensionParameter... parameters) {
 
-        this.name = name;
-        this.parameters = parameters;
+    this.name = name;
+    this.parameters = parameters;
+  }
+
+  @Override
+  public String getName () {
+
+    return name;
+  }
+
+  private ExtensionParameter[] getParametersAsArray () {
+
+    return parameters;
+  }
+
+  @Override
+  public List<Parameter> getParameters () {
+
+    if (parameters == null) {
+
+      return Collections.emptyList();
     }
 
-    @Override
-    public String getName () {
+    return Arrays.<Parameter>asList(parameters);
+  }
 
-        return name;
-    }
+  @Override
+  public int hashCode () {
 
-    private ExtensionParameter[] getParametersAsArray () {
+    return name.hashCode() ^ Arrays.hashCode(parameters);
+  }
 
-        return parameters;
-    }
+  @Override
+  public boolean equals (Object obj) {
 
-    @Override
-    public List<Parameter> getParameters () {
-
-        if (parameters == null) {
-
-            return Collections.emptyList();
-        }
-
-        return Arrays.<Parameter>asList(parameters);
-    }
-
-    @Override
-    public int hashCode () {
-
-        return name.hashCode() ^ Arrays.hashCode(parameters);
-    }
-
-    @Override
-    public boolean equals (Object obj) {
-
-        return (obj instanceof WebSocketExtension) && ((WebSocketExtension)obj).getName().equals(name) && Arrays.equals(((WebSocketExtension)obj).getParametersAsArray(), parameters);
-    }
+    return (obj instanceof WebSocketExtension) && ((WebSocketExtension)obj).getName().equals(name) && Arrays.equals(((WebSocketExtension)obj).getParametersAsArray(), parameters);
+  }
 }

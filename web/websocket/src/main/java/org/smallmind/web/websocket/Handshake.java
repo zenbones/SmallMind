@@ -40,6 +40,7 @@ import java.security.NoSuchAlgorithmException;
 import java.util.LinkedList;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import javax.websocket.Extension;
 import org.smallmind.nutsnbolts.http.Base64Codec;
 import org.smallmind.nutsnbolts.security.EncryptionUtility;
 import org.smallmind.nutsnbolts.security.HashAlgorithm;
@@ -50,7 +51,7 @@ public class Handshake {
   private static final Pattern HTTP_STATUS_PATTERN = Pattern.compile("HTTP/(\\d+\\.\\d+)\\s(\\d+)\\s(.+)");
   private static final Pattern HTTP_HEADER_PATTERN = Pattern.compile("([^:]+):\\s*(.+)\\s*");
 
-  public static Tuple<String, String> constructHeaders (int protocolVersion, URI uri, byte[] keyBytes, WebSocketExtension[] extensions, String... protocols)
+  public static Tuple<String, String> constructHeaders (int protocolVersion, URI uri, byte[] keyBytes, Extension[] extensions, String... protocols)
     throws IOException {
 
     Tuple<String, String> headerTuple = new Tuple<>();
@@ -84,8 +85,7 @@ public class Handshake {
     return headerTuple;
   }
 
-  public static byte[] constructRequest (URI uri, Tuple<String, String> headerTuple)
-    throws IOException {
+  public static byte[] constructRequest (URI uri, Tuple<String, String> headerTuple) {
 
     StringBuilder handshakeBuilder = new StringBuilder();
 
@@ -105,13 +105,13 @@ public class Handshake {
     return handshakeBuilder.toString().getBytes();
   }
 
-  public static HandshakeResponse validateResponse (Tuple<String, String> headerTuple, String response, byte[] keyBytes, WebSocketExtension[] installedExtensions, String... protocols)
+  public static HandshakeResponse validateResponse (Tuple<String, String> headerTuple, String response, byte[] keyBytes, Extension[] installedExtensions, String... protocols)
     throws IOException, NoSuchAlgorithmException, SyntaxException {
 
     BufferedReader reader = new BufferedReader(new StringReader(response));
     Matcher httpStatusMatcher;
-    LinkedList<WebSocketExtension> negotiatedExtensionList = new LinkedList<>();
-    WebSocketExtension[] negotiatedExtensions = null;
+    Extension[] negotiatedExtensions = null;
+    LinkedList<Extension> negotiatedExtensionList = new LinkedList<>();
     String httpStatus;
     String httpField;
     String negotiatedProtocol = "";
@@ -197,7 +197,6 @@ public class Handshake {
 
           if (splitParameterValues.length > 0) {
 
-            WebSocketExtension negotiatedExtension;
             LinkedList<ExtensionParameter> parameterList = new LinkedList<>();
             ExtensionParameter[] parameters;
             String extensionName;
@@ -231,17 +230,16 @@ public class Handshake {
             parameters = new ExtensionParameter[parameterList.size()];
             parameterList.toArray(parameters);
 
-            negotiatedExtension = new WebSocketExtension(extensionName, parameters);
-            for (WebSocketExtension installedExtension : installedExtensions) {
-              if (installedExtension.equals(negotiatedExtension)) {
-                negotiatedExtensionList.add(negotiatedExtension);
+            for (Extension installedExtension : installedExtensions) {
+              if (installedExtension.getName().equals(extensionName)) {
+                negotiatedExtensionList.add(installedExtension);
                 break;
               }
             }
           }
         }
 
-        negotiatedExtensions = new WebSocketExtension[negotiatedExtensionList.size()];
+        negotiatedExtensions = new Extension[negotiatedExtensionList.size()];
         negotiatedExtensionList.toArray(negotiatedExtensions);
       }
     }

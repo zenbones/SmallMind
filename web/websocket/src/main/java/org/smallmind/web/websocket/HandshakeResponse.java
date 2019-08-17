@@ -37,23 +37,23 @@ import javax.websocket.Extension;
 
 public class HandshakeResponse {
 
-  private WebSocketExtension[] extensions;
+  private Extension[] extensions;
   private String protocol;
 
-  public HandshakeResponse (String protocol, WebSocketExtension... extensions) {
+  public HandshakeResponse (String protocol, Extension... extensions) {
 
     this.protocol = protocol;
     this.extensions = extensions;
   }
 
-  public static String getExtensionsAsString (WebSocketExtension[] extensions) {
+  public static String getExtensionsAsString (Extension[] extensions) {
 
     if ((extensions != null) && (extensions.length > 0)) {
 
       StringBuilder extensionBuilder = new StringBuilder();
       boolean firstExtension = true;
 
-      for (WebSocketExtension extension : extensions) {
+      for (Extension extension : extensions) {
 
         List<Extension.Parameter> parameterList;
 
@@ -66,7 +66,10 @@ public class HandshakeResponse {
 
         if (!(parameterList = extension.getParameters()).isEmpty()) {
           for (Extension.Parameter parameter : parameterList) {
-            extensionBuilder.append("; ").append(parameter.getName()).append('=').append(parameter.getValue());
+            extensionBuilder.append("; ").append(parameter.getName());
+            if ((parameter.getValue() != null) && (!parameter.getValue().isEmpty())) {
+              extensionBuilder.append('=').append(parameter.getValue());
+            }
           }
         }
       }
@@ -82,7 +85,7 @@ public class HandshakeResponse {
     return protocol;
   }
 
-  public WebSocketExtension[] getExtensions () {
+  public Extension[] getExtensions () {
 
     return extensions;
   }

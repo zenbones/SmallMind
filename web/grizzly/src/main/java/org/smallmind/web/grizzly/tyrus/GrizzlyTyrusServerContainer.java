@@ -47,6 +47,7 @@ import org.glassfish.tyrus.core.cluster.ClusterContext;
 import org.glassfish.tyrus.core.monitoring.ApplicationEventListener;
 import org.glassfish.tyrus.server.TyrusServerContainer;
 import org.glassfish.tyrus.spi.WebSocketEngine;
+import org.smallmind.scribe.pen.LoggerManager;
 import org.smallmind.web.grizzly.WebSocketExtensionInstaller;
 
 public class GrizzlyTyrusServerContainer extends TyrusServerContainer {
