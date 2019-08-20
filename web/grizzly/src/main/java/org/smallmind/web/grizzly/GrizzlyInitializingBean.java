@@ -282,7 +282,7 @@ public class GrizzlyInitializingBean implements DisposableBean, ApplicationConte
     }
 
     if (includeSpringSupport) {
-      webappContext.addListener("org.springframework.web.context.request.RequestContextListener");
+      webappContext.addListener(new GrizzlyRequestContextListener());
     }
 
     for (ListenerInstaller listenerInstaller : listenerInstallerList) {
