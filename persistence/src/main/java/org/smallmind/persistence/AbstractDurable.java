@@ -116,11 +116,13 @@ public abstract class AbstractDurable<I extends Serializable & Comparable<I>, D 
 
           if ((exclusions != null) && (exclusions.length > 0)) {
             for (Field exclusion : exclusions) {
-              if (!exclusion.getDeclaringClass().isAssignableFrom(this.getClass())) {
-                throw new PersistenceException("The type(%s) does not contain the excluded field(%s)", this.getClass().getName(), exclusion.getName());
-              } else if (exclusion.equals(fieldAccessor.getField())) {
-                excluded = true;
-                break;
+              if (exclusion != null) {
+                if (!exclusion.getDeclaringClass().isAssignableFrom(this.getClass())) {
+                  throw new PersistenceException("The type(%s) does not contain the excluded field(%s)", this.getClass().getName(), exclusion.getName());
+                } else if (exclusion.equals(fieldAccessor.getField())) {
+                  excluded = true;
+                  break;
+                }
               }
             }
           }
