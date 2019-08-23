@@ -40,6 +40,7 @@ import javax.persistence.Temporal;
 import javax.persistence.TemporalType;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
+import org.smallmind.nutsnbolts.reflection.FieldAccessor;
 import org.smallmind.nutsnbolts.reflection.FieldUtility;
 import org.smallmind.persistence.Durable;
 
@@ -82,6 +83,10 @@ public abstract class TimestampedJPADurable<I extends Serializable & Comparable<
   @Override
   public boolean mirrors (Durable durable) {
 
-    return mirrors(durable, FieldUtility.getField(this.getClass(), "id"), FieldUtility.getField(this.getClass(), "created"), FieldUtility.getField(this.getClass(), "lastUpdated"));
+    FieldAccessor idFieldAccessor = FieldUtility.getFieldAccessor(this.getClass(), "id");
+    FieldAccessor createdFieldAccessor = FieldUtility.getFieldAccessor(this.getClass(), "created");
+    FieldAccessor lastUpdatedFieldAccessor = FieldUtility.getFieldAccessor(this.getClass(), "lastUpdated");
+
+    return mirrors(durable, (idFieldAccessor == null) ? null : idFieldAccessor.getField(), (createdFieldAccessor == null) ? null : createdFieldAccessor.getField(), (lastUpdatedFieldAccessor == null) ? null : lastUpdatedFieldAccessor.getField());
   }
 }

@@ -33,57 +33,96 @@
 package org.smallmind.nutsnbolts.reflection;
 
 import java.lang.reflect.Field;
+import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.util.LinkedList;
 import java.util.concurrent.ConcurrentHashMap;
+import org.smallmind.nutsnbolts.reflection.bean.BeanUtility;
 import org.smallmind.nutsnbolts.util.AlphaNumericComparator;
 
 public class FieldUtility {
 
-  private static final AlphaNumericComparator<Field> ALPHA_NUMERIC_COMPARATOR = new AlphaNumericComparator<>(Field::getName);
-  private static final ConcurrentHashMap<Class<?>, Field[]> FIELD_MAP = new ConcurrentHashMap<>();
+  private static final AlphaNumericComparator<FieldAccessor> ALPHA_NUMERIC_COMPARATOR = new AlphaNumericComparator<>(FieldAccessor::getName);
+  private static final ConcurrentHashMap<Class<?>, FieldAccessor[]> FIELD_ACCESSOR_MAP = new ConcurrentHashMap<>();
 
-  public static Field getField (Class<?> clazz, String name) {
+  public static FieldAccessor getFieldAccessor (Class<?> clazz, String name) {
 
-    for (Field field : getFields(clazz)) {
-      if (field.getName().equals(name)) {
+    for (FieldAccessor fieldAccessor : getFieldAccessors(clazz)) {
+      if (fieldAccessor.getField().getName().equals(name)) {
 
-        return field;
+        return fieldAccessor;
       }
     }
 
     return null;
   }
 
-  public static Field[] getFields (final Class<?> clazz) {
+  public static FieldAccessor[] getFieldAccessors (final Class<?> clazz) {
 
-    Field[] fields;
+    FieldAccessor[] fieldAccessors;
 
-    if ((fields = FIELD_MAP.get(clazz)) == null) {
-      synchronized (FIELD_MAP) {
-        if ((fields = FIELD_MAP.get(clazz)) == null) {
+    if ((fieldAccessors = FIELD_ACCESSOR_MAP.get(clazz)) == null) {
+      synchronized (FIELD_ACCESSOR_MAP) {
+        if ((fieldAccessors = FIELD_ACCESSOR_MAP.get(clazz)) == null) {
+
           Class<?> currentClass = clazz;
-          LinkedList<Field> fieldList = new LinkedList<>();
+          LinkedList<FieldAccessor> fieldAccessorList = new LinkedList<>();
 
           do {
             for (Field field : currentClass.getDeclaredFields()) {
               if (!(field.isSynthetic() || Modifier.isStatic(field.getModifiers()) || Modifier.isTransient(field.getModifiers()))) {
+
                 field.setAccessible(true);
-                fieldList.add(field);
+                fieldAccessorList.add(new FieldAccessor(field, locateGetter(clazz, field), locateSetter(clazz, field)));
               }
             }
           } while ((currentClass = currentClass.getSuperclass()) != null);
 
-          fieldList.sort(ALPHA_NUMERIC_COMPARATOR);
+          fieldAccessorList.sort(ALPHA_NUMERIC_COMPARATOR);
+          fieldAccessors = fieldAccessorList.toArray(new FieldAccessor[0]);
 
-          fields = new Field[fieldList.size()];
-          fieldList.toArray(fields);
-
-          FIELD_MAP.put(clazz, fields);
+          FIELD_ACCESSOR_MAP.put(clazz, fieldAccessors);
         }
       }
     }
 
-    return fields;
+    return fieldAccessors;
+  }
+
+  private static Method locateGetter (Class<?> clazz, Field field) {
+
+    try {
+
+      Method method;
+
+      try {
+        method = clazz.getMethod(BeanUtility.asGetterName(field.getName()));
+      } catch (NoSuchMethodException noSuchMethodException) {
+        method = clazz.getMethod(BeanUtility.asIsName(field.getName()));
+      }
+
+      return Modifier.isStatic(method.getModifiers()) ? null : method;
+    } catch (NoSuchMethodException noSuchMethodException) {
+
+      return null;
+    }
+  }
+
+  private static Method locateSetter (Class<?> clazz, Field field) {
+
+    try {
+
+      Method method;
+
+      if (Modifier.isStatic((method = clazz.getMethod(BeanUtility.asSetterName(field.getName()), field.getType())).getModifiers())) {
+
+        return null;
+      }
+
+      return method;
+    } catch (NoSuchMethodException noSuchMethodException) {
+
+      return null;
+    }
   }
 }

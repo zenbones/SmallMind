@@ -33,6 +33,7 @@
 package org.smallmind.nutsnbolts.reflection;
 
 import java.lang.reflect.Field;
+import java.lang.reflect.InvocationTargetException;
 import org.smallmind.nutsnbolts.lang.TypeMismatchException;
 
 public interface Overlay<O extends Overlay<O>> {
@@ -57,7 +58,7 @@ public interface Overlay<O extends Overlay<O>> {
 
             boolean excluded;
 
-            for (Field field : FieldUtility.getFields(this.getClass())) {
+            for (FieldAccessor fieldAccessor : FieldUtility.getFieldAccessors(this.getClass())) {
 
               excluded = false;
 
@@ -65,7 +66,7 @@ public interface Overlay<O extends Overlay<O>> {
                 for (Field exclusion : exclusions) {
                   if (!exclusion.getDeclaringClass().isAssignableFrom(this.getClass())) {
                     throw new TypeMismatchException("The type(%s) does not contain the excluded field(%s)", this.getClass().getName(), exclusion.getName());
-                  } else if (exclusion.equals(field)) {
+                  } else if (exclusion.equals(fieldAccessor.getField())) {
                     excluded = true;
                     break;
                   }
@@ -77,22 +78,22 @@ public interface Overlay<O extends Overlay<O>> {
                 Object value;
 
                 try {
-                  if ((value = field.get(overlay)) != null) {
-                    if (Overlay.class.isAssignableFrom(field.getType())) {
+                  if ((value = fieldAccessor.get(overlay)) != null) {
+                    if (Overlay.class.isAssignableFrom(fieldAccessor.getType())) {
 
                       Object original;
 
-                      if ((original = field.get(this)) != null) {
-                        field.set(this, ((Overlay)original).overlay(new Overlay[] {(Overlay)value}));
+                      if ((original = fieldAccessor.get(this)) != null) {
+                        fieldAccessor.set(this, ((Overlay)original).overlay(new Overlay[] {(Overlay)value}));
                       } else {
-                        field.set(this, value);
+                        fieldAccessor.set(this, value);
                       }
                     } else {
-                      field.set(this, value);
+                      fieldAccessor.set(this, value);
                     }
                   }
-                } catch (IllegalAccessException illegalAccessException) {
-                  throw new OverlayException(illegalAccessException);
+                } catch (IllegalAccessException | InvocationTargetException exception) {
+                  throw new OverlayException(exception);
                 }
               }
             }

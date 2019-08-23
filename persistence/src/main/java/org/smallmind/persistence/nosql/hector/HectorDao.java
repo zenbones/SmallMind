@@ -34,6 +34,7 @@ package org.smallmind.persistence.nosql.hector;
 
 import java.io.Serializable;
 import java.lang.reflect.Field;
+import java.lang.reflect.InvocationTargetException;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedList;
@@ -46,6 +47,7 @@ import me.prettyprint.cassandra.service.template.ColumnFamilyUpdater;
 import me.prettyprint.cassandra.service.template.ThriftColumnFamilyTemplate;
 import me.prettyprint.hector.api.Keyspace;
 import me.prettyprint.hector.api.beans.Composite;
+import org.smallmind.nutsnbolts.reflection.FieldAccessor;
 import org.smallmind.nutsnbolts.reflection.FieldUtility;
 import org.smallmind.persistence.Durable;
 import org.smallmind.persistence.NaturalKey;
@@ -102,12 +104,12 @@ public abstract class HectorDao<W extends Serializable & Comparable<W>, I extend
         D durable;
         NaturalKey naturalKey;
         Field[] naturalKeyFields = NaturalKey.getNaturalKeyFields(durableClass);
-        Field nonKeyField;
+        FieldAccessor nonKeyFieldAccessor;
         Object[] naturalKeyValues = new Object[naturalKeyFields.length];
         String nonKeyFieldName;
         int naturalKeyIndex;
 
-        if ((nonKeyField = FieldUtility.getField(durableClass, nonKeyFieldName = columnName.get(naturalKeyFields.length, StringSerializer.get()))) == null) {
+        if ((nonKeyFieldAccessor = FieldUtility.getFieldAccessor(durableClass, nonKeyFieldName = columnName.get(naturalKeyFields.length, StringSerializer.get()))) == null) {
           throw new PersistenceException("Unknown field(%s) in return values", nonKeyFieldName);
         }
 
@@ -131,15 +133,15 @@ public abstract class HectorDao<W extends Serializable & Comparable<W>, I extend
 
         try {
           if (nonKeyFieldName.equals("id")) {
-            nonKeyField.set(durable, HectorType.getTranslator(getIdClass(), "id").toEntityValue(getIdClass(), columnName, hectorResult));
+            nonKeyFieldAccessor.set(durable, HectorType.getTranslator(getIdClass(), "id").toEntityValue(getIdClass(), columnName, hectorResult));
           } else {
 
-            Class<?> nonKeyType = nonKeyField.getType();
+            Class<?> nonKeyType = nonKeyFieldAccessor.getType();
 
-            nonKeyField.set(durable, HectorType.getTranslator(nonKeyType, nonKeyFieldName).toEntityValue(nonKeyType, columnName, hectorResult));
+            nonKeyFieldAccessor.set(durable, HectorType.getTranslator(nonKeyType, nonKeyFieldName).toEntityValue(nonKeyType, columnName, hectorResult));
           }
-        } catch (IllegalAccessException illegalAccessException) {
-          throw new PersistenceException(illegalAccessException);
+        } catch (IllegalAccessException | InvocationTargetException exception) {
+          throw new PersistenceException(exception);
         }
       }
 

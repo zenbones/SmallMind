@@ -34,9 +34,11 @@ package org.smallmind.persistence;
 
 import java.io.Serializable;
 import java.lang.reflect.Field;
+import java.lang.reflect.InvocationTargetException;
 import java.util.HashSet;
 import java.util.Set;
 import org.smallmind.nutsnbolts.lang.TypeMismatchException;
+import org.smallmind.nutsnbolts.reflection.FieldAccessor;
 import org.smallmind.nutsnbolts.reflection.FieldUtility;
 import org.smallmind.nutsnbolts.reflection.Overlay;
 
@@ -98,7 +100,7 @@ public abstract class AbstractDurable<I extends Serializable & Comparable<I>, D 
 
   public boolean mirrors (Durable durable) {
 
-    return mirrors(durable, FieldUtility.getField(this.getClass(), "id"));
+    return mirrors(durable, FieldUtility.getFieldAccessor(this.getClass(), "id").getField());
   }
 
   public boolean mirrors (Durable durable, Field... exclusions) {
@@ -108,7 +110,7 @@ public abstract class AbstractDurable<I extends Serializable & Comparable<I>, D 
       boolean excluded;
 
       try {
-        for (Field field : FieldUtility.getFields(this.getClass())) {
+        for (FieldAccessor fieldAccessor : FieldUtility.getFieldAccessors(this.getClass())) {
 
           excluded = false;
 
@@ -116,7 +118,7 @@ public abstract class AbstractDurable<I extends Serializable & Comparable<I>, D 
             for (Field exclusion : exclusions) {
               if (!exclusion.getDeclaringClass().isAssignableFrom(this.getClass())) {
                 throw new PersistenceException("The type(%s) does not contain the excluded field(%s)", this.getClass().getName(), exclusion.getName());
-              } else if (exclusion.equals(field)) {
+              } else if (exclusion.equals(fieldAccessor.getField())) {
                 excluded = true;
                 break;
               }
@@ -125,8 +127,8 @@ public abstract class AbstractDurable<I extends Serializable & Comparable<I>, D 
 
           if (!excluded) {
 
-            Object myValue = field.get(this);
-            Object theirValue = field.get(durable);
+            Object myValue = fieldAccessor.get(this);
+            Object theirValue = fieldAccessor.get(durable);
 
             if ((myValue == null)) {
               if (theirValue != null) {
@@ -139,8 +141,8 @@ public abstract class AbstractDurable<I extends Serializable & Comparable<I>, D 
             }
           }
         }
-      } catch (IllegalAccessException illegalAccessException) {
-        throw new RuntimeException(illegalAccessException);
+      } catch (IllegalAccessException | InvocationTargetException exception) {
+        throw new RuntimeException(exception);
       }
 
       return true;
@@ -164,16 +166,16 @@ public abstract class AbstractDurable<I extends Serializable & Comparable<I>, D 
         displayBuilder.append(this.getClass().getSimpleName()).append('[');
 
         try {
-          for (Field field : FieldUtility.getFields(this.getClass())) {
+          for (FieldAccessor fieldAccessor : FieldUtility.getFieldAccessors(this.getClass())) {
             if (first) {
               displayBuilder.append(',');
             }
 
-            displayBuilder.append(field.getName()).append('=').append(field.get(this));
+            displayBuilder.append(fieldAccessor.getName()).append('=').append(fieldAccessor.get(this));
             first = true;
           }
-        } catch (IllegalAccessException illegalAccessException) {
-          throw new RuntimeException(illegalAccessException);
+        } catch (IllegalAccessException | InvocationTargetException exception) {
+          throw new RuntimeException(exception);
         }
 
         displayBuilder.append(']');

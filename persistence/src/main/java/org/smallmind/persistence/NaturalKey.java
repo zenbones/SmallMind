@@ -35,6 +35,7 @@ package org.smallmind.persistence;
 import java.lang.reflect.Field;
 import java.util.Arrays;
 import java.util.concurrent.ConcurrentHashMap;
+import org.smallmind.nutsnbolts.reflection.FieldAccessor;
 import org.smallmind.nutsnbolts.reflection.FieldUtility;
 import org.smallmind.nutsnbolts.reflection.type.TypeUtility;
 
@@ -84,27 +85,27 @@ public class NaturalKey<D extends Durable<? extends Comparable>> {
     if ((nonKeyFields = NON_KEY_MAP.get(durableClass)) == null) {
 
       Field[] naturalKeyFields = getNaturalKeyFields(durableClass);
-      Field[] durableFields = FieldUtility.getFields(durableClass);
+      FieldAccessor[] durableFieldAccessors = FieldUtility.getFieldAccessors(durableClass);
 
-      nonKeyFields = new Field[durableFields.length - naturalKeyFields.length];
+      nonKeyFields = new Field[durableFieldAccessors.length - naturalKeyFields.length];
 
       if (nonKeyFields.length > 0) {
 
         int index = 0;
 
-        for (Field durableField : durableFields) {
+        for (FieldAccessor durableFieldAccessor : durableFieldAccessors) {
 
           boolean matched = false;
 
           for (Field naturalKeyField : naturalKeyFields) {
-            if (durableField.equals(naturalKeyField)) {
+            if (durableFieldAccessor.getField().equals(naturalKeyField)) {
               matched = true;
               break;
             }
           }
 
           if (!matched) {
-            nonKeyFields[index++] = durableField;
+            nonKeyFields[index++] = durableFieldAccessor.getField();
           }
         }
       }
