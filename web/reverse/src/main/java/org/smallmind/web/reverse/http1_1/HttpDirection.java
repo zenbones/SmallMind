@@ -30,14 +30,9 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.web.reverse;
+package org.smallmind.web.reverse.http1_1;
 
-import org.smallmind.nutsnbolts.lang.FormattedRuntimeException;
+public enum HttpDirection {
 
-public class ReverseProxyException extends FormattedRuntimeException {
-
-  public ReverseProxyException (String message, Object... args) {
-
-    super(message, args);
-  }
+  REQUEST, RESPONSE
 }

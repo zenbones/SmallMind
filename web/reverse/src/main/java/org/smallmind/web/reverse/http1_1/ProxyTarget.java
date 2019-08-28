@@ -30,46 +30,38 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.web.reverse;
+package org.smallmind.web.reverse.http1_1;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
+public class ProxyTarget {
 
-public class HttpHeader {
+  private String host;
+  private int port;
 
-  private String name;
-  private ArrayList<String> valueList = new ArrayList<>(1);
+  public ProxyTarget (String host, int port) {
 
-  public HttpHeader (String name, String... values) {
-
-    this.name = name;
-
-    valueList.addAll(Arrays.asList(values));
+    this.host = host;
+    this.port = port;
   }
 
-  public String getName () {
+  public String getHost () {
 
-    return name;
+    return host;
   }
 
-  public List<String> getValues () {
+  public int getPort () {
 
-    return valueList;
+    return port;
   }
 
-  public HttpHeader addValue (String value) {
+  @Override
+  public int hashCode () {
 
-    valueList.add(value);
-
-    return this;
+    return host.hashCode() ^ port;
   }
 
-  public HttpHeader setValue (String value) {
+  @Override
+  public boolean equals (Object obj) {
 
-    valueList.clear();
-    addValue(value);
-
-    return this;
+    return (obj instanceof ProxyTarget) && ((ProxyTarget)obj).getHost().equals(host) && (((ProxyTarget)obj).getPort() == port);
   }
 }

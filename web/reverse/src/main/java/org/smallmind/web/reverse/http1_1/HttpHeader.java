@@ -30,17 +30,46 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.web.reverse;
+package org.smallmind.web.reverse.http1_1;
 
-import java.nio.ByteBuffer;
-import java.nio.channels.SelectionKey;
-import java.nio.channels.SocketChannel;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 
-public interface FrameReader {
+public class HttpHeader {
 
-  void closeChannels ();
+  private String name;
+  private ArrayList<String> valueList = new ArrayList<>(1);
 
-  void fail (CannedResponse cannedResponse, SocketChannel failedChannel);
+  public HttpHeader (String name, String... values) {
 
-  void processInput (SelectionKey selectionKey, ByteBuffer byteBuffer);
+    this.name = name;
+
+    valueList.addAll(Arrays.asList(values));
+  }
+
+  public String getName () {
+
+    return name;
+  }
+
+  public List<String> getValues () {
+
+    return valueList;
+  }
+
+  public HttpHeader addValue (String value) {
+
+    valueList.add(value);
+
+    return this;
+  }
+
+  public HttpHeader setValue (String value) {
+
+    valueList.clear();
+    addValue(value);
+
+    return this;
+  }
 }

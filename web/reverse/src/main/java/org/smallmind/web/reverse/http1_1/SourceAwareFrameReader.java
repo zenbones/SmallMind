@@ -30,24 +30,21 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.web.reverse;
+package org.smallmind.web.reverse.http1_1;
 
-import java.io.IOException;
-import java.io.OutputStream;
-import org.smallmind.nutsnbolts.io.ByteArrayIOStream;
+import java.nio.channels.SocketChannel;
 
-public class HttpProtocolOutputStream extends OutputStream {
+public abstract class SourceAwareFrameReader implements FrameReader {
 
-  private ByteArrayIOStream.ByteArrayOutputStream byteArrayOutputStream;
+  private SocketChannel sourceChannel;
 
-  public HttpProtocolOutputStream (ByteArrayIOStream.ByteArrayOutputStream byteArrayOutputStream) {
+  public SourceAwareFrameReader (SocketChannel sourceChannel) {
 
-    this.byteArrayOutputStream = byteArrayOutputStream;
+    this.sourceChannel = sourceChannel;
   }
 
-  @Override
-  public void write (int b) throws IOException {
+  public SocketChannel getSourceChannel () {
 
-    byteArrayOutputStream.write(b);
+    return sourceChannel;
   }
 }

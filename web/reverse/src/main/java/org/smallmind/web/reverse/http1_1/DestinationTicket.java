@@ -30,9 +30,40 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.web.reverse;
+package org.smallmind.web.reverse.http1_1;
 
-public enum HttpDirection {
+import java.nio.channels.SocketChannel;
 
-  REQUEST, RESPONSE
+public class DestinationTicket {
+
+  private ProxyTarget target;
+  private SocketChannel destinationChannel;
+
+  public DestinationTicket (ProxyTarget target, SocketChannel destinationChannel) {
+
+    this.target = target;
+    this.destinationChannel = destinationChannel;
+  }
+
+  public ProxyTarget getProxyTarget () {
+
+    return target;
+  }
+
+  public SocketChannel getSocketChannel () {
+
+    return destinationChannel;
+  }
+
+  @Override
+  public int hashCode () {
+
+    return target.hashCode();
+  }
+
+  @Override
+  public boolean equals (Object obj) {
+
+    return (obj instanceof DestinationTicket) && ((DestinationTicket)obj).getProxyTarget().equals(target);
+  }
 }

@@ -30,19 +30,24 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.web.reverse;
+package org.smallmind.web.reverse.http1_1;
 
-public class ProtocolException extends Exception {
+public class ProxyDebug {
 
-  private CannedResponse cannedResponse;
+  private byte[] buffer;
+  private int offset;
+  private int length;
 
-  public ProtocolException (CannedResponse cannedResponse) {
+  public ProxyDebug (byte[] buffer, int offset, int length) {
 
-    this.cannedResponse = cannedResponse;
+    this.buffer = buffer;
+    this.offset = offset;
+    this.length = length;
   }
 
-  public CannedResponse getCannedResponse () {
+  @Override
+  public String toString () {
 
-    return cannedResponse;
+    return new String(buffer, offset, length);
   }
 }

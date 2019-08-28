@@ -30,40 +30,27 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.web.reverse;
+package org.smallmind.web.reverse.http1_1;
 
-import java.nio.channels.SocketChannel;
+import java.nio.ByteBuffer;
 
-public class DestinationTicket {
+public enum CannedResponse {
 
-  private ProxyTarget target;
-  private SocketChannel destinationChannel;
+  BAD_REQUEST(ByteBuffer.wrap("HTTP/1.1 400 Bad Request\r\n\r\n".getBytes())),
+  NOT_FOUND(ByteBuffer.wrap("HTTP/1.1 404 Not Found\r\n\r\n".getBytes())),
+  LENGTH_REQUIRED(ByteBuffer.wrap("HTTP/1.1 411 Length Required\r\n\r\n".getBytes())),
+  BAD_GATEWAY(ByteBuffer.wrap("HTTP/1.1 502 Bad Gateway\r\n\r\n".getBytes())),
+  GATEWAY_TIMEOUT(ByteBuffer.wrap("HTTP/1.1 504 Gateway Timeout\r\n\r\n".getBytes()));
 
-  public DestinationTicket (ProxyTarget target, SocketChannel destinationChannel) {
+  private ByteBuffer byteBuffer;
 
-    this.target = target;
-    this.destinationChannel = destinationChannel;
+  CannedResponse (ByteBuffer byteBuffer) {
+
+    this.byteBuffer = byteBuffer;
   }
 
-  public ProxyTarget getProxyTarget () {
+  public ByteBuffer getByteBuffer () {
 
-    return target;
-  }
-
-  public SocketChannel getSocketChannel () {
-
-    return destinationChannel;
-  }
-
-  @Override
-  public int hashCode () {
-
-    return target.hashCode();
-  }
-
-  @Override
-  public boolean equals (Object obj) {
-
-    return (obj instanceof DestinationTicket) && ((DestinationTicket)obj).getProxyTarget().equals(target);
+    return byteBuffer;
   }
 }

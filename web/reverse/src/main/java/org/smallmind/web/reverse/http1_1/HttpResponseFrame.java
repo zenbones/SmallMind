@@ -30,27 +30,59 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.web.reverse;
+package org.smallmind.web.reverse.http1_1;
 
-import java.nio.ByteBuffer;
+import java.io.IOException;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
-public enum CannedResponse {
+public class HttpResponseFrame extends HttpFrame {
 
-  BAD_REQUEST(ByteBuffer.wrap("HTTP/1.1 400 Bad Request\r\n\r\n".getBytes())),
-  NOT_FOUND(ByteBuffer.wrap("HTTP/1.1 404 Not Found\r\n\r\n".getBytes())),
-  LENGTH_REQUIRED(ByteBuffer.wrap("HTTP/1.1 411 Length Required\r\n\r\n".getBytes())),
-  BAD_GATEWAY(ByteBuffer.wrap("HTTP/1.1 502 Bad Gateway\r\n\r\n".getBytes())),
-  GATEWAY_TIMEOUT(ByteBuffer.wrap("HTTP/1.1 504 Gateway Timeout\r\n\r\n".getBytes()));
+  private static final Pattern RESPONSE_LINE_PATTERN = Pattern.compile("HTTP/(\\d+\\.\\d+)\\s+(\\d+)\\s+(.+)");
 
-  private ByteBuffer byteBuffer;
+  private String reason;
+  private int status;
 
-  CannedResponse (ByteBuffer byteBuffer) {
+  public HttpResponseFrame (HttpProtocolInputStream httpProtocolInputStream)
+    throws IOException, ProtocolException {
 
-    this.byteBuffer = byteBuffer;
+    this(httpProtocolInputStream, parseResponseLine(httpProtocolInputStream.readLine()));
   }
 
-  public ByteBuffer getByteBuffer () {
+  private HttpResponseFrame (HttpProtocolInputStream inputStream, Matcher matcher)
+    throws IOException, ProtocolException {
 
-    return byteBuffer;
+    super(inputStream, matcher.group(1));
+
+    status = Integer.parseInt(matcher.group(2));
+    reason = matcher.group(3);
+  }
+
+  private static Matcher parseResponseLine (String line)
+    throws ProtocolException {
+
+    Matcher matcher;
+
+    if (!(matcher = RESPONSE_LINE_PATTERN.matcher(line)).matches()) {
+      throw new ProtocolException(CannedResponse.BAD_REQUEST);
+    }
+
+    return matcher;
+  }
+
+  @Override
+  public HttpDirection getDirection () {
+
+    return HttpDirection.RESPONSE;
+  }
+
+  public int getStatus () {
+
+    return status;
+  }
+
+  public String getReason () {
+
+    return reason;
   }
 }

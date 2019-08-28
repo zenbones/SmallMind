@@ -30,24 +30,14 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.web.reverse;
+package org.smallmind.web.reverse.http1_1;
 
-public class ProxyDebug {
+import org.smallmind.nutsnbolts.lang.FormattedRuntimeException;
 
-  private byte[] buffer;
-  private int offset;
-  private int length;
+public class ReverseProxyException extends FormattedRuntimeException {
 
-  public ProxyDebug (byte[] buffer, int offset, int length) {
+  public ReverseProxyException (String message, Object... args) {
 
-    this.buffer = buffer;
-    this.offset = offset;
-    this.length = length;
-  }
-
-  @Override
-  public String toString () {
-
-    return new String(buffer, offset, length);
+    super(message, args);
   }
 }

@@ -30,21 +30,50 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.web.reverse;
+package org.smallmind.web.reverse.http1_1;
 
+import java.io.IOException;
+import java.nio.ByteBuffer;
+import java.nio.channels.SelectionKey;
 import java.nio.channels.SocketChannel;
 
-public abstract class SourceAwareFrameReader implements FrameReader {
+public class HttpContentLengthFrameReader implements FrameReader {
 
-  private SocketChannel sourceChannel;
+  private final HttpFrameReader httpFrameReader;
+  private final int contentLength;
+  private int bytesRead = 0;
 
-  public SourceAwareFrameReader (SocketChannel sourceChannel) {
+  public HttpContentLengthFrameReader (HttpFrameReader httpFrameReader, int contentLength) {
 
-    this.sourceChannel = sourceChannel;
+    this.httpFrameReader = httpFrameReader;
+    this.contentLength = contentLength;
   }
 
-  public SocketChannel getSourceChannel () {
+  @Override
+  public void closeChannels () {
 
-    return sourceChannel;
+    httpFrameReader.closeChannels();
+  }
+
+  @Override
+  public void fail (CannedResponse cannedResponse, SocketChannel failedChannel) {
+
+    httpFrameReader.fail(cannedResponse, failedChannel);
+  }
+
+  public void processInput (SelectionKey selectionKey, ByteBuffer byteBuffer) {
+
+    try {
+      while ((byteBuffer.remaining() > 0) && (bytesRead++ < contentLength)) {
+        httpFrameReader.writeToBuffer(byteBuffer.get());
+      }
+
+      if (bytesRead == contentLength) {
+        httpFrameReader.flushBufferToTarget(true);
+        selectionKey.attach(httpFrameReader);
+      }
+    } catch (IOException ioException) {
+      fail(CannedResponse.BAD_REQUEST, null);
+    }
   }
 }

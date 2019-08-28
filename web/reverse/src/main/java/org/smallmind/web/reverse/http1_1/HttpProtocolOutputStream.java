@@ -30,59 +30,24 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.web.reverse;
+package org.smallmind.web.reverse.http1_1;
 
 import java.io.IOException;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
+import java.io.OutputStream;
+import org.smallmind.nutsnbolts.io.ByteArrayIOStream;
 
-public class HttpResponseFrame extends HttpFrame {
+public class HttpProtocolOutputStream extends OutputStream {
 
-  private static final Pattern RESPONSE_LINE_PATTERN = Pattern.compile("HTTP/(\\d+\\.\\d+)\\s+(\\d+)\\s+(.+)");
+  private ByteArrayIOStream.ByteArrayOutputStream byteArrayOutputStream;
 
-  private String reason;
-  private int status;
+  public HttpProtocolOutputStream (ByteArrayIOStream.ByteArrayOutputStream byteArrayOutputStream) {
 
-  public HttpResponseFrame (HttpProtocolInputStream httpProtocolInputStream)
-    throws IOException, ProtocolException {
-
-    this(httpProtocolInputStream, parseResponseLine(httpProtocolInputStream.readLine()));
-  }
-
-  private HttpResponseFrame (HttpProtocolInputStream inputStream, Matcher matcher)
-    throws IOException, ProtocolException {
-
-    super(inputStream, matcher.group(1));
-
-    status = Integer.parseInt(matcher.group(2));
-    reason = matcher.group(3);
-  }
-
-  private static Matcher parseResponseLine (String line)
-    throws ProtocolException {
-
-    Matcher matcher;
-
-    if (!(matcher = RESPONSE_LINE_PATTERN.matcher(line)).matches()) {
-      throw new ProtocolException(CannedResponse.BAD_REQUEST);
-    }
-
-    return matcher;
+    this.byteArrayOutputStream = byteArrayOutputStream;
   }
 
   @Override
-  public HttpDirection getDirection () {
+  public void write (int b) throws IOException {
 
-    return HttpDirection.RESPONSE;
-  }
-
-  public int getStatus () {
-
-    return status;
-  }
-
-  public String getReason () {
-
-    return reason;
+    byteArrayOutputStream.write(b);
   }
 }

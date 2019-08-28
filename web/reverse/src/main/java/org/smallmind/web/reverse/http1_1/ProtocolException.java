@@ -30,38 +30,19 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.web.reverse;
+package org.smallmind.web.reverse.http1_1;
 
-public class ProxyTarget {
+public class ProtocolException extends Exception {
 
-  private String host;
-  private int port;
+  private CannedResponse cannedResponse;
 
-  public ProxyTarget (String host, int port) {
+  public ProtocolException (CannedResponse cannedResponse) {
 
-    this.host = host;
-    this.port = port;
+    this.cannedResponse = cannedResponse;
   }
 
-  public String getHost () {
+  public CannedResponse getCannedResponse () {
 
-    return host;
-  }
-
-  public int getPort () {
-
-    return port;
-  }
-
-  @Override
-  public int hashCode () {
-
-    return host.hashCode() ^ port;
-  }
-
-  @Override
-  public boolean equals (Object obj) {
-
-    return (obj instanceof ProxyTarget) && ((ProxyTarget)obj).getHost().equals(host) && (((ProxyTarget)obj).getPort() == port);
+    return cannedResponse;
   }
 }
