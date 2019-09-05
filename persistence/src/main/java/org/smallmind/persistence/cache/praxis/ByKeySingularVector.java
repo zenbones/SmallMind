@@ -43,11 +43,7 @@ import org.smallmind.persistence.cache.DurableKey;
 import org.smallmind.persistence.cache.DurableVector;
 import org.smallmind.persistence.orm.ORMDao;
 import org.smallmind.persistence.orm.OrmDaoManager;
-import org.terracotta.annotations.AutolockRead;
-import org.terracotta.annotations.AutolockWrite;
-import org.terracotta.annotations.InstrumentedClass;
 
-@InstrumentedClass
 public class ByKeySingularVector<I extends Serializable & Comparable<I>, D extends Durable<I>> extends DurableVector<I, D> {
 
   private transient volatile ORMDao<I, D, ?, ?> ormDao;
@@ -84,7 +80,6 @@ public class ByKeySingularVector<I extends Serializable & Comparable<I>, D exten
     return durable;
   }
 
-  @AutolockRead
   public DurableVector<I, D> copy () {
 
     return new ByKeySingularVector<>(durableKey, getTimeToLiveSeconds());
@@ -95,7 +90,6 @@ public class ByKeySingularVector<I extends Serializable & Comparable<I>, D exten
     return true;
   }
 
-  @AutolockWrite
   public synchronized boolean add (D durable) {
 
     if (!getDurable().equals(durable)) {
@@ -112,19 +106,16 @@ public class ByKeySingularVector<I extends Serializable & Comparable<I>, D exten
     throw new UnsupportedOperationException("Attempted removal from a 'singular' vector");
   }
 
-  @AutolockRead
   public synchronized D head () {
 
     return getDurable();
   }
 
-  @AutolockRead
   public synchronized List<D> asBestEffortLazyList () {
 
     return Collections.singletonList(getDurable());
   }
 
-  @AutolockRead
   public synchronized Iterator<D> iterator () {
 
     return new SingleItemIterable<>(getDurable()).iterator();

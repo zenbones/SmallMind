@@ -48,9 +48,7 @@ import org.smallmind.persistence.cache.VectoredDao;
 import org.smallmind.persistence.cache.praxis.intrinsic.IntrinsicRoster;
 import org.smallmind.persistence.orm.ORMDao;
 import org.smallmind.persistence.orm.OrmDaoManager;
-import org.terracotta.annotations.InstrumentedClass;
 
-@InstrumentedClass
 public class ByKeyRoster<I extends Serializable & Comparable<I>, D extends Durable<I>> implements Roster<D> {
 
   private final Roster<DurableKey<I, D>> keyRoster;

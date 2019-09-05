@@ -658,11 +658,6 @@
         <version>2.1.0</version>
       </dependency>
       <dependency>
-        <groupId>org.terracotta.toolkit</groupId>
-        <artifactId>terracotta-toolkit-1.6</artifactId>
-        <version>5.5.0</version>
-      </dependency>
-      <dependency>
         <groupId>org.apache.wicket</groupId>
         <artifactId>wicket-core</artifactId>
         <version>6.18.0</version>

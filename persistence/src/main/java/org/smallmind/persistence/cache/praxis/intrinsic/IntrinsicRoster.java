@@ -41,9 +41,7 @@ import java.util.ListIterator;
 import java.util.NoSuchElementException;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import org.smallmind.persistence.cache.praxis.Roster;
-import org.terracotta.annotations.InstrumentedClass;
 
-@InstrumentedClass
 public class IntrinsicRoster<T> implements Roster<T> {
 
   private final ReentrantReadWriteLock lock;

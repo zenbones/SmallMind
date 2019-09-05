@@ -38,9 +38,7 @@ import org.smallmind.persistence.cache.aop.CachedWith;
 import org.smallmind.persistence.cache.aop.Classifications;
 import org.smallmind.persistence.cache.aop.Vector;
 import org.smallmind.persistence.cache.aop.VectorCalculator;
-import org.terracotta.annotations.InstrumentedClass;
 
-@InstrumentedClass
 public class VectorKey<D extends Durable> implements Serializable {
 
   private Class<D> elementClass;

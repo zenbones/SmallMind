@@ -37,11 +37,7 @@ import java.util.Comparator;
 import java.util.Iterator;
 import org.smallmind.persistence.Durable;
 import org.smallmind.persistence.cache.DurableVector;
-import org.terracotta.annotations.AutolockRead;
-import org.terracotta.annotations.AutolockWrite;
-import org.terracotta.annotations.InstrumentedClass;
 
-@InstrumentedClass
 public abstract class AbstractDurableVector<I extends Serializable & Comparable<I>, D extends Durable<I>> extends DurableVector<I, D> {
 
   public AbstractDurableVector (Comparator<D> comparator, int maxSize, int timeToLiveSeconds, boolean ordered) {
@@ -58,7 +54,6 @@ public abstract class AbstractDurableVector<I extends Serializable & Comparable<
     return false;
   }
 
-  @AutolockWrite
   public synchronized boolean add (D durable) {
 
     boolean changed = false;
@@ -124,7 +119,6 @@ public abstract class AbstractDurableVector<I extends Serializable & Comparable<
     return changed;
   }
 
-  @AutolockWrite
   public synchronized boolean remove (D durable) {
 
     boolean changed = false;
@@ -139,7 +133,6 @@ public abstract class AbstractDurableVector<I extends Serializable & Comparable<
     return changed;
   }
 
-  @AutolockRead
   public synchronized D head () {
 
     if (getRoster().isEmpty()) {

@@ -36,9 +36,7 @@ import java.io.Serializable;
 import java.util.Comparator;
 import java.util.List;
 import org.smallmind.persistence.Durable;
-import org.terracotta.annotations.InstrumentedClass;
 
-@InstrumentedClass
 public abstract class DurableVector<I extends Serializable & Comparable<I>, D extends Durable<I>> implements Serializable, Iterable<D> {
 
   private Comparator<D> comparator;

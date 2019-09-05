@@ -44,10 +44,7 @@ import org.smallmind.persistence.cache.DurableVector;
 import org.smallmind.persistence.cache.praxis.AbstractDurableVector;
 import org.smallmind.persistence.cache.praxis.ByKeyRoster;
 import org.smallmind.persistence.cache.praxis.Roster;
-import org.terracotta.annotations.AutolockRead;
-import org.terracotta.annotations.InstrumentedClass;
 
-@InstrumentedClass
 public class ByKeyIntrinsicVector<I extends Serializable & Comparable<I>, D extends Durable<I>> extends AbstractDurableVector<I, D> {
 
   private ByKeyRoster<I, D> roster;
@@ -81,25 +78,21 @@ public class ByKeyIntrinsicVector<I extends Serializable & Comparable<I>, D exte
     return roster;
   }
 
-  @AutolockRead
   public DurableVector<I, D> copy () {
 
     return new ByKeyIntrinsicVector<>(new ByKeyRoster<>(roster.getDurableClass(), new IntrinsicRoster<>(roster.getInternalRoster())), getComparator(), getMaxSize(), getTimeToLiveSeconds(), isOrdered());
   }
 
-  @AutolockRead
   public synchronized List<D> asBestEffortLazyList () {
 
     return Collections.unmodifiableList(new LinkedList<>(roster));
   }
 
-  @AutolockRead
   public synchronized List<D> asBestEffortPreFetchedList () {
 
     return Collections.unmodifiableList(roster.prefetch());
   }
 
-  @AutolockRead
   public synchronized Iterator<D> iterator () {
 
     return Collections.unmodifiableList(new LinkedList<>(roster)).iterator();

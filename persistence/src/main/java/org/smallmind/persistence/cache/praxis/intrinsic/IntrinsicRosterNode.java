@@ -32,9 +32,6 @@
  */
 package org.smallmind.persistence.cache.praxis.intrinsic;
 
-import org.terracotta.annotations.InstrumentedClass;
-
-@InstrumentedClass
 public class IntrinsicRosterNode<T> {
 
   private IntrinsicRosterNode<T> prev;

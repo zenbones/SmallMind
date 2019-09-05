@@ -39,11 +39,7 @@ import java.util.List;
 import org.smallmind.nutsnbolts.util.SingleItemIterable;
 import org.smallmind.persistence.Durable;
 import org.smallmind.persistence.cache.DurableVector;
-import org.terracotta.annotations.AutolockRead;
-import org.terracotta.annotations.AutolockWrite;
-import org.terracotta.annotations.InstrumentedClass;
 
-@InstrumentedClass
 public class ByReferenceSingularVector<I extends Serializable & Comparable<I>, D extends Durable<I>> extends DurableVector<I, D> {
 
   private D durable;
@@ -55,7 +51,6 @@ public class ByReferenceSingularVector<I extends Serializable & Comparable<I>, D
     this.durable = durable;
   }
 
-  @AutolockRead
   public DurableVector<I, D> copy () {
 
     return new ByReferenceSingularVector<>(durable, getTimeToLiveSeconds());
@@ -66,7 +61,6 @@ public class ByReferenceSingularVector<I extends Serializable & Comparable<I>, D
     return true;
   }
 
-  @AutolockWrite
   public synchronized boolean add (D durable) {
 
     if (!this.durable.equals(durable)) {
@@ -83,19 +77,16 @@ public class ByReferenceSingularVector<I extends Serializable & Comparable<I>, D
     throw new UnsupportedOperationException("Attempted removal from a 'singular' vector");
   }
 
-  @AutolockRead
   public synchronized D head () {
 
     return durable;
   }
 
-  @AutolockRead
   public synchronized List<D> asBestEffortLazyList () {
 
     return Collections.singletonList(durable);
   }
 
-  @AutolockRead
   public synchronized Iterator<D> iterator () {
 
     return new SingleItemIterable<>(durable).iterator();

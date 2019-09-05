@@ -40,10 +40,7 @@ import java.util.List;
 import org.smallmind.persistence.Durable;
 import org.smallmind.persistence.cache.DurableVector;
 import org.smallmind.persistence.cache.praxis.AbstractDurableVector;
-import org.terracotta.annotations.AutolockRead;
-import org.terracotta.annotations.InstrumentedClass;
 
-@InstrumentedClass
 public class ByReferenceIntrinsicVector<I extends Serializable & Comparable<I>, D extends Durable<I>> extends AbstractDurableVector<I, D> {
 
   private IntrinsicRoster<D> roster;
@@ -66,19 +63,16 @@ public class ByReferenceIntrinsicVector<I extends Serializable & Comparable<I>, 
     return roster;
   }
 
-  @AutolockRead
   public DurableVector<I, D> copy () {
 
     return new ByReferenceIntrinsicVector<>(new IntrinsicRoster<D>(roster), getComparator(), getMaxSize(), getTimeToLiveSeconds(), isOrdered());
   }
 
-  @AutolockRead
   public synchronized List<D> asBestEffortLazyList () {
 
     return Collections.unmodifiableList(getRoster());
   }
 
-  @AutolockRead
   public synchronized Iterator<D> iterator () {
 
     return Collections.unmodifiableList(getRoster()).iterator();

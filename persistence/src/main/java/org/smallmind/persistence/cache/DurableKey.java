@@ -34,9 +34,7 @@ package org.smallmind.persistence.cache;
 
 import java.io.Serializable;
 import org.smallmind.persistence.Durable;
-import org.terracotta.annotations.InstrumentedClass;
 
-@InstrumentedClass
 public class DurableKey<I extends Serializable & Comparable<I>, D extends Durable<I>> implements Serializable {
 
   private Class<D> durableClass;
