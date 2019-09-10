@@ -45,7 +45,7 @@ import org.smallmind.persistence.orm.OrmDaoManager;
 public class RepositoryAspect {
 
   @AfterReturning(value = "@within(org.smallmind.nutsnbolts.inject.Service) && initialization(new(..)) && this(constructed)", argNames = "constructed")
-  public void aroundInitializationOfService (Object constructed)
+  public void afterInitializationOfService (Object constructed)
     throws IllegalAccessException, InvocationTargetException {
 
     for (FieldAccessor fieldAccessor : FieldUtility.getFieldAccessors(constructed.getClass())) {

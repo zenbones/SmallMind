@@ -32,13 +32,12 @@
  */
 package org.smallmind.nutsnbolts.inject;
 
-import java.lang.annotation.ElementType;
-import java.lang.annotation.Retention;
-import java.lang.annotation.RetentionPolicy;
-import java.lang.annotation.Target;
+import org.smallmind.nutsnbolts.lang.FormattedError;
 
-@Target(ElementType.TYPE)
-@Retention(RetentionPolicy.RUNTIME)
-public @interface Service {
+public class LazyError extends FormattedError {
 
+  public LazyError (String message, Object... args) {
+
+    super(message, args);
+  }
 }
