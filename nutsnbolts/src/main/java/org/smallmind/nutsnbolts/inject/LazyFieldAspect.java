@@ -32,14 +32,32 @@
  */
 package org.smallmind.nutsnbolts.inject;
 
-import java.lang.annotation.ElementType;
-import java.lang.annotation.Retention;
-import java.lang.annotation.RetentionPolicy;
-import java.lang.annotation.Target;
+import org.aspectj.lang.ProceedingJoinPoint;
+import org.aspectj.lang.annotation.Around;
+import org.aspectj.lang.annotation.Aspect;
+import org.smallmind.nutsnbolts.reflection.FieldAccessor;
+import org.smallmind.nutsnbolts.reflection.FieldUtility;
 
-@Target(ElementType.METHOD)
-@Retention(RetentionPolicy.RUNTIME)
-public @interface Lazy {
+@Aspect
+public class LazyFieldAspect {
 
-  String value ();
+  @Around(value = "execution(@org.smallmind.nutsnbolts.inject.LazyField * * (..)) && @annotation(lazyField) && this(called)", argNames = "thisJoinPoint, lazyField, called")
+  public Object aroundLazyMethod (ProceedingJoinPoint thisJoinPoint, LazyField lazyField, Object called)
+    throws Throwable {
+
+    FieldAccessor fieldAccessor;
+
+    if ((fieldAccessor = FieldUtility.getFieldAccessor(called.getClass(), lazyField.value())) == null) {
+      throw new LazyError("Missing field(%s) in type(%s) with @%s annotated method(%s)", lazyField.value(), called.getClass().getName(), LazyField.class.getSimpleName(), thisJoinPoint.getSignature().getName());
+    } else {
+
+      Object fieldValue;
+
+      if ((fieldValue = fieldAccessor.get(called)) == null) {
+        fieldAccessor.set(called, fieldValue = thisJoinPoint.proceed());
+      }
+
+      return fieldValue;
+    }
+  }
 }

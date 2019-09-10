@@ -36,8 +36,10 @@ import org.aspectj.lang.annotation.AfterReturning;
 import org.aspectj.lang.annotation.AfterThrowing;
 import org.aspectj.lang.annotation.Aspect;
 import org.aspectj.lang.annotation.Before;
+import org.aspectj.lang.annotation.DeclarePrecedence;
 
 @Aspect
+@DeclarePrecedence("org.smallmind.nutsnbolts.inject.LazyFieldAspect, org.smallmind.persistence.orm.aop.TransactionalAspect")
 public class TransactionalAspect {
 
   @Before(value = "@within(transactional) && (execution(* * (..)) || initialization(new(..))) && !@annotation(Transactional)", argNames = "transactional")
