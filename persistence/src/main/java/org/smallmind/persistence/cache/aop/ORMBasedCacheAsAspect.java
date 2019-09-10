@@ -64,7 +64,7 @@ public class ORMBasedCacheAsAspect {
   public Object aroundCacheAsMethod (ProceedingJoinPoint thisJoinPoint, CacheAs cacheAs, ORMDao ormDao)
     throws Throwable {
 
-    Annotation instrumentedAnnotation;
+    Instrumented instrumented;
     MethodSignature methodSignature;
     Method executedMethod = null;
     String metricSource = null;
@@ -72,8 +72,8 @@ public class ORMBasedCacheAsAspect {
     long start = 0;
     long stop;
 
-    instrumentedAnnotation = ormDao.getClass().getAnnotation(Instrumented.class);
-    if (timingEnabled = (instrumentedAnnotation != null) && ((Instrumented)instrumentedAnnotation).value()) {
+    instrumented = ormDao.getClass().getAnnotation(Instrumented.class);
+    if (timingEnabled = (instrumented != null) && ((Instrumented)instrumented).value()) {
       start = System.currentTimeMillis();
     }
 
