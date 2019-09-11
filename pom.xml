@@ -97,14 +97,15 @@
     <aether.version>1.1.0</aether.version>
     <asm.version>7.1</asm.version>
     <grizzly.version>2.4.4</grizzly.version>
-    <tyrus.version>1.15</tyrus.version>
     <hk2.version>2.6.1</hk2.version>
     <jaxb.version>2.3.1</jaxb.version>
     <jackson.version>2.9.9</jackson.version>
     <jersey.version>2.29</jersey.version>
+    <jetty.version>9.4.20.v20190813</jetty.version>
     <querydsl.version>4.2.1</querydsl.version>
     <slf4j.version>1.7.26</slf4j.version>
     <spring.version>5.1.9.RELEASE</spring.version>
+    <tyrus.version>1.15</tyrus.version>
   </properties>
 
   <modules>
@@ -836,6 +837,31 @@
         <groupId>org.glassfish.tyrus</groupId>
         <artifactId>tyrus-server</artifactId>
         <version>${tyrus.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.eclipse.jetty</groupId>
+        <artifactId>jetty-server</artifactId>
+        <version>${jetty.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.eclipse.jetty</groupId>
+        <artifactId>jetty-servlet</artifactId>
+        <version>${jetty.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.eclipse.jetty</groupId>
+        <artifactId>jetty-http-spi</artifactId>
+        <version>${jetty.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.eclipse.jetty.websocket</groupId>
+        <artifactId>websocket-server</artifactId>
+        <version>${jetty.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.eclipse.jetty.websocket</groupId>
+        <artifactId>javax-websocket-server-impl</artifactId>
+        <version>${jetty.version}</version>
       </dependency>
       <dependency>
         <groupId>org.eclipse.jgit</groupId>

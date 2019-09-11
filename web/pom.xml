@@ -14,6 +14,7 @@
   <modules>
     <module>grizzly</module>
     <module>jersey</module>
+    <module>jetty</module>
     <module>json</module>
     <module>jwt</module>
     <module>oauth</module>

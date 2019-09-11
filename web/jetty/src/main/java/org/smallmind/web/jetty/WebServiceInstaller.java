@@ -30,15 +30,16 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.web.grizzly;
+package org.smallmind.web.jetty;
 
 // @ServicePath("/<service Uri>")
-public class WebService {
+public class WebServiceInstaller {
 
   private String path;
   private Object service;
+  private Boolean asyncSupported;
 
-  public WebService (String path, Object service) {
+  public WebServiceInstaller (String path, Object service) {
 
     this.path = path;
     this.service = service;
@@ -62,5 +63,15 @@ public class WebService {
   public void setService (Object service) {
 
     this.service = service;
+  }
+
+  public Boolean getAsyncSupported () {
+
+    return asyncSupported;
+  }
+
+  public void setAsyncSupported (Boolean asyncSupported) {
+
+    this.asyncSupported = asyncSupported;
   }
 }
