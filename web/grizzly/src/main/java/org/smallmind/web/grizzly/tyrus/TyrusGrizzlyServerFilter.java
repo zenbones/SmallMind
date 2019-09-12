@@ -78,15 +78,15 @@ import org.glassfish.tyrus.spi.WebSocketEngine;
  * {@link org.glassfish.tyrus.core.TyrusWebSocket}) for processing.
  */
 
-public class TyrusGrizzlyFilter extends BaseFilter {
+public class TyrusGrizzlyServerFilter extends BaseFilter {
 
-  private static final Attribute<org.glassfish.tyrus.spi.Connection> TYRUS_CONNECTION = Grizzly.DEFAULT_ATTRIBUTE_BUILDER.createAttribute(TyrusGrizzlyFilter.class.getName() + ".Connection");
+  private static final Attribute<org.glassfish.tyrus.spi.Connection> TYRUS_CONNECTION = Grizzly.DEFAULT_ATTRIBUTE_BUILDER.createAttribute(TyrusGrizzlyServerFilter.class.getName() + ".Connection");
   private static final Attribute<TaskProcessor> TASK_PROCESSOR = Grizzly.DEFAULT_ATTRIBUTE_BUILDER.createAttribute(TaskProcessor.class.getName() + ".TaskProcessor");
 
   private final WebSocketEngine websocketEngine;
   private final String contextPath;
 
-  public TyrusGrizzlyFilter (WebSocketEngine websocketEngine, String contextPath) {
+  public TyrusGrizzlyServerFilter (WebSocketEngine websocketEngine, String contextPath) {
 
     this.websocketEngine = websocketEngine;
     this.contextPath = contextPath.endsWith("/") ? contextPath : contextPath + "/";

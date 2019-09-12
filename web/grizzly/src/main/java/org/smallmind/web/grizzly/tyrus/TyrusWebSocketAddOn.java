@@ -60,7 +60,7 @@ public class TyrusWebSocketAddOn implements AddOn {
   private final HttpHandler staticHttpHandler;
   private final String contextPath;
   private final boolean includeWsadlSupport;
-  private GrizzlyTyrusServerContainer serverContainer;
+  private TyrusGrizzlyServerContainer serverContainer;
 
   public TyrusWebSocketAddOn (ServerConfiguration serverConfiguration, WebappContext webappContext, String contextPath, boolean includeWsadlSupport, HttpHandler staticHttpHandler, WebSocketExtensionInstaller... webSocketExtensionInstallers) {
 
@@ -93,7 +93,7 @@ public class TyrusWebSocketAddOn implements AddOn {
 
     int httpServerFilterIndex;
 
-    serverContainer = new GrizzlyTyrusServerContainer(networkListener, contextPath, webSocketExtensionInstallers);
+    serverContainer = new TyrusGrizzlyServerContainer(networkListener, contextPath, webSocketExtensionInstallers);
 
     if ((httpServerFilterIndex = builder.indexOfType(HttpServerFilter.class)) < 0) {
       throw new GrizzlyInitializationException("Missing http servlet filter in the available filter chain");
@@ -106,7 +106,7 @@ public class TyrusWebSocketAddOn implements AddOn {
       }
 
       // Insert the WebSocketFilter right before HttpServerFilter
-      builder.add(httpServerFilterIndex, new TyrusGrizzlyFilter(serverContainer.getWebSocketEngine(), contextPath));
+      builder.add(httpServerFilterIndex, new TyrusGrizzlyServerFilter(serverContainer.getWebSocketEngine(), contextPath));
       webappContext.setAttribute("javax.websocket.server.ServerContainer", serverContainer);
     }
   }

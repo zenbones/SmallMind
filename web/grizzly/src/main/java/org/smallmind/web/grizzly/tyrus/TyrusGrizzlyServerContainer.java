@@ -49,14 +49,14 @@ import org.glassfish.tyrus.server.TyrusServerContainer;
 import org.glassfish.tyrus.spi.WebSocketEngine;
 import org.smallmind.web.grizzly.WebSocketExtensionInstaller;
 
-public class GrizzlyTyrusServerContainer extends TyrusServerContainer {
+public class TyrusGrizzlyServerContainer extends TyrusServerContainer {
 
   private final WebSocketExtensionInstaller[] webSocketExtensionInstallers;
   private final WebSocketEngine webSocketEngine;
   private final NetworkListener networkListener;
   private final String contextPath;
 
-  public GrizzlyTyrusServerContainer (NetworkListener networkListener, String contextPath, WebSocketExtensionInstaller... webSocketExtensionInstallers) {
+  public TyrusGrizzlyServerContainer (NetworkListener networkListener, String contextPath, WebSocketExtensionInstaller... webSocketExtensionInstallers) {
 
     super((Set<Class<?>>)null);
 
