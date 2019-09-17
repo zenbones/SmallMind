@@ -9,7 +9,7 @@
   <artifactId>sleuth-runner</artifactId>
   <packaging>jar</packaging>
   <name>Sleuth-Runner</name>
-  <description>Test RUnner</description>
+  <description>Test Runner</description>
   <dependencies>
     <dependency>
       <groupId>org.smallmind</groupId>
