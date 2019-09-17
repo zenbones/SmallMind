@@ -255,7 +255,7 @@ public class DynamicPooledDataSourceInitializingBean implements InitializingBean
       return PooledDataSourceFactory.createPooledDataSource(poolName, factoryMap.get(poolName), validationQuery, maxStatementsOption.isNone() ? 0 : maxStatementsOption.get(), complexPoolConfig, postContextMap.get(null));
     } else {
 
-      ComponentPool<? extends PooledConnection>[] componentPools = new ComponentPool[postContextMap.size()];
+      ComponentPool[] componentPools = new ComponentPool[postContextMap.size()];
       DefaultContextualPoolNameTranslator poolNameTranslator = new DefaultContextualPoolNameTranslator(poolName, ':');
       int index = 0;
 

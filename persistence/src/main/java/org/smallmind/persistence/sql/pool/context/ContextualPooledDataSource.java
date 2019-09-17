@@ -44,16 +44,16 @@ import org.smallmind.quorum.pool.complex.ComponentPool;
 
 public class ContextualPooledDataSource extends AbstractPooledDataSource<DataSource, PooledConnection> implements DataSource {
 
-  private final HashMap<String, ComponentPool<? extends PooledConnection>> componentPoolMap = new HashMap<>();
+  private final HashMap<String, ComponentPool> componentPoolMap = new HashMap<>();
   private final String baseName;
 
-  public ContextualPooledDataSource (ContextualPoolNameTranslator poolNameTranslator, ComponentPool<? extends PooledConnection>... componentPools)
+  public ContextualPooledDataSource (ContextualPoolNameTranslator poolNameTranslator, ComponentPool... componentPools)
     throws ComponentPoolException {
 
     super(DataSource.class, PooledConnection.class);
 
     baseName = poolNameTranslator.getBaseName();
-    for (ComponentPool<? extends PooledConnection> componentPool : componentPools) {
+    for (ComponentPool componentPool : componentPools) {
       componentPoolMap.put(poolNameTranslator.getContextualPartFromPoolName(componentPool.getPoolName()), componentPool);
     }
   }
@@ -65,14 +65,14 @@ public class ContextualPooledDataSource extends AbstractPooledDataSource<DataSou
     try {
 
       PooledDataSourceContext pooledDataSourceContext = ContextFactory.getContext(PooledDataSourceContext.class);
-      ComponentPool<? extends PooledConnection> componentPool;
+      ComponentPool componentPool;
       String contextualPart;
 
       if ((componentPool = componentPoolMap.get(contextualPart = (pooledDataSourceContext == null) ? null : pooledDataSourceContext.getContextualPart())) == null) {
         throw new ComponentPoolException("Unable to locate component pool for base name(%s) and context(%s)", baseName, contextualPart == null ? "null" : contextualPart);
       }
 
-      return componentPool.getComponent().getConnection();
+      return ((PooledConnection)componentPool.getComponent()).getConnection();
     } catch (ComponentPoolException componentPoolException) {
       throw new SQLException(componentPoolException);
     }
@@ -87,7 +87,7 @@ public class ContextualPooledDataSource extends AbstractPooledDataSource<DataSou
   public void startup ()
     throws ComponentPoolException {
 
-    for (ComponentPool<? extends PooledConnection> componentPool : componentPoolMap.values()) {
+    for (ComponentPool componentPool : componentPoolMap.values()) {
       componentPool.startup();
     }
   }
@@ -96,7 +96,7 @@ public class ContextualPooledDataSource extends AbstractPooledDataSource<DataSou
   public void shutdown ()
     throws ComponentPoolException {
 
-    for (ComponentPool<? extends PooledConnection> componentPool : componentPoolMap.values()) {
+    for (ComponentPool componentPool : componentPoolMap.values()) {
       componentPool.shutdown();
     }
   }
