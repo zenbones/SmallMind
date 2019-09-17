@@ -32,8 +32,6 @@
  */
 package org.smallmind.nutsnbolts.spring.property;
 
-import java.util.Iterator;
-
-public interface PropertyHandler<E extends PropertyEntry> extends Iterable<E>, Iterator<E> {
+public interface PropertyHandler<E extends PropertyEntry> extends Iterable<E> {
 
 }

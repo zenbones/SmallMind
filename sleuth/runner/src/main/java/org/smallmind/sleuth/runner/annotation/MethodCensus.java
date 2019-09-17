@@ -37,54 +37,64 @@ import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.NoSuchElementException;
 
-public class MethodCensus implements Iterable<Method>, Iterator<Method> {
+public class MethodCensus implements Iterable<Method> {
 
-  private LinkedList<Class<?>> classList = new LinkedList<>();
-  private Method[] methods = new Method[0];
-  private int methodIndex = 0;
+  private Class<?> clazz;
 
   public MethodCensus (Class<?> clazz) {
 
-    do {
-      classList.addFirst(clazz);
-    } while ((clazz = clazz.getSuperclass()) != null);
+    this.clazz = clazz;
   }
 
   @Override
   public Iterator<Method> iterator () {
 
-    return this;
+    return new MethodCensusIterator(clazz);
   }
 
-  @Override
-  public boolean hasNext () {
+  private static class MethodCensusIterator implements Iterator<Method> {
 
-    while (methodIndex == methods.length) {
-      if (classList.isEmpty()) {
+    private LinkedList<Class<?>> classList = new LinkedList<>();
+    private Method[] methods = new Method[0];
+    private int methodIndex = 0;
 
-        return false;
-      } else {
-        methods = classList.removeFirst().getDeclaredMethods();
-        methodIndex = 0;
+    private MethodCensusIterator (Class<?> clazz) {
+
+      do {
+        classList.addFirst(clazz);
+      } while ((clazz = clazz.getSuperclass()) != null);
+    }
+
+    @Override
+    public boolean hasNext () {
+
+      while (methodIndex == methods.length) {
+        if (classList.isEmpty()) {
+
+          return false;
+        } else {
+          methods = classList.removeFirst().getDeclaredMethods();
+          methodIndex = 0;
+        }
       }
+
+      return true;
     }
 
-    return true;
-  }
+    @Override
+    public Method next () {
 
-  @Override
-  public Method next () {
+      if (!hasNext()) {
+        throw new NoSuchElementException();
+      }
 
-    if (!hasNext()) {
-      throw new NoSuchElementException();
+      return methods[methodIndex++];
     }
 
-    return methods[methodIndex++];
-  }
+    @Override
+    public void remove () {
 
-  @Override
-  public void remove () {
-
-    throw new UnsupportedOperationException();
+      throw new UnsupportedOperationException();
+    }
   }
 }

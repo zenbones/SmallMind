@@ -309,7 +309,7 @@ public class ProxyGenerator {
                 LinkedList<String> parameterList;
 
                 parameterList = new LinkedList<>();
-                for (String parameter : new ParameterIterator(desc.substring(1, desc.indexOf(')')))) {
+                for (String parameter : new ParameterIterable(desc.substring(1, desc.indexOf(')')))) {
                   parameterList.add(parameter);
                 }
                 parameters = new String[parameterList.size()];

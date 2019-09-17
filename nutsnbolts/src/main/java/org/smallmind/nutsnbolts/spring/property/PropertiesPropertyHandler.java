@@ -38,34 +38,44 @@ import java.util.Properties;
 
 public class PropertiesPropertyHandler implements PropertyHandler<PropertiesPropertyEntry> {
 
-  private Iterator<Map.Entry<Object, Object>> mapEntryIter;
+  private Properties properties;
 
   public PropertiesPropertyHandler (Properties properties) {
 
-    mapEntryIter = properties.entrySet().iterator();
+    this.properties = properties;
   }
 
   @Override
   public Iterator<PropertiesPropertyEntry> iterator () {
 
-    return this;
+    return new PropertiesPropertyEntryIterator(properties);
   }
 
-  @Override
-  public boolean hasNext () {
+  private static class PropertiesPropertyEntryIterator implements Iterator<PropertiesPropertyEntry> {
 
-    return mapEntryIter.hasNext();
-  }
+    private Iterator<Map.Entry<Object, Object>> mapEntryIter;
 
-  @Override
-  public PropertiesPropertyEntry next () {
+    private PropertiesPropertyEntryIterator (Properties properties) {
 
-    return new PropertiesPropertyEntry(mapEntryIter.next());
-  }
+      mapEntryIter = properties.entrySet().iterator();
+    }
 
-  @Override
-  public void remove () {
+    @Override
+    public boolean hasNext () {
 
-    throw new UnsupportedOperationException();
+      return mapEntryIter.hasNext();
+    }
+
+    @Override
+    public PropertiesPropertyEntry next () {
+
+      return new PropertiesPropertyEntry(mapEntryIter.next());
+    }
+
+    @Override
+    public void remove () {
+
+      throw new UnsupportedOperationException();
+    }
   }
 }

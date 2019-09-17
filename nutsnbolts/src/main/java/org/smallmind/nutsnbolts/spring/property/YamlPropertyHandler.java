@@ -40,86 +40,96 @@ import java.util.Map;
 
 public class YamlPropertyHandler implements PropertyHandler<YamlPropertyEntry> {
 
-  private LinkedList<NamedIteration> namedIterationList = new LinkedList<>();
+  private Map<String, Object> yamlMap;
 
   public YamlPropertyHandler (Map<String, Object> yamlMap) {
 
-    namedIterationList.push(new NamedIteration(yamlMap.entrySet().iterator()));
+    this.yamlMap = yamlMap;
   }
 
   @Override
   public Iterator<YamlPropertyEntry> iterator () {
 
-    return this;
+    return new YamlPropertyEntryIterator(yamlMap);
   }
 
-  @Override
-  public boolean hasNext () {
+  private static class YamlPropertyEntryIterator implements Iterator<YamlPropertyEntry> {
 
-    while (!namedIterationList.isEmpty()) {
-      if (!namedIterationList.peekFirst().getIterator().hasNext()) {
-        namedIterationList.pop();
+    private LinkedList<NamedIteration> namedIterationList = new LinkedList<>();
+
+    private YamlPropertyEntryIterator (Map<String, Object> yamlMap) {
+
+      namedIterationList.push(new NamedIteration(yamlMap.entrySet().iterator()));
+    }
+
+    @Override
+    public boolean hasNext () {
+
+      while (!namedIterationList.isEmpty()) {
+        if (!namedIterationList.peekFirst().getIterator().hasNext()) {
+          namedIterationList.pop();
+        } else {
+
+          return true;
+        }
+      }
+
+      return false;
+    }
+
+    @Override
+    public YamlPropertyEntry next () {
+
+      Map.Entry<String, Object> entry = namedIterationList.peekFirst().getIterator().next();
+
+      namedIterationList.peekFirst().setName(entry.getKey());
+
+      if (entry.getValue() instanceof Map) {
+        namedIterationList.push(new NamedIteration(((Map<String, Object>)entry.getValue()).entrySet().iterator()));
+
+        return next();
+      } else if (entry.getValue() instanceof List) {
+
+        LinkedHashMap<String, Object> interpolatedMap = new LinkedHashMap<>();
+        int index = 0;
+
+        for (Object item : (List)entry.getValue()) {
+          interpolatedMap.put(String.valueOf(index++), item);
+        }
+
+        namedIterationList.push(new NamedIteration(interpolatedMap.entrySet().iterator()));
+
+        return next();
       } else {
 
-        return true;
-      }
-    }
+        StringBuilder keyBuilder = new StringBuilder();
+        boolean first = true;
 
-    return false;
-  }
-
-  @Override
-  public YamlPropertyEntry next () {
-
-    Map.Entry<String, Object> entry = namedIterationList.peekFirst().getIterator().next();
-
-    namedIterationList.peekFirst().setName(entry.getKey());
-
-    if (entry.getValue() instanceof Map) {
-      namedIterationList.push(new NamedIteration(((Map<String, Object>)entry.getValue()).entrySet().iterator()));
-
-      return next();
-    } else if (entry.getValue() instanceof List) {
-
-      LinkedHashMap<String, Object> interpolatedMap = new LinkedHashMap<>();
-      int index = 0;
-
-      for (Object item : (List)entry.getValue()) {
-        interpolatedMap.put(String.valueOf(index++), item);
-      }
-
-      namedIterationList.push(new NamedIteration(interpolatedMap.entrySet().iterator()));
-
-      return next();
-    } else {
-
-      StringBuilder keyBuilder = new StringBuilder();
-      boolean first = true;
-
-      for (NamedIteration namedIteration : namedIterationList) {
-        if (!first) {
-          keyBuilder.insert(0, '.');
+        for (NamedIteration namedIteration : namedIterationList) {
+          if (!first) {
+            keyBuilder.insert(0, '.');
+          }
+          first = false;
+          keyBuilder.insert(0, namedIteration.getName());
         }
-        first = false;
-        keyBuilder.insert(0, namedIteration.getName());
-      }
 
-      return new YamlPropertyEntry(keyBuilder.toString(), entry.getValue());
+        return new YamlPropertyEntry(keyBuilder.toString(), entry.getValue());
+      }
+    }
+
+    @Override
+    public void remove () {
+
+      throw new UnsupportedOperationException();
     }
   }
 
-  @Override
-  public void remove () {
-
-    throw new UnsupportedOperationException();
-  }
-
-  private class NamedIteration {
+  private static class NamedIteration {
 
     private Iterator<Map.Entry<String, Object>> iterator;
     private String name;
 
-    public NamedIteration (Iterator<Map.Entry<String, Object>> iterator) {
+    private NamedIteration (Iterator<Map.Entry<String, Object>> iterator) {
 
       this.iterator = iterator;
     }
