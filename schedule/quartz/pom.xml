@@ -4,7 +4,7 @@
   <parent>
     <groupId>org.smallmind</groupId>
     <artifactId>smallmind-schedule</artifactId>
-    <version>3.3.21-SNAPSHOT</version>
+    <version>3.3.23</version>
   </parent>
   <artifactId>schedule-quartz</artifactId>
   <name>Sechedule-Quartz</name>
