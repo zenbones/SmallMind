@@ -30,15 +30,15 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.batch.base;
+package org.smallmind.batch.spring;
 
-import java.util.Map;
+import java.util.concurrent.Executors;
+import org.springframework.core.task.support.TaskExecutorAdapter;
 
-public interface JobFactory {
+public class BatchTaskExecutor extends TaskExecutorAdapter {
 
-  void create (String logicalName, Map<String, BatchParameter<?>> parameterMap)
-    throws Exception;
+  public BatchTaskExecutor () {
 
-  public void restart (long executionId)
-    throws Exception;
+    super(Executors.newSingleThreadExecutor());
+  }
 }

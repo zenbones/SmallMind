@@ -32,15 +32,22 @@
  */
 package org.smallmind.batch.spring;
 
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashSet;
 import org.springframework.batch.core.Job;
-import org.springframework.batch.core.configuration.JobLocator;
+import org.springframework.batch.core.configuration.ListableJobLocator;
+import org.springframework.beans.BeansException;
+import org.springframework.beans.factory.config.BeanFactoryPostProcessor;
+import org.springframework.beans.factory.config.ConfigurableListableBeanFactory;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationListener;
 import org.springframework.context.event.ContextRefreshedEvent;
 
-public class BatchJobLocator implements JobLocator, ApplicationListener<ContextRefreshedEvent> {
+public class BatchJobLocator implements ListableJobLocator, ApplicationListener<ContextRefreshedEvent>, BeanFactoryPostProcessor {
 
   private ApplicationContext applicationContext;
+  private HashSet<String> jobNameSet = new HashSet<>();
 
   @Override
   public void onApplicationEvent (ContextRefreshedEvent event) {
@@ -52,6 +59,28 @@ public class BatchJobLocator implements JobLocator, ApplicationListener<ContextR
   public Job getJob (String name) {
 
     return applicationContext.getBean(name, Job.class);
+  }
+
+  @Override
+  public Collection<String> getJobNames () {
+
+    return Collections.unmodifiableSet(jobNameSet);
+  }
+
+  @Override
+  public void postProcessBeanFactory (ConfigurableListableBeanFactory configurableListableBeanFactory)
+    throws BeansException {
+
+    for (String beanName : configurableListableBeanFactory.getBeanDefinitionNames()) {
+
+      Class<?> beanClass;
+
+      if ((beanClass = configurableListableBeanFactory.getType(beanName)) != null) {
+        if (Job.class.isAssignableFrom(beanClass)) {
+          jobNameSet.add(beanName);
+        }
+      }
+    }
   }
 }
 

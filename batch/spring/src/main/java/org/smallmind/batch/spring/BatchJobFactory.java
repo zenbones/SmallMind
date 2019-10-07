@@ -33,18 +33,20 @@
 package org.smallmind.batch.spring;
 
 import java.util.Map;
+import org.smallmind.batch.base.BatchParameter;
 import org.smallmind.batch.base.DateBatchParameter;
 import org.smallmind.batch.base.DoubleBatchParameter;
 import org.smallmind.batch.base.JobFactory;
 import org.smallmind.batch.base.LongBatchParameter;
-import org.smallmind.batch.base.BatchParameter;
 import org.smallmind.batch.base.StringBatchParameter;
 import org.smallmind.nutsnbolts.lang.UnknownSwitchCaseException;
 import org.springframework.batch.core.JobParametersBuilder;
 import org.springframework.batch.core.JobParametersInvalidException;
 import org.springframework.batch.core.configuration.JobLocator;
 import org.springframework.batch.core.launch.JobLauncher;
+import org.springframework.batch.core.launch.JobOperator;
 import org.springframework.batch.core.launch.NoSuchJobException;
+import org.springframework.batch.core.launch.NoSuchJobExecutionException;
 import org.springframework.batch.core.repository.JobExecutionAlreadyRunningException;
 import org.springframework.batch.core.repository.JobInstanceAlreadyCompleteException;
 import org.springframework.batch.core.repository.JobRestartException;
@@ -53,6 +55,7 @@ public class BatchJobFactory implements JobFactory {
 
   private JobLocator jobLocator;
   private JobLauncher jobLauncher;
+  private JobOperator jobOperator;
 
   public void setJobLocator (JobLocator jobLocator) {
 
@@ -62,6 +65,11 @@ public class BatchJobFactory implements JobFactory {
   public void setJobLauncher (JobLauncher jobLauncher) {
 
     this.jobLauncher = jobLauncher;
+  }
+
+  public void setJobOperator (JobOperator jobOperator) {
+
+    this.jobOperator = jobOperator;
   }
 
   @Override
@@ -92,5 +100,12 @@ public class BatchJobFactory implements JobFactory {
     }
 
     jobLauncher.run(jobLocator.getJob(logicalName), jobParametersBuilder.toJobParameters());
+  }
+
+  @Override
+  public void restart (long executionId)
+    throws NoSuchJobException, NoSuchJobExecutionException, JobParametersInvalidException, JobRestartException, JobInstanceAlreadyCompleteException {
+
+    jobOperator.restart(executionId);
   }
 }

@@ -8,6 +8,8 @@
     <constructor-arg name="dataSource" index="0" ref="batchDataSource"/>
   </bean>
 
+  <bean id="jobLocator" class="org.smallmind.batch.spring.BatchJobLocator"/>
+
   <bean id="jobRepository" class="org.springframework.batch.core.repository.support.JobRepositoryFactoryBean">
     <property name="databaseType" value="mysql"/>
     <property name="dataSource" ref="batchDataSource"/>
@@ -15,13 +17,28 @@
     <property name="maxVarCharLength" value="2500"/>
   </bean>
 
-  <bean id="jobLocator" class="org.smallmind.batch.spring.BatchJobLocator"/>
+  <bean id="jobExplorer" class="org.springframework.batch.core.explore.support.JobExplorerFactoryBean">
+    <property name="dataSource" ref="batchDataSource"/>
+  </bean>
 
-  <bean id="jobLauncher" class="org.smallmind.batch.spring.BatchJobLauncher" depends-on="jobRepository"/>
+  <bean id="jobLauncher" class="org.springframework.batch.core.launch.support.SimpleJobLauncher">
+    <property name="jobRepository" ref="jobRepository"/>
+    <property name="taskExecutor">
+      <bean class="org.smallmind.batch.spring.BatchTaskExecutor"/>
+    </property>
+  </bean>
+
+  <bean id="jobOperator" class="org.springframework.batch.core.launch.support.SimpleJobOperator">
+    <property name="jobRepository" ref="jobRepository"/>
+    <property name="jobExplorer" ref="jobExplorer"/>
+    <property name="jobLauncher" ref="jobLauncher"/>
+    <property name="jobRegistry" ref="jobLocator"/>
+  </bean>
 
   <bean id="jobFactory" class="org.smallmind.batch.spring.BatchJobFactory">
     <property name="jobLocator" ref="jobLocator"/>
     <property name="jobLauncher" ref="jobLauncher"/>
+    <property name="jobOperator" ref="jobOperator"/>
   </bean>
 
 </beans>
