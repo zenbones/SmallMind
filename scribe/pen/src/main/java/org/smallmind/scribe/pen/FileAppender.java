@@ -176,6 +176,7 @@ public class FileAppender extends AbstractFormattedAppender {
     super(formatter, errorHandler);
 
     this.rollover = rollover;
+    this.cleanup = cleanup;
 
     setLogPath(logPath);
   }
