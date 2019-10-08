@@ -1,28 +1,28 @@
 /*
  * Copyright (c) 2007, 2008, 2009, 2010, 2011, 2012, 2013, 2014, 2015, 2016, 2017, 2018, 2019 David Berkman
- * 
+ *
  * This file is part of the SmallMind Code Project.
- * 
+ *
  * The SmallMind Code Project is free software, you can redistribute
  * it and/or modify it under either, at your discretion...
- * 
+ *
  * 1) The terms of GNU Affero General Public License as published by the
  * Free Software Foundation, either version 3 of the License, or (at
  * your option) any later version.
- * 
+ *
  * ...or...
- * 
+ *
  * 2) The terms of the Apache License, Version 2.0.
- * 
+ *
  * The SmallMind Code Project is distributed in the hope that it will
  * be useful, but WITHOUT ANY WARRANTY; without even the implied warranty
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License or Apache License for more details.
- * 
+ *
  * You should have received a copy of the GNU Affero General Public License
  * and the Apache License along with the SmallMind Code Project. If not, see
  * <http://www.gnu.org/licenses/> or <http://www.apache.org/licenses/LICENSE-2.0>.
- * 
+ *
  * Additional permission under the GNU Affero GPL version 3 section 7
  * ------------------------------------------------------------------
  * If you modify this Program, or any covered work, by linking or
@@ -43,7 +43,7 @@ import org.smallmind.nutsnbolts.io.PathUtility;
 
 public class FileAppender extends AbstractFormattedAppender {
 
-  private OutputStream fileOutputStream;
+  private OutputStream outputStream;
   private Path logPath;
   private Cleanup cleanup;
   private Rollover rollover;
@@ -233,7 +233,7 @@ public class FileAppender extends AbstractFormattedAppender {
   private void openStream ()
     throws IOException {
 
-    fileOutputStream = Files.newOutputStream(logPath, StandardOpenOption.CREATE, StandardOpenOption.APPEND);
+    outputStream = Files.newOutputStream(logPath, StandardOpenOption.CREATE, StandardOpenOption.APPEND);
     lastModified = Files.getLastModifiedTime(logPath).toMillis();
     fileSize = 0;
   }
@@ -247,7 +247,7 @@ public class FileAppender extends AbstractFormattedAppender {
       throw new LoggerException("Appender to file(%s) has been previously closed", logPath.toAbsolutePath());
     }
 
-    if (fileOutputStream != null) {
+    if (outputStream != null) {
       if ((rollover != null) && rollover.willRollover(fileSize, lastModified, formattedBytes.length)) {
 
         Path rolloverPath;
@@ -281,7 +281,7 @@ public class FileAppender extends AbstractFormattedAppender {
         } while (Files.exists(rolloverPath = (parentPath == null) ? Paths.get(uniqueNameBuilder.toString()) : parentPath.resolve(uniqueNameBuilder.toString())));
 
         try {
-          fileOutputStream.close();
+          outputStream.close();
         } catch (IOException ioException) {
           throw new LoggerException(ioException, "Unable to close the current log file(%s)", logPath.toAbsolutePath());
         }
@@ -306,8 +306,8 @@ public class FileAppender extends AbstractFormattedAppender {
       }
 
       try {
-        fileOutputStream.write(formattedBytes);
-        fileOutputStream.flush();
+        outputStream.write(formattedBytes);
+        outputStream.flush();
 
         fileSize += formattedBytes.length;
         lastModified = System.currentTimeMillis();
@@ -324,7 +324,7 @@ public class FileAppender extends AbstractFormattedAppender {
       closed = true;
 
       try {
-        fileOutputStream.close();
+        outputStream.close();
       } catch (IOException ioException) {
         throw new LoggerException(ioException);
       }
