@@ -48,7 +48,7 @@ import org.smallmind.web.json.scaffold.util.JsonCodec;
 
 public class JsonUserType implements UserType, ParameterizedType {
 
-  private Class embeddedClass;
+  private Class<?> embeddedClass;
 
   public void setParameterValues (Properties parameters) {
 
