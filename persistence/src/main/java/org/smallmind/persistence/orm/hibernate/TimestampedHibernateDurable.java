@@ -87,6 +87,6 @@ public abstract class TimestampedHibernateDurable<I extends Serializable & Compa
     FieldAccessor createdFieldAccessor = FieldUtility.getFieldAccessor(this.getClass(), "created");
     FieldAccessor lastUpdatedFieldAccessor = FieldUtility.getFieldAccessor(this.getClass(), "lastUpdated");
 
-    return mirrors(durable, (idFieldAccessor == null) ? null : idFieldAccessor.getField(), (createdFieldAccessor == null) ? null : createdFieldAccessor.getField(), (lastUpdatedFieldAccessor == null) ? null : lastUpdatedFieldAccessor.getField());
+    return super.mirrors(durable, (idFieldAccessor == null) ? null : idFieldAccessor.getField(), (createdFieldAccessor == null) ? null : createdFieldAccessor.getField(), (lastUpdatedFieldAccessor == null) ? null : lastUpdatedFieldAccessor.getField());
   }
 }
