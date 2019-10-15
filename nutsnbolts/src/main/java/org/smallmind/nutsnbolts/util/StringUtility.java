@@ -118,4 +118,16 @@ public class StringUtility {
 
     return true;
   }
+
+  public static boolean hasNext (String template, String match, int index) {
+
+    int matchIndex = 0;
+
+    while ((matchIndex < match.length()) && (index < template.length()) && (template.charAt(index) == match.charAt(matchIndex))) {
+      index += 1;
+      matchIndex += 1;
+    }
+
+    return matchIndex == match.length();
+  }
 }
