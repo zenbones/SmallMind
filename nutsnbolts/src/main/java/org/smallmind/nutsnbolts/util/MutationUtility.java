@@ -35,8 +35,10 @@ package org.smallmind.nutsnbolts.util;
 import java.lang.reflect.Array;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Set;
 
 public class MutationUtility {
 
@@ -91,6 +93,34 @@ public class MutationUtility {
         }
 
         return outList;
+      } catch (Exception exception) {
+        throw new MutationException(exception);
+      }
+    }
+  }
+
+  public static <T, U> Set<U> toSet (T[] array, Mutation<? super T, U> mutation)
+    throws MutationException {
+
+    return toSet(Arrays.asList(array), mutation);
+  }
+
+  public static <T, U> Set<U> toSet (Collection<T> collection, Mutation<? super T, U> mutation)
+    throws MutationException {
+
+    if (collection == null) {
+
+      return null;
+    } else {
+      try {
+
+        HashSet<U> outSet = new HashSet<>();
+
+        for (T inType : collection) {
+          outSet.add(mutation.apply(inType));
+        }
+
+        return outSet;
       } catch (Exception exception) {
         throw new MutationException(exception);
       }
