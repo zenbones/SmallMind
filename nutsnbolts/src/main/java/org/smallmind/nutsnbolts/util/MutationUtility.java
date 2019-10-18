@@ -41,51 +41,59 @@ import java.util.List;
 public class MutationUtility {
 
   public static <T, U> U[] toArray (T[] array, Class<U> outType, Mutation<? super T, U> mutation)
-    throws Exception {
+    throws MutationException {
 
     return toArray(Arrays.asList(array), outType, mutation);
   }
 
   public static <T, U> U[] toArray (Collection<T> collection, Class<U> outType, Mutation<? super T, U> mutation)
-    throws Exception {
+    throws MutationException {
 
     if (collection == null) {
 
       return null;
     } else {
+      try {
 
-      U[] outArray = (U[])Array.newInstance(outType, collection.size());
-      int index = 0;
+        U[] outArray = (U[])Array.newInstance(outType, collection.size());
+        int index = 0;
 
-      for (T inType : collection) {
-        outArray[index++] = mutation.apply(inType);
+        for (T inType : collection) {
+          outArray[index++] = mutation.apply(inType);
+        }
+
+        return outArray;
+      } catch (Exception exception) {
+        throw new MutationException(exception);
       }
-
-      return outArray;
     }
   }
 
   public static <T, U> List<U> toList (T[] array, Mutation<? super T, U> mutation)
-    throws Exception {
+    throws MutationException {
 
     return toList(Arrays.asList(array), mutation);
   }
 
   public static <T, U> List<U> toList (Collection<T> collection, Mutation<? super T, U> mutation)
-    throws Exception {
+    throws MutationException {
 
     if (collection == null) {
 
       return null;
     } else {
+      try {
 
-      LinkedList<U> outList = new LinkedList<>();
+        LinkedList<U> outList = new LinkedList<>();
 
-      for (T inType : collection) {
-        outList.add(mutation.apply(inType));
+        for (T inType : collection) {
+          outList.add(mutation.apply(inType));
+        }
+
+        return outList;
+      } catch (Exception exception) {
+        throw new MutationException(exception);
       }
-
-      return outList;
     }
   }
 }
