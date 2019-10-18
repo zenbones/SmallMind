@@ -34,6 +34,7 @@ package org.smallmind.nutsnbolts.util;
 
 import java.lang.reflect.Array;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -45,18 +46,18 @@ public class MutationUtility {
     return toArray(Arrays.asList(array), outType, mutation);
   }
 
-  public static <T, U> U[] toArray (List<T> list, Class<U> outType, Mutation<? super T, U> mutation)
+  public static <T, U> U[] toArray (Collection<T> collection, Class<U> outType, Mutation<? super T, U> mutation)
     throws Exception {
 
-    if (list == null) {
+    if (collection == null) {
 
       return null;
     } else {
 
-      U[] outArray = (U[])Array.newInstance(outType, list.size());
+      U[] outArray = (U[])Array.newInstance(outType, collection.size());
       int index = 0;
 
-      for (T inType : list) {
+      for (T inType : collection) {
         outArray[index++] = mutation.apply(inType);
       }
 
@@ -70,17 +71,17 @@ public class MutationUtility {
     return toList(Arrays.asList(array), mutation);
   }
 
-  public static <T, U> List<U> toList (List<T> list, Mutation<? super T, U> mutation)
+  public static <T, U> List<U> toList (Collection<T> collection, Mutation<? super T, U> mutation)
     throws Exception {
 
-    if (list == null) {
+    if (collection == null) {
 
       return null;
     } else {
 
       LinkedList<U> outList = new LinkedList<>();
 
-      for (T inType : list) {
+      for (T inType : collection) {
         outList.add(mutation.apply(inType));
       }
 
