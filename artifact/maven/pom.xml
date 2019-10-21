@@ -4,7 +4,7 @@
   <parent>
     <groupId>org.smallmind</groupId>
     <artifactId>smallmind-artifact</artifactId>
-    <version>3.3.24-SNAPSHOT</version>
+    <version>3.3.24</version>
   </parent>
   <artifactId>artifact-maven</artifactId>
   <packaging>jar</packaging>
