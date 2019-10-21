@@ -1,28 +1,28 @@
 /*
  * Copyright (c) 2007, 2008, 2009, 2010, 2011, 2012, 2013, 2014, 2015, 2016, 2017, 2018, 2019 David Berkman
- * 
+ *
  * This file is part of the SmallMind Code Project.
- * 
+ *
  * The SmallMind Code Project is free software, you can redistribute
  * it and/or modify it under either, at your discretion...
- * 
+ *
  * 1) The terms of GNU Affero General Public License as published by the
  * Free Software Foundation, either version 3 of the License, or (at
  * your option) any later version.
- * 
+ *
  * ...or...
- * 
+ *
  * 2) The terms of the Apache License, Version 2.0.
- * 
+ *
  * The SmallMind Code Project is distributed in the hope that it will
  * be useful, but WITHOUT ANY WARRANTY; without even the implied warranty
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License or Apache License for more details.
- * 
+ *
  * You should have received a copy of the GNU Affero General Public License
  * and the Apache License along with the SmallMind Code Project. If not, see
  * <http://www.gnu.org/licenses/> or <http://www.apache.org/licenses/LICENSE-2.0>.
- * 
+ *
  * Additional permission under the GNU Affero GPL version 3 section 7
  * ------------------------------------------------------------------
  * If you modify this Program, or any covered work, by linking or
@@ -90,10 +90,10 @@ public class GenerateWrapperMojo extends AbstractMojo {
   private String applicationDescription;
   @Parameter
   private String[] jvmArgs;
-  @Parameter(defaultValue = "0")
-  private int jvmInitMemoryMB;
-  @Parameter(defaultValue = "0")
-  private int jvmMaxMemoryMB;
+  @Parameter
+  private String jvmInitMemoryMB;
+  @Parameter
+  private String jvmMaxMemoryMB;
   @Parameter
   private String runAs;
   @Parameter
@@ -221,19 +221,19 @@ public class GenerateWrapperMojo extends AbstractMojo {
       freemarkerMap.put("jvmArgs", (jvmArgs != null) ? jvmArgs : NO_SIMPLE_ARGS);
       freemarkerMap.put("envArgs", (envArgs != null) ? envArgs : NO_ENV_ARGS);
 
-      if (jvmInitMemoryMB > 0) {
+      if ((jvmInitMemoryMB != null) && (!jvmInitMemoryMB.isEmpty())) {
         freemarkerMap.put("jvmInitMemoryMB", jvmInitMemoryMB);
       }
-      if (jvmMaxMemoryMB > 0) {
+      if ((jvmMaxMemoryMB != null) && (!jvmMaxMemoryMB.isEmpty())) {
         freemarkerMap.put("jvmMaxMemoryMB", jvmMaxMemoryMB);
       }
-      if ((runAs != null) && (runAs.length() > 0)) {
+      if ((runAs != null) && (!runAs.isEmpty())) {
         freemarkerMap.put("runAs", runAs);
       }
-      if ((withPassword != null) && (withPassword.length()) > 0) {
+      if ((withPassword != null) && (!withPassword.isEmpty())) {
         freemarkerMap.put("withPassword", withPassword);
       }
-      if ((umask != null) && (umask.length() > 0)) {
+      if ((umask != null) && (!umask.isEmpty())) {
         freemarkerMap.put("umask", umask);
       }
 
