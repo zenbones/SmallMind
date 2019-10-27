@@ -7,10 +7,12 @@
     <property name="host" value="${grizzly.host}"/>
     <property name="port" value="${grizzly.port}"/>
     <property name="contextPath" value="${grizzly.context_path}"/>
-    <property name="staticPath" value="${grizzly.static_path}"/>
-    <property name="restPath" value="${grizzly.rest_path}"/>
     <property name="soapPath" value="${grizzly.soap_path}"/>
-    <property name="webSocketPath" value="${grizzly.web_socket_path}"/>
+    <property name="jaxRSOption">
+      <bean class="org.smallmind.web.grizzly.option.JaxRSOption">
+        <property name="restPath" value="${grizzly.rest_path}"/>
+      </bean>
+    </property>
     <property name="resourceConfigExtensions">
       <list>
         <bean class="org.smallmind.web.jersey.aop.EntityParamResourceConfigExtension"/>

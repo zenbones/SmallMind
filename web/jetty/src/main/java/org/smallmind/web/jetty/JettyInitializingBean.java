@@ -67,6 +67,11 @@ import org.smallmind.scribe.pen.LoggerManager;
 import org.smallmind.web.jersey.spring.ExposedApplicationContext;
 import org.smallmind.web.jersey.spring.JerseyResourceConfig;
 import org.smallmind.web.jersey.spring.ResourceConfigExtension;
+import org.smallmind.web.jetty.option.ClassLoaderResourceOption;
+import org.smallmind.web.jetty.option.DocumentRootOption;
+import org.smallmind.web.jetty.option.JaxRSOption;
+import org.smallmind.web.jetty.option.SpringSupportOption;
+import org.smallmind.web.jetty.option.WebSocketOption;
 import org.springframework.beans.factory.DisposableBean;
 import org.springframework.beans.factory.config.BeanPostProcessor;
 import org.springframework.context.ApplicationContext;
@@ -83,25 +88,22 @@ public class JettyInitializingBean implements DisposableBean, ApplicationContext
   private LinkedList<FilterInstaller> filterInstallerList = new LinkedList<>();
   private LinkedList<ServletInstaller> servletInstallerList = new LinkedList<>();
 
-  private Map<String, String> documentRoots;
   private ResourceConfigExtension[] resourceConfigExtensions;
+  private ClassLoaderResourceOption classLoaderResourceOption;
+  private DocumentRootOption documentRootOption;
+  private JaxRSOption jaxRSOption;
+  private SpringSupportOption springSupportOption;
+  private WebSocketOption webSocketOption;
   private SSLInfo sslInfo;
   private String host;
   private String contextPath = "/context";
-  private String documentPath = "/document";
-  private String staticPath = "/static";
-  private String restPath = "/rest";
   private String soapPath = "/soap";
   private Integer maxHttpHeaderSize;
   private Integer initialWorkerPoolSize;
   private Integer maximumWorkerPoolSize;
   private int port = 80;
   private boolean allowInsecure = true;
-  private boolean allowClassPathAccess = false;
   private boolean debug = false;
-  private boolean includeSpringSupport = true;
-  private boolean includeJaxRsSupport = true;
-  private boolean includeWebSocketSupport = true;
 
   public void setHost (String host) {
 
@@ -111,6 +113,31 @@ public class JettyInitializingBean implements DisposableBean, ApplicationContext
   public void setPort (int port) {
 
     this.port = port;
+  }
+
+  public void setClassLoaderResourceOption (ClassLoaderResourceOption classLoaderResourceOption) {
+
+    this.classLoaderResourceOption = classLoaderResourceOption;
+  }
+
+  public void setDocumentRootOption (DocumentRootOption documentRootOption) {
+
+    this.documentRootOption = documentRootOption;
+  }
+
+  public void setJaxRSOption (JaxRSOption jaxRSOption) {
+
+    this.jaxRSOption = jaxRSOption;
+  }
+
+  public void setSpringSupportOption (SpringSupportOption springSupportOption) {
+
+    this.springSupportOption = springSupportOption;
+  }
+
+  public void setWebSocketOption (WebSocketOption webSocketOption) {
+
+    this.webSocketOption = webSocketOption;
   }
 
   public void setSslInfo (SSLInfo sslInfo) {
@@ -123,29 +150,9 @@ public class JettyInitializingBean implements DisposableBean, ApplicationContext
     this.contextPath = normalizePath(contextPath);
   }
 
-  public void setStaticPath (String staticPath) {
-
-    this.staticPath = staticPath;
-  }
-
-  public void setDocumentPath (String documentPath) {
-
-    this.documentPath = normalizePath(documentPath);
-  }
-
-  public void setRestPath (String restPath) {
-
-    this.restPath = normalizePath(restPath);
-  }
-
   public void setSoapPath (String soapPath) {
 
     this.soapPath = normalizePath(soapPath);
-  }
-
-  public void setDocumentRoots (Map<String, String> documentRoots) {
-
-    this.documentRoots = documentRoots;
   }
 
   public void setResourceConfigExtensions (ResourceConfigExtension[] resourceConfigExtensions) {
@@ -166,26 +173,6 @@ public class JettyInitializingBean implements DisposableBean, ApplicationContext
   public void setMaxHttpHeaderSize (Integer maxHttpHeaderSize) {
 
     this.maxHttpHeaderSize = maxHttpHeaderSize;
-  }
-
-  public void setIncludeJaxRsSupport (boolean includeJaxRsSupport) {
-
-    this.includeJaxRsSupport = includeJaxRsSupport;
-  }
-
-  public void setIncludeSpringSupport (boolean includeSpringSupport) {
-
-    this.includeSpringSupport = includeSpringSupport;
-  }
-
-  public void setIncludeWebSocketSupport (boolean includeWebSocketSupport) {
-
-    this.includeWebSocketSupport = includeWebSocketSupport;
-  }
-
-  public void setAllowClassPathAccess (boolean allowClassPathAccess) {
-
-    this.allowClassPathAccess = allowClassPathAccess;
   }
 
   public void setAllowInsecure (boolean allowInsecure) {
@@ -276,9 +263,9 @@ public class JettyInitializingBean implements DisposableBean, ApplicationContext
 
     server.setHandler(contextHandlerCollection);
 
-    if (allowClassPathAccess) {
+    if (classLoaderResourceOption != null) {
 
-      ContextHandler staticContextHandler = new ContextHandler(combinePaths(contextPath, staticPath));
+      ContextHandler staticContextHandler = new ContextHandler(combinePaths(contextPath, classLoaderResourceOption.getStaticPath()));
       ResourceHandler staticResourceHandler = new ResourceHandler();
 
       staticResourceHandler.setBaseResource(Resource.newClassPathResource("/"));
@@ -286,10 +273,10 @@ public class JettyInitializingBean implements DisposableBean, ApplicationContext
       contextHandlerCollection.addHandler(staticContextHandler);
     }
 
-    if (documentRoots != null) {
-      for (Map.Entry<String, String> documentRootEntry : documentRoots.entrySet()) {
+    if (documentRootOption != null) {
+      for (Map.Entry<String, String> documentRootEntry : documentRootOption.getDocumentRoots().entrySet()) {
 
-        ContextHandler documentContextHandler = new ContextHandler(combinePaths(combinePaths(contextPath, documentPath), normalizePath(documentRootEntry.getKey())));
+        ContextHandler documentContextHandler = new ContextHandler(combinePaths(combinePaths(contextPath, documentRootOption.getDocumentPath()), normalizePath(documentRootEntry.getKey())));
         ResourceHandler documentResourceHandler = new ResourceHandler();
 
         documentResourceHandler.setBaseResource(new PathResource(Paths.get(documentRootEntry.getValue())));
@@ -312,7 +299,7 @@ public class JettyInitializingBean implements DisposableBean, ApplicationContext
       }
     }
 
-    if ((!listenerInstallerList.isEmpty()) || (!filterInstallerList.isEmpty()) || (!servletInstallerList.isEmpty()) || includeJaxRsSupport || includeSpringSupport || includeWebSocketSupport) {
+    if ((!listenerInstallerList.isEmpty()) || (!filterInstallerList.isEmpty()) || (!servletInstallerList.isEmpty()) || (jaxRSOption != null) || (springSupportOption != null) || (webSocketOption != null)) {
 
       ServletContextHandler servletContextHandler = new ServletContextHandler(ServletContextHandler.NO_SESSIONS);
 
@@ -369,7 +356,7 @@ public class JettyInitializingBean implements DisposableBean, ApplicationContext
         }
       }
 
-      if (includeJaxRsSupport) {
+      if (jaxRSOption != null) {
 
         ServletHolder jerseyServletHolder = new ServletHolder(new ServletContainer(new JerseyResourceConfig(ExposedApplicationContext.getApplicationContext(), resourceConfigExtensions)));
         FilterHolder jerseyFilterHolder = new FilterHolder(new PerApplicationContextFilter());
@@ -380,15 +367,15 @@ public class JettyInitializingBean implements DisposableBean, ApplicationContext
         jerseyFilterHolder.setName("per-application-data");
         jerseyFilterHolder.setDisplayName("per-application-data");
 
-        servletContextHandler.addServlet(jerseyServletHolder, restPath + "/*");
-        servletContextHandler.addFilter(jerseyFilterHolder, restPath + "/*", EnumSet.of(DispatcherType.REQUEST));
+        servletContextHandler.addServlet(jerseyServletHolder, jaxRSOption.getRestPath() + "/*");
+        servletContextHandler.addFilter(jerseyFilterHolder, jaxRSOption.getRestPath() + "/*", EnumSet.of(DispatcherType.REQUEST));
       }
 
-      if (includeSpringSupport) {
+      if (springSupportOption != null) {
         servletContextHandler.addEventListener(new JettyRequestContextListener());
       }
 
-      if (includeWebSocketSupport) {
+      if (webSocketOption != null) {
         try {
           WebSocketServerContainerInitializer.configureContext(servletContextHandler);
         } catch (ServletException servletException) {
