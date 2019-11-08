@@ -48,6 +48,7 @@ public class EntitySeekingDataStoreFactoryBean implements FactoryBean<DataStoreF
   private MongoClient mongoClient;
   private String sessionSourceKey;
   private String databaseName;
+  private boolean ensureIndexes = false;
 
   public void setAnnotationSeekingBeanFactoryPostProcessor (AnnotationSeekingBeanFactoryPostProcessor annotationSeekingBeanFactoryPostProcessor) {
 
@@ -67,6 +68,11 @@ public class EntitySeekingDataStoreFactoryBean implements FactoryBean<DataStoreF
   public void setSessionSourceKey (String sessionSourceKey) {
 
     this.sessionSourceKey = sessionSourceKey;
+  }
+
+  public void setEnsureIndexes (boolean ensureIndexes) {
+
+    this.ensureIndexes = ensureIndexes;
   }
 
   public Class getObjectType () {
@@ -92,7 +98,9 @@ public class EntitySeekingDataStoreFactoryBean implements FactoryBean<DataStoreF
     morphia = new Morphia(new HashSet<>(Arrays.asList(annotationSeekingBeanFactoryPostProcessor.getAnnotatedClasses(sessionSourceKey))));
     datastore = morphia.createDatastore(mongoClient, databaseName);
 
-    datastore.ensureIndexes();
+    if (ensureIndexes) {
+      datastore.ensureIndexes();
+    }
 
     dataStoreFactory = new DataStoreFactory(datastore);
   }
