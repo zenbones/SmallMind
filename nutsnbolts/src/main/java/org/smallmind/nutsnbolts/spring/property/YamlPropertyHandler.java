@@ -59,7 +59,9 @@ public class YamlPropertyHandler implements PropertyHandler<YamlPropertyEntry> {
 
     private YamlPropertyEntryIterator (Map<String, Object> yamlMap) {
 
-      namedIterationList.push(new NamedIteration(yamlMap.entrySet().iterator()));
+      if ((yamlMap != null) && (!yamlMap.isEmpty())) {
+        namedIterationList.push(new NamedIteration(yamlMap.entrySet().iterator()));
+      }
     }
 
     @Override
