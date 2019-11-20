@@ -47,6 +47,6 @@ public class SpringContextRefreshedAnnouncer implements ApplicationListener<Cont
   @Override
   public void onApplicationEvent (ContextRefreshedEvent event) {
 
-    System.out.println("Spring context(" + ((applicationName != null) ? applicationName : event.getApplicationContext().getApplicationName()) + ") initialized..");
+    System.out.println("Spring context(" + ((applicationName != null) ? applicationName : event.getApplicationContext().getApplicationName()) + ") initialized...");
   }
 }
