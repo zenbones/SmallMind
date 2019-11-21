@@ -17,7 +17,6 @@
     <module>jetty</module>
     <module>json</module>
     <module>jwt</module>
-    <module>oauth</module>
     <module>reverse</module>
     <module>schema</module>
     <module>websocket</module>

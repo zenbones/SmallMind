@@ -33,11 +33,14 @@
 package org.smallmind.nutsnbolts.http;
 
 import java.io.UnsupportedEncodingException;
+import java.net.URLDecoder;
+import java.net.URLEncoder;
 import org.smallmind.nutsnbolts.util.Tuple;
 
 public class HTTPCodec {
 
-  public static String urlEncode (Tuple<String, String> tuple, String... ignoredKeys) {
+  public static String urlEncode (Tuple<String, String> tuple, String... ignoredKeys)
+    throws UnsupportedEncodingException {
 
     StringBuilder dataBuilder = new StringBuilder();
     String key;
@@ -49,9 +52,9 @@ public class HTTPCodec {
 
       key = tuple.getKey(count);
 
-      dataBuilder.append(isIgnoredKey(key, ignoredKeys) ? key : HexCodec.hexEncode(key));
+      dataBuilder.append(isIgnoredKey(key, ignoredKeys) ? key : URLEncoder.encode(key, "UTF-8"));
       dataBuilder.append('=');
-      dataBuilder.append(isIgnoredKey(key, ignoredKeys) ? tuple.getValue(count) : HexCodec.hexEncode(tuple.getValue(count)));
+      dataBuilder.append(isIgnoredKey(key, ignoredKeys) ? tuple.getValue(count) : URLEncoder.encode(tuple.getValue(count), "UTF-8"));
     }
     return dataBuilder.toString();
   }
@@ -102,7 +105,7 @@ public class HTTPCodec {
       throw new UnsupportedEncodingException("Not a standard hex encoded query string");
     }
 
-    tuple.addPair(HexCodec.hexDecode(pairBuilder.substring(0, equalsPos)), HexCodec.hexDecode(pairBuilder.substring(equalsPos + 1)));
+    tuple.addPair(URLDecoder.decode(pairBuilder.substring(0, equalsPos), "UTF-8"), URLDecoder.decode(pairBuilder.substring(equalsPos + 1), "UTF-8"));
   }
 }
 
