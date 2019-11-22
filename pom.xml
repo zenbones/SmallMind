@@ -534,7 +534,7 @@
       <dependency>
         <groupId>com.h2database</groupId>
         <artifactId>h2</artifactId>
-        <version>1.4.199</version>
+        <version>1.4.200</version>
       </dependency>
       <dependency>
         <groupId>org.liquibase</groupId>
@@ -954,8 +954,8 @@
         <plugin>
           <groupId>org.hibernate.orm.tooling</groupId>
           <artifactId>hibernate-enhance-maven-plugin</artifactId>
-          <!-- <version>5.4.2.Final</version> -->
-          <version>5.2.17.Final</version>
+          <!-- <version>5.4.9.Final</version> -->
+          <version>5.1.6.Final</version>
           <executions>
             <execution>
               <goals>
@@ -964,6 +964,7 @@
               <configuration>
                 <failOnError>true</failOnError>
                 <enableLazyInitialization>true</enableLazyInitialization>
+                <enableDirtyTracking>true</enableDirtyTracking>
               </configuration>
             </execution>
           </executions>
