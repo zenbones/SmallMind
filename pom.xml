@@ -3,7 +3,7 @@
 
   <groupId>org.smallmind</groupId>
   <artifactId>smallmind</artifactId>
-  <version>3.3.25-SNAPSHOT</version>
+  <version>3.3.25</version>
   <packaging>pom</packaging>
   <name>Parent</name>
   <description>Parent POM</description>
@@ -122,7 +122,6 @@
     <module>persistence</module>
     <module>phalanx</module>
     <module>quorum</module>
-    <module>seda</module>
     <module>schedule</module>
     <module>scribe</module>
     <module>sleuth</module>
