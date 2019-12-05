@@ -34,6 +34,7 @@ package org.smallmind.persistence.database.mongodb;
 
 import com.mongodb.MongoClient;
 import com.mongodb.MongoClientOptions;
+import com.mongodb.WriteConcern;
 import org.bson.UuidRepresentation;
 import org.bson.codecs.UuidCodec;
 import org.bson.codecs.configuration.CodecRegistries;
@@ -43,13 +44,6 @@ import org.springframework.beans.factory.FactoryBean;
 public class MongoClientOptionsFactoryBean implements FactoryBean<MongoClientOptions> {
 
   private final MongoClientOptions.Builder optionsBuilder;
-
-  private boolean socketKeepAlive;
-  private int connectionsPerHost;
-  private int threadsAllowedToBlockForConnectionMultiplier;
-  private int connectTimeout;
-  private int maxWaitTime;
-  private int socketTimeout;
 
   public MongoClientOptionsFactoryBean () {
 
@@ -84,9 +78,19 @@ public class MongoClientOptionsFactoryBean implements FactoryBean<MongoClientOpt
     optionsBuilder.socketTimeout(socketTimeout);
   }
 
+  public void setSslEnabled (boolean sslEnabled) {
+
+    optionsBuilder.sslEnabled(sslEnabled);
+  }
+
   public void setThreadsAllowedToBlockForConnectionMultiplier (int threadsAllowedToBlockForConnectionMultiplier) {
 
     optionsBuilder.threadsAllowedToBlockForConnectionMultiplier(threadsAllowedToBlockForConnectionMultiplier);
+  }
+
+  public void setWriteConcern (WriteConcern writeConcern) {
+
+    optionsBuilder.writeConcern(writeConcern);
   }
 
   @Override
@@ -102,7 +106,7 @@ public class MongoClientOptionsFactoryBean implements FactoryBean<MongoClientOpt
   }
 
   @Override
-  public MongoClientOptions getObject () throws Exception {
+  public MongoClientOptions getObject () {
 
     return optionsBuilder.build();
   }
