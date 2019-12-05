@@ -45,6 +45,7 @@ public class EntitySeekingDataStoreFactoryBean implements FactoryBean<DataStoreF
 
   private DataStoreFactory dataStoreFactory;
   private AnnotationSeekingBeanFactoryPostProcessor annotationSeekingBeanFactoryPostProcessor;
+  private MorphiaIndexer morphiaIndexer;
   private MongoClient mongoClient;
   private String sessionSourceKey;
   private String databaseName;
@@ -53,6 +54,11 @@ public class EntitySeekingDataStoreFactoryBean implements FactoryBean<DataStoreF
   public void setAnnotationSeekingBeanFactoryPostProcessor (AnnotationSeekingBeanFactoryPostProcessor annotationSeekingBeanFactoryPostProcessor) {
 
     this.annotationSeekingBeanFactoryPostProcessor = annotationSeekingBeanFactoryPostProcessor;
+  }
+
+  public void setMorphiaIndexer (MorphiaIndexer morphiaIndexer) {
+
+    this.morphiaIndexer = morphiaIndexer;
   }
 
   public void setMongoClient (MongoClient mongoClient) {
@@ -100,6 +106,8 @@ public class EntitySeekingDataStoreFactoryBean implements FactoryBean<DataStoreF
 
     if (ensureIndexes) {
       datastore.ensureIndexes();
+    } else if (morphiaIndexer != null) {
+      morphiaIndexer.registerDatastore(datastore);
     }
 
     dataStoreFactory = new DataStoreFactory(datastore);

@@ -30,47 +30,31 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.persistence.database.mongodb;
+package org.smallmind.persistence.orm.spring.morphia;
 
-import com.mongodb.WriteConcern;
-import org.springframework.beans.factory.FactoryBean;
+import java.util.LinkedList;
+import javax.management.StandardMBean;
+import org.mongodb.morphia.Datastore;
 
-public class MorphiaWriteConcern implements FactoryBean<WriteConcern> {
+public class MorphiaIndexer extends StandardMBean implements MorphiaIndexingMXBean {
 
-  private MorphiaAcknowledgment acknowledgment;
-  private boolean journaled;
+  private LinkedList<Datastore> dataStoreList = new LinkedList<>();
 
-  public void setAcknowledgment (MorphiaAcknowledgment acknowledgment) {
+  public MorphiaIndexer () {
 
-    this.acknowledgment = acknowledgment;
+    super(MorphiaIndexingMXBean.class, true);
   }
 
-  public void setJournaled (boolean journaled) {
+  public synchronized void registerDatastore (Datastore datastore) {
 
-    this.journaled = journaled;
-  }
-
-  @Override
-  public boolean isSingleton () {
-
-    return false;
+    dataStoreList.add(datastore);
   }
 
   @Override
-  public Class<?> getObjectType () {
+  public synchronized void enforce () {
 
-    return WriteConcern.class;
-  }
-
-  @Override
-  public WriteConcern getObject () {
-
-    WriteConcern writeConcern = acknowledgment.getWriteConcern();
-
-    if (acknowledgment.isJournable()) {
-      writeConcern.withJournal(journaled);
+    for (Datastore datastore : dataStoreList) {
+      datastore.ensureIndexes();
     }
-
-    return writeConcern;
   }
 }
