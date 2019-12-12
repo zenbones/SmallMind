@@ -42,10 +42,12 @@ import org.hibernate.validator.HibernateValidator;
 public class EntityValidator {
 
   private static final ExecutableValidator EXECUTABLE_VALIDATOR;
+
   static {
 
     EXECUTABLE_VALIDATOR = Validation.byProvider(HibernateValidator.class).configure().parameterNameProvider(new EntityParameterNameProvider()).buildValidatorFactory().getValidator().forExecutables();
   }
+
   public static <T> void validateParameters (T object, Method method, Object[] parameters) {
 
     Set<ConstraintViolation<T>> constraintViolationSet;
