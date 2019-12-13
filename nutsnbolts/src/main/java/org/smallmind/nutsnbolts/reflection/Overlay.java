@@ -38,64 +38,76 @@ import org.smallmind.nutsnbolts.lang.TypeMismatchException;
 
 public interface Overlay<O extends Overlay<O>> {
 
+  default void overliad () {
+
+  }
+
   default O overlay (O[] overlays) {
 
     return overlay(overlays, null);
   }
 
-  default void overliad () {
-
-  }
-
   default O overlay (O[] overlays, Field[] exclusions) {
 
     if ((overlays != null) && (overlays.length > 0)) {
-      for (Object overlay : overlays) {
-        if (overlay != null) {
-          if (!overlay.getClass().isAssignableFrom(this.getClass())) {
-            throw new TypeMismatchException("Overlays must be assignable from type(%s)", this.getClass());
-          } else {
+      for (O overlay : overlays) {
+        overlay(overlay, exclusions);
+      }
+    }
 
-            boolean excluded;
+    return (O)this;
+  }
 
-            for (FieldAccessor fieldAccessor : FieldUtility.getFieldAccessors(this.getClass())) {
+  default O overlay (O overlay) {
 
-              excluded = false;
+    return overlay(overlay, null);
+  }
 
-              if ((exclusions != null) && (exclusions.length > 0)) {
-                for (Field exclusion : exclusions) {
-                  if (!exclusion.getDeclaringClass().isAssignableFrom(this.getClass())) {
-                    throw new TypeMismatchException("The type(%s) does not contain the excluded field(%s)", this.getClass().getName(), exclusion.getName());
-                  } else if (exclusion.equals(fieldAccessor.getField())) {
-                    excluded = true;
-                    break;
+  default O overlay (O overlay, Field[] exclusions) {
+
+    if (overlay != null) {
+      if (!overlay.getClass().isAssignableFrom(this.getClass())) {
+        throw new TypeMismatchException("Overlays must be assignable from type(%s)", this.getClass());
+      } else {
+
+        boolean excluded;
+
+        for (FieldAccessor fieldAccessor : FieldUtility.getFieldAccessors(this.getClass())) {
+
+          excluded = false;
+
+          if ((exclusions != null) && (exclusions.length > 0)) {
+            for (Field exclusion : exclusions) {
+              if (!exclusion.getDeclaringClass().isAssignableFrom(this.getClass())) {
+                throw new TypeMismatchException("The type(%s) does not contain the excluded field(%s)", this.getClass().getName(), exclusion.getName());
+              } else if (exclusion.equals(fieldAccessor.getField())) {
+                excluded = true;
+                break;
+              }
+            }
+          }
+
+          if (!excluded) {
+
+            Object value;
+
+            try {
+              if ((value = fieldAccessor.get(overlay)) != null) {
+                if (Overlay.class.isAssignableFrom(fieldAccessor.getType())) {
+
+                  Overlay original;
+
+                  if ((original = (Overlay)fieldAccessor.get(this)) != null) {
+                    fieldAccessor.set(this, fieldAccessor.getType().cast(original.overlay((Overlay)value)));
+                  } else {
+                    fieldAccessor.set(this, value);
                   }
+                } else {
+                  fieldAccessor.set(this, value);
                 }
               }
-
-              if (!excluded) {
-
-                Object value;
-
-                try {
-                  if ((value = fieldAccessor.get(overlay)) != null) {
-                    if (Overlay.class.isAssignableFrom(fieldAccessor.getType())) {
-
-                      Object original;
-
-                      if ((original = fieldAccessor.get(this)) != null) {
-                        fieldAccessor.set(this, ((Overlay)original).overlay(new Overlay[] {(Overlay)value}));
-                      } else {
-                        fieldAccessor.set(this, value);
-                      }
-                    } else {
-                      fieldAccessor.set(this, value);
-                    }
-                  }
-                } catch (IllegalAccessException | InvocationTargetException exception) {
-                  throw new OverlayException(exception);
-                }
-              }
+            } catch (IllegalAccessException | InvocationTargetException exception) {
+              throw new OverlayException(exception);
             }
           }
         }
