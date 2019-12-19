@@ -78,6 +78,11 @@ public class MongoClientOptionsFactoryBean implements FactoryBean<MongoClientOpt
     optionsBuilder.socketTimeout(socketTimeout);
   }
 
+  public void setServerSelectionTimeout (int serverSelectionTimeout) {
+
+    optionsBuilder.serverSelectionTimeout(serverSelectionTimeout);
+  }
+
   public void setSslEnabled (boolean sslEnabled) {
 
     optionsBuilder.sslEnabled(sslEnabled);
