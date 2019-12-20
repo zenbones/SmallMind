@@ -38,6 +38,11 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.ObjectInputStream;
 import java.net.URL;
+import java.security.AllPermission;
+import java.security.CodeSource;
+import java.security.PermissionCollection;
+import java.security.ProtectionDomain;
+import java.security.cert.Certificate;
 import java.util.Collections;
 import java.util.Enumeration;
 import java.util.HashMap;
@@ -49,9 +54,11 @@ import java.util.jar.Attributes;
 import java.util.jar.JarEntry;
 import java.util.jar.JarInputStream;
 import java.util.jar.Manifest;
+import sun.security.util.SecurityConstants;
 
 public class SingularityClassLoader extends ClassLoader {
 
+  private static final PermissionCollection ALL_PERMISSIONS_COLLECTION;
   private static final String[] INOPERABLE_NAMESPACES = new String[] {"javax.xml.", "org.xml.", "org.w3c."};
   private final HashMap<String, URL> urlMap = new HashMap<>();
   private final HashSet<String> packageSet = new HashSet<>();
@@ -64,6 +71,9 @@ public class SingularityClassLoader extends ClassLoader {
   private final String implementationVendor;
 
   static {
+
+    ALL_PERMISSIONS_COLLECTION = new AllPermission().newPermissionCollection();
+    ALL_PERMISSIONS_COLLECTION.add(SecurityConstants.ALL_PERMISSION);
 
     ClassLoader.registerAsParallelCapable();
     URL.setURLStreamHandlerFactory(new SingularityJarURLStreamHandlerFactory());
@@ -129,10 +139,10 @@ public class SingularityClassLoader extends ClassLoader {
   }
 
   @Override
-  public synchronized Class loadClass (String name, boolean resolve)
+  public synchronized Class<?> loadClass (String name, boolean resolve)
     throws ClassNotFoundException {
 
-    Class singularityClass;
+    Class<?> singularityClass;
 
     if ((singularityClass = findLoadedClass(name)) == null) {
       try {
@@ -154,7 +164,7 @@ public class SingularityClassLoader extends ClassLoader {
   }
 
   @Override
-  public synchronized Class findClass (String name)
+  public synchronized Class<?> findClass (String name)
     throws ClassNotFoundException {
 
     if (isOperableNamespace(name)) {
@@ -164,6 +174,8 @@ public class SingularityClassLoader extends ClassLoader {
       if ((classURL = urlMap.get(name.replace('.', '/') + ".class")) != null) {
         try {
 
+          CodeSource codeSource = new CodeSource(classURL, (Certificate[])null);
+          ProtectionDomain protectionDomain = new ProtectionDomain(codeSource, ALL_PERMISSIONS_COLLECTION, this, null);
           InputStream classInputStream;
           byte[] classData;
 
@@ -173,7 +185,7 @@ public class SingularityClassLoader extends ClassLoader {
 
           definePackage(name);
 
-          return defineClass(name, classData, 0, classData.length);
+          return defineClass(name, classData, 0, classData.length, protectionDomain);
         } catch (Exception exception) {
           throw new ClassNotFoundException("Exception encountered while attempting to define class (" + name + ")", exception);
         }
