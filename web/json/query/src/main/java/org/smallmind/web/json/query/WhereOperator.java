@@ -44,9 +44,9 @@ public enum WhereOperator {
 
       if (!(OperandType.ARRAY.equals(op1.getOperandType()) || OperandType.ARRAY.equals(op2.getOperandType()))) {
         if ((ElementType.NUMBER.equals(op1.getElementType()) && ElementType.NUMBER.equals(op2.getElementType()))) {
-          return NUMBER_COMPARATOR.compare((Number)op1.get(), (Number)op2.get()) < 0;
+          return NUMBER_COMPARATOR.compare((Number)op2.get(), (Number)op1.get()) < 0;
         } else if ((ElementType.DATE.equals(op1.getElementType()) && ElementType.DATE.equals(op2.getElementType()))) {
-          return ((Date)op1.get()).before((Date)op2.get());
+          return ((Date)op2.get()).before((Date)op1.get());
         }
       }
 
@@ -59,9 +59,9 @@ public enum WhereOperator {
 
       if (!(OperandType.ARRAY.equals(op1.getOperandType()) || OperandType.ARRAY.equals(op2.getOperandType()))) {
         if ((ElementType.NUMBER.equals(op1.getElementType()) && ElementType.NUMBER.equals(op2.getElementType()))) {
-          return NUMBER_COMPARATOR.compare((Number)op1.get(), (Number)op2.get()) <= 0;
+          return NUMBER_COMPARATOR.compare((Number)op2.get(), (Number)op1.get()) <= 0;
         } else if ((ElementType.DATE.equals(op1.getElementType()) && ElementType.DATE.equals(op2.getElementType()))) {
-          return op1.get().equals(op2.get()) || ((Date)op1.get()).before((Date)op2.get());
+          return op2.get().equals(op1.get()) || ((Date)op2.get()).before((Date)op1.get());
         }
       }
 
@@ -130,9 +130,9 @@ public enum WhereOperator {
 
       if (!(OperandType.ARRAY.equals(op1.getOperandType()) || OperandType.ARRAY.equals(op2.getOperandType()))) {
         if ((ElementType.NUMBER.equals(op1.getElementType()) && ElementType.NUMBER.equals(op2.getElementType()))) {
-          return NUMBER_COMPARATOR.compare((Number)op1.get(), (Number)op2.get()) >= 0;
+          return NUMBER_COMPARATOR.compare((Number)op2.get(), (Number)op1.get()) >= 0;
         } else if ((ElementType.DATE.equals(op1.getElementType()) && ElementType.DATE.equals(op2.getElementType()))) {
-          return op1.get().equals(op2.get()) || ((Date)op1.get()).after((Date)op2.get());
+          return op2.get().equals(op1.get()) || ((Date)op2.get()).after((Date)op1.get());
         }
       }
 
@@ -145,9 +145,9 @@ public enum WhereOperator {
 
       if (!(OperandType.ARRAY.equals(op1.getOperandType()) || OperandType.ARRAY.equals(op2.getOperandType()))) {
         if ((ElementType.NUMBER.equals(op1.getElementType()) && ElementType.NUMBER.equals(op2.getElementType()))) {
-          return NUMBER_COMPARATOR.compare((Number)op1.get(), (Number)op2.get()) > 0;
+          return NUMBER_COMPARATOR.compare((Number)op2.get(), (Number)op1.get()) > 0;
         } else if ((ElementType.DATE.equals(op1.getElementType()) && ElementType.DATE.equals(op2.getElementType()))) {
-          return ((Date)op1.get()).after((Date)op2.get());
+          return ((Date)op2.get()).after((Date)op1.get());
         }
       }
       throw new QueryProcessingException("The operator(%s) requires numeric or date inputs", name());
