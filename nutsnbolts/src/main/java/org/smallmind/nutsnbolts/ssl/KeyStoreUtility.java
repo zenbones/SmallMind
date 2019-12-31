@@ -70,10 +70,11 @@ public class KeyStoreUtility {
    *      (OU) field is the name of the department or organization unit making the request. To skip the OU field, press Enter on the keyboard.
    *   f) Common Name: The Common Name is the Host + Domain Name. It looks like "www.company.com" or "company.com".
    *   g) NOTE: Please do not enter an email address, challenge password or an optional company name when generating the CSR.
-   * 3) Once the certificate has been generated collect it and any intermediate and/or root certificates
-   * 4) openssl pkcs8 -topk8 -nocrypt -in <private key file name>.key -out <private key file name>.key.der -outform der
-   * 5) openssl x509 -in <cert file name>.cert -out <cert file name>.cert.der -outform der - for each cert
-   * 6) Run this utility which will generate a JKS format keystore file
+   * 3) Send the csr to a CA which will generate and send back a signed cert.
+   * 4) Once the certificate has been generated collect it and any intermediate and/or root certificates
+   * 5) openssl pkcs8 -topk8 -nocrypt -in <private key file name>.key -out <private key file name>.key.der -outform der
+   * 6) openssl x509 -in <cert file name>.cert -out <cert file name>.cert.der -outform der - for each cert
+   * 7) Run this utility which will generate a JKS format keystore file
    */
 
   public static KeyStoreInfo construct (String keystoreName, String keystoreAlias, String keystorePassword, Resource keyResource, Resource... certResources)
