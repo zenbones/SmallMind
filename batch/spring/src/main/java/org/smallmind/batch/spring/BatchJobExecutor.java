@@ -35,9 +35,9 @@ package org.smallmind.batch.spring;
 import java.util.concurrent.Executors;
 import org.springframework.core.task.support.TaskExecutorAdapter;
 
-public class BatchTaskExecutor extends TaskExecutorAdapter {
+public class BatchJobExecutor extends TaskExecutorAdapter {
 
-  public BatchTaskExecutor () {
+  public BatchJobExecutor () {
 
     super(Executors.newSingleThreadExecutor());
   }
