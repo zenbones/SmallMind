@@ -1,28 +1,28 @@
 /*
  * Copyright (c) 2007, 2008, 2009, 2010, 2011, 2012, 2013, 2014, 2015, 2016, 2017, 2018, 2019 David Berkman
- * 
+ *
  * This file is part of the SmallMind Code Project.
- * 
+ *
  * The SmallMind Code Project is free software, you can redistribute
  * it and/or modify it under either, at your discretion...
- * 
+ *
  * 1) The terms of GNU Affero General Public License as published by the
  * Free Software Foundation, either version 3 of the License, or (at
  * your option) any later version.
- * 
+ *
  * ...or...
- * 
+ *
  * 2) The terms of the Apache License, Version 2.0.
- * 
+ *
  * The SmallMind Code Project is distributed in the hope that it will
  * be useful, but WITHOUT ANY WARRANTY; without even the implied warranty
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License or Apache License for more details.
- * 
+ *
  * You should have received a copy of the GNU Affero General Public License
  * and the Apache License along with the SmallMind Code Project. If not, see
  * <http://www.gnu.org/licenses/> or <http://www.apache.org/licenses/LICENSE-2.0>.
- * 
+ *
  * Additional permission under the GNU Affero GPL version 3 section 7
  * ------------------------------------------------------------------
  * If you modify this Program, or any covered work, by linking or
@@ -38,7 +38,7 @@ import org.smallmind.persistence.orm.ProxyTransaction;
 
 public class NonTransactionalState {
 
-  private static final ThreadLocal<LinkedList<BoundarySet<ProxySession>>> SESSION_SET_STACK_LOCAL = new ThreadLocal<LinkedList<BoundarySet<ProxySession>>>();
+  private static final ThreadLocal<LinkedList<BoundarySet<ProxySession<?, ?>>>> SESSION_SET_STACK_LOCAL = new ThreadLocal<>();
 
   public static boolean isInSession () {
 
@@ -50,10 +50,10 @@ public class NonTransactionalState {
     return currentSession(sessionSourceKey) != null;
   }
 
-  public static ProxySession currentSession (String sessionSourceKey) {
+  public static ProxySession<?, ?> currentSession (String sessionSourceKey) {
 
-    LinkedList<BoundarySet<ProxySession>> sessionSetStack;
-    ProxyTransaction currentTransaction;
+    LinkedList<BoundarySet<ProxySession<?, ?>>> sessionSetStack;
+    ProxyTransaction<?> currentTransaction;
 
     if ((currentTransaction = TransactionalState.currentTransaction(sessionSourceKey)) != null) {
 
@@ -61,8 +61,8 @@ public class NonTransactionalState {
     }
 
     if ((sessionSetStack = SESSION_SET_STACK_LOCAL.get()) != null) {
-      for (BoundarySet<ProxySession> sessionSet : sessionSetStack) {
-        for (ProxySession proxySession : sessionSet) {
+      for (BoundarySet<ProxySession<?, ?>> sessionSet : sessionSetStack) {
+        for (ProxySession<?, ?> proxySession : sessionSet) {
           if (sessionSourceKey == null) {
             if (proxySession.getSessionSourceKey() == null) {
 
@@ -79,12 +79,12 @@ public class NonTransactionalState {
     return null;
   }
 
-  protected static boolean containsSession (ProxySession proxySession) {
+  protected static boolean containsSession (ProxySession<?, ?> proxySession) {
 
-    LinkedList<BoundarySet<ProxySession>> sessionSetStack;
+    LinkedList<BoundarySet<ProxySession<?, ?>>> sessionSetStack;
 
     if ((sessionSetStack = SESSION_SET_STACK_LOCAL.get()) != null) {
-      for (BoundarySet<ProxySession> sessionSet : sessionSetStack) {
+      for (BoundarySet<ProxySession<?, ?>> sessionSet : sessionSetStack) {
         if (sessionSet.contains(proxySession)) {
           return true;
         }
@@ -94,12 +94,12 @@ public class NonTransactionalState {
     return false;
   }
 
-  public static BoundarySet<ProxySession> obtainBoundary (ProxySession proxySession) {
+  public static BoundarySet<ProxySession<?, ?>> obtainBoundary (ProxySession<?, ?> proxySession) {
 
-    LinkedList<BoundarySet<ProxySession>> sessionSetStack;
+    LinkedList<BoundarySet<ProxySession<?, ?>>> sessionSetStack;
 
     if ((sessionSetStack = SESSION_SET_STACK_LOCAL.get()) != null) {
-      for (BoundarySet<ProxySession> sessionSet : sessionSetStack) {
+      for (BoundarySet<ProxySession<?, ?>> sessionSet : sessionSetStack) {
         if (sessionSet.allows(proxySession)) {
 
           return sessionSet;
@@ -112,21 +112,21 @@ public class NonTransactionalState {
 
   protected static void startBoundary (NonTransactional nonTransactional) {
 
-    LinkedList<BoundarySet<ProxySession>> sessionSetStack;
+    LinkedList<BoundarySet<ProxySession<?, ?>>> sessionSetStack;
 
     if ((sessionSetStack = SESSION_SET_STACK_LOCAL.get()) == null) {
-      SESSION_SET_STACK_LOCAL.set(sessionSetStack = new LinkedList<BoundarySet<ProxySession>>());
+      SESSION_SET_STACK_LOCAL.set(sessionSetStack = new LinkedList<>());
     }
 
-    sessionSetStack.addLast(new BoundarySet<ProxySession>(nonTransactional.dataSources(), nonTransactional.implicit()));
+    sessionSetStack.addLast(new BoundarySet<>(nonTransactional.dataSources(), nonTransactional.implicit()));
   }
 
   protected static void endBoundary (Throwable throwable)
     throws SessionError {
 
-    if ((throwable == null) || (!(throwable instanceof SessionError)) || ((SESSION_SET_STACK_LOCAL.get() != null) && (SESSION_SET_STACK_LOCAL.get().size() != ((SessionError)throwable).getClosure()))) {
+    if ((!(throwable instanceof SessionError)) || ((SESSION_SET_STACK_LOCAL.get() != null) && (SESSION_SET_STACK_LOCAL.get().size() != ((SessionError)throwable).getClosure()))) {
 
-      LinkedList<BoundarySet<ProxySession>> sessionSetStack;
+      LinkedList<BoundarySet<ProxySession<?, ?>>> sessionSetStack;
       UnexpectedSessionError unexpectedSessionError = null;
 
       if (((sessionSetStack = SESSION_SET_STACK_LOCAL.get()) == null) || sessionSetStack.isEmpty()) {
@@ -134,7 +134,7 @@ public class NonTransactionalState {
       }
 
       try {
-        for (ProxySession proxySession : sessionSetStack.removeLast()) {
+        for (ProxySession<?, ?> proxySession : sessionSetStack.removeLast()) {
           try {
             proxySession.close();
           } catch (Throwable unexpectedThrowable) {

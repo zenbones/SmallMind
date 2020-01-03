@@ -1,28 +1,28 @@
 /*
  * Copyright (c) 2007, 2008, 2009, 2010, 2011, 2012, 2013, 2014, 2015, 2016, 2017, 2018, 2019 David Berkman
- * 
+ *
  * This file is part of the SmallMind Code Project.
- * 
+ *
  * The SmallMind Code Project is free software, you can redistribute
  * it and/or modify it under either, at your discretion...
- * 
+ *
  * 1) The terms of GNU Affero General Public License as published by the
  * Free Software Foundation, either version 3 of the License, or (at
  * your option) any later version.
- * 
+ *
  * ...or...
- * 
+ *
  * 2) The terms of the Apache License, Version 2.0.
- * 
+ *
  * The SmallMind Code Project is distributed in the hope that it will
  * be useful, but WITHOUT ANY WARRANTY; without even the implied warranty
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License or Apache License for more details.
- * 
+ *
  * You should have received a copy of the GNU Affero General Public License
  * and the Apache License along with the SmallMind Code Project. If not, see
  * <http://www.gnu.org/licenses/> or <http://www.apache.org/licenses/LICENSE-2.0>.
- * 
+ *
  * Additional permission under the GNU Affero GPL version 3 section 7
  * ------------------------------------------------------------------
  * If you modify this Program, or any covered work, by linking or
@@ -32,24 +32,23 @@
  */
 package org.smallmind.persistence.orm;
 
-import java.util.Collections;
 import java.util.LinkedList;
-import java.util.UUID;
+import org.smallmind.nutsnbolts.util.SnowflakeId;
 
-public abstract class ProxyTransaction<S extends ProxySession> {
+public abstract class ProxyTransaction<S extends ProxySession<?, ?>> {
 
   private static final ProcessPriorityComparator PROCESS_PRIORITY_COMPARATOR = new ProcessPriorityComparator();
 
   private S proxySession;
   private LinkedList<TransactionPostProcess> postProcessList;
-  private String uuidAsString;
+  private String uuid;
   private boolean rollbackOnly = false;
 
   public ProxyTransaction (S proxySession) {
 
     this.proxySession = proxySession;
 
-    uuidAsString = UUID.randomUUID().toString();
+    uuid = SnowflakeId.newInstance().generateHexEncoding();
   }
 
   public abstract void flush ();
@@ -62,7 +61,7 @@ public abstract class ProxyTransaction<S extends ProxySession> {
 
   public String getUniqueId () {
 
-    return uuidAsString;
+    return uuid;
   }
 
   public S getSession () {
@@ -82,7 +81,7 @@ public abstract class ProxyTransaction<S extends ProxySession> {
 
   private LinkedList<TransactionPostProcess> getPostProcessList () {
 
-    return (postProcessList == null) ? postProcessList = new LinkedList<TransactionPostProcess>() : postProcessList;
+    return (postProcessList == null) ? postProcessList = new LinkedList<>() : postProcessList;
   }
 
   public void addPostProcess (TransactionPostProcess postProcess) {
@@ -95,7 +94,7 @@ public abstract class ProxyTransaction<S extends ProxySession> {
 
     TransactionPostProcessException postProcessException = null;
 
-    Collections.sort(getPostProcessList(), PROCESS_PRIORITY_COMPARATOR);
+    getPostProcessList().sort(PROCESS_PRIORITY_COMPARATOR);
     for (TransactionPostProcess postProcess : getPostProcessList()) {
       if (postProcess.getEndState().equals(TransactionEndState.ANY) || postProcess.getEndState().equals(endState)) {
         try {
@@ -117,11 +116,11 @@ public abstract class ProxyTransaction<S extends ProxySession> {
 
   public int hashCode () {
 
-    return uuidAsString.hashCode();
+    return uuid.hashCode();
   }
 
   public boolean equals (Object obj) {
 
-    return (obj instanceof ProxyTransaction) && uuidAsString.equals(((ProxyTransaction)obj).getUniqueId());
+    return (obj instanceof ProxyTransaction) && uuid.equals(((ProxyTransaction<?>)obj).getUniqueId());
   }
 }
