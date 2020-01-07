@@ -50,6 +50,10 @@ import org.smallmind.web.json.query.WhereOperator;
 
 public class MorphiaQueryUtility {
 
+  private static final String SINGLE_WILDCARD = "*";
+  private static final String DOUBLE_WILDCARD = SINGLE_WILDCARD + SINGLE_WILDCARD;
+  private static final char WILDCARD_CHAR = '*';
+
   public static <T> Query<T> apply (Query<T> query, Where where) {
 
     return apply(query, where, null);
@@ -153,19 +157,19 @@ public class MorphiaQueryUtility {
             case 0:
               return fieldEnd.equal("");
             case 1:
-              return likeValue.equals("%") ? fieldEnd.exists() : fieldEnd.equal(likeValue);
+              return likeValue.equals(SINGLE_WILDCARD) ? fieldEnd.exists() : fieldEnd.equal(likeValue);
             case 2:
-              return likeValue.equals("%%") ? fieldEnd.exists() : (((String)likeValue).charAt(0) == '%') ? fieldEnd.endsWith(((String)likeValue).substring(1)) : (((String)likeValue).charAt(1) == '%') ? fieldEnd.startsWith(((String)likeValue).substring(0, 1)) : fieldEnd.equal(likeValue);
+              return likeValue.equals(DOUBLE_WILDCARD) ? fieldEnd.exists() : (((String)likeValue).charAt(0) == WILDCARD_CHAR) ? fieldEnd.endsWith(((String)likeValue).substring(1)) : (((String)likeValue).charAt(1) == WILDCARD_CHAR) ? fieldEnd.startsWith(((String)likeValue).substring(0, 1)) : fieldEnd.equal(likeValue);
             default:
-              if (((String)likeValue).substring(1, ((String)likeValue).length() - 1).indexOf('%') >= 0) {
-                throw new QueryProcessingException("The operation(%s) allows wildcards('%') only at the  start or end of the operand", WhereOperator.LIKE.name());
-              } else if (((String)likeValue).startsWith("%") && ((String)likeValue).endsWith("%")) {
+              if (((String)likeValue).substring(1, ((String)likeValue).length() - 1).indexOf(WILDCARD_CHAR) >= 0) {
+                throw new QueryProcessingException("The operation(%s) allows wildcards(%s) only at the start or end of the operand", WhereOperator.LIKE.name(), SINGLE_WILDCARD);
+              } else if (((String)likeValue).startsWith(SINGLE_WILDCARD) && ((String)likeValue).endsWith(SINGLE_WILDCARD)) {
 
                 return fieldEnd.contains(((String)likeValue).substring(1, ((String)likeValue).length() - 1));
-              } else if (((String)likeValue).startsWith("%")) {
+              } else if (((String)likeValue).startsWith(SINGLE_WILDCARD)) {
 
                 return fieldEnd.endsWith(((String)likeValue).substring(1));
-              } else if (((String)likeValue).endsWith("%")) {
+              } else if (((String)likeValue).endsWith(SINGLE_WILDCARD)) {
 
                 return fieldEnd.startsWith(((String)likeValue).substring(0, ((String)likeValue).length() - 1));
               } else {
@@ -189,19 +193,19 @@ public class MorphiaQueryUtility {
             case 0:
               return fieldEnd.notEqual("");
             case 1:
-              return unlikeValue.equals("%") ? fieldEnd.doesNotExist() : fieldEnd.notEqual(unlikeValue);
+              return unlikeValue.equals(SINGLE_WILDCARD) ? fieldEnd.doesNotExist() : fieldEnd.notEqual(unlikeValue);
             case 2:
-              return unlikeValue.equals("%%") ? fieldEnd.doesNotExist() : (((String)unlikeValue).charAt(0) == '%') ? fieldEnd.not().endsWith(((String)unlikeValue).substring(1)) : (((String)unlikeValue).charAt(1) == '%') ? fieldEnd.not().startsWith(((String)unlikeValue).substring(0, 1)) : fieldEnd.notEqual(unlikeValue);
+              return unlikeValue.equals(DOUBLE_WILDCARD) ? fieldEnd.doesNotExist() : (((String)unlikeValue).charAt(0) == WILDCARD_CHAR) ? fieldEnd.not().endsWith(((String)unlikeValue).substring(1)) : (((String)unlikeValue).charAt(1) == WILDCARD_CHAR) ? fieldEnd.not().startsWith(((String)unlikeValue).substring(0, 1)) : fieldEnd.notEqual(unlikeValue);
             default:
-              if (((String)unlikeValue).substring(1, ((String)unlikeValue).length() - 1).indexOf('%') >= 0) {
-                throw new QueryProcessingException("The operation(%s) allows wildcards('%') only at the  start or end of the operand", WhereOperator.UNLIKE.name());
-              } else if (((String)unlikeValue).startsWith("%") && ((String)unlikeValue).endsWith("%")) {
+              if (((String)unlikeValue).substring(1, ((String)unlikeValue).length() - 1).indexOf(WILDCARD_CHAR) >= 0) {
+                throw new QueryProcessingException("The operation(%s) allows wildcards(%s) only at the start or end of the operand", WhereOperator.UNLIKE.name(), SINGLE_WILDCARD);
+              } else if (((String)unlikeValue).startsWith(SINGLE_WILDCARD) && ((String)unlikeValue).endsWith(SINGLE_WILDCARD)) {
 
                 return fieldEnd.not().contains(((String)unlikeValue).substring(1, ((String)unlikeValue).length() - 1));
-              } else if (((String)unlikeValue).startsWith("%")) {
+              } else if (((String)unlikeValue).startsWith(SINGLE_WILDCARD)) {
 
                 return fieldEnd.not().endsWith(((String)unlikeValue).substring(1));
-              } else if (((String)unlikeValue).endsWith("%")) {
+              } else if (((String)unlikeValue).endsWith(SINGLE_WILDCARD)) {
 
                 return fieldEnd.not().startsWith(((String)unlikeValue).substring(0, ((String)unlikeValue).length() - 1));
               } else {

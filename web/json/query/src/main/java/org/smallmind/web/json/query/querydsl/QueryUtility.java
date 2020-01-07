@@ -56,6 +56,7 @@ import org.smallmind.web.json.query.WhereCriterion;
 import org.smallmind.web.json.query.WhereField;
 import org.smallmind.web.json.query.WhereFieldTransformer;
 import org.smallmind.web.json.query.WherePath;
+import org.smallmind.web.json.query.WildcardUtility;
 
 public class QueryUtility {
 
@@ -159,9 +160,9 @@ public class QueryUtility {
       case GT:
         return Expressions.predicate(Ops.GT, wherePath.getPath(), Expressions.constant(fieldValue));
       case LIKE:
-        return Expressions.predicate(Ops.LIKE, wherePath.getPath(), Expressions.constant(fieldValue));
+        return Expressions.predicate(Ops.LIKE, wherePath.getPath(), Expressions.constant(WildcardUtility.swapWithSqlWildcard((String)fieldValue)));
       case UNLIKE:
-        return Expressions.predicate(Ops.NOT, Expressions.predicate(Ops.LIKE, wherePath.getPath(), Expressions.constant(fieldValue)));
+        return Expressions.predicate(Ops.NOT, Expressions.predicate(Ops.LIKE, wherePath.getPath(), Expressions.constant(WildcardUtility.swapWithSqlWildcard((String)fieldValue))));
       case IN:
 
         int arrayLength;

@@ -54,6 +54,7 @@ import org.smallmind.web.json.query.WhereCriterion;
 import org.smallmind.web.json.query.WhereField;
 import org.smallmind.web.json.query.WhereFieldTransformer;
 import org.smallmind.web.json.query.WherePath;
+import org.smallmind.web.json.query.WildcardUtility;
 
 public class JPAQueryUtility {
 
@@ -150,9 +151,9 @@ public class JPAQueryUtility {
       case GT:
         return OperandType.DATE.equals(whereField.getOperand().getOperandType()) ? criteriaBuilder.greaterThan((Path<Date>)wherePath.getPath(), (Date)fieldValue) : criteriaBuilder.gt((Path<Number>)wherePath.getPath(), (Number)fieldValue);
       case LIKE:
-        return criteriaBuilder.like((Path<String>)wherePath.getPath(), (String)fieldValue);
+        return criteriaBuilder.like((Path<String>)wherePath.getPath(), WildcardUtility.swapWithSqlWildcard((String)fieldValue));
       case UNLIKE:
-        return criteriaBuilder.notLike((Path<String>)wherePath.getPath(), (String)fieldValue);
+        return criteriaBuilder.notLike((Path<String>)wherePath.getPath(), WildcardUtility.swapWithSqlWildcard((String)fieldValue));
       case IN:
         return criteriaBuilder.in((Path<?>)wherePath.getPath()).in(fieldValue);
       default:
