@@ -101,9 +101,13 @@ public class Page<T> implements Iterable<T> {
     return new Page<>(outArray, firstResult, maxResults, totalResults);
   }
 
-  public Page<T> jsonConvert (Class<?> arrayClass) {
+  public Page<T> jsonConvert (Class<T> componentClass) {
 
-    setValues((T[])JsonCodec.convert(getValues(), arrayClass));
+    int index = 0;
+
+    for (Object obj : getValues()) {
+      values[index++] = JsonCodec.convert(obj, componentClass);
+    }
 
     return this;
   }
