@@ -103,10 +103,17 @@ public class Page<T> implements Iterable<T> {
 
   public Page<T> jsonConvert (Class<T> componentClass) {
 
-    int index = 0;
+    if ((values == null) || (!values.getClass().getComponentType().equals(componentClass))) {
 
-    for (Object obj : getValues()) {
-      values[index++] = JsonCodec.convert(obj, componentClass);
+      T[] convertedArray = (T[])Array.newInstance(componentClass, (values == null) ? 0 : values.length);
+
+      int index = 0;
+
+      for (Object obj : getValues()) {
+        convertedArray[index++] = JsonCodec.convert(obj, componentClass);
+      }
+
+      values = convertedArray;
     }
 
     return this;
