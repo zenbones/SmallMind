@@ -37,11 +37,9 @@ import java.lang.reflect.Type;
 import java.util.concurrent.ConcurrentHashMap;
 import javax.ws.rs.ext.ParamConverter;
 import javax.ws.rs.ext.ParamConverterProvider;
-import javax.ws.rs.ext.Provider;
 import javax.xml.bind.annotation.adapters.XmlAdapter;
 import javax.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
 
-@Provider
 public class XmlAdapterParamConverterProvider implements ParamConverterProvider {
 
   private final ConcurrentHashMap<Class<? extends XmlAdapter>, ParamConverter<?>> CONVERTER_MAP = new ConcurrentHashMap<>();

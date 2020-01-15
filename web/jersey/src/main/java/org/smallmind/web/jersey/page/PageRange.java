@@ -39,7 +39,7 @@ import java.lang.annotation.Target;
 import javax.ws.rs.NameBinding;
 
 @Retention(RetentionPolicy.RUNTIME)
-@Target({ElementType.TYPE, ElementType.METHOD})
+@Target({ElementType.METHOD})
 @NameBinding
 public @interface PageRange {
 

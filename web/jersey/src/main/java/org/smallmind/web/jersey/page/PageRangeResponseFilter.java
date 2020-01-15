@@ -35,23 +35,25 @@ package org.smallmind.web.jersey.page;
 import javax.ws.rs.container.ContainerRequestContext;
 import javax.ws.rs.container.ContainerResponseContext;
 import javax.ws.rs.container.ContainerResponseFilter;
-import javax.ws.rs.ext.Provider;
+import javax.ws.rs.container.ResourceInfo;
+import javax.ws.rs.core.Context;
 import org.smallmind.web.json.scaffold.util.Page;
 
-@Provider
-@PageRange
 public class PageRangeResponseFilter implements ContainerResponseFilter {
 
   public static int HTTP_DATA_COMPLETE = 200;
   public static int HTTP_DATA_INCOMPLETE = 206;
   public static int HTTP_DATA_OUT_OF_RANGE = 416;
 
+  @Context
+  ResourceInfo resourceInfo;
+
   @Override
   public void filter (ContainerRequestContext requestContext, ContainerResponseContext responseContext) {
 
     Class<?> entityClass;
 
-    if (((entityClass = responseContext.getEntityClass()) != null) && Page.class.isAssignableFrom(entityClass)) {
+    if (((resourceInfo.getResourceMethod().getAnnotation(PageRange.class)) != null) && ((entityClass = responseContext.getEntityClass()) != null) && Page.class.isAssignableFrom(entityClass)) {
 
       Page<?> page = (Page<?>)responseContext.getEntity();
 

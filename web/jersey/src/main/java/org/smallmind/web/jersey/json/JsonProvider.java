@@ -48,7 +48,6 @@ import javax.ws.rs.ext.MessageBodyWriter;
 import javax.ws.rs.ext.Provider;
 import org.smallmind.web.json.scaffold.util.JsonCodec;
 
-@Provider
 @Consumes({MediaType.APPLICATION_JSON, "text/json"})
 @Produces({MediaType.APPLICATION_JSON, "text/json"})
 public class JsonProvider implements MessageBodyReader<Object>, MessageBodyWriter<Object> {

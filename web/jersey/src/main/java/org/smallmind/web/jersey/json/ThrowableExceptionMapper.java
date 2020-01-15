@@ -36,13 +36,11 @@ import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.ext.ExceptionMapper;
-import javax.ws.rs.ext.Provider;
 import org.smallmind.nutsnbolts.reflection.type.GenericUtility;
 import org.smallmind.scribe.pen.LoggerManager;
 import org.smallmind.web.json.scaffold.fault.Fault;
 import org.smallmind.web.json.scaffold.fault.FaultWrappingException;
 
-@Provider
 public class ThrowableExceptionMapper implements ExceptionMapper<Throwable> {
 
   private ExceptionMapper[] mappers;
