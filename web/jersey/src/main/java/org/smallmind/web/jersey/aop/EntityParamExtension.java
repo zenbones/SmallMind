@@ -35,13 +35,13 @@ package org.smallmind.web.jersey.aop;
 import org.glassfish.jersey.server.ResourceConfig;
 import org.smallmind.web.jersey.spring.ResourceConfigExtension;
 
-public class EntityParamResourceConfigExtension extends ResourceConfigExtension {
+public class EntityParamExtension extends ResourceConfigExtension {
 
   @Override
   public void apply (ResourceConfig resourceConfig) {
 
-    resourceConfig.register(ResourceMethodContainerFilter.class);
-    resourceConfig.register(EntityAwareValidationConfigurationContextResolver.class);
+    resourceConfig.register(ResourceMethodFilter.class);
+    resourceConfig.register(EntityAwareContextResolver.class);
     resourceConfig.register(new EntityParamResolver.EntityParamFeature());
   }
 }

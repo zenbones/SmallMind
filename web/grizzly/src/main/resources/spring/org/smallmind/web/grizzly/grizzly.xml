@@ -15,9 +15,9 @@
     </property>
     <property name="resourceConfigExtensions">
       <list>
-        <bean class="org.smallmind.web.jersey.aop.EntityParamResourceConfigExtension"/>
-        <bean class="org.smallmind.web.jersey.json.XmlAdapterParamResourceConfigurationExtension"/>
-        <bean class="org.smallmind.web.jersey.json.ThrowableTranslationResourceConfigExtension"/>
+        <bean class="org.smallmind.web.jersey.aop.EntityParamExtension"/>
+        <bean class="org.smallmind.web.jersey.json.XmlAdapterParamExtension"/>
+        <bean class="org.smallmind.web.jersey.json.ThrowableExceptionExtension"/>
       </list>
     </property>
     <!--

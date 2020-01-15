@@ -40,7 +40,7 @@ import org.smallmind.web.json.scaffold.util.Page;
 
 @Provider
 @PageRange
-public class PageRangeContainerResponseFilter implements ContainerResponseFilter {
+public class PageRangeResponseFilter implements ContainerResponseFilter {
 
   public static int HTTP_DATA_COMPLETE = 200;
   public static int HTTP_DATA_INCOMPLETE = 206;

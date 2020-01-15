@@ -30,22 +30,31 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.web.jersey.aop;
+package org.smallmind.web.jersey.json;
 
-import javax.ws.rs.container.ResourceContext;
-import javax.ws.rs.core.Context;
-import javax.ws.rs.ext.ContextResolver;
-import org.glassfish.jersey.server.validation.ValidationConfig;
-import org.glassfish.jersey.server.validation.internal.InjectingConstraintValidatorFactory;
+import javax.ws.rs.ext.ExceptionMapper;
+import org.glassfish.jersey.server.ResourceConfig;
+import org.smallmind.web.jersey.spring.ResourceConfigExtension;
 
-public class EntityAwareValidationConfigurationContextResolver implements ContextResolver<ValidationConfig> {
+public class ThrowableExceptionExtension extends ResourceConfigExtension {
 
-  @Context
-  private ResourceContext resourceContext;
+  private ExceptionMapper[] mappers;
+  private boolean logUnclassifiedErrors = false;
+
+  public void setMappers (ExceptionMapper[] mappers) {
+
+    this.mappers = mappers;
+  }
+
+  public void setLogUnclassifiedErrors (boolean logUnclassifiedErrors) {
+
+    this.logUnclassifiedErrors = logUnclassifiedErrors;
+  }
 
   @Override
-  public ValidationConfig getContext (final Class<?> type) {
+  public void apply (ResourceConfig resourceConfig) {
 
-    return new ValidationConfig().constraintValidatorFactory(resourceContext.getResource(InjectingConstraintValidatorFactory.class)).parameterNameProvider(new EntityParameterNameProvider());
+    resourceConfig.property("jersey.config.server.response.setStatusOverSendError", "true");
+    resourceConfig.register(new ThrowableExceptionMapper(logUnclassifiedErrors, mappers));
   }
 }

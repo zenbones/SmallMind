@@ -30,38 +30,16 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.web.jersey.spring;
+package org.smallmind.web.jersey.json;
 
 import org.glassfish.jersey.server.ResourceConfig;
+import org.smallmind.web.jersey.spring.ResourceConfigExtension;
 
-public class ResourceConfigProperty extends ResourceConfigExtension {
-
-  private String name;
-  private Object value;
-
-  public String getName () {
-
-    return name;
-  }
-
-  public void setName (String name) {
-
-    this.name = name;
-  }
-
-  public Object getValue () {
-
-    return value;
-  }
-
-  public void setValue (Object value) {
-
-    this.value = value;
-  }
+public class XmlAdapterParamExtension extends ResourceConfigExtension {
 
   @Override
   public void apply (ResourceConfig resourceConfig) {
 
-    resourceConfig.property(name, value);
+    resourceConfig.register(XmlAdapterParamConverterProvider.class);
   }
 }

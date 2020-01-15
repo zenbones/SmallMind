@@ -35,11 +35,11 @@ package org.smallmind.web.jersey.page;
 import org.glassfish.jersey.server.ResourceConfig;
 import org.smallmind.web.jersey.spring.ResourceConfigExtension;
 
-public class PageRangeResourceConfigExtension extends ResourceConfigExtension {
+public class PageRangeResponseExtension extends ResourceConfigExtension {
 
   @Override
   public void apply (ResourceConfig resourceConfig) {
 
-    resourceConfig.register(PageRangeContainerResponseFilter.class);
+    resourceConfig.register(PageRangeResponseFilter.class);
   }
 }

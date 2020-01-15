@@ -30,31 +30,22 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.web.jersey.json;
+package org.smallmind.web.jersey.aop;
 
-import javax.ws.rs.ext.ExceptionMapper;
-import org.glassfish.jersey.server.ResourceConfig;
-import org.smallmind.web.jersey.spring.ResourceConfigExtension;
+import javax.ws.rs.container.ResourceContext;
+import javax.ws.rs.core.Context;
+import javax.ws.rs.ext.ContextResolver;
+import org.glassfish.jersey.server.validation.ValidationConfig;
+import org.glassfish.jersey.server.validation.internal.InjectingConstraintValidatorFactory;
 
-public class ThrowableTranslationResourceConfigExtension extends ResourceConfigExtension {
+public class EntityAwareContextResolver implements ContextResolver<ValidationConfig> {
 
-  private ExceptionMapper[] mappers;
-  private boolean logUnclassifiedErrors = false;
-
-  public void setMappers (ExceptionMapper[] mappers) {
-
-    this.mappers = mappers;
-  }
-
-  public void setLogUnclassifiedErrors (boolean logUnclassifiedErrors) {
-
-    this.logUnclassifiedErrors = logUnclassifiedErrors;
-  }
+  @Context
+  private ResourceContext resourceContext;
 
   @Override
-  public void apply (ResourceConfig resourceConfig) {
+  public ValidationConfig getContext (final Class<?> type) {
 
-    resourceConfig.property("jersey.config.server.response.setStatusOverSendError", "true");
-    resourceConfig.register(new ThrowableExceptionMapper(logUnclassifiedErrors, mappers));
+    return new ValidationConfig().constraintValidatorFactory(resourceContext.getResource(InjectingConstraintValidatorFactory.class)).parameterNameProvider(new EntityParameterNameProvider());
   }
 }

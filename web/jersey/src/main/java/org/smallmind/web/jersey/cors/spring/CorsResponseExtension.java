@@ -36,7 +36,7 @@ import org.glassfish.jersey.server.ResourceConfig;
 import org.smallmind.web.jersey.cors.CorsResponseFilter;
 import org.smallmind.web.jersey.spring.ResourceConfigExtension;
 
-public class CorsResourceConfigExtension extends ResourceConfigExtension {
+public class CorsResponseExtension extends ResourceConfigExtension {
 
   @Override
   public void apply (ResourceConfig resourceConfig) {

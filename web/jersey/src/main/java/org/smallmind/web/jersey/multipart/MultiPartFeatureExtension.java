@@ -30,16 +30,17 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.web.jersey.json;
+package org.smallmind.web.jersey.multipart;
 
+import org.glassfish.jersey.media.multipart.MultiPartFeature;
 import org.glassfish.jersey.server.ResourceConfig;
 import org.smallmind.web.jersey.spring.ResourceConfigExtension;
 
-public class XmlAdapterParamResourceConfigurationExtension extends ResourceConfigExtension {
+public class MultiPartFeatureExtension extends ResourceConfigExtension {
 
   @Override
   public void apply (ResourceConfig resourceConfig) {
 
-    resourceConfig.register(XmlAdapterParamConverterProvider.class);
+    resourceConfig.packages("org.glassfish.jersey.examples.multipart").register(MultiPartFeature.class);
   }
 }
