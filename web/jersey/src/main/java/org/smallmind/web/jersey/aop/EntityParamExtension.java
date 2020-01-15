@@ -33,15 +33,15 @@
 package org.smallmind.web.jersey.aop;
 
 import org.glassfish.jersey.server.ResourceConfig;
-import org.smallmind.web.jersey.spring.ResourceConfigExtension;
+import org.smallmind.web.jersey.spring.PrioritizedResourceConfigExtension;
 
-public class EntityParamExtension extends ResourceConfigExtension {
+public class EntityParamExtension extends PrioritizedResourceConfigExtension {
 
   @Override
   public void apply (ResourceConfig resourceConfig) {
 
-    resourceConfig.register(ResourceMethodFilter.class);
-    resourceConfig.register(EntityAwareContextResolver.class);
-    resourceConfig.register(new EntityParamResolver.EntityParamFeature());
+    resourceConfig.register(ResourceMethodFilter.class, getPriority());
+    resourceConfig.register(EntityAwareContextResolver.class, getPriority());
+    resourceConfig.register(new EntityParamResolver.EntityParamFeature(), getPriority());
   }
 }

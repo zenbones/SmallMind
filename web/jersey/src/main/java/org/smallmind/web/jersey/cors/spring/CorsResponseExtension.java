@@ -34,13 +34,13 @@ package org.smallmind.web.jersey.cors.spring;
 
 import org.glassfish.jersey.server.ResourceConfig;
 import org.smallmind.web.jersey.cors.CorsResponseFilter;
-import org.smallmind.web.jersey.spring.ResourceConfigExtension;
+import org.smallmind.web.jersey.spring.PrioritizedResourceConfigExtension;
 
-public class CorsResponseExtension extends ResourceConfigExtension {
+public class CorsResponseExtension extends PrioritizedResourceConfigExtension {
 
   @Override
   public void apply (ResourceConfig resourceConfig) {
 
-    resourceConfig.register(CorsResponseFilter.class);
+    resourceConfig.register(CorsResponseFilter.class, getPriority());
   }
 }

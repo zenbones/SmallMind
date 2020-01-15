@@ -34,9 +34,9 @@ package org.smallmind.web.jersey.json;
 
 import javax.ws.rs.ext.ExceptionMapper;
 import org.glassfish.jersey.server.ResourceConfig;
-import org.smallmind.web.jersey.spring.ResourceConfigExtension;
+import org.smallmind.web.jersey.spring.PrioritizedResourceConfigExtension;
 
-public class ThrowableExceptionExtension extends ResourceConfigExtension {
+public class ThrowableExceptionExtension extends PrioritizedResourceConfigExtension {
 
   private ExceptionMapper[] mappers;
   private boolean logUnclassifiedErrors = false;
@@ -55,6 +55,6 @@ public class ThrowableExceptionExtension extends ResourceConfigExtension {
   public void apply (ResourceConfig resourceConfig) {
 
     resourceConfig.property("jersey.config.server.response.setStatusOverSendError", "true");
-    resourceConfig.register(new ThrowableExceptionMapper(logUnclassifiedErrors, mappers));
+    resourceConfig.register(new ThrowableExceptionMapper(logUnclassifiedErrors, mappers), getPriority());
   }
 }

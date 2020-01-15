@@ -33,13 +33,13 @@
 package org.smallmind.web.jersey.page;
 
 import org.glassfish.jersey.server.ResourceConfig;
-import org.smallmind.web.jersey.spring.ResourceConfigExtension;
+import org.smallmind.web.jersey.spring.PrioritizedResourceConfigExtension;
 
-public class PageRangeResponseExtension extends ResourceConfigExtension {
+public class PageRangeResponseExtension extends PrioritizedResourceConfigExtension {
 
   @Override
   public void apply (ResourceConfig resourceConfig) {
 
-    resourceConfig.register(PageRangeResponseFilter.class);
+    resourceConfig.register(PageRangeResponseFilter.class, getPriority());
   }
 }

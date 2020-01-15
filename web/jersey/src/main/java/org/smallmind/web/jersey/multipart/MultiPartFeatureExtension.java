@@ -34,13 +34,13 @@ package org.smallmind.web.jersey.multipart;
 
 import org.glassfish.jersey.media.multipart.MultiPartFeature;
 import org.glassfish.jersey.server.ResourceConfig;
-import org.smallmind.web.jersey.spring.ResourceConfigExtension;
+import org.smallmind.web.jersey.spring.PrioritizedResourceConfigExtension;
 
-public class MultiPartFeatureExtension extends ResourceConfigExtension {
+public class MultiPartFeatureExtension extends PrioritizedResourceConfigExtension {
 
   @Override
   public void apply (ResourceConfig resourceConfig) {
 
-    resourceConfig.packages("org.glassfish.jersey.examples.multipart").register(MultiPartFeature.class);
+    resourceConfig.packages("org.glassfish.jersey.examples.multipart").register(MultiPartFeature.class, getPriority());
   }
 }
