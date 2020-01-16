@@ -53,7 +53,7 @@ public class PageRangeResponseFilter implements ContainerResponseFilter {
 
     Class<?> entityClass;
 
-    if (((resourceInfo.getResourceMethod().getAnnotation(PageRange.class)) != null) && ((entityClass = responseContext.getEntityClass()) != null) && Page.class.isAssignableFrom(entityClass)) {
+    if ((resourceInfo.getResourceMethod() != null) && ((resourceInfo.getResourceMethod().getAnnotation(PageRange.class)) != null) && ((entityClass = responseContext.getEntityClass()) != null) && Page.class.isAssignableFrom(entityClass)) {
 
       Page<?> page = (Page<?>)responseContext.getEntity();
 
