@@ -183,83 +183,7 @@ public class RemoteEndpointImpl implements RemoteEndpoint {
     throw new IOException("pongs are automatically sent in response to pings");
   }
 
-  private class SendStream extends OutputStream {
-
-    private RemoteEndpointImpl.Basic basicEndpoint;
-    private AtomicReference<ByteArrayOutputStream> partialStreamRef;
-
-    public SendStream (Basic basicEndpoint, AtomicReference<ByteArrayOutputStream> partialStreamRef) {
-
-      this.basicEndpoint = basicEndpoint;
-      this.partialStreamRef = partialStreamRef;
-    }
-
-    @Override
-    public void write (int b) {
-
-      partialStreamRef.get().write(b);
-    }
-
-    @Override
-    public void write (byte[] b, int off, int len) {
-
-      partialStreamRef.get().write(b, off, len);
-    }
-
-    @Override
-    public void write (byte[] b)
-      throws IOException {
-
-      partialStreamRef.get().write(b);
-    }
-
-    @Override
-    public void close ()
-      throws IOException {
-
-      byte[] completeBuffer = partialStreamRef.get().toByteArray();
-
-      partialStreamRef.set(null);
-      basicEndpoint.sendBinary(ByteBuffer.wrap(completeBuffer));
-
-      super.close();
-    }
-  }
-
-  private class SendWriter extends Writer {
-
-    private RemoteEndpointImpl.Basic basicEndpoint;
-    private AtomicReference<StringBuilder> partialBuilderRef;
-
-    public SendWriter (Basic basicEndpoint, AtomicReference<StringBuilder> partialBuilderRef) {
-
-      this.basicEndpoint = basicEndpoint;
-      this.partialBuilderRef = partialBuilderRef;
-    }
-
-    @Override
-    public void write (char[] cbuf, int off, int len) {
-
-      partialBuilderRef.get().append(cbuf, off, len);
-    }
-
-    @Override
-    public void flush () {
-
-    }
-
-    @Override
-    public void close ()
-      throws IOException {
-
-      String completeText = partialBuilderRef.get().toString();
-
-      partialBuilderRef.set(null);
-      basicEndpoint.sendText(completeText);
-    }
-  }
-
-  private class SendFuture implements Future<Void> {
+  private static class SendFuture implements Future<Void> {
 
     private SendRunnable sendRunnable;
     private Thread sendThread;
@@ -318,7 +242,7 @@ public class RemoteEndpointImpl implements RemoteEndpoint {
     }
   }
 
-  private class SendRunnable implements Runnable {
+  private static class SendRunnable implements Runnable {
 
     private SendExecutable executable;
     private Throwable throwable;
@@ -344,7 +268,83 @@ public class RemoteEndpointImpl implements RemoteEndpoint {
     }
   }
 
-  private abstract class SendExecutable {
+  private static class SendStream extends OutputStream {
+
+    private RemoteEndpointImpl.Basic basicEndpoint;
+    private AtomicReference<ByteArrayOutputStream> partialStreamRef;
+
+    public SendStream (Basic basicEndpoint, AtomicReference<ByteArrayOutputStream> partialStreamRef) {
+
+      this.basicEndpoint = basicEndpoint;
+      this.partialStreamRef = partialStreamRef;
+    }
+
+    @Override
+    public void write (int b) {
+
+      partialStreamRef.get().write(b);
+    }
+
+    @Override
+    public void write (byte[] b, int off, int len) {
+
+      partialStreamRef.get().write(b, off, len);
+    }
+
+    @Override
+    public void write (byte[] b)
+      throws IOException {
+
+      partialStreamRef.get().write(b);
+    }
+
+    @Override
+    public void close ()
+      throws IOException {
+
+      byte[] completeBuffer = partialStreamRef.get().toByteArray();
+
+      partialStreamRef.set(null);
+      basicEndpoint.sendBinary(ByteBuffer.wrap(completeBuffer));
+
+      super.close();
+    }
+  }
+
+  private static class SendWriter extends Writer {
+
+    private RemoteEndpointImpl.Basic basicEndpoint;
+    private AtomicReference<StringBuilder> partialBuilderRef;
+
+    public SendWriter (Basic basicEndpoint, AtomicReference<StringBuilder> partialBuilderRef) {
+
+      this.basicEndpoint = basicEndpoint;
+      this.partialBuilderRef = partialBuilderRef;
+    }
+
+    @Override
+    public void write (char[] cbuf, int off, int len) {
+
+      partialBuilderRef.get().append(cbuf, off, len);
+    }
+
+    @Override
+    public void flush () {
+
+    }
+
+    @Override
+    public void close ()
+      throws IOException {
+
+      String completeText = partialBuilderRef.get().toString();
+
+      partialBuilderRef.set(null);
+      basicEndpoint.sendText(completeText);
+    }
+  }
+
+  private static abstract class SendExecutable {
 
     public abstract void execute ()
       throws Throwable;
@@ -452,7 +452,7 @@ public class RemoteEndpointImpl implements RemoteEndpoint {
     }
 
     @Override
-    public synchronized OutputStream getSendStream () throws IOException {
+    public synchronized OutputStream getSendStream () {
 
       if ((partialBuilderRef.get() != null) || (partialStreamRef.get() != null)) {
         throw new IllegalStateException("Incomplete transmission ongoing in another thread of execution");
@@ -464,7 +464,7 @@ public class RemoteEndpointImpl implements RemoteEndpoint {
     }
 
     @Override
-    public synchronized Writer getSendWriter () throws IOException {
+    public synchronized Writer getSendWriter () {
 
       if ((partialBuilderRef.get() != null) || (partialStreamRef.get() != null)) {
         throw new IllegalStateException("Incomplete transmission ongoing in another thread of execution");
