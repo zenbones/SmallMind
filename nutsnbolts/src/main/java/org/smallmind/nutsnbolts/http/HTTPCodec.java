@@ -33,8 +33,6 @@
 package org.smallmind.nutsnbolts.http;
 
 import java.io.UnsupportedEncodingException;
-import java.net.URLDecoder;
-import java.net.URLEncoder;
 import org.smallmind.nutsnbolts.util.Tuple;
 
 public class HTTPCodec {
@@ -52,9 +50,9 @@ public class HTTPCodec {
 
       key = tuple.getKey(count);
 
-      dataBuilder.append(isIgnoredKey(key, ignoredKeys) ? key : URLEncoder.encode(key, "UTF-8"));
+      dataBuilder.append(isIgnoredKey(key, ignoredKeys) ? key : URLCodec.urlEncode(key));
       dataBuilder.append('=');
-      dataBuilder.append(isIgnoredKey(key, ignoredKeys) ? tuple.getValue(count) : URLEncoder.encode(tuple.getValue(count), "UTF-8"));
+      dataBuilder.append(isIgnoredKey(key, ignoredKeys) ? tuple.getValue(count) : URLCodec.urlEncode(tuple.getValue(count)));
     }
     return dataBuilder.toString();
   }
@@ -105,7 +103,7 @@ public class HTTPCodec {
       throw new UnsupportedEncodingException("Not a standard hex encoded query string");
     }
 
-    tuple.addPair(URLDecoder.decode(pairBuilder.substring(0, equalsPos), "UTF-8"), URLDecoder.decode(pairBuilder.substring(equalsPos + 1), "UTF-8"));
+    tuple.addPair(URLCodec.urlDecode(pairBuilder.substring(0, equalsPos)), URLCodec.urlDecode(pairBuilder.substring(equalsPos + 1)));
   }
 }
 

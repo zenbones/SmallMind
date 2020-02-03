@@ -34,7 +34,7 @@ package org.smallmind.forge.deploy;
 
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
@@ -74,7 +74,7 @@ public class UpstartDecorator implements Decorator {
       interpolationMap.put("batchExtension", operatingSystem.getBatchExtension());
       interpolationMap.put("envVars", envVars);
 
-      UPSTART_TEMPLATE.process(interpolationMap, Files.newBufferedWriter(installPath.resolve(artifactId).resolve("bin").resolve(artifactId + ".install"), Charset.forName("UTF-8"), StandardOpenOption.WRITE, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING));
+      UPSTART_TEMPLATE.process(interpolationMap, Files.newBufferedWriter(installPath.resolve(artifactId).resolve("bin").resolve(artifactId + ".install"), StandardCharsets.UTF_8, StandardOpenOption.WRITE, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING));
     }
   }
 }
