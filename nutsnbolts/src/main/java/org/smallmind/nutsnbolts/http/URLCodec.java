@@ -144,6 +144,10 @@ public class URLCodec {
       }
     }
 
+    if (expected > 0) {
+      throw new UnsupportedEncodingException("Not URL encoded");
+    }
+
     return (decodedBuilder == null) ? encoded : decodedBuilder.toString();
   }
 
