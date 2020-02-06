@@ -110,9 +110,9 @@ public class URLCodec {
               if ((decodedByte >> 6) != 0x2) {
                 throw new UnsupportedEncodingException("Not URL encoded");
               } else {
-                decoding |= (decodedByte & 0x3F) << --expected * 6;
+                decoding |= (decodedByte & 0x3F) << (--expected * 6);
                 if (expected == 0) {
-                  decodedBuilder.append((char)decoding);
+                  decodedBuilder.append(Character.toChars(decoding));
                 }
               }
             } else {
