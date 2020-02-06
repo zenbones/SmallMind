@@ -63,9 +63,9 @@ import org.smallmind.nutsnbolts.apt.AptUtility;
 import org.smallmind.nutsnbolts.reflection.bean.BeanUtility;
 import org.smallmind.web.json.dto.translator.DtoTranslatorFactory;
 
-@SupportedAnnotationTypes({"org.smallmind.web.json.dto.DtoGenerator"})
+@SupportedAnnotationTypes("org.smallmind.web.json.dto.DtoGenerator")
 @SupportedSourceVersion(SourceVersion.RELEASE_8)
-@SupportedOptions({"prefix"})
+@SupportedOptions("prefix")
 @AutoService(Processor.class)
 public class DtoAnnotationProcessor extends AbstractProcessor {
 
@@ -104,8 +104,7 @@ public class DtoAnnotationProcessor extends AbstractProcessor {
       AnnotationMirror dtoGeneratorAnnotationMirror;
 
       if ((dtoGeneratorAnnotationMirror = AptUtility.extractAnnotationMirror(processingEnv, classElement, processingEnv.getElementUtils().getTypeElement(DtoGenerator.class.getName()).asType())) != null) {
-        if (classTracker.isPreCompiled(classElement)) {
-        } else {
+        if (!classTracker.isPreCompiled(classElement)) {
           if ((!ElementKind.CLASS.equals(classElement.getKind())) || (!NestingKind.TOP_LEVEL.equals(classElement.getNestingKind()))) {
             throw new DtoDefinitionException("The class(%s) must be a root implementation of type 'class'", classElement.getQualifiedName());
           } else {
