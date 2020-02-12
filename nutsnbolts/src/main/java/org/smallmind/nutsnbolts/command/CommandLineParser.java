@@ -46,6 +46,12 @@ public class CommandLineParser {
   public static OptionSet parseCommands (Template template, String[] args)
     throws CommandLineException {
 
+    return parseCommands(template, args, false);
+  }
+
+  public static OptionSet parseCommands (Template template, String[] args, boolean allowUndeclared)
+    throws CommandLineException {
+
     OptionSet optionSet = new OptionSet();
     HashSet<Option> unusedSet = new HashSet<>(template.getOptionSet());
     HashSet<Option> usedSet = new HashSet<>();
@@ -86,7 +92,9 @@ public class CommandLineParser {
             throw new UnknownSwitchCaseException(matchingOption.getArgument().getType().name());
         }
       } else if (args[argCounter.get()].startsWith("-")) {
-        if (args[argCounter.get()].length() == 1) {
+        if (args[argCounter.get()].length() > 2) {
+          throw new CommandLineException("The option(%s) is not a flag (flags are single characters)", args[argCounter.get()]);
+        } else if (args[argCounter.get()].length() == 1) {
           throw new CommandLineException("Missing option after '-'");
         }
 
@@ -125,6 +133,8 @@ public class CommandLineParser {
               throw new UnknownSwitchCaseException(matchingOption.getArgument().getType().name());
           }
         }
+      } else if (allowUndeclared) {
+        optionSet.addRemaining(args[argCounter.get()]);
       } else {
         throw new CommandLineException("Was not expecting arguments, but an option, which must start with either '--' or '-'");
       }

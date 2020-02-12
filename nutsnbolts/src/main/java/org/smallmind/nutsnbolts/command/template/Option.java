@@ -43,11 +43,32 @@ public class Option {
   private Character flag;
   private boolean required;
 
-  public Option (String name, Character flag, boolean required) {
+  public Option (String name, Character flag, boolean required, Option... children) {
 
     this.name = name;
     this.flag = flag;
     this.required = required;
+  }
+
+  public Option (String name, Character flag, boolean required, Argument argument, Option... children) {
+
+    this(name, flag, required, children);
+
+    this.argument = argument;
+  }
+
+  public Option (Option parent, String name, Character flag, boolean required, Option... children) {
+
+    this(name, flag, required, children);
+
+    this.parent = parent;
+  }
+
+  public Option (Option parent, String name, Character flag, boolean required, Argument argument, Option... children) {
+
+    this(name, flag, required, argument, children);
+
+    this.parent = parent;
   }
 
   public String getName () {

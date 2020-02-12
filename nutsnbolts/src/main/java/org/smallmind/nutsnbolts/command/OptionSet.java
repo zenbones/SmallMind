@@ -38,17 +38,13 @@ import java.util.Map;
 
 public class OptionSet {
 
-  private HashMap<String, LinkedList<String>> optionMap;
-
-  public OptionSet () {
-
-    optionMap = new HashMap<>();
-  }
+  private HashMap<String, LinkedList<String>> optionMap = new HashMap<>();
+  private LinkedList<String> remainingList = new LinkedList<>();
 
   public synchronized void addOption (String option) {
 
     if (!optionMap.containsKey(option)) {
-      optionMap.put(option, new LinkedList<String>());
+      optionMap.put(option, new LinkedList<>());
     }
   }
 
@@ -58,14 +54,19 @@ public class OptionSet {
     (optionMap.get(option)).add(argument);
   }
 
+  public synchronized void addRemaining (String argument) {
+
+    remainingList.add(argument);
+  }
+
+  public synchronized String[] getRemaining () {
+
+    return remainingList.toArray(new String[0]);
+  }
+
   public synchronized String[] getOptions () {
 
-    String[] options;
-
-    options = new String[optionMap.size()];
-    optionMap.keySet().toArray(options);
-
-    return options;
+    return optionMap.keySet().toArray(new String[0]);
   }
 
   public synchronized boolean containsOption (String name) {

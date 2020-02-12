@@ -33,20 +33,40 @@
 package org.smallmind.ansible;
 
 import org.smallmind.nutsnbolts.command.CommandLineException;
+import org.smallmind.nutsnbolts.command.CommandLineParser;
+import org.smallmind.nutsnbolts.command.template.NoneArgument;
 import org.smallmind.nutsnbolts.command.template.Option;
 import org.smallmind.nutsnbolts.command.template.Template;
+import org.smallmind.nutsnbolts.lang.StaticInitializationError;
 
 public class AnsibleVault {
+
+  private static final Template CREATE_TEMPLATE;
+
+  static {
+
+    try {
+      CREATE_TEMPLATE = new Template("ansible-vault", new Option("help", null, false, NoneArgument.instance()));
+    } catch (CommandLineException commandLineException) {
+      throw new StaticInitializationError(commandLineException);
+    }
+  }
 
   public static void main (String... args)
     throws CommandLineException {
 
-    Template template = new Template("ansible-vault", new Option("help", null, false));
-
     if ((args == null) || (args.length == 0)) {
       throw new CommandLineException("Missing 'action', requires one of [(create|decrypt|edit|view|encrypt|encrypt_string|rekey)");
     } else {
+
+      String[] remainingArgs = new String[args.length - 1];
+
+      System.arraycopy(args, 1, remainingArgs, 0, args.length - 1);
+
       switch (args[0]) {
+        case "create":
+          CommandLineParser.parseCommands(CREATE_TEMPLATE, remainingArgs, true);
+          break;
         default:
           throw new CommandLineException("Unknown 'action', requires one of [(create|decrypt|edit|view|encrypt|encrypt_string|rekey)");
       }

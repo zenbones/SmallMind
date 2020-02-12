@@ -53,8 +53,7 @@ public class Template {
 
   private LinkedList<Option> optionList = new LinkedList<>();
   private HashSet<Option> optionSet = new HashSet<>();
-  private HashSet<String> nameSet = new HashSet<>();
-  private HashSet<Character> flagSet = new HashSet<>();
+  private HashSet<String> nameAndFlagSet = new HashSet<>();
   private String shortName;
 
   public Template (Class<?> entryClass) {
@@ -122,17 +121,17 @@ public class Template {
         throw new CommandLineException("All options must have either their 'name' or 'flag' set");
       } else {
         if ((option.getName() != null) && (!option.getName().isEmpty())) {
-          if (nameSet.contains(option.getName())) {
+          if (nameAndFlagSet.contains(option.getName())) {
             throw new CommandLineException("All options must have a unique 'name', '%s' has been used", option.getName());
           } else {
-            nameSet.add(option.getName());
+            nameAndFlagSet.add(option.getName());
           }
         }
         if (option.getFlag() != null) {
-          if (flagSet.contains(option.getFlag())) {
+          if (nameAndFlagSet.contains(option.getFlag().toString())) {
             throw new CommandLineException("All options must have a unique 'flag', '%s' has been used", option.getFlag().toString());
           } else {
-            flagSet.add(option.getFlag());
+            nameAndFlagSet.add(option.getFlag().toString());
           }
         }
       }
