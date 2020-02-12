@@ -35,12 +35,17 @@ package org.smallmind.ansible;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.security.InvalidAlgorithmParameterException;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
 import java.security.spec.InvalidKeySpecException;
+import javax.crypto.BadPaddingException;
+import javax.crypto.IllegalBlockSizeException;
 import javax.crypto.Mac;
+import javax.crypto.NoSuchPaddingException;
 import javax.crypto.SecretKey;
 import javax.crypto.SecretKeyFactory;
+import javax.crypto.spec.IvParameterSpec;
 import javax.crypto.spec.PBEKeySpec;
 import javax.crypto.spec.SecretKeySpec;
 import org.smallmind.nutsnbolts.security.EncryptionUtility;
@@ -48,7 +53,7 @@ import org.smallmind.nutsnbolts.security.EncryptionUtility;
 public class VaultCodec {
 
   public static byte[] decrypt (InputStream inputStream, String password)
-    throws IOException, NoSuchAlgorithmException, InvalidKeySpecException, InvalidKeyException, VaultException {
+    throws IOException, NoSuchAlgorithmException, InvalidAlgorithmParameterException, NoSuchPaddingException, InvalidKeySpecException, InvalidKeyException, IllegalBlockSizeException, BadPaddingException, VaultException {
 
     String header = readLine(inputStream);
     String[] headerParts = header.split(";", -1);
@@ -65,17 +70,24 @@ public class VaultCodec {
         SecretKeyFactory pbkdf2KeyFactory = SecretKeyFactory.getInstance("PBKDF2WithHmacSHA256");
         SecretKey pbkdf2Key = pbkdf2KeyFactory.generateSecret(new PBEKeySpec(password.toCharArray(), salt, 10000, 640));
         byte[] pbkdf2KeyBytes = pbkdf2Key.getEncoded();
+        byte[] aesKeyBytes = new byte[32];
         byte[] hmacKeyBytes = new byte[32];
+        byte[] ivBytes = new byte[16];
 
-        System.arraycopy(pbkdf2KeyBytes, 32, hmacKeyBytes,0, 32);
+        System.arraycopy(pbkdf2KeyBytes, 0, aesKeyBytes, 0, 32);
+        System.arraycopy(pbkdf2KeyBytes, 32, hmacKeyBytes, 0, 32);
+        System.arraycopy(pbkdf2KeyBytes, 64, ivBytes, 0, 16);
 
+        SecretKeySpec aesKey = new SecretKeySpec(aesKeyBytes, "AES");
         SecretKeySpec hmacKey = new SecretKeySpec(hmacKeyBytes, "HmacSHA256");
         Mac mac = Mac.getInstance("HmacSHA256");
 
         mac.init(hmacKey);
         byte[] test = mac.doFinal(encrypted);
 
-        System.out.println(test);
+        // test vs hmac
+        System.out.println(new String(EncryptionUtility.decrypt(aesKey, "AES/CTR/PKCS7Padding", encrypted, new IvParameterSpec(ivBytes))));
+
         return null;
       }
     } else {
