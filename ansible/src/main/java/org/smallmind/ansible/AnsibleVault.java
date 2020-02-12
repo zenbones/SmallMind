@@ -32,10 +32,24 @@
  */
 package org.smallmind.ansible;
 
-public class VaultPasswordException extends VaultCodecException {
+import org.smallmind.nutsnbolts.command.CommandLineException;
+import org.smallmind.nutsnbolts.command.template.Option;
+import org.smallmind.nutsnbolts.command.template.Template;
 
-  public VaultPasswordException (String message, Object... args) {
+public class AnsibleVault {
 
-    super(message, args);
+  public static void main (String... args)
+    throws CommandLineException {
+
+    Template template = new Template("ansible-vault", new Option("help", null, false));
+
+    if ((args == null) || (args.length == 0)) {
+      throw new CommandLineException("Missing 'action', requires one of [(create|decrypt|edit|view|encrypt|encrypt_string|rekey)");
+    } else {
+      switch (args[0]) {
+        default:
+          throw new CommandLineException("Unknown 'action', requires one of [(create|decrypt|edit|view|encrypt|encrypt_string|rekey)");
+      }
+    }
   }
 }

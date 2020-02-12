@@ -32,6 +32,7 @@
  */
 package org.smallmind.ansible;
 
+import java.io.ByteArrayInputStream;
 import java.io.FileInputStream;
 
 public class Wombat {
@@ -39,6 +40,14 @@ public class Wombat {
   public static void main (String... args)
     throws Exception {
 
-    VaultCodec.decrypt(new FileInputStream("C:/Users/david/Documents/Nutshell/empyrean/aeon/pantheon/com/forio/epicenter-control/ansible/inventory/group_vars/desktop/vault.yaml"), "tomato?window");
+    String string;
+    byte[] bytes;
+
+    System.out.println(new String(bytes = VaultCodec.decrypt(new FileInputStream("C:/Users/david/Documents/Nutshell/empyrean/aeon/pantheon/com/forio/epicenter-control/ansible/inventory/group_vars/desktop/vault.yaml"), "tomato?window")));
+    System.out.println("---------------------------");
+    System.out.println(string = VaultCodec.encrypt(new ByteArrayInputStream(bytes), "tomato?window"));
+    System.out.println("---------------------------");
+    System.out.println(new String(bytes = VaultCodec.decrypt(new ByteArrayInputStream(string.getBytes()), "tomato?window")));
+    System.out.println("---------------------------");
   }
 }

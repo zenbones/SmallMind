@@ -32,9 +32,11 @@
  */
 package org.smallmind.ansible;
 
-public class VaultPasswordException extends VaultCodecException {
+import org.smallmind.nutsnbolts.lang.FormattedException;
 
-  public VaultPasswordException (String message, Object... args) {
+public class VaultCodecException extends VaultException {
+
+  public VaultCodecException (String message, Object... args) {
 
     super(message, args);
   }

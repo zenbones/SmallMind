@@ -61,19 +61,15 @@ public class OptionElementExtender extends AbstractElementExtender {
   public void completedChildElement (ElementExtender elementExtender)
     throws SAXException {
 
-    LinkedList<Option> optionList;
-
     if (elementExtender instanceof OptionsElementExtender) {
+
+      LinkedList<Option> optionList;
+
       for (Option childOption : optionList = ((OptionsElementExtender)elementExtender).getOptionList()) {
         childOption.setParent(option);
       }
 
-      option.setOptionList(optionList);
-      try {
-        ((OptionsDocumentExtender)getDocumentExtender()).getTemplate().addOptions(optionList);
-      } catch (CommandLineException commandLineException) {
-        throw new SAXException(commandLineException);
-      }
+      option.setChildren(optionList);
     }
     if (elementExtender instanceof ArgumentsElementExtender) {
       option.setArgument(((ArgumentsElementExtender)elementExtender).getArgument());

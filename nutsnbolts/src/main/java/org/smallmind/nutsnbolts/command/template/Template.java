@@ -33,6 +33,7 @@
 package org.smallmind.nutsnbolts.command.template;
 
 import java.io.InputStream;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.LinkedList;
@@ -50,16 +51,26 @@ public class Template {
 
   private static final XMLEntityResolver SMALL_MIND_ENTITY_RESOLVER = new XMLEntityResolver(SmallMindProtocolResolver.getInstance());
 
-  private LinkedList<Option> optionList;
+  private LinkedList<Option> optionList = new LinkedList<>();
   private HashSet<Option> optionSet = new HashSet<>();
+  private HashSet<String> nameSet = new HashSet<>();
+  private HashSet<Character> flagSet = new HashSet<>();
   private String shortName;
 
-  public Template (Class entryClass) {
+  public Template (Class<?> entryClass) {
 
     shortName = entryClass.getSimpleName();
   }
 
-  public static Template createTemplate (Class entryClass)
+  public Template (String shortName, Option... options)
+    throws CommandLineException {
+
+    this.shortName = shortName;
+
+    addOptions(options);
+  }
+
+  public static Template createTemplate (Class<?> entryClass)
     throws CommandLineException {
 
     Template template;
@@ -96,38 +107,44 @@ public class Template {
     return Collections.unmodifiableSet(optionSet);
   }
 
-  public synchronized void setOptionList (LinkedList<Option> optionList)
+  public synchronized void addOptions (Option... options)
     throws CommandLineException {
 
-    this.optionList = optionList;
-
-    addOptions(optionList);
+    addOptions(Arrays.asList(options));
   }
 
-  public synchronized void addOptions (LinkedList<Option> optionList)
+  public synchronized void addOptions (List<Option> optionList)
     throws CommandLineException {
 
     for (Option option : optionList) {
 
       if (((option.getName() == null) || option.getName().isEmpty()) && (option.getFlag() == null)) {
         throw new CommandLineException("All options must have either their 'name' or 'flag' set");
-      }
-
-      for (Option heldOption : optionSet) {
+      } else {
         if ((option.getName() != null) && (!option.getName().isEmpty())) {
-          if (option.getName().equals(heldOption.getName())) {
+          if (nameSet.contains(option.getName())) {
             throw new CommandLineException("All options must have a unique 'name', '%s' has been used", option.getName());
+          } else {
+            nameSet.add(option.getName());
           }
         }
         if (option.getFlag() != null) {
-          if (option.getFlag().equals(heldOption.getFlag())) {
+          if (flagSet.contains(option.getFlag())) {
             throw new CommandLineException("All options must have a unique 'flag', '%s' has been used", option.getFlag().toString());
+          } else {
+            flagSet.add(option.getFlag());
           }
         }
       }
 
       optionSet.add(option);
+
+      if (option.getChildren() != null) {
+        addOptions(option.getChildren());
+      }
     }
+
+    this.optionList.addAll(optionList);
   }
 
   public synchronized String toString () {
@@ -187,9 +204,9 @@ public class Template {
           throw new UnknownSwitchCaseException(option.getArgument().getType().name());
       }
 
-      if ((option.getOptionList() != null) && (!option.getOptionList().isEmpty())) {
+      if ((option.getChildren() != null) && (!option.getChildren().isEmpty())) {
         lineBuilder.append(' ');
-        stringifyOptions(lineBuilder, option.getOptionList());
+        stringifyOptions(lineBuilder, option.getChildren());
       }
 
       lineBuilder.append(option.isRequired() ? ']' : '>');

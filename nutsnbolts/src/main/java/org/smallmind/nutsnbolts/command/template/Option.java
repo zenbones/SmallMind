@@ -36,7 +36,7 @@ import java.util.LinkedList;
 
 public class Option {
 
-  private LinkedList<Option> optionList;
+  private LinkedList<Option> children;
   private Option parent;
   private Argument argument;
   private String name;
@@ -75,14 +75,14 @@ public class Option {
     this.parent = parent;
   }
 
-  public LinkedList<Option> getOptionList () {
+  public LinkedList<Option> getChildren () {
 
-    return optionList;
+    return children;
   }
 
-  public void setOptionList (LinkedList<Option> optionList) {
+  public void setChildren (LinkedList<Option> children) {
 
-    this.optionList = optionList;
+    this.children = children;
   }
 
   public Argument getArgument () {

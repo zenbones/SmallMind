@@ -68,7 +68,7 @@ public class OptionsDocumentExtender extends AbstractDocumentExtender {
 
     if (elementExtender instanceof OptionsElementExtender) {
       try {
-        template.setOptionList(((OptionsElementExtender)elementExtender).getOptionList());
+        template.addOptions(((OptionsElementExtender)elementExtender).getOptionList());
       } catch (CommandLineException commandLineException) {
         throw new SAXException(commandLineException);
       }

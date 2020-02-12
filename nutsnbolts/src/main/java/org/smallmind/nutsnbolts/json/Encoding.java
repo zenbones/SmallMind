@@ -33,6 +33,7 @@
 package org.smallmind.nutsnbolts.json;
 
 import java.io.IOException;
+import java.io.UnsupportedEncodingException;
 import org.smallmind.nutsnbolts.http.Base64Codec;
 import org.smallmind.nutsnbolts.security.EncryptionUtility;
 
@@ -46,7 +47,8 @@ public enum Encoding {
     }
 
     @Override
-    public byte[] decode (String encoded) {
+    public byte[] decode (String encoded)
+      throws UnsupportedEncodingException {
 
       return EncryptionUtility.hexDecode(encoded);
     }

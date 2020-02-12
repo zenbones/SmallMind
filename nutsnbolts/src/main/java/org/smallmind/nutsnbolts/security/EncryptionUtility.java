@@ -37,6 +37,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
+import java.io.UnsupportedEncodingException;
 import java.security.InvalidAlgorithmParameterException;
 import java.security.InvalidKeyException;
 import java.security.Key;
@@ -87,16 +88,36 @@ public class EncryptionUtility {
     return encodingBuilder.toString();
   }
 
-  public static byte[] hexDecode (String toBeDecoded) {
+  public static byte[] hexDecode (String toBeDecoded)
+    throws UnsupportedEncodingException {
 
-    byte[] bytes;
+    return hexDecode(toBeDecoded.getBytes());
+  }
 
-    bytes = new byte[toBeDecoded.length() / 2];
-    for (int count = 0; count < toBeDecoded.length(); count += 2) {
-      bytes[count / 2] = (byte)Integer.parseInt(toBeDecoded.substring(count, count + 2), 16);
+  public static byte[] hexDecode (byte[] toBeDecoded)
+    throws UnsupportedEncodingException {
+
+    if (toBeDecoded.length % 2 != 0) {
+      throw new UnsupportedEncodingException("Not hex encoded");
+    } else {
+
+      byte[] bytes = new byte[toBeDecoded.length / 2];
+
+      for (int count = 0; count < toBeDecoded.length; count += 2) {
+        if (isHexDigit(toBeDecoded[count]) && isHexDigit(toBeDecoded[count + 1])) {
+          bytes[count / 2] = (byte)((Character.digit(toBeDecoded[count], 16) * 16) + Character.digit(toBeDecoded[count + 1], 16));
+        } else {
+          throw new UnsupportedEncodingException("Not hex encoded");
+        }
+      }
+
+      return bytes;
     }
+  }
 
-    return bytes;
+  private static boolean isHexDigit (byte singleChar) {
+
+    return ((singleChar >= '0') && (singleChar <= '9')) || ((singleChar >= 'A') && (singleChar <= 'F')) || ((singleChar >= 'a') && (singleChar <= 'f'));
   }
 
   public static byte[] hash (HashAlgorithm algorithm, byte[] toBeHashed)

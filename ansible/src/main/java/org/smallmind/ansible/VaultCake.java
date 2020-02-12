@@ -32,10 +32,31 @@
  */
 package org.smallmind.ansible;
 
-public class VaultPasswordException extends VaultCodecException {
+public class VaultCake {
 
-  public VaultPasswordException (String message, Object... args) {
+  private byte[] salt;
+  private byte[] hmac;
+  private byte[] encrypted;
 
-    super(message, args);
+  public VaultCake (byte[] salt, byte[] hmac, byte[] encrypted) {
+
+    this.salt = salt;
+    this.hmac = hmac;
+    this.encrypted = encrypted;
+  }
+
+  public byte[] getSalt () {
+
+    return salt;
+  }
+
+  public byte[] getHmac () {
+
+    return hmac;
+  }
+
+  public byte[] getEncrypted () {
+
+    return encrypted;
   }
 }
