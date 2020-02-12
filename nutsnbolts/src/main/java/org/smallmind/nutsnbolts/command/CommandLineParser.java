@@ -64,9 +64,19 @@ public class CommandLineParser {
       if (args[argCounter.get()].startsWith("--")) {
         if (args[argCounter.get()].length() == 2) {
           throw new CommandLineException("Missing option after '--'");
-        }
-        if ((matchingOption = findUnusedOptionByName(unusedSet, usedSet, args[argCounter.get()].substring(2))) == null) {
-          throw new CommandLineException("No such option name '--%s'", args[argCounter.get()].substring(2));
+        } else {
+
+          String name;
+
+          if ((matchingOption = findUnusedOptionByName(unusedSet, name = args[argCounter.get()].substring(2))) == null) {
+            if (isNameUsed(usedSet, name)) {
+              throw new CommandLineException("The option name '--%s' has already been invoked", name);
+            } else {
+              throw new CommandLineException("No such option name '--%s'", name);
+            }
+          } else {
+            usedSet.add(matchingOption);
+          }
         }
 
         switch (matchingOption.getArgument().getType()) {
@@ -103,8 +113,14 @@ public class CommandLineParser {
 
           char flagChar;
 
-          if ((matchingOption = findUnusedOptionByFlag(unusedSet, usedSet, flagChar = args[argCounter.get()].charAt(flagIndex++))) == null) {
-            throw new CommandLineException("No such option flag '-%s'", String.valueOf(flagChar));
+          if ((matchingOption = findUnusedOptionByFlag(unusedSet, flagChar = args[argCounter.get()].charAt(flagIndex++))) == null) {
+            if (isFlagUsed(usedSet, flagChar)) {
+              throw new CommandLineException("The option flag '-%s' has already been invoked", String.valueOf(flagChar));
+            } else {
+              throw new CommandLineException("No such option flag '-%s'", String.valueOf(flagChar));
+            }
+          } else {
+            usedSet.add(matchingOption);
           }
 
           switch (matchingOption.getArgument().getType()) {
@@ -210,12 +226,11 @@ public class CommandLineParser {
     }
   }
 
-  private static Option findUnusedOptionByFlag (HashSet<Option> unusedSet, HashSet<Option> usedSet, Character flag) {
+  private static Option findUnusedOptionByFlag (HashSet<Option> unusedSet, Character flag) {
 
     for (Option option : unusedSet) {
       if (flag.equals(option.getFlag())) {
         unusedSet.remove(option);
-        usedSet.add(option);
 
         return option;
       }
@@ -224,17 +239,40 @@ public class CommandLineParser {
     return null;
   }
 
-  private static Option findUnusedOptionByName (HashSet<Option> unusedSet, HashSet<Option> usedSet, String name) {
+  private static Option findUnusedOptionByName (HashSet<Option> unusedSet, String name) {
 
     for (Option option : unusedSet) {
       if (name.equals(option.getName())) {
         unusedSet.remove(option);
-        usedSet.add(option);
 
         return option;
       }
     }
 
     return null;
+  }
+
+  private static final boolean isFlagUsed (HashSet<Option> usedSet, Character flag) {
+
+    for (Option option : usedSet) {
+      if (flag.equals(option.getFlag())) {
+
+        return true;
+      }
+    }
+
+    return false;
+  }
+
+  private static final boolean isNameUsed (HashSet<Option> usedSet, String name) {
+
+    for (Option option : usedSet) {
+      if (name.equals(option.getName())) {
+
+        return true;
+      }
+    }
+
+    return false;
   }
 }
