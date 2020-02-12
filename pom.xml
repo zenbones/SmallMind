@@ -109,6 +109,7 @@
   </properties>
 
   <modules>
+    <module>ansible</module>
     <module>artifact</module>
     <module>batch</module>
     <module>forge</module>

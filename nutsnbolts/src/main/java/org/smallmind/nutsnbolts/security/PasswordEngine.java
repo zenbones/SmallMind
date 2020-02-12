@@ -112,13 +112,13 @@ public class PasswordEngine {
     } else {
 
       byte[] compiledPasswordBytes = Base64Codec.decode(stored);
-      byte[] salBytes = new byte[saltLength];
+      byte[] saltBytes = new byte[saltLength];
       byte[] hashedPasswordBytes = new byte[compiledPasswordBytes.length - saltLength];
 
-      System.arraycopy(compiledPasswordBytes, 0, salBytes, 0, saltLength);
+      System.arraycopy(compiledPasswordBytes, 0, saltBytes, 0, saltLength);
       System.arraycopy(compiledPasswordBytes, saltLength, hashedPasswordBytes, 0, compiledPasswordBytes.length - saltLength);
 
-      return Arrays.equals(hash(salBytes, password), hashedPasswordBytes);
+      return Arrays.equals(hash(saltBytes, password), hashedPasswordBytes);
     }
   }
 
