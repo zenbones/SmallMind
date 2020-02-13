@@ -94,7 +94,7 @@ public class SingularityIndex implements Serializable {
 
         String fileName = fileNameIter.next();
 
-        return new URLEntry(fileName, new URL("jar", "localhost", parentJarUrlPart + "!/" + fileName));
+        return new URLEntry(fileName, new URL("jar", null, parentJarUrlPart + "!/" + fileName));
       } catch (MalformedURLException malformedURLException) {
         throw new RuntimeException(malformedURLException);
       }
@@ -136,7 +136,7 @@ public class SingularityIndex implements Serializable {
 
         Map.Entry<String, String> inverseEntry = inverseEntryIter.next();
 
-        return new URLEntry(inverseEntry.getKey(), new URL("singularity", "localhost", parentJarUrlPart + "!!/META-INF/singularity/" + inverseEntry.getValue() + "!/" + inverseEntry.getKey()));
+        return new URLEntry(inverseEntry.getKey(), new URL("singularity", null, parentJarUrlPart + "!!/META-INF/singularity/" + inverseEntry.getValue() + "!/" + inverseEntry.getKey()));
       } catch (MalformedURLException malformedURLException) {
         throw new RuntimeException(malformedURLException);
       }
