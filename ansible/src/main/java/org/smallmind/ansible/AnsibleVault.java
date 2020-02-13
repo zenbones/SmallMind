@@ -32,9 +32,20 @@
  */
 package org.smallmind.ansible;
 
+import java.io.ByteArrayOutputStream;
+import java.io.FileReader;
 import java.io.IOException;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.nio.file.StandardOpenOption;
+import java.security.InvalidAlgorithmParameterException;
+import java.security.InvalidKeyException;
+import java.security.NoSuchAlgorithmException;
+import java.security.spec.InvalidKeySpecException;
+import javax.crypto.BadPaddingException;
+import javax.crypto.IllegalBlockSizeException;
+import javax.crypto.NoSuchPaddingException;
 import org.smallmind.nutsnbolts.command.CommandLineException;
 import org.smallmind.nutsnbolts.command.CommandLineParser;
 import org.smallmind.nutsnbolts.command.OptionSet;
@@ -59,10 +70,10 @@ public class AnsibleVault {
   }
 
   public static void main (String... args)
-    throws IOException, CommandLineException {
+    throws IOException, NoSuchAlgorithmException, InvalidAlgorithmParameterException, NoSuchPaddingException, InvalidKeySpecException, InvalidKeyException, IllegalBlockSizeException, BadPaddingException, CommandLineException {
 
     if ((args == null) || (args.length == 0)) {
-      throw new CommandLineException("Missing 'action', requires one of [(%s)", ACTIONS);
+      throw new CommandLineException("Missing 'action', requires one of [(%s)]", ACTIONS);
     } else {
 
       String[] remainingArgs = new String[args.length - 1];
@@ -80,17 +91,19 @@ public class AnsibleVault {
             System.out.print("create ");
             System.out.print(ENCRYPT_TEMPLATE.toString());
             System.out.println(" [file list]");
-          } else if (encryptOptionSet.containsOption("vault-id") && encryptOptionSet.containsOption("vault-password-file")) {
-            throw new CommandLineException("Options can user either 'vault-id' or 'vault-password-file', but not both");
           } else {
 
+            PasswordAndId passwordAndId = getPasswordAndId(encryptOptionSet);
             String[] remaining;
 
             if ((remaining = encryptOptionSet.getRemaining()).length == 0) {
               throw new CommandLineException("Missing a list of files to encrypt");
             } else {
               for (String file : remaining) {
-                  VaultCodec.encrypt(Files.newInputStream(Paths.get(file)), );
+
+                Path path = Paths.get(file);
+
+                Files.write(path, VaultCodec.encrypt(Files.newInputStream(path), passwordAndId.getPassword(), passwordAndId.getId()).getBytes(), StandardOpenOption.TRUNCATE_EXISTING);
               }
             }
           }
@@ -98,6 +111,79 @@ public class AnsibleVault {
         default:
           throw new CommandLineException("Unknown 'action', requires one of [(%s)]", ACTIONS);
       }
+    }
+  }
+
+  private static PasswordAndId getPasswordAndId (OptionSet optionSet)
+    throws IOException, CommandLineException {
+
+    if (optionSet.containsOption("vault-id")) {
+
+      VaultId vaultId = new VaultId(optionSet.getArgument("vault-id"));
+
+      if ("prompt".equals(vaultId.getFileOrPrompt())) {
+
+        return new PasswordAndId(getPasswordFomPrompt("Vault password: "), vaultId.getId());
+      } else {
+
+        return new PasswordAndId(getPasswordFromFile(vaultId.getFileOrPrompt()), vaultId.getId());
+      }
+    } else if (optionSet.containsOption("vault-password-file")) {
+
+      return new PasswordAndId(getPasswordFromFile(optionSet.getArgument("vault-password-file")), null);
+    } else {
+
+      return new PasswordAndId(getPasswordFomPrompt("Vault password: "), null);
+    }
+  }
+
+  private static String getPasswordFromFile (String file)
+    throws IOException {
+
+    try (FileReader fileReader = new FileReader(file)) {
+
+      ByteArrayOutputStream byteOutputStream = new ByteArrayOutputStream();
+      int singleByte;
+
+      while ((singleByte = fileReader.read()) >= 0) {
+        if (singleByte != '\n') {
+          byteOutputStream.write(singleByte);
+        } else {
+
+          return byteOutputStream.toString().trim();
+        }
+      }
+
+      return byteOutputStream.toString().trim();
+    }
+  }
+
+  //New Vault password:
+  //Confirm New Vault password:
+  private static String getPasswordFomPrompt (String prompt) {
+
+    return new String(System.console().readPassword(prompt));
+  }
+
+  private static class PasswordAndId {
+
+    private String password;
+    private String id;
+
+    public PasswordAndId (String password, String id) {
+
+      this.password = password;
+      this.id = id;
+    }
+
+    public String getPassword () {
+
+      return password;
+    }
+
+    public String getId () {
+
+      return id;
     }
   }
 }

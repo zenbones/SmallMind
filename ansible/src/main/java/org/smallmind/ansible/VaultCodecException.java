@@ -34,7 +34,7 @@ package org.smallmind.ansible;
 
 import org.smallmind.nutsnbolts.lang.FormattedException;
 
-public class VaultCodecException extends VaultException {
+public class VaultCodecException extends FormattedException {
 
   public VaultCodecException (String message, Object... args) {
 
