@@ -33,6 +33,7 @@
 package org.smallmind.ansible;
 
 import java.io.ByteArrayOutputStream;
+import java.io.Console;
 import java.io.FileReader;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -206,24 +207,29 @@ public class AnsibleVault {
     }
   }
 
-  private static String getPasswordFomPrompt (boolean confirm) {
+  private static String getPasswordFomPrompt (boolean confirm)
+    throws CommandLineException {
 
-    if (confirm) {
+    Console console;
+
+    if ((console = System.console()) == null) {
+      throw new CommandLineException("No available console");
+    } else if (confirm) {
       while (true) {
 
-        char[] password = System.console().readPassword("New Vault password: ");
-        char[] confirmation = System.console().readPassword("Confirm New Vault password: ");
+        char[] password = console.readPassword("New Vault password: ");
+        char[] confirmation = console.readPassword("Confirm New Vault password: ");
 
         if (!Arrays.equals(password, confirmation)) {
           System.out.println("Passwords do not match...");
         } else {
+
           return new String(password);
         }
       }
     } else {
 
-      return "foobar";
-//      return new String(System.console().readPassword("Vault password: "));
+      return new String(console.readPassword("Vault password: "));
     }
   }
 

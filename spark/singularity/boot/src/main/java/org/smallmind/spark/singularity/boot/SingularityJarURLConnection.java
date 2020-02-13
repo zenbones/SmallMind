@@ -49,8 +49,7 @@ public class SingularityJarURLConnection extends URLConnection {
   }
 
   @Override
-  public void connect ()
-    throws IOException {
+  public void connect () {
 
   }
 
