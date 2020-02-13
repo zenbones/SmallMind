@@ -65,28 +65,6 @@ public class SingularityIndex implements Serializable {
     return new SingularityURLIterator(parentJarUrlPart);
   }
 
-  public static class URLEntry {
-
-    private final URL entryURL;
-    private final String entryName;
-
-    public URLEntry (String entryName, URL entryURL) {
-
-      this.entryName = entryName;
-      this.entryURL = entryURL;
-    }
-
-    public String getEntryName () {
-
-      return entryName;
-    }
-
-    public URL getEntryURL () {
-
-      return entryURL;
-    }
-  }
-
   private class JarURLIterator implements Iterator<URLEntry>, Iterable<URLEntry> {
 
     private final Iterator<String> fileNameIter = fileNameSet.iterator();
@@ -168,6 +146,28 @@ public class SingularityIndex implements Serializable {
     public void remove () {
 
       throw new UnsupportedOperationException();
+    }
+  }
+
+  public static class URLEntry {
+
+    private final URL entryURL;
+    private final String entryName;
+
+    public URLEntry (String entryName, URL entryURL) {
+
+      this.entryName = entryName;
+      this.entryURL = entryURL;
+    }
+
+    public String getEntryName () {
+
+      return entryName;
+    }
+
+    public URL getEntryURL () {
+
+      return entryURL;
     }
   }
 }

@@ -51,6 +51,8 @@ import org.smallmind.nutsnbolts.security.EncryptionUtility;
 
 public class VaultTumbler {
 
+  private static final String AES_ALGORITHM = "AES/CTR/PKCS7Padding";
+
   private Mac mac = Mac.getInstance("HmacSHA256");
   private SecretKeySpec aesKey;
   private byte[] iv = new byte[16];
@@ -99,7 +101,7 @@ public class VaultTumbler {
   public VaultCake encrypt (byte[] original)
     throws NoSuchAlgorithmException, InvalidAlgorithmParameterException, NoSuchPaddingException, InvalidKeyException, IllegalBlockSizeException, BadPaddingException {
 
-    byte[] encrypted = EncryptionUtility.encrypt(aesKey, "AES/CTR/PKCS7Padding", original, new IvParameterSpec(iv));
+    byte[] encrypted = EncryptionUtility.encrypt(aesKey, AES_ALGORITHM, original, new IvParameterSpec(iv));
 
     return new VaultCake(salt, mac.doFinal(encrypted), encrypted);
   }
@@ -111,7 +113,7 @@ public class VaultTumbler {
       throw new VaultPasswordException("Wrong password");
     } else {
 
-      return EncryptionUtility.decrypt(aesKey, "AES/CTR/PKCS7Padding", encrypted, new IvParameterSpec(iv));
+      return EncryptionUtility.decrypt(aesKey, AES_ALGORITHM, encrypted, new IvParameterSpec(iv));
     }
   }
 }

@@ -32,63 +32,48 @@
  */
 package org.smallmind.spark.singularity.boot;
 
-import java.io.FileNotFoundException;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.net.URL;
-import java.net.URLConnection;
-import java.util.concurrent.ConcurrentHashMap;
+import java.util.HashMap;
 import java.util.jar.JarEntry;
-import java.util.jar.JarFile;
 import java.util.jar.JarInputStream;
 
-public class SingularityJarURLConnection extends URLConnection {
+public class CachedJarFile {
 
-  private static final ConcurrentHashMap<String, CachedJarFile> CACHE_MAP = new ConcurrentHashMap<>();
+  private HashMap<String, byte[]> entryMap = new HashMap<>();
 
-  public SingularityJarURLConnection (URL url) {
-
-    super(url);
-  }
-
-  @Override
-  public void connect () {
-
-  }
-
-  @Override
-  public InputStream getInputStream ()
+  public CachedJarFile (JarInputStream jarInputStream)
     throws IOException {
 
-    JarFile jarFile;
-    JarEntry jarEntry;
-    JarWithinJarName jarWithinJarName = new JarWithinJarName(getURL());
+    JarEntry innerJarEntry;
+    byte[] buffer = new byte[8192];
 
-    jarFile = new JarFile(new URL(jarWithinJarName.getOuterJarName()).getFile());
-    if ((jarEntry = jarFile.getJarEntry(jarWithinJarName.getOuterEntryName())) != null) {
+    long start = System.currentTimeMillis();
+    while ((innerJarEntry = jarInputStream.getNextJarEntry()) != null) {
 
-      CachedJarFile cachedJarFile;
-      InputStream cachedInputStream;
+      int bytesRead;
 
-      if ((cachedJarFile = CACHE_MAP.get(jarWithinJarName.getOuterEntryName())) == null) {
-        synchronized (CACHE_MAP) {
-          if ((cachedJarFile = CACHE_MAP.get(jarWithinJarName.getOuterEntryName())) == null) {
-            CACHE_MAP.put(jarWithinJarName.getOuterEntryName(), cachedJarFile = new CachedJarFile(new JarInputStream(jarFile.getInputStream(jarEntry))));
-          }
+      try (ByteArrayOutputStream byteOutputStream = new ByteArrayOutputStream()) {
+        while ((bytesRead = jarInputStream.read(buffer)) >= 0) {
+          byteOutputStream.write(buffer, 0, bytesRead);
         }
-      }
-      if ((cachedInputStream = cachedJarFile.getInputStream(jarWithinJarName.getInnerEntryName())) != null) {
 
-        return cachedInputStream;
+        entryMap.put(innerJarEntry.getName(), byteOutputStream.toByteArray());
       }
     }
-
-    throw new FileNotFoundException(getURL().getPath());
   }
 
-  @Override
-  public int getContentLength () {
+  public InputStream getInputStream (String name) {
 
-    return 0;
+    byte[] contents;
+
+    if ((contents = entryMap.get(name)) != null) {
+
+      return new ByteArrayInputStream(contents);
+    }
+
+    return null;
   }
 }
