@@ -32,10 +32,18 @@
  */
 package org.smallmind.ansible;
 
+import java.security.Security;
+import javax.crypto.Cipher;
+import org.bouncycastle.jce.provider.BouncyCastleProvider;
+
 public class Wombat {
 
-  public static void main (String... args) {
+  public static void main (String... args)
+    throws Exception {
 
-    AnsibleVault.main("decrypt", "C:\\Users\\david\\Documents\\Nutshell\\empyrean\\aeon\\pantheon\\com\\forio\\epicenter-control\\ansible\\inventory\\group_vars\\production\\vault.yaml");
+    Security.addProvider(new BouncyCastleProvider());
+    Cipher cipher = Cipher.getInstance("AES/CTR/PKCS7Padding");
+    System.out.println(cipher);
+    //  AnsibleVault.main("decrypt", "C:\\Users\\david\\Documents\\Nutshell\\empyrean\\aeon\\pantheon\\com\\forio\\epicenter-control\\ansible\\inventory\\group_vars\\production\\vault.yaml");
   }
 }

@@ -43,14 +43,16 @@ import java.util.jar.JarInputStream;
 public class CachedJarFile {
 
   private HashMap<String, byte[]> entryMap = new HashMap<>();
+  private String entryName;
 
-  public CachedJarFile (JarInputStream jarInputStream)
+  public CachedJarFile (String entryName, JarInputStream jarInputStream)
     throws IOException {
 
     JarEntry innerJarEntry;
     byte[] buffer = new byte[8192];
 
-    long start = System.currentTimeMillis();
+    this.entryName = entryName;
+
     while ((innerJarEntry = jarInputStream.getNextJarEntry()) != null) {
 
       int bytesRead;
@@ -63,6 +65,11 @@ public class CachedJarFile {
         entryMap.put(innerJarEntry.getName(), byteOutputStream.toByteArray());
       }
     }
+  }
+
+  public String getEntryName () {
+
+    return entryName;
   }
 
   public InputStream getInputStream (String name) {
