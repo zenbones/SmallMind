@@ -1,28 +1,28 @@
 /*
  * Copyright (c) 2007, 2008, 2009, 2010, 2011, 2012, 2013, 2014, 2015, 2016, 2017, 2018, 2019, 2020 David Berkman
- *
+ * 
  * This file is part of the SmallMind Code Project.
- *
+ * 
  * The SmallMind Code Project is free software, you can redistribute
  * it and/or modify it under either, at your discretion...
- *
+ * 
  * 1) The terms of GNU Affero General Public License as published by the
  * Free Software Foundation, either version 3 of the License, or (at
  * your option) any later version.
- *
+ * 
  * ...or...
- *
+ * 
  * 2) The terms of the Apache License, Version 2.0.
- *
+ * 
  * The SmallMind Code Project is distributed in the hope that it will
  * be useful, but WITHOUT ANY WARRANTY; without even the implied warranty
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License or Apache License for more details.
- *
+ * 
  * You should have received a copy of the GNU Affero General Public License
  * and the Apache License along with the SmallMind Code Project. If not, see
  * <http://www.gnu.org/licenses/> or <http://www.apache.org/licenses/LICENSE-2.0>.
- *
+ * 
  * Additional permission under the GNU Affero GPL version 3 section 7
  * ------------------------------------------------------------------
  * If you modify this Program, or any covered work, by linking or
@@ -39,14 +39,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
-import java.security.InvalidAlgorithmParameterException;
-import java.security.InvalidKeyException;
-import java.security.NoSuchAlgorithmException;
-import java.security.spec.InvalidKeySpecException;
 import java.util.Arrays;
-import javax.crypto.BadPaddingException;
-import javax.crypto.IllegalBlockSizeException;
-import javax.crypto.NoSuchPaddingException;
 import org.smallmind.nutsnbolts.command.CommandLineException;
 import org.smallmind.nutsnbolts.command.CommandLineParser;
 import org.smallmind.nutsnbolts.command.OptionSet;
@@ -82,75 +75,91 @@ public class AnsibleVault {
     }
   }
 
-  public static void main (String... args)
-    throws IOException, NoSuchAlgorithmException, InvalidAlgorithmParameterException, NoSuchPaddingException, InvalidKeySpecException, InvalidKeyException, IllegalBlockSizeException, BadPaddingException, CommandLineException, VaultCodecException {
+  public static void main (String... args) {
 
-    if ((args == null) || (args.length == 0)) {
-      throw new CommandLineException("Missing 'action', requires one of [(%s)]", ACTIONS);
-    } else {
+    try {
+      if ((args == null) || (args.length == 0)) {
+        throw new CommandLineException("Missing 'action', requires one of [(%s)]", ACTIONS);
+      } else {
 
-      String[] remainingArgs = new String[args.length - 1];
+        String[] remainingArgs = new String[args.length - 1];
 
-      System.arraycopy(args, 1, remainingArgs, 0, args.length - 1);
+        System.arraycopy(args, 1, remainingArgs, 0, args.length - 1);
 
-      switch (args[0]) {
-        case "--help":
-          System.out.print("ansible-vault [(");
-          System.out.print(ACTIONS);
-          System.out.println("]");
-          System.out.print("\t");
-          ENCRYPT_HELP.out(System.out);
-          break;
-        case "encrypt":
+        switch (args[0]) {
+          case "--help":
+            provideHelp();
+            break;
+          case "encrypt":
 
-          OptionSet encryptOptionSet = CommandLineParser.parseCommands(ENCRYPT_HELP.getTemplate(), remainingArgs, true);
+            OptionSet encryptOptionSet = CommandLineParser.parseCommands(ENCRYPT_HELP.getTemplate(), remainingArgs, true);
 
-          if (encryptOptionSet.containsOption("help")) {
-            ENCRYPT_HELP.out(System.out);
-          } else {
-
-            PasswordAndId passwordAndId = getPasswordAndId(encryptOptionSet, false);
-            String[] remaining;
-
-            if ((remaining = encryptOptionSet.getRemaining()).length == 0) {
-              throw new CommandLineException("Missing a list of files to encrypt");
+            if (encryptOptionSet.containsOption("help")) {
+              System.out.print("ansible-vault ");
+              ENCRYPT_HELP.out(System.out);
             } else {
-              for (String file : remaining) {
 
-                Path path = Paths.get(file);
+              PasswordAndId passwordAndId = getPasswordAndId(encryptOptionSet, true);
+              String[] remaining;
 
-                Files.write(path, VaultCodec.encrypt(Files.newInputStream(path), passwordAndId.getPassword(), passwordAndId.getId()).getBytes(), StandardOpenOption.TRUNCATE_EXISTING);
+              if ((remaining = encryptOptionSet.getRemaining()).length == 0) {
+                throw new CommandLineException("Missing a list of files to encrypt");
+              } else {
+                for (String file : remaining) {
+
+                  Path path = Paths.get(file);
+
+                  Files.write(path, VaultCodec.encrypt(Files.newInputStream(path), passwordAndId.getPassword(), passwordAndId.getId()).getBytes(), StandardOpenOption.TRUNCATE_EXISTING);
+                }
               }
             }
-          }
-          break;
-        case "decrypt":
+            break;
+          case "decrypt":
 
-          OptionSet decryptOptionSet = CommandLineParser.parseCommands(DECRYPT_HELP.getTemplate(), remainingArgs, true);
+            OptionSet decryptOptionSet = CommandLineParser.parseCommands(DECRYPT_HELP.getTemplate(), remainingArgs, true);
 
-          if (decryptOptionSet.containsOption("help")) {
-            DECRYPT_HELP.out(System.out);
-          } else {
-
-            PasswordAndId passwordAndId = getPasswordAndId(decryptOptionSet, true);
-            String[] remaining;
-
-            if ((remaining = decryptOptionSet.getRemaining()).length == 0) {
-              throw new CommandLineException("Missing a list of files to decrypt");
+            if (decryptOptionSet.containsOption("help")) {
+              System.out.print("ansible-vault ");
+              DECRYPT_HELP.out(System.out);
             } else {
-              for (String file : remaining) {
 
-                Path path = Paths.get(file);
+              PasswordAndId passwordAndId = getPasswordAndId(decryptOptionSet, false);
+              String[] remaining;
 
-                Files.write(path, VaultCodec.decrypt(Files.newInputStream(path), passwordAndId.getPassword()), StandardOpenOption.TRUNCATE_EXISTING);
+              if ((remaining = decryptOptionSet.getRemaining()).length == 0) {
+                throw new CommandLineException("Missing a list of files to decrypt");
+              } else {
+                for (String file : remaining) {
+
+                  Path path = Paths.get(file);
+
+                  Files.write(path, VaultCodec.decrypt(Files.newInputStream(path), passwordAndId.getPassword()), StandardOpenOption.TRUNCATE_EXISTING);
+                }
               }
             }
-          }
-          break;
-        default:
-          throw new CommandLineException("Unknown 'action', requires one of [(%s)]", ACTIONS);
+            break;
+          default:
+            throw new CommandLineException("Unknown 'action', requires one of [(%s)]", ACTIONS);
+        }
       }
+    } catch (CommandLineException commandLineException) {
+      System.out.println(commandLineException.getMessage());
+      provideHelp();
+    } catch (Exception exception) {
+      System.out.println("Failure...");
+      System.out.println(exception.getMessage());
     }
+  }
+
+  private static void provideHelp () {
+
+    System.out.print("ansible-vault [(");
+    System.out.print(ACTIONS);
+    System.out.println("]");
+    System.out.print("\t");
+    ENCRYPT_HELP.out(System.out);
+    System.out.print("\t");
+    DECRYPT_HELP.out(System.out);
   }
 
   private static PasswordAndId getPasswordAndId (OptionSet optionSet, boolean confirm)
@@ -213,7 +222,8 @@ public class AnsibleVault {
       }
     } else {
 
-      return new String(System.console().readPassword("Vault password: "));
+      return "foobar";
+//      return new String(System.console().readPassword("Vault password: "));
     }
   }
 

@@ -32,28 +32,10 @@
  */
 package org.smallmind.ansible;
 
-import java.io.PrintStream;
-import java.util.function.BiConsumer;
-import org.smallmind.nutsnbolts.command.template.Template;
+public class Wombat {
 
-public class VaultHelp {
+  public static void main (String... args) {
 
-  private Template template;
-  private BiConsumer<Template, PrintStream> help;
-
-  public VaultHelp (Template template, BiConsumer<Template, PrintStream> help) {
-
-    this.template = template;
-    this.help = help;
-  }
-
-  public Template getTemplate () {
-
-    return template;
-  }
-
-  public void out (PrintStream stream) {
-
-    help.accept(template, stream);
+    AnsibleVault.main("decrypt", "C:\\Users\\david\\Documents\\Nutshell\\empyrean\\aeon\\pantheon\\com\\forio\\epicenter-control\\ansible\\inventory\\group_vars\\production\\vault.yaml");
   }
 }
