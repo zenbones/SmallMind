@@ -43,6 +43,7 @@ import java.security.InvalidAlgorithmParameterException;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
 import java.security.spec.InvalidKeySpecException;
+import java.util.Arrays;
 import javax.crypto.BadPaddingException;
 import javax.crypto.IllegalBlockSizeException;
 import javax.crypto.NoSuchPaddingException;
@@ -57,20 +58,32 @@ import org.smallmind.nutsnbolts.lang.StaticInitializationError;
 
 public class AnsibleVault {
 
-  private static final Template ENCRYPT_TEMPLATE;
+  private static final VaultHelp ENCRYPT_HELP;
+  private static final VaultHelp DECRYPT_HELP;
   private static final String ACTIONS = "decrypt|edit|encrypt|encrypt_string|view|rekey";
 
   static {
 
     try {
-      ENCRYPT_TEMPLATE = new Template("ansible-vault", new Option("help", null, false, NoneArgument.instance()), new Option("vault-id", null, false, new SingleArgument("[id]@[file|'prompt']")), new Option("vault-password-file", null, false, new SingleArgument("file")));
+      ENCRYPT_HELP = new VaultHelp(new Template("ansible-vault", new Option("help", null, false, NoneArgument.instance()), new Option("vault-id", null, false, new SingleArgument("[id]@[file|'prompt']")), new Option("vault-password-file", null, false, new SingleArgument("file"))),
+        (template, stream) -> {
+          stream.print("encrypt ");
+          stream.print(template);
+          stream.println(" [file list]");
+        });
+      DECRYPT_HELP = new VaultHelp(new Template("ansible-vault", new Option("help", null, false, NoneArgument.instance()), new Option("vault-id", null, false, new SingleArgument("[id]@[file|'prompt']")), new Option("vault-password-file", null, false, new SingleArgument("file"))),
+        (template, stream) -> {
+          stream.print("decrypt ");
+          stream.print(template);
+          stream.println(" [file list]");
+        });
     } catch (CommandLineException commandLineException) {
       throw new StaticInitializationError(commandLineException);
     }
   }
 
   public static void main (String... args)
-    throws IOException, NoSuchAlgorithmException, InvalidAlgorithmParameterException, NoSuchPaddingException, InvalidKeySpecException, InvalidKeyException, IllegalBlockSizeException, BadPaddingException, CommandLineException {
+    throws IOException, NoSuchAlgorithmException, InvalidAlgorithmParameterException, NoSuchPaddingException, InvalidKeySpecException, InvalidKeyException, IllegalBlockSizeException, BadPaddingException, CommandLineException, VaultCodecException {
 
     if ((args == null) || (args.length == 0)) {
       throw new CommandLineException("Missing 'action', requires one of [(%s)]", ACTIONS);
@@ -82,18 +95,21 @@ public class AnsibleVault {
 
       switch (args[0]) {
         case "--help":
+          System.out.print("ansible-vault [(");
+          System.out.print(ACTIONS);
+          System.out.println("]");
+          System.out.print("\t");
+          ENCRYPT_HELP.out(System.out);
           break;
         case "encrypt":
 
-          OptionSet encryptOptionSet = CommandLineParser.parseCommands(ENCRYPT_TEMPLATE, remainingArgs, true);
+          OptionSet encryptOptionSet = CommandLineParser.parseCommands(ENCRYPT_HELP.getTemplate(), remainingArgs, true);
 
           if (encryptOptionSet.containsOption("help")) {
-            System.out.print("create ");
-            System.out.print(ENCRYPT_TEMPLATE.toString());
-            System.out.println(" [file list]");
+            ENCRYPT_HELP.out(System.out);
           } else {
 
-            PasswordAndId passwordAndId = getPasswordAndId(encryptOptionSet);
+            PasswordAndId passwordAndId = getPasswordAndId(encryptOptionSet, false);
             String[] remaining;
 
             if ((remaining = encryptOptionSet.getRemaining()).length == 0) {
@@ -108,13 +124,36 @@ public class AnsibleVault {
             }
           }
           break;
+        case "decrypt":
+
+          OptionSet decryptOptionSet = CommandLineParser.parseCommands(DECRYPT_HELP.getTemplate(), remainingArgs, true);
+
+          if (decryptOptionSet.containsOption("help")) {
+            DECRYPT_HELP.out(System.out);
+          } else {
+
+            PasswordAndId passwordAndId = getPasswordAndId(decryptOptionSet, true);
+            String[] remaining;
+
+            if ((remaining = decryptOptionSet.getRemaining()).length == 0) {
+              throw new CommandLineException("Missing a list of files to decrypt");
+            } else {
+              for (String file : remaining) {
+
+                Path path = Paths.get(file);
+
+                Files.write(path, VaultCodec.decrypt(Files.newInputStream(path), passwordAndId.getPassword()), StandardOpenOption.TRUNCATE_EXISTING);
+              }
+            }
+          }
+          break;
         default:
           throw new CommandLineException("Unknown 'action', requires one of [(%s)]", ACTIONS);
       }
     }
   }
 
-  private static PasswordAndId getPasswordAndId (OptionSet optionSet)
+  private static PasswordAndId getPasswordAndId (OptionSet optionSet, boolean confirm)
     throws IOException, CommandLineException {
 
     if (optionSet.containsOption("vault-id")) {
@@ -123,7 +162,7 @@ public class AnsibleVault {
 
       if ("prompt".equals(vaultId.getFileOrPrompt())) {
 
-        return new PasswordAndId(getPasswordFomPrompt("Vault password: "), vaultId.getId());
+        return new PasswordAndId(getPasswordFomPrompt(confirm), vaultId.getId());
       } else {
 
         return new PasswordAndId(getPasswordFromFile(vaultId.getFileOrPrompt()), vaultId.getId());
@@ -133,7 +172,7 @@ public class AnsibleVault {
       return new PasswordAndId(getPasswordFromFile(optionSet.getArgument("vault-password-file")), null);
     } else {
 
-      return new PasswordAndId(getPasswordFomPrompt("Vault password: "), null);
+      return new PasswordAndId(getPasswordFomPrompt(confirm), null);
     }
   }
 
@@ -158,11 +197,24 @@ public class AnsibleVault {
     }
   }
 
-  //New Vault password:
-  //Confirm New Vault password:
-  private static String getPasswordFomPrompt (String prompt) {
+  private static String getPasswordFomPrompt (boolean confirm) {
 
-    return new String(System.console().readPassword(prompt));
+    if (confirm) {
+      while (true) {
+
+        char[] password = System.console().readPassword("New Vault password: ");
+        char[] confirmation = System.console().readPassword("Confirm New Vault password: ");
+
+        if (!Arrays.equals(password, confirmation)) {
+          System.out.println("Passwords do not match...");
+        } else {
+          return new String(password);
+        }
+      }
+    } else {
+
+      return new String(System.console().readPassword("Vault password: "));
+    }
   }
 
   private static class PasswordAndId {
