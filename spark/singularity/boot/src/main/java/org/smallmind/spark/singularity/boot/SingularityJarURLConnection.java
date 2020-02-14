@@ -35,6 +35,7 @@ package org.smallmind.spark.singularity.boot;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLConnection;
 import java.util.concurrent.atomic.AtomicReference;
@@ -62,36 +63,49 @@ public class SingularityJarURLConnection extends URLConnection {
 
     JarFile jarFile;
     JarEntry jarEntry;
-    String baseJarName;
     String outerEntryName;
     String innerEntryName;
-    int doubleBangPos = url.getPath().indexOf("!!/");
-    int singBangPos = url.getPath().indexOf("!/", doubleBangPos + 3);
+    int atPos;
 
-    baseJarName = url.getPath().substring(0, doubleBangPos);
-    outerEntryName = url.getPath().substring(doubleBangPos + 3, singBangPos);
-    innerEntryName = url.getPath().substring(singBangPos + 2);
+    if ((atPos = url.getPath().indexOf("@/")) < 0) {
+      throw new MalformedURLException("no @/ found in url spec:" + url.getPath());
+    } else {
 
-    jarFile = new JarFile(new URL(baseJarName).getFile());
-    if ((jarEntry = jarFile.getJarEntry(outerEntryName)) != null) {
+      int bangPos;
 
-      CachedJarFile cachedJarFile;
-      InputStream cachedInputStream;
+      jarFile = new JarFile(new URL(url.getPath().substring(0, atPos)).getFile());
 
-      if (((cachedJarFile = CACHED_JAR_FILE_REFERENCE.get()) == null) || (!cachedJarFile.getEntryName().equals(outerEntryName))) {
-        synchronized (CACHED_JAR_FILE_REFERENCE) {
+      if ((bangPos = url.getPath().indexOf("!/", atPos + 3)) < 0) {
+
+        if ((jarEntry = jarFile.getJarEntry(url.getPath().substring(atPos + 2))) != null) {
+          return jarFile.getInputStream(jarEntry);
+        }
+      } else {
+
+        outerEntryName = url.getPath().substring(atPos + 2, bangPos);
+        innerEntryName = url.getPath().substring(bangPos + 2);
+
+        if ((jarEntry = jarFile.getJarEntry(outerEntryName)) != null) {
+
+          CachedJarFile cachedJarFile;
+          InputStream cachedInputStream;
+
           if (((cachedJarFile = CACHED_JAR_FILE_REFERENCE.get()) == null) || (!cachedJarFile.getEntryName().equals(outerEntryName))) {
-            CACHED_JAR_FILE_REFERENCE.set(cachedJarFile = new CachedJarFile(outerEntryName, new JarInputStream(jarFile.getInputStream(jarEntry))));
+            synchronized (CACHED_JAR_FILE_REFERENCE) {
+              if (((cachedJarFile = CACHED_JAR_FILE_REFERENCE.get()) == null) || (!cachedJarFile.getEntryName().equals(outerEntryName))) {
+                CACHED_JAR_FILE_REFERENCE.set(cachedJarFile = new CachedJarFile(outerEntryName, new JarInputStream(jarFile.getInputStream(jarEntry))));
+              }
+            }
+          }
+          if ((cachedInputStream = cachedJarFile.getInputStream(innerEntryName)) != null) {
+
+            return cachedInputStream;
           }
         }
       }
-      if ((cachedInputStream = cachedJarFile.getInputStream(innerEntryName)) != null) {
 
-        return cachedInputStream;
-      }
+      throw new FileNotFoundException(getURL().getPath());
     }
-
-    throw new FileNotFoundException(getURL().getPath());
   }
 
   @Override

@@ -37,6 +37,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.ObjectInputStream;
+import java.net.MalformedURLException;
 import java.net.URL;
 import java.security.AllPermission;
 import java.security.CodeSource;
@@ -170,11 +171,34 @@ public class SingularityClassLoader extends ClassLoader {
     if (isOperableNamespace(name)) {
 
       URL classURL;
+      URL codeSourceUrl;
 
       if ((classURL = urlMap.get(name.replace('.', '/') + ".class")) != null) {
         try {
 
-          CodeSource codeSource = new CodeSource(classURL, (Certificate[])null);
+          String classURLExternalForm = classURL.toExternalForm();
+
+          switch (classURL.getProtocol()) {
+            case "jar":
+
+              int jarBangSlashIndex;
+
+              if ((jarBangSlashIndex = classURLExternalForm.indexOf("!/")) < 0) {
+                codeSourceUrl = new URL(classURLExternalForm + "!/");
+              } else {
+                codeSourceUrl = new URL(classURLExternalForm.substring(0, jarBangSlashIndex + 2));
+              }
+              break;
+            case "singularity":
+              // javax.crypto.JarVerifier will encase this URL in 'jar:<code source url>!/ (it incorrectly assumes any protocol not 'jar:' is 'file:'),
+              // which then gets stripped again by JarUrlConnection, which will let SingularityJarURLConnection respond correctly...
+              codeSourceUrl = new URL(classURLExternalForm.substring(0, classURLExternalForm.indexOf("!/")));
+              break;
+            default:
+              throw new MalformedURLException("Unknown class url protocol(" + classURL.getProtocol() + ")");
+          }
+
+          CodeSource codeSource = new CodeSource(codeSourceUrl, (Certificate[])null);
           ProtectionDomain protectionDomain = new ProtectionDomain(codeSource, ALL_PERMISSIONS_COLLECTION, this, null);
           InputStream classInputStream;
           byte[] classData;
