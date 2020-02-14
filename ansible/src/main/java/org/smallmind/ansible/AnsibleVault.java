@@ -1,28 +1,28 @@
 /*
  * Copyright (c) 2007, 2008, 2009, 2010, 2011, 2012, 2013, 2014, 2015, 2016, 2017, 2018, 2019, 2020 David Berkman
- *
+ * 
  * This file is part of the SmallMind Code Project.
- *
+ * 
  * The SmallMind Code Project is free software, you can redistribute
  * it and/or modify it under either, at your discretion...
- *
+ * 
  * 1) The terms of GNU Affero General Public License as published by the
  * Free Software Foundation, either version 3 of the License, or (at
  * your option) any later version.
- *
+ * 
  * ...or...
- *
+ * 
  * 2) The terms of the Apache License, Version 2.0.
- *
+ * 
  * The SmallMind Code Project is distributed in the hope that it will
  * be useful, but WITHOUT ANY WARRANTY; without even the implied warranty
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License or Apache License for more details.
- *
+ * 
  * You should have received a copy of the GNU Affero General Public License
  * and the Apache License along with the SmallMind Code Project. If not, see
  * <http://www.gnu.org/licenses/> or <http://www.apache.org/licenses/LICENSE-2.0>.
- *
+ * 
  * Additional permission under the GNU Affero GPL version 3 section 7
  * ------------------------------------------------------------------
  * If you modify this Program, or any covered work, by linking or
@@ -55,6 +55,7 @@ public class AnsibleVault {
 
   private static final VaultHelp DECRYPT_HELP;
   private static final VaultHelp ENCRYPT_HELP;
+  private static final VaultHelp ENCRYPT_STRING_HELP;
   private static final VaultHelp REKEY_HELP;
   private static final VaultHelp VIEW_HELP;
   private static final String ACTIONS = "decrypt|encrypt|encrypt_string|rekey|view";
@@ -73,6 +74,12 @@ public class AnsibleVault {
           stream.print("encrypt ");
           stream.print(template);
           stream.println(" [files...]");
+        });
+      ENCRYPT_STRING_HELP = new VaultHelp(new Template("ansible-vault", new Option("help", null, false, NoneArgument.instance()), new Option("vault-id", null, false, new SingleArgument("[id]@[file|'prompt']")), new Option("vault-password-file", null, false, new SingleArgument("file")), new Option("name", null, true, new SingleArgument("key"))),
+        (template, stream) -> {
+          stream.print("encrypt_string ");
+          stream.print(template);
+          stream.println(" [content]");
         });
       REKEY_HELP = new VaultHelp(new Template("ansible-vault", new Option("help", null, false, NoneArgument.instance()), new Option("vault-id", null, false, new SingleArgument("[id]@[file|'prompt']")), new Option("new-vault-id", null, false, new SingleArgument("[id]@[file|'prompt']")), new Option("vault-password-file", null, false, new SingleArgument("file")), new Option("new-vault-password-file", null, false, new SingleArgument("file"))),
         (template, stream) -> {
@@ -154,6 +161,30 @@ public class AnsibleVault {
               }
             }
             break;
+          case "encrypt_string":
+
+            OptionSet encryptStringOptionSet = CommandLineParser.parseCommands(ENCRYPT_STRING_HELP.getTemplate(), remainingArgs, true);
+
+            if (encryptStringOptionSet.containsOption("help")) {
+              System.out.print("ansible-vault ");
+              ENCRYPT_STRING_HELP.out(System.out);
+            } else {
+
+              PasswordAndId passwordAndId = getPasswordAndId(encryptStringOptionSet, "vault-id", "vault-password-file", true);
+              String[] remaining;
+
+              if ((remaining = encryptStringOptionSet.getRemaining()).length != 1) {
+                throw new CommandLineException("Missing content to encrypt");
+              } else {
+                System.out.print(encryptStringOptionSet.getArgument("name"));
+                System.out.println(": !vault |");
+                for (String line : VaultCodec.encrypt(new ByteArrayInputStream(remaining[0].getBytes()), passwordAndId.getPassword()).split("\n", -1)) {
+                  System.out.print("\t");
+                  System.out.println(line);
+                }
+              }
+            }
+            break;
           case "rekey":
 
             OptionSet rekeyOptionSet = CommandLineParser.parseCommands(REKEY_HELP.getTemplate(), remainingArgs, true);
@@ -205,10 +236,11 @@ public class AnsibleVault {
         }
       }
     } catch (CommandLineException commandLineException) {
+      System.out.print("Error! - ");
       System.out.println(commandLineException.getMessage());
       provideHelp();
     } catch (Exception exception) {
-      System.out.println("Failure...");
+      System.out.print("Failure! - ");
       System.out.println(exception.getMessage());
     }
   }
@@ -217,11 +249,13 @@ public class AnsibleVault {
 
     System.out.print("ansible-vault [(");
     System.out.print(ACTIONS);
-    System.out.println("]");
+    System.out.println(")]");
+    System.out.print("\t");
+    DECRYPT_HELP.out(System.out);
     System.out.print("\t");
     ENCRYPT_HELP.out(System.out);
     System.out.print("\t");
-    DECRYPT_HELP.out(System.out);
+    ENCRYPT_STRING_HELP.out(System.out);
     System.out.print("\t");
     REKEY_HELP.out(System.out);
     System.out.print("\t");
