@@ -1140,11 +1140,7 @@
     </plugins>
     <resources>
       <resource>
-        <directory>src/main/resources/spring</directory>
-        <filtering>false</filtering>
-      </resource>
-      <resource>
-        <directory>src/main/resources/property</directory>
+        <directory>src/main/resources/freemarker</directory>
         <filtering>false</filtering>
       </resource>
       <resource>
@@ -1152,21 +1148,25 @@
         <filtering>false</filtering>
       </resource>
       <resource>
-        <directory>src/main/resources/freemarker</directory>
+        <directory>src/main/resources/meta</directory>
         <filtering>false</filtering>
       </resource>
       <resource>
-        <directory>src/main/resources/meta</directory>
+        <directory>src/main/resources/property</directory>
+        <filtering>false</filtering>
+      </resource>
+      <resource>
+        <directory>src/main/resources/script</directory>
+        <filtering>false</filtering>
+      </resource>
+      <resource>
+        <directory>src/main/resources/spring</directory>
         <filtering>false</filtering>
       </resource>
     </resources>
     <testResources>
       <testResource>
-        <directory>src/test/resources/spring</directory>
-        <filtering>false</filtering>
-      </testResource>
-      <testResource>
-        <directory>src/test/resources/property</directory>
+        <directory>src/test/resources/freemarker</directory>
         <filtering>false</filtering>
       </testResource>
       <testResource>
@@ -1174,11 +1174,19 @@
         <filtering>false</filtering>
       </testResource>
       <testResource>
-        <directory>src/test/resources/freemarker</directory>
+        <directory>src/test/resources/meta</directory>
         <filtering>false</filtering>
       </testResource>
       <testResource>
-        <directory>src/test/resources/meta</directory>
+        <directory>src/test/resources/property</directory>
+        <filtering>false</filtering>
+      </testResource>
+      <testResource>
+        <directory>src/test/resources/script</directory>
+        <filtering>false</filtering>
+      </testResource>
+      <testResource>
+        <directory>src/test/resources/spring</directory>
         <filtering>false</filtering>
       </testResource>
     </testResources>
