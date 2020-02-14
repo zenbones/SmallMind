@@ -9,11 +9,8 @@
   <artifactId>smallmind-ansible</artifactId>
   <name>Ansible</name>
   <description>Ansible Vault Implementation</description>
-  <packaging>singularity</packaging>
+  <packaging>jar</packaging>
 
-  <properties>
-    <singularity.skip>true</singularity.skip>
-  </properties>
   <dependencies>
     <dependency>
       <groupId>org.smallmind</groupId>
@@ -33,23 +30,6 @@
         <groupId>org.smallmind</groupId>
         <artifactId>smallmind-license-plugin</artifactId>
       </plugin>
-      <plugin>
-        <groupId>org.smallmind</groupId>
-        <artifactId>spark-singularity-maven-plugin</artifactId>
-        <extensions>true</extensions>
-        <configuration>
-          <skip>${singularity.skip}</skip>
-          <mainClass>org.smallmind.ansible.AnsibleVault</mainClass>
-        </configuration>
-      </plugin>
     </plugins>
   </build>
-  <profiles>
-    <profile>
-      <id>singularity</id>
-      <properties>
-        <singularity.skip>false</singularity.skip>
-      </properties>
-    </profile>
-  </profiles>
 </project>
