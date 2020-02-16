@@ -30,65 +30,12 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.web.grizzly;
+package org.smallmind.nutsnbolts.lang;
 
-import org.smallmind.nutsnbolts.lang.SecureStore;
+public class ClassVerificationException extends FormattedException {
 
-public class SSLInfo {
+  public ClassVerificationException (String message, Object... args) {
 
-  private SecureStore keySecureStore;
-  private SecureStore trustSecureStore;
-  private boolean requireClientAuth = false;
-  private boolean proxyMode = false;
-  private int port = 443;
-
-  public int getPort () {
-
-    return port;
-  }
-
-  public void setPort (int port) {
-
-    this.port = port;
-  }
-
-  public SecureStore getKeySecureStore () {
-
-    return keySecureStore;
-  }
-
-  public void setKeySecureStore (SecureStore keySecureStore) {
-
-    this.keySecureStore = keySecureStore;
-  }
-
-  public SecureStore getTrustSecureStore () {
-
-    return trustSecureStore;
-  }
-
-  public void setTrustSecureStore (SecureStore trustSecureStore) {
-
-    this.trustSecureStore = trustSecureStore;
-  }
-
-  public boolean isRequireClientAuth () {
-
-    return requireClientAuth;
-  }
-
-  public void setRequireClientAuth (boolean requireClientAuth) {
-
-    this.requireClientAuth = requireClientAuth;
-  }
-
-  public boolean isProxyMode () {
-
-    return proxyMode;
-  }
-
-  public void setProxyMode (boolean proxyMode) {
-
-    this.proxyMode = proxyMode;
+    super(message, args);
   }
 }

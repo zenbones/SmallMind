@@ -23,8 +23,8 @@
     <!--
     <property name="sslInfo">
       <bean class="org.smallmind.web.grizzly.SSLInfo">
-        <property name="keySSLStore">
-          <bean class="org.smallmind.web.grizzly.SSLStore">
+        <property name="keySecureStore">
+          <bean class="org.smallmind.nutsnbolts.lang.SecureStore">
             <property name="resource" value="classpath:com/mydomain/mycertificate.jks"/>
             <property name="password" value="changeit"/>
           </bean>

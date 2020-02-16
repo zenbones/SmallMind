@@ -30,7 +30,7 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.web.grizzly;
+package org.smallmind.nutsnbolts.lang;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -39,7 +39,7 @@ import org.smallmind.nutsnbolts.resource.ResourceException;
 import org.smallmind.nutsnbolts.resource.ResourceParser;
 import org.smallmind.nutsnbolts.resource.ResourceTypeFactory;
 
-public class SSLStore {
+public class SecureStore {
 
   private static final ResourceParser RESOURCE_PARSER = new ResourceParser(new ResourceTypeFactory());
 
