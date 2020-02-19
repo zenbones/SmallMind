@@ -168,6 +168,12 @@ public class URLCodec {
   public static String urlEncode (String original)
     throws UnsupportedEncodingException {
 
+    return urlEncode(original, true);
+  }
+
+  public static String urlEncode (String original, boolean spacesAsPluses)
+    throws UnsupportedEncodingException {
+
     StringBuilder encodedBuilder = null;
 
     for (int index = 0; index < original.length(); index++) {
@@ -178,7 +184,7 @@ public class URLCodec {
         if (encodedBuilder != null) {
           encodedBuilder.append(singleChar);
         }
-      } else if (singleChar == ' ') {
+      } else if ((singleChar == ' ') && spacesAsPluses) {
         if (encodedBuilder == null) {
           encodedBuilder = new StringBuilder(original.substring(0, index));
         }
