@@ -90,6 +90,6 @@ public class SelfDestructiveKey<K extends Comparable<K>> implements Comparable<S
   @Override
   public boolean equals (Object obj) {
 
-    return (obj instanceof SelfDestructiveKey) && (mapKey.equals(((SelfDestructiveKey)obj).getMapKey()));
+    return (obj instanceof SelfDestructiveKey) && (mapKey.equals(((SelfDestructiveKey<?>)obj).getMapKey()));
   }
 }
