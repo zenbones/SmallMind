@@ -126,7 +126,7 @@ public class SelfDestructiveMap<K extends Comparable<K>, S extends SelfDestructi
 
           NavigableSet<SelfDestructiveKey<K>> ignitedKeySet;
 
-          if (!(ignitedKeySet = ignitionKeySet.headSet(new SelfDestructiveKey<K>(Duration.none()))).isEmpty()) {
+          if (!(ignitedKeySet = ignitionKeySet.headSet(new SelfDestructiveKey<>(Duration.none()))).isEmpty()) {
 
             SelfDestructiveKey<K> ignitedKey;
 
