@@ -963,8 +963,7 @@
         <plugin>
           <groupId>org.hibernate.orm.tooling</groupId>
           <artifactId>hibernate-enhance-maven-plugin</artifactId>
-          <!-- <version>5.4.9.Final</version> -->
-          <version>5.1.6.Final</version>
+          <version>5.4.12.Final</version>
           <executions>
             <execution>
               <goals>
