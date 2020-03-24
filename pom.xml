@@ -102,6 +102,7 @@
     <jersey.version>2.30.1</jersey.version>
     <jetty.version>9.4.27.v20200227</jetty.version>
     <maven.version>3.6.3</maven.version>
+    <micrometer.version>1.4.0</micrometer.version>
     <querydsl.version>4.3.0</querydsl.version>
     <slf4j.version>1.7.30</slf4j.version>
     <spring.version>5.2.4.RELEASE</spring.version>
@@ -392,12 +393,17 @@
       <dependency>
         <groupId>org.testng</groupId>
         <artifactId>testng</artifactId>
-        <version>6.14.3</version>
+        <version>7.1.0</version>
       </dependency>
       <dependency>
         <groupId>org.apache.maven.surefire</groupId>
         <artifactId>surefire-api</artifactId>
         <version>2.22.1</version>
+      </dependency>
+      <dependency>
+        <groupId>io.micrometer</groupId>
+        <artifactId>micrometer-core</artifactId>
+        <version>${micrometer.version}</version>
       </dependency>
       <dependency>
         <groupId>org.freemarker</groupId>
