@@ -71,11 +71,13 @@ public class ExponentiallyWeightedMovingAverage {
       int cap = size.get();
       int n = 0;
 
-      while ((unprocessed = valueQueue.poll()) != null) {
-        size.decrementAndGet();
-        accumulated += unprocessed;
-        if (++n >= cap) {
-          break;
+      if (cap > 0) {
+        while ((unprocessed = valueQueue.poll()) != null) {
+          size.decrementAndGet();
+          accumulated += unprocessed;
+          if (++n >= cap) {
+            break;
+          }
         }
       }
 
