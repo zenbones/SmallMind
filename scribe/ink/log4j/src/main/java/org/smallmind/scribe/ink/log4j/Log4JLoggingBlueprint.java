@@ -30,25 +30,42 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.scribe.pen;
+package org.smallmind.scribe.ink.log4j;
 
-import org.smallmind.scribe.pen.adapter.LoggingBlueprintFactory;
+import org.apache.log4j.Logger;
+import org.apache.log4j.spi.LoggingEvent;
+import org.smallmind.scribe.pen.DefaultLogicalContext;
+import org.smallmind.scribe.pen.Level;
+import org.smallmind.scribe.pen.LoggerManager;
+import org.smallmind.scribe.pen.LogicalContext;
+import org.smallmind.scribe.pen.Record;
+import org.smallmind.scribe.pen.adapter.LoggerAdapter;
+import org.smallmind.scribe.pen.adapter.LoggingBlueprint;
 
-public class FilterUtility {
+public class Log4JLoggingBlueprint extends LoggingBlueprint {
 
-  public static boolean willBeFiltered (Record record, Level level, Filter... filters) {
+  static {
 
-    if ((filters != null) && (filters.length > 0)) {
+    LoggerManager.addLoggingPackagePrefix("org.apache.log4j.");
+  }
 
-      Record filterRecord = LoggingBlueprintFactory.getLoggingBlueprint().filterRecord(record, level);
+  public LoggerAdapter getLoggingAdapter (String name) {
 
-      for (Filter filter : filters) {
-        if (!filter.willLog(filterRecord)) {
-          return true;
-        }
-      }
-    }
+    return new Log4JLoggerAdapter(Logger.getLogger(name));
+  }
 
-    return false;
+  public Record filterRecord (Record record, Level level) {
+
+    return new Log4JRecordFilter(record, level).getRecord();
+  }
+
+  public Record errorRecord (Record record, Throwable throwable, String message, Object... args) {
+
+    LogicalContext logicalContext;
+
+    logicalContext = new DefaultLogicalContext();
+    logicalContext.fillIn();
+
+    return new Log4JRecordSubverter((Logger)((LoggingEvent)record.getNativeLogEntry()).getLogger(), Level.FATAL, logicalContext, throwable, message, args).getRecord();
   }
 }

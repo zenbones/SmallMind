@@ -34,7 +34,7 @@ package org.smallmind.scribe.pen;
 
 import java.io.Serializable;
 import org.smallmind.scribe.pen.adapter.LoggerAdapter;
-import org.smallmind.scribe.pen.adapter.LoggingBlueprintsFactory;
+import org.smallmind.scribe.pen.adapter.LoggingBlueprintFactory;
 
 public class Logger {
 
@@ -47,7 +47,7 @@ public class Logger {
 
   public Logger (String name) {
 
-    loggerAdapter = LoggingBlueprintsFactory.getLoggingBlueprints().getLoggingAdapter(name);
+    loggerAdapter = LoggingBlueprintFactory.getLoggingBlueprint().getLoggingAdapter(name);
   }
 
   public String getName () {

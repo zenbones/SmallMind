@@ -30,25 +30,46 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.scribe.pen;
+package org.smallmind.scribe.pen.adapter;
 
-import org.smallmind.scribe.pen.adapter.LoggingBlueprintFactory;
+import java.util.Arrays;
+import java.util.Iterator;
+import java.util.LinkedList;
+import java.util.ServiceLoader;
+import org.smallmind.nutsnbolts.lang.StaticInitializationError;
 
-public class FilterUtility {
+public class LoggingBlueprintFactory {
 
-  public static boolean willBeFiltered (Record record, Level level, Filter... filters) {
+  private static LoggingBlueprint LOGGING_BLUEPRINT;
 
-    if ((filters != null) && (filters.length > 0)) {
+  static {
 
-      Record filterRecord = LoggingBlueprintFactory.getLoggingBlueprint().filterRecord(record, level);
+    Iterator<LoggingBlueprint> blueprintsIter;
 
-      for (Filter filter : filters) {
-        if (!filter.willLog(filterRecord)) {
-          return true;
-        }
-      }
+    blueprintsIter = ServiceLoader.load(LoggingBlueprint.class, Thread.currentThread().getContextClassLoader()).iterator();
+    if (!blueprintsIter.hasNext()) {
+      throw new StaticInitializationError("No provider found for LoggingBlueprints");
     }
 
-    return false;
+    LOGGING_BLUEPRINT = blueprintsIter.next();
+
+    if (blueprintsIter.hasNext()) {
+
+      LinkedList<String> implementationList = new LinkedList<String>();
+
+      while (blueprintsIter.hasNext()) {
+        implementationList.add(blueprintsIter.next().getClass().getName());
+      }
+
+      String[] implementations = new String[implementationList.size()];
+      implementationList.toArray(implementations);
+
+      throw new StaticInitializationError("Found conflicting service implementations(%s) %s", LoggingBlueprint.class.getSimpleName(), Arrays.toString(implementations));
+    }
+  }
+
+  public static LoggingBlueprint getLoggingBlueprint () {
+
+    return LOGGING_BLUEPRINT;
   }
 }

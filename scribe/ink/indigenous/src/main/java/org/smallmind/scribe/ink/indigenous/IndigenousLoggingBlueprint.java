@@ -30,25 +30,37 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.scribe.pen;
+package org.smallmind.scribe.ink.indigenous;
 
-import org.smallmind.scribe.pen.adapter.LoggingBlueprintFactory;
+import org.smallmind.scribe.pen.DefaultLogicalContext;
+import org.smallmind.scribe.pen.Level;
+import org.smallmind.scribe.pen.LogicalContext;
+import org.smallmind.scribe.pen.Record;
+import org.smallmind.scribe.pen.adapter.LoggerAdapter;
+import org.smallmind.scribe.pen.adapter.LoggingBlueprint;
 
-public class FilterUtility {
+public class IndigenousLoggingBlueprint extends LoggingBlueprint {
 
-  public static boolean willBeFiltered (Record record, Level level, Filter... filters) {
+  public LoggerAdapter getLoggingAdapter (String name) {
 
-    if ((filters != null) && (filters.length > 0)) {
+    return new IndigenousLoggerAdapter(name);
+  }
 
-      Record filterRecord = LoggingBlueprintFactory.getLoggingBlueprint().filterRecord(record, level);
+  public Record filterRecord (Record record, Level level) {
 
-      for (Filter filter : filters) {
-        if (!filter.willLog(filterRecord)) {
-          return true;
-        }
-      }
-    }
+    return new IndigenousRecordFilter(record, level).getRecord();
+  }
 
-    return false;
+  public Record errorRecord (Record record, Throwable throwable, String message, Object... args) {
+
+    IndigenousRecord indigenousRecord;
+    LogicalContext logicalContext;
+
+    indigenousRecord = new IndigenousRecord(record.getLoggerName(), Level.FATAL, throwable, message, args);
+    logicalContext = new DefaultLogicalContext();
+    logicalContext.fillIn();
+    indigenousRecord.setLogicalContext(logicalContext);
+
+    return indigenousRecord.getRecord();
   }
 }

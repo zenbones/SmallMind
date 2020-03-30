@@ -30,25 +30,16 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.scribe.pen;
+package org.smallmind.scribe.pen.adapter;
 
-import org.smallmind.scribe.pen.adapter.LoggingBlueprintFactory;
+import org.smallmind.scribe.pen.Level;
+import org.smallmind.scribe.pen.Record;
 
-public class FilterUtility {
+public abstract class LoggingBlueprint {
 
-  public static boolean willBeFiltered (Record record, Level level, Filter... filters) {
+  public abstract LoggerAdapter getLoggingAdapter (String name);
 
-    if ((filters != null) && (filters.length > 0)) {
+  public abstract Record filterRecord (Record record, Level level);
 
-      Record filterRecord = LoggingBlueprintFactory.getLoggingBlueprint().filterRecord(record, level);
-
-      for (Filter filter : filters) {
-        if (!filter.willLog(filterRecord)) {
-          return true;
-        }
-      }
-    }
-
-    return false;
-  }
+  public abstract Record errorRecord (Record record, Throwable throwable, String message, Object... args);
 }
