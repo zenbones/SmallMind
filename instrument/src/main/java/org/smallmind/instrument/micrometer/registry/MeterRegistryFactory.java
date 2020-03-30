@@ -6,15 +6,15 @@ import java.util.LinkedList;
 import java.util.ServiceLoader;
 import org.smallmind.nutsnbolts.lang.StaticInitializationError;
 
-public class MetricRegistryFactory {
+public class MeterRegistryFactory {
 
-  private static MetricRegistry METRIC_REGISTRY;
+  private static MeterRegistry METRIC_REGISTRY;
 
   static {
 
-    Iterator<MetricRegistry> registryIter;
+    Iterator<MeterRegistry> registryIter;
 
-    registryIter = ServiceLoader.load(MetricRegistry.class, Thread.currentThread().getContextClassLoader()).iterator();
+    registryIter = ServiceLoader.load(MeterRegistry.class, Thread.currentThread().getContextClassLoader()).iterator();
     if (!registryIter.hasNext()) {
       throw new StaticInitializationError("No provider found for MetricRegistry");
     }
@@ -32,11 +32,11 @@ public class MetricRegistryFactory {
       String[] implementations = new String[implementationList.size()];
       implementationList.toArray(implementations);
 
-      throw new StaticInitializationError("Found conflicting service implementations(%s) %s", MetricRegistry.class.getSimpleName(), Arrays.toString(implementations));
+      throw new StaticInitializationError("Found conflicting service implementations(%s) %s", MeterRegistry.class.getSimpleName(), Arrays.toString(implementations));
     }
   }
 
-  public static MetricRegistry getMetricRegistry () {
+  public static MeterRegistry getMetricRegistry () {
 
     return METRIC_REGISTRY;
   }
