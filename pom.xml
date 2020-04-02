@@ -103,7 +103,7 @@
     <jetty.version>9.4.27.v20200227</jetty.version>
     <maven.version>3.6.3</maven.version>
     <micrometer.version>1.4.0</micrometer.version>
-    <querydsl.version>4.3.0</querydsl.version>
+    <querydsl.version>4.3.1</querydsl.version>
     <slf4j.version>1.7.30</slf4j.version>
     <spring.version>5.2.4.RELEASE</spring.version>
     <tyrus.version>1.16</tyrus.version>
@@ -597,6 +597,12 @@
         <groupId>com.querydsl</groupId>
         <artifactId>querydsl-jpa-codegen</artifactId>
         <version>${querydsl.version}</version>
+        <exclusions>
+          <exclusion>
+            <groupId>org.hibernate.javax.persistence</groupId>
+            <artifactId>hibernate-jpa-2.0-api</artifactId>
+          </exclusion>
+        </exclusions>
       </dependency>
       <dependency>
         <groupId>com.querydsl</groupId>
