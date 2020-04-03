@@ -52,6 +52,7 @@ public class CorsResponseFilter implements ContainerResponseFilter {
 
     if (((accessControlRequestHeaders = requestContext.getHeaderString("Access-Control-Request-Headers")) != null) && (!accessControlRequestHeaders.isEmpty())) {
       responseContext.getHeaders().add("Access-Control-Allow-Headers", accessControlRequestHeaders);
+      responseContext.getHeaders().add("Access-Control-Expose-Headers", accessControlRequestHeaders);
     }
 
     responseContext.getHeaders().add("Access-Control-Allow-Methods", "DELETE, GET, HEAD, OPTIONS, PATCH, POST, PUT");
