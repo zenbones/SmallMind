@@ -38,9 +38,44 @@ import org.smallmind.web.jersey.spring.PrioritizedResourceConfigExtension;
 
 public class CorsResponseExtension extends PrioritizedResourceConfigExtension {
 
+  private String[] allowedHeaders;
+  private String[] exposedHeaders;
+
+  public void setAllowedHeaders (String[] allowedHeaders) {
+
+    this.allowedHeaders = allowedHeaders;
+  }
+
+  public void setExposedHeaders (String[] exposedHeaders) {
+
+    this.exposedHeaders = exposedHeaders;
+  }
+
   @Override
   public void apply (ResourceConfig resourceConfig) {
 
-    resourceConfig.register(CorsResponseFilter.class, getPriority());
+    resourceConfig.register(new CorsResponseFilter(concatenateHeaders(allowedHeaders), concatenateHeaders(exposedHeaders)), getPriority());
+  }
+
+  private String concatenateHeaders (String[] headers) {
+
+    if ((headers == null) || (headers.length == 0)) {
+
+      return null;
+    } else {
+
+      StringBuilder headerBuilder = new StringBuilder();
+      boolean first = true;
+
+      for (String header : headers) {
+        if (!first) {
+          headerBuilder.append(", ");
+        }
+        headerBuilder.append(header);
+        first = false;
+      }
+
+      return headerBuilder.toString();
+    }
   }
 }

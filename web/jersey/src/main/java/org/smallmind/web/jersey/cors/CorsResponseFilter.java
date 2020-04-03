@@ -38,11 +38,19 @@ import javax.ws.rs.container.ContainerResponseFilter;
 
 public class CorsResponseFilter implements ContainerResponseFilter {
 
+  private String allowedHeaders;
+  private String exposedHeaders;
+
+  public CorsResponseFilter (String allowedHeaders, String exposedHeaders) {
+
+    this.allowedHeaders = allowedHeaders;
+    this.exposedHeaders = exposedHeaders;
+  }
+
   @Override
   public void filter (ContainerRequestContext requestContext, ContainerResponseContext responseContext) {
 
     String originHeader;
-    String accessControlRequestHeaders;
 
     if (((originHeader = requestContext.getHeaderString("Origin")) != null) && (!originHeader.isEmpty())) {
       responseContext.getHeaders().add("Access-Control-Allow-Origin", originHeader);
@@ -50,9 +58,11 @@ public class CorsResponseFilter implements ContainerResponseFilter {
       responseContext.getHeaders().add("Access-Control-Allow-Origin", "*");
     }
 
-    if (((accessControlRequestHeaders = requestContext.getHeaderString("Access-Control-Request-Headers")) != null) && (!accessControlRequestHeaders.isEmpty())) {
-      responseContext.getHeaders().add("Access-Control-Allow-Headers", accessControlRequestHeaders);
-      responseContext.getHeaders().add("Access-Control-Expose-Headers", accessControlRequestHeaders);
+    if (allowedHeaders != null) {
+      responseContext.getHeaders().add("Access-Control-Allow-Headers", allowedHeaders);
+    }
+    if (exposedHeaders != null) {
+      responseContext.getHeaders().add("Access-Control-Expose-Headers", exposedHeaders);
     }
 
     responseContext.getHeaders().add("Access-Control-Allow-Methods", "DELETE, GET, HEAD, OPTIONS, PATCH, POST, PUT");
