@@ -30,9 +30,9 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.instrument.micrometer.statistic;
+package org.smallmind.claxon.meter.aggregate;
 
-public interface Statistic {
+public interface Aggregate {
 
   default String getName () {
 

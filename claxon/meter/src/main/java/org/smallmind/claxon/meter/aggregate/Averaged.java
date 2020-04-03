@@ -30,41 +30,51 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.instrument.micrometer.statistic;
+package org.smallmind.claxon.meter.aggregate;
 
-import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.TimeUnit;
 
-public class Counted extends AbstractStatistic {
+public class Averaged extends AbstractAggregate {
 
-  private final AtomicLong count = new AtomicLong();
+  private final ExponentiallyWeightedMovingAverage[] movingAverages;
 
-  public Counted () {
+  public Averaged () {
 
+    this(null, TimeUnit.MINUTES, 1, 5, 15);
   }
 
-  public Counted (String name) {
+  public Averaged (String name) {
+
+    this(name, TimeUnit.MINUTES, 1, 5, 15);
+  }
+
+  public Averaged (TimeUnit windowTimeUnit, long... windowTimes) {
+
+    this(null, windowTimeUnit, windowTimes);
+  }
+
+  public Averaged (String name, TimeUnit windowTimeUnit, long... windowTimes) {
 
     super(name);
+
+    int index = 0;
+
+    movingAverages = new ExponentiallyWeightedMovingAverage[windowTimes.length];
+    for (long averagedTime : windowTimes) {
+      movingAverages[index++] = new ExponentiallyWeightedMovingAverage(averagedTime, windowTimeUnit);
+    }
   }
 
-  public void inc () {
+  public double get (int index) {
 
-    count.incrementAndGet();
-  }
-
-  public void dec () {
-
-    count.decrementAndGet();
-  }
-
-  public void add (long delta) {
-
-    count.addAndGet(delta);
+    return movingAverages[index].getMovingAverage();
   }
 
   @Override
   public void update (long value) {
 
-    add(value);
+    for (ExponentiallyWeightedMovingAverage movingAverage : movingAverages) {
+      movingAverage.update(value);
+    }
   }
 }

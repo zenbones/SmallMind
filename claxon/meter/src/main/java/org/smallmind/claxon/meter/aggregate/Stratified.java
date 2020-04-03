@@ -30,24 +30,45 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.instrument.micrometer;
+package org.smallmind.claxon.meter.aggregate;
 
-import org.smallmind.instrument.micrometer.statistic.Statistic;
+import org.HdrHistogram.Histogram;
+import org.HdrHistogram.Recorder;
 
-public abstract class AbstractMeter implements Meter {
+public class Stratified extends AbstractAggregate {
 
-  private final Statistic[] statistics;
+  private final Recorder recorder;
 
-  public AbstractMeter (Statistic... statistics) {
+  public Stratified () {
 
-    this.statistics = statistics;
+    this(null, 1, 3600000L, 2);
+  }
+
+  public Stratified (String name) {
+
+    this(name, 1, 3600000L, 2);
+  }
+
+  public Stratified (long lowestDiscernibleValue, long highestTrackableValue, int numberOfSignificantValueDigits) {
+
+    this(null, lowestDiscernibleValue, highestTrackableValue, numberOfSignificantValueDigits);
+  }
+
+  public Stratified (String name, long lowestDiscernibleValue, long highestTrackableValue, int numberOfSignificantValueDigits) {
+
+    super(name);
+
+    recorder = new Recorder(lowestDiscernibleValue, highestTrackableValue, numberOfSignificantValueDigits);
+  }
+
+  public void get (Histogram histogram) {
+
+    recorder.getIntervalHistogram(histogram);
   }
 
   @Override
   public void update (long value) {
 
-    for (Statistic statistic : statistics) {
-      statistic.update(value);
-    }
+    recorder.recordValue(value);
   }
 }

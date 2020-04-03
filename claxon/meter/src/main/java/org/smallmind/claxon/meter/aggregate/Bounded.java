@@ -30,51 +30,37 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.instrument.micrometer.statistic;
+package org.smallmind.claxon.meter.aggregate;
 
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.LongAccumulator;
 
-public class Averaged extends AbstractStatistic {
+public class Bounded extends AbstractAggregate {
 
-  private final ExponentiallyWeightedMovingAverage[] movingAverages;
+  private final LongAccumulator maxAccumulator = new LongAccumulator(Long::max, Long.MIN_VALUE);
+  private final LongAccumulator minAccumulator = new LongAccumulator(Long::min, Long.MAX_VALUE);
 
-  public Averaged () {
+  public Bounded () {
 
-    this(null, TimeUnit.MINUTES, 1, 5, 15);
   }
 
-  public Averaged (String name) {
-
-    this(name, TimeUnit.MINUTES, 1, 5, 15);
-  }
-
-  public Averaged (TimeUnit windowTimeUnit, long... windowTimes) {
-
-    this(null, windowTimeUnit, windowTimes);
-  }
-
-  public Averaged (String name, TimeUnit windowTimeUnit, long... windowTimes) {
+  public Bounded (String name) {
 
     super(name);
-
-    int index = 0;
-
-    movingAverages = new ExponentiallyWeightedMovingAverage[windowTimes.length];
-    for (long averagedTime : windowTimes) {
-      movingAverages[index++] = new ExponentiallyWeightedMovingAverage(averagedTime, windowTimeUnit);
-    }
   }
 
-  public double get (int index) {
+  public long getMaximum () {
 
-    return movingAverages[index].getMovingAverage();
+    return maxAccumulator.get();
   }
 
-  @Override
+  public long getMinimum () {
+
+    return minAccumulator.get();
+  }
+
   public void update (long value) {
 
-    for (ExponentiallyWeightedMovingAverage movingAverage : movingAverages) {
-      movingAverage.update(value);
-    }
+    maxAccumulator.accumulate(value);
+    minAccumulator.accumulate(value);
   }
 }

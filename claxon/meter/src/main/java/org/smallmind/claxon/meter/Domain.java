@@ -30,8 +30,8 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.instrument.micrometer.registry;
+package org.smallmind.claxon.meter;
 
-public class MeterRegistry {
+public class Domain {
 
 }

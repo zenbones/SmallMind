@@ -30,11 +30,44 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.instrument.micrometer;
+package org.smallmind.claxon.meter;
 
-import java.util.HashMap;
+public class Tag {
 
-public class Domain {
+  private String key;
+  private String value;
 
-  private HashMap<String, Meter> meterMap = new HashMap<>();
+  public Tag (String key, String value) {
+
+    this.key = key;
+    this.value = value;
+  }
+
+  public String getKey () {
+
+    return key;
+  }
+
+  public String getValue () {
+
+    return value;
+  }
+
+  @Override
+  public String toString () {
+
+    return new StringBuilder(key).append('=').append(value).toString();
+  }
+
+  @Override
+  public int hashCode () {
+
+    return (key.hashCode() * 31) + value.hashCode();
+  }
+
+  @Override
+  public boolean equals (Object obj) {
+
+    return (obj instanceof Tag) && ((Tag)obj).getKey().equals(key) && ((Tag)obj).getValue().equals(value);
+  }
 }

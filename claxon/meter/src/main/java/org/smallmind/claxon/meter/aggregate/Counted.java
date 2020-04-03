@@ -30,24 +30,41 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.instrument.micrometer.statistic;
+package org.smallmind.claxon.meter.aggregate;
 
-public abstract class AbstractStatistic implements Statistic {
+import java.util.concurrent.atomic.AtomicLong;
 
-  private String name;
+public class Counted extends AbstractAggregate {
 
-  public AbstractStatistic () {
+  private final AtomicLong count = new AtomicLong();
+
+  public Counted () {
 
   }
 
-  public AbstractStatistic (String name) {
+  public Counted (String name) {
 
-    this.name = name;
+    super(name);
+  }
+
+  public void inc () {
+
+    count.incrementAndGet();
+  }
+
+  public void dec () {
+
+    count.decrementAndGet();
+  }
+
+  public void add (long delta) {
+
+    count.addAndGet(delta);
   }
 
   @Override
-  public String getName () {
+  public void update (long value) {
 
-    return (name != null) ? name : Statistic.super.getName();
+    add(value);
   }
 }

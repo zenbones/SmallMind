@@ -178,6 +178,11 @@
       </dependency>
       <dependency>
         <groupId>org.smallmind</groupId>
+        <artifactId>smallmind-instrument</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.smallmind</groupId>
         <artifactId>smallmind-memcached</artifactId>
         <version>${project.version}</version>
       </dependency>

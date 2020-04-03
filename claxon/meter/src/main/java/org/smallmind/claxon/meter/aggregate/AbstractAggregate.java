@@ -30,9 +30,24 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.instrument.micrometer;
+package org.smallmind.claxon.meter.aggregate;
 
-public interface Meter {
+public abstract class AbstractAggregate implements Aggregate {
 
-  void update (long value);
+  private String name;
+
+  public AbstractAggregate () {
+
+  }
+
+  public AbstractAggregate (String name) {
+
+    this.name = name;
+  }
+
+  @Override
+  public String getName () {
+
+    return (name != null) ? name : Aggregate.super.getName();
+  }
 }
