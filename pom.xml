@@ -113,6 +113,7 @@
     <module>ansible</module>
     <module>artifact</module>
     <module>batch</module>
+    <module>claxon</module>
     <module>forge</module>
     <module>foundation</module>
     <module>instrument</module>
@@ -172,7 +173,7 @@
       </dependency>
       <dependency>
         <groupId>org.smallmind</groupId>
-        <artifactId>smallmind-instrument</artifactId>
+        <artifactId>claxon-meter</artifactId>
         <version>${project.version}</version>
       </dependency>
       <dependency>
