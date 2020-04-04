@@ -34,7 +34,5 @@ package org.smallmind.claxon.meter;
 
 public interface Registry {
 
-  Kind<?> kinds ();
-
-  MeterBuilder<?> register (Kind<?> kind);
+  Kind<?> kind ();
 }
