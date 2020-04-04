@@ -32,15 +32,25 @@
  */
 package org.smallmind.claxon.meter.aggregate;
 
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.locks.ReentrantLock;
+import org.smallmind.nutsnbolts.time.DurationUtility;
 
-public class Counted extends AbstractAggregate {
+public class Clocked extends AbstractAggregate {
 
-  private final AtomicLong count = new AtomicLong();
+  private final ReentrantLock lock = new ReentrantLock();
+  private final AtomicLong countInWindow = new AtomicLong();
+  private final double nanosecondsInWindow;
+  private double velocity = 0;
+  private long markTime;
 
-  public Counted (String name) {
+  public Clocked (String name, TimeUnit velocityTimeUnit) {
 
     super(name);
+
+    nanosecondsInWindow = DurationUtility.convertToDouble(1, velocityTimeUnit, TimeUnit.NANOSECONDS);
+    markTime = System.nanoTime();
   }
 
   public void inc () {
@@ -55,7 +65,25 @@ public class Counted extends AbstractAggregate {
 
   public void add (long delta) {
 
-    count.addAndGet(delta);
+    long countInWindowRightNow;
+    long now;
+    long transpired;
+
+    countInWindowRightNow = countInWindow.incrementAndGet();
+    now = System.nanoTime();
+
+    if ((transpired = (now - markTime)) > nanosecondsInWindow) {
+      if (lock.tryLock()) {
+        try {
+          velocity = countInWindowRightNow / (transpired / nanosecondsInWindow);
+
+          markTime = now;
+          countInWindow.addAndGet(-countInWindowRightNow);
+        } finally {
+          lock.unlock();
+        }
+      }
+    }
   }
 
   @Override
@@ -64,8 +92,8 @@ public class Counted extends AbstractAggregate {
     add(value);
   }
 
-  public long getCount () {
+  public double getVelocity () {
 
-    return count.get();
+    return velocity;
   }
 }
