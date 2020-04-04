@@ -43,17 +43,17 @@ public class ExponentiallyWeightedMovingAverage {
   private final ReentrantLock lock = new ReentrantLock();
   private final ConcurrentLinkedQueue<Long> valueQueue = new ConcurrentLinkedQueue<>();
   private final AtomicInteger size = new AtomicInteger();
-  private final double windowAsNonaseconds;
+  private final double nanosecondsInWindow;
   private double average = 0;
   private long markTime;
 
-  public ExponentiallyWeightedMovingAverage (long window, TimeUnit timeUnit) {
+  public ExponentiallyWeightedMovingAverage (long window, TimeUnit windowTimeUnit) {
 
-    windowAsNonaseconds = DurationUtility.convertToDouble(window, timeUnit, TimeUnit.NANOSECONDS);
+    nanosecondsInWindow = DurationUtility.convertToDouble(window, windowTimeUnit, TimeUnit.NANOSECONDS);
     markTime = System.nanoTime();
   }
 
-  public synchronized void update (long value) {
+  public void update (long value) {
 
     if (!process(value)) {
       size.incrementAndGet();
@@ -64,42 +64,49 @@ public class ExponentiallyWeightedMovingAverage {
   private boolean process (long value) {
 
     if (lock.tryLock()) {
+      try {
 
-      Long unprocessed;
-      long now = System.nanoTime();
-      long accumulated = value;
-      int cap = size.get();
-      int n = 0;
-      int nPlusOne;
+        Long unprocessed;
+        long accumulated = value;
+        long now;
+        int n = 0;
+        int cap;
+        int nPlusOne;
 
-      if (cap > 0) {
-        while ((unprocessed = valueQueue.poll()) != null) {
-          size.decrementAndGet();
-          accumulated += unprocessed;
-          if (++n >= cap) {
-            break;
+        cap = size.get();
+        now = System.nanoTime();
+
+        if (cap > 0) {
+          while ((unprocessed = valueQueue.poll()) != null) {
+            size.decrementAndGet();
+            accumulated += unprocessed;
+            if (++n >= cap) {
+              break;
+            }
           }
         }
+
+        nPlusOne = n + 1;
+
+        if (markTime == 0) {
+          average = ((double)accumulated) / nPlusOne;
+        } else {
+          average = (average + ((1 - Math.exp(-((now - markTime) / nanosecondsInWindow))) * ((((double)accumulated) / nPlusOne) - average)));
+        }
+
+        markTime = now;
+
+        return true;
+      } finally {
+        lock.unlock();
       }
-
-      nPlusOne = n + 1;
-
-      if (markTime == 0) {
-        average = ((double)accumulated) / nPlusOne;
-      } else {
-        average = (average + ((1 - Math.exp(-((now - markTime) / windowAsNonaseconds))) * ((((double)accumulated) / nPlusOne) - average)));
-      }
-
-      markTime = now;
-
-      return true;
     } else {
 
       return false;
     }
   }
 
-  public synchronized double getMovingAverage () {
+  public double getMovingAverage () {
 
     return average;
   }
