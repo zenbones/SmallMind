@@ -4,6 +4,6 @@ public class Wombat {
 
   public static void main (String... args) {
 
-IndigenousKind.SPEEDOMETER.build();
+// IndigenousKind.SPEEDOMETER.build();
   }
 }
