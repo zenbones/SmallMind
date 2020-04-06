@@ -33,7 +33,7 @@
 package org.smallmind.phalanx.wire;
 
 import java.util.concurrent.TimeUnit;
-import org.smallmind.nutsnbolts.time.Duration;
+import org.smallmind.nutsnbolts.time.Stint;
 import org.smallmind.nutsnbolts.util.SelfDestructiveMap;
 
 public abstract class AbstractRequestTransport implements RequestTransport {
@@ -42,7 +42,7 @@ public abstract class AbstractRequestTransport implements RequestTransport {
 
   public AbstractRequestTransport (int defaultTimeoutSeconds) {
 
-    callbackMap = new SelfDestructiveMap<>(new Duration(defaultTimeoutSeconds, TimeUnit.SECONDS));
+    callbackMap = new SelfDestructiveMap<>(new Stint(defaultTimeoutSeconds, TimeUnit.SECONDS));
   }
 
   public SelfDestructiveMap<String, TransmissionCallback> getCallbackMap () {
@@ -60,7 +60,7 @@ public abstract class AbstractRequestTransport implements RequestTransport {
       Object timeoutObject;
       int timeoutSeconds = (timeoutObject = voice.getConversation().getTimeout()) == null ? 0 : (Integer)timeoutObject;
 
-      if ((previousCallback = (SynchronousTransmissionCallback)getCallbackMap().putIfAbsent(messageId, asynchronousCallback, (timeoutSeconds > 0) ? new Duration(timeoutSeconds, TimeUnit.SECONDS) : null)) != null) {
+      if ((previousCallback = (SynchronousTransmissionCallback)getCallbackMap().putIfAbsent(messageId, asynchronousCallback, (timeoutSeconds > 0) ? new Stint(timeoutSeconds, TimeUnit.SECONDS) : null)) != null) {
 
         return previousCallback.getResult(signalCodec);
       }

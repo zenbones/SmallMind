@@ -34,7 +34,7 @@ package org.smallmind.nutsnbolts.time;
 
 import java.util.concurrent.TimeUnit;
 
-public class DurationUtility {
+public class StintUtility {
 
   public static double convertToDouble (long fromTime, TimeUnit fromTimeUnit, TimeUnit toTimeUnit) {
 

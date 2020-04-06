@@ -34,20 +34,20 @@ package org.smallmind.nutsnbolts.time;
 
 import java.util.concurrent.TimeUnit;
 
-public class Duration {
+public class Stint {
 
-  private static final Duration NONE = new Duration(0, TimeUnit.SECONDS);
+  private static final Stint NONE = new Stint(0, TimeUnit.SECONDS);
 
   private TimeUnit timeUnit;
   private long time;
 
-  public Duration (long time, TimeUnit timeUnit) {
+  public Stint (long time, TimeUnit timeUnit) {
 
     this.time = time;
     this.timeUnit = timeUnit;
   }
 
-  public static Duration none () {
+  public static Stint none () {
 
     return NONE;
   }

@@ -32,7 +32,7 @@
  */
 package org.smallmind.phalanx.wire;
 
-import org.smallmind.nutsnbolts.time.Duration;
+import org.smallmind.nutsnbolts.time.Stint;
 
 public class SynchronousTransmissionCallback extends TransmissionCallback {
 
@@ -44,7 +44,7 @@ public class SynchronousTransmissionCallback extends TransmissionCallback {
   }
 
   @Override
-  public void destroy (Duration timeoutDuration) {
+  public void destroy (Stint timeoutStint) {
 
   }
 

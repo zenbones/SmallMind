@@ -32,25 +32,25 @@
  */
 package org.smallmind.nutsnbolts.util;
 
-import org.smallmind.nutsnbolts.time.Duration;
+import org.smallmind.nutsnbolts.time.Stint;
 
 public class SelfDestructiveKey<K extends Comparable<K>> implements Comparable<SelfDestructiveKey<K>> {
 
   private final K mapKey;
-  private final Duration timeoutDuration;
+  private final Stint timeoutStint;
   private final long ignitionTime;
 
-  public SelfDestructiveKey (Duration timeoutDuration) {
+  public SelfDestructiveKey (Stint timeoutStint) {
 
-    this(null, timeoutDuration);
+    this(null, timeoutStint);
   }
 
-  public SelfDestructiveKey (K mapKey, Duration timeoutDuration) {
+  public SelfDestructiveKey (K mapKey, Stint timeoutStint) {
 
     this.mapKey = mapKey;
-    this.timeoutDuration = timeoutDuration;
+    this.timeoutStint = timeoutStint;
 
-    ignitionTime = System.currentTimeMillis() + timeoutDuration.toMilliseconds();
+    ignitionTime = System.currentTimeMillis() + timeoutStint.toMilliseconds();
   }
 
   public K getMapKey () {
@@ -58,9 +58,9 @@ public class SelfDestructiveKey<K extends Comparable<K>> implements Comparable<S
     return mapKey;
   }
 
-  public Duration getTimeoutDuration () {
+  public Stint getTimeoutStint () {
 
-    return timeoutDuration;
+    return timeoutStint;
   }
 
   public long getIgnitionTime () {
