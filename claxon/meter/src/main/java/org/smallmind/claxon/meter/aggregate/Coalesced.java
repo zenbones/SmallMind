@@ -102,4 +102,9 @@ public class Coalesced extends AbstractAggregate {
 
     return false;
   }
+
+  public double getAverage () {
+
+    return average;
+  }
 }
