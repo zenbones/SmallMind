@@ -69,7 +69,7 @@ public class Clocked extends AbstractAggregate {
     long now;
     long transpired;
 
-    countInWindowRightNow = countInWindow.incrementAndGet();
+    countInWindowRightNow = countInWindow.addAndGet(delta);
     now = System.nanoTime();
 
     if ((transpired = (now - markTime)) > nanosecondsInWindow) {

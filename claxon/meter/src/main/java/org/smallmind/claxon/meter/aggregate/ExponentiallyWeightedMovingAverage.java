@@ -91,7 +91,7 @@ public class ExponentiallyWeightedMovingAverage {
         if (markTime == 0) {
           average = ((double)accumulated) / nPlusOne;
         } else {
-          average = (average + ((1 - Math.exp(-((now - markTime) / nanosecondsInWindow))) * ((((double)accumulated) / nPlusOne) - average)));
+          average += (1 - Math.exp(-((now - markTime) / nanosecondsInWindow))) * ((((double)accumulated) / nPlusOne) - average);
         }
 
         markTime = now;
