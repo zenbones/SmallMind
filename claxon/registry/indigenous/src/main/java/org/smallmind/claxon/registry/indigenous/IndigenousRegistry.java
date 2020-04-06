@@ -32,7 +32,6 @@
  */
 package org.smallmind.claxon.registry.indigenous;
 
-import org.smallmind.claxon.meter.Kind;
 import org.smallmind.claxon.meter.Registry;
 
 public class IndigenousRegistry implements Registry {
