@@ -44,16 +44,16 @@ public class Coalesced extends AbstractAggregate {
   private final ReentrantLock lock = new ReentrantLock();
   private final ConcurrentLinkedQueue<Long> valueQueue = new ConcurrentLinkedQueue<>();
   private final AtomicInteger size = new AtomicInteger();
-  private final double nanosecondsInWindow;
+  private final double nanosecondsInVelocity;
   private final double nanosecondsInPulse;
   private double average = 0;
   private long markTime;
 
-  public Coalesced (String name, TimeUnit windowTimeUnit, Stint pulseStint) {
+  public Coalesced (String name, TimeUnit velocityTimeUnit, Stint pulseStint) {
 
     super(name);
 
-    nanosecondsInWindow = StintUtility.convertToDouble(1, windowTimeUnit, TimeUnit.NANOSECONDS);
+    nanosecondsInVelocity = StintUtility.convertToDouble(1, velocityTimeUnit, TimeUnit.NANOSECONDS);
     nanosecondsInPulse = pulseStint.getTimeUnit().toNanos(pulseStint.getTime());
     markTime = System.nanoTime();
   }
@@ -91,7 +91,7 @@ public class Coalesced extends AbstractAggregate {
             }
           }
 
-          average = ((double)accumulated) / (transpired / nanosecondsInWindow);
+          average = accumulated * nanosecondsInVelocity / transpired;
 
           markTime = now;
         }
