@@ -41,8 +41,9 @@ import org.smallmind.nutsnbolts.time.StintUtility;
 public class Stratified extends AbstractAggregate {
 
   private final ReentrantLock lock = new ReentrantLock();
-  private final Recorder recorder;
   private final double nanosecondsInVelocity;
+  private Recorder writeRecorder;
+  private Recorder readRecorder;
   private long markTime;
 
   public Stratified () {
@@ -75,7 +76,9 @@ public class Stratified extends AbstractAggregate {
     super(name);
 
     nanosecondsInVelocity = (velocityTimeUnit == null) ? 0 : StintUtility.convertToDouble(1, velocityTimeUnit, TimeUnit.NANOSECONDS);
-    recorder = new Recorder(lowestDiscernibleValue, highestTrackableValue, numberOfSignificantValueDigits);
+    writeRecorder = new Recorder(lowestDiscernibleValue, highestTrackableValue, numberOfSignificantValueDigits);
+    readRecorder = (velocityTimeUnit == null) ? writeRecorder : new Recorder(lowestDiscernibleValue, highestTrackableValue, numberOfSignificantValueDigits);
+
     markTime = System.nanoTime();
   }
 
@@ -86,7 +89,7 @@ public class Stratified extends AbstractAggregate {
       checkForReset();
     }
 
-    recorder.recordValue(value);
+    writeRecorder.recordValue(value);
   }
 
   private void checkForReset () {
@@ -97,7 +100,13 @@ public class Stratified extends AbstractAggregate {
         long now = System.nanoTime();
 
         if ((now - markTime) > nanosecondsInVelocity) {
+
+          Recorder recorder = readRecorder;
+
+          readRecorder = writeRecorder;
           recorder.reset();
+          writeRecorder = recorder;
+
           markTime = now;
         }
       } finally {
@@ -112,6 +121,6 @@ public class Stratified extends AbstractAggregate {
       checkForReset();
     }
 
-    recorder.getIntervalHistogram(histogram);
+    readRecorder.getIntervalHistogram(histogram);
   }
 }
