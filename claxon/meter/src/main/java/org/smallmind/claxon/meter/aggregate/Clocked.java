@@ -77,7 +77,7 @@ public class Clocked extends AbstractAggregate {
         long transpired;
 
         if ((transpired = (now - markTime)) > nanosecondsInPulse) {
-          velocity = countInPulse / (transpired / nanosecondsInVelocity);
+          velocity = countInPulse * nanosecondsInVelocity / transpired;
 
           this.countInPulse.addAndGet(-countInPulse);
           markTime = now;
