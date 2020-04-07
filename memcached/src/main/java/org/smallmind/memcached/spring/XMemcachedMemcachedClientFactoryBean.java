@@ -35,7 +35,6 @@ package org.smallmind.memcached.spring;
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.util.HashMap;
-import net.rubyeye.xmemcached.MemcachedClient;
 import net.rubyeye.xmemcached.MemcachedClientBuilder;
 import net.rubyeye.xmemcached.XMemcachedClientBuilder;
 import net.rubyeye.xmemcached.command.BinaryCommandFactory;
@@ -83,6 +82,24 @@ public class XMemcachedMemcachedClientFactoryBean implements FactoryBean<XMemcac
   }
 
   @Override
+  public boolean isSingleton () {
+
+    return true;
+  }
+
+  @Override
+  public Class<?> getObjectType () {
+
+    return XMemcachedMemcachedClient.class;
+  }
+
+  @Override
+  public XMemcachedMemcachedClient getObject () {
+
+    return memcachedClient;
+  }
+
+  @Override
   public void afterPropertiesSet ()
     throws IOException {
 
@@ -123,24 +140,6 @@ public class XMemcachedMemcachedClientFactoryBean implements FactoryBean<XMemcac
         memcachedClient = new XMemcachedMemcachedClient(builder.build());
       }
     }
-  }
-
-  @Override
-  public XMemcachedMemcachedClient getObject () {
-
-    return memcachedClient;
-  }
-
-  @Override
-  public Class<?> getObjectType () {
-
-    return MemcachedClient.class;
-  }
-
-  @Override
-  public boolean isSingleton () {
-
-    return true;
   }
 
   public void shutdown () {
