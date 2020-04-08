@@ -59,7 +59,6 @@ public class Coalesced extends AbstractAggregate {
     nanosecondsInVelocity = StintUtility.convertToDouble(1, velocityTimeUnit, TimeUnit.NANOSECONDS);
     nanosecondsInPulse = pulseStint.getTimeUnit().toNanos(pulseStint.getTime());
     markTime = System.nanoTime();
-    System.out.println(nanosecondsInVelocity);
   }
 
   public void update (long value) {
