@@ -32,9 +32,16 @@
  */
 package org.smallmind.claxon.registry.indigenous;
 
+import org.smallmind.claxon.meter.Identifier;
+import org.smallmind.claxon.meter.Meter;
+import org.smallmind.claxon.meter.MeterBuilder;
 import org.smallmind.claxon.meter.Registry;
 
 public class IndigenousRegistry implements Registry {
 
+  @Override
+  public <M extends Meter> M register (Identifier identifier, MeterBuilder<M> builder) {
 
+    return null;
+  }
 }

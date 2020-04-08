@@ -34,4 +34,5 @@ package org.smallmind.claxon.meter;
 
 public interface Meter {
 
+  void update (long vaue, Tag... tags);
 }
