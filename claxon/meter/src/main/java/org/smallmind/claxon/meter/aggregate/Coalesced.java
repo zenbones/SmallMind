@@ -48,7 +48,9 @@ public class Coalesced extends AbstractAggregate {
   private final double nanosecondsInVelocity;
   private final double nanosecondsInPulse;
   private double result = 0;
+  private long accumulatedValue = 0;
   private long markTime;
+  private int accumulatedCount;
 
   public Coalesced (String name, Calculation calculation, TimeUnit velocityTimeUnit, Stint pulseStint) {
 
@@ -63,38 +65,44 @@ public class Coalesced extends AbstractAggregate {
 
   public void update (long value) {
 
-    if (!process(value)) {
+    if (!process(value, true)) {
       size.incrementAndGet();
       valueQueue.add(value);
     }
   }
 
-  private boolean process (long value) {
+  private boolean process (long value, boolean required) {
 
     if (lock.tryLock()) {
       try {
 
+        Long unprocessed;
         long now = System.nanoTime();
         long transpired;
+        int cap = size.get();
+        int n = 0;
 
-        if ((transpired = (now - markTime)) > nanosecondsInPulse) {
+        if (required) {
+          accumulatedValue += value;
+          accumulatedCount++;
+        }
 
-          Long unprocessed;
-          long accumulated = value;
-          int cap = size.get();
-          int n = 0;
-
-          if (cap > 0) {
-            while ((unprocessed = valueQueue.poll()) != null) {
-              size.decrementAndGet();
-              accumulated += unprocessed;
-              if (++n >= cap) {
-                break;
-              }
+        if (cap > 0) {
+          while ((unprocessed = valueQueue.poll()) != null) {
+            size.decrementAndGet();
+            accumulatedValue += unprocessed;
+            accumulatedCount++;
+            if (++n >= cap) {
+              break;
             }
           }
+        }
 
-          result = calculation.execute(accumulated, n, transpired, nanosecondsInVelocity);
+        if ((accumulatedCount > 0) && ((transpired = (now - markTime)) > nanosecondsInPulse)) {
+          result = calculation.execute(accumulatedValue, accumulatedCount, transpired, nanosecondsInVelocity);
+
+          accumulatedValue = 0;
+          accumulatedCount = 0;
 
           markTime = now;
         }
@@ -109,7 +117,7 @@ public class Coalesced extends AbstractAggregate {
   public double getResult () {
 
     if (size.get() > 0) {
-      process(0);
+      process(0, false);
     }
 
     return result;

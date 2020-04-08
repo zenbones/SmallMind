@@ -136,7 +136,7 @@ public class Stratified extends AbstractAggregate {
     flipLock.lock();
     try {
 
-      return readRecorder.getIntervalHistogram(readHistogram);
+      return readHistogram = readRecorder.getIntervalHistogram(readHistogram);
     } finally {
       flipLock.unlock();
     }
