@@ -2,31 +2,32 @@ package org.smallmind.claxon.meter;
 
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.TimeUnit;
-import org.smallmind.claxon.meter.aggregate.Clocked;
-import org.smallmind.nutsnbolts.time.Stint;
+import org.HdrHistogram.Histogram;
+import org.smallmind.claxon.meter.aggregate.Stratified;
 
 public class Wombat {
 
   public static void main (String... args)
     throws Exception {
 
-    Clocked clocked = new Clocked("foo", TimeUnit.SECONDS, new Stint(100, TimeUnit.MILLISECONDS));
+    Stratified stratified = new Stratified("foo", TimeUnit.SECONDS);
 
     for (int i = 0; i < 10; i++) {
-      new Thread(new Worker(clocked)).start();
+      new Thread(new Worker(stratified)).start();
     }
-    new Thread(new Reader(clocked)).start();
+    new Thread(new Reader(stratified)).start();
 
     Thread.sleep(3000000);
   }
 
   private static class Reader implements Runnable {
 
-    private Clocked clocked;
+    private Stratified stratified;
+    private Histogram histogram;
 
-    public Reader (Clocked clocked) {
+    public Reader (Stratified stratified) {
 
-      this.clocked = clocked;
+      this.stratified = stratified;
     }
 
     @Override
@@ -38,18 +39,21 @@ public class Wombat {
         } catch (InterruptedException e) {
 
         }
-        System.out.println(clocked.getVelocity());
+
+        histogram = stratified.get();
+
+        System.out.println(histogram.getMean() + ":" + histogram.getMaxValue() + ":" + histogram.getTotalCount());
       }
     }
   }
 
   private static class Worker implements Runnable {
 
-    private Clocked clocked;
+    private Stratified stratified;
 
-    public Worker (Clocked clocked) {
+    public Worker (Stratified stratified) {
 
-      this.clocked = clocked;
+      this.stratified = stratified;
     }
 
     @Override
@@ -59,7 +63,7 @@ public class Wombat {
 
         long value = ThreadLocalRandom.current().nextLong(100, 300);
 
-        clocked.update(value);
+        stratified.update(value);
 
         try {
           Thread.sleep(1);
