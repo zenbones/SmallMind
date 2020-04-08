@@ -32,8 +32,8 @@
  */
 package org.smallmind.claxon.registry.indigenous;
 
-import org.smallmind.claxon.meter.Registry;
+import org.smallmind.claxon.meter.Recorder;
 
-public class IndigenousRegistry implements Registry {
+public class IndigenousRecorder implements Recorder {
 
 }

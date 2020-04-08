@@ -1,6 +1,10 @@
 package org.smallmind.claxon.meter;
 
-public class Guage implements Meter {
+public class Gauge implements Meter {
+
+  @Override
+  public void update (long value, Tag... tags) {
 
 
+  }
 }
