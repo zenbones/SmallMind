@@ -34,4 +34,5 @@ package org.smallmind.claxon.meter;
 
 public interface Registry {
 
+  <M extends Meter> M register (Identifier identifier, MeterBuilder<M> builder);
 }
