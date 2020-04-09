@@ -39,7 +39,7 @@ import org.smallmind.claxon.meter.Clock;
 import org.smallmind.nutsnbolts.time.Stint;
 import org.smallmind.nutsnbolts.time.StintUtility;
 
-public class Clocked extends AbstractAggregate {
+public class Paced extends AbstractAggregate {
 
   private final ReentrantLock lock = new ReentrantLock();
   private final AtomicLong countInPulse = new AtomicLong();
@@ -49,22 +49,22 @@ public class Clocked extends AbstractAggregate {
   private double velocity = 0;
   private long markTime;
 
-  public Clocked (Clock clock) {
+  public Paced (Clock clock) {
 
     this(null, clock, TimeUnit.SECONDS, new Stint(1, TimeUnit.SECONDS));
   }
 
-  public Clocked (String name, Clock clock) {
+  public Paced (String name, Clock clock) {
 
     this(name, clock, TimeUnit.SECONDS, new Stint(1, TimeUnit.SECONDS));
   }
 
-  public Clocked (Clock clock, TimeUnit velocityTimeUnit, Stint pulseStint) {
+  public Paced (Clock clock, TimeUnit velocityTimeUnit, Stint pulseStint) {
 
     this(null, clock, velocityTimeUnit, pulseStint);
   }
 
-  public Clocked (String name, Clock clock, TimeUnit velocityTimeUnit, Stint pulseStint) {
+  public Paced (String name, Clock clock, TimeUnit velocityTimeUnit, Stint pulseStint) {
 
     super(name);
 
