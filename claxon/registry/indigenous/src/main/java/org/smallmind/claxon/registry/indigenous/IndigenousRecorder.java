@@ -32,8 +32,50 @@
  */
 package org.smallmind.claxon.registry.indigenous;
 
+import java.io.PrintStream;
+import org.smallmind.claxon.meter.Identifier;
+import org.smallmind.claxon.meter.Quantity;
 import org.smallmind.claxon.meter.Recorder;
+import org.smallmind.claxon.meter.Tag;
 
 public class IndigenousRecorder implements Recorder {
 
+  private PrintStream output;
+
+  public IndigenousRecorder () {
+
+    this(System.out);
+  }
+
+  public IndigenousRecorder (PrintStream output) {
+
+    this.output = output;
+  }
+
+  @Override
+  public void record (Identifier identifier, Tag[] tags, Quantity[] quantities) {
+
+    StringBuilder recordBuilder = new StringBuilder(identifier.getName());
+
+    recordBuilder.append('[');
+    if ((tags != null) && (tags.length > 0)) {
+
+      boolean first = true;
+
+      for (Tag tag : tags) {
+        if (!first) {
+          recordBuilder.append(", ");
+        }
+        recordBuilder.append(tag.getKey()).append("=").append(tag.getValue());
+        first = false;
+      }
+    }
+    recordBuilder.append("].");
+
+    if ((quantities != null) && (quantities.length > 0)) {
+      for (Quantity quantity : quantities) {
+        output.println(recordBuilder + quantity.getName() + "=" + quantity.getValue());
+      }
+    }
+  }
 }

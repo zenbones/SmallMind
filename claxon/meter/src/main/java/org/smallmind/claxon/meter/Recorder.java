@@ -34,4 +34,5 @@ package org.smallmind.claxon.meter;
 
 public interface Recorder {
 
+  void record (Identifier identifier, Tag[] tags, Quantity[] quantities);
 }
