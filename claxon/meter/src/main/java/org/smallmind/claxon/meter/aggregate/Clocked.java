@@ -1,28 +1,28 @@
 /*
  * Copyright (c) 2007, 2008, 2009, 2010, 2011, 2012, 2013, 2014, 2015, 2016, 2017, 2018, 2019, 2020 David Berkman
- * 
+ *
  * This file is part of the SmallMind Code Project.
- * 
+ *
  * The SmallMind Code Project is free software, you can redistribute
  * it and/or modify it under either, at your discretion...
- * 
+ *
  * 1) The terms of GNU Affero General Public License as published by the
  * Free Software Foundation, either version 3 of the License, or (at
  * your option) any later version.
- * 
+ *
  * ...or...
- * 
+ *
  * 2) The terms of the Apache License, Version 2.0.
- * 
+ *
  * The SmallMind Code Project is distributed in the hope that it will
  * be useful, but WITHOUT ANY WARRANTY; without even the implied warranty
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License or Apache License for more details.
- * 
+ *
  * You should have received a copy of the GNU Affero General Public License
  * and the Apache License along with the SmallMind Code Project. If not, see
  * <http://www.gnu.org/licenses/> or <http://www.apache.org/licenses/LICENSE-2.0>.
- * 
+ *
  * Additional permission under the GNU Affero GPL version 3 section 7
  * ------------------------------------------------------------------
  * If you modify this Program, or any covered work, by linking or
@@ -35,6 +35,7 @@ package org.smallmind.claxon.meter.aggregate;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.locks.ReentrantLock;
+import org.smallmind.claxon.meter.Clock;
 import org.smallmind.nutsnbolts.time.Stint;
 import org.smallmind.nutsnbolts.time.StintUtility;
 
@@ -42,33 +43,36 @@ public class Clocked extends AbstractAggregate {
 
   private final ReentrantLock lock = new ReentrantLock();
   private final AtomicLong countInPulse = new AtomicLong();
+  private final Clock clock;
   private final double nanosecondsInVelocity;
   private final double nanosecondsInPulse;
   private double velocity = 0;
   private long markTime;
 
-  public Clocked () {
+  public Clocked (Clock clock) {
 
-    this(null, TimeUnit.SECONDS, new Stint(1, TimeUnit.SECONDS));
+    this(null, clock, TimeUnit.SECONDS, new Stint(1, TimeUnit.SECONDS));
   }
 
-  public Clocked (String name) {
+  public Clocked (String name, Clock clock) {
 
-    this(name, TimeUnit.SECONDS, new Stint(1, TimeUnit.SECONDS));
+    this(name, clock, TimeUnit.SECONDS, new Stint(1, TimeUnit.SECONDS));
   }
 
-  public Clocked (TimeUnit velocityTimeUnit, Stint pulseStint) {
+  public Clocked (Clock clock, TimeUnit velocityTimeUnit, Stint pulseStint) {
 
-    this(null, velocityTimeUnit, pulseStint);
+    this(null, clock, velocityTimeUnit, pulseStint);
   }
 
-  public Clocked (String name, TimeUnit velocityTimeUnit, Stint pulseStint) {
+  public Clocked (String name, Clock clock, TimeUnit velocityTimeUnit, Stint pulseStint) {
 
     super(name);
 
+    this.clock = clock;
+
     nanosecondsInVelocity = StintUtility.convertToDouble(1, velocityTimeUnit, TimeUnit.NANOSECONDS);
     nanosecondsInPulse = pulseStint.getTimeUnit().toNanos(pulseStint.getTime());
-    markTime = System.nanoTime();
+    markTime = clock.monotonicTime();
   }
 
   public void inc () {
@@ -88,7 +92,7 @@ public class Clocked extends AbstractAggregate {
     if (lock.tryLock()) {
       try {
 
-        long now = System.nanoTime();
+        long now = clock.monotonicTime();
         long transpired;
 
         if ((transpired = (now - markTime)) > nanosecondsInPulse) {
