@@ -42,8 +42,8 @@ public class Wombat {
 
   public static void main (String... args)
     throws Exception {
-
-    Stratified stratified = new Stratified("foo", new Stint(1, TimeUnit.SECONDS));
+    
+    Stratified stratified = new Stratified("foo", SystemClock.instance(), new Stint(1, TimeUnit.SECONDS));
 
     for (int i = 0; i < 10; i++) {
       new Thread(new Worker(stratified)).start();

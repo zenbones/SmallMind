@@ -32,24 +32,8 @@
  */
 package org.smallmind.claxon.meter;
 
-public class SystemClock implements Clock {
+@FunctionalInterface
+public interface Executable {
 
-  private static final SystemClock SYSTEM_CLOCK = new SystemClock();
-
-  public static SystemClock instance () {
-
-    return SYSTEM_CLOCK;
-  }
-
-  @Override
-  public long wallTime () {
-
-    return System.currentTimeMillis();
-  }
-
-  @Override
-  public long monotonicTime () {
-
-    return System.nanoTime();
-  }
+  void execute ();
 }

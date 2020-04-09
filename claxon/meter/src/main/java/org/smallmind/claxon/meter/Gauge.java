@@ -35,7 +35,18 @@ package org.smallmind.claxon.meter;
 public class Gauge implements Meter {
 
   @Override
+  public void setClock (Clock clock) {
+
+  }
+
+  @Override
   public void update (long value) {
 
+  }
+
+  @Override
+  public Quantity[] getQuantities () {
+
+    return new Quantity[0];
   }
 }

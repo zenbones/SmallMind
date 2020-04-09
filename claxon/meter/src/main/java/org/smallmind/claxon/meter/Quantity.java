@@ -32,24 +32,24 @@
  */
 package org.smallmind.claxon.meter;
 
-public class SystemClock implements Clock {
+public class Quantity {
 
-  private static final SystemClock SYSTEM_CLOCK = new SystemClock();
+  private String name;
+  private double value;
 
-  public static SystemClock instance () {
+  public Quantity (String name, double value) {
 
-    return SYSTEM_CLOCK;
+    this.name = name;
+    this.value = value;
   }
 
-  @Override
-  public long wallTime () {
+  public String getName () {
 
-    return System.currentTimeMillis();
+    return name;
   }
 
-  @Override
-  public long monotonicTime () {
+  public double getValue () {
 
-    return System.nanoTime();
+    return value;
   }
 }

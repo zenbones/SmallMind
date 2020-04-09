@@ -34,9 +34,19 @@ package org.smallmind.claxon.meter;
 
 public class GaugeBuilder implements MeterBuilder<Gauge> {
 
+  private Gauge gauge = new Gauge();
+
+  @Override
+  public MeterBuilder<Gauge> clock (Clock clock) {
+
+    gauge.setClock(clock);
+
+    return this;
+  }
+
   @Override
   public Gauge build () {
 
-    return new Gauge();
+    return gauge;
   }
 }
