@@ -66,7 +66,7 @@ public class Registry {
     if ((meter = (M)meterMap.get(key)) == null) {
       synchronized (meterMap) {
         if ((meter = (M)meterMap.get(key)) == null) {
-          meterMap.put(key, meter = builder.build());
+          meterMap.put(key, meter = builder.clock(clock).build());
         }
       }
     }
