@@ -32,23 +32,49 @@
  */
 package org.smallmind.claxon.meter.aggregate;
 
-public enum Calculation {
+import java.util.concurrent.TimeUnit;
 
-  PER_TIME {
-    @Override
-    public double execute (long accumulated, int n, long transpired, double nanosecondsInVelocity) {
+public class Pursued extends AbstractAggregate {
 
-      double timeFactor = nanosecondsInVelocity / transpired;
+  private final ExponentiallyWeightedMovingAverage[] movingAverages;
 
-      return accumulated * timeFactor;
+  public Pursued () {
+
+    this(null, TimeUnit.MINUTES, 1, 5, 15);
+  }
+
+  public Pursued (String name) {
+
+    this(name, TimeUnit.MINUTES, 1, 5, 15);
+  }
+
+  public Pursued (TimeUnit windowTimeUnit, long... windowTimes) {
+
+    this(null, windowTimeUnit, windowTimes);
+  }
+
+  public Pursued (String name, TimeUnit windowTimeUnit, long... windowTimes) {
+
+    super(name);
+
+    int index = 0;
+
+    movingAverages = new ExponentiallyWeightedMovingAverage[windowTimes.length];
+    for (long averagedTime : windowTimes) {
+      movingAverages[index++] = new ExponentiallyWeightedMovingAverage(averagedTime, windowTimeUnit);
     }
-  }, AVERAGE {
-    @Override
-    public double execute (long accumulated, int n, long transpired, double nanosecondsInVelocity) {
+  }
 
-      return accumulated / ((double)n);
+  public double get (int index) {
+
+    return movingAverages[index].getMovingAverage();
+  }
+
+  @Override
+  public void update (long value) {
+
+    for (ExponentiallyWeightedMovingAverage movingAverage : movingAverages) {
+      movingAverage.update(value);
     }
-  };
-
-  public abstract double execute (long accumulated, int n, long transpired, double nanosecondsInVelocity);
+  }
 }

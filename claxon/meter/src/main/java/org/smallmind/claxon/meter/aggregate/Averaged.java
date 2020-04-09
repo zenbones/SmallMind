@@ -32,49 +32,99 @@
  */
 package org.smallmind.claxon.meter.aggregate;
 
+import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.locks.ReentrantLock;
+import org.smallmind.nutsnbolts.time.Stint;
+import org.smallmind.nutsnbolts.time.StintUtility;
 
 public class Averaged extends AbstractAggregate {
 
-  private final ExponentiallyWeightedMovingAverage[] movingAverages;
+  private final ReentrantLock lock = new ReentrantLock();
+  private final ConcurrentLinkedQueue<Long> valueQueue = new ConcurrentLinkedQueue<>();
+  private final AtomicInteger size = new AtomicInteger();
+  private final double nanosecondsInWindow;
+  private double average = 0;
+  private long accumulatedValue = 0;
+  private long markTime;
+  private int accumulatedCount;
 
   public Averaged () {
 
-    this(null, TimeUnit.MINUTES, 1, 5, 15);
+    this(null, new Stint(1, TimeUnit.SECONDS));
   }
 
   public Averaged (String name) {
 
-    this(name, TimeUnit.MINUTES, 1, 5, 15);
+    this(name, new Stint(1, TimeUnit.SECONDS));
   }
 
-  public Averaged (TimeUnit windowTimeUnit, long... windowTimes) {
-
-    this(null, windowTimeUnit, windowTimes);
-  }
-
-  public Averaged (String name, TimeUnit windowTimeUnit, long... windowTimes) {
+  public Averaged (String name, Stint windowStint) {
 
     super(name);
 
-    int index = 0;
-
-    movingAverages = new ExponentiallyWeightedMovingAverage[windowTimes.length];
-    for (long averagedTime : windowTimes) {
-      movingAverages[index++] = new ExponentiallyWeightedMovingAverage(averagedTime, windowTimeUnit);
-    }
+    nanosecondsInWindow = StintUtility.convertToDouble(windowStint.getTime(), windowStint.getTimeUnit(), TimeUnit.NANOSECONDS);
+    markTime = System.nanoTime();
   }
 
-  public double get (int index) {
-
-    return movingAverages[index].getMovingAverage();
-  }
-
-  @Override
   public void update (long value) {
 
-    for (ExponentiallyWeightedMovingAverage movingAverage : movingAverages) {
-      movingAverage.update(value);
+    if (!process(value, true)) {
+      size.incrementAndGet();
+      valueQueue.add(value);
     }
+  }
+
+  private boolean process (long value, boolean required) {
+
+    if (lock.tryLock()) {
+      try {
+
+        Long unprocessed;
+        long now = System.nanoTime();
+        int cap = size.get();
+        int n = 0;
+
+        if (required) {
+          accumulatedValue += value;
+          accumulatedCount++;
+        }
+
+        if (cap > 0) {
+          while ((unprocessed = valueQueue.poll()) != null) {
+            size.decrementAndGet();
+            accumulatedValue += unprocessed;
+            accumulatedCount++;
+            if (++n >= cap) {
+              break;
+            }
+          }
+        }
+
+        if ((now - markTime) > nanosecondsInWindow) {
+          average = accumulatedValue / ((double)accumulatedCount);
+
+          accumulatedValue = 0;
+          accumulatedCount = 0;
+
+          markTime = now;
+        }
+
+        return true;
+      } finally {
+        lock.unlock();
+      }
+    } else {
+
+      return false;
+    }
+  }
+
+  public double getAverage () {
+
+    process(0, false);
+
+    return average;
   }
 }

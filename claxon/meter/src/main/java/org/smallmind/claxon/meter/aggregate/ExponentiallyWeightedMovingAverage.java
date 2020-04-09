@@ -71,7 +71,7 @@ public class ExponentiallyWeightedMovingAverage {
         long now = System.nanoTime();
         int cap = size.get();
         int n = 0;
-        int nPlusOne;
+        int accumulatedCount;
 
         if (cap > 0) {
           while ((unprocessed = valueQueue.poll()) != null) {
@@ -85,12 +85,12 @@ public class ExponentiallyWeightedMovingAverage {
 
         if (required | (n > 0)) {
 
-          nPlusOne = (required) ? n + 1 : n;
+          accumulatedCount = (required) ? n + 1 : n;
 
           if (markTime == 0) {
-            average = ((double)accumulated) / nPlusOne;
+            average = ((double)accumulated) / accumulatedCount;
           } else {
-            average += (1 - Math.exp(-((now - markTime) / nanosecondsInWindow))) * ((((double)accumulated) / nPlusOne) - average);
+            average += (1 - Math.exp(-((now - markTime) / nanosecondsInWindow))) * ((((double)accumulated) / accumulatedCount) - average);
           }
         }
 
