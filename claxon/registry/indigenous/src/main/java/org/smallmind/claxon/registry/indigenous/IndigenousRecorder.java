@@ -33,6 +33,7 @@
 package org.smallmind.claxon.registry.indigenous;
 
 import java.util.function.Consumer;
+import org.smallmind.claxon.meter.Domain;
 import org.smallmind.claxon.meter.Identifier;
 import org.smallmind.claxon.meter.Quantity;
 import org.smallmind.claxon.meter.Recorder;
@@ -53,9 +54,14 @@ public class IndigenousRecorder implements Recorder {
   }
 
   @Override
-  public void record (Identifier identifier, Tag[] tags, Quantity[] quantities) {
+  public void record (Domain domain, Identifier identifier, Tag[] tags, Quantity[] quantities) {
 
-    StringBuilder recordBuilder = new StringBuilder(identifier.getName());
+    StringBuilder recordBuilder = new StringBuilder();
+
+    if (domain != null) {
+      recordBuilder.append(domain).append('.');
+    }
+    recordBuilder.append(identifier);
 
     recordBuilder.append('[');
     if ((tags != null) && (tags.length > 0)) {

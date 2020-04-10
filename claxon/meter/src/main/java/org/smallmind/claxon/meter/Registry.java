@@ -1,28 +1,28 @@
 /*
  * Copyright (c) 2007, 2008, 2009, 2010, 2011, 2012, 2013, 2014, 2015, 2016, 2017, 2018, 2019, 2020 David Berkman
- * 
+ *
  * This file is part of the SmallMind Code Project.
- * 
+ *
  * The SmallMind Code Project is free software, you can redistribute
  * it and/or modify it under either, at your discretion...
- * 
+ *
  * 1) The terms of GNU Affero General Public License as published by the
  * Free Software Foundation, either version 3 of the License, or (at
  * your option) any later version.
- * 
+ *
  * ...or...
- * 
+ *
  * 2) The terms of the Apache License, Version 2.0.
- * 
+ *
  * The SmallMind Code Project is distributed in the hope that it will
  * be useful, but WITHOUT ANY WARRANTY; without even the implied warranty
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License or Apache License for more details.
- * 
+ *
  * You should have received a copy of the GNU Affero General Public License
  * and the Apache License along with the SmallMind Code Project. If not, see
  * <http://www.gnu.org/licenses/> or <http://www.apache.org/licenses/LICENSE-2.0>.
- * 
+ *
  * Additional permission under the GNU Affero GPL version 3 section 7
  * ------------------------------------------------------------------
  * If you modify this Program, or any covered work, by linking or
@@ -43,15 +43,17 @@ public class Registry {
 
   private final ConcurrentHashMap<RegistryKey, Meter> meterMap = new ConcurrentHashMap<>();
   private final ConcurrentLinkedQueue<Recorder> recorderQueue = new ConcurrentLinkedQueue<>();
+  private final Domain domain;
   private final Clock clock;
 
   public Registry () {
 
-    this(SystemClock.instance());
+    this(null, SystemClock.instance());
   }
 
-  public Registry (Clock clock) {
+  public Registry (Domain domain, Clock clock) {
 
+    this.domain = domain;
     this.clock = clock;
   }
 
@@ -102,7 +104,7 @@ public class Registry {
     for (Map.Entry<RegistryKey, Meter> meterEntry : meterMap.entrySet()) {
       for (Recorder recorder : recorderQueue) {
         try {
-          recorder.record(meterEntry.getKey().getIdentifier(), meterEntry.getKey().getTags(), meterEntry.getValue().getQuantities());
+          recorder.record(domain, meterEntry.getKey().getIdentifier(), meterEntry.getKey().getTags(), meterEntry.getValue().getQuantities());
         } catch (Exception exception) {
           LoggerManager.getLogger(Registry.class).error(exception);
         }
