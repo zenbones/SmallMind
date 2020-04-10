@@ -36,6 +36,8 @@ import java.util.concurrent.ThreadLocalRandom;
 import javax.management.MBeanServer;
 import org.smallmind.claxon.meter.Gauge;
 import org.smallmind.claxon.meter.GaugeBuilder;
+import org.smallmind.claxon.meter.Histogram;
+import org.smallmind.claxon.meter.HistogramBuilder;
 import org.smallmind.claxon.meter.Identifier;
 import org.smallmind.claxon.meter.Registry;
 import org.smallmind.claxon.meter.SystemClock;
@@ -60,10 +62,11 @@ public class Wombat {
 
     ClassPathXmlApplicationContext context = new ClassPathXmlApplicationContext("org/smallmind/claxon/registry/jmx.xml");
     Registry registry = new Registry(SystemClock.instance()).bind(new JMXRecorder(context.getBean("mbeanServer", MBeanServer.class)));
-    Gauge gauge = registry.register(Identifier.instance("id"), new GaugeBuilder(), new Tag("one", "hello"), new Tag("two", "goodbye"));
+    Gauge gauge = registry.register(Identifier.instance("gid"), new GaugeBuilder(), new Tag("one", "hello"), new Tag("two", "goodbye"));
+    Histogram histogram = registry.register(Identifier.instance("hid"), new HistogramBuilder(), new Tag("one", "hello"), new Tag("two", "goodbye"));
 
     for (int i = 0; i < 10; i++) {
-      new Thread(new Worker(averaged, bounded, paced, pursued, stratified, gauge)).start();
+      new Thread(new Worker(averaged, bounded, paced, pursued, stratified, gauge, histogram)).start();
     }
     new Thread(new Reader(registry)).start();
 
@@ -102,8 +105,9 @@ public class Wombat {
     private Pursued pursued;
     private Stratified stratified;
     private Gauge gauge;
+    private Histogram histogram;
 
-    public Worker (Averaged averaged, Bounded bounded, Paced paced, Pursued pursued, Stratified stratified, Gauge gauge) {
+    public Worker (Averaged averaged, Bounded bounded, Paced paced, Pursued pursued, Stratified stratified, Gauge gauge, Histogram histogram) {
 
       this.averaged = averaged;
       this.bounded = bounded;
@@ -111,6 +115,7 @@ public class Wombat {
       this.pursued = pursued;
       this.stratified = stratified;
       this.gauge = gauge;
+      this.histogram = histogram;
     }
 
     @Override
@@ -139,6 +144,7 @@ public class Wombat {
         // System.out.println("av:" + a + ":bo:" + b + ":pa:" + c + ":pu:" + d + ":st:" + e);
 
         gauge.update(value);
+        histogram.update(value);
 
         try {
           Thread.sleep(1);

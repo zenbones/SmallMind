@@ -47,6 +47,7 @@ public class Stratified implements Aggregate {
   private final double nanosecondsInWindow;
   private Recorder writeRecorder;
   private Recorder readRecorder;
+  private double timeFactor;
   private long markTime;
 
   public Stratified (Clock clock) {
@@ -88,8 +89,9 @@ public class Stratified implements Aggregate {
       try {
 
         long now = clock.monotonicTime();
+        long transpired;
 
-        if ((now - markTime) > nanosecondsInWindow) {
+        if ((transpired = (now - markTime)) > nanosecondsInWindow) {
 
           Recorder recorder = readRecorder;
 
@@ -97,12 +99,18 @@ public class Stratified implements Aggregate {
           recorder.reset();
           writeRecorder = recorder;
 
+          timeFactor = transpired / nanosecondsInWindow;
           markTime = now;
         }
       } finally {
         updateLock.unlock();
       }
     }
+  }
+
+  public double getTimeFactor () {
+
+    return timeFactor;
   }
 
   public Histogram get () {
