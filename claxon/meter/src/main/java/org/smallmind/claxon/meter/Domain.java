@@ -34,4 +34,38 @@ package org.smallmind.claxon.meter;
 
 public class Domain {
 
+  private String name;
+
+  public Domain (String name) {
+
+    this.name = name;
+  }
+
+  public static Domain instance (String name) {
+
+    return new Domain(name);
+  }
+
+  public String getName () {
+
+    return name;
+  }
+
+  @Override
+  public String toString () {
+
+    return name;
+  }
+
+  @Override
+  public int hashCode () {
+
+    return name.hashCode();
+  }
+
+  @Override
+  public boolean equals (Object obj) {
+
+    return (obj instanceof Domain) && name.equals(((Domain)obj).getName());
+  }
 }

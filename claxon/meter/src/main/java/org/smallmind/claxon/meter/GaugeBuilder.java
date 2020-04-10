@@ -32,14 +32,25 @@
  */
 package org.smallmind.claxon.meter;
 
+import java.util.concurrent.TimeUnit;
+import org.smallmind.nutsnbolts.time.Stint;
+
 public class GaugeBuilder implements MeterBuilder<Gauge> {
 
-  private Gauge gauge = new Gauge();
+  private Clock clock;
+  private Stint resolutionStint = new Stint(1, TimeUnit.SECONDS);
+
+  public MeterBuilder<Gauge> resolution (Stint resolutionStint) {
+
+    this.resolutionStint = resolutionStint;
+
+    return this;
+  }
 
   @Override
   public MeterBuilder<Gauge> clock (Clock clock) {
 
-    gauge.setClock(clock);
+    this.clock = clock;
 
     return this;
   }
@@ -47,6 +58,6 @@ public class GaugeBuilder implements MeterBuilder<Gauge> {
   @Override
   public Gauge build () {
 
-    return gauge;
+    return new Gauge(clock, resolutionStint);
   }
 }

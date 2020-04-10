@@ -39,7 +39,7 @@ import org.smallmind.claxon.meter.Clock;
 import org.smallmind.nutsnbolts.time.Stint;
 import org.smallmind.nutsnbolts.time.StintUtility;
 
-public class Bounded extends AbstractAggregate {
+public class Bounded implements Aggregate {
 
   private final ReentrantLock lock = new ReentrantLock();
   private final LongAccumulator maxAccumulator = new LongAccumulator(Long::max, Long.MIN_VALUE);
@@ -52,22 +52,10 @@ public class Bounded extends AbstractAggregate {
 
   public Bounded (Clock clock) {
 
-    this(null, clock, new Stint(1, TimeUnit.SECONDS));
-  }
-
-  public Bounded (String name, Clock clock) {
-
-    this(name, clock, new Stint(1, TimeUnit.SECONDS));
+    this(clock, new Stint(1, TimeUnit.SECONDS));
   }
 
   public Bounded (Clock clock, Stint windowStint) {
-
-    this(null, clock, windowStint);
-  }
-
-  public Bounded (String name, Clock clock, Stint windowStint) {
-
-    super(name);
 
     this.clock = clock;
 

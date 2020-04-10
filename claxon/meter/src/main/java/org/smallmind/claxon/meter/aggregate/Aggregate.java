@@ -34,10 +34,5 @@ package org.smallmind.claxon.meter.aggregate;
 
 public interface Aggregate {
 
-  default String getName () {
-
-    return this.getClass().getSimpleName();
-  }
-
   void update (long value);
 }

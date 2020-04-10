@@ -33,9 +33,11 @@
 package org.smallmind.claxon.meter;
 
 import java.util.Arrays;
+import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.function.Supplier;
+import org.smallmind.scribe.pen.LoggerManager;
 
 public class Registry {
 
@@ -56,6 +58,17 @@ public class Registry {
   public Clock getClock () {
 
     return clock;
+  }
+
+  public Registry bind (Recorder recorder) {
+
+    synchronized (recorderQueue) {
+      if (!recorderQueue.contains(recorder)) {
+        recorderQueue.add(recorder);
+      }
+    }
+
+    return this;
   }
 
   public <M extends Meter> M register (Identifier identifier, MeterBuilder<M> builder, Tag... tags) {
@@ -82,6 +95,19 @@ public class Registry {
   public <T> T instrument (Meter meter, Supplier<T> supplier) {
 
     return supplier.get();
+  }
+
+  public void speak () {
+
+    for (Map.Entry<RegistryKey, Meter> meterEntry : meterMap.entrySet()) {
+      for (Recorder recorder : recorderQueue) {
+        try {
+          recorder.record(meterEntry.getKey().getIdentifier(), meterEntry.getKey().getTags(), meterEntry.getValue().getQuantities());
+        } catch (Exception exception) {
+          LoggerManager.getLogger(Registry.class).error(exception);
+        }
+      }
+    }
   }
 
   private static class RegistryKey {

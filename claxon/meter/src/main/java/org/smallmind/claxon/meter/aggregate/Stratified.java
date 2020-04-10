@@ -40,7 +40,7 @@ import org.smallmind.claxon.meter.Clock;
 import org.smallmind.nutsnbolts.time.Stint;
 import org.smallmind.nutsnbolts.time.StintUtility;
 
-public class Stratified extends AbstractAggregate {
+public class Stratified implements Aggregate {
 
   private final ReentrantLock updateLock = new ReentrantLock();
   private final Clock clock;
@@ -51,42 +51,20 @@ public class Stratified extends AbstractAggregate {
 
   public Stratified (Clock clock) {
 
-    this(null, clock, 1, 3600000L, 2, new Stint(1, TimeUnit.SECONDS));
-  }
-
-  public Stratified (String name, Clock clock) {
-
-    this(name, clock, 1, 3600000L, 2, new Stint(1, TimeUnit.SECONDS));
+    this(clock, 1, 3600000L, 2, new Stint(1, TimeUnit.SECONDS));
   }
 
   public Stratified (Clock clock, Stint windowStint) {
 
-    this(null, clock, 1, 3600000L, 2, windowStint);
+    this(clock, 1, 3600000L, 2, windowStint);
   }
 
   public Stratified (Clock clock, long lowestDiscernibleValue, long highestTrackableValue, int numberOfSignificantValueDigits) {
 
-    this(null, clock, lowestDiscernibleValue, highestTrackableValue, numberOfSignificantValueDigits, new Stint(1, TimeUnit.SECONDS));
-  }
-
-  public Stratified (String name, Clock clock, Stint windowStint) {
-
-    this(name, clock, 1, 3600000L, 2, windowStint);
-  }
-
-  public Stratified (String name, Clock clock, long lowestDiscernibleValue, long highestTrackableValue, int numberOfSignificantValueDigits) {
-
-    this(name, clock, lowestDiscernibleValue, highestTrackableValue, numberOfSignificantValueDigits, new Stint(1, TimeUnit.SECONDS));
+    this(clock, lowestDiscernibleValue, highestTrackableValue, numberOfSignificantValueDigits, new Stint(1, TimeUnit.SECONDS));
   }
 
   public Stratified (Clock clock, long lowestDiscernibleValue, long highestTrackableValue, int numberOfSignificantValueDigits, Stint windowStint) {
-
-    this(null, clock, lowestDiscernibleValue, highestTrackableValue, numberOfSignificantValueDigits, windowStint);
-  }
-
-  public Stratified (String name, Clock clock, long lowestDiscernibleValue, long highestTrackableValue, int numberOfSignificantValueDigits, Stint windowStint) {
-
-    super(name);
 
     this.clock = clock;
 

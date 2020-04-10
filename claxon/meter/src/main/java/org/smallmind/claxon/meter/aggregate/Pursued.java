@@ -35,28 +35,16 @@ package org.smallmind.claxon.meter.aggregate;
 import java.util.concurrent.TimeUnit;
 import org.smallmind.claxon.meter.Clock;
 
-public class Pursued extends AbstractAggregate {
+public class Pursued implements Aggregate {
 
   private final ExponentiallyWeightedMovingAverage[] movingAverages;
 
   public Pursued (Clock clock) {
 
-    this(null, clock, TimeUnit.MINUTES, 1, 5, 15);
-  }
-
-  public Pursued (String name, Clock clock) {
-
-    this(name, clock, TimeUnit.MINUTES, 1, 5, 15);
+    this(clock, TimeUnit.MINUTES, 1, 5, 15);
   }
 
   public Pursued (Clock clock, TimeUnit windowTimeUnit, long... windowTimes) {
-
-    this(null, clock, windowTimeUnit, windowTimes);
-  }
-
-  public Pursued (String name, Clock clock, TimeUnit windowTimeUnit, long... windowTimes) {
-
-    super(name);
 
     int index = 0;
 

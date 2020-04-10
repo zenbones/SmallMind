@@ -40,7 +40,7 @@ import org.smallmind.claxon.meter.Clock;
 import org.smallmind.nutsnbolts.time.Stint;
 import org.smallmind.nutsnbolts.time.StintUtility;
 
-public class Averaged extends AbstractAggregate {
+public class Averaged implements Aggregate {
 
   private final ReentrantLock lock = new ReentrantLock();
   private final ConcurrentLinkedQueue<Long> valueQueue = new ConcurrentLinkedQueue<>();
@@ -54,17 +54,10 @@ public class Averaged extends AbstractAggregate {
 
   public Averaged (Clock clock) {
 
-    this(null, clock, new Stint(1, TimeUnit.SECONDS));
+    this(clock, new Stint(1, TimeUnit.SECONDS));
   }
 
-  public Averaged (String name, Clock clock) {
-
-    this(name, clock, new Stint(1, TimeUnit.SECONDS));
-  }
-
-  public Averaged (String name, Clock clock, Stint windowStint) {
-
-    super(name);
+  public Averaged (Clock clock, Stint windowStint) {
 
     this.clock = clock;
 

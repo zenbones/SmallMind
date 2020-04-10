@@ -34,8 +34,6 @@ package org.smallmind.claxon.meter;
 
 public interface Meter {
 
-  void setClock (Clock clock);
-
   void update (long value);
 
   Quantity[] getQuantities ();

@@ -34,19 +34,9 @@ package org.smallmind.claxon.meter.aggregate;
 
 import java.util.concurrent.atomic.AtomicLong;
 
-public class Tallied extends AbstractAggregate {
+public class Tallied implements Aggregate {
 
   private final AtomicLong count = new AtomicLong();
-
-  public Tallied () {
-
-    this(null);
-  }
-
-  public Tallied (String name) {
-
-    super(name);
-  }
 
   public void inc () {
 
