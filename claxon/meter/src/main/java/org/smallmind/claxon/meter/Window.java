@@ -30,47 +30,26 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.claxon.meter.aggregate;
+package org.smallmind.claxon.meter;
 
-import java.util.concurrent.TimeUnit;
-import org.smallmind.claxon.meter.Clock;
+public class Window {
 
-public class Pursued implements Aggregate {
+  private String name;
+  private long value;
 
-  private final ExponentiallyWeightedMovingAverage[] movingAverages;
+  public Window (String name, long value) {
 
-  public Pursued (Clock clock) {
-
-    this(clock, TimeUnit.MINUTES, 1, 5, 15);
+    this.name = name;
+    this.value = value;
   }
 
-  public Pursued (Clock clock, TimeUnit windowTimeUnit, long... windowTimes) {
+  public String getName () {
 
-    int index = 0;
-
-    movingAverages = new ExponentiallyWeightedMovingAverage[windowTimes.length];
-    for (long averagedTime : windowTimes) {
-      movingAverages[index++] = new ExponentiallyWeightedMovingAverage(clock, averagedTime, windowTimeUnit);
-    }
+    return name;
   }
 
-  public double[] getMovingAverages () {
+  public long getValue () {
 
-    double[] values = new double[movingAverages.length];
-    int index = 0;
-
-    for (ExponentiallyWeightedMovingAverage movingAverage : movingAverages) {
-      values[index++] = movingAverage.getMovingAverage();
-    }
-
-    return values;
-  }
-
-  @Override
-  public void update (long value) {
-
-    for (ExponentiallyWeightedMovingAverage movingAverage : movingAverages) {
-      movingAverage.update(value);
-    }
+    return value;
   }
 }

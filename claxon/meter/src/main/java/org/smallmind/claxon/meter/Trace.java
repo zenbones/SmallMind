@@ -30,47 +30,47 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.claxon.meter.aggregate;
+package org.smallmind.claxon.meter;
 
 import java.util.concurrent.TimeUnit;
-import org.smallmind.claxon.meter.Clock;
+import org.smallmind.claxon.meter.aggregate.Pursued;
 
-public class Pursued implements Aggregate {
+public class Trace implements Meter {
 
-  private final ExponentiallyWeightedMovingAverage[] movingAverages;
+  private final Pursued pursued;
+  private final Window[] windows;
 
-  public Pursued (Clock clock) {
+  public Trace (Clock clock, TimeUnit windowTimeUnit, Window... windows) {
 
-    this(clock, TimeUnit.MINUTES, 1, 5, 15);
-  }
-
-  public Pursued (Clock clock, TimeUnit windowTimeUnit, long... windowTimes) {
-
+    long[] windowTimes = new long[windows.length];
     int index = 0;
 
-    movingAverages = new ExponentiallyWeightedMovingAverage[windowTimes.length];
-    for (long averagedTime : windowTimes) {
-      movingAverages[index++] = new ExponentiallyWeightedMovingAverage(clock, averagedTime, windowTimeUnit);
-    }
-  }
+    this.windows = windows;
 
-  public double[] getMovingAverages () {
-
-    double[] values = new double[movingAverages.length];
-    int index = 0;
-
-    for (ExponentiallyWeightedMovingAverage movingAverage : movingAverages) {
-      values[index++] = movingAverage.getMovingAverage();
+    for (Window window : windows) {
+      windowTimes[index++] = window.getValue();
     }
 
-    return values;
+    pursued = new Pursued(clock, windowTimeUnit, windowTimes);
   }
 
   @Override
   public void update (long value) {
 
-    for (ExponentiallyWeightedMovingAverage movingAverage : movingAverages) {
-      movingAverage.update(value);
+    pursued.update(value);
+  }
+
+  @Override
+  public Quantity[] getQuantities () {
+
+    Quantity[] quantities = new Quantity[windows.length];
+    double[] values = pursued.getMovingAverages();
+    int index = 0;
+
+    for (Window window : windows) {
+      quantities[index] = new Quantity(window.getName(), values[index++]);
     }
+
+    return quantities;
   }
 }

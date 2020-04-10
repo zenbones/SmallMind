@@ -30,47 +30,33 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.claxon.meter.aggregate;
+package org.smallmind.claxon.meter;
 
-import java.util.concurrent.TimeUnit;
-import org.smallmind.claxon.meter.Clock;
+import org.smallmind.claxon.meter.aggregate.Bounded;
+import org.smallmind.claxon.meter.aggregate.Paced;
+import org.smallmind.nutsnbolts.time.Stint;
 
-public class Pursued implements Aggregate {
+public class Speedometer implements Meter {
 
-  private final ExponentiallyWeightedMovingAverage[] movingAverages;
+  private final Bounded bounded;
+  private final Paced paced;
 
-  public Pursued (Clock clock) {
+  public Speedometer (Clock clock, Stint resolutionStint) {
 
-    this(clock, TimeUnit.MINUTES, 1, 5, 15);
-  }
-
-  public Pursued (Clock clock, TimeUnit windowTimeUnit, long... windowTimes) {
-
-    int index = 0;
-
-    movingAverages = new ExponentiallyWeightedMovingAverage[windowTimes.length];
-    for (long averagedTime : windowTimes) {
-      movingAverages[index++] = new ExponentiallyWeightedMovingAverage(clock, averagedTime, windowTimeUnit);
-    }
-  }
-
-  public double[] getMovingAverages () {
-
-    double[] values = new double[movingAverages.length];
-    int index = 0;
-
-    for (ExponentiallyWeightedMovingAverage movingAverage : movingAverages) {
-      values[index++] = movingAverage.getMovingAverage();
-    }
-
-    return values;
+    bounded = new Bounded(clock, resolutionStint);
+    paced = new Paced(clock, resolutionStint.getTimeUnit(), resolutionStint);
   }
 
   @Override
   public void update (long value) {
 
-    for (ExponentiallyWeightedMovingAverage movingAverage : movingAverages) {
-      movingAverage.update(value);
-    }
+    bounded.update(value);
+    paced.update(1);
+  }
+
+  @Override
+  public Quantity[] getQuantities () {
+
+    return new Quantity[] {new Quantity("minimum", bounded.getMinimum()), new Quantity("maximum", bounded.getMaximum()), new Quantity("velocity", paced.getVelocity())};
   }
 }

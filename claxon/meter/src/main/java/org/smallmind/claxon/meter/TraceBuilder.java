@@ -30,47 +30,41 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.claxon.meter.aggregate;
+package org.smallmind.claxon.meter;
 
 import java.util.concurrent.TimeUnit;
-import org.smallmind.claxon.meter.Clock;
 
-public class Pursued implements Aggregate {
+public class TraceBuilder implements MeterBuilder<Trace> {
 
-  private final ExponentiallyWeightedMovingAverage[] movingAverages;
+  private Clock clock;
+  private TimeUnit windowTimeUnit = TimeUnit.MINUTES;
+  private Window[] windows = new Window[] {new Window("m1", 1), new Window("m5", 5), new Window("m15", 15)};
 
-  public Pursued (Clock clock) {
+  public MeterBuilder<Trace> timeUnit (TimeUnit windowTimeUnit) {
 
-    this(clock, TimeUnit.MINUTES, 1, 5, 15);
+    this.windows = windows;
+
+    return this;
   }
 
-  public Pursued (Clock clock, TimeUnit windowTimeUnit, long... windowTimes) {
+  public MeterBuilder<Trace> setWindows (Window[] windows) {
 
-    int index = 0;
+    this.windows = windows;
 
-    movingAverages = new ExponentiallyWeightedMovingAverage[windowTimes.length];
-    for (long averagedTime : windowTimes) {
-      movingAverages[index++] = new ExponentiallyWeightedMovingAverage(clock, averagedTime, windowTimeUnit);
-    }
-  }
-
-  public double[] getMovingAverages () {
-
-    double[] values = new double[movingAverages.length];
-    int index = 0;
-
-    for (ExponentiallyWeightedMovingAverage movingAverage : movingAverages) {
-      values[index++] = movingAverage.getMovingAverage();
-    }
-
-    return values;
+    return this;
   }
 
   @Override
-  public void update (long value) {
+  public MeterBuilder<Trace> clock (Clock clock) {
 
-    for (ExponentiallyWeightedMovingAverage movingAverage : movingAverages) {
-      movingAverage.update(value);
-    }
+    this.clock = clock;
+
+    return this;
+  }
+
+  @Override
+  public Trace build () {
+
+    return new Trace(clock, windowTimeUnit, windows);
   }
 }

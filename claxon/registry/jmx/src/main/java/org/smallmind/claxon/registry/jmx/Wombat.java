@@ -42,6 +42,8 @@ import org.smallmind.claxon.meter.Identifier;
 import org.smallmind.claxon.meter.Registry;
 import org.smallmind.claxon.meter.SystemClock;
 import org.smallmind.claxon.meter.Tag;
+import org.smallmind.claxon.meter.Trace;
+import org.smallmind.claxon.meter.TraceBuilder;
 import org.smallmind.claxon.meter.aggregate.Averaged;
 import org.smallmind.claxon.meter.aggregate.Bounded;
 import org.smallmind.claxon.meter.aggregate.Paced;
@@ -64,9 +66,10 @@ public class Wombat {
     Registry registry = new Registry(SystemClock.instance()).bind(new JMXRecorder(context.getBean("mbeanServer", MBeanServer.class)));
     Gauge gauge = registry.register(Identifier.instance("gid"), new GaugeBuilder(), new Tag("one", "hello"), new Tag("two", "goodbye"));
     Histogram histogram = registry.register(Identifier.instance("hid"), new HistogramBuilder(), new Tag("one", "hello"), new Tag("two", "goodbye"));
+    Trace trace = registry.register(Identifier.instance("tid"), new TraceBuilder(), new Tag("one", "hello"), new Tag("two", "goodbye"));
 
     for (int i = 0; i < 10; i++) {
-      new Thread(new Worker(averaged, bounded, paced, pursued, stratified, gauge, histogram)).start();
+      new Thread(new Worker(averaged, bounded, paced, pursued, stratified, gauge, histogram, trace)).start();
     }
     new Thread(new Reader(registry)).start();
 
@@ -106,8 +109,9 @@ public class Wombat {
     private Stratified stratified;
     private Gauge gauge;
     private Histogram histogram;
+    private Trace trace;
 
-    public Worker (Averaged averaged, Bounded bounded, Paced paced, Pursued pursued, Stratified stratified, Gauge gauge, Histogram histogram) {
+    public Worker (Averaged averaged, Bounded bounded, Paced paced, Pursued pursued, Stratified stratified, Gauge gauge, Histogram histogram, Trace trace) {
 
       this.averaged = averaged;
       this.bounded = bounded;
@@ -116,6 +120,7 @@ public class Wombat {
       this.stratified = stratified;
       this.gauge = gauge;
       this.histogram = histogram;
+      this.trace = trace;
     }
 
     @Override
@@ -145,6 +150,7 @@ public class Wombat {
 
         gauge.update(value);
         histogram.update(value);
+        trace.update(value);
 
         try {
           Thread.sleep(1);

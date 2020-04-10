@@ -30,47 +30,34 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.claxon.meter.aggregate;
+package org.smallmind.claxon.meter;
 
 import java.util.concurrent.TimeUnit;
-import org.smallmind.claxon.meter.Clock;
+import org.smallmind.nutsnbolts.time.Stint;
 
-public class Pursued implements Aggregate {
+public class SpeedometerBuilder implements MeterBuilder<Speedometer> {
 
-  private final ExponentiallyWeightedMovingAverage[] movingAverages;
+  private Clock clock;
+  private Stint resolutionStint = new Stint(1, TimeUnit.SECONDS);
 
-  public Pursued (Clock clock) {
+  public MeterBuilder<Speedometer> resolution (Stint resolutionStint) {
 
-    this(clock, TimeUnit.MINUTES, 1, 5, 15);
-  }
+    this.resolutionStint = resolutionStint;
 
-  public Pursued (Clock clock, TimeUnit windowTimeUnit, long... windowTimes) {
-
-    int index = 0;
-
-    movingAverages = new ExponentiallyWeightedMovingAverage[windowTimes.length];
-    for (long averagedTime : windowTimes) {
-      movingAverages[index++] = new ExponentiallyWeightedMovingAverage(clock, averagedTime, windowTimeUnit);
-    }
-  }
-
-  public double[] getMovingAverages () {
-
-    double[] values = new double[movingAverages.length];
-    int index = 0;
-
-    for (ExponentiallyWeightedMovingAverage movingAverage : movingAverages) {
-      values[index++] = movingAverage.getMovingAverage();
-    }
-
-    return values;
+    return this;
   }
 
   @Override
-  public void update (long value) {
+  public MeterBuilder<Speedometer> clock (Clock clock) {
 
-    for (ExponentiallyWeightedMovingAverage movingAverage : movingAverages) {
-      movingAverage.update(value);
-    }
+    this.clock = clock;
+
+    return this;
+  }
+
+  @Override
+  public Speedometer build () {
+
+    return new Speedometer(clock, resolutionStint);
   }
 }

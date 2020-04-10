@@ -32,31 +32,31 @@
  */
 package org.smallmind.claxon.meter;
 
+import org.smallmind.claxon.meter.aggregate.Averaged;
 import org.smallmind.claxon.meter.aggregate.Bounded;
-import org.smallmind.claxon.meter.aggregate.Paced;
 import org.smallmind.nutsnbolts.time.Stint;
 
 public class Gauge implements Meter {
 
   private final Bounded bounded;
-  private final Paced paced;
+  private final Averaged averaged;
 
   public Gauge (Clock clock, Stint resolutionStint) {
 
     bounded = new Bounded(clock, resolutionStint);
-    paced = new Paced(clock, resolutionStint.getTimeUnit(), resolutionStint);
+    averaged = new Averaged(clock, resolutionStint);
   }
 
   @Override
   public void update (long value) {
 
     bounded.update(value);
-    paced.update(1);
+    averaged.update(value);
   }
 
   @Override
   public Quantity[] getQuantities () {
 
-    return new Quantity[] {new Quantity("maximum", bounded.getMaximum()), new Quantity("velocity", paced.getVelocity())};
+    return new Quantity[] {new Quantity("minimum", bounded.getMinimum()), new Quantity("maximum", bounded.getMaximum()), new Quantity("average", averaged.getAverage())};
   }
 }
