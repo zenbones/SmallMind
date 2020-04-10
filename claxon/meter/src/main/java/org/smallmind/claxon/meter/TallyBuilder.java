@@ -30,52 +30,19 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.claxon.registry.indigenous;
+package org.smallmind.claxon.meter;
 
-import java.util.function.Consumer;
-import org.smallmind.claxon.meter.Identifier;
-import org.smallmind.claxon.meter.Quantity;
-import org.smallmind.claxon.meter.Recorder;
-import org.smallmind.claxon.meter.Tag;
+public class TallyBuilder implements MeterBuilder<Tally> {
 
-public class IndigenousRecorder implements Recorder {
+  @Override
+  public MeterBuilder<Tally> clock (Clock clock) {
 
-  private Consumer<String> output;
-
-  public IndigenousRecorder () {
-
-    this(System.out::println);
-  }
-
-  public IndigenousRecorder (Consumer<String> output) {
-
-    this.output = output;
+    return this;
   }
 
   @Override
-  public void record (Identifier identifier, Tag[] tags, Quantity[] quantities) {
+  public Tally build () {
 
-    StringBuilder recordBuilder = new StringBuilder(identifier.getName());
-
-    recordBuilder.append('[');
-    if ((tags != null) && (tags.length > 0)) {
-
-      boolean first = true;
-
-      for (Tag tag : tags) {
-        if (!first) {
-          recordBuilder.append(", ");
-        }
-        recordBuilder.append(tag.getKey()).append("=").append(tag.getValue());
-        first = false;
-      }
-    }
-    recordBuilder.append("].");
-
-    if ((quantities != null) && (quantities.length > 0)) {
-      for (Quantity quantity : quantities) {
-        output.accept(recordBuilder + quantity.getName() + "=" + quantity.getValue());
-      }
-    }
+    return new Tally();
   }
 }
