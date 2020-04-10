@@ -36,11 +36,13 @@ import java.util.Hashtable;
 import javax.management.Attribute;
 import javax.management.AttributeList;
 import javax.management.InstanceAlreadyExistsException;
+import javax.management.InstanceNotFoundException;
 import javax.management.MBeanRegistrationException;
 import javax.management.MBeanServer;
 import javax.management.MalformedObjectNameException;
 import javax.management.NotCompliantMBeanException;
 import javax.management.ObjectName;
+import javax.management.ReflectionException;
 import org.smallmind.claxon.meter.Identifier;
 import org.smallmind.claxon.meter.Quantity;
 import org.smallmind.claxon.meter.Recorder;
@@ -57,7 +59,7 @@ public class JMXRecorder implements Recorder {
 
   @Override
   public void record (Identifier identifier, Tag[] tags, Quantity[] quantities)
-    throws MalformedObjectNameException, NotCompliantMBeanException, MBeanRegistrationException, InstanceAlreadyExistsException {
+    throws MalformedObjectNameException, NotCompliantMBeanException, MBeanRegistrationException, InstanceAlreadyExistsException, InstanceNotFoundException, ReflectionException {
 
     if ((quantities != null) && (quantities.length > 0)) {
 
@@ -81,11 +83,11 @@ public class JMXRecorder implements Recorder {
         }
       }
 
-
       for (Quantity quantity : quantities) {
         attributeList.add(new Attribute(quantity.getName(), quantity.getValue()));
       }
 
+      server.setAttributes(objectName, attributeList);
     }
   }
 }
