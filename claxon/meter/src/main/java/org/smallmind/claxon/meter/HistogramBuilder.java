@@ -33,7 +33,6 @@
 package org.smallmind.claxon.meter;
 
 import java.util.concurrent.TimeUnit;
-import org.smallmind.claxon.Percentile;
 import org.smallmind.nutsnbolts.time.Stint;
 
 public class HistogramBuilder implements MeterBuilder<Histogram> {

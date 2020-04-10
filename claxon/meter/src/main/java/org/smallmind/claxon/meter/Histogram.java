@@ -32,7 +32,6 @@
  */
 package org.smallmind.claxon.meter;
 
-import org.smallmind.claxon.Percentile;
 import org.smallmind.claxon.meter.aggregate.Stratified;
 import org.smallmind.nutsnbolts.time.Stint;
 
