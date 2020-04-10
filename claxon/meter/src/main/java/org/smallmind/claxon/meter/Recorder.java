@@ -34,6 +34,8 @@ package org.smallmind.claxon.meter;
 
 public interface Recorder {
 
+  RecorderType getType ();
+
   void record (Domain domain, Identifier identifier, Tag[] tags, Quantity[] quantities)
     throws Exception;
 }

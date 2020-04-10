@@ -37,6 +37,7 @@ import org.smallmind.claxon.meter.Domain;
 import org.smallmind.claxon.meter.Identifier;
 import org.smallmind.claxon.meter.Quantity;
 import org.smallmind.claxon.meter.Recorder;
+import org.smallmind.claxon.meter.RecorderType;
 import org.smallmind.claxon.meter.Tag;
 
 public class IndigenousRecorder implements Recorder {
@@ -51,6 +52,12 @@ public class IndigenousRecorder implements Recorder {
   public IndigenousRecorder (Consumer<String> output) {
 
     this.output = output;
+  }
+
+  @Override
+  public RecorderType getType () {
+
+    return RecorderType.PUSH;
   }
 
   @Override
