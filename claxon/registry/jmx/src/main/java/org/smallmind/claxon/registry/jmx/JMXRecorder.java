@@ -34,14 +34,11 @@ package org.smallmind.claxon.registry.jmx;
 
 import java.util.Hashtable;
 import javax.management.InstanceAlreadyExistsException;
-import javax.management.MBeanInfo;
 import javax.management.MBeanRegistrationException;
 import javax.management.MBeanServer;
-import javax.management.MXBean;
 import javax.management.MalformedObjectNameException;
 import javax.management.NotCompliantMBeanException;
 import javax.management.ObjectName;
-import javax.management.StandardMBean;
 import org.smallmind.claxon.meter.Identifier;
 import org.smallmind.claxon.meter.Quantity;
 import org.smallmind.claxon.meter.Recorder;
@@ -74,11 +71,7 @@ public class JMXRecorder implements Recorder {
     if (!server.isRegistered(objectName)) {
       synchronized (server) {
         if (!server.isRegistered(objectName)) {
-
-          MBeanInfo i;
-          StandardMBean mBean = null;
-
-          server.registerMBean(mBean, objectName);
+          server.registerMBean(new MeterDynamicMbean(null, identifier, tags, quantities), objectName);
         }
       }
     }
