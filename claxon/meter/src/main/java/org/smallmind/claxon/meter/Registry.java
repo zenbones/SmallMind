@@ -74,12 +74,12 @@ public class Registry {
     return meter;
   }
 
-  public void instrument (Executable executable) {
+  public void instrument (Meter meter, Executable executable) {
 
     executable.execute();
   }
 
-  public <T> T instrument (Supplier<T> supplier) {
+  public <T> T instrument (Meter meter, Supplier<T> supplier) {
 
     return supplier.get();
   }

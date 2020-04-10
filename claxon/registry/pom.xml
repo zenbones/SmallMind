@@ -12,5 +12,6 @@
   <packaging>pom</packaging>
   <modules>
     <module>indigenous</module>
+    <module>jmx</module>
   </modules>
 </project>
