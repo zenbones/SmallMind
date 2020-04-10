@@ -71,33 +71,8 @@ public class Wombat {
     for (int i = 0; i < 10; i++) {
       new Thread(new Worker(averaged, bounded, paced, pursued, stratified, gauge, histogram, trace)).start();
     }
-    new Thread(new Reader(registry)).start();
 
     Thread.sleep(3000000);
-  }
-
-  private static class Reader implements Runnable {
-
-    private Registry registry;
-
-    public Reader (Registry registry) {
-
-      this.registry = registry;
-    }
-
-    @Override
-    public void run () {
-
-      while (true) {
-        try {
-          Thread.sleep(1000);
-        } catch (InterruptedException e) {
-
-        }
-
-        registry.speak();
-      }
-    }
   }
 
   private static class Worker implements Runnable {
