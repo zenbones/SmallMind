@@ -173,7 +173,7 @@
       </dependency>
       <dependency>
         <groupId>org.smallmind</groupId>
-        <artifactId>claxon-meter</artifactId>
+        <artifactId>claxon-registry</artifactId>
         <version>${project.version}</version>
       </dependency>
       <dependency>
