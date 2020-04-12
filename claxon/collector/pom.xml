@@ -11,7 +11,9 @@
   <description>Collector Monitoring Extensions</description>
   <packaging>pom</packaging>
   <modules>
+    <module>datadog</module>
     <module>indigenous</module>
     <module>jmx</module>
+    <module>prometheus</module>
   </modules>
 </project>
