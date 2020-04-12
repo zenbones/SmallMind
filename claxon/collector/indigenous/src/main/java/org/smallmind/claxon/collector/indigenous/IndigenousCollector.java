@@ -33,11 +33,10 @@
 package org.smallmind.claxon.collector.indigenous;
 
 import java.util.function.Consumer;
+import org.smallmind.claxon.registry.CollectionMethod;
 import org.smallmind.claxon.registry.Collector;
-import org.smallmind.claxon.registry.Domain;
 import org.smallmind.claxon.registry.Identifier;
 import org.smallmind.claxon.registry.Quantity;
-import org.smallmind.claxon.registry.CollectionMethod;
 import org.smallmind.claxon.registry.Tag;
 
 public class IndigenousCollector implements Collector {
@@ -61,14 +60,9 @@ public class IndigenousCollector implements Collector {
   }
 
   @Override
-  public void record (Domain domain, Identifier identifier, Tag[] tags, Quantity[] quantities) {
+  public void record (Identifier identifier, Tag[] tags, Quantity[] quantities) {
 
-    StringBuilder recordBuilder = new StringBuilder();
-
-    if (domain != null) {
-      recordBuilder.append(domain).append('.');
-    }
-    recordBuilder.append(identifier);
+    StringBuilder recordBuilder = new StringBuilder(identifier.getName());
 
     recordBuilder.append('[');
     if ((tags != null) && (tags.length > 0)) {

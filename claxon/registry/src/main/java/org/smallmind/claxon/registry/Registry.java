@@ -46,50 +46,28 @@ public class Registry {
   private final ConcurrentHashMap<String, Collector> collectorMap = new ConcurrentHashMap<>();
   private final ConcurrentHashMap<RegistryKey, Meter> meterMap = new ConcurrentHashMap<>();
   private final CollectionWorker collectionWorker;
-  private final Domain domain;
   private final Clock clock;
   private final Stint collectionStint;
 
   public Registry () {
 
-    this(null, SystemClock.instance(), new Stint(1, TimeUnit.SECONDS));
-  }
-
-  public Registry (Domain domain) {
-
-    this(domain, SystemClock.instance(), new Stint(1, TimeUnit.SECONDS));
+    this(SystemClock.instance(), new Stint(1, TimeUnit.SECONDS));
   }
 
   public Registry (Clock clock) {
 
-    this(null, clock, new Stint(1, TimeUnit.SECONDS));
+    this(clock, new Stint(1, TimeUnit.SECONDS));
   }
 
   public Registry (Stint collectionStint) {
 
-    this(null, SystemClock.instance(), collectionStint);
-  }
-
-  public Registry (Domain domain, Clock clock) {
-
-    this(domain, clock, new Stint(1, TimeUnit.SECONDS));
-  }
-
-  public Registry (Domain domain, Stint collectionStint) {
-
-    this(domain, SystemClock.instance(), collectionStint);
+    this(SystemClock.instance(), collectionStint);
   }
 
   public Registry (Clock clock, Stint collectionStint) {
 
-    this(null, clock, collectionStint);
-  }
-
-  public Registry (Domain domain, Clock clock, Stint collectionStint) {
-
     Thread workerThread = new Thread(collectionWorker = new CollectionWorker());
 
-    this.domain = domain;
     this.clock = clock;
     this.collectionStint = collectionStint;
 
@@ -142,7 +120,7 @@ public class Registry {
       if (CollectionMethod.PUSH.equals(collector.getCollectionMethod())) {
         for (Map.Entry<RegistryKey, Meter> meterEntry : meterMap.entrySet()) {
           try {
-            collector.record(domain, meterEntry.getKey().getIdentifier(), meterEntry.getKey().getTags(), meterEntry.getValue().getQuantities());
+            collector.record(meterEntry.getKey().getIdentifier(), meterEntry.getKey().getTags(), meterEntry.getValue().getQuantities());
           } catch (Exception exception) {
             LoggerManager.getLogger(Registry.class).error(exception);
           }

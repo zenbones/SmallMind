@@ -43,11 +43,10 @@ import javax.management.MalformedObjectNameException;
 import javax.management.NotCompliantMBeanException;
 import javax.management.ObjectName;
 import javax.management.ReflectionException;
+import org.smallmind.claxon.registry.CollectionMethod;
 import org.smallmind.claxon.registry.Collector;
-import org.smallmind.claxon.registry.Domain;
 import org.smallmind.claxon.registry.Identifier;
 import org.smallmind.claxon.registry.Quantity;
-import org.smallmind.claxon.registry.CollectionMethod;
 import org.smallmind.claxon.registry.Tag;
 
 public class JMXCollector implements Collector {
@@ -66,7 +65,7 @@ public class JMXCollector implements Collector {
   }
 
   @Override
-  public void record (Domain domain, Identifier identifier, Tag[] tags, Quantity[] quantities)
+  public void record (Identifier identifier, Tag[] tags, Quantity[] quantities)
     throws MalformedObjectNameException, NotCompliantMBeanException, MBeanRegistrationException, InstanceAlreadyExistsException, InstanceNotFoundException, ReflectionException {
 
     if ((quantities != null) && (quantities.length > 0)) {
@@ -81,12 +80,12 @@ public class JMXCollector implements Collector {
         }
       }
 
-      objectName = new ObjectName((domain != null) ? domain.getName() + "." + identifier.getName() : identifier.getName(), tagTable);
+      objectName = new ObjectName(identifier.getName(), tagTable);
 
       if (!server.isRegistered(objectName)) {
         synchronized (server) {
           if (!server.isRegistered(objectName)) {
-            server.registerMBean(new MeterDynamicMbean(new Domain("domain"), identifier, tags, quantities), objectName);
+            server.registerMBean(new MeterDynamicMbean(identifier, tags, quantities), objectName);
           }
         }
       }
