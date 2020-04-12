@@ -34,5 +34,5 @@ package org.smallmind.instrument;
 
 public interface Temporal {
 
-  public abstract Clock getClock ();
+  Clock getClock ();
 }

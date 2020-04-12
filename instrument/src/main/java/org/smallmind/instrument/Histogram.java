@@ -35,5 +35,5 @@ package org.smallmind.instrument;
 // Count, sum, minimum, maximum, average, median, standard deviation and percentiles (75th, 95th, 98th, 99th, 999th)
 public interface Histogram extends Metric<Histogram>, Estimating, Statistician {
 
-  public abstract void update (long value);
+  void update (long value);
 }

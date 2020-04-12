@@ -34,12 +34,12 @@ package org.smallmind.phalanx.wire;
 
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicReference;
-import org.smallmind.nutsnbolts.time.Duration;
+import org.smallmind.nutsnbolts.time.Stint;
 
 public class AsynchronousTransmissionCallback extends TransmissionCallback {
 
   private final CountDownLatch resultLatch = new CountDownLatch(1);
-  private final AtomicReference<Duration> timeoutDurationRef = new AtomicReference<>();
+  private final AtomicReference<Stint> timeoutDurationRef = new AtomicReference<>();
   private final AtomicReference<ResultSignal> resultSignalRef = new AtomicReference<>();
   private String serviceName;
   private String functionName;
@@ -51,9 +51,9 @@ public class AsynchronousTransmissionCallback extends TransmissionCallback {
   }
 
   @Override
-  public void destroy (Duration timeoutDuration) {
+  public void destroy (Stint timeoutStint) {
 
-    timeoutDurationRef.set(timeoutDuration);
+    timeoutDurationRef.set(timeoutStint);
 
     resultLatch.countDown();
   }
@@ -68,9 +68,9 @@ public class AsynchronousTransmissionCallback extends TransmissionCallback {
 
     if ((resultSignal = resultSignalRef.get()) == null) {
 
-      Duration timeoutDuration = timeoutDurationRef.get();
+      Stint timeoutStint = timeoutDurationRef.get();
 
-      throw new TransportTimeoutException("The timeout(%s) milliseconds was exceeded while waiting for a response(%s.%s)", (timeoutDuration == null) ? "unknown" : String.valueOf(timeoutDuration.toMilliseconds()), serviceName, functionName);
+      throw new TransportTimeoutException("The timeout(%s) milliseconds was exceeded while waiting for a response(%s.%s)", (timeoutStint == null) ? "unknown" : String.valueOf(timeoutStint.toMilliseconds()), serviceName, functionName);
     }
 
     handleError(signalCodec, resultSignal);

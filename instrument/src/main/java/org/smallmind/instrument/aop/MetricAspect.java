@@ -54,7 +54,7 @@ public abstract class MetricAspect {
   public Object engage (ProceedingJoinPoint thisJoinPoint, JMX jmx, String alias, Metrics.MetricBuilder<?> metricBuilder)
     throws Throwable {
 
-    Metric metric;
+    Metric<?> metric;
     MetricProperty[] properties;
     String supplierKey;
 

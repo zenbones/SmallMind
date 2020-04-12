@@ -35,7 +35,7 @@ package org.smallmind.instrument;
 // Tracking metric plus exponentially weighted moving average (1 minute, 5 minutes, 15 minutes)
 public interface Gauge extends Metric<Gauge>, Gauged, Temporal, Stoppable {
 
-  public abstract void mark ();
+  void mark ();
 
-  public abstract void mark (long n);
+  void mark (long n);
 }

@@ -145,11 +145,7 @@ public class DotNotatedLoggerNameFilter implements Filter {
           }
         }
       } else if (patternMap.remove(protoPattern) != null) {
-        for (String className : classList) {
-          if (!noCachedMatch(className, false)) {
-            classList.remove(className);
-          }
-        }
+        classList.removeIf(className -> !noCachedMatch(className, false));
       }
     } finally {
       patternWriteLock.unlock();

@@ -37,27 +37,27 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentSkipListSet;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
-import org.smallmind.nutsnbolts.time.Duration;
+import org.smallmind.nutsnbolts.time.Stint;
 
 public class SelfDestructiveMap<K extends Comparable<K>, S extends SelfDestructive> {
 
   private final ConcurrentHashMap<K, S> internalMap = new ConcurrentHashMap<K, S>();
   private final ConcurrentSkipListSet<SelfDestructiveKey<K>> ignitionKeySet = new ConcurrentSkipListSet<>();
-  private final Duration defaultTimeoutDuration;
-  private final Duration pulseTimeDuration;
+  private final Stint defaultTimeoutStint;
+  private final Stint pulseTimeStint;
   private IgnitionWorker ignitionWorker;
 
-  public SelfDestructiveMap (Duration defaultTimeoutDuration) {
+  public SelfDestructiveMap (Stint defaultTimeoutStint) {
 
-    this(defaultTimeoutDuration, new Duration(1, TimeUnit.SECONDS));
+    this(defaultTimeoutStint, new Stint(1, TimeUnit.SECONDS));
   }
 
-  public SelfDestructiveMap (Duration defaultTimeoutDuration, Duration pulseTimeDuration) {
+  public SelfDestructiveMap (Stint defaultTimeoutStint, Stint pulseTimeStint) {
 
     Thread ignitionThread;
 
-    this.defaultTimeoutDuration = defaultTimeoutDuration;
-    this.pulseTimeDuration = pulseTimeDuration;
+    this.defaultTimeoutStint = defaultTimeoutStint;
+    this.pulseTimeStint = pulseTimeStint;
 
     ignitionThread = new Thread(ignitionWorker = new IgnitionWorker());
     ignitionThread.setDaemon(true);
@@ -71,15 +71,15 @@ public class SelfDestructiveMap<K extends Comparable<K>, S extends SelfDestructi
 
   public S putIfAbsent (K key, S value) {
 
-    return putIfAbsent(key, value, defaultTimeoutDuration);
+    return putIfAbsent(key, value, defaultTimeoutStint);
   }
 
-  public S putIfAbsent (K key, S value, Duration timeoutDuration) {
+  public S putIfAbsent (K key, S value, Stint timeoutStint) {
 
     S previousValue;
 
     if ((previousValue = internalMap.putIfAbsent(key, value)) == null) {
-      ignitionKeySet.add(new SelfDestructiveKey<>(key, (timeoutDuration != null) ? timeoutDuration : defaultTimeoutDuration));
+      ignitionKeySet.add(new SelfDestructiveKey<>(key, (timeoutStint != null) ? timeoutStint : defaultTimeoutStint));
     }
 
     return previousValue;
@@ -122,11 +122,11 @@ public class SelfDestructiveMap<K extends Comparable<K>, S extends SelfDestructi
       try {
         runnableThread = Thread.currentThread();
 
-        while (!terminationLatch.await(pulseTimeDuration.getTime(), pulseTimeDuration.getTimeUnit())) {
+        while (!terminationLatch.await(pulseTimeStint.getTime(), pulseTimeStint.getTimeUnit())) {
 
           NavigableSet<SelfDestructiveKey<K>> ignitedKeySet;
 
-          if (!(ignitedKeySet = ignitionKeySet.headSet(new SelfDestructiveKey<>(Duration.none()))).isEmpty()) {
+          if (!(ignitedKeySet = ignitionKeySet.headSet(new SelfDestructiveKey<>(Stint.none()))).isEmpty()) {
 
             SelfDestructiveKey<K> ignitedKey;
 
@@ -135,7 +135,7 @@ public class SelfDestructiveMap<K extends Comparable<K>, S extends SelfDestructi
               SelfDestructive selfDestructive;
 
               if ((selfDestructive = internalMap.remove(ignitedKey.getMapKey())) != null) {
-                selfDestructive.destroy(ignitedKey.getTimeoutDuration());
+                selfDestructive.destroy(ignitedKey.getTimeoutStint());
               }
             }
           }

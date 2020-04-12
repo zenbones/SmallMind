@@ -32,9 +32,9 @@
  */
 package org.smallmind.nutsnbolts.util;
 
-import org.smallmind.nutsnbolts.time.Duration;
+import org.smallmind.nutsnbolts.time.Stint;
 
 public interface SelfDestructive {
 
-  public abstract void destroy (Duration timeoutDuration);
+  public abstract void destroy (Stint timeoutStint);
 }

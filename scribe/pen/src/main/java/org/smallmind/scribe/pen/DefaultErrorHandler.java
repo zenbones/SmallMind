@@ -32,7 +32,7 @@
  */
 package org.smallmind.scribe.pen;
 
-import org.smallmind.scribe.pen.adapter.LoggingBlueprintsFactory;
+import org.smallmind.scribe.pen.adapter.LoggingBlueprintFactory;
 
 public class DefaultErrorHandler implements ErrorHandler {
 
@@ -55,7 +55,7 @@ public class DefaultErrorHandler implements ErrorHandler {
 
   public void process (Record record, Exception exception, String errorMessage, Object... args) {
 
-    appender.publish(LoggingBlueprintsFactory.getLoggingBlueprints().errorRecord(record, exception, errorMessage, args));
+    appender.publish(LoggingBlueprintFactory.getLoggingBlueprint().errorRecord(record, exception, errorMessage, args));
     appender.publish(record);
   }
 }

@@ -34,15 +34,15 @@ package org.smallmind.instrument;
 
 public interface Estimating extends Countable {
 
-  public abstract String getSampleType ();
+  String getSampleType ();
 
-  public abstract double getSum ();
+  double getSum ();
 
-  public abstract double getMin ();
+  double getMin ();
 
-  public abstract double getMax ();
+  double getMax ();
 
-  public abstract double getAverage ();
+  double getAverage ();
 
-  public abstract double getStdDev ();
+  double getStdDev ();
 }

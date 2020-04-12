@@ -36,12 +36,12 @@ import java.util.regex.Pattern;
 
 public class DotNotation {
 
-  private static enum TranslationState {
+  private enum TranslationState {
 
     START, POST_DOT, WILD, NORMAL
   }
 
-  private static enum WildState {
+  private enum WildState {
 
     STAR, QUESTION, TAME
   }

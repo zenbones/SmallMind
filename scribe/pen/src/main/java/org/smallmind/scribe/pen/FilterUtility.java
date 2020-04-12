@@ -32,7 +32,7 @@
  */
 package org.smallmind.scribe.pen;
 
-import org.smallmind.scribe.pen.adapter.LoggingBlueprintsFactory;
+import org.smallmind.scribe.pen.adapter.LoggingBlueprintFactory;
 
 public class FilterUtility {
 
@@ -40,7 +40,7 @@ public class FilterUtility {
 
     if ((filters != null) && (filters.length > 0)) {
 
-      Record filterRecord = LoggingBlueprintsFactory.getLoggingBlueprints().filterRecord(record, level);
+      Record filterRecord = LoggingBlueprintFactory.getLoggingBlueprint().filterRecord(record, level);
 
       for (Filter filter : filters) {
         if (!filter.willLog(filterRecord)) {

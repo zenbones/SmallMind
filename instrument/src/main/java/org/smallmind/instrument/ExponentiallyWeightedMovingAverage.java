@@ -36,7 +36,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
-import org.smallmind.nutsnbolts.time.DurationUtility;
+import org.smallmind.nutsnbolts.time.StintUtility;
 
 public class ExponentiallyWeightedMovingAverage {
 
@@ -63,7 +63,7 @@ public class ExponentiallyWeightedMovingAverage {
 
   private ExponentiallyWeightedMovingAverage (long tickInterval, TimeUnit tickTimeUnit, int minutes) {
 
-    alpha = 1 - Math.exp(-(tickInterval / DurationUtility.convertToDouble(minutes, TimeUnit.MINUTES, tickTimeUnit)));
+    alpha = 1 - Math.exp(-(tickInterval / StintUtility.convertToDouble(minutes, TimeUnit.MINUTES, tickTimeUnit)));
     intervalInNanos = tickTimeUnit.toNanos(tickInterval);
   }
 

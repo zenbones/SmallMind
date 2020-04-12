@@ -34,5 +34,5 @@ package org.smallmind.instrument.config;
 
 public interface MetricDomain {
 
-  public abstract String getDomain ();
+  String getDomain ();
 }

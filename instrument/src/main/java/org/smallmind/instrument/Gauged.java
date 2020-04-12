@@ -36,13 +36,13 @@ import java.util.concurrent.TimeUnit;
 
 public interface Gauged extends Countable {
 
-  public abstract TimeUnit getRateTimeUnit ();
+  TimeUnit getRateTimeUnit ();
 
-  public abstract double getOneMinuteAvgRate ();
+  double getOneMinuteAvgRate ();
 
-  public abstract double getFiveMinuteAvgRate ();
+  double getFiveMinuteAvgRate ();
 
-  public abstract double getFifteenMinuteAvgRate ();
+  double getFifteenMinuteAvgRate ();
 
-  public abstract double getAverageRate ();
+  double getAverageRate ();
 }

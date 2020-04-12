@@ -35,11 +35,11 @@ package org.smallmind.instrument;
 // Simple counter
 public interface Tally extends Metric<Tally>, Countable {
 
-  public abstract void inc ();
+  void inc ();
 
-  public abstract void inc (long n);
+  void inc (long n);
 
-  public abstract void dec ();
+  void dec ();
 
-  public abstract void dec (long n);
+  void dec (long n);
 }

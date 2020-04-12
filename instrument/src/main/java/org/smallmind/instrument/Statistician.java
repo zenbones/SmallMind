@@ -34,5 +34,5 @@ package org.smallmind.instrument;
 
 public interface Statistician {
 
-  public abstract Statistics getStatistics ();
+  Statistics getStatistics ();
 }

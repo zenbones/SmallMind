@@ -36,5 +36,5 @@ import java.util.concurrent.TimeUnit;
 
 public interface Timed {
 
-  public abstract TimeUnit getLatencyTimeUnit ();
+  TimeUnit getLatencyTimeUnit ();
 }

@@ -34,11 +34,11 @@ package org.smallmind.instrument;
 
 public interface Sample extends Statistician {
 
-  public abstract Samples getType ();
+  Samples getType ();
 
-  public abstract void clear ();
+  void clear ();
 
-  public abstract int size ();
+  int size ();
 
-  public abstract void update (long value);
+  void update (long value);
 }

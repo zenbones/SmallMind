@@ -39,7 +39,7 @@ import java.sql.SQLException;
 import java.sql.Types;
 import java.util.Currency;
 import org.hibernate.HibernateException;
-import org.hibernate.engine.spi.SessionImplementor;
+import org.hibernate.engine.spi.SharedSessionContractImplementor;
 import org.hibernate.usertype.UserType;
 
 public class CurrencyUserType implements UserType {
@@ -99,11 +99,8 @@ public class CurrencyUserType implements UserType {
   }
 
   @Override
-  public Object nullSafeGet (ResultSet resultSet, String[] names, SessionImplementor sessionImplementor, Object o)
+  public Object nullSafeGet (ResultSet resultSet, String[] names, SharedSessionContractImplementor sharedSessionContractImplementor, Object o)
     throws HibernateException, SQLException {
-//  @Override
-//  public Object nullSafeGet (ResultSet resultSet, String[] names, SharedSessionContractImplementor sharedSessionContractImplementor, Object o)
-//    throws HibernateException, SQLException {
 
     String code = resultSet.getString(names[0]);
 
@@ -111,11 +108,8 @@ public class CurrencyUserType implements UserType {
   }
 
   @Override
-  public void nullSafeSet (PreparedStatement preparedStatement, Object value, int index, SessionImplementor sessionImplementor)
+  public void nullSafeSet (PreparedStatement preparedStatement, Object value, int index, SharedSessionContractImplementor sharedSessionContractImplementor)
     throws HibernateException, SQLException {
-//  @Override
-//  public void nullSafeSet (PreparedStatement preparedStatement, Object value, int index, SharedSessionContractImplementor sharedSessionContractImplementor)
-//    throws HibernateException, SQLException {
 
     if (value == null) {
       preparedStatement.setNull(index, Types.CHAR);

@@ -34,15 +34,15 @@ package org.smallmind.instrument;
 
 public interface Tracked extends Gauged {
 
-  public abstract double getMin ();
+  double getMin ();
 
-  public abstract double getMax ();
+  double getMax ();
 
-  public abstract double getOneMinuteAvgVelocity ();
+  double getOneMinuteAvgVelocity ();
 
-  public abstract double getFiveMinuteAvgVelocity ();
+  double getFiveMinuteAvgVelocity ();
 
-  public abstract double getFifteenMinuteAvgVelocity ();
+  double getFifteenMinuteAvgVelocity ();
 
-  public abstract double getAverageVelocity ();
+  double getAverageVelocity ();
 }

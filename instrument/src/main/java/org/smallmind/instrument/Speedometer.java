@@ -35,7 +35,7 @@ package org.smallmind.instrument;
 // Tracking of both metric and frequency plus exponentially weighted moving averages plus absolute minimum and maximum
 public interface Speedometer extends Metric<Speedometer>, Tracked, Temporal, Stoppable {
 
-  public abstract void update ();
+  void update ();
 
-  public abstract void update (long quantity);
+  void update (long quantity);
 }

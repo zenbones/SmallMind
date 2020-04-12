@@ -36,5 +36,5 @@ import java.util.EventListener;
 
 public interface MetricEventListener extends EventListener {
 
-  public abstract void metricTriggered (MetricEvent metricEvent);
+  void metricTriggered (MetricEvent metricEvent);
 }

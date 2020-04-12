@@ -86,13 +86,13 @@ public class Metrics {
     return new ChronometerBuilder(samples, durationUnit, tickInterval, tickTimeUnit, clocks);
   }
 
-  public static interface MetricBuilder<M extends Metric<M>> {
+  public interface MetricBuilder<M extends Metric<M>> {
 
-    public abstract Class<M> getMetricClass ();
+    Class<M> getMetricClass ();
 
-    public abstract MetricType getType ();
+    MetricType getType ();
 
-    public abstract M construct ();
+    M construct ();
   }
 
   public static class TallyBuilder implements MetricBuilder<Tally> {

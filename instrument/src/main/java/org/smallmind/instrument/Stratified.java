@@ -34,15 +34,15 @@ package org.smallmind.instrument;
 
 public interface Stratified {
 
-  public abstract double getMedian ();
+  double getMedian ();
 
-  public abstract double get75thPercentile ();
+  double get75thPercentile ();
 
-  public abstract double get95thPercentile ();
+  double get95thPercentile ();
 
-  public abstract double get98thPercentile ();
+  double get98thPercentile ();
 
-  public abstract double get99thPercentile ();
+  double get99thPercentile ();
 
-  public abstract double get999thPercentile ();
+  double get999thPercentile ();
 }

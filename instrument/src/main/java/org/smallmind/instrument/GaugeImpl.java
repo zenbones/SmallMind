@@ -41,7 +41,7 @@ import java.util.concurrent.atomic.AtomicLong;
 import org.smallmind.instrument.context.MetricFact;
 import org.smallmind.instrument.context.MetricItem;
 import org.smallmind.instrument.context.MetricSnapshot;
-import org.smallmind.nutsnbolts.time.DurationUtility;
+import org.smallmind.nutsnbolts.time.StintUtility;
 
 public class GaugeImpl extends MetricImpl<Gauge> implements Gauge {
 
@@ -211,7 +211,7 @@ public class GaugeImpl extends MetricImpl<Gauge> implements Gauge {
       return 0.0;
     } else {
 
-      return (((double)currentCount) / (clock.getTimeMilliseconds() - startTime.get())) * DurationUtility.convertToDouble(1, tickTimeUnit, TimeUnit.MILLISECONDS);
+      return (((double)currentCount) / (clock.getTimeMilliseconds() - startTime.get())) * StintUtility.convertToDouble(1, tickTimeUnit, TimeUnit.MILLISECONDS);
     }
   }
 

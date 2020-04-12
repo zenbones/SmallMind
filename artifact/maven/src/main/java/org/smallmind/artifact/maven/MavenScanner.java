@@ -45,7 +45,7 @@ import org.eclipse.aether.resolution.DependencyResolutionException;
 import org.smallmind.nutsnbolts.lang.ClassGate;
 import org.smallmind.nutsnbolts.lang.ClasspathClassGate;
 import org.smallmind.nutsnbolts.lang.GatingClassLoader;
-import org.smallmind.nutsnbolts.time.Duration;
+import org.smallmind.nutsnbolts.time.Stint;
 import org.smallmind.scribe.pen.LoggerManager;
 
 public class MavenScanner {
@@ -53,28 +53,28 @@ public class MavenScanner {
   private static enum State {STARTED, STOPPED}
 
   private final LinkedList<MavenScannerListener> listenerList = new LinkedList<>();
-  private final Duration cycleDuration;
+  private final Stint cycleStint;
   private final MavenRepository mavenRepository;
   private final MavenCoordinate[] mavenCoordinates;
   private final ArtifactTag[] artifactTags;
   private ScannerWorker scannerWorker;
   private State state = State.STOPPED;
 
-  public MavenScanner (String repositoryId, boolean offline, Duration cycleDuration, MavenCoordinate... mavenCoordinates)
+  public MavenScanner (String repositoryId, boolean offline, Stint cycleStint, MavenCoordinate... mavenCoordinates)
     throws SettingsBuildingException {
 
-    this(new MavenRepository(repositoryId, offline), cycleDuration, mavenCoordinates);
+    this(new MavenRepository(repositoryId, offline), cycleStint, mavenCoordinates);
   }
 
-  public MavenScanner (String settingsDirectory, String repositoryId, boolean offline, Duration cycleDuration, MavenCoordinate... mavenCoordinates)
+  public MavenScanner (String settingsDirectory, String repositoryId, boolean offline, Stint cycleStint, MavenCoordinate... mavenCoordinates)
     throws SettingsBuildingException {
 
-    this(new MavenRepository(settingsDirectory, repositoryId, offline), cycleDuration, mavenCoordinates);
+    this(new MavenRepository(settingsDirectory, repositoryId, offline), cycleStint, mavenCoordinates);
   }
 
-  private MavenScanner (MavenRepository mavenRepository, Duration cycleDuration, MavenCoordinate... mavenCoordinates) {
+  private MavenScanner (MavenRepository mavenRepository, Stint cycleStint, MavenCoordinate... mavenCoordinates) {
 
-    if (cycleDuration == null) {
+    if (cycleStint == null) {
       throw new IllegalArgumentException("Must provide a cycle duration");
     }
     if (mavenCoordinates == null) {
@@ -82,7 +82,7 @@ public class MavenScanner {
     }
 
     this.mavenRepository = mavenRepository;
-    this.cycleDuration = cycleDuration;
+    this.cycleStint = cycleStint;
     this.mavenCoordinates = mavenCoordinates;
 
     artifactTags = new ArtifactTag[mavenCoordinates.length];
@@ -201,7 +201,7 @@ public class MavenScanner {
           } catch (Exception exception) {
             LoggerManager.getLogger(MavenScanner.class).error(exception);
           }
-        } while (!finishLatch.await(cycleDuration.getTime(), cycleDuration.getTimeUnit()));
+        } while (!finishLatch.await(cycleStint.getTime(), cycleStint.getTimeUnit()));
       } catch (InterruptedException interruptedException) {
         finishLatch.countDown();
       } finally {
