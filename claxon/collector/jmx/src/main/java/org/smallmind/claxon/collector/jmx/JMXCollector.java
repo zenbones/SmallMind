@@ -43,25 +43,18 @@ import javax.management.MalformedObjectNameException;
 import javax.management.NotCompliantMBeanException;
 import javax.management.ObjectName;
 import javax.management.ReflectionException;
-import org.smallmind.claxon.registry.CollectionMethod;
-import org.smallmind.claxon.registry.Collector;
 import org.smallmind.claxon.registry.Identifier;
+import org.smallmind.claxon.registry.PushCollector;
 import org.smallmind.claxon.registry.Quantity;
 import org.smallmind.claxon.registry.Tag;
 
-public class JMXCollector implements Collector {
+public class JMXCollector extends PushCollector {
 
   private final MBeanServer server;
 
   public JMXCollector (MBeanServer server) {
 
     this.server = server;
-  }
-
-  @Override
-  public CollectionMethod getCollectionMethod () {
-
-    return CollectionMethod.PUSH;
   }
 
   @Override

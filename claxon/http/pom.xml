@@ -13,22 +13,12 @@
   <dependencies>
     <dependency>
       <groupId>org.smallmind</groupId>
-      <artifactId>smallmind-nutsnbolts</artifactId>
+      <artifactId>claxon-registry</artifactId>
       <scope>compile</scope>
     </dependency>
     <dependency>
-      <groupId>org.smallmind</groupId>
-      <artifactId>scribe-pen</artifactId>
-      <scope>compile</scope>
-    </dependency>
-    <dependency>
-      <groupId>org.hdrhistogram</groupId>
-      <artifactId>HdrHistogram</artifactId>
-      <version>2.1.12</version>
-    </dependency>
-    <dependency>
-      <groupId>io.micrometer</groupId>
-      <artifactId>micrometer-core</artifactId>
+      <groupId>org.glassfish.jersey.core</groupId>
+      <artifactId>jersey-server</artifactId>
       <scope>compile</scope>
     </dependency>
   </dependencies>

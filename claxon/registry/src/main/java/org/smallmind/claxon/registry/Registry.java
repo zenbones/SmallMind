@@ -81,6 +81,11 @@ public class Registry {
     collectionWorker.stop();
   }
 
+  public Collector collector (String name) {
+
+    return collectorMap.get(name);
+  }
+
   public Registry bind (String name, Collector collector) {
 
     collectorMap.put(name, collector);
@@ -114,16 +119,14 @@ public class Registry {
     return supplier.get();
   }
 
-  public void speak () {
+  public void record () {
 
     for (Collector collector : collectorMap.values()) {
-      if (CollectionMethod.PUSH.equals(collector.getCollectionMethod())) {
-        for (Map.Entry<RegistryKey, Meter> meterEntry : meterMap.entrySet()) {
-          try {
-            collector.record(meterEntry.getKey().getIdentifier(), meterEntry.getKey().getTags(), meterEntry.getValue().getQuantities());
-          } catch (Exception exception) {
-            LoggerManager.getLogger(Registry.class).error(exception);
-          }
+      for (Map.Entry<RegistryKey, Meter> meterEntry : meterMap.entrySet()) {
+        try {
+          collector.record(meterEntry.getKey().getIdentifier(), meterEntry.getKey().getTags(), meterEntry.getValue().getQuantities());
+        } catch (Exception exception) {
+          LoggerManager.getLogger(Registry.class).error(exception);
         }
       }
     }
@@ -146,7 +149,7 @@ public class Registry {
 
       try {
         while (!finishLatch.await(collectionStint.getTime(), collectionStint.getTimeUnit())) {
-          speak();
+          record();
         }
       } catch (InterruptedException interruptedException) {
         LoggerManager.getLogger(Registry.class).error(interruptedException);

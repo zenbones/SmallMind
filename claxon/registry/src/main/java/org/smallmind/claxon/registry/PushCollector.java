@@ -30,52 +30,13 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.claxon.collector.indigenous;
+package org.smallmind.claxon.registry;
 
-import java.util.function.Consumer;
-import org.smallmind.claxon.registry.Identifier;
-import org.smallmind.claxon.registry.PushCollector;
-import org.smallmind.claxon.registry.Quantity;
-import org.smallmind.claxon.registry.Tag;
-
-public class IndigenousCollector extends PushCollector {
-
-  private Consumer<String> output;
-
-  public IndigenousCollector () {
-
-    this(System.out::println);
-  }
-
-  public IndigenousCollector (Consumer<String> output) {
-
-    this.output = output;
-  }
+public abstract class PushCollector implements Collector {
 
   @Override
-  public void record (Identifier identifier, Tag[] tags, Quantity[] quantities) {
+  public CollectionMethod getCollectionMethod () {
 
-    StringBuilder recordBuilder = new StringBuilder(identifier.getName());
-
-    recordBuilder.append('[');
-    if ((tags != null) && (tags.length > 0)) {
-
-      boolean first = true;
-
-      for (Tag tag : tags) {
-        if (!first) {
-          recordBuilder.append(", ");
-        }
-        recordBuilder.append(tag.getKey()).append("=").append(tag.getValue());
-        first = false;
-      }
-    }
-    recordBuilder.append("].");
-
-    if ((quantities != null) && (quantities.length > 0)) {
-      for (Quantity quantity : quantities) {
-        output.accept(recordBuilder + quantity.getName() + "=" + quantity.getValue());
-      }
-    }
+    return CollectionMethod.PUSH;
   }
 }

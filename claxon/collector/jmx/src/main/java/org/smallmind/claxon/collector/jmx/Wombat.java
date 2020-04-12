@@ -33,7 +33,6 @@
 package org.smallmind.claxon.collector.jmx;
 
 import java.util.concurrent.ThreadLocalRandom;
-import javax.management.MBeanServer;
 import org.smallmind.claxon.registry.Gauge;
 import org.smallmind.claxon.registry.GaugeBuilder;
 import org.smallmind.claxon.registry.Histogram;
@@ -49,7 +48,7 @@ import org.smallmind.claxon.registry.aggregate.Bounded;
 import org.smallmind.claxon.registry.aggregate.Paced;
 import org.smallmind.claxon.registry.aggregate.Pursued;
 import org.smallmind.claxon.registry.aggregate.Stratified;
-import org.springframework.context.support.ClassPathXmlApplicationContext;
+//import org.springframework.context.support.ClassPathXmlApplicationContext;
 
 public class Wombat {
 
@@ -62,8 +61,9 @@ public class Wombat {
     Pursued pursued = new Pursued(SystemClock.instance());
     Stratified stratified = new Stratified(SystemClock.instance());
 
-    ClassPathXmlApplicationContext context = new ClassPathXmlApplicationContext("org/smallmind/claxon/registry/jmx.xml");
-    Registry registry = new Registry(SystemClock.instance()).bind("jmx", new JMXCollector(context.getBean("mbeanServer", MBeanServer.class)));
+//    ClassPathXmlApplicationContext context = new ClassPathXmlApplicationContext("org/smallmind/claxon/registry/jmx.xml");
+//    Registry registry = new Registry(SystemClock.instance()).bind("jmx", new JMXCollector(context.getBean("mbeanServer", MBeanServer.class)));
+    Registry registry = new Registry();
     Gauge gauge = registry.register(Identifier.instance("gid"), new GaugeBuilder(), new Tag("one", "hello"), new Tag("two", "goodbye"));
     Histogram histogram = registry.register(Identifier.instance("hid"), new HistogramBuilder(), new Tag("one", "hello"), new Tag("two", "goodbye"));
     Trace trace = registry.register(Identifier.instance("tid"), new TraceBuilder(), new Tag("one", "hello"), new Tag("two", "goodbye"));

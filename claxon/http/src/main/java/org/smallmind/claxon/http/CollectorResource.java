@@ -32,6 +32,49 @@
  */
 package org.smallmind.claxon.http;
 
-public class ClaxonCollectorResource {
+import javax.ws.rs.GET;
+import javax.ws.rs.Path;
+import javax.ws.rs.core.Response;
+import org.smallmind.claxon.registry.CollectionMethod;
+import org.smallmind.claxon.registry.Collector;
+import org.smallmind.claxon.registry.InvalidCollectionException;
+import org.smallmind.claxon.registry.PullCollector;
+import org.smallmind.claxon.registry.Registry;
+import org.smallmind.claxon.registry.UnknownCollectorException;
 
+@Path("/claxon")
+public class CollectorResource {
+
+  private Registry registry;
+
+  public CollectorResource () {
+
+  }
+
+  public CollectorResource (Registry registry) {
+
+    this.registry = registry;
+  }
+
+  public void setRegistry (Registry registry) {
+
+    this.registry = registry;
+  }
+
+  @GET
+  @Path("/{name}")
+  public Response get (String name)
+    throws UnknownCollectorException, InvalidCollectionException {
+
+    Collector collector;
+
+    if ((collector = registry.collector(name)) == null) {
+      throw new UnknownCollectorException(name);
+    } else if (!CollectionMethod.PULL.equals(collector.getCollectionMethod())) {
+      throw new InvalidCollectionException("Invalid collection method(%s) for collector(%s)");
+    } else {
+
+      return Response.ok(((PullCollector<?>)collector).emit()).build();
+    }
+  }
 }
