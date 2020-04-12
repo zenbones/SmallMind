@@ -33,6 +33,7 @@
 package org.smallmind.claxon.registry;
 
 import java.util.concurrent.TimeUnit;
+import java.util.function.Function;
 import org.smallmind.claxon.registry.meter.MeterBuilder;
 
 public class Instrumentation {
@@ -56,6 +57,11 @@ public class Instrumentation {
     this.timeUnit = timeUnit;
 
     return this;
+  }
+
+  public <T> T track (T measured, Function<T, Long> measurement) {
+
+    return registry.track(identifier, builder, measured, measurement, tags);
   }
 
   public void update (long value) {

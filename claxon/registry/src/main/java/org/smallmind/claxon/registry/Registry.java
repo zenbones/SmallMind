@@ -37,6 +37,7 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Function;
 import org.smallmind.claxon.registry.meter.Meter;
 import org.smallmind.claxon.registry.meter.MeterBuilder;
 import org.smallmind.nutsnbolts.time.Stint;
@@ -46,6 +47,7 @@ public class Registry {
 
   private final ConcurrentHashMap<String, Collector> collectorMap = new ConcurrentHashMap<>();
   private final ConcurrentHashMap<RegistryKey, Meter> meterMap = new ConcurrentHashMap<>();
+  private final MeasurableSet measurableSet;
   private final CollectionWorker collectionWorker;
   private final Clock clock;
   private final Stint collectionStint;
@@ -72,6 +74,7 @@ public class Registry {
     this.clock = clock;
     this.collectionStint = collectionStint;
 
+    measurableSet = new MeasurableSet(this);
     workerThread.setDaemon(true);
     workerThread.start();
   }
@@ -110,6 +113,16 @@ public class Registry {
     return meter;
   }
 
+  public void unregister (Identifier identifier, Tag... tags) {
+
+    meterMap.remove(new RegistryKey(identifier, tags));
+  }
+
+  public <T> T track (Identifier identifier, MeterBuilder<?> builder, T measured, Function<T, Long> measurement, Tag... tags) {
+
+    return measurableSet.track(identifier, builder, measured, measurement, tags);
+  }
+
   public void instrument (Meter meter, long value) {
 
     meter.update(value);
@@ -137,6 +150,8 @@ public class Registry {
   }
 
   public void record () {
+
+    measurableSet.sweepAndUpdate();
 
     for (Collector collector : collectorMap.values()) {
       for (Map.Entry<RegistryKey, Meter> meterEntry : meterMap.entrySet()) {

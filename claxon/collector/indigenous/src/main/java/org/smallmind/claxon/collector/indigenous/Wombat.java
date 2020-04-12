@@ -32,14 +32,16 @@
  */
 package org.smallmind.claxon.collector.indigenous;
 
+import java.util.LinkedList;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.TimeUnit;
-import org.smallmind.claxon.registry.meter.HistogramBuilder;
 import org.smallmind.claxon.registry.Identifier;
 import org.smallmind.claxon.registry.Instrument;
 import org.smallmind.claxon.registry.Registry;
 import org.smallmind.claxon.registry.SystemClock;
 import org.smallmind.claxon.registry.Tag;
+import org.smallmind.claxon.registry.meter.HistogramBuilder;
+import org.smallmind.claxon.registry.meter.TallyBuilder;
 import org.smallmind.nutsnbolts.lang.PerApplicationContext;
 //import org.springframework.context.support.ClassPathXmlApplicationContext;
 
@@ -48,12 +50,15 @@ public class Wombat {
   public static void main (String... args)
     throws Exception {
 
+    LinkedList<String> someList = new LinkedList<>();
+
     new PerApplicationContext().prepareThread();
     Registry registry = new Registry(SystemClock.instance()).bind("jmx", new IndigenousCollector());
     Instrument.register(registry);
+    Instrument.with(Identifier.instance("sid"), new TallyBuilder(), new Tag("one", "hello"), new Tag("two", "goodbye"));
 
     for (int i = 0; i < 10; i++) {
-      new Thread(new Worker()).start();
+      new Thread(new Worker(someList)).start();
     }
 
     Thread.sleep(3000000);
@@ -61,12 +66,24 @@ public class Wombat {
 
   private static class Worker implements Runnable {
 
+    private LinkedList<String> someList;
+
+    public Worker (LinkedList<String> someList) {
+
+      this.someList = someList;
+    }
+
     @Override
     public void run () {
 
       while (true) {
 
         long value = ThreadLocalRandom.current().nextLong(100, 300);
+        int count = ThreadLocalRandom.current().nextInt(1, 5);
+
+        for (int index = 0; index < count; index++) {
+          someList.add("something");
+        }
 
         try {
           Instrument.with(Identifier.instance("hid"), new HistogramBuilder(), new Tag("one", "hello"), new Tag("two", "goodbye")).as(TimeUnit.SECONDS).on(() -> {
