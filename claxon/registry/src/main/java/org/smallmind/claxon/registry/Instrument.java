@@ -32,6 +32,7 @@
  */
 package org.smallmind.claxon.registry;
 
+import org.smallmind.claxon.registry.meter.MeterBuilder;
 import org.smallmind.nutsnbolts.lang.PerApplicationContext;
 import org.smallmind.nutsnbolts.lang.PerApplicationDataManager;
 

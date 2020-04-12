@@ -30,33 +30,21 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.claxon.registry;
+package org.smallmind.claxon.registry.meter;
 
-import org.smallmind.claxon.registry.aggregate.Averaged;
-import org.smallmind.claxon.registry.aggregate.Bounded;
-import org.smallmind.nutsnbolts.time.Stint;
+import org.smallmind.claxon.registry.Clock;
 
-public class Gauge implements Meter {
+public class TallyBuilder implements MeterBuilder<Tally> {
 
-  private final Bounded bounded;
-  private final Averaged averaged;
+  @Override
+  public MeterBuilder<Tally> clock (Clock clock) {
 
-  public Gauge (Clock clock, Stint resolutionStint) {
-
-    bounded = new Bounded(clock, resolutionStint);
-    averaged = new Averaged(clock, resolutionStint);
+    return this;
   }
 
   @Override
-  public void update (long value) {
+  public Tally build () {
 
-    bounded.update(value);
-    averaged.update(value);
-  }
-
-  @Override
-  public Quantity[] getQuantities () {
-
-    return new Quantity[] {new Quantity("minimum", bounded.getMinimum()), new Quantity("maximum", bounded.getMaximum()), new Quantity("average", averaged.getAverage())};
+    return new Tally();
   }
 }

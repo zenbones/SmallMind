@@ -30,17 +30,51 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.claxon.registry;
+package org.smallmind.claxon.registry.meter;
 
 import java.util.concurrent.TimeUnit;
+import org.smallmind.claxon.registry.Clock;
+import org.smallmind.claxon.registry.Percentile;
 import org.smallmind.nutsnbolts.time.Stint;
 
-public class GaugeBuilder implements MeterBuilder<Gauge> {
+public class HistogramBuilder implements MeterBuilder<Histogram> {
 
   private Clock clock;
   private Stint resolutionStint = new Stint(1, TimeUnit.SECONDS);
+  private Percentile[] percentiles = new Percentile[] {new Percentile("p75", 75.0), new Percentile("p95", 95.0), new Percentile("p98", 98.0), new Percentile("p99", 99.0), new Percentile("p999", 99.9)};
+  private long lowestDiscernibleValue = 1;
+  private long highestTrackableValue = 3600000L;
+  private int numberOfSignificantValueDigits = 2;
 
-  public MeterBuilder<Gauge> resolution (Stint resolutionStint) {
+  public MeterBuilder<Histogram> lowestDiscernibleValue (long lowestDiscernibleValue) {
+
+    this.lowestDiscernibleValue = lowestDiscernibleValue;
+
+    return this;
+  }
+
+  public MeterBuilder<Histogram> highestTrackableValue (long highestTrackableValue) {
+
+    this.highestTrackableValue = highestTrackableValue;
+
+    return this;
+  }
+
+  public MeterBuilder<Histogram> numberOfSignificantValueDigits (int numberOfSignificantValueDigits) {
+
+    this.numberOfSignificantValueDigits = numberOfSignificantValueDigits;
+
+    return this;
+  }
+
+  public MeterBuilder<Histogram> percentiles (Percentile... percentiles) {
+
+    this.percentiles = percentiles;
+
+    return this;
+  }
+
+  public MeterBuilder<Histogram> resolution (Stint resolutionStint) {
 
     this.resolutionStint = resolutionStint;
 
@@ -48,7 +82,7 @@ public class GaugeBuilder implements MeterBuilder<Gauge> {
   }
 
   @Override
-  public MeterBuilder<Gauge> clock (Clock clock) {
+  public MeterBuilder<Histogram> clock (Clock clock) {
 
     this.clock = clock;
 
@@ -56,8 +90,8 @@ public class GaugeBuilder implements MeterBuilder<Gauge> {
   }
 
   @Override
-  public Gauge build () {
+  public Histogram build () {
 
-    return new Gauge(clock, resolutionStint);
+    return new Histogram(clock, lowestDiscernibleValue, highestTrackableValue, numberOfSignificantValueDigits, resolutionStint, percentiles);
   }
 }

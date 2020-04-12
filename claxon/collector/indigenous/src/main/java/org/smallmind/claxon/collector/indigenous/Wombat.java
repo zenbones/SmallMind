@@ -34,7 +34,7 @@ package org.smallmind.claxon.collector.indigenous;
 
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.TimeUnit;
-import org.smallmind.claxon.registry.HistogramBuilder;
+import org.smallmind.claxon.registry.meter.HistogramBuilder;
 import org.smallmind.claxon.registry.Identifier;
 import org.smallmind.claxon.registry.Instrument;
 import org.smallmind.claxon.registry.Registry;

@@ -30,49 +30,50 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.claxon.registry;
+package org.smallmind.claxon.registry.meter;
 
-import org.smallmind.claxon.registry.aggregate.Stratified;
-import org.smallmind.nutsnbolts.time.Stint;
+import java.util.concurrent.TimeUnit;
+import org.smallmind.claxon.registry.Clock;
+import org.smallmind.claxon.registry.Quantity;
+import org.smallmind.claxon.registry.Window;
+import org.smallmind.claxon.registry.aggregate.Pursued;
 
-public class Histogram implements Meter {
+public class Trace implements Meter {
 
-  private final Stratified stratified;
-  private final Percentile[] percentiles;
+  private final Pursued pursued;
+  private final Window[] windows;
 
-  public Histogram (Clock clock, long lowestDiscernibleValue, long highestTrackableValue, int numberOfSignificantValueDigits, Stint resolutionStint, Percentile... percentiles) {
+  public Trace (Clock clock, TimeUnit windowTimeUnit, Window... windows) {
 
-    this.percentiles = percentiles;
+    long[] windowTimes = new long[windows.length];
+    int index = 0;
 
-    stratified = new Stratified(clock, lowestDiscernibleValue, highestTrackableValue, numberOfSignificantValueDigits, resolutionStint);
+    this.windows = windows;
+
+    for (Window window : windows) {
+      windowTimes[index++] = window.getValue();
+    }
+
+    pursued = new Pursued(clock, windowTimeUnit, windowTimes);
   }
 
   @Override
   public void update (long value) {
 
-    stratified.update(value);
+    pursued.update(value);
   }
 
   @Override
   public Quantity[] getQuantities () {
 
-    org.HdrHistogram.Histogram snapshot = stratified.get();
-    Quantity[] basicQuantities = new Quantity[] {
-      new Quantity("count", snapshot.getTotalCount()),
-      new Quantity("velocity", snapshot.getTotalCount() * stratified.getTimeFactor()),
-      new Quantity("minimum", snapshot.getMinValue()),
-      new Quantity("maximum", snapshot.getMaxValue()),
-      new Quantity("mean", snapshot.getMean())};
-    Quantity[] allQuantities = new Quantity[basicQuantities.length + ((percentiles == null) ? 0 : percentiles.length)];
+    Quantity[] quantities = new Quantity[windows.length];
+    double[] values = pursued.getMovingAverages();
     int index = 0;
 
-    System.arraycopy(basicQuantities, 0, allQuantities, 0, basicQuantities.length);
-    if ((percentiles != null) && (percentiles.length > 0)) {
-      for (Percentile percentile : percentiles) {
-        allQuantities[basicQuantities.length + (index++)] = new Quantity(percentile.getName(), snapshot.getValueAtPercentile(percentile.getValue()));
-      }
+    for (Window window : windows) {
+      quantities[index] = new Quantity(window.getName(), values[index++]);
     }
 
-    return allQuantities;
+    return quantities;
   }
 }

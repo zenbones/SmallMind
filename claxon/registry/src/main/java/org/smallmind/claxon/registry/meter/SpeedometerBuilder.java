@@ -30,11 +30,35 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.claxon.registry;
+package org.smallmind.claxon.registry.meter;
 
-public interface MeterBuilder<M extends Meter> {
+import java.util.concurrent.TimeUnit;
+import org.smallmind.claxon.registry.Clock;
+import org.smallmind.nutsnbolts.time.Stint;
 
-  MeterBuilder<M> clock (Clock clock);
+public class SpeedometerBuilder implements MeterBuilder<Speedometer> {
 
-  M build ();
+  private Clock clock;
+  private Stint resolutionStint = new Stint(1, TimeUnit.SECONDS);
+
+  public MeterBuilder<Speedometer> resolution (Stint resolutionStint) {
+
+    this.resolutionStint = resolutionStint;
+
+    return this;
+  }
+
+  @Override
+  public MeterBuilder<Speedometer> clock (Clock clock) {
+
+    this.clock = clock;
+
+    return this;
+  }
+
+  @Override
+  public Speedometer build () {
+
+    return new Speedometer(clock, resolutionStint);
+  }
 }

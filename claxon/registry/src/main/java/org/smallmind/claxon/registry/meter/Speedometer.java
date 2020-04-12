@@ -30,8 +30,10 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.claxon.registry;
+package org.smallmind.claxon.registry.meter;
 
+import org.smallmind.claxon.registry.Clock;
+import org.smallmind.claxon.registry.Quantity;
 import org.smallmind.claxon.registry.aggregate.Bounded;
 import org.smallmind.claxon.registry.aggregate.Paced;
 import org.smallmind.nutsnbolts.time.Stint;

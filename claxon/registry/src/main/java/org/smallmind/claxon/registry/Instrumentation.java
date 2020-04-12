@@ -33,6 +33,7 @@
 package org.smallmind.claxon.registry;
 
 import java.util.concurrent.TimeUnit;
+import org.smallmind.claxon.registry.meter.MeterBuilder;
 
 public class Instrumentation {
 

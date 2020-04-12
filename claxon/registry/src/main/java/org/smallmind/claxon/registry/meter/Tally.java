@@ -30,47 +30,29 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.claxon.registry;
+package org.smallmind.claxon.registry.meter;
 
-import java.util.concurrent.TimeUnit;
-import org.smallmind.claxon.registry.aggregate.Pursued;
+import org.smallmind.claxon.registry.Quantity;
+import org.smallmind.claxon.registry.aggregate.Tallied;
 
-public class Trace implements Meter {
+public class Tally implements Meter {
 
-  private final Pursued pursued;
-  private final Window[] windows;
+  private final Tallied tallied;
 
-  public Trace (Clock clock, TimeUnit windowTimeUnit, Window... windows) {
+  public Tally () {
 
-    long[] windowTimes = new long[windows.length];
-    int index = 0;
-
-    this.windows = windows;
-
-    for (Window window : windows) {
-      windowTimes[index++] = window.getValue();
-    }
-
-    pursued = new Pursued(clock, windowTimeUnit, windowTimes);
+    tallied = new Tallied();
   }
 
   @Override
   public void update (long value) {
 
-    pursued.update(value);
+    tallied.update(value);
   }
 
   @Override
   public Quantity[] getQuantities () {
 
-    Quantity[] quantities = new Quantity[windows.length];
-    double[] values = pursued.getMovingAverages();
-    int index = 0;
-
-    for (Window window : windows) {
-      quantities[index] = new Quantity(window.getName(), values[index++]);
-    }
-
-    return quantities;
+    return new Quantity[] {new Quantity("count", tallied.getCount())};
   }
 }

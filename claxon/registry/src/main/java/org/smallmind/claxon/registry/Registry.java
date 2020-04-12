@@ -37,6 +37,8 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
+import org.smallmind.claxon.registry.meter.Meter;
+import org.smallmind.claxon.registry.meter.MeterBuilder;
 import org.smallmind.nutsnbolts.time.Stint;
 import org.smallmind.scribe.pen.LoggerManager;
 

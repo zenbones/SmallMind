@@ -30,28 +30,13 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.claxon.registry;
+package org.smallmind.claxon.registry.meter;
 
-import org.smallmind.claxon.registry.aggregate.Tallied;
+import org.smallmind.claxon.registry.Clock;
 
-public class Tally implements Meter {
+public interface MeterBuilder<M extends Meter> {
 
-  private final Tallied tallied;
+  MeterBuilder<M> clock (Clock clock);
 
-  public Tally () {
-
-    tallied = new Tallied();
-  }
-
-  @Override
-  public void update (long value) {
-
-    tallied.update(value);
-  }
-
-  @Override
-  public Quantity[] getQuantities () {
-
-    return new Quantity[] {new Quantity("count", tallied.getCount())};
-  }
+  M build ();
 }
