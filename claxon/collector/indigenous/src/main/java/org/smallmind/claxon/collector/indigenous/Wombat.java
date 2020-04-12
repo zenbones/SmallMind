@@ -32,48 +32,56 @@
  */
 package org.smallmind.claxon.collector.indigenous;
 
-import java.util.function.Consumer;
+import java.util.concurrent.ThreadLocalRandom;
+import java.util.concurrent.TimeUnit;
+import org.smallmind.claxon.registry.HistogramBuilder;
 import org.smallmind.claxon.registry.Identifier;
-import org.smallmind.claxon.registry.PushCollector;
-import org.smallmind.claxon.registry.Quantity;
+import org.smallmind.claxon.registry.Instrument;
+import org.smallmind.claxon.registry.Registry;
+import org.smallmind.claxon.registry.SystemClock;
 import org.smallmind.claxon.registry.Tag;
+import org.smallmind.nutsnbolts.lang.PerApplicationContext;
+//import org.springframework.context.support.ClassPathXmlApplicationContext;
 
-public class IndigenousCollector extends PushCollector {
+public class Wombat {
 
-  private Consumer<String> output;
+  public static void main (String... args)
+    throws Exception {
 
-  public IndigenousCollector () {
+    new PerApplicationContext().prepareThread();
+    Registry registry = new Registry(SystemClock.instance()).bind("jmx", new IndigenousCollector());
+    Instrument.register(registry);
 
-    this(System.out::println);
-  }
-
-  public IndigenousCollector (Consumer<String> output) {
-
-    this.output = output;
-  }
-
-  @Override
-  public void record (Identifier identifier, Tag[] tags, Quantity[] quantities) {
-
-    StringBuilder recordBuilder = new StringBuilder(identifier.getName());
-
-    recordBuilder.append('[');
-    if ((tags != null) && (tags.length > 0)) {
-
-      boolean first = true;
-
-      for (Tag tag : tags) {
-        if (!first) {
-          recordBuilder.append(", ");
-        }
-        recordBuilder.append(tag.getKey()).append("=").append(tag.getValue());
-        first = false;
-      }
+    for (int i = 0; i < 10; i++) {
+      new Thread(new Worker()).start();
     }
-    recordBuilder.append("].");
 
-    for (Quantity quantity : quantities) {
-      output.accept(recordBuilder.toString() + quantity.getName() + "=" + quantity.getValue());
+    Thread.sleep(3000000);
+  }
+
+  private static class Worker implements Runnable {
+
+    @Override
+    public void run () {
+
+      while (true) {
+
+        long value = ThreadLocalRandom.current().nextLong(100, 300);
+
+        try {
+          Instrument.with(Identifier.instance("hid"), new HistogramBuilder(), new Tag("one", "hello"), new Tag("two", "goodbye")).as(TimeUnit.SECONDS).on(() -> {
+            Thread.sleep(value);
+          });
+        } catch (Exception e) {
+          e.printStackTrace();
+        }
+
+        try {
+          Thread.sleep(1);
+        } catch (InterruptedException i) {
+
+        }
+      }
     }
   }
 }

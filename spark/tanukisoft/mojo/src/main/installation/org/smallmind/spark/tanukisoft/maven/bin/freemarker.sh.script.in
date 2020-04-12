@@ -544,7 +544,7 @@ gettext() {
 outputFile() {
     if [ -f "$1" ]
     then
-        eval echo `gettext '  $1  Found but not executable.'`;
+        eval echo `gettext '  $1  Found but not sansResultExecutable.'`;
     else
         echo "  $1"
     fi

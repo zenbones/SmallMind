@@ -30,7 +30,7 @@ rem The name and location of the Wrapper configuration file. This will be used
 rem  if the user does not specify a configuration file as the first parameter to
 rem  this script.
 rem If a relative path is specified, please note that the location is based on the 
-rem location of the Wrapper executable.
+rem location of the Wrapper sansResultExecutable.
 set _WRAPPER_CONF_DEFAULT="../conf/%_WRAPPER_BASE%.conf"
 
 rem Makes it possible to override the Wrapper configuration file by specifying it
@@ -96,7 +96,7 @@ set _WRAPPER_EXE="%_WRAPPER_L_EXE:"=%"
 if exist %_WRAPPER_EXE% goto conf
 set _WRAPPER_EXE="%_REALPATH:"=%%_WRAPPER_BASE%.exe"
 if exist %_WRAPPER_EXE% goto conf
-echo Unable to locate a Wrapper executable using any of the following names:
+echo Unable to locate a Wrapper sansResultExecutable using any of the following names:
 echo %_WRAPPER_L_EXE%
 echo %_WRAPPER_EXE%
 pause

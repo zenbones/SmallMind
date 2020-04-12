@@ -32,8 +32,45 @@
  */
 package org.smallmind.claxon.registry;
 
-@FunctionalInterface
-public interface Executable {
+import java.util.concurrent.TimeUnit;
 
-  void execute ();
+public class Instrumentation {
+
+  private Registry registry;
+  private MeterBuilder<?> builder;
+  private Tag[] tags;
+  private Identifier identifier;
+  private TimeUnit timeUnit = TimeUnit.MILLISECONDS;
+
+  public Instrumentation (Registry registry, Identifier identifier, MeterBuilder<?> builder, Tag... tags) {
+
+    this.registry = registry;
+    this.identifier = identifier;
+    this.builder = builder;
+    this.tags = tags;
+  }
+
+  public Instrumentation as (TimeUnit timeUnit) {
+
+    this.timeUnit = timeUnit;
+
+    return this;
+  }
+
+  public void update (long value) {
+
+    registry.instrument(registry.register(identifier, builder, tags), value);
+  }
+
+  public void on (SansResultExecutable sansResultExecutable)
+    throws Exception {
+
+    registry.instrument(registry.register(identifier, builder, tags), timeUnit, sansResultExecutable);
+  }
+
+  public <T> T on (WithResultExecutable<T> withResultExecutable)
+    throws Exception {
+
+    return registry.instrument(registry.register(identifier, builder, tags), timeUnit, withResultExecutable);
+  }
 }
