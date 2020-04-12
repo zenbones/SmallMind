@@ -16,6 +16,11 @@
       <artifactId>claxon-registry</artifactId>
       <scope>compile</scope>
     </dependency>
+    <dependency>
+      <groupId>com.datadoghq</groupId>
+      <artifactId>java-dogstatsd-client</artifactId>
+      <scope>compile</scope>
+    </dependency>
   </dependencies>
     <build>
     <plugins>

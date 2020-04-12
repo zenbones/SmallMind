@@ -62,8 +62,7 @@ public class Histogram implements Meter {
       new Quantity("velocity", snapshot.getTotalCount() * stratified.getTimeFactor()),
       new Quantity("minimum", snapshot.getMinValue()),
       new Quantity("maximum", snapshot.getMaxValue()),
-      new Quantity("mean", snapshot.getMean()),
-      new Quantity("sigma", snapshot.getStdDeviation()),};
+      new Quantity("mean", snapshot.getMean())};
     Quantity[] allQuantities = new Quantity[basicQuantities.length + ((percentiles == null) ? 0 : percentiles.length)];
     int index = 0;
 
