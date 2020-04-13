@@ -33,95 +33,71 @@
 package org.smallmind.claxon.registry.aggregate;
 
 import java.util.concurrent.ConcurrentLinkedQueue;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.ReentrantLock;
-import org.smallmind.claxon.registry.Clock;
-import org.smallmind.nutsnbolts.time.Stint;
-import org.smallmind.nutsnbolts.time.StintUtility;
 
 public class Averaged implements Aggregate {
 
   private final ReentrantLock lock = new ReentrantLock();
   private final ConcurrentLinkedQueue<Long> valueQueue = new ConcurrentLinkedQueue<>();
   private final AtomicInteger size = new AtomicInteger();
-  private final Clock clock;
-  private final double nanosecondsInWindow;
-  private double average = 0;
-  private long accumulatedValue = 0;
-  private long markTime;
+  private long accumulatedValue;
   private int accumulatedCount;
-
-  public Averaged (Clock clock) {
-
-    this(clock, new Stint(1, TimeUnit.SECONDS));
-  }
-
-  public Averaged (Clock clock, Stint windowStint) {
-
-    this.clock = clock;
-
-    nanosecondsInWindow = StintUtility.convertToDouble(windowStint.getTime(), windowStint.getTimeUnit(), TimeUnit.NANOSECONDS);
-    markTime = clock.monotonicTime();
-  }
 
   public void update (long value) {
 
-    if (!process(value, true)) {
+    if (lock.tryLock()) {
+      try {
+        sweep();
+
+        accumulatedValue += value;
+        accumulatedCount++;
+      } finally {
+        lock.unlock();
+      }
+    } else {
       size.incrementAndGet();
       valueQueue.add(value);
     }
   }
 
-  private boolean process (long value, boolean required) {
+  public void sweep () {
 
-    if (lock.tryLock()) {
-      try {
+    int cap = size.get();
+    int n = 0;
 
-        Long unprocessed;
-        long now = clock.monotonicTime();
-        int cap = size.get();
-        int n = 0;
+    if (cap > 0) {
 
-        if (required) {
-          accumulatedValue += value;
-          accumulatedCount++;
+      Long unprocessed;
+
+      while ((unprocessed = valueQueue.poll()) != null) {
+        size.decrementAndGet();
+        accumulatedValue += unprocessed;
+        accumulatedCount++;
+        if (++n >= cap) {
+          break;
         }
-
-        if (cap > 0) {
-          while ((unprocessed = valueQueue.poll()) != null) {
-            size.decrementAndGet();
-            accumulatedValue += unprocessed;
-            accumulatedCount++;
-            if (++n >= cap) {
-              break;
-            }
-          }
-        }
-
-        if ((now - markTime) > nanosecondsInWindow) {
-          average = accumulatedValue / ((double)accumulatedCount);
-
-          accumulatedValue = 0;
-          accumulatedCount = 0;
-
-          markTime = now;
-        }
-
-        return true;
-      } finally {
-        lock.unlock();
       }
-    } else {
-
-      return false;
     }
   }
 
   public double getAverage () {
 
-    process(0, false);
+    lock.lock();
+    try {
 
-    return average;
+      double average;
+
+      sweep();
+
+      average = accumulatedValue / ((double)accumulatedCount);
+
+      accumulatedValue = 0;
+      accumulatedCount = 0;
+
+      return average;
+    } finally {
+      lock.unlock();
+    }
   }
 }

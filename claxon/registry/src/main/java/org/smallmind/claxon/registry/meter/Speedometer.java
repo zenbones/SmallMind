@@ -43,10 +43,10 @@ public class Speedometer implements Meter {
   private final Bounded bounded;
   private final Paced paced;
 
-  public Speedometer (Clock clock, Stint resolutionStint) {
+  public Speedometer (Clock clock, Stint windowStint) {
 
-    bounded = new Bounded(clock, resolutionStint);
-    paced = new Paced(clock, resolutionStint.getTimeUnit(), resolutionStint);
+    bounded = new Bounded();
+    paced = new Paced(clock, windowStint);
   }
 
   @Override
@@ -57,7 +57,7 @@ public class Speedometer implements Meter {
   }
 
   @Override
-  public Quantity[] getQuantities () {
+  public Quantity[] record () {
 
     return new Quantity[] {new Quantity("minimum", bounded.getMinimum()), new Quantity("maximum", bounded.getMaximum()), new Quantity("velocity", paced.getVelocity())};
   }

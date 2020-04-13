@@ -64,7 +64,7 @@ public class Trace implements Meter {
   }
 
   @Override
-  public Quantity[] getQuantities () {
+  public Quantity[] record () {
 
     Quantity[] quantities = new Quantity[windows.length];
     double[] values = pursued.getMovingAverages();

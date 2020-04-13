@@ -33,8 +33,6 @@
 package org.smallmind.claxon.registry.aggregate;
 
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.locks.ReentrantLock;
-import org.HdrHistogram.Histogram;
 import org.HdrHistogram.Recorder;
 import org.smallmind.claxon.registry.Clock;
 import org.smallmind.nutsnbolts.time.Stint;
@@ -42,12 +40,10 @@ import org.smallmind.nutsnbolts.time.StintUtility;
 
 public class Stratified implements Aggregate {
 
-  private final ReentrantLock updateLock = new ReentrantLock();
   private final Clock clock;
   private final double nanosecondsInWindow;
-  private Recorder writeRecorder;
+  private volatile Recorder writeRecorder;
   private Recorder readRecorder;
-  private double timeFactor;
   private long markTime;
 
   public Stratified (Clock clock) {
@@ -78,45 +74,25 @@ public class Stratified implements Aggregate {
   @Override
   public void update (long value) {
 
-    checkForReset();
-
     writeRecorder.recordValue(value);
   }
 
-  private void checkForReset () {
+  public synchronized HistogramTime get () {
 
-    if (updateLock.tryLock()) {
-      try {
+    Recorder recorder;
+    double timeFactor;
+    long now;
 
-        long now = clock.monotonicTime();
-        long transpired;
+    recorder = readRecorder;
+    readRecorder = writeRecorder;
+    recorder.reset();
 
-        if ((transpired = (now - markTime)) > nanosecondsInWindow) {
+    now = clock.monotonicTime();
+    writeRecorder = recorder;
 
-          Recorder recorder = readRecorder;
+    timeFactor = (now - markTime) / nanosecondsInWindow;
+    markTime = now;
 
-          readRecorder = writeRecorder;
-          recorder.reset();
-          writeRecorder = recorder;
-
-          timeFactor = transpired / nanosecondsInWindow;
-          markTime = now;
-        }
-      } finally {
-        updateLock.unlock();
-      }
-    }
-  }
-
-  public double getTimeFactor () {
-
-    return timeFactor;
-  }
-
-  public Histogram get () {
-
-    checkForReset();
-
-    return readRecorder.getIntervalHistogram();
+    return new HistogramTime(readRecorder.getIntervalHistogram(), timeFactor);
   }
 }

@@ -38,5 +38,5 @@ public interface Meter {
 
   void update (long value);
 
-  Quantity[] getQuantities ();
+  Quantity[] record ();
 }

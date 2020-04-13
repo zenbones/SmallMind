@@ -30,28 +30,28 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.claxon.registry.json;
+package org.smallmind.claxon.registry.aggregate;
 
-import org.smallmind.nutsnbolts.time.Stint;
-import org.smallmind.web.json.dto.DtoGenerator;
-import org.smallmind.web.json.dto.DtoProperty;
-import org.smallmind.web.json.dto.Idiom;
+import org.HdrHistogram.Histogram;
 
-import static org.smallmind.web.json.dto.Visibility.IN;
+public class HistogramTime {
 
-@DtoGenerator
-public class GaugeProperties {
+  private Histogram histogram;
+  private double timeFactor;
 
-  @DtoProperty(adapter = StintXmlAdapter.class, idioms = @Idiom(visibility = IN))
-  private Stint resolutionStint;
+  public HistogramTime (Histogram histogram, double timeFactor) {
 
-  public Stint getResolutionStint () {
-
-    return resolutionStint;
+    this.histogram = histogram;
+    this.timeFactor = timeFactor;
   }
 
-  public void setResolutionStint (Stint resolutionStint) {
+  public Histogram getHistogram () {
 
-    this.resolutionStint = resolutionStint;
+    return histogram;
+  }
+
+  public double getTimeFactor () {
+
+    return timeFactor;
   }
 }

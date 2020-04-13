@@ -35,6 +35,7 @@ package org.smallmind.claxon.registry.meter;
 import org.smallmind.claxon.registry.Clock;
 import org.smallmind.claxon.registry.Percentile;
 import org.smallmind.claxon.registry.Quantity;
+import org.smallmind.claxon.registry.aggregate.HistogramTime;
 import org.smallmind.claxon.registry.aggregate.Stratified;
 import org.smallmind.nutsnbolts.time.Stint;
 
@@ -57,22 +58,22 @@ public class Histogram implements Meter {
   }
 
   @Override
-  public Quantity[] getQuantities () {
+  public Quantity[] record () {
 
-    org.HdrHistogram.Histogram snapshot = stratified.get();
+    HistogramTime snapshot = stratified.get();
     Quantity[] basicQuantities = new Quantity[] {
-      new Quantity("count", snapshot.getTotalCount()),
-      new Quantity("velocity", snapshot.getTotalCount() * stratified.getTimeFactor()),
-      new Quantity("minimum", snapshot.getMinValue()),
-      new Quantity("maximum", snapshot.getMaxValue()),
-      new Quantity("mean", snapshot.getMean())};
+      new Quantity("count", snapshot.getHistogram().getTotalCount()),
+      new Quantity("velocity", snapshot.getHistogram().getTotalCount() * snapshot.getTimeFactor()),
+      new Quantity("minimum", snapshot.getHistogram().getMinValue()),
+      new Quantity("maximum", snapshot.getHistogram().getMaxValue()),
+      new Quantity("mean", snapshot.getHistogram().getMean())};
     Quantity[] allQuantities = new Quantity[basicQuantities.length + ((percentiles == null) ? 0 : percentiles.length)];
     int index = 0;
 
     System.arraycopy(basicQuantities, 0, allQuantities, 0, basicQuantities.length);
     if ((percentiles != null) && (percentiles.length > 0)) {
       for (Percentile percentile : percentiles) {
-        allQuantities[basicQuantities.length + (index++)] = new Quantity(percentile.getName(), snapshot.getValueAtPercentile(percentile.getValue()));
+        allQuantities[basicQuantities.length + (index++)] = new Quantity(percentile.getName(), snapshot.getHistogram().getValueAtPercentile(percentile.getValue()));
       }
     }
 

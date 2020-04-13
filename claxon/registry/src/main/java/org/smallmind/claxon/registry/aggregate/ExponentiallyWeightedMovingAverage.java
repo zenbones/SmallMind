@@ -59,61 +59,55 @@ public class ExponentiallyWeightedMovingAverage {
 
   public void update (long value) {
 
-    if (!process(value, true)) {
+    if (lock.tryLock()) {
+      try {
+        sweep(value, 1);
+      } finally {
+        lock.unlock();
+      }
+    } else {
       size.incrementAndGet();
       valueQueue.add(value);
     }
   }
 
-  private boolean process (long value, boolean required) {
+  private double sweep (long initialValue, int initialCount) {
 
-    if (lock.tryLock()) {
-      try {
+    Long unprocessed;
+    long now = clock.monotonicTime();
+    long accumulated = initialValue;
+    int cap = size.get();
+    int n = initialCount;
 
-        Long unprocessed;
-        long accumulated = value;
-        long now = clock.monotonicTime();
-        int cap = size.get();
-        int n = 0;
-        int accumulatedCount;
-
-        if (cap > 0) {
-          while ((unprocessed = valueQueue.poll()) != null) {
-            size.decrementAndGet();
-            accumulated += unprocessed;
-            if (++n >= cap) {
-              break;
-            }
-          }
+    if (cap > 0) {
+      while ((unprocessed = valueQueue.poll()) != null) {
+        size.decrementAndGet();
+        accumulated += unprocessed;
+        if (++n >= cap) {
+          break;
         }
-
-        if (required | (n > 0)) {
-
-          accumulatedCount = (required) ? n + 1 : n;
-
-          if (markTime == 0) {
-            average = ((double)accumulated) / accumulatedCount;
-          } else {
-            average += (1 - Math.exp(-((now - markTime) / nanosecondsInWindow))) * ((((double)accumulated) / accumulatedCount) - average);
-          }
-        }
-
-        markTime = now;
-
-        return true;
-      } finally {
-        lock.unlock();
       }
-    } else {
-
-      return false;
     }
+
+    if (markTime == 0) {
+      average = ((double)accumulated) / n;
+    } else {
+      average += (1 - Math.exp(-((now - markTime) / nanosecondsInWindow))) * ((((double)accumulated) / n) - average);
+    }
+
+    markTime = now;
+
+    return average;
   }
 
   public double getMovingAverage () {
 
-    process(0, false);
+    lock.lock();
+    try {
 
-    return average;
+      return sweep(0, 0);
+    } finally {
+      lock.unlock();
+    }
   }
 }

@@ -51,7 +51,7 @@ public class Tally implements Meter {
   }
 
   @Override
-  public Quantity[] getQuantities () {
+  public Quantity[] record () {
 
     return new Quantity[] {new Quantity("count", tallied.getCount())};
   }

@@ -32,25 +32,15 @@
  */
 package org.smallmind.claxon.registry.json;
 
-import java.io.IOException;
 import org.smallmind.claxon.registry.aop.BuilderParser;
-import org.smallmind.claxon.registry.meter.MeterBuilder;
 import org.smallmind.claxon.registry.meter.GaugeBuilder;
-import org.smallmind.web.json.scaffold.util.JsonCodec;
+import org.smallmind.claxon.registry.meter.MeterBuilder;
 
 public class GaugeParser implements BuilderParser {
 
   @Override
-  public MeterBuilder<?> parse (String json)
-    throws IOException {
+  public MeterBuilder<?> parse (String json) {
 
-    GaugeProperties properties = JsonCodec.read(json, GaugePropertiesInDto.class).factory();
-    GaugeBuilder builder = new GaugeBuilder();
-
-    if (properties.getResolutionStint() != null) {
-      builder.resolution(properties.getResolutionStint());
-    }
-
-    return builder;
+    return new GaugeBuilder();
   }
 }

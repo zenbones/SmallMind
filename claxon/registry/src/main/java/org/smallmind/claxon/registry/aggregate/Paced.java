@@ -33,33 +33,28 @@
 package org.smallmind.claxon.registry.aggregate;
 
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicLong;
-import java.util.concurrent.locks.ReentrantLock;
+import java.util.concurrent.atomic.LongAdder;
 import org.smallmind.claxon.registry.Clock;
 import org.smallmind.nutsnbolts.time.Stint;
 import org.smallmind.nutsnbolts.time.StintUtility;
 
 public class Paced implements Aggregate {
 
-  private final ReentrantLock lock = new ReentrantLock();
-  private final AtomicLong countInPulse = new AtomicLong();
   private final Clock clock;
-  private final double nanosecondsInVelocity;
-  private final double nanosecondsInPulse;
-  private double velocity = 0;
+  private final LongAdder count = new LongAdder();
+  private final double nanosecondsInWindow;
   private long markTime;
 
   public Paced (Clock clock) {
 
-    this(clock, TimeUnit.SECONDS, new Stint(1, TimeUnit.SECONDS));
+    this(clock, new Stint(1, TimeUnit.SECONDS));
   }
 
-  public Paced (Clock clock, TimeUnit velocityTimeUnit, Stint pulseStint) {
+  public Paced (Clock clock, Stint windowStint) {
 
     this.clock = clock;
 
-    nanosecondsInVelocity = StintUtility.convertToDouble(1, velocityTimeUnit, TimeUnit.NANOSECONDS);
-    nanosecondsInPulse = pulseStint.getTimeUnit().toNanos(pulseStint.getTime());
+    nanosecondsInWindow = StintUtility.convertToDouble(windowStint.getTime(), windowStint.getTimeUnit(), TimeUnit.NANOSECONDS);
     markTime = clock.monotonicTime();
   }
 
@@ -68,33 +63,12 @@ public class Paced implements Aggregate {
     add(1);
   }
 
-  public void dec () {
-
-    add(-1);
-  }
-
   public void add (long delta) {
 
-    long countInPulse = this.countInPulse.addAndGet(delta);
-
-    if (lock.tryLock()) {
-      try {
-
-        long now = clock.monotonicTime();
-        long transpired;
-
-        if ((transpired = (now - markTime)) > nanosecondsInPulse) {
-
-          double timeFactor = nanosecondsInVelocity / transpired;
-
-          velocity = countInPulse * timeFactor;
-
-          this.countInPulse.addAndGet(-countInPulse);
-          markTime = now;
-        }
-      } finally {
-        lock.unlock();
-      }
+    if (delta < 0) {
+      throw new IllegalArgumentException(delta + " is less than 0");
+    } else {
+      count.add(delta);
     }
   }
 
@@ -104,9 +78,18 @@ public class Paced implements Aggregate {
     add(value);
   }
 
-  public double getVelocity () {
+  public synchronized double getVelocity () {
 
-    add(0);
+    double velocity;
+    double timeFactor;
+    long now = clock.monotonicTime();
+    long currentCount = count.sum();
+
+    timeFactor = nanosecondsInWindow / (now - markTime);
+    velocity = currentCount * timeFactor;
+
+    count.add(-currentCount);
+    markTime = now;
 
     return velocity;
   }

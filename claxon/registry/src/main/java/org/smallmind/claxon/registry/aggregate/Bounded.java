@@ -32,75 +32,26 @@
  */
 package org.smallmind.claxon.registry.aggregate;
 
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.LongAccumulator;
-import java.util.concurrent.locks.ReentrantLock;
-import org.smallmind.claxon.registry.Clock;
-import org.smallmind.nutsnbolts.time.Stint;
-import org.smallmind.nutsnbolts.time.StintUtility;
 
 public class Bounded implements Aggregate {
 
-  private final ReentrantLock lock = new ReentrantLock();
   private final LongAccumulator maxAccumulator = new LongAccumulator(Long::max, Long.MIN_VALUE);
   private final LongAccumulator minAccumulator = new LongAccumulator(Long::min, Long.MAX_VALUE);
-  private final Clock clock;
-  private final double nanosecondsInWindow;
-  private long markTime;
-  private long maximum;
-  private long minimum;
-
-  public Bounded (Clock clock) {
-
-    this(clock, new Stint(1, TimeUnit.SECONDS));
-  }
-
-  public Bounded (Clock clock, Stint windowStint) {
-
-    this.clock = clock;
-
-    nanosecondsInWindow = StintUtility.convertToDouble(windowStint.getTime(), windowStint.getTimeUnit(), TimeUnit.NANOSECONDS);
-    markTime = clock.monotonicTime();
-  }
 
   public void update (long value) {
-
-    checkForReset();
 
     maxAccumulator.accumulate(value);
     minAccumulator.accumulate(value);
   }
 
-  private void checkForReset () {
-
-    if (lock.tryLock()) {
-      try {
-
-        long now = clock.monotonicTime();
-
-        if ((now - markTime) > nanosecondsInWindow) {
-          maximum = maxAccumulator.getThenReset();
-          minimum = minAccumulator.getThenReset();
-
-          markTime = now;
-        }
-      } finally {
-        lock.unlock();
-      }
-    }
-  }
-
   public long getMaximum () {
 
-    checkForReset();
-
-    return maximum;
+    return maxAccumulator.getThenReset();
   }
 
   public long getMinimum () {
 
-    checkForReset();
-
-    return minimum;
+    return minAccumulator.getThenReset();
   }
 }
