@@ -44,9 +44,9 @@ public class MeasurableTracker {
 
   private final ConcurrentHashMap<Reference<?>, Measurable> measurableMap = new ConcurrentHashMap<>();
   private final ReferenceQueue<Object> referenceQueue = new ReferenceQueue<>();
-  private final Registry registry;
+  private final ClaxonRegistry registry;
 
-  public MeasurableTracker (Registry registry) {
+  public MeasurableTracker (ClaxonRegistry registry) {
 
     this.registry = registry;
   }

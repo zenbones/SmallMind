@@ -42,9 +42,9 @@ import org.smallmind.claxon.registry.meter.MeterBuilder;
 public class ObservableTracker {
 
   private final ReferenceQueue<Object> referenceQueue = new ReferenceQueue<>();
-  private final Registry registry;
+  private final ClaxonRegistry registry;
 
-  public ObservableTracker (Registry registry) {
+  public ObservableTracker (ClaxonRegistry registry) {
 
     this.registry = registry;
   }

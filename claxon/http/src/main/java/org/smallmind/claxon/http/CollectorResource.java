@@ -39,24 +39,24 @@ import org.smallmind.claxon.registry.CollectionMethod;
 import org.smallmind.claxon.registry.Collector;
 import org.smallmind.claxon.registry.InvalidCollectionException;
 import org.smallmind.claxon.registry.PullCollector;
-import org.smallmind.claxon.registry.Registry;
+import org.smallmind.claxon.registry.ClaxonRegistry;
 import org.smallmind.claxon.registry.UnknownCollectorException;
 
 @Path("/claxon")
 public class CollectorResource {
 
-  private Registry registry;
+  private ClaxonRegistry registry;
 
   public CollectorResource () {
 
   }
 
-  public CollectorResource (Registry registry) {
+  public CollectorResource (ClaxonRegistry registry) {
 
     this.registry = registry;
   }
 
-  public void setRegistry (Registry registry) {
+  public void setRegistry (ClaxonRegistry registry) {
 
     this.registry = registry;
   }
