@@ -76,13 +76,13 @@ public class Instrumentation {
   }
 
   public void on (SansResultExecutable sansResultExecutable)
-    throws Exception {
+    throws Throwable {
 
     registry.instrument(registry.register(identifier, builder, tags), timeUnit, sansResultExecutable);
   }
 
   public <T> T on (WithResultExecutable<T> withResultExecutable)
-    throws Exception {
+    throws Throwable {
 
     return registry.instrument(registry.register(identifier, builder, tags), timeUnit, withResultExecutable);
   }

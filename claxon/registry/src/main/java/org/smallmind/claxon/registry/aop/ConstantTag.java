@@ -32,7 +32,9 @@
  */
 package org.smallmind.claxon.registry.aop;
 
-public @interface Instrument {
+public @interface ParameterTag {
 
-  Tag[] tags () default {};
+  String key ();
+
+  String parameter ();
 }

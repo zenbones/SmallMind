@@ -138,7 +138,7 @@ public class Registry {
   }
 
   public void instrument (Meter meter, TimeUnit timeUnit, SansResultExecutable sansResultExecutable)
-    throws Exception {
+    throws Throwable {
 
     long start = clock.monotonicTime();
 
@@ -147,7 +147,7 @@ public class Registry {
   }
 
   public <T> T instrument (Meter meter, TimeUnit timeUnit, WithResultExecutable<T> withResultExecutable)
-    throws Exception {
+    throws Throwable {
 
     T result;
     long start = clock.monotonicTime();

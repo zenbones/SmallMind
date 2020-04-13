@@ -36,5 +36,5 @@ package org.smallmind.claxon.registry;
 public interface SansResultExecutable {
 
   void execute ()
-    throws Exception;
+    throws Throwable;
 }
