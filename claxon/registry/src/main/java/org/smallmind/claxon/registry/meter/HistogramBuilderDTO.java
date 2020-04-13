@@ -30,11 +30,15 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.claxon.registry.aop;
+package org.smallmind.claxon.registry.meter;
 
-import org.smallmind.claxon.registry.meter.MeterBuilder;
+import org.smallmind.claxon.registry.aop.BuilderDTO;
 
-public interface BuilderDTO {
+public class HistogramBuilderDTO implements BuilderDTO {
 
-  MeterBuilder<?> parse (String json);
+  @Override
+  public MeterBuilder<?> parse (String json) {
+
+    return new HistogramBuilder();
+  }
 }
