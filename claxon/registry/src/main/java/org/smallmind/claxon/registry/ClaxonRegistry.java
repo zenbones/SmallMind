@@ -53,28 +53,30 @@ public class ClaxonRegistry {
   private final CollectionWorker collectionWorker;
   private final Clock clock;
   private final Stint collectionStint;
+  private final Tag[] registryTags;
 
-  public ClaxonRegistry () {
+  public ClaxonRegistry (Tag... registryTags) {
 
-    this(SystemClock.instance(), new Stint(1, TimeUnit.SECONDS));
+    this(SystemClock.instance(), new Stint(1, TimeUnit.SECONDS), registryTags);
   }
 
-  public ClaxonRegistry (Clock clock) {
+  public ClaxonRegistry (Clock clock, Tag... registryTags) {
 
-    this(clock, new Stint(1, TimeUnit.SECONDS));
+    this(clock, new Stint(1, TimeUnit.SECONDS), registryTags);
   }
 
-  public ClaxonRegistry (Stint collectionStint) {
+  public ClaxonRegistry (Stint collectionStint, Tag... registryTags) {
 
-    this(SystemClock.instance(), collectionStint);
+    this(SystemClock.instance(), collectionStint, registryTags);
   }
 
-  public ClaxonRegistry (Clock clock, Stint collectionStint) {
+  public ClaxonRegistry (Clock clock, Stint collectionStint, Tag... registryTags) {
 
     Thread workerThread = new Thread(collectionWorker = new CollectionWorker());
 
     this.clock = clock;
     this.collectionStint = collectionStint;
+    this.registryTags = registryTags;
 
     measurableTrcker = new MeasurableTracker(this);
     observableTracker = new ObservableTracker(this);
@@ -170,7 +172,21 @@ public class ClaxonRegistry {
           Quantity[] quantities = meterEntry.getValue().getQuantities();
 
           if ((quantities != null) && (quantities.length > 0)) {
-            collector.record(meterEntry.getKey().getIdentifier(), meterEntry.getKey().getTags(), quantities);
+
+            Tag[] mergedTags;
+            Tag[] meterTags = meterEntry.getKey().getTags();
+
+            if ((registryTags == null) || (registryTags.length == 0)) {
+              mergedTags = meterTags;
+            } else if ((meterTags == null) || (meterTags.length == 0)) {
+              mergedTags = registryTags;
+            } else {
+              mergedTags = new Tag[registryTags.length + meterTags.length];
+              System.arraycopy(registryTags, 0, mergedTags, 0, registryTags.length);
+              System.arraycopy(meterTags, 0, mergedTags, registryTags.length, meterTags.length);
+            }
+
+            collector.record(meterEntry.getKey().getIdentifier(), mergedTags, quantities);
           }
         } catch (Exception exception) {
           LoggerManager.getLogger(ClaxonRegistry.class).error(exception);
