@@ -30,15 +30,27 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.claxon.registry.meter;
+package org.smallmind.claxon.registry.json;
 
-import org.smallmind.claxon.registry.aop.BuilderDTO;
+import java.io.IOException;
+import org.smallmind.claxon.registry.aop.BuilderParser;
+import org.smallmind.claxon.registry.meter.MeterBuilder;
+import org.smallmind.claxon.registry.meter.GaugeBuilder;
+import org.smallmind.web.json.scaffold.util.JsonCodec;
 
-public class HistogramBuilderDTO implements BuilderDTO {
+public class GaugeParser implements BuilderParser {
 
   @Override
-  public MeterBuilder<?> parse (String json) {
+  public MeterBuilder<?> parse (String json)
+    throws IOException {
 
-    return new HistogramBuilder();
+    GaugeProperties properties = JsonCodec.read(json, GaugePropertiesInDto.class).factory();
+    GaugeBuilder builder = new GaugeBuilder();
+
+    if (properties.getResolutionStint() != null) {
+      builder.resolution(properties.getResolutionStint());
+    }
+
+    return builder;
   }
 }

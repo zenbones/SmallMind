@@ -44,9 +44,9 @@ public @interface Instrumented {
 
   String identifier ();
 
-  Class<? extends BuilderDTO> dto ();
+  Class<? extends BuilderParser> parser ();
 
-  String json ();
+  String json () default "{}";
 
   ConstantTag[] constants () default {};
 

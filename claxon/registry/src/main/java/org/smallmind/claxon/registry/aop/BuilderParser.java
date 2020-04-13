@@ -30,43 +30,12 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.claxon.registry.meter;
+package org.smallmind.claxon.registry.aop;
 
-import java.util.concurrent.TimeUnit;
-import org.smallmind.claxon.registry.Clock;
-import org.smallmind.claxon.registry.Window;
+import org.smallmind.claxon.registry.meter.MeterBuilder;
 
-public class TraceBuilder implements MeterBuilder<Trace> {
+public interface BuilderParser {
 
-  private Clock clock;
-  private TimeUnit windowTimeUnit = TimeUnit.MINUTES;
-  private Window[] windows = new Window[] {new Window("m1", 1), new Window("m5", 5), new Window("m15", 15)};
-
-  public MeterBuilder<Trace> windowTimeUnit (TimeUnit windowTimeUnit) {
-
-    this.windows = windows;
-
-    return this;
-  }
-
-  public MeterBuilder<Trace> windows (Window[] windows) {
-
-    this.windows = windows;
-
-    return this;
-  }
-
-  @Override
-  public MeterBuilder<Trace> clock (Clock clock) {
-
-    this.clock = clock;
-
-    return this;
-  }
-
-  @Override
-  public Trace build () {
-
-    return new Trace(clock, windowTimeUnit, windows);
-  }
+  MeterBuilder<?> parse (String json)
+    throws Exception;
 }

@@ -30,11 +30,17 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.claxon.registry.aop;
+package org.smallmind.claxon.registry.json;
 
+import org.smallmind.claxon.registry.aop.BuilderParser;
 import org.smallmind.claxon.registry.meter.MeterBuilder;
+import org.smallmind.claxon.registry.meter.TallyBuilder;
 
-public interface BuilderDTO {
+public class TallyParser implements BuilderParser {
 
-  MeterBuilder<?> parse (String json);
+  @Override
+  public MeterBuilder<?> parse (String json) {
+
+    return new TallyBuilder();
+  }
 }

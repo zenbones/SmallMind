@@ -32,10 +32,23 @@
  */
 package org.smallmind.claxon.registry;
 
+import org.smallmind.web.json.dto.DtoGenerator;
+import org.smallmind.web.json.dto.DtoProperty;
+import org.smallmind.web.json.dto.Idiom;
+
+import static org.smallmind.web.json.dto.Visibility.IN;
+
+@DtoGenerator
 public class Percentile {
 
+  @DtoProperty(idioms = @Idiom(visibility = IN))
   private String name;
+  @DtoProperty(idioms = @Idiom(visibility = IN))
   private double value;
+
+  public Percentile () {
+
+  }
 
   public Percentile (String name, double value) {
 
@@ -48,8 +61,18 @@ public class Percentile {
     return name;
   }
 
+  public void setName (String name) {
+
+    this.name = name;
+  }
+
   public double getValue () {
 
     return value;
+  }
+
+  public void setValue (double value) {
+
+    this.value = value;
   }
 }

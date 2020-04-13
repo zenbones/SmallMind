@@ -68,7 +68,7 @@ public class InstrumentedAspect {
       tags[index++] = new Tag(parameterTag.key(), AOPUtility.getParameterValue(thisJoinPoint, parameterTag.parameter(), false).toString());
     }
 
-    return Instrument.with(Identifier.instance(instrumented.identifier()), instrumented.dto().getConstructor().newInstance().parse(instrumented.json()), tags)
+    return Instrument.with(Identifier.instance(instrumented.identifier()), instrumented.parser().getConstructor().newInstance().parse(instrumented.json()), tags)
              .as(instrumented.timeUnit())
              .on((WithResultExecutable<Object>)thisJoinPoint::proceed);
   }

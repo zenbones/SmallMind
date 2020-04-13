@@ -237,12 +237,12 @@
       </dependency>
       <dependency>
         <groupId>org.smallmind</groupId>
-        <artifactId>web-json-scaffold</artifactId>
+        <artifactId>web-json-dto</artifactId>
         <version>${project.version}</version>
       </dependency>
       <dependency>
         <groupId>org.smallmind</groupId>
-        <artifactId>json-dto-engine</artifactId>
+        <artifactId>web-json-scaffold</artifactId>
         <version>${project.version}</version>
       </dependency>
       <dependency>

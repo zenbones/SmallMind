@@ -30,8 +30,10 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.claxon.registry;
+package org.smallmind.claxon.registry.json;
 
+import org.smallmind.claxon.registry.Percentile;
+import org.smallmind.nutsnbolts.time.Stint;
 import org.smallmind.web.json.dto.DtoGenerator;
 import org.smallmind.web.json.dto.DtoProperty;
 import org.smallmind.web.json.dto.Idiom;
@@ -39,40 +41,66 @@ import org.smallmind.web.json.dto.Idiom;
 import static org.smallmind.web.json.dto.Visibility.IN;
 
 @DtoGenerator
-public class Window {
+public class HistogramProperties {
 
+  @DtoProperty(adapter = StintXmlAdapter.class, idioms = @Idiom(visibility = IN))
+  private Stint resolutionStint;
   @DtoProperty(idioms = @Idiom(visibility = IN))
-  private String name;
+  private Percentile[] percentiles;
   @DtoProperty(idioms = @Idiom(visibility = IN))
-  private long value;
+  private Long lowestDiscernibleValue;
+  @DtoProperty(idioms = @Idiom(visibility = IN))
+  private Long highestTrackableValue;
+  @DtoProperty(idioms = @Idiom(visibility = IN))
+  private Integer numberOfSignificantValueDigits;
 
-  public Window () {
+  public Stint getResolutionStint () {
 
+    return resolutionStint;
   }
 
-  public Window (String name, long value) {
+  public void setResolutionStint (Stint resolutionStint) {
 
-    this.name = name;
-    this.value = value;
+    this.resolutionStint = resolutionStint;
   }
 
-  public String getName () {
+  public Percentile[] getPercentiles () {
 
-    return name;
+    return percentiles;
   }
 
-  public void setName (String name) {
+  public void setPercentiles (Percentile[] percentiles) {
 
-    this.name = name;
+    this.percentiles = percentiles;
   }
 
-  public long getValue () {
+  public Long getLowestDiscernibleValue () {
 
-    return value;
+    return lowestDiscernibleValue;
   }
 
-  public void setValue (long value) {
+  public void setLowestDiscernibleValue (Long lowestDiscernibleValue) {
 
-    this.value = value;
+    this.lowestDiscernibleValue = lowestDiscernibleValue;
+  }
+
+  public Long getHighestTrackableValue () {
+
+    return highestTrackableValue;
+  }
+
+  public void setHighestTrackableValue (Long highestTrackableValue) {
+
+    this.highestTrackableValue = highestTrackableValue;
+  }
+
+  public Integer getNumberOfSignificantValueDigits () {
+
+    return numberOfSignificantValueDigits;
+  }
+
+  public void setNumberOfSignificantValueDigits (Integer numberOfSignificantValueDigits) {
+
+    this.numberOfSignificantValueDigits = numberOfSignificantValueDigits;
   }
 }

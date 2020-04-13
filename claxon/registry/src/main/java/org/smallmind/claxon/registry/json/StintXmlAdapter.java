@@ -30,43 +30,37 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.claxon.registry.meter;
+package org.smallmind.claxon.registry.json;
 
 import java.util.concurrent.TimeUnit;
-import org.smallmind.claxon.registry.Clock;
-import org.smallmind.claxon.registry.Window;
+import javax.xml.bind.annotation.adapters.XmlAdapter;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.JsonNodeFactory;
+import com.fasterxml.jackson.databind.node.ObjectNode;
+import org.smallmind.nutsnbolts.time.Stint;
 
-public class TraceBuilder implements MeterBuilder<Trace> {
+public class StintXmlAdapter extends XmlAdapter<JsonNode, Stint> {
 
-  private Clock clock;
-  private TimeUnit windowTimeUnit = TimeUnit.MINUTES;
-  private Window[] windows = new Window[] {new Window("m1", 1), new Window("m5", 5), new Window("m15", 15)};
+  @Override
+  public JsonNode marshal (Stint stint) {
 
-  public MeterBuilder<Trace> windowTimeUnit (TimeUnit windowTimeUnit) {
+    if (stint == null) {
 
-    this.windows = windows;
+      return null;
+    } else {
 
-    return this;
-  }
+      ObjectNode node = JsonNodeFactory.instance.objectNode();
 
-  public MeterBuilder<Trace> windows (Window[] windows) {
+      node.put("time", stint.getTime());
+      node.put("timeUnit", stint.getTimeUnit().name());
 
-    this.windows = windows;
-
-    return this;
+      return node;
+    }
   }
 
   @Override
-  public MeterBuilder<Trace> clock (Clock clock) {
+  public Stint unmarshal (JsonNode node) {
 
-    this.clock = clock;
-
-    return this;
-  }
-
-  @Override
-  public Trace build () {
-
-    return new Trace(clock, windowTimeUnit, windows);
+    return (node == null) ? null : new Stint(node.get("time").longValue(), TimeUnit.valueOf(node.get("timeUnit").asText()));
   }
 }

@@ -30,43 +30,41 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.claxon.registry.meter;
+package org.smallmind.claxon.registry.json;
 
 import java.util.concurrent.TimeUnit;
-import org.smallmind.claxon.registry.Clock;
 import org.smallmind.claxon.registry.Window;
+import org.smallmind.web.json.dto.DtoGenerator;
+import org.smallmind.web.json.dto.DtoProperty;
+import org.smallmind.web.json.dto.Idiom;
 
-public class TraceBuilder implements MeterBuilder<Trace> {
+import static org.smallmind.web.json.dto.Visibility.IN;
 
-  private Clock clock;
+@DtoGenerator
+public class TraceProperties {
+
+  @DtoProperty(adapter = TimeUnitEnumXmlAdapter.class, idioms = @Idiom(visibility = IN))
   private TimeUnit windowTimeUnit = TimeUnit.MINUTES;
+  @DtoProperty(idioms = @Idiom(visibility = IN))
   private Window[] windows = new Window[] {new Window("m1", 1), new Window("m5", 5), new Window("m15", 15)};
 
-  public MeterBuilder<Trace> windowTimeUnit (TimeUnit windowTimeUnit) {
+  public TimeUnit getWindowTimeUnit () {
+
+    return windowTimeUnit;
+  }
+
+  public void setWindowTimeUnit (TimeUnit windowTimeUnit) {
+
+    this.windowTimeUnit = windowTimeUnit;
+  }
+
+  public Window[] getWindows () {
+
+    return windows;
+  }
+
+  public void setWindows (Window[] windows) {
 
     this.windows = windows;
-
-    return this;
-  }
-
-  public MeterBuilder<Trace> windows (Window[] windows) {
-
-    this.windows = windows;
-
-    return this;
-  }
-
-  @Override
-  public MeterBuilder<Trace> clock (Clock clock) {
-
-    this.clock = clock;
-
-    return this;
-  }
-
-  @Override
-  public Trace build () {
-
-    return new Trace(clock, windowTimeUnit, windows);
   }
 }

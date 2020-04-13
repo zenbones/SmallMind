@@ -30,43 +30,27 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.claxon.registry.meter;
+package org.smallmind.claxon.registry.json;
 
-import java.util.concurrent.TimeUnit;
-import org.smallmind.claxon.registry.Clock;
-import org.smallmind.claxon.registry.Window;
+import java.io.IOException;
+import org.smallmind.claxon.registry.aop.BuilderParser;
+import org.smallmind.claxon.registry.meter.MeterBuilder;
+import org.smallmind.claxon.registry.meter.SpeedometerBuilder;
+import org.smallmind.web.json.scaffold.util.JsonCodec;
 
-public class TraceBuilder implements MeterBuilder<Trace> {
-
-  private Clock clock;
-  private TimeUnit windowTimeUnit = TimeUnit.MINUTES;
-  private Window[] windows = new Window[] {new Window("m1", 1), new Window("m5", 5), new Window("m15", 15)};
-
-  public MeterBuilder<Trace> windowTimeUnit (TimeUnit windowTimeUnit) {
-
-    this.windows = windows;
-
-    return this;
-  }
-
-  public MeterBuilder<Trace> windows (Window[] windows) {
-
-    this.windows = windows;
-
-    return this;
-  }
+public class SpeedometerParser implements BuilderParser {
 
   @Override
-  public MeterBuilder<Trace> clock (Clock clock) {
+  public MeterBuilder<?> parse (String json)
+    throws IOException {
 
-    this.clock = clock;
+    SpeedometerProperties properties = JsonCodec.read(json, SpeedometerPropertiesInDto.class).factory();
+    SpeedometerBuilder builder = new SpeedometerBuilder();
 
-    return this;
-  }
+    if (properties.getResolutionStint() != null) {
+      builder.resolution(properties.getResolutionStint());
+    }
 
-  @Override
-  public Trace build () {
-
-    return new Trace(clock, windowTimeUnit, windows);
+    return builder;
   }
 }
