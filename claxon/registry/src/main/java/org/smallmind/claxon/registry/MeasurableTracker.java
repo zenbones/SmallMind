@@ -40,13 +40,13 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Function;
 import org.smallmind.claxon.registry.meter.MeterBuilder;
 
-public class MeasurableSet {
+public class MeasurableTracker {
 
   private final ConcurrentHashMap<Reference<?>, Measurable> measurableMap = new ConcurrentHashMap<>();
   private final ReferenceQueue<Object> referenceQueue = new ReferenceQueue<>();
   private final Registry registry;
 
-  public MeasurableSet (Registry registry) {
+  public MeasurableTracker (Registry registry) {
 
     this.registry = registry;
   }

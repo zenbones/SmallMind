@@ -1,28 +1,28 @@
 /*
  * Copyright (c) 2007, 2008, 2009, 2010, 2011, 2012, 2013, 2014, 2015, 2016, 2017, 2018, 2019, 2020 David Berkman
- *
+ * 
  * This file is part of the SmallMind Code Project.
- *
+ * 
  * The SmallMind Code Project is free software, you can redistribute
  * it and/or modify it under either, at your discretion...
- *
+ * 
  * 1) The terms of GNU Affero General Public License as published by the
  * Free Software Foundation, either version 3 of the License, or (at
  * your option) any later version.
- *
+ * 
  * ...or...
- *
+ * 
  * 2) The terms of the Apache License, Version 2.0.
- *
+ * 
  * The SmallMind Code Project is distributed in the hope that it will
  * be useful, but WITHOUT ANY WARRANTY; without even the implied warranty
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License or Apache License for more details.
- *
+ * 
  * You should have received a copy of the GNU Affero General Public License
  * and the Apache License along with the SmallMind Code Project. If not, see
  * <http://www.gnu.org/licenses/> or <http://www.apache.org/licenses/LICENSE-2.0>.
- *
+ * 
  * Additional permission under the GNU Affero GPL version 3 section 7
  * ------------------------------------------------------------------
  * If you modify this Program, or any covered work, by linking or
@@ -48,7 +48,8 @@ public class Registry {
 
   private final ConcurrentHashMap<String, Collector> collectorMap = new ConcurrentHashMap<>();
   private final ConcurrentHashMap<RegistryKey, Meter> meterMap = new ConcurrentHashMap<>();
-  private final MeasurableSet measurableSet;
+  private final MeasurableTracker measurableTrcker;
+  private final ObservableTracker observableTracker;
   private final CollectionWorker collectionWorker;
   private final Clock clock;
   private final Stint collectionStint;
@@ -75,7 +76,9 @@ public class Registry {
     this.clock = clock;
     this.collectionStint = collectionStint;
 
-    measurableSet = new MeasurableSet(this);
+    measurableTrcker = new MeasurableTracker(this);
+    observableTracker = new ObservableTracker(this);
+
     workerThread.setDaemon(true);
     workerThread.start();
   }
@@ -121,25 +124,12 @@ public class Registry {
 
   public <O extends Observable> O track (Identifier identifier, MeterBuilder<?> builder, O observable, Tag... tags) {
 
-    observable.addObserver((Observable obs, Object arg) -> {
-
-      Meter meter = register(identifier, builder, tags);
-
-      if (Number.class.isAssignableFrom(arg.getClass())) {
-        meter.update(((Number)arg).longValue());
-      } else if (String.class.equals(arg.getClass())) {
-        meter.update(Long.parseLong((String)arg));
-      } else {
-        throw new IllegalArgumentException("Must be a long value(" + arg + ")");
-      }
-    });
-
-    return observable;
+    return observableTracker.track(identifier, builder, observable, tags);
   }
 
   public <T> T track (Identifier identifier, MeterBuilder<?> builder, T measured, Function<T, Long> measurement, Tag... tags) {
 
-    return measurableSet.track(identifier, builder, measured, measurement, tags);
+    return measurableTrcker.track(identifier, builder, measured, measurement, tags);
   }
 
   public void instrument (Meter meter, long value) {
@@ -170,7 +160,8 @@ public class Registry {
 
   public void record () {
 
-    measurableSet.sweepAndUpdate();
+    measurableTrcker.sweepAndUpdate();
+    observableTracker.sweep();
 
     for (Collector collector : collectorMap.values()) {
       for (Map.Entry<RegistryKey, Meter> meterEntry : meterMap.entrySet()) {
