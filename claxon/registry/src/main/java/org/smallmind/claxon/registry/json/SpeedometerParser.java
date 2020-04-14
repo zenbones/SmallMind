@@ -35,13 +35,14 @@ package org.smallmind.claxon.registry.json;
 import java.io.IOException;
 import org.smallmind.claxon.registry.aop.BuilderParser;
 import org.smallmind.claxon.registry.meter.MeterBuilder;
+import org.smallmind.claxon.registry.meter.Speedometer;
 import org.smallmind.claxon.registry.meter.SpeedometerBuilder;
 import org.smallmind.web.json.scaffold.util.JsonCodec;
 
-public class SpeedometerParser implements BuilderParser {
+public class SpeedometerParser implements BuilderParser<Speedometer> {
 
   @Override
-  public MeterBuilder<?> parse (String json)
+  public MeterBuilder<Speedometer> parse (String json)
     throws IOException {
 
     SpeedometerProperties properties = JsonCodec.read(json, SpeedometerPropertiesInDto.class).factory();

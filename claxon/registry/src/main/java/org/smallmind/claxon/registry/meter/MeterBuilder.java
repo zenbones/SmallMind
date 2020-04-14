@@ -34,9 +34,8 @@ package org.smallmind.claxon.registry.meter;
 
 import org.smallmind.claxon.registry.Clock;
 
+@FunctionalInterface
 public interface MeterBuilder<M extends Meter> {
 
-  MeterBuilder<M> clock (Clock clock);
-
-  M build ();
+  M build (Clock clock);
 }

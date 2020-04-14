@@ -34,12 +34,13 @@ package org.smallmind.claxon.registry.json;
 
 import org.smallmind.claxon.registry.aop.BuilderParser;
 import org.smallmind.claxon.registry.meter.MeterBuilder;
+import org.smallmind.claxon.registry.meter.Tally;
 import org.smallmind.claxon.registry.meter.TallyBuilder;
 
-public class TallyParser implements BuilderParser {
+public class TallyParser implements BuilderParser<Tally> {
 
   @Override
-  public MeterBuilder<?> parse (String json) {
+  public MeterBuilder<Tally> parse (String json) {
 
     return new TallyBuilder();
   }

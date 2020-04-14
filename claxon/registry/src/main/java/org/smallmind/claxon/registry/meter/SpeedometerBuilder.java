@@ -38,8 +38,9 @@ import org.smallmind.nutsnbolts.time.Stint;
 
 public class SpeedometerBuilder implements MeterBuilder<Speedometer> {
 
-  private Clock clock;
-  private Stint resolutionStint = new Stint(1, TimeUnit.SECONDS);
+  private static final Stint ONE_SECOND_STINT = new Stint(1, TimeUnit.SECONDS);
+
+  private Stint resolutionStint = ONE_SECOND_STINT;
 
   public MeterBuilder<Speedometer> resolution (Stint resolutionStint) {
 
@@ -49,15 +50,7 @@ public class SpeedometerBuilder implements MeterBuilder<Speedometer> {
   }
 
   @Override
-  public MeterBuilder<Speedometer> clock (Clock clock) {
-
-    this.clock = clock;
-
-    return this;
-  }
-
-  @Override
-  public Speedometer build () {
+  public Speedometer build (Clock clock) {
 
     return new Speedometer(clock, resolutionStint);
   }

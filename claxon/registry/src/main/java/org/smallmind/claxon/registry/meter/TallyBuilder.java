@@ -37,13 +37,7 @@ import org.smallmind.claxon.registry.Clock;
 public class TallyBuilder implements MeterBuilder<Tally> {
 
   @Override
-  public MeterBuilder<Tally> clock (Clock clock) {
-
-    return this;
-  }
-
-  @Override
-  public Tally build () {
+  public Tally build (Clock clock) {
 
     return new Tally();
   }

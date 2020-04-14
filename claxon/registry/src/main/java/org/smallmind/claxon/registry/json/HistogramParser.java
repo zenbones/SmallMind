@@ -34,14 +34,15 @@ package org.smallmind.claxon.registry.json;
 
 import java.io.IOException;
 import org.smallmind.claxon.registry.aop.BuilderParser;
+import org.smallmind.claxon.registry.meter.Histogram;
 import org.smallmind.claxon.registry.meter.HistogramBuilder;
 import org.smallmind.claxon.registry.meter.MeterBuilder;
 import org.smallmind.web.json.scaffold.util.JsonCodec;
 
-public class HistogramParser implements BuilderParser {
+public class HistogramParser implements BuilderParser<Histogram> {
 
   @Override
-  public MeterBuilder<?> parse (String json)
+  public MeterBuilder<Histogram> parse (String json)
     throws IOException {
 
     HistogramProperties properties = JsonCodec.read(json, HistogramPropertiesInDto.class).factory();

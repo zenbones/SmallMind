@@ -32,10 +32,12 @@
  */
 package org.smallmind.claxon.registry.aop;
 
+import org.smallmind.claxon.registry.meter.Meter;
 import org.smallmind.claxon.registry.meter.MeterBuilder;
 
-public interface BuilderParser {
+@FunctionalInterface
+public interface BuilderParser<M extends Meter> {
 
-  MeterBuilder<?> parse (String json)
+  MeterBuilder<M> parse (String json)
     throws Exception;
 }

@@ -37,13 +37,7 @@ import org.smallmind.claxon.registry.Clock;
 public class GaugeBuilder implements MeterBuilder<Gauge> {
 
   @Override
-  public MeterBuilder<Gauge> clock (Clock clock) {
-
-    return this;
-  }
-
-  @Override
-  public Gauge build () {
+  public Gauge build (Clock clock) {
 
     return new Gauge();
   }

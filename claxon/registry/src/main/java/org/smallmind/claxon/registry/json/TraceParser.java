@@ -35,13 +35,14 @@ package org.smallmind.claxon.registry.json;
 import java.io.IOException;
 import org.smallmind.claxon.registry.aop.BuilderParser;
 import org.smallmind.claxon.registry.meter.MeterBuilder;
+import org.smallmind.claxon.registry.meter.Trace;
 import org.smallmind.claxon.registry.meter.TraceBuilder;
 import org.smallmind.web.json.scaffold.util.JsonCodec;
 
-public class TraceParser implements BuilderParser {
+public class TraceParser implements BuilderParser<Trace> {
 
   @Override
-  public MeterBuilder<?> parse (String json)
+  public MeterBuilder<Trace> parse (String json)
     throws IOException {
 
     TraceProperties properties = JsonCodec.read(json, TracePropertiesInDto.class).factory();
