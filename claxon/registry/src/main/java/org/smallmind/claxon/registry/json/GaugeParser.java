@@ -32,12 +32,12 @@
  */
 package org.smallmind.claxon.registry.json;
 
-import org.smallmind.claxon.registry.aop.BuilderParser;
+import org.smallmind.claxon.registry.aop.InstrumentedParser;
 import org.smallmind.claxon.registry.meter.Gauge;
 import org.smallmind.claxon.registry.meter.GaugeBuilder;
 import org.smallmind.claxon.registry.meter.MeterBuilder;
 
-public class GaugeParser implements BuilderParser<Gauge> {
+public class GaugeParser implements InstrumentedParser<Gauge> {
 
   @Override
   public MeterBuilder<Gauge> parse (String json) {

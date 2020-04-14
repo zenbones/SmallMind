@@ -30,18 +30,12 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.claxon.registry.json;
+package org.smallmind.claxon.registry.aop;
 
-import org.smallmind.claxon.registry.aop.InstrumentedParser;
-import org.smallmind.claxon.registry.meter.MeterBuilder;
-import org.smallmind.claxon.registry.meter.Tally;
-import org.smallmind.claxon.registry.meter.TallyBuilder;
+public class InstrumentationException extends RuntimeException {
 
-public class TallyParser implements InstrumentedParser<Tally> {
+  public InstrumentationException (Throwable cause) {
 
-  @Override
-  public MeterBuilder<Tally> parse (String json) {
-
-    return new TallyBuilder();
+    super(cause);
   }
 }

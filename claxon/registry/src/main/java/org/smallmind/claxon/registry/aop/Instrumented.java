@@ -44,7 +44,7 @@ public @interface Instrumented {
 
   String identifier ();
 
-  Class<? extends BuilderParser> parser ();
+  Class<? extends InstrumentedParser> parser ();
 
   String json () default "{}";
 

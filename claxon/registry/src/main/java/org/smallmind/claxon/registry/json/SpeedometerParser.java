@@ -33,13 +33,13 @@
 package org.smallmind.claxon.registry.json;
 
 import java.io.IOException;
-import org.smallmind.claxon.registry.aop.BuilderParser;
+import org.smallmind.claxon.registry.aop.InstrumentedParser;
 import org.smallmind.claxon.registry.meter.MeterBuilder;
 import org.smallmind.claxon.registry.meter.Speedometer;
 import org.smallmind.claxon.registry.meter.SpeedometerBuilder;
 import org.smallmind.web.json.scaffold.util.JsonCodec;
 
-public class SpeedometerParser implements BuilderParser<Speedometer> {
+public class SpeedometerParser implements InstrumentedParser<Speedometer> {
 
   @Override
   public MeterBuilder<Speedometer> parse (String json)

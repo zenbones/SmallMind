@@ -32,12 +32,20 @@
  */
 package org.smallmind.claxon.registry.aop;
 
+import org.smallmind.claxon.registry.meter.LazyBuilder;
 import org.smallmind.claxon.registry.meter.Meter;
-import org.smallmind.claxon.registry.meter.MeterBuilder;
 
-@FunctionalInterface
-public interface BuilderParser<M extends Meter> {
+public class InstrumentedLazyBuilder<M extends Meter> extends LazyBuilder<M> {
 
-  MeterBuilder<M> parse (String json)
-    throws Exception;
+  public InstrumentedLazyBuilder (Class<InstrumentedParser<M>> parserClass, String json) {
+
+    super(() -> {
+
+      try {
+        return parserClass.getConstructor().newInstance().parse(json);
+      } catch (Exception exception) {
+        throw new InstrumentationException(exception);
+      }
+    });
+  }
 }

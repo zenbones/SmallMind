@@ -32,7 +32,6 @@
  */
 package org.smallmind.claxon.registry.aop;
 
-import java.util.concurrent.ConcurrentHashMap;
 import org.aspectj.lang.ProceedingJoinPoint;
 import org.aspectj.lang.annotation.Around;
 import org.aspectj.lang.annotation.Aspect;
@@ -46,16 +45,12 @@ import org.smallmind.nutsnbolts.reflection.aop.AOPUtility;
 @Aspect
 public class InstrumentedAspect {
 
-  // Should not grow large as the json representing builders should have very low cardinality
-  private static final ConcurrentHashMap<ParsedKey, MeterBuilder<?>> PARSED_MAP = new ConcurrentHashMap<>();
-
   @Around(value = "(execution(@Instrumented * * (..)) || initialization(@Instrumented new(..))) && @annotation(instrumented)", argNames = "thisJoinPoint, instrumented")
   public Object aroundInstrumentedMethod (ProceedingJoinPoint thisJoinPoint, Instrumented instrumented)
     throws Throwable {
 
     MeterBuilder<?> builder;
     Tag[] tags = new Tag[instrumented.constants().length + instrumented.parameters().length];
-    ParsedKey parsedKey = new ParsedKey(instrumented.parser(), instrumented.json());
     int index = 0;
 
     for (ConstantTag constantTag : instrumented.constants()) {
@@ -65,50 +60,10 @@ public class InstrumentedAspect {
       tags[index++] = new Tag(parameterTag.key(), AOPUtility.getParameterValue(thisJoinPoint, parameterTag.parameter(), false).toString());
     }
 
-    if ((builder = PARSED_MAP.get(parsedKey)) == null) {
-      synchronized (PARSED_MAP) {
-        if ((builder = PARSED_MAP.get(parsedKey)) == null) {
-          PARSED_MAP.put(parsedKey, builder = instrumented.parser().getConstructor().newInstance().parse(instrumented.json()));
-        }
-      }
-    }
+    builder = new InstrumentedLazyBuilder(instrumented.parser(), instrumented.json());
 
     return Instrument.with(Identifier.instance(instrumented.identifier()), builder, tags)
              .as(instrumented.timeUnit())
              .on((WithResultExecutable<Object>)thisJoinPoint::proceed);
-  }
-
-  private static class ParsedKey {
-
-    private Class<?> parser;
-    private String json;
-
-    public ParsedKey (Class<?> parser, String json) {
-
-      this.parser = parser;
-      this.json = json;
-    }
-
-    public Class<?> getParser () {
-
-      return parser;
-    }
-
-    public String getJson () {
-
-      return json;
-    }
-
-    @Override
-    public int hashCode () {
-
-      return (parser.hashCode() * 31) + json.hashCode();
-    }
-
-    @Override
-    public boolean equals (Object obj) {
-
-      return (obj instanceof ParsedKey) && ((ParsedKey)obj).getParser().equals(parser) && ((ParsedKey)obj).getJson().equals(json);
-    }
   }
 }

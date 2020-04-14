@@ -30,18 +30,10 @@
  * alone subject to any of the requirements of the GNU Affero GPL
  * version 3.
  */
-package org.smallmind.claxon.registry.json;
+package org.smallmind.claxon.registry.meter;
 
-import org.smallmind.claxon.registry.aop.InstrumentedParser;
-import org.smallmind.claxon.registry.meter.MeterBuilder;
-import org.smallmind.claxon.registry.meter.Tally;
-import org.smallmind.claxon.registry.meter.TallyBuilder;
+@FunctionalInterface
+public interface BuilderFactory<M extends Meter> {
 
-public class TallyParser implements InstrumentedParser<Tally> {
-
-  @Override
-  public MeterBuilder<Tally> parse (String json) {
-
-    return new TallyBuilder();
-  }
+  MeterBuilder<M> construct ();
 }
