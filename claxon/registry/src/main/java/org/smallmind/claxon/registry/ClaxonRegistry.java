@@ -83,6 +83,9 @@ public class ClaxonRegistry {
 
     workerThread.setDaemon(true);
     workerThread.start();
+  }
+
+  public void asInstrumentRegistry () {
 
     Instrument.register(this);
   }
