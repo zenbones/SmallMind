@@ -68,7 +68,7 @@ public class CollectorResource {
 
     Collector collector;
 
-    if ((collector = registry.collector(name)) == null) {
+    if ((collector = registry.getCollector(name)) == null) {
       throw new UnknownCollectorException(name);
     } else if (!CollectionMethod.PULL.equals(collector.getCollectionMethod())) {
       throw new InvalidCollectionException("Invalid collection method(%s) for collector(%s)");
