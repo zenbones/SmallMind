@@ -46,7 +46,7 @@ import org.smallmind.nutsnbolts.reflection.aop.AOPUtility;
 @Aspect
 public class InstrumentedAspect {
 
-  // TODO: Should possibly be an LRUMap or SelfDestructiveMap
+  // Should not grow large as the json representing builders should have very low cardinality
   private static final ConcurrentHashMap<ParsedKey, MeterBuilder<?>> PARSED_MAP = new ConcurrentHashMap<>();
 
   @Around(value = "(execution(@Instrumented * * (..)) || initialization(@Instrumented new(..))) && @annotation(instrumented)", argNames = "thisJoinPoint, instrumented")
