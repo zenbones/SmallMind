@@ -43,7 +43,6 @@ import javax.management.MalformedObjectNameException;
 import javax.management.NotCompliantMBeanException;
 import javax.management.ObjectName;
 import javax.management.ReflectionException;
-import org.smallmind.claxon.registry.Identifier;
 import org.smallmind.claxon.registry.PushCollector;
 import org.smallmind.claxon.registry.Quantity;
 import org.smallmind.claxon.registry.Tag;
@@ -58,7 +57,7 @@ public class JMXCollector extends PushCollector {
   }
 
   @Override
-  public void record (Identifier identifier, Tag[] tags, Quantity[] quantities)
+  public void record (String identifier, Tag[] tags, Quantity[] quantities)
     throws MalformedObjectNameException, NotCompliantMBeanException, MBeanRegistrationException, InstanceAlreadyExistsException, InstanceNotFoundException, ReflectionException {
 
     ObjectName objectName;
@@ -71,7 +70,7 @@ public class JMXCollector extends PushCollector {
       }
     }
 
-    objectName = new ObjectName(identifier.getName(), tagTable);
+    objectName = new ObjectName(identifier, tagTable);
 
     if (!server.isRegistered(objectName)) {
       synchronized (server) {

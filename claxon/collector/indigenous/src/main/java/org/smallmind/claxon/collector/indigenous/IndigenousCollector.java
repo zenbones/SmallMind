@@ -33,7 +33,6 @@
 package org.smallmind.claxon.collector.indigenous;
 
 import java.util.function.Consumer;
-import org.smallmind.claxon.registry.Identifier;
 import org.smallmind.claxon.registry.PushCollector;
 import org.smallmind.claxon.registry.Quantity;
 import org.smallmind.claxon.registry.Tag;
@@ -53,9 +52,9 @@ public class IndigenousCollector extends PushCollector {
   }
 
   @Override
-  public void record (Identifier identifier, Tag[] tags, Quantity[] quantities) {
+  public void record (String identifier, Tag[] tags, Quantity[] quantities) {
 
-    StringBuilder recordBuilder = new StringBuilder(identifier.getName());
+    StringBuilder recordBuilder = new StringBuilder(identifier);
 
     recordBuilder.append('[');
     if ((tags != null) && (tags.length > 0)) {

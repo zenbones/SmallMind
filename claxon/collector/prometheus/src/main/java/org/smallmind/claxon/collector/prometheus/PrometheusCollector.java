@@ -33,7 +33,6 @@
 package org.smallmind.claxon.collector.prometheus;
 
 import java.util.concurrent.ConcurrentLinkedQueue;
-import org.smallmind.claxon.registry.Identifier;
 import org.smallmind.claxon.registry.PullCollector;
 import org.smallmind.claxon.registry.Quantity;
 import org.smallmind.claxon.registry.Tag;
@@ -52,9 +51,9 @@ public class PrometheusCollector extends PullCollector<String> {
   */
 
   @Override
-  public void record (Identifier identifier, Tag[] tags, Quantity[] quantities) {
+  public void record (String identifier, Tag[] tags, Quantity[] quantities) {
 
-    StringBuilder identityBuilder = mangle(identifier.getName(), new StringBuilder());
+    StringBuilder identityBuilder = mangle(identifier, new StringBuilder());
     StringBuilder labelBuilder = null;
     long nowInSeconds = System.currentTimeMillis() / 1000;
 

@@ -49,7 +49,7 @@ public class ObservableTracker {
     this.registry = registry;
   }
 
-  public <O extends Observable> O track (Identifier identifier, MeterBuilder<?> builder, O observable, Tag... tags) {
+  public <O extends Observable> O track (String identifier, MeterBuilder<?> builder, O observable, Tag... tags) {
 
     new RegisteredWeakReference<>(observable, referenceQueue, identifier, tags);
 
@@ -81,10 +81,10 @@ public class ObservableTracker {
 
   private static class RegisteredWeakReference<O extends Observable> extends WeakReference<O> {
 
-    private Identifier identifier;
+    private String identifier;
     private Tag[] tags;
 
-    public RegisteredWeakReference (O referent, ReferenceQueue<? super O> q, Identifier identifier, Tag... tags) {
+    public RegisteredWeakReference (O referent, ReferenceQueue<? super O> q, String identifier, Tag... tags) {
 
       super(referent, q);
 
@@ -92,7 +92,7 @@ public class ObservableTracker {
       this.tags = tags;
     }
 
-    public Identifier getIdentifier () {
+    public String getIdentifier () {
 
       return identifier;
     }

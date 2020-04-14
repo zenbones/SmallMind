@@ -108,7 +108,7 @@ public class ClaxonRegistry {
     return this;
   }
 
-  public <M extends Meter> M register (Identifier identifier, MeterBuilder<M> builder, Tag... tags) {
+  public <M extends Meter> M register (String identifier, MeterBuilder<M> builder, Tag... tags) {
 
     RegistryKey key = new RegistryKey(identifier, tags);
     M meter;
@@ -124,17 +124,17 @@ public class ClaxonRegistry {
     return meter;
   }
 
-  public void unregister (Identifier identifier, Tag... tags) {
+  public void unregister (String identifier, Tag... tags) {
 
     meterMap.remove(new RegistryKey(identifier, tags));
   }
 
-  public <O extends Observable> O track (Identifier identifier, MeterBuilder<?> builder, O observable, Tag... tags) {
+  public <O extends Observable> O track (String identifier, MeterBuilder<?> builder, O observable, Tag... tags) {
 
     return observableTracker.track(identifier, builder, observable, tags);
   }
 
-  public <T> T track (Identifier identifier, MeterBuilder<?> builder, T measured, Function<T, Long> measurement, Tag... tags) {
+  public <T> T track (String identifier, MeterBuilder<?> builder, T measured, Function<T, Long> measurement, Tag... tags) {
 
     return measurableTrcker.track(identifier, builder, measured, measurement, tags);
   }
@@ -230,16 +230,16 @@ public class ClaxonRegistry {
 
   private static class RegistryKey {
 
-    private Identifier identifier;
+    private String identifier;
     private Tag[] tags;
 
-    public RegistryKey (Identifier identifier, Tag... tags) {
+    public RegistryKey (String identifier, Tag... tags) {
 
       this.identifier = identifier;
       this.tags = tags;
     }
 
-    public Identifier getIdentifier () {
+    public String getIdentifier () {
 
       return identifier;
     }

@@ -36,6 +36,6 @@ public interface Collector {
 
   CollectionMethod getCollectionMethod ();
 
-  void record (Identifier identifier, Tag[] tags, Quantity[] quantities)
+  void record (String identifier, Tag[] tags, Quantity[] quantities)
     throws Exception;
 }

@@ -34,7 +34,6 @@ package org.smallmind.claxon.collector.datadog;
 
 import com.timgroup.statsd.NonBlockingStatsDClient;
 import com.timgroup.statsd.StatsDClient;
-import org.smallmind.claxon.registry.Identifier;
 import org.smallmind.claxon.registry.PushCollector;
 import org.smallmind.claxon.registry.Quantity;
 import org.smallmind.claxon.registry.Tag;
@@ -50,12 +49,12 @@ public class DataDogCollector extends PushCollector {
   }
 
   @Override
-  public void record (Identifier identifier, Tag[] tags, Quantity[] quantities) {
+  public void record (String identifier, Tag[] tags, Quantity[] quantities) {
 
     String[] translatedTags = translateTags(tags);
 
     for (Quantity quantity : quantities) {
-      statsdClient.gauge(identifier.getName() + '.' + quantity.getName(), quantity.getValue(), translatedTags);
+      statsdClient.gauge(identifier + '.' + quantity.getName(), quantity.getValue(), translatedTags);
     }
   }
 

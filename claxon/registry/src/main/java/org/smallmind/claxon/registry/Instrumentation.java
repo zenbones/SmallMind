@@ -42,10 +42,10 @@ public class Instrumentation {
   private ClaxonRegistry registry;
   private MeterBuilder<?> builder;
   private Tag[] tags;
-  private Identifier identifier;
+  private String identifier;
   private TimeUnit timeUnit = TimeUnit.MILLISECONDS;
 
-  public Instrumentation (ClaxonRegistry registry, Identifier identifier, MeterBuilder<?> builder, Tag... tags) {
+  public Instrumentation (ClaxonRegistry registry, String identifier, MeterBuilder<?> builder, Tag... tags) {
 
     this.registry = registry;
     this.identifier = identifier;

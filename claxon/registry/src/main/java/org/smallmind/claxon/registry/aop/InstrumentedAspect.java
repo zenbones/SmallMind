@@ -35,7 +35,6 @@ package org.smallmind.claxon.registry.aop;
 import org.aspectj.lang.ProceedingJoinPoint;
 import org.aspectj.lang.annotation.Around;
 import org.aspectj.lang.annotation.Aspect;
-import org.smallmind.claxon.registry.Identifier;
 import org.smallmind.claxon.registry.Instrument;
 import org.smallmind.claxon.registry.Tag;
 import org.smallmind.claxon.registry.WithResultExecutable;
@@ -62,7 +61,7 @@ public class InstrumentedAspect {
 
     builder = new InstrumentedLazyBuilder(instrumented.parser(), instrumented.json());
 
-    return Instrument.with(Identifier.instance(instrumented.identifier()), builder, tags)
+    return Instrument.with(instrumented.identifier(), builder, tags)
              .as(instrumented.timeUnit())
              .on((WithResultExecutable<Object>)thisJoinPoint::proceed);
   }
