@@ -32,38 +32,12 @@
  */
 package org.smallmind.web.jersey.spring;
 
-import java.util.LinkedList;
-import javax.ws.rs.Path;
-import org.glassfish.jersey.server.ResourceConfig;
-import org.springframework.beans.BeansException;
-import org.springframework.beans.factory.config.BeanPostProcessor;
+import org.smallmind.nutsnbolts.lang.FormattedRuntimeException;
 
-public class HK2ResourceBeanPostProcessor implements BeanPostProcessor {
+public class SpringIntegrationException extends FormattedRuntimeException {
 
-  private LinkedList<Object> resourceList = new LinkedList<>();
+  public SpringIntegrationException (String message, Object... args) {
 
-  public synchronized void registerResources (ResourceConfig resourceConfig) {
-
-    for (Object bean : resourceList) {
-      resourceConfig.register(bean);
-    }
-  }
-
-  @Override
-  public Object postProcessBeforeInitialization (Object bean, String beanName)
-    throws BeansException {
-
-    return bean;
-  }
-
-  @Override
-  public synchronized Object postProcessAfterInitialization (Object bean, String beanName)
-    throws BeansException {
-
-    if (bean.getClass().getAnnotation(Path.class) != null) {
-      resourceList.add(bean);
-    }
-
-    return bean;
+    super(message, args);
   }
 }

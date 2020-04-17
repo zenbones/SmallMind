@@ -24,6 +24,11 @@
     </dependency>
     <dependency>
       <groupId>org.smallmind</groupId>
+      <artifactId>scribe-pen</artifactId>
+      <scope>compile</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.smallmind</groupId>
       <artifactId>web-jersey</artifactId>
       <scope>compile</scope>
     </dependency>
@@ -85,11 +90,6 @@
     <dependency>
       <groupId>com.sun.xml.ws</groupId>
       <artifactId>jaxws-rt</artifactId>
-      <scope>compile</scope>
-    </dependency>
-    <dependency>
-      <groupId>org.glassfish.hk2</groupId>
-      <artifactId>hk2-utils</artifactId>
       <scope>compile</scope>
     </dependency>
   </dependencies>
