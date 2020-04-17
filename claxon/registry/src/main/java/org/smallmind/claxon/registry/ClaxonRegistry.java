@@ -47,7 +47,7 @@ import org.smallmind.scribe.pen.LoggerManager;
 public class ClaxonRegistry {
 
   private final ConcurrentHashMap<String, Collector> collectorMap = new ConcurrentHashMap<>();
-  private final ConcurrentHashMap<RegistryKey, Meter> meterMap = new ConcurrentHashMap<>();
+  private final ConcurrentHashMap<RegistryKey, NamedMeter<?>> meterMap = new ConcurrentHashMap<>();
   private final MeasurableTracker measurableTrcker;
   private final ObservableTracker observableTracker;
   private final CollectionWorker collectionWorker;
@@ -97,17 +97,33 @@ public class ClaxonRegistry {
   public <M extends Meter> M register (Identifier identifier, MeterBuilder<M> builder, Tag... tags) {
 
     RegistryKey key = new RegistryKey(identifier, tags);
-    M meter;
+    NamedMeter<?> namedMeter;
 
-    if ((meter = (M)meterMap.get(key)) == null) {
+    if ((namedMeter = meterMap.get(key)) == null) {
       synchronized (meterMap) {
-        if ((meter = (M)meterMap.get(key)) == null) {
-          meterMap.put(key, meter = builder.build(configuration.getClock()));
+        if ((namedMeter = meterMap.get(key)) == null) {
+
+          String meterName;
+
+          if (identifier.getDomain() == null) {
+            meterName = identifier.getName();
+          } else {
+
+            String prefix;
+
+            if ((configuration.getPrefixMap() == null) || ((prefix = configuration.getPrefixMap().get(identifier.getDomain())) == null)) {
+              throw new MissingDomainException("The requested domain(%s) has not been defined", identifier.getDomain());
+            } else {
+              meterName = prefix + '.' + identifier.getName();
+            }
+          }
+
+          meterMap.put(key, namedMeter = new NamedMeter<M>(meterName, builder.build(configuration.getClock())));
         }
       }
     }
 
-    return meter;
+    return (M)namedMeter.getMeter();
   }
 
   public void unregister (Identifier identifier, Tag... tags) {
@@ -156,28 +172,14 @@ public class ClaxonRegistry {
     measurableTrcker.sweepAndUpdate();
     observableTracker.sweep();
 
-    for (Map.Entry<RegistryKey, Meter> meterEntry : meterMap.entrySet()) {
+    for (Map.Entry<RegistryKey, NamedMeter<?>> namedMeterEntry : meterMap.entrySet()) {
 
-      Quantity[] quantities = meterEntry.getValue().record();
-      String meterName;
-
-      if (meterEntry.getKey().getIdentifier().getDomain() == null) {
-        meterName = meterEntry.getKey().getIdentifier().getName();
-      } else {
-
-        String prefix;
-
-        if ((configuration.getPrefixMap() == null) || ((prefix = configuration.getPrefixMap().get(meterEntry.getKey().getIdentifier().getDomain())) == null)) {
-          throw new MissingDomainException("The requested domain(%s) has not been defined", meterEntry.getKey().getIdentifier().getDomain());
-        } else {
-          meterName = prefix + '.' + meterEntry.getKey().getIdentifier().getName();
-        }
-      }
+      Quantity[] quantities = namedMeterEntry.getValue().getMeter().record();
 
       if ((quantities != null) && (quantities.length > 0)) {
 
         Tag[] mergedTags;
-        Tag[] meterTags = meterEntry.getKey().getTags();
+        Tag[] meterTags = namedMeterEntry.getKey().getTags();
 
         if ((configuration.getRegistryTags() == null) || (configuration.getRegistryTags().length == 0)) {
           mergedTags = meterTags;
@@ -191,7 +193,7 @@ public class ClaxonRegistry {
 
         for (Collector collector : collectorMap.values()) {
           try {
-            collector.record(meterName, mergedTags, quantities);
+            collector.record(namedMeterEntry.getValue().getName(), mergedTags, quantities);
           } catch (Exception exception) {
             LoggerManager.getLogger(ClaxonRegistry.class).error(exception);
           }
@@ -259,6 +261,28 @@ public class ClaxonRegistry {
     public boolean equals (Object obj) {
 
       return (obj instanceof RegistryKey) && ((RegistryKey)obj).getIdentifier().equals(identifier) && Arrays.equals(((RegistryKey)obj).getTags(), tags);
+    }
+  }
+
+  private static class NamedMeter<M extends Meter> {
+
+    private String name;
+    private M meter;
+
+    public NamedMeter (String name, M meter) {
+
+      this.name = name;
+      this.meter = meter;
+    }
+
+    public String getName () {
+
+      return name;
+    }
+
+    public M getMeter () {
+
+      return meter;
     }
   }
 }

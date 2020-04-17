@@ -32,6 +32,8 @@
  */
 package org.smallmind.nutsnbolts.util;
 
+import java.util.LinkedList;
+import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class DotNotation {
@@ -153,5 +155,51 @@ public class DotNotation {
   public Pattern getPattern () {
 
     return pattern;
+  }
+
+  public int matchLogger (String loggerName) {
+
+    Matcher matcher;
+    LinkedList<Integer> dotPositions;
+    int matchValue = NO_MATCH;
+
+    dotPositions = getDotPositions(loggerName);
+    matcher = notation.getPattern().matcher(loggerName);
+
+    if (matcher.matches()) {
+      matchValue += 2;
+      for (int count = 1; count <= matcher.groupCount(); count++) {
+        matchValue += assignValueToMatch(dotPositions, matcher.start(count));
+      }
+    }
+
+    return matchValue;
+  }
+
+  private int assignValueToMatch (LinkedList<Integer> dotPositions, int matchStart) {
+
+    int index = 0;
+
+    for (Integer dotPosition : dotPositions) {
+      if (dotPosition > matchStart) {
+        break;
+      }
+      index++;
+    }
+
+    return (int)Math.pow(2, index);
+  }
+
+  private LinkedList<Integer> getDotPositions (String loggerName) {
+
+    LinkedList<Integer> dotPositionList = new LinkedList<>();
+
+    for (int count = 0; count < loggerName.length(); count++) {
+      if (loggerName.charAt(count) == '.') {
+        dotPositionList.add(count);
+      }
+    }
+
+    return dotPositionList;
   }
 }

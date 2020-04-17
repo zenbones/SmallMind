@@ -1,28 +1,28 @@
 /*
  * Copyright (c) 2007, 2008, 2009, 2010, 2011, 2012, 2013, 2014, 2015, 2016, 2017, 2018, 2019, 2020 David Berkman
- * 
+ *
  * This file is part of the SmallMind Code Project.
- * 
+ *
  * The SmallMind Code Project is free software, you can redistribute
  * it and/or modify it under either, at your discretion...
- * 
+ *
  * 1) The terms of GNU Affero General Public License as published by the
  * Free Software Foundation, either version 3 of the License, or (at
  * your option) any later version.
- * 
+ *
  * ...or...
- * 
+ *
  * 2) The terms of the Apache License, Version 2.0.
- * 
+ *
  * The SmallMind Code Project is distributed in the hope that it will
  * be useful, but WITHOUT ANY WARRANTY; without even the implied warranty
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License or Apache License for more details.
- * 
+ *
  * You should have received a copy of the GNU Affero General Public License
  * and the Apache License along with the SmallMind Code Project. If not, see
  * <http://www.gnu.org/licenses/> or <http://www.apache.org/licenses/LICENSE-2.0>.
- * 
+ *
  * Additional permission under the GNU Affero GPL version 3 section 7
  * ------------------------------------------------------------------
  * If you modify this Program, or any covered work, by linking or
@@ -33,14 +33,13 @@
 package org.smallmind.scribe.pen;
 
 import java.util.LinkedList;
-import java.util.concurrent.atomic.AtomicReference;
 import java.util.regex.Matcher;
 import org.smallmind.nutsnbolts.util.DotNotation;
 import org.smallmind.nutsnbolts.util.DotNotationException;
 
 public class ClassNameTemplate extends Template {
 
-  private AtomicReference<DotNotation> notationRef = new AtomicReference<DotNotation>();
+  private DotNotation notation;
 
   public ClassNameTemplate () {
 
@@ -52,11 +51,7 @@ public class ClassNameTemplate extends Template {
 
     super();
 
-    try {
-      notationRef.set(new DotNotation(pattern));
-    } catch (DotNotationException dotNotationException) {
-      throw new LoggerException(dotNotationException);
-    }
+    setPattern(pattern);
   }
 
   public ClassNameTemplate (Level level, boolean autoFillLogicalContext, String pattern)
@@ -64,11 +59,7 @@ public class ClassNameTemplate extends Template {
 
     super(level, autoFillLogicalContext);
 
-    try {
-      notationRef.set(new DotNotation(pattern));
-    } catch (DotNotationException dotNotationException) {
-      throw new LoggerException(dotNotationException);
-    }
+    setPattern(pattern);
   }
 
   public ClassNameTemplate (Filter[] filters, Appender[] appenders, Enhancer[] enhancers, Level level, boolean autoFillLogicalContext, String pattern)
@@ -76,77 +67,18 @@ public class ClassNameTemplate extends Template {
 
     super(filters, appenders, enhancers, level, autoFillLogicalContext);
 
-    try {
-      notationRef.set(new DotNotation(pattern));
-    } catch (DotNotationException dotNotationException) {
-      throw new LoggerException(dotNotationException);
-    }
-  }
-
-  private static int assignValueToMatch (Integer[] dotPositions, int matchStart) {
-
-    int index = 0;
-
-    for (Integer dotPosition : dotPositions) {
-      if (dotPosition > matchStart) {
-        break;
-      }
-      index++;
-    }
-
-    return (int)Math.pow(2, index);
-  }
-
-  private static Integer[] getDotPositions (String loggerName) {
-
-    Integer[] dotPosiitions;
-    LinkedList<Integer> dotPositionList;
-
-    dotPositionList = new LinkedList<Integer>();
-    for (int count = 0; count < loggerName.length(); count++) {
-      if (loggerName.charAt(count) == '.') {
-        dotPositionList.add(count);
-      }
-    }
-
-    dotPosiitions = new Integer[dotPositionList.size()];
-    dotPositionList.toArray(dotPosiitions);
-
-    return dotPosiitions;
+    setPattern(pattern);
   }
 
   public void setPattern (String pattern)
     throws LoggerException {
 
     try {
-      if (!notationRef.compareAndSet(null, new DotNotation(pattern))) {
-        throw new LoggerRuntimeException("ClassNameTemplate has been previously initialized with a pattern");
-      }
+      notation = new DotNotation(pattern);
     } catch (DotNotationException dotNotationException) {
       throw new LoggerException(dotNotationException);
     }
   }
 
-  public int matchLogger (String loggerName) {
 
-    Matcher matcher;
-    Integer[] dotPositions;
-    int matchValue = NO_MATCH;
-
-    if (notationRef.get() == null) {
-      throw new LoggerRuntimeException("ClassNameTemplate was never initialized with a pattern");
-    }
-
-    dotPositions = getDotPositions(loggerName);
-    matcher = notationRef.get().getPattern().matcher(loggerName);
-
-    if (matcher.matches()) {
-      matchValue += 2;
-      for (int count = 1; count <= matcher.groupCount(); count++) {
-        matchValue += assignValueToMatch(dotPositions, matcher.start(count));
-      }
-    }
-
-    return matchValue;
-  }
 }
