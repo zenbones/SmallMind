@@ -18,11 +18,6 @@
     </dependency>
     <dependency>
       <groupId>org.smallmind</groupId>
-      <artifactId>smallmind-instrument</artifactId>
-      <scope>compile</scope>
-    </dependency>
-    <dependency>
-      <groupId>org.smallmind</groupId>
       <artifactId>scribe-pen</artifactId>
       <scope>compile</scope>
     </dependency>
@@ -44,18 +39,6 @@
       <plugin>
         <groupId>org.smallmind</groupId>
         <artifactId>smallmind-license-plugin</artifactId>
-      </plugin>
-      <plugin>
-        <groupId>org.codehaus.mojo</groupId>
-        <artifactId>aspectj-maven-plugin</artifactId>
-        <configuration>
-          <aspectLibraries>
-            <aspectLibrary>
-              <groupId>org.smallmind</groupId>
-              <artifactId>smallmind-instrument</artifactId>
-            </aspectLibrary>
-          </aspectLibraries>
-        </configuration>
       </plugin>
     </plugins>
   </build>

@@ -42,6 +42,9 @@ import org.aspectj.lang.ProceedingJoinPoint;
 import org.aspectj.lang.annotation.Around;
 import org.aspectj.lang.annotation.Aspect;
 import org.aspectj.lang.reflect.MethodSignature;
+import org.smallmind.claxon.registry.Instrument;
+import org.smallmind.claxon.registry.Tag;
+import org.smallmind.claxon.registry.aop.Instrumented;
 import org.smallmind.instrument.InstrumentationManager;
 import org.smallmind.instrument.MetricProperty;
 import org.smallmind.persistence.AbstractVectorAwareManagedDao;
@@ -50,7 +53,6 @@ import org.smallmind.persistence.PersistenceManager;
 import org.smallmind.persistence.UpdateMode;
 import org.smallmind.persistence.cache.VectoredDao;
 import org.smallmind.persistence.cache.praxis.intrinsic.IntrinsicRoster;
-import org.smallmind.persistence.instrument.aop.Instrumented;
 
 @Aspect
 public class CacheCoherentAspect {
@@ -146,6 +148,8 @@ public class CacheCoherentAspect {
         }
 
         InstrumentationManager.instrumentWithChronometer(PersistenceManager.getPersistence().getMetricConfiguration(), stop - start, TimeUnit.MILLISECONDS, new MetricProperty("durable", durableDao.getManagedClass().getSimpleName()), new MetricProperty("method", executedMethod.getName()), new MetricProperty("source", durableDao.getMetricSource()));
+
+        Instrument.with("",null, new Tag("durable", durableDao.getManagedClass().getSimpleName()), new Tag("method", executedMethod.getName()), new Tag("source", durableDao.getMetricSource())).on();
       }
     }
   }

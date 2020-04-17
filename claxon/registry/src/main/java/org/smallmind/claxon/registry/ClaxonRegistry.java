@@ -1,28 +1,28 @@
 /*
  * Copyright (c) 2007, 2008, 2009, 2010, 2011, 2012, 2013, 2014, 2015, 2016, 2017, 2018, 2019, 2020 David Berkman
- * 
+ *
  * This file is part of the SmallMind Code Project.
- * 
+ *
  * The SmallMind Code Project is free software, you can redistribute
  * it and/or modify it under either, at your discretion...
- * 
+ *
  * 1) The terms of GNU Affero General Public License as published by the
  * Free Software Foundation, either version 3 of the License, or (at
  * your option) any later version.
- * 
+ *
  * ...or...
- * 
+ *
  * 2) The terms of the Apache License, Version 2.0.
- * 
+ *
  * The SmallMind Code Project is distributed in the hope that it will
  * be useful, but WITHOUT ANY WARRANTY; without even the implied warranty
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License or Apache License for more details.
- * 
+ *
  * You should have received a copy of the GNU Affero General Public License
  * and the Apache License along with the SmallMind Code Project. If not, see
  * <http://www.gnu.org/licenses/> or <http://www.apache.org/licenses/LICENSE-2.0>.
- * 
+ *
  * Additional permission under the GNU Affero GPL version 3 section 7
  * ------------------------------------------------------------------
  * If you modify this Program, or any covered work, by linking or
@@ -41,7 +41,6 @@ import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 import org.smallmind.claxon.registry.meter.Meter;
 import org.smallmind.claxon.registry.meter.MeterBuilder;
-import org.smallmind.nutsnbolts.time.Stint;
 import org.smallmind.scribe.pen.LoggerManager;
 
 public class ClaxonRegistry {
@@ -51,32 +50,18 @@ public class ClaxonRegistry {
   private final MeasurableTracker measurableTrcker;
   private final ObservableTracker observableTracker;
   private final CollectionWorker collectionWorker;
-  private final Clock clock;
-  private final Stint collectionStint;
-  private final Tag[] registryTags;
+  private ClaxonConfiguration configuration;
 
-  public ClaxonRegistry (Tag... registryTags) {
+  public ClaxonRegistry () {
 
-    this(SystemClock.instance(), new Stint(1, TimeUnit.SECONDS), registryTags);
+    this(new ClaxonConfiguration());
   }
 
-  public ClaxonRegistry (Clock clock, Tag... registryTags) {
-
-    this(clock, new Stint(1, TimeUnit.SECONDS), registryTags);
-  }
-
-  public ClaxonRegistry (Stint collectionStint, Tag... registryTags) {
-
-    this(SystemClock.instance(), collectionStint, registryTags);
-  }
-
-  public ClaxonRegistry (Clock clock, Stint collectionStint, Tag... registryTags) {
+  public ClaxonRegistry (ClaxonConfiguration configuration) {
 
     Thread workerThread = new Thread(collectionWorker = new CollectionWorker());
 
-    this.clock = clock;
-    this.collectionStint = collectionStint;
-    this.registryTags = registryTags;
+    this.configuration = configuration;
 
     measurableTrcker = new MeasurableTracker(this);
     observableTracker = new ObservableTracker(this);
@@ -116,7 +101,7 @@ public class ClaxonRegistry {
     if ((meter = (M)meterMap.get(key)) == null) {
       synchronized (meterMap) {
         if ((meter = (M)meterMap.get(key)) == null) {
-          meterMap.put(key, meter = builder.build(clock));
+          meterMap.put(key, meter = builder.build(configuration.getClock()));
         }
       }
     }
@@ -147,20 +132,20 @@ public class ClaxonRegistry {
   public void instrument (Meter meter, TimeUnit timeUnit, SansResultExecutable sansResultExecutable)
     throws Throwable {
 
-    long start = clock.monotonicTime();
+    long start = configuration.getClock().monotonicTime();
 
     sansResultExecutable.execute();
-    meter.update(timeUnit.convert(clock.monotonicTime() - start, TimeUnit.NANOSECONDS));
+    meter.update(timeUnit.convert(configuration.getClock().monotonicTime() - start, TimeUnit.NANOSECONDS));
   }
 
   public <T> T instrument (Meter meter, TimeUnit timeUnit, WithResultExecutable<T> withResultExecutable)
     throws Throwable {
 
     T result;
-    long start = clock.monotonicTime();
+    long start = configuration.getClock().monotonicTime();
 
     result = withResultExecutable.execute();
-    meter.update(timeUnit.convert(clock.monotonicTime() - start, TimeUnit.NANOSECONDS));
+    meter.update(timeUnit.convert(configuration.getClock().monotonicTime() - start, TimeUnit.NANOSECONDS));
 
     return result;
   }
@@ -179,14 +164,14 @@ public class ClaxonRegistry {
         Tag[] mergedTags;
         Tag[] meterTags = meterEntry.getKey().getTags();
 
-        if ((registryTags == null) || (registryTags.length == 0)) {
+        if ((configuration.getRegistryTags() == null) || (configuration.getRegistryTags().length == 0)) {
           mergedTags = meterTags;
         } else if ((meterTags == null) || (meterTags.length == 0)) {
-          mergedTags = registryTags;
+          mergedTags = configuration.getRegistryTags();
         } else {
-          mergedTags = new Tag[registryTags.length + meterTags.length];
-          System.arraycopy(registryTags, 0, mergedTags, 0, registryTags.length);
-          System.arraycopy(meterTags, 0, mergedTags, registryTags.length, meterTags.length);
+          mergedTags = new Tag[configuration.getRegistryTags().length + meterTags.length];
+          System.arraycopy(configuration.getRegistryTags(), 0, mergedTags, 0, configuration.getRegistryTags().length);
+          System.arraycopy(meterTags, 0, mergedTags, configuration.getRegistryTags().length, meterTags.length);
         }
 
         for (Collector collector : collectorMap.values()) {
@@ -216,7 +201,7 @@ public class ClaxonRegistry {
     public void run () {
 
       try {
-        while (!finishLatch.await(collectionStint.getTime(), collectionStint.getTimeUnit())) {
+        while (!finishLatch.await(configuration.getCollectionStint().getTime(), configuration.getCollectionStint().getTimeUnit())) {
           record();
         }
       } catch (InterruptedException interruptedException) {

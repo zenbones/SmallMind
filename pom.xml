@@ -115,7 +115,6 @@
     <module>claxon</module>
     <module>forge</module>
     <module>foundation</module>
-    <module>instrument</module>
     <module>javafx</module>
     <module>license</module>
     <module>liquibase</module>
@@ -173,11 +172,6 @@
       <dependency>
         <groupId>org.smallmind</groupId>
         <artifactId>claxon-registry</artifactId>
-        <version>${project.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>org.smallmind</groupId>
-        <artifactId>smallmind-instrument</artifactId>
         <version>${project.version}</version>
       </dependency>
       <dependency>
