@@ -34,9 +34,9 @@ package org.smallmind.claxon.registry;
 
 import org.smallmind.nutsnbolts.lang.FormattedException;
 
-public class AlreadyBoundException extends FormattedException {
+public class InvalidCollectorException extends FormattedException {
 
-  public AlreadyBoundException (String message, Object... args) {
+  public InvalidCollectorException (String message, Object... args) {
 
     super(message, args);
   }

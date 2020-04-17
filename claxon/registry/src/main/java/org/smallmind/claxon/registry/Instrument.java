@@ -49,7 +49,7 @@ public class Instrument implements PerApplicationDataManager {
     return PerApplicationContext.getPerApplicationData(Instrument.class, ClaxonRegistry.class);
   }
 
-  public static Instrumentation with (String identifier, MeterBuilder<?> builder, Tag... tags) {
+  public static Instrumentation with (Identifier identifier, MeterBuilder<?> builder, Tag... tags) {
 
     ClaxonRegistry registry;
 

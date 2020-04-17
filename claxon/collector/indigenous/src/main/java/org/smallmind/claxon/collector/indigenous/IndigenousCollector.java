@@ -52,9 +52,9 @@ public class IndigenousCollector extends PushCollector {
   }
 
   @Override
-  public void record (String identifier, Tag[] tags, Quantity[] quantities) {
+  public void record (String meterName, Tag[] tags, Quantity[] quantities) {
 
-    StringBuilder recordBuilder = new StringBuilder(identifier);
+    StringBuilder recordBuilder = new StringBuilder(meterName);
 
     recordBuilder.append('[');
     if ((tags != null) && (tags.length > 0)) {

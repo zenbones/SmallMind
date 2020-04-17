@@ -41,6 +41,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 import org.smallmind.claxon.registry.meter.Meter;
 import org.smallmind.claxon.registry.meter.MeterBuilder;
+import org.smallmind.claxon.registry.meter.MissingDomainException;
 import org.smallmind.scribe.pen.LoggerManager;
 
 public class ClaxonRegistry {
@@ -93,7 +94,7 @@ public class ClaxonRegistry {
     return this;
   }
 
-  public <M extends Meter> M register (String identifier, MeterBuilder<M> builder, Tag... tags) {
+  public <M extends Meter> M register (Identifier identifier, MeterBuilder<M> builder, Tag... tags) {
 
     RegistryKey key = new RegistryKey(identifier, tags);
     M meter;
@@ -109,17 +110,17 @@ public class ClaxonRegistry {
     return meter;
   }
 
-  public void unregister (String identifier, Tag... tags) {
+  public void unregister (Identifier identifier, Tag... tags) {
 
     meterMap.remove(new RegistryKey(identifier, tags));
   }
 
-  public <O extends Observable> O track (String identifier, MeterBuilder<?> builder, O observable, Tag... tags) {
+  public <O extends Observable> O track (Identifier identifier, MeterBuilder<?> builder, O observable, Tag... tags) {
 
     return observableTracker.track(identifier, builder, observable, tags);
   }
 
-  public <T> T track (String identifier, MeterBuilder<?> builder, T measured, Function<T, Long> measurement, Tag... tags) {
+  public <T> T track (Identifier identifier, MeterBuilder<?> builder, T measured, Function<T, Long> measurement, Tag... tags) {
 
     return measurableTrcker.track(identifier, builder, measured, measurement, tags);
   }
@@ -158,6 +159,20 @@ public class ClaxonRegistry {
     for (Map.Entry<RegistryKey, Meter> meterEntry : meterMap.entrySet()) {
 
       Quantity[] quantities = meterEntry.getValue().record();
+      String meterName;
+
+      if (meterEntry.getKey().getIdentifier().getDomain() == null) {
+        meterName = meterEntry.getKey().getIdentifier().getName();
+      } else {
+
+        String prefix;
+
+        if ((configuration.getPrefixMap() == null) || ((prefix = configuration.getPrefixMap().get(meterEntry.getKey().getIdentifier().getDomain())) == null)) {
+          throw new MissingDomainException("The requested domain(%s) has not been defined", meterEntry.getKey().getIdentifier().getDomain());
+        } else {
+          meterName = prefix + '.' + meterEntry.getKey().getIdentifier().getName();
+        }
+      }
 
       if ((quantities != null) && (quantities.length > 0)) {
 
@@ -176,7 +191,7 @@ public class ClaxonRegistry {
 
         for (Collector collector : collectorMap.values()) {
           try {
-            collector.record(meterEntry.getKey().getIdentifier(), mergedTags, quantities);
+            collector.record(meterName, mergedTags, quantities);
           } catch (Exception exception) {
             LoggerManager.getLogger(ClaxonRegistry.class).error(exception);
           }
@@ -215,16 +230,16 @@ public class ClaxonRegistry {
 
   private static class RegistryKey {
 
-    private String identifier;
+    private Identifier identifier;
     private Tag[] tags;
 
-    public RegistryKey (String identifier, Tag... tags) {
+    public RegistryKey (Identifier identifier, Tag... tags) {
 
       this.identifier = identifier;
       this.tags = tags;
     }
 
-    public String getIdentifier () {
+    public Identifier getIdentifier () {
 
       return identifier;
     }

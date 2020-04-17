@@ -51,7 +51,7 @@ public class MeasurableTracker {
     this.registry = registry;
   }
 
-  public <T> T track (String identifier, MeterBuilder<?> builder, T measured, Function<T, Long> measurement, Tag... tags) {
+  public <T> T track (Identifier identifier, MeterBuilder<?> builder, T measured, Function<T, Long> measurement, Tag... tags) {
 
     measurableMap.put(new WeakReference<>(measured, referenceQueue), new Measurable(identifier, builder, measurement, tags));
 
@@ -84,11 +84,11 @@ public class MeasurableTracker {
   private static class Measurable {
 
     private MeterBuilder<?> builder;
-    private String identifier;
+    private Identifier identifier;
     private Tag[] tags;
     private Function<Object, Long> measurement;
 
-    public Measurable (String identifier, MeterBuilder<?> builder, Function<?, Long> measurement, Tag... tags) {
+    public Measurable (Identifier identifier, MeterBuilder<?> builder, Function<?, Long> measurement, Tag... tags) {
 
       this.identifier = identifier;
       this.builder = builder;

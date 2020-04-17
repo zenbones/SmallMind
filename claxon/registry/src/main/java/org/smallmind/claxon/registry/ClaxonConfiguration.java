@@ -11,7 +11,7 @@ public class ClaxonConfiguration {
   private Stint collectionStint = new Stint(1, TimeUnit.SECONDS);
   private Tag[] registryTags = new Tag[0];
   private TimeUnit defaultTimeUnit = TimeUnit.MILLISECONDS;
-  private Map<String, String> domainMap = new HashMap<>();
+  private Map<String, String> prefixMap = new HashMap<>();
 
   public Clock getClock () {
 
@@ -53,13 +53,13 @@ public class ClaxonConfiguration {
     this.defaultTimeUnit = defaultTimeUnit;
   }
 
-  public Map<String, String> getDomainMap () {
+  public Map<String, String> getPrefixMap () {
 
-    return domainMap;
+    return prefixMap;
   }
 
-  public void setDomainMap (Map<String, String> domainMap) {
+  public void setPrefixMap (Map<String, String> prefixMap) {
 
-    this.domainMap = domainMap;
+    this.prefixMap = prefixMap;
   }
 }

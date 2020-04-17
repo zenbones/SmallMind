@@ -51,9 +51,9 @@ public class PrometheusCollector extends PullCollector<String> {
   */
 
   @Override
-  public void record (String identifier, Tag[] tags, Quantity[] quantities) {
+  public void record (String meterName, Tag[] tags, Quantity[] quantities) {
 
-    StringBuilder identityBuilder = mangle(identifier, new StringBuilder());
+    StringBuilder identityBuilder = mangle(meterName, new StringBuilder());
     StringBuilder labelBuilder = null;
     long nowInSeconds = System.currentTimeMillis() / 1000;
 

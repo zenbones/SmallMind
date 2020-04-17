@@ -49,12 +49,12 @@ public class DataDogCollector extends PushCollector {
   }
 
   @Override
-  public void record (String identifier, Tag[] tags, Quantity[] quantities) {
+  public void record (String meterName, Tag[] tags, Quantity[] quantities) {
 
     String[] translatedTags = translateTags(tags);
 
     for (Quantity quantity : quantities) {
-      statsdClient.gauge(identifier + '.' + quantity.getName(), quantity.getValue(), translatedTags);
+      statsdClient.gauge(meterName + '.' + quantity.getName(), quantity.getValue(), translatedTags);
     }
   }
 
