@@ -54,9 +54,7 @@ public class DotNotation {
   public DotNotation (String notation)
     throws DotNotationException {
 
-    this.notation = notation;
-
-    pattern = Pattern.compile(validateAsRegEx(notation));
+    setNotation(notation);
   }
 
   public static String validateAsRegEx (String notation)
@@ -150,6 +148,14 @@ public class DotNotation {
   public String getNotation () {
 
     return notation;
+  }
+
+  public void setNotation (String notation)
+    throws DotNotationException {
+
+    this.notation = notation;
+
+    pattern = Pattern.compile(validateAsRegEx(notation));
   }
 
   public Pattern getPattern () {

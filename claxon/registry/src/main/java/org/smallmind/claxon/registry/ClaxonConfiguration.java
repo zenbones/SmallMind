@@ -4,6 +4,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import org.smallmind.nutsnbolts.time.Stint;
+import org.smallmind.nutsnbolts.util.DotNotation;
 
 public class ClaxonConfiguration {
 
@@ -11,7 +12,8 @@ public class ClaxonConfiguration {
   private Stint collectionStint = new Stint(1, TimeUnit.SECONDS);
   private Tag[] registryTags = new Tag[0];
   private TimeUnit defaultTimeUnit = TimeUnit.MILLISECONDS;
-  private Map<String, String> prefixMap = new HashMap<>();
+  private Map<DotNotation, String> prefixMap = new HashMap<>();
+  private String defaultPrefix;
 
   public Clock getClock () {
 
@@ -53,13 +55,23 @@ public class ClaxonConfiguration {
     this.defaultTimeUnit = defaultTimeUnit;
   }
 
-  public Map<String, String> getPrefixMap () {
+  public Map<DotNotation, String> getPrefixMap () {
 
     return prefixMap;
   }
 
-  public void setPrefixMap (Map<String, String> prefixMap) {
+  public void setPrefixMap (Map<DotNotation, String> prefixMap) {
 
     this.prefixMap = prefixMap;
+  }
+
+  public String getDefaultPrefix () {
+
+    return defaultPrefix;
+  }
+
+  public void setDefaultPrefix (String defaultPrefix) {
+
+    this.defaultPrefix = defaultPrefix;
   }
 }

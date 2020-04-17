@@ -41,7 +41,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 import org.smallmind.claxon.registry.meter.Meter;
 import org.smallmind.claxon.registry.meter.MeterBuilder;
-import org.smallmind.claxon.registry.meter.MissingDomainException;
+import org.smallmind.nutsnbolts.util.DotNotation;
 import org.smallmind.scribe.pen.LoggerManager;
 
 public class ClaxonRegistry {
@@ -106,16 +106,32 @@ public class ClaxonRegistry {
           String meterName;
 
           if (identifier.getDomain() == null) {
-            meterName = identifier.getName();
+            meterName = (configuration.getDefaultPrefix() == null) ? identifier.getName() : configuration.getDefaultPrefix() + '.' + identifier.getName();
           } else {
 
             String prefix;
 
-            if ((configuration.getPrefixMap() == null) || ((prefix = configuration.getPrefixMap().get(identifier.getDomain())) == null)) {
-              throw new MissingDomainException("The requested domain(%s) has not been defined", identifier.getDomain());
+            if ((configuration.getPrefixMap() == null) || configuration.getPrefixMap().isEmpty()) {
+              prefix = configuration.getDefaultPrefix();
             } else {
-              meterName = prefix + '.' + identifier.getName();
+
+              Map.Entry<DotNotation, String> strongestEntry = null;
+              int currentStrength = 0;
+
+              for (Map.Entry<DotNotation, String> prefixEntry : configuration.getPrefixMap().entrySet()) {
+
+                int possibleStrength;
+
+                if ((possibleStrength = prefixEntry.getKey().calculateValue(identifier.getDomain(), -1)) > currentStrength) {
+                  currentStrength = possibleStrength;
+                  strongestEntry = prefixEntry;
+                }
+              }
+
+              prefix = (strongestEntry == null) ? configuration.getDefaultPrefix() : strongestEntry.getValue();
             }
+
+            meterName = (prefix == null) ? identifier.getName() : configuration.getDefaultPrefix() + '.' + identifier.getName();
           }
 
           meterMap.put(key, namedMeter = new NamedMeter<M>(meterName, builder.build(configuration.getClock())));
