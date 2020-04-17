@@ -32,8 +32,6 @@
  */
 package org.smallmind.scribe.pen;
 
-import java.util.LinkedList;
-import java.util.regex.Matcher;
 import org.smallmind.nutsnbolts.util.DotNotation;
 import org.smallmind.nutsnbolts.util.DotNotationException;
 
@@ -80,5 +78,9 @@ public class ClassNameTemplate extends Template {
     }
   }
 
+  @Override
+  public int matchLogger (String loggerName) {
 
+    return notation.calculateValue(loggerName, NO_MATCH);
+  }
 }
